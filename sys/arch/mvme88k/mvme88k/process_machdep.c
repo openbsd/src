@@ -1,4 +1,4 @@
-/*	$OpenBSD: process_machdep.c,v 1.8 2001/02/01 03:38:22 smurph Exp $ */
+/*	$OpenBSD: process_machdep.c,v 1.9 2001/03/09 05:44:42 smurph Exp $ */
 
 /*
  * Copyright (c) 1993 The Regents of the University of California.
@@ -70,6 +70,7 @@
 #include <sys/vnode.h>
 #include <machine/psl.h>
 #include <machine/reg.h>
+#include <machine/trap.h>
 #if 0
 #include <machine/frame.h>
 #endif
@@ -78,8 +79,8 @@
 
 int
 process_read_regs(p, regs)
-struct proc *p;
-struct reg *regs;
+	struct proc *p;
+	struct reg *regs;
 {
 
 	bcopy((caddr_t)USER_REGS(p), (caddr_t)regs, sizeof(struct reg));
@@ -88,8 +89,8 @@ struct reg *regs;
 
 int
 process_write_regs(p, regs)
-struct proc *p;
-struct reg *regs;
+	struct proc *p;
+	struct reg *regs;
 {
 	bcopy((caddr_t)regs, (caddr_t)USER_REGS(p), sizeof(struct reg));
 	return (0);
@@ -97,8 +98,8 @@ struct reg *regs;
 
 int
 process_sstep(p, sstep)
-struct proc *p;
-int sstep;
+	struct proc *p;
+	int sstep;
 {
 	if (sstep)
 		cpu_singlestep(p);
@@ -107,8 +108,8 @@ int sstep;
 
 int
 process_set_pc(p, addr)
-struct proc *p;
-caddr_t addr;
+	struct proc *p;
+	caddr_t addr;
 {
 	struct reg *regs;
 
@@ -124,8 +125,8 @@ caddr_t addr;
 
 int
 process_read_fpregs(p, regs)
-struct proc     *p;
-struct fpreg    *regs;
+	struct proc     *p;
+	struct fpreg    *regs;
 {
 #if 0
 	extern struct fpstate   initfpstate;
@@ -141,8 +142,8 @@ struct fpreg    *regs;
 
 int
 process_write_fpregs(p, regs)
-struct proc     *p;
-struct fpreg    *regs;
+	struct proc     *p;
+	struct fpreg    *regs;
 {
 #if 0
 	if (p->p_md.md_fpstate == NULL)

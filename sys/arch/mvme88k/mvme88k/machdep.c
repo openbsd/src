@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.27 2001/03/07 23:56:06 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.28 2001/03/09 05:44:42 smurph Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -78,6 +78,7 @@
 
 #include <mvme88k/dev/sysconreg.h>
 #include <mvme88k/dev/pcctworeg.h>
+#include <machine/locore.h>
 #include <machine/cpu.h>
 #include <machine/cpu_number.h>
 #include <machine/asm_macro.h>   /* enable/disable interrupts */
@@ -98,11 +99,12 @@
 #endif
 
 #define __IS_MACHDEP_C__
-#include <assym.s>			  /* EF_EPSR, etc. */
-#include <machine/m88100.h>  			/* DMT_VALID        */
-#include <machine/m882xx.h>  			/* CMMU stuff       */
+#include <assym.s>			/* EF_EPSR, etc. */
+#include <machine/m88100.h>  		/* DMT_VALID        */
+#include <machine/m882xx.h>  		/* CMMU stuff       */
 #if DDB
    #include <machine/db_machdep.h>
+   #include <ddb/db_output.h>		/* db_printf()		*/
 #endif /* DDB */
 
 #if DDB
@@ -119,9 +121,15 @@ vm_offset_t interrupt_stack[MAX_CPUS] = {0};
 struct funcp mdfp;
 
 /* forwards */
-void m88100_Xfp_precise(void);
-void m88110_Xfp_precise(void);
-void setupiackvectors(void);
+void m88100_Xfp_precise __P((void));
+void m88110_Xfp_precise __P((void));
+void setupiackvectors __P((void));
+void regdump __P((struct trapframe *f));
+void dumpsys __P((void));
+void configure __P((void));
+void consinit __P((void));
+void kdb_init __P((void));
+int badwordaddr __P((void *addr));
 
 volatile unsigned char *ivec[] = {
 	(unsigned char *)0xFFFE0003, /* not used, no such thing as int 0 */
@@ -331,7 +339,7 @@ size_memory(void)
 
 		/* if can't access, we've reached the end */
 		if (foodebug) printf("%x\n", look);
-		if (badwordaddr((vm_offset_t)look)) {
+		if (badwordaddr((void*)look)) {
 #if defined(DEBUG)
 			printf("%x\n", look);
 #endif
@@ -410,7 +418,7 @@ save_u_area(struct proc *p, vm_offset_t va)
 {
 	int i; 
 	for (i=0; i<UPAGES; i++) {
-		p->p_md.md_upte[i] = kvtopte(va + (i * NBPG))->bits;
+		p->p_md.md_upte[i] = kvtopte((va + (i * NBPG)))->bits;
 	}
 }
 
@@ -421,11 +429,11 @@ load_u_area(struct proc *p)
 
 	int i; 
 	for (i=0; i<UPAGES; i++) {
-		t = kvtopte(UADDR + (i * NBPG));
+		t = kvtopte((UADDR + (i * NBPG)));
 		t->bits = p->p_md.md_upte[i];
 	}
 	for (i=0; i<UPAGES; i++) {
-		cmmu_flush_tlb(1, UADDR + (i * NBPG), NBPG);
+		cmmu_flush_tlb(1, (UADDR + (i * NBPG)), NBPG);
 	}
 }
 
@@ -471,7 +479,7 @@ cpu_startup()
 	vm_size_t size;    
 	int base, residual;
 #if defined(UVM)
-	vaddr_t minaddr, maxaddr, uarea_pages, addr;
+	vaddr_t minaddr, maxaddr, uarea_pages;
 #else
 	vm_offset_t minaddr, maxaddr, uarea_pages;
 #endif 
@@ -820,7 +828,7 @@ cpu_startup()
  */
 caddr_t
 allocsys(v)
-register caddr_t v;
+	register caddr_t v;
 {
 
 #define	valloc(name, type, num) \
@@ -910,10 +918,10 @@ register caddr_t v;
 
 void
 setregs(p, pack, stack, retval)
-struct proc *p;
-struct exec_package *pack;
-u_long stack;
-int retval[2];
+	struct proc *p;
+	struct exec_package *pack;
+	u_long stack;
+	int retval[2];
 {
 	register struct trapframe *tf = USER_REGS(p);
 
@@ -998,11 +1006,11 @@ int sigpid = 0;
 /* MVME197 TODO list :-) smurph */
 void
 sendsig(catcher, sig, mask, code, type, val)
-sig_t catcher;
-int sig, mask;
-unsigned long code;
-int type;
-union sigval val;
+	sig_t catcher;
+	int sig, mask;
+	unsigned long code;
+	int type;
+	union sigval val;
 {
 	register struct proc *p = curproc;
 	register struct trapframe *tf;
@@ -1235,7 +1243,7 @@ _doboot()
 
 void
 boot(howto)
-register int howto;
+	register int howto;
 {
 	/* take a snap shot before clobbering any registers */
 #if 0
@@ -1483,7 +1491,7 @@ slave_main(void)
  */
 int
 intr_findvec(start, end)
-int start, end;
+	int start, end;
 {
 	int vec;
 
@@ -1719,7 +1727,7 @@ out_m188:
 	disable_interrupt();
 	if (eframe->dmt0 & DMT_VALID) {
 		trap(T_DATAFLT, eframe);
-		data_access_emulation(eframe);
+		data_access_emulation((unsigned *)eframe);
 		eframe->dmt0 &= ~DMT_VALID;
 	}
 
@@ -1847,7 +1855,7 @@ out:
 	if (cputyp != CPU_197) {
 		if (eframe->dmt0 & DMT_VALID) {
 			trap(T_DATAFLT, eframe);
-			data_access_emulation(eframe);
+			data_access_emulation((unsigned *)eframe);
 			eframe->dmt0 &= ~DMT_VALID;
 		}
 	}
@@ -1924,7 +1932,7 @@ struct proc *p;
 
 void
 _insque(velement, vhead)
-void *velement, *vhead;
+	void *velement, *vhead;
 {
 	register struct prochd *element, *head;
 	element = velement;
@@ -1941,7 +1949,7 @@ void *velement, *vhead;
 
 void
 _remque(velement)
-void *velement;
+	void *velement;
 {
 	register struct prochd *element;
 	element = velement;
@@ -1952,10 +1960,10 @@ void *velement;
 
 int
 copystr(fromaddr, toaddr, maxlength, lencopied)
-const void *fromaddr;
-void *toaddr;
-size_t maxlength;
-size_t *lencopied;
+	const void *fromaddr;
+	void *toaddr;
+	size_t maxlength;
+	size_t *lencopied;
 {
 	u_int tally;
 
@@ -1978,7 +1986,7 @@ size_t *lencopied;
 
 void
 setrunqueue(p)
-register struct proc *p;
+	register struct proc *p;
 {
 	register struct prochd *q;
 	register struct proc *oldlast;
@@ -2000,7 +2008,7 @@ register struct proc *p;
  */
 void
 remrunqueue(vp)
-struct proc *vp;
+	struct proc *vp;
 {
 	register struct proc *p = vp;
 	register int which = p->p_priority >> 2;
@@ -2025,7 +2033,7 @@ bugsyscall()
 
 void
 myetheraddr(cp)
-u_char *cp;
+	u_char *cp;
 {
 	struct bugbrdid brdid;
 
@@ -2118,7 +2126,7 @@ dosoftint()
 }
 
 int
-spl0()
+spl0(void)
 {
 	int x;
 	x = splsoftclock();
@@ -2151,8 +2159,8 @@ char        *s;
 
 void
 MY_info_done(f, flags)
-struct trapframe  *f;
-int         flags;
+	struct trapframe  *f;
+	int         flags;
 {
 	regdump(f);
 }  
@@ -2199,7 +2207,7 @@ regdump(struct trapframe *f)
 		printf("dmt1 %x dmd1 %x dma1 %x\n", f->dmt1, f->dmd1, f->dma1);
 		printf("dmt2 %x dmd2 %x dma2 %x\n", f->dmt2, f->dmd2, f->dma2);
 		printf("fault type %d\n", (f->dpfsr >> 16) & 0x7);
-		dae_print(f);
+		dae_print((unsigned *)f);
 	}
 	if (longformat && cputyp != CPU_197) {
 		printf("fpsr %x ", f->fpsr);
@@ -2256,26 +2264,10 @@ regdump(struct trapframe *f)
 #endif 
 }
 
-#if DDB
-inline int
-db_splhigh(void)
-{
-	return (db_setipl(IPL_HIGH));
-}
-
-inline int
-db_splx(int s)
-{
-	return (db_setipl(s));
-}
-#endif /* DDB */	
-
-
 /*
  * Called from locore.S during boot,
  * this is the first C code that's run.
  */
-
 
 void
 mvme_bootstrap(void)
@@ -2421,7 +2413,7 @@ mvme_bootstrap(void)
  */
 int
 bootcnprobe(cp)
-struct consdev *cp;
+	struct consdev *cp;
 {
 	cp->cn_dev = makedev(14, 0);
 	cp->cn_pri = CN_NORMAL;
@@ -2430,7 +2422,7 @@ struct consdev *cp;
 
 int
 bootcninit(cp)
-struct consdev *cp;
+	struct consdev *cp;
 {
 	/* Nothing to do */
 	return (1);
@@ -2438,15 +2430,15 @@ struct consdev *cp;
 
 int
 bootcngetc(dev)
-dev_t dev;
+	dev_t dev;
 {
 	return (buginchr());
 }
 
 void
 bootcnputc(dev, c)
-dev_t dev;
-char c;
+	dev_t dev;
+	char c;
 {
 	if (c == '\n')
 		bugoutchr('\r');

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.8 2001/03/07 23:42:32 miod Exp $ */
+/*	$OpenBSD: cpu.h,v 1.9 2001/03/09 05:44:40 smurph Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * Copyright (c) 1992, 1993
@@ -87,6 +87,11 @@ extern int intstack;
 #define	CLKF_BASEPRI(framep)	(((struct trapframe *)(framep))->mask == 0)
 #define	CLKF_PC(framep)		(((struct trapframe *)(framep))->sxip & ~3)
 #define	CLKF_INTR(framep)	(((struct trapframe *)(framep))->r[31] > intstack)
+
+/*
+ * Get interrupt glue.
+ */
+#include <machine/intr.h>
 
 /*
  * Internal IO space (iiomapsize).

@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.12 2001/03/08 00:03:30 miod Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.13 2001/03/09 05:44:41 smurph Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1995 Dale Rahn.
@@ -31,9 +31,10 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/buf.h>
 #include <sys/device.h>
-#define DKTYPENAMES
+#undef DKTYPENAMES
 #include <sys/disklabel.h>
 #include <sys/disk.h>
 

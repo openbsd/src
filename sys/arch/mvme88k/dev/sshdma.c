@@ -1,4 +1,4 @@
-/*	$OpenBSD: sshdma.c,v 1.2 2001/03/07 23:47:20 miod Exp $	*/
+/*	$OpenBSD: sshdma.c,v 1.3 2001/03/09 05:44:39 smurph Exp $	*/
 
 /*
  * Copyright (c) 1996 Nivas Madhur
@@ -69,8 +69,9 @@ int	afscmatch	__P((struct device *, void *, void *));
 void	afscattach	__P((struct device *, struct device *, void *));
 
 int	afscprint	__P((void *auxp, char *));
-int	sshintr	__P((struct ssh_softc *));
+int	sshintr		__P((struct ssh_softc *));
 int	afsc_dmaintr	__P((void *));
+void	sshinitialize	__P((struct ssh_softc *));
 
 struct scsi_adapter afsc_scsiswitch = {
 	ssh_scsicmd,

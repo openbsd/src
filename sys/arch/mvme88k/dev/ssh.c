@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssh.c,v 1.2 2001/03/07 23:47:20 miod Exp $	*/
+/*	$OpenBSD: ssh.c,v 1.3 2001/03/09 05:44:39 smurph Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -62,8 +62,6 @@
 
 #include <mvme88k/dev/sshreg.h>
 #include <mvme88k/dev/sshvar.h>
-
-extern u_int	kvtop();
 
 /*
  * SCSI delays
@@ -580,7 +578,7 @@ sshinitialize(sc)
 	 * Also should verify that dev doesn't span non-contiguous
 	 * physical pages.
 	 */
-	sc->sc_scriptspa = kvtop(scripts);
+	sc->sc_scriptspa = kvtop((vm_offset_t)scripts);
 
 	/*
 	 * malloc sc_acb to ensure that DS is on a long word boundary.
@@ -754,20 +752,20 @@ ssh_start (sc, target, lun, cbuf, clen, buf, len)
 	acb->msg[0] = -1;
 	acb->ds.scsi_addr = (0x10000 << target) | (sc->sc_sync[target].sxfer << 8);
 	acb->ds.idlen = 1;
-	acb->ds.idbuf = (char *) kvtop(&acb->msgout[0]);
+	acb->ds.idbuf = (char *) kvtop((vm_offset_t)&acb->msgout[0]);
 	acb->ds.cmdlen = clen;
-	acb->ds.cmdbuf = (char *) kvtop(cbuf);
+	acb->ds.cmdbuf = (char *) kvtop((vm_offset_t)cbuf);
 	acb->ds.stslen = 1;
-	acb->ds.stsbuf = (char *) kvtop(&acb->stat[0]);
+	acb->ds.stsbuf = (char *) kvtop((vm_offset_t)&acb->stat[0]);
 	acb->ds.msglen = 1;
-	acb->ds.msgbuf = (char *) kvtop(&acb->msg[0]);
+	acb->ds.msgbuf = (char *) kvtop((vm_offset_t)&acb->msg[0]);
 	acb->msg[1] = -1;
 	acb->ds.msginlen = 1;
 	acb->ds.extmsglen = 1;
 	acb->ds.synmsglen = 3;
-	acb->ds.msginbuf = (char *) kvtop(&acb->msg[1]);
-	acb->ds.extmsgbuf = (char *) kvtop(&acb->msg[2]);
-	acb->ds.synmsgbuf = (char *) kvtop(&acb->msg[3]);
+	acb->ds.msginbuf = (char *) kvtop((vm_offset_t)&acb->msg[1]);
+	acb->ds.extmsgbuf = (char *) kvtop((vm_offset_t)&acb->msg[2]);
+	acb->ds.synmsgbuf = (char *) kvtop((vm_offset_t)&acb->msg[3]);
 	bzero(&acb->ds.chain, sizeof (acb->ds.chain));
 
 	if (sc->sc_sync[target].state == SYNC_START) {
@@ -811,7 +809,7 @@ ssh_start (sc, target, lun, cbuf, clen, buf, len)
 	addr = buf;
 	dmaend = NULL;
 	while (count > 0) {
-		acb->ds.chain[nchain].databuf = (char *) kvtop (addr);
+		acb->ds.chain[nchain].databuf = (char *) kvtop((vm_offset_t)addr);
 		if (count < (tcount = NBPG - ((int) addr & PGOFSET)))
 			tcount = count;
 		acb->ds.chain[nchain].datalen = tcount;
@@ -885,7 +883,7 @@ ssh_start (sc, target, lun, cbuf, clen, buf, len)
 			    sc->sc_dev.dv_xname);
 		rp->ssh_temp = 0;
 		rp->ssh_sbcl = sc->sc_sync[target].sbcl;
-		rp->ssh_dsa = kvtop(&acb->ds);
+		rp->ssh_dsa = kvtop((vm_offset_t)&acb->ds);
 		rp->ssh_dsp = sc->sc_scriptspa;
 		SSH_TRACE('s',1,0,0)
 	} else {
@@ -969,9 +967,9 @@ ssh_checkintr(sc, istat, dstat, sstat0, status)
 	if (dstat & SSH_DSTAT_SIR && rp->ssh_dsps == 0xff00) {
 		/* Normal completion status, or check condition */
 #ifdef DEBUG
-		if (rp->ssh_dsa != kvtop(&acb->ds)) {
+		if (rp->ssh_dsa != kvtop((vm_offset_t)&acb->ds)) {
 			printf ("ssh: invalid dsa: %x %x\n", rp->ssh_dsa,
-			    kvtop(&acb->ds));
+			    kvtop((vm_offset_t)&acb->ds));
 			panic("*** ssh DSA invalid ***");
 		}
 #endif
@@ -1030,7 +1028,7 @@ ssh_checkintr(sc, istat, dstat, sstat0, status)
 			}
 		}
 #if CACHECTL
-		/*cmmu_inval_cache(kvtop(&acb->stat[0]), 1);*/
+		/*cmmu_inval_cache(kvtop((vm_offset_t)&acb->stat[0]), 1);*/
 		dma_cachectl(&acb->stat[0], 1);
 #endif
 		*status = acb->stat[0];
@@ -1335,7 +1333,7 @@ ssh_checkintr(sc, istat, dstat, sstat0, status)
 #if CACHECTL
 			dma_cachectl(&acb->stat[0], sizeof(acb->stat[0]));
 #endif
-			rp->ssh_dsa = kvtop(&acb->ds);
+			rp->ssh_dsa = kvtop((vm_offset_t)&acb->ds);
 			rp->ssh_sxfer = sc->sc_sync[acb->xs->sc_link->target].sxfer;
 			rp->ssh_sbcl = sc->sc_sync[acb->xs->sc_link->target].sbcl;
 			break;
@@ -1381,7 +1379,7 @@ ssh_checkintr(sc, istat, dstat, sstat0, status)
 		}
 		target = sc->sc_nexus->xs->sc_link->target;
 		rp->ssh_temp = 0;
-		rp->ssh_dsa = kvtop(&sc->sc_nexus->ds);
+		rp->ssh_dsa = kvtop((vm_offset_t)&sc->sc_nexus->ds);
 		rp->ssh_sxfer = sc->sc_sync[target].sxfer;
 		rp->ssh_sbcl = sc->sc_sync[target].sbcl;
 		rp->ssh_dsp = sc->sc_scriptspa;
@@ -1393,13 +1391,13 @@ ssh_checkintr(sc, istat, dstat, sstat0, status)
 			    sc->sc_dev.dv_xname);
 		/* Unrecognized message in byte */
 #if CACHECTL
-		/*cmmu_inval_cache(kvtop(&acb->msg[1]), 1);*/
+		/*cmmu_inval_cache(kvtop((vm_offset_t)&acb->msg[1]), 1);*/
 		dma_cachectl (&acb->msg[1],1);
 #endif
 		printf ("%s: Unrecognized message in data sfbr %x msg %x sbcl %x\n",
 			sc->sc_dev.dv_xname, rp->ssh_sfbr, acb->msg[1], rp->ssh_sbcl);
 		/* what should be done here? */
-		/*DCIAS(kvtop(&acb->msg[1]));*/
+		/*DCIAS(kvtop((vm_offset_t)&acb->msg[1]));*/
 		rp->ssh_dsp = sc->sc_scriptspa + Ent_switch;
 		return (0);
 	}
@@ -1605,8 +1603,8 @@ ssh_checkintr(sc, istat, dstat, sstat0, status)
 
 	if (sstat0 == 0 && dstat & SSH_DSTAT_SIR) {
 #if CACHECTL
-		/*cmmu_inval_cache(kvtop(&acb->stat[0]), 1); */
-		/*cmmu_inval_cache(kvtop(&acb->msg[0]), 1); */
+		/*cmmu_inval_cache(kvtop((vm_offset_t)&acb->stat[0]), 1); */
+		/*cmmu_inval_cache(kvtop((vm_offset_t)&acb->msg[0]), 1); */
 		dma_cachectl (&acb->stat[0], 1);
 		dma_cachectl (&acb->msg[0], 1);
 #endif
@@ -1642,7 +1640,7 @@ bad_phase:
 	 */
 	printf ("sshchkintr: target %x ds %x\n", target, &acb->ds);
 	printf ("scripts %x ds %x rp %x dsp %x dcmd %x\n", sc->sc_scriptspa,
-	    kvtop(&acb->ds), kvtop(rp), rp->ssh_dsp,
+	    kvtop((vm_offset_t)&acb->ds), kvtop((vm_offset_t)rp), rp->ssh_dsp,
 	    *((long *)&rp->ssh_dcmd));
 	printf ("sshchkintr: istat %x dstat %x sstat0 %x dsps %x "
 	    "dsa %x sbcl %x sts %x msg %x %x sfbr %x\n",
@@ -1749,7 +1747,7 @@ sshintr (sc)
 #ifdef DEBUG
 	if (ssh_debug & 5) {
 #if CACHECTL
-		/*cmmu_inval_cache(kvtop(&sc->sc_nexus->stat[0]),
+		/*cmmu_inval_cache(kvtop((vm_offset_t)&sc->sc_nexus->stat[0]),
 			sizeof(sc->sc_nexus->stat[0])); */
 		dma_cachectl(&sc->sc_nexus->stat[0],
 			sizeof(sc->sc_nexus->stat[0]));

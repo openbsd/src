@@ -1,4 +1,4 @@
-/* $OpenBSD: m88110_fp.S,v 1.2 2001/03/07 23:40:35 miod Exp $	*/
+/* $OpenBSD: m88110_fp.S,v 1.3 2001/03/09 05:44:42 smurph Exp $	*/
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * All rights reserved.
@@ -47,6 +47,10 @@
  * 1) Unimplemented Floating Point Instruction
  * 2) Floating Point Privilege Violation
  */
+
+#ifndef ASSEMBLER
+#define	ASSEMBLER
+#endif /* ASSEMBLER */
 
 #include "assym.s"
 #include <machine/trap.h>

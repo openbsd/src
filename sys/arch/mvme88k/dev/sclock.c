@@ -1,4 +1,4 @@
-/*	$OpenBSD: sclock.c,v 1.4 2001/03/07 23:45:51 miod Exp $ */
+/*	$OpenBSD: sclock.c,v 1.5 2001/03/09 05:44:39 smurph Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * 
@@ -150,8 +150,8 @@ u_char	stat_reset;
  */
 int
 sclockmatch(parent, vcf, args)
-struct device *parent;
-void *vcf, *args;
+	struct device *parent;
+	void *vcf, *args;
 {
 	register struct confargs *ca = args;
 	register struct cfdata *cf = vcf;
@@ -173,8 +173,8 @@ void *vcf, *args;
 
 void
 sclockattach(parent, self, args)
-struct device *parent, *self;
-void *args;
+	struct device *parent, *self;
+	void *args;
 {
 	struct confargs *ca = args;
 	struct sclocksoftc *sc = (struct sclocksoftc *)self;
@@ -349,7 +349,7 @@ m188_initstatclock(void)
 /* Write CIO register */
 void
 write_cio(reg, val)
-unsigned reg,val;
+	unsigned reg,val;
 {
 	int s, i;
 	volatile int *cio_ctrl = (volatile int *)CIO_CNTRL;
@@ -371,7 +371,7 @@ unsigned reg,val;
 /* Read CIO register */
 static u_char
 read_cio(reg)
-unsigned reg;
+	unsigned reg;
 {
 	int c;
 	int s, i;
@@ -398,7 +398,8 @@ unsigned reg;
  */
 
 void
-m188_cio_init(unsigned p)
+m188_cio_init(p)
+	unsigned p;
 {
 	long i;
 	short period;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bugtty.c,v 1.6 2001/03/08 00:03:12 miod Exp $ */
+/*	$OpenBSD: bugtty.c,v 1.7 2001/03/09 05:44:38 smurph Exp $ */
 /* Copyright (c) 1998 Steve Murphree, Jr. 
  * Copyright (c) 1995 Dale Rahn.
  * All rights reserved.
@@ -133,7 +133,7 @@ int bugttyswflags;
 
 struct tty * 
 bugttytty(dev)
-dev_t dev;
+	dev_t dev;
 {
 	int unit;
 	unit = BUGTTYUNIT(dev);
@@ -144,9 +144,9 @@ dev_t dev;
 }
 
 int
-bugttymctl(dev, bits, how)
-dev_t dev;
-int bits, how;
+	bugttymctl(dev, bits, how)
+	dev_t dev;
+	int bits, how;
 {
 	int s;
 
@@ -181,9 +181,9 @@ int bits, how;
 
 int
 bugttyopen(dev, flag, mode, p)
-dev_t dev;
-int flag, mode;
-struct proc *p;
+	dev_t dev;
+	int flag, mode;
+	struct proc *p;
 {
 	int s, unit = BUGTTYUNIT(dev);
 	struct tty *tp;
@@ -270,7 +270,7 @@ bugttyparam(tp, tm)
 
 void
 bugttyoutput(tp)
-struct tty *tp;
+	struct tty *tp;
 {
 	int cc, s, cnt ;
 
@@ -292,9 +292,9 @@ struct tty *tp;
 
 int
 bugttyclose(dev, flag, mode, p)
-dev_t dev;
-int flag, mode;
-struct proc *p;
+	dev_t dev;
+	int flag, mode;
+	struct proc *p;
 {
 	int unit = BUGTTYUNIT(dev);
 	struct tty *tp = bugtty_tty[unit];
@@ -310,9 +310,9 @@ struct proc *p;
 
 int
 bugttyread(dev, uio, flag)
-dev_t dev;
-struct uio *uio;
-int flag;
+	dev_t dev;
+	struct uio *uio;
+	int flag;
 {
 	struct tty *tp;
 
@@ -344,9 +344,9 @@ bugtty_chkinput()
 
 int
 bugttywrite(dev, uio, flag)
-dev_t dev;
-struct uio *uio;
-int flag;
+	dev_t dev;
+	struct uio *uio;
+	int flag;
 {
 #if 0
 	/* bypass tty output routines. */
@@ -373,11 +373,11 @@ int flag;
 
 int
 bugttyioctl(dev, cmd, data, flag, p)
-dev_t dev;
-int cmd;
-caddr_t data;
-int flag;
-struct proc *p;
+	dev_t dev;
+	int cmd;
+	caddr_t data;
+	int flag;
+	struct proc *p;
 {
 	int unit = BUGTTYUNIT(dev);
 	struct tty *tp = bugtty_tty[unit];
@@ -447,8 +447,8 @@ struct proc *p;
 
 int
 bugttystop(tp, flag)
-struct tty *tp;
-int flag;
+	struct tty *tp;
+	int flag;
 {
 	int s;
 
@@ -466,7 +466,7 @@ int flag;
  */
 int
 bugttycnprobe(cp)
-struct consdev *cp;
+	struct consdev *cp;
 {
 	int maj;
 	int needprom = 1;
@@ -503,7 +503,7 @@ struct consdev *cp;
 
 int
 bugttycninit(cp)
-struct consdev *cp;
+	struct consdev *cp;
 {
 	/* Nothing to do */
 	return 0;
@@ -511,15 +511,15 @@ struct consdev *cp;
 
 int
 bugttycngetc(dev)
-dev_t dev;
+	dev_t dev;
 {
 	return (buginchr());
 }
 
 void
 bugttycnputc(dev, c)
-dev_t dev;
-char c;
+	dev_t dev;
+	char c;
 {
 	if (c == '\n')
 		bugoutchr('\r');

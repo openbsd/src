@@ -1,4 +1,4 @@
-/* $OpenBSD: locore_c_routines.c,v 1.9 2001/03/08 00:03:31 miod Exp $	*/
+/* $OpenBSD: locore_c_routines.c,v 1.10 2001/03/09 05:44:41 smurph Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -407,8 +407,8 @@ unsigned int int_mask_val[INT_LEVEL] = {
  */
 unsigned int 
 safe_level(mask, curlevel)
-unsigned mask;
-unsigned curlevel;
+	unsigned mask;
+	unsigned curlevel;
 {
 	register int i;
 
@@ -490,8 +490,9 @@ spl(void)
 {
 	unsigned curspl;
 	m88k_psr_type psr; /* proccessor status register */
+#ifdef MVME188
 	int cpu = 0;
-
+#endif 
 	psr = disable_interrupts_return_psr();
 	switch (cputyp) {
 #ifdef MVME188
@@ -519,7 +520,9 @@ db_spl(void)
 {
 	unsigned curspl;
 	m88k_psr_type psr; /* proccessor status register */
+#ifdef MVME188
 	int cpu = 0;
+#endif 
 
 	psr = disable_interrupts_return_psr();
 	switch (cputyp) {
@@ -562,7 +565,9 @@ setipl(unsigned level)
 {
 	unsigned curspl;
 	m88k_psr_type psr; /* proccessor status register */
+#ifdef MVME188
 	int cpu = 0;
+#endif 
 	if (level > 7) {
 		level = 0;	/* assume this for the time being */
 	}
@@ -603,7 +608,9 @@ db_setipl(unsigned level)
 {
 	unsigned curspl;
 	m88k_psr_type psr; /* proccessor status register */
+#ifdef MVME188
 	int cpu = 0;
+#endif 
 
 	psr = disable_interrupts_return_psr();
 	switch (cputyp) {
@@ -640,14 +647,14 @@ db_setipl(unsigned level)
 #include <sys/simplelock.h>
 void
 simple_lock_init(lkp)
-__volatile struct simplelock *lkp;
+	__volatile struct simplelock *lkp;
 {
 	lkp->lock_data = 0;
 }
 
 int 
 test_and_set(lock)
-__volatile int *lock;
+	__volatile int *lock;
 {   
 #if 0
 	int oldlock = *lock;

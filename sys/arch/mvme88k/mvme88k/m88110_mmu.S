@@ -1,3 +1,7 @@
+#ifndef ASSEMBLER
+#define	ASSEMBLER
+#endif /* ASSEMBLER */
+
 #include <machine/asm.h>
 
 #ifdef MVME197

@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.6 2001/03/08 00:02:18 miod Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.7 2001/03/09 05:44:37 smurph Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -31,9 +31,9 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/reboot.h>
-#include <sys/systm.h> /* just for boothowto --eichin */
 
 #include <vm/vm.h>
 
@@ -41,14 +41,25 @@
 #include <machine/trap.h>		 /* current_thread()            */
 #include <machine/db_machdep.h>		 /* local ddb stuff             */
 #include <machine/bug.h>		 /* bug routines 		*/
+#include <machine/locore.h>		 
 #include <machine/mmu.h>
 #include <machine/cpu_number.h>
 
 #include <ddb/db_command.h>
+#include <ddb/db_extern.h>
+#include <ddb/db_output.h>
 #include <ddb/db_sym.h>
 
 extern label_t *db_recover;
 extern unsigned int db_maxoff;
+extern int db_are_interrupts_disabled();
+extern unsigned db_trace_get_val(vm_offset_t addr, unsigned *ptr);
+extern int frame_is_sane();
+extern int badwordaddr();
+extern void cnpollc __P((int));
+void kdbprinttrap __P((int type, int code));
+void kdb_init __P((void));
+
 
 int 	db_active = 0;
 int 	db_noisy = 0;
@@ -383,7 +394,7 @@ m88k_db_trap(
 #if 0
     (void) spl7();
 #endif
-    return(1);
+    return;
 }
 
 extern char *trap_type[];
@@ -392,6 +403,7 @@ extern int trap_types;
 /*
  * Print trap reason.
  */
+void
 kdbprinttrap(type, code)
 	int type, code;
 {       

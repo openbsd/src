@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.13 2001/03/08 00:03:31 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.14 2001/03/09 05:44:42 smurph Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -56,12 +56,14 @@
 #include <sys/user.h>
 #include <sys/syscall.h>
 #include <sys/ktrace.h>
+#include <machine/bugio.h>		/* bugreturn() */
 #include <machine/cpu.h>		/* DMT_VALID, etc. */
 #include <machine/asm_macro.h>   /* enable/disable interrupts */
 #include <machine/m88100.h>		/* DMT_VALID, etc. */
 #ifdef MVME197
 #include <machine/m88110.h>		/* DMT_VALID, etc. */
 #endif
+#include <machine/locore.h>
 #include <machine/trap.h>
 #include <machine/psl.h>		/* FIP_E, etc. */
 #include <machine/pcb.h>		/* FIP_E, etc. */
@@ -70,6 +72,7 @@
 
 #if (DDB)
    #include <machine/db_machdep.h>
+   #include <ddb/db_output.h>		/* db_printf()		*/
 #else 
    #define PC_REGS(regs) ((regs->sxip & 2) ?  regs->sxip & ~3 : \
 	(regs->snip & 2 ? regs->snip & ~3 : regs->sfip & ~3))
@@ -98,6 +101,9 @@ unsigned traptrace = 0;
 #define SYSTEMMODE(PSR) (((struct psr*)&(PSR))->psr_mode != 0)
 
 /* XXX MAJOR CLEANUP REQUIRED TO PORT TO BSD */
+
+extern int procfs_domem();
+extern void regdump __P((struct trapframe *f));
 
 char  *trap_type[] = {
 	"Reset",
@@ -379,7 +385,7 @@ trap(unsigned type, struct m88100_saved_state *frame)
 			 */
 			frame->dmt0 = DMT_SKIP;
 			frame->dpfsr = 0;
-                        data_access_emulation(frame);
+                        data_access_emulation((unsigned *)frame);
                         /* so data_access_emulation doesn't get called again. */
 			frame->dmt0 = 0;
 			return;
@@ -398,7 +404,7 @@ trap(unsigned type, struct m88100_saved_state *frame)
 					/*
 					printf("calling data_access_emulation()\n");
 					*/
-					data_access_emulation(frame);
+					data_access_emulation((unsigned *)frame);
 					frame->dmt0 = 0;
 					frame->dpfsr = 0;
 				} else {
@@ -434,7 +440,7 @@ trap(unsigned type, struct m88100_saved_state *frame)
 					/*
 					printf("calling data_access_emulation()\n");
 					*/
-					data_access_emulation(frame);
+					data_access_emulation((unsigned *)frame);
 					frame->dmt0 = 0;
 					frame->dpfsr = 0;
 				} else {
@@ -466,7 +472,7 @@ outtahere:
 		 */
 		frame->dmt0 = DMT_SKIP;
 		frame->dpfsr = 0;
-		data_access_emulation(frame);
+		data_access_emulation((unsigned *)frame);
 		/* so data_access_emulation doesn't get called again. */
 		frame->dmt0 = 0;
 		return;
@@ -531,7 +537,7 @@ outtahere:
 			 * pipe line and reset dmt0 so that trap won't
 			 * get called again.
 			 */
-				data_access_emulation(frame);
+				data_access_emulation((unsigned *)frame);
 				frame->dmt0 = 0;
 				frame->dpfsr = 0;
 			} else {
@@ -1633,8 +1639,8 @@ child_return(struct proc *p)
  */
 u_long
 allocate_sir(proc, arg)
-void (*proc)();
-void *arg;
+	void (*proc)();
+	void *arg;
 {
 	int bit;
 
@@ -1768,7 +1774,7 @@ ss_getreg_val(unsigned regno, struct trapframe *tf)
 	}
 }
 
-boolean_t
+int
 ss_inst_branch(unsigned ins)
 {
 	/* check high five bits */
@@ -1791,7 +1797,7 @@ ss_inst_branch(unsigned ins)
 /* ss_inst_delayed - this instruction is followed by a delay slot. Could be
    br.n, bsr.n bb0.n, bb1.n, bcnd.n or jmp.n or jsr.n */
 
-boolean_t
+int
 ss_inst_delayed(unsigned ins)
 {
 	/* check the br, bsr, bb0, bb1, bcnd cases */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.8 2001/01/13 05:18:59 smurph Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.9 2001/03/09 05:44:41 smurph Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -54,13 +54,13 @@
  * the machine.
  */
 
-struct   device *parsedisk __P((char *, int, int, dev_t *));
-void  setroot __P((void));
-void  swapconf __P((void));
-void  configure __P((void));
-char    buginchr __P((void));
-int   getsb __P((char *, int));
-
+struct	device *parsedisk __P((char *, int, int, dev_t *));
+void	setroot __P((void));
+void	swapconf __P((void));
+void	configure __P((void));
+char	buginchr __P((void));
+int	getsb __P((char *, int));
+void	dumpconf __P((void));
 int cold;   /* 1 if still booting */
 #include <sys/kernel.h>
 
@@ -97,15 +97,15 @@ configure()
 /*ARGSUSED*/
 int
 simple_devprint(auxp, pnp)
-void *auxp;
-char *pnp;
+	void *auxp;
+	char *pnp;
 {
    return (QUIET);
 }
 
 int
 matchname(fp, sp)
-char *fp, *sp;
+	char *fp, *sp;
 {
    int len;
 
@@ -154,7 +154,7 @@ struct nam2blk {
 
 static int
 findblkmajor(dv)
-struct device *dv;
+	struct device *dv;
 {
    char *name = dv->dv_xname;
    register int i;
@@ -167,9 +167,9 @@ struct device *dv;
 
 static struct device *
 getdisk(str, len, defpart, devp)
-char *str;
-int len, defpart;
-dev_t *devp;
+	char *str;
+	int len, defpart;
+	dev_t *devp;
 {
    register struct device *dv;
 
@@ -191,9 +191,9 @@ dev_t *devp;
 
 struct device *
 parsedisk(str, len, defpart, devp)
-char *str;
-int len, defpart;
-dev_t *devp;
+	char *str;
+	int len, defpart;
+	dev_t *devp;
 {
    register struct device *dv;
    register char *cp, c;
@@ -421,8 +421,8 @@ setroot()
  */
 struct device *
 getdevunit(name, unit)
-char *name;
-int unit;
+	char *name;
+	int unit;
 {
    struct device *dev = alldevs.tqh_first;
    char num[10], fullname[16];
@@ -446,8 +446,8 @@ int unit;
 
 int
 getsb(cp, size)
-char *cp;
-int size;
+	char *cp;
+	int size;
 {
    register char *lp;
    register int len;

@@ -191,7 +191,6 @@ pcc_handler(struct exception_frame *except)
 	}
 }
 
-
 int
 abort_handler()
 {
@@ -201,6 +200,7 @@ abort_handler()
 	Debugger();
 	return 0;
 }
+
 static void abort_setup()
 {
 	printf("PCC_ABRT_ICR %x\n",&PCC_ABRT_ICR(pcc_io_base));

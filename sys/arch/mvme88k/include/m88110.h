@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88110.h,v 1.3 2001/03/07 23:37:16 miod Exp $ */
+/*	$OpenBSD: m88110.h,v 1.4 2001/03/09 05:44:40 smurph Exp $ */
 
 #ifndef	__MACHINE_M88110_H__
 #define	__MACHINE_M88110_H__
@@ -132,6 +132,12 @@ void m197_cmmu_parity_enable(void);
 #if !DDB
 static
 #endif /* !DDB */
+void m197_setup_board_config(void);
+void m197_setup_cmmu_config(void);
+void m197_cmmu_dump_config(void);
+unsigned m197_cmmu_get_by_mode(int cpu, int mode);
+void m197_cpu_configuration_print(int master);
+void m197_dma_cachectl(vm_offset_t va, int size, int op);
 void m197_cmmu_remote_set(unsigned cpu, unsigned r, unsigned data, unsigned x);
 void m197_cmmu_set_sapr(unsigned ap);
 void m197_cmmu_remote_set_sapr(unsigned cpu, unsigned ap);

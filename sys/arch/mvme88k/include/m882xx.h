@@ -1,4 +1,4 @@
-/*	$OpenBSD: m882xx.h,v 1.6 2001/03/07 23:37:16 miod Exp $ */
+/*	$OpenBSD: m882xx.h,v 1.7 2001/03/09 05:44:40 smurph Exp $ */
 /* 
  * Mach Operating System
  * Copyright (c) 1993-1992 Carnegie Mellon University
@@ -135,6 +135,11 @@
 /*
  * Prototypes from "mvme88k/mvme88k/m18x_cmmu.c"
  */
+#if DDB
+void m18x_cmmu_show_translation(unsigned, unsigned, unsigned, int);
+void m18x_cmmu_cache_state(unsigned, unsigned);
+void m18x_show_cmmu_info(unsigned);
+#endif 
 
 #ifdef CMMU_DEBUG
  void m18x_show_apr(unsigned value);
@@ -153,6 +158,13 @@ void m18x_cmmu_parity_enable(void);
 #if !DDB
 static
 #endif /* !DDB */
+int m18x_cmmu_alive(int mmu);
+void m18x_setup_board_config(void);
+void m18x_setup_cmmu_config(void);
+void m18x_cmmu_dump_config(void);
+unsigned m18x_cmmu_get_by_mode(int cpu, int mode);
+void m18x_cpu_configuration_print(int master);
+void m18x_dma_cachectl(vm_offset_t va, int size, int op);
 void m18x_cmmu_remote_set(unsigned cpu, unsigned r, unsigned data, unsigned x);
 void m18x_cmmu_set_sapr(unsigned ap);
 void m18x_cmmu_remote_set_sapr(unsigned cpu, unsigned ap);

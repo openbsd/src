@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmmu.c,v 1.8 2001/03/08 00:03:30 miod Exp $	*/
+/*	$OpenBSD: cmmu.c,v 1.9 2001/03/09 05:44:41 smurph Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -90,6 +90,7 @@ int      vme188_config;
 int      max_cpus, max_cmmus;
 int      cpu_cmmu_ratio;
 
+#ifdef CMMU_DEBUG
 void
 show_apr(unsigned value)
 {
@@ -125,6 +126,7 @@ show_sctr(unsigned value)
 #endif 
    }
 }
+#endif /* CMMU_DEBUG */
 
 void 
 setup_board_config(void)

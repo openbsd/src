@@ -1,4 +1,4 @@
-/*	$OpenBSD: cl.c,v 1.9 2001/03/07 23:45:50 miod Exp $ */
+/*	$OpenBSD: cl.c,v 1.10 2001/03/09 05:44:38 smurph Exp $ */
 
 /*
  * Copyright (c) 1995 Dale Rahn. All rights reserved.
@@ -756,9 +756,9 @@ int clclose (dev, flag, mode, p)
 	return 0;
 }
 int clread (dev, uio, flag)
-dev_t dev;
-struct uio *uio;
-int flag;
+	dev_t dev;
+	struct uio *uio;
+	int flag;
 {
 	int unit, channel;
 	struct tty *tp;
@@ -778,9 +778,9 @@ int flag;
 }
 
 int clwrite (dev, uio, flag)
-dev_t dev;
-struct uio *uio;
-int flag;
+	dev_t dev;
+	struct uio *uio;
+	int flag;
 {
 	int unit, channel;
 	struct tty *tp;
@@ -800,11 +800,11 @@ int flag;
 }
 
 int clioctl (dev, cmd, data, flag, p)
-dev_t dev;
-int cmd;
-caddr_t data;
-int flag;
-struct proc *p;
+	dev_t dev;
+	int cmd;
+	caddr_t data;
+	int flag;
+	struct proc *p;
 {
 	int error;
 	int unit, channel;
@@ -905,7 +905,7 @@ clstop(tp, flag)
 
 int
 clcnprobe(cp)
-struct consdev *cp;
+	struct consdev *cp;
 {
 	/* always there ? */
 	/* serial major */
@@ -928,7 +928,7 @@ struct consdev *cp;
 
 int
 clcninit(cp)
-struct consdev *cp;
+	struct consdev *cp;
 {
 	volatile struct clreg *cl_reg;
 	
@@ -1329,7 +1329,9 @@ clccparam(sc, par, channel)
 
 	return imask;
 }
+
 static int clknum = 0;
+
 u_char 
 cl_clkdiv(speed)
 	int speed;
@@ -1699,8 +1701,8 @@ log(LOG_WARNING, "cl_txintr: DMAMODE channel %x dmabsts %x risrl %x risrh %x\n",
 				status =  sc->cl_reg->cl_brbsts;
 			}
 #ifdef DMA_DEBUG
-log(LOG_WARNING, "cl_rxintr: 1channel %x buf %x cnt %x status %x\n",
-channel, nbuf, cnt, status);
+			log(LOG_WARNING, "cl_rxintr: 1channel %x buf %x cnt %x status %x\n",
+			    channel, nbuf, cnt, status);
 #endif
 #if USE_BUFFER
 			cl_appendbufn(sc, channel, sc->rx[nbuf], cnt);
@@ -1804,10 +1806,10 @@ channel, nbuf, cnt, status);
 
 void
 cl_overflow (sc, channel, ptime, msg)
-struct clsoftc *sc;
-int channel;
-long *ptime;
-u_char *msg;
+	struct clsoftc *sc;
+	int channel;
+	long *ptime;
+	u_char *msg;
 {
 /*
 	if (*ptime != time.tv_sec) {

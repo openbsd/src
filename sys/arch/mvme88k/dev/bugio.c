@@ -1,5 +1,7 @@
-/*	$OpenBSD: bugio.c,v 1.6 2001/02/12 08:16:21 smurph Exp $ */
+/*	$OpenBSD: bugio.c,v 1.7 2001/03/09 05:44:38 smurph Exp $ */
 /*  Copyright (c) 1998 Steve Murphree, Jr. */
+#include <sys/param.h>
+#include <sys/systm.h>
 #include <machine/bugio.h>
 
 #define INCHR	"0x0000"
@@ -16,7 +18,7 @@
 #define	OUTSTR	"0x0021"
 #define	PCRLF	"0x0026"
 #define	TMDISP	"0x0042"
-#define	DELAY	"0x0043"
+#define	BUGDELAY "0x0043"
 #define	RTC_DSP	"0x0052"
 #define	RTC_RD	"0x0053"
 #define	RETURN	"0x0063"
@@ -76,6 +78,7 @@ buginchr(void)
 	return ((char)ret & 0xFF);
 }
 
+void
 bugoutchr(unsigned char c)
 {
 	unsigned char cc;
@@ -86,16 +89,14 @@ bugoutchr(unsigned char c)
 	}
 
 	BUGCTXT();
-
 	asm("or r2,r0,%0" : : "r" (cc));
 	asm("or r9,r0," OUTCHR);
 	asm("tb0 0,r0,0x1F0");
-
 	OSCTXT();
 }
 
 /* return 1 if not empty else 0 */
-
+int
 buginstat(void)
 {
 	register int ret;
@@ -108,6 +109,7 @@ buginstat(void)
 	return (ret & 0x4 ? 0 : 1);
 }
 
+void
 bugoutstr(char *s, char *se)
 {
 	BUGCTXT();
@@ -116,6 +118,7 @@ bugoutstr(char *s, char *se)
 	OSCTXT();
 }
 
+void
 bugpcrlf(void)
 {
 	BUGCTXT();
@@ -125,7 +128,7 @@ bugpcrlf(void)
 }
 
 /* return 0 on success */
-
+int
 bugdskrd(struct bugdisk_io *arg)
 {
 	int ret;
@@ -140,7 +143,7 @@ bugdskrd(struct bugdisk_io *arg)
 }
 
 /* return 0 on success */
-
+int
 bugdskwr(struct bugdisk_io *arg)
 {
 	int ret;
@@ -152,6 +155,7 @@ bugdskwr(struct bugdisk_io *arg)
 	return ((ret&0x4) == 0x4 ? 1 : 0);
 }
 
+void
 bugrtcrd(struct bugrtc *rtc)
 {
 	BUGCTXT();
@@ -160,23 +164,29 @@ bugrtcrd(struct bugrtc *rtc)
 	OSCTXT();
 }
 
+void
 bugdelay(int delay)
 {
 	BUGCTXT();
 	asm("or r2,r0,%0" : : "r" (delay));
-	asm("or r9,r0, " DELAY);
+	asm("or r9,r0, " BUGDELAY);
 	asm("tb0 0,r0,0x1F0");
 	OSCTXT();
 }
 
+int
 bugfork(int cpu, unsigned address)
 {
+	register int ret;
 	BUGCTXT();
 	asm("or r9,r0, " FORKMPU);
 	asm("tb0 0,r0,0x1F0");
+	asm volatile ("or %0,r0,r2" : "=r" (ret) : );
 	OSCTXT();
+	return(ret);
 }
 
+void
 bugreturn(void)
 {
 	BUGCTXT();
@@ -185,6 +195,7 @@ bugreturn(void)
 	OSCTXT();
 }
 
+void
 bugbrdid(struct bugbrdid *id)
 {
 	struct bugbrdid *ptr;
@@ -196,6 +207,7 @@ bugbrdid(struct bugbrdid *id)
 	bcopy(ptr, id, sizeof(struct bugbrdid));
 }
 
+void
 bugnetctrl(struct bugniocall *niocall)
 {
 /*	BUGCTXT();*/
@@ -240,11 +252,15 @@ struct bugniotcall {
 	unsigned long cntrlflag;
 };
 
+int
 bugnetcfg(struct bugniotcall *niotcall)
 {
+	register int ret;
 /*	BUGCTXT();*/
 	asm("or r2,r0,%0" : : "r" (niotcall));
 	asm("or r9,r0, " NETCTRL);
 	asm("tb0 0,r0,0x1F0");
+	asm volatile ("or %0,r0,r2" : "=r" (ret) : );
 /*	OSCTXT();*/
+	return(ret);
 }

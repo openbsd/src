@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.22 2001/03/08 22:26:00 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.23 2001/03/09 05:44:42 smurph Exp $	*/
 /*
  * Copyright (c) 1996 Nivas Madhur
  * All rights reserved.
@@ -52,6 +52,7 @@
 /*#define DEBUG 1*/
 #include <sys/types.h>
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/simplelock.h>
 #include <sys/proc.h>
 #include <sys/malloc.h>
@@ -1626,7 +1627,7 @@ pmap_zero_page(vm_offset_t phys)
 		cmmu_flush_tlb(1, srcva, M88K_PGBYTES);
 		*srcpte = template.pte;
 		splx(spl_sav);
-		bzero (srcva, M88K_PGBYTES);
+		bzero((void*)srcva, M88K_PGBYTES);
 		/* force the data out */
 		cmmu_flush_remote_data_cache(my_cpu,phys, M88K_PGBYTES);
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.6 2001/03/08 00:03:22 miod Exp $ */
+/*	$OpenBSD: db_machdep.h,v 1.7 2001/03/09 05:44:40 smurph Exp $ */
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -109,6 +109,8 @@ boolean_t inst_branch __P((unsigned));
 db_addr_t next_instr_address __P((db_addr_t, unsigned));
 db_addr_t branch_taken __P((u_int, db_addr_t,
     db_expr_t (*) __P((db_regs_t *, int)), db_regs_t *));
+int ddb_break_trap __P((int type, db_regs_t *eframe));
+int ddb_entry_trap __P((int level, db_regs_t *eframe));
 
 /* breakpoint/watchpoint foo */
 #define IS_BREAKPOINT_TRAP(type,code) ((type)==T_KDB_BREAK)

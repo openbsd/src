@@ -1,4 +1,4 @@
-/*	$OpenBSD: psl.h,v 1.7 2001/03/07 23:37:17 miod Exp $ */
+/*	$OpenBSD: psl.h,v 1.8 2001/03/09 05:44:40 smurph Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * All rights reserved.
@@ -44,98 +44,6 @@
  */
 #ifndef __M88K_M88100_PSL_H__
 #define __M88K_M88100_PSL_H__
-
-/*
- * INTERRUPT STAT levels.  for 'systat vmstat'
- * intrcnt and friends are defined in locore.S
- * XXX smurph
- */
-#ifndef _LOCORE
-
-#define M88K_NIRQ	12
-
-#define M88K_SPUR_IRQ	0
-#define M88K_LEVEL1_IRQ	1
-#define M88K_LEVEL2_IRQ	2
-#define M88K_LEVEL3_IRQ	3
-#define M88K_LEVEL4_IRQ	4
-#define M88K_LEVEL5_IRQ	5
-#define M88K_LEVEL6_IRQ	6
-#define M88K_LEVEL7_IRQ	7
-/* 
- * We keep track of these seperately, but   
- * they will be reflected with the above also.
- */
-#define M88K_CLK_IRQ	8
-#define M88K_SCLK_IRQ	9
-#define M88K_PCLK_IRQ	10
-#define M88K_NMI_IRQ	11
-
-extern int intrcnt[M88K_NIRQ];
-
-#endif 
-
-
-/* needs major cleanup - XXX nivas */
-
-#ifndef _LOCORE
-unsigned setipl __P((unsigned));
-#endif
-
-#if 0
-spl0 is a function by itself. I really am serious about the clean up
-above...
-#define spl0()		spln(0)
-#else
-#ifndef _LOCORE
-int spl0 __P((void));
-#endif
-#endif /* 0 */
-#define spl1()		setipl(1)
-#define spl2()		setipl(2)
-#define spl3()		setipl(3)
-#define spl4()		setipl(4)
-#define spl5()		setipl(5)
-#define spl6()		setipl(6)
-#define spl7()		setipl(7)
-
-/*
- * IPL levels.
- * We use 6 as IPL_HIGH so that abort can be programmed at 7 so that
- * it is always possible to break into the system unless interrupts
- * are disabled.
- */
-
-#define IPL_NONE	0
-#define IPL_SOFTCLOCK	1
-#define IPL_SOFTNET	1
-#define IPL_BIO		2
-#define IPL_NET		3
-#define IPL_TTY		3
-#define IPL_CLOCK	5
-#define IPL_STATCLOCK	5
-#define IPL_IMP		6
-#define IPL_VM		6
-#define IPL_HIGH	6
-#define IPL_SCHED	6
-#define IPL_NMI		7
-#define IPL_ABORT	7
-
-#define splnone			spl0
-#define spllowersoftclock()	setipl(IPL_SOFTCLOCK)
-#define splsoftclock()		setipl(IPL_SOFTCLOCK)
-#define splsoftnet()		setipl(IPL_SOFTNET)
-#define splbio()		setipl(IPL_BIO)
-#define splnet()		setipl(IPL_NET)
-#define spltty()		setipl(IPL_TTY)
-#define splclock()		setipl(IPL_CLOCK)
-#define splstatclock()		setipl(IPL_STATCLOCK)
-#define splimp()		setipl(IPL_IMP)
-#define splvm()			setipl(IPL_VM)
-#define splhigh()		setipl(IPL_HIGH)
-#define splsched()		setipl(IPL_SCHED)
-
-#define splx(x)		((x) ? setipl((x)) : spl0())
 
 /* 
  * 88100 control registers

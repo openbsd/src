@@ -1,4 +1,4 @@
-/*	$OpenBSD: vs.c,v 1.4 2001/03/08 00:03:15 miod Exp $ */
+/*	$OpenBSD: vs.c,v 1.5 2001/03/09 05:44:39 smurph Exp $ */
 
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
@@ -101,9 +101,9 @@ extern u_int   kvtop();
 
 void
 vs_copy(src, dst, cnt)
-void *src;
-void *dst;
-unsigned short cnt;
+	void *src;
+	void *dst;
+	unsigned short cnt;
 { 
 	register unsigned short volatile *x, *y, z; 
 
@@ -118,8 +118,8 @@ unsigned short cnt;
 
 void
 vs_zero(src, cnt)
-void *src;
-u_long cnt;
+	void *src;
+	u_long cnt;
 {
 	register unsigned short *source;
 	register unsigned short zero = 0;
@@ -139,7 +139,7 @@ u_long cnt;
  */
 void
 vs_minphys(bp)
-struct buf *bp;
+	struct buf *bp;
 {
 	/*
 	 * No max transfer at this level.
@@ -149,8 +149,8 @@ struct buf *bp;
 
 int 
 do_vspoll(sc, to)
-struct vs_softc *sc;
-int to;
+	struct vs_softc *sc;
+	int to;
 {
 	int i;
 	if (to <= 0 ) to = 50000;
@@ -178,8 +178,8 @@ int to;
 
 int
 vs_poll(sc, xs)
-struct vs_softc *sc;
-struct scsi_xfer *xs;
+	struct vs_softc *sc;
+	struct scsi_xfer *xs;
 {
 	int status;
 	int to;
@@ -212,8 +212,8 @@ struct scsi_xfer *xs;
 
 void 
 thaw_queue(sc, target)
-struct vs_softc *sc;
-u_int8_t target;
+	struct vs_softc *sc;
+	u_int8_t target;
 {
 	u_short t;
 	t = target << 8;
@@ -225,9 +225,9 @@ u_int8_t target;
 
 void 
 vs_scsidone (sc, xs, stat)
-struct vs_softc *sc;
-struct scsi_xfer *xs;
-int stat;                             
+	struct vs_softc *sc;
+	struct scsi_xfer *xs;
+	int stat;                             
 {
 	int tgt; 
 	xs->status = stat;
@@ -249,7 +249,7 @@ int stat;
 
 int
 vs_scsicmd(xs)
-struct scsi_xfer *xs;
+	struct scsi_xfer *xs;
 {
 	struct scsi_link *slp = xs->sc_link;
 	struct vs_softc *sc = slp->adapter_softc;
@@ -398,7 +398,7 @@ struct scsi_xfer *xs;
 
 void
 vs_chksense(xs)
-struct scsi_xfer *xs;
+	struct scsi_xfer *xs;
 {
 	int s;
 	struct scsi_link *slp = xs->sc_link;
@@ -453,7 +453,7 @@ struct scsi_xfer *xs;
 
 M328_CQE *
 vs_getcqe(sc)
-struct vs_softc *sc;
+	struct vs_softc *sc;
 {
 	M328_MCSB *mcsb = (M328_MCSB *)&sc->sc_vsreg->sh_MCSB;
 	M328_CQE *cqep;
@@ -470,7 +470,7 @@ struct vs_softc *sc;
 
 M328_IOPB *
 vs_getiopb(sc)
-struct vs_softc *sc;
+	struct vs_softc *sc;
 {
 	M328_MCSB *mcsb = (M328_MCSB *)&sc->sc_vsreg->sh_MCSB;
 	M328_IOPB *iopb;
@@ -488,7 +488,7 @@ struct vs_softc *sc;
 
 int
 vs_initialize(sc)
-struct vs_softc *sc;
+	struct vs_softc *sc;
 {
 	M328_CIB *cib = (M328_CIB *)&sc->sc_vsreg->sh_CIB;
 	M328_CQE *mc = (M328_CQE*)&sc->sc_vsreg->sh_MCE;
@@ -600,7 +600,7 @@ struct vs_softc *sc;
 
 void
 vs_resync(sc)
-struct vs_softc *sc;
+	struct vs_softc *sc;
 {
 	M328_CQE *mc = (M328_CQE*)&sc->sc_vsreg->sh_MCE;
 	M328_IOPB *riopb = (M328_IOPB *)&sc->sc_vsreg->sh_RET_IOPB;
@@ -639,7 +639,7 @@ struct vs_softc *sc;
 
 void
 vs_reset(sc)
-struct vs_softc *sc;
+	struct vs_softc *sc;
 {
 	u_int s;
 	M328_CQE *mc = (M328_CQE*)&sc->sc_vsreg->sh_MCE;
@@ -685,9 +685,9 @@ struct vs_softc *sc;
 
 int
 vs_checkintr(sc, xs, status)
-struct   vs_softc *sc;
-struct scsi_xfer *xs;
-int   *status;
+	struct   vs_softc *sc;
+	struct scsi_xfer *xs;
+	int   *status;
 {
 	int   target = -1;
 	int   lun = -1;
@@ -780,7 +780,7 @@ int   *status;
 /* normal interrupt routine */
 int
 vs_nintr(sc)
-register struct vs_softc *sc;
+	register struct vs_softc *sc;
 {
 	M328_CRB *crb = (M328_CRB *)&sc->sc_vsreg->sh_CRB;
 	M328_CMD *m328_cmd;
@@ -829,7 +829,7 @@ register struct vs_softc *sc;
 
 int
 vs_eintr(sc)
-register struct vs_softc *sc;
+	register struct vs_softc *sc;
 {
 	M328_CEVSB *crb = (M328_CEVSB *)&sc->sc_vsreg->sh_CRB;
 	M328_CMD *m328_cmd;
@@ -909,7 +909,7 @@ register struct vs_softc *sc;
 
 static __inline__ void
 vs_clear_return_info(sc)
-register struct vs_softc *sc;
+	register struct vs_softc *sc;
 {
         M328_IOPB *riopb = (M328_IOPB *)&sc->sc_vsreg->sh_RET_IOPB;
 	M328_CEVSB *crb = (M328_CEVSB *)&sc->sc_vsreg->sh_CRB;
@@ -938,7 +938,7 @@ vs_alloc_scatter_gather(void)
 
 void
 vs_dealloc_scatter_gather(sg)
-M328_SG sg;
+	M328_SG sg;
 {
 	register int i;
 
@@ -952,9 +952,9 @@ M328_SG sg;
 
 void
 vs_link_sg_element(element, phys_add, len)
-sg_list_element_t *element;
-register vm_offset_t phys_add;
-register int len;
+	sg_list_element_t *element;
+	register vm_offset_t phys_add;
+	register int len;
 {
 	element->count.bytes = len;
 	LV(element->address, phys_add);
@@ -966,9 +966,9 @@ register int len;
 
 void
 vs_link_sg_list(list, phys_add, elements)
-sg_list_element_t *list;
-register vm_offset_t phys_add;
-register int elements;
+	sg_list_element_t *list;
+	register vm_offset_t phys_add;
+	register int elements;
 {
 
 	list->count.scatter.gather  = elements;
@@ -981,8 +981,8 @@ register int elements;
 
 M328_SG 
 vs_build_memory_structure(xs, iopb)
-struct scsi_xfer *xs;
-M328_IOPB  *iopb;	       /* the iopb */
+	struct scsi_xfer *xs;
+	M328_IOPB  *iopb;	       /* the iopb */
 {
 	M328_SG   sg;
 	vm_offset_t starting_point_virt, starting_point_phys, point_virt, 

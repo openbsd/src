@@ -1,4 +1,4 @@
-/*	$OpenBSD: vme.c,v 1.8 2001/03/07 23:45:52 miod Exp $ */
+/*	$OpenBSD: vme.c,v 1.9 2001/03/09 05:44:39 smurph Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1995 Theo de Raadt
@@ -285,14 +285,13 @@ vmescan(parent, child, args, bustype)
 
 void
 vmeattach(parent, self, args)
-struct device *parent, *self;
-void *args;
+	struct device *parent, *self;
+	void *args;
 {
 	struct vmesoftc *sc = (struct vmesoftc *)self;
 	struct confargs *ca = args;
 	struct vme2reg *vme2;
 	int scon;
-	char sconc;
 
 	/* XXX any initialization to do? */
 
@@ -316,11 +315,14 @@ void *args;
 #endif
 #if NSYSCON > 0
 	case BUS_SYSCON:
-		vmevecbase = 0x80;  /* Hard coded for MVME188 */
-		sconc = *(char *)GLOBAL1;
-		sconc &= M188_SYSCON;
-		printf(": %ssystem controller\n", scon ? "" : "not ");
-		vmesyscon_init(sc);
+		{
+			char sconc;
+			vmevecbase = 0x80;  /* Hard coded for MVME188 */
+			sconc = *(char *)GLOBAL1;
+			sconc &= M188_SYSCON;
+			printf(": %ssystem controller\n", scon ? "" : "not ");
+			vmesyscon_init(sc);
+		}
 		break;
 #endif
 	}
@@ -470,7 +472,7 @@ vme2chip_init(sc)
 #if NSYSCON > 0
 void
 vmesyscon_init(sc)
-struct vmesoftc *sc;
+	struct vmesoftc *sc;
 {
 #ifdef TODO
 	struct sysconreg *syscon = (struct sysconreg *)sc->sc_vaddr;
@@ -516,13 +518,14 @@ vme2chip_map(base, len, dwidth)
 {
 	switch (dwidth) {
 	case 16:
-		return (base);
+		break;
 	case 32:
 		if (base < VME2_D32STARTPHYS ||
 		    base + (u_long)len > VME2_D32ENDPHYS)
 			return (NULL);
-		return (base);
+		break;
 	}
+	return (base);
 }
 
 #if NPCCTWO > 0

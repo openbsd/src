@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscon.c,v 1.4 2001/03/07 23:45:52 miod Exp $ */
+/*	$OpenBSD: syscon.c,v 1.5 2001/03/09 05:44:39 smurph Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * All rights reserved.
@@ -110,8 +110,8 @@ int syscon_scan __P((struct device *parent, void *child, void *args));
 
 int
 sysconmatch(parent, vcf, args)
-struct device *parent;
-void *vcf, *args;
+	struct device *parent;
+	void *vcf, *args;
 {
 	struct confargs *ca = args;
 	struct sysconreg *syscon;
@@ -126,8 +126,8 @@ void *vcf, *args;
 
 int
 syscon_print(args, bus)
-void *args;
-const char *bus;
+	void *args;
+	const char *bus;
 {
 	struct confargs *ca = args;
 
@@ -140,8 +140,8 @@ const char *bus;
 
 int
 syscon_scan(parent, child, args)
-struct device *parent;
-void *child, *args;
+	struct device *parent;
+	void *child, *args;
 {
 	struct cfdata *cf = child;
 	struct sysconsoftc *sc = (struct sysconsoftc *)parent;
@@ -174,8 +174,8 @@ void *child, *args;
 void
 
 sysconattach(parent, self, args)
-struct device *parent, *self;
-void *args;
+	struct device *parent, *self;
+	void *args;
 {
 	struct confargs *ca = args;
 	struct sysconsoftc *sc = (struct sysconsoftc *)self;
@@ -224,8 +224,8 @@ void *args;
 
 int
 sysconintr_establish(vec, ih)
-int vec;
-struct intrhand *ih;
+	int vec;
+	struct intrhand *ih;
 {
 	return (intr_establish(vec, ih));
 }

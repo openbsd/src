@@ -1,4 +1,4 @@
-/*	$OpenBSD: bugio.h,v 1.7 2001/01/14 20:25:23 smurph Exp $ */
+/*	$OpenBSD: bugio.h,v 1.8 2001/03/09 05:44:40 smurph Exp $ */
 #ifndef __MACHINE_BUGIO_H__
 #define __MACHINE_BUGIO_H__
 #include "sys/cdefs.h"
@@ -74,27 +74,28 @@ struct bugniocall {
 	unsigned char ci;
 	unsigned char cd;
 #define	NETCTRL_INITDEVICE	0
-#define	NETCTRL_GETHDW			1
-#define	NETCTRL_TX				2
-#define	NETCTRL_RX				3
-#define	NETCTRL_FLUSH			4
-#define	NETCTRL_RESET			5
+#define	NETCTRL_GETHDW		1
+#define	NETCTRL_TX		2
+#define	NETCTRL_RX		3
+#define	NETCTRL_FLUSH		4
+#define	NETCTRL_RESET		5
 	unsigned long cid;
 	unsigned long memaddr;
 	unsigned long nbytes;
 	unsigned long csword;
 };
-
-char buginchr	__P((void));
+void buginit	__P((void));
 int buginstat	__P((void));
-int bugoutchr	__P((unsigned char));
-int bugoutstr	__P((char *, char *));
-int bugpcrlf	__P((void));
+char buginchr	__P((void));
+void bugoutchr	__P((unsigned char));
+void bugoutstr	__P((char *, char *));
+void bugpcrlf	__P((void));
 int bugdskrd	__P((struct bugdisk_io *));
 int bugdskwr	__P((struct bugdisk_io *));
-int bugrtcrd	__P((struct bugrtc *));
-int bugreturn	__P((void));
-int bugbrdid	__P((struct bugbrdid *));
-int bugnetctrl	__P((struct bugniocall *));
+void bugrtcrd	__P((struct bugrtc *));
+void bugreturn	__P((void));
+int bugfork	__P((int cpu, unsigned address));
+void bugbrdid	__P((struct bugbrdid *));
+void bugnetctrl	__P((struct bugniocall *));
 #endif __MACHINE_BUGIO_H__
 

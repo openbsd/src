@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ie.c,v 1.9 2001/03/07 23:45:51 miod Exp $ */
+/*	$OpenBSD: if_ie.c,v 1.10 2001/03/09 05:44:38 smurph Exp $ */
 
 /*-
  * Copyright (c) 1998 Steve Murphree, Jr. 
@@ -181,7 +181,7 @@ struct ie_softc {
 	void (*run_596)();      /* card depenent "go on-line" function */
 	void (*memcopy) __P((const void *, void *, u_int));
 	                        /* card dependent memory copy function */
-   void (*memzero) __P((void *, u_int));
+	void (*memzero) __P((void *, u_int));
 	                        /* card dependent memory zero function */
 	int want_mcsetup;       /* mcsetup flag */
 	int promisc;            /* are we in promisc mode? */
@@ -209,7 +209,7 @@ struct ie_softc {
 	volatile struct ie_recv_frame_desc *rframes[MXFRAMES];
 	volatile struct ie_recv_buf_desc *rbuffs[MXRXBUF];
 	volatile char *cbuffs[MXRXBUF];
-   int rfhead, rftail, rbhead, rbtail;
+	int rfhead, rftail, rbhead, rbtail;
 
 	volatile struct ie_xmit_cmd *xmit_cmds[NTXBUF];
 	volatile struct ie_xmit_buf *xmit_buffs[NTXBUF];
@@ -238,6 +238,7 @@ struct ie_softc {
 static void ie_obreset __P((struct ie_softc *));
 static void ie_obattend __P((struct ie_softc *));
 static void ie_obrun __P((struct ie_softc *));
+int ie_setupram __P((struct ie_softc *sc));
 
 void iewatchdog __P((struct ifnet *));
 int ieintr __P((void *));
@@ -267,6 +268,7 @@ int in_ietint = 0;
 
 int iematch();
 void ieattach();
+extern void pcctwointr_establish();
 
 struct cfattach ie_ca = {
 	sizeof(struct ie_softc), iematch, ieattach
@@ -337,7 +339,7 @@ iematch(parent, vcf, args)
 	struct confargs *ca = args;
 	int ret;
 
-	if ((ret = badvaddr(IIOV(ca->ca_vaddr), 1)) <=0){
+	if ((ret = badvaddr((unsigned)IIOV(ca->ca_vaddr), 1)) <=0){
 		return(0);
 	}
 	return(1);                      
@@ -516,7 +518,7 @@ void *v;
  */
 int
 ieintr(v)
-void *v;
+	void *v;
 {
 	struct ie_softc *sc = v;
 	register u_short status;

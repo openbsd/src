@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.6 2001/03/08 00:02:18 miod Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.7 2001/03/09 05:44:38 smurph Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -84,12 +84,17 @@ static inline unsigned br_dest(unsigned addr, union instruction inst)
 
 #define TRACE_DEBUG	/* undefine to disable debugging */
 
+#include <sys/param.h>
+#include <sys/systm.h>
 #include <machine/db_machdep.h> /* lots of stuff                  */
 #include <ddb/db_variables.h>	/* db_variable, DB_VAR_GET, etc.  */
 #include <ddb/db_output.h>	/* db_printf                      */
 #include <ddb/db_sym.h>		/* DB_STGY_PROC, etc.             */
 #include <ddb/db_command.h>	/* db_recover                     */
 
+extern int badwordaddr();
+extern int m88k_print_instruction __P((unsigned iadr, long inst));
+extern void db_read_bytes();
 /*
  * Some macros to tell if the given text is the instruction.
  */
@@ -355,7 +360,7 @@ db_trace_get_val(vm_offset_t addr, unsigned *ptr)
 
     quiet_db_read_bytes = 1;
 
-    if (setjmp(*(db_recover = &db_jmpbuf)) != 0) {
+    if (setjmp((db_recover = &db_jmpbuf)) != 0) {
 	db_recover = prev;
         quiet_db_read_bytes = old_quiet_db_read_bytes;
 	return 0;
@@ -1067,7 +1072,10 @@ db_stack_trace_cmd(
       case Frame:
 	regs = arg.frame;
 	break;
-
+      
+      case Proc:
+        break;
+      
       case Stack:
       {
 	unsigned val1, val2, sxip;
@@ -1139,7 +1147,7 @@ db_stack_trace_cmd(
 	frame.sxip = sxip | 2;
 	frame.snip = frame.sxip + 4;
 	frame.sfip = frame.snip + 4;
-db_printf("[r31=%x, sxip=%x]\n", frame.r[31], frame.sxip);
+	db_printf("[r31=%x, sxip=%x]\n", frame.r[31], frame.sxip);
 	regs = &frame;
       }
     }

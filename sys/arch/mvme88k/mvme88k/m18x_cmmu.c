@@ -1,4 +1,4 @@
-/*	$OpenBSD: m18x_cmmu.c,v 1.6 2001/03/08 00:03:31 miod Exp $	*/
+/*	$OpenBSD: m18x_cmmu.c,v 1.7 2001/03/09 05:44:41 smurph Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -60,12 +60,24 @@
 
 #include <sys/param.h>
 #include <sys/types.h>
+#include <sys/systm.h>
 #include <sys/simplelock.h>
 #include <machine/asm_macro.h>
 #include <machine/board.h>
 #include <machine/cpus.h>
 #include <machine/cpu_number.h>
+#include <machine/locore.h>
 #include <machine/m882xx.h>
+
+#if DDB
+   #include <ddb/db_output.h>		/* db_printf()		*/
+#endif /* DDB */
+
+#if DDB
+   #define DEBUG_MSG db_printf
+#else
+   #define DEBUG_MSG printf
+#endif /* DDB */
 
 /* On some versions of 88200, page size flushes don't work. I am using
  * sledge hammer approach till I find for sure which ones are bad XXX nivas */
@@ -80,6 +92,8 @@ unsigned int m18x_debuglevel = 0;
    #define dprintf(_L_,_X_)
 #endif 
 #undef	SHADOW_BATC		/* don't use BATCs for now XXX nivas */
+
+int badwordaddr __P((void *addr));
 
 struct cmmu_regs {
    /* base + $000 */volatile unsigned idr; 
@@ -378,10 +392,12 @@ m18x_setup_board_config(void)
 void 
 m18x_setup_cmmu_config(void)
 {
+	register int num, cmmu_num;
+#ifdef MVME188
+	register int val1, val2;
 	volatile unsigned long *pcnfa;
 	volatile unsigned long *pcnfb;
-
-	register int num, cmmu_num, val1, val2;
+#endif 
 
 	dprintf(DB_CMMU,("m18x_setup_cmmu_config: initializing with %d CPU(s) and %d CMMU(s)\n",
 			 max_cpus, max_cmmus));
@@ -390,7 +406,7 @@ m18x_setup_cmmu_config(void)
 	 * Probe for available MMUs
 	 */
 	for (cmmu_num = 0; cmmu_num < max_cmmus; cmmu_num++)
-		if (!badwordaddr((vm_offset_t)cmmu[cmmu_num].cmmu_regs)) {
+		if (!badwordaddr((void *)cmmu[cmmu_num].cmmu_regs)) {
 			union cpupid id;
 
 			id.cpupid = cmmu[cmmu_num].cmmu_regs->idr;
@@ -580,24 +596,25 @@ m18x_setup_cmmu_config(void)
 	return;
 }
 
+#ifdef MVME188
 static char *cmmu_strat_string[] = {
 	"address split ",
 	"user/spv split",
 	"spv SRAM split",
 	"all SRAM split"
 };
+#endif 
 
 void 
 m18x_cmmu_dump_config(void)
 {
-
+#ifdef MVME188
 	volatile unsigned long *pcnfa;
 	volatile unsigned long *pcnfb;
 	register int cmmu_num;
+#endif /* MVME188 */
 
-	if (cputyp != CPU_188) return;
-
-	db_printf("Current CPU/CMMU configuration:\n\n");
+	DEBUG_MSG("Current CPU/CMMU configuration:\n\n");
 
 	switch (cputyp) {
 #ifdef MVME187
@@ -607,15 +624,15 @@ m18x_cmmu_dump_config(void)
 	case CPU_197:
 #endif
 #if defined(MVME187) || defined(MVME197)
-		db_printf("VME1x7 split mode\n\n");
+		DEBUG_MSG("VME1x7 split mode\n\n");
 #endif /* defined(MVME187) || defined(MVME197) */
 #ifdef MVME188
 	case CPU_188:
-		db_printf("VME188 address decoder: PCNFA = 0x%1x, PCNFB = 0x%1x\n\n", *pcnfa & 0xf, *pcnfb & 0xf);
+		DEBUG_MSG("VME188 address decoder: PCNFA = 0x%1x, PCNFB = 0x%1x\n\n", *pcnfa & 0xf, *pcnfb & 0xf);
 		pcnfa = (volatile unsigned long *)MVME188_PCNFA;
 		pcnfb = (volatile unsigned long *)MVME188_PCNFB;
 		for (cmmu_num = 0; cmmu_num < max_cmmus; cmmu_num++) {
-			db_printf("CMMU #%d: %s CMMU for CPU %d:\n Strategy: %s\n %s access addr 0x%08x mask 0x%08x match %s\n",
+			DEBUG_MSG("CMMU #%d: %s CMMU for CPU %d:\n Strategy: %s\n %s access addr 0x%08x mask 0x%08x match %s\n",
 				  cmmu_num,
 				  (cmmu[cmmu_num].which == INST_CMMU) ? "inst" : "data",
 				  cmmu[cmmu_num].cmmu_cpu,
@@ -631,7 +648,7 @@ m18x_cmmu_dump_config(void)
 		}
 #endif /* MVME188 */
 	default:
-		db_printf("Unknown CPU\n\n");
+		DEBUG_MSG("Unknown CPU\n\n");
 	}
 }
 
@@ -712,6 +729,7 @@ m18x_cmmu_get_by_mode(int cpu, int mode)
 	       (mode == DATA_CMMU) ? "data" : "instruction", cpu);
 	panic("m18x_cmmu_get_by_mode");
 	/* NOTREACHED */
+	return(0);
 }
 #endif
 
@@ -1897,7 +1915,7 @@ m18x_cmmu_show_translation(
 	unsigned value;
 
 	if (verbose_flag)
-		db_printf("-------------------------------------------\n");
+		DEBUG_MSG("-------------------------------------------\n");
 
 
 
@@ -1909,19 +1927,19 @@ m18x_cmmu_show_translation(
 		supervisor_flag = 0; /* thread implies user */
 
 		if (thread->task == 0) {
-			db_printf("[thread %x has empty task pointer]\n", thread);
+			DEBUG_MSG("[thread %x has empty task pointer]\n", thread);
 			return;
 		} else if (thread->task->map == 0) {
-			db_printf("[thread/task %x/%x has empty map pointer]\n",
+			DEBUG_MSG("[thread/task %x/%x has empty map pointer]\n",
 				  thread, thread->task);
 			return;
 		} else if (thread->task->map->pmap == 0) {
-			db_printf("[thread/task/map %x/%x/%x has empty pmap pointer]\n",
+			DEBUG_MSG("[thread/task/map %x/%x/%x has empty pmap pointer]\n",
 				  thread, thread->task, thread->task->map);
 			return;
 		}
 		if (thread->task->map->pmap->lock.lock_data) {
-			db_printf("[Warning: thread %x's task %x's map %x's "
+			DEBUG_MSG("[Warning: thread %x's task %x's map %x's "
 				  "pmap %x is locked]\n", thread, thread->task,
 				  thread->task->map, thread->task->map->pmap);
 		}
@@ -1933,7 +1951,7 @@ m18x_cmmu_show_translation(
 		apr_data.field.te = 1;
 		value = apr_data.bits;
 		if (verbose_flag) {
-			db_printf("[thread %x task %x map %x pmap %x UAPR is %x]\n",
+			DEBUG_MSG("[thread %x task %x map %x pmap %x UAPR is %x]\n",
 				  thread, thread->task, thread->task->map,
 				  thread->task->map->pmap, value);
 		}
@@ -1943,22 +1961,22 @@ m18x_cmmu_show_translation(
 		if (cmmu_num == -1) {
 			int cpu = cpu_number();
 			if (cpu_cmmu[cpu].pair[DATA_CMMU] == 0) {
-				db_printf("ack! can't figure my own data cmmu number.\n");
+				DEBUG_MSG("ack! can't figure my own data cmmu number.\n");
 				return;
 			}
 			cmmu_num = cpu_cmmu[cpu].pair[DATA_CMMU] - cmmu;
 			if (verbose_flag)
-				db_printf("The data cmmu for cpu#%d is cmmu#%d.\n",
+				DEBUG_MSG("The data cmmu for cpu#%d is cmmu#%d.\n",
 					  0, cmmu_num);
 		} else if (cmmu_num < 0 || cmmu_num >= MAX_CMMUS) {
-			db_printf("invalid cpu number [%d]... must be in range [0..%d]\n",
+			DEBUG_MSG("invalid cpu number [%d]... must be in range [0..%d]\n",
 				  cmmu_num, MAX_CMMUS - 1);
 
 			return;
 		}
 
 		if (cmmu[cmmu_num].cmmu_alive == 0) {
-			db_printf("warning: cmmu %d is not alive.\n", cmmu_num);
+			DEBUG_MSG("warning: cmmu %d is not alive.\n", cmmu_num);
 #if 0
 			return;
 #endif
@@ -1966,14 +1984,14 @@ m18x_cmmu_show_translation(
 
 		if (!verbose_flag) {
 			if (!(cmmu[cmmu_num].cmmu_regs->sctr & CMMU_SCTR_SE))
-				db_printf("WARNING: snooping not enabled for CMMU#%d.\n",
+				DEBUG_MSG("WARNING: snooping not enabled for CMMU#%d.\n",
 					  cmmu_num);
 		} else {
 			int i;
 			for (i=0; i<MAX_CMMUS; i++)
 				if ((i == cmmu_num || cmmu[i].cmmu_alive) &&
 				    (verbose_flag>1 || !(cmmu[i].cmmu_regs->sctr&CMMU_SCTR_SE))) {
-					db_printf("CMMU#%d (cpu %d %s) snooping %s\n", i,
+					DEBUG_MSG("CMMU#%d (cpu %d %s) snooping %s\n", i,
 						  cmmu[i].cmmu_cpu, cmmu[i].which ? "data" : "inst",
 						  (cmmu[i].cmmu_regs->sctr & CMMU_SCTR_SE) ? "on":"OFF");
 				}
@@ -1996,15 +2014,15 @@ m18x_cmmu_show_translation(
 			batc.bits = cmmu[cmmu_num].batc[i];
 			if (batc.field.v == 0) {
 				if (verbose_flag>1)
-					db_printf("cmmu #%d batc[%d] invalid.\n", cmmu_num, i);
+					DEBUG_MSG("cmmu #%d batc[%d] invalid.\n", cmmu_num, i);
 			} else {
-				db_printf("cmmu#%d batc[%d] v%08x p%08x", cmmu_num, i,
+				DEBUG_MSG("cmmu#%d batc[%d] v%08x p%08x", cmmu_num, i,
 					  batc.field.lba << 18, batc.field.pba);
-				if (batc.field.s)  db_printf(", supervisor");
-				if (batc.field.wt) db_printf(", wt.th");
-				if (batc.field.g)  db_printf(", global");
-				if (batc.field.ci) db_printf(", cache inhibit");
-				if (batc.field.wp) db_printf(", write protect");
+				if (batc.field.s)  DEBUG_MSG(", supervisor");
+				if (batc.field.wt) DEBUG_MSG(", wt.th");
+				if (batc.field.g)  DEBUG_MSG(", global");
+				if (batc.field.ci) DEBUG_MSG(", cache inhibit");
+				if (batc.field.wp) DEBUG_MSG(", write protect");
 			}
 		}
 	}
@@ -2022,24 +2040,24 @@ m18x_cmmu_show_translation(
 		cmmu_regs->scr = supervisor_flag ? CMMU_PROBE_SUPER : CMMU_PROBE_USER;
 		ssr.bits = cmmu_regs->ssr;
 		if (verbose_flag > 1)
-			db_printf("probe of 0x%08x returns ssr=0x%08x\n",
+			DEBUG_MSG("probe of 0x%08x returns ssr=0x%08x\n",
 				  address, ssr.bits);
 		if (ssr.field.v)
-			db_printf("PROBE of 0x%08x returns phys=0x%x",
+			DEBUG_MSG("PROBE of 0x%08x returns phys=0x%x",
 				  address, cmmu_regs->sar);
 		else
-			db_printf("PROBE fault at 0x%x", cmmu_regs->pfADDRr);
-		if (ssr.field.ce) db_printf(", copyback err");
-		if (ssr.field.be) db_printf(", bus err");
-		if (ssr.field.wt) db_printf(", writethrough");
-		if (ssr.field.sp) db_printf(", sup prot");
-		if (ssr.field.g)  db_printf(", global");
-		if (ssr.field.ci) db_printf(", cache inhibit");
-		if (ssr.field.m)  db_printf(", modified");
-		if (ssr.field.u)  db_printf(", used");
-		if (ssr.field.wp) db_printf(", write prot");
-		if (ssr.field.bh) db_printf(", BATC");
-		db_printf(".\n");
+			DEBUG_MSG("PROBE fault at 0x%x", cmmu_regs->pfADDRr);
+		if (ssr.field.ce) DEBUG_MSG(", copyback err");
+		if (ssr.field.be) DEBUG_MSG(", bus err");
+		if (ssr.field.wt) DEBUG_MSG(", writethrough");
+		if (ssr.field.sp) DEBUG_MSG(", sup prot");
+		if (ssr.field.g)  DEBUG_MSG(", global");
+		if (ssr.field.ci) DEBUG_MSG(", cache inhibit");
+		if (ssr.field.m)  DEBUG_MSG(", modified");
+		if (ssr.field.u)  DEBUG_MSG(", used");
+		if (ssr.field.wp) DEBUG_MSG(", write prot");
+		if (ssr.field.bh) DEBUG_MSG(", BATC");
+		DEBUG_MSG(".\n");
 	}
 
 	/******* INTERPRET AREA DESCRIPTOR *********/
@@ -2047,38 +2065,38 @@ m18x_cmmu_show_translation(
 		union apr_template apr_template;
 		apr_template.bits = value;
 		if (verbose_flag > 1) {
-			db_printf("CMMU#%d", cmmu_num);
+			DEBUG_MSG("CMMU#%d", cmmu_num);
 #if 0
 			if (thread == 0)
-				db_printf("CMMU#%d", cmmu_num);
+				DEBUG_MSG("CMMU#%d", cmmu_num);
 			else
-				db_printf("THREAD %x", thread);
+				DEBUG_MSG("THREAD %x", thread);
 #endif /* 0 */
-			db_printf(" %cAPR is 0x%08x\n",
+			DEBUG_MSG(" %cAPR is 0x%08x\n",
 				  supervisor_flag ? 'S' : 'U', apr_template.bits);
 		}
-		db_printf("CMMU#%d", cmmu_num);
+		DEBUG_MSG("CMMU#%d", cmmu_num);
 #if 0
 		if (thread == 0)
-			db_printf("CMMU#%d", cmmu_num);
+			DEBUG_MSG("CMMU#%d", cmmu_num);
 		else
-			db_printf("THREAD %x", thread);
+			DEBUG_MSG("THREAD %x", thread);
 #endif /* 0 */
-		db_printf(" %cAPR: SegTbl: 0x%x000p",
+		DEBUG_MSG(" %cAPR: SegTbl: 0x%x000p",
 			  supervisor_flag ? 'S' : 'U', apr_template.field.st_base);
-		if (apr_template.field.wt) db_printf(", WTHRU");
-		else			   db_printf(", !wthru");
-		if (apr_template.field.g)  db_printf(", GLOBAL");
-		else			   db_printf(", !global");
-		if (apr_template.field.ci) db_printf(", $INHIBIT");
-		else			   db_printf(", $ok");
-		if (apr_template.field.te) db_printf(", VALID");
-		else			   db_printf(", !valid");
-		db_printf(".\n");
+		if (apr_template.field.wt) DEBUG_MSG(", WTHRU");
+		else			   DEBUG_MSG(", !wthru");
+		if (apr_template.field.g)  DEBUG_MSG(", GLOBAL");
+		else			   DEBUG_MSG(", !global");
+		if (apr_template.field.ci) DEBUG_MSG(", $INHIBIT");
+		else			   DEBUG_MSG(", $ok");
+		if (apr_template.field.te) DEBUG_MSG(", VALID");
+		else			   DEBUG_MSG(", !valid");
+		DEBUG_MSG(".\n");
 
 		/* if not valid, done now */
 		if (apr_template.field.te == 0) {
-			db_printf("<would report an error, valid bit not set>\n");
+			DEBUG_MSG("<would report an error, valid bit not set>\n");
 
 			return;
 		}
@@ -2088,7 +2106,7 @@ m18x_cmmu_show_translation(
 
 	/* translate value from physical to virtual */
 	if (verbose_flag)
-		db_printf("[%x physical is %x virtual]\n", value, value + VEQR_ADDR);
+		DEBUG_MSG("[%x physical is %x virtual]\n", value, value + VEQR_ADDR);
 	value += VEQR_ADDR;
 
 	virtual_address.bits = address;
@@ -2097,39 +2115,39 @@ m18x_cmmu_show_translation(
 	{
 		union sdt_entry_template std_template;
 		if (verbose_flag)
-			db_printf("will follow to entry %d of page at 0x%x...\n",
+			DEBUG_MSG("will follow to entry %d of page at 0x%x...\n",
 				  virtual_address.field.segment_table_index, value);
 		value |= virtual_address.field.segment_table_index *
 			 sizeof(struct sdt_entry);
 
-		if (badwordaddr(value)) {
-			db_printf("ERROR: unable to access page at 0x%08x.\n", value);
+		if (badwordaddr((void *)value)) {
+			DEBUG_MSG("ERROR: unable to access page at 0x%08x.\n", value);
 
 			return;
 		}
 
 		std_template.bits = *(unsigned *)value;
 		if (verbose_flag > 1)
-			db_printf("SEG DESC @0x%x is 0x%08x\n", value, std_template.bits);
-		db_printf("SEG DESC @0x%x: PgTbl: 0x%x000",
+			DEBUG_MSG("SEG DESC @0x%x is 0x%08x\n", value, std_template.bits);
+		DEBUG_MSG("SEG DESC @0x%x: PgTbl: 0x%x000",
 			  value, std_template.sdt_desc.table_addr);
-		if (std_template.sdt_desc.wt)	    db_printf(", WTHRU");
-		else				    db_printf(", !wthru");
-		if (std_template.sdt_desc.sup)	    db_printf(", S-PROT");
-		else				    db_printf(", UserOk");
-		if (std_template.sdt_desc.g)	    db_printf(", GLOBAL");
-		else				    db_printf(", !global");
-		if (std_template.sdt_desc.no_cache) db_printf(", $INHIBIT");
-		else				    db_printf(", $ok");
-		if (std_template.sdt_desc.prot)	    db_printf(", W-PROT");
-		else				    db_printf(", WriteOk");
-		if (std_template.sdt_desc.dtype)    db_printf(", VALID");
-		else				    db_printf(", !valid");
-		db_printf(".\n");
+		if (std_template.sdt_desc.wt)	    DEBUG_MSG(", WTHRU");
+		else				    DEBUG_MSG(", !wthru");
+		if (std_template.sdt_desc.sup)	    DEBUG_MSG(", S-PROT");
+		else				    DEBUG_MSG(", UserOk");
+		if (std_template.sdt_desc.g)	    DEBUG_MSG(", GLOBAL");
+		else				    DEBUG_MSG(", !global");
+		if (std_template.sdt_desc.no_cache) DEBUG_MSG(", $INHIBIT");
+		else				    DEBUG_MSG(", $ok");
+		if (std_template.sdt_desc.prot)	    DEBUG_MSG(", W-PROT");
+		else				    DEBUG_MSG(", WriteOk");
+		if (std_template.sdt_desc.dtype)    DEBUG_MSG(", VALID");
+		else				    DEBUG_MSG(", !valid");
+		DEBUG_MSG(".\n");
 
 		/* if not valid, done now */
 		if (std_template.sdt_desc.dtype == 0) {
-			db_printf("<would report an error, STD entry not valid>\n");
+			DEBUG_MSG("<would report an error, STD entry not valid>\n");
 
 			return;
 		}
@@ -2139,64 +2157,64 @@ m18x_cmmu_show_translation(
 
 	/* translate value from physical to virtual */
 	if (verbose_flag)
-		db_printf("[%x physical is %x virtual]\n", value, value + VEQR_ADDR);
+		DEBUG_MSG("[%x physical is %x virtual]\n", value, value + VEQR_ADDR);
 	value += VEQR_ADDR;
 
 	/******* PAGE TABLE *********/
 	{
 		union pte_template pte_template;
 		if (verbose_flag)
-			db_printf("will follow to entry %d of page at 0x%x...\n",
+			DEBUG_MSG("will follow to entry %d of page at 0x%x...\n",
 				  virtual_address.field.page_table_index, value);
 		value |= virtual_address.field.page_table_index *
 			 sizeof(struct pt_entry);
 
-		if (badwordaddr(value)) {
-			db_printf("error: unable to access page at 0x%08x.\n", value);
+		if (badwordaddr((void *)value)) {
+			DEBUG_MSG("error: unable to access page at 0x%08x.\n", value);
 
 			return;
 		}
 
 		pte_template.bits = *(unsigned *)value;
 		if (verbose_flag > 1)
-			db_printf("PAGE DESC @0x%x is 0x%08x.\n", value, pte_template.bits);
-		db_printf("PAGE DESC @0x%x: page @%x000",
+			DEBUG_MSG("PAGE DESC @0x%x is 0x%08x.\n", value, pte_template.bits);
+		DEBUG_MSG("PAGE DESC @0x%x: page @%x000",
 			  value, pte_template.pte.pfn);
-		if (pte_template.pte.wired)    db_printf(", WIRE");
-		else			       db_printf(", !wire");
-		if (pte_template.pte.wt)       db_printf(", WTHRU");
-		else			       db_printf(", !wthru");
-		if (pte_template.pte.sup)      db_printf(", S-PROT");
-		else			       db_printf(", UserOk");
-		if (pte_template.pte.g)	       db_printf(", GLOBAL");
-		else			       db_printf(", !global");
-		if (pte_template.pte.ci)       db_printf(", $INHIBIT");
-		else			       db_printf(", $ok");
-		if (pte_template.pte.modified) db_printf(", MOD");
-		else			       db_printf(", !mod");
-		if (pte_template.pte.pg_used)  db_printf(", USED");
-		else			       db_printf(", !used");
-		if (pte_template.pte.prot)     db_printf(", W-PROT");
-		else			       db_printf(", WriteOk");
-		if (pte_template.pte.dtype)    db_printf(", VALID");
-		else			       db_printf(", !valid");
-		db_printf(".\n");
+		if (pte_template.pte.wired)    DEBUG_MSG(", WIRE");
+		else			       DEBUG_MSG(", !wire");
+		if (pte_template.pte.wt)       DEBUG_MSG(", WTHRU");
+		else			       DEBUG_MSG(", !wthru");
+		if (pte_template.pte.sup)      DEBUG_MSG(", S-PROT");
+		else			       DEBUG_MSG(", UserOk");
+		if (pte_template.pte.g)	       DEBUG_MSG(", GLOBAL");
+		else			       DEBUG_MSG(", !global");
+		if (pte_template.pte.ci)       DEBUG_MSG(", $INHIBIT");
+		else			       DEBUG_MSG(", $ok");
+		if (pte_template.pte.modified) DEBUG_MSG(", MOD");
+		else			       DEBUG_MSG(", !mod");
+		if (pte_template.pte.pg_used)  DEBUG_MSG(", USED");
+		else			       DEBUG_MSG(", !used");
+		if (pte_template.pte.prot)     DEBUG_MSG(", W-PROT");
+		else			       DEBUG_MSG(", WriteOk");
+		if (pte_template.pte.dtype)    DEBUG_MSG(", VALID");
+		else			       DEBUG_MSG(", !valid");
+		DEBUG_MSG(".\n");
 
 		/* if not valid, done now */
 		if (pte_template.pte.dtype == 0) {
-			db_printf("<would report an error, PTE entry not valid>\n");
+			DEBUG_MSG("<would report an error, PTE entry not valid>\n");
 
 			return;
 		}
 
 		value = pte_template.pte.pfn << 12;
 		if (verbose_flag)
-			db_printf("will follow to byte %d of page at 0x%x...\n",
+			DEBUG_MSG("will follow to byte %d of page at 0x%x...\n",
 				  virtual_address.field.page_offset, value);
 		value |= virtual_address.field.page_offset;
 
-		if (badwordaddr(value)) {
-			db_printf("error: unable to access page at 0x%08x.\n", value);
+		if (badwordaddr((void *)value)) {
+			DEBUG_MSG("error: unable to access page at 0x%08x.\n", value);
 
 			return;
 		}
@@ -2204,10 +2222,10 @@ m18x_cmmu_show_translation(
 
 	/* translate value from physical to virtual */
 	if (verbose_flag)
-		db_printf("[%x physical is %x virtual]\n", value, value + VEQR_ADDR);
+		DEBUG_MSG("[%x physical is %x virtual]\n", value, value + VEQR_ADDR);
 	value += VEQR_ADDR;
 
-	db_printf("WORD at 0x%x is 0x%08x.\n", value, *(unsigned *)value);
+	DEBUG_MSG("WORD at 0x%x is 0x%08x.\n", value, *(unsigned *)value);
 
 }
 
@@ -2226,7 +2244,7 @@ m18x_cmmu_cache_state(unsigned addr, unsigned supervisor_flag)
 		if (!cmmu[cmmu_num].cmmu_alive)
 			continue;
 		R = cmmu[cmmu_num].cmmu_regs;
-		db_printf("cmmu #%d %s cmmu for cpu %d.\n", cmmu_num,
+		DEBUG_MSG("cmmu #%d %s cmmu for cpu %d.\n", cmmu_num,
 			  cmmu[cmmu_num].which ? "data" : "inst", 
 			  cmmu[cmmu_num].cmmu_cpu);
 		R->sar = addr;
@@ -2234,10 +2252,10 @@ m18x_cmmu_cache_state(unsigned addr, unsigned supervisor_flag)
 
 		ssr.bits = R->ssr;
 		if (!ssr.field.v) {
-			db_printf("PROBE of 0x%08x faults.\n",addr);
+			DEBUG_MSG("PROBE of 0x%08x faults.\n",addr);
 			continue;
 		}
-		db_printf("PROBE of 0x%08x returns phys=0x%x", addr, R->sar);
+		DEBUG_MSG("PROBE of 0x%08x returns phys=0x%x", addr, R->sar);
 
 		tag = R->sar & ~0xfff;
 		cssp.bits = R->cssp;
@@ -2245,20 +2263,20 @@ m18x_cmmu_cache_state(unsigned addr, unsigned supervisor_flag)
 		/* check to see if any of the tags for the set match the address */
 		for (line = 0; line < 4; line++) {
 			if (VV(cssp, line) == VV_INVALID) {
-				db_printf("line %d invalid.\n", line);
+				DEBUG_MSG("line %d invalid.\n", line);
 				continue; /* line is invalid */
 			}
 			if (D(cssp, line)) {
-				db_printf("line %d disabled.\n", line);
+				DEBUG_MSG("line %d disabled.\n", line);
 				continue; /* line is disabled */
 			}
 
 			if ((R->ctp[line] & ~0xfff) != tag) {
-				db_printf("line %d address tag is %x.\n", line,
+				DEBUG_MSG("line %d address tag is %x.\n", line,
 					  (R->ctp[line] & ~0xfff));
 				continue;
 			}
-			db_printf("found in line %d as %08x (%s).\n",
+			DEBUG_MSG("found in line %d as %08x (%s).\n",
 				  line, R->cdp[line], vv_name[VV(cssp, line)]);
 		}
 	}
@@ -2274,7 +2292,7 @@ m18x_show_cmmu_info(unsigned addr)
 
 	for (cmmu_num = 0; cmmu_num < MAX_CMMUS; cmmu_num++)
 		if (cmmu[cmmu_num].cmmu_alive) {
-			db_printf("cmmu #%d %s cmmu for cpu %d: ", cmmu_num,
+			DEBUG_MSG("cmmu #%d %s cmmu for cpu %d: ", cmmu_num,
 				  cmmu[cmmu_num].which ? "data" : "inst", 
 				  cmmu[cmmu_num].cmmu_cpu);
 			m18x_cmmu_show_translation(addr, 1, 0, cmmu_num);

@@ -144,7 +144,7 @@ struct dart_s {
 
 int
 dart_speed(speed)
-int speed;
+	int speed;
 {
 	struct dart_s *ds = dart_speeds;
 	while (ds->kspeed != 0xFFFF) {
@@ -157,7 +157,7 @@ int speed;
 
 struct tty* 
 darttty(dev)
-dev_t dev;
+	dev_t dev;
 {
 	int port;
 	struct dartsoftc *sc;
@@ -168,8 +168,8 @@ dev_t dev;
 
 int
 dartmatch(parent, vcf, args)
-struct device *parent;
-void *vcf, *args;
+	struct device *parent;
+	void *vcf, *args;
 {
 	struct confargs *ca = args;
 	union dartreg *addr;
@@ -187,9 +187,9 @@ void *vcf, *args;
 
 void
 dartattach(parent, self, aux)
-struct device *parent;
-struct device *self;
-void *aux;
+	struct device *parent;
+	struct device *self;
+	void *aux;
 {
 	struct dartsoftc *sc = (struct dartsoftc *)self;
 	struct confargs *ca = aux;
@@ -298,7 +298,7 @@ void *aux;
  */
 void
 dartstart(tp)
-struct tty *tp;
+	struct tty *tp;
 {
 	dev_t dev;
 	struct dartsoftc *sc;
@@ -386,8 +386,8 @@ bail:
  */
 int
 dartstop(tp, flag)
-struct tty *tp;
-int flag;
+	struct tty *tp;
+	int flag;
 {
 	int s;
 	s = spltty();
@@ -421,9 +421,9 @@ int flag;
 
 int
 dartmctl (dev, flags, how)
-dev_t dev;
-int flags;
-int how;
+	dev_t dev;
+	int flags;
+	int how;
 {
 	union dartreg *addr;
 	int port;
@@ -497,8 +497,8 @@ int how;
  */
 void
 dartbreak(dev, state)
-dev_t dev;
-int state;
+	dev_t dev;
+	int state;
 {
 	union dartreg *addr;
 	union dart_pt_io *ptaddr;
@@ -529,11 +529,11 @@ int state;
 
 int 
 dartioctl (dev, cmd, data, flag, p)
-dev_t dev;
-int cmd;
-caddr_t data;
-int flag;
-struct proc *p;
+	dev_t dev;
+	int cmd;
+	caddr_t data;
+	int flag;
+	struct proc *p;
 {
 	int error;
 	int port;
@@ -615,8 +615,8 @@ struct proc *p;
  */
 int 
 dartparam(tp, t)
-struct tty *tp;
-struct termios *t;
+	struct tty *tp;
+	struct termios *t;
 {
 	union dartreg *addr;
 	union dart_pt_io *ptaddr;
@@ -759,9 +759,9 @@ struct termios *t;
 
 void
 dartmodemtrans(sc, ip, ipcr)
-struct dartsoftc *sc;
-unsigned int ip;
-unsigned int ipcr;
+	struct dartsoftc *sc;
+	unsigned int ip;
+	unsigned int ipcr;
 {
 	unsigned int dcdstate;
 	struct tty *tp;
@@ -794,10 +794,10 @@ unsigned int ipcr;
 
 int 
 dartopen (dev, flag, mode, p)
-dev_t dev;
-int flag;
-int mode;
-struct proc *p;
+	dev_t dev;
+	int flag;
+	int mode;
+	struct proc *p;
 {
 	int s, port;
 	struct dart_info *dart;
@@ -856,10 +856,10 @@ struct proc *p;
 
 int 
 dartclose (dev, flag, mode, p)
-dev_t dev;
-int flag;
-int mode;
-struct proc *p;
+	dev_t dev;
+	int flag;
+	int mode;
+	struct proc *p;
 {
 	struct tty *tp;
 	struct dart_info *dart;
@@ -881,9 +881,9 @@ struct proc *p;
 
 int 
 dartread (dev, uio, flag)
-dev_t dev;
-struct uio *uio;
-int flag;
+	dev_t dev;
+	struct uio *uio;
+	int flag;
 {
 	int port;
 	struct tty *tp;
@@ -904,9 +904,9 @@ int flag;
 
 int 
 dartwrite(dev, uio, flag)
-dev_t dev;
-struct uio *uio;
-int flag;
+	dev_t dev;
+	struct uio *uio;
+	int flag;
 {
 	int port;
 	struct tty *tp;
@@ -927,8 +927,8 @@ int flag;
 
 void
 dartrint(sc, port)
-struct dartsoftc *sc;
-int port;
+	struct dartsoftc *sc;
+	int port;
 {
 	union dartreg *addr;
 	union dart_pt_io *ptaddr;
@@ -1017,8 +1017,8 @@ int port;
 
 void
 dartxint(sc, port)
-struct dartsoftc *sc;
-int port;
+	struct dartsoftc *sc;
+	int port;
 {
 	struct tty *tp;
 	struct dart_info *dart;
@@ -1130,7 +1130,7 @@ dartintr(arg)
 
 int
 dartcnprobe(cp)
-struct consdev *cp;
+	struct consdev *cp;
 {
 	int maj;
 
@@ -1150,7 +1150,7 @@ struct consdev *cp;
 
 int
 dartcninit(cp)
-struct consdev *cp;
+	struct consdev *cp;
 {
 	dart_cons = A_PORT;
 	return 0;
@@ -1158,8 +1158,8 @@ struct consdev *cp;
 
 void
 dartcnputc(dev, c)
-dev_t dev;
-char c;
+	dev_t dev;
+	char c;
 {
 	union dartreg *addr;
 	union dart_pt_io *ptaddr;
@@ -1223,7 +1223,7 @@ char c;
 
 int
 dartcngetc(dev)
-dev_t dev;
+	dev_t dev;
 {
 	union dartreg  *addr;	   /* pointer to DUART regs */
 	union dart_pt_io  *ptaddr; /* pointer to port regs */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.9 2001/03/07 23:45:50 miod Exp $ */
+/*	$OpenBSD: clock.c,v 1.10 2001/03/09 05:44:38 smurph Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1995 Theo de Raadt
@@ -150,8 +150,8 @@ u_char	prof_reset;
  */
 int
 clockmatch(parent, vcf, args)
-struct device *parent;
-void *vcf, *args;
+	struct device *parent;
+	void *vcf, *args;
 {
 	register struct confargs *ca = args;
 	register struct cfdata *cf = vcf;
@@ -173,8 +173,8 @@ void *vcf, *args;
 
 void
 clockattach(parent, self, args)
-struct device *parent, *self;
-void *args;
+	struct device *parent, *self;
+	void *args;
 {
 	struct confargs *ca = args;
 	struct clocksoftc *sc = (struct clocksoftc *)self;
@@ -254,7 +254,7 @@ sbc_clockintr(eframe)
 #endif /* NPCCTWO */
 int
 delay(us)
-register int us;
+	register int us;
 {
 	volatile register int c;
 

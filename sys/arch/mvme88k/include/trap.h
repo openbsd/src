@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.h,v 1.7 2001/02/01 03:38:18 smurph Exp $ */
+/*	$OpenBSD: trap.h,v 1.8 2001/03/09 05:44:40 smurph Exp $ */
 /* 
  * Mach Operating System
  * Copyright (c) 1992 Carnegie Mellon University
@@ -71,6 +71,37 @@
 #define T_197_INST	27	/* MVME197 Inst ATC Miss (Software Table Searches) */
 #define T_INT		28	/* interrupt exception */
 #define T_USER		29	/* user mode fault */
+
+#ifndef ASSEMBLER
+void panictrap(int type, struct m88100_saved_state *frame);
+void test_trap2(int num, int m197);
+void test_trap(struct m88100_saved_state *frame);
+void error_fault(struct m88100_saved_state *frame);
+void error_reset(struct m88100_saved_state *frame);
+void child_return(struct proc *p);
+u_long allocate_sir(void (*proc)(), void *arg);
+void init_sir();
+unsigned ss_get_value(struct proc *p, unsigned addr, int size);
+int ss_put_value(struct proc *p, unsigned addr, unsigned value, int size);
+unsigned ss_branch_taken(unsigned inst, unsigned pc, 
+			 unsigned (*func)(unsigned int, struct trapframe *),
+			 struct trapframe *func_data);  /* 'opaque' */
+unsigned ss_getreg_val(unsigned regno, struct trapframe *tf);
+int ss_inst_branch(unsigned ins);
+int ss_inst_delayed(unsigned ins);
+unsigned ss_next_instr_address(struct proc *p, unsigned pc, unsigned delay_slot);
+int cpu_singlestep(register struct proc *p);
+
+#if defined(MVME187) || defined(MVME188)
+void trap(unsigned type, struct m88100_saved_state *frame);
+void syscall(register_t code, struct m88100_saved_state *tf);
+#endif /* defined(MVME187) || defined(MVME188) */
+
+#ifdef MVME197
+void trap2(unsigned type, struct m88100_saved_state *frame);
+void m197_syscall(register_t code, struct m88100_saved_state *tf);
+#endif /* MVME197 */
+#endif /* ASSEMBLER */
 
 #endif __MACHINE_TRAP_H__
 

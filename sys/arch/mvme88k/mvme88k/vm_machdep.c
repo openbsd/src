@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.18 2001/03/08 00:03:31 miod Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.19 2001/03/09 05:44:43 smurph Exp $	*/
 
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -65,6 +65,8 @@
 
 #include <machine/cpu.h>
 #include <machine/cpu_number.h>
+#include <machine/locore.h>
+#include <machine/cmmu.h>
 #include <machine/pte.h>
 
 extern struct map *iomap;
@@ -92,7 +94,9 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack, size_t stacksize)
 	extern struct pcb *curpcb;
 	extern void proc_do_uret(), child_return();
 	extern void proc_trampoline();
-	
+	extern void savectx();
+        extern void save_u_area();
+
 	cpu = cpu_number();
 /*	
 	savectx(p1->p_addr->u_pcb);
@@ -204,6 +208,7 @@ cpu_coredump(struct proc *p, struct vnode *vp, struct ucred *cred, struct core *
 void
 cpu_swapin(struct proc *p)
 {
+        extern void save_u_area();
 	save_u_area(p, (vm_offset_t)p->p_addr);
 }
 
@@ -528,7 +533,6 @@ u_int
 kvtop(vm_offset_t va)
 {
 	extern pmap_t kernel_pmap;
-
 	return ((u_int)pmap_extract(kernel_pmap, va));
 }
 

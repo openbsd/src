@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.14 2001/03/07 23:50:35 miod Exp $ */
+/*	$OpenBSD: param.h,v 1.15 2001/03/09 05:44:40 smurph Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1988 University of Utah.
@@ -40,7 +40,7 @@
  * from: Utah $Hdr: machparam.h 1.11 89/08/14$
  *
  *	@(#)param.h	7.8 (Berkeley) 6/28/91
- *	$Id: param.h,v 1.14 2001/03/07 23:50:35 miod Exp $
+ *	$Id: param.h,v 1.15 2001/03/09 05:44:40 smurph Exp $
  */
 #ifndef _MACHINE_PARAM_H_
 #define _MACHINE_PARAM_H_
@@ -172,6 +172,13 @@
  */
 #define mvme88k_btop(x)		((unsigned)(x) >> PGSHIFT)
 #define mvme88k_ptob(x)		((unsigned)(x) << PGSHIFT)
+
+#include <machine/psl.h>
+
+/*
+ * Get interrupt glue.
+ */
+#include <machine/intr.h>
 
 #ifdef   _KERNEL
 extern int delay __P((int));

@@ -24,6 +24,8 @@
  * the rights to redistribute these changes.
  */
 
+#include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/types.h>
 #include <machine/board.h>
 #include <sys/param.h>
@@ -71,7 +73,7 @@ static pmap_table_entry m197_board_table[] = {
 
 pmap_table_t 
 pmap_table_build(endoftext)
-unsigned endoftext;
+	unsigned endoftext;
 {
 	unsigned int i;
 	pmap_table_t bt, pbt;

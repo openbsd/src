@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ve.c,v 1.5 2001/03/08 00:03:13 miod Exp $ */
+/*	$OpenBSD: if_ve.c,v 1.6 2001/03/09 05:44:39 smurph Exp $ */
 /*-
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1982, 1992, 1993
@@ -143,9 +143,9 @@ hide u_int16_t verdcsr __P((struct vam7990_softc *, u_int16_t));
 /* send command to the nvram controller */
 void
 nvram_cmd(sc, cmd, addr )
-struct vam7990_softc *sc;
-u_char cmd;
-u_short addr;
+	struct vam7990_softc *sc;
+	u_char cmd;
+	u_short addr;
 {
 	int i;
 	u_char rcmd = 0;
@@ -163,8 +163,8 @@ u_short addr;
 /* read nvram one bit at a time */
 u_int16_t
 nvram_read(sc, nvram_addr)
-struct vam7990_softc *sc;
-u_char nvram_addr;
+	struct vam7990_softc *sc;
+	u_char nvram_addr;
 {
 	u_short val = 0, mask = 0x04000;
 	u_int16_t wbit;
@@ -217,7 +217,7 @@ verdcsr(sc, port)
 /* reset MVME376, set ipl and vec */
 void
 vereset(sc)
-struct vam7990_softc *sc;
+	struct vam7990_softc *sc;
 {
 	register struct vereg1 *reg1 = ((struct ve_softc *)sc)->sc_r1;
 	u_char vec = ((struct ve_softc *)sc)->sc_vec;
@@ -231,7 +231,7 @@ struct vam7990_softc *sc;
 /* ack the intrrupt by reenableling interrupts */
 void
 ve_ackint(sc)
-struct vam7990_softc *sc;
+	struct vam7990_softc *sc;
 {
 	register struct vereg1 *reg1 = ((struct ve_softc *)sc)->sc_r1;
 	ENABLE_INTR;
@@ -240,12 +240,12 @@ struct vam7990_softc *sc;
 
 int
 vematch(parent, vcf, args)
-struct device *parent;
-void *vcf, *args;
+	struct device *parent;
+	void *vcf, *args;
 {
 
 	struct confargs *ca = args;
-	if (!badvaddr(ca->ca_vaddr, 1)) {
+	if (!badvaddr((unsigned)ca->ca_vaddr, 1)) {
 		return (1);
 	} else {
 		return (0);
@@ -259,9 +259,9 @@ void *vcf, *args;
  */
 void
 veattach(parent, self, aux)
-struct device *parent;
-struct device *self;
-void *aux;
+	struct device *parent;
+	struct device *self;
+	void *aux;
 {
 	register struct ve_softc *lesc = (struct ve_softc *)self;
 	struct vam7990_softc *sc = &lesc->sc_am7990;
@@ -338,7 +338,7 @@ void *aux;
 
 void
 veetheraddr(sc)
-struct vam7990_softc *sc;
+	struct vam7990_softc *sc;
 {
 	u_char * cp = sc->sc_arpcom.ac_enaddr;
 	u_int16_t ival[3];
@@ -352,7 +352,7 @@ struct vam7990_softc *sc;
 
 void
 ve_config(sc)
-struct vam7990_softc *sc;
+	struct vam7990_softc *sc;
 {
 	int mem;
 
@@ -449,7 +449,7 @@ ve_reset(sc)
  */
 void
 ve_meminit(sc)
-register struct vam7990_softc *sc;
+	register struct vam7990_softc *sc;
 {
 	u_long a;
 	int bix;

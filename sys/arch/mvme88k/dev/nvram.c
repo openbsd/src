@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvram.c,v 1.8 2001/03/08 00:03:14 miod Exp $ */
+/*	$OpenBSD: nvram.c,v 1.9 2001/03/09 05:44:39 smurph Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -83,8 +83,8 @@ int nvrammmap __P((dev_t dev, int off, int prot));
 
 int
 nvrammatch(parent, vcf, args)
-struct device *parent;
-void *vcf, *args;
+	struct device *parent;
+	void *vcf, *args;
 {
 #if 0
 	int ret;
@@ -116,8 +116,8 @@ void *vcf, *args;
 
 void
 nvramattach(parent, self, args)
-struct device *parent, *self;
-void *args;
+	struct device *parent, *self;
+	void *args;
 {
 	struct confargs *ca = args;
 	struct nvramsoftc       *sc = (struct nvramsoftc *)self;
@@ -159,13 +159,12 @@ void *args;
  */
 void
 microtime(tvp)
-register struct timeval *tvp;
+	register struct timeval *tvp;
 {
 	int s = splhigh();
 	static struct timeval lasttime;
 
 	*tvp = time;
-	tvp->tv_usec;
 	while (tvp->tv_usec >= 1000000) {
 		tvp->tv_sec++;
 		tvp->tv_usec -= 1000000;
@@ -199,7 +198,7 @@ const short dayyr[12] =
 
 static u_long
 chiptotime(sec, min, hour, day, mon, year)
-register int sec, min, hour, day, mon, year;
+	register int sec, min, hour, day, mon, year;
 {
 	register int days, yr;
 
@@ -301,7 +300,7 @@ timetochip(c)
 
 void 
 inittodr(base)
-time_t base;
+	time_t base;
 {
 	struct nvramsoftc *sc = (struct nvramsoftc *) nvram_cd.cd_devs[0];
 	int sec, min, hour, day, mon, year;
@@ -410,8 +409,8 @@ void resettodr()
 /*ARGSUSED*/
 int
 nvramopen(dev, flag, mode)
-dev_t dev;
-int flag, mode;
+	dev_t dev;
+	int flag, mode;
 {
 	if (minor(dev) >= nvram_cd.cd_ndevs ||
 	    nvram_cd.cd_devs[minor(dev)] == NULL)
@@ -422,8 +421,8 @@ int flag, mode;
 /*ARGSUSED*/
 int
 nvramclose(dev, flag, mode)
-dev_t dev;
-int flag, mode;
+	dev_t dev;
+	int flag, mode;
 {
 	return (0);
 }
@@ -455,9 +454,9 @@ nvramioctl(dev, cmd, data, flag, p)
 /*ARGSUSED*/
 int
 nvramread(dev, uio, flags)
-dev_t dev;
-struct uio *uio;
-int flags;
+	dev_t dev;
+	struct uio *uio;
+	int flags;
 {
 	int unit = minor(dev);
 	struct nvramsoftc *sc = (struct nvramsoftc *) nvram_cd.cd_devs[unit];
@@ -468,9 +467,9 @@ int flags;
 /*ARGSUSED*/
 int
 nvramwrite(dev, uio, flags)
-dev_t dev;
-struct uio *uio;
-int flags;
+	dev_t dev;
+	struct uio *uio;
+	int flags;
 {
 	int unit = minor(dev);
 	struct nvramsoftc *sc = (struct nvramsoftc *) nvram_cd.cd_devs[unit];
@@ -485,8 +484,8 @@ int flags;
  */
 int
 nvrammmap(dev, off, prot)
-dev_t dev;
-int off, prot;
+	dev_t dev;
+	int off, prot;
 {
 	int unit = minor(dev);
 	struct nvramsoftc *sc = (struct nvramsoftc *) nvram_cd.cd_devs[unit];

@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_sstep.c,v 1.5 2001/03/07 23:58:36 miod Exp $	*/
+/*	$OpenBSD: db_sstep.c,v 1.6 2001/03/09 05:44:38 smurph Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -26,6 +26,8 @@
  * rights to redistribute these changes.
  */
 
+#include <sys/param.h>
+#include <sys/systm.h>
 #include <machine/db_machdep.h>
 #include <ddb/db_access.h>	/* db_get_value() */
 
