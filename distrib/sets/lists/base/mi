@@ -1605,9 +1605,12 @@
 ./usr/sbin/moptrace
 ./usr/sbin/mtree
 ./usr/sbin/named
+./usr/sbin/named-checkconf
+./usr/sbin/named-checkzone
 ./usr/sbin/ndp
 ./usr/sbin/netgroup_mkdb
 ./usr/sbin/nslookup
+./usr/sbin/nsupdate
 ./usr/sbin/openssl
 ./usr/sbin/pac
 ./usr/sbin/pkg
@@ -1639,6 +1642,8 @@
 ./usr/sbin/rmgroup
 ./usr/sbin/rmt
 ./usr/sbin/rmuser
+./usr/sbin/rndc
+./usr/sbin/rndc-confgen
 ./usr/sbin/rotatelogs
 ./usr/sbin/route6d
 ./usr/sbin/rpc.bootparamd
@@ -4091,8 +4096,3 @@
 ./var/yp/Makefile.yp
 ./var/yp/Makefile.yp.dist
 ./var/yp/README
-./usr/sbin/named-checkconf
-./usr/sbin/named-checkzone
-./usr/sbin/nsupdate
-./usr/sbin/rndc
-./usr/sbin/rndc-confgen

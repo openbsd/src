@@ -1092,6 +1092,9 @@
 ./usr/share/man/cat4/gre.0
 ./usr/share/man/cat4/gtp.0
 ./usr/share/man/cat4/hifn.0
+./usr/share/man/cat4/hil.0
+./usr/share/man/cat4/hilkbd.0
+./usr/share/man/cat4/hilms.0
 ./usr/share/man/cat4/hme.0
 ./usr/share/man/cat4/hp300
 ./usr/share/man/cat4/hp300/apci.0

@@ -667,6 +667,12 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/eisa/eisadevs_data.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/eisa/eisareg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/eisa/eisavar.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/hil
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/hil/hildevs.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/hil/hildevs_data.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/hil/hilkbdmap.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/hil/hilreg.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/hil/hilvar.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/i2o
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/i2o/i2o.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/i2o/iopio.ph

@@ -116,6 +116,12 @@
 ./usr/include/dev/eisa/eisadevs_data.h
 ./usr/include/dev/eisa/eisareg.h
 ./usr/include/dev/eisa/eisavar.h
+./usr/include/dev/hil
+./usr/include/dev/hil/hildevs.h
+./usr/include/dev/hil/hildevs_data.h
+./usr/include/dev/hil/hilkbdmap.h
+./usr/include/dev/hil/hilreg.h
+./usr/include/dev/hil/hilvar.h
 ./usr/include/dev/i2o
 ./usr/include/dev/i2o/i2o.h
 ./usr/include/dev/i2o/iopio.h
