@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.9 2004/05/14 20:38:32 miod Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.10 2004/11/18 16:10:43 miod Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -62,6 +62,7 @@ mbattach(struct device *parent, struct device *self, void *aux)
 	struct mainbus_softc *sc = (struct mainbus_softc *)self;
 	struct confargs nca;
 	u_int8_t systype;
+	int cpu;
 	extern vaddr_t isaspace_va;
 
 	/* Pretty print the system type */
@@ -75,10 +76,18 @@ mbattach(struct device *parent, struct device *self, void *aux)
 		printf("Dahu MVME");
 		break;
 	case MVMETYPE_2600_712:
-		printf("MVME2600 or MVME2700 (712-compatible)");
+		cpu = ppc_mfpvr() >> 16;
+		if (cpu == PPC_CPU_MPC750)
+			printf("MVME2700 (712-compatible)");
+		else
+			printf("MVME2600 (712-compatible)");
 		break;
 	case MVMETYPE_2600_761:
-		printf("MVME2600 or MVME2700 (761-compatible)");
+		cpu = ppc_mfpvr() >> 16;
+		if (cpu == PPC_CPU_MPC750)
+			printf("MVME2700 (761-compatible)");
+		else
+			printf("MVME2600 (761-compatible)");
 		break;
 	case MVMETYPE_3600_712:
 		printf("MVME3600 or MVME4600 (712-compatible)");
