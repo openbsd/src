@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.45 2004/01/02 01:46:20 deraadt Exp $ */
+/*	$OpenBSD: kroute.c,v 1.46 2004/01/05 16:17:22 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -318,11 +318,16 @@ kroute_fib_couple(void)
 {
 	struct kroute_node	*kr;
 
+	if (kr_state.fib_sync == 1)	/* already coupled */
+		return;
+
 	kr_state.fib_sync = 1;
 
 	RB_FOREACH(kr, kroute_tree, &krt)
 		if ((kr->flags & F_BGPD_INSERTED))
 			kroute_msg(kr_state.fd, RTM_ADD, &kr->r);
+
+	logit(LOG_INFO, "kernel routing table coupled");
 }
 
 void
@@ -330,11 +335,16 @@ kroute_fib_decouple(void)
 {
 	struct kroute_node	*kr;
 
+	if (kr_state.fib_sync == 0)	/* already decoupled */
+		return;
+
 	RB_FOREACH(kr, kroute_tree, &krt)
 		if ((kr->flags & F_BGPD_INSERTED))
 			kroute_msg(kr_state.fd, RTM_DELETE, &kr->r);
 
 	kr_state.fib_sync = 0;
+
+	logit(LOG_INFO, "kernel routing table decoupled");
 }
 
 #define	ROUNDUP(a, size)	\
