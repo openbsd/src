@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl81x9.c,v 1.36 2005/01/15 05:24:11 brad Exp $ */
+/*	$OpenBSD: rtl81x9.c,v 1.37 2005/02/20 00:41:36 brad Exp $ */
 
 /*
  * Copyright (c) 1997, 1998
@@ -591,7 +591,7 @@ rl_rxeof(sc)
 {
 	struct mbuf		*m;
 	struct ifnet		*ifp;
-	int			total_len = 0;
+	int			total_len;
 	u_int32_t		rxstat;
 	caddr_t			rxbufpos;
 	int			wrap = 0;
@@ -626,7 +626,8 @@ rl_rxeof(sc)
 		 * RealTek should be shot for this.
 		 */
 		rxstat = htole32(rxstat);
-		if ((u_int16_t)(rxstat >> 16) == RL_RXSTAT_UNFINISHED) {
+		total_len = rxstat >> 16;
+		if (total_len == RL_RXSTAT_UNFINISHED) {
 			bus_dmamap_sync(sc->sc_dmat, sc->sc_rx_dmamap,
 			    0, sc->sc_rx_dmamap->dm_mapsize,
 			    BUS_DMASYNC_PREREAD);
@@ -643,7 +644,6 @@ rl_rxeof(sc)
 		}
 
 		/* No errors; receive the packet. */
-		total_len = rxstat >> 16;
 		rx_bytes += total_len + 4;
 
 		/*
