@@ -1,4 +1,4 @@
-/*	$Id: iwicontrol.c,v 1.4 2004/10/24 11:50:47 deraadt Exp $	*/
+/*	$Id: iwicontrol.c,v 1.5 2004/10/27 21:39:05 damien Exp $	*/
 
 /*-
  * Copyright (c) 2004
@@ -95,6 +95,7 @@ main(int argc, char **argv)
 			if (!ifspecified)
 				iface = optarg;
 			break;
+
 		case 'd':
 			path = optarg;
 			break;
@@ -232,12 +233,8 @@ get_radio_state(char *iface)
 {
 	int radio;
 
-	if (do_req(iface, SIOCGRADIO, &radio) == -1) {
-		if (errno == ENOTTY)
-			errx(EX_OSERR, "Can't read radio: no firmware");
-		else
-			err(EX_OSERR, "Can't read radio");
-	}
+	if (do_req(iface, SIOCGRADIO, &radio) == -1)
+		err(EX_OSERR, "Can't read radio");
 
 	(void)printf("Radio is %s\n", radio ? "ON" : "OFF");
 }
@@ -310,12 +307,8 @@ get_statistics(char *iface)
 	static unsigned long stats[256]; /* XXX */
 	const struct statistic *stat;
 
-	if (do_req(iface, SIOCGTABLE0, stats) == -1) {
-		if (errno == ENOTTY)
-			errx(EX_OSERR, "Can't read statistics: no firmware");
-		else
-			err(EX_OSERR, "Can't read statistics");
-	}
+	if (do_req(iface, SIOCGTABLE0, stats) == -1)
+		err(EX_OSERR, "Can't read statistics");
 
 	for (stat = tbl; stat->index != 0; stat++)
 		(void)printf("%-60s[%lu]\n", stat->desc, stats[stat->index]);
