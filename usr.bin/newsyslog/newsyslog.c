@@ -1,4 +1,4 @@
-/*	$OpenBSD: newsyslog.c,v 1.68 2003/06/09 20:21:36 millert Exp $	*/
+/*	$OpenBSD: newsyslog.c,v 1.69 2003/06/09 20:29:10 millert Exp $	*/
 
 /*
  * Copyright (c) 1999, 2002, 2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -68,7 +68,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: newsyslog.c,v 1.68 2003/06/09 20:21:36 millert Exp $";
+static const char rcsid[] = "$OpenBSD: newsyslog.c,v 1.69 2003/06/09 20:29:10 millert Exp $";
 #endif /* not lint */
 
 #ifndef CONF
@@ -364,7 +364,7 @@ send_signal(char *pidfile, int signal)
 	pid_t pid;
 	FILE *f;
 	char line[BUFSIZ], *ep, *err;
-	unsigned long ulval;
+	long lval;
 
 	if ((f = fopen(pidfile, "r")) == NULL) {
 		warn("can't open %s", pidfile);
@@ -375,17 +375,17 @@ send_signal(char *pidfile, int signal)
 	errno = 0;
 	err = NULL;
 	if (fgets(line, sizeof(line), f)) {
-		ulval = strtoul(line, &ep, 10);
+		lval = strtol(line, &ep, 10);
 		if (line[0] == '\0' || (*ep != '\0' && *ep != '\n'))
 			err = "invalid number in";
-		else if (errno == ERANGE && ulval == ULONG_MAX)
+		else if (lval < 0 || (errno == ERANGE && lval == LONG_MAX))
 			err = "out of range number in";
-		else if (ulval == 0)
+		else if (lval == 0)
 			err = "no number in";
-		else if (ulval < MIN_PID)
+		else if (lval < MIN_PID)
 			err = "preposterous process number in";
 		else
-			pid = ulval;
+			pid = (pid_t)lval;
 	} else {
 		if (errno == 0)
 			err = "empty";
