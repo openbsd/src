@@ -1,5 +1,5 @@
-/*	$OpenBSD: srt0.s,v 1.2 1997/01/17 08:33:00 downsj Exp $	*/
-/*	$NetBSD: srt0.s,v 1.3 1995/09/02 05:04:23 thorpej Exp $	*/
+/*	$OpenBSD: srt0.s,v 1.3 1997/03/21 07:16:21 downsj Exp $	*/
+/*	$NetBSD: srt0.s,v 1.2 1997/03/10 08:00:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -189,8 +189,12 @@ boot1:
 	movl	d6,_bootdev	| save bootdev and howto
 	movl	d7,_howto	|   globally so all can access
 	movl	LOWRAM,d0	| read lowram value from bootrom
-	addl	#NBPG,d0	| must preserve this for bootrom to reboot
-	andl	#0xfffff000,d0	| round to next page
+	/*
+	 * Must preserve the scratch area for the BOOT ROM.
+	 * Round up to the next 8k boundary.
+	 */
+	addl	#((2*NBPG)-1),d0
+	andl	#-(2*NBPG),d0
 	movl	d0,_lowram	| stash that value
 start:
 	movl	#_edata,a2	| start of BSS
