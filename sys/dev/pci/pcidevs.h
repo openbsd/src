@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.526 2002/07/06 14:26:58 gluk Exp 
+ *		OpenBSD: pcidevs,v 1.527 2002/07/10 18:07:49 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -63,7 +63,7 @@
 #define	PCI_VENDOR_NETFRAME	0x1007		/* NetFrame Systems */
 #define	PCI_VENDOR_EPSON	0x1008		/* Epson */
 #define	PCI_VENDOR_PHOENIX	0x100a		/* Phoenix Technologies */
-#define	PCI_VENDOR_NS	0x100b		/* National Semiconductor */
+#define	PCI_VENDOR_NS	0x100b		/* NS */
 #define	PCI_VENDOR_TSENG	0x100c		/* Tseng Labs */
 #define	PCI_VENDOR_AST	0x100d		/* AST Research */
 #define	PCI_VENDOR_WEITEK	0x100e		/* Weitek */

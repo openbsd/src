@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.526 2002/07/06 14:26:58 gluk Exp 
+ *		OpenBSD: pcidevs,v 1.527 2002/07/10 18:07:49 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -5796,7 +5796,7 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	},
 	{
 	    PCI_VENDOR_NS,
-	    "National Semiconductor",
+	    "NS",
 	},
 	{
 	    PCI_VENDOR_TSENG,
