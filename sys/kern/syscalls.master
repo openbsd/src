@@ -1,4 +1,4 @@
-	$OpenBSD: syscalls.master,v 1.6 1996/04/19 16:09:07 niklas Exp $
+	$OpenBSD: syscalls.master,v 1.7 1996/04/28 00:26:47 tholo Exp $
 ;	$NetBSD: syscalls.master,v 1.31 1996/02/27 04:20:41 jonathan Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -97,7 +97,7 @@
 41	STD		{ int sys_dup(u_int fd); }
 42	STD		{ int sys_pipe(void); }
 43	STD		{ gid_t sys_getegid(void); }
-44	STD		{ int sys_profil(caddr_t samples, size_t size, \
+44	STD		{ int sys_profil(char *samples, size_t size, \
 			    u_long offset, u_int scale); }
 #ifdef KTRACE
 45	STD		{ int sys_ktrace(char *fname, int ops, int facs, \

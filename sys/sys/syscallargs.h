@@ -192,7 +192,7 @@ struct sys_dup_args {
 };
 
 struct sys_profil_args {
-	syscallarg(caddr_t) samples;
+	syscallarg(char *) samples;
 	syscallarg(size_t) size;
 	syscallarg(u_long) offset;
 	syscallarg(u_int) scale;

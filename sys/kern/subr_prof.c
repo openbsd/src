@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_prof.c,v 1.4 1996/04/21 22:27:21 deraadt Exp $	*/
+/*	$OpenBSD: subr_prof.c,v 1.5 1996/04/28 00:26:46 tholo Exp $	*/
 /*	$NetBSD: subr_prof.c,v 1.11 1996/03/17 02:44:40 pk Exp $	*/
 
 /*-
@@ -157,7 +157,7 @@ sys_profil(p, v, retval)
 	register_t *retval;
 {
 	register struct sys_profil_args /* {
-		syscallarg(caddr_t) samples;
+		syscallarg(char *) samples;
 		syscallarg(u_int) size;
 		syscallarg(u_int) offset;
 		syscallarg(u_int) scale;
@@ -177,7 +177,7 @@ sys_profil(p, v, retval)
 	s = splstatclock();
 	upp->pr_off = SCARG(uap, offset);
 	upp->pr_scale = SCARG(uap, scale);
-	upp->pr_base = SCARG(uap, samples);
+	upp->pr_base = (caddr_t)SCARG(uap, samples);
 	upp->pr_size = SCARG(uap, size);
 	startprofclock(p);
 	splx(s);
