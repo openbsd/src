@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.2 1996/03/03 17:20:22 niklas Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.3 1996/06/25 21:26:11 deraadt Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -418,7 +418,7 @@ unp_bind(unp, nam, p)
 	}
 	VATTR_NULL(&vattr);
 	vattr.va_type = VSOCK;
-	vattr.va_mode = ACCESSPERMS;
+	vattr.va_mode = ACCESSPERMS &~ p->p_fd->fd_cmask;
 	VOP_LEASE(nd.ni_dvp, p, p->p_ucred, LEASE_WRITE);
 	error = VOP_CREATE(nd.ni_dvp, &nd.ni_vp, &nd.ni_cnd, &vattr);
 	if (error)
