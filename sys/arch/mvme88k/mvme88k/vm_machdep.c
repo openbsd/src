@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.26 2001/06/27 04:29:22 art Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.27 2001/07/05 10:03:48 art Exp $	*/
 
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -328,7 +328,7 @@ iomap_mapin(vm_offset_t pa, vm_size_t len, boolean_t canwait)
 	len = round_page(off + len);
 
 	s = splhigh();
-	error = extent_alloc(iomap_extent, len, PAGE_SIZE, 0,
+	error = extent_alloc(iomap_extent, len, PAGE_SIZE, 0, 0,
 	    canwait ? EX_WAITSPACE : 0, &iova);
 	splx(s);
 
