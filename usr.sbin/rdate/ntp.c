@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.16 2004/05/18 17:25:18 jakob Exp $	*/
+/*	$OpenBSD: ntp.c,v 1.17 2004/05/26 16:38:44 jakob Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 by N.M. Maclaren. All rights reserved.
@@ -99,6 +99,9 @@ struct ntp_data {
 	double	receive;
 	double	transmit;
 	double	current;
+
+	u_int64_t xmitck;
+	u_int64_t recvck;
 };
 
 void	ntp_client(const char *, int, struct timeval *, struct timeval *, int);
@@ -234,8 +237,26 @@ make_packet(struct ntp_data *data)
 	data->polling = 0;
 	data->precision = 0;
 	data->reference = data->dispersion = 0.0;
-	data->receive = data->originate = 0.0;
+	data->receive = 0.0;
 	data->current = data->transmit = current_time(JAN_1970);
+	data->originate = data->transmit;
+
+
+	/*
+	 * Send out a random 64-bit number as our transmit time.  The NTP 
+	 * server will copy said number into the originate field on the
+	 * response that it sends us.  This is totally legal per the SNTP spec.
+	 * 
+	 * The impact of this is two fold: we no longer send out the current
+	 * system time for the world to see (which may aid an attacker), and 
+	 * it gives us a (not very secure) way of knowing that we're not
+	 * getting spoofed by an attacker that can't capture our traffic
+	 * but can spoof packets from the NTP server we're communicating with.
+	 *
+	 */
+	 
+	data->xmitck = ((u_int64_t)arc4random() << 32) | arc4random();
+	data->recvck = 0;
 }
 
 int
@@ -265,7 +286,7 @@ read_packet(int fd, struct ntp_data *data, double *off, double *error,
     double *dispersion)
 {
 	u_char	receive[NTP_PACKET_MAX+1];
-	double	delay1, delay2, x, y;
+	double	delay, x, y;
 	int	length, r;
 	fd_set	*rfds;
 	struct	timeval tv;
@@ -308,6 +329,11 @@ retry:
 
 	unpack_ntp(data, receive, length);
 
+	if (data->recvck != data->xmitck) {
+		warnx("Invalid cookie received");
+		return 1;
+	}
+
 	if (data->version < NTP_VERSION_MIN ||
 	    data->version > NTP_VERSION_MAX) {
 		warnx("Invalid NTP version, packet rejected");
@@ -325,17 +351,14 @@ retry:
 	 * completely unsynchronised packets is an abomination, anyway, so
 	 * reject it.
 	 */
-	delay1 = data->transmit - data->receive;
-	delay2 = data->current - data->originate;
+	delay = data->transmit - data->receive;
 
 	if (data->reference == 0.0 ||
 	    data->transmit == 0.0 ||
 	    data->receive == 0.0 ||
 	    (data->reference != 0.0 && data->receive < data->reference) ||
-	    delay1 < 0.0 ||
-	    delay1 > NTP_INSANITY ||
-	    delay2 < 0.0 ||
-	    delay2 > NTP_INSANITY ||
+	    delay < 0.0 ||
+	    delay > NTP_INSANITY ||
 	    data->dispersion > NTP_INSANITY) {
 		warnx("Incomprehensible NTP packet rejected");
 		return 1;
@@ -373,13 +396,6 @@ pack_ntp(u_char	*packet, int length, struct ntp_data *data)
 	packet[2] = data->polling;
 	packet[3] = data->precision;
 
-	d = data->originate/NTP_SCALE;
-	for (i = 0; i < 8; ++i) {
-		if ((k = (int)(d *= 256.0)) >= 256) k = 255;
-		packet[NTP_ORIGINATE+i] = k;
-		d -= k;
-	}
-
 	d = data->receive/NTP_SCALE;
 	for (i = 0; i < 8; ++i) {
 		if ((k = (int)(d *= 256.0)) >= 256) k = 255;
@@ -387,12 +403,13 @@ pack_ntp(u_char	*packet, int length, struct ntp_data *data)
 		d -= k;
 	}
 
-	d = data->transmit/NTP_SCALE;
-	for (i = 0; i < 8; ++i) {
-		if ((k = (int)(d *= 256.0)) >= 256) k = 255;
-		packet[NTP_TRANSMIT+i] = k;
-		d -= k;
-	}
+	/* 
+	 * No endian concerns here.  Since we're running as a strict 
+	 * unicast client, we don't have to worry about anyone else finding
+	 * this field intelligible. 
+	 */
+	
+	*(u_int64_t *)(packet + NTP_TRANSMIT) = data->xmitck;
 }
 
 /*
@@ -424,16 +441,15 @@ unpack_ntp(struct ntp_data *data, u_char *packet, int length)
 	data->reference = d/NTP_SCALE;
 
 	for (i = 0, d = 0.0; i < 8; ++i)
-	    d = 256.0*d+packet[NTP_ORIGINATE+i];
-	data->originate = d/NTP_SCALE;
-
-	for (i = 0, d = 0.0; i < 8; ++i)
 	    d = 256.0*d+packet[NTP_RECEIVE+i];
 	data->receive = d/NTP_SCALE;
 
 	for (i = 0, d = 0.0; i < 8; ++i)
 	    d = 256.0*d+packet[NTP_TRANSMIT+i];
 	data->transmit = d/NTP_SCALE;
+
+	/* See unpack_ntp for why there is no byte-order change. */
+	data->recvck = *(u_int64_t *)(packet + NTP_ORIGINATE);
 }
 
 /*
@@ -508,5 +524,7 @@ print_packet(const struct ntp_data *data)
 	printf("receive:     %e\n", data->receive);
 	printf("transmit:    %e\n", data->transmit);
 	printf("current:     %e\n", data->current);
+	printf("xmitck:      0x%0llX\n", data->xmitck);
+	printf("recvck:      0x%0llX\n", data->recvck);
 };
 #endif
