@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.53 2001/03/19 23:58:38 jason Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.54 2001/03/22 02:00:36 jason Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -237,9 +237,8 @@ bridge_ioctl(ifp, cmd, data)
 				 * Bring interface up long enough to set
 				 * promiscuous flag, then shut it down again.
 				 */
-				strncpy(ifreq.ifr_name, req->ifbr_ifsname,
-				    sizeof(ifreq.ifr_name) - 1);
-				ifreq.ifr_name[sizeof(ifreq.ifr_name) - 1] = '\0';
+				strlcpy(ifreq.ifr_name, req->ifbr_ifsname,
+				    IFNAMSIZ);
 				ifs->if_flags |= IFF_UP;
 				ifreq.ifr_flags = ifs->if_flags;
 				error = (*ifs->if_ioctl)(ifs, SIOCSIFFLAGS,
@@ -251,9 +250,8 @@ bridge_ioctl(ifp, cmd, data)
 				if (error != 0)
 					break;
 
-				strncpy(ifreq.ifr_name, req->ifbr_ifsname,
-				    sizeof(ifreq.ifr_name) - 1);
-				ifreq.ifr_name[sizeof(ifreq.ifr_name) - 1] = '\0';
+				strlcpy(ifreq.ifr_name, req->ifbr_ifsname,
+				    IFNAMSIZ);
 				ifs->if_flags &= ~IFF_UP;
 				ifreq.ifr_flags = ifs->if_flags;
 				error = (*ifs->if_ioctl)(ifs, SIOCSIFFLAGS,
@@ -585,12 +583,8 @@ bridge_bifconf(sc, bifc)
 	LIST_FOREACH(p, &sc->sc_iflist, next) {
 		if (bifc->ifbic_len < sizeof(breq))
 			break;
-		strncpy(breq.ifbr_name, sc->sc_if.if_xname,
-		    sizeof(breq.ifbr_name)-1);
-		breq.ifbr_name[sizeof(breq.ifbr_name) - 1] = '\0';
-		strncpy(breq.ifbr_ifsname, p->ifp->if_xname,
-		    sizeof(breq.ifbr_ifsname)-1);
-		breq.ifbr_ifsname[sizeof(breq.ifbr_ifsname) - 1] = '\0';
+		strlcpy(breq.ifbr_name, sc->sc_if.if_xname, IFNAMSIZ);
+		strlcpy(breq.ifbr_ifsname, p->ifp->if_xname, IFNAMSIZ);
 		breq.ifbr_ifsflags = p->bif_flags;
 		breq.ifbr_state = p->bif_state;
 		breq.ifbr_priority = p->bif_priority;
@@ -647,12 +641,8 @@ bridge_brlconf(sc, bc)
 	SIMPLEQ_FOREACH(n, &ifl->bif_brlin, brl_next) {
 		if (bc->ifbrl_len < sizeof(req))
 			goto done;
-		strncpy(req.ifbr_name, sc->sc_if.if_xname,
-		    sizeof(req.ifbr_name) - 1);
-		req.ifbr_name[sizeof(req.ifbr_name) - 1] = '\0';
-		strncpy(req.ifbr_ifsname, ifl->ifp->if_xname,
-		    sizeof(req.ifbr_ifsname) - 1);
-		req.ifbr_ifsname[sizeof(req.ifbr_ifsname) - 1] = '\0';
+		strlcpy(req.ifbr_name, sc->sc_if.if_xname, IFNAMSIZ);
+		strlcpy(req.ifbr_ifsname, ifl->ifp->if_xname, IFNAMSIZ);
 		req.ifbr_action = n->brl_action;
 		req.ifbr_flags = n->brl_flags;
 		req.ifbr_src = n->brl_src;
@@ -668,12 +658,8 @@ bridge_brlconf(sc, bc)
 	SIMPLEQ_FOREACH(n, &ifl->bif_brlout, brl_next) {
 		if (bc->ifbrl_len < sizeof(req))
 			goto done;
-		strncpy(req.ifbr_name, sc->sc_if.if_xname,
-		    sizeof(req.ifbr_name) - 1);
-		req.ifbr_name[sizeof(req.ifbr_name) - 1] = '\0';
-		strncpy(req.ifbr_ifsname, ifl->ifp->if_xname,
-		    sizeof(req.ifbr_ifsname) - 1);
-		req.ifbr_ifsname[sizeof(req.ifbr_ifsname) - 1] = '\0';
+		strlcpy(req.ifbr_name, sc->sc_if.if_xname, IFNAMSIZ);
+		strlcpy(req.ifbr_ifsname, ifl->ifp->if_xname, IFNAMSIZ);
 		req.ifbr_action = n->brl_action;
 		req.ifbr_flags = n->brl_flags;
 		req.ifbr_src = n->brl_src;
