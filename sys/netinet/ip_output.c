@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.31 1998/06/03 10:00:19 provos Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.32 1998/06/30 23:50:17 provos Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -353,8 +353,6 @@ ip_output(m0, va_alist)
 #endif /* ENCDEBUG */
 
 		while (tdb && tdb->tdb_xform) {
-			m0 = NULL;
-
 			/* Check if the SPI is invalid */
 			if (tdb->tdb_flags & TDBF_INVALID) {
 			 	if (encdebug)
