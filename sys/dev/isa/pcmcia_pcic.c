@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcmcia_pcic.c,v 1.12 1997/01/26 10:02:07 niklas Exp $	*/
+/*	$OpenBSD: pcmcia_pcic.c,v 1.13 1997/01/26 11:00:07 niklas Exp $	*/
 
 /*
  *  Copyright (c) 1995, 1996 John T. Kohl
@@ -283,55 +283,56 @@ pcic_probe(parent, self, aux)
 	pcic->sc_adapter.nslots = 0;
 	maxslot = 2;
 	for (i = j = 0; i < maxslot; i++) {
-	    pcic->slot[j].reg_off = 0x80 * pia->pia_ctlr + 0x40 * i;
-	    pcic->slot[j].chip = pcic;
+		pcic->slot[j].reg_off = 0x80 * pia->pia_ctlr + 0x40 * i;
+		pcic->slot[j].chip = pcic;
 
-	    chip_inf = pcic_rd(&pcic->slot[j], PCIC_ID_REV);
-	    if (PDEBUG(PCDCONF)) {
-		printf("pcic_probe read info %x\n", chip_inf);
-		delay(2000000);
-	    }
-	    if (!first && ochip_inf != chip_inf)
-		continue;		/* don't attach, it's different */
-	    ochip_inf = chip_inf;
-	    switch (chip_inf) {
-	    case PCIC_INTEL0:
-		pcic->chip_inf = PCMICA_CHIP_82365_0;
-		goto ok;
-	    case PCIC_INTEL1:
-		pcic->chip_inf = PCMICA_CHIP_82365_1;
-		goto ok;
-	    case PCIC_IBM1:
-		pcic->chip_inf = PCMICA_CHIP_IBM_1;
-		goto ok;
-	    case PCIC_146FC6:
-		pcic->chip_inf = PCMICA_CHIP_146FC6;
-		maxslot = 4;
-		goto ok;
-	    case PCIC_146FC7:
-		pcic->chip_inf = PCMICA_CHIP_146FC7;
-		maxslot = 4;
-		goto ok;
-	    case PCIC_IBM2:
-		pcic->chip_inf = PCMICA_CHIP_IBM_2;
-	ok:
-		if (first) {
-		    pcic->sc_adapter.adapter_softc = (void *)pcic;
-		    pcic->sc_adapter.chip_link = &pcic_funcs;
-		    pcic->sc_adapter.bus_link = &pcmcia_isa_link;
-		    pcicm->sc_ctlrs[pia->pia_ctlr] = pcic;
-		    pcicm->sc_slavestate[pia->pia_ctlr] = SLAVE_CONFIGURED;
-		    first = 0;
-		}
-		pcic->sc_adapter.nslots++;
-		j++;
-	    default:
+		chip_inf = pcic_rd(&pcic->slot[j], PCIC_ID_REV);
 		if (PDEBUG(PCDCONF)) {
-		    printf("found ID %x at pcic%d position\n",
-			   chip_inf & 0xff, pcic->sc_dev.dv_unit);
+	    		printf("pcic_probe read info %x\n", chip_inf);
+			delay(2000000);
 		}
-		continue;
-	    }
+		if (!first && ochip_inf != chip_inf)
+			continue;	/* don't attach, it's different */
+		ochip_inf = chip_inf;
+		switch (chip_inf) {
+		case PCIC_INTEL0:
+			pcic->chip_inf = PCMICA_CHIP_82365_0;
+			goto ok;
+		case PCIC_INTEL1:
+			pcic->chip_inf = PCMICA_CHIP_82365_1;
+			goto ok;
+		case PCIC_IBM1:
+			pcic->chip_inf = PCMICA_CHIP_IBM_1;
+			goto ok;
+		case PCIC_146FC6:
+			pcic->chip_inf = PCMICA_CHIP_146FC6;
+			maxslot = 4;
+			goto ok;
+		case PCIC_146FC7:
+			pcic->chip_inf = PCMICA_CHIP_146FC7;
+			maxslot = 4;
+			goto ok;
+		case PCIC_IBM2:
+			pcic->chip_inf = PCMICA_CHIP_IBM_2;
+ok:
+			if (first) {
+				pcic->sc_adapter.adapter_softc = (void *)pcic;
+				pcic->sc_adapter.chip_link = &pcic_funcs;
+				pcic->sc_adapter.bus_link = &pcmcia_isa_link;
+				pcicm->sc_ctlrs[pia->pia_ctlr] = pcic;
+				pcicm->sc_slavestate[pia->pia_ctlr] =
+				    SLAVE_CONFIGURED;
+				first = 0;
+			}
+			pcic->sc_adapter.nslots++;
+			j++;
+		default:
+			if (PDEBUG(PCDCONF)) {
+				printf("found ID %x at pcic%d position\n",
+				    chip_inf & 0xff, pcic->sc_dev.dv_unit);
+			}
+			continue;
+		}
 	}
 	if (pcic->sc_adapter.nslots != 0) {
 		if (bus_space_map(pia->pia_memt, pia->pia_maddr,
