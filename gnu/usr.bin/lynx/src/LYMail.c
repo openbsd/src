@@ -1216,8 +1216,11 @@ PUBLIC void reply_by_mail ARGS3(
      *	Put the To: line in the header.
      */
 #ifndef DOSPATH
-    sprintf(buf, "To: %s\n", address);
-    StrAllocCopy(header, buf);
+    asprintf(&header, "To: %s\n", address);
+    if (!header) {
+	fprintf(stderr, "Out of memory, you loose!\n");
+	exit(1);
+    }
 #endif
 
     /*
