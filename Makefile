@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.93 2003/10/05 00:12:52 mickey Exp $
+#	$OpenBSD: Makefile,v 1.94 2003/10/05 00:18:02 mickey Exp $
 
 #
 # For more information on building in tricky environments, please see
@@ -312,7 +312,7 @@ cross-lib:	${CROSSGCC}
 		    ${MAKE} depend all install); \
 	    done; \
 	    eval ${CROSSENV} MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
-	        SKIPDIR="${NO_CROSS} libocurses/PSD.doc" \
+	        SKIPDIR=\"${NO_CROSS} libocurses/PSD.doc\" \
 	        ${MAKE} depend all install)
 .if (${KERBEROS5:L} == "yes")
 	MACHINE=${TARGET} MACHINE_ARCH=`cat ${CROSSDIR}/TARGET_ARCH`; \
@@ -328,7 +328,7 @@ cross-bin:	${CROSSOBJ}
 	for i in libexec bin sbin usr.bin usr.sbin; do \
 	(cd ${.CURDIR}/$$i; \
 	    eval ${CROSSENV} MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
-	        SKIPDIR="${BINUTILS} ${NO_CROSS}" \
+	        SKIPDIR=\"${BINUTILS} ${NO_CROSS}\" \
 	        ${MAKE} depend all install); \
 	done
 
