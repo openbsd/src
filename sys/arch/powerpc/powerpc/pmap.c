@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.85 2004/01/03 00:57:06 pvalchev Exp $ */
+/*	$OpenBSD: pmap.c,v 1.86 2004/01/25 13:22:10 miod Exp $ */
 
 /*
  * Copyright (c) 2001, 2002 Dale Rahn.
@@ -187,7 +187,7 @@ struct pmapvp {
  * from the vp table because they were statically initialized at the
  * initial pmap initialization. This is so that memory allocation 
  * is not necessary in the pmap_kernel() mappings.
- * otherwise bad race conditions can appear.
+ * Otherwise bad race conditions can appear.
  */
 struct pte_desc *
 pmap_vp_lookup(pmap_t pm, vaddr_t va)
@@ -243,7 +243,7 @@ pmap_vp_remove(pmap_t pm, vaddr_t va)
  * This code should track allocations of vp table allocations
  * so they can be freed efficiently.
  * 
- * should this be called under splimp?
+ * Should this be called under splimp?
  */
 void
 pmap_vp_enter(pmap_t pm, vaddr_t va, struct pte_desc *pted)
@@ -379,15 +379,15 @@ PTED_VALID(struct pte_desc *pted)
 
 /*
  * PV entries -
- * manpulate the physical to virtual translations for the entire system.
+ * manipulate the physical to virtual translations for the entire system.
  * 
- * QUESTION: should all mapped memory be stored in PV tables? or
+ * QUESTION: should all mapped memory be stored in PV tables? Or
  * is it alright to only store "ram" memory. Currently device mappings
  * are not stored.
  * It makes sense to pre-allocate mappings for all of "ram" memory, since
  * it is likely that it will be mapped at some point, but would it also
  * make sense to use a tree/table like is use for pmap to store device
- * mappings.
+ * mappings?
  * Futher notes: It seems that the PV table is only used for pmap_protect
  * and other paging related operations. Given this, it is not necessary
  * to store any pmap_kernel() entries in PV tables and does not make
@@ -402,7 +402,7 @@ PTED_VALID(struct pte_desc *pted)
  * One issue of making this a single data structure is that two pointers are
  * wasted for every page which does not map ram (device mappings), this 
  * should be a low percentage of mapped pages in the system, so should not
- * have too noticable unnecssary ram consumption.
+ * have too noticable unnecessary ram consumption.
  */
 
 int
@@ -481,7 +481,7 @@ pmap_enter(pm, va, pa, prot, flags)
 	/* Calculate PTE */
 	pvh = pmap_find_pvh(pa);
 	if (pvh != NULL)
-		cache = PMAP_CACHE_WB; /* managed memory is cachable */
+		cache = PMAP_CACHE_WB; /* managed memory is cacheable */
 	else
 		cache = PMAP_CACHE_CI;
 
@@ -511,7 +511,7 @@ pmap_enter(pm, va, pa, prot, flags)
 
 	/*
 	 * Insert into HTAB
-	 * we were told to map the page, probably called from vm_fault,
+	 * We were told to map the page, probably called from vm_fault,
 	 * so map the page!
 	 */
 	pte_insert(pted);
@@ -523,8 +523,8 @@ pmap_enter(pm, va, pa, prot, flags)
 		if (pm->pm_sr[sn] & SR_NOEXEC) {
 			pm->pm_sr[sn] &= ~SR_NOEXEC;
 
-			/* set the current sr if not kernel used segemnts
-			 * and this pmap is current active pmap
+			/* set the current sr if not kernel used segments
+			 * and this pmap is the currently active pmap
 			 */
 			if (sn != USER_SR && sn != KERNEL_SR && curpm == pm)
 				ppc_mtsrin(pm->pm_sr[sn],
@@ -651,8 +651,8 @@ pmap_remove_pg(pmap_t pm, vaddr_t va)
 		if (pm->pm_exec[sn] == 0) {
 			pm->pm_sr[sn] |= SR_NOEXEC;
 			
-			/* set the current sr if not kernel used segemnts
-			 * and this pmap is current active pmap
+			/* set the current sr if not kernel used segments
+			 * and this pmap is the currently active pmap
 			 */
 			if (sn != USER_SR && sn != KERNEL_SR && curpm == pm)
 				ppc_mtsrin(pm->pm_sr[sn],
@@ -712,7 +712,7 @@ _pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, int flags, int cache)
 	pvh = pmap_find_pvh(pa);
 	if (cache == PMAP_CACHE_DEFAULT) {
 		if (pvh != NULL)
-			cache = PMAP_CACHE_WB; /* managed memory is cachable */
+			cache = PMAP_CACHE_WB; /* managed memory is cacheable */
 		else
 			cache = PMAP_CACHE_CI;
 	}
@@ -722,7 +722,7 @@ _pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, int flags, int cache)
 
 	/*
 	 * Insert into HTAB
-	 * we were told to map the page, probably called from vm_fault,
+	 * We were told to map the page, probably called from vm_fault,
 	 * so map the page!
 	 */
 	pte_insert(pted);
@@ -735,8 +735,8 @@ _pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, int flags, int cache)
 		if (pm->pm_sr[sn] & SR_NOEXEC) {
 			pm->pm_sr[sn] &= ~SR_NOEXEC;
 
-			/* set the current sr if not kernel used segemnts
-			 * and this pmap is current active pmap
+			/* set the current sr if not kernel used segments
+			 * and this pmap is the currently active pmap
 			 */
 			if (sn != USER_SR && sn != KERNEL_SR && curpm == pm)
 				ppc_mtsrin(pm->pm_sr[sn],
@@ -798,8 +798,8 @@ pmap_kremove_pg(vaddr_t va)
 		if (pm->pm_exec[sn] == 0) {
 			pm->pm_sr[sn] |= SR_NOEXEC;
 
-			/* set the current sr if not kernel used segemnts
-			 * and this pmap is current active pmap
+			/* set the current sr if not kernel used segments
+			 * and this pmap is the currently active pmap
 			 */
 			if (sn != USER_SR && sn != KERNEL_SR && curpm == pm)
 				ppc_mtsrin(pm->pm_sr[sn],
@@ -1006,7 +1006,7 @@ pmap_collect(pmap_t pm)
 	 * are empty.
 	 * could malicious programs allocate memory and eat
 	 * these wired pages? These are allocated via pool.
-	 * Is there pool functions which could be called
+	 * Are there pool functions which could be called
 	 * to lower the pool usage here?
 	 */
 }
@@ -1072,7 +1072,7 @@ pmap_pinit(pmap_t pm)
 
 	/*
 	 * Allocate segment registers for this pmap.
-	 * try not to reuse pmap ids, to spread the hash table usage.
+	 * Try not to reuse pmap ids, to spread the hash table usage.
 	 */
 again:
 	for (i = 0; i < NPMAPS; i++) {
@@ -1281,7 +1281,7 @@ pmap_remove_avail(paddr_t base, paddr_t end)
 	/* remove given region from available */
 	for (mp = pmap_avail; mp->size; mp++) {
 		/*
-		 * Check if this region hold all of the region
+		 * Check if this region holds all of the region
 		 */
 		mpend = mp->start + mp->size;
 		if (base > mpend) {
@@ -1474,7 +1474,7 @@ pmap_bootstrap(u_int kernelstart, u_int kernelend)
 	for (mp = pmap_avail; mp->size; mp++) {
 		npgs += btoc(mp->size);
 	}
-	/* Ok we loose a few pages from this allocation, but hopefully
+	/* Ok we lose a few pages from this allocation, but hopefully
 	 * not too many 
 	 */
 	pmap_pvh = pmap_steal_avail(sizeof(struct pted_pv_head *) * npgs, 4);
@@ -1986,7 +1986,7 @@ pte_spill_r(u_int32_t va, u_int32_t msr, u_int32_t dsisr, int exec_fault)
 	}
 	if ((exec_fault != 0)
 	    && ((pted->pted_va & PTED_VA_EXEC_M) == 0)) {
-		/* attempted to execute non-executeable page */
+		/* attempted to execute non-executable page */
 		return 0;
 	}
 	pte_insert(pted);
@@ -2017,7 +2017,7 @@ pte_spill_v(pmap_t pm, u_int32_t va, u_int32_t dsisr, int exec_fault)
 	}
 	if ((exec_fault != 0)
 	    && ((pted->pted_va & PTED_VA_EXEC_M) == 0)) {
-		/* attempted to execute non-executeable page */
+		/* attempted to execute non-executable page */
 		return 0;
 	}
 	pte_insert(pted);
