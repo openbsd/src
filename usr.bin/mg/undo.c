@@ -1,4 +1,4 @@
-/* $OpenBSD: undo.c,v 1.18 2003/06/26 23:04:10 vincent Exp $ */
+/* $OpenBSD: undo.c,v 1.19 2003/10/21 22:48:07 vincent Exp $ */
 /*
  * Copyright (c) 2002 Vincent Labrecque
  * All rights reserved.
@@ -158,7 +158,7 @@ drop_oldest_undo_record(void)
 {
 	struct undo_rec *rec;
 
-	rec = LIST_END(&curbp->b_undo);
+	rec = LIST_END(&curwp->w_undo);
 	if (rec != NULL) {
 		undo_free_num--;
 		LIST_REMOVE(rec, next);
@@ -173,7 +173,7 @@ last_was_boundary(void)
 {
 	struct undo_rec *rec;
 
-	if ((rec = LIST_FIRST(&curbp->b_undo)) != NULL &&
+	if ((rec = LIST_FIRST(&curwp->w_undo)) != NULL &&
 	    (rec->type == BOUNDARY))
 		return (1);
 	return (0);
@@ -198,7 +198,7 @@ undo_add_boundary(void)
 	rec = new_undo_record();
 	rec->type = BOUNDARY;
 
-	LIST_INSERT_HEAD(&curbp->b_undo, rec, next);
+	LIST_INSERT_HEAD(&curwp->w_undo, rec, next);
 
 	return (TRUE);
 }
@@ -228,7 +228,7 @@ undo_add_custom(int asocial,
 
 	if (!last_was_boundary())
 		undo_add_boundary();
-	LIST_INSERT_HEAD(&curbp->b_undo, rec, next);
+	LIST_INSERT_HEAD(&curwp->w_undo, rec, next);
 	undo_add_boundary();
 	if (asocial)		/* Add a second one */
 		undo_add_boundary();
@@ -254,7 +254,7 @@ undo_add_insert(LINE *lp, int offset, int size)
 	/*
 	 * We try to reuse the last undo record to `compress' things.
 	 */
-	rec = LIST_FIRST(&curbp->b_undo);
+	rec = LIST_FIRST(&curwp->w_undo);
 	if (rec != NULL) {
 		/* this will be hit like, 80% of the time... */
 		if (rec->type == BOUNDARY)
@@ -279,7 +279,7 @@ undo_add_insert(LINE *lp, int offset, int size)
 	if (!last_was_boundary())
 		undo_add_boundary();
 
-	LIST_INSERT_HEAD(&curbp->b_undo, rec, next);
+	LIST_INSERT_HEAD(&curwp->w_undo, rec, next);
 	undo_add_boundary();
 
 	return (TRUE);
@@ -306,7 +306,7 @@ undo_add_delete(LINE *lp, int offset, int size)
 
 	if (offset == llength(lp))	/* if it's a newline... */
 		undo_add_boundary();
-	else if ((rec = LIST_FIRST(&curbp->b_undo)) != NULL) {
+	else if ((rec = LIST_FIRST(&curwp->w_undo)) != NULL) {
 		/*
 		 * Separate this command from the previous one if we're not
 		 * just before the previous record...
@@ -331,7 +331,7 @@ undo_add_delete(LINE *lp, int offset, int size)
 
 	region_get_data(&reg, rec->content, reg.r_size);
 
-	LIST_INSERT_HEAD(&curbp->b_undo, rec, next);
+	LIST_INSERT_HEAD(&curwp->w_undo, rec, next);
 	undo_add_boundary();
 
 	return (TRUE);
@@ -384,7 +384,7 @@ undo_dump(int f, int n)
 	}
 
 	num = 0;
-	for (rec = LIST_FIRST(&curbp->b_undo); rec != NULL;
+	for (rec = LIST_FIRST(&curwp->w_undo); rec != NULL;
 	    rec = LIST_NEXT(rec, next)) {
 		num++;
 		snprintf(buf, sizeof buf,
@@ -451,13 +451,13 @@ undo(int f, int n)
 	LINE *lp;
 	int offset;
 
-	ptr = curbp->b_undoptr;
+	ptr = curwp->w_undoptr;
 
 	/* if we moved, make ptr point back to the top of the list */
-	if ((curbp->b_undopos.r_linep != curwp->w_dotp) ||
-	    (curbp->b_undopos.r_offset != curwp->w_doto) ||
+	if ((curwp->w_undopos.r_linep != curwp->w_dotp) ||
+	    (curwp->w_undopos.r_offset != curwp->w_doto) ||
 	    (ptr == NULL))
-		ptr = LIST_FIRST(&curbp->b_undo);
+		ptr = LIST_FIRST(&curwp->w_undo);
 
 	rval = TRUE;
 	while (n--) {
@@ -536,9 +536,9 @@ undo(int f, int n)
 	 * Record where we are. (we have to save our new position at the end
 	 * since we change the dot when undoing....)
 	 */
-	curbp->b_undoptr = ptr;
-	curbp->b_undopos.r_linep = curwp->w_dotp;
-	curbp->b_undopos.r_offset = curwp->w_doto;
+	curwp->w_undoptr = ptr;
+	curwp->w_undopos.r_linep = curwp->w_dotp;
+	curwp->w_undopos.r_offset = curwp->w_doto;
 
 	return (rval);
 }

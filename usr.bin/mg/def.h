@@ -1,4 +1,4 @@
-/*	$OpenBSD: def.h,v 1.48 2003/08/15 23:23:18 vincent Exp $	*/
+/*	$OpenBSD: def.h,v 1.49 2003/10/21 22:48:07 vincent Exp $	*/
 
 #include <sys/queue.h>
 
@@ -106,6 +106,20 @@ typedef int	(*PF)(int, int);	/* generally useful type */
 #define KFORW	1
 #define KBACK	2
 
+
+/*
+ * This structure holds the starting position
+ * (as a line/offset pair) and the number of characters in a
+ * region of a buffer. This makes passing the specification
+ * of a region around a little bit easier.
+ */
+typedef struct {
+	struct LINE	*r_linep;	/* Origin LINE address.		 */
+	int		r_offset;	/* Origin LINE offset.		 */
+	RSIZE		r_size;		/* Length in characters.	 */
+} REGION;
+
+
 /*
  * All text is kept in circularly linked
  * lists of "LINE" structures. These begin at the
@@ -187,6 +201,10 @@ typedef struct MGWIN {
 	char		w_ntrows;	/* # of rows of text in window	*/
 	char		w_force;	/* If NZ, forcing row.		*/
 	char		w_flag;		/* Flags.			*/
+	LIST_HEAD(, undo_rec) w_undo;	/* Undo actions list */
+	REGION          w_undopos;      /* Where we were during the last
+					   undo action */
+	struct undo_rec *w_undoptr;
 } MGWIN;
 #define w_wndp	w_list.l_p.l_wp
 #define w_name	w_list.l_name
@@ -208,17 +226,6 @@ typedef struct MGWIN {
 
 struct undo_rec;
 
-/*
- * This structure holds the starting position
- * (as a line/offset pair) and the number of characters in a
- * region of a buffer. This makes passing the specification
- * of a region around a little bit easier.
- */
-typedef struct {
-	struct LINE	*r_linep;	/* Origin LINE address.		 */
-	int		r_offset;	/* Origin LINE offset.		 */
-	RSIZE		r_size;		/* Length in characters.	 */
-} REGION;
 /*
  * Text is kept in buffers. A buffer header, described
  * below, exists for every buffer in the system. The buffers are
@@ -243,12 +250,7 @@ typedef struct BUFFER {
 	char		b_flag;		/* Flags			 */
 	char		b_fname[NFILEN];/* File name			 */
 	struct fileinfo	b_fi;		/* File attributes		 */
-	LIST_HEAD(, undo_rec) b_undo;	/* Undo actions list */
-	REGION          b_undopos;      /* Where we were during the last
-					   undo action */
-	struct undo_rec *b_undoptr;
 } BUFFER;
-
 #define b_bufp	b_list.l_p.x_bp
 #define b_bname b_list.l_name
 

@@ -1,10 +1,48 @@
-/*	$OpenBSD: window.c,v 1.11 2003/05/20 03:08:55 cloder Exp $	*/
+/*	$OpenBSD: window.c,v 1.12 2003/10/21 22:48:07 vincent Exp $	*/
 
 /*
  *		Window handling.
  */
 
 #include "def.h"
+
+MGWIN *
+new_window(BUFFER *bp)
+{
+	MGWIN *wp;
+
+	wp = malloc(sizeof(MGWIN));
+	if (wp == NULL)
+		return (NULL);
+
+	wp->w_bufp = bp;
+	wp->w_dotp = NULL;
+	wp->w_doto = 0;
+	wp->w_markp = NULL;
+	wp->w_marko = 0;
+	wp->w_flag = 0;
+	wp->w_force = 0;
+	bp->b_nwnd++;
+	LIST_INIT(&wp->w_undo);
+	wp->w_undoptr = NULL;
+	memset(&wp->w_undopos, 0, sizeof wp->w_undopos);
+
+	return (wp);
+}
+
+void
+free_window(MGWIN *wp)
+{
+	struct undo_rec *rec, *next;
+
+	rec = LIST_FIRST(&wp->w_undo);
+	while (rec != NULL) {
+		next = LIST_NEXT(rec, next);
+		free_undo_record(rec);
+		rec = next;
+	}
+	free(wp);
+}
 
 /*
  * Reposition dot in the current window to line "n".  If the argument is
@@ -135,7 +173,7 @@ onlywind(int f, int n)
 			wp->w_bufp->b_markp = wp->w_markp;
 			wp->w_bufp->b_marko = wp->w_marko;
 		}
-		free((char *)wp);
+		free_window(wp);
 	}
 	while (curwp->w_wndp != NULL) {
 		wp = curwp->w_wndp;
@@ -146,7 +184,7 @@ onlywind(int f, int n)
 			wp->w_bufp->b_markp = wp->w_markp;
 			wp->w_bufp->b_marko = wp->w_marko;
 		}
-		free((char *)wp);
+		free_window(wp);
 	}
 	lp = curwp->w_linep;
 	i = curwp->w_toprow;
@@ -180,28 +218,26 @@ splitwind(int f, int n)
 		ewprintf("Cannot split a %d line window", curwp->w_ntrows);
 		return (FALSE);
 	}
-	if ((wp = malloc(sizeof(MGWIN))) == NULL) {
-		ewprintf("Can't get %d", sizeof(MGWIN));
+	wp = new_window(curbp);
+	if (wp == NULL) {
+		ewprintf("Unable to create a window");
 		return (FALSE);
 	}
 
-	/* displayed twice */
-	++curbp->b_nwnd;
-	wp->w_bufp = curbp;
+	/* use the current dot and mark */
 	wp->w_dotp = curwp->w_dotp;
 	wp->w_doto = curwp->w_doto;
 	wp->w_markp = curwp->w_markp;
 	wp->w_marko = curwp->w_marko;
-	wp->w_flag = 0;
-	wp->w_force = 0;
-	ntru = (curwp->w_ntrows - 1) / 2;	/* Upper size		 */
-	ntrl = (curwp->w_ntrows - 1) - ntru;	/* Lower size		 */
-	lp = curwp->w_linep;
-	ntrd = 0;
-	while (lp != curwp->w_dotp) {
-		++ntrd;
-		lp = lforw(lp);
-	}
+
+	/* figure out which half of the screen we're in */
+	ntru = (curwp->w_ntrows - 1) / 2;	/* Upper size */
+	ntrl = (curwp->w_ntrows - 1) - ntru;	/* Lower size */
+
+	for (lp = curwp->w_linep, ntrd = 0; lp != curwp->w_dotp;
+	    lp = lforw(lp))
+		ntrd++;
+
 	lp = curwp->w_linep;
 
 	/* old is upper window */
@@ -385,7 +421,7 @@ delwind(int f, int n)
 			nwp->w_wndp = wp->w_wndp;
 			break;
 		}
-	free((char *)wp);
+	free_window(wp);
 	return TRUE;
 }
 
