@@ -1,5 +1,5 @@
-/*	$OpenBSD: udp.c,v 1.23 2000/10/16 23:27:23 niklas Exp $	*/
-/*	$EOM: udp.c,v 1.52 2000/10/15 22:02:55 niklas Exp $	*/
+/*	$OpenBSD: udp.c,v 1.24 2000/11/23 12:56:51 niklas Exp $	*/
+/*	$EOM: udp.c,v 1.56 2000/11/23 12:22:08 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -334,8 +334,8 @@ udp_bind_if (struct ifreq *ifrp, void *arg)
   t = udp_bind (if_addr, port);
   if (!t)
     {
-      log_print ("udp_bind_if: failed to create a socket on %x:%d",
-		 htons (if_addr), port);
+      log_print ("udp_bind_if: failed to create a socket on %s:%d",
+		 inet_ntoa (*((struct in_addr *)&if_addr)), port);
       return;
     }
   LIST_INSERT_HEAD (&udp_listen_list, (struct udp_transport *)t, link);
@@ -343,7 +343,7 @@ udp_bind_if (struct ifreq *ifrp, void *arg)
 
 /*
  * NAME is a section name found in the config database.  Setup and return
- * a transport useable to talk to the peer specified by that name
+ * a transport useable to talk to the peer specified by that name.
  */
 static struct transport *
 udp_create (char *name)
@@ -406,11 +406,12 @@ udp_create (char *name)
       log_print ("udp_create: inet_addr (\"%s\") failed", addr_str);
       return 0;
     }
-  u = udp_listen_lookup (addr, port);
+  u = udp_listen_lookup (addr, (udp_default_port ? htons (udp_default_port) :
+						   htons (UDP_DEFAULT_PORT)));
   if (!u)
     {
       log_print ("udp_create: %s:%d must exist as a listener too", addr_str,
-		 port);
+		 udp_default_port);
       return 0;
     } 
   return udp_clone (u, &dst);
@@ -646,7 +647,7 @@ udp_decode_port (char *port_str)
 	  log_print ("udp_decode_port: service \"%s\" unknown", port_str);
 	  return 0;
 	}
-      return service->s_port;
+      return ntohs (service->s_port);
     }
   else if (port_long < 1 || port_long > 65535)
     {
