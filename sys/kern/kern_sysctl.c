@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.71 2002/06/11 11:14:29 beck Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.72 2002/06/24 11:09:01 art Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -1100,11 +1100,31 @@ sysctl_proc_args(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 		vargv = pss.ps_envstr;
 	}
 
-	limit = *oldlenp;
+	/* -1 to have space for a terminating NUL */
+	limit = *oldlenp - 1;
 	*oldlenp = 0;
 
+	if (limit > 8 * PAGE_SIZE) {
+		/* Don't allow a denial of service. */
+		error = E2BIG;
+		goto out;
+	}
+
 	rargv = oldp;
+
+	/*
+	 * *oldlenp - number of bytes copied out into readers buffer.
+	 * limit - maximal number of bytes allowed into readers buffer.
+	 * rarg - pointer into readers buffer where next arg will be stored.
+	 * rargv - pointer into readers buffer where the next rarg pointer
+	 *  will be stored.
+	 * vargv - pointer into victim address space where the next argument
+	 *  will be read.
+	 */
+
+	/* space for cnt pointers and a NULL */
 	rarg = (char *)(rargv + cnt + 1);
+	*oldlenp += (cnt + 1) * sizeof(char **);
 
 	while (cnt > 0 && *oldlenp < limit) {
 		size_t len, vstrlen;
@@ -1126,11 +1146,16 @@ sysctl_proc_args(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 		if ((error = uvm_io(&vp->p_vmspace->vm_map, &uio)) != 0)
 			goto out;
 
+		if (varg == NULL)
+			break;
+
 		/*
 		 * read the victim arg. We must jump through hoops to avoid
 		 * crossing a page boundary too much and returning an error.
 		 */
-		len = round_page((vaddr_t)varg) - ((vaddr_t)varg);
+more:
+		len = PAGE_SIZE - (((vaddr_t)varg) & PAGE_MASK);
+		/* leave space for the terminating NUL */
 		iov.iov_base = buf;
 		iov.iov_len = len;
 		uio.uio_iov = &iov;
@@ -1143,31 +1168,42 @@ sysctl_proc_args(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 		if ((error = uvm_io(&vp->p_vmspace->vm_map, &uio)) != 0)
 			goto out;
 
-		for (vstrlen = 0; vstrlen < (len - 1); vstrlen++) {
-			if (buf[vstrlen] == '\0') {
-				vstrlen++;
+		for (vstrlen = 0; vstrlen < len; vstrlen++) {
+			if (buf[vstrlen] == '\0')
 				break;
-			}
+		}
+
+		/* Don't overflow readers buffer. */
+		if (*oldlenp + vstrlen + 1 >= limit) {
+			error = ENOMEM;
+			goto out;
 		}
 
 		if ((error = copyout(buf, rarg, vstrlen)) != 0)
 			goto out;
 
-		rarg += vstrlen;
 		*oldlenp += vstrlen;
+		rarg += vstrlen;
 
-		/* Don't allow a denial of service. */
-		if (vstrlen == len && len == 4 * PAGE_SIZE) {
-			error = E2BIG;	/* XXX - ? */
-			goto out;
+		/* The string didn't end in this page? */
+		if (vstrlen == len) {
+			varg += vstrlen;
+			goto more;
 		}
+
+		/* End of string. Terminate it with a NUL */
+		buf[0] = '\0';
+		if ((error = copyout(buf, rarg, 1)) != 0)
+			goto out;
+		*oldlenp += 1;;
+		rarg += 1;
 
 		vargv++;
 		rargv++;
 		cnt--;
 	}
 
-	if (*oldlenp == limit) {
+	if (*oldlenp >= limit) {
 		error = ENOMEM;
 		goto out;
 	}
