@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.182 2002/11/07 17:47:33 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.183 2002/11/08 10:50:28 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -2914,7 +2914,7 @@ host(char *s, int mask)
 	struct in_addr ina;
 	struct addrinfo hints, *res0, *res;
 	int bits, error, v4mask, v6mask;
-	char *buf;
+	char *buf = NULL;
 
 	if (ifa_exists(s) || !strncmp(s, "self", IFNAMSIZ)) {
 		/* interface with this name exists */
