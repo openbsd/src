@@ -1,4 +1,4 @@
-/*	$OpenBSD: mmaptest.c,v 1.1 2002/01/03 15:03:42 art Exp $	*/
+/*	$OpenBSD: mmaptest.c,v 1.2 2002/01/03 15:07:05 art Exp $	*/
 /*
  * Copyright (c) 2001 Artur Grabowski <art@openbsd.org>
  * All rights reserved. 
@@ -31,6 +31,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <err.h>
+#include <string.h>
 
 #include <sys/types.h>
 #include <sys/mman.h>
@@ -87,5 +88,7 @@ main()
 		err(1, "munmap");
 
 	close(fd);
+
+	return 0;
 }
 
