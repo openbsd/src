@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsecadm.c,v 1.2 1997/04/14 10:04:27 provos Exp $ */
+/* $OpenBSD: ipsecadm.c,v 1.3 1997/05/15 19:32:22 deraadt Exp $ */
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
  * 	(except when noted otherwise).
@@ -6,7 +6,8 @@
  * This code was written for BSD/OS in Athens, Greece, in November 1995.
  *
  * Ported to OpenBSD and NetBSD, with additional transforms, in December 1996,
- * by Angelos D. Keromytis, kermit@forthnet.gr.
+ * by Angelos D. Keromytis, kermit@forthnet.gr.  Additional code written by
+ * Niels Provos in Germany.
  *
  * Copyright (C) 1995, 1996, 1997 by John Ioannidis and Angelos D. Keromytis.
  *
