@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxp.c,v 1.40 2002/10/17 15:12:12 drahn Exp $	*/
+/*	$OpenBSD: fxp.c,v 1.41 2003/02/19 04:24:39 jason Exp $	*/
 /*	$NetBSD: if_fxp.c,v 1.2 1997/06/05 02:01:55 thorpej Exp $	*/
 
 /*
@@ -635,7 +635,7 @@ fxp_start(ifp)
 		return;
 
 	while (1) {
-		if (cnt >= (FXP_NTXCB - 1)) {
+		if (cnt >= (FXP_NTXCB - 2)) {
 			ifp->if_flags |= IFF_OACTIVE;
 			break;
 		}
@@ -706,14 +706,17 @@ fxp_start(ifp)
 		ifp->if_timer = 5;
 
 		txs = sc->sc_cbt_prod;
-		txs->tx_cb->cb_command |=
-		    htole16(FXP_CB_COMMAND_I | FXP_CB_COMMAND_S);
+		txs = txs->tx_next;
+		sc->sc_cbt_prod = txs;
+		txs->tx_cb->cb_command =
+		    htole16(FXP_CB_COMMAND_I | FXP_CB_COMMAND_NOP | FXP_CB_COMMAND_S);
 		FXP_TXCB_SYNC(sc, txs,
 		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 
 		FXP_TXCB_SYNC(sc, sc->sc_cbt_prev,
 		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
-		sc->sc_cbt_prev->tx_cb->cb_command &= htole16(~FXP_CB_COMMAND_S);
+		sc->sc_cbt_prev->tx_cb->cb_command &=
+		    htole16(~(FXP_CB_COMMAND_S | FXP_CB_COMMAND_I));
 		FXP_TXCB_SYNC(sc, sc->sc_cbt_prev,
 		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 
@@ -722,7 +725,7 @@ fxp_start(ifp)
 		fxp_scb_wait(sc);
 		fxp_scb_cmd(sc, FXP_SCB_COMMAND_CU_RESUME);
 
-		sc->sc_cbt_cnt = cnt;
+		sc->sc_cbt_cnt = cnt + 1;
 	}
 }
 
@@ -771,7 +774,8 @@ fxp_intr(arg)
 			    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
 			while ((txcnt > 0) &&
-			   (txs->tx_cb->cb_status & htole16(FXP_CB_STATUS_C))) {
+			   ((txs->tx_cb->cb_status & htole16(FXP_CB_STATUS_C)) ||
+			   (txs->tx_cb->cb_command & htole16(FXP_CB_COMMAND_NOP)))) {
 				if (txs->tx_mbuf != NULL) {
 					FXP_MBUF_SYNC(sc, txs->tx_map,
 					    BUS_DMASYNC_POSTWRITE);
