@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.8 1997/05/11 18:20:32 millert Exp $
+#	$OpenBSD: Makefile,v 1.9 1997/05/14 11:32:22 graichen Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -105,3 +105,6 @@ unconfig:
 	-cat /*bin/* > /dev/null
 	-umount ${MOUNT_POINT}
 	-vnconfig -u ${VND} && cat /*bin/* > /dev/null
+
+beforeinstall:
+	cp ${FLOPPY} ${DESTDIR}/snapshot
