@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.113 2004/06/16 18:14:12 deraadt Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.114 2004/06/20 03:04:15 art Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -429,7 +429,7 @@ kern_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		return (sysctl_malloc(name + 1, namelen - 1, oldp, oldlenp,
 		    newp, newlen, p));
 	case KERN_CPTIME:
-#ifdef MULTIPROCESSOR
+#ifdef __HAVE_CPUINFO
 	{
 		CPU_INFO_ITERATOR cii;
 		struct cpu_info *ci;
