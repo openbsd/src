@@ -1,4 +1,4 @@
-/*	$OpenBSD: creator.c,v 1.7 2002/05/22 03:15:29 jason Exp $	*/
+/*	$OpenBSD: creator.c,v 1.8 2002/05/22 14:44:20 jason Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -184,7 +184,7 @@ creator_attach(parent, self, aux)
 		goto fail;
 	}
 
-	for (i = 0; i < ma->ma_nreg; i++) {
+	for (i = 0; i < FFB_NREGS; i++) {
 		sc->sc_addrs[i] = ma->ma_reg[i].ur_paddr;
 		sc->sc_sizes[i] = ma->ma_reg[i].ur_len;
 	}
