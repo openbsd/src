@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.h,v 1.8 2001/01/22 14:51:06 art Exp $	*/
+/*	$OpenBSD: exec.h,v 1.9 2002/08/11 23:06:03 art Exp $	*/
 /*	$NetBSD: exec.h,v 1.7 1994/11/20 20:53:02 deraadt Exp $ */
 
 /*
@@ -33,6 +33,7 @@
 
 #define __LDPGSZ	8192	/* linker page size */
 
+#ifndef __ELF__
 enum reloc_type {
 	RELOC_8,	RELOC_16, 	RELOC_32,
 	RELOC_DISP8,	RELOC_DISP16,	RELOC_DISP32,
@@ -57,6 +58,58 @@ struct relocation_info_sparc {
 	long r_addend;			/* relocation addend */
 };
 #define relocation_info	relocation_info_sparc
+#else
+#define R_SPARC_NONE		0
+#define R_SPARC_8		1
+#define R_SPARC_16		2
+#define R_SPARC_32		3
+#define R_SPARC_DISP8		4
+#define R_SPARC_DISP16		5
+#define R_SPARC_DISP32		6
+#define R_SPARC_WDISP30		7
+#define R_SPARC_WDISP22		8
+#define R_SPARC_HI22		9
+#define R_SPARC_22		10
+#define R_SPARC_13		11
+#define R_SPARC_LO10		12
+#define R_SPARC_GOT10		13
+#define R_SPARC_GOT13		14
+#define R_SPARC_GOT22		15
+#define R_SPARC_PC10		16
+#define R_SPARC_PC22		17
+#define R_SPARC_WPLT30		18
+#define R_SPARC_COPY		19
+#define R_SPARC_GLOB_DAT	20
+#define R_SPARC_JMP_SLOT	21
+#define R_SPARC_RELATIVE	22
+#define R_SPARC_UA32		23
+#define R_SPARC_PLT32		24
+#define R_SPARC_HIPLT22		25
+#define R_SPARC_LOPLT10		26
+#define R_SPARC_PCPLT32		27
+#define R_SPARC_PCPLT22		28
+#define R_SPARC_PCPLT10		29
+#define R_SPARC_10		30
+#define R_SPARC_11		31
+#define R_SPARC_64		32
+#define R_SPARC_OLO10		33
+#define R_SPARC_HH22		34
+#define R_SPARC_HM10		35
+#define R_SPARC_LM22		36
+#define R_SPARC_PC_HH22		37
+#define R_SPARC_PC_HM10		38
+#define R_SPARC_PC_LM22		39
+#define R_SPARC_WDISP16		40
+#define R_SPARC_WDISP19		41
+#define R_SPARC_GLOB_JMP	42
+#define R_SPARC_7		43
+#define R_SPARC_5		44
+#define R_SPARC_6		45
+
+#define R_TYPE(name)		__CONCAT(R_SPARC_,name)
+#endif
+
+#define NATIVE_EXEC_ELF
 
 #define ARCH_ELFSIZE		32
 
@@ -68,8 +121,6 @@ struct relocation_info_sparc {
 #define	_NLIST_DO_ELF
 
 #define _KERN_DO_AOUT
-#if defined(COMPAT_LINUX) || defined(COMPAT_SVR4)
 #define _KERN_DO_ELF
-#endif
 
 #endif  /* _SPARC_EXEC_H_ */
