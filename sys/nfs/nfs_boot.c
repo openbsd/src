@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_boot.c,v 1.5 1996/05/10 12:31:01 deraadt Exp $ */
+/*	$OpenBSD: nfs_boot.c,v 1.6 1996/10/20 17:05:21 briggs Exp $ */
 /*	$NetBSD: nfs_boot.c,v 1.26 1996/05/07 02:51:25 thorpej Exp $	*/
 
 /*
@@ -54,8 +54,7 @@
 #include <nfs/xdr_subs.h>
 #include <nfs/nfs_var.h>
 
-#include "ether.h"
-#if NETHER == 0
+#ifndef NFSCLIENT
 
 int nfs_boot_init(nd, procp)
 	struct nfs_diskless *nd;
@@ -73,7 +72,7 @@ nfs_boot_getfh(bpsin, key, ndmntp)
 	/* can not get here */
 }
 
-#else /* NETHER */
+#else /* (ifdef NFSCLIENT) */
 
 /*
  * Support for NFS diskless booting, specifically getting information
@@ -556,4 +555,4 @@ out:
 	return error;
 }
 
-#endif /* NETHER */
+#endif /* ifdef NFSCLIENT */
