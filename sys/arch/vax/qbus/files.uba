@@ -1,4 +1,4 @@
-#	$OpenBSD: files.uba,v 1.1 2000/04/27 03:14:48 bjc Exp $
+#	$OpenBSD: files.uba,v 1.2 2001/05/16 22:15:18 hugh Exp $
 #	$NetBSD: files.uba,v 1.6 1999/06/20 18:09:22 ragge Exp $
 #
 # Config file and device description for machine-independent
@@ -11,7 +11,7 @@ define	qfont
 file	arch/vax/qbus/uba.c				uba
 
 # DZ-11 (-compatible) tty device driver.
-device	dz { }: tty
+device	dz { line = -1 }: tty
 attach	dz at uba with dz_uba
 file	arch/vax/qbus/dz.c				dz needs-flag
 file	arch/vax/qbus/dz_uba.c			dz_uba

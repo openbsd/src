@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr.s,v 1.12 2001/03/16 03:11:00 bjc Exp $     */
+/*	$OpenBSD: subr.s,v 1.13 2001/05/16 22:15:18 hugh Exp $     */
 /*	$NetBSD: subr.s,v 1.32 1999/03/25 00:41:48 mrg Exp $	   */
 
 /*
@@ -472,6 +472,7 @@ ENTRY(suswintr,0)
 	movl	r1,r0
 	ret
 
+ALTENTRY(fusword)
 ENTRY(fuswintr,0)
 	movab	1f,*pcbtrap
 	movl	4(ap),r0

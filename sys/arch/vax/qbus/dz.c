@@ -1,4 +1,4 @@
-/*	$OpenBSD: dz.c,v 1.2 2001/01/28 01:19:59 hugh Exp $	*/
+/*	$OpenBSD: dz.c,v 1.3 2001/05/16 22:15:18 hugh Exp $	*/
 /*	$NetBSD: dz.c,v 1.19 2000/01/24 02:40:29 matt Exp $	*/
 /*
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
@@ -177,7 +177,8 @@ dzrint(arg)
 		tp = sc->sc_dz[line].dz_tty;
 
 		/* Must be caught early */
-		if (sc->sc_catch && (*sc->sc_catch)(line, cc))
+		if (sc->sc_dz[line].dz_catch &&
+		    (*sc->sc_dz[line].dz_catch)(sc->sc_dz[line].dz_private, cc))
 			continue;
 
 		if (!(tp->t_state & TS_ISOPEN)) {
@@ -264,6 +265,9 @@ dzxint(arg)
 		tcr &= 255;
 		tcr &= ~(1 << line);
 		DZ_WRITE_BYTE(dr_tcr, tcr);
+
+		if (sc->sc_dz[line].dz_catch)
+			continue;
 
 		if (tp->t_state & TS_FLUSH)
 			tp->t_state &= ~TS_FLUSH;

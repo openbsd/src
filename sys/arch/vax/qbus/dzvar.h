@@ -1,4 +1,4 @@
-/*	$OpenBSD: dzvar.h,v 1.1 2000/04/27 03:14:47 bjc Exp $	*/
+/*	$OpenBSD: dzvar.h,v 1.2 2001/05/16 22:15:18 hugh Exp $	*/
 /*	$NetBSD: dzvar.h,v 1.6 2000/01/24 02:40:29 matt Exp $	*/
 /*
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
@@ -58,8 +58,11 @@ struct	dz_softc {
 	int		sc_rxint;	/* Receive interrupt count XXX */
 	u_char		sc_brk;		/* Break asserted on some lines */
 	u_char		sc_dsr;		/* DSR set bits if no mdm ctrl */
-	int		(*sc_catch) __P((int, int)); /* Fast catch recv */
-	struct {
+	struct dz_linestate {
+		struct dz_softc	*dz_sc;		/* backpointer to softc */
+		int		dz_line;	/* sub-driver unit number */
+		void		*dz_private;	/* sub-driver data pointer */
+		int		(*dz_catch) __P((void *, int)); /* Fast catch recv */
 		struct	tty *	dz_tty;		/* what we work on */
 #ifdef notyet
 		caddr_t		dz_mem;		/* pointers to clist output */

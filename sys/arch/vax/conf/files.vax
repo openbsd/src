@@ -1,4 +1,4 @@
-#	$OpenBSD: files.vax,v 1.23 2001/05/11 07:13:16 deraadt Exp $
+#	$OpenBSD: files.vax,v 1.24 2001/05/16 22:15:18 hugh Exp $
 #       $NetBSD: files.vax,v 1.60 1999/08/27 20:04:32 ragge Exp $
 #
 # new style config file for vax architecture
@@ -126,6 +126,14 @@ device	ry: disk
 attach	ry at hdc
 major	{ry = 24}
 
+#
+# Bus-independent support for DEC devices
+#
+include "arch/vax/dec/files.dec"
+
+# wscons files.
+include "dev/wscons/files.wscons"
+
 # RAM Disk for install floppy
 major	{rd = 23}
 
@@ -148,13 +156,21 @@ attach	le at vsbus with le_vsbus
 file	arch/vax/vsa/if_le_vsbus.c	le_vsbus
 
 # Monochrome framebuffer on VS3100.
-device	smg: qfont
+device	smg: wsemuldisplaydev
 attach	smg at vsbus
 file	arch/vax/vsa/smg.c		smg needs-flag
 
-device	lkc: qfont
-attach	lkc at dz
-file	arch/vax/vsa/lkc.c		lkc needs-flag
+device	lkkbd: wskbddev 
+attach	lkkbd at dz with dzkbd
+file	arch/vax/dec/dzkbd.c		dzkbd needs-flag
+
+device	lkms: wsmousedev
+attach	lkms at dz with dzms
+file	arch/vax/dec/dzms.c		dzms needs-flag
+
+#device	lkc: qfont
+#attach	lkc at dz
+#file	arch/vax/vsa/lkc.c		lkc needs-flag
 
 # These devices aren't tested (or even compiled!)
 # They are just included here to make some files happy ;)
@@ -364,7 +380,3 @@ include "compat/ultrix/files.ultrix"
 #arch/vax/if/if_pcl.c         optional pcl device-driver
 #arch/vax/if/if_vv.c          optional vv device-driver
 #arch/vax/if/raw_hy.c         optional hy device-driver
-
-# wscons files.
-include "dev/wscons/files.wscons"
-
