@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.100 1998/11/19 05:12:55 deraadt Exp $
+$OpenBSD: pcidevs,v 1.101 1998/11/19 06:45:23 jason Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -482,7 +482,6 @@ vendor COMPEX		0x11f6	Compex
 vendor PMCSIERRA	0x11f8	PMC-Sierra
 vendor CYCLADES		0x120e	Cyclades
 vendor ESSENTIAL	0x120f	Essential Communications
-vendor REALTEK2		0x1211	RealTek (2nd ID)
 vendor 2MICRO		0x1217	2 Micro Inc
 vendor 3DFX		0x121a	3DFX Interactive
 vendor ARIEL		0x1220	Ariel
@@ -1018,9 +1017,6 @@ product QUANTUMDESIGNS 8580	0x0002	8580
 product REALTEK RT8029		0x8029	8029
 product REALTEK RT8129		0x8129	8129
 product REALTEK RT8139		0x8139	8139
-
-/* RealTek (2nd ID) */
-product REALTEK2 RT8139		0x1211	8139
 
 /* S3 products */
 product S3 VIRGE		0x5631	ViRGE
