@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.7 1996/09/26 21:08:53 niklas Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.8 1996/09/28 09:44:10 deraadt Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1996/05/03 19:42:03 christos Exp $	*/
 
 /*
@@ -135,29 +135,46 @@ readdisklabel(dev, strat, lp, osdep)
 				ourpart = i;
 
 		if (ourpart != -1) {
-			dp = &dp[i];
+			dp2 = &dp[ourpart];
 
 			/*
-			 * This is our MBR partition.
-			 * need sector address for SCSI/IDE,
-			 * cylinder for ESDI/ST506/RLL
+			 * This is our MBR partition. need sector address
+			 * for SCSI/IDE, cylinder for ESDI/ST506/RLL
 			 */
-			dospartoff = dp->dp_start;
-			cyl = DPCYL(dp->dp_scyl, dp->dp_ssect);
+			dospartoff = dp2->dp_start;
+			cyl = DPCYL(dp2->dp_scyl, dp2->dp_ssect);
 
 			/* XXX build a temporary disklabel */
-			lp->d_partitions[0].p_size = dp->dp_size;
-			lp->d_partitions[0].p_offset = dp->dp_start;
-			lp->d_partitions[RAW_PART].p_size = dp->dp_size;
-			lp->d_partitions[RAW_PART].p_offset = dp->dp_start;
+			lp->d_partitions[0].p_size = dp2->dp_size;
+			lp->d_partitions[0].p_offset = dp2->dp_start;
+			lp->d_partitions[RAW_PART].p_size = dp2->dp_size;
+			lp->d_partitions[RAW_PART].p_offset = dp2->dp_start;
 			if (lp->d_ntracks == 0)
-				lp->d_ntracks = dp->dp_ehd + 1;
+				lp->d_ntracks = dp2->dp_ehd + 1;
 			if (lp->d_nsectors == 0)
-				lp->d_nsectors = DPSECT(dp->dp_esect);
+				lp->d_nsectors = DPSECT(dp2->dp_esect);
 			if (lp->d_secpercyl == 0)
 				lp->d_secpercyl = lp->d_ntracks *
 				    lp->d_nsectors;
 		}
+
+		/*
+		 * In case the disklabel read below fails, we want to provide
+		 * a fake label in which m/n/o/p are MBR partitions 0/1/2/3
+		 */
+		for (dp2=dp, i=0; i < NDOSPART; i++, dp2++) {
+			lp->d_partitions[12+i].p_size = dp2->dp_size;
+			lp->d_partitions[12+i].p_offset = dp2->dp_start;
+			for (ip = fat_types; *ip != -1; ip++) {
+				if (dp2->dp_typ != *ip)
+					continue;
+				lp->d_partitions[12+i].p_fstype =
+				    FS_MSDOS;
+			}
+		}
+		lp->d_bbsize = 8192;
+		lp->d_sbsize = 64*1024;		/* XXX ? */
+		lp->d_npartitions = MAXPARTITIONS;
 	}
 	
 	/* next, dig out disk label */
