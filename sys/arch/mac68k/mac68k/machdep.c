@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.24 1996/11/05 01:40:29 briggs Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.25 1997/01/16 20:43:36 kstailey Exp $	*/
 /*	$NetBSD: machdep.c,v 1.122 1996/10/15 06:40:39 scottr Exp $	*/
 
 /*
@@ -829,9 +829,14 @@ boot(howto)
 #ifdef notyet
 		/*
 		 * If we've been adjusting the clock, the todr
-		 * will be out of synch; adjust it now.
+		 * will be out of synch; adjust it now unless
+		 * the system was sitting in ddb.
 		 */
-		resettodr();
+		if ((howto & RB_TIMEBAD) == 0) {
+			resettodr();
+		} else {
+			printf("WARNING: not updating battery clock\n");
+		}
 #else
 # ifdef DIAGNOSTIC
 		printf("NetBSD/mac68k does not trust itself to update the "

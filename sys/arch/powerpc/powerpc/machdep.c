@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.2 1996/12/28 06:22:05 rahnds Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.3 1997/01/16 20:43:44 kstailey Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -865,7 +865,16 @@ boot(howto)
 	if (!cold && !(howto & RB_NOSYNC) && !syncing) {
 		syncing = 1;
 		vfs_shutdown();		/* sync */
-		resettodr();		/* set wall clock */
+		/*
+		 * If we've been adjusting the clock, the todr
+		 * will be out of synch; adjust it now unless
+		 * the system was sitting in ddb.
+		 */
+		if ((howto & RB_TIMEBAD) == 0) {
+			resettodr();
+		} else {
+			printf("WARNING: not updating battery clock\n");
+		}
 	}
 	splhigh();
 	if (howto & RB_HALT) {
