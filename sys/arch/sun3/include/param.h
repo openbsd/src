@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.29 1995/06/27 14:37:22 gwr Exp $	*/
+/*	$NetBSD: param.h,v 1.29.2.1 1995/11/10 22:09:00 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -70,6 +70,7 @@
 
 #define	KERNBASE	0x0E000000	/* start of kernel virtual */
 #define	BTOPKERNBASE	((u_long)KERNBASE >> PGSHIFT)
+#define	KERNTEXTOFF	0x0E004000	/* start of kernel text */
 
 #define	DEV_BSIZE	512
 #define	DEV_BSHIFT	9		/* log2(DEV_BSIZE) */
