@@ -1,6 +1,6 @@
-.TH ld.so 8 "30 March 1995"
+.TH ld.so 8 "October 4 1996"
 .SH NAME
-ld.so \- a.out dynamic linker/loader
+ld.so \- ELF dynamic linker/loader
 .SH DESCRIPTION
 .B ld.so
 completes the final process of linking all necessary references to 
@@ -15,7 +15,7 @@ Unless explicitly specified via the
 .B \-static
 option to
 .B ld
-during compilation, all Linux binaries in a.out format will be "incomplete"
+during compilation, all OpenBSD binaries in ELF format will be "incomplete"
 and require further linking at run time.
 .BR ld.so 's
 job is thus to complete the linking process started at compilation.
@@ -25,14 +25,14 @@ requires to complete it's linking process are searched for in the following
 order
 .IP o
 Using the environment variable
-.BR LD_AOUT_LIBRARY_PATH .
+.BR LD_ELF_LIBRARY_PATH .
 Except if the executable is a setuid/setgid binary, in which case it
 is ignored.
 .IP o
 Using the environment variable
 .BR LD_LIBRARY_PATH .
 Except if
-.B LD_AOUT_LIBRARY_PATH
+.B LD_ELF_LIBRARY_PATH
 is specified or the executable is a setuid/setgid binary, in which case
 it is ignored.
 .IP o
@@ -42,9 +42,7 @@ which contains a compiled list of candidate libraries previously found
 in the augmented library path.
 .IP o
 In the default path
-.BR /usr/lib ,
-and then
-.BR /lib .
+.BR /usr/lib . 
 .SH MESSAGES
 The following, possibly fatal, warnings may be output by
 .B ld.so
@@ -68,15 +66,6 @@ binary attempting to be executed.
 .TP
 .SB using incompatible library 'libfoo'
 .PD 0
-.TP
-.SB Desire minor version >= x and found y
-.PD
-Even though the minor version is incompatable
-.B ld.so
-will attempt to use it.
-This message is suppressed if the environment variable
-.B LD_NOWARN
-is set.
 .TP
 .SB too many directories in library path
 There is a hard coded limit of 32 search directories. The above warning will
@@ -105,7 +94,7 @@ A problem was encountered with the cache.
 Execution will continue as if the cache did not exist.
 .SH ENVIRONMENT
 .TP
-.B LD_AOUT_LIBRARY_PATH
+.B LD_ELF_LIBRARY_PATH
 A colon-separated list of directories in which to search for
 libraries at execution-time.
 Similar to the 
@@ -115,33 +104,26 @@ environment variable.
 .B LD_LIBRARY_PATH
 A colon-separated list of directories in which to search for
 libraries at execution-time if
-.B LD_AOUT_LIBRARY_PATH
+.B LD_ELF_LIBRARY_PATH
 is not specified.
 Similar to the 
 .B PATH
 environment variable.
 .TP
-.B LD_NOWARN
-Suppress warnings about libraries with incompatible minor version numbers.
-.TP
-.B LD_KEEPDIR
-Don't ignore the directory in the names of libraries to be loaded.
-Use of this option is strongly discouraged.
-.TP
-.B LD_AOUT_PRELOAD
+.B LD_ELF_PRELOAD
 The name of an additional, user-specified, shared library to be loaded 
 after all others.
 This can be used to selectively override functions in other shared libraries.
 .B LD_PRELOAD
 The name of an additional, user-specified, shared library to be loaded 
 after all others if
-.B LD_AOUT_PRELOAD
+.B LD_ELF_PRELOAD
 is not specified.
 This can be used to selectively override functions in other shared libraries.
 .SH FILES
 .PD 0
 .TP 20
-.B /lib/ld.so
+.B /usr/libexec/ld.so
 execution time linker/loader
 .TP
 .B /etc/ld.so.cache
@@ -150,9 +132,6 @@ libraries and an ordered list of candidate libraries.
 .TP
 .B lib*.so.version
 shared libraries
-.TP
-.B lib*.sa
-exported initialized library data.
 .PD
 .SH SEE ALSO
 .BR ldd (1),
@@ -164,9 +143,11 @@ Currently
 has no means of unloading and searching for compatable or newer version of
 libraries.
 .PP
+.SH BUGS
 .B ld.so
-functionality is only available for executables compiled using libc version
-4.4.3 or greater.
+is 'broken' in several aspects and will be replaced in the future.
+.PP
 .SH AUTHORS
 David Engel, Eric Youngdale, Peter MacDonald, Hongjiu Lu, Linus
 Torvalds, Lars Wirzenius and Mitch D'Souza (not necessarily in that order).
+Changed for OpenBSD Mips by Per Fogelstrom
