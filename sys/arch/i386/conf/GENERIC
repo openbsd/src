@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.309 2002/06/18 01:00:04 nate Exp $
+#	$OpenBSD: GENERIC,v 1.310 2002/07/09 19:28:01 nate Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -124,6 +124,8 @@ uscanner* at uhub? port ?		# USB Scanners
 usscanner* at uhub? port ?		# USB SCSI scanners, e.g., HP5300
 scsibus* at usscanner?
 #uyap*	at uhub? port ?			# Y@P firmware loader
+#udsbr*	at uhub? port ?			# D-Link DSB-R100 radio
+#radio*	at udsbr?
 ugen*	at uhub? port ? configuration ? # USB Generic driver
 
 puc*	at pci?				# PCI "universal" communication device
