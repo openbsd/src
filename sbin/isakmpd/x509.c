@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.62 2001/07/05 12:37:00 ho Exp $	*/
+/*	$OpenBSD: x509.c,v 1.63 2001/07/13 14:16:39 ho Exp $	*/
 /*	$EOM: x509.c,v 1.54 2001/01/16 18:42:16 ho Exp $	*/
 
 /*
@@ -847,7 +847,7 @@ x509_cert_validate (void *scert)
   X509_NAME *issuer, *subject;
   X509 *cert = (X509 *)scert;
   EVP_PKEY *key;
-  int res;
+  int res, err;
 
   /*
    * Validate the peer certificate by checking with the CA certificates we
@@ -855,11 +855,19 @@ x509_cert_validate (void *scert)
    */
   LC (X509_STORE_CTX_init, (&csc, x509_cas, cert, NULL));
   res = LC (X509_verify_cert, (&csc));
+  err = csc.error;
   LC (X509_STORE_CTX_cleanup, (&csc));
 
   /* Return if validation succeeded or self-signed certs are not accepted.  */
-  if (res || !conf_get_str ("X509-certificates", "Accept-self-signed"))
-    return res;
+  if (res)
+    return 1;
+  else if (!conf_get_str ("X509-certificates", "Accept-self-signed"))
+    {
+      if (err)
+	log_print ("x509_cert_validate: %100s",
+		   LC (X509_verify_cert_error_string, (err)));
+      return res;
+    }
 
   issuer = LC (X509_get_issuer_name, (cert));
   subject = LC (X509_get_subject_name, (cert));
@@ -869,10 +877,17 @@ x509_cert_validate (void *scert)
 
   key = LC (X509_get_pubkey, (cert));
   if (!key)
-    return 0;
+    {
+      log_print ("x509_cert_validate: could not get public key from "
+		 "self-signed cert");
+      return 0;
+    }
 
   if (LC (X509_verify, (cert, key)) == -1)
-    return 0;
+    {
+      log_print ("x509_cert_validate: self-signed cert is bad");
+      return 0;
+    }
 
   return 1;
 }
