@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fstat.1,v 1.25 2003/06/03 02:56:08 millert Exp $
+.\"	$OpenBSD: fstat.1,v 1.26 2003/07/14 08:56:02 jmc Exp $
 .\"
 .\" Copyright (c) 1987, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -113,11 +113,11 @@ The process ID.
 The file number in the per-process open file table or one of the following
 special names:
 .Pp
-.Bd -literal -ragged -offset indent -compact
-text	- pure text inode
-wd 	- current working directory
-root	- root inode
-tr	- kernel trace file
+.Bd -literal -offset indent -compact
+text	\- pure text inode
+wd 	\- current working directory
+root	\- root inode
+tr	\- kernel trace file
 .Ed
 .Pp
 If the file number is followed by an asterisk
@@ -211,7 +211,7 @@ an arrow
 or
 .Dq -> ) ,
 and a full duplex socket shows a double arrow
-.Pq Dq <-> ) .
+.Pq Dq <-> .
 .Pp
 For
 .Dv AF_INET
@@ -236,9 +236,9 @@ indicates the direction the socket connection was created.
 Every pipe is printed as an address which is the same for both sides of
 the pipe and a state that is built of the letters
 .Dq RWE .
-W - The pipe blocks waiting for the reader to read data.
-R - The pipe blocks waiting for the writer to write data.
-E - The pipe is in EOF state.
+W \- The pipe blocks waiting for the reader to read data.
+R \- The pipe blocks waiting for the writer to write data.
+E \- The pipe is in EOF state.
 .Sh CRYPTO
 Each
 .Xr crypto 4
