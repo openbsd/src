@@ -1,4 +1,4 @@
-/*	$OpenBSD: brconfig.c,v 1.5 2000/01/25 22:06:27 jason Exp $	*/
+/*	$OpenBSD: brconfig.c,v 1.6 2000/02/04 06:32:04 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -71,10 +71,10 @@ int is_bridge __P((int, char *));
 int bridge_show_all __P((int));
 void printb __P((char *, unsigned short, char *));
 int bridge_rule __P((int, char *, int, char **, int));
-int bridge_rules __P((int, char *, char *));
+int bridge_rules __P((int, char *, char *, char *));
 int bridge_flushrule __P((int, char *, char *));
 void bridge_badrule __P((int, char **, int));
-void bridge_showrule __P((struct ifbrlreq *));
+void bridge_showrule __P((struct ifbrlreq *, char *));
 int bridge_rulefile __P((int, char *, char *));
 
 /* if_flags bits: borrowed from ifconfig.c */
@@ -306,7 +306,7 @@ main(argc, argv)
 				warnx("rules requires an argument");
 				return (EX_USAGE);
 			}
-			error = bridge_rules(sock, brdg, argv[0]);
+			error = bridge_rules(sock, brdg, argv[0], NULL);
 			if (error)
 				return (error);
 		}
@@ -556,6 +556,7 @@ bridge_list(s, brdg, delim)
 		printf("%s%s ", delim, buf);
 		printb("flags", reqp->ifbr_ifsflags, IFBIFBITS);
 		printf("\n");
+		bridge_rules(s, brdg, buf, delim);
 	}
 	free(bifc.ifbic_buf);
 	return (0);             /* NOTREACHED */
@@ -823,9 +824,10 @@ bridge_flushrule(s, brdg, ifname)
 }
 
 int
-bridge_rules(s, brdg, ifname)
+bridge_rules(s, brdg, ifname, delim)
 	int s;
 	char *brdg, *ifname;
+	char *delim;
 {
 	char *inbuf = NULL;
 	struct ifbrlconf ifc;
@@ -848,16 +850,20 @@ bridge_rules(s, brdg, ifname)
 	ifrp = ifc.ifbrl_req;
 	for (i = 0; i < ifc.ifbrl_len; i += sizeof(ifreq)) {
 		ifrp = (struct ifbrlreq *)((caddr_t)ifc.ifbrl_req + i);
-		bridge_showrule(ifrp);
+		bridge_showrule(ifrp, delim);
 	}
 	return (0);
 }
 
 void
-bridge_showrule(r)
+bridge_showrule(r, delim)
 	struct ifbrlreq *r;
+	char *delim;
 {
-	printf("%s: ", r->ifbr_name);
+	if (delim)
+		printf("%s    ", delim);
+	else
+		printf("%s: ", r->ifbr_name);
 
 	if (r->ifbr_action == BRL_ACTION_BLOCK)
 		printf("block ");
