@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: scanner.l,v 1.9 2000/04/26 21:25:53 jakob Exp $	*/
+/*	$OpenBSD: scanner.l,v 1.10 2000/06/29 06:56:13 dugsong Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -24,7 +24,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/lib/libpcap/scanner.l,v 1.9 2000/04/26 21:25:53 jakob Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/lib/libpcap/scanner.l,v 1.10 2000/06/29 06:56:13 dugsong Exp $ (LBL)";
 #endif
 
 #include <sys/types.h>
@@ -233,8 +233,6 @@ outbound	return OUTBOUND;
 "=="			return '=';
 "<<"			return LSH;
 ">>"			return RSH;
-:{B}			{ yylval.e = pcap_ether_aton(((char *)yytext)+1);
-			  return AID; }
 {N}			{ yylval.i = stoi((char *)yytext); return NUM; }
 ({N}\.{N})|({N}\.{N}\.{N})|({N}\.{N}\.{N}\.{N})	{
 			yylval.s = sdup((char *)yytext); return HID; }
