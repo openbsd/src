@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.h,v 1.39 2000/05/25 01:22:00 itojun Exp $	*/
+/*	$OpenBSD: in.h,v 1.40 2000/06/18 07:06:13 itojun Exp $	*/
 /*	$NetBSD: in.h,v 1.20 1996/02/13 23:41:47 christos Exp $	*/
 
 /*
@@ -255,9 +255,9 @@ struct ip_opts {
 /* 14-17 left empty for future compatibility with FreeBSD */
 
 #define IP_PORTRANGE		19   /* int; range to choose for unspec port */
-#define IP_AUTH_LEVEL		20   /* u_char; authentication used */
-#define IP_ESP_TRANS_LEVEL	21   /* u_char; transport encryption */
-#define IP_ESP_NETWORK_LEVEL	22   /* u_char; full-packet encryption */
+#define IP_AUTH_LEVEL		20   /* int; authentication used */
+#define IP_ESP_TRANS_LEVEL	21   /* int; transport encryption */
+#define IP_ESP_NETWORK_LEVEL	22   /* int; full-packet encryption */
 
 #define IPSEC_OUTSA		39   /* set the outbound SA for a socket */
 
