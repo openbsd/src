@@ -308,7 +308,7 @@ crypto_op(struct csession *cse, struct crypt_op *cop)
 	error = tsleep(cse, PSOCK, "crydev", 0);
 	if (error) {
 		/// XXX can this happen?  if so, how do we recover?
-		return (error);
+		goto bail;
 	}
 
 	if (cse->error)
