@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hostname.if.5,v 1.11 2000/01/10 02:16:51 deraadt Exp $
+.\"	$OpenBSD: hostname.if.5,v 1.12 2000/01/10 02:25:05 deraadt Exp $
 .\"	$NetBSD: hosts.5,v 1.4 1994/11/30 19:31:20 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -94,7 +94,9 @@ The above formats have the following field values:
 .Bl -tag -width indent -offset xxxx
 .It Va addr_family
 The address family of the interface, generally
-.Dq inet or inet6.
+.Dq inet
+or
+.Dq inet6.
 .It Va addr
 The optional address that belongs to the interface, such as
 190.191.192.1 or fe80:2::1 .
