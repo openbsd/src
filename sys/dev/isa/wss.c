@@ -1,4 +1,4 @@
-/*	$OpenBSD: wss.c,v 1.12 1996/05/29 08:18:01 mickey Exp $	*/
+/*	$OpenBSD: wss.c,v 1.13 1996/06/23 13:44:50 deraadt Exp $	*/
 /*	$NetBSD: wss.c,v 1.13 1996/05/12 23:54:16 mycroft Exp $	*/
 
 /*
@@ -209,7 +209,9 @@ wssprobe(parent, match, aux)
 
     /* Is there an ad1848 chip at the WSS iobase ? */
     if (ad1848_probe(&sc->sc_ad1848) == 0) {
+#if 0
 	printf("ad_detect_A: no ad1848 found.\n");
+#endif
 	return 0;
     }
 	
