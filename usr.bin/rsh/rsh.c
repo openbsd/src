@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsh.c,v 1.33 2003/08/11 20:10:00 millert Exp $	*/
+/*	$OpenBSD: rsh.c,v 1.34 2003/08/11 20:43:31 millert Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1990 The Regents of the University of California.
@@ -37,7 +37,7 @@ static const char copyright[] =
 
 #ifndef lint
 /*static const char sccsid[] = "from: @(#)rsh.c	5.24 (Berkeley) 7/1/91";*/
-static const char rcsid[] = "$OpenBSD: rsh.c,v 1.33 2003/08/11 20:10:00 millert Exp $";
+static const char rcsid[] = "$OpenBSD: rsh.c,v 1.34 2003/08/11 20:43:31 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -46,17 +46,19 @@ static const char rcsid[] = "$OpenBSD: rsh.c,v 1.33 2003/08/11 20:10:00 millert 
 #include <sys/file.h>
 
 #include <netinet/in.h>
-#include <netdb.h>
 
+#include <err.h>
+#include <errno.h>
+#include <netdb.h>
+#include <poll.h>
 #include <pwd.h>
 #include <signal.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
-#include <errno.h>
-#include <err.h>
 #include <string.h>
-#include <stdarg.h>
+#include <unistd.h>
+
 #include "pathnames.h"
 
 #ifdef KERBEROS
@@ -310,28 +312,25 @@ talk(int nflag, sigset_t *omask, pid_t pid, int rem)
 {
 	int cc, wc;
 	char *bp;
-	fd_set readfrom, ready, rembits;
+	struct pollfd pfd[2];
 	char buf[BUFSIZ];
 
 	if (!nflag && pid == 0) {
 		(void)close(rfd2);
 
 reread:		errno = 0;
-		if ((cc = read(0, buf, sizeof buf)) <= 0)
+		if ((cc = read(STDIN_FILENO, buf, sizeof buf)) <= 0)
 			goto done;
 		bp = buf;
 
-rewrite:	FD_ZERO(&rembits);
-		if (rem >= FD_SETSIZE)
-			errx(1, "descriptor too large");
-                FD_SET(rem, &rembits);
-		if (select(rem + 1, 0, &rembits, 0, 0) < 0) {
+		pfd[0].fd = rem;
+		pfd[0].events = POLLOUT;
+rewrite:
+		if (poll(pfd, 1, INFTIM) < 0) {
 			if (errno != EINTR)
-				err(1, "select");
+				err(1, "poll");
 			goto rewrite;
 		}
-		if (!FD_ISSET(rem, &rembits))
-			goto rewrite;
 #ifdef KERBEROS
 		if (doencrypt)
 			wc = des_write(rem, bp, cc);
@@ -354,21 +353,17 @@ done:
 	}
 
 	sigprocmask(SIG_SETMASK, omask, NULL);
-	FD_ZERO(&readfrom);
-	if (rfd2 >= FD_SETSIZE)
-		errx(1, "descriptor too large");
-	FD_SET(rfd2, &readfrom);
-	if (rem >= FD_SETSIZE)
-		errx(1, "descriptor too large");
-	FD_SET(rem, &readfrom);
+	pfd[1].fd = rfd2;
+	pfd[1].events = POLLIN;
+	pfd[0].fd = rem;
+	pfd[0].events = POLLIN;
 	do {
-		FD_COPY(&readfrom, &ready);
-		if (select(MAX(rfd2, rem) + 1, &ready, 0, 0, 0) < 0) {
+		if (poll(pfd, 2, INFTIM) < 0) {
 			if (errno != EINTR)
-				err(1, "select");
+				err(1, "poll");
 			continue;
 		}
-		if (FD_ISSET(rfd2, &ready)) {
+		if (pfd[1].revents & POLLIN) {
 			errno = 0;
 #ifdef KERBEROS
 			if (doencrypt)
@@ -378,11 +373,11 @@ done:
 				cc = read(rfd2, buf, sizeof buf);
 			if (cc <= 0) {
 				if (errno != EWOULDBLOCK)
-					FD_CLR(rfd2, &readfrom);
+					pfd[1].revents = 0;
 			} else
-				(void)write(2, buf, cc);
+				(void)write(STDERR_FILENO, buf, cc);
 		}
-		if (FD_ISSET(rem, &ready)) {
+		if (pfd[0].revents & POLLIN) {
 			errno = 0;
 #ifdef KERBEROS
 			if (doencrypt)
@@ -392,11 +387,11 @@ done:
 				cc = read(rem, buf, sizeof buf);
 			if (cc <= 0) {
 				if (errno != EWOULDBLOCK)
-					FD_CLR(rem, &readfrom);
+					pfd[0].revents = 0;
 			} else
-				(void)write(1, buf, cc);
+				(void)write(STDOUT_FILENO, buf, cc);
 		}
-	} while (FD_ISSET(rem, &readfrom) || FD_ISSET(rfd2, &readfrom));
+	} while ((pfd[0].revents & POLLIN) || (pfd[1].revents & POLLIN));
 }
 
 void
