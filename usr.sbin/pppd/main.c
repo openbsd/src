@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.14 1997/01/23 02:18:05 niklas Exp $	*/
+/*	$OpenBSD: main.c,v 1.15 1997/03/29 04:17:22 dgregor Exp $	*/
 
 /*
  * main.c - Point-to-Point Protocol main module
@@ -20,7 +20,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: main.c,v 1.14 1997/01/23 02:18:05 niklas Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.15 1997/03/29 04:17:22 dgregor Exp $";
 #endif
 
 #include <stdio.h>
@@ -1348,7 +1348,7 @@ vfmtmsg(buf, buflen, fmt, args)
     unsigned long val;  
     char *str, *f, *buf0;
     unsigned char *p;
-    void *a;
+    va_list a;
     char num[32];
     time_t t;
     static char hexchars[] = "0123456789abcdef";
@@ -1444,7 +1444,7 @@ vfmtmsg(buf, buflen, fmt, args)
 	     * XXX We assume a va_list is either a pointer or an array, so
 	     * what gets passed for a va_list is like a void * in some sense.
 	     */
-	    a = va_arg(args, void *);
+	    a = va_arg(args, va_list);
             n = vfmtmsg(buf, buflen + 1, f, a);
             buf += n;
             buflen -= n;
