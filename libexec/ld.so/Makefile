@@ -1,11 +1,11 @@
-#	$OpenBSD: Makefile,v 1.6 2001/05/23 14:24:03 drahn Exp $
+#	$OpenBSD: Makefile,v 1.7 2001/06/08 06:50:34 art Exp $
 
 SUBDIR=libdl ldconfig ldd
 VPATH=${.CURDIR}/../../lib/libc/string:${.CURDIR}/../../sys/lib/libsa
 
 NOMAN=
 SRCS=	ldasm.S loader.c library.c resolve.c dlfcn.c dl_printf.c rtld_machine.c
-SRCS+=  sod.c strcmp.c strlen.c strncmp.c strsep.c strtol.c strdup.c strcpy.c
+SRCS+=  sod.c strcmp.c strncmp.c strsep.c strtol.c strdup.c strcpy.c
 OBJS+=  strchr.o
 PROG=	ld.so
 MAN=	ld.so.8
