@@ -166,6 +166,9 @@
 ./usr/include/dev/ic/i82596var.h
 ./usr/include/dev/ic/i82802reg.h
 ./usr/include/dev/ic/ics2101reg.h
+./usr/include/dev/ic/if_wi_ieee.h
+./usr/include/dev/ic/if_wireg.h
+./usr/include/dev/ic/if_wivar.h
 ./usr/include/dev/ic/iha.h
 ./usr/include/dev/ic/intersil7170.h
 ./usr/include/dev/ic/isp_inline.h
@@ -402,8 +405,6 @@
 ./usr/include/dev/pcmcia
 ./usr/include/dev/pcmcia/if_cnwreg.h
 ./usr/include/dev/pcmcia/if_rayreg.h
-./usr/include/dev/pcmcia/if_wavelan_ieee.h
-./usr/include/dev/pcmcia/if_wireg.h
 ./usr/include/dev/pcmcia/if_xereg.h
 ./usr/include/dev/pcmcia/pcmciachip.h
 ./usr/include/dev/pcmcia/pcmciadevs.h

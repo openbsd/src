@@ -551,6 +551,9 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/i82596var.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/i82802reg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/ics2101reg.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/if_wi_ieee.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/if_wireg.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/if_wivar.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/iha.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/intersil7170.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/isp_inline.ph
@@ -783,8 +786,6 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pcmcia
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pcmcia/if_cnwreg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pcmcia/if_rayreg.ph
-./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pcmcia/if_wavelan_ieee.ph
-./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pcmcia/if_wireg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pcmcia/if_xereg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pcmcia/pcmciachip.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pcmcia/pcmciadevs.ph
