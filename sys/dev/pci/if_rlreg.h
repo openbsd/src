@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rlreg.h,v 1.1 1998/11/11 20:51:39 jason Exp $	*/
+/*	$OpenBSD: if_rlreg.h,v 1.2 1998/11/18 20:11:33 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -331,7 +331,6 @@ struct rl_mii_frame {
 #define RL_8139			2
 
 struct rl_softc {
-#ifdef __OpenBSD__
 	struct device		sc_dev;
 	void *			sc_ih;
 	bus_space_tag_t		sc_st;
@@ -341,15 +340,8 @@ struct rl_softc {
 	bus_dmamap_t		sc_dma_oprog;
 	bus_dmamap_t		sc_dma_mem;
 	size_t			sc_dma_mapsize;
-#endif
 	struct arpcom		arpcom;		/* interface info */
-	struct ifmedia		ifmedia;	/* media info */
-#ifdef __FreeBSD__
-	u_int32_t		iobase;		/* pointer to PIO space */
-#ifndef RL_USEIOSPACE
-	volatile caddr_t	csr;		/* pointer to register map */
-#endif
-#endif
+	struct mii_data		sc_mii;		/* MII information */
 	struct rl_type		*rl_pinfo;	/* phy info */
 	u_int8_t		rl_unit;	/* interface number */
 	u_int8_t		rl_type;
@@ -364,39 +356,6 @@ struct rl_softc {
 /*
  * register space access macros
  */
-#ifdef __FreeBSD__
-#ifdef RL_USEIOSPACE
-#define CSR_WRITE_4(sc, reg, val)	\
-	outl(sc->iobase + (u_int32_t)(reg), val)
-#define CSR_WRITE_2(sc, reg, val)	\
-	outw(sc->iobase + (u_int32_t)(reg), val)
-#define CSR_WRITE_1(sc, reg, val)	\
-	outb(sc->iobase + (u_int32_t)(reg), val)
-
-#define CSR_READ_4(sc, reg)	\
-	inl(sc->iobase + (u_int32_t)(reg))
-#define CSR_READ_2(sc, reg)	\
-	inw(sc->iobase + (u_int32_t)(reg))
-#define CSR_READ_1(sc, reg)	\
-	inb(sc->iobase + (u_int32_t)(reg))
-#else
-#define CSR_WRITE_4(sc, reg, val)	\
-	((*(u_int32_t*)((sc)->csr + (u_int32_t)(reg))) = (u_int32_t)(val))
-#define CSR_WRITE_2(sc, reg, val)	\
-	((*(u_int16_t*)((sc)->csr + (u_int32_t)(reg))) = (u_int16_t)(val))
-#define CSR_WRITE_1(sc, reg, val)	\
-	((*(u_int8_t*)((sc)->csr + (u_int32_t)(reg))) = (u_int8_t)(val))
-
-#define CSR_READ_4(sc, reg)	\
-	(*(u_int32_t *)((sc)->csr + (u_int32_t)(reg)))
-#define CSR_READ_2(sc, reg)	\
-	(*(u_int16_t *)((sc)->csr + (u_int32_t)(reg)))
-#define CSR_READ_1(sc, reg)	\
-	(*(u_int8_t *)((sc)->csr + (u_int32_t)(reg)))
-#endif
-#endif
-
-#ifdef __OpenBSD__
 #define CSR_WRITE_4(sc, csr, val) \
 	bus_space_write_4((sc)->sc_st, (sc)->sc_sh, csr, (val))
 #define CSR_WRITE_2(sc, csr, val) \
@@ -410,7 +369,6 @@ struct rl_softc {
 	bus_space_read_2((sc)->sc_st, (sc)->sc_sh, csr)
 #define CSR_READ_1(sc, csr) \
 	bus_space_read_1((sc)->sc_st, (sc)->sc_sh, csr)
-#endif
 
 #define RL_TIMEOUT		1000
 
