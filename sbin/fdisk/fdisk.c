@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdisk.c,v 1.30 1998/09/14 03:54:34 rahnds Exp $	*/
+/*	$OpenBSD: fdisk.c,v 1.31 2000/01/08 04:51:16 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -87,12 +87,12 @@ main(argc, argv)
 			break;
 		case 'c':
 			c_arg = atoi(optarg);
-			if (c_arg < 0 || c_arg > 1023)
+			if (c_arg < 1 || c_arg > 262144)
 				errx(1, "Cylinder argument out of range.");
 			break;
 		case 'h':
 			h_arg = atoi(optarg);
-			if (h_arg < 0 || h_arg > 255)
+			if (h_arg < 1 || h_arg > 256)
 				errx(1, "Head argument out of range.");
 			break;
 		case 's':
@@ -117,24 +117,19 @@ main(argc, argv)
 	if (c_arg | h_arg | s_arg) {
 		usermetrics = malloc(sizeof(DISK_metrics));
 		if (usermetrics != NULL) {
-			if (c_arg)
+			if (c_arg && h_arg && s_arg) {
 				usermetrics->cylinders = c_arg;
-			else
-				errx(1, "Please specify a full geometry with [-chs].");
-			if (h_arg)
 				usermetrics->heads = h_arg;
-			else
-				errx(1, "Please specify a full geometry with [-chs].");
-			if (s_arg)
 				usermetrics->sectors = s_arg;
-			else
+				usermetrics->size = c_arg * h_arg * s_arg;
+			} else
 				errx(1, "Please specify a full geometry with [-chs].");
 		}
-		usermetrics->size = c_arg * h_arg * s_arg;
 	} else
 		usermetrics = NULL;
 
 	/* Get the geometry */
+	disk.real = NULL;
 	if (DISK_getmetrics(&disk, usermetrics))
 		errx(1, "Can't get disk geometry, please use [-chs] to specify.");
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: disk.c,v 1.9 1997/10/28 10:06:32 deraadt Exp $	*/
+/*	$OpenBSD: disk.c,v 1.10 2000/01/08 04:51:16 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -211,7 +211,7 @@ DISK_getmetrics(disk, user)
 	 * Or we need a mapping from biosdev -> BSD universe.
 	 */
 	if (disk->bios)
-		if (disk->real->cylinders > 1024 || disk->real->heads > 255 ||
+		if (disk->real->cylinders > 262144 || disk->real->heads > 256 ||
 		    disk->real->sectors > 63)
 			disk->real = disk->bios;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.13 1999/11/23 01:56:39 ian Exp $	*/
+/*	$OpenBSD: part.c,v 1.14 2000/01/08 04:51:16 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -61,7 +61,9 @@ static struct part_type {
 	{ 0x09, "AIX/Coherent", "AIX boot partition or Coherent"},
 	{ 0x0A, "OS/2 Bootmgr", "OS/2 Boot Manager or OPUS"},
 	{ 0x0B, "Win95 FAT-32", "Primary Win95 w/ 32-bit FAT"},
+	{ 0x0C, "Win95 FAT32L", "Primary Win95 w/ 32-bit FAT LBA-mapped"},
 	{ 0x0E, "DOS FAT-16  ", "Primary DOS w/ 16-bit FAT, CHS-mapped"},
+	{ 0x0F, "Extended LBA", "Extended DOS LBA-mapped"},
 	{ 0x10, "OPUS        ", "OPUS"},
 	{ 0x12, "Compaq Diag.", "Compaq Diagnostics"},
 	{ 0x40, "VENIX 286   ", "VENIX 286"},
@@ -138,19 +140,7 @@ PRT_parse(disk, prt, offset, reloff, partn)
 {
 	unsigned char *p = prt;
 	off_t off;
-	int need_fix_chs = 0;
 
-	/* dont check fields 0 and 4, they are flag and id, always preserved */
-	if ((p[1] == 0xff) && 
-	    (p[2] == 0xff) && 
-	    (p[3] == 0xff) && 
-	    (p[5] == 0xff) && 
-	    (p[6] == 0xff) && 
-	    (p[7] == 0xff))
-	{
-		/* CHS values invalid */
-		need_fix_chs =1;
-	}
 	partn->flag = *p++;
 	partn->shead = *p++;
 
@@ -164,15 +154,15 @@ PRT_parse(disk, prt, offset, reloff, partn)
 	partn->ecyl = ((*p << 2) & 0xFF00) | (*(p+1));
 	p += 2;
 
-	off = partn->id != DOSPTYP_EXTEND ? offset : reloff;
+	if ((partn->id == DOSPTYP_EXTEND) || (partn->id == DOSPTYP_EXTENDL))
+		off = reloff;
+	else
+		off = offset;
 
 	partn->bs = getlong(p) + off;
 	partn->ns = getlong(p+4);
 
-	if (need_fix_chs == 1) {
-		printf("warning MBR CHS values invalid, translating LBA values\n");
-		PRT_fix_CHS(disk, partn);
-	}
+	PRT_fix_CHS(disk, partn);
 }
 
 int
@@ -198,7 +188,28 @@ PRT_make(partn, offset, reloff, prt)
 	void *prt;
 {
 	unsigned char *p = prt;
-	off_t off = partn->id != DOSPTYP_EXTEND ? offset : reloff; 
+	prt_t tmp;
+	off_t off;
+
+	tmp.shead = partn->shead;
+	tmp.ssect = partn->ssect;
+	tmp.scyl = (partn->scyl > 1024)? 1023: partn->scyl; 
+	tmp.ehead = partn->ehead;
+	tmp.esect = partn->ssect;
+	tmp.ecyl = (partn->ecyl > 1024)? 1023: partn->ecyl; 
+	if (!PRT_check_chs(partn) && PRT_check_chs(&tmp)) {
+		partn->shead = tmp.shead;
+		partn->ssect = tmp.ssect;
+		partn->scyl = tmp.scyl;
+		partn->ehead = tmp.ehead;
+		partn->esect = tmp.esect;
+		partn->ecyl = tmp.ecyl;
+		printf("Cylinder values are modified to fit in CHS.\n");
+	}
+	if ((partn->id == DOSPTYP_EXTEND) || (partn->id == DOSPTYP_EXTENDL))
+		off = reloff;
+	else
+		off = offset;
 
 	if (PRT_check_chs(partn)) {
 		*p++ = partn->flag & 0xFF;
@@ -303,6 +314,10 @@ PRT_fix_CHS(disk, part)
 	head = (start / spt); start -= (head * spt);
 	sect = (start + 1);
 
+	if (cyl > 1023) {
+		cyl = 1023;
+		printf("Only LBA values are valid in starting cylinder.\n");
+	}
 	part->scyl = cyl;
 	part->shead = head;
 	part->ssect = sect;
@@ -312,6 +327,10 @@ PRT_fix_CHS(disk, part)
 	head = (end / spt); end -= (head * spt);
 	sect = (end + 1);
 
+	if (cyl > 1023) {
+		cyl = 1023;
+		printf("Only LBA values are valid in ending cylinder.\n");
+	}
 	part->ecyl = cyl;
 	part->ehead = head;
 	part->esect = sect;
