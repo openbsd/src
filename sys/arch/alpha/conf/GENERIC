@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.101 2002/04/01 18:50:11 nate Exp $
+#	$OpenBSD: GENERIC,v 1.102 2002/04/02 13:06:56 nate Exp $
 #	$NetBSD: GENERIC,v 1.31 1996/12/03 17:25:29 cgd Exp $
 
 machine	alpha
@@ -160,6 +160,7 @@ bge*	at pci? dev ? function ?	# Broadcom BCM570x (aka Tigon3)
 stge*	at pci? dev ? function ?	# Sundance TC9021 GigE
 rl*	at pci? dev ? function ?	# RealTek 81[23]9 ethernet
 vr*	at pci? dev ? function ?	# VIA Rhine ethernet
+#gx*	at pci? dev ? function ?	# Intel Pro/1000 ethernet
 
 #UNTESTED:  the vollowing section of drivers is untested on alpha.
 en*	at pci? dev ? function ?	# ENI PCI ATM (untested)
