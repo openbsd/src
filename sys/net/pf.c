@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.466 2004/12/05 12:12:01 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.467 2004/12/06 23:28:38 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -934,8 +934,9 @@ pf_src_tree_remove_state(struct pf_state *s)
 
 	if (s->src_node != NULL) {
 		if (s->proto == IPPROTO_TCP) {
-		    if (s->timeout >= PFTM_TCP_ESTABLISHED )
-			--s->src_node->conn;
+			if (s->src.state == PF_TCPS_PROXY_DST ||
+			    s->timeout >= PFTM_TCP_ESTABLISHED)
+				--s->src_node->conn;
 		}
 		if (--s->src_node->states <= 0) {
 			timeout = s->rule.ptr->timeout[PFTM_SRC_NODE];
@@ -3949,6 +3950,8 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct pfi_kif *kif,
 		    (ntohl(th->th_ack) != (*state)->src.seqhi + 1) ||
 		    (ntohl(th->th_seq) != (*state)->src.seqlo + 1))
 			return (PF_DROP);
+		else if ((*state)->src_node != NULL && pf_src_connlimit(state))
+			return (PF_DROP);
 		else
 			(*state)->src.state = PF_TCPS_PROXY_DST;
 	}
@@ -4160,9 +4163,13 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct pfi_kif *kif,
 			if (src->state < TCPS_CLOSING)
 				src->state = TCPS_CLOSING;
 		if (th->th_flags & TH_ACK) {
-			if (dst->state == TCPS_SYN_SENT)
+			if (dst->state == TCPS_SYN_SENT) {
 				dst->state = TCPS_ESTABLISHED;
-			else if (dst->state == TCPS_CLOSING)
+				if (src->state == TCPS_ESTABLISHED &&
+				    (*state)->src_node != NULL &&
+				    pf_src_connlimit(state))
+					return (PF_DROP);
+			} else if (dst->state == TCPS_CLOSING)
 				dst->state = TCPS_FIN_WAIT_2;
 		}
 		if (th->th_flags & TH_RST)
@@ -4182,13 +4189,8 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct pfi_kif *kif,
 		else if (src->state >= TCPS_CLOSING ||
 		    dst->state >= TCPS_CLOSING)
 			(*state)->timeout = PFTM_TCP_CLOSING;
-		else {
-			if ((*state)->timeout != PFTM_TCP_ESTABLISHED &&
-			    (*state)->src_node != NULL &&
-			    pf_src_connlimit(state))
-				return (PF_DROP);
+		else
 			(*state)->timeout = PFTM_TCP_ESTABLISHED;
-		}
 
 		/* Fall through to PASS packet */
 
