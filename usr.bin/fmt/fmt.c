@@ -1,4 +1,4 @@
-/*	$OpenBSD: fmt.c,v 1.22 2004/06/29 16:59:46 mickey Exp $	*/
+/*	$OpenBSD: fmt.c,v 1.23 2005/03/08 23:34:43 cloder Exp $	*/
 
 /* Sensible version of fmt
  *
@@ -170,7 +170,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-  "$OpenBSD: fmt.c,v 1.22 2004/06/29 16:59:46 mickey Exp $";
+  "$OpenBSD: fmt.c,v 1.23 2005/03/08 23:34:43 cloder Exp $";
 static const char copyright[] =
   "Copyright (c) 1997 Gareth McCaughan. All rights reserved.\n";
 #endif /* not lint */
@@ -359,7 +359,7 @@ process_named_file(const char *name)
 	FILE *f;
 
 	if ((f = fopen(name, "r")) == NULL) {
-		warn(name);
+		warn("%s", name);
 		++n_errors;
 	} else {
 		process_stream(f, name);
@@ -468,7 +468,7 @@ process_stream(FILE *stream, const char *name)
 
 	new_paragraph(output_in_paragraph ? last_indent : first_indent, 0);
 	if (ferror(stream)) {
-		warn(name);
+		warn("%s", name);
 		++n_errors;
 	}
 }
@@ -633,7 +633,7 @@ center_stream(FILE *stream, const char *name)
 	}
 
 	if (ferror(stream)) {
-		warn(name);
+		warn("%s", name);
 		++n_errors;
 	}
 }
