@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.6 1999/01/16 07:58:32 mickey Exp $	*/
+/*	$OpenBSD: asm.h,v 1.7 1999/04/20 19:25:02 mickey Exp $	*/
 
 /* 
  * Copyright (c) 1990,1991,1994 The University of Utah and
@@ -268,8 +268,6 @@ tf4	.reg	%fr8
 #define VA_ARG9		-FM_SIZE-40
 #define VA_ARG10	-FM_SIZE-44
 #define VA_ARG11	-FM_SIZE-48
-#define VA_ARG12	-FM_SIZE-52
-#define VA_ARG13	-FM_SIZE-56
 
 #ifdef __STDC__
 #define	__CONCAT(a,b)	a ## b
@@ -314,7 +312,7 @@ tf4	.reg	%fr8
 #endif
 
 #define	ENTRY(x)		!\
-	.space	$text$		!\
+	.space	.text		!\
 	.subspa	$code$		!\
 	.export	x,entry		!\
 	.label	x               !\
@@ -328,8 +326,6 @@ tf4	.reg	%fr8
 	.label  x
 
 #define EXIT(x)			!\
-	bv,n    r0(rp)          !\
-	nop			!\
 	.exit                   !\
 	.procend
 
