@@ -1,4 +1,4 @@
-/*	$OpenBSD: impyu.S,v 1.5 2001/03/29 03:58:18 mickey Exp $	*/
+/*	$OpenBSD: impyu.S,v 1.6 2002/02/04 23:04:18 mickey Exp $	*/
 
 /*
  * Copyright 1996 1995 by Open Software Foundation, Inc.
@@ -66,15 +66,8 @@ pc	.equ		9		; carry bit of product, = 00...01
 pm	.equ	       10		; value of -1 used in shifting
 temp	.equ		6
 
-;****************************************************************************
-	.export impyu,entry
-	.text
-	.align 4
-	.proc
-	.callinfo
-;
-;****************************************************************************
-impyu	stws,ma		pu,4(sp)		; save registers on stack
+LEAF_ENTRY(impyu)
+	stws,ma		pu,4(sp)		; save registers on stack
 	stws,ma		pl,4(sp)		; save registers on stack
 	stws,ma		op1,4(sp)		; save registers on stack
 	stws,ma		cnt,4(sp)		; save registers on stack
@@ -314,5 +307,6 @@ fini	stws		pu,0(arg2)		; save high part of result
 	bv		0(rp)			; return
 	ldws,mb		-4(sp),pu		; restore registers
 
-	.procend
+EXIT(impyu)
+
 	.end
