@@ -1,4 +1,4 @@
-/*      $OpenBSD: neo.c,v 1.3 2000/04/14 03:56:50 csapuntz Exp $       */
+/*      $OpenBSD: neo.c,v 1.4 2000/07/19 09:04:37 csapuntz Exp $       */
 
 /*
  * Copyright (c) 1999 Cameron Grant <gandalf@vilnya.demon.co.uk>
@@ -153,8 +153,6 @@ struct neo_softc {
         u_int32_t       pwmark;
         u_int32_t       rwmark;
 
-        int             mallocIdx;
-
 	struct ac97_codec_if *codec_if;
 	struct ac97_host_if host_if;	
 };
@@ -198,11 +196,11 @@ int     neo_attach_codec __P((void *sc, struct ac97_codec_if *));
 int	neo_read_codec __P((void *sc, u_int8_t a, u_int16_t *d));
 int	neo_write_codec __P((void *sc, u_int8_t a, u_int16_t d));
 void    neo_reset_codec __P((void *sc));
+enum ac97_host_flags neo_flags_codec __P((void *sc));
 int	neo_query_devinfo __P((void *, mixer_devinfo_t *));
-void   *neo_malloc __P((void *, u_long, int, int));
+void   *neo_malloc __P((void *, int, size_t, int, int));
 void	neo_free __P((void *, void *, int));
-u_long	neo_round_buffersize __P((void *, u_long));
-int	neo_mappage __P((void *, void *, int, int));
+size_t	neo_round_buffersize __P((void *, int, size_t));
 int	neo_get_props __P((void *));
 void	neo_set_mixer __P((struct neo_softc *sc, int a, int d));
 
@@ -272,13 +270,16 @@ struct audio_hw_if neo_hw_if = {
 	neo_mixer_set_port,
 	neo_mixer_get_port,
 	neo_query_devinfo,
-	neo_malloc,
+	NULL, /* neo_malloc_old, */
 	neo_free,
-	neo_round_buffersize,
+	NULL, /* neo_round_buffersize_old, */
 	0, /* neo_mappage, */
 	neo_get_props,
 	neo_trigger_output,
 	neo_trigger_input,
+	neo_malloc,
+	neo_round_buffersize,
+
 };
 
 /* -------------------------------------------------------------------- */
@@ -608,7 +609,8 @@ neo_attach(parent, self, aux)
 	sc->host_if.read   = neo_read_codec;
 	sc->host_if.write  = neo_write_codec;
 	sc->host_if.reset  = neo_reset_codec;
-		
+	sc->host_if.flags  = neo_flags_codec;
+
 	if ((error = ac97_attach(&sc->host_if)) != 0)
 		return;
 
@@ -717,6 +719,13 @@ neo_reset_codec(sc)
 	return;
 }
 
+
+enum ac97_host_flags
+neo_flags_codec(sc)
+	void *sc;
+{
+	return (AC97_HOST_DONT_READ);
+}
 
 int
 neo_open(addr, flags)
@@ -1035,22 +1044,21 @@ neo_query_devinfo(addr, dip)
 }
 
 void *
-neo_malloc(addr, size, pool, flags)
+neo_malloc(addr, direction, size, pool, flags)
 	void *addr;
-	u_long size;
+	int  direction;
+	size_t size;
 	int pool, flags;
 {
 	struct neo_softc *sc = addr;
 	void *rv = 0;
 
-	switch (sc->mallocIdx) {
-	case 0:
+	switch (direction) {
+	case AUMODE_PLAY:
 	  rv = (char *)sc->bufioh + sc->pbuf;
-	  sc->mallocIdx++;
 	  break;
-	case 1:
+	case AUMODE_RECORD:
 	  rv = (char *)sc->bufioh + sc->rbuf;
-	  sc->mallocIdx++;
 	  break;
 	default:
 	  break;
@@ -1068,10 +1076,11 @@ neo_free(addr, ptr, pool)
 	return;
 }
 
-u_long
-neo_round_buffersize(addr, size)
+size_t
+neo_round_buffersize(addr, direction, size)
 	void *addr;
-	u_long size;
+	int direction;
+	size_t size;
 {
 	return (NM_BUFFSIZE);
 }

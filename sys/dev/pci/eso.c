@@ -1,4 +1,4 @@
-/*	$OpenBSD: eso.c,v 1.9 2000/04/03 21:13:48 deraadt Exp $	*/
+/*	$OpenBSD: eso.c,v 1.10 2000/07/19 09:04:38 csapuntz Exp $	*/
 /*	$NetBSD: eso.c,v 1.3 1999/08/02 17:37:43 augustss Exp $	*/
 
 /*
@@ -131,17 +131,9 @@ HIDE int	eso_getdev __P((void *, struct audio_device *));
 HIDE int	eso_set_port __P((void *, mixer_ctrl_t *));
 HIDE int	eso_get_port __P((void *, mixer_ctrl_t *));
 HIDE int	eso_query_devinfo __P((void *, mixer_devinfo_t *));
-#ifdef __OpenBSD__
-void *		eso_allocm __P((void *, u_long, int, int));
-#else
 HIDE void *	eso_allocm __P((void *, int, size_t, int, int));
-#endif
 HIDE void	eso_freem __P((void *, void *, int));
-#ifdef __OpenBSD__
-u_long		eso_round_buffersize __P((void *, u_long));
-#else
 HIDE size_t	eso_round_buffersize __P((void *, int, size_t));
-#endif
 HIDE int	eso_mappage __P((void *, void *, int, int));
 HIDE int	eso_get_props __P((void *));
 HIDE int	eso_trigger_output __P((void *, void *, void *, int,
@@ -169,13 +161,25 @@ HIDE struct audio_hw_if eso_hw_if = {
 	eso_set_port,
 	eso_get_port,
 	eso_query_devinfo,
+#ifdef __OpenBSD__
+	0,
+#else
 	eso_allocm,
+#endif
 	eso_freem,
+#ifdef __OpenBSD__
+	0, 
+#else
 	eso_round_buffersize,
+#endif
 	eso_mappage,
 	eso_get_props,
 	eso_trigger_output,
-	eso_trigger_input
+	eso_trigger_input,
+#ifdef __OpenBSD__
+	eso_allocm,
+	eso_round_buffersize
+#endif
 };
 
 HIDE const char * const eso_rev2model[] = {
@@ -1507,18 +1511,10 @@ eso_freemem(sc, ed)
 }
 	
 HIDE void *
-#ifdef __OpenBSD__
-eso_allocm(hdl, size, type, flags)
-#else
 eso_allocm(hdl, direction, size, type, flags)
-#endif
 	void *hdl;
-#ifdef __OpenBSD__
-	u_long size;
-#else
 	int direction;
 	size_t size;
-#endif
 	int type, flags;
 {
 	struct eso_softc *sc = hdl;
@@ -1535,14 +1531,11 @@ eso_allocm(hdl, direction, size, type, flags)
 	 * take care of that ourselves.  The second channel DMA controller
 	 * doesn't have that restriction, however.
 	 */
-#ifdef __OpenBSD__
-	boundary = 0x10000;
-#else
 	if (direction == AUMODE_RECORD)
 		boundary = 0x10000;
 	else
 		boundary = 0;
-#endif
+
 
 	error = eso_allocmem(sc, size, 32, boundary, flags, ed);
 	if (error) {
@@ -1574,20 +1567,11 @@ eso_freem(hdl, addr, type)
 	}
 }
 
-#ifdef __OpenBSD__
-u_long
-eso_round_buffersize(hdl, bufsize)
-#else
 HIDE size_t
 eso_round_buffersize(hdl, direction, bufsize)
-#endif
 	void *hdl;
-#ifdef __OpenBSD__
-	u_long bufsize;
-#else
 	int direction;
 	size_t bufsize;
-#endif
 {
 
 	/* 64K restriction: ISA at eleven? */

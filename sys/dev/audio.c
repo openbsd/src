@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.22 2000/05/24 13:44:17 ho Exp $	*/
+/*	$OpenBSD: audio.c,v 1.23 2000/07/19 09:04:37 csapuntz Exp $	*/
 /*	$NetBSD: audio.c,v 1.105 1998/09/27 16:43:56 christos Exp $	*/
 
 /*
@@ -142,7 +142,7 @@ int	audio_drain __P((struct audio_softc *));
 void	audio_clear __P((struct audio_softc *));
 static __inline void audio_pint_silence __P((struct audio_softc *, struct audio_ringbuffer *, u_char *, int));
 
-int	audio_alloc_ring __P((struct audio_softc *, struct audio_ringbuffer *, int));
+int	audio_alloc_ring __P((struct audio_softc *, struct audio_ringbuffer *, int, int));
 void	audio_free_ring __P((struct audio_softc *, struct audio_ringbuffer *));
 
 int	audioprint __P((void *, const char *));
@@ -260,13 +260,13 @@ audioattach(parent, self, aux)
 	sc->hw_hdl = hdlp;
 	sc->sc_dev = parent;
 
-	error = audio_alloc_ring(sc, &sc->sc_pr, AU_RING_SIZE);
+	error = audio_alloc_ring(sc, &sc->sc_pr, AUMODE_PLAY, AU_RING_SIZE);
 	if (error) {
 		sc->hw_if = 0;
 		printf("audio: could not allocate play buffer\n");
 		return;
 	}
-	error = audio_alloc_ring(sc, &sc->sc_rr, AU_RING_SIZE);
+	error = audio_alloc_ring(sc, &sc->sc_rr, AUMODE_RECORD, AU_RING_SIZE);
 	if (error) {
 		audio_free_ring(sc, &sc->sc_pr);
 		sc->hw_if = 0;
@@ -311,6 +311,8 @@ audioattach(parent, self, aux)
 	for(mi.index = 0; ; mi.index++) {
 		if (hwp->query_devinfo(hdlp, &mi) != 0)
 			break;
+		if (mi.type == AUDIO_MIXER_CLASS)
+			continue;
 		au_check_ports(sc, &sc->sc_inports,  &mi, iclass, 
 			       AudioNsource, AudioNrecord, itable);
 		au_check_ports(sc, &sc->sc_outports, &mi, oclass, 
@@ -534,9 +536,10 @@ audio_print_params(s, p)
 #endif
 
 int
-audio_alloc_ring(sc, r, bufsize)
+audio_alloc_ring(sc, r, direction, bufsize)
 	struct audio_softc *sc;
 	struct audio_ringbuffer *r;
+	int direction;
 	int bufsize;
 {
 	struct audio_hw_if *hw = sc->hw_if;
@@ -544,16 +547,21 @@ audio_alloc_ring(sc, r, bufsize)
 	/*
 	 * Alloc DMA play and record buffers
 	 */
-	ROUNDSIZE(bufsize);
 	if (bufsize < AUMINBUF)
 		bufsize = AUMINBUF;
+	ROUNDSIZE(bufsize);
 	if (hw->round_buffersize)
-		bufsize = hw->round_buffersize(hdl, bufsize);
+		bufsize = hw->round_buffersize(hdl, direction, bufsize);
+	else if (hw->round_buffersize_old)
+		bufsize = hw->round_buffersize_old(hdl, bufsize);
 	r->bufsize = bufsize;
 	if (hw->allocm)
-	    r->start = hw->allocm(hdl, r->bufsize, M_DEVBUF, M_WAITOK);
+		r->start = hw->allocm(hdl, direction, r->bufsize, M_DEVBUF, 
+		    M_WAITOK);
+	else if (hw->allocm_old)
+		r->start = hw->allocm_old(hdl, r->bufsize, M_DEVBUF, M_WAITOK);
 	else
-	    r->start = malloc(bufsize, M_DEVBUF, M_WAITOK);
+		r->start = malloc(bufsize, M_DEVBUF, M_WAITOK);
 	if (r->start == 0)
 		return ENOMEM;
 	return 0;
@@ -565,9 +573,9 @@ audio_free_ring(sc, r)
 	struct audio_ringbuffer *r;
 {
 	if (sc->hw_if->freem) {
-	    sc->hw_if->freem(sc->hw_hdl, r->start, M_DEVBUF);
+		sc->hw_if->freem(sc->hw_hdl, r->start, M_DEVBUF);
 	} else {
-	    free(r->start, M_DEVBUF);
+		free(r->start, M_DEVBUF);
 	}
 }
 
