@@ -112,13 +112,4 @@ pchbattach(parent, self, aux)
 	printf("%s: %s (rev. 0x%02x)\n", self->dv_xname, devinfo,
 	    PCI_REVISION(pa->pa_class));
 	*/
-#include "gm.h"
-#if NGM > 0
-	if ((PCI_VENDOR(pa->pa_id) == PCI_VENDOR_APPLE) && 
-		(PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_APPLE_UNINORTHETH ))
-	{
-		 gmac_enable_hack();
-		
-	}
-#endif
 }
