@@ -1,35 +1,33 @@
-/*	$OpenBSD: __syscall.c,v 1.3 2003/07/31 21:48:07 deraadt Exp $	*/
+/*	$OpenBSD: __syscall.c,v 1.4 2003/11/04 07:28:05 mickey Exp $	*/
+
 /*
- *	Written by Artur Grabowski <art@openbsd.org> 2002 Public Domain.
+ * Written by Michael Shalayeff <mickey@openbsd.org> 2003 Public Domain.
  */
+
 #include <sys/types.h>
 #include <sys/syscall.h>
-#include <sys/wait.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <fcntl.h>
 #include <err.h>
 
 int
-main(int argc, char *argv[])
+main(void)
 {
-	int status;
+	extern off_t __syscall();
+	off_t off;
+	int fd;
 
-	switch(fork()) {
-	case -1:
-		err(1, "fork");
-	case 0:
-		__syscall((u_int64_t)SYS_exit, (u_int64_t)17);
-		abort();
-	}
+	if ((fd = open("/etc/passwd", O_RDONLY)) < 0)
+		err(1, "/etc/passwd");
 
-	if (wait(&status) < 0)
-		err(1, "wait");
+	off = __syscall((u_int64_t)SYS_lseek, fd, 0, (off_t)1, SEEK_SET);
+	if (off < 0)
+		err(1, "lseek");
 
-	if (!WIFEXITED(status))
-		errx(1, "child didn't exit gracefully");
-
-	if (WEXITSTATUS(status) != 17)
-		errx(1, "wrong exit status");
+	off = __syscall((u_int64_t)SYS_lseek, fd, 0, (off_t)0, SEEK_CUR);
+	if (off != 1)
+		errx(1, "lseek: wrong position %llu", off);
 
 	return 0;
 }
