@@ -1,4 +1,4 @@
-/*	$OpenBSD: ugen.c,v 1.22 2002/07/09 17:50:14 nate Exp $ */
+/*	$OpenBSD: ugen.c,v 1.23 2002/07/10 21:41:50 mickey Exp $ */
 /*	$NetBSD: ugen.c,v 1.58 2002/02/20 20:30:12 christos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ugen.c,v 1.26 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -120,7 +120,7 @@ struct ugen_softc {
 	u_char sc_dying;
 };
 
-#if defined(__NetBSD__) || defined(__OpenBSD__)
+#if defined(__NetBSD__)
 cdev_decl(ugen);
 #elif defined(__FreeBSD__)
 d_open_t  ugenopen;

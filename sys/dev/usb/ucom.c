@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucom.c,v 1.12 2002/07/10 03:09:34 nate Exp $ */
+/*	$OpenBSD: ucom.c,v 1.13 2002/07/10 21:41:50 mickey Exp $ */
 /*	$NetBSD: ucom.c,v 1.42 2002/03/17 19:41:04 atatat Exp $	*/
 
 /*
@@ -142,8 +142,6 @@ struct ucom_softc {
 	rndsource_element_t	sc_rndsource;	/* random source */
 #endif
 };
-
-cdev_decl(ucom);
 
 Static void	ucom_cleanup(struct ucom_softc *);
 Static void	ucom_hwiflow(struct ucom_softc *);

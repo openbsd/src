@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb.c,v 1.20 2002/07/09 17:41:02 nate Exp $	*/
+/*	$OpenBSD: usb.c,v 1.21 2002/07/10 21:41:51 mickey Exp $	*/
 /*	$NetBSD: usb.c,v 1.53 2001/01/23 17:04:30 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb.c,v 1.20 1999/11/17 22:33:46 n_hibma Exp $	*/
 
@@ -102,8 +102,6 @@ struct usb_softc {
 
 	char		sc_dying;
 };
-
-cdev_decl(usb);
 
 Static void	usb_discover(void *);
 Static void	usb_create_event_thread(void *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ulpt.c,v 1.10 2002/05/07 18:08:04 nate Exp $ */
+/*	$OpenBSD: ulpt.c,v 1.11 2002/07/10 21:41:51 mickey Exp $ */
 /*	$NetBSD: ulpt.c,v 1.49 2002/02/25 22:39:01 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ulpt.c,v 1.24 1999/11/17 22:33:44 n_hibma Exp $	*/
 
@@ -124,7 +124,7 @@ struct ulpt_softc {
 #endif
 };
 
-#if defined(__NetBSD__) || defined(__OpenBSD__)
+#if defined(__NetBSD__)
 cdev_decl(ulpt);
 #elif defined(__FreeBSD__)
 Static d_open_t ulptopen;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uscanner.c,v 1.8 2002/07/09 16:28:02 nate Exp $ */
+/*	$OpenBSD: uscanner.c,v 1.9 2002/07/10 21:41:51 mickey Exp $ */
 /*	$NetBSD: uscanner.c,v 1.29 2002/06/18 00:32:30 augustss Exp $	*/
 
 /*
@@ -235,7 +235,7 @@ struct uscanner_softc {
 	u_char			sc_dying;
 };
 
-#if defined(__NetBSD__) || defined(__OpenBSD__)
+#if defined(__NetBSD__)
 cdev_decl(uscanner);
 #elif defined(__FreeBSD__)
 d_open_t  uscanneropen;
