@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.82 2002/10/07 14:38:34 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.83 2002/10/07 14:42:07 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999-2002 Michael Shalayeff
@@ -1211,10 +1211,10 @@ sendsig(catcher, sig, mask, code, type, val)
 	union sigval val;
 {
 	struct proc *p = curproc;
-	struct sigcontext *scp, ksc;
 	struct trapframe *tf = p->p_md.md_regs;
 	struct sigacts *psp = p->p_sigacts;
-	siginfo_t ksi, *sip = NULL;
+	struct sigcontext ksc, *scp;
+	siginfo_t ksi, *sip;
 	int sss;
 
 #ifdef DEBUG
@@ -1236,10 +1236,11 @@ sendsig(catcher, sig, mask, code, type, val)
 		scp = (struct sigcontext *)tf->tf_sp;
 
 	sss = sizeof(*scp);
+	sip = NULL;
 	if (psp->ps_siginfo & sigmask(sig)) {
 		initsiginfo(&ksi, sig, code, type, val);
-		sip = (void *)(scp + 1);
-		if (copyout((caddr_t)&ksi, sip, sizeof(*sip)))
+		sip = (siginfo_t *)(scp + 1);
+		if (copyout((caddr_t)&ksi, sip, sizeof(ksi)))
 			sigexit(p, SIGILL);
 		sss += sizeof(*sip);
 	}
@@ -1255,7 +1256,7 @@ sendsig(catcher, sig, mask, code, type, val)
 		sigexit(p, SIGILL);
 
 	sss += HPPA_FRAME_SIZE;
-	if (suword((caddr_t)scp + sss, 0) ||
+	if (suword((caddr_t)scp + sss - HPPA_FRAME_SIZE, 0) ||
 	    suword((caddr_t)scp + sss + HPPA_FRAME_CRP, 0))
 		sigexit(p, SIGILL);
 
