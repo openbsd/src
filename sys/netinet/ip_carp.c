@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.32 2003/12/10 07:22:43 itojun Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.33 2004/01/13 07:23:43 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -263,6 +263,12 @@ carp_setroute(struct carp_softc *sc, int cmd)
 	TAILQ_FOREACH(ifa, &sc->sc_ac.ac_if.if_addrlist, ifa_list) {
 		if (ifa->ifa_addr->sa_family == AF_INET)
 			rtinit(ifa, cmd, RTF_UP | RTF_HOST);
+		if (ifa->ifa_addr->sa_family == AF_INET6) {
+			if (cmd == RTM_ADD)
+				in6_ifaddloop(ifa);
+			else
+				in6_ifremloop(ifa);
+		}
 	}
 	splx(s);
 }
