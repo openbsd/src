@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.7 2001/05/10 01:33:35 millert Exp $
+#	$OpenBSD: genassym.cf,v 1.8 2001/05/13 17:19:56 millert Exp $
 #	$NetBSD: genassym.cf,v 1.11 1998/02/16 20:58:29 thorpej Exp $
 
 #
@@ -169,6 +169,7 @@ define	PSL_IPL7		PSL_IPL7
 define	PSL_LOWIPL		PSL_LOWIPL
 define	PSL_HIGHIPL		PSL_HIGHIPL
 define	PSL_USER		PSL_USER
+define	PSL_TS			PSL_T | PSL_S
 define	SPL1			PSL_S | PSL_IPL1
 define	SPL2			PSL_S | PSL_IPL2
 define	SPL3			PSL_S | PSL_IPL3

@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.21 2001/05/11 23:24:57 millert Exp $	*/
+/*	$OpenBSD: trap.c,v 1.22 2001/05/13 17:19:56 millert Exp $	*/
 /*	$NetBSD: trap.c,v 1.57 1998/02/16 20:58:31 thorpej Exp $	*/
 
 /*
@@ -536,10 +536,9 @@ trap(type, code, v, frame)
 	 * SUN 3.x traps get passed through as T_TRAP15 and are not really
 	 * supported yet.
 	 *
-	 * XXX: We should never get kernel-mode T_TRACE or T_TRAP15
+	 * XXX: We should never get kernel-mode T_TRAP15
 	 * XXX: because locore.s now gives them special treatment.
 	 */
-	case T_TRACE:		/* kernel trace trap */
 	case T_TRAP15:		/* kernel breakpoint */
 #ifdef DEBUG
 		printf("unexpected kernel trace trap, type = %d\n", type);
@@ -549,7 +548,6 @@ trap(type, code, v, frame)
 		return;
 
 	case T_TRACE|T_USER:	/* user trace trap */
-	case T_TRAP15|T_USER:	/* SUN user trace trap */
 #ifdef COMPAT_SUNOS
 		/*
 		 * SunOS uses Trap #2 for a "CPU cache flush".
@@ -561,6 +559,9 @@ trap(type, code, v, frame)
 			return;
 		}
 #endif
+		/* FALLTHROUGH */
+	case T_TRACE:		/* tracing a trap instruction */
+	case T_TRAP15|T_USER:	/* SUN user trace trap */
 		frame.f_sr &= ~PSL_T;
 		i = SIGTRAP;
 		typ = TRAP_TRACE;
