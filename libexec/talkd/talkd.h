@@ -1,4 +1,4 @@
-/*	$OpenBSD: talkd.h,v 1.2 1996/07/15 05:10:12 mickey Exp $	*/
+/*	$OpenBSD: talkd.h,v 1.3 1998/08/18 03:42:11 millert Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -52,7 +52,6 @@ int	find_user __P((char *name, char *tty));
 
 /* announce.c */
 int	announce __P((CTL_MSG *,char *));
-int	announce_proc __P((CTL_MSG *,char *));
 
 /* print.c */
 void	print_request __P((char *,register CTL_MSG *));
