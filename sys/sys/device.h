@@ -1,4 +1,4 @@
-/*	$OpenBSD: device.h,v 1.12 1997/08/07 10:34:48 downsj Exp $	*/
+/*	$OpenBSD: device.h,v 1.13 1998/05/11 09:59:37 niklas Exp $	*/
 /*	$NetBSD: device.h,v 1.15 1996/04/09 20:55:24 cgd Exp $	*/
 
 /*
@@ -96,6 +96,7 @@ struct cfdata {
 	int	cf_locnames;		/* start of names */
 	void	(**cf_ivstubs)		/* config-generated vectors, if any */
 			__P((void));
+	short	cf_starunit1;		/* 1st usable unit number by STAR */
 };
 extern struct cfdata cfdata[];
 #define FSTATE_NOTFOUND	0	/* has not been found */
@@ -186,7 +187,9 @@ extern int attach_loadable __P((char *, int, struct cftable *));
 extern int detach_loadable __P((struct cftable *));
 typedef void (*config_detach_callback_t) __P((struct device *, void *));
 extern int config_detach __P((struct cfdata *, config_detach_callback_t,
-			      void *));
+	    void *));
+extern int config_detach_children __P((struct cfdata *,
+	    config_detach_callback_t, void *));
 
 #endif /* _KERNEL */
 

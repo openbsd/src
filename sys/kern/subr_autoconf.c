@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_autoconf.c,v 1.20 1998/02/20 14:51:57 niklas Exp $	*/
+/*	$OpenBSD: subr_autoconf.c,v 1.21 1998/05/11 09:59:39 niklas Exp $	*/
 /*	$NetBSD: subr_autoconf.c,v 1.21 1996/04/04 06:06:18 cgd Exp $	*/
 
 /*
@@ -64,6 +64,8 @@
  * Autoconfiguration subroutines.
  */
 
+typedef int (*cond_predicate_t) __P((struct device *, void *));
+
 /*
  * ioconf.c exports exactly two names: cfdata and cfroots.  All system
  * devices and drivers are found via these tables.
@@ -92,6 +94,12 @@ int autoconf_verbose = AUTOCONF_VERBOSE;	/* trace probe calls */
 
 static char *number __P((char *, int));
 static void mapply __P((struct matchinfo *, struct cfdata *));
+static int haschild __P((struct device *));
+int	detach_devices __P((cond_predicate_t, void *,
+	    config_detach_callback_t, void *));
+int	dev_matches_cfdata __P((struct device *dev, void *));
+int	parentdev_matches_cfdata __P((struct device *dev, void *));
+
 
 struct devicelist alldevs;		/* list of all devices */
 struct evcntlist allevents;		/* list of all event counters */
@@ -128,9 +136,13 @@ mapply(m, cf)
 	else
 		match = cf;
 
-	if (autoconf_verbose)
-		printf(">>> probing for %s%d\n", cf->cf_driver->cd_name,
-		    cf->cf_unit);
+	if (autoconf_verbose) {
+		printf(">>> probing for %s", cf->cf_driver->cd_name);
+		if (cf->cf_fstate == FSTATE_STAR)
+			printf("*\n");
+		else
+			printf("%d\n", cf->cf_unit);
+	}
 	if (m->fn != NULL)
 		pri = (*m->fn)(m->parent, match, m->aux);
 	else {
@@ -141,8 +153,8 @@ mapply(m, cf)
 		pri = (*cf->cf_attach->ca_match)(m->parent, match, m->aux);
 	}
 	if (autoconf_verbose)
-		printf(">>> probe for %s%d returned %d\n",
-		    cf->cf_driver->cd_name, cf->cf_unit, pri);
+		printf(">>> %s probe returned %d\n", cf->cf_driver->cd_name,
+		    pri);
 
 	if (pri > m->pri) {
 		if (m->indirect && m->match)
@@ -202,9 +214,8 @@ config_search(fn, parent, aux)
 	}
 	if (autoconf_verbose) {
 		if (m.match)
-			printf(">>> probe for %s%d won\n",
-			    ((struct cfdata *)m.match)->cf_driver->cd_name,
-			    ((struct cfdata *)m.match)->cf_unit);
+			printf(">>> %s probe won\n",
+			    ((struct cfdata *)m.match)->cf_driver->cd_name);
 		else
 			printf(">>> no winning probe\n");
 	}
@@ -371,11 +382,17 @@ config_attach(parent, match, aux, print)
 
 	cd = cf->cf_driver;
 	ca = cf->cf_attach;
-	cd->cd_devs[cf->cf_unit] = dev;
 
-	if (cf->cf_fstate == FSTATE_STAR)
-		cf->cf_unit++;
-	else
+	cd->cd_devs[dev->dv_unit] = dev;
+
+	/*
+	 * If this is a "STAR" device and we used the last unit, prepare for
+	 * another one.
+	 */
+	if (cf->cf_fstate == FSTATE_STAR) {
+		if (dev->dv_unit == cf->cf_unit)
+			cf->cf_unit++;
+	} else
 		cf->cf_fstate = FSTATE_FOUND;
 
 	TAILQ_INSERT_TAIL(&alldevs, dev, dv_list);
@@ -427,21 +444,31 @@ config_make_softc(parent, cf)
 	if (ca->ca_devsize < sizeof(struct device))
 		panic("config_make_softc");
 
-	/* compute length of name and decimal expansion of unit number */
-	lname = strlen(cd->cd_name);
-	xunit = number(&num[sizeof num], cf->cf_unit);
-	lunit = &num[sizeof num] - xunit;
-	if (lname + lunit >= sizeof(dev->dv_xname))
-		panic("config_attach: device name too long");
-
 	/* get memory for all device vars */
 	dev = (struct device *)malloc(ca->ca_devsize, M_DEVBUF, M_NOWAIT);
 	if (!dev)
-	    panic("config_attach: memory allocation for device softc failed");
+		panic("config_make_softc: allocation for device softc failed");
 	bzero(dev, ca->ca_devsize);
 	dev->dv_class = cd->cd_class;
 	dev->dv_cfdata = cf;
-	dev->dv_unit = cf->cf_unit;
+
+	/* If this is a STAR device, search for a free unit number */
+	if (cf->cf_fstate == FSTATE_STAR) {
+		for (dev->dv_unit = cf->cf_starunit1;
+		    dev->dv_unit < cf->cf_unit; dev->dv_unit++)
+			if (cd->cd_ndevs == 0 ||
+			    cd->cd_devs[dev->dv_unit] == NULL)
+				break;
+	} else
+		dev->dv_unit = cf->cf_unit;
+
+	/* compute length of name and decimal expansion of unit number */
+	lname = strlen(cd->cd_name);
+	xunit = number(&num[sizeof num], dev->dv_unit);
+	lunit = &num[sizeof num] - xunit;
+	if (lname + lunit >= sizeof(dev->dv_xname))
+		panic("config_make_softc: device name too long");
+
 	bcopy(cd->cd_name, dev->dv_xname, lname);
 	bcopy(xunit, dev->dv_xname + lname, lunit);
 	dev->dv_parent = parent;
@@ -463,7 +490,7 @@ config_make_softc(parent, cf)
 		cd->cd_ndevs = new;
 		nsp = malloc(new * sizeof(void *), M_DEVBUF, M_NOWAIT);	
 		if (nsp == 0)
-			panic("config_attach: %sing dev array",
+			panic("config_make_softc: %sing dev array",
 			    old != 0 ? "expand" : "creat");
 		bzero(nsp + old, (new - old) * sizeof(void *));
 		if (old != 0) {
@@ -473,7 +500,7 @@ config_make_softc(parent, cf)
 		cd->cd_devs = nsp;
 	}
 	if (cd->cd_devs[dev->dv_unit])
-		panic("config_attach: duplicate %s", dev->dv_xname);
+		panic("config_make_softc: duplicate %s", dev->dv_xname);
 
 	return (dev);
 }
@@ -501,12 +528,6 @@ evcnt_attach(dev, name, ev)
 	TAILQ_INSERT_TAIL(&allevents, ev, ev_list);
 }
 
-typedef int (*cond_predicate_t) __P((struct device*, void*));
-
-static int haschild __P((struct device *));
-static int detach_devices __P((cond_predicate_t, void *,
-			       config_detach_callback_t, void *));
-
 static int
 haschild(dev)
 	struct device *dev;
@@ -520,7 +541,7 @@ haschild(dev)
 	return(0);
 }
 
-static int
+int
 detach_devices(cond, condarg, callback, arg)
 	cond_predicate_t cond;
 	void *condarg;
@@ -581,7 +602,9 @@ detach_devices(cond, condarg, callback, arg)
 #ifdef DEBUG
 				printf("%s removed\n", d->dv_xname);
 #endif
-				d->dv_cfdata->cf_fstate = FSTATE_NOTFOUND;
+				if (d->dv_cfdata->cf_fstate == FSTATE_FOUND)
+					d->dv_cfdata->cf_fstate =
+					    FSTATE_NOTFOUND;
 				/* free memory for dev data (alloc'd
                                    in config_make_softc) */
 				free(d, M_DEVBUF);
@@ -592,10 +615,8 @@ detach_devices(cond, condarg, callback, arg)
 		}
 		d = d->dv_list.tqe_next;
 	}
-	return(!alldone);
+	return (!alldone);
 }
-
-int dev_matches_cfdata __P((struct device *dev, void *));
 
 int
 dev_matches_cfdata(dev, arg)
@@ -613,12 +634,29 @@ dev_matches_cfdata(dev, arg)
 }
 
 int
+parentdev_matches_cfdata(dev, arg)
+	struct device *dev;
+	void *arg;
+{
+	return (dev->dv_parent ? dev_matches_cfdata(dev->dv_parent, arg) : 0);
+}
+
+int
 config_detach(cf, callback, arg)
 	struct cfdata *cf;
 	config_detach_callback_t callback;
 	void *arg;
 {
-	return(detach_devices(dev_matches_cfdata, cf, callback, arg));
+	return (detach_devices(dev_matches_cfdata, cf, callback, arg));
+}
+
+int
+config_detach_children(cf, callback, arg)
+	struct cfdata *cf;
+	config_detach_callback_t callback;
+	void *arg;
+{
+	return (detach_devices(parentdev_matches_cfdata, cf, callback, arg));
 }
 
 int
