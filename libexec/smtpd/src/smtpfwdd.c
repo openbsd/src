@@ -4,7 +4,7 @@
  * to pick it up and invokes sendmail (or sendmail-like agent) to
  * deliver it.
  *
- * $Id: smtpfwdd.c,v 1.4 1999/05/25 16:40:55 millert Exp $
+ * $Id: smtpfwdd.c,v 1.5 2000/10/19 03:06:40 beck Exp $
  * 
  * Copyright (c) 1996, 1997 Obtuse Systems Corporation. All rights
  * reserved.
@@ -41,7 +41,7 @@
  */
 char *obtuse_copyright =
 "Copyright 1996 - Obtuse Systems Corporation - All rights reserved.";
-char *obtuse_rcsid = "$Id: smtpfwdd.c,v 1.4 1999/05/25 16:40:55 millert Exp $";
+char *obtuse_rcsid = "$Id: smtpfwdd.c,v 1.5 2000/10/19 03:06:40 beck Exp $";
 
 #include <stdio.h>
 #include <signal.h>
@@ -680,7 +680,6 @@ forward(char *fname)
       case EX_OSERR:
       case EX_OSFILE:
       case EX_IOERR:	
-      case EX_UNAVAILABLE:
       case EX_TEMPFAIL:
 	syslog(LOG_INFO, "Temporary sendmail failure (status %d), will retry later", status);
 	fail_retry(f, fname);
