@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.1.1.1 1997/02/06 16:02:46 pefo Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.2 1997/02/16 22:31:26 pefo Exp $	*/
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	8.3 (Berkeley) 1/12/94
- *      $Id: machdep.c,v 1.1.1.1 1997/02/06 16:02:46 pefo Exp $
+ *      $Id: machdep.c,v 1.2 1997/02/16 22:31:26 pefo Exp $
  */
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
@@ -177,6 +177,9 @@ mips_init(argc, argv, code)
 	mem_layout[1].mem_size = 0x400000 - (int)(CACHED_TO_PHYS(sysend));
 	physmem = 4096 * 1024;
 
+	mem_layout[2].mem_start = 0x400000;
+	mem_layout[2].mem_size = 0x800000;
+	physmem += 8192 * 1024;
 
 	switch (cputype) {
 	case WGRISC9100:

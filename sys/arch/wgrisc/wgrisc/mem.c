@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.1.1.1 1997/02/06 16:02:46 pefo Exp $	*/
+/*	$OpenBSD: mem.c,v 1.2 1997/02/16 22:31:28 pefo Exp $	*/
 /*	$NetBSD: mem.c,v 1.6 1995/04/10 11:55:03 mycroft Exp $	*/
 
 /*
@@ -134,6 +134,10 @@ mmrw(dev, uio, flags)
 			if (uio->uio_rw == UIO_WRITE)
 				uio->uio_resid = 0;
 			return (0);
+
+		case 3:
+			mdbpanic();
+			return(0);
 
 /* minor device 12 (/dev/zero) is source of nulls on read, rathole on write */
 		case 12:

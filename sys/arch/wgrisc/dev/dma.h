@@ -1,4 +1,4 @@
-/*	$OpenBSD: dma.h,v 1.1.1.1 1997/02/06 16:02:42 pefo Exp $ */
+/*	$OpenBSD: dma.h,v 1.2 1997/02/16 22:31:22 pefo Exp $ */
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -124,6 +124,10 @@ typedef struct dma_softc {
 	        xcmd = ~(0x30 << 6);					\
 	    }								\
 	    dcmd |= (1 << 26);						\
+	    /* Switch direction before enable */			\
+	    out32(R3715_IO_TIMING, (in32(R3715_IO_TIMING) & xcmd) |	\
+			(dcmd & ~0x410));				\
+	    (void)in16(RISC_STATUS);					\
 	    out32(R3715_IO_TIMING, (in32(R3715_IO_TIMING) & xcmd) | dcmd);\
 	}
 #endif
@@ -132,9 +136,17 @@ typedef struct dma_softc {
 #define	DMA_DRAIN(r)
 #define	DMA_END(c)							\
 	{								\
-	    int dcmd;							\
-	    dcmd = ((c)->dma_ch == DMA_CH0) ? 0x10 : 0x10000;		\
-	    out32(R3715_IO_TIMING, in32(R3715_IO_TIMING) & ~dcmd);	\
+	    int resudial;						\
+	    if((c)->dma_ch == DMA_CH0) {				\
+	    	out32(R3715_IO_TIMING, in32(R3715_IO_TIMING) & ~0x10);	\
+		resudial = in32(R3715_DMA_CNT0);			\
+if(resudial)								\
+printf("res: %d\n", resudial);						\
+	    }								\
+	    else {							\
+	    	out32(R3715_IO_TIMING, in32(R3715_IO_TIMING) & ~0x400);	\
+		resudial = in32(R3715_DMA_CNT1);			\
+	    }								\
 	    if((c)->mode == DMA_FROM_DEV) {				\
 		int *_v = (int *)(c)->req_va;				\
 		int *_p = (int *)PHYS_TO_UNCACHED(CACHED_TO_PHYS(dma_buffer)); \

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.1.1.1 1997/02/06 16:02:44 pefo Exp $	*/
+/*	$OpenBSD: bus.h,v 1.2 1997/02/16 22:31:25 pefo Exp $	*/
 
 /*
  * Copyright (c) 1996 Niklas Hallqvist.  All rights reserved.
@@ -64,6 +64,8 @@ CAT(bus_space_read_,n)(bus_space_tag_t bst, bus_space_handle_t bsh,	      \
 	wbflush();							      \
 	wbflush();							      \
 	wbflush();							      \
+	wbflush();							      \
+	wbflush();							      \
 	return *(volatile CAT3(u_int,m,_t) *)(bsh + ba);		      \
 }
 
@@ -94,10 +96,13 @@ CAT(bus_space_write_,n)(bus_space_tag_t bst, bus_space_handle_t bsh,	      \
      bus_addr_t ba, CAT3(u_int,m,_t) x)					      \
 {									      \
 	wbflush();							      \
+	wbflush();							      \
+	wbflush();							      \
+	wbflush();							      \
+	wbflush();							      \
+	wbflush();							      \
+	wbflush();							      \
 	*(volatile CAT3(u_int,m,_t) *)(bsh + ba) = x;			      \
-	wbflush();							      \
-	wbflush();							      \
-	wbflush();							      \
 }
 
 bus_space_write(1,8)
