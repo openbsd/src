@@ -1,4 +1,4 @@
-/*	$OpenBSD: exchange.c,v 1.74 2002/11/21 12:09:20 ho Exp $	*/
+/*	$OpenBSD: exchange.c,v 1.75 2003/01/09 02:34:43 ho Exp $	*/
 /*	$EOM: exchange.c,v 1.143 2000/12/04 00:02:25 angelos Exp $	*/
 
 /*
@@ -1012,6 +1012,8 @@ exchange_setup_p1 (struct message *msg, u_int32_t doi)
   struct transport *t = msg->transport;
   struct exchange *exchange;
   struct sockaddr *dst;
+  struct conf_list *flags;
+  struct conf_list_node *flag;
   char *name = 0, *policy = 0, *str;
   u_int32_t want_doi;
   u_int8_t type;
@@ -1113,6 +1115,38 @@ exchange_setup_p1 (struct message *msg, u_int32_t doi)
       return 0;
     }
   exchange->policy = policy;
+
+  if (name)
+    {
+      flags = conf_get_list (name, "Flags");
+      if (flags)
+	{
+	  for (flag = TAILQ_FIRST (&flags->fields); flag;
+	       flag = TAILQ_NEXT (flag, link))
+	    if (strcasecmp (flag->field, "ikecfg") == 0)
+	      {
+		struct exchange_finalization_node *node;
+
+		node = calloc (1, (unsigned long)sizeof *node);
+		if (!node)
+		  {
+		    log_print ("exchange_establish_p1: calloc (1, %lu) failed",
+			       (unsigned long)sizeof (*node));
+		    exchange_free (exchange);
+		    return 0;
+		  }
+
+		/* Insert this finalization inbetween the original.  */
+		node->first = 0;
+		node->first_arg = 0;
+		node->second_arg = name;
+		exchange_add_finalization (exchange,
+					   exchange_establish_transaction,
+					   node);
+	      }
+	  conf_free_list (flags);
+	}
+    }
   cookie_gen (msg->transport, exchange,
 	      exchange->cookies + ISAKMP_HDR_ICOOKIE_LEN,
 	      ISAKMP_HDR_RCOOKIE_LEN);
