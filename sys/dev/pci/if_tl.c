@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tl.c,v 1.17 2001/02/20 19:39:43 mickey Exp $	*/
+/*	$OpenBSD: if_tl.c,v 1.18 2001/03/25 06:37:27 csapuntz Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -2092,6 +2092,7 @@ void tl_init(xsc)
 		printf("tl%d: initialization failed: no "
 			"memory for rx buffers\n", sc->tl_unit);
 		tl_stop(sc);
+		splx(s);
 		return;
 	}
 
