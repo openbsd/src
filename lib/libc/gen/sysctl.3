@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.126 2004/01/19 09:39:44 tedu Exp $
+.\"	$OpenBSD: sysctl.3,v 1.127 2004/01/31 20:12:20 markus Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -1015,6 +1015,7 @@ The currently defined protocols and names are:
 .It tcp	mssdflt	integer	yes
 .It tcp	recvspace	integer	yes
 .It tcp	rfc1323	integer	yes
+.It tcp	rfc3390	integer	yes
 .It tcp	rstppslimit	integer	yes
 .It tcp	sack	integer	yes
 .It tcp	sendspace	integer	yes
@@ -1356,6 +1357,10 @@ receive buffer size.
 Returns 1 if RFC 1323 extensions to
 .Tn TCP
 are enabled.
+.It Li tcp.rfc3390
+Returns 1 if the
+.Tn TCP
+Initial Window is increased as specified in RFC3390.
 .It Li tcp.rstppslimit
 This variable specifies the maximum number of outgoing TCP RST packets
 per second.
