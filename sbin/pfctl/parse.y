@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.173 2002/10/22 12:28:08 mcbride Exp $	*/
+/*	$OpenBSD: parse.y,v 1.174 2002/10/22 12:55:01 mpech Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -978,7 +978,7 @@ uid		: STRING			{
 				}
 			} else {
 				if (ulval >= UID_MAX) {
-					yyerror("illegal uid value %ul", ulval);
+					yyerror("illegal uid value %lu", ulval);
 					YYERROR;
 				}
 				$$ = ulval;
@@ -1056,7 +1056,7 @@ gid		: STRING			{
 				}
 			} else {
 				if (ulval >= GID_MAX) {
-					yyerror("illegal gid value %ul", ulval);
+					yyerror("illegal gid value %lu", ulval);
 					YYERROR;
 				}
 				$$ = ulval;
