@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.26 2001/09/01 00:50:49 chris Exp $ */
+/*	$OpenBSD: if_vlan.c,v 1.27 2001/10/01 09:27:31 niklas Exp $ */
 /*
  * Copyright 1998 Massachusetts Institute of Technology
  *
@@ -50,7 +50,6 @@
  */
 
 #include "vlan.h"
-#if NVLAN > 0
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -81,7 +80,8 @@
 
 struct	ifaddr	**ifnet_addrs;
 
-struct ifvlan ifv_softc[NVLAN];
+struct ifvlan *ifv_softc;
+int nifvlan;
 
 extern int ifqmaxlen;
 
@@ -90,7 +90,7 @@ int	vlan_ioctl (struct ifnet *ifp, u_long cmd, caddr_t addr);
 int	vlan_setmulti (struct ifnet *ifp);
 int	vlan_unconfig (struct ifnet *ifp);
 int	vlan_config (struct ifvlan *ifv, struct ifnet *p);
-void	vlanattach (void *dummy);
+void	vlanattach (int count);
 int	vlan_set_promisc (struct ifnet *ifp);
 
 /*
@@ -142,14 +142,19 @@ int vlan_setmulti(struct ifnet *ifp)
 }
 
 void
-vlanattach(void *dummy)
+vlanattach(int count)
 {
 	struct ifnet *ifp;
 	int i;
 
-	bzero(ifv_softc, sizeof(ifv_softc));
+	MALLOC(ifv_softc, struct ifvlan *, count * sizeof(struct ifvlan),
+	    M_DEVBUF, M_NOWAIT);
+	if (ifv_softc == NULL)
+		panic("vlanattach: MALLOC failed");
+	nifvlan = count;
+	bzero(ifv_softc, nifvlan * sizeof(ifv_softc));
 
-	for (i = 0; i < NVLAN; i++) {
+	for (i = 0; i < nifvlan; i++) {
 		ifp = &ifv_softc[i].ifv_if;
 		ifp->if_softc = &ifv_softc[i];
 		sprintf(ifp->if_xname, "vlan%d", i);
@@ -314,13 +319,13 @@ vlan_input_tag(struct mbuf *m, u_int16_t t)
 	struct ifvlan *ifv;
 	struct ether_vlan_header vh;
 
-	for (i = 0; i < NVLAN; i++) {
+	for (i = 0; i < nifvlan; i++) {
 		ifv = &ifv_softc[i];
 		if (m->m_pkthdr.rcvif == ifv->ifv_p && t == ifv->ifv_tag)
 			break;
 	}
 
-	if (i >= NVLAN) {
+	if (i >= nifvlan) {
 		if (m->m_pkthdr.len < sizeof(struct ether_header))
 			return (-1);
 		m_copydata(m, 0, sizeof(struct ether_header), (caddr_t)&vh);
@@ -381,13 +386,13 @@ vlan_input(eh, m)
 
 	tag = EVL_VLANOFTAG(ntohs(*mtod(m, u_int16_t *)));
 
-	for (i = 0; i < NVLAN; i++) {
+	for (i = 0; i < nifvlan; i++) {
 		ifv = &ifv_softc[i];
 		if (m->m_pkthdr.rcvif == ifv->ifv_p && tag == ifv->ifv_tag)
 			break;
 	}
 
-	if (i >= NVLAN || (ifv->ifv_if.if_flags & (IFF_UP|IFF_RUNNING)) !=
+	if (i >= nifvlan || (ifv->ifv_if.if_flags & (IFF_UP|IFF_RUNNING)) !=
 	    (IFF_UP|IFF_RUNNING)) {
 		m_freem(m);
 		return -1;	/* so ether_input can take note */
@@ -693,5 +698,3 @@ vlan_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	}
 	return error;
 }
-
-#endif /* NVLAN > 0 */
