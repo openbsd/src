@@ -1,4 +1,4 @@
-.\"	$OpenBSD: autest.1,v 1.1.1.1 2003/02/01 17:58:18 jason Exp $
+.\"	$OpenBSD: autest.1,v 1.2 2003/02/01 18:09:27 jason Exp $
 .\"
 .\" Copyright (c) 2002 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -37,11 +37,18 @@
 .Nd test audio encoding output
 .Sh SYNOPSIS
 .Nm autest
+.Op Fl f Ar device
 .Sh DESCRIPTION
 The
 .Nm
-utility opens
-.Ar /dev/sound
+utility opens the
+.Xr audio 4
+device specified with the
+.Fl f
+flag
+or
+.Pa /dev/sound
+if not specified,
 and iterates through all of the encodings supported by the device playing
 a 440Hz tone in the proper format.
 The tone should sound almost identical in each of the formats.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: autest.c,v 1.1.1.1 2003/02/01 17:58:18 jason Exp $	*/
+/*	$OpenBSD: autest.c,v 1.2 2003/02/01 18:09:27 jason Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -45,7 +45,7 @@
 #include "adpcm.h"
 #include "law.h"
 
-int main(void);
+int main(int, char **);
 void check_encoding(int, audio_encoding_t *);
 void check_encoding_mono(int, audio_encoding_t *);
 void check_encoding_stereo(int, audio_encoding_t *);
@@ -62,15 +62,37 @@ void audio_wait(int);
 
 #define	PLAYSECS	2
 
-int
-main()
-{
-	int fd, i;
+#define	DEFAULT_DEV	"/dev/sound"
 
-	fd = open("/dev/sound", O_RDWR, 0);
+int
+main(int argc, char **argv)
+{
+	audio_info_t ainfo;
+	char *fname = NULL;
+	int fd, i, c;
+
+	while ((c = getopt(argc, argv, "f:")) != -1) {
+		switch (c) {
+		case 'f':
+			fname = optarg;
+			break;
+		case '?':
+		default:
+			fprintf(stderr, "%s [-f device]\n", argv[0]);
+			return (1);
+		}
+	}
+
+	if (fname == NULL)
+		fname = DEFAULT_DEV;
+
+	fd = open(fname, O_RDWR, 0);
 	if (fd == -1)
 		err(1, "open");
 
+
+	if (ioctl(fd, AUDIO_GETINFO, &ainfo) == -1)
+		err(1, "%s: audio_getinfo", fname);
 
 	for (i = 0; ; i++) {
 		audio_encoding_t enc;
