@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_lcd.c,v 1.14 2005/02/17 23:07:46 drahn Exp $ */
+/*	$OpenBSD: pxa2x0_lcd.c,v 1.15 2005/02/17 23:16:33 drahn Exp $ */
 /* $NetBSD: pxa2x0_lcd.c,v 1.8 2003/10/03 07:24:05 bsh Exp $ */
 
 /*
@@ -258,6 +258,7 @@ pxa2x0_lcd_attach_sub(struct pxa2x0_lcd_softc *sc,
 		 * Initialize a dummy rasops_info to compute fontsize and
 		 * the screen size in chars.
 		 */
+		bzero(&dummy, sizeof(dummy));
 		pxa2x0_lcd_setup_rasops(&dummy, descr, geom);
 	}
 }
@@ -560,7 +561,6 @@ pxa2x0_lcd_setup_rasops(struct rasops_info *rinfo,
     const struct lcd_panel_geometry *geom)
 {
 
-	bzero(rinfo, sizeof(struct rasops_info));
 	rinfo->ri_flg = 0;
 	rinfo->ri_depth = descr->depth;
 	rinfo->ri_width = geom->panel_width;
@@ -624,9 +624,9 @@ pxa2x0_lcd_cnattach(struct pxa2x0_wsscreen_descr *descr,
 		return (error);
 
 	ri = &pxa2x0_lcd_console.scr.rinfo;
-	pxa2x0_lcd_setup_rasops(ri, descr, pxa2x0_lcd_console.geometry);
 	ri->ri_hw = (void *)&pxa2x0_lcd_console.scr;
 	ri->ri_bits = pxa2x0_lcd_console.scr.buf_va;
+	pxa2x0_lcd_setup_rasops(ri, descr, pxa2x0_lcd_console.geometry);
 
 	/* assumes 16 bpp */
 	ri->ri_ops.alloc_attr(ri, 0, 0, 0, &defattr);
@@ -711,9 +711,9 @@ pxa2x0_lcd_alloc_screen(void *v, const struct wsscreen_descr *_type,
 	 * initialize raster operation for this screen.
 	 */
 	ri = &scr->rinfo;
-	pxa2x0_lcd_setup_rasops(ri, type, sc->geometry);
 	ri->ri_hw = (void *)scr;
 	ri->ri_bits = scr->buf_va;
+	pxa2x0_lcd_setup_rasops(ri, type, sc->geometry);
 
 	/* assumes 16 bpp */
 	ri->ri_ops.alloc_attr(ri, 0, 0, 0, attrp);
