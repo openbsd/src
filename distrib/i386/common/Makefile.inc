@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.3 2002/04/28 18:28:33 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.4 2002/04/30 01:05:22 deraadt Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -91,7 +91,6 @@ rdsetroot:	${TOP}/../common/rdsetroot.c
 unconfig:
 	-umount -f ${MOUNT_POINT}
 	-vnconfig -u ${VND}
-	-/bin/rm -f ${IMAGE}
 
 .PRECIOUS:	${IMAGE}
 
