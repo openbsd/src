@@ -1,5 +1,5 @@
-/*	$OpenBSD: exchange.c,v 1.27 2000/02/19 19:31:32 niklas Exp $	*/
-/*	$EOM: exchange.c,v 1.115 2000/02/19 07:46:30 niklas Exp $	*/
+/*	$OpenBSD: exchange.c,v 1.28 2000/02/25 17:23:39 niklas Exp $	*/
+/*	$EOM: exchange.c,v 1.116 2000/02/20 19:58:37 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -200,11 +200,11 @@ exchange_validate (struct message *msg)
 
   while (*pc != EXCHANGE_SCRIPT_END && *pc != EXCHANGE_SCRIPT_SWITCH)
     {
-      log_debug (LOG_EXCHANGE, 90, 
-		 "exchange_validate: checking for required %s",
-		 *pc >= ISAKMP_PAYLOAD_NONE
-		 ? constant_name (isakmp_payload_cst, *pc)
-		 : constant_name (exchange_script_cst, *pc));
+      LOG_DBG ((LOG_EXCHANGE, 90, 
+		"exchange_validate: checking for required %s",
+		*pc >= ISAKMP_PAYLOAD_NONE
+		? constant_name (isakmp_payload_cst, *pc)
+		: constant_name (exchange_script_cst, *pc)));
 
       /* Check for existence of the required payloads.  */
       if ((*pc > 0 && !TAILQ_FIRST (&msg->payload[*pc]))
@@ -216,11 +216,11 @@ exchange_validate (struct message *msg)
 	      && !TAILQ_FIRST (&msg->payload[ISAKMP_PAYLOAD_DELETE])))
 	{
 	  /* Missing payload.  */
-	  log_debug (LOG_MESSAGE, 70,
-		     "exchange_validate: msg %p requires missing %s", msg,
-		     *pc >= ISAKMP_PAYLOAD_NONE
-		     ? constant_name (isakmp_payload_cst, *pc)
-		     : constant_name (exchange_script_cst, *pc));
+	  LOG_DBG ((LOG_MESSAGE, 70,
+		    "exchange_validate: msg %p requires missing %s", msg,
+		    *pc >= ISAKMP_PAYLOAD_NONE
+		    ? constant_name (isakmp_payload_cst, *pc)
+		    : constant_name (exchange_script_cst, *pc)));
 	  return -1;
 	}
       pc++;
@@ -346,9 +346,9 @@ exchange_run (struct message *msg)
 		    if ((payload->flags & PL_MARK) == 0)
 		      if (!doi->handle_leftover_payload
 			  || doi->handle_leftover_payload (msg, i, payload))
-			log_debug (LOG_EXCHANGE, 10, 
-				   "exchange_run: unexpected payload %s",
-				   constant_name (isakmp_payload_cst, i));
+			LOG_DBG ((LOG_EXCHANGE, 10, 
+				  "exchange_run: unexpected payload %s",
+				  constant_name (isakmp_payload_cst, i)));
 
 	      /*
 	       * We have advanced the state.  If we have been processing an
@@ -376,9 +376,9 @@ exchange_run (struct message *msg)
 	    }
 	}
 
-      log_debug (LOG_EXCHANGE, 40, 
-		 "exchange_run: exchange %p finished step %d, advancing...",
-		 exchange, exchange->step);
+      LOG_DBG ((LOG_EXCHANGE, 40, 
+		"exchange_run: exchange %p finished step %d, advancing...",
+		exchange, exchange->step));
       exchange->step++;
       while (*exchange->exch_pc != EXCHANGE_SCRIPT_SWITCH
 	     && *exchange->exch_pc != EXCHANGE_SCRIPT_END)
@@ -453,10 +453,10 @@ exchange_lookup_by_name (char *name, int phase)
     for (exchange = LIST_FIRST (&exchange_tab[i]); exchange;
 	 exchange = LIST_NEXT (exchange, link))
       {
-	log_debug (LOG_EXCHANGE, 90,
-		   "exchange_lookup_by_name: %s == %s && %d == %d?", name,
-		   exchange->name ? exchange->name : "<unnamed>", phase,
-		   exchange->phase);
+	LOG_DBG ((LOG_EXCHANGE, 90,
+		  "exchange_lookup_by_name: %s == %s && %d == %d?", name,
+		  exchange->name ? exchange->name : "<unnamed>", phase,
+		  exchange->phase));
 
 	/* 
 	 * Match by name, but don't select finished exchanges, i.e
@@ -487,19 +487,19 @@ exchange_lookup_active (char *name, int phase)
     for (exchange = LIST_FIRST (&exchange_tab[i]); exchange;
 	 exchange = LIST_NEXT (exchange, link))
       {
-	log_debug (LOG_EXCHANGE, 90,
-		   "exchange_lookup_active: %s == %s && %d == %d?",
-		   name, exchange->name ? exchange->name : "<unnamed>", phase,
-		   exchange->phase);
+	LOG_DBG ((LOG_EXCHANGE, 90,
+		  "exchange_lookup_active: %s == %s && %d == %d?",
+		  name, exchange->name ? exchange->name : "<unnamed>", phase,
+		  exchange->phase));
 	if (exchange->name && strcasecmp (exchange->name, name) == 0
 	    && exchange->phase == phase)
 	  {
 	    if (exchange->step > 1)
 	      return exchange;
 	    else
-	      log_debug (LOG_EXCHANGE, 80, 
-			 "exchange_lookup_active: avoided early (pre-step 1) "
-			 "exchange %p", exchange);
+	      LOG_DBG ((LOG_EXCHANGE, 80, 
+			"exchange_lookup_active: avoided early (pre-step 1) "
+			"exchange %p", exchange));
 	  }
       }
   return 0;
@@ -1091,17 +1091,17 @@ exchange_dump_real (char *header, struct exchange *exchange, int class,
   int bufsize_max = LOG_SIZE - strlen (header) - 32; 
   struct sa *sa;
 
-  log_debug (class, level, 
-	     "%s: %p %s %s policy %s phase %d doi %d exchange %d step %d",
-	     header, exchange, exchange->name ? exchange->name : "<unnamed>",
-	     exchange->policy ? exchange->policy : "<no policy>",
-	     exchange->initiator ? "initiator" : "responder", exchange->phase,
-	     exchange->doi->id, exchange->type, exchange->step);
-  log_debug (class, level, 
-	     "%s: icookie %08x%08x rcookie %08x%08x", header,
-	     decode_32 (exchange->cookies), decode_32 (exchange->cookies + 4),
-	     decode_32 (exchange->cookies + 8),
-	     decode_32 (exchange->cookies + 12));
+  LOG_DBG ((class, level, 
+	    "%s: %p %s %s policy %s phase %d doi %d exchange %d step %d",
+	    header, exchange, exchange->name ? exchange->name : "<unnamed>",
+	    exchange->policy ? exchange->policy : "<no policy>",
+	    exchange->initiator ? "initiator" : "responder", exchange->phase,
+	    exchange->doi->id, exchange->type, exchange->step));
+  LOG_DBG ((class, level, 
+	    "%s: icookie %08x%08x rcookie %08x%08x", header,
+	    decode_32 (exchange->cookies), decode_32 (exchange->cookies + 4),
+	    decode_32 (exchange->cookies + 8),
+	    decode_32 (exchange->cookies + 12)));
 
   /* Include phase 2 SA list for this exchange */
   if (exchange->phase == 2)
@@ -1116,8 +1116,8 @@ exchange_dump_real (char *header, struct exchange *exchange, int class,
   else
     buf[0] = '\0';
 
-  log_debug (class, level, "%s: msgid %08x %s", header, 
-	     decode_32 (exchange->message_id), buf);
+  LOG_DBG ((class, level, "%s: msgid %08x %s", header, 
+	    decode_32 (exchange->message_id), buf));
 }
 
 static void
@@ -1150,8 +1150,8 @@ exchange_free_aux (void *v_exch)
   struct sa *sa, *next_sa;
   struct cert_handler *handler;
 
-  log_debug (LOG_EXCHANGE, 80, "exchange_free_aux: freeing exchange %p", 
-	     exchange);
+  LOG_DBG ((LOG_EXCHANGE, 80, "exchange_free_aux: freeing exchange %p", 
+	    exchange));
 
   if (exchange->last_received)
     message_free (exchange->last_received);
@@ -1400,7 +1400,7 @@ exchange_nonce (struct exchange *exchange, int peer, size_t nonce_sz,
     }
   memcpy (*nonce, buf, nonce_sz);
   snprintf (header, 32, "exchange_nonce: NONCE_%c", initiator ? 'i' : 'r');
-  log_debug_buf (LOG_EXCHANGE, 80, header, *nonce, nonce_sz);
+  LOG_DBG_BUF ((LOG_EXCHANGE, 80, header, *nonce, nonce_sz));
   return 0;
 }
 
@@ -1539,10 +1539,10 @@ exchange_establish_finalize (struct exchange *exchange, void *arg, int fail)
 {
   char *name = arg;
 
-  log_debug (LOG_EXCHANGE, 20,
-	     "exchange_establish_finalize: "
-	     "finalizing exchange %p with arg %p (%s) & fail = %d",
-	     exchange, arg, name ? name : "<unnamed>", fail);
+  LOG_DBG ((LOG_EXCHANGE, 20,
+	    "exchange_establish_finalize: "
+	    "finalizing exchange %p with arg %p (%s) & fail = %d",
+	    exchange, arg, name ? name : "<unnamed>", fail));
 
   if (!fail)
     exchange_establish (name, 0, 0);
@@ -1573,9 +1573,9 @@ exchange_establish (char *name,
   exchange = exchange_lookup_by_name (name, phase);
   if (exchange)
     {
-      log_debug (LOG_EXCHANGE, 40,
-		 "exchange_establish: %s exchange already exists as %p", name,
-		 exchange);
+      LOG_DBG ((LOG_EXCHANGE, 40,
+		"exchange_establish: %s exchange already exists as %p", name,
+		exchange));
       exchange_add_finalization (exchange, finalize, arg);
       return;
     }

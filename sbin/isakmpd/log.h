@@ -1,5 +1,5 @@
-/*	$OpenBSD: log.h,v 1.6 1999/04/19 21:06:51 niklas Exp $	*/
-/*	$EOM: log.h,v 1.17 1999/04/16 17:33:08 ho Exp $	*/
+/*	$OpenBSD: log.h,v 1.7 2000/02/25 17:23:41 niklas Exp $	*/
+/*	$EOM: log.h,v 1.18 2000/02/20 19:58:40 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -60,10 +60,23 @@ enum log_classes {
 #define LOG_PRINT  -1
 #define LOG_REPORT -2
 
-extern FILE *log_current (void);
+#ifdef USE_DEBUG
+
+#define LOG_DBG(x)	log_debug x
+#define LOG_DBG_BUF(x)	log_debug_buf x
+
 extern void log_debug (int, int, const char *, ...);
 extern void log_debug_buf (int, int, const char *, const u_int8_t *, size_t);
 extern void log_debug_cmd (int, int);
+
+#else /* USE_DEBUG */
+
+#define LOG_DBG(x)
+#define LOG_DBG_BUF(x)
+
+#endif /* USE_DEBUG */
+
+extern FILE *log_current (void);
 extern void log_error (const char *, ...);
 extern void log_fatal (const char *, ...);
 extern void log_print (const char *, ...);

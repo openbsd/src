@@ -1,5 +1,5 @@
-/*	$OpenBSD: math_group.c,v 1.10 2000/02/19 19:32:54 niklas Exp $	*/
-/*	$EOM: math_group.c,v 1.22 2000/02/19 07:58:56 niklas Exp $	*/
+/*	$OpenBSD: math_group.c,v 1.11 2000/02/25 17:23:41 niklas Exp $	*/
+/*	$EOM: math_group.c,v 1.23 2000/02/20 19:58:40 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niels Provos.  All rights reserved.
@@ -256,8 +256,8 @@ group_get (int id)
       free (new);
       return 0;
     }
-  log_debug (LOG_MISC, 70, "group_get: returning %p of group %d", new,
-	     new->id);
+  LOG_DBG ((LOG_MISC, 70, "group_get: returning %p of group %d", new,
+	    new->id));
   return new;
 }
 

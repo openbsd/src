@@ -1,5 +1,5 @@
-/*	$OpenBSD: ike_phase_1.c,v 1.14 2000/02/19 19:32:53 niklas Exp $	*/
-/*	$EOM: ike_phase_1.c,v 1.21 2000/02/19 07:58:55 niklas Exp $	*/
+/*	$OpenBSD: ike_phase_1.c,v 1.15 2000/02/25 17:23:40 niklas Exp $	*/
+/*	$EOM: ike_phase_1.c,v 1.22 2000/02/20 19:58:38 niklas Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -588,8 +588,8 @@ ike_phase_1_post_exchange_KE_NONCE (struct message *msg)
 		 "dh_create_shared failed");
       return -1;
     }
-  log_debug_buf (LOG_MISC, 80, "ike_phase_1_post_exchange_KE_NONCE: g^xy",
-		 ie->g_xy, ie->g_x_len);
+  LOG_DBG_BUF ((LOG_MISC, 80, "ike_phase_1_post_exchange_KE_NONCE: g^xy",
+		ie->g_xy, ie->g_x_len));
 
   /* Compute the SKEYID depending on the authentication method.  */
   ie->skeyid = ie->ike_auth->gen_skeyid (exchange, &ie->skeyid_len);
@@ -598,8 +598,8 @@ ike_phase_1_post_exchange_KE_NONCE (struct message *msg)
       /* XXX Log and teardown?  */
       return -1;
     }
-  log_debug_buf (LOG_MISC, 80, "ike_phase_1_post_exchange_KE_NONCE: SKEYID",
-		 ie->skeyid, ie->skeyid_len);
+  LOG_DBG_BUF ((LOG_MISC, 80, "ike_phase_1_post_exchange_KE_NONCE: SKEYID",
+		ie->skeyid, ie->skeyid_len));
 
   /* SKEYID_d.  */
   ie->skeyid_d = malloc (ie->skeyid_len);
@@ -621,8 +621,8 @@ ike_phase_1_post_exchange_KE_NONCE (struct message *msg)
   prf->Update (prf->prfctx, exchange->cookies, ISAKMP_HDR_COOKIES_LEN);
   prf->Update (prf->prfctx, "\0", 1);
   prf->Final (ie->skeyid_d, prf->prfctx);
-  log_debug_buf (LOG_MISC, 80, "ike_phase_1_post_exchange_KE_NONCE: SKEYID_d",
-		 ie->skeyid_d, ie->skeyid_len);
+  LOG_DBG_BUF ((LOG_MISC, 80, "ike_phase_1_post_exchange_KE_NONCE: SKEYID_d",
+		ie->skeyid_d, ie->skeyid_len));
 
   /* SKEYID_a.  */
   ie->skeyid_a = malloc (ie->skeyid_len);
@@ -639,8 +639,8 @@ ike_phase_1_post_exchange_KE_NONCE (struct message *msg)
   prf->Update (prf->prfctx, exchange->cookies, ISAKMP_HDR_COOKIES_LEN);
   prf->Update (prf->prfctx, "\1", 1);
   prf->Final (ie->skeyid_a, prf->prfctx);
-  log_debug_buf (LOG_MISC, 80, "ike_phase_1_post_exchange_KE_NONCE: SKEYID_a",
-		 ie->skeyid_a, ie->skeyid_len);
+  LOG_DBG_BUF ((LOG_MISC, 80, "ike_phase_1_post_exchange_KE_NONCE: SKEYID_a",
+		ie->skeyid_a, ie->skeyid_len));
 
   /* SKEYID_e.  */
   ie->skeyid_e = malloc (ie->skeyid_len);
@@ -659,8 +659,8 @@ ike_phase_1_post_exchange_KE_NONCE (struct message *msg)
   prf->Update (prf->prfctx, "\2", 1);
   prf->Final (ie->skeyid_e, prf->prfctx);
   prf_free (prf);
-  log_debug_buf (LOG_MISC, 80, "ike_phase_1_post_exchange_KE_NONCE: SKEYID_e",
-		 ie->skeyid_e, ie->skeyid_len);
+  LOG_DBG_BUF ((LOG_MISC, 80, "ike_phase_1_post_exchange_KE_NONCE: SKEYID_e",
+		ie->skeyid_e, ie->skeyid_len));
 
   /* Key length determination.  */
   if (!exchange->key_length)
@@ -846,8 +846,8 @@ ike_phase_1_send_ID (struct message *msg)
   memcpy (*id, buf + ISAKMP_GEN_SZ, *id_len);
   snprintf (header, 80, "ike_phase_1_send_ID: %s",
 	    constant_name (ipsec_id_cst, GET_ISAKMP_ID_TYPE (buf)));
-  log_debug_buf (LOG_MISC, 40, header, buf + ISAKMP_ID_DATA_OFF,
-		 sz - ISAKMP_ID_DATA_OFF);
+  LOG_DBG_BUF ((LOG_MISC, 40, header, buf + ISAKMP_ID_DATA_OFF,
+		sz - ISAKMP_ID_DATA_OFF));
 
   return 0;
 }
@@ -912,8 +912,8 @@ ike_phase_1_recv_ID (struct message *msg)
   memcpy (*id, payload->p + ISAKMP_GEN_SZ, *id_len);
   snprintf (header, 80, "ike_phase_1_recv_ID: %s",
 	    constant_name (ipsec_id_cst, GET_ISAKMP_ID_TYPE (payload->p)));
-  log_debug_buf (LOG_MISC, 40, header, payload->p + ISAKMP_ID_DATA_OFF,
-		 *id_len + ISAKMP_GEN_SZ - ISAKMP_ID_DATA_OFF);
+  LOG_DBG_BUF ((LOG_MISC, 40, header, payload->p + ISAKMP_ID_DATA_OFF,
+		*id_len + ISAKMP_GEN_SZ - ISAKMP_ID_DATA_OFF));
   payload->flags |= PL_MARK;
 
   return 0;
@@ -969,7 +969,7 @@ ike_phase_1_recv_AUTH (struct message *msg)
   prf_free (prf);
   snprintf (header, 80, "ike_phase_1_recv_AUTH: computed HASH_%c",
 	    initiator ? 'R' : 'I');
-  log_debug_buf (LOG_MISC, 80, header, hash->digest, hashsize);
+  LOG_DBG_BUF ((LOG_MISC, 80, header, hash->digest, hashsize));
 
   /* Check that the hash we got matches the one we computed.  */
   if (memcmp (*hash_p, hash->digest, hashsize) != 0)
@@ -1054,7 +1054,7 @@ ike_phase_1_validate_prop (struct exchange *exchange, struct sa *sa,
 	}
 
       /* All protocols were OK, we succeeded.  */
-      log_debug (LOG_MISC, 20, "ike_phase_1_validate_prop: success");
+      LOG_DBG ((LOG_MISC, 20, "ike_phase_1_validate_prop: success"));
       conf_free_list (conf);
       if (vs.life)
 	free (vs.life);
@@ -1073,7 +1073,7 @@ ike_phase_1_validate_prop (struct exchange *exchange, struct sa *sa,
 	free (vs.life);
     }
 
-  log_debug (LOG_MISC, 20, "ike_phase_1_validate_prop: failure");
+  LOG_DBG ((LOG_MISC, 20, "ike_phase_1_validate_prop: failure"));
   conf_free_list (conf);
   return 0;
 }

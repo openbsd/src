@@ -1,5 +1,5 @@
-/*	$OpenBSD: conf.c,v 1.10 1999/08/05 22:41:08 niklas Exp $	*/
-/*	$EOM: conf.c,v 1.19 1999/08/05 14:57:59 niklas Exp $	*/
+/*	$OpenBSD: conf.c,v 1.11 2000/02/25 17:23:38 niklas Exp $	*/
+/*	$EOM: conf.c,v 1.20 2000/02/20 19:58:36 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -129,8 +129,8 @@ conf_remove_now (char *section, char *tag)
 	  && strcasecmp (cb->tag, tag) == 0)
 	{
 	  LIST_REMOVE (cb, link);
-	  log_debug (LOG_MISC, 70, "[%s]:%s->%s removed", section, tag,
-		     cb->value);
+	  LOG_DBG ((LOG_MISC, 70, "[%s]:%s->%s removed", section, tag,
+		    cb->value));
 	  free (cb->section);
 	  free (cb->tag);
 	  free (cb->value);
@@ -154,8 +154,8 @@ conf_remove_section_now (char *section)
 	{
 	  unseen = 0;
 	  LIST_REMOVE (cb, link);
-	  log_debug (LOG_MISC, 70, "[%s]:%s->%s removed", section, cb->tag,
-		     cb->value);
+	  LOG_DBG ((LOG_MISC, 70, "[%s]:%s->%s removed", section, cb->tag,
+		    cb->value));
 	  free (cb->section);
 	  free (cb->tag);
 	  free (cb->value);
@@ -194,8 +194,8 @@ conf_set_now (char *section, char *tag, char *value, int override)
   node->value = value;
 
   LIST_INSERT_HEAD (&conf_bindings[conf_hash (section)], node, link);
-  log_debug (LOG_MISC, 70, "[%s]:%s->%s", node->section, node->tag,
-	     node->value);
+  LOG_DBG ((LOG_MISC, 70, "[%s]:%s->%s", node->section, node->tag,
+	    node->value));
   return 0;
 }
 
@@ -390,12 +390,12 @@ conf_match_num (char *section, char *tag, int x)
   switch (n)
     {
     case 1:
-      log_debug (LOG_MISC, 90, "conf_match_num: %s:%s %d==%d?", section, tag,
-		 val, x);
+      LOG_DBG ((LOG_MISC, 90, "conf_match_num: %s:%s %d==%d?", section, tag,
+		val, x));
       return x == val;
     case 3:
-      log_debug (LOG_MISC, 90, "conf_match_num: %s:%s %d<=%d<=%d?", section,
-		 tag, min, x, max);
+      LOG_DBG ((LOG_MISC, 90, "conf_match_num: %s:%s %d<=%d<=%d?", section,
+		tag, min, x, max));
       return min <= x && max >= x;
     default:
       log_error ("conf_match_num: section %s tag %s: invalid number spec %s",
@@ -415,13 +415,13 @@ conf_get_str (char *section, char *tag)
     if (strcasecmp (section, cb->section) == 0
 	&& strcasecmp (tag, cb->tag) == 0)
       {
-	log_debug (LOG_MISC, 60, "conf_get_str: [%s]:%s->%s", section,
-		   tag, cb->value);
+	LOG_DBG ((LOG_MISC, 60, "conf_get_str: [%s]:%s->%s", section,
+		  tag, cb->value));
 	return cb->value;
       }
-  log_debug (LOG_MISC, 60,
-	     "conf_get_str: configuration value not found [%s]:%s", section,
-	     tag);
+  LOG_DBG ((LOG_MISC, 60,
+	    "conf_get_str: configuration value not found [%s]:%s", section,
+	    tag));
   return 0;
 }
 

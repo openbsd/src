@@ -1,5 +1,5 @@
-/*	$OpenBSD: timer.c,v 1.6 1999/06/02 06:33:00 niklas Exp $	*/
-/*	$EOM: timer.c,v 1.12 1999/05/21 14:12:59 ho Exp $	*/
+/*	$OpenBSD: timer.c,v 1.7 2000/02/25 17:23:41 niklas Exp $	*/
+/*	$EOM: timer.c,v 1.13 2000/02/20 19:58:42 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -78,8 +78,8 @@ timer_handle_expirations ()
   for (n = TAILQ_FIRST (&events); n && timercmp (&now, &n->expiration, >=);
        n = TAILQ_FIRST (&events))
     {
-      log_debug (LOG_TIMER, 10,
-		 "timer_handle_expirations: event %s(%p)", n->name, n->arg);
+      LOG_DBG ((LOG_TIMER, 10,
+		"timer_handle_expirations: event %s(%p)", n->name, n->arg));
       TAILQ_REMOVE (&events, n, link);
       (*n->func) (n->arg);
       free (n);
@@ -107,17 +107,17 @@ timer_add_event (char *name, void (*func) (void *), void *arg,
     ;
   if (n)
     {
-      log_debug (LOG_TIMER, 10,
-		 "timer_add_event: event %s(%p) added before %s(%p), "
-		 "expiration in %ds", name,
-		 arg, n->name, n->arg, expiration->tv_sec - now.tv_sec);
+      LOG_DBG ((LOG_TIMER, 10,
+		"timer_add_event: event %s(%p) added before %s(%p), "
+		"expiration in %ds", name,
+		arg, n->name, n->arg, expiration->tv_sec - now.tv_sec));
       TAILQ_INSERT_BEFORE (n, ev, link);
     }
   else
     {
-      log_debug (LOG_TIMER, 10, "timer_add_event: event %s(%p) added last, "
-		 "expiration in %ds", name, arg, 
-		 expiration->tv_sec - now.tv_sec);
+      LOG_DBG ((LOG_TIMER, 10, "timer_add_event: event %s(%p) added last, "
+		"expiration in %ds", name, arg, 
+		expiration->tv_sec - now.tv_sec));
       TAILQ_INSERT_TAIL (&events, ev, link);
     }
   return ev;
@@ -126,8 +126,8 @@ timer_add_event (char *name, void (*func) (void *), void *arg,
 void
 timer_remove_event (struct event *ev)
 {
-  log_debug (LOG_TIMER, 10, "timer_remove_event: removing event %s(%p)",
-	     ev->name, ev->arg);
+  LOG_DBG ((LOG_TIMER, 10, "timer_remove_event: removing event %s(%p)",
+	    ev->name, ev->arg));
   TAILQ_REMOVE (&events, ev, link);
   free (ev);
 }
@@ -141,8 +141,8 @@ timer_report (void)
   gettimeofday (&now, 0);
 
   for (ev = TAILQ_FIRST (&events); ev; ev = TAILQ_NEXT (ev, link))
-    log_debug (LOG_REPORT, 0, 
-	       "timer_report: event %s(%p) scheduled in %d seconds",
-	       (ev->name ? ev->name : "<unknown>"), ev, 
-	       (int)(ev->expiration.tv_sec - now.tv_sec));
+    LOG_DBG ((LOG_REPORT, 0, 
+	      "timer_report: event %s(%p) scheduled in %d seconds",
+	      (ev->name ? ev->name : "<unknown>"), ev, 
+	      (int)(ev->expiration.tv_sec - now.tv_sec)));
 }

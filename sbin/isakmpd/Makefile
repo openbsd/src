@@ -1,5 +1,5 @@
-#	$OpenBSD: Makefile,v 1.24 2000/02/19 19:31:32 niklas Exp $
-#	$EOM: Makefile,v 1.61 2000/02/19 07:46:30 niklas Exp $
+#	$OpenBSD: Makefile,v 1.25 2000/02/25 17:23:38 niklas Exp $
+#	$EOM: Makefile,v 1.62 2000/02/20 19:58:36 niklas Exp $
 
 #
 # Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -49,7 +49,7 @@ OS=		openbsd
 #OS=		linux
 
 # Compile-time configuration of otherwise optional features
-FEATURES=	tripledes blowfish cast policy x509 ec aggressive
+FEATURES=	tripledes blowfish cast policy x509 ec aggressive debug
 
 .PATH:		${.CURDIR}/sysdep/${OS}
 

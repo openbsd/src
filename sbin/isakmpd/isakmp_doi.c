@@ -1,5 +1,5 @@
-/*	$OpenBSD: isakmp_doi.c,v 1.8 1999/05/02 19:20:33 niklas Exp $	*/
-/*	$EOM: isakmp_doi.c,v 1.39 1999/05/02 12:49:01 niklas Exp $	*/
+/*	$OpenBSD: isakmp_doi.c,v 1.9 2000/02/25 17:23:40 niklas Exp $	*/
+/*	$EOM: isakmp_doi.c,v 1.40 2000/02/20 19:58:39 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -52,7 +52,9 @@
 #include "sa.h"
 #include "util.h"
 
+#ifdef USE_DEBUG
 static int isakmp_debug_attribute (u_int16_t, u_int8_t *, u_int16_t, void *);
+#endif
 static void isakmp_finalize_exchange (struct message *);
 static struct keystate *isakmp_get_keystate (struct message *);
 static int isakmp_initiator (struct message *);
@@ -73,7 +75,9 @@ static int isakmp_validate_transform_id (u_int8_t, u_int8_t);
 
 static struct doi isakmp_doi = {
   { 0 }, ISAKMP_DOI_ISAKMP, 0, 0, 0,
+#ifdef USE_DEBUG
   isakmp_debug_attribute,
+#endif
   0,				/* delete_spi not needed.  */
   0,				/* exchange_script not needed.  */
   isakmp_finalize_exchange,
@@ -109,6 +113,7 @@ isakmp_doi_init ()
   doi_register (&isakmp_doi);
 }
 
+#ifdef USE_DEBUG
 int
 isakmp_debug_attribute (u_int16_t type, u_int8_t *value, u_int16_t len,
 			void *vmsg)
@@ -116,6 +121,7 @@ isakmp_debug_attribute (u_int16_t type, u_int8_t *value, u_int16_t len,
   /* XXX Not implemented yet.  */
   return 0;
 }
+#endif /* USE_DEBUG */
 
 static void
 isakmp_finalize_exchange (struct message *msg)
@@ -229,18 +235,18 @@ isakmp_responder (struct message *msg)
       for (p = TAILQ_FIRST (&msg->payload[ISAKMP_PAYLOAD_NOTIFY]); p;
 	   p = TAILQ_NEXT (p, link))
 	{
-	  log_debug (LOG_EXCHANGE, 10,
-		     "isakmp_responder: got NOTIFY of type %s, ignoring",
-		     constant_lookup (isakmp_notify_cst,
-				      GET_ISAKMP_NOTIFY_MSG_TYPE (p->p)));
+	  LOG_DBG ((LOG_EXCHANGE, 10,
+		    "isakmp_responder: got NOTIFY of type %s, ignoring",
+		    constant_lookup (isakmp_notify_cst,
+				     GET_ISAKMP_NOTIFY_MSG_TYPE (p->p))));
 	  p->flags |= PL_MARK;
 	}
 
       for (p = TAILQ_FIRST (&msg->payload[ISAKMP_PAYLOAD_DELETE]); p;
 	   p = TAILQ_NEXT (p, link))
 	{
-	  log_debug (LOG_EXCHANGE, 10,
-		     "isakmp_responder: got DELETE, ignoring");
+	  LOG_DBG ((LOG_EXCHANGE, 10,
+		    "isakmp_responder: got DELETE, ignoring"));
 	  p->flags |= PL_MARK;
 	}
       return 0;

@@ -1,5 +1,5 @@
-/*	$OpenBSD: ipsec.c,v 1.24 2000/02/19 19:32:53 niklas Exp $	*/
-/*	$EOM: ipsec.c,v 1.117 2000/02/19 07:58:55 niklas Exp $	*/
+/*	$OpenBSD: ipsec.c,v 1.25 2000/02/25 17:23:40 niklas Exp $	*/
+/*	$EOM: ipsec.c,v 1.118 2000/02/20 19:58:38 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -86,7 +86,9 @@ int contact_cnt = 0, contact_limit = 0;
 static int addr_cmp (const void *, const void *);
 static int ipsec_add_contact (struct message *msg);
 static int ipsec_contacted (struct message *msg);
+#ifdef USE_DEBUG
 static int ipsec_debug_attribute (u_int16_t, u_int8_t *, u_int16_t, void *);
+#endif
 static void ipsec_delete_spi (struct sa *, struct proto *, int);
 static u_int16_t *ipsec_exchange_script (u_int8_t);
 static void ipsec_finalize_exchange (struct message *);
@@ -120,7 +122,9 @@ static struct doi ipsec_doi = {
   { 0 }, IPSEC_DOI_IPSEC,
   sizeof (struct ipsec_exch), sizeof (struct ipsec_sa),
   sizeof (struct ipsec_proto),
+#ifdef USE_DEBUG
   ipsec_debug_attribute,
+#endif
   ipsec_delete_spi,
   ipsec_exchange_script,
   ipsec_finalize_exchange,
@@ -314,10 +318,10 @@ ipsec_finalize_exchange (struct message *msg)
 		/* Responder is source, initiator is destination.  */
 		ipsec_set_network (ie->id_cr, ie->id_ci, isa);
 
-	      log_debug (LOG_EXCHANGE, 50,
-			 "ipsec_finalize_exchange: src %x %x dst %x %x",
-			 ntohl (isa->src_net), ntohl (isa->src_mask),
-			 ntohl (isa->dst_net), ntohl (isa->dst_mask));
+	      LOG_DBG ((LOG_EXCHANGE, 50,
+			"ipsec_finalize_exchange: src %x %x dst %x %x",
+			ntohl (isa->src_net), ntohl (isa->src_mask),
+			ntohl (isa->dst_net), ntohl (isa->dst_mask)));
 
 	      if (sysdep_ipsec_enable_sa (sa))
 		/* XXX Tear down this exchange.  */
@@ -481,20 +485,20 @@ ipsec_get_keystate (struct message *msg)
 
   hash = hash_get (((struct ipsec_sa *)msg->isakmp_sa->data)->hash);
   hash->Init (hash->ctx);
-  log_debug_buf (LOG_CRYPTO, 80, "ipsec_get_keystate: final phase 1 IV",
-		 ks->riv, ks->xf->blocksize);
+  LOG_DBG_BUF ((LOG_CRYPTO, 80, "ipsec_get_keystate: final phase 1 IV",
+		ks->riv, ks->xf->blocksize));
   hash->Update (hash->ctx, ks->riv, ks->xf->blocksize);
-  log_debug_buf (LOG_CRYPTO, 80, "ipsec_get_keystate: message ID",
-		 ((u_int8_t *)msg->iov[0].iov_base)
-		 + ISAKMP_HDR_MESSAGE_ID_OFF,
-		 ISAKMP_HDR_MESSAGE_ID_LEN);
+  LOG_DBG_BUF ((LOG_CRYPTO, 80, "ipsec_get_keystate: message ID",
+		((u_int8_t *)msg->iov[0].iov_base)
+		+ ISAKMP_HDR_MESSAGE_ID_OFF,
+		ISAKMP_HDR_MESSAGE_ID_LEN));
   hash->Update (hash->ctx,
 		((u_int8_t *)msg->iov[0].iov_base) + ISAKMP_HDR_MESSAGE_ID_OFF,
 		ISAKMP_HDR_MESSAGE_ID_LEN);
   hash->Final (hash->digest, hash->ctx);
   crypto_init_iv (ks, hash->digest, ks->xf->blocksize);
-  log_debug_buf (LOG_CRYPTO, 80, "ipsec_get_keystate: phase 2 IV",
-		 hash->digest, ks->xf->blocksize);
+  LOG_DBG_BUF ((LOG_CRYPTO, 80, "ipsec_get_keystate: phase 2 IV",
+		hash->digest, ks->xf->blocksize));
   return ks;
 }
 
@@ -545,23 +549,23 @@ ipsec_validate_id_information (u_int8_t type, u_int8_t *extra, u_int8_t *buf,
   u_int8_t proto = GET_IPSEC_ID_PROTO (extra);
   u_int16_t port = GET_IPSEC_ID_PORT (extra);
 
-  log_debug (LOG_MESSAGE, 0, 
-	     "ipsec_validate_id_information: proto %d port %d type %d",
-	     proto, port, type);
+  LOG_DBG ((LOG_MESSAGE, 0, 
+	    "ipsec_validate_id_information: proto %d port %d type %d",
+	    proto, port, type));
   if (type < IPSEC_ID_IPV4_ADDR || type > IPSEC_ID_KEY_ID)
     return -1;
 
   switch (type)
     {
     case IPSEC_ID_IPV4_ADDR:
-      log_debug_buf (LOG_MESSAGE, 40, "ipsec_validate_id_information: IPv4",
-		     buf, 4);
+      LOG_DBG_BUF ((LOG_MESSAGE, 40, "ipsec_validate_id_information: IPv4",
+		    buf, 4));
       break;
 
     case IPSEC_ID_IPV4_ADDR_SUBNET:
-      log_debug_buf (LOG_MESSAGE, 40,
-		     "ipsec_validate_id_information: IPv4 network/netmask",
-		     buf, 8);
+      LOG_DBG_BUF ((LOG_MESSAGE, 40,
+		    "ipsec_validate_id_information: IPv4 network/netmask",
+		    buf, 8));
       break;
 
     default:
@@ -727,9 +731,9 @@ ipsec_responder (struct message *msg)
       return -1;
     }
     
-  log_debug (LOG_MISC, 30,
-	     "ipsec_responder: phase %d exchange %d step %d", exchange->phase,
-	     exchange->type, exchange->step);
+  LOG_DBG ((LOG_MISC, 30,
+	    "ipsec_responder: phase %d exchange %d step %d", exchange->phase,
+	    exchange->type, exchange->step));
   switch (exchange->type)
     {
     case ISAKMP_EXCH_ID_PROT:
@@ -746,10 +750,10 @@ ipsec_responder (struct message *msg)
       for (p = TAILQ_FIRST (&msg->payload[ISAKMP_PAYLOAD_NOTIFY]); p;
 	   p = TAILQ_NEXT (p, link))
 	{
-	  log_debug (LOG_EXCHANGE, 10,
-		     "ipsec_responder: got NOTIFY of type %s",
-		     constant_lookup (isakmp_notify_cst,
-				      GET_ISAKMP_NOTIFY_MSG_TYPE (p->p)));
+	  LOG_DBG ((LOG_EXCHANGE, 10,
+		    "ipsec_responder: got NOTIFY of type %s",
+		    constant_lookup (isakmp_notify_cst,
+				     GET_ISAKMP_NOTIFY_MSG_TYPE (p->p))));
 	  p->flags |= PL_MARK;
 	}
 
@@ -890,6 +894,7 @@ ipsec_is_attribute_incompatible (u_int16_t type, u_int8_t *value,
   return 1;
 }
 
+#ifdef USE_DEBUG
 /*
  * Log the attribute of TYPE with a LEN length value pointed to by VALUE
  * in human-readable form.  VMSG is a pointer to the current message.
@@ -909,12 +914,13 @@ ipsec_debug_attribute (u_int16_t type, u_int8_t *value, u_int16_t len,
   else
     sprintf (val, "unrepresentable");
 
-  log_debug (LOG_MESSAGE, 50, "Attribute %s value %s",
-	     constant_name (msg->exchange->phase == 1
-			    ? ike_attr_cst : ipsec_attr_cst, type),
-	     val);
+  LOG_DBG ((LOG_MESSAGE, 50, "Attribute %s value %s",
+	    constant_name (msg->exchange->phase == 1
+			   ? ike_attr_cst : ipsec_attr_cst, type),
+	    val));
   return 0;
 }
+#endif
 
 /*
  * Decode the attribute of type TYPE with a LEN length value pointed to by
@@ -1091,8 +1097,8 @@ ipsec_decode_transform (struct message *msg, struct sa *sa,
   struct ipsec_exch *ie = msg->exchange->data;
   struct ipsec_decode_arg ida;
 
-  log_debug (LOG_MISC, 20, "ipsec_decode_transform: transform %d chosen",
-	     GET_ISAKMP_TRANSFORM_NO (buf));
+  LOG_DBG ((LOG_MISC, 20, "ipsec_decode_transform: transform %d chosen",
+	    GET_ISAKMP_TRANSFORM_NO (buf)));
 
   ida.msg = msg;
   ida.sa = sa;
@@ -1150,7 +1156,7 @@ ipsec_g_x (struct message *msg, int peer, u_int8_t *buf)
     }
   memcpy (*g_x, buf, ie->g_x_len);
   snprintf (header, 32, "ipsec_g_x: g^x%c", initiator ? 'i' : 'r');
-  log_debug_buf (LOG_MISC, 80, header, *g_x, ie->g_x_len);
+  LOG_DBG_BUF ((LOG_MISC, 80, header, *g_x, ie->g_x_len));
   return 0;
 }
 
@@ -1264,10 +1270,10 @@ ipsec_handle_leftover_payload (struct message *msg, u_int8_t type,
 	  msg->transport->vtbl->get_dst (msg->transport, &dst, &dstlen);
 	  while ((sa = sa_lookup_by_peer (dst, dstlen)) != 0)
 	    {
-	      log_debug (LOG_SA, 30,
-			 "ipsec_handle_leftover_payload: "
-			 "INITIAL-CONTACT made us delete SA %p",
-			 sa);
+	      LOG_DBG ((LOG_SA, 30,
+			"ipsec_handle_leftover_payload: "
+			"INITIAL-CONTACT made us delete SA %p",
+			sa));
 	      sa_delete (sa, 0);
 	    }
 
@@ -1666,7 +1672,6 @@ ipsec_fill_in_hash (struct message *msg)
   struct sa *isakmp_sa = msg->isakmp_sa;
   struct ipsec_sa *isa = isakmp_sa->data;
   struct hash *hash = hash_get (isa->hash);
-  size_t hashsize = hash->hashsize;
   struct prf *prf;
   struct payload *payload;
   u_int8_t *buf;
@@ -1686,15 +1691,15 @@ ipsec_fill_in_hash (struct message *msg)
   buf = payload->p;
 
   /* Allocate the prf and start calculating our HASH(1).  */
-  log_debug_buf (LOG_MISC, 90, "ipsec_fill_in_hash: SKEYID_a", isa->skeyid_a,
-		 isa->skeyid_len);
+  LOG_DBG_BUF ((LOG_MISC, 90, "ipsec_fill_in_hash: SKEYID_a", isa->skeyid_a,
+		isa->skeyid_len));
   prf = prf_alloc (isa->prf_type, hash->type, isa->skeyid_a, isa->skeyid_len);
   if (!prf)
     return -1;
 
   prf->Init (prf->prfctx);
-  log_debug_buf (LOG_MISC, 90, "ipsec_fill_in_hash: message_id",
-		 exchange->message_id, ISAKMP_HDR_MESSAGE_ID_LEN);
+  LOG_DBG_BUF ((LOG_MISC, 90, "ipsec_fill_in_hash: message_id",
+		exchange->message_id, ISAKMP_HDR_MESSAGE_ID_LEN));
   prf->Update (prf->prfctx, exchange->message_id, ISAKMP_HDR_MESSAGE_ID_LEN);
 
   /* Loop over all payloads after HASH(1).  */
@@ -1703,14 +1708,14 @@ ipsec_fill_in_hash (struct message *msg)
       /* XXX Misleading payload type printouts.  */
       snprintf (header, 80, "ipsec_fill_in_hash: payload %d after HASH(1)",
 		i - 1);
-      log_debug_buf (LOG_MISC, 90, header, msg->iov[i].iov_base,
-		     msg->iov[i].iov_len);
+      LOG_DBG_BUF ((LOG_MISC, 90, header, msg->iov[i].iov_base,
+		    msg->iov[i].iov_len));
       prf->Update (prf->prfctx, msg->iov[i].iov_base, msg->iov[i].iov_len);
     }
   prf->Final (buf + ISAKMP_HASH_DATA_OFF, prf->prfctx);
   prf_free (prf);
-  log_debug_buf (LOG_MISC, 80, "ipsec_fill_in_hash: HASH(1)",
-		 buf + ISAKMP_HASH_DATA_OFF, hashsize);
+  LOG_DBG_BUF ((LOG_MISC, 80, "ipsec_fill_in_hash: HASH(1)",
+		buf + ISAKMP_HASH_DATA_OFF, hash->hashsize));
 
   return 0;
 }

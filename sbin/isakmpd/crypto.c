@@ -1,5 +1,5 @@
-/*	$OpenBSD: crypto.c,v 1.8 2000/02/19 19:31:32 niklas Exp $	*/
-/*	$EOM: crypto.c,v 1.27 2000/02/19 07:46:30 niklas Exp $	*/
+/*	$OpenBSD: crypto.c,v 1.9 2000/02/25 17:23:39 niklas Exp $	*/
+/*	$EOM: crypto.c,v 1.28 2000/02/20 19:58:36 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niels Provos.  All rights reserved.
@@ -273,7 +273,7 @@ crypto_init (struct crypto_xf *xf, u_int8_t *key, u_int16_t len,
 
   if (len < xf->keymin || len > xf->keymax)
     {
-      log_debug (LOG_CRYPTO, 10, "crypto_init: invalid key length %d", len);
+      LOG_DBG ((LOG_CRYPTO, 10, "crypto_init: invalid key length %d", len));
       *err = EKEYLEN;
       return 0;
     }
@@ -292,13 +292,13 @@ crypto_init (struct crypto_xf *xf, u_int8_t *key, u_int16_t len,
   ks->riv = ks->iv;
   ks->liv = ks->iv2;
 
-  log_debug_buf (LOG_CRYPTO, 40, "crypto_init: key", key, len);
+  LOG_DBG_BUF ((LOG_CRYPTO, 40, "crypto_init: key", key, len));
 
   *err = xf->init (ks, key, len);
   if (*err != EOKAY)
     {
-      log_debug (LOG_CRYPTO, 30, "crypto_init: weak key found for %s",
-		 xf->name);
+      LOG_DBG ((LOG_CRYPTO, 30, "crypto_init: weak key found for %s",
+		xf->name));
       free (ks);
       return 0;
     }
@@ -315,8 +315,8 @@ crypto_update_iv (struct keystate *ks)
   ks->riv = ks->liv;
   ks->liv = tmp;
 
-  log_debug_buf (LOG_CRYPTO, 50, "crypto_update_iv: updated IV", ks->riv,
-		 ks->xf->blocksize);
+  LOG_DBG_BUF ((LOG_CRYPTO, 50, "crypto_update_iv: updated IV", ks->riv,
+		ks->xf->blocksize));
 }
 
 void
@@ -324,34 +324,34 @@ crypto_init_iv (struct keystate *ks, u_int8_t *buf, size_t len)
 {
   memcpy (ks->riv, buf, len);
 
-  log_debug_buf (LOG_CRYPTO, 50, "crypto_update_iv: initialized IV", ks->riv,
-		 len);
+  LOG_DBG_BUF ((LOG_CRYPTO, 50, "crypto_update_iv: initialized IV", ks->riv,
+		len));
 }
 
 void
 crypto_encrypt (struct keystate *ks, u_int8_t *buf, u_int16_t len)
 {
-  log_debug_buf (LOG_CRYPTO, 10, "crypto_encrypt: before encryption", buf,
-		 len);
+  LOG_DBG_BUF ((LOG_CRYPTO, 10, "crypto_encrypt: before encryption", buf,
+		len));
   ks->xf->encrypt (ks, buf, len);
   memcpy (ks->liv, buf + len - ks->xf->blocksize, ks->xf->blocksize);
-  log_debug_buf (LOG_CRYPTO, 30, "crypto_encrypt: after encryption", buf,
-		 len);
+  LOG_DBG_BUF ((LOG_CRYPTO, 30, "crypto_encrypt: after encryption", buf,
+		len));
 }
 
 void
 crypto_decrypt (struct keystate *ks, u_int8_t *buf, u_int16_t len)
 {
-  log_debug_buf (LOG_CRYPTO, 10, "crypto_decrypt: before decryption", buf,
-		 len);
+  LOG_DBG_BUF ((LOG_CRYPTO, 10, "crypto_decrypt: before decryption", buf,
+		len));
   /*
    * XXX There is controversy about the correctness of updating the IV
    * like this.
    */
   memcpy (ks->liv, buf + len - ks->xf->blocksize, ks->xf->blocksize);
   ks->xf->decrypt (ks, buf, len);;
-  log_debug_buf (LOG_CRYPTO, 30, "crypto_decrypt: after decryption", buf,
-		 len);
+  LOG_DBG_BUF ((LOG_CRYPTO, 30, "crypto_decrypt: after decryption", buf,
+		len));
 }
 
 /* Make a copy of the keystate pointed to by OKS.  */

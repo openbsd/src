@@ -1,5 +1,5 @@
-/*	$OpenBSD: connection.c,v 1.5 1999/10/01 14:10:19 niklas Exp $	*/
-/*	$EOM: connection.c,v 1.18 1999/08/31 11:08:57 niklas Exp $	*/
+/*	$OpenBSD: connection.c,v 1.6 2000/02/25 17:23:39 niklas Exp $	*/
+/*	$EOM: connection.c,v 1.19 2000/02/20 19:58:36 niklas Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist.  All rights reserved.
@@ -229,14 +229,14 @@ connection_passive_lookup_by_ids (u_int8_t *id1, u_int8_t *id2)
 	  (compare_ids (id1, conn->remote_id, conn->remote_sz) == 0 &&
 	   compare_ids (id2, conn->local_id, conn->local_sz) == 0))
 	{
-	  log_debug (LOG_MISC, 60,
-		     "connection_passive_lookup_by_ids: returned \"%s\"",
-		     conn->name);
+	  LOG_DBG ((LOG_MISC, 60,
+		    "connection_passive_lookup_by_ids: returned \"%s\"",
+		    conn->name));
 	  return conn->name;
 	}
     }
-  log_debug (LOG_MISC, 60,
-	     "connection_passive_lookup_by_ids: no match");
+  LOG_DBG ((LOG_MISC, 60,
+	    "connection_passive_lookup_by_ids: no match"));
   return 0;
 }
 
@@ -254,8 +254,8 @@ connection_setup (char *name)
   /* Check for trials to add duplicate connections.  */
   if (connection_lookup (name))
     {
-      log_debug (LOG_MISC, 10, "connection_setup: cannot add \"%s\" twice",
-		 name);
+      LOG_DBG ((LOG_MISC, 10, "connection_setup: cannot add \"%s\" twice",
+		name));
       return 0;
     }
 
@@ -303,9 +303,9 @@ connection_record_passive (char *name)
 
   if (connection_passive_lookup_by_name (name))
     {
-      log_debug (LOG_MISC, 10, 
-		 "connection_record_passive: cannot add \"%s\" twice",
-		 name);
+      LOG_DBG ((LOG_MISC, 10, 
+		"connection_record_passive: cannot add \"%s\" twice",
+		name));
       return 0;
     }
   
@@ -345,9 +345,9 @@ connection_record_passive (char *name)
 
   TAILQ_INSERT_TAIL (&connections_passive, conn, link);
   
-  log_debug (LOG_MISC, 60,
-	     "connection_record_passive: passive connection \"%s\" "
-	     "added", conn->name);
+  LOG_DBG ((LOG_MISC, 60,
+	    "connection_record_passive: passive connection \"%s\" "
+	    "added", conn->name));
   return 0;
 
  fail:
@@ -392,6 +392,7 @@ connection_passive_teardown (char *name)
   free (conn);
 }
 
+#ifdef USE_DEBUG
 /* 
  * XXX Perhaps move this outside connection.c (ipsec.c?)
  * Perhaps rewrite without the duplicated code.
@@ -440,6 +441,7 @@ decode_ids (char *fmt, u_int8_t *id1, u_int8_t *id2)
   snprintf (result, 1024, fmt, s_id1, s_id2);
   return result;
 }
+#endif /* USE_DEBUG */
 
 void
 connection_report (void)
@@ -450,16 +452,16 @@ connection_report (void)
 
   gettimeofday (&now, 0);
   for (conn = TAILQ_FIRST (&connections); conn; conn = TAILQ_NEXT (conn, link))
-    log_debug (LOG_REPORT, 0, 
-	       "connection_report: connection %s next check %ld seconds",
-	       (conn->name ? conn->name : "<unnamed>"),
-	       conn->ev->expiration.tv_sec - now.tv_sec);
+    LOG_DBG ((LOG_REPORT, 0, 
+	      "connection_report: connection %s next check %ld seconds",
+	      (conn->name ? conn->name : "<unnamed>"),
+	      conn->ev->expiration.tv_sec - now.tv_sec));
   for (pconn = TAILQ_FIRST (&connections_passive); pconn; 
        pconn = TAILQ_NEXT (pconn, link))
-    log_debug (LOG_REPORT, 0,
-	       "connection_report: passive connection %s %s", pconn->name, 
-	       decode_ids ("local_id %s remote_id %s", pconn->local_id,
-			   pconn->remote_id));
+    LOG_DBG ((LOG_REPORT, 0,
+	      "connection_report: passive connection %s %s", pconn->name, 
+	      decode_ids ("local_id %s remote_id %s", pconn->local_id,
+			  pconn->remote_id)));
 }
 
 /* Reinit all connections (SIGHUP handling).  */
@@ -469,8 +471,8 @@ connection_reinit (void)
   struct connection *conn;
   struct connection_passive *pconn;
 
-  log_debug (LOG_MISC, 30, 
-	     "connection_reinit: reinitializing connection list");
+  LOG_DBG ((LOG_MISC, 30, 
+	    "connection_reinit: reinitializing connection list"));
 
   /* Remove all present connections. */
 

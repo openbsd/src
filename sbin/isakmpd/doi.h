@@ -1,5 +1,5 @@
-/*	$OpenBSD: doi.h,v 1.7 1999/05/02 19:20:31 niklas Exp $	*/
-/*	$EOM: doi.h,v 1.27 1999/05/02 12:48:54 niklas Exp $	*/
+/*	$OpenBSD: doi.h,v 1.8 2000/02/25 17:23:39 niklas Exp $	*/
+/*	$EOM: doi.h,v 1.28 2000/02/20 19:58:37 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -61,7 +61,9 @@ struct doi {
   /* Size of DOI-specific protocol data.  */
   size_t proto_size;
 
+#ifdef USE_DEBUG
   int (*debug_attribute) (u_int16_t, u_int8_t *, u_int16_t, void *);
+#endif
   void (*delete_spi) (struct sa *, struct proto *, int);
   u_int16_t *(*exchange_script) (u_int8_t);
   void (*finalize_exchange) (struct message *);

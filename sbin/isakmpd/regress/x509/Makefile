@@ -1,5 +1,5 @@
-#	$OpenBSD: Makefile,v 1.7 1999/08/26 22:31:53 niklas Exp $
-#	$EOM: Makefile,v 1.9 1999/08/26 11:31:35 niklas Exp $
+#	$OpenBSD: Makefile,v 1.8 2000/02/25 17:23:37 niklas Exp $
+#	$EOM: Makefile,v 1.10 2000/02/20 19:58:44 niklas Exp $
 
 #
 # Copyright (c) 1999 Niels Provos.  All rights reserved.
@@ -38,13 +38,14 @@
 # Test X509
 
 PROG=		x509test
-SRCS=		x509test.c conf.c libcrypto.c log.c sysdep.c field.c util.c \
+SRCS=		x509test.c conf.c log.c libcrypto.c sysdep.c field.c util.c \
 		isakmp_fld.c ipsec_fld.c ipsec_num.c isakmp_num.c constants.c
 TOPSRC=		${.CURDIR}/../..
 TOPOBJ!=	cd ${TOPSRC}; printf "all:\n\t@pwd\n" |${MAKE} -f-
 OS!=		awk '/^OS=/ { print $$2 }' ${.CURDIR}/../../Makefile
 .PATH:		${TOPSRC} ${TOPSRC}/sysdep/${OS} ${TOPOBJ}
-CFLAGS+=	-I${TOPSRC} -I${TOPSRC}/sysdep/${OS} -I${TOPOBJ} -Wall
+CFLAGS+=	-I${TOPSRC} -I${TOPSRC}/sysdep/${OS} -I${TOPOBJ} -Wall \
+		-DUSE_X509
 NOMAN=
 DEBUG=		-g
 

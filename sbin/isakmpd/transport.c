@@ -1,5 +1,5 @@
-/*	$OpenBSD: transport.c,v 1.9 1999/05/01 20:43:45 niklas Exp $	*/
-/*	$EOM: transport.c,v 1.40 1999/05/01 20:21:17 niklas Exp $	*/
+/*	$OpenBSD: transport.c,v 1.10 2000/02/25 17:23:42 niklas Exp $	*/
+/*	$EOM: transport.c,v 1.41 2000/02/20 19:58:42 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -65,7 +65,7 @@ transport_init (void)
 void
 transport_add (struct transport *t)
 {
-  log_debug (LOG_TRANSPORT, 70, "transport_add: adding %p", t);
+  LOG_DBG ((LOG_TRANSPORT, 70, "transport_add: adding %p", t));
   TAILQ_INIT (&t->sendq);
   LIST_INSERT_HEAD (&transport_list, t, link);
   t->flags = 0;
@@ -77,9 +77,9 @@ void
 transport_reference (struct transport *t)
 {
   t->refcnt++;
-  log_debug (LOG_TRANSPORT, 90,
-	     "transport_reference: transport %p now has %d references", t,
-	     t->refcnt);
+  LOG_DBG ((LOG_TRANSPORT, 90,
+	    "transport_reference: transport %p now has %d references", t,
+	    t->refcnt));
 }
 
 /*
@@ -88,13 +88,13 @@ transport_reference (struct transport *t)
 void
 transport_release (struct transport *t)
 {
-  log_debug (LOG_TRANSPORT, 90,
-	     "transport_release: transport %p had %d references", t,
-	     t->refcnt);
+  LOG_DBG ((LOG_TRANSPORT, 90,
+	    "transport_release: transport %p had %d references", t,
+	    t->refcnt));
   if (--t->refcnt)
     return;
 
-  log_debug (LOG_TRANSPORT, 70, "transport_release: freeing %p", t);
+  LOG_DBG ((LOG_TRANSPORT, 70, "transport_release: freeing %p", t));
   LIST_REMOVE (t, link);
   t->vtbl->remove (t);
 }
@@ -107,9 +107,9 @@ transport_report (void)
 
   for (t = LIST_FIRST (&transport_list); t; t = LIST_NEXT (t, link))
     { 
-      log_debug (LOG_REPORT, 0, 
-		 "transport_report: transport %p flags %x refcnt %d", t,
-		 t->flags, t->refcnt);
+      LOG_DBG ((LOG_REPORT, 0, 
+		"transport_report: transport %p flags %x refcnt %d", t,
+		t->flags, t->refcnt));
       
       t->vtbl->report (t);
       
@@ -272,10 +272,10 @@ transport_send_messages (fd_set *fds)
 		   */
 		  expiry = msg->xmits * 2 + 5;
 		  expiration.tv_sec += expiry;
-		  log_debug (LOG_TRANSPORT, 30,
-			     "transport_send_messages: message %p "
-			     "scheduled for retransmission %d in %d secs",
-			     msg, msg->xmits, expiry);
+		  LOG_DBG ((LOG_TRANSPORT, 30,
+			    "transport_send_messages: message %p "
+			    "scheduled for retransmission %d in %d secs",
+			    msg, msg->xmits, expiry));
 		  msg->retrans
 		    = timer_add_event ("message_send",
 				       (void (*) (void *))message_send,

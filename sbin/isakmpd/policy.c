@@ -1,5 +1,5 @@
-/*	$OpenBSD: policy.c,v 1.8 2000/02/19 19:32:04 niklas Exp $	*/
-/*	$EOM: policy.c,v 1.17 2000/02/19 07:58:56 niklas Exp $ */
+/*	$OpenBSD: policy.c,v 1.9 2000/02/25 17:23:41 niklas Exp $	*/
+/*	$EOM: policy.c,v 1.18 2000/02/20 19:58:41 niklas Exp $ */
 
 /*
  * Copyright (c) 1999, 2000 Angelos D. Keromytis.  All rights reserved.
@@ -1291,7 +1291,7 @@ policy_init (void)
   struct stat st;
   int fd, len, i;
 
-  log_debug (LOG_MISC, 50, "policy_init: initializing");
+  LOG_DBG ((LOG_MISC, 50, "policy_init: initializing"));
 
 #if defined (HAVE_DLOPEN) && !defined (USE_KEYNOTE)
   if (!dyn_load (libkeynote_script))

@@ -1,5 +1,5 @@
-/*	$OpenBSD: pf_key_v2.c,v 1.23 2000/02/01 02:46:18 niklas Exp $	*/
-/*	$EOM: pf_key_v2.c,v 1.36 2000/01/31 22:33:48 niklas Exp $	*/
+/*	$OpenBSD: pf_key_v2.c,v 1.24 2000/02/25 17:23:40 niklas Exp $	*/
+/*	$EOM: pf_key_v2.c,v 1.37 2000/02/20 19:58:41 niklas Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -326,7 +326,7 @@ pf_key_v2_read (u_int32_t seq)
 	  goto cleanup;
 	}
 
-      log_debug_buf (LOG_SYSDEP, 80, "pf_key_v2_read: msg", buf, n);
+      LOG_DBG_BUF ((LOG_SYSDEP, 80, "pf_key_v2_read: msg", buf, n));
 
       /* We drop all messages that is not what we expect.  */
       msg = (struct sadb_msg *)buf;
@@ -341,10 +341,11 @@ pf_key_v2_read (u_int32_t seq)
 	    }
 	  else
 	    {
-	      log_debug (LOG_SYSDEP, 90,
-			 "pf_key_v2_read:"
-			 "bad version (%d) or PID (%d, mine is %d), ignored",
-			 msg->sadb_msg_version, msg->sadb_msg_pid, getpid ());
+	      LOG_DBG ((LOG_SYSDEP, 90,
+			"pf_key_v2_read:"
+			"bad version (%d) or PID (%d, mine is %d), ignored",
+			msg->sadb_msg_version, msg->sadb_msg_pid,
+			getpid ()));
 	      goto cleanup;
 	    }
 	}
@@ -436,8 +437,8 @@ pf_key_v2_write (struct pf_key_v2_msg *pmsg)
   for (i = 0; i < cnt; i++)
     {
       sprintf (header, "pf_key_v2_write: iov[%d]", i);
-      log_debug_buf (LOG_SYSDEP, 80, header, (u_int8_t *)iov[i].iov_base,
-		     iov[i].iov_len);
+      LOG_DBG_BUF ((LOG_SYSDEP, 80, header, (u_int8_t *)iov[i].iov_base,
+		    iov[i].iov_len));
     }
 
   n = writev (pf_key_v2_socket, iov, cnt);
@@ -701,7 +702,7 @@ pf_key_v2_get_spi (size_t *sz, u_int8_t proto, struct sockaddr *src,
 #endif
   pf_key_v2_msg_free (ret);
 
-  log_debug_buf (LOG_SYSDEP, 50, "pf_key_v2_get_spi: spi", spi, *sz);
+  LOG_DBG_BUF ((LOG_SYSDEP, 50, "pf_key_v2_get_spi: spi", spi, *sz));
 
   return spi;
 
@@ -1035,10 +1036,10 @@ pf_key_v2_set_spi (struct sa *sa, struct proto *proto, int incoming)
   /* XXX Here can identity and sensitivity extensions be setup.  */
 
   /* XXX IPv4 specific.  */
-  log_debug (LOG_SYSDEP, 10, "pf_key_v2_set_spi: satype %d dst %s SPI 0x%x",
-	     msg.sadb_msg_satype,
-	     inet_ntoa (((struct sockaddr_in *)dst)->sin_addr),
-	     ntohl (ssa.sadb_sa_spi));
+  LOG_DBG ((LOG_SYSDEP, 10, "pf_key_v2_set_spi: satype %d dst %s SPI 0x%x",
+	    msg.sadb_msg_satype,
+	    inet_ntoa (((struct sockaddr_in *)dst)->sin_addr),
+	    ntohl (ssa.sadb_sa_spi)));
 
   /*
    * Although PF_KEY knows about expirations, it is unreliable per the specs
@@ -1071,7 +1072,7 @@ pf_key_v2_set_spi (struct sa *sa, struct proto *proto, int incoming)
       goto cleanup;
     }
 
-  log_debug (LOG_SYSDEP, 50, "pf_key_v2_set_spi: done");
+  LOG_DBG ((LOG_SYSDEP, 50, "pf_key_v2_set_spi: done"));
 
   return 0;
 
@@ -1267,8 +1268,8 @@ pf_key_v2_flow (in_addr_t laddr, in_addr_t lmask, in_addr_t raddr,
     goto cleanup;
   addr = 0;
 
-  log_debug (LOG_SYSDEP, 50, "pf_key_v2_flow: src %x %x dst %x %x",
-	     ntohl (laddr), ntohl (lmask), ntohl (raddr), ntohl (rmask));
+  LOG_DBG ((LOG_SYSDEP, 50, "pf_key_v2_flow: src %x %x dst %x %x",
+	    ntohl (laddr), ntohl (lmask), ntohl (raddr), ntohl (rmask)));
 
   ret = pf_key_v2_call (flow);
   pf_key_v2_msg_free (flow);
@@ -1280,8 +1281,8 @@ pf_key_v2_flow (in_addr_t laddr, in_addr_t lmask, in_addr_t raddr,
     {
 #ifdef __OpenBSD__
       if (err == ESRCH) /* These are common and usually harmless.  */
-	log_debug (LOG_SYSDEP, 10, "pf_key_v2_flow: %sFLOW: %s", 
-		   delete ? "DEL" : "ADD", strerror (err));
+	LOG_DBG ((LOG_SYSDEP, 10, "pf_key_v2_flow: %sFLOW: %s", 
+		  delete ? "DEL" : "ADD", strerror (err)));
       else
 #endif
 	log_print ("pf_key_v2_flow: %sFLOW: %s", delete ? "DEL" : "ADD", 
@@ -1290,7 +1291,7 @@ pf_key_v2_flow (in_addr_t laddr, in_addr_t lmask, in_addr_t raddr,
     }
   pf_key_v2_msg_free (ret);
 
-  log_debug (LOG_MISC, 50, "pf_key_v2_flow: done");
+  LOG_DBG ((LOG_MISC, 50, "pf_key_v2_flow: done"));
 
   return 0;
 
@@ -1417,8 +1418,8 @@ pf_key_v2_flow (in_addr_t laddr, in_addr_t lmask, in_addr_t raddr,
   if (pf_key_v2_msg_add (flow, (struct sadb_ext *)policy, 0) == -1)
     goto cleanup;
 
-  log_debug (LOG_SYSDEP, 50, "pf_key_v2_flow: src %x %x dst %x %x",
-	     ntohl (laddr), ntohl (lmask), ntohl (raddr), ntohl (rmask));
+  LOG_DBG ((LOG_SYSDEP, 50, "pf_key_v2_flow: src %x %x dst %x %x",
+	    ntohl (laddr), ntohl (lmask), ntohl (raddr), ntohl (rmask)));
 
   ret = pf_key_v2_call (flow);
   pf_key_v2_msg_free (flow);
@@ -1434,7 +1435,7 @@ pf_key_v2_flow (in_addr_t laddr, in_addr_t lmask, in_addr_t raddr,
     }
   pf_key_v2_msg_free (ret);
 
-  log_debug (LOG_SYSDEP, 50, "pf_key_v2_flow: done");
+  LOG_DBG ((LOG_SYSDEP, 50, "pf_key_v2_flow: done"));
 
   return 0;
 
@@ -1692,13 +1693,13 @@ pf_key_v2_delete_spi (struct sa *sa, struct proto *proto, int incoming)
   err = ((struct sadb_msg *)TAILQ_FIRST (ret)->seg)->sadb_msg_errno;
   if (err)
     {
-      log_debug (LOG_SYSDEP, 10, "pf_key_v2_delete_spi: DELETE: %s", 
-		 strerror (err));
+      LOG_DBG ((LOG_SYSDEP, 10, "pf_key_v2_delete_spi: DELETE: %s", 
+		strerror (err)));
       goto cleanup;
     }
   pf_key_v2_msg_free (ret);
 
-  log_debug (LOG_SYSDEP, 50, "pf_key_v2_delete_spi: done");
+  LOG_DBG ((LOG_SYSDEP, 50, "pf_key_v2_delete_spi: done"));
 
   return 0;
 
@@ -1730,13 +1731,13 @@ pf_key_v2_connection_check (char *conn)
 {
   if (!sa_lookup_by_name (conn, 2))
     {
-      log_debug (LOG_SYSDEP, 70,
-		 "pf_key_v2_connection_check: SA for %s missing", conn);
+      LOG_DBG ((LOG_SYSDEP, 70,
+		"pf_key_v2_connection_check: SA for %s missing", conn));
       exchange_establish (conn, pf_key_v2_stayalive, conn);
     }
   else
-    log_debug (LOG_SYSDEP, 70, "pf_key_v2_connection_check: SA for %s exists",
-	       conn);
+    LOG_DBG ((LOG_SYSDEP, 70, "pf_key_v2_connection_check: SA for %s exists",
+	      conn));
 }
 
 /* Handle a PF_KEY lifetime expiration message PMSG.  */
@@ -1761,12 +1762,12 @@ pf_key_v2_expire (struct pf_key_v2_msg *pmsg)
   life = lifenode->seg;
 
   /* XXX IPv4 specific.  */
-  log_debug (LOG_SYSDEP, 20,
-	     "pf_key_v2_expire: %s dst %s SPI %x sproto %d",
-	     life->sadb_lifetime_exttype == SADB_EXT_LIFETIME_SOFT ? "SOFT"
-	     : "HARD",
-	     inet_ntoa (((struct sockaddr_in *)dstaddr)->sin_addr),
-	     ntohl (ssa->sadb_sa_spi), msg->sadb_msg_satype);
+  LOG_DBG ((LOG_SYSDEP, 20,
+	    "pf_key_v2_expire: %s dst %s SPI %x sproto %d",
+	    life->sadb_lifetime_exttype == SADB_EXT_LIFETIME_SOFT ? "SOFT"
+	    : "HARD",
+	    inet_ntoa (((struct sockaddr_in *)dstaddr)->sin_addr),
+	    ntohl (ssa->sadb_sa_spi), msg->sadb_msg_satype));
 
   /*
    * Find the IPsec SA.  The IPsec stack has two SAs for every IKE SA,
@@ -1997,7 +1998,7 @@ pf_key_v2_group_spis (struct sa *sa, struct proto *proto1,
     }
   pf_key_v2_msg_free (ret);
 
-  log_debug (LOG_SYSDEP, 50, "pf_key_v2_group_spis: done");
+  LOG_DBG ((LOG_SYSDEP, 50, "pf_key_v2_group_spis: done"));
 
   return 0;
 

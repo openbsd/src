@@ -1,5 +1,5 @@
-/*	$OpenBSD: ike_auth.c,v 1.21 2000/02/19 19:32:53 niklas Exp $	*/
-/*	$EOM: ike_auth.c,v 1.43 2000/02/19 07:58:54 niklas Exp $	*/
+/*	$OpenBSD: ike_auth.c,v 1.22 2000/02/25 17:23:40 niklas Exp $	*/
+/*	$EOM: ike_auth.c,v 1.44 2000/02/20 19:58:37 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -407,7 +407,7 @@ pre_shared_decode_hash (struct message *msg)
   memcpy (*hash_p, payload->p + ISAKMP_HASH_DATA_OFF, hashsize);
   snprintf (header, 80, "pre_shared_decode_hash: HASH_%c",
 	    initiator ? 'R' : 'I');
-  log_debug_buf (LOG_MISC, 80, header, *hash_p, hashsize);
+  LOG_DBG_BUF ((LOG_MISC, 80, header, *hash_p, hashsize));
 
   payload->flags |= PL_MARK;
 
@@ -461,8 +461,8 @@ rsa_sig_decode_hash (struct message *msg)
     {
       cert = handler->cert_get (rawcert, rawlen);
       if (!cert)
-	log_debug (LOG_CRYPTO, 50,
-		   "rsa_sig_decode_hash: certificate malformed");
+	LOG_DBG ((LOG_CRYPTO, 50,
+		  "rsa_sig_decode_hash: certificate malformed"));
       else
 	{
 	  if (!handler->cert_get_key (cert, &key))
@@ -473,8 +473,8 @@ rsa_sig_decode_hash (struct message *msg)
 	  else
 	    {
 	      found++;
-	      log_debug (LOG_CRYPTO, 40,
-			 "rsa_sig_decode_hash: using cert from X509_STORE");
+	      LOG_DBG ((LOG_CRYPTO, 40,
+			"rsa_sig_decode_hash: using cert from X509_STORE"));
 	      exchange->recv_cert = cert;
 	      exchange->recv_certtype = handler->id;
 	    }
@@ -499,10 +499,10 @@ rsa_sig_decode_hash (struct message *msg)
       handler = cert_get (GET_ISAKMP_CERT_ENCODING (p->p));
       if (!handler)
 	{
-	  log_debug (LOG_MISC, 30,
-		     "rsa_sig_decode_hash: no handler for %s CERT encoding",
-		     constant_lookup (isakmp_certenc_cst,
-				      GET_ISAKMP_CERT_ENCODING (p->p)));
+	  LOG_DBG ((LOG_MISC, 30,
+		    "rsa_sig_decode_hash: no handler for %s CERT encoding",
+		    constant_lookup (isakmp_certenc_cst,
+				     GET_ISAKMP_CERT_ENCODING (p->p))));
 	  continue;
 	}
   
@@ -616,7 +616,7 @@ rsa_sig_decode_hash (struct message *msg)
     }
 
   snprintf (header, 80, "rsa_sig_decode_hash: HASH_%c", initiator ? 'R' : 'I');
-  log_debug_buf (LOG_MISC, 80, header, *hash_p, hashsize);
+  LOG_DBG_BUF ((LOG_MISC, 80, header, *hash_p, hashsize));
 
   p->flags |= PL_MARK;
 
@@ -646,7 +646,7 @@ pre_shared_encode_hash (struct message *msg)
     
   snprintf (header, 80, "pre_shared_encode_hash: HASH_%c",
 	    initiator ? 'I' : 'R');
-  log_debug_buf (LOG_MISC, 80, header, buf + ISAKMP_HASH_DATA_OFF, hashsize);
+  LOG_DBG_BUF ((LOG_MISC, 80, header, buf + ISAKMP_HASH_DATA_OFF, hashsize));
   return 0;
 #else
   return -1;
@@ -703,7 +703,7 @@ rsa_sig_encode_hash (struct message *msg)
 	}
     }
   else
-    log_debug (LOG_MISC, 10, "rsa_sig_decode_hash: no certificate to send");
+    LOG_DBG ((LOG_MISC, 10, "rsa_sig_decode_hash: no certificate to send"));
 
   key = ike_auth_get_key (IKE_AUTH_RSA_SIG, exchange->name, NULL);
   if (key == NULL)
@@ -729,7 +729,7 @@ rsa_sig_encode_hash (struct message *msg)
     }
     
   snprintf (header, 80, "rsa_sig_encode_hash: HASH_%c", initiator ? 'I' : 'R');
-  log_debug_buf (LOG_MISC, 80, header, buf, hashsize);
+  LOG_DBG_BUF ((LOG_MISC, 80, header, buf, hashsize));
 
   data = malloc (LC (RSA_size, (key)));
   if (!data)
@@ -764,7 +764,7 @@ rsa_sig_encode_hash (struct message *msg)
   memmove (buf + ISAKMP_SIG_SZ, buf, datalen);
 
   snprintf (header, 80, "rsa_sig_encode_hash: SIG_%c", initiator ? 'I' : 'R');
-  log_debug_buf (LOG_MISC, 80, header, buf + ISAKMP_SIG_DATA_OFF, datalen);
+  LOG_DBG_BUF ((LOG_MISC, 80, header, buf + ISAKMP_SIG_DATA_OFF, datalen));
   if (message_add_payload (msg, ISAKMP_PAYLOAD_SIG, buf,
 			   ISAKMP_SIG_SZ + datalen, 1))
     {

@@ -1,5 +1,5 @@
-#	$OpenBSD: Makefile,v 1.8 1999/08/26 22:28:24 niklas Exp $
-#	$EOM: Makefile,v 1.7 1999/08/13 15:13:04 ho Exp $
+#	$OpenBSD: Makefile,v 1.9 2000/02/25 17:23:36 niklas Exp $
+#	$EOM: Makefile,v 1.8 2000/02/20 19:58:44 niklas Exp $
 
 #
 # Copyright (c) 1999 Niels Provos.  All rights reserved.
@@ -43,7 +43,8 @@ TOPSRC=		${.CURDIR}/../..
 TOPOBJ!=	cd ${TOPSRC}; printf "all:\n\t@pwd\n" |${MAKE} -f-
 OS!=		awk '/^OS=/ { print $$2 }' ${.CURDIR}/../../Makefile
 .PATH:		${TOPSRC} ${TOPSRC}/sysdep/${OS} ${TOPOBJ}
-CFLAGS+=	-I${TOPSRC} -I${TOPSRC}/sysdep/${OS} -I${TOPOBJ} -Wall
+CFLAGS+=	-I${TOPSRC} -I${TOPSRC}/sysdep/${OS} -I${TOPOBJ} -Wall \
+		-DUSE_DEBUG
 NOMAN=
 DEBUG=		-g
 

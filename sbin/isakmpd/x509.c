@@ -1,5 +1,5 @@
-/*	$OpenBSD: x509.c,v 1.24 2000/02/19 19:31:33 niklas Exp $	*/
-/*	$EOM: x509.c,v 1.35 2000/02/19 07:46:33 niklas Exp $	*/
+/*	$OpenBSD: x509.c,v 1.25 2000/02/25 17:23:42 niklas Exp $	*/
+/*	$EOM: x509.c,v 1.36 2000/02/20 19:58:43 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niels Provos.  All rights reserved.
@@ -310,11 +310,12 @@ x509_hash_find (u_int8_t *id, size_t len)
 	}
       free (cid);
 
-      log_debug (LOG_CRYPTO, 70, "x509_hash_find: return X509 %p", cert->cert);
+      LOG_DBG ((LOG_CRYPTO, 70, "x509_hash_find: return X509 %p",
+		cert->cert));
       return cert->cert;
     }
 
-  log_debug (LOG_CRYPTO, 70, "x509_hash_find: no certificate matched query");
+  LOG_DBG ((LOG_CRYPTO, 70, "x509_hash_find: no certificate matched query"));
   return 0;
 }
 
@@ -347,8 +348,8 @@ x509_hash_enter (X509 *cert)
   free (id);
 
   LIST_INSERT_HEAD (&x509_tab[bucket], certh, link);
-  log_debug (LOG_CRYPTO, 70, "x509_hash_enter: cert %p added to bucket %d", 
-	     cert, bucket);
+  LOG_DBG ((LOG_CRYPTO, 70, "x509_hash_enter: cert %p added to bucket %d", 
+	    cert, bucket));
   return 1;
 }
 
@@ -370,8 +371,8 @@ x509_read_from_dir (X509_STORE *ctx, char *name, int hash)
       return 0;
     }
 
-  log_debug (LOG_CRYPTO, 40, "x509_read_from_dir: reading certs from %s",
-	     name);
+  LOG_DBG ((LOG_CRYPTO, 40, "x509_read_from_dir: reading certs from %s",
+	    name));
   
   dir = opendir (name);
   if (!dir)
@@ -390,8 +391,8 @@ x509_read_from_dir (X509_STORE *ctx, char *name, int hash)
       if (file->d_type != DT_REG && file->d_type != DT_LNK)
 	continue;
 
-      log_debug (LOG_CRYPTO, 60, "x509_read_from_dir: reading certificate %s",
-		 file->d_name);
+      LOG_DBG ((LOG_CRYPTO, 60, "x509_read_from_dir: reading certificate %s",
+		file->d_name));
 
       certh = LC (BIO_new, (LC (BIO_s_file, ())));
       if (!certh)
@@ -432,9 +433,9 @@ x509_read_from_dir (X509_STORE *ctx, char *name, int hash)
 	   * differing in subjectAltName, which is not an something that is
 	   * strange.  Consider multi-homed machines.
 	   */
-	  log_debug (LOG_CRYPTO, 50,
-		     "x509_read_from_dir: X509_STORE_add_cert failed for %s",
-		     file->d_name);
+	  LOG_DBG ((LOG_CRYPTO, 50,
+		    "x509_read_from_dir: X509_STORE_add_cert failed for %s",
+		    file->d_name));
 	}
 
       if (hash)
@@ -781,17 +782,17 @@ x509_check_subjectaltname (u_char *id, u_int id_len, X509 *scert)
 
   if (!ret)
     {
-      log_debug (LOG_CRYPTO, 50,
-		 "x509_check_subjectaltname: "
-		 "our ID type does not match X509 cert ID type");
+      LOG_DBG ((LOG_CRYPTO, 50,
+		"x509_check_subjectaltname: "
+		"our ID type does not match X509 cert ID type"));
       return 0;
     }
 
   if (altlen != id_len || memcmp (altname, id, id_len) != 0)
     {
-      log_debug (LOG_CRYPTO, 50,
-		 "x509_check_subjectaltname: "
-		 "our ID does not match X509 cert ID");
+      LOG_DBG ((LOG_CRYPTO, 50,
+		"x509_check_subjectaltname: "
+		"our ID does not match X509 cert ID"));
       return 0;
     }
 
@@ -811,8 +812,8 @@ x509_cert_obtain (u_int8_t *id, size_t id_len, void *data, u_int8_t **cert,
   u_char *p;
 
   if (aca)
-    log_debug (LOG_CRYPTO, 60,
-	       "x509_cert_obtain: acceptable certificate authorities here");
+    LOG_DBG ((LOG_CRYPTO, 60,
+	      "x509_cert_obtain: acceptable certificate authorities here"));
 
   /* We need our ID to find a certificate.  */
   if (!id)

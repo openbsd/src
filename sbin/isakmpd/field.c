@@ -1,5 +1,5 @@
-/*	$OpenBSD: field.c,v 1.7 1999/04/20 11:32:40 niklas Exp $	*/
-/*	$EOM: field.c,v 1.10 1999/04/20 09:23:43 niklas Exp $	*/
+/*	$OpenBSD: field.c,v 1.8 2000/02/25 17:23:39 niklas Exp $	*/
+/*	$EOM: field.c,v 1.11 2000/02/20 19:58:37 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -204,7 +204,7 @@ field_dump_field (struct field *f, u_int8_t *buf)
   value = decode_field[(int)f->type] (buf + f->offset, f->len, f->maps);
   if (value)
     {
-      log_debug (LOG_MESSAGE, 70, "%s: %s", f->name, value);
+      LOG_DBG ((LOG_MESSAGE, 70, "%s: %s", f->name, value));
       free (value);
     }
 }

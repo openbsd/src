@@ -1,5 +1,5 @@
-/*	$OpenBSD: sa.c,v 1.24 2000/02/01 02:46:18 niklas Exp $	*/
-/*	$EOM: sa.c,v 1.98 2000/01/31 22:33:48 niklas Exp $	*/
+/*	$OpenBSD: sa.c,v 1.25 2000/02/25 17:23:38 niklas Exp $	*/
+/*	$EOM: sa.c,v 1.99 2000/02/20 19:58:42 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -120,10 +120,10 @@ sa_find (int (*check) (struct sa *, void *), void *arg)
     for (sa = LIST_FIRST (&sa_tab[i]); sa; sa = LIST_NEXT (sa, link))
       if (check (sa, arg))
       {
-	log_debug (LOG_SA, 90, "sa_find: return SA %p", sa);
+	LOG_DBG ((LOG_SA, 90, "sa_find: return SA %p", sa));
 	return sa;
       }
-  log_debug (LOG_SA, 90, "sa_find: no SA matched query");
+  LOG_DBG ((LOG_SA, 90, "sa_find: no SA matched query"));
   return 0;
 }
 
@@ -235,7 +235,7 @@ sa_enter (struct sa *sa)
     }
   bucket &= bucket_mask;
   LIST_INSERT_HEAD (&sa_tab[bucket], sa, link);
-  log_debug (LOG_SA, 70, "sa_enter: SA %p added to SA list", sa);
+  LOG_DBG ((LOG_SA, 70, "sa_enter: SA %p added to SA list", sa));
   return 1;
 }
 
@@ -338,10 +338,10 @@ sa_create (struct exchange *exchange, struct transport *t)
   TAILQ_INSERT_TAIL (&exchange->sa_list, sa, next);
   sa_reference (sa);
 
-  log_debug (LOG_SA, 60,
-	     "sa_create: sa %p phase %d added to exchange %p (%s)", sa,
-	     sa->phase, exchange,
-	     exchange->name ? exchange->name : "<unnamed>");
+  LOG_DBG ((LOG_SA, 60,
+	    "sa_create: sa %p phase %d added to exchange %p (%s)", sa,
+	    sa->phase, exchange,
+	    exchange->name ? exchange->name : "<unnamed>"));
   return 0;
 }
 
@@ -356,30 +356,30 @@ sa_dump (char *header, struct sa *sa)
   char spi_header[80];
   int i;
 
-  log_debug (LOG_REPORT, 0, "%s: %p %s phase %d doi %d flags 0x%x", 
-	     header, sa, sa->name ? sa->name : "<unnamed>", sa->phase, 
-	     sa->doi->id, sa->flags);
-  log_debug (LOG_REPORT, 0, 
-	     "%s: icookie %08x%08x rcookie %08x%08x", header,
-	     decode_32 (sa->cookies), decode_32 (sa->cookies + 4),
-	     decode_32 (sa->cookies + 8), decode_32 (sa->cookies + 12));
-  log_debug (LOG_REPORT, 0, "%s: msgid %08x refcnt %d", header, 
-	     decode_32 (sa->message_id), sa->refcnt);
+  LOG_DBG ((LOG_REPORT, 0, "%s: %p %s phase %d doi %d flags 0x%x", 
+	    header, sa, sa->name ? sa->name : "<unnamed>", sa->phase, 
+	    sa->doi->id, sa->flags));
+  LOG_DBG ((LOG_REPORT, 0, 
+	    "%s: icookie %08x%08x rcookie %08x%08x", header,
+	    decode_32 (sa->cookies), decode_32 (sa->cookies + 4),
+	    decode_32 (sa->cookies + 8), decode_32 (sa->cookies + 12)));
+  LOG_DBG ((LOG_REPORT, 0, "%s: msgid %08x refcnt %d", header, 
+	    decode_32 (sa->message_id), sa->refcnt));
   for (proto = TAILQ_FIRST (&sa->protos); proto;
        proto = TAILQ_NEXT (proto, link))
     {
-      log_debug (LOG_REPORT, 0, 
-		 "%s: suite %d proto %d", header, proto->no, proto->proto);
-      log_debug (LOG_REPORT, 0, 
-		 "%s: spi_sz[0] %d spi[0] %p spi_sz[1] %d spi[1] %p", header,
-		 proto->spi_sz[0], proto->spi[0], proto->spi_sz[1],
-		 proto->spi[1]);
+      LOG_DBG ((LOG_REPORT, 0, 
+		"%s: suite %d proto %d", header, proto->no, proto->proto));
+      LOG_DBG ((LOG_REPORT, 0, 
+		"%s: spi_sz[0] %d spi[0] %p spi_sz[1] %d spi[1] %p", header,
+		proto->spi_sz[0], proto->spi[0], proto->spi_sz[1],
+		proto->spi[1]));
       for (i = 0; i < 2; i++)
 	if (proto->spi[i])
 	  {
 	    snprintf (spi_header, 80, "%s: spi[%d]", header, i);
-	    log_debug_buf (LOG_REPORT, 0, spi_header, proto->spi[i], 
-			   proto->spi_sz[i]);
+	    LOG_DBG_BUF ((LOG_REPORT, 0, spi_header, proto->spi[i], 
+			  proto->spi_sz[i]));
 	  }
     }
 }
@@ -419,7 +419,7 @@ proto_free (struct proto *proto)
     }
 
   /* XXX Use class LOG_SA instead?  */
-  log_debug (LOG_MISC, 90, "proto_free: freeing %p", proto);
+  LOG_DBG ((LOG_MISC, 90, "proto_free: freeing %p", proto));
 
   free (proto);
 }
@@ -440,7 +440,7 @@ void
 sa_free_aux (struct sa *sa)
 {
   LIST_REMOVE (sa, link);
-  log_debug (LOG_SA, 70, "sa_free_aux: SA %p removed from SA list", sa);
+  LOG_DBG ((LOG_SA, 70, "sa_free_aux: SA %p removed from SA list", sa));
   sa_release (sa);
 }
 
@@ -449,8 +449,8 @@ void
 sa_reference (struct sa *sa)
 {
   sa->refcnt++;
-  log_debug (LOG_SA, 80, "sa_reference: SA %p now has %d references",
-	     sa, sa->refcnt);
+  LOG_DBG ((LOG_SA, 80, "sa_reference: SA %p now has %d references",
+	    sa, sa->refcnt));
 }
 
 /* Release a reference to SA.  */
@@ -460,13 +460,13 @@ sa_release (struct sa *sa)
   struct proto *proto;
   struct cert_handler *handler;
   
-  log_debug (LOG_SA, 80, "sa_release: SA %p had %d references",
-	     sa, sa->refcnt);
+  LOG_DBG ((LOG_SA, 80, "sa_release: SA %p had %d references",
+	    sa, sa->refcnt));
 
   if (--sa->refcnt)
     return;
 
-  log_debug (LOG_SA, 60, "sa_release: freeing SA %p", sa);
+  LOG_DBG ((LOG_SA, 60, "sa_release: freeing SA %p", sa));
 
   while ((proto = TAILQ_FIRST (&sa->protos)) != 0)
     proto_free (proto);
@@ -580,10 +580,11 @@ sa_add_transform (struct sa *sa, struct payload *xf, int initiator,
   if (sa->doi->proto_init)
     sa->doi->proto_init (proto, 0);
 
-  log_debug (LOG_SA, 80,
-	     "sa_add_transform: proto %p no %d proto %d chosen %p sa %p id %d",
-	     proto, proto->no, proto->proto, proto->chosen, proto->sa,
-	     proto->id);
+  LOG_DBG ((LOG_SA, 80,
+	    "sa_add_transform: "
+	    "proto %p no %d proto %d chosen %p sa %p id %d",
+	    proto, proto->no, proto->proto, proto->chosen, proto->sa,
+	    proto->id));
 	     
   return 0;
 
@@ -666,7 +667,7 @@ sa_flag (char *attr)
 void
 sa_mark_replaced (struct sa *sa)
 {
-  log_debug (LOG_SA, 60, "sa_mark_replaced: SA %p marked as replaced", sa);
+  LOG_DBG ((LOG_SA, 60, "sa_mark_replaced: SA %p marked as replaced", sa));
   sa->flags |= SA_FLAG_REPLACED;
 }
 
@@ -697,9 +698,9 @@ sa_setup_expirations (struct sa *sa)
       gettimeofday (&expiration, 0);
       /* XXX This should probably be configuration controlled somehow.  */
       seconds = sa->seconds * (850 + sysdep_random () % 100) / 1000;
-      log_debug (LOG_TIMER, 95,
-		 "sa_setup_expirations: SA %p soft timeout in %qd seconds",
-		 seconds);
+      LOG_DBG ((LOG_TIMER, 95,
+		"sa_setup_expirations: SA %p soft timeout in %qd seconds",
+		seconds));
       expiration.tv_sec += seconds;
       sa->soft_death
 	= timer_add_event ("sa_soft_expire", sa_soft_expire, sa, &expiration);
@@ -714,9 +715,9 @@ sa_setup_expirations (struct sa *sa)
   if (!sa->death)
     {
       gettimeofday(&expiration, 0);
-      log_debug (LOG_TIMER, 95,
-		 "sa_setup_expirations: SA %p hard timeout in %qd seconds",
-		 sa->seconds);
+      LOG_DBG ((LOG_TIMER, 95,
+		"sa_setup_expirations: SA %p hard timeout in %qd seconds",
+		sa->seconds));
       expiration.tv_sec += sa->seconds;
       sa->death
 	= timer_add_event ("sa_hard_expire", sa_hard_expire, sa, &expiration);

@@ -1,5 +1,5 @@
-/*	$OpenBSD: message.c,v 1.29 2000/02/01 02:46:18 niklas Exp $	*/
-/*	$EOM: message.c,v 1.143 2000/01/31 22:33:47 niklas Exp $	*/
+/*	$OpenBSD: message.c,v 1.30 2000/02/25 17:23:41 niklas Exp $	*/
+/*	$EOM: message.c,v 1.144 2000/02/20 19:58:40 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -155,7 +155,7 @@ message_alloc (struct transport *t, u_int8_t *buf, size_t sz)
   for (i = ISAKMP_PAYLOAD_SA; i < ISAKMP_PAYLOAD_RESERVED_MIN; i++)
     TAILQ_INIT (&msg->payload[i]);
   TAILQ_INIT (&msg->post_send);
-  log_debug (LOG_MESSAGE, 90, "message_alloc: allocated %p", msg);
+  LOG_DBG ((LOG_MESSAGE, 90, "message_alloc: allocated %p", msg));
   return msg;
 }
 
@@ -182,7 +182,7 @@ message_free (struct message *msg)
   struct payload *payload, *next;
   struct post_send *node;
 
-  log_debug (LOG_MESSAGE, 20, "message_free: freeing %p", msg);
+  LOG_DBG ((LOG_MESSAGE, 20, "message_free: freeing %p", msg));
   if (!msg)
     return;
   if (msg->orig && msg->orig != (u_int8_t *)msg->iov[0].iov_base)
@@ -233,10 +233,10 @@ message_parse_payloads (struct message *msg, struct payload *p, u_int8_t next,
 
   do
     {
-      log_debug (LOG_MESSAGE, 50,
-		 "message_parse_payloads: offset 0x%x payload %s",
-		 buf - (u_int8_t *)msg->iov[0].iov_base,
-		 constant_name (isakmp_payload_cst, next));
+      LOG_DBG ((LOG_MESSAGE, 50,
+		"message_parse_payloads: offset 0x%x payload %s",
+		buf - (u_int8_t *)msg->iov[0].iov_base,
+		constant_name (isakmp_payload_cst, next)));
 
       /* Does this payload's header fit?  */
       if (buf + ISAKMP_GEN_SZ
@@ -334,11 +334,13 @@ message_parse_transform (struct message *msg, struct payload *p,
   /* Put the transform into the transform bucket.  */
   message_index_payload (msg, p, payload, buf);
 
-  log_debug (LOG_MESSAGE, 50, "Transform %d's attributes",
-	     GET_ISAKMP_TRANSFORM_NO (buf));
+  LOG_DBG ((LOG_MESSAGE, 50, "Transform %d's attributes",
+	    GET_ISAKMP_TRANSFORM_NO (buf)));
+#ifdef USE_DEBUG
   attribute_map (buf + ISAKMP_TRANSFORM_SA_ATTRS_OFF,
 		 GET_ISAKMP_GEN_LENGTH (buf) - ISAKMP_TRANSFORM_SA_ATTRS_OFF,
 		 msg->exchange->doi->debug_attribute, msg);
+#endif
 
   return 0;
 }
@@ -726,7 +728,7 @@ message_validate_vendor (struct message *msg, struct payload *p)
       return -1;
     }
 
-  log_debug (LOG_MESSAGE, 40, "message_validate_vendor: vendor ID seen");
+  LOG_DBG ((LOG_MESSAGE, 40, "message_validate_vendor: vendor ID seen"));
   return 0;
 }
 
@@ -789,9 +791,10 @@ message_validate_payloads (struct message *msg)
   for (i = ISAKMP_PAYLOAD_SA; i < ISAKMP_PAYLOAD_RESERVED_MIN; i++)
     for (p = TAILQ_FIRST (&msg->payload[i]); p; p = TAILQ_NEXT (p, link))
       {
-	log_debug (LOG_MESSAGE, 60,
-		   "message_validate_payloads: payload %s at %p of message %p",
-		   constant_name (isakmp_payload_cst, i), p->p, msg);
+	LOG_DBG ((LOG_MESSAGE, 60,
+		  "message_validate_payloads: "
+		  "payload %s at %p of message %p",
+		  constant_name (isakmp_payload_cst, i), p->p, msg));
 	field_dump_payload (fields[i - ISAKMP_PAYLOAD_SA], p->p);
 	if (message_validate_payload[i - ISAKMP_PAYLOAD_SA] (msg, p))
 	  return -1;
@@ -850,8 +853,8 @@ message_recv (struct message *msg)
 	   * XXX Later we should differentiate between retransmissions and
 	   * potential replay attacks.
 	   */
-	  log_debug (LOG_MESSAGE, 90,
-		     "message_recv: dropping setup for existing SA");
+	  LOG_DBG ((LOG_MESSAGE, 90,
+		    "message_recv: dropping setup for existing SA"));
 	  message_free (msg);
 	  return -1;
 	}
@@ -983,8 +986,8 @@ message_recv (struct message *msg)
 	}
       else if (msg->exchange->last_sent)
 	{
-	  log_debug (LOG_MESSAGE, 80,
-		     "message_recv: resending last message from phase 1");
+	  LOG_DBG ((LOG_MESSAGE, 80,
+		    "message_recv: resending last message from phase 1"));
 	  message_send (msg->exchange->last_sent);
 	}
     }
@@ -1395,7 +1398,7 @@ message_dump_raw (char *header, struct message *msg, int class)
   int i, j, k = 0;
   char buf[80], *p = buf;
 
-  log_debug (class, 70, "%s: message %p", header, msg);
+  LOG_DBG ((class, 70, "%s: message %p", header, msg));
   field_dump_payload (isakmp_hdr_fld, msg->iov[0].iov_base);
   for (i = 0; i < msg->iovlen; i++)
     for (j = 0; j < msg->iov[i].iov_len; j++)
@@ -1405,7 +1408,7 @@ message_dump_raw (char *header, struct message *msg, int class)
 	if (++k % 32 == 0)
 	  {
 	    *p = '\0';
-	    log_debug (class, 70, "%s: %s", header, buf);
+	    LOG_DBG ((class, 70, "%s: %s", header, buf));
 	    p = buf;
 	  }
 	else if (k % 4 == 0)
@@ -1413,7 +1416,7 @@ message_dump_raw (char *header, struct message *msg, int class)
       }
   *p = '\0';
   if (p != buf)
-    log_debug (class, 70, "%s: %s", header, buf);
+    LOG_DBG ((class, 70, "%s: %s", header, buf));
 }
 
 /*
@@ -1491,18 +1494,20 @@ message_check_duplicate (struct message *msg)
   if (!exchange)
     return 0;
 
-  log_debug (LOG_MESSAGE, 90, "message_check_duplicate: last_received 0x%x",
-	     exchange->last_received);
+  LOG_DBG ((LOG_MESSAGE, 90, "message_check_duplicate: last_received 0x%x",
+	    exchange->last_received));
   if (exchange->last_received)
     {
-      log_debug_buf (LOG_MESSAGE, 95, "message_check_duplicate: last_received",
-		     exchange->last_received->orig,
-		     exchange->last_received->orig_sz);
+      LOG_DBG_BUF ((LOG_MESSAGE, 95,
+		    "message_check_duplicate: last_received",
+		    exchange->last_received->orig,
+		    exchange->last_received->orig_sz));
       /* Is it a duplicate, lose the new one.  */
       if (sz == exchange->last_received->orig_sz
 	  && memcmp (pkt, exchange->last_received->orig, sz) == 0)
 	{
-	  log_debug (LOG_MESSAGE, 80, "message_check_duplicate: dropping dup");
+	  LOG_DBG ((LOG_MESSAGE, 80,
+		    "message_check_duplicate: dropping dup"));
 
 	  /*
 	   * Retransmit if the previos sent message was the last of an
@@ -1600,12 +1605,12 @@ message_negotiate_sa (struct message *msg,
 			  - ISAKMP_TRANSFORM_SA_ATTRS_OFF,
 			  exchange->doi->is_attribute_incompatible, msg))
 	{
-	  log_debug (LOG_MESSAGE, 30,
-		     "message_negotiate_sa: "
-		     "transform %d proto %d proposal %d ok",
-		     GET_ISAKMP_TRANSFORM_NO (tp->p),
-		     GET_ISAKMP_PROP_PROTO (propp->p),
-		     GET_ISAKMP_PROP_NO (propp->p));
+	  LOG_DBG ((LOG_MESSAGE, 30,
+		    "message_negotiate_sa: "
+		    "transform %d proto %d proposal %d ok",
+		    GET_ISAKMP_TRANSFORM_NO (tp->p),
+		    GET_ISAKMP_PROP_PROTO (propp->p),
+		    GET_ISAKMP_PROP_NO (propp->p)));
 	  if (sa_add_transform (sa, tp, exchange->initiator, &proto))
 	    goto cleanup;
 	  suite_ok_so_far = 1;
@@ -1630,10 +1635,10 @@ message_negotiate_sa (struct message *msg,
 	{
 	  if (!suite_ok_so_far)
 	    {
-	      log_debug (LOG_MESSAGE, 30,
-			 "message_negotiate_sa: proto %d proposal %d failed",
-			 GET_ISAKMP_PROP_PROTO (propp->p),
-			 GET_ISAKMP_PROP_NO (propp->p));
+	      LOG_DBG ((LOG_MESSAGE, 30,
+			"message_negotiate_sa: proto %d proposal %d failed",
+			GET_ISAKMP_PROP_PROTO (propp->p),
+			GET_ISAKMP_PROP_NO (propp->p)));
 	      /* Remove potentially succeeded choices from the SA.  */
 	      while (TAILQ_FIRST (&sa->protos))
 		TAILQ_REMOVE (&sa->protos, TAILQ_FIRST (&sa->protos), link);
@@ -1663,9 +1668,9 @@ message_negotiate_sa (struct message *msg,
 	    {
 	      if (!validate || validate (exchange, sa, msg->isakmp_sa))
 		{
-		  log_debug (LOG_MESSAGE, 30,
-			     "message_negotiate_sa: proposal %d succeeded",
-			     GET_ISAKMP_PROP_NO (propp->p));
+		  LOG_DBG ((LOG_MESSAGE, 30,
+			    "message_negotiate_sa: proposal %d succeeded",
+			    GET_ISAKMP_PROP_NO (propp->p)));
 
 		  /* Skip to the last transform of this SA.  */
 		  while ((next_tp
@@ -1676,9 +1681,9 @@ message_negotiate_sa (struct message *msg,
 	      else
 		{
 		  /* Backtrack.  */
-		  log_debug (LOG_MESSAGE, 30,
-			     "message_negotiate_sa: proposal %d failed", 
-			     GET_ISAKMP_PROP_NO (propp->p));
+		  LOG_DBG ((LOG_MESSAGE, 30,
+			    "message_negotiate_sa: proposal %d failed", 
+			    GET_ISAKMP_PROP_NO (propp->p)));
 		  next_tp = saved_tp;
 		  next_propp = saved_propp;
 		  next_sap = saved_sap;

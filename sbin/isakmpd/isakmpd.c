@@ -1,5 +1,5 @@
-/*	$OpenBSD: isakmpd.c,v 1.19 2000/02/19 19:32:53 niklas Exp $	*/
-/*	$EOM: isakmpd.c,v 1.44 2000/02/19 07:58:56 niklas Exp $	*/
+/*	$OpenBSD: isakmpd.c,v 1.20 2000/02/25 17:23:39 niklas Exp $	*/
+/*	$EOM: isakmpd.c,v 1.45 2000/02/20 19:58:39 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -102,16 +102,22 @@ usage ()
 static void
 parse_args (int argc, char *argv[])
 {
-  int ch, cls, level;
+  int ch;
+#ifdef USE_DEBUG
+  int cls, level;
+#endif
 
   while ((ch = getopt (argc, argv, "c:dD:f:np:P:r:")) != -1) {
     switch (ch) {
     case 'c':
       conf_path = optarg;
       break;
+
     case 'd':
       debug++;
       break;
+
+#ifdef USE_DEBUG
     case 'D':
       if (sscanf (optarg, "%d=%d", &cls, &level) != 2)
 	{
@@ -126,29 +132,37 @@ parse_args (int argc, char *argv[])
       else
 	log_debug_cmd (cls, level);
       break;
+#endif /* USE_DEBUG */
+
     case 'f':
       ui_fifo = optarg;
       break;
+
     case 'n':
       app_none++;
       break;
+
     case 'p':
       udp_default_port = udp_decode_port (optarg);
       if (!udp_default_port)
 	exit (1);
       break;
+
     case 'P':
       udp_bind_port = udp_decode_port (optarg);
       if (!udp_bind_port)
 	exit (1);
       break;
+
     case 'r':
       srandom (strtoul (optarg, 0, 0));
       regrand = 1;
       break;
+
     case 'R':
       report_file = optarg;
       break;
+
     case '?':
     default:
       usage ();

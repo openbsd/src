@@ -1,5 +1,5 @@
-/*	$OpenBSD: ui.c,v 1.11 1999/08/26 22:29:57 niklas Exp $	*/
-/*	$EOM: ui.c,v 1.36 1999/08/20 12:54:51 ho Exp $	*/
+/*	$OpenBSD: ui.c,v 1.12 2000/02/25 17:23:42 niklas Exp $	*/
+/*	$EOM: ui.c,v 1.37 2000/02/20 19:58:42 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -208,6 +208,7 @@ ui_delete (char *cmd)
   sa_delete (sa, 1);
 }
 
+#ifdef USE_DEBUG
 /* Parse the debug command found in CMD.  */
 static void
 ui_debug (char *cmd)
@@ -221,6 +222,7 @@ ui_debug (char *cmd)
     }
   log_debug_cmd (cls, level);
 }
+#endif /* USE_DEBUG */
 
 /* Report SAs and ongoing exchanges.  */
 void
@@ -256,9 +258,11 @@ ui_handle_command (char *line)
       ui_delete (line);
       break;
 
+#ifdef USE_DEBUG
     case 'D':
       ui_debug (line);
       break;
+#endif
 
     case 'r':
       ui_report (line);

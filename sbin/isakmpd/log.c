@@ -1,5 +1,5 @@
-/*	$OpenBSD: log.c,v 1.8 1999/08/26 22:31:36 niklas Exp $	*/
-/*	$EOM: log.c,v 1.25 1999/08/12 23:08:55 niklas Exp $	*/
+/*	$OpenBSD: log.c,v 1.9 2000/02/25 17:23:40 niklas Exp $	*/
+/*	$EOM: log.c,v 1.26 2000/02/20 19:58:39 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -52,7 +52,9 @@
 static void _log_print (int, int, const char *, va_list, int, int);
 
 static FILE *log_output = stderr;
+#ifdef USE_DEBUG
 static int log_level[LOG_ENDCLASS];
+#endif
 
 void
 log_to (FILE *f)
@@ -142,6 +144,7 @@ _log_print (int error, int syslog_level, const char *fmt, va_list ap,
     syslog (class == LOG_REPORT ? LOG_ALERT : syslog_level, buffer);
 }
 
+#ifdef USE_DEBUG
 void
 #ifdef __STDC__
 log_debug (int cls, int level, const char *fmt, ...)
@@ -208,6 +211,33 @@ log_debug_buf (int cls, int level, const char *header, const u_int8_t *buf,
 }
 
 void
+log_debug_cmd (int cls, int level)
+{
+  if (cls < 0 || cls >= LOG_ENDCLASS)
+    {
+      log_print ("log_debug_cmd: invalid debugging class %d", cls);
+      return;
+    }
+
+  if (level < 0)
+    {
+      log_print ("log_debug_cmd: invalid debugging level %d for class %d",
+		 level, cls);
+      return;
+    }
+
+  if (level == log_level[cls])
+    log_print ("log_debug_cmd: log level unchanged for class %d", cls);
+  else
+    {
+      log_print ("log_debug_cmd: log level changed from %d to %d for class %d",
+		 log_level[cls], level, cls);
+      log_level[cls] = level;
+    }
+}
+#endif /* USE_DEBUG */
+
+void
 #ifdef __STDC__
 log_print (const char *fmt, ...)
 #else
@@ -269,30 +299,4 @@ log_fatal (fmt, va_alist)
   _log_print (1, LOG_CRIT, fmt, ap, LOG_PRINT, 0);
   va_end (ap);
   exit (1);
-}
-
-void
-log_debug_cmd (int cls, int level)
-{
-  if (cls < 0 || cls >= LOG_ENDCLASS)
-    {
-      log_print ("log_debug_cmd: invalid debugging class %d", cls);
-      return;
-    }
-
-  if (level < 0)
-    {
-      log_print ("log_debug_cmd: invalid debugging level %d for class %d",
-		 level, cls);
-      return;
-    }
-
-  if (level == log_level[cls])
-    log_print ("log_debug_cmd: log level unchanged for class %d", cls);
-  else
-    {
-      log_print ("log_debug_cmd: log level changed from %d to %d for class %d",
-		 log_level[cls], level, cls);
-      log_level[cls] = level;
-    }
 }

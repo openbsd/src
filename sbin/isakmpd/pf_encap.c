@@ -1,5 +1,5 @@
-/*	$OpenBSD: pf_encap.c,v 1.15 1999/05/02 19:16:12 niklas Exp $	*/
-/*	$EOM: pf_encap.c,v 1.69 1999/05/02 12:50:28 niklas Exp $	*/
+/*	$OpenBSD: pf_encap.c,v 1.16 2000/02/25 17:23:41 niklas Exp $	*/
+/*	$EOM: pf_encap.c,v 1.70 2000/02/20 19:58:40 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -117,11 +117,11 @@ pf_encap_expire (struct encap_msghdr *emsg)
 {
   struct sa *sa;
 
-  log_debug (LOG_SYSDEP, 20,
-	     "pf_encap_expire: NOTIFY_%s_EXPIRE dst %s spi %x sproto %d",
-	     emsg->em_not_type == NOTIFY_SOFT_EXPIRE ? "SOFT" : "HARD",
-	     inet_ntoa (emsg->em_not_dst), htonl (emsg->em_not_spi),
-	     emsg->em_not_sproto);
+  LOG_DBG ((LOG_SYSDEP, 20,
+	    "pf_encap_expire: NOTIFY_%s_EXPIRE dst %s spi %x sproto %d",
+	    emsg->em_not_type == NOTIFY_SOFT_EXPIRE ? "SOFT" : "HARD",
+	    inet_ntoa (emsg->em_not_dst), htonl (emsg->em_not_spi),
+	    emsg->em_not_sproto));
 
   /*
    * Find the IPsec SA.  The IPsec stack has two SAs for every IKE SA,
@@ -178,8 +178,8 @@ pf_encap_expire (struct encap_msghdr *emsg)
 static void
 pf_encap_notify (struct encap_msghdr *emsg)
 {
-  log_debug_buf (LOG_SYSDEP, 90, "pf_encap_notify: emsg", (u_int8_t *)emsg,
-		 emsg->em_msglen);
+  LOG_DBG_BUF ((LOG_SYSDEP, 90, "pf_encap_notify: emsg", (u_int8_t *)emsg,
+		emsg->em_msglen));
 
   switch (emsg->em_not_type)
     {
@@ -271,8 +271,8 @@ pf_encap_write (struct encap_msghdr *em)
 
   em->em_version = PFENCAP_VERSION_1;
 
-  log_debug_buf (LOG_SYSDEP, 30, "pf_encap_write: em", (u_int8_t *)em,
-		 em->em_msglen);
+  LOG_DBG_BUF ((LOG_SYSDEP, 30, "pf_encap_write: em", (u_int8_t *)em,
+		em->em_msglen));
   n = write (pf_encap_socket, em, em->em_msglen);
   if (n == -1)
     {
@@ -296,9 +296,9 @@ pf_encap_request_sa (struct encap_msghdr *emsg)
 {
   struct on_demand_connection *node;
 
-  log_debug (LOG_SYSDEP, 10,
-	     "pf_encap_request_sa: SA requested for %s type %d",
-	     inet_ntoa (emsg->em_not_dst), emsg->em_not_satype);
+  LOG_DBG ((LOG_SYSDEP, 10,
+	    "pf_encap_request_sa: SA requested for %s type %d",
+	    inet_ntoa (emsg->em_not_dst), emsg->em_not_satype));
 
   /*
    * In my mind this is rediculous, PF_ENCAP is just broken.  Well, to
@@ -421,7 +421,7 @@ pf_encap_get_spi (size_t *sz, u_int8_t proto, struct sockaddr *src, int srclen,
   memcpy (spi, &emsg->em_gen_spi, *sz);
   free (emsg);
 
-  log_debug_buf (LOG_SYSDEP, 50, "pf_encap_get_spi: spi", spi, *sz);
+  LOG_DBG_BUF ((LOG_SYSDEP, 50, "pf_encap_get_spi: spi", spi, *sz));
 
   return spi;
 
@@ -467,7 +467,7 @@ pf_encap_group_spis (struct sa *sa, struct proto *proto1, struct proto *proto2,
     goto cleanup;
   free (emsg);
 
-  log_debug (LOG_SYSDEP, 50, "pf_encap_group_spis: done");
+  LOG_DBG ((LOG_SYSDEP, 50, "pf_encap_group_spis: done"));
 
   return 0;
 
@@ -646,13 +646,14 @@ pf_encap_set_spi (struct sa *sa, struct proto *proto, int incoming)
   emsg->em_packets_hard = 0;
   emsg->em_packets_soft = 0;
 
-  log_debug (LOG_SYSDEP, 10, "pf_encap_set_spi: proto %d dst %s SPI 0x%x",
-	     emsg->em_sproto, inet_ntoa (emsg->em_dst), htonl (emsg->em_spi));
+  LOG_DBG ((LOG_SYSDEP, 10, "pf_encap_set_spi: proto %d dst %s SPI 0x%x",
+	    emsg->em_sproto, inet_ntoa (emsg->em_dst),
+	    htonl (emsg->em_spi)));
   if (pf_encap_write (emsg))
     goto cleanup;
   free (emsg);
 
-  log_debug (LOG_SYSDEP, 50, "pf_encap_set_spi: done");
+  LOG_DBG ((LOG_SYSDEP, 50, "pf_encap_set_spi: done"));
 
   return 0;
 
@@ -694,7 +695,7 @@ pf_encap_delete_spi (struct sa *sa, struct proto *proto, int incoming)
     goto cleanup;
   free (emsg);
 
-  log_debug (LOG_SYSDEP, 50, "pf_encap_delete_spi: done");
+  LOG_DBG ((LOG_SYSDEP, 50, "pf_encap_delete_spi: done"));
 
   return 0;
 
@@ -739,8 +740,8 @@ pf_encap_enable_spi (in_addr_t laddr, in_addr_t lmask, in_addr_t raddr,
   memcpy (&emsg->em_ena_spi, spi, sizeof emsg->em_ena_spi);
   emsg->em_ena_dst.s_addr = dst;
 
-  log_debug (LOG_SYSDEP, 50, "pf_encap_enable_spi: src %x %x dst %x %x",
-	     htonl(laddr), htonl(lmask), htonl(raddr), htonl(rmask));
+  LOG_DBG ((LOG_SYSDEP, 50, "pf_encap_enable_spi: src %x %x dst %x %x",
+	    htonl(laddr), htonl(lmask), htonl(raddr), htonl(rmask)));
   emsg->em_ena_isrc.s_addr = laddr;
   emsg->em_ena_ismask.s_addr = lmask;
   emsg->em_ena_idst.s_addr = raddr;
@@ -769,7 +770,7 @@ pf_encap_enable_spi (in_addr_t laddr, in_addr_t lmask, in_addr_t raddr,
 	goto cleanup;
     }
   free (emsg);
-  log_debug (LOG_SYSDEP, 50, "pf_encap_enable_spi: done");
+  LOG_DBG ((LOG_SYSDEP, 50, "pf_encap_enable_spi: done"));
   return 0;
 
  cleanup:
@@ -850,16 +851,16 @@ pf_encap_route (in_addr_t laddr, in_addr_t lmask, in_addr_t raddr,
 
   rtmsg->rtm_msglen = off + msk->sen_len;
 
-  log_debug (LOG_SYSDEP, 70, "pf_encap_route: rtmsg", rtmsg,
-	     rtmsg->rtm_msglen);
+  LOG_DBG ((LOG_SYSDEP, 70, "pf_encap_route: rtmsg", rtmsg,
+	    rtmsg->rtm_msglen));
   if (write(s, (caddr_t)rtmsg, rtmsg->rtm_msglen) == -1)
     {
       if (errno == EEXIST)
 	{
 	  rtmsg->rtm_type = RTM_CHANGE;
 
-	  log_debug (LOG_SYSDEP, 70, "pf_encap_route: rtmsg", rtmsg,
-		     rtmsg->rtm_msglen);
+	  LOG_DBG ((LOG_SYSDEP, 70, "pf_encap_route: rtmsg", rtmsg,
+		    rtmsg->rtm_msglen));
 	  if (write(s, (caddr_t)rtmsg, rtmsg->rtm_msglen) == -1)
 	    {
 	      log_error("pf_encap_route: write(%d, %p, %d) failed", s, rtmsg,
@@ -885,7 +886,7 @@ pf_encap_route (in_addr_t laddr, in_addr_t lmask, in_addr_t raddr,
   close (s);
   free (rtmsg);
 
-  log_debug (LOG_SYSDEP, 30, "pf_encap_route: done");
+  LOG_DBG ((LOG_SYSDEP, 30, "pf_encap_route: done"));
   return 0;
 
  fail:
@@ -906,9 +907,9 @@ pf_encap_connection_check (char *conn)
 
   if (sa_lookup_by_name (conn, 2) || exchange_lookup_by_name (conn, 2))
     {
-      log_debug (LOG_SYSDEP, 70,
-		 "pf_encap_connection_check: SA or exchange for %s exists", 
-		 conn);
+      LOG_DBG ((LOG_SYSDEP, 70,
+		"pf_encap_connection_check: SA or exchange for %s exists", 
+		conn));
       return;
     }
 
