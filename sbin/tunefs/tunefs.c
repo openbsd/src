@@ -1,4 +1,4 @@
-/*	$OpenBSD: tunefs.c,v 1.7 1997/11/06 20:27:16 csapuntz Exp $	*/
+/*	$OpenBSD: tunefs.c,v 1.8 1997/11/07 23:27:04 deraadt Exp $	*/
 /*	$NetBSD: tunefs.c,v 1.10 1995/03/18 15:01:31 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)tunefs.c	8.2 (Berkeley) 4/19/94";
 #else
-static char rcsid[] = "$OpenBSD: tunefs.c,v 1.7 1997/11/06 20:27:16 csapuntz Exp $";
+static char rcsid[] = "$OpenBSD: tunefs.c,v 1.8 1997/11/07 23:27:04 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -190,24 +190,23 @@ again:
 					warnx(OPTWARN, "space", "<", MINFREE);
 				continue;
 
- 			case 's':
- 				name = "soft updates";
- 				if (argc < 1)
- 					errx(10, "-s: missing %s", name);
- 				argc--, argv++;
- 				if (strcmp(*argv, "enable") == 0) {
- 					sblock.fs_flags |= FS_DOSOFTDEP;
- 					action = "set";
- 				} else if (strcmp(*argv, "disable") == 0) {
- 					sblock.fs_flags &= ~FS_DOSOFTDEP;
- 					action = "cleared";
- 				} else {
- 					errx(10, "bad %s (options are %s)",
- 					    name, "`enable' or `disable'");
- 				}
- 				warnx("%s %s", name, action);
- 				continue;
- 
+			case 's':
+				name = "soft updates";
+				if (argc < 1)
+					errx(10, "-s: missing %s", name);
+				argc--, argv++;
+				if (strcmp(*argv, "enable") == 0) {
+					sblock.fs_flags |= FS_DOSOFTDEP;
+					action = "set";
+				} else if (strcmp(*argv, "disable") == 0) {
+					sblock.fs_flags &= ~FS_DOSOFTDEP;
+					action = "cleared";
+				} else {
+					errx(10, "bad %s (options are %s)",
+					    name, "`enable' or `disable'");
+				}
+				warnx("%s %s", name, action);
+				continue;
 
 			case 'o':
 				name = "optimization preference";
