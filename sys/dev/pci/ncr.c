@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr.c,v 1.30 1997/09/07 03:36:43 millert Exp $	*/
+/*	$OpenBSD: ncr.c,v 1.31 1997/10/11 11:05:27 pefo Exp $	*/
 /*	$NetBSD: ncr.c,v 1.56 1997/03/04 21:42:34 mycroft Exp $	*/
 
 /**************************************************************************
@@ -15,6 +15,9 @@
 **
 **  Ported to NetBSD by
 **	Charles M. Hannum	<mycroft@gnu.ai.mit.edu>
+**
+**  Modified for big endian systems by
+**	Per Fogelstrom for RTMX Inc, North Carolina. <pefo@opsycon.se>
 **
 **-------------------------------------------------------------------------
 **
@@ -218,7 +221,7 @@
 #include <dev/pci/ncr_reg.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
-#ifndef __alpha__
+#if !defined(__alpha__) && !defined(__powerpc__)
 #define DELAY(x)	delay(x)
 #endif
 #endif /* __NetBSD__ || __OpenBSD__ */      
@@ -1357,7 +1360,7 @@ static	void	ncr_attach	(pcici_t tag, int unit);
 
 #if 0
 static char ident[] =
-	"\n$OpenBSD: ncr.c,v 1.30 1997/09/07 03:36:43 millert Exp $\n";
+	"\n$OpenBSD: ncr.c,v 1.31 1997/10/11 11:05:27 pefo Exp $\n";
 #endif
 
 static const u_long	ncr_version = NCR_VERSION	* 11
@@ -3133,7 +3136,8 @@ static void ncr_script_copy_and_bind (struct script *script, ncb_p np)
 
 	while (src < end) {
 
-		*dst++ = opcode = *src++;
+		opcode = *src++;
+		*dst++ = SCR_BO(opcode);
 
 		/*
 		**	If we forget to change the length
@@ -3239,11 +3243,13 @@ static void ncr_script_copy_and_bind (struct script *script, ncb_p np)
 					break;
 				}
 
-				*dst++ = new;
+				*dst++ = SCR_BO(new);
 			}
-		} else
-			*dst++ = *src++;
-
+		}
+		else {
+			*dst++ = SCR_BO(*src);
+			src++;
+		}
 	};
 }
 
@@ -3597,8 +3603,8 @@ static	void ncr_attach (pcici_t config_id, int unit)
 	**	init data structure
 	*/
 
-	np->jump_tcb.l_cmd	= SCR_JUMP;
-	np->jump_tcb.l_paddr	= NCB_SCRIPT_PHYS (np, abort);
+	np->jump_tcb.l_cmd	= SCR_BO(SCR_JUMP);
+	np->jump_tcb.l_paddr	= SCR_BO(NCB_SCRIPT_PHYS (np, abort));
 
 	/*
 	**  Get SCSI addr of host adapter (set by bios?).
@@ -3618,7 +3624,7 @@ static	void ncr_attach (pcici_t config_id, int unit)
 #endif /* __NetBSD__ || __OpenBSD__ */      
 		for (reg=0; reg<256; reg+=4) {
 			if (reg%16==0) printf ("reg[%2x]", reg);
-			printf (" %08x", (int)pci_conf_read (config_id, reg));
+			printf (" %08x", (int)pci_conf_read (pc, config_id, reg));
 			if (reg%16==12) printf ("\n");
 		}
 	}
@@ -4128,13 +4134,17 @@ static INT32 ncr_start (struct scsi_xfer * xp)
 	*/
 
 	if (flags & SCSI_DATA_IN) {
-		cp->phys.header.savep = NCB_SCRIPT_PHYS (np, data_in);
-		cp->phys.header.goalp = cp->phys.header.savep +20 +segments*16;
+		u_long sp;
+		sp = NCB_SCRIPT_PHYS (np, data_in);
+		cp->phys.header.savep = SCR_BO(sp);
+		cp->phys.header.goalp = SCR_BO(sp + 20 + segments * 16);
 	} else if (flags & SCSI_DATA_OUT) {
-		cp->phys.header.savep = NCB_SCRIPT_PHYS (np, data_out);
-		cp->phys.header.goalp = cp->phys.header.savep +20 +segments*16;
+		u_long sp;
+		sp = NCB_SCRIPT_PHYS (np, data_out);
+		cp->phys.header.savep = SCR_BO(sp);
+		cp->phys.header.goalp = SCR_BO(sp + 20 + segments * 16);
 	} else {
-		cp->phys.header.savep = NCB_SCRIPT_PHYS (np, no_data);
+		cp->phys.header.savep = SCR_BO(NCB_SCRIPT_PHYS (np, no_data));
 		cp->phys.header.goalp = cp->phys.header.savep;
 	};
 	cp->phys.header.lastp = cp->phys.header.savep;
@@ -4154,8 +4164,8 @@ static INT32 ncr_start (struct scsi_xfer * xp)
 	/*
 	**	Startqueue
 	*/
-	cp->phys.header.launch.l_paddr	= NCB_SCRIPT_PHYS (np, select);
-	cp->phys.header.launch.l_cmd	= SCR_JUMP;
+	cp->phys.header.launch.l_paddr	= SCR_BO(NCB_SCRIPT_PHYS (np, select));
+	cp->phys.header.launch.l_cmd	= SCR_BO(SCR_JUMP);
 	/*
 	**	select
 	*/
@@ -4165,21 +4175,21 @@ static INT32 ncr_start (struct scsi_xfer * xp)
 	/*
 	**	message
 	*/
-	cp->phys.smsg.addr		= CCB_PHYS (cp, scsi_smsg);
-	cp->phys.smsg.size		= msglen;
+	cp->phys.smsg.addr		= SCR_BO(CCB_PHYS (cp, scsi_smsg));
+	cp->phys.smsg.size		= SCR_BO(msglen);
 
-	cp->phys.smsg2.addr		= CCB_PHYS (cp, scsi_smsg2);
-	cp->phys.smsg2.size		= msglen2;
+	cp->phys.smsg2.addr		= SCR_BO(CCB_PHYS (cp, scsi_smsg2));
+	cp->phys.smsg2.size		= SCR_BO(msglen2);
 	/*
 	**	command
 	*/
-	cp->phys.cmd.addr		= vtophys (cmd);
-	cp->phys.cmd.size		= xp->cmdlen;
+	cp->phys.cmd.addr		= SCR_BO(vtophys (cmd));
+	cp->phys.cmd.size		= SCR_BO(xp->cmdlen);
 	/*
 	**	sense command
 	*/
-	cp->phys.scmd.addr		= CCB_PHYS (cp, sensecmd);
-	cp->phys.scmd.size		= 6;
+	cp->phys.scmd.addr		= SCR_BO(CCB_PHYS (cp, sensecmd));
+	cp->phys.scmd.size		= SCR_BO(6);
 	/*
 	**	patch requested size into sense command
 	*/
@@ -4191,8 +4201,8 @@ static INT32 ncr_start (struct scsi_xfer * xp)
 	/*
 	**	sense data
 	*/
-	cp->phys.sense.addr		= vtophys (&cp->xfer->sense);
-	cp->phys.sense.size		= sizeof(struct scsi_sense_data);
+	cp->phys.sense.addr		= SCR_BO(vtophys (&cp->xfer->sense));
+	cp->phys.sense.size		= SCR_BO(sizeof(struct scsi_sense_data));
 	/*
 	**	status
 	*/
@@ -4217,7 +4227,7 @@ static INT32 ncr_start (struct scsi_xfer * xp)
 	**	reselect pattern and activate this job.
 	*/
 
-	cp->jump_ccb.l_cmd	= (SCR_JUMP ^ IFFALSE (DATA (cp->tag)));
+	cp->jump_ccb.l_cmd	= SCR_BO((SCR_JUMP ^ IFFALSE (DATA (cp->tag))));
 	cp->tlimit		= mono_time.tv_sec + xp->timeout / 1000 + 2;
 	cp->magic		= CCB_MAGIC;
 
@@ -4227,15 +4237,15 @@ static INT32 ncr_start (struct scsi_xfer * xp)
 
 	qidx = np->squeueput + 1;
 	if (qidx >= MAX_START) qidx=0;
-	np->squeue [qidx	 ] = NCB_SCRIPT_PHYS (np, idle);
-	np->squeue [np->squeueput] = CCB_PHYS (cp, phys);
+	np->squeue [qidx	 ] = SCR_BO(NCB_SCRIPT_PHYS (np, idle));
+	np->squeue [np->squeueput] = SCR_BO(CCB_PHYS (cp, phys));
 	np->squeueput = qidx;
 
 	if(DEBUG_FLAGS & DEBUG_QUEUE)
 		printf ("%s: queuepos=%d tryoffset=%d.\n", ncr_name (np),
 		np->squeueput,
-		(unsigned)(np->script->startpos[0]- 
-			   (NCB_SCRIPT_PHYS (np, tryloop))));
+		SCR_BO((unsigned)(np->script->startpos[0]))- 
+			   (NCB_SCRIPT_PHYS (np, tryloop)));
 
 	/*
 	**	Script processor may be waiting for reselect.
@@ -4346,12 +4356,12 @@ void ncr_complete (ncb_p np, ccb_p cp)
 	/*
 	**	No Reselect anymore.
 	*/
-	cp->jump_ccb.l_cmd = (SCR_JUMP);
+	cp->jump_ccb.l_cmd = SCR_BO((SCR_JUMP));
 
 	/*
 	**	No starting.
 	*/
-	cp->phys.header.launch.l_paddr= NCB_SCRIPT_PHYS (np, idle);
+	cp->phys.header.launch.l_paddr= SCR_BO(NCB_SCRIPT_PHYS (np, idle));
 
 	/*
 	**	timestamp
@@ -4359,7 +4369,7 @@ void ncr_complete (ncb_p np, ccb_p cp)
 	ncb_profile (np, cp);
 
 	if (DEBUG_FLAGS & DEBUG_TINY)
-		printf ("CCB=%lx STAT=%x/%x\n", (unsigned long)cp & 0xfff,
+		printf ("CCB=%lx STAT=%x/%x\n", (unsigned long)cp,
 			cp->host_status,cp->scsi_status);
 
 	xp = cp->xfer;
@@ -4653,15 +4663,15 @@ void ncr_init (ncb_p np, char * msg, u_long code)
 	*/
 
 	for (i=0;i<MAX_START;i++)
-		np -> squeue [i] = NCB_SCRIPT_PHYS (np, idle);
+		np -> squeue [i] = SCR_BO(NCB_SCRIPT_PHYS (np, idle));
 
 	/*
 	**	Start at first entry.
 	*/
 
 	np->squeueput = 0;
-	np->script->startpos[0] = NCB_SCRIPT_PHYS (np, tryloop);
-	np->script->start0  [0] = SCR_INT ^ IFFALSE (0);
+	np->script->startpos[0] = SCR_BO(NCB_SCRIPT_PHYS (np, tryloop));
+	np->script->start0  [0] = SCR_BO(SCR_INT ^ IFFALSE (0));
 
 	/*
 	**	Wakeup all pending jobs.
@@ -5130,13 +5140,13 @@ static void ncr_timeout (ncb_p np)
 			**	Disable reselect.
 			**      Remove it from startqueue.
 			*/
-			cp->jump_ccb.l_cmd = (SCR_JUMP);
+			cp->jump_ccb.l_cmd = SCR_BO((SCR_JUMP));
 			if (cp->phys.header.launch.l_paddr ==
-				NCB_SCRIPT_PHYS (np, select)) {
+				SCR_BO(NCB_SCRIPT_PHYS (np, select))) {
 				printf ("%s: timeout ccb=%p (skip)\n",
 					ncr_name (np), cp);
 				cp->phys.header.launch.l_paddr
-				= NCB_SCRIPT_PHYS (np, skip);
+				= SCR_BO(NCB_SCRIPT_PHYS (np, skip));
 			};
 
 			switch (cp->host_status) {
@@ -5147,7 +5157,7 @@ static void ncr_timeout (ncb_p np)
 				** still in start queue ?
 				*/
 				if (cp->phys.header.launch.l_paddr ==
-					NCB_SCRIPT_PHYS (np, skip))
+					SCR_BO(NCB_SCRIPT_PHYS (np, skip)))
 					continue;
 
 				/* fall through */
@@ -5564,7 +5574,7 @@ void ncr_int_sto (ncb_p np)
 /*	assert ((diff <= MAX_START * 20) && !(diff % 20));*/
 
 	if ((diff <= MAX_START * 20) && !(diff % 20)) {
-		np->script->startpos[0] = scratcha;
+		np->script->startpos[0] = SCR_BO(scratcha);
 		OUTL (nc_dsp, NCB_SCRIPT_PHYS (np, start));
 		return;
 	};
@@ -5653,10 +5663,10 @@ static void ncr_int_ma (ncb_p np)
 
 	if (dsp == vtophys (&cp->patch[2])) {
 		vdsp = &cp->patch[0];
-		nxtdsp = vdsp[3];
+		nxtdsp = SCR_BO(vdsp[3]);
 	} else if (dsp == vtophys (&cp->patch[6])) {
 		vdsp = &cp->patch[4];
-		nxtdsp = vdsp[3];
+		nxtdsp = SCR_BO(vdsp[3]);
 	} else {
 		vdsp = (U_INT32 *) ((char*)np->script - np->p_script + dsp -8);
 		nxtdsp = dsp;
@@ -5680,20 +5690,20 @@ static void ncr_int_ma (ncb_p np)
 	**	get old startaddress and old length.
 	*/
 
-	oadr = vdsp[1];
+	oadr = SCR_BO(vdsp[1]);
 
 	if (cmd & 0x10) {	/* Table indirect */
 		tblp = (U_INT32 *) ((char*) &cp->phys + oadr);
-		olen = tblp[0];
-		oadr = tblp[1];
+		olen = SCR_BO(tblp[0]);
+		oadr = SCR_BO(tblp[1]);
 	} else {
 		tblp = (U_INT32 *) 0;
-		olen = vdsp[0] & 0xffffff;
+		olen = SCR_BO(vdsp[0]) & 0xffffff;
 	};
 
 	if (DEBUG_FLAGS & DEBUG_PHASE) {
 		printf ("OCMD=%x\nTBLP=%p OLEN=%x OADR=%x\n",
-			(unsigned) (vdsp[0] >> 24),
+			(unsigned) (SCR_BO(vdsp[0]) >> 24),
 			tblp,
 			(unsigned) olen,
 			(unsigned) oadr);
@@ -5703,10 +5713,10 @@ static void ncr_int_ma (ncb_p np)
 	**	if old phase not dataphase, leave here.
 	*/
 
-	if (cmd != (vdsp[0] >> 24)) {
+	if (cmd != (SCR_BO(vdsp[0]) >> 24)) {
 		PRINT_ADDR(cp->xfer);
 		printf ("internal error: cmd=%02x != %02x=(vdsp[0] >> 24)\n",
-			(unsigned)cmd, (unsigned)vdsp[0] >> 24);
+			(unsigned)cmd, (unsigned)SCR_BO(vdsp[0]) >> 24);
 		
 		return;
 	}
@@ -5726,16 +5736,16 @@ static void ncr_int_ma (ncb_p np)
 	*/
 
 	newcmd = cp->patch;
-	if (cp->phys.header.savep == vtophys (newcmd)) newcmd+=4;
+	if (cp->phys.header.savep == SCR_BO(vtophys (newcmd))) newcmd+=4;
 
 	/*
 	**	fillin the commands
 	*/
 
-	newcmd[0] = ((cmd & 0x0f) << 24) | rest;
-	newcmd[1] = oadr + olen - rest;
-	newcmd[2] = SCR_JUMP;
-	newcmd[3] = nxtdsp;
+	newcmd[0] = SCR_BO(((cmd & 0x0f) << 24) | rest);
+	newcmd[1] = SCR_BO(oadr + olen - rest);
+	newcmd[2] = SCR_BO(SCR_JUMP);
+	newcmd[3] = SCR_BO(nxtdsp);
 
 	if (DEBUG_FLAGS & DEBUG_PHASE) {
 		PRINT_ADDR(cp->xfer);
@@ -6275,8 +6285,8 @@ void ncr_int_sir (ncb_p np)
 		printf ("M_DISCONNECT received, but datapointer not saved:\n"
 			"\tdata=%x save=%x goal=%x.\n",
 			(unsigned) INL (nc_temp),
-			(unsigned) np->header.savep,
-			(unsigned) np->header.goalp);
+			SCR_BO((unsigned) np->header.savep),
+			SCR_BO((unsigned) np->header.goalp));
 		break;
 
 /*--------------------------------------------------------------------
@@ -6377,7 +6387,6 @@ static	ccb_p ncr_get_ccb
 	lcb_p lp;
 	ccb_p cp = (ccb_p) 0;
 	int oldspl;
-
 	oldspl = splbio();
 	/*
 	**	Lun structure available ?
@@ -6472,27 +6481,27 @@ static	void ncr_alloc_ccb (ncb_p np, u_long target, u_long lun)
 		/*
 		**	initialize it.
 		*/
-		tp->jump_tcb.l_cmd   = (SCR_JUMP^IFFALSE (DATA (0x80 + target)));
+		tp->jump_tcb.l_cmd   = SCR_BO((SCR_JUMP^IFFALSE (DATA (0x80 + target))));
 		tp->jump_tcb.l_paddr = np->jump_tcb.l_paddr;
 
-		tp->getscr[0] = SCR_COPY (1);
-		tp->getscr[1] = vtophys (&tp->sval);
-		tp->getscr[2] = np->paddr + offsetof (struct ncr_reg, nc_sxfer);
-		tp->getscr[3] = SCR_COPY (1);
-		tp->getscr[4] = vtophys (&tp->wval);
-		tp->getscr[5] = np->paddr + offsetof (struct ncr_reg, nc_scntl3);
+		tp->getscr[0] = SCR_BO(SCR_COPY (1));
+		tp->getscr[1] = SCR_BO(vtophys (&tp->sval));
+		tp->getscr[2] = SCR_BO(np->paddr + offsetof (struct ncr_reg, nc_sxfer));
+		tp->getscr[3] = SCR_BO(SCR_COPY (1));
+		tp->getscr[4] = SCR_BO(vtophys (&tp->wval));
+		tp->getscr[5] = SCR_BO(np->paddr + offsetof (struct ncr_reg, nc_scntl3));
 
 		assert (( (offsetof(struct ncr_reg, nc_sxfer) ^
 			offsetof(struct tcb    , sval    )) &3) == 0);
 		assert (( (offsetof(struct ncr_reg, nc_scntl3) ^
 			offsetof(struct tcb    , wval    )) &3) == 0);
 
-		tp->call_lun.l_cmd   = (SCR_CALL);
-		tp->call_lun.l_paddr = NCB_SCRIPT_PHYS (np, resel_lun);
+		tp->call_lun.l_cmd   = SCR_BO((SCR_CALL));
+		tp->call_lun.l_paddr = SCR_BO(NCB_SCRIPT_PHYS (np, resel_lun));
 
-		tp->jump_lcb.l_cmd   = (SCR_JUMP);
-		tp->jump_lcb.l_paddr = NCB_SCRIPT_PHYS (np, abort);
-		np->jump_tcb.l_paddr = vtophys (&tp->jump_tcb);
+		tp->jump_lcb.l_cmd   = SCR_BO((SCR_JUMP));
+		tp->jump_lcb.l_paddr = SCR_BO(NCB_SCRIPT_PHYS (np, abort));
+		np->jump_tcb.l_paddr = SCR_BO(vtophys (&tp->jump_tcb));
 
 		ncr_setmaxtags (tp, SCSI_NCR_DFLT_TAGS);
 	}
@@ -6512,21 +6521,21 @@ static	void ncr_alloc_ccb (ncb_p np, u_long target, u_long lun)
 		**	Initialize it
 		*/
 		bzero (lp, sizeof (*lp));
-		lp->jump_lcb.l_cmd   = (SCR_JUMP ^ IFFALSE (DATA (lun)));
+		lp->jump_lcb.l_cmd   = SCR_BO((SCR_JUMP ^ IFFALSE (DATA (lun))));
 		lp->jump_lcb.l_paddr = tp->jump_lcb.l_paddr;
 
-		lp->call_tag.l_cmd   = (SCR_CALL);
-		lp->call_tag.l_paddr = NCB_SCRIPT_PHYS (np, resel_tag);
+		lp->call_tag.l_cmd   = SCR_BO((SCR_CALL));
+		lp->call_tag.l_paddr = SCR_BO(NCB_SCRIPT_PHYS (np, resel_tag));
 
-		lp->jump_ccb.l_cmd   = (SCR_JUMP);
-		lp->jump_ccb.l_paddr = NCB_SCRIPT_PHYS (np, aborttag);
+		lp->jump_ccb.l_cmd   = SCR_BO((SCR_JUMP));
+		lp->jump_ccb.l_paddr = SCR_BO(NCB_SCRIPT_PHYS (np, aborttag));
 
 		lp->actlink = 1;
 
 		/*
 		**   Chain into LUN list
 		*/
-		tp->jump_lcb.l_paddr = vtophys (&lp->jump_lcb);
+		tp->jump_lcb.l_paddr = SCR_BO(vtophys (&lp->jump_lcb));
 		tp->lp[lun] = lp;
 
 	}
@@ -6574,11 +6583,11 @@ static	void ncr_alloc_ccb (ncb_p np, u_long target, u_long lun)
 	/*
 	**	Chain into reselect list
 	*/
-	cp->jump_ccb.l_cmd   = SCR_JUMP;
+	cp->jump_ccb.l_cmd   = SCR_BO(SCR_JUMP);
 	cp->jump_ccb.l_paddr = lp->jump_ccb.l_paddr;
-	lp->jump_ccb.l_paddr = CCB_PHYS (cp, jump_ccb);
-	cp->call_tmp.l_cmd   = SCR_CALL;
-	cp->call_tmp.l_paddr = NCB_SCRIPT_PHYS (np, resel_tmp);
+	lp->jump_ccb.l_paddr = SCR_BO(CCB_PHYS (cp, jump_ccb));
+	cp->call_tmp.l_cmd   = SCR_BO(SCR_CALL);
+	cp->call_tmp.l_paddr = SCR_BO(NCB_SCRIPT_PHYS (np, resel_tmp));
 
 	/*
 	**	Chain into wakeup list
@@ -6684,7 +6693,7 @@ static	int	ncr_scatter
 	bzero (&phys->data, sizeof (phys->data));
 	if (!datalen) return (0);
 
-	paddr = vtophys (vaddr);
+	paddr = vtophys ((void *)vaddr);
 
 	/*
 	**	insert extra break points at a distance of chunk.
@@ -6742,7 +6751,7 @@ static	int	ncr_scatter
 			vaddr   += size;
 			csize   -= size;
 			datalen -= size;
-			paddr    = vtophys (vaddr);
+			paddr    = vtophys ((void *)vaddr);
 		};
 
 		if(DEBUG_FLAGS & DEBUG_SCATTER)
@@ -6752,8 +6761,8 @@ static	int	ncr_scatter
 			(unsigned) segsize,
 			(unsigned) datalen);
 
-		phys->data[segment].addr = segaddr;
-		phys->data[segment].size = segsize;
+		phys->data[segment].addr = SCR_BO(segaddr);
+		phys->data[segment].size = SCR_BO(segsize);
 		segment++;
 	}
 
@@ -6820,7 +6829,7 @@ static int ncr_snooptest (struct ncb* np)
 	**	Set memory and register.
 	*/
 	ncr_cache = host_wr;
-	OUTL (nc_temp, ncr_wr);
+	OUTL (nc_temp, SCR_BO(ncr_wr));
 	/*
 	**	Start script (exchange values)
 	*/
@@ -6839,8 +6848,8 @@ static int ncr_snooptest (struct ncb* np)
 	**	Read memory and register.
 	*/
 	host_rd = ncr_cache;
-	ncr_rd  = INL (nc_scratcha);
-	ncr_bk  = INL (nc_temp);
+	ncr_rd  = SCR_BO(INL (nc_scratcha));
+	ncr_bk  = SCR_BO(INL (nc_temp));
 	/*
 	**	Reset ncr chip
 	*/
