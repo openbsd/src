@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_vnops.c,v 1.57 2004/06/25 00:54:28 tholo Exp $	*/
+/*	$OpenBSD: ufs_vnops.c,v 1.58 2004/07/25 23:09:19 tedu Exp $	*/
 /*	$NetBSD: ufs_vnops.c,v 1.18 1996/05/11 18:28:04 mycroft Exp $	*/
 
 /*
@@ -913,7 +913,6 @@ abortit:
 		 * Relookup() may find a file that is unrelated to the
 		 * original one, or it may fail.  Too bad.
 		 */
-		vrele(fdvp);
 		vrele(fvp);
 		fcnp->cn_flags &= ~MODMASK;
 		fcnp->cn_flags |= LOCKPARENT | LOCKLEAF;
@@ -921,6 +920,7 @@ abortit:
 			panic("ufs_rename: lost from startdir");
 		fcnp->cn_nameiop = DELETE;
 		(void) relookup(fdvp, &fvp, fcnp);
+		vrele(fdvp);
 		if (fvp == NULL) {
 			return (ENOENT);
 		}
@@ -970,8 +970,6 @@ abortit:
 		doingdirectory = 1;
 	}
 	VN_KNOTE(fdvp, NOTE_WRITE);		/* XXX right place? */
-	/* Why? */
-	vrele(fdvp);
 
 	/*
 	 * When the target exists, both the directory
@@ -1174,6 +1172,7 @@ abortit:
 	if ((fcnp->cn_flags & SAVESTART) == 0)
 		panic("ufs_rename: lost from startdir");
 	(void) relookup(fdvp, &fvp, fcnp);
+	vrele(fdvp);
 	if (fvp != NULL) {
 		xp = VTOI(fvp);
 		dp = VTOI(fdvp);
@@ -1226,6 +1225,7 @@ bad:
 		vput(ITOV(xp));
 	vput(ITOV(dp));
 out:
+	vrele(fdvp);
 	if (doingdirectory)
 		ip->i_flag &= ~IN_RENAME;
 	if (vn_lock(fvp, LK_EXCLUSIVE, p) == 0) {
