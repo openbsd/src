@@ -1,4 +1,4 @@
-/*	$OpenBSD: tape.c,v 1.24 2003/06/02 20:06:16 millert Exp $	*/
+/*	$OpenBSD: tape.c,v 1.25 2003/06/19 03:49:44 millert Exp $	*/
 /*	$NetBSD: tape.c,v 1.26 1997/04/15 07:12:25 lukem Exp $	*/
 
 /*
@@ -335,14 +335,16 @@ again:
 	fprintf(stderr, "Enter ``none'' if there are no more tapes\n");
 	fprintf(stderr, "otherwise enter tape name (default: %s) ", magtape);
 	(void)fflush(stderr);
-	(void)fgets(buf, TP_BSIZE, terminal);
-	if (feof(terminal))
+	if (fgets(buf, TP_BSIZE, terminal) == NULL || feof(terminal))
 		exit(1);
-	if (!strcmp(buf, "none\n")) {
+	i = strlen(buf);
+	if (i > 0 && buf[--i] == '\n')
+		buf[i] = '\0';
+	if (strcmp(buf, "none") == 0) {
 		terminateinput();
 		return;
 	}
-	if (buf[0] != '\n')
+	if (buf[0] != '\0')
 		(void)strlcpy(magtape, buf, sizeof magtape);
 
 #ifdef RRESTORE
