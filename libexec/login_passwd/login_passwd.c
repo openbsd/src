@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_passwd.c,v 1.1 2000/12/12 02:33:44 millert Exp $	*/
+/*	$OpenBSD: login_passwd.c,v 1.2 2001/06/25 21:52:16 hin Exp $	*/
 
 /*-
  * Copyright (c) 1995 Berkeley Software Design, Inc. All rights reserved.
@@ -61,7 +61,7 @@ main(argc, argv)
 	char *argv[];
 {
 	FILE *back;
-	char *class, *instance, *p, *salt, *username, *wheel;
+	char *class, *p, *salt, *username, *wheel;
 	char response[1024];
 	int c, mode, lastchance;
 	struct passwd *pwd;
@@ -124,21 +124,7 @@ main(argc, argv)
 		exit(1);
 	}
 
-	/*
-	 * .root instances in passwd is just the root account.
-	 * all other instances will fail.
-	 * make a special check to see if there really is an
-	 * account named user.root.
-	 */
-	if ((pwd = getpwnam(username)) == NULL) {
-		instance = strchr(username, '.');
-		if (instance && strcmp(instance+1, "root") == 0) {
-			*instance++ = 0;
-			if ((pwd = getpwnam(username)) == NULL || pwd->pw_uid)
-				username = instance;
-		}
-		pwd = getpwnam(username);
-	}
+	pwd = getpwnam(username);
 
 	if (back == NULL && (back = fdopen(3, "r+")) == NULL) {
 		syslog(LOG_ERR, "reopening back channel: %m");
