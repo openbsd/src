@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.8 1997/10/18 11:52:32 deraadt Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.9 1997/10/19 23:13:48 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -239,6 +239,7 @@ Xprint(cmd, disk, mbr, tt, offset)
 	int offset;
 {
 
+	DISK_printmetrics(disk);
 	printf("Offset: %d\t", offset);
 	MBR_print(mbr);
 
