@@ -7,8 +7,7 @@ ftp://ftp.aba.net.su/pub/OpenBSD ==
 
 France:
 
-ftp://ftp.ibp.fr/pub/OpenBSD ==
-	ftp://ftp.lip6.fr/pub/OpenBSD == 
+ftp://ftp.lip6.fr/pub/OpenBSD == 
 	ftp://ftp.fr.openbsd.org/pub/OpenBSD
 
 ftp://frp.univ-evry.fr/pub/OpenBSD
