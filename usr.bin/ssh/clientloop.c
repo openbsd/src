@@ -16,7 +16,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: clientloop.c,v 1.31 2000/08/19 21:55:52 markus Exp $");
+RCSID("$OpenBSD: clientloop.c,v 1.32 2000/08/19 22:21:19 markus Exp $");
 
 #include "xmalloc.h"
 #include "ssh.h"
@@ -471,6 +471,7 @@ client_process_net_input(fd_set * readset)
 int
 process_escapes(Buffer *bin, Buffer *bout, Buffer *berr, char *buf, int len)
 {
+	char string[1024];
 	pid_t pid;
 	int bytes = 0;
 	unsigned int i;
@@ -490,9 +491,9 @@ process_escapes(Buffer *bin, Buffer *bout, Buffer *berr, char *buf, int len)
 			switch (ch) {
 			case '.':
 				/* Terminate the connection. */
-				snprintf(buf, sizeof buf, "%c.\r\n", escape_char);
-				buffer_append(berr, buf, strlen(buf));
-				/*stderr_bytes += strlen(buf); XXX*/
+				snprintf(string, sizeof string, "%c.\r\n", escape_char);
+				buffer_append(berr, string, strlen(string));
+				/*stderr_bytes += strlen(string); XXX*/
 
 				quit_pending = 1;
 				return -1;
@@ -500,9 +501,9 @@ process_escapes(Buffer *bin, Buffer *bout, Buffer *berr, char *buf, int len)
 			case 'Z' - 64:
 				/* Suspend the program. */
 				/* Print a message to that effect to the user. */
-				snprintf(buf, sizeof buf, "%c^Z [suspend ssh]\r\n", escape_char);
-				buffer_append(berr, buf, strlen(buf));
-				/*stderr_bytes += strlen(buf); XXX*/
+				snprintf(string, sizeof string, "%c^Z [suspend ssh]\r\n", escape_char);
+				buffer_append(berr, string, strlen(string));
+				/*stderr_bytes += strlen(string); XXX*/
 
 				/* Restore terminal modes and suspend. */
 				client_suspend_self(bin, bout, berr);
@@ -556,7 +557,7 @@ process_escapes(Buffer *bin, Buffer *bout, Buffer *berr, char *buf, int len)
 				continue; /*XXX ? */
 
 			case '?':
-				snprintf(buf, sizeof buf,
+				snprintf(string, sizeof string,
 "%c?\r\n\
 Supported escape sequences:\r\n\
 ~.  - terminate connection\r\n\
@@ -567,12 +568,12 @@ Supported escape sequences:\r\n\
 ~~  - send the escape character by typing it twice\r\n\
 (Note that escapes are only recognized immediately after newline.)\r\n",
 					 escape_char);
-				buffer_append(berr, buf, strlen(buf));
+				buffer_append(berr, string, strlen(string));
 				continue;
 
 			case '#':
-				snprintf(buf, sizeof buf, "%c#\r\n", escape_char);
-				buffer_append(berr, buf, strlen(buf));
+				snprintf(string, sizeof string, "%c#\r\n", escape_char);
+				buffer_append(berr, string, strlen(string));
 				s = channel_open_message();
 				buffer_append(berr, s, strlen(s));
 				xfree(s);
