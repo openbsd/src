@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_glue.c,v 1.37 2003/11/20 14:44:31 grange Exp $	*/
+/*	$OpenBSD: uvm_glue.c,v 1.38 2003/11/20 17:54:55 grange Exp $	*/
 /*	$NetBSD: uvm_glue.c,v 1.44 2001/02/06 19:54:44 eeh Exp $	*/
 
 /* 
@@ -176,7 +176,7 @@ uvm_chgkprot(addr, len, rw)
 #endif
 
 /*
- * vslock: wire user memory for I/O
+ * uvm_vslock: wire user memory for I/O
  *
  * - called from physio and sys___sysctl
  * - XXXCDC: consider nuking this (or making it a macro?)
@@ -205,7 +205,7 @@ uvm_vslock(p, addr, len, access_type)
 }
 
 /*
- * vslock: wire user memory for I/O
+ * uvm_vsunlock: unwire user memory wired by uvm_vslock()
  *
  * - called from physio and sys___sysctl
  * - XXXCDC: consider nuking this (or making it a macro?)
