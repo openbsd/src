@@ -1,4 +1,4 @@
-/*	$OpenBSD: ises.c,v 1.25 2004/05/04 16:59:31 grange Exp $	*/
+/*	$OpenBSD: ises.c,v 1.26 2004/05/07 01:41:37 tedu Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Håkan Olsson (ho@crt.se)
@@ -263,17 +263,19 @@ ises_attach(struct device *parent, struct device *self, void *aux)
 
  fail:
 	switch (state) { /* Always fallthrough here. */
-	case 4:
+	case 5:
 		bus_dmamem_unmap(sc->sc_dmat, (caddr_t)&sc->sc_dma_data,
 		    sizeof sc->sc_dma_data);
-	case 3:
+	case 4:
 		bus_dmamem_free(sc->sc_dmat, &seg, nsegs);
-	case 2:
+	case 3:
 		bus_dmamap_destroy(sc->sc_dmat, sc->sc_dmamap);
-	case 1:
+	case 2:
 		pci_intr_disestablish(pc, sc->sc_ih);
-	default: /* 0 */
+	case 1:
 		bus_space_unmap(sc->sc_memt, sc->sc_memh, memsize);
+	default: /* 0 */
+		break;
 	}
 	return;
 }
