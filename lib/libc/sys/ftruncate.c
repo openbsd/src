@@ -32,16 +32,13 @@
  */
 
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: ftruncate.c,v 1.7 1998/11/20 11:18:52 d Exp $";
+static char rcsid[] = "$OpenBSD: ftruncate.c,v 1.8 2002/09/17 12:57:50 mickey Exp $";
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include <sys/types.h>
 #include <sys/syscall.h>
+#include <unistd.h>
 #include "thread_private.h"
-
-#ifdef lint
-quad_t __syscall(quad_t, ...);
-#endif
 
 /*
  * This function provides 64-bit offset padding that
@@ -57,7 +54,7 @@ ftruncate(fd, length)
 	if (_FD_LOCK(fd, FD_RDWR, NULL) != 0) {
 		retval = -1;
 	} else {
-		retval = __syscall((quad_t)SYS_ftruncate, fd, 0, length);
+		retval = __syscall(SYS_ftruncate, fd, 0, length);
 		_FD_UNLOCK(fd, FD_RDWR);
 	}
 	return retval;

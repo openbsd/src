@@ -1,4 +1,4 @@
-/*	$OpenBSD: pread.c,v 1.2 2001/05/05 22:58:29 millert Exp $	*/
+/*	$OpenBSD: pread.c,v 1.3 2002/09/17 12:57:50 mickey Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -34,7 +34,7 @@
  */
 
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: pread.c,v 1.2 2001/05/05 22:58:29 millert Exp $";
+static char rcsid[] = "$OpenBSD: pread.c,v 1.3 2002/09/17 12:57:50 mickey Exp $";
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -52,11 +52,10 @@ pread(fd, buf, nbyte, offset)
 	size_t nbyte;
 	off_t offset;
 {
-	extern off_t __syscall();
 	quad_t q;
 	int rv;
 
-	q = __syscall((quad_t)SYS_pread, fd, buf, nbyte, 0, offset);
+	q = __syscall(SYS_pread, fd, buf, nbyte, 0, offset);
 	if (/* LINTED constant */ sizeof (quad_t) == sizeof (register_t) ||
 	    /* LINTED constant */ BYTE_ORDER == LITTLE_ENDIAN)
 		rv = (int)q;

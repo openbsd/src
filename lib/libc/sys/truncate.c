@@ -32,15 +32,12 @@
  */
 
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: truncate.c,v 1.6 1997/04/26 08:50:13 tholo Exp $";
+static char rcsid[] = "$OpenBSD: truncate.c,v 1.7 2002/09/17 12:57:50 mickey Exp $";
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include <sys/types.h>
 #include <sys/syscall.h>
-
-#ifdef lint
-quad_t __syscall(quad_t, ...);
-#endif
+#include <unistd.h>
 
 /*
  * This function provides 64-bit offset padding that
@@ -52,5 +49,5 @@ truncate(path, length)
 	off_t length;
 {
 
-	return(__syscall((quad_t)SYS_truncate, path, 0, length));
+	return(__syscall(SYS_truncate, path, 0, length));
 }
