@@ -3201,6 +3201,7 @@ tulip_init(
 	    sc->tulip_cmdmode &= ~TULIP_CMD_RXRUN;
 	    sc->tulip_intrmask &= ~TULIP_STS_RXSTOPPED;
 	}
+
 	TULIP_CSR_WRITE(sc, csr_intr, sc->tulip_intrmask);
 	TULIP_CSR_WRITE(sc, csr_command, sc->tulip_cmdmode);
 	tulip_ifstart(&sc->tulip_if);
@@ -3520,6 +3521,11 @@ tulip_tx_intr(
 		    xmits++;
 		    if (d_status & TULIP_DSTS_ERRSUM) {
 			sc->tulip_if.if_oerrors++;
+
+#if defined(TULIP_DEBUG)
+			printf ("Output error, status: %x, %x\n", d_status,
+				TULIP_CSR_READ(sc, csr_command));
+#endif
 			if (d_status & TULIP_DSTS_TxEXCCOLL)
 			    sc->tulip_dot3stats.dot3StatsExcessiveCollisions++;
 			if (d_status & TULIP_DSTS_TxLATECOLL)
@@ -3672,6 +3678,9 @@ tulip_intr_handler(
 	    u_int32_t tmp = csr & sc->tulip_intrmask
 		& ~(TULIP_STS_NORMALINTR|TULIP_STS_ABNRMLINTR);
 	    if (csr & TULIP_STS_TXUNDERFLOW) {
+#if defined(TULIP_DEBUG)
+		printf ("Underflow interrupt\n");
+#endif
 		if ((sc->tulip_cmdmode & TULIP_CMD_THRESHOLDCTL) != TULIP_CMD_THRSHLD160) {
 		    sc->tulip_cmdmode += TULIP_CMD_THRSHLD96;
 		    sc->tulip_flags |= TULIP_NEWTXTHRESH;
@@ -4973,6 +4982,15 @@ tulip_pci_attach(
 	PCI_CONF_WRITE(PCI_CFDA, cfdainfo);
 	DELAY(11*1000);
     }
+
+#if defined(__OpenBSD__)
+    /* XXX - csapuntz@lcs.mit.edu
+       OpenBSD + our PCI motherboard underflows consistently */
+    if (sc->tulip_features & TULIP_HAVE_STOREFWD)
+	    sc->tulip_cmdmode |= TULIP_CMD_STOREFWD;
+#endif
+
+
 #if defined(__alpha__)
     /*
      * The Alpha SRM console encodes a console set media in the driver
