@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.54 2004/06/15 23:36:55 deraadt Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.55 2005/01/01 02:57:36 millert Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.20 1996/05/03 19:41:56 christos Exp $	*/
 
 /*-
@@ -80,7 +80,7 @@ void diskconf(void);
  * the configuration process, and are used in initializing
  * the machine.
  */
-dev_t	bootdev = 0;		/* bootdevice, initialized in locore.s */
+extern dev_t bootdev;
 
 /* Support for VIA C3 RNG */
 #ifdef I686_CPU
