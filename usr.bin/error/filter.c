@@ -1,4 +1,4 @@
-/*	$OpenBSD: filter.c,v 1.4 1999/08/06 20:41:07 deraadt Exp $	*/
+/*	$OpenBSD: filter.c,v 1.5 1999/12/04 00:16:52 deraadt Exp $	*/
 /*	$NetBSD: filter.c,v 1.3 1995/09/02 06:15:28 jtc Exp $	*/
 
 /*
@@ -38,10 +38,10 @@
 #if 0
 static char sccsid[] = "@(#)filter.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: filter.c,v 1.4 1999/08/06 20:41:07 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: filter.c,v 1.5 1999/12/04 00:16:52 deraadt Exp $";
 #endif /* not lint */
 
-#include <sys/types.h>
+#include <sys/param.h>
 #include <pwd.h>
 #include <unistd.h>
 #include <stdio.h>
@@ -70,7 +70,7 @@ getignored(auxname)
 	FILE	*fyle;
 	char	inbuffer[256];
 	uid_t	uid;
-	char	filename[128];
+	char	filename[MAXPATHLEN];
 	char	*username;
 	struct	passwd *passwdentry;
 
@@ -86,10 +86,10 @@ getignored(auxname)
 			if ( (passwdentry = (struct passwd *)getpwnam(username)) == NULL)
 				return;
 		}
-		strcpy(filename, passwdentry->pw_dir);
-		(void)strcat(filename, ERRORNAME);
+		strlcpy(filename, passwdentry->pw_dir, sizeof(filename));
+		(void)strlcat(filename, ERRORNAME, sizeof(filename));
 	} else
-		(void)strcpy(filename, auxname);
+		(void)strlcpy(filename, auxname, sizeof filename);
 #ifdef FULLDEBUG
 	printf("Opening file \"%s\" to read names to ignore.\n",
 		filename);
@@ -103,7 +103,8 @@ getignored(auxname)
 	/*
 	 *	Make the first pass through the file, counting lines
 	 */
-	for (nignored = 0; fgets(inbuffer, 255, fyle) != NULL; nignored++)
+	for (nignored = 0;
+	    fgets(inbuffer, sizeof(inbuffer)-1, fyle) != NULL; nignored++)
 		continue;
 	names_ignored = (char **)Calloc(nignored+1, sizeof (char *));
 	fclose(fyle);
@@ -114,7 +115,8 @@ getignored(auxname)
 		nignored = 0;
 		return;
 	}
-	for (i=0; i < nignored && (fgets (inbuffer, 255, fyle) != NULL); i++){
+	for (i=0; i < nignored &&
+	    (fgets (inbuffer, sizeof(inbuffer)-1, fyle) != NULL); i++){
 		names_ignored[i] = strsave(inbuffer);
 		(void)substitute(names_ignored[i], '\n', '\0');
 	}
