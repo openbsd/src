@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.95 1998/10/10 07:03:13 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.97 1998/10/21 01:54:49 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -408,7 +408,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PCNET_PCI,
 	    0,
 	    "Advanced Micro Devices",
-	    "79c970 PCnet-PCI LANCE Ethernet",
+	    "79c970 PCnet-PCI LANCE",
 	},
 	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PCSCSI_PCI,
@@ -420,7 +420,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PCNETS_PCI,
 	    0,
 	    "Advanced Micro Devices",
-	    "79C974 PCnet-PCI Ethernet & SCSI",
+	    "79C974 PCnet-PCI Ether+SCSI",
 	},
 	{
 	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_BANDIT,
@@ -768,7 +768,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_COGENT, PCI_PRODUCT_COGENT_EM110TX,
 	    0,
 	    "Cogent Data Technologies",
-	    "EX110TX PCI Fast Ethernet Adapter",
+	    "EX110TX",
 	},
 	{
 	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_PCI_EISA_BRIDGE,
@@ -894,7 +894,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_COMPEX, PCI_PRODUCT_COMPEX_COMPEXE,
 	    0,
 	    "Compex",
-	    "Compex Ethernet",
+	    "Ethernet",
 	},
 	{
 	    PCI_VENDOR_CONTAQ, PCI_PRODUCT_CONTAQ_82C599,
@@ -1272,25 +1272,25 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82596,
 	    0,
 	    "Intel",
-	    "82596 Ethernet",
+	    "82596",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EEPRO100,
 	    0,
 	    "Intel",
-	    "EE Pro 100 10/100 Fast Ethernet",
+	    "EE Pro 100",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EEPRO100S,
 	    0,
 	    "Intel",
-	    "EE Pro 100 Smart 10/100 Fast Ethernet",
+	    "EE Pro 100 Smart",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82557,
 	    0,
 	    "Intel",
-	    "82557 Fast Ethernet",
+	    "82557",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82437FX,
@@ -1452,7 +1452,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_KTI, PCI_PRODUCT_KTI_KTIE,
 	    0,
 	    "KTI",
-	    "KTI Ethernet",
+	    "KTI",
 	},
 	{
 	    PCI_VENDOR_LEADTEK, PCI_PRODUCT_LEADTEK_S3_805,
@@ -1470,7 +1470,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_MACRONIX, PCI_PRODUCT_MACRONIX_MX98713,
 	    0,
 	    "Macronix",
-	    "PMAC 100/10base PCI MAC controller",
+	    "PMAC",
 	},
 	{
 	    PCI_VENDOR_MADGE, PCI_PRODUCT_MADGE_COLLAGE25,
@@ -1536,7 +1536,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_MYLEX, PCI_PRODUCT_MYLEX_960P,
 	    0,
 	    "Mylex",
-	    "DAC960P RAID controller",
+	    "DAC960P RAID",
 	},
 	{
 	    PCI_VENDOR_MUTECH, PCI_PRODUCT_MUTECH_MV1000,
@@ -1548,7 +1548,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_NS, PCI_PRODUCT_NS_DP83810,
 	    0,
 	    "National Semiconductor",
-	    "DP83810 10/100 Ethernet",
+	    "DP83810 10/100",
 	},
 	{
 	    PCI_VENDOR_NS, PCI_PRODUCT_NS_NS87410,
@@ -1656,7 +1656,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_PE_GNIC,
 	    0,
 	    "Symbios Logic",
-	    "Packet Engines G-NIC Ethernet",
+	    "Packet Engines G-NIC",
 	},
 	{
 	    PCI_VENDOR_NEXGEN, PCI_PRODUCT_NEXGEN_NX82C501,
@@ -1787,14 +1787,26 @@ struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8029,
 	    0,
-	    "Realtek Semiconductor",
-	    "Ethernet",
+	    "Realtek Semi",
+	    "8029",
+	},
+	{
+	    PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8129,
+	    0,
+	    "Realtek Semi",
+	    "8129",
 	},
 	{
 	    PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8139,
 	    0,
-	    "Realtek Semiconductor",
-	    "100Mb Ethernet",
+	    "Realtek Semi",
+	    "8139",
+	},
+	{
+	    PCI_VENDOR_REALTEK2, PCI_PRODUCT_REALTEK2_RT8139,
+	    0,
+	    "RealTek (2nd ID)",
+	    "8139",
 	},
 	{
 	    PCI_VENDOR_S3, PCI_PRODUCT_S3_VIRGE,
@@ -1986,7 +1998,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_86C202,
 	    0,
 	    "Silicon Integrated System",
-	    "86C202 VGA Controller",
+	    "86C202 VGA",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_86C205,
@@ -2106,7 +2118,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_SMC, PCI_PRODUCT_SMC_83C170,
 	    0,
 	    "Standard Microsystems",
-	    "83C170 (EPIC/100) Fast Ethernet",
+	    "83C170 (EPIC/100)",
 	},
 	{
 	    PCI_VENDOR_STB2, PCI_PRODUCT_STB2_RIVA128,
@@ -2478,7 +2490,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT86C926,
 	    0,
 	    "VIA Technologies",
-	    "VT86C926 Amazon Ethernet",
+	    "VT86C926 Amazon",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C570M,
@@ -4079,7 +4091,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_REALTEK, 0,
 	    PCI_KNOWNDEV_NOPROD,
-	    "Realtek Semiconductor",
+	    "Realtek Semi",
 	    NULL,
 	},
 	{
@@ -5334,6 +5346,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_ESSENTIAL, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Essential Communications",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_REALTEK2, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "RealTek (2nd ID)",
 	    NULL,
 	},
 	{

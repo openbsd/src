@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.95 1998/10/10 07:03:13 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.96 1998/10/21 01:51:36 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -277,7 +277,7 @@
 #define	PCI_VENDOR_ALPSELECTIC	0x10e9		/* Alps Electric */
 #define	PCI_VENDOR_INTERGRAPHICS	0x10ea		/* Integraphics Systems */
 #define	PCI_VENDOR_ARTISTSGRAPHICS	0x10eb		/* Artists Graphics */
-#define	PCI_VENDOR_REALTEK	0x10ec		/* Realtek Semiconductor */
+#define	PCI_VENDOR_REALTEK	0x10ec		/* Realtek Semi */
 #define	PCI_VENDOR_ASCIICORP	0x10ed		/* ASCII Corporation */
 #define	PCI_VENDOR_XILINX	0x10ee		/* Xilinx */
 #define	PCI_VENDOR_RACORE	0x10ef		/* Racore Computer Products */
@@ -487,6 +487,7 @@
 #define	PCI_VENDOR_PMCSIERRA	0x11f8		/* PMC-Sierra */
 #define	PCI_VENDOR_CYCLADES	0x120e		/* Cyclades */
 #define	PCI_VENDOR_ESSENTIAL	0x120f		/* Essential Communications */
+#define	PCI_VENDOR_REALTEK2	0x1211		/* RealTek (2nd ID) */
 #define	PCI_VENDOR_2MICRO	0x1217		/* 2 Micro Inc */
 #define	PCI_VENDOR_3DFX	0x121a		/* 3DFX Interactive */
 #define	PCI_VENDOR_ARIEL	0x1220		/* Ariel */
@@ -618,9 +619,9 @@
 #define	PCI_PRODUCT_APPLE_BANDIT	0x0001		/* PCI Controller */
 
 /* AMD products */
-#define	PCI_PRODUCT_AMD_PCNET_PCI	0x2000		/* 79c970 PCnet-PCI LANCE Ethernet */
+#define	PCI_PRODUCT_AMD_PCNET_PCI	0x2000		/* 79c970 PCnet-PCI LANCE */
 #define	PCI_PRODUCT_AMD_PCSCSI_PCI	0x2020		/* 53c974 PCscsi-PCI SCSI */
-#define	PCI_PRODUCT_AMD_PCNETS_PCI	0x2040		/* 79C974 PCnet-PCI Ethernet & SCSI */
+#define	PCI_PRODUCT_AMD_PCNETS_PCI	0x2040		/* 79C974 PCnet-PCI Ether+SCSI */
 
 /* Apple products */
 #define	PCI_PRODUCT_APPLE_BANDIT	0x0001		/* PCI Controller */
@@ -709,7 +710,7 @@
 #define	PCI_PRODUCT_CMDTECH_673	0x0673		/* USB0673 */
 	
 /* Cogent Data Technologies products */
-#define	PCI_PRODUCT_COGENT_EM110TX	0x1400		/* EX110TX PCI Fast Ethernet Adapter */
+#define	PCI_PRODUCT_COGENT_EM110TX	0x1400		/* EX110TX */
 
 /* Compaq products */
 #define	PCI_PRODUCT_COMPAQ_PCI_EISA_BRIDGE	0x0001		/* PCI-EISA Bridge */
@@ -734,7 +735,7 @@
 #define	PCI_PRODUCT_COMPAQ_NF3P_BNC	0xf150		/* NetFlex 3/P w/ BNC */
 
 /* Compex */
-#define	PCI_PRODUCT_COMPEX_COMPEXE	0x1401		/* Compex Ethernet */
+#define	PCI_PRODUCT_COMPEX_COMPEXE	0x1401		/* Ethernet */
 
 /* Contaq Microsystems products */
 #define	PCI_PRODUCT_CONTAQ_82C599	0x0600		/* 82C599 PCI-VLB Bridge */
@@ -842,10 +843,10 @@
 #define	PCI_PRODUCT_INTEL_PCMC	0x04a3		/* 82434LX/NX (Mercury/Neptune) PCI/Cache/DRAM Controller */
 #define	PCI_PRODUCT_INTEL_82092AA	0x1222		/* 82092AA IDE controller */
 #define	PCI_PRODUCT_INTEL_SAA7116	0x1223		/* SAA7116 */
-#define	PCI_PRODUCT_INTEL_82596	0x1226		/* 82596 Ethernet */
-#define	PCI_PRODUCT_INTEL_EEPRO100	0x1227		/* EE Pro 100 10/100 Fast Ethernet */
-#define	PCI_PRODUCT_INTEL_EEPRO100S	0x1228		/* EE Pro 100 Smart 10/100 Fast Ethernet */
-#define	PCI_PRODUCT_INTEL_82557	0x1229		/* 82557 Fast Ethernet */
+#define	PCI_PRODUCT_INTEL_82596	0x1226		/* 82596 */
+#define	PCI_PRODUCT_INTEL_EEPRO100	0x1227		/* EE Pro 100 */
+#define	PCI_PRODUCT_INTEL_EEPRO100S	0x1228		/* EE Pro 100 Smart */
+#define	PCI_PRODUCT_INTEL_82557	0x1229		/* 82557 */
 #define	PCI_PRODUCT_INTEL_82437FX	0x122d		/* 82437FX (Triton) PCI, Cache, and DRAM Controller */
 #define	PCI_PRODUCT_INTEL_82371	0x122e		/* 82371FB (Triton) PCI-ISA Bridge */
 #define	PCI_PRODUCT_INTEL_82438	0x1230		/* 82438 (Triton) IDE controller */
@@ -876,7 +877,7 @@
 #define	PCI_PRODUCT_ITT_ITT3204	0x0002		/* ITT3204 MPEG Decoder */
 
 /* KTI */
-#define	PCI_PRODUCT_KTI_KTIE	0x3000		/* KTI Ethernet */
+#define	PCI_PRODUCT_KTI_KTIE	0x3000		/* KTI */
 
 /* LeadTek Research */
 #define	PCI_PRODUCT_LEADTEK_S3_805	0x0000		/* S3 805 */
@@ -908,7 +909,7 @@
 #define	PCI_PRODUCT_MUTECH_MV1000	0x0001		/* MV1000 */
 
 /* National Semiconductor products */
-#define	PCI_PRODUCT_NS_DP83810	0x0001		/* DP83810 10/100 Ethernet */
+#define	PCI_PRODUCT_NS_DP83810	0x0001		/* DP83810 10/100 */
 #define	PCI_PRODUCT_NS_NS87410	0xd001		/* NS87410 */
 
 /* NEC */
@@ -938,7 +939,7 @@
 #define	PCI_PRODUCT_SYMBIOS_896	0x000b		/* 53c896 */
 
 /* Packet Engines products */
-#define	PCI_PRODUCT_SYMBIOS_PE_GNIC	0x0702		/* Packet Engines G-NIC Ethernet */
+#define	PCI_PRODUCT_SYMBIOS_PE_GNIC	0x0702		/* Packet Engines G-NIC */
 
 /* NexGen products */
 #define	PCI_PRODUCT_NEXGEN_NX82C501	0x4e78		/* NX82C501 Host-PCI Bridge */
@@ -982,8 +983,12 @@
 #define	PCI_PRODUCT_QUANTUMDESIGNS_8580	0x0002		/* 8580 */
 
 /* Realtek (Creative Labs?) products */
-#define	PCI_PRODUCT_REALTEK_RT8029	0x8029		/* Ethernet */
-#define	PCI_PRODUCT_REALTEK_RT8139	0x8139		/* 100Mb Ethernet */
+#define	PCI_PRODUCT_REALTEK_RT8029	0x8029		/* 8029 */
+#define	PCI_PRODUCT_REALTEK_RT8129	0x8129		/* 8129 */
+#define	PCI_PRODUCT_REALTEK_RT8139	0x8139		/* 8139 */
+
+/* RealTek (2nd ID) */
+#define	PCI_PRODUCT_REALTEK2_RT8139	0x1211		/* 8139 */
 
 /* S3 products */
 #define	PCI_PRODUCT_S3_VIRGE	0x5631		/* ViRGE */
@@ -1045,7 +1050,7 @@
 /* SMC products */
 #define	PCI_PRODUCT_SMC_37C665	0x1000		/* FDC 37C665 */
 #define	PCI_PRODUCT_SMC_37C922	0x1001		/* FDC 37C922 */
-#define	PCI_PRODUCT_SMC_83C170	0x0005		/* 83C170 (EPIC/100) Fast Ethernet */
+#define	PCI_PRODUCT_SMC_83C170	0x0005		/* 83C170 (EPIC/100) */
 
 /* STB products */
 #define	PCI_PRODUCT_STB2_RIVA128	0x0018		/* Velocity128 */
@@ -1138,7 +1143,7 @@
 #define	PCI_PRODUCT_VIATECH_VT82C595	0x0595		/* VT82C595 (Apollo VP2) Host-PCI Bridge */
 #define	PCI_PRODUCT_VIATECH_VT82C597PCI	0x0597		/* VT82C597 (Apollo VP3) Host-PCI Bridge */
 #define	PCI_PRODUCT_VIATECH_VT82C598PCI	0x0598		/* VT82C598 (Apollo MVP3) Host-PCI Bridge */
-#define	PCI_PRODUCT_VIATECH_VT86C926	0x0926		/* VT86C926 Amazon Ethernet */
+#define	PCI_PRODUCT_VIATECH_VT86C926	0x0926		/* VT86C926 Amazon */
 #define	PCI_PRODUCT_VIATECH_VT82C570M	0x1000		/* VT82C570M (Apollo) Host-PCI Bridge */
 #define	PCI_PRODUCT_VIATECH_VT82C570MV	0x1006		/* VT82C570M (Apollo) PCI-ISA Bridge */
 #define	PCI_PRODUCT_VIATECH_VT82C416MV	0x1571		/* VT82C416MV */
