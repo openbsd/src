@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: grammar.y,v 1.10 2002/03/23 01:33:16 frantzen Exp $	*/
+/*	$OpenBSD: grammar.y,v 1.11 2003/05/14 08:50:37 canacar Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996
@@ -24,7 +24,7 @@
  */
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/lib/libpcap/grammar.y,v 1.10 2002/03/23 01:33:16 frantzen Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/lib/libpcap/grammar.y,v 1.11 2003/05/14 08:50:37 canacar Exp $ (LBL)";
 #endif
 
 #include <sys/types.h>
@@ -108,7 +108,7 @@ pcap_parse()
 %token  ATALK DECNET LAT SCA MOPRC MOPDL
 %token  TK_BROADCAST TK_MULTICAST
 %token  NUM INBOUND OUTBOUND
-%token  PF_IFNAME PF_RNR PF_REASON PF_ACTION
+%token  PF_IFNAME PF_RSET PF_RNR PF_SRNR PF_REASON PF_ACTION
 %token  LINK
 %token	GEQ LEQ NEQ
 %token	ID EID HID HID6
@@ -274,7 +274,9 @@ other:	  pqual TK_BROADCAST	{ $$ = gen_broadcast($1); }
 	;
 
 pfvar:	  PF_IFNAME ID		{ $$ = gen_pf_ifname($2); }
+	| PF_RSET ID		{ $$ = gen_pf_ruleset($2); }
 	| PF_RNR NUM		{ $$ = gen_pf_rnr($2); }
+	| PF_SRNR NUM		{ $$ = gen_pf_srnr($2); }
 	| PF_REASON reason	{ $$ = gen_pf_reason($2); }
 	| PF_ACTION action	{ $$ = gen_pf_action($2); }
 	;

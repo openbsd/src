@@ -1,4 +1,4 @@
-/*	$OpenBSD: gencode.c,v 1.18 2002/11/29 18:27:54 mickey Exp $	*/
+/*	$OpenBSD: gencode.c,v 1.19 2003/05/14 08:50:37 canacar Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998
@@ -22,7 +22,7 @@
  */
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/lib/libpcap/gencode.c,v 1.18 2002/11/29 18:27:54 mickey Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/lib/libpcap/gencode.c,v 1.19 2003/05/14 08:50:37 canacar Exp $ (LBL)";
 #endif
 
 #include <sys/types.h>
@@ -620,9 +620,15 @@ init_linktype(type)
 		off_nl = 12;
 		return;
 
-	case DLT_PFLOG:
+	case DLT_OLD_PFLOG:
 		off_linktype = 0;
 		off_nl = 28;
+		return;
+
+	case DLT_PFLOG:
+		off_linktype = 0;
+		/* XXX read from header? */
+		off_nl = PFLOG_HDRLEN;
 		return;
 
 	case DLT_PFSYNC:
@@ -740,7 +746,7 @@ gen_linktype(proto)
 		else
 			return gen_false();
 		break;
-	case DLT_PFLOG:
+	case DLT_OLD_PFLOG:
 		if (proto == ETHERTYPE_IP)
 			return (gen_cmp(0, BPF_W, (bpf_int32)AF_INET));
 #ifdef INET6
@@ -750,6 +756,20 @@ gen_linktype(proto)
 		else
 			return gen_false();
 		break;
+
+	case DLT_PFLOG:
+		if (proto == ETHERTYPE_IP)
+			return (gen_cmp(offsetof(struct pfloghdr, af), BPF_B,
+			    (bpf_int32)AF_INET));
+#ifdef INET6
+		else if (proto == ETHERTYPE_IPV6)
+			return (gen_cmp(offsetof(struct pfloghdr, af), BPF_B,
+			    (bpf_int32)AF_INET6));
+#endif /* INET6 */
+		else
+			return gen_false();
+		break;
+
 	case DLT_ARCNET:
 		/*
 		 * XXX should we check for first fragment if the protocol
@@ -2903,7 +2923,12 @@ gen_inbound(dir)
 		break;
 
 	case DLT_PFLOG:
-		b0 = gen_cmp(offsetof(struct pfloghdr, dir), BPF_H,
+		b0 = gen_cmp(offsetof(struct pfloghdr, dir), BPF_B,
+		    (bpf_int32)((dir == 0) ? PF_IN : PF_OUT));
+		break;
+
+	case DLT_OLD_PFLOG:
+		b0 = gen_cmp(offsetof(struct old_pfloghdr, dir), BPF_H,
 		    (bpf_int32)((dir == 0) ? PF_IN : PF_OUT));
 		break;
 
@@ -2922,19 +2947,45 @@ struct block *
 gen_pf_ifname(char *ifname)
 {
 	struct block *b0;
+	u_int len, off;
 
-	if (linktype != DLT_PFLOG) {
+	if (linktype == DLT_PFLOG) {
+		len = sizeof(((struct pfloghdr *)0)->ifname);
+		off = offsetof(struct pfloghdr, ifname);
+	} else if (linktype == DLT_OLD_PFLOG) {
+		len = sizeof(((struct old_pfloghdr *)0)->ifname);
+		off = offsetof(struct old_pfloghdr, ifname);
+	} else {
 		bpf_error("ifname not supported on linktype 0x%x\n", linktype);
 		/* NOTREACHED */
 	}
-	if (strlen(ifname) >= sizeof(((struct pfloghdr *)0)->ifname)) {
+	if (strlen(ifname) >= len) {
 		bpf_error("ifname interface names can only be %d characters\n",
-		    sizeof(((struct pfloghdr *)0)->ifname) - 1);
-
+		    len - 1);
 		/* NOTREACHED */
 	}
-	b0 = gen_bcmp(offsetof(struct pfloghdr, ifname), strlen(ifname),
-	    ifname);
+	b0 = gen_bcmp(off, strlen(ifname), ifname);
+	return (b0);
+}
+
+
+/* PF firewall log matched interface */
+struct block *
+gen_pf_ruleset(char *ruleset)
+{
+	struct block *b0;
+
+	if (linktype != DLT_PFLOG) {
+		bpf_error("ruleset not supported on linktype 0x%x\n", linktype);
+		/* NOTREACHED */
+	}
+	if (strlen(ruleset) >= sizeof(((struct pfloghdr *)0)->ruleset)) {
+		bpf_error("ruleset names can only be %d characters\n",
+		    sizeof(((struct pfloghdr *)0)->ruleset) - 1);
+		/* NOTREACHED */
+	}
+	b0 = gen_bcmp(offsetof(struct pfloghdr, ruleset),
+	    strlen(ruleset), ruleset);
 	return (b0);
 }
 
@@ -2945,12 +2996,34 @@ gen_pf_rnr(int rnr)
 {
 	struct block *b0;
 
-	if (linktype != DLT_PFLOG) {
+	if (linktype == DLT_PFLOG) {
+		b0 = gen_cmp(offsetof(struct pfloghdr, rulenr), BPF_W,
+			 (bpf_int32)rnr);
+	} else if (linktype == DLT_OLD_PFLOG) {
+		b0 = gen_cmp(offsetof(struct old_pfloghdr, rnr), BPF_H,
+			 (bpf_int32)rnr);
+	} else {
 		bpf_error("rnr not supported on linktype 0x%x\n", linktype);
 		/* NOTREACHED */
 	}
 
-	b0 = gen_cmp(offsetof(struct pfloghdr, rnr), BPF_H, (bpf_int32)rnr);
+	return (b0);
+}
+
+
+/* PF firewall log sub-rule number */
+struct block *
+gen_pf_srnr(int srnr)
+{
+	struct block *b0;
+
+	if (linktype != DLT_PFLOG) {
+		bpf_error("srnr not supported on linktype 0x%x\n", linktype);
+		/* NOTREACHED */
+	}
+
+	b0 = gen_cmp(offsetof(struct pfloghdr, subrulenr), BPF_W,
+	    (bpf_int32)srnr);
 	return (b0);
 }
 
@@ -2960,13 +3033,17 @@ gen_pf_reason(int reason)
 {
 	struct block *b0;
 
-	if (linktype != DLT_PFLOG) {
+	if (linktype == DLT_PFLOG) {
+		b0 = gen_cmp(offsetof(struct pfloghdr, reason), BPF_B,
+		    (bpf_int32)reason);
+	} else if (linktype == DLT_OLD_PFLOG) {
+		b0 = gen_cmp(offsetof(struct old_pfloghdr, reason), BPF_H,
+		    (bpf_int32)reason);
+	} else {
 		bpf_error("reason not supported on linktype 0x%x\n", linktype);
 		/* NOTREACHED */
 	}
 
-	b0 = gen_cmp(offsetof(struct pfloghdr, reason), BPF_H,
-	    (bpf_int32)reason);
 	return (b0);
 }
 
@@ -2976,13 +3053,17 @@ gen_pf_action(int action)
 {
 	struct block *b0;
 
-	if (linktype != DLT_PFLOG) {
+	if (linktype == DLT_PFLOG) {
+		b0 = gen_cmp(offsetof(struct pfloghdr, action), BPF_B,
+		    (bpf_int32)action);
+	} else if (linktype == DLT_OLD_PFLOG) {
+		b0 = gen_cmp(offsetof(struct old_pfloghdr, action), BPF_H,
+		    (bpf_int32)action);
+	} else {
 		bpf_error("action not supported on linktype 0x%x\n", linktype);
 		/* NOTREACHED */
 	}
 
-	b0 = gen_cmp(offsetof(struct pfloghdr, action), BPF_H,
-	    (bpf_int32)action);
 	return (b0);
 }
 

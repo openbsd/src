@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-pflog.c,v 1.12 2003/01/28 22:45:19 henning Exp $	*/
+/*	$OpenBSD: print-pflog.c,v 1.13 2003/05/14 08:50:37 canacar Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993, 1994, 1995, 1996
@@ -23,7 +23,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-pflog.c,v 1.12 2003/01/28 22:45:19 henning Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-pflog.c,v 1.13 2003/05/14 08:50:37 canacar Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -59,17 +59,32 @@ pflog_if_print(u_char *user, const struct pcap_pkthdr *h,
      register const u_char *p)
 {
 	u_int length = h->len;
+	u_int hdrlen;
 	u_int caplen = h->caplen;
 	const struct ip *ip;
 	const struct ip6_hdr *ip6;
 	const struct pfloghdr *hdr;
-	u_short res;
+	u_int32_t res;
 	char reason[128], *why;
 	u_int8_t af;
 
 	ts_print(&h->ts);
 
-	if (caplen < PFLOG_HDRLEN) {
+	// check length
+	if (caplen < sizeof(u_int8_t)) {
+		printf("[|pflog]");
+		goto out;
+	}
+
+#define MIN_PFLOG_HDRLEN	45
+	hdr = (struct pfloghdr *)p;
+	if (hdr->length < MIN_PFLOG_HDRLEN) {
+		printf("[pflog: invalid header length!]");
+		goto out;
+	}
+	hdrlen = BPF_WORDALIGN(hdr->length);
+
+	if (caplen < hdrlen) {
 		printf("[|pflog]");
 		goto out;
 	}
@@ -83,6 +98,96 @@ pflog_if_print(u_char *user, const struct pcap_pkthdr *h,
 	snapend = p + caplen;
 
 	hdr = (struct pfloghdr *)p;
+	if (eflag) {
+		res = hdr->reason;
+		why = (res < PFRES_MAX) ? pf_reasons[res] : "unkn";
+
+		snprintf(reason, sizeof(reason), "%d(%s)", res, why);
+
+		if (ntohl(hdr->subrulenr) == (u_int32_t) -1)
+			printf("rule %u/%s: ",
+			   ntohl(hdr->rulenr), reason);
+		else
+			printf("rule %u.%s.%u/%s: ", ntohl(hdr->rulenr),
+			    hdr->ruleset, ntohl(hdr->subrulenr), reason);
+
+		switch (hdr->action) {
+		case PF_SCRUB:
+			printf("scrub");
+			break;
+		case PF_PASS:
+			printf("pass");
+			break;
+		case PF_DROP:
+			printf("block");
+			break;
+		case PF_NAT:
+		case PF_NONAT:
+			printf("nat");
+			break;
+		case PF_BINAT:
+		case PF_NOBINAT:
+			printf("binat");
+			break;
+		case PF_RDR:
+		case PF_NORDR:
+			printf("rdr");
+			break;
+		}
+		printf(" %s on %s: ",
+		    hdr->dir == PF_OUT ? "out" : "in",
+		    hdr->ifname);
+	}
+	af = hdr->af;
+	length -= hdrlen;
+	if (af == AF_INET) {
+		ip = (struct ip *)(p + hdrlen);
+		ip_print((const u_char *)ip, length);
+		if (xflag)
+			default_print((const u_char *)ip,
+			    caplen - hdrlen);
+	} else {
+		ip6 = (struct ip6_hdr *)(p + hdrlen);
+		ip6_print((const u_char *)ip6, length);
+		if (xflag)
+			default_print((const u_char *)ip6,
+			    caplen - hdrlen);
+	}
+
+out:
+	putchar('\n');
+}
+
+
+void
+pflog_old_if_print(u_char *user, const struct pcap_pkthdr *h,
+     register const u_char *p)
+{
+	u_int length = h->len;
+	u_int caplen = h->caplen;
+	const struct ip *ip;
+	const struct ip6_hdr *ip6;
+	const struct old_pfloghdr *hdr;
+	u_short res;
+	char reason[128], *why;
+	u_int8_t af;
+
+	ts_print(&h->ts);
+
+	if (caplen < OLD_PFLOG_HDRLEN) {
+		printf("[|pflog]");
+		goto out;
+	}
+
+	/*
+	 * Some printers want to get back at the link level addresses,
+	 * and/or check that they're not walking off the end of the packet.
+	 * Rather than pass them all the way down, we set these globals.
+	 */
+	packetp = p;
+	snapend = p + caplen;
+
+	hdr = (struct old_pfloghdr *)p;
 	if (eflag) {
 		res = ntohs(hdr->reason);
 		why = (res < PFRES_MAX) ? pf_reasons[res] : "unkn";
@@ -119,19 +224,19 @@ pflog_if_print(u_char *user, const struct pcap_pkthdr *h,
 		    hdr->ifname);
 	}
 	af = ntohl(hdr->af);
-	length -= PFLOG_HDRLEN;
+	length -= OLD_PFLOG_HDRLEN;
 	if (af == AF_INET) {
-		ip = (struct ip *)(p + PFLOG_HDRLEN);
+		ip = (struct ip *)(p + OLD_PFLOG_HDRLEN);
 		ip_print((const u_char *)ip, length);
 		if (xflag)
 			default_print((const u_char *)ip,
-			    caplen - PFLOG_HDRLEN);
+			    caplen - OLD_PFLOG_HDRLEN);
 	} else {
-		ip6 = (struct ip6_hdr *)(p + PFLOG_HDRLEN);
+		ip6 = (struct ip6_hdr *)(p + OLD_PFLOG_HDRLEN);
 		ip6_print((const u_char *)ip6, length);
 		if (xflag)
 			default_print((const u_char *)ip6,
-			    caplen - PFLOG_HDRLEN);
+			    caplen - OLD_PFLOG_HDRLEN);
 	}
 
 out:
