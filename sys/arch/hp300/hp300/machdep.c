@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.62 2001/08/26 00:15:37 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.63 2001/09/11 20:09:56 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.121 1999/03/26 23:41:29 mycroft Exp $	*/
 
 /*
@@ -332,13 +332,13 @@ cpu_startup()
 	 * limits the number of processes exec'ing at any time.
 	 */
 	exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				   16*NCARGS, TRUE, FALSE, NULL);
+				   16*NCARGS, VM_MAP_PAGEABLE, FALSE, NULL);
 
 	/*
 	 * Allocate a submap for physio
 	 */
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				   VM_PHYS_SIZE, TRUE, FALSE, NULL);
+				   VM_PHYS_SIZE, 0, FALSE, NULL);
 
 	mb_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
 				 VM_MBUF_SIZE, VM_MAP_INTRSAFE, FALSE, NULL);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.7 2001/08/27 21:15:17 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.8 2001/09/11 20:10:00 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -562,18 +562,18 @@ cpu_startup()
 	 * limits the number of processes exec'ing at any time.
 	 */
 	exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr, 16 * NCARGS,
-	    TRUE, FALSE, NULL);
+	    VM_MAP_PAGEABLE, FALSE, NULL);
 
 	/*
 	 * Allocate a submap for physio
 	 */
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-	    VM_PHYS_SIZE, TRUE, FALSE, NULL);
+	    VM_PHYS_SIZE, 0, FALSE, NULL);
 	ppc_malloc_ok = 1;
 	
 
 	mb_map = uvm_km_suballoc(kernel_map, (vm_offset_t *)&mbutl, &maxaddr,
-	    VM_MBUF_SIZE, FALSE, FALSE, NULL);
+	    VM_MBUF_SIZE, VM_MAP_INTRSAFE, FALSE, NULL);
 
 	printf("avail mem = %d\n", ptoa(uvmexp.free));
 	printf("using %d buffers containing %d bytes of memory\n", nbuf,
