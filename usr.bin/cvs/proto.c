@@ -1,4 +1,4 @@
-/*	$OpenBSD: proto.c,v 1.2 2004/07/14 04:32:42 jfb Exp $	*/
+/*	$OpenBSD: proto.c,v 1.3 2004/07/14 05:16:04 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -582,7 +582,6 @@ static int
 cvs_resp_newentry(int type, char *line)
 {
 	char entbuf[128], path[MAXPATHLEN];
-	struct cvs_ent *entp;
 	CVSENTRIES *entfile;
 
 	snprintf(path, sizeof(path), "%s/" CVS_PATH_ENTRIES, line);
@@ -594,16 +593,10 @@ cvs_resp_newentry(int type, char *line)
 	if (cvs_client_getln(entbuf, sizeof(entbuf)) < 0)
 		return (-1);
 
-	entp = cvs_ent_parse(entbuf);
-	if (entp == NULL)
-		return (-1);
-
 	entfile = cvs_ent_open(path, O_WRONLY);
 	if (entfile == NULL)
 		return (-1);
-
-	cvs_ent_add(entfile, entp);
-
+	cvs_ent_addln(entfile, entbuf);
 	cvs_ent_close(entfile);
 
 	return (0);

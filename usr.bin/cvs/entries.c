@@ -1,4 +1,4 @@
-/*	$OpenBSD: entries.c,v 1.2 2004/07/14 04:32:42 jfb Exp $	*/
+/*	$OpenBSD: entries.c,v 1.3 2004/07/14 05:16:04 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -41,6 +41,11 @@
 #define CVS_ENTRIES_DELIM   '/'
 
 
+
+static struct cvs_ent*  cvs_ent_clone (const struct cvs_ent *);
+
+
+
 /*
  * cvs_ent_open()
  *
@@ -53,13 +58,23 @@ CVSENTRIES*
 cvs_ent_open(const char *dir, int flags)
 {
 	size_t len;
-	char entpath[MAXPATHLEN], ebuf[128];
+	char entpath[MAXPATHLEN], ebuf[128], mode[4];
 	FILE *fp;
 	struct cvs_ent *ent;
 	CVSENTRIES *ep;
 
+	memset(mode, 0, sizeof(mode));
+	if (flags & O_RDONLY)
+		mode[0] = 'r';
+	else if (flags & O_WRONLY)
+		mode[0] = 'w';
+	else if (flags & O_RDWR) {
+		mode[0] = 'r';
+		mode[1] = '+';
+	}
+
 	snprintf(entpath, sizeof(entpath), "%s/" CVS_PATH_ENTRIES, dir);
-	fp = fopen(entpath, "r");
+	fp = fopen(entpath, mode);
 	if (fp == NULL) {
 		cvs_log(LP_ERRNO, "cannot open CVS/Entries for reading",
 		    entpath);
@@ -83,6 +98,10 @@ cvs_ent_open(const char *dir, int flags)
 	ep->cef_nid = 0;
 	ep->cef_entries = NULL;
 	ep->cef_nbent = 0;
+
+	/* only keep a pointer to the open file if we're in writing mode */
+	if ((flags & O_WRONLY) || (flags & O_RDWR))
+		ep->cef_file = fp;
 
 	while (fgets(ebuf, sizeof(ebuf), fp) != NULL) {
 		len = strlen(ebuf);
@@ -120,31 +139,73 @@ cvs_ent_close(CVSENTRIES *ep)
 /*
  * cvs_ent_add()
  *
- * Add the entry <ent>
+ * Add the entry <ent> to the Entries file <ef>.
  */
 
 int
 cvs_ent_add(CVSENTRIES *ef, struct cvs_ent *ent)
 {
 	void *tmp;
-	struct cvs_ent *entp;
+
+	if (ef->cef_file == NULL) {
+		cvs_log(LP_ERR, "Entries file is opened in read-only mode");
+		return (-1);
+	}
 
 	if (cvs_ent_get(ef, ent->ce_name) != NULL)
 		return (-1);
 
-	entp = cvs_ent_parse(ent->ce_line);
-	if (entp == NULL) {
+	if (fseek(ef->cef_file, (long)0, SEEK_END) == -1) {
+		cvs_log(LP_ERRNO, "failed to seek to end of CVS/Entries file");
 		return (-1);
 	}
+	fprintf(ef->cef_file, "%s\n", ent->ce_line);
 
-	tmp = realloc(ef->cef_entries, (ef->cef_nbent + 1) * sizeof(entp));
+	tmp = realloc(ef->cef_entries, (ef->cef_nbent + 1) * sizeof(ent));
 	if (tmp == NULL) {
 		cvs_log(LP_ERRNO, "failed to resize entries buffer");
 		return (-1);
 	}
 
 	ef->cef_entries = (struct cvs_ent **)tmp;
-	ef->cef_entries[ef->cef_nbent++] = entp;
+	ef->cef_entries[ef->cef_nbent++] = ent;
+
+	return (0);
+}
+
+
+/*
+ * cvs_ent_addln()
+ *
+ * Add a line to the Entries file.
+ */
+
+int
+cvs_ent_addln(CVSENTRIES *ef, const char *line)
+{
+	void *tmp;
+	struct cvs_ent *ent;
+
+	if (ef->cef_file == NULL) {
+		cvs_log(LP_ERR, "Entries file is opened in read-only mode");
+		return (-1);
+	}
+
+	ent = cvs_ent_parse(line);
+	if (ent == NULL)
+		return (-1);
+
+	if (cvs_ent_get(ef, ent->ce_name) != NULL)
+		return (-1);
+
+	tmp = realloc(ef->cef_entries, (ef->cef_nbent + 1) * sizeof(ent));
+	if (tmp == NULL) {
+		cvs_log(LP_ERRNO, "failed to resize entries buffer");
+		return (-1);
+	}
+
+	ef->cef_entries = (struct cvs_ent **)tmp;
+	ef->cef_entries[ef->cef_nbent++] = ent;
 
 	return (0);
 }
