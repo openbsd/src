@@ -1,4 +1,4 @@
-/*	$OpenBSD: xform.c,v 1.23 2003/07/24 08:03:19 itojun Exp $	*/
+/*	$OpenBSD: xform.c,v 1.24 2003/12/26 10:04:49 markus Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -441,25 +441,22 @@ rijndael128_encrypt(caddr_t key, u_int8_t *blk)
 void
 rijndael128_decrypt(caddr_t key, u_int8_t *blk)
 {
-	rijndael_decrypt(((rijndael_ctx *) key) + 1, (u_char *) blk,
-	    (u_char *) blk);
+	rijndael_decrypt((rijndael_ctx *) key, (u_char *) blk, (u_char *) blk);
 }
 
 void
 rijndael128_setkey(u_int8_t **sched, u_int8_t *key, int len)
 {
-	MALLOC(*sched, u_int8_t *, 2 * sizeof(rijndael_ctx), M_CRYPTO_DATA,
+	MALLOC(*sched, u_int8_t *, sizeof(rijndael_ctx), M_CRYPTO_DATA,
 	    M_WAITOK);
-	bzero(*sched, 2 * sizeof(rijndael_ctx));
-	rijndael_set_key((rijndael_ctx *) *sched, (u_char *) key, len * 8, 1);
-	rijndael_set_key(((rijndael_ctx *) *sched) + 1, (u_char *) key,
-	    len * 8, 0);
+	bzero(*sched, sizeof(rijndael_ctx));
+	rijndael_set_key((rijndael_ctx *) *sched, (u_char *) key, len * 8);
 }
 
 void
 rijndael128_zerokey(u_int8_t **sched)
 {
-	bzero(*sched, 2 * sizeof(rijndael_ctx));
+	bzero(*sched, sizeof(rijndael_ctx));
 	FREE(*sched, M_CRYPTO_DATA);
 	*sched = NULL;
 }
