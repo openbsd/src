@@ -1,10 +1,10 @@
-/*	$OpenBSD: pcmciadevs.h,v 1.14 1999/05/27 13:39:14 niklas Exp $	*/
+/*	$OpenBSD: pcmciadevs.h,v 1.15 1999/06/03 06:41:39 fgsch Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcmciadevs,v 1.12 1999/05/27 13:32:38 niklas Exp 
+ *		OpenBSD: pcmciadevs,v 1.13 1999/06/03 06:40:28 fgsch Exp 
  */
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
@@ -43,6 +43,7 @@
  * List of known PCMCIA vendors
  */
 
+#define	PCMCIA_VENDOR_FUJITSU	0x0004	/* Fujitsu */
 #define	PCMCIA_VENDOR_SANDISK	0x0045	/* Sandisk */
 #define	PCMCIA_VENDOR_NEWMEDIA	0x0057	/* NewMedia */
 #define	PCMCIA_VENDOR_INTEL	0x0089	/* Intel */
@@ -111,6 +112,14 @@
 #define	PCMCIA_CIS_DIGITAL_MOBILE_MEDIA_CDROM	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_DIGITAL_MOBILE_MEDIA_CDROM	0x0d00
 #define	PCMCIA_STR_DIGITAL_MOBILE_MEDIA_CDROM	"Digital Mobile Media CD-ROM"
+
+/* Fujitsu Products */
+#define	PCMCIA_CIS_FUJITSU_SCSI600	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_FUJITSU_SCSI600	0x0401
+#define	PCMCIA_STR_FUJITSU_SCSI600	"Fujitsu SCSI 600 Interface"
+#define	PCMCIA_CIS_FUJITSU_LA501	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_FUJITSU_LA501	0x2000
+#define	PCMCIA_STR_FUJITSU_LA501	"Fujitsu Towa LA501 Ethernet"
 
 /* Motorola Products */
 #define	PCMCIA_CIS_MOTOROLA_POWER144	{ NULL, NULL, NULL, NULL }
@@ -239,6 +248,9 @@
 #define	PCMCIA_CIS_SMC_8016	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_SMC_8016	0x0105
 #define	PCMCIA_STR_SMC_8016	"SMC 8016 EtherCard"
+#define	PCMCIA_CIS_SMC_EZCARD	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_SMC_EZCARD	0x8022
+#define	PCMCIA_STR_SMC_EZCARD	"SMC EXCard 10 PCMCIA"
 
 /* Cards we know only by their cis */
 #define	PCMCIA_VENDOR_PREMAX	-1	/* Premax */
