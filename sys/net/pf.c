@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.48 2001/06/26 06:58:28 markus Exp $ */
+/*	$OpenBSD: pf.c,v 1.49 2001/06/26 11:17:31 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -608,7 +608,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 
 	case DIOCSTART:
 		if (pf_status.running)
-			error = EINVAL;
+			error = EEXIST;
 		else {
 			u_int32_t states = pf_status.states;
 			bzero(&pf_status, sizeof(struct pf_status));
@@ -621,7 +621,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 
 	case DIOCSTOP:
 		if (!pf_status.running)
-			error = EINVAL;
+			error = ENOENT;
 		else {
 			pf_status.running = 0;
 			printf("pf: stopped\n");
