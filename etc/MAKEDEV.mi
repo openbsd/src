@@ -1,6 +1,6 @@
 include(MAKEDEV.sub)dnl
 dnl
-vers(a, {-$OpenBSD: MAKEDEV.mi,v 1.58 2003/04/10 16:11:12 millert Exp $-})dnl
+vers(a, {-$OpenBSD: MAKEDEV.mi,v 1.59 2003/05/21 18:48:59 jason Exp $-})dnl
 dnl
 divert(1)dnl
 {-#-}
@@ -626,6 +626,7 @@ _mkdev(spif, spif*, {-case $U in
 	done
 	M bpp${nam}0 c major_bppsp_c Add($offset, 0) 600-})dnl
 __devitem(bpp, bpp*, parallel port devices)dnl
+_mkdev(bpp, {-bpp*-}, {-M bpp$U c major_bpp_c $U 600-}, 600)dnl
 __devitem(xfs, xfs*, XFS filesystem devices)dnl
 _mcdev(xfs, xfs*, xfs, {-major_xfs_c-}, 600)dnl
 __devitem(hil, hil, HIL input devices)dnl

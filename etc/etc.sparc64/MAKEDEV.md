@@ -1,5 +1,5 @@
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.25 2002/12/05 04:30:21 kjc Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.26 2003/05/21 18:49:00 jason Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001 Todd T. Fries <todd@OpenBSD.org>
@@ -110,6 +110,7 @@ _DEV(lkm, 112)
 _DEV(rnd, 119)
 _DEV(mag, 71)
 _DEV(bppmag, 72)
+_DEV(bpp, 107)
 _DEV(spif, 108)
 _DEV(bppsp, 109)
 _DEV(cry, 75)
@@ -159,6 +160,7 @@ target(all, rd, 0)dnl
 target(all, cd, 0, 1)dnl
 target(all, sd, 0, 1, 2, 3, 4)dnl
 target(all, vnd, 0, 1, 2, 3)dnl
+target(all, bpp, 0)dnl
 target(ramd, fd, 0)dnl
 target(ramd, rd, 0)dnl
 target(ramd, sd, 0, 1, 2, 3)dnl
