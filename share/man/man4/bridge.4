@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bridge.4,v 1.44 2002/06/30 22:02:13 miod Exp $
+.\"	$OpenBSD: bridge.4,v 1.45 2002/09/18 07:35:13 deraadt Exp $
 .\"
 .\" Copyright (c) 1999-2001 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -556,9 +556,7 @@ policies set with the
 command by the administrator.
 If appropriate security associations (SAs) do not exist, any key
 management daemons such as
-.Xr isakmpd 8
-or
-.Xr photurisd 8
+.Xr isakmpd 8 .
 that are running on the bridge will be invoked to establish the
 necessary SAs.
 These daemons have to be configured as if they were running on the
@@ -578,8 +576,7 @@ and certificates, to impersonate the protected host(s).
 .Xr bridgename.if 5 ,
 .Xr brconfig 8 ,
 .Xr ipsecadm 8 ,
-.Xr isakmpd 8 ,
-.Xr photurisd 8
+.Xr isakmpd 8
 .Sh AUTHORS
 The
 .Xr brconfig 8

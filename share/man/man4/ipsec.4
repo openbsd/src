@@ -1,4 +1,4 @@
-.\" $OpenBSD: ipsec.4,v 1.49 2002/02/19 21:11:22 miod Exp $
+.\" $OpenBSD: ipsec.4,v 1.50 2002/09/18 07:36:07 deraadt Exp $
 .\"
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -148,9 +148,7 @@ can be done manually, or automatically with a key management daemon.
 .Pp
 Further information on manual SA establishment is described in
 .Xr ipsecadm 8 ,
-and we provide two key management daemons,
-.Xr photurisd 8
-and
+and we provide a key management daemon called
 .Xr isakmpd 8 .
 .Pp
 .Tn AH
@@ -319,10 +317,8 @@ packet has been modified by NAT.
 Security Associations can be set up manually with the
 .Xr ipsecadm 8
 utility or automatically with the
-.Xr photurisd 8
-or
 .Xr isakmpd 8
-key management daemons.
+key management daemon.
 .Pp
 The following
 .Tn IP-level
@@ -350,8 +346,6 @@ specify the security policy to use in that category:
 Bypass the default system security policy.
 This option can only be used by privileged processes.
 This level is necessary for key management daemons like
-.Xr photurisd 8
-or
 .Xr isakmpd 8 .
 .It IPSEC_LEVEL_AVAIL
 If a Security Association is available it will be used for sending packets
@@ -439,8 +433,7 @@ At the moment the socket options are not fully implemented.
 .Xr tcp 4 ,
 .Xr udp 4 ,
 .Xr ipsecadm 8 ,
-.Xr isakmpd 8 ,
-.Xr photurisd 8 ,
+.Xr isakmpd 8
 .Xr vpn 8
 .Sh ACKNOWLEDGMENTS
 The authors of the
