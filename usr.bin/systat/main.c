@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.24 2002/06/18 00:46:37 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.25 2002/08/04 00:50:42 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.8 1996/05/10 23:16:36 thorpej Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: main.c,v 1.24 2002/06/18 00:46:37 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.25 2002/08/04 00:50:42 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -91,6 +91,15 @@ main(int argc, char *argv[])
 	int ch;
 	char errbuf[_POSIX2_LINE_MAX];
 
+	kd = kvm_openfiles(NULL, NULL, NULL, O_RDONLY, errbuf);
+	if (kd == NULL) {
+		error("%s", errbuf);
+		exit(1);
+	}
+
+	setegid(getgid());
+	setgid(getgid());
+
 	while ((ch = getopt(argc, argv, "w:")) != -1)
 		switch (ch) {
 		case 'w':
@@ -121,14 +130,6 @@ main(int argc, char *argv[])
 		argc--;
 		argv++;
 	}
-	kd = kvm_openfiles(NULL, NULL, NULL, O_RDONLY, errbuf);
-	if (kd == NULL) {
-		error("%s", errbuf);
-		exit(1);
-	}
-
-	setegid(getgid());
-	setgid(getgid());
 
 	signal(SIGINT, sigdie);
 	siginterrupt(SIGINT, 1);
