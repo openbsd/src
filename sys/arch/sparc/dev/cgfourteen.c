@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgfourteen.c,v 1.16 2002/09/23 18:13:38 miod Exp $	*/
+/*	$OpenBSD: cgfourteen.c,v 1.17 2002/10/01 07:09:59 miod Exp $	*/
 /*	$NetBSD: cgfourteen.c,v 1.7 1997/05/24 20:16:08 pk Exp $ */
 
 /*
@@ -113,6 +113,8 @@
 
 #include <sparc/dev/cgfourteenreg.h>
 
+#include <dev/cons.h>	/* for prom console hook */
+
 /*
  * per-display variables/state
  */
@@ -157,6 +159,7 @@ paddr_t cgfourteen_mmap(void *, off_t, int);
 int cgfourteen_is_console(int);
 void cgfourteen_reset(struct cgfourteen_softc *);
 void cgfourteen_burner(void *, u_int, u_int);
+void cgfourteen_prom(void *);
 
 int  cgfourteen_getcmap(union cg14cmap *, struct wsdisplay_cmap *);
 int  cgfourteen_putcmap(union cg14cmap *, struct wsdisplay_cmap *);
@@ -504,6 +507,30 @@ cgfourteen_reset(sc)
 		 * Zero the xlut to enable direct-color mode
 		 */
 		bzero(sc->sc_xlut, CG14_CLUT_SIZE);
+
+		shutdownhook_establish(cgfourteen_prom, sc);
+	}
+}
+
+void
+cgfourteen_prom(v)
+	void *v;
+{
+	struct cgfourteen_softc *sc = v;
+	extern struct consdev consdev_prom;
+
+	if (sc->sc_sunfb.sf_depth != 8) {
+		/*
+		 * Go back to 8-bit mode.
+		 */
+		sc->sc_ctl->ctl_mctl = CG14_MCTL_ENABLEVID |
+		    CG14_MCTL_PIXMODE_8 | CG14_MCTL_POWERCTL;
+
+		/*
+		 * Go back to prom output for the last few messages, so they
+		 * will be displayed correctly.
+		 */
+		cn_tab = &consdev_prom;
 	}
 }
 
