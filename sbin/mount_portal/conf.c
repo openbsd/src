@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.8 2003/07/29 18:38:36 deraadt Exp $	*/
+/*	$OpenBSD: conf.c,v 1.9 2004/06/06 00:12:03 tedu Exp $	*/
 /*	$NetBSD: conf.c,v 1.4 1995/04/23 10:33:19 cgd Exp $	*/
 
 /*
@@ -100,7 +100,7 @@ xmalloc(size_t siz)
 	void *p = malloc(siz);
 	if (p)
 		return (p);
-	syslog(LOG_ALERT, "malloc: failed to get %d bytes", siz);
+	syslog(LOG_ALERT, "malloc: failed to get %ld bytes", siz);
 	exit(1);
 }
 
@@ -151,7 +151,7 @@ palloc(char *cline, int lno)
 	c = 0;
 	key = strdup(cline);
 	if (key == NULL) {
-		syslog(LOG_ALERT, "malloc: failed to get %d bytes",
+		syslog(LOG_ALERT, "malloc: failed to get %ld bytes",
 		    strlen(cline));
 		exit(1);
 	}
@@ -176,7 +176,7 @@ palloc(char *cline, int lno)
 	p->p_argv = xmalloc(c * sizeof(char *));
 	p->p_args = strdup(cline);
 	if (p->p_args == NULL) {
-		syslog(LOG_ALERT, "malloc: failed to get %d bytes",
+		syslog(LOG_ALERT, "malloc: failed to get %ld bytes",
 		    strlen(cline));
 		exit(1);
 	}
