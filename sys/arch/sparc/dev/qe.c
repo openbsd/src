@@ -1,4 +1,4 @@
-/*	$OpenBSD: qe.c,v 1.22 2002/04/30 01:12:29 art Exp $	*/
+/*	$OpenBSD: qe.c,v 1.23 2002/08/07 17:23:44 jason Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 Jason L. Wright.
@@ -311,14 +311,14 @@ qeintr(v)
 
 	qecstat = sc->sc_qr->stat >> (4 * sc->sc_channel);
 	if ((qecstat & 0xf) == 0)
-		return r;
+		return (r);
 
 	qestat = sc->sc_cr->stat;
 
 	if (qestat & QE_CR_STAT_ALLERRORS) {
 		r |= qe_eint(sc, qestat);
 		if (r == -1)
-			return 1;
+			return (1);
 	}
 
 	if (qestat & QE_CR_STAT_TXIRQ)
@@ -406,7 +406,7 @@ qe_rint(sc)
 
 	sc->sc_last_rd = bix;
 
-	return 1;
+	return (1);
 }
 
 /*
@@ -575,10 +575,10 @@ qe_eint(sc, why)
 	if (rst) {
 		printf("%s: resetting...\n", sc->sc_dev.dv_xname);
 		qereset(sc);
-		return -1;
+		return (-1);
 	}
 
-	return r;
+	return (r);
 }
 
 int
@@ -677,13 +677,13 @@ qeioctl(ifp, cmd, data)
 	default:
 		if ((error = ether_ioctl(ifp, &sc->sc_arpcom, cmd, data)) > 0) {
 			splx(s);
-			return error;
+			return (error);
 		}
 		error = EINVAL;
 		break;
 	}
 	splx(s);
-	return error;
+	return (error);
 }
 
 void
