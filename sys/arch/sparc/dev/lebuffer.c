@@ -1,4 +1,4 @@
-/*	$OpenBSD: lebuffer.c,v 1.1 1997/08/08 08:25:16 downsj Exp $	*/
+/*	$OpenBSD: lebuffer.c,v 1.2 1998/03/09 09:33:39 deraadt Exp $	*/
 /*	$NetBSD: lebuffer.c,v 1.3 1997/05/24 20:16:28 pk Exp $ */
 
 /*
@@ -116,7 +116,7 @@ lebufattach(parent, self, aux)
 	/* Clamp at parent's burst sizes */
 	sc->sc_burst &= sbusburst;
 
-	printf("\n");
+	printf(": %dK memory\n", sc->sc_bufsiz / 1024);
 
 	node = sc->sc_node = ca->ca_ra.ra_node;
 
