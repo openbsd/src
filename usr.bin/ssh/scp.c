@@ -42,11 +42,11 @@ and ssh has the necessary privileges.)
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: scp.c,v 1.3 1999/09/29 21:15:54 deraadt Exp $
+ *	$Id: scp.c,v 1.4 1999/09/30 01:21:41 aaron Exp $
  */
 
 #include "includes.h"
-RCSID("$Id: scp.c,v 1.3 1999/09/29 21:15:54 deraadt Exp $");
+RCSID("$Id: scp.c,v 1.4 1999/09/30 01:21:41 aaron Exp $");
 
 #include "ssh.h"
 #include "xmalloc.h"
@@ -77,6 +77,14 @@ struct utimbuf
 #ifndef STDERR_FILENO
 #define STDERR_FILENO 2
 #endif
+
+/* For progressmeter() function. */
+#define STALLTIME	5
+
+static struct timeval start;
+unsigned long statbytes = 0;
+unsigned long totalbytes = 0;
+void progressmeter(int);
 
 /* This is set to non-zero to enable verbose mode. */
 int verbose = 0;
@@ -524,6 +532,11 @@ next:			(void)close(fd);
 			continue;
 		}
 
+		totalbytes = stb.st_size;
+
+		/* kick-start the progress meter */
+		progressmeter(-1);
+
 		/* Keep writing after an error so that we stay sync'd up. */
 		for (haderr = i = 0; i < stb.st_size; i += bp->cnt) {
 			amt = bp->cnt;
@@ -540,8 +553,11 @@ next:			(void)close(fd);
 				result = write(remout, bp->buf, amt);
 				if (result != amt)
 					haderr = result >= 0 ? EIO : errno;
+				statbytes += result;
 			}
 		}
+		progressmeter(1);
+
 		if (close(fd) < 0 && !haderr)
 			haderr = errno;
 		if (!haderr)
@@ -957,7 +973,7 @@ run_err(const char *fmt, ...)
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: scp.c,v 1.3 1999/09/29 21:15:54 deraadt Exp $
+ *	$Id: scp.c,v 1.4 1999/09/30 01:21:41 aaron Exp $
  */
 
 char *
@@ -1047,3 +1063,117 @@ lostconn(signo)
 		fprintf(stderr, "lost connection\n");
 	exit(1);
 }
+
+void alarmtimer(int wait)
+{
+   struct itimerval itv;
+
+   itv.it_value.tv_sec = wait;
+   itv.it_value.tv_usec = 0;
+   itv.it_interval = itv.it_value;
+   setitimer(ITIMER_REAL, &itv, NULL);
+}
+
+static void updateprogressmeter(void)
+{
+	progressmeter(0);
+}
+
+void progressmeter(int flag)
+{
+	static const char prefixes[] = " KMGTP";
+	static struct timeval lastupdate;
+	static off_t lastsize = 0;
+	struct timeval now, td, wait;
+	off_t cursize, abbrevsize;
+	double elapsed;
+	int ratio, barlength, i, remaining;
+	char buf[256];
+
+	if (flag == -1) {
+		(void)gettimeofday(&start, (struct timezone *)0);
+		lastupdate = start;
+	}   
+	(void)gettimeofday(&now, (struct timezone *)0);
+	cursize = statbytes;
+	ratio = cursize * 100 / totalbytes;
+	ratio = MAX(ratio, 0);
+	ratio = MIN(ratio, 100);
+	snprintf(buf, sizeof(buf), "\r%3d%% ", ratio); 
+
+	barlength = getttywidth() - 30;
+	if (barlength > 0) {
+		i = barlength * ratio / 100;
+		snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf),
+		"|%.*s%*s|", i,
+"*****************************************************************************"
+"*****************************************************************************",
+                 barlength - i, "");
+	}
+
+	i = 0;
+	abbrevsize = cursize;
+	while (abbrevsize >= 100000 && i < sizeof(prefixes)) {
+		i++;
+		abbrevsize >>= 10;
+	}
+	snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf), " %5qd %c%c ",
+		(quad_t)abbrevsize, prefixes[i], prefixes[i] == ' ' ? ' ' :
+		'B');
+
+	timersub(&now, &lastupdate, &wait);
+	if (cursize > lastsize) {
+		lastupdate = now;
+		lastsize = cursize;
+		if (wait.tv_sec >= STALLTIME) {
+			start.tv_sec += wait.tv_sec;
+			start.tv_usec += wait.tv_usec;
+		}
+		wait.tv_sec = 0;
+	}
+
+	timersub(&now, &start, &td);
+	elapsed = td.tv_sec + (td.tv_sec / 1000000.0);
+
+	if (statbytes <= 0 || elapsed <= 0.0 || cursize > totalbytes) {
+		snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf),
+			"   --:-- ETA");
+	} else if (wait.tv_sec >= STALLTIME) {
+		snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf),
+			" - stalled -");
+	} else {
+		remaining = (int)(totalbytes / (statbytes / elapsed) - elapsed);
+		i = elapsed / 3600;
+		if (i)
+			snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf),
+				"%2d:", i);
+		else
+			snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf),
+				"   ");
+		i = remaining % 3600;
+		snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf),
+			"%02d:%02d ETA", i / 60, i % 60);
+	}
+	write(fileno(stdout), buf, strlen(buf));
+
+	if (flag == -1) {
+		signal(SIGALRM, (void *)updateprogressmeter);
+		alarmtimer(1);
+	} else if (flag == 1) {
+			alarmtimer(0);
+			putc('\n', stdout);
+	}
+	fflush(stdout);
+}
+
+int getttywidth(void)
+{
+	struct winsize winsize;
+
+	if (ioctl(fileno(stdout), TIOCGWINSZ, &winsize) != -1)
+		return(winsize.ws_col ? winsize.ws_col : 80);
+	else
+		return(80);
+}
+
+
