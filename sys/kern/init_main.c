@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.54 2000/06/16 21:47:14 provos Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.55 2000/06/18 03:07:48 angelos Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -137,6 +137,7 @@ void	start_init __P((void *));
 void	start_pagedaemon __P((void *));
 void	start_update __P((void *));
 void	start_reaper __P((void *));
+void    start_crypto __P((void *));
 
 #ifdef cpu_set_init_frame
 void *initframep;				/* XXX should go away */
@@ -441,6 +442,12 @@ main(framep)
 #endif
 	}
 
+#ifdef CRYPTO
+	/* Create process 5, the crypto kernel thread. */
+	if (kthread_create(start_crypto, NULL, NULL, "crypto"))
+	        panic("crypto thread");
+#endif /* CRYPTO */
+
 	/* Create any other deferred kernel threads. */
 	kthread_run_deferred_queue();
 
@@ -666,3 +673,13 @@ start_reaper(arg)
 	reaper();
 	/* NOTREACHED */
 }
+
+#ifdef CRYPTO
+void
+start_crypto(arg)
+        void *arg;
+{
+        crypto_thread();
+        /* NOTREACHED */
+}
+#endif /* CRYPTO */
