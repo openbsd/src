@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipf.5,v 1.8 1997/04/09 11:44:27 kstailey Exp $
+.\"	$OpenBSD: ipf.5,v 1.9 1997/07/14 01:21:41 angelos Exp $
 .TH IPF 5
 .SH NAME
 ipf \- IP packet filter rule syntax
@@ -404,7 +404,7 @@ The "fall-through" rule parsing allows for effects such as this:
 .nf
         block in from any to any port < 6000
         pass in from any to any port >= 6000
-        block in from any to port > 6003
+        block in from any to any port > 6003
 .fi
 .PP
 which sets up the range 6000-6003 as being permitted and all others being
