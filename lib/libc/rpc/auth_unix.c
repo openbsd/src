@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: auth_unix.c,v 1.6 1996/11/14 05:45:16 etheisen Exp $";
+static char *rcsid = "$OpenBSD: auth_unix.c,v 1.7 1996/12/14 06:49:40 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -170,11 +170,12 @@ authunix_create(machname, uid, gid, len, aup_gids)
 AUTH *
 authunix_create_default()
 {
-	register int len;
+	register int len, i;
 	char machname[MAX_MACHINE_NAME + 1];
 	register uid_t uid;
 	register gid_t gid;
 	gid_t gids[NGRPS];
+	int gids2[NGRPS];
 
 	if (gethostname(machname, MAX_MACHINE_NAME) == -1)
 		abort();
@@ -183,7 +184,9 @@ authunix_create_default()
 	gid = getegid();
 	if ((len = getgroups(NGRPS, gids)) < 0)
 		abort();
-	return (authunix_create(machname, uid, gid, len, gids));
+	for (i = 0; i < len; i++)
+		gids2[i] = gids[i];
+	return (authunix_create(machname, uid, gid, len, gids2));
 }
 
 /*

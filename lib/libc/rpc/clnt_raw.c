@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: clnt_raw.c,v 1.4 1996/09/15 09:31:32 tholo Exp $";
+static char *rcsid = "$OpenBSD: clnt_raw.c,v 1.5 1996/12/14 06:49:41 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -149,7 +149,7 @@ call_again:
 	XDR_SETPOS(xdrs, 0);
 	((struct rpc_msg *)clp->mashl_callmsg)->rm_xid ++ ;
 	if ((! XDR_PUTBYTES(xdrs, clp->mashl_callmsg, clp->mcnt)) ||
-	    (! XDR_PUTLONG(xdrs, &proc)) ||
+	    (! XDR_PUTLONG(xdrs, (long *)&proc)) ||
 	    (! AUTH_MARSHALL(h->cl_auth, xdrs)) ||
 	    (! (*xargs)(xdrs, argsp))) {
 		return (RPC_CANTENCODEARGS);

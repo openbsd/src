@@ -52,7 +52,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: res_mkquery.c,v 1.4 1996/09/15 09:31:20 tholo Exp $";
+static char rcsid[] = "$OpenBSD: res_mkquery.c,v 1.5 1996/12/14 06:49:39 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -132,7 +132,7 @@ res_mkquery(op, dname, class, type, data, datalen, newrr_in, buf, buflen)
 		 * Make an additional record for completion domain.
 		 */
 		buflen -= RRFIXEDSZ;
-		if ((n = dn_comp(data, cp, buflen, dnptrs, lastdnptr)) < 0)
+		if ((n = dn_comp((const char *)data, cp, buflen, dnptrs, lastdnptr)) < 0)
 			return (-1);
 		cp += n;
 		buflen -= n;

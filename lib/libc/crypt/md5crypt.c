@@ -1,4 +1,4 @@
-/*	$OpenBSD: md5crypt.c,v 1.6 1996/10/15 09:25:32 deraadt Exp $	*/
+/*	$OpenBSD: md5crypt.c,v 1.7 1996/12/14 06:49:36 tholo Exp $	*/
 
 /*
  * ----------------------------------------------------------------------------
@@ -13,7 +13,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: md5crypt.c,v 1.6 1996/10/15 09:25:32 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: md5crypt.c,v 1.7 1996/12/14 06:49:36 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <unistd.h>
@@ -54,21 +54,21 @@ md5crypt(pw, salt)
 	 * This string is magic for this algorithm.  Having
 	 * it this way, we can get get better later on
 	 */
-	static char	*magic = "$1$";
+	static unsigned char	*magic = (unsigned char *)"$1$";
 
 	static char     passwd[120], *p;
-	static const char *sp,*ep;
+	static const unsigned char *sp,*ep;
 	unsigned char	final[16];
-	int sl,pl,i,j;
+	int sl,pl,i;
 	MD5_CTX	ctx,ctx1;
 	unsigned long l;
 
 	/* Refine the Salt first */
-	sp = salt;
+	sp = (const unsigned char *)salt;
 
 	/* If it starts with the magic string, then skip that */
-	if(!strncmp(sp,magic,strlen(magic)))
-		sp += strlen(magic);
+	if(!strncmp((const char *)sp,(const char *)magic,strlen((const char *)magic)))
+		sp += strlen((const char *)magic);
 
 	/* It stops at the first '$', max 8 chars */
 	for(ep=sp;*ep && *ep != '$' && ep < (sp+8);ep++)
@@ -80,19 +80,19 @@ md5crypt(pw, salt)
 	MD5Init(&ctx);
 
 	/* The password first, since that is what is most unknown */
-	MD5Update(&ctx,pw,strlen(pw));
+	MD5Update(&ctx,(const unsigned char *)pw,strlen(pw));
 
 	/* Then our magic string */
-	MD5Update(&ctx,magic,strlen(magic));
+	MD5Update(&ctx,magic,strlen((const char *)magic));
 
 	/* Then the raw salt */
 	MD5Update(&ctx,sp,sl);
 
 	/* Then just as many characters of the MD5(pw,salt,pw) */
 	MD5Init(&ctx1);
-	MD5Update(&ctx1,pw,strlen(pw));
+	MD5Update(&ctx1,(const unsigned char *)pw,strlen(pw));
 	MD5Update(&ctx1,sp,sl);
-	MD5Update(&ctx1,pw,strlen(pw));
+	MD5Update(&ctx1,(const unsigned char *)pw,strlen(pw));
 	MD5Final(final,&ctx1);
 	for(pl = strlen(pw); pl > 0; pl -= 16)
 		MD5Update(&ctx,final,pl>16 ? 16 : pl);
@@ -105,11 +105,11 @@ md5crypt(pw, salt)
 		if(i&1)
 		    MD5Update(&ctx, final, 1);
 		else
-		    MD5Update(&ctx, pw, 1);
+		    MD5Update(&ctx, (const unsigned char *)pw, 1);
 
 	/* Now make the output string */
-	strcpy(passwd,magic);
-	strncat(passwd,sp,sl);
+	strcpy(passwd,(const char *)magic);
+	strncat(passwd,(const char *)sp,sl);
 	strcat(passwd,"$");
 
 	MD5Final(final,&ctx);
@@ -122,7 +122,7 @@ md5crypt(pw, salt)
 	for(i=0;i<1000;i++) {
 		MD5Init(&ctx1);
 		if(i & 1)
-			MD5Update(&ctx1,pw,strlen(pw));
+			MD5Update(&ctx1,(const unsigned char *)pw,strlen(pw));
 		else
 			MD5Update(&ctx1,final,16);
 
@@ -130,12 +130,12 @@ md5crypt(pw, salt)
 			MD5Update(&ctx1,sp,sl);
 
 		if(i % 7)
-			MD5Update(&ctx1,pw,strlen(pw));
+			MD5Update(&ctx1,(const unsigned char *)pw,strlen(pw));
 
 		if(i & 1)
 			MD5Update(&ctx1,final,16);
 		else
-			MD5Update(&ctx1,pw,strlen(pw));
+			MD5Update(&ctx1,(const unsigned char *)pw,strlen(pw));
 		MD5Final(final,&ctx1);
 	}
 

@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: xdr.c,v 1.3 1996/08/19 08:32:01 tholo Exp $";
+static char *rcsid = "$OpenBSD: xdr.c,v 1.4 1996/12/14 06:49:42 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -131,10 +131,10 @@ xdr_u_int(xdrs, up)
 
 	case XDR_ENCODE:
 		l = (u_long) *up;
-		return (XDR_PUTLONG(xdrs, &l));
+		return (XDR_PUTLONG(xdrs, (long *)&l));
 
 	case XDR_DECODE:
-		if (!XDR_GETLONG(xdrs, &l)) {
+		if (!XDR_GETLONG(xdrs, (long *)&l)) {
 			return (FALSE);
 		}
 		*up = (u_int) l;
@@ -234,10 +234,10 @@ xdr_u_int32_t(xdrs, u_int32_p)
 
 	case XDR_ENCODE:
 		l = (u_long) *u_int32_p;
-		return (XDR_PUTLONG(xdrs, &l));
+		return (XDR_PUTLONG(xdrs, (long *)&l));
 
 	case XDR_DECODE:
-		if (!XDR_GETLONG(xdrs, &l)) {
+		if (!XDR_GETLONG(xdrs, (long *)&l)) {
 			return (FALSE);
 		}
 		*u_int32_p = (u_int32_t) l;
@@ -293,10 +293,10 @@ xdr_u_short(xdrs, usp)
 
 	case XDR_ENCODE:
 		l = (u_long) *usp;
-		return (XDR_PUTLONG(xdrs, &l));
+		return (XDR_PUTLONG(xdrs, (long *)&l));
 
 	case XDR_DECODE:
-		if (!XDR_GETLONG(xdrs, &l)) {
+		if (!XDR_GETLONG(xdrs, (long *)&l)) {
 			return (FALSE);
 		}
 		*usp = (u_short) l;
@@ -352,10 +352,10 @@ xdr_u_int16_t(xdrs, u_int16_p)
 
 	case XDR_ENCODE:
 		l = (u_long) *u_int16_p;
-		return (XDR_PUTLONG(xdrs, &l));
+		return (XDR_PUTLONG(xdrs, (long *)&l));
 
 	case XDR_DECODE:
-		if (!XDR_GETLONG(xdrs, &l)) {
+		if (!XDR_GETLONG(xdrs, (long *)&l)) {
 			return (FALSE);
 		}
 		*u_int16_p = (u_int16_t) l;
@@ -458,7 +458,7 @@ xdr_enum(xdrs, ep)
 	}
 #else
 	(void) (xdr_short(xdrs, (short *)ep));
-	(void) (xdr_int(xdrs, (short *)ep));
+	(void) (xdr_int(xdrs, (int *)ep));
 	return (xdr_long(xdrs, (long *)ep));
 #endif
 }

@@ -35,7 +35,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: vfprintf.c,v 1.5 1996/11/13 18:46:29 niklas Exp $";
+static char *rcsid = "$OpenBSD: vfprintf.c,v 1.6 1996/12/14 06:49:43 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -61,7 +61,7 @@ static char *rcsid = "$OpenBSD: vfprintf.c,v 1.5 1996/11/13 18:46:29 niklas Exp 
 #include "fvwrite.h"  
 
 static void __find_arguments(const char *fmt0, va_list ap, va_list **argtable);
-static void __grow_type_table(int nextarg, unsigned char **typetable,
+static int __grow_type_table(unsigned char **typetable,
 			      int *tablesize);
 
 /*
@@ -808,7 +808,6 @@ __find_arguments (fmt0, ap, argtable)
 	register int n, n2;	/* handy integer (short term usage) */
 	register char *cp;	/* handy char pointer (short term usage) */
 	register int flags;	/* flags as above */
-	int width;		/* width from format (%8d), or 0 */
 	unsigned char *typetable; /* table of types */
 	unsigned char stattypetable[STATIC_ARG_TBL_SIZE];
 	int tablesize;		/* current size of type table */
@@ -820,7 +819,7 @@ __find_arguments (fmt0, ap, argtable)
 	 */
 #define ADDTYPE(type) \
 	((nextarg >= tablesize) ? \
-		__grow_type_table(nextarg, &typetable, &tablesize) : 0, \
+		__grow_type_table(&typetable, &tablesize) : 0, \
 	typetable[nextarg++] = type, \
 	(nextarg > tablemax) ? tablemax = nextarg : 0)
 
@@ -869,7 +868,6 @@ __find_arguments (fmt0, ap, argtable)
 		fmt++;		/* skip over '%' */
 
 		flags = 0;
-		width = 0;
 
 rflag:		ch = *fmt++;
 reswitch:	switch (ch) {
@@ -904,7 +902,6 @@ reswitch:	switch (ch) {
 				nextarg = n;
 				goto rflag;
 			}
-			width = n;
 			goto reswitch;
 #ifdef FLOATING_POINT
 		case 'L':
@@ -1070,9 +1067,8 @@ done:
 /*
  * Increase the size of the type table.
  */
-static void
-__grow_type_table (nextarg, typetable, tablesize)
-	int nextarg;
+static int
+__grow_type_table (typetable, tablesize)
 	unsigned char **typetable;
 	int *tablesize;
 {
@@ -1091,6 +1087,7 @@ __grow_type_table (nextarg, typetable, tablesize)
 	memset (&typetable [*tablesize], T_UNUSED, (newsize - *tablesize));
 
 	*tablesize = newsize;
+	return(0);
 }
 
   
