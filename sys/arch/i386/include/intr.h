@@ -119,7 +119,7 @@ spllower(ncpl)
 #define	spltty()	splraise(imask[IPL_TTY])
 #define	splclock()	splraise(imask[IPL_CLOCK])
 #define	splimp()	splraise(imask[IPL_IMP])
-#define	splstatclock()	splclock()
+#define	splstatclock()	splhigh()
 
 /*
  * Software interrupt masks
