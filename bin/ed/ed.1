@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ed.1,v 1.44 2003/09/25 14:08:56 jmc Exp $
+.\"	$OpenBSD: ed.1,v 1.45 2003/12/13 23:52:01 jmc Exp $
 .\"
 .\" Copyright (c) 1993 Andrew Moore, Talke Studio.
 .\" All rights reserved.
@@ -120,12 +120,17 @@ If fewer addresses are given than the command accepts, then
 default addresses are supplied.
 .Pp
 The options are as follows:
-.Bl -tag -width Ds
+.Bl -tag -width "-p string"
 .It Fl
 Same as the
 .Fl s
 option
 .Pq deprecated .
+.It Fl p Ar string
+Specifies a command prompt.
+This may be toggled on and off with the
+.Ic P
+command.
 .It Fl s
 Suppress diagnostics.
 This should be used if
@@ -136,11 +141,6 @@ Prompt for an encryption key to be used in subsequent reads and writes
 (see the
 .Ic x
 command).
-.It Fl p Ar string
-Specifies a command prompt.
-This may be toggled on and off with the
-.Ic P
-command.
 .It Ar file
 Specifies the name of a file to read.
 If
