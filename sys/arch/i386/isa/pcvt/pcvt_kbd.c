@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_kbd.c,v 1.37 2000/10/07 03:12:46 aaron Exp $	*/
+/*	$OpenBSD: pcvt_kbd.c,v 1.38 2000/10/11 21:24:28 aaron Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -1200,8 +1200,8 @@ scroll_reset:
 			goto loop;
 		}
 	}
-	else if (vsp->scrolling && key != 128 && key != 44 && key != 85 &&
-		 key != 86) {
+	else if (vsp->scrolling && key != 128 && key != 44 && key != 57 &&
+		 key != 85 && key != 86) {
 			vsp->scrolling = 1;
 			goto scroll_reset;
 	     }

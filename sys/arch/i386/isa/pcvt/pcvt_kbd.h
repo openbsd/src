@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_kbd.h,v 1.5 1998/02/22 21:35:34 niklas Exp $	*/
+/*	$OpenBSD: pcvt_kbd.h,v 1.6 2000/10/11 21:24:28 aaron Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -186,7 +186,7 @@ static u_char extscantokey[] = {
 /*18*/   25, 26, 27, 28,108, 64, 31, 32,  /* O   P   [   ]   KPE CTr A   S   */
 /*20*/   33, 34, 35, 36, 37, 38, 39, 40,  /* D   F   G   H   J   K   L   ;   */
 /*28*/   41,  1,128, 29, 46, 47, 48, 49,  /* '   `   vSh \   Z   X   C   V   */
-/*30*/   50, 51, 52, 53, 54, 95, 57,124,  /* B   N   M   ,   .   KP/ SHr KP* */
+/*30*/   50, 51, 52, 53, 54, 95,128,124,  /* B   N   M   ,   .   KP/ vSh KP* */
 /*38*/   62, 61, 30,112,113,114,115,116,  /* ALr SP  CAP F1  F2  F3  F4  F5  */
 /*40*/  117,118,119,120,121, 90,126, 80,  /* F6  F7  F8  F9  F10 NUM Brk HOM */
 /*48*/   83, 85,105, 79, 97, 89,106, 81,  /* UA  PU  KP- LA  KP5 RA  KP+ END */
