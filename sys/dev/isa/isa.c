@@ -1,4 +1,4 @@
-/*	$OpenBSD: isa.c,v 1.30 1998/01/20 20:39:31 niklas Exp $	*/
+/*	$OpenBSD: isa.c,v 1.31 1998/01/20 21:42:25 niklas Exp $	*/
 /*	$NetBSD: isa.c,v 1.85 1996/05/14 00:31:04 thorpej Exp $	*/
 
 /*
@@ -236,8 +236,9 @@ isascan(parent, match)
 		printf(">>> probing for %s%d\n", cf->cf_driver->cd_name,
 		    cf->cf_unit);
 	if ((*cf->cf_attach->ca_match)(parent, dev, &ia) > 0) {
-		printf(">>> probing for %s%d succeeded\n",
-		    cf->cf_driver->cd_name, cf->cf_unit);
+		if (autoconf_verbose)
+			printf(">>> probing for %s%d succeeded\n",
+			    cf->cf_driver->cd_name, cf->cf_unit);
 		config_attach(parent, dev, &ia, isaprint);
 
 #if NISADMA > 0
@@ -245,8 +246,9 @@ isascan(parent, match)
 			ISA_DRQ_ALLOC((struct device *)sc, ia.ia_drq);
 #endif /* NISAMDA > 0 */
 	} else {
-		printf(">>> probing for %s%d failed\n",
-		    cf->cf_driver->cd_name, cf->cf_unit);
+		if (autoconf_verbose)
+			printf(">>> probing for %s%d failed\n",
+			    cf->cf_driver->cd_name, cf->cf_unit);
 		free(dev, M_DEVBUF);
 	}
 }
