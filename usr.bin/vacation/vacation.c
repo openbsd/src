@@ -1,4 +1,4 @@
-/*	$OpenBSD: vacation.c,v 1.21 2003/08/09 23:47:32 millert Exp $	*/
+/*	$OpenBSD: vacation.c,v 1.22 2004/03/08 19:08:03 deraadt Exp $	*/
 /*	$NetBSD: vacation.c,v 1.7 1995/04/29 05:58:27 cgd Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)vacation.c	8.2 (Berkeley) 1/26/94";
 #endif
-static char rcsid[] = "$OpenBSD: vacation.c,v 1.21 2003/08/09 23:47:32 millert Exp $";
+static char rcsid[] = "$OpenBSD: vacation.c,v 1.22 2004/03/08 19:08:03 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -100,16 +100,16 @@ void usage(void);
 int
 main(int argc, char *argv[])
 {
+	int ch, iflag, flags;
 	struct passwd *pw;
+	time_t interval;
 	struct stat sb;
 	ALIAS *cur;
-	time_t interval;
-	int ch, iflag, flags;
 
 	opterr = iflag = 0;
 	interval = -1;
 	while ((ch = getopt(argc, argv, "a:Iir:")) != -1)
-		switch((char)ch) {
+		switch ((char)ch) {
 		case 'a':			/* alias */
 			if (!(cur = (ALIAS *)malloc((u_int)sizeof(ALIAS))))
 				break;
@@ -126,8 +126,7 @@ main(int argc, char *argv[])
 				interval = atol(optarg) * SECSPERDAY;
 				if (interval < 0)
 					usage();
-			}
-			else
+			} else
 				interval = (time_t)LONG_MAX;	/* XXX */
 			break;
 		case '?':
@@ -145,8 +144,7 @@ main(int argc, char *argv[])
 			    "no such user uid %u.", getuid());
 			exit(1);
 		}
-	}
-	else if (!(pw = getpwnam(*argv))) {
+	} else if (!(pw = getpwnam(*argv))) {
 		syslog(LOG_ERR, "no such user %s.", *argv);
 		exit(1);
 	}
@@ -163,7 +161,7 @@ main(int argc, char *argv[])
 		flags = O_CREAT|O_RDWR|O_TRUNC;
 	else
 		flags = O_CREAT|O_RDWR;
-		
+
 	db = dbopen(VDB, flags, S_IRUSR|S_IWUSR, DB_HASH, NULL);
 	if (!db) {
 		syslog(LOG_NOTICE, "%s: %m", VDB);
@@ -189,8 +187,7 @@ main(int argc, char *argv[])
 		setreply();
 		(void)(db->close)(db);
 		sendmessage(pw->pw_name);
-	}
-	else
+	} else
 		(void)(db->close)(db);
 	exit(0);
 	/* NOTREACHED */
@@ -203,14 +200,13 @@ main(int argc, char *argv[])
 void
 readheaders(void)
 {
-	ALIAS *cur;
-	char *p;
+	char buf[MAXLINE], *p;
 	int tome, cont;
-	char buf[MAXLINE];
+	ALIAS *cur;
 
 	cont = tome = 0;
 	while (fgets(buf, sizeof(buf), stdin) && *buf != '\n')
-		switch(*buf) {
+		switch (*buf) {
 		case 'F':		/* "From " */
 		case 'f':
 			cont = 0;
@@ -229,14 +225,14 @@ readheaders(void)
 		case 'r':
 			cont = 0;
 			if (strncasecmp(buf, "Return-Path:",
-					sizeof("Return-Path:")-1) ||
+			    sizeof("Return-Path:")-1) ||
 			    (buf[12] != ' ' && buf[12] != '\t'))
 				break;
 			for (p = buf + 12; *p && isspace(*p); ++p)
 				;
 			if (strlcpy(from, p, sizeof(from)) >= sizeof(from)) {
 				syslog(LOG_NOTICE,
-				       "Return-Path %s exceeds limits", p);
+				    "Return-Path %s exceeds limits", p);
 				exit(1);
 			}
 			if ((p = strchr(from, '\n')))
@@ -253,7 +249,8 @@ readheaders(void)
 				break;
 			if (!(p = strchr(buf, ':')))
 				break;
-			while (*++p && isspace(*p));
+			while (*++p && isspace(*p))
+				;
 			if (!*p)
 				break;
 			if (!strncasecmp(p, "junk", 4) ||
@@ -265,14 +262,14 @@ readheaders(void)
 		case 's':
 			cont = 0;
 			if (strncasecmp(buf, "Subject:",
-					sizeof("Subject:")-1) ||
+			    sizeof("Subject:")-1) ||
 			    (buf[8] != ' ' && buf[8] != '\t'))
 				break;
 			for (p = buf + 8; *p && isspace(*p); ++p)
 				;
 			if (strlcpy(subj, p, sizeof(subj)) >= sizeof(subj)) {
 				syslog(LOG_NOTICE,
-				       "Subject %s exceeds limits", p);
+				    "Subject %s exceeds limits", p);
 				exit(1);
 			}
 			if ((p = strchr(subj, '\n')))
@@ -351,7 +348,7 @@ junkmail(void)
 	 *
 	 * From site!site!SENDER%site.domain%site.domain@site.domain
 	 */
-	if (!(p = strchr(from, '%')))
+	if (!(p = strchr(from, '%'))) {
 		if (!(p = strchr(from, '@'))) {
 			if ((p = strrchr(from, '!')))
 				++p;
@@ -360,6 +357,7 @@ junkmail(void)
 			for (; *p; ++p)
 				;
 		}
+	}
 	len = p - from;
 	for (cur = ignore; cur->name; ++cur)
 		if (len >= cur->len &&
@@ -378,8 +376,8 @@ junkmail(void)
 int
 recent(void)
 {
-	DBT key, data;
 	time_t then, next;
+	DBT key, data;
 
 	/* get interval time */
 	key.data = VIT;
@@ -442,10 +440,9 @@ setreply(void)
 void
 sendmessage(char *myname)
 {
-	FILE *mfp, *sfp;
-	int i;
-	int pvect[2];
 	char buf[MAXLINE];
+	FILE *mfp, *sfp;
+	int pvect[2], i;
 
 	mfp = fopen(VMSG, "r");
 	if (mfp == NULL) {
@@ -476,7 +473,8 @@ sendmessage(char *myname)
 	fprintf(sfp, "To: %s\n", from);
 	while (fgets(buf, sizeof buf, mfp)) {
 		char *s = strstr(buf, "$SUBJECT");
-		if ( s ) {
+
+		if (s) {
 			*s = 0;
 			fputs(buf, sfp);
 			fputs(subj, sfp);
