@@ -12,7 +12,7 @@ Created: Wed Apr 19 17:41:39 1995 ylo
 */
 
 #include "includes.h"
-RCSID("$Id: cipher.c,v 1.5 1999/09/30 05:19:57 deraadt Exp $");
+RCSID("$Id: cipher.c,v 1.6 1999/09/30 05:53:04 deraadt Exp $");
 
 #include "ssh.h"
 #include "cipher.h"
@@ -124,11 +124,7 @@ static char *cipher_names[] =
 {
   "none",
   "no idea",
-#ifdef WITH_DES
-  "des",
-#else
   "no des",
-#endif
   "3des",
   "no tss",
   "no rc4",
@@ -143,9 +139,6 @@ unsigned int cipher_mask()
 {
   unsigned int mask = 0;
   mask |= 1 << SSH_CIPHER_NONE;
-#ifdef WITH_DES
-  mask |= 1 << SSH_CIPHER_DES;
-#endif
   mask |= 1 << SSH_CIPHER_3DES;	/* Mandatory */
   mask |= 1 << SSH_CIPHER_BLOWFISH;
   return mask;
@@ -214,18 +207,6 @@ void cipher_set_key(CipherContext *context, int cipher,
     case SSH_CIPHER_NONE:
       break;
 
-#ifdef WITH_DES
-    case SSH_CIPHER_DES:
-      /* Note: the least significant bit of each byte of key is parity, 
-	 and must be ignored by the implementation.  8 bytes of key are
-	 used. */
-      if (keylen < 8)
-	error("Key length %d is insufficient for DES.", keylen);
-      des_set_key((void*)padded, context->u.des.key);
-      memset(context->u.des.iv, 0, sizeof(context->u.des.iv));
-      break;
-#endif /* WITH_DES */
-
     case SSH_CIPHER_3DES:
       /* Note: the least significant bit of each byte of key is parity, 
 	 and must be ignored by the implementation.  16 bytes of key are
@@ -266,14 +247,6 @@ void cipher_encrypt(CipherContext *context, unsigned char *dest,
       memcpy(dest, src, len);
       break;
 
-#ifdef WITH_DES
-    case SSH_CIPHER_DES:
-      des_cbc_encrypt((void*)src, (void*)dest, len,
-		      context->u.des.key, &context->u.des.iv, DES_ENCRYPT);
-      memcpy(context->u.des.iv, dest + len - 8, 8);
-      break;
-#endif /* WITH_DES */
-
     case SSH_CIPHER_3DES:
       SSH_3CBC_ENCRYPT(context->u.des3.key1,
 		       context->u.des3.key2, &context->u.des3.iv2,
@@ -305,15 +278,6 @@ void cipher_decrypt(CipherContext *context, unsigned char *dest,
     case SSH_CIPHER_NONE:
       memcpy(dest, src, len);
       break;
-
-#ifdef WITH_DES
-    case SSH_CIPHER_DES:
-      detect_cbc_attack(src, len);
-      des_cbc_encrypt((void*)src, (void*)dest, len,
-		      context->u.des.key, &context->u.des.iv, DES_DECRYPT);
-      memcpy(context->u.des.iv, src + len - 8, 8);
-      break;
-#endif /* WITH_DES */
 
     case SSH_CIPHER_3DES:
       /* CRC-32 attack? */

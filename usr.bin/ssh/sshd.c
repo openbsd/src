@@ -18,7 +18,7 @@ agent connections.
 */
 
 #include "includes.h"
-RCSID("$Id: sshd.c,v 1.11 1999/09/30 05:03:05 deraadt Exp $");
+RCSID("$Id: sshd.c,v 1.12 1999/09/30 05:53:04 deraadt Exp $");
 
 #include "xmalloc.h"
 #include "rsa.h"
@@ -230,9 +230,7 @@ main(int ac, char **av)
   char remote_version[100]; /* Must be at least as big as buf. */
   char *comment;
   FILE *f;
-#ifdef SO_LINGER
   struct linger linger;
-#endif /* SO_LINGER */
 
   /* Save argv[0]. */
   saved_argv = av;
@@ -448,12 +446,10 @@ main(int ac, char **av)
 	 on close. */
       setsockopt(listen_sock, SOL_SOCKET, SO_REUSEADDR, (void *)&on, 
 		 sizeof(on));
-#ifdef SO_LINGER
       linger.l_onoff = 1;
       linger.l_linger = 5;
       setsockopt(listen_sock, SOL_SOCKET, SO_LINGER, (void *)&linger, 
 		 sizeof(linger));
-#endif /* SO_LINGER */
 
       /* Initialize the socket address. */
       memset(&sin, 0, sizeof(sin));
@@ -610,11 +606,9 @@ main(int ac, char **av)
      as fast as possible without waiting for anything.  If the connection
      is not a socket, these will do nothing. */
   /* setsockopt(sock_in, SOL_SOCKET, SO_REUSEADDR, (void *)&on, sizeof(on)); */
-#ifdef SO_LINGER
   linger.l_onoff = 1;
   linger.l_linger = 5;
   setsockopt(sock_in, SOL_SOCKET, SO_LINGER, (void *)&linger, sizeof(linger));
-#endif /* SO_LINGER */
 
   /* Register our connection.  This turns encryption off because we do not
      have a key. */

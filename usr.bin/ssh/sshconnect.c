@@ -15,7 +15,7 @@ login (authentication) dialog.
 */
 
 #include "includes.h"
-RCSID("$Id: sshconnect.c,v 1.7 1999/09/30 04:30:03 deraadt Exp $");
+RCSID("$Id: sshconnect.c,v 1.8 1999/09/30 05:53:04 deraadt Exp $");
 
 #include <ssl/bn.h>
 #include "xmalloc.h"
@@ -183,9 +183,7 @@ int ssh_connect(const char *host, int port, int connection_attempts,
   struct servent *sp;
   struct hostent *hp;
   struct sockaddr_in hostaddr;
-#ifdef SO_LINGER
   struct linger linger;
-#endif /* SO_LINGER */
 
   debug("ssh_connect: getuid %d geteuid %d anon %d", 
 	(int)getuid(), (int)geteuid(), anonymous);
@@ -315,14 +313,10 @@ int ssh_connect(const char *host, int port, int connection_attempts,
   /* Set socket options.  We would like the socket to disappear as soon as
      it has been closed for whatever reason. */
   /* setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (void *)&on, sizeof(on)); */
-#ifdef TCP_NODELAY
   setsockopt(sock, IPPROTO_TCP, TCP_NODELAY, (void *)&on, sizeof(on));
-#endif /* TCP_NODELAY */
-#ifdef SO_LINGER
   linger.l_onoff = 1;
   linger.l_linger = 5;
   setsockopt(sock, SOL_SOCKET, SO_LINGER, (void *)&linger, sizeof(linger));
-#endif /* SO_LINGER */
 
   /* Set the connection. */
   packet_set_connection(sock, sock);

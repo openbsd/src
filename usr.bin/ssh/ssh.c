@@ -18,7 +18,7 @@ Modified to work with SSL by Niels Provos <provos@citi.umich.edu> in Canada.
 */
 
 #include "includes.h"
-RCSID("$Id: ssh.c,v 1.17 1999/09/30 05:43:33 deraadt Exp $");
+RCSID("$Id: ssh.c,v 1.18 1999/09/30 05:53:04 deraadt Exp $");
 
 #include "xmalloc.h"
 #include "ssh.h"
@@ -58,13 +58,11 @@ Options options;
    in a configuration file. */
 char *host;
 
-#ifdef SIGWINCH
 /* Flag to indicate that we have received a window change signal which has
    not yet been processed.  This will cause a message indicating the new
    window size to be sent to the server a little later.  This is volatile
    because this is updated in a signal handler. */
 volatile int received_window_change_signal = 0;
-#endif /* SIGWINCH */
 
 /* Value of argv[0] (set in the main program). */
 char *av0;

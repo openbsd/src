@@ -14,7 +14,7 @@ Functions for returning the canonical host name of the remote site.
 */
 
 #include "includes.h"
-RCSID("$Id: canohost.c,v 1.2 1999/09/29 21:14:16 deraadt Exp $");
+RCSID("$Id: canohost.c,v 1.3 1999/09/30 05:53:04 deraadt Exp $");
 
 #include "packet.h"
 #include "xmalloc.h"
@@ -99,7 +99,6 @@ char *get_remote_hostname(int socket)
 
  check_ip_options:
   
-#ifdef IP_OPTIONS
   /* If IP options are supported, make sure there are none (log and clear
      them if any are found).  Basically we are worried about source routing;
      it can be used to pretend you are somebody (ip-address) you are not.
@@ -132,7 +131,6 @@ char *get_remote_hostname(int socket)
 			  inet_ntoa(from.sin_addr), text);
       }
   }
-#endif
 
   return xstrdup(name);
 }
