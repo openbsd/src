@@ -1,4 +1,4 @@
-#	$Id: Makefile.bsd-wrapper,v 1.11 1997/06/23 23:19:47 kstailey Exp $
+#	$Id: Makefile.bsd-wrapper,v 1.12 1997/07/24 15:14:01 kstailey Exp $
 
 INFODIR=	infodir=${DESTDIR}/usr/share/info
 INFOPATH=	DEFAULT_INFOPATH=/usr/local/info:/usr/share/info:.
@@ -8,6 +8,14 @@ MAN=		info/info.1
 SUBDIRS=	libtxi makeinfo info util
 GNUCFLAGS=	CFLAGS="$(CFLAGS)"
 FSFMAKE=	${MAKE} SUBDIRS="$(SUBDIRS)" $(GNUCFLAGS) $(INFODIR) $(INFOPATH)
+
+.include <bsd.own.mk>
+
+.if (${INSTALL_STRIP} == "-s")
+INST_PROG='/usr/bin/install -cs'
+.else
+INST_PROG='/usr/bin/install -c'
+.endif
 
 all:	config.status
 	${FSFMAKE} LDFLAGS=${LDSTATIC}
@@ -19,7 +27,7 @@ config: .FORCE
 	/bin/sh ${.CURDIR}/configure --prefix=/usr
 
 config.status:
-	/bin/sh ${.CURDIR}/configure --prefix=/usr
+	INSTALL_PROGRAM=$(INST_PROG) /bin/sh ${.CURDIR}/configure --prefix=/usr
 
 .ifdef NOMAN
 maninstall:
