@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.8 1997/07/23 23:31:11 niklas Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.9 2000/01/03 19:19:41 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Niklas Hallqvist.  All rights reserverd.
@@ -43,6 +43,7 @@
 #include <ddb/db_output.h>
 #include <ddb/db_run.h>
 #include <ddb/db_sym.h>
+#include <ddb/db_var.h>
 #include <ddb/db_variables.h>
 #include <ddb/db_extern.h>
 
@@ -170,6 +171,9 @@ kdb_trap(type, code, regs)
 		if (code == ALPHA_IF_CODE_BPT)
 			break;
 	default:
+		if (!db_panic)
+			return (0);
+
 		kdbprinttrap(type, code);
 		if (db_recover != 0) {
 			db_error("Faulted in DDB; continuing...\n");
