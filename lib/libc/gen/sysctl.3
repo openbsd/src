@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.7 1997/08/09 23:36:30 millert Exp $
+.\"	$OpenBSD: sysctl.3,v 1.8 1997/10/02 03:01:15 angelos Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -419,9 +419,27 @@ privilege may change the value.
 .It Sy Pa Second level name	Type	Changeable
 .It PF\_ROUTE	routing messages	no
 .It PF\_INET	internet values	yes
+.It PF\_ENCAP	IPsec values	yes
 .El
 .Pp
 .Bl -tag -width "123456"
+.It Li PF_ENCAP
+Get or set various global information about the IP security protocols.
+The third level name is the protocol.   
+The fourth level name is the variable name.
+The currently defined protocols and names are:
+.Bl -column "Protocol name" "Variable name" "integer" -offset indent
+.It Sy Pa Protocol name	Variable name	Type	Changeable
+.It encap	encdebug	integer	yes
+.El
+.Pp
+The variables are as follows:
+.Bl -tag -width "123456"
+.It Li encap.encdebug
+Returns 1 when error message reporting is enabled for the host.
+If the kernel has been compiled with the ENCDEBUG option,
+then debugging information will also be reported when this variable is set.
+.El
 .It Li PF_ROUTE
 Return the entire routing table or a subset of it.
 The data is returned as a sequence of routing messages (see
@@ -444,8 +462,8 @@ Get or set various global information about the internet protocols.
 The third level name is the protocol.
 The fourth level name is the variable name.
 The currently defined protocols and names are:
-.Bl -column "Protocol nameXXXXXX" "Variable nameXXX" "integerXXX" -offset indent
-.It Pa Protocol name	Variable name	Type	Changeable
+.Bl -column "Protocol name" "Variable name" "integer" -offset indent
+.It Sy Pa Protocol name	Variable name	Type	Changeable
 .It ip	forwarding	integer	yes
 .It ip	redirect	integer	yes
 .It ip	ttl	integer	yes
