@@ -1,10 +1,10 @@
-# 	$OpenBSD: files.cats,v 1.1 2004/02/01 05:12:54 drahn Exp $
+# 	$OpenBSD: files.cats,v 1.2 2004/02/01 14:53:23 miod Exp $
 #	$NetBSD: files.cats,v 1.27 2003/10/21 08:15:40 skrll Exp $
 #
 # CATS-specific configuration info
 #
 
-maxpartitions	8
+maxpartitions 16	
 maxusers 2 8 64
 
 define todservice {}
