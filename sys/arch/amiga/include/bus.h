@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.10 1999/09/09 21:28:14 espie Exp $	*/
+/*	$OpenBSD: bus.h,v 1.11 2001/10/16 16:03:21 jj Exp $	*/
 
 /*
  * Copyright (c) 1996 Niklas Hallqvist.
@@ -329,6 +329,13 @@ bus_space_free(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size)
 {
 	/* XXX Nothing here yet.  */
 }
+
+/*
+ * No 68k cpus require barriers, but we need to provide these for MI code.
+ */
+#define bus_space_barrier(t, h, o, l, f)
+#define BUS_SPACE_BARRIER_READ	0x1
+#define BUS_SPACE_BARRIER_WRITE 0x2
 
 /* let MI code be happy */
 typedef void *bus_dmamap_t;
