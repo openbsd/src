@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mdoc.samples.7,v 1.27 2000/05/19 18:19:46 aaron Exp $
+.\"	$OpenBSD: mdoc.samples.7,v 1.28 2001/02/25 07:06:20 aaron Exp $
 .\"	$NetBSD: mdoc.samples.7,v 1.5 1996/04/03 20:17:34 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -200,7 +200,6 @@ outlined as follows:
 .It
 .Tn "BUGS"
 .El
-.ne 7
 .Sh TROFF IDIOSYNCRASIES
 The
 .Nm \-mdoc
@@ -1076,8 +1075,7 @@ the
 call (it will close-parenthesis at that point).
 .Pp
 For functions that have more than eight parameters (and this
-is rare), the
-macros
+is rare), the macros
 .Ql \&.Fo
 (function open)
 and
@@ -1089,7 +1087,8 @@ may be used with
 to get around the limitation.
 For example:
 .Bd -literal -offset indent
-\&.Fo "int res_mkquery"
+\&.Ft int
+\&.Fo res_mkquery
 \&.Fa "int op"
 \&.Fa "char *dname"
 \&.Fa "int class"
@@ -1104,7 +1103,8 @@ For example:
 .Pp
 Produces:
 .Bd -filled -offset indent
-.Fo "int res_mkquery"
+.Ft int
+.Fo res_mkquery
 .Fa "int op"
 .Fa "char *dname"
 .Fa "int class"
@@ -1586,7 +1586,6 @@ and while they have nesting limitations, the one line quote macros
 can be used inside
 of them.
 .Pp
-.ne 5
 .Bd -filled -offset indent
 .Bl -column "quote " "close " "open " "Enclose Stringx(in XX) " XXstringXX
 .Em " Quote	 Close	 Open	Function	Result"
@@ -1642,7 +1641,6 @@ The
 callable, performs the analogous suffix function.
 .El
 .Pp
-.ne 4
 Examples of quoting:
 .Bl -tag -width ".Aq Pa ctype.h ) ,xxxxxxxx" -compact -offset indent
 .It Li \&.Aq
