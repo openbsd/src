@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdisk.c,v 1.14 1997/04/06 23:54:44 downsj Exp $	*/
+/*	$OpenBSD: fdisk.c,v 1.15 1997/04/11 10:01:31 deraadt Exp $	*/
 /*	$NetBSD: fdisk.c,v 1.11 1995/10/04 23:11:19 ghudson Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: fdisk.c,v 1.14 1997/04/06 23:54:44 downsj Exp $";
+static char rcsid[] = "$OpenBSD: fdisk.c,v 1.15 1997/04/11 10:01:31 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -65,7 +65,7 @@ int	cylindersectors;
 int	disksectors;
 
 struct mboot {
-	u_int8_t	padding[2];	/* force the longs to be long alligned */
+	u_int8_t	padding[2];	/* force the int's to be int aligned */
 	u_int8_t	bootinst[DOSPARTOFF];
 	struct		dos_partition parts[4];
 	u_int16_t	signature;
@@ -104,12 +104,14 @@ struct part_type {
 	{ 0x09, "AIX boot partition or Coherent"},
 	{ 0x0A, "OS/2 Boot Manager or OPUS"},
 	{ 0x0B, "Primary Windows 95 with 32 bit FAT"},
+	{ 0x0E, "Primary DOS with 16-bit FAT, CHS-mapped"},
 	{ 0x10, "OPUS"},
 	{ 0x12, "Compaq Diagnostics"},
 	{ 0x40, "VENIX 286"},
 	{ 0x50, "DM"},
 	{ 0x51, "DM"},
 	{ 0x52, "CP/M or Microport SysV/AT"},
+	{ 0x54, "Ontrack"},
 	{ 0x56, "GB"},
 	{ 0x61, "Speed"},
 	{ 0x63, "ISC, System V/386, GNU HURD or Mach"},
@@ -124,6 +126,7 @@ struct part_type {
 	{ 0x94, "Amoeba bad block table"},
 	{ 0xA5, "386BSD/FreeBSD/NetBSD"},
 	{ 0xA6, "OpenBSD"},
+	{ 0xA7, "NEXTSTEP"},
 	{ 0xB7, "BSDI BSD/386 filesystem"},
 	{ 0xB8, "BSDI BSD/386 swap"},
 	{ 0xDB, "Concurrent CPM or C.DOS or CTOS"},
@@ -150,7 +153,7 @@ void	change_active __P((int));
 void	get_params_to_use __P((void));
 void	dos __P((int, unsigned char *, unsigned char *, unsigned char *));
 int	open_disk __P((int));
-int	read_disk __P((int, void *));
+int	read_disk __P((u_int32_t, void *));
 int	write_disk __P((int, void *));
 int	get_params __P((void));
 int	read_s0 __P((void));
@@ -159,6 +162,7 @@ int	yesno __P((char *));
 void	decimal __P((char *, int *));
 int	type_match __P((const void *, const void *));
 char	*get_type __P((int));
+int	get_mapping __P((int, int *, int *, int *, int *));
 
 int
 main(argc, argv)
@@ -287,7 +291,7 @@ putshort(p, l)
 	*cp++ = l >> 8;
 }
 
-static inline unsigned long
+static inline u_int32_t
 getlong(p)
 	void *p;
 {
@@ -309,31 +313,84 @@ putlong(p, l)
 	*cp++ = l >> 24;
 }
 
+void
+leader(lead)
+	int lead;
+{
+	while (lead--)
+		printf(" ");
+}
+
+void
+print_partinfo(pp, lead)
+	struct dos_partition *pp;
+	int lead;
+{
+	leader(lead);
+	printf("sysid %d=0x%02x (%s)\n", pp->dp_typ, pp->dp_typ,
+	    get_type(pp->dp_typ));
+	if (DPCYL(pp->dp_scyl, pp->dp_esect) > 1023) {
+		leader(lead);
+		printf("Starts beyond 1023/0/1: BIOS cannot boot from here\n");
+	}
+	leader(lead);
+	printf("    start %d, size %d (%d MB), flag 0x%02x\n",
+	    getlong(&pp->dp_start), getlong(&pp->dp_size),
+	    getlong(&pp->dp_size) * 512 / (1024 * 1024), pp->dp_flag);
+	leader(lead);
+	printf("    beg: cylinder %4d, head %3d, sector %2d\n",
+	    DPCYL(pp->dp_scyl, pp->dp_ssect),
+	    pp->dp_shd, DPSECT(pp->dp_ssect));
+	leader(lead);
+	printf("    end: cylinder %4d, head %3d, sector %2d\n",
+	    DPCYL(pp->dp_ecyl, pp->dp_esect),
+	    pp->dp_ehd, DPSECT(pp->dp_esect));
+	if (pp->dp_typ == DOSPTYP_EXTEND) {
+		struct mboot data;
+		int off;
+		int i;
+
+		/*
+		 * XXX not positive if the extended partition label should
+		 * should be found at the dp_start or at dp_s{cyl,hd,sect}
+		 */
+#if 0
+		off = getlong(&pp->dp_start) - 1;
+#else
+		off = DPCYL(pp->dp_scyl, pp->dp_ssect) * dos_cylindersectors +
+		    pp->dp_shd * dos_sectors +
+		    DPSECT(pp->dp_ssect);
+#endif
+		if (read_disk(off, &data) == -1) {
+			leader(lead+4);
+			printf("uhm, disk read error...\n");
+		} else {
+			for (i = 0; i < 4; i++) {
+				leader(lead+4);
+				printf("Extended Partition %d: ", i);
+				pp = &data.parts[i];
+				if (!memcmp(pp, &mtpart, sizeof(*pp)))
+					printf("<UNUSED>\n");
+				else
+					print_partinfo(pp, lead+4);
+			}
+		}
+	}
+}
 
 void
 print_part(part)
 	int part;
 {
-	struct dos_partition *partp;
+	struct dos_partition *pp = &mboot.parts[part];
 
 	printf("MBR Partition %d: ", part);
-	partp = &mboot.parts[part];
-	if (!memcmp(partp, &mtpart, sizeof(struct dos_partition))) {
+	if (!memcmp(pp, &mtpart, sizeof(*pp)))
 		printf("<UNUSED>\n");
-		return;
-	}
-	printf("sysid %d=0x%02x (%s)\n", partp->dp_typ, partp->dp_typ,
-	    get_type(partp->dp_typ));
-	printf("    start %d, size %d (%d MB), flag 0x%02x\n",
-	    getlong(&partp->dp_start), getlong(&partp->dp_size),
-	    getlong(&partp->dp_size) * 512 / (1024 * 1024), partp->dp_flag);
-	printf("    beg: cylinder %4d, head %3d, sector %2d\n",
-	    DPCYL(partp->dp_scyl, partp->dp_ssect),
-	    partp->dp_shd, DPSECT(partp->dp_ssect));
-	printf("    end: cylinder %4d, head %3d, sector %2d\n",
-	    DPCYL(partp->dp_ecyl, partp->dp_esect),
-	    partp->dp_ehd, DPSECT(partp->dp_esect));
+	else
+		print_partinfo(pp, 0);
 }
+
 
 void
 init_sector0(start)
@@ -384,7 +441,7 @@ intuit_translated_geometry()
 {
 	int cylinders = -1, heads = -1, sectors = -1, i, j;
 	int c1, h1, s1, c2, h2, s2;
-	long a1, a2;
+	int a1, a2;
 	quad_t num, denom;
 
 	/* Try to deduce the number of heads from two different mappings. */
@@ -456,7 +513,7 @@ intuit_translated_geometry()
 int
 get_mapping(i, cylinder, head, sector, absolute)
 	int i, *cylinder, *head, *sector;
-	long *absolute;
+	int *absolute;
 {
 	struct dos_partition *part = &mboot.parts[i / 2];
 
@@ -555,7 +612,7 @@ print_params()
 		printf("Figures below won't work with BIOS for partitions not in cylinder 1\n");
 	printf("Parameters to be used for BIOS calculations are:\n");
 	printf("    cylinders=%d heads=%d sectors/track=%d\n",
-	    dos_cylinders, dos_heads, dos_sectors, dos_cylindersectors);
+	    dos_cylinders, dos_heads, dos_sectors);
 	printf("    sectors/cylinder=%d\n",
 	    dos_cylindersectors);
 }
@@ -658,7 +715,7 @@ open_disk(u_flag)
 
 int
 read_disk(sector, buf)
-	int sector;
+	u_int32_t sector;
 	void *buf;
 {
 	if (lseek(fd, (off_t)(sector * 512), 0) == -1)
@@ -730,6 +787,7 @@ write_s0()
 	flag = 0;
 	if (ioctl(fd, DIOCWLABEL, &flag) < 0)
 		warn("DIOCWLABEL");
+	return 0;
 }
 
 int
