@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_proc.c,v 1.22 2004/10/04 12:03:45 pedro Exp $	*/
+/*	$OpenBSD: kern_proc.c,v 1.23 2004/11/18 15:10:24 markus Exp $	*/
 /*	$NetBSD: kern_proc.c,v 1.14 1996/02/09 18:59:41 christos Exp $	*/
 
 /*
@@ -375,7 +375,7 @@ void
 proc_printit(struct proc *p, const char *modif, int (*pr)(const char *, ...))
 {
 	static const char *const pstat[] = {
-		"idle", "run", "sleep", "stop", "zombie", "dead"
+		"idle", "run", "sleep", "stop", "zombie", "dead", "onproc"
 	};
 	char pstbuf[5];
 	const char *pst = pstbuf;

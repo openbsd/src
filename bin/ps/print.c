@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.33 2004/09/14 23:45:14 deraadt Exp $	*/
+/*	$OpenBSD: print.c,v 1.34 2004/11/18 15:10:24 markus Exp $	*/
 /*	$NetBSD: print.c,v 1.27 1995/09/29 21:58:12 cgd Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-static char rcsid[] = "$OpenBSD: print.c,v 1.33 2004/09/14 23:45:14 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: print.c,v 1.34 2004/11/18 15:10:24 markus Exp $";
 #endif
 #endif /* not lint */
 
@@ -206,6 +206,7 @@ state(const struct kinfo_proc2 *kp, VARENT *ve)
 
 	case SRUN:
 	case SIDL:
+	case SONPROC:
 		*cp = 'R';
 		break;
 

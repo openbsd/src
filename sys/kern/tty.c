@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.66 2004/09/19 21:34:43 mickey Exp $	*/
+/*	$OpenBSD: tty.c,v 1.67 2004/11/18 15:10:24 markus Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -2146,7 +2146,8 @@ ttyinfo(tp)
  *	   we pick out just "short-term" sleepers (P_SINTR == 0).
  *	4) Further ties are broken by picking the highest pid.
  */
-#define ISRUN(p)	(((p)->p_stat == SRUN) || ((p)->p_stat == SIDL))
+#define ISRUN(p)	(((p)->p_stat == SRUN) || ((p)->p_stat == SIDL) || \
+			 ((p)->p_stat == SONPROC))
 #define TESTAB(a, b)    ((a)<<1 | (b))
 #define ONLYA   2
 #define ONLYB   1

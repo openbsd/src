@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc_compare.c,v 1.8 2004/01/08 18:14:51 millert Exp $	*/
+/*	$OpenBSD: proc_compare.c,v 1.9 2004/11/18 15:10:24 markus Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -33,7 +33,7 @@
 #if 0
 static char sccsid[] = "@(#)proc_compare.c	8.2 (Berkeley) 9/23/93";
 #else
-static char *rcsid = "$OpenBSD: proc_compare.c,v 1.8 2004/01/08 18:14:51 millert Exp $";
+static char *rcsid = "$OpenBSD: proc_compare.c,v 1.9 2004/11/18 15:10:24 markus Exp $";
 #endif
 #endif /* not lint */
 
@@ -62,7 +62,8 @@ static char *rcsid = "$OpenBSD: proc_compare.c,v 1.8 2004/01/08 18:14:51 millert
  * TODO - consider whether pctcpu should be used.
  */
 
-#define ISRUN(p)	(((p)->p_stat == SRUN) || ((p)->p_stat == SIDL))
+#define ISRUN(p)	(((p)->p_stat == SRUN) || ((p)->p_stat == SIDL) || \
+			 ((p)->p_stat == SONPROC))
 #define TESTAB(a, b)    ((a)<<1 | (b))
 #define ONLYA   2
 #define ONLYB   1
