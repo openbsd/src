@@ -1,4 +1,4 @@
-/*	$OpenBSD: bsd_fdintr.s,v 1.7 2002/04/28 03:51:19 art Exp $	*/
+/*	$OpenBSD: bsd_fdintr.s,v 1.8 2002/08/11 12:14:39 art Exp $	*/
 /*	$NetBSD: bsd_fdintr.s,v 1.11 1997/04/07 21:00:36 pk Exp $ */
 
 /*
@@ -36,6 +36,7 @@
 #include "assym.h"
 #include <machine/param.h>
 #include <machine/psl.h>
+#include <machine/asm.h>
 #include <sparc/sparc/intreg.h>
 #include <sparc/sparc/auxioreg.h>
 #include <sparc/sparc/vaddrs.h>
@@ -61,8 +62,8 @@
 #define FD_SET_SWINTR	FD_SET_SWINTR_4M
 #else
 #define FD_SET_SWINTR					\
-	sethi	%hi(_cputyp), %l5;			\
-	ld	[%l5 + %lo(_cputyp)], %l5;		\
+	sethi	%hi(_C_LABEL(cputyp)), %l5;		\
+	ld	[%l5 + %lo(_C_LABEL(cputyp))], %l5;	\
 	cmp	%l5, CPU_SUN4M;				\
 	be	8f;					\
 	FD_SET_SWINTR_4C;				\
@@ -107,8 +108,8 @@
 #define FD_DEASSERT_TC		FD_DEASSERT_TC_4M
 #else
 #define FD_ASSERT_TC					\
-	sethi	%hi(_cputyp), %l5;			\
-	ld	[%l5 + %lo(_cputyp)], %l5;		\
+	sethi	%hi(_C_LABEL(cputyp)), %l5;		\
+	ld	[%l5 + %lo(_C_LABEL(cputyp))], %l5;	\
 	cmp	%l5, CPU_SUN4M;				\
 	be	8f;					\
 	 nop;						\
@@ -148,34 +149,34 @@
 
 	.seg	"data"
 	.align	8
-	.global _fdciop
+	.global _C_LABEL(fdciop)
 /* A save haven for three precious registers */
 save_l:
 	.word	0
 	.word	0
 	.word	0
 /* Pointer to a `struct fdcio', set in fd.c */
-_fdciop:
+_C_LABEL(fdciop):
 	.word	0
 
 	.seg	"text"
 	.align	4
-	.global _fdchwintr
+	.global _C_LABEL(fdchwintr)
 
-_fdchwintr:
+_C_LABEL(fdchwintr):
 	set	save_l, %l7
 	std	%l0, [%l7]
 	st	%l2, [%l7 + 8]
 
 	! tally interrupt
-	sethi	%hi(_uvmexp+V_INTR), %l7
-	ld	[%l7 + %lo(_uvmexp+V_INTR)], %l6
+	sethi	%hi(_C_LABEL(uvmexp)+V_INTR), %l7
+	ld	[%l7 + %lo(_C_LABEL(uvmexp)+V_INTR)], %l6
 	inc	%l6
-	st	%l6, [%l7 + %lo(_uvmexp+V_INTR)]
+	st	%l6, [%l7 + %lo(_C_LABEL(uvmexp)+V_INTR)]
 
 	! load fdc, if it's NULL there's nothing to do: schedule soft interrupt
-	sethi	%hi(_fdciop), %l7
-	ld	[%l7 + %lo(_fdciop)], R_fdc
+	sethi	%hi(_C_LABEL(fdciop)), %l7
+	ld	[%l7 + %lo(_C_LABEL(fdciop))], R_fdc
 
 	! tally interrupt
 	ld	[R_fdc + FDC_EVCNT], %l6

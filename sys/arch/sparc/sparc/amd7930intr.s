@@ -1,4 +1,4 @@
-/*	$OpenBSD: amd7930intr.s,v 1.6 2002/04/28 03:51:19 art Exp $	*/
+/*	$OpenBSD: amd7930intr.s,v 1.7 2002/08/11 12:14:39 art Exp $	*/
 /*	$NetBSD: amd7930intr.s,v 1.10 1997/03/11 01:03:07 pk Exp $	*/
 /*
  * Copyright (c) 1995 Rolf Grossmann.
@@ -50,6 +50,7 @@
 #include <machine/param.h>
 #include <sparc/sparc/intreg.h>
 #include <machine/psl.h>
+#include <machine/asm.h>
 
 #define AUDIO_SET_SWINTR_4C				\
 	sethi	%hi(INTRREG_VA), %l5;			\
@@ -70,8 +71,8 @@
 #define AUDIO_SET_SWINTR	AUDIO_SET_SWINTR_4M
 #else
 #define AUDIO_SET_SWINTR				\
-	sethi	%hi(_cputyp), %l5;			\
-	ld	[%l5 + %lo(_cputyp)], %l5;		\
+	sethi	%hi(_C_LABEL(cputyp)), %l5;		\
+	ld	[%l5 + %lo(_C_LABEL(cputyp))], %l5;	\
 	cmp	%l5, CPU_SUN4M;				\
 	be	8f;					\
 	AUDIO_SET_SWINTR_4C;				\
@@ -92,20 +93,20 @@ savepc:
 
 	.seg	"text"
 	.align	4
-	.global _amd7930_trap
-	.global	_auiop
+	.global _C_LABEL(amd7930_trap)
+	.global	_C_LABEL(auiop)
 
-_amd7930_trap:
+_C_LABEL(amd7930_trap):
 	sethi	%hi(savepc), %l7
 	st	%l2, [%l7 + %lo(savepc)]
 
 	! tally interrupt
-	sethi	%hi(_uvmexp+V_INTR), %l7
-	ld	[%l7 + %lo(_uvmexp+V_INTR)], %l6
+	sethi	%hi(_C_LABEL(uvmexp)+V_INTR), %l7
+	ld	[%l7 + %lo(_C_LABEL(uvmexp)+V_INTR)], %l6
 	inc	%l6
-	st	%l6, [%l7 + %lo(_uvmexp+V_INTR)]
-	sethi	%hi(_auiop), %l7
-	ld	[%l7 + %lo(_auiop)], %l7
+	st	%l6, [%l7 + %lo(_C_LABEL(uvmexp)+V_INTR)]
+	sethi	%hi(_C_LABEL(auiop)), %l7
+	ld	[%l7 + %lo(_C_LABEL(auiop))], %l7
 
 	ld	[%l7 + AU_EVCNT], %l6
 	inc	%l6
