@@ -1,4 +1,4 @@
-/*	$OpenBSD: null_vfsops.c,v 1.8 1998/02/08 22:41:38 tholo Exp $	*/
+/*	$OpenBSD: null_vfsops.c,v 1.9 1998/08/06 23:38:39 csapuntz Exp $	*/
 /*	$NetBSD: null_vfsops.c,v 1.11 1996/05/10 22:50:56 jtk Exp $	*/
 
 /*
@@ -122,6 +122,11 @@ nullfs_mount(mp, path, data, ndp, p)
 
 	vrele(ndp->ni_dvp);
 	ndp->ni_dvp = NULL;
+
+	if (lowerrootvp->v_type != VDIR) {
+		vput(lowerrootvp);
+		return (EINVAL);
+	}
 
 	xmp = (struct null_mount *) malloc(sizeof(struct null_mount),
 				M_UFSMNT, M_WAITOK);	/* XXX */
