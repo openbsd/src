@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wxvar.h,v 1.3 2000/12/06 01:02:15 mjacob Exp $	*/
+/*	$OpenBSD: if_wxvar.h,v 1.4 2001/01/09 02:23:12 mjacob Exp $	*/
 /*                  
  * Copyright (c) 1999, Traakan Software
  * All rights reserved.
@@ -288,6 +288,7 @@ struct wxmdvar {
 	bus_space_handle_t	sh;		/* bus space handle */
 	struct ifmedia 		ifm;
 	struct wx_softc *	next;
+	int			locked;
 	int			spl;
 };
 #define	wx_dev		w.dev
@@ -308,8 +309,11 @@ struct wxmdvar {
 #define	VTIMEOUT(sc, func, arg, time)	timeout(func, arg, time)
 #define	UNTIMEOUT(f, arg, sc)		untimeout(f, arg)
 #define	INLINE				inline
-#define	WX_LOCK(_sc)			_sc->w.spl = splimp()
-#define	WX_UNLOCK(_sc)			splx(_sc->w.spl)
+#define	WX_LOCK(wx)	if (wx->w.locked++ == 0) wx->w.spl = splimp()
+#define	WX_UNLOCK(wx)	if (wx->w.locked) {				\
+				if (--wx->w.locked == 0)		\
+					splx(wx->w.spl);		\
+			}
 #define	WX_ILOCK(_sc)
 #define	WX_IUNLK(_sc)
 
