@@ -1,4 +1,4 @@
-/* $OpenBSD: res_random.c,v 1.3 1997/04/19 10:07:01 provos Exp $ */
+/* $OpenBSD: res_random.c,v 1.4 1997/04/23 22:37:50 provos Exp $ */
 
 /*
  * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
@@ -92,7 +92,7 @@ static long ru_reseed;
 static u_int32_t tmp;                /* Storage for unused random */
 static struct timeval tv;
 
-static u_int32_t pmod __P((u_int32_t, u_int32_t, u_int32_t));
+static u_int16_t pmod __P((u_int16_t, u_int16_t, u_int16_t));
 static void res_initid __P((void));
 
 /*
@@ -100,11 +100,11 @@ static void res_initid __P((void));
  * of 0 - (mod-1)
  */
 
-static u_int32_t
+static u_int16_t
 pmod(gen, exp, mod)
-	u_int32_t gen, exp, mod;
+	u_int16_t gen, exp, mod;
 {
-	u_int32_t s, t, u;
+	u_int16_t s, t, u;
 
 	s = 1;
 	t = gen;
