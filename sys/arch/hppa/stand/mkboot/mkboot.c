@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkboot.c,v 1.2 1998/07/13 02:11:29 millert Exp $	*/
+/*	$OpenBSD: mkboot.c,v 1.3 1998/07/27 15:41:08 mickey Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: mkboot.c,v 1.2 1998/07/13 02:11:29 millert Exp $";
+static char rcsid[] = "$OpenBSD: mkboot.c,v 1.3 1998/07/27 15:41:08 mickey Exp $";
 #endif /* not lint */
 #endif
 
@@ -61,7 +61,12 @@ static char rcsid[] = "$OpenBSD: mkboot.c,v 1.2 1998/07/13 02:11:29 millert Exp 
 #include <sys/exec_aout.h>
 #include <sys/exec_elf.h>
 
-#include "volhdr.h"
+#ifndef hppa
+/* hack for cross compile XXX */
+#include "../../include/lifvar.h"
+#else
+#include <machine/lifvar.h>
+#endif
 
 #include <stdio.h>
 #include <ctype.h>
@@ -71,17 +76,6 @@ void __dead usage __P((void));
 void bcddate __P((char *, char *));
 char *lifname __P((char *));
 int cksum __P((int, int *, int));
-
-#define LIF_NUMDIR	8
-
-#define LIF_VOLSTART	0
-#define LIF_VOLSIZE	sizeof(struct lifvol)
-#define LIF_DIRSTART	2048
-#define LIF_DIRSIZE	(LIF_NUMDIR * sizeof(struct lifdir))
-#define LIF_FILESTART	4096
-
-#define btolifs(b)	(((b) + (SECTSIZE - 1)) / SECTSIZE)
-#define lifstob(s)	((s) * SECTSIZE)
 
 char *to_file;
 int loadpoint, verbose;
@@ -139,7 +133,7 @@ main(argc, argv)
 
 	bzero(buf, sizeof(buf));
 	/* clear possibly unused directory entries */
-	strncpy(lifd[1].dir_name, "	     ", 10);
+	memset(lifd[1].dir_name, ' ', 10);
 	lifd[1].dir_type = -1;
 	lifd[1].dir_addr = 0;
 	lifd[1].dir_length = 0;
@@ -164,11 +158,11 @@ main(argc, argv)
 	argv += optind;
 	argc -= optind;
 	optind = 0;
-	for (pos = btolifs(LIF_FILESTART); optind < argc; optind++) {
+	for (pos = LIF_FILESTART; optind < argc; optind++) {
 
 		/* output bootfile */
-		lseek(to, lifstob(pos), 0);
-		lifd[optind].dir_addr = htobe32(pos);
+		lseek(to, pos, 0);
+		lifd[optind].dir_addr = htobe32(btolifs(pos));
 		n = btolifs(putfile(argv[optind], to));
 		if (lifv->ipl_entry == 0) {
 			lifv->ipl_entry = htobe32(loadpoint + entry);
@@ -358,10 +352,10 @@ char *
 lifname(str)
 	char *str;
 {
-	static char lname[10] = "SYS_XXXXXX";
+	static char lname[10] = "XXXXXXXXXX";
 	register int i;
 
-	for (i = 4; i < 9; i++) {
+	for (i = 0; i < 9; i++) {
 		if (islower(*str))
 			lname[i] = toupper(*str);
 		else if (isalnum(*str) || *str == '_')
