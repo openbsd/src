@@ -1,4 +1,4 @@
-/*	$OpenBSD: dma.c,v 1.1 2000/03/20 07:05:52 rahnds Exp $	*/
+/*	$OpenBSD: dma.c,v 1.2 2000/03/31 04:12:58 rahnds Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -92,16 +92,99 @@ _dmamap_destroy(v, map)
 	free(map, M_DEVBUF);
 }
 
+/*
+ * Common function for loading a DMA map with a linear buffer.  May
+ * be called by bus-specific DMA map load functions.
+ */
 int
-_dmamap_load(v, map, addr, size, p, flags)
-	void *v;
+_dmamap_load(t, map, buf, buflen, p, flags)
+	void * t;
 	bus_dmamap_t map;
-	void *addr;
-	bus_size_t size;
+	void *buf;
+	bus_size_t buflen;
 	struct proc *p;
 	int flags;
 {
-	panic("_dmamap_load: not implemented");
+	bus_size_t sgsize;
+	bus_addr_t curaddr, lastaddr, baddr, bmask;
+	caddr_t vaddr = buf;
+	int first, seg;
+	pmap_t pmap;
+
+	/*
+	 * Make sure that on error condition we return "no valid mappings".
+	 */
+	map->dm_nsegs = 0;
+	if (buflen > map->_dm_size)
+		return (EINVAL);
+
+	if (p != NULL)
+		pmap = p->p_vmspace->vm_map.pmap;
+	else
+		pmap = pmap_kernel();
+
+	lastaddr = ~0;		/* XXX gcc */
+	bmask  = ~(map->_dm_boundary - 1);
+
+	for (first = 1, seg = 0; buflen > 0; ) {
+		/*
+		 * Get the physical address for this segment.
+		 */
+		curaddr = (bus_addr_t)pmap_extract(pmap, (vm_offset_t)vaddr);
+
+		/*
+		 * Compute the segment size, and adjust counts.
+		 */
+		sgsize = NBPG - ((u_long)vaddr & PGOFSET);
+		if (buflen < sgsize)
+			sgsize = buflen;
+
+		/*
+		 * Make sure we don't cross any boundaries.
+		 */
+		if (map->_dm_boundary > 0) {
+			baddr = (curaddr + map->_dm_boundary) & bmask;
+			if (sgsize > (baddr - curaddr))
+				sgsize = (baddr - curaddr);
+		}
+
+		/*
+		 * Insert chunk into a segment, coalescing with
+		 * previous segment if possible.
+		 */
+		if (first) {
+			map->dm_segs[seg].ds_addr = curaddr;
+			map->dm_segs[seg].ds_len = sgsize;
+			first = 0;
+		} else {
+			if (curaddr == lastaddr &&
+			    (map->dm_segs[seg].ds_len + sgsize) <=
+			     map->_dm_maxsegsz &&
+			     (map->_dm_boundary == 0 ||
+			     (map->dm_segs[seg].ds_addr & bmask) ==
+			     (curaddr & bmask)))
+				map->dm_segs[seg].ds_len += sgsize;
+			else {
+				if (++seg >= map->_dm_segcnt)
+					break;
+				map->dm_segs[seg].ds_addr = curaddr;
+				map->dm_segs[seg].ds_len = sgsize;
+			}
+		}
+
+		lastaddr = curaddr + sgsize;
+		vaddr += sgsize;
+		buflen -= sgsize;
+	}
+
+	/*
+	 * Did we fit?
+	 */
+	if (buflen != 0)
+		return (EFBIG);		/* XXX better return value here? */
+
+	map->dm_nsegs = seg + 1;
+	return (0);
 }
 
 int
@@ -173,16 +256,20 @@ _dmamem_alloc(v, size, alignment, boundary, segs, nsegs, rsegs, flags)
 	va = uvm_pagealloc_contig(size, VM_MIN_KERNEL_ADDRESS,
 					VM_MAX_KERNEL_ADDRESS, NBPG);
 #else
+# if 0
 	vm_page_alloc_memory(size, VM_MIN_KERNEL_ADDRESS,
 		VM_MAX_KERNEL_ADDRESS,
 	    alignment, boundary, (void *)&va, nsegs, (flags & BUS_DMA_NOWAIT));
+# else
+	va = kmem_alloc_wait(phys_map, NBPG); /* XXX */
+# endif
 #endif
 	if (va == NULL)
 		return (ENOMEM);
 
 	segs[0].ds_addr = va;
 	segs[0].ds_len = size;
-	*rsegs = 1;
+	*rsegs = nsegs;
 
 #if 0
 	/* XXX for now */
