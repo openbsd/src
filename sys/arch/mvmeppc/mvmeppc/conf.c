@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.11 2002/05/16 21:11:17 miod Exp $ */
+/*	$OpenBSD: conf.c,v 1.12 2002/06/08 15:47:34 miod Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -34,11 +34,12 @@
  */
 #include <sys/param.h>
 #include <sys/buf.h>
-#include <sys/conf.h>
 #include <sys/ioctl.h>
 #include <sys/systm.h>
 #include <sys/tty.h>
 #include <sys/vnode.h>
+
+#include <machine/conf.h>
 
 #include "wd.h"
 bdev_decl(wd);
@@ -79,9 +80,6 @@ struct bdevsw bdevsw[] = {
 };
 int nblkdev = sizeof bdevsw / sizeof bdevsw[0];
 
-#define mmread	mmrw
-#define	mmwrite	mmrw
-cdev_decl(mm);
 #include "pty.h"
 
 #include "bugtty.h"
