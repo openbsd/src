@@ -1,4 +1,4 @@
-.\"	$NetBSD: gprof.1,v 1.5 1995/04/19 07:15:57 cgd Exp $
+.\"	$NetBSD: gprof.1,v 1.6 1995/11/21 22:24:55 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -213,6 +213,17 @@ and accumulated time).
 This is useful with the
 .Fl c
 option for discovering which routines were never called.
+.El
+.Sh ENVIRONMENT
+.Bl -tag -width PROFDIR
+.It Ev PROFDIR
+If the environmental variable
+.Ev PROFDIR
+is set, profiling information is placed in that directory in a file named
+.Pa pid.progname .
+If it is set to a null value, no profiling information is output.
+Otherwise, profiling information is placed in the file
+.Pa gmon.out .
 .El
 .Sh FILES
 .Bl -tag -width gmon.sum -compact
