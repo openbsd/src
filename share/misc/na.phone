@@ -1,4 +1,4 @@
-#	$OpenBSD: na.phone,v 1.13 2001/07/13 16:22:17 millert Exp $
+#	$OpenBSD: na.phone,v 1.14 2001/07/13 16:36:00 millert Exp $
 #	@(#)na.phone	8.1 (Berkeley) 6/8/93
 #
 # Area Code : City : State/Province : State/Province Abbrev.
@@ -37,6 +37,7 @@
 246::Barbados:BB
 250:Prince George:British Columbia:BC
 250:Victoria:British Columbia:BC
+267:Philadelphia:Pennsylvania:PA
 268::Antigua and Barbuda:AG
 281:Houston Cellular and Pagers:Texas:TX
 301:Bethesda:Maryland:MD
@@ -132,6 +133,9 @@
 441::Bermuda:BM
 443:Annapolis:Maryland:MD
 443:Baltimore:Maryland:MD
+445:Philadelphia:Pennsylvania:PA
+484:Allentown:Pennsylvania:PA
+484:Reading:Pennsylvania:PA
 501::Arkansas:AR
 502:Frankfort:Kentucky:KY
 502:Louisville:Kentucky:KY
@@ -182,6 +186,8 @@
 541:Pendleton:Oregon:OR
 561:Boca Raton:Florida:FL
 561:Sebastian:Florida:FL
+570:Scranton:Pennsylvania:PA
+570:Wikes-Barre:Pennsylvania:PA
 573:Jefferson City:Missouri:MO
 601::Mississippi:MS
 602:Phoenix (metro):Arizona:AZ
@@ -247,10 +253,8 @@
 716:Buffalo:New York:NY
 716:Niagara Falls:New York:NY
 716:Rochester:New York:NY
-717:Gettysburg:Pennsylvania:PA
 717:Harrisburg:Pennsylvania:PA
-717:Scranton:Pennsylvania:PA
-717:Wikes-Barre:Pennsylvania:PA
+717:Lancaster:Pennsylvania:PA
 718:Bronx:New York:NY
 718:Brooklyn:New York:NY
 718:Queens:New York:NY
@@ -264,6 +268,9 @@
 720:Boulder:Colorado:CO
 720:Denver:Colorado:CO
 720:Longmont:Colorado:CO
+724:New Castle:Pennsylvania:PA
+724:Uniontown:Pennsylvania:PA
+724:Washington:Pennsylvania:PA
 732::New Jersey:NJ
 757:Norfolk:Virginia:VI
 758::St Lucia:LC
@@ -309,6 +316,7 @@
 813:Tampa:Florida:FL
 814:Altoona:Pennsylvania:PA
 814:Erie:Pennsylvania:PA
+814:State College:Pennsylvania:PA
 815:Joliet:Illinois:IL
 815:La Salle:Illinois:IL
 815:Rock Island:Illinois:IL
@@ -323,11 +331,17 @@
 818:San Fernando:California:CA
 818:Van Nuys:California:CA
 819:Sherbrooke:Quebec:PQ
+835:Allentown:Pennsylvania:PA
+835:Reading:Pennsylvania:PA
 847:Arlington Heights:Illinois:IL
 860:Hartford:Connecticut:CT
 864:Greeville:South Carolina:SC
 864:Spartanburg:South Carolina:SC
 869::St Kitts and Nevis:KN
+878:New Castle:Pennsylvania:PA
+878:Pittsburgh:Pennsylvania:PA
+878:Uniontown:Pennsylvania:PA
+878:Washington:Pennsylvania:PA
 901:Memphis:Tennessee:TN
 902::Prince Edward Island:PE
 902::Nova Scotia:NS
