@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.127 1999/03/09 03:54:00 deraadt Exp $
+$OpenBSD: pcidevs,v 1.128 1999/03/09 04:18:27 deraadt Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -496,6 +496,7 @@ vendor ESSTECH		0x125d	ESS Technology Inc
 vendor ENSONIQ		0x1274	Ensoniq
 vendor NETAPP		0x1275	Network Appliance
 vendor ROCKWELL		0x127a	Rockwell Semiconductor Systems
+vendor LUXSONOR		0x1287	LuxSonor
 vendor TRITECH		0x1292	TriTech Microelectronics
 vendor KOFAX		0x1296	Kofax Image Products
 vendor RISCOM		0x12aa	RISCom
@@ -939,6 +940,9 @@ product LEADTEK S3_805		0x0000	S3 805
 /* Lite-On Communications */
 product LITEON	PNIC		0x0002	PNIC
 product LITEON	PNICII		0xc115	PNIC-II
+
+/* LuxSonor */
+product LUXSONOR LS242		0x0020	LS242 DVD Decoder
 
 /* Macronix */
 product MACRONIX MX98713	0x0512	PMAC 98713
