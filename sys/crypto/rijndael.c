@@ -1,4 +1,4 @@
-/*	$OpenBSD: rijndael.c,v 1.15 2004/02/08 00:45:15 deraadt Exp $ */
+/*	$OpenBSD: rijndael.c,v 1.16 2004/12/14 17:01:08 hshoexer Exp $ */
 
 /**
  * rijndael-alg-fst.c
@@ -246,7 +246,6 @@ static const u32 Te2[256] = {
     0xb0cb7bb0U, 0x54fca854U, 0xbbd66dbbU, 0x163a2c16U,
 };
 static const u32 Te3[256] = {
-
     0x6363a5c6U, 0x7c7c84f8U, 0x777799eeU, 0x7b7b8df6U,
     0xf2f20dffU, 0x6b6bbdd6U, 0x6f6fb1deU, 0xc5c55491U,
     0x30305060U, 0x01010302U, 0x6767a9ceU, 0x2b2b7d56U,
@@ -531,7 +530,6 @@ static const u32 Td2[256] = {
     0xf4cd65daU, 0xbed50605U, 0x621fd134U, 0xfe8ac4a6U,
     0x539d342eU, 0x55a0a2f3U, 0xe132058aU, 0xeb75a4f6U,
     0xec390b83U, 0xefaa4060U, 0x9f065e71U, 0x1051bd6eU,
-
     0x8af93e21U, 0x063d96ddU, 0x05aedd3eU, 0xbd464de6U,
     0x8db59154U, 0x5d0571c4U, 0xd46f0406U, 0x15ff6050U,
     0xfb241998U, 0xe997d6bdU, 0x43cc8940U, 0x9e7767d9U,
@@ -723,7 +721,9 @@ static const u32 rcon[] = {
  *
  * @return	the number of rounds for the given cipher key size.
  */
-int rijndaelKeySetupEnc(u32 rk[/*4*(Nr + 1)*/], const u8 cipherKey[], int keyBits) {
+int
+rijndaelKeySetupEnc(u32 rk[/*4*(Nr + 1)*/], const u8 cipherKey[], int keyBits)
+{
    	int i = 0;
 	u32 temp;
 
@@ -785,9 +785,9 @@ int rijndaelKeySetupEnc(u32 rk[/*4*(Nr + 1)*/], const u8 cipherKey[], int keyBit
 			rk[ 9] = rk[ 1] ^ rk[ 8];
 			rk[10] = rk[ 2] ^ rk[ 9];
 			rk[11] = rk[ 3] ^ rk[10];
-				if (++i == 7) {
-					return 14;
-				}
+			if (++i == 7) {
+				return 14;
+			}
 			temp = rk[11];
 			rk[12] = rk[ 4] ^
 				(Te4[(temp >> 24)       ] & 0xff000000) ^
@@ -809,7 +809,8 @@ int rijndaelKeySetupEnc(u32 rk[/*4*(Nr + 1)*/], const u8 cipherKey[], int keyBit
  * @return	the number of rounds for the given cipher key size.
  */
 int
-rijndaelKeySetupDec(u32 rk[/*4*(Nr + 1)*/], const u8 cipherKey[], int keyBits) {
+rijndaelKeySetupDec(u32 rk[/*4*(Nr + 1)*/], const u8 cipherKey[], int keyBits)
+{
 	int Nr, i, j;
 	u32 temp;
 
@@ -850,7 +851,10 @@ rijndaelKeySetupDec(u32 rk[/*4*(Nr + 1)*/], const u8 cipherKey[], int keyBits) {
 	return Nr;
 }
 
-static void rijndaelEncrypt(const u32 rk[/*4*(Nr + 1)*/], int Nr, const u8 pt[16], u8 ct[16]) {
+static void
+rijndaelEncrypt(const u32 rk[/*4*(Nr + 1)*/], int Nr, const u8 pt[16],
+    u8 ct[16])
+{
 	u32 s0, s1, s2, s3, t0, t1, t2, t3;
 #ifndef FULL_UNROLL
     int r;
@@ -1031,7 +1035,10 @@ static void rijndaelEncrypt(const u32 rk[/*4*(Nr + 1)*/], int Nr, const u8 pt[16
 	PUTU32(ct + 12, s3);
 }
 
-static void rijndaelDecrypt(const u32 rk[/*4*(Nr + 1)*/], int Nr, const u8 ct[16], u8 pt[16]) {
+static void
+rijndaelDecrypt(const u32 rk[/*4*(Nr + 1)*/], int Nr, const u8 ct[16],
+    u8 pt[16])
+{
 	u32 s0, s1, s2, s3, t0, t1, t2, t3;
 #ifndef FULL_UNROLL
     int r;
