@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.25 2000/09/25 09:41:02 provos Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.26 2000/09/26 01:02:25 angelos Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -529,7 +529,6 @@ icmp_reflect(m)
 	struct in_addr t;
 	struct mbuf *opts = 0;
 	int optlen = (ip->ip_hl << 2) - sizeof(struct ip);
-        struct ifnet *ifp;
 
 	if (!in_canforward(ip->ip_src) &&
 	    ((ip->ip_src.s_addr & IN_CLASSA_NET) !=
@@ -555,20 +554,34 @@ icmp_reflect(m)
 	icmpdst.sin_addr = t;
 	if (ia == (struct in_ifaddr *)0)
 		ia = ifatoia(ifaof_ifpforaddr(sintosa(&icmpdst),
-		    m->m_pkthdr.rcvif));
+					      m->m_pkthdr.rcvif));
 	/*
 	 * The following happens if the packet was not addressed to us,
-	 * and was received on an interface with no IP address.
+	 * and was received on an interface with no IP address (like an
+	 * enc interface).
 	 */
 	if (ia == (struct in_ifaddr *)0) {
-		for (ia = in_ifaddr.tqh_first; ia; ia = ia->ia_list.tqe_next) {
-                        struct in_addr addr = ia->ia_addr.sin_addr;
-                        INADDR_TO_IFP(addr, ifp);
-                        if ((ifp == NULL) || (ifp->if_flags & IFF_LOOPBACK))
-                                continue;
-                        break;
-                }
+	        struct sockaddr_in *dst;
+		struct route ro;
+
+		bzero((caddr_t) &ro, sizeof(ro));
+		dst = satosin(&ro.ro_dst);
+		dst->sin_family = AF_INET;
+		dst->sin_len = sizeof(*dst);
+		dst->sin_addr = t;
+
+		rtalloc(&ro);
+		if (ro.ro_rt == 0) 
+		{
+		    ipstat.ips_noroute++;
+		    goto done;
+		}
+
+		ia = ifatoia(ro.ro_rt->rt_ifa);
+		ro.ro_rt->rt_use++;
+                RTFREE(ro.ro_rt);
         }
+
 	t = ia->ia_addr.sin_addr;
 	ip->ip_src = t;
 	ip->ip_ttl = MAXTTL;
