@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.37 1997/04/14 05:39:14 millert Exp $
+#	$OpenBSD: GENERIC,v 1.38 1997/05/23 22:01:54 deraadt Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -127,7 +127,7 @@ fd*	at fdc? drive ?
 #mcd0	at isa? port 0x300 irq 10	# Mitsumi CD-ROM drives
 
 wdc0	at isa? port 0x1f0 irq 14	# ST506, ESDI, and IDE controllers
-#wdc1	at isa? port 0x170 irq 15
+wdc1	at isa? port 0x170 irq 15
 wd*	at wdc? drive ?
 
 atapibus* at wdc?
