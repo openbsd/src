@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.491 2002/03/06 21:09:07 nate Exp $
+	$OpenBSD: pcidevs,v 1.492 2002/03/15 00:06:06 millert Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -40,7 +40,7 @@
  *
  * There is a Vendor ID search engine available at:
  *
- *	http://www.pcisig.com/app/search/by_vendor_id/
+ *	http://www.pcisig.com/membership/vid_search/
  */
 
 /*
