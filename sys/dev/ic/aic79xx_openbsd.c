@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx_openbsd.c,v 1.5 2004/06/22 22:40:35 krw Exp $	*/
+/*	$OpenBSD: aic79xx_openbsd.c,v 1.6 2004/08/06 01:29:19 marco Exp $	*/
 /*
  * Bus independent OpenBSD shim for the aic79xx based Adaptec SCSI controllers
  *
@@ -44,6 +44,7 @@ __FBSDID("$FreeBSD: src/sys/dev/aic7xxx/aic79xx_osm.c,v 1.16 2003/12/17 00:02:09
 
 #include <dev/ic/aic79xx_openbsd.h>
 #include <dev/ic/aic79xx_inline.h>
+#include <dev/ic/aic79xx.h>
 
 #ifndef AHD_TMODE_ENABLE
 #define AHD_TMODE_ENABLE 0
@@ -748,3 +749,247 @@ ahd_adapter_req_set_xfer_mode(struct ahd_softc *ahd, struct scb *scb)
 
 	splx(s);
 }
+
+void
+ahd_timer_reset(ahd_timer_t *timer, u_int usec, ahd_callback_t *func, void *arg)
+{
+	callout_reset(timer, (usec * hz)/1000000, func, arg);
+}
+
+void
+ahd_scb_timer_reset(struct scb *scb, u_int usec)
+{
+	if (!(scb->xs->xs_control & XS_CTL_POLL)) {
+		callout_reset(&scb->xs->xs_callout,
+		    (usec * hz)/1000000, ahd_timeout, scb);
+	}
+}
+
+void
+ahd_flush_device_writes(struct ahd_softc *ahd)
+{
+	/* XXX Is this sufficient for all architectures??? */
+	ahd_inb(ahd, INTSTAT);
+}
+
+void
+ahd_lockinit(struct ahd_softc *ahd)
+{
+}
+
+void
+ahd_lock(struct ahd_softc *ahd, int *flags)
+{
+	*flags = splbio();
+}
+
+void
+ahd_unlock(struct ahd_softc *ahd, int *flags)
+{
+	splx(*flags);
+}
+
+/* Lock held during command compeletion to the upper layer */
+void
+ahd_done_lockinit(struct ahd_softc *ahd)
+{
+}
+
+void
+ahd_done_lock(struct ahd_softc *ahd, int *flags)
+{
+}
+
+void
+ahd_done_unlock(struct ahd_softc *ahd, int *flags)
+{
+}
+
+/* Lock held during ahd_list manipulation and ahd softc frees */
+void
+ahd_list_lockinit(void)
+{
+}
+
+void
+ahd_list_lock(int *flags)
+{
+}
+
+void
+ahd_list_unlock(int *flags)
+{
+}
+
+void ahd_set_transaction_status(struct scb *scb, uint32_t status)
+{
+	scb->xs->error = status;
+}
+
+void ahd_set_scsi_status(struct scb *scb, uint32_t status)
+{
+	scb->xs->xs_status = status;
+}
+
+uint32_t ahd_get_transaction_status(struct scb *scb)
+{
+	if (scb->xs->flags & ITSDONE)
+		return CAM_REQ_CMP;
+	else
+		return scb->xs->error;
+}
+
+uint32_t ahd_get_scsi_status(struct scb *scb)
+{
+	return (scb->xs->status);
+}
+
+void ahd_set_transaction_tag(struct scb *scb, int enabled, u_int type)
+{
+}
+
+u_long ahd_get_transfer_length(struct scb *scb)
+{
+	return (scb->xs->datalen);
+}
+
+int ahd_get_transfer_dir(struct scb *scb)
+{
+	return (scb->xs->flags & (SCSI_DATA_IN | SCSI_DATA_OUT));
+}
+
+void ahd_set_residual(struct scb *scb, u_long resid)
+{
+	scb->xs->resid = resid;
+}
+
+void ahd_set_sense_residual(struct scb *scb, u_long resid)
+{
+	scb->xs->resid = resid;
+}
+
+u_long ahd_get_residual(struct scb *scb)
+{
+	return (scb->xs->resid);
+}
+
+int ahd_perform_autosense(struct scb *scb)
+{
+	/* Return true for OpenBSD */
+	return (1);
+}
+
+uint32_t
+ahd_get_sense_bufsize(struct ahd_softc *ahd, struct scb *scb)
+{
+	return (sizeof(struct scsi_sense_data));
+}
+
+void
+ahd_freeze_simq(struct ahd_softc *ahd)
+{
+        /* do nothing for now */
+}
+
+void
+ahd_release_simq(struct ahd_softc *ahd)
+{
+        /* do nothing for now */
+}
+
+void
+ahd_freeze_scb(struct scb *scb)
+{
+	struct scsi_xfer *xs = scb->xs;
+	int target;
+
+	target = xs->sc_link->target;
+	if (!(scb->flags & SCB_FREEZE_QUEUE)) {
+		scb->flags |= SCB_FREEZE_QUEUE;
+	}
+}
+
+void
+ahd_platform_freeze_devq(struct ahd_softc *ahd, struct scb *scb)
+{
+}
+
+int
+ahd_platform_abort_scbs(struct ahd_softc *ahd, int target,
+			char channel, int lun, u_int tag,
+			role_t role, uint32_t status)
+{
+	return (0);
+}
+
+void
+ahd_platform_scb_free(struct ahd_softc *ahd, struct scb *scb)
+{
+	int s;
+
+	ahd_lock(ahd, &s);
+
+	if ((ahd->flags & AHD_RESOURCE_SHORTAGE) != 0 ||
+	    (scb->flags & SCB_RECOVERY_SCB) != 0) {
+		ahd->flags &= ~AHD_RESOURCE_SHORTAGE;
+	}
+
+	if (!cold) {
+		/* we are no longer in autoconf */
+		timeout_del(&scb->xs->stimeout);
+	}
+
+	ahd_unlock(ahd, &s);
+}
+
+uint32_t
+ahd_pci_read_config(ahd_dev_softc_t pci, int reg, int width)
+{
+	return (pci_conf_read(pci->pa_pc, pci->pa_tag, reg));
+}
+
+void
+ahd_pci_write_config(ahd_dev_softc_t pci, int reg, uint32_t value, int width)
+{
+	pci_conf_write(pci->pa_pc, pci->pa_tag, reg, value);
+}
+
+int
+ahd_get_pci_function(ahd_dev_softc_t pci)
+{
+	return (pci->pa_function);
+}
+
+int
+ahd_get_pci_slot(ahd_dev_softc_t pci)
+{
+	return (pci->pa_device);
+}
+
+
+int
+ahd_get_pci_bus(ahd_dev_softc_t pci)
+{
+	return (pci->pa_bus);
+}
+
+void
+ahd_print_path(struct ahd_softc *ahd, struct scb *scb)
+{
+	sc_print_addr(scb->xs->sc_link);
+}
+
+void
+ahd_platform_dump_card_state(struct ahd_softc *ahd)
+{
+	/* Nothing to do here for OpenBSD */
+	printf("FEATURES = 0x%x, FLAGS = 0x%x, CHIP = 0x%x BUGS =0x%x\n",
+		ahd->features, ahd->flags, ahd->chip, ahd->bugs);
+}
+
+void
+ahd_platform_flushwork(struct ahd_softc *ahd)
+{
+}
+
+

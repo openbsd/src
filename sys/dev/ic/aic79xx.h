@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx.h,v 1.4 2004/06/23 03:23:19 marco Exp $	*/
+/*	$OpenBSD: aic79xx.h,v 1.5 2004/08/06 01:29:19 marco Exp $	*/
 /*
  * Core definitions and data structures shareable across OS platforms.
  *
@@ -1375,16 +1375,10 @@ extern const int ahd_num_aic7770_devs;
 
 /*************************** Function Declarations ****************************/
 /******************************************************************************/
-void			ahd_reset_cmds_pending(struct ahd_softc *ahd);
-u_int			ahd_find_busy_tcl(struct ahd_softc *ahd, u_int tcl);
-void			ahd_busy_tcl(struct ahd_softc *ahd,
-				     u_int tcl, u_int busyid);
-static __inline void	ahd_unbusy_tcl(struct ahd_softc *ahd, u_int tcl);
-static __inline void
-ahd_unbusy_tcl(struct ahd_softc *ahd, u_int tcl)
-{
-	ahd_busy_tcl(ahd, tcl, SCB_LIST_NULL);
-}
+void	ahd_reset_cmds_pending(struct ahd_softc *ahd);
+u_int	ahd_find_busy_tcl(struct ahd_softc *ahd, u_int tcl);
+void	ahd_busy_tcl(struct ahd_softc *ahd, u_int tcl, u_int busyid);
+void	ahd_unbusy_tcl(struct ahd_softc *, u_int);
 
 /***************************** PCI Front End *********************************/
 const struct ahd_pci_identity * ahd_find_pci_device(pcireg_t, pcireg_t);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx_openbsd.h,v 1.3 2004/05/23 05:29:31 marco Exp $	*/
+/*	$OpenBSD: aic79xx_openbsd.h,v 1.4 2004/08/06 01:29:19 marco Exp $	*/
 /*
  * FreeBSD platform specific driver option settings, data structures,
  * function declarations and includes.
@@ -150,27 +150,14 @@ typedef struct timeout ahd_timer_t;
 
 /***************************** Timer Facilities *******************************/
 void ahd_timeout(void*);
+void ahd_timer_reset(ahd_timer_t *, u_int, ahd_callback_t *, void *);
+void ahd_scb_timer_reset(struct scb *, u_int);
 
 ahd_callback_t  ahd_reset_poll;
 ahd_callback_t  ahd_stat_timer;
 
 #define ahd_timer_init callout_init
 #define ahd_timer_stop callout_stop
-
-static __inline void
-ahd_timer_reset(ahd_timer_t *timer, u_int usec, ahd_callback_t *func, void *arg)
-{
-	callout_reset(timer, (usec * hz)/1000000, func, arg);
-}
-
-static __inline void
-ahd_scb_timer_reset(struct scb *scb, u_int usec)
-{
-	if (!(scb->xs->xs_control & XS_CTL_POLL)) {
-		callout_reset(&scb->xs->xs_callout,
-		    (usec * hz)/1000000, ahd_timeout, scb);
-	}
-}
 
 /*************************** Device Access ************************************/
 #define ahd_inb(ahd, port)					\
@@ -200,278 +187,60 @@ ahd_scb_timer_reset(struct scb *scb, u_int usec)
 			       (ahd)->bshs[(port) >> 8],	\
 			       (port & 0xFF), valp, count)
 
-static __inline void ahd_flush_device_writes(struct ahd_softc *);
-
-static __inline void
-ahd_flush_device_writes(struct ahd_softc *ahd)
-{
-	/* XXX Is this sufficient for all architectures??? */
-	ahd_inb(ahd, INTSTAT);
-}
+void ahd_flush_device_writes(struct ahd_softc *);
 
 /**************************** Locking Primitives ******************************/
 /* Lock protecting internal data structures */
-static __inline void ahd_lockinit(struct ahd_softc *);
-static __inline void ahd_lock(struct ahd_softc *, int *flags);
-static __inline void ahd_unlock(struct ahd_softc *, int *flags);
+void ahd_lockinit(struct ahd_softc *);
+void ahd_lock(struct ahd_softc *, int *flags);
+void ahd_unlock(struct ahd_softc *, int *flags);
 
 /* Lock held during command compeletion to the upper layer */
-static __inline void ahd_done_lockinit(struct ahd_softc *);
-static __inline void ahd_done_lock(struct ahd_softc *, int *flags);
-static __inline void ahd_done_unlock(struct ahd_softc *, int *flags);
+void ahd_done_lockinit(struct ahd_softc *);
+void ahd_done_lock(struct ahd_softc *, int *flags);
+void ahd_done_unlock(struct ahd_softc *, int *flags);
 
 /* Lock held during ahd_list manipulation and ahd softc frees */
-static __inline void ahd_list_lockinit(void);
-static __inline void ahd_list_lock(int *flags);
-static __inline void ahd_list_unlock(int *flags);
-
-static __inline void
-ahd_lockinit(struct ahd_softc *ahd)
-{
-}
-
-static __inline void
-ahd_lock(struct ahd_softc *ahd, int *flags)
-{
-	*flags = splbio();
-}
-
-static __inline void
-ahd_unlock(struct ahd_softc *ahd, int *flags)
-{
-	splx(*flags);
-}
-
-/* Lock held during command compeletion to the upper layer */
-static __inline void
-ahd_done_lockinit(struct ahd_softc *ahd)
-{
-}
-
-static __inline void
-ahd_done_lock(struct ahd_softc *ahd, int *flags)
-{
-}
-
-static __inline void
-ahd_done_unlock(struct ahd_softc *ahd, int *flags)
-{
-}
-
-/* Lock held during ahd_list manipulation and ahd softc frees */
-static __inline void
-ahd_list_lockinit(void)
-{
-}
-
-static __inline void
-ahd_list_lock(int *flags)
-{
-}
-
-static __inline void
-ahd_list_unlock(int *flags)
-{
-}
+void ahd_list_lockinit(void);
+void ahd_list_lock(int *flags);
+void ahd_list_unlock(int *flags);
 
 /****************************** OS Primitives *********************************/
 #define ahd_delay DELAY
 
 /************************** Transaction Operations ****************************/
-static __inline void ahd_set_transaction_status(struct scb *, uint32_t);
-static __inline void ahd_set_scsi_status(struct scb *, uint32_t);
-static __inline uint32_t ahd_get_transaction_status(struct scb *);
-static __inline uint32_t ahd_get_scsi_status(struct scb *);
-static __inline void ahd_set_transaction_tag(struct scb *, int, u_int);
-static __inline u_long ahd_get_transfer_length(struct scb *);
-static __inline int ahd_get_transfer_dir(struct scb *);
-static __inline void ahd_set_residual(struct scb *, u_long);
-static __inline void ahd_set_sense_residual(struct scb *, u_long);
-static __inline u_long ahd_get_residual(struct scb *);
-static __inline int ahd_perform_autosense(struct scb *);
-static __inline uint32_t ahd_get_sense_bufsize(struct ahd_softc*, struct scb*);
-static __inline void ahd_freeze_simq(struct ahd_softc *);
-static __inline void ahd_release_simq(struct ahd_softc *);
-static __inline void ahd_freeze_scb(struct scb *);
-static __inline void ahd_platform_freeze_devq(struct ahd_softc *, struct scb *);
-static __inline int  ahd_platform_abort_scbs(struct ahd_softc *, int,
+void ahd_set_transaction_status(struct scb *, uint32_t);
+void ahd_set_scsi_status(struct scb *, uint32_t);
+uint32_t ahd_get_transaction_status(struct scb *);
+uint32_t ahd_get_scsi_status(struct scb *);
+void ahd_set_transaction_tag(struct scb *, int, u_int);
+u_long ahd_get_transfer_length(struct scb *);
+int ahd_get_transfer_dir(struct scb *);
+void ahd_set_residual(struct scb *, u_long);
+void ahd_set_sense_residual(struct scb *, u_long);
+u_long ahd_get_residual(struct scb *);
+int ahd_perform_autosense(struct scb *);
+uint32_t ahd_get_sense_bufsize(struct ahd_softc*, struct scb*);
+void ahd_freeze_simq(struct ahd_softc *);
+void ahd_release_simq(struct ahd_softc *);
+void ahd_freeze_scb(struct scb *);
+void ahd_platform_freeze_devq(struct ahd_softc *, struct scb *);
+int  ahd_platform_abort_scbs(struct ahd_softc *, int,
 		    char, int, u_int, role_t, uint32_t);
-
-static __inline
-void ahd_set_transaction_status(struct scb *scb, uint32_t status)
-{
-	scb->xs->error = status;
-}
-
-static __inline
-void ahd_set_scsi_status(struct scb *scb, uint32_t status)
-{
-	scb->xs->xs_status = status;
-}
-
-static __inline
-uint32_t ahd_get_transaction_status(struct scb *scb)
-{
-	if (scb->xs->flags & ITSDONE)
-		return CAM_REQ_CMP;
-	else
-		return scb->xs->error;
-}
-
-static __inline
-uint32_t ahd_get_scsi_status(struct scb *scb)
-{
-	return (scb->xs->status);
-}
-
-static __inline
-void ahd_set_transaction_tag(struct scb *scb, int enabled, u_int type)
-{
-}
-
-static __inline
-u_long ahd_get_transfer_length(struct scb *scb)
-{
-	return (scb->xs->datalen);
-}
-
-static __inline
-int ahd_get_transfer_dir(struct scb *scb)
-{
-	return (scb->xs->flags & (SCSI_DATA_IN | SCSI_DATA_OUT));
-}
-
-static __inline
-void ahd_set_residual(struct scb *scb, u_long resid)
-{
-	scb->xs->resid = resid;
-}
-
-static __inline
-void ahd_set_sense_residual(struct scb *scb, u_long resid)
-{
-	scb->xs->resid = resid;
-}
-
-static __inline
-u_long ahd_get_residual(struct scb *scb)
-{
-	return (scb->xs->resid);
-}
-
-static __inline
-int ahd_perform_autosense(struct scb *scb)
-{
-	/* Return true for OpenBSD */
-	return (1);
-}
-
-static __inline uint32_t
-ahd_get_sense_bufsize(struct ahd_softc *ahd, struct scb *scb)
-{
-	return (sizeof(struct scsi_sense_data));
-}
-
-static __inline void
-ahd_freeze_simq(struct ahd_softc *ahd)
-{
-        /* do nothing for now */
-}
-
-static __inline void
-ahd_release_simq(struct ahd_softc *ahd)
-{
-        /* do nothing for now */
-}
-
-static __inline void
-ahd_freeze_scb(struct scb *scb)
-{
-	struct scsi_xfer *xs = scb->xs;
-	int target;
-
-	target = xs->sc_link->target;
-	if (!(scb->flags & SCB_FREEZE_QUEUE)) {
-		scb->flags |= SCB_FREEZE_QUEUE;
-	}
-}
-
-static __inline void
-ahd_platform_freeze_devq(struct ahd_softc *ahd, struct scb *scb)
-{
-}
-
-static __inline int
-ahd_platform_abort_scbs(struct ahd_softc *ahd, int target,
-			char channel, int lun, u_int tag,
-			role_t role, uint32_t status)
-{
-	return (0);
-}
-
-static __inline void
-ahd_platform_scb_free(struct ahd_softc *ahd, struct scb *scb)
-{
-	int s;
-
-	ahd_lock(ahd, &s);
-
-	if ((ahd->flags & AHD_RESOURCE_SHORTAGE) != 0 ||
-	    (scb->flags & SCB_RECOVERY_SCB) != 0) {
-		ahd->flags &= ~AHD_RESOURCE_SHORTAGE;
-	}
-
-	if (!cold) {
-		/* we are no longer in autoconf */
-		timeout_del(&scb->xs->stimeout);
-	}
-
-	ahd_unlock(ahd, &s);
-}
+void ahd_platform_scb_free(struct ahd_softc *, struct scb *);
 
 /********************************** PCI ***************************************/
-#if AHD_PCI_CONFIG > 0
-static __inline uint32_t ahd_pci_read_config(ahd_dev_softc_t, int, int);
-static __inline void	ahd_pci_write_config(ahd_dev_softc_t, int,
+/*#if AHD_PCI_CONFIG > 0*/
+uint32_t ahd_pci_read_config(ahd_dev_softc_t, int, int);
+void	ahd_pci_write_config(ahd_dev_softc_t, int,
 		uint32_t, int);
-static __inline int	ahd_get_pci_function(ahd_dev_softc_t);
-static __inline int	ahd_get_pci_slot(ahd_dev_softc_t);
-static __inline int	ahd_get_pci_bus(ahd_dev_softc_t);
+int	ahd_get_pci_function(ahd_dev_softc_t);
+int	ahd_get_pci_slot(ahd_dev_softc_t);
+int	ahd_get_pci_bus(ahd_dev_softc_t);
 
 int			ahd_pci_map_registers(struct ahd_softc *);
 int			ahd_pci_map_int(struct ahd_softc *);
-
-static __inline uint32_t
-ahd_pci_read_config(ahd_dev_softc_t pci, int reg, int width)
-{
-	return (pci_conf_read(pci->pa_pc, pci->pa_tag, reg));
-}
-
-static __inline void
-ahd_pci_write_config(ahd_dev_softc_t pci, int reg, uint32_t value, int width)
-{
-	pci_conf_write(pci->pa_pc, pci->pa_tag, reg, value);
-}
-
-static __inline int
-ahd_get_pci_function(ahd_dev_softc_t pci)
-{
-	return (pci->pa_function);
-}
-
-static __inline int
-ahd_get_pci_slot(ahd_dev_softc_t pci)
-{
-	return (pci->pa_device);
-}
-
-
-static __inline int
-ahd_get_pci_bus(ahd_dev_softc_t pci)
-{
-	return (pci->pa_bus);
-}
-#endif
+/*#endif*/
 
 typedef enum
 {
@@ -488,22 +257,9 @@ int aic7770_map_registers(struct ahd_softc *);
 int aic7770_map_int(struct ahd_softc *, int);
 
 /********************************* Debug **************************************/
-static __inline void	ahd_print_path(struct ahd_softc *, struct scb *);
-static __inline void	ahd_platform_dump_card_state(struct ahd_softc *ahd);
+void	ahd_print_path(struct ahd_softc *, struct scb *);
+void	ahd_platform_dump_card_state(struct ahd_softc *ahd);
 
-static __inline void
-ahd_print_path(struct ahd_softc *ahd, struct scb *scb)
-{
-	sc_print_addr(scb->xs->sc_link);
-}
-
-static __inline void
-ahd_platform_dump_card_state(struct ahd_softc *ahd)
-{
-	/* Nothing to do here for OpenBSD */
-	printf("FEATURES = 0x%x, FLAGS = 0x%x, CHIP = 0x%x BUGS =0x%x\n",
-		ahd->features, ahd->flags, ahd->chip, ahd->bugs);
-}
 /**************************** Transfer Settings *******************************/
 void	  ahd_notify_xfer_settings_change(struct ahd_softc *,
 					  struct ahd_devinfo *);
@@ -520,12 +276,7 @@ int	  ahd_detach(struct device *, int);
 
 /****************************** Interrupts ************************************/
 int			ahd_platform_intr(void *);
-static __inline void	ahd_platform_flushwork(struct ahd_softc *ahd);
-static __inline void
-ahd_platform_flushwork(struct ahd_softc *ahd)
-{
-}
-
+void	ahd_platform_flushwork(struct ahd_softc *ahd);
 /************************ Misc Function Declarations **************************/
 void	  ahd_done(struct ahd_softc *, struct scb *);
 void	  ahd_send_async(struct ahd_softc *, char /*channel*/,
