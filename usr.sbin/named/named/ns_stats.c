@@ -1,11 +1,11 @@
-/*	$OpenBSD: ns_stats.c,v 1.2 1997/03/12 10:42:36 downsj Exp $	*/
+/*	$OpenBSD: ns_stats.c,v 1.3 2000/06/29 01:52:49 deraadt Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 #if 0
 static char sccsid[] = "@(#)ns_stats.c	4.10 (Berkeley) 6/27/90";
 static char rcsid[] = "$From: ns_stats.c,v 8.8 1996/09/22 00:13:10 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: ns_stats.c,v 1.2 1997/03/12 10:42:36 downsj Exp $";
+static char rcsid[] = "$OpenBSD: ns_stats.c,v 1.3 2000/06/29 01:52:49 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -375,13 +375,13 @@ ns_logstats()
 				sprintf(buffer2, " %d=%lu", i, typestats[i]);
 			if (strlen(buffer) + strlen(buffer2) >
 			    sizeof(buffer) - 1) {
-				syslog(LOG_INFO, buffer);
+				syslog(LOG_INFO, "%s", buffer);
 				strcpy(buffer, header);
 			}
 			strcat(buffer, buffer2);
 		}
 	}
-	syslog(LOG_INFO, buffer);
+	syslog(LOG_INFO, "%s", buffer);
 
 	sprintf(header, "XSTATS %lu %lu", (u_long)timenow, (u_long)boottime);
 	strcpy(buffer, header);
@@ -389,12 +389,12 @@ ns_logstats()
 		sprintf(buffer2, " %s=%lu",
 			statNames[i]?statNames[i]:"?", (u_long)globalStats[i]);
 		if (strlen(buffer) + strlen(buffer2) > sizeof(buffer) - 1) {
-			syslog(LOG_INFO, buffer);
+			syslog(LOG_INFO, "%s", buffer);
 			strcpy(buffer, header);
 		}
 		strcat(buffer, buffer2);
 	}
-	syslog(LOG_INFO, buffer);
+	syslog(LOG_INFO, "%s, buffer);
 }
 
 #endif /*XSTATS*/
