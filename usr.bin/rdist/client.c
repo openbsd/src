@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.4 1996/07/25 05:31:00 millert Exp $	*/
+/*	$OpenBSD: client.c,v 1.5 1997/07/21 01:53:37 angelos Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -35,7 +35,7 @@
 
 #ifndef lint
 static char RCSid[] = 
-"$OpenBSD: client.c,v 1.4 1996/07/25 05:31:00 millert Exp $";
+"$OpenBSD: client.c,v 1.5 1997/07/21 01:53:37 angelos Exp $";
 
 static char sccsid[] = "@(#)client.c";
 
@@ -838,7 +838,7 @@ static int update(rname, opts, statp)
 	/*
 	 * Parse size
 	 */
-	size = strtol(cp, &cp, 10);
+	size = strtol(cp, (char **) &cp, 10);
 	if (*cp++ != ' ') {
 		error("update: size not delimited");
 		return(US_NOTHING);
@@ -847,7 +847,7 @@ static int update(rname, opts, statp)
 	/*
 	 * Parse mtime
 	 */
-	mtime = strtol(cp, &cp, 10);
+	mtime = strtol(cp, (char **) &cp, 10);
 	if (*cp++ != ' ') {
 		error("update: mtime not delimited");
 		return(US_NOTHING);
@@ -856,7 +856,7 @@ static int update(rname, opts, statp)
 	/*
 	 * Parse remote file mode
 	 */
-	rmode = strtol(cp, &cp, 8);
+	rmode = strtol(cp, (char **) &cp, 8);
 	if (cp && *cp)
 		++cp;
 
