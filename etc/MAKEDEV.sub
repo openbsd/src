@@ -1,4 +1,4 @@
-dnl	$OpenBSD: MAKEDEV.sub,v 1.8 2003/06/18 18:08:59 todd Exp $
+dnl	$OpenBSD: MAKEDEV.sub,v 1.9 2004/01/12 22:18:24 todd Exp $
 dnl
 dnl Copyright (c) 2001,2002,2003 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -66,8 +66,8 @@ dnl store a version string for 'this' file
 dnl
 dnl vers ( uniqueidstring, versionstring, subdir )
 dnl
-dnl example1: vers(__file__, {-$OpenBSD: MAKEDEV.sub,v 1.8 2003/06/18 18:08:59 todd Exp $-})
-dnl example2: vers(__file__, {-$OpenBSD: MAKEDEV.sub,v 1.8 2003/06/18 18:08:59 todd Exp $-}, etc.MACHINE)
+dnl example1: vers(__file__, {-$OpenBSD: MAKEDEV.sub,v 1.9 2004/01/12 22:18:24 todd Exp $-})
+dnl example2: vers(__file__, {-$OpenBSD: MAKEDEV.sub,v 1.9 2004/01/12 22:18:24 todd Exp $-}, etc.MACHINE)
 dnl
 dnl if subdir is defined, prepend it to the filename in the version string
 dnl
@@ -78,7 +78,7 @@ define({-vers-},
 dnl
 dnl Version info for this file:
 dnl
-vers(__file__, {-$OpenBSD: MAKEDEV.sub,v 1.8 2003/06/18 18:08:59 todd Exp $-})dnl
+vers(__file__, {-$OpenBSD: MAKEDEV.sub,v 1.9 2004/01/12 22:18:24 todd Exp $-})dnl
 dnl
 dnl
 define({-_addsubdir-},
@@ -222,7 +222,7 @@ define({-_mkdev-}, {-define($1_mkdev, {-$2{--}_beg{--}$3{--}_end-})-})dnl
 dnl
 dnl  define a major character device
 dnl             $1     $2      $3      $4
-dnl _mcdev(shortname, devpatt, devbase, devmajor)dnl
+dnl _mcdev(shortname, devpatt, devbase, devmajor [, group [ owner ] ])dnl
 dnl
 define({-_mcdev-}, {-define($1_mkdev, {-{-$2-}_beg{--}M $3$U c $4 $U{--}dnl
 ifelse($6, , ifelse($5, , , {- -}$5), {- -}ifelse($5, , 600, $5){- -}$6){--}_end-})-})dnl

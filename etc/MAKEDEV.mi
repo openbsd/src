@@ -1,6 +1,6 @@
 include(MAKEDEV.sub)dnl
 dnl
-vers(a, {-$OpenBSD: MAKEDEV.mi,v 1.63 2003/10/15 02:01:04 todd Exp $-})dnl
+vers(a, {-$OpenBSD: MAKEDEV.mi,v 1.64 2004/01/12 22:18:23 todd Exp $-})dnl
 dnl
 divert(1)dnl
 {-#-}
@@ -227,7 +227,7 @@ twrget(usb, uscan, uscanner, 0)dnl
 target(usb, uhid, 0, 1, 2, 3)dnl
 target(usb, ulpt, 0, 1)dnl
 target(usb, ugen, 0, 1)dnl
-target(usb, utty, 0, 1)dnl
+target(usb, ttyU, 0, 1)dnl
 dnl
 __devitem({-usbs-}, usbs, make USB devices)dnl
 _mkdev(usbs, usbs, {-dnl
@@ -446,8 +446,8 @@ __devitem(uhid, uhid*, Generic HID devices)dnl
 _mcdev({-uhid-}, uhid*, {-uhid-}, {-major_uhid_c-}, 660)dnl
 __devitem(ulpt, ulpt*, Printer devices)dnl
 _mcdev({-ulpt-}, ulpt*, {-ulpt-}, {-major_ulpt_c-}, 660)dnl
-__devitem(utty, utty*, Serial ports)dnl
-_mcdev({-utty-}, utty*, {-utty-}, {-major_utty_c-}, 660)dnl
+__devitem(ttyU, ttyU*, Serial ports)dnl
+_mcdev({-ttyU-}, ttyU*, {-ttyU-}, {-major_ttyU_c-}, 660, dialer uucp)dnl
 __devitem(urio, urio*, Diamond Multimedia Rio 500)dnl
 _mcdev({-urio-}, urio*, {-urio-}, {-major_urio_c-}, 660)dnl
 __devitem(uscan, uscanner*, Scanners)dnl
