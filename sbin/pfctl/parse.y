@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.126 2002/07/19 14:30:08 dhartmei Exp $	*/
+/*	$OpenBSD: parse.y,v 1.127 2002/07/19 21:00:25 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -133,7 +133,7 @@ int	yyparse(void);
 void	ipmask(struct pf_addr *, u_int8_t);
 void	expand_rdr(struct pf_rdr *, struct node_if *, struct node_proto *,
     struct node_host *, struct node_host *);
-void	expand_nat(struct pf_nat *, struct node_if *, struct node_proto *, 
+void	expand_nat(struct pf_nat *, struct node_if *, struct node_proto *,
     struct node_host *, struct node_port *,
     struct node_host *, struct node_port *);
 void	expand_label_addr(const char *, char *, u_int8_t, struct node_host *);
@@ -2626,7 +2626,7 @@ ifa_load(void)
 			    sizeof(struct in6_addr));
 			n->ifindex = ((struct sockaddr_in6 *)
 			    ifa->ifa_addr)->sin6_scope_id;
-		} 
+		}
 		if ((n->ifname = strdup(ifa->ifa_name)) == NULL) {
 			yyerror("malloc failed");
 			exit(1);
@@ -2645,7 +2645,7 @@ ifa_exists(char *ifa_name)
 
 	if (iftab == NULL)
 		ifa_load();
-	
+
 	for (n = iftab; n; n = n->next) {
 		if (n->af == AF_LINK && !strncmp(n->ifname, ifa_name, IFNAMSIZ))
 			return(1);
