@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.15 1996/11/05 04:49:16 tholo Exp $	*/
+/*	$OpenBSD: tty.c,v 1.16 1996/11/06 08:37:39 deraadt Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -264,19 +264,23 @@ ttyinput(c, tp)
 				c = cc[VINTR];
 			else if (ISSET(iflag, PARMRK))
 				goto parmrk;
-		} else if ((ISSET(error, TTY_PE) &&
-			    ISSET(iflag, INPCK)) || ISSET(error, TTY_FE)) {
+		} else if ((ISSET(error, TTY_PE) && ISSET(iflag, INPCK)) ||
+		    ISSET(error, TTY_FE)) {
 			if (ISSET(iflag, IGNPAR))
 				goto endcase;
 			else if (ISSET(iflag, PARMRK)) {
 parmrk:				(void)putc(0377 | TTY_QUOTE, &tp->t_rawq);
-				(void)putc(0 | TTY_QUOTE, &tp->t_rawq);
+				if (ISSET(iflag, ISTRIP) || c != 0377)
+					(void)putc(0 | TTY_QUOTE, &tp->t_rawq);
 				(void)putc(c | TTY_QUOTE, &tp->t_rawq);
 				goto endcase;
 			} else
 				c = 0;
 		}
 	}
+	if (c == 0377 && !ISSET(iflag, ISTRIP) && ISSET(iflag, PARMRK))
+		goto parmrk;
+
 	/*
 	 * In tandem mode, check high water mark.
 	 */
