@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.h,v 1.7 2002/07/23 23:56:31 mickey Exp $ */
+/*	$OpenBSD: syscall.h,v 1.8 2002/07/24 04:00:44 deraadt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -65,7 +65,7 @@ _dl_exit (int status)
 }
 
 extern inline int
-_dl_open (const char* addr, int flags)
+_dl_open (const char* addr, unsigned int flags)
 {
 	register int status __asm__ ("$2");
 
@@ -99,10 +99,10 @@ _dl_close (int fd)
 	return status;
 }
 
-extern inline ssize_t
-_dl_write (int fd, const char* buf, size_t len)
+extern inline int
+_dl_write (int fd, const char* buf, int len)
 {
-	register ssize_t status __asm__ ("$2");
+	register int status __asm__ ("$2");
 
 	__asm__ volatile ("move  $4,%2\n\t"
 	    "move  $5,%3\n\t"
@@ -118,10 +118,10 @@ _dl_write (int fd, const char* buf, size_t len)
 	return status;
 }
 
-extern inline ssize_t
-_dl_read (int fd, const char* buf, size_t len)
+extern inline int
+_dl_read (int fd, const char* buf, int len)
 {
-	register ssize_t status __asm__ ("$2");
+	register int status __asm__ ("$2");
 
 	__asm__ volatile ("move  $4,%2\n\t"
 	    "move  $5,%3\n\t"
@@ -137,10 +137,11 @@ _dl_read (int fd, const char* buf, size_t len)
 	return status;
 }
 
-extern inline void *
-_dl_mmap (void *addr, size_t size, int prot, int flags, int fd, off_t f_offset)
+extern inline int
+_dl_mmap (void *addr, unsigned int size, unsigned int prot,
+    unsigned int flags, int fd, unsigned int f_offset)
 {
-	register void * malloc_buffer __asm__ ("$2");
+	register int malloc_buffer __asm__ ("$2");
 
 	__asm__ volatile ("addiu $29,-40\n\t"
 	    "move  $6,%2\n\t"
@@ -174,7 +175,7 @@ _dl_mmap (void *addr, size_t size, int prot, int flags, int fd, off_t f_offset)
 }
 
 extern inline int
-_dl_munmap (const void* addr, size_t len)
+_dl_munmap (const void* addr, unsigned int len)
 {
 	register int status __asm__ ("$2");
 
@@ -192,7 +193,7 @@ _dl_munmap (const void* addr, size_t len)
 }
 
 extern inline int
-_dl_mprotect (const void *addr, size_t size, int prot)
+_dl_mprotect (const void *addr, int size, int prot)
 {
 	register int status __asm__ ("$2");
 

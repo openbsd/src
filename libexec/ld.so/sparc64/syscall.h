@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.h,v 1.8 2002/07/24 01:05:11 deraadt Exp $ */
+/*	$OpenBSD: syscall.h,v 1.9 2002/07/24 04:00:45 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001 Niklas Hallqvist
@@ -48,12 +48,12 @@ int	_dl_close(int);
 int	_dl_exit(int);
 int	_dl_issetugid(void);
 long	_dl__syscall(quad_t, ...);
-int	_dl_mprotect(const void *, size_t, int);
-int	_dl_munmap(const void*, size_t);
-int	_dl_open(const char*, int);
-ssize_t	_dl_read(int, const char*, size_t);
+int	_dl_mprotect(const void *, int, int);
+int	_dl_munmap(const void*, unsigned int);
+int	_dl_open(const char*, unsigned int);
+int	_dl_read(int, const char*, int);
 int	_dl_stat(const char *, struct stat *);
-ssize_t	_dl_write(int, const char*, size_t);
+int	_dl_write(int, const char*, int);
 int	_dl_fstat(int, struct stat *);
 int	_dl_fcntl(int, int, ...);
 int	_dl_getdirentries(int, char*, int, long *);
@@ -61,7 +61,7 @@ int	_dl_getdirentries(int, char*, int, long *);
 static inline off_t
 _dl_lseek(int fildes, off_t offset, int whence)
 {
-	return _dl__syscall((quad_t)SYS_lseek, fildes, 0, offset, whence);
+        return _dl__syscall((quad_t)SYS_lseek, fildes, 0, offset, whence);
 }
 
 #endif /*__DL_SYSCALL_H__*/

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.c,v 1.2 2002/07/24 01:05:11 deraadt Exp $	*/
+/*	$OpenBSD: dir.c,v 1.3 2002/07/24 04:00:44 deraadt Exp $	*/
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -83,7 +83,7 @@ _dl_opendir(name)
 	 * If the machine's page size is an exact multiple of DIRBLKSIZ,
 	 * use a buffer that is cluster boundary aligned.
 	 * Hopefully this can be a big win someday by allowing page trades
-	 * to user space to be done by getdirentries()
+	 * to user space to be done by getdirentries() 
 	 * - not done in ld.so.
 	 */
 	incr = DIRBLKSIZ;
@@ -190,7 +190,7 @@ static char rcsid[] = "$ telldir.c,v 1.2 1996/08/19 08:26:35 tholo Exp $";
 
 /*
  * One of these structures is malloced to describe the current directory
- * position each time telldir is called. It records the current magic
+ * position each time telldir is called. It records the current magic 
  * cookie returned by getdirentries and the offset within the buffer
  * associated with that return value.
  */
