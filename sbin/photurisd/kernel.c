@@ -1,4 +1,4 @@
-/*	$OpenBSD: kernel.c,v 1.26 2002/06/10 19:58:20 espie Exp $	*/
+/*	$OpenBSD: kernel.c,v 1.27 2002/08/08 20:17:34 aaron Exp $	*/
 
 /*
  * Copyright 1997-2000 Niels Provos <provos@citi.umich.edu>
@@ -41,7 +41,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: kernel.c,v 1.26 2002/06/10 19:58:20 espie Exp $";
+static char rcsid[] = "$OpenBSD: kernel.c,v 1.27 2002/08/08 20:17:34 aaron Exp $";
 #endif
 
 #include <time.h>
@@ -313,7 +313,7 @@ kernel_queue_msg(struct sadb_msg *smsg)
 	LOG_DBG((LOG_KERNEL, 50, "%s: queuing message type %d",
 		__func__, smsg->sadb_msg_type));
 
-	pfmsg = malloc(sizeof(pfmsg));
+	pfmsg = malloc(sizeof(*pfmsg));
 	if (pfmsg == NULL) {
 		log_error("%s: malloc", __func__);
 		return;
