@@ -1,4 +1,4 @@
-.\"	$OpenBSD: date.1,v 1.11 1998/06/09 07:14:13 deraadt Exp $
+.\"	$OpenBSD: date.1,v 1.12 1998/09/01 03:39:35 pjanzen Exp $
 .\"	$NetBSD: date.1,v 1.12 1996/03/12 04:32:37 phil Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
@@ -76,12 +76,12 @@ is used to synchronize the clocks on groups of machines.
 By default, if
 .Xr timed 8
 is running,
-.Nm date
+.Nm
 will set the time on all of the machines in the local group.
 The
 .Fl n
 option stops
-.Nm date
+.Nm
 from setting the time for other than the current machine.
 .It Fl r Ar seconds
 Print out (in specified format) the date and time represented by
@@ -97,7 +97,7 @@ by future calls to
 .Xr gettimeofday 2 .
 .It Fl u
 Display or set the date in
-.Tn UCT
+.Tn UTC
 (universal) time.
 .El
 .Pp
@@ -205,19 +205,19 @@ Occasionally, when
 synchronizes the time on many hosts, the setting of a new time value may
 require more than a few seconds.
 On these occasions,
-.Nm date
+.Nm
 prints:
 .Ql Network time being set .
 The message
 .Ql Communication error with timed
 occurs when the communication
 between
-.Nm date
+.Nm
 and
 .Xr timed 8
 fails.
 .Sh STANDARDS
 The
-.Nm date
+.Nm
 utility is expected to be compatible with
 .St -p1003.2 .
