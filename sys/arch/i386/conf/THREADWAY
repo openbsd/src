@@ -1,7 +1,7 @@
 #
 #	THREADWAY: threadway.teeny.org
 #
-#	$OpenBSD: THREADWAY,v 1.18 1997/06/08 19:14:03 downsj Exp $
+#	$OpenBSD: THREADWAY,v 1.19 1997/09/02 04:11:25 downsj Exp $
 #
 
 machine		i386
@@ -9,7 +9,7 @@ option		I586_CPU
 
 option		XSERVER
 option		EXTMEM_SIZE=56320
-option		PCVT_USL_VT_COMPAT=1,PCVT_SCREENSAVER=1,PCVT_PRETTYSCRNS=0
+option		PCVT_SCREENSAVER=1,PCVT_PRETTYSCRNS=0
 option		NMBCLUSTERS=512
 
 maxusers	32
@@ -29,7 +29,6 @@ option		SYSVSEM
 option		SYSVSHM
 #option		SHMMAXPGS=1024
 
-option		COMPAT_NOMID
 option		COMPAT_09
 option		COMPAT_10
 option		COMPAT_11
@@ -40,6 +39,7 @@ option		COMPAT_SVR4
 option		COMPAT_IBCS2
 option		COMPAT_LINUX
 option		COMPAT_FREEBSD
+option		COMPAT_BSDOS
 
 option		BOOT_CONFIG
 
@@ -66,6 +66,7 @@ option		UMAPFS
 option		UNION
 
 option		INET
+option		IPSEC
 
 config		bsd root on wd0 swap on wd0 and wd1 and wd2
 
@@ -106,6 +107,8 @@ ch*	at scsibus? target ? lun ?	# SCSI autochangers
 fdc0	at isa? port 0x3f0 irq 6 drq 2
 fd*	at fdc? drive ?
 
+#cmdpci*	at pci? dev ? function ?
+
 wdc0	at isa? port 0x1f0 irq 14
 wdc1	at isa? port 0x170 irq 15
 wd*	at wdc? drive ?
@@ -117,6 +120,7 @@ acd*	at atapibus? drive?
 pseudo-device	loop	1
 pseudo-device	bpfilter 8
 pseudo-device	tun	2
+pseudo-device	enc	4
 
 pseudo-device	pty	64
 pseudo-device	vnd	8

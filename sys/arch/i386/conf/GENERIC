@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.42 1997/08/25 05:28:05 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.43 1997/09/02 04:11:22 downsj Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -27,6 +27,7 @@ option		COMPAT_SVR4	# binary compatibility with SVR4
 option		COMPAT_IBCS2	# binary compatibility with SCO and ISC
 option		COMPAT_LINUX	# binary compatibility with Linux
 option		COMPAT_FREEBSD	# binary compatibility with FreeBSD
+option		COMPAT_BSDOS	# binary compatibility with BSD/OS
 
 maxusers	32		# estimated number of users
 

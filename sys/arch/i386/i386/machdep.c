@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.45 1997/04/17 03:44:50 tholo Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.46 1997/09/02 04:10:19 downsj Exp $	*/
 /*	$NetBSD: machdep.c,v 1.202 1996/05/18 15:54:59 christos Exp $	*/
 
 /*-
@@ -176,8 +176,8 @@ void	dumpsys __P((void));
 void	identifycpu __P((void));
 void	init386 __P((vm_offset_t));
 void	consinit __P((void));
-#ifdef COMPAT_NOMID
-static int exec_nomid	__P((struct proc *, struct exec_package *));
+#ifdef COMPAT_BSDOS
+static int exec_bsdos	__P((struct proc *, struct exec_package *));
 #endif
 
 int	bus_mem_add_mapping __P((bus_addr_t, bus_size_t,
@@ -1362,9 +1362,9 @@ _remque(v)
 	elem->q_prev = 0;
 }
 
-#ifdef COMPAT_NOMID
+#ifdef COMPAT_BSDOS
 static int
-exec_nomid(p, epp)
+exec_bsdos(p, epp)
 	struct proc *p;
 	struct exec_package *epp;
 {
@@ -1436,7 +1436,7 @@ exec_nomid(p, epp)
  * understand and, if so, set up the vmcmds for it.
  *
  * On the i386, old (386bsd) ZMAGIC binaries and BSDI QMAGIC binaries
- * if COMPAT_NOMID is given as a kernel option.
+ * if COMPAT_BSDOS is given as a kernel option.
  */
 int
 cpu_exec_aout_makecmds(p, epp)
@@ -1445,10 +1445,10 @@ cpu_exec_aout_makecmds(p, epp)
 {
 	int error = ENOEXEC;
 
-#ifdef COMPAT_NOMID
-	if ((error = exec_nomid(p, epp)) == 0)
+#ifdef COMPAT_BSDOS
+	if ((error = exec_bsdos(p, epp)) == 0)
 		return error;
-#endif /* ! COMPAT_NOMID */
+#endif /* ! COMPAT_BSDOS */
 
 	return error;
 }

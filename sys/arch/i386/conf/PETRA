@@ -1,4 +1,4 @@
-#	$OpenBSD: PETRA,v 1.4 1997/08/07 09:05:49 niklas Exp $
+#	$OpenBSD: PETRA,v 1.5 1997/09/02 04:11:24 downsj Exp $
 #
 #	PETRA -- everything that's currently supported with certain
 #		 changes for Applitron's fileserver petra, a 128 MB
@@ -37,6 +37,7 @@ option		COMPAT_SVR4_NCR # 		"		 (NCR variant)
 option		COMPAT_IBCS2	# binary compatibility with SCO and ISC
 option		COMPAT_LINUX	# binary compatibility with Linux
 option		COMPAT_FREEBSD	# binary compatibility with FreeBSD
+option		COMPAT_BSDOS	# binary compatibility with BSD/OS
 
 maxusers	32		# estimated number of users
 

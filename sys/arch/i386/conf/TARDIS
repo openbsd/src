@@ -6,7 +6,7 @@
 #	Please note that before you use this kernel config as an example for
 #	anything, it currently requires special boot blocks.
 #
-#	$OpenBSD: TARDIS,v 1.2 1997/06/23 19:05:39 kstailey Exp $
+#	$OpenBSD: TARDIS,v 1.3 1997/09/02 04:11:24 downsj Exp $
 #
 
 machine		i386
@@ -31,7 +31,6 @@ option		SYSVSEM
 option		SYSVSHM
 option		SHMMAXPGS=1024
 
-#option		COMPAT_NOMID
 #option		COMPAT_09
 #option		COMPAT_10
 #option		COMPAT_11
@@ -42,6 +41,7 @@ option		COMPAT_SVR4
 option		COMPAT_IBCS2
 option		COMPAT_LINUX
 option		COMPAT_FREEBSD
+option		COMPAT_BSDOS
 
 option		LKM
 
@@ -68,6 +68,7 @@ option		PROCFS
 
 option		GATEWAY
 option		INET
+option		IPSEC
 
 config		bsd root on wd0 swap on wd0
 
@@ -84,6 +85,7 @@ isadma0 at isa?
 
 pccom0	at isa? port 0x3f8 irq 4
 pccom1	at isa? port 0x2f8 irq 3
+pccom2	at isa? port 0x170 irq 7	# Really PnP device, argh.
 
 lpt0	at isa? port 0x278 irq 5
 
@@ -95,7 +97,7 @@ fdc0	at isa? port 0x3f0 irq 6 drq 2
 fd*	at fdc? drive ?
 
 wdc0	at isa? port 0x1f0 irq 14
-wdc1	at isa? port 0x170 irq 15
+#wdc1	at isa? port 0x170 irq 15
 wd*	at wdc? drive ?
 
 pseudo-device	loop	1
@@ -103,6 +105,8 @@ pseudo-device	bpfilter 8
 pseudo-device	sl	2
 pseudo-device	ppp	2
 pseudo-device	tun	2
+pseudo-device	enc	4
 
-pseudo-device	pty	64
-pseudo-device	vnd	8
+pseudo-device	pty	16
+pseudo-device	vnd	4
+pseudo-device	pctr	1

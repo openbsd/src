@@ -1,7 +1,7 @@
 #
 #	SARUMAN -- i486DX/50 EISA bus
 #
-#	$OpenBSD: SARUMAN,v 1.4 1997/04/29 05:15:18 deraadt Exp $
+#	$OpenBSD: SARUMAN,v 1.5 1997/09/02 04:11:24 downsj Exp $
 #
 
 machine		i386		# architecture, used by config; REQUIRED
@@ -36,8 +36,7 @@ option		SYSVSEM		# System V-like semaphores
 option		SYSVSHM		# System V-like memory sharing
 #option		SHMMAXPGS=1024	# 1024 pages is the default
 
-option		COMPAT_NOMID	# compatibility with 386BSD, BSDI, NetBSD 0.8,
-option		COMPAT_09	# NetBSD 0.9,
+option		COMPAT_09	# Kernel compatibility with NetBSD 0.9,
 option		COMPAT_10	# NetBSD 1.0,
 option		COMPAT_11	# NetBSD 1.1,
 option		COMPAT_43	# and 4.3BSD
@@ -47,6 +46,7 @@ option		COMPAT_43	# and 4.3BSD
 #option		COMPAT_IBCS2	# binary compatibility with SCO and ISC
 #option		COMPAT_LINUX	# binary compatibility with Linux
 option		COMPAT_FREEBSD	# binary compatibility with FreeBSD
+option		COMPAT_BSDOS	# binary compatibility with BSD/OS
 
 #option		USER_LDT	# user-settable LDT; used by WINE
 option		LKM		# loadable kernel modules
