@@ -1,0 +1,36 @@
+.\"	$OpenBSD: mec.4,v 1.1 2004/08/10 08:17:09 mickey Exp $
+.\"
+.\"	Written by Michael Shalayeff, 2004. Public Domain.
+.\"
+.Dd August 10, 2004
+.Dt MEC 4 SGI
+.Os
+.Sh NAME
+.Nm mec
+.Nd MAC-110 Ethernet controller
+.Sh SYNOPSIS
+.Cd "mec0 at macebus0 sys 0x18 base 0x00280000 irq 4"
+.Sh DESCRIPTION
+The
+.Nm
+driver provides support for the MAC-110 Fast Ethernet controller
+found on the
+.Tn O2
+machines.
+.Sh SEE ALSO
+.Xr arp 4 ,
+.Xr intro 4 ,
+.Xr mace 4 ,
+.Xr netintro 4 ,
+.Xr ifconfig 8
+.Sh HISTORY
+The
+.Nm
+device driver first appeared in
+.Ox 3.6 .
+.Sh AUTHORS
+The
+.Nm
+device driver was written by Izumi Tsutsui and Christopher SEKIYA.
+.Ox
+port was done by Michael Shalayeff.
