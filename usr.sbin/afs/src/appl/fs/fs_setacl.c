@@ -116,8 +116,9 @@ afs_setacl(char *path, char *user, char *rights)
 	position && acl->NumPositiveEntries; 
 	position = position->next) {
 	if (position->RightsMask) {
-	    sprintf(tmpstr, "%s %d\n", position->name, position->RightsMask);
-	    strcat(acltext,tmpstr);
+	    snprintf(tmpstr, sizeof(tmpstr), "%s %d\n",
+		     position->name, position->RightsMask);
+	    strlcat(acltext, tmpstr, sizeof(acltext));
 	} else
 	    acl->NumPositiveEntries--;
     }
@@ -125,8 +126,9 @@ afs_setacl(char *path, char *user, char *rights)
 	position && acl->NumNegativeEntries;
 	position = position->next) {
 	if (position->RightsMask) {
-	    sprintf(tmpstr, "%s %d\n", position->name, position->RightsMask);
-	    strcat(acltext,tmpstr);
+	    snprintf(tmpstr, sizeof(tmpstr), "%s %d\n",
+		     position->name, position->RightsMask);
+	    strlcat(acltext, tmpstr, sizeof(acltext));
 	} else
 	    acl->NumNegativeEntries--;
     }
