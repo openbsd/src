@@ -1,4 +1,4 @@
-.\" $OpenBSD: ipsecadm.8,v 1.50 2002/06/09 08:13:06 todd Exp $
+.\" $OpenBSD: ipsecadm.8,v 1.51 2002/06/10 15:42:24 kjell Exp $
 .\"
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -433,9 +433,10 @@ The
 should be chosen in random (ideally, using some true-random source like
 coin flipping).
 It is very important that the key is not guessable.
-One practical way of generating keys is by using the
-.Xr random 4
-device (e.g., dd if=/dev/urandom bs=1024 count=1 | sha1)
+One practical way of generating 160-bit (20-byte) keys is as follows:
+.Bd -literal
+	$ openssl rand 20 | hexdump -e '20/1 "%02x"'
+.Ed
 .It Fl keyfile
 Read the key from a file.
 May be used instead of the
@@ -455,9 +456,10 @@ The
 should be chosen in random (ideally, using some true-random source like
 coin flipping).
 It is very important that the key is not guessable.
-One practical way of generating keys is by using the
-.Xr random 4
-device (e.g., dd if=/dev/urandom bs=1024 count=1 | sha1)
+One practical way of generating 160-bit (20-byte) keys is as follows:
+.Bd -literal
+	$ openssl rand 20 | hexdump -e '20/1 "%02x"'
+.Ed
 .It Fl authkeyfile
 Read the authkey from a file.
 May be used instead of the
