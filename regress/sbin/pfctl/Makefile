@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.61 2003/01/14 14:43:31 cedric Exp $
+# $OpenBSD: Makefile,v 1.62 2003/01/14 15:37:29 henning Exp $
 
 PFTESTS=1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27
 PFTESTS+=28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46
@@ -68,10 +68,10 @@ pfr${n}:
 REGRESS_TARGETS+=pfsetup${n}
 
 pfsetup${n}:
-	${SHELL} ${.CURDIR}/pfsetup${n}.setup
+	${SUDO} ${SHELL} ${.CURDIR}/pfsetup${n}.setup
 	pfctl -nv -f - < ${.CURDIR}/pfsetup${n}.in | \
 	    diff -u ${.CURDIR}/pfsetup${n}.ok /dev/stdin
-	${SHELL} ${.CURDIR}/pfsetup${n}.clean
+	${SUDO} ${SHELL} ${.CURDIR}/pfsetup${n}.clean
 
 .endfor
 .endif
