@@ -1,4 +1,4 @@
-.\" $OpenBSD: strsep.3,v 1.5 1999/06/04 19:14:56 aaron Exp $
+.\" $OpenBSD: strsep.3,v 1.6 1999/07/04 15:59:50 aaron Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -70,8 +70,8 @@ An
 .Dq empty
 field, i.e., one caused by two adjacent delimiter characters,
 can be detected by comparing the location referenced by the pointer returned
-in
-.Fa *stringp
+by
+.Fn strsep
 to
 .Ql \e0 .
 .Pp
