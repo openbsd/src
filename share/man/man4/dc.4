@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dc.4,v 1.9 2000/09/12 01:06:50 aaron Exp $
+.\"	$OpenBSD: dc.4,v 1.10 2000/10/13 17:55:58 aaron Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ee.columbia.edu>. All rights reserved.
@@ -51,9 +51,9 @@ embedded controllers based on the following chipsets:
 .It
 DEC/Intel 21143
 .It
-Macronix 98713, 98713A, 98715, 98715A and 98725
+Macronix 98713, 98713A, 98715, 98715A, 98725, 98727, and 98732
 .It
-Davicom DM9100 and DM9102
+Davicom DM9100, DM9102, and DM9102A
 .It
 ASIX Electronics AX88140A and AX88141
 .It
@@ -97,15 +97,19 @@ Digital DE500-BA 10/100 (21143, non-MII)
 .It
 Built in DE500-BA on DEC Alpha workstations (21143, non-MII)
 .It
+Built in Ethernet on LinkSys EtherFast 10/100 Instant GigaDrive (DM9102, MII)
+.It
 Kingston KNE100TX (21143, MII)
 .It
 D-Link DFE-570TX (21143, MII, quad port)
 .It
-NDC SOHOware SFA110 (98513A)
+NDC SOHOware SFA110A (98713A)
+.It
+NDC SOHOware SFA110A Rev B4 (98715AEC-C)
 .It
 SVEC PN102-TX (98713)
 .It
-CNet Pro120A (98715A or 9713A) and CNet Pro120B (98715)
+CNet Pro120A (98715A or 98713A) and CNet Pro120B (98715)
 .It
 Compex RL100-TX (98713 or 98713A)
 .It
@@ -124,6 +128,8 @@ Jaton XpressNet (Davicom DM9102)
 Alfa Inc GFC2204 (ASIX AX88140A)
 .It
 CNet Pro110B (ASIX AX88140A)
+.It
+LinkSys LNE100TX v4.x (ADMtek AN983 Centaur-P)
 .El
 .Pp
 The
@@ -218,7 +224,7 @@ correctly. The driver tries to detect this condition and bring
 the adapter back to the D0 (full power) state, but this may not be
 enough to return the driver to a fully operational condition. If
 you see this message at boot time and the driver fails to attach
-the device as a network interface, you will have to perform second
+the device as a network interface, you will have to perform a second
 warm boot to have the device properly configured.
 .Pp
 Note that this condition only occurs when warm booting from another
