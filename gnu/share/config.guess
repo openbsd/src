@@ -342,6 +342,9 @@ EOF
     *:*MiNT:*:* | *:*mint:*:* | *:*TOS:*:*)
         echo m68k-unknown-mint${UNAME_RELEASE}
         exit 0 ;;
+    cats:OpenBSD:*:*)
+	echo arm-unknown-openbsd${UNAME_RELEASE}
+	exit 0 ;;
     sun3*:OpenBSD:*:*)
 	echo m68k-unknown-openbsd${UNAME_RELEASE}
 	exit 0 ;;
@@ -362,6 +365,9 @@ EOF
 	exit 0 ;;
     mvmeppc:OpenBSD:*:*)
 	echo powerpc-unknown-openbsd${UNAME_RELEASE}
+	exit 0 ;;
+    zaurus:OpenBSD:*:*)
+	echo arm-unknown-openbsd${UNAME_RELEASE}
 	exit 0 ;;
     powerpc:machten:*:*)
 	echo powerpc-apple-machten${UNAME_RELEASE}
