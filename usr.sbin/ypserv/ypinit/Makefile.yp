@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.yp,v 1.12 2000/04/18 15:34:18 turan Exp $
+#	$OpenBSD: Makefile.yp,v 1.13 2002/11/01 23:54:18 fgsch Exp $
 
 YPDBDIR=/var/yp
 DIR=/etc
@@ -27,6 +27,7 @@ YPPUSH=/usr/sbin/yppush
 # passwords are accessable for anyone. FreeBSD and now OpenBSD has a common
 # solution to this, maps can be secure (makedbm -s). If a map is secure only
 # a privileged user can access it.
+# For secure maps, leave UNSECURE blank.
 MAKEDBM-S=$(MAKEDBM) -s
 UNSECURE="True"
 
