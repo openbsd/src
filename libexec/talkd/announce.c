@@ -1,4 +1,4 @@
-/*	$OpenBSD: announce.c,v 1.12 2002/02/16 21:27:31 millert Exp $	*/
+/*	$OpenBSD: announce.c,v 1.13 2002/05/21 23:51:28 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)announce.c	5.9 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$Id: announce.c,v 1.12 2002/02/16 21:27:31 millert Exp $";
+static char rcsid[] = "$Id: announce.c,v 1.13 2002/05/21 23:51:28 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -121,21 +121,21 @@ print_mesg(tf, request, remote_machine)
 	max_size = max(max_size, sizes[i]);
 	i++;
 	(void)snprintf(line_buf[i], N_CHARS, 
-		"Message from Talk_Daemon@%s at %d:%02d ...",
-		hostname, localclock->tm_hour , localclock->tm_min );
+	    "Message from Talk_Daemon@%s at %d:%02d ...",
+	    hostname, localclock->tm_hour , localclock->tm_min );
 	sizes[i] = strlen(line_buf[i]);
 	max_size = max(max_size, sizes[i]);
 	i++;
 	vis_user = (char *) malloc(strlen(request->l_name) * 4 + 1);
 	strvis(vis_user, request->l_name, VIS_CSTYLE);
 	(void)snprintf(line_buf[i], N_CHARS,
-		"talk: connection requested by %s@%s.",
-		vis_user, remote_machine);
+	    "talk: connection requested by %s@%s.",
+	    vis_user, remote_machine);
 	sizes[i] = strlen(line_buf[i]);
 	max_size = max(max_size, sizes[i]);
 	i++;
 	(void)snprintf(line_buf[i], N_CHARS, "talk: respond with:  talk %s@%s",
-		vis_user, remote_machine);
+	    vis_user, remote_machine);
 	sizes[i] = strlen(line_buf[i]);
 	max_size = max(max_size, sizes[i]);
 	i++;
