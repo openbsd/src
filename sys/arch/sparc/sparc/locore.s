@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.25 1999/04/22 18:47:19 art Exp $	*/
+/*	$OpenBSD: locore.s,v 1.26 1999/08/06 01:25:12 jason Exp $	*/
 /*	$NetBSD: locore.s,v 1.73 1997/09/13 20:36:48 pk Exp $	*/
 
 /*
@@ -2271,9 +2271,10 @@ return_from_syscall:
  * we do them in-line before enabling traps.
  *
  * After preliminary setup work, the interrupt is passed to each
- * registered handler in turn.  These are expected to return nonzero if
- * they took care of the interrupt.  If a handler claims the interrupt,
- * we exit (hardware interrupts are latched in the requestor so we'll
+ * registered handler in turn.  These are expected to return 1 if they
+ * took care of the interrupt, 0 if they didn't, and -1 if the device
+ * isn't sure.  If a handler claims the interrupt, we exit
+ * (hardware interrupts are latched in the requestor so we'll
  * just take another interrupt in the unlikely event of simultaneous
  * interrupts from two different devices at the same level).  If we go
  * through all the registered handlers and no one claims it, we report a
@@ -2418,6 +2419,7 @@ _sparc_interrupt_common:
 	st	%o0, [%l4 + %l5]
 	set	_intrhand, %l4		! %l4 = intrhand[intlev];
 	ld	[%l4 + %l5], %l4
+	clr	%l5			! %l5 = 0
 	b	3f
 	 st	%fp, [%sp + CCFSZ + 16]
 
@@ -2428,11 +2430,14 @@ _sparc_interrupt_common:
 	 add	%sp, CCFSZ, %o0
 2:	jmpl	%o1, %o7		!	handled = (*ih->ih_fun)(...)
 	 ld	[%l4 + 8], %l4		!	and ih = ih->ih_next
-	tst	%o0
-	bnz	4f			! if (handled) break
-	 nop
+	cmp	%o0, 1
+	bge	4f			!	if (handled >= 1) break
+	 or	%o0, %l5, %l5		! 	and %l5 |= handled
 3:	tst	%l4
 	bnz	1b			! while (ih)
+	 nop
+	tst	%l5			! if (handled) break
+	bnz	4f
 	 nop
 	call	_strayintr		!	strayintr(&intrframe)
 	 add	%sp, CCFSZ, %o0
