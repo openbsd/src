@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_mklocatedb.1,v 1.1 2005/02/15 09:13:05 espie Exp $
+.\"	$OpenBSD: pkg_mklocatedb.1,v 1.2 2005/02/15 20:34:27 jmc Exp $
 .\" Copyright (c) 2005 Marc Espie <espie@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -27,8 +27,10 @@
 The
 .Nm
 command is used to create
-.Xr locate 1 Ns -style
-databases adapted for packages.
+databases adapted for packages,
+which can be searched using the
+.Xr locate 1
+utility.
 .Pp
 Entries created for each package will have the package name prepended:
 .Li kdelibs-3.3.2p2:/usr/local/bin/meinproc .
