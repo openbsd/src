@@ -1,4 +1,4 @@
-;	$OpenBSD: syscalls.master,v 1.14 2001/09/05 23:41:45 art Exp $
+;	$OpenBSD: syscalls.master,v 1.15 2001/09/21 15:31:59 art Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -364,9 +364,9 @@
 171	UNIMPL		1.0 shmsys
 #endif
 172	UNIMPL
-173	STD		{ ssize_t netbsd_sys_pread(int fd, void *buf, \
+173	NOARGS		{ ssize_t sys_pread(int fd, void *buf, \
 			    size_t nbyte, int pad, off_t offset); }
-174	STD		{ ssize_t netbsd_sys_pwrite(int fd, const void *buf, \
+174	NOARGS		{ ssize_t sys_pwrite(int fd, const void *buf, \
 			    size_t nbyte, int pad, off_t offset); }
 #ifdef NTP
 175	NOARGS		{ int sys_ntp_gettime(struct ntptimeval *ntvp); }
@@ -589,10 +589,10 @@
 #else
 288	UNIMPL
 #endif
-289	STD		{ ssize_t netbsd_sys_preadv(int fd, \
+289	NOARGS		{ ssize_t sys_preadv(int fd, \
 			    const struct iovec *iovp, int iovcnt, \
 			    int pad, off_t offset); }
-290	STD		{ ssize_t netbsd_sys_pwritev(int fd, \
+290	NOARGS		{ ssize_t sys_pwritev(int fd, \
 			    const struct iovec *iovp, int iovcnt, \
 			    int pad, off_t offset); }
 291	STD		{ int netbsd_sys___sigaction14(int signum, \
