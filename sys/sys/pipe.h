@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipe.h,v 1.7 2001/06/23 06:04:33 art Exp $	*/
+/*	$OpenBSD: pipe.h,v 1.8 2001/06/23 06:09:16 art Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -85,7 +85,6 @@ struct pipe {
 };
 
 #ifdef _KERNEL
-int	pipe_stat __P((struct file *fp, struct stat *ub, struct proc *p));
 void	pipe_init __P((void));
 #endif /* _KERNEL */
 
