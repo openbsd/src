@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_page.c,v 1.13 1998/03/20 15:40:36 niklas Exp $	*/
+/*	$OpenBSD: vm_page.c,v 1.14 1998/06/09 18:10:02 mickey Exp $	*/
 /*	$NetBSD: vm_page.c,v 1.41 1998/02/08 18:24:52 thorpej Exp $	*/
 
 #define	VM_PAGE_ALLOC_MEMORY_STATS
@@ -291,10 +291,8 @@ vm_page_bootstrap(startp, endp)
 	 * want to return some memory to the pool after booting.
 	 */
 	freepages = 0;
-	for (lcv = 0; lcv < vm_nphysseg; lcv++) {
-		freepages = freepages +
-		    (vm_physmem[lcv].end - vm_physmem[lcv].start);
-	}
+	for (lcv = 0; lcv < vm_nphysseg; lcv++)
+		freepages += (vm_physmem[lcv].end - vm_physmem[lcv].start);
 
 	/*
 	 * we now know we have (PAGE_SIZE * freepages) bytes of memory we can
@@ -318,8 +316,8 @@ vm_page_bootstrap(startp, endp)
 
 		n = vm_physmem[lcv].end - vm_physmem[lcv].start;
 		if (n > pagecount) {
-			printf("vm_init: lost %d page(s) in init\n",
-			    n - pagecount);
+			printf("vm_page_bootstrap: lost %d page(s) in init\n",
+			       n - pagecount);
 			vm_page_lost_count += (n - pagecount);
 			n = pagecount;
 		}
