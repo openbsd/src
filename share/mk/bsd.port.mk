@@ -1,6 +1,6 @@
 #-*- mode: Fundamental; tab-width: 4; -*-
 # ex:ts=4
-#	$OpenBSD: bsd.port.mk,v 1.28 1998/04/06 21:46:00 marc Exp $
+#	$OpenBSD: bsd.port.mk,v 1.29 1998/04/28 19:19:29 marc Exp $
 #	$NetBSD: $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
@@ -277,24 +277,6 @@ OpenBSD_MAINTAINER=	joey@OpenBSD.ORG
 #
 # NEVER override the "regular" targets unless you want to open
 # a major can of worms.
-
-.if defined(ONLY_FOR_ARCHS)
-.for __ARCH in ${ONLY_FOR_ARCHS}
-.if ${MACHINE} == "${__ARCH}"
-__ARCH_OK=	1
-.endif
-.endfor
-.else
-__ARCH_OK=	1
-.endif
-
-.if !defined(__ARCH_OK)
-.MAIN:	all
-
-fetch fetch-list extract patch clean clean-depends configure build install reinstall package describe checkpatch checksum makesum all:
-	@echo "This port is only for ${ONLY_FOR_ARCHS},"
-	@echo "and you are running ${MACHINE}."
-.else
 
 # Get the operating system type
 OPSYS!=	uname -s
@@ -852,6 +834,15 @@ IGNORE=	"is restricted: ${RESTRICTED}"
 IGNORE=	"uses X11, but ${X11BASE} not found"
 .elif defined(BROKEN)
 IGNORE=	"is marked as broken: ${BROKEN}"
+.elif defined(ONLY_FOR_ARCHS)
+.for __ARCH in ${ONLY_FOR_ARCHS}
+.if ${MACHINE} == "${__ARCH}"
+__ARCH_OK=	1
+.endif
+.endfor
+.if !defined(__ARCH_OK)
+IGNORE= "is only for ${ONLY_FOR_ARCHS}, not ${MACHINE}"
+.endif
 .elif defined(COMES_WITH)
 OS_VER!=	uname -r
 .if ( ${OS_VER} >= ${COMES_WITH} )
@@ -1875,4 +1866,3 @@ depend:
 tags:
 .endif
 
-.endif
