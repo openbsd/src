@@ -1,4 +1,4 @@
-/*	$OpenBSD: systrace.c,v 1.29 2002/07/19 14:38:58 itojun Exp $	*/
+/*	$OpenBSD: systrace.c,v 1.30 2002/07/30 05:52:50 itojun Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -49,8 +49,8 @@
 #include "systrace.h"
 #include "util.h"
 
-pid_t pid;
-int fd;
+pid_t trpid;
+int trfd;
 int connected = 0;		/* Connected to GUI */
 int inherit = 0;		/* Inherit policy to childs */
 int automatic = 0;		/* Do not run interactively */
@@ -318,7 +318,7 @@ child_handler(int sig)
 	int s = errno, status;
 
 	if (signal(SIGCHLD, child_handler) == SIG_ERR) {
-		close(fd);
+		close(trfd);
 	}
 
 	while (wait4(-1, &status, WNOHANG, NULL) > 0)
@@ -448,7 +448,7 @@ main(int argc, char **argv)
 	systrace_initpolicy(filename);
 	systrace_initcb();
 
-	if ((fd = intercept_open()) == -1)
+	if ((trfd = intercept_open()) == -1)
 		exit(1);
 
 	/* See if we can run the systrace process in the background */
@@ -463,18 +463,18 @@ main(int argc, char **argv)
 			args[i] = argv[i];
 		args[i] = NULL;
 
-		pid = intercept_run(background, fd, args[0], args);
-		if (pid == -1)
+		trpid = intercept_run(background, trfd, args[0], args);
+		if (trpid == -1)
 			err(1, "fork");
 
-		if (intercept_attach(fd, pid) == -1)
+		if (intercept_attach(trfd, trpid) == -1)
 			err(1, "attach");
 
-		if (kill(pid, SIGUSR1) == -1)
+		if (kill(trpid, SIGUSR1) == -1)
 			err(1, "kill");
 	} else {
 		/* Attach to a running command */
-		if (intercept_attachpid(fd, pidattach, argv[0]) == -1)
+		if (intercept_attachpid(trfd, pidattach, argv[0]) == -1)
 			err(1, "attachpid");
 
 		if (background) {
@@ -490,14 +490,14 @@ main(int argc, char **argv)
 	if (usex11 && !automatic && !allow)
 		requestor_start(guipath);
 
-	while (intercept_read(fd) != -1)
+	while (intercept_read(trfd) != -1)
 		if (!intercept_existpids())
 			break;
 
 	if (userpolicy)
 		systrace_dumppolicy();
 
-	close(fd);
+	close(trfd);
 
 	exit(0);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: alias.c,v 1.2 2002/07/19 14:38:57 itojun Exp $	*/
+/*	$OpenBSD: alias.c,v 1.3 2002/07/30 05:52:50 itojun Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -132,9 +132,7 @@ systrace_reverse(const char *emulation, const char *name)
 
 	TAILQ_INIT(&reverse->revl);
 
-	if (SPLAY_INSERT(revtr, &revroot, reverse) != NULL)
-		errx(1, "%s: %s-%s: double revalias",
-		    __func__, emulation, name);
+	SPLAY_INSERT(revtr, &revroot, reverse);
 
 	return (reverse);
 }
@@ -156,8 +154,7 @@ systrace_new_alias(const char *emulation, const char *name,
 	strlcpy(alias->aname, aname, sizeof(alias->aname));
 	alias->nargs = 0;
 
-	if (SPLAY_INSERT(alitr, &aliasroot, alias) != NULL)
-		errx(1, "%s: %s-%s: double alias", __func__, emulation, name);
+	SPLAY_INSERT(alitr, &aliasroot, alias);
 
 	reverse = systrace_reverse(aemul, aname);
 	alias->reverse = reverse;
