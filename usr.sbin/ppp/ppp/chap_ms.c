@@ -19,7 +19,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $OpenBSD: chap_ms.c,v 1.6 2000/11/02 00:54:33 brian Exp $
+ * $OpenBSD: chap_ms.c,v 1.7 2000/11/28 22:50:39 brian Exp $
  *
  */
 
@@ -159,7 +159,7 @@ ChallengeHash(char *PeerChallenge, char *AuthenticatorChallenge,
 
   SHA1_Update(&Context, PeerChallenge, 16); 
   SHA1_Update(&Context, AuthenticatorChallenge, 16);
-  SHA1_Update(&Context, UserName, UserNameLen);
+  SHA1_Update(&Context, Name, strlen(Name));
 
   SHA1_Final(Digest, &Context);
   memcpy(Challenge, Digest, 8);
