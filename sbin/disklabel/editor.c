@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.72 2000/06/04 18:34:41 millert Exp $	*/
+/*	$OpenBSD: editor.c,v 1.73 2000/08/13 22:07:14 millert Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -28,7 +28,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.72 2000/06/04 18:34:41 millert Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.73 2000/08/13 22:07:14 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -204,8 +204,6 @@ editor(lp, f, dev, fstabfile)
 	lastlabel = label;
 	for (;;) {
 		fputs("> ", stdout);
-		fflush(stdout);
-		rewind(stdin);
 		if (fgets(buf, sizeof(buf), stdin) == NULL) {
 			putchar('\n');
 			buf[0] = 'q';
@@ -1044,8 +1042,6 @@ getstring(prompt, helpstring, oval)
 	buf[0] = '\0';
 	do {
 		printf("%s: [%s] ", prompt, oval ? oval : "");
-		fflush(stdout);
-		rewind(stdin);
 		if (fgets(buf, sizeof(buf), stdin) == NULL) {
 			buf[0] = '\0';
 			if (feof(stdin)) {
@@ -1094,8 +1090,6 @@ getuint(lp, partno, prompt, helpstring, oval, maxval, offset, flags)
 	buf[0] = '\0';
 	do {
 		printf("%s: [%u] ", prompt, oval);
-		fflush(stdout);
-		rewind(stdin);
 		if (fgets(buf, sizeof(buf), stdin) == NULL) {
 			buf[0] = '\0';
 			if (feof(stdin)) {
