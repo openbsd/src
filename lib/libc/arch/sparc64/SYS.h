@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.1 2001/08/28 21:59:43 art Exp $	*/
+/*	$OpenBSD: SYS.h,v 1.2 2001/08/28 22:47:26 art Exp $	*/
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -124,3 +124,9 @@
 	t ST_SYSCALL
 
 	.globl	_C_LABEL(__cerror)
+
+/*
+ * SYSENTRY is for functions that pretend to be syscalls.
+ */
+#define SYSENTRY(x) ENTRY(x)
+
