@@ -1,4 +1,4 @@
-/*	$OpenBSD: ast.c,v 1.16 1996/12/03 02:31:57 deraadt Exp $	*/
+/*	$OpenBSD: ast.c,v 1.17 1997/07/07 16:38:22 niklas Exp $	*/
 /*	$NetBSD: ast.c,v 1.28 1996/05/12 23:51:45 mycroft Exp $	*/
 
 /*
@@ -100,7 +100,7 @@ astprobe(parent, self, aux)
 		rv = 0;
 		goto out;
 	}
-	rv = comprobe1(iot, ioh, iobase);
+	rv = comprobe1(iot, ioh);
 	bus_space_unmap(iot, ioh, COM_NPORTS);
 	if (rv == 0)
 		goto out;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: boca.c,v 1.14 1996/12/03 07:48:23 niklas Exp $ */
+/*	$OpenBSD: boca.c,v 1.15 1997/07/07 16:38:23 niklas Exp $ */
 /*	$NetBSD: boca.c,v 1.15 1996/05/12 23:51:50 mycroft Exp $	*/
 
 /*
@@ -100,7 +100,7 @@ bocaprobe(parent, self, aux)
 		rv = 0;
 		goto out;
 	}
-	rv = comprobe1(iot, ioh, iobase);
+	rv = comprobe1(iot, ioh);
 	bus_space_unmap(iot, ioh, COM_NPORTS);
 	if (rv == 0)
 		goto out;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtfps.c,v 1.16 1997/01/29 06:23:31 downsj Exp $       */
+/*	$OpenBSD: rtfps.c,v 1.17 1997/07/07 16:38:22 niklas Exp $       */
 /*	$NetBSD: rtfps.c,v 1.27 1996/10/21 22:41:18 thorpej Exp $	*/
 
 /*
@@ -102,7 +102,7 @@ rtfpsprobe(parent, self, aux)
 		rv = 0;
 		goto out;
 	}
-	rv = comprobe1(iot, ioh, iobase);
+	rv = comprobe1(iot, ioh);
 	bus_space_unmap(iot, ioh, COM_NPORTS);
 	if (rv == 0)
 		goto out;
