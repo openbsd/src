@@ -1,4 +1,4 @@
-#	$OpenBSD: services,v 1.44 2002/08/11 16:33:15 millert Exp $
+#	$OpenBSD: services,v 1.45 2002/08/13 02:21:40 millert Exp $
 #
 # Network services, Internet style
 #
@@ -137,6 +137,10 @@ kshell		544/tcp		krcmd		# Kerberos remote shell
 ekshell		545/tcp				# Kerberos encrypted shell
 submission	587/tcp		msa		# mail message submission
 submission	587/udp		msa		# mail message submission
+imaps		993/tcp				# imap4 protocol over TLS/SSL
+imaps		993/udp				# imap4 protocol over TLS/SSL
+pop3s		995/tcp		spop3		# pop3 protocol over TLS/SSL
+pop3s		995/udp		spop3		# pop3 protocol over TLS/SSL
 #
 # UNIX specific services
 #
