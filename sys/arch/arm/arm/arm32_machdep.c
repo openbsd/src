@@ -1,4 +1,4 @@
-/*	$OpenBSD: arm32_machdep.c,v 1.3 2004/02/12 04:13:02 drahn Exp $	*/
+/*	$OpenBSD: arm32_machdep.c,v 1.4 2004/02/26 04:58:38 drahn Exp $	*/
 /*	$NetBSD: arm32_machdep.c,v 1.42 2003/12/30 12:33:15 pk Exp $	*/
 
 /*
@@ -113,6 +113,13 @@ struct user *proc0paddr;
 /* exported variable to be filled in by the bootloaders */
 char *booted_kernel;
 
+#ifdef APERTURE
+#ifdef INSECURE
+int allowaperture = 1;
+#else
+int allowaperture = 0;
+#endif
+#endif
 
 /* Prototypes */
 
@@ -412,6 +419,17 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		return (EOPNOTSUPP);
 	}
 
+	case CPU_ALLOWAPERTURE:
+#ifdef APERTURE
+		if (securelevel > 0)
+			return (sysctl_rdint(oldp, oldlenp, newp,
+			    allowaperture));
+		else
+			return (sysctl_int(oldp, oldlenp, newp, newlen,
+			    &allowaperture));
+#else
+		return (sysctl_rdint(oldp, oldlenp, newp, 0));
+#endif
 	default:
 		return (EOPNOTSUPP);
 	}

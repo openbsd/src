@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.2 2004/02/01 06:10:33 drahn Exp $	*/
+/*	$OpenBSD: mem.c,v 1.3 2004/02/26 04:58:38 drahn Exp $	*/
 /*	$NetBSD: mem.c,v 1.11 2003/10/16 12:02:58 jdolecek Exp $	*/
 
 /*
@@ -91,6 +91,13 @@ extern char *memhook;            /* poor name! */
 caddr_t zeropage;
 int physlock;
 
+/* open counter for aperture */
+#ifdef APERTURE
+static int ap_open_count = 0;
+extern int allowaperture;
+#endif
+
+
 /*ARGSUSED*/
 int
 mmopen(dev, flag, mode, p)
@@ -99,8 +106,24 @@ mmopen(dev, flag, mode, p)
 	struct proc *p;
 {
 	switch (minor(dev)) {
-	default:
+		case 0:
+		case 1:
+		case 2:
+		case 12:
+			break;
+#ifdef APERTURE
+	case 4:
+	        if (suser(p, 0) != 0 || !allowaperture)
+			return (EPERM);
+
+		/* authorize only one simultaneous open() */
+		if (ap_open_count > 0)
+			return(EPERM);
+		ap_open_count++;
 		break;
+#endif
+		default:
+			return (ENXIO);
 	}
 	return (0);
 }
@@ -112,7 +135,10 @@ mmclose(dev, flag, mode, p)
 	int flag, mode;
 	struct proc *p;
 {
-
+#ifdef APERTURE
+	if (minor(dev) == 4)
+		ap_open_count--;
+#endif
 	return (0);
 }
 #define DEV_MEM 0
