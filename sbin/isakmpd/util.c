@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.20 2001/07/01 19:59:13 niklas Exp $	*/
+/*	$OpenBSD: util.c,v 1.21 2001/07/03 23:39:01 angelos Exp $	*/
 /*	$EOM: util.c,v 1.23 2000/11/23 12:22:08 niklas Exp $	*/
 
 /*
@@ -318,9 +318,10 @@ int
 sockaddr2text (struct sockaddr *sa, char **address, int zflag)
 {
   char buf[NI_MAXHOST];
-  char *token, *bstart, *p, *ep;
-  int addrlen, c_pre = 0, c_post = 0;
+  char *token, *bstart, *ep;
+  int addrlen;
   long val;
+  int i, j;
 
 #ifdef HAVE_GETNAMEINFO
   if (getnameinfo (sa, sa->sa_len, buf, sizeof buf, 0, 0,
@@ -393,51 +394,12 @@ sockaddr2text (struct sockaddr *sa, char **address, int zflag)
 	*address = malloc (addrlen);
 	if (!*address)
 	  return -1;
-	bstart = buf;
-	**address = '\0';
-	buf[addrlen] = '\0';
-	while ((token = strsep (&bstart, ":")) != NULL)
-	  {
-	    if (strlen (token) == 0)
-	      {
-		/*
-		 * Encountered a '::'. Fill out the string.
-		 * XXX Isn't there a library function for this somewhere?
-		 */
-		for (p = buf; p < token - 1; p++)
-		  if (*p == 0)
-		    c_pre++;
-		for (p = token + 1; p < (bstart + strlen (bstart)); p++)
-		  if (*p == ':')
-		    c_post++;
-		/* The number of zero groups to add. */
-		c_pre = 7 - c_pre - c_post - 1;
-		if (c_pre > 6 || strlen (*address) > (40 - 5 * c_pre))
-		  {
-		    free (*address);
-		    return -1;
-		  }
-		for (; c_pre; c_pre--)
-		  strcat (*address + strlen (*address), "0000:");
-	      }
-	    else
-	      {
-		if (strlen (*address) > 35)
-		  {
-		    free (*address);
-		    return -1;
-		  }
-		val = strtol (token, &ep, 10);
-		if (ep == token || val < 0 || val > USHRT_MAX)
-		  {
-		    free (*address);
-		    return -1;
-		  }
-		sprintf (*address + strlen (*address), "%04lx", val);
-		if (bstart)
-		  strcat (*address + strlen (*address), ":");
-	      }
-	  }
+
+	for (i = 0, j = 0; i < 8; i++)
+	  j += sprintf ((*address) + j, "%02x%02x:",
+			((struct sockaddr_in6 *)sa)->sin6_addr.s6_addr[2 * i],
+			((struct sockaddr_in6 *)sa)->sin6_addr.s6_addr[2 * i + 1]);
+	(*address)[j - 1] = '\0';
 	break;
 
       default:
