@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.21 2003/07/04 17:50:24 millert Exp $	*/
+/*	$OpenBSD: diff.c,v 1.22 2003/07/04 17:52:35 millert Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -90,7 +90,7 @@ main(int argc, char **argv)
 	status = 2;
 	diffargv = argv;
 
-	while ((ch = getopt(argc, argv, "abC:cD:efinrS:stU:uw")) != -1) {
+	while ((ch = getopt(argc, argv, "abC:cD:efhinrS:stU:uw")) != -1) {
 		switch (ch) {
 		case 'a':
 			aflag++;
@@ -117,6 +117,9 @@ main(int argc, char **argv)
 			break;
 		case 'f':
 			opt = D_REVERSE;
+			break;
+		case 'h':
+			/* silently ignore for backwards compatibility */
 			break;
 		case 'i':
 			iflag++;
@@ -208,7 +211,7 @@ emalloc(size_t n)
 	void *p;
 
 	if ((p = malloc(n)) == NULL)
-		error("files too big, try -h");
+		error(NULL);
 	return (p);
 }
 
@@ -218,7 +221,7 @@ erealloc(void *p, size_t n)
 	void *q;
 
 	if ((q = realloc(p, n)) == NULL)
-		error("files too big, try -h");
+		error(NULL);
 	return (q);
 }
 
