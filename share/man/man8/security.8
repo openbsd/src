@@ -1,0 +1,99 @@
+.\" $OpenBSD: security.8,v 1.1 2001/01/28 03:52:44 d Exp $
+.Dd July 1, 2000
+.Dt SECURITY 8
+.Os
+.Sh NAME
+.Nm security
+.Nd periodic system security check
+.Sh SYNOPSIS
+.Nm /etc/security
+.Sh DESCRIPTION
+.Nm security
+is a command script that examines the system for some signs of security
+weaknesses.
+It is only a security aid and does not offer complete protection.
+The
+.Nm security
+script is normally run from the
+.Pa /etc/daily
+script, which sends mails to root on a daily basis.
+.Pp
+The
+.Nm security
+script carries out the following list of simple checks:
+.Bl -bullet
+.It
+Check the master
+.Xr passwd 5
+and
+.Xr group 5
+files for
+syntax, empty passwords, partially closed accounts,
+suspicious UIDs, GIDs and duplicate entries
+.It
+Check root's home directory and login environment for
+insecure permissions, suspicious paths and umask commands in the
+dotfiles
+.It
+Check that root and uucp are in
+.Pa /etc/ftpusers
+.It
+Check for suspicious commands in
+.Pa /etc/mail/aliases
+.It
+Check for insecurities in various trust files such as
+.Pa /etc/hosts.equiv , /etc/shosts.equiv ,
+and
+.Pa /etc/hosts.lpd
+.It
+Check user
+.Pa .rhosts , .shosts
+files for open access
+.It
+Check user home directory permissions
+.It
+Check many user dotfile permissions
+.It
+Check user mailbox permissions
+.It
+Check NFS
+.Xr exports 5
+file for global export entries
+.It
+Check for changes in setuid/setgid files and devices
+.It
+Check disk ownership and permissions
+.It
+Check for changes in the device file list
+.It
+Check for permssion changes in special files and system binaries listed in
+.Pa /etc/mtree/special
+and
+.Pa "/etc/mtree/*.secure" .
+.Sy Note:
+This is not complete protection against Trojan horsed binaries, as
+the miscreant can modify the tree specification to match the replaced binary.
+For details on really protecting yourself against modified binaries, see
+.Xr mtree 8 .
+.It
+Check for content changes in those files specified by
+.Pa /etc/changelist
+.El
+.Pp
+The intent of the
+.Nm security
+script is to point out some obvious holes to the system administrator.
+.Sh BUGS
+The name of this script may provide a false sense of
+.Nm security .
+.\" Well, I thought it was amusing.
+.Pp
+There are perhaps an infinite number of ways the system can be compromised
+without this script noticing.
+.Sh FILES
+.Pa /etc/daily ,
+.Pa /etc/mtree ,
+.Pa /etc/changelist ,
+.Pa /var/backups
+.Sh SEE ALSO
+.Xr mtree 8
