@@ -1,4 +1,4 @@
-/*	$OpenBSD: mii_physubr.c,v 1.9 2001/06/08 02:16:41 nate Exp $	*/
+/*	$OpenBSD: mii_physubr.c,v 1.10 2001/06/25 20:24:13 nate Exp $	*/
 /*	$NetBSD: mii_physubr.c,v 1.20 2001/04/13 23:30:09 thorpej Exp $	*/
 
 /*-
@@ -202,9 +202,12 @@ mii_phy_tick(sc)
 	}
 
 	/*
-	 * Only retry autonegotiation every 5 seconds.
+	 * Only retry autonegotiation every N seconds.
 	 */
-	if (++sc->mii_ticks != 5)
+	if (!sc->mii_anegticks)
+		sc->mii_anegticks = 5;
+	
+	if (++sc->mii_ticks != sc->mii_anegticks)
 		return (EJUSTRETURN);
 
 	sc->mii_ticks = 0;
@@ -363,18 +366,22 @@ mii_phy_add_media(sc)
 		 * XXX to hnalde 1000LX and 1000CX some how.
 		 */
 		if (sc->mii_extcapabilities & EXTSR_1000XHDX) {
+			sc->mii_anegticks = 10;
 			ADD(IFM_MAKEWORD(IFM_ETHER, IFM_1000_SX, 0,
 			    sc->mii_inst), MII_MEDIA_1000);
 		}
 		if (sc->mii_extcapabilities & EXTSR_1000XFDX) {
+			sc->mii_anegticks = 10;
 			ADD(IFM_MAKEWORD(IFM_ETHER, IFM_1000_SX, IFM_FDX,
 			    sc->mii_inst), MII_MEDIA_1000_FDX);
 		}
 		if (sc->mii_extcapabilities & EXTSR_1000THDX) {
+			sc->mii_anegticks = 10;
 			ADD(IFM_MAKEWORD(IFM_ETHER, IFM_1000_TX, 0,
 			    sc->mii_inst), MII_MEDIA_1000);
 		}
 		if (sc->mii_extcapabilities & EXTSR_1000TFDX) {
+			sc->mii_anegticks = 10;
 			ADD(IFM_MAKEWORD(IFM_ETHER, IFM_1000_TX, IFM_FDX,
 			    sc->mii_inst), MII_MEDIA_1000_FDX);
 		}
