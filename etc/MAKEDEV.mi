@@ -1,6 +1,6 @@
 include(MAKEDEV.sub)dnl
 dnl
-vers(a, {-$OpenBSD: MAKEDEV.mi,v 1.35 2002/02/19 21:03:18 todd Exp $-})dnl
+vers(a, {-$OpenBSD: MAKEDEV.mi,v 1.36 2002/02/19 21:05:10 todd Exp $-})dnl
 dnl
 divert(1)dnl
 {-#-}
@@ -824,7 +824,7 @@ target(wscons, wsmouse, 0, 1, 2, 3)dnl
 _mkdev({-wscons-}, {-wscons-}, {-dnl
 show_target(wscons)dnl
 -})dnl
-__devitem(wsdisp, tty[C-F]*, wscons virtual consoles)dnl
+__devitem(wsdisp, ttyC-F*, wscons virtual consoles)dnl
 _mkdev({-wsdisp-}, tty[C-F]*, {-U=${i##tty[C-F]}
 	case $i in
 	ttyC*) n=C m=expr(0*256);;
