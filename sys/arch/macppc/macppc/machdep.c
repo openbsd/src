@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.13 2001/11/09 15:25:55 art Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.14 2001/11/13 14:31:52 drahn Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -102,6 +102,9 @@ struct pmap *curpm;
 struct proc *fpuproc;
 
 extern struct user *proc0paddr;
+#ifdef PPC_VECTOR_SUPPORTED
+struct pool ppc_vecpl;
+#endif /* PPC_VECTOR_SUPPORTED */
 
 /*
  * Declare these as initialized data so we can patch them.
@@ -477,6 +480,11 @@ where = 3;
 	 * Figure out ethernet address.
 	 */
 	(void)power4e_get_eth_addr();
+
+#ifdef PPC_VECTOR_SUPPORTED
+        pool_init(&ppc_vecpl, sizeof(struct vreg), 16, 0, 0, "ppcvec",
+		    0, NULL, NULL, M_SUBPROC);
+#endif /* PPC_VECTOR_SUPPORTED */
 
 }
 void ofw_dbg(char *str)

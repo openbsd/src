@@ -1,4 +1,4 @@
-/*	$OpenBSD: psl.h,v 1.4 2001/09/01 15:49:05 drahn Exp $	*/
+/*	$OpenBSD: psl.h,v 1.5 2001/11/13 14:31:52 drahn Exp $	*/
 /*	$NetBSD: psl.h,v 1.1 1996/09/30 16:34:32 ws Exp $	*/
 
 /*
@@ -37,6 +37,7 @@
 /*
  * Flags in MSR:
  */
+#define PSL_VEC		0x02000000	/* AltiVec vector unit available */
 #define	PSL_POW		0x00040000
 #define	PSL_ILE		0x00010000
 #define	PSL_EE		0x00008000

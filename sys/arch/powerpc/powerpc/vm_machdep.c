@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.26 2001/11/06 19:53:16 miod Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.27 2001/11/13 14:31:52 drahn Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.1 1996/09/30 16:34:57 ws Exp $	*/
 
 /*
@@ -34,6 +34,7 @@
 #include <sys/param.h>
 #include <sys/core.h>
 #include <sys/exec.h>
+#include <sys/pool.h>
 #include <sys/proc.h>
 #include <sys/signalvar.h>
 #include <sys/user.h>
@@ -66,6 +67,18 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 		save_fpu(p1);
 	*pcb = p1->p_addr->u_pcb;
 	
+#ifdef PPC_VECTOR_SUPPORTED
+	/* ALTIVEC */
+	if (p1->p_addr->u_pcb.pcb_vr != NULL) {
+		if (p1 == ppc_vecproc)
+			save_vec(p1);
+		pcb->pcb_vr = pool_get(&ppc_vecpl, PR_WAITOK);
+		*pcb->pcb_vr = *p1->p_addr->u_pcb.pcb_vr;
+	} else {
+		pcb->pcb_vr = NULL;
+	}
+#endif /* PPC_VECTOR_SUPPORTED */
+
 	pcb->pcb_pm = p2->p_vmspace->vm_map.pmap;
 
 	pmap_extract(pmap_kernel(),

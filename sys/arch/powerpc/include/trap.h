@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.h,v 1.4 2001/09/01 15:49:05 drahn Exp $	*/
+/*	$OpenBSD: trap.h,v 1.5 2001/11/13 14:31:52 drahn Exp $	*/
 /*	$NetBSD: trap.h,v 1.1 1996/09/30 16:34:35 ws Exp $	*/
 
 /*
@@ -47,9 +47,8 @@
 #define	EXC_SC		0x0c00		/* System Call */
 #define	EXC_TRC		0x0d00		/* Trace */
 #define	EXC_FPA		0x0e00		/* Floating-point Assist */
-
-/* The following are only available on 604: */
 #define	EXC_PERF	0x0f00		/* Performance Monitoring */
+#define	EXC_VEC		0x0f20		/* AltiVec Unavailable */
 #define	EXC_BPT		0x1300		/* Instruction Breakpoint */
 #define	EXC_SMI		0x1400		/* System Managment Interrupt */
 
