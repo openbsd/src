@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_motorola.c,v 1.27 2003/06/02 23:27:48 millert Exp $ */
+/*	$OpenBSD: pmap_motorola.c,v 1.28 2003/10/09 22:12:24 miod Exp $ */
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -835,7 +835,7 @@ pmap_page_protect(pg, prot)
 #ifdef DEBUG
 	if ((pmapdebug & (PDB_FOLLOW|PDB_PROTECT)) ||
 	    (prot == VM_PROT_NONE && (pmapdebug & PDB_REMOVE)))
-		printf("pmap_page_protect(%lx, %x)\n", pa, prot);
+		printf("pmap_page_protect(%lx, %x)\n", pg, prot);
 #endif
 
 	switch (prot) {
@@ -859,7 +859,7 @@ pmap_page_protect(pg, prot)
 		pte = pmap_pte(pv->pv_pmap, pv->pv_va);
 #ifdef DEBUG
 		if (!pmap_ste_v(pv->pv_pmap, pv->pv_va) ||
-		    pmap_pte_pa(pte) != pa)
+		    pmap_pte_pa(pte) != VM_PAGE_TO_PHYS(pg))
 			panic("pmap_page_protect: bad mapping");
 #endif
 		if (!pmap_pte_w(pte))
@@ -869,7 +869,7 @@ pmap_page_protect(pg, prot)
 			pv = pv->pv_next;
 			PMAP_DPRINTF(PDB_PARANOIA,
 			    ("%s wired mapping for %lx not removed\n",
-			     "pmap_page_protect:", pa));
+			     "pmap_page_protect:", pg));
 			if (pv == NULL)
 				break;
 		}
@@ -2063,6 +2063,13 @@ pmap_remove_mapping(pmap, va, pte, flags)
 	opte = *pte;
 #endif
 
+#if defined(M68040) || defined(M68060)
+	if ((mmutype <= MMU_68040) && (flags & PRM_CFLUSH)) {
+		DCFP(pa);
+		ICPP(pa);
+	}
+#endif
+
 	/*
 	 * Update statistics
 	 */
@@ -2409,7 +2416,7 @@ pmap_changebit(pg, set, mask)
 				 * protection make sure the caches are
 				 * flushed (but only once).
 				 */
-				if (firstpage && (mmutype == MMU_68040) &&
+				if (firstpage && (mmutype <= MMU_68040) &&
 				    ((set == PG_RO) ||
 				     (set & PG_CMASK) ||
 				     (mask & PG_CMASK) == 0)) {
