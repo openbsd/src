@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.9 1996/09/18 22:03:47 deraadt Exp $
+#	$OpenBSD: MAKEDEV,v 1.10 1996/11/06 01:34:02 deraadt Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -163,11 +163,69 @@ tun*)
 	chown root.wheel tun$unit
 	;;
 
-ccd*|fd*|sd*|xd*|xy*|cd*|vnd*)
+fd*)
+	umask 2 ; unit=`expr $i : 'fd.*\(.\)$'`
+	typnam=`expr $i : 'fd\(.\).*'`
+	case $typnam in
+	0|1)		typnam=; typnum=0;;	# no type specified, assume A
+	A)		typnam=; typnum=0;;
+	B)		typnum=1;;
+	C)		typnum=2;;
+	D)		typnum=3;;
+	E)		typnum=4;;
+	F)		typnum=5;;
+	G)		typnum=6;;
+	H)		typnum=7;;
+	*)		echo bad type $typnam for $i; exit 1;;
+	esac
+	case $unit in
+	0|1)	blk=16; chr=54;;
+	*)	echo bad unit $unit for $i; exit 1;;
+	esac
+	nam=fd${typnam}${unit}
+	rm -f ${nam}? r${nam}?
+	basenum=`expr $unit '*' 128 + $typnum '*' 16`
+	mknod ${nam}a	b $blk `expr $basenum + 0`
+	mknod ${nam}b	b $blk `expr $basenum + 1`
+	mknod ${nam}c	b $blk `expr $basenum + 2`
+	#mknod ${nam}d	b $blk `expr $basenum + 3`
+	#mknod ${nam}e	b $blk `expr $basenum + 4`
+	#mknod ${nam}f	b $blk `expr $basenum + 5`
+	#mknod ${nam}g	b $blk `expr $basenum + 6`
+	#mknod ${nam}h	b $blk `expr $basenum + 7`
+	#mknod ${nam}i	b $blk `expr $basenum + 8`
+	#mknod ${nam}j	b $blk `expr $basenum + 9`
+	#mknod ${nam}k	b $blk `expr $basenum + 10`
+	#mknod ${nam}l	b $blk `expr $basenum + 11`
+	#mknod ${nam}m	b $blk `expr $basenum + 12`
+	#mknod ${nam}n	b $blk `expr $basenum + 13`
+	#mknod ${nam}o	b $blk `expr $basenum + 14`
+	#mknod ${nam}p	b $blk `expr $basenum + 15`
+	mknod r${nam}a	c $chr `expr $basenum + 0`
+	mknod r${nam}b	c $chr `expr $basenum + 1`
+	mknod r${nam}c	c $chr `expr $basenum + 2`
+	#mknod r${nam}d	c $chr `expr $basenum + 3`
+	#mknod r${nam}e	c $chr `expr $basenum + 4`
+	#mknod r${nam}f	c $chr `expr $basenum + 5`
+	#mknod r${nam}g	c $chr `expr $basenum + 6`
+	#mknod r${nam}h	c $chr `expr $basenum + 7`
+	#mknod r${nam}i	c $chr `expr $basenum + 8`
+	#mknod r${nam}j	c $chr `expr $basenum + 9`
+	#mknod r${nam}k	c $chr `expr $basenum + 10`
+	#mknod r${nam}l	c $chr `expr $basenum + 11`
+	#mknod r${nam}m	c $chr `expr $basenum + 12`
+	#mknod r${nam}n	c $chr `expr $basenum + 13`
+	#mknod r${nam}o	c $chr `expr $basenum + 14`
+	#mknod r${nam}p	c $chr `expr $basenum + 15`
+	chown root.operator ${nam}[a-p] r${nam}[a-p]
+	chmod 640 ${nam}[a-p] r${nam}[a-p]
+	umask 77
+	;;
+
+ccd*|sd*|xd*|xy*|cd*|vnd*)
 	umask 2
 	case $i in
 	ccd*) name=ccd; blk=9; chr=23;;
-	fd*) name=fd; blk=16; chr=54;;
 	sd*) name=sd; blk=7; chr=17;;
 	xd*) name=xd; blk=10; chr=42;;
 	xy*) name=xy; blk=3; chr=9;;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.2 1996/08/26 11:12:00 pefo Exp $	*/
+/*	$OpenBSD: fd.c,v 1.3 1996/11/06 01:34:00 deraadt Exp $	*/
 /*	$NetBSD: fd.c,v 1.78 1995/07/04 07:23:09 mycroft Exp $	*/
 
 /*-
@@ -63,8 +63,9 @@
 #include <arc/dev/dma.h>
 
 
-#define FDUNIT(dev)	(minor(dev) / 8)
-#define FDTYPE(dev)	(minor(dev) % 8)
+#define FDUNIT(dev)	((dev & 0x080) >> 7)
+#define FDTYPE(dev)	((minor(dev) & 0x70) >> 4)
+#define FDPART(dev)	(minor(dev) & 0x0f)
 
 #define b_cylin b_resid
 

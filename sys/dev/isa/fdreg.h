@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdreg.h,v 1.6 1996/10/26 06:22:38 downsj Exp $	*/
+/*	$OpenBSD: fdreg.h,v 1.7 1996/11/06 01:33:53 deraadt Exp $	*/
 /*	$NetBSD: fdreg.h,v 1.8 1995/06/28 04:30:57 cgd Exp $	*/
 
 /*-
@@ -66,5 +66,6 @@
 #define	FDC_NPORT	8
 #define	FDC_MAXIOSIZE	NBPG	/* XXX should be MAXBSIZE */
 
-#define FDUNIT(dev)	(minor(dev) / 16)
-#define FDTYPE(dev)	(minor(dev) % 16)
+#define FDUNIT(dev)	((dev & 0x180) >> 7)
+#define FDTYPE(dev)	((minor(dev) & 0x70) >> 4)
+#define FDPART(dev)	(minor(dev) & 0x0f)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.9 1996/08/11 23:11:35 downsj Exp $	*/
+/*	$OpenBSD: fd.c,v 1.10 1996/11/06 01:33:58 deraadt Exp $	*/
 /*	$NetBSD: fd.c,v 1.33.4.1 1996/06/12 20:52:25 pk Exp $	*/
 
 /*-
@@ -68,8 +68,9 @@
 #include <sparc/dev/fdreg.h>
 #include <sparc/dev/fdvar.h>
 
-#define FDUNIT(dev)	(minor(dev) / 8)
-#define FDTYPE(dev)	(minor(dev) % 8)
+#define FDUNIT(dev)	((dev & 0x180) >> 7)
+#define FDTYPE(dev)	((minor(dev) & 0x70) >> 4)
+#define FDPART(dev)	(minor(dev) & 0x0f)
 
 #define b_cylin b_resid
 
