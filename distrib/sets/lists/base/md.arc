@@ -30,7 +30,7 @@
 ./usr/lib/libpanel.so.1.1
 ./usr/lib/libpcap.so.1.0
 ./usr/lib/libskey.so.1.0
-./usr/lib/libssl.so.1.0
+./usr/lib/libssl.so.2.0
 ./usr/lib/libtermcap.so.5.0
 ./usr/lib/libtermlib.so.5.0
 ./usr/lib/libutil.so.4.4

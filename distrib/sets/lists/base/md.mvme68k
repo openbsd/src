@@ -28,7 +28,7 @@
 ./usr/lib/libpcap.so.1.0
 ./usr/lib/librx.so.0.1
 ./usr/lib/libskey.so.1.0
-./usr/lib/libssl.so.1.0
+./usr/lib/libssl.so.2.0
 ./usr/lib/libstdc++.so.28.0
 ./usr/lib/libtermcap.so.5.1
 ./usr/lib/libtermlib.so.5.1
