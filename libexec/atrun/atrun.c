@@ -1,4 +1,4 @@
-/*	$OpenBSD: atrun.c,v 1.5 1997/07/29 02:22:46 deraadt Exp $	*/
+/*	$OpenBSD: atrun.c,v 1.6 1997/09/08 22:09:28 deraadt Exp $	*/
 
 /*
  *  atrun.c - run jobs queued by at; run with root privileges.
@@ -67,7 +67,7 @@
 /* File scope variables */
 
 static char *namep;
-static char rcsid[] = "$OpenBSD: atrun.c,v 1.5 1997/07/29 02:22:46 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: atrun.c,v 1.6 1997/09/08 22:09:28 deraadt Exp $";
 static int debug = 0;
 
 /* Local functions */
@@ -295,17 +295,18 @@ run_file(filename, uid, gid)
 		if (queue > 'b')
 		    nice(queue - 'b');
 
-		if (chdir(pentry->pw_dir) < 0)
-			chdir("/");
-
 		if (initgroups(pentry->pw_name, pentry->pw_gid) < 0)
 			perr("Cannot init group list");
 
 		if (setegid(pentry->pw_gid) < 0 || setgid(pentry->pw_gid) < 0)
 			perr("Cannot change primary group");
 
+		setlogin(pentry->pw_name);
 		if (seteuid(uid) < 0 || setuid(uid) < 0)
 			perr("Cannot set user id");
+
+		if (chdir(pentry->pw_dir) < 0)
+			chdir("/");
 
 		if (execle("/bin/sh", "sh", (char *)NULL, nenvp) != 0)
 			perr("Exec failed for /bin/sh");
