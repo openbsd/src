@@ -189,20 +189,16 @@ OpenBSDBootMsgs
 	will be used by the finished system, following which the new file
 	systems will be mounted to complete the installation.
 
-	After these preparatory steps has been completed, you will be
+	After these preparatory steps have been completed, you will be
 	able to extract the distribution sets onto your system.  There
 	are several install methods supported; FTP, HTTP, tape, CD-ROM, NFS
-	or a local disk partition.  To install from a tape, the distrib-
-	ution sets must have been written to tape prior to running the
-	installation program, either as tar images or as gzipped tar
-	images.  Note that installation sets on multiple floppies is not
-	currently supported.
+	or a local disk partition.
 
 OpenBSDFTPInstall
 
 OpenBSDHTTPInstall
 
-OpenBSDTAPEInstall
+OpenBSDTAPEInstall(4)
 
 OpenBSDCDROMInstall
 		
