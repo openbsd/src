@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.47 2002/12/17 23:11:32 millert Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.48 2003/02/26 21:54:44 drahn Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -1474,7 +1474,7 @@ kcopy(from, to, size)
 	faultbuf env;
 	register void *oldh = curproc->p_addr->u_pcb.pcb_onfault;
 
-	if (setfault(env)) {
+	if (setfault(&env)) {
 		curproc->p_addr->u_pcb.pcb_onfault = oldh;
 		return EFAULT;
 	}

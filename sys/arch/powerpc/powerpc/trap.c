@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.55 2002/10/13 18:26:12 krw Exp $	*/
+/*	$OpenBSD: trap.c,v 1.56 2003/02/26 21:54:44 drahn Exp $	*/
 /*	$NetBSD: trap.c,v 1.3 1996/10/13 03:31:37 christos Exp $	*/
 
 /*
@@ -713,7 +713,7 @@ badaddr(addr, len)
 	u_int32_t v;
 	register void *oldh = curpcb->pcb_onfault;
 
-	if (setfault(env)) {
+	if (setfault(&env)) {
 		curpcb->pcb_onfault = oldh;
 		return EFAULT;
 	}

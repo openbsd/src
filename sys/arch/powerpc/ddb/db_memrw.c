@@ -1,5 +1,5 @@
 /*	$NetBSD: db_memrw.c,v 1.4 2001/05/18 20:38:27 matt Exp $	*/
-/*	$OpenBSD: db_memrw.c,v 1.3 2002/09/15 09:01:59 deraadt Exp $	*/
+/*	$OpenBSD: db_memrw.c,v 1.4 2003/02/26 21:54:44 drahn Exp $	*/
 
 /* 
  * Mach Operating System
@@ -61,7 +61,7 @@ db_read_bytes(addr, size, data)
 	register char	*src = (char *)addr;
 	faultbuf env;
 	faultbuf *old_onfault = curpcb->pcb_onfault;
-	if (setfault(env)) {
+	if (setfault(&env)) {
 		curpcb->pcb_onfault = old_onfault;
 		return;
 	}
@@ -92,7 +92,7 @@ db_write_bytes(addr, size, data)
 	faultbuf env;
 	faultbuf *old_onfault = curpcb->pcb_onfault;
 
-	if (setfault(env)) {
+	if (setfault(&env)) {
 		curpcb->pcb_onfault = old_onfault;
 		return;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.79 2003/01/30 15:38:09 drahn Exp $ */
+/*	$OpenBSD: pmap.c,v 1.80 2003/02/26 21:54:44 drahn Exp $ */
 
 /*
  * Copyright (c) 2001, 2002 Dale Rahn. All rights reserved.
@@ -1578,7 +1578,7 @@ copyin(udaddr, kaddr, len)
 		if (l > len)
 			l = len;
 		oldsr = pmap_setusr(curpcb->pcb_pm, (vaddr_t)udaddr);
-		if (setfault(env)) {
+		if (setfault(&env)) {
 			pmap_popusr(oldsr);
 			curpcb->pcb_onfault = oldh;
 			return EFAULT;
@@ -1611,7 +1611,7 @@ copyout(kaddr, udaddr, len)
 		if (l > len)
 			l = len;
 		oldsr = pmap_setusr(curpcb->pcb_pm, (vaddr_t)udaddr);
-		if (setfault(env)) {
+		if (setfault(&env)) {
 			pmap_popusr(oldsr);
 			curpcb->pcb_onfault = oldh;
 			return EFAULT;
@@ -1649,7 +1649,7 @@ copyinstr(const void *udaddr, void *kaddr, size_t len, size_t *done)
 			l = len;
 		len -= l;
 		oldsr = pmap_setusr(curpcb->pcb_pm, (vaddr_t)uaddr);
-		if (setfault(env)) {
+		if (setfault(&env)) {
 			if (done != NULL)
 				*done =  cnt;
 
@@ -1705,7 +1705,7 @@ copyoutstr(const void *kaddr, void *udaddr, size_t len, size_t *done)
 			l = len;
 		len -= l;
 		oldsr = pmap_setusr(curpcb->pcb_pm, (vaddr_t)uaddr);
-		if (setfault(env)) {
+		if (setfault(&env)) {
 			if (done != NULL)
 				*done =  cnt;
 
