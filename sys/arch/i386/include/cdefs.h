@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdefs.h,v 1.6 2000/08/05 22:07:31 niklas Exp $	*/
+/*	$OpenBSD: cdefs.h,v 1.7 2001/08/18 02:35:06 brad Exp $	*/
 /*	$NetBSD: cdefs.h,v 1.2 1995/03/23 20:10:26 jtc Exp $	*/
 
 /*
@@ -38,7 +38,9 @@
 	__asm__(".weak _/**/alias; _/**/alias = _/**/sym")
 #endif
 #else
-#define	__warn_references(sym,msg)	/* nothing */
+#define __indr_reference(sym,alias)
+#define __warn_references(sym,msg)
+#define __weak_alias(alias,sym)
 #endif
 
 #endif /* !_MACHINE_CDEFS_H_ */
