@@ -1,6 +1,6 @@
 #! /bin/sh
 # Output RCS compile-time configuration.
-Id='$Id: conf.sh,v 1.1 1996/08/12 04:08:05 millert Exp $'
+Id='$Id: conf.sh,v 1.2 1996/08/16 18:01:24 millert Exp $'
 #	Copyright 1990, 1991, 1992, 1993, 1994, 1995 Paul Eggert
 #	Distributed under license by the Free Software Foundation, Inc.
 
@@ -73,16 +73,16 @@ case `echo -n` in
 	ech='echo -n' dots='... '
 esac
 
-$ech >&3 "$0: testing permissions $dots"
-rm -f a.d &&
-date >a.d &&
-chmod 0 a.d &&
-{ test -w a.d || cp /dev/null a.d 2>/dev/null; } && {
-	echo >&3 "$n$0: This command should not be run with superuser permissions."
-	exit 1
-}
-echo >&3 OK
-rm -f a.d || exit
+#$ech >&3 "$0: testing permissions $dots"
+#rm -f a.d &&
+#date >a.d &&
+#chmod 0 a.d &&
+#{ test -w a.d || cp /dev/null a.d 2>/dev/null; } && {
+#	echo >&3 "$n$0: This command should not be run with superuser permissions."
+#	exit 1
+#}
+#echo >&3 OK
+#rm -f a.d || exit
 
 $ech >&3 "$0: testing compiler for plausibility $dots"
 echo 'main() { return 0; }' >a.c
