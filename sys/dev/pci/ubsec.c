@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.74 2001/11/14 00:39:46 jason Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.75 2001/11/20 20:19:26 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -113,7 +113,8 @@ ubsec_probe(parent, match, aux)
 		return (1);
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_BROADCOM &&
 	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_5805 ||
-	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_5820))
+	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_5820 ||
+	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_5821))
 		return (1);
 	return (0);
 }
@@ -145,7 +146,8 @@ ubsec_attach(parent, self, aux)
 		sc->sc_flags |= UBS_FLAGS_KEY;
 
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_BROADCOM &&
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_5820)
+	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_5820 ||
+	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_5821))
 		sc->sc_flags |= UBS_FLAGS_KEY | UBS_FLAGS_LONGCTX;
 
 	cmd = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
@@ -169,6 +171,11 @@ ubsec_attach(parent, self, aux)
 		return;
 	}
 	sc->sc_dmat = pa->pa_dmat;
+
+	/* Disable TRDY timeout and RETRY timeout */
+	cmd = pci_conf_read(pc, pa->pa_tag, BS_TRDY_TIMEOUT);
+	cmd &= 0xffff0000;
+	pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, cmd);
 
 	if (pci_intr_map(pa, &ih)) {
 		printf(": couldn't map interrupt\n");
