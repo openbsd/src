@@ -1,4 +1,4 @@
-/*	$OpenBSD: fty_enum.c,v 1.3 1997/12/03 05:40:17 millert Exp $	*/
+/*	$OpenBSD: fty_enum.c,v 1.4 1998/07/24 02:37:43 millert Exp $	*/
 
 
 /*
@@ -15,7 +15,7 @@
 
 #include "form.priv.h"
 
-MODULE_ID("Id: fty_enum.c,v 1.8 1997/10/18 19:33:20 tom Exp $")
+MODULE_ID("$From: fty_enum.c,v 1.8 1997/10/18 19:33:20 tom Exp $")
 
 typedef struct {
   char **kwds;

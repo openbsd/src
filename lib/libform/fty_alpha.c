@@ -1,4 +1,4 @@
-/*	$OpenBSD: fty_alpha.c,v 1.3 1997/12/03 05:40:17 millert Exp $	*/
+/*	$OpenBSD: fty_alpha.c,v 1.4 1998/07/24 02:37:42 millert Exp $	*/
 
 
 /*
@@ -15,7 +15,7 @@
 
 #include "form.priv.h"
 
-MODULE_ID("Id: fty_alpha.c,v 1.7 1997/10/18 19:33:38 tom Exp $")
+MODULE_ID("$From: fty_alpha.c,v 1.7 1997/10/18 19:33:38 tom Exp $")
 
 typedef struct {
   int width;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fty_num.c,v 1.3 1997/12/03 05:40:19 millert Exp $	*/
+/*	$OpenBSD: fty_num.c,v 1.4 1998/07/24 02:37:47 millert Exp $	*/
 
 
 /*
@@ -15,7 +15,7 @@
 
 #include "form.priv.h"
 
-MODULE_ID("Id: fty_num.c,v 1.11 1997/10/18 19:32:58 tom Exp $")
+MODULE_ID("$From: fty_num.c,v 1.11 1997/10/18 19:32:58 tom Exp $")
 
 #if HAVE_LOCALE_H
 #include <locale.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fty_int.c,v 1.3 1997/12/03 05:40:18 millert Exp $	*/
+/*	$OpenBSD: fty_int.c,v 1.4 1998/07/24 02:37:44 millert Exp $	*/
 
 
 /*
@@ -15,7 +15,7 @@
 
 #include "form.priv.h"
 
-MODULE_ID("Id: fty_int.c,v 1.8 1997/10/18 19:32:50 tom Exp $")
+MODULE_ID("$From: fty_int.c,v 1.8 1997/10/18 19:32:50 tom Exp $")
 
 typedef struct {
   int precision;

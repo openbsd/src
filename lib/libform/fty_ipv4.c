@@ -1,4 +1,4 @@
-/*	$OpenBSD: fty_ipv4.c,v 1.2 1997/12/03 05:40:18 millert Exp $	*/
+/*	$OpenBSD: fty_ipv4.c,v 1.3 1998/07/24 02:37:46 millert Exp $	*/
 
 
 /*
@@ -15,7 +15,7 @@
 
 #include "form.priv.h"
 
-MODULE_ID("Id: fty_ipv4.c,v 1.2 1997/04/26 22:06:00 tom Exp $")
+MODULE_ID("$From: fty_ipv4.c,v 1.2 1997/04/26 22:06:00 tom Exp $")
 
 /*---------------------------------------------------------------------------
 |   Facility      :  libnform  

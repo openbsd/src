@@ -1,5 +1,35 @@
+.\" $OpenBSD: form_fieldtype.3,v 1.5 1998/07/24 02:37:13 millert Exp $
+.\"
+.\"***************************************************************************
+.\" Copyright (c) 1998 Free Software Foundation, Inc.                        *
+.\"                                                                          *
+.\" Permission is hereby granted, free of charge, to any person obtaining a  *
+.\" copy of this software and associated documentation files (the            *
+.\" "Software"), to deal in the Software without restriction, including      *
+.\" without limitation the rights to use, copy, modify, merge, publish,      *
+.\" distribute, distribute with modifications, sublicense, and/or sell       *
+.\" copies of the Software, and to permit persons to whom the Software is    *
+.\" furnished to do so, subject to the following conditions:                 *
+.\"                                                                          *
+.\" The above copyright notice and this permission notice shall be included  *
+.\" in all copies or substantial portions of the Software.                   *
+.\"                                                                          *
+.\" THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS  *
+.\" OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF               *
+.\" MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.   *
+.\" IN NO EVENT SHALL THE ABOVE COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,   *
+.\" DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR    *
+.\" OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR    *
+.\" THE USE OR OTHER DEALINGS IN THE SOFTWARE.                               *
+.\"                                                                          *
+.\" Except as contained in this notice, the name(s) of the above copyright   *
+.\" holders shall not be used in advertising or otherwise to promote the     *
+.\" sale, use or other dealings in this Software without prior written       *
+.\" authorization.                                                           *
+.\"***************************************************************************
+.\"
+.\" $From: form_fieldtype.3x,v 1.5 1998/03/11 21:12:53 juergen Exp $
 '\" t
-.\" $OpenBSD: form_fieldtype.3,v 1.4 1997/12/03 05:46:32 millert Exp $
 .TH form_field 3 ""
 .SH NAME
 \fBform_fieldtype\fR - define validation-field types
@@ -23,9 +53,9 @@ int set_fieldtype_choice(
     bool (* const next_choice)(FIELD *, const void *),
     bool (* const prev_choice)(FIELD *, const void *));
 .br
-FIELDTYPE *link_fieldtype(FIELDTYPE *type1,
+FIELDTYPE *link_fieldtype(FIELDTYPE *type1, 
                           FIELDTYPE *type2);
-.br
+.br 
 .SH DESCRIPTION
 The function \fBnew_fieldtype\fR creates a new field type usable for data
 validation.  You supply it with \fIfield_check\fR, a predicate to check the
@@ -41,10 +71,10 @@ the character to be checked and a pointer to an argument-block structure.
 The function \fBfree_fieldtype\fR frees the space allocated for a given
 validation type.
 
-The function \fBset_fieldtype\fR associates three storage-management functions
+The function \fBset_fieldtype\fR associates three storage-management functions 
 with a field type.  The \fImak_arg\fR function is automatically applied to the
 list of arguments you give \fBset_field_type\fR when attaching validation
-to a field; its job is to bundle these into an allocated argument-block
+to a field; its job is to bundle these into an allocated argument-block 
 object which can later be passed to validation predicated.  The other two
 hook arguments should copy and free argument-block structures.  They will
 be used by the forms-driver code. You must supply the \fImak_arg\fR function,
