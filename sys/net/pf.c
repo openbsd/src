@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.11 2001/06/24 23:10:23 deraadt Exp $ */
+/*	$OpenBSD: pf.c,v 1.12 2001/06/24 23:26:14 art Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -492,22 +492,22 @@ int
 pfopen(dev_t dev, int flags, int fmt, struct proc *p)
 {
 	if (minor(dev) >= 1)
-		return ENXIO;
-	return NO_ERROR;
+		return (ENXIO);
+	return (0);
 }
 
 int
 pfclose(dev_t dev, int flags, int fmt, struct proc *p)
 {
 	if (minor(dev) >= 1)
-		return ENXIO;
-	return NO_ERROR;
+		return (ENXIO);
+	return (0);
 }
 
 int
 pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 {
-	int error = NO_ERROR;
+	int error = 0;
 	struct ioctlbuffer *ub;
 	void *kb = NULL;
 	int s;
