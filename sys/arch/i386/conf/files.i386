@@ -1,4 +1,4 @@
-#	$OpenBSD: files.i386,v 1.120 2004/06/03 18:13:13 grange Exp $
+#	$OpenBSD: files.i386,v 1.121 2004/06/03 18:22:21 grange Exp $
 #
 # new style config file for i386 architecture
 #
@@ -121,12 +121,17 @@ file	arch/i386/pci/geodesc.c		geodesc
 # PCI-ISA bridge chipsets
 device	pcib: isabus
 attach	pcib at pci
-file	arch/i386/pci/pcib.c		pcib | ichpcib
+file	arch/i386/pci/pcib.c		pcib | ichpcib | gscpcib
 
 # Intel ICHx/ICHx-M LPC bridges
 device	ichpcib: isabus
 attach	ichpcib at pci
 file	arch/i386/pci/ichpcib.c		ichpcib
+
+# National Semiconductor Geode SC1100 PCI-ISA bridge
+device	gscpcib: isabus, gpiobus
+attach	gscpcib at pci
+file	arch/i386/pci/gscpcib.c		gscpcib
 
 device	hme: ether, ifnet, mii, ifmedia
 file	dev/ic/hme.c			hme

@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.365 2004/05/30 08:11:26 grange Exp $
+#	$OpenBSD: GENERIC,v 1.366 2004/06/03 18:22:21 grange Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -46,6 +46,7 @@ pcibios0 at bios0 flags 0x0000	# use 0x30 for a total verbose
 isa0	at mainbus0
 isa0	at pcib?
 isa0	at ichpcib?
+isa0	at gscpcib?
 eisa0	at mainbus0
 pci*	at mainbus0 bus ?
 
@@ -59,6 +60,8 @@ pci*	at ppb? bus ?
 pci*	at pchb? bus ?
 pcib*	at pci? dev ? function ?	# PCI-ISA bridge
 ichpcib* at pci? dev ? function ?	# Intel ICHx/ICHx-M LPC bridges
+gscpcib* at pci? dev ? function ?	# NS Geode SC1100 PCI-ISA bridge
+gpio*	at gscpcib?
 
 # power management and other environmental stuff
 #amdpm*	at pci? dev ? function ?	# AMD768MPX
