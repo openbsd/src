@@ -1,4 +1,4 @@
-/*	$Id: dev_net.c,v 1.1.1.1 1997/03/03 19:30:38 rahnds Exp $ */
+/*	$OpenBSD: dev_net.c,v 1.2 1998/08/22 08:37:56 smurph Exp $ */
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -55,7 +55,10 @@
 #include <netinet/if_ether.h>
 #include <netinet/in_systm.h>
 
+#include <machine/prom.h>
+
 #include "stand.h"
+#include "libsa.h"
 #include "net.h"
 #include "netif.h"
 #include "config.h"
@@ -183,29 +186,15 @@ machdep_common_ether(ether)
 	u_char *ether;
 {
 	u_char *ea;
-	extern int cputyp;
 
-	if (cputyp == CPU_147) {
-		ea = (u_char *) ETHER_ADDR_147;
+	ea = (u_char *) ETHER_ADDR_16X;
 
-		if ((*(int *) ea & 0x2fffff00) == 0x2fffff00)
-			panic("ERROR: ethernet address not set!\r\n");
-		ether[0] = 0x08;
-		ether[1] = 0x00;
-		ether[2] = 0x3e;
-		ether[3] = ea[0];
-		ether[4] = ea[1];
-		ether[5] = ea[2];
-	} else {
-		ea = (u_char *) ETHER_ADDR_16X;
-
-		if (ea[0] + ea[1] + ea[2] + ea[3] + ea[4] + ea[5] == 0)
-			panic("ERROR: ethernet address not set!\r\n");
-		ether[0] = ea[0];
-		ether[1] = ea[1];
-		ether[2] = ea[2];
-		ether[3] = ea[3];
-		ether[4] = ea[4];
-		ether[5] = ea[5];
-	}
+	if (ea[0] + ea[1] + ea[2] + ea[3] + ea[4] + ea[5] == 0)
+		panic("ERROR: ethernet address not set!\r\n");
+	ether[0] = ea[0];
+	ether[1] = ea[1];
+	ether[2] = ea[2];
+	ether[3] = ea[3];
+	ether[4] = ea[4];
+	ether[5] = ea[5];
 }

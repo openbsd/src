@@ -1,4 +1,4 @@
-/*	$Id: if_le.c,v 1.1.1.1 1997/03/03 19:30:37 rahnds Exp $ */
+/*	$OpenBSD: if_le.c,v 1.2 1998/08/22 08:38:02 smurph Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -66,7 +66,10 @@
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 
+#include <machine/prom.h>
+
 #include "stand.h"
+#include "libsa.h"
 #include "netif.h"
 #include "config.h"
 
@@ -129,10 +132,7 @@ le_match(nif, machdep_hint)
 {
 	char   *name;
 	int     i, val = 0;
-	extern int cputyp;
 
-	if (cputyp != CPU_147)
-		return (0);
 	name = machdep_hint;
 	if (name && !bcmp(le_driver.netif_bname, name, 2))
 		val += 10;
@@ -154,14 +154,11 @@ le_probe(nif, machdep_hint)
 	struct netif *nif;
 	void   *machdep_hint;
 {
-	extern int cputyp;
 
 	/* the set unit is the current unit */
 	if (le_debug)
 		printf("le%d: le_probe called\n", nif->nif_unit);
 
-	if (cputyp == CPU_147)
-		return 0;
 	return 1;
 }
 

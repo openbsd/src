@@ -1,4 +1,4 @@
-/*	$Id: if_iereg.h,v 1.1.1.1 1997/03/03 19:30:38 rahnds Exp $ */
+/*	$OpenBSD: if_iereg.h,v 1.2 1998/08/22 08:38:01 smurph Exp $ */
 
 /*
  * if_sunie.h
