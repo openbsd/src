@@ -42,11 +42,13 @@ static char *rcsid = "$NetBSD: getrpcport.c,v 1.5 1995/06/03 22:37:24 mycroft Ex
 #include <stdio.h>
 #include <string.h>
 #include <rpc/rpc.h>
+#include <rpc/pmap_clnt.h>
 #include <netdb.h>
 #include <sys/socket.h>
 
 getrpcport(host, prognum, versnum, proto)
 	char *host;
+	int prognum, versnum, proto;
 {
 	struct sockaddr_in addr;
 	struct hostent *hp;
