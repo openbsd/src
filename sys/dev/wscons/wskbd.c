@@ -1,4 +1,4 @@
-/* $OpenBSD: wskbd.c,v 1.37 2003/09/23 16:51:12 millert Exp $ */
+/* $OpenBSD: wskbd.c,v 1.38 2004/02/27 22:09:47 deraadt Exp $ */
 /* $NetBSD: wskbd.c,v 1.38 2000/03/23 07:01:47 thorpej Exp $ */
 
 /*
@@ -1429,7 +1429,7 @@ internal_command(sc, type, ksym, ksym2)
 		if (sc->sc_displaydv != NULL)
 			wsdisplay_reset(sc->sc_displaydv, WSDISPLAY_RESETCLOSE);
 		return (1);
-#ifdef __i386__
+#if defined(__i386__) || defined(__amd64__)
 	case KS_Cmd_KbdReset:
 		if (kbd_reset == 1) {
 			kbd_reset = 0;
