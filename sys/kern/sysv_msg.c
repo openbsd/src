@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_msg.c,v 1.6 1999/02/04 18:48:25 deraadt Exp $	*/
+/*	$OpenBSD: sysv_msg.c,v 1.7 1999/04/18 18:24:40 deraadt Exp $	*/
 /*	$NetBSD: sysv_msg.c,v 1.19 1996/02/09 19:00:18 christos Exp $	*/
 
 /*
@@ -1127,10 +1127,10 @@ sys_msgrcv(p, v, retval)
 	for (len = 0; len < msgsz; len += msginfo.msgssz) {
 		size_t tlen;
 
-		if (msgsz > msginfo.msgssz)
+		if (msgsz - len > msginfo.msgssz)
 			tlen = msginfo.msgssz;
 		else
-			tlen = msgsz;
+			tlen = msgsz - len;
 #ifdef DIAGNOSTIC
 		if (next <= -1)
 			panic("next too low #3");
