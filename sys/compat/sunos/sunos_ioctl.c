@@ -1,4 +1,4 @@
-/*	$OpenBSD: sunos_ioctl.c,v 1.5 1997/11/30 21:41:05 deraadt Exp $	*/
+/*	$OpenBSD: sunos_ioctl.c,v 1.6 1997/12/04 07:21:27 deraadt Exp $	*/
 /*	$NetBSD: sunos_ioctl.c,v 1.23 1996/03/14 19:33:46 christos Exp $	*/
 
 /*
@@ -36,8 +36,10 @@
 #include <sys/termios.h>
 #include <sys/tty.h>
 #include <sys/socket.h>
+#include <sys/vnode.h>
 #include <sys/audioio.h>
 #include <net/if.h>
+#include <miscfs/specfs/specdev.h>
 
 #include <sys/mount.h>
 
