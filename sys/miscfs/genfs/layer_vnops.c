@@ -1,4 +1,4 @@
-/*	$OpenBSD: layer_vnops.c,v 1.4 2003/11/08 19:17:28 jmc Exp $ */
+/*	$OpenBSD: layer_vnops.c,v 1.5 2003/11/29 18:44:46 jmc Exp $ */
 /*	$NetBSD: layer_vnops.c,v 1.10 2001/12/06 04:29:23 chs Exp $	*/
 
 /*
@@ -68,7 +68,7 @@
  *
  * Ancestors:
  *	@(#)lofs_vnops.c	1.2 (Berkeley) 6/18/92
- *	$Id: layer_vnops.c,v 1.4 2003/11/08 19:17:28 jmc Exp $
+ *	$Id: layer_vnops.c,v 1.5 2003/11/29 18:44:46 jmc Exp $
  *	...and...
  *	@(#)null_vnodeops.c 1.20 92/07/07 UCLA Ficus project
  */
@@ -122,13 +122,13 @@
  * The null layer is the minimum file system layer,
  * simply bypassing all possible operations to the lower layer
  * for processing there.  The majority of its activity centers
- * on the bypass routine, though which nearly all vnode operations
+ * on the bypass routine, through which nearly all vnode operations
  * pass.
  *
  * The bypass routine accepts arbitrary vnode operations for
  * handling by the lower layer.  It begins by examing vnode
  * operation arguments and replacing any layered nodes by their
- * lower-layer equivlants.  It then invokes the operation
+ * lower-layer equivalents.  It then invokes the operation
  * on the lower layer.  Finally, it replaces the layered nodes
  * in the arguments and, if a vnode is return by the operation,
  * stacks a layered node on top of the returned vnode.
@@ -180,7 +180,7 @@
  * are created as a result of vnode operations on
  * this or other null vnode stacks.
  *
- * New vnode stacks come into existance as a result of
+ * New vnode stacks come into existence as a result of
  * an operation which returns a vnode.  
  * The bypass routine stacks a null-node above the new
  * vnode before returning it to the caller.
@@ -220,15 +220,15 @@
  *
  * The first approach is to call the aliasing layer's bypass routine.
  * This method is most suitable when you wish to invoke the operation
- * currently being hanldled on the lower layer.  It has the advantage
+ * currently being handled on the lower layer.  It has the advantage
  * that the bypass routine already must do argument mapping.
  * An example of this is null_getattrs in the null layer.
  *
- * A second approach is to directly invoked vnode operations on
+ * A second approach is to directly invoke vnode operations on
  * the lower layer with the VOP_OPERATIONNAME interface.
  * The advantage of this method is that it is easy to invoke
  * arbitrary operations on the lower layer.  The disadvantage
- * is that vnodes arguments must be manualy mapped.
+ * is that vnodes' arguments must be manually mapped.
  *
  */
 
