@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.40 2001/02/02 01:00:07 jason Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.41 2001/03/25 07:59:25 csapuntz Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -592,10 +592,17 @@ ubsec_process(crp)
 	q->q_sesn = UBSEC_SESSION(crp->crp_sid);
 	ses = &sc->sc_sessions[q->q_sesn];
 
+	if (crp->crp_flags & CRYPTO_F_IMBUF) {
+		q->q_src_m = (struct mbuf *)crp->crp_buf;
+		q->q_dst_m = (struct mbuf *)crp->crp_buf;
+	} else {
+		err = EINVAL;
+		goto errout;	/* XXX only handle mbufs right now */
+	}
+
 	q->q_mcr = (struct ubsec_mcr *)malloc(sizeof(struct ubsec_mcr),
 	    M_DEVBUF, M_NOWAIT);
 	if (q->q_mcr == NULL) {
-		free(q, M_DEVBUF);
 		err = ENOMEM;
 		goto errout;
 	}
@@ -606,14 +613,6 @@ ubsec_process(crp)
 	q->q_mcr->mcr_cmdctxp = vtophys(&q->q_ctx);
 	q->q_sc = sc;
 	q->q_crp = crp;
-
-	if (crp->crp_flags & CRYPTO_F_IMBUF) {
-		q->q_src_m = (struct mbuf *)crp->crp_buf;
-		q->q_dst_m = (struct mbuf *)crp->crp_buf;
-	} else {
-		err = EINVAL;
-		goto errout;	/* XXX only handle mbufs right now */
-	}
 
 	crd1 = crp->crp_desc;
 	if (crd1 == NULL) {
