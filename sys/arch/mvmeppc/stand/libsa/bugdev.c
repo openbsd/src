@@ -1,4 +1,4 @@
-/*	$OpenBSD: bugdev.c,v 1.2 2003/06/01 17:00:38 deraadt Exp $ */
+/*	$OpenBSD: bugdev.c,v 1.3 2004/01/26 18:39:20 miod Exp $ */
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -479,7 +479,7 @@ net_open(struct open_file *f, ...)
 	nfo.clun = pp->clun;
 	nfo.dlun = pp->dlun;
 	nfo.status = 0;
-	strlcpy(nfo.filename, filename, sizeof filename);
+	strlcpy(nfo.filename, filename, sizeof nfo.filename);
 	/* .NETFOPN syscall */
 	mvmeprom_netfopen(&nfo);
 	
