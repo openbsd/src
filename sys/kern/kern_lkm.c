@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_lkm.c,v 1.25 1999/02/26 04:54:00 art Exp $	*/
+/*	$OpenBSD: kern_lkm.c,v 1.26 2000/01/02 06:28:06 assar Exp $	*/
 /*	$NetBSD: kern_lkm.c,v 1.31 1996/03/31 21:40:27 christos Exp $	*/
 
 /*
@@ -159,6 +159,7 @@ lkmalloc()
 		ret->refcnt =
 		ret->depcnt = 0;
 		ret->id = nlkms++;
+		ret->sym_id = -1;
 		TAILQ_INSERT_TAIL(&lkmods, ret, list);
 	}
 
@@ -242,7 +243,8 @@ lkmunreserve()
 		return;
 
 #ifdef DDB
-	if (curp && curp->private.lkm_any && curp->private.lkm_any->lkm_name)
+	if (curp && curp->private.lkm_any && curp->private.lkm_any->lkm_name
+	    && curp->sym_id != -1)
 	    db_del_symbol_table(curp->private.lkm_any->lkm_name);
 #endif
 
