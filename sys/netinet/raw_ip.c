@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip.c,v 1.19 1999/09/23 07:20:35 deraadt Exp $	*/
+/*	$OpenBSD: raw_ip.c,v 1.20 1999/12/19 02:54:29 itojun Exp $	*/
 /*	$NetBSD: raw_ip.c,v 1.25 1996/02/18 18:58:33 christos Exp $	*/
 
 /*
@@ -121,6 +121,10 @@ rip_input(m, va_alist)
 	for (inp = rawcbtable.inpt_queue.cqh_first;
 	    inp != (struct inpcb *)&rawcbtable.inpt_queue;
 	    inp = inp->inp_queue.cqe_next) {
+#ifdef INET6
+		if (inp->inp_flags & INP_IPV6)
+			continue;
+#endif
 		if (inp->inp_ip.ip_p && inp->inp_ip.ip_p != ip->ip_p)
 			continue;
 		if (inp->inp_laddr.s_addr &&

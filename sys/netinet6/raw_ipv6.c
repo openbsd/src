@@ -1,4 +1,4 @@
-/* $OpenBSD: raw_ipv6.c,v 1.9 1999/12/15 07:08:00 itojun Exp $ */
+/* $OpenBSD: raw_ipv6.c,v 1.10 1999/12/19 02:54:29 itojun Exp $ */
 /*
 %%% copyright-nrl-95
 This software is Copyright 1995-1998 by Randall Atkinson, Ronald Lee,
@@ -43,7 +43,7 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
  * SUCH DAMAGE.
  *
  *	@(#)raw_ip.c	8.7 (Berkeley) 5/15/95
- *	$Id: raw_ipv6.c,v 1.9 1999/12/15 07:08:00 itojun Exp $
+ *	$Id: raw_ipv6.c,v 1.10 1999/12/19 02:54:29 itojun Exp $
  */
 
 #include <sys/param.h>
@@ -264,6 +264,8 @@ rip6_input(mp, offp, proto)
        inp != (struct inpcb *)&rawin6pcbtable.inpt_queue;
        inp = inp->inp_queue.cqe_next)
   {
+    if (!(inp->inp_flags & INP_IPV6))
+      continue;
     if (inp->inp_ipv6.ip6_nxt && inp->inp_ipv6.ip6_nxt != nexthdr)
       continue;
     if (!IN6_IS_ADDR_UNSPECIFIED(&inp->inp_laddr6) && 
