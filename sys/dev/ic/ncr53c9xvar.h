@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr53c9xvar.h,v 1.4 1998/05/28 22:07:54 jason Exp $	*/
+/*	$OpenBSD: ncr53c9xvar.h,v 1.5 1998/09/02 06:09:28 deraadt Exp $	*/
 /*	$NetBSD: ncr53c9xvar.h,v 1.13 1998/05/26 23:17:34 thorpej Exp $	*/
 
 /*-
@@ -287,7 +287,7 @@ struct ncr53c9x_softc {
 	size_t	sc_cmdlen;	/* Size of command in transit */
 
 	/* hardware/openprom stuff */
-	int sc_freq;				/* Freq in HZ */
+	int sc_freq;				/* Freq in MHz */
 	int sc_id;				/* our scsi id */
 	int sc_rev;				/* esp revision */
 	int sc_features;			/* chip features */
