@@ -2722,8 +2722,7 @@ usl_vt_ioctl(Dev_t dev, int cmd, caddr_t data, int flag, struct proc *p)
 			int x = spltty();
 			i = current_video_screen;
 			error = 0;
-			while (current_video_screen == i &&
-			       (error == 0 || error == ERESTART))
+			while (current_video_screen == i && error == 0)
 			{
 				vs[i].vt_status |= VT_WAIT_ACT;
 				error = tsleep((caddr_t)&vs[i].smode,
@@ -2735,8 +2734,7 @@ usl_vt_ioctl(Dev_t dev, int cmd, caddr_t data, int flag, struct proc *p)
 		{
 			int x = spltty();
 			error = 0;
-			while (current_video_screen != i &&
-			       (error == 0 || error == ERESTART))
+			while (current_video_screen != i && error == 0)
 			{
 				vs[i].vt_status |= VT_WAIT_ACT;
 				error = tsleep((caddr_t)&vs[i].smode,
@@ -2744,7 +2742,7 @@ usl_vt_ioctl(Dev_t dev, int cmd, caddr_t data, int flag, struct proc *p)
 			}
 			splx(x);
 		}
-		return error;
+		return (error == ERESTART) ? PCVT_ERESTART : error;
 
 	case KDENABIO:
 		/* grant the process IO access; only allowed if euid == 0 */

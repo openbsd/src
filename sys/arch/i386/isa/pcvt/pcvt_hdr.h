@@ -914,6 +914,9 @@ typedef struct video_state {
 
 EXTERN video_state vs[PCVT_NSCREENS];	/* parameters for screens */
 
+/* used to be able to pass ERESTART on properly */
+#define PCVT_ERESTART (ELAST + 1)
+
 /* possible states for video_state.vt_status: */
 
 #define	VT_WAIT_REL 1			/* wait till process released vt */

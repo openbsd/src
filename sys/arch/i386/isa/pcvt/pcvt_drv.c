@@ -611,11 +611,11 @@ pcioctl(Dev_t dev, int cmd, caddr_t data, int flag, struct proc *p)
 	}
 #endif /* PCVT_EMU_MOUSE */
 
-#ifdef XSERVER
 
 	if((error = usl_vt_ioctl(dev, cmd, data, flag, p)) >= 0)
-		return error;
+		return (error == PCVT_ERESTART) ? ERESTART : error;
 
+#ifdef XSERVER
 	/*
 	 * just for compatibility:
 	 * XFree86 < 2.0 and SuperProbe still might use it
