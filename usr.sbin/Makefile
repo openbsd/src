@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.111 2004/05/30 20:43:25 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.112 2004/06/03 19:14:17 grange Exp $
 
 .include <bsd.own.mk>
 
@@ -18,7 +18,7 @@ SUBDIR+=faithd ndp rip6query route6d rtadvd rtsold traceroute6
 
 # Arch dependent tools, with manpages
 SUBDIR+=bad144 apm apmd fdformat memconfig
-SUBDIR+=eeprom grfinfo hilinfo
+SUBDIR+=eeprom gpioctl grfinfo hilinfo hotplugd
 SUBDIR+=wsconscfg wsfontload
 
 # Extended Attribute tools
