@@ -1,4 +1,4 @@
-.\"	$OpenBSD: csh.1,v 1.7 2003/06/02 23:32:07 millert Exp $
+.\"	$OpenBSD: csh.1,v 1.8 2004/03/18 09:37:25 jmc Exp $
 .\"	$NetBSD: csh.1,v 1.3 1995/03/21 09:03:33 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1993
@@ -674,7 +674,7 @@ and does not execute the command.
 .PP
 Another very important point is that files with the character `.' at the
 beginning are treated specially.
-Neither `*' or `?' or the `[' `]' mechanism will match it.
+Neither `*' nor `?' nor the `[' `]' mechanism will match it.
 This prevents accidental matching of the filenames `.' and `..'
 in the working directory which have special meaning to the system,
 as well as other files such as
@@ -737,14 +737,14 @@ Thus the command
 echo *
 .DE
 will not echo the character `*'.
-It will either echo an sorted list of filenames in the
+It will either echo a sorted list of filenames in the
 current
 .I "working directory,"
 or print the message `No match' if there are
 no files in the working directory.
 .PP
 The recommended mechanism for placing characters which are neither numbers,
-digits, `/', `.' or `\-' in an argument word to a command is to enclose
+digits, `/', `.', nor `\-' in an argument word to a command, is to enclose
 it with single quotation characters `\'', i.e.
 .DS
 echo \'*\'
