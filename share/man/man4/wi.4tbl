@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wi.4tbl,v 1.16 2002/05/28 02:29:56 millert Exp $
+.\"	$OpenBSD: wi.4tbl,v 1.17 2002/05/28 02:49:52 mickey Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -168,6 +168,8 @@ NANOSPEED ROOT-RZ2000:Prism-II:PCMCIA
 NDC/Sohoware NCP130:Prism-II:PCI
 NEC CMZ-RT-WP:Prism-II:PCMCIA
 Netgear MA401:Prism-II:PCMCIA
+Nokia C020 Wireless LAN:Prism-I:PCMCIA
+Nokia C110/C111 Wireless LAN:Prism-II:PCMCIA
 NTT-ME 11Mbps Wireless LAN:Prism-II:PCMCIA
 Proxim RangeLAN-DS:Prism-II:PCMCIA
 Samsung MagicLAN SWL-2000N:Prism-II:PCMCIA
