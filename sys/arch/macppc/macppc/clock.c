@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.12 2003/12/18 20:06:15 drahn Exp $	*/
+/*	$OpenBSD: clock.c,v 1.13 2004/01/04 21:07:43 drahn Exp $	*/
 /*	$NetBSD: clock.c,v 1.1 1996/09/30 16:34:40 ws Exp $	*/
 
 /*
@@ -79,7 +79,7 @@ static u_int32_t chiptotime(int sec, int min, int hour, int day, int mon,
     int year);
 
 /* event tracking variables, when the next events of each time should occur */
-u_int64_t nexttimerevent, nextstatevent;
+u_int64_t nexttimerevent, prevtb, nextstatevent;
 
 /* vars for stats */
 int statint;
@@ -208,14 +208,13 @@ resettodr(void)
 	}
 }
 
-volatile int tickspending, statspending;
+volatile int statspending;
 
 void
 decr_intr(struct clockframe *frame)
 {
 	u_int64_t tb;
 	u_int64_t nextevent;
-	int nticks;
 	int nstats;
 	int s;
 
@@ -232,8 +231,10 @@ decr_intr(struct clockframe *frame)
 	 */
 
 	tb = ppc_mftb();
-	for (nticks = 0; nexttimerevent <= tb; nticks++)
+	while (nexttimerevent <= tb)
 		nexttimerevent += ticks_per_intr;
+
+	prevtb = nexttimerevent - ticks_per_intr;
 
 	for (nstats = 0; nextstatevent <= tb; nstats++) {
 		int r;
@@ -244,7 +245,6 @@ decr_intr(struct clockframe *frame)
 	}
 
 	/* only count timer ticks for CLK_IRQ */
-	intrcnt[PPC_CLK_IRQ] += nticks;
 	intrcnt[PPC_STAT_IRQ] += nstats;
 
 	if (nexttimerevent < nextstatevent)
@@ -259,53 +259,47 @@ decr_intr(struct clockframe *frame)
 	ppc_mtdec(nextevent - tb);
 
 	if (cpl & SPL_CLOCK) {
-		tickspending += nticks;
 		statspending += nstats;
 	} else {
-		do {
-			nticks += tickspending;
-			nstats += statspending;
-			tickspending = 0;
-			statspending = 0;
+		nstats += statspending;
+		statspending = 0;
 
-			s = splclock();
+		s = splclock();
 
-			/*
-			 * Reenable interrupts
-			 */
-			ppc_intr_enable(1);
+		/*
+		 * Reenable interrupts
+		 */
+		ppc_intr_enable(1);
 
-			/*
-			 * Do standard timer interrupt stuff.
-			 * Do softclock stuff only on the last iteration.
-			 */
-			frame->pri = s | SINT_CLOCK;
-			while (nticks > 1) {
-				/* sync lasttb with hardclock */
-				lasttb += ticks_per_intr;
-				hardclock(frame);
-				nticks--;
-			}
+		/*
+		 * Do standard timer interrupt stuff.
+		 * Do softclock stuff only on the last iteration.
+		 */
+		frame->pri = s | SINT_CLOCK;
+		while (lasttb < prevtb - ticks_per_intr) {
+			/* sync lasttb with hardclock */
+			lasttb += ticks_per_intr;
+			intrcnt[PPC_CLK_IRQ] ++;
+			hardclock(frame);
+		}
 
-			frame->pri = s;
-			if (nticks) {
-				/* sync lasttb with hardclock */
-				lasttb += ticks_per_intr;
-				hardclock(frame);
-			}
+		frame->pri = s;
+		while (lasttb < prevtb) {
+			/* sync lasttb with hardclock */
+			lasttb += ticks_per_intr;
+			intrcnt[PPC_CLK_IRQ] ++;
+			hardclock(frame);
+		}
 
-			while (nstats-- > 0)
-				statclock(frame);
+		while (nstats-- > 0)
+			statclock(frame);
 
-			splx(s);
-			(void) ppc_intr_disable();
+		splx(s);
+		(void) ppc_intr_disable();
 
-			/* if a tick has occurred while dealing with these,
-			 * service it now, do not delay until the next tick.
-			 */
-			nstats = 0;
-			nticks = 0;
-		} while (tickspending != 0 || statspending != 0);
+		/* if a tick has occurred while dealing with these,
+		 * dont service it now, delay until the next tick.
+		 */
 	}
 }
 
