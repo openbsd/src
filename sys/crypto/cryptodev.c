@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptodev.c,v 1.17 2001/06/23 22:36:10 angelos Exp $	*/
+/*	$OpenBSD: cryptodev.c,v 1.18 2001/06/23 22:37:19 angelos Exp $	*/
 
 /*
  * Copyright (c) 2001 Theo de Raadt
@@ -369,7 +369,7 @@ crypto_op(struct csession *cse, struct crypt_op *cop, struct proc *p)
 			error = EINVAL;
 			goto bail;
 		}
-		if ((error = copyin(cop->mac, cse->tmp_mac, 16)))	/* XXX */
+		if ((error = copyin(cop->mac, cse->tmp_mac, 16)))    /* XXX */
 			goto bail;
 		crp->crp_mac_trunc_len = 16;	/* XXX */
 	}
@@ -377,7 +377,7 @@ crypto_op(struct csession *cse, struct crypt_op *cop, struct proc *p)
 	crypto_dispatch(crp);
 	error = tsleep(cse, PSOCK, "crydev", 0);
 	if (error) {
-		/// XXX can this happen?  if so, how do we recover?
+		/* XXX can this happen?  if so, how do we recover? */
 		goto bail;
 	}
 
