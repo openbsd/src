@@ -1,4 +1,4 @@
-/*	$OpenBSD: mountd.c,v 1.40 2001/11/17 19:54:57 deraadt Exp $	*/
+/*	$OpenBSD: mountd.c,v 1.41 2001/12/02 02:05:59 deraadt Exp $	*/
 /*	$NetBSD: mountd.c,v 1.31 1996/02/18 11:57:53 fvdl Exp $	*/
 
 /*
@@ -250,7 +250,7 @@ main(argc, argv)
 		default:
 			fprintf(stderr, "Usage: mountd [-dn] [export_file]\n");
 			exit(1);
-		};
+		}
 	argc -= optind;
 	argv += optind;
 	grphead = NULL;
@@ -554,7 +554,7 @@ xdr_fhs(xdrsp, cp)
 		if (!xdr_long(xdrsp, &len))
 			return (0);
 		return (xdr_long(xdrsp, &auth));
-	};
+	}
 	return (0);
 }
 
@@ -1266,7 +1266,7 @@ chk_host(dp, saddr, defsetp, hostsetp)
 				return (1);
 			    }
 			    break;
-			};
+			}
 			hp = hp->ht_next;
 		}
 	}
@@ -1639,7 +1639,7 @@ do_mount(ep, grp, exflags, anoncrp, dirp, dirplen, fsb)
 			if (cp)
 				*cp = savedc;
 			return (1);
-		};
+		}
 
 		/*
 		 * XXX:
