@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_delete,v 1.5 2003/10/27 22:46:23 espie Exp $
+# $OpenBSD: pkg_delete,v 1.6 2003/10/28 17:26:01 espie Exp $
 #
 # Copyright (c) 2003 Marc Espie.
 # 
@@ -97,7 +97,7 @@ sub delete
 	}
 	elsif (@$entry > 1) {
 		print "Dirrm $name defined in multiple packages: ",
-			join(",", @$entry), "\n";
+			join(",", @$entry), "\n" if $state->{verbose};
 	    	@$entry = grep { $_ ne $state->{pkgname} }  @$entry;
 	}
 }
@@ -290,6 +290,48 @@ $state->{quick} = $opt_q;
 $state->{verbose} = $opt_v;
 $state->{extra} = $opt_c;
 $ENV{'PKG_DELETE_EXTRA'} = $state->{extra} ? "Yes" : "No";
+
+my (%toremove, %extra_rm);
+my $bad;
+for my $pkgname (@ARGV) {
+	$toremove{$pkgname} = 1;
+}
+my @todo;
+push(@todo, @ARGV);
+
+while (my $pkgname = pop @todo) {
+	unless (is_installed($pkgname)) {
+	    if (OpenBSD::PackageName::is_stem($pkgname)) {
+		my @l = OpenBSD::PackageName::findstem($pkgname, 
+		    installed_packages());
+		if (@l == 1) {
+		    $pkgname = $l[0];
+		} elsif (@l != 0) {
+		    print "Ambiguous: $pkgname could be ", join(' ', @l),"\n";
+		    $bad = 1;
+		    next;
+		}
+	    }
+	}
+	next unless is_installed($pkgname);
+	my $deps = OpenBSD::RequiredBy->new($pkgname)->list();
+	if (@$deps > 0) {
+		for my $dep (@$deps) {
+			next if defined $toremove{$dep};
+			next if defined $extra_rm{$dep};
+			$extra_rm{$dep}=$pkgname;
+			push(@todo, $dep);
+			$bad=1;
+		}
+	}
+}
+if ($bad) {
+	print "Can't remove ", join(' ', @ARGV), " without also removing:\n",
+	    join(' ', keys(%extra_rm)), "\n"
+		if keys(%extra_rm) != 0;
+	exit(1);
+}
+
 { do {
 	$removed = 0;
 	for my $pkgname (@ARGV) {
@@ -311,11 +353,7 @@ $ENV{'PKG_DELETE_EXTRA'} = $state->{extra} ? "Yes" : "No";
 			next;
 		}
 		my $deps = OpenBSD::RequiredBy->new($pkgname)->list();
-		if (@$deps > 0) {
-			print "Can't remove $pkgname yet, ";
-			print "needed by ", join(',', @$deps), "\n";
-			next;
-		}
+		next if @$deps > 0;
 		print "Deleting $pkgname\n";
 		delete_package($pkgname, $state);
 		$done{$pkgname} = 1;
