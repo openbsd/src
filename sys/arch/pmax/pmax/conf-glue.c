@@ -69,7 +69,7 @@ extern struct pmax_driver tzdriver;
  */
 
 struct pmax_scsi_device scsi_dinit[] = {
-/*driver,	cdriver,	unit,	ctlr,	drive,	slave,	dk,	flags*/
+/*driver,	cdriver,	unit,	ctlr,	drive,	lun,	dk,	flags*/
 
 #if NSII > 0
 # if NRZ > 0

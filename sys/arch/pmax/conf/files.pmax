@@ -2,7 +2,7 @@
 # DECstation-specific configuration info
 
 # maxpartitions must be first item in files.${ARCH}.
-maxpartitions 8
+maxpartitions 16
 
 maxusers 2 8 64
 

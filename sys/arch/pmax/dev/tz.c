@@ -140,7 +140,7 @@ tzprobe(xxxsd)
 	sc->sc_cmd.sd = sd;
 	sc->sc_cmd.unit = sd->sd_unit;
 	sc->sc_cmd.flags = 0;
-	sc->sc_rwcmd.unitNumber = sd->sd_slave;
+	sc->sc_rwcmd.unitNumber = sd->sd_lun;
 
 	/* XXX set up device info */				/* XXX */
 	bzero(&sc->sc_dev, sizeof(sc->sc_dev));			/* XXX */
@@ -151,7 +151,7 @@ tzprobe(xxxsd)
 	/* try to find out what type of device this is */
 	sc->sc_flags = TZF_ALTCMD;	/* force use of sc_cdb */
 	sc->sc_cdb.len = sizeof(ScsiGroup0Cmd);
-	scsiGroup0Cmd(SCSI_INQUIRY, sd->sd_slave, 0, sizeof(inqbuf),
+	scsiGroup0Cmd(SCSI_INQUIRY, sd->sd_lun, 0, sizeof(inqbuf),
 		(ScsiGroup0Cmd *)sc->sc_cdb.cdb);
 	sc->sc_buf.b_flags = B_BUSY | B_READ;
 	sc->sc_buf.b_bcount = sizeof(inqbuf);
@@ -169,7 +169,7 @@ tzprobe(xxxsd)
 
 	/* check for device ready to clear UNIT_ATTN */
 	sc->sc_cdb.len = sizeof(ScsiGroup0Cmd);
-	scsiGroup0Cmd(SCSI_TEST_UNIT_READY, sd->sd_slave, 0, 0,
+	scsiGroup0Cmd(SCSI_TEST_UNIT_READY, sd->sd_lun, 0, 0,
 		(ScsiGroup0Cmd *)sc->sc_cdb.cdb);
 	sc->sc_buf.b_flags = B_BUSY | B_READ;
 	sc->sc_buf.b_bcount = 0;
@@ -184,9 +184,9 @@ tzprobe(xxxsd)
 	sc->sc_flags = TZF_ALIVE;
 	sc->sc_modelen = 12;
 	sc->sc_buf.b_flags = 0;
-	printf("tz%d at %s%d drive %d slave %d", sd->sd_unit,
+	printf("tz%d at %s%d drive %d lun %d", sd->sd_unit,
 		sd->sd_cdriver->d_name, sd->sd_ctlr, sd->sd_drive,
-		sd->sd_slave);
+		sd->sd_lun);
 	if (i == 5 && inqbuf.version == 1 && inqbuf.qualifier == 0x50) {
 		printf(" TK50\n");
 		sc->sc_tapeid = MT_ISTK50;
@@ -229,7 +229,7 @@ tzprobe(xxxsd)
 		} else if (bcmp("HP35450A", pid, 8) == 0) {
 #if 0
 			/* XXX "extra" stat makes the HP drive happy at boot time */
-			stat = scsi_test_unit_rdy(ctlr, slave, unit);
+			stat = scsi_test_unit_rdy(ctlr, lun, unit);
 #endif
 			sc->sc_tapeid = MT_ISHPDAT;
 		} else if (bcmp("123107 SCSI", pid, 11) == 0) {
@@ -278,7 +278,7 @@ tzcommand(dev, command, code, count, data)
 	sc->sc_cdb.len = sizeof(ScsiGroup0Cmd);
 	c = (ScsiGroup0Cmd *)sc->sc_cdb.cdb;
 	c->command = command;
-	c->unitNumber = sc->sc_sd->sd_slave;
+	c->unitNumber = sc->sc_sd->sd_lun;
 	c->highAddr = code;
 	c->midAddr = count >> 16;
 	c->lowAddr = count >> 8;
@@ -499,7 +499,7 @@ tzdone(unit, error, resid, status)
 			 */
 			sc->sc_flags |= TZF_SENSEINPROGRESS;
 			sc->sc_cdb.len = sizeof(ScsiGroup0Cmd);
-			scsiGroup0Cmd(SCSI_REQUEST_SENSE, sc->sc_sd->sd_slave,
+			scsiGroup0Cmd(SCSI_REQUEST_SENSE, sc->sc_sd->sd_lun,
 				0, sizeof(sc->sc_sense.sense),
 				(ScsiGroup0Cmd *)sc->sc_cdb.cdb);
 			sc->sc_errbuf.b_flags = B_BUSY | B_PHYS | B_READ;

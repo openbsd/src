@@ -56,6 +56,7 @@
 #include <sys/buf.h>
 #include <sys/dkstat.h>
 #include <sys/conf.h>
+#include <sys/disklabel.h>
 #include <sys/dmap.h>
 #include <sys/reboot.h>
 #include <sys/device.h>
@@ -230,9 +231,6 @@ static	char devname[][2] = {
 	{ 'r','a' },	/* 23 = ra */
 };
 
-#define	PARTITIONMASK	0x7
-#define	PARTITIONSHIFT	3
-
 /*
  * Attempt to find the device from which we were booted.
  * If we can do so, and not instructed not to do so,
@@ -274,9 +272,8 @@ setroot()
 	/*
 	 * Form a new rootdev
 	 */
-	mindev = (mindev << PARTITIONSHIFT) + part;
 	orootdev = rootdev;
-	rootdev = makedev(majdev, mindev);
+	rootdev = MAKEDISKDEV(majdev, mindev, part);
 	/*
 	 * If the original rootdev is the same as the one
 	 * just calculated, don't need to adjust the swap configuration.
@@ -286,14 +283,14 @@ setroot()
 
 	printf("Changing root device to %c%c%d%c\n",
 		devname[majdev][0], devname[majdev][1],
-		mindev >> PARTITIONSHIFT, part + 'a');
+		mindev, part + 'a');
 
 #ifdef DOSWAP
-	mindev &= ~PARTITIONMASK;
+	part = mindev % MAXPARTITIONS;
 	temp = 0;
 	for (swp = swdevt; swp->sw_dev != NODEV; swp++) {
 		if (majdev == major(swp->sw_dev) &&
-		    mindev == (minor(swp->sw_dev) & ~PARTITIONMASK)) {
+		    part == DISKPART(swp->sw_dev)) {
 			temp = swdevt[0].sw_dev;
 			swdevt[0].sw_dev = swp->sw_dev;
 			swp->sw_dev = temp;

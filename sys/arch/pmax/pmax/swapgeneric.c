@@ -41,6 +41,7 @@
 #include <sys/param.h>
 #include <sys/conf.h>
 #include <sys/buf.h>
+#include <sys/disklabel.h>
 #include <sys/systm.h>
 #include <sys/reboot.h>
 
@@ -90,7 +91,7 @@ setconf()
 	else {
 		if (rootdev != NODEV) {
 			swdevt[0].sw_dev = argdev = dumpdev =
-				makedev(major(rootdev), minor(rootdev)+1);
+				MAKEDISKDEV(major(rootdev), DISKUNIT(rootdev), 1);
 			return;
 		}
 		root_swap = "root";
@@ -139,11 +140,11 @@ gotit:
 found:
 	if (boothowto & RB_MINIROOT) {
 		swdevt[0].sw_dev = argdev = dumpdev =
-			makedev(major(gc->gc_root), unit*8+1);
+			MAKEDISKDEV(major(gc->gc_root), unit, 1);
 	} else {
-		rootdev = makedev(major(gc->gc_root), unit*8);
+		rootdev = MAKEDISKDEV(major(gc->gc_root), unit, 0);
 		swdevt[0].sw_dev = argdev = dumpdev =
-			makedev(major(rootdev), minor(rootdev)+1);
+			MAKEDISKDEV(major(rootdev), DISKUNIT(rootdev), 1);
 		/* swap size and dumplo set during autoconfigure */
 		if (swaponroot)
 			rootdev = dumpdev;

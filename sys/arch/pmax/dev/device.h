@@ -85,7 +85,7 @@ struct pmax_scsi_device {
 	int		sd_unit;	/* device unit number */
 	int		sd_ctlr;	/* SCSI interface number */
 	int		sd_drive;	/* SCSI address number */
-	int		sd_slave;	/* LUN if device has multiple units */
+	int		sd_lun;		/* LUN if device has multiple units */
 	int		sd_flags;	/* flags */
 
 	int		sd_alive;	/* true if init routine succeeded */

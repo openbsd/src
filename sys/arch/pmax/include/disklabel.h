@@ -35,7 +35,7 @@
 
 #define	LABELSECTOR	0			/* sector containing label */
 #define	LABELOFFSET	64			/* offset of label in sector */
-#define	MAXPARTITIONS	8			/* number of partitions */
+#define	MAXPARTITIONS	16			/* number of partitions */
 #define	RAW_PART	2			/* raw partition: xx?c */
 #define NUMBOOT		2			/* bootxx + xxboot... */
 

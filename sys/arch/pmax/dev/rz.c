@@ -1,4 +1,4 @@
-/*	$OpenBSD: rz.c,v 1.11 1998/05/09 20:15:36 millert Exp $	*/
+/*	$OpenBSD: rz.c,v 1.12 1998/05/10 04:01:16 millert Exp $	*/
 /*	$NetBSD: rz.c,v 1.37 1998/03/02 23:17:19 thorpej Exp $	*/
 
 /*
@@ -137,7 +137,15 @@ static struct size rzdefaultpart[MAXPARTITIONS] = {
 	{  212992,  409600 },	/* E -- /usr */
 	{  622592,  409600 },	/* F -- /home, alternate /usr */
 	{ 1032912,  RZ_END },	/* G -- F to end of disk */
-	{  196608,  RZ_END }	/* H -- B to end of disk */
+	{  196608,  RZ_END },	/* H -- B to end of disk */
+	{	0,	 0 },	/* I */
+	{	0,	 0 },	/* J */
+	{	0,	 0 },	/* K */
+	{	0,	 0 },	/* L */
+	{	0,	 0 },	/* M */
+	{	0,	 0 },	/* N */
+	{	0,	 0 },	/* O */
+	{	0,	 0 }	/* P */
 };
 
 
@@ -214,8 +222,6 @@ struct	rz_softc {
 int	rzdebug = RZB_ERROR;
 #endif
 
-#define	rzunit(x)	(minor(x) >> 3)
-#define rzpart(x)	(minor(x) & 0x7)
 #define	b_cylin		b_resid
 
 struct scsi_mode_sense_data {
@@ -564,7 +570,7 @@ rzlblkstrat(bp, bsize)
 		register int count;
 
 		if (boff || resid < bsize) {
-			rz_softc[rzunit(bp->b_dev)].sc_stats.rzpartials++;
+			rz_softc[DISKUNIT(bp->b_dev)].sc_stats.rzpartials++;
 			count = min(resid, bsize - boff);
 			cbp->b_flags = B_BUSY | B_PHYS | B_READ;
 			cbp->b_blkno = bn - btodb(boff);
@@ -629,8 +635,8 @@ void
 rzstrategy(bp)
 	register struct buf *bp;
 {
-	register int unit = rzunit(bp->b_dev);
-	register int part = rzpart(bp->b_dev);
+	register int unit = DISKUNIT(bp->b_dev);
+	register int part = DISKPART(bp->b_dev);
 	register struct rz_softc *sc = &rz_softc[unit];
 	register struct partition *pp = &sc->sc_label->d_partitions[part];
 	register daddr_t bn;
@@ -856,14 +862,14 @@ void
 rzgetinfo(dev)
 	dev_t dev;
 {
-	register int unit = rzunit(dev);
+	register int unit = DISKUNIT(dev);
 	register struct rz_softc *sc = &rz_softc[unit];
 	register struct disklabel *lp = sc->sc_label;
 	char *msg;
 	int part;
 	struct cpu_disklabel cd;
 
-	part = rzpart(dev);
+	part = DISKPART(dev);
 	sc->sc_flags |= RZF_HAVELABEL;
 
 	if (sc->sc_type == SCSI_ROM_TYPE) {
@@ -934,7 +940,7 @@ rzopen(dev, flags, mode, p)
 	int flags, mode;
 	struct proc *p;
 {
-	register int unit = rzunit(dev);
+	register int unit = DISKUNIT(dev);
 	register struct rz_softc *sc = &rz_softc[unit];
 	register int i;
 	int part;
@@ -950,7 +956,7 @@ rzopen(dev, flags, mode, p)
 	}
 
 	/* Try to read disk label and partition table information */
-	part = rzpart(dev);
+	part = DISKPART(dev);
 	mask = 1 << part;
 	if (!(sc->sc_flags & RZF_HAVELABEL))
 		rzgetinfo(dev);
@@ -981,8 +987,8 @@ rzclose(dev, flags, mode, p)
 	int flags, mode;
 	struct proc *p;
 {
-	register struct rz_softc *sc = &rz_softc[rzunit(dev)];
-	int mask = (1 << rzpart(dev));
+	register struct rz_softc *sc = &rz_softc[DISKUNIT(dev)];
+	int mask = (1 << DISKPART(dev));
 	int s;
 
 	switch (mode) {
@@ -1014,7 +1020,7 @@ rzread(dev, uio, ioflag)
 	struct uio *uio;
 	int ioflag;
 {
-	register struct rz_softc *sc = &rz_softc[rzunit(dev)];
+	register struct rz_softc *sc = &rz_softc[DISKUNIT(dev)];
 
 	if (sc->sc_type == SCSI_ROM_TYPE)
 		return (EROFS);
@@ -1032,7 +1038,7 @@ rzwrite(dev, uio, ioflag)
 	struct uio *uio;
 	int ioflag;
 {
-	register struct rz_softc *sc = &rz_softc[rzunit(dev)];
+	register struct rz_softc *sc = &rz_softc[DISKUNIT(dev)];
 
 	if (sc->sc_format_pid && sc->sc_format_pid != curproc->p_pid)
 		return (EPERM);
@@ -1049,7 +1055,7 @@ rzioctl(dev, cmd, data, flag, p)
 	int flag;
 	struct proc *p;
 {
-	register struct rz_softc *sc = &rz_softc[rzunit(dev)];
+	register struct rz_softc *sc = &rz_softc[DISKUNIT(dev)];
 	int error;
 	int flags;
 	struct cpu_disklabel cd;
@@ -1115,7 +1121,7 @@ rzioctl(dev, cmd, data, flag, p)
 		/* return the disk partition data */
 		((struct partinfo *)data)->disklab = sc->sc_label;
 		((struct partinfo *)data)->part =
-			&sc->sc_label->d_partitions[rzpart(dev)];
+			&sc->sc_label->d_partitions[DISKPART(dev)];
 		return (0);
 
 	case DIOCWLABEL:
@@ -1153,8 +1159,8 @@ int
 rzsize(dev)
 	dev_t dev;
 {
-	register int unit = rzunit(dev);
-	register int part = rzpart(dev);
+	register int unit = DISKUNIT(dev);
+	register int part = DISKPART(dev);
 	register struct rz_softc *sc = &rz_softc[unit];
 	int omask, size;
 
@@ -1558,8 +1564,8 @@ rzdump(dev, blkno, va, size)
 	rzdoingadump = 1;
 
 	/* Decompose unit and partition. */
-	unit = rzunit(dev);
-	part = rzpart(dev);
+	unit = DISKUNIT(dev);
+	part = DISKPART(dev);
 
 	if (unit >= NRZ)
 		return (ENXIO);
