@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.109 2002/11/19 22:18:50 pb Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.110 2002/11/19 23:41:03 deraadt Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -833,11 +833,21 @@ pass out quick on lo0 all
 .Ed
 .Sh QUEUE RULES
 Filtering rules can also assign packets to a queue.
-At least two rules are required to configure queues, which are referenced in
+At least two rules are required to configure queues, following
+which any
 .Em pass
 or
 .Em block
-rules.
+rule can reference the defined queues by name.
+The queue name last referenced is where any packets from
+.Em pass
+rules will be queued, while for
+.Em block
+rules it specifies where any resulting
+.Em icmp
+or
+.Em TCP RST
+packets should be enqueued.
 .Pp
 .Em altq on
 specifies on which interface queues will be set up.
