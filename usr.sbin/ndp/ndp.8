@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ndp.8,v 1.2 1999/12/10 07:26:56 itojun Exp $
+.\"	$OpenBSD: ndp.8,v 1.3 2000/01/04 21:12:18 deraadt Exp $
 .\" 
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
 .\" All rights reserved.
@@ -106,9 +106,8 @@ list; install the top entry of the list into the kernel routing table.
 .\" .Ar interface
 .\" Specifies the default interface used as the default route when
 .\" there is no default router.
-.It Fl i
-.Ar interface
-view ND information for specified interface.
+.It Fl i Ar interface
+View ND information for specified interface.
 .It Fl l
 Do not truncate numeric IPv6 address.
 .It Fl n
