@@ -1,4 +1,4 @@
-/*	$OpenBSD: auich.c,v 1.28 2002/09/17 19:10:30 mickey Exp $	*/
+/*	$OpenBSD: auich.c,v 1.29 2003/01/16 14:20:27 mickey Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Michael Shalayeff
@@ -33,6 +33,8 @@
  * AC'97 audio found on Intel 810/815/820/440MX chipsets.
  *	http://developer.intel.com/design/chipsets/datashts/290655.htm
  *	http://developer.intel.com/design/chipsets/manuals/298028.htm
+ *	http://www.intel.com/design/chipsets/datashts/290716.htm
+ *	http://www.intel.com/design/chipsets/datashts/290744.htm
  */
 
 #include <sys/param.h>
@@ -84,6 +86,16 @@
 #define	AUICH_MICI	0x20
 
 #define	AUICH_GCTRL	0x2c
+#define		AUICH_SSM_78	0x40000000	/* S/PDIF slots 7 and 8 */
+#define		AUICH_SSM_69	0x80000000	/* S/PDIF slots 6 and 9 */
+#define		AUICH_SSM_1011	0xc0000000	/* S/PDIF slots 10 and 11 */
+#define		AUICH_POM16	0x000000	/* PCM out precision 16bit */
+#define		AUICH_POM20	0x400000	/* PCM out precision 20bit */
+#define		AUICH_PCM246_MASK 0x300000
+#define		AUICH_PCM2	0x000000	/* 2ch output */
+#define		AUICH_PCM4	0x100000	/* 4ch output */
+#define		AUICH_PCM6	0x200000	/* 6ch output */
+#define		AUICH_S2RIE	0x40	/* int when tertiary codec resume */
 #define		AUICH_SRIE	0x20	/* int when 2ndary codec resume */
 #define		AUICH_PRIE	0x10	/* int when primary codec resume */
 #define		AUICH_ACLSO	0x08	/* aclink shut off */
@@ -174,6 +186,9 @@ struct auich_softc {
 	void *powerhook;
 	int suspend;
 	u_int16_t ext_ctrl;
+	int sc_sample_size;
+	int sc_sts_reg;
+	int sc_ignore_codecready;
 };
 
 #ifdef AUICH_DEBUG
@@ -199,16 +214,21 @@ struct cfattach auich_ca = {
 };
 
 static const struct auich_devtype {
+	int	vendor;
 	int	product;
 	int	options;
 	char	name[8];
 } auich_devices[] = {
-	{ PCI_PRODUCT_INTEL_82801AA_ACA, 0, "ICH" },
-	{ PCI_PRODUCT_INTEL_82801AB_ACA, 0, "ICH0" },
-	{ PCI_PRODUCT_INTEL_82801BA_ACA, 0, "ICH2" },
-	{ PCI_PRODUCT_INTEL_82801CA_ACA, 0, "ICH3" },
-	{ PCI_PRODUCT_INTEL_82801DB_ACA, 0, "ICH4" },
-	{ PCI_PRODUCT_INTEL_82440MX_ACA, 0, "440MX" },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801AA_ACA,	0, "ICH" },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801AB_ACA,	0, "ICH0" },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801BA_ACA,	0, "ICH2" },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801CA_ACA,	0, "ICH3" },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801DB_ACA,	0, "ICH4" },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82440MX_ACA,	0, "440MX" },
+	{ PCI_VENDOR_SIS,	PCI_PRODUCT_SIS_7012_ACA,	0, "SiS7012" },
+	{ PCI_VENDOR_NVIDIA,	PCI_PRODUCT_NVIDIA_NFORCE_ACA,	0, "nForce" },
+	{ PCI_VENDOR_AMD,	PCI_PRODUCT_AMD_PBC768_ACA,	0, "AMD768" },
+	{ PCI_VENDOR_AMD,	PCI_PRODUCT_AMD_8111_ACA,	0, "AMD8111" },
 };
 
 int auich_open(void *, int);
@@ -282,7 +302,8 @@ auich_match(parent, match, aux)
 		return 0;
 
 	for (i = sizeof(auich_devices)/sizeof(auich_devices[0]); i--;)
-		if (PCI_PRODUCT(pa->pa_id) == auich_devices[i].product)
+		if (PCI_VENDOR(pa->pa_id) == auich_devices[i].vendor &&
+		    PCI_PRODUCT(pa->pa_id) == auich_devices[i].product)
 			return 1;
 
 	return 0;
@@ -299,8 +320,19 @@ auich_attach(parent, self, aux)
 	bus_size_t mix_size, aud_size;
 	pcireg_t csr;
 	const char *intrstr;
+	u_int32_t status;
 	int i;
 
+	/* SiS 7012 needs special handling */
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_SIS &&
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_SIS_7012_ACA) {
+		sc->sc_sts_reg = AUICH_PICB;
+		sc->sc_sample_size = 1;
+	} else {
+		sc->sc_sts_reg = AUICH_STS;
+		sc->sc_sample_size = 2;
+	}
+	    
 	if (pci_mapreg_map(pa, AUICH_NAMBAR, PCI_MAPREG_TYPE_IO, 0,
 			   &sc->iot, &sc->mix_ioh, NULL, &mix_size, 0)) {
 		printf(": can't map codec i/o space\n");
@@ -359,6 +391,15 @@ auich_attach(parent, self, aux)
 
 	/* Reset codec and AC'97 */
 	auich_reset_codec(sc);
+	status = bus_space_read_4(sc->iot, sc->aud_ioh, AUICH_GSTS);
+	if (!(status & AUICH_PCR)) {	/* reset failure */
+		if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_INTEL &&
+		    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_82801DB_ACA) {
+			/* MSI 845G Max never return AUICH_PCR */
+			sc->sc_ignore_codecready = 1;
+		} else
+			return;
+	}
 
 	sc->host_if.arg = sc;
 	sc->host_if.attach = auich_attach_codec;
@@ -393,17 +434,16 @@ auich_read_codec(v, reg, val)
 	for (i = AUICH_SEMATIMO; i-- &&
 	    bus_space_read_1(sc->iot, sc->aud_ioh, AUICH_CAS) & 1; DELAY(1));
 
-	if (i >= 0) {
-		*val = bus_space_read_2(sc->iot, sc->mix_ioh, reg);
-		DPRINTF(AUICH_DEBUG_CODECIO, ("%s: read_codec(%x, %x)\n",
-		    sc->sc_dev.dv_xname, reg, *val));
-
-		return 0;
-	} else {
+	if (!sc->sc_ignore_codecready && i < 0) {
 		DPRINTF(AUICH_DEBUG_CODECIO,
 		    ("%s: read_codec timeout\n", sc->sc_dev.dv_xname));
-		return -1;
+		return (-1);
 	}
+
+	*val = bus_space_read_2(sc->iot, sc->mix_ioh, reg);
+	DPRINTF(AUICH_DEBUG_CODECIO, ("%s: read_codec(%x, %x)\n",
+	    sc->sc_dev.dv_xname, reg, *val));
+	return (0);
 }
 
 int
@@ -419,15 +459,15 @@ auich_write_codec(v, reg, val)
 	for (i = AUICH_SEMATIMO; i-- &&
 	    bus_space_read_1(sc->iot, sc->aud_ioh, AUICH_CAS) & 1; DELAY(1));
 
-	if (i >= 0) {
+	if (sc->sc_ignore_codecready || i >= 0) {
 		DPRINTF(AUICH_DEBUG_CODECIO, ("%s: write_codec(%x, %x)\n",
 		    sc->sc_dev.dv_xname, reg, val));
 		bus_space_write_2(sc->iot, sc->mix_ioh, reg, val);
-		return 0;
+		return (0);
 	} else {
 		DPRINTF(AUICH_DEBUG_CODECIO,
 		    ("%s: write_codec timeout\n", sc->sc_dev.dv_xname));
-		return -1;
+		return (-1);
 	}
 }
 
@@ -447,10 +487,12 @@ auich_reset_codec(v)
 	void *v;
 {
 	struct auich_softc *sc = v;
+	u_int32_t control;
 	int i;
 
-	bus_space_write_4(sc->iot, sc->aud_ioh, AUICH_GCTRL, 0);
-	DELAY(10);
+	control = bus_space_read_4(sc->iot, sc->aud_ioh, AUICH_GCTRL);
+	control &= ~(AUICH_ACLSO | AUICH_PCM246_MASK);
+	control |= (control & AUICH_CRESET) ? AUICH_WRESET : AUICH_CRESET;
 	bus_space_write_4(sc->iot, sc->aud_ioh, AUICH_GCTRL, AUICH_CRESET);
 
 	for (i = AUICH_RESETIMO; i-- &&
@@ -459,7 +501,7 @@ auich_reset_codec(v)
 
 	if (i < 0)
 		DPRINTF(AUICH_DEBUG_CODECIO,
-		    ("%s: write_codec timeout\n", sc->sc_dev.dv_xname));
+		    ("%s: reset_codec timeout\n", sc->sc_dev.dv_xname));
 }
 
 int
@@ -964,7 +1006,8 @@ auich_intr(v)
 	DPRINTF(AUICH_DEBUG_DMA, ("auich_intr: gsts=%b\n", gsts, AUICH_GSTS_BITS));
 
 	if (gsts & AUICH_POINT) {
-		sts = bus_space_read_2(sc->iot, sc->aud_ioh, AUICH_PCMO+AUICH_STS);
+		sts = bus_space_read_2(sc->iot, sc->aud_ioh,
+		    AUICH_PCMO + sc->sc_sts_reg);
 		DPRINTF(AUICH_DEBUG_DMA,
 		    ("auich_intr: osts=%b\n", sts, AUICH_ISTS_BITS));
 
@@ -983,10 +1026,12 @@ auich_intr(v)
 			while (q != qe) {
 
 				q->base = sc->pcmo_p;
-				q->len = (sc->pcmo_blksize / 2) | AUICH_DMAF_IOC;
+				q->len = (sc->pcmo_blksize /
+				    sc->sc_sample_size) | AUICH_DMAF_IOC;
 				DPRINTF(AUICH_DEBUG_DMA,
 				    ("auich_intr: %p, %p = %x @ %p\n",
-				    qe, q, sc->pcmo_blksize / 2, sc->pcmo_p));
+				    qe, q, sc->pcmo_blksize /
+				    sc->sc_sample_size, sc->pcmo_p));
 
 				sc->pcmo_p += sc->pcmo_blksize;
 				if (sc->pcmo_p >= sc->pcmo_end)
@@ -1007,14 +1052,16 @@ auich_intr(v)
 			sc->sc_pintr(sc->sc_parg);
 
 		/* int ack */
-		bus_space_write_2(sc->iot, sc->aud_ioh, AUICH_PCMO + AUICH_STS,
-		    sts & (AUICH_LVBCI | AUICH_CELV | AUICH_BCIS | AUICH_FIFOE));
+		bus_space_write_2(sc->iot, sc->aud_ioh,
+		    AUICH_PCMO + sc->sc_sts_reg, sts &
+		    (AUICH_LVBCI | AUICH_CELV | AUICH_BCIS | AUICH_FIFOE));
 		bus_space_write_2(sc->iot, sc->aud_ioh, AUICH_GSTS, AUICH_POINT);
 		ret++;
 	}
 
 	if (gsts & AUICH_PIINT) {
-		sts = bus_space_read_2(sc->iot, sc->aud_ioh, AUICH_PCMI+AUICH_STS);
+		sts = bus_space_read_2(sc->iot, sc->aud_ioh,
+		    AUICH_PCMI + sc->sc_sts_reg);
 		DPRINTF(AUICH_DEBUG_DMA,
 		    ("auich_intr: ists=%b\n", sts, AUICH_ISTS_BITS));
 
@@ -1033,10 +1080,12 @@ auich_intr(v)
 			while (q != qe) {
 
 				q->base = sc->pcmi_p;
-				q->len = (sc->pcmi_blksize / 2) | AUICH_DMAF_IOC;
+				q->len = (sc->pcmi_blksize /
+				    sc->sc_sample_size) | AUICH_DMAF_IOC;
 				DPRINTF(AUICH_DEBUG_DMA,
 				    ("auich_intr: %p, %p = %x @ %p\n",
-				    qe, q, sc->pcmi_blksize / 2, sc->pcmi_p));
+				    qe, q, sc->pcmi_blksize /
+				    sc->sc_sample_size, sc->pcmi_p));
 
 				sc->pcmi_p += sc->pcmi_blksize;
 				if (sc->pcmi_p >= sc->pcmi_end)
@@ -1057,14 +1106,16 @@ auich_intr(v)
 			sc->sc_rintr(sc->sc_rarg);
 
 		/* int ack */
-		bus_space_write_2(sc->iot, sc->aud_ioh, AUICH_PCMI + AUICH_STS,
-		    sts & (AUICH_LVBCI | AUICH_CELV | AUICH_BCIS | AUICH_FIFOE));
+		bus_space_write_2(sc->iot, sc->aud_ioh,
+		    AUICH_PCMI + sc->sc_sts_reg, sts &
+		    (AUICH_LVBCI | AUICH_CELV | AUICH_BCIS | AUICH_FIFOE));
 		bus_space_write_2(sc->iot, sc->aud_ioh, AUICH_GSTS, AUICH_POINT);
 		ret++;
 	}
 
 	if (gsts & AUICH_MIINT) {
-		sts = bus_space_read_2(sc->iot, sc->aud_ioh, AUICH_MICI+AUICH_STS);
+		sts = bus_space_read_2(sc->iot, sc->aud_ioh,
+		    AUICH_MICI + sc->sc_sts_reg);
 		DPRINTF(AUICH_DEBUG_DMA,
 		    ("auich_intr: ists=%b\n", sts, AUICH_ISTS_BITS));
 		if (sts & AUICH_FIFOE)
@@ -1114,7 +1165,7 @@ auich_trigger_output(v, start, end, blksize, intr, arg, param)
 
 	q = sc->dmap_pcmo = sc->dmalist_pcmo;
 	q->base = sc->pcmo_start;
-	q->len = (blksize / 2) | AUICH_DMAF_IOC;
+	q->len = (blksize / sc->sc_sample_size) | AUICH_DMAF_IOC;
 	if (++q == &sc->dmalist_pcmo[AUICH_DMALIST_MAX])
 		q = sc->dmalist_pcmo;
 	sc->dmap_pcmo = q;
@@ -1165,7 +1216,7 @@ auich_trigger_input(v, start, end, blksize, intr, arg, param)
 
 	q = sc->dmap_pcmi = sc->dmalist_pcmi;
 	q->base = sc->pcmi_start;
-	q->len = (blksize / 2) | AUICH_DMAF_IOC;
+	q->len = (blksize / sc->sc_sample_size) | AUICH_DMAF_IOC;
 	if (++q == &sc->dmalist_pcmi[AUICH_DMALIST_MAX])
 		q = sc->dmalist_pcmi;
 	sc->dmap_pcmi = q;

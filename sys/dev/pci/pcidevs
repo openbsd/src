@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.585 2003/01/14 23:51:27 avsm Exp $
+	$OpenBSD: pcidevs,v 1.586 2003/01/16 14:20:27 mickey Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -825,11 +825,12 @@ product	AMD 766_USB_HCI		0x7414	766 USB OpenHCI
 product	AMD PBC768_ISA		0x7440	768 PCI-ISA
 product	AMD PBC768_IDE		0x7441	768 IDE
 product	AMD PBC768_PMC		0x7443	768 Power Mgmt
-product	AMD PBC768_AC		0x7445	768 AC97 Audio
+product	AMD PBC768_ACA		0x7445	768 AC97 Audio
 product	AMD PBC768_MD		0x7446	768 AC97 Modem
 product	AMD PBC768_PPB		0x7448	768 PCI-PCI
 product	AMD PBC768_USB		0x7449	768 USB
 product AMD 8111_IDE		0x7469	8111 IDE
+product AMD 8111_ACA		0x746d	8111 AC97 Audio
 
 /* AMI */
 product AMI MEGARAID		0x1960	MegaRAID
@@ -1868,7 +1869,7 @@ product NVIDIA NFORCE_PCHB	0x01a4	nForce PCI Host
 product NVIDIA NFORCE_DDR	0x01ab	nForce 420 DDR
 product NVIDIA NFORCE_MEM	0x01ac	nForce 220/420
 product NVIDIA NFORCE_MEM1	0x01ad	nForce 220/420
-product NVIDIA NFORCE_AC97	0x01b1	nForce AC-97
+product NVIDIA NFORCE_ACA	0x01b1	nForce AC-97 Audio
 product NVIDIA NFORCE_ISA	0x01b2	nForce PCI-ISA
 product NVIDIA NFORCE_SMB	0x01b4	nForce SMBus
 product NVIDIA NFORCE_AGP	0x01b7	nForce PCI-AGP
@@ -2124,6 +2125,9 @@ product SIS 6300		0x6300	6300
 product SIS 530			0x6306	530 VGA
 product SIS 6326		0x6326	6326 AGP Video
 product SIS 5597_USB		0x7001	5597/5598 USB
+product SIS 7012_ACA		0x7012	7012 AC-97 Sound
+product SIS 7016		0x7016	7016 10/100 Ethernet
+product SIS 7018		0x7018	7018 Sound
 
 /* SMC products */
 product SMC 37C665		0x1000	FDC 37C665
