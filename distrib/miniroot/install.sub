@@ -1,7 +1,7 @@
-#	$OpenBSD: install.sub,v 1.336 2004/03/18 00:25:12 krw Exp $
+#	$OpenBSD: install.sub,v 1.337 2004/03/23 02:39:39 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
-# Copyright (c) 1997-2003 Todd Miller, Theo de Raadt, Ken Westerback
+# Copyright (c) 1997-2004 Todd Miller, Theo de Raadt, Ken Westerback
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
