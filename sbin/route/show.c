@@ -1,4 +1,4 @@
-/*	$OpenBSD: show.c,v 1.34 2004/09/15 23:41:42 deraadt Exp $	*/
+/*	$OpenBSD: show.c,v 1.35 2004/09/21 02:45:52 jaredy Exp $	*/
 /*	$NetBSD: show.c,v 1.1 1996/11/15 18:01:41 gwr Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-static const char rcsid[] = "$OpenBSD: show.c,v 1.34 2004/09/15 23:41:42 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: show.c,v 1.35 2004/09/21 02:45:52 jaredy Exp $";
 #endif
 #endif /* not lint */
 
@@ -425,6 +425,16 @@ routename(struct sockaddr *sa)
 	case AF_LINK:
 		return (link_print(sa));
 
+	case AF_UNSPEC:
+		if (sa->sa_len == sizeof(struct sockaddr_rtlabel)) {
+			static char name[RTLABEL_LEN];
+			struct sockaddr_rtlabel *sr;
+
+			sr = (struct sockaddr_rtlabel *)sa;
+			(void) strlcpy(name, sr->sr_label, sizeof name);
+			return (name);
+		}
+		/* FALLTHROUGH */
 	default:
 		(void) snprintf(line, sizeof line, "(%d) %s",
 		    sa->sa_family, any_ntoa(sa));
