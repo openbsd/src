@@ -35,7 +35,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "@(#)rwhod.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$OpenBSD: rwhod.c,v 1.28 2003/06/08 17:05:36 mickey Exp $";
+static char rcsid[] = "$OpenBSD: rwhod.c,v 1.29 2003/09/26 07:15:41 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -355,19 +355,16 @@ timer(void)
 	if ((stb.st_mtime != utmptime) || (stb.st_size > utmpsize)) {
 		utmptime = stb.st_mtime;
 		if (stb.st_size > utmpsize) {
-			utmpsize = stb.st_size + 10 * sizeof(struct utmp);
-			if (utmp)
-				nutmp = (struct utmp *)realloc(utmp, utmpsize);
-			else
-				nutmp = (struct utmp *)malloc(utmpsize);
+			int nutmpsize = stb.st_size + 10 * sizeof(struct utmp);
+			nutmp = (struct utmp *)realloc(utmp, nutmpsize);
 			if (!nutmp) {
 				warnx("malloc failed");
-				if (utmp)
-					free(utmp);
+				free(utmp);
 				utmpsize = 0;
 				return;
 			}
 			utmp = nutmp;
+			utmpsize = nutmpsize;
 		}
 		(void) lseek(utmpf, (off_t)0, SEEK_SET);
 		cc = read(utmpf, (char *)utmp, stb.st_size);
