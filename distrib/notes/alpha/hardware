@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.34 2003/09/06 22:22:41 miod Exp $
+dnl	$OpenBSD: hardware,v 1.35 2003/09/24 06:24:42 jason Exp $
 OpenBSD/MACHINE OSREV is expected to run on the following hardware.
 If you have hardware that is listed here and are unable to run
 OpenBSD, or if you are able to run OpenBSD on hardware not listed
@@ -287,8 +287,8 @@ Supported Peripherals:
 	FDDI Adapters [*]
 		Digital DEFPA PCI FDDI adapters (fpa)
 	Cryptography Accelerators [*]
-		Hifn 7751-based boards (hifn), including:
-		    Soekris Engineering vpn1201 and vpn1211
+		Hifn 7751/7811/7951/7955/7956-based boards (hifn), including:
+		    Soekris Engineering vpn1201, vpn1211, vpn1401, and vpn1411
 		    GTGI PowerCrypt Encryption Accelerator
 		    NetSec 7751
 		    Hifn 7751 and 9751 reference boards
