@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tcsetattr.3,v 1.8 1999/07/02 16:57:49 aaron Exp $
+.\"	$OpenBSD: tcsetattr.3,v 1.9 1999/07/05 13:09:08 aaron Exp $
 .\"
 .\" Copyright (c) 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -64,33 +64,41 @@
 .Fn tcsetattr "int fd" "int action" "const struct termios *t"
 .Sh DESCRIPTION
 The
-.Nm cfmakeraw ,
-.Nm tcgetattr
+.Fn cfmakeraw ,
+.Fn tcgetattr ,
 and
-.Nm tcsetattr
-functions are provided for getting and setting the termios structure.
+.Fn tcsetattr
+functions are provided for getting and setting the
+.Li termios
+structure.
 .Pp
 The
-.Nm cfgetispeed ,
-.Nm cfsetispeed ,
-.Nm cfgetospeed ,
-.Nm cfsetospeed
+.Fn cfgetispeed ,
+.Fn cfsetispeed ,
+.Fn cfgetospeed ,
+.Fn cfsetospeed ,
 and
-.Nm cfsetspeed
+.Fn cfsetspeed
 functions are provided for getting and setting the baud rate values in
-the termios structure.
+the
+.Li termios
+structure.
 The effects of the functions on the terminal as described below
 do not become effective, nor are all errors detected, until the
-.Nm tcsetattr
+.Fn tcsetattr
 function is called.
-Certain values for baud rates set in the termios structure and passed to
-.Nm tcsetattr
+Certain values for baud rates set in the
+.Li termios
+structure and passed to
+.Fn tcsetattr
 have special meanings.
 These are discussed in the portion of the manual page that describes the
-.Nm tcsetattr
+.Fn tcsetattr
 function.
 .Sh GETTING AND SETTING THE BAUD RATE
-The input and output baud rates are found in the termios structure.
+The input and output baud rates are found in the
+.Li termios
+structure.
 The unsigned integer
 .Li speed_t
 is typedef'd in the include file
@@ -121,44 +129,53 @@ represented; however, the following symbolic values are also defined.
 .Ed
 .Pp
 The
-.Nm cfgetispeed
-function returns the input baud rate in the termios structure referenced by
+.Fn cfgetispeed
+function returns the input baud rate in the
+.Li termios
+structure referenced by
 .Fa tp .
 .Pp
 The
-.Nm cfsetispeed
-function sets the input baud rate in the termios structure referenced by
+.Fn cfsetispeed
+function sets the input baud rate in the
+.Li termios
+structure referenced by
 .Fa tp
 to
 .Fa speed .
 .Pp
 The
-.Nm cfgetospeed
-function returns the output baud rate in the termios structure referenced by
+.Fn cfgetospeed
+function returns the output baud rate in the
+.Li termios
+structure referenced by
 .Fa tp .
 .Pp
 The
-.Nm cfsetospeed
-function sets the output baud rate in the termios structure referenced by
+.Fn cfsetospeed
+function sets the output baud rate in the
+.Li termios
+structure referenced by
 .Fa tp
 to
 .Fa speed .
 .Pp
 The
-.Nm cfsetspeed
-function sets both the input and output baud rate in the termios structure
-referenced by
+.Fn cfsetspeed
+function sets both the input and output baud rate in the
+.Li termios
+structure referenced by
 .Fa tp
 to
 .Fa speed .
 .Pp
 Upon successful completion, the functions
-.Nm cfsetispeed ,
-.Nm cfsetospeed ,
+.Fn cfsetispeed ,
+.Fn cfsetospeed ,
 and
-.Nm cfsetspeed
+.Fn cfsetspeed
 return a value of 0.
-Otherwise, a value of -1 is returned and the global variable
+Otherwise, a value of \-1 is returned and the global variable
 .Va errno
 is set to indicate the error.
 .Sh GETTING AND SETTING THE TERMIOS STATE
@@ -184,37 +201,42 @@ file, not just the open file description associated with the particular
 file descriptor.
 .Pp
 The
-.Nm cfmakeraw
-function sets the flags stored in the termios structure to a state disabling
+.Fn cfmakeraw
+function sets the flags stored in the
+.Li termios
+structure to a state disabling
 all input and output processing, giving a
 .Dq raw I/O path.
 It should be noted that there is no function to reverse this effect.
 This is because there are a variety of processing options that could be
 re-enabled and the correct method is for an application to snapshot the
 current terminal state using the function
-.Nm tcgetattr ,
+.Fn tcgetattr ,
 setting raw mode with
-.Nm cfmakeraw
+.Fn cfmakeraw
 and the subsequent
-.Nm tcsetattr ,
+.Fn tcsetattr ,
 and then using another
-.Nm tcsetattr
+.Fn tcsetattr
 with the saved state to revert to the previous terminal state.
 .Pp
 The
-.Nm tcgetattr
+.Fn tcgetattr
 function copies the parameters associated with the terminal referenced
 by
 .Fa fd
-in the termios structure referenced by
+in the
+.Li termios
+structure referenced by
 .Fa tp .
 This function is allowed from a background process, although the terminal
 attributes may be subsequently changed by a foreground process.
 .Pp
 The
-.Nm tcsetattr
+.Fn tcsetattr
 function sets the parameters associated with the terminal from the
-termios structure referenced by
+.Li termios
+structure referenced by
 .Fa tp .
 The
 .Fa action
@@ -243,40 +265,40 @@ If this value is
 into the
 .Fa action
 value, the values of the
-.Em c_cflag ,
-.Em c_ispeed ,
+.Fa c_cflag ,
+.Fa c_ispeed ,
 and
-.Em c_ospeed
+.Fa c_ospeed
 fields are ignored.
 .El
 .Pp
 The 0 baud rate is used to terminate the connection.
 If 0 is specified as the output speed to the function
-.Nm tcsetattr ,
+.Fn tcsetattr ,
 modem control will no longer be asserted on the terminal, disconnecting
 the terminal.
 .Pp
 If zero is specified as the input speed to the function
-.Nm tcsetattr ,
+.Fn tcsetattr ,
 the input baud rate will be set to the same value as that specified by
 the output baud rate.
 .Pp
 If
-.Nm tcsetattr
-is unable able to make any of the requested changes, it returns -1 and
-sets 
+.Fn tcsetattr
+is unable able to make any of the requested changes, it returns \-1 and
+sets
 .Va errno .
 Otherwise, it makes all of the requested changes it can.
 If the specified input and output baud rates differ and are a combination
 that is not supported, neither baud rate is changed.
 .Pp
 Upon successful completion, the functions
-.Nm tcgetattr
+.Fn tcgetattr
 and
-.Nm tcsetattr
+.Fn tcsetattr
 return a value of 0.
 Otherwise, they
-return -1 and the global variable
+return \-1 and the global variable
 .Va errno
 is set to indicate the error, as follows:
 .Bl -tag -width Er
@@ -284,28 +306,30 @@ is set to indicate the error, as follows:
 The
 .Fa fd
 argument to
-.Nm tcgetattr
+.Fn tcgetattr
 or
-.Nm tcsetattr
+.Fn tcsetattr
 was not a valid file descriptor.
 .It Bq Er EINTR
 The
-.Nm tcsetattr
+.Fn tcsetattr
 function was interrupted by a signal.
 .It Bq Er EINVAL
 The
 .Fa action
 argument to the
-.Nm tcsetattr
+.Fn tcsetattr
 function was not valid, or an attempt was made to change an attribute
-represented in the termios structure to an unsupported value.
+represented in the
+.Li termios
+structure to an unsupported value.
 .It Bq Er ENOTTY
 The file associated with the
 .Fa fd
 argument to
-.Nm tcgetattr
+.Fn tcgetattr
 or
-.Nm tcsetattr
+.Fn tcsetattr
 is not a terminal.
 .El
 .Sh SEE ALSO
@@ -313,25 +337,25 @@ is not a terminal.
 .Xr termios 4
 .Sh STANDARDS
 The
-.Nm cfgetispeed ,
-.Nm cfsetispeed ,
-.Nm cfgetospeed ,
-.Nm cfsetospeed ,
-.Nm tcgetattr
+.Fn cfgetispeed ,
+.Fn cfsetispeed ,
+.Fn cfgetospeed ,
+.Fn cfsetospeed ,
+.Fn tcgetattr ,
 and
-.Nm tcsetattr
+.Fn tcsetattr
 functions are expected to be compliant with the
 .St -p1003.1-88
 specification.
 The
-.Nm cfmakeraw
+.Fn cfmakeraw
 and
-.Nm cfsetspeed
+.Fn cfsetspeed
 functions,
 as well as the
 .Dv TCSASOFT
 option to the
-.Nm tcsetattr
+.Fn tcsetattr
 function are extensions to the
 .St -p1003.1-88
 specification.

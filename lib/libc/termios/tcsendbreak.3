@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tcsendbreak.3,v 1.4 1999/07/02 16:57:49 aaron Exp $
+.\"	$OpenBSD: tcsendbreak.3,v 1.5 1999/07/05 13:09:08 aaron Exp $
 .\"
 .\" Copyright (c) 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -35,10 +35,10 @@
 .Dt TCSENDBREAK 3
 .Os
 .Sh NAME
-.Nm tcsendbreak ,
 .Nm tcdrain ,
+.Nm tcflow ,
 .Nm tcflush ,
-.Nm tcflow
+.Nm tcsendbreak
 .Nd line control functions
 .Sh SYNOPSIS
 .Fd #include <termios.h>
@@ -52,13 +52,13 @@
 .Fn tcsendbreak "int fd" "int len"
 .Sh DESCRIPTION
 The
-.Nm tcdrain
+.Fn tcdrain
 function waits until all output written to the terminal referenced by
 .Fa fd
 has been transmitted to the terminal.
 .Pp
 The
-.Nm tcflow
+.Fn tcflow
 function suspends transmission of data to or the reception of data from
 the terminal referenced by
 .Fa fd
@@ -68,28 +68,31 @@ The value of
 .Fa action
 must be one of the following:
 .Bl -tag -width "TCIOFF"
-.It Fa TCOOFF
+.It Dv TCOOFF
 Suspend output.
-.It Fa TCOON
+.It Dv TCOON
 Restart suspended output.
-.It Fa TCIOFF
+.It Dv TCIOFF
 Transmit a STOP character, which is intended to cause the terminal to stop
 transmitting data to the system.
-(See the description of IXOFF in the
+(See the description of
+.Dv IXOFF
+in the
 .Ql Input Modes
 section of
 .Xr termios 4 ).
-.It Fa TCION
+.It Dv TCION
 Transmit a START character, which is intended to cause the terminal to start
 transmitting data to the system.
-(See the description of IXOFF in the
+(See the description of
+.Dv IXOFF in the
 .Ql Input Modes
 section of
 .Xr termios 4 ).
 .El
 .Pp
 The
-.Nm tcflush
+.Fn tcflush
 function discards any data written to the terminal referenced by
 .Fa fd
 which has not been transmitted to the terminal, or any data received
@@ -99,16 +102,16 @@ The value of
 .Fa action
 must be one of the following:
 .Bl -tag -width "TCIOFLUSH"
-.It Fa TCIFLUSH
+.It Dv TCIFLUSH
 Flush data received but not read.
-.It Fa TCOFLUSH
+.It Dv TCOFLUSH
 Flush data written but not transmitted.
-.It Fa TCIOFLUSH
+.It Dv TCIOFLUSH
 Flush both data received but not read and data written but not transmitted.
 .El
 .Pp
 The
-.Nm tcsendbreak
+.Fn tcsendbreak
 function transmits a continuous stream of zero-valued bits for four-tenths
 of a second to the terminal referenced by
 .Fa fd .
@@ -118,7 +121,7 @@ parameter is ignored in this implementation.
 .Sh RETURN VALUES
 Upon successful completion, all of these functions return a value of zero.
 .Sh ERRORS
-If any error occurs, a value of -1 is returned and the global variable
+If any error occurs, a value of \-1 is returned and the global variable
 .Va errno
 is set to indicate the error, as follows:
 .Bl -tag -width Er
@@ -136,7 +139,7 @@ The file associated with
 is not a terminal.
 .It Bq Er EINTR
 A signal interrupted the
-.Nm tcdrain
+.Fn tcdrain
 function.
 .El
 .Sh SEE ALSO
@@ -144,11 +147,11 @@ function.
 .Xr termios 4
 .Sh STANDARDS
 The
-.Nm tcsendbreak ,
-.Nm tcdrain ,
-.Nm tcflush
+.Fn tcdrain ,
+.Fn tcflow ,
+.Fn tcflush ,
 and
-.Nm tcflow
+.Fn tcsendbreak
 functions are expected to be compliant with the
 .St -p1003.1-88
 specification.
