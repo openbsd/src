@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.8 2001/01/30 00:01:55 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.9 2001/03/08 08:00:16 maja Exp $
 
 PROG=	kbd
 MAN=	kbd.8
@@ -8,6 +8,10 @@ CFLAGS+=-I${.CURDIR}
 
 .if (${MACHINE} == "arc")
 SRCS+=	kbd_i386.c
+.elif (${MACHINE} == "i386") || (${MACHINE} == "powerpc")
+SRCS+=	kbd_wscons.c
+LDADD=	-lkvm
+DPADD=	${LIBKVM}
 .elif (${MACHINE} == "sparc")
 SRCS+=	kbd_sparc.c
 .else
