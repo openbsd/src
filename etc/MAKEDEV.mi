@@ -1,6 +1,6 @@
 include(MAKEDEV.sub)dnl
 dnl
-vers(a,{-$OpenBSD: MAKEDEV.mi,v 1.7 2002/01/07 07:20:50 todd Exp $-})dnl
+vers(a,{-$OpenBSD: MAKEDEV.mi,v 1.8 2002/01/07 07:50:48 todd Exp $-})dnl
 dnl
 divert(1)dnl
 {-#-}
@@ -125,6 +125,8 @@ _dl({-std-},{-std-},
 {-flo-},{-fd1 fd1B fd1C fd1D fd1E fd1F fd1G fd1H-},
 {-bpf-},{-bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9-},
 {-tun-},{-tun0 tun1 tun2 tun3-},
+{-pctr-},{-pctr-},
+{-bktr-},{-bktr0-},
 {-altq-},{-altq-},
 {-pf-},{-pf-},
 {-cry-},{-crypto-},
@@ -137,15 +139,22 @@ _dl({-std-},{-std-},
 {-lkm-},{-lkm-},
 {-iop-},{-iop0 iop1-},
 {-mmcl-},{-mmclock-},dnl
-{-lpt-},{-lpa0 lpt0-},
+{-lpt-},{-lpa0 lpt0 lpa1 lpt1 lpa2 lpt2-},
+{-joy-},{-joy0 joy1-},
 {-rnd-},{-random-},
 {-ses-},{-ses0-},
 {-uk-},{-uk0 uk1-},
 {-ss-},{-ss0 ss1-},
+{-wt-},{-wt0-},
+{-wdt-},{-wdt0-},
 {-ttyc-},{-ttyc0 ttyc1 ttyc2 ttyc3 ttyc4 ttyc5 ttyc6 ttyc7-},
 {-com-},{-tty00 tty01 tty02 tty03-},
 {-xfs-},{-xfs0-},
 {-au-},{-audio0-},
+{-music-},{-music0-},
+{-radio-},{-radio0-},
+{-tuner-},{-tuner0-},
+{-rmidi-},{-rmidi0 rmidi1 rmidi2 rmidi3 rmidi4 rmidi5 rmidi6 rmidi7-},
 {-usbs-},{-usbs-},
 {-wsmouse-},{-wscons-},
 {-local-},{-local-})-})dnl
@@ -337,8 +346,8 @@ _dl(dnl
 __devitem(wsdisp,ttyC*,wscons virtual consoles)dnl
 _mkdev({-wsdisp-},ttyC*,{-U=${i##ttyC}
 	case $U in
-	[0-9a-f]) M ttyC$U c major_wsdisp_c {-$(( 16#$U ))-} 600 ;;
-	cfg) M ttyCcfg c major_wsdisp_c 255 ;;
+	[0-9a-f]) M ttyC$U c major_wsdisp_c {-$(( 16#$U ))-} 600;;
+	cfg) M ttyCcfg c major_wsdisp_c 255 600;;
 	*) echo bad unit $U for $i; exit 1;;
 	esac-})dnl
 __devitem(wskbd,wskbd*,wscons keyboards)dnl
@@ -483,6 +492,9 @@ _mkdev(music,music*,{-M music$U     c major_music_c $U
 	M sequencer$U c major_music_c Add($U,128)
 	MKlist="$MKlist;[ -e music ] || ln -s music$U music"
 	MKlist="$MKlist;[ -e sequencer ] || ln -s sequencer$U sequencer"-})dnl
+__devitem(radio,radio*,FM tuner device)dnl
+_mkdev(radio,radio*,{-M radio$U     c major_radio_c $U 644
+	MKlist="$MKlist;[ -e radio ] || ln -s radio$U radio"-})dnl
 __devitem(fdesc,fd,makes fd/* for the fdescfs)dnl
 _mkdev(fdesc,fd,{-RMlist="mkdir -p fd;$RMlist" n=0
 	while [ $n -lt 64 ];do M fd/$n c major_fdesc_c $n;n=Add($n,1);done
@@ -527,6 +539,7 @@ _mkdev(altq,altq,{-RMlist="mkdir -p altq;$RMlist"
 		U=Add($U,1)
 	done-})dnl
 __devitem(speak,speaker,pc speaker)dnl
+_mcdev(speak,speaker,speaker,{-major_speak_c-},600)dnl
 __devitem(kbd,kbd,keyboard (provides events, for X11))dnl
 _cdev(kbd,kbd,{-major_kbd_c-},0,600)dnl
 __devitem(kbd_atari,kbd,Atari keyboard)dnl
@@ -555,7 +568,7 @@ _mkdev(rnd,*random,{-n=0
 		n=Add($n,1)
 	done-},644)dnl
 __devitem(joy,joy*,joystick driver)dnl
-_mcdev(joy,joy*,joy,{-major_joy_c-},600)dnl
+_mcdev(joy,joy*,joy,{-major_joy_c-},666)dnl
 __devitem(mag,magma*,magma card (makes 16 tty and 2 bpp))dnl
 __devitem(xfs,xfs*,XFS filesystem devices)dnl
 _mcdev(xfs,xfs*,xfs,{-major_xfs_c-},600)dnl
