@@ -1,4 +1,4 @@
-dnl	$OpenBSD: xfer,v 1.15 2002/04/04 21:13:32 jason Exp $
+dnl	$OpenBSD: xfer,v 1.16 2002/06/30 15:32:14 miod Exp $
 Installation is supported from several media types, including:
 
 	CD-ROM (NOT supported if booting from floppy)
@@ -32,12 +32,12 @@ OpenBSDXferFloppyFromUNIX
 
 Creating a bootable hard disk using SunOS, Solaris or other Un*x-like system:
 
-	If you don't have a floppy drive you can copy the floppy
- 	installation image "floppy{:--:}OSrev.fs" or the mini-root "miniroot{:--:}OSrev.fs"
- 	onto the hard disk you intend to boot on.  Traditionally, the
- 	way to do this is to use dd(1) to place the bootable filesystem
- 	image in the "swap" partition of the disk (while running in
- 	single user mode), and then booting from that partition.
+	If you don't have a floppy drive you can copy the mini-root
+	"miniroot{:--:}OSrev.fs" onto the hard disk you intend to boot on.
+	Traditionally, the way to do this is to use dd(1) to place the
+	bootable filesystem image in the "swap" partition of the disk
+	(while running in single user mode), and then booting from that
+	partition.
 
 	Using the "b" partition allows you to boot without overwriting
 	any useful parts of the disk, you can also use another partition,
@@ -49,13 +49,9 @@ Creating a bootable hard disk using SunOS, Solaris or other Un*x-like system:
 
 	Use the dd(1) utility to copy the file to the hard drive.
 	The command would likely be, under SunOS:
-		dd if=floppy{:--:}OSrev.fs of=/dev/rsd0b bs=36b
- 				- or -
- 		dd if=miniroot{:--:}OSrev.fs of=/dev/rsd0b bs=36b
+ 		dd if=miniroot{:--:}OSrev.fs of=/dev/rsd0b bs=64b
 	and under Solaris:
-		dd if=floppy{:--:}OSrev.fs of=/dev/rdsk/c0t0d0s1 bs=36b
- 				- or -
- 		dd if=miniroot{:--:}OSrev.fs of=/dev/rdsk/c0t0d0s1 bs=36b
+ 		dd if=miniroot{:--:}OSrev.fs of=/dev/rdsk/c0t0d0s1 bs=64b
 
 	The blocksize is arbitrary as long as it's a multiple of 512-bytes
 	and within the maximum supported by the driver, i.e. bs=126b may
@@ -77,32 +73,6 @@ Creating a bootable hard disk using SunOS, Solaris or other Un*x-like system:
 	using OpenBSD, perhaps on another architecture, OpenBSD will
 	create a "fictitious label" that will let you access the whole
 	disk.
-
-	The floppy image is used only for booting, and can be placed in
-	a partition that will be overwritten during the install process,
-	since it actually runs off a ram-disk image in the kernel.  In
-	contrast the miniroot is a normal unix root filesystem and you
-	must place in a partition that will not be overwritten until you've
-	completed the installation process.
-
-	To copy the floppy image to the hard disk, preserving SunOS,
-	Solaris, NetBSD or OpenBSD labels:
-	Under SunOS:
-		dd if=floppy{:--:}OSrev.fs of=/dev/rsdXc bs=1b skip=1 seek=1
-	and Solaris:
-		dd if=floppy{:--:}OSrev.fs of=/dev/rdsk/c0tXd0s2 \
-		    bs=1b skip=1 seek=1
-
-	You need to be sure that your version of dd(1) supports the
-	skip and seek operands, otherwise you can try a technique like:
-
-		dd if=/dev/rsdXc of=/tmp/label bs=1b count=1
-		dd if=floppy{:--:}OSrev.fs of=/dev/rsdXc bs=36b
-		dd if=/tmp/label of=/dev/rsdXc bs=1b count=1
-
-	In either case, you've created a situation where the disklabel
-	and the filesystem information don't agree about the partition
-	size and geometry, however the results will be usable.
 
 Creating a network bootable setup using SunOS or other Un*x-like system:
 
