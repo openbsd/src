@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_bootstrap.c,v 1.11 2001/11/06 19:53:14 miod Exp $	*/
+/*	$OpenBSD: pmap_bootstrap.c,v 1.12 2001/11/30 20:58:18 miod Exp $	*/
 /*	$NetBSD: pmap_bootstrap.c,v 1.13 1997/06/10 18:56:50 veego Exp $	*/
 
 /* 
@@ -519,4 +519,23 @@ pmap_bootstrap(nextpa, firstpa)
 		va += MSGBUFSIZE;
 		RELOC(virtual_avail, vaddr_t) = va;
 	}
+}
+
+void
+pmap_init_md()
+{
+	vaddr_t		addr;
+
+	/*
+	 * mark as unavailable the regions which we have mapped in
+	 * pmap_bootstrap().
+	 */
+	addr = (vaddr_t) intiobase;
+	if (uvm_map(kernel_map, &addr,
+		    m68k_ptob(IIOMAPSIZE+EIOMAPSIZE),
+		    NULL, UVM_UNKNOWN_OFFSET, 0,
+		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE,
+				UVM_INH_NONE, UVM_ADV_RANDOM,
+				UVM_FLAG_FIXED)))
+		panic("pmap_init: bogons in the VM system!\n");
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_bootstrap.c,v 1.9 2001/11/25 18:13:37 miod Exp $ */
+/*	$OpenBSD: pmap_bootstrap.c,v 1.10 2001/11/30 20:58:18 miod Exp $ */
 
 /* 
  * Copyright (c) 1995 Theo de Raadt
@@ -360,10 +360,8 @@ register vm_offset_t firstpa;
 	 * iiomapsize pages prior to external IO space at end of static
 	 * kernel page table.
 	 */
-	RELOC(intiobase, char *) = (char *)
-										m68k_ptob(nptpages*NPTEPG - (RELOC(iiomapsize, int)+EIOMAPSIZE));
-	RELOC(intiolimit, char *) = (char *)
-										 m68k_ptob(nptpages*NPTEPG - EIOMAPSIZE);
+	RELOC(intiobase, char *) = (char *)m68k_ptob(nptpages*NPTEPG - (RELOC(iiomapsize, int)+EIOMAPSIZE));
+	RELOC(intiolimit, char *) = (char *)m68k_ptob(nptpages*NPTEPG - EIOMAPSIZE);
 	/*
 	 * extiobase: base of external (DIO-II) IO space.
 	 * EIOMAPSIZE pages at the end of the static kernel page table.
@@ -896,4 +894,23 @@ register vm_offset_t firstpa;
 		va += NBPG;
 		RELOC(virtual_avail, vm_offset_t) = va;
 	}
+}
+
+void
+pmap_init_md()
+{
+	vaddr_t		addr;
+
+	/*
+	 * mark as unavailable the regions which we have mapped in
+	 * pmap_bootstrap().
+	 */
+	addr = (vaddr_t) intiobase;
+	if (uvm_map(kernel_map, &addr,
+		    m68k_ptob(iiomapsize+EIOMAPSIZE),
+		    NULL, UVM_UNKNOWN_OFFSET, 0,
+		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE,
+				UVM_INH_NONE, UVM_ADV_RANDOM,
+				UVM_FLAG_FIXED)))
+		panic("pmap_init: bogons in the VM system!\n");
 }
