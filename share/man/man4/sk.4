@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sk.4,v 1.13 2001/10/05 14:45:53 mpech Exp $
+.\"	$OpenBSD: sk.4,v 1.14 2002/06/11 03:52:00 aaron Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -91,6 +91,8 @@ utility configures the adapter to receive and transmit jumbo frames.
 Using jumbo frames can greatly improve performance for certain tasks,
 such as file transfers and data streaming.
 .Pp
+Hardware TCP/IP checksum offloading for IPv4 is supported.
+.Pp
 The following media types and options (as given to
 .Xr ifconfig 8 )
 are supported:
@@ -105,7 +107,7 @@ file.
 .It Cm media No 1000baseSX Cm mediaopt No full-duplex
 Set 1000Mbps (Gigabit Ethernet) operation on fiber and force full-duplex mode.
 .It Cm media No 1000baseSX Cm mediaopt No half-duplex
-Set 1000Mbps (Gigabit Ethernet) operation on fiber and force full-duplex mode.
+Set 1000Mbps (Gigabit Ethernet) operation on fiber and force half-duplex mode.
 .It Cm media No 1000baseT Cm mediaopt
 Set 1000Mbps (Gigabit Ethernet) operation and force full-duplex mode.
 .El
