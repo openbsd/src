@@ -1,4 +1,4 @@
-/*	$OpenBSD: whois.c,v 1.23 2003/01/15 23:16:29 millert Exp $	*/
+/*	$OpenBSD: whois.c,v 1.24 2003/04/15 23:24:45 millert Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)whois.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: whois.c,v 1.23 2003/01/15 23:16:29 millert Exp $";
+static const char rcsid[] = "$OpenBSD: whois.c,v 1.24 2003/04/15 23:24:45 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -77,7 +77,7 @@ static const char rcsid[] = "$OpenBSD: whois.c,v 1.23 2003/01/15 23:16:29 miller
 #define	QNICHOST_TAIL	".whois-servers.net"
 
 #define	WHOIS_PORT	"whois"
-#define	WHOIS_SERVER_ID	"Whois Server: "
+#define	WHOIS_SERVER_ID	"Whois Server:"
 
 #define WHOIS_RECURSE		0x01
 #define WHOIS_QUICK		0x02
@@ -200,7 +200,7 @@ whois(const char *query, const char *server, const char *port, int flags)
 	}
 	if (s < 0) {
 		if (reason)
-			warn("%s", reason);
+			warn("%s: %s", server, reason);
 		else
 			warn("unknown error in connection attempt");
 		freeaddrinfo(res);
