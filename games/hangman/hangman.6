@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hangman.6,v 1.4 1998/12/15 19:18:39 pjanzen Exp $
+.\"	$OpenBSD: hangman.6,v 1.5 1999/09/25 20:51:53 pjanzen Exp $
 .\"
 .\" Copyright (c) 1983, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -41,6 +41,7 @@
 .Nd Computer version of the game hangman
 .Sh SYNOPSIS
 .Nm hangman
+.Op Fl d Ar wordlist
 .Sh DESCRIPTION
 In
 .Nm hangman ,
@@ -48,10 +49,19 @@ the computer picks a word from the on-line word list
 and you must try to guess it.
 The computer keeps track of which letters have been guessed
 and how many wrong guesses you have made on the screen in a graphic fashion.
+.Sh OPTIONS
+.Bl -tag -width flag -compact
+.It Fl d
+Use the specified
+.Ar wordlist
+instead of the default.  A wordlist file must have one word per line.  Only
+lowercase words of at least a certain length (typically 6 characters) are
+chosen.
+.El
 .Sh FILES
 .Bl -tag -width /usr/share/dict/words -compact
 .It Pa /usr/share/dict/words
-On-line word list
+Default word list
 .El
 .Sh SEE ALSO
 .Xr ddb 4 .

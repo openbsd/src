@@ -1,4 +1,4 @@
-/*	$OpenBSD: getword.c,v 1.2 1998/08/19 07:40:34 pjanzen Exp $	*/
+/*	$OpenBSD: getword.c,v 1.3 1999/09/25 20:51:53 pjanzen Exp $	*/
 /*	$NetBSD: getword.c,v 1.4 1995/03/23 08:32:45 cgd Exp $	*/
 
 /*
@@ -38,12 +38,13 @@
 #if 0
 static char sccsid[] = "@(#)getword.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: getword.c,v 1.2 1998/08/19 07:40:34 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: getword.c,v 1.3 1999/09/25 20:51:53 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
-#include "hangman.h"
 #include <stdlib.h>
+#include "hangman.h"
+#include "pathnames.h"
 
 /*
  * getword:
@@ -52,26 +53,38 @@ static char rcsid[] = "$OpenBSD: getword.c,v 1.2 1998/08/19 07:40:34 pjanzen Exp
 void
 getword()
 {
-	register FILE		*inf;
-	register char		*wp, *gp;
-	register long		 pos;
+	FILE		*inf;
+	char		*wp, *gp;
+	long		 pos;
+	int		badwords, countwords;
 
 	inf = Dict;
-	for (;;) {
+	badwords = 0;
+	/* Make sure the dictionary file is valid if it's not the default */
+	countwords = strcmp(Dict_name, _PATH_DICT);
+	while (badwords < MAXBADWORDS) {
+		if (countwords)
+			badwords++;
 		pos = (double) random() / (RAND_MAX + 1.0) * (double) Dict_size;
-		fseek(inf, pos, 0);
+		fseek(inf, pos, SEEK_SET);
 		if (fgets(Word, BUFSIZ, inf) == NULL)
 			continue;
 		if (fgets(Word, BUFSIZ, inf) == NULL)
 			continue;
 		Word[strlen(Word) - 1] = '\0';
-		if (strlen(Word) < MINLEN)
+		if (strlen(Word) < MINLEN || strlen(Word) > MAXLEN)
 			continue;
 		for (wp = Word; *wp; wp++)
 			if (!islower(*wp))
 				goto cont;
 		break;
 cont:		;
+	}
+	if (badwords >= MAXBADWORDS) {
+		mvcur(0, COLS - 1, LINES - 1, 0);
+		endwin();
+		errx(1, "file %s appears to be incorrectly formatted\n(Need one lower-case word per line)",
+			Dict_name);
 	}
 	gp = Known;
 	wp = Word;

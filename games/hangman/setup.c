@@ -1,4 +1,4 @@
-/*	$OpenBSD: setup.c,v 1.3 1999/04/20 22:54:56 pjanzen Exp $	*/
+/*	$OpenBSD: setup.c,v 1.4 1999/09/25 20:51:54 pjanzen Exp $	*/
 /*	$NetBSD: setup.c,v 1.3 1995/03/23 08:32:59 cgd Exp $	*/
 
 /*-
@@ -38,10 +38,11 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: setup.c,v 1.3 1999/04/20 22:54:56 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: setup.c,v 1.4 1999/09/25 20:51:54 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
+#include	<time.h>
 #include	"hangman.h"
 
 /*
@@ -51,7 +52,7 @@ static char rcsid[] = "$OpenBSD: setup.c,v 1.3 1999/04/20 22:54:56 pjanzen Exp $
 void
 setup()
 {
-	register char		**sp;
+	const char		*const *sp;
 	static struct stat	sbuf;
 
 	noecho();
@@ -70,9 +71,9 @@ setup()
 	}
 
 	srandom(time(NULL) + getpid());
-	if ((Dict = fopen(_PATH_DICT, "r")) == NULL) {
+	if ((Dict = fopen(Dict_name, "r")) == NULL) {
 		endwin();
-		err(1, "fopen %s", _PATH_DICT);
+		err(1, "fopen %s", Dict_name);
 	}
 	fstat(fileno(Dict), &sbuf);
 	Dict_size = sbuf.st_size;

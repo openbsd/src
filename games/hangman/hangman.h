@@ -1,4 +1,4 @@
-/*	$OpenBSD: hangman.h,v 1.3 1999/04/20 22:54:55 pjanzen Exp $	*/
+/*	$OpenBSD: hangman.h,v 1.4 1999/09/25 20:51:53 pjanzen Exp $	*/
 /*	$NetBSD: hangman.h,v 1.5 1995/04/24 12:23:44 cgd Exp $	*/
 
 /*
@@ -46,8 +46,11 @@
 #include	<string.h>
 #include	<unistd.h>
 #include	"pathnames.h"
+ 
+#define	MAXBADWORDS	100
 
 #define	MINLEN	6
+#define	MAXLEN	60
 #define	MAXERRS	7
 
 #define	MESGY	12
@@ -71,13 +74,16 @@ typedef struct {
 
 extern bool Guessed[];
 
-extern char Word[], Known[], *Noose_pict[];
+extern char Word[], Known[];
+extern const char *const Noose_pict[];
 
 extern int Errors, Wordnum;
 
 extern double Average;
 
-extern ERR_POS Err_pos[];
+extern const ERR_POS Err_pos[];
+
+extern const char *Dict_name;
 
 extern FILE *Dict;
 

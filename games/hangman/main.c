@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.5 1999/04/20 22:54:56 pjanzen Exp $	*/
+/*	$OpenBSD: main.c,v 1.6 1999/09/25 20:51:53 pjanzen Exp $	*/
 /*	$NetBSD: main.c,v 1.3 1995/03/23 08:32:50 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.5 1999/04/20 22:54:56 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.6 1999/09/25 20:51:53 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -58,9 +58,24 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
+	int ch;
+
 	/* revoke */
 	setegid(getgid());
 	setgid(getgid());
+
+	while ((ch = getopt(argc, argv, "d:h")) != -1) {
+		switch (ch) {
+		case 'd':
+			Dict_name = optarg;
+			break;
+		case 'h':
+		case '?':
+		default:
+			(void)fprintf(stderr, "usage: hangman [-d wordlist]\n");
+			exit(1);
+		}
+	}
 
 	initscr();
 	if (COLS < 50 || LINES < 14) {

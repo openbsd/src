@@ -1,4 +1,4 @@
-/*	$OpenBSD: endgame.c,v 1.2 1998/08/19 07:40:30 pjanzen Exp $	*/
+/*	$OpenBSD: endgame.c,v 1.3 1999/09/25 20:51:53 pjanzen Exp $	*/
 /*	$NetBSD: endgame.c,v 1.3 1995/03/23 08:32:40 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)endgame.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: endgame.c,v 1.2 1998/08/19 07:40:30 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: endgame.c,v 1.3 1999/09/25 20:51:53 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -51,7 +51,7 @@ static char rcsid[] = "$OpenBSD: endgame.c,v 1.2 1998/08/19 07:40:30 pjanzen Exp
 void
 endgame()
 {
-	register char	ch;
+	char	ch;
 
 	prman();
 	if (Errors >= MAXERRS)

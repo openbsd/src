@@ -1,4 +1,4 @@
-/*	$OpenBSD: getguess.c,v 1.3 1998/08/19 07:40:32 pjanzen Exp $	*/
+/*	$OpenBSD: getguess.c,v 1.4 1999/09/25 20:51:53 pjanzen Exp $	*/
 /*	$NetBSD: getguess.c,v 1.5 1995/03/23 08:32:43 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getguess.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: getguess.c,v 1.3 1998/08/19 07:40:32 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: getguess.c,v 1.4 1999/09/25 20:51:53 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -52,9 +52,9 @@ static char rcsid[] = "$OpenBSD: getguess.c,v 1.3 1998/08/19 07:40:32 pjanzen Ex
 void
 getguess()
 {
-	register int	i;
-	register int	ch;
-	register bool	correct;
+	int	i;
+	int	ch;
+	bool	correct;
 
 	leaveok(stdscr, FALSE);
 	for (;;) {
