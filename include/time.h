@@ -1,4 +1,4 @@
-/*	$OpenBSD: time.h,v 1.8 1999/09/17 13:13:46 espie Exp $	*/
+/*	$OpenBSD: time.h,v 1.9 2000/08/22 13:59:44 millert Exp $	*/
 /*	$NetBSD: time.h,v 1.9 1994/10/26 00:56:35 cgd Exp $	*/
 
 /*
@@ -113,6 +113,9 @@ void tzset __P((void));
 #if !defined(_ANSI_SOURCE) && !defined(_POSIX_SOURCE)
 char *timezone __P((int, int));
 void tzsetwall __P((void));
+time_t timelocal __P((struct tm *));
+time_t timegm __P((struct tm *));
+time_t timeoff __P((struct tm *, const long));
 #endif /* neither ANSI nor POSIX */
 __END_DECLS
 
