@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.c,v 1.9 2004/07/09 11:34:11 henning Exp $ */
+/*	$OpenBSD: ntpd.c,v 1.10 2004/07/09 15:08:54 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -121,8 +121,6 @@ main(int argc, char *argv[])
 
 	if (!debug)
 		daemon(1, 0);
-
-	log_info("startup");
 
 	if (pipe(pipe_chld) == -1)
 		fatal("pipe");
