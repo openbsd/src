@@ -573,8 +573,8 @@ AHA-154x, AHA-174x (in compatibility mode), or BT-54x SCSI host adapters
 		aha1	0x334	any	any
 
 BT445, BT74x, or BT9xx SCSI host adapters
-		bt0	0x330	any	any
-		bt1	0x334	any	any
+		bha0	0x330	any	any
+		bha1	0x334	any	any
 
 Ultrastor 14f, 24f (if it works), or 34f SCSI host adapters
 		uha0	0x330	any	any
