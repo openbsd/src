@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamdb.c,v 1.9 2004/04/25 17:32:17 itojun Exp $	*/
+/*	$OpenBSD: spamdb.c,v 1.10 2004/04/26 18:21:20 itojun Exp $	*/
 
 /*
  * Copyright (c) 2004 Bob Beck.  All rights reserved.
@@ -47,6 +47,7 @@ dbupdate(char *dbname, char *ip, int add)
 	db = dbopen(dbname, O_EXLOCK|O_RDWR, 0600, DB_BTREE, &btreeinfo);
 	if (db == NULL)
 		err(1, "cannot open %s for writing", dbname);
+	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = PF_UNSPEC;
 	hints.ai_socktype = SOCK_DGRAM;	/*dummy*/
 	hints.ai_flags = AI_NUMERICHOST;
