@@ -1,4 +1,4 @@
-/*	$OpenBSD: adutil.c,v 1.11 1998/08/21 23:03:14 csapuntz Exp $	*/
+/*	$OpenBSD: adutil.c,v 1.12 1998/09/03 15:50:32 csapuntz Exp $	*/
 /*	$NetBSD: adutil.c,v 1.15 1996/10/13 02:52:07 christos Exp $	*/
 
 /*
@@ -97,7 +97,7 @@ adosfs_ainshash(amp, ap)
 
 	hp = &amp->anodetab[AHASH(ap->block)];
 
-	for (aq = hp->lh_first; ; aq = aq->link.le_next) {
+	for (aq = hp->lh_first; aq ; aq = aq->link.le_next) {
 		if (aq->block == ap->block) {
 			lockmgr(&ap->a_lock, LK_RELEASE,
 				(struct simplelock *)0, p);
