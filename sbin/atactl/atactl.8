@@ -1,4 +1,4 @@
-.\"	$OpenBSD: atactl.8,v 1.25 2004/01/13 22:44:58 grange Exp $
+.\"	$OpenBSD: atactl.8,v 1.26 2004/02/02 08:30:26 grange Exp $
 .\"	$NetBSD: atactl.8,v 1.5 1999/02/24 18:49:14 jwise Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -159,11 +159,13 @@ warning.
 .Pp
 .It Li podenable
 Allows the specified device to revert to power-on default (pod) settings
-after a reset.
+after a software reset.
 .Pp
 .It Li poddisable
 Disallows the specified device to revert to power-on default (pod) settings
-after a reset.
+after a software reset.
+In other words this permits the settings that have been modified since
+power-on to remain after a software reset.
 .Pp
 .It Li puisenable
 Enables power-up in standby (puis) on the specified device, causing the
