@@ -1,4 +1,4 @@
-/*	$OpenBSD: freebsd_exec.c,v 1.9 2001/02/02 05:21:47 tholo Exp $	*/
+/*	$OpenBSD: freebsd_exec.c,v 1.10 2001/02/02 18:34:15 tholo Exp $	*/
 /*	$NetBSD: freebsd_exec.c,v 1.2 1996/05/18 16:02:08 christos Exp $	*/
 
 /*
@@ -90,7 +90,7 @@ struct emul emul_elf_freebsd = {
 	FREEBSD_ELF_AUX_ARGSIZ,
 	elf_copyargs,
 	setregs,
-	NULL,
+	exec_elf_fixup,
 	freebsd_sigcode,
 	freebsd_esigcode,
 };
