@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.20 2003/07/02 22:44:12 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.21 2003/07/15 19:02:19 deraadt Exp $
 #	from: @(#)Makefile	8.2 (Berkeley) 12/15/93
 #	$NetBSD: Makefile,v 1.6 1996/02/24 01:22:12 jtk Exp $
 
@@ -18,8 +18,8 @@ MAN=	telnetd.8
 
 .if (${KERBEROS5:L} == "yes")
 CFLAGS+=-DENCRYPTION -DAUTHENTICATION -I${.CURDIR}/../../lib
-DPADD+=	${LIBKRB5} ${LIBASN1} ${LIBCRYPTO} ${LIBDES} ${LIBCOM_ERR}
-LDADD+=	-lkrb5 -lasn1 -lcrypto -ldes -lcom_err
+DPADD+=	${LIBKRB5} ${LIBASN1} ${LIBCRYPTO} ${LIBDES}
+LDADD+=	-lkrb5 -lasn1 -lcrypto -ldes
 .endif
 
 .include <bsd.prog.mk>
