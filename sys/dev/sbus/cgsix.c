@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgsix.c,v 1.36 2003/03/27 18:06:48 jason Exp $	*/
+/*	$OpenBSD: cgsix.c,v 1.37 2003/03/28 00:23:05 miod Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -348,9 +348,12 @@ cgsix_ioctl(v, cmd, data, flags, p)
 		break;
 	case WSDISPLAYIO_SMODE:
 		mode = *(u_int *)data;
-		if (sc->sc_mode != WSDISPLAYIO_MODE_EMUL &&
-		    mode == WSDISPLAYIO_MODE_EMUL)
-			cgsix_ras_init(sc);
+		if ((sc->sc_dev.dv_cfdata->cf_flags & CG6_CFFLAG_NOACCEL)
+		    == 0) {
+			if (sc->sc_mode != WSDISPLAYIO_MODE_EMUL &&
+			    mode == WSDISPLAYIO_MODE_EMUL)
+				cgsix_ras_init(sc);
+		}
 		sc->sc_mode = mode;
 		break;
 	case WSDISPLAYIO_GINFO:
