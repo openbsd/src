@@ -1,4 +1,4 @@
-.\"	$OpenBSD: df.1,v 1.5 1997/04/14 17:44:29 kstailey Exp $
+.\"	$OpenBSD: df.1,v 1.6 1997/08/19 06:46:56 denny Exp $
 .\"	$NetBSD: df.1,v 1.12 1995/12/05 02:42:45 jtc Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
@@ -89,6 +89,9 @@ When this option is specified,
 .Nm df
 will not request new statistics from the file systems, but will respond
 with the possibly stale statistics that were previously obtained.
+.It Fl P
+Print out information in a stricter format designed to be parsed
+by portable scripts.
 .It Fl t Ar type
 Is used to indicate the actions should only be taken on
 filesystems of the specified type.
@@ -120,6 +123,12 @@ size block.
 .Xr fstab 5 ,
 .Xr mount 8 ,
 .Xr quot 8
+.Sh STANDARDS
+The
+.Nm df
+utility is compliant with the
+.St -p1003.2-92
+specification.
 .Sh HISTORY
 A
 .Nm df
