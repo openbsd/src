@@ -1,4 +1,4 @@
-/*	$OpenBSD: kauaiata.c,v 1.2 2003/06/05 18:29:06 grange Exp $ */
+/*	$OpenBSD: kauaiata.c,v 1.3 2003/06/05 22:40:48 drahn Exp $ */
 
 /*
  * Copyright (c) 2003 Dale Rahn
@@ -108,21 +108,26 @@ vendor 0x106b product 0x003b (class undefined unknown subclass 0x00, rev 0x00) a
 
 	node = OF_finddevice("/pci@f4000000/ata-6");
 
+	/*
+	 * XXX - need to compare node and PCI id to verify this is the 
+	 * correct device.
+	 */
+
 	ca.ca_nreg  = OF_getprop(node, "reg", reg, sizeof(reg));
-	printf("nreg %x\n", ca.ca_nreg);
 
 	intr[0] = PCI_INTERRUPT_LINE(pci_conf_read(pc, pa->pa_tag,
 	    PCI_INTERRUPT_REG));
-	ca.ca_nintr = 4; /* XXX */
-	intr[0] = 0x27; /* XXXX */
+	ca.ca_nintr = 4; /* claim to have 4 bytes of interrupt info */
+	/* This needs to come from INTERRUPT REG above, but is not filled out */
+	intr[0] = 0x27;
 
 	namelen = OF_getprop(node, "name", name, sizeof(name));
-	if (namelen < 0)
+	if ((namelen < 0) || (namelen >= sizeof(name))) {
+		printf(" bad name prop len %x\n", namelen);
 		return;
-	if (namelen >= sizeof(name))
-		return;
+	}
 
-	name[namelen] = 0;
+	name[namelen] = 0; /* name property may not be null terminated */
 
 	/* config read */
 	sc->sc_membus_space.bus_base =
@@ -134,7 +139,7 @@ vendor 0x106b product 0x003b (class undefined unknown subclass 0x00, rev 0x00) a
 		sc->sc_membus_space.bus_base);
 #endif
 
-	ca.ca_baseaddr = 0;
+	ca.ca_baseaddr = sc->sc_membus_space.bus_base;
 
 	sc->sc_membus_space.bus_reverse = 1;
 
@@ -143,10 +148,10 @@ vendor 0x106b product 0x003b (class undefined unknown subclass 0x00, rev 0x00) a
 	ca.ca_dmat = pa->pa_dmat;
 
 	ca.ca_reg = reg;
-	reg[0] = sc->sc_membus_space.bus_base + 0x2000;
-	reg[1] = reg[9]; /* XXX */
-	reg[2] = sc->sc_membus_space.bus_base + 0x1000;
-	reg[3] = 0x1000; /* XXX */
+	reg[0] = 0x2000; /* offset to wdc registers */
+	reg[1] = reg[9] - 0x2000; /* map size of wdc registers */
+	reg[2] = 0x1000; /* offset to dbdma registers */
+	reg[3] = 0x1000; /* map size of dbdma registers */
 	ca.ca_intr = intr;
 
 	printf("\n");

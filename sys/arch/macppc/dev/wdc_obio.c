@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdc_obio.c,v 1.9 2003/06/05 05:17:04 drahn Exp $	*/
+/*	$OpenBSD: wdc_obio.c,v 1.10 2003/06/05 22:40:48 drahn Exp $	*/
 /*	$NetBSD: wdc_obio.c,v 1.15 2001/07/25 20:26:33 bouyer Exp $	*/
 
 /*-
@@ -179,9 +179,6 @@ wdc_obio_attach(parent, self, aux)
 	cmdbase = ca->ca_reg[0];
 	cmdsize = ca->ca_reg[1];
 
-	printf("wdc_obio map %x %x %x %x\n", cmdbase, cmdsize, ca->ca_reg[2],
-	    ca->ca_reg[2]);
-
 	if (bus_space_map(chp->cmd_iot, cmdbase, cmdsize, 0, &chp->cmd_ioh) ||
 	    bus_space_subregion(chp->cmd_iot, chp->cmd_ioh,
 			/* WDC_AUXREG_OFFSET<<4 */ 0x160, 1, &chp->ctl_ioh))
@@ -215,7 +212,7 @@ wdc_obio_attach(parent, self, aux)
 		if (strcmp(ca->ca_name, "ata-6") == 0) {
 			sc->sc_wdcdev.cap |= WDC_CAPABILITY_UDMA |
 			    WDC_CAPABILITY_MODE;
-			sc->sc_wdcdev.UDMA_cap = 6;
+			sc->sc_wdcdev.UDMA_cap = 5;
 			sc->sc_wdcdev.set_modes = wdc_obio_ata6_adjust_timing;
 		}
 	}
@@ -273,49 +270,48 @@ static const struct ide_timings udma_timing[] = {
 
 /* these number _guessed_ from linux driver. */
 static u_int32_t kauai_pio_timing[] = {
-	#if 0
-	/*120*/	0x04000148,	/* Mode 0 */
-	/*180*/	0x05000249,	/* Mode 1 */
+	#if 1
+	/*600*/	0x08000a92,	/* Mode 0 */
+	/*360*/	0x08000392,	/* Mode 1 */
 	/*240*/	0x0800038b,	/* Mode 2 */
-	/*360*/	0x08000392,	/* Mode 3 */
-	/*600*/	0x08000a92	/* Mode 4 */
-	#endif
+	/*180*/	0x05000249,	/* Mode 3 */
+	/*120*/	0x04000148	/* Mode 4 */
+	#else
 	/*120*/	0x06000246,	/* Mode 0 */
 	/*180*/	0x06000246,	/* Mode 1 */
 	/*240*/	0x06000246,	/* Mode 2 */
 	/*360*/	0x06000246,	/* Mode 3 */
 	/*600*/	0x06000246	/* Mode 4 */
+	#endif
 		
 };
 static u_int32_t kauai_dma_timing[] = {
-	#if 0
-	/*120*/	0x00148000,	/* Mode 0 */
-	/*150*/	0x00209000,	/* Mode 1 */
-	/*240*/	0x0030c000,	/* Mode 2 */
-	/*360*/	0x00492000,	/* Mode 3 */
-	/*480*/	0x00618000	/* Mode 4 */
-	#endif
+	#if 1
+	/*480*/	0x00618000,	/* Mode 0 */
+	/*360*/	0x00492000,	/* Mode 1 */
+	/*240*/	0x00149000	/* Mode 2 */
+	#else
 	/*120*/	0x00149000,	/* Mode 0 */
 	/*150*/	0x00149000,	/* Mode 1 */
-	/*240*/	0x00149000,	/* Mode 2 */
-	/*360*/	0x00149000,	/* Mode 3 */
-	/*480*/	0x00149000	/* Mode 4 */
+	/*240*/	0x00149000	/* Mode 2 */
+	#endif
 };
 static u_int32_t kauai_udma_timing[] = {
-	#if 0
-	/* 20*/	0x00002921,	/* Mode 0 */
-	/* 30*/	0x00002a30,	/* Mode 1 */
-	/* 45*/	0x00003a50,	/* Mode 2 */
-	/* 60*/	0x00004a60,	/* Mode 3 */
-	/* 90*/	0x00005d80,	/* Mode 4 */
-	/*120*/	0x000070c0	/* Mode 5 */
+	#if 1
+	/*120*/	0x000070c0,	/* Mode 0 */
+	/* 90*/	0x00005d80,	/* Mode 1 */
+	/* 60*/	0x00004a60,	/* Mode 2 */
+	/* 45*/	0x00003a50,	/* Mode 3 */
+	/* 30*/	0x00002a30,	/* Mode 4 */
+	/* 20*/	0x00002921	/* Mode 5 */
+	#else
+	/*120*/	0x00002921,	/* Mode 0 */
+	/* 90*/	0x00002921,	/* Mode 1 */
+	/* 60*/	0x00002921,	/* Mode 2 */
+	/* 45*/	0x00002921,	/* Mode 3 */
+	/* 30*/	0x00002921,	/* Mode 4 */
+	/* 20*/	0x00002921	/* Mode 5 */
 	#endif
-	/* 20*/	0x00002921,	/* Mode 0 */
-	/* 30*/	0x00002921,	/* Mode 1 */
-	/* 45*/	0x00002921,	/* Mode 2 */
-	/* 60*/	0x00002921,	/* Mode 3 */
-	/* 90*/	0x00002921,	/* Mode 4 */
-	/*120*/	0x00002921	/* Mode 5 */
 };
 
 #define	TIME_TO_TICK(time)	howmany((time), 30)
@@ -541,12 +537,13 @@ wdc_obio_ata6_adjust_timing(struct channel_softc *chp)
 	if (udmamode == -2)
 		udmamode = -1;
 
-
 	conf = bus_space_read_4(chp->cmd_iot, chp->cmd_ioh, CONFIG_REG);
 	conf1 = bus_space_read_4(chp->cmd_iot, chp->cmd_ioh,
 	    KAUAI_ULTRA_CONFIG);
 
+#if 1
 	printf("ata6 conf old: 0x%x, %x", conf, conf1);
+#endif
 	conf = (conf & ~KAUAI_PIO_MASK) | kauai_pio_timing[piomode];
 
 	if (dmamode != -1) {
