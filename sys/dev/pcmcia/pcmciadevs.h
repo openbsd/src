@@ -1,10 +1,10 @@
-/*	$OpenBSD: pcmciadevs.h,v 1.32 1999/11/06 04:08:49 deraadt Exp $	*/
+/*	$OpenBSD: pcmciadevs.h,v 1.33 1999/12/22 21:14:36 fgsch Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcmciadevs,v 1.27 1999/11/06 04:08:47 deraadt Exp 
+ *		OpenBSD: pcmciadevs,v 1.28 1999/12/22 21:13:34 fgsch Exp 
  */
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
@@ -73,6 +73,7 @@
 #define	PCMCIA_VENDOR_BREEZECOM	0x0a02	/* BreezeCOM */
 #define	PCMCIA_VENDOR_LASAT	0x3401	/* Lasat */
 #define	PCMCIA_VENDOR_COMPEX	0x8a01	/* Compex */
+#define	PCMCIA_VENDOR_DUAL	0x890f	/* Dual */
 #define	PCMCIA_VENDOR_CONTEC	0xc001	/* Contec */
 #define	PCMCIA_VENDOR_COREGA	0xc00f	/* Corega K.K. */
 #define	PCMCIA_VENDOR_ALLIEDTELESIS	0xc00f	/* Allied Telesis K.K. */
@@ -141,6 +142,11 @@
 #define	PCMCIA_CIS_DIGITAL_MOBILE_MEDIA_CDROM	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_DIGITAL_MOBILE_MEDIA_CDROM	0x0d00
 #define	PCMCIA_STR_DIGITAL_MOBILE_MEDIA_CDROM	"Digital Mobile Media CD-ROM"
+
+/* Dual */
+#define	PCMCIA_CIS_DUAL_NE2000	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_DUAL_NE2000	0x0100
+#define	PCMCIA_STR_DUAL_NE2000	"Dual NE2000"
 
 /* Fujitsu */
 #define	PCMCIA_CIS_FUJITSU_SCSI600	{ NULL, NULL, NULL, NULL }
