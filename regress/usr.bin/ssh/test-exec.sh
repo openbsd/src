@@ -1,4 +1,4 @@
-#	$OpenBSD: test-exec.sh,v 1.5 2002/02/16 01:09:47 markus Exp $
+#	$OpenBSD: test-exec.sh,v 1.6 2002/02/18 10:09:20 markus Exp $
 #	Placed in the Public Domain.
 
 PORT=4242
@@ -87,6 +87,9 @@ EOF
 
 # server config for proxy connects
 cp $OBJ/sshd_config $OBJ/sshd_proxy
+
+# allow group-writable directories in proxy-mode
+echo 'StrictModes no' >> $OBJ/sshd_proxy
 
 # create client config
 cat << EOF > $OBJ/ssh_config
