@@ -1,4 +1,4 @@
-/*	$OpenBSD: klogin.c,v 1.8 1999/11/11 15:28:15 art Exp $	*/
+/*	$OpenBSD: klogin.c,v 1.9 1999/11/24 16:08:18 art Exp $	*/
 /*	$NetBSD: klogin.c,v 1.7 1996/05/21 22:07:04 mrg Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)klogin.c	8.3 (Berkeley) 4/2/94";
 #endif
-static char rcsid[] = "$OpenBSD: klogin.c,v 1.8 1999/11/11 15:28:15 art Exp $";
+static char rcsid[] = "$OpenBSD: klogin.c,v 1.9 1999/11/24 16:08:18 art Exp $";
 #endif /* not lint */
 
 #ifdef KERBEROS
@@ -249,9 +249,6 @@ kdestroy()
 	extern int errno;
 	struct stat statb;
 	char buf[BUFSIZ];
-#ifdef TKT_SHMEM
-	char shmidname[MAXPATHLEN];
-#endif /* TKT_SHMEM */
 
 	if (k_hasafs())
 	    k_unlog();
@@ -289,15 +286,7 @@ kdestroy()
 
 out:
 	if (errno != 0) return;
-#ifdef TKT_SHMEM
-	/* 
-	 * handle the shared memory case 
-	 */
-	(void) strcpy(shmidname, file);
-	(void) strcat(shmidname, ".shm");
-	if (krb_shm_dest(shmidname) != KSUCCESS)
-	    return;
-#endif /* TKT_SHMEM */
+
 	return;
 }
 #endif
