@@ -1,4 +1,4 @@
-/*	$OpenBSD: installboot.c,v 1.45 2004/02/22 09:03:05 tom Exp $	*/
+/*	$OpenBSD: installboot.c,v 1.46 2004/05/05 04:33:56 mickey Exp $	*/
 /*	$NetBSD: installboot.c,v 1.5 1995/11/17 23:23:50 gwr Exp $ */
 
 /*
@@ -170,7 +170,7 @@ main(int argc, char *argv[])
 
 	/* XXX - Paranoia: Make sure size is aligned! */
 	if (protosize & (DEV_BSIZE - 1))
-		err(1, "proto %s bad size=%ld", proto, protosize);
+		errx(1, "proto %s bad size=%ld", proto, protosize);
 
 	/* Write patched proto bootblock(s) into the superblock. */
 	if (protosize > SBSIZE - DEV_BSIZE)
