@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.34 1997/03/28 12:38:59 briggs Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.35 1997/04/05 15:29:10 briggs Exp $	*/
 /*	$NetBSD: machdep.c,v 1.134 1997/02/14 06:15:30 scottr Exp $	*/
 
 /*
@@ -2153,8 +2153,7 @@ setmachdep()
 		Via1Base = (volatile u_char *) IOBase;
 		mac68k_machine.scsi80 = 1;
 		mac68k_machine.sccClkConst = 115200;
-		/* Disable everything but PM; we need it. */
-		via_reg(VIA1, vIER) = 0x6f;	/* disable VIA1 int */
+		via_reg(VIA1, vIER) = 0x7f;	/* disable VIA1 int */
 		/* Are we disabling something important? */
 		via_reg(VIA2, vIER) = 0x7f;	/* disable VIA2 int */
 		if (cputype == CPU_68040)
@@ -2171,8 +2170,7 @@ setmachdep()
 		Via1Base = (volatile u_char *) IOBase;
 		mac68k_machine.scsi80 = 1;
 		mac68k_machine.sccClkConst = 115200;
-		/* Disable everything but PM; we need it. */
-		via_reg(VIA1, vIER) = 0x6f;	/* disable VIA1 int */
+		via_reg(VIA1, vIER) = 0x7f;	/* disable VIA1 int */
 		/* Are we disabling something important? */
 		via_reg(VIA2, rIER) = 0x7f;	/* disable VIA2 int */
 		break;

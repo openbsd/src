@@ -1,4 +1,4 @@
-/*	$OpenBSD: macromasm.s,v 1.6 1997/03/30 21:56:54 briggs Exp $	*/
+/*	$OpenBSD: macromasm.s,v 1.7 1997/04/05 15:29:13 briggs Exp $	*/
 /*	$NetBSD: macromasm.s,v 1.11 1996/05/25 14:45:37 briggs Exp $	*/
 
 /*-
@@ -109,6 +109,7 @@
 
 	loglob(InitEgretJTVec, 0x2010)	/* pointer to a jump table for */
 					/* InitEgret on AV machines */
+	loglob(jCacheFlush, 0x6f4)	/* setup_pm() needs this */
 
 #if 0
 	/* I wish I knew what these things were */

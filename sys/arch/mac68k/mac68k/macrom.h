@@ -1,4 +1,4 @@
-/*	$OpenBSD: macrom.h,v 1.6 1997/03/30 21:53:26 briggs Exp $	*/
+/*	$OpenBSD: macrom.h,v 1.7 1997/04/05 15:29:12 briggs Exp $	*/
 /*	$NetBSD: macrom.h,v 1.9 1996/05/25 14:45:35 briggs Exp $	*/
 
 /*-
@@ -83,6 +83,7 @@ extern caddr_t		jDTInstall;	/* short-cut to deferred task mgr */
 
 extern u_int32_t	**InitEgretJTVec; /* pointer to a jump table for */
 					  /* InitEgret on AV machines */
+extern caddr_t	jCacheFlush;		/* pointer to CacheFlush */
 
 	/* Types */
 
@@ -250,6 +251,7 @@ int	mrg_DisposPtr __P((void));
 int	mrg_GetPtrSize __P((void));
 int	mrg_SetPtrSize __P((void));
 int	mrg_PostEvent __P((void));
+int	mrg_GetTrapAddress __P((void));
 int	mrg_SetTrapAddress __P((void));
 void	mrg_StripAddress __P((void));
 void	mrg_aline_super __P((struct frame *));

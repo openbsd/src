@@ -1,4 +1,4 @@
-/*	$OpenBSD: macrom.c,v 1.11 1997/03/30 21:53:25 briggs Exp $	*/
+/*	$OpenBSD: macrom.c,v 1.12 1997/04/05 15:29:12 briggs Exp $	*/
 /*	$NetBSD: macrom.c,v 1.31 1997/03/01 17:20:34 scottr Exp $	*/
 
 /*-
@@ -111,6 +111,7 @@ caddr_t	mrg_rompmintr = 0;			/* ROM PM (?) interrupt */
 char *mrg_romident = NULL;			/* ident string for ROMs */
 caddr_t mrg_ADBAlternateInit = 0;
 caddr_t mrg_InitEgret = 0;
+caddr_t mrg_InitPM = 0;
 caddr_t	mrg_ADBIntrPtr = (caddr_t)0x0;	/* ADB interrupt taken from MacOS vector table*/
 caddr_t ROMResourceMap = 0;
 extern romvec_t *mrg_MacOSROMVectors;
@@ -601,6 +602,23 @@ mrg_SetTrapAddress()
         return 0;
 }
 
+int
+mrg_GetTrapAddress()
+{
+	extern caddr_t mrg_OStraps[];
+	caddr_t ptr;
+	int trap_num;
+
+	asm("	movl d0, %0"
+		: "=g" (trap_num) : : "d0");
+
+	ptr = mrg_OStraps[trap_num];
+
+	asm("	movl %0, a0"
+		: : "g" (ptr) : "a0");
+	return 0;
+}
+
 /*
  * trap jump address tables (different per machine?)
  * Can I just use the tables stored in the ROMs?
@@ -622,6 +640,7 @@ caddr_t mrg_OStraps[256] = {
 		(caddr_t)mrg_GetPtrSize,
 	[0x2f]	(caddr_t)mrg_PostEvent,
 	[0x3b]	(caddr_t)mrg_Delay,	
+	[0x46]	(caddr_t)mrg_GetTrapAddress,
 	[0x47]	(caddr_t)mrg_SetTrapAddress,
 	[0x55]	(caddr_t)mrg_StripAddress,
 	[0x82]	(caddr_t)mrg_DTInstall,
@@ -906,8 +925,12 @@ mrg_init()
 #endif
 		/* expected globals */
 	ExpandMem = &mrg_ExpandMem[0];
-	*((u_int16_t *)(mrg_ExpandMem + 0x00) ) = 0x0123;	/* magic (word) */
-	*((u_int32_t *)(mrg_ExpandMem + 0x02) ) = 0x000001ea;	/* Length of table (long) */
+
+	/* magic (word) */
+	*((u_int16_t *)(mrg_ExpandMem + 0x00) ) = 0x0123;
+	/* Length of table (long) */
+	*((u_int32_t *)(mrg_ExpandMem + 0x02) ) = 0x000001ea;
+
 	*((u_int32_t *)(mrg_ExpandMem + 0x1e0)) = (u_int32_t) &mrg_adbstore4[0];
 
 	*((u_int32_t *)(mrg_adbstore4 + 0x8)) = (u_int32_t) mrg_init_stub_1;
@@ -1031,6 +1054,18 @@ mrg_init()
 #endif
 		pmap_map(0x50f00000, 0x50f00000, 0x50f00000 + 0x4000,
 			 VM_PROT_READ|VM_PROT_WRITE);
+		if (     (current_mac_model->class == MACH_CLASSPB)
+		   ||   (current_mac_model->class == MACH_CLASSDUO)) {
+			/* CPU GLU */
+			pmap_map(0x50080000, 0x50080000, 0x50080000 + 0x10000,	
+				 VM_PROT_READ|VM_PROT_WRITE);
+			/* Modem slot for PB500 */
+			pmap_map(0xfb000000, 0xfb000000, 0xfb000000 + 0x10000,
+				 VM_PROT_READ|VM_PROT_WRITE);
+			/* ??? */
+			pmap_map(0x50f80000, 0x50f80000, 0x50f80000 + 0x40000,
+				 VM_PROT_READ|VM_PROT_WRITE);
+		}
 	}
 }
 
@@ -1049,7 +1084,8 @@ setup_egret(void)
 			:
 			: "g" (mrg_InitEgret), "g" (ADBState)
 			: "a0", "a1");
-		jEgret = (void (*)) mrg_OStraps[0x92]; /* may have been set in asm() */
+		/* may have been set in asm() */
+		jEgret = (void (*)) mrg_OStraps[0x92];
 	}
 	else printf("Help ...  No vector for InitEgret!!\n");
 	
@@ -1062,12 +1098,33 @@ setup_egret(void)
 #endif
 }
 
+static void     setup_pm __P((void));
+
+static void
+setup_pm(void)
+{
+	if (0 != mrg_InitPM){
+
+	/* This initializes the Power Manager system and
+	   enables interrupts */
+		asm("
+			movml	#0xffff, sp@-
+			moval	%0, a0
+			jbsr	a0@
+			movml	sp@+, #0xffff"
+			:
+			: "g" (mrg_InitPM)
+			: "a0"
+		);
+	} else printf("Help ...  No vector for InitPM!!\n");
+}
+
 void
 mrg_initadbintr()
 {
 	if (mac68k_machine.do_graybars)
 		printf("Got following HwCfgFlags: 0x%4x, 0x%8x, 0x%8x, 0x%8x\n",
-				HwCfgFlags, HwCfgFlags2, HwCfgFlags3, ADBReInit_JTBL);
+			HwCfgFlags, HwCfgFlags2, HwCfgFlags3, ADBReInit_JTBL);
 
         if ( (HwCfgFlags == 0) && (HwCfgFlags2 == 0) && (HwCfgFlags3 == 0) ){
 
@@ -1106,8 +1163,17 @@ mrg_initadbintr()
 		if (mac68k_machine.do_graybars)
 			printf("mrg: setup_egret: done.\n");
 
-	} else {
+	} else if (	(current_mac_model->class == MACH_CLASSPB)
+		   ||	(current_mac_model->class == MACH_CLASSDUO)) {
+		if (mac68k_machine.do_graybars)
+			printf("mrg: setup_pm:\n");
 
+		setup_pm();
+
+		if (mac68k_machine.do_graybars)
+			printf("mrg: setup_pm: done.\n");
+
+	} else {
 		if (mac68k_machine.do_graybars)
 			printf("mrg: Not setting up egret.\n");
 
@@ -1203,9 +1269,82 @@ mrg_fixupROMBase(obase, nbase)
         mrg_InitEgret = rom->InitEgret == 0 ?
                 0 : rom->InitEgret - oldbase + newbase;
 
+	if (	(current_mac_model->class == MACH_CLASSPB)
+	   ||	(current_mac_model->class == MACH_CLASSDUO)) {
+		switch( mac68k_machine.machineid ) {
+		case MACH_MACPB140:
+		case MACH_MACPB145:
+		case MACH_MACPB170:
+			mrg_InitPM =	/* PMgrInit */
+				(caddr_t)0x40888400 - oldbase + newbase;
+			jCacheFlush = (caddr_t)0x40809a7c - oldbase + newbase;
+			mrg_OStraps[0x33] =	/* VInstall */
+				(caddr_t)0x4082ea80 - oldbase + newbase;
+			mrg_OStraps[0x55] =	/* MemoryDispatch */
+				(caddr_t)0x4082eada - oldbase + newbase;
+			mrg_OStraps[0x5e] =	/* NMInstall */
+				(caddr_t)0x4082eafe - oldbase + newbase;
+			mrg_OStraps[0x5f] =	/* NMRemove */
+				(caddr_t)0x4082eb08 - oldbase + newbase;
+			mrg_OStraps[0x8d] =	/* EnterSuperVisor */
+				(caddr_t)0x4082914a - oldbase + newbase;
+			mrg_OStraps[0x9e] =	/* FullProcessorSpeed */
+				(caddr_t)0x40829868 - oldbase + newbase;
+			mrg_OStraps[0x9f] =	/* PMgrDispatch */
+				(caddr_t)0x408888d8 - oldbase + newbase;
+			break;
+		case MACH_MACPB160:
+		case MACH_MACPB165:
+		case MACH_MACPB165C:
+		case MACH_MACPB180:
+		case MACH_MACPB180C:
+		case MACH_MACPB210:
+		case MACH_MACPB230:
+		case MACH_MACPB250:
+		case MACH_MACPB270:
+		case MACH_MACPB280:
+		case MACH_MACPB280C:
+			mrg_InitPM =	/* PMgrInit */
+				(caddr_t)0x40888400 - oldbase + newbase;
+			jCacheFlush = (caddr_t)0x40809a7c - oldbase + newbase;
+			mrg_OStraps[0x33] =	/* VInstall */
+				(caddr_t)0x4080a230 - oldbase + newbase;
+			mrg_OStraps[0x55] =	/* MemoryDispatch */
+				(caddr_t)0x40805538 - oldbase + newbase;
+			mrg_OStraps[0x5e] =	/* NMInstall */
+				(caddr_t)0x4082eafe - oldbase + newbase;
+			mrg_OStraps[0x5f] =	/* NMRemove */
+				(caddr_t)0x4082eb08 - oldbase + newbase;
+			mrg_OStraps[0x8d] =	/* EnterSuperVisor */
+				(caddr_t)0x4082914a - oldbase + newbase;
+			mrg_OStraps[0x9e] =	/* FullProcessorSpeed */
+				(caddr_t)0x40829868 - oldbase + newbase;
+			mrg_OStraps[0x9f] =	/* PMgrDispatch */
+				(caddr_t)0x408888d8 - oldbase + newbase;
+			break;
+		case MACH_MACPB500:
+			mrg_InitPM =	/* PMgrInit */
+				(caddr_t)0x400d8800 - oldbase + newbase;
+			jCacheFlush = (caddr_t)0x40085030 - oldbase + newbase;
+			mrg_OStraps[0x33] =	/* VInstall */
+				(caddr_t)0x4000a230 - oldbase + newbase;
+			mrg_OStraps[0x5e] =	/* NMInstall */
+				(caddr_t)0x4002eafe - oldbase + newbase;
+			mrg_OStraps[0x5f] =	/* NMRemove */
+				(caddr_t)0x4002eb08 - oldbase + newbase;
+			mrg_OStraps[0x8d] =	/* EnterSuperVisor */
+				(caddr_t)0x4000a0f0 - oldbase + newbase;
+			mrg_OStraps[0x9e] =	/* FullProcessorSpeed */
+				(caddr_t)0x400da254 - oldbase + newbase;
+			mrg_OStraps[0x9f] =	/* PMgrDispatch */
+				(caddr_t)0x400d8fc0 - oldbase + newbase;
+			break;
+		}
+	}
+
         if (rom->jClkNoMem == 0) {
-                printf("WARNING: don't have a value for jClkNoMem, please contac
-t:  walter@ghpc8.ihf.rwth-aachen.de\n");
+                printf("WARNING: don't have a value for jClkNoMem, please ");
+		printf("contact:  walter@ghpc8.ihf.rwth-aachen.de\n");
                 printf("Can't read RTC without it. Using MacOS boot time.\n");
                 jClkNoMem = 0;
         }
