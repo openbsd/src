@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_nfs.c,v 1.14 1997/11/11 18:36:38 deraadt Exp $	*/
+/*	$OpenBSD: mount_nfs.c,v 1.15 1998/05/16 06:28:00 deraadt Exp $	*/
 /*	$NetBSD: mount_nfs.c,v 1.12.4.1 1996/05/25 22:48:05 fvdl Exp $	*/
 
 /*
@@ -650,7 +650,8 @@ tryagain:
 		saddr.sin_family = AF_INET;
 		saddr.sin_port = htons(PMAPPORT);
 		if ((tport = port_no ? port_no : pmap_getport(&saddr,
-		    RPCPROG_NFS, nfsvers, nfsproto)) == 0) {
+		    RPCPROG_NFS, nfsvers, nfsargsp->sotype == SOCK_STREAM ?
+		    IPPROTO_TCP : IPPROTO_UDP)) == 0) {
 			if ((opflags & ISBGRND) == 0)
 				clnt_pcreateerror("NFS Portmap");
 		} else {
