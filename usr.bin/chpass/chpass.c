@@ -1,4 +1,4 @@
-/*	$OpenBSD: chpass.c,v 1.27 2003/06/03 02:56:06 millert Exp $	*/
+/*	$OpenBSD: chpass.c,v 1.28 2003/07/01 01:01:28 avsm Exp $	*/
 /*	$NetBSD: chpass.c,v 1.8 1996/05/15 21:50:43 jtc Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)chpass.c	8.4 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: chpass.c,v 1.27 2003/06/03 02:56:06 millert Exp $";
+static char rcsid[] = "$OpenBSD: chpass.c,v 1.28 2003/07/01 01:01:28 avsm Exp $";
 #endif
 #endif /* not lint */
 
@@ -53,6 +53,7 @@ static char rcsid[] = "$OpenBSD: chpass.c,v 1.27 2003/06/03 02:56:06 millert Exp
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <paths.h>
 #include <pwd.h>
 #include <signal.h>
 #include <stdio.h>
@@ -62,7 +63,6 @@ static char rcsid[] = "$OpenBSD: chpass.c,v 1.27 2003/06/03 02:56:06 millert Exp
 #include <util.h>
 
 #include "chpass.h"
-#include "pathnames.h"
 
 extern char *__progname;
 
@@ -173,7 +173,7 @@ main(int argc, char *argv[])
 
 	/* Edit the user passwd information if requested. */
 	if (op == EDITENTRY) {
-		char tempname[] = __CONCAT(_PATH_VARTMP,"pw.XXXXXXXX");
+		char tempname[] = __CONCAT(_PATH_VARTMP,"pw.XXXXXXXXXX");
 		int edit_status;
 
 		dfd = mkstemp(tempname);
