@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.145 1999/05/27 21:46:54 deraadt Exp $
+$OpenBSD: pcidevs,v 1.146 1999/05/27 21:50:35 deraadt Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -466,7 +466,7 @@ vendor PYRAMID		0x11bb	Pyramid Technologies
 vendor NETPERIPH	0x11bc	Network Peripherals
 vendor PINNACLE		0x11bd	Pinnacle Systems
 vendor IMI		0x11be	International Microcircuts
-vendor FUJITSU4		0x11c1  Fujitsu (4th ID)
+vendor LUCENT		0x11c1  AT&T/Lucent
 vendor NEC2		0x11c3	NEC (2nd ID)
 vendor DOCTECH		0x11c4	Document Technologies
 vendor SHIVA		0x11c5	Shiva
@@ -868,7 +868,8 @@ product FORE PCA200		0x0210	ATM PCA-200
 product FORE PCA200E		0x0300	ATM PCA-200e
 
 /* Fujtsu products */
-product FUJITSU4 LTMODEM	0x0440	K56flex DSVD LTMODEM
+product LUCENT LTMODEM		0x0440	K56flex DSVD LTMODEM
+product	LUCENT USBHC		0x5801	USB
 
 /* Future Domain products */
 product FUTUREDOMAIN TMC_18C30	0x0000	TMC-18C30 (36C70)
@@ -1162,6 +1163,7 @@ product SIS 5596		0x5596	5596
 product SIS 5598		0x5598	5598
 product SIS 6204		0x6204	6204
 product SIS 6205		0x6205	6205
+product SIS 5597_USB		0x7001	5597/5598 USB
 
 /* SMC products */
 product SMC 37C665		0x1000	FDC 37C665
