@@ -2,7 +2,7 @@
  *    Kerberos v5 authentication and ticket-passing routines.
  * 
  * $FreeBSD: src/crypto/openssh/auth-krb5.c,v 1.6 2001/02/13 16:58:04 assar Exp $
- * $OpenBSD: auth-krb5.c,v 1.3 2001/12/19 07:18:56 deraadt Exp $
+ * $OpenBSD: auth-krb5.c,v 1.4 2002/01/27 15:12:09 markus Exp $
  */
 
 #include "includes.h"
@@ -208,8 +208,11 @@ auth_krb5_password(Authctxt *authctxt, const char *password)
 	if (problem)
 		goto out;
 
+	restore_uid();
 	problem = krb5_verify_user(authctxt->krb5_ctx, authctxt->krb5_user,
 	    authctxt->krb5_fwd_ccache, password, 1, NULL);
+	temporarily_use_uid(authctxt->pw);
+
 	if (problem)
 		goto out;
 
