@@ -1,4 +1,4 @@
-/*	$OpenBSD: klogin.c,v 1.3 1996/06/26 05:36:00 deraadt Exp $	*/
+/*	$OpenBSD: klogin.c,v 1.4 1997/01/27 20:44:16 dm Exp $	*/
 /*	$NetBSD: klogin.c,v 1.7 1996/05/21 22:07:04 mrg Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)klogin.c	8.3 (Berkeley) 4/2/94";
 #endif
-static char rcsid[] = "$OpenBSD: klogin.c,v 1.3 1996/06/26 05:36:00 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: klogin.c,v 1.4 1997/01/27 20:44:16 dm Exp $";
 #endif /* not lint */
 
 #ifdef KERBEROS
@@ -97,15 +97,18 @@ klogin(pw, instance, localhost, password)
 #endif
 
 	/*
-	 * Root logins don't use Kerberos.
+	 * Root logins don't use Kerberos (or at least shouldn't be
+	 * sending kerberos passwords around in cleartext), so don't
+	 * allow any root logins here (keeping in mind that we only
+	 * get here with a password).
+	 *
 	 * If we have a realm, try getting a ticket-granting ticket
 	 * and using it to authenticate.  Otherwise, return
 	 * failure so that we can try the normal passwd file
 	 * for a password.  If that's ok, log the user in
 	 * without issuing any tickets.
 	 */
-	if (strcmp(pw->pw_name, "root") == 0 ||
-	    krb_get_lrealm(realm, 0) != KSUCCESS)
+	if (pw->pw_uid == 0 || krb_get_lrealm(realm, 0) != KSUCCESS)
 		return (1);
 
 	/*
@@ -178,7 +181,9 @@ klogin(pw, instance, localhost, password)
 		  dest_tkt();
 		  return (1);
 		}
-		return (0);
+		/* Otherwise, leave ticket around, but make sure
+		 * password matches the Unix password. */
+		return (1);
 	}
 
 	if (kerror != KSUCCESS) {

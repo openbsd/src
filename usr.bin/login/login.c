@@ -1,4 +1,4 @@
-/*	$OpenBSD: login.c,v 1.16 1997/01/15 23:43:03 millert Exp $	*/
+/*	$OpenBSD: login.c,v 1.17 1997/01/27 20:44:14 dm Exp $	*/
 /*	$NetBSD: login.c,v 1.13 1996/05/15 23:50:16 jtc Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-static char rcsid[] = "$OpenBSD: login.c,v 1.16 1997/01/15 23:43:03 millert Exp $";
+static char rcsid[] = "$OpenBSD: login.c,v 1.17 1997/01/27 20:44:14 dm Exp $";
 #endif /* not lint */
 
 /*
@@ -221,6 +221,9 @@ main(argc, argv)
 			getloginname();
 		}
 		rootlogin = 0;
+#if 1 /* Why should anyone with a root instance be able to be root here? */
+		instance = "";
+#else
 #ifdef	KERBEROS
 		if ((instance = strchr(username, '.')) != NULL) {
 			if (strncmp(instance, ".root", 5) == 0)
@@ -236,6 +239,7 @@ main(argc, argv)
 			*instance++ = '\0';
 		} else
 			instance = "";
+#endif
 #endif
 		if (strlen(username) > UT_NAMESIZE)
 			username[UT_NAMESIZE] = '\0';

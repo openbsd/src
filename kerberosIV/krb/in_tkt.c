@@ -100,7 +100,7 @@ in_tkt(pname, pinst)
 	    if (krb_debug)
 		printf("swapped UID's %d and %d\n",(int)metoo,(int)me);
     }
-    if ((tktfile = creat(file,0600)) < 0) {
+    if ((tktfile = open (file,O_CREAT|O_EXCL|O_WRONLY,0600)) < 0) {
 	if (krb_debug)
 	    fprintf(stderr,"Error initializing %s",TKT_FILE);
         return(KFAILURE);
