@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.18 2004/05/30 22:41:15 jakob Exp $	*/
+/*	$OpenBSD: ntp.c,v 1.19 2004/05/30 22:57:42 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 by N.M. Maclaren. All rights reserved.
@@ -184,10 +184,10 @@ sync_ntp(int fd, const struct sockaddr *peer, double *offset, double *error)
 	struct ntp_data data;
 
 	deadline = current_time(JAN_1970) + delay;
-        *offset = 0.0;
-        *error = NTP_INSANITY;
+	*offset = 0.0;
+	*error = NTP_INSANITY;
 
-        while (accepts < MAX_QUERIES && attempts < 2 * MAX_QUERIES) {
+	while (accepts < MAX_QUERIES && attempts < 2 * MAX_QUERIES) {
 		if (current_time(JAN_1970) > deadline)
 			errx(1, "Not enough valid responses received in time");
 
@@ -226,7 +226,7 @@ sync_ntp(int fd, const struct sockaddr *peer, double *offset, double *error)
 
 		if (*error <= minerr)
 			break;
-        }
+	}
 
 	return accepts;
 }
@@ -248,18 +248,18 @@ make_packet(struct ntp_data *data)
 
 
 	/*
-	 * Send out a random 64-bit number as our transmit time.  The NTP 
+	 * Send out a random 64-bit number as our transmit time.  The NTP
 	 * server will copy said number into the originate field on the
 	 * response that it sends us.  This is totally legal per the SNTP spec.
-	 * 
+	 *
 	 * The impact of this is two fold: we no longer send out the current
-	 * system time for the world to see (which may aid an attacker), and 
+	 * system time for the world to see (which may aid an attacker), and
 	 * it gives us a (not very secure) way of knowing that we're not
 	 * getting spoofed by an attacker that can't capture our traffic
 	 * but can spoof packets from the NTP server we're communicating with.
 	 *
 	 */
-	 
+
 	data->xmitck = ((u_int64_t)arc4random() << 32) | arc4random();
 	data->recvck = 0;
 }
@@ -329,7 +329,7 @@ retry:
 
 	if (length < NTP_PACKET_MIN || length > NTP_PACKET_MAX) {
 		warnx("Invalid NTP packet size, packet reject");
-	        return 1;
+		return 1;
 	}
 
 	unpack_ntp(data, receive, length);
@@ -350,10 +350,10 @@ retry:
 		return 1;
 	}
 
-	if (data->status == STATUS_ALARM) {                                     
-		warnx("Server clock not syncronized, packet rejected");         
-		return 1;                                                       
-	}                                                                       
+	if (data->status == STATUS_ALARM) {
+		warnx("Server clock not syncronized, packet rejected");
+		return 1;
+	}
 
 	/*
 	 * Note that the conventions are very poorly defined in the NTP
@@ -377,12 +377,12 @@ retry:
 	if (*dispersion < data->dispersion)
 		*dispersion = data->dispersion;
 
-        x = data->receive - data->originate;
-        y = (data->transmit == 0.0 ? 0.0 : data->transmit-data->current);
-        *off = 0.5*(x+y);
-        *error = x-y;
-        x = data->current - data->originate;
-        if (0.5*x > *error)
+	x = data->receive - data->originate;
+	y = (data->transmit == 0.0 ? 0.0 : data->transmit-data->current);
+	*off = 0.5*(x+y);
+	*error = x-y;
+	x = data->current - data->originate;
+	if (0.5*x > *error)
 		*error = 0.5*x;
 
 	return 0;
@@ -413,12 +413,12 @@ pack_ntp(u_char	*packet, int length, struct ntp_data *data)
 		d -= k;
 	}
 
-	/* 
-	 * No endian concerns here.  Since we're running as a strict 
+	/*
+	 * No endian concerns here.  Since we're running as a strict
 	 * unicast client, we don't have to worry about anyone else finding
-	 * this field intelligible. 
+	 * this field intelligible.
 	 */
-	
+
 	*(u_int64_t *)(packet + NTP_TRANSMIT) = data->xmitck;
 }
 
