@@ -1,4 +1,4 @@
-/*	$OpenBSD: kentry.c,v 1.2 1997/08/05 17:45:55 mickey Exp $	*/
+/*	$OpenBSD: kentry.c,v 1.3 1997/08/12 21:49:18 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -34,6 +34,7 @@
 
 #include <sys/param.h>
 #include <machine/biosvar.h>
+#include <dev/cons.h>
 #include <libsa.h>
 #include "cmd.h"
 
@@ -55,14 +56,17 @@ kentry(cmd, arg)
 		case BOOTV_BDGMTRY:
 			return bootdev_geometry;
 		case BOOTV_CONSDEV:
-			return consdev;
+			return (cn_tab==NULL)? 0 : cn_tab->cn_dev;
+#ifdef BOOT_APM
 		case BOOTV_APMCONN:
 			return (int)&apminfo;
+#endif
+		default:
+			return 0;
 		}
-		return 0;
 	case BOOTC_SETENV:
 		return 0;
 	default:
-		return -1;
+		return 0;
 	}
 }
