@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.53 2002/07/03 21:19:08 miod Exp $	*/
+/*	$OpenBSD: tty.c,v 1.54 2002/07/11 22:48:51 art Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -236,6 +236,7 @@ ttyinput(c, tp)
 	register int iflag, lflag;
 	register u_char *cc;
 	int i, error;
+	int s;
 
 	add_tty_randomness(tp->t_dev << 8 | c);
 	/*
@@ -243,12 +244,15 @@ ttyinput(c, tp)
 	 */
 	if (!ISSET(tp->t_cflag, CREAD))
 		return (0);
+
 	/*
 	 * If input is pending take it first.
 	 */
 	lflag = tp->t_lflag;
+	s = spltty();
 	if (ISSET(lflag, PENDIN))
 		ttypend(tp);
+	splx(s);
 	/*
 	 * Gather stats.
 	 */
@@ -779,7 +783,9 @@ ttioctl(tp, cmd, data, flag, p)
 	case FIONBIO:			/* set/clear non-blocking i/o */
 		break;			/* XXX: delete. */
 	case FIONREAD:			/* get # bytes to read */
+		s = spltty();
 		*(int *)data = ttnread(tp);
+		splx(s);
 		break;
 	case TIOCEXCL:			/* set exclusive use of tty */
 		s = spltty();
@@ -1101,8 +1107,11 @@ filt_ttyread(struct knote *kn, long hint)
 {
 	dev_t dev = (dev_t)((u_long)kn->kn_hook);
 	struct tty *tp = (*cdevsw[major(dev)].d_tty)(dev);
+	int s;
 
+	s = spltty();
 	kn->kn_data = ttnread(tp);
+	splx(s);
 	if (!ISSET(tp->t_state, CLOCAL) && !ISSET(tp->t_state, TS_CARR_ON)) {
 		kn->kn_flags |= EV_EOF;
 		return (1);
@@ -1138,6 +1147,8 @@ ttnread(tp)
 	struct tty *tp;
 {
 	int nread;
+
+	splassert(IPL_TTY);
 
 	if (ISSET(tp->t_lflag, PENDIN))
 		ttypend(tp);
