@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: dot.profile,v 1.2 1997/02/16 19:32:32 downsj Exp $
+#	$OpenBSD: dot.profile,v 1.3 1997/02/23 19:10:51 downsj Exp $
 #	$NetBSD: dot.profile,v 1.1 1995/07/18 04:13:09 briggs Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
@@ -37,10 +37,18 @@ TERM=hp300h
 export TERM
 
 # set up some sane defaults
-echo "TERM is $TERM"
 echo 'erase ^?, werase ^H, kill ^U, intr ^C'
 stty newcrt werase ^H intr ^C kill ^U erase ^? 9600
 echo ''
+
+# This needs to be done now, for the sake of ksh.
+if [ ! -f /tmp/writeable ]; then
+	echo 'Remounting /dev/rd0a as root...'
+	mount -t ffs -u /dev/rd0a /
+	sleep 2
+	# ..and let install.md know we've done it.
+	> /tmp/writeable
+fi
 
 # pull in the function definitions that people will use from the shell prompt.
 . /.commonutils

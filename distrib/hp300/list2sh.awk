@@ -1,5 +1,5 @@
-#	$OpenBSD: list2sh.awk,v 1.1 1997/02/16 18:19:57 downsj Exp $
-#	$NetBSD: list2sh.awk,v 1.1 1995/07/18 04:12:59 briggs Exp $
+#	$OpenBSD: list2sh.awk,v 1.2 1997/02/23 19:10:47 downsj Exp $
+#	$NetBSD: list2sh.awk,v 1.1 1995/10/03 22:47:56 thorpej Exp $
 
 BEGIN {
 	printf("cd ${CURDIR}\n");
@@ -11,12 +11,28 @@ BEGIN {
 }
 $1 == "COPY" {
 	printf("echo '%s'\n", $0);
+	printf("rm -f ${TARGDIR}/%s\n", $3);
 	printf("cp %s ${TARGDIR}/%s\n", $2, $3);
 	next;
 }
 $1 == "LINK" {
 	printf("echo '%s'\n", $0);
+	printf("rm -f ${TARGDIR}/%s\n", $3);
 	printf("(cd ${TARGDIR}; ln %s %s)\n", $2, $3);
+	next;
+}
+$1 == "SYMLINK" {
+	printf("echo '%s'\n", $0);
+	printf("rm -f ${TARGDIR}/%s\n", $3);
+	printf("(cd ${TARGDIR}; ln -s %s %s)\n", $2, $3);
+	next;
+}
+$1 == "COPYDIR" {
+	printf("echo '%s'\n", $0);
+	printf("(cd ${TARGDIR}/%s && find . ! -name . | xargs /bin/rm -rf)\n",
+	    $3);
+	printf("(cd %s && find . ! -name . | cpio -pdamu ${TARGDIR}/%s)\n", $2,
+	    $3);
 	next;
 }
 $1 == "SPECIAL" {

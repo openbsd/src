@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.1 1997/02/16 18:20:03 downsj Exp $
+#	$OpenBSD: install.sh,v 1.2 1997/02/23 19:10:52 downsj Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -71,8 +71,8 @@ MODE="install"
 # include common subroutines
 . install.sub
 
-# which sets?
-THESETS="$ALLSETS"
+# Deal with terminal issues
+md_set_term
 
 # Good {morning,afternoon,evening,night}.
 md_welcome_banner
@@ -80,7 +80,6 @@ echo -n "Proceed with installation? [n] "
 getresp "n"
 case "$resp" in
 	y*|Y*)
-		echo	"Cool!  Let's get to it..."
 		;;
 	*)
 		md_not_going_to_install
@@ -88,11 +87,24 @@ case "$resp" in
 		;;
 esac
 
+echo -n "Is this a (s)napshot or (r)elease? [s] "
+getresp "s"
+case "$resp" in
+	s*|S*)
+		THESETS="$SNAPSETS"
+		;;
+	r*|R*)
+		THESETS="$ALLSETS"
+		;;
+	*)
+		md_not_going_to_install
+		exit
+		;;
+esac
+echo "Cool!  Let's get to it..."
+
 # XXX Work around vnode aliasing bug (thanks for the tip, Chris...)
 ls -l /dev >> /dev/null 2>&1
-
-# Deal with terminal issues
-md_set_term
 
 # Get timezone info
 get_timezone

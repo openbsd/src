@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$OpenBSD: install.md,v 1.2 1997/02/16 19:32:35 downsj Exp $
+#	$OpenBSD: install.md,v 1.3 1997/02/23 19:10:52 downsj Exp $
 #	$NetBSD: install.md,v 1.1.2.4 1996/08/26 15:45:14 gwr Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -45,50 +45,86 @@
 # Machine-dependent install sets
 MDSETS=""
 
+TMPWRITEABLE=/tmp/writeable
+KERNFSMOUNTED=/tmp/kernfsmounted
+
 md_set_term() {
-	if [ ! -z "$TERM" ]; then
-		return
-	fi
 	echo -n "Specify terminal type [hp300h]: "
 	getresp "hp300h"
 	TERM="$resp"
 	export TERM
-	# XXX call tset?
+	# set screensize (i.e., for an xterm)
+	rows=`stty -a | grep rows | awk '{print $4}'`
+	columns=`stty -a | grep columns | awk '{print $6}'`
+	if [ "$rows" -eq 0 -o "$columns" -eq 0 ]; then
+		echo -n "Specify terminal rows [25]: "
+		getresp "25"
+		rows="$resp"
+
+		echo -n "Specify terminal columns [80]: "
+		getresp "80"
+		columns="$resp"
+
+		stty rows "$rows" columns "$columns"
+	fi
 }
 
 md_makerootwritable() {
-	# Was: do_mfs_mount "/tmp" "2048"
-	# /tmp is the mount point
-	# 2048 is the size in DEV_BIZE blocks
 
-	umount /tmp > /dev/null 2>&1
-	if ! mount_mfs -s 2048 swap /tmp ; then
-		cat << \__mfs_failed_1
+	if [ -e ${TMPWRITEABLE} ]
+	then
+		md_mountkernfs
+		return
+	fi
+	if ! mount -t ffs  -u /dev/rd0a / ; then
+		cat << \__rd0_failed_1
 
-FATAL ERROR: Can't mount the memory filesystem.
+FATAL ERROR: Can't mount the ram filesystem.
 
-__mfs_failed_1
+__rd0_failed_1
 		exit
 	fi
 
-	# Bleh.  Give mount_mfs a chance to DTRT.
 	sleep 2
+	> ${TMPWRITEABLE}
+
+	md_mountkernfs
+}
+
+md_mountkernfs() {
+	if [ -e ${KERNFSMOUNTED} ]
+	then
+		return
+	fi
+	if ! mount -t kernfs /kern /kern
+	then
+		cat << \__kernfs_failed_1
+FATAL ERROR: Can't mount kernfs filesystem
+__kernfs_failed_1
+		exit
+	fi
+	> ${KERNFSMOUNTED} 
 }
 
 md_get_diskdevs() {
 	# return available disk devices
-	dmesg | grep "^rd[0-9]*:." | cut -d":" -f1 | sort -u
-	dmesg | grep "^sd[0-9]*:.*cylinders" | cut -d":" -f1 | sort -u
+	egrep "^hd[0-9]*:." < /kern/msgbuf | cut -d":" -f1 | sort -u
+	egrep "^sd[0-9]*:.*cylinders" < /kern/msgbuf | cut -d":" -f1 | sort -u
 }
 
 md_get_cddevs() {
 	# return available CD-ROM devices
-	dmesg | grep "sd[0-9]*:.*CD-ROM" | cut -d":" -f1 | sort -u
+	egrep "sd[0-9]*:.*CD-ROM" < /kern/msgbuf | cut -d":" -f1 | sort -u
 }
 
 md_get_ifdevs() {
 	# return available network interfaces
-	dmesg | grep "^le[0-9]*:" | cut -d":" -f1 | sort -u
+	egrep "^le[0-9]*:" < /kern/msgbuf | cut -d":" -f1 | sort -u
+}
+
+md_get_partition_range() {
+	# return range of valid partition letters
+	echo "[a-p]"
 }
 
 md_installboot() {
@@ -127,7 +163,7 @@ hp300_init_label_scsi_disk() {
 	_cur_disk_name="install-disk-${_disk_instance}"
 
 	# Get geometry information from the user.
-	more << \__scsi_label_1
+	less << \__scsi_label_1
 
 You will need to provide some information about your disk's geometry.
 Geometry info for SCSI disks was printed at boot time.  If that information
@@ -154,7 +190,7 @@ __scsi_label_1
 	getresp "y"
 	case "$resp" in
 		y*|Y*)
-			(echo ""; dmesg; echo "") | more
+			less -rsS /kern/msgbuf
 			;;
 
 		*)
@@ -271,8 +307,8 @@ hp300_init_label_hpib_disk() {
 	# We look though the boot messages attempting to find
 	# the model number for the provided disk.
 	_hpib_disktype=""
-	if dmesg | grep "${1}: " > /dev/null 2>&1; then
-		_hpib_disktype=HP`dmesg | grep "${1}: " | sort -u | \
+	if egrep "${1}: " < /kern/msgbuf > /dev/null 2>&1; then
+		_hpib_disktype=HP`egrep "${1}: " < /kern/msgbuf | sort -u | \
 		    awk '{print $2}'`
 	fi
 	if [ "X${_hpib_disktype}" = "X" ]; then
@@ -286,7 +322,7 @@ hp300_init_label_hpib_disk() {
 	# layout.  If it doesn't, we have to treat it like a SCSI disk;
 	# i.e. prompt for geometry, and create a default to place
 	# on the disk.
-	if ! grep "${_hpib_disktype}[:|]" /etc/disktab > /dev/null \
+	if ! egrep "${_hpib_disktype}[:|]" /etc/disktab > /dev/null \
 	    2>&1; then
 		echo ""
 		echo "WARNING: can't find defaults for $1 ($_hpib_disktype)"
@@ -341,7 +377,7 @@ md_labeldisk() {
 		*)
 		echo -n "No disklabel present, installing a default for type: "
 			case "$1" in
-				rd*)
+				hd*)
 					echo "HP-IB"
 					hp300_init_label_hpib_disk $1
 					;;
@@ -378,76 +414,96 @@ md_labeldisk() {
 	esac
 }
 
-md_prep_disklabel() {
-	# $1 is the root disk
+md_prep_disklabel()
+{
+	local _disk
 
-	# Make sure there's a disklabel there.  If there isn't, puke after
-	# disklabel prints the error message.
-	md_checkfordisklabel $1
-	case "$resp" in
-		1)
-			cat << \__md_prep_disklabel_1
-
-FATAL ERROR: There is no disklabel present on the root disk!  You must
-label the disk with SYS_INST before continuing.
-
-__md_prep_disklabel_1
-			exit
-			;;
-
-		2)
-			cat << \__md_prep_disklabel_2
-
-FATAL ERROR: The disklabel on the root disk is corrupted!  You must
-re-label the disk with SYS_INST before continuing.
-
-__md_prep_disklabel_2
-			exit
-			;;
-
-		*)
-			;;
+	_disk=$1
+	md_checkfordisklabel $_disk
+	case "$rval" in
+	0)
+		echo -n "Do you wish to edit the disklabel on $_disk? [y] "
+		;;
+	1)
+		echo "WARNING: Disk $_disk has no label"
+		echo -n "Do you want to create one with the disklabel editor? [y] "
+		;;
+	2)
+		echo "WARNING: Label on disk $_disk is corrupted"
+		echo -n "Do you want to try and repair the damage using the disklabel editor? [y] "
+		;;
 	esac
 
-	# Give the user the opportinuty to edit the root disklabel.
-	cat << \__md_prep_disklabel_3
-
-You have already placed a disklabel onto the target root disk.
-However, due to the limitations of the standalone program used
-you may want to edit that label to change partition type information.
-You will be given the opporunity to do that now.  Note that you may
-not change the size or location of any presently open partition.
-
-__md_prep_disklabel_3
-	echo -n "Do you wish to edit the root disklabel? [y] "
 	getresp "y"
 	case "$resp" in
-		y*|Y*)
-			disklabel -W $1
-			disklabel -e $1
-			;;
-
-		*)
-			;;
+	y*|Y*) ;;
+	*)	return ;;
 	esac
 
-	cat << \__md_prep_disklabel_4
+	# display example
+	cat << \__md_prep_disklabel_1
 
-You will now be given the opportunity to place disklabels on any additional
-disks on your system.
-__md_prep_disklabel_4
+Here is an example of what the partition information will look like once
+you have entered the disklabel editor. Disk partition sizes and offsets
+are in sector (most likely 512 bytes) units. Make sure these size/offset
+pairs are on cylinder boundaries (the number of sector per cylinder is
+given in the `sectors/cylinder' entry, which is not shown here).
 
-	_DKDEVS=`rmel ${ROOTDISK} ${_DKDEVS}`
-	resp="X"	# force at least one iteration
-	while [ "X$resp" != X"done" ]; do
-		labelmoredisks
-	done
+For the boot disk, partition `a' must be offset one cylinder (the number
+of sectors per cylinder should be given as the offset) and partition
+`c' must have an fstype of `unused'.  Non-boot disks may start filesystems
+at offset 0.
+
+[Example]
+16 partitions:
+#        size   offset    fstype   [fsize bsize   cpg]
+  a:    50176     1574    4.2BSD     1024  8192    16   # (Cyl.    1 - 111)
+  b:    64512    50176      swap                        # (Cyl.  112 - 255)
+  c:   640192        0      boot                        # (Cyl.    0 - 1428)
+  d:   525504   114688    4.2BSD     1024  8192    16   # (Cyl.  256 - 1428)
+[End of example]
+
+__md_prep_disklabel_1
+	echo -n "Press [Enter] to continue "
+	getresp ""
+	disklabel -W ${_disk}
+	disklabel -e ${_disk}
 }
 
 md_copy_kernel() {
-	echo -n "Copying kernel..."
-	cp -p /netbsd /mnt/netbsd
-	echo "done."
+	if [ -d "$SETSDIR" ]; then
+		# `bsd' is prefered over `bsd.gz'
+		if [ -f "$SETSDIR/bsd" ]; then
+			kernfile="$SETSDIR/bsd"
+			dogzip=""
+		elif [ -f "$SETSDIR/bsd.gz" ]; then
+			kernfile="$SETSDIR/bsd.gz"
+			dogzip="yes"
+		elif [ -f "$SETSDIR/bsd-gen" ]; then
+			kernfile="$SETSDIR/bsd-gen"
+			dogzip=""
+		elif [ -f "$SETSDIR/bsd-gen.gz" ]; then
+			kernfile="$SETSDIR/bsd-gen.gz"
+			dogzip="yes"
+		else
+			echo "Couldn't find a kernel file in $SETSDIR."
+			echo "You will have to copy a kernel by hand."
+			return
+		fi
+
+		# Copy in the kernel.
+		echo -n "Copying kernel $kernfile..."
+		if [ "$dogzip" ]; then
+			gzip -d < $kernfile > /mnt/bsd
+		else
+			cp $kernfile /mnt/bsd
+		fi
+		chmod 755 /mnt/bsd
+		echo " done."
+	else
+		echo "Couldn't find $SETSDIR."
+		echo "You will have to copy a kernel by hand."
+	fi
 }
 
 	# Note, while they might not seem machine-dependent, the
@@ -485,7 +541,7 @@ prompt, you may have to hit return.  Also, quitting in the middle of
 installation may leave your system in an inconsistent state.
 
 __welcome_banner_1
-) | more
+) | less
 }
 
 md_not_going_to_install() {

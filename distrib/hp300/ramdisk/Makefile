@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 1997/02/16 18:20:00 downsj Exp $
+#	$OpenBSD: Makefile,v 1.2 1997/02/23 19:10:50 downsj Exp $
 #	$NetBSD: Makefile,v 1.1 1995/07/18 04:13:06 briggs Exp $
 
 TOP=		${.CURDIR}/..
@@ -13,7 +13,7 @@ BDEV=		/dev/rd0a
 CDEV=		/dev/rrd0a
 RDEV=		/dev/rd0c
 
-KERNEL=		${SRCSYSDIR}/arch/hp300/compile/MINIROOT/bsd
+KERNEL=		${SRCSYSDIR}/arch/hp300/compile/RAMDISK/bsd
 
 all: ${CBIN} ${IMAGE}
 	@echo "all done"
@@ -27,9 +27,9 @@ NBLKS=          4096
 
 ${IMAGE}:	do_prep do_mount do_files do_umount_copy do_unconfig
 	mv -f ${IMAGE}.tmp ${IMAGE}
-	if [ -e rd.pid ] ; then \
-	kill `< rd.pid`; \
-	rm rd.pid;\
+	if [ -e ${.CURDIR}/${__objdir}/rd.pid ] ; then \
+	kill `< ${.CURDIR}/${__objdir}/rd.pid`; \
+	rm ${.CURDIR}/${__objdir}/rd.pid;\
 	fi
 
 rdsetroot:	${TOP}/common/rdsetroot.c
@@ -66,9 +66,9 @@ do_umount_copy:
 
 do_unconfig:
 	-umount ${MOUNT_POINT}
-	if [ -e rd.pid ] ; then \
-	kill `< rd.pid`; \
-	rm rd.pid; \
+	if [ -e ${.CURDIR}/${__objdir}/rd.pid ] ; then \
+	kill `< ${.CURDIR}/${__objdir}/rd.pid`; \
+	rm ${.CURDIR}/${__objdir}/rd.pid; \
 	fi
 
 
