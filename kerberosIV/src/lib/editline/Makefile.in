@@ -1,5 +1,5 @@
 #
-# $KTH: Makefile.in,v 1.31 1999/04/08 13:44:40 joda Exp $
+# $KTH: Makefile.in,v 1.31.16.1 2000/06/23 03:20:03 assar Exp $
 #
 
 SHELL = /bin/sh
@@ -61,7 +61,7 @@ Wall:
 
 install: all
 	$(MKINSTALLDIRS) $(DESTDIR)$(libdir)
-	$(INSTALL_DATA) -m 0555 $(LIB) $(DESTDIR)$(libdir)/$(LIB)
+	$(INSTALL_DATA)  $(LIB) $(DESTDIR)$(libdir)/$(LIB)
 	@install_symlink_command@
 
 uninstall:

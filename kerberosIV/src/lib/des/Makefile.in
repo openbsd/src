@@ -1,5 +1,5 @@
 #
-# $KTH: Makefile.in,v 1.53 1999/08/13 03:45:25 assar Exp $
+# $KTH: Makefile.in,v 1.53.2.1 2000/03/10 22:58:39 assar Exp $
 #
 
 SHELL = /bin/sh
@@ -74,8 +74,8 @@ COM = $(CC) -c $(CPPFLAGS) $(DEFS) -I../../include -I$(srcdir) $(PICFLAGS)
 # Compile this file without debug if using gcc
 des_enc.o: des_enc.c
 	@if test "$(CC)" = gcc; then\
-	  echo "$(COM) -fomit-frame-pointer -O3 $(srcdir)/des_enc.c"; \
-	  $(COM) -fomit-frame-pointer -O3 $(srcdir)/des_enc.c; \
+	  echo "$(COM) $(CFLAGS) -fomit-frame-pointer -O3 $(srcdir)/des_enc.c"; \
+	  $(COM) $(CFLAGS) -fomit-frame-pointer -O3 $(srcdir)/des_enc.c; \
 	else \
 	  echo "$(COM) $(CFLAGS) $(srcdir)/des_enc.c"; \
 	  $(COM) $(CFLAGS) $(srcdir)/des_enc.c; \

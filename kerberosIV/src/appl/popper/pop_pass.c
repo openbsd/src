@@ -5,7 +5,7 @@
  */
 
 #include <popper.h>
-RCSID("$KTH: pop_pass.c,v 1.40 1999/11/02 17:04:23 bg Exp $");
+RCSID("$KTH: pop_pass.c,v 1.40.2.1 2000/04/12 15:47:59 assar Exp $");
 
 #ifdef KRB4
 static int
@@ -17,7 +17,7 @@ krb4_verify_password (POP *p)
 
     status = krb_get_lrealm(lrealm,1);
     if (status == KFAILURE) {
-        pop_log(p, POP_FAILURE, "%s: (%s.%s@%s) %s", p->client,
+        pop_log(p, POP_PRIORITY, "%s: (%s.%s@%s) %s", p->client,
 		p->kdata.pname, p->kdata.pinst, p->kdata.prealm,
 		krb_get_err_text(status));
 	return 1;
@@ -53,7 +53,7 @@ krb5_verify_password (POP *p)
     
     ret = krb5_parse_name (p->context, p->user, &client);
     if (ret) {
-	pop_log(p, POP_FAILURE, "krb5_parse_name: %s",
+	pop_log(p, POP_PRIORITY, "krb5_parse_name: %s",
 		krb5_get_err_text (p->context, ret));
 	return 1;
     }
@@ -68,7 +68,7 @@ krb5_verify_password (POP *p)
 					NULL,
 					&get_options);
     if (ret) {
-	pop_log(p, POP_FAILURE,
+	pop_log(p, POP_PRIORITY,
 		"krb5_get_init_creds_password: %s",
 		krb5_get_err_text (p->context, ret));
 	return 1;
@@ -80,7 +80,7 @@ krb5_verify_password (POP *p)
 				   KRB5_NT_SRV_HST,
 				   &server);
     if (ret) {
-	pop_log(p, POP_FAILURE,
+	pop_log(p, POP_PRIORITY,
 		"krb5_get_init_creds_password: %s",
 		krb5_get_err_text (p->context, ret));
 	return 1;
@@ -124,7 +124,7 @@ pop_pass (POP *p)
 #ifdef KRB4
 	if (p->version == 4) {
 	    if(kuserok (&p->kdata, p->user)) {
-		pop_log(p, POP_FAILURE,
+		pop_log(p, POP_PRIORITY,
 			"%s: (%s.%s@%s) tried to retrieve mail for %s.",
 			p->client, p->kdata.pname, p->kdata.pinst,
 			p->kdata.prealm, p->user);
@@ -142,7 +142,7 @@ pop_pass (POP *p)
 	    char *name;
 	    
 	    if (!krb5_kuserok (p->context, p->principal, p->user)) {
-		pop_log (p, POP_FAILURE,
+		pop_log (p, POP_PRIORITY,
 			 "krb5 permission denied");
 		return pop_msg(p, POP_FAILURE,
 			       "Popping not authorized");
@@ -153,7 +153,7 @@ pop_pass (POP *p)
 		free (name);
 	    }
 	} else {
-	    pop_log (p, POP_FAILURE, "kerberos authentication failed");
+	    pop_log (p, POP_PRIORITY, "kerberos authentication failed");
 	    return pop_msg (p, POP_FAILURE,
 			    "kerberos authentication failed");
 	}

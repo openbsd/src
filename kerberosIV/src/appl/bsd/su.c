@@ -33,7 +33,7 @@
 
 #include "bsd_locl.h"
 
-RCSID ("$KTH: su.c,v 1.70 1999/11/13 06:14:11 assar Exp $");
+RCSID ("$KTH: su.c,v 1.70.2.1 2000/06/23 02:42:28 assar Exp $");
 
 #ifdef SYSV_SHADOW
 #include "sysv_shadow.h"
@@ -225,11 +225,21 @@ main (int argc, char **argv)
 
     if (setgid (pwd->pw_gid) < 0)
 	err (1, "setgid");
-    if (initgroups (user, pwd->pw_gid))
-	errx (1, "initgroups failed.");
+    if (initgroups (user, pwd->pw_gid)) {
+        if (errno == E2BIG)    /* Member of to many groups! */
+	    warn("initgroups failed.");
+	else
+	    errx(1, "initgroups failed.");
+    }
 
     if (setuid (pwd->pw_uid) < 0)
 	err (1, "setuid");
+
+    if (pwd->pw_uid != 0 && setuid(0) != -1) {
+      syslog(LOG_ALERT | LOG_AUTH,
+	     "Failed to drop privileges for user %s", pwd->pw_name);
+      errx(1, "Sorry");
+    }
 
     if (!asme) {
 	if (asthem) {

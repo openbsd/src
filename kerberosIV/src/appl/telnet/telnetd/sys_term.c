@@ -33,7 +33,7 @@
 
 #include "telnetd.h"
 
-RCSID("$KTH: sys_term.c,v 1.89 1999/09/16 20:41:36 assar Exp $");
+RCSID("$KTH: sys_term.c,v 1.89.2.1 2000/03/26 20:05:36 assar Exp $");
 
 #if defined(_CRAY) || (defined(__hpux) && !defined(HAVE_UTMPX_H))
 # define PARENT_DOES_UTMP
@@ -1154,7 +1154,7 @@ startslave(char *host, int autologin, char *autoname)
 	/*
 	 * Create utmp entry for child
 	 */
-	time(&wtmp.ut_time);
+	wtmp.ut_time = time(NULL);
 	wtmp.ut_type = LOGIN_PROCESS;
 	wtmp.ut_pid = pid;
 	strncpy(wtmp.ut_user,  "LOGIN", sizeof(wtmp.ut_user));
@@ -1425,7 +1425,7 @@ rmut(void)
 #ifdef HAVE_STRUCT_UTMP_UT_HOST
 	    strncpy(wtmp.ut_host,  "", sizeof(wtmp.ut_host));
 #endif
-	    time(&wtmp.ut_time);
+	    wtmp.ut_time = time(NULL);
 	    write(f, &wtmp, sizeof(wtmp));
 	    close(f);
 	  }
@@ -1469,7 +1469,7 @@ rmut(void)
 #ifdef HAVE_STRUCT_UTMP_UT_HOST
 		strncpy(u->ut_host,  "", sizeof(u->ut_host));
 #endif
-		time(&u->ut_time);
+		u->ut_time = time(NULL);
 		write(f, u, sizeof(wtmp));
 		found++;
 	    }
@@ -1484,7 +1484,7 @@ rmut(void)
 #ifdef HAVE_STRUCT_UTMP_UT_HOST
 	    strncpy(wtmp.ut_host,  "", sizeof(wtmp.ut_host));
 #endif
-	    time(&wtmp.ut_time);
+	    wtmp.ut_time = time(NULL);
 	    write(f, &wtmp, sizeof(wtmp));
 	    close(f);
 	}

@@ -1,3 +1,8 @@
+2000-04-12  Assar Westerlund  <assar@sics.se>
+
+	* *.c: replace all erroneous calls to pop_log with POP_FAILURE
+	with POP_PRIORITY.  reported by Janne Johansson <jj@it.kth.se>'
+
 1999-11-02  Assar Westerlund  <assar@sics.se>
 
 	* pop_debug.c (main): redo the v4/v5 selection for consistency.

@@ -1,4 +1,4 @@
-/*  $KTHRevision: 1.1 $
+/*  $KTH: 1.1 $
 **
 **  Editline system header file for Unix.
 */

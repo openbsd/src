@@ -8,7 +8,7 @@ dnl
 
 dnl Process this file with autoconf to produce a configure script.
 dnl
-AC_REVISION($KTHRevision: 1.432.2.2 $)
+AC_REVISION($KTH: 1.432.2.9 $)
 AC_INIT(lib/krb/getrealm.c)
 AC_CONFIG_HEADER(include/config.h)
 
@@ -18,7 +18,7 @@ dnl
 
 PACKAGE=krb4
 AC_SUBST(PACKAGE)dnl
-VERSION=1.0
+VERSION=1.0.2
 AC_SUBST(VERSION)dnl
 AC_DEFINE_UNQUOTED(PACKAGE, "$PACKAGE", [Name of package])dnl
 AC_DEFINE_UNQUOTED(VERSION, "$VERSION", [Version number of package])dnl
@@ -39,6 +39,9 @@ case "$host" in
 	;;
 *-*-solaris2.7)
 	sunos=57
+	;;
+*-*-solaris2.8)
+	sunos=58
 	;;
 *-*-solaris2*)
 	sunos=50
@@ -333,6 +336,9 @@ if test -f /lib/pse.exp ;then
 	LIBS="$LIBS -Wl,-bnolibpath -Wl,-bI:/lib/pse.exp"
 fi
 ;;
+*-*-aix*)
+	LIBS="$LIBS -Wl,-bnolibpath"
+	;;
 esac
 
 dnl
@@ -523,12 +529,15 @@ dnl
 KRB_CHECK_X
 if test "$no_x" = "yes" ; then
 	MAKE_X_PROGS_BIN=""
+	MAKE_X_SCRIPTS_BIN=""
 	MAKE_X_PROGS_LIBEXEC=""
 else
 	MAKE_X_PROGS_BIN='$(X_PROGS_BIN)'
+	MAKE_X_SCRIPTS_BIN='$(X_SCRIPTS_BIN)'
 	MAKE_X_PROGS_LIBEXEC='$(X_PROGS_LIBEXEC)'
 fi
 AC_SUBST(MAKE_X_PROGS_BIN)dnl
+AC_SUBST(MAKE_X_SCRIPTS_BIN)dnl
 AC_SUBST(MAKE_X_PROGS_LIBEXEC)dnl
 
 AC_CHECK_XAU
@@ -772,22 +781,6 @@ AC_MSG_RESULT($LIB_AUTH_SUBDIRS)
 AC_SUBST(LIB_AUTH_SUBDIRS)dnl
 
 dnl
-dnl Figure out if we have tunnels
-dnl
-
-AC_MSG_CHECKING(for tunnel devices)
-
-APPL_KIP_DIR=
-
-if test "$ac_cv_header_net_if_tun_h" = "yes"; then
-	APPL_KIP_DIR=kip
-fi
-
-AC_MSG_RESULT($ac_cv_header_net_if_tun_h)
-
-AC_SUBST(APPL_KIP_DIR)dnl
-
-dnl
 dnl Checks for prototypes and declarations
 dnl
 
@@ -996,6 +989,8 @@ timezone)
 
 AC_HAVE_TYPE([sa_family_t],[#include <sys/socket.h>])
 
+AC_HAVE_TYPE([socklen_t],[#include <sys/socket.h>])
+ 
 AC_HAVE_TYPE([struct sockaddr_storage], [#include <sys/socket.h>])
 
 AC_KRB_STRUCT_SPWD
@@ -1021,6 +1016,8 @@ AC_CHECK_TYPE_EXTRA(ssize_t, int, [
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif])
+
+AC_CHECK_TYPE_EXTRA(sig_atomic_t, int, [#include <signal.h>])
 
 dnl
 dnl Check for broken ultrix sys/socket.h
@@ -1154,7 +1151,7 @@ AC_DEFINE(OLD_ENVIRON)dnl
 
 AC_MSG_CHECKING(for streamspty)
 case "`uname -sr`" in
-SunOS\ 4*|OSF1*|IRIX\ 4*|HP-UX\ ?.10.*)
+SunOS\ 4*|OSF1*|IRIX\ 4*|HP-UX\ ?.1[01].*)
 	krb_cv_sys_streamspty=no
 	;;
 AIX*)

@@ -386,6 +386,9 @@
 /* Define if you have the socket function.  */
 #undef HAVE_SOCKET
 
+/* Define if you have the socklen_t function.  */
+#undef HAVE_SOCKLEN_T
+
 /* Define if you have the strcasecmp function.  */
 #undef HAVE_STRCASECMP
 
@@ -1081,6 +1084,9 @@
 
 /* Define this to what the type ssize_t should be. */
 #undef ssize_t
+
+/* Define this to what the type sig_atomic_t should be. */
+#undef sig_atomic_t
 
 /* Define if struct sockaddr has field sa_len. */
 #undef HAVE_STRUCT_SOCKADDR_SA_LEN

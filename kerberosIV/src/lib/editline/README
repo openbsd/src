@@ -1,4 +1,4 @@
-$KTHRevision: 1.1 $
+$KTH: 1.1 $
 
 This is a line-editing library.  It can be linked into almost any
 program to provide command-line editing and recall.

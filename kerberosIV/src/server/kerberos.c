@@ -9,7 +9,7 @@
 #include "config.h"
 #include "protos.h"
 
-RCSID("$KTH: kerberos.c,v 1.87 1999/11/13 06:35:39 assar Exp $");
+RCSID("$KTH: kerberos.c,v 1.87.2.1 2000/06/23 03:14:04 assar Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -298,10 +298,13 @@ kerberos(unsigned char *buf, int len,
     switch(msg_type){
     case AUTH_MSG_KDC_REQUEST:
 	/* XXX range check */
-	p += krb_get_nir(p, name, inst, realm);
+	p += krb_get_nir(p, name, sizeof(name),
+			 inst, sizeof(inst),
+			 realm, sizeof(realm));
 	p += krb_get_int(p, &req_time, 4, lsb);
 	life = *p++;
-	p += krb_get_nir(p, service, sinst, NULL);
+	p += krb_get_nir(p, service, sizeof(service),
+			 sinst, sizeof(sinst), NULL, 0);
 	klog(L_INI_REQ,
 	     "AS REQ %s.%s@%s for %s.%s from %s (%s/%u)", 
 	     name, inst, realm, service, sinst,
@@ -377,7 +380,8 @@ kerberos(unsigned char *buf, int len,
 	}
 	p += krb_get_int(p, &req_time, 4, lsb);
 	life = *p++;
-	p += krb_get_nir(p, service, sinst, NULL);
+	p += krb_get_nir(p, service, sizeof(service),
+			 sinst, sizeof(sinst), NULL, 0);
 	klog(L_APPL_REQ,
 	     "APPL REQ %s.%s@%s for %s.%s from %s (%s/%u)",
 	     ad.pname, ad.pinst, ad.prealm,

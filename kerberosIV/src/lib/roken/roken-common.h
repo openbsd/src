@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  */
 
-/* $KTH: roken-common.h,v 1.19 1999/12/02 16:58:52 joda Exp $ */
+/* $KTH: roken-common.h,v 1.19.2.1 2000/06/28 20:22:29 assar Exp $ */
 
 #ifndef __ROKEN_COMMON_H__
 #define __ROKEN_COMMON_H__
@@ -98,6 +98,10 @@
 
 #ifndef O_ACCMODE
 #define O_ACCMODE	003
+#endif
+
+#ifndef _PATH_DEV
+#define _PATH_DEV "/dev/"
 #endif
 
 #ifndef _PATH_DEVNULL

@@ -36,7 +36,7 @@
  */
 #include "bsd_locl.h"
 
-RCSID("$KTH: rlogin.c,v 1.67 1999/11/13 06:13:02 assar Exp $");
+RCSID("$KTH: rlogin.c,v 1.67.2.1 2000/06/23 02:35:44 assar Exp $");
 
 CREDENTIALS cred;
 Key_schedule schedule;
@@ -641,7 +641,7 @@ main(int argc, char **argv)
 	get_window_size(0, &winsize);
 
 	if (use_kerberos) {
-	        setuid(getuid());
+	        paranoid_setuid(getuid());
 		rem = KSUCCESS;
 		errno = 0;
 		if (dest_realm == NULL)
@@ -703,7 +703,7 @@ main(int argc, char **argv)
 #endif /* IP_TOS */
 #endif /* HAVE_SETSOCKOPT */
 
-	setuid(uid);
+	paranoid_setuid(uid);
 	doit();
 	return 0;
 }

@@ -21,7 +21,11 @@ or implied warranty.
 
 #include "krb_locl.h"
 
-RCSID("$KTH: dest_tkt.c,v 1.11 1997/05/19 03:03:40 assar Exp $");
+RCSID("$KTH: dest_tkt.c,v 1.11.14.1 2000/06/28 19:36:40 assar Exp $");
+
+#ifndef O_BINARY
+#define O_BINARY 0
+#endif
 
 /*
  * dest_tkt() is used to destroy the ticket store upon logout.
@@ -35,48 +39,62 @@ RCSID("$KTH: dest_tkt.c,v 1.11 1997/05/19 03:03:40 assar Exp $");
 int
 dest_tkt(void)
 {
-    char *file = TKT_FILE;
-    int i,fd;
-    struct stat statb;
+    const char *filename = TKT_FILE;
+    int i, fd;
+    struct stat sb1, sb2;
     char buf[BUFSIZ];
 
     errno = 0;
-    if (
-#ifdef HAVE_LSTAT
-    lstat
-#else
-    stat
-#endif
-    (file, &statb) < 0)      
+    if (lstat (filename, &sb1) < 0)
 	goto out;
 
-    if (!(statb.st_mode & S_IFREG)
-#ifdef notdef
-	|| statb.st_mode & 077
-#endif
-	)
+    fd = open (filename, O_RDWR | O_BINARY);
+    if (fd < 0)
 	goto out;
 
-    if ((fd = open(file, O_RDWR, 0)) < 0)
+    if (unlink (filename) < 0) {
+	int save_errno = errno;
+
+	close(fd);
+	errno = save_errno;
 	goto out;
+    }
 
-    memset(buf, 0, BUFSIZ);
+    if (fstat (fd, &sb2) < 0) {
+	int save_errno = errno;
 
-    for (i = 0; i < statb.st_size; i += sizeof(buf))
+	close(fd);
+	errno = save_errno;
+	goto out;
+    }
+
+    if (sb1.st_dev != sb2.st_dev || sb1.st_ino != sb2.st_ino) {
+	close (fd);
+	errno = EPERM;
+	goto out;
+    }
+
+    if (sb2.st_nlink != 0) {
+	close (fd);
+	errno = EPERM;
+	goto out;
+    }
+
+    for (i = 0; i < sb2.st_size; i += sizeof(buf))
 	if (write(fd, buf, sizeof(buf)) != sizeof(buf)) {
 	    fsync(fd);
 	    close(fd);
 	    goto out;
 	}
-	
 
     fsync(fd);
     close(fd);
     
-    unlink(file);
-
 out:
-    if (errno == ENOENT) return RET_TKFIL;
-    else if (errno != 0) return KFAILURE;
-    return(KSUCCESS);
+    if (errno == ENOENT)
+	return RET_TKFIL;
+    else if (errno != 0)
+	return KFAILURE;
+    else
+	return(KSUCCESS);
 }

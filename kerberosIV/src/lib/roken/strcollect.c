@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1998, 1999 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -31,36 +31,66 @@
  * SUCH DAMAGE. 
  */
 
-/* $KTH: com_right.h,v 1.9.2.1 2000/06/23 03:23:44 assar Exp $ */
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+RCSID("$KTH: strcollect.c,v 1.1.8.1 2000/06/23 04:37:44 assar Exp $");
+#endif
 
-#ifndef __COM_RIGHT_H__
-#define __COM_RIGHT_H__
-
-#ifdef __STDC__
 #include <stdarg.h>
-#endif
+#include <stdlib.h>
+#include <string.h>
+#include <errno.h>
+#include <roken.h>
 
-#ifndef __P
-#ifdef __STDC__
-#define __P(X) X
-#else
-#define __P(X) ()
-#endif
-#endif
+enum { initial = 10, increment = 5 };
 
-struct error_table {
-    char const * const * msgs;
-    long base;
-    int n_msgs;
-};
-struct et_list {
-    struct et_list *next;
-    struct error_table *table;
-};
-extern struct et_list *_et_list;
+static char **
+sub (char **argv, int i, int argc, va_list *ap)
+{
+    do {
+	if(i == argc) {
+	    /* realloc argv */
+	    char **tmp = realloc(argv, (argc + increment) * sizeof(*argv));
+	    if(tmp == NULL) {
+		free(argv);
+		errno = ENOMEM;
+		return NULL;
+	    }
+	    argv  = tmp;
+	    argc += increment;
+	}
+	argv[i++] = va_arg(*ap, char*);
+    } while(argv[i - 1] != NULL);
+    return argv;
+}
 
-const char *com_right __P((struct et_list *list, long code));
-void initialize_error_table_r __P((struct et_list **, const char **, int, long);)
-void free_error_table __P((struct et_list *));
+/*
+ * return a malloced vector of pointers to the strings in `ap'
+ * terminated by NULL.
+ */
 
-#endif /* __COM_RIGHT_H__ */
+char **
+vstrcollect(va_list *ap)
+{
+    return sub (NULL, 0, 0, ap);
+}
+
+/*
+ *
+ */
+
+char **
+strcollect(char *first, ...)
+{
+    va_list ap;
+    char **ret = malloc (initial * sizeof(char *));
+
+    if (ret == NULL)
+	return ret;
+
+    ret[0] = first;
+    va_start(ap, first);
+    ret = sub (ret, 1, initial, &ap);
+    va_end(ap);
+    return ret;
+}

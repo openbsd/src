@@ -29,7 +29,7 @@
 @subtitle 1999
 @author Johan Danielsson
 @author Assar Westerlund
-@author last updated $KTHDate: 1999/12/02 16:58:35 $
+@author last updated $KTH: 1999/12/02 16:58:35 $
 
 @def@copynext{@vskip 20pt plus 1fil@penalty-1000}
 @def@copyrightstart{}

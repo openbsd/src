@@ -1,5 +1,5 @@
 #
-# $KTH: Makefile.in,v 1.14 1999/03/10 19:01:16 joda Exp $
+# $KTH: Makefile.in,v 1.14.4.1 2000/06/23 03:20:02 assar Exp $
 #
 
 # This should really be set from configure
@@ -57,7 +57,7 @@ install: all
 	$(MKINSTALLDIRS) $(DESTDIR)$(includedir)/rx
 	$(INSTALL_DATA) $(srcdir)/rxkad.h $(DESTDIR)$(includedir)/rx/rxkad.h
 	$(MKINSTALLDIRS) $(DESTDIR)$(libdir)
-	$(INSTALL_DATA) -m 0555 $(LIB) $(DESTDIR)$(libdir)/$(LIB)
+	$(INSTALL_DATA)  $(LIB) $(DESTDIR)$(libdir)/$(LIB)
 
 uninstall:
 	rm -f $(DESTDIR)$(includedir)/rx/rxkad.h

@@ -1,6 +1,36 @@
+2000-03-26
+
+	* config.guess, config.sub: update to current version from
+	:pserver:anoncvs@subversions.gnu.org:/home/cvs
+
+	* appl/bsd/rlogind.c (rlogind_logout, logwtmp): make sure to
+	always call time and ctime with `time_t's.  there were some types
+	(like in lastlog) that we believed to always be time_t.  this has
+	proven wrong on Solaris 8 in 64-bit mode, where they are stored as
+	32-bit quantities but time_t has gone up to 64 bits
+	* appl/bsd/login.c: dito
+
+2000-03-20
+
+	* configure.in: add solaris2.8
+
+2000-03-15
+
+	* configure.in: on all versions of aix, add `-bnolibpath' to the
+	linker.  otherwise ld will interpret -L as run-time path for where
+	to find shared libraries and looking in ../../foo is a bad idea.
+	bug report from Niklas Edmundsson <nikke@ing.umu.se>
+
+2000-03-09
+
+	*  Release 1.0.1
+
 1999-11-29
 
+	*  Release 1.0
+
 	* lib/krb/krb-protos.h (tf_get_cred_addr): add prototype
+
 	* lib/krb/tf_util.c (tf_get_cred_addr): new function for fetching
 	the NAT addresses stored in the ticket file. From
 	<thn@stacken.kth.se>
