@@ -1,4 +1,4 @@
-/*	$OpenBSD: nlist.c,v 1.15 1998/10/28 23:20:01 millert Exp $	*/
+/*	$OpenBSD: nlist.c,v 1.16 1998/11/29 09:34:09 downsj Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from: @(#)nlist.c	8.1 (Berkeley) 6/6/93";
 #else
-static char *rcsid = "$OpenBSD: nlist.c,v 1.15 1998/10/28 23:20:01 millert Exp $";
+static char *rcsid = "$OpenBSD: nlist.c,v 1.16 1998/11/29 09:34:09 downsj Exp $";
 #endif
 #endif /* not lint */
 
@@ -116,6 +116,10 @@ __aout_knlist(fd, db)
 	if (!ebuf.a_syms)
 		badfmt("stripped");
 
+	/* Sanity check. */
+	if (!ebuf.a_data || !ebuf.a_bss)
+		badfmt("corrupt exec header");
+
 	/* Seek to string table. */
 	if (lseek(fd, N_STROFF(ebuf), SEEK_SET) == -1)
 		badfmt("corrupted string table");
@@ -128,7 +132,7 @@ __aout_knlist(fd, db)
 	/* Read in the string table. */
 	strsize -= sizeof(strsize);
 	if (!(strtab = malloc(strsize)))
-		errx(1, "cannot allocate %d bytes", strsize);
+		errx(1, "cannot allocate %d bytes for string table", strsize);
 	if ((nr = read(fd, strtab, strsize)) != strsize)
 		badread(nr, "corrupted symbol table");
 
@@ -311,7 +315,7 @@ __elf_knlist(fd, db)
 
 	sh = (Elf32_Shdr *)malloc(sizeof(Elf32_Shdr) * eh.e_shnum);
 	if (sh == NULL)
-		errx(1, "cannot allocate %d bytes",
+		errx(1, "cannot allocate %d bytes for symbol header",
 		    sizeof(Elf32_Shdr) * eh.e_shnum);
 
 	if (fseek (fp, eh.e_shoff, SEEK_SET) < 0)
@@ -322,7 +326,8 @@ __elf_knlist(fd, db)
 
 	shstr = (char *)malloc(sh[eh.e_shstrndx].sh_size);
 	if (shstr == NULL)
-		errx(1, "cannot allocate %d bytes", sh[eh.e_shstrndx].sh_size);
+		errx(1, "cannot allocate %d bytes for symbol string",
+		    sh[eh.e_shstrndx].sh_size);
 	if (fseek (fp, sh[eh.e_shstrndx].sh_offset, SEEK_SET) < 0)
 		badfmt("corrupt file");
 	if (fread(shstr, sh[eh.e_shstrndx].sh_size, 1, fp) != 1)
