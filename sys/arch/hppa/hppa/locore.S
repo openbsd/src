@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.8 1999/05/21 17:06:56 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.9 1999/05/21 23:19:17 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998,1999 Michael Shalayeff
@@ -284,7 +284,7 @@ EXIT(__start)
  * those in the C library.
  */
 	.align  NBPG
-	.globl	gateway_page, code
+	.export	gateway_page, entry
 gateway_page
 	nop				/* @ 0.C0000000 (Nothing)  */
 	gate,n	$bsd_syscall,r0         /* @ 0.C0000004 (HPUX/BSD) */
@@ -339,7 +339,7 @@ $bsd_syscall
 	be,n    R%$syscall(sr1,r1)
 	nop
 
-	.globl	gateway_page_end, code
+	.export	gateway_page_end, code
 gateway_page_end
 
 	.import	syscall,code
