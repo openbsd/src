@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr.c,v 1.13 1996/09/05 23:14:00 dm Exp $	*/
+/*	$OpenBSD: ncr.c,v 1.14 1996/10/12 01:08:13 downsj Exp $	*/
 /*	$NetBSD: ncr.c,v 1.35.4.1 1996/06/03 20:32:17 cgd Exp $	*/
 
 /**************************************************************************
@@ -117,11 +117,9 @@
 /*
 **    Number of logic units supported by the driver.
 **    n enables logic unit numbers 0..n-1.
-**    The common SCSI devices require only
-**    one lun, so take 1 as the default.
 */
 
-#define MAX_LUN     (1)
+#define MAX_LUN     (8)
 
 /*
 **    The maximum number of jobs scheduled for starting.
