@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig_43.c,v 1.3 1996/04/18 21:21:34 niklas Exp $	*/
+/*	$OpenBSD: kern_sig_43.c,v 1.4 2001/02/19 16:54:27 art Exp $	*/
 /*	$NetBSD: kern_sig_43.c,v 1.7 1996/03/14 19:31:47 christos Exp $	*/
 
 /*
@@ -77,11 +77,12 @@ compat_43_sys_sigblock(p, v, retval)
 	struct compat_43_sys_sigblock_args /* {
 		syscallarg(int) mask;
 	} */ *uap = v;
+	int s;
 
-	(void) splhigh();
+	s = splhigh();
 	*retval = p->p_sigmask;
 	p->p_sigmask |= SCARG(uap, mask) &~ sigcantmask;
-	(void) spl0();
+	splx(s);
 	return (0);
 }
 
@@ -95,11 +96,12 @@ compat_43_sys_sigsetmask(p, v, retval)
 	struct compat_43_sys_sigsetmask_args /* {
 		syscallarg(int) mask;
 	} */ *uap = v;
+	int s;
 
-	(void) splhigh();
+	s = splhigh();
 	*retval = p->p_sigmask;
 	p->p_sigmask = SCARG(uap, mask) &~ sigcantmask;
-	(void) spl0();
+	splx(s);
 	return (0);
 }
 
