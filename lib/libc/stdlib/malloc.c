@@ -8,7 +8,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: malloc.c,v 1.49 2002/11/03 20:36:43 marc Exp $";
+static char rcsid[] = "$OpenBSD: malloc.c,v 1.50 2002/11/03 23:58:39 marc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -48,8 +48,6 @@ static char rcsid[] = "$OpenBSD: malloc.c,v 1.49 2002/11/03 20:36:43 marc Exp $"
 #include <fcntl.h>
 #include <errno.h>
 
-#include "thread_private.h"
-
 /*
  * The basic parameters you can tweak.
  *
@@ -68,6 +66,39 @@ static char rcsid[] = "$OpenBSD: malloc.c,v 1.49 2002/11/03 20:36:43 marc Exp $"
 #if defined(__OpenBSD__) && defined(__sparc__)
 #   define    malloc_pageshift	13U
 #endif /* __OpenBSD__ */
+
+#ifdef _THREAD_SAFE
+# include "thread_private.h"
+# if 0
+   /* kernel threads */
+#  include <pthread.h>
+   static pthread_mutex_t malloc_lock;
+#  define THREAD_LOCK()		pthread_mutex_lock(&malloc_lock)
+#  define THREAD_UNLOCK()	pthread_mutex_unlock(&malloc_lock)
+#  define THREAD_LOCK_INIT()	pthread_mutex_init(&malloc_lock, 0);
+# else
+   /* user threads */
+#  include "spinlock.h"
+   static spinlock_t malloc_lock = _SPINLOCK_INITIALIZER;
+#  define THREAD_LOCK()		if (__isthreaded) _SPINLOCK(&malloc_lock)
+#  define THREAD_UNLOCK()	if (__isthreaded) _SPINUNLOCK(&malloc_lock)
+#  define THREAD_LOCK_INIT()
+   /*
+    * Malloc can't use the wrapped write() if it fails very early, so
+    * we use the unwrapped syscall _thread_sys_write()
+    */
+#  define write _thread_sys_write
+   ssize_t write(int, const void *, size_t);
+#   undef malloc
+#   undef realloc
+#   undef free
+# endif
+#else
+  /* no threads */
+# define THREAD_LOCK()
+# define THREAD_UNLOCK()
+# define THREAD_LOCK_INIT()
+#endif
 
 /*
  * No user serviceable parts behind this point.
@@ -463,7 +494,7 @@ malloc_init ()
     int i, j;
     int save_errno = errno;
 
-    _MALLOC_LOCK_INIT();
+    THREAD_LOCK_INIT();
 
     INIT_MMAP();
 
@@ -1213,17 +1244,17 @@ malloc(size_t size)
     register void *r;
 
     malloc_func = " in malloc():";
-    _MALLOC_LOCK();
+    THREAD_LOCK();
     if (malloc_active++) {
 	wrtwarning("recursive call.\n");
         malloc_active--;
-	_MALLOC_UNLOCK();
+	THREAD_UNLOCK();
 	return (0);
     }
     r = imalloc(size);
     UTRACE(0, size, r);
     malloc_active--;
-    _MALLOC_UNLOCK();
+    THREAD_UNLOCK();
     if (malloc_xmalloc && !r)
 	wrterror("out of memory.\n");
     return (r);
@@ -1233,17 +1264,17 @@ void
 free(void *ptr)
 {
     malloc_func = " in free():";
-    _MALLOC_LOCK();
+    THREAD_LOCK();
     if (malloc_active++) {
 	wrtwarning("recursive call.\n");
         malloc_active--;
-	_MALLOC_UNLOCK();
+	THREAD_UNLOCK();
 	return;
     }
     ifree(ptr);
     UTRACE(ptr, 0, 0);
     malloc_active--;
-    _MALLOC_UNLOCK();
+    THREAD_UNLOCK();
     return;
 }
 
@@ -1253,11 +1284,11 @@ realloc(void *ptr, size_t size)
     register void *r;
 
     malloc_func = " in realloc():";
-    _MALLOC_LOCK();
+    THREAD_LOCK();
     if (malloc_active++) {
 	wrtwarning("recursive call.\n");
         malloc_active--;
-	_MALLOC_UNLOCK();
+	THREAD_UNLOCK();
 	return (0);
     }
     if (!ptr) {
@@ -1267,7 +1298,7 @@ realloc(void *ptr, size_t size)
     }
     UTRACE(ptr, size, r);
     malloc_active--;
-    _MALLOC_UNLOCK();
+    THREAD_UNLOCK();
     if (malloc_xmalloc && !r)
 	wrterror("out of memory.\n");
     return (r);

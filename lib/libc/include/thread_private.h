@@ -1,4 +1,4 @@
-/* $OpenBSD: thread_private.h,v 1.12 2002/11/03 20:36:43 marc Exp $ */
+/* $OpenBSD: thread_private.h,v 1.13 2002/11/03 23:58:39 marc Exp $ */
 
 #ifndef _THREAD_PRIVATE_H_
 #define _THREAD_PRIVATE_H_
@@ -18,7 +18,19 @@ extern int __isthreaded;
  * Use WEAK_NAME(n) to get a libc-private name for n (_weak_n),
  *     WEAK_ALIAS(n) to generate the weak symbol n pointing to _weak_n,
  *     WEAK_PROTOTYPE(n) to generate a prototype for _weak_n (based on n).
+ *
+ * If the symbol _NO_WEAK_ALIASES is defined, then symbols will be
  */
+
+#ifdef _NO_WEAK_ALIASES
+#ifdef _THREAD_SAFE
+#define WEAK_NAME(name)			__CONCAT(_weak,name)
+#else
+#define WEAK_NAME(name)			name
+#endif
+#define WEAK_ALIAS(name)		/* unavailable */
+#define WEAK_PROTOTYPE(name)		/* unnecessary */
+#else /* !_NO_WEAK_ALIASES */
 #define WEAK_NAME(name)			__CONCAT(_weak_,name)
 #define WEAK_ALIAS(name)		__weak_alias(name, WEAK_NAME(name))
 #ifdef __GNUC__
@@ -26,6 +38,7 @@ extern int __isthreaded;
 #else
 #define WEAK_PROTOTYPE(name)		/* typeof() only in gcc */
 #endif
+#endif /* !_NO_WEAK_ALIASES */
 
 /*
  * These macros help in making persistent storage thread-specific.
@@ -49,7 +62,7 @@ struct _thread_private_key_struct {
 void	_libc_private_storage_lock(pthread_mutex_t *);
 void	_libc_private_storage_unlock(pthread_mutex_t *);
 void *	_libc_private_storage(volatile struct _thread_private_key_struct *,
-			      void *, size_t, void *);
+	void *, size_t, void *);
 
 /* Declare a module mutex. */
 #define _THREAD_PRIVATE_MUTEX(name)					\
@@ -84,7 +97,18 @@ void *	_libc_private_storage(volatile struct _thread_private_key_struct *,
  */
 #define _THREAD_PRIVATE(keyname, storage, error) 			\
 	_libc_private_storage(&__THREAD_KEY_NAME(keyname),		\
-			      &(storage), sizeof (storage), error)
+		&(storage), sizeof (storage), error)
+
+/*
+ * Macros for locking and unlocking FILEs. These test if the
+ * process is threaded to avoid locking when not required.
+ */
+#ifdef	_FLOCK_DEBUG
+#define FLOCKFILE(fp)		_flockfile_debug(fp, __FILE__, __LINE__)
+#else
+#define FLOCKFILE(fp)		flockfile(fp)
+#endif
+#define	FUNLOCKFILE(fp)		funlockfile(fp)
 
 /*
  * File descriptor locking definitions.
@@ -93,33 +117,19 @@ void *	_libc_private_storage(volatile struct _thread_private_key_struct *,
 #define FD_WRITE	    0x2
 #define FD_RDWR		    (FD_READ | FD_WRITE)
 
-#define _FD_LOCK(_fd,_type,_ts)						\
-		_thread_fd_lock(_fd, _type, _ts, __FILE__, __LINE__)
-#define _FD_UNLOCK(_fd,_type)						\
-		_thread_fd_unlock(_fd, _type, __FILE__, __LINE__)
+#ifdef	_LOCK_DEBUG
+#define _FD_LOCK(_fd,_type,_ts)		_thread_fd_lock_debug(_fd, _type, \
+						_ts, __FILE__, __LINE__)
+#define _FD_UNLOCK(_fd,_type)		_thread_fd_unlock_debug(_fd, _type, \
+						__FILE__, __LINE__)
+#else
+#define _FD_LOCK(_fd,_type,_ts)		_thread_fd_lock(_fd, _type, _ts)
+#define _FD_UNLOCK(_fd,_type)		_thread_fd_unlock(_fd, _type)
+#endif
 
-int	_thread_fd_lock(int, int, struct timespec *, const char *, int);
-void	_thread_fd_unlock(int, int, const char *, int);
-
-/*
- * malloc lock/unlock definitions
- */
-# define _MALLOC_LOCK()		do {					\
-					if (__isthreaded)		\
-						_thread_malloc_lock();	\
-				} while (0)
-# define _MALLOC_UNLOCK()	do {					\
-					if (__isthreaded)		\
-						_thread_malloc_unlock();\
-				} while (0)
-# define _MALLOC_LOCK_INIT()do {					\
-					if (__isthreaded)		\
-						_thread_malloc_init();\
-				} while (0)
-
-
-void	_thread_malloc_init(void);
-void	_thread_malloc_lock(void);
-void	_thread_malloc_unlock(void);
+int	_thread_fd_lock(int, int, struct timespec *);
+int	_thread_fd_lock_debug(int, int, struct timespec *, char *, int);
+void	_thread_fd_unlock(int, int);
+void	_thread_fd_unlock_debug(int, int, char *, int);
 
 #endif /* _THREAD_PRIVATE_H_ */
