@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.11 2001/05/11 23:24:57 millert Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.12 2001/05/25 22:07:17 millert Exp $	*/
 /*	$NetBSD: cpu.h,v 1.28 1998/02/13 07:41:51 scottr Exp $	*/
 
 /*
@@ -118,11 +118,17 @@ extern int astpending;		/* need to trap before returning to user mode */
  * CTL_MACHDEP definitions.
  */
 #define	CPU_CONSDEV		1	/* dev_t: console terminal device */
-#define	CPU_MAXID		2	/* number of valid machdep ids */
+#define	CPU_CPUSPEED		2	/* CPU speed in Mhz */
+#define	CPU_MACHINEID		3	/* machine id (HP_XXX) */
+#define	CPU_MMUID		4	/* mmu id (MMUID_*) */
+#define	CPU_MAXID		5	/* number of valid machdep ids */
 
 #define CTL_MACHDEP_NAMES { \
 	{ 0, 0 }, \
 	{ "console_device", CTLTYPE_STRUCT }, \
+	{ "cpuspeed", CTLTYPE_INT }, \
+	{ "machineid", CTLTYPE_INT }, \
+	{ "mmuid", CTLTYPE_INT }, \
 }
 
 /*

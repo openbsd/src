@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.48 2001/05/23 15:12:06 millert Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.49 2001/05/25 22:07:18 millert Exp $	*/
 /*	$NetBSD: machdep.c,v 1.121 1999/03/26 23:41:29 mycroft Exp $	*/
 
 /*
@@ -789,7 +789,7 @@ identifycpu()
 #if !defined(HP433)
 	case HP_433:
 #endif
-		panic("SPU type not configured");
+		panic("SPU type not configured for machineid %d", machineid);
 	default:
 		break;
 	}
@@ -826,6 +826,12 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 			consdev = NODEV;
 		return (sysctl_rdstruct(oldp, oldlenp, newp, &consdev,
 		    sizeof consdev));
+	case CPU_CPUSPEED:
+		return (sysctl_rdint(oldp, oldlenp, newp, cpuspeed));
+	case CPU_MACHINEID:
+		return (sysctl_rdint(oldp, oldlenp, newp, machineid));
+	case CPU_MMUID:
+		return (sysctl_rdint(oldp, oldlenp, newp, mmuid));
 	default:
 		return (EOPNOTSUPP);
 	}
