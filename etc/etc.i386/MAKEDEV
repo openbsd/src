@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.71 1999/07/30 18:49:36 deraadt Exp $
+#	$OpenBSD: MAKEDEV,v 1.72 1999/08/13 05:39:24 fgsch Exp $
 #	$NetBSD: MAKEDEV,v 1.40 1996/03/31 00:50:47 perry Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -30,6 +30,7 @@
 #	floppy	devices to be put on install floppies
 #	std	standard devices
 #	local	configuration specific devices
+#	usbs	make USB devices
 #
 # Tapes:
 #	wt*	QIC-interfaced (e.g. not SCSI) 3M cartridge tape
@@ -66,6 +67,12 @@
 # Printers:
 #	lpt*	stock lp
 #	lpa*	interruptless lp
+#
+# USB devices:
+#	usb*	Bus control devices used by usbd for attach/detach
+#	uhid*	Generic HID devices
+#	ulpt*	Printer devices
+#	ugen*	Generic device
 #
 # Call units:
 #
@@ -123,6 +130,7 @@ all)
 	sh MAKEDEV fd1 fd1B fd1C fd1D fd1E fd1F fd1G fd1H
 	sh MAKEDEV xfs0 music
 	sh MAKEDEV rmidi0 rmidi1 rmidi2 rmidi3 rmidi4 rmidi5 rmidi6 rmidi7
+	sh MAKEDEV usbs
 # MISSING:
 #	sh MAKEDEV mouse-?
 	;;
@@ -136,6 +144,12 @@ ramdisk)
 	sh MAKEDEV std lkm tty00 tty01 tty02 tty03 ttyC0 random
 	sh MAKEDEV wt0 fd0 rd0 wd0 wd1 wd2 wd3 bpf0
 	sh MAKEDEV sd0 sd1 sd2 sd3 st0 st1 cd0 cd1 mcd0
+	;;
+
+usbs)
+	sh MAKEDEV usb0 usb1 
+	sh MAKEDEV uhid0 uhid1 uhid2 uhid3
+#	sh MAKEDEV ulpt0 ulpt1 
 	;;
 
 std)
@@ -154,6 +168,41 @@ std)
 	mknod stdout		c 22 1	; chmod 666 stdout
 	mknod stderr		c 22 2	; chmod 666 stderr
 	mknod ksyms		c 50 0  ; chmod 640 ksyms ; chown root.kmem ksyms
+	;;
+
+usb*)
+	unit=`expr $i : 'usb\(.\).*'`
+	rm -f usb$unit
+	mknod usb$unit c 61 $unit
+	chown root.wheel usb$unit
+	chmod 600 usb$unit
+	;;
+
+uhid*)
+	unit=`expr $i : 'uhid\(.\).*'`
+	rm -f uhid$unit
+	mknod uhid$unit c 62 $unit
+	chown root.wheel uhid$unit
+	chmod 666 uhid$unit
+	;;
+
+#ulpt*)
+#	unit=`expr $i : 'ulpt\(.\).*'`
+#	rm -f ulpt$unit
+#	mknod ulpt$unit c ?? $unit
+#	chown root.wheel ulpt$unit
+#	chmod 600 ulpt$unit
+#	;;
+
+ugen*)
+	unit=`expr $i : 'ugen\(.\).*'`
+	for j in 00 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15
+	do
+		rm -f ugen$unit.$j
+		mknod ugen$unit.$j c 63 `expr $unit '*' 16 + $j`
+		chown root.wheel ugen$unit.$j
+		chmod 600 ugen$unit.$j
+	done
 	;;
 
 ttyC*)
