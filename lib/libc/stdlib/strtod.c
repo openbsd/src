@@ -90,13 +90,13 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: strtod.c,v 1.18 2004/02/01 07:11:24 drahn Exp $";
+static char *rcsid = "$OpenBSD: strtod.c,v 1.19 2004/02/03 16:52:11 drahn Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #if defined(__m68k__) || defined(__sparc__) || defined(__i386__) || \
     defined(__mips__) || defined(__ns32k__) || defined(__alpha__) || \
     defined(__powerpc__) || defined(__m88k__) || defined(__hppa__) || \
-    defined(__x86_64__)
+    defined(__x86_64__) || (defined(__arm__) && defined(__VFP_FP__))
 #include <sys/types.h>
 #if BYTE_ORDER == BIG_ENDIAN
 #define IEEE_BIG_ENDIAN
@@ -105,7 +105,7 @@ static char *rcsid = "$OpenBSD: strtod.c,v 1.18 2004/02/01 07:11:24 drahn Exp $"
 #endif
 #endif
 
-#if defined(__arm__) && !defined(_VFP_FP__)
+#if defined(__arm__) && !defined(__VFP_FP__)
 /*
  * Although the CPU is little endian the FP has different
  * byte and word endianness. The byte order is still little endian
