@@ -1,4 +1,5 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.17 1995/12/19 23:07:46 cgd Exp $	*/
+/*	$OpenBSD: nfs_syscalls.c,v 1.3 1996/02/29 09:24:57 niklas Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.18 1996/02/09 21:48:36 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -56,6 +57,7 @@
 #include <sys/protosw.h>
 #include <sys/namei.h>
 #include <sys/syslog.h>
+#include <sys/filedesc.h>
 
 #include <sys/syscallargs.h>
 
@@ -72,10 +74,14 @@
 #include <nfs/nfsnode.h>
 #include <nfs/nqnfs.h>
 #include <nfs/nfsrtt.h>
+#include <nfs/nfs_var.h>
 
 /* Global defs. */
 extern u_int32_t nfs_prog, nfs_vers;
-extern int32_t (*nfsrv_procs[NFS_NPROCS])();
+extern int32_t (*nfsrv_procs[NFS_NPROCS]) __P((struct nfsd *, struct mbuf *,
+					       struct mbuf *, caddr_t,
+					       struct ucred *, struct mbuf *,
+					       struct mbuf **));
 extern struct proc *nfs_iodwant[NFS_MAXASYNCDAEMON];
 extern int nfs_numasync;
 extern time_t nqnfsstarttime;
@@ -83,19 +89,22 @@ extern int nqsrv_writeslack;
 extern int nfsrtton;
 struct nfssvc_sock *nfs_udpsock, *nfs_cltpsock;
 int nuidhash_max = NFS_MAXUIDHASH;
-static int nfs_numnfsd = 0;
 int nfsd_waiting = 0;
+#ifdef NFSSERVER
+static int nfs_numnfsd = 0;
 static int notstarted = 1;
 static int modify_flag = 0;
 static struct nfsdrt nfsdrt;
-void nfsrv_cleancache(), nfsrv_rcv(), nfsrv_wakenfsd(), nfs_sndunlock();
-static void nfsd_rt();
-void nfsrv_slpderef(), nfsrv_init();
+#endif
 
 #define	TRUE	1
 #define	FALSE	0
 
 static int nfs_asyncdaemon[NFS_MAXASYNCDAEMON];
+#ifdef NFSSERVER
+static void nfsd_rt __P((struct timeval *, int, struct nfsd *, struct mbuf *,
+			 int));
+#endif
 /*
  * NFS server system calls
  * getfh() lives here too, but maybe should move to kern/vfs_syscalls.c
@@ -104,9 +113,10 @@ static int nfs_asyncdaemon[NFS_MAXASYNCDAEMON];
 /*
  * Get file handle system call
  */
+int
 sys_getfh(p, v, retval)
 	struct proc *p;
-	void *v;
+	register void *v;
 	register_t *retval;
 {
 	register struct sys_getfh_args /* {
@@ -121,11 +131,11 @@ sys_getfh(p, v, retval)
 	/*
 	 * Must be super user
 	 */
-	if (error = suser(p->p_ucred, &p->p_acflag))
+	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
 		return (error);
 	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE,
 	    SCARG(uap, fname), p);
-	if (error = namei(&nd))
+	if ((error = namei(&nd)) != 0)
 		return (error);
 	vp = nd.ni_vp;
 	bzero((caddr_t)&fh, sizeof(fh));
@@ -145,6 +155,7 @@ sys_getfh(p, v, retval)
  * - remains in the kernel as an nfsd
  * - remains in the kernel as an nfsiod
  */
+int
 sys_nfssvc(p, v, retval)
 	struct proc *p;
 	void *v;
@@ -155,21 +166,23 @@ sys_nfssvc(p, v, retval)
 		syscallarg(caddr_t) argp;
 	} */ *uap = v;
 	struct nameidata nd;
+	struct nfsmount *nmp;
+	int error;
+#ifdef NFSSERVER
 	struct file *fp;
 	struct mbuf *nam;
 	struct nfsd_args nfsdarg;
 	struct nfsd_srvargs nfsd_srvargs, *nsd = &nfsd_srvargs;
-	struct nfsd_cargs ncd;
 	struct nfsd *nfsd;
 	struct nfssvc_sock *slp;
-	struct nfsuid *nuidp, **nuh;
-	struct nfsmount *nmp;
-	int error;
+	struct nfsuid *nuidp;
+#endif
+	struct nfsd_cargs ncd;
 
 	/*
 	 * Must be super user
 	 */
-	if (error = suser(p->p_ucred, &p->p_acflag))
+	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
 		return (error);
 	while (nfssvc_sockhead_flag & SLP_INIT) {
 		nfssvc_sockhead_flag |= SLP_WANTINIT;
@@ -185,12 +198,12 @@ sys_nfssvc(p, v, retval)
 #ifndef NFSCLIENT
 		error = ENOSYS;
 #else /* !NFSCLIENT */
-		if (error =
-		    copyin(SCARG(uap, argp), (caddr_t)&ncd, sizeof (ncd)))
+		error = copyin(SCARG(uap, argp), (caddr_t)&ncd, sizeof (ncd));
+		if (error)
 			return (error);
 		NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE,
 			ncd.ncd_dirp, p);
-		if (error = namei(&nd))
+		if ((error = namei(&nd)) != 0)
 			return (error);
 		if ((nd.ni_vp->v_flag & VROOT) == 0)
 			error = EINVAL;
@@ -209,27 +222,31 @@ sys_nfssvc(p, v, retval)
 #ifndef NFSSERVER
 		error = ENOSYS;
 #else /* !NFSSERVER */
-		if (error = copyin(SCARG(uap, argp), (caddr_t)&nfsdarg,
-		    sizeof(nfsdarg)))
+		error = copyin(SCARG(uap, argp), (caddr_t)&nfsdarg,
+			       sizeof(nfsdarg));
+		if (error)
 			return (error);
-		if (error = getsock(p->p_fd, nfsdarg.sock, &fp))
+		if ((error = getsock(p->p_fd, nfsdarg.sock, &fp)) != 0)
 			return (error);
 		/*
 		 * Get the client address for connected sockets.
 		 */
 		if (nfsdarg.name == NULL || nfsdarg.namelen == 0)
 			nam = (struct mbuf *)0;
-		else if (error = sockargs(&nam, nfsdarg.name, nfsdarg.namelen,
-			MT_SONAME))
-			return (error);
+		else {
+			error = sockargs(&nam, nfsdarg.name, nfsdarg.namelen,
+					 MT_SONAME);
+			if (error)
+				return (error);
+		}
 		error = nfssvc_addsock(fp, nam);
 #endif /* !NFSSERVER */
 	} else {
 #ifndef NFSSERVER
 		error = ENOSYS;
 #else /* !NFSSERVER */
-		if (error = copyin(SCARG(uap, argp), (caddr_t)nsd,
-		    sizeof (*nsd)))
+		error = copyin(SCARG(uap, argp), (caddr_t)nsd, sizeof (*nsd));
+		if (error)
 			return (error);
 		if ((SCARG(uap, flag) & NFSSVC_AUTHIN) &&
 		    (nfsd = nsd->nsd_nfsd) &&
@@ -293,6 +310,7 @@ sys_nfssvc(p, v, retval)
 /*
  * Adds a socket to the list for servicing by nfsds.
  */
+int
 nfssvc_addsock(fp, mynam)
 	struct file *fp;
 	struct mbuf *mynam;
@@ -328,7 +346,7 @@ nfssvc_addsock(fp, mynam)
 		siz = NFS_MAXPACKET + sizeof (u_int32_t);
 	else
 		siz = NFS_MAXPACKET;
-	if (error = soreserve(so, siz, siz)) {
+	if ((error = soreserve(so, siz, siz)) != 0) {
 		m_freem(mynam);
 		return (error);
 	}
@@ -383,6 +401,7 @@ nfssvc_addsock(fp, mynam)
  * Called by nfssvc() for nfsds. Just loops around servicing rpc requests
  * until it is killed by a signal.
  */
+int
 nfssvc_nfsd(nsd, argp, p)
 	struct nfsd_srvargs *nsd;
 	caddr_t argp;
@@ -397,7 +416,7 @@ nfssvc_nfsd(nsd, argp, p)
 	struct mbuf *mreq, *nam;
 	struct timeval starttime;
 	struct nfsuid *uidp;
-	int error, cacherep, s;
+	int error = 0, cacherep, s;
 	int sotype;
 
 	s = splsoftnet();
@@ -479,7 +498,7 @@ nfssvc_nfsd(nsd, argp, p)
 		 * nam2 == NULL for connection based protocols to disable
 		 *    recent request caching.
 		 */
-		if (nam2 = nd->nd_nam) {
+		if ((nam2 = nd->nd_nam) != NULL) {
 			nam = nam2;
 			cacherep = RC_CHECKIT;
 		} else {
@@ -645,17 +664,17 @@ done:
  * will stop using it and clear ns_flag at the end so that it will not be
  * reassigned during cleanup.
  */
+void
 nfsrv_zapsock(slp)
 	register struct nfssvc_sock *slp;
 {
 	register struct nfsuid *nuidp, *nnuidp;
-	register int i;
 	struct socket *so;
 	struct file *fp;
 	struct mbuf *m;
 
 	slp->ns_flag &= ~SLP_ALLFLAGS;
-	if (fp = slp->ns_fp) {
+	if ((fp = slp->ns_fp) != NULL) {
 		slp->ns_fp = (struct file *)0;
 		so = slp->ns_so;
 		so->so_upcall = NULL;
@@ -783,6 +802,7 @@ nfsd_rt(startp, sotype, nd, nam, cacherep)
  * They do read-ahead and write-behind operations on the block I/O cache.
  * Never returns unless it fails or gets killed.
  */
+int
 nfssvc_iod(p)
 	struct proc *p;
 {
@@ -832,6 +852,7 @@ nfssvc_iod(p)
  * Get an authorization string for the uid by having the mount_nfs sitting
  * on this mount point porpous out of the kernel and do it.
  */
+int
 nfs_getauth(nmp, rep, cred, auth_type, auth_str, auth_len)
 	register struct nfsmount *nmp;
 	struct nfsreq *rep;
@@ -846,7 +867,8 @@ nfs_getauth(nmp, rep, cred, auth_type, auth_str, auth_len)
 		nmp->nm_flag |= NFSMNT_WANTAUTH;
 		(void) tsleep((caddr_t)&nmp->nm_authtype, PSOCK,
 			"nfsauth1", 2 * hz);
-		if (error = nfs_sigintr(nmp, rep, rep->r_procp)) {
+		error = nfs_sigintr(nmp, rep, rep->r_procp);
+		if (error) {
 			nmp->nm_flag &= ~NFSMNT_WANTAUTH;
 			return (error);
 		}

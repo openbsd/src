@@ -1,4 +1,5 @@
-/*	$NetBSD: nfs_nqlease.c,v 1.11 1995/12/19 23:07:29 cgd Exp $	*/
+/*	$OpenBSD: nfs_nqlease.c,v 1.3 1996/02/29 09:24:51 niklas Exp $	*/
+/*	$NetBSD: nfs_nqlease.c,v 1.12 1996/02/09 21:48:26 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -74,6 +75,7 @@
 #include <nfs/nqnfs.h>
 #include <nfs/nfsnode.h>
 #include <nfs/nfsmount.h>
+#include <nfs/nfs_var.h>
 
 time_t nqnfsstarttime = (time_t)0;
 u_int32_t nqnfs_prog, nqnfs_vers;
@@ -81,11 +83,6 @@ int nqsrv_clockskew = NQ_CLOCKSKEW;
 int nqsrv_writeslack = NQ_WRITESLACK;
 int nqsrv_maxlease = NQ_MAXLEASE;
 int nqsrv_maxnumlease = NQ_MAXNUMLEASE;
-void nqsrv_instimeq(), nqsrv_send_eviction(), nfs_sndunlock();
-void nqsrv_unlocklease(), nqsrv_waitfor_expiry(), nfsrv_slpderef();
-void nqsrv_addhost(), nqsrv_locklease(), nqnfs_serverd();
-void nqnfs_clientlease();
-struct mbuf *nfsm_rpchead();
 
 /*
  * Signifies which rpcs can have piggybacked lease requests
@@ -146,6 +143,7 @@ extern int nfsd_waiting;
  *     is when a new lease is being allocated, since it is not in the timer
  *     queue yet. (Ditto for the splsoftclock() and splx(s) calls)
  */
+int
 nqsrv_getlease(vp, duration, flags, nd, nam, cachablep, frev, cred)
 	struct vnode *vp;
 	u_int *duration;
@@ -157,8 +155,8 @@ nqsrv_getlease(vp, duration, flags, nd, nam, cachablep, frev, cred)
 	struct ucred *cred;
 {
 	register struct nqlease *lp;
-	register struct nqfhhashhead *lpp;
-	register struct nqhost *lph;
+	register struct nqfhhashhead *lpp = NULL;
+	register struct nqhost *lph = NULL;
 	struct nqlease *tlp;
 	struct nqm **lphp;
 	struct vattr vattr;
@@ -169,7 +167,7 @@ nqsrv_getlease(vp, duration, flags, nd, nam, cachablep, frev, cred)
 		return (0);
 	if (*duration > nqsrv_maxlease)
 		*duration = nqsrv_maxlease;
-	if (error = VOP_GETATTR(vp, &vattr, cred, nd->nd_procp))
+	if ((error = VOP_GETATTR(vp, &vattr, cred, nd->nd_procp)) != 0)
 		return (error);
 	*frev = vattr.va_filerev;
 	s = splsoftclock();
@@ -181,7 +179,7 @@ nqsrv_getlease(vp, duration, flags, nd, nam, cachablep, frev, cred)
 		 * Find the lease by searching the hash list.
 		 */
 		fh.fh_fsid = vp->v_mount->mnt_stat.f_fsid;
-		if (error = VFS_VPTOFH(vp, &fh.fh_fid)) {
+		if ((error = VFS_VPTOFH(vp, &fh.fh_fid)) != 0) {
 			splx(s);
 			return (error);
 		}
@@ -304,14 +302,16 @@ doreply:
  * Local lease check for server syscalls.
  * Just set up args and let nqsrv_getlease() do the rest.
  */
-lease_check(ap)
+int
+lease_check(v)
+	void *v;
+{
 	struct vop_lease_args /* {
 		struct vnode *a_vp;
 		struct proc *a_p;
 		struct ucred *a_cred;
 		int a_flag;
-	} */ *ap;
-{
+	} */ *ap = v;
 	int duration = 0, cache;
 	struct nfsd nfsd;
 	u_quad_t frev;
@@ -320,6 +320,7 @@ lease_check(ap)
 	nfsd.nd_procp = ap->a_p;
 	(void) nqsrv_getlease(ap->a_vp, &duration, NQL_CHECK | ap->a_flag,
 		&nfsd, (struct mbuf *)0, &cache, &frev, ap->a_cred);
+	return 0;
 }
 
 /*
@@ -389,6 +390,7 @@ nqsrv_instimeq(lp, duration)
  * This is somewhat messy due to the union in the nqhost structure.
  * The local host is indicated by the special value of NQLOCALSLP for slp.
  */
+int
 nqsrv_cmpnam(slp, nam, lph)
 	register struct nfssvc_sock *slp;
 	struct mbuf *nam;
@@ -586,7 +588,7 @@ tryagain:
 void
 nqnfs_serverd()
 {
-	register struct nqlease *lp, *lq;
+	register struct nqlease *lp;
 	register struct nqhost *lph;
 	struct nqlease *nextlp;
 	struct nqm *lphnext, *olphnext;
@@ -668,6 +670,7 @@ nqnfs_serverd()
  * Do the from/to xdr translation and call nqsrv_getlease() to
  * do the real work.
  */
+int
 nqnfsrv_getlease(nfsd, mrep, md, dpos, cred, nam, mrq)
 	struct nfsd *nfsd;
 	struct mbuf *mrep, *md;
@@ -694,8 +697,9 @@ nqnfsrv_getlease(nfsd, mrep, md, dpos, cred, nam, mrq)
 	nfsm_dissect(tl, u_int32_t *, 2*NFSX_UNSIGNED);
 	flags = fxdr_unsigned(int, *tl++);
 	nfsd->nd_duration = fxdr_unsigned(int, *tl);
-	if (error = nfsrv_fhtovp(fhp,
-	    TRUE, &vp, cred, nfsd->nd_slp, nam, &rdonly))
+	error = nfsrv_fhtovp(fhp,
+			     TRUE, &vp, cred, nfsd->nd_slp, nam, &rdonly);
+	if (error)
 		nfsm_reply(0);
 	if (rdonly && flags == NQL_WRITE) {
 		error = EROFS;
@@ -719,6 +723,7 @@ nqnfsrv_getlease(nfsd, mrep, md, dpos, cred, nam, mrq)
  * Called from nfssvc_nfsd() when a "vacated" message is received from a
  * client. Find the entry and expire it.
  */
+int
 nqnfsrv_vacated(nfsd, mrep, md, dpos, cred, nam, mrq)
 	struct nfsd *nfsd;
 	struct mbuf *mrep, *md;
@@ -792,6 +797,7 @@ nfsmout:
 /*
  * Client get lease rpc function.
  */
+int
 nqnfs_getlease(vp, rwflag, cred, p)
 	register struct vnode *vp;
 	int rwflag;
@@ -836,6 +842,7 @@ nqnfs_getlease(vp, rwflag, cred, p)
 /*
  * Client vacated message function.
  */
+int
 nqnfs_vacated(vp, cred)
 	register struct vnode *vp;
 	struct ucred *cred;
@@ -881,6 +888,7 @@ nqnfs_vacated(vp, cred)
 /*
  * Called for client side callbacks
  */
+int
 nqnfs_callback(nmp, mrep, md, dpos)
 	struct nfsmount *nmp;
 	struct mbuf *mrep, *md;
@@ -899,7 +907,7 @@ nqnfs_callback(nmp, mrep, md, dpos)
 	nd.nd_mrep = mrep;
 	nd.nd_md = md;
 	nd.nd_dpos = dpos;
-	if (error = nfs_getreq(&nd, FALSE))
+	if ((error = nfs_getreq(&nd, FALSE)) != 0)
 		return (error);
 	md = nd.nd_md;
 	dpos = nd.nd_dpos;
@@ -910,7 +918,8 @@ nqnfs_callback(nmp, mrep, md, dpos)
 	fhp = &nfh.fh_generic;
 	nfsm_srvmtofh(fhp);
 	m_freem(mrep);
-	if (error = nfs_nget(nmp->nm_mountp, fhp, &np))
+	error = nfs_nget(nmp->nm_mountp, (nfsv2fh_t *) fhp, &np);
+	if (error)
 		return (error);
 	vp = NFSTOV(np);
 	if (np->n_timer.cqe_next != 0) {
@@ -932,6 +941,7 @@ nqnfs_callback(nmp, mrep, md, dpos)
  * "sleep" since nfs_reclaim() called from vclean() can pull a node off
  * the list asynchronously.
  */
+int
 nqnfs_clientd(nmp, cred, ncd, flag, argp, p)
 	register struct nfsmount *nmp;
 	struct ucred *cred;
@@ -943,7 +953,7 @@ nqnfs_clientd(nmp, cred, ncd, flag, argp, p)
 	register struct nfsnode *np;
 	struct vnode *vp;
 	struct nfsreq myrep;
-	int error, vpid;
+	int error = 0, vpid;
 
 	/*
 	 * First initialize some variables
@@ -999,13 +1009,15 @@ nqnfs_clientd(nmp, cred, ncd, flag, argp, p)
 		while (np != (void *)&nmp->nm_timerhead &&
 		       (nmp->nm_flag & NFSMNT_DISMINPROG) == 0) {
 			vp = NFSTOV(np);
-if (strncmp(&vp->v_mount->mnt_stat.f_fstypename[0], MOUNT_NFS, MFSNAMELEN)) panic("trash2");
+if (strncmp(&vp->v_mount->mnt_stat.f_fstypename[0], MOUNT_NFS, MFSNAMELEN))
+	panic("trash2");
 			vpid = vp->v_id;
 			if (np->n_expiry < time.tv_sec) {
 			   if (vget(vp, 1) == 0) {
 			     nmp->nm_inprog = vp;
 			     if (vpid == vp->v_id) {
-if (strncmp(&vp->v_mount->mnt_stat.f_fstypename[0], MOUNT_NFS, MFSNAMELEN)) panic("trash3");
+if (strncmp(&vp->v_mount->mnt_stat.f_fstypename[0], MOUNT_NFS, MFSNAMELEN))
+	panic("trash3");
 				CIRCLEQ_REMOVE(&nmp->nm_timerhead, np, n_timer);
 				np->n_timer.cqe_next = 0;
 				if ((np->n_flag & (NMODIFIED | NQNFSEVICTED))

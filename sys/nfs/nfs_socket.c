@@ -1,4 +1,5 @@
-/*	$NetBSD: nfs_socket.c,v 1.22 1995/12/19 23:07:38 cgd Exp $	*/
+/*	$OpenBSD: nfs_socket.c,v 1.3 1996/02/29 09:24:53 niklas Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.23 1996/02/09 21:48:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -55,6 +56,7 @@
 #include <sys/socketvar.h>
 #include <sys/syslog.h>
 #include <sys/tprintf.h>
+#include <sys/namei.h>
 
 #include <netinet/in.h>
 #include <netinet/tcp.h>
@@ -67,6 +69,7 @@
 #include <nfs/nfsnode.h>
 #include <nfs/nfsrtt.h>
 #include <nfs/nqnfs.h>
+#include <nfs/nfs_var.h>
 
 #define	TRUE	1
 #define	FALSE	0
@@ -153,10 +156,6 @@ static int proct[NFS_NPROCS] = {
 #define	NFS_CWNDSCALE	256
 #define	NFS_MAXCWND	(NFS_CWNDSCALE * 32)
 static int nfs_backoff[8] = { 2, 4, 8, 16, 32, 64, 128, 256, };
-int	nfs_sbwait();
-void	nfs_disconnect(), nfs_realign(), nfsrv_wakenfsd(), nfs_sndunlock();
-void	nfs_rcvunlock(), nqnfs_serverd(), nqnfs_clientlease();
-struct mbuf *nfsm_rpchead();
 int nfsrtton = 0;
 struct nfsrtt nfsrtt;
 
@@ -164,6 +163,7 @@ struct nfsrtt nfsrtt;
  * Initialize sockets and congestion for a new NFS connection.
  * We do not free the sockaddr if error.
  */
+int
 nfs_connect(nmp, rep)
 	register struct nfsmount *nmp;
 	struct nfsreq *rep;
@@ -177,8 +177,9 @@ nfs_connect(nmp, rep)
 
 	nmp->nm_so = (struct socket *)0;
 	saddr = mtod(nmp->nm_nam, struct sockaddr *);
-	if (error = socreate(saddr->sa_family,
-		&nmp->nm_so, nmp->nm_sotype, nmp->nm_soproto))
+	error = socreate(saddr->sa_family,
+			 &nmp->nm_so, nmp->nm_sotype, nmp->nm_soproto);
+	if (error)
 		goto bad;
 	so = nmp->nm_so;
 	nmp->nm_soflags = so->so_proto->pr_flags;
@@ -212,7 +213,7 @@ nfs_connect(nmp, rep)
 			goto bad;
 		}
 	} else {
-		if (error = soconnect(so, nmp->nm_nam))
+		if ((error = soconnect(so, nmp->nm_nam)) != 0)
 			goto bad;
 
 		/*
@@ -273,7 +274,7 @@ nfs_connect(nmp, rep)
 		rcvreserve = (nmp->nm_rsize + NFS_MAXPKTHDR +
 		    sizeof (u_int32_t)) * 2;
 	}
-	if (error = soreserve(so, sndreserve, rcvreserve))
+	if ((error = soreserve(so, sndreserve, rcvreserve)) != 0)
 		goto bad;
 	so->so_rcv.sb_flags |= SB_NOINTR;
 	so->so_snd.sb_flags |= SB_NOINTR;
@@ -302,6 +303,7 @@ bad:
  * If this fails the mount point is DEAD!
  * nb: Must be called with the nfs_sndlock() set on the mount point.
  */
+int
 nfs_reconnect(rep)
 	register struct nfsreq *rep;
 {
@@ -310,7 +312,7 @@ nfs_reconnect(rep)
 	int error;
 
 	nfs_disconnect(nmp);
-	while (error = nfs_connect(nmp, rep)) {
+	while ((error = nfs_connect(nmp, rep)) != 0) {
 		if (error == EINTR || error == ERESTART)
 			return (EINTR);
 		(void) tsleep((caddr_t)&lbolt, PSOCK, "nfscon", 0);
@@ -357,6 +359,7 @@ nfs_disconnect(nmp)
  * - return EPIPE if a connection is lost for connection based sockets (TCP...)
  * - do any cleanup required by recoverable socket errors (???)
  */
+int
 nfs_send(so, nam, top, rep)
 	register struct socket *so;
 	struct mbuf *nam;
@@ -425,6 +428,7 @@ nfs_send(so, nam, top, rep)
  * For SOCK_STREAM we must be very careful to read an entire record once
  * we have read any of it, even if the system call has been interrupted.
  */
+int
 nfs_receive(rep, aname, mp)
 	register struct nfsreq *rep;
 	struct mbuf **aname;
@@ -456,7 +460,7 @@ nfs_receive(rep, aname, mp)
 	 * until we have an entire rpc request/reply.
 	 */
 	if (sotype != SOCK_DGRAM) {
-		if (error = nfs_sndlock(&rep->r_nmp->nm_flag, rep))
+		if ((error = nfs_sndlock(&rep->r_nmp->nm_flag, rep)) != 0)
 			return (error);
 tryagain:
 		/*
@@ -473,7 +477,7 @@ tryagain:
 			return (EINTR);
 		}
 		if ((so = rep->r_nmp->nm_so) == NULL) {
-			if (error = nfs_reconnect(rep)) {
+			if ((error = nfs_reconnect(rep)) != 0) {
 				nfs_sndunlock(&rep->r_nmp->nm_flag);
 				return (error);
 			}
@@ -482,7 +486,8 @@ tryagain:
 		while (rep->r_flags & R_MUSTRESEND) {
 			m = m_copym(rep->r_mreq, 0, M_COPYALL, M_WAIT);
 			nfsstats.rpcretries++;
-			if (error = nfs_send(so, rep->r_nmp->nm_nam, m, rep)) {
+			error = nfs_send(so, rep->r_nmp->nm_nam, m, rep);
+			if (error) {
 				if (error == EINTR || error == ERESTART ||
 				    (error = nfs_reconnect(rep))) {
 					nfs_sndunlock(&rep->r_nmp->nm_flag);
@@ -631,6 +636,7 @@ errout:
  * with outstanding requests using the xid, until ours is found.
  */
 /* ARGSUSED */
+int
 nfs_reply(myrep)
 	struct nfsreq *myrep;
 {
@@ -652,7 +658,7 @@ nfs_reply(myrep)
 		 * Also necessary for connection based protocols to avoid
 		 * race conditions during a reconnect.
 		 */
-		if (error = nfs_rcvlock(myrep))
+		if ((error = nfs_rcvlock(myrep)) != 0)
 			return (error);
 		/* Already received, bye bye */
 		if (myrep->r_mrep != NULL) {
@@ -796,6 +802,7 @@ nfsmout:
  *	  by mrep or error
  * nb: always frees up mreq mbuf list
  */
+int
 nfs_request(vp, mrest, procnum, procp, cred, mrp, mdp, dposp)
 	struct vnode *vp;
 	struct mbuf *mrest;
@@ -812,7 +819,6 @@ nfs_request(vp, mrest, procnum, procp, cred, mrp, mdp, dposp)
 	register int i;
 	struct nfsmount *nmp;
 	struct mbuf *md, *mheadend;
-	struct nfsreq *reph;
 	struct nfsnode *np;
 	time_t reqtime, waituntil;
 	caddr_t dpos, cp2;
@@ -1065,6 +1071,7 @@ nfsmout:
  * Generate the rpc reply header
  * siz arg. is used to decide if adding a cluster is worthwhile
  */
+int
 nfs_rephead(siz, nd, err, cache, frev, mrq, mbp, bposp)
 	int siz;
 	struct nfsd *nd;
@@ -1178,7 +1185,9 @@ nfs_timer(arg)
 	register struct socket *so;
 	register struct nfsmount *nmp;
 	register int timeo;
+#ifdef NFSSERVER
 	static long lasttime = 0;
+#endif
 	int s, error;
 
 	s = splsoftnet();
@@ -1286,6 +1295,7 @@ nfs_timer(arg)
  * Test for a termination condition pending on the process.
  * This is used for NFSMNT_INT mounts.
  */
+int
 nfs_sigintr(nmp, rep, p)
 	struct nfsmount *nmp;
 	struct nfsreq *rep;
@@ -1309,6 +1319,7 @@ nfs_sigintr(nmp, rep, p)
  * and also to avoid race conditions between the processes with nfs requests
  * in progress when a reconnect is necessary.
  */
+int
 nfs_sndlock(flagp, rep)
 	register int *flagp;
 	struct nfsreq *rep;
@@ -1354,6 +1365,7 @@ nfs_sndunlock(flagp)
 	}
 }
 
+int
 nfs_rcvlock(rep)
 	register struct nfsreq *rep;
 {
@@ -1491,6 +1503,7 @@ nfs_realign(m, hsiz)
  * - verify it
  * - fill in the cred struct.
  */
+int
 nfs_getreq(nd, has_header)
 	register struct nfsd *nd;
 	int has_header;
@@ -1639,6 +1652,7 @@ nfsmout:
 	return (error);
 }
 
+void
 nfs_msg(p, server, msg)
 	struct proc *p;
 	char *server, *msg;
@@ -1654,29 +1668,9 @@ nfs_msg(p, server, msg)
 }
 
 #ifdef NFSSERVER
-int	nfsrv_null(),
-	nfsrv_getattr(),
-	nfsrv_setattr(),
-	nfsrv_lookup(),
-	nfsrv_readlink(),
-	nfsrv_read(),
-	nfsrv_write(),
-	nfsrv_create(),
-	nfsrv_remove(),
-	nfsrv_rename(),
-	nfsrv_link(),
-	nfsrv_symlink(),
-	nfsrv_mkdir(),
-	nfsrv_rmdir(),
-	nfsrv_readdir(),
-	nfsrv_statfs(),
-	nfsrv_noop(),
-	nqnfsrv_readdirlook(),
-	nqnfsrv_getlease(),
-	nqnfsrv_vacated(),
-	nqnfsrv_access();
-
-int (*nfsrv_procs[NFS_NPROCS])() = {
+int (*nfsrv_procs[NFS_NPROCS]) __P((struct nfsd *, struct mbuf *, struct mbuf *,
+				    caddr_t, struct ucred *, struct mbuf *,
+				    struct mbuf **)) = {
 	nfsrv_null,
 	nfsrv_getattr,
 	nfsrv_setattr,
@@ -1770,7 +1764,7 @@ nfsrv_rcv(so, arg, waitflag)
 		/*
 		 * Now try and parse record(s) out of the raw stream data.
 		 */
-		if (error = nfsrv_getstream(slp, waitflag)) {
+		if ((error = nfsrv_getstream(slp, waitflag)) != 0) {
 			if (error == EPERM)
 				slp->ns_flag |= SLP_DISCONN;
 			else
@@ -1820,6 +1814,7 @@ dorecs:
  * stream socket. The "waitflag" argument indicates whether or not it
  * can sleep.
  */
+int
 nfsrv_getstream(slp, waitflag)
 	register struct nfssvc_sock *slp;
 	int waitflag;
@@ -1827,7 +1822,7 @@ nfsrv_getstream(slp, waitflag)
 	register struct mbuf *m;
 	register char *cp1, *cp2;
 	register int len;
-	struct mbuf *om, *m2, *recm;
+	struct mbuf *om, *m2, *recm = NULL;
 	u_long recmark;
 
 	if (slp->ns_flag & SLP_GETSTREAM)
@@ -1924,6 +1919,7 @@ nfsrv_getstream(slp, waitflag)
 /*
  * Parse an RPC header.
  */
+int
 nfsrv_dorec(slp, nd)
 	register struct nfssvc_sock *slp;
 	register struct nfsd *nd;
@@ -1934,7 +1930,7 @@ nfsrv_dorec(slp, nd)
 	if ((slp->ns_flag & SLP_VALID) == 0 ||
 	    (m = slp->ns_rec) == (struct mbuf *)0)
 		return (ENOBUFS);
-	if (slp->ns_rec = m->m_nextpkt)
+	if ((slp->ns_rec = m->m_nextpkt) != NULL)
 		m->m_nextpkt = (struct mbuf *)0;
 	else
 		slp->ns_recend = (struct mbuf *)0;
@@ -1947,7 +1943,7 @@ nfsrv_dorec(slp, nd)
 		nd->nd_md = nd->nd_mrep = m;
 	}
 	nd->nd_dpos = mtod(nd->nd_md, caddr_t);
-	if (error = nfs_getreq(nd, TRUE)) {
+	if ((error = nfs_getreq(nd, TRUE)) != 0) {
 		m_freem(nd->nd_nam);
 		return (error);
 	}

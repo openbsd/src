@@ -1,4 +1,5 @@
-/*	$NetBSD: nfsmount.h,v 1.8 1995/03/26 20:37:31 jtc Exp $	*/
+/*	$OpenBSD: nfsmount.h,v 1.2 1996/02/29 09:25:03 niklas Exp $	*/
+/*	$NetBSD: nfsmount.h,v 1.9 1996/02/09 21:48:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -78,51 +79,26 @@ struct	nfsmount {
  * Convert mount ptr to nfsmount ptr.
  */
 #define VFSTONFS(mp)	((struct nfsmount *)((mp)->mnt_data))
-#endif /* _KERNEL */
 
 /*
  * Prototypes for NFS mount operations
  */
-int	nfs_mount __P((
-		struct mount *mp,
-		char *path,
-		caddr_t data,
-		struct nameidata *ndp,
-		struct proc *p));
-int	nfs_start __P((
-		struct mount *mp,
-		int flags,
-		struct proc *p));
-int	nfs_unmount __P((
-		struct mount *mp,
-		int mntflags,
-		struct proc *p));
-int	nfs_root __P((
-		struct mount *mp,
-		struct vnode **vpp));
-int	nfs_quotactl __P((
-		struct mount *mp,
-		int cmds,
-		uid_t uid,
-		caddr_t arg,
-		struct proc *p));
-int	nfs_statfs __P((
-		struct mount *mp,
-		struct statfs *sbp,
-		struct proc *p));
-int	nfs_sync __P((
-		struct mount *mp,
-		int waitfor,
-		struct ucred *cred,
-		struct proc *p));
-int	nfs_fhtovp __P((
-		struct mount *mp,
-		struct fid *fhp,
-		struct mbuf *nam,
-		struct vnode **vpp,
-		int *exflagsp,
-		struct ucred **credanonp));
-int	nfs_vptofh __P((
-		struct vnode *vp,
-		struct fid *fhp));
-int	nfs_init __P(());
+int nfs_statfs __P((struct mount *, struct statfs *, struct proc *));
+int nfs_mountroot __P((void));
+void nfs_decode_args __P((struct nfsmount *, struct nfs_args *));
+int nfs_mount __P((struct mount *, char *, caddr_t, struct nameidata *,
+		   struct proc *));
+int mountnfs __P((struct nfs_args *, struct mount *, struct mbuf *, char *,
+		  char *, struct vnode **));
+int nfs_unmount __P((struct mount *, int, struct proc *));
+int nfs_root __P((struct mount *, struct vnode **));
+int nfs_sync __P((struct mount *, int, struct ucred *, struct proc *));
+int nfs_vget __P((struct mount *, ino_t, struct vnode **));
+int nfs_fhtovp __P((struct mount *, struct fid *, struct mbuf *,
+		    struct vnode **, int *, struct ucred **));
+int nfs_vptofh __P((struct vnode *, struct fid *));
+int nfs_start __P((struct mount *, int, struct proc *));
+int nfs_quotactl __P((struct mount *, int, uid_t, caddr_t, struct proc *));
+void nfs_init __P((void));
+
+#endif /* _KERNEL */

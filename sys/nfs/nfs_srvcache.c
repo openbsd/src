@@ -1,4 +1,5 @@
-/*	$NetBSD: nfs_srvcache.c,v 1.10 1994/12/13 17:17:03 mycroft Exp $	*/
+/*	$OpenBSD: nfs_srvcache.c,v 1.2 1996/02/29 09:24:55 niklas Exp $	*/
+/*	$NetBSD: nfs_srvcache.c,v 1.11 1996/02/09 21:48:32 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -64,6 +65,7 @@
 #include <nfs/nfs.h>
 #include <nfs/nfsrvcache.h>
 #include <nfs/nqnfs.h>
+#include <nfs/nfs_var.h>
 
 long numnfsrvcache, desirednfsrvcache = NFSRVCACHESIZ;
 
@@ -138,6 +140,7 @@ static int repliesstatus[NFS_NPROCS] = {
 /*
  * Initialize the server request cache list
  */
+void
 nfsrv_initcache()
 {
 
@@ -159,6 +162,7 @@ nfsrv_initcache()
  *   return DOIT
  * Update/add new request at end of lru list
  */
+int
 nfsrv_getcache(nam, nd, repp)
 	struct mbuf *nam;
 	register struct nfsd *nd;

@@ -1,4 +1,5 @@
-/*	$NetBSD: nfs_bio.c,v 1.21 1995/07/24 21:20:46 cgd Exp $	*/
+/*	$OpenBSD: nfs_bio.c,v 1.3 1996/02/29 09:24:48 niklas Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.23 1996/02/09 21:48:19 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -47,6 +48,8 @@
 #include <sys/trace.h>
 #include <sys/mount.h>
 #include <sys/kernel.h>
+#include <sys/namei.h>
+#include <sys/signalvar.h>
 
 #include <vm/vm.h>
 
@@ -56,8 +59,8 @@
 #include <nfs/nfs.h>
 #include <nfs/nfsmount.h>
 #include <nfs/nqnfs.h>
+#include <nfs/nfs_var.h>
 
-struct buf *incore(), *nfs_getcacheblk();
 extern struct proc *nfs_iodwant[NFS_MAXASYNCDAEMON];
 extern int nfs_numasync;
 
@@ -65,6 +68,7 @@ extern int nfs_numasync;
  * Vnode op for read using bio
  * Any similarity to readip() is purely coincidental
  */
+int
 nfs_bioread(vp, uio, ioflag, cred)
 	register struct vnode *vp;
 	register struct uio *uio;
@@ -73,13 +77,13 @@ nfs_bioread(vp, uio, ioflag, cred)
 {
 	register struct nfsnode *np = VTONFS(vp);
 	register int biosize, diff;
-	struct buf *bp, *rabp;
+	struct buf *bp = NULL, *rabp;
 	struct vattr vattr;
 	struct proc *p;
 	struct nfsmount *nmp;
 	daddr_t lbn, bn, rabn;
 	caddr_t baddr;
-	int got_buf, nra, error = 0, n, on, not_readin;
+	int got_buf = 0, nra, error = 0, n = 0, on = 0, not_readin;
 
 #ifdef lint
 	ioflag = ioflag;
@@ -118,22 +122,25 @@ nfs_bioread(vp, uio, ioflag, cred)
 		if (np->n_flag & NMODIFIED) {
 			if ((nmp->nm_flag & NFSMNT_MYWRITE) == 0 ||
 			     vp->v_type != VREG) {
-				if (error = nfs_vinvalbuf(vp, V_SAVE, cred, p, 1))
+				error = nfs_vinvalbuf(vp, V_SAVE, cred, p, 1);
+				if (error)
 					return (error);
 			}
 			np->n_attrstamp = 0;
 			np->n_direofoffset = 0;
-			if (error = VOP_GETATTR(vp, &vattr, cred, p))
+			error = VOP_GETATTR(vp, &vattr, cred, p);
+			if (error)
 				return (error);
-			np->n_mtime = vattr.va_mtime.ts_sec;
+			np->n_mtime = vattr.va_mtime.tv_sec;
 		} else {
-			if (error = VOP_GETATTR(vp, &vattr, cred, p))
+			if ((error = VOP_GETATTR(vp, &vattr, cred, p)) != 0)
 				return (error);
-			if (np->n_mtime != vattr.va_mtime.ts_sec) {
+			if (np->n_mtime != vattr.va_mtime.tv_sec) {
 				np->n_direofoffset = 0;
-				if (error = nfs_vinvalbuf(vp, V_SAVE, cred, p, 1))
+				error = nfs_vinvalbuf(vp, V_SAVE, cred, p, 1);
+				if (error)
 					return (error);
-				np->n_mtime = vattr.va_mtime.ts_sec;
+				np->n_mtime = vattr.va_mtime.tv_sec;
 			}
 		}
 	}
@@ -156,14 +163,16 @@ nfs_bioread(vp, uio, ioflag, cred)
 			    np->n_direofoffset = 0;
 			    cache_purge(vp);
 			}
-			if (error = nfs_vinvalbuf(vp, V_SAVE, cred, p, 1))
+			error = nfs_vinvalbuf(vp, V_SAVE, cred, p, 1);
+			if (error)
 			    return (error);
 			np->n_brev = np->n_lrev;
 		    }
 		} else if (vp->v_type == VDIR && (np->n_flag & NMODIFIED)) {
 		    np->n_direofoffset = 0;
 		    cache_purge(vp);
-		    if (error = nfs_vinvalbuf(vp, V_SAVE, cred, p, 1))
+		    error = nfs_vinvalbuf(vp, V_SAVE, cred, p, 1);
+		    if (error)
 			return (error);
 		}
 	    }
@@ -181,6 +190,13 @@ nfs_bioread(vp, uio, ioflag, cred)
 			break;
 		case VDIR:
 			error = nfs_readdirrpc(vp, uio, cred);
+			break;
+		case VCHR:
+		case VSOCK:
+		case VFIFO:
+		case VBAD:
+		case VNON:
+		case VBLK:
 			break;
 		};
 		return (error);
@@ -237,7 +253,8 @@ again:
 			if ((bp->b_flags & (B_DONE | B_DELWRI)) == 0) {
 				bp->b_flags |= B_READ;
 				not_readin = 0;
-				if (error = nfs_doio(bp, cred, p)) {
+				error = nfs_doio(bp, cred, p);
+				if (error) {
 				    brelse(bp);
 				    return (error);
 				}
@@ -278,7 +295,7 @@ again:
 			return (EINTR);
 		if ((bp->b_flags & B_DONE) == 0) {
 			bp->b_flags |= B_READ;
-			if (error = nfs_doio(bp, cred, p)) {
+			if ((error = nfs_doio(bp, cred, p)) != 0) {
 				brelse(bp);
 				return (error);
 			}
@@ -297,7 +314,7 @@ again:
 			return (EINTR);
 		if ((bp->b_flags & B_DONE) == 0) {
 			bp->b_flags |= B_READ;
-			if (error = nfs_doio(bp, cred, p)) {
+			if ((error = nfs_doio(bp, cred, p)) != 0) {
 				brelse(bp);
 				return (error);
 			}
@@ -328,6 +345,13 @@ again:
 		n = min(uio->uio_resid, NFS_DIRBLKSIZ - bp->b_resid);
 		got_buf = 1;
 		break;
+	    case VBAD:
+	    case VSOCK:
+	    case VCHR:
+	    case VBLK:
+	    case VNON:
+	    case VFIFO:
+		break;
 	    };
 
 	    if (n > 0) {
@@ -342,6 +366,14 @@ again:
 	    case VDIR:
 		uio->uio_offset = bp->b_blkno;
 		break;
+	    case VREG:
+	    case VBAD:
+	    case VFIFO:
+	    case VSOCK:
+	    case VCHR:
+	    case VBLK:
+	    case VNON:
+		break;
 	    };
 	    if (got_buf)
 		brelse(bp);
@@ -352,14 +384,16 @@ again:
 /*
  * Vnode op for write using bio
  */
-nfs_write(ap)
+int
+nfs_write(v)
+	void *v;
+{
 	struct vop_write_args /* {
-		struct vnode *a_vp;
+		struct vnode a_vp;
 		struct uio *a_uio;
 		int  a_ioflag;
 		struct ucred *a_cred;
-	} */ *ap;
-{
+	} */ *ap = v;
 	register int biosize;
 	register struct uio *uio = ap->a_uio;
 	struct proc *p = uio->uio_procp;
@@ -388,12 +422,14 @@ nfs_write(ap)
 	if (ioflag & (IO_APPEND | IO_SYNC)) {
 		if (np->n_flag & NMODIFIED) {
 			np->n_attrstamp = 0;
-			if (error = nfs_vinvalbuf(vp, V_SAVE, cred, p, 1))
+			error = nfs_vinvalbuf(vp, V_SAVE, cred, p, 1);
+			if (error)
 				return (error);
 		}
 		if (ioflag & IO_APPEND) {
 			np->n_attrstamp = 0;
-			if (error = VOP_GETATTR(vp, &vattr, cred, p))
+			error = VOP_GETATTR(vp, &vattr, cred, p);
+			if (error)
 				return (error);
 			uio->uio_offset = np->n_size;
 		}
@@ -438,7 +474,8 @@ nfs_write(ap)
 				return (error);
 			if (np->n_lrev != np->n_brev ||
 			    (np->n_flag & NQNFSNONCACHE)) {
-				if (error = nfs_vinvalbuf(vp, V_SAVE, cred, p, 1))
+				error = nfs_vinvalbuf(vp, V_SAVE, cred, p, 1);
+				if (error)
 					return (error);
 				np->n_brev = np->n_lrev;
 			}
@@ -493,13 +530,15 @@ again:
 			if (np->n_lrev != np->n_brev ||
 			    (np->n_flag & NQNFSNONCACHE)) {
 				brelse(bp);
-				if (error = nfs_vinvalbuf(vp, V_SAVE, cred, p, 1))
+				error = nfs_vinvalbuf(vp, V_SAVE, cred, p, 1);
+				if (error)
 					return (error);
 				np->n_brev = np->n_lrev;
 				goto again;
 			}
 		}
-		if (error = uiomove((char *)bp->b_data + on, n, uio)) {
+		error = uiomove((char *)bp->b_data + on, n, uio);
+		if (error) {
 			bp->b_flags |= B_ERROR;
 			brelse(bp);
 			return (error);
@@ -532,7 +571,7 @@ again:
 		 */
 		if ((np->n_flag & NQNFSNONCACHE) || (ioflag & IO_SYNC)) {
 			bp->b_proc = p;
-			if (error = VOP_BWRITE(bp))
+			if ((error = VOP_BWRITE(bp)) != 0)
 				return (error);
 		} else if ((n + on) == biosize &&
 			(nmp->nm_flag & NFSMNT_NQNFS) == 0) {
@@ -577,6 +616,7 @@ nfs_getcacheblk(vp, bn, size, p)
  * Flush and invalidate all dirty buffers. If another process is already
  * doing the flush, just wait for completion.
  */
+int
 nfs_vinvalbuf(vp, flags, cred, p, intrflg)
 	struct vnode *vp;
 	int flags;
@@ -637,6 +677,7 @@ nfs_vinvalbuf(vp, flags, cred, p, intrflg)
  * This is mainly to avoid queueing async I/O requests when the nfsiods
  * are all hung on a dead server.
  */
+int
 nfs_asyncio(bp, cred)
 	register struct buf *bp;
 	struct ucred *cred;
@@ -674,14 +715,14 @@ nfs_asyncio(bp, cred)
 int
 nfs_doio(bp, cr, p)
 	register struct buf *bp;
-	struct cred *cr;
+	struct ucred *cr;
 	struct proc *p;
 {
 	register struct uio *uiop;
 	register struct vnode *vp;
 	struct nfsnode *np;
 	struct nfsmount *nmp;
-	int error, diff, len;
+	int error = 0, diff, len;
 	struct uio uio;
 	struct iovec io;
 
@@ -753,7 +794,7 @@ nfs_doio(bp, cr, p)
 			  NQNFS_CKINVALID(vp, np, NQL_READ) &&
 			  np->n_lrev != np->n_brev) ||
 			 (!(nmp->nm_flag & NFSMNT_NQNFS) &&
-			  np->n_mtime != np->n_vattr.va_mtime.ts_sec))) {
+			  np->n_mtime != np->n_vattr.va_mtime.tv_sec))) {
 			uprintf("Process killed due to text file modification\n");
 			psignal(p, SIGKILL);
 			p->p_holdcnt++;
@@ -776,6 +817,12 @@ nfs_doio(bp, cr, p)
 		 */
 		bp->b_blkno = uiop->uio_offset;
 		break;
+	    case VNON:
+	    case VBLK:
+	    case VCHR:
+	    case VFIFO:
+	    case VBAD:
+	    case VSOCK:
 	    };
 	    if (error) {
 		bp->b_flags |= B_ERROR;

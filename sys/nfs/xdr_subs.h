@@ -1,4 +1,5 @@
-/*	$NetBSD: xdr_subs.h,v 1.9 1995/12/19 23:08:30 cgd Exp $	*/
+/*	$OpenBSD: xdr_subs.h,v 1.3 1996/02/29 09:25:04 niklas Exp $	*/
+/*	$NetBSD: xdr_subs.h,v 1.10 1996/02/01 00:41:32 jtc Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -53,24 +54,24 @@
 #define	txdr_unsigned(v)	(htonl((int32_t)(v)))
 
 #define	fxdr_nfstime(f, t) { \
-	(t)->ts_sec = ntohl((f)->nfs_sec); \
+	(t)->tv_sec = ntohl((f)->nfs_sec); \
 	if ((f)->nfs_usec != 0xffffffff) \
-		(t)->ts_nsec = 1000 * ntohl((f)->nfs_usec); \
+		(t)->tv_nsec = 1000 * ntohl((f)->nfs_usec); \
 	else \
-		(t)->ts_nsec = 0; \
+		(t)->tv_nsec = 0; \
 }
 #define	txdr_nfstime(f, t) { \
-	(t)->nfs_sec = htonl((f)->ts_sec); \
-	(t)->nfs_usec = htonl((f)->ts_nsec) / 1000; \
+	(t)->nfs_sec = htonl((f)->tv_sec); \
+	(t)->nfs_usec = htonl((f)->tv_nsec) / 1000; \
 }
 
 #define	fxdr_nqtime(f, t) { \
-	(t)->ts_sec = ntohl((f)->nq_sec); \
-	(t)->ts_nsec = ntohl((f)->nq_nsec); \
+	(t)->tv_sec = ntohl((f)->nq_sec); \
+	(t)->tv_nsec = ntohl((f)->nq_nsec); \
 }
 #define	txdr_nqtime(f, t) { \
-	(t)->nq_sec = htonl((f)->ts_sec); \
-	(t)->nq_nsec = htonl((f)->ts_nsec); \
+	(t)->nq_sec = htonl((f)->tv_sec); \
+	(t)->nq_nsec = htonl((f)->tv_nsec); \
 }
 
 #define	fxdr_hyper(f, t) { \
