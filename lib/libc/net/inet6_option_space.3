@@ -1,4 +1,4 @@
-.\"	$OpenBSD: inet6_option_space.3,v 1.8 2001/06/23 05:57:04 deraadt Exp $
+.\"	$OpenBSD: inet6_option_space.3,v 1.9 2003/01/18 23:53:49 deraadt Exp $
 .\"	$KAME: inet6_option_space.3,v 1.7 2000/05/17 14:32:13 itojun Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993
@@ -63,7 +63,7 @@
 .Sh DESCRIPTION
 .\"
 Building and parsing the Hop-by-Hop and Destination options is
-complicated due to alignment constranints, padding and
+complicated due to alignment constraints, padding and
 ancillary data manipulation.
 RFC2292 defines a set of functions to help the application.
 The function prototypes for
@@ -247,12 +247,10 @@ initialized by
 is the value of the option data length byte for this option.
 This value is required as an argument to allow the function to
 determine if padding must be appended at the end of the option.
-.Po
-The
-.Fn inet6_option_append
+(The
+.Fn inet6_option_append 
 function does not need a data length argument
-since the option data length must already be stored by the caller.
-.Pc
+since the option data length must already be stored by the caller.)
 .Pp
 .Fa multx
 is the value
@@ -287,10 +285,8 @@ and
 .Fa *tptrp
 points to
 the 8-bit option type field
-.Po
-which is followed by the 8-bit option
-data length, followed by the option data
-.Pc .
+(which is followed by the 8-bit option
+data length, followed by the option data).
 If no more options remain
 to be processed, the return value is
 .Li -1
@@ -368,7 +364,7 @@ called for a given ancillary data object,
 .Fa *tptrp
 must be set to
 .Dv NULL .
-.Pa
+.Pp
 This function starts searching for an option of the specified type
 beginning after the value of
 .Fa *tptrp .

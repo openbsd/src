@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ip6.4,v 1.12 2002/09/26 07:55:40 miod Exp $
+.\"	$OpenBSD: ip6.4,v 1.13 2003/01/18 23:53:49 deraadt Exp $
 .\"	$KAME: ip6.4,v 1.12 2000/06/08 21:19:39 itojun Exp $
 .\"
 .\" Copyright (C) 1999 WIDE Project.
@@ -98,7 +98,7 @@ The basic API looks very similar to the API presented in
 .Xr ip 4 .
 Advanced API uses ancillary data and can handle more complex cases.
 .Pp
-To specify some of socket options, certain privilege
+To specify some socket options, a certain level of privilege
 (i.e. root privilege) is required.
 .\"
 .Ss Basic IPv6 sockets API
@@ -106,7 +106,8 @@ To specify some of socket options, certain privilege
 may be used to set the hoplimit field in the
 .Tn IPv6
 header.
-As symbol name suggests, the option controls hoplimit field on unicast packets.
+As the symbol name suggests, the option controls the hoplimit field 
+on unicast packets.
 If -1 is specified, the kernel will use a default value.
 If a value of 0 to 255 is specified, the packet will have the specified
 value as hoplimit.
@@ -142,7 +143,7 @@ Multicast datagrams with a hoplimit of 0 will not be transmitted on any network,
 but may be delivered locally if the sending host belongs to the destination
 group and if multicast loopback has not been disabled on the sending socket
 (see below).
-Multicast datagrams with hoplimit greater than 1 may be forwarded
+Multicast datagrams with a hoplimit greater than 1 may be forwarded
 to other networks if a multicast router is attached to the local network.
 .Pp
 For hosts with multiple interfaces, each multicast transmission is
@@ -174,7 +175,7 @@ setsockopt(s, IPPROTO_IPV6, IPV6_MULTICAST_LOOP, &loop, sizeof(loop));
 .Pp
 This option
 improves performance for applications that may have no more than one
-instance on a single host (such as a router demon), by eliminating
+instance on a single host (such as a router daemon), by eliminating
 the overhead of receiving their own transmissions.
 It should generally not be used by applications for which there
 may be more than one instance on a single host (such as a conferencing
@@ -276,34 +277,34 @@ will be available via
 on ancillary data stream.
 You can pick the structure by checking for an ancillary data item with
 .Li cmsg_level
-equals to
+equal to
 .Dv IPPROTO_IPV6 ,
 and
 .Li cmsg_type
-equals to
+equal to
 .Dv IPV6_PKTINFO .
 .Pp
 If
 .Dv IPV6_HOPLIMIT
-is enabled, hoplimit value on the packet will be made available to the
+is enabled, the hoplimit value on the packet will be made available to the
 userland program.
-Ancillary data stream will contain an integer data item with
+The ancillary data stream will contain an integer data item with
 .Li cmsg_level
-equals to
+equal to
 .Dv IPPROTO_IPV6 ,
 and
 .Li cmsg_type
-equals to
+equal to
 .Dv IPV6_HOPLIMIT .
 .Pp
 .Xr inet6_option_space 3
-and friends will help you parse ancillary data items for
+and friends help parse ancillary data items for
 .Dv IPV6_HOPOPTS
 and
 .Dv IPV6_DSTOPTS .
 Similarly,
 .Xr inet6_rthdr_space 3
-and friends will help you parse ancillary data items for
+and friends help parse ancillary data items for
 .Dv IPV6_RTHDR .
 .Pp
 .Dv IPV6_HOPOPTS
@@ -311,19 +312,19 @@ and
 .Dv IPV6_DSTOPTS
 may appear multiple times on an ancillary data stream
 (note that the behavior is slightly different than the specification).
-Other ancillary data item will appear no more than once.
+Other ancillary data items can appear no more than once.
 .Pp
 For outgoing direction,
-you can pass ancillary data items with normal payload data, using
+ancillary data items with normal payload data can be passed using
 .Xr sendmsg 2 .
 Ancillary data items will be parsed by the kernel, and used to construct
 the IPv6 header and extension headers.
 For the 5
 .Li cmsg_level
-values listed above, ancillary data format is the same as inbound case.
-Additionally, you can specify
+values listed above, the ancillary data format is the same as the inbound case.
+Additionally, the
 .Dv IPV6_NEXTHOP
-data object.
+data object can also be specified.
 The
 .Dv IPV6_NEXTHOP
 ancillary data object specifies the next hop for the
@@ -354,10 +355,11 @@ equivalent to the existing
 .Dv SO_DONTROUTE
 socket option.
 .Pp
-For applications that do not, or unable to use
+For applications that do not, or are unable to use
 .Xr sendmsg 2
 or
 .Xr recvmsg 2 ,
+the
 .Dv IPV6_PKTOPTIONS
 socket option is defined.
 Setting the socket option specifies any of the optional output fields:
@@ -441,13 +443,13 @@ it can be manipulated by
 .Dv IPV6_MULTICAST_IF
 in basic API,
 .Dv IPV6_PKTINFO
-in advanced API, and
+in advanced API, and the
 .Li sin6_scope_id
 field of the socket address passed to
 .Xr sendto 2 .
 .Pp
 When conflicting options are given to the kernel,
-the kernel will get the value in the following preference:
+the kernel will get the value in the following order of preference:
 (1) options specified by using ancillary data,
 (2) options specified by a sticky option of the advanced API,
 (3) options specified by using the basic API, and lastly
@@ -490,9 +492,9 @@ Outgoing packets automatically have an
 .Tn IPv6
 header prepended to them (based on the destination address and the
 protocol number the socket is created with).
-Incoming packets are received without
+Incoming packets are received without an
 .Tn IPv6
-header nor extension headers.
+header or extension headers.
 .Pp
 All data sent via raw sockets MUST be in network byte order and all
 data received via raw sockets will be in network byte order.
@@ -545,15 +547,15 @@ when used as a next-header field).
 .\" socket option was added.
 .Pp
 For ICMPv6 raw sockets,
-the kernel will calculate and insert the ICMPv6 checksum for
+the kernel will calculate and insert the ICMPv6 checksum
 since this checksum is mandatory.
 .Pp
 For other raw IPv6 sockets (that is, for raw IPv6 sockets created
 with a third argument other than IPPROTO_ICMPV6), the application
 must set the new IPV6_CHECKSUM socket option to have the kernel (1)
-compute and store a pseudo header checksum for output,
+compute and store a pseudo-header checksum for output,
 and (2) verify the received
-pseudo header checksum on input,
+pseudo-header checksum on input,
 discarding the packet if the checksum is in error.
 This option prevents applications from having to perform source
 address selection on the packets they send.
@@ -583,12 +585,12 @@ A socket operation may fail with one of the following errors returned:
 .It Bq Er EISCONN
 when trying to establish a connection on a socket which already
 has one, or when trying to send a datagram with the destination
-address specified and the socket is already connected;
+address specified and the socket is already connected.
 .It Bq Er ENOTCONN
 when trying to send a datagram, but no destination address is
-specified, and the socket hasn't been connected;
+specified, and the socket hasn't been connected.
 .It Bq Er ENOBUFS
-when the system runs out of memory for an internal data structure;
+when the system runs out of memory for an internal data structure.
 .It Bq Er EADDRNOTAVAIL
 when an attempt is made to create a socket with a network address
 for which no network interface exists.
@@ -652,7 +654,7 @@ is not defined in the RFCs and should be considered implementation dependent.
 .Sh HISTORY
 The implementation is based on KAME stack
 .Po
-which is descendant of WIDE hydrangea IPv6 stack kit
+which is a descendant of WIDE hydrangea IPv6 stack kit
 .Pc .
 .Pp
 Part of the document was shamelessly copied from RFC2553 and RFC2292.

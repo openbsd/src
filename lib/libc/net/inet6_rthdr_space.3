@@ -1,4 +1,4 @@
-.\"	$OpenBSD: inet6_rthdr_space.3,v 1.8 2001/06/23 05:57:04 deraadt Exp $
+.\"	$OpenBSD: inet6_rthdr_space.3,v 1.9 2003/01/18 23:53:49 deraadt Exp $
 .\"	$KAME: inet6_rthdr_space.3,v 1.8 2000/05/17 14:30:15 itojun Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993
@@ -234,10 +234,8 @@ The return value of the function is -1 upon an error.
 .Ss inet6_rthdr_getaddr
 This function returns a pointer to the IPv6 address specified by
 .Fa index
-.Po
-which must have a value between 1 and the value returned by
-.Fn inet6_rthdr_segments
-.Pc
+(which must have a value between 1 and the value returned by
+.Fn inet6_rthdr_segments )
 in the Routing header described by
 .Fa cmsg .
 An
@@ -251,11 +249,9 @@ Upon an error the return value of the function is
 .Ss inet6_rthdr_getflags
 This function returns the flags value specified by
 .Fa index
-.Po
-which must
+(which must
 have a value between 0 and the value returned by
-.Fn inet6_rthdr_segments
-.Pc
+.Fn inet6_rthdr_segments )
 in the Routing header described by
 .Fa cmsg .
 For an IPv6 Type 0 Routing header the return value will be either

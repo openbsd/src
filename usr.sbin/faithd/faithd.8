@@ -1,4 +1,4 @@
-.\"	$OpenBSD: faithd.8,v 1.22 2002/05/09 14:26:41 itojun Exp $
+.\"	$OpenBSD: faithd.8,v 1.23 2003/01/18 23:53:49 deraadt Exp $
 .\"	$KAME: faithd.8,v 1.36 2002/05/09 13:59:16 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -43,7 +43,7 @@
 .\".Nm ""
 .Sh DESCRIPTION
 .Nm
-provides IPv6-to-IPv4 TCP relay.
+provides an IPv6-to-IPv4 TCP relay.
 .Nm
 must be used on an IPv4/v6 dual stack router.
 .Pp
@@ -57,9 +57,9 @@ will relay the
 .Tn TCPv6
 traffic to
 .Tn TCPv4 .
-Destination for relayed
+The destination for the relayed
 .Tn TCPv4
-connection will be determined by the last 4 octets of the original
+connection is determined by the last 4 octets of the original
 .Tn IPv6
 destination.
 For example, if
@@ -70,17 +70,17 @@ and the
 .Tn TCPv6
 destination address is
 .Li 3ffe:0501:4819:ffff::0a01:0101 ,
-the traffic will be relayed to IPv4 destination
+the traffic is relayed to IPv4 destination
 .Li 10.1.1.1 .
 .Pp
-To use
+To use the
 .Nm
 translation service,
-an IPv6 address prefix must be reserved for mapping IPv4 addresses into.
-Kernel must be properly configured to route all the TCP connection
+an IPv6 address prefix must be reserved for mapping IPv4 addresses onto.
+The kernel must be properly configured to route all the TCP connections
 toward the reserved IPv6 address prefix into the
 .Xr faith 4
-pseudo interface, by using
+pseudo interface, by using the
 .Xr route 8
 command.
 Also,
@@ -91,9 +91,9 @@ to
 .Dv 1 .
 .Pp
 The router must be configured to capture all the TCP traffic
-toward reserved
+for a given reserved
 .Tn IPv6
-address prefix, by using
+address prefix, by using the
 .Xr route 8
 and
 .Xr sysctl 8
@@ -101,7 +101,7 @@ commands.
 .Pp
 .Nm
 needs a special name-to-address translation logic, so that
-hostnames gets resolved into special
+hostnames get resolved into a special
 .Tn IPv6
 address prefix.
 For small-scale installation, use
@@ -142,19 +142,19 @@ it is not possible to run local TCP daemons for port
 on the router, using
 .Xr inetd 8
 or other standard mechanisms.
-By specifying
+Local daemons can be run on the router
+by specifying a
 .Ar serverpath
 to
-.Nm Ns ,
-you can run local daemons on the router.
+.Nm Ns .
 .Nm
-will invoke local daemon at
+will invoke a local daemon at
 .Ar serverpath
-if the destination address is local interface address,
+if the destination address is a local interface address,
 and will perform translation to IPv4 TCP in other cases.
-You can also specify
-.Ar serverargs
-for the arguments for the local daemon.
+.Ar Serverargs
+can also be specified as
+arguments for the local daemon.
 .Pp
 The following options are available:
 .Bl -tag -width indent
@@ -165,8 +165,8 @@ Debugging information will be generated using
 Specify a configuration file for access control.
 See below.
 .It Fl p
-Use privileged TCP port number as source port,
-for IPv4 TCP connection toward final destination.
+Use the privileged TCP port number as a source port,
+for an IPv4 TCP connection toward the final destination.
 For relaying
 .Xr ftp 1
 this flag is not necessary as special program code is supplied.
@@ -191,7 +191,7 @@ to avoid stale sessions from chewing up resources.
 This may be inappropriate for some of the services
 .Pq should this be configurable? .
 .Ss Access control
-To prevent malicious accesses,
+To prevent malicious access,
 .Nm
 implements a simple address-based access control.
 With
@@ -204,7 +204,6 @@ specified by
 .Pc ,
 .Nm
 will avoid relaying unwanted traffic.
-The
 .Pa faithd.conf
 contains directives with the following format:
 .Bl -bullet
@@ -233,8 +232,8 @@ permit the connection.
 The directives are evaluated in sequence,
 and the first matching entry will be effective.
 If there is no match
-.Pq if we reach the end of the ruleset
-the traffic will be denied.
+.Pq the end of the ruleset has been reached ,
+the traffic is denied.
 .\".Pp
 .\"With inetd mode,
 .\"traffic may be filtered by using access control functionality in
@@ -251,8 +250,9 @@ on error.
 .Sh EXAMPLES
 Before invoking
 .Nm Ns ,
+the
 .Xr faith 4
-interface has to be configured properly.
+interface has to be configured properly:
 .Bd -literal -offset
 # sysctl -w net.inet6.ip6.accept_rtadv=0
 # sysctl -w net.inet6.ip6.forwarding=1
@@ -262,6 +262,7 @@ interface has to be configured properly.
 # route change -inet6 3ffe:501:4819:ffff:: -prefixlen 96 -ifp faith0
 .Ed
 .\".Ss Daemon mode samples
+.Pp
 To translate
 .Li telnet
 service, and provide no local telnet service, invoke
@@ -271,24 +272,23 @@ as follows:
 # faithd telnet
 .Ed
 .Pp
-If you would like to provide local telnet service via
+Provide local telnet service via
 .Xr telnetd 8
-on
-.Pa /usr/libexec/telnetd ,
-use the following command line:
+using
+.Pa /usr/libexec/telnetd .
 .Bd -literal -offset
 # faithd telnet /usr/libexec/telnetd telnetd
 .Ed
 .Pp
-If you would like to pass extra arguments to the local daemon:
+Pass extra arguments to the local daemon:
 .Bd -literal -offset
 # faithd ftp /usr/libexec/ftpd ftpd -l
 .Ed
 .Pp
 Here are some other examples.
-You may need
+If the service checks the source port range,
 .Fl p
-if the service checks the source port range.
+may be required.
 .Bd -literal -offset
 # faithd ssh
 # faithd telnet /usr/libexec/telnetd telnetd
@@ -334,16 +334,16 @@ Administrators are advised to limit accesses to
 .Nm
 using
 .Pa faithd.conf ,
-or by using IPv6 packet filters.
-It is to protect
+or by using IPv6 packet filters,
+to protect the
 .Nm
 service from malicious parties and avoid theft of service/bandwidth.
-IPv6 destination address can be limited by
-carefully configuring routing entries that points to
+IPv6 destination addresses can be limited by
+carefully configuring routing entries that point to
 .Xr faith 4 ,
 using
 .Xr route 8 .
-IPv6 source address needs to be filtered by using packet filters.
+IPv6 source addresses need to be filtered  using a packet filter.
 Documents listed in
 .Sx SEE ALSO
 have more discussions on this topic.

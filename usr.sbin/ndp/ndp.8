@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ndp.8,v 1.17 2002/07/17 13:49:03 itojun Exp $
+.\"	$OpenBSD: ndp.8,v 1.18 2003/01/18 23:53:49 deraadt Exp $
 .\"	$KAME: ndp.8,v 1.28 2002/07/17 08:46:33 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -159,7 +159,7 @@ If additional arguments
 are given,
 .Nm
 sets or clears the specified flags for the interface.
-Each flag should be separated by white spaces or tab characters.
+Each flag should be separated by whitespace or tab characters.
 Possible flags are as follows.
 All of the flags can begin with the
 special character
@@ -219,7 +219,7 @@ The entry will be permanent unless the word
 is given in the command.
 If the word
 .Ic proxy
-is given, this system will act as an proxy NDP server,
+is given, this system will act as a proxy NDP server,
 responding to requests for
 .Ar hostname
 even though the host address is not its own.
@@ -234,7 +234,7 @@ Most useful when used with
 .Sh RETURN VALUES
 The
 .Nm
-command will exit with 0 on success, and non-zero on errors.
+command exits with 0 on success, and non-zero on errors.
 .\"
 .Sh SEE ALSO
 .Xr arp 8
