@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.102 2004/11/11 11:36:26 espie Exp $
+# $OpenBSD: pkg_add,v 1.103 2004/11/11 12:13:57 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -83,7 +83,7 @@ sub can_install($$)
 
 	require OpenBSD::Update;
 
-	my $plist = OpenBSD::Update::can_do($l[0], $pkgname, $state);
+	my $plist = OpenBSD::Update::can_do($l[0], $pkgname, $state, \%forced);
 	if ($plist) {
 		$plist->{dir} = installed_info($l[0]);
 		return $plist;
@@ -297,37 +297,6 @@ sub check_lib_specs
 		}
 	}
 	return 1;
-}
-
-sub collision_report($)
-{
-	my $list = shift;
-	my %todo = map {($_, 1)} @$list;
-	my $bypkg = {};
-	
-
-	for my $pkg (installed_packages()) {
-		my $plist = OpenBSD::PackingList->from_installation($pkg, 
-		    \&OpenBSD::PackingList::FilesOnly);
-		for my $item (@{$plist->{items}}) {
-			next unless $item->IsFile();
-			my $name = $item->fullname();
-			if (defined $todo{$name}) {
-				$bypkg->{$pkg} = [] unless defined $bypkg->{$pkg};
-				push(@{$bypkg->{$pkg}}, $name);
-				delete $todo{$name};
-			}
-		}
-	}
-	print "Collision: the following files already exist\n";
-	for my $pkg (sort keys %$bypkg) {
-	    for my $item (sort @{$bypkg->{$pkg}}) {
-	    	print "\t$item ($pkg)\n";
-	    }
-	}
-	for my $item (sort keys %todo) {
-	    print "\t$item\n";
-	}
 }
 
 sub do_script
