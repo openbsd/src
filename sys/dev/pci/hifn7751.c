@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751.c,v 1.13 2000/03/17 21:59:07 jason Exp $	*/
+/*	$OpenBSD: hifn7751.c,v 1.14 2000/03/18 02:41:45 jason Exp $	*/
 
 /*
  * Invertex AEON / Hi/fn 7751 driver
@@ -495,6 +495,9 @@ hifn_sessions(sc)
 	}
 	else
 		sc->sc_maxses = sc->sc_ramsize / 16384;
+
+	if (sc->sc_maxses > 2048)
+		sc->sc_maxses = 2048;
 }
 
 /*
