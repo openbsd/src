@@ -1,4 +1,4 @@
-.\"	$OpenBSD: de.4,v 1.15 2003/07/09 13:26:20 jmc Exp $
+.\"	$OpenBSD: de.4,v 1.16 2004/03/20 23:06:07 miod Exp $
 .\"
 .\" Copyright (c) 1997 David E. O'Brien
 .\"
@@ -52,23 +52,23 @@ This driver may support other cards based on the 21040 and 21041 Ethernet
 controllers, or the 21140[A], 21141, 21142, and 21143 Fast Ethernet
 controllers.
 .Pp
-The following media types and options (as given to
-.Xr ifconfig 8 )
-are supported:
-.Bl -tag -width xxx -offset indent
-.It Cm media No autoselect
+The
+.Nm
+driver supports the following media types:
+.Bl -tag -width full-duplex -offset indent
+.It autoselect
 Enable autoselection of the media type and options.
-.It Cm media No 10baseT
+.It 10baseT
 Set 10Mbps operation on the 10baseT port.
-.It Cm media No 10base2
+.It 10base2
 Set 10Mbps operation on the BNC port.
-.It Cm media No 10base5
+.It 10base5
 Set 10Mbps operation on the AUI port.
-.It Cm media No 100baseTX
+.It 100baseTX
 Set 100Mbps (Fast Ethernet) operation.
-.It Cm media No 100baseFX
+.It 100baseFX
 Set 100Mbps operation.
-.It Cm media No 100baseT4
+.It 100baseT4
 Set 100Mbps operation (4-pair cat-3 cable).
 .El
 .Pp
@@ -76,7 +76,7 @@ The
 .Nm
 driver supports the following media options:
 .Pp
-.Bl -tag -width xxx -offset indent -compact
+.Bl -tag -width full-duplex -offset indent -compact
 .It full-duplex
 Set full duplex operation for UTP port.
 .El
@@ -91,12 +91,6 @@ For example,
 Note that the media types available depend on the particular card in use.
 Some cards are explicitly programmed to a particular media type by a
 setup utility and are not changeable.
-.Pp
-Use the
-.Xr ifconfig 8
-command and in particular the
-.Fl m
-flag to list the supported media types for your particular card.
 .Pp
 The old
 .Dq ifconfig linkN
@@ -132,3 +126,25 @@ This manual page was written by David E. O'Brien.
 .Sh CAVEATS
 Since the 21040 is available on both EISA and PCI boards, one must be careful
 in how one defines the 21040 in the kernel config file.
+.Pp
+On the alpha platform, disk space requirements on the installation media
+cause the
+.Nm
+driver to be preferred to the
+.Nm dc
+driver.
+However, the
+.Nm dc
+will perform better on some hardware; if this is the case, it is advised to
+rename the
+.Pa /etc/hostname.de*
+files to
+.Pa /etc/hostname.dc* ,
+and disable the
+.Nm
+driver in the kernel, so that the
+.Nm dc
+driver will be used.
+Refer to
+.Xr boot_config 8
+for details on how to disable drivers in the kernel.
