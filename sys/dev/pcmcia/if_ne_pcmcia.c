@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ne_pcmcia.c,v 1.29 2000/05/30 14:36:41 fgsch Exp $	*/
+/*	$OpenBSD: if_ne_pcmcia.c,v 1.30 2000/06/26 06:22:00 aaron Exp $	*/
 /*	$NetBSD: if_ne_pcmcia.c,v 1.17 1998/08/15 19:00:04 thorpej Exp $	*/
 
 /*
@@ -160,6 +160,10 @@ struct ne2000dev {
     { PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
       PCMCIA_CIS_NDC_ND5100_E,
       0, -1, { 0x00, 0x80, 0xc6 } },
+
+    { PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
+      PCMCIA_CIS_LINKSYS_COMBO_ECARD_2,
+      0, -1, { 0x00, 0xe0, 0x98 } },
 
     /*
      * You have to add new entries which contains
