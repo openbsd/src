@@ -1,4 +1,4 @@
-/*	$OpenBSD: getlog.c,v 1.10 2004/12/07 17:10:56 tedu Exp $	*/
+/*	$OpenBSD: getlog.c,v 1.11 2004/12/14 20:19:37 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -196,7 +196,7 @@ cvs_getlog_file(CVSFILE *cf, void *arg)
 	}
 
 	snprintf(fpath, sizeof(fpath), "%s/%s/%s%s",
-	    root->cr_dir, repo, fpath, RCS_FILE_EXT);
+	    root->cr_dir, repo, CVS_FILE_NAME(cf), RCS_FILE_EXT);
 
 	rf = rcs_open(fpath, RCS_MODE_READ);
 	if (rf == NULL) {
