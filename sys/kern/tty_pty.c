@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_pty.c,v 1.5 1997/02/24 14:20:00 niklas Exp $	*/
+/*	$OpenBSD: tty_pty.c,v 1.6 1997/11/13 03:11:17 millert Exp $	*/
 /*	$NetBSD: tty_pty.c,v 1.33.4.1 1996/06/02 09:08:11 mrg Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)tty_pty.c	8.2 (Berkeley) 9/23/93
+ *	@(#)tty_pty.c	8.4 (Berkeley) 2/20/95
  */
 
 /*
@@ -603,7 +603,7 @@ ptyioctl(dev, cmd, data, flag, p)
 			}
 			tp->t_lflag |= EXTPROC;
 		} else {
-			if ((tp->t_state & EXTPROC) &&
+			if ((tp->t_lflag & EXTPROC) &&
 			    (pti->pt_flags & PF_PKT)) {
 				pti->pt_send |= TIOCPKT_IOCTL;
 				ptcwakeup(tp, FREAD);
