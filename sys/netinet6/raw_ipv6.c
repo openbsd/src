@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ipv6.c,v 1.14 2000/02/28 11:55:23 itojun Exp $	*/
+/*	$OpenBSD: raw_ipv6.c,v 1.15 2000/02/28 16:40:39 itojun Exp $	*/
 
 /*
 %%% copyright-nrl-95
@@ -44,7 +44,7 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
  * SUCH DAMAGE.
  *
  *	@(#)raw_ip.c	8.7 (Berkeley) 5/15/95
- *	$Id: raw_ipv6.c,v 1.14 2000/02/28 11:55:23 itojun Exp $
+ *	$Id: raw_ipv6.c,v 1.15 2000/02/28 16:40:39 itojun Exp $
  */
 
 #include <sys/param.h>
@@ -71,6 +71,7 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 #include <netinet/ip6.h>
 #include <netinet6/ip6_var.h>
 #include <netinet/icmp6.h>
+#include <netinet6/ip6protosw.h>
 
 #undef IPSEC
 
@@ -282,7 +283,7 @@ rip6_input(mp, offp, proto)
     if (!IN6_IS_ADDR_UNSPECIFIED(&inp->inp_faddr6) && 
 	!IN6_ARE_ADDR_EQUAL(&inp->inp_faddr6, &ip6->ip6_src))
       continue;
-    if (inp->inp_icmp6filt && 
+    if (icmp6type >= 0 && inp->inp_icmp6filt && 
 	ICMP6_FILTER_WILLBLOCK(icmp6type, inp->inp_icmp6filt))
       continue;
 
@@ -334,6 +335,67 @@ ret:
     m_freem(m);
 
   return IPPROTO_DONE;
+}
+
+void
+rip6_ctlinput(cmd, sa, d)
+	int cmd;
+	struct sockaddr *sa;
+	void *d;
+{
+	struct sockaddr_in6 sa6;
+	register struct ip6_hdr *ip6;
+	struct mbuf *m;
+	int off;
+	void (*notify) __P((struct inpcb *, int)) = in_rtchange;
+
+	if (sa->sa_family != AF_INET6 ||
+	    sa->sa_len != sizeof(struct sockaddr_in6))
+		return;
+
+	if ((unsigned)cmd >= PRC_NCMDS)
+		return;
+	if (PRC_IS_REDIRECT(cmd))
+		notify = in_rtchange, d = NULL;
+	else if (cmd == PRC_HOSTDEAD)
+		d = NULL;
+	else if (inet6ctlerrmap[cmd] == 0)
+		return;
+
+	/* if the parameter is from icmp6, decode it. */
+	if (d != NULL) {
+		struct ip6ctlparam *ip6cp = (struct ip6ctlparam *)d;
+		m = ip6cp->ip6c_m;
+		ip6 = ip6cp->ip6c_ip6;
+		off = ip6cp->ip6c_off;
+	} else {
+		m = NULL;
+		ip6 = NULL;
+	}
+
+	/* translate addresses into internal form */
+	sa6 = *(struct sockaddr_in6 *)sa;
+	if (IN6_IS_ADDR_LINKLOCAL(&sa6.sin6_addr) && m && m->m_pkthdr.rcvif)
+		sa6.sin6_addr.s6_addr16[1] = htons(m->m_pkthdr.rcvif->if_index);
+
+	if (ip6) {
+		/*
+		 * XXX: We assume that when IPV6 is non NULL,
+		 * M and OFF are valid.
+		 */
+		struct in6_addr s;
+
+		/* translate addresses into internal form */
+		memcpy(&s, &ip6->ip6_src, sizeof(s));
+		if (IN6_IS_ADDR_LINKLOCAL(&s))
+			s.s6_addr16[1] = htons(m->m_pkthdr.rcvif->if_index);
+
+		(void) in6_pcbnotify(&rawin6pcbtable, (struct sockaddr *)&sa6,
+					0, &s, 0, cmd, notify);
+	} else {
+		(void) in6_pcbnotify(&rawin6pcbtable, (struct sockaddr *)&sa6,
+					0, &zeroin6_addr, 0, cmd, notify);
+	}
 }
 
 /*----------------------------------------------------------------------
@@ -514,6 +576,12 @@ rip6_ctloutput (op, so, level, optname, m)
       };
       break;
     case ICMP6_FILTER:
+      if (level != IPPROTO_ICMPV6) {
+	if (op == PRCO_SETOPT && *m)
+	  (void)m_free(*m);
+	return EINVAL;
+      }
+
       if (op == PRCO_SETOPT || op == PRCO_GETOPT) {
         if (op == PRCO_SETOPT) {
           if (!m || !*m || (*m)->m_len != sizeof(struct icmp6_filter))
