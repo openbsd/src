@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.1 2002/11/29 18:25:22 mickey Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.2 2002/12/03 15:52:34 mickey Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -57,8 +57,6 @@
 #include <net/pfvar.h>
 #include <net/if_pfsync.h>
 
-#define PFSYNCMTU	\
-    (sizeof(struct pfsync_header) + sizeof(struct pf_state) * 4)
 #define PFSYNC_MINMTU	\
     (sizeof(struct pfsync_header) + sizeof(struct pf_state))
 
@@ -72,10 +70,10 @@ int pfsyncdebug;
 struct pfsync_softc pfsyncif;
 
 void	pfsyncattach(int);
+void	pfsync_setmtu(struct pfsync_softc *sc, int);
 int	pfsyncoutput(struct ifnet *, struct mbuf *, struct sockaddr *,
 	       struct rtentry *);
 int	pfsyncioctl(struct ifnet *, u_long, caddr_t);
-void	pfsyncrtrequest(int, struct rtentry *, struct sockaddr *);
 void	pfsyncstart(struct ifnet *);
 
 struct mbuf *pfsync_get_mbuf(struct pfsync_softc *sc, u_int8_t action);
@@ -95,13 +93,14 @@ pfsyncattach(int npfsync)
 	ifp = &pfsyncif.sc_if;
 	strcpy(ifp->if_xname, "pfsync0");
 	ifp->if_softc = &pfsyncif;
-	ifp->if_mtu = PFSYNCMTU;
 	ifp->if_ioctl = pfsyncioctl;
 	ifp->if_output = pfsyncoutput;
 	ifp->if_start = pfsyncstart;
 	ifp->if_type = IFT_PFSYNC;
 	ifp->if_snd.ifq_maxlen = ifqmaxlen;
 	ifp->if_hdrlen = PFSYNC_HDRLEN;
+	ifp->if_baudrate = IF_Mbps(100);
+	pfsync_setmtu(&pfsyncif, MCLBYTES);
 	timeout_set(&pfsyncif.sc_tmo, pfsync_timeout, &pfsyncif);
 	if_attach(ifp);
 	if_alloc_sadl(ifp);
@@ -142,14 +141,6 @@ pfsyncoutput(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 }
 
 /* ARGSUSED */
-void
-pfsyncrtrequest(int cmd, struct rtentry *rt, struct sockaddr *sa)
-{
-	if (rt)
-		rt->rt_rmx.rmx_mtu = PFSYNCMTU;
-}
-
-/* ARGSUSED */
 int
 pfsyncioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
@@ -175,10 +166,7 @@ pfsyncioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		s = splnet();
 		if (ifr->ifr_mtu < ifp->if_mtu)
 			pfsync_sendout(sc);
-		sc->sc_count = (ifr->ifr_mtu - sizeof(struct pfsync_header)) /
-		    sizeof(struct pf_state);
-		ifp->if_mtu = sizeof(struct pfsync_header) +
-		    sc->sc_count * sizeof(struct pf_state);
+		pfsync_setmtu(sc, ifr->ifr_mtu);
 		splx(s);
 		break;
 	default:
@@ -186,6 +174,17 @@ pfsyncioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	}
 
 	return (0);
+}
+
+void
+pfsync_setmtu(sc, mtu)
+	struct pfsync_softc *sc;
+	int mtu;
+{
+	sc->sc_count = (mtu - sizeof(struct pfsync_header)) /
+	    sizeof(struct pf_state);
+	sc->sc_if.if_mtu = sizeof(struct pfsync_header) +
+	    sc->sc_count * sizeof(struct pf_state);
 }
 
 struct mbuf *
@@ -215,7 +214,6 @@ pfsync_get_mbuf(sc, action)
 	}
 	m->m_pkthdr.rcvif = NULL;
 	m->m_pkthdr.len = m->m_len = len;
-	MH_ALIGN(m, m->m_len);
 
 	h = mtod(m, struct pfsync_header *);
 	h->version = PFSYNC_VERSION;
