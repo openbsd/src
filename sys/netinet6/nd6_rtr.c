@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_rtr.c,v 1.18 2002/06/08 21:22:41 itojun Exp $	*/
+/*	$OpenBSD: nd6_rtr.c,v 1.19 2002/06/08 21:51:08 itojun Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.97 2001/02/07 11:09:13 itojun Exp $	*/
 
 /*
@@ -468,7 +468,7 @@ defrouter_addreq(new)
 	gate.sin6_scope_id = 0;	/* XXX */
 #endif
 
-	s = splnet();
+	s = splsoftnet();
 	error = rtrequest(RTM_ADD, (struct sockaddr *)&def,
 	    (struct sockaddr *)&gate, (struct sockaddr *)&mask,
 	    RTF_GATEWAY, &newrt);
@@ -722,7 +722,7 @@ defrouter_reset()
 void
 defrouter_select()
 {
-	int s = splnet();
+	int s = splsoftnet();
 	struct nd_defrouter *dr, *selected_dr = NULL, *installed_dr = NULL;
 	struct rtentry *rt = NULL;
 	struct llinfo_nd6 *ln = NULL;
@@ -878,7 +878,7 @@ defrtrlist_update(new)
 	struct nd_defrouter *new;
 {
 	struct nd_defrouter *dr, *n;
-	int s = splnet();
+	int s = splsoftnet();
 
 	if ((dr = defrouter_lookup(&new->rtaddr, new->ifp)) != NULL) {
 		/* entry exists */
@@ -1042,7 +1042,7 @@ nd6_prelist_add(pr, dr, newp)
 		new->ndpr_prefix.sin6_addr.s6_addr32[i] &=
 		    new->ndpr_mask.s6_addr32[i];
 
-	s = splnet();
+	s = splsoftnet();
 	/* link ndpr_entry to nd_prefix list */
 	LIST_INSERT_HEAD(&nd_prefix, new, ndpr_entry);
 	splx(s);
@@ -1096,7 +1096,7 @@ prelist_remove(pr)
 	if (pr->ndpr_refcnt > 0)
 		return;		/* notice here? */
 
-	s = splnet();
+	s = splsoftnet();
 
 	/* unlink ndpr_entry from nd_prefix list */
 	LIST_REMOVE(pr, ndpr_entry);
@@ -1124,7 +1124,7 @@ prelist_update(new, dr, m)
 	struct ifaddr *ifa;
 	struct ifnet *ifp = new->ndpr_ifp;
 	struct nd_prefix *pr;
-	int s = splnet();
+	int s = splsoftnet();
 	int error = 0;
 	int newprefix = 0;
 	int auth;
@@ -1936,7 +1936,7 @@ rt6_flush(gateway, ifp)
     struct ifnet *ifp;
 {
 	struct radix_node_head *rnh = rt_tables[AF_INET6];
-	int s = splnet();
+	int s = splsoftnet();
 
 	/* We'll care only link-local addresses */
 	if (!IN6_IS_ADDR_LINKLOCAL(gateway)) {

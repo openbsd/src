@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_nbr.c,v 1.25 2002/06/08 21:29:13 itojun Exp $	*/
+/*	$OpenBSD: nd6_nbr.c,v 1.26 2002/06/08 21:51:08 itojun Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -774,7 +774,7 @@ nd6_na_input(m, off, icmp6len)
 			 * is only called under the network software interrupt
 			 * context.  However, we keep it just for safety.
 			 */
-			s = splnet();
+			s = splsoftnet();
 			dr = defrouter_lookup(in6, rt->rt_ifp);
 			if (dr)
 				defrtrlist_del(dr);
@@ -1173,7 +1173,7 @@ nd6_dad_timer(ifa)
 	struct in6_ifaddr *ia = (struct in6_ifaddr *)ifa;
 	struct dadq *dp;
 
-	s = splnet();		/* XXX */
+	s = splsoftnet();		/* XXX */
 
 	/* Sanity check */
 	if (ia == NULL) {

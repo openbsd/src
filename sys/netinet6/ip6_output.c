@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.66 2002/06/08 21:22:03 itojun Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.67 2002/06/08 21:51:08 itojun Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -205,10 +205,10 @@ ip6_output(m0, opt, ro, flags, im6o, ifpp)
 
 #ifdef IPSEC
 	/*
-	 * splnet is chosen over spltdb because we are not allowed to
-	 * lower the level, and udp6_output calls us in splnet(). XXX check
+	 * splsoftnet is chosen over spltdb because we are not allowed to
+	 * lower the level, and udp6_output calls us in splsoftnet(). XXX check
 	 */
-	s = splnet();
+	s = splsoftnet();
 
 	/*
 	 * Check if there was an outgoing SA bound to the flow

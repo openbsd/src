@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.49 2002/06/08 21:22:41 itojun Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.50 2002/06/08 21:51:08 itojun Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -380,7 +380,7 @@ nd6_timer(ignored_arg)
 	struct in6_ifaddr *ia6, *nia6;
 	struct in6_addrlifetime *lt6;
 
-	s = splnet();
+	s = splsoftnet();
 	timeout_set(&nd6_timer_ch, nd6_timer, NULL);
 	timeout_add(&nd6_timer_ch, nd6_prune * hz);
 
@@ -810,7 +810,7 @@ nd6_free(rt, gc)
 
 	if (!ip6_forwarding && ip6_accept_rtadv) { /* XXX: too restrictive? */
 		int s;
-		s = splnet();
+		s = splsoftnet();
 		dr = defrouter_lookup(&((struct sockaddr_in6 *)rt_key(rt))->sin6_addr,
 		    rt->rt_ifp);
 
@@ -1226,7 +1226,7 @@ nd6_ioctl(cmd, data, ifp)
 		 * obsolete API, use sysctl under net.inet6.icmp6
 		 */
 		bzero(drl, sizeof(*drl));
-		s = splnet();
+		s = splsoftnet();
 		dr = TAILQ_FIRST(&nd_defrouter);
 		while (dr && i < DRLSTSIZ) {
 			drl->defrouter[i].rtaddr = dr->rtaddr;
@@ -1262,7 +1262,7 @@ nd6_ioctl(cmd, data, ifp)
 		 * how about separating ioctls into two?
 		 */
 		bzero(oprl, sizeof(*oprl));
-		s = splnet();
+		s = splsoftnet();
 		pr = nd_prefix.lh_first;
 		while (pr && i < PRLSTSIZ) {
 			struct nd_pfxrouter *pfr;
@@ -1333,7 +1333,7 @@ nd6_ioctl(cmd, data, ifp)
 		/* flush all the prefix advertised by routers */
 		struct nd_prefix *pr, *next;
 
-		s = splnet();
+		s = splsoftnet();
 		for (pr = nd_prefix.lh_first; pr; pr = next) {
 			struct in6_ifaddr *ia, *ia_next;
 
@@ -1363,7 +1363,7 @@ nd6_ioctl(cmd, data, ifp)
 		/* flush all the default routers */
 		struct nd_defrouter *dr, *next;
 
-		s = splnet();
+		s = splsoftnet();
 		defrouter_reset();
 		for (dr = TAILQ_FIRST(&nd_defrouter); dr; dr = next) {
 			next = TAILQ_NEXT(dr, dr_entry);
@@ -1390,7 +1390,7 @@ nd6_ioctl(cmd, data, ifp)
 				*idp = htons(ifp->if_index);
 		}
 
-		s = splnet();
+		s = splsoftnet();
 		if ((rt = nd6_lookup(&nb_addr, 0, ifp)) == NULL ||
 		    (ln = (struct llinfo_nd6 *)rt->rt_llinfo) == NULL) {
 			error = EINVAL;
@@ -1654,7 +1654,7 @@ static void
 nd6_slowtimo(ignored_arg)
     void *ignored_arg;
 {
-	int s = splnet();
+	int s = splsoftnet();
 	struct nd_ifinfo *nd6if;
 	struct ifnet *ifp;
 
@@ -2009,7 +2009,7 @@ fill_drlist(oldp, oldlenp, ol)
 	struct nd_defrouter *dr;
 	size_t l;
 
-	s = splnet();
+	s = splsoftnet();
 
 	if (oldp) {
 		d = (struct in6_defrouter *)oldp;
@@ -2061,7 +2061,7 @@ fill_prlist(oldp, oldlenp, ol)
 	struct in6_prefix *pe = NULL;
 	size_t l;
 
-	s = splnet();
+	s = splsoftnet();
 
 	if (oldp) {
 		p = (struct in6_prefix *)oldp;

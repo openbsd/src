@@ -1,4 +1,4 @@
-/*	$OpenBSD: mld6.c,v 1.14 2002/06/08 21:22:03 itojun Exp $	*/
+/*	$OpenBSD: mld6.c,v 1.15 2002/06/08 21:51:08 itojun Exp $	*/
 /*	$KAME: mld6.c,v 1.26 2001/02/16 14:50:35 itojun Exp $	*/
 
 /*
@@ -134,7 +134,7 @@ void
 mld6_start_listening(in6m)
 	struct in6_multi *in6m;
 {
-	int s = splnet();
+	int s = splsoftnet();
 
 	/*
 	 * RFC2710 page 10:
@@ -359,7 +359,7 @@ mld6_fasttimeo()
 	if (!mld6_timers_are_running)
 		return;
 
-	s = splnet();
+	s = splsoftnet();
 	mld6_timers_are_running = 0;
 	IN6_FIRST_MULTI(step, in6m);
 	while (in6m != NULL) {

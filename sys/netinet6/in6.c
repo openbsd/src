@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.42 2002/06/08 21:22:02 itojun Exp $	*/
+/*	$OpenBSD: in6.c,v 1.43 2002/06/08 21:51:08 itojun Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -1800,7 +1800,7 @@ in6_addmulti(maddr6, ifp, errorp)
 	struct	in6_ifaddr *ia;
 	struct	in6_ifreq ifr;
 	struct	in6_multi *in6m;
-	int	s = splnet();
+	int	s = splsoftnet();
 
 	*errorp = 0;
 	/*
@@ -1876,7 +1876,7 @@ in6_delmulti(in6m)
 	struct in6_multi *in6m;
 {
 	struct	in6_ifreq ifr;
-	int	s = splnet();
+	int	s = splsoftnet();
 
 	if (--in6m->in6m_refcount == 0) {
 		/*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip6.c,v 1.12 2002/06/07 22:08:41 itojun Exp $	*/
+/*	$OpenBSD: raw_ip6.c,v 1.13 2002/06/08 21:51:08 itojun Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.69 2001/03/04 15:55:44 itojun Exp $	*/
 
 /*
@@ -597,7 +597,7 @@ rip6_usrreq(so, req, m, nam, control, p)
 			error = EACCES;
 			break;
 		}
-		s = splnet();
+		s = splsoftnet();
 		if ((error = soreserve(so, rip6_sendspace, rip6_recvspace)) != 0) {
 			splx(s);
 			break;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_mroute.c,v 1.24 2002/06/07 18:18:14 itojun Exp $	*/
+/*	$OpenBSD: ip6_mroute.c,v 1.25 2002/06/08 21:51:08 itojun Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.45 2001/03/25 08:38:51 itojun Exp $	*/
 
 /*
@@ -302,7 +302,7 @@ get_sg_cnt(req)
 	struct mf6c *rt;
 	int s;
 
-	s = splnet();
+	s = splsoftnet();
 
 	MF6CFIND(req->src.sin6_addr, req->grp.sin6_addr, rt);
 	splx(s);
@@ -431,7 +431,7 @@ ip6_mrouter_done()
 	struct rtdetq *rte;
 	int s;
 
-	s = splnet();
+	s = splsoftnet();
 
 	/*
 	 * For each phyint in use, disable promiscuous reception of all IPv6
@@ -555,7 +555,7 @@ add_m6if(mifcp)
 		if ((ifp->if_flags & IFF_MULTICAST) == 0)
 			return EOPNOTSUPP;
 
-		s = splnet();
+		s = splsoftnet();
 
 		/*
 		 * Enable promiscuous reception of all IPv6 multicasts
@@ -570,7 +570,7 @@ add_m6if(mifcp)
 			return error;
 	}
 
-	s = splnet();
+	s = splsoftnet();
 
 	mifp->m6_flags     = mifcp->mif6c_flags;
 	mifp->m6_ifp       = ifp;
@@ -618,7 +618,7 @@ del_m6if(mifip)
 	if (mifp->m6_ifp == NULL)
 		return EINVAL;
 
-	s = splnet();
+	s = splsoftnet();
 
 	if (!(mifp->m6_flags & MIFF_REGISTER)) {
 		/*
@@ -680,7 +680,7 @@ add_m6fc(mfccp)
 			    mfccp->mf6cc_parent);
 #endif
 
-		s = splnet();
+		s = splsoftnet();
 
 		rt->mf6c_parent = mfccp->mf6cc_parent;
 		rt->mf6c_ifset = mfccp->mf6cc_ifset;
@@ -691,7 +691,7 @@ add_m6fc(mfccp)
 	/*
 	 * Find the entry for which the upcall was made and update
 	 */
-	s = splnet();
+	s = splsoftnet();
 
 	hash = MF6CHASH(mfccp->mf6cc_origin.sin6_addr,
 			mfccp->mf6cc_mcastgrp.sin6_addr);
@@ -863,7 +863,7 @@ del_m6fc(mfccp)
 		    ip6_sprintf(&mcastgrp.sin6_addr));
 #endif
 
-	s = splnet();
+	s = splsoftnet();
 
 	nptr = &mf6ctable[hash];
 	while ((rt = *nptr) != NULL) {
@@ -972,7 +972,7 @@ ip6_mforward(ip6, ifp, m)
 	/*
 	 * Determine forwarding mifs from the forwarding cache table
 	 */
-	s = splnet();
+	s = splsoftnet();
 	MF6CFIND(ip6->ip6_src, ip6->ip6_dst, rt);
 
 	/* Entry exists, so forward if necessary */
@@ -1194,7 +1194,7 @@ expire_upcalls(unused)
 	int i;
 	int s;
 
-	s = splnet();
+	s = splsoftnet();
 
 	for (i = 0; i < MF6CTBLSIZ; i++) {
 		if (n6expire[i] == 0)
@@ -1422,7 +1422,7 @@ phyint_send(ip6, mifp, m)
 	struct mbuf *mb_copy;
 	struct ifnet *ifp = mifp->m6_ifp;
 	int error = 0;
-	int s = splnet();
+	int s = splsoftnet();
 	static struct route_in6 ro;
 	struct	in6_multi *in6m;
 	struct sockaddr_in6 *dst6;
