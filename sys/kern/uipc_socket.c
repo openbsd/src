@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.9 1997/02/28 02:56:50 angelos Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.10 1997/02/28 03:20:38 angelos Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -53,6 +53,11 @@
 #ifndef SOMINCONN
 #define SOMINCONN 80
 #endif /* SOMINCONN */
+
+extern u_char ipsec_auth_default_level;
+extern u_char ipsec_esp_trans_default_level;
+extern u_char ipsec_esp_network_default_level;
+
 int	somaxconn = SOMAXCONN;
 int	sominconn = SOMINCONN;
 
@@ -91,9 +96,9 @@ socreate(dom, aso, type, proto)
 		so->so_state = SS_PRIV;
 	so->so_uid = p->p_ucred->cr_uid;
 	so->so_proto = prp;
-	so->so_seclevel[SL_AUTH] = IPSEC_AUTH_LEVEL_DEFAULT;
-	so->so_seclevel[SL_ESP_TRANS] = IPSEC_ESP_TRANS_LEVEL_DEFAULT;
-	so->so_seclevel[SL_ESP_NETWORK] = IPSEC_ESP_NETWORK_LEVEL_DEFAULT;
+	so->so_seclevel[SL_AUTH] = ipsec_auth_default_level;
+	so->so_seclevel[SL_ESP_TRANS] = ipsec_esp_trans_default_level;
+	so->so_seclevel[SL_ESP_NETWORK] = ipsec_esp_network_default_level;
 	error =
 	    (*prp->pr_usrreq)(so, PRU_ATTACH, NULL, (struct mbuf *)(long)proto,
 			      NULL);
