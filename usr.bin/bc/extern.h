@@ -1,4 +1,4 @@
-/*      $OpenBSD: extern.h,v 1.2 2003/09/26 07:02:52 deraadt Exp $	*/
+/*      $OpenBSD: extern.h,v 1.3 2003/09/28 07:57:57 otto Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -24,6 +24,8 @@ struct lvalue {
 };
 
 int		yylex(void);
+void		yyerror(char *);
+void		fatal(const char *);
 void		abort_line(int);
 
 extern int	lineno;

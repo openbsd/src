@@ -1,5 +1,5 @@
 %{
-/*      $OpenBSD: scan.l,v 1.4 2003/09/26 19:00:38 deraadt Exp $	*/
+/*      $OpenBSD: scan.l,v 1.5 2003/09/28 07:57:57 otto Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -18,7 +18,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: scan.l,v 1.4 2003/09/26 19:00:38 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: scan.l,v 1.5 2003/09/28 07:57:57 otto Exp $";
 #endif /* not lint */
 
 #include <err.h>
@@ -50,6 +50,7 @@ DIGIT		[0-9A-F]
 	\n	lineno++;
 	\*	;
 	[^*\n]+	;
+	<<EOF>>	fatal("end of file in comment");
 }
 
 \"		BEGIN(string); init_strbuf();
@@ -57,6 +58,7 @@ DIGIT		[0-9A-F]
 	[^"\n]+	add_str(yytext);
 	\n	add_str("\n"); lineno++;
 	\"	BEGIN(INITIAL); yylval.str = strbuf; return STRING;
+	<<EOF>>	fatal("end of file in string");
 }
 
 {DIGIT}+	{
@@ -87,8 +89,7 @@ DIGIT		[0-9A-F]
 	\\\n[ \t]*	lineno++;
 	[^0-9A-F\.]	{
 			if (strcmp(strbuf, ".") == 0) {
-				warnx("unexpected ascii char 0x%x at line %d",
-				    yytext[0], lineno);
+				yyerror("syntax error");
 				BEGIN(INITIAL);
 				REJECT;
 			}
@@ -159,7 +160,7 @@ DIGIT		[0-9A-F]
 \n		lineno++; return NEWLINE;
 
 [ \t]		;
-.		warnx("unexpected character %c at line %d", yytext[0], lineno);
+.		yyerror("illegal character");
 
 %%
 

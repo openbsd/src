@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: bc.y,v 1.7 2003/09/28 07:45:55 otto Exp $	*/
+/*	$OpenBSD: bc.y,v 1.8 2003/09/28 07:57:57 otto Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -31,7 +31,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: bc.y,v 1.7 2003/09/28 07:45:55 otto Exp $";
+static const char rcsid[] = "$OpenBSD: bc.y,v 1.8 2003/09/28 07:57:57 otto Exp $";
 #endif /* not lint */
 
 #include <ctype.h>
@@ -60,7 +60,6 @@ struct tree {
 
 int			yyparse(void);
 int			yywrap(void);
-void			yyerror(char *);
 
 static void		grow(void);
 static ssize_t		cs(const char *);
@@ -72,7 +71,6 @@ static void		free_tree(void);
 static ssize_t		numnode(int);
 static void		add_par(ssize_t);
 static void		add_local(ssize_t);
-static void		fatal(const char *);
 static void		warning(const char *);
 static void		init(void);
 static __dead void	usage(void);
@@ -168,8 +166,9 @@ input_item	: semicolon_list NEWLINE
 				putchar('\n');
 				free_tree();
 			}
-		| error
+		| error NEWLINE
 			{
+				yyerrok;
 			}
 		;
 
@@ -244,7 +243,7 @@ statement	: expression
 		| RETURN
 			{
 				if (nesting == 0) {
-					warnx("return must be in a function");
+					warning("return must be in a function");
 					YYERROR;
 				}
 				$$ = node(cs("0"), epilogue,
@@ -253,7 +252,7 @@ statement	: expression
 		| RETURN LPAR return_expression RPAR
 			{
 				if (nesting == 0) {
-					warnx("return must be in a function");
+					warning("return must be in a function");
 					YYERROR;
 				}
 				$$ = $3;
@@ -695,16 +694,17 @@ add_local(ssize_t n)
 int
 yywrap(void)
 {
-	lineno = 1;
 	if (optind < sargc) {
 		filename = sargv[optind++];
 		yyin = fopen(filename, "r");
+		lineno = 1;
 		if (yyin == NULL)
 			err(1, "cannot open %s", filename);
 		return 0;
 	} else if (optind == sargc) {
 		optind++;
 		yyin = stdin;
+		lineno = 1;
 		filename = "stdin";
 		return 0;
 	}
@@ -715,14 +715,14 @@ void
 yyerror(char *s)
 {
 	if (isspace(*yytext) || !isprint(*yytext))
-		printf("c[%s:%d: %s: ascii char 0x%x unexpected]pc\n",
-		    filename, lineno, s, *yytext);
+		printf("c[%s: %s:%d: %s: ascii char 0x%x unexpected]pc\n",
+		    __progname, filename, lineno, s, *yytext);
 	else
-		printf("c[%s:%d: %s: %s unexpected]pc\n",
-		    filename, lineno, s, yytext);
+		printf("c[%s: %s:%d: %s: %s unexpected]pc\n",
+		    __progname, filename, lineno, s, yytext);
 }
 
-static void
+void
 fatal(const char *s)
 {
 	errx(1, "%s:%d: %s", filename, lineno, s);
