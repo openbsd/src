@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdc.c,v 1.40 2001/07/27 04:54:06 csapuntz Exp $     */
+/*      $OpenBSD: wdc.c,v 1.41 2001/07/31 07:07:00 csapuntz Exp $     */
 /*	$NetBSD: wdc.c,v 1.68 1999/06/23 19:00:17 bouyer Exp $ */
 
 
@@ -1396,11 +1396,12 @@ wdc_downgrade_mode(drvp)
 		return 0;
 
 	/*
-	 * If we were using Ultra-DMA mode > 2, downgrade to mode 2 first.
-	 * Maybe we didn't properly notice the cable type
+	 * We'd ideally like to use an Ultra DMA mode since they have the
+	 * protection of a CRC. So we try each Ultra DMA mode and see if
+	 * we can find any working combo
 	 */
-	if ((drvp->drive_flags & DRIVE_UDMA) && drvp->UDMA_mode >= 2) {
-		drvp->UDMA_mode = (drvp->UDMA_mode == 2) ? 1 : 2;
+	if ((drvp->drive_flags & DRIVE_UDMA) && drvp->UDMA_mode > 0) {
+		drvp->UDMA_mode = drvp->UDMA_mode - 1;
 		printf("%s: transfer error, downgrading to Ultra-DMA mode %d\n",
 		    drvp->drive_name, drvp->UDMA_mode);
 	} else 	if ((drvp->drive_flags & DRIVE_UDMA) &&

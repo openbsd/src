@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd.c,v 1.17 2001/07/12 02:44:17 csapuntz Exp $ */
+/*	$OpenBSD: wd.c,v 1.18 2001/07/31 07:07:00 csapuntz Exp $ */
 /*	$NetBSD: wd.c,v 1.193 1999/02/28 17:15:27 explorer Exp $ */
 
 /*
@@ -277,6 +277,11 @@ wdattach(parent, self, aux)
 	strncpy(wd->drvp->drive_name, wd->sc_dev.dv_xname, 
 		sizeof(wd->drvp->drive_name) - 1);
 	wd->drvp->cf_flags = wd->sc_dev.dv_cfdata->cf_flags;
+
+	if ((NERRS_MAX - 2) > 0)
+		wd->drvp->n_dmaerrs = NERRS_MAX - 2;
+	else
+		wd->drvp->n_dmaerrs = 0;
 
 	/* read our drive info */
 	if (wd_get_params(wd, at_poll, &wd->sc_params) != 0) {
