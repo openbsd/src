@@ -1,7 +1,7 @@
 /*
  * Holiday
  *
- * $OpenBSD: calendar.holiday,v 1.6 1997/08/27 11:20:37 provos Exp $
+ * $OpenBSD: calendar.holiday,v 1.7 1999/07/01 15:36:45 aaron Exp $
  */
 
 #ifndef _calendar_holiday_
@@ -225,7 +225,7 @@
 06/29	Independence Day in Seychelles
 06/29	Last Day of Ramadan* in Algeria, Oman
 06/30	Day of the Army in Guatemala
-07/01	Dominion Day in Canada
+07/01	Canada Day in Canada (previously Dominion Day)
 07/01	Freedom Day in Suriname
 07/01	Independence Day in Burundi
 07/01	National Day in Rwamda
