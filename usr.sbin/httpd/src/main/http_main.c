@@ -5147,6 +5147,10 @@ static void standalone_main(int argc, char **argv)
 	version_locked++;	/* no more changes to server_version */
 
 	if(!is_graceful && ap_server_chroot) {
+
+	    /* initialize /dev/crypto, XXX check for -DSSL option */
+	    OpenSSL_add_all_algorithms();
+
 	    if (geteuid()) {
 		ap_log_error(APLOG_MARK, APLOG_ALERT, server_conf,
 		   "can't run in secure mode if not started with root privs.");
