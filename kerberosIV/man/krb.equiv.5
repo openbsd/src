@@ -1,0 +1,25 @@
+.\" Copyright 1989 by the Massachusetts Institute of Technology.
+.\"
+.\" For copying and distribution information,
+.\" please see the file <mit-copyright.h>.
+.\"
+.\"	$Id: krb.equiv.5,v 1.1.1.1 1995/12/14 06:52:35 tholo Exp $
+.TH KRB.EQUIV 5 "Kerberos Version 4.0" "MIT Project Athena"
+.SH NAME
+/etc/kerberosIV/krb.equiv \- Kerberos equivalent hosts file
+.SH DESCRIPTION
+.I krb.equiv
+contains a list of IP address pairs that is to be considered being
+the same host for Kerberos purposes.
+.PP
+.I krb.equiv
+contains one pair of IP addresses per line.
+For example:
+.nf
+.in +1i
+130.237.223.3   192.16.126.3   # alv alv1
+130.237.223.4   192.16.126.4   # byse byse1
+130.237.228.152 192.16.126.9   # topsy topsy1
+.in -1i
+.SH SEE ALSO
+krb.conf(5), krb.realms(5), krb_equiv(3)
