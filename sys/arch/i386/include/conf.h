@@ -63,6 +63,10 @@ cdev_decl(pms);
 
 cdev_decl(joy);
 
+#define biosselect seltrue
 cdev_decl(bios);
 
 cdev_decl(apm);
+
+#define pctrselect seltrue
+cdev_decl(pctr);

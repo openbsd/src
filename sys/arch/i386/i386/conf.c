@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.36 1997/09/24 22:52:57 mickey Exp $	*/
+/*	$OpenBSD: conf.c,v 1.37 1997/09/24 23:00:02 mickey Exp $	*/
 /*	$NetBSD: conf.c,v 1.75 1996/05/03 19:40:20 christos Exp $	*/
 
 /*
@@ -161,7 +161,6 @@ cdev_decl(svr4_net);
 #include "joy.h"
 #include "apm.h"
 #include "pctr.h"
-cdev_decl(pctr);
 #include "bios.h"
 
 cdev_decl(ipl);
@@ -236,7 +235,7 @@ struct cdevsw	cdevsw[] =
 #endif
 	cdev_gen_ipf(NIPF,ipl),         /* 44: ip filtering */
 	cdev_random_init(1,random),	/* 45: random data source */
-	cdev_uk_init(NPCTR,pctr),	/* 46: pentium performance counters */
+	cdev_ocis_init(NPCTR,pctr),	/* 46: pentium performance counters */
 	cdev_disk_init(NRD,rd),		/* 47: ram disk driver */
 	cdev_ocis_init(NBIOS,bios),	/* 48: onboard BIOS PROM */
 };
