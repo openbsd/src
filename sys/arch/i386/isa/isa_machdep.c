@@ -1,4 +1,4 @@
-/*	$OpenBSD: isa_machdep.c,v 1.50 2004/06/28 01:41:53 aaron Exp $	*/
+/*	$OpenBSD: isa_machdep.c,v 1.51 2004/11/29 20:15:40 pat Exp $	*/
 /*	$NetBSD: isa_machdep.c,v 1.22 1997/06/12 23:57:32 thorpej Exp $	*/
 
 #define ISA_DMA_STATS
@@ -575,6 +575,7 @@ isa_intr_establish(ic, irq, type, level, ih_fun, ih_arg, ih_what)
 
 	if (!LEGAL_IRQ(irq) || type == IST_NONE) {
 		printf("%s: isa_intr_establish: bogus irq or type\n", ih_what);
+		free(ih, M_DEVBUF);
 		return (NULL);
 	}
 	switch (intrtype[irq]) {
@@ -590,6 +591,7 @@ isa_intr_establish(ic, irq, type, level, ih_fun, ih_arg, ih_what)
 			/*printf("%s: intr_establish: can't share %s with %s, irq %d\n",
 			    ih_what, isa_intr_typename(intrtype[irq]),
 			    isa_intr_typename(type), irq);*/
+			free(ih, M_DEVBUF);
 			return (NULL);
 		}
 		break;

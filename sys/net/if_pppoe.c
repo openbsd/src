@@ -1,4 +1,4 @@
-/* $OpenBSD: if_pppoe.c,v 1.1 2004/11/28 23:39:45 canacar Exp $ */
+/* $OpenBSD: if_pppoe.c,v 1.2 2004/11/29 20:15:40 pat Exp $ */
 /* $NetBSD: if_pppoe.c,v 1.51 2003/11/28 08:56:48 keihan Exp $ */
 
 /*
@@ -809,12 +809,15 @@ pppoe_output(struct pppoe_softc *sc, struct mbuf *m)
 	u_int16_t etype;
 
 	if (sc->sc_eth_if == NULL) {
-		m_free(m);
+		m_freem(m);
 		return (EIO);
 	}
 	
-	if ((sc->sc_eth_if->if_flags & (IFF_UP|IFF_RUNNING)) != (IFF_UP|IFF_RUNNING))
+	if ((sc->sc_eth_if->if_flags & (IFF_UP|IFF_RUNNING))
+	    != (IFF_UP|IFF_RUNNING)) {
+		m_freem(m);
 		return (ENETDOWN);
+	}
 
 	memset(&dst, 0, sizeof dst);
 	dst.sa_family = AF_UNSPEC;
