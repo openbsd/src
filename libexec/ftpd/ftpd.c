@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.130 2002/07/02 18:09:54 danh Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.131 2002/07/14 07:14:09 jakob Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -74,7 +74,7 @@ static const char copyright[] =
 static const char sccsid[] = "@(#)ftpd.c	8.4 (Berkeley) 4/16/94";
 #else
 static const char rcsid[] = 
-    "$OpenBSD: ftpd.c,v 1.130 2002/07/02 18:09:54 danh Exp $";
+    "$OpenBSD: ftpd.c,v 1.131 2002/07/14 07:14:09 jakob Exp $";
 #endif
 #endif /* not lint */
 
@@ -150,7 +150,6 @@ int	debug = 0;
 int	timeout = 900;    /* timeout after 15 minutes of inactivity */
 int	maxtimeout = 7200;/* don't allow idle time to be set beyond 2 hours */
 int	logging;
-int	high_data_ports = 0;
 int	anon_only = 0;
 int	multihome = 0;
 int	guest;
@@ -317,8 +316,7 @@ main(argc, argv, envp)
 			portcheck = 0;
 			break;
 
-		case 'h':
-			high_data_ports = 1;
+		case 'h':		/* deprecated */
 			break;
 
 		case 'l':
@@ -2219,12 +2217,10 @@ passive()
 		return;
 	}
 
-#ifdef IP_PORTRANGE
-	on = high_data_ports ? IP_PORTRANGE_HIGH : IP_PORTRANGE_DEFAULT;
+	on = IP_PORTRANGE_HIGH;
 	if (setsockopt(pdata, IPPROTO_IP, IP_PORTRANGE,
 	    (char *)&on, sizeof(on)) < 0)
 		goto pasv_error;
-#endif
 
 	pasv_addr = ctrl_addr;
 	pasv_addr.su_sin.sin_port = 0;
@@ -2356,21 +2352,16 @@ long_passive(char *cmd, int pf)
 
 	switch (ctrl_addr.su_family) {
 	case AF_INET:
-#ifdef IP_PORTRANGE
-		on = high_data_ports ? IP_PORTRANGE_HIGH : IP_PORTRANGE_DEFAULT;
+		on = IP_PORTRANGE_HIGH;
 		if (setsockopt(pdata, IPPROTO_IP, IP_PORTRANGE,
 		    (char *)&on, sizeof(on)) < 0)
 			goto pasv_error;
-#endif
 		break;
 	case AF_INET6:
-#ifdef IPV6_PORTRANGE
-		on = high_data_ports ? IPV6_PORTRANGE_HIGH
-				     : IPV6_PORTRANGE_DEFAULT;
+		on = IPV6_PORTRANGE_HIGH;
 		if (setsockopt(pdata, IPPROTO_IPV6, IPV6_PORTRANGE,
 		    (char *)&on, sizeof(on)) < 0)
 			goto pasv_error;
-#endif
 		break;
 	}
 

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ftpd.8,v 1.50 2002/03/27 18:10:37 millert Exp $
+.\"	$OpenBSD: ftpd.8,v 1.51 2002/07/14 07:14:09 jakob Exp $
 .\"	$NetBSD: ftpd.8,v 1.8 1996/01/14 20:55:23 thorpej Exp $
 .\"
 .\" Copyright (c) 1985, 1988, 1991, 1993
@@ -42,7 +42,7 @@
 .Nd Internet File Transfer Protocol server
 .Sh SYNOPSIS
 .Nm ftpd
-.Op Fl AdDhlMPSU46
+.Op Fl AdDlMPSU46
 .Op Fl T Ar maxtimeout
 .Op Fl t Ar timeout
 .Op Fl u Ar mask
@@ -78,16 +78,6 @@ This has lower overhead than starting
 from
 .Xr inetd 8
 and is thus useful on busy servers to reduce load.
-.It Fl h
-The server will use data ports in the high port range for passive connections.
-This range is defined by the
-.Ev IPPORT_HIFIRSTAUTO
-and
-.Ev IPPORT_HILASTAUTO
-defines in <netinet/in.h>.
-In
-.Ox
-they are set to 49152 and 65535 respectively.
 .It Fl l
 Each successful and failed
 .Xr ftp 1
@@ -497,6 +487,16 @@ If this variable is not set,
 .Pa /etc/motd
 is used.
 .El
+.Sh PORT ALLOCATION
+For passive mode data connections, 
+.Nm
+will listen to a random high tcp port.
+The interval of ports used are configurable using
+.Xr sysctl 8 
+variables
+.Li net.inet.ip.porthifirst
+and
+.Li net.inet.ip.porthilast .
 .Sh FILES
 .Bl -tag -width /var/run/ftpd.pid -compact
 .It Pa /etc/ftpchroot
