@@ -1,4 +1,4 @@
-/*	$OpenBSD: pax.h,v 1.9 1997/07/23 19:15:58 kstailey Exp $	*/
+/*	$OpenBSD: pax.h,v 1.10 2001/02/07 19:04:14 millert Exp $	*/
 /*	$NetBSD: pax.h,v 1.3 1995/03/21 09:07:41 cgd Exp $	*/
 
 /*-
@@ -238,6 +238,7 @@ typedef struct oplist {
 /*
  * General Defines
  */
-#define HEX	16
-#define OCT	8
-#define _PAX_	1
+#define HEX		16
+#define OCT		8
+#define _PAX_		1
+#define _TFILE_BASE	"paxXXXXXXXXXX"

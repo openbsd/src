@@ -27,7 +27,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: cpio.1,v 1.14 2000/11/10 17:52:02 aaron Exp $
+.\"	$OpenBSD: cpio.1,v 1.15 2001/02/07 19:04:13 millert Exp $
 .\"
 .Dd February 16, 1997
 .Dt CPIO 1
@@ -276,6 +276,13 @@ or error,
 .Nm
 may have only partially created the archive which may violate the
 specific archive format specification.
+.Sh ENVIRONMENT
+The following environment variables affect the execution of
+.Nm cpio :
+.Bl -tag -width Fl
+.It Ev TMPDIR
+Path in which to store temporary files.
+.El
 .Sh SEE ALSO
 .Xr pax 1 ,
 .Xr tar 1

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pax.c,v 1.15 2000/06/09 16:37:54 espie Exp $	*/
+/*	$OpenBSD: pax.c,v 1.16 2001/02/07 19:04:14 millert Exp $	*/
 /*	$NetBSD: pax.c,v 1.5 1996/03/26 23:54:20 mrg Exp $	*/
 
 /*-
@@ -48,7 +48,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)pax.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: pax.c,v 1.15 2000/06/09 16:37:54 espie Exp $";
+static char rcsid[] = "$OpenBSD: pax.c,v 1.16 2001/02/07 19:04:14 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -65,6 +65,7 @@ static char rcsid[] = "$OpenBSD: pax.c,v 1.15 2000/06/09 16:37:54 espie Exp $";
 #include <errno.h>
 #include <err.h>
 #include <fcntl.h>
+#include <paths.h>
 #include "pax.h"
 #include "extern.h"
 static int gen_init __P((void));
@@ -108,6 +109,8 @@ char	*ltmfrmt;		/* -v locale time format (if any) */
 char	*argv0;			/* root of argv[0] */
 sigset_t s_mask;		/* signal mask for cleanup critical sect */
 FILE	*listf = stderr;	/* file pointer to print file list to */
+char	*tempfile;		/* tempfile to use for mkstemp(3) */
+char	*tempbase;		/* basename of tempfile to use for mkstemp(3) */
 
 /*
  *	PAX - Portable Archive Interchange
@@ -239,6 +242,9 @@ main(argc, argv)
 	char **argv;
 #endif
 {
+	char *tmpdir;
+	size_t tdlen;
+
 	/*
 	 * Keep a reference to cwd, so we can always come back home.
 	 */
@@ -247,6 +253,24 @@ main(argc, argv)
 		syswarn(0, errno, "Can't open current working directory.");
 		return(exit_val);
 	}
+
+	/*
+	 * Where should we put temporary files?
+	 */
+	if ((tmpdir = getenv("TMPDIR")) == NULL || *tmpdir == '\0')
+		tmpdir = _PATH_TMP;
+	tdlen = strlen(tmpdir);
+	while(tdlen > 0 && tmpdir[tdlen - 1] == '/')
+		tdlen--;
+	tempfile = malloc(tdlen + 1 + sizeof(_TFILE_BASE));
+	if (tempfile == NULL) {
+		paxwarn(1, "Cannot allocate memory for temp file name.");
+		return(exit_val);
+	}
+	if (tdlen)
+		memcpy(tempfile, tmpdir, tdlen);
+	tempbase = tempfile + tdlen;
+	*tempbase++ = '/';
 
 	/*
 	 * parse options, determine operational mode, general init

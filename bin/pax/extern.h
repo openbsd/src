@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.16 2000/06/09 16:37:54 espie Exp $	*/
+/*	$OpenBSD: extern.h,v 1.17 2001/02/07 19:04:14 millert Exp $	*/
 /*	$NetBSD: extern.h,v 1.5 1996/03/26 23:54:16 mrg Exp $	*/
 
 /*-
@@ -238,6 +238,8 @@ extern char *dirptr;
 extern char *ltmfrmt;
 extern char *argv0;
 extern FILE *listf;
+extern char *tempfile;
+extern char *tempbase;
 
 int main __P((int, char **));
 void sig_cleanup __P((int));

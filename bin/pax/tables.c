@@ -1,4 +1,4 @@
-/*	$OpenBSD: tables.c,v 1.11 1999/04/29 12:59:03 aaron Exp $	*/
+/*	$OpenBSD: tables.c,v 1.12 2001/02/07 19:04:14 millert Exp $	*/
 /*	$NetBSD: tables.c,v 1.4 1995/03/21 09:07:45 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)tables.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: tables.c,v 1.11 1999/04/29 12:59:03 aaron Exp $";
+static char rcsid[] = "$OpenBSD: tables.c,v 1.12 2001/02/07 19:04:14 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -364,7 +364,6 @@ int
 ftime_start()
 #endif
 {
-	char *pt;
 
 	if (ftab != NULL)
 		return(0);
@@ -377,18 +376,13 @@ ftime_start()
 	 * get random name and create temporary scratch file, unlink name
 	 * so it will get removed on exit
 	 */
-	if ((pt = strdup("/tmp/paxXXXXXXXXXX")) == NULL) {
-		paxwarn(1, "Cannot allocate memory for temporary file name");
-		(void)free((char *)ftab);
+	memcpy(tempbase, _TFILE_BASE, sizeof(_TFILE_BASE));
+	if ((ffd = mkstemp(tempfile)) < 0) {
+		syswarn(1, errno, "Unable to create temporary file: %s",
+		    tempfile);
 		return(-1);
 	}
-	if ((ffd = mkstemp(pt)) < 0) {
-		syswarn(1, errno, "Unable to create temporary file: %s", pt);
-		free(pt);
-		return(-1);
-	}
-	(void)unlink(pt);
-	free(pt);
+	(void)unlink(tempfile);
 
 	return(0);
 }
@@ -1218,7 +1212,6 @@ int
 dir_start()
 #endif
 {
-	char *pt;
 
 	if (dirfd != -1)
 		return(0);
@@ -1226,17 +1219,13 @@ dir_start()
 	/*
 	 * unlink the file so it goes away at termination by itself
 	 */
-	if ((pt = strdup("/tmp/paxXXXXXXXXXX")) == NULL) {
-		paxwarn(1, "Cannot allocate memory for temporary filename");
-		return(-1);
-	}
-	if ((dirfd = mkstemp(pt)) >= 0) {
-		(void)unlink(pt);
-		free(pt);
+	memcpy(tempbase, _TFILE_BASE, sizeof(_TFILE_BASE));
+	if ((dirfd = mkstemp(tempfile)) >= 0) {
+		(void)unlink(tempfile);
 		return(0);
 	}
-	paxwarn(1, "Unable to create temporary file for directory times: %s", pt);
-	free(pt);
+	paxwarn(1, "Unable to create temporary file for directory times: %s",
+	    tempfile);
 	return(-1);
 }
 

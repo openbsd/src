@@ -27,7 +27,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: tar.1,v 1.29 2001/02/05 00:29:46 deraadt Exp $
+.\"	$OpenBSD: tar.1,v 1.30 2001/02/07 19:04:15 millert Exp $
 .\"
 .Dd June 11, 1996
 .Dt TAR 1
@@ -261,6 +261,16 @@ specific archive format specification.
 .Bl -tag -width "/dev/rst0"
 .It Pa /dev/rst0
 default archive name
+.El
+.Sh ENVIRONMENT
+The following environment variables affect the execution of
+.Nm tar :
+.Bl -tag -width Fl
+.It Ev TMPDIR
+Path in which to store temporary files.
+.It Ev TAPE
+Default tape device to use instead of
+.Pa /dev/rst0 .
 .El
 .Sh SEE ALSO
 .Xr cpio 1 ,
