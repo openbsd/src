@@ -1,4 +1,4 @@
-/*	$OpenBSD: grf.c,v 1.6 1997/04/16 11:56:02 downsj Exp $	*/
+/*	$OpenBSD: grf.c,v 1.7 1998/03/06 17:24:11 millert Exp $	*/
 /*	$NetBSD: grf.c,v 1.25 1997/04/02 22:37:30 scottr Exp $	*/
 
 /*
@@ -183,16 +183,17 @@ grfopen(dev, flags, mode, p)
 	/*
 	 * XXX: cannot handle both HPUX and BSD processes at the same time
 	 */
-	if (p->p_emul == &emul_hpux)
+	if (p->p_emul == &emul_hpux) {
 		if (gp->g_flags & GF_BSDOPEN)
 			return(EBUSY);
 		else
 			gp->g_flags |= GF_HPUXOPEN;
-	else
+	} else {
 		if (gp->g_flags & GF_HPUXOPEN)
 			return(EBUSY);
 		else
 			gp->g_flags |= GF_BSDOPEN;
+	}
 #endif
 	/*
 	 * First open.
