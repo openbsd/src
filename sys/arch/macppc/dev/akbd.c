@@ -1,4 +1,4 @@
-/*	$OpenBSD: akbd.c,v 1.5 2002/03/28 00:58:27 deraadt Exp $	*/
+/*	$OpenBSD: akbd.c,v 1.6 2002/03/28 01:02:55 miod Exp $	*/
 /*	$NetBSD: akbd.c,v 1.13 2001/01/25 14:08:55 tsubai Exp $	*/
 
 /*
@@ -513,6 +513,9 @@ akbd_intr(event)
 {
 	int key, press, val;
 	int type;
+#ifdef WSDISPLAY_COMPAT_RAWKBD
+	int s;
+#endif
 
 	struct akbd_softc *sc = akbd_cd.cd_devs[0];
 
