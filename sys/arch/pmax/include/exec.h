@@ -37,4 +37,12 @@
 
 #define	__LDPGSZ	4096
 
+#define ELF_TARG_CLASS		ELFCLASS32
+#define ELF_TARG_DATA		ELFDATA2LSB
+#define ELF_TARG_MACH		EM_MIPS
+
+#define DO_AOUT			/* support a.out */
+#define DO_ELF			/* support ELF */
+#define DO_ECOFF		/* support ecoff */
+
 #include <machine/reloc.h>

@@ -35,4 +35,11 @@
 /* Size of a page in an object file. */
 #define	__LDPGSZ	8192
 
+#define ELF_TARG_CLASS		ELFCLASS64
+#define ELF_TARG_DATA		ELFDATA2LSB
+#define ELF_TARG_MACH		EM_ALPHA
+
+#define DO_AOUT			/* support a.out */
+#define DO_ECOFF		/* support ECOFF */
+
 #endif /* !_ALPHA_EXEC_H_ */

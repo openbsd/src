@@ -1,4 +1,4 @@
-/*	$OpenBSD: nlist.c,v 1.8 1996/05/28 14:11:21 etheisen Exp $ */
+/*	$OpenBSD: nlist.c,v 1.9 1996/05/29 03:05:14 deraadt Exp $ */
 /*	$NetBSD: nlist.c,v 1.7 1996/05/16 20:49:20 cgd Exp $	*/
 
 /*
@@ -35,11 +35,10 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: nlist.c,v 1.8 1996/05/28 14:11:21 etheisen Exp $";
+static char rcsid[] = "$OpenBSD: nlist.c,v 1.9 1996/05/29 03:05:14 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
-#include "exec_sup.h"           /* determine targ OMFs for a given machine */
-
+#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
@@ -49,6 +48,15 @@ static char rcsid[] = "$OpenBSD: nlist.c,v 1.8 1996/05/28 14:11:21 etheisen Exp 
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <a.out.h>		/* pulls in nlist.h */
+
+#ifdef DO_ELF
+#include <elf_abi.h>
+#endif
+
+#ifdef DO_ECOFF
+#include <sys/exec_ecoff.h>
+#endif
 
 #define	ISLAST(p)	(p->n_un.n_name == 0 || p->n_un.n_name[0] == 0)
 
@@ -243,6 +251,37 @@ out:
 #endif /* DO_ECOFF */
 
 #ifdef DO_ELF
+/*
+ * __elf_is_okay__ - Determine if ehdr really
+ * is ELF and valid for the target platform.
+ *
+ * WARNING:  This is NOT a ELF ABI function and
+ * as such it's use should be restricted.
+ */
+int
+__elf_is_okay__(ehdr)
+	register Elf32_Ehdr *ehdr;
+{
+	register int retval = 0;
+	/*
+	 * We need to check magic, class size, endianess,
+	 * and version before we look at the rest of the
+	 * Elf32_Ehdr structure.  These few elements are
+	 * represented in a machine independant fashion.
+	 */
+	if (IS_ELF(*ehdr) &&
+	    ehdr->e_ident[EI_CLASS] == ELF_TARG_CLASS &&
+	    ehdr->e_ident[EI_DATA] == ELF_TARG_DATA &&
+	    ehdr->e_ident[EI_VERSION] == ELF_TARG_VER) {
+
+		/* Now check the machine dependant header */
+		if (ehdr->e_machine == ELF_TARG_MACH &&
+		    ehdr->e_version == ELF_TARG_VER)
+			retval = 1;
+	}
+	return retval;
+}
+
 int
 __elf_fdnlist(fd, list)
 	register int fd;

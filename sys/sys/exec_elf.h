@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.h,v 1.4 1996/05/22 07:44:29 etheisen Exp $	*/
+/*	$OpenBSD: exec_elf.h,v 1.5 1996/05/29 03:04:51 deraadt Exp $	*/
 /*
  * Copyright (c) 1995, 1996 Erik Theisen
  * All rights reserved.
@@ -422,5 +422,7 @@ struct elf_oshdr {
 #define ELF_LINUX       "linux"         /* Linux */
 
 #endif /* _KERNEL */
+
+#define ELF_TARG_VER	1	/* The ver for which this code is intended */
 
 #endif /* _SYS_EXEC_ELF_H_ */

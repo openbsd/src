@@ -1,4 +1,4 @@
-/*	$OpenBSD: elf_hash.c,v 1.1 1996/05/28 14:11:20 etheisen Exp $	*/
+/*	$OpenBSD: elf_hash.c,v 1.2 1996/05/29 03:05:12 deraadt Exp $	*/
 /*
  * Copyright (c) 1995, 1996 Erik Theisen
  * All rights reserved.
@@ -25,6 +25,19 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/types.h>
+#include <sys/param.h>
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <sys/file.h>
+
+#include <errno.h>
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
+#include <sys/exec.h>
+
 #include <elf_abi.h>
 
 /*
@@ -34,16 +47,15 @@
  */
 unsigned long
 elf_hash(name)
-        const unsigned char *name;
+	const unsigned char *name;
 {
-        register unsigned long h = 0, g;
+	register unsigned long h = 0, g;
 
-        while(*name)
-        {
-                h = (h << 4) + *name++;
-                if (g = h & 0xf0000000)
-                        h ^= g >> 24;
-                h &= ~g;
-        }
-        return h;
-} /* end elf_hash() */
+	while (*name) {
+		h = (h << 4) + *name++;
+		if (g = h & 0xf0000000)
+			h ^= g >> 24;
+		h &= ~g;
+	}
+	return h;
+}

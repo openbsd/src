@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.h,v 1.3 1996/04/28 10:56:16 deraadt Exp $ */
+/*	$OpenBSD: exec.h,v 1.4 1996/05/29 03:05:01 deraadt Exp $ */
 
 /*
  * Copyright (c) 1993 Christopher G. Demetriou
@@ -44,5 +44,12 @@ struct relocation_info_m68k {
 			  r_copy :  1;	/* run time copy */
 };
 #define relocation_info	relocation_info_m68k
+
+#define ELF_TARG_CLASS		ELFCLASS32
+#define ELF_TARG_DATA		ELFDATA2MSB
+#define ELF_TARG_MACH		EM_68K
+
+#define DO_AOUT			/* support a.out */
+#define DO_ELF			/* support ELF */
 
 #endif  /* _MACHINE_EXEC_H_ */

@@ -324,4 +324,11 @@ struct relocation_info
 }
 #endif
 
+#define ELF_TARG_CLASS		ELFCLASS32
+#define ELF_TARG_DATA		ELFDATA2MSB
+#define ELF_TARG_MACH		EM_88K
+
+#define DO_AOUT			/* support a.out */
+#define DO_ELF			/* support ELF */
+
 #endif /* __A_OUT_GNU_H__ */
