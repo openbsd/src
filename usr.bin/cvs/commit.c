@@ -1,4 +1,4 @@
-/*	$OpenBSD: commit.c,v 1.12 2004/12/14 22:30:48 jfb Exp $	*/
+/*	$OpenBSD: commit.c,v 1.13 2004/12/21 18:32:10 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -178,26 +178,24 @@ cvs_commit_prepare(CVSFILE *cf, void *arg)
 int
 cvs_commit_file(CVSFILE *cf, void *arg)
 {
+	int ret;
 	char *repo, rcspath[MAXPATHLEN], fpath[MAXPATHLEN];
 	RCSFILE *rf;
 	struct cvsroot *root;
 	struct cvs_ent *entp;
 
+	ret = 0;
 	rf = NULL;
 	repo = NULL;
 	root = CVS_DIR_ROOT(cf);
 
 	if (cf->cf_type == DT_DIR) {
-		if (cf->cf_cvstat != CVS_FST_UNKNOWN) {
-			if ((cf->cf_parent != NULL) &&
-			    (root != cf->cf_parent->cf_ddat->cd_root)) {
-				cvs_connect(root);
-			}
-
-			cvs_senddir(root, cf);
+		if (root->cr_method != CVS_METHOD_LOCAL) {
+			if (cf->cf_cvstat != CVS_FST_UNKNOWN)
+				ret = cvs_senddir(root, cf);
 		}
 
-		return (0);
+		return (ret);
 	}
 
 	cvs_file_getpath(cf, fpath, sizeof(fpath));

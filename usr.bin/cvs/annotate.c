@@ -1,4 +1,4 @@
-/*	$OpenBSD: annotate.c,v 1.2 2004/12/14 22:30:47 jfb Exp $	*/
+/*	$OpenBSD: annotate.c,v 1.3 2004/12/21 18:32:09 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -150,12 +150,15 @@ cvs_annotate_file(CVSFILE *cf, void *arg)
 	ret = 0;
 	root = CVS_DIR_ROOT(cf);
 
-	if ((root->cr_method != CVS_METHOD_LOCAL) && (cf->cf_type == DT_DIR)) {
-		if (cf->cf_cvstat == CVS_FST_UNKNOWN)
-			ret = cvs_sendreq(root, CVS_REQ_QUESTIONABLE,
-			    CVS_FILE_NAME(cf));
-		else
-			ret = cvs_senddir(root, cf);
+	if (cf->cf_type == DT_DIR) {
+		if (root->cr_method != CVS_METHOD_LOCAL) {
+			if (cf->cf_cvstat == CVS_FST_UNKNOWN)
+				ret = cvs_sendreq(root, CVS_REQ_QUESTIONABLE,
+				    CVS_FILE_NAME(cf));
+			else
+				ret = cvs_senddir(root, cf);
+		}
+
 		return (ret);
 	}
 

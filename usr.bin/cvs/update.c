@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.12 2004/12/14 22:30:48 jfb Exp $	*/
+/*	$OpenBSD: update.c,v 1.13 2004/12/21 18:32:10 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -146,12 +146,15 @@ cvs_update_file(CVSFILE *cf, void *arg)
 	root = CVS_DIR_ROOT(cf);
 	repo = CVS_DIR_REPO(cf);
 
-	if ((root->cr_method != CVS_METHOD_LOCAL) && (cf->cf_type == DT_DIR)) {
-		if (cf->cf_cvstat == CVS_FST_UNKNOWN)
-			ret = cvs_sendreq(root, CVS_REQ_QUESTIONABLE,
-			    CVS_FILE_NAME(cf));
-		else
-			ret = cvs_senddir(root, cf);
+	if (cf->cf_type == DT_DIR) {
+		if (root->cr_method != CVS_METHOD_LOCAL) {
+			if (cf->cf_cvstat == CVS_FST_UNKNOWN)
+				ret = cvs_sendreq(root, CVS_REQ_QUESTIONABLE,
+				    CVS_FILE_NAME(cf));
+			else
+				ret = cvs_senddir(root, cf);
+		}
+
 		return (ret);
 	}
 
