@@ -52,7 +52,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: gethostnamadr.c,v 1.40 2000/01/03 11:51:07 itojun Exp $";
+static char rcsid[] = "$OpenBSD: gethostnamadr.c,v 1.41 2000/01/06 08:24:17 d Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -490,7 +490,7 @@ gethostbyaddr_r(addr, len, af, he, buf, buflen, errorp)
 /* XXX RFC2133 expects a gethostbyname2_r() -- unimplemented */
 #endif
 
-_THREAD_PRIVATE_MUTEX(gethostnamadr)
+_THREAD_PRIVATE_MUTEX(gethostnamadr);
 
 struct hostent *
 gethostbyname(name)

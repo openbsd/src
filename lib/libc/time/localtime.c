@@ -5,7 +5,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint) && !defined(NOID)
 static char elsieid[] = "@(#)localtime.c	7.66";
-static char rcsid[] = "$OpenBSD: localtime.c,v 1.17 1999/03/09 23:06:12 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: localtime.c,v 1.18 2000/01/06 08:24:17 d Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -1069,7 +1069,7 @@ struct tm *
 localtime(timep)
 const time_t * const	timep;
 {
-	_THREAD_PRIVATE_KEY(localtime)
+	_THREAD_PRIVATE_KEY(localtime);
 	struct tm * p_tm = (struct tm*)_THREAD_PRIVATE(localtime, tm, NULL);
 
 	if (p_tm == NULL)
@@ -1132,7 +1132,7 @@ struct tm *
 gmtime(timep)
 const time_t * const	timep;
 {
-	_THREAD_PRIVATE_KEY(gmtime)
+	_THREAD_PRIVATE_KEY(gmtime);
 	struct tm * p_tm = (struct tm*) _THREAD_PRIVATE(gmtime, tm, NULL);
 
 	if (p_tm == NULL)

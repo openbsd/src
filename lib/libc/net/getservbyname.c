@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: getservbyname.c,v 1.4 1998/11/20 11:18:44 d Exp $";
+static char rcsid[] = "$OpenBSD: getservbyname.c,v 1.5 2000/01/06 08:24:17 d Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <netdb.h>
@@ -41,7 +41,7 @@ static char rcsid[] = "$OpenBSD: getservbyname.c,v 1.4 1998/11/20 11:18:44 d Exp
 
 extern int _serv_stayopen;
 
-_THREAD_PRIVATE_MUTEX(getservbyname_r)
+_THREAD_PRIVATE_MUTEX(getservbyname_r);
 
 struct servent *
 getservbyname_r(name, proto, se, buf, buflen)
@@ -75,7 +75,7 @@ gotname:
 struct servent *getservbyname(name, proto)
 	const char *name, *proto;
 {
-	_THREAD_PRIVATE_KEY(getservbyname)
+	_THREAD_PRIVATE_KEY(getservbyname);
 	static char buf[4096];
 	char *bufp = (char*)_THREAD_PRIVATE(getservbyname, buf, NULL);
 
