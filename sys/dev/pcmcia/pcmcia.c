@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcmcia.c,v 1.21 1999/08/16 06:46:18 deraadt Exp $	*/
+/*	$OpenBSD: pcmcia.c,v 1.22 1999/08/16 07:45:22 fgsch Exp $	*/
 /*	$NetBSD: pcmcia.c,v 1.9 1998/08/13 02:10:55 eeh Exp $	*/
 
 /*
@@ -310,7 +310,7 @@ pcmcia_print(arg, pnp)
 				    card->manufacturer,
 				    card->product == -1 ? "" : ", ");
 			if (card->product != -1)
-				printf("product 0x%lx%s",
+				printf("product 0x%lx",
 				    card->product);
 			printf(")");
 		}
