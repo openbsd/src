@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.mac68k,v 1.23 2001/12/14 08:51:21 miod Exp $
+#	$OpenBSD: Makefile.mac68k,v 1.24 2001/12/24 23:12:14 miod Exp $
 #	$NetBSD: Makefile.mac68k,v 1.53 1997/04/15 06:11:38 scottr Exp $
 
 # Makefile for OpenBSD
@@ -24,12 +24,12 @@
 
 .include <bsd.own.mk>
 
+AS?=	as
 CC?=	cc
+CPP?=	cpp
 LD?=	ld
 MKDEP?=	mkdep
-STRIP?=	strip -d
-TOUCH?=	touch -f -c
-COPTS?= -O2
+STRIP?=	strip
 
 # source tree is located via $S relative to the compilation directory
 .ifndef S
@@ -44,7 +44,7 @@ CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL \
 CWARNFLAGS=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes \
 		-Wno-uninitialized -Wno-format -Wno-main
 CMACHFLAGS=	-msoft-float
-
+COPTS?= -O2
 CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS} ${CMACHFLAGS}
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
 LINKFLAGS=	-n -Ttext 0 -e start
@@ -106,7 +106,7 @@ SYSTEM_DEP=	Makefile ${SYSTEM_OBJ}
 SYSTEM_LD_HEAD=	@rm -f $@
 SYSTEM_LD=	@echo ${LD} ${LINKFLAGS} -o $@ '$${SYSTEM_OBJ}' vers.o; \
 		${LD} ${LINKFLAGS} -o $@ ${SYSTEM_OBJ} vers.o
-SYSTEM_LD_TAIL=	@size $@; chmod 755 $@
+SYSTEM_LD_TAIL=	@${SIZE} $@; chmod 755 $@
 
 DEBUG?=
 .if ${DEBUG} == "-g"

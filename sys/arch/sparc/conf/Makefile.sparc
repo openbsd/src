@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.sparc,v 1.19 2001/07/15 13:10:50 assar Exp $
+#	$OpenBSD: Makefile.sparc,v 1.20 2001/12/24 23:12:14 miod Exp $
 # 	$NetBSD: Makefile.sparc,v 1.32.4.1 1996/06/12 20:26:32 pk Exp $
 
 # Makefile for OpenBSD
@@ -30,7 +30,6 @@ CPP?=	cpp
 LD?=	ld
 MKDEP?=	mkdep
 STRIP?=	strip
-TOUCH?=	touch
 
 # source tree is located via $S relative to the compilation directory
 .ifndef S
@@ -56,7 +55,6 @@ CFLAGS+=	-mno-fpu
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
 LINKFLAGS=	-N -p -Ttext F8004000 -e start
 STRIPFLAGS=	-d
-TOUCHFLAGS=	-f -c
 
 HOSTCC=	${CC}
 HOSTED_CPPFLAGS=${CPPFLAGS:S/^-nostdinc$//}
@@ -111,7 +109,7 @@ SYSTEM_DEP=	Makefile ${SYSTEM_OBJ}
 SYSTEM_LD_HEAD=	@rm -f $@
 SYSTEM_LD=	@echo ${LD} ${LINKFLAGS} -o $@ '$${SYSTEM_OBJ}' vers.o; \
 		${LD} ${LINKFLAGS} -o $@ ${SYSTEM_OBJ} vers.o
-SYSTEM_LD_TAIL=	@size $@; chmod 755 $@
+SYSTEM_LD_TAIL=	@${SIZE} $@; chmod 755 $@
 
 DEBUG?=
 .if ${DEBUG} == "-g"

@@ -8,7 +8,6 @@ CPP?=	cpp
 LD?=	ld
 MKDEP?=	mkdep
 STRIP?=	strip
-TOUCH?=	touch
 
 # source tree is located via $S relative to the compilation directory
 .ifndef S
@@ -28,7 +27,6 @@ CFLAGS=		${DEBUG} -O2 ${CDIAGFLAGS} ${CMACHFLAGS} ${COPTS}
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE -Wa,-Av9a
 LINKFLAGS=	-n -Ttext 01000000 -Tdata 01800000 -e start
 STRIPFLAGS=	-d
-TOUCHFLAGS=	-f -c
 
 HOSTCC=	${CC}
 HOSTED_CPPFLAGS=${CPPFLAGS:S/^-nostdinc$//}
@@ -83,7 +81,7 @@ SYSTEM_DEP=	Makefile ${SYSTEM_OBJ}
 SYSTEM_LD_HEAD=	@rm -f $@
 SYSTEM_LD=	@echo ${LD} ${LINKFLAGS} -o $@ '$${SYSTEM_OBJ}' vers.o; \
 		${LD} ${LINKFLAGS} -o $@ ${SYSTEM_OBJ} vers.o
-SYSTEM_LD_TAIL=	@size $@; chmod 755 $@
+SYSTEM_LD_TAIL=	@${SIZE} $@; chmod 755 $@
 
 DEBUG?=
 .if ${DEBUG} == "-g"

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.amiga,v 1.29 2001/12/14 08:51:17 miod Exp $
+#	$OpenBSD: Makefile.amiga,v 1.30 2001/12/24 23:12:14 miod Exp $
 #	$NetBSD: Makefile.amiga,v 1.60 1997/07/23 10:19:42 is Exp $
 
 # Makefile for OpenBSD
@@ -24,12 +24,13 @@
 
 .include <bsd.own.mk>
 
+AS?=	as
 CC?=	cc
+CPP?=	cpp
 LD?=	ld
 MKDEP?=	mkdep
+SIZE?=	size
 STRIP?=	strip
-TOUCH?=	touch -f -c
-COPTS?=	-O2
 
 # source tree is located via $S relative to the compilation directory
 .ifndef S
@@ -51,6 +52,7 @@ CMACHFLAGS=	-m68060 -Wa,-m68030
 .endif
 CMACHFLAGS+=	-msoft-float
 
+COPTS?=	-O2
 CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS} ${CMACHFLAGS}
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
 LINKFLAGS=	-n -Ttext 0 -e start
@@ -112,7 +114,7 @@ SYSTEM_DEP=	Makefile ${SYSTEM_OBJ}
 SYSTEM_LD_HEAD=	@rm -f $@
 SYSTEM_LD=	@echo ${LD} ${LINKFLAGS} -o $@ '$${SYSTEM_OBJ}' vers.o; \
 		${LD} ${LINKFLAGS} -o $@ ${SYSTEM_OBJ} vers.o
-SYSTEM_LD_TAIL=	@size $@; chmod 755 $@
+SYSTEM_LD_TAIL=	@${SIZE} $@; chmod 755 $@
 
 DEBUG?=
 .if ${DEBUG} == "-g"

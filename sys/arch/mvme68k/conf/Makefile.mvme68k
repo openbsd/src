@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.mvme68k,v 1.13 2001/12/14 08:51:21 miod Exp $
+#	$OpenBSD: Makefile.mvme68k,v 1.14 2001/12/24 23:12:14 miod Exp $
 
 # This makefile is constructed from a machine description:
 #	config machineid
@@ -25,8 +25,9 @@ AS?=	as
 CC?=	cc
 CPP?=	cpp
 LD?=	ld
+MKDEP?=	mkdep
+SIZE?=	size
 STRIP?=	strip
-COPTS?=	-O2
 
 # source tree is located via $S relative to the compilation directory
 .ifndef S
@@ -47,6 +48,7 @@ CMACHFLAGS=	-m68060 -Wa,-m68030
 .endif
 CMACHFLAGS+=	-msoft-float
 
+COPTS?=	-O2
 CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS} ${CMACHFLAGS}
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
 LINKFLAGS=	-Ttext 0x10000 -z -e start
@@ -103,7 +105,7 @@ SYSTEM_DEP=	Makefile ${SYSTEM_OBJ}
 SYSTEM_LD_HEAD=	@rm -f $@
 SYSTEM_LD=	@echo ${LD} ${LINKFLAGS} -o $@ '$${SYSTEM_OBJ}' vers.o; \
 		${LD} ${LINKFLAGS} -o $@ ${SYSTEM_OBJ} vers.o
-SYSTEM_LD_TAIL=	@size $@; chmod 755 $@
+SYSTEM_LD_TAIL=	@${SIZE} $@; chmod 755 $@
 
 DEBUG?=
 .if ${DEBUG} == "-g"

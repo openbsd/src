@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.sun3,v 1.28 2001/12/14 08:51:21 miod Exp $
+#	$OpenBSD: Makefile.sun3,v 1.29 2001/12/24 23:12:14 miod Exp $
 #	$NetBSD: Makefile.sun3,v 1.51 1996/09/09 21:07:08 mycroft Exp $
 
 # Makefile for OpenBSD
@@ -93,7 +93,7 @@ SYSTEM_DEP=	Makefile ${SYSTEM_OBJ}
 SYSTEM_LD_HEAD=	@rm -f $@
 SYSTEM_LD=	@echo ${LD} ${LINKFLAGS} -o $@ '$${SYSTEM_OBJ}' vers.o; \
 		${LD} ${LINKFLAGS} -o $@ ${SYSTEM_OBJ} vers.o
-SYSTEM_LD_TAIL=	@size $@; chmod 755 $@
+SYSTEM_LD_TAIL=	@${SIZE} $@; chmod 755 $@
 
 DEBUG?=
 .if ${DEBUG} == "-g"

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.mvme88k,v 1.17 2001/12/22 18:22:38 smurph Exp $
+#	$OpenBSD: Makefile.mvme88k,v 1.18 2001/12/24 23:12:14 miod Exp $
 #
 # Makefile for OpenBSD
 #
@@ -30,7 +30,6 @@ LD?=    ld
 MKDEP?=	mkdep
 SIZE?=	size
 STRIP?= strip
-TOUCH?=	touch
 
 # source tree is located via $S relative to the compilation directory
 .ifndef S
@@ -48,7 +47,6 @@ CFLAGS=		${DEBUG} ${CWARNFLAGS} ${CMACHFLAGS} ${COPTS}
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE ${CMACHFLAGS}
 LINKFLAGS=	-Ttext 0x10000 -e start
 STRIPFLAGS=	-d
-TOUCHFLAGS=	-f -c
 
 HOSTCC?=	${CC}
 HOSTED_CPPFLAGS?=${CPPFLAGS:S/^-nostdinc$//}

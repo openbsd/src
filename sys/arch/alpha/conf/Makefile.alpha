@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.alpha,v 1.22 2001/09/14 14:50:33 art Exp $
+#	$OpenBSD: Makefile.alpha,v 1.23 2001/12/24 23:12:12 miod Exp $
 #	$NetBSD: Makefile.alpha,v 1.27 1996/12/01 06:12:25 jonathan Exp $
 
 # Makefile for OpenBSD
@@ -18,12 +18,13 @@
 
 .include <bsd.own.mk>
 
+AS?=	as
 CC?=	cc
+CPP?=	cpp
 LD?=	ld
 MKDEP?=	mkdep
-STRIP?=	strip
-COPTS?= 	-O2
 SIZE?=	size
+STRIP?=	strip
 
 # source tree is located via $S relative to the compilation directory
 .ifndef S
@@ -38,6 +39,7 @@ CDIAGFLAGS?=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes \
 		-Wno-uninitialized -Wno-format -Wno-main
 
 CMACHFLAGS=	-mno-fp-regs
+COPTS?= 	-O2
 CFLAGS=		${DEBUG} ${CDIAGFLAGS} ${CMACHFLAGS} ${COPTS}
 AFLAGS=		-traditional -D_LOCORE
 LINKFLAGS=	-N -Ttext fffffc0000230000 -e __start -G 4

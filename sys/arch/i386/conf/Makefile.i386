@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.i386,v 1.27 2001/07/15 13:10:48 assar Exp $
+#	$OpenBSD: Makefile.i386,v 1.28 2001/12/24 23:12:14 miod Exp $
 #	$NetBSD: Makefile.i386,v 1.67 1996/05/11 16:12:11 mycroft Exp $
 
 # Makefile for OpenBSD
@@ -26,11 +26,11 @@
 
 AS?=	as
 CC?=	cc
-MKDEP?=	mkdep
 CPP?=	cpp
 LD?=	ld
+MKDEP?=	mkdep
+SIZE?=	size
 STRIP?=	strip
-TOUCH?=	touch
 
 # source tree is located via $S relative to the compilation directory
 .ifndef S
@@ -40,7 +40,6 @@ I386=	$S/arch/i386
 
 INCLUDES=	-nostdinc -I. -I$S/arch -I$S
 CPPFLAGS=	${INCLUDES} ${IDENT} -D_KERNEL -Di386
-
 CDIAGFLAGS=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes \
 		-Wno-uninitialized -Wno-format -Wno-main
 
@@ -50,11 +49,11 @@ CMACHFLAGS=	-march=i486
 CMACHFLAGS=
 .endif
 
-CFLAGS=		${DEBUG} -O2 ${CDIAGFLAGS} ${CMACHFLAGS} ${COPTS}
+COPTS?=	-O2
+CFLAGS=		${DEBUG} ${CDIAGFLAGS} ${CMACHFLAGS} ${COPTS}
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
 LINKFLAGS=	-z -Ttext E0100000 -e start
 STRIPFLAGS=	-d
-TOUCHFLAGS=	-f -c
 
 HOSTCC= ${CC}
 HOSTED_CPPFLAGS=${CPPFLAGS:S/^-nostdinc$//}
@@ -109,7 +108,7 @@ SYSTEM_DEP=	Makefile ${SYSTEM_OBJ}
 SYSTEM_LD_HEAD=	rm -f $@
 SYSTEM_LD=	@echo ${LD} ${LINKFLAGS} -o $@ '$${SYSTEM_OBJ}' vers.o; \
 		${LD} ${LINKFLAGS} -o $@ ${SYSTEM_OBJ} vers.o
-SYSTEM_LD_TAIL=	@size $@; chmod 755 $@
+SYSTEM_LD_TAIL=	@${SIZE} $@; chmod 755 $@
 
 DEBUG?=
 .if ${DEBUG} == "-g"
