@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.26 1997/04/19 21:26:31 millert Exp $
+#	$OpenBSD: Makefile,v 1.27 1997/06/24 09:51:42 downsj Exp $
 
 # not yet done: catman
 
@@ -36,7 +36,7 @@ SUBDIR+=
 .elif ${MACHINE} == "sun3"
 SUBDIR+=dbsym eeprom screenblank
 .elif ${MACHINE} == "sparc"
-SUBDIR+=eeprom screenblank
+SUBDIR+=eeprom fdformat screenblank
 .endif
 
 .include <bsd.subdir.mk>
