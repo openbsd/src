@@ -1,3 +1,4 @@
+./usr/include/machine/kcore.h
 ./usr/bin/gdb
 ./usr/include/ansidecl.h
 ./usr/include/bfd.h
