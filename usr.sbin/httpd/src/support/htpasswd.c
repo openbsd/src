@@ -228,26 +228,17 @@ static int mkrecord(char *user, char *record, size_t rlen, char *passwd,
 
 static int usage(void)
 {
-    fprintf(stderr, "Usage:\n");
-    fprintf(stderr, "\thtpasswd [-cmdps] passwordfile username\n");
-    fprintf(stderr, "\thtpasswd -b[cmdps] passwordfile username password\n\n");
-    fprintf(stderr, "\thtpasswd -n[mdps] username\n");
-    fprintf(stderr, "\thtpasswd -nb[mdps] username password\n");
+    fprintf(stderr, "Usage:\thtpasswd [-c] [-d | -m | -p | -s] passwordfile username\n");
+    fprintf(stderr, "\thtpasswd -b [-c] [-d | -m | -p | -s] passwordfile username password\n");
+    fprintf(stderr, "\thtpasswd -n [-d | -m | -p | -s] username\n");
+    fprintf(stderr, "\thtpasswd -bn [-d | -m | -p | -s] username password\n");
+    fprintf(stderr, " -b  Use the password from the command line rather than prompting for it.\n");
     fprintf(stderr, " -c  Create a new file.\n");
+    fprintf(stderr, " -d  Force CRYPT encryption of the password (default).\n");
+    fprintf(stderr, " -m  Force MD5 encryption of the password.\n");
     fprintf(stderr, " -n  Don't update file; display results on stdout.\n");
-    fprintf(stderr, " -m  Force MD5 encryption of the password"
-	".\n");
-    fprintf(stderr, " -d  Force CRYPT encryption of the password"
-	    " (default)"
-	    ".\n");
     fprintf(stderr, " -p  Do not encrypt the password (plaintext).\n");
     fprintf(stderr, " -s  Force SHA encryption of the password.\n");
-    fprintf(stderr, " -b  Use the password from the command line rather "
-	    "than prompting for it.\n");
-    fprintf(stderr,
-	    "On Windows, TPF and NetWare systems the '-m' flag is used by default.\n");
-    fprintf(stderr,
-	    "On all other systems, the '-p' flag will probably not work.\n");
     return ERR_SYNTAX;
 }
 
