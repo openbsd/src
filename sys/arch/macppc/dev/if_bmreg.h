@@ -1,5 +1,5 @@
-/*	$OpenBSD: if_bmreg.h,v 1.1 2001/09/01 15:50:00 drahn Exp $	*/
-/*	$NetBSD: if_bmreg.h,v 1.1 1999/01/01 01:27:52 tsubai Exp $	*/
+/*	$OpenBSD: if_bmreg.h,v 1.2 2001/09/16 03:19:30 drahn Exp $	*/
+/*	$NetBSD: if_bmreg.h,v 1.2 2000/01/25 14:38:50 tsubai Exp $	*/
 
 /*
  * Copyright 1991-1998 by Open Software Foundation, Inc.
@@ -53,6 +53,10 @@
 #define  ClkBit			0x0008
 #define CHIPID		0x0170
 #define MIFCSR		0x0180
+#define  MIFDC			0x0001	/* MII clock */
+#define  MIFDO			0x0002	/* MII data out */
+#define  MIFDIR			0x0004	/* MII direction (1: write) */
+#define  MIFDI			0x0008	/* MII data in */
 #define SROMCSR		0x0190
 #define TXPNTR		0x01A0
 #define RXPNTR		0x01B0
@@ -83,6 +87,7 @@
 #define TXCFG		0x0430
 #define  TxMACEnable		0x0001
 #define  TxThreshold		0x0004
+#define  TxFullDuplex		0x0200
 #define IPG1		0x0440
 #define IPG2		0x0450
 #define ALIMIT		0x0460
