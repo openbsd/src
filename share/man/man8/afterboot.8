@@ -1,4 +1,4 @@
-.\"	$OpenBSD: afterboot.8,v 1.104 2005/03/02 11:59:18 jmc Exp $
+.\"	$OpenBSD: afterboot.8,v 1.105 2005/03/02 14:53:07 jmc Exp $
 .\"
 .\" Copyright (c) 1997 Marshall M. Midden
 .\" All rights reserved.
@@ -786,6 +786,14 @@ and
 to check on running processes, network connections, and opened files,
 respectively.
 .Sh COMPILING A KERNEL
+Note:
+The standard
+.Ox
+kernel configuration (GENERIC) is suitable for most purposes.
+Use of an alternative kernel configuration is not recommended.
+.Xr sendbug 1
+reports for non-GENERIC kernels will be rejected.
+.Pp
 First, review the system message buffer using the
 .Xr dmesg 8
 command to find out information on your system's devices as probed by the
@@ -864,6 +872,7 @@ boot time in the kernel image.
 .Xr passwd 1 ,
 .Xr pkg_add 1 ,
 .Xr ps 1 ,
+.Xr sendbug 1 ,
 .Xr ssh 1 ,
 .Xr su 1 ,
 .Xr xdm 1 ,
