@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rc.conf.8,v 1.9 2000/09/08 13:17:41 aaron Exp $
+.\"	$OpenBSD: rc.conf.8,v 1.10 2001/12/13 03:49:52 millert Exp $
 .\"
 .\" Copyright (c) 1997 Ian F. Darwin
 .\" All rights reserved.
@@ -53,19 +53,19 @@ Variables set in this file will override variables previously set in
 There are three sections in this file.
 The first is used to turn features on or off.
 For example, whether the system runs the
-.Nm sendmail
+.Nm routed
 daemon is determined by the line in this section
 .Bd -literal -indent xxx
-sendmail_flags=NO
+routed=NO		# for normal use: "-q"
 .Ed
 .Pp
-If this line is edited to contain some valid sendmail daemon command-line
+If this line is edited to contain some valid routed daemon command-line
 flags, such as
 .Bd -literal -indent xxx
-sendmail_flags="-bd -q30m"
+routed="-q"		# for normal use: "-q"
 .Ed
 .Pp
-then the sendmail daemon will be started with those options.
+then the routed daemon will be started with those options.
 .Pp
 The second section contains some other programs that can either be run or not,
 but that don't need options.
