@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.2 1998/04/07 07:11:32 deraadt Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.3 1998/04/13 14:26:15 millert Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintainance
 .\" of non-core utilities.
@@ -19,7 +19,7 @@
 .\"
 .Dd November 25, 1994
 .Dt pkg_add 1
-.Os FreeBSD 2.0
+.Os
 .Sh NAME
 .Nm pkg_add
 .Nd a utility for installing software package distributions.
@@ -168,7 +168,8 @@ in the staging area, the location of which is read as a string
 from stdin.  The complete packing list is also read from stdin,
 and the contents then acted on as normal.
 .El
-On or more
+.Pp
+One or more
 .Ar pkg-name
 arguments may be specified, each being either a file containing the
 package (these usually ending with the ``.tgz'' suffix) or a
@@ -176,24 +177,41 @@ URL pointing at a file available on an ftp site.  Thus you may
 extract files directly from their anonymous ftp locations (e.g.
 .Nm
 ftp://ftp.freebsd.org/pub/FreeBSD/packages/shells/bash-1.14.4.tgz).
+.Pp
 Note:  If you wish to use
 .Bf -emphasis
-passive mode
+active mode
 .Ef
 ftp in such transfers, set
 the variable
 .Bf -emphasis
-FTP_ACTIVE_MODE
+FTPMODE
 .Ef
-to some value in your environment.  Otherwise, the more standard
-PASSIVE mode may be used.  If
+to
+.Dq active
+in your environment.  Otherwise, the more flexible
+PASSIVE mode may be used.  (see
+.Xr ftp 1
+for more info on the
+.Ev FTPMODE
+environment variable.)  If
 .Nm
 consistently fails to fetch a package from a site known to work,
-it may be because you have a firewall that demands the usage of
+it may be because the site does not support
 .Bf -emphasis
 passive mode
 .Ef
-ftp.
+ftp correctly.  This is very rare since
+.Nm
+will try
+.Bf -emphasis
+active mode
+.Ef
+ftp if the server refuses a
+.Bf -emphasis
+passive mode
+.Ef
+connection.
 .Sh TECHNICAL DETAILS
 .Nm
 is fairly simple.  It extracts each packages' "packing list"
@@ -325,6 +343,7 @@ is installed, even if the user might change it with the
 flag to
 .Cm pkg_add .
 .Sh SEE ALSO
+.Xr ftp 1 ,
 .Xr pkg_info 1 ,
 .Xr mktemp 3 ,
 .Xr sysconf 3 ,
