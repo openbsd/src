@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcvar.h,v 1.6 1996/12/08 01:03:07 niklas Exp $	*/
+/*	$OpenBSD: tcvar.h,v 1.7 2001/06/27 20:23:38 miod Exp $	*/
 /*	$NetBSD: tcvar.h,v 1.7 1996/10/22 21:37:31 cgd Exp $	*/
 
 /*
@@ -35,22 +35,17 @@
  * Definitions for TurboChannel autoconfiguration.
  */
 
-#ifdef __alpha__	/* XXX pmax does not yet have machine/bus.h */
 #include <machine/bus.h>
-#endif
 #include <dev/tc/tcreg.h>
 
 /*
  * Machine-dependent definitions.
  */
-#if (alpha + pmax != 1)
+#if !defined(__alpha__)
 ERROR: COMPILING FOR UNSUPPORTED MACHINE, OR MORE THAN ONE.
 #endif
-#if alpha
+#ifdef __alpha__
 #include <alpha/tc/tc_machdep.h>
-#endif
-#if pmax
-#include <machine/tc_machdep.h>
 #endif
 
 /*
@@ -74,17 +69,6 @@ ERROR: COMPILING FOR UNSUPPORTED MACHINE, OR MORE THAN ONE.
 #define	TC_IPL_TTY	IPL_TTY
 #define	TC_IPL_CLOCK	IPL_CLOCK
 
-#else
-/*
- * On the pmax, we still need the old definitions.
- */
-typedef enum {
-	TC_IPL_NONE,			/* block only this interrupt */
-	TC_IPL_BIO,			/* block disk interrupts */
-	TC_IPL_NET,			/* block network interrupts */
-	TC_IPL_TTY,			/* block terminal interrupts */
-	TC_IPL_CLOCK,			/* block clock interrupts */
-} tc_intrlevel_t;
 #endif
 
 /*
