@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcp.c,v 1.23 2001/09/06 13:29:08 mpech Exp $	*/
+/*	$OpenBSD: rcp.c,v 1.24 2001/10/01 08:06:28 markus Exp $	*/
 /*	$NetBSD: rcp.c,v 1.9 1995/03/21 08:19:06 cgd Exp $	*/
 
 /*
@@ -409,6 +409,11 @@ source(argc, argv)
 		len = strlen(name);
 		while (len > 1 && name[len-1] == '/')
 			name[--len] = '\0';
+		if (strchr(name, '\n') != NULL) {
+			run_err("%s: skipping, filename contains a newline",
+			    name);
+			goto next;
+		}
 		if ((fd = open(name, O_RDONLY, 0)) < 0)
 			goto syserr;
 		if (fstat(fd, &stb)) {
