@@ -1,4 +1,4 @@
-/*	$OpenBSD: var.c,v 1.46 2000/07/18 20:17:20 espie Exp $	*/
+/*	$OpenBSD: var.c,v 1.47 2000/08/21 10:44:21 espie Exp $	*/
 /*	$NetBSD: var.c,v 1.18 1997/03/18 19:24:46 christos Exp $	*/
 
 /*
@@ -70,7 +70,7 @@
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: var.c,v 1.46 2000/07/18 20:17:20 espie Exp $";
+static char rcsid[] = "$OpenBSD: var.c,v 1.47 2000/08/21 10:44:21 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -691,7 +691,7 @@ Var_Append(name, val, ctxt)
     v = VarFind(name, (SymTable *)ctxt, (ctxt == VAR_GLOBAL) ? FIND_ENV : 0);
 
     if (v == NULL) {
-	(void)VarAdd(name, val, ctxt);
+	v = VarAdd(name, val, ctxt);
     } else {
 	Buf_AddSpace(&(v->val));
 	Buf_AddString(&(v->val), val);
