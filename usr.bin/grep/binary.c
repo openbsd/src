@@ -1,4 +1,4 @@
-/*	$OpenBSD: binary.c,v 1.11 2004/05/06 19:42:16 millert Exp $	*/
+/*	$OpenBSD: binary.c,v 1.12 2004/05/06 20:18:51 otto Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -41,7 +41,7 @@ bin_file(FILE *f)
 	int		i, m;
 	int		ret = 0;
 
-	if (fseek(f, 0L, SEEK_SET) == -1)
+	if (isatty(fileno(f)) || fseek(f, 0L, SEEK_SET) == -1)
 		return 0;
 
 	if ((m = (int)fread(buf, 1, BUFSIZ, f)) == 0)
