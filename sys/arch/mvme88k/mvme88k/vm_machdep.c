@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.34 2001/09/21 02:11:57 miod Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.35 2001/09/23 02:51:36 miod Exp $	*/
 
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -496,11 +496,11 @@ pagemove(from, to, size)
 		panic("pagemove");
 #endif
 	while (size > 0) {
-		rv = pmap_extract(kernel_pmap, (vaddr_t)from, &pa);
+		rv = pmap_extract(pmap_kernel(), (vaddr_t)from, &pa);
 #ifdef DEBUG
 		if (rv == FALSE)
 			panic("pagemove 2");
-		if (pmap_extract(kernel_pmap, (vaddr_t)to, NULL) == TRUE)
+		if (pmap_extract(pmap_kernel(), (vaddr_t)to, NULL) == TRUE)
 			panic("pagemove 3");
 #endif
 		pmap_kremove((vaddr_t)from, PAGE_SIZE);
@@ -517,6 +517,6 @@ kvtop(va)
 {
 	vm_offset_t pa;
 
-	pmap_extract(kernel_pmap, va, &pa);
+	pmap_extract(pmap_kernel(), va, &pa);
 	return ((u_int)pa);
 }
