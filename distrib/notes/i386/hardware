@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.107 2003/03/06 11:50:59 grange Exp $
+dnl	$OpenBSD: hardware,v 1.108 2003/03/13 19:56:56 jason Exp $
 OpenBSD/MACHINE OSREV works across a broad range of standard PC's and
 clones, with a wide variety of processors and I/O bus architectures.  It
 can be expected to install and run with minimal difficulties on most
@@ -544,7 +544,7 @@ Supported hardware {:-include-:}:
 		    Soekris Engineering vpn1201 and vpn1211
 		    GTGI PowerCrypt Encryption Accelerator
 		    NetSec 7751
-		    Hifn reference board
+		    Hifn 7751 and 9751 reference boards
 		    Invertex AEON
 	PC Cards (PCMCIA [B] and Carbus [B] [C])
 		ATA cards, including:

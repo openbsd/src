@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.31 2003/01/13 15:56:50 jason Exp $
+dnl	$OpenBSD: hardware,v 1.32 2003/03/13 19:56:56 jason Exp $
 OpenBSD/MACHINE OSREV is expected to run on the following hardware.
 If you have hardware that is listed here and are unable to run
 OpenBSD, or if you are able to run OpenBSD on hardware not listed
@@ -291,7 +291,7 @@ Supported Peripherals:
 		    Soekris Engineering vpn1201 and vpn1211
 		    GTGI PowerCrypt Encryption Accelerator
 		    NetSec 7751
-		    Hifn reference board
+		    Hifn 7751 and 9751 reference boards
 		    Invertex AEON
 	Sound Devices [*]
 		Ensoniq AudioPCI (eap)
