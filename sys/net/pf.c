@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.164 2001/10/24 09:07:38 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.165 2001/11/06 11:48:29 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2102,28 +2102,28 @@ pf_calc_skip_steps(struct pf_rulequeue *rules)
 	r = TAILQ_FIRST(rules);
 	while (r != NULL) {
 		a = 0;
-		for (i = 0; i < 7; ++i) {
+		for (i = 0; i < PF_SKIP_COUNT; ++i) {
 			a |= 1 << i;
 			r->skip[i] = TAILQ_NEXT(r, entries);
 		}
 		s = TAILQ_NEXT(r, entries);
 		while (a && s != NULL) {
-			PF_CALC_SKIP_STEP(0, s->ifp == r->ifp);
-			PF_CALC_SKIP_STEP(1, s->af == r->af);
-			PF_CALC_SKIP_STEP(2, s->proto == r->proto);
-			PF_CALC_SKIP_STEP(3,
+			PF_CALC_SKIP_STEP(PF_SKIP_IFP, s->ifp == r->ifp);
+			PF_CALC_SKIP_STEP(PF_SKIP_AF, s->af == r->af);
+			PF_CALC_SKIP_STEP(PF_SKIP_PROTO, s->proto == r->proto);
+			PF_CALC_SKIP_STEP(PF_SKIP_SRC_ADDR,
 			    PF_AEQ(&s->src.addr, &r->src.addr, r->af) &&
 			    PF_AEQ(&s->src.mask, &r->src.mask, r->af) &&
 			    s->src.not == r->src.not);
-			PF_CALC_SKIP_STEP(4,
+			PF_CALC_SKIP_STEP(PF_SKIP_SRC_PORT,
 			    s->src.port[0] == r->src.port[0] &&	
 			    s->src.port[1] == r->src.port[1] &&
 			    s->src.port_op == r->src.port_op);
-			PF_CALC_SKIP_STEP(5,
+			PF_CALC_SKIP_STEP(PF_SKIP_DST_ADDR,
 			    PF_AEQ(&s->dst.addr, &r->dst.addr, r->af) &&
 			    PF_AEQ(&s->dst.mask, &r->dst.mask, r->af) &&
 			    s->dst.not == r->dst.not);
-			PF_CALC_SKIP_STEP(6,
+			PF_CALC_SKIP_STEP(PF_SKIP_DST_PORT,
 			    s->dst.port[0] == r->dst.port[0] &&
 			    s->dst.port[1] == r->dst.port[1] &&
 			    s->dst.port_op == r->dst.port_op);
@@ -2784,23 +2784,23 @@ pf_test_tcp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 		}
 		r->evaluations++;
 		if (r->ifp != NULL && r->ifp != ifp)
-			r = r->skip[0];
+			r = r->skip[PF_SKIP_IFP];
 		else if (r->af && r->af != af)
-			r = r->skip[1];
+			r = r->skip[PF_SKIP_AF];
 		else if (r->proto && r->proto != IPPROTO_TCP)
-			r = r->skip[2];
+			r = r->skip[PF_SKIP_PROTO];
 		else if (!PF_AZERO(&r->src.mask, af) && !PF_MATCHA(r->src.not,
 		    &r->src.addr, &r->src.mask, saddr, af))
-			r = r->skip[3];
+			r = r->skip[PF_SKIP_SRC_ADDR];
 		else if (r->src.port_op && !pf_match_port(r->src.port_op,
 		    r->src.port[0], r->src.port[1], th->th_sport))
-			r = r->skip[4];
+			r = r->skip[PF_SKIP_SRC_PORT];
 		else if (!PF_AZERO(&r->dst.mask, af) && !PF_MATCHA(r->dst.not,
 		    &r->dst.addr, &r->dst.mask, daddr, af))
-			r = r->skip[5];
+			r = r->skip[PF_SKIP_DST_ADDR];
 		else if (r->dst.port_op && !pf_match_port(r->dst.port_op,
 		    r->dst.port[0], r->dst.port[1], th->th_dport))
-			r = r->skip[6];
+			r = r->skip[PF_SKIP_DST_PORT];
 		else if (r->direction != direction)
 			r = TAILQ_NEXT(r, entries);
 		else if ((r->flagset & th->th_flags) != r->flags)
@@ -3009,25 +3009,25 @@ pf_test_udp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 		r->evaluations++;
 
 		if (r->ifp != NULL && r->ifp != ifp)
-			r = r->skip[0];
+			r = r->skip[PF_SKIP_IFP];
 		else if (r->af && r->af != af)
-			r = r->skip[1];
+			r = r->skip[PF_SKIP_AF];
 		else if (r->proto && r->proto != IPPROTO_UDP)
-			r = r->skip[2];
+			r = r->skip[PF_SKIP_PROTO];
 		else if (!PF_AZERO(&r->src.mask, af) &&
 		    !PF_MATCHA(r->src.not, &r->src.addr, &r->src.mask,
 			saddr, af))
-			r = r->skip[3];
+			r = r->skip[PF_SKIP_SRC_ADDR];
 		else if (r->src.port_op && !pf_match_port(r->src.port_op,
                     r->src.port[0], r->src.port[1], uh->uh_sport))
-                        r = r->skip[4];
+                        r = r->skip[PF_SKIP_SRC_PORT];
 		else if (!PF_AZERO(&r->dst.mask, af) &&
 		    !PF_MATCHA(r->dst.not, &r->dst.addr, &r->dst.mask,
 			daddr, af))
-			r = r->skip[5];
+			r = r->skip[PF_SKIP_DST_ADDR];
 		else if (r->dst.port_op && !pf_match_port(r->dst.port_op,
 		    r->dst.port[0], r->dst.port[1], uh->uh_dport))
-			r = r->skip[6];
+			r = r->skip[PF_SKIP_DST_PORT];
 		else if (r->direction != direction)
 			r = TAILQ_NEXT(r, entries);
 		else {
@@ -3247,17 +3247,17 @@ pf_test_icmp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 		}
 		r->evaluations++;
 		if (r->ifp != NULL && r->ifp != ifp)
-			r = r->skip[0];
+			r = r->skip[PF_SKIP_IFP];
 		else if (r->af && r->af != af)
-			r = r->skip[1];
+			r = r->skip[PF_SKIP_AF];
 		else if (r->proto && r->proto != pd->proto)
-			r = r->skip[2];
+			r = r->skip[PF_SKIP_PROTO];
 		else if (!PF_AZERO(&r->src.mask, af) && !PF_MATCHA(r->src.not,
 		    &r->src.addr, &r->src.mask, saddr, af))
-			r = r->skip[3];
+			r = r->skip[PF_SKIP_SRC_ADDR];
 		else if (!PF_AZERO(&r->dst.mask, af) && !PF_MATCHA(r->dst.not,
 		    &r->dst.addr, &r->dst.mask, daddr, af))
-			r = r->skip[5];
+			r = r->skip[PF_SKIP_DST_ADDR];
 		else if (r->direction != direction)
 			r = TAILQ_NEXT(r, entries);
 		else if (r->ifp != NULL && r->ifp != ifp)
@@ -3408,17 +3408,17 @@ pf_test_other(struct pf_rule **rm, int direction, struct ifnet *ifp,
 		}
 		r->evaluations++;
 		if (r->ifp != NULL && r->ifp != ifp)
-			r = r->skip[0];
+			r = r->skip[PF_SKIP_IFP];
 		else if (r->af && r->af != af)
-			r = r->skip[1];
+			r = r->skip[PF_SKIP_AF];
 		else if (r->proto && r->proto != pd->proto)
-			r = r->skip[2];
+			r = r->skip[PF_SKIP_PROTO];
 		else if (!PF_AZERO(&r->src.mask, af) && !PF_MATCHA(r->src.not,
 		    &r->src.addr, &r->src.mask, pd->src, af))
-			r = r->skip[3];
+			r = r->skip[PF_SKIP_SRC_ADDR];
 		else if (!PF_AZERO(&r->dst.mask, af) && !PF_MATCHA(r->dst.not,
 		    &r->dst.addr, &r->dst.mask, pd->dst, af))
-			r = r->skip[5];
+			r = r->skip[PF_SKIP_DST_ADDR];
 		else if (r->direction != direction)
 			r = TAILQ_NEXT(r, entries);
 		else {
