@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ksh.1tbl,v 1.19 1999/06/03 09:50:31 aaron Exp $
+.\"	$OpenBSD: ksh.1tbl,v 1.20 1999/06/14 03:13:58 pjanzen Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
 .\"     The Regents of the University of California.  All rights reserved.
@@ -80,14 +80,14 @@ If neither the
 .Fl c
 nor the
 .Fl s
-options are specified, the first non-option argument specifies the name
+option is specified, the first non-option argument specifies the name
 of a file the shell reads commands from. If there are no non-option
 arguments, the shell reads commands from the standard input. The name of
 the shell (i.e., the contents of $0) is determined as follows: if the
 .Fl c
 option is used and there is a non-option argument, it is used as the name;
 if commands are being read from a file, the file is used as the name;
-otherwise the name the shell was called with (i.e., argv[0]) is used.
+otherwise, the name the shell was called with (i.e., argv[0]) is used.
 .Pp
 A shell is
 .Dq interactive
@@ -227,7 +227,7 @@ and
 .Ql \&)
 .Pc .
 Aside from delimiting words, spaces and tabs are ignored, while newlines
-usually delimit commands. The meta-charcters are used in building the
+usually delimit commands. The meta-characters are used in building the
 following tokens:
 .Ql < ,
 .Ql <& ,
@@ -291,7 +291,7 @@ the
 .Ql #
 up to the nearest newline is ignored;
 .Ql $
-is used to introduce parameter, command and arithmetic substitutions (see
+is used to introduce parameter, command, and arithmetic substitutions (see
 .Sx Substitution
 below);
 .Ql `
@@ -460,7 +460,7 @@ control structure.
 .Pp
 In the following compound command descriptions, command lists (denoted as
 .Em list )
-that are followed by reserved words must end with a semi-colon, a newline or
+that are followed by reserved words must end with a semicolon, a newline, or
 a (syntactically correct) reserved word. For example,
 .Pp
 .Bl -inset -indent -compact
@@ -515,7 +515,7 @@ and
 .Ql /
 are dropped. Note that any unquoted space before and after a pattern is
 stripped; any space with a pattern must be quoted. Both the word and the
-patterns are subject to parameter, command and arithmetic substitution as
+patterns are subject to parameter, command, and arithmetic substitution as
 well as tilde substitution. For historical reasons, open and close braces
 may be used instead of
 .Ic in
@@ -543,7 +543,7 @@ is set to the word and
 is executed. If
 .Ic in
 is not used to specify a word list, the positional parameters ($1, $2, etc.)
-are used instead. For historical reasons, open and clase braces may be used
+are used instead. For historical reasons, open and close braces may be used
 instead of
 .Ic do
 and
@@ -569,7 +569,7 @@ If the exit status of the first
 .Ar list
 is zero, the second
 .Ar list
-is executed; otherwise the
+is executed; otherwise, the
 .Ar list
 following the
 .Ic elif ,
@@ -734,7 +734,7 @@ operators must always be used (e.g., instead of
 use
 .Ic \&[[ Fl n Ar str Ic \&]] ) .
 .It
-Parameter, command and arithmetic substitutions are performed as expressions
+Parameter, command, and arithmetic substitutions are performed as expressions
 are evaluated and lazy expression evaluation is used for the
 .Ql &&
 and
@@ -801,7 +801,7 @@ for its value) when it reads the first word of a command. An expanded alias
 is re-processed to check for more aliases. If a command alias ends in a
 space or tab, the following word is also checked for alias expansion. The
 alias expansion process stops when a word that is not an alias is found, when
-a quoted word is found or when an alias word that iscurrently being expanded
+a quoted word is found or when an alias word that is currently being expanded
 is found.
 .Pp
 The following command aliases are defined automatically by the shell:
@@ -863,7 +863,7 @@ and
 .Ss Substitution
 The first step the shell takes in executing a simple-command is to perform
 substitutions on the words of the command. There are three kinds of
-substitution: parameter, command and arithmetic. Parameter substitutions,
+substitution: parameter, command, and arithmetic. Parameter substitutions,
 which are described in detail in the next section, take the form
 .Ic $name
 or
@@ -882,7 +882,7 @@ the current value of the
 parameter. The
 .Ev IFS
 parameter specifies a list of characters which are used to break a string up
-into several words; any characters from the set space, tab and newline that
+into several words; any characters from the set space, tab, and newline that
 appear in the
 .Ev IFS
 characters are called
@@ -892,7 +892,7 @@ Sequences of one or more
 whitespace characters, in combination with zero or no
 .Pf non- Ev IFS
 whitespace
-characters delimit a field. As a special case, leading and trailing
+characters, delimit a field. As a special case, leading and trailing
 .Ev IFS
 whitespace is stripped (i.e., no leading or trailing empty field is created by
 it); leading or trailing
@@ -915,7 +915,7 @@ Note that if the
 parameter is set to the
 .Dv NULL
 string, no field splitting is done; if the parameter is unset, the default
-value of space, tab and newline is used.
+value of space, tab, and newline is used.
 .Pp
 The results of substitution are, unless otherwise specified, also subject to
 brace expansion and file name expansion (see the relevant sections below).
@@ -925,7 +925,7 @@ command, which is run in a subshell. For
 .Ic $( Ns Ar command Ns Ic )
 substitutions, normal quoting rules are used when
 .Ar command
-is parsed, however, for the
+is parsed; however, for the
 .Ic ` Ns Ar command Ns Ic `
 form, a
 .Ql \e
@@ -950,7 +950,7 @@ but it is carried out more efficiently because no process is started).
 .Sy Note:
 .Ic $( Ns Ar command Ns Ic \&)
 expressions are currently parsed by finding the matching parenthesis,
-regardless of quoting. This will hopefully be fixed soon.
+regardless of quoting. This should be fixed soon.
 .Pp
 Arithmetic substitutions are replaced by the value of the specified expression.
 For example, the command
@@ -1054,7 +1054,7 @@ If
 .Ar name
 is set and not
 .Dv NULL ,
-it is substituted, otherwise
+it is substituted; otherwise,
 .Ar word
 is substituted.
 .It Xo Ic ${ Ns Ar name Ns
@@ -1065,7 +1065,7 @@ If
 is set and not
 .Dv NULL ,
 .Ar word
-is substituted, otherwise nothing is substituted.
+is substituted; otherwise, nothing is substituted.
 .It Xo Ic ${ Ns Ar name Ns
 .Ic \&:\&= Ns Ar word Ns Ic \&}
 .Xc
@@ -1073,7 +1073,7 @@ If
 .Ar name
 is set and not
 .Dv NULL ,
-it is substituted, otherwise it is assigned
+it is substituted; otherwise, it is assigned
 .Ar word
 and the resulting value of
 .Ar name
@@ -1085,7 +1085,7 @@ If
 .Ar name
 is set and not
 .Dv NULL ,
-it is substituted, otherwise
+it is substituted; otherwise,
 .Ar word
 is printed on standard error (preceded by
 .Ar name Ns No \&: )
@@ -1097,7 +1097,7 @@ is used instead.
 .Pp
 In the above modifiers, the
 .Ql \&:
-can be omitted, in which case the conditions only depand on
+can be omitted, in which case the conditions only depend on
 .Ar name
 being set (as opposed to set and not
 .Dv NULL ) .
@@ -1135,8 +1135,8 @@ matches the beginning of the value of parameter
 .Ar name ,
 the matched text is deleted from the result of substitution. A single
 .Ql #
-results in the shortest match, two
-of them results in the longest match.
+results in the shortest match, and two
+of them result in the longest match.
 .Sm off
 .It Xo
 .Ic ${ Ar name Ic \&% Ar pattern Ic \&},\ \&
@@ -1391,7 +1391,7 @@ below.
 .It Ev PPID
 The process ID of the shell's parent (read-only).
 .It Ev PS1
-The primary prompt for interactive shells. Parameter, command and arithmetic
+The primary prompt for interactive shells. Parameter, command, and arithmetic
 substitutions are performed, and
 .Ql !
 is replaced with the current command number (see
@@ -1428,7 +1428,7 @@ statement when reading a menu selection. Default is
 .It Ev PS4
 Used to prefix commands that are printed during execution tracing (see
 .Ic set Fl x
-command below). Parameter, command and arithmetic substitutions are performed
+command below). Parameter, command, and arithmetic substitutions are performed
 before it is printed. Default is
 .Dq \&+\ \& .
 .It Ev PWD
@@ -1695,8 +1695,8 @@ inside a
 .Ic \&[ Ns No .. Ns Ic \&]
 expression) are not yet implemented.
 .Ss Input/output redirection
-When a command is executed, its standard input, standard output and standard
-error (file descriptors 0, 1 and 2, respectively) are normally inherited from
+When a command is executed, its standard input, standard output, and standard
+error (file descriptors 0, 1, and 2, respectively) are normally inherited from
 the shell. Three exceptions to this are commands in pipelines, for which
 standard input and/or standard output are those set up by the pipeline,
 asynchronous commands created when job control is disabled, for which standard
@@ -1711,8 +1711,8 @@ If
 .Ar file
 does not exist, it is created; if it does exist, is a regular file and the
 .Ic noclobber
-option is set, an error occurs, otherwise the file is truncated. Note that this
-means the command
+option is set, an error occurs; otherwise, the file is truncated. Note that
+this means the command
 .Ic cmd < foo > foo
 will open
 .Ar foo
@@ -1745,7 +1745,7 @@ except the file is opened for reading and writing.
 .It Ic \&<\&< Ar marker
 After reading the command line containing this kind of redirection (called a
 .Dq here document ) ,
-the shell copies lines from the command source into a termpoary file until a
+the shell copies lines from the command source into a temporary file until a
 line matching
 .Ar marker
 is read. When the command is executed, standard input is redirected from the
@@ -1753,7 +1753,7 @@ temporary file. If
 .Ar marker
 contains no quoted characters, the contents of the temporary file are processed
 as if enclosed in double quotes each time the command is executed, so
-parameter, command and arithmetic substitutions are performed, along with
+parameter, command, and arithmetic substitutions are performed, along with
 backslash
 .Pq Sq \e
 escapes for
@@ -1787,8 +1787,8 @@ except the operation is done on standard output.
 .Pp
 In any of the above redirections, the file descriptor that is redirected (i.e.,
 standard input or standard output) can be explicitly given by preceding the
-redirection with a single digit. Parameter, command and arithmetic
-substitutions, tilde substitutions and (if the shell is interative)
+redirection with a single digit. Parameter, command, and arithmetic
+substitutions, tilde substitutions, and (if the shell is interactive)
 file name generation are all performed on the
 .Ar file ,
 .Ar marker
@@ -1799,8 +1799,8 @@ generation are only used if a single file is matched; if multiple files match,
 the word with the expanded file name generation characters is used. Note
 that in restricted shells, redirections which can create files cannot be used.
 .Pp
-For simple-commands, redirections may appear anywhere in the command, for
-compund-commands
+For simple-commands, redirections may appear anywhere in the command; for
+compound-commands
 .Po
 .Ic if
 statements, etc.
@@ -1892,9 +1892,12 @@ Result is the argument (included for completeness).
 .It unary Ic \&-
 Negation.
 .It Ic \&!
-Logical NOT; the result is 1 if argument is zero, 0 if not.
+Logical
+.Tn NOT ;
+the result is 1 if argument is zero, 0 if not.
 .It Ic \&~
-Arithmetic (bit-wise) NOT.
+Arithmetic (bit-wise)
+.Tn NOT .
 .It Ic \&+\&+
 Increment; must be applied to a parameter (not a literal or other expression).
 The parameter is incremented by 1. When used as a prefix operator, the result
@@ -1925,17 +1928,25 @@ is the same as
 .Ao Ar expr Ac
 .Ic \&) .
 .It Ic \&|\&|
-Logical OR; the result is 1 if either argument is non-zero, 0 if not. The right
+Logical
+.Tn OR ;
+the result is 1 if either argument is non-zero, 0 if not. The right
 argument is evaluated only if the left argument is zero.
 .It Ic \&&\&&
-Logical AND; the result is 1 if both arguments are non-zero, 0 if not. The
+Logical
+.Tn AND ;
+the result is 1 if both arguments are non-zero, 0 if not. The
 right argument is evaluated only if the left argument is non-zero.
 .It Ic \&|
-Arithmetic (bit-wise) OR.
+Arithmetic (bit-wise)
+.Tn OR .
 .It Ic ^
-Arithmetic (bit-wise) XOR (exclusive-OR).
+Arithmetic (bit-wise)
+.Tn XOR
+(exclusive-OR).
 .It Ic \&&
-Arithmetic (bit-wise) AND.
+Arithmetic (bit-wise)
+.Tn AND .
 .It Ic ==
 Equal; the result is 1 if both arguments are equal, 0 if not.
 .It Ic \&!=
@@ -2020,11 +2031,11 @@ syntax or the Bourne/POSIX shell
 .Fn name
 syntax (see below for the difference between the two forms). Functions are like
 .Li .-scripts
-in that they are executed in the current environment. Howeer, unlike
+in that they are executed in the current environment. However, unlike
 .Li .-scripts ,
 shell arguments (i.e., positional parameters $1, $2, etc.) are never visible
 inside them. When the shell is determining the location of a command, functions
-are searched after special built-in commands, and before regular and
+are searched after special built-in commands, before regular and
 non-regular built-ins, and before the
 .Ev PATH
 is searched.
@@ -2121,7 +2132,7 @@ returns.
 .Ss POSIX mode
 The shell is intended to be
 .Tn POSIX
-compliant, however, in some cases,
+compliant; however, in some cases,
 .Tn POSIX
 behaviour is contrary either to the original Korn shell behaviour or to user
 convenience. How the shell behaves in these cases is determined by the state
@@ -2131,7 +2142,7 @@ option
 .Pq Ic set Fl o Ic posix .
 If it is on, the
 .Tn POSIX
-behaviour is followed, otherwise it is not. The
+behaviour is followed; otherwise, it is not. The
 .Ic posix
 option is set automatically when the shell starts up if the environment
 contains the
@@ -2139,7 +2150,7 @@ contains the
 parameter. (The shell can also be compiled so that it is in
 .Tn POSIX
 mode by
-default, however this is usually not desirable).
+default; however, this is usually not desirable).
 .Pp
 The following is a list of things that are affected by the state of the
 .Ic posix
@@ -2215,7 +2226,7 @@ mode, brace expansion is enabled. Note that
 .Ev POSIXLY_CORRECT
 parameter) automatically turns the
 .Ic braceexpand
-option off, however, it can be explicitly turned on later.
+option off; however, it can be explicitly turned on later.
 .It
 .Ic set \&- .
 In
@@ -2317,8 +2328,8 @@ test may be left out and defaults to 1).
 .El
 .Ss Command execution
 After evaluation of command-line arguments, redirections and parameter
-assignments, the type of command is determined; a special built-in, a function,
-a regular built-in, or the name of a file to execute found using the
+assignments, the type of command is determined:  a special built-in, a
+function, a regular built-in, or the name of a file to execute found using the
 .Ev PATH
 parameter. The checks are made in the above order. Special built-in commands
 differ from other commands in that the
@@ -2555,7 +2566,7 @@ exit, and command assignments are not permanent). If the
 .Fl p
 option is given, a default search path is used instead of the current value of
 .Ev PATH
-(the actual value of the default path is system dependent; on
+(the actual value of the default path is system dependent: on
 .Tn POSIX Ns ish
 systems,
 it is the value returned by
@@ -2619,7 +2630,8 @@ string which the shell then parses and executes in the current environment.
 .Xc
 The command is executed without forking, replacing the shell process.
 .Pp
-If no arguments are given, and I/O redirection is permanent and the shell is
+If no command is given except for I/O redirection, the I/O redirection is
+permanent and the shell is
 not replaced. Any file descriptors greater than 2 which are opened or
 .Xr dup 2 Ns 'd
 in this way are not made available to other executed commands (i.e., commands
@@ -2702,10 +2714,10 @@ parameters, if no arguments are given) and to check for legal options.
 contains the option letters that
 .Ic getopts
 is to recognize. If a letter is followed by a colon, the option is expected to
-ahve an argument. Options that do not take arguments may be grouped in a single
+have an argument. Options that do not take arguments may be grouped in a single
 argument. If an option takes an argument and the option character is not the
 last character of the argument it is found in, the remainder of the argument is
-taken to be the option's argument, otherwise, the next argument is the option's
+taken to be the option's argument; otherwise, the next argument is the option's
 argument.
 .Pp
 Each time
@@ -2810,7 +2822,7 @@ is syntactic sugar for
 .Li | Fl R No [-en] Oc [argument\ ...]
 .Xc
 .Ic print
-prints its arguments on the standard output, separated by spaces, and
+prints its arguments on the standard output, separated by spaces and
 terminated with a newline. The
 .Fl n
 option suppresses the newline. By default, certain C escapes are translated.
@@ -3190,7 +3202,7 @@ defaults to 1.
 .Ic test
 evaluates the
 .Ar expression
-and returns zero status if true, 1 status if fase, and greater than 1 if there
+and returns zero status if true, 1 status if false, or greater than 1 if there
 was an error. It is normally used as the condition command of
 .Ic if
 and
@@ -3254,7 +3266,7 @@ mode has sticky bit set.
 is not empty.
 .It Fl O Ar file
 .Ar file Ns 's
-owned is the shell's effective user ID.
+owner is the shell's effective user ID.
 .It Fl G Ar file
 .Ar file Ns 's
 group is the shell's effective group ID.
@@ -3347,11 +3359,14 @@ increasing order of precedence):
 .Pp
 .Bl -tag -width "expr -o expr" -compact
 .It Ar expr Fl o Ar expr
-Logical OR.
+Logical
+.Tn OR .
 .It Ar expr Fl a Ar expr
-Logical AND.
+Logical
+.Tn AND .
 .It Ic \&! Ar expr
-Logical NOT.
+Logical
+.Tn NOT .
 .It Ic \&( Ar expr Ic \&)
 Grouping.
 .El
@@ -3664,7 +3679,7 @@ Display or set the file permission creation mask, or umask (see
 .Xr umask 2 ) .
 If the
 .Fl S
-option is used, the mask displayed or set is symbolic, otherwise it is an
+option is used, the mask displayed or set is symbolic; otherwise, it is an
 octal number.
 .Pp
 Symbolic masks are like those used by
@@ -3997,7 +4012,7 @@ words, leaving the cursor past the end of the last word.
 .Pp
 If the current line does not being with a comment character, one is added at
 the beginning of the line and the line is entered (as if return had been
-pressed), otherwise the existing comment characters are removed and the cursor
+pressed); otherwise, the existing comment characters are removed and the cursor
 is placed at the beginning of the line.
 .It Ic complete ^[^[
 Automatically completes as much as is unique of the command name or the file
@@ -4230,7 +4245,7 @@ Like vi, there are two modes --
 mode and
 .Dq command
 mode. In insert mode, most characters are simply put in the buffer at the
-current cursor position as they are typed, however, some characters are
+current cursor position as they are typed; however, some characters are
 treated specially. In particular, the following characters are taken from
 current tty settings (see
 .Xr tty 1 )
