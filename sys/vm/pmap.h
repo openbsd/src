@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.6 1998/03/01 11:36:44 niklas Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.7 1998/03/02 17:07:12 niklas Exp $	*/
 /*	$NetBSD: pmap.h,v 1.16 1996/03/31 22:15:32 pk Exp $	*/
 
 /* 
@@ -196,20 +196,19 @@ void		 pmap_zero_page __P((vm_offset_t));
 #ifdef MACHINE_NONCONTIG
 u_int		 pmap_free_pages __P((void));
 boolean_t	 pmap_next_page __P((vm_offset_t *));
-void		 pmap_startup __P((vm_offset_t *, vm_offset_t *));
-vm_offset_t	 pmap_steal_memory __P((vm_size_t));
-void		 pmap_virtual_space __P((vm_offset_t *, vm_offset_t *));
 #endif
-#ifdef MACHINE_NEW_NONCONTIG
-#if defined(PMAP_STEAL_MEMORY)
+#if defined(MACHINE_NEW_NONCONTIG) && defined(PMAP_STEAL_MEMORY)
 vm_offset_t	 pmap_steal_memory __P((vm_size_t, vm_offset_t *,
 		    vm_offset_t *));
 #else
 void		 pmap_virtual_space __P((vm_offset_t *, vm_offset_t *));
 #endif
-#endif
 __END_DECLS
 #endif	/* kernel*/
 #endif  /* PMAP_EXCLUDE_DECLS */
+
+/* XXX these are about to disappear real soon */
+void		 pmap_startup __P((vm_offset_t *, vm_offset_t *));
+vm_offset_t	 pmap_steal_memory __P((vm_size_t));
 
 #endif /* _PMAP_VM_ */
