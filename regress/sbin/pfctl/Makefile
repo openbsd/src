@@ -1,7 +1,7 @@
-# $OpenBSD: Makefile,v 1.19 2002/06/11 18:07:49 frantzen Exp $
+# $OpenBSD: Makefile,v 1.20 2002/06/25 08:17:16 henning Exp $
 
-PFTESTS=1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21
-PFFAIL=1 2 3 4 5 6 7 8 9 10
+PFTESTS=1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22
+PFFAIL=1 2 3 4 5 6 7 8 9 10 11
 
 .for n in ${PFFAIL}
 REGRESSTARGETS+=pfail${n}
