@@ -14,7 +14,7 @@ Code for uid-swapping.
 */
 
 #include "includes.h"
-RCSID("$Id: uidswap.c,v 1.2 1999/09/30 08:34:25 deraadt Exp $");
+RCSID("$Id: uidswap.c,v 1.3 1999/11/23 22:25:56 markus Exp $");
 
 #include "ssh.h"
 #include "uidswap.h"
@@ -40,56 +40,51 @@ static uid_t saved_euid = 0;
 /* Temporarily changes to the given uid.  If the effective user id is not
    root, this does nothing.  This call cannot be nested. */
 
-void temporarily_use_uid(uid_t uid)
+void 
+temporarily_use_uid(uid_t uid)
 {
 #ifdef SAVED_IDS_WORK_WITH_SETEUID
+	/* Save the current euid. */
+	saved_euid = geteuid();
 
-  /* Save the current euid. */
-  saved_euid = geteuid();
-
-  /* Set the effective uid to the given (unprivileged) uid. */
-  if (seteuid(uid) == -1)
-    debug("seteuid %d: %.100s", (int)uid, strerror(errno));
-
+	/* Set the effective uid to the given (unprivileged) uid. */
+	if (seteuid(uid) == -1)
+		debug("seteuid %d: %.100s", (int) uid, strerror(errno));
 #else /* SAVED_IDS_WORK_WITH_SETUID */
+	/* Propagate the privileged uid to all of our uids. */
+	if (setuid(geteuid()) < 0)
+		debug("setuid %d: %.100s", (int) geteuid(), strerror(errno));
 
-  /* Propagate the privileged uid to all of our uids. */
-  if (setuid(geteuid()) < 0)
-    debug("setuid %d: %.100s", (int)geteuid(), strerror(errno));
-
-  /* Set the effective uid to the given (unprivileged) uid. */
-  if (seteuid(uid) == -1)
-    debug("seteuid %d: %.100s", (int)uid, strerror(errno));
-
+	/* Set the effective uid to the given (unprivileged) uid. */
+	if (seteuid(uid) == -1)
+		debug("seteuid %d: %.100s", (int) uid, strerror(errno));
 #endif /* SAVED_IDS_WORK_WITH_SETEUID */
-
 }
 
 /* Restores to the original uid. */
 
-void restore_uid()
+void 
+restore_uid()
 {
 #ifdef SAVED_IDS_WORK_WITH_SETEUID
-
-  /* Set the effective uid back to the saved uid. */
-  if (seteuid(saved_euid) < 0)
-    debug("seteuid %d: %.100s", (int)saved_euid, strerror(errno));
-
+	/* Set the effective uid back to the saved uid. */
+	if (seteuid(saved_euid) < 0)
+		debug("seteuid %d: %.100s", (int) saved_euid, strerror(errno));
 #else /* SAVED_IDS_WORK_WITH_SETEUID */
-
-  /* We are unable to restore the real uid to its unprivileged value. */
-  /* Propagate the real uid (usually more privileged) to effective uid
-     as well. */
-  setuid(getuid());
-
+	/* We are unable to restore the real uid to its unprivileged
+	   value. */
+	/* Propagate the real uid (usually more privileged) to effective
+	   uid as well. */
+	setuid(getuid());
 #endif /* SAVED_IDS_WORK_WITH_SETEUID */
 }
 
 /* Permanently sets all uids to the given uid.  This cannot be called while
    temporarily_use_uid is effective. */
 
-void permanently_set_uid(uid_t uid)
+void 
+permanently_set_uid(uid_t uid)
 {
-  if (setuid(uid) < 0)
-    debug("setuid %d: %.100s", (int)uid, strerror(errno));
+	if (setuid(uid) < 0)
+		debug("setuid %d: %.100s", (int) uid, strerror(errno));
 }
