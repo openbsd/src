@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp.c,v 1.7 2001/11/05 09:56:02 deraadt Exp $	*/
+/*	$OpenBSD: tcp.c,v 1.8 2001/11/16 19:55:49 deraadt Exp $	*/
 /*	$KAME: tcp.c,v 1.6 2001/07/02 14:36:49 itojun Exp $	*/
 
 /*
@@ -97,7 +97,7 @@ sig_child(int sig)
 	pid_t pid;
 
 	pid = wait3(&status, WNOHANG, (struct rusage *)0);
-	if (pid && WEXITSTATUS(status))
+	if (pid > 0 && WEXITSTATUS(status))
 		syslog_r(LOG_WARNING, &sdata,
 		    "child %d exit status 0x%x", pid, status);
 	exit_success("terminate connection due to child termination");
