@@ -1,4 +1,4 @@
-/*	$OpenBSD: apmvar.h,v 1.7 1998/07/27 23:24:10 marc Exp $	*/
+/*	$OpenBSD: apmvar.h,v 1.8 1999/02/15 20:42:23 mickey Exp $	*/
 
 /*
  *  Copyright (c) 1995 John T. Kohl
@@ -37,6 +37,8 @@
  * functions/defines/etc.
  */
 
+#define	APM_VERSION	0x0101
+
 /*
  * APM info word from boot loader
  */
@@ -45,6 +47,8 @@
 #define APM_IDLE_SLOWS		0x00040000
 #define APM_BIOS_PM_DISABLED	0x00080000
 #define APM_BIOS_PM_DISENGAGED	0x00100000
+#define	APM_MAJOR(f)		(((f) >> 8) & 0xff)
+#define	APM_MINOR(f)		((f) & 0xff)
 
 /* APM error codes */
 #define	APM_ERR_CODE(regs)	(((regs)->ax & 0xff00) >> 8)
@@ -71,7 +75,11 @@
 #define		APM_DEV_SERIAL(x)	(0x0400|((x)&0xff))
 #define		APM_DEV_NETWORK(x)	(0x0500|((x)&0xff))
 #define		APM_DEV_PCMCIA(x)	(0x0600|((x)&0xff))
+#define		APM_DEV_BATTERIES(x)	(0x8000|((x)&0xff))
 #define		APM_DEV_ALLUNITS	0xff
+/* 0x8100-0xDFFF - reserved	*/
+/* 0xE000-0xEFFF - OEM-defined	*/
+/* 0xF000-0xFFFF - reserved	*/
 
 #define	APM_INSTCHECK		0x5300	/* int15 only */
 #define		APM_16BIT_SUPPORT	0x01
@@ -155,7 +163,8 @@
 #define		APM_USER_STANDBY_REQ	0x0009
 #define		APM_USER_SUSPEND_REQ	0x000A
 #define		APM_SYS_STANDBY_RESUME	0x000B
-/* 0x000c - 0x00ff	Reserved system events */
+#define		APM_CAPABILITY_CHANGE	0x000C
+/* 0x000d - 0x00ff	Reserved system events */
 /* 0x0100 - 0x01ff	Reserved device events */
 /* 0x0200 - 0x02ff	OEM-defined APM events */
 /* 0x0300 - 0xffff	Reserved */
@@ -177,7 +186,41 @@
 #define		APM_MGT_DISENGAGE	0x0	/* %cx */
 #define		APM_MGT_ENGAGE		0x1
 
+#define	APM_GET_CAPABILITIES	0x5310
+
+/* %bx - APM_DEV_APM_BIOS
+ * %cl - function
+ *	for %cl=2 (set resume timer)
+ * %ch - seconds in BCD
+ * %dh - hours in BCD
+ * %dl - minutes in BCD
+ * %si - month in BCD (high), day in BCD (low)
+ * %di - year in BCD
+ */
+#define	APM_RESUME_TIMER	0x5311
+#define		APM_RT_DISABLE	0x0
+#define		APM_RT_GET	0x1
+#define		APM_RT_SET	0x2
+
+/* %bx - APM_DEV_APM_BIOS
+ * %cx - function
+ */
+#define	APM_RESUME_ON_RING	0x5312
+#define		APM_ROR_DISABLE	0x0
+#define		APM_ROR_ENABLE	0x1
+#define		APM_ROR_STATUS	0x2
+
+/* %bx - APM_EDV_APM_BIOS
+ * %cx - function
+ */
+#define	APM_INACTIVITY_TIMER	0x5313
+#define		APM_IT_DISABLE	0x0
+#define		APM_IT_ENABLE	0x1
+#define		APM_IT_STATUS	0x2
+
+/* %bh - function */
 #define APM_OEM			0x5380
+#define		APM_OEM_INSTCHECK	0x7f	/* %bx - OEM ID */
 
 /*
  * LP (Laptop Package)
