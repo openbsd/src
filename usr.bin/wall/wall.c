@@ -1,4 +1,4 @@
-/*	$OpenBSD: wall.c,v 1.6 1996/09/02 09:07:35 deraadt Exp $	*/
+/*	$OpenBSD: wall.c,v 1.7 1996/09/16 02:26:18 deraadt Exp $	*/
 /*	$NetBSD: wall.c,v 1.6 1994/11/17 07:17:58 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)wall.c	8.2 (Berkeley) 11/16/93";
 #endif
-static char rcsid[] = "$OpenBSD: wall.c,v 1.6 1996/09/02 09:07:35 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: wall.c,v 1.7 1996/09/16 02:26:18 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -190,7 +190,7 @@ makemsg(fname)
 	char tmpbuf[5];
 
 	(void)strcpy(tmpname, _PATH_TMP);
-	(void)strcat(tmpname, "/wall.XXXXXX");
+	(void)strcat(tmpname, "wall.XXXXXX");
 	if (!(fd = mkstemp(tmpname)) || !(fp = fdopen(fd, "r+"))) {
 		(void)fprintf(stderr, "wall: can't open temporary file.\n");
 		exit(1);

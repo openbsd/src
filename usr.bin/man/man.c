@@ -1,4 +1,4 @@
-/*	$OpenBSD: man.c,v 1.3 1996/07/18 22:52:58 michaels Exp $	*/
+/*	$OpenBSD: man.c,v 1.4 1996/09/16 02:26:10 deraadt Exp $	*/
 /*	$NetBSD: man.c,v 1.7 1995/09/28 06:05:34 tls Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)man.c	8.17 (Berkeley) 1/31/95";
 #else
-static char rcsid[] = "$OpenBSD: man.c,v 1.3 1996/07/18 22:52:58 michaels Exp $";
+static char rcsid[] = "$OpenBSD: man.c,v 1.4 1996/09/16 02:26:10 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -501,7 +501,7 @@ build_page(fmt, pathp)
 	TAG *intmpp;
 	int fd, n;
 	char *p, *b;
-	char buf[MAXPATHLEN], cmd[MAXPATHLEN], tpath[sizeof(_PATH_TMP)];
+	char buf[MAXPATHLEN], cmd[MAXPATHLEN], tpath[MAXPATHLEN];
 
 	/* Let the user know this may take awhile. */
 	if (!warned) {
@@ -543,7 +543,7 @@ build_page(fmt, pathp)
 	 * Get a temporary file and build a version of the file
 	 * to display.  Replace the old file name with the new one.
 	 */
-	(void)strcpy(tpath, _PATH_TMP);
+	(void)strcpy(tpath, _PATH_TMPFILE);
 	if ((fd = mkstemp(tpath)) == -1) {
 		warn("%s", tpath);
 		(void)cleanup();

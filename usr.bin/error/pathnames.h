@@ -1,4 +1,4 @@
-/*	$OpenBSD: pathnames.h,v 1.2 1996/06/26 05:32:44 deraadt Exp $	*/
+/*	$OpenBSD: pathnames.h,v 1.3 1996/09/16 02:26:04 deraadt Exp $	*/
 /*	$NetBSD: pathnames.h,v 1.3 1995/09/02 06:15:40 jtc Exp $	*/
 
 /*
@@ -42,5 +42,4 @@
 #define	IG_FILE2	"llib-port"
 #define	IG_FILE3	"/usr/lib/llib-lc"
 #define	IG_FILE4	"/usr/lib/llib-port"
-#undef _PATH_TMP
-#define	_PATH_TMP	"/tmp/ErrorXXXXXX"
+#define	_PATH_TMPFILE	"/tmp/ErrorXXXXXX"

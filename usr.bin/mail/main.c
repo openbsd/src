@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.2 1996/06/11 12:53:45 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.3 1996/09/16 02:26:09 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.5 1996/06/08 19:48:31 christos Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.2 1996/06/11 12:53:45 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.3 1996/09/16 02:26:09 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -113,6 +113,7 @@ main(argc, argv)
 			/*
 			 * Next argument is person to pretend to be.
 			 */
+			unsetenv("MAIL");
 			myname = optarg;
 			break;
 		case 'i':

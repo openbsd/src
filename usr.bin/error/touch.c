@@ -1,4 +1,4 @@
-/*	$OpenBSD: touch.c,v 1.4 1996/09/16 01:47:06 deraadt Exp $	*/
+/*	$OpenBSD: touch.c,v 1.5 1996/09/16 02:26:05 deraadt Exp $	*/
 /*	$NetBSD: touch.c,v 1.3 1995/09/02 06:15:54 jtc Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)touch.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: touch.c,v 1.4 1996/09/16 01:47:06 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: touch.c,v 1.5 1996/09/16 02:26:05 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -539,7 +539,7 @@ boolean edit(name)
 			processname, name);
 		return(TRUE);
 	}
-	snprintf(n_name, sizeof n_name, "%s/error.XXXXXXXX", _PATH_TMP);
+	strcpy(n_name, _PATH_TMPFILE);
 	if ((fd = mkstemp(n_name)) == -1 ||
 	    (n_touchedfile = fdopen(fd, "w")) == NULL) {
 		if (fd != -1)

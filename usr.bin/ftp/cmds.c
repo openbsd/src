@@ -1,4 +1,4 @@
-/*      $OpenBSD: cmds.c,v 1.3 1996/09/09 04:44:38 downsj Exp $      */
+/*      $OpenBSD: cmds.c,v 1.4 1996/09/16 02:26:06 deraadt Exp $      */
 /*      $NetBSD: cmds.c,v 1.8 1995/09/08 01:06:05 tls Exp $      */
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-static char rcsid[] = "$OpenBSD: cmds.c,v 1.3 1996/09/09 04:44:38 downsj Exp $";
+static char rcsid[] = "$OpenBSD: cmds.c,v 1.4 1996/09/16 02:26:06 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -806,7 +806,7 @@ remglob(argv,doswitch)
 		return (cp);
 	}
 	if (ftemp == NULL) {
-		(void) strcpy(temp, _PATH_TMP);
+		(void) strcpy(temp, _PATH_TMPFILE);
 		(void) mktemp(temp);
 		oldverbose = verbose, verbose = 0;
 		oldhash = hash, hash = 0;

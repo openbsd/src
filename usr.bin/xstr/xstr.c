@@ -1,4 +1,4 @@
-/*	$OpenBSD: xstr.c,v 1.2 1996/06/26 05:44:34 deraadt Exp $	*/
+/*	$OpenBSD: xstr.c,v 1.3 1996/09/16 02:26:20 deraadt Exp $	*/
 /*	$NetBSD: xstr.c,v 1.5 1994/12/24 16:57:59 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)xstr.c	8.1 (Berkeley) 6/9/93";
 #endif
-static char rcsid[] = "$OpenBSD: xstr.c,v 1.2 1996/06/26 05:44:34 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: xstr.c,v 1.3 1996/09/16 02:26:20 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -116,7 +116,7 @@ main(argc, argv)
 	if (cflg || argc == 0 && !readstd)
 		inithash();
 	else
-		strings = mktemp(strdup(_PATH_TMP));
+		strings = mktemp(strdup(_PATH_TMPFILE));
 	while (readstd || argc > 0) {
 		if (freopen("x.c", "w", stdout) == NULL)
 			perror("x.c"), exit(1);

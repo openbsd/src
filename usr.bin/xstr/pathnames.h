@@ -1,4 +1,4 @@
-/*	$OpenBSD: pathnames.h,v 1.2 1996/06/26 05:44:33 deraadt Exp $	*/
+/*	$OpenBSD: pathnames.h,v 1.3 1996/09/16 02:26:20 deraadt Exp $	*/
 /*	$NetBSD: pathnames.h,v 1.3 1994/11/14 04:56:22 jtc Exp $	*/
 
 /*
@@ -34,7 +34,6 @@
  * SUCH DAMAGE.
  *
  *	@(#)pathnames.h	8.1 (Berkeley) 6/9/93
- *	$NetBSD: pathnames.h,v 1.3 1994/11/14 04:56:22 jtc Exp $
  */
 
-#define	_PATH_TMP	"/tmp/xstrXXXXXX"
+#define	_PATH_TMPFILE	"/tmp/xstrXXXXXX"

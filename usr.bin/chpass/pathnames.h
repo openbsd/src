@@ -1,4 +1,4 @@
-/*	$OpenBSD: pathnames.h,v 1.2 1996/06/26 05:31:57 deraadt Exp $	*/
+/*	$OpenBSD: pathnames.h,v 1.3 1996/09/16 02:26:02 deraadt Exp $	*/
 /*	$NetBSD: pathnames.h,v 1.3 1995/03/26 04:55:29 glass Exp $	*/
 
 /*
@@ -38,5 +38,4 @@
 
 #include <paths.h>
 
-#undef _PATH_TMP
-#define	_PATH_TMP	"/tmp/chpass.XXXXXX"
+#define	_PATH_TMPFILE	"/tmp/chpass.XXXXXX"

@@ -1,4 +1,4 @@
-/*	$OpenBSD: msgs.c,v 1.3 1996/06/26 05:37:18 deraadt Exp $	*/
+/*	$OpenBSD: msgs.c,v 1.4 1996/09/16 02:26:12 deraadt Exp $	*/
 /*	$NetBSD: msgs.c,v 1.7 1995/09/28 06:57:40 tls Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)msgs.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: msgs.c,v 1.3 1996/06/26 05:37:18 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: msgs.c,v 1.4 1996/09/16 02:26:12 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -764,7 +764,7 @@ char *prompt;
 				strcpy(fname, "Messages");
 		}
 		else {
-			strcpy(fname, _PATH_TMP);
+			strcpy(fname, _PATH_TMPFILE);
 			mktemp(fname);
 			sprintf(cmdbuf, _PATH_MAIL, fname);
 			mailing = YES;

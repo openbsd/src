@@ -1,4 +1,4 @@
-/*	$OpenBSD: pathnames.h,v 1.2 1996/06/26 05:37:18 deraadt Exp $	*/
+/*	$OpenBSD: pathnames.h,v 1.3 1996/09/16 02:26:13 deraadt Exp $	*/
 /*	$NetBSD: pathnames.h,v 1.3 1995/09/28 06:57:41 tls Exp $	*/
 
 /*
@@ -39,5 +39,4 @@
 #define	_PATH_MSGS	"/var/msgs"
 #define	_PATH_MAIL	"/usr/bin/Mail -f %s"
 #define	_PATH_PAGER	"/usr/bin/more -%d"
-#undef _PATH_TMP
-#define	_PATH_TMP	"/tmp/msgXXXXXX"
+#define	_PATH_TMPFILE	"/tmp/msgXXXXXX"
