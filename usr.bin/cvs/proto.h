@@ -1,4 +1,4 @@
-/*	$OpenBSD: proto.h,v 1.3 2004/08/03 04:58:45 jfb Exp $	*/
+/*	$OpenBSD: proto.h,v 1.4 2004/08/04 13:26:03 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -31,6 +31,11 @@
 
 #include "buf.h"
 #include "file.h"
+
+
+#define CVS_PROTO_MAXARG   256
+
+
 
 #define CVS_REQ_TIMEOUT    300
 
@@ -181,6 +186,7 @@ char*            cvs_resp_getvalid  (void);
 
 int         cvs_sendreq     (struct cvsroot *, u_int, const char *);
 int         cvs_getresp     (struct cvsroot *);
+int         cvs_sendresp    (u_int, const char *);
 int         cvs_getln       (struct cvsroot *, char *, size_t);
 int         cvs_senddir     (struct cvsroot *, CVSFILE *);
 int         cvs_sendarg     (struct cvsroot *, const char *, int);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: proto.c,v 1.18 2004/08/03 04:58:45 jfb Exp $	*/
+/*	$OpenBSD: proto.c,v 1.19 2004/08/04 13:26:02 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -758,11 +758,11 @@ cvs_getln(struct cvsroot *root, char *lbuf, size_t len)
 	return (0);
 }
 
-#ifdef notyet
+
 /*
  * cvs_sendresp()
  *
- * Send a response to the client of type <rid>, with optional arguments
+ * Send a response of type <rid> to the client, with optional arguments
  * contained in <arg>, which should not be terminated by a newline.
  * Returns 0 on success, or -1 on failure.
  */
@@ -771,8 +771,7 @@ int
 cvs_sendresp(u_int rid, const char *arg)
 {
 	int ret;
-	size_t len;
-	const char *resp;
+	struct cvs_resp *resp;
 
 	resp = cvs_resp_getbyid(rid);
 	if (resp == NULL) {
@@ -780,22 +779,22 @@ cvs_sendresp(u_int rid, const char *arg)
 		return (-1);
 	}
 
-	snprintf(cvs_proto_buf, sizeof(cvs_proto_buf), "%s %s\n", resp,
-	    (arg == NULL) ? "" : arg);
-
-	ret = fputs(resp, stdout);
+	ret = fputs(resp->resp_str, stdout);
 	if (ret == EOF) {
 		cvs_log(LP_ERRNO, "failed to send response to client");
 	}
 	else {
-		if (arg != NULL)
-			ret = fprintf(stdout, " %s", arg);
+		if (arg != NULL) {
+			putc(' ', stdout);
+			fputs(arg, stdout);
+		}
 		putc('\n', stdout);
 	}
 	return (0);
 }
 
 
+#ifdef notyet
 /*
  * cvs_getreq()
  *
