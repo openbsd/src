@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_arcsubr.c,v 1.17 2003/12/10 07:22:42 itojun Exp $	*/
+/*	$OpenBSD: if_arcsubr.c,v 1.18 2003/12/12 12:54:57 hshoexer Exp $	*/
 /*	$NetBSD: if_arcsubr.c,v 1.8 1996/05/07 02:40:29 thorpej Exp $	*/
 
 /*
@@ -73,7 +73,7 @@ static struct mbuf *arc_defrag(struct ifnet *, struct mbuf *);
  * option.
  */
 #if ARC_PHDSMTU > 60480
-ERROR: The arc_phdsmtu is ARC_PHDSMTU, but must not exceed 60480.
+#error The arc_phdsmtu is ARC_PHDSMTU, but must not exceed 60480.
 #endif
 u_int16_t arc_phdsmtu = ARC_PHDSMTU;
 u_int8_t  arcbroadcastaddr = 0;
