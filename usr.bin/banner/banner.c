@@ -1,4 +1,4 @@
-/*	$OpenBSD: banner.c,v 1.3 1998/12/07 20:09:40 deraadt Exp $	*/
+/*	$OpenBSD: banner.c,v 1.4 2001/06/21 16:35:18 lebel Exp $	*/
 /*	$NetBSD: banner.c,v 1.2 1995/04/09 06:00:15 cgd Exp $	*/
 
 /*
@@ -62,7 +62,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)printjob.c	8.2 (Berkeley) 4/16/94";
 #else
-static char rcsid[] = "$OpenBSD: banner.c,v 1.3 1998/12/07 20:09:40 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: banner.c,v 1.4 2001/06/21 16:35:18 lebel Exp $";
 #endif
 #endif /* not lint */
 
@@ -173,8 +173,7 @@ main(argc, argv)
 	char word[10+1];			/* strings limited to 10 chars */
 	
 	while (*++argv) {
-		(void)strncpy(word, *argv, sizeof (word) - 1);
-		word[sizeof (word) - 1] = '\0';
+		(void)strlcpy(word, *argv, sizeof (word));
 		scan_out(1, word, '\0');
 	}
 	exit(0);
