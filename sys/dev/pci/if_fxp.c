@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fxp.c,v 1.23 2000/01/08 05:54:44 jason Exp $	*/
+/*	$OpenBSD: if_fxp.c,v 1.24 2000/01/09 22:36:46 jason Exp $	*/
 /*	$NetBSD: if_fxp.c,v 1.2 1997/06/05 02:01:55 thorpej Exp $	*/
 
 /*
@@ -428,12 +428,15 @@ fxp_attach(parent, self, aux)
 	mii_phy_probe(self, &sc->sc_mii, 0xffffffff);
 	/* If no phy found, just use auto mode */
 	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
-		ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER|IFM_AUTO, 0, NULL);
-		printf(FXP_FORMAT ": no phy found, using auto mode\n",
+		ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER|IFM_MANUAL,
+		    0, NULL);
+		printf(FXP_FORMAT ": no phy found, using manual mode\n",
 		    FXP_ARGS(sc));
 	}
 
-	if (ifmedia_match(&sc->sc_mii.mii_media, IFM_ETHER|IFM_AUTO, 0))
+	if (ifmedia_match(&sc->sc_mii.mii_media, IFM_ETHER|IFM_MANUAL, 0))
+		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_MANUAL);
+	else if (ifmedia_match(&sc->sc_mii.mii_media, IFM_ETHER|IFM_AUTO, 0))
 		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_AUTO);
 	else
 		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_10_T);
