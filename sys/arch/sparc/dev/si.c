@@ -278,7 +278,7 @@ si_match(parent, vcf, args)
 	 * what my board seems to be at.  --thorpej
 	 */
 	if (ra->ra_intr[0].int_pri == -1)
-		ra->ra_intr[0].int_pri == 3;
+		ra->ra_intr[0].int_pri = 3;
 
 	/* Figure out the bus type and look for the appropriate adapter. */
 	switch (ca->ca_bustype) {
