@@ -1,4 +1,4 @@
-/*	$OpenBSD: commands.c,v 1.17 1998/07/01 19:31:12 deraadt Exp $	*/
+/*	$OpenBSD: commands.c,v 1.18 1998/07/09 06:32:10 deraadt Exp $	*/
 /*	$NetBSD: commands.c,v 1.14 1996/03/24 22:03:48 jtk Exp $	*/
 
 /*
@@ -1667,17 +1667,16 @@ env_init()
 	if ((ep = env_find("DISPLAY"))
 	    && ((*ep->value == ':')
 		|| (strncmp((char *)ep->value, "unix:", 5) == 0))) {
-		char hbuf[256+1];
+		char hbuf[MAXHOSTNAMELEN];
 		char *cp2 = strchr((char *)ep->value, ':');
 
-		gethostname(hbuf, 256);
-		hbuf[256] = '\0';
+		gethostname(hbuf, sizeof hbuf);
 
 		/* If this is not the full name, try to get it via DNS */
 		if (strchr(hbuf, '.') == 0) {
 			struct hostent *he = gethostbyname(hbuf);
 			if (he != 0)
-				strncpy(hbuf, he->h_name, 256);
+				strncpy(hbuf, he->h_name, sizeof hbuf);
 			hbuf[256] = '\0';
 		}
 
