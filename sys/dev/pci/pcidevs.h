@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.730 2004/05/06 16:42:40 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.731 2004/05/06 17:21:18 peter Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -2080,6 +2080,7 @@
 #define	PCI_PRODUCT_SIS_733	0x0733		/* 733 PCI */
 #define	PCI_PRODUCT_SIS_735	0x0735		/* 735 PCI */
 #define	PCI_PRODUCT_SIS_740	0x0740		/* 740 PCI */
+#define	PCI_PRODUCT_SIS_741	0x0741		/* 741 PCI */
 #define	PCI_PRODUCT_SIS_745	0x0745		/* 745 PCI */
 #define	PCI_PRODUCT_SIS_746	0x0746		/* 746 PCI */
 #define	PCI_PRODUCT_SIS_748	0x0748		/* 748 PCI */
@@ -2107,6 +2108,7 @@
 #define	PCI_PRODUCT_SIS_530_VGA	0x6306		/* 530 VGA */
 #define	PCI_PRODUCT_SIS_650_VGA	0x6325		/* 650 VGA */
 #define	PCI_PRODUCT_SIS_6326	0x6326		/* 6326 VGA */
+#define	PCI_PRODUCT_SIS_6330	0x6330		/* 6330 VGA */
 #define	PCI_PRODUCT_SIS_5597_USB	0x7001		/* 5597/5598 USB */
 #define	PCI_PRODUCT_SIS_7002	0x7002		/* 7002 USB */
 #define	PCI_PRODUCT_SIS_7007	0x7007		/* 7007 FireWire */
