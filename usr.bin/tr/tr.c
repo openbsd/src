@@ -1,4 +1,4 @@
-/*	$OpenBSD: tr.c,v 1.4 1997/07/25 21:05:45 mickey Exp $	*/
+/*	$OpenBSD: tr.c,v 1.5 1997/07/25 21:14:04 mickey Exp $	*/
 /*	$NetBSD: tr.c,v 1.5 1995/08/31 22:13:48 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)tr.c	8.2 (Berkeley) 5/4/95";
 #endif
-static char rcsid[] = "$OpenBSD: tr.c,v 1.4 1997/07/25 21:05:45 mickey Exp $";
+static char rcsid[] = "$OpenBSD: tr.c,v 1.5 1997/07/25 21:14:04 mickey Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -53,6 +53,7 @@ static char rcsid[] = "$OpenBSD: tr.c,v 1.4 1997/07/25 21:05:45 mickey Exp $";
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <err.h>
 
 #include "extern.h"
 
@@ -205,7 +206,7 @@ main(argc, argv)
 			*p++ = OOBCH;
 
 	if (!next(&s2))
-		err("empty string2");
+		errx(1, "empty string2");
 
 	/* If string2 runs out of characters, use the last one specified. */
 	if (sflag)
@@ -264,33 +265,4 @@ usage()
 	(void)fprintf(stderr, "       tr [-c] -s string1\n");
 	(void)fprintf(stderr, "       tr [-c] -ds string1 string2\n");
 	exit(1);
-}
-
-#ifdef __STDC__
-#include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
-
-void
-#ifdef __STDC__
-err(const char *fmt, ...)
-#else
-err(fmt, va_alist)
-	char *fmt;
-        va_dcl
-#endif
-{
-	va_list ap;
-#ifdef __STDC__
-	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
-	(void)fprintf(stderr, "tr: ");
-	(void)vfprintf(stderr, fmt, ap);
-	va_end(ap);
-	(void)fprintf(stderr, "\n");
-	exit(1);
-	/* NOTREACHED */
 }

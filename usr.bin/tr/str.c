@@ -1,4 +1,4 @@
-/*	$OpenBSD: str.c,v 1.3 1997/01/17 07:13:40 millert Exp $	*/
+/*	$OpenBSD: str.c,v 1.4 1997/07/25 21:14:04 mickey Exp $	*/
 /*	$NetBSD: str.c,v 1.7 1995/08/31 22:13:47 jtc Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)str.c	8.2 (Berkeley) 4/28/95";
 #endif
-static char rcsid[] = "$OpenBSD: str.c,v 1.3 1997/01/17 07:13:40 millert Exp $";
+static char rcsid[] = "$OpenBSD: str.c,v 1.4 1997/07/25 21:14:04 mickey Exp $";
 #endif /* not lint */
 
 #include <sys/cdefs.h>
@@ -50,6 +50,7 @@ static char rcsid[] = "$OpenBSD: str.c,v 1.3 1997/01/17 07:13:40 millert Exp $";
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <err.h>
 
 #include "extern.h"
 
@@ -113,6 +114,8 @@ next(s)
 			return (next(s));
 		}
 		return (1);
+	default:
+		return 0;
 	}
 	/* NOTREACHED */
 }
@@ -182,10 +185,10 @@ genclass(s)
 	tmp.name = s->str;
 	if ((cp = (CLASS *)bsearch(&tmp, classes, sizeof(classes) /
 	    sizeof(CLASS), sizeof(CLASS), c_class)) == NULL)
-		err("unknown class %s", s->str);
+		errx(1, "unknown class %s", s->str);
 
 	if ((cp->set = p = malloc((NCHARS + 1) * sizeof(int))) == NULL)
-		err("%s", strerror(errno));
+		errx(1, "no memory for a class");
 	bzero(p, (NCHARS + 1) * sizeof(int));
 	for (cnt = 0, func = cp->func; cnt < NCHARS; ++cnt)
 		if ((func)(cnt))
@@ -215,11 +218,11 @@ genequiv(s)
 	if (*s->str == '\\') {
 		s->equiv[0] = backslash(s);
 		if (*s->str != '=')
-			err("misplaced equivalence equals sign");
+			errx(1, "misplaced equivalence equals sign");
 	} else {
 		s->equiv[0] = s->str[0];
 		if (s->str[1] != '=')
-			err("misplaced equivalence equals sign");
+			errx(1, "misplaced equivalence equals sign");
 	}
 	s->str += 2;
 	s->cnt = 0;
@@ -253,14 +256,14 @@ genseq(s)
 	char *ep;
 
 	if (s->which == STRING1)
-		err("sequences only valid in string2");
+		errx(1, "sequences only valid in string2");
 
 	if (*s->str == '\\')
 		s->lastch = backslash(s);
 	else
 		s->lastch = *s->str++;
 	if (*s->str != '*')
-		err("misplaced sequence asterisk");
+		errx(1, "misplaced sequence asterisk");
 
 	switch (*++s->str) {
 	case '\\':
@@ -278,7 +281,7 @@ genseq(s)
 				break;
 			}
 		}
-		err("illegal sequence count");
+		errx(1, "illegal sequence count");
 		/* NOTREACHED */
 	}
 

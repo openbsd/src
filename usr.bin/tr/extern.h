@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.3 1996/06/26 05:41:49 deraadt Exp $	*/
+/*	$OpenBSD: extern.h,v 1.4 1997/07/25 21:14:03 mickey Exp $	*/
 /*	$NetBSD: extern.h,v 1.4 1995/11/01 00:45:22 pk Exp $	*/
 
 /*-
@@ -50,5 +50,4 @@ typedef struct {
 #define	NCHARS	(UCHAR_MAX + 1)		/* Number of possible characters. */
 #define	OOBCH	(UCHAR_MAX + 1)		/* Out of band character value. */
 
-void	 err __P((const char *fmt, ...));
 int	 next __P((STR *));
