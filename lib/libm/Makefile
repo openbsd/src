@@ -1,5 +1,5 @@
 #  $NetBSD: Makefile,v 1.28 1995/11/20 22:06:19 jtc Exp $
-#  $OpenBSD: Makefile,v 1.25 2001/08/28 21:44:20 art Exp $
+#  $OpenBSD: Makefile,v 1.26 2002/01/30 15:09:42 naddy Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24 
 # 
@@ -51,7 +51,10 @@ CFLAGS+= -D__LIBM_PRIVATE -D_USE_WRITE
 CFLAGS+= -O0
 .endif
 
-.if (${MACHINE_ARCH} == "i386")
+.if (${MACHINE_ARCH} == "alpha")
+.PATH:	${.CURDIR}/arch/alpha
+ARCH_SRCS = s_copysign.S s_copysignf.S
+.elif (${MACHINE_ARCH} == "i386")
 .PATH:	${.CURDIR}/arch/i387
 ARCH_SRCS = e_acos.S e_asin.S e_atan2.S e_exp.S e_fmod.S e_log.S e_log10.S \
 	    e_remainder.S e_remainderf.S e_scalb.S e_sqrt.S e_sqrtf.S \
