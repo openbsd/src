@@ -1,5 +1,5 @@
-/*	$OpenBSD: ipsec.c,v 1.11 1999/04/02 01:09:07 niklas Exp $	*/
-/*	$EOM: ipsec.c,v 1.89 1999/04/02 00:47:56 niklas Exp $	*/
+/*	$OpenBSD: ipsec.c,v 1.12 1999/04/05 20:57:50 niklas Exp $	*/
+/*	$EOM: ipsec.c,v 1.92 1999/04/05 18:28:10 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -361,7 +361,7 @@ ipsec_finalize_exchange (struct message *msg)
 	      while ((old_sa = sa_find (ipsec_sa_check_flow, sa)) != 0)
 		{
 		  sa_reference (old_sa);
-		  sa_mark_replaced (old_sa);
+		  sa_mark_replaced (old_sa, 0);
 		}
 	    }
 	  break;
@@ -438,6 +438,8 @@ ipsec_free_exchange_data (void *vie)
     free (ie->hash_i);
   if (ie->hash_r)
     free (ie->hash_r);
+  if (ie->group)
+    group_free (ie->group);
 }
 
 /* Free the DOI-specific SA data pointed to by VISA.  */
@@ -494,7 +496,16 @@ ipsec_get_keystate (struct message *msg)
 
   /* If we have already have an IV, use it.  */
   if (msg->exchange && msg->exchange->keystate)
-    return msg->exchange->keystate;
+    {
+      ks = malloc (sizeof *ks);
+      if (!ks)
+	{
+	  log_error ("ipsec_get_keystate: malloc (%d) failed", sizeof *ks);
+	  return 0;
+	}
+      memcpy (ks, msg->exchange->keystate, sizeof *ks);
+      return ks;
+    }
 
   /*
    * For phase 2 when no SA yet is setup we need to hash the IV used by
@@ -952,8 +963,9 @@ ipsec_decode_attribute (u_int16_t type, u_int8_t *value, u_int16_t len,
 	  ie->ike_auth = ike_auth_get (decode_16 (value));
 	  break;
 	case IKE_ATTR_GROUP_DESCRIPTION:
-	  /* XXX Errors possible?  */
 	  ie->group = group_get (decode_16 (value));
+	  if (!ie->group)
+	    return -1;
 	  break;
 	case IKE_ATTR_GROUP_TYPE:
 	  break;
@@ -1141,7 +1153,10 @@ ipsec_g_x (struct message *msg, int peer, u_int8_t *buf)
   g_x = initiator ? &ie->g_xi : &ie->g_xr;
   *g_x = malloc (ie->g_x_len);
   if (!*g_x)
-    return -1;
+    {
+      log_error ("ipsec_g_x: malloc (%d) failed", ie->g_x_len);
+      return -1;
+    }
   memcpy (*g_x, buf, ie->g_x_len);
   snprintf (header, 32, "ipsec_g_x: g^x%c", initiator ? 'i' : 'r');
   log_debug_buf (LOG_MISC, 80, header, *g_x, ie->g_x_len);
@@ -1158,7 +1173,11 @@ ipsec_gen_g_x (struct message *msg)
 
   buf = malloc (ISAKMP_KE_SZ + ie->g_x_len);
   if (!buf)
-    return -1;
+    {
+      log_error ("ipsec_gen_g_x: malloc (%d) failed",
+		 ISAKMP_KE_SZ + ie->g_x_len);
+      return -1;
+    }
 
   if (message_add_payload (msg, ISAKMP_PAYLOAD_KEY_EXCH, buf,
 			   ISAKMP_KE_SZ + ie->g_x_len, 1))
