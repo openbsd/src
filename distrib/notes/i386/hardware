@@ -90,14 +90,16 @@ Supported devices {:-include-:}:
 			Olicom OC2183, OC2325, OC2326
 			TI ThunderLAN adapters
 		RealTek 8129, RealTek 8139 Ethernet adapters, including:
+			Accton MPX 5030/5038
 			Allied Telesyn AT2550
-			Genius GF100TXR
-			NDC NE100TX-E
-			OvisLink LEF-8129TX, LEF-8139TX
-			Netronix EA-1210 Net Ether 10/100
-			KTX-9130TX 10/100 Fast Ethernet
 			Encore ENL832-TX 10/100 M PCI
+			Genius GF100TXR
+			KTX-9130TX 10/100 Fast Ethernet
 			Longshine LCS-8038TX-R
+			NDC NE100TX-E
+			Netronix EA-1210 Net Ether 10/100
+			OvisLink LEF-8129TX, LEF-8139TX
+			SMC EtherEZ PCI 1211-TX
 	Tape drives:
 		Most SCSI tape drives
 		QIC-02 and QIC-36 format (Archive- and Wangtek-
