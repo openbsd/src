@@ -1,4 +1,4 @@
-/*	$OpenBSD: rf_engine.c,v 1.7 2001/12/29 21:51:18 tdeval Exp $	*/
+/*	$OpenBSD: rf_engine.c,v 1.8 2002/02/16 00:56:23 tdeval Exp $	*/
 /*	$NetBSD: rf_engine.c,v 1.10 2000/08/20 16:51:03 thorpej Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -760,8 +760,8 @@ DAGExecutionThread_pre(RF_ThreadArg_t arg)
 	if (rf_engineDebug) {
 		printf("raid%d: Creating engine thread\n", raidPtr->raidid);
 	}
-	lastpid = -2;
 
+	lastpid = RF_ENGINE_PID + raidPtr->raidid - 1;
 	len = sprintf(&raidname[0], "raid%d", raidPtr->raidid);
 #ifdef DIAGNOSTIC
 	if (len >= sizeof(raidname))
@@ -773,10 +773,7 @@ DAGExecutionThread_pre(RF_ThreadArg_t arg)
 		RF_ERRORMSG("RAIDFRAME: Unable to create engine thread\n");
 		return;
 	}
-	LIST_REMOVE(raidPtr->engine_thread, p_hash);
-	raidPtr->engine_thread->p_pid = RF_ENGINE_PID + raidPtr->raidid;
-	LIST_INSERT_HEAD(PIDHASH(RF_ENGINE_PID + raidPtr->raidid),
-	    raidPtr->engine_thread, p_hash);
+
 	lastpid = oldpid;
 	if (rf_engineDebug) {
 		printf("raid%d: Created engine thread\n", raidPtr->raidid);
