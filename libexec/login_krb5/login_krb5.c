@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_krb5.c,v 1.6 2001/06/25 14:21:30 hin Exp $	*/
+/*	$OpenBSD: login_krb5.c,v 1.7 2001/06/25 15:49:21 hin Exp $	*/
 
 /*-
  * Copyright (c) 2001 Hans Insulander <hin@openbsd.org>.
@@ -40,6 +40,7 @@
 #include <string.h>
 #include <pwd.h>
 #include <err.h>
+#include <util.h>
 
 #include <kerberosV/krb5.h>
 #ifdef KRB4
@@ -75,6 +76,9 @@ krb5_login(char *username, char *password)
 	krb5_context context;
 	krb5_ccache ccache;
 	krb5_principal princ;
+
+	if(username == NULL || password == NULL)
+		return AUTH_FAILED;
 
 	if(strcmp(username, "root") == 0)
 		return AUTH_FAILED;
@@ -242,12 +246,48 @@ krb5_login(char *username, char *password)
 	return return_code;
 }
 
+#ifdef PASSWD
+int
+pwd_login(char *username, char *password)
+{
+	struct passwd *pwd;
+	char *salt;
+
+	pwd = getpwnam(username);
+
+	/* Check for empty password */
+	if((pwd != NULL) && (*pwd->pw_passwd == '\0')) {
+		fprintf(back, BI_AUTH "\n");
+		return AUTH_OK;
+	}
+
+	if(pwd)
+		salt = pwd->pw_passwd;
+	else
+		salt = "xx";
+
+	setpriority(PRIO_PROCESS, 0, -4);
+
+	salt = crypt(password, salt);
+	memset(password, 0, strlen(password));
+	if (!pwd || strcmp(salt, pwd->pw_passwd) != 0)
+		return AUTH_FAILED;
+
+	if(login_check_expire(back, pwd, NULL, 0))
+		return AUTH_FAILED;
+
+	fprintf(back, BI_AUTH "\n");
+
+	return AUTH_OK;
+}
+#endif PASSWD
 
 int
 main(int argc, char **argv)
 {
-	int opt, mode, ret;
-	char *username, *password;
+	int opt, mode = 0, ret;
+	char *username, *password = NULL;
+	char response[1024];
 
 	signal(SIGQUIT, SIG_IGN);
 	signal(SIGINT, SIG_IGN);
@@ -296,10 +336,37 @@ main(int argc, char **argv)
 		exit(1);
 	}
 
-	password = getpass("Password:");
+	/*
+	 * Read password, either as from the terminal or if the
+	 * response mode is active from the caller program.
+	 *
+	 * XXX  This is completely ungrokkable, and should be rewritten.
+	 */
+	if(mode == MODE_RESPONSE) {
+		int count;
+		mode = 0;
+		count = -1;
+		while(++count < sizeof(response) &&
+		      read(3, &response[count], 1) == 1) {
+			if(response[count] == '\0' && ++mode == 2)
+				break;
+			if(response[count] == '\0' && mode == 1) {
+				password = response + count + 1;
+			}
+		}
+		if(mode < 2) {
+			syslog(LOG_ERR, "protocol error on back channel");
+			exit(1);
+		}
+	} else
+		password = getpass("Password:");
 
 	ret = krb5_login(username, password);
-
+#ifdef PASSWD
+	if(ret != AUTH_OK)
+		ret = pwd_login(username, password);
+#endif
+	memset(password, 0, strlen(password));
 	if(ret != AUTH_OK)
 		fprintf(back, BI_REJECT "\n");
 
