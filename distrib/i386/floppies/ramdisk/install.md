@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.32 1998/04/01 20:21:51 millert Exp $
+#	$OpenBSD: install.md,v 1.33 1998/04/01 20:22:48 millert Exp $
 #
 #
 # Copyright rc) 1996 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 #
 
 # Machine-dependent install sets
-MDSETS="kernel xlink"
+MDSETS="kernel"
 
 md_set_term() {
 	if [ ! -z "$TERM" ]; then
