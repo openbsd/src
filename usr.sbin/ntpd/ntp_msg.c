@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp_msg.c,v 1.13 2004/12/08 17:35:16 mickey Exp $ */
+/*	$OpenBSD: ntp_msg.c,v 1.14 2004/12/14 06:27:13 dtucker Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -63,7 +63,7 @@ ntp_sendmsg(int fd, struct sockaddr *sa, struct ntp_msg *msg, ssize_t len,
 {
 	char		 buf[NTP_MSGSIZE];
 	char		*p = buf;
-	u_int8_t	sa_len;
+	socklen_t	sa_len;
 
 #define	copyout(p,f)	memcpy((p), &(f), sizeof(f)); p += sizeof(f)
 
