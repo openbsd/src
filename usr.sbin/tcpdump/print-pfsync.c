@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-pfsync.c,v 1.8 2003/06/21 09:07:00 djm Exp $	*/
+/*	$OpenBSD: print-pfsync.c,v 1.9 2003/11/02 16:20:03 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -28,7 +28,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-pfsync.c,v 1.8 2003/06/21 09:07:00 djm Exp $";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-pfsync.c,v 1.9 2003/11/02 16:20:03 mcbride Exp $";
 #endif
 
 #include <sys/param.h>
@@ -90,9 +90,9 @@ pfsync_if_print(u_char *user, const struct pcap_pkthdr *h,
 		    hdr->version, hdr->count);
 
 	if (hdr->action < PFSYNC_ACT_MAX)
-		printf("%s: ", pfsync_acts[hdr->action]);
+		printf("%s:\n", pfsync_acts[hdr->action]);
 	else
-		printf("%d?: ", hdr->action);
+		printf("%d?:\n", hdr->action);
 
 	flags = 0;
 	if (vflag)
@@ -123,8 +123,6 @@ pfsync_if_print(u_char *user, const struct pcap_pkthdr *h,
 		st.direction = s->direction;
 		st.log = s->log;
 		st.allow_opts = s->allow_opts;
-
-		printf("rule %d ", st.rule.nr);
 
 		print_state(&st, flags);
 	}
