@@ -1,4 +1,4 @@
-/*	$OpenBSD: mii_physubr.c,v 1.6 2000/08/28 05:24:05 jason Exp $	*/
+/*	$OpenBSD: mii_physubr.c,v 1.7 2000/10/12 19:32:43 aaron Exp $	*/
 /*	$NetBSD: mii_physubr.c,v 1.16 2000/03/15 20:34:43 thorpej Exp $	*/
 
 /*-
@@ -409,7 +409,7 @@ mii_phy_detach(self, flags)
 	struct mii_softc *sc = (void *) self;
 
 	if (sc->mii_flags & MIIF_DOINGAUTO)
-		untimeout(mii_phy_auto_timeout, sc);
+		timeout_del(&sc->mii_phy_timo);
 
 	mii_phy_delete_media(sc);
 
