@@ -1,9 +1,9 @@
-# $OpenBSD: Makefile,v 1.2 2002/06/09 19:05:40 hin Exp $
+# $OpenBSD: Makefile,v 1.3 2002/06/10 18:03:08 hin Exp $
 
 .if !make(install)
 SUBDIR	= sl
 .endif
 
-SUBDIR	+= krb kadm kafs kdb acl
+SUBDIR	+= krb kadm kdb acl
 
 .include <bsd.subdir.mk>
