@@ -1,7 +1,12 @@
 .rn '' }`
-''' $RCSfile: sudoers.5,v $$Revision: 1.7 $$Date: 2001/09/17 23:49:21 $
+''' $RCSfile: sudoers.5,v $$Revision: 1.8 $$Date: 2001/09/28 06:46:25 $
 '''
 ''' $Log: sudoers.5,v $
+''' Revision 1.8  2001/09/28 06:46:25  jufi
+'''
+''' semicolon -> colon
+''' detected by mihaak@lecturax.tmfweb.nl
+'''
 ''' Revision 1.7  2001/09/17 23:49:21  pjanzen
 ''' Typo and grammar fixes, one from PR/2058 (Dennis Schwarz); ok millert@
 '''
@@ -268,7 +273,7 @@ where \fIAlias_Type\fR is one of \f(CWUser_Alias\fR, \f(CWRunas_Alias\fR, \f(CWH
 or \f(CWCmnd_Alias\fR.  A \f(CWNAME\fR is a string of uppercase letters, numbers,
 and the underscore characters ('_').  A \f(CWNAME\fR \fBmust\fR start with an
 uppercase letter.  It is possible to put several alias definitions
-of the same type on a single line, joined by a semicolon (':').  E.g.,
+of the same type on a single line, joined by a colon (':').  E.g.,
 .PP
 .Vb 1
 \& Alias_Type NAME = item1, item2, item3 : NAME = item4, item5
