@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcopy.S,v 1.3 1996/11/13 22:05:07 niklas Exp $	*/
+/*	$OpenBSD: bcopy.S,v 1.4 1996/11/13 23:24:27 etheisen Exp $	*/
 /*	$NetBSD: bcopy.S,v 1.3 1996/10/17 03:08:11 cgd Exp $	*/
 
 /*
@@ -31,10 +31,10 @@
 
 #if defined(LIBC_SCCS)
 	.text
-	.asciz "$OpenBSD: bcopy.S,v 1.3 1996/11/13 22:05:07 niklas Exp $"
+	.asciz "$OpenBSD: bcopy.S,v 1.4 1996/11/13 23:24:27 etheisen Exp $"
 #endif
 
-include <machine/asm.h>
+#include <machine/asm.h>
 
 #if defined(MEMCOPY) || defined(MEMMOVE)
 #ifdef MEMCOPY
