@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.130 2004/07/30 14:44:30 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.131 2004/08/04 12:41:48 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -102,7 +102,7 @@ u_int32_t	peerhashsize = 64;
 u_int32_t	pathhashsize = 1024;
 u_int32_t	nexthophashsize = 64;
 
-int
+pid_t
 rde_main(struct bgpd_config *config, struct network_head *net_l,
     struct filter_head *rules, struct mrt_head *mrt_l,
     int pipe_m2r[2], int pipe_s2r[2], int pipe_m2s[2])
