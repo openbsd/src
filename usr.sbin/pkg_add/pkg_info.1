@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_info.1,v 1.15 2004/12/02 00:29:04 xsa Exp $
+.\"	$OpenBSD: pkg_info.1,v 1.16 2005/03/13 09:19:02 espie Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -52,6 +52,15 @@ distribution file, or a URL to a package available through FTP, HTTP, or SCP.
 will try to complete
 .Ar pkg-name
 with a version number while looking through installed packages.
+.Pp
+When browsing through uninstalled packages, running
+.Ic pkg_info -I *.tgz
+will report a summary line for each package, so that it is possible to
+run
+.Ic pkg_info pkgname.tgz
+to obtain a longer package description, and
+.Ic pkg_add -n pkgname.tgz
+to check that the installation would proceed cleanly, including dependencies.
 .Pp
 The following command-line options are supported:
 .Bl -tag -width indent
