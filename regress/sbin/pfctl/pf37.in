@@ -1,5 +1,5 @@
 #test altq with interface expansion
 #also tests multiple queues with the same name but on different interfaces
 
-altq on { lo0 lo1 } cbq bandwidth 10Mb queue std
+altq on { lo0 lo1 } tbrsize 1824 cbq bandwidth 10Mb queue std
 queue	std cbq(default)

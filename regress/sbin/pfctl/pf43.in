@@ -1,6 +1,6 @@
 #test various forms of queue assignment
 
-altq on lo0 bandwidth 100Mb cbq queue { bulk, prio }
+altq on lo0 tbrsize 3648 bandwidth 100Mb cbq queue { bulk, prio }
 queue bulk priority 1 cbq(default)
 queue prio priority 7
 pass in on lo0 inet proto tcp from any to lo0 port 22 queue (bulk prio)
