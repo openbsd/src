@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_lkm.c,v 1.7 1996/08/29 15:17:37 deraadt Exp $	*/
+/*	$OpenBSD: kern_lkm.c,v 1.8 1996/09/04 22:24:23 niklas Exp $	*/
 /*	$NetBSD: kern_lkm.c,v 1.31 1996/03/31 21:40:27 christos Exp $	*/
 
 /*
@@ -407,7 +407,9 @@ lkmioctl(dev, cmd, data, flag, p)
 		}
 
 		/* copy in buffer full of data*/
-		if (error = copyin(loadbufp->data, curp->syms + curp->sym_offset, i))
+		error = copyin(loadbufp->data, curp->syms + curp->sym_offset,
+		    i);
+		if (error)
 			break;
 
 		if ((curp->sym_offset + i) < curp->sym_size) {
