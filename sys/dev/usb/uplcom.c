@@ -1,4 +1,4 @@
-/*	$OpenBSD: uplcom.c,v 1.19 2005/01/16 05:56:55 dlg Exp $	*/
+/*	$OpenBSD: uplcom.c,v 1.20 2005/01/16 06:18:12 dlg Exp $	*/
 /*	$NetBSD: uplcom.c,v 1.29 2002/09/23 05:51:23 simonb Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -267,7 +267,7 @@ USB_ATTACH(uplcom)
 	 * The Linux driver suggest this will only be true for the HX
 	 * variants. The datasheets disagree.
 	 */
-	if (ddesc->bMaxPacketSize = 0x40) {
+	if (ddesc->bMaxPacketSize == 0x40) {
 		DPRINTF(("%s: Assuming HX variant\n", USBDEVNAME(sc->sc_dev)));
 		sc->sc_type_hx = 1;
 	} else
