@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.9 2004/07/22 18:58:57 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.10 2004/07/26 10:42:56 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -86,6 +86,7 @@ extern int procfs_domem(struct proc *, struct proc *, void *, struct uio *);
 __dead void panictrap(int, struct trapframe *);
 __dead void error_fatal(struct trapframe *);
 int double_reg_fixup(struct trapframe *);
+int ss_put_value(struct proc *, unsigned, unsigned, int);
 
 extern void regdump(struct trapframe *f);
 
@@ -525,6 +526,7 @@ user_fault:
 		fault_type = TRAP_TRACE;
 		break;
 	case T_STEPBPT+T_USER:
+#ifdef PTRACE
 		/*
 		 * This trap is used by the kernel to support single-step
 		 * debugging (although any user could generate this trap
@@ -539,8 +541,6 @@ user_fault:
 		{
 			unsigned va;
 			unsigned instr;
-			struct uio uio;
-			struct iovec iov;
 			unsigned pc = PC_REGS(&frame->tf_regs);
 
 			/* read break instruction */
@@ -559,35 +559,17 @@ user_fault:
 				break;
 			}
 			/* restore original instruction and clear BP  */
-			instr = p->p_md.md_ss_instr;
 			va = p->p_md.md_ss_addr;
 			if (va != 0) {
-				iov.iov_base = (caddr_t)&instr;
-				iov.iov_len = sizeof(int);
-				uio.uio_iov = &iov;
-				uio.uio_iovcnt = 1;
-				uio.uio_offset = (off_t)va;
-				uio.uio_resid = sizeof(int);
-				uio.uio_segflg = UIO_SYSSPACE;
-				uio.uio_rw = UIO_WRITE;
-				uio.uio_procp = curproc;
-				procfs_domem(p, p, NULL, &uio);
+				instr = p->p_md.md_ss_instr;
+				ss_put_value(p, va, instr, sizeof(instr));
 			}
 
 			/* branch taken instruction */
 			instr = p->p_md.md_ss_taken_instr;
-			va = p->p_md.md_ss_taken_addr;
 			if (instr != 0) {
-				iov.iov_base = (caddr_t)&instr;
-				iov.iov_len = sizeof(int);
-				uio.uio_iov = &iov;
-				uio.uio_iovcnt = 1;
-				uio.uio_offset = (off_t)va;
-				uio.uio_resid = sizeof(int);
-				uio.uio_segflg = UIO_SYSSPACE;
-				uio.uio_rw = UIO_WRITE;
-				uio.uio_procp = curproc;
-				procfs_domem(p, p, NULL, &uio);
+				va = p->p_md.md_ss_taken_addr;
+				ss_put_value(p, va, instr, sizeof(instr));
 			}
 #if 1
 			frame->tf_sfip = frame->tf_snip;
@@ -600,6 +582,10 @@ user_fault:
 			sig = SIGTRAP;
 			fault_type = TRAP_BRKPT;
 		}
+#else
+		sig = SIGTRAP;
+		fault_type = TRAP_TRACE;
+#endif
 		break;
 
 	case T_USERBPT+T_USER:
@@ -1070,6 +1056,7 @@ m88110_user_fault:
 		fault_type = TRAP_TRACE;
 		break;
 	case T_STEPBPT+T_USER:
+#ifdef PTRACE
 		/*
 		 * This trap is used by the kernel to support single-step
 		 * debugging (although any user could generate this trap
@@ -1083,8 +1070,6 @@ m88110_user_fault:
 		 */
 		{
 			unsigned instr;
-			struct uio uio;
-			struct iovec iov;
 			unsigned pc = PC_REGS(&frame->tf_regs);
 
 			/* read break instruction */
@@ -1103,25 +1088,20 @@ m88110_user_fault:
 			}
 #endif
 			/* restore original instruction and clear BP  */
-			/*sig = suiword((caddr_t)pc, p->p_md.md_ss_instr);*/
 			instr = p->p_md.md_ss_instr;
-			if (instr != 0) {
-				iov.iov_base = (caddr_t)&instr;
-				iov.iov_len = sizeof(int);
-				uio.uio_iov = &iov;
-				uio.uio_iovcnt = 1;
-				uio.uio_offset = (off_t)pc;
-				uio.uio_resid = sizeof(int);
-				uio.uio_segflg = UIO_SYSSPACE;
-				uio.uio_rw = UIO_WRITE;
-				uio.uio_procp = curproc;
-			}
+			if (instr != 0)
+				ss_put_value(p, pc, instr, sizeof(instr));
 
 			p->p_md.md_ss_addr = 0;
+			p->p_md.md_ss_instr = 0;
 			sig = SIGTRAP;
 			fault_type = TRAP_BRKPT;
-			break;
 		}
+#else
+		sig = SIGTRAP;
+		fault_type = TRAP_TRACE;
+#endif
+		break;
 	case T_USERBPT+T_USER:
 		/*
 		 * This trap is meant to be used by debuggers to implement
@@ -1556,7 +1536,6 @@ child_return(arg)
 #include <sys/ptrace.h>
 
 unsigned ss_get_value(struct proc *, unsigned, int);
-int ss_put_value(struct proc *, unsigned, unsigned, int);
 unsigned ss_branch_taken(unsigned, unsigned,
     unsigned (*func)(unsigned int, struct reg *), struct reg *);
 unsigned int ss_getreg_val(unsigned int, struct reg *);
