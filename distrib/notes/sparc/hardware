@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.44 2003/01/22 19:03:25 miod Exp $
+dnl	$OpenBSD: hardware,v 1.45 2003/02/03 08:13:42 fgsch Exp $
 OpenBSD/MACHINE OSREV runs on the following classes of machines:
     * sun4: the VME series
 	- 4/100: Original sparc with VME. Many hardware bugs.
@@ -130,7 +130,7 @@ Supported devices {:-include-:}:
 	- on-board Intel 82586 Ethernet on 4/100 and 4/200 (ie)
 	- VME Intel 82586 Ethernet cards (ie)
 	- SBus 10/100Mbit qec+be found on Sun FastEthernet cards
-	  (SUNW,501-2655) (be)
+	  (SUNW,501-2450) (be)
 	- SBus Quad 10/100Mbit qec+qe found on Sun Quad Ethernet cards
 	  (SUNW,501-2062) (qe)
 	- SBus 10/100MBit hme Ethernet cards (hme) [*]
