@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptodev.c,v 1.58 2003/06/03 15:51:28 deraadt Exp $	*/
+/*	$OpenBSD: cryptodev.c,v 1.59 2003/06/10 18:34:51 jason Exp $	*/
 
 /*
  * Copyright (c) 2001 Theo de Raadt
@@ -630,7 +630,11 @@ cryptoopen(dev_t dev, int flag, int mode, struct proc *p)
 {
 	if (usercrypto == 0)
 		return (ENXIO);
+#ifdef CRYPTO
 	return (0);
+#else
+	return (ENXIO);
+#endif
 }
 
 int
