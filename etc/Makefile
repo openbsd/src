@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.219 2005/03/19 00:11:21 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.220 2005/03/20 20:11:42 deraadt Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	Canada/Mountain
@@ -258,7 +258,7 @@ release:
 release: distribution snap_pre snap_md
 	cd ${.CURDIR}/../distrib/notes && ${MAKE} && exec ${SUDO} ${MAKE} install
 	cd ${.CURDIR}/../distrib/sets && exec ${SUDO} sh maketars ${OSrev}
-	-cp ${DESTDIR}/snapshot/bsd* ${RELEASEDIR}
+	-cp ${DESTDIR}/snapshot/*bsd* ${RELEASEDIR}
 	-cp ${DESTDIR}/snapshot/*boot* ${RELEASEDIR}
 	-cp ${DESTDIR}/snapshot/cdbr ${RELEASEDIR}
 	-cp ${DESTDIR}/snapshot/*BOOT* ${RELEASEDIR}
@@ -378,7 +378,7 @@ distrib:
 DHSIZE=1024 1536 2048 3072 4096
 update-moduli:
 	( \
-		echo '#    $$OpenBSD: Makefile,v 1.219 2005/03/19 00:11:21 deraadt Exp $$'; \
+		echo '#    $$OpenBSD: Makefile,v 1.220 2005/03/20 20:11:42 deraadt Exp $$'; \
 		echo '# Time Type Tests Tries Size Generator Modulus'; \
 		( for i in ${DHSIZE}; do \
 			ssh-keygen -b $$i -G /dev/stdout; \
