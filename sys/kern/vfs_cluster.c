@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_cluster.c,v 1.13 1998/02/20 14:51:58 niklas Exp $	*/
+/*	$OpenBSD: vfs_cluster.c,v 1.14 1998/10/11 06:33:11 csapuntz Exp $	*/
 /*	$NetBSD: vfs_cluster.c,v 1.12 1996/04/22 01:39:05 christos Exp $	*/
 
 /*-
@@ -511,7 +511,7 @@ cluster_write(bp, filesize)
 			 * Otherwise try reallocating to make it sequential.
 			 */
 			cursize = vp->v_lastw - vp->v_cstart + 1;
-			if ((lbn + 1) * bp->b_bcount != filesize ||
+			if (((u_quad_t)(lbn + 1)) * bp->b_bcount != filesize ||
 			    lbn != vp->v_lastw + 1 || vp->v_clen <= cursize) {
 				cluster_wbuild(vp, NULL, bp->b_bcount,
 				    vp->v_cstart, cursize, lbn);
