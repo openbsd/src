@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd.c,v 1.14 2001/01/25 03:50:50 todd Exp $ */
+/*	$OpenBSD: wd.c,v 1.15 2001/04/02 19:41:35 csapuntz Exp $ */
 /*	$NetBSD: wd.c,v 1.193 1999/02/28 17:15:27 explorer Exp $ */
 
 /*
@@ -1380,7 +1380,11 @@ wd_flushcache(wd, flags)
 	wdc_c.r_command = WDCC_FLUSHCACHE;
 	wdc_c.r_st_bmask = WDCS_DRDY;
 	wdc_c.r_st_pmask = WDCS_DRDY;
-	wdc_c.flags = flags | AT_WAIT;
+	if (flags != 0) {
+		wdc_c.flags = AT_POLL;
+	} else {
+		wdc_c.flags = AT_WAIT;
+	}
 	wdc_c.timeout = 30000; /* 30s timeout */
 	if (wdc_exec_command(wd->drvp, &wdc_c) != WDC_COMPLETE) {
 		printf("%s: flush cache command didn't complete\n",
@@ -1406,7 +1410,7 @@ wd_shutdown(arg)
 	void *arg;
 {
 	struct wd_softc *wd = arg;
-	wd_flushcache(wd, ATA_POLL);
+	wd_flushcache(wd, AT_POLL);
 }
 
 /*
