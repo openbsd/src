@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.23 2003/09/28 22:10:20 miod Exp $ */
+/*	$OpenBSD: clock.c,v 1.24 2003/10/08 19:10:04 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1995 Theo de Raadt
@@ -104,8 +104,6 @@
 #include <mvme88k/dev/vme.h>
 
 extern struct vme2reg *sys_vme2;
-
-u_long delay_factor = 1;
 
 int	clockmatch(struct device *, void *, void *);
 void	clockattach(struct device *, struct device *, void *);
@@ -241,7 +239,7 @@ sbc_clockintr(eframe)
 }
 #endif /* NPCCTWO */
 
-int
+void
 delay(us)
 	int us;
 {
@@ -255,7 +253,7 @@ delay(us)
 	if (sys_vme2 == NULL || brdtyp == BRD_188) {
 		c = 3 * us;	/* XXX not accurate! */
 		while (--c > 0);
-		return (0);
+		return;
 	}
 	sys_vme2->vme2_irql1 |= (0 << VME2_IRQL1_TIC1SHIFT);
 	sys_vme2->vme2_t1count = 0;
@@ -264,7 +262,6 @@ delay(us)
 	while (sys_vme2->vme2_t1count < us)
 		;
 	sys_vme2->vme2_tctl &= ~(VME2_TCTL1_CEN | VME2_TCTL1_COVF);
-	return (0);
 }
 
 #if NSYSCON > 0
