@@ -18,7 +18,7 @@ Modified to work with SSL by Niels Provos <provos@citi.umich.edu> in Canada.
 */
 
 #include "includes.h"
-RCSID("$Id: ssh.c,v 1.7 1999/09/29 11:45:50 provos Exp $");
+RCSID("$Id: ssh.c,v 1.8 1999/09/29 12:16:35 provos Exp $");
 
 #include "xmalloc.h"
 #include "ssh.h"
@@ -95,6 +95,7 @@ usage()
   fprintf(stderr, "  -i file     Identity for RSA authentication (default: ~/.ssh/identity).\n");
   fprintf(stderr, "  -t          Tty; allocate a tty even if command is given.\n");
   fprintf(stderr, "  -v          Verbose; display verbose debugging messages.\n");
+  fprintf(stderr, "  -V          Display version number only.\n");
   fprintf(stderr, "  -q          Quiet; don't display any warning messages.\n");
   fprintf(stderr, "  -f          Fork into background after authentication.\n");
   fprintf(stderr, "  -e char     Set escape character; ``none'' = disable (default: ~).\n");
