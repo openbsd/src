@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.18 1995/06/13 05:59:37 mycroft Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.19 1995/12/13 23:47:40 pk Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -360,7 +360,7 @@ tuncioctl(dev, cmd, data, flag, p)
 	case FIONREAD:
 		s = splimp();
 		if (tp->tun_if.if_snd.ifq_head)
-			*(int *)data = tp->tun_if.if_snd.ifq_head->m_len;
+			*(int *)data = tp->tun_if.if_snd.ifq_head->m_pkthdr.len;
 		else	
 			*(int *)data = 0;
 		splx(s);
@@ -428,6 +428,8 @@ tunread(dev, uio)
 		TUNDEBUG("Dropping mbuf\n");
 		m_freem(m0);
 	}
+	if (error)
+		ifp->if_ierrors++;
 	return error;
 }
 
@@ -478,6 +480,7 @@ tunwrite(dev, uio)
 	if (error) {
 		if (top)
 			m_freem (top);
+		ifp->if_ierrors++;
 		return error;
 	}
 
