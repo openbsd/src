@@ -1,4 +1,4 @@
-.\" $OpenBSD: pthread_detach.3,v 1.7 2000/03/04 15:39:43 aaron Exp $
+.\" $OpenBSD: pthread_detach.3,v 1.8 2001/06/24 18:17:30 jasoni Exp $
 .\" Copyright (c) 1996-1998 John Birrell <jb@cimlogic.com.au>.
 .\" All rights reserved.
 .\"
@@ -55,7 +55,7 @@ will not cause it to terminate. The effect of multiple
 .Fn pthread_detach
 calls on the same target thread is unspecified.
 .Sh RETURN VALUES
-If successful,  the
+If successful, the
 .Fn pthread_detach
 function will return zero. Otherwise an error number will be returned to
 indicate the error. Note that the function does not change the value
