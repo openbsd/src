@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.conf.5,v 1.95 2004/12/14 10:17:28 mcbride Exp $
+.\" $OpenBSD: isakmpd.conf.5,v 1.96 2005/01/05 10:23:53 hshoexer Exp $
 .\" $EOM: isakmpd.conf.5,v 1.57 2000/12/21 14:43:17 ho Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -757,6 +757,10 @@ to have different shared secrets.
 .Pp
 This only works for aggressive mode because in main mode the remote
 initiator ID would not yet be known.
+Note, however, that use of aggressive mode is discouraged.
+See
+.Sx CAVEATS
+section below.
 .Pp
 The name of the <Initiator-ID> section depends on the ID type sent by
 the initiator.
@@ -1141,6 +1145,12 @@ LIFE_DURATION=		1000,768:1536
 .Xr keynote 4 ,
 .Xr isakmpd.policy 5 ,
 .Xr isakmpd 8
+.Sh CAVEATS
+Using aggressive mode is discouraged due to various design problems.
+If your peer only supports aggressive mode, please consider replacing that
+peer with a sane ISAKMP/IKE implementation.
+For details see 
+.Pa http://www.usenix.org/publications/login/1999-12/features/harmful.html .
 .Sh BUGS
 The RFCs do not permit differing DH groups in the same proposal for
 aggressive and quick mode exchanges.
