@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.9 1999/01/03 04:01:36 mickey Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.10 1999/01/03 18:42:50 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -1576,10 +1576,10 @@ pmap_changebit(pa, set, reset)
 	s = splimp();
 	while (pv) {
 		pv->pv_tlbprot |= set;
-		pv->vp_tlbprot &= ~reset;
+		pv->pv_tlbprot &= ~reset;
 		pv = pv->pv_next;
 	}
-	pmap_clear_pv(pv, NULL);
+	pmap_clear_pv(pa, NULL);
 	splx(s);
 }
 
