@@ -1,4 +1,4 @@
-/*	$OpenBSD: procfs_vnops.c,v 1.13 1999/08/13 04:50:48 deraadt Exp $	*/
+/*	$OpenBSD: procfs_vnops.c,v 1.14 1999/08/13 07:05:46 csapuntz Exp $	*/
 /*	$NetBSD: procfs_vnops.c,v 1.40 1996/03/16 23:52:55 christos Exp $	*/
 
 /*
@@ -823,11 +823,13 @@ procfs_readdir(v)
 
 	pfs = VTOPFS(ap->a_vp);
 
-	if (uio->uio_offset < 0 || uio->uio_offset % UIO_MX)
+	if (uio->uio_resid < UIO_MX)
 		return (EINVAL);
 
 	error = 0;
 	i = uio->uio_offset;
+	if (i < 0)
+		return (EINVAL);
 	bzero((caddr_t)&d, UIO_MX);
 	d.d_reclen = UIO_MX;
 
@@ -840,9 +842,6 @@ procfs_readdir(v)
 	case Pproc: {
 		struct proc *p;
 		struct proc_target *pt;
-
-		if (nproc_targets <= uio->uio_offset/UIO_MX) 
-			return (EINVAL);
 
 		p = PFIND(pfs->pfs_pid);
 		if (p == NULL)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdesc_vnops.c,v 1.14 1999/08/13 04:50:46 deraadt Exp $	*/
+/*	$OpenBSD: fdesc_vnops.c,v 1.15 1999/08/13 07:05:46 csapuntz Exp $	*/
 /*	$NetBSD: fdesc_vnops.c,v 1.32 1996/04/11 11:24:29 mrg Exp $	*/
 
 /*
@@ -716,19 +716,18 @@ fdesc_readdir(v)
 
 	fdp = uio->uio_procp->p_fd;
 
-	if (uio->uio_offset < 0 || uio->uio_offset % UIO_MX)
+	if (uio->uio_resid < UIO_MX)
 		return (EINVAL);
 
 	error = 0;
 	i = uio->uio_offset;
+	if (i < 0)
+		return (EINVAL);
 	bzero((caddr_t)&d, UIO_MX);
 	d.d_reclen = UIO_MX;
 
 	if (VTOFDESC(ap->a_vp)->fd_type == Froot) {
 		struct fdesc_target *ft;
-
-		if (nfdesc_targets <= uio->uio_offset/UIO_MX)
-			return (EINVAL);
 
 		for (ft = &fdesc_targets[i];
 		     uio->uio_resid >= UIO_MX && i < nfdesc_targets; ft++, i++) {
