@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.25 2004/09/18 08:14:40 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.26 2004/09/18 13:28:19 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -506,6 +506,9 @@ sub add
 	if ($args[0] eq 'no-default-conflict') {
 		shift;
 		return OpenBSD::PackingElement::NoDefaultConflict->add($plist);
+	} elsif ($args[0] eq 'manual-installation') {
+		shift;
+		return OpenBSD::PackingElement::ManualInstallation->add($plist);
 	} else {
 		die "Unknown option: $args[0]";
 	}
@@ -519,6 +522,22 @@ sub keyword() { 'option' }
 sub stringize() 
 {
 	return 'no-default-conflict';
+}
+
+sub new
+{
+	my ($class, @args) = @_;
+	bless {}, $class;
+}
+
+package OpenBSD::PackingElement::ManualInstallation;
+our @ISA=qw(OpenBSD::PackingElement::Unique);
+sub category() { 'manual-installation' }
+sub keyword() { 'option' }
+
+sub stringize() 
+{
+	return 'manual-installation';
 }
 
 sub new

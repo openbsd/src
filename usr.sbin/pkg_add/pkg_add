@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.55 2004/09/18 09:27:05 espie Exp $
+# $OpenBSD: pkg_add,v 1.56 2004/09/18 13:28:19 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -259,8 +259,8 @@ package main;
 
 my $errors = 0;
 
-our ($opt_v, $opt_n, $opt_I, $opt_f, $opt_L, $opt_B, $opt_A, $opt_P);
-getopts('vnIL:f:B:A:P:');
+our ($opt_a, $opt_v, $opt_n, $opt_I, $opt_f, $opt_L, $opt_B, $opt_A, $opt_P);
+getopts('avnIL:f:B:A:P:');
 if ($opt_f) {
 	%forced = map {($_, 1)} split(/,/, $opt_f);
 }
