@@ -1,4 +1,4 @@
-/*	$OpenBSD: do_command.c,v 1.19 2002/07/15 19:13:29 millert Exp $	*/
+/*	$OpenBSD: do_command.c,v 1.20 2002/07/15 22:16:50 millert Exp $	*/
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
  */
@@ -21,7 +21,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char const rcsid[] = "$OpenBSD: do_command.c,v 1.19 2002/07/15 19:13:29 millert Exp $";
+static char const rcsid[] = "$OpenBSD: do_command.c,v 1.20 2002/07/15 22:16:50 millert Exp $";
 #endif
 
 #include "cron.h"
@@ -195,6 +195,9 @@ child_process(entry *e, user *u) {
 		 */
 #ifdef LOGIN_CAP
 		{
+#ifdef BSD_AUTH
+			auth_session_t *as;
+#endif
 			login_cap_t *lc;
 			char **p;
 			extern char **environ;
@@ -211,12 +214,17 @@ child_process(entry *e, user *u) {
 				_exit(ERROR_EXIT);
 			}
 #ifdef BSD_AUTH
-			/* XXX - stash pwd with auth_setpwd to avoid lookup */
-			if (auth_approval(0, lc, usernm, "cron") <= 0) {
+			as = auth_open();
+			if (as == NULL || auth_setpwd(as, e->pwd) != 0) {
+				fprintf(stderr, "can't malloc\n");
+				_exit(ERROR_EXIT);
+			}
+			if (auth_approval(as, lc, usernm, "cron") <= 0) {
 				fprintf(stderr, "approval failed for %s\n",
 				    e->pwd->pw_name);
 				_exit(ERROR_EXIT);
 			}
+			auth_close(as);
 #endif /* BSD_AUTH */
 			login_close(lc);
 
