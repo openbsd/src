@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_gre.c,v 1.3 2000/01/07 23:25:21 angelos Exp $ */
+/*      $OpenBSD: if_gre.c,v 1.4 2000/01/08 01:39:24 angelos Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -145,7 +145,7 @@ greattach(void)
 
 /* 
  * The output routine. Takes a packet and encapsulates it in the protocol
- * given by sc->g_proto. See also RFC 1701 and RFC 2004
+ * given by sc->g_proto. See also RFC 1701 and RFC 2004.
  */
 
 int
@@ -161,23 +161,8 @@ gre_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 	struct mobile_h mob_h;
 
 #if NBPFILTER >0
-	if (ifp->if_bpf) {
-                /*
-                 * We need to prepend the address family as
-                 * a four byte field.  Cons up a fake header
-                 * to pacify bpf.  This is safe because bpf
-                 * will only read from the mbuf (i.e., it won't
-                 * try to free it or keep a pointer a to it).
-                 */
-		struct mbuf m0;
-		u_int af = dst->sa_family;
-
-		m0.m_next = m;
-		m0.m_len = 4;
-		m0.m_data = (char *) &af;
-		
-		bpf_mtap(ifp->if_bpf, &m0);
-	}
+	if (ifp->if_bpf)
+		bpf_mtap(ifp->if_bpf, m);
 #endif
 
 	if (sc->g_proto == IPPROTO_MOBILE) {
@@ -385,8 +370,12 @@ gre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			sc->g_dst = ia->ia_dstaddr.sin_addr;
 			if ((sc->g_src.s_addr != INADDR_ANY) &&
 			    (sc->g_dst.s_addr != INADDR_ANY)) {
-				if (sc->route.ro_rt != 0) /* free old route */
+				if (sc->route.ro_rt != 0) {
+                                        /* free old route */
 					RTFREE(sc->route.ro_rt);
+					sc->route.ro_rt = (struct rtentry *) 0;
+				}
+
 				gre_compute_route(sc);
 				ifp->if_flags |= IFF_UP;
 			}
@@ -465,8 +454,12 @@ gre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			sc->g_dst = (satosin(sa))->sin_addr;
 		if ((sc->g_src.s_addr != INADDR_ANY) &&
 		    (sc->g_dst.s_addr != INADDR_ANY)) {
-			if (sc->route.ro_rt != 0) /* free old route */
+			if (sc->route.ro_rt != 0) {
+			        /* free old route */
 				RTFREE(sc->route.ro_rt);
+				sc->route.ro_rt = (struct rtentry *) 0;
+			}
+
 			gre_compute_route(sc);
 			ifp->if_flags |= IFF_UP;
 		}
@@ -526,11 +519,12 @@ gre_compute_route(struct gre_softc *sc)
 		c = a & 0xfffffffe;
 		b = b ^ 0x01;
 		a = b | c;
-		((struct sockaddr_in *) &ro->ro_dst)->sin_addr.s_addr
-			= htonl(a);
+		((struct sockaddr_in *) &ro->ro_dst)->sin_addr.s_addr = htonl(a);
 	}
 
 	rtalloc(ro);
+	if (ro->ro_rt == 0)
+		return;
 
 	/*
 	 * now change it back - else ip_output will just drop 
