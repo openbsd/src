@@ -1,3 +1,5 @@
+/* $OpenBSD */
+
 /* ====================================================================
  * Copyright (c) 1998-2000 The Apache Group.  All rights reserved.
  *
@@ -64,88 +66,94 @@
 #include "ap_config.h"
 #include "ap_ctx.h"
 
-API_EXPORT(ap_ctx *) ap_ctx_new(pool *p)
+API_EXPORT(ap_ctx *)
+ap_ctx_new(pool *p)
 {
-    ap_ctx *ctx;
-    int i;
+	ap_ctx *ctx;
+	int i;
 
-    if (p != NULL) {
-        ctx = (ap_ctx *)ap_palloc(p, sizeof(ap_ctx_rec));
-        ctx->cr_pool = p;
-        ctx->cr_entry = (ap_ctx_entry **)
-            ap_palloc(p, sizeof(ap_ctx_entry *)*(AP_CTX_MAX_ENTRIES+1));
-    }
-    else {
-        ctx = (ap_ctx *)malloc(sizeof(ap_ctx_rec));
-        ctx->cr_pool = NULL;
-        ctx->cr_entry = (ap_ctx_entry **)
-            malloc(sizeof(ap_ctx_entry *)*(AP_CTX_MAX_ENTRIES+1));
-    }
-    for (i = 0; i < AP_CTX_MAX_ENTRIES+1; i++) 
-        ctx->cr_entry[i] = NULL;
-    return ctx;
+	if (p != NULL) {
+		ctx = (ap_ctx *)ap_palloc(p, sizeof(ap_ctx_rec));
+		ctx->cr_pool = p;
+		ctx->cr_entry = (ap_ctx_entry **)
+		    ap_palloc(p, sizeof(ap_ctx_entry *)*(AP_CTX_MAX_ENTRIES+1));
+	}
+	else {
+		ctx = (ap_ctx *)malloc(sizeof(ap_ctx_rec));
+		ctx->cr_pool = NULL;
+		ctx->cr_entry = (ap_ctx_entry **)
+		    malloc(sizeof(ap_ctx_entry *)*(AP_CTX_MAX_ENTRIES+1));
+	}
+	for (i = 0; i < AP_CTX_MAX_ENTRIES+1; i++)
+		ctx->cr_entry[i] = NULL;
+	return ctx;
 }
 
-API_EXPORT(void) ap_ctx_set(ap_ctx *ctx, char *key, void *val)
+API_EXPORT(void)
+ap_ctx_set(ap_ctx *ctx, char *key, void *val)
 {
-    int i;
-    ap_ctx_entry *ce;
+	int i;
+	ap_ctx_entry *ce;
 
-    ce = NULL;
-    for (i = 0; ctx->cr_entry[i] != NULL; i++) {
-        if (strcmp(ctx->cr_entry[i]->ce_key, key) == 0) {
-            ce = ctx->cr_entry[i];
-            break;
-        }
-    }
-    if (ce == NULL) {
-        if (i == AP_CTX_MAX_ENTRIES)
-            return;
-        if (ctx->cr_pool != NULL) {
-            ce = (ap_ctx_entry *)ap_palloc(ctx->cr_pool, sizeof(ap_ctx_entry));
-            ce->ce_key = ap_pstrdup(ctx->cr_pool, key);
-        }
-        else {
-            ce = (ap_ctx_entry *)malloc(sizeof(ap_ctx_entry));
-            ce->ce_key = strdup(key);
-        }
-        ctx->cr_entry[i] = ce;
-        ctx->cr_entry[i+1] = NULL;
-    }
-    ce->ce_val = val;
-    return;
+	ce = NULL;
+	for (i = 0; ctx->cr_entry[i] != NULL; i++) {
+		if (strcmp(ctx->cr_entry[i]->ce_key, key) == 0) {
+			ce = ctx->cr_entry[i];
+			break;
+		}
+	}
+	if (ce == NULL) {
+		if (i == AP_CTX_MAX_ENTRIES)
+			return;
+		if (ctx->cr_pool != NULL) {
+			ce = (ap_ctx_entry *)ap_palloc(ctx->cr_pool,
+			    sizeof(ap_ctx_entry));
+			ce->ce_key = ap_pstrdup(ctx->cr_pool, key);
+		}
+		else {
+			ce = (ap_ctx_entry *)malloc(sizeof(ap_ctx_entry));
+			ce->ce_key = strdup(key);
+		}
+		ctx->cr_entry[i] = ce;
+		ctx->cr_entry[i+1] = NULL;
+	}
+	ce->ce_val = val;
+	return;
 }
 
-API_EXPORT(void *) ap_ctx_get(ap_ctx *ctx, char *key)
+API_EXPORT(void *)
+ap_ctx_get(ap_ctx *ctx, char *key)
 {
-    int i;
+	int i;
 
-    for (i = 0; ctx->cr_entry[i] != NULL; i++)
-        if (strcmp(ctx->cr_entry[i]->ce_key, key) == 0)
-            return ctx->cr_entry[i]->ce_val;
-    return NULL;
+	for (i = 0; ctx->cr_entry[i] != NULL; i++)
+		if (strcmp(ctx->cr_entry[i]->ce_key, key) == 0)
+			return ctx->cr_entry[i]->ce_val;
+	return NULL;
 }
 
-API_EXPORT(ap_ctx *) ap_ctx_overlay(pool *p, ap_ctx *over, ap_ctx *base)
+API_EXPORT(ap_ctx *)
+ap_ctx_overlay(pool *p, ap_ctx *over, ap_ctx *base)
 {
-    ap_ctx *new;
-    int i;
+	ap_ctx *new;
+	int i;
 
-#ifdef POOL_DEBUG
-    if (p != NULL) {
-        if (!ap_pool_is_ancestor(over->cr_pool, p))
-            ap_log_assert("ap_ctx_overlay: overlay's pool is not an ancestor of p", 
-                          __FILE__, __LINE__);
-        if (!ap_pool_is_ancestor(base->cr_pool, p))
-            ap_log_assert("ap_ctx_overlay: base's pool is not an ancestor of p",
-                          __FILE__, __LINE__);
-    }
-#endif
-    if ((new = ap_ctx_new(p)) == NULL)
-        return NULL;
-    memcpy(new->cr_entry, base->cr_entry, 
-           sizeof(ap_ctx_entry *)*(AP_CTX_MAX_ENTRIES+1));
-    for (i = 0; over->cr_entry[i] != NULL; i++)
-        ap_ctx_set(new, over->cr_entry[i]->ce_key, over->cr_entry[i]->ce_val);
-    return new;
+	#ifdef POOL_DEBUG
+	if (p != NULL) {
+		if (!ap_pool_is_ancestor(over->cr_pool, p))
+		    ap_log_assert("ap_ctx_overlay: overlay's pool is not an"
+			" ancestor of p", __FILE__, __LINE__);
+		if (!ap_pool_is_ancestor(base->cr_pool, p))
+		    ap_log_assert("ap_ctx_overlay: base's pool is not an"
+			" ancestor of p", __FILE__, __LINE__);
+	}
+	#endif
+	if ((new = ap_ctx_new(p)) == NULL)
+		return NULL;
+	memcpy(new->cr_entry, base->cr_entry,
+	    sizeof(ap_ctx_entry *)*(AP_CTX_MAX_ENTRIES+1));
+	for (i = 0; over->cr_entry[i] != NULL; i++)
+		ap_ctx_set(new, over->cr_entry[i]->ce_key,
+		    over->cr_entry[i]->ce_val);
+	return new;
 }

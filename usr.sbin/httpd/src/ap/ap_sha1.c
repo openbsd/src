@@ -1,3 +1,5 @@
+/* $OpenBSD: ap_sha1.c,v 1.9 2005/03/28 21:03:33 niallo Exp $ */
+
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
@@ -60,7 +62,7 @@
  *
  * The exported function:
  *
- * 	 ap_sha1_base64(const char *clear, int len, char *out);
+ *       ap_sha1_base64(const char *clear, int len, char *out);
  *
  * provides a means to SHA1 crypt/encode a plaintext password in
  * a way which makes password files compatible with those commonly
@@ -81,10 +83,10 @@
  * This software also makes use of the following component:
  *
  * NIST Secure Hash Algorithm
- *  	heavily modified by Uwe Hollerbach uh@alumni.caltech edu
- *	from Peter C. Gutmann's implementation as found in
- *	Applied Cryptography by Bruce Schneier
- *	This code is hereby placed in the public domain
+ *      heavily modified by Uwe Hollerbach uh@alumni.caltech edu
+ *      from Peter C. Gutmann's implementation as found in
+ *      Applied Cryptography by Bruce Schneier
+ *      This code is hereby placed in the public domain
  */
 
 #include <string.h>
@@ -94,57 +96,59 @@
 #include "ap.h"
 
 
-API_EXPORT(void) ap_SHA1Init(AP_SHA1_CTX *sha_info)
+API_EXPORT(void)
+ap_SHA1Init(AP_SHA1_CTX *sha_info)
 {
-    SHA1Init(sha_info);
+	SHA1Init(sha_info);
 }
 
 /* update the SHA digest */
 
-API_EXPORT(void) ap_SHA1Update_binary(AP_SHA1_CTX *sha_info,
-				      const unsigned char *buffer,
-				      unsigned int count)
+API_EXPORT(void)
+ap_SHA1Update_binary(AP_SHA1_CTX *sha_info, const unsigned char *buffer,
+    unsigned int count)
 {
-    SHA1Update(sha_info, buffer, count);
+	SHA1Update(sha_info, buffer, count);
 }
 
-API_EXPORT(void) ap_SHA1Update(AP_SHA1_CTX *sha_info, const char *buf,
-			       unsigned int count)
+API_EXPORT(void)
+ap_SHA1Update(AP_SHA1_CTX *sha_info, const char *buf, unsigned int count)
 {
-    SHA1Update(sha_info, (const unsigned char *) buf, count);
+	SHA1Update(sha_info, (const unsigned char *) buf, count);
 }
 
 /* finish computing the SHA digest */
 
-API_EXPORT(void) ap_SHA1Final(unsigned char digest[SHA_DIGESTSIZE],
-                              AP_SHA1_CTX *sha_info)
+API_EXPORT(void)
+ap_SHA1Final(unsigned char digest[SHA_DIGESTSIZE], AP_SHA1_CTX *sha_info)
 {
-    SHA1Final(digest, sha_info);
+	SHA1Final(digest, sha_info);
 }
 
 
-API_EXPORT(void) ap_sha1_base64(const char *clear, int len, char *out)
+API_EXPORT(void)
+ap_sha1_base64(const char *clear, int len, char *out)
 {
-    int l;
-    AP_SHA1_CTX context;
-    unsigned char digest[SHA_DIGESTSIZE];
+	int l;
+	AP_SHA1_CTX context;
+	unsigned char digest[SHA_DIGESTSIZE];
 
-    if (strncmp(clear, AP_SHA1PW_ID, AP_SHA1PW_IDLEN) == 0) {
-	clear += AP_SHA1PW_IDLEN;
-    }
+	if (strncmp(clear, AP_SHA1PW_ID, AP_SHA1PW_IDLEN) == 0)
+		clear += AP_SHA1PW_IDLEN;
 
-    ap_SHA1Init(&context);
-    ap_SHA1Update(&context, clear, len);
-    ap_SHA1Final(digest, &context);
+	ap_SHA1Init(&context);
+	ap_SHA1Update(&context, clear, len);
+	ap_SHA1Final(digest, &context);
 
-    /* private marker. */
-    ap_cpystrn(out, AP_SHA1PW_ID, AP_SHA1PW_IDLEN + 1);
+	/* private marker. */
+	ap_cpystrn(out, AP_SHA1PW_ID, AP_SHA1PW_IDLEN + 1);
 
-    /* SHA1 hash is always 20 chars */
-    l = ap_base64encode_binary(out + AP_SHA1PW_IDLEN, digest, sizeof(digest));
-    out[l + AP_SHA1PW_IDLEN] = '\0';
+	/* SHA1 hash is always 20 chars */
+	l = ap_base64encode_binary(out + AP_SHA1PW_IDLEN, digest,
+	    sizeof(digest));
+	out[l + AP_SHA1PW_IDLEN] = '\0';
 
-    /*
-     * output of base64 encoded SHA1 is always 28 chars + AP_SHA1PW_IDLEN
-     */
+	/*
+	* output of base64 encoded SHA1 is always 28 chars + AP_SHA1PW_IDLEN
+	*/
 }

@@ -1,3 +1,5 @@
+/* $OpenBSD: ap_mm.c,v 1.4 2005/03/28 21:03:33 niallo Exp $ */
+
 /* ====================================================================
  * Copyright (c) 1999-2000 The Apache Group.  All rights reserved.
  *
@@ -87,9 +89,9 @@ API_EXPORT(int) ap_mm_useable(void) { return FALSE; }
 #define STUB_STMT(stmt)             { return;       }
 #endif
 
-API_EXPORT(int) ap_MM_create(size_t size, char *file) 
+API_EXPORT(int) ap_MM_create(size_t size, char *file)
     STUB(MM_create(size, file), FALSE)
-API_EXPORT(int) ap_MM_permission(mode_t mode, uid_t owner, gid_t group) 
+API_EXPORT(int) ap_MM_permission(mode_t mode, uid_t owner, gid_t group)
     STUB(MM_permission(mode, owner, group), -1)
 API_EXPORT(void) ap_MM_destroy(void)
     STUB_STMT(MM_destroy())
@@ -118,7 +120,8 @@ API_EXPORT(char *) ap_MM_error(void)
 
 API_EXPORT(AP_MM *) ap_mm_create(size_t size, char *file)
     STUB(mm_create(size, file), NULL)
-API_EXPORT(int) ap_mm_permission(AP_MM *mm, mode_t mode, uid_t owner, gid_t group) 
+API_EXPORT(int) ap_mm_permission(AP_MM *mm, mode_t mode, uid_t owner,
+    gid_t group)
     STUB(mm_permission(mm, mode, owner, group), -1)
 API_EXPORT(void) ap_mm_destroy(AP_MM *mm)
     STUB_STMT(mm_destroy(mm))
@@ -149,7 +152,8 @@ API_EXPORT(void) ap_mm_display_info(AP_MM *mm)
 
 API_EXPORT(void *) ap_mm_core_create(size_t size, char *file)
     STUB(mm_core_create(size, file), NULL)
-API_EXPORT(int) ap_mm_core_permission(void *core, mode_t mode, uid_t owner, gid_t group) 
+API_EXPORT(int) ap_mm_core_permission(void *core, mode_t mode, uid_t owner,
+    gid_t group)
     STUB(mm_core_permission(core, mode, owner, group), -1)
 API_EXPORT(void) ap_mm_core_delete(void *core)
     STUB_STMT(mm_core_delete(core))

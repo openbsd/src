@@ -1,3 +1,5 @@
+/* $OpenBSD: ap_getpass.c,v 1.8 2005/03/28 21:03:33 niallo Exp $ */
+
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
@@ -88,15 +90,15 @@
  * but the caller is *not* made aware of it.
  */
 
-API_EXPORT(int) ap_getpass(const char *prompt, char *pwbuf, size_t bufsiz)
+API_EXPORT(int)
+ap_getpass(const char *prompt, char *pwbuf, size_t bufsiz)
 {
-    char *pw_got;
-    int result = 0;
+	char *pw_got;
+	int result = 0;
 
-    pw_got = getpass(prompt);
-    if (strlen(pw_got) > (bufsiz - 1)) {
-	result = ERR_OVERFLOW;
-    }
-    ap_cpystrn(pwbuf, pw_got, bufsiz);
-    return result;
+	pw_got = getpass(prompt);
+	if (strlen(pw_got) > (bufsiz - 1))
+		result = ERR_OVERFLOW;
+	ap_cpystrn(pwbuf, pw_got, bufsiz);
+	return result;
 }

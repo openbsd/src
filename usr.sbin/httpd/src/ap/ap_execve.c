@@ -1,3 +1,5 @@
+/* $OpenBSD: ap_execve.c,v 1.11 2005/03/28 21:03:33 niallo Exp $ */
+
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
@@ -92,4 +94,7 @@
 /*---------------------------------------------------------------*/
 
 extern void ap_execve_is_not_here(void);
-void ap_execve_is_not_here(void) {}
+void
+ap_execve_is_not_here(void)
+{
+}

@@ -1,3 +1,5 @@
+/* $OpenBSD */
+
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
@@ -70,35 +72,31 @@
 
 /*
  * Validate a plaintext password against a smashed one.  Use either
- * crypt() (if available), ap_MD5Encode() or ap_SHA1Encode depending 
- * upon the format of the smashed input password.  
+ * crypt() (if available), ap_MD5Encode() or ap_SHA1Encode depending
+ * upon the format of the smashed input password.
  *
  * Return NULL if they match, or an explanatory text string if they don't.
  */
 
-API_EXPORT(char *) ap_validate_password(const char *passwd, const char *hash)
+API_EXPORT(char *)
+ap_validate_password(const char *passwd, const char *hash)
 {
-    char sample[120];
+	char sample[120];
 
-
-    /* FreeBSD style MD5 string 
-     */
-    if (strncmp(hash, AP_MD5PW_ID, AP_MD5PW_IDLEN) == 0) {
-
-	ap_MD5Encode((const unsigned char *)passwd,
-		     (const unsigned char *)hash, sample, sizeof(sample));
-    }
-    /* Netscape / SHA1 ldap style strng  
-     */
-    else if (strncmp(hash, AP_SHA1PW_ID, AP_SHA1PW_IDLEN) == 0) {
-
- 	ap_sha1_base64(passwd, strlen(passwd), sample);
-    }
-    else {
+	/* FreeBSD style MD5 string 
+	*/
+	if (strncmp(hash, AP_MD5PW_ID, AP_MD5PW_IDLEN) == 0)
+		ap_MD5Encode((const unsigned char *)passwd,
+		    (const unsigned char *)hash, sample, sizeof(sample));
+	/* Netscape / SHA1 ldap style strng  
+	*/
+	else if (strncmp(hash, AP_SHA1PW_ID, AP_SHA1PW_IDLEN) == 0)
+		ap_sha1_base64(passwd, strlen(passwd), sample);
 	/*
 	 * It's not our algorithm, so feed it to crypt() if possible.
 	 */
-	ap_cpystrn(sample, (char *)crypt(passwd, hash), sizeof(sample) - 1);
-    }
-    return (strcmp(sample, hash) == 0) ? NULL : "password mismatch";
+	else
+		ap_cpystrn(sample, (char *)crypt(passwd, hash),
+		    sizeof(sample) - 1);
+	return (strcmp(sample, hash) == 0) ? NULL : "password mismatch";
 }

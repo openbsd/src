@@ -1,3 +1,5 @@
+/* $OpenBSD */
+
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
@@ -106,7 +108,8 @@
  *  upper/lower case A-I, J-R, and S-Z are contiguous.)
  */
 
-API_EXPORT(long) ap_strtol(const char *nptr, char **endptr, int base)
+API_EXPORT(long)
+ap_strtol(const char *nptr, char **endptr, int base)
 {
 	const char *s;
 	unsigned long acc;
@@ -123,7 +126,8 @@ API_EXPORT(long) ap_strtol(const char *nptr, char **endptr, int base)
 	s = nptr;
 	do {
 		c = *s++;
-	} while (ap_isspace(c));
+	}
+	while (ap_isspace(c));
 	if (c == '-') {
 		neg = 1;
 		c = *s++;
