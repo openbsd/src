@@ -1,29 +1,29 @@
 #!/usr/bin/awk -f
 #
-# $NetBSD: mkoldconf.awk,v 1.4 1995/12/16 15:05:03 ragge Exp $
+# $NetBSD: mkoldconf.awk,v 1.7 1996/03/17 22:56:31 ragge Exp $
 #
 
-/tmscd/{
-	tmsplats[ntms]=$2;
-	tmsaddr[ntms]=$5;
+/tms_cd/{
+	tmsplats[ntms]=$3;
+	tmsaddr[ntms]=$6;
 	ntms++;
 }
 
-/tscd/{
-	tsplats[nts]=$2;
-	tsaddr[nts]=$5;
+/ts_cd/{
+	tsplats[nts]=$3;
+	tsaddr[nts]=$6;
 	nts++;
 }
 
-/racd/{
-	raplats[nra]=$2;
-	raaddr[nra]=$5;
+/ra_cd/{
+	raplats[nra]=$3;
+	raaddr[nra]=$6;
 	nra++;
 }
 
 {
 	if(savenext==1){
-		l=sprintf("%d",$2)
+		l=sprintf("%d",$3)
 		udanummer[l-1]=nuda-1
 		savenext=0;
 	}
@@ -32,27 +32,27 @@
 
 {
 	if(tmssavenext==1){
-		l=sprintf("%d",$2)
+		l=sprintf("%d",$3)
 		tmsnummer[l-1]=ntmscp-1
 		tmssavenext=0;
 	}
 	if(tssavenext==1){
-		l=sprintf("%d",$2)
+		l=sprintf("%d",$3)
 		tsnummer[l-1]=nts-1
 		tssavenext=0;
 	}
 }
 
-/tmscpcd/{
-	tmscpplats[ntmscp]=$2;
-	tmscpaddr[ntmscp]=$5;
+/tmscp_cd/{
+	tmscpplats[ntmscp]=$3;
+	tmscpaddr[ntmscp]=$6;
 	ntmscp++;
 	tmssavenext=1;
 }
 		
-/udacd/{
-	udaplats[nuda]=$2;
-	udaddr[nuda]=$5;
+/uda_cd/{
+	udaplats[nuda]=$3;
+	udaddr[nuda]=$6;
 	nuda++;
 	savenext=1;
 }
@@ -91,12 +91,12 @@
 
 END{
 
-printf "#include \"sys/param.h\"\n"
-printf "#include \"machine/pte.h\"\n"
-printf "#include \"sys/buf.h\"\n"
-printf "#include \"sys/map.h\"\n"
+printf "#include <sys/param.h>\n"
+printf "#include <machine/pte.h>\n"
+printf "#include <sys/buf.h>\n"
+printf "#include <sys/map.h>\n"
 
-printf "#include \"vax/uba/ubavar.h\"\n"
+printf "#include <vax/uba/ubavar.h>\n"
 
 printf "int antal_ra=%d;\n",nra-1
 printf "int antal_uda=%d;\n",nuda-1
@@ -110,13 +110,13 @@ if(nts) printf "void tsintr();\n"
 if(ntms) printf "extern struct uba_driver tmscpdriver;\n"
 if(ntms) printf "void tmscpintr();\n"
 printf "void udaintr();\n"
-printf "int racd=0, tmscd=0;\n"
+printf "int ra_cd=0, ra_ca=0, tms_cd=0, tms_ca=0;\n"
 printf "#define C (caddr_t)\n"
 
 printf "struct uba_ctlr ubminit[]={\n"
 for(i=1;i<nuda;i++){
 	k=sprintf("%d",udaddr[i])
-	printf "	{ &udadriver, %d,0,0,udaintr,C %s},\n",
+	printf "	{ &udadriver, %d,'?',0,udaintr,C %s},\n",
 		udaplats[i],loc[k+1]
 }
 for(i=1;i<nts;i++){
@@ -134,7 +134,7 @@ printf "0};\n"
 printf "struct uba_device ubdinit[]={\n"
 for(i=1;i<nra;i++){
 	k=sprintf("%d",raaddr[i])
-	printf "	{ &udadriver,%d,%d,0,%d,0,0,1,0},\n",raplats[i],
+	printf "	{ &udadriver,%d,%d,'?',%d,0,0,1,0},\n",raplats[i],
 		rr++/4,loc[k+1]
 }
 for(i=1;i<nts;i++){

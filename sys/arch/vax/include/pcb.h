@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.9 1996/01/28 12:27:19 ragge Exp $	*/
+/*	$NetBSD: pcb.h,v 1.10 1996/02/02 18:08:26 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -35,7 +35,7 @@
 #ifndef _VAX_PCB_H_
 #define _VAX_PCB_H_
 
-#include "machine/trap.h"
+#include <machine/trap.h>
 
 struct pcb {
 

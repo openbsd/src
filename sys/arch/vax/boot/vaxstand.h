@@ -1,4 +1,4 @@
-/*	$NetBSD: vaxstand.h,v 1.3 1995/04/25 14:14:34 ragge Exp $ */
+/*	$NetBSD: vaxstand.h,v 1.4 1996/02/17 18:23:25 ragge Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -44,8 +44,8 @@ extern int *ubaaddr, *mbaaddr, *udaaddr, *uioaddr;
 
 /* devsw type definitions, used in bootxx and conf */
 #define SADEV(name,strategy,open,close,ioctl) \
-        { name, \
-         (int(*)(void *, int ,daddr_t , u_int , char *, u_int *))strategy, \
+        { (char *)name, \
+         (int(*)(void *, int ,daddr_t , size_t, void *, size_t *))strategy, \
          (int(*)(struct open_file *, ...))open, \
          (int(*)(struct open_file *))close, \
          (int(*)(struct open_file *,u_long, void *))ioctl}

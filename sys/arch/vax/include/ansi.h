@@ -1,4 +1,4 @@
-/*	$NetBSD: ansi.h,v 1.3 1994/10/26 08:01:59 cgd Exp $	*/
+/*	$NetBSD: ansi.h,v 1.4 1996/03/16 01:32:03 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -56,5 +56,6 @@
 #define _BSD_TIME_T_    long                    /* time() */
 #define _BSD_VA_LIST_   char *                  /* va_list */
 #define	_BSD_WCHAR_T_	int                     /* wchar_t */
+#define _BSD_WINT_T_	int			/* wint_t */
 
 #endif  /* _ANSI_H_ */

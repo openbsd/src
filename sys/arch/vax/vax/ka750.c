@@ -1,4 +1,4 @@
-/*	$NetBSD: ka750.c,v 1.8 1995/12/13 18:50:34 ragge Exp $	*/
+/*	$NetBSD: ka750.c,v 1.12 1996/04/08 18:32:42 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1988 The Regents of the University of California.
@@ -37,18 +37,23 @@
  *      @(#)autoconf.c  7.20 (Berkeley) 5/9/91
  */
 
-#include "sys/param.h"
-#include "sys/types.h"
-#include "sys/device.h"
-#include "vm/vm.h"
-#include "vm/vm_kern.h"
+#include <sys/param.h>
+#include <sys/types.h>
+#include <sys/device.h>
+#include <sys/systm.h>
 
-#include "machine/ka750.h"
-#include "machine/pte.h"
-#include "machine/cpu.h"
-#include "machine/mtpr.h"
-#include "vax/uba/ubavar.h"
-#include "vax/uba/ubareg.h"
+#include <vm/vm.h>
+#include <vm/vm_kern.h>
+
+#include <machine/ka750.h>
+#include <machine/pte.h>
+#include <machine/cpu.h>
+#include <machine/mtpr.h>
+#include <machine/scb.h>
+#include <vax/uba/ubavar.h>
+#include <vax/uba/ubareg.h>
+
+void	ctuattach __P((void));
 
 /*
  * ka750_conf() is called by cpu_attach to do the cpu_specific setup.
@@ -58,7 +63,7 @@ ka750_conf(parent, self, aux)
 	struct	device *parent, *self;
 	void	*aux;
 {
-	extern char cpu_model[];
+	extern	char cpu_model[];
 
 	strcpy(cpu_model,"VAX 11/750");
 	printf(": 11/750, hardware rev %d, ucode rev %d\n",
@@ -69,6 +74,9 @@ ka750_conf(parent, self, aux)
 		mtpr(0x8000, PR_ACCS);
 	} else
 		printf("no FPA\n");
+
+	/* Call ctuattach() here so it can setup its vectors. */
+	ctuattach();
 }
 
 /*
@@ -114,34 +122,48 @@ struct	mcr750 {
 #define	M750_ADDR(err)	(((err) >> 9) & 0x7fff)
 
 /* enable crd interrupts */
+void
 ka750_memenable(sa,self)
 	struct sbi_attach_args *sa;
 	struct device *self;
 {
-	extern int nmcr;
-	int k,l,m,cardinfo;
-	struct mcr750 *mcr=(struct mcr750 *)sa->nexaddr;
+	int k, l, m, cardinfo;
+	struct mcr750 *mcr = (struct mcr750 *)sa->nexaddr;
 	
-	mcraddr[self->dv_unit]=(caddr_t)sa->nexaddr;
+	mcraddr[self->dv_unit] = (caddr_t)sa->nexaddr;
 
 	/* We will use this info for error reporting - later! */
-	cardinfo=mcr->mc_inf;
-	switch((cardinfo>>24)&3){
+	cardinfo = mcr->mc_inf;
+	switch ((cardinfo >> 24) & 3) {
 	case 0: printf(": L0011 ");
 		break;
+
 	case 1: printf(": L0016 ");
-		m=cardinfo&0xaaaa;
-		for(k=l=0;k<16;k++){if(m&1)l++;m>>=1;}
+		m = cardinfo & 0xaaaa;
+		for (k = l = 0; k < 16; k++){
+			if (m & 1)
+				l++;
+			m >>= 1;
+		}
 		printf("with %d M8750",l);
 		break;
+
 	case 3: printf(": L0022 ");
-		m=cardinfo&0x5555;
-		for(k=l=0;k<16;k++){if(m&1)l++;m>>=1;}
+		m = cardinfo & 0x5555;
+		for (k = l = 0; k < 16; k++) {
+			if (m & 1)
+				l++;
+			m>>=1;
+		}
 		printf("with %d M7199",l);
-		m=cardinfo&0xaaaa;
-		if(m){
-		for(k=l=0;k<16;k++){if(m&1)l++;m>>=1;}
-		printf(" and %d M8750",l);
+		m = cardinfo & 0xaaaa;
+		if (m) {
+			for (k = l = 0; k < 16; k++) {
+				if (m & 1)
+					l++;
+				m >>= 1;
+			}
+			printf(" and %d M8750",l);
 		}
 		break;
 	}
@@ -152,6 +174,7 @@ ka750_memenable(sa,self)
 }
 
 /* log crd errors */
+void
 ka750_memerr()
 {
 	register struct mcr750 *mcr = (struct mcr750 *)mcraddr[0];
@@ -188,6 +211,7 @@ struct mc750frame {
 #define MC750_TBERR	2		/* type code of cp tbuf par */
 #define	MC750_TBPAR	4		/* tbuf par bit in mcesr */
 
+int
 ka750_mchk(cmcf)
 	caddr_t cmcf;
 {
@@ -208,11 +232,12 @@ ka750_mchk(cmcf)
 	mtpr(0xf, PR_MCESR);
 	if (type == MC750_TBERR && (mcf->mc5_mcesr&0xe) == MC750_TBPAR) {
 		printf("tbuf par: flushing and returning\n");
-		return (0);
+		return (MCHK_RECOVERED);
 	}
-	return (-1);
+	return (MCHK_PANIC);
 }
 
+void
 ka750_steal_pages()
 {
 	extern	vm_offset_t avail_start, virtual_avail;
@@ -228,7 +253,5 @@ ka750_steal_pages()
 	MAPVIRT(nexus, btoc(NEX750SZ));
 	pmap_map((vm_offset_t)nexus, NEX750, NEX750 + NEX750SZ,
 	    VM_PROT_READ|VM_PROT_WRITE);
-
-	return 0;
 }
 

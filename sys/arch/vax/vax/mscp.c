@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp.c,v 1.6 1995/11/30 00:59:37 jtc Exp $	*/
+/*	$NetBSD: mscp.c,v 1.9 1996/04/08 18:32:50 ragge Exp $	*/
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -42,18 +42,25 @@
  * MSCP generic driver routines
  */
 
-#include "sys/param.h"
-#include "sys/buf.h"
-#include "sys/errno.h"
-#include "sys/dkstat.h"
-#include "sys/ioctl.h"
-#include "sys/disklabel.h"
-#include "sys/syslog.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/buf.h>
+#include <sys/errno.h>
+#include <sys/dkstat.h>
+#include <sys/ioctl.h>
+#include <sys/disklabel.h>
+#include <sys/syslog.h>
+#include <sys/proc.h>
 
-#include "../uba/ubavar.h"
+#include <vax/uba/ubavar.h>
 
-#include "mscp.h"
-#include "mscpvar.h"
+#include <vax/vax/mscp.h>
+#include <vax/vax/mscpvar.h>
+
+void	mscp_hexdump __P((struct mscp *));
+
+
+
 
 #define	PCMD	PSWP		/* priority for command packet waits */
 
@@ -138,6 +145,7 @@ int	mscp_aeb_xor = 0x8000bb80;
  * such a case by changing this command into an on line request and
  * not dequeuing the transfer after all.
  */
+void
 mscp_go(mi, mp, info)
 	register struct mscp_info *mi;
 	register struct mscp *mp;
@@ -159,9 +167,12 @@ mscp_go(mi, mp, info)
 	dp->b_actf = bp->b_actf;	/* transfer off drive queue */
 	mi->mi_tab->b_actf = dp->b_hash.le_next;/* drive off ctlr queue */
 	MSCP_APPEND(dp, mi->mi_tab, b_hash.le_next);	/* then back again */
-/* Was:	dp->b_actf = bp->av_forw;	/* transfer off drive queue */
-/* Was:	mi->mi_tab->b_actf = dp->b_forw;/* drive off ctlr queue */
-/* Was:	MSCP_APPEND(dp, mi->mi_tab, b_forw);	/* then back again */
+
+#ifdef oldway
+	dp->b_actf = bp->av_forw;	 /* transfer off drive queue */
+	mi->mi_tab->b_actf = dp->b_forw; /* drive off ctlr queue */
+	MSCP_APPEND(dp, mi->mi_tab, b_forw);	 /* then back again */
+#endif
 
 	/*
 	 * Move the buffer to the I/O wait queue.
@@ -177,11 +188,13 @@ mscp_go(mi, mp, info)
 		while(tmp->b_actf!=&mi->mi_wtab) tmp=tmp->b_actf;
 		tmp->b_actf=bp;
 	}}
-	
-/* Was:	bp->av_back = mi->mi_wtab.av_back;
-/* Was:	bp->av_forw = &mi->mi_wtab;
-/* Was:	mi->mi_wtab.av_back->av_forw = bp;
-/* Was:	mi->mi_wtab.av_back = bp;
+
+#ifdef oldway
+	bp->av_back = mi->mi_wtab.av_back;
+	bp->av_forw = &mi->mi_wtab;
+	mi->mi_wtab.av_back->av_forw = bp;
+	mi->mi_wtab.av_back = bp;
+#endif
 
 	/*
 	 * Save the mapping info, finish the command packet, and give
@@ -222,6 +235,7 @@ found:
 /*
  * Handle a response ring transition.
  */
+void
 mscp_dorsp(mi)
 	register struct mscp_info *mi;
 {
@@ -326,7 +340,7 @@ loop:
 		 */
 		if (st == M_ST_INVALCMD && mp->mscp_cmdref != 0) {
 			printf("%s%d: bad lbn (%d)?\n", drivename,
-				ui->ui_unit, mp->mscp_seq.seq_lbn);
+				ui->ui_unit, (int)mp->mscp_seq.seq_lbn);
 			error = EIO;
 			goto rwend;
 		}
@@ -601,6 +615,7 @@ done:
  * Dump the entire contents of an MSCP packet in hex.  Mainly useful
  * for debugging....
  */
+void
 mscp_hexdump(mp)
 	register struct mscp *mp;
 {
@@ -611,7 +626,7 @@ mscp_hexdump(mp)
 		i = 256;
 	i /= sizeof (*p);	/* ASSUMES MULTIPLE OF sizeof(long) */
 	while (--i >= 0)
-		printf("0x%x ", *p++);
+		printf("0x%x ", (int)*p++);
 	printf("\n");
 }
 
@@ -620,6 +635,7 @@ mscp_hexdump(mp)
  * Also requeue any drives that have on line or unit status
  * info pending.
  */
+void
 mscp_requeue(mi)
 	struct mscp_info *mi;
 {
@@ -846,24 +862,25 @@ struct code_decode {
 	char	**cdc_submsgs;
 } code_decode[] = {
 #define	SC(m)	sizeof (m) / sizeof (m[0]), m
-	"success",			SC(succ_msgs),
-	"invalid command",		SC(icmd_msgs),
-	"command aborted",		0, 0,
-	"unit offline",		SC(offl_msgs),
-	"unit available",		0, 0,
-	"media format error",		SC(media_fmt_msgs),
-	"write protected",		SC(wrprot_msgs),
-	"compare error",		0, 0,
-	"data error",			SC(data_msgs),
-	"host buffer access error",	SC(host_buffer_msgs),
-	"controller error",		SC(cntlr_msgs),
-	"drive error",			SC(drive_msgs),
+	{"success",			SC(succ_msgs)},
+	{"invalid command",		SC(icmd_msgs)},
+	{"command aborted",		0, 0},
+	{"unit offline",		SC(offl_msgs)},
+	{"unit available",		0, 0},
+	{"media format error",		SC(media_fmt_msgs)},
+	{"write protected",		SC(wrprot_msgs)},
+	{"compare error",		0, 0},
+	{"data error",			SC(data_msgs)},
+	{"host buffer access error",	SC(host_buffer_msgs)},
+	{"controller error",		SC(cntlr_msgs)},
+	{"drive error",			SC(drive_msgs)},
 #undef SC
 };
 
 /*
  * Print the decoded error event from an MSCP error datagram.
  */
+void
 mscp_printevent(mp)
 	struct mscp *mp;
 {
@@ -899,6 +916,7 @@ mscp_printevent(mp)
  * THIS IS PROBABLY PECULIAR TO DISK DRIVES.  IT SURE WOULD BE
  * NICE IF DEC SOLD DOCUMENTATION FOR THEIR OWN CONTROLLERS.
  */
+void
 mscp_decodeerror(name, ctlr, mp)
 	char *name;
 	int ctlr;
@@ -930,7 +948,7 @@ mscp_decodeerror(name, ctlr, mp)
 		break;
 
 	case M_FM_BUSADDR:	/* host memory access error */
-		printf(" memory addr 0x%x:", mp->mscp_erd.erd_busaddr);
+		printf(" memory addr 0x%x:", (int)mp->mscp_erd.erd_busaddr);
 		break;
 
 	case M_FM_DISKTRN:
@@ -938,13 +956,13 @@ mscp_decodeerror(name, ctlr, mp)
 			mp->mscp_unit,
 			mp->mscp_erd.erd_level, mp->mscp_erd.erd_retry,
 			BADCODE(mp->mscp_erd.erd_hdr),
-			BADLBN(mp->mscp_erd.erd_hdr));
+			(int)BADLBN(mp->mscp_erd.erd_hdr));
 		break;
 
 	case M_FM_SDI:
 		printf(" unit %d: %s %d:", mp->mscp_unit,
 			BADCODE(mp->mscp_erd.erd_hdr),
-			BADLBN(mp->mscp_erd.erd_hdr));
+			(int)BADLBN(mp->mscp_erd.erd_hdr));
 		break;
 
 	case M_FM_SMLDSK:

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.3 1996/01/28 12:05:55 ragge Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.6 1996/04/08 18:32:33 ragge Exp $	*/
 
 /* 
  * Mach Operating System
@@ -37,18 +37,25 @@
 #include <sys/reboot.h>
 #include <sys/systm.h> /* just for boothowto --eichin */
 
-#include <ddb/db_variables.h>
-
 #include <vm/vm.h>
 
 #include <machine/db_machdep.h>
 #include <machine/trap.h>
 #include <machine/frame.h>
+#include <machine/cpu.h>
 #include <machine/../vax/gencons.h>
 
-#include <setjmp.h>
+#include <ddb/db_sym.h>
+#include <ddb/db_command.h>
+#include <ddb/db_output.h>
+#include <ddb/db_extern.h>
+#include <ddb/db_access.h>
+#include <ddb/db_interface.h>
+#include <ddb/db_variables.h>
 
-extern jmp_buf	*db_recover;
+extern	label_t	*db_recover;
+
+void	kdbprinttrap __P((int, int));
 
 int	db_active = 0;
 
@@ -58,7 +65,7 @@ int	db_active = 0;
  * If it is the result of a panic, set the ddb register frame to
  * contain the registers when panic was called. (easy to debug).
  */
-int
+void
 kdb_trap(frame)
 	struct trapframe *frame;
 {
@@ -87,7 +94,7 @@ kdb_trap(frame)
 
 	default:
 		if ((boothowto & RB_KDB) == 0)
-			return 0;
+			return;
 
 		kdbprinttrap(frame->trap, frame->code);
 		if (db_recover != 0) {
@@ -115,7 +122,7 @@ kdb_trap(frame)
 		bcopy(&ddb_regs, frame, sizeof(struct trapframe));
 	frame->sp = mfpr(PR_USP);
 
-	return (1);
+	return;
 }
 
 extern char *traptypes[];
@@ -124,6 +131,7 @@ extern int no_traps;
 /*
  * Print trap reason.
  */
+void
 kdbprinttrap(type, code)
 	int type, code;
 {
@@ -141,7 +149,7 @@ kdbprinttrap(type, code)
 void
 db_read_bytes(addr, size, data)
 	vm_offset_t	addr;
-	register int	size;
+	register size_t	size;
 	register char	*data;
 {
 	register char	*src;
@@ -157,7 +165,7 @@ db_read_bytes(addr, size, data)
 void
 db_write_bytes(addr, size, data)
 	vm_offset_t	addr;
-	register int	size;
+	register size_t	size;
 	register char	*data;
 {
 	register char	*dst;
@@ -167,7 +175,7 @@ db_write_bytes(addr, size, data)
 		*dst++ = *data++;
 }
 
-int
+void
 Debugger()
 {
 	int s = splx(0xe); /* Is this good? We must lower anyway... */
@@ -179,23 +187,23 @@ Debugger()
  * Machine register set.
  */
 struct db_variable db_regs[] = {
-	"r0",	&ddb_regs.r0,	FCN_NULL,
-	"r1",	&ddb_regs.r1,	FCN_NULL,
-	"r2",	&ddb_regs.r2,	FCN_NULL,
-	"r3",	&ddb_regs.r3,	FCN_NULL,
-	"r4",	&ddb_regs.r4,	FCN_NULL,
-	"r5",	&ddb_regs.r5,	FCN_NULL,
-	"r6",	&ddb_regs.r6,	FCN_NULL,
-	"r7",	&ddb_regs.r7,	FCN_NULL,
-	"r8",	&ddb_regs.r8,	FCN_NULL,
-	"r9",	&ddb_regs.r9,	FCN_NULL,
-	"r10",	&ddb_regs.r10,	FCN_NULL,
-	"r11",	&ddb_regs.r11,	FCN_NULL,
-	"ap",	&ddb_regs.ap,	FCN_NULL,
-	"fp",	&ddb_regs.fp,	FCN_NULL,
-	"sp",	&ddb_regs.sp,	FCN_NULL,
-	"pc",	&ddb_regs.pc,	FCN_NULL,
-	"psl",	&ddb_regs.psl,	FCN_NULL,
+	{"r0",	&ddb_regs.r0,	FCN_NULL},
+	{"r1",	&ddb_regs.r1,	FCN_NULL},
+	{"r2",	&ddb_regs.r2,	FCN_NULL},
+	{"r3",	&ddb_regs.r3,	FCN_NULL},
+	{"r4",	&ddb_regs.r4,	FCN_NULL},
+	{"r5",	&ddb_regs.r5,	FCN_NULL},
+	{"r6",	&ddb_regs.r6,	FCN_NULL},
+	{"r7",	&ddb_regs.r7,	FCN_NULL},
+	{"r8",	&ddb_regs.r8,	FCN_NULL},
+	{"r9",	&ddb_regs.r9,	FCN_NULL},
+	{"r10",	&ddb_regs.r10,	FCN_NULL},
+	{"r11",	&ddb_regs.r11,	FCN_NULL},
+	{"ap",	&ddb_regs.ap,	FCN_NULL},
+	{"fp",	&ddb_regs.fp,	FCN_NULL},
+	{"sp",	&ddb_regs.sp,	FCN_NULL},
+	{"pc",	&ddb_regs.pc,	FCN_NULL},
+	{"psl",	&ddb_regs.psl,	FCN_NULL},
 };
 struct db_variable *db_eregs = db_regs + sizeof(db_regs)/sizeof(db_regs[0]);
 
@@ -206,7 +214,7 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
         db_expr_t       count;
         char            *modif;
 {
-	printf("db_stack_trace_cmd - addr %x, have_addr %x, count %x, modif %x\n",addr, have_addr, count, modif);
+	printf("db_stack_trace_cmd - addr %x, have_addr %x, count %x, modif %x\n",addr, have_addr, count, (int)modif);
 }
 
 static int ddbescape = 0;

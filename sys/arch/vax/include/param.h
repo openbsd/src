@@ -1,5 +1,4 @@
-/*      $NetBSD: param.h,v 1.14 1995/12/30 21:37:31 ragge Exp $    */
-
+/*      $NetBSD: param.h,v 1.19 1996/03/04 05:04:43 cgd Exp $    */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -41,16 +40,18 @@
 #ifndef _VAX_PARAM_H_
 #define _VAX_PARAM_H_
 
-#include "machine/macros.h"
-#include "machine/psl.h"
+#include <machine/macros.h>
+#include <machine/psl.h>
 
 /*
  * Machine dependent constants for VAX.
  */
 
-#define MACHINE		"vax"
+#define	_MACHINE	vax
+#define	MACHINE		"vax"
+#define	_MACHINE_ARCH	vax
 #define	MACHINE_ARCH	"vax"
-#define MID_MACHINE	MID_VAX
+#define	MID_MACHINE	MID_VAX
 
 /*
  * Round p (pointer or byte index) up to a correctly-aligned value
@@ -163,7 +164,7 @@
 #define splbio()        splx(0x15)	/* IPL15 */
 #define splnet()        splx(0x15)	/* IPL15 */
 #define spltty()        splx(0x15)	/* IPL15 */
-#define splimp()        splx(0x16)	/* IPL16 */
+#define splimp()        splx(0x17)	/* IPL17 */
 #define splclock()      splx(0x18)	/* IPL18 */
 #define splhigh()       splx(0x1f)	/* IPL1F */
 #define	splstatclock()	splclock()
@@ -172,6 +173,11 @@
 
 #define vmapbuf(p,q)
 #define vunmapbuf(p,q)
+
+/* Prototype needed for delay() */
+#ifndef	_LOCORE
+void	delay __P((int));
+#endif
 
 #define	DELAY(x) delay(x)
 

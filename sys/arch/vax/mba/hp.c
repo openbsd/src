@@ -1,6 +1,6 @@
-/*	$NetBSD: hp.c,v 1.1 1995/02/13 00:43:59 ragge Exp $ */
+/*	$NetBSD: hp.c,v 1.8 1996/04/08 18:38:58 ragge Exp $ */
 /*
- * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
+ * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -13,7 +13,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *     This product includes software developed at Ludd, University of Lule}.
+ *      This product includes software developed at Ludd, University of 
+ *      Lule}, Sweden and its contributors.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission
  *
@@ -29,338 +30,464 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
- /* All bugs are subject to removal without further notice */
-		
-
-
-/* hp.c - drivrutiner f|r massbussdiskar 940325/ragge */
-
-#include "param.h"
-#include "types.h"
-#include "fcntl.h"
-#include "syslog.h"
-#include "disklabel.h"
-#include "buf.h"
-#include "vax/mba/mbareg.h"
-#include "vax/mba/mbavar.h"
-#include "vax/mba/hpdefs.h"
-#include "hp.h"
-
-struct	mba_device	*hpinfo[NHP];
-struct	hp_info		hp_info[NHP];
-struct	disklabel	hplabel[NHP];
-int hpslave(), hpattach();
-
-char hptypes[]={
-	0x22,0
-};
-
-struct mba_driver hpdriver={
-	hpslave, 0, "hp", hptypes, hpattach, hpinfo
-};
-
-hpslave(){
-	printf("Hpslave.\n");
-	asm("halt");
-};
-
-hpopen(){
-	printf("hpopen");
-	        asm("halt");
-};
-
-hpclose(){
-	printf("hpclose\n");
-        asm("halt");
-};
-
-hpioctl(){
-	printf("hpioctl\n");
-	asm("halt");
-}
-
-hpdump(){
-	printf("hpdump\n");
-        asm("halt");
-};
-
-hpsize(){
-	printf("hpsize");
-        asm("halt");
-};
-
-
-
-hpattach(mi)
-	struct mba_device *mi;
-{
-	struct mba_drv *md;
-
 /*
- * We check status of the drive first; to see if there is any idea
- * to try to read the label.
+ * Simple device driver routine for massbuss disks.
+ * TODO:
+ *  Fix support for Standard DEC BAD144 bad block forwarding.
+ *  Be able to to handle soft/hard transfer errors.
+ *  Handle non-data transfer interrupts.
+ *  Autoconfiguration of disk drives 'on the fly'.
+ *  Handle disk media changes.
+ *  Dual-port operations should be supported.
  */
-	md=&(mi->mi_mba->mba_drv[mi->drive]);
-	if(!md->rmcs1&HPCS1_DVA){
-		printf(": Drive not available");
-		return;
-	}
-	if(!md->rmds&HPDS_MOL){
-		printf(": Drive offline");
-		return;
-	}
-	if (hpinit(mi, 0))
-                printf(": offline");
-/*        else if (ra_info[unit].ra_state == OPEN) {
-                printf(": %s, size = %d sectors",
-                    udalabel[unit].d_typename, ra_info[unit].ra_dsize);
-*/	
-	printf("rmcs1: %x, rmds: %x, rmdt: %x rmsn: %x\n",
-		md->rmcs1, md->rmds, md->rmdt, md->rmsn);
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/device.h>
+#include <sys/disklabel.h>
+#include <sys/disk.h>
+#include <sys/dkio.h>
+#include <sys/buf.h>
+#include <sys/stat.h>
+#include <sys/ioccom.h>
+#include <sys/fcntl.h>
+#include <sys/syslog.h>
+#include <sys/cpu.h>
 
+#include <machine/trap.h>
+#include <machine/pte.h>
+#include <machine/mtpr.h>
+#include <machine/cpu.h>
 
-/*        asm("halt"); */
+#include <vax/mba/mbavar.h>
+#include <vax/mba/mbareg.h>
+#include <vax/mba/hpreg.h>
+
+#define	HPMASK 0xffff
+
+struct	hp_softc {
+	struct	device	sc_dev;
+	struct	disk sc_disk;
+	struct	mba_device sc_md;	/* Common struct used by mbaqueue. */
+	int	sc_wlabel;		/* Disklabel area is writable */
+	int	sc_physnr;		/* Physical disk number */
+};
+
+int     hpmatch __P((struct device *, void *, void *));
+void    hpattach __P((struct device *, struct device *, void *));
+void	hpstrategy __P((struct buf *));
+void	hpstart __P((struct mba_device *));
+int	hpattn __P((struct mba_device *));
+enum	xfer_action hpfinish __P((struct mba_device *, int, int *));
+int	hpopen __P((dev_t, int, int));
+int	hpclose __P((dev_t, int, int));
+int	hpioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
+int	hpdump __P((dev_t, caddr_t, caddr_t, size_t));
+int	hpread __P((dev_t, struct uio *));
+int	hpwrite __P((dev_t, struct uio *));
+int	hpsize __P((dev_t));
+
+struct	cfdriver hp_cd = {
+	NULL, "hp", DV_DISK
+};
+
+struct	cfattach hp_ca = {
+	sizeof(struct hp_softc), hpmatch, hpattach
+};
+
 /*
-        if (MSCP_MID_ECH(1, ra_info[unit].ra_mediaid) == 'X' - '@') {
-                printf(": floppy");
-                return;
-        }
-        if (ui->ui_dk >= 0)
-                dk_wpms[ui->ui_dk] = (60 * 31 * 256); 
-        udaip[ui->ui_ctlr][ui->ui_slave] = ui;
-
-        if (uda_rainit(ui, 0))
-                printf(": offline");
-        else if (ra_info[unit].ra_state == OPEN) {
-                printf(": %s, size = %d sectors",
-                    udalabel[unit].d_typename, ra_info[unit].ra_dsize);
-        }*/
-}
-
-
-/*
- * Initialise a drive.  If it is not already, bring it on line,
- * and set a timeout on it in case it fails to respond.
- * When on line, read in the pack label.
+ * Check if this is a disk drive; done by checking type from mbaattach.
  */
-hpinit(mi, flags)
-        struct mba_device *mi;
+int
+hpmatch(parent, match, aux)
+	struct	device *parent;
+	void	*match, *aux;
 {
-/*        struct uda_softc *sc = &uda_softc[ui->ui_ctlr]; */
-	struct disklabel *lp;
-	struct hp_info *hp;
-/*         struct mscp *mp; */
-        int unit = mi->unit;
-	char *msg, *readdisklabel();
-	int s, i, hpstrategy();
-	extern int cold;
+	struct	cfdata *cf = match;
+	struct	mba_attach_args *ma = aux;
 
-        hp = &hp_info[unit];
-/*
-        if ((ui->ui_flags & UNIT_ONLINE) == 0) {
-                mp = mscp_getcp(&sc->sc_mi, MSCP_WAIT);
-                mp->mscp_opcode = M_OP_ONLINE;
-                mp->mscp_unit = ui->ui_slave;
-                mp->mscp_cmdref = (long)&ui->ui_flags;
-                *mp->mscp_addr |= MSCP_OWN | MSCP_INT;
-                ra->ra_state = WANTOPEN;
-                if (!cold)
-                        s = spl5();
-                i = ((struct udadevice *)ui->ui_addr)->udaip;
+	if (cf->cf_loc[0] != -1 && cf->cf_loc[0] != ma->unit)
+		return 0;
 
-                if (cold) {
-                        i = todr() + 1000;
-                        while ((ui->ui_flags & UNIT_ONLINE) == 0)
-                                if (todr() > i)
-                                        break;
-                } else {
-                        timeout(wakeup, (caddr_t)&ui->ui_flags, 10 * hz);
-                        sleep((caddr_t)&ui->ui_flags, PSWP + 1);
-                        splx(s);
-                        untimeout(wakeup, (caddr_t)&ui->ui_flags);
-                }
-                if (ra->ra_state != OPENRAW) {
-                        ra->ra_state = CLOSED;
-                        wakeup((caddr_t)ra);
-                        return (EIO);
-                }
-        }
-*/
-        lp = &hplabel[unit];
-        lp->d_secsize = DEV_BSIZE;
+	if (ma->devtyp != MB_RP)
+		return 0;
 
-        lp->d_secsize = DEV_BSIZE;
-        lp->d_secperunit = 15 /*ra->ra_dsize*/;
-
-        if (flags & O_NDELAY)
-                return (0);
-        hp->hp_state = RDLABEL;
-        /*
-         * Set up default sizes until we have the label, or longer
-         * if there is none.  Set secpercyl, as readdisklabel wants
-         * to compute b_cylin (although we do not need it), and set
-         * nsectors in case diskerr is called.
-         */
-        lp->d_secpercyl = 1;
-        lp->d_npartitions = 1;
-        lp->d_secsize = 512;
-/*        lp->d_secperunit = ra->ra_dsize; */
-        lp->d_nsectors = 15 /*ra->ra_geom.rg_nsectors*/;
-        lp->d_partitions[0].p_size = lp->d_secperunit;
-        lp->d_partitions[0].p_offset = 0;
-
-        /*
-         * Read pack label.
-         */
-        if ((msg = readdisklabel(hpminor(unit, 0), hpstrategy, lp)) != NULL) {
-                if (cold)
-                        printf(": %s", msg);
-                else
-                        log(LOG_ERR, "hp%d: %s", unit, msg);
-/*                ra->ra_state = OPENRAW; */
-/*                uda_makefakelabel(ra, lp); */
-        } else
-/*                ra->ra_state = OPEN; */
-/*        wakeup((caddr_t)hp); */
-        return (0);
+	return 1;
 }
 
 /*
- * Queue a transfer request, and if possible, hand it to the controller.
- *
- * This routine is broken into two so that the internal version
- * udastrat1() can be called by the (nonexistent, as yet) bad block
- * revectoring routine.
+ * Disk drive found; fake a disklabel and try to read the real one.
+ * If the on-disk label can't be read; we lose.
  */
-hpstrategy(bp)
-        register struct buf *bp;
+void
+hpattach(parent, self, aux)
+	struct	device *parent, *self;
+	void	*aux;
 {
-	register int unit;
-	register struct uba_device *ui;
-	register struct hp_info *hp;
-	struct partition *pp;
-	int p;
-	daddr_t sz, maxsz;
+	struct	hp_softc *sc = (void *)self;
+	struct	mba_softc *ms = (void *)parent;
+	struct	disklabel *dl;
+	struct  mba_attach_args *ma = aux;
+	char	*msg;
 
 	/*
-	 * Make sure this is a reasonable drive to use.
+	 * Init the common struct for both the adapter and its slaves.
 	 */
-/*	bp->b_error = ENXIO;
-	goto bad;
-*/
-	unit = hpunit(bp->b_dev);
+	sc->sc_md.md_softc = (void *)sc;	/* Pointer to this softc */
+	sc->sc_md.md_mba = (void *)parent;	/* Pointer to parent softc */
+	sc->sc_md.md_start = hpstart;		/* Disk start routine */
+	sc->sc_md.md_attn = hpattn;		/* Disk attention routine */
+	sc->sc_md.md_finish = hpfinish;		/* Disk xfer finish routine */
 
-        /*
-         * If drive is open `raw' or reading label, let it at it.
-         */
+	ms->sc_md[ma->unit] = &sc->sc_md;	/* Per-unit backpointer */
 
-	if (hp->hp_state < OPEN) {
-		hpstrat1(bp);
-		return;
-	}
+	sc->sc_physnr = ma->unit;
+	/*
+	 * Init and attach the disk structure.
+	 */
+	sc->sc_disk.dk_name = sc->sc_dev.dv_xname;
+	disk_attach(&sc->sc_disk);
 
+	/*
+	 * Fake a disklabel to be able to read in the real label.
+	 */
+	dl = sc->sc_disk.dk_label;
 
-/*	if ((unit = udaunit(bp->b_dev)) >= NRA ||
-	    (ui = udadinfo[unit]) == NULL || ui->ui_alive == 0 ||
-            (ra = &ra_info[unit])->ra_state == CLOSED) {
-                bp->b_error = ENXIO;
-                goto bad;
-        }
-*/
-        /*
-         * If drive is open `raw' or reading label, let it at it.
-         */
-/*
-        if (ra->ra_state < OPEN) {
-                udastrat1(bp);
-                return;
-        }
-        p = udapart(bp->b_dev);
-        if ((ra->ra_openpart & (1 << p)) == 0) {
-                bp->b_error = ENODEV;
-                goto bad;
-        }
-*/
-        /*
-         * Determine the size of the transfer, and make sure it is
-         * within the boundaries of the partition.
-         */
-/*
-        pp = &udalabel[unit].d_partitions[p];
-        maxsz = pp->p_size;
-        if (pp->p_offset + pp->p_size > ra->ra_dsize)
-                maxsz = ra->ra_dsize - pp->p_offset;
-        sz = (bp->b_bcount + DEV_BSIZE - 1) >> DEV_BSHIFT;
-        if (bp->b_blkno + pp->p_offset <= LABELSECTOR &&
-#if LABELSECTOR != 0
-            bp->b_blkno + pp->p_offset + sz > LABELSECTOR &&
-#endif
-            (bp->b_flags & B_READ) == 0 && ra->ra_wlabel == 0) {
-                bp->b_error = EROFS;
-                goto bad;
-        }
-        if (bp->b_blkno < 0 || bp->b_blkno + sz > maxsz) {
-                /* if exactly at end of disk, return an EOF */
-/*
-                if (bp->b_blkno == maxsz) {
-                        bp->b_resid = bp->b_bcount;
-                        biodone(bp);
-                        return;
-                }
-                /* or truncate if part of it fits */
-/*
-                sz = maxsz - bp->b_blkno;
-                if (sz <= 0) {
-                        bp->b_error = EINVAL;   /* or hang it up */
-/*
-                        goto bad;
-                }
-                bp->b_bcount = sz << DEV_BSHIFT;
-        }
-        udastrat1(bp);
-        return;
-*/
-bad:
-        bp->b_flags |= B_ERROR;
-        biodone(bp);
+	dl->d_secsize = DEV_BSIZE;
+	dl->d_ntracks = 1;
+	dl->d_nsectors = 32;
+	dl->d_secpercyl = 32;
+
+	/*
+	 * Read in label.
+	 */
+	if ((msg = readdisklabel(makedev(0, self->dv_unit * 8), hpstrategy,
+	    dl, NULL)) != NULL)
+		printf(": %s", msg);
+	printf(": %s, size = %d sectors\n", dl->d_typename, dl->d_secperunit);
 }
 
-/*
- * Work routine for udastrategy.
- */
-hpstrat1(bp)
-        register struct buf *bp;
+
+void
+hpstrategy(bp)
+	struct buf *bp;
 {
-        register int unit = hpunit(bp->b_dev);
-        register struct hp_ctlr *um;
-        register struct buf *dp;
-        struct hp_device *ui;
-/*        int s = spl5(); */
+	struct	hp_softc *sc;
+	struct	buf *gp;
+	int	unit, s;
 
-	asm("halt");
-        /*
-         * Append the buffer to the drive queue, and if it is not
-         * already there, the drive to the controller queue.  (However,
-         * if the drive queue is marked to be requeued, we must be
-         * awaiting an on line or get unit status command; in this
-         * case, leave it off the controller queue.)
-         */
-/*
-        um = (ui = udadinfo[unit])->ui_mi;
-        dp = &udautab[unit];
-        APPEND(bp, dp, av_forw);
-        if (dp->b_active == 0 && (ui->ui_flags & UNIT_REQUEUE) == 0) {
-                APPEND(dp, &um->um_tab, b_forw);
-                dp->b_active++;
-        }
+	unit = DISKUNIT(bp->b_dev);
+	sc = hp_cd.cd_devs[unit];
 
-        /*
-         * Start activity on the controller.  Note that unlike other
-         * Unibus drivers, we must always do this, not just when the
-         * controller is not active.
-         */
-/*
-        udastart(um);
-        splx(s);
-*/
+	if (bounds_check_with_label(bp, sc->sc_disk.dk_label, sc->sc_wlabel)
+	    <= 0)
+		goto done;
+	s = splbio();
+
+	gp = sc->sc_md.md_q.b_actf;
+	disksort(&sc->sc_md.md_q, bp);
+	if (gp == 0)
+		mbaqueue(&sc->sc_md);
+
+	splx(s);
+	return;
+
+done:
+	bp->b_resid = bp->b_bcount;
+	biodone(bp);
 }
+
+/*
+ * Start transfer on given disk. Called from mbastart().
+ */
+void
+hpstart(md)
+	struct	mba_device *md;
+{
+	struct	hp_softc *sc = md->md_softc;
+	struct	mba_regs *mr = md->md_mba->sc_mbareg;
+	volatile struct	hp_regs *hr;
+	struct	disklabel *lp = sc->sc_disk.dk_label;
+	struct	buf *bp = md->md_q.b_actf;
+	unsigned bn, cn, sn, tn;
+	int	part = DISKPART(bp->b_dev);
+
+	/*
+	 * Collect statistics.
+	 */
+	disk_busy(&sc->sc_disk);
+	sc->sc_disk.dk_seek++;
+
+	hr = (void *)&mr->mba_md[DISKUNIT(bp->b_dev)];
+
+	bn = bp->b_blkno + lp->d_partitions[part].p_offset;
+	if (bn) {
+		cn = bn / lp->d_secpercyl;
+		sn = bn % lp->d_secpercyl;
+		tn = sn / lp->d_nsectors;
+		sn = sn % lp->d_nsectors;
+	} else
+		cn = sn = tn = 0;
+
+	hr->hp_dc = cn;
+	hr->hp_da = (tn << 8) | sn;
+	if (bp->b_flags & B_READ)
+		hr->hp_cs1 = HPCS_READ;		/* GO */
+	else
+		hr->hp_cs1 = HPCS_WRITE;
+}
+
+int
+hpopen(dev, flag, fmt)
+	dev_t	dev;
+	int	flag, fmt;
+{
+	struct	hp_softc *sc;
+	int	unit, part;
+
+	unit = DISKUNIT(dev);
+	if (unit >= hp_cd.cd_ndevs)
+		return ENXIO;
+	sc = hp_cd.cd_devs[unit];
+	if (sc == 0)
+		return ENXIO;
+
+	part = DISKPART(dev);
+
+	if (part >= sc->sc_disk.dk_label->d_npartitions)
+		return ENXIO;
+
+	switch (fmt) {
+	case 	S_IFCHR:
+		sc->sc_disk.dk_copenmask |= (1 << part);
+		break;
+
+	case	S_IFBLK:
+		sc->sc_disk.dk_bopenmask |= (1 << part);
+		break;
+	}
+	sc->sc_disk.dk_openmask =
+	    sc->sc_disk.dk_copenmask | sc->sc_disk.dk_bopenmask;
+
+	return 0;
+}
+
+int
+hpclose(dev, flag, fmt)
+	dev_t	dev;
+	int	flag, fmt;
+{
+	struct	hp_softc *sc;
+	int	unit, part;
+
+	unit = DISKUNIT(dev);
+	sc = hp_cd.cd_devs[unit];
+
+	part = DISKPART(dev);
+
+	switch (fmt) {
+	case 	S_IFCHR:
+		sc->sc_disk.dk_copenmask &= ~(1 << part);
+		break;
+
+	case	S_IFBLK:
+		sc->sc_disk.dk_bopenmask &= ~(1 << part);
+		break;
+	}
+	sc->sc_disk.dk_openmask =
+	    sc->sc_disk.dk_copenmask | sc->sc_disk.dk_bopenmask;
+
+	return 0;
+}
+
+int
+hpioctl(dev, cmd, addr, flag, p)
+	dev_t	dev;
+	u_long	cmd;
+	caddr_t	addr;
+	int	flag;
+	struct	proc *p;
+{
+	struct	hp_softc *sc = hp_cd.cd_devs[DISKUNIT(dev)];
+	struct	disklabel *lp = sc->sc_disk.dk_label;
+	int	error;
+
+	switch (cmd) {
+	case	DIOCGDINFO:
+		bcopy(lp, addr, sizeof (struct disklabel));
+		return 0;
+
+	case	DIOCGPART:
+		((struct partinfo *)addr)->disklab = lp;
+		((struct partinfo *)addr)->part =
+		    &lp->d_partitions[DISKPART(dev)];
+		break;
+
+	case	DIOCSDINFO:
+		if ((flag & FWRITE) == 0)
+			return EBADF;
+
+		return setdisklabel(lp, (struct disklabel *)addr, 0, 0);
+
+	case	DIOCWDINFO:
+		if ((flag & FWRITE) == 0)
+			error = EBADF;
+		else {
+			sc->sc_wlabel = 1;
+			error = writedisklabel(dev, hpstrategy, lp, 0);
+			sc->sc_wlabel = 0;
+		}
+		return error;
+	case	DIOCWLABEL:
+		if ((flag & FWRITE) == 0)
+			return EBADF;
+		sc->sc_wlabel = 1;
+		break;
+
+	default:
+		printf("hpioctl: command %x\n", (unsigned int)cmd);
+		return ENOTTY;
+	}
+	return 0;
+}
+
+/*
+ * Called when a transfer is finished. Check if transfer went OK,
+ * Return info about what-to-do-now.
+ */
+enum xfer_action
+hpfinish(md, mbasr, attn)
+	struct	mba_device *md;
+	int	mbasr, *attn;
+{
+	struct	hp_softc *sc = md->md_softc;
+	struct	buf *bp = md->md_q.b_actf;
+	volatile struct  mba_regs *mr = md->md_mba->sc_mbareg;
+	volatile struct	hp_regs *hr = (void *)&mr->mba_md[DISKUNIT(bp->b_dev)];
+	int	er1, er2;
+	volatile int bc; /* to get GCC read whole longword */
+	unsigned byte;
+
+	er1 = hr->hp_er1 & HPMASK;
+	er2 = hr->hp_er2 & HPMASK;
+	hr->hp_er1 = hr->hp_er2 = 0;
+hper1:
+	switch (ffs(er1) - 1) {
+	case -1:
+		hr->hp_er1 = 0;
+		goto hper2;
+		
+	case HPER1_DCK: /* Corrected? data read. Just notice. */
+		bc = mr->mba_bc;
+		byte = ~(bc >> 16);
+		diskerr(buf, hp_cd.cd_name, "soft ecc", LOG_PRINTF,
+		    btodb(bp->b_bcount - byte), sc->sc_disk.dk_label);
+		er1 &= ~(1<<HPER1_DCK);
+		er1 &= HPMASK;
+		break;
+
+	default:
+		printf("drive error :%s er1 %x er2 %x\n",
+		    sc->sc_dev.dv_xname, er1, er2);
+		hr->hp_er1 = hr->hp_er2 = 0;
+		goto hper2;
+	}
+	goto hper1;
+
+hper2:
+	mbasr &= ~(MBASR_DTBUSY|MBASR_DTCMP|MBASR_ATTN);
+	if (mbasr)
+		printf("massbuss error :%s %x\n",
+		    sc->sc_dev.dv_xname, mbasr);
+
+	md->md_q.b_actf->b_resid = 0;
+	disk_unbusy(&sc->sc_disk, md->md_q.b_actf->b_bcount);
+	return XFER_FINISH;
+}
+
+/*
+ * Non-data transfer interrupt; like volume change.
+ */
+int
+hpattn(md)
+	struct	mba_device *md;
+{
+	struct	hp_softc *sc = md->md_softc;
+	struct	mba_softc *ms = (void *)sc->sc_dev.dv_parent;
+	struct  mba_regs *mr = ms->sc_mbareg;
+	struct  hp_regs *hr = (void *)&mr->mba_md[sc->sc_dev.dv_unit];
+	int	er1, er2;
+
+        er1 = hr->hp_er1 & HPMASK;
+        er2 = hr->hp_er2 & HPMASK;
+
+	printf("%s: Attention! er1 %x er2 %x\n",
+		sc->sc_dev.dv_xname, er1, er2);
+	return 0;
+}
+
+
+int
+hpsize(dev)
+	dev_t	dev;
+{
+	int	size, unit = DISKUNIT(dev);
+	struct  hp_softc *sc;
+
+	if (unit >= hp_cd.cd_ndevs || hp_cd.cd_devs[unit] == 0)
+		return -1;
+
+	sc = hp_cd.cd_devs[unit];
+	size = sc->sc_disk.dk_label->d_partitions[DISKPART(dev)].p_size;
+
+	return size;
+}
+
+int
+hpdump(dev, a1, a2, size)
+	dev_t	dev;
+	caddr_t	a1, a2;
+	size_t	size;
+{
+	printf("hpdump: Not implemented yet.\n");
+	return 0;
+}
+
+int
+hpread(dev, uio)
+	dev_t dev;
+	struct uio *uio;
+{
+	return (physio(hpstrategy, NULL, dev, B_READ, minphys, uio));
+}
+
+int
+hpwrite(dev, uio)
+	dev_t dev;
+	struct uio *uio;
+{
+	return (physio(hpstrategy, NULL, dev, B_WRITE, minphys, uio));
+}
+
+/*
+ * Convert physical adapternr and unit to the unit number used by kernel.
+ */
+int
+hp_getdev(mbanr, unit)
+	int	mbanr, unit;
+{
+	struct	mba_softc *ms;
+	struct	hp_softc *sc;
+	int i;
+
+	for (i = 0; i < hp_cd.cd_ndevs; i++) {
+		if (hp_cd.cd_devs[i] == 0)
+			continue;
+
+		sc = hp_cd.cd_devs[i];
+		ms = (void *)sc->sc_dev.dv_parent;
+		if (ms->sc_physnr == mbanr && sc->sc_physnr == unit)
+			return i;
+	}
+	return -1;
+}
+

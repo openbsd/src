@@ -1,15 +1,16 @@
-#	$NetBSD: Makefile.vax,v 1.12 1995/09/19 23:57:55 thorpej Exp $
+#	$OpenBSD: Makefile.vax,v 1.3 1996/05/03 09:09:08 mickey Exp $
+#	$NetBSD: Makefile.vax,v 1.20 1996/02/29 20:57:46 cgd Exp $
 
-#	@(#)Makefile.vax	7.18 (Berkeley) 12/16/90
+# Makefile for OpenBSD
 #
 # This makefile is constructed from a machine description:
 #	config machineid
 # Most changes should be made in the machine description
-#	/sys/vax/conf/``machineid''
+#	/sys/arch/vax/conf/``machineid''
 # after which you should do
-#	 config machineid
+#	config machineid
 # Machine generic makefile changes should be made in
-#	/sys/conf/Makefile.``machinetype''
+#	/sys/arch/vax/conf/Makefile.vax
 # after which config should be rerun for all machines of that type.
 #
 # N.B.: NO DEPENDENCIES ON FOLLOWING FLAGS ARE VISIBLE TO MAKEFILE
@@ -18,20 +19,26 @@
 # -DTRACE	compile in kernel tracing hooks
 # -DQUOTA	compile in file system quotas
 # -DUUDMA	compile in unibus tu58 pseudo-dma code
-#
-CC=	cc
-CPP=	cpp
-LD=	/usr/bin/ld
-AWK=	awk
 
+# DEBUG is set to -g if debugging.
+# PROF is set to -pg if profiling.
+
+AS?=	as
+CC?=	cc
+CPP?=	cpp
+LD?=	ld
+STRIP?=	strip -d
+TOUCH?=	touch -f -c
+
+# source tree is located via $S relative to the compilation directory
 S=	../../../..
 VAX=	../..
 
-INCLUDES= -I. -I$S/arch -I$S -I$S/sys
-COPTS=	${INCLUDES} ${IDENT} -D_KERNEL -D_VAX_INLINE_
-AOPTS=  ${COPTS} -DASSEMBLER
-CFLAGS=	-Werror ${COPTS}
-LOAD_ADDRESS=80000000
+INCLUDES=	-I. -I$S/arch -I$S
+CPPFLAGS=	${INCLUDES} ${IDENT} -D_KERNEL -D_VAX_INLINE_
+CFLAGS=		${DEBUG} -O2 -Werror
+AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
+LINKFLAGS=	-Z -Ttext 80000000 -e _start
 
 ### find out what to use for libkern
 .include "$S/lib/libkern/Makefile.inc"
@@ -49,77 +56,121 @@ LIBCOMPAT=      ${COMPATLIB}
 LIBCOMPAT=      ${COMPATLIB_PROF}
 .endif
 
-NORMAL_C= ${CC} -O -c ${CFLAGS} ${PROF} $<
-NORMAL_C_C= ${CC} -c ${CFLAGS} ${PROF} ${PARAM} $<
-NORMAL_S= ${CC} -x assembler-with-cpp -E -I. -DLOCORE ${COPTS} $< | \
-	${AS} ${ASFLAGS} -o $*.o
-DRIVER_C= ${CC} -c ${CFLAGS} ${PROF} $<
-DRIVER_C_C= ${CC} -c ${CFLAGS} ${PROF} ${PARAM} $<
-SYSTEM_ASMS=intvec.o subr.o
-SYSTEM_OBJS=${SYSTEM_ASMS} lim.o vnode_if.o ${OBJS} param.o ioconf.o \
-	    ${LIBKERN} ${LIBCOMPAT}
-#SYSTEM_DEP=${SYSTEM_ASMS} lovm.o pmap.o
-SYSTEM_DEP=${SYSTEM_ASMS} ${SYSTEM_OBJS}
-SYSTEM_LD_HEAD=         @echo loading $@; rm -f $@
-SYSTEM_LD= ${LD} -Z -e _start -T ${LOAD_ADDRESS} -o $@ ${SYSTEM_OBJS} vers.o
-#SYSTEM_LD_TAIL= @echo rearranging symbols; symorder symbols.sort $@; ${DBSYM} -f
-SYSTEM_LD_TAIL=@echo Nu {r k{rnan klar!!!!
+# compile rules: rules are named ${TYPE}_${SUFFIX}${CONFIG_DEP}
+# where TYPE is NORMAL, DRIVER, or PROFILE}; SUFFIX is the file suffix,
+# capitalized (e.g. C for a .c file), and CONFIG_DEP is _C if the file
+# is marked as config-dependent.
 
+NORMAL_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c $<
+NORMAL_C_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} ${PARAM} -c $<
+
+DRIVER_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c $<
+DRIVER_C_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} ${PARAM} -c $<
+
+NORMAL_S=	${CC} ${AFLAGS} ${CPPFLAGS} -c $<
+NORMAL_S_C=	${CC} ${AFLAGS} ${CPPFLAGS} ${PARAM} -c $<
 
 %OBJS
 
 %CFILES
 
+%SFILES
+
+# load lines for config "xxx" will be emitted as:
+# xxx: ${SYSTEM_DEP} swapxxx.o
+#	${SYSTEM_LD_HEAD}
+#	${SYSTEM_LD} swapxxx.o
+#	${SYSTEM_LD_TAIL}
+SYSTEM_OBJ=	intvec.o subr.o lim.o \
+		param.o ioconf.o ${OBJS} ${LIBKERN} ${LIBCOMPAT}
+SYSTEM_DEP=	Makefile ${SYSTEM_OBJ}
+SYSTEM_LD_HEAD=	@rm -f $@
+SYSTEM_LD=	@echo ${LD} ${LINKFLAGS} -o $@ '$${SYSTEM_OBJ}' vers.o; \
+		${LD} ${LINKFLAGS} -o $@ ${SYSTEM_OBJ} vers.o
+SYSTEM_LD_TAIL=	@size $@; chmod 755 $@
+
+DEBUG?=
+.if ${DEBUG} == "-g"
+LINKFLAGS+=	-X
+SYSTEM_LD_TAIL+=; \
+		echo cp $@ $@.gdb; rm -f $@.gdb; cp $@ $@.gdb; \
+		echo ${STRIP} $@; ${STRIP} $@
+.else
+LINKFLAGS+=	-x
+.endif
+
 %LOAD
-
-clean::
-	rm -f eddep *vmunix tags *.o subr.i [a-tv-z]*.s \
-	Errs errs linterrs makelinks vnode_if.* genassym
-
-lint: /tmp param.c
-	@lint -hbxn -DGENERIC ${COPTS} ${PARAM} \
-	  ${VAX}/vax/Locore.c ${CFILES} ioconf.c param.c | \
-	    grep -v 'struct/union .* never defined' | \
-	    grep -v 'possible pointer alignment problem'
-
-symbols.sort: ${VAX}/vax/symbols.raw
-	grep -v '^#' ${VAX}/vax/symbols.raw \
-	    | sed 's/^	//' | sort -u > symbols.sort
-
-intvec.o: ${VAX}/vax/intvec.s
-	${CC} -x assembler-with-cpp -E ${AOPTS} ${VAX}/vax/intvec.s| as -o intvec.o
-
-subr.o: ${VAX}/vax/subr.s
-	${CC} -x assembler-with-cpp -E ${AOPTS} ${VAX}/vax/subr.s| as -o subr.o
-
-
-depend: ${CFILES}
-	mkdep ${COPTS} ${.ALLSRC:M*.c} ioconf.c
-	mkdep -a -p ${INCLUDES} ${IDENT} ${PARAM}
-
-ioconf.o:
-	${CC} -c ${CFLAGS} ${PARAM} ioconf.c
-
-lim.o:	Makefile
-	../../conf/mkoldconf.awk < ioconf.c > lim.c
-	${CC} -O -c ${CFLAGS} ${PARAM} lim.c
 
 param.c: $S/conf/param.c
 	rm -f param.c
 	cp $S/conf/param.c .
 
 param.o: param.c Makefile
-	${CC} -O -c ${CFLAGS} ${PARAM} param.c
+	${NORMAL_C_C}
 
-conf.o: ${VAX}/vax/conf.c
-	${CC} -O -c ${CFLAGS} ${PARAM} ${VAX}/vax/conf.c
+ioconf.o: ioconf.c
+	${NORMAL_C}
 
-newvers:
+newvers: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP}
 	sh $S/conf/newvers.sh
-	${CC} ${CFLAGS} -c vers.c
+	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c vers.c
 
-vnode_if.c vnode_if.h : $S/kern/vnode_if.sh $S/kern/vnode_if.src
-	AWK="${AWK}" sh $S/kern/vnode_if.sh $S/kern/vnode_if.src
 
+clean::
+	rm -f eddep *bsd bsd.gdb tags *.[io] [a-z]*.s \
+	    [Ee]rrs linterrs makelinks
+
+lint:
+	@lint -hbxncez -DGENERIC -Dvolatile= ${CPPFLAGS} ${PARAM} -UKGDB \
+	    ${VAX}/vax/Locore.c ${CFILES} ${VAX}/vax/swapgeneric.c \
+	    ioconf.c param.c | \
+	    grep -v 'static function .* unused'
+
+tags:
+	@echo "see $S/kern/Makefile for tags"
+
+links:
+	egrep '#if' ${CFILES} | sed -f $S/conf/defines | \
+	  sed -e 's/:.*//' -e 's/\.c/.o/' | sort -u > dontlink
+	echo ${CFILES} | tr -s ' ' '\12' | sed 's/\.c/.o/' | \
+	  sort -u | comm -23 - dontlink | \
+	  sed 's,../.*/\(.*.o\),rm -f \1; ln -s ../GENERIC/\1 \1,' > makelinks
+	sh makelinks && rm -f dontlink
+
+SRCS=	${VAX}/vax/intvec.s ${VAX}/vax/subr.s lim.c \
+	param.c ioconf.c ${CFILES} ${SFILES}
+depend: .depend
+.depend: ${SRCS} param.c
+	mkdep ${AFLAGS} ${CPPFLAGS} ${VAX}/vax/intvec.s ${VAX}/vax/subr.s
+	mkdep -a ${CFLAGS} ${CPPFLAGS} lim.c
+	mkdep -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
+	mkdep -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
+
+
+# depend on root or device configuration
+autoconf.o conf.o: Makefile
+ 
+# depend on network or filesystem configuration 
+uipc_proto.o vfs_conf.o: Makefile 
+
+# depend on maxusers
+machdep.o: Makefile
+
+# depend on CPU configuration 
+tmscp.o ts.o uba.o uda.o autoconf.o clock.o conf.o emulate.o intvec.o: Makefile
+machdep.o sbi.o subr.o uvaxII.o: Makefile
+
+
+intvec.o: ${VAX}/vax/intvec.s
+	${NORMAL_S}
+
+subr.o: ${VAX}/vax/subr.s
+	${NORMAL_S}
+
+lim.c: ioconf.c
+	../../conf/mkoldconf.awk < ioconf.c > lim.c
+
+lim.o: lim.c
+	${NORMAL_C_C}
 
 %RULES

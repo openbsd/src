@@ -1,4 +1,4 @@
-/*      $NetBSD: clock.c,v 1.9 1995/12/13 18:45:56 ragge Exp $  */
+/*      $NetBSD: clock.c,v 1.13 1996/04/08 18:32:27 ragge Exp $  */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -32,9 +32,11 @@
 
 #include <sys/param.h>
 #include <sys/kernel.h>
+#include <sys/systm.h>
 
-#include "machine/mtpr.h"
-#include "machine/sid.h"
+#include <machine/mtpr.h>
+#include <machine/sid.h>
+#include <machine/uvaxII.h>
 
 #define SEC_PER_DAY (60*60*24)
 
@@ -102,7 +104,7 @@ inittodr(fs_time)
 {
 
 	unsigned long tmp_year, sluttid, year_ticks;
-	int clock_stopped;
+	int clock_stopped = 0;
 
 	sluttid = fs_time;
 	year = (fs_time / SEC_PER_DAY / 365) * 365 * SEC_PER_DAY;
@@ -121,6 +123,12 @@ inittodr(fs_time)
 #if VAX630 || VAX410
 	case VAX_78032:
 		year_ticks = uvaxII_gettodr(&clock_stopped);
+		break;
+#endif
+#if VAX780 || VAX8600
+	case VAX_780:
+	case VAX_8600:
+		year_ticks = mfpr(PR_TODR);
 		break;
 #endif
 	default:
@@ -149,7 +157,7 @@ inittodr(fs_time)
 	} else if (year_ticks / 100 > fs_time - year + SEC_PER_DAY * 3) {
 		printf(
 	"WARNING: Clock has gained %d days - CHECK AND RESET THE DATE.\n",
-		    (year_ticks / 100 - (fs_time - year)) / SEC_PER_DAY);
+		    (int)(year_ticks / 100 - (fs_time - year)) / SEC_PER_DAY);
 		sluttid = year + (year_ticks / 100);
 	} else if (year_ticks / 100 < fs_time - year) {
 		printf(
@@ -184,26 +192,39 @@ resettodr()
 		uvaxII_settodr((time.tv_sec - year) * 100 + 1);
 		break;
 #endif
+	default:
+		mtpr((time.tv_sec - year) * 100, PR_TODR);
 	};
 	todrstopped = 0;
 }
 
 /*
- * Unfortunately the 78032 cpu chip (MicroVAXII cpu) does not have a functional
- * todr register, so this function is necessary.
- * (the x and y variables are used to confuse the optimizer enough to ensure
- *  that the code actually loops:-)
+ * A delayloop that delays about the number of milliseconds that is
+ * given as argument.
  */
 void
 delay(i)
 	int i;
 {
-	volatile int n;
+	int	mul;
 
-	n = i;
-
-	while (--n)
-		;
-
-	return;
+	switch (cpunumber) {
+#if VAX750 || VAX630 || VAX780
+	case VAX_750:
+	case VAX_78032:
+	case VAX_780:
+		mul = 1; /* <= 1 VUPS */
+		break;
+#endif
+#if VAX650
+	case VAX_650:
+		mul = 3; /* <= 3 VUPS */
+		break;
+#endif
+	default:	/* Would be enough... */
+	case VAX_8600:
+		mul = 6; /* <= 6 VUPS */
+		break;
+	}
+	asm ("1: sobgtr %0, 1b" : : "r" (mul * i));
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: rootfil.c,v 1.7 1996/01/28 12:09:34 ragge Exp $	*/
+/*	$NetBSD: rootfil.c,v 1.11 1996/04/08 18:32:54 ragge Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,40 +44,47 @@
  */
  /* All bugs are subject to removal without further notice */
 
-#include "param.h"
-#include "vax/include/sid.h"
-#include "buf.h"
-#include "mbuf.h"
-#include "vax/include/pte.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/buf.h>
+#include <sys/mbuf.h>
+#include <sys/reboot.h>
+#include <sys/conf.h>
+#include <sys/device.h>
+
+#include <machine/macros.h>
+#include <machine/nexus.h>
+#include <machine/sid.h>
+#include <machine/pte.h>
+#include <machine/cpu.h>
+
+#include <vax/uba/ubavar.h>
+
 #include "uda.h"
-#include "reboot.h"
-#include "conf.h"
-#include "vax/include/macros.h"
-#include "vax/include/nexus.h"
-#include "vax/uba/ubavar.h"
+#include "hp.h"
 
 #define DOSWAP                  /* Change swdevt, argdev, and dumpdev too */
 u_long  bootdev;                /* should be dev_t, but not until 32 bits */
 extern dev_t rootdev, dumpdev;
 
 static  char devname[][2] = {
-        'h','p',        /* 0 = hp */
-        0,0,            /* 1 = ht */
-        'u','p',        /* 2 = up */
-        'r','k',        /* 3 = hk */
-        0,0,            /* 4 = sw */
-        0,0,            /* 5 = tm */
-        0,0,            /* 6 = ts */
-        0,0,            /* 7 = mt */
-        0,0,            /* 8 = tu */
-        'r','a',        /* 9 = ra */
-        0,0,            /* 10 = ut */
-        'r','b',        /* 11 = rb */
-        0,0,            /* 12 = uu */
-        0,0,            /* 13 = rx */
-        'r','l',        /* 14 = rl */
-        0,0,            /* 15 = tmscp */
-        'k','r',        /* 16 = ra on kdb50 */
+        {'h','p'},        /* 0 = hp */
+        {0,0},            /* 1 = ht */
+        {'u','p'},        /* 2 = up */
+        {'r','k'},        /* 3 = hk */
+        {0,0},            /* 4 = sw */
+        {0,0},            /* 5 = tm */
+        {0,0},            /* 6 = ts */
+        {0,0},            /* 7 = mt */
+        {0,0},            /* 8 = tu */
+        {'r','a'},        /* 9 = ra */
+        {0,0},            /* 10 = ut */
+        {'r','b'},        /* 11 = rb */
+        {0,0},            /* 12 = uu */
+        {0,0},            /* 13 = rx */
+        {'r','l'},        /* 14 = rl */
+        {0,0},            /* 15 = tmscp */
+        {'k','r'},        /* 16 = ra on kdb50 */
 };
 
 #define PARTITIONMASK   0x7
@@ -88,10 +95,11 @@ static  char devname[][2] = {
  * If we can do so, and not instructed not to do so,
  * change rootdev to correspond to the load device.
  */
+void
 setroot()
 {
         int  majdev, mindev, unit, part, controller, adaptor;
-        dev_t temp, orootdev;
+        dev_t temp = 0, orootdev;
 #if NUDA > 0
 	extern struct uba_device ubdinit[];
 #endif
@@ -109,43 +117,10 @@ setroot()
         part = B_PARTITION(bootdev);
         unit = B_UNIT(bootdev);
         if (majdev == 0) {      /* MBA device */
-#if NMBA > 0
-                register struct mba_device *mbap;
-                int mask;
-
-/*
- * The MBA number used at boot time is not necessarily the same as the
- * MBA number used by the kernel.  In order to change the rootdev we need to
- * convert the boot MBA number to the kernel MBA number.  The address space
- * for an MBA used by the boot code is 0x20010000 + 0x2000 * MBA_number
- * on the 78? and 86?0, 0xf28000 + 0x2000 * MBA_number on the 750.
- * Therefore we can search the mba_hd table for the MBA that has the physical
- * address corresponding to the boot MBA number.
- */
-#define PHYSADRSHFT     13
-#define PHYSMBAMASK780  0x7
-#define PHYSMBAMASK750  0x3
-
-                switch (MACHID(cpu_type)) {
-
-                case VAX_780:
-/*              case VAX_8600: */
-                default:
-                        mask = PHYSMBAMASK780;
-                        break;
-
-                case VAX_750:
-                        mask = PHYSMBAMASK750;
-                        break;
-                }
-                for (mbap = mbdinit; mbap->driver; mbap++)
-                        if (mbap->alive && mbap->drive == unit &&
-                            (((long)mbap->hd->mh_physmba >> PHYSADRSHFT)
-                              & mask) == adaptor)
-                                break;
-                if (mbap->driver == 0)
-                        return;
-                mindev = mbap->unit;
+#if NHP > 0
+		mindev = hp_getdev(adaptor, unit);
+		if (mindev < 0)
+			return;
 #else
                 return;
 #endif
@@ -153,7 +128,6 @@ setroot()
                 register struct uba_device *ubap;
 
                 for (ubap = ubdinit; ubap->ui_driver; ubap++){
-			printf("ubap %x\n",ubap);
                         if (ubap->ui_alive && ubap->ui_slave == unit &&
                            ubap->ui_ctlr == controller &&
                            ubap->ui_ubanum == adaptor &&
@@ -164,7 +138,6 @@ setroot()
                 if (ubap->ui_driver == 0)
                         return;
                 mindev = ubap->ui_unit;
-		printf("mindev %x, majdev %x\n",mindev,majdev);
         }
         mindev = (mindev << PARTITIONSHIFT) + part;
         orootdev = rootdev;
@@ -209,6 +182,7 @@ setroot()
 /*
  * Configure swap space and related parameters.
  */
+void
 swapconf()
 {
         register struct swdevt *swp;

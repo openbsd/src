@@ -1,4 +1,4 @@
-/*	$NetBSD: macros.h,v 1.6 1995/12/13 18:56:01 ragge Exp $	*/
+/*	$NetBSD: macros.h,v 1.8 1996/03/17 22:44:50 ragge Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -33,7 +33,7 @@
  /* All bugs are subject to removal without further notice */
 
 #if !defined(_VAX_MACROS_H_) && (defined(STANDALONE) || \
-	(!defined(ASSEMBLER) && defined(_VAX_INLINE_)))
+	(!defined(_LOCORE) && defined(_VAX_INLINE_)))
 #define	_VAX_MACROS_H_
 
 /* Here general macros are supposed to be stored */
@@ -137,7 +137,7 @@ static __inline__ int scanc(u_int size, u_char *cp,u_char *table, int mask){
 	return ret;
 }
 
-static __inline__ int skpc(int mask, int size, char *cp){
+static __inline__ int skpc(int mask, size_t size, u_char *cp){
 	register ret;
 
 	asm __volatile("skpc %1,%2,(%3);movl r0,%0"

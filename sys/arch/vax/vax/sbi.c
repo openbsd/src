@@ -1,4 +1,4 @@
-/*	$NetBSD: sbi.c,v 1.4 1995/12/13 18:45:53 ragge Exp $ */
+/*	$NetBSD: sbi.c,v 1.9 1996/04/08 18:32:55 ragge Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -29,19 +29,24 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "sys/types.h"
-#include "sys/param.h"
-#include "sys/device.h"
-#include "vm/vm.h"
-#include "vm/vm_kern.h"
-#include "vm/vm_page.h"
-#include "machine/ka750.h"
-#include "machine/pmap.h"
-#include "machine/sid.h"
+#include <sys/types.h>
+#include <sys/param.h>
+#include <sys/device.h>
+#include <sys/systm.h>
+#include <vm/vm.h>
+#include <vm/vm_kern.h>
+#include <vm/vm_page.h>
+#include <machine/ka750.h>
+#include <machine/pmap.h>
+#include <machine/sid.h>
+#include <machine/cpu.h>
 
 struct nexus *nexus;
 
-static int sbi_attached = 0;
+static	int sbi_print __P((void *, char *));
+	int sbi_match __P((struct device *, void *, void *));
+	void sbi_attach __P((struct device *, struct device *, void*));
+
 
 struct bp_conf {
 	char *type;
@@ -62,7 +67,6 @@ sbi_print(aux, name)
 		switch (sa->type) {
 		case NEX_MBA:
 			printf("mba%d at %s",nmba++, name);
-			unsupp++;
 			break;
 		default:
 			printf("unknown device 0x%x at %s", sa->type, name);
@@ -76,14 +80,13 @@ sbi_print(aux, name)
 int
 sbi_match(parent, cf, aux)
 	struct  device  *parent;
-	struct  cfdata  *cf;
-	void    *aux;
+	void    *cf, *aux;
 {
 	struct bp_conf *bp = aux;
 
 	if (strcmp(bp->type, "sbi"))
-		return 1;
-	return 0;
+		return 0;
+	return 1;
 }
 
 void
@@ -91,9 +94,8 @@ sbi_attach(parent, self, aux)
 	struct  device  *parent, *self;
 	void    *aux;
 {
-	void *nisse;
-	u_int nextype, nexnum, maxnex;
-	struct sbi_attach_args sa;
+	u_int 	nexnum, maxnex, minnex;
+	struct	sbi_attach_args sa;
 
 	switch (cpunumber) {
 #ifdef VAX730
@@ -133,6 +135,9 @@ sbi_attach(parent, self, aux)
 		printf(": SBI780\n");
 		break;
 #endif
+	default:
+		maxnex = 0; /* Leave it */
+		break;
 	}
 
 	/*
@@ -140,21 +145,24 @@ sbi_attach(parent, self, aux)
 	 * in different ways (if they identifies themselves at all).
 	 * We have to fake identifying depending on different CPUs.
 	 */
-	for (nexnum = 0; nexnum < maxnex; nexnum++) {
+	minnex = self->dv_unit * maxnex;
+	for (nexnum = minnex; nexnum < minnex + maxnex; nexnum++) {
+		volatile int tmp;
+
 		if (badaddr((caddr_t)&nexus[nexnum], 4))
 			continue;
 
-		switch(cpunumber){
+		switch (cpunumber) {
 #ifdef VAX750
 		case VAX_750:
-		{	extern int nexty750[];
+		{	extern	int nexty750[];
 			sa.type = nexty750[nexnum];
 			break;
 		}
 #endif
 #ifdef VAX730
 		case VAX_730:
-		{	extern int nexty730[];
+		{	extern	int nexty730[];
 			sa.type = nexty730[nexnum];
 			break;
 		}
@@ -166,7 +174,8 @@ sbi_attach(parent, self, aux)
 			break;
 #endif
 		default:
-			sa.type = nexus[nexnum].nexcsr.nex_type;
+			tmp = nexus[nexnum].nexcsr.nex_csr; /* no byte reads */
+			sa.type = tmp & 255;
 		}
 		sa.nexnum = nexnum;
 		sa.nexaddr = nexus + nexnum;
@@ -174,6 +183,11 @@ sbi_attach(parent, self, aux)
 	}
 }
 
-struct  cfdriver sbicd =
-	{ NULL, "sbi", sbi_match, sbi_attach, DV_DULL, sizeof(struct device) };
+struct  cfdriver sbi_cd = {
+	NULL, "sbi", DV_DULL
+};
 
+struct	cfattach sbi_ca = {
+	sizeof(struct device), sbi_match, sbi_attach
+};
+	

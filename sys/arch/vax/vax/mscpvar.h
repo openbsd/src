@@ -1,4 +1,4 @@
-/*	$NetBSD: mscpvar.h,v 1.6 1995/11/10 19:09:58 ragge Exp $	*/
+/*	$NetBSD: mscpvar.h,v 1.7 1996/04/08 18:32:51 ragge Exp $	*/
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -78,6 +78,8 @@
  * to the buffer describing the transfer in error.
  * END OUT OF DATE
  */
+struct mscp_info;
+
 struct mscp_driver {
 	int	md_ndpc;		/* number of drives per ctlr */
 	int	md_nunits;		/* total number drives (all ctlrs) */
@@ -85,15 +87,26 @@ struct mscp_driver {
 	struct	buf *md_utab;		/* pointer to device queues */
 	struct	disklabel *md_lab;	/* pointer to devicee disklabels */
 	struct	uba_device **md_dinfo;	/* pointer to device info */
-	int	(*md_dgram)();		/* error datagram */
-	int	(*md_ctlrdone)();	/* controller operation complete */
-	int	(*md_unconf)();		/* response from unconfigured drive */
-	int	(*md_iodone)();		/* normal I/O is done */
-	int	(*md_online)();		/* drive on line */
-	int	(*md_gotstatus)();	/* got unit status */
-	int	(*md_replace)();	/* replace done */
-	int	(*md_ioerr)();		/* read or write failed */
-	int	(*md_bb)();		/* B_BAD io done */
+	    /* error datagram */
+	void	(*md_dgram) __P((struct mscp_info *, struct mscp *));
+	    /* controller operation complete */
+	void	(*md_ctlrdone) __P((struct mscp_info *, struct mscp *));
+	    /* response from unconfigured drive */
+	int	(*md_unconf) __P((struct mscp_info *, struct mscp *));	
+	    /* normal I/O is done */
+	void	(*md_iodone) __P((struct mscp_info *, struct buf *, int));
+	    /* drive on line */
+	int	(*md_online) __P((struct uba_device *, struct mscp *));/*XXX*/
+	    /* got unit status */
+	int	(*md_gotstatus) __P((struct uba_device *, struct mscp *));
+	    /* replace done */
+	void	(*md_replace) __P((struct uba_device *, struct mscp *));
+	    /* read or write failed */
+	int	(*md_ioerr) __P((struct uba_device *, struct mscp *, 
+	    struct buf *));	
+	    /* B_BAD io done */
+	void	(*md_bb) __P((struct uba_device *, struct mscp *,
+	    struct buf *));
 	char	*md_mname;		/* name of controllers */
 	char	*md_dname;		/* name of drives */
 };
@@ -163,7 +176,8 @@ struct mscp_info {
 #define	MSCP_WAIT	1
 #define	MSCP_DONTWAIT	0
 
-struct	mscp *mscp_getcp();	/* get a command packet */
+	/* get a command packet */
+struct	mscp *mscp_getcp __P((struct mscp_info *, int));
 
 /*
  * Unit flags
@@ -217,3 +231,12 @@ struct	mscp *mscp_getcp();	/* get a command packet */
         (queue)->b_actl = (bp); \
 }
 */
+
+/* Prototypes */
+
+void	mscp_printevent __P((struct mscp *));
+void	mscp_go __P((struct mscp_info *, struct mscp *, int));
+void	mscp_requeue __P((struct mscp_info *));
+void	mscp_dorsp __P((struct mscp_info *));
+void	mscp_decodeerror __P((char *, int, struct mscp *));
+

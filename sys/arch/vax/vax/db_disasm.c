@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.3 1996/01/28 11:31:25 ragge Exp $ */
+/*	$NetBSD: db_disasm.c,v 1.6 1996/04/08 18:32:32 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -35,14 +35,17 @@
 
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/reboot.h>
 
-#include <ddb/db_variables.h>
 #include <machine/db_machdep.h>
 #include <ddb/db_sym.h>
+#include <ddb/db_output.h>
+#include <ddb/db_interface.h>
+#include <ddb/db_variables.h>
 
-#include "vax/vax/db_disasm.h"
+#include <vax/vax/db_disasm.h>
 
 #ifdef VMS_MODE
 #define DEFERRED   '@'
@@ -469,7 +472,7 @@ add_str(ib, s)
 	inst_buffer    *ib;
 	char           *s;
 {
-	while (*ib->curp++ = *s++);
+	while ((*ib->curp++ = *s++));
 	*--ib->curp = '\0';
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.3 1995/09/16 13:18:29 ragge Exp $ */
+/*	$NetBSD: devopen.c,v 1.4 1996/03/16 11:02:28 ragge Exp $ */
 /*-
  *  Copyright (c) 1993 John Brezak
  *  All rights reserved.
@@ -182,13 +182,14 @@ devopen(f, fname, file)
 {
 	int n, error;
 	int dev, ctlr, unit, part;
-	int adapt = 0;	/* XXX not used on HP */
+	int adapt;
 	struct devsw *dp = &devsw[0];
 
 	dev   = B_TYPE(bootdev);
 	ctlr  = B_CONTROLLER(bootdev);
 	unit  = B_UNIT(bootdev);
 	part  = B_PARTITION(bootdev);
+	adapt = B_ADAPTOR(bootdev);
 	
 	if (error = devparse(fname, &dev, &adapt, &ctlr, &unit, &part, file))
 		return(error);

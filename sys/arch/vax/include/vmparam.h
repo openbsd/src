@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.10 1995/12/13 18:53:15 ragge Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.11 1996/02/02 19:08:43 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
  *
  *	@(#)vmparam.h	5.9 (Berkeley) 5/12/91
  */
-#ifndef ASSEMBLER
+#ifndef _LOCORE
 #include <vm/vm_param.h>
 #endif
 

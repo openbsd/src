@@ -1,4 +1,4 @@
-/*	$NetBSD: swapgeneric.c,v 1.6 1996/01/28 12:09:37 ragge Exp $	*/
+/*	$NetBSD: swapgeneric.c,v 1.9 1996/04/08 18:32:57 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -38,18 +38,26 @@
 #include "uda.h"
 #include "hp.h"
 
-#include "sys/param.h"
-#include "sys/conf.h"
-#include "sys/buf.h"
-#include "sys/systm.h"
-#include "sys/reboot.h"
-#include "sys/device.h"
+#include <sys/param.h>
+#include <sys/conf.h>
+#include <sys/buf.h>
+#include <sys/systm.h>
+#include <sys/reboot.h>
+#include <sys/device.h>
 
-#include "machine/pte.h"
-#include "machine/mtpr.h"
+#include <dev/cons.h>
 
-#include "../uba/ubareg.h"
-#include "../uba/ubavar.h"
+#include <ufs/ffs/ffs_extern.h>
+
+#include <machine/pte.h>
+#include <machine/mtpr.h>
+#include <machine/cpu.h>
+
+#include <vax/uba/ubareg.h>
+#include <vax/uba/ubavar.h>
+
+
+void	gets __P((char *));
 
 /*
  * Generic configuration;  all in one
@@ -67,8 +75,7 @@ struct	swdevt swdevt[] = {
 long	dumplo;
 int	dmmin, dmmax, dmtext;
 
-extern int ffs_mountroot();
-int (*mountroot)() = ffs_mountroot;
+int (*mountroot) __P((void)) = ffs_mountroot;
 
 extern	struct uba_driver scdriver;
 extern	struct uba_driver hkdriver;
@@ -77,14 +84,14 @@ extern	struct uba_driver hldriver;
 extern	struct uba_driver udadriver;
 extern	struct uba_driver kdbdriver;
 
-extern	struct cfdriver hpcd;
+extern	struct cfdriver hp_cd;
 
 struct	ngcconf {
 	struct	cfdriver *ng_cf;
 	dev_t	ng_root;
 } ngcconf[] = {
 #if NHP > 0
-	{ &hpcd,	makedev(0, 0), },
+	{ &hp_cd,	makedev(0, 0), },
 #endif
 	{ 0 },
 };
@@ -94,7 +101,7 @@ struct	genericconf {
 	char	*gc_name;
 	dev_t	gc_root;
 } genericconf[] = {
-/*	{ (caddr_t)&hpcd,	"hp",	makedev(0, 0),	},
+/*	{ (caddr_t)&hp_cd,	"hp",	makedev(0, 0),	},
 	{ (caddr_t)&scdriver,	"up",	makedev(2, 0),	}, */
 #if NUDA > 0
 	{ (caddr_t)&udadriver,	"ra",	makedev(9, 0),	},
@@ -107,6 +114,7 @@ struct	genericconf {
 	{ 0 },
 };
 
+void
 setconf()
 {
 #if NUDA > 0
@@ -213,6 +221,7 @@ doswap:
 		rootdev = dumpdev;
 }
 
+void
 gets(cp)
 	char *cp;
 {

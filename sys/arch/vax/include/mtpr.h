@@ -1,4 +1,4 @@
-/*      $NetBSD: mtpr.h,v 1.5 1995/05/03 19:53:45 ragge Exp $     */
+/*      $NetBSD: mtpr.h,v 1.8 1996/03/07 23:23:59 ragge Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -35,7 +35,7 @@
 #ifndef	_VAX_MTPR_H_
 #define	_VAX_MTPR_H_
 
-#include "machine/macros.h"
+#include <machine/macros.h>
 
 /******************************************************************************
 
@@ -103,11 +103,27 @@
 #define PR_SID    62 /* System ID Register */
 #define PR_TBCHK  63 /* Translation Buffer Check */
 
+#define	PR_PAMACC 64 /* Physical Address Memory Map Access (KA86) */
+#define	PR_PAMLOC 65 /* Physical Address Memory Map Location (KA86) */
+#define PR_CSWP   66 /* Cache Sweep (KA86) */
+#define PR_MDECC  67 /* MBOX Data Ecc Register (KA86) */
+#define PR_MENA   68 /* MBOX Error Enable Register (KA86) */
+#define PR_MDCTL  69 /* MBOX Data Control Register (KA86) */
+#define PR_MCCTL  70 /* MBOX Mcc Control Register (KA86) */
+#define PR_MERG   71 /* MBOX Error Generator Register (KA86) */
+#define PR_CRBT   72 /* Console Reboot (KA86) */
+#define PR_DFI    73 /* Diagnostic Fault Insertion Register (KA86) */
+#define PR_EHSR   74 /* Error Handling Status Register (KA86) */
+#define PR_STXCS  76 /* Console Storage C/S (KA86) */
+#define PR_STXDB  77 /* Console Storage D/B (KA86) */
+#define PR_ESPA   78 /* EBOX Scratchpad Address (KA86) */
+#define PR_ESPD   79 /* EBOX Scratchpad Data (KA86) */
+
 /* Definitions for AST */
 #define	AST_NO	  4
 #define	AST_OK	  3
 
-#ifndef	ASSEMBLER
+#ifndef	_LOCORE
 
 #define mtpr(val,reg)                                   \
 {                                                       \
@@ -124,6 +140,6 @@
                         : "g" (reg));                   \
         val;                                            \
 })
-#endif	/* ASSEMBLER */
+#endif	/* _LOCORE */
 
 #endif /* _VAX_MTPR_H_ */

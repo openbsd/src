@@ -1,4 +1,4 @@
-/*	$NetBSD: ka750.h,v 1.3 1995/11/12 14:37:20 ragge Exp $	*/
+/*	$NetBSD: ka750.h,v 1.5 1996/04/08 18:35:50 ragge Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -30,7 +30,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "machine/nexus.h"
+#include <machine/nexus.h>
 
 #define V750UCODE(x)    ((x>>8)&255)
 #define V750HARDW(x)    (x&255)
@@ -42,3 +42,10 @@
 /* 11/750 specific pages needed to be stolen when bootstrapping */
 #define	V750PGS	4
 
+/* 11/750 specific prototypes */
+void	ka750_conf __P((void *, void *, void *));
+int	ka750_clock __P((void));
+void	ka750_memenable __P((struct sbi_attach_args *, struct device *));
+void	ka750_memerr __P((void));
+int	ka750_mchk __P((caddr_t));
+void	ka750_steal_pages __P((void));

@@ -1,3 +1,4 @@
+#	$OpenBSD: EVERYTHING,v 1.2 1996/05/03 09:09:07 mickey Exp $
 #	$NetBSD: EVERYTHING,v 1.1 1995/03/29 22:54:02 ragge Exp $
 #
 # This file contains everything that is known to be compiled
@@ -64,7 +65,7 @@ options		LKM
 
 
 # Kernel(s) to compile
-config          vmunix          root on hp0 swap on hp0
+config          bsd          root on hp0 swap on hp0
 
 # All supported CPU:s
 cpu0		at backplane0

@@ -1,4 +1,4 @@
-/*	$NetBSD: intvec.s,v 1.13 1996/01/28 12:22:55 ragge Exp $   */
+/*	$NetBSD: intvec.s,v 1.19 1996/03/09 23:36:40 ragge Exp $   */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -34,22 +34,43 @@
 		
 
 
-#include "machine/mtpr.h"
-#include "machine/pte.h"
-#include "machine/trap.h"
+#include <machine/mtpr.h>
+#include <machine/pte.h>
+#include <machine/trap.h>
 
-#define	TRAPCALL(namn, typ)	\
-	.align 2; namn ## :;.globl namn ;pushl $0; pushl $typ; jbr trap;
+#define	ENTRY(name) \
+	.text			; \
+	.align 2		; \
+	.globl name		; \
+name /**/:
 
-#define	TRAPARGC(namn, typ)	\
-	.align 2; namn ## :;.globl namn ; pushl $typ; jbr trap;
+#define	TRAPCALL(namn, typ) \
+ENTRY(namn)			; \
+	pushl $0		; \
+	pushl $typ		; \
+	jbr trap
 
-#define	FASTINTR(namn, rutin)	\
-	.align 2; namn ## :;.globl namn ;pushr $0x3f; \
-	calls $0,_ ## rutin ;popr $0x3f;rei
-#define	STRAY(scbnr,vecnr) \
-	.align 2;stray ## vecnr ## :;pushr $0x3f;pushl $ ## 0x ## vecnr; \
-	pushl $scbnr; calls $2,_stray ; popr $0x3f; rei;
+#define	TRAPARGC(namn, typ) \
+ENTRY(namn)			; \
+	pushl $typ		; \
+	jbr trap
+
+#define	FASTINTR(namn, rutin) \
+ENTRY(namn)			; \
+	pushr $0x3f		; \
+	calls $0,_/**/rutin	; \
+	popr $0x3f		; \
+	rei
+
+#define	STRAY(scbnr, vecnr) \
+ENTRY(stray/**/vecnr)		; \
+	pushr $0x3f		; \
+	pushl $/**/0x/**/vecnr	; \
+	pushl $scbnr		; \
+	calls $2,_stray		; \
+	popr $0x3f		; \
+	rei
+
 #define	KSTACK 0
 #define ISTACK 1
 #define INTVEC(label,stack)	\
@@ -89,7 +110,7 @@ _rpb:
 	INTVEC(stray50, ISTACK)	# System Backplane Exception, 50
 	INTVEC(cmrerr, ISTACK)	# Corrected Memory Read, 54
 	INTVEC(stray58, ISTACK)	# System Backplane Alert, 58
-	INTVEC(stray5C, ISTACK)	# System Backplane Fault, 5C
+	INTVEC(sbiflt, ISTACK)	# System Backplane Fault, 5C
 	INTVEC(stray60, ISTACK)	# Memory Write Timeout, 60
 	INTVEC(stray64, ISTACK)	# Unused, 64
 	INTVEC(stray68, ISTACK)	# Unused, 68
@@ -126,20 +147,15 @@ _rpb:
 	INTVEC(strayE4, ISTACK)	# Unused, E4
 	INTVEC(strayE8, ISTACK)	# Unused, E8
 	INTVEC(strayEC, ISTACK)	# Unused, EC
-#ifdef VAX750
-	INTVEC(cstrint, ISTACK)	# Console Storage Recieve Interrupt
-	INTVEC(csttint, ISTACK)	# Console Storage Transmit Interrupt
-#else
 	INTVEC(strayF0, ISTACK)
 	INTVEC(strayF4, ISTACK)
-#endif
 	INTVEC(consrint, ISTACK)	# Console Terminal Recieve Interrupt
 	INTVEC(constint, ISTACK)	# Console Terminal Transmit Interrupt
 
 	/* space for adapter vectors */
 	.space 0x100
 
-	STRAY(0, 00)
+	STRAY(0,00)
 
 		.align 2
 #
@@ -161,15 +177,27 @@ mcheck:	.globl	mcheck
         rei
 
 L4:	addl2	(sp)+,sp	# remove info pushed on stack
-	mtpr	$0xF,$PR_MCESR	# clear the bus error bit
-	movl	_memtest,(sp)	# REI to new adress
+	cmpl	_cpunumber, $1	# Is it a 11/780?
+	bneq	1f		# No...
+
+	mtpr	$0, $PR_SBIFS	# Clear SBI fault register
+	brb	2f
+
+1:	cmpl	_cpunumber, $4	# Is it a 8600?
+	bneq	3f
+
+	mtpr	$0, $PR_EHSR	# Clear Error status register
+	brb	2f
+
+3:	mtpr	$0xF,$PR_MCESR	# clear the bus error bit
+2:	movl	_memtest,(sp)	# REI to new adress
 	rei
 
 	TRAPCALL(invkstk, T_KSPNOTVAL)
-	STRAY(0, 0C)
+	STRAY(0,0C)
 
 	TRAPCALL(privinflt, T_PRIVINFLT)
-	STRAY(0, 14)
+	STRAY(0,14)
 	TRAPCALL(resopflt, T_RESOPFLT)
 	TRAPCALL(resadflt, T_RESADFLT)
 
@@ -196,12 +224,12 @@ ptelen:	movl	$T_PTELEN, (sp)		# PTE must expand (or send segv)
 
 	TRAPCALL(tracep, T_TRCTRAP)
 	TRAPCALL(breakp, T_BPTFLT)
-	STRAY(0, 30)
+	STRAY(0,30)
 
 	TRAPARGC(arithflt, T_ARITHFLT)
 
-	STRAY(0, 38)
-	STRAY(0, 3C)
+	STRAY(0,38)
+	STRAY(0,3C)
 
 
 
@@ -225,42 +253,45 @@ syscall:
 	mtpr	$0x1f, $PR_IPL	# Be sure we can REI
 	rei
 
-	STRAY(0, 44)
-	STRAY(0, 48)
-	STRAY(0, 4C)
-	STRAY(0, 50)
-	FASTINTR(cmrerr, cmrerr)
-	STRAY(0, 58)
-	STRAY(0, 5C)
-	STRAY(0, 60)
-	STRAY(0, 64)
-	STRAY(0, 68)
-	STRAY(0, 6C)
-	STRAY(0, 70)
-	STRAY(0, 74)
-	STRAY(0, 78)
-	STRAY(0, 7C)
-	STRAY(0, 80)
-	STRAY(0, 84)
+	STRAY(0,44)
+	STRAY(0,48)
+	STRAY(0,4C)
+	STRAY(0,50)
+	FASTINTR(cmrerr,cmrerr)
+	STRAY(0,58)
+	ENTRY(sbiflt);
+	moval	sbifltmsg, -(sp)
+	calls	$1, _panic
+
+	STRAY(0,60)
+	STRAY(0,64)
+	STRAY(0,68)
+	STRAY(0,6C)
+	STRAY(0,70)
+	STRAY(0,74)
+	STRAY(0,78)
+	STRAY(0,7C)
+	STRAY(0,80)
+	STRAY(0,84)
 
 	TRAPCALL(astintr, T_ASTFLT)
 
-	STRAY(0, 8C)
-	STRAY(0, 90)
-	STRAY(0, 94)
-	STRAY(0, 98)
-	STRAY(0, 9C)
+	STRAY(0,8C)
+	STRAY(0,90)
+	STRAY(0,94)
+	STRAY(0,98)
+	STRAY(0,9C)
 
-	FASTINTR(softclock, softclock)
+	FASTINTR(softclock,softclock)
 
-	STRAY(0, A4)
-	STRAY(0, A8)
-	STRAY(0, AC)
+	STRAY(0,A4)
+	STRAY(0,A8)
+	STRAY(0,AC)
 
-	FASTINTR(netint, netintr)	#network packet interrupt
+	FASTINTR(netint,netintr)	#network packet interrupt
 
-	STRAY(0, B4)
-	STRAY(0, B8)
+	STRAY(0,B4)
+	STRAY(0,B8)
 	TRAPCALL(ddbtrap, T_KDBTRAP)
 
 		.align	2
@@ -273,27 +304,21 @@ hardclock:	mtpr	$0xc1,$PR_ICCS		# Reset interrupt flag
 		popr	$0x3f
 		rei
 
-	STRAY(0, C4)
-	STRAY(0, CC)
-	STRAY(0, D0)
-	STRAY(0, D4)
-	STRAY(0, D8)
-	STRAY(0, DC)
-	STRAY(0, E0)
-	STRAY(0, E4)
-	STRAY(0, E8)
-	STRAY(0, EC)
+	STRAY(0,C4)
+	STRAY(0,CC)
+	STRAY(0,D0)
+	STRAY(0,D4)
+	STRAY(0,D8)
+	STRAY(0,DC)
+	STRAY(0,E0)
+	STRAY(0,E4)
+	STRAY(0,E8)
+	STRAY(0,EC)
+	STRAY(0,F0)
+	STRAY(0,F4)
 
-#ifdef VAX750
-	FASTINTR(cstrint, cturintr)
-	FASTINTR(csttint, ctutintr)
-#else
-	STRAY(0, F0)
-	STRAY(0, F4)
-#endif
-
-	FASTINTR(consrint, gencnrint)
-	FASTINTR(constint, gencntint)
+	FASTINTR(consrint,gencnrint)
+	FASTINTR(constint,gencntint)
 
 /*
  * Main routine for traps; all go through this.
@@ -316,6 +341,9 @@ _sret:	movl	(sp)+, fp
 	addl2	$8, sp
 	mtpr	$0x1f, $PR_IPL	# Be sure we can REI
 	rei
+
+sbifltmsg:
+	.asciz	"SBI fault",0
 
 #if VAX630 || VAX650
 /*

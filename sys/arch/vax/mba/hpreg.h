@@ -1,4 +1,4 @@
-/*	$NetBSD: hpreg.h,v 1.3 1995/10/20 13:43:43 ragge Exp $ */
+/*	$NetBSD: hpreg.h,v 1.4 1996/02/11 13:19:35 ragge Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -28,10 +28,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
- /* All bugs are subject to removal without further notice */
-		
-
 
 struct hp_regs {
         int     hp_cs1;
@@ -78,23 +74,35 @@ struct hp_regs {
 #define HPDS_DRY        0x80    /* Drive ready to accept commands */
 #define HPDS_DPR        0x100   /* Drive present */
 #define HPDS_PGM        0x200   /* Programmable in dual-port config */
+#define HPDS_LBT        0x400   /* Last block transferred */
 #define HPDS_WRL        0x800   /* Write locked media */
 #define HPDS_MOL        0x1000  /* Medium on-line */
+#define HPDS_PIP        0x2000  /* Positioning in progress */
+#define HPDS_ERR        0x4000  /* ORed error bit, something wrong */
+#define HPDS_ATA        0x8000  /* Attention drive */
 
 #define HPDT_DRQ        0x800   /* Dual-port disk */
 
 #define	HPOF_FMT	0x1000	/* 16/18 bit data */
 
-#if 0
-#define	HPCS_
-#define	HPCS_
-#define	HPCS_
-#define	HPCS_
-#define	HPCS_
-#define	HPCS_
-#define	HPCS_
-#define	HPCS_
-#endif
-
-
-
+/*
+ * Error registers. The defines are the corresponding bit number
+ * in the error register, instead of a bit mask.
+ * Use (1<<HPER1_FOO) when touching registers.
+ */
+#define	HPER1_ILF	0	/* Illegal function */
+#define HPER1_ILR	1	/* Illegal register */
+#define HPER1_RMR	2	/* Register modification refused */
+#define HPER1_PAR	3	/* Parity error */
+#define HPER1_FER	4	/* Format error */
+#define HPER1_WCF	5	/* Write clock failed */
+#define HPER1_ECH	6	/* ECC hard error */
+#define HPER1_HCE	7	/* Header compare error */
+#define HPER1_HCRC	8	/* Header CRC error */
+#define HPER1_AOE	9	/* Address overflow error */
+#define	HPER1_IAE	10	/* Invalid address error */
+#define HPER1_WLE	11	/* Write lock error */
+#define HPER1_DTE	12	/* Drive timing error */
+#define HPER1_OPI	13	/* Operation incomplete */
+#define HPER1_UNS	14	/* Unsafe drive */
+#define HPER1_DCK	15	/* Data check error */

@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.15 1996/01/28 11:46:54 ragge Exp $	*/
+/*	$NetBSD: conf.c,v 1.21 1996/04/08 18:32:29 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -47,14 +47,12 @@ int	ttselect	__P((dev_t, int, struct proc *));
 
 #ifndef LKM
 #define lkmenodev       enodev
-#else
-int     lkmenodev();
 #endif
 
 #include "hp.h" /* 0 */
 bdev_decl(hp);
 
-#include "tu.h"
+#include "ht.h"
 bdev_decl(ht);
 
 #include "rk.h"
@@ -114,7 +112,7 @@ bdev_decl(vnd);
 struct bdevsw	bdevsw[] =
 {
 	bdev_disk_init(NHP,hp),		/* 0: RP0?/RM0? */
-	bdev_tape_init(NTU,ht),		/* 1: TU77 w/ TM03 */
+	bdev_tape_init(NHT,ht),		/* 1: TU77 w/ TM03 */
 	bdev_disk_init(NUP,up),		/* 2: SC-21/SC-31 */
 	bdev_disk_init(NRK,rk),		/* 3: RK06/07 */
 	bdev_swap_init(1,sw),		/* 4: swap pseudo-device */
@@ -257,7 +255,7 @@ cdev_decl(crl);
 #define	crxwrite crxrw
 cdev_decl(crx);
 
-#if VAX780
+#if VAX780 && 0
 #define	NFL 1
 #else
 #define NFL 0
@@ -320,6 +318,8 @@ cdev_decl(bpf);
 #include "tun.h" 
 cdev_decl(tun);
 
+dev_decl(filedesc,open);
+
 struct cdevsw	cdevsw[] =
 {
 	cdev_cn_init(1,cn),		/* 0: virtual console */
@@ -375,7 +375,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 50 */
 	cdev_cnstore_init(NCRX,crx),	/* 51: Console RX50 at 8200 */
 	cdev_disk_init(NKDB,kdb),	/* 52: KDB50/RA?? */
-	cdev_fd_init(1,fd),		/* 53: file descriptor pseudo-device */
+	cdev_fd_init(1,filedesc),	/* 53: file descriptor pseudo-device */
 	cdev_disk_init(NCCD,ccd),	/* 54: concatenated disk driver */
 	cdev_disk_init(NVND,vnd),	/* 55: vnode disk driver */
 	cdev_bpftun_init(NBPFILTER,bpf),/* 56: berkeley packet filter */
@@ -455,6 +455,7 @@ int	chrtoblktbl[] = {
 	18,	/* 55 */
 };
 
+int
 chrtoblk(dev)
 	dev_t dev;
 {
@@ -466,6 +467,7 @@ chrtoblk(dev)
 /*
  * Returns true if dev is /dev/mem or /dev/kmem.
  */
+int
 iskmemdev(dev)
 	dev_t dev;
 {
@@ -477,6 +479,7 @@ iskmemdev(dev)
  * Returns true if dev is /dev/zero.
  * ?? Shall I use 12 as /dev/zero?
  */
+int
 iszerodev(dev)
 	dev_t dev;
 {

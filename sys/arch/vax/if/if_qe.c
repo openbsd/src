@@ -1,4 +1,4 @@
-/*	$NetBSD: if_qe.c,v 1.8 1995/12/24 02:30:55 mycroft Exp $ */
+/*	$NetBSD: if_qe.c,v 1.13 1996/03/18 16:47:25 ragge Exp $ */
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -137,49 +137,50 @@
 /*
  * Digital Q-BUS to NI Adapter
  */
-#include "sys/param.h"
-#include "sys/systm.h"
-#include "sys/mbuf.h"
-#include "sys/buf.h"
-#include "sys/protosw.h"
-#include "sys/socket.h"
-#include "sys/ioctl.h"
-#include "sys/errno.h"
-#include "sys/syslog.h"
-#include "sys/device.h"
-#include "sys/time.h"
-#include "sys/kernel.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/mbuf.h>
+#include <sys/buf.h>
+#include <sys/protosw.h>
+#include <sys/socket.h>
+#include <sys/ioctl.h>
+#include <sys/errno.h>
+#include <sys/syslog.h>
+#include <sys/device.h>
+#include <sys/time.h>
+#include <sys/kernel.h>
 
-#include "net/if.h"
-#include "net/netisr.h"
-#include "net/route.h"
+#include <net/if.h>
+#include <net/netisr.h>
+#include <net/route.h>
 
 #ifdef INET
-#include "netinet/in.h"
-#include "netinet/in_systm.h"
-#include "netinet/in_var.h"
-#include "netinet/ip.h"
-#include "netinet/if_ether.h"
+#include <netinet/in.h>
+#include <netinet/in_systm.h>
+#include <netinet/in_var.h>
+#include <netinet/ip.h>
+#include <netinet/if_ether.h>
 #endif
 
 #ifdef NS
-#include "netns/ns.h"
-#include "netns/ns_if.h"
+#include <netns/ns.h>
+#include <netns/ns_if.h>
 #endif
 
 #ifdef ISO
-#include "netiso/iso.h"
-#include "netiso/iso_var.h"
+#include <netiso/iso.h>
+#include <netiso/iso_var.h>
 extern char all_es_snpa[], all_is_snpa[], all_l1is_snpa[], all_l2is_snpa[];
 #endif
 
-#include "machine/pte.h"
-#include "machine/cpu.h"
-#include "machine/mtpr.h"
-#include "if_qereg.h"
-#include "if_uba.h"
-#include "vax/uba/ubareg.h"
-#include "vax/uba/ubavar.h"
+#include <machine/pte.h>
+#include <machine/cpu.h>
+#include <machine/mtpr.h>
+
+#include <vax/if/if_qereg.h>
+#include <vax/if/if_uba.h>
+#include <vax/uba/ubareg.h>
+#include <vax/uba/ubavar.h>
 
 #define NRCV	15	 		/* Receive descriptors		*/
 #define NXMT	5	 		/* Transmit descriptors		*/
@@ -200,7 +201,7 @@ void qetimeout(int);
  * This structure contains the output queue for the interface, its address, ...
  */
 struct	qe_softc {
-	struct	device qe_device;	/* Configuration common part	*/
+	struct	device qe_dev;		/* Configuration common part	*/
 	struct	arpcom qe_ac;		/* Ethernet common part 	*/
 #define	qe_if	qe_ac.ac_if		/* network-visible interface 	*/
 #define	qe_addr	qe_ac.ac_enaddr		/* hardware Ethernet address 	*/
@@ -231,7 +232,7 @@ struct	qe_softc {
 
 int	qematch __P((struct device *, void *, void *));
 void	qeattach __P((struct device *, struct device *, void *));
-int	qereset __P((int));
+void	qereset __P((int));
 void	qeinit __P((int));
 void	qestart __P((struct ifnet *));
 void	qeintr __P((int));
@@ -245,9 +246,13 @@ void	qeread __P((struct qe_softc *, struct ifrw *, int));
 void	qetimeout __P((int));
 void	qerestart __P((struct qe_softc *));
 
-struct	cfdriver qecd =
-	{ 0, "qe", qematch, qeattach, DV_IFNET, sizeof(struct qe_softc) };
+struct	cfdriver qe_cd = {
+	NULL, "qe", DV_IFNET
+};
 
+struct	cfattach qe_ca = {
+	sizeof(struct qe_softc), qematch, qeattach
+};
 
 #define	QEUNIT(x)	minor(x)
 /*
@@ -339,7 +344,6 @@ qematch(parent, match, aux)
 	ubarelse(0, (int *)&sc->rringaddr);
 	sc->ipl = 0x15;
 	ua->ua_ivec = qeintr;
-	ua->ua_iarg = sc->qe_device.dv_unit;
 	return 1;
 }
 
@@ -361,7 +365,7 @@ qeattach(parent, self, aux)
 
 	printf("\n");
 	sc->qe_vaddr = addr;
-	ifp->if_unit = sc->qe_device.dv_unit;
+	ifp->if_unit = sc->qe_dev.dv_unit;
 	ifp->if_name = "qe";
 	/*
 	 * The Deqna is cable of transmitting broadcasts, but
@@ -376,7 +380,7 @@ qeattach(parent, self, aux)
 		sc->setup_pkt[i][1] = sc->qe_addr[i] =
 		    addr->qe_sta_addr[i] & 0xff;
 	addr->qe_vector |= 1;
-	printf("qe%d: %s, hardware address %s\n", sc->qe_device.dv_unit,
+	printf("qe%d: %s, hardware address %s\n", sc->qe_dev.dv_unit,
 		addr->qe_vector&01 ? "delqa":"deqna",
 		ether_sprintf(sc->qe_addr));
 	addr->qe_vector &= ~1;
@@ -388,7 +392,6 @@ qeattach(parent, self, aux)
 
 	ifp->if_start = qestart;
 	ifp->if_ioctl = qeioctl;
-	ifp->if_reset = qereset;
 	ifp->if_watchdog = qetimeout;
 	sc->qe_uba.iff_flags = UBA_CANTWAIT;
 	if_attach(ifp);
@@ -397,22 +400,16 @@ qeattach(parent, self, aux)
 
 /*
  * Reset of interface after UNIBUS reset.
- * If interface is on specified uba, reset its state.
  */
+void
 qereset(unit)
 	int unit;
 {
-	register struct uba_device *ui;
+	struct	qe_softc *sc = qe_cd.cd_devs[unit];
 
-	panic("qereset");
-#ifdef notyet
-	if (unit >= NQE || (ui = qeinfo[unit]) == 0 || ui->ui_alive == 0 ||
-		ui->ui_ubanum != uban)
-		return;
-	printf(" qe%d", unit);
-	qe_softc[unit].qe_if.if_flags &= ~IFF_RUNNING;
+	printf(" %s", sc->qe_dev.dv_xname);
+	sc->qe_if.if_flags &= ~IFF_RUNNING;
 	qeinit(unit);
-#endif
 }
 
 /*
@@ -422,7 +419,7 @@ void
 qeinit(unit)
 	int unit;
 {
-	struct qe_softc *sc = (struct qe_softc *)qecd.cd_devs[unit];
+	struct qe_softc *sc = (struct qe_softc *)qe_cd.cd_devs[unit];
 	struct qedevice *addr = sc->qe_vaddr;
 	struct ifnet *ifp = (struct ifnet *)&sc->qe_if;
 	int i;
@@ -452,7 +449,7 @@ qeinit(unit)
 		/*
 		 * init buffers and maps
 		 */
-		if (if_ubaminit(&sc->qe_uba, sc->qe_device.dv_parent->dv_unit,
+		if (if_ubaminit(&sc->qe_uba, sc->qe_dev.dv_parent->dv_unit,
 		    sizeof (struct ether_header), (int)btoc(MAXPACKETSIZE),
 		    sc->qe_ifr, NRCV, sc->qe_ifw, NXMT) == 0) {
 	fail:
@@ -518,8 +515,7 @@ void
 qestart(ifp)
 	struct ifnet *ifp;
 {
-	int unit =  ifp->if_unit;
-	register struct qe_softc *sc = qecd.cd_devs[ifp->if_unit];
+	register struct qe_softc *sc = qe_cd.cd_devs[ifp->if_unit];
 	volatile struct qedevice *addr = sc->qe_vaddr;
 	register struct qe_ring *rp;
 	register index;
@@ -603,7 +599,7 @@ qeintr(unit)
 	volatile struct qedevice *addr;
 	int buf_addr, csr;
 
-	sc = qecd.cd_devs[unit];
+	sc = qe_cd.cd_devs[unit];
 	addr = sc->qe_vaddr;
 	splx(sc->ipl);
 	if (!(sc->qe_flags & QEF_FASTTIMEO))
@@ -633,7 +629,7 @@ void
 qetint(unit)
 	int unit;
 {
-	register struct qe_softc *sc = qecd.cd_devs[unit];
+	register struct qe_softc *sc = qe_cd.cd_devs[unit];
 	register struct qe_ring *rp;
 	register struct ifxmt *ifxp;
 	int status1, setupflag;
@@ -689,7 +685,7 @@ void
 qerint(unit)
 	int unit;
 {
-	register struct qe_softc *sc = qecd.cd_devs[unit];
+	register struct qe_softc *sc = qe_cd.cd_devs[unit];
 	register struct qe_ring *rp;
 	register int nrcv = 0;
 	int len, status1, status2;
@@ -771,7 +767,7 @@ qeioctl(ifp, cmd, data)
 	u_long cmd;
 	caddr_t data;
 {
-	struct qe_softc *sc = qecd.cd_devs[ifp->if_unit];
+	struct qe_softc *sc = qe_cd.cd_devs[ifp->if_unit];
 	struct ifaddr *ifa = (struct ifaddr *)data;
 	int s = splnet(), error = 0;
 
@@ -827,7 +823,7 @@ qe_setaddr(physaddr, unit)
 	u_char *physaddr;
 	int unit;
 {
-	register struct qe_softc *sc = qecd.cd_devs[unit];
+	register struct qe_softc *sc = qe_cd.cd_devs[unit];
 	register int i;
 
 	for (i = 0; i < 6; i++)
@@ -906,8 +902,6 @@ qeread(sc, ifrw, len)
 {
 	struct ether_header *eh;
     	struct mbuf *m;
-	int s;
-	struct ifqueue *inq;
 
 	/*
 	 * Deal with trailer protocol: if type is INET trailer
@@ -950,7 +944,7 @@ qetimeout(unit)
 {
 	register struct qe_softc *sc;
 
-	sc = qecd.cd_devs[unit];
+	sc = qe_cd.cd_devs[unit];
 #ifdef notdef
 	log(LOG_ERR, "qe%d: transmit timeout, restarted %d\n",
 	     unit, sc->qe_restarts++);

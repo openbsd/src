@@ -1,4 +1,4 @@
-/*	$NetBSD: ra.c,v 1.3 1995/09/16 13:34:22 ragge Exp $ */
+/*	$NetBSD: ra.c,v 1.4 1996/02/17 18:23:23 ragge Exp $ */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -96,7 +96,7 @@ raopen(f, adapt, ctlr, unit, part)
 	ra->unit=unit;
 	ra->part = part;
 	udacsr=(void*)ra->udaddr;
-	nisse=&mr->uba_map[0];
+	nisse=(u_int *)&mr->uba_map[0];
 	nisse[494]=PG_V|(((u_int)&uda)>>9);
 	nisse[495]=nisse[494]+1;
 	ubauda=(void*)0x3dc00+(((u_int)(&uda))&0x1ff);
@@ -163,7 +163,7 @@ rastrategy(ra, func, dblk, size, buf, rsize)
 
 	ur = (void *)ra->ubaddr;
 	udadev = (void*)ra->udaddr;
-	ptmapp = &ur->uba_map[0];
+	ptmapp = (u_int *)&ur->uba_map[0];
 	lp = &ralabel;
 
 	pfnum = (u_int)buf >> PGSHIFT;

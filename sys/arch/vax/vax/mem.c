@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.8 1995/10/30 16:27:56 ragge Exp $	*/
+/*	$NetBSD: mem.c,v 1.9 1996/04/08 18:32:48 ragge Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -50,6 +50,7 @@
 #include <sys/systm.h>
 #include <sys/uio.h>
 #include <sys/malloc.h>
+#include <sys/proc.h>
 
 #include <machine/pte.h>
 #include <machine/mtpr.h>
@@ -58,6 +59,12 @@
 
 extern unsigned int vmmap, avail_end;
 caddr_t zeropage;
+
+int	mmopen __P((dev_t, int, int));
+int	mmclose __P((dev_t, int, int));
+int	mmrw __P((dev_t, struct uio *, int));
+int	mmmmap __P((dev_t, int, int));
+
 
 /*ARGSUSED*/
 int

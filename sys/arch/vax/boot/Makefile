@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 1995/12/28 15:27:21 ragge Exp $
+#	$NetBSD: Makefile,v 1.9 1996/03/16 11:03:12 ragge Exp $
 #
 
 INCPATH=-I. -I../../.. -I../.. -I../../../lib/libsa
@@ -11,7 +11,7 @@ S=      ../../..
 RELOC=	100000
 CFLAGS+=-O ${INCPATH} -DSTANDALONE -DRELOC=0x${RELOC} -D_VAX_INLINE_
 
-DEVS=	autoconf.o hp.o ra.o tmscp.o
+DEVS=	autoconf.o hp.o ra.o tmscp.o ctu.o
 
 LIBKERN=libkern.a
 KERNOBJ=__main.o strlen.o strcmp.o strncmp.o strncpy.o min.o strcpy.o
@@ -102,6 +102,14 @@ libkern.a: ${KERNOBJ}
 	@ar rv libkern.a `lorder ${KERNOBJ} | tsort`
 
 #
+install: boot xxboot
+	install -c -o ${BINOWN} -g ${BINGRP} -m 444 boot ${DESTDIR}/
+	install -c -o ${BINOWN} -g ${BINGRP} -m 444 xxboot ${DESTDIR}/usr/mdec
+	rm -f ${DESTDIR}/usr/mdec/raboot
+	ln ${DESTDIR}/usr/mdec/xxboot ${DESTDIR}/usr/mdec/raboot
+	rm -f ${DESTDIR}/usr/mdec/hpboot
+	ln ${DESTDIR}/usr/mdec/xxboot ${DESTDIR}/usr/mdec/hpboot
+
 clean::
 	rm -f start.o romread.o bootxx.o init.o xxboot boot racopy \
 	libsvax.a udiv.o urem.o consio.o ${DEVS} edlabel edlabel.o

@@ -1,5 +1,4 @@
-/*      $NetBSD: pmap.c,v 1.19 1995/12/13 18:50:20 ragge Exp $     */
-#define DEBUG
+/*      $NetBSD: pmap.c,v 1.26 1996/04/08 18:32:53 ragge Exp $     */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -30,37 +29,37 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "sys/types.h"
-#include "sys/param.h"
-#include "sys/queue.h"
-#include "sys/malloc.h"
-#include "sys/proc.h"
-#include "sys/user.h"
-#include "sys/msgbuf.h"
+#include <sys/types.h>
+#include <sys/param.h>
+#include <sys/queue.h>
+#include <sys/malloc.h>
+#include <sys/proc.h>
+#include <sys/user.h>
+#include <sys/msgbuf.h>
+#include <sys/systm.h>
 
-#include "vm/vm.h"
-#include "vm/vm_page.h"
-#include "vm/vm_kern.h"
+#include <vm/vm.h>
+#include <vm/vm_page.h>
+#include <vm/vm_kern.h>
 
-#include "machine/pte.h"
-#include "machine/pcb.h"
-#include "machine/mtpr.h"
-#include "machine/macros.h"
-#include "machine/sid.h"
-#include "machine/uvaxII.h"
-#include "machine/cpu.h"
-#include "machine/scb.h"
+#include <machine/pte.h>
+#include <machine/pcb.h>
+#include <machine/mtpr.h>
+#include <machine/macros.h>
+#include <machine/sid.h>
+#include <machine/uvaxII.h>
+#include <machine/cpu.h>
+#include <machine/scb.h>
 
 
-pt_entry_t *pmap_virt2pte(pmap_t, u_int);
-static	pv_entry_t alloc_pv_entry();
-static	void	free_pv_entry();
+static	pt_entry_t *pmap_virt2pte __P((pmap_t, u_int));
+static	pv_entry_t alloc_pv_entry __P((void));
+static	void	free_pv_entry __P((pv_entry_t));
+static	int	remove_pmap_from_mapping __P((pv_entry_t, pmap_t));
 
 
 #define	ISTACK_SIZE (4 * NBPG)
 #define	PTE_TO_PV(pte)	(PHYS_TO_PV((pte&PG_FRAME)<<PGSHIFT))
-
-
 
 struct pmap kernel_pmap_store;
 
@@ -72,11 +71,12 @@ static int kernel_prot[]={ PG_NONE, PG_KR, PG_KW, PG_KW,
 
 static pv_entry_t   pv_head = NULL;
 static unsigned int pv_count = 0;
-
+pv_entry_t      pv_table;               /* array of entries,
+                                           one per LOGICAL page */
 unsigned *pte_cmap;
 void 	*scratch;
 
-#ifdef DEBUG
+#ifdef PMAPDEBUG
 int	startpmapdebug = 0;
 extern	int startsysc, faultdebug;
 #endif
@@ -97,7 +97,7 @@ void
 pmap_bootstrap()
 {
 	unsigned int junk, sysptsize, istack;
-	extern	unsigned int proc0paddr, sigcode, esigcode, etext;
+	extern	unsigned int proc0paddr, etext;
 	extern	struct vmspace vmspace0;
 	struct	pmap *p0pmap;
 
@@ -112,7 +112,7 @@ pmap_bootstrap()
 	 * a variable here that is changed dependent of the physical
 	 * memory size.
 	 */
-	while (!badaddr(avail_end, 4)) /* Memory is in 64K hunks */
+	while (!badaddr((caddr_t)avail_end, 4)) /* Memory is in 64K hunks */
 		avail_end += NBPG * 128;
 	sysptsize += avail_end >> PGSHIFT;
 	virtual_avail = KERNBASE;
@@ -178,7 +178,7 @@ pmap_bootstrap()
 	bzero(0, NBPG >> 1);
 	(cpu_calls[cpunumber].cpu_steal_pages)();
 
-#ifdef DEBUG
+#ifdef PMAPDEBUG
         printf("Sysmap %x, istack %x, scratch %x\n",Sysmap,istack,scratch);
         printf("etext %x\n", &etext);
         printf("SYSPTSIZE %x, USRPTSIZE %x\n",sysptsize,USRPTSIZE);
@@ -198,16 +198,16 @@ pmap_bootstrap()
         p0pmap->pm_pcb = (struct pcb *)proc0paddr;
 
         p0pmap->pm_pcb->P1BR = (void *)0x80000000;
-        p0pmap->pm_pcb->P0BR = 0;
+        p0pmap->pm_pcb->P0BR = (void *)0x80000000;
         p0pmap->pm_pcb->P1LR = 0x200000;
         p0pmap->pm_pcb->P0LR = AST_PCB;
         mtpr(0x80000000, PR_P1BR);
-        mtpr(0, PR_P0BR);
+        mtpr(0x80000000, PR_P0BR);
         mtpr(0x200000, PR_P1LR);
         mtpr(AST_PCB, PR_P0LR);
-/*
- * Now everything should be complete, start virtual memory.
- */
+	/*
+	 * Now everything should be complete, start virtual memory.
+	 */
         mtpr(sysptsize, PR_SLR);
         mtpr(1, PR_MAPEN);
 }
@@ -240,7 +240,7 @@ pmap_create(phys_size)
 {
 	pmap_t   pmap;
 
-#ifdef DEBUG
+#ifdef PMAPDEBUG
 if(startpmapdebug)printf("pmap_create: phys_size %x\n",phys_size);
 #endif
 	if (phys_size)
@@ -262,7 +262,7 @@ void
 pmap_release(pmap)
 	struct pmap *pmap;
 {
-#ifdef DEBUG
+#ifdef PMAPDEBUG
 if(startpmapdebug)printf("pmap_release: pmap %x\n",pmap);
 #endif
 
@@ -291,7 +291,7 @@ pmap_destroy(pmap)
 {
 	int count;
   
-#ifdef DEBUG
+#ifdef PMAPDEBUG
 if(startpmapdebug)printf("pmap_destroy: pmap %x\n",pmap);
 #endif
 	if (pmap == NULL)
@@ -315,7 +315,7 @@ pmap_enter(pmap, v, p, prot, wired)
 	vm_prot_t       prot;
 	boolean_t       wired;
 {
-	u_int j, i, pte, s, *patch;
+	u_int	i, pte, s, *patch;
 	pv_entry_t pv, tmp;
 
 	if (v > 0x7fffffff) pte = kernel_prot[prot] | PG_PFNUM(p) | PG_V;
@@ -323,7 +323,7 @@ pmap_enter(pmap, v, p, prot, wired)
 	s = splimp();
 	pv = PHYS_TO_PV(p);
 
-#ifdef DEBUG
+#ifdef PMAPDEBUG
 if(startpmapdebug)
 printf("pmap_enter: pmap: %x,virt %x, phys %x,pv %x prot %x\n",
 	pmap,v,p,pv,prot);
@@ -415,7 +415,7 @@ pmap_map(virtuell, pstart, pend, prot)
 	vm_offset_t count;
 	int *pentry;
 
-#ifdef DEBUG
+#ifdef PMAPDEBUG
 if(startpmapdebug)
 	printf("pmap_map: virt %x, pstart %x, pend %x, Sysmap %x\n",
 	    virtuell, pstart, pend, Sysmap);
@@ -438,8 +438,8 @@ pmap_extract(pmap, va)
 	vm_offset_t va;
 {
 
-	int	*pte, nypte;
-#ifdef DEBUG
+	int	*pte;
+#ifdef PMAPDEBUG
 if(startpmapdebug)printf("pmap_extract: pmap %x, va %x\n",pmap, va);
 #endif
 
@@ -460,7 +460,7 @@ pmap_protect(pmap, start, end, prot)
 {
 	int pte, *patch, s;
 
-#ifdef DEBUG
+#ifdef PMAPDEBUG
 if(startpmapdebug) printf("pmap_protect: pmap %x, start %x, end %x, prot %x\n",
 	pmap, start, end,prot);
 #endif
@@ -504,20 +504,22 @@ pmap_remove(pmap, start, slut)
 	pmap_t	pmap;
 	vm_offset_t	start, slut;
 {
-	u_int *ptestart, *pteslut,i,s,*temp;
+	u_int		*ptestart, *pteslut, s, *temp;
 	pv_entry_t	pv;
 	vm_offset_t	countup;
 
-#ifdef DEBUG
+#ifdef PMAPDEBUG
 if(startpmapdebug) printf("pmap_remove: pmap=0x %x, start=0x %x, slut=0x %x\n",
 	   pmap, start, slut);
 #endif
 
-	if(!pmap) return;
+	if (!pmap)
+		return;
 	if(!pmap->pm_pcb&&start<0x80000000) return; /* No page registers */
 /* First, get pte first address */
 	if(start<0x40000000){ /* P0 */
-		if(!(temp=pmap->pm_pcb->P0BR)) return; /* No page table */
+		if (!(temp = (unsigned *)pmap->pm_pcb->P0BR))
+			return; /* No page table */
 		ptestart=&temp[start>>PGSHIFT];
 		pteslut=&temp[slut>>PGSHIFT];
 		if(pteslut>&temp[(pmap->pm_pcb->P0LR&~AST_MASK)])
@@ -526,14 +528,15 @@ if(startpmapdebug) printf("pmap_remove: pmap=0x %x, start=0x %x, slut=0x %x\n",
 		ptestart=(u_int *)&Sysmap[(start&0x3fffffff)>>PGSHIFT];
 		pteslut=(u_int *)&Sysmap[(slut&0x3fffffff)>>PGSHIFT];
 	} else { /* P1 (stack) region */
-		if(!(temp=pmap->pm_pcb->P1BR)) return; /* No page table */
+		if (!(temp = (unsigned *)pmap->pm_pcb->P1BR))
+			return; /* No page table */
 		pteslut=&temp[(slut&0x3fffffff)>>PGSHIFT];
 		ptestart=&temp[(start&0x3fffffff)>>PGSHIFT];
 		if(ptestart<&temp[pmap->pm_pcb->P1LR])
 			ptestart=&temp[pmap->pm_pcb->P1LR];
 	}
 
-#ifdef DEBUG
+#ifdef PMAPDEBUG
 if(startpmapdebug)
 printf("pmap_remove: ptestart %x, pteslut %x, pv %x\n",ptestart, pteslut,pv);
 #endif
@@ -555,7 +558,7 @@ printf("pmap_remove: ptestart %x, pteslut %x, pv %x\n",ptestart, pteslut,pv);
 	splx(s);
 }
 
-
+int
 remove_pmap_from_mapping(pv, pmap)
 	pv_entry_t pv;
 	pmap_t	pmap;
@@ -600,7 +603,7 @@ pmap_copy_page(src, dst)
 	int s;
 	extern uint vmmap;
 
-#ifdef DEBUG
+#ifdef PMAPDEBUG
 if(startpmapdebug)printf("pmap_copy_page: src %x, dst %x\n",src, dst);
 #endif
 	s=splimp();
@@ -660,7 +663,7 @@ alloc_pv_entry()
 	if (temporary == 0)
 		panic("alloc_pv_entry");
 #endif
-#ifdef DEBUG
+#ifdef PMAPDEBUG
 if(startpmapdebug) printf("alloc_pv_entry: %x\n",temporary);
 #endif
 	} else {
@@ -700,7 +703,7 @@ pmap_is_referenced(pa)
 		pte=(u_int *)pmap_virt2pte(pv->pv_pmap,pv->pv_va);
 		spte|=*pte++;
 		spte|=*pte;
-	} while(pv=pv->pv_next);
+	} while((pv=pv->pv_next));
 	return((spte&PG_REF)?1:0);
 }
 
@@ -717,7 +720,7 @@ pmap_is_modified(pa)
                 pte=(u_int *)pmap_virt2pte(pv->pv_pmap,pv->pv_va);
                 spte|=*pte++;
                 spte|=*pte;
-	} while(pv=pv->pv_next);
+	} while((pv=pv->pv_next));
 	return((spte&PG_M)?1:0);
 }
 
@@ -731,12 +734,12 @@ pmap_clear_reference(pa)
 	vm_offset_t     pa;
 {
 	struct pv_entry *pv;
-	int *pte,s,i;
+	int *pte;
 /*
  * Simulate page reference bit
  */
 	pv=PHYS_TO_PV(pa);
-#ifdef DEBUG
+#ifdef PMAPDEBUG
 if(startpmapdebug) printf("pmap_clear_reference: pa %x, pv %x\n",pa,pv);
 #endif
 
@@ -749,7 +752,7 @@ if(startpmapdebug) printf("pmap_clear_reference: pa %x, pv %x\n",pa,pv);
 		*pte++|=PG_SREF;
 		*pte&= ~(PG_REF|PG_V);
 		*pte|=PG_SREF;
-	} while(pv=pv->pv_next);
+	} while((pv=pv->pv_next));
 	mtpr(0,PR_TBIA);
 }
 
@@ -758,7 +761,7 @@ pmap_clear_modify(pa)
 	vm_offset_t     pa;
 {
 	struct pv_entry *pv;
-	u_int *pte,spte=0,s;
+	u_int *pte;
 
 	pv=PHYS_TO_PV(pa);
 	if(!pv->pv_pmap) return;
@@ -766,7 +769,7 @@ pmap_clear_modify(pa)
 		pte=(u_int *)pmap_virt2pte(pv->pv_pmap,pv->pv_va);
 		*pte++&= ~PG_M;
 		*pte&= ~PG_M;
-	} while(pv=pv->pv_next);
+	} while((pv=pv->pv_next));
 }
 
 void 
@@ -776,7 +779,7 @@ pmap_change_wiring(pmap, va, wired)
 	boolean_t       wired;
 {
 	int *pte;
-#ifdef DEBUG
+#ifdef PMAPDEBUG
 if(startpmapdebug) printf("pmap_change_wiring: pmap %x, va %x, wired %x\n",
 	pmap, va, wired);
 #endif
@@ -800,7 +803,7 @@ pmap_page_protect(pa, prot)
 	pv_entry_t pv,opv;
 	u_int s,*pte,*pte1,nyprot,kprot;
   
-#ifdef DEBUG
+#ifdef PMAPDEBUG
 if(startpmapdebug) printf("pmap_page_protect: pa %x, prot %x\n",pa, prot);
 #endif
 	pv = PHYS_TO_PV(pa);
@@ -827,7 +830,7 @@ if(startpmapdebug) printf("pmap_page_protect: pa %x, prot %x\n",pa, prot);
 				*pte1|=nyprot;
 			}
 			splx(s);
-		} while(pv=pv->pv_next);
+		} while((pv=pv->pv_next));
 		mtpr(0,PR_TBIA);
 		break;
 
@@ -865,87 +868,96 @@ void
 pmap_zero_page(phys)
 	vm_offset_t    phys;
 {
-	int s;
+	int	s;
 
-#ifdef DEBUG
+#ifdef PMAPDEBUG
 if(startpmapdebug)printf("pmap_zero_page(phys %x, vmmap %x, pte_cmap %x\n",
 	phys,vmmap,pte_cmap);
 #endif
-	s=splimp();
-	pte_cmap[0]=(phys>>PGSHIFT)|PG_V|PG_KW;
-	pte_cmap[1]=pte_cmap[0]+1;
-	mtpr(vmmap,PR_TBIS);
-	mtpr(vmmap+NBPG,PR_TBIS);
-	bzero((void *)vmmap,NBPG*2);
-	pte_cmap[0]=pte_cmap[1]=0;
-	mtpr(vmmap,PR_TBIS);
-	mtpr(vmmap+NBPG,PR_TBIS);
+	s = splimp();
+	pte_cmap[0] = (phys >> PGSHIFT) | PG_V|PG_KW;
+	pte_cmap[1] = pte_cmap[0] + 1;
+	mtpr(vmmap, PR_TBIS);
+	mtpr(vmmap+ NBPG, PR_TBIS);
+	bzero((void *)vmmap, NBPG * 2);
+	pte_cmap[0] = pte_cmap[1] = 0;
+	mtpr(vmmap, PR_TBIS);
+	mtpr(vmmap + NBPG, PR_TBIS);
 	splx(s);
 }
 
 pt_entry_t *
-pmap_virt2pte(pmap,vaddr)
+pmap_virt2pte(pmap, vaddr)
 	pmap_t	pmap;
 	u_int	vaddr;
 {
-	u_int *pte,scr;
+	u_int *pte;
 
-	if(vaddr<0x40000000){
-		pte=pmap->pm_pcb->P0BR;
-		if((vaddr>>PGSHIFT)>(pmap->pm_pcb->P0LR&~AST_MASK)) return 0;
-	} else if(vaddr<(u_int)0x80000000){
-		pte=pmap->pm_pcb->P1BR;
-		if(((vaddr&0x3fffffff)>>PGSHIFT)<pmap->pm_pcb->P1LR) return 0;
-	} else {
-		pte=(u_int *)Sysmap;
-	}
+	if (vaddr < 0x40000000) {
+		pte = (unsigned *)pmap->pm_pcb->P0BR;
+		if ((vaddr >> PGSHIFT) > (pmap->pm_pcb->P0LR & ~AST_MASK))
+			return 0;
+	} else if (vaddr < (u_int)0x80000000) {
+		pte = (unsigned *)pmap->pm_pcb->P1BR;
+		if (((vaddr & 0x3fffffff) >> PGSHIFT) < pmap->pm_pcb->P1LR)
+			return 0;
+	} else
+		pte = (u_int *)Sysmap;
 
-	vaddr&=(u_int)0x3fffffff;
+	vaddr &= (u_int)0x3fffffff;
 
-	return((pt_entry_t *)&pte[vaddr>>PGSHIFT]);
+	return ((pt_entry_t *)&pte[vaddr >> PGSHIFT]);
 }
 
-pmap_expandp0(pmap,ny_storlek)
-	struct pmap *pmap;
+void
+pmap_expandp0(pmap, ny_storlek)
+	struct	pmap *pmap;
 {
-	u_int tmp,s,size,osize,oaddr,astlvl,*i,j;
+	u_int	tmp, s, size, osize, oaddr, astlvl;
 
-	astlvl=pmap->pm_pcb->P0LR&AST_MASK;
-	osize=(pmap->pm_pcb->P0LR&~AST_MASK)*4;
-	size=ny_storlek*4;
-	tmp=kmem_alloc_wait(pte_map, size);
-	s=splhigh();
-	if(osize) blkcpy(pmap->pm_pcb->P0BR, (void*)tmp,osize);
-	oaddr=(u_int)pmap->pm_pcb->P0BR;
-	mtpr(tmp,PR_P0BR);
-	mtpr(((size>>2)|astlvl),PR_P0LR);
-	mtpr(0,PR_TBIA);
-	pmap->pm_pcb->P0BR=(void*)tmp;
-	pmap->pm_pcb->P0LR=((size>>2)|astlvl);
+	astlvl = pmap->pm_pcb->P0LR & AST_MASK;
+	osize = (pmap->pm_pcb->P0LR & ~AST_MASK) * 4;
+	size = ny_storlek * 4;
+	tmp = kmem_alloc_wait(pte_map, size);
+	if (osize)
+		blkcpy(pmap->pm_pcb->P0BR, (void*)tmp, osize);
+
+	s = splimp();
+	oaddr = (u_int)pmap->pm_pcb->P0BR;
+	mtpr(tmp, PR_P0BR);
+	mtpr(((size >> 2) | astlvl), PR_P0LR);
+	mtpr(0, PR_TBIA);
+	pmap->pm_pcb->P0BR = (void*)tmp;
+	pmap->pm_pcb->P0LR = ((size >> 2) | astlvl);
 	splx(s);
+
 	if(osize)
 		kmem_free_wakeup(pte_map, (vm_offset_t)oaddr, osize);
 }
 
+void
 pmap_expandp1(pmap)
-	struct pmap *pmap;
+	struct	pmap *pmap;
 {
-	u_int tmp,s,size,osize,oaddr,*i,j;
+	u_int	tmp, s, size, osize, oaddr;
 
-	osize=0x800000-(pmap->pm_pcb->P1LR*4);
-	size=osize+PAGE_SIZE;
-	tmp=kmem_alloc_wait(pte_map, size);
-	s=splhigh();
+	osize = 0x800000 - (pmap->pm_pcb->P1LR * 4);
+	size = osize + PAGE_SIZE;
+	tmp = kmem_alloc_wait(pte_map, size);
 
-	if(osize) blkcpy((void*)pmap->pm_stack, (void*)tmp+PAGE_SIZE,osize);
-	oaddr=pmap->pm_stack;
-	pmap->pm_pcb->P1BR=(void*)(tmp+size-0x800000);
-	pmap->pm_pcb->P1LR=(0x800000-size)>>2;
-	pmap->pm_stack=tmp;
-	mtpr(pmap->pm_pcb->P1BR,PR_P1BR);
-	mtpr(pmap->pm_pcb->P1LR,PR_P1LR);
-	mtpr(0,PR_TBIA);
+	if (osize)
+		blkcpy((void*)pmap->pm_stack, (void*)tmp + PAGE_SIZE, osize);
+
+	s = splimp();
+	oaddr = pmap->pm_stack;
+	pmap->pm_pcb->P1BR = (void*)(tmp + size - 0x800000);
+	pmap->pm_pcb->P1LR = (0x800000 - size) >> 2;
+	pmap->pm_stack = tmp;
+	mtpr(pmap->pm_pcb->P1BR, PR_P1BR);
+	mtpr(pmap->pm_pcb->P1LR, PR_P1LR);
+	mtpr(0, PR_TBIA);
 	splx(s);
+
 	if (osize)
 		kmem_free_wakeup(pte_map, (vm_offset_t)oaddr, osize);
 }

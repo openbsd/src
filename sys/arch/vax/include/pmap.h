@@ -1,4 +1,4 @@
-/*      $NetBSD: pmap.h,v 1.11 1995/11/12 14:41:41 ragge Exp $     */
+/*      $NetBSD: pmap.h,v 1.16 1996/04/08 18:35:51 ragge Exp $     */
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -46,7 +46,7 @@
 #ifndef	PMAP_H
 #define	PMAP_H
 
-#include "machine/mtpr.h"
+#include <machine/mtpr.h>
 
 
 #define VAX_PAGE_SIZE	NBPG
@@ -99,12 +99,10 @@ typedef struct pv_entry {
 	avail_start += (count) * NBPG;
 
 #ifdef	_KERNEL
-pv_entry_t	pv_table;		/* array of entries, 
-					   one per LOGICAL page */
-struct pmap	kernel_pmap_store;
-
 #define pa_index(pa)	                atop(pa)
 #define pa_to_pvh(pa)	                (&pv_table[atop(pa)])
+
+extern	struct pmap kernel_pmap_store;
 
 #define	pmap_kernel()			(&kernel_pmap_store)
 
@@ -117,6 +115,10 @@ struct pmap	kernel_pmap_store;
 #define	pmap_collect(pmap)		/* No need so far */
 #define	pmap_reference(pmap)	if(pmap) (pmap)->ref_count++
 #define	pmap_pinit(pmap)	(pmap)->ref_count=1;
-#define	pmap_phys_address(phys) ((u_int)(phys)<<PAGE_SIZE)
+#define	pmap_phys_address(phys) ((u_int)(phys)<<PAGE_SHIFT)
 
+/* Prototypes */
+void	pmap_bootstrap __P((void));
+void	pmap_expandp0 __P((struct pmap *, int));
+void	pmap_expandp1 __P((struct pmap *));
 #endif PMAP_H

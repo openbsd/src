@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.4 1995/09/16 13:18:28 ragge Exp $ */
+/*	$NetBSD: conf.c,v 1.5 1996/02/17 18:23:18 ragge Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -40,6 +40,7 @@
 
 int	raopen(),  rastrategy();
 int	hpopen(),  hpstrategy();
+int	ctuopen(),  ctustrategy();
 int     tmscpopen(), tmscpstrategy();
 
 struct	devsw devsw[]={
@@ -51,7 +52,7 @@ struct	devsw devsw[]={
 	SADEV("tm",nullsys, nodev, nullsys, noioctl),
 	SADEV("ts",nullsys, nodev, nullsys, noioctl),
 	SADEV("mt",nullsys, nodev, nullsys, noioctl),
-	SADEV("tu",nullsys, nodev, nullsys, noioctl),
+	SADEV("ctu",ctustrategy, ctuopen, nullsys, noioctl),
 	SADEV("ra",rastrategy, raopen, nullsys, noioctl),
 	SADEV("ut",nullsys, nodev, nullsys, noioctl),
 	SADEV("id",nullsys, nodev, nullsys, noioctl),

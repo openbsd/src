@@ -1,4 +1,4 @@
-/*	$NetBSD: srt0.s,v 1.4 1995/09/16 16:20:20 ragge Exp $ */
+/*	$NetBSD: srt0.s,v 1.5 1996/03/07 23:27:10 ragge Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -48,11 +48,12 @@ _start:	.globl	_start
 	movl	$_start, sp	# Probably safe place for stack
 	subl2	$52, sp		# do not overwrite saved boot-registers
 
-	subl3   $_start, $_end, r0
-	moval   _start, r1
-	movl    $_start, r2
-	movc3	r0, (r1), (r2)	# should use movc5 instead, to clear bss.
-	
+	subl3	$_start, $_edata, r0
+	moval	_start, r1
+	subl3	$_start, $_end, r2
+	movl	$_start, r3
+	movc5	r0, (r1), $0, r2, (r3)
+
 	jsb	1f
 1:	movl    $relocated, (sp)   # return-address on top of stack
 	rsb                        # can be replaced with new address

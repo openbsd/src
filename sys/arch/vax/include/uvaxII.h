@@ -1,4 +1,4 @@
-/*	$NetBSD: uvaxII.h,v 1.1 1995/02/23 17:51:45 ragge Exp $ */
+/*	$NetBSD: uvaxII.h,v 1.3 1996/04/08 18:35:54 ragge Exp $ */
 /*-
  * Copyright (c) 1986, 1988 The Regents of the University of California.
  * All rights reserved.
@@ -62,8 +62,8 @@ struct uvaxIIcpu {
 #define	UVAXIICEAR_PG	0x00007fff
 #define	UVAXIIDEAR_PG	0x00007fff
 
-u_long uvaxII_gettodr();
-void uvaxII_settodr();
+u_long	uvaxII_gettodr __P((int *));
+void	uvaxII_settodr __P((time_t));
 #endif
 
 /*
@@ -122,4 +122,13 @@ struct ka630clock {
 };
 
 #endif
+struct	sbi_attach_args;
+
+/* Prototypes */
+void	uvaxII_conf __P((void *, void *, void *));
+int	uvaxII_clock __P((void));
+void	uvaxII_memenable __P((struct sbi_attach_args *, struct device *));
+void	uvaxII_memerr __P((void));
+int	uvaxII_mchk __P((caddr_t));
+void	uvaxII_steal_pages __P((void));
 #endif

@@ -1,4 +1,4 @@
-/*      $NetBSD: pte.h,v 1.7 1996/01/28 12:31:24 ragge Exp $      */
+/*      $NetBSD: pte.h,v 1.10 1996/02/23 17:54:33 ragge Exp $      */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -30,9 +30,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "machine/param.h"
+#include <machine/param.h>
 
-#ifndef ASSEMBLER
+#ifndef _LOCORE
 
 /*
  * VAX page table entries
@@ -52,7 +52,7 @@ struct pte {
 
 typedef struct pte	pt_entry_t;	/* Mach page table entry */
 
-#endif ASSEMBLER
+#endif _LOCORE
 
 #define	PT_ENTRY_NULL	((pt_entry_t *) 0)
 
@@ -73,7 +73,7 @@ typedef struct pte	pt_entry_t;	/* Mach page table entry */
 #define PG_FRAME        0x001fffff
 #define	PG_PFNUM(x)	((x) >> PGSHIFT)
 
-#ifndef ASSEMBLER
+#ifndef _LOCORE
 extern pt_entry_t *Sysmap;
 /*
  * Kernel virtual address to page table entry and to physical address.
@@ -87,6 +87,6 @@ extern pt_entry_t *Sysmap;
 #define	kvtophys(va) \
 	(((kvtopte(va))->pg_pfn << PGSHIFT) | ((int)(va) & PGOFSET))
 #define	uvtopte(va, pcb) \
-	(((unsigned)va < 0x40000000) || ((unsigned)va > 0x40000000) ? \
+	(((unsigned)va < 0x40000000) || ((unsigned)va > 0x80000000) ? \
 	&((pcb->P0BR)[(unsigned)va >> PGSHIFT]) : \
 	&((pcb->P1BR)[((unsigned)va & 0x3fffffff) >> PGSHIFT]))

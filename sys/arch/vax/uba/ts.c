@@ -1,4 +1,4 @@
-/*      $NetBSD: ts.c,v 1.1 1996/01/06 16:43:46 ragge Exp $ */
+/*      $NetBSD: ts.c,v 1.6 1996/04/08 18:37:32 ragge Exp $ */
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -61,7 +61,7 @@
  *   legends may be placed on  the drivative work in addition           *
  *   to that set forth above.                                           *
  *                                                                      *
- ************************************************************************
+ ************************************************************************/
 
 /*
  * TSV05/TS05 device driver, written by Bertram Barth.
@@ -134,37 +134,41 @@ int tstrace = 1;
 #if NTS > 0
 
 
-#include "sys/param.h"
-#include "sys/systm.h" 
-#include "sys/kernel.h"
-#include "sys/buf.h" 
-#include "sys/conf.h"
-#include "sys/errno.h" 
-#include "sys/file.h"
-#include "sys/map.h"
-#include "sys/syslog.h"
-#include "sys/ioctl.h"
-#include "sys/mtio.h"
-#include "sys/uio.h"
-#include "sys/proc.h"
-#include "sys/tprintf.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/kernel.h>
+#include <sys/buf.h>
+#include <sys/conf.h>
+#include <sys/errno.h>
+#include <sys/file.h>
+#include <sys/map.h>
+#include <sys/syslog.h>
+#include <sys/ioctl.h>
+#include <sys/mtio.h>
+#include <sys/uio.h>
+#include <sys/proc.h>
+#include <sys/tprintf.h>
 
-#include "machine/pte.h"
-#include "machine/sid.h"
-#include "machine/cpu.h"
-#include "machine/mtpr.h"
+#include <machine/pte.h>
+#include <machine/sid.h>
+#include <machine/cpu.h>
+#include <machine/mtpr.h>
 
-#include "vax/uba/ubareg.h"
-#include "vax/uba/ubavar.h"
+#include <vax/uba/ubareg.h>
+#include <vax/uba/ubavar.h>
 
-#include "tsreg.h"
+#include <vax/uba/tsreg.h>
 
 int	ts_match __P((struct device *, void *, void *));
 void	ts_attach __P((struct device *, struct device *, void *));
 void	tsstrategy __P((struct buf *));
 
-struct	cfdriver tscd = {
-	NULL, "ts", ts_match, ts_attach, DV_DULL, sizeof(struct device)
+struct	cfdriver ts_cd = {
+	NULL, "ts", DV_DULL
+};
+
+struct	cfattach ts_ca = {
+	sizeof(struct device), ts_match, ts_attach
 };
 
 /*
@@ -201,6 +205,27 @@ struct	ts_softc {
 	tpr_t	sc_tpr;			/* tprintf handle */
 } ts_softc[NTS];
 
+int	tsprobe __P((caddr_t, int, struct uba_ctlr *, struct uba_softc *));
+int	tsslave __P((struct uba_device *, caddr_t));
+void	tsattach __P((struct uba_device *));
+void	tsintr __P((int));
+int	tsinit __P((int));
+void	tscommand __P((dev_t, int, int));
+int	tsstatus __P((int));
+int	tsexec __P((int, int));
+int	tsstart __P((struct uba_ctlr *, struct buf *));
+int	tswchar __P((int));
+void	tsreset __P((int));
+void	tsxstatus __P((struct tsmsg *));
+
+int	tsopen __P((dev_t, int, int, struct proc *));
+int	tsclose __P((dev_t, int, int, struct proc *));
+int	tsioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
+int	tsread __P((dev_t, struct uio *));
+int	tswrite __P((dev_t, struct uio *));
+int	tsdump __P((dev_t, daddr_t, caddr_t, size_t));
+
+
 #define ST_INVALID	0	/* uninitialized, before probe */
 #define ST_PROBE	1	/* during tsprobe(), not used */
 #define ST_SLAVE	2	/* in tsslave(), init almost complete */
@@ -225,8 +250,6 @@ struct	ts_softc {
 
 struct  uba_ctlr 	*zsinfo[NTS];		/* controller-info */
 struct  uba_device 	*tsinfo[NTS];		/* unit(tape)-info */
-
-int     tsprobe(), tsslave(), tsattach(), tsdgo(), tsintr();
 
 u_short tsstd[] = { 0172520, 0172524, 		/* standart csr for ts */
 		    0172530, 0172534, 0 };	/* standart csr for ts */
@@ -303,7 +326,6 @@ tsexec (ctlr, cmd)
 	volatile struct tsdevice *tsreg = ts[ctlr].reg;
 	volatile char *dbx = ((char*)tsreg) + 3;
 	volatile short sr;
-	char *cmdName;
 
 	sc->sc_cmdf |= TS_CF_ACK | TS_CF_IE;
 	tscmdp->cmdr = sc->sc_cmdf | cmd;
@@ -375,7 +397,7 @@ tsexec (ctlr, cmd)
  * This routine sets up a buffer and calls the strategy routine which
  * issues the command to the controller.
  */
-int
+void
 tscommand (dev, cmd, count)
 	register dev_t dev;
 	int cmd;
@@ -445,7 +467,6 @@ tsstart (um, bp)
 	volatile struct tsdevice *tsreg = ts[um->um_ctlr].reg;
 	register struct tscmd *tscmdp = &ts[um->um_ctlr].cmd;
 	register struct buf *dp;
-	register struct ts *tp;
 	volatile int i, itmp;
 	int unit;
 	int ioctl;
@@ -577,7 +598,7 @@ tsstart (um, bp)
 			break;
 		default:
 			printf ("%s%d: bad ioctl %d\n", 
-				CTLRNAME, unit, bp->b_resid);
+				CTLRNAME, unit, (int)bp->b_resid);
 			/* Need a no-op. get status */
 			cmd = TS_CMD_STAT;
 		} /* end switch (bp->b_resid) */
@@ -629,7 +650,6 @@ int
 tswchar (ctlr)
 	int ctlr;
 {
-	register struct ts_softc *sc = &ts_softc[ctlr];
 	volatile struct tsdevice *tsregs = ts[ctlr].reg;
 	volatile struct tscmd *tscmdp = &ts[ctlr].cmd;
 	volatile struct tsmsg *tsmsgp = &ts[ctlr].msg;
@@ -705,11 +725,10 @@ tswchar (ctlr)
 /*
  *
  */
-int
-tsreset (ctlr) 
+void
+tsreset(ctlr) 
 	int ctlr;
 {
-	register struct ts_softc *sc = &ts_softc[ctlr];
 	volatile struct tsdevice *tsreg = ts[ctlr].reg;
 	volatile unsigned int sr, timeout;
 
@@ -729,23 +748,24 @@ tsreset (ctlr)
                                 printf ("%s%d: timeout waiting for TS_SSR\n",
                                         CTLRNAME, ctlr);
                         tsstatus (sr);
-                        return (-1);
+			return;
                 }
         } while ((sr & TS_SSR) == 0);   /* wait until subsystem ready */
         tsstatus (sr);
 
-	return (tswchar (ctlr));
+	return;
 }
 
-extern	struct cfdriver ubacd;
+extern	struct cfdriver uba_cd;
 /*
  * probe for device. If found, try to raise an interrupt.
  */
 int 
-tsprobe (reg, ctlr, um)
+tsprobe (reg, ctlr, um, uh)
 	caddr_t reg;		/* address of TSDB register */
 	int ctlr;		/* index of the controller */
 	struct uba_ctlr *um;	/* controller-info */
+	struct uba_softc *uh;
 {
 	register struct ts_softc *sc;
 	register struct tsdevice *tsregs = (struct tsdevice*) reg;
@@ -768,7 +788,7 @@ tsprobe (reg, ctlr, um)
          * The device is not really initialized at this point, this is just to
          * find out if the device exists. 
          */
-	ubasc = ubacd.cd_devs[0]; /* XXX */
+	ubasc = uba_cd.cd_devs[0]; /* XXX */
         sc->sc_ivec = (ubasc->uh_lastiv -= 4);
 
 	count = 0;
@@ -851,37 +871,35 @@ tsslave (ui, reg)
  * Open routine will issue the online command, later.
  * Just reset the flags and do nothing ...
  */
-int
+void
 tsattach (ui)
-	register struct uba_device *ui;
+	struct uba_device *ui;
 {
 	trace (("\ntsattach (%x)", ui));
 	ui->ui_flags = 0;	/* mark unit offline */
-	return (0);	
 }	
 
 
 /*
  * TSV05/TS05 interrupt routine
  */
-int
+void
 tsintr(ctlr)
+	int ctlr;
 {
 	register struct ts_softc *sc = &ts_softc[ctlr];
 	register struct tsmsg *tsmsgp = &ts[ctlr].msg;
 	register struct tscmd *tscmdp = &ts[ctlr].cmd;
 	volatile struct tsdevice *tsreg = ts[ctlr].reg;
-	volatile struct uba_ctlr *um = zsinfo[ctlr];
+	struct uba_ctlr *um = zsinfo[ctlr];
 	register struct buf *bp;
 
 	unsigned short sr = tsreg->tssr;	/* save TSSR */
 	unsigned short mh = tsmsgp->hdr;	/* and msg-header */
 		/* clear the message header ??? */
 
-	short cmode = tscmdp->cmdr & TS_CF_CMODE;
 	short ccode = tscmdp->cmdr & TS_CF_CCODE;
 	short cmask = tscmdp->cmdr & TS_CF_CMASK;
-	short error = 0;
 
 #ifdef DEBUG
 	printf ("TSSR: %b, MSG: %x ", sr, TS_TSSR_BITS, mh);
@@ -1165,9 +1183,10 @@ tsintr(ctlr)
  * in the run state, call init to initialize the ts controller first.
  */
 int
-tsopen (dev, flag)
+tsopen (dev, flag, type, p)
 	dev_t dev;
-	int flag;
+	int flag, type;
+	struct proc *p;
 {
 	register struct uba_device *ui;
 	register struct uba_ctlr *um;
@@ -1226,15 +1245,16 @@ tsopen (dev, flag)
  * Make the tape available to others, by clearing openf flag.
  */
 int
-tsclose (dev, flag)
+tsclose (dev, flag, type, p)
         dev_t dev;
-        int flag;
+        int flag, type;
+	struct proc *p;
 {
 	register struct ts_softc *sc = &ts_softc[TS_UNIT(dev)];
 
         trace (("tsclose (%x, %d)\n", dev, flag));
 
-	if (flag == FWRITE || (flag & FWRITE) && sc->sc_liowf) {
+	if (flag == FWRITE || ((flag & FWRITE) && sc->sc_liowf)) {
 		debug (("tsclose: writing eot\n"));
 		/* 
 		 * We are writing two tape marks (EOT), but place the tape
@@ -1267,8 +1287,6 @@ tsstrategy (bp)
 {
 	register struct uba_device *ui;
 	register struct uba_ctlr *um;
-	register struct buf *dp;
-	register int ctlr = TS_CTLR(bp->b_dev);
 	register int unit = TS_UNIT(bp->b_dev);
 	int s;
 
@@ -1319,14 +1337,14 @@ tsstrategy (bp)
  * Catch ioctl commands, and call the "command" routine to do them.
  */
 int
-tsioctl (dev, cmd, data, flag)
+tsioctl (dev, cmd, data, flag, p)
         dev_t dev;
-        int cmd;
+	u_long cmd;
         caddr_t data;
         int flag;
+	struct proc *p;
 {
 	register struct buf *bp = &ts_cbuf[TS_UNIT(dev)];
-	register struct uba_device *ui;
 	register struct ts_softc *sc;
 	register struct mtop *mtop;	/* mag tape cmd op to perform */
 	register struct mtget *mtget;	/* mag tape struct to get info in */
@@ -1447,10 +1465,14 @@ tswrite (dev, uio)
  *
  */
 int
-tsdump (dev)
+tsdump(dev, blkno, va, size)
 	dev_t dev;
+	daddr_t blkno;
+	caddr_t va;
+	size_t size;
 {
 	trace (("tsdump (%x)\n", dev));
+	return 0;
 }
 
 /*----------------------------------------------------------------------*/
@@ -1489,7 +1511,7 @@ tsstatus (sr)
 	return (0);
 }
 
-int
+void
 tsxstatus (mp) 
 	struct tsmsg *mp;
 {

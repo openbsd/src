@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.12 1995/12/30 19:42:16 ragge Exp $	*/
+/*	$NetBSD: if_de.c,v 1.19 1996/04/08 18:34:54 ragge Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989 Regents of the University of California.
@@ -45,49 +45,50 @@
  *	timeout routine (get statistics)
  */
 
-#include "sys/param.h"
-#include "sys/systm.h"
-#include "sys/mbuf.h"
-#include "sys/buf.h"
-#include "sys/protosw.h"
-#include "sys/socket.h"
-#include "sys/ioctl.h"
-#include "sys/errno.h"
-#include "sys/syslog.h"
-#include "sys/device.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/mbuf.h>
+#include <sys/buf.h>
+#include <sys/protosw.h>
+#include <sys/socket.h>
+#include <sys/ioctl.h>
+#include <sys/errno.h>
+#include <sys/syslog.h>
+#include <sys/device.h>
 
-#include "machine/pte.h"
-#include "machine/sid.h"
+#include <machine/pte.h>
+#include <machine/sid.h>
 
-#include "net/if.h"
-#include "net/netisr.h"
-#include "net/route.h"
+#include <net/if.h>
+#include <net/netisr.h>
+#include <net/route.h>
 
 #ifdef INET
-#include "netinet/in.h"
-#include "netinet/in_systm.h"
-#include "netinet/in_var.h"
-#include "netinet/ip.h"
-#include "netinet/if_ether.h"
+#include <netinet/in.h>
+#include <netinet/in_systm.h>
+#include <netinet/in_var.h>
+#include <netinet/ip.h>
+#include <netinet/if_ether.h>
 #endif
 
 #ifdef NS
-#include "netns/ns.h"
-#include "netns/ns_if.h"
+#include <netns/ns.h>
+#include <netns/ns_if.h>
 #endif
 
 #ifdef ISO
-#include "netiso/iso.h"
-#include "netiso/iso_var.h"
+#include <netiso/iso.h>
+#include <netiso/iso_var.h>
 extern char all_es_snpa[], all_is_snpa[];
 #endif
 
-#include "../include/cpu.h"
-#include "../include/mtpr.h"
-#include "if_dereg.h"
-#include "if_uba.h"
-#include "../uba/ubareg.h"
-#include "../uba/ubavar.h"
+#include <machine/cpu.h>
+#include <machine/mtpr.h>
+
+#include <vax/if/if_dereg.h>
+#include <vax/if/if_uba.h>
+#include <vax/uba/ubareg.h>
+#include <vax/uba/ubavar.h>
 
 #define	NXMT	3	/* number of transmit buffers */
 #define	NRCV	7	/* number of receive buffers (must be > 1) */
@@ -144,16 +145,21 @@ void	deattach __P((struct device *, struct device *, void *));
 int	dewait __P((struct de_softc *, char *));
 void	deinit __P((int));
 int     deioctl __P((struct ifnet *, u_long, caddr_t));
-int	dereset __P((int));
+void	dereset __P((int));
 void    destart __P((struct ifnet *));
 void	deread __P((struct de_softc *, struct ifrw *, int));
 void    derecv __P((int));
 void	de_setaddr __P((u_char *, int));
+void	deintr __P((int));
 
 
-struct  cfdriver decd =
-	{ 0,"de",dematch, deattach, DV_IFNET, sizeof(struct de_softc) };
+struct  cfdriver de_cd = {
+	NULL, "de", DV_IFNET
+};
 
+struct	cfattach de_ca = {
+	sizeof(struct de_softc), dematch, deattach
+};
 /*
  * Interface exists: make available by filling in network interface
  * record.  System will initialize the interface when it is ready
@@ -195,7 +201,7 @@ deattach(parent, self, aux)
 	 * the pcbb buffer onto the Unibus.
 	 */
 	addr->pcsr0 = 0;		/* reset INTE */
-	DELAY(5000);
+	DELAY(100);
 	addr->pcsr0 = PCSR0_RSET;
 	(void)dewait(ds, "reset");
 
@@ -216,7 +222,6 @@ deattach(parent, self, aux)
 	printf("de%d: hardware address %s\n", ds->ds_device.dv_unit,
 		ether_sprintf(ds->ds_addr));
 	ifp->if_ioctl = deioctl;
-	ifp->if_reset = dereset;
 	ifp->if_start = destart;
 	ds->ds_deuba.iff_flags = UBA_CANTWAIT;
 #ifdef notdef
@@ -229,26 +234,20 @@ deattach(parent, self, aux)
 
 /*
  * Reset of interface after UNIBUS reset.
- * If interface is on specified uba, reset its state.
  */
-int
+void
 dereset(unit)
 	int unit;
 {
-#if 0
-	register struct uba_device *ui;
+	struct	de_softc *sc = de_cd.cd_devs[unit];
+	volatile struct dedevice *addr = sc->ds_vaddr;
 
-	if (unit >= NDE || (ui = deinfo[unit]) == 0 || ui->ui_alive == 0 ||
-	    ui->ui_ubanum != uban)
-		return;
 	printf(" de%d", unit);
-	de_softc[unit].ds_if.if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
-	de_softc[unit].ds_flags &= ~DSF_RUNNING;
-	((struct dedevice *)ui->ui_addr)->pcsr0 = PCSR0_RSET;
-	(void)dewait(ui, "reset");
+	sc->ds_if.if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	sc->ds_flags &= ~DSF_RUNNING;
+	addr->pcsr0 = PCSR0_RSET;
+	(void)dewait(sc, "reset");
 	deinit(unit);
-#endif
-	return 0;
 }
 
 /*
@@ -267,7 +266,7 @@ deinit(unit)
 	struct de_ring *rp;
 	int s,incaddr;
 
-	ds = (struct de_softc *)decd.cd_devs[unit];
+	ds = (struct de_softc *)de_cd.cd_devs[unit];
 	ifp = &ds->ds_if;
 
 	/* not yet, if address still unknown */
@@ -294,7 +293,7 @@ deinit(unit)
 	addr->pcsr2 = incaddr & 0xffff;
 	addr->pcsr3 = (incaddr >> 16) & 0x3;
 	addr->pclow = 0;	/* reset INTE */
-	DELAY(5000);
+	DELAY(500);
 	addr->pclow = CMD_GETPCBB;
 	(void)dewait(ds, "pcbb");
 
@@ -366,8 +365,7 @@ destart(ifp)
 	struct ifnet *ifp;
 {
         int len;
-	int unit = ifp->if_unit;
-	register struct de_softc *ds = decd.cd_devs[ifp->if_unit];
+	register struct de_softc *ds = de_cd.cd_devs[ifp->if_unit];
 	volatile struct dedevice *addr = ds->ds_vaddr;
 	register struct de_ring *rp;
 	struct mbuf *m;
@@ -419,7 +417,7 @@ deintr(unit)
 	register struct ifxmt *ifxp;
 	short csr0;
 
-	ds = decd.cd_devs[unit];
+	ds = de_cd.cd_devs[unit];
 	addr = ds->ds_vaddr;
 
 
@@ -501,7 +499,7 @@ void
 derecv(unit)
 	int unit;
 {
-	register struct de_softc *ds = decd.cd_devs[unit];
+	register struct de_softc *ds = de_cd.cd_devs[unit];
 	register struct de_ring *rp;
 	int len;
 
@@ -550,8 +548,6 @@ deread(ds, ifrw, len)
 {
 	struct ether_header *eh;
     	struct mbuf *m;
-	int s;
-	register struct ifqueue *inq;
 
 	/*
 	 * Deal with trailer protocol: if type is trailer type
@@ -581,7 +577,7 @@ deioctl(ifp, cmd, data)
 	caddr_t data;
 {
 	register struct ifaddr *ifa = (struct ifaddr *)data;
-	register struct de_softc *ds = decd.cd_devs[ifp->if_unit];
+	register struct de_softc *ds = de_cd.cd_devs[ifp->if_unit];
 	int s = splnet(), error = 0;
 
 	switch (cmd) {
@@ -639,7 +635,7 @@ de_setaddr(physaddr, unit)
 	u_char	*physaddr;
 	int	unit;
 {
-	register struct de_softc *ds = decd.cd_devs[unit];
+	register struct de_softc *ds = de_cd.cd_devs[unit];
 	volatile struct dedevice *addr= ds->ds_vaddr;
 	
 	if (! (ds->ds_flags & DSF_RUNNING))
@@ -682,7 +678,6 @@ dematch(parent, match, aux)
 	struct	device *parent;
 	void	*match, *aux;
 {
-	struct	de_softc *sc = match;
 	struct	uba_attach_args *ua = aux;
 	volatile struct	dedevice *addr = (struct dedevice *)ua->ua_addr;
 	int	i;
@@ -697,9 +692,9 @@ dematch(parent, match, aux)
 	     (addr->pcsr1 & PCSR1_STMASK) == STAT_RESET;
 	     ++i)
 		DELAY(50000);
-	if ((addr->pcsr0 & PCSR0_FATI) != 0 ||
-	    (addr->pcsr1 & PCSR1_STMASK) != STAT_READY &&
-		(addr->pcsr1 & PCSR1_STMASK) != STAT_RUN)
+	if (((addr->pcsr0 & PCSR0_FATI) != 0) ||
+	    (((addr->pcsr1 & PCSR1_STMASK) != STAT_READY) &&
+		((addr->pcsr1 & PCSR1_STMASK) != STAT_RUN)))
 		return(0);
 
 	addr->pcsr0 = 0;
@@ -713,7 +708,9 @@ dematch(parent, match, aux)
 	addr->pcsr3 = 0;
 	addr->pcsr0 = PCSR0_INTE|CMD_GETPCBB;
 	DELAY(50000);
+
 	ua->ua_ivec = deintr;
-	ua->ua_iarg = sc->ds_device.dv_unit;
+	ua->ua_reset = dereset;	/* Wish to be called after ubareset */
+
 	return 1;
 }

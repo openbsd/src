@@ -1,4 +1,4 @@
-/*	$NetBSD: endian.h,v 1.6 1995/08/21 16:36:32 ragge Exp $	*/
+/*	$NetBSD: endian.h,v 1.7 1996/04/08 18:35:48 ragge Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991 Regents of the University of California.
@@ -102,10 +102,10 @@ __END_DECLS
 /*
  * Macros for network/external number representation conversion.
  */
-#define NTOHL(x)        (x) = ntohl((unsigned long)(x))
-#define NTOHS(x)        (x) = ntohs((unsigned long)(x))
-#define HTONL(x)        (x) = htonl((unsigned long)(x))
-#define HTONS(x)        (x) = htons((unsigned long)(x))
+#define NTOHL(x)	(x) = ntohl((unsigned long)(x))
+#define NTOHS(x)	(x) = ntohs((unsigned long)(x))
+#define HTONL(x)	(x) = htonl((unsigned long)(x))
+#define HTONS(x)	(x) = htons((unsigned long)(x))
 
 #endif	/* _POSIX_SOURCE */
 

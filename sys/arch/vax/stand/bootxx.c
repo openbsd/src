@@ -1,4 +1,4 @@
-/* $NetBSD: bootxx.c,v 1.4 1995/10/20 13:35:43 ragge Exp $ */
+/* $NetBSD: bootxx.c,v 1.5 1996/02/17 18:23:21 ragge Exp $ */
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -41,14 +41,14 @@
 #include "lib/libsa/stand.h"
 #include "lib/libsa/ufs.h"
 
-#include "../mba/mbareg.h"
-#include "../mba/hpreg.h"
-
 #include "../include/pte.h"
 #include "../include/sid.h"
 #include "../include/mtpr.h"
 #include "../include/reg.h"
 #include "../include/rpb.h"
+
+#include "../mba/mbareg.h"
+#include "../mba/hpreg.h"
 
 #define NRSP 0 /* Kludge */
 #define NCMD 0 /* Kludge */
@@ -197,6 +197,10 @@ getbootdev()
 		is_tmscp = 1;	/* use tape spec in mscp routines */
 		break;
 
+	case 64:
+		major = 8;
+		break;
+
 	default:
 		printf("Unsupported boot device %d, trying anyway.\n", bootdev);
 		boothowto |= (RB_SINGLE | RB_ASKNAME);
@@ -236,7 +240,7 @@ devopen(f, fname, file)
 	char		line[64];
 
 	f->f_dev = &devsw[0];
-	*file = fname;
+	*file = (char *)fname;
 
 	/*
 	 * On uVAX we need to init [T]MSCP ctlr to be able to use it.
@@ -382,7 +386,7 @@ hpread(block, size, buf)
 	pfnum = (u_int) buf >> PGSHIFT;
 
 	for (mapnr = 0, nsize = size; (nsize + NBPG) > 0; nsize -= NBPG)
-		mr->mba_map[mapnr++] = PG_V | pfnum++;
+		*(int *)&mr->mba_map[mapnr++] = PG_V | pfnum++;
 	mr->mba_var = ((u_int) buf & PGOFSET);
 	mr->mba_bc = (~size) + 1;
 	bn = block;

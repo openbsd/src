@@ -1,38 +1,42 @@
-#	$NetBSD: GENERIC,v 1.8 1995/11/30 00:59:20 jtc Exp $
+#	$OpenBSD: GENERIC,v 1.3 1996/05/03 09:09:08 mickey Exp $
+#	$NetBSD: GENERIC,v 1.12 1996/03/17 22:56:29 ragge Exp $
 #
-# GENERIC VAX, currently only supports 11/750 anyway.
+# GENERIC VAX configuration file; all supported devices.
 #
 
 include "std.vax"
 
 # Here are all different supported CPU types listed.
+options         "VAX8600"
+options         "VAX780"
 options         "VAX750"
 options         "VAX630"
+options         "VAX650"
 
 # Kernel identification
 options         GENERIC
 
 # Max users on system; this is just a hint
-maxusers	16
+maxusers	8
 
 # Paging system, we always have them all.
 options		SWAPPAGER, DEVPAGER, VNODEPAGER
 
 # Kernel compiled-in symbolic debugger & system call tracer
-#options		DDB
+options		DDB
 options		KTRACE
+options		DIAGNOSTIC
 
 # Network support
 #options		GATEWAY
 options         INET
-options         ETHER
 
 # All supported filesystem types
 options		FFS,QUOTA
 options		LFS
 options		MFS
-options		NFSSERVER
 options		NFSCLIENT
+options		NFSSERVER
 options		FDESC
 options		FIFO
 options		KERNFS
@@ -46,31 +50,34 @@ options		SYSVMSG
 options		SYSVSEM
 options		SYSVSHM
 
-# Old compat stuff; needed to run 4.3BSD Reno programs
+# Old compat stuff; needed to run 4.3BSD Reno programs.
+# Note that if COMPAT_ULTRIX is set, you lose compatibility with
+# 4.3BSD Reno programs and get Ultrix compatibility instead.
+# (They cannot coexist).
 options		COMPAT_43
 options		COMPAT_09
 options		COMPAT_10
-options		COMPAT_RENO
+#options		COMPAT_ULTRIX
 options		TCP_COMPAT_42
 
 options		LKM
 
 
 # Kernel(s) to compile
-config          netbsd	swap generic
+config          bsd          swap generic
 
-# All supported CPU:s
-cpu0		at backplane0
-
-# Main buses at backplane
-sbi*		at backplane0
+# Devices directly attached to backplane.
+cpu0		at backplane0	# Only one CPU so far.
+sbi*		at backplane0	# SBI's are always at backplane (Abus).
+mem*		at backplane0	# Some machines have memory at backplane.
 
 # Devices connected at sbi
 mem*		at sbi? tr?	# Memory subsystems
-uba0		at sbi? tr?	# Unibus adapters
-uba1		at sbi? tr?	# Unibus adapters
-uba2		at sbi? tr?	# Unibus adapters
-uba3		at sbi? tr?	# Unibus adapters
+uba*		at sbi? tr?	# Unibus adapters
+mba*		at sbi? tr?	# Massbus adapters
+
+# Devices on Massbus adapters
+hp*		at mba? drive?	# RM/RP disk drives
 
 # Disk controllers at Unibus
 uda0		at uba?	csr 0172150
@@ -86,12 +93,16 @@ ra6		at uda1 drive 2
 ra7		at uda1 drive 3
 
 # Ethernet cards
-de0		at uba? csr 0174510
-qe0		at uba? csr 0174440
+de0		at uba? csr 0174510	# DELUA/DEUNA
+qe0		at uba? csr 0174440	# DEQNA/DELQA
 
 # Tape drivers
-tmscp0		at uba? csr 0174500
-tms0		at tmscp0 drive ?
+tmscp0		at uba? csr 0174500	# TMSCP ctlr
+tms0		at tmscp0 drive ?	# TMSCP tape
+ts0		at uba? csr 0172520	# TS11/TSV05 tape.
+
+# Terminal lines
+dhu0		at uba? csr 0160440	# DHU-11
 
 pseudo-device   loop	1
 pseudo-device   pty	48

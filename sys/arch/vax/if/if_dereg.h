@@ -1,4 +1,4 @@
-/*	$NetBSD: if_dereg.h,v 1.2 1994/10/26 08:01:51 cgd Exp $	*/
+/*	$NetBSD: if_dereg.h,v 1.3 1996/04/08 18:34:55 ragge Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
@@ -177,7 +177,7 @@ struct de_ring {
 #define	XFLG_BITS	"\10\10OWN\7ERRS\6MTCH\5MORE\4ONE\3DEF\2STP\1ENP"
 
 #define	XERR_BUFL	0x8000		/* Buffer length error */
-#define	XERR_UBTO	0x4000		/* UNIBUS tiemout
+#define	XERR_UBTO	0x4000		/* UNIBUS tiemout */
 #define	XERR_LCOL	0x1000		/* Late collision */
 #define	XERR_LCAR	0x0800		/* Loss of carrier */
 #define	XERR_RTRY	0x0400		/* Failed after 16 retries */

@@ -1,4 +1,4 @@
-/*	$NetBSD: gencons.h,v 1.3 1995/06/05 16:26:38 ragge Exp $ */
+/*	$NetBSD: gencons.h,v 1.5 1996/04/08 18:32:37 ragge Exp $ */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -41,6 +41,10 @@
 /* PR_TXCS */
 #define	GC_RDY	0x80	/* Console ready to xmit chr */
 #define	GC_TIE	0x40	/* xmit interrupt enable */
+#if VAX8600
+#define	GC_LT	0x80000	/* Enable logical terminal */
+#define	GC_WRT	0x8000	/* Allow mtpr's to console */
+#endif
 
 /* PR_RXCS */
 #define	GC_DON	0x80	/* character received */
@@ -53,3 +57,6 @@
 /* PR_TXDB */
 #define	GC_BOOT	0xf02	/* boot machine */
 #define	GC_CCF	0xf04	/* clear cold start flag */
+
+/* Prototypes */
+void	gencnputc __P((dev_t, int));

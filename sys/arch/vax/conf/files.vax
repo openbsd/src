@@ -1,4 +1,4 @@
-#       $NetBSD: files.vax,v 1.13 1995/07/24 18:58:36 ragge Exp $
+#       $NetBSD: files.vax,v 1.18 1996/03/17 22:56:30 ragge Exp $
 #
 # new style config file for vax architecture
 #
@@ -8,184 +8,235 @@ maxpartitions 8
 
 maxusers 8 32 64
 
-device	backplane at root { }
-device	sbi at backplane { tr=-1 }
-device	bi at backplane { node=-1 }
+device	backplane { }
+attach	backplane at root
 
-device	cpu at backplane, bi, sbi
-device	mem at backplane, bi, sbi
+device	sbi { tr=-1 }
+attach	sbi at backplane
+device	bi { node=-1 }
+attach	bi at backplane
+
+device	cpu
+attach	cpu at backplane with cpu_backplane
+attach	cpu at bi with cpu_bi
+device	mem
+attach	mem at backplane with mem_backplane
+attach	mem at bi with mem_bi
+attach	mem at sbi with mem_sbi
 
 file	arch/vax/vax/sbi.c		sbi needs-flag
 file	arch/vax/vax/bi.c		bi needs-flag
 
-device	mba at sbi { drive = -1 }
+device	mba { drive = -1 }
+attach	mba at sbi
 file	arch/vax/mba/mba.c		mba needs-flag
 
-device  hp at mba
+device  hp: disk
+attach  hp at mba
 file    arch/vax/mba/hp.c		hp needs-flag
 major	{hp = 0}
 
-device	ht at mba
+device	ht
+attach	ht at mba
 file	arch/vax/mba/ht.c		ht needs-flag
 
-device	uba at sbi, bi { csr }
-file	arch/vax/uba/uba.c		uba needs-count
+device	uba { csr }
+attach	uba at sbi, bi
+file	arch/vax/uba/uba.c		uba
 
-device	uda at uba { drive=-1 }
+device	uda { drive=-1 }
+attach	uda at uba
 file    arch/vax/uba/uda.c		uda needs-count
 
-device	de at uba:ifnet, ether
-file	arch/vax/if/if_de.c		de needs-count
+device	de:ifnet, ether
+attach	de at uba
+file	arch/vax/if/if_de.c		de
 
-device	ra at uda	
+device	ra: disk
+attach	ra at uda	
 file	arch/vax/vax/mscp.c		ra needs-count
 major	{ra = 9}
 
 # TK50/TU81 at UBA
-device	tmscp at uba {drive = -1}
-device	tms at tmscp
+device	tmscp {drive = -1}
+attach	tmscp at uba
+device	tms
+attach	tms at tmscp
 file	arch/vax/uba/tmscp.c		tmscp needs-count
 
 # DEQNA/DELQA used on Qbus
-device	qe at uba:ifnet, ether
-file	arch/vax/if/if_qe.c		qe needs-count
+device	qe:ifnet, ether
+attach	qe at uba
+file	arch/vax/if/if_qe.c		qe
+
+# TS11 at UBA
+device	ts
+attach	ts at uba
+file	arch/vax/uba/ts.c		ts needs-count
+
+# DHU-11 at UBA
+device	dhu
+attach	dhu at uba
+file	arch/vax/uba/dhu.c		dhu needs-count
 
 # These devices aren't tested (or even compiled!)
 # They are just included here to make some files happy ;)
 #
 
 # Ikonas framebuffer
-device	ik at uba
+device	ik
+attach	ik at uba
 file	arch/vax/uba/ik.c		ik needs-count
 
-device	vs at uba
+device	vs
+attach	vs at uba
 file	arch/vax/uba/vs.c		vs needs-count
 
-# TU58 on 750/730
-device	tu at root
-file	arch/vax/vax/tu.c		tu needs-count
-
 # RK06/07 on UBA
-device	rk at uba
+device	rk
+attach	rk at uba
 file	arch/vax/uba/rk.c		rk needs-count
 
 # TM11/TE10 at UBA
-device	te at uba
+device	te
+attach	te at uba
 file	arch/vax/uba/tm.c		te needs-count
 
-# TS11 at UBA
-device	ts at uba
-file	arch/vax/uba/ts.c		ts needs-count
-
 # TU78 at MBA
-device	mu at mba
+device	mu
+attach	mu at mba
 file	arch/vax/mba/mt.c		mu needs-count
 
 # KDB50 on BI
-device	kdb at bi { drive=-1 }
+device	kdb { drive=-1 }
+attach	kdb at bi
 file	arch/vax/bi/kdb.c		kdb needs-count
 
 
 # DMF32 on UBA
-device	dmf at uba
+device	dmf
+attach	dmf at uba
 file	arch/vax/uba/dmf.c		dmf needs-count
 file	arch/vax/uba/dmz.c		dmf needs-count
 
 # DMZ32 on UBA
-device	dmz at uba
+device	dmz
+attach	dmz at uba
 file	arch/vax/uba/dmx.c		dmz needs-count
 
 # DN-11 on UBA
-device	dn at uba
+device	dn
+attach	dn at uba
 file	arch/vax/uba/dn.c		dn needs-count
 
 # DZ11 at UBA
-device	dz at uba
+device	dz
+attach	dz at uba
 file	arch/vax/uba/dz.c		dz needs-count
 
 # IDC (RB730) on UBA (VAX 11/730)
-device	idc at uba { drive=-1 }
-device	rb at idc
+device	idc { drive=-1 }
+attach	idc at uba
+device	rb
+attach	rb at idc
 file	arch/vax/uba/idc.c		rb needs-count
 
 # LP-11 at UBA
-device	lp at uba
+device	lp
+attach	lp at uba
 file	arch/vax/uba/lp.c		lp needs-count
 
 # ???? at UBA
-device	lpa at uba
+device	lpa
+attach	lpa at uba
 file	arch/vax/uba/lpa.c		lpa needs-count
 
 # PS2 at UBA
-device	ps at uba
+device	ps
+attach	ps at uba
 file	arch/vax/uba/ps.c		ps needs-count
 
 # RL02/RL11 at UBA
-device	hl at uba { drive=-1 }
-device	rl at hl
+device	hl { drive=-1 }
+attach	hl at uba
+device	rl
+attach	rl at hl
 file	arch/vax/uba/rl.c		rl needs-count
 
 # RX211/RX02 at UBA
-device	fx at uba { drive=-1 }
-device	rx at fx
+device	fx { drive=-1 }
+attach	fx at uba
+device	rx
+attach	rx at fx
 file	arch/vax/uba/rx.c		rx needs-count
 
 # SC-21/SC-31 at UBA
-device	sc at uba { drive=-1 }
-device	up at sc
+device	sc { drive=-1 }
+attach	sc at uba
+device	up
+attach	up at sc
 file	arch/vax/uba/up.c		up needs-count
 
 # TU45 at UBA
-device	ut at uba { drive=-1}
-device	tj at ut
+device	ut { drive=-1}
+attach	ut at uba
+device	tj
+attach	tj at ut
 file	arch/vax/uba/ut.c		tj needs-count
 
 # TU58/DECtape II
-device	uu at uba
+device	uu
+attach	uu at uba
 file	arch/vax/uba/uu.c		uu needs-count
 
 # Benson-Varian plotter at UBA
-device	va at uba { drive=-1}
-device	vz at va
+device	va { drive=-1}
+attach	va at uba
+device	vz
+attach	vz at va
 file	arch/vax/uba/va.c		va needs-count
 
 # Versatec plotter at UBA
-device	vp at uba
+device	vp
+attach	vp at uba
 file	arch/vax/uba/vp.c		vp needs-count
 
 # QVSS at UBA
-device	qv at uba
+device	qv
+attach	qv at uba
 file	arch/vax/uba/qv.c		qv needs-count
 file	arch/vax/uba/qfont.c		qv needs-count
 
 # QDSS at UBA
-device	qd at uba
+device	qd
+attach	qd at uba
 file	arch/vax/uba/qd.c		qd needs-count
 
 # Interlan NP100 at UBA
-device	np at uba
+device	np
+attach	np at uba
 file	arch/vax/if/if_ix.c		np needs-count
 file	arch/vax/uba/np.c		np needs-count
 
 # ACC LH/DH IMP on UBA
-device	acc at uba
+device	acc
+attach	acc at uba
 file	arch/vax/if/if_acc.c		acc needs-count
 
 # DR11C at UBA
-device	ct at uba
+device	ct
+attach	ct at uba
 file	arch/vax/uba/ct.c		ct needs-count
 
 # A/D-converter on UBA
-device	ad at uba
+device	ad
+attach	ad at uba
 file	arch/vax/uba/ad.c		ad needs-count
 
 # DH-11/DM-11 on UBA
-device	dh at uba
+device	dh
+attach	dh at uba
 file	arch/vax/uba/dh.c		dh needs-count
-
-# DHU-11 at UBA
-device	dhu at uba
-file	arch/vax/uba/dhu.c		dhu needs-count
 
 # These are general files needed for compilation.
 file	dev/cons.c
@@ -197,8 +248,13 @@ file	arch/vax/vax/gencons.c
 file	arch/vax/vax/pmap.c
 file	arch/vax/vax/machdep.c
 file	arch/vax/vax/ka750.c		vax750
+file	arch/vax/vax/ka780.c		vax780
+file	arch/vax/vax/ctu.c		vax750
 file	arch/vax/vax/uvaxII.c		vax630
-file	arch/vax/vax/emulate.s		vax630
+file	arch/vax/vax/emulate.s		vax630 | ka650
+file	arch/vax/vax/ka650.c		vax650
+file	arch/vax/vax/ka860.c		vax8600
+file	arch/vax/vax/crl.c		vax8600
 file	arch/vax/vax/conf.c
 file	arch/vax/vax/urem.s
 file	arch/vax/vax/udiv.s
@@ -207,31 +263,22 @@ file	arch/vax/vax/trap.c
 
 file	arch/vax/vax/vm_machdep.c
 file	arch/vax/vax/autoconf.c
-#file	arch/vax/vax/cpu_machdep.c
-#file	arch/vax/vax/in_cksum.c		inet
-file	netinet/in_cksum.c		inet
 file	arch/vax/vax/random.s		inet
+file	arch/vax/vax/in_cksum.c		inet
+file	arch/vax/vax/ns_cksum.c		ns
 file	arch/vax/vax/disksubr.c		ffs
-file	arch/vax/if/if_uba.c		de qe
+file	arch/vax/if/if_uba.c		de | qe
 file	arch/vax/vax/db_machdep.c	ddb
 file	arch/vax/vax/db_disasm.c	ddb
 
+include "../../../compat/ultrix/files.ultrix"
+
 # Dom h{ra f}r vara kvar s} l{nge f}r vi se vilka vi beh|ver...
-#arch/vax/vax/crl.c           standard
 #arch/vax/vax/dkbad.c         standard
 #arch/vax/vax/flp.c           standard
-#arch/vax/vax/ka650.c         standard
-#arch/vax/vax/ka630.c         standard
 #arch/vax/vax/ka730.c         standard
-#arch/vax/vax/ka750.c         standard
-#arch/vax/vax/ka780.c         standard
 #arch/vax/vax/ka820.c         standard
-#arch/vax/vax/ka860.c         standard
-#arch/vax/vax/kdb_machdep.c   optional kadb
-#arch/vax/vax/kdb_opset.c     optional kadb
-#arch/vax/vax/ns_cksum.c      optional ns
 #arch/vax/vax/rx50.c          standard
-#arch/vax/vax/sys_machdep.c   standard
 #arch/vax/vax/iidr.o          optional ii
 #arch/vax/vax/iidrsys.o       optional ii
 #arch/vax/vax/iidr_glob.o     optional ii
@@ -247,6 +294,5 @@ file	arch/vax/vax/db_disasm.c	ddb
 #arch/vax/if/if_hy.c          optional hy device-driver
 #arch/vax/if/if_il.c          optional il device-driver
 #arch/vax/if/if_pcl.c         optional pcl device-driver
-##arch/vax/if/if_uba.c         optional ns device-driver
 #arch/vax/if/if_vv.c          optional vv device-driver
 #arch/vax/if/raw_hy.c         optional hy device-driver

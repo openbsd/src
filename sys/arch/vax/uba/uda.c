@@ -1,4 +1,4 @@
-/*	$NetBSD: uda.c,v 1.10 1995/12/13 19:02:47 ragge Exp $	*/
+/*	$NetBSD: uda.c,v 1.15 1996/03/17 22:56:50 ragge Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -85,35 +85,35 @@
 #define	STEP3MASK	ALLSTEPS
 #define	STEP3GOOD	UDA_STEP4
 
-#include "sys/param.h"
-#include "sys/systm.h"
-#include "sys/buf.h"
-#include "sys/conf.h"
-#include "sys/file.h"
-#include "sys/ioctl.h"
-#include "sys/proc.h"
-#include "sys/user.h"
-#include "sys/map.h"
-#include "sys/device.h"
-#include "sys/dkstat.h"
-#include "sys/disklabel.h"
-#include "sys/syslog.h"
-#include "sys/stat.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/buf.h>
+#include <sys/conf.h>
+#include <sys/file.h>
+#include <sys/ioctl.h>
+#include <sys/proc.h>
+#include <sys/user.h>
+#include <sys/map.h>
+#include <sys/device.h>
+#include <sys/dkstat.h>
+#include <sys/disklabel.h>
+#include <sys/syslog.h>
+#include <sys/stat.h>
 
-#include "machine/pte.h"
-#include "machine/sid.h"
-#include "machine/cpu.h"
+#include <machine/pte.h>
+#include <machine/sid.h>
+#include <machine/cpu.h>
 
-#include "vax/uba/ubareg.h"
-#include "vax/uba/ubavar.h"
+#include <vax/uba/ubareg.h>
+#include <vax/uba/ubavar.h>
 
 #define	NRSP	(1 << NRSPL2)
 #define	NCMD	(1 << NCMDL2)
 
-#include "vax/uba/udareg.h"
-#include "vax/vax/mscp.h"
-#include "vax/vax/mscpvar.h"
-#include "machine/mtpr.h"
+#include <vax/uba/udareg.h>
+#include <vax/vax/mscp.h>
+#include <vax/vax/mscpvar.h>
+#include <machine/mtpr.h>
 
 extern int cold;
 
@@ -128,7 +128,7 @@ extern int cold;
 		if ((udaddr->udasa & mask) != result) {			\
 			volatile int count = 0;				\
 			while ((udaddr->udasa & mask) != result) {	\
-				DELAY(1000);				\
+				DELAY(10000);				\
 				count += 1; 				\
 				if (count > DELAYTEN)			\
 					break;				\
@@ -177,8 +177,12 @@ struct udastats {
 int	udamatch __P((struct device *, void *, void *));
 void	uda_attach __P((struct device *, struct device *, void *));
 
-struct	cfdriver udacd = {
-	NULL, "uda", udamatch, uda_attach, DV_DULL, sizeof(struct device)
+struct	cfdriver uda_cd = {
+	NULL, "uda", DV_DULL
+};
+
+struct	cfattach uda_ca = {
+	sizeof(struct device), udamatch, uda_attach
 };
 
 /*
@@ -298,7 +302,6 @@ void	udawatch();	/* watchdog timer */
  * Externals
  */
 int	hz;
-extern	struct cfdriver ubacd;
 
 /*
  * Poke at a supposed UDA50 to see if it is there.
@@ -321,10 +324,11 @@ uda_attach(parent, self, aux)
 {
 }
 
-udaprobe(reg, ctlr, um)
+udaprobe(reg, ctlr, um, uhp)
 	caddr_t reg;
 	int ctlr;
 	struct uba_ctlr *um;
+	struct	uba_softc *uhp;
 {
 	struct uda_softc *sc;
 	volatile struct udadevice *udaddr;
@@ -347,7 +351,6 @@ udaprobe(reg, ctlr, um)
 	if (MACHID(cpu_type) == VAX_750)
 		udadriver.ud_keepbdp = 1;
 #endif
-/* printf("udaprobe\n"); */
 	probeum = um;			/* remember for udaslave() */
 	/*
 	 * Set up the controller-specific generic MSCP driver info.
@@ -366,12 +369,7 @@ udaprobe(reg, ctlr, um)
 	mi->mi_rsp.mri_size = NRSP;
 	mi->mi_rsp.mri_desc = sc->sc_uda.uda_ca.ca_rspdsc;
 	mi->mi_rsp.mri_ring = sc->sc_uda.uda_rsp;
-#ifdef ragge
-	mi->mi_wtab.b_actf = NULL;
-#else
 	mi->mi_wtab.b_actf = &mi->mi_wtab;
-#endif
-/* Was:	mi->mi_wtab.av_forw = mi->mi_wtab.av_back = &mi->mi_wtab; */
 
 	/*
 	 * More controller specific variables.  Again, this should
@@ -386,7 +384,7 @@ udaprobe(reg, ctlr, um)
 	 * problem; but it would be easily fixed if we had a controller
 	 * attach routine.  Sigh.
 	 */
-	ubasc = ubacd.cd_devs[0]; /* XXX */
+	ubasc = uhp;
 	sc->sc_ivec = ubasc->uh_lastiv -= 4;
 	udaddr = (struct udadevice *) reg;
 
@@ -488,7 +486,7 @@ again:
 		return (0);
 	timeout = 1000;
 	while (timeout-- > 0) {
-		DELAY(3000);
+		DELAY(10000);
 		if (sc->sc_state == ST_RUN)
 			goto findunit;
 	}
@@ -677,7 +675,7 @@ udainit(ctlr)
 	int ctlr;
 {
 	register struct uda_softc *sc;
-	register struct udadevice *udaddr;
+	volatile struct udadevice *udaddr;
 	struct uba_ctlr *um;
 	int timo, ubinfo, count, i, wait_status;
 	unsigned short hej;
@@ -927,7 +925,7 @@ uda_rainit(ui, flags)
 		if (cold) {
 			i = 1000;
 			while ((ui->ui_flags & UNIT_ONLINE) == 0) {
-				DELAY(1000);
+				DELAY(10000);
 				if (i-- < 0)
 					break;
 			}
@@ -2098,7 +2096,7 @@ udadump(dev)
  * comes on, or ten seconds pass without response, return true (error).
  */
 udadumpwait(udaddr, bits)
-	register struct udadevice *udaddr;
+	volatile struct udadevice *udaddr;
 	register int bits;
 {
 	register int timo = todr() + 1000;
