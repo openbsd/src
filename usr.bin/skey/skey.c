@@ -1,4 +1,4 @@
-/* * $OpenBSD: skey.c,v 1.2 1996/06/26 05:39:20 deraadt Exp $*/
+/* * $OpenBSD: skey.c,v 1.3 1996/09/27 15:41:36 millert Exp $*/
 /*
  * S/KEY v1.1b (skey.c)
  *
@@ -21,14 +21,12 @@
  *
  */
 
-#include <sys/cdefs.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <fcntl.h>
-#include <sgtty.h>
-#include "md4.h"
-#include "skey.h"
+#include <err.h>
+#include <unistd.h>
+#include <skey.h>
 
 void    usage __P((char *));
 
@@ -37,14 +35,10 @@ main(argc, argv)
 	int	argc;
 	char	*argv[];
 {
-	int     n, cnt, i, pass = 0;
+	int     n, i, cnt = 1, pass = 0, hexmode = 0;
 	char    passwd[256], key[8], buf[33], *seed, *slash;
-	extern int optind;
-	extern char *optarg;
 
-	cnt = 1;
-
-	while ((i = getopt(argc, argv, "n:p:")) != EOF) {
+	while ((i = getopt(argc, argv, "n:p:x45")) != EOF) {
 		switch (i) {
 		case 'n':
 			cnt = atoi(optarg);
@@ -52,6 +46,15 @@ main(argc, argv)
 		case 'p':
 			strcpy(passwd, optarg);
 			pass = 1;
+			break;
+		case 'x':
+			hexmode = 1;
+			break;
+		case '4':
+			skey_set_MDX(4);
+			break;
+		case '5':
+			skey_set_MDX(5);
 			break;
 		}
 	}
@@ -69,13 +72,12 @@ main(argc, argv)
 		seed = slash;
 
 		if ((n = atoi(argv[optind])) < 0) {
-			fprintf(stderr, "%s not positive\n", argv[optind]);
+			warnx("%s not positive", argv[optind]);
 			usage(argv[0]);
 		}
 	} else {
-
 		if ((n = atoi(argv[optind])) < 0) {
-			fprintf(stderr, "%s not positive\n", argv[optind]);
+			warnx("%s not positive", argv[optind]);
 			usage(argv[0]);
 		}
 		seed = argv[++optind];
@@ -83,32 +85,29 @@ main(argc, argv)
 
 	/* Get user's secret password */
 	if (!pass) {
-		fprintf(stderr, "Enter secret password: ");
+		(void)fputs("Reminder - Do not use this program while logged in via telnet or rlogin.\n", stderr);
+		(void)fputs("Enter secret password: ", stderr);
 		readpass(passwd, sizeof(passwd));
 	}
 	rip(passwd);
 
 	/* Crunch seed and password into starting key */
-	if (keycrunch(key, seed, passwd) != 0) {
-		fprintf(stderr, "%s: key crunch failed\n", argv[0]);
-		exit(1);
-	}
+	if (keycrunch(key, seed, passwd) != 0)
+		errx(1, "key crunch failed");
+
 	if (cnt == 1) {
 		while (n-- != 0)
 			f(key);
-		printf("%s\n", btoe(buf, key));
-#ifdef	HEXIN
-		printf("%s\n", put8(buf, key));
-#endif
+		(void)puts(hexmode ? put8(buf, key) : btoe(buf, key));
 	} else {
 		for (i = 0; i <= n - cnt; i++)
 			f(key);
 		for (; i <= n; i++) {
-#ifdef	HEXIN
-			printf("%d: %-29s  %s\n", i, btoe(buf, key), put8(buf, key));
-#else
-			printf("%d: %-29s\n", i, btoe(buf, key));
-#endif
+			if (hexmode)
+				(void)printf("%d: %-29s  %s\n", i,
+				    btoe(buf, key), put8(buf, key));
+			else
+				(void)printf("%d: %-29s\n", i, btoe(buf, key));
 			f(key);
 		}
 	}
@@ -119,8 +118,6 @@ void
 usage(s)
 	char   *s;
 {
-
-	fprintf(stderr,
-	    "Usage: %s [-n count] [-p password ] sequence# [/] key\n", s);
+	(void)fprintf(stderr, "Usage: %s [-x] [-4|-5] [-n count] [-p password ] sequence# [/] key", s);
 	exit(1);
 }
