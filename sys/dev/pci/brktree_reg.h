@@ -37,6 +37,8 @@
  */
 #define	BROOKTREE_848_ID			0x0350109E
 #define BROOKTREE_849_ID                        0x0351109E
+#define BROOKTREE_878_ID                        0x036E109E
+#define BROOKTREE_879_ID                        0x036F109E
 
 typedef volatile u_int 	bregister_t;
 /*
@@ -55,6 +57,7 @@ struct bt848_registers {
 #define BT848_DSTATUS_FIELD		(1<<5)
 #define BT848_DSTATUS_NUML		(1<<4)
 #define BT848_DSTATUS_CSEL		(1<<3)
+#define BT848_DSTATUS_PLOCK		(1<<2)
 #define BT848_DSTATUS_LOF		(1<<1)
 #define BT848_DSTATUS_COF		(1<<0)
     BTBYTE (iform);		/* 4, 5,6,7 */
@@ -62,6 +65,7 @@ struct bt848_registers {
 # define BT848_IFORM_M_MUX1		(0x03<<5)
 # define BT848_IFORM_M_MUX0		(0x02<<5)
 # define BT848_IFORM_M_MUX2		(0x01<<5)
+# define BT848_IFORM_M_MUX3		(0x0)
 # define BT848_IFORM_M_RSVD		(0x00<<5)
 #define BT848_IFORM_XTSEL		(0x3<<3)
 # define BT848_IFORM_X_AUTO		(0x03<<3)
@@ -122,7 +126,14 @@ struct bt848_registers {
     int 	:32;		/* 74, 75,76,77 */
     int		:32;		/* 78, 79,7a,7b */
     BTLONG (sreset);		/* 7c, 7d,7e,7f */
-    u_char 	filler[0x8c-0x80];
+    u_char 	filler1[0x84-0x80];
+    BTBYTE (tgctrl);		/* 84, 85,86,87 */
+#define BT848_TGCTRL_TGCKI		(3<<3)
+#define BT848_TGCTRL_TGCKI_XTAL		(0<<3)
+#define BT848_TGCTRL_TGCKI_PLL		(1<<3)
+#define BT848_TGCTRL_TGCKI_GPCLK	(2<<3)
+#define BT848_TGCTRL_TGCKI_GPCLK_I	(3<<3)
+    u_char 	filler[0x8c-0x88];
     BTBYTE (o_crop);		/* 8c, 8d,8e,8f */
     BTBYTE (o_vdelay_lo);	/* 90, 91,92,93 */
     BTBYTE (o_vactive_lo);	/* 94, 95,96,97 */
@@ -146,10 +157,10 @@ struct bt848_registers {
 #define BT848_O_SCLOOP_CAGC		(1<<6)
 #define BT848_O_SCLOOP_CKILL		(1<<5)
 #define BT848_O_SCLOOP_HFILT		(0x3<<3)
-# define BT848_O_SCLOOP_HFILT_ICON	(0x3<<3)
-# define BT848_O_SCLOOP_HFILT_QCIF	(0x2<<3)
-# define BT848_O_SCLOOP_HFILT_CIF	(0x1<<3)
-# define BT848_O_SCLOOP_HFILT_AUTO	(0x0<<3)
+#define BT848_O_SCLOOP_HFILT_ICON	(0x3<<3)
+#define BT848_O_SCLOOP_HFILT_QCIF	(0x2<<3)
+#define BT848_O_SCLOOP_HFILT_CIF	(0x1<<3)
+#define BT848_O_SCLOOP_HFILT_AUTO	(0x0<<3)
 #define BT848_O_SCLOOP_RSVD0		(0x7<<0)
     int		:32;		/* c4, c5,c6,c7 */
     int		:32;		/* c8, c9,ca,cb */
@@ -176,7 +187,12 @@ struct bt848_registers {
     BTBYTE (vbi_pack_del);	/* e4, e5,e6,e7 */
     int		:32;		/* e8, e9,ea,eb */
     BTBYTE (o_vtc);		/* ec, ed,ee,ef */
-    u_char	filler2[0x100-0xf0];
+    BTBYTE (pll_f_lo);		/* f0, f1,f2,f3 */
+    BTBYTE (pll_f_hi);		/* f4, f5,f6,f7 */
+    BTBYTE (pll_f_xci);		/* f8, f9,fa,fb */
+#define BT848_PLL_F_C			(1<<6)
+#define BT848_PLL_F_X			(1<<7)
+    u_char	filler2[0x100-0xfc];
     BTLONG (int_stat);		/* 100, 101,102,103 */
     BTLONG (int_mask);		/* 104, 105,106,107 */
 #define BT848_INT_RISCS			(0xf<<28)
@@ -325,6 +341,7 @@ struct TUNER {
 /* description of the card */
 #define EEPROMBLOCKSIZE		32
 struct CARDTYPE {
+	unsigned int		card_id;	/* card id (from #define's) */
 	char*			name;
 	const struct TUNER*	tuner;
 	u_char			dbx;		/* Has DBX chip? */
@@ -340,13 +357,13 @@ struct format_params {
   int vtotal, vdelay, vactive;
   /* Total unscaled horizontal pixels, pixels before image, image pixels */
   int htotal, hdelay, hactive;
- /* visible active horizontal and vertical : 480 640 for NTSC */
-  int  horizontal, vertical;
-/* frame rate . for ntsc is 30 frames per second */
+  /* Scaled horizontal image pixels, Total Scaled horizontal pixels */
+  int  scaled_hactive, scaled_htotal;
+  /* frame rate . for ntsc is 30 frames per second */
   int frame_rate;
-/* A-delay and B-delay */
+  /* A-delay and B-delay */
   u_char adelay, bdelay;
-/* Iform XTSEL value */
+  /* Iform XTSEL value */
   int iform_xtsel;
 };
 
@@ -393,6 +410,7 @@ struct bktr_softc {
     int		alloc_pages;	/* number of pages in bigbuf */
     struct proc	*proc;		/* process to receive raised signal */
     int		signal;		/* signal to send to process */
+    int		clr_on_start;	/* clear cap buf on capture start? */
 #define	METEOR_SIG_MODE_MASK	0xffff0000
 #define	METEOR_SIG_FIELD_MODE	0x00010000
 #define	METEOR_SIG_FRAME_MODE	0x00000000
@@ -404,6 +422,11 @@ struct bktr_softc {
     short	current;	/* frame number in buffer (1-frames) */
     short	rows;		/* number of rows in a frame */
     short	cols;		/* number of columns in a frame */
+    int		capture_area_x_offset; /* Usually the full 640x480(NTSC) image is */
+    int		capture_area_y_offset; /* captured. The capture area allows for */
+    int		capture_area_x_size;   /* example 320x200 pixels from the centre */
+    int		capture_area_y_size;   /* of the video image to be captured. */
+    char	capture_area_enabled;  /* When TRUE use user's capture area. */
     int		pixfmt;         /* active pixel format (idx into fmt tbl) */
     int		pixfmt_compat;  /* Y/N - in meteor pix fmt compat mode */
     u_long	format;		/* frame format rgb, yuv, etc.. */
@@ -430,6 +453,9 @@ struct bktr_softc {
 #define	METEOR_NTSC		0x00000100
 #define	METEOR_PAL		0x00000200
 #define	METEOR_SECAM		0x00000400
+#define	BROOKTREE_NTSC		0x00000100	/* used in video open() and */
+#define	BROOKTREE_PAL		0x00000200	/* in the kernel config */
+#define	BROOKTREE_SECAM		0x00000400	/* file */
 #define	METEOR_AUTOMODE		0x00000800
 #define	METEOR_FORM_MASK	0x00000f00
 #define	METEOR_DEV0		0x00001000
@@ -475,7 +501,19 @@ struct bktr_softc {
     int                 yclip2;
     int                 max_clip_node;
     bktr_clip_t		clip_list[100];
+    int                 reverse_mute;
+    int                 bt848_tuner;
+    int                 bt848_card;
+    u_long              id;
 };
 
 typedef struct bktr_softc bktr_reg_t;
 typedef struct bktr_softc* bktr_ptr_t;
+
+#define Bt848_MAX_SIGN 16
+
+struct bt848_card_sig {
+  int card;
+  int tuner;
+  u_char signature[Bt848_MAX_SIGN];
+};
