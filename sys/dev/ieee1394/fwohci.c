@@ -1,4 +1,4 @@
-/*	$OpenBSD: fwohci.c,v 1.6 2002/12/13 21:35:11 tdeval Exp $	*/
+/*	$OpenBSD: fwohci.c,v 1.7 2002/12/13 22:40:16 tdeval Exp $	*/
 /*	$NetBSD: fwohci.c,v 1.54 2002/03/29 05:06:42 jmc Exp $	*/
 
 /*
@@ -3821,7 +3821,9 @@ fwohci_write(struct ieee1394_abuf *ab)
 	u_int32_t high, lo;
 	int rv;
 
-	if (ab->ab_length > IEEE1394_MAX_REC(sc->sc1394_max_receive)) {
+	if ((ab->ab_tcode == IEEE1394_TCODE_WRITE_REQUEST_DATABLOCK &&
+	     ab->ab_length > IEEE1394_MAX_REC(sc->sc1394_max_receive)) ||
+	    ab->ab_length > IEEE1394_MAX_ASYNC(sc->sc1394_link_speed)) {
 		DPRINTF(("%s: Packet too large: %d\n", __func__,
 		    ab->ab_length));
 		return E2BIG;
