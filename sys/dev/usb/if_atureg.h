@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atureg.h,v 1.14 2004/12/05 01:51:20 dlg Exp $ */
+/*	$OpenBSD: if_atureg.h,v 1.15 2004/12/05 12:25:59 dlg Exp $ */
 /*
  * Copyright (c) 2003
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -32,7 +32,7 @@
  *
  */
 
-/* $ATUWI: $Id: if_atureg.h,v 1.14 2004/12/05 01:51:20 dlg Exp $ */
+/* $ATUWI: $Id: if_atureg.h,v 1.15 2004/12/05 12:25:59 dlg Exp $ */
 
 /************ 		driver options 		************/
 
@@ -257,6 +257,12 @@ struct atu_softc {
 
 	int			(*sc_newstate)(struct ieee80211com *,
 				    enum ieee80211_state, int);
+
+	int			sc_cmd;
+#define ATU_C_NONE 0
+#define ATU_C_SCAN 1
+#define ATU_C_JOIN 2
+	struct usb_task		sc_task;
 
 	usbd_device_handle	atu_udev;
 	usbd_interface_handle	atu_iface;

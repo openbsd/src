@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atu.c,v 1.37 2004/12/05 04:51:47 dlg Exp $ */
+/*	$OpenBSD: if_atu.c,v 1.38 2004/12/05 12:25:59 dlg Exp $ */
 /*
  * Copyright (c) 2003, 2004
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -173,6 +173,7 @@ void	atu_xfer_list_free(struct atu_softc *sc, struct atu_chain *ch,
 void	atu_print_a_bunch_of_debug_things(struct atu_softc *sc);
 int	atu_set_wepkey(struct atu_softc *sc, int nr, u_int8_t *key, int len);
 
+void atu_task(void *);
 int atu_newstate(struct ieee80211com *, enum ieee80211_state, int);
 int atu_tx_start(struct atu_softc *, struct ieee80211_node *,
     struct atu_chain *, struct mbuf *);
@@ -1119,6 +1120,56 @@ atu_media_status(struct ifnet *ifp, struct ifmediareq *req)
 	ieee80211_media_status(ifp, req);
 }
 
+void
+atu_task(void *arg)
+{
+	struct atu_softc	*sc = (struct atu_softc *)arg;
+	struct ieee80211com	*ic = &sc->sc_ic;
+	struct ifnet		*ifp = &ic->ic_if;
+	usbd_status		err;
+	int			s;
+
+	DPRINTFN(10, ("%s: atu_task\n", USBDEVNAME(sc->atu_dev)));
+
+	if (sc->atu_dying)
+		return;
+
+	switch (sc->sc_cmd) {
+	case ATU_C_SCAN:
+
+		err = atu_start_scan(sc);
+		if (err) {
+			DPRINTFN(1, ("%s: atu_init: couldn't start scan!\n",
+			    USBDEVNAME(sc->atu_dev)));
+			return;
+		}
+
+		err = atu_wait_completion(sc, CMD_START_SCAN, NULL);
+		if (err) {
+			DPRINTF(("%s: atu_init: error waiting for scan\n",
+			    USBDEVNAME(sc->atu_dev)));
+			return;
+		}
+
+		DPRINTF(("%s: ==========================> END OF SCAN!\n",
+		    USBDEVNAME(sc->atu_dev)));
+
+		ifp->if_flags |= IFF_DEBUG;
+
+		s = splnet();
+		/* ieee80211_next_scan(ifp); */
+		ieee80211_end_scan(ifp);
+		splx(s);
+
+		DPRINTF(("%s: ----------------------======> END OF SCAN2!\n",
+		    USBDEVNAME(sc->atu_dev)));
+		break;
+
+	case ATU_C_JOIN:
+		atu_join(sc, ic->ic_bss);
+	}
+}
+
 int
 atu_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 {
@@ -1129,16 +1180,32 @@ atu_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 	DPRINTFN(10, ("%s: atu_newstate: %s -> %s\n", USBDEVNAME(sc->atu_dev),
 	    ieee80211_state_name[ostate], ieee80211_state_name[nstate]));
 
-	if ((ostate == IEEE80211_S_SCAN) && ((nstate == IEEE80211_S_AUTH) ||
-	    (nstate == IEEE80211_S_RUN))) {
+	switch (nstate) {
+	case IEEE80211_S_SCAN:
+		memcpy(ic->ic_chan_scan, ic->ic_chan_active,
+		    sizeof(ic->ic_chan_active));
+		ieee80211_free_allnodes(ic);
 
-		/*
-		 * The BSSID has changed. Join it first before net80211 starts
-		 * sending packets...
-		 */
+		/* tell the event thread that we want a scan */
+		sc->sc_cmd = ATU_C_SCAN;
+		usb_add_task(sc->atu_udev, &sc->sc_task);
 
-		atu_join(sc, ic->ic_bss);
+		/* handle this ourselves */
+		ic->ic_state = nstate;
+		return (0);
+
+	case IEEE80211_S_AUTH:
+	case IEEE80211_S_RUN:
+		if (ostate == IEEE80211_S_SCAN) {
+			sc->sc_cmd = ATU_C_JOIN;
+			usb_add_task(sc->atu_udev, &sc->sc_task);
+		}
+		break;
+	default:
+		/* nothing to do */
+		break;
 	}
+
 	return (*sc->sc_newstate)(ic, nstate, arg);
 }
 
@@ -1316,7 +1383,7 @@ USB_ATTACH(atu)
 
 	for (i = 1; i <= 14; i++) {
 		ic->ic_channels[i].ic_flags = IEEE80211_CHAN_B |
-		    IEEE80211_F_ASCAN;
+		    IEEE80211_CHAN_PASSIVE;
 		ic->ic_channels[i].ic_freq = ieee80211_ieee2mhz(i,
 		    ic->ic_channels[i].ic_flags);
 	}
@@ -1343,6 +1410,8 @@ USB_ATTACH(atu)
 	/* setup ifmedia interface */
 	ieee80211_media_init(ifp, atu_media_change, atu_media_status);
 
+	usb_init_task(&sc->sc_task, atu_task, sc);
+
 	sc->atu_dying = 0;
 
 	USB_ATTACH_SUCCESS_RETURN;
@@ -1362,6 +1431,8 @@ USB_DETACH(atu)
 		usbd_abort_pipe(sc->atu_ep[ATU_ENDPT_TX]);
 	if (sc->atu_ep[ATU_ENDPT_RX] != NULL)
 		usbd_abort_pipe(sc->atu_ep[ATU_ENDPT_RX]);
+
+	usb_rem_task(sc->atu_udev, &sc->sc_task);
 	return(0);
 }
 
@@ -1987,40 +2058,6 @@ atu_init(struct ifnet *ifp)
 		    "ieee80211_net_state", USBDEVNAME(sc->atu_dev)));
 	}
 	splx(s);
-
-	err = atu_start_scan(sc);
-	if (err) {
-		DPRINTFN(1, ("%s: atu_init: couldn't start scan!\n",
-		    USBDEVNAME(sc->atu_dev)));
-		return(EIO);
-	}
-
-	/* Start a timer to check when the scan is done */
-	/* timeout_add(&sc->atu_scan_timer, (1000 * hz) / 1000); */
-	/*
-	 * Hmmm... sleeping in a timeout handler crashes the system :)
-	 * let's just wait here for the scan to finish
-	 */
-
-	err = atu_wait_completion(sc, CMD_START_SCAN, NULL);
-	if (err) {
-		DPRINTF(("%s: atu_init: error waiting for scan\n",
-		    USBDEVNAME(sc->atu_dev)));
-		return(err);
-	}
-
-	DPRINTF(("%s: ==========================> END OF SCAN!\n",
-	    USBDEVNAME(sc->atu_dev)));
-
-	ifp->if_flags |= IFF_DEBUG;
-
-	s = splnet();
-	/* ieee80211_next_scan(ifp); */
-	ieee80211_end_scan(ifp);
-	splx(s);
-
-	DPRINTF(("%s: ----------------------======> END OF SCAN2!\n",
-	    USBDEVNAME(sc->atu_dev)));
 
 	return 0;
 }
