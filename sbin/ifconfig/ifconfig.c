@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.32 2000/04/11 18:08:42 mickey Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.33 2000/04/14 02:38:21 itojun Exp $	*/
 /*      $NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $      */
 
 /*
@@ -81,7 +81,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static char rcsid[] = "$OpenBSD: ifconfig.c,v 1.32 2000/04/11 18:08:42 mickey Exp $";
+static char rcsid[] = "$OpenBSD: ifconfig.c,v 1.33 2000/04/14 02:38:21 itojun Exp $";
 #endif
 #endif /* not lint */
 
@@ -620,10 +620,9 @@ printif(ifrm, ifaliases)
 		    sizeof(ifrp->ifr_name))) {
 			register const struct afswtch *p;
 
-#if 0
-			if (ifaliases == 0 && noinet == 0)
+			if (ifrp->ifr_addr.sa_family == AF_INET &&
+			    ifaliases == 0 && noinet == 0)
 				continue;
-#endif
 			ifr = *ifrp;
 #ifdef INET6
 			/* quickhack: sizeof(ifr) < sizeof(ifr6) */
@@ -640,7 +639,8 @@ printif(ifrm, ifaliases)
 				}
 			}
 			count++;
-			noinet = 0;
+			if (ifrp->ifr_addr.sa_family == AF_INET)
+				noinet = 0;
 			continue;
 		}
 	}
