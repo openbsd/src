@@ -1,4 +1,4 @@
-/*	$OpenBSD: commands.c,v 1.12 1998/03/18 21:21:40 art Exp $	*/
+/*	$OpenBSD: commands.c,v 1.13 1998/04/07 20:01:06 art Exp $	*/
 /*	$NetBSD: commands.c,v 1.14 1996/03/24 22:03:48 jtk Exp $	*/
 
 /*
@@ -2010,6 +2010,13 @@ static int
 encrypt_cmd(int argc, char **argv)
 {
     struct encryptlist *c;
+
+    if (argc < 2) {
+	fprintf(stderr, "Need at least one argument for 'encrypt' command.\n");
+	fprintf(stderr, "('encrypt ?' for help)\n");
+	return 0;
+    }
+
     c = (struct encryptlist *)
                genget(argv[1], (char **) EncryptList, sizeof(struct encryptlist));
     if (c == 0) {

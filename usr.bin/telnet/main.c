@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.5 1998/03/12 04:57:35 art Exp $	*/
+/*	$OpenBSD: main.c,v 1.6 1998/04/07 20:01:10 art Exp $	*/
 /*	$NetBSD: main.c,v 1.5 1996/02/28 21:04:05 thorpej Exp $	*/
 
 /*
@@ -49,6 +49,10 @@ static char copyright[] =
 
 #if KRB5
 #define FORWARD
+#endif
+
+#ifdef KRB4
+#include <kerberosIV/krb.h>
 #endif
 
 /*
@@ -245,12 +249,7 @@ main(argc, argv)
 #endif
 			break;
 		case 'l':
-			if(autologin == 0){
-				fprintf(stderr, "%s: Warning: -K ignored\n", 
-					prompt);
-				autologin = -1;
-                 }
-
+			autologin = -1;
 			user = optarg;
 			break;
 		case 'b':
@@ -303,15 +302,25 @@ main(argc, argv)
 		}
 	}
 
-	if (autologin == -1) {          /* esc@magic.fi; force  */
+#ifdef KRB4
+	{
+		char realm[REALM_SZ];
+
+		if (krb_get_lrealm(realm, 0) != KSUCCESS) {
 #if defined(AUTHENTICATION)
-		autologin = 1;
+			auth_disable_name("KERBEROS_V4");
+#endif
+		} else if (autologin == -1) {
+#if defined(AUTHENTICATION)
+			autologin = 1;
 #endif
 #if defined(ENCRYPTION)
-		encrypt_auto(1);
-		decrypt_auto(1);
+			encrypt_auto(1);
+			decrypt_auto(1);
 #endif
+		}
 	}
+#endif /* KRB4 */
 
 	if (autologin == -1)
 		autologin = (rlogin == _POSIX_VDISABLE) ? 0 : 1;
