@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd_i386.c,v 1.8 1997/10/02 04:30:23 mickey Exp $	*/
+/*	$OpenBSD: cmd_i386.c,v 1.9 1997/10/09 22:23:00 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff, Tobias Weingartner
@@ -54,7 +54,7 @@ Xdiskinfo()
 	u_int32_t di;
 	int i;
 
-	printf("Disk\tCylinders\tTracks\tSectors\n");
+	printf("Disk\tCylinders\tHeads\tSectors\n");
 	for(i = 0x80; i < 0x84; i++){
 		if ((di = biosdinfo(i)))
 			printf("0x%x\t  %d   \t%d\t%d\n", i,
