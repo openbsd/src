@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_sig.c,v 1.8 2001/08/21 19:24:53 fgsch Exp $	*/
+/*	$OpenBSD: uthread_sig.c,v 1.9 2001/11/02 20:37:20 marc Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -246,15 +246,15 @@ _thread_sig_handle(int sig, struct sigcontext * scp)
 				if (curthread->sig_defer_count > 0)
 					pthread->sig_defer_count++;
 
-				curthread = pthread;
 				_thread_signal(pthread,sig);
 
 				/*
 				 * Dispatch pending signals to the
 				 * running thread:
 				 */
+				_set_curthread(pthread);
 				_dispatch_signals();
-				curthread = pthread_saved;
+				_set_curthread(pthread_saved);
 
 				/* Current thread inside critical region? */
 				if (curthread->sig_defer_count > 0)
