@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.23 2000/02/01 20:53:06 espie Exp $	*/
+/*	$OpenBSD: util.c,v 1.24 2000/05/15 18:27:27 deraadt Exp $	*/
 /*	$NetBSD: util.c,v 1.12 1997/08/18 10:20:27 lukem Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: util.c,v 1.23 2000/02/01 20:53:06 espie Exp $";
+static char rcsid[] = "$OpenBSD: util.c,v 1.24 2000/05/15 18:27:27 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -674,11 +674,14 @@ progressmeter(flag)
 		lastsize = restart_point;
 	}
 	(void)gettimeofday(&now, (struct timezone *)0);
-	if (!progress || filesize <= 0)
+	if (!progress || filesize < 0)
 		return;
 	cursize = bytes + restart_point;
 
-	ratio = cursize * 100 / filesize;
+	if (filesize)
+		ratio = cursize * 100 / filesize;
+	else
+		ratio = 100;
 	ratio = MAX(ratio, 0);
 	ratio = MIN(ratio, 100);
 	snprintf(buf, sizeof(buf), "\r%3d%% ", ratio);
@@ -717,7 +720,18 @@ progressmeter(flag)
 	timersub(&now, &start, &td);
 	elapsed = td.tv_sec + (td.tv_usec / 1000000.0);
 
-	if (bytes <= 0 || elapsed <= 0.0 || cursize > filesize) {
+	if (flag == 1) {
+		i = (int)elapsed / 3600;
+		if (i)
+			snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf),
+			    "%2d:", i);
+		else
+			snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf),
+			    "   ");
+		i = (int)elapsed % 3600;
+		snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf),
+		    "%02d:%02d    ", i / 60, i % 60);
+	} else if (bytes <= 0 || elapsed <= 0.0 || cursize > filesize) {
 		snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf),
 		    "   --:-- ETA");
 	} else if (wait.tv_sec >= STALLTIME) {
