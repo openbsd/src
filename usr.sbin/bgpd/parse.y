@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.56 2004/02/10 23:10:23 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.57 2004/02/19 13:54:58 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -28,6 +28,7 @@
 #include <ctype.h>
 #include <err.h>
 #include <errno.h>
+#include <limits.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>

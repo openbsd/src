@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.c,v 1.25 2004/02/02 21:29:50 henning Exp $ */
+/*	$OpenBSD: mrt.c,v 1.26 2004/02/19 13:54:58 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -565,7 +565,7 @@ mrt_select(struct mrt_head *mc, struct pollfd *pfd, struct mrt **mrt,
 	int		 t;
 
 	now = time(NULL);
-	for (m = LIST_FIRST(mc); m != LIST_END(mc); m = xm) {
+	for (m = LIST_FIRST(mc); m != NULL; m = xm) {
 		xm = LIST_NEXT(m, list);
 		if (m->state == MRT_STATE_TOREMOVE) {
 			imsg_compose(m->ibuf, IMSG_MRT_END, 0,
@@ -750,8 +750,8 @@ mrt_mergeconfig(struct mrt_head *xconf, struct mrt_head *nconf)
 			xm->state = MRT_STATE_TOREMOVE;
 
 	/* free config */
-	for (m = LIST_FIRST(nconf); m != LIST_END(nconf); m = xm) {
-		xm = LIST_NEXT(m, list);
+	while ((m = LIST_FIRST(nconf)) != NULL) {
+		LIST_REMOVE(m, list);
 		free(m);
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.81 2004/02/18 23:18:16 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.82 2004/02/19 13:54:58 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -19,8 +19,10 @@
 #include <sys/types.h>
 
 #include <errno.h>
+#include <limits.h>
 #include <pwd.h>
 #include <poll.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -281,7 +283,7 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 			if (nconf == NULL)
 				fatalx("got IMSG_RECONF_DONE but no config");
 			for (p = LIST_FIRST(&peerlist);
-			    p != LIST_END(&peerlist); p = np) {
+			    p != NULL; p = np) {
 				np = LIST_NEXT(p, peer_l);
 				switch (p->conf.reconf_action) {
 				case RECONF_NONE:
@@ -840,9 +842,7 @@ peer_down(u_int32_t id)
 	up_down(peer);
 
 	/* walk through per peer RIB list and remove all prefixes. */
-	for (asp = LIST_FIRST(&peer->path_h);
-	    asp != LIST_END(&peer->path_h);
-	    asp = nasp) {
+	for (asp = LIST_FIRST(&peer->path_h); asp != NULL; asp = nasp) {
 		nasp = LIST_NEXT(asp, peer_l);
 		path_remove(asp);
 	}
@@ -868,8 +868,7 @@ network_init(struct network_head *net_l)
 	snprintf(peerself.conf.descr, sizeof(peerself.conf.descr),
 	    "LOCAL AS %hu", conf->as);
 
-	for (n = TAILQ_FIRST(net_l); n != TAILQ_END(net_l);
-	    n = TAILQ_FIRST(net_l)) {
+	while ((n = TAILQ_FIRST(net_l)) != NULL) {
 		TAILQ_REMOVE(net_l, n, network_l);
 		network_add(&n->net);
 		free(n);

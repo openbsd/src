@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.79 2004/02/09 23:16:46 henning Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.80 2004/02/19 13:54:58 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -378,15 +378,14 @@ reconfigure(char *conffile, struct bgpd_config *conf, struct mrt_head *mrt_l,
 		    &p->conf, sizeof(struct peer_config)) == -1)
 			return (-1);
 	}
-	for (n = TAILQ_FIRST(&net_l); n != TAILQ_END(&net_l);
-	    n = TAILQ_FIRST(&net_l)) {
+	while ((n = TAILQ_FIRST(&net_l)) != NULL) {
 		if (imsg_compose(&ibuf_rde, IMSG_RECONF_NETWORK, 0,
 		    &n->net, sizeof(struct network_config)) == -1)
 			return (-1);
 		TAILQ_REMOVE(&net_l, n, network_l);
 		free(n);
 	}
-	for (r = TAILQ_FIRST(rules_l); r != NULL; r = TAILQ_FIRST(rules_l)) {
+	while ((r = TAILQ_FIRST(rules_l)) != NULL) {
 		if (imsg_compose(&ibuf_rde, IMSG_RECONF_FILTER, 0,
 		    r, sizeof(struct filter_rule)) == -1)
 			return (-1);

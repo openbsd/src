@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.33 2004/02/09 01:56:18 henning Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.34 2004/02/19 13:54:58 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -176,9 +176,7 @@ path_remove(struct rde_aspath *asp)
 
 	RIB_STAT(path_remove);
 
-	for (p = LIST_FIRST(&asp->prefix_h);
-	    p != LIST_END(&asp->prefix_h);
-	    p = np) {
+	for (p = LIST_FIRST(&asp->prefix_h); p != NULL; p = np) {
 		np = LIST_NEXT(p, path_l);
 		prefix_destroy(p);
 	}
@@ -488,9 +486,7 @@ void
 prefix_destroy(struct prefix *p)
 {
 	struct pt_entry		*pte;
-	struct rde_aspath	*asp;
 
-	asp = p->aspath;
 	pte = p->prefix;
 	prefix_unlink(p);
 	prefix_free(p);
@@ -509,13 +505,9 @@ prefix_network_clean(struct rde_peer *peer, time_t reloadtime)
 	struct prefix		*p, *xp;
 	struct pt_entry		*pte;
 
-	for (asp = LIST_FIRST(&peer->path_h);
-	    asp != LIST_END(&peer->path_h);
-	    asp = xasp) {
+	for (asp = LIST_FIRST(&peer->path_h); asp != NULL; asp = xasp) {
 		xasp = LIST_NEXT(asp, peer_l);
-		for (p = LIST_FIRST(&asp->prefix_h);
-		    p != LIST_END(&asp->prefix_h);
-		    p = xp) {
+		for (p = LIST_FIRST(&asp->prefix_h); p != NULL; p = xp) {
 			xp = LIST_NEXT(p, path_l);
 			if (reloadtime > p->lastchange) {
 				pte = p->prefix;
