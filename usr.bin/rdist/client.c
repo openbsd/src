@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.14 2003/04/05 20:31:58 deraadt Exp $	*/
+/*	$OpenBSD: client.c,v 1.15 2003/04/07 21:13:52 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -39,7 +39,7 @@ static char RCSid[] =
 "$From: client.c,v 6.80 1996/02/28 20:34:27 mcooper Exp $";
 #else
 static char RCSid[] = 
-"$OpenBSD: client.c,v 1.14 2003/04/05 20:31:58 deraadt Exp $";
+"$OpenBSD: client.c,v 1.15 2003/04/07 21:13:52 deraadt Exp $";
 #endif
 
 static char sccsid[] = "@(#)client.c";
@@ -134,7 +134,7 @@ char *remfilename(src, dest, path, rname, destdir)
 				    "%s%s", dest, cp);
 		}
 	} else
-		strcpy(lname, dest);
+		strlcpy(lname, dest, buf + sizeof buff - lname);
 
 	debugmsg(DM_MISC, "remfilename: remote filename=%s\n", lname);
 
@@ -362,7 +362,6 @@ static int sendhardlink(opts, lp, rname, destdir)
 	int destdir;
 {
 	static char buff[MAXPATHLEN];
-	char *lname;	/* name of file to link to */
 
 	debugmsg(DM_MISC, 
 	       "sendhardlink: rname='%s' pathname='%s' src='%s' target='%s'\n",
@@ -373,13 +372,11 @@ static int sendhardlink(opts, lp, rname, destdir)
 		(void) sendcmd(C_RECVHARDLINK, "%o %s %s", 
 			       opts, lp->pathname, rname);
 	else {
-		lname = buff;
-		strcpy(lname, remfilename(lp->src, lp->target, 
-					  lp->pathname, rname, 
-					  destdir));
-		debugmsg(DM_MISC, "sendhardlink: lname=%s\n", lname);
+		strlcpy(buff, remfilename(lp->src, lp->target, 
+		    lp->pathname, rname, destdir), sizeof buff);
+		debugmsg(DM_MISC, "sendhardlink: lname=%s\n", buff);
 		(void) sendcmd(C_RECVHARDLINK, "%o %s %s", 
-			       opts, lname, rname);
+			       opts, buff, rname);
 	}
 
 	return(response());
@@ -1192,7 +1189,7 @@ extern int install(src, dest, ddir, destdir, opts)
 	if (IS_ON(opts, DO_WHOLE))
 		source[0] = CNULL;
 	else
-		(void) strcpy(source, src);
+		(void) strlcpy(source, src, sizeof source);
 
 	if (dest == NULL) {
 		FLAG_OFF(opts, DO_WHOLE); /* WHOLE only useful if renaming */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.10 2002/02/16 21:27:57 millert Exp $	*/
+/*	$OpenBSD: options.c,v 1.11 2003/04/07 21:13:54 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -303,7 +303,7 @@ opts_init(sp, oargs)
 	/* Set numeric and string default values. */
 #define	OI(indx, str) {							\
 	if (str != b1)		/* GCC puts strings in text-space. */	\
-		(void)strcpy(b1, str);					\
+		(void)strlcpy(b1, str, sizeof b1);			\
 	a.len = strlen(b1);						\
 	if (opts_set(sp, argv, NULL)) {					\
 		 optindx = indx;					\

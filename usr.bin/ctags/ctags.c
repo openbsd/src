@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctags.c,v 1.6 2002/02/16 21:27:45 millert Exp $	*/
+/*	$OpenBSD: ctags.c,v 1.7 2003/04/07 21:13:54 deraadt Exp $	*/
 /*	$NetBSD: ctags.c,v 1.4 1995/09/02 05:57:23 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ctags.c	8.4 (Berkeley) 2/7/95";
 #endif
-static char rcsid[] = "$OpenBSD: ctags.c,v 1.6 2002/02/16 21:27:45 millert Exp $";
+static char rcsid[] = "$OpenBSD: ctags.c,v 1.7 2003/04/07 21:13:54 deraadt Exp $";
 #endif /* not lint */
 
 #include <err.h>
@@ -261,7 +261,7 @@ find_entries(file)
 				 * for C references.  This may be wrong.
 				 */
 				toss_yysec();
-				(void)strcpy(lbuf, "%%$");
+				(void)strlcpy(lbuf, "%%$", sizeof lbuf);
 				pfnote("yylex", lineno);
 				rewind(inf);
 			}
@@ -272,7 +272,7 @@ find_entries(file)
 			 * for C references.  This may be wrong.
 			 */
 			toss_yysec();
-			(void)strcpy(lbuf, "%%$");
+			(void)strlcpy(lbuf, "%%$", sizeof lbuf);
 			pfnote("yyparse", lineno);
 			y_entries();
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: skeyinit.c,v 1.42 2003/04/06 21:07:38 deraadt Exp $	*/
+/*	$OpenBSD: skeyinit.c,v 1.43 2003/04/07 21:13:54 deraadt Exp $	*/
 
 /* OpenBSD S/Key (skeyinit.c)
  *
@@ -255,11 +255,13 @@ purpose of using S/Key in the fist place.\n");
 			if (l > 0) {
 				lastc = skey.seed[l - 1];
 				if (isdigit(lastc) && lastc != '9') {
-					(void)strcpy(seed, skey.seed);
+					(void)strlcpy(seed, skey.seed,
+					    sizeof seed);
 					seed[l - 1] = lastc + 1;
 				}
 				if (isdigit(lastc) && lastc == '9' && l < 16) {
-					(void)strcpy(seed, skey.seed);
+					(void)strlcpy(seed, skey.seed,
+					    sizeof seed);
 					seed[l - 1] = '0';
 					seed[l] = '0';
 					seed[l + 1] = '\0';
@@ -371,7 +373,7 @@ secure_mode(int *count, char *key, char *seed, char *buf, size_t bufsiz)
 			break;  /* Valid seed */
 	}
 	if (newseed[0] != '\0')
-		(void)strcpy(seed, newseed);
+		(void)strlcpy(seed, newseed, sizeof seed);
 
 	for (i = 0; ; i++) {
 		if (i >= 2)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ul.c,v 1.7 2001/11/19 19:02:17 mpech Exp $	*/
+/*	$OpenBSD: ul.c,v 1.8 2003/04/07 21:13:54 deraadt Exp $	*/
 /*	$NetBSD: ul.c,v 1.3 1994/12/07 00:28:24 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ul.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: ul.c,v 1.7 2001/11/19 19:02:17 mpech Exp $";
+static char rcsid[] = "$OpenBSD: ul.c,v 1.8 2003/04/07 21:13:54 deraadt Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -149,7 +149,8 @@ main(argc, argv)
 
 	case 0:
 		/* No such terminal type - assume dumb */
-		(void)strcpy(termcap, "dumb:os:col#80:cr=^M:sf=^J:am:");
+		(void)strlcpy(termcap, "dumb:os:col#80:cr=^M:sf=^J:am:",
+		    sizeof termcap);
 		break;
 	}
 	initcap();
