@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.328 2003/03/21 12:47:36 cedric Exp $ */
+/*	$OpenBSD: pf.c,v 1.329 2003/03/31 13:15:27 cedric Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -505,9 +505,11 @@ pf_purge_expired_states(void)
 			pfsync_delete_state(cur->state);
 #endif
 			if (cur->state->rule.ptr != NULL)
-				cur->state->rule.ptr->states--;
+				if (--cur->state->rule.ptr->states <= 0)
+					pf_rm_rule(NULL, cur->state->rule.ptr);
 			if (cur->state->nat_rule != NULL)
-				cur->state->nat_rule->states--;
+				if (--cur->state->nat_rule->states <= 0)
+					pf_rm_rule(NULL, cur->state->nat_rule);
 			pool_put(&pf_state_pl, cur->state);
 			pool_put(&pf_tree_pl, cur);
 			pool_put(&pf_tree_pl, peer);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.50 2003/03/11 13:26:09 dhartmei Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.51 2003/03/31 13:15:27 cedric Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -80,7 +80,6 @@ struct pf_ruleset	*pf_find_or_create_ruleset(char *, char *);
 void			 pf_remove_if_empty_ruleset(struct pf_ruleset *);
 void			 pf_mv_pool(struct pf_palist *, struct pf_palist *);
 void			 pf_empty_pool(struct pf_palist *);
-void			 pf_rm_rule(struct pf_rulequeue *, struct pf_rule *);
 int			 pfioctl(dev_t, u_long, caddr_t, int, struct proc *);
 
 extern struct timeout	 pf_expire_to;
@@ -362,13 +361,17 @@ pf_empty_pool(struct pf_palist *poola)
 void
 pf_rm_rule(struct pf_rulequeue *rulequeue, struct pf_rule *rule)
 {
+	if (rulequeue != NULL) {
+		TAILQ_REMOVE(rulequeue, rule, entries);
+		rule->entries.tqe_prev = NULL;
+	}
+	if (rule->states > 0 || rule->entries.tqe_prev != NULL)
+		return;
 	pf_dynaddr_remove(&rule->src.addr);
 	pf_dynaddr_remove(&rule->dst.addr);
 	pf_tbladdr_remove(&rule->src.addr);
 	pf_tbladdr_remove(&rule->dst.addr);
 	pf_empty_pool(&rule->rpool.list);
-	if (rulequeue != NULL)
-		TAILQ_REMOVE(rulequeue, rule, entries);
 	pool_put(&pf_rule_pl, rule);
 }
 
@@ -535,6 +538,9 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		rule->anchor = NULL;
 		rule->ifp = NULL;
 		TAILQ_INIT(&rule->rpool.list);
+		/* initialize refcounting */
+		rule->states = 0;
+		rule->entries.tqe_prev = NULL;
 #ifndef INET
 		if (rule->af == AF_INET) {
 			pool_put(&pf_rule_pl, rule);
@@ -598,7 +604,6 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		struct pf_ruleset	*ruleset;
 		struct pf_rulequeue	*old_rules;
 		struct pf_rule		*rule;
-		struct pf_tree_node	*n;
 		int			 rs_num;
 
 		ruleset = pf_find_ruleset(pr->anchor, pr->ruleset);
@@ -618,17 +623,6 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 
 		/* Swap rules, keep the old. */
 		s = splsoftnet();
-		/*
-		 * Rules are about to get freed, clear rule pointers in states
-		 */
-		if (rs_num == PF_RULESET_FILTER) {
-			if (ruleset == &pf_main_ruleset)
-				RB_FOREACH(n, pf_state_tree, &tree_ext_gwy)
-					n->state->rule.ptr = NULL;
-		} else if ((rs_num == PF_RULESET_NAT) ||
-		    (rs_num == PF_RULESET_BINAT) || (rs_num == PF_RULESET_RDR))
-			RB_FOREACH(n, pf_state_tree, &tree_ext_gwy)
-				n->state->nat_rule = NULL;
 		old_rules = ruleset->rules[rs_num].active.ptr;
 		ruleset->rules[rs_num].active.ptr =
 		    ruleset->rules[rs_num].inactive.ptr;
@@ -767,6 +761,9 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			}
 			bcopy(&pcr->rule, newrule, sizeof(struct pf_rule));
 			TAILQ_INIT(&newrule->rpool.list);
+			/* initialize refcounting */
+			newrule->states = 0;
+			newrule->entries.tqe_prev = NULL;
 #ifndef INET
 			if (newrule->af == AF_INET) {
 				pool_put(&pf_rule_pl, newrule);
@@ -842,17 +839,9 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			}
 		}
 
-		if (pcr->action == PF_CHANGE_REMOVE) {
-			struct pf_tree_node	*n;
-
-			RB_FOREACH(n, pf_state_tree, &tree_ext_gwy) {
-				if (n->state->rule.ptr == oldrule)
-					n->state->rule.ptr = NULL;
-				if (n->state->nat_rule == oldrule)
-					n->state->nat_rule = NULL;
-			}
+		if (pcr->action == PF_CHANGE_REMOVE)
 			pf_rm_rule(ruleset->rules[rs_num].active.ptr, oldrule);
-		} else {
+		else {
 			if (oldrule == NULL)
 				TAILQ_INSERT_TAIL(
 				    ruleset->rules[rs_num].active.ptr,

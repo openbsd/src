@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.136 2003/03/03 14:33:17 cedric Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.137 2003/03/31 13:15:27 cedric Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -975,6 +975,8 @@ extern struct ifnet		*status_ifp;
 extern int			*pftm_timeouts[PFTM_MAX];
 extern void			 pf_addrcpy(struct pf_addr *, struct pf_addr *,
 				    u_int8_t);
+void				 pf_rm_rule(struct pf_rulequeue *,
+				    struct pf_rule *);
 
 #ifdef INET
 int	pf_test(int, struct ifnet *, struct mbuf **);
