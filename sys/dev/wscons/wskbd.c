@@ -1,4 +1,4 @@
-/* $OpenBSD: wskbd.c,v 1.14 2001/04/18 02:24:22 aaron Exp $ */
+/* $OpenBSD: wskbd.c,v 1.15 2001/04/18 02:26:58 aaron Exp $ */
 /* $NetBSD: wskbd.c,v 1.38 2000/03/23 07:01:47 thorpej Exp $ */
 
 /*
@@ -247,7 +247,7 @@ extern struct cfdriver wskbd_cd;
 extern int kbd_reset;
 
 #ifndef WSKBD_DEFAULT_BELL_PITCH
-#define	WSKBD_DEFAULT_BELL_PITCH	400	/* 1500Hz */
+#define	WSKBD_DEFAULT_BELL_PITCH	400	/* 400Hz */
 #endif
 #ifndef WSKBD_DEFAULT_BELL_PERIOD
 #define	WSKBD_DEFAULT_BELL_PERIOD	100	/* 100ms */
