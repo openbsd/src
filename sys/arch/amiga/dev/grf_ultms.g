@@ -18,7 +18,7 @@
 ;	This product contains software developed by Ignatios Souvatzis
 ;	for the NetBSD project.
 ; 4. The name of the author may not be used to endorse or promote products
-;    derived from this software withough specific prior written permission
+;    derived from this software without specific prior written permission
 ;
 ; THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
 ; IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES

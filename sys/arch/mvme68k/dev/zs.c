@@ -1,4 +1,4 @@
-/*	$OpenBSD: zs.c,v 1.11 2002/04/27 23:21:05 miod Exp $ */
+/*	$OpenBSD: zs.c,v 1.12 2002/06/02 22:49:59 deraadt Exp $ */
 
 /*
  * Copyright (c) 2000 Steve Murphree, Jr.
@@ -19,7 +19,7 @@
  *      This product includes software developed under OpenBSD by
  *	Theo de Raadt for Willowglen Singapore.
  * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software withough specific prior written permission
+ *    derived from this software without specific prior written permission
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
