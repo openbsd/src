@@ -1,4 +1,4 @@
-.\" $OpenBSD: pthreads.3,v 1.11 2000/12/31 19:38:24 brad Exp $
+.\" $OpenBSD: pthreads.3,v 1.12 2001/05/31 03:01:49 deraadt Exp $
 .\" David Leonard <d@openbsd.org>, 1998. Public domain.
 .Dd August 17, 1998
 .Dt PTHREADS 3
@@ -24,7 +24,7 @@ The
 .Dv SIGINFO
 signal can be sent to a threaded process to have the library show the state of
 all of its threads. The information is sent to the process'
-controlling tty and descrbes each thread's
+controlling tty and describes each thread's
 ID,
 state (see
 .Sx Thread states ) ,
@@ -156,9 +156,9 @@ If a thread overflows its stack, unpredictable results may occur.
 System-allocated stacks (including that of the initial thread)
 are typically allocated in such a way that a
 .Dv SIGSEGV
-signal is deliverred to the process when a stack overflows.
+signal is delivered to the process when a stack overflows.
 .Pp
-Signals handlers are normally  run on the stack of the currently executing
+Signals handlers are normally run on the stack of the currently executing
 thread.
 Hence, if you want to handle the
 .Dv SIGSEGV
@@ -211,7 +211,7 @@ John Birrell
 wrote the majority of the user level thread library.
 .\" David Leonard did a fair bit too, but is far too modest.
 .Sh BUGS
-The library contains of a scheduler that uses the
+The library contains a scheduler that uses the
 process virtual interval timer to pre-empt running threads.
 This means that using
 .Xr setitimer 2
