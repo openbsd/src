@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.20 1999/01/01 20:33:35 millert Exp $
+#	$OpenBSD: Makefile,v 1.21 1999/01/21 19:37:23 millert Exp $
 #
 #  OpenBSD Makefile
 #
@@ -22,7 +22,7 @@ MAPDEF+=-DNIS
 .endif
 
 # environment definitions (e.g., -DNETISO)
-ENVDEF= -DNETISO -D_FFR_MAX_MIME_HEADER_LENGTH=1
+ENVDEF= -DNETISO -D_FFR_MAX_MIME_HEADER_LENGTH=1 -D_FFR_MAX_HEADER_LINES=1
 
 .if (${TCP_WRAPPERS} == "yes")
 ENVDEF+=-DTCPWRAPPERS

@@ -284,6 +284,8 @@ setdefaults(e)
 	ColonOkInAddr = TRUE;
 	DontLockReadFiles = TRUE;
 	DoubleBounceAddr = "postmaster";
+      MaxHeaderLines = MAXHDRLINES;
+      MaxHeaderLineLength = MAXHDRLINELEN;
 	snprintf(buf, sizeof buf, "%s%sdead.letter",
 		_PATH_VARTMP,
 		_PATH_VARTMP[sizeof _PATH_VARTMP - 2] == '/' ? "" : "/");
@@ -1946,7 +1948,7 @@ getla()
 
 /* Non Apollo stuff removed by Don Lewis 11/15/93 */
 #ifndef lint
-static char  rcsid[] = "@(#)$Id: conf.c,v 1.11 1999/01/01 20:33:39 millert Exp $";
+static char  rcsid[] = "@(#)$Id: conf.c,v 1.12 1999/01/21 19:37:24 millert Exp $";
 #endif /* !lint */
 
 #ifdef apollo
