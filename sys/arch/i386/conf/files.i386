@@ -1,4 +1,4 @@
-#	$OpenBSD: files.i386,v 1.123 2004/06/13 21:49:15 niklas Exp $
+#	$OpenBSD: files.i386,v 1.124 2004/06/16 18:22:19 grange Exp $
 #
 # new style config file for i386 architecture
 #
@@ -47,7 +47,7 @@ file	dev/cninit.c
 file	arch/i386/i386/mptramp.s	multiprocessor
 file	arch/i386/i386/lock_machdep.c	multiprocessor
 file	arch/i386/i386/ipifuncs.c	multiprocessor
-file	arch/i386/i386/db_mp.c		multiprocessor
+file	arch/i386/i386/db_mp.c		multiprocessor & ddb
 file	arch/i386/i386/wscons_machdep.c	wsdisplay
 major	{vnd = 14}
 
