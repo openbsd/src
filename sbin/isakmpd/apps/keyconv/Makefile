@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.1 2001/08/15 12:31:40 ho Exp $
+#	$Id: Makefile,v 1.2 2001/08/16 11:33:07 jakob Exp $
 
 #
 # Copyright (c) 2000 Håkan Olsson.  All rights reserved.
@@ -36,7 +36,7 @@ OS!=		awk '/^OS=/ { print $$2 }' ${.CURDIR}/../../Makefile
 .PATH:		${TOPSRC} ${TOPSRC}/sysdep/${OS} ${TOPOBJ}
 CFLAGS+=	-I${TOPSRC} -I${TOPSRC}/sysdep/${OS} -I${TOPOBJ} -Wall
 CFLAGS+=	-I/usr/local/include
-LDADD+=		-lcrypto ${LIBLWRES}
+LDADD+=		-lcrypto
 DPADD+=		${LIBCRYPTO}
 NOMAN=		yes
 
