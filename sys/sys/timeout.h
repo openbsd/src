@@ -1,4 +1,4 @@
-/*	$OpenBSD: timeout.h,v 1.4 2000/03/23 14:59:23 art Exp $	*/
+/*	$OpenBSD: timeout.h,v 1.5 2000/03/23 15:47:50 art Exp $	*/
 /*
  * Copyright (c) 2000 Artur Grabowski <art@openbsd.org>
  * All rights reserved. 
@@ -35,7 +35,7 @@
 /*
  * Interface for handling time driven events in the kernel.
  *
- * The basic component of this API is the struct timeout. The user should
+ * The basic component of this API is the struct timeout. The user should not
  * touch the internals of this structure, but it's the users responsibility
  * to allocate and deallocate timeouts.
  *
