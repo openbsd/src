@@ -51,6 +51,10 @@ Boston, MA 02111-1307, USA.  */
 #define OBSD_HAS_CORRECT_SPECS
 #include <openbsd.h>
 
+/* mips assembler uses .set for arcane purposes.  __attribute__((alias))
+   and friends won't work until we get recent binutils with .weakext
+	support.  */
+#undef SET_ASM_OP
 
 /* Run-time target specifications.  */
 #if TARGET_ENDIAN_DEFAULT != 0
