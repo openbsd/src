@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.131 2003/06/27 22:40:40 krw Exp $
+#	$OpenBSD: install.sh,v 1.132 2003/06/30 17:49:14 krw Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -98,8 +98,10 @@ if [ ! -f /etc/fstab ]; then
 			cat /dev/null >$FILESYSTEMS
 			cat /dev/null >$SWAPLIST
 		else
-			ask_which "disk" "do you wish to initialize?" "$_DKDEVS"
-			[ "$resp" = "done" ] && break
+			# Force the user to think and type in a disk name by
+			# making 'done' the default choice.
+			ask_which "disk" "do you wish to initialize?" "$_DKDEVS" done
+			[[ $resp == done ]] && break
 		fi
 
 		DISK=$resp
