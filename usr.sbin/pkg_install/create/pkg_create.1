@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_create.1,v 1.12 2000/03/19 17:57:09 aaron Exp $
+.\"	$OpenBSD: pkg_create.1,v 1.13 2000/03/27 17:09:02 espie Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintainance
 .\" of non-core utilities.
@@ -40,6 +40,7 @@
 .Op Fl i Ar iscript
 .Op Fl k Ar dscript
 .Op Fl r Ar rscript
+.Op Fl s Ar fake-prefix
 .Op Fl t Ar template
 .Op Fl X Ar excludefile
 .Op Fl D Ar displayfile
@@ -145,7 +146,12 @@ Set
 as the initial directory
 .Dq base
 to start from in selecting files for
-the package.
+the package, and to record as the base for installing the package.
+.It Fl s Ar fake-prefix
+Set
+.Ar fake-prefix
+as the real initial directory
+to start from in selecting files for the package.
 .It Fl k Ar dscript
 Set
 .Ar dscript
@@ -431,6 +437,10 @@ package must
 be installed if
 .Ar pkgname
 package gets installed cause they install the same files and thus conflict.
+.It Cm @option Ar name
+Effects vary depending on 
+.Ar name .
+No options are documented yet.
 .El
 .Sh SEE ALSO
 .Xr pkg_add 1 ,
@@ -459,10 +469,5 @@ They additionally must not end up being split between
 invocations due to exec argument-space limitations (this depends on the
 value returned by
 .Fn sysconf _SC_ARG_MAX ) .
-.Pp
-.Cm @exec Ar command
-can't be used before at least one file has been extracted, even if the
-command does not make use of 
-.Cm "%F", "%f", "%B" .
 .Pp
 Sure to be others.
