@@ -1,4 +1,4 @@
-/*	$OpenBSD: rlnsubr.c,v 1.1 1999/07/30 13:43:36 d Exp $	*/
+/*	$OpenBSD: rlnsubr.c,v 1.2 1999/08/19 06:16:32 d Exp $	*/
 /*
  * David Leonard <d@openbsd.org>, 1999. Public Domain.
  *
@@ -113,7 +113,7 @@ rln_reset(sc)
 	rln_data_write_2(sc, 0xaa55);
 	rln_status_write(sc, 0x5a);
 	splx(s);
-	for (i = 0; i < 200 *5; i++) {		/* Proxim says 200. */
+	for (i = 0; i < 200 * 10; i++) {	/* Proxim says 200. */
 		if ((status = rln_status_read(sc)) == 0x5a)
 			break;
 		DELAY(1000);
@@ -829,7 +829,9 @@ rln_mbox_wait(sc, seq, timeo)
 	int			s;
 	int			ret;
 	volatile struct rln_mbox * mb = &sc->sc_mbox[seq];
+#if defined(RLN_TSLEEP)
 	extern int		cold;
+#endif
 
 	dprintf(" <wait %d", seq);
 
@@ -837,8 +839,20 @@ rln_mbox_wait(sc, seq, timeo)
 	if (seq > RLN_NMBOX)
 		panic("mbox wait");
 #endif
-	if (cold) {
+
+#if defined(RLN_TSLEEP)
+	if (!cold) {
+		tsleep((void *)mb, PRIBIO, "rlnmbox", hz * timeo / 1000);
+		if (mb->mb_state == RLNMBOX_FILLING) {
+			/* Must wait until filled. */
+			s = spl0();
+			while (mb->mb_state == RLNMBOX_FILLING)
+				;
+			splx(s);
+		}
+	} else {
 		/* Autoconfiguration - spin at spl0. */
+#endif
 		s = spl0();
 		i = 0;
 		while (mb->mb_state == RLNMBOX_EMPTY && i < timeo) {
@@ -850,18 +864,12 @@ rln_mbox_wait(sc, seq, timeo)
 		while (mb->mb_state == RLNMBOX_FILLING) 
 			;
 		splx(s);
-	} else {
-		tsleep((void *)mb, PRIBIO, "rlnmbox", hz * timeo / 1000);
-		if (mb->mb_state == RLNMBOX_FILLING) {
-			/* Must wait until filled. */
-			s = spl0();
-			while (mb->mb_state == RLNMBOX_FILLING)
-				;
-			splx(s);
-		}
+#if defined(RLN_TSLEEP)
 	}
+#endif
 
 	s = splhigh();
+
 #ifdef DIAGNOSTIC
 	if (mb->mb_state != RLNMBOX_EMPTY && mb->mb_state != RLNMBOX_FILLED)
 		panic("mbox wait %d", mb->mb_state);
@@ -928,7 +936,9 @@ rln_mbox_unlock(sc, seq, actlen)
 	mb->mb_state = RLNMBOX_FILLED;
 	dprintf(" filled>");
 	mb->mb_actlen = actlen;
+#if defined(RLN_TSLEEP)
 	wakeup(mb);
+#endif
 	splx(s);
 }
 
