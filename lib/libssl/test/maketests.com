@@ -910,7 +910,8 @@ $ ENDIF
 $!
 $! Time to check the contents, and to make sure we get the correct library.
 $!
-$ IF P4.EQS."SOCKETSHR" .OR. P4.EQS."MULTINET" .OR. P4.EQS."UCX"
+$ IF P4.EQS."SOCKETSHR" .OR. P4.EQS."MULTINET" .OR. P4.EQS."UCX" -
+     .OR. P4.EQS."TCPIP" .OR. P4.EQS."NONE"
 $ THEN
 $!
 $!  Check to see if SOCKETSHR was chosen
@@ -920,7 +921,7 @@ $   THEN
 $!
 $!    Set the library to use SOCKETSHR
 $!
-$     TCPIP_LIB = "[-.VMS]SOCKETSHR_SHR.OPT/OPT"
+$     TCPIP_LIB = "SYS$DISK:[-.VMS]SOCKETSHR_SHR.OPT/OPT"
 $!
 $!    Done with SOCKETSHR
 $!
@@ -946,16 +947,42 @@ $   THEN
 $!
 $!    Set the library to use UCX.
 $!
-$     TCPIP_LIB = "[-.VMS]UCX_SHR_DECC.OPT/OPT"
+$     TCPIP_LIB = "SYS$DISK:[-.VMS]UCX_SHR_DECC.OPT/OPT"
 $     IF F$TRNLNM("UCX$IPC_SHR") .NES. ""
 $     THEN
-$       TCPIP_LIB = "[-.VMS]UCX_SHR_DECC_LOG.OPT/OPT"
+$       TCPIP_LIB = "SYS$DISK:[-.VMS]UCX_SHR_DECC_LOG.OPT/OPT"
 $     ELSE
 $       IF COMPILER .NES. "DECC" .AND. ARCH .EQS. "VAX" THEN -
-	  TCPIP_LIB = "[-.VMS]UCX_SHR_VAXC.OPT/OPT"
+	  TCPIP_LIB = "SYS$DISK:[-.VMS]UCX_SHR_VAXC.OPT/OPT"
 $     ENDIF
 $!
 $!    Done with UCX
+$!
+$   ENDIF
+$!
+$!  Check to see if TCPIP was chosen
+$!
+$   IF P4.EQS."TCPIP"
+$   THEN
+$!
+$!    Set the library to use TCPIP (post UCX).
+$!
+$     TCPIP_LIB = "SYS$DISK:[-.VMS]TCPIP_SHR_DECC.OPT/OPT"
+$!
+$!    Done with TCPIP
+$!
+$   ENDIF
+$!
+$!  Check to see if NONE was chosen
+$!
+$   IF P4.EQS."NONE"
+$   THEN
+$!
+$!    Do not use a TCPIP library.
+$!
+$     TCPIP_LIB = ""
+$!
+$!    Done with NONE
 $!
 $   ENDIF
 $!
@@ -974,6 +1001,7 @@ $   WRITE SYS$OUTPUT "The Option ",P4," Is Invalid.  The Valid Options Are:"
 $   WRITE SYS$OUTPUT ""
 $   WRITE SYS$OUTPUT "    SOCKETSHR  :  To link with SOCKETSHR TCP/IP library."
 $   WRITE SYS$OUTPUT "    UCX        :  To link with UCX TCP/IP library."
+$   WRITE SYS$OUTPUT "    TCPIP      :  To link with TCPIP (post UCX) TCP/IP library."
 $   WRITE SYS$OUTPUT ""
 $!
 $!  Time To EXIT.

@@ -1,5 +1,5 @@
 # Build wrapper for OpenSSL
-# $OpenBSD: Makefile,v 1.8 2002/06/01 01:35:36 deraadt Exp $
+# $OpenBSD: Makefile,v 1.9 2002/06/07 03:45:32 beck Exp $
 
 # Our lndir is hacked; specify a full path to avoid potential conflicts
 # with the one installed with X11.
@@ -15,6 +15,7 @@ SSLCONF=	--openssldir="${OPENSSLDIR}" OpenBSD-${MACHINE_ARCH}
 MUNGEDFILES= \
 	${.OBJDIR}/${SSL_SRC}/crypto/opensslconf.h \
 	${.OBJDIR}/${SSL_SRC}/crypto/objects/obj_dat.h \
+	${.OBJDIR}/${SSL_SRC}/crypto/objects/obj_mac.h \
 	${.OBJDIR}/${SSL_SRC}/Makefile.ssl \
 	${.OBJDIR}/${SSL_SRC}/Makefile \
 	${.OBJDIR}/${SSL_SRC}/apps/der_chop \
@@ -924,19 +925,17 @@ includes: prereq
 	@cd ${.OBJDIR}/crypto && ${MAKE} includes
 	@cd ${.OBJDIR}/ssl && ${MAKE} includes
 
-prereq:	${.OBJDIR}/${SSL_SRC}/Makefile.ssl ${.OBJDIR}/${SSL_SRC}/crypto/objects/obj_dat.h
+prereq:	${.OBJDIR}/${SSL_SRC}/Makefile.ssl ${.OBJDIR}/${SSL_SRC}/crypto/objects/obj_dat.h ${.OBJDIR}/${SSL_SRC}/crypto/objects/obj_mac.h
 
 install: maninstall
 	@cd ${.OBJDIR}/crypto && ${MAKE} install
-	@cd ${.OBJDIR}/ssl && ${MAKE} install
+	@cd ${.OBJDIR}/ssl && ${MAKE} installq
 
 ${.OBJDIR}/${SSL_SRC}/crypto/objects/obj_dat.h: ${.OBJDIR}/${SSL_SRC}/crypto/objects/obj_mac.h
 	/usr/bin/perl ${.OBJDIR}/${SSL_SRC}/crypto/objects/obj_dat.pl ${.OBJDIR}/${SSL_SRC}/crypto/objects/obj_mac.h ${.OBJDIR}/${SSL_SRC}/crypto/objects/obj_dat.h
-# Stupid ssl 0.9.6 fucks this up completely, won't even build if you
-# try to regenerate obj_dat.h - even with a stock distrib. 
-#${.OBJDIR}/${SSL_SRC}/crypto/objects/obj_dat.h: ${.OBJDIR}/${SSL_SRC}/crypto/objects/obj_dat.h.src
-#	@cp ${.OBJDIR}/${SSL_SRC}/crypto/objects/obj_dat.h.src \
-#		${.OBJDIR}/${SSL_SRC}/crypto/objects/obj_dat.h
+
+${.OBJDIR}/${SSL_SRC}/crypto/objects/obj_mac.h: ${.OBJDIR}/${SSL_SRC}/crypto/objects/objects.h
+	/usr/bin/perl ${.OBJDIR}/${SSL_SRC}/crypto/objects/objects.pl ${.OBJDIR}/${SSL_SRC}/crypto/objects/objects.txt ${.OBJDIR}/${SSL_SRC}/crypto/objects/obj_mac.num ${.OBJDIR}/${SSL_SRC}/crypto/objects/obj_mac.h
 
 ${.OBJDIR}/${SSL_SRC}/Makefile.ssl : ${.OBJDIR}/${SSL_SRC}/Makefile.org
 	@cd ${.OBJDIR}/${SSL_SRC} && /usr/bin/perl Configure ${SSLCONF}
