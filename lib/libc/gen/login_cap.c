@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_cap.c,v 1.2 2000/08/24 17:03:47 deraadt Exp $	*/
+/*	$OpenBSD: login_cap.c,v 1.3 2000/09/16 18:06:01 millert Exp $	*/
 
 /*-
  * Copyright (c) 1995,1997 Berkeley Software Design, Inc. All rights reserved.
@@ -53,7 +53,7 @@
 
 
 static	char *_authtypes[] = { LOGIN_DEFSTYLE, 0 };
-static	void setuserpath __P((login_cap_t *, char *));
+static	int setuserpath __P((login_cap_t *, char *));
 static	u_quad_t multiply __P((u_quad_t, u_quad_t));
 static	u_quad_t strtolimit __P((char *, char **, int));
 static	u_quad_t strtosize __P((char *, char **, int));
@@ -627,14 +627,19 @@ setusercontext(lc, pwd, uid, flags)
 		}
 	}
 
-	if (flags & LOGIN_SETPATH)
-		setuserpath(lc, pwd ? pwd->pw_dir : "");
+	if (flags & LOGIN_SETPATH) {
+		if (setuserpath(lc, pwd ? pwd->pw_dir : "") == -1) {
+			syslog(LOG_ERR, "could not set PATH: %m");
+			login_close(flc);
+			return (-1);
+		}
+	}
 
 	login_close(flc);
 	return (0);
 }
 
-static void
+static int
 setuserpath(lc, home)
 	login_cap_t *lc;
 	char *home;
@@ -680,7 +685,9 @@ setuserpath(lc, home)
 	} else
 		path = _PATH_DEFPATH;
 	if (setenv("PATH", path, 1))
-		warn("could not set PATH");
+		return (-1);
+
+	return (0);
 }
 
 /*
