@@ -1,4 +1,4 @@
-.\"	$OpenBSD: twe.4,v 1.7 2000/11/10 20:02:17 todd Exp $
+.\"	$OpenBSD: twe.4,v 1.8 2001/01/09 17:56:21 krw Exp $
 .\"
 .\" Copyright (c) 2000 Michael Shalayeff.  All rights reserved.
 .\"
@@ -54,9 +54,9 @@ cards in the lowest slot before other SCSI or RAID disk controllers.
 .Pp
 The current 3ware firmware is known to fail if a redundant configuration
 is selected (RAID0 or RAID10) and the array is heavily used
-(eg. installation) before the controller has finished initialising the array.
+(e.g. installation) before the controller has finished initialising the array.
 In this case, create the array, boot the installation media and
-leave the array idle untill all controller activity has ceased.
+leave the array idle until all controller activity has ceased.
 .Pp
 The card provides a mechanism to receive asynchronous notifications
 about RAID set status change and so forth, unfortunately this
