@@ -1,4 +1,4 @@
-/*	$OpenBSD: pty.c,v 1.7 2002/05/24 21:24:15 deraadt Exp $	*/
+/*	$OpenBSD: pty.c,v 1.8 2002/05/24 22:04:02 deraadt Exp $	*/
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,7 +34,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /* from: static char sccsid[] = "@(#)pty.c	8.1 (Berkeley) 6/4/93"; */
-static char *rcsid = "$Id: pty.c,v 1.7 2002/05/24 21:24:15 deraadt Exp $";
+static char *rcsid = "$Id: pty.c,v 1.8 2002/05/24 22:04:02 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/cdefs.h>
@@ -86,8 +86,13 @@ openpty(amaster, aslave, name, termp, winp)
 				if ((slave = open(line, O_RDWR, 0)) != -1) {
 					*amaster = master;
 					*aslave = slave;
-					if (name)
-						strcpy(name, line);
+					if (name) {
+						/*
+						 * Manual page says "at least
+						 * 16 characters".
+						 */
+						strlcpy(name, line, 16);
+					}
 					if (termp)
 						(void) tcsetattr(slave, 
 						    TCSAFLUSH, termp);
