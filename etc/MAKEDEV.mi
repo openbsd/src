@@ -1,6 +1,6 @@
 include(MAKEDEV.sub)dnl
 dnl
-vers(a,{-$OpenBSD: MAKEDEV.mi,v 1.22 2002/01/23 08:09:30 todd Exp $-})dnl
+vers(a,{-$OpenBSD: MAKEDEV.mi,v 1.23 2002/02/08 20:26:36 todd Exp $-})dnl
 dnl
 divert(1)dnl
 {-#-}
@@ -114,20 +114,24 @@ target(all,mcd,0)dnl
 target(all,std)dnl
 target(all,vnd,0,1,2,3)dnl
 target(all,ccd,0,1,2,3)dnl
-target(all,wd,0,1,2,3)dnl
 target(all,raid,0,1,2,3)dnl
-target(all,xy,0,1,2,3)dnl
-target(all,xd,0,1,2,3)dnl
-target(all,rz,0,1,2,3,4)dnl
+target(all,hd,0,1,2,3,4)dnl
 target(all,rd,0)dnl
-target(all,hp,0,1,2,3)dnl
+target(all,rz,0,1,2,3,4)dnl
 target(all,hk,0,1,2,3)dnl
-target(all,up,0,1,2,3)dnl
+target(all,hp,0,1,2,3)dnl
+target(all,ht,0)dnl
 target(all,ra,0,1,2,3)dnl
 target(all,rb,0,1,2,3)dnl
-target(all,rx,0,1)dnl
 target(all,rl,0,1,2,3)dnl
-target(all,hd,0,1,2,3,4)dnl
+target(all,rx,0,1)dnl
+target(all,tm,0)dnl
+target(all,ts,0)dnl
+target(all,up,0,1,2,3)dnl
+target(all,ut,0)dnl
+target(all,wd,0,1,2,3)dnl
+target(all,xy,0,1,2,3)dnl
+target(all,xd,0,1,2,3)dnl
 twrget(all,flo,fd,0,0B,0C,0D,0E,0F,0G,0H)dnl
 twrget(all,flo,fd,1,1B,1C,1D,1E,1F,1G,1H)dnl
 twrget(all,aflo,fd,0,1,2,3)dnl
@@ -184,8 +188,8 @@ twrget(all,csx,cgsix,0)dnl
 twrget(all,ceg,cgeight,0)dnl
 twrget(all,cfo,cgfourteen,0)dnl
 target(all,tcx,0)dnl
-twrget(all,mac_grf,grf,0,1,2,3)dnl
-target(all,grf,0,1,2,3,4,5,6)dnl
+twrget(all,grf_mac,grf,0,1,2,3)dnl
+twrget(all,grf_amiga,grf,0,1,2,3,4,5,6)dnl
 target(all,par,0)dnl
 twrget(all,amouse,mouse,0,1)dnl
 twrget(all,akbd,kbd)dnl
@@ -227,7 +231,7 @@ std)
 dnl
 target(usb,usb,0,1)dnl
 target(usb,urio,0)dnl
-target(usb,uscanner,0)dnl
+twrget(usb,uscan,uscanner,0)dnl
 target(usb,uhid,0,1,2,3)dnl
 target(usb,ulpt,0,1)dnl
 target(usb,ugen,0,1)dnl
@@ -280,6 +284,10 @@ _mkdev(st_hp300,ct*|mt*|st*,
 __devitem(st_hp300,st*,Exabyte tape)dnl
 __devitem(ct,ct*,HP300 HP-IB cartridge tape)dnl
 __devitem(mt,mt*,(Magnetic) 9-track reel tape)dnl
+__devitem(ht,ht*,massbus tm03 & tu??)dnl
+__devitem(tm,tm*,unibus tm11 & te10 emulations (e.g. Emulex tc-11))dnl
+__devitem(ts,ts*,unibus ts11)dnl
+__devitem(ut,ut*,unibus tu45 emulations (e.g.si 9700))dnl
 __devtitle(dis,Disks)dnl
 __devitem(rz,rz*,SCSI disks)dnl
 __devitem(sd,{-sd*-},SCSI disks{-,-} includes flopticals)dnl
@@ -329,6 +337,28 @@ target(ramd,wd,0,1,2,3)dnl
 target(ramd,cd,0,1)dnl
 target(ramd,st,0,1)dnl
 target(ramd,bpf,0)dnl
+twrget(all,s64_tzs,tty,a,b,c,d)dnl
+twrget(all,s64_czs,cua,a,b,c,d)dnl
+__devitem(s64_tzs,tty[a-z]*,Zilog 8530 Serial Port)dnl
+__devitem(s64_czs,cua[a-z]*,Zilog 8530 Serial Port)dnl
+_mkdev(s64_tzs,{-tty[a-z]-},{-u=${i#tty*}
+	case $u in
+	a) n=0 ;;
+	b) n=1 ;;
+	c) n=2 ;;
+	d) n=3 ;;
+	*) echo unknown tty device $i ;;
+	esac
+	M tty$u c major_s64_tzs_c $n 660 dialer uucp-})dnl
+_mkdev(s64_czs,cua[a-z],{-u=${i#cua*}
+	case $u in
+	a) n=0 ;;
+	b) n=1 ;;
+	c) n=2 ;;
+	d) n=3 ;;
+	*) echo unknown cua device $i ;;  
+	esac
+	M cua$u c major_s64_czs_c Add($n,128) 660 dialer uucp-})dnl
 -})dnl
 ifelse(MACHINE,i386,{-dnl
 target(ramd,tty0,0,1,2,3)dnl
@@ -672,14 +702,14 @@ _mkdev(music,music*,{-M music$U     c major_music_c $U
 	MKlist="$MKlist;[ -e music ] || ln -s music$U music"
 	MKlist="$MKlist;[ -e sequencer ] || ln -s sequencer$U sequencer"-})dnl
 __devitem(radio,radio*,FM tuner device)dnl
-_mkdev(radio,radio*,{-M radio$U     c major_radio_c $U 644
+_mkdev(radio,radio*,{-M radio$U     c major_radio_c $U
 	MKlist="$MKlist;[ -e radio ] || ln -s radio$U radio"-})dnl
 __devitem(fdesc,fd,makes fd/* for the fdescfs)dnl
 _mkdev(fdesc,fd,{-RMlist="mkdir -p fd;$RMlist" n=0
 	while [ $n -lt 64 ];do M fd/$n c major_fdesc_c $n;n=Add($n,1);done
 	MKlist="$MKlist;chmod 555 fd"-})dnl
 __devtitle(graph,Graphics devices)dnl
-__devitem(mac_grf,grf*,{-custom chip (grf0){-,-} Retina Z2/Z3 (grf1/grf2){-,-}
+__devitem(grf_mac,grf*,{-custom chip (grf0){-,-} Retina Z2/Z3 (grf1/grf2){-,-}
 {-#-}		Cirrus boards (grf3){-,-} A2410 (grf4) video or
 {-#-}		CyberVision 64 (grf5)-})dnl
 __devitem(grf_amiga,grf*,{-Motherboard bitmapped video.-})dnl
@@ -792,7 +822,7 @@ __devitem(fb,fb*,framebuffer device)dnl
 __devitem(bktr,bktr*,video capturing)dnl
 _mcdev(bktr,bktr*,bktr,{-major_bktr_c-},644)dnl
 __devitem(tuner,tuner*,tuner device)dnl
-_mkdev(tuner,tuner*,{-M tuner$U c major_tuner_c Add(Mult($U,2),16) 644-},644)dnl
+_mkdev(tuner,tuner*,{-M tuner$U c major_bktr_c Add(Mult($U,2),16) 644-},644)dnl
 __devitem(pci,pci,PCI bus device)dnl
 _mkdev(pci,pci,{-M pci c major_pci_c 0 664-},664)dnl
 __devitem(adb,adb,Apple Desktop bus event interface)dnl
@@ -986,6 +1016,7 @@ fi
 divert(3)dnl  
 dnl
 R() {
+[ "$DEBUG" ] && set -x
 for i in "$@"
 do
 U=`unt $i`
