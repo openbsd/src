@@ -1,4 +1,4 @@
-#	$OpenBSD: elf,v 1.11 2004/10/20 17:23:34 grange Exp $
+#	$OpenBSD: elf,v 1.12 2004/10/23 16:59:25 grange Exp $
 
 #------------------------------------------------------------------------------
 # elf:  file(1) magic for ELF executables
@@ -66,8 +66,8 @@
 >>18	leshort		18		SPARC32PLUS,
 >>18	leshort		20		PowerPC,
 >>18	leshort		40		ARM,
->>18	leshort		43		Sparc64 - invalid byte order,
->>18	leshort		62		Amd64,
+>>18	leshort		43		SPARC64 - invalid byte order,
+>>18	leshort		62		AMD64,
 >>18	leshort		75		VAX,
 >>18	leshort		0x9026		Alpha,
 >>20	lelong		0		invalid version
@@ -123,8 +123,8 @@
 >>18	beshort		18		SPARC32PLUS,
 >>18	beshort		20		PowerPC,
 >>18	beshort		40		ARM,
->>18	beshort		43		Sparc64,
->>18	beshort		62		Amd64 - invalid byte order,
+>>18	beshort		43		SPARC64,
+>>18	beshort		62		AMD64 - invalid byte order,
 >>18	beshort		75		VAX - invalid byte order,
 >>18	beshort		0x9026		Alpha,
 >>20	belong		0		invalid version
