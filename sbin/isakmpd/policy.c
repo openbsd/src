@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.25 2001/03/14 12:15:45 niklas Exp $	*/
+/*	$OpenBSD: policy.c,v 1.26 2001/03/14 21:13:24 tholo Exp $	*/
 /*	$EOM: policy.c,v 1.49 2000/10/24 13:33:39 niklas Exp $ */
 
 /*
@@ -1690,7 +1690,7 @@ keynote_certreq_validate (u_int8_t *data, u_int32_t len)
   if (!dat)
     {
       log_error ("keynote_certreq_validate: calloc (%d, %d) failed", len + 1,
-		 sizeof (char))
+		 sizeof (char));
 	return 0;
     }
 
