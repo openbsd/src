@@ -1,7 +1,7 @@
 /*
  * History
  *
- * $OpenBSD: calendar.history,v 1.6 1999/01/14 14:57:50 mickey Exp $
+ * $OpenBSD: calendar.history,v 1.7 1999/06/15 07:03:42 pjanzen Exp $
  */
 
 #ifndef _calendar_history_
@@ -13,12 +13,10 @@
 01/01	First Rose Bowl; Michigan 49 - Stanford 0, 1902
 01/04	Quadrantid meteor shower (look north)
 01/05	-50 degrees F, Strawberry UT, 1913
-01/05	Fellowship enters Moria  (LOTR)
 01/05	The FCC hears the first demonstration of FM radio, 1940
 01/05	Twelfth night
 01/06	Millard Fillmore's birthday (let's party!)
 01/08	Battle of New Orleans
-01/09	Fellowship reaches Lorien (LOTR)
 01/09	Plough Monday
 01/10	First meeting of United Nations General Assembly in London, 1946
 01/10	Thomas Paine's Common Sense published, 1776
@@ -31,8 +29,6 @@
 01/14	Julian Calendar New Year's Day
 01/14	The first "Be-In" is held in Golden Gate Park, 1967
 01/16	Prohibition begins, 1920
-01/17	Passing of Gandalf (LOTR)
-01/18	Grey whale migration, California
 01/20	St. Agnes Eve (Ah, bitter chill it was...)
 01/24	Eskimo Pie patented by Christian Nelson, 1922
 01/24	Gold discovered in California at Sutter's Mill, 1848
@@ -52,7 +48,6 @@
 02/01	Forces lead by Khomeini take over Iran, 1979
 02/04	Cybernet inaugurated, 1969
 02/04	Patricia Hearst kidnaped by Symbionese Liberation Army, 1974
-02/07	Fellowship leaves Lorien (LOTR)
 02/08	1963 Revolution Anniversary in Iraq
 02/09	-51 degrees F, Vanderbilt MI, 1934
 02/12	Lincoln's real birthday
@@ -61,29 +56,21 @@
 02/15	Chicago Seven convicted, 1970
 02/16	Nylon patented, 1937
 02/16	Stephen Decatur burns US frigate in Tripoli, 1804
-02/17	Death of Boromir (LOTR)
 02/18	Pluto discovered by Clyde Tombaugh, Lowell Observatory, AZ, 1930
 02/19	US Marines land on Iwo Jima, 1945
 02/20	John Glenn orbits the Earth 3 times, 1962
-02/20	Meriadoc & Pippin meet Treebeard (LOTR)
 02/21	Battle of Verdun begins, 1916 1M casualties
 02/21	First telephone directory, New Haven, Connecticut, 1878
 02/21	Malcom X shot to death in Harlem, 1965
-02/22	Passing of King Ellesar (LOTR)
 02/23	Lt. Calley confesses, implicates Cpt. Medina, 1971
-02/24	Ents destroy Isengard (LOTR)
 02/24	Impeachment proceedings against Andrew Johnson begin, 1868
-02/26	Aragorn takes the Paths of the Dead (LOTR)
 02/27	The Lionheart crowned, 1189
 02/28	The "French Connection" drug bust occurs in Marseilles, 1972
 02/29	French and Indian raid on Deerfield MA, 1704
 03/01	Sarah Goode, Sarah Osborne, and Tituba arrested for witchcraft
 	in Salem, Massachusetts, 1692
-03/02	Blackthorn winds (New England) (Does anyone know what this is?)
 03/04	First meeting of Congress, 1789, in N.Y.C.
-03/05	Frodo & Samwise encounter Shelob (LOTR)
 03/06	Hindenburg explodes and burns upon landing at Lakehurst, NJ, 1939
-03/08	Deaths of Denethor & Theoden (LOTR)
 03/13	"Striptease" introduced, Paris, 1894
 03/14	Teddy Roosevelt excludes Japanese laborers from continental US, 1907
 03/15	Buzzards return to Hinckley OH
@@ -94,7 +81,6 @@
 03/16	Robert Goddard launches first liquid-fueled rocket, Auburn MA, 1926
 03/17	Vanguard I launched, 1958.  Earth proved pear-shaped
 03/18	Aleksei Leonov performs first spacewalk, 1965
-03/18	Destruction of the Ring (LOTR)
 03/19	Swallows return to Capistrano
 03/20	Radio Caroline, the original British pirate radio station, sinks, 1980
 03/24	Construction of New York subway system begins, 1900
@@ -102,13 +88,11 @@
 03/26	Popeye statue unveiled, Crystal City TX Spinach Festival, 1937
 03/27	Khrushchev becomes Premier of Soviet Union, 1958
 03/28	Three Mile Island releases radioactive gas, 1979
-03/29	Flowering of the Mallorn (LOTR)
 03/29	Swedish settled Christiana (Wilmington) DE, 1638
 03/30	Alaska purchased from Russia for $7.2 million, 1867
 03/30	Five rings around Uranus discovered, 1977
 03/30	Pencil with eraser patented, 1858
 04/01	People of superb intelligence, savoir-faire, etc. born this day.
-04/04	Gandalf visits Bilbo (LOTR)
 04/04	Martin Luther King assassinated in Memphis, Tennessee, 1968
 04/04	NATO Established, 1949
 04/06	Joseph Smith founds Mormon Church, 1830
@@ -124,7 +108,6 @@
 04/14	Titanic hits iceberg and sinks, 1912
 04/15	Ray Kroc opens first McDonalds in Des Plaines, IL, 1955
 04/16	Lincoln shot in Ford's Theatre by John Wilkes Booth, 1865
-04/17	An unexpected party (LOTR)
 04/17	Bay of Pigs invasion crushed by Castro forces, 1961
 04/18	Einstein's Death, 1955
 04/18	First Laundromat opens, Fort Worth Texas, 1934
@@ -133,18 +116,17 @@
 04/19	Warsaw Ghetto uprising, 1943
 04/20	Supreme Court unanimously rules in favor of busing, 1971
 04/21	Lyrid meteor shower
-04/23	Crowning of King Ellesar (LOTR)
 04/23	Hank Aaron hits his first home run, 1954
 04/26	William Shakespeare baptized in Stratford-on-Avon, England, 1564,
-	birthdate unknown
+	birthdate less certain
 04/27	Magellan killed in Philippines, 1521
 04/29	Zipper patented by Gideon Sindback, 1913
 05/01	Beltaine; Feast of the god Bel, sun god
+05/03	Last Star Trek episode first aired ("Turnabout Intruder"), 1969
 05/03	Anti-war protest disrupts business in Washington, 1971
 05/04	Four Kent State students are shot down by the National Guard, 1970
 05/05	John Scopes arrested for teaching evolution, Dayton, TN, 1925
 05/07	Germany surrenders after WWII, 1945
-05/08	Beginning of ostrich mating season
 05/08	US institutes mining of Haiphong Harbor, 1972
 05/09	94 degrees, New York, 1979
 05/10	Germany invades Low Countries, 1940
@@ -156,14 +138,11 @@
 05/17	Six SLA members killed in televised gun fight, 1974
 05/18	Battle of Las Piedras in Uruguay
 05/18	Napoleon crowned Emperor, 1804
-05/19	Arwen leaves Lorian to wed King Ellesar (LOTR)
 05/21	Battle of Iquique in Chile
 05/21	US explodes first hydrogen bomb, 1956
 05/22	US Civil War ends, 1865
 05/23	Israeli raid into Argentina to capture Adolf Eichmann, 1960
-05/23	Two Yetis sighted, Mt. Everest, 1953
 05/24	Battle of Pinchincha in Ecuador
-05/25	Oral Roberts sees 900 foot tall Jesus Christ, Tulsa OK, 1980
 05/25	Successful test of the limelight in Purfleet, England, 1830
 05/26	Congress sets first immigration quotas, 1924
 05/27	Golden Gate Bridge opens, 1937
@@ -171,7 +150,6 @@
 05/29	First food stamps issued, 1961
 05/30	US Marines sent to Nicaragua, 1912
 06/02	Native Americans "granted" citizenship, 1924
-06/04	Roquefort cheese developed, 1070
 06/05	Robert Kennedy assassinated, 1968
 06/05	US leaves the Gold Standard, 1933
 06/06	First drive-in movie, 1933
@@ -179,9 +157,8 @@
 06/10	Death of Alexander the Great, 323 B.C.
 06/10	Denver police tear gas Jethro Tull and 2000 fans at Red Rocks, 1971
 06/11	Greeks seize Troy, 1184BC
-06/11	Sauron attacks Osgilliath (LOTR)
-06/13	Bilbo returns to Bag End (LOTR)
-06/13	Pioneer flies past Neptune, and therefore out of the Solar System
+06/13	Pioneer 10 flies past Neptune's orbit, and becomes the first human
+	artifact to travel beyond the orbits of all known planets, 1983
 06/14	Sandpaper invented by I. Fischer, Jr., 1834
 06/15	Ben Franklin's kite experiment, 1752
 06/15	Magna Carta signed, 1215
@@ -198,13 +175,11 @@
 06/21	Sun rises over Heelstone at Stonehenge
 06/22	Civil rights workers disappear in Mississippi, 1964
 06/23	Slavery abolished in England, 1772
-06/23	Wedding of Ellesar & Arwen (LOTR)
 06/24	Senate repeals Gulf of Tonkin resolution, 1970
 06/25	Custer's Last Stand at Little Big Horn, 1876
 06/25	North Korea invades South Korea, 1950
 06/26	Battle of Gettysburg, 1863
 06/26	St. Lawrence Seaway dedicated by Eisenhower & Queen Elizabeth II, 1959
-06/26	Toothbrush invented, 1498
 06/27	100 degrees, Fort Yukon, 1915
 06/27	Bill Graham closes the Fillmore East, 1971
 06/28	Supreme Court decides in favor of Alan Bakke, 1978
@@ -214,7 +189,6 @@
 07/03	Dog days begin
 07/04	Battles of Vicksburg and Gettysburg won by Union forces, 1863
 07/04	Cloudy, 76 degrees, Philadelphia PA, 1776
-07/04	Gandalf imprisoned by Saruman (LOTR)
 07/04	New York abstains on Declaration of Independence vote, 1776
 07/04	Thoreau enters woods, 1845
 07/06	First `talkie' (talking motion picture) premiere in New York, 1928
@@ -235,10 +209,7 @@
 07/21	Vietnam divided at 17th parallel, 1954
 07/23	Ice cream cone introduced, St. Louis MO, 1904
 07/24	Scopes Monkey Trial, 1925
-07/24	The ring comes to Bilbo (LOTR)
-07/26	Bilbo rescued from Wargs by Eagles (LOTR)
 07/28	Potato introduced in Europe by Sir Thomas Harriot, 1586
-07/28	Hamburger invented by Louis Lessing, CT, 1900
 07/28	B-25 hit 79th floor of Empire State Building, 1945
 07/30	"In God We Trust" made U.S. motto, 1956
 07/31	Harry S. Truman dedicates N.Y. Int'l Airport @ Idlewild Field, 1948,
@@ -246,7 +217,6 @@
 08/01	Lughnasa; Feast of the god Lugh, a 30 day Celtic feast centers on
 	this day
 08/03	Columbus sets sail for Cathay, 1492
-08/03	Funeral of King Theoden (LOTR)
 08/03	USS Nautilus crosses under north polar ice cap, 1958
 08/04	Axe murder of Andrew and Abbey Borden, 1892
 08/04	Bombing of N. Vietnam begins, 1964
@@ -293,7 +263,6 @@
 08/28	King leads over 200K in civil rights rally in Washington, DC, 1963
 08/29	Star in Cygnus goes nova and becomes 4th brightest in sky, 1975;
 	Nova Cygni 1975.
-08/29	Saruman enters the Shire (LOTR)
 08/30	75 cents a pound tariff set on opium, 1842
 08/30	Japan Stationery Co. sells first felt-tipped pen, 1960
 08/30	St. Rose of Lima in Peru
@@ -309,32 +278,27 @@
 09/05	Kennedy orders resumption of underground nuclear tests, 1961
 09/05	The first Continental Congress was convened in Philadelphia, 1774
 09/06	149 Pilgrims set forth from England aboard the Mayflower, 1620
-09/06	First Star Trek episode (The Man Trap) aired 1966
 09/06	Pres. McKinley shot, 1901
 09/06	Somhlolo in Swaziland
-09/08	"Star Trek" debuts on NBC (1966)
+09/08	Star Trek debuts on NBC (1966) with "The Man Trap"
 09/08	Jack the Ripper kills again, Annie Chapman is second victim, 1888
 09/08	President Ford pardons Richard M. Nixon, 1974
 09/09	California becomes the 31st state, 1850
 09/09	United Colonies is renamed the United States, 1776
-09/10	Gandalf escapes from Orthanc (LOTR)
 09/10	Mountain Meadows Massacre.  Mormons kill Gentile wagon train, 1857
 09/12	German paratroopers rescue Mussolini from captivity in Rome, 1943
 09/12	Germany annexes Sudentenland, 1938
 09/13	136.4 F at el Azizia, Libya, 1922
-09/13	British defeat the French at Abraham near Quebec City, 1788
+09/13	British defeat the French at Plains of Abraham near Quebec City, 1788
 09/13	Building of Hadrian's Wall begun, 122
 09/13	Chiang Kai-Shek becomes president of China, 1943
 09/14	Benjamin Franklin is sent to France as an American minister, 1778
-09/14	Frodo & Bilbo's birthday (LOTR)
 09/14	Salem, Massachusetts, is founded, 1629
 09/14	The Selective Service Act establishes the first peacetime draft, 1940
-09/15	Black riders enter the Shire (LOTR)
 09/15	Soviet Premier Nikita Khrushchev begins his 13 day tour of the US, 1959
 09/15	The U.S. Foreign Affairs Dept. becomes the U.S. State Department, 1789
 09/16	The village of Shawmut, Massachusetts, becomes the city of Boston, 1630
 09/17	Battle of Antietam, 1862
-09/18	Frodo and company rescued by Bombadil (LOTR)
 09/18	Victory of Uprona in Burundi
 09/20	Equal Rights Party nominates Belva Lockwood for President, 1884
 09/20	First meeting of the American Association for the Advancement of
@@ -354,7 +318,6 @@
 09/28	"Pilgrim's Progress" published, 1678
 09/28	A Greek soldier runs 26+ miles after the Persian defeat at Marathon,
 	490BC
-09/28	Frodo wounded at Weathertop (LOTR)
 09/30	Red Jack kills 2, Elizabeth Stride (#3) and Catherine Eddowes (#4),
 	1888
 09/30	The first tooth is extracted under anesthesia in Charleston, Mass, 1846
@@ -364,7 +327,6 @@
 10/04	Crimean war begins, 1853
 10/04	First space vehicle, Sputnik I, launched, 1957
 10/04	Sputnik 1, world's first orbiting satellite launched, 1957
-10/05	Frodo crosses bridge of Mitheithel
 10/06	Antioch College is the first public school to admit men and women, 1853
 10/06	Egyptian President Anwar Sadat is assassinated in Cairo, 1981
 10/06	Israel is attacked by the alliance of Egypt and Syria, 1973
@@ -377,13 +339,11 @@
 10/09	First two-way telephone conversation, 1876
 10/10	Beginning of the Wars for Independence in Cuba
 10/10	Foundation of the Workers Party in North Korea
-10/10	Mercury at Superior Conjunction with Sun.  Moves into night sky. (1984)
 10/10	Spiro T. Agnew resigns as Vice-President due to income tax fraud, 1973
 10/11	"Saturday Night Live" premiers on NBC-TV, 1975
 10/11	The Gang of Four are arrested in Peking, 1976
 10/11	The first steam powered ferry ran between New York and Hoboken, 1811
 10/11	The second Vatican Ecumenical Council opens in Rome, 1962
-10/11	First broadcast of Saturday Night Live, 1975
 10/12	Bahama Natives discover Columbus of Europe lost on their shores, 1492
 10/12	Khrushchev pounds his desk with shoe during a speech to the UN, 1960
 10/12	Man O'War's last race, 1920
@@ -393,8 +353,6 @@
 10/14	Battle of Hastings won by William the Conqueror and the Normans, 1066
 10/14	Chuck Yeager breaks sound barrier, 1947
 10/15	First draft card burned, 1965
-10/16	Boromir reaches Rivendell (LOTR)
-10/17	Council of Elrond (LOTR)
 10/18	Boston Shoemakers form first U.S. labor org., 1648
 10/18	Soviets announce their probe took photos of the Moon's far side, 1959
 10/19	Mao Tse-tung establishes the People's Republic of China, 1949
@@ -404,9 +362,7 @@
 10/21	Edison makes the first practical incandescent lamp, 1879
 10/21	Guggenheim Museum opens, 1959
 10/23	Battle of Leyte Gulf begins, 1944
-10/23	Earth created at 6:30 AM, 4004BC.
 10/23	Swallows leave Capistrano
-10/25	End of War of the Ring (LOTR)
 10/25	The UN removes Taiwan and admits the People's Republic of China, 1971
 10/26	UN's World Health Organization declares smallpox eradicated, 1978
 10/27	New York's Boss Tweed is arrested on fraud charges, 1871
@@ -446,7 +402,6 @@
 	price controls (but okayed by Price Commission after formal request
 	from McDonald's), 1971
 11/15	Niagara Falls power plant startup, 1896
-11/16	Bilbo reaches the Lonely Mountain (LOTR)
 11/16	Opening of the Suez Canal, 1869
 11/17	46,000 meteoroids fall over AZ in 20 minutes, 1966
 11/17	Richard Nixon says "I am not a crook.", 1973
@@ -469,7 +424,6 @@
 12/03	First successful human heart transplant lead by Dr. Barnard, 1967
 12/03	The Montreux Casino burns down during a Frank Zappa concert, 1971
 12/04	Washington takes leave of his officers at Fraunce's Tavern, NYC, 1783
-12/05	Death of Smaug (LOTR)
 12/05	End of Prohibition, 1933 (at least the alcohol part)
 12/05	Phi Beta Kappa founded, 1776
 12/05	The Eighteenth Amendment repealed, ending Prohibition, 1933
@@ -485,9 +439,7 @@
 12/15	Bill of Rights adopted, 1791
 12/15	James Naismith invents basketball, Canada, 1891
 12/15	Sitting Bull shot in head while submitting to arrest, 1890
-12/16	Fellowship begins Quest (LOTR)
 12/20	U.S. buys ~1,000,000 sq. miles of Louisiana for ~$20/sq.mi.
-12/21	Phileas Fogg completes his trip around the world in less than 80 days
 12/24	KKK formed in Pulaski, Tenn, 1865
 12/26	DPMA founded, 1951
 12/27	APT report published, 1956

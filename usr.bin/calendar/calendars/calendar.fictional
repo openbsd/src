@@ -1,0 +1,56 @@
+/*
+ * Fictional events
+ *
+ * $OpenBSD: calendar.fictional,v 1.1 1999/06/15 07:03:42 pjanzen Exp $
+ */
+
+#ifndef _calendar_fictional_
+#define _calendar_fictional_
+
+01/05	Fellowship enters Moria  (LOTR)
+01/09	Fellowship reaches Lorien (LOTR)
+01/17	Passing of Gandalf (LOTR)
+02/07	Fellowship leaves Lorien (LOTR)
+02/17	Death of Boromir (LOTR)
+02/20	Meriadoc & Pippin meet Treebeard (LOTR)
+02/22	Passing of King Ellesar (LOTR)
+02/24	Ents destroy Isengard (LOTR)
+02/26	Aragorn takes the Paths of the Dead (LOTR)
+03/05	Frodo & Samwise encounter Shelob (LOTR)
+03/08	Deaths of Denethor & Theoden (LOTR)
+03/18	Destruction of the Ring (LOTR)
+03/29	Flowering of the Mallorn (LOTR)
+04/04	Gandalf visits Bilbo (LOTR)
+04/17	An unexpected party (LOTR)
+04/23	Crowning of King Ellesar (LOTR)
+05/19	Arwen leaves Lorian to wed King Ellesar (LOTR)
+06/11	Sauron attacks Osgilliath (LOTR)
+06/13	Bilbo returns to Bag End (LOTR)
+06/23	Wedding of Ellesar & Arwen (LOTR)
+07/04	Gandalf imprisoned by Saruman (LOTR)
+07/24	The ring comes to Bilbo (LOTR)
+07/26	Bilbo rescued from Wargs by Eagles (LOTR)
+08/03	Funeral of King Theoden (LOTR)
+08/29	Saruman enters the Shire (LOTR)
+09/10	Gandalf escapes from Orthanc (LOTR)
+09/14	Frodo & Bilbo's birthday (LOTR)
+09/15	Black riders enter the Shire (LOTR)
+09/18	Frodo and company rescued by Bombadil (LOTR)
+09/28	Frodo wounded at Weathertop (LOTR)
+10/05	Frodo crosses bridge of Mitheithel
+10/16	Boromir reaches Rivendell (LOTR)
+10/17	Council of Elrond (LOTR)
+10/25	End of War of the Ring (LOTR)
+11/16	Bilbo reaches the Lonely Mountain (LOTR)
+12/05	Death of Smaug (LOTR)
+12/16	Fellowship begins Quest (LOTR)
+12/21	Phileas Fogg completes his trip around the world in less than 80 days
+
+/* These really _did_ "happen" */
+05/23	Two Yetis sighted, Mt. Everest, 1953
+05/25	Oral Roberts sees 900 foot tall Jesus Christ, Tulsa OK, 1980
+/* Not really a fictional event, just a fictional time */
+05/08	Beginning of ostrich mating season
+10/23	Earth created at 6:30 AM, 4004BC.
+
+#endif /* !_calendar_fictional_ */
