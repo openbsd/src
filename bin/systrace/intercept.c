@@ -1,4 +1,4 @@
-/*	$OpenBSD: intercept.c,v 1.30 2002/09/06 22:56:21 deraadt Exp $	*/
+/*	$OpenBSD: intercept.c,v 1.31 2002/09/17 04:57:53 itojun Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -313,7 +313,7 @@ intercept_run(int bg, int fd, char *path, char *const argv[])
 	}
 
 	if (bg) {
-		if (daemon(0, 1) == -1) {
+		if (daemon(1, 1) == -1) {
 			kill(pid, SIGKILL);
 			err(1, "daemon");
 		}

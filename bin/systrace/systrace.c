@@ -1,4 +1,4 @@
-/*	$OpenBSD: systrace.c,v 1.33 2002/09/16 04:34:46 itojun Exp $	*/
+/*	$OpenBSD: systrace.c,v 1.34 2002/09/17 04:57:53 itojun Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -512,7 +512,7 @@ main(int argc, char **argv)
 			err(1, "attachpid");
 
 		if (background) {
-			if (daemon(0, 1) == -1)
+			if (daemon(1, 1) == -1)
 				err(1, "daemon");
 		}
 	}
