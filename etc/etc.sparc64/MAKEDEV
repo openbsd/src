@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.23 2001/09/21 17:58:56 todd Exp $
+#	$OpenBSD: MAKEDEV,v 1.24 2001/10/29 19:33:39 todd Exp $
 #
 # Copyright (c) 2001 Todd T. Fries <todd@OpenBSD.org>
 # All rights reserved.
@@ -30,11 +30,9 @@
 #	floppy	devices to be put on install floppies
 #	std	standard devices
 #	local	configuration specific devices
-#
 # Tapes:
 #	st*	SCSI tapes
 #	ch*	SCSI media changer
-#
 # Disks:
 #	wd*	"winchester" disk drives (ST506,IDE,ESDI,RLL,...)
 #	fd*	Floppy disk drives (3 1/2", 5 1/4")
@@ -44,21 +42,18 @@
 #	rd*	"ramdisk" pseudo-disks
 #	ccd*	concatenated disk devices
 #	raid*	RAIDframe disk devices
-#
 # Console ports:
 #	console	PROM console
-#
 # Pointing devices:
 #	mouse	mouse (provides events, for X11)
-#
 # Terminal ports:
 #	tty[a-z]*	Zilog 8530 Serial Port
 #	cua[a-z]*	Zilog 8530 Serial Port
-#	com*	NS16x50 serial ports
-#
+#	tty0*	NS16x50 serial ports
+#	ttyh*	Sab82532 serial devices
 # Pseudo terminals:
-#	pty*	set of 16 master and slave pseudo terminals
-#
+#	tty*	set of 16 slave psuedo terminals
+#	pty*	set of 16 master pseudo terminals
 # Special purpose devices:
 #	ses*	SES/SAF-TE SCSI devices
 #	fd	makes fd/* for the fdescfs
@@ -77,7 +72,6 @@
 #	tun*	network tunnel driver
 #	lkm	loadable kernel modules interface
 #	*random	inkernel random data source
-#
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 T=$0
 
@@ -193,7 +187,7 @@ all)
 	R fd1 fd1B fd1C fd1D fd1E fd1F fd1G fd1H
 	R xfs0 tcx0 lkm audio0 local
 	R ttya ttyb ttyc ttyd cuaa cuab cuac cuad
-	R tty00 tty01 tty02 tty03
+	R tty00 tty01 tty02 tty03 ttyh0 ttyh1
 	;;
 floppy)
 	R std fd0 wd0 wd1 sd0 sd1
@@ -291,6 +285,7 @@ pty*)case $U in
 		M pty$nam c 21 $(($off+$n))
 		n=$(($n+1))
 	done;;
+ttyh*)M ttyh$U c 77 $U 660 dialer uucp;;
 tty0*)M tty$U c 36 $U 660 dialer uucp
 	M cua$U c 36 $(($U+128)) 660 dialer uucp;;
 cua[a-z])u=${i#cua*}
