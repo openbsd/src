@@ -75,6 +75,7 @@
 ./etc/networks
 ./etc/newsyslog.conf
 ./etc/ntpd.conf
+./etc/ospfd.conf
 ./etc/passwd
 ./etc/pf.conf
 ./etc/pf.os

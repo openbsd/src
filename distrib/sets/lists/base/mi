@@ -1831,6 +1831,8 @@
 ./usr/sbin/nsupdate
 ./usr/sbin/ntpd
 ./usr/sbin/openssl
+./usr/sbin/ospfctl
+./usr/sbin/ospfd
 ./usr/sbin/pac
 ./usr/sbin/pkg
 ./usr/sbin/pkg_add
