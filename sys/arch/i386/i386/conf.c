@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.47 1998/08/24 05:29:55 millert Exp $	*/
+/*	$OpenBSD: conf.c,v 1.48 1998/08/31 05:16:53 art Exp $	*/
 /*	$NetBSD: conf.c,v 1.75 1996/05/03 19:40:20 christos Exp $	*/
 
 /*
@@ -173,6 +173,10 @@ cdev_decl(svr4_net);
 #include "apm.h"
 #include "pctr.h"
 #include "bios.h"
+#ifdef XFS
+#include <xfs/nxfs.h>
+cdev_decl(xfs_dev);
+#endif
 #include "bktr.h"
 cdev_decl(bktr);
 #include "ksyms.h"
@@ -254,6 +258,11 @@ struct cdevsw	cdevsw[] =
 	cdev_ocis_init(NBIOS,bios),	/* 48: onboard BIOS PROM */
 	cdev_bktr_init(NBKTR,bktr),     /* 49: Bt848 video capture device */
 	cdev_ksyms_init(NKSYMS,ksyms),	/* 50: Kernel symbols device */
+#ifdef XFS
+	cdev_xfs_init(NXFS,xfs_dev),	/* 51: xfs communication device */
+#else
+	cdev_notdef(),			/* 51 */
+#endif
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
