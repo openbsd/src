@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.45 2001/09/16 14:28:43 miod Exp $	*/
+/*	$OpenBSD: locore.S,v 1.46 2001/09/20 18:33:03 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2001 Michael Shalayeff
@@ -168,7 +168,7 @@ ENTRY($start,0)
 
 	/* zero fake trapframe and proc0 u-area */
 	copy	arg3, t2
-	ldi	NBPG+TF_SIZE, t1
+	ldi	NBPG+TRAPFRAME_SIZEOF, t1
 $start_zero_tf
 	stws,ma r0, 4(t2)
 	addib,>= -8, t1, $start_zero_tf
@@ -179,7 +179,7 @@ $start_zero_tf
 	 * initialize the pcb
 	 * arg0 will be available space for hppa_init()
 	 */
-	ldo	NBPG+TF_SIZE(arg3), sp
+	ldo	NBPG+TRAPFRAME_SIZEOF(arg3), sp
 	mtctl	arg3, cr30
 	stw	r0, U_PCB+PCB_ONFAULT(arg3)
 	stw	r0, U_PCB+PCB_SPACE(arg3)	/* XXX HPPA_SID_KERNEL == 0 */
@@ -192,8 +192,8 @@ $start_zero_tf
 	stw	arg3, R%proc0+P_ADDR(t2)
 
 	ldil	L%TFF_LAST, t1
-	stw	t1, TF_FLAGS-TF_SIZE(sp)
-	stw	arg3, TF_CR30-TF_SIZE(sp)
+	stw	t1, TF_FLAGS-TRAPFRAME_SIZEOF(sp)
+	stw	arg3, TF_CR30-TRAPFRAME_SIZEOF(sp)
 
 	/*
 	 * We need to set the Q bit so that we can take TLB misses after we
@@ -537,11 +537,11 @@ $syscall
 
 	/* calculate kernel sp, load, create kernel stack frame */
 	copy	sp, t4
-	ldo	NBPG+TF_SIZE(t2), t3
+	ldo	NBPG+TRAPFRAME_SIZEOF(t2), t3
 	ldo	HPPA_FRAME_SIZE+HPPA_FRAME_MAXARGS(t3), sp
-	stw	t1, TF_R22 -TF_SIZE(sr1, t3)	/* syscall # */
-	stw	t4, TF_R30 -TF_SIZE(sr1, t3)	/* user stack */
-	stw	r1, TF_CR15-TF_SIZE(sr1, t3)	/* eiem */
+	stw	t1, TF_R22 -TRAPFRAME_SIZEOF(sr1, t3)	/* syscall # */
+	stw	t4, TF_R30 -TRAPFRAME_SIZEOF(sr1, t3)	/* user stack */
+	stw	r1, TF_CR15-TRAPFRAME_SIZEOF(sr1, t3)	/* eiem */
 	mtctl	r1, eiem
 
 	/*
@@ -549,25 +549,25 @@ $syscall
 	 * will be saved accordingly in either syscall()
 	 * or deeper called functions
 	 */
-	stw	r27, TF_R27-TF_SIZE(sr1, t3)	/* dp */
-	stw	r3 , TF_R3 -TF_SIZE(sr1, t3)
+	stw	r27, TF_R27-TRAPFRAME_SIZEOF(sr1, t3)	/* dp */
+	stw	r3 , TF_R3 -TRAPFRAME_SIZEOF(sr1, t3)
 #ifdef DDB
 	/* save callee-save registers */
-	stw	r4 , TF_R4 -TF_SIZE(sr1, t3)
-	stw	r5 , TF_R5 -TF_SIZE(sr1, t3)
-	stw	r6 , TF_R6 -TF_SIZE(sr1, t3)
-	stw	r7 , TF_R7 -TF_SIZE(sr1, t3)
-	stw	r8 , TF_R8 -TF_SIZE(sr1, t3)
-	stw	r9 , TF_R9 -TF_SIZE(sr1, t3)
-	stw	r10, TF_R10-TF_SIZE(sr1, t3)
-	stw	r11, TF_R11-TF_SIZE(sr1, t3)
-	stw	r12, TF_R12-TF_SIZE(sr1, t3)
-	stw	r13, TF_R13-TF_SIZE(sr1, t3)
-	stw	r14, TF_R14-TF_SIZE(sr1, t3)
-	stw	r15, TF_R15-TF_SIZE(sr1, t3)
-	stw	r16, TF_R16-TF_SIZE(sr1, t3)
-	stw	r17, TF_R17-TF_SIZE(sr1, t3)
-	stw	r18, TF_R18-TF_SIZE(sr1, t3)
+	stw	r4 , TF_R4 -TRAPFRAME_SIZEOF(sr1, t3)
+	stw	r5 , TF_R5 -TRAPFRAME_SIZEOF(sr1, t3)
+	stw	r6 , TF_R6 -TRAPFRAME_SIZEOF(sr1, t3)
+	stw	r7 , TF_R7 -TRAPFRAME_SIZEOF(sr1, t3)
+	stw	r8 , TF_R8 -TRAPFRAME_SIZEOF(sr1, t3)
+	stw	r9 , TF_R9 -TRAPFRAME_SIZEOF(sr1, t3)
+	stw	r10, TF_R10-TRAPFRAME_SIZEOF(sr1, t3)
+	stw	r11, TF_R11-TRAPFRAME_SIZEOF(sr1, t3)
+	stw	r12, TF_R12-TRAPFRAME_SIZEOF(sr1, t3)
+	stw	r13, TF_R13-TRAPFRAME_SIZEOF(sr1, t3)
+	stw	r14, TF_R14-TRAPFRAME_SIZEOF(sr1, t3)
+	stw	r15, TF_R15-TRAPFRAME_SIZEOF(sr1, t3)
+	stw	r16, TF_R16-TRAPFRAME_SIZEOF(sr1, t3)
+	stw	r17, TF_R17-TRAPFRAME_SIZEOF(sr1, t3)
+	stw	r18, TF_R18-TRAPFRAME_SIZEOF(sr1, t3)
 #endif
 	stw	r0, 0(sr1, t3)	/* terminate frame */
 	copy	r0 , r3
@@ -605,48 +605,48 @@ $syscall
 	 */
 
 	ldo	4(r31), arg1
-	stw	r31, TF_IIOQH-TF_SIZE(sr1, t3)
-	stw	arg1, TF_IIOQT-TF_SIZE(sr1, t3)
+	stw	r31, TF_IIOQH-TRAPFRAME_SIZEOF(sr1, t3)
+	stw	arg1, TF_IIOQT-TRAPFRAME_SIZEOF(sr1, t3)
 
 	mfsp	sr0, arg0
-	stw	arg0, TF_IISQH-TF_SIZE(sr1, t3)
-	stw	arg0, TF_IISQT-TF_SIZE(sr1, t3)
+	stw	arg0, TF_IISQH-TRAPFRAME_SIZEOF(sr1, t3)
+	stw	arg0, TF_IISQT-TRAPFRAME_SIZEOF(sr1, t3)
 
-	stw	arg0, TF_CR20-TF_SIZE(sr1, t3)
-	stw	r31, TF_CR21-TF_SIZE(sr1, t3)
+	stw	arg0, TF_CR20-TRAPFRAME_SIZEOF(sr1, t3)
+	stw	r31, TF_CR21-TRAPFRAME_SIZEOF(sr1, t3)
 
 	mfsp	sr3, arg0
-	stw	arg0, TF_SR3-TF_SIZE(sr1, t3)
-	stw	r28, TF_CR8-TF_SIZE(sr1, t3)	/* pidr1 */
+	stw	arg0, TF_SR3-TRAPFRAME_SIZEOF(sr1, t3)
+	stw	r28, TF_CR8-TRAPFRAME_SIZEOF(sr1, t3)	/* pidr1 */
 
 	mfctl	iir, arg0	/* XXX bogus */
 	ldil	TFF_LAST|TFF_SYS, arg1
-	stw	arg0, TF_CR19-TF_SIZE(sr1, t3)
-	stw	arg1, TF_FLAGS-TF_SIZE(sr1, t3)
+	stw	arg0, TF_CR19-TRAPFRAME_SIZEOF(sr1, t3)
+	stw	arg1, TF_FLAGS-TRAPFRAME_SIZEOF(sr1, t3)
 
 	mfsp	sr0, arg0
 	mfsp	sr0, arg1
 	mfsp	sr2, arg2
 	mfsp	sr4, arg3
-	stw	arg0, TF_SR0-TF_SIZE(sr1, t3)
-	stw	arg1, TF_SR1-TF_SIZE(sr1, t3)
-	stw	arg2, TF_SR2-TF_SIZE(sr1, t3)
-	stw	arg3, TF_SR4-TF_SIZE(sr1, t3)
+	stw	arg0, TF_SR0-TRAPFRAME_SIZEOF(sr1, t3)
+	stw	arg1, TF_SR1-TRAPFRAME_SIZEOF(sr1, t3)
+	stw	arg2, TF_SR2-TRAPFRAME_SIZEOF(sr1, t3)
+	stw	arg3, TF_SR4-TRAPFRAME_SIZEOF(sr1, t3)
 
 	mfsp	sr5, arg0
 	mfsp	sr6, arg1
 	mfsp	sr7, arg2
 	mfctl	pidr2, arg3
-	stw	arg0, TF_SR5-TF_SIZE(sr1, t3)
-	stw	arg1, TF_SR6-TF_SIZE(sr1, t3)
-	stw	arg2, TF_SR7-TF_SIZE(sr1, t3)
-	stw	arg3, TF_CR9-TF_SIZE(sr1, t3)
+	stw	arg0, TF_SR5-TRAPFRAME_SIZEOF(sr1, t3)
+	stw	arg1, TF_SR6-TRAPFRAME_SIZEOF(sr1, t3)
+	stw	arg2, TF_SR7-TRAPFRAME_SIZEOF(sr1, t3)
+	stw	arg3, TF_CR9-TRAPFRAME_SIZEOF(sr1, t3)
 
 #if pbably_not_worth_it
 	mfctl	pidr3, arg2
 	mfctl	pidr4, arg3
-	stw	arg2, TF_CR12-TF_SIZE(sr1, t3)
-	stw	arg3, TF_CR13-TF_SIZE(sr1, t3)
+	stw	arg2, TF_CR12-TRAPFRAME_SIZEOF(sr1, t3)
+	stw	arg3, TF_CR13-TRAPFRAME_SIZEOF(sr1, t3)
 #endif
 
 #ifdef DDB
@@ -655,13 +655,13 @@ $syscall
 	 */
 	mfctl	eirr, arg0
 	mfctl	hptmask, arg1
-	stw	arg0, TF_CR23-TF_SIZE(sr1, t3)
-	stw	arg1, TF_CR24-TF_SIZE(sr1, t3)
+	stw	arg0, TF_CR23-TRAPFRAME_SIZEOF(sr1, t3)
+	stw	arg1, TF_CR24-TRAPFRAME_SIZEOF(sr1, t3)
 
 	mfctl	vtop, arg0
 	mfctl	cr28, arg1
-	stw	arg0, TF_CR25-TF_SIZE(sr1, t3)
-	stw	arg1, TF_CR28-TF_SIZE(sr1, t3)
+	stw	arg0, TF_CR25-TRAPFRAME_SIZEOF(sr1, t3)
+	stw	arg1, TF_CR28-TRAPFRAME_SIZEOF(sr1, t3)
 #endif
 
 	/* setup kernel context */
@@ -674,7 +674,7 @@ $syscall
 	mtsp	r0, sr6
 	mtsp	r0, sr7
 
-	ldo	-TF_SIZE(t3), arg0
+	ldo	-TRAPFRAME_SIZEOF(t3), arg0
 	ldo	4(t3), arg1
 
 	ldil	L%$global$,dp
@@ -1147,7 +1147,7 @@ ENTRY(TLABEL(excpt),0)
 	.import	$fpemu_stack, data
 	ldil	L%$fpemu_stack, r31
 	ldo	R%$fpemu_stack(r31), r31
-	ldo	R%TF_SIZE+HPPA_FRAME_SIZE(r31), sp
+	ldo	R%TRAPFRAME_SIZEOF+HPPA_FRAME_SIZE(r31), sp
 
 	stw	r1 , TF_R1 (r31)
 	stw	r2 , TF_R2 (r31)
@@ -1678,7 +1678,7 @@ $trap_from_kernel
 	mfctl	tr7, r1
 
 	copy	sp, t3
-	ldo	HPPA_FRAME_SIZE+TF_SIZE(sp), sp
+	ldo	HPPA_FRAME_SIZE+TRAPFRAME_SIZEOF(sp), sp
 	rfir
 	nop
 $trapnowvirt
@@ -2593,9 +2593,11 @@ EXIT(switch_trampoline)
  * Signal "trampoline" code. Invoked from RTE setup by sendsig().
  */
 ENTRY(sigcode,0)
-	/* TODO call signal handler */
-
-	/*ldo	SIGF_SC(sp), arg0*/
+	.call
+	blr	r0, rp
+	bv,n	r0(arg3)
+	nop
+	copy	r3, arg0
 	ldil	L%SYSCALLGATE, r1
 	.call
 	ble	4(sr7, r1)
