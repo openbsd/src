@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.81 2002/01/28 16:26:21 jason Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.82 2002/01/28 17:10:11 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -981,81 +981,96 @@ ubsec_process(crp)
 		    dmap->d_mcr->mcr_opktbuf.pb_next);
 #endif
 	} else {
-		if (!nicealign && (crp->crp_flags & CRYPTO_F_IOV)) {
-			err = EINVAL;
-			goto errout;
-		} else if (!nicealign && (crp->crp_flags & CRYPTO_F_IMBUF)) {
-			int totlen, len;
-			struct mbuf *m, *top, **mp;
-
-			totlen = q->q_src_map->dm_mapsize;
-			if (q->q_src_m->m_flags & M_PKTHDR) {
-				len = MHLEN;
-				MGETHDR(m, M_DONTWAIT, MT_DATA);
-			} else {
-				len = MLEN;
-				MGET(m, M_DONTWAIT, MT_DATA);
+		if (crp->crp_flags & CRYPTO_F_IOV) {
+			if (!nicealign) {
+				err = EINVAL;
+				goto errout;
 			}
-			if (m == NULL) {
+			if (bus_dmamap_create(sc->sc_dmat, 0xfff0,
+			    UBS_MAX_SCATTER, 0xfff0, 0, BUS_DMA_NOWAIT,
+			    &q->q_dst_map) != 0) {
 				err = ENOMEM;
 				goto errout;
 			}
-			if (len == MHLEN)
-				M_DUP_PKTHDR(m, q->q_src_m);
-			if (totlen >= MINCLSIZE) {
-				MCLGET(m, M_DONTWAIT);
-				if (m->m_flags & M_EXT)
-					len = MCLBYTES;
-			}
-			m->m_len = len;
-			top = NULL;
-			mp = &top;
-
-			while (totlen > 0) {
-				if (top) {
-					MGET(m, M_DONTWAIT, MT_DATA);
-					if (m == NULL) {
-						m_freem(top);
-						err = ENOMEM;
-						goto errout;
-					}
-					len = MLEN;
-				}
-				if (top && totlen >= MINCLSIZE) {
-					MCLGET(m, M_DONTWAIT);
-					if (m->m_flags & M_EXT)
-						len = MCLBYTES;
-				}
-				m->m_len = len = min(totlen, len);
-				totlen -= len;
-				*mp = m;
-				mp = &m->m_next;
-			}
-			q->q_dst_m = top;
-			ubsec_mcopy(q->q_src_m, q->q_dst_m, cpskip, cpoffset);
-		} else
-			q->q_dst_m = q->q_src_m;
-
-		if (bus_dmamap_create(sc->sc_dmat, 0xfff0, UBS_MAX_SCATTER,
-		    0xfff0, 0, BUS_DMA_NOWAIT, &q->q_dst_map) != 0) {
-			err = ENOMEM;
-			goto errout;
-		}
-		if (crp->crp_flags & CRYPTO_F_IMBUF) {
-			if (bus_dmamap_load_mbuf(sc->sc_dmat, q->q_dst_map,
-			    q->q_dst_m, BUS_DMA_NOWAIT) != 0) {
-				bus_dmamap_destroy(sc->sc_dmat, q->q_dst_map);
-				q->q_dst_map = NULL;
-				err = ENOMEM;
-				goto errout;
-			}
-		} else if (crp->crp_flags & CRYPTO_F_IOV) {
 			if (bus_dmamap_load_uio(sc->sc_dmat, q->q_dst_map,
 			    q->q_dst_io, BUS_DMA_NOWAIT) != 0) {
 				bus_dmamap_destroy(sc->sc_dmat, q->q_dst_map);
 				q->q_dst_map = NULL;
 				goto errout;
 			}
+		} else if (crp->crp_flags & CRYPTO_F_IMBUF) {
+			if (nicealign) {
+				q->q_dst_m = q->q_src_m;
+				q->q_dst_map = q->q_src_map;
+			} else {
+				int totlen, len;
+				struct mbuf *m, *top, **mp;
+
+				totlen = q->q_src_map->dm_mapsize;
+				if (q->q_src_m->m_flags & M_PKTHDR) {
+					len = MHLEN;
+					MGETHDR(m, M_DONTWAIT, MT_DATA);
+				} else {
+					len = MLEN;
+					MGET(m, M_DONTWAIT, MT_DATA);
+				}
+				if (m == NULL) {
+					err = ENOMEM;
+					goto errout;
+				}
+				if (len == MHLEN)
+					M_DUP_PKTHDR(m, q->q_src_m);
+				if (totlen >= MINCLSIZE) {
+					MCLGET(m, M_DONTWAIT);
+					if (m->m_flags & M_EXT)
+						len = MCLBYTES;
+				}
+				m->m_len = len;
+				top = NULL;
+				mp = &top;
+
+				while (totlen > 0) {
+					if (top) {
+						MGET(m, M_DONTWAIT, MT_DATA);
+						if (m == NULL) {
+							m_freem(top);
+							err = ENOMEM;
+							goto errout;
+						}
+						len = MLEN;
+					}
+					if (top && totlen >= MINCLSIZE) {
+						MCLGET(m, M_DONTWAIT);
+						if (m->m_flags & M_EXT)
+							len = MCLBYTES;
+					}
+					m->m_len = len = min(totlen, len);
+					totlen -= len;
+					*mp = m;
+					mp = &m->m_next;
+				}
+				q->q_dst_m = top;
+				ubsec_mcopy(q->q_src_m, q->q_dst_m,
+				    cpskip, cpoffset);
+				if (bus_dmamap_create(sc->sc_dmat, 0xfff0,
+				    UBS_MAX_SCATTER, 0xfff0, 0, BUS_DMA_NOWAIT,
+				    &q->q_dst_map) != 0) {
+					err = ENOMEM;
+					goto errout;
+				}
+				if (bus_dmamap_load_mbuf(sc->sc_dmat,
+				    q->q_dst_map, q->q_dst_m,
+				    BUS_DMA_NOWAIT) != 0) {
+					bus_dmamap_destroy(sc->sc_dmat,
+					q->q_dst_map);
+					q->q_dst_map = NULL;
+					err = ENOMEM;
+					goto errout;
+				}
+			}
+		} else {
+			err = EINVAL;
+			goto errout;
 		}
 
 #ifdef UBSEC_DEBUG
@@ -1152,6 +1167,15 @@ errout:
 		if ((q->q_dst_m != NULL) && (q->q_src_m != q->q_dst_m))
 			m_freem(q->q_dst_m);
 
+		if (q->q_dst_map != NULL && q->q_dst_map != q->q_src_map) {
+			bus_dmamap_unload(sc->sc_dmat, q->q_dst_map);
+			bus_dmamap_destroy(sc->sc_dmat, q->q_dst_map);
+		}
+		if (q->q_src_map != NULL) {
+			bus_dmamap_unload(sc->sc_dmat, q->q_src_map);
+			bus_dmamap_destroy(sc->sc_dmat, q->q_src_map);
+		}
+
 		s = splnet();
 		SIMPLEQ_INSERT_TAIL(&sc->sc_freequeue, q, q_next);
 		splx(s);
@@ -1160,15 +1184,6 @@ errout:
 		ubsecstats.hst_invalid++;
 	else
 		ubsecstats.hst_nomem++;
-	if (q->q_src_map != NULL) {
-		bus_dmamap_unload(sc->sc_dmat, q->q_src_map);
-		bus_dmamap_destroy(sc->sc_dmat, q->q_src_map);
-	}
-	if (q->q_dst_map != NULL) {
-		bus_dmamap_unload(sc->sc_dmat, q->q_dst_map);
-		bus_dmamap_destroy(sc->sc_dmat, q->q_dst_map);
-	}
-
 errout2:
 	crp->crp_etype = err;
 	crp->crp_callback(crp);
@@ -1187,14 +1202,16 @@ ubsec_callback(sc, q)
 	bus_dmamap_sync(sc->sc_dmat, dmap->d_alloc.dma_map, 0,
 	    dmap->d_alloc.dma_map->dm_mapsize,
 	    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
-	bus_dmamap_sync(sc->sc_dmat, q->q_src_map,
-	    0, q->q_src_map->dm_mapsize, BUS_DMASYNC_POSTWRITE);
-	if (q->q_dst_map != NULL) {
+	if (q->q_dst_map != NULL && q->q_dst_map != q->q_src_map) {
 		bus_dmamap_sync(sc->sc_dmat, q->q_dst_map,
 		    0, q->q_dst_map->dm_mapsize, BUS_DMASYNC_POSTREAD);
-		bus_dmamap_destroy(sc->sc_dmat, q->q_src_map);
+		bus_dmamap_unload(sc->sc_dmat, q->q_dst_map);
+		bus_dmamap_destroy(sc->sc_dmat, q->q_dst_map);
 	}
-	bus_dmamap_destroy(sc->sc_dmat, q->q_dst_map);
+	bus_dmamap_sync(sc->sc_dmat, q->q_src_map,
+	    0, q->q_src_map->dm_mapsize, BUS_DMASYNC_POSTWRITE);
+	bus_dmamap_unload(sc->sc_dmat, q->q_src_map);
+	bus_dmamap_destroy(sc->sc_dmat, q->q_src_map);
 
 	if ((crp->crp_flags & CRYPTO_F_IMBUF) && (q->q_src_m != q->q_dst_m)) {
 		m_freem(q->q_src_m);
