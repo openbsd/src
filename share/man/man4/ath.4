@@ -1,3 +1,4 @@
+.\"	$OpenBSD: ath.4,v 1.5 2004/11/07 18:12:58 jmc Exp $
 .\"     $NetBSD: ath.4,v 1.5 2004/07/03 16:58:18 mycroft Exp $
 .\"
 .\" Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -109,9 +110,9 @@ The driver may also be configured to operate in hostap mode.
 In this mode a host may function as an access point (base station).
 Access points are different than operating in IBSS mode.
 They operate in BSS mode.
-They allow for easier roaming and bridge all ethernet traffic such
+They allow for easier roaming and bridge all Ethernet traffic such
 that machines connected via an access point appear to be on the local
-ethernet segment.
+Ethernet segment.
 .Pp
 For more information on configuring this device, see
 .Xr ifconfig 8 .
@@ -179,11 +180,11 @@ The driver was unable to allocate contiguous memory for the transmit
 and receive descriptors.
 This usually indicates system memory is scarce and/or fragmented.
 .It "ath%d: unable to setup a data xmit queue!"
-The request to the HAL to setup the transmit queue for normal
+The request to the HAL to set up the transmit queue for normal
 data frames failed.
 This should not happen.
 .It "ath%d: unable to setup a beacon xmit queue!"
-The request to the HAL to setup the transmit queue for 802.11 beacon frames
+The request to the HAL to set up the transmit queue for 802.11 beacon frames
 failed.
 This should not happen.
 .It "ath%d: 802.11 address: %s"
@@ -277,7 +278,6 @@ have overlapping channels.
 .Pp
 Revision A1 of the D-LINK DWL-G520 and DWL-G650 are based on an
 Intersil PrismGT chip and are not supported by this driver.
-.Pp
 .Sh BUGS
 Performance in lossy environments is suboptimal.
 The algorithm used to select the rate for transmitted packets is
