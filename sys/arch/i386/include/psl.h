@@ -1,4 +1,4 @@
-/*	$OpenBSD: psl.h,v 1.14 2004/02/01 19:05:23 deraadt Exp $	*/
+/*	$OpenBSD: psl.h,v 1.15 2004/02/02 23:02:42 deraadt Exp $	*/
 /*	$NetBSD: psl.h,v 1.30 1996/05/13 01:28:05 mycroft Exp $	*/
 
 /*-
@@ -58,7 +58,7 @@
 #define	PSL_VIF		0x00080000	/* virtual interrupt enable flag */
 #define	PSL_VIP		0x00100000	/* virtual interrupt pending flag */
 #define	PSL_ID		0x00200000	/* identification flag */
-#define	PSL_XCRYPT	0x20000000	/* VIA xcrypt: operation loaded */
+#define	PSL_XCRYPT	0x40000000	/* VIA xcrypt: operation loaded */
 
 #define	PSL_MBO		0x00000002	/* must be one bits */
 #define	PSL_MBZ		0xffc08028	/* must be zero bits */
