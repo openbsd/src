@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_arcsubr.c,v 1.19 2004/04/17 00:09:01 henning Exp $	*/
+/*	$OpenBSD: if_arcsubr.c,v 1.20 2004/06/21 17:20:59 tholo Exp $	*/
 /*	$NetBSD: if_arcsubr.c,v 1.8 1996/05/07 02:40:29 thorpej Exp $	*/
 
 /*
@@ -549,7 +549,7 @@ arc_ifattach(ifp)
 
 	ifp->if_mtu = (ifp->if_flags & IFF_LINK0 ? arc_phdsmtu : ARCMTU);
 	ac = (struct arccom *)ifp;
-	ac->ac_seqid = (time.tv_sec) & 0xFFFF; /* try to make seqid unique */
+	ac->ac_seqid = arc4random() & 0xFFFF; /* try to make seqid unique */
 	if (ac->ac_anaddr == 0) {
 		/* XXX this message isn't entirely clear, to me -- cgd */
 		log(LOG_ERR,"%s: link address 0 reserved for broadcasts.  Please change it and ifconfig %s down up\n",
