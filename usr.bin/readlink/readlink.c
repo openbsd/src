@@ -1,5 +1,5 @@
 /*
- * $OpenBSD: readlink.c,v 1.4 1997/06/28 04:56:49 grr Exp $
+ * $OpenBSD: readlink.c,v 1.5 1997/06/29 19:01:18 deraadt Exp $
  *
  * Copyright (c) 1997
  *	Kenneth Stailey (hereinafter referred to as the author)
@@ -40,8 +40,10 @@ char **argv;
 	char buf[PATH_MAX];
 	int n;
 
-	if (argc != 2)
-		errx(1, "usage: readlink symlink");
+	if (argc != 2) {
+		frintf(stderr, "usage: readlink symlink");
+		exit(1);
+	}
 
 	if ((n = readlink(argv[1], buf, PATH_MAX)) < 0)
 		exit(1);
