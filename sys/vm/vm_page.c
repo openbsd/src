@@ -1,4 +1,4 @@
-/*    $OpenBSD: vm_page.c,v 1.3 1996/08/02 00:06:03 niklas Exp $    */
+/*    $OpenBSD: vm_page.c,v 1.4 1997/01/04 14:17:30 niklas Exp $    */
 /*    $NetBSD: vm_page.c,v 1.28 1996/02/05 01:54:05 christos Exp $    */
 
 /* 
@@ -533,7 +533,7 @@ pmap_startup(startp, endp)
 	i = 0;
 	for (;;) {
 		/* Initialize a page array element. */
-		VM_PAGE_INIT(&vm_page_array[i], NULL, NULL);
+		VM_PAGE_INIT(&vm_page_array[i], NULL, 0);
 		vm_page_array[i].phys_addr = paddr;
 		vm_page_free(&vm_page_array[i]);
 
