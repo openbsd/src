@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_altq.c,v 1.56 2003/04/12 19:05:57 henning Exp $	*/
+/*	$OpenBSD: pfctl_altq.c,v 1.57 2003/04/12 19:07:42 henning Exp $	*/
 
 /*
  * Copyright (C) 2002
@@ -804,7 +804,7 @@ check_commit_hfsc(int dev, int opts, struct pf_altq *pa)
 	}
 	if (default_class != 1) {
 		warnx("should have one default queue on %s", pa->ifname);
-		error++;
+		return (1);
 	}
 	/* make sure the default queue is a leaf */
 	TAILQ_FOREACH(altq, &altqs, entries) {
