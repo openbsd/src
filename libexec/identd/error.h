@@ -1,4 +1,4 @@
-/*	$OpenBSD: error.h,v 1.4 2002/07/16 10:25:47 deraadt Exp $*/
+/*	$OpenBSD: error.h,v 1.5 2003/12/09 22:41:06 deraadt Exp $*/
 
 /*
 **
@@ -17,11 +17,11 @@
 
 #include <syslog.h>
 
-#define ERROR(fmt) \
-    ((syslog_flag ? (syslog(LOG_ERR, fmt),0) : 0), \
+#define ERROR(msg) \
+    ((syslog_flag ? (syslog(LOG_ERR, "%s", msg),0) : 0), \
      (debug_flag ? (fprintf(stderr, "%d , %d : ERROR : X-DBG : ", \
 			    lport, fport), \
-		    fprintf(stderr, fmt), perror(": "), 0) : \
+		    fprintf(stderr, "%s", msg), perror(": "), 0) : \
       (printf("%d , %d : ERROR : UNKNOWN-ERROR\r\n", lport, fport), 0)), \
      fflush(stdout), fflush(stderr), exit(1), 0)
 
