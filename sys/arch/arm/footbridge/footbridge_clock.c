@@ -1,4 +1,4 @@
-/*	$OpenBSD: footbridge_clock.c,v 1.1 2004/02/01 05:09:49 drahn Exp $	*/
+/*	$OpenBSD: footbridge_clock.c,v 1.2 2004/02/14 00:17:06 drahn Exp $	*/
 /*	$NetBSD: footbridge_clock.c,v 1.17 2003/03/23 14:12:25 chris Exp $	*/
 
 /*
@@ -281,13 +281,12 @@ void
 cpu_initclocks()
 {
 	/* stathz and profhz should be set to something, we have the timer */
-#if 0
+
 	if (stathz == 0)
-		stathz = hz;
+		stathz = 128;
 
 	if (profhz == 0)
-		profhz = stathz * 5;
-#endif
+		profhz = stathz * 8;
 
 	/* Report the clock frequencies */
 	printf("clock: hz=%d stathz = %d profhz = %d\n", hz, stathz, profhz);
