@@ -1,4 +1,4 @@
-.\"     $OpenBSD: intro.4,v 1.19 2003/06/19 20:29:51 deraadt Exp $
+.\"     $OpenBSD: intro.4,v 1.20 2003/07/08 14:25:51 mickey Exp $
 .\"
 .\" Copyright (c) 1998 The OpenBSD Project
 .\" All Rights Reserved.
@@ -64,7 +64,291 @@ the system will have to be rebooted.
 .Pp
 The autoconfiguration system is described in
 .Xr autoconf 4 .
-A list of the supported devices is given below.
+A list of the supported hardware and devices is given below.
+.Sh SUPPORTED SYSTEMS
+.Tn DEC
+and
+.Tn Compaq
+have produced a series of the
+.Tn Alpha
+.Tn CPU ,
+some of which are listed below, along with some systems which contain them.
+.Pp
+.Qq EV
+stands for
+.Qq Extended VAX
+.Po
+or
+.Qq Electro Vlassic
+.Pc
+and the number following is a reference to the
+.Tn CMOS
+process used to make the chips.
+.Qq LCA
+stands for Low Cost Alpha, and
+.Qq PCA
+stands for PC-architecture Alpha.
+.Pp
+.Bl -hang -width 9n
+.It 21064
+.Sy EV4
+.Po
+100-200
+.Tn MHz ,
+0.75 micron
+.Pc
+.Pp
+AlphaPC 64
+.Pq EB64
+.br
+.Bl -hang -width 4n
+.It Avanti family
+.br
+Digital's lower-end PCI-based workstations.
+.Pp
+AlphaStation 200 4/100-166
+.Pq Mustang
+.br
+AlphaStation 400 4/166
+.Pq Chinet
+.It Pelican family
+.br
+Low-end
+.Tn TURBOchannel
+based workstations.
+.Pp
+DEC 3000/300
+.Pq 150 Tn MHz
+.Pq Pelican
+.br
+DEC 3000/300X
+.Pq 175 Tn MHz
+.Pq Pelican+
+.br
+DEC 3000/300L
+.Pq 100 Tn MHz
+.Pq Pelica
+.br
+DEC 3000/300LX
+.Pq 125 Tn MHz
+.Pq Pelica+
+.It Sandpiper family
+.br
+High-end
+.Tn TURBOchannel
+based workstations.
+.Pp
+DEC 3000/400
+.Pq 133 Tn MHz
+.Pq Sandpiper
+.br
+DEC 3000/600
+.Pq 175 Tn MHz
+.Pq Sandpiper+
+.It Flamingo family
+.br
+High-end
+.Tn TURBOchannel
+based workstations.
+.Pp
+DEC 3000/500
+.Pq 150 Tn MHz
+.Pq Flamingo
+.br
+DEC 3000/500X
+.Pq 200 Tn MHz
+.Pq Hot Pink
+.br
+DEC 3000/800
+.Pq 200 Tn MHz
+.Pq Flamingo II
+.br
+.El
+.It 21064-A
+.Sy EV45
+.Po
+225-333
+.Tn MHz ,
+0.50 micron
+.Pc
+.Pp
+DEC 3000/700
+.Pq 225 Tn MHz
+.Pq Sandpiper45
+.br
+DEC 3000/900
+.Pq 275 Tn MHz
+.Pq Flamingo45
+.Pp
+.Bl -hang -width 4n
+.It Avanti family
+.br
+Digital's lower-end PCI-based workstations.
+.Pp
+AlphaStation 200 4/233
+.Pq Mustang+
+.br
+AlphaStation 205 4/133-333
+.Pq LX3
+.br
+AlphaStation 250 4/300
+.Pq M3+
+.br
+AlphaStation 255 4/133-333
+.Pq LX3+
+.br
+AlphaStation 300 4/266
+.Pq Melmac
+.br
+AlphaStation 400 4/233-300
+.Pq Avanti
+.br
+.El
+.It 21066
+.Sy LCA4
+.Po
+166-233
+.Tn MHz ,
+0.75 micron
+.Pc
+.Bl -hang -width 4n
+.It NoName family
+.br
+Digital's lowest-end family of PCI-based systems.
+.Pp
+DEC AXPpci33
+.Pq NoName
+.br
+Universal Desktop Box AXPpci166MT
+.Pq UDB/Multia
+.El
+.Pp
+21066 evaluation motherboard
+.Pq EB66
+.It 21066-A
+.Sy LCA45
+.Po
+233
+.Tn MHz ,
+0.50 micron
+.Pc
+.Pp
+21066-A evaluation motherboard
+.Pq EB66+
+.It 21068
+.Sy LCA4s
+.Po
+66-233
+.Tn MHz ,
+0.75 micron
+.Pc
+.Pp
+Universal Desktop Box AXPpci233MT
+.Pq UDB/Multia
+.It 21164
+.Sy EV5
+.Po
+250-366
+.Tn MHz ,
+0.50 micron
+.Pc
+.Pp
+.Bl -hang -width 4n
+.It Mikasa family
+.br
+AlphaServer 1000 5/300
+.Pq Pinnacle
+.It Noritake family
+.br
+AlphaServer 1000A 5/300
+.Pq Pinnacle
+.Pp
+21164 evaluation motherboard
+.Pq EB164
+.br
+.El
+.It 21164-A
+.Sy EV56
+.Po
+400-766
+.Tn MHz ,
+0.35 micron, BWX
+.Pc
+.Pp
+.Bl -hang -width 4n
+.It Personal Workstation Pq PWS
+.br
+PWS 433a/433au
+.Pq Miata
+.br
+PWS 500a/500au
+.Pq Miata
+.br
+PWS 600a/600au
+.Pq Miata
+.It Mikasa family
+.br
+AlphaServer 1000 5/333-500
+.Pq Primo
+.It Noritake family
+.br
+AlphaServer 1000A 5/333-500
+.Pq Primo
+.br
+AlphaServer 800 5/333-500
+.Pq Corelle
+.It EB164 family
+.br
+AlphaPC 164 motherboard
+.Pq EB164
+.br
+AlphaPC 164LX motherboard
+.Pq EB164
+.br
+.El
+.Pp
+DigitalServer 3300
+.Po
+rebadged AlphaServer 800 for NT
+.Pc
+.Pp
+.It 21164-PC
+.Sy PCA56
+.Po
+400-600
+.Tn MHz ,
+0.35 micron, MVI, no L2 cache
+.Pc
+.Pp
+AlphaPC 164SX motherboard
+.Pq EB164
+.Pp
+PWS 466au
+.Pq Miata
+.br
+PWS 550au
+.Pq Miata
+.It 21264
+.Sy EV6
+.Po
+450-600
+.Tn MHz ,
+0.35 micron
+.Pc
+.Pp
+APi UP1000 and UP1100;
+AMD 751-based EV6 systems.
+.Pp
+264DP, XP1000, DS10, DS20
+Tsunami-based systems.
+.It 21264-A
+.Sy EV67
+.Po
+600-833
+.Tn MHz ,
+0.28 micron
+.Pc
+.El
 .Sh LIST OF DEVICES
 The devices listed below are supported in this incarnation of
 the system.
