@@ -1,4 +1,4 @@
-/*	$OpenBSD: getopt_long.c,v 1.10 2002/12/08 17:52:26 millert Exp $	*/
+/*	$OpenBSD: getopt_long.c,v 1.11 2002/12/10 17:51:42 millert Exp $	*/
 /*	$NetBSD: getopt_long.c,v 1.15 2002/01/31 22:43:40 tv Exp $	*/
 
 /*
@@ -64,7 +64,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: getopt_long.c,v 1.10 2002/12/08 17:52:26 millert Exp $";
+static char *rcsid = "$OpenBSD: getopt_long.c,v 1.11 2002/12/10 17:51:42 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <err.h>
@@ -348,8 +348,9 @@ start:
 			nonopt_start = nonopt_end = -1;
 			return (-1);
 		}
-		if (*(place = nargv[optind]) != '-') {	/* found non-option */
-			place = EMSG;
+		if (*(place = nargv[optind]) != '-' ||
+		    (place[1] == '\0' && strchr(options, '-') == NULL)) {
+			place = EMSG;		/* found non-option */
 			if (flags & FLAG_ALLARGS) {
 				/*
 				 * GNU extension:
