@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti_sgc.c,v 1.27 2005/03/01 15:04:45 mickey Exp $	*/
+/*	$OpenBSD: sti_sgc.c,v 1.28 2005/03/17 22:15:15 mickey Exp $	*/
 
 /*
  * Copyright (c) 2000-2003 Michael Shalayeff
@@ -58,6 +58,8 @@
 #define	STI_GOPT1_REV	0x17
 #define	STI_GOPT2_REV	0x70
 #define	STI_GOPT3_REV	0xd0
+#define	STI_GOPT4_REV	0x20
+#define	STI_GOPT5_REV	0x40
 
 /* internal EG */
 #define	STI_INEG_REV	0x60
@@ -85,7 +87,9 @@ sti_sgc_getrom(int unit, struct confargs *ca)
 		if (ca->ca_type.iodc_sv_model == HPPA_FIO_GSGC &&
 		    (ca->ca_type.iodc_revision == STI_GOPT1_REV ||
 		     ca->ca_type.iodc_revision == STI_GOPT2_REV ||
-		     ca->ca_type.iodc_revision == STI_GOPT3_REV))
+		     ca->ca_type.iodc_revision == STI_GOPT3_REV ||
+		     ca->ca_type.iodc_revision == STI_GOPT4_REV ||
+		     ca->ca_type.iodc_revision == STI_GOPT5_REV))
 			/* these three share the onboard's prom */ ;
 		else
 			rom = 0;
@@ -174,6 +178,7 @@ sti_sgc_probe(parent, match, aux)
 		printf("sti: unknown type (%x)\n", devtype);
 #endif
 		rv = 0;
+		romend = 0;
 	}
 
 	if (rv &&
