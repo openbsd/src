@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.7 2004/04/08 12:24:07 avsm Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.8 2004/04/23 06:00:50 otto Exp $	*/
 
 /*
  * Copyright (c) 2003 Can Erkin Acar
@@ -176,6 +176,7 @@ priv_init(int argc, char **argv)
 
 	/* parse the arguments for required options so that the child
 	 * need not send them back */
+	opterr = 0;
 	while ((i = getopt(argc, argv,
 	    "ac:deE:fF:i:lnNOopqr:s:StT:vw:xXY")) != -1) {
 		switch (i) {
