@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.49 1998/07/23 08:13:38 deraadt Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.50 1998/11/18 23:30:08 deraadt Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -309,7 +309,7 @@ main(argc, argv, envp)
 			long val = 0;
 
 			val = strtol(optarg, &optarg, 8);
-			if (*optarg != '\0' || val < 0)
+			if (*optarg != '\0' || val < 0 || (val & ~ACCESSPERMS))
 				warnx("bad value for -u");
 			else
 				defumask = val;
