@@ -33,7 +33,11 @@
 #include "zlib.h"
 
 #include <sys/types.h>
+#ifdef _STANDALONE
+#include <stand.h>
+#else
 #include <sys/systm.h>
+#endif
 
 #ifndef local
 #  define local static
