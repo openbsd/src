@@ -1,5 +1,6 @@
 # Makefile for GNU Assembler
-#   Copyright (C) 1987-1992, 1993 Free Software Foundation, Inc.
+#   Copyright (C) 1987, 88, 89, 90, 91, 92, 93, 94, 95, 1996
+#   Free Software Foundation, Inc.
 
 # This file is part of GNU GAS.
 
@@ -52,27 +53,30 @@ infodir = $(prefix)/info
 includedir = $(prefix)/include
 docdir = $(datadir)/doc
 
-VERSION=2.6
+VERSION=cygnus-2.6
 
 SHELL = /bin/sh
 
 INSTALL = $${srcroot}/install.sh -c
 INSTALL_PROGRAM = $(INSTALL)
 INSTALL_DATA = $(INSTALL)
-INSTALL_XFORM = $(INSTALL) -t='-e $(program_transform_name)'
+INSTALL_XFORM = $(INSTALL) -t='$(program_transform_name)'
 INSTALL_XFORM1= $(INSTALL_XFORM) -b=.1
 
 DISTSTUFF= make-gas.com m68k-parse.c
 
 AR = ar
 AR_FLAGS = qv
-BISON = bison -y
+BISON = `if [ -f ../bison/bison ] ; then echo ../bison/bison -y -L../bison/bison ; else echo bison -y ; fi`
 BISONFLAGS =
 MAKEINFO = makeinfo
 TEXI2DVI = texi2dvi
 RANLIB = ranlib
 CC = @CC@
 CFLAGS = -g
+LDFLAGS =
+HLDFLAGS = @HLDFLAGS@
+RPATH_ENVVAR = @RPATH_ENVVAR@
 
 MAKEOVERRIDES=
 
@@ -98,8 +102,8 @@ FLAGS_TO_PASS = \
 	"INSTALL_DATA=$(INSTALL_DATA)" \
 	"INSTALL_PROGRAM=$(INSTALL_PROGRAM)"
 
-RUNTEST = `if [ -f ${srcdir}/../dejagnu/runtest ] ; then \
-		echo ${srcdir}/../dejagnu/runtest ; else echo runtest; \
+RUNTEST = `if [ -f $${srcdir}/../dejagnu/runtest ] ; then \
+		echo $${srcdir}/../dejagnu/runtest ; else echo runtest; \
 	   fi`
 RUNTESTFLAGS=
 
@@ -232,6 +236,7 @@ ALL_CFLAGS = $(INTERNAL_CFLAGS) $(CROSS) $(CFLAGS) $(HDEFINES) $(TDEFINES)
 # How to link with both our special library facilities
 # and the system's installed libraries.
 
+LIBDEPS = @OPCODES_DEP@ @BFDDEP@ $(LOCAL_LOADLIBES) ../libiberty/libiberty.a
 LIBS = @OPCODES_LIB@ @BFDLIB@ $(LOCAL_LOADLIBES) ../libiberty/libiberty.a
 
 # Specify the directories to be searched for header files.
@@ -253,8 +258,8 @@ STAGESTUFF = *.o as.new gasp.new
 
 $(OBJS): @ALL_OBJ_DEPS@
 
-as.new: $(OBJS) $(LIBS)
-	$(CC) $(ALL_CFLAGS) $(LDFLAGS) -o as.new $(OBJS) $(LIBS) $(LOADLIBES)
+as.new: $(OBJS) $(LIBDEPS)
+	$(CC) $(HLDFLAGS) $(ALL_CFLAGS) $(LDFLAGS) -o as.new $(OBJS) $(LIBS) $(LOADLIBES)
 
 $(OBJS): config.h as.h targ-env.h obj-format.h targ-cpu.h flonum.h expr.h \
 	struc-symbol.h write.h frags.h hash.h read.h symbols.h tc.h obj.h \
@@ -302,6 +307,8 @@ check:  site.exp
 	cp site.exp testsuite/site.exp
 	rootme=`pwd`; export rootme; \
 	srcdir=`cd ${srcdir}; pwd` ; export srcdir ; \
+	$(RPATH_ENVVAR)=$$rootme/../bfd:$$rootme/../opcodes:$$$(RPATH_ENVVAR); \
+	export $(RPATH_ENVVAR); \
 	cd testsuite; \
 	EXPECT=${EXPECT} ; export EXPECT ; \
 	if [ -f $${rootme}/../expect/expect ] ; then  \
@@ -332,26 +339,26 @@ config-stamp: Makefile conf
 # Compiling object files from source files.
 
 TARG_CPU_DEP_a29k    =
-TARG_CPU_DEP_alpha   =
-TARG_CPU_DEP_arm     =
+TARG_CPU_DEP_alpha   = $(srcdir)/config/alpha-opcode.h subsegs.h
+TARG_CPU_DEP_arm     = subsegs.h
 TARG_CPU_DEP_generic =
 TARG_CPU_DEP_h8300   = $(srcdir)/../include/opcode/h8300.h
-TARG_CPU_DEP_h8500   = $(srcdir)/../opcodes/h8500-opc.h
-TARG_CPU_DEP_hppa    =
-TARG_CPU_DEP_i386    = $(srcdir)/../include/opcode/i386.h
+TARG_CPU_DEP_h8500   = $(srcdir)/../opcodes/h8500-opc.h subsegs.h
+TARG_CPU_DEP_hppa    = subsegs.h
+TARG_CPU_DEP_i386    = $(srcdir)/../include/opcode/i386.h subsegs.h
 TARG_CPU_DEP_i860    =
 TARG_CPU_DEP_i960    =
 TARG_CPU_DEP_m68k    = $(srcdir)/../include/opcode/m68k.h \
 			$(srcdir)/config/m68k-parse.h subsegs.h
-TARG_CPU_DEP_m88k    = $(srcdir)/config/m88k-opcode.h
-TARG_CPU_DEP_mips    = $(srcdir)/../include/opcode/mips.h
+TARG_CPU_DEP_m88k    = $(srcdir)/config/m88k-opcode.h subsegs.h
+TARG_CPU_DEP_mips    = $(srcdir)/../include/opcode/mips.h subsegs.h
 TARG_CPU_DEP_ns32k   =
-TARG_CPU_DEP_ppc     =
-TARG_CPU_DEP_sh      = $(srcdir)/../opcodes/sh-opc.h
-TARG_CPU_DEP_sparc   =
+TARG_CPU_DEP_ppc     = subsegs.h
+TARG_CPU_DEP_sh      = $(srcdir)/../opcodes/sh-opc.h subsegs.h
+TARG_CPU_DEP_sparc   = subsegs.h
 TARG_CPU_DEP_tahoe   =
 TARG_CPU_DEP_vax     =
-TARG_CPU_DEP_w65     = $(srcdir)/../opcodes/w65-opc.h
+TARG_CPU_DEP_w65     = $(srcdir)/../opcodes/w65-opc.h subsegs.h
 TARG_CPU_DEP_z8k     = $(srcdir)/../opcodes/z8k-opc.h
 
 gasp.o : gasp.c sb.h macro.h config.h
@@ -424,16 +431,21 @@ clean mostlyclean: clean-here
 	@cd doc ; $(MAKE) $(FLAGS_TO_PASS) $@
 
 # Like clean but also delete the links made to configure gas.
+
+DISTCLEAN_HERE = config.status Makefile targ-env.h targ-cpu.h \
+	targ-cpu.c obj-format.h obj-format.c atof-targ.c TAGS \
+	config-stamp config.h conf config.log config.cache .gdbinit \
+	testsuite/Makefile testsuite/config.status
+
 distclean: clean-here
 	@cd doc ; $(MAKE) $(FLAGS_TO_PASS) $@
-	-rm -f config.status Makefile targ-env.h targ-cpu.h \
-		targ-cpu.c obj-format.h obj-format.c atof-targ.c TAGS \
-		config-stamp config.h conf config.log config.cache .gdbinit \
-		testsuite/Makefile testsuite/config.status
-maintainer-clean realclean: clean clean-info distclean
+	-rm -f $(DISTCLEAN_HERE)
+
+maintainer-clean realclean: clean-here
 	@echo "This command is intended for maintainers to use;"
 	@echo "it deletes files that may require special tools to rebuild."
-	-rm -rf $(DISTSTUFF)
+	@cd doc ; $(MAKE) $(FLAGS_TO_PASS) $@
+	-rm -rf $(DISTCLEAN_HERE) $(DISTSTUFF)
 
 # Entry points `install', `includes' and `uninstall'.
 
@@ -441,13 +453,13 @@ maintainer-clean realclean: clean clean-info distclean
 install: $(INSTALL_MAN)
 	srcroot=`cd $(srcroot); pwd`; export srcroot; \
 	$(INSTALL_XFORM) as.new $(bindir)/as; \
+	$(INSTALL_XFORM1) $(srcdir)/doc/as.1 $(man1dir)/as.1; \
+	test -d $(tooldir) || mkdir $(tooldir); \
+	test -d $(tooldir)/bin || mkdir $(tooldir)/bin; \
 	n=`echo as | sed '$(program_transform_name)'`; \
-	if [ -d $(tooldir) ]; then \
-	  if [ -d $(tooldir)/bin ] ; then true ; else mkdir $(tooldir)/bin ; fi; \
-	  rm -f $(tooldir)/bin/as; \
-	  ln $(bindir)/$$n $(tooldir)/bin/as >/dev/null 2>/dev/null \
-	   || $(INSTALL_PROGRAM) as.new $(tooldir)/bin/as; \
-	else true; fi
+	rm -f $(tooldir)/bin/as; \
+	ln $(bindir)/$$n $(tooldir)/bin/as >/dev/null 2>/dev/null \
+	 || $(INSTALL_PROGRAM) as.new $(tooldir)/bin/as
 	srcroot=`cd $(srcroot); pwd`; export srcroot; \
 	$(INSTALL_XFORM) gasp.new $(bindir)/gasp
 

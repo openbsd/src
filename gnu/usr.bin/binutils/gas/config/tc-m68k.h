@@ -1,6 +1,7 @@
 /* This file is tc-m68k.h
 
-   Copyright (C) 1987-1992, 1995 Free Software Foundation, Inc.
+   Copyright (C) 1987, 89, 90, 91, 92, 93, 94, 95, 1996
+   Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -25,12 +26,15 @@
 #ifdef OBJ_AOUT
 #ifdef TE_SUN3
 #define TARGET_FORMAT "a.out-sunos-big"
-#else
+#endif
 #ifdef TE_NetBSD
 #define TARGET_FORMAT "a.out-m68k-netbsd"
-#else
-#define TARGET_FORMAT "a.out-zero-big"
 #endif
+#ifdef TE_LINUX
+#define TARGET_FORMAT "a.out-m68k-linux"
+#endif
+#ifndef TARGET_FORMAT
+#define TARGET_FORMAT "a.out-zero-big"
 #endif
 #endif
 
@@ -46,6 +50,9 @@
 
 #ifdef TE_LYNX
 #define TARGET_FORMAT		"coff-m68k-lynx"
+#endif
+#ifdef TE_AUX
+#define TARGET_FORMAT		"coff-m68k-aux"
 #endif
 
 #ifndef COFF_MAGIC
@@ -71,6 +78,9 @@ extern int tc_coff_sizemachdep PARAMS ((struct frag *));
 #define AOUT_MACHTYPE m68k_aout_machtype
 extern int m68k_aout_machtype;
 #endif
+
+#define tc_comment_chars m68k_comment_chars
+extern const char *m68k_comment_chars;
 
 #define tc_crawl_symbol_chain(a)	{;}	/* not used */
 #define tc_headers_hook(a)		{;}	/* not used */
@@ -112,9 +122,35 @@ extern int m68k_aout_machtype;
 #define NO_PSEUDO_DOT
 #endif
 
+extern void m68k_mri_mode_change PARAMS ((int));
+#define MRI_MODE_CHANGE(i) m68k_mri_mode_change (i)
+
 #ifdef BFD_ASSEMBLER
+
 #define tc_frob_symbol(sym,punt) \
     if (S_GET_SEGMENT (sym) == reg_section) punt = 1
+
+#define NO_RELOC BFD_RELOC_NONE
+
+#ifdef OBJ_ELF
+
+/* This expression evaluates to false if the relocation is for a local object
+   for which we still want to do the relocation at runtime.  True if we
+   are willing to perform this relocation while building the .o file.  */
+
+#define TC_RELOC_RTSYM_LOC_FIXUP(FIX)			\
+	((FIX)->fx_r_type != BFD_RELOC_8_PLT_PCREL	\
+	 && (FIX)->fx_r_type != BFD_RELOC_16_PLT_PCREL	\
+	 && (FIX)->fx_r_type != BFD_RELOC_32_PLT_PCREL	\
+	 && (FIX)->fx_r_type != BFD_RELOC_8_GOT_PCREL	\
+	 && (FIX)->fx_r_type != BFD_RELOC_16_GOT_PCREL	\
+	 && (FIX)->fx_r_type != BFD_RELOC_32_GOT_PCREL)
+
+#define tc_fix_adjustable(X) tc_m68k_fix_adjustable(X)
+#endif
+
+#else
+#define NO_RELOC 0
 #endif
 
 #define DIFF_EXPR_OK

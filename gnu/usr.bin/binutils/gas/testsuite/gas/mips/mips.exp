@@ -17,19 +17,24 @@ if [istarget mips*-*-*] then {
     run_dump_test "div"
     run_dump_test "jal"
     if $svr4pic { run_dump_test "jal-svr4pic" }
+    if $svr4pic { run_dump_test "jal-xgot" }
     if $empic { run_dump_test "jal-empic" }
     if !$aout { run_dump_test "la" }
     if $svr4pic { run_dump_test "la-svr4pic" }
+    if $svr4pic { run_dump_test "la-xgot" }
     if $empic { run_dump_test "la-empic" }
     if !$aout { run_dump_test "lb" }
     if $svr4pic { run_dump_test "lb-svr4pic" }
+    if $svr4pic { run_dump_test "lb-xgot" }
     if $empic { run_dump_test "lb-empic" }
     if !$aout { run_dump_test "ld" }
     if $svr4pic { run_dump_test "ld-svr4pic" }
+    if $svr4pic { run_dump_test "ld-xgot" }
     if $empic { run_dump_test "ld-empic" }
     run_dump_test "li"
     if !$aout { run_dump_test "lifloat" }
     if $svr4pic { run_dump_test "lif-svr4pic" }
+    if $svr4pic { run_dump_test "lif-xgot" }
     if $empic { run_dump_test "lif-empic" }
     run_dump_test "mips4"
     run_dump_test "mul"
@@ -38,6 +43,7 @@ if [istarget mips*-*-*] then {
     run_dump_test "trunc"
     if !$aout { run_dump_test "ulh" }
     if $svr4pic { run_dump_test "ulh-svr4pic" }
+    if $svr4pic { run_dump_test "ulh-xgot" }
     if $empic { run_dump_test "ulh-empic" }
     if !$aout {
 	run_dump_test "ulw"

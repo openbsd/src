@@ -1,5 +1,5 @@
 /* tc-i386.h -- Header file for tc-i386.c
-   Copyright (C) 1989, 1992, 1993, 1994, 1995 Free Software Foundation.
+   Copyright (C) 1989, 92, 93, 94, 95, 1996 Free Software Foundation.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -367,9 +367,10 @@ extern const struct relax_type md_relax_table[];
 
 extern int flag_16bit_code;
 
-#define md_do_align(n, fill, around)					\
-if ((n) && !need_pass_2 && (!(fill) || (char)*(fill) == (char)0x90) &&	\
-    now_seg != data_section && now_seg != bss_section)			\
+#define md_do_align(n, fill, len, around)				\
+if ((n) && !need_pass_2							\
+    && (!(fill) || ((char)*(fill) == (char)0x90 && (len) == 1))		\
+    && now_seg != data_section && now_seg != bss_section)		\
   {									\
     char *p;								\
     p = frag_var(rs_align_code, 15, 1, (relax_substateT) 0,		\
@@ -388,5 +389,13 @@ if (fragP->fr_type == rs_align_code) 					\
 
 /* call md_apply_fix3 with segment instead of md_apply_fix */
 #define MD_APPLY_FIX3
+
+void i386_print_statistics PARAMS ((FILE *));
+#define tc_print_statistics i386_print_statistics
+
+#ifdef SCO_ELF
+#define tc_init_after_args() sco_id ()
+extern void sco_id PARAMS ((void));
+#endif
 
 /* end of tc-i386.h */

@@ -1,5 +1,5 @@
 /* tc-sparc.h - Macros and type defines for the sparc.
-   Copyright (C) 1989, 90, 91, 92, 93, 94, 1995 Free Software Foundation, Inc.
+   Copyright (C) 1989, 90-95, 1996 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -15,7 +15,8 @@
 
    You should have received a copy of the GNU General Public
    License along with GAS; see the file COPYING.  If not, write
-   to the Free Software Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
+   to the Free Software Foundation, 59 Temple Place - Suite 330,
+   Boston, MA 02111-1307, USA.  */
 
 #define TC_SPARC 1
 
@@ -33,12 +34,11 @@
 #define TARGET_FORMAT "b.out.big"
 #endif
 #ifdef OBJ_ELF
-#ifndef sparcv9
+#ifdef SPARC_ARCH64
+#define TARGET_FORMAT "elf64-sparc"
+#else
 #define TARGET_FORMAT "elf32-sparc"
-#else	/* sparcv9 */
-#define TARGET_FORMAT "elf64-sparc" /* v9 */
-#define ENV64			/* v9 */
-#endif	/* sparcv9 */
+#endif
 #define LOCAL_LABEL(name)	(((name)[0] == '.' && (name)[1] == 'L') || !strncmp ((name), "_.L_", 4))
 #endif
 #define WORKING_DOT_WORD
@@ -68,6 +68,7 @@ extern int sparc_pic_code;
   (! sparc_pic_code \
    || (FIX)->fx_addsy == NULL \
    || (! S_IS_EXTERNAL ((FIX)->fx_addsy) \
+       && ! S_IS_WEAK ((FIX)->fx_addsy) \
        && S_IS_DEFINED ((FIX)->fx_addsy) \
        && ! S_IS_COMMON ((FIX)->fx_addsy)))
 #endif
@@ -91,6 +92,7 @@ extern int sparc_pic_code;
    any non PC relative reloc.  */
 #define tc_fix_adjustable(FIX) \
   (! S_IS_EXTERNAL ((FIX)->fx_addsy) \
+   && ! S_IS_WEAK ((FIX)->fx_addsy) \
    && (! sparc_pic_code || (FIX)->fx_pcrel))
 #endif
 
@@ -105,5 +107,8 @@ extern int sparc_pic_code;
 #endif
 
 #define md_operand(x)
+
+extern void sparc_md_end PARAMS ((void));
+#define md_end() sparc_md_end ()
 
 /* end of tc-sparc.h */

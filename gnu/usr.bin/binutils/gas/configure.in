@@ -23,6 +23,17 @@ AC_ARG_ENABLE(targets,
   no)	    enable_targets= ;;
   *)	    enable_targets=$enableval ;;
 esac])dnl
+AC_ARG_ENABLE(shared,
+[  --enable-shared         build shared BFD library],
+[case "${enableval}" in
+  yes) shared=true shared_bfd=true shared_opcodes=true ;;
+  no)  shared=false ;;
+  *bfd*opcodes*) shared=true shared_bfd=true shared_opcodes=true ;;
+  *opcodes*bfd*) shared=true shared_bfd=true shared_opcodes=true ;;
+  *bfd*) shared=true shared_bfd=true ;;
+  *opcodes*) shared=true shared_opcodes=true ;;
+  *) shared=false ;;
+esac])dnl
 
 # Generate a header file -- gets more post-processing by Makefile later.
 AC_CONFIG_HEADER(conf)
@@ -33,44 +44,6 @@ AC_CANONICAL_SYSTEM
 AC_ARG_PROGRAM
 
 te_file=generic
-
-# assign cpu type
-
-# check for architecture variants
-case ${target_cpu} in
-  armeb)	cpu_type=arm endian=big ;;
-  arm*)		cpu_type=arm endian=little ;;
-  hppa*)	cpu_type=hppa ;;
-changequote(,)dnl
-  i[45]86)	cpu_type=i386 ;;
-  m680[012346]0) cpu_type=m68k ;;
-  m68008)	cpu_type=m68k ;;
-  m683??)       cpu_type=m68k ;;
-changequote([,])dnl
-  m8*)		cpu_type=m88k ;;
-  mips*el)	cpu_type=mips endian=little;;
-  mips*)	cpu_type=mips endian=big ;;
-  powerpcle*)	cpu_type=ppc endian=little ;;
-  powerpc*)	cpu_type=ppc endian=big ;;
-  rs6000*)	cpu_type=ppc ;;
-  sparc64)	cpu_type=sparc obj_format=elf
-		AC_DEFINE(sparcv9) ;;
-  sparclite*)   cpu_type=sparc ;;
-  *)		cpu_type=${target_cpu} ;;
-esac
-
-# do we need the opcodes library?
-case ${cpu_type} in
-  alpha | vax)
-    ;;
-  *)
-    OPCODES_LIB="../opcodes/libopcodes.a"
-    ;;
-esac
-AC_SUBST(OPCODES_LIB)
-
-gas_target=${cpu_type}
-this_target=${generic_target}
 
 canon_targets=""
 if test -n "$enable_targets" ; then
@@ -94,9 +67,11 @@ for this_target in $target $canon_targets ; do
 
     # check for architecture variants
     case ${cpu} in
+      armeb)		cpu_type=arm endian=big ;;
+      arm*)		cpu_type=arm endian=little ;;
       hppa*)		cpu_type=hppa ;;
 changequote(,)dnl
-      i[45]86)		cpu_type=i386 ;;
+      i[456]86)		cpu_type=i386 ;;
       m680[012346]0)	cpu_type=m68k ;;
       m68008)		cpu_type=m68k ;;
       m683??)		cpu_type=m68k ;;
@@ -107,8 +82,8 @@ changequote([,])dnl
       powerpcle*)	cpu_type=ppc endian=little ;;
       powerpc*)		cpu_type=ppc endian=big ;;
       rs6000*)		cpu_type=ppc ;;
-      sparc64)		cpu_type=sparc obj_format=elf want_sparcv9=true ;;
-      sparclite*)	cpu_type=sparc ;;
+      sparc64)		cpu_type=sparc want_sparc_v9=true ;;
+      sparc*)		cpu_type=sparc ;;
       *)		cpu_type=${cpu} ;;
     esac
 
@@ -126,6 +101,7 @@ changequote([,])dnl
 
     # assign object format
     case ${generic_target} in
+      a29k-*-coff)          fmt=coff targ=ebmon29k ;;
       a29k-amd-udi)         fmt=coff targ=ebmon29k ;;
       a29k-amd-ebmon)       fmt=coff targ=ebmon29k ;;
       a29k-nyu-sym1)        fmt=coff targ=ebmon29k ;;
@@ -168,8 +144,9 @@ changequote([,])dnl
       i386-*-linux*)        fmt=elf em=linux ;;
       i386-*-lynxos*)       fmt=coff targ=i386coff
 			     em=lynx ;;
-      i386-*-sysv4* | i386-*-solaris* | i386-*-elf)
+      i386-*-sysv4* | i386-*-solaris* | i386-*-elf | i386-*-freebsdelf*)
 			    fmt=elf ;;
+      i386-*-sco*elf*)      fmt=elf targ=sco5 ;;
       i386-*-coff | i386-*-sysv* | i386-*-sco* | i386-*-isc*)
 			    fmt=coff targ=i386coff ;;
       i386-*-vsta)          fmt=aout ;;
@@ -180,7 +157,7 @@ changequote([,])dnl
       i386-*-msdos*)        fmt=aout ;;
       i386-*-moss*)	    fmt=elf ;;
       i386-*-pe)            fmt=coff targ=i386coff em=pe ;;
-      i386-*-win32)         fmt=coff targ=i386coff em=pe ;;
+      i386-*-cygwin32)      fmt=coff targ=i386coff em=pe ;;
       i386-*-*nt)           fmt=coff targ=i386coff em=pe ;;
       i960-*-bout)          fmt=bout ;;
       i960-*-coff)          fmt=coff em=ic960 targ=ic960coff ;;
@@ -195,16 +172,21 @@ changequote([,])dnl
       m68k-motorola-sysv*)  fmt=coff targ=m68kcoff em=delta ;;
       m68k-bull-sysv3*)     fmt=coff targ=m68kcoff em=dpx2 ;;
       m68k-apollo-*)        fmt=coff targ=apollo em=apollo ;;
+      m68k-*-sysv4 | m68k-*-elf) # must be before -sysv*
+			    fmt=elf ;;
       m68k-*-coff | m68k-*-sysv*)
 			    fmt=coff targ=m68kcoff ;;
-      m68k-*-elf)           fmt=elf ;;
       m68k-*-hpux*)         fmt=hp300 em=hp300 ;;
+      m68k-*-linux*aout*)   fmt=aout em=linux ;;
+      m68k-*-linux*)	    fmt=elf em=linux ;;
       m68k-*-lynxos*)       fmt=coff targ=m68kcoff
 			     em=lynx ;;
       m68k-*-netbsd*)       fmt=aout em=nbsd bfd_gas=yes ;;
       m68k-*-openbsd*)       fmt=aout em=nbsd bfd_gas=yes ;;
+      m68k-apple-aux*)      fmt=coff targ=m68kcoff em=aux ;;
+      m68k-*-psos*)         fmt=elf em=psos;;
 
-      m88k-motorola-sysv3*) fmt=coff targ=m88kcoff em=delta88 ;;
+      m88k-motorola-sysv3*) fmt=coff targ=m88kcoff em=delt88 ;;
       m88k-*-coff*)         fmt=coff targ=m88kcoff ;;
 
       # don't change em like *-*-bsd does
@@ -237,13 +219,8 @@ changequote([,])dnl
 			    *)   targ=mips-lit ;;
 			    esac
 			    ;;
-      ppc-*-pe)             fmt=coff em=pe 
-			    case "$endian" in
-			    big) targ=ppc-big ;;
-			    *)   targ=ppc-lit ;;
-			    esac
-                            ;;
-      ppc-*-winnt*)         fmt=coff em=pe 
+      ppc-*-pe | ppc-*-cygwin32 | ppc-*-winnt*)
+		            fmt=coff em=pe 
 			    case "$endian" in
 			    big) targ=ppc-big ;;
 			    *)   targ=ppc-lit ;;
@@ -257,24 +234,35 @@ changequote([,])dnl
 			    *)    targ=ppc-lit ;;
 			    esac
 			    ;;
+      ppc-*-linux*)	    fmt=elf
+			    case "$endian" in
+			    big)  targ=ppc-big ;;
+			    *)    AC_MSG_ERROR(Linux must be configured big endian) ;;
+			    esac
+			    ;;
+      ppc-*-solaris*)	    fmt=elf
+			    case "$endian" in
+			    big)  AC_MSG_ERROR(Solaris must be configured little endian) ;;
+			    *)    targ=ppc-sol ;;
+			    esac
+			    ;;
       ppc-*-macos* | ppc-*-mpw*)
 			    fmt=coff em=macos ;;
       ppc-*-netware*)       fmt=elf em=ppcnw ;;
 
       sh-*-coff)            fmt=coff ;;
 
-
       ns32k-pc532-mach* | ns32k-pc532-ux*)    fmt=aout em=pc532mach ;;
       ns32k-pc532-netbsd* | ns32k-pc532-lites*)  fmt=aout em=nbsd532 ;;
       ns32k-pc532-openbsd*) fmt=aout em=nbsd532 ;;
 
       sparc-*-sunos4*)      fmt=aout em=sun3 ;;
-      sparc-*-aout | sparc*-*-vxworks)
+      sparc-*-aout | sparc*-*-vxworks*)
 			    fmt=aout ;;
       sparc-*-coff)         fmt=coff ;;
       sparc-*-lynxos*)      fmt=coff em=lynx ;;
       sparc-fujitsu-none)   fmt=aout ;;
-      sparc-*-elf | sparc*-*-solaris*)
+      sparc-*-elf | sparc-*-solaris*)
 			    fmt=elf ;;
       sparc-*-netbsd*)      fmt=aout em=nbsd bfd_gas=yes ;;
       sparc-*-openbsd*)      fmt=aout em=nbsd bfd_gas=yes ;;
@@ -298,7 +286,7 @@ changequote([,])dnl
       *-*-xray | *-*-hms)   fmt=coff ;;
       *-*-sim)              fmt=coff ;;
       *-*-elf | *-*-sysv4* | *-*-solaris*)
-			    AC_MSG_WARN(GAS support for ELF format is incomplete.)
+			    AC_MSG_WARN(GAS support for ${generic_target} is incomplete.)
 			    fmt=elf dev=yes ;;
       *-*-vxworks)          fmt=aout ;;
       *-*-netware)          fmt=elf ;;
@@ -320,10 +308,32 @@ changequote([,])dnl
 
 # Other random stuff.
 
-    test -n "$want_sparcv9" && AC_DEFINE(sparcv9)
+    # do we need the opcodes library?
+    case ${cpu_type} in
+      alpha | vax | i386)
+	;;
+      *)
+	need_opcodes=yes
+	if test "${shared_opcodes}" = "true"; then
+	  # A shared libopcodes must be linked against libbfd.
+	  need_bfd=yes
+	fi
+	;;
+    esac
+
+    test -n "$want_sparc_v9" && AC_DEFINE(SPARC_V9)
+
+    case ${cpu}-${vendor}-${os} in
+      sparc64-*-elf*) AC_DEFINE(SPARC_ARCH64) ;;
+    esac
 
     case ${cpu_type} in
-      m68k) extra_objects="$extra_objects m68k-parse.o" ;;
+      m68k)
+	case ${extra_objects} in
+	*m68k-parse.o*) ;;
+	*) extra_objects="$extra_objects m68k-parse.o" ;;
+	esac
+	;;
     esac
 
 # See if we really can support this configuration with the emulation code.
@@ -516,11 +526,46 @@ case "${primary_bfd_gas}" in
 	need_bfd=yes ;;
 esac
 
-case "${need_bfd}" in
-  yes)	BFDLIB=../bfd/libbfd.a
-	ALL_OBJ_DEPS="$ALL_OBJ_DEPS ../bfd/bfd.h"
-	;;
+# do we need the opcodes library?
+case "${need_opcodes}" in
+  yes)
+    OPCODES_DEP=../opcodes/libopcodes.a
+    OPCODES_LIB='-L../opcodes -lopcodes'
+
+    # We need to handle some special cases if opcodes was built shared.
+    if test "${shared_opcodes}" = "true"; then
+      case "${host}" in
+      *-*-sunos*)
+      # On SunOS, we must link against the name we are going to install,
+      # not -lbfd, since SunOS does not support SONAME.
+      OPCODES_LIB='-L../opcodes -l`echo opcodes | sed '"'"'$(program_transform_name)'"'"'`'
+      ;;
+      esac
+    fi
+    ;;
 esac
+AC_SUBST(OPCODES_DEP)
+AC_SUBST(OPCODES_LIB)
+
+case "${need_bfd}" in
+  yes)
+    BFDDEP=../bfd/libbfd.a
+    BFDLIB='-L../bfd -lbfd'
+    ALL_OBJ_DEPS="$ALL_OBJ_DEPS ../bfd/bfd.h"
+
+    # We need to handle some special cases if BFD was built shared.
+    if test "${shared_bfd}" = "true"; then
+      case "${host}" in
+	*-*-sunos*)
+	# On SunOS, we must link against the name we are going to install,
+	# not -lbfd, since SunOS does not support SONAME.
+	BFDLIB='-L../bfd -l`echo bfd | sed '"'"'$(program_transform_name)'"'"'`'
+	;;
+      esac
+    fi
+    ;;
+esac
+AC_SUBST(BFDDEP)
 AC_SUBST(BFDLIB)
 AC_SUBST(ALL_OBJ_DEPS)
 
@@ -589,6 +634,53 @@ GAS_CHECK_DECL_NEEDED(errno, f, int f, [
 #include <errno.h>
 #endif
 ])
+
+HLDFLAGS=
+RPATH_ENVVAR=LD_LIBRARY_PATH
+# If we have shared libraries, try to set rpath reasonably.
+if test "${shared}" = "true"; then
+  case "${host}" in
+  *-*-hpux*)
+    HLDFLAGS='-Wl,+s,+b,$(libdir)'
+    RPATH_ENVVAR=SHLIB_PATH
+    ;;
+  *-*-irix5*)
+    HLDFLAGS='-Wl,-rpath,$(libdir)'
+    ;;
+  *-*-linux*aout*)
+    ;;
+  *-*-linux*)
+    HLDFLAGS='-Wl,-rpath,$(libdir)'
+    ;;
+  *-*-sysv4* | *-*-solaris*)
+    HLDFLAGS='-R $(libdir)'
+    ;;
+  esac
+fi
+
+# On SunOS, if the linker supports the -rpath option, use it to
+# prevent ../bfd and ../opcodes from being included in the run time
+# search path.
+case "${host}" in
+  *-*-sunos*)
+    echo 'main () { }' > conftest.c
+    ${CC} -o conftest -Wl,-rpath= conftest.c >/dev/null 2>conftest.t
+    if grep 'unrecognized' conftest.t >/dev/null 2>&1; then
+      :
+    elif grep 'No such file' conftest.t >/dev/null 2>&1; then
+      :
+    elif grep 'do not mix' conftest.t >/dev/null 2>&1; then
+      :
+    elif test "${shared}" = "true"; then
+      HLDFLAGS='-Wl,-rpath=$(libdir)'
+    else
+      HLDFLAGS='-Wl,-rpath='
+    fi
+    rm -f conftest.t conftest.c conftest
+    ;;
+esac
+AC_SUBST(HLDFLAGS)
+AC_SUBST(RPATH_ENVVAR)
 
 dnl This must come last.
 AC_OUTPUT(Makefile doc/Makefile .gdbinit:gdbinit.in)
