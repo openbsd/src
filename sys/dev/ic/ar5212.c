@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5212.c,v 1.2 2005/02/19 17:57:15 reyk Exp $	*/
+/*	$OpenBSD: ar5212.c,v 1.3 2005/02/25 22:25:30 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -38,8 +38,6 @@ static const struct ar5k_ar5212_ini ar5212_ini[] =
     AR5K_AR5212_INI;
 static const struct ar5k_ar5212_ini_mode ar5212_mode[] =
     AR5K_AR5212_INI_MODE;
-static const struct ar5k_ar5212_ini_rfgain ar5212_rfgain[] =
-    AR5K_AR5212_INI_RFGAIN;
 
 AR5K_HAL_FUNCTIONS(extern, ar5k_ar5212,);
 
@@ -516,9 +514,8 @@ ar5k_ar5212_reset(hal, op_mode, channel, change_channel, status)
 	 * Write initial RF gain settings
 	 */
 	phy = ar5112 == AH_TRUE ? AR5K_INI_PHY_5112 : AR5K_INI_PHY_5111;
-	for (i = 0; i < AR5K_ELEMENTS(ar5212_rfgain); i++)
-		AR5K_REG_WRITE((u_int32_t)ar5212_rfgain[i].rfg_register,
-		    ar5212_rfgain[i].rfg_value[phy][freq]);
+	if (ar5k_rfgain(hal, phy, freq) == AH_FALSE)
+		return (AH_FALSE);
 
 	AR5K_DELAY(1000);
 

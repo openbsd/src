@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5xxx.c,v 1.14 2005/02/23 14:26:54 reyk Exp $	*/
+/*	$OpenBSD: ar5xxx.c,v 1.15 2005/02/25 22:25:30 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -26,9 +26,7 @@
 #include <dev/ic/ar5xxx.h>
 
 extern ar5k_attach_t ar5k_ar5210_attach;
-#ifdef notyet
 extern ar5k_attach_t ar5k_ar5211_attach;
-#endif
 extern ar5k_attach_t ar5k_ar5212_attach;
 
 static const struct
@@ -51,7 +49,6 @@ static const struct {
 	    ar5k_ar5210_attach },
 	{ PCI_VENDOR_ATHEROS, PCI_PRODUCT_ATHEROS_AR5210_DEFAULT,
 	    ar5k_ar5210_attach },
-#ifdef notyet
 	{ PCI_VENDOR_ATHEROS, PCI_PRODUCT_ATHEROS_AR5211,
 	    ar5k_ar5211_attach },
 	{ PCI_VENDOR_ATHEROS, PCI_PRODUCT_ATHEROS_AR5211_DEFAULT,
@@ -62,7 +59,6 @@ static const struct {
 	    ar5k_ar5211_attach },
 	{ PCI_VENDOR_ATHEROS, PCI_PRODUCT_ATHEROS_AR5211_LEGACY,
 	    ar5k_ar5211_attach },
-#endif
 	{ PCI_VENDOR_ATHEROS, PCI_PRODUCT_ATHEROS_AR5212,
 	    ar5k_ar5212_attach },
 	{ PCI_VENDOR_ATHEROS, PCI_PRODUCT_ATHEROS_AR5212_DEFAULT,
@@ -100,6 +96,8 @@ static const struct ar5k_ini_rf ar5111_rf[] =
     AR5K_AR5111_INI_RF;
 static const struct ar5k_ini_rf ar5112_rf[] =
     AR5K_AR5112_INI_RF;
+static const struct ar5k_ini_rfgain ar5k_rfg[] =
+    AR5K_INI_RFGAIN;
 
 /*
  * Enable to overwrite the country code (use "00" for debug)
@@ -1489,6 +1487,37 @@ ar5k_ar5112_rfregs(hal, channel, mode)
 	for (i = 0; i < rf_size; i++) {
 		AR5K_REG_WRITE(ar5112_rf[i].rf_register, rf[i]);
 		AR5K_DELAY(1);
+	}
+
+	return (AH_TRUE);
+}
+
+HAL_BOOL
+ar5k_rfgain(hal, phy, freq)
+	struct ath_hal *hal;
+	u_int phy, freq;
+{
+	int i;
+
+	switch (phy) {
+	case AR5K_INI_PHY_5111:
+	case AR5K_INI_PHY_5112:
+		break;
+	default:
+		return (AH_FALSE);
+	}
+
+	switch (freq) {
+	case AR5K_INI_RFGAIN_2GHZ:
+	case AR5K_INI_RFGAIN_5GHZ:
+		break;
+	default:
+		return (AH_FALSE);
+	}
+
+	for (i = 0; i < AR5K_ELEMENTS(ar5k_rfg); i++) {
+		AR5K_REG_WRITE((u_int32_t)ar5k_rfg[i].rfg_register,
+		    ar5k_rfg[i].rfg_value[phy][freq]);
 	}
 
 	return (AH_TRUE);
