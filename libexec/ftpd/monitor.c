@@ -1,4 +1,4 @@
-/*	$OpenBSD: monitor.c,v 1.4 2004/11/29 22:24:57 henning Exp $	*/
+/*	$OpenBSD: monitor.c,v 1.5 2004/12/06 20:52:04 moritz Exp $	*/
 
 /*
  * Copyright (c) 2004 Moritz Jodeit <moritz@jodeit.org>
@@ -136,7 +136,7 @@ set_monitor_signals(void)
 	struct sigaction act;
 	int i;
 
-	sigemptyset(&act.sa_mask);
+	sigfillset(&act.sa_mask);
 	act.sa_flags = 0;
 
 	act.sa_handler = SIG_DFL;
@@ -378,16 +378,11 @@ handle_cmds(void)
 void
 sig_pass_to_slave(int signo)
 {
-	sigset_t allsigs, oldsigs;
 	int olderrno = errno;
-
-	sigfillset(&allsigs);
-	sigprocmask(SIG_BLOCK, &allsigs, &oldsigs);
 
 	if (slave_pid > 0)
 		kill(slave_pid, signo);
 
-	sigprocmask(SIG_SETMASK, &oldsigs, NULL);
 	errno = olderrno;
 }
 
@@ -396,11 +391,7 @@ void
 sig_chld(int signo)
 {
 	pid_t pid;
-	sigset_t allsigs, oldsigs;
 	int stat, olderrno = errno;
-
-	sigfillset(&allsigs);
-	sigprocmask(SIG_BLOCK, &allsigs, &oldsigs);
 
 	do {
 		pid = waitpid(-1, &stat, WNOHANG);
@@ -411,7 +402,6 @@ sig_chld(int signo)
 		slave_pid = -1;
 	}
 
-	sigprocmask(SIG_SETMASK, &oldsigs, NULL);
 	errno = olderrno;
 }
 
