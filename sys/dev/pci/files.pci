@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.147 2003/04/25 21:46:43 grange Exp $
+#	$OpenBSD: files.pci,v 1.148 2003/08/12 18:48:13 jason Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -331,6 +331,11 @@ file	dev/pci/noct.c			noct
 device	ises: crypto
 attach	ises at pci
 file	dev/pci/ises.c			ises
+
+# Safenet SafeXcel 1141
+device	safe: crypto
+attach	safe at pci
+file	dev/pci/safe.c			safe
 
 # Winbond W89C840F ethernet
 device	wb: ether, ifnet, mii, ifmedia, mii_phy
