@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: getservent.c,v 1.6 2003/06/02 20:18:35 millert Exp $";
+static char rcsid[] = "$OpenBSD: getservent.c,v 1.7 2004/09/16 03:13:22 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -47,8 +47,7 @@ static char *serv_aliases[MAXALIASES];
 int _serv_stayopen;
 
 void
-setservent(f)
-	int f;
+setservent(int f)
 {
 	if (servf == NULL)
 		servf = fopen(_PATH_SERVICES, "r" );
@@ -58,7 +57,7 @@ setservent(f)
 }
 
 void
-endservent()
+endservent(void)
 {
 	if (servf) {
 		fclose(servf);
@@ -68,7 +67,7 @@ endservent()
 }
 
 struct servent *
-getservent()
+getservent(void)
 {
 	char *p, *cp, **q, *endp;
 	long l;
