@@ -5,7 +5,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint) && !defined(NOID)
 static char elsieid[] = "@(#)localtime.c	7.64";
-static char rcsid[] = "$OpenBSD: localtime.c,v 1.11 1998/01/18 23:24:53 millert Exp $";
+static char rcsid[] = "$OpenBSD: localtime.c,v 1.12 1998/07/11 23:08:53 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -277,7 +277,7 @@ register struct state * const	sp;
 	register int		fid;
 
 	if (name != NULL && issetugid() != 0)
-		if ((name[0] == ':' && name[1] == '/') || 
+		if ((name[0] == ':') ||
 		    name[0] == '/' || strchr(name, '.'))
 			name = NULL;
 	if (name == NULL && (name = TZDEFAULT) == NULL)
