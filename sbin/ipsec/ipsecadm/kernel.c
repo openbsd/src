@@ -1,4 +1,4 @@
-/* $OpenBSD: kernel.c,v 1.3 1998/05/24 13:29:02 provos Exp $ */
+/* $OpenBSD: kernel.c,v 1.4 1998/08/01 06:23:48 angelos Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and 
@@ -74,5 +74,7 @@ xf_set(em)
 	  perror("write");
 	  return 0;
 	}
+
+	close(sd);
 	return 1;
 }
