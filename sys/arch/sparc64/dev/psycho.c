@@ -1,4 +1,4 @@
-/*	$OpenBSD: psycho.c,v 1.16 2002/03/14 03:16:00 millert Exp $	*/
+/*	$OpenBSD: psycho.c,v 1.17 2002/04/04 17:03:00 jason Exp $	*/
 /*	$NetBSD: psycho.c,v 1.39 2001/10/07 20:30:41 eeh Exp $	*/
 
 /*
@@ -468,8 +468,8 @@ psycho_attach(parent, self, aux)
 			panic("psycho_attach: malloc iommu_state");
 
 
-		sc->sc_is->is_sb[0] = 0;
-		sc->sc_is->is_sb[1] = 0;
+		sc->sc_is->is_sb[0] = NULL;
+		sc->sc_is->is_sb[1] = NULL;
 		if (getproplen(sc->sc_node, "no-streaming-cache") >= 0)
 			sc->sc_is->is_sb[0] = &pci_ctl->pci_strbuf;
 
