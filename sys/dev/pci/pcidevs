@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.643 2003/06/16 19:34:36 deraadt Exp $
+	$OpenBSD: pcidevs,v 1.644 2003/06/25 08:59:55 henning Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -1793,6 +1793,7 @@ product MOT RAVEN		0x4801	Raven Host-PCI
 
 /* Moxa */
 product MOXA CP114 		0x1141	CP-114
+product MOXA C104H		0x1040	C104H
 product MOXA C168H		0x1680	C168H
 
 /* Mesa Ridge Technologies (MAGMA) */
