@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb.c,v 1.8 2000/03/26 08:39:46 aaron Exp $	*/
+/*	$OpenBSD: usb.c,v 1.9 2000/03/26 21:47:51 aaron Exp $	*/
 /*	$NetBSD: usb.c,v 1.41 2000/03/16 00:46:38 augustss Exp $	*/
 
 /*
@@ -236,7 +236,7 @@ USB_ATTACH(usb)
 		 * until the USB event thread is running, which means that
 		 * the keyboard will not work until after cold boot.
 		 */
-		if (cold && (sc->sc_dev.dv_cfdata->cf_flags & 1)
+		if (cold && (sc->sc_dev.dv_cfdata->cf_flags & 1))
 			dev->hub->explore(sc->sc_bus->root_hub);
 #endif
 	} else {
@@ -539,7 +539,7 @@ usbpoll(dev, events, p)
 {
 	int revents, mask, s;
 
-	if (minor(dev) != USB_DEV_MINOR) {
+	if (minor(dev) == USB_DEV_MINOR) {
 		revents = 0;
 		mask = POLLIN | POLLRDNORM;
 
@@ -550,7 +550,7 @@ usbpoll(dev, events, p)
 			selrecord(p, &usb_selevent);
 		splx(s);
 
-		return(revents);
+		return (revents);
 	} else {
 #if defined(__FreeBSD__)
 		/* This part should be deleted when kthreads is available */
@@ -606,6 +606,7 @@ usb_discover(sc)
 #if defined(__FreeBSD__)
 	splx(s);
 #endif
+
 	return (USBD_NORMAL_COMPLETION);
 }
 

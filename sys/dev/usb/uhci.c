@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhci.c,v 1.8 2000/03/26 15:53:07 aaron Exp $	*/
+/*	$OpenBSD: uhci.c,v 1.9 2000/03/26 21:47:51 aaron Exp $	*/
 /*	$NetBSD: uhci.c,v 1.87 2000/02/29 21:37:01 augustss Exp $	*/
 
 /*
@@ -59,7 +59,7 @@
 #include <sys/module.h>
 #include <sys/bus.h>
 #include <machine/bus_pio.h>
-#if defined(DIAGNOSTIC) && defined(__i386)
+#if defined(DIAGNOSTIC) && defined(__i386__)
 #include <machine/cpu.h>
 #endif
 #endif
@@ -705,7 +705,7 @@ uhci_dump_qhs(sqh)
 {
 	uhci_dump_qh(sqh);
 
-	/* uhci_dump_sqh displays all the QHs and TDs from the given QH onwards
+	/* uhci_dump_qhs displays all the QHs and TDs from the given QH onwards
 	 * Traverses sideways first, then down.
 	 *
 	 * QH1
@@ -1396,7 +1396,7 @@ uhci_alloc_sqh(sc)
 		err = usb_allocmem(&sc->sc_bus, UHCI_SQH_SIZE * UHCI_SQH_CHUNK,
 				 UHCI_QH_ALIGN, &dma);
 		if (err)
-			return 0;
+			return (0);
 		for(i = 0; i < UHCI_SQH_CHUNK; i++) {
 			offs = i * UHCI_SQH_SIZE;
 			sqh = (uhci_soft_qh_t *)((char *)KERNADDR(&dma) +offs);
