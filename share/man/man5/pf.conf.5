@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.115 2002/11/24 17:41:53 pb Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.116 2002/11/24 18:12:12 pb Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -1367,11 +1367,17 @@ cbq-type       = ( "default" | "control" | "borrow" | "red" | "ecn" | "rio" ) .
 
 .Ed
 .Sh FILES
-.Bl -tag -width "/etc/pf.conf" -compact
+.Bl -tag -width "/etc/protocols" -compact
 .It Pa /etc/hosts
+host name database
 .It Pa /etc/pf.conf
+default location of the ruleset file
 .It Pa /etc/protocols
+protocol name database
 .It Pa /etc/services
+service name database
+.It Pa /usr/share/pf
+example rulesets
 .El
 .Sh SEE ALSO
 .Xr pf 4 ,
