@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.8 1996/03/25 02:50:50 jonathan Exp $	*/
+/*      $OpenBSD: asm.h,v 1.2 1996/10/29 17:02:38 graichen Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -35,14 +35,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)machAsmDefs.h	8.1 (Berkeley) 6/10/93
- */
-
-/*
- * machAsmDefs.h --
- *
- *	Macros used when writing assembler programs.
- *
  *	Copyright (C) 1989 Digital Equipment Corporation.
  *	Permission to use, copy, modify, and distribute this software and
  *	its documentation for any purpose and without fee is hereby granted,
@@ -50,39 +42,65 @@
  *	Digital Equipment Corporation makes no representations about the
  *	suitability of this software for any purpose.  It is provided "as is"
  *	without express or implied warranty.
- *
- * from: Header: /sprite/src/kernel/mach/ds3100.md/RCS/machAsmDefs.h,
- *	v 1.2 89/08/15 18:28:24 rab Exp  SPRITE (DECWRL)
  */
 
-#ifndef _MIPS_ASM_H
-#define _MIPS_ASM_H
+#ifndef _MACHASMDEFS
+#define _MACHASMDEFS
 
 #include <machine/regdef.h>
+
+#define	ABICALLS	.abicalls
+
+#if defined(ABICALLS) && !defined(_KERNEL)
+	ABICALLS
+#endif
+
+#define RCSID(x)
+
+#define _C_LABEL(x) x
+
+/*
+ * Define how to access unaligned data word 
+ */
+#ifdef MIPSEL
+#define LWLO    lwl
+#define LWHI    lwr
+#define	SWLO	swl
+#define	SWHI	swr
+#endif
+#ifdef MIPSEB
+#define LWLO    lwr
+#define LWHI    lwl
+#define	SWLO	swr
+#define	SWHI	swl
+#endif
+
+/*
+ * Code for setting gp reg if abicalls are used.
+ */
+#if defined(ABICALLS) && !defined(_KERNEL)
+#define	ABISETUP		\
+	.set	noreorder;	\
+	.cpload	t9;		\
+	.set	reorder;
+#else
+#define	ABISETUP
+#endif
 
 /*
  * Define -pg profile entry code.
  */
 #if defined(GPROF) || defined(PROF)
-#define	MCOUNT	.set noreorder; \
-		.set noat; \
-		move $1,$31; \
-		jal _mcount; \
-		subu sp,sp,8; \
-		.set reorder; \
-		.set at;
+#define	MCOUNT			\
+	.set noreorder;		\
+	.set noat;		\
+	move $1,$31;		\
+	jal _mcount;		\
+	subu sp,sp,8;		\
+	.set reorder;		\
+	.set at;
 #else
 #define	MCOUNT
-#endif
-
-#ifdef __NO_LEADING_UNDERSCORES__
-# define _C_LABEL(x)	x
-#else
-# ifdef __STDC__
-#  define _C_LABEL(x)	_ ## x
-# else
-#  define _C_LABEL(x)	_/**/x
-# endif
 #endif
 
 /*
@@ -90,37 +108,31 @@
  *
  *	Declare a leaf routine.
  */
-#define LEAF(x) \
-	.globl _C_LABEL(x); \
-	.ent _C_LABEL(x), 0; \
-_C_LABEL(x): ; \
-	.frame sp, 0, ra; \
+#define LEAF(x)			\
+	.align	3;		\
+	.globl x;		\
+	.ent x, 0;		\
+x: ;				\
+	.frame sp, 0, ra;	\
+	ABISETUP		\
 	MCOUNT
+
+#define	ALEAF(x)		\
+	.globl	x;		\
+x:
 
 /*
  * NLEAF(x)
  *
  *	Declare a non-profiled leaf routine.
  */
-#define NLEAF(x) \
-	.globl _C_LABEL(x); \
-	.ent _C_LABEL(x), 0; \
-_C_LABEL(x): ; \
-	.frame sp, 0, ra
-
-/*
- * ALEAF -- declare alternate entry to a leaf routine.
- */
-#ifdef USE_AENT
-#define AENT(x) \
-	.aent	x, 0
-#else
-#define AENT(x)
-#endif
-#define	ALEAF(x)					\
-	.globl	_C_LABEL(x);				\
-	AENT (_C_LABEL(x))				\
-_C_LABEL(x):
+#define NLEAF(x)		\
+	.align	3;		\
+	.globl x;		\
+	.ent x, 0;		\
+x: ;				\
+	.frame sp, 0, ra;	\
+	ABISETUP
 
 /*
  * NON_LEAF(x)
@@ -128,10 +140,12 @@ _C_LABEL(x):
  *	Declare a non-leaf routine (a routine that makes other C calls).
  */
 #define NON_LEAF(x, fsize, retpc) \
-	.globl _C_LABEL(x); \
-	.ent _C_LABEL(x), 0; \
-_C_LABEL(x): ; \
+	.align	3;		\
+	.globl x;		\
+	.ent x, 0;		\
+x: ;				\
 	.frame sp, fsize, retpc; \
+	ABISETUP		\
 	MCOUNT
 
 /*
@@ -141,10 +155,12 @@ _C_LABEL(x): ; \
  *	(a routine that makes other C calls).
  */
 #define NNON_LEAF(x, fsize, retpc) \
-	.globl _C_LABEL(x); \
-	.ent _C_LABEL(x), 0; \
-_C_LABEL(x): ; \
-	.frame sp, fsize, retpc
+	.align	3;		\
+	.globl x;		\
+	.ent x, 0;		\
+x: ;				\
+	.frame sp, fsize, retpc	\
+	ABISETUP
 
 /*
  * END(x)
@@ -152,7 +168,7 @@ _C_LABEL(x): ; \
  *	Mark end of a procedure.
  */
 #define END(x) \
-	.end _C_LABEL(x)
+	.end x
 
 #define STAND_FRAME_SIZE	24
 #define STAND_RA_OFFSET		20
@@ -162,12 +178,12 @@ _C_LABEL(x): ; \
  */
 #define PANIC(msg) \
 	la	a0, 9f; \
-	jal	_C_LABEL(panic); \
+	jal	panic; \
 	MSG(msg)
 
 #define	PRINTF(msg) \
 	la	a0, 9f; \
-	jal	_C_LABEL(printf); \
+	jal	printf; \
 	MSG(msg)
 
 #define	MSG(msg) \
@@ -177,6 +193,6 @@ _C_LABEL(x): ; \
 
 #define ASMSTR(str) \
 	.asciiz str; \
-	.align	2
+	.align	3
 
-#endif /* _MIPS_ASM_H */
+#endif /* _MACHASMDEFS */

@@ -24,7 +24,7 @@
 AS?=	as
 CC?=	cc
 CPP?=	cpp
-LD?=	ld
+LD=	/usr/local/bin/ld
 STRIP?=	strip -d
 TOUCH?=	touch -f -c
 
@@ -33,8 +33,8 @@ S=	../../../..
 PMAX=	../..
 
 INCLUDES=	-I. -I$S/arch -I$S
-CPPFLAGS=	${INCLUDES} ${IDENT} -D_KERNEL -Dpmax ${GP}
-CFLAGS=		${DEBUG} -O2 -Werror
+CPPFLAGS=	${INCLUDES} ${IDENT} -D_KERNEL -Dpmax
+CFLAGS=		${DEBUG} -O2 -Werror -mno-abicalls -mcpu=r3000
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
 LINKFLAGS=	-N -Ttext 80030000 -e start
 
@@ -99,7 +99,7 @@ LINKFLAGS+=	-x
 
 SYSTEM_LD_TAIL+=;\
 		mv $@ $@.elf; \
-		elf2aout $@.elf $@; \
+		/usr/local/bin/elf2aout $@.elf $@; \
 		chmod 755 $@
 
 %LOAD
@@ -111,7 +111,7 @@ genassym: genassym.o
 	${CC} -o $@ genassym.o
 
 genassym.o: ${S}/arch/pmax/pmax/genassym.c
-	${NORMAL_C_C}
+	${CC} ${INCLUDES} ${IDENT} -D_KERNEL -Dpmax -c $<
 
 param.c: $S/conf/param.c
 	rm -f param.c
