@@ -1,4 +1,4 @@
-/*	$OpenBSD: power.c,v 1.7 2003/05/13 22:25:30 miod Exp $	*/
+/*	$OpenBSD: power.c,v 1.8 2005/03/23 17:12:24 miod Exp $	*/
 /*	$NetBSD: power.c,v 1.2 1996/05/16 15:56:56 abrown Exp $ */
 
 /*
@@ -50,8 +50,8 @@
 
 #include <sparc/dev/power.h>
 
-static int powermatch(struct device *, void *, void *);
-static void powerattach(struct device *, struct device *, void *);
+void	powerattach(struct device *, struct device *, void *);
+int	powermatch(struct device *, void *, void *);
 
 struct cfattach power_ca = {
 	sizeof(struct device), powermatch, powerattach
@@ -70,24 +70,24 @@ volatile u_char *power_reg;
  * shutdown or halted or whatever.
  */
 
-static int
-powermatch(parent, vcf, aux)
-	struct device *parent;
-	void *aux, *vcf;
+int
+powermatch(struct device *parent, void *vcf, void *aux)
 {
-	register struct confargs *ca = aux;
+	struct confargs *ca = aux;
 
-	if (CPU_ISSUN4M)
-		return (strcmp("power", ca->ca_ra.ra_name) == 0);
+	if (CPU_ISSUN4M) {
+		/* Tadpole SPARCbooks provide the power register as "auxio2" */
+		if (strcmp("power", ca->ca_ra.ra_name) == 0 ||
+		    strcmp("auxio2", ca->ca_ra.ra_name) == 0)
+			return (1);
+	}
 
 	return (0);
 }
 
 /* ARGSUSED */
-static void
-powerattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+void
+powerattach(struct device *parent, struct device *self, void *aux)
 {
 	struct confargs *ca = aux;
 	struct romaux *ra = &ca->ca_ra;
@@ -100,9 +100,10 @@ powerattach(parent, self, aux)
 }
 
 void
-powerdown()
+auxio_powerdown()
 {
-	if (power_attached)
+	if (power_attached) {
 		*POWER_REG |= POWER_OFF;
-	DELAY(1000000);
+		DELAY(1000000);
+	}
 }

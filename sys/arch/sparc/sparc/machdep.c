@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.102 2004/09/29 07:35:14 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.103 2005/03/23 17:12:26 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.85 1997/09/12 08:55:02 pk Exp $ */
 
 /*
@@ -84,8 +84,10 @@
 #include <uvm/uvm.h>
 
 #ifdef SUN4M
-#include <sparc/dev/power.h>
 #include "power.h"
+#if NPOWER > 0
+#include <sparc/dev/power.h>
+#endif
 #include "scf.h"
 #include "tctrl.h"
 #if NTCTRL > 0
@@ -443,7 +445,7 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	size_t newlen;
 	struct proc *p;
 {
-#if (NAUXREG > 0) || (NLED > 0)
+#if (NLED > 0) || (NAUXREG > 0) || (NSCF > 0)
 	int oldval;
 #endif
 	int ret;
@@ -725,15 +727,13 @@ haltsys:
 	if ((howto & RB_HALT) || (howto & RB_POWERDOWN)) {
 #if defined(SUN4M)
 		if (howto & RB_POWERDOWN) {
-#if NPOWER > 0 || NTCTRL >0
 			printf("attempting to power down...\n");
-#if NPOWER > 0
-			powerdown();
-#endif
 #if NTCTRL > 0
 			tadpole_powerdown();
 #endif
-#endif /* NPOWER || MTCTRL */
+#if NPOWER > 0
+			auxio_powerdown();
+#endif
 			rominterpret("power-off");
 			printf("WARNING: powerdown failed!\n");
 		}
