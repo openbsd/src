@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosboot.S,v 1.18 1997/08/29 21:16:48 mickey Exp $	*/
+/*	$OpenBSD: biosboot.S,v 1.19 1997/08/29 22:26:58 mickey Exp $	*/
 
 	.file	"bootbios.S"
 
@@ -312,16 +312,22 @@ Lchr:
 Gdtr:	.word	. - 1b
 	.long	BOOTREL + 1b
 
-	.globl	_block_table
+	.globl	_block_table, _block_count
+_block_count:
+	.byte	BLKCNT	/* entries in _block_table */
 _block_table:
 	.word	0	/* cylinder/sector */
 	.byte	0	/* head */
 	.byte	0	/* nsect */
-	. = _block_table + BLKCNT*4
-	.globl	_block_count
-_block_count:
-	.byte	BLKCNT	/* entries in _block_table */
+	# . = _block_table + BLKCNT*4
 
+#ifdef BEMBR
+	. = 0x1b8
+	.space	4, 0	/* NT registry offset from James C. Cortilier III */
+
+ 	. = DOSPARTOFF
+ 	.globl	_partitions
+ 	/* throw in a partition in case we are block0 as well */
 	. = DOSPARTOFF
 	.globl	_partitions
 	/* throw in a partition in case we are block0 as well */
@@ -335,7 +341,7 @@ _partitions:
 	.long   0,0
 	.byte   0,0,0,0,0,0,0,0
 	.long   0,0
-	
+#endif
 	. = 0x200 - 2
 	/* a little signature */
 	.word	DOSMBR_SIGNATURE
