@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.42 1997/06/12 16:37:59 kstailey Exp $
+#	$OpenBSD: Makefile,v 1.43 1997/06/12 16:41:04 kstailey Exp $
 #	$NetBSD: Makefile,v 1.62 1996/03/10 05:45:43 thorpej Exp $
 #	from: @(#)Makefile	5.8.1.1 (Berkeley) 5/8/91
 
@@ -8,8 +8,8 @@ SUBDIR= apply apropos arch asa at aucat awk banner basename bdes biff cal \
 	calendar cap_mkdb cdio checknr chflags chpass cksum cmp col colcrt \
 	colrm column comm compile_et compress cpp crontab ctags cut dirname \
 	du elf2olf encrypt env error expand false file file2c find finger fmt \
-	fold from fsplit fstat ftp gencat getconf getopt head hexdump id \
-	indent \
+	fold from fsplit fstat ftp gencat getconf getopt gprof head hexdump \
+	id indent \
 	info_mkdb ipcrm ipcs join jot kdump ktrace lam last lastcomm leave \
 	less lex lndir locate lock logger login logname look lorder m4 \
 	machine mail make man mesg mk_cmds mkdep mkfifo mkstr mktemp modstat \
@@ -23,8 +23,7 @@ SUBDIR= apply apropos arch asa at aucat awk banner basename bdes biff cal \
 	unifdef uniq units unvis users uudecode uuencode \
 	vacation vgrind vi vim vis vmstat w wall wc what whatis \
 	which who whois window write \
-	xargs xinstall xlint xstr yacc yes \
-	gprof
+	xargs xinstall xlint xstr yacc yes
 
 .if (${YP} == "yes")
 SUBDIR+=ypcat ypmatch ypwhich
