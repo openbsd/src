@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.76 2001/09/12 15:48:45 art Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.77 2001/09/17 19:17:30 gluk Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -133,6 +133,7 @@ int	main __P((void *));
 void	check_console __P((struct proc *));
 void	start_init __P((void *));
 void	start_pagedaemon __P((void *));
+void	start_flusher __P((void *));
 void	start_update __P((void *));
 void	start_reaper __P((void *));
 void    start_crypto __P((void *));
@@ -413,15 +414,16 @@ main(framep)
 	if (kthread_create(start_reaper, NULL, NULL, "reaper"))
 		panic("fork reaper");
 
-	/* Create process 4, the update daemon kernel thread. */
-	if (kthread_create(start_update, NULL, NULL, "update")) {
-#ifdef DIAGNOSTIC
+	/* Create process 4, the flusher daemon kernel thread. */
+	if (kthread_create(start_flusher, NULL, NULL, "flusher"))
+		panic("fork flusher");
+
+	/* Create process 5, the update daemon kernel thread. */
+	if (kthread_create(start_update, NULL, NULL, "update"))
 		panic("fork update");
-#endif
-	}
 
 #ifdef CRYPTO
-	/* Create process 5, the crypto kernel thread. */
+	/* Create process 6, the crypto kernel thread. */
 	if (kthread_create(start_crypto, NULL, NULL, "crypto"))
 		panic("crypto thread");
 #endif /* CRYPTO */
@@ -614,6 +616,14 @@ start_update(arg)
 	void *arg;
 {
 	sched_sync(curproc);
+	/* NOTREACHED */
+}
+
+void
+start_flusher(arg)
+	void *arg;
+{
+	buf_daemon(curproc);
 	/* NOTREACHED */
 }
 

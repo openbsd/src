@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.h,v 1.27 2001/09/10 08:48:42 gluk Exp $	*/
+/*	$OpenBSD: buf.h,v 1.28 2001/09/17 19:17:30 gluk Exp $	*/
 /*	$NetBSD: buf.h,v 1.25 1997/04/09 21:12:17 mycroft Exp $	*/
 
 /*
@@ -226,6 +226,7 @@ void  reassignbuf __P((struct buf *));
 void  bgetvp __P((struct vnode *, struct buf *));
 
 void  buf_replacevnode __P((struct buf *, struct vnode *));
+void  buf_daemon __P((struct proc *));
 
 static __inline void
 buf_start(struct buf *bp)
