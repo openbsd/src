@@ -1,4 +1,4 @@
-/*	$OpenBSD: bereg.h,v 1.1 2001/08/20 22:47:08 jason Exp $	*/
+/*	$OpenBSD: bereg.h,v 1.2 2003/06/02 18:32:41 jason Exp $	*/
 /*	$NetBSD: bereg.h,v 1.4 2000/07/24 04:28:51 mycroft Exp $	*/
 
 /*-
@@ -49,8 +49,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. The name of the authors may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHORS ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
