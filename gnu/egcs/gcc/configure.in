@@ -1165,6 +1165,8 @@ changequote([,])dnl
 changequote(,)dnl
 	i[34567]86-*-openbsd*)
 changequote([,])dnl
+		# needed to unconfuse gdb
+		tmake_file="t-libc-ok t-openbsd i386/t-openbsd"
 		# we need collect2 until our bug is fixed...
 		use_collect2=yes
 		;;
@@ -2038,6 +2040,7 @@ changequote([,])dnl
        use_collect2=yes
 		;;
 	m68k*-*-openbsd*)
+		tmake_file="t-libc-ok t-openbsd m68k/t-openbsd"
 		float_format=m68k
 		# we need collect2 until our bug is fixed...
 		use_collect2=yes
