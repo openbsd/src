@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccomvar.h,v 1.6 1998/04/05 07:36:45 downsj Exp $	*/
+/*	$OpenBSD: pccomvar.h,v 1.7 1999/07/26 12:31:44 niklas Exp $	*/
 /*	$NetBSD: comvar.h,v 1.5 1996/05/05 19:50:47 christos Exp $	*/
 
 /*
@@ -78,9 +78,6 @@ struct com_softc {
 #define	COM_HW_NOIEN	0x01
 #define	COM_HW_FIFO	0x02
 #define	COM_HW_HAYESP	0x04
-#define	COM_HW_ABSENT_PENDING	0x08	/* reattached, awaiting close/reopen */
-#define	COM_HW_ABSENT	0x10		/* configure actually failed, or removed */
-#define	COM_HW_REATTACH	0x20		/* reattaching */
 #define	COM_HW_CONSOLE	0x40
 	u_char sc_swflags;
 #define	COM_SW_SOFTCAR	0x01
@@ -107,7 +104,6 @@ struct com_softc {
 int	comprobe1 __P((bus_space_tag_t, bus_space_handle_t));
 void	cominit __P((bus_space_tag_t, bus_space_handle_t, int));
 int	comintr __P((void *));
-void	com_absent_notify __P((struct com_softc *sc));
 
 #ifdef COM_HAYESP
 int comprobeHAYESP __P((bus_space_handle_t hayespioh, struct com_softc *sc));

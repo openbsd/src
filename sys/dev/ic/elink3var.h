@@ -1,4 +1,4 @@
-/*	$OpenBSD: elink3var.h,v 1.11 1998/09/19 10:08:05 maja Exp $	*/
+/*	$OpenBSD: elink3var.h,v 1.12 1999/07/26 12:31:44 niklas Exp $	*/
 /*	$NetBSD: elink3var.h,v 1.12 1997/03/30 22:47:11 jonathan Exp $	*/
 
 /*
@@ -88,9 +88,6 @@ struct ep_softc {
 #define EP_IS_BUS_32(a)	((a) & 0x2)
 
 	u_char	txashift;		/* shift in SET_TX_AVAIL_THRESH */
-	u_char	pcmcia_flags;
-#define EP_REATTACH		0x01
-#define EP_ABSENT		0x02
 };
 
 u_int16_t epreadeeprom __P((bus_space_tag_t, bus_space_handle_t, int));
