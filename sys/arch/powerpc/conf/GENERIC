@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.19 2000/09/16 04:03:00 rahnds Exp $
+#	$OpenBSD: GENERIC,v 1.20 2000/10/20 05:23:18 drahn Exp $
 #
 # PPC GENERIC config file
 #
@@ -119,6 +119,9 @@ ukbd*  at uhub? port ? configuration ? interface ?
 # USB Mice
 ums*	at uhub? port ? configuration ? interface ?
 wsmouse*	at ums? mux 0
+
+# USB Printer
+ulpt*   at uhub? port ? configuration ? interface ?
 
 # USB Generic driver
 ugen*  at uhub? port ? configuration ? interface ?
