@@ -1,4 +1,4 @@
-/*	$OpenBSD: diskprobe.c,v 1.22 2003/09/19 05:25:12 fgsch Exp $	*/
+/*	$OpenBSD: diskprobe.c,v 1.23 2003/10/23 18:33:45 fgsch Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -79,10 +79,14 @@ floppyprobe(void)
 
 		/* Fill out best we can - (fd?) */
 		dip->bios_info.bsd_dev = MAKEBOOTDEV(2, 0, 0, i, RAW_PART);
-		if((bios_getdisklabel(&dip->bios_info, &dip->disklabel)) != 0) 
-			dip->bios_info.flags |= BDI_BADLABEL;
-		else
-			dip->bios_info.flags |= BDI_GOODLABEL;
+
+		/*
+		 * Delay reading the disklabel until we're sure we want
+		 * to boot from the floppy. Doing this avoids a delay
+		 * (sometimes very long) when trying to read the label
+		 * and the drive is unplugged.
+		 */
+		dip->bios_info.flags |= BDI_BADLABEL;
 
 		/* Add to queue of disks */
 		TAILQ_INSERT_TAIL(&disklist, dip, list);
