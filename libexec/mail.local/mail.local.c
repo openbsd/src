@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)mail.local.c	5.6 (Berkeley) 6/19/91";*/
-static char rcsid[] = "$Id: mail.local.c,v 1.4 1996/08/27 20:33:41 dm Exp $";
+static char rcsid[] = "$Id: mail.local.c,v 1.5 1996/08/29 04:19:34 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -67,6 +67,7 @@ void	notifybiff __P((char *));
 int	store __P((char *));
 void	usage __P((void));
 
+int
 main(argc, argv)
 	int argc;
 	char **argv;
@@ -167,6 +168,22 @@ store(from)
 	return(fd);
 }
 
+void
+baditem(path)
+	char *path;
+{
+	char npath[MAXPATHLEN];
+
+	if (unlink(path) == 0)
+		return;
+	snprintf(npath, sizeof npath, "%s/XXXXXXXXX", _PATH_MAILDIR);
+	if (mktemp(npath) == NULL)
+		return;
+	if (rename(path, npath) != -1)
+		err(NOTFATAL, "nasty spool item %s renamed to %s",
+		    path, npath);
+}
+
 int
 deliver(fd, name, lockfile)
 	int fd;
@@ -188,15 +205,79 @@ deliver(fd, name, lockfile)
 		return(1);
 	}
 
-	(void)sprintf(path, "%s/%s", _PATH_MAILDIR, name);
+	(void)snprintf(path, sizeof path, "%s/%s", _PATH_MAILDIR, name);
 
 	if (lockfile) {
-		(void)sprintf(lpath, "%s/%s.lock", _PATH_MAILDIR, name);
+		int tries = 0;
 
-		if ((lfd = open(lpath, O_CREAT|O_WRONLY|O_EXCL,
-		    S_IRUSR|S_IWUSR)) < 0) {
-			err(NOTFATAL, "%s: %s", lpath, strerror(errno));
-			return(1);
+		(void)snprintf(lpath, sizeof lpath, "%s/%s.lock",
+		    _PATH_MAILDIR, name);
+
+		if (stat(_PATH_MAILDIR, &sb) != -1 &&
+		    (sb.st_mode & 7) == 7) {
+			/*
+			 * We have a writeable spool, deal with it as
+			 * securely as possible.
+			 */
+			time_t ctim = -1;
+
+			seteuid(pw->pw_uid);
+			if (lstat(lpath, &sb) != -1)
+				ctim = sb.st_ctime;
+			while (1) {
+				/*
+				 * Deal with existing user.lock files
+				 * or directories or symbolic links that
+				 * should not be here.
+				 */
+				if (readlink(lpath, buf, sizeof buf) != -1) {
+					if (lstat(lpath, &sb) != -1 &&
+					    S_ISLNK(fsb.st_mode)) {
+						seteuid(sb.st_uid);
+						unlink(lpath);
+						seteuid(pw->pw_uid);
+					}
+					goto again;
+				}
+				if ((lfd = open(lpath,
+				    O_CREAT|O_WRONLY|O_EXCL|O_EXLOCK,
+				    S_IRUSR|S_IWUSR)) != -1)
+					break;
+again:
+				if (tries > 10) {
+					err(NOTFATAL, "%s: %s", lpath,
+					    strerror(errno));
+					seteuid(0);
+					return(1);
+				}
+				if (tries > 9 &&
+				    (lfd = open(lpath, O_WRONLY|O_EXLOCK,
+					    0)) != -1) {
+					if (fstat(lfd, &fsb) != -1 &&
+					    lstat(lpath, &sb) != -1) {
+						if (fsb.st_dev == sb.st_dev &&
+						    fsb.st_ino == sb.st_ino &&
+						    ctim == fsb.st_ctime ) {
+							seteuid(fsb.st_uid);
+							baditem(lpath);
+							seteuid(pw->pw_uid);
+						}
+					}
+				}
+				sleep(1 << tries);
+				tries++;
+				continue;
+			}
+			seteuid(0);
+		} else {
+			/*
+			 * Only root can write the spool directory.
+			 */
+	 		if ((lfd = open(lpath, O_CREAT|O_WRONLY|O_EXCL,
+	 		    S_IRUSR|S_IWUSR)) < 0) {
+	 			err(NOTFATAL, "%s: %s", lpath, strerror(errno));
+	 			return(1);
+			}
 		}
 	}
 
@@ -255,7 +336,7 @@ retry:
 	}
 
 	curoff = lseek(mbfd, 0, SEEK_END);
-	(void)sprintf(biffmsg, "%s@%qd\n", name, curoff);
+	(void)snprintf(biffmsg, sizeof biffmsg, "%s@%qd\n", name, curoff);
 	if (lseek(fd, 0, SEEK_SET) == (off_t)-1) {
 		err(FATAL, "temporary file: %s", strerror(errno));
 		goto bad;
