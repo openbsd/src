@@ -1,4 +1,4 @@
-/*	$OpenBSD: exchange.c,v 1.46 2001/05/05 00:48:11 angelos Exp $	*/
+/*	$OpenBSD: exchange.c,v 1.47 2001/05/31 20:25:10 angelos Exp $	*/
 /*	$EOM: exchange.c,v 1.143 2000/12/04 00:02:25 angelos Exp $	*/
 
 /*
@@ -63,9 +63,7 @@
 #include "ipsec.h"
 #include "sa.h"
 #include "util.h"
-#ifdef USE_X509
-#include "x509.h"
-#endif
+#include "key.h"
 
 /* Initial number of bits from the cookies used as hash.  */
 #define INITIAL_BUCKET_BITS 6
@@ -1181,11 +1179,21 @@ exchange_free_aux (void *v_exch)
       handler = cert_get (exchange->recv_certtype);
       if (handler)
 	handler->cert_free (exchange->recv_cert);
-      else if (exchange->recv_certtype == ISAKMP_CERTENC_NONE)
-	free (exchange->recv_cert);
+    }
+  if (exchange->sent_cert)
+    {
+      handler = cert_get (exchange->sent_certtype);
+      if (handler)
+	handler->cert_free (exchange->sent_cert);
     }
   if (exchange->recv_key)
-    free (exchange->recv_key);
+    key_free (exchange->recv_keytype, ISAKMP_KEYTYPE_PUBLIC,
+	      exchange->recv_key);
+  if (exchange->sent_key)
+    key_free (exchange->sent_keytype, ISAKMP_KEYTYPE_PRIVATE,
+	      exchange->sent_key);
+  if (exchange->keynote_key)
+    free (exchange->keynote_key); /* This is just a string */
 
 #if defined(POLICY) || defined(KEYNOTE)
   if (exchange->policy_id != -1)
@@ -1279,6 +1287,7 @@ exchange_finalize (struct message *msg)
   struct proto *proto;
   struct conf_list *attrs;
   struct conf_list_node *attr;
+  struct cert_handler *handler;
   int i;
 
   exchange_dump ("exchange_finalize", exchange);
@@ -1347,55 +1356,35 @@ exchange_finalize (struct message *msg)
       exchange->keystate = 0;
 
       msg->isakmp_sa->recv_certtype = exchange->recv_certtype;
-      msg->isakmp_sa->recv_certlen = exchange->recv_certlen;
+      msg->isakmp_sa->sent_certtype = exchange->sent_certtype;
+      msg->isakmp_sa->recv_keytype = exchange->recv_keytype;
+      msg->isakmp_sa->sent_keytype = exchange->sent_keytype;
       msg->isakmp_sa->recv_key = exchange->recv_key;
+      msg->isakmp_sa->sent_key = exchange->sent_key;
+      msg->isakmp_sa->keynote_key = exchange->keynote_key;
       exchange->recv_key = NULL; /* Reset */
+      exchange->sent_key = NULL; /* Reset */
+      exchange->keynote_key = NULL; /* Reset */
       msg->isakmp_sa->policy_id = exchange->policy_id;
       exchange->policy_id = -1; /* Reset */
       msg->isakmp_sa->id_i_len = exchange->id_i_len;
       msg->isakmp_sa->id_r_len = exchange->id_r_len;
       msg->isakmp_sa->initiator = exchange->initiator;
 
-      switch (exchange->recv_certtype)
+      if (exchange->recv_certtype && exchange->recv_cert)
+	{
+	  handler = cert_get (exchange->recv_certtype);
+	  if (handler)
+	    msg->isakmp_sa->recv_cert =
+	      handler->cert_dup (exchange->recv_cert);
+	}
+
+      if (exchange->sent_certtype)
         {
-        case ISAKMP_CERTENC_NONE:
-	case ISAKMP_CERTENC_KEYNOTE: /* No need for special handling */
-	    msg->isakmp_sa->recv_cert = malloc (exchange->recv_certlen);
-	    if (!msg->isakmp_sa->recv_cert)
-	      {
-		log_error ("exchange_finalize: malloc (%d) failed",
-			   exchange->recv_certlen);
-		/* XXX How to cleanup?  */
-		return;
-	      }
-	    memcpy (msg->isakmp_sa->recv_cert, exchange->recv_cert,
-		    msg->isakmp_sa->recv_certlen);
-	    break;
-
-	case ISAKMP_CERTENC_X509_SIG:
-#ifdef USE_X509
-	    msg->isakmp_sa->recv_cert = LC (X509_dup,
-					    ((X509 *) exchange->recv_cert));
-	    if (!msg->isakmp_sa->recv_cert)
-	      {
-		log_print ("exchange_finalize: "
-			   "failed copying X509 certificate to isakmp_sa");
-		/* XXX How to cleanup?  */
-		return;
-	      }
-	    break;
-#endif
-
-	    /* XXX Eventually handle these */
-	case ISAKMP_CERTENC_PKCS:
-	case ISAKMP_CERTENC_PGP:	
-	case ISAKMP_CERTENC_DNS:
-	case ISAKMP_CERTENC_X509_KE:
-	case ISAKMP_CERTENC_KERBEROS:
-	case ISAKMP_CERTENC_CRL:
-	case ISAKMP_CERTENC_ARL:
-	case ISAKMP_CERTENC_SPKI:
-	case ISAKMP_CERTENC_X509_ATTR:
+	  handler = cert_get (exchange->sent_certtype);
+	  if (handler)
+	    msg->isakmp_sa->sent_cert =
+	      handler->cert_dup (exchange->sent_cert);
 	}
 
       LOG_DBG ((LOG_EXCHANGE, 10,
