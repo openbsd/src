@@ -1,5 +1,5 @@
-/*	$OpenBSD: rtsold.c,v 1.9 2000/10/06 02:46:58 itojun Exp $	*/
-/*	$KAME: rtsold.c,v 1.27 2000/10/05 22:20:39 itojun Exp $	*/
+/*	$OpenBSD: rtsold.c,v 1.10 2001/07/09 22:37:33 itojun Exp $	*/
+/*	$KAME: rtsold.c,v 1.32 2001/07/09 22:34:07 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -109,7 +109,10 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	int s, ch;
+	int s, maxfd, ch;
+#if 0
+	int rtsock;
+#endif
 	int once = 0;
 	struct timeval *timeout;
 	struct fd_set fdset;
@@ -222,6 +225,15 @@ main(argc, argv)
 		errx(1, "failed to open a socket");
 		/*NOTREACHED*/
 	}
+	maxfd = s;
+#if 0
+	if ((rtsock = rtsock_open()) < 0) {
+		errx(1, "failed to open a socket");
+		/*NOTREACHED*/
+	}
+	if (rtsock > maxfd)
+		maxfd = rtsock;
+#endif
 
 	/* configuration per interface */
 	if (ifinit()) {
@@ -262,6 +274,9 @@ main(argc, argv)
 
 	FD_ZERO(&fdset);
 	FD_SET(s, &fdset);
+#if 0
+	FD_SET(rtsock, &fdset);
+#endif
 	while (1) {		/* main loop */
 		int e;
 		struct fd_set select_fd = fdset;
@@ -288,8 +303,8 @@ main(argc, argv)
 			if (ifi == NULL)
 				break;
 		}
-
-		if ((e = select(s + 1, &select_fd, NULL, NULL, timeout)) < 1) {
+		e = select(maxfd + 1, &select_fd, NULL, NULL, timeout);
+		if (e < 1) {
 			if (e < 0 && errno != EINTR) {
 				warnmsg(LOG_ERR, __FUNCTION__, "select: %s",
 				       strerror(errno));
@@ -298,7 +313,11 @@ main(argc, argv)
 		}
 
 		/* packet reception */
-		if (FD_ISSET(s, &fdset))
+#if 0
+		if (FD_ISSET(rtsock, &select_fd))
+			rtsock_input(rtsock);
+#endif
+		if (FD_ISSET(s, &select_fd))
 			rtsol_input(s);
 	}
 	/* NOTREACHED */
@@ -596,7 +615,18 @@ rtsol_timer_update(struct ifinfo *ifinfo)
 		ifinfo->timer.tv_usec = interval % MILLION;
 		break;
 	case IFS_PROBE:
-		ifinfo->timer.tv_sec = RTR_SOLICITATION_INTERVAL;
+		if (ifinfo->probes < MAX_RTR_SOLICITATIONS)
+			ifinfo->timer.tv_sec = RTR_SOLICITATION_INTERVAL;
+		else {
+			/*
+			 * After sending MAX_RTR_SOLICITATIONS solicitations,
+			 * we're just waiting for possible replies; there
+			 * will be no more solicatation.  Thus, we change
+			 * the timer value to MAX_RTR_SOLICITATION_DELAY based
+			 * on RFC 2461, Section 6.3.7.
+			 */
+			ifinfo->timer.tv_sec = MAX_RTR_SOLICITATION_DELAY;
+		}
 		break;
 	default:
 		warnmsg(LOG_ERR, __FUNCTION__,
