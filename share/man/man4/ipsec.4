@@ -1,4 +1,4 @@
-.\" $OpenBSD: ipsec.4,v 1.28 2000/04/03 21:19:36 aaron Exp $
+.\" $OpenBSD: ipsec.4,v 1.29 2000/04/22 01:05:29 angelos Exp $
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
 .\"
@@ -36,20 +36,26 @@
 .Tn IPsec
 .Nd IP Security Protocol
 .Sh NOTE
-.Tn IPSec
+.Tn IPsec
 is enabled with the following
 .Xr sysctl 3
 variables in
 .Pa /etc/sysctl.conf :
 .Bl -tag -width xxxxxxxxxxxxxxxxxxxxx
 .It net.inet.esp.enable
-Enable the ESP IPSec protocol
+Enable the ESP IPsec protocol
 .It net.inet.ah.enable
-Enable the AH IPSec protocol
+Enable the AH IPsec protocol
+.It net.inet.ip.ipsec-acl
+Enable IPsec ingress packet filtering.  See
+.Xr ipsecadm 8
+and
+.Xr sysctl 3
+for more details on use and semantics.
 .El
 .Pp
 .Sh DESCRIPTION
-.Tn IPSec
+.Tn IPsec
 is a pair of protocols,
 .Tn ESP
 (for Encapsulating Security
@@ -65,7 +71,7 @@ aka
 does not inherently provide any
 protection to your transferred data.  It does not even guarantee that
 the sender is who he says he is.
-.Tn IPSec
+.Tn IPsec
 tries to remedy this.  There
 are several kinds of properties you might want to add to your
 communication, the most common are:
@@ -98,7 +104,7 @@ protection is not performed when using manual-keyed IPsec (e.g., when using
 ).
 .El
 .Pp
-.Tn IPSec
+.Tn IPsec
 can provide all of these properties, in two new protocols,
 called
 .Tn AH ,
@@ -184,7 +190,7 @@ and 51 for
 .Tn AH ,
 as these are the protocol numbers assigned by IANA.
 .Pp
-.Tn IPSec
+.Tn IPsec
 can operate in two modes, either tunnel or transport mode.  In transport
 mode the ordinary
 .Tn IP
@@ -211,7 +217,7 @@ use a SA for protecting our data.  These limits can be in wall-clock time
 or in volume of our data.
 .Pp
 To better illustrate how
-.Tn IPSec
+.Tn IPsec
 works, consider a typical
 .Tn TCP
 packet:
@@ -258,7 +264,7 @@ and the unprotected
 headers don't have to be exactly the same). A
 typical application of this is in Virtual Private Networks (or VPNs),
 where two firewalls use
-.Tn IPSec
+.Tn IPsec
 to secure the traffic of all the hosts behind them. For example:
 .Bd -literal -offset indent
 Net A <----> Firewall 1 <--- Internet ---> Firewall 2 <----> Net B
@@ -266,14 +272,14 @@ Net A <----> Firewall 1 <--- Internet ---> Firewall 2 <----> Net B
 .Pp
 Firewall 1 and Firewall 2 can protect all communications between Net A
 and Net B by using
-.Tn IPSec
+.Tn IPsec
 in tunnel mode, as illustrated above.
 .Pp
 This implementation makes use of a virtual interface
 .Nm enc0 ,
 which can be used in packet filters to specify those
 packets that have been successfully processed by
-.Tn IPSec.
+.Tn IPsec.
 .Pp
 Security Associations can be set up manually with the
 .Xr ipsecadm 1
@@ -352,7 +358,7 @@ A list of all security associations in the kernel tables can be
 obtained via the kernfs file
 .Aq Pa ipsec
 (typically in
-.Aq Pa /kernfs/ipsec
+.Aq Pa /kern/ipsec
 ).
 .Sh DIAGNOSTICS
 A socket operation may fail with one of the following errors returned:
@@ -364,6 +370,20 @@ by a non-privileged process.
 The length of option field did not match or an unknown security level
 was given.
 .El
+.Pp
+.Xr netstat 1
+can be used to obtain some statistics about
+.Tn AH
+and
+.Tn ESP
+usage, using the
+.Fl p
+flag.
+.Pp
+.Xr vmstat 8
+displays information about memory use by IPsec with the
+.Fl m
+flag (look for ``tdb'' and ``xform'' allocations).
 .Sh BUGS
 There's a lot more to be said on this subject. This is just a beginning.
 .Br
@@ -382,7 +402,7 @@ At the moment the socket options are not fully implemented.
 .Xr vpn 8 .
 .Sh ACKNOWLEDGMENTS
 The authors of the
-.Tn IPSec
+.Tn IPsec
 code proper are John Ioannidis, Angelos D. Keromytis and Niels Provos.
 .Pp
 Niklas Hallqvist & Niels Provos are the authors of
@@ -400,7 +420,7 @@ interface follows somewhat loosely the draft-mcdonald-simple-ipsec-api,
 which is work in progress.
 .Sh HISTORY
 The
-.Tn IPSec
+.Tn IPsec
 protocol started in 1992, by John Ioannidis, Phil Karn
 and William Allen Simpson. In 1995, the former wrote an
 implementation for
