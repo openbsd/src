@@ -1,4 +1,4 @@
-# 	$OpenBSD: RAMDISK,v 1.17 1998/10/19 05:43:30 jason Exp $
+# 	$OpenBSD: RAMDISK,v 1.18 1999/01/06 03:37:46 deraadt Exp $
 # 	$NetBSD: GENERIC,v 1.28.2.1 1996/07/02 23:55:22 jtc Exp $
 
 # Machine architecture; required by config(8)
@@ -143,9 +143,9 @@ esp*	at dma? flags 0xff0f				# depending on model
 ledma0	at sbus0 slot ? offset ?			# sun4m on-board
 le0	at ledma0					#
 
-# Additional SBus LANCE devices - glued on by lebuffer (not yet implemented)
-#lebuffer*	at sbus0 slot ? offset ?		# sun4m SBus
-#le*	at lebuffer?					#
+# Additional SBus LANCE devices - glued on by lebuffer
+lebuffer*	at sbus0 slot ? offset ?		# sun4m SBus
+le*	at lebuffer?					#
 
 # sun4/300 and sun4c Ethernet - an AMD 7990 LANCE
 le0	at sbus0 slot ? offset ?			# sun4c on-board
