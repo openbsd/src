@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dc.1,v 1.13 2003/10/23 09:01:42 jmc Exp $
+.\"	$OpenBSD: dc.1,v 1.14 2003/11/04 08:10:06 otto Exp $
 .\"
 .\" Copyright (C) Caldera International Inc.  2001-2002.
 .\" All rights reserved.
@@ -214,6 +214,9 @@ by that value.
 Exits the program.
 If executing a string, the recursion level is
 popped by two.
+.It Ic r
+The top two values on the stack are reversed (swapped).
+This is a non-portable extension.
 .It Ic S Ns Ar x
 Register
 .Ar x
