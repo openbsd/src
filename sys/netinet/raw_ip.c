@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip.c,v 1.18 1999/06/07 07:22:26 deraadt Exp $	*/
+/*	$OpenBSD: raw_ip.c,v 1.19 1999/09/23 07:20:35 deraadt Exp $	*/
 /*	$NetBSD: raw_ip.c,v 1.25 1996/02/18 18:58:33 christos Exp $	*/
 
 /*
@@ -154,7 +154,6 @@ rip_input(m, va_alist)
 			icmp_error(m, ICMP_UNREACH, ICMP_UNREACH_PROTOCOL, 0, 0);
 		else
 			m_freem(m);
-		/* Perhaps should send an ICMP protocol unreachable here. */
 		ipstat.ips_noproto++;
 		ipstat.ips_delivered--;
 	}
