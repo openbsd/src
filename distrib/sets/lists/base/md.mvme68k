@@ -601,3 +601,4 @@
 ./usr/mdec/sboot
 ./usr/mdec/stboot
 ./usr/lib/perl5/site_perl/m68k-openbsd/cast.ph
+./usr/lib/perl5/site_perl/m68k-openbsd/sys/midiio.ph

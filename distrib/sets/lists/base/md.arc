@@ -410,3 +410,4 @@
 ./usr/mipsel-unknown-openbsd2.4/lib/ldscripts
 ./usr/lib/perl5/site_perl/mips-openbsd/cast.ph
 ./usr/lib/perl5/site_perl/mips-openbsd/ncurses.ph
+./usr/lib/perl5/site_perl/mips-openbsd/sys/midiio.ph

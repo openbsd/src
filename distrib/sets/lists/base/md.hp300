@@ -588,3 +588,4 @@
 ./usr/lib/perl5/site_perl/m68k-openbsd/machine/types.ph
 ./usr/lib/perl5/site_perl/m68k-openbsd/machine/varargs.ph
 ./usr/lib/perl5/site_perl/m68k-openbsd/machine/vmparam.ph
+./usr/lib/perl5/site_perl/m68k-openbsd/sys/midiio.ph

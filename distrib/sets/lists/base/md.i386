@@ -634,3 +634,4 @@
 ./usr/lib/perl5/site_perl/i386-openbsd/machine/ioctl_bt848.ph
 ./usr/lib/perl5/site_perl/i386-openbsd/machine/ioctl_meteor.ph
 ./usr/lib/perl5/site_perl/i386-openbsd/ncurses.ph
+./usr/lib/perl5/site_perl/i386-openbsd/sys/midiio.ph

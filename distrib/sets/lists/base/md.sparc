@@ -603,3 +603,4 @@
 ./usr/lib/perl5/site_perl/sparc-openbsd/machine/svr4_machdep.ph
 ./usr/lib/perl5/site_perl/sparc-openbsd/cast.ph
 ./usr/lib/perl5/site_perl/sparc-openbsd/ncurses.ph
+./usr/lib/perl5/site_perl/sparc-openbsd/sys/midiio.ph

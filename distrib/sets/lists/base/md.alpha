@@ -377,3 +377,4 @@
 ./usr/mdec/setnetbootinfo
 ./usr/lib/perl5/site_perl/alpha-openbsd/cast.ph
 ./usr/lib/perl5/site_perl/alpha-openbsd/ncurses.ph
+./usr/lib/perl5/site_perl/alpha-openbsd/sys/midiio.ph
