@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.86 2000/06/01 04:38:34 angelos Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.87 2000/06/01 05:08:42 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -151,7 +151,6 @@ static int tdb_count;
 /*
  * Check which transformationes are required
  */
-
 u_int8_t
 get_sa_require(struct inpcb *inp)
 {
@@ -386,6 +385,7 @@ check_ipsec_policy(struct inpcb *inp, void *daddr)
 
 	if (error && error != EWOULDBLOCK)
 	  break;
+
 	/* 
 	 * A Key Management daemon returned an apropriate SA back
 	 * to the kernel, the kernel noted that state in the waiting
@@ -441,7 +441,6 @@ tdb_add_inp(struct tdb *tdb, struct inpcb *inp)
  * an error return value.  It'll not be a problem that we also use that
  * for demand-keying as that is manually specified.
  */
-
 u_int32_t
 reserve_spi(u_int32_t sspi, u_int32_t tspi, union sockaddr_union *src,
 	    union sockaddr_union *dst, u_int8_t sproto, int *errval)
@@ -566,7 +565,6 @@ tdb_hash(u_int32_t spi, union sockaddr_union *dst, u_int8_t proto)
  *
  * Caller is responsible for setting at least spltdb().
  */
-
 struct tdb *
 gettdb(u_int32_t spi, union sockaddr_union *dst, u_int8_t proto)
 {
@@ -653,7 +651,6 @@ tdb_hashstats()
 /*
  * Caller is responsible for setting at least spltdb().
  */
-
 int
 tdb_walk(int (*walker)(struct tdb *, void *), void *arg)
 {
@@ -688,7 +685,6 @@ get_flow(void)
 /*
  * Called at splsoftclock().
  */
-
 void
 handle_expirations(void *arg)
 {
@@ -936,7 +932,6 @@ tdb_expiration(struct tdb *tdb, int flags)
 /*
  * Caller is responsible for setting at least spltdb().
  */
-
 struct flow *
 find_flow(union sockaddr_union *src, union sockaddr_union *srcmask,
 	  union sockaddr_union *dst, union sockaddr_union *dstmask,
@@ -963,7 +958,6 @@ find_flow(union sockaddr_union *src, union sockaddr_union *srcmask,
 /*
  * Caller is responsible for setting at least spltdb().
  */
-
 struct flow *
 find_global_flow(union sockaddr_union *src, union sockaddr_union *srcmask,
 		 union sockaddr_union *dst, union sockaddr_union *dstmask,
@@ -994,7 +988,6 @@ find_global_flow(union sockaddr_union *src, union sockaddr_union *srcmask,
 /*
  * Caller is responsible for spltdb().
  */
-
 void
 tdb_rehash(void)
 {
@@ -1019,6 +1012,9 @@ tdb_rehash(void)
     tdbh = new_tdbh;
 }
 
+/*
+ * Add TDB in the hash table.
+ */
 void
 puttdb(struct tdb *tdbp)
 {
@@ -1057,7 +1053,6 @@ puttdb(struct tdb *tdbp)
 /*
  * Caller is responsible for setting at least spltdb().
  */
-
 void
 put_flow(struct flow *flow, struct tdb *tdb, int ingress)
 {
@@ -1082,7 +1077,6 @@ put_flow(struct flow *flow, struct tdb *tdb, int ingress)
 /*
  * Caller is responsible for setting at least spltdb().
  */
-
 void
 delete_flow(struct flow *flow, struct tdb *tdb, int ingress)
 {
@@ -1107,6 +1101,9 @@ delete_flow(struct flow *flow, struct tdb *tdb, int ingress)
     FREE(flow, M_TDB);
 }
 
+/*
+ * Caller is responsible to set at least spltdb().
+ */
 void
 tdb_delete(struct tdb *tdbp, int delchain, int expflags)
 {
@@ -1313,6 +1310,9 @@ tdb_delete(struct tdb *tdbp, int delchain, int expflags)
     splx(s);
 }
 
+/*
+ * Run once, from system boot.
+ */
 int
 tdb_init(struct tdb *tdbp, u_int16_t alg, struct ipsecinit *ii)
 {
@@ -1338,7 +1338,7 @@ tdb_init(struct tdb *tdbp, u_int16_t alg, struct ipsecinit *ii)
 }
 
 /*
- * Used by kernfs
+ * Used by kernfs.
  */
 int
 ipsp_kern(int off, char **bufp, int len)
