@@ -1,4 +1,4 @@
-/*	$OpenBSD: mtrmt.c,v 1.3 1996/09/01 15:29:21 millert Exp $	*/
+/*	$OpenBSD: mtrmt.c,v 1.4 1996/09/02 05:37:11 deraadt Exp $	*/
 /*	$NetBSD: mtrmt.c,v 1.2 1996/03/06 06:22:07 scottr Exp $	*/
 
 /*-
@@ -81,9 +81,6 @@ static	int rmtstate = TS_CLOSED;
 static	int rmtape;
 static	char *rmtpeer;
 
-extern	int uid;
-extern	int euid;
-
 static	int okname __P((char *));
 static	int rmtcall __P((char *, char *));
 static	void rmtconnaborted __P((/* int, int */));
@@ -146,10 +143,8 @@ rmtgetconn()
 	} else
 		tuser = pwd->pw_name;
 
-	(void) seteuid(euid);
 	rmtape = rcmd(&rmtpeer, (u_short)sp->s_port, pwd->pw_name, tuser,
 	    _PATH_RMT, (int *)0);
-	(void) setuid(uid); /* Just to be Really Really Safe */
 	if (rmtape == -1)
 		exit(1);		/* rcmd already printed error message */
 
@@ -165,7 +160,7 @@ rmtgetconn()
 	(void)setsockopt(rmtape, SOL_SOCKET, SO_RCVBUF, &size, sizeof (size));
 
 	maxseg = 1024;
-	if (setsockopt(rmtape, IPPROTO_TCP, TCP_MAXSEG,
+	if (getuid() == 0 && setsockopt(rmtape, IPPROTO_TCP, TCP_MAXSEG,
 	    &maxseg, sizeof (maxseg)) < 0)
 		perror("TCP_MAXSEG setsockopt");
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mt.c,v 1.13 1996/08/10 22:43:00 deraadt Exp $	*/
+/*	$OpenBSD: mt.c,v 1.14 1996/09/02 05:37:10 deraadt Exp $	*/
 /*	$NetBSD: mt.c,v 1.14.2.1 1996/05/27 15:12:11 mrg Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mt.c	8.2 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: mt.c,v 1.13 1996/08/10 22:43:00 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: mt.c,v 1.14 1996/09/02 05:37:10 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -100,8 +100,6 @@ void status __P((struct mtget *));
 void usage __P((void));
 
 char	*host = NULL;	/* remote host (if any) */
-uid_t	uid;		/* read uid */
-uid_t	euid;		/* effective uid */
 
 char	*progname;
 int	eject = 0;
@@ -116,10 +114,6 @@ main(argc, argv)
 	struct mtop mt_com;
 	int ch, len, mtfd, flags;
 	char *p, *tape, *realtape;
-
-	uid = getuid();
-	euid = geteuid();
-	(void) seteuid(uid);
 
 	if ((progname = strrchr(argv[0], '/')))
 		progname++;
@@ -168,7 +162,6 @@ main(argc, argv)
 		if (rmthost(host) == 0)
 			exit(X_ABORT);
 	}
-	(void) setuid(uid); /* rmthost() is the only reason to be setuid */
 
 	if (eject)
 		comp = &com[COM_EJECT];
