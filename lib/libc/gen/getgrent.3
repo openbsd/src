@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getgrent.3,v 1.7 2000/03/23 22:09:01 d Exp $
+.\"	$OpenBSD: getgrent.3,v 1.8 2000/03/23 22:14:03 d Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -52,11 +52,11 @@
 .Fn getgrent void
 .Ft struct group *
 .Fn getgrnam "const char *name"
-.Ft struct group *
+.Ft int
 .Fn getgrnam_r "const char *name" "struct group *grp" "char *buffer" "size_t bufsize" "struct group **result"
 .Ft struct group *
 .Fn getgrgid "gid_t gid"
-.Ft struct group *
+.Ft int
 .Fn getgrgid_r "gid_t gid" "struct group *grp" "char *buffer" "size_t bufsize" "struct group **result"
 .Ft int
 .Fn setgroupent "int stayopen"
@@ -168,6 +168,7 @@ and
 .Fn getgrnam_r
 store a null pointer at the location pointed to by
 .Fa result
+and return the error number
 if an error occurs, or the requested entry is not found.
 .Sh FILES
 .Bl -tag -width /etc/group -compact
