@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.122 1999/10/15 19:51:29 deraadt Exp $
+#	$OpenBSD: rc,v 1.123 1999/10/18 01:46:24 deraadt Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -451,11 +451,9 @@ if [ "X${mopd_flags}" != X"NO" -a -d /tftpboot/mop ]; then
 fi
 
 if [ X"${sshd}" == X"YES" ]; then
-	if [ -x /usr/sbin/sshd ]; then
-		if /usr/sbin/sshd -Q ; then
-			echo -n ' sshd';
-			#echo -n ' sshd(2022)';	/usr/sbin/sshd -p 2022
-		fi
+	if test -x /usr/sbin/sshd && /usr/sbin/sshd -Q ; then
+		echo -n ' sshd';
+		#echo -n ' sshd(2022)';	/usr/sbin/sshd -p 2022
 	elif [ -x /usr/local/sbin/sshd ]; then
 		/usr/local/sbin/sshd
 		echo -n ' sshd';
