@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.30 1998/12/16 01:18:09 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.31 1998/12/21 10:10:15 deraadt Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -92,7 +92,7 @@ unconfig:
 .PRECIOUS:	${IMAGE}
 
 install:
-	cp bsd.rd ${DESTDIR}/snapshot/${FS} 
+	cp bsd.rd ${DESTDIR}/snapshot/bsd.rd
 	cp ${FS} ${DESTDIR}/snapshot/${FS}
 
 ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
