@@ -65,7 +65,7 @@ ksymsattach(num)
 		/*
 		 * If we have a symbol table, fake up a struct exec.
 		 * We only fill in the following non-zero entries:
-		 *	a_text - fake text sement (struct exec only)
+		 *	a_text - fake text segment (struct exec only)
 		 *	a_syms - size of symbol table
 		 *
 		 * We assume __LDPGSZ is a multiple of NBPG (it is)
