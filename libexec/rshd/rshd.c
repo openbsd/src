@@ -1,4 +1,4 @@
-/*	$OpenBSD: rshd.c,v 1.37 2001/05/29 21:37:16 millert Exp $	*/
+/*	$OpenBSD: rshd.c,v 1.38 2001/06/11 15:18:51 mickey Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1992, 1993, 1994
@@ -41,7 +41,7 @@ static char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)rshd.c	8.2 (Berkeley) 4/6/94"; */
-static char *rcsid = "$OpenBSD: rshd.c,v 1.37 2001/05/29 21:37:16 millert Exp $";
+static char *rcsid = "$OpenBSD: rshd.c,v 1.38 2001/06/11 15:18:51 mickey Exp $";
 #endif /* not lint */
 
 /*
@@ -385,8 +385,7 @@ doit(fromp)
 		if (!use_kerberos)
 #endif
 		if (check_all || local_domain(saddr)) {
-			strncpy(remotehost, saddr, sizeof(remotehost) - 1);
-			remotehost[sizeof(remotehost) - 1] = 0;
+			strlcpy(remotehost, saddr, sizeof(remotehost));
 			errorhost = remotehost;
 			memset(&hints, 0, sizeof(hints));
 			hints.ai_family = fromp->sa_family;
@@ -429,15 +428,14 @@ doit(fromp)
 				}
 			}
 		}
-		hostname = strncpy(hostnamebuf, hostname,
-		    sizeof(hostnamebuf) - 1);
+		strlcpy(hostnamebuf, hostname, sizeof(hostnamebuf));
+		hostname = hostnamebuf;
 		if (res0)
 			freeaddrinfo(res0);
 	} else
-		errorhost = hostname = strncpy(hostnamebuf,
-		    naddr, sizeof(hostnamebuf) - 1);
+		strlcpy(hostnamebuf, naddr, sizeof(hostnamebuf));
+		errorhost = hostname = hostnamebuf;
 
-	hostnamebuf[sizeof(hostnamebuf) - 1] = '\0';
 #ifdef	KERBEROS
 	if (use_kerberos) {
 		kdata = (AUTH_DAT *) authbuf;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tftpd.c,v 1.17 2001/05/09 18:06:35 deraadt Exp $	*/
+/*	$OpenBSD: tftpd.c,v 1.18 2001/06/11 15:18:53 mickey Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)tftpd.c	5.13 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$OpenBSD: tftpd.c,v 1.17 2001/05/09 18:06:35 deraadt Exp $: tftpd.c,v 1.6 1997/02/16 23:49:21 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: tftpd.c,v 1.18 2001/06/11 15:18:53 mickey Exp $: tftpd.c,v 1.6 1997/02/16 23:49:21 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -617,10 +617,9 @@ nak(error)
 		pe->e_msg = strerror(error - 100);
 		tp->th_code = EUNDEF;   /* set 'undef' errorcode */
 	}
-	strcpy(tp->th_msg, pe->e_msg);
-	length = strlen(pe->e_msg);
-	tp->th_msg[length] = '\0';
-	length += 5;
-	if (send(peer, buf, length, 0) != length)
+	length = strlcpy(tp->th_msg, pe->e_msg, sizeof(buf) - 4);
+	if (length >= sizeof(buf) - 4)
+		length = sizeof(buf) - 5;
+	if (send(peer, buf, length + 5, 0) != length)
 		syslog(LOG_ERR, "nak: %m");
 }

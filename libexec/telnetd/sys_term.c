@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_term.c,v 1.22 2001/01/17 23:51:54 deraadt Exp $	*/
+/*	$OpenBSD: sys_term.c,v 1.23 2001/06/11 15:18:52 mickey Exp $	*/
 /*	$NetBSD: sys_term.c,v 1.9 1996/03/20 04:25:53 tls Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
 static char sccsid[] = "@(#)sys_term.c	8.4+1 (Berkeley) 5/30/95";
 static char rcsid[] = "$NetBSD: sys_term.c,v 1.8 1996/02/28 20:38:21 thorpej Exp $";
 #else
-static char rcsid[] = "$OpenBSD: sys_term.c,v 1.22 2001/01/17 23:51:54 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: sys_term.c,v 1.23 2001/06/11 15:18:52 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -2138,10 +2138,8 @@ jobend(jid, path, user)
 	}
 
 	if (path) {
-		strncpy(saved_path, path, sizeof(wtmp.ut_tpath));
-		strncpy(saved_user, user, sizeof(wtmp.ut_user));
-		saved_path[sizeof(saved_path)] = '\0';
-		saved_user[sizeof(saved_user)] = '\0';
+		strlcpy(saved_path, path, sizeof(saved_path));
+		strlcpy(saved_user, user, sizeof(saved_user));
 	}
 	if (saved_jid == 0) {
 		saved_jid = jid;

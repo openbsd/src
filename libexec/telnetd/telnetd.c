@@ -1,4 +1,4 @@
-/*	$OpenBSD: telnetd.c,v 1.28 2001/05/25 10:25:22 hin Exp $	*/
+/*	$OpenBSD: telnetd.c,v 1.29 2001/06/11 15:18:52 mickey Exp $	*/
 /*	$NetBSD: telnetd.c,v 1.6 1996/03/20 04:25:57 tls Exp $	*/
 
 /*
@@ -45,7 +45,7 @@ static char copyright[] =
 static char sccsid[] = "@(#)telnetd.c	8.4 (Berkeley) 5/30/95";
 static char rcsid[] = "$NetBSD: telnetd.c,v 1.5 1996/02/28 20:38:23 thorpej Exp $";
 #else
-static char rcsid[] = "$OpenBSD: telnetd.c,v 1.28 2001/05/25 10:25:22 hin Exp $";
+static char rcsid[] = "$OpenBSD: telnetd.c,v 1.29 2001/06/11 15:18:52 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -705,14 +705,12 @@ getterminaltype(name, name_sz)
 	 * we have to just go with what we (might) have already gotten.
 	 */
 	if (his_state_is_will(TELOPT_TTYPE) && !terminaltypeok(terminaltype)) {
-	    (void) strncpy(first, terminaltype, sizeof(first)-1);
-	    first[sizeof(first)-1] = '\0';
+	    strlcpy(first, terminaltype, sizeof(first));
 	    for(;;) {
 		/*
 		 * Save the unknown name, and request the next name.
 		 */
-		(void) strncpy(last, terminaltype, sizeof(last)-1);
-		last[sizeof(last)-1] = '\0';
+		strlcpy(last, terminaltype, sizeof(last));
 		_gettermname();
 		if (terminaltypeok(terminaltype))
 		    break;
@@ -730,10 +728,8 @@ getterminaltype(name, name_sz)
 		     * the start of the list.
 		     */
 		     _gettermname();
-		    if (strncmp(first, terminaltype, sizeof(first)) != 0) {
-			(void) strncpy(terminaltype, first, sizeof(terminaltype)-1);
-			terminaltype[sizeof(terminaltype)-1] = '\0';
-		    }
+		    if (strncmp(first, terminaltype, sizeof(first)) != 0)
+			strlcpy(terminaltype, first, sizeof(terminaltype));
 		    break;
 		}
 	    }
@@ -823,8 +819,7 @@ doit(who)
 			fatal(net, "Out of ptys");
 
 		if ((pty = open(lp, O_RDWR)) >= 0) {
-			strncpy(line, lp, sizeof line -1);
-			line[sizeof line -1] = '\0';
+			strlcpy(line, lp, sizeof line);
 			line[5] = 't';
 			break;
 		}
@@ -884,8 +879,7 @@ doit(who)
 	 * We must make a copy because Kerberos is probably going
 	 * to also do a gethost* and overwrite the static data...
 	 */
-	strncpy(remote_host_name, host, sizeof(remote_host_name)-1);
-	remote_host_name[sizeof(remote_host_name)-1] = 0;
+	strlcpy(remote_host_name, host, sizeof(remote_host_name));
 	host = remote_host_name;
 
 	(void) gethostname(host_name, sizeof (host_name));
@@ -1161,10 +1155,8 @@ telnet(f, p, host)
 		HE = gtgetstr("he", &cp);
 		HN = gtgetstr("hn", &cp);
 		IM = gtgetstr("im", &cp);
-		if (HN && *HN) {
-			strncpy(host_name, HN, sizeof host_name - 1);
-			host_name[sizeof host_name -1] = '\0';
-		}
+		if (HN && *HN)
+			strlcpy(host_name, HN, sizeof host_name);
 		if (IM == 0)
 			IM = "";
 	} else {

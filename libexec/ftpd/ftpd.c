@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.97 2001/05/29 21:35:16 millert Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.98 2001/06/11 15:18:49 mickey Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -73,7 +73,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.4 (Berkeley) 4/16/94";
 #else
-static char rcsid[] = "$OpenBSD: ftpd.c,v 1.97 2001/05/29 21:35:16 millert Exp $";
+static char rcsid[] = "$OpenBSD: ftpd.c,v 1.98 2001/06/11 15:18:49 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -2510,8 +2510,7 @@ guniquefd(local, nam)
 	}
 	if (cp)
 		*cp = '/';
-	(void) strlcpy(new, local, sizeof(new));
-	len = strlen(new);
+	len = strlcpy(new, local, sizeof(new));
 	if (len+2+1 >= sizeof(new)-1)
 		return (-1);
 	cp = new + len;
@@ -2703,11 +2702,12 @@ logxfer(name, size, start)
 	char vremotehost[MAXHOSTNAMELEN*4], vpath[MAXPATHLEN*4];
 	char *vpw;
 	time_t now;
+	int len;
 
 	if ((statfd >= 0) && (getcwd(dir, sizeof(dir)) != NULL)) {
 		time(&now);
 
-		vpw = (char *)malloc(strlen((guest) ? guestpw : pw->pw_name)*4+1);
+		vpw = malloc(strlen(guest ? guestpw : pw->pw_name) * 4 + 1);
 		if (vpw == NULL)
 			return;
 
@@ -2717,9 +2717,9 @@ logxfer(name, size, start)
 		strvis(vpath, rpath, VIS_SAFE|VIS_NOSLASH);
 
 		strvis(vremotehost, remotehost, VIS_SAFE|VIS_NOSLASH);
-		strvis(vpw, (guest) ? guestpw : pw->pw_name, VIS_SAFE|VIS_NOSLASH);
+		strvis(vpw, guest? guestpw : pw->pw_name, VIS_SAFE|VIS_NOSLASH);
 
-		snprintf(buf, sizeof(buf),
+		len = snprintf(buf, sizeof(buf),
 		    "%.24s %d %s %qd %s %c %s %c %c %s ftp %d %s %s\n",
 		    ctime(&now), now - start + (now == start),
 		    vremotehost, (long long) size, vpath,
@@ -2727,7 +2727,11 @@ logxfer(name, size, start)
 		    'o', ((guest) ? 'a' : 'r'),
 		    vpw, 0 /* none yet */,
 		    ((guest) ? "*" : pw->pw_name), dhostname);
-		write(statfd, buf, strlen(buf));
+		if (len >= sizeof(buf)) {
+			len = sizeof(buf);
+			buf[sizeof(buf) - 1] = '\n';
+		}
+		write(statfd, buf, len);
 		free(vpw);
 	}
 }
