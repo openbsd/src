@@ -12,7 +12,7 @@
  */
 
 #include "includes.h"
-RCSID("$Id: servconf.c,v 1.38 2000/05/03 18:03:06 markus Exp $");
+RCSID("$Id: servconf.c,v 1.39 2000/05/06 17:45:36 markus Exp $");
 
 #include "ssh.h"
 #include "servconf.h"
@@ -51,6 +51,7 @@ initialize_server_options(ServerOptions *options)
 	options->rhosts_authentication = -1;
 	options->rhosts_rsa_authentication = -1;
 	options->rsa_authentication = -1;
+	options->dsa_authentication = -1;
 #ifdef KRB4
 	options->kerberos_authentication = -1;
 	options->kerberos_or_local_passwd = -1;
@@ -122,6 +123,8 @@ fill_default_server_options(ServerOptions *options)
 		options->rhosts_rsa_authentication = 0;
 	if (options->rsa_authentication == -1)
 		options->rsa_authentication = 1;
+	if (options->dsa_authentication == -1)
+		options->dsa_authentication = 1;
 #ifdef KRB4
 	if (options->kerberos_authentication == -1)
 		options->kerberos_authentication = (access(KEYFILE, R_OK) == 0);
@@ -174,7 +177,7 @@ typedef enum {
 	sStrictModes, sEmptyPasswd, sRandomSeedFile, sKeepAlives, sCheckMail,
 	sUseLogin, sAllowUsers, sDenyUsers, sAllowGroups, sDenyGroups,
 	sIgnoreUserKnownHosts, sHostDSAKeyFile, sCiphers, sProtocol, sPidFile,
-	sGatewayPorts
+	sGatewayPorts, sDSAAuthentication
 } ServerOpCodes;
 
 /* Textual representation of the tokens. */
@@ -195,6 +198,7 @@ static struct {
 	{ "rhostsauthentication", sRhostsAuthentication },
 	{ "rhostsrsaauthentication", sRhostsRSAAuthentication },
 	{ "rsaauthentication", sRSAAuthentication },
+	{ "dsaauthentication", sDSAAuthentication },
 #ifdef KRB4
 	{ "kerberosauthentication", sKerberosAuthentication },
 	{ "kerberosorlocalpasswd", sKerberosOrLocalPasswd },
@@ -448,6 +452,10 @@ parse_flag:
 
 		case sRSAAuthentication:
 			intptr = &options->rsa_authentication;
+			goto parse_flag;
+
+		case sDSAAuthentication:
+			intptr = &options->dsa_authentication;
 			goto parse_flag;
 
 #ifdef KRB4

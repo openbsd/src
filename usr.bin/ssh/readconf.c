@@ -14,7 +14,7 @@
  */
 
 #include "includes.h"
-RCSID("$Id: readconf.c,v 1.29 2000/05/02 22:18:04 markus Exp $");
+RCSID("$Id: readconf.c,v 1.30 2000/05/06 17:45:36 markus Exp $");
 
 #include "ssh.h"
 #include "cipher.h"
@@ -105,7 +105,7 @@ typedef enum {
 	oBatchMode, oCheckHostIP, oStrictHostKeyChecking, oCompression,
 	oCompressionLevel, oKeepAlives, oNumberOfPasswordPrompts, oTISAuthentication,
 	oUsePrivilegedPort, oLogLevel, oCiphers, oProtocol, oIdentityFile2,
-	oGlobalKnownHostsFile2, oUserKnownHostsFile2
+	oGlobalKnownHostsFile2, oUserKnownHostsFile2, oDSAAuthentication
 } OpCodes;
 
 /* Textual representations of the tokens. */
@@ -121,6 +121,7 @@ static struct {
 	{ "rhostsauthentication", oRhostsAuthentication },
 	{ "passwordauthentication", oPasswordAuthentication },
 	{ "rsaauthentication", oRSAAuthentication },
+	{ "dsaauthentication", oDSAAuthentication },
 	{ "skeyauthentication", oSkeyAuthentication },
 #ifdef KRB4
 	{ "kerberosauthentication", oKerberosAuthentication },
@@ -288,6 +289,10 @@ parse_flag:
 
 	case oPasswordAuthentication:
 		intptr = &options->password_authentication;
+		goto parse_flag;
+
+	case oDSAAuthentication:
+		intptr = &options->dsa_authentication;
 		goto parse_flag;
 
 	case oRSAAuthentication:
@@ -637,6 +642,7 @@ initialize_options(Options * options)
 	options->use_privileged_port = -1;
 	options->rhosts_authentication = -1;
 	options->rsa_authentication = -1;
+	options->dsa_authentication = -1;
 	options->skey_authentication = -1;
 #ifdef KRB4
 	options->kerberos_authentication = -1;
@@ -696,6 +702,8 @@ fill_default_options(Options * options)
 		options->rhosts_authentication = 1;
 	if (options->rsa_authentication == -1)
 		options->rsa_authentication = 1;
+	if (options->dsa_authentication == -1)
+		options->dsa_authentication = 1;
 	if (options->skey_authentication == -1)
 		options->skey_authentication = 0;
 #ifdef KRB4

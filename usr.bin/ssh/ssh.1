@@ -9,7 +9,7 @@
 .\"
 .\" Created: Sat Apr 22 21:55:14 1995 ylo
 .\"
-.\" $Id: ssh.1,v 1.49 2000/05/03 22:01:09 markus Exp $
+.\" $Id: ssh.1,v 1.50 2000/05/06 17:45:37 markus Exp $
 .\"
 .Dd September 25, 1999
 .Dt SSH 1
@@ -502,7 +502,7 @@ logging in as root on the remote machine.
 .It Fl 2
 Forces
 .Nm
-to use protocol version 2 only.
+to try protocol version 2 only.
 .It Fl 4
 Forces
 .Nm
@@ -619,6 +619,15 @@ Specifies the number of tries (one per second) to make before falling
 back to rsh or exiting.
 The argument must be an integer.
 This may be useful in scripts if the connection sometimes fails.
+.It Cm DSAAuthentication
+Specifies whether to try DSA authentication.
+The argument to this keyword must be
+.Dq yes
+or
+.Dq no .
+DSA authentication will only be
+attempted if a DSA identity file exists.
+Note that this option applies to protocol version 2 only.
 .It Cm EscapeChar
 Sets the escape character (default:
 .Ql ~ ) .
@@ -758,6 +767,7 @@ The argument to this keyword must be
 .Dq yes
 or
 .Dq no .
+Note that this option applies to both protocol version 1 and 2.
 .It Cm Port
 Specifies the port number to connect on the remote host.
 Default is 22.
@@ -840,6 +850,7 @@ or
 RSA authentication will only be
 attempted if the identity file exists, or an authentication agent is
 running.
+Note that this option applies to protocol version 1 only.
 .It Cm SkeyAuthentication
 Specifies whether to use
 .Xr skey 1

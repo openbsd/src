@@ -28,7 +28,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshconnect2.c,v 1.6 2000/05/03 17:55:21 markus Exp $");
+RCSID("$OpenBSD: sshconnect2.c,v 1.7 2000/05/06 17:45:37 markus Exp $");
 
 #include <openssl/bn.h>
 #include <openssl/rsa.h>
@@ -432,7 +432,7 @@ ssh_userauth2(const char *server_user, char *host)
 		packet_done();
 		if (partial)
 			debug("partial success");
-		if (options.rsa_authentication &&
+		if (options.dsa_authentication &&
 		    strstr(auths, "publickey") != NULL) {
 			while (i < options.num_identity_files2) {
 				sent = ssh2_try_pubkey(
