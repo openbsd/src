@@ -154,9 +154,9 @@ field. This is usually one of the three blocks of address space the Internet
 Assigned Numbers Authority has allocated for private networks (RFC 1597):
 .Pp
 .Bd -unfilled -offset indent -compact
-10.0.0.0    - 10.255.255.255
-172.16.0.0  - 172.31.255.255
-192.168.0.0 - 192.168.255.255
+10.0.0.0    - 10.255.255.255   (ie. 10/24)
+172.16.0.0  - 172.31.255.255   (ie. 172.16/20)
+192.168.0.0 - 192.168.255.255  (ie. 192.168/16)
 .Ed
 .Pp
 The
@@ -168,7 +168,7 @@ is the netmask of the address. This mask is 32 bits long, and is divided into
 four 8-bit numbers.
 .Pp
 .Bd -unfilled -offset indent -compact
-11111111.0.0.0				Class A - 8 bits set.
+11111111.0.0.0			Class A - 8 bits set.
 11111111.11111111.0.0 		Class B - 16 bits set.
 11111111.11111111.11111111.0	Class C - 24 bits set.
 .Ed
