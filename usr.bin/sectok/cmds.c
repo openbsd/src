@@ -1,4 +1,4 @@
-/* $Id: cmds.c,v 1.7 2001/07/17 17:10:44 rees Exp $ */
+/* $Id: cmds.c,v 1.8 2001/07/17 17:58:23 rees Exp $ */
 
 /*
  * Smartcard commander.
@@ -68,7 +68,7 @@ struct {
     { "write", "input-filename", dwrite },
 
     /* Cyberflex commands */
-    { "ls", "", ls },
+    { "ls", "[ -l ] [ -a ]", ls },
     { "create", "fid size", jcreate },
     { "delete", "fid", jdelete },
     { "jdefault", "[ -d ]", jdefault },

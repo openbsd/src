@@ -1,4 +1,4 @@
-/* $Id: cyberflex.c,v 1.7 2001/07/17 17:10:44 rees Exp $ */
+/* $Id: cyberflex.c,v 1.8 2001/07/17 17:58:24 rees Exp $ */
 
 /*
 copyright 1999, 2000
@@ -66,28 +66,6 @@ int aut0_vfyd;
 
 /* default signed applet key of Cyberflex Access */
 static des_cblock app_key = {0x6A, 0x21, 0x36, 0xF5, 0xD8, 0x0C, 0x47, 0x83};
-
-char *apptype[] = {
-    "?",
-    "applet",
-    "app",
-    "app/applet",
-};
-
-char *appstat[] = {
-    "?",
-    "created",
-    "installed",
-    "registered",
-};
-
-char *filestruct[] = {
-    "binary",
-    "fixed rec",
-    "variable rec",
-    "cyclic",
-    "program",
-};
 
 static int
 get_AUT0(int ac, char *av[], char *prompt, unsigned char *digest)
@@ -266,11 +244,59 @@ int jdata(int ac, char *av[])
 
 #define JDIRSIZE 40
 
+static char *apptype[] = {
+    "?",
+    "applet",
+    "app",
+    "app/applet",
+};
+
+static char *appstat[] = {
+    "?",
+    "created",
+    "installed",
+    "registered",
+};
+
+static char *filestruct[] = {
+    "binary",
+    "fixed rec",
+    "variable rec",
+    "cyclic",
+    "program",
+};
+
+static char *principals[] = {
+    "world", "CHV1", "CHV2", "AUT0", "AUT1", "AUT2", "AUT3", "AUT4"
+};
+
+static char *f_rights[] = {
+    "r", "w", "x/a", "inval", "rehab", NULL, "dec", "inc"
+};
+
+static char *d_rights[] = {
+    "l", "d", "a", NULL, NULL, "i", "manage", NULL
+};
+
 int ls(int ac, char *av[])
 {
-    int p2, f0, f1, sw;
-    char ftype[32], fname[6];
+    int i, j, p2, f0, f1, aflag = 0, lflag = 0, sw;
+    int isdir, fsize;
+    char ftype[32], fname[6], *as;
     unsigned char buf[JDIRSIZE];
+
+    optind = optreset = 1;
+
+    while ((i = getopt(ac, av, "la")) != -1) {
+	switch (i) {
+	case 'l':
+	    lflag = 1;
+	    break;
+	case 'a':
+	    aflag = 1;
+	    break;
+	}
+    }
 
     if (fd < 0 && reset(0, NULL) < 0)
 	return -1;
@@ -284,20 +310,57 @@ int ls(int ac, char *av[])
 	f1 = buf[5];
 	if (f0 == 0xff || f0 + f1 == 0)
 	    continue;
+
+	/* Format name */
 	sectok_fmt_fid(fname, f0, f1);
-	if (buf[6] == 1)
+
+	/* Format size */
+	fsize = (buf[2] << 8) | buf[3];
+
+	/* Format file type */
+	isdir = 0;
+	if (buf[6] == 1) {
 	    /* root */
 	    sprintf(ftype, "root");
-	else if (buf[6] == 2) {
+	    isdir = 1;
+	} else if (buf[6] == 2) {
 	    /* DF */
 	    if (buf[12] == 27)
 		sprintf(ftype, "%s %s", appstat[buf[10]], apptype[buf[9]]);
-	    else
+	    else {
 		sprintf(ftype, "directory");
-	} else if (buf[6] == 4)
+		isdir = 1;
+	    }
+	} else if (buf[6] == 4) {
 	    /* EF */
 	    sprintf(ftype, "%s", filestruct[buf[13]]);
-	printf("%4s %5d %s\n", fname, (buf[2] << 8) | buf[3], ftype);
+	}
+
+	if (!lflag)
+	    printf("%-4s\n", fname);
+	else
+	    printf("%-4s %5d %s\n", fname, fsize, ftype);
+
+	if (aflag) {
+	    /* Format acl */
+	    if (sectok_apdu(fd, cla, 0xfe, 0, 0, 0, NULL, 8, buf, &sw) < 0)
+		printf(" [GetFileACL: %s]", sectok_get_sw(sw));
+	    else {
+		for (i = 0; i < 8; i++) {
+		    if (buf[i]) {
+			printf(" %s: ", principals[i]);
+			for (j = 0; j < 8; j++)
+			    if (buf[i] & (1 << j)) {
+				as = isdir ? d_rights[j] : f_rights[j];
+				if (as)
+				    printf("%s, ", as);
+			    }
+			printf("\n");
+		    }
+		}
+	    }
+	    printf("\n");
+	}
     }
     return 0;
 }
