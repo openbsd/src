@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdesc_vnops.c,v 1.36 2003/09/23 16:51:12 millert Exp $	*/
+/*	$OpenBSD: fdesc_vnops.c,v 1.37 2004/05/20 18:32:37 tedu Exp $	*/
 /*	$NetBSD: fdesc_vnops.c,v 1.32 1996/04/11 11:24:29 mrg Exp $	*/
 
 /*
@@ -442,7 +442,7 @@ fdesc_getattr(v)
 	case Fdevfd:
 	case Flink:
 	case Fctty:
-		bzero((caddr_t) vap, sizeof(*vap));
+		bzero(vap, sizeof(*vap));
 		vattr_null(vap);
 		vap->va_fileid = VTOFDESC(vp)->fd_ix;
 
@@ -658,7 +658,7 @@ fdesc_readdir(v)
 	i = uio->uio_offset;
 	if (i < 0)
 		return (EINVAL);
-	bzero((caddr_t)&d, UIO_MX);
+	bzero(&d, UIO_MX);
 	d.d_reclen = UIO_MX;
 
 	if (VTOFDESC(ap->a_vp)->fd_type == Froot) {
@@ -687,7 +687,7 @@ fdesc_readdir(v)
 			bcopy(ft->ft_name, d.d_name, ft->ft_namlen + 1);
 			d.d_type = ft->ft_type;
 
-			if ((error = uiomove((caddr_t)&d, UIO_MX, uio)) != 0)
+			if ((error = uiomove(&d, UIO_MX, uio)) != 0)
 				break;
 		}
 	} else {
@@ -713,7 +713,7 @@ fdesc_readdir(v)
 				break;
 			}
 
-			if ((error = uiomove((caddr_t)&d, UIO_MX, uio)) != 0)
+			if ((error = uiomove(&d, UIO_MX, uio)) != 0)
 				break;
 		}
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: portal_vfsops.c,v 1.19 2004/03/03 06:01:48 tedu Exp $	*/
+/*	$OpenBSD: portal_vfsops.c,v 1.20 2004/05/20 18:32:38 tedu Exp $	*/
 /*	$NetBSD: portal_vfsops.c,v 1.14 1996/02/09 22:40:41 christos Exp $	*/
 
 /*
@@ -127,7 +127,7 @@ portal_mount(mp, path, data, ndp, p)
 	FRELE(fp);
 
 	mp->mnt_flag |= MNT_LOCAL;
-	mp->mnt_data = (qaddr_t)fmp;
+	mp->mnt_data = fmp;
 	vfs_getnewfsid(mp);
 
 	(void) copyinstr(path, mp->mnt_stat.f_mntonname, MNAMELEN - 1, &size);

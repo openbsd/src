@@ -1,4 +1,4 @@
-/*	$OpenBSD: procfs_vnops.c,v 1.30 2003/09/23 16:51:13 millert Exp $	*/
+/*	$OpenBSD: procfs_vnops.c,v 1.31 2004/05/20 18:32:38 tedu Exp $	*/
 /*	$NetBSD: procfs_vnops.c,v 1.40 1996/03/16 23:52:55 christos Exp $	*/
 
 /*
@@ -936,7 +936,7 @@ procfs_readdir(v)
 	i = uio->uio_offset;
 	if (i < 0)
 		return (EINVAL);
-	bzero((caddr_t)&d, UIO_MX);
+	bzero(&d, UIO_MX);
 	d.d_reclen = UIO_MX;
 
 	switch (pfs->pfs_type) {
@@ -964,7 +964,7 @@ procfs_readdir(v)
 			bcopy(pt->pt_name, d.d_name, pt->pt_namlen + 1);
 			d.d_type = pt->pt_type;
 
-			if ((error = uiomove((caddr_t)&d, UIO_MX, uio)) != 0)
+			if ((error = uiomove(&d, UIO_MX, uio)) != 0)
 				break;
 		}
 
@@ -1054,7 +1054,7 @@ procfs_readdir(v)
 				break;
 			}
 
-			if ((error = uiomove((caddr_t)&d, UIO_MX, uio)) != 0)
+			if ((error = uiomove(&d, UIO_MX, uio)) != 0)
 				break;
 		}
 	done:
@@ -1098,7 +1098,7 @@ procfs_readlink(v)
 	else
 		return (EINVAL);
 
-	return (uiomove((caddr_t)buf, len, ap->a_uio));
+	return (uiomove(buf, len, ap->a_uio));
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: union_vfsops.c,v 1.18 2004/04/25 19:46:40 tedu Exp $	*/
+/*	$OpenBSD: union_vfsops.c,v 1.19 2004/05/20 18:32:38 tedu Exp $	*/
 /*	$NetBSD: union_vfsops.c,v 1.10 1995/06/18 14:47:47 cgd Exp $	*/
 
 /*
@@ -199,7 +199,7 @@ union_mount(mp, path, data, ndp, p)
 	 */
 	mp->mnt_flag |= (um->um_uppervp->v_mount->mnt_flag & MNT_RDONLY);
 
-	mp->mnt_data = (qaddr_t)um;
+	mp->mnt_data = um;
 	vfs_getnewfsid(mp);
 
 	(void) copyinstr(path, mp->mnt_stat.f_mntonname, MNAMELEN - 1, &size);

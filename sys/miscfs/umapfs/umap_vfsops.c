@@ -1,4 +1,4 @@
-/*	$OpenBSD: umap_vfsops.c,v 1.25 2004/03/03 06:39:49 tedu Exp $	*/
+/*	$OpenBSD: umap_vfsops.c,v 1.26 2004/05/20 18:32:38 tedu Exp $	*/
 /*	$NetBSD: umap_vfsops.c,v 1.35 2002/09/21 18:09:31 christos Exp $	*/
 
 /*
@@ -100,7 +100,7 @@ umapfs_mount(mp, path, data, ndp, p)
 	/*
 	 * Get argument
 	 */
-	error = copyin(data, (caddr_t)&args, sizeof(struct umap_args));
+	error = copyin(data, &args, sizeof(struct umap_args));
 	if (error)
 		return (error);
 
@@ -141,11 +141,10 @@ umapfs_mount(mp, path, data, ndp, p)
 	printf("mp = %p\n", mp);
 #endif
 
-	amp = (struct umap_mount *) malloc(sizeof(struct umap_mount),
-				M_MISCFSMNT, M_WAITOK);
-	memset((caddr_t)amp, 0, sizeof(struct umap_mount));
+	amp = malloc(sizeof(struct umap_mount), M_MISCFSMNT, M_WAITOK);
+	memset(amp, 0, sizeof(struct umap_mount));
 
-	mp->mnt_data = (qaddr_t)amp;
+	mp->mnt_data = amp;
 	amp->umapm_vfs = lowerrootvp->v_mount;
 	if (amp->umapm_vfs->mnt_flag & MNT_LOCAL)
 		mp->mnt_flag |= MNT_LOCAL;
@@ -160,7 +159,7 @@ umapfs_mount(mp, path, data, ndp, p)
 
 	amp->info_unentries = args.unentries;
 	amp->info_gnentries = args.gnentries;
-	error = copyin(args.umapdata, (caddr_t)amp->info_umapdata, 
+	error = copyin(args.umapdata, amp->info_umapdata, 
 	    2*sizeof(u_long)*args.unentries);
 	if (error) {
 		vput(lowerrootvp);
@@ -174,7 +173,7 @@ umapfs_mount(mp, path, data, ndp, p)
 	 	    amp->info_umapdata[i][1]);
 #endif
 
-	error = copyin(args.gmapdata, (caddr_t)amp->info_gmapdata, 
+	error = copyin(args.gmapdata, amp->info_gmapdata, 
 	    2*sizeof(u_long)*args.gnentries);
 	if (error) {
 		vput(lowerrootvp);

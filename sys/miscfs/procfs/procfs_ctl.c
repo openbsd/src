@@ -1,4 +1,4 @@
-/*	$OpenBSD: procfs_ctl.c,v 1.12 2003/08/11 10:08:04 mickey Exp $	*/
+/*	$OpenBSD: procfs_ctl.c,v 1.13 2004/05/20 18:32:38 tedu Exp $	*/
 /*	$NetBSD: procfs_ctl.c,v 1.14 1996/02/09 22:40:48 christos Exp $	*/
 
 /*
@@ -197,7 +197,7 @@ procfs_control(curp, p, op)
 
 		p->p_oppid = 0;
 		CLR(p->p_flag, P_WAITED); /* XXX ? */
-		wakeup((caddr_t) curp);	/* XXX for CTL_WAIT below ? */
+		wakeup(curp);	/* XXX for CTL_WAIT below ? */
 
 		break;
 
@@ -231,15 +231,13 @@ procfs_control(curp, p, op)
 					(p->p_stat != SSTOP) &&
 					ISSET(p->p_flag, P_TRACED) &&
 					(p->p_pptr == curp)) {
-				error = tsleep((caddr_t) p,
-						PWAIT|PCATCH, "procfsx", 0);
+				error = tsleep(p, PWAIT|PCATCH, "procfsx", 0);
 			}
 			if (error == 0 && !TRACE_WAIT_P(curp, p))
 				error = EBUSY;
 		} else {
 			while (error == 0 && p->p_stat != SSTOP) {
-				error = tsleep((caddr_t) p,
-						PWAIT|PCATCH, "procfs", 0);
+				error = tsleep(p, PWAIT|PCATCH, "procfs", 0);
 			}
 		}
 		return (error);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: null_vfsops.c,v 1.20 2004/05/18 12:37:51 pedro Exp $	*/
+/*	$OpenBSD: null_vfsops.c,v 1.21 2004/05/20 18:32:37 tedu Exp $	*/
 /*	$NetBSD: null_vfsops.c,v 1.38 2002/09/21 18:09:29 christos Exp $	*/
 
 /*
@@ -161,7 +161,7 @@ nullfs_mount(mp, path, data, ndp, p)
 	    M_UFSMNT, M_WAITOK);		/* XXX */
 	memset(nmp, 0, sizeof(struct null_mount));
 
-	mp->mnt_data = (qaddr_t)nmp;
+	mp->mnt_data = nmp;
 	nmp->nullm_vfs = lowerrootvp->v_mount;
 	if (nmp->nullm_vfs->mnt_flag & MNT_LOCAL)
 		mp->mnt_flag |= MNT_LOCAL;
