@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_misc.c,v 1.26 2000/02/28 13:29:30 jasoni Exp $	*/
+/*	$OpenBSD: linux_misc.c,v 1.27 2000/04/12 04:22:40 jasoni Exp $	*/
 /*	$NetBSD: linux_misc.c,v 1.27 1996/05/20 01:59:21 fvdl Exp $	*/
 
 /*
@@ -1439,6 +1439,38 @@ linux_sys_getresuid(p, v, retval)
 
 	return (copyout(&pc->p_svuid, SCARG(uap, suid), sizeof(uid_t)));
 }
+
+/*
+ * We have nonexistent fsuid equal to uid.
+ * If modification is requested, refuse.
+ */
+int
+linux_sys_setfsuid(p, v, retval)
+	 struct proc *p;
+	 void *v;
+	 register_t *retval;
+{
+	 struct linux_sys_setfsuid_args /* {
+		 syscallarg(uid_t) uid;
+	 } */ *uap = v;
+	 uid_t uid;
+
+	 uid = SCARG(uap, uid);
+	 if (p->p_cred->p_ruid != uid)
+		 return sys_nosys(p, v, retval);
+	 else
+		 return (0);
+}
+
+int
+linux_sys_getfsuid(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	return sys_getuid(p, v, retval);
+}
+
 
 int
 linux_sys_nice(p, v, retval)
