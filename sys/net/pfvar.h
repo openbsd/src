@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.39 2001/08/11 12:04:59 dhartmei Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.40 2001/08/18 21:09:13 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -264,6 +264,16 @@ struct pfioc_state {
 	struct pf_state	 state;
 };
 
+struct pfioc_states {
+	int	ps_len;
+	union {
+		caddr_t psu_buf;
+		struct pf_state *psu_states;
+	} ps_u;
+#define ps_buf		ps_u.psu_buf
+#define ps_states	ps_u.psu_states
+};
+
 struct pfioc_if {
 	char		 ifname[IFNAMSIZ];
 };
@@ -296,6 +306,7 @@ struct pfioc_if {
 #define DIOCCLRSTATUS	_IO  ('D', 22)
 #define DIOCNATLOOK	_IOWR('D', 23, struct pf_natlook)
 #define DIOCSETDEBUG	_IOWR('D', 24, u_int32_t)
+#define DIOCGETSTATES	_IOWR('D', 25, struct pfioc_states)
 
 #ifdef _KERNEL
 

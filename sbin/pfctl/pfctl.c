@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.32 2001/08/11 12:05:00 dhartmei Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.33 2001/08/18 21:09:13 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -220,13 +220,31 @@ pfctl_show_nat(int dev)
 int
 pfctl_show_states(int dev, u_int8_t proto)
 {
-	struct pfioc_state ps;
+	struct pfioc_states ps;
+	struct pf_state *p;
+	char *inbuf = NULL;
+	int i, len = 0;
 
-	ps.nr = 0;
-	while (!ioctl(dev, DIOCGETSTATE, &ps)) {
-		if (!proto || (ps.state.proto == proto))
-			print_state(&ps.state);
-		ps.nr++;
+	while (1) {
+		ps.ps_len = len;
+		if (len) {
+			ps.ps_buf = inbuf = realloc(inbuf, len);
+			if (inbuf == NULL)
+				err(1, "malloc");
+		}
+		if (ioctl(dev, DIOCGETSTATES, &ps) < 0)
+			err(1, "DIOCGETSTATES");
+		if (ps.ps_len + sizeof(struct pfioc_state) < len)
+			break;
+		if (len == 0 && ps.ps_len != 0)
+			len = ps.ps_len;
+		len *= 2;
+	}
+	p = ps.ps_states;
+	for (i = 0; i < ps.ps_len; i += sizeof(*p)) {
+		if (!proto || (p->proto == proto))
+			print_state(p);
+		p++;
 	}
 	return (0);
 }
@@ -343,7 +361,6 @@ pfctl_nat(int dev, char *filename, int opts)
 	if ((opts & PF_OPT_NOACTION) == 0) {
 		if (ioctl(dev, DIOCBEGINNATS, &pn.ticket))
 			err(1, "DIOCBEGINNATS");
-		
 		if (ioctl(dev, DIOCBEGINRDRS, &pr.ticket))
 			err(1, "DIOCBEGINRDRS");
 	}
@@ -376,7 +393,7 @@ pfctl_log(int dev, char *ifname, int opts)
 {
 	struct pfioc_if pi;
 
-	strncpy(pi.ifname, ifname, 16);
+	strlcpy(pi.ifname, ifname, sizeof(pi.ifname));
 	if (ioctl(dev, DIOCSETSTATUSIF, &pi))
 		err(1, "DIOCSETSTATUSIF");
 	if ((opts & PF_OPT_QUIET) == 0)
@@ -485,7 +502,6 @@ main(int argc, char *argv[])
 			error = 1;
 
 	if (clearopt != NULL) {
-		
 		switch (*clearopt) {
 		case 'r':
 			pfctl_clear_rules(dev, opts);

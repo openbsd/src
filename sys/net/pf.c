@@ -1,7 +1,7 @@
-/*	$OpenBSD: pf.c,v 1.123 2001/08/11 12:05:00 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.124 2001/08/18 21:09:13 deraadt Exp $ */
 
 /*
- * Copyright (c) 2001, Daniel Hartmeier
+ * Copyright (c) 2001 Daniel Hartmeier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -1117,6 +1117,50 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		break;
 	}
 
+	case DIOCGETSTATES: {
+		struct pfioc_states *ps = (struct pfioc_states *)addr;
+		struct pf_tree_node *n;
+		struct pf_state *p, pstore;
+		u_int32_t nr = 0;
+		int space = ps->ps_len;
+
+		if (space == 0) {
+			s = splsoftnet();
+			n = pf_tree_first(tree_ext_gwy);
+			while (n != NULL) {
+				n = pf_tree_next(n);
+				nr++;
+			}
+			splx(s);
+			ps->ps_len = sizeof(struct pf_state) * nr;
+			return (0);
+		}
+
+		microtime(&pftv);
+		s = splsoftnet();
+		p = ps->ps_states;
+		n = pf_tree_first(tree_ext_gwy);
+		while (n && (nr + 1) * sizeof(*p) <= ps->ps_len) {
+			bcopy(n->state, &pstore, sizeof(pstore));
+			pstore.creation = pftv.tv_sec - pstore.creation;
+			if (pstore.expire <= pftv.tv_sec)
+				pstore.expire = 0;
+			else
+				pstore.expire -= pftv.tv_sec;
+			error = copyout(&pstore, p, sizeof(*p));
+			if (error) {
+				splx(s);
+				goto fail;
+			}
+			p++;
+			nr++;
+			n = pf_tree_next(n);
+		}
+		ps->ps_len = sizeof(struct pf_state) * nr;
+		splx(s);
+		break;
+	}
+
 	case DIOCSETSTATUSIF: {
 		struct pfioc_if *pi = (struct pfioc_if *)addr;
 		struct ifnet *ifp;
@@ -1200,6 +1244,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		error = ENODEV;
 		break;
 	}
+fail:
 
 	return (error);
 }
