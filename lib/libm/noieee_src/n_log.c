@@ -76,7 +76,7 @@ static char sccsid[] = "@(#)log.c	8.2 (Berkeley) 11/30/93";
  *	+Inf	return +Inf
 */
 
-#if defined(vax) || defined(tahoe)
+#if defined(__vax__) || defined(tahoe)
 #define _IEEE		0
 #define TRUNC(x)	x = (double) (float) (x)
 #else

@@ -110,7 +110,7 @@ static char sccsid[] = "@(#)pow.c	8.1 (Berkeley) 6/4/93";
 
 #include "mathimpl.h"
 
-#if (defined(vax) || defined(tahoe))
+#if (defined(__vax__) || defined(tahoe))
 #define TRUNC(x)	x = (double) (float) x
 #define _IEEE		0
 #else

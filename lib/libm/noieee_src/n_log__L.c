@@ -103,9 +103,9 @@ ic(L7, 1.4795612545334174692E-1, -3, 1.2F039F0085122)
 double __log__L(z)
 double z;
 {
-#if defined(vax)||defined(tahoe)
+#if defined(__vax__)||defined(tahoe)
     return(z*(L1+z*(L2+z*(L3+z*(L4+z*(L5+z*(L6+z*(L7+z*L8))))))));
-#else	/* defined(vax)||defined(tahoe) */
+#else	/* defined(__vax__)||defined(tahoe) */
     return(z*(L1+z*(L2+z*(L3+z*(L4+z*(L5+z*(L6+z*L7)))))));
-#endif	/* defined(vax)||defined(tahoe) */
+#endif	/* defined(__vax__)||defined(tahoe) */
 }

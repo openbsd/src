@@ -37,7 +37,7 @@
 #include <sys/cdefs.h>
 #include <math.h>
 
-#if defined(vax)||defined(tahoe)
+#if defined(__vax__)||defined(tahoe)
 
 /* Deal with different ways to concatenate in cpp */
 #  ifdef __STDC__
@@ -47,7 +47,7 @@
 #  endif
 
 /* Deal with vax/tahoe byte order issues */
-#  ifdef vax
+#  ifdef __vax__
 #    define	cat3t(a,b,c) cat3(a,b,c)
 #  else
 #    define	cat3t(a,b,c) cat3(a,c,b)
@@ -85,7 +85,7 @@
 #  define ic(name, value, bexp, xval) \
 	const static double name = value;
 
-#endif	/* defined(vax)||defined(tahoe) */
+#endif	/* defined(__vax__)||defined(tahoe) */
 
 
 /*

@@ -146,7 +146,7 @@ static char sccsid[] = "@(#)erf.c	8.1 (Berkeley) 6/4/93";
  *	   	erfc/erf(NaN) is NaN
  */
 
-#if defined(vax) || defined(tahoe)
+#if defined(__vax__) || defined(tahoe)
 #define _IEEE	0
 #define TRUNC(x) (double) (float) (x)
 #else

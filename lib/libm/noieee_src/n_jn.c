@@ -96,7 +96,7 @@ static char sccsid[] = "@(#)jn.c	8.2 (Berkeley) 11/30/93";
 #include <float.h>
 #include <errno.h>
 
-#if defined(vax) || defined(tahoe)
+#if defined(__vax__) || defined(tahoe)
 #define _IEEE	0
 #else
 #define _IEEE	1
@@ -239,11 +239,11 @@ double jn(n,x)
 		        b = ((i+i)/x)*b - a;
 		        a = temp;
 		    /* scale b to avoid spurious overflow */
-#			if defined(vax) || defined(tahoe)
+#			if defined(__vax__) || defined(tahoe)
 #				define BMAX 1e13
 #			else
 #				define BMAX 1e100
-#			endif /* defined(vax) || defined(tahoe) */
+#			endif /* defined(__vax__) || defined(tahoe) */
 			if (b > BMAX) {
 				a /= b;
 				t /= b;

@@ -115,7 +115,7 @@ static char sccsid[] = "@(#)j0.c	8.2 (Berkeley) 11/30/93";
 #include <float.h>
 #include <errno.h>
 
-#if defined(vax) || defined(tahoe)
+#if defined(__vax__) || defined(tahoe)
 #define _IEEE	0
 #else
 #define _IEEE	1

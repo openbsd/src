@@ -88,9 +88,9 @@ ic(ivln10, 4.3429448190325181667E-1, -2, 1.BCB7B1526E50E)
 double log10(x)
 double x;
 {
-#if defined(vax)||defined(tahoe)
+#if defined(__vax__)||defined(tahoe)
 	return(log(x)/ln10hi);
-#else	/* defined(vax)||defined(tahoe) */
+#else	/* defined(__vax__)||defined(tahoe) */
 	return(ivln10*log(x));
-#endif	/* defined(vax)||defined(tahoe) */
+#endif	/* defined(__vax__)||defined(tahoe) */
 }

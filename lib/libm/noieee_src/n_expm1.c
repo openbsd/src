@@ -112,15 +112,15 @@ double x;
 	const static double one=1.0, half=1.0/2.0; 
 	double  z,hi,lo,c;
 	int k;
-#if defined(vax)||defined(tahoe)
+#if defined(__vax__)||defined(tahoe)
 	static prec=56;
-#else	/* defined(vax)||defined(tahoe) */
+#else	/* defined(__vax__)||defined(tahoe) */
 	static prec=53;
-#endif	/* defined(vax)||defined(tahoe) */
+#endif	/* defined(__vax__)||defined(tahoe) */
 
-#if !defined(vax)&&!defined(tahoe)
+#if !defined(__vax__)&&!defined(tahoe)
 	if(x!=x) return(x);	/* x is NaN */
-#endif	/* !defined(vax)&&!defined(tahoe) */
+#endif	/* !defined(__vax__)&&!defined(tahoe) */
 
 	if( x <= lnhuge ) {
 		if( x >= -40.0 ) {

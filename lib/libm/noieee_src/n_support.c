@@ -76,16 +76,16 @@ static char sccsid[] = "@(#)support.c	8.1 (Berkeley) 6/4/93";
 
 #include "mathimpl.h"
 
-#if defined(vax)||defined(tahoe)      /* VAX D format */
+#if defined(__vax__)||defined(tahoe)      /* VAX D format */
 #include <errno.h>
     static const unsigned short msign=0x7fff , mexp =0x7f80 ;
     static const short  prep1=57, gap=7, bias=129           ;   
     static const double novf=1.7E38, nunf=3.0E-39, zero=0.0 ;
-#else	/* defined(vax)||defined(tahoe) */
+#else	/* defined(__vax__)||defined(tahoe) */
     static const unsigned short msign=0x7fff, mexp =0x7ff0  ;
     static const short prep1=54, gap=4, bias=1023           ;
     static const double novf=1.7E308, nunf=3.0E-308,zero=0.0;
-#endif	/* defined(vax)||defined(tahoe) */
+#endif	/* defined(__vax__)||defined(tahoe) */
 
 double scalb(x,N)
 double x; int N;
@@ -100,19 +100,19 @@ double x; int N;
 
         if( x == zero )  return(x); 
 
-#if defined(vax)||defined(tahoe)
+#if defined(__vax__)||defined(tahoe)
         if( (k= *px & mexp ) != ~msign ) {
             if (N < -260)
 		return(nunf*nunf);
 	    else if (N > 260) {
 		return(copysign(infnan(ERANGE),x));
 	    }
-#else	/* defined(vax)||defined(tahoe) */
+#else	/* defined(__vax__)||defined(tahoe) */
         if( (k= *px & mexp ) != mexp ) {
             if( N<-2100) return(nunf*nunf); else if(N>2100) return(novf+novf);
             if( k == 0 ) {
                  x *= scalb(1.0,(int)prep1);  N -= prep1; return(scalb(x,N));}
-#endif	/* defined(vax)||defined(tahoe) */
+#endif	/* defined(__vax__)||defined(tahoe) */
 
             if((k = (k>>gap)+ N) > 0 )
                 if( k < (mexp>>gap) ) *px = (*px&~mexp) | (k<<gap);
@@ -139,9 +139,9 @@ double x,y;
                         *py=(unsigned short *) &y;
 #endif	/* national */
 
-#if defined(vax)||defined(tahoe)
+#if defined(__vax__)||defined(tahoe)
         if ( (*px & mexp) == 0 ) return(x);
-#endif	/* defined(vax)||defined(tahoe) */
+#endif	/* defined(__vax__)||defined(tahoe) */
 
         *px = ( *px & msign ) | ( *py & ~msign );
         return(x);
@@ -157,9 +157,9 @@ double x;
         short *px=(short *) &x, k;
 #endif	/* national */
 
-#if defined(vax)||defined(tahoe)
+#if defined(__vax__)||defined(tahoe)
         return (int)(((*px&mexp)>>gap)-bias);
-#else	/* defined(vax)||defined(tahoe) */
+#else	/* defined(__vax__)||defined(tahoe) */
         if( (k= *px & mexp ) != mexp )
             if ( k != 0 )
                 return ( (k>>gap) - bias );
@@ -171,21 +171,21 @@ double x;
             return(x);
         else
             {*px &= msign; return(x);}
-#endif	/* defined(vax)||defined(tahoe) */
+#endif	/* defined(__vax__)||defined(tahoe) */
 }
 
 finite(x)
 double x;    
 {
-#if defined(vax)||defined(tahoe)
+#if defined(__vax__)||defined(tahoe)
         return(1);
-#else	/* defined(vax)||defined(tahoe) */
+#else	/* defined(__vax__)||defined(tahoe) */
 #ifdef national
         return( (*((short *) &x+3 ) & mexp ) != mexp );
 #else	/* national */
         return( (*((short *) &x ) & mexp ) != mexp );
 #endif	/* national */
-#endif	/* defined(vax)||defined(tahoe) */
+#endif	/* defined(__vax__)||defined(tahoe) */
 }
 
 double drem(x,p)
@@ -210,25 +210,25 @@ double x,p;
 
         *pp &= msign ;
 
-#if defined(vax)||defined(tahoe)
+#if defined(__vax__)||defined(tahoe)
         if( ( *px & mexp ) == ~msign )	/* is x a reserved operand? */
-#else	/* defined(vax)||defined(tahoe) */
+#else	/* defined(__vax__)||defined(tahoe) */
         if( ( *px & mexp ) == mexp )
-#endif	/* defined(vax)||defined(tahoe) */
+#endif	/* defined(__vax__)||defined(tahoe) */
 		return  (x-p)-(x-p);	/* create nan if x is inf */
 	if (p == zero) {
-#if defined(vax)||defined(tahoe)
+#if defined(__vax__)||defined(tahoe)
 		return(infnan(EDOM));
-#else	/* defined(vax)||defined(tahoe) */
+#else	/* defined(__vax__)||defined(tahoe) */
 		return zero/zero;
-#endif	/* defined(vax)||defined(tahoe) */
+#endif	/* defined(__vax__)||defined(tahoe) */
 	}
 
-#if defined(vax)||defined(tahoe)
+#if defined(__vax__)||defined(tahoe)
         if( ( *pp & mexp ) == ~msign )	/* is p a reserved operand? */
-#else	/* defined(vax)||defined(tahoe) */
+#else	/* defined(__vax__)||defined(tahoe) */
         if( ( *pp & mexp ) == mexp )
-#endif	/* defined(vax)||defined(tahoe) */
+#endif	/* defined(__vax__)||defined(tahoe) */
 		{ if (p != p) return p; else return x;}
 
         else  if ( ((*pp & mexp)>>gap) <= 1 ) 
@@ -248,20 +248,20 @@ double x,p;
                         tmp = dp ;
                         *pt += k ;
 
-#if defined(vax)||defined(tahoe)
+#if defined(__vax__)||defined(tahoe)
                         if( x < tmp ) *pt -= 128 ;
-#else	/* defined(vax)||defined(tahoe) */
+#else	/* defined(__vax__)||defined(tahoe) */
                         if( x < tmp ) *pt -= 16 ;
-#endif	/* defined(vax)||defined(tahoe) */
+#endif	/* defined(__vax__)||defined(tahoe) */
 
                         x -= tmp ;
                     }
                 if ( x > hp )
                     { x -= p ;  if ( x >= hp ) x -= p ; }
 
-#if defined(vax)||defined(tahoe)
+#if defined(__vax__)||defined(tahoe)
 		if (x)
-#endif	/* defined(vax)||defined(tahoe) */
+#endif	/* defined(__vax__)||defined(tahoe) */
 			*px ^= sign;
                 return( x);
 
@@ -276,22 +276,22 @@ double x;
         double t;
 	double const zero=0.0;
         int m,n,i;
-#if defined(vax)||defined(tahoe)
+#if defined(__vax__)||defined(tahoe)
         int k=54;
-#else	/* defined(vax)||defined(tahoe) */
+#else	/* defined(__vax__)||defined(tahoe) */
         int k=51;
-#endif	/* defined(vax)||defined(tahoe) */
+#endif	/* defined(__vax__)||defined(tahoe) */
 
     /* sqrt(NaN) is NaN, sqrt(+-0) = +-0 */
         if(x!=x||x==zero) return(x);
 
     /* sqrt(negative) is invalid */
         if(x<zero) {
-#if defined(vax)||defined(tahoe)
+#if defined(__vax__)||defined(tahoe)
 		return (infnan(EDOM));	/* NaN */
-#else	/* defined(vax)||defined(tahoe) */
+#else	/* defined(__vax__)||defined(tahoe) */
 		return(zero/zero);
-#endif	/* defined(vax)||defined(tahoe) */
+#endif	/* defined(__vax__)||defined(tahoe) */
 	}
 
     /* sqrt(INF) is INF */

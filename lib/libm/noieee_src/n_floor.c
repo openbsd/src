@@ -60,9 +60,9 @@ double x;
 	volatile double y;
 
 	if (
-#if !defined(vax)&&!defined(tahoe)
+#if !defined(__vax__)&&!defined(tahoe)
 		x != x ||	/* NaN */
-#endif	/* !defined(vax)&&!defined(tahoe) */
+#endif	/* !defined(__vax__)&&!defined(tahoe) */
 		x >= L)		/* already an even integer */
 		return x;
 	else if (x < (double)0)
@@ -81,9 +81,9 @@ double x;
 	volatile double y;
 
 	if (
-#if !defined(vax)&&!defined(tahoe)
+#if !defined(__vax__)&&!defined(tahoe)
 		x != x ||	/* NaN */
-#endif	/* !defined(vax)&&!defined(tahoe) */
+#endif	/* !defined(__vax__)&&!defined(tahoe) */
 		x >= L)		/* already an even integer */
 		return x;
 	else if (x < (double)0)
@@ -125,10 +125,10 @@ double x;
 	volatile double t;
 	const double one = 1.0;
 
-#if !defined(vax)&&!defined(tahoe)
+#if !defined(__vax__)&&!defined(tahoe)
 	if (x != x)				/* NaN */
 		return (x);
-#endif	/* !defined(vax)&&!defined(tahoe) */
+#endif	/* !defined(__vax__)&&!defined(tahoe) */
 	if (copysign(x,one) >= L)		/* already an integer */
 	    return (x);
 	s = copysign(L,x);

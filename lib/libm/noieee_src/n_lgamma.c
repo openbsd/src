@@ -71,7 +71,7 @@ static char sccsid[] = "@(#)lgamma.c	8.2 (Berkeley) 11/30/93";
  *	NaN			returns NaN
 */
 static int endian;
-#if defined(vax) || defined(tahoe)
+#if defined(__vax__) || defined(tahoe)
 #define _IEEE		0
 /* double and float have same size exponent field */
 #define TRUNC(x)	x = (double) (float) (x)

@@ -127,7 +127,7 @@ static int endian;
  * TRUNC sets trailing bits in a floating-point number to zero.
  * is a temporary variable.
  */
-#if defined(vax) || defined(tahoe)
+#if defined(__vax__) || defined(tahoe)
 #define _IEEE		0
 #define TRUNC(x)	x = (double) (float) (x)
 #else

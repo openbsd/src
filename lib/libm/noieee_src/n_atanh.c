@@ -64,9 +64,9 @@ static char sccsid[] = "@(#)atanh.c	8.1 (Berkeley) 6/4/93";
  */
 #include "mathimpl.h"
 
-#if defined(vax)||defined(tahoe)
+#if defined(__vax__)||defined(tahoe)
 #include <errno.h>
-#endif	/* defined(vax)||defined(tahoe) */
+#endif	/* defined(__vax__)||defined(tahoe) */
 
 double atanh(x)
 double x;
@@ -74,11 +74,11 @@ double x;
 	double z;
 	z = copysign(0.5,x);
 	x = copysign(x,1.0);
-#if defined(vax)||defined(tahoe)
+#if defined(__vax__)||defined(tahoe)
 	if (x == 1.0) {
 	    return(copysign(1.0,z)*infnan(ERANGE));	/* sign(x)*INF */
 	}
-#endif	/* defined(vax)||defined(tahoe) */
+#endif	/* defined(__vax__)||defined(tahoe) */
 	x = x/(1.0-x);
 	return( z*log1p(x+x) );
 }

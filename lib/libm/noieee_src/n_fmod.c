@@ -64,9 +64,9 @@ static char sccsid[] = "@(#)fmod.c	8.1 (Berkeley) 6/4/93";
  *    fmod(x,0), fmod(INF,y) are invalid operations and NaN is returned.
  *
  */
-#if !defined(vax) && !defined(tahoe)
+#if !defined(__vax__) && !defined(tahoe)
 extern int isnan(),finite();
-#endif	/* !defined(vax) && !defined(tahoe) */
+#endif	/* !defined(__vax__) && !defined(tahoe) */
 extern double frexp(),ldexp(),fabs();
 
 #ifdef TEST_FMOD
@@ -82,9 +82,9 @@ double x,y;
 	double r,w;
 
 	if (y == (double)0
-#if !defined(vax) && !defined(tahoe)	/* per "fmod" manual entry, SunOS 4.0 */
+#if !defined(__vax__) && !defined(tahoe)	/* per "fmod" manual entry, SunOS 4.0 */
 		|| isnan(y) || !finite(x)
-#endif	/* !defined(vax) && !defined(tahoe) */
+#endif	/* !defined(__vax__) && !defined(tahoe) */
 	    )
 	    return (x*y)/(x*y);
 

@@ -80,9 +80,9 @@ double x;
 	double expm1(), t, copysign(), sign;
 	int finite();
 
-#if !defined(vax)&&!defined(tahoe)
+#if !defined(__vax__)&&!defined(tahoe)
 	if(x!=x) return(x);	/* x is NaN */
-#endif	/* !defined(vax)&&!defined(tahoe) */
+#endif	/* !defined(__vax__)&&!defined(tahoe) */
 
 	sign=copysign(one,x);
 	x=copysign(x,one);

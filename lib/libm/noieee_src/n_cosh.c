@@ -99,11 +99,11 @@ ic(lnovfl, 7.0978271289338397310E2,     9, 1.62E42FEFA39EF)
 #define   lnovfl    vccast(lnovfl)
 #endif
 
-#if defined(vax)||defined(tahoe)
+#if defined(__vax__)||defined(tahoe)
 static max = 126                      ;
-#else	/* defined(vax)||defined(tahoe) */
+#else	/* defined(__vax__)||defined(tahoe) */
 static max = 1023                     ;
-#endif	/* defined(vax)||defined(tahoe) */
+#endif	/* defined(__vax__)||defined(tahoe) */
 
 double cosh(x)
 double x;
@@ -112,9 +112,9 @@ double x;
 		one=1.0, small=1.0E-18; /* fl(1+small)==1 */
 	double t;
 
-#if !defined(vax)&&!defined(tahoe)
+#if !defined(__vax__)&&!defined(tahoe)
 	if(x!=x) return(x);	/* x is NaN */
-#endif	/* !defined(vax)&&!defined(tahoe) */
+#endif	/* !defined(__vax__)&&!defined(tahoe) */
 	if((x=copysign(x,one)) <= 22)
 	    if(x<0.3465) 
 		if(x<small) return(one+x);

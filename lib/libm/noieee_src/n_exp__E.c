@@ -116,11 +116,11 @@ double x,c;
 	if(copysign(x,one)>small) {
            z = x*x  ;
 	   p = z*( p1 +z* p2 );
-#if defined(vax)||defined(tahoe)
+#if defined(__vax__)||defined(tahoe)
            q = z*( q1 +z*( q2 +z* q3 ));
-#else	/* defined(vax)||defined(tahoe) */
+#else	/* defined(__vax__)||defined(tahoe) */
            q = z*( q1 +z*  q2 );
-#endif	/* defined(vax)||defined(tahoe) */
+#endif	/* defined(__vax__)||defined(tahoe) */
            xp= x*p     ; 
 	   xh= x*half  ;
            w = xh-(q-xp)  ;

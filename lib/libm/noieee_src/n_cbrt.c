@@ -54,7 +54,7 @@ static char sccsid[] = "@(#)cbrt.c	8.1 (Berkeley) 6/4/93";
  * On a National machine, it has different ordering; therefore, this code 
  * must be compiled with flag -DNATIONAL. 
  */
-#if !defined(vax)&&!defined(tahoe)
+#if !defined(__vax__)&&!defined(tahoe)
 
 static const unsigned long
 		     B1 = 715094163, /* B1 = (682-0.03306235651)*2**20 */
