@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_pci.c,v 1.1 2001/06/06 18:53:50 millert Exp $	*/
+/*	$OpenBSD: if_wi_pci.c,v 1.2 2001/06/07 04:55:06 millert Exp $	*/
 
 /*
  * Copyright (c) 2001 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -162,8 +162,6 @@ wi_pci_attach(parent, self, aux)
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pcireg_t csr;
 	const char *intrstr;
-
-	sc->sc_prism2 = 1;		/* All PCI flavors of wi are Prism2 */
 
 	/* Map memory and I/O registers. */
 	if (pci_mapreg_map(pa, WI_PCI_LOMEM, PCI_MAPREG_TYPE_MEM, 0,
