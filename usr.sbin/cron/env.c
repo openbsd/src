@@ -1,4 +1,4 @@
-/*	$OpenBSD: env.c,v 1.11 2002/07/08 23:42:17 millert Exp $	*/
+/*	$OpenBSD: env.c,v 1.12 2002/07/09 18:59:12 millert Exp $	*/
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
  */
@@ -21,14 +21,14 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char const rcsid[] = "$OpenBSD: env.c,v 1.11 2002/07/08 23:42:17 millert Exp $";
+static char const rcsid[] = "$OpenBSD: env.c,v 1.12 2002/07/09 18:59:12 millert Exp $";
 #endif
 
 #include "cron.h"
 
 char **
 env_init(void) {
-	char	**p = (char **) malloc(sizeof(char **));
+	char **p = (char **) malloc(sizeof(char **));
 
 	if (p != NULL)
 		p[0] = NULL;
@@ -37,9 +37,9 @@ env_init(void) {
 
 void
 env_free(char **envp) {
-	char	**p;
+	char **p;
 
-	for (p = envp;  *p != NULL;  p++)
+	for (p = envp; *p != NULL;  p++)
 		free(*p);
 	free(envp);
 }

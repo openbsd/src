@@ -1,4 +1,4 @@
-/*	$OpenBSD: pathnames.h,v 1.6 2002/07/08 23:42:17 millert Exp $	*/
+/*	$OpenBSD: pathnames.h,v 1.7 2002/07/09 18:59:12 millert Exp $	*/
 
 /* Copyright 1993,1994 by Paul Vixie
  * All rights reserved
@@ -58,6 +58,7 @@
 #define LOG_FILE	"log"
 
 			/* where should the daemon stick its PID?
+			 * PIDDIR must end in '/'.
 			 */
 #ifdef _PATH_VARRUN
 # define PIDDIR	_PATH_VARRUN
@@ -65,6 +66,7 @@
 # define PIDDIR "/etc/"
 #endif
 #define PIDFILE		"cron.pid"
+#define _PATH_CRON_PID	PIDDIR PIDFILE
 
 			/* 4.3BSD-style crontab */
 #define SYSCRONTAB	"/etc/crontab"

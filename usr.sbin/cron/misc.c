@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.20 2002/07/08 18:11:02 millert Exp $	*/
+/*	$OpenBSD: misc.c,v 1.21 2002/07/09 18:59:12 millert Exp $	*/
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
  */
@@ -21,7 +21,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char const rcsid[] = "$OpenBSD: misc.c,v 1.20 2002/07/08 18:11:02 millert Exp $";
+static char const rcsid[] = "$OpenBSD: misc.c,v 1.21 2002/07/09 18:59:12 millert Exp $";
 #endif
 
 /* vix 26jan87 [RCS has the rest of the log]
@@ -254,13 +254,13 @@ set_cron_cwd(void) {
  *
  * note: main() calls us twice; once before forking, once after.
  *	we maintain static storage of the file pointer so that we
- *	can rewrite our PID into the PIDFILE after the fork.
+ *	can rewrite our PID into _PATH_CRON_PID after the fork.
  */
 void
 acquire_daemonlock(int closeflag) {
 	static int fd = -1;
 	char buf[3*MAX_FNAME];
-	char pidfile[MAX_FNAME];
+	const char *pidfile;
 	char *ep;
 	long otherpid;
 	ssize_t num;
@@ -275,13 +275,7 @@ acquire_daemonlock(int closeflag) {
 	}
 
 	if (fd == -1) {
-		if (!glue_strings(pidfile, sizeof pidfile, PIDDIR,
-		    PIDFILE, '/')) {
-			fprintf(stderr, "%s/%s: path too long\n",
-				PIDDIR, PIDFILE);
-			log_it("CRON", getpid(), "DEATH", "path too long");
-			exit(ERROR_EXIT);
-		}
+		pidfile = _PATH_CRON_PID;
 		if ((fd = open(pidfile, O_RDWR|O_CREAT|O_EXLOCK|O_NONBLOCK,
 		    0644)) == -1) {
 			int save_errno = errno;

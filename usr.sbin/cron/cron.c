@@ -1,4 +1,4 @@
-/*	$OpenBSD: cron.c,v 1.25 2002/07/08 18:11:02 millert Exp $	*/
+/*	$OpenBSD: cron.c,v 1.26 2002/07/09 18:59:12 millert Exp $	*/
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
  */
@@ -21,7 +21,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static const char rcsid[] = "$OpenBSD: cron.c,v 1.25 2002/07/08 18:11:02 millert Exp $";
+static const char rcsid[] = "$OpenBSD: cron.c,v 1.26 2002/07/09 18:59:12 millert Exp $";
 #endif
 
 #define	MAIN_PROGRAM
@@ -116,11 +116,11 @@ main(int argc, char *argv[]) {
 			/* child process */
 			log_it("CRON",getpid(),"STARTUP","fork ok");
 			(void) setsid();
-			if ((fd = open(_PATH_DEVNULL, O_RDWR, 0)) != -1) {
+			if ((fd = open(_PATH_DEVNULL, O_RDWR, 0)) >= 0) {
 				(void) dup2(fd, STDIN);
 				(void) dup2(fd, STDOUT);
 				(void) dup2(fd, STDERR);
-				if (fd > STDERR)
+				if (fd != STDERR)
 					(void) close(fd);
 			}
 			break;
@@ -417,11 +417,7 @@ sigchld_handler(int x) {
 
 static void
 quit(int x) {
-	char	pidfile[MAX_FNAME];
-
-	if (glue_strings(pidfile, sizeof pidfile, PIDDIR, PIDFILE, '/'))
-		(void) unlink(pidfile);
-
+	(void) unlink(_PATH_CRON_PID);
 	_exit(0);
 }
 
@@ -449,6 +445,7 @@ sigchld_reaper() {
 			Debug(DPROC,
 			      ("[%ld] sigchld...pid #%ld died, stat=%d\n",
 			       (long)getpid(), (long)pid, WEXITSTATUS(waiter)))
+			break;
 		}
 	} while (pid > 0);
 }
