@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.82 2003/01/14 18:19:07 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.83 2003/01/17 17:36:04 deraadt Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -79,7 +79,7 @@ is set to a list of files to ignore.
 Invoking
 .Ar checksum
 with REFETCH=true
-will try to fetch a version of with mismatched checksums off the
+will try to fetch a version without mismatched checksums off the
 .Ox
 main archive site.
 .It Ar clean
@@ -254,7 +254,7 @@ testing, define a
 .It Ar show
 Invoked as show=name, show the contents of ${name}.
 Mostly used from recursive makes, or to know the contents of another
-port's variables without guessing wrong.
+port's variables without guessing wrongly.
 .It Ar update-plist
 Update the packing lists for a port, using the fake installation and the
 existing packing lists.
@@ -425,7 +425,7 @@ Many ports ignore it.
 See also
 .Ev COPTS .
 .It Ev CHECKSUM_FILE
-Location for this port checksums, used by
+Location for this port's checksums, used by
 .Ar addsum ,
 .Ar checksum ,
 and
@@ -433,7 +433,7 @@ and
 Defaults to distinfo.
 .It Ev CLEANDEPENDS
 If set to
-.Sq Yes
+.Sq Yes ,
 .Sq make clean
 will also clean dependencies.
 Note that distclean never recurses down to dependencies.
@@ -464,7 +464,7 @@ Set to name of script invoked by
 target, if appropriate.
 Should be relative to ${WRKSRC}.
 .It Ev CONFIGURE_SHARED
-Set to --enable-shared or --disable-shared, depending whether the
+Set to --enable-shared or --disable-shared, depending on whether the
 architecture supports shared libraries.
 Should be appended to CONFIGURE_ARGS, for ports that build dynamic libraries 
 and whose configure script supports these options.
@@ -490,7 +490,7 @@ see also
 .Pc .
 Add
 .Sq old
-if port is an older autoconf port, that does not recognize --sysconfdir.
+if port is an older autoconf port that does not recognize --sysconfdir.
 Add
 .Sq autoconf
 if autoconf needs to be rerun first.
@@ -542,19 +542,18 @@ to refer to ports' distfiles location, as it takes an eventual
 .Ev DIST_SUBDIR
 into account.
 .It Ev DISTFILES
-The main port distribution files (the actual software source, except
+The main port's distribution files (the actual software source, except
 for binary-only ports).
 Will be retrieved from the MASTER_SITES (see
 .Ar fetch ) ,
 checksummed and extracted (see
 .Ar checksum ,
 .Ar extract ) .
-normally holds a list of files, possibly with :0
 .Ev DISTFILES
 normally holds a list of files, possibly with
-.Sq 0
+.Sq :0
 to
-.Sq 9
+.Sq :9
 appended to select a different
 .Ev MASTER_SITES .
 See also
@@ -663,7 +662,7 @@ Location of other files related to the current ports.
 Holds at least the checksum file, sometimes other files
 (default: files.${ARCH} or files).
 .It Ev FLAVOR
-The port current options.
+The port's current options.
 Set by the user, and tested by the port to activate wanted functionalities.
 .It Ev FLAVORS
 List of all flavors keywords a port may match.
@@ -708,7 +707,7 @@ for more details.
 .Pp
 On architectures that use dynamic libraries,
 .Ev LIB_DEPENDS
-is also used as a running time dependency, and recorded in the package as
+is also used as a run-time dependency, and recorded in the package as
 such.
 .It Ev FULLDISTDIR
 Complete path to directory where ${DISTFILES} and ${PATCHFILES} will be
@@ -934,7 +933,8 @@ Default will trip ports that try to write into $HOME while building.
 Path used by most shell invocations.
 Don't override unless really needed.
 .It Ev PORTSDIR
-Root of the ports tree (default: /usr/ports).
+Root of the ports tree (default:
+.Pa /usr/ports ) .
 .It Ev PKGDIR
 Location for packaging information (packing list, port description, port
 short description).
@@ -942,7 +942,7 @@ Default: pkg.${ARCH} or pkg.
 .It Ev PKGNAME
 Name of the main created package.
 Default is ${DISTNAME} for the main package,
-and ${DISTNAME} for multi-packages ports.
+and ${DISTNAME} for multi-package ports.
 This does not take flavors into account.
 See
 .Ev FULLPKGNAME
@@ -960,11 +960,12 @@ Default is
 The first cipher that matches in ${CHECKSUM_FILE} is verified.
 .It Ev PREFIX
 Base directory for the current port installation.
-Usually ${LOCALBASE}, though some ports may elect a location under /var,
+Usually ${LOCALBASE}, though some ports may elect a location under 
+.Pa /var ,
 and some multi-package ports may install under several locations.
 .It Ev PSEUDO_FLAVORS
 Extra list of flavors that do not register in package names, but are still
-used to control build logic, and e.g., working directories names.
+used to control build logic, and e.g., working directory names.
 Its main use is for disabling part of a multi-packages build, for instance:
 .Bd -literal
 FLAVOR=no_gnome make package 
@@ -1115,7 +1116,7 @@ Ports that need to know the WRKDIR of another port must use
 cd that_port_dir && make show VARNAME=WRKDIR for this.
 Note that WRKDIR may be a symbolic link.
 .It Ev WRKDIST
-Subdirectory of ${WRKDIR} where the source normally unpacked.
+Subdirectory of ${WRKDIR} where the source is normally unpacked.
 Base for all patches (default: ${WRKDIR}/${DISTNAME}).
 Note that WRKDIST may be a symbolic link, if set to ${WRKDIR}.
 .It Ev WRKSRC
@@ -1144,7 +1145,7 @@ if gnu make (${GMAKE}) is needed for correct behavior of this port.
 Set to
 .Sq Yes
 if libtool is required for correct behavior of this port.
-Add correct dependencies, and passes LIBTOOL environment variable to
+Adds correct dependencies, and passes LIBTOOL environment variable to
 scripts invocations.
 .It Ev USE_MOTIF
 Set to
@@ -1411,7 +1412,7 @@ for
 .Ev SUBPACKAGE
 -foo .
 .Ev PKGNAME
-now holds the package name, not taking multi-packages nor flavors
+now holds the package name, not taking multi-packages or flavors
 into account.
 Most ports are not concerned by this change.
 .It Ev PLIST_SUBST
@@ -1454,8 +1455,11 @@ was used.
 .It Pa /usr/share/mk/bsd.port.mk
 Original location of
 .Nm bsd.port.mk .
-The current file lives under ${PORTSDIR}/infrastructure/mk/bsd.port.mk,
-whereas /usr/share/mk/bsd.port.mk is just a stub.
+The current file lives under 
+.Pa ${PORTSDIR}/infrastructure/mk/bsd.port.mk ,
+whereas 
+.Pa /usr/share/mk/bsd.port.mk
+is just a stub.
 .It Pa {scripts,files,patches}.${OPSYS}
 The
 .Ox

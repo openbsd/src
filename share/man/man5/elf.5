@@ -1,4 +1,4 @@
-.\"	$OpenBSD: elf.5,v 1.1 2002/10/14 21:09:21 miod Exp $
+.\"	$OpenBSD: elf.5,v 1.2 2003/01/17 17:36:04 deraadt Exp $
 .\"Copyright (c) 1999 Jeroen Ruigrok van der Werven
 .\"All rights reserved.
 .\"
@@ -60,10 +60,10 @@ all the types and structures by their generic names
 and to the macros by
 .Dq ELF_xxx .
 Applications written this way can be compiled on any architecture,
-regardless whether the host is 32-bit or 64-bit.
+regardless of whether the host is 32-bit or 64-bit.
 .Pp
 Should an application need to process ELF files of an unknown
-architecture, then the application needs to explicitely use either
+architecture, then the application needs to explicitly use either
 .Dq Elf32_xxx
 or
 .Dq Elf64_xxx
@@ -74,10 +74,10 @@ or
 .Dq ELF64_xxx .
 .Pp
 This header file describes the above mentioned headers as C structures
-and also include structures for dynamic sections, relocation sections and
+and also includes structures for dynamic sections, relocation sections and
 symbol tables.
 .Pp
-The following types are being used for 32-bit architectures:
+The following types are used for 32-bit architectures:
 .Bd -literal -offset indent
 Elf32_Addr	Unsigned program address
 Elf32_Half	Unsigned halfword field
@@ -87,7 +87,7 @@ Elf32_Word	Field or unsigned large integer
 .\" Elf32_Size	Unsigned object size
 .Ed
 .Pp
-And the following types are being used for 64-bit architectures:
+And the following types are used for 64-bit architectures:
 .Bd -literal -offset indent
 Elf64_Addr	Unsigned program address
 Elf64_Shalf	Signed halfword field
@@ -408,11 +408,11 @@ This value specifies the lower bound of the range of reserved indexes.
 .It Dv SHN_LOPROC
 This value up to and including
 .Sy SHN_HIPROC
-are reserved for processor-specific semantics.
+is reserved for processor-specific semantics.
 .It Dv SHN_HIPROC
 This value down to and including
 .Sy SHN_LOPROC
-are reserved for processor-specific semantics.
+is reserved for processor-specific semantics.
 .It Dv SHN_ABS
 This value specifies absolute values for the corresponding reference.
 For
@@ -423,7 +423,7 @@ have absolute values and are not affected by relocation.
 Symbols defined relative to this section are common symbols, such as Fortran
 COMMON or unallocated C external variables.
 .It Dv SHN_HIRESERVE
-This value specifies the upper bound of the range of the range of reserved
+This value specifies the upper bound of the range of reserved
 indices between
 .Sy SHN_LORESERVE
 and
@@ -540,16 +540,16 @@ If it is present it must precede any loadable segment entry.
 .It Dv PT_LOPROC
 This value up to and including
 .Sy PT_HIPROC
-are reserved for processor-specific semantics.
+is reserved for processor-specific semantics.
 .It Dv PT_HIPROC
 This value down to and including
 .Sy PT_LOPROC
-are reserved for processor-specific semantics.
+is reserved for processor-specific semantics.
 .El
 .Pp
 .It Dv p_offset
 This member holds the offset from the beginning of the file at which
-the first byte of the of the segment resides.
+the first byte of the segment resides.
 .It Dv p_vaddr
 This member holds the virtual address at which the first byte of the
 segment resides in memory.
@@ -606,7 +606,7 @@ modulo
 .Sy p_align .
 .El
 .Pp
-An file's section header table lets one locate all the file's sections.
+A file's section header table lets one locate all the file's sections.
 The
 section header table is an array of Elf32_Shdr or Elf64_Shdr structures.
 The
@@ -634,11 +634,11 @@ This value specifies the lower bound of the range of reserved indices.
 .It Dv SHN_LOPROC
 This value up to and including
 .Sy SHN_HIPROC
-are reserved for processor-specific semantics.
+is reserved for processor-specific semantics.
 .It Dv SHN_HIPROC
 This value down to and including
 .Sy SHN_LOPROC
-are reserved for processor-specific semantics.
+is reserved for processor-specific semantics.
 .It Dv SHN_ABS
 This value specifies absolute values for the corresponding reference.
 For
@@ -735,7 +735,7 @@ An object may have multiple
 relocation sections.
 .It Dv SHT_HASH
 This section holds a symbol hash table.
-All object participating in
+An object participating in
 dynamic linking must contain a symbol hash table.
 An object file may
 have only one hash table.
@@ -770,11 +770,11 @@ section.
 .It Dv SHT_LOPROC
 This value up to and including
 .Sy SHT_HIPROC
-are reserved for processor-specific semantics.
+is reserved for processor-specific semantics.
 .It Dv SHT_HIPROC
 This value down to and including
 .Sy SHT_LOPROC
-are reserved for processor-specific semantics.
+is reserved for processor-specific semantics.
 .It Dv SHT_LOUSER
 This value specifies the lower bound of the range of indices reserved for
 application programs.
@@ -806,20 +806,20 @@ Undefined attributes are set to zero.
 This section contains data that should be writable during process
 execution.
 .It Dv SHF_ALLOC
-The section occupies memory during process execution.
+This section occupies memory during process execution.
 Some control
 sections do not reside in the memory image of an object file.
 This
 attribute is off for those sections.
 .It Dv SHF_EXECINSTR
-The section contains executable machine instructions.
+This section contains executable machine instructions.
 .It Dv SHF_MASKPROC
 All bits included in this mask are reserved for processor-specific
 semantics.
 .El
 .Pp
 .It Dv sh_addr
-If the section will appear in the memory image of a process, this member
+If this section appears in the memory image of a process, this member
 holds the address at which the section's first byte should reside.
 Otherwise, the member contains zero.
 .It Dv sh_offset
@@ -1061,7 +1061,7 @@ This section is of type
 The attribute used is
 .Sy SHF_ALLOC .
 .It .rodata1
-This section hold read-only data that typically contributes to a
+This section holds read-only data that typically contributes to a
 non-writable segment in the process image.
 This section is of type
 .Sy SHT_PROGBITS .
@@ -1186,18 +1186,18 @@ symbols of the file, if it is present.
 .It Dv STT_LOPROC
 This value up to and including
 .Sy STT_HIPROC
-are reserved for processor-specific semantics.
+is reserved for processor-specific semantics.
 .It Dv STT_HIPROC
 This value down to and including
 .Sy STT_LOPROC
-are reserved for processor-specific semantics.
+is reserved for processor-specific semantics.
 .El
 .Pp
 .Bl -tag -width "STB_GLOBAL" -compact
 .It Dv STB_LOCAL
 Local symbols are not visible outside the object file containing their
 definition.
-Local symbols of the same name may exist in multiple file
+Local symbols of the same name may exist in multiple files
 without interfering with each other.
 .It Dv STB_GLOBAL
 Global symbols are visible to all object files being combined.
@@ -1210,11 +1210,11 @@ precedence.
 .It Dv STB_LOPROC
 This value up to and including
 .Sy STB_HIPROC
-are reserved for processor-specific semantics.
+is reserved for processor-specific semantics.
 .It Dv STB_HIPROC
 This value down to and including
 .Sy STB_LOPROC
-are reserved for processor-specific semantics.
+is reserved for processor-specific semantics.
 .Pp
 There are macros for packing and unpacking the binding and type fields:
 .Pp
@@ -1309,7 +1309,7 @@ applying
 .Sy ELF_[32|64]_R_TYPE
 or
 .Sy ELF[32|64]_R_SYM ,
-respectively to the entry's
+respectively, to the entry's
 .Sy r_info
 member.
 .It Dv r_addend
