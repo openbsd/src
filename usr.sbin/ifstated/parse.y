@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.8 2005/02/03 17:51:12 mpf Exp $	*/
+/*	$OpenBSD: parse.y,v 1.9 2005/02/07 12:41:53 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2004 Ryan McBride <mcbride@openbsd.org>
@@ -211,7 +211,7 @@ action		: RUN STRING		{
 
 			if (curstate == NULL) {
 				free($2);
-				yyerror("setstate must be used inside 'if'");
+				yyerror("set-state must be used inside 'if'");
 				YYERROR;
 			}
 			if ((action = calloc(1, sizeof(*action))) == NULL)
