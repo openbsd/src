@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.38 2001/01/29 04:01:44 jason Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.39 2001/01/31 05:14:02 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -829,17 +829,18 @@ ubsec_process(crp)
 
 			totlen = q->q_dst_l = q->q_src_l;
 			if (q->q_src_m->m_flags & M_PKTHDR) {
-				MGETHDR(m, M_DONTWAIT, MT_DATA);
-				M_COPY_PKTHDR(m, q->q_src_m);
 				len = MHLEN;
+				MGETHDR(m, M_DONTWAIT, MT_DATA);
 			} else {
-				MGET(m, M_DONTWAIT, MT_DATA);
 				len = MLEN;
+				MGET(m, M_DONTWAIT, MT_DATA);
 			}
 			if (m == NULL) {
 				err = ENOMEM;
 				goto errout;
 			}
+			if (len == MHLEN)
+				M_COPY_PKTHDR(m, q->q_src_m);
 			if (totlen >= MINCLSIZE) {
 				MCLGET(m, M_DONTWAIT);
 				if (m->m_flags & M_EXT)
