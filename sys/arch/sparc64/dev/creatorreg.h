@@ -1,4 +1,4 @@
-/*	$OpenBSD: creatorreg.h,v 1.4 2002/07/28 17:07:33 jason Exp $	*/
+/*	$OpenBSD: creatorreg.h,v 1.5 2002/07/29 06:21:45 jason Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -198,6 +198,7 @@
 #define	FBC_PPC_CS_CONST	0x00000003	/* color source ??? */
 
 #define	FBC_ROP_NEW		0x83
+#define	FBC_ROP_OLD		0x85
 
 #define	FBC_UCSR_FIFO_MASK	0x00000fff
 #define	FBC_UCSR_FB_BUSY	0x01000000

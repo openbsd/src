@@ -1,4 +1,4 @@
-/*	$OpenBSD: creator.c,v 1.18 2002/07/29 05:53:12 jason Exp $	*/
+/*	$OpenBSD: creator.c,v 1.19 2002/07/29 06:21:45 jason Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -148,9 +148,7 @@ creator_attach(struct creator_softc *sc)
 	sc->sc_rasops.ri_hw = sc;
 	sc->sc_rasops.ri_ops.eraserows = creator_ras_eraserows;
 	sc->sc_rasops.ri_ops.erasecols = creator_ras_erasecols;
-#if 0
 	sc->sc_rasops.ri_ops.copyrows = creator_ras_copyrows;
-#endif
 	creator_ras_init(sc);
 
 	creator_stdscreen.nrows = sc->sc_rasops.ri_rows;
@@ -451,7 +449,8 @@ void
 creator_ras_fill(sc)
 	struct creator_softc *sc;
 {
-	creator_ras_fifo_wait(sc, 1);
+	creator_ras_fifo_wait(sc, 2);
+	FBC_WRITE(sc, FFB_FBC_ROP, FBC_ROP_NEW);
 	FBC_WRITE(sc, FFB_FBC_DRAWOP, FBC_DRAWOP_RECTANGLE);
 	creator_ras_wait(sc);
 }
@@ -484,7 +483,8 @@ creator_ras_copyrows(cookie, src, dst, n)
 	src *= ri->ri_font->fontheight;
 	dst *= ri->ri_font->fontheight;
 
-	creator_ras_fifo_wait(sc, 7);
+	creator_ras_fifo_wait(sc, 8);
+	FBC_WRITE(sc, FFB_FBC_ROP, FBC_ROP_OLD | (FBC_ROP_OLD << 8));
 	FBC_WRITE(sc, FFB_FBC_DRAWOP, FBC_DRAWOP_VSCROLL);
 	FBC_WRITE(sc, FFB_FBC_BY, ri->ri_yorigin + src);
 	FBC_WRITE(sc, FFB_FBC_BX, ri->ri_xorigin);
