@@ -1,4 +1,4 @@
-/*	$OpenBSD: isapnp.c,v 1.24 1999/03/04 08:57:34 deraadt Exp $	*/
+/*	$OpenBSD: isapnp.c,v 1.25 1999/03/04 22:14:35 deraadt Exp $	*/
 /*	$NetBSD: isapnp.c,v 1.9.4.3 1997/10/29 00:40:43 thorpej Exp $	*/
 
 /*
@@ -47,10 +47,6 @@
 #include <dev/isa/isadmavar.h>
 
 #include <dev/isa/pnpdevs.h>
-
-#ifdef CONFIG_CS4232
-#include <dev/isa/cs4232.h>
-#endif
 
 void isapnp_init __P((struct isapnp_softc *));
 static __inline u_char isapnp_shift_bit __P((struct isapnp_softc *));
@@ -817,38 +813,6 @@ isapnp_isa_attach_hook(isa_sc)
 	if (isapnp_map(&sc))
 		return;
 
-#ifdef CONFIG_CS4232
-	/*
-	 * XXX XXX
-	 * This a totally disgusting hack, but I can't figure out another way.
-	 * It seems that many CS audio chips have a bug (as far as I can
-	 * understand).  The reset below does not really reset the chip, it
-	 * remains in a catatonic state and will not respond when probed.
-	 * The chip can be used both as a WSS and as a SB device, and a
-	 * single read at the WSS address (0x534) takes it out of this
-	 * non-responsive state.
-	 * The read has to happen at this point in time (or earlier) so
-	 * it cannot be moved to the wss_isapnp.c driver.
-	 * (BTW, We're not alone in having problems with these chips: 
-	 * Windoze 98 couldn't detect the sound chip on a Dell when I tried.)
-	 *
-	 *     Lennart Augustsson <augustss@netbsd.org>
-	 *
-	 * (Implementation from John Kohl <jtk@kolvir.arlington.ma.us>)
-	 */
-	{
-		bus_space_handle_t ioh;
-		int rv;
-	
-		if ((rv = bus_space_map(sc.sc_iot, 0x534, 1, 0, &ioh)) == 0) {
-			DPRINTF(("wss probe kludge\n"));
-			(void)bus_space_read_1(sc.sc_iot, ioh, 0);
-			bus_space_unmap(sc.sc_iot, ioh, 1);
-		} else {
-			DPRINTF(("wss probe kludge failed to map: %d\n", rv));
-		}
-	}
-#endif
 	isapnp_init(&sc);
 
 	isapnp_write_reg(&sc, ISAPNP_CONFIG_CONTROL, ISAPNP_CC_RESET_DRV);
@@ -874,9 +838,6 @@ isapnp_match(parent, match, aux)
 	sc.sc_ncards = 0;
 	(void) strcpy(sc.sc_dev.dv_xname, "(isapnp probe)");
 
-#ifdef CONFIG_CS4232
-	probe_cs4232();
-#endif
 	if (isapnp_map(&sc))
 		return 0;
 

@@ -84,8 +84,6 @@ wss_isapnp_match(parent, match, aux)
 	return 1;
 }
 
-
-
 /*
  * Attach hardware to driver, attach hardware driver to audio
  * pseudo-device driver.
@@ -95,15 +93,20 @@ wss_isapnp_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
+	struct isapnp_softc *pnp = (struct isapnp_softc *)parent;
 	struct wss_softc *sc = (struct wss_softc *)self;
 	struct ad1848_softc *ac = &sc->sc_ad1848;
 	struct isa_attach_args *ipa = aux;
 
 	printf("\n");
 	
+	/* probably broken */
+	if (bus_space_read_1(ipa->ia_iot, ipa->ipa_io[0].h, 0x0) == 0x01)
+		isapnp_write_reg(pnp, ISAPNP_CONFIG_CONTROL, 0x02);
+
 	sc->sc_iot = ipa->ia_iot;
-        sc->sc_ioh = ipa->ipa_io[0].h;
-        sc->mad_chip_type = MAD_NONE;
+	sc->sc_ioh = ipa->ipa_io[0].h;
+	sc->mad_chip_type = MAD_NONE;
 
 /* Set up AD1848 I/O handle. */ 
 	ac->sc_iot = sc->sc_iot;
@@ -112,25 +115,19 @@ wss_isapnp_attach(parent, self, aux)
 	ac->mode = 2;
 	ac->sc_iooffs = 0;
 
-
 	sc->sc_ic  = ipa->ia_ic;
 	sc->wss_irq = ipa->ipa_irq[0].num;
 	sc->wss_drq = ipa->ipa_drq[0].num; /* I DONT NEED TO DO THIS */
 	sc->wss_recdrq = ipa->ipa_drq[1].num;
-	/*
-		ipa->ipa_ndrq > 1 ? ipa->ipa_drq[1].num : ipa->ipa_drq[0].num; 
-	*/
+	/* ipa->ipa_ndrq > 1 ? ipa->ipa_drq[1].num : ipa->ipa_drq[0].num; */
 
-
-	if(ad1848_probe(&sc->sc_ad1848)==0)
-	{
+	if(ad1848_probe(&sc->sc_ad1848)==0) {
 		printf("%s: probe failed\n",ac->sc_dev.dv_xname);
 		return;
-
 	}
 
 	printf("%s: %s %s", ac->sc_dev.dv_xname, ipa->ipa_devident,
-	       ipa->ipa_devclass);
+		ipa->ipa_devclass);
 
 	wssattach(sc);
 }
