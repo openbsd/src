@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.120 2003/06/30 10:51:09 henning Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.121 2003/06/30 19:09:25 henning Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -2080,9 +2080,6 @@ bridge_flushrule(struct bridge_iflist *bif)
 #endif
 		free(p, M_DEVBUF);
 	}
-#if NPF > 0
-	pf_tag_purge();
-#endif
 	return (0);
 }
 
