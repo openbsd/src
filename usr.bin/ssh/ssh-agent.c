@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssh-agent.c,v 1.42 2000/12/09 14:06:54 markus Exp $	*/
+/*	$OpenBSD: ssh-agent.c,v 1.43 2000/12/13 23:25:44 markus Exp $	*/
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -37,7 +37,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: ssh-agent.c,v 1.42 2000/12/09 14:06:54 markus Exp $");
+RCSID("$OpenBSD: ssh-agent.c,v 1.43 2000/12/13 23:25:44 markus Exp $");
 
 #include "ssh.h"
 #include "rsa.h"
@@ -238,7 +238,7 @@ process_sign_request2(SocketEntry *e)
 	int ok = -1;
 
 	datafellows = 0;
-	
+
 	blob = buffer_get_string(&e->input, &blen);
 	data = buffer_get_string(&e->input, &dlen);
 
@@ -673,7 +673,7 @@ main(int ac, char **av)
 	struct rlimit rlim;
 	pid_t pid;
 	char *shell, *format, *pidstr, pidstrbuf[1 + 3 * sizeof pid];
-	extern int optind;                                                          
+	extern int optind;
 
 	while ((ch = getopt(ac, av, "cks")) != -1) {
 		switch (ch) {
