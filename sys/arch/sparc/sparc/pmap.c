@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.83 2001/05/10 10:34:48 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.84 2001/05/10 10:39:11 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
@@ -251,7 +251,7 @@ pgt_page_alloc(sz, flags, mtype)
         p = (caddr_t)uvm_km_kmemalloc(kernel_map, uvm.kernel_object,
                                       (vsize_t)sz, UVM_KMF_NOWAIT);
 
-        if ((cpuinfo.flags & CPUFLG_CACHEPAGETABLES) == 0) {
+        if (p != NULL && ((cpuinfo.flags & CPUFLG_CACHEPAGETABLES) == 0)) {
                 pcache_flush(p, (caddr_t)VA2PA(p), sz);
                 kvm_uncache(p, atop(sz));
         }
