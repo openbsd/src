@@ -1,4 +1,4 @@
-/* $OpenBSD: kqueue-tun.c,v 1.2 2003/12/07 15:45:57 markus Exp $ */
+/* $OpenBSD: kqueue-tun.c,v 1.3 2004/02/28 02:22:29 deraadt Exp $ */
 /* $Gateweaver: tunkq.c,v 1.2 2003/11/27 22:47:41 cmaxwell Exp $ */
 /*
  * Copyright 2003 Christopher J. Maxwell <cmaxwell@themanor.net>
@@ -75,8 +75,8 @@ tunnel_write(int fd, short which, void *arg)
 
 	state++;
 	if ((rlen = writev(fd, iv, 2)) > 0)
-		fprintf(stderr, "Tunnel %d wrote %d bytes\n",
-				fdkey, rlen - sizeof(type));
+		fprintf(stderr, "Tunnel %d wrote %ld bytes\n",
+		    fdkey, (long)(rlen - sizeof(type)));
 	else
 		errx(1, "Read from tunnel %d failed", fdkey);
 }
@@ -97,8 +97,8 @@ tunnel_read(int fd, short which, void *arg)
 
 	state++;
 	if ((rlen = readv(fd, iv, 2)) > 0) {
-		fprintf(stderr, "Tunnel %d read %d bytes\n",
-				fdkey, rlen - sizeof(type));
+		fprintf(stderr, "Tunnel %d read %ld bytes\n",
+		    fdkey, (long)(rlen - sizeof(type)));
 		tpkt.len = rlen - sizeof(type);
 
 		/* add write event on opposite tunnel */
