@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pci.4,v 1.90 2004/05/03 15:18:19 drahn Exp $
+.\"	$OpenBSD: pci.4,v 1.91 2004/05/23 02:43:42 deraadt Exp $
 .\"	$NetBSD: pci.4,v 1.29 2000/04/01 00:32:23 tsarna Exp $
 .\"
 .\" Copyright (c) 2000 Theo de Raadt.  All rights reserved.
@@ -356,6 +356,8 @@ TV tuners and video capture boards.
 Yenta compatible
 .Tn CardBus
 bridges.
+.It Xr ehci 4
+USB EHCI host controller.
 .It Xr ohci 4
 USB OHCI host controller.
 .It Xr pcic 4
@@ -471,6 +473,7 @@ driver.
 .Xr dino 4 ,
 .Xr dpt 4 ,
 .Xr eap 4 ,
+.Xr ehci 4 ,
 .Xr eisa 4 ,
 .Xr em 4 ,
 .Xr emu 4 ,
