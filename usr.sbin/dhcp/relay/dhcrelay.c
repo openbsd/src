@@ -296,10 +296,10 @@ void relay (ip, packet, length, from_port, from, hfrom)
 			return;
 		}
 
-		if (!send_packet (out,
+		if (send_packet (out,
 				  (struct packet *)0,
 				  packet, length, out -> primary_address,
-				  &to, &hto) < 0)
+				  &to, &hto) != -1)
 			debug ("forwarded BOOTREPLY for %s to %s",
 			       print_hw_addr (packet -> htype, packet -> hlen,
 					      packet -> chaddr),
@@ -324,11 +324,11 @@ void relay (ip, packet, length, from_port, from, hfrom)
 	/* Otherwise, it's a BOOTREQUEST, so forward it to all the
 	   servers. */
 	for (sp = servers; sp; sp = sp -> next) {
-		if (!send_packet ((fallback_interface
+		if (send_packet ((fallback_interface
 				   ? fallback_interface : interfaces),
 				  (struct packet *)0,
 				  packet, length, ip -> primary_address,
-				  &sp -> to, (struct hardware *)0) < 0) {
+				  &sp -> to, (struct hardware *)0) != -1) {
 			debug ("forwarded BOOTREQUEST for %s to %s",
 			       print_hw_addr (packet -> htype, packet -> hlen,
 					      packet -> chaddr),
