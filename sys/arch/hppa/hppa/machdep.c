@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.100 2003/02/12 05:30:47 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.101 2003/02/12 21:33:40 jason Exp $	*/
 
 /*
  * Copyright (c) 1999-2002 Michael Shalayeff
@@ -109,8 +109,8 @@ int bufcachepercent = BUFCACHEPERCENT;
 /*
  * Different kinds of flags used throughout the kernel.
  */
-int cold = 1;		/* unset when engine is up to go */
-int msgbufmapped;	/* set when safe to use msgbuf */
+int cold = 1;			/* unset when engine is up to go */
+extern int msgbufmapped;	/* set when safe to use msgbuf */
 
 /*
  * cache configuration, for most machines is the same
