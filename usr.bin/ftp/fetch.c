@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.48 2003/12/16 21:46:22 deraadt Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.49 2004/02/28 20:08:38 krw Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
  */
 
 #if !defined(lint) && !defined(SMALL)
-static char rcsid[] = "$OpenBSD: fetch.c,v 1.48 2003/12/16 21:46:22 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: fetch.c,v 1.49 2004/02/28 20:08:38 krw Exp $";
 #endif /* not lint and not SMALL */
 
 /*
@@ -610,14 +610,13 @@ auto_fetch(argc, argv, outfile)
 	char *argv[];
 	char *outfile;
 {
-	static char lasthost[MAXHOSTNAMELEN];
 	char *xargv[5];
 	char *cp, *line, *host, *dir, *file, *portnum;
 	char *user, *pass;
 	char *ftpproxy, *httpproxy;
 	int rval, xargc;
 	volatile int argpos;
-	int dirhasglob, filehasglob;
+	int dirhasglob, filehasglob, oautologin;
 	char rempath[MAXPATHLEN];
 
 	argpos = 0;
@@ -778,48 +777,33 @@ bad_ftp_url:
 			    user, pass, host, portnum, dir, file);
 
 		/*
-		 * Set up the connection if we don't have one.
+		 * Set up the connection.
 		 */
-		if (strcmp(host, lasthost) != 0) {
-			int oautologin;
-
-			(void)strlcpy(lasthost, host, sizeof lasthost);
-			if (connected)
-				disconnect(0, NULL);
-			xargv[0] = __progname;
-			xargv[1] = host;
-			xargv[2] = NULL;
-			xargc = 2;
-			if (!EMPTYSTRING(portnum)) {
-				xargv[2] = portnum;
-				xargv[3] = NULL;
-				xargc = 3;
-			}
-			oautologin = autologin;
-			if (user != NULL)
-				autologin = 0;
-			setpeer(xargc, xargv);
-			autologin = oautologin;
-			if ((connected == 0) ||
-			    ((connected == 1) && !ftp_login(host, user, pass))) {
-				warnx("Can't connect or login to host `%s'",
-				    host);
-				rval = argpos + 1;
-				continue;
-			}
-
-			/* Always use binary transfers. */
-			setbinary(0, NULL);
-		}
-		/* cd back to '/' */
-		xargv[0] = "cd";
-		xargv[1] = "/";
+		if (connected)
+			disconnect(0, NULL);
+		xargv[0] = __progname;
+		xargv[1] = host;
 		xargv[2] = NULL;
-		cd(2, xargv);
-		if (!dirchange) {
+		xargc = 2;
+		if (!EMPTYSTRING(portnum)) {
+			xargv[2] = portnum;
+			xargv[3] = NULL;
+			xargc = 3;
+		}
+		oautologin = autologin;
+		if (user != NULL)
+			autologin = 0;
+		setpeer(xargc, xargv);
+		autologin = oautologin;
+		if ((connected == 0) ||
+		    ((connected == 1) && !ftp_login(host, user, pass))) {
+			warnx("Can't connect or login to host `%s'", host);
 			rval = argpos + 1;
 			continue;
 		}
+
+		/* Always use binary transfers. */
+		setbinary(0, NULL);
 
 		dirhasglob = filehasglob = 0;
 		if (doglob) {
