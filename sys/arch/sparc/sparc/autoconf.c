@@ -88,6 +88,10 @@ int	mmu_3l;		/* SUN4_400 models have a 3-level MMU */
 
 extern	struct promvec *promvec;
 
+#ifdef KGDB
+extern int kgdb_debug_panic;
+#endif
+
 static	int rootnode;
 int	findroot __P((void));
 void	setroot __P((void));
@@ -168,9 +172,6 @@ void
 bootstrap()
 {
 	int nregion, nsegment, ncontext, node;
-#ifdef KGDB
-	extern int kgdb_debug_panic;
-#endif
 
 #if defined(SUN4)
 	extern void oldmon_w_cmd();
