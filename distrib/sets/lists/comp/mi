@@ -714,6 +714,7 @@
 ./usr/include/dev/usb/if_cuereg.h
 ./usr/include/dev/usb/if_kuereg.h
 ./usr/include/dev/usb/if_kuevar.h
+./usr/include/dev/usb/if_ubtreg.h
 ./usr/include/dev/usb/if_udavreg.h
 ./usr/include/dev/usb/if_urlreg.h
 ./usr/include/dev/usb/if_wi_usb.h
@@ -1036,6 +1037,8 @@
 ./usr/include/netinet/ip_ipsp.h
 ./usr/include/netinet/ip_mroute.h
 ./usr/include/netinet/ip_var.h
+./usr/include/netinet/pim.h
+./usr/include/netinet/pim_var.h
 ./usr/include/netinet/tcp.h
 ./usr/include/netinet/tcp_debug.h
 ./usr/include/netinet/tcp_fsm.h

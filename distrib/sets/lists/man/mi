@@ -1342,6 +1342,7 @@
 ./usr/share/man/cat4/mtd.0
 ./usr/share/man/cat4/mtdphy.0
 ./usr/share/man/cat4/mtio.0
+./usr/share/man/cat4/multicast.0
 ./usr/share/man/cat4/mvme68k
 ./usr/share/man/cat4/mvme68k/autoconf.0
 ./usr/share/man/cat4/mvme68k/ie.0
@@ -1398,6 +1399,7 @@
 ./usr/share/man/cat4/pflog.0
 ./usr/share/man/cat4/pfsync.0
 ./usr/share/man/cat4/piixpm.0
+./usr/share/man/cat4/pim.0
 ./usr/share/man/cat4/pms.0
 ./usr/share/man/cat4/pmsi.0
 ./usr/share/man/cat4/pnp.0
@@ -1589,6 +1591,7 @@
 ./usr/share/man/cat4/uaudio.0
 ./usr/share/man/cat4/ubsa.0
 ./usr/share/man/cat4/ubsec.0
+./usr/share/man/cat4/ubt.0
 ./usr/share/man/cat4/ucom.0
 ./usr/share/man/cat4/udav.0
 ./usr/share/man/cat4/udp.0

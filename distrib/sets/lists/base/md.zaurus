@@ -1321,6 +1321,7 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/usb/if_cuereg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/usb/if_kuereg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/usb/if_kuevar.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/usb/if_ubtreg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/usb/if_udavreg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/usb/if_urlreg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/usb/if_wi_usb.ph
@@ -1717,6 +1718,8 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/netinet/ip_ipsp.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/netinet/ip_mroute.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/netinet/ip_var.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/netinet/pim.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/netinet/pim_var.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/netinet/tcp.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/netinet/tcp_debug.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/netinet/tcp_fsm.ph
