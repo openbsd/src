@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.39 2000/09/19 03:19:39 angelos Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.40 2000/09/19 03:41:11 angelos Exp $ */
 /*
 %%% copyright-nrl-97
 This software is Copyright 1997-1998 by Randall Atkinson, Ronald Lee,
@@ -1609,6 +1609,8 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 				      SADB_GETSPROTO(smsg->sadb_msg_satype));
 		if (ipo->ipo_tdb == NULL)
 		{
+                    if (!exists)
+                      FREE(ipo, M_TDB);
 		    ipo->ipo_tdb = ktdb; /* Reset */
 		    rval = ESRCH;
 		    goto splxret;
@@ -1624,27 +1626,6 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 		splx(s);
 	    }
 
-            if (sunionp)
-	      bcopy(sunionp, &ipo->ipo_dst, sizeof(union sockaddr_union));
-            else
-            {
-		bzero(&ipo->ipo_dst, sizeof(union sockaddr_union));
-                ipo->ipo_dst.sa.sa_family = src->sa.sa_family;
-                ipo->ipo_dst.sa.sa_len = src->sa.sa_len;
-            }
-
-	    if (ssrc)
-	      bcopy(ssrc, &ipo->ipo_src, sizeof(union sockaddr_union));
-	    else
-	    {
-		bzero(&ipo->ipo_src, sizeof(union sockaddr_union));
-		ipo->ipo_src.sa.sa_family = src->sa.sa_family;
-		ipo->ipo_src.sa.sa_len = src->sa.sa_len;
-	    }
-
-	    ipo->ipo_sproto = SADB_GETSPROTO(smsg->sadb_msg_satype);
-
-	    /* Flow type */
 	    switch (((struct sadb_protocol *) headers[SADB_X_EXT_FLOW_TYPE])->sadb_protocol_proto)
 	    {
 		case FLOW_X_TYPE_USE:
@@ -1672,11 +1653,33 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 		    break;
 
 		default:
-		    FREE(ipo, M_TDB);
+                    if (!exists)
+		      FREE(ipo, M_TDB);
 		    rval = EINVAL;
 		    goto ret;
 	    }
 
+            if (sunionp)
+	      bcopy(sunionp, &ipo->ipo_dst, sizeof(union sockaddr_union));
+            else
+            {
+		bzero(&ipo->ipo_dst, sizeof(union sockaddr_union));
+                ipo->ipo_dst.sa.sa_family = src->sa.sa_family;
+                ipo->ipo_dst.sa.sa_len = src->sa.sa_len;
+            }
+
+	    if (ssrc)
+	      bcopy(ssrc, &ipo->ipo_src, sizeof(union sockaddr_union));
+	    else
+	    {
+		bzero(&ipo->ipo_src, sizeof(union sockaddr_union));
+		ipo->ipo_src.sa.sa_family = src->sa.sa_family;
+		ipo->ipo_src.sa.sa_len = src->sa.sa_len;
+	    }
+
+	    ipo->ipo_sproto = SADB_GETSPROTO(smsg->sadb_msg_satype);
+
+	    /* Flow type */
 	    if (!exists)
 	    {
 		/* Add SPD entry */
