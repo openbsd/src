@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.12 1997/04/30 22:04:26 niklas Exp $
+#	$OpenBSD: MAKEDEV,v 1.13 1997/05/04 02:03:02 imp Exp $
 #	@(#)MAKEDEV	8.1 (Berkeley) 6/9/93
 #
 
@@ -14,7 +14,9 @@
 # Disks:
 #	fd*	floppy disk drives
 #	sd*	SCSI disks
+#	wd*	IDE disks
 #	cd*	SCSI CD rom
+#	acd*	IDE CDROM.
 #	vnd*	"file" pseudo-disks
 #	rd*	"ramdisk" pseudo-disks
 #	ccd*	contatenated disk devices
@@ -52,7 +54,7 @@ do
 case $i in
 
 all)
-	sh MAKEDEV std fd fd0 sd0 sd1 sd2 st0 cd0 ss0 tty00 tty01 pty0 pty1
+	sh MAKEDEV std fd fd0 wd0 wd1 wd2 wd3 sd0 sd1 sd2 st0 acd0 cd0 ss0 tty00 tty01 pty0 pty1
 	sh MAKEDEV ttyC0 lpt0 pms0 random bpf0 local
 	;;
 
@@ -152,12 +154,13 @@ bpf*|tun*)
 #	chmod 640 lkm
 #	;;
 
-fd*|sd*|vnd*)
+fd*|sd*|vnd*|wd*)
 	umask 2 ; unit=`expr $i : '..\(.*\)'`
 	case $i in
 	sd*) name=sd; blk=0; chr=9;;
 	vnd*) name=vnd; blk=2; chr=11;;
 	fd*) name=fd; blk=7; chr=13;;
+	wd*) name=wd; blk=4; chr=18;;
 	esac
 	rm -f $name$unit r$name$unit
 	case $unit in
@@ -204,10 +207,11 @@ fd*|sd*|vnd*)
 	umask 77
 	;;
 
-cd*)
+cd*|acd*)
 	umask 2 ; unit=`expr $i : '.*cd\(.*\)'`
 	case $i in
 	cd*) name=cd; blk=3; chr=8;;
+	acd*) name=acd; blk=6; char=19;;
 	esac
 	rm -f $name$unit? r$name$unit?
 	mknod ${name}${unit}a   b $blk `expr $unit '*' 16 + 0`
