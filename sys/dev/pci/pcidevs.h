@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.432 2001/08/22 11:55:53 art Exp 
+ *		OpenBSD: pcidevs,v 1.433 2001/08/23 05:41:14 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -187,7 +187,7 @@
 #define	PCI_VENDOR_BIT3	0x108a		/* Bit3 Computer Corp. */
 #define	PCI_VENDOR_ELONEX	0x108c		/* Elonex PLC c/o Oakleigh Systems */
 #define	PCI_VENDOR_OLICOM	0x108d		/* Olicom */
-#define	PCI_VENDOR_SUN	0x108e		/* Sun Microsystems */
+#define	PCI_VENDOR_SUN	0x108e		/* Sun */
 #define	PCI_VENDOR_SYSTEMSOFT	0x108f		/* Systemsoft */
 #define	PCI_VENDOR_ENCORE	0x1090		/* Encore Computer */
 #define	PCI_VENDOR_INTERGRAPH	0x1091		/* Intergraph */

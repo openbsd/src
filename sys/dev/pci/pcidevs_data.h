@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.432 2001/08/22 11:55:53 art Exp 
+ *		OpenBSD: pcidevs,v 1.433 2001/08/23 05:41:14 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -5228,7 +5228,7 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	},
 	{
 	    PCI_VENDOR_SUN,
-	    "Sun Microsystems",
+	    "Sun",
 	},
 	{
 	    PCI_VENDOR_SYSTEMSOFT,
