@@ -1,0 +1,472 @@
+.Dd October 20, 1997
+.Dt AFTERBOOT 8
+\!\" Originally created by Marshall M. Midden -- 1997-10-20, m4@umn.edu
+.Os OpenBSD
+.Sh NAME
+.Nm afterboot
+.Nd things to check after the first complete boot
+.Sh DESCRIPTION
+This document attempts to list items for the system administrator
+to check and set up after the installation and first complete boot of the
+system.
+The idea is to create a list of items that can be checked off so that you have
+a warm fuzzy feeling that something obvious has not been missed.
+.Pp
+Complete instructions for correcting and fixing items is not provided.
+There are man pages and other methodologies available for doing that.
+\!\"--------------------------------------------------------------------------
+.Ss Login
+Login on console as
+.Ql Xr root .
+There is no password initially.
+You will not be able to login over the network, only the console.
+\!\"--------------------------------------------------------------------------
+.Ss System Date
+Check the system date with the
+.Nm date
+command.
+If needed, set the system date, and/or change the symbolic link of
+.Pa /etc/localtime
+to the correct time zone in the
+.Pa /usr/share/zoneinfo
+directory.
+\!\"--------------------------------------------------------------------------
+.Ss Root password
+Set the password for the root login.
+Choose a password that has numbers, digits, and special characters (not space)
+as well as the upper and lower case alphabet.  Do not choose any word in any
+language.  It is common for an intruder to use dictionary attacks.
+Use the
+.Nm /usr/bin/passwd
+command to change it.  It is a good idea to always specify the full path
+name for both the
+.Nm passwd
+and the
+.Nm su
+commands.  This inhibits the possibility files placed in your execution
+.Ev PATH
+for most shells.
+\!\"--------------------------------------------------------------------------
+.Ss Check hostname
+Type the
+.Nm hostname
+command to verify that the name of your machine is correct.
+See the man page for
+.Nm hostname
+if you need to change it.
+You will also need to edit the
+.Pa /etc/myname
+file to have it stick around for the next reboot.
+\!\"--------------------------------------------------------------------------
+.Ss Verify network interfaces configured correctly
+The first thing to do is an
+.Nm ifconfig -a
+to see if the network interfaces are properly configured.
+Correct by editing
+.Pa /etc/hostname.{INTERFACE}
+and via
+.Nm ifconfig
+if you do not wish to reboot.
+The loopback interface will look something like:
+.Bd -literal -offset indent
+lo0: flags=8009<UP,LOOPBACK,MULTICAST>
+	inet 127.0.0.1 netmask 0xff000000
+.Ed
+.Pp
+An ethernet interface something like:
+.Bd -literal -offset indent
+le0: flags=9863<UP,BROADCAST,NOTRAILERS,RUNNING,SIMPLEX,MULTICAST>
+	inet 192.168.4.52 netmask 0xffffff00 broadcast 192.168.4.255
+.Ed
+\!\"--------------------------------------------------------------------------
+\!\" Will someone else fill in the ppp and slip interfaces.
+\!\"--------------------------------------------------------------------------
+.Pp
+You may wish to turn off multicast routing in
+.Pa /etc/netstart
+by commenting out the line (placing a # sign at the start of a line):
+.Bd -literal -offset indent
+# route add -net 224.0.0.0 -interface $hostname
+.Ed
+.Pp
+\!\"--------------------------------------------------------------------------
+.Ss Check for routing correct
+Do a
+.Nm netstat -r -n
+command.  The output will look something like:
+.Bd -literal -offset indent
+Routing tables
+
+Internet:
+Destination    Gateway           Flags  Refs     Use  Mtu
+Interface
+default        192.168.4.254     UGS      0 11098028    -  le0
+127            127.0.0.1         UGRS     0        0    -  lo0
+127.0.0.1      127.0.0.1         UH       3       24    -  lo0
+192.168.4      link#1            UC       0        0    -  le0
+192.168.4.52   8:0:20:73:b8:4a   UHL      1     6707    -  le0
+192.168.4.254  0:60:3e:99:67:ea  UHL      1        0    -  le0
+.Ed
+.Pp
+Fix by editing the file
+.Pa /etc/mygate
+and using
+.Nm route delete
+and
+.Nm route add
+if you do not wish to reboot.
+\!\"--------------------------------------------------------------------------
+.Ss Bind Name Server
+If you are using the Bind Name Server (DNS), check the
+.Pa /etc/resolv.conf
+file.  It may look something like:
+.Bd -literal -offset indent
+domain nts.umn.edu
+nameserver 128.101.101.101
+nameserver 134.84.84.84
+search nts.umn.edu. umn.edu.
+.Ed
+.Pp
+If using a caching name server add the line "nameserver 127.0.0.1" first.
+(Of course, you need to change "named_flags" in /etc/rc.conf and add
+the named.boot file in the appropriate place.  Same holds true if this
+is the name server for you domain.  Also make sure "named" is running.
+[Otherwise there are long waits while timeouts happen.])
+\!\"--------------------------------------------------------------------------
+.Ss YP verification
+Check the domainname with the
+.Nm domainname
+command, and edit
+.Pa /etc/defaultdomain
+to correct.  You may change the running system with the
+.Nm domainname
+command.
+To start YP client services, simply run ypbind.  The perform the remaining
+YP activation as described in
+.Xr passwd 5 ,
+and
+.Xr group 5 .
+There are many more YP manpages on the system, more information start at
+.Xr yp 8 .
+.Ss Check disks are mounted correctly.
+Check that the disks are mounted correctly by
+checking file
+.Pa /etc/fstab
+against the output of the
+.Nm mount
+and the
+.Nm df
+commands.
+Example:
+.Bd -literal -offset indent
+# cat /etc/fstab
+/dev/sd0a / ffs rw 1 1
+/dev/sd0b none swap sw 0 0
+/dev/sd0d /usr ffs rw,nodev 1 2
+/dev/sd0e /var ffs rw,nodev,noexec 1 2
+/dev/sd0g /tmp ffs rw,nodev,noexec,nosuid 1 2
+/dev/sd0h /home ffs rw,nodev,nosuid 1 2
+# mount
+/dev/sd0a on / type ffs (local)
+/dev/sd0d on /usr type ffs (local, nodev)
+/dev/sd0e on /var type ffs (local, nodev, noexec)
+/dev/sd0g on /tmp type ffs (local, nodev, noexec, nosuid)
+/dev/sd0h on /home type ffs (local, nodev, nosuid)
+# df
+Filesystem  1024-blocks     Used    Avail Capacity  Mounted on
+/dev/sd0a         22311    14589     6606    69%    /
+/dev/sd0d        203399   150221    43008    78%    /usr
+/dev/sd0e         10447      682     9242     7%    /var
+/dev/sd0g         18823        2    17879     0%    /tmp
+/dev/sd0h          7519     5255     1888    74%    /home
+.Ed
+.Pp
+Edit
+.Pa /etc/fstab
+and use the
+.Nm umount
+and
+.Nm mount
+commands as appropriate.  (See man pages.)
+.Pp
+You may wish to do NFS partitions later, but you may do them now.
+\!\"--------------------------------------------------------------------------
+.Ss Concatenated disks (ccd)
+If you are using concatenated disks, edit
+.Pa /etc/ccd.conf
+and use the
+.Nm ccdconfig -U
+command to unload, and the
+.Nm ccdconfig -C
+command to create tables internal to the kernel for the concatenated disks.
+You then
+.Nm mount
+and
+.Nm umount
+and edit
+.Pa /etc/fstab
+as needed.
+\!\"--------------------------------------------------------------------------
+.Ss AMD
+Go into the
+.Pa /etc/amd
+directory if using this package and set it up by
+renaming
+.Pa amd.home.sample
+to
+.Pa amd.home .
+You may wish to create a file
+.Pa amd.home
+in this directory, or alternatively supply your amd.home map via YP.
+.Sh CHANGING /ETC FILES
+The system should be usable now, but you may wish to do more customizing,
+such as adding of users, etc.  Many of the following sections may be skipped
+if you are not using that package (for example
+.Pa kerberos
+section).  My suggestions are to
+.Nm cd /etc
+and edit most files.
+\!\"--------------------------------------------------------------------------
+.Ss /etc/motd
+Edit motd to make lawyers comfortable and make sure that no mention
+of the word "Welcome" appears.  (Some U.S. lawyers have stated that
+the word "Welcome" is an invitation to come on in.)
+\!\"--------------------------------------------------------------------------
+.Ss Add new users
+Add users.  There is a
+.Nm adduser
+script.
+You may use
+.Nm vipw
+to add users to the
+.Pa /etc/passwd
+file
+and edit
+.Pa /etc/group
+by hand if you desire.  As described in
+.Xr su 8 ,
+make sure to put people in
+.Pa /etc/group
+under the
+.Pa wheel group if they need root access (non-kerberos).  Something like:
+.Bd -literal -offset indent
+wheel:*:0:root,myself
+.Ed
+.Pp
+Follow instructions for
+.Pa kerberos
+if using
+.Pa kerberos
+for authentication.
+\!\"--------------------------------------------------------------------------
+.Ss rc.conf, netstart, rc.local, rc.securelevel
+Check for any local changes needed in the files:
+.Pa /etc/rc.conf, /etc/netstart, /etc/rc.local, rc.securelevel.
+Turning on something like the Network Time Protocol in
+.Pa /etc/rc.securelevel
+requires:
+a) making sure the package is installed,
+b) uncommenting the lines in
+.Pa rc.securelevel
+(delete the # signs):
+.Bd -literal -offset indent
+if [ -x /usr/local/sbin/xntpd ]; then
+     /usr/local/sbin/tickadj -Aq
+     echo -n ' xntpd';       /usr/local/sbin/xntpd
+fi
+.Ed
+\!\"--------------------------------------------------------------------------
+.Ss Printers
+Edit /etc/printcap and /etc/hosts.lpd to get any printers set up.
+\!\"--------------------------------------------------------------------------
+.Ss Tighten up security
+You might wish to tighten up security by editing:
+.Pa /etc/fbtab
+as for example when installing X.
+In
+.Pa /etc/inetd.conf
+turn off extra stuff that you do not need,
+and only add things that are really needed.
+\!\"--------------------------------------------------------------------------
+.Ss Kerberos
+If you are going to use
+.Pa kerberos
+for authentication, and you already have a
+.Pa kerberos
+master, go into the directory
+.Pa /etc/kerberosIV
+and configure
+.Pa kerberos.
+Remember to get a
+.Pa srvtab
+from the master so that the remote commands work.
+\!\"--------------------------------------------------------------------------
+.Ss Mail Aliases
+Edit
+.Pa /etc/aliases
+and set the four standard aliases to go to either a mailing list, or
+the system administrator.
+.Bd -literal -offset indent
+# Well-known aliases -- these should be filled in!
+root:		sysadm
+manager:	sysadm
+dumper:		sysadm
+operator:	sysadm
+.Ed
+.Pp
+Run
+.Nm newaliases
+after changes.
+\!\"--------------------------------------------------------------------------
+.Ss Bootp server
+If this is a
+.Pa bootp
+server, edit
+.Pa /etc/bootptab
+as needed.  You will have to turn it on in
+.Pa /etc/inetd.conf
+or run
+.Nm bootpd
+in stand-a-lone mode.
+\!\"--------------------------------------------------------------------------
+.Ss NFS server
+If this is an NFS server
+make sure
+.Pa /etc/rc.conf
+has:
+.Bd -literal -offset indent
+nfs_server=YES
+.Ed
+.Pp
+Edit
+.Pa /etc/exports
+and get it correct.
+It is probably easier to reboot than get the daemons running, manually,
+but you can get the order correct by looking at
+.Pa /etc/netstart.
+\!\"--------------------------------------------------------------------------
+.Ss HP remote boot server
+Edit
+.Pa /etc/rbootd.config
+if needed for remote booting.
+If you do not have HP computers doing remote booting, do not enable this.
+\!\"--------------------------------------------------------------------------
+.Ss Daily, Weekly, Monthly scripts
+Look at and possibly edit the
+.Pa /etc/daily, /etc/weekly,
+and
+.Pa /etc/monthly
+scripts.  Your site specific things should go into
+.Pa /etc/daily.local, /etc/weekly.local,
+and
+.Pa /etc/monthly.local.
+.Pp
+These scripts have been limited to keeping the system running without
+filling up disk space from normal running processes and updating databases.
+(You probably do not need to understand them.)
+\!\"--------------------------------------------------------------------------
+.Ss Other files in /etc
+Look at the other files in
+.Pa /etc
+and edit as needed.
+(Do not edit files ending in
+.Pa .db
+-- like
+.Pa aliases.db, pwd.db, spwd.db,
+nor
+.Pa localtime,
+nor
+.Pa rmt,
+nor any directories.)
+\!\"--------------------------------------------------------------------------
+.Ss Crontab (background running processes)
+Check what is running via
+.Nm crontab -l
+to see if anything unexpected is present.
+Do you need anything else?  Do you wish to change things?  I do not
+like root getting standard output of the daily scripts, only the security
+scripts that are mailed internally:
+.Bd -literal -offset indent
+30  1  *  *  *   /bin/sh /etc/daily 2>&1 > /var/log/daily.out
+30  3  *  *  6   /bin/sh /etc/weekly 2>&1 > /var/log/weekly.out
+30  5  1  *  *   /bin/sh /etc/monthly 2>&1 > /var/log/monthly.out
+.Ed
+\!\"--------------------------------------------------------------------------
+.Ss Next day cleanup
+After the first nights security run, change ownerships and permissions
+on things.  The best bet is to have permissions as in the security list.
+(The first of the two listed permissions, and the first group number of
+the two).
+Use
+.Nm chmod
+and
+.Nm chgrp
+as needed.
+\!\"--------------------------------------------------------------------------
+.Ss Install packages
+Install your own packages.
+The simple way is to copy source and compile and link/load.
+.Pp
+Copy vendor binaries and install them.  You will need to install any
+shared libraries, etc.
+(hint:
+.Nm man -k compat
+to find out about compatibily mode.
+.Pp
+Install any of a large group of Third-Party Software that is available
+in source form.  See
+.Pa http://www.openbsd.org
+under
+.Pa Ports: a Nice Way to Get Third-Party Software.
+.Pp
+You may have some difficulty installing due to various compiling errors.
+Don't get discouraged easily!  Sometimes checking the mailing lists for
+past problems that people have encountered will result in a fix posted.
+One recent item says to delete
+.Pa -lcrypt
+from
+.Pa Makefiles
+as the routines are present in the normal libraries.
+.Sh SEE ALSO
+.Xr adduser 8 ,
+.Xr aliases 5 ,
+.Xr bootpd 8 ,
+.Xr bootptab 5 ,
+.Xr ccd 4 ,
+.Xr ccdconfig 8 ,
+.Xr chgrp 1 ,
+.Xr chmod 1 ,
+.Xr crontab 1 ,
+.Xr crontab 5 ,
+.Xr date 1 ,
+.Xr df 1 ,
+.Xr domainname 8 ,
+.Xr exports 5 ,
+.Xr fbtab 5 ,
+.Xr fstab 5 ,
+.Xr group 5 ,
+.Xr hostname 1 ,
+.Xr hostname 7 ,
+.Xr ifconfig 8 ,
+.Xr inetd 8 ,
+.Xr kerberos 1 ,
+.Xr krb.conf 5 ,
+.Xr krb.realms 5 ,
+.Xr make 1 ,
+.Xr man 1 ,
+.Xr mount 8 ,
+.Xr netstat 1 ,
+.Xr newaliases 1 ,
+.Xr passwd 1 ,
+.Xr passwd 5 ,
+.Xr rbootd 5 ,
+.Xr rc 8 ,
+.Xr resolv.conf 5 ,
+.Xr rmt 8 ,
+.Xr route 8 ,
+.Xr su 1 ,
+.Xr umount 8 ,
+.Xr vipw 8 .
+.Sh HISTORY
+This document first appeared 
+.Ox 2.2 .
