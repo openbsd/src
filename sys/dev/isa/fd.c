@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.30 1996/12/05 13:13:05 deraadt Exp $	*/
+/*	$OpenBSD: fd.c,v 1.31 1996/12/05 17:16:05 deraadt Exp $	*/
 /*	$NetBSD: fd.c,v 1.90 1996/05/12 23:12:03 mycroft Exp $	*/
 
 /*-
@@ -955,7 +955,7 @@ fdioctl(dev, cmd, addr, flag, p)
 	struct fd_softc *fd = fd_cd.cd_devs[FDUNIT(dev)];
 	struct disklabel dl, *lp = &dl;
 	struct cpu_disklabel cdl;
-	char *msg;
+	char *errstring;
 	int error;
 
 	switch (cmd) {
@@ -972,7 +972,6 @@ fdioctl(dev, cmd, addr, flag, p)
 		lp->d_ntracks = fd->sc_type->heads;
 		lp->d_nsectors = fd->sc_type->seccyl;
 		lp->d_ncylinders = fd->sc_type->tracks;
-		lp->d_secpercyl = lp->d_ntracks * lp->d_nsectors;
 
 		strncpy(lp->d_typename, "floppy disk", 16);
 		lp->d_type = DTYPE_FLOPPY;
@@ -992,8 +991,11 @@ fdioctl(dev, cmd, addr, flag, p)
 		lp->d_magic2 = DISKMAGIC;
 		lp->d_checksum = dkcksum(lp);
 
-		if ((msg = readdisklabel(dev, fdstrategy, lp, &cdl)) != NULL)
-			printf("readdisklabel: %s\n", msg);
+		errstring = readdisklabel(dev, fdstrategy, lp, &cdl);
+		if (errstring) {
+			printf("%s: %s\n", fd->sc_dev.dv_xname, errstring);
+			return;
+		}
 
 		*(struct disklabel *)addr = *lp;
 		return 0;
