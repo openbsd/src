@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.4 1998/08/22 08:55:27 pjanzen Exp $	*/
+/*	$OpenBSD: init.c,v 1.5 1998/09/16 00:44:36 pjanzen Exp $	*/
 /*	$NetBSD: init.c,v 1.4 1995/04/28 23:49:19 mycroft Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)init.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: init.c,v 1.4 1998/08/22 08:55:27 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: init.c,v 1.5 1998/09/16 00:44:36 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -57,6 +57,7 @@ static char rcsid[] = "$OpenBSD: init.c,v 1.4 1998/08/22 08:55:27 pjanzen Exp $"
  *
  */
 
+#include <err.h>
 #include "rogue.h"
 
 char login_name[MAX_OPT_LEN];
@@ -334,7 +335,8 @@ env_get_value(s, e, add_blank)
 			break;
 		}
 	}
-	*s = md_malloc(MAX_OPT_LEN + 2);
+	if (!(*s = md_malloc(MAX_OPT_LEN + 2)))
+		errx(1, "malloc failure");
 	(void) strncpy(*s, t, i);
 	if (add_blank) {
 		(*s)[i++] = ' ';
@@ -347,7 +349,8 @@ init_str(str, dflt)
 	char **str, *dflt;
 {
 	if (!(*str)) {
-		*str = md_malloc(MAX_OPT_LEN + 2);
+		if (!(*str = md_malloc(MAX_OPT_LEN + 2)))
+			errx(1, "malloc failure");
 		(void) strcpy(*str, dflt);
 	}
 }
