@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.155 2004/12/20 12:56:19 espie Exp $
+# $OpenBSD: pkg_add,v 1.156 2004/12/20 17:17:32 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -32,6 +32,7 @@ use OpenBSD::Error;
 use OpenBSD::ProgressMeter;
 use OpenBSD::Add;
 use OpenBSD::SharedLibs;
+use File::Path;
 
 our %forced = ();
 
@@ -565,6 +566,7 @@ sub install_package
 	}
 
 	if (defined $state->{installed}->{$handle->{pkgname}}) {
+		$handle->close();
 		return ();
 	}
 
@@ -629,6 +631,7 @@ sub install_package
 	}
 	really_add($handle, $state);
 	OpenBSD::PkgCfl::register($plist, $state);
+	rmtree($handle->info());
 	delete $handle->{plist};
 	$state->{installed}->{$handle->{pkgname}} = 1;
 	return ();
@@ -735,7 +738,7 @@ if ($< && !$forced{nonroot}) {
 my @todo = (@ARGV);
 if (defined $state->{forced}->{kitchensink}) {
 	reorder(\@todo);
-	print "Adding in order ", join(', ', @todo), "\n";
+	print "Adding in order:\n", (map { "\t$_\n" } @todo), "\n";
 }
 
 eval {
@@ -762,7 +765,7 @@ if ($state->{beverbose}) {
 }
 $state->delayed_output();
 if (defined $state->{forced}->{kitchensink}) {
-	print "Added ", join(', ', sort keys %{$state->{installed}}), "\n";
+	print "Added:\n", (map { "\t$_\n" } sort keys %{$state->{installed}}), "\n";
 }
 rethrow $dielater;
 } catch {
