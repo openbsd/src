@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.48 1998/07/13 02:11:15 millert Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.49 1998/07/23 08:13:38 deraadt Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -218,6 +218,7 @@ static int	guniquefd __P((char *, char **));
 static void	 lostconn __P((int));
 static void	 sigquit __P((int));
 static int	 receive_data __P((FILE *, FILE *));
+static void	 replydirname __P((const char *, const char *));
 static void	 send_data __P((FILE *, FILE *, off_t, off_t, int));
 static struct passwd *
 		 sgetpwnam __P((char *));
@@ -1676,6 +1677,22 @@ cwd(path)
 }
 
 void
+replydirname(name, message)
+	const char *name, *message;
+{
+	char npath[MAXPATHLEN];
+	int i;
+
+	for (i = 0; *name != '\0' && i < sizeof(npath) - 1; i++, name++) {
+		npath[i] = *name;
+		if (*name == '"')
+			npath[++i] = '"';
+	}
+	npath[i] = '\0';
+	reply(257, "\"%s\" %s", npath, message);
+}
+
+void
 makedir(name)
 	char *name;
 {
@@ -1684,7 +1701,7 @@ makedir(name)
 	if (mkdir(name, 0777) < 0)
 		perror_reply(550, name);
 	else
-		reply(257, "MKD command successful.");
+		replydirname(name, "directory created.");
 }
 
 void
@@ -1707,7 +1724,7 @@ pwd()
 	if (getwd(path) == (char *)NULL)
 		reply(550, "%s.", path);
 	else
-		reply(257, "\"%s\" is current directory.", path);
+		replydirname(path, "is current directory.");
 }
 
 char *
