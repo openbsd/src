@@ -1,4 +1,4 @@
-/*	$OpenBSD: arch.c,v 1.7 1996/09/21 19:36:27 niklas Exp $	*/
+/*	$OpenBSD: arch.c,v 1.8 1996/10/17 19:08:44 niklas Exp $	*/
 /*	$NetBSD: arch.c,v 1.16 1996/08/13 16:42:00 christos Exp $	*/
 
 /*
@@ -44,7 +44,7 @@
 static char sccsid[] = "@(#)arch.c	5.7 (Berkeley) 12/28/90";
 static char rcsid[] = "$NetBSD: arch.c,v 1.14 1996/03/12 18:04:27 christos Exp $";
 #else
-static char rcsid[] = "$OpenBSD: arch.c,v 1.7 1996/09/21 19:36:27 niklas Exp $";
+static char rcsid[] = "$OpenBSD: arch.c,v 1.8 1996/10/17 19:08:44 niklas Exp $";
 #endif
 #endif /* not lint */
 
@@ -1168,7 +1168,7 @@ Arch_LibOODate (gn)
     
     if (OP_NOP(gn->type) && Lst_IsEmpty(gn->children)) {
 	oodate = FALSE;
-    } else if ((gn->mtime > now) || (gn->mtime < gn->cmtime)) {
+    } else if ((gn->mtime > now) || (gn->mtime < gn->cmtime) || !gn->mtime) {
 	oodate = TRUE;
     } else {
 #ifdef RANLIBMAG
