@@ -1,4 +1,4 @@
-/*	$OpenBSD: lndir.c,v 1.1 1996/08/19 05:47:26 downsj Exp $	*/
+/*	$OpenBSD: lndir.c,v 1.2 1996/08/19 06:34:03 downsj Exp $	*/
 /* $XConsortium: lndir.c /main/15 1995/08/30 10:56:18 gildea $ */
 /* Create shadow link tree (after X11R4 script of the same name)
    Mark Reinhold (mbr@lcs.mit.edu)/3 January 1990 */
@@ -319,11 +319,7 @@ char **av;
     /* to directory */
     if (stat (tn, &ts) < 0)
 	quiterr (1, tn);
-#ifdef S_ISDIR
     if (!(S_ISDIR(ts.st_mode)))
-#else
-    if (!(ts.st_mode & S_IFDIR))
-#endif
 	quit (2, "%s: Not a directory", tn);
     if (chdir (tn) < 0)
 	quiterr (1, tn);
@@ -331,11 +327,7 @@ char **av;
     /* from directory */
     if (stat (fn, &fs) < 0)
 	quiterr (1, fn);
-#ifdef S_ISDIR
     if (!(S_ISDIR(fs.st_mode)))
-#else
-    if (!(fs.st_mode & S_IFDIR))
-#endif
 	quit (2, "%s: Not a directory", fn);
 
     exit (dodir (fn, &fs, &ts, 0));
