@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.328 2000/10/06 01:39:48 aaron Exp $
+	$OpenBSD: pcidevs,v 1.329 2000/10/08 19:34:08 millert Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -1331,6 +1331,8 @@ product SYMBIOS	885		0x000d	53c885
 product SYMBIOS	895		0x000c	53c895
 product SYMBIOS	895A		0x0012	53c895A
 product SYMBIOS	896		0x000b	53c896
+product SYMBIOS	1510		0x0010	53c1510
+product SYMBIOS	1510D		0x000a	53c1510D
 
 /* Packet Engines products */
 product SYMBIOS PE_GNIC		0x0702	Packet Engines G-NIC
