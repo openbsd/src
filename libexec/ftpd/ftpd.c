@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.84 2000/12/04 10:49:31 itojun Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.85 2000/12/30 06:08:58 angelos Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -1136,7 +1136,7 @@ retrieve(cmd, name)
 	send_data(fin, dout, st.st_blksize, st.st_size,
 		  (restart_point == 0 && cmd == 0 && S_ISREG(st.st_mode)));
 	if ((cmd == 0) && stats)
-		logxfer(name, st.st_size, start);
+		logxfer(name, byte_count, start);
 	(void) fclose(dout);
 	data = -1;
 done:
