@@ -1,4 +1,4 @@
-.\"	$NetBSD: dlfcn.3,v 1.2 1995/10/01 18:47:23 pk Exp $
+.\"	$NetBSD: dlfcn.3,v 1.3 1996/01/09 19:43:34 pk Exp $
 .\"
 .\" Copyright (c) 1995 Paul Kranenburg
 .\" All rights reserved.
@@ -41,7 +41,7 @@
 .Sh SYNOPSIS
 .Fd #include <dlfcn.h>
 .Ft "void *"
-.Fn dlopen "char *name" "int mode"
+.Fn dlopen "char *path" "int mode"
 .Ft "int"
 .Fn dlclose "void *handle"
 .Ft "void *"
@@ -57,11 +57,19 @@ They allow new shared objects to be loaded into the process' address space
 under program control.
 The
 .Fn dlopen
-function takes a filename of the forms 'libname.so', 'libname.so.xx.xx' where
-xx are the major and minor revisions, or 'pathname/filename' of a shared object
-as the first argument. The shared object is mapped into the address space,
-relocated and its external references are resolved in the same way as is done
-with the implicitly loaded shared libraries at program startup.
+function takes a name of a shared object as the first argument. The
+shared object is mapped into the address space, relocated and its external
+references are resolved in the same way as is done with the implicitly loaded
+shared libraries at program startup. The argument can either be an absolute
+pathname or it can be of the form
+.Sm off
+.Do Xo lib Ao name Ac .so
+.Op .xx Op .yy Xc
+.Dc
+.Sm on
+in which case the same library search rules apply that are used for
+.Dq intrinsic
+shared library searches.
 The second argument has currently no effect, but should be set to
 .Dv DL_LAZY
 for future compatibility.
