@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.17 1998/03/01 14:56:46 niklas Exp $	*/
+/*	$OpenBSD: trap.c,v 1.18 2000/05/27 21:34:36 art Exp $	*/
 /*	$NetBSD: trap.c,v 1.56 1997/07/16 00:01:47 is Exp $	*/
 
 /*
@@ -59,6 +59,10 @@
 #include <vm/vm.h>
 #include <sys/user.h>
 #include <vm/pmap.h>
+
+#if defined(UVM)
+#include <uvm/uvm_extern.h>
+#endif
 
 #include <machine/psl.h>
 #include <machine/trap.h>
@@ -400,7 +404,11 @@ trapmmufault(type, code, v, fp, p, sticks)
 		printf("vm_fault(%p,%lx,%d,0)\n", map, va, ftype);
 #endif
 
+#if defined(UVM)
+	rv = uvm_fault(map, va, 0, ftype);
+#else
 	rv = vm_fault(map, va, ftype, FALSE);
+#endif
 
 #ifdef DEBUG
 	if (mmudebug)
@@ -543,7 +551,11 @@ trap(type, code, v, frame)
 
 	p = curproc;
 	typ = ucode = 0;
+#if defined(UVM)
+	uvmexp.traps++;
+#else
 	cnt.v_trap++;
+#endif
 
 	if (USERMODE(frame.f_sr)) {
 		type |= T_USER;
@@ -813,7 +825,11 @@ syscall(code, frame)
 	extern struct emul emul_sunos;
 #endif
 
+#if defined(UVM)
+	uvmexp.syscalls++;
+#else
 	cnt.v_syscall++;
+#endif
 	if (!USERMODE(frame.f_sr))
 		panic("syscall");
 	p = curproc;
@@ -1017,9 +1033,15 @@ _write_back (wb, wb_sts, wb_data, wb_addr, wb_map)
 			if (mmudebug)
 				printf("wb3: need to bring in first page\n");
 #endif
+#if defined(UVM)
+			wb_rc = uvm_fault(wb_map, 
+			    trunc_page((vm_offset_t)wb_addr), 
+			    0, VM_PROT_READ | VM_PROT_WRITE);
+#else
 			wb_rc = vm_fault(wb_map, 
 			    trunc_page((vm_offset_t)wb_addr), 
 			    VM_PROT_READ | VM_PROT_WRITE, FALSE);
+#endif
 
 			if (wb_rc != KERN_SUCCESS)
 				return (wb_rc);
@@ -1050,9 +1072,15 @@ _write_back (wb, wb_sts, wb_data, wb_addr, wb_map)
 				    "  Bringing in extra page.\n", wb);
 #endif
 
+#if defined(UVM)
+			wb_rc = uvm_fault(wb_map,
+			    trunc_page((vm_offset_t)wb_addr + wb_extra_page),
+			    0, VM_PROT_READ | VM_PROT_WRITE);
+#else
 			wb_rc = vm_fault(wb_map, 
 			    trunc_page((vm_offset_t)wb_addr + wb_extra_page),
 			    VM_PROT_READ | VM_PROT_WRITE, FALSE);
+#endif
 
 			if (wb_rc != KERN_SUCCESS)
 				return (wb_rc);
