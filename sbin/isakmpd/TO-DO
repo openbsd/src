@@ -1,4 +1,4 @@
-$OpenBSD: TO-DO,v 1.21 2001/06/12 21:53:19 niklas Exp $
+$OpenBSD: TO-DO,v 1.22 2001/06/27 03:31:40 angelos Exp $
 $EOM: TO-DO,v 1.45 2000/04/07 22:47:38 niklas Exp $
 
 This file mixes small nitpicks with large projects to be done.
@@ -34,11 +34,11 @@ This file mixes small nitpicks with large projects to be done.
 
 * Finish main mode exchange [done]
 
-* Separation of key exchange from the IPSEC DOI, i.e. factor out IKE details.
+* Separation of key exchange from the IPsec DOI, i.e. factor out IKE details.
 
-* Setup the IPSEC situation field in the main mode. [done]
+* Setup the IPsec situation field in the main mode. [done]
 
-* Kernel interface for IPSEC parameter passing. [done]
+* Kernel interface for IPsec parameter passing. [done]
 
 * Notify of unsupported situations.
 

@@ -1,4 +1,4 @@
-$OpenBSD: DESIGN-NOTES,v 1.15 1999/08/26 22:30:46 niklas Exp $
+$OpenBSD: DESIGN-NOTES,v 1.16 2001/06/27 03:31:39 angelos Exp $
 $EOM: DESIGN-NOTES,v 1.48 1999/08/12 22:34:25 niklas Exp $
 
 General coding conventions
@@ -61,9 +61,9 @@ ike_quick_mode.c
 		IKE's quick mode logic.
 init.c		Initialization of all modules (might be autogenned in the 
 		future).
-ipsec.c		The IPSec DOI.
-ipsec_fld.fld	Description of IPSec DOI-specific packet layouts.
-ipsec_num.cst	Constants defined by the IPSec DOI.
+ipsec.c		The IPsec DOI.
+ipsec_fld.fld	Description of IPsec DOI-specific packet layouts.
+ipsec_num.cst	Constants defined by the IPsec DOI.
 isakmp_doi.c	The ISAKMP pseudo-DOI.
 isakmp_fld.fld	Generic packet layout.
 isakmp_num.cst	ISAKMP constants.
@@ -74,8 +74,8 @@ math_2n.c	Polynomial math.
 math_ec2n.c	Elliptic curve math.
 math_group.c	Group math.
 message.c	Generic message handling.
-pf_encap.c	Interface with PF_ENCAP sockets (for use with IPSEC).
-pf_key_v2.c	Interface with PF_KEY sockets (for use with IPSEC).
+pf_encap.c	Interface with PF_ENCAP sockets (for use with IPsec).
+pf_key_v2.c	Interface with PF_KEY sockets (for use with IPsec).
 pkcs.c		PKCS#1: RSA Encryption Standard.
 policy.c	Keynote glue.
 prf.c		Pseudo random functions.
@@ -101,9 +101,9 @@ struct exchange		A description of an exchange while it is performed.
 struct field		A description of an ISAKMP field.
 struct group		A class abstracting out Oakley group operations
 struct hash		A hashing class
-struct ipsec_exch	IPSec-specific exchange fields.
-struct ipsec_proto	IPSec-specific protocol attributes.
-struct ipsec_sa		IPSec-specific SA stuff.
+struct ipsec_exch	IPsec-specific exchange fields.
+struct ipsec_proto	IPsec-specific protocol attributes.
+struct ipsec_sa		IPsec-specific SA stuff.
 struct message		A generic ISAKMP message. 
 struct payload		A "fat" payload reference pointing into message buffers
 struct prf		A pseudo random function class
@@ -199,10 +199,10 @@ Design "errors"
 ---------------
 
 Currently there are two "errors" in our design.  The first one is that the
-coupling between the IPSEC DOI and IKE is tight.  It should be separated by
+coupling between the IPsec DOI and IKE is tight.  It should be separated by
 a clean interface letting other key exchange models fit in instead of IKE.
 The second problem is that we need a protocol-specific opaque SA part
-in the DOI specific one.  Now both IPSEC ESP attributes takes place even
+in the DOI specific one.  Now both IPsec ESP attributes takes place even
 in ISAKMP SA structures.
 
 User control

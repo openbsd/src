@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.conf.5,v 1.53 2001/06/05 11:20:28 angelos Exp $
+.\" $OpenBSD: isakmpd.conf.5,v 1.54 2001/06/27 03:31:42 angelos Exp $
 .\" $EOM: isakmpd.conf.5,v 1.57 2000/12/21 14:43:17 ho Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -44,7 +44,7 @@
 is the configuration file for the
 .Nm isakmpd
 daemon managing security association and key management for the
-IPSEC layer of the kernel's networking stack.
+IPsec layer of the kernel's networking stack.
 .Pp
 The file is of a well known type of format called .INI style, named after
 the suffix used by an overrated windowing environment for its configuration
@@ -197,19 +197,19 @@ Look at <ISAKMP-peer> below.
 IPsec SA negotiation parameter root
 .Bl -tag -width 12n
 .It Em Connections
-A list of directed IPSec "connection" names that should be brought up
+A list of directed IPsec "connection" names that should be brought up
 automatically, either on first use if the system supports it, or at
 startup of the daemon.
 These names are section names where further information can be found.
-Look at <IPSec-connection> below.
+Look at <IPsec-connection> below.
 Normally any connection mentioned here are treated as part of the
 "Passive-connection" list we present below, however there is a
 flag: "Active-only" that disables this behaviour.
-This too is mentioned in the <IPSec-connection> section, in the "Flags" tag.
+This too is mentioned in the <IPsec-connection> section, in the "Flags" tag.
 .It Em Passive-connections
-A list of IPSec "connection" names we recognize and accept initiations for.
+A list of IPsec "connection" names we recognize and accept initiations for.
 These names are section names where further information can be found.
-Look at <IPSec-connection> below.
+Look at <IPsec-connection> below.
 Currently only the Local-ID and Remote-ID tags
 are looked at in those sections, as they are matched against the IDs given
 by the initiator.
@@ -277,7 +277,7 @@ Parameters for negotiation with an ISAKMP peer
 .It Em Phase
 The constant
 .Li 1 ,
-as ISAKMP-peers and IPSec-connections
+as ISAKMP-peers and IPsec-connections
 really are handled by the same code inside isakmpd.
 .It Em Transport
 The name of the transport protocol, defaults to
@@ -414,12 +414,12 @@ Notice that this field may NOT be set to ANY.
 An offer/accept kind of value, see above.
 Can also be set to ANY.
 .El
-.It Em <IPSec-connection>
+.It Em <IPsec-connection>
 .Bl -tag -width 12n
 .It Em Phase
 The constant
 .Li 2 ,
-as ISAKMP-peers and IPSec-connections
+as ISAKMP-peers and IPsec-connections
 really are handled by the same code inside isakmpd.
 .It Em ISAKMP-peer
 The name of the ISAKMP-peer which to talk to in order to
@@ -427,32 +427,32 @@ set up this connection.
 The value is the name of an <ISAKMP-peer> section.
 See above.
 .It Em Configuration
-The name of the IPSec-configuration section to use.
-Look at <IPSec-configuration> below.
+The name of the IPsec-configuration section to use.
+Look at <IPsec-configuration> below.
 .It Em Local-ID
 If existent, the name of the section that describes the
 optional local client ID that we should present to our peer.
 It is also used when we act as responders to find out what
-<IPSec-connection> we are dealing with.
-Look at <IPSec-ID> below.
+<IPsec-connection> we are dealing with.
+Look at <IPsec-ID> below.
 .It Em Remote-ID
 If existent, the name of the section that describes the
 optional remote client ID that we should present to our peer.
 It is also used when we act as responders to find out what
-<IPSec-connection> we are dealing with.
-Look at <IPSec-ID> below.
+<IPsec-connection> we are dealing with.
+Look at <IPsec-ID> below.
 .It Em Flags
 A comma-separated list of flags controlling the further
-handling of the IPSec SA.
+handling of the IPsec SA.
 Currently only one flag is defined:
 .Bl -tag -width 12n
 .It Em Active-only
-If this flag is given and this <IPSec-connection> is part of the phase 2
+If this flag is given and this <IPsec-connection> is part of the phase 2
 connections we automatically keep up, it will not automatically be used for
 accepting connections from the peer.
 .El
 .El
-.It Em <IPSec-configuration>
+.It Em <IPsec-configuration>
 .Bl -tag -width 12n
 .It Em DOI
 The domain of interpretation as given by the RFCs.
@@ -467,18 +467,18 @@ For quick mode this is
 .It Em Suites
 A list of protection suites (bundles of protocols) usable for
 protecting the IP traffic.
-Each of the list elements is a name of an <IPSec-suite> section.
+Each of the list elements is a name of an <IPsec-suite> section.
 See below.
 .El
-.It Em <IPSec-suite>
+.It Em <IPsec-suite>
 .Bl -tag -width 12n
 .It Em Protocols
 A list of the protocols included in this protection suite.
-Each of the list elements is a name of an <IPSec-protocol>
+Each of the list elements is a name of an <IPsec-protocol>
 section.
 See below.
 .El
-.It Em <IPSec-protocol>
+.It Em <IPsec-protocol>
 .Bl -tag -width 12n
 .It Em PROTOCOL_ID
 The protocol as given by the RFCs.
@@ -488,7 +488,7 @@ and
 .Li IPSEC_ESP .
 .It Em Transforms
 A list of transforms usable for implementing the protocol.
-Each of the list elements is a name of an <IPSec-transform>
+Each of the list elements is a name of an <IPsec-transform>
 section.
 See below.
 .It Em ReplayWindow
@@ -500,7 +500,7 @@ and
 .Nm AH
 RFCs for a better description.
 .El
-.It Em <IPSec-transform>
+.It Em <IPsec-transform>
 .Bl -tag -width 12n
 .It Em TRANSFORM_ID
 The transform ID as given by the RFCs.
@@ -518,11 +518,11 @@ in <ISAKMP-transform> sections shown above.
 .It Em Life
 List of lifetimes, each element is a <Lifetime> section name.
 .El
-.It Em <IPSec-ID>
+.It Em <IPsec-ID>
 .Bl -tag -width 12n
 .It Em ID-type
 The ID type as given by the RFCs.
-For IPSec this is currently
+For IPsec this is currently
 .Li IPV4_ADDR
 or
 .Li IPV4_ADDR_SUBNET .

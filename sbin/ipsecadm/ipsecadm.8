@@ -1,4 +1,4 @@
-.\" $OpenBSD: ipsecadm.8,v 1.38 2001/06/26 20:44:22 itojun Exp $
+.\" $OpenBSD: ipsecadm.8,v 1.39 2001/06/27 03:31:38 angelos Exp $
 .\"
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -35,7 +35,7 @@
 .Os
 .Sh NAME
 .Nm ipsecadm
-.Nd interface to setup IPSec
+.Nd interface to setup IPsec
 .Sh SYNOPSIS
 .Nm ipsecadm
 .Op command
@@ -43,14 +43,14 @@
 .Sh NOTE
 Before
 .Xr ipsecadm 8
-can be used, IPSec must be enabled by setting one or more of the following
+can be used, IPsec must be enabled by setting one or more of the following
 .Xr sysctl 3
 variables:
 .Bl -tag -width xxxxxxxxxxxxxxxxxxxxx
 .It net.inet.esp.enable
-Enable the ESP IPSec protocol
+Enable the ESP IPsec protocol
 .It net.inet.ah.enable
-Enable the AH IPSec protocol
+Enable the AH IPsec protocol
 .El
 .Pp
 To enable these operations across reboots, see
@@ -64,7 +64,7 @@ to be used with
 .Xr ipsec 4 .
 It can be used to specify the encryption and authentication
 algorithms and key material for the network layer security
-provided by IPSec.
+provided by IPsec.
 The possible commands are:
 .Bl -tag -width new_esp
 .It new esp
@@ -251,7 +251,7 @@ A
 .Nm bypass
 or
 .Nm permit
-flow is used to specify a flow for which IPSec processing will be
+flow is used to specify a flow for which IPsec processing will be
 bypassed, i.e packets will/need not be processed by any SAs.
 For
 .Nm permit
@@ -535,7 +535,7 @@ For
 create or delete a
 .Nm bypass
 flow.
-Packets matching this flow will not be processed by IPSec.
+Packets matching this flow will not be processed by IPsec.
 .It Fl deny
 For
 .Nm flow ,

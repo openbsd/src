@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec.c,v 1.45 2001/05/05 00:52:50 angelos Exp $	*/
+/*	$OpenBSD: ipsec.c,v 1.46 2001/06/27 03:31:40 angelos Exp $	*/
 /*	$EOM: ipsec.c,v 1.143 2000/12/11 23:57:42 niklas Exp $	*/
 
 /*
@@ -74,7 +74,7 @@
 #define NI_MAXHOST 1025
 #endif
 
-/* The replay window size used for all IPSec protocols if not overridden.  */
+/* The replay window size used for all IPsec protocols if not overridden.  */
 #define DEFAULT_REPLAY_WINDOW 16
 
 struct ipsec_decode_arg {
@@ -257,7 +257,7 @@ ipsec_sa_check_flow (struct sa *sa, void *v_arg)
 }
 
 /*
- * Do IPSec DOI specific finalizations task for the exchange where MSG was
+ * Do IPsec DOI specific finalizations task for the exchange where MSG was
  * the final message.
  */
 static void
@@ -1260,7 +1260,7 @@ ipsec_decode_transform (struct message *msg, struct sa *sa,
 }
 
 /*
- * Delete the IPSec SA represented by the INCOMING direction in protocol PROTO
+ * Delete the IPsec SA represented by the INCOMING direction in protocol PROTO
  * of the IKE security association SA.
  */
 static void
@@ -1857,7 +1857,7 @@ ipsec_clone_id (u_int8_t **did, size_t *did_len, u_int8_t *id, size_t id_len)
 }
 
 /*
- * IPSec-specific PROTO initializations.  SECTION is only set if we are the
+ * IPsec-specific PROTO initializations.  SECTION is only set if we are the
  * initiator thus only usable there.
  * XXX I want to fix this later.
  */

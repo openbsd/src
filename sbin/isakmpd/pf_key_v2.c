@@ -1,4 +1,4 @@
-/*      $OpenBSD: pf_key_v2.c,v 1.66 2001/06/27 00:48:21 angelos Exp $  */
+/*      $OpenBSD: pf_key_v2.c,v 1.67 2001/06/27 03:31:43 angelos Exp $  */
 /*	$EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	*/
 
 /*
@@ -524,7 +524,7 @@ pf_key_v2_open ()
   struct sadb_msg msg;
   struct pf_key_v2_msg *regmsg = 0, *ret = 0;
 
-  /* Open the socket we use to speak to IPSec.  */
+  /* Open the socket we use to speak to IPSec. */
   pf_key_v2_socket = -1;
   fd = socket (PF_KEY, SOCK_RAW, PF_KEY_V2);
   if (fd == -1)
@@ -2148,7 +2148,7 @@ pf_key_v2_disable_sa (struct sa *sa, int incoming)
 }
 
 /*
- * Delete the IPSec SA represented by the INCOMING direction in protocol PROTO
+ * Delete the IPsec SA represented by the INCOMING direction in protocol PROTO
  * of the IKE security association SA.  Also delete potential flows tied to it.
  */
 int
@@ -3574,7 +3574,7 @@ pf_key_v2_handler (int fd)
 }
 
 /*
- * Group 2 IPSec SAs given by the PROTO1 and PROTO2 protocols of the SA IKE
+ * Group 2 IPsec SAs given by the PROTO1 and PROTO2 protocols of the SA IKE
  * security association in a chain.
  * XXX Assumes OpenBSD GRPSPIS extension.  Should probably be moved to sysdep.c
  */

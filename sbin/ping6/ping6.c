@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.30 2001/06/22 13:20:21 itojun Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.31 2001/06/27 03:31:48 angelos Exp $	*/
 /*	$KAME: ping6.c,v 1.129 2001/06/22 13:16:02 itojun Exp $	*/
 
 /*
@@ -2576,7 +2576,7 @@ setpolicy(so, policy)
 		errx(1, "%s", ipsec_strerror());
 	if (setsockopt(s, IPPROTO_IPV6, IPV6_IPSEC_POLICY, buf,
 	    ipsec_get_policylen(buf)) < 0)
-		warnx("Unable to set IPSec policy");
+		warnx("Unable to set IPsec policy");
 	free(buf);
 
 	return 0;

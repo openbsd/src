@@ -1,4 +1,4 @@
-/*	$OpenBSD: klips.c,v 1.5 2001/05/05 00:51:48 angelos Exp $	*/
+/*	$OpenBSD: klips.c,v 1.6 2001/06/27 03:31:44 angelos Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist.  All rights reserved.
@@ -385,7 +385,7 @@ klips_set_spi (struct sa *sa, struct proto *proto, int incoming,
       free (emsg);
 
       /*
-       * Grouping the IP-in-IP SA with the IPSec one means we must be careful
+       * Grouping the IP-in-IP SA with the IPsec one means we must be careful
        * in klips_group_spis so that we'll remove duplicate IP-in-IP SAs
        * and get everything grouped in the right order.
        *
@@ -427,7 +427,7 @@ klips_set_spi (struct sa *sa, struct proto *proto, int incoming,
 }
  
 /*
- * Delete the IPSec SA represented by the INCOMING direction in protocol PROTO
+ * Delete the IPsec SA represented by the INCOMING direction in protocol PROTO
  * of the IKE security association SA.
  */
 int

@@ -1,13 +1,13 @@
 
-                       How to use Photuris with IPSec ?
+                       How to use Photuris with IPsec ?
                                        
-What is IPSec ?
+What is IPsec ?
 
    IP Security is a framework providing authentication/integrity and
    privacy to network traffic. Authenticated data can not be modified by
    third parties and encryption conceals the content of packets.
    
-What has Photuris to do with IPSec ?
+What has Photuris to do with IPsec ?
 
    In order to transmit encrypted or authenticated data between two
    hosts, those two hosts have to agree on session keys which are used
@@ -40,8 +40,8 @@ How to get it working ?
    exchange of values now and finally the shared secret from which the
    session keys are derived.
    
-   If you compiled the photuris daemon with -IPSEC and also have a kernel
-   with IPSEC compiled into it, you could start for example
+   If you compiled the photuris daemon with -DIPSEC and also have a kernel
+   with IPsec compiled into it, you could start for example
 
 8. tcpdump proto 51 &
 9. telnet host1
@@ -54,7 +54,7 @@ How to get it working ?
 
    will show you some information also.
    
-  Enabling IPSEC in the OpenBSD kernel
+  Enabling IPsec in the OpenBSD kernel
   
    Add the following two lines into your kernel config file:
 config IPSEC

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_encap.c,v 1.21 2001/04/09 22:09:52 ho Exp $	*/
+/*	$OpenBSD: pf_encap.c,v 1.22 2001/06/27 03:31:42 angelos Exp $	*/
 /*	$EOM: pf_encap.c,v 1.73 2000/12/04 04:46:34 angelos Exp $	*/
 
 /*
@@ -665,7 +665,7 @@ pf_encap_set_spi (struct sa *sa, struct proto *proto, int incoming)
 }
  
 /*
- * Delete the IPSec SA represented by the INCOMING direction in protocol PROTO
+ * Delete the IPsec SA represented by the INCOMING direction in protocol PROTO
  * of the IKE security association SA.
  */
 int

@@ -1,4 +1,4 @@
-$OpenBSD: README,v 1.16 2001/01/27 11:16:16 niklas Exp $
+$OpenBSD: README,v 1.17 2001/06/27 03:31:39 angelos Exp $
 $EOM: README,v 1.28 1999/10/10 22:53:24 angelos Exp $
 
 This is isakmpd, a BSD-licensed ISAKMP/Oakley (a.k.a. IKE)
@@ -29,13 +29,13 @@ under gdb with args similar to:
 	-d -n -p5000 -DA=99 -f/tmp/isakmpd.fifo -csamples/VPN-east.conf
 
 That will run isakmpd in the foreground, not connected to any application
-(like an IPSEC implementation) logging to stderr with full debugging ouput,
+(like an IPsec implementation) logging to stderr with full debugging ouput,
 listening on UDP port 5000, accepting control commands via the named pipe
 called /tmp/isakmpd.fifo and reading its configuration from the
 VPN-east.conf file (found in the isakmpd/samples directory).
 
 If you are root you can try to run without -n -p5000 thus getting it to
-talk to your IPSec stack and use the standard port 500 instead.
+talk to your IPsec stack and use the standard port 500 instead.
 
 The logging classes are Miscellaneous = 0, Transports = 1, Messages = 2,
 Crypto = 3, Timers = 4, System Dependencies = 5, Security Associations = 6,

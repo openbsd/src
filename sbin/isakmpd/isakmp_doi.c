@@ -1,4 +1,4 @@
-/*	$OpenBSD: isakmp_doi.c,v 1.11 2000/10/07 06:59:24 niklas Exp $	*/
+/*	$OpenBSD: isakmp_doi.c,v 1.12 2001/06/27 03:31:41 angelos Exp $	*/
 /*	$EOM: isakmp_doi.c,v 1.42 2000/09/12 16:29:41 ho Exp $	*/
 
 /*
@@ -36,7 +36,7 @@
 
 /*
  * XXX This DOI is very fuzzily defined, and should perhaps be short-circuited
- * to the IPSEC DOI instead.  At the moment I will have it as its own DOI,
+ * to the IPsec DOI instead.  At the moment I will have it as its own DOI,
  * as the ISAKMP architecture seems to imply it should be done like this.
  */
 

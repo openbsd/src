@@ -1,4 +1,4 @@
-/*	$OpenBSD: kernel.c,v 1.22 2001/06/05 00:17:48 niklas Exp $	*/
+/*	$OpenBSD: kernel.c,v 1.23 2001/06/27 03:31:46 angelos Exp $	*/
 
 /*
  * Copyright 1997-2000 Niels Provos <provos@citi.umich.edu>
@@ -33,7 +33,7 @@
 
 /*
  * The following functions handle the interaction of the Photuris daemon
- * with the PF_ENCAP interface as used by OpenBSD's IPSec implementation.
+ * with the PF_ENCAP interface as used by OpenBSD's IPsec implementation.
  * This is the only file which needs to be changed for making Photuris
  * work with other kernel interfaces.
  * The SPI object here can actually hold two SPIs, one for encryption
@@ -41,7 +41,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: kernel.c,v 1.22 2001/06/05 00:17:48 niklas Exp $";
+static char rcsid[] = "$OpenBSD: kernel.c,v 1.23 2001/06/27 03:31:46 angelos Exp $";
 #endif
 
 #include <time.h>
@@ -230,7 +230,7 @@ init_kernel(void)
 	TAILQ_INIT(&pfqueue);
 	
 	if ((sd = socket(PF_KEY, SOCK_RAW, PF_KEY_V2)) == -1) 
-		log_fatal(__FUNCTION__": socket(PF_KEY) for IPSec keyengine");
+		log_fatal(__FUNCTION__": socket(PF_KEY) for IPsec key engine");
 	if ((regsd = socket(PF_KEY, SOCK_RAW, PF_KEY_V2)) == -1) 
 		log_fatal(__FUNCTION__": socket() for PFKEY register");
 
@@ -262,13 +262,13 @@ kernel_set_socket_policy(int sd)
      level = IPSEC_LEVEL_BYPASS;   /* Did I mention I'm privileged? */
      if (setsockopt(sd, IPPROTO_IP, IP_AUTH_LEVEL, (char *)&level,
 		    sizeof (int)) == -1)
-	  log_fatal("setsockopt: can not bypass ipsec authentication policy");
+	  log_fatal("setsockopt: can not bypass IPsec authentication policy");
      if (setsockopt(sd, IPPROTO_IP, IP_ESP_TRANS_LEVEL,
 			(char *)&level, sizeof (int)) == -1)
-	  log_fatal("setsockopt: can not bypass ipsec esp transport policy");
+	  log_fatal("setsockopt: can not bypass IPsec ESP transport policy");
      if (setsockopt(sd, IPPROTO_IP, IP_ESP_NETWORK_LEVEL,
 		    (char *)&level, sizeof (int)) == -1)
-	  log_fatal("setsockopt: can not bypass ipsec esp network policy");
+	  log_fatal("setsockopt: can not bypass IPsec ESP network policy");
 }
 
 struct sadb_ext *

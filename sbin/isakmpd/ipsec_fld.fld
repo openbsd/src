@@ -1,4 +1,4 @@
-#	$OpenBSD: ipsec_fld.fld,v 1.3 1998/11/17 11:10:14 niklas Exp $
+#	$OpenBSD: ipsec_fld.fld,v 1.4 2001/06/27 03:31:41 angelos Exp $
 #	$EOM: ipsec_fld.fld,v 1.1 1998/08/02 20:12:02 niklas Exp $
 
 #
@@ -36,7 +36,7 @@
 
 # XXX There are num-declared fields below that really are csts.
 
-# IPSEC's situation field's subdivision.
+# IPsec's situation field's subdivision.
 IPSEC_SIT
   SIT			mask 4		ipsec_sit_cst
   LABELED_DOMAIN_ID	num 4
@@ -58,7 +58,7 @@ IPSEC_SIT
 # alignment on top of the aforementioned offset.
 .
 
-# IPSEC's layout of the identification payload's DOI data field.
+# IPsec's layout of the identification payload's DOI data field.
 IPSEC_ID
   PROTO			num 1
   PORT			num 2
