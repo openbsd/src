@@ -1,4 +1,4 @@
-/*	$OpenBSD: vsbus.c,v 1.10 2002/01/16 20:50:17 miod Exp $ */
+/*	$OpenBSD: vsbus.c,v 1.11 2003/04/02 23:42:13 jason Exp $ */
 /*	$NetBSD: vsbus.c,v 1.29 2000/06/29 07:14:37 mrg Exp $ */
 /*
  * Copyright (c) 1996, 1999 Ludd, University of Lule}, Sweden.
@@ -206,7 +206,18 @@ vsbus_attach(parent, self, aux)
 	*sc->sc_intclr = 0xff;
 	DELAY(1000000); /* Wait a second */
 	sc->sc_mask = *sc->sc_intreq;
+
+#if VAX48
+	/*
+	 * It's possible for the 4000/VLC to generate an DZ-11 rx interrupt
+	 * (0x20) during the delay period, unmask that bit.
+	 */
+	if (vax_boardtype == VAX_BTYP_48)
+		sc->sc_mask &= ~0x20;
+#endif
+
 	printf("%s: interrupt mask %x\n", self->dv_xname, sc->sc_mask);
+
 	/*
 	 * now check for all possible devices on this "bus"
 	 */
