@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.17 2004/07/10 12:25:49 deraadt Exp $ */
+/*	$OpenBSD: ehci.c,v 1.18 2004/07/10 13:08:41 deraadt Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -2126,16 +2126,12 @@ ehci_alloc_sqtd_chain(struct ehci_pipe *epipe, ehci_softc_t *sc,
 	len = alen;
 	dataphys = DMAADDR(dma, 0);
 	dataphyslastpage = EHCI_PAGE(dataphys + len - 1);
-	qtdstatus = htole32(
-	    EHCI_QTD_ACTIVE |
+	qtdstatus = EHCI_QTD_ACTIVE |
 	    EHCI_QTD_SET_PID(rd ? EHCI_QTD_PID_IN : EHCI_QTD_PID_OUT) |
-	    EHCI_QTD_SET_CERR(3)
-	    /* IOC set below */
-	    /* BYTES set below */
-	    );
+	    EHCI_QTD_SET_CERR(3); /* IOC set below and BYTES set below */
 	mps = UGETW(epipe->pipe.endpoint->edesc->wMaxPacketSize);
 	tog = epipe->nexttoggle;
-	qtdstatus |= htole32(EHCI_QTD_SET_TOGGLE(tog));
+	qtdstatus |= EHCI_QTD_SET_TOGGLE(tog);
 
 	cur = ehci_alloc_sqtd(sc);
 	*sp = cur;
@@ -2203,8 +2199,8 @@ ehci_alloc_sqtd_chain(struct ehci_pipe *epipe, ehci_softc_t *sc,
 		}
 		cur->nextqtd = next;
 		cur->qtd.qtd_next = cur->qtd.qtd_altnext = nextphys;
-		cur->qtd.qtd_status =
-		    qtdstatus | htole32(EHCI_QTD_SET_BYTES(curlen));
+		cur->qtd.qtd_status = htole32(qtdstatus |
+		    EHCI_QTD_SET_BYTES(curlen));
 		cur->xfer = xfer;
 		cur->len = curlen;
 		DPRINTFN(10,("ehci_alloc_sqtd_chain: cbp=0x%08x end=0x%08x\n",
@@ -2213,7 +2209,7 @@ ehci_alloc_sqtd_chain(struct ehci_pipe *epipe, ehci_softc_t *sc,
 		   qtd */
 		if (((curlen + mps - 1) / mps) & 1) {
 			tog ^= 1;
-			qtdstatus ^= htole32(EHCI_QTD_TOGGLE_MASK);
+			qtdstatus ^= EHCI_QTD_TOGGLE_MASK;
 		}
 		if (len == 0)
 			break;
