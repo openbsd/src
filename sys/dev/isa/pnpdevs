@@ -1,4 +1,4 @@
-#	$OpenBSD: pnpdevs,v 1.43 1998/12/09 13:17:21 deraadt Exp $
+#	$OpenBSD: pnpdevs,v 1.44 1998/12/09 13:32:44 deraadt Exp $
 
 #
 # NOTE: All `com' devices also need pccom identifiers.
@@ -419,3 +419,4 @@ sb	OPT9310	#OPTi Audio 16 (possibly a wss instead of sb)
 ym	@@@1001 #ALS100+
 ym	YMH0021	#OPL3-SA2 Sound Board
 ym	YMH0021 #OPL3-SA2 Sound Board
+#gus	GRV0000	#Advanced Gravis InterWave Audio
