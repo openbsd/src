@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb.c,v 1.1 2000/09/06 02:12:14 rahnds Exp $	*/
+/*	$OpenBSD: vgafb.c,v 1.2 2000/09/07 03:25:53 rahnds Exp $	*/
 /*	$NetBSD: vga.c,v 1.3 1996/12/02 22:24:54 cgd Exp $	*/
 
 /*
@@ -444,6 +444,9 @@ vgafb_cnattach(iot, memt, pc, bus, device, function)
 	ri->rc_sp->depth = cons_depth;
 	ri->rc_sp->linelongs = cons_linebytes /4; /* XXX */
 	ri->rc_sp->pixels = (void *)cons_display_mem_h;
+	ri->rc_crow = ri->rc_ccol = -1;
+	ri->rc_crowp = &ri->rc_crow;
+	ri->rc_ccolp = &ri->rc_ccol;
 
 	rcons_init(ri, 160, 160);
 
