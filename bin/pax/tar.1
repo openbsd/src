@@ -27,7 +27,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: tar.1,v 1.31 2001/02/07 19:43:10 millert Exp $
+.\"	$OpenBSD: tar.1,v 1.32 2001/02/10 17:21:14 millert Exp $
 .\"
 .Dd February 7, 2001
 .Dt TAR 1
@@ -38,14 +38,14 @@
 .Sh SYNOPSIS
 .Nm tar
 .Sm off
-.Oo \&- Oc {crtux} Op befhmopqvwzHLOPXZ014578
+.Oo \&- Oc {crtux} Op befhmopqsvwzHLOPXZ014578
 .Sm on
-.Op Ar archive
 .Op Ar blocksize
+.Op Ar archive
+.Op Ar replstr
 .\" XXX how to do this right?
 .Op Fl C Ar directory
-.Op Fl T Ar file
-.Op Fl s Ar replstr
+.Op Fl I Ar file
 .Op Ar file ...
 .Sh DESCRIPTION
 The
@@ -197,9 +197,6 @@ following files.
 When extracting, files will be extracted into
 the specified directory; when creating, the specified files will be matched
 from the directory.
-This argument and its parameter may also appear in a file list specified by
-.Fl T ,
-but in this case it should be separated by a newline instead of whitespace.
 .It Fl H
 Follow symlinks given on command line only.
 .It Fl L
@@ -209,14 +206,9 @@ Do not strip leading slashes
 .Pq Sq /
 from pathnames.
 The default is to strip leading slashes.
-.It Fl T Ar file
-Read the names of files to archive or extract from the given file, one
-per line.
-A line may also specify the positional argument
-.Dq Fl C
-with the
-.Ar directory
-listed on the next line.
+.It Fl I Ar file
+This is a positional argument which reads the names of files to
+archive or extract from the given file, one per line.
 .It Fl X
 Do not cross mount points in the file system.
 .It Fl Z
@@ -296,9 +288,3 @@ The
 flag is not portable to other versions of
 .Nm
 where it may have a different meaning.
-.Pp
-Unlike some versions of
-.Nm tar ,
-when the
-.Fl T
-flag is specified other files may still be listed on the command line.

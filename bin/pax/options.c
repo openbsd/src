@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.46 2001/02/09 14:04:33 espie Exp $	*/
+/*	$OpenBSD: options.c,v 1.47 2001/02/10 17:21:14 millert Exp $	*/
 /*	$NetBSD: options.c,v 1.6 1996/03/26 23:54:18 mrg Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: options.c,v 1.46 2001/02/09 14:04:33 espie Exp $";
+static char rcsid[] = "$OpenBSD: options.c,v 1.47 2001/02/10 17:21:14 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -607,6 +607,13 @@ tar_options(argc, argv)
 	register int c;
 	int fstdin = 0;
 	int Oflag = 0;
+	int nincfiles = 0;
+	int incfiles_max = 0;
+	struct incfile {
+		char *file;
+		char *dir;
+	};
+	struct incfile *incfiles = NULL;
 
 	/*
 	 * Set default values.
@@ -617,8 +624,7 @@ tar_options(argc, argv)
 	 * process option flags
 	 */
 	while ((c = getoldopt(argc, argv,
-	    "b:cef:hmopqruts:vwxzBC:HLOPXZ014578"))
-	    != -1) {
+	    "b:cef:hmopqruts:vwxzBC:HI:LOPXZ014578")) != -1) {
 		switch(c) {
 		case 'b':
 			/*
@@ -750,6 +756,20 @@ tar_options(argc, argv)
 			 */
 			Hflag = 1;
 			break;
+		case 'I':
+			if (++nincfiles > incfiles_max) {
+				incfiles_max = nincfiles + 3;
+				incfiles = realloc(incfiles,
+				    sizeof(*incfiles) * incfiles_max);
+				if (incfiles == NULL) {
+					paxwarn(0, "Unable to allocate space "
+					    "for option list");
+					exit(1);
+				}
+			}
+			incfiles[nincfiles - 1].file = optarg;
+			incfiles[nincfiles - 1].dir = chdname;
+			break;
 		case 'L':
 			/*
 			 * follow symlinks
@@ -806,8 +826,8 @@ tar_options(argc, argv)
 	else
 		listf = stdout;
 
-	/* Traditional tar behaviour (pax wants to read filelist from stdin) */
-	if ((act == ARCHIVE || act == APPND) && argc == 0)
+	/* Traditional tar behaviour (pax wants to read file list from stdin) */
+	if ((act == ARCHIVE || act == APPND) && argc == 0 && nincfiles == 0)
 		exit(0);
 
 	/*
@@ -830,47 +850,61 @@ tar_options(argc, argv)
 	default:
 		{
 			int sawpat = 0;
+			char *file, *dir;
 
-			while (*argv != NULL) {
-				if (strcmp(*argv, "-C") == 0) {
-					if(*++argv == NULL)
+			while (nincfiles || *argv != NULL) {
+				/*
+				 * If we queued up any include files,
+				 * pull them in now.  Otherwise, check
+				 * for -I and -C positional flags.
+				 * Anything else must be a file to
+				 * extract.
+				 */
+				if (nincfiles) {
+					file = incfiles->file;
+					dir = incfiles->dir;
+					incfiles++;
+					nincfiles--;
+				} else if (strcmp(*argv, "-I") == 0) {
+					if (*++argv == NULL)
 						break;
-					chdname = *argv++;
-
-					continue;
-				} 
-				if (strcmp(*argv, "-T") == 0) {
+					file = *argv++;
+					dir = chdname;
+				} else
+					file = NULL;
+				if (file != NULL) {
 					FILE *fp;
 					char *str;
 
-					if (*++argv == NULL)
-						break;
-
-					if ((fp = fopen(*argv, "r")) == NULL) {
-						paxwarn(1, "Unable to open file '%s' for read", *argv);
+					if (strcmp(file, "-") == 0)
+						fp = stdin;
+					else if ((fp = fopen(file, "r")) == NULL) {
+						paxwarn(1, "Unable to open file '%s' for read", file);
 						tar_usage();
 					}
 					while ((str = getline(fp)) != NULL) {
-						if (pat_add(str, chdname) < 0)
+						if (pat_add(str, dir) < 0)
 							tar_usage();
-						sawpat++;
+						sawpat = 1;
 					}
-					fclose(fp);
+					if (strcmp(file, "-") != 0)
+						fclose(fp);
 					if (getline_error) {
-						paxwarn(1, "Problem with file '%s'", *argv);
+						paxwarn(1, "Problem with file '%s'", file);
 						tar_usage();
 					}
-					argv++;
-
-					continue;
-				}
-				if (pat_add(*argv++, chdname) < 0)
+				} else if (strcmp(*argv, "-C") == 0) {
+					if (*++argv == NULL)
+						break;
+					chdname = *argv++;
+				} else if (pat_add(*argv++, chdname) < 0)
 					tar_usage();
-				sawpat++;
+				else
+					sawpat = 1;
 			}
 			/*
 			 * if patterns were added, we are doing	chdir()
-			 * on a file-by-file basis, else, just one 
+			 * on a file-by-file basis, else, just one
 			 * global chdir (if any) after opening input.
 			 */
 			if (sawpat > 0)
@@ -884,40 +918,60 @@ tar_options(argc, argv)
 				tar_usage();
 		}
 
-		while (*argv != NULL) {
-			if (strcmp(*argv, "-C") == 0) {
+		while (nincfiles || *argv != NULL) {
+			char *file, *dir;
+
+			/*
+			 * If we queued up any include files, pull them in
+			 * now.  Otherwise, check for -I and -C positional
+			 * flags.  Anything else must be a file to include
+			 * in the archive.
+			 */
+			if (nincfiles) {
+				file = incfiles->file;
+				dir = incfiles->dir;
+				incfiles++;
+				nincfiles--;
+			} else if (strcmp(*argv, "-I") == 0) {
 				if (*++argv == NULL)
 					break;
-				if (ftree_add(*argv++, 1) < 0)
-					tar_usage();
-
-				continue;
-			}
-			if (strcmp(*argv, "-T") == 0) {
+				file = *argv++;
+				dir = NULL;
+			} else
+				file = NULL;
+			if (file != NULL) {
 				FILE *fp;
 				char *str;
 
-				if (*++argv == NULL)
-					break;
+				/* Set directory if needed */
+				if (dir) {
+					if (ftree_add(dir, 1) < 0)
+						tar_usage();
+				}
 
-				if ((fp = fopen(*argv, "r")) == NULL) {
-					paxwarn(1, "Unable to open file '%s' for read", *argv);
+				if (strcmp(file, "-") == 0)
+					fp = stdin;
+				else if ((fp = fopen(file, "r")) == NULL) {
+					paxwarn(1, "Unable to open file '%s' for read", file);
 					tar_usage();
 				}
 				while ((str = getline(fp)) != NULL) {
 					if (ftree_add(str, 0) < 0)
 						tar_usage();
 				}
-				fclose(fp);
+				if (strcmp(file, "-") != 0)
+					fclose(fp);
 				if (getline_error) {
-					paxwarn(1, "Problem with file '%s'", *argv);
+					paxwarn(1, "Problem with file '%s'",
+					    file);
 					tar_usage();
 				}
-				argv++;
-
-				continue;
-			}
-			if (ftree_add(*argv++, 0) < 0)
+			} else if (strcmp(*argv, "-C") == 0) {
+				if (*++argv == NULL)
+					break;
+				if (ftree_add(*argv++, 1) < 0)
+					tar_usage();
+			} else if (ftree_add(*argv++, 0) < 0)
 				tar_usage();
 		}
 		/*
@@ -1581,9 +1635,9 @@ void
 tar_usage()
 #endif
 {
-	(void)fputs("usage: tar [-]{txru}[cevfbmopqswzBHLPXZ014578] [tapefile] ",
+	(void)fputs("usage: tar [-]{crtux}[-befhmopqsvwzHLOPXZ014578] [blocksize] ",
 		 stderr);
-	(void)fputs("[blocksize] [replstr] [-C directory] [-T file] file1 file2...\n",
+	(void)fputs("[archive] [replstr] [-C directory] [-I file] [file ...]\n",
 	    stderr);
 	exit(1);
 }
