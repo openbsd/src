@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdc.c,v 1.26 2001/01/29 02:18:33 niklas Exp $     */
+/*      $OpenBSD: wdc.c,v 1.27 2001/03/15 23:08:16 csapuntz Exp $     */
 /*	$NetBSD: wdc.c,v 1.68 1999/06/23 19:00:17 bouyer Exp $ */
 
 
@@ -1094,12 +1094,20 @@ wdctimeout(arg)
 	void *arg;
 {
 	struct channel_softc *chp = (struct channel_softc *)arg;
-	struct wdc_xfer *xfer = chp->ch_queue->sc_xfer.tqh_first;
+	struct wdc_xfer *xfer;
 	int s;
 
 	WDCDEBUG_PRINT(("wdctimeout\n"), DEBUG_FUNCS);
 
 	s = splbio();
+	xfer = TAILQ_FIRST(&chp->ch_queue->sc_xfer);
+
+	/* Did we lose a race with the interrupt? */
+	if (xfer == NULL ||
+	    !timeout_triggered(&chp->ch_timo)) {
+		splx(s);
+		return;
+	}	
 	if ((chp->ch_flags & WDCF_IRQ_WAIT) != 0) {
 		__wdcerror(chp, "timeout");
 		printf("\ttype: %s\n", (xfer->c_flags & C_ATAPI) ?

@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdcvar.h,v 1.14 2001/03/05 16:04:11 ho Exp $     */
+/*      $OpenBSD: wdcvar.h,v 1.15 2001/03/15 23:08:16 csapuntz Exp $     */
 /*	$NetBSD: wdcvar.h,v 1.17 1999/04/11 20:50:29 bouyer Exp $	*/
 
 /*-
@@ -186,6 +186,8 @@ struct wdc_softc { /* Per controller state */
   * Description of a command to be handled by a controller.
   * These commands are queued in a list.
   */
+struct atapi_return_args;
+
 struct wdc_xfer {
 	volatile u_int c_flags;    
 #define C_INUSE  	0x0001 /* xfer struct is in use */
@@ -211,18 +213,15 @@ struct wdc_xfer {
 	LIST_ENTRY(wdc_xfer) free_list;
 	void (*c_start) __P((struct channel_softc *, struct wdc_xfer *));
 	int  (*c_intr)  __P((struct channel_softc *, struct wdc_xfer *, int));
-	int (*c_done)  __P((struct channel_softc *, struct wdc_xfer *, int));
         void (*c_kill_xfer) __P((struct channel_softc *, struct wdc_xfer *));
 
 	/* Used by ATAPISCSI */
-	int timeout;
-	int endticks;
-	int delay;
+ 	int endticks;
 	struct timeout atapi_poll_to;
-	unsigned int expect_irq:1;
-	unsigned int claim_irq:1;
-
-	int (*next) __P((struct channel_softc *, struct wdc_xfer *, int));
+	void (*next) __P((struct channel_softc *, struct wdc_xfer *, int,
+			 struct atapi_return_args *));
+	void (*c_done)  __P((struct channel_softc *, struct wdc_xfer *, int,
+			 struct atapi_return_args *));
 	
 	/* Used for tape devices */
 	int  transfer_len;
