@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ieee80211.9,v 1.1 2005/04/04 12:48:42 jsg Exp $
+.\"	$OpenBSD: ieee80211.9,v 1.2 2005/04/04 14:12:05 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Bruce M. Simpson <bms@spc.org>
 .\" Copyright (c) 2004 Darron Broad <darron@kewl.org>
@@ -26,7 +26,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\" $FreeBSD: src/share/man/man9/ieee80211.9,v 1.3 2004/07/07 12:59:39 ru Exp $
-.\" $Id: ieee80211.9,v 1.1 2005/04/04 12:48:42 jsg Exp $
+.\" $Id: ieee80211.9,v 1.2 2005/04/04 14:12:05 jmc Exp $
 .\"
 .Dd March 2, 2004
 .Dt IEEE80211 9
@@ -93,7 +93,7 @@ function attaches the network interface
 to the 802.11 network stack layer.
 This function must be called before using any of the
 .Nm ieee80211
-functions which need to store driver state across invocations;
+functions which need to store driver state across invocations.
 The
 .Vt struct ifnet
 instance pointed to by
@@ -144,7 +144,7 @@ to an IEEE channel number for the driver
 .Fa ic .
 If the conversion would be invalid, an error message is printed to the
 system console.
-This function REQUIRES that the driver is hooked up to the
+This function requires that the driver is hooked up to the
 .Nm ieee80211
 subsystem.
 .Pp
