@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_delete.1,v 1.5 2004/01/27 14:50:52 espie Exp $
+.\"	$OpenBSD: pkg_delete.1,v 1.6 2004/01/27 15:34:31 espie Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -66,8 +66,14 @@ is a comma-separated list of keywords that state what failsafes
 should be waived.
 These include:
 .Bl -tag -width keyword
+.It Ar ambiguous
+delete all packages matching ambiguous package specifications.
+.It Ar dependencies
+also delete the whole set of packages that depends upon the requested packages.
 .It Ar nonroot
-install even if not running as root.
+uninstall even if not running as root.
+.It Ar uninstalled
+proceed even if some package names don't resolve to installed package names.
 .El
 .It Fl c
 Delete extra configuration file, mentioned as

@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_delete,v 1.20 2004/01/27 14:50:52 espie Exp $
+# $OpenBSD: pkg_delete,v 1.21 2004/01/27 15:34:31 espie Exp $
 #
 # Copyright (c) 2003 Marc Espie.
 # 
@@ -347,26 +347,29 @@ my @realnames;
 my $bad;
 
 for my $pkgname (@ARGV) {
-	$pkgname =~ s/\.tgz$//;
-	unless (is_installed($pkgname)) {
-	    if (OpenBSD::PackageName::is_stem($pkgname)) {
-		my @l = OpenBSD::PackageName::findstem($pkgname, 
-		    installed_packages());
-		if (@l == 1) {
-		    $pkgname = $l[0];
-		} elsif (@l != 0) {
-		    print "Ambiguous: $pkgname could be ", join(' ', @l),"\n";
+    $pkgname =~ s/\.tgz$//;
+    if (is_installed($pkgname)) {
+	push(@realnames, installed_name($pkgname));
+    } else {
+	if (OpenBSD::PackageName::is_stem($pkgname)) {
+	    my @l = OpenBSD::PackageName::findstem($pkgname, 
+		installed_packages());
+	    if (@l == 0) {
+		print "Can't resolve $pkgname to an installed package name\n";
+		$bad = 1 unless $forced{uninstalled};
+	    } elsif (@l == 1) {
+		push(@realnames, $l[0]);
+	    } elsif (@l != 0) {
+		print "Ambiguous: $pkgname could be ", join(' ', @l),"\n";
+		if ($forced{ambiguous}) {
+		    print "(removing them all)\n";
+		    push(@realnames, @l);
+		} else {
 		    $bad = 1;
-		    next;
 		}
 	    }
 	}
-	if (is_installed($pkgname)) {
-	    push(@realnames, installed_name($pkgname));
-	} else {
-	    print "Can't resolve $pkgname to an installed package name\n";
-	    $bad = 1;
-	}
+    }
 }
 
 # Then check that dependencies are okay
@@ -388,14 +391,22 @@ while (my $pkgname = pop @todo) {
 			next if defined $extra_rm{$dep};
 			$extra_rm{$dep}=$pkgname;
 			push(@todo, $dep);
-			$bad = 1;
 		}
 	}
 }
-if ($bad) {
+
+if (keys(%extra_rm) != 0) {
 	print "Can't remove ", join(' ', @ARGV), " without also removing:\n",
-	    join(' ', keys(%extra_rm)), "\n"
-		if keys(%extra_rm) != 0;
+	    join(' ', keys(%extra_rm)), "\n";
+	if ($forced{dependencies}) {
+		print "(removing them as well)\n";
+		push(@realnames, keys(%extra_rm));
+	} else {
+		$bad = 1;
+	}
+}
+
+if ($bad) {
 	exit(1);
 }
 
