@@ -1,50 +1,78 @@
-#!/bin/sh -
+#!/usr/bin/perl -w
 #
-#	$OpenBSD: recover,v 1.1 1997/07/27 23:29:12 downsj Exp $
-#	@(#)recover.in	8.8 (Berkeley) 10/10/96
+# $OpenBSD: recover,v 1.2 1999/10/11 20:07:19 millert Exp $
 #
-# Script to recover nvi edit sessions.
+# Script to (safely) recover nvi edit sessions.
 #
-RECDIR="/var/tmp/vi.recover"
-SENDMAIL="/usr/sbin/sendmail"
+$recoverdir = $ARGV[0] || "/var/tmp/vi.recover";
+$sendmail = "/usr/sbin/sendmail";
 
-echo 'Recovering nvi editor sessions.'
+# Make the recovery dir if it does not exist.
+if (!lstat($recoverdir)) {
+	mkdir($recoverdir, 01777) || die "Unable to create $recoverdir: $!\n";
+	chmod(01777, $recoverdir);
+	exit(0);
+}
+
+# Sanity check the vi recovery dir
+if (-l _) {
+	die "Warning! $recoverdir is a symbolic link! (ignoring)\n";
+} elsif (! -O _) {
+	die "Warning! $recoverdir is not owned by root! (ignoring)\n";
+} elsif (! -d _) {
+	die "Warning! $recoverdir is not a directory! (ignoring)\n";
+}
+chdir($recoverdir) || die "$0: can't chdir to $recoverdir: $!\n";
 
 # Check editor backup files.
-vibackup=`echo $RECDIR/vi.*`
-if [ "$vibackup" != "$RECDIR/vi.*" ]; then
-	for i in $vibackup; do
-		# Only test files that are readable.
-		if test ! -r $i; then
-			continue
-		fi
+opendir(RECDIR, ".") || die "$0: can't open $recoverdir: $!\n";
+foreach $file (readdir(RECDIR)) {
+	next unless $file =~ /^vi\./;
 
-		# Unmodified nvi editor backup files either have the
-		# execute bit set or are zero length.  Delete them.
-		if test -x $i -o ! -s $i; then
-			rm $i
-		fi
-	done
-fi
+	# Unmodified vi editor backup files either have the
+	# execute bit set or are zero length.  Delete them.
+	# Anything that is not a normal file gets deleted too.
+	lstat($file) || die "$0: can't stat $file: $!\n";
+	if (-x _ || ! -s _ || ! -f _) {
+		unlink($file) unless -d _;
+	}
+}
 
 # It is possible to get incomplete recovery files, if the editor crashes
 # at the right time.
-virecovery=`echo $RECDIR/recover.*`
-if [ "$virecovery" != "$RECDIR/recover.*" ]; then
-	for i in $virecovery; do
-		# Only test files that are readable.
-		if test ! -r $i; then
-			continue
-		fi
+rewinddir(RECDIR);
+foreach $file (readdir(RECDIR)) {
+	next unless $file =~ /^recover\./;
 
-		# Delete any recovery files that are zero length, corrupted,
-		# or that have no corresponding backup file.  Else send mail
-		# to the user.
-		recfile=`awk '/^X-vi-recover-path:/{print $2}' < $i`
-		if test -n "$recfile" -a -s "$recfile"; then
-			$SENDMAIL -t < $i
-		else
-			rm $i
-		fi
-	done
-fi
+	# Delete anything that is not a regular file as that is either
+	# filesystem corruption from fsck or an exploit attempt.
+	lstat($file) || die "$0: can't stat $file: $!\n";
+	if (! -f _ || ! -s _) {
+		unlink($file) unless -d _;
+		next;
+	}
+
+	# Slurp in the recover.* file and search for X-vi-recover-path
+	# (which should point to an existing vi.* file).
+	open(RECFILE, $file) || die "$0: can't open $file: $!\n";
+	@recfile = <RECFILE>;
+	close(RECFILE);
+	@backups = grep(s/^X-vi-recover-path:\s*(.*)[\r\n]*$/$1/, @recfile);
+
+	# Delete any recovery files that are zero length, corrupted,
+	# or that have no corresponding backup file.  Else send mail
+	# to the user.
+	if ($#backups != 0) {
+		unlink($file);
+	} elsif (! -s $backups[0]) {
+		unlink($file, $backups[0]);
+	} else {
+		open(SENDMAIL, "|$sendmail -t") ||
+		    die "$0: can't run $sendmail -t: $!\n";
+		print SENDMAIL @recfile;
+		close(SENDMAIL);
+	}
+}
+closedir(RECDIR);
+
+exit(0);
