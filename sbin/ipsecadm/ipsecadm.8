@@ -1,4 +1,4 @@
-.\" $OpenBSD: ipsecadm.8,v 1.55 2003/02/03 17:46:57 jmc Exp $
+.\" $OpenBSD: ipsecadm.8,v 1.56 2003/02/24 21:54:33 jason Exp $
 .\"
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -410,8 +410,15 @@ Also
 for both new ah and esp.
 .It Fl comp
 The compression algorithm to be used with the IPCA.
-The only possible value currently is:
-.Nm deflate .
+Possible values are:
+.Nm deflate
+and
+.Nm lzs .
+Note that
+.Nm lzs
+is only available with
+.Xr hifn 4
+because of the patent held by Hifn, Inc.
 .It Fl key
 The secret symmetric key used for encryption and authentication.
 The size for
