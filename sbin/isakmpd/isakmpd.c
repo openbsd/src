@@ -1,4 +1,4 @@
-/*	$OpenBSD: isakmpd.c,v 1.44 2002/06/14 21:34:58 todd Exp $	*/
+/*	$OpenBSD: isakmpd.c,v 1.45 2002/07/05 13:58:50 ho Exp $	*/
 /*	$EOM: isakmpd.c,v 1.54 2000/10/05 09:28:22 niklas Exp $	*/
 
 /*
@@ -78,14 +78,14 @@ int debug = 0;
  * If we receive a SIGHUP signal, this flag gets set to show we need to
  * reconfigure ASAP.
  */
-static int sighupped = 0;
+volatile sig_atomic_t sighupped = 0;
 
 /*
  * If we receive a USR1 signal, this flag gets set to show we need to dump
  * a report over our internal state ASAP.  The file to report to is settable
  * via the -R parameter.
  */
-static int sigusr1ed = 0;
+volatile sig_atomic_t sigusr1ed = 0;
 static char *report_file = "/var/run/isakmpd.report";
 
 /*
@@ -93,13 +93,13 @@ static char *report_file = "/var/run/isakmpd.report";
  * rehash our SA soft expiration timers to a uniform distribution.
  * XXX Perhaps this is a really bad idea?
  */
-static int sigusr2ed = 0;
+volatile sig_atomic_t sigusr2ed = 0;
 
 /*
  * If we receive a TERM signal, perform a "clean shutdown" of the daemon.
  * This includes to send DELETE notifications for all our active SAs.
  */
-static int sigtermed = 0;
+volatile sig_atomic_t sigtermed = 0;
 void daemon_shutdown_now (int);
 
 /* The default path of the PID file.  */
