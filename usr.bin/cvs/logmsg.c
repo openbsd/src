@@ -1,4 +1,4 @@
-/*	$OpenBSD: logmsg.c,v 1.4 2004/12/02 19:23:44 jfb Exp $	*/
+/*	$OpenBSD: logmsg.c,v 1.5 2004/12/03 19:01:02 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -286,22 +286,22 @@ cvs_logmsg_get(const char *dir, struct cvs_flist *files)
 int
 cvs_logmsg_send(struct cvsroot *root, const char *msg)
 {
-	const char *mp, *np;
-	char buf[256];
+	const char *mp;
+	char *np, buf[256];
 
 	if (cvs_sendarg(root, "-m", 0) < 0)
 		return (-1);
 
-	for (np = msg; np != NULL; np = strchr(np, '\n')) {
-		if (*np == '\n')
-			np++;
+	for (mp = msg; mp != NULL; mp = strchr(mp, '\n')) {
+		if (*mp == '\n')
+			mp++;
 
 		/* XXX ghetto */
-		strlcpy(buf, np, sizeof(buf));
-		mp = strchr(buf, '\n');
-		if (mp != NULL)
-			*mp = '\0';
-		if (cvs_sendarg(root, buf, (np == msg) ? 0 : 1) < 0)
+		strlcpy(buf, mp, sizeof(buf));
+		np = strchr(buf, '\n');
+		if (np != NULL)
+			*np = '\0';
+		if (cvs_sendarg(root, buf, (mp == msg) ? 0 : 1) < 0)
 			return (-1);
 	}
 
