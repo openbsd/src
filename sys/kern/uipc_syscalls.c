@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.8 1998/07/28 00:12:56 millert Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.9 1998/07/28 04:29:45 millert Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -439,8 +439,9 @@ sendit(p, s, mp, flags, retsize)
 	auio.uio_resid = 0;
 	iov = mp->msg_iov;
 	for (i = 0; i < mp->msg_iovlen; i++, iov++) {
-		if ((auio.uio_resid += iov->iov_len) < 0)
+		if (auio.uio_resid + iov->iov_len < auio.uio_resid)
 			return (EINVAL);
+		auio.uio_resid += iov->iov_len;
 	}
 	if (mp->msg_name) {
 		error = sockargs(&to, mp->msg_name, mp->msg_namelen,
@@ -631,8 +632,9 @@ recvit(p, s, mp, namelenp, retsize)
 	auio.uio_resid = 0;
 	iov = mp->msg_iov;
 	for (i = 0; i < mp->msg_iovlen; i++, iov++) {
-		if ((auio.uio_resid += iov->iov_len) < 0)
+		if (auio.uio_resid + iov->iov_len < auio.uio_resid)
 			return (EINVAL);
+		auio.uio_resid += iov->iov_len;
 	}
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_GENIO)) {
