@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.27 1997/08/21 22:15:17 mickey Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.28 1997/08/21 22:17:56 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -541,7 +541,7 @@ qualify(name)
 		if (p[1] == '/')
 			sprintf(cmd.path, "%s", name);
 		else
-			sprintf(cmd.path, "%s%s%s", name, cmd.cwd, name);
+			sprintf(cmd.path, "%s%s", cmd.cwd, name);
 	else if (name[0] == '/')
 		sprintf(cmd.path, "%s:%s", cmd.bootdev, name);
 	else
