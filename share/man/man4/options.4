@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.100 2002/05/16 14:13:44 kjc Exp $
+.\"	$OpenBSD: options.4,v 1.101 2002/05/23 21:11:48 drahn Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -526,6 +526,11 @@ See also
 .Xr chflags 1 .
 .It Cd option UFS_EXTATTR
 This option enables Extended Attribute support for UFS filesystems.
+.It Cd option UFS_EXTATTR_AUTOSTART
+This option causes Extended Attributes to be started and enabled when each
+UFS filesystem is mounted.
+The attribute storage is expected to be (relative to mount point)
+.Pa /.attribute/{system|user}/<attrname>
 .El
 .Ss Miscellaneous Options
 .Bl -ohang
