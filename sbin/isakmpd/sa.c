@@ -1,5 +1,5 @@
-/*	$OpenBSD: sa.c,v 1.31 2000/08/03 07:28:44 niklas Exp $	*/
-/*	$EOM: sa.c,v 1.108 2000/08/03 07:22:29 niklas Exp $	*/
+/*	$OpenBSD: sa.c,v 1.32 2000/10/16 23:27:43 niklas Exp $	*/
+/*	$EOM: sa.c,v 1.110 2000/10/16 18:16:59 provos Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -437,9 +437,17 @@ void
 sa_free (struct sa *sa)
 {
   if (sa->death)
-    timer_remove_event (sa->death);
+    {
+      timer_remove_event (sa->death);
+      sa->death = 0;
+      sa->refcnt--;
+    }
   if (sa->soft_death)
-    timer_remove_event (sa->soft_death);
+    {
+      timer_remove_event (sa->soft_death);
+      sa->soft_death = 0;
+      sa->refcnt--;
+    }
   sa_free_aux (sa);
 }
 
@@ -639,6 +647,8 @@ sa_soft_expire (void *v_sa)
      * happen as soon as it is shown to be alive.
      */
     sa->flags |= SA_FLAG_FADING;
+
+  sa_release (sa);
 }
 
 /* SA has passed its best before date.  */
@@ -666,7 +676,9 @@ sa_flag (char *attr)
     char *name;
     int flag;
   } sa_flag_map[] = {
-    { "active-only", SA_FLAG_ACTIVE_ONLY }
+    { "active-only", SA_FLAG_ACTIVE_ONLY },
+    /* Below this point are flags that are internal to the implementation.  */
+    { "__ondemand", SA_FLAG_ONDEMAND }
   };
   int i;
 
@@ -724,6 +736,7 @@ sa_setup_expirations (struct sa *sa)
 	  sa_delete (sa, 1);
 	  return -1;
 	}
+      sa_reference (sa);
     }
 
   if (!sa->death)
@@ -741,6 +754,7 @@ sa_setup_expirations (struct sa *sa)
 	  sa_delete (sa, 1);
 	  return -1;
 	}
+      sa_reference (sa);
     }
   return 0;
 }
