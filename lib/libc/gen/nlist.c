@@ -1,4 +1,4 @@
-/*	$OpenBSD: nlist.c,v 1.9 1996/05/29 03:05:14 deraadt Exp $ */
+/*	$OpenBSD: nlist.c,v 1.10 1996/05/30 16:16:53 pefo Exp $ */
 /*	$NetBSD: nlist.c,v 1.7 1996/05/16 20:49:20 cgd Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: nlist.c,v 1.9 1996/05/29 03:05:14 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: nlist.c,v 1.10 1996/05/30 16:16:53 pefo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -197,11 +197,11 @@ __ecoff_fdnlist(fd, list)
 		BADUNMAP;
 	symhdrp = (struct ecoff_symhdr *)&mappedfile[symhdroff];
 
-	nesyms = symhdrp->esymMax;
-	if (check(symhdrp->cbExtOffset, nesyms * sizeof *esyms))
+	nesyms = symhdrp->sh_esymmax;
+	if (check(symhdrp->sh_esymoff, nesyms * sizeof *esyms))
 		BADUNMAP;
-	esyms = (struct ecoff_extsym *)&mappedfile[symhdrp->cbExtOffset];
-	extstroff = symhdrp->cbSsExtOffset;
+	esyms = (struct ecoff_extsym *)&mappedfile[symhdrp->sh_esymoff];
+	extstroff = symhdrp->sh_estroff;
 
 	/*
 	 * clean out any left-over information for all valid entries.
