@@ -1,4 +1,4 @@
-/*	$OpenBSD: vprintf.c,v 1.2 1996/06/26 05:39:58 deraadt Exp $	*/
+/*	$OpenBSD: vprintf.c,v 1.3 1997/04/01 07:35:53 todd Exp $	*/
 
 /*
  * Copyright (c) 1991 Carnegie Mellon University
@@ -28,43 +28,16 @@
  * varargs versions of printf routines
  *
  **********************************************************************
- * HISTORY
- * $Log: vprintf.c,v $
- * Revision 1.2  1996/06/26 05:39:58  deraadt
- * rcsid
- *
- * Revision 1.1  1995/12/16 11:47:03  deraadt
- * add sup to the tree
- *
- * Revision 1.1.1.1  1993/05/21 14:52:19  cgd
- * initial import of CMU's SUP to NetBSD
- *
- * Revision 2.5  89/09/08  18:15:55  mbj
- * 	Use _doprnt() for the Multimax (an "old" architecture).
- * 	[89/09/08            mbj]
- * 
- * Revision 2.4  89/08/03  14:40:10  mja
- * 	Add vsnprintf() routine.
- * 	[89/07/12            mja]
- * 
- * 	Terminate vsprintf() string with null byte.
- * 	[89/04/21            mja]
- * 
- * 	Change to use new hidden name for _doprnt on MIPS.
- * 	[89/04/18            mja]
- * 
- * Revision 2.3  89/06/10  14:13:43  gm0w
- * 	Added putc of NULL byte to vsprintf.
- * 	[89/06/10            gm0w]
- * 
- * Revision 2.2  88/12/13  13:53:17  gm0w
- * 	From Brad White.
- * 	[88/12/13            gm0w]
- ************************************************************
  */
 
 #include <stdio.h>
 #include <varargs.h>
+
+#ifdef _IOSTRG
+#define STRFLAG		(_IOSTRG|_IOWRT)	/* no _IOWRT: avoid stdio bug */
+#else
+#define STRFLAG		(_IOREAD)		/* XXX: Assume svr4 stdio */
+#endif
 
 #ifdef DOPRINT_VA
 /* 
@@ -106,7 +79,7 @@ vsprintf(s, fmt, args)
 {
 	FILE fakebuf;
 
-	fakebuf._flag = _IOSTRG+_IOWRT;	/* no _IOWRT: avoid stdio bug */
+	fakebuf._flag = STRFLAG;
 	fakebuf._ptr = s;
 	fakebuf._cnt = 32767;
 	_doprnt(fmt, args, &fakebuf);
@@ -123,9 +96,10 @@ vsnprintf(s, n, fmt, args)
 {
 	FILE fakebuf;
 
-	fakebuf._flag = _IOSTRG+_IOWRT;	/* no _IOWRT: avoid stdio bug */
+	fakebuf._flag = STRFLAG;
 	fakebuf._ptr = s;
 	fakebuf._cnt = n-1;
+	fakebuf._file = -1;
 	_doprnt(fmt, args, &fakebuf);
 	fakebuf._cnt++;
 	putc('\0', &fakebuf);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: scm.c,v 1.3 1996/08/04 12:58:26 deraadt Exp $	*/
+/*	$OpenBSD: scm.c,v 1.4 1997/04/01 07:35:22 todd Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -69,42 +69,6 @@
  *  2-Oct-92  Mary Thompson (mrt) at Carnegie-Mellon University
  *	Added conditional declarations of INADDR_NONE and INADDR_LOOPBACK
  *	since Tahoe version of <netinet/in.h> does not define them.
- *
- * $Log: scm.c,v $
- * Revision 1.3  1996/08/04 12:58:26  deraadt
- * ftp bounce protection
- *
- * Revision 1.2  1996/06/26 05:39:47  deraadt
- * rcsid
- *
- * Revision 1.1  1995/12/16 11:46:51  deraadt
- * add sup to the tree
- *
- * Revision 1.2  1995/06/03 21:21:51  christos
- * Changes to write ascii timestamps in the when files.
- * Looked into making it 64 bit clean, but it is hopeless.
- * Added little program to convert from the old timestamp files
- * into the new ones.
- *
- * Revision 1.1.1.1  1993/05/21 14:52:17  cgd
- * initial import of CMU's SUP to NetBSD
- *
- * Revision 1.13  92/08/11  12:05:35  mrt
- * 	Added changes from stump:
- * 	  Allow for multiple interfaces, and for numeric addresses.
- * 	  Changed to use builtin port for the "supfiledbg"
- * 	    service when getservbyname() cannot find it.
- * 	  Added forward static declatations, delinted.
- * 	  Updated variable argument usage.
- * 	[92/08/08            mrt]
- * 
- * Revision 1.12  92/02/08  19:01:11  mja
- * 	Add (struct sockaddr *) casts for HC 2.1.
- * 	[92/02/08  18:59:09  mja]
- * 
- * Revision 1.11  89/08/03  19:49:03  mja
- * 	Updated to use v*printf() in place of _doprnt().
- * 	[89/04/19            mja]
  * 
  * 11-Feb-88  Glenn Marcy (gm0w) at Carnegie-Mellon University
  *	Moved sleep into computeBackoff, renamed to dobackoff.
@@ -188,6 +152,9 @@
 #include <sys/time.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
+#ifndef SIOCGIFCONF
+#include <sys/sockio.h>
+#endif
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <net/if.h>
@@ -197,7 +164,8 @@
 #else
 #include <varargs.h>
 #endif
-#include "sup.h"
+#include "supcdefs.h"
+#include "supextern.h"
 
 #ifndef INADDR_NONE
 #define	INADDR_NONE		0xffffffff		/* -1 return */
@@ -207,9 +175,9 @@
 #endif
 
 extern int errno;
-static char *myhost ();
 
 char scmversion[] = "4.3 BSD";
+extern int silent;
 
 /*************************
  ***    M A C R O S    ***
@@ -232,15 +200,15 @@ static struct in_addr remoteaddr;	/* remote host address */
 static char *remotename = NULL;		/* remote host name */
 static int swapmode;			/* byte-swapping needed on server? */
 
-#if __STDC__
-int scmerr(int,char *,...);
-#endif
+
+static char *myhost __P((void));
 
 /***************************************************
  ***    C O N N E C T I O N   R O U T I N E S    ***
  ***    F O R   S E R V E R                      ***
  ***************************************************/
 
+int
 servicesetup (server)		/* listen for clients */
 char *server;
 {
@@ -278,6 +246,7 @@ char *server;
 	return (SCMOK);
 }
 
+int
 service ()
 {
 	struct sockaddr_in from;
@@ -309,6 +278,7 @@ again:
 	return (SCMOK);
 }
 
+int
 serviceprep ()		/* kill temp socket in daemon */
 {
 	if (sock >= 0) {
@@ -318,6 +288,7 @@ serviceprep ()		/* kill temp socket in daemon */
 	return (SCMOK);
 }
 
+int
 servicekill ()		/* kill net file in daemon's parent */
 {
 	if (netfile >= 0) {
@@ -331,6 +302,7 @@ servicekill ()		/* kill net file in daemon's parent */
 	return (SCMOK);
 }
 
+int
 serviceend ()		/* kill net file after use in daemon */
 {
 	if (netfile >= 0) {
@@ -349,7 +321,7 @@ serviceend ()		/* kill net file after use in daemon */
  ***    F O R   C L I E N T                      ***
  ***************************************************/
 
-dobackoff (t,b)
+int dobackoff (t,b)
 int *t,*b;
 {
 	struct timeval tt;
@@ -366,11 +338,13 @@ int *t,*b;
 			s = *t;
 		*t -= s;
 	}
-	(void) scmerr (-1,"Will retry in %d seconds",s);
+	if (!silent)
+	    (void) scmerr (-1,"Will retry in %d seconds",s);
 	sleep (s);
 	return (1);
 }
 
+int
 request (server,hostname,retry)		/* connect to server */
 char *server;
 char *hostname;
@@ -390,8 +364,9 @@ int *retry;
 		else
 			return (scmerr (-1,"Can't find %s server description",
 					server));
-		(void) scmerr (-1,"%s/tcp: unknown service: using port %d",
-					server,port);
+		if (!silent)
+		    (void) scmerr (-1,"%s/tcp: unknown service: using port %d",
+				    server,port);
 	} else
 		port = sp->s_port;
 	(void) bzero ((char *)&sin,sizeof(sin));
@@ -426,6 +401,7 @@ int *retry;
 	return (SCMOK);
 }
 
+int
 requestend ()			/* end connection to server */
 {
 	(void) readflush ();
@@ -546,7 +522,7 @@ char *name;
 	return (0);
 }
 
-#if __STDC__
+#ifdef __STDC__
 int scmerr (int errno,char *fmt,...)
 #else
 /*VARARGS*//*ARGSUSED*/
@@ -554,24 +530,24 @@ int scmerr (va_alist)
 va_dcl
 #endif
 {
-#if !__STDC__
+	va_list ap;
+#ifdef __STDC__
+	va_start(ap,fmt);
+#else
 	int errno;
 	char *fmt;
+
+	va_start(ap);
+	errno = va_arg(ap,int);
+	fmt = va_arg(ap,char *);
 #endif
-	va_list ap;
 
 	(void) fflush (stdout);
 	if (progpid > 0)
 		fprintf (stderr,"%s %d: ",program,progpid);
 	else
 		fprintf (stderr,"%s: ",program);
-#if __STDC__
-	va_start(ap,fmt);
-#else
-	va_start(ap);
-	errno = va_arg(ap,int);
-	fmt = va_arg(ap,char *);
-#endif
+
 	vfprintf(stderr, fmt, ap);
 	va_end(ap);
 	if (errno >= 0)

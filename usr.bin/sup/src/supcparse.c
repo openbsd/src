@@ -1,4 +1,4 @@
-/*	$OpenBSD: supcparse.c,v 1.2 1996/06/26 05:39:53 deraadt Exp $	*/
+/*	$OpenBSD: supcparse.c,v 1.3 1997/04/01 07:35:38 todd Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -33,37 +33,6 @@
  *	Modified SUP to use gzip based compression when sending files
  *	across the network to save BandWidth
  *
- * $Log: supcparse.c,v $
- * Revision 1.2  1996/06/26 05:39:53  deraadt
- * rcsid
- *
- * Revision 1.1  1995/12/16 11:46:58  deraadt
- * add sup to the tree
- *
- * Revision 1.4  1995/06/09 04:33:34  christos
- * fixed bug related to the ascii `when' files previous fix, where the -t
- * option would fail to read the timestamp files.
- *
- * Revision 1.2  1993/08/04  17:46:20  brezak
- * Changes from nate for gzip'ed sup
- *
- * Revision 1.1.1.1  1993/05/21  14:52:18  cgd
- * initial import of CMU's SUP to NetBSD
- *
- * Revision 1.6  92/08/11  12:07:38  mrt
- * 	Added use-rel-suffix option corresponding to -u switch.
- * 	[92/07/26            mrt]
- * 
- * Revision 1.5  92/02/08  18:24:19  mja
- * 	Added "keep" supfile option, corresponding to -k switch.
- * 	[92/01/17            vdelvecc]
- * 
- * Revision 1.4  91/05/16  14:49:50  ern
- * 	Change default timeout from none to 3 hours so we don't accumalute 
- * 	processes running sups to dead hosts especially for users.
- * 	[91/05/16  14:49:21  ern]
- * 
- *
  * 10-Feb-88  Glenn Marcy (gm0w) at Carnegie-Mellon University
  *	Added timeout to backoff.
  *
@@ -77,6 +46,7 @@
  */
 
 #include "supcdefs.h"
+#include "supextern.h"
 
 
 #ifdef	lint
@@ -96,26 +66,28 @@ struct option {
 	char *op_name;
 	OPTION op_enum;
 } options[] = {
-	"host",		OHOST,
-	"base",		OBASE,
-	"hostbase",	OHOSTBASE,
-	"prefix",	OPREFIX,
-	"release",	ORELEASE,
-	"notify",	ONOTIFY,
-	"login",	OLOGIN,
-	"password",	OPASSWORD,
-	"crypt",	OCRYPT,
-	"backup",	OBACKUP,
-	"delete",	ODELETE,
-	"execute",	OEXECUTE,
-	"old",		OOLD,
-	"timeout",	OTIMEOUT,
-	"keep",		OKEEP,
-	"use-rel-suffix", OURELSUF,
- 	"compress", 	OCOMPRESS
+	{ "host",	OHOST },
+	{ "base",	OBASE },
+	{ "hostbase",	OHOSTBASE },
+	{ "prefix",	OPREFIX },
+	{ "release",	ORELEASE },
+	{ "notify",	ONOTIFY },
+	{ "login",	OLOGIN },
+	{ "password",	OPASSWORD },
+	{ "crypt",	OCRYPT },
+	{ "backup",	OBACKUP },
+	{ "delete",	ODELETE },
+	{ "execute",	OEXECUTE },
+	{ "old",	OOLD },
+	{ "timeout",	OTIMEOUT },
+	{ "keep",	OKEEP },
+	{ "use-rel-suffix", OURELSUF },
+ 	{ "compress", 	OCOMPRESS }
 };
 
-passdelim (ptr,delim)		/* skip over delimiter */
+static void passdelim __P((char **, int ));
+
+static void passdelim (ptr,delim)		/* skip over delimiter */
 char **ptr,delim;
 {
 	*ptr = skipover (*ptr, " \t");
@@ -125,7 +97,7 @@ char **ptr,delim;
 	}
 }
 
-parsecoll(c,collname,args)
+int parsecoll(c,collname,args)
 COLLECTION *c;
 char *collname,*args;
 {
@@ -243,14 +215,14 @@ char *collname,*args;
 }
 
 
-long
+time_t
 getwhen(collection, relsuffix)
 	char *collection, *relsuffix;
 {
 	char buf[STRINGLENGTH];
 	char *ep;
 	FILE *fp;
-	long tstamp;
+	time_t tstamp;
 
 	(void) sprintf (buf,FILEWHEN,collection,relsuffix);
 
@@ -273,7 +245,7 @@ getwhen(collection, relsuffix)
 int
 putwhen(fname, tstamp)
 	char *fname;
-	long tstamp;
+	time_t tstamp;
 {
 	FILE *fp;
 	if ((fp = fopen(fname, "w")) == NULL)

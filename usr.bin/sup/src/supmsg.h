@@ -1,4 +1,4 @@
-/*	$OpenBSD: supmsg.h,v 1.3 1996/07/31 11:11:34 niklas Exp $	*/
+/*	$OpenBSD: supmsg.h,v 1.4 1997/04/01 07:35:47 todd Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -34,30 +34,6 @@
  *	Modified SUP to use gzip based compression when sending files
  *	across the network to save BandWidth
  *
- * $Log: supmsg.h,v $
- * Revision 1.3  1996/07/31 11:11:34  niklas
- * Better use time_t instead of long when dealing with times
- *
- * Revision 1.2  1996/06/26 05:39:56  deraadt
- * rcsid
- *
- * Revision 1.1  1995/12/16 11:47:01  deraadt
- * add sup to the tree
- *
- * Revision 1.2  1993/08/04 17:46:24  brezak
- * Changes from nate for gzip'ed sup
- *
- * Revision 1.1.1.1  1993/05/21  14:52:19  cgd
- * initial import of CMU's SUP to NetBSD
- *
- * Revision 1.7  92/08/11  12:08:20  mrt
- * 	Added copyright.
- * 	[92/08/10            mrt]
- * 
- * Revision 1.6  89/08/23  14:56:42  gm0w
- * 	Changed MSGF to MSG constants.
- * 	[89/08/23            gm0w]
- * 
  * 27-Dec-87  Glenn Marcy (gm0w) at Carnegie-Mellon University
  *	Added crosspatch support.  Removed nameserver support.
  *

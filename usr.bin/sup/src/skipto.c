@@ -1,4 +1,4 @@
-/*	$OpenBSD: skipto.c,v 1.2 1996/06/26 05:39:48 deraadt Exp $	*/
+/*	$OpenBSD: skipto.c,v 1.3 1997/04/01 07:35:26 todd Exp $	*/
 
 /*
  * Copyright (c) 1991 Carnegie Mellon University
@@ -52,11 +52,14 @@
  *	and partly due to popular usage of this function.
  */
 
-static unsigned char tab[256] = {
+#include "supcdefs.h"
+#include "supextern.h"
+
+static char tab[256] = {
 	0};
 
 char *skipto (string,charset)
-unsigned char *string, *charset;
+char *string, *charset;
 {
 	register unsigned char *setp,*strp;
 
@@ -68,7 +71,7 @@ unsigned char *string, *charset;
 }
 
 char *skipover (string,charset)
-unsigned char *string, *charset;
+char *string, *charset;
 {
 	register unsigned char *setp,*strp;
 

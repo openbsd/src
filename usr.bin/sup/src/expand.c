@@ -1,4 +1,4 @@
-/*	$OpenBSD: expand.c,v 1.3 1997/01/17 07:13:20 millert Exp $	*/
+/*	$OpenBSD: expand.c,v 1.4 1997/04/01 07:35:01 todd Exp $	*/
 
 /*
  * Copyright (c) 1991 Carnegie Mellon University
@@ -72,6 +72,8 @@
 #include <ctype.h>
 #include <libc.h>
 #include <setjmp.h>
+#include <stdlib.h>
+#include <unistd.h>
 
 static	jmp_buf	sjbuf;
 
@@ -85,14 +87,25 @@ static	char	**BUFFER;		/* pointer to the buffer */
 static	int	BUFSIZE;		/* maximum number in buffer */
 static	int	bufcnt;			/* current number in buffer */
 
-static void glob();
-static void matchdir();
-static int execbrc();
-static int match();
-static int amatch();
-static void addone();
-static int addpath();
-static int gethdir();
+#define fixit(a) (a[0] ? a : ".")
+
+#ifndef __P
+#ifdef __STDC__
+#define __P(a)	a
+#else
+#define __P(a)	()
+#endif
+#endif
+
+int expand __P((char *, char **, int));
+static void glob __P((char *));
+static void matchdir __P((char *));
+static int execbrc __P((char *, char *));
+static int match __P((char *, char *));
+static int amatch __P((char *, char *));
+static void addone __P((char *, char *));
+static int addpath __P((int));
+static int gethdir __P((char *));
 
 int expand(spec, buffer, bufsize)
 	register char *spec;
@@ -136,7 +149,7 @@ static void glob(as)
 	}
 	while (*cs == 0 || strchr(globchars, *cs) == 0) {
 		if (*cs == 0) {
-			if (lstat(path, &stb) >= 0) addone(path, "");
+			if (lstat(fixit(path), &stb) >= 0) addone(path, "");
 			goto endit;
 		}
 		if (addpath(*cs++)) goto endit;
@@ -152,7 +165,7 @@ static void glob(as)
 		return;
 	}
 	/* this should not be an lstat */
-	if (stat(path, &stb) >= 0 && (stb.st_mode&S_IFMT) == S_IFDIR)
+	if (stat(fixit(path), &stb) >= 0 && (stb.st_mode&S_IFMT) == S_IFDIR)
 		matchdir(cs);
 endit:
 	pathp = spathp;
@@ -170,11 +183,11 @@ static void matchdir(pattern)
 #endif
 	DIR *dirp;
 
-	dirp = opendir(path);
+	dirp = opendir(fixit(path));
 	if (dirp == NULL)
 		return;
 	while ((dp = readdir(dirp)) != NULL) {
-#ifdef HAS_POSIX_DIR
+#if defined(HAS_POSIX_DIR) && !defined(__SVR4)
 		if (dp->d_fileno == 0) continue;
 #else
 		if (dp->d_ino == 0) continue;
@@ -282,7 +295,7 @@ static int amatch(s, p)
 		case '[':
 			ok = 0;
 			lc = 077777;
-			while (cc = *p++) {
+			while ((cc = *p++) != 0) {
 				if (cc == ']') {
 					if (ok) break;
 					return (0);
@@ -322,7 +335,7 @@ slash:
 			while (*s)
 				if (addpath(*s++)) goto pathovfl;
 			if (addpath('/')) goto pathovfl;
-			if (stat(path, &stb) >= 0 &&
+			if (stat(fixit(path), &stb) >= 0 &&
 			    (stb.st_mode&S_IFMT) == S_IFDIR)
 				if (*p == 0)
 					addone(path, "");
@@ -352,7 +365,8 @@ static void addone(s1, s2)
 	}
 	BUFFER[bufcnt++] = ep;
 	while (*s1) *ep++ = *s1++;
-	while (*ep++ = *s2++);
+	while ((*ep++ = *s2++) != '\0')
+		continue;
 }
 
 static int addpath(c)
@@ -368,7 +382,6 @@ static int addpath(c)
 static int gethdir(home)
 	char *home;
 {
-	struct passwd *getpwnam();
 	register struct passwd *pp = getpwnam(home);
 
 	if (pp == 0)

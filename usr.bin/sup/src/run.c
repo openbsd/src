@@ -1,4 +1,4 @@
-/*	$OpenBSD: run.c,v 1.3 1996/12/22 03:26:04 tholo Exp $	*/
+/*	$OpenBSD: run.c,v 1.4 1997/04/01 07:35:16 todd Exp $	*/
 
 /*
  * Copyright (c) 1991 Carnegie Mellon University
@@ -49,30 +49,6 @@
  *
  **********************************************************************
  * HISTORY
- * $Log: run.c,v $
- * Revision 1.3  1996/12/22 03:26:04  tholo
- * Deal with _POSIX_SAVED_IDS when relinquishing privileges
- *
- * Revision 1.2  1996/06/26 05:39:45  deraadt
- * rcsid
- *
- * Revision 1.1  1995/12/16 11:46:49  deraadt
- * add sup to the tree
- *
- * Revision 1.2  1995/06/24 16:21:33  christos
- * - Don't use system(3) to fork processes. It is a big security hole.
- * - Encode the filenames in the scan files using strvis(3), so filenames
- *   that contain newlines or other weird characters don't break the scanner.
- *
- * Revision 1.1.1.1  1993/05/21 14:52:17  cgd
- * initial import of CMU's SUP to NetBSD
- *
- * Revision 1.1  89/10/14  19:53:39  rvb
- * Initial revision
- * 
- * Revision 1.2  89/08/03  14:36:46  mja
- * 	Update run() and runp() to use <varargs.h>.
- * 	[89/04/19            mja]
  * 
  * 23-Sep-86  Glenn Marcy (gm0w) at Carnegie-Mellon University
  *	Merged old runv and runvp modules.
@@ -109,7 +85,9 @@
 #include <signal.h>
 #include <fcntl.h>
 #include <sys/wait.h>
-#include <varargs.h>
+
+#include "supcdefs.h"
+#include "supextern.h"
 
 #ifndef __STDC__
 #ifndef const
@@ -117,17 +95,30 @@
 #endif
 #endif
 
-static int dorun();
+static int dorun __P((char *, char **, int));
 
-int run (name,va_alist)
-char *name;
+int
+#ifdef __STDC__
+run(char *name, ...)
+#else
+run(va_alist)
 va_dcl
+#endif
 {
 	int val;
 	va_list ap;
+	char **argv;
+#ifdef __STDC__
+	va_start(ap, name);
+#else
+	char *name;
 
 	va_start(ap);
-	val = runv (name,ap);
+	name = va_arg(ap, char *);
+#endif
+
+	argv = va_arg(ap, char **);
+	val = runv (name, argv);
 	va_end(ap);
 	return(val);
 }
@@ -138,15 +129,28 @@ char *name,**argv;
 	return (dorun (name, argv, 0));
 }
 
-int runp (name,va_alist)
-char *name;
+int
+#ifdef __STDC__
+runp(char *name, ...)
+#else
+runp (va_alist)
 va_dcl
+#endif
 {
 	int val;
 	va_list ap;
+	char **argv;
+#ifdef __STDC__
+	va_start(ap, name);
+#else
+	char *name;
 
 	va_start(ap);
-	val = runvp (name,ap);
+	name = va_arg(ap, char *);
+#endif
+
+	argv = va_arg(ap, char **);
+	val = runvp (name, argv);
 	va_end(ap);
 	return (val);
 }
@@ -164,10 +168,8 @@ int usepath;
 {
 	int wpid;
 	register int pid;
-	struct sigvec ignoresig,intsig,quitsig;
-	union wait status;
-	int execvp(), execv();
-	int (*execrtn)() = usepath ? execvp : execv;
+	struct sigaction ignoresig,intsig,quitsig;
+	int status;
 
 	if ((pid = vfork()) == -1)
 		return(-1);	/* no more process's, so exit with error */
@@ -177,30 +179,33 @@ int usepath;
 		setgid (getgid());
 		seteuid (getuid());
 		setuid (getuid());
-		(*execrtn) (name,argv);
+		if (usepath)
+		    execvp(name,argv);
+		else
+		    execv(name,argv);
 		fprintf (stderr,"run: can't exec %s\n",name);
 		_exit (0377);
 	}
 
-	ignoresig.sv_handler = SIG_IGN;	/* ignore INT and QUIT signals */
-	ignoresig.sv_mask = 0;
-	ignoresig.sv_onstack = 0;
-	sigvec (SIGINT,&ignoresig,&intsig);
-	sigvec (SIGQUIT,&ignoresig,&quitsig);
+	ignoresig.sa_handler = SIG_IGN;	/* ignore INT and QUIT signals */
+	sigemptyset(&ignoresig.sa_mask);
+	ignoresig.sa_flags = 0;
+	sigaction (SIGINT,&ignoresig,&intsig);
+	sigaction (SIGQUIT,&ignoresig,&quitsig);
 	do {
-		wpid = wait3 (&status.w_status, WUNTRACED, 0);
+		wpid = wait3 (&status, WUNTRACED, 0);
 		if (WIFSTOPPED (status)) {
 		    kill (0,SIGTSTP);
 		    wpid = 0;
 		}
 	} while (wpid != pid && wpid != -1);
-	sigvec (SIGINT,&intsig,0);	/* restore signals */
-	sigvec (SIGQUIT,&quitsig,0);
+	sigaction (SIGINT,&intsig,0);	/* restore signals */
+	sigaction (SIGQUIT,&quitsig,0);
 
-	if (WIFSIGNALED (status) || status.w_retcode == 0377)
+	if (WIFSIGNALED (status) || WEXITSTATUS(status) == 0377)
 		return (-1);
 
-	return (status.w_retcode);
+	return (WEXITSTATUS(status));
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffilecopy.c,v 1.4 1996/12/04 08:21:00 niklas Exp $	*/
+/*	$OpenBSD: ffilecopy.c,v 1.5 1997/04/01 07:35:03 todd Exp $	*/
 
 /*
  * Copyright (c) 1991 Carnegie Mellon University
@@ -47,7 +47,8 @@
  */
 
 #include <stdio.h>
-int filecopy();
+#include "supcdefs.h"
+#include "supextern.h"
 
 int ffilecopy (here,there)
 FILE *here, *there;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: quit.c,v 1.2 1996/06/26 05:39:45 deraadt Exp $	*/
+/*	$OpenBSD: quit.c,v 1.3 1997/04/01 07:35:15 todd Exp $	*/
 
 /*
  * Copyright (c) 1991 Carnegie Mellon University
@@ -37,35 +37,35 @@
  *
  **********************************************************************
  * HISTORY
- * $Log: quit.c,v $
- * Revision 1.2  1996/06/26 05:39:45  deraadt
- * rcsid
- *
- * Revision 1.1  1995/12/16 11:46:49  deraadt
- * add sup to the tree
- *
- * Revision 1.1.1.1  1993/05/21 14:52:17  cgd
- * initial import of CMU's SUP to NetBSD
- *
- * Revision 1.2  88/12/13  13:52:41  gm0w
- * 	Rewritten to use varargs.
- * 	[88/12/13            gm0w]
  * 
  **********************************************************************
  */
 
 #include <stdio.h>
-#include <varargs.h>
+#include "supcdefs.h"
+#include "supextern.h"
 
-quit (status, fmt, va_alist)
-int status;
-char *fmt;
+void
+#ifdef __STDC__
+quit (int status, char * fmt, ...)
+#else
+quit (va_alist)
 va_dcl
+#endif
 {
 	va_list args;
+#ifdef __STDC__
+	va_start(args, fmt);
+#else
+	int status;
+	char *fmt;
+
+	va_start(args);
+	status = va_arg(args, int);
+	fmt = va_arg(args, char *);
+#endif
 
 	fflush(stdout);
-	va_start(args);
 	(void) vfprintf(stderr, fmt, args);
 	va_end(args);
 	exit(status);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: supfilesrv.c,v 1.6 1997/01/17 07:18:10 millert Exp $	*/
+/*	$OpenBSD: supfilesrv.c,v 1.7 1997/04/01 07:35:43 todd Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -24,14 +24,16 @@
  * any improvements or extensions that they make and grant Carnegie Mellon
  * the rights to redistribute these changes.
  *
+ */
 /*
  * supfilesrv -- SUP File Server
  *
- * Usage:  supfilesrv [-l] [-P] [-N] [-R]
+ * Usage:  supfilesrv [-l] [-P] [-N] [-R] [-S]
  *	-l	"live" -- don't fork daemon
  *	-P	"debug ports" -- use debugging network ports
  *	-N	"debug network" -- print debugging messages for network i/o
  *	-R	"RCS mode" -- if file is an rcs file, use co to get contents
+ *	-S	"Operate silently" -- Only print error messages
  *
  **********************************************************************
  * HISTORY
@@ -43,119 +45,6 @@
  *	Modified SUP to use gzip based compression when sending files
  *	across the network to save BandWidth
  *
- * $Log: supfilesrv.c,v $
- * Revision 1.6  1997/01/17 07:18:10  millert
- * more r?index -> strr?chr
- *
- * Revision 1.5  1996/12/22 03:26:05  tholo
- * Deal with _POSIX_SAVED_IDS when relinquishing privileges
- *
- * Revision 1.4  1996/07/31 11:11:31  niklas
- * Better use time_t instead of long when dealing with times
- *
- * Revision 1.3  1996/06/26 05:39:54  deraadt
- * rcsid
- *
- * Revision 1.2  1996/06/10 20:45:35  deraadt
- * hack: print hostname connection failed with
- *
- * Revision 1.1  1995/12/16 11:46:59  deraadt
- * add sup to the tree
- *
- * Revision 1.8  1995/10/29 23:54:49  christos
- * - runio fails when result != 0 not only < 0
- * - print vis-encoded file in the scanner.
- *
- * Revision 1.7  1995/06/24 16:21:55  christos
- * - Don't use system(3) to fork processes. It is a big security hole.
- * - Encode the filenames in the scan files using strvis(3), so filenames
- *   that contain newlines or other weird characters don't break the scanner.
- *
- * Revision 1.6  1995/06/03 21:22:00  christos
- * Changes to write ascii timestamps in the when files.
- * Looked into making it 64 bit clean, but it is hopeless.
- * Added little program to convert from the old timestamp files
- * into the new ones.
- *
- * Revision 1.5  1993/08/04 17:46:21  brezak
- * Changes from nate for gzip'ed sup
- *
- * Revision 1.3  1993/06/05  21:32:17  cgd
- * use daemon() to put supfilesrv into daemon mode...
- *
- * Revision 1.2  1993/05/24  17:57:31  brezak
- * Remove netcrypt.c. Remove unneeded files. Cleanup make.
- *
- * Revision 1.20  92/09/09  22:05:00  mrt
- * 	Added Brad's change to make sendfile take a va_list.
- * 	Added support in login to accept an non-encrypted login
- * 	message if no user or password is being sent. This supports
- * 	a non-crypting version of sup. Also fixed to skip leading
- * 	white space from crypts in host files.
- * 	[92/09/01            mrt]
- * 
- * Revision 1.19  92/08/11  12:07:59  mrt
- * 		Made maxchildren a patchable variable, which can be set by the
- * 		command line switch -C or else defaults to the MAXCHILDREN
- * 		defined in sup.h. Added most of Brad's STUMP changes.
- * 	Increased PGMVERSION to 12 to reflect substantial changes.
- * 	[92/07/28            mrt]
- * 
- * Revision 1.18  90/12/25  15:15:39  ern
- * 	Yet another rewrite of the logging code. Make up the text we will write
- * 	   and then get in, write it and get out.
- * 	Also set error on write-to-full-disk if the logging is for recording
- * 	   server is busy.
- * 	[90/12/25  15:15:15  ern]
- * 
- * Revision 1.17  90/05/07  09:31:13  dlc
- * 	Sigh, some more fixes to the new "crypt" file handling code.  First,
- * 	just because the "crypt" file is in a local file system does not mean
- * 	it can be trusted.  We have to check for hard links to root owned
- * 	files whose contents could be interpretted as a crypt key.  For
- * 	checking this fact, the new routine stat_info_ok() was added.  This
- * 	routine also makes other sanity checks, such as owner only permission,
- * 	the file is a regular file, etc.  Also, even if the uid/gid of th
- * 	"crypt" file is not going to be used, still use its contents in order
- * 	to cause fewer surprises to people supping out of a shared file system
- * 	such as AFS.
- * 	[90/05/07            dlc]
- * 
- * Revision 1.16  90/04/29  04:21:08  dlc
- * 	Fixed logic bug in docrypt() which would not get the stat information
- * 	from the crypt file if the crypt key had already been set from a
- * 	"host" file.
- * 	[90/04/29            dlc]
- * 
- * Revision 1.15  90/04/18  19:51:27  dlc
- * 	Added the new routines local_file(), link_nofollow() for use in
- * 	dectecting whether a file is located in a local file system.  These
- * 	routines probably should have been in another module, but only
- * 	supfilesrv needs to do the check and none of its other modules seemed
- * 	appropriate.  Note, the implementation should be changed once we have
- * 	direct kernel support, for example the fstatfs(2) system call, for
- * 	detecting the type of file system a file resides.  Also, I changed
- * 	the routines which read the crosspatch crypt file or collection crypt
- * 	file to save the uid and gid from the stat information obtained via
- * 	the local_file() call (when the file is local) at the same time the
- * 	crypt key is read.  This change disallows non-local files for the
- * 	crypt key to plug a security hole involving the usage of the uid/gid
- * 	of the crypt file to define who the the file server should run as.  If
- * 	the saved uid/gid are both valid, then the server will set its uid/gid
- * 	to these values.
- * 	[90/04/18            dlc]
- * 
- * Revision 1.14  89/08/23  14:56:15  gm0w
- * 	Changed msgf routines to msg routines.
- * 	[89/08/23            gm0w]
- * 
- * Revision 1.13  89/08/03  19:57:33  mja
- * 	Remove setaid() call.
- * 
- * Revision 1.12  89/08/03  19:49:24  mja
- * 	Updated to use v*printf() in place of _doprnt().
- * 	[89/04/19            mja]
- * 
  * 11-Sep-88  Glenn Marcy (gm0w) at Carnegie-Mellon University
  *	Added code to record release name in logfile.
  *
@@ -257,6 +146,7 @@
 #include <setjmp.h>
 #include <pwd.h>
 #include <grp.h>
+#include <fcntl.h>
 #if __STDC__
 #include <stdarg.h>
 #else
@@ -267,7 +157,12 @@
 #include <sys/wait.h>
 #include <sys/stat.h>
 #include <sys/file.h>
+#include <sys/mount.h>
+#ifndef HAS_POSIX_DIR
 #include <sys/dir.h>
+#else
+#include <dirent.h>
+#endif
 #if	MACH
 #include <sys/ioctl.h>
 #endif
@@ -280,18 +175,22 @@
 #define ACCESS_CODE_OK		0
 #define ACCESS_CODE_BADPASSWORD (-2)
 #endif  CMUCS
-#include "sup.h"
+#ifdef __linux__
+#include <sys/vfs.h>
+#include <linux/nfs_fs.h>
+#endif
+
+#ifdef __SVR4
+# include <sys/mkdev.h>
+# include <sys/statvfs.h>
+#endif
+
+#include "supcdefs.h"
+#include "supextern.h"
 #define MSGFILE
 #include "supmsg.h"
 
-#ifdef	lint
-/*VARARGS1*//*ARGSUSED*/
-static void quit(status) {};
-#endif	/* lint */
-
 extern int errno;
-uid_t getuid ();
-
 int maxchildren;
 
 /*
@@ -336,6 +235,7 @@ int progpid = -1;			/* and process id */
 jmp_buf sjbuf;				/* jump location for network errors */
 TREELIST *listTL;			/* list of trees to upgrade */
 
+int silent;				/* -S flag */
 int live;				/* -l flag */
 int dbgportsq;				/* -P flag */
 extern int scmdebug;			/* -N flag */
@@ -365,22 +265,50 @@ HASH *uidH[HASHSIZE];			/* for uid and gid lookup */
 HASH *gidH[HASHSIZE];
 HASH *inodeH[HASHSIZE];			/* for inode lookup for linked file check */
 
-char *fmttime ();			/* time format routine */
-#if __STDC__
-int goaway(char *fmt,...);
-#endif
+
+/* supfilesrv.c */
+int main __P((int, char **));
+void chldsig __P((int));
+void usage __P((void));
+void init __P((int, char **));
+void answer __P((void));
+void srvsignon __P((void));
+void srvsetup __P((void));
+void docrypt __P((void));
+void srvlogin __P((void));
+void listfiles __P((void));
+int denyone __P((TREE *, void *));
+void sendfiles __P((void));
+int sendone __P((TREE *, void *));
+int senddir __P((TREE *, void *));
+int sendfile __P((TREE *, va_list));
+void srvfinishup __P((time_t));
+void Hfree __P((HASH **));
+HASH *Hlookup __P((HASH **, int, int ));
+void Hinsert __P((HASH **, int, int, char *, TREE *));
+TREE *linkcheck __P((TREE *, int, int ));
+char *uconvert __P((int));
+char *gconvert __P((int));
+char *changeuid __P((char *, char *, int, int ));
+void goaway __P((char *, ...));
+char *fmttime __P((time_t));
+int local_file __P((int, struct stat *));
+int stat_info_ok __P((struct stat *, struct stat *));
+int link_nofollow __P((int));
+int link_nofollow __P((int));
 
 /*************************************
  ***    M A I N   R O U T I N E    ***
  *************************************/
 
+int
 main (argc,argv)
 int argc;
 char **argv;
 {
-	register int x,pid,signalmask;
-	struct sigvec chldvec,ignvec,oldvec;
-	void chldsig();
+	register int x,pid;
+	sigset_t nset, oset;
+	struct sigaction chld,ign;
 	time_t tloc;
 
 	/* initialize global variables */
@@ -408,16 +336,16 @@ char **argv;
 		(void) serviceend ();
 		exit (0);
 	}
-	ignvec.sv_handler = SIG_IGN;
-	ignvec.sv_onstack = 0;
-	ignvec.sv_mask = 0;
-	(void) sigvec (SIGHUP,&ignvec,&oldvec);
-	(void) sigvec (SIGINT,&ignvec,&oldvec);
-	(void) sigvec (SIGPIPE,&ignvec,&oldvec);
-	chldvec.sv_handler = chldsig;
-	chldvec.sv_mask = 0;
-	chldvec.sv_onstack = 0;
-	(void) sigvec (SIGCHLD,&chldvec,&oldvec);
+	ign.sa_handler = SIG_IGN;
+	sigemptyset(&ign.sa_mask);
+	ign.sa_flags = 0;
+	(void) sigaction (SIGHUP,&ign,NULL);
+	(void) sigaction (SIGINT,&ign,NULL);
+	(void) sigaction (SIGPIPE,&ign,NULL);
+	chld.sa_handler = chldsig;
+	sigemptyset(&chld.sa_mask);
+	chld.sa_flags = 0;
+	(void) sigaction (SIGCHLD,&chld,NULL);
 	nchildren = 0;
 	for (;;) {
 		x = service ();
@@ -426,7 +354,9 @@ char **argv;
 			(void) servicekill ();
 			continue;
 		}
-		signalmask = sigblock(sigmask(SIGCHLD));
+		sigemptyset(&nset);
+		sigaddset(&nset, SIGCHLD);
+		sigprocmask(SIG_BLOCK, &nset, &oset);
 		if ((pid = fork()) == 0) { /* server process */
 			(void) serviceprep ();
 			answer ();
@@ -435,7 +365,7 @@ char **argv;
 		}
 		(void) servicekill ();	/* parent */
 		if (pid > 0) nchildren++;
-		(void) sigsetmask(signalmask);
+		(void) sigprocmask(SIG_SETMASK, &oset, NULL);
 	}
 }
 
@@ -447,7 +377,7 @@ void
 chldsig(snum)
 	int snum;
 {
-	union wait w;
+	int w;
 
 	while (wait3((int *) &w, WNOHANG, (struct rusage *)0) > 0) {
 		if (nchildren) nchildren--;
@@ -458,11 +388,13 @@ chldsig(snum)
  ***    I N I T I A L I Z A T I O N    ***
  *****************************************/
 
+void
 usage ()
 {
 	quit (1,"Usage: supfilesrv [ -l | -P | -N | -C <max children> | -H <host> <user> <cryptfile> <supargs> ]\n");
 }
 
+void
 init (argc,argv)
 int argc;
 char **argv;
@@ -489,6 +421,9 @@ char **argv;
 	argv++;
 	while (clienthost == NULL && argc > 0 && argv[0][0] == '-') {
 		switch (argv[0][1]) {
+		case 'S':
+			silent = TRUE;
+			break;
 		case 'l':
 			live = TRUE;
 			break;
@@ -542,7 +477,7 @@ char **argv;
 	f = fopen (cryptkey,"r");
 	if (f == NULL)
 		quit (1,"Unable to open cryptfile %s\n",cryptkey);
-	if (p = fgets (buf,STRINGLENGTH,f)) {
+	if ((p = fgets (buf,STRINGLENGTH,f)) != NULL) {
 		if (q = strchr (p,'\n'))  *q = '\0';
 		if (*p == '\0')
 			quit (1,"No cryptkey found in %s\n",cryptkey);
@@ -620,6 +555,7 @@ char **argv;
  ***    A N S W E R   R E Q U E S T    ***
  *****************************************/
 
+void
 answer ()
 {
 	time_t starttime;
@@ -639,10 +575,10 @@ answer ()
 	lockfd = -1;
 	starttime = time ((time_t *)NULL);
 	if (!setjmp (sjbuf)) {
-		signon ();
-		setup ();
+		srvsignon ();
+		srvsetup ();
 		docrypt ();
-		login ();
+		srvlogin ();
 		if (xpatch) {
 			int fd;
 
@@ -664,7 +600,7 @@ answer ()
 		listfiles ();
 		sendfiles ();
 	}
-	finishup (starttime);
+	srvfinishup (starttime);
 	if (collname)  free (collname);
 	if (basedir)  free (basedir);
 	if (prefix)  free (prefix);
@@ -694,7 +630,8 @@ answer ()
  ***    S I G N   O N   C L I E N T    ***
  *****************************************/
 
-signon ()
+void
+srvsignon ()
 {
 	register int x;
 
@@ -711,7 +648,8 @@ signon ()
  ***    E X C H A N G E   S E T U P   I N F O R M A T I O N    ***
  *****************************************************************/
 
-setup ()
+void
+srvsetup ()
 {
 	register int x;
 	char *p,*q;
@@ -733,13 +671,12 @@ setup ()
 	}
 	if (xpatch) {
 		register struct passwd *pw;
-		extern int link_nofollow(), local_file();
 
 		if ((pw = getpwnam (xuser)) == NULL) {
 			setupack = FSETUPSAME;
 			(void) msgsetupack ();
 			if (protver >= 6)  longjmp (sjbuf,TRUE);
-			goaway ("User not found");
+			goaway ("User `%s' not found",xuser);
 		}
 		(void) free (xuser);
 		xuser = salloc (pw->pw_dir);
@@ -758,7 +695,7 @@ setup ()
 			if ((f = fopen (buf,"r")) != NULL) {
 				struct stat fsbuf;
 
-				while (p = fgets (buf,STRINGLENGTH,f)) {
+				while ((p = fgets (buf,STRINGLENGTH,f)) != NULL) {
 					q = strchr (p,'\n');
 					if (q)  *q = 0;
 					if (strchr ("#;:",*p))  continue;
@@ -811,7 +748,7 @@ setup ()
 		(void) sprintf (buf,FILEDIRS,DEFDIR);
 		f = fopen (buf,"r");
 		if (f) {
-			while (p = fgets (buf,STRINGLENGTH,f)) {
+			while ((p = fgets (buf,STRINGLENGTH,f)) != NULL) {
 				q = strchr (p,'\n');
 				if (q)  *q = 0;
 				if (strchr ("#;:",*p))  continue;
@@ -834,7 +771,7 @@ setup ()
 	(void) sprintf (buf,FILEPREFIX,collname);
 	f = fopen (buf,"r");
 	if (f) {
-		while (p = fgets (buf,STRINGLENGTH,f)) {
+		while ((p = fgets (buf,STRINGLENGTH,f)) != NULL) {
 			q = strchr (p,'\n');
 			if (q)  *q = 0;
 			if (strchr ("#;:",*p))  continue;
@@ -879,7 +816,7 @@ setup ()
 		f = fopen (buf,"r");
 		if (f) {
 			int hostok = FALSE;
-			while (p = fgets (buf,STRINGLENGTH,f)) {
+			while ((p = fgets (buf,STRINGLENGTH,f)) != NULL) {
 				int not;
 				q = strchr (p,'\n');
 				if (q)  *q = 0;
@@ -906,6 +843,7 @@ setup ()
 	}
 	/* try to lock collection */
 	(void) sprintf (buf,FILELOCK,collname);
+#ifdef LOCK_SH
 	x = open (buf,O_RDONLY,0);
 	if (x >= 0) {
 		if (flock (x,(LOCK_SH|LOCK_NB)) < 0) {
@@ -919,11 +857,13 @@ setup ()
 		}
 		lockfd = x;
 	}
+#endif
 	setupack = FSETUPOK;
 	x = msgsetupack ();
 	if (x != SCMOK)  goaway ("Error sending setup reply to client");
 }
 
+void
 /** Test data encryption **/
 docrypt ()
 {
@@ -932,7 +872,6 @@ docrypt ()
 	char buf[STRINGLENGTH];
 	register FILE *f;
 	struct stat sbuf;
-	extern int  link_nofollow(), local_file();
 
 	if (!xpatch) {
 		(void) sprintf (buf,FILECRYPT,collname);
@@ -948,7 +887,8 @@ docrypt ()
 
 				if (cryptkey == NULL &&
 				    (p = fgets (buf,STRINGLENGTH,f))) {
-					if (q = strchr (p,'\n'))  *q = '\0';
+					if ((q = strchr (p,'\n')) != NULL)
+						*q = '\0';
 					if (*p)  cryptkey = salloc (buf);
 				}
 				if (local_file(fileno(f), &fsbuf) > 0
@@ -982,10 +922,10 @@ docrypt ()
  ***    C O N N E C T   T O   P R O P E R   A C C O U N T    ***
  ***************************************************************/
 
-login ()
+void
+srvlogin ()
 {
-	char *changeuid ();
-	register int x,fileuid,filegid;
+	register int x,fileuid = -1,filegid = -1;
 
 	(void) netcrypt (PSWDCRYPT);	/* encrypt acct name and password */
 	x = msglogin ();
@@ -1034,9 +974,9 @@ login ()
  ***    M A K E   N A M E   L I S T    ***
  *****************************************/
 
+void
 listfiles ()
 {
-	int denyone();
 	register int x;
 
 	refuseT = NULL;
@@ -1053,22 +993,24 @@ listfiles ()
 	if (x != SCMOK)
 		goaway ("Error reading needed files list from client");
 	denyT = NULL;
-	(void) Tprocess (needT,denyone);
+	(void) Tprocess (needT,denyone, NULL);
 	Tfree (&needT);
 	x = msgdeny ();
 	if (x != SCMOK)  goaway ("Error sending denied files list to client");
 	Tfree (&denyT);
 }
 
-denyone (t)
+
+int
+denyone (t, v)
 register TREE *t;
+void *v;
 {
 	register TREELIST *tl;
 	register char *name = t->Tname;
 	register int update = (t->Tflags&FUPDATE) != 0;
 	struct stat sbuf;
 	register TREE *tlink;
-	TREE *linkcheck ();
 	char slinkname[STRINGLENGTH];
 	register int x;
 
@@ -1121,9 +1063,9 @@ register TREE *t;
  ***    S E N D   F I L E S    ***
  *********************************/
 
+void
 sendfiles ()
 {
-	int sendone(),senddir(),sendfile();
 	register TREELIST *tl;
 	register int x;
 
@@ -1148,12 +1090,12 @@ sendfiles ()
                         }
                 }
 #endif
-		(void) Tprocess (tl->TLtree,sendone);
+		(void) Tprocess (tl->TLtree,sendone,NULL);
 	}
 	/* send directories in reverse order */
 	for (tl = listTL; tl != NULL; tl = tl->TLnext) {
 		cdprefix (tl->TLprefix);
-		(void) Trprocess (tl->TLtree,senddir);
+		(void) Trprocess (tl->TLtree,senddir,NULL);
 	}
 	x = msgsend ();
 	if (x != SCMOK)
@@ -1164,16 +1106,13 @@ sendfiles ()
 		goaway ("Error sending file to client");
 }
 
-sendone (t)
+int
+sendone (t, v)
 TREE *t;
+void *v;
 {
 	register int x,fd;
-	register int fdtmp;
-	char temp_file[STRINGLENGTH], rcs_file[STRINGLENGTH];
-        union wait status;
-	char *uconvert(),*gconvert();
-	int sendfile ();
-	int ac;
+	char temp_file[STRINGLENGTH];
 	char *av[50];	/* More than enough */
 
 	if ((t->Tflags&FNEEDED) == 0)	/* only send needed files */
@@ -1219,34 +1158,34 @@ TREE *t;
 #endif
 					av[ac++] = t->Tname;
 					av[ac++] = NULL;
-					status.w_status = runio(av,
-							        NULL,
-							        rcs_file,
-							        "/dev/null");
+					status = runio(av, NULL, rcs_file,
+							"/dev/null");
                                         /*loginfo("using rcs mode \n");*/
-                                        if (status.w_status < 0 || status.w_retcode) {
+                                        if (status < 0 || WEXITSTATUS(status)) {
                                                 /* Just in case */
                                                 unlink(rcs_file);
-                                                if (status.w_status < 0) {
-                                                        goaway ("We died trying to run cvs or rcs");
+                                                if (status < 0) {
+                                                        goaway ("We died trying to run cvs or rcs on %s", rcs_file);
                                                         t->Tmode = 0;
                                                 }
                                                 else {
-                                                        /*logerr("rcs command failed = %d\n",
-                                                               status.w_retcode);*/
+#if 0
+							logerr("rcs command failed = %d\n",
+								WEXITSTATUS(status));
+#endif
                                                         t->Tflags |= FUPDATE;
                                                 }
                                         }
                                         else if (docompress) {
                                                 tmpnam(temp_file);
 						av[0] = "gzip";
-						av[1] = "-c";
+						av[1] = "-cf";
 						av[2] = NULL;
 						if (runio(av, rcs_file, temp_file, NULL) != 0) {
                                                         /* Just in case */
                                                         unlink(temp_file);
                                                         unlink(rcs_file);
-                                                        goaway ("We died trying to gzip a file");
+                                                        goaway ("We died trying to gzip %s", rcs_file);
                                                         t->Tmode = 0;
                                                 }
                                                 fd = open (temp_file,O_RDONLY,0);
@@ -1260,12 +1199,12 @@ TREE *t;
                                 if (docompress) {
                                         tmpnam(temp_file);
 					av[0] = "gzip";
-					av[1] = "-c";
+					av[1] = "-cf";
 					av[2] = NULL;
 					if (runio(av, t->Tname, temp_file, NULL) != 0) {
                                                 /* Just in case */
                                                 unlink(temp_file);
-                                                goaway ("We died trying to run gzip");
+                                                goaway ("We died trying to run gzip %s", t->Tname);
                                                 t->Tmode = 0;
                                         }
                                         fd = open (temp_file,O_RDONLY,0);
@@ -1287,16 +1226,16 @@ TREE *t;
 	if (dorcs)
 		unlink(rcs_file);
 #endif
-	if (x != SCMOK)  goaway ("Error sending file to client");
+	if (x != SCMOK)  goaway ("Error sending file %s to client", t->Tname);
 	return (SCMOK);
 }
 
-senddir (t)
+int
+senddir (t, v)
 TREE *t;
+void *v;
 {
 	register int x;
-	char *uconvert(),*gconvert();
-	int sendfile ();
 
 	if ((t->Tflags&FNEEDED) == 0)	/* only send needed files */
 		return (SCMOK);
@@ -1308,20 +1247,22 @@ TREE *t;
 	t->Tuser = salloc (uconvert (t->Tuid));
 	t->Tgroup = salloc (gconvert (t->Tgid));
 	x = msgrecv (sendfile,0);
-	if (x != SCMOK)  goaway ("Error sending file to client");
+	if (x != SCMOK)  goaway ("Error sending file %s to client", t->Tname);
 	return (SCMOK);
 }
 
-sendfile (t,ap)
-register TREE *t;
+int
+sendfile (t, ap)
+TREE *t;
 va_list ap;
 {
-	register int x;
-	int fd = va_arg(ap,int);
+	register int x, fd;
+
+	fd = va_arg(ap,int);
 	if ((t->Tmode&S_IFMT) != S_IFREG || listonly || (t->Tflags&FUPDATE))
 		return (SCMOK);
 	x = writefile (fd);
-	if (x != SCMOK)  goaway ("Error sending file to client");
+	if (x != SCMOK)  goaway ("Error sending file %s to client", t->Tname);
         (void) close (fd);
 	return (SCMOK);
 }
@@ -1330,13 +1271,13 @@ va_list ap;
  ***    E N D   C O N N E C T I O N    ***
  *****************************************/
 
-finishup (starttime)
+void
+srvfinishup (starttime)
 time_t starttime;
 {
 	register int x = SCMOK;
 	char tmpbuf[BUFSIZ], *p, lognam[STRINGLENGTH];
 	int logfd;
-	struct stat sbuf;
 	time_t finishtime;
 	char *releasename;
 
@@ -1404,13 +1345,14 @@ time_t starttime;
  ***    H A S H   T A B L E   R O U T I N E S    ***
  ***************************************************/
 
+void
 Hfree (table)
 HASH **table;
 {
 	register HASH *h;
 	register int i;
 	for (i = 0; i < HASHSIZE; i++)
-		while (h = table[i]) {
+		while ((h = table[i]) != NULL) {
 			table[i] = h->Hnext;
 			if (h->Hname)  free (h->Hname);
 			free ((char *)h);
@@ -1428,6 +1370,7 @@ int num1,num2;
 	return (h);
 }
 
+void
 Hinsert (table,num1,num2,name,tree)
 HASH **table;
 int num1,num2;
@@ -1495,7 +1438,6 @@ char *changeuid (namep,passwordp,fileuid,filegid)
 char *namep,*passwordp;
 int fileuid,filegid;
 {
-	char *okpassword ();
 	char *group,*account,*pswdp;
 	struct passwd *pwd;
 	struct group *grp;
@@ -1509,7 +1451,7 @@ int fileuid,filegid;
 #if	CMUCS
 	int *grps;
 #endif	/* CMUCS */
-	char *p;
+	char *p = NULL;
 
 	if (namep == NULL) {
 		pwd = getpwuid (fileuid);
@@ -1676,7 +1618,8 @@ int fileuid,filegid;
 	return (NULL);
 }
 
-#if __STDC__
+void
+#ifdef __STDC__
 goaway (char *fmt,...)
 #else
 /*VARARGS*//*ARGSUSED*/
@@ -1684,19 +1627,19 @@ goaway (va_alist)
 va_dcl
 #endif
 {
-#if !__STDC__
-	register char *fmt;
-#endif
 	char buf[STRINGLENGTH];
 	va_list ap;
 
-	(void) netcrypt ((char *)NULL);
-#if __STDC__
+#ifdef __STDC__
 	va_start(ap,fmt);
 #else
+	register char *fmt;
+
 	va_start(ap);
 	fmt = va_arg(ap,char *);
 #endif
+	(void) netcrypt ((char *)NULL);
+
 	vsnprintf(buf, sizeof(buf), fmt, ap);
 	va_end(ap);
 	strcat(buf, " [");
@@ -1824,16 +1767,42 @@ struct stat *sinfo;
 
 	/*
 	 * Verify the file is not in NFS.
-	 *
-	 * Our current implementation and Sun OS 3.x use major device
-	 * 255 for NFS files; Sun OS 4.x seems to use 130 (I have only
-	 * determined this empirically -- DLC).  Without a fstatfs()
+	 */
+
+#ifdef __SVR4
+	{
+		struct statvfs sf;
+
+		if (fstatvfs(handle, &sf) == -1)
+			return(-1);
+		return strcmp(sf.f_basetype, "nfs") != 0;
+	}
+#elif defined(__NetBSD__) || defined(__OpenBSD__)
+	{
+		struct statfs sf;
+		if (fstatfs(handle, &sf) == -1)
+			return(-1);
+		return strcmp(sf.f_fstypename, "nfs") != 0;
+	}
+#elif defined(__linux__)
+	{
+		struct statfs sf;
+
+		if (fstatfs(handle, &sf) == -1)
+			return(-1);
+		return sf.f_type != NFS_SUPER_MAGIC;
+	}
+#else
+	/*
+	 * Sun OS 3.x use major device 255 for NFS files;
+	 * Sun OS 4.x seems to use 130 (I have only determined
+	 * this empirically -- DLC).  Without a fstatfs()
 	 * system call, this will have to do for now.
 	 */
-	if (major(sb.st_dev) == 255 || major(sb.st_dev) == 130)
-		return(0);
 
-	return(1);
+	return !(major(sb.st_dev) == 255 || major(sb.st_dev) == 130);
+
+#endif
 }
 
 /*

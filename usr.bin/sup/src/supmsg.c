@@ -1,4 +1,4 @@
-/*	$OpenBSD: supmsg.c,v 1.3 1996/07/31 11:11:33 niklas Exp $	*/
+/*	$OpenBSD: supmsg.c,v 1.4 1997/04/01 07:35:45 todd Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -31,52 +31,16 @@
  * 7-July-93  Nate Williams at Montana State University
  *	Modified SUP to use gzip based compression when sending files
  *	across the network to save BandWidth
- *
- * $Log: supmsg.c,v $
- * Revision 1.3  1996/07/31 11:11:33  niklas
- * Better use time_t instead of long when dealing with times
- *
- * Revision 1.2  1996/06/26 05:39:55  deraadt
- * rcsid
- *
- * Revision 1.1  1995/12/16 11:47:00  deraadt
- * add sup to the tree
- *
- * Revision 1.2  1993/08/04 17:46:23  brezak
- * Changes from nate for gzip'ed sup
- *
- * Revision 1.1.1.1  1993/05/21  14:52:19  cgd
- * initial import of CMU's SUP to NetBSD
- *
- * Revision 2.4  92/09/09  22:05:17  mrt
- * 	Moved PFI definition under __STDC__ conditional since it
- * 	is already defined in libc.h in this case.
- * 	[92/09/01            mrt]
- * 
- * Revision 2.3  92/08/11  12:08:12  mrt
- * 	Added copyright
- * 	[92/08/10            mrt]
- * 	Brad's changes: Delinted, Incorporated updated variable 
- * 	argument list usage from old msgxfer.c
- * 	[92/07/24            mrt]
- * 
- * Revision 2.2  89/08/23  15:02:56  gm0w
- * 	Created from separate message modules.
- * 	[89/08/14            gm0w]
  * 
  **********************************************************************
  */
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#if __STDC__
-#include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
 #include <libc.h>
 #include <c.h>
-#include "sup.h"
+#include "supcdefs.h"
+#include "supextern.h"
 #define MSGSUBR
 #define MSGFILE
 #include "supmsg.h"
@@ -88,6 +52,12 @@ extern int	pgmver;			/* program version of partner */
 extern int	pgmversion;		/* my program version */
 extern char	*scmver;		/* scm version of partner */
 extern int	fspid;			/* process id of fileserver */
+
+static int refuseone __P((TREE *, void *));
+static int listone __P((TREE *, void *));
+static int needone __P((TREE *, void *));
+static int denyone __P((TREE *, void *));
+static int writeone __P((TREE *, void *));
 
 int msgsignon ()
 {
@@ -277,8 +247,9 @@ int msglogack ()
  */
 extern TREE	*refuseT;		/* tree of files to refuse */
 
-static int refuseone (t)
+static int refuseone (t, v)
 register TREE *t;
+void *v;
 {
 	return (writestring (t->Tname));
 }
@@ -299,7 +270,7 @@ int msgrefuse ()
 		if (x == SCMOK)  x = readmend ();
 	} else {
 		x = writemsg (MSGREFUSE);
-		if (x == SCMOK)  x = Tprocess (refuseT,refuseone);
+		if (x == SCMOK)  x = Tprocess (refuseT,refuseone, NULL);
 		if (x == SCMOK)  x = writestring ((char *)NULL);
 		if (x == SCMOK)  x = writemend ();
 	}
@@ -312,8 +283,9 @@ int msgrefuse ()
 extern TREE	*listT;			/* tree of files to list */
 extern time_t	scantime;		/* time that collection was scanned */
 
-static int listone (t)
+static int listone (t, v)
 register TREE *t;
+void *v;
 {
 	register int x;
 
@@ -329,7 +301,7 @@ int msglist ()
 	register int x;
 	if (server) {
 		x = writemsg (MSGLIST);
-		if (x == SCMOK)  x = Tprocess (listT,listone);
+		if (x == SCMOK)  x = Tprocess (listT,listone, NULL);
 		if (x == SCMOK)  x = writestring ((char *)NULL);
 		if (x == SCMOK)  x = writeint ((int)scantime);
 		if (x == SCMOK)  x = writemend ();
@@ -363,8 +335,9 @@ int msglist ()
  */
 extern TREE	*needT;			/* tree of files to need */
 
-static int needone (t)
+static int needone (t, v)
 register TREE *t;
+void *v;
 {
 	register int x;
 	x = writestring (t->Tname);
@@ -393,7 +366,7 @@ int msgneed ()
 		if (x == SCMOK)  x = readmend ();
 	} else {
 		x = writemsg (MSGNEED);
-		if (x == SCMOK)  x = Tprocess (needT,needone);
+		if (x == SCMOK)  x = Tprocess (needT,needone, NULL);
 		if (x == SCMOK)  x = writestring ((char *)NULL);
 		if (x == SCMOK)  x = writemend ();
 	}
@@ -405,8 +378,9 @@ int msgneed ()
  */
 extern TREE	*denyT;			/* tree of files to deny */
 
-static int denyone (t)
+static int denyone (t, v)
 register TREE *t;
+void *v;
 {
 	return (writestring (t->Tname));
 }
@@ -416,7 +390,7 @@ int msgdeny ()
 	register int x;
 	if (server) {
 		x = writemsg (MSGDENY);
-		if (x == SCMOK)  x = Tprocess (denyT,denyone);
+		if (x == SCMOK)  x = Tprocess (denyT,denyone, NULL);
 		if (x == SCMOK)  x = writestring ((char *)NULL);
 		if (x == SCMOK)  x = writemend ();
 	} else {
@@ -449,33 +423,32 @@ int msgsend ()
  */
 extern TREE	*upgradeT;		/* pointer to file being upgraded */
 
-static int writeone (t)
+static int writeone (t, v)
 register TREE *t;
+void *v;
 {
 	return (writestring (t->Tname));
 }
 
 
-#if __STDC__
-int msgrecv (PFI xferfile,...)
+#ifdef __STDC__
+int msgrecv (int (*xferfile)(TREE *, va_list),...)
 #else
 /*VARARGS*//*ARGSUSED*/
 int msgrecv (va_alist)
 va_dcl
 #endif
 {
-#if !__STDC__
-	typedef int (*PFI)();
-	PFI xferfile;
-#endif
 	va_list args;
 	register int x;
 	register TREE *t = upgradeT;
-#if __STDC__
+#ifdef __STDC__
 	va_start(args,xferfile);
 #else
+	int (*xferfile)(TREE *, void *);
+
 	va_start(args);
-	xferfile = va_arg(args, PFI);
+	xferfile = va_arg(args, int (*)(TREE *, void *));
 #endif
 	if (server) {
 		x = writemsg (MSGRECV);
@@ -494,9 +467,9 @@ va_dcl
 		if (x == SCMOK)  x = writestring (t->Tuser);
 		if (x == SCMOK)  x = writestring (t->Tgroup);
 		if (x == SCMOK)  x = writeint (t->Tmtime);
-		if (x == SCMOK)  x = Tprocess (t->Tlink,writeone);
+		if (x == SCMOK)  x = Tprocess (t->Tlink,writeone, NULL);
 		if (x == SCMOK)  x = writestring ((char *)NULL);
-		if (x == SCMOK)  x = Tprocess (t->Texec,writeone);
+		if (x == SCMOK)  x = Tprocess (t->Texec,writeone, NULL);
 		if (x == SCMOK)  x = writestring ((char *)NULL);
 		if (x == SCMOK)  x = (*xferfile) (t,args);
 		if (x == SCMOK)  x = writemend ();

@@ -1,4 +1,4 @@
-/*	$OpenBSD: atoo.c,v 1.2 1996/06/26 05:39:37 deraadt Exp $	*/
+/*	$OpenBSD: atoo.c,v 1.3 1997/04/01 07:34:57 todd Exp $	*/
 
 /*
  * Copyright (c) 1991 Carnegie Mellon University
@@ -39,6 +39,8 @@
  *	Rewritten for VAX.
  *
  */
+#include "supcdefs.h"
+#include "supextern.h"
 
 unsigned int atoo(ap)
 char *ap;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: libc.h,v 1.2 1996/06/26 05:39:41 deraadt Exp $	*/
+/*	$OpenBSD: libc.h,v 1.3 1997/04/01 07:35:06 todd Exp $	*/
 
 /*
  * Copyright (c) 1991 Carnegie Mellon University
@@ -27,43 +27,6 @@
 /*
  **********************************************************************
  * HISTORY
- * $Log: libc.h,v $
- * Revision 1.2  1996/06/26 05:39:41  deraadt
- * rcsid
- *
- * Revision 1.1  1995/12/16 11:46:46  deraadt
- * add sup to the tree
- *
- * Revision 1.1.1.1  1993/05/21 14:52:17  cgd
- * initial import of CMU's SUP to NetBSD
- *
- * Revision 1.7  89/04/03  11:10:45  vanryzin
- * 	Changed definition of qsort for c++ to indicate the procedure
- * 	passed to qsort has parameters.  Since we were unsure if ANSI C
- * 	could handle the syntax I placed the new definition within #if
- * 	defined(c_plusplus) conditionals.  This may not be necessary
- * 	and perhaps should be fixed at a later time.
- * 	[89/04/03            vanryzin]
- * 
- * Revision 1.6  89/02/05  15:55:57  gm0w
- * 	Added extern char *errmsg().
- * 	[89/02/04            gm0w]
- * 
- * Revision 1.5  89/01/20  15:34:40  gm0w
- * 	Moved all of the STDC changes to other existing include files
- * 	back into this one.  Added non-STDC extern declarations for
- * 	all functions without int return values to match those defined
- * 	by STDC.  Added include of sysent.h.  Removed obsolete cdate
- * 	extern declaration.
- * 	[88/12/17            gm0w]
- * 
- * Revision 1.4  88/12/22  16:58:56  mja
- * 	Correct __STDC__ parameter type for getenv().
- * 	[88/12/20            dld]
- * 
- * Revision 1.3  88/12/14  23:31:42  mja
- * 	Made file reentrant.  Added declarations for __STDC__.
- * 	[88/01/06            jjk]
  * 
  * 30-Apr-88  Glenn Marcy (gm0w) at Carnegie-Mellon University
  *	Added pathof() extern.
@@ -123,9 +86,6 @@ extern FILE *fwantwrite();
 extern char* foldup(char*, const char*);
 extern char* folddown(char*, const char*);
 extern char* sindex(const char*, const char*);
-extern char* skipto(const char*, const char*);
-extern char* skipover(const char*, const char*);
-extern char* nxtarg(char**, const char*);
 extern char _argbreak;
 extern char* getstr(const char*, char*, char*);
 extern int getstab(const char*, const char**, const char*);
@@ -156,9 +116,7 @@ extern unsigned int gethex(const char*, unsigned int, unsigned int,
 			   unsigned int);
 extern unsigned int hexarg(const char**, const char*, const char*,
 			   unsigned int, unsigned int, unsigned int);
-extern unsigned int atoo(const char*);
 extern unsigned int atoh(const char*);
-extern char *salloc(const char*);
 extern char *concat(const char*, int, ...);
 #else	/* __STDC__ */
 extern char *foldup(), *folddown();
@@ -196,7 +154,9 @@ extern long atot();
 
 /* 4.3 BSD standard library routines; taken from man(3) */
 #if defined(__STDC__)
+#if 0
 typedef int (*PFI)();
+#endif
 #if defined(c_plusplus)
 typedef int (*PFI2)(...);
 #endif /* c_plusplus */

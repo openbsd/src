@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysent.h,v 1.2 1996/06/26 05:39:57 deraadt Exp $	*/
+/*	$OpenBSD: sysent.h,v 1.3 1997/04/01 07:35:52 todd Exp $	*/
 
 /*
  * Copyright (c) 1991 Carnegie Mellon University
@@ -25,32 +25,6 @@
  * to redistribute these changes.
  */
 /*
- **********************************************************************
- * HISTORY
- * $Log: sysent.h,v $
- * Revision 1.2  1996/06/26 05:39:57  deraadt
- * rcsid
- *
- * Revision 1.1  1995/12/16 11:47:02  deraadt
- * add sup to the tree
- *
- * Revision 1.1.1.1  1993/05/21 14:52:19  cgd
- * initial import of CMU's SUP to NetBSD
- *
- * Revision 2.4  89/12/05  16:02:00  mrt
- * 	Removed include of sys/features.h as it is no longer
- * 	exported or needed.
- * 	[89/12/05            mrt]
- * 
- * Revision 2.3  89/01/20  15:44:24  gm0w
- * 	Added externs to the non-STDC case for functions that do not
- * 	have int return values.
- * 	[88/12/17            gm0w]
- * 
- * Revision 2.2  88/12/14  23:35:52  mja
- * 	Created.
- * 	[88/01/06            jjk]
- * 
  **********************************************************************
  */
 

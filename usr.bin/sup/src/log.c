@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.2 1996/06/26 05:39:42 deraadt Exp $	*/
+/*	$OpenBSD: log.c,v 1.3 1997/04/01 07:35:08 todd Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -28,24 +28,6 @@
  * Logging support for SUP
  **********************************************************************
  * HISTORY
- * $Log: log.c,v $
- * Revision 1.2  1996/06/26 05:39:42  deraadt
- * rcsid
- *
- * Revision 1.1  1995/12/16 11:46:47  deraadt
- * add sup to the tree
- *
- * Revision 1.1.1.1  1993/05/21 14:52:17  cgd
- * initial import of CMU's SUP to NetBSD
- *
- * Revision 1.5  92/08/11  12:03:43  mrt
- * 	Brad's delinting and variable argument list usage
- * 	changes. Added copyright.
- * 
- * Revision 1.3  89/08/15  15:30:37  bww
- * 	Updated to use v*printf() in place of _doprnt().
- * 	From "[89/04/19            mja]" at CMU.
- * 	[89/08/15            bww]
  * 
  * 27-Dec-87  Glenn Marcy (gm0w) at Carnegie-Mellon University
  *	Added check to allow logopen() to be called multiple times.
@@ -59,20 +41,12 @@
 #include <stdio.h>
 #include <sys/syslog.h>
 #include <c.h>
-#if __STDC__
-#include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
-#include "sup.h"
-
-#ifdef	lint
-/*VARARGS1*//*ARGSUSED*/
-static void quit(status) {};
-#endif	/* lint */
+#include "supcdefs.h"
+#include "supextern.h"
 
 static int opened = 0;
 
+void
 logopen(program)
 char *program;
 {
@@ -81,7 +55,8 @@ char *program;
 	opened++;
 }
 
-#if __STDC__
+void
+#ifdef __STDC__
 logquit(int retval,char *fmt,...)
 #else
 /*VARARGS*//*ARGSUSED*/
@@ -89,16 +64,15 @@ logquit(va_alist)
 va_dcl
 #endif
 {
-#if !__STDC__
-	int retval;
-	char *fmt;
-#endif
 	char buf[STRINGLENGTH];
 	va_list ap;
 
-#if __STDC__
+#ifdef __STDC__
 	va_start(ap,fmt);
 #else
+	int retval;
+	char *fmt;
+
 	va_start(ap);
 	retval = va_arg(ap,int);
 	fmt = va_arg(ap,char *);
@@ -110,10 +84,11 @@ va_dcl
 		closelog ();
 		exit (retval);
 	}
-	quit (retval,"SUP: %s\n",buf);
+	quit (retval,"SUP: %s\n", buf);
 }
 
-#if __STDC__
+void
+#ifdef __STDC__
 logerr(char *fmt,...)
 #else
 /*VARARGS*//*ARGSUSED*/
@@ -121,15 +96,14 @@ logerr(va_alist)
 va_dcl
 #endif
 {
-#if !__STDC__
-	char *fmt;
-#endif
 	char buf[STRINGLENGTH];
 	va_list ap;
 
-#if __STDC__
+#ifdef __STDC__
 	va_start(ap,fmt);
 #else
+	char *fmt;
+
 	va_start(ap);
 	fmt = va_arg(ap,char *);
 #endif
@@ -143,7 +117,8 @@ va_dcl
 	(void) fflush (stderr);
 }
 
-#if __STDC__
+void
+#ifdef __STDC__
 loginfo(char *fmt,...)
 #else
 /*VARARGS*//*ARGSUSED*/
@@ -151,15 +126,14 @@ loginfo(va_alist)
 va_dcl
 #endif
 {
-#if !__STDC__
-	char *fmt;
-#endif
 	char buf[STRINGLENGTH];
 	va_list ap;
 
-#if __STDC__
+#ifdef __STDC__
 	va_start(ap,fmt);
 #else
+	char *fmt;
+
 	va_start(ap);
 	fmt = va_arg(ap,char *);
 #endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: path.c,v 1.2 1996/06/26 05:39:44 deraadt Exp $	*/
+/*	$OpenBSD: path.c,v 1.3 1997/04/01 07:35:13 todd Exp $	*/
 
 /*
  * Copyright (c) 1991 Carnegie Mellon University
@@ -58,7 +58,10 @@
  *	If you want to be cute, you can also resolve ".."s at that time.
  *
  */
+#include "supcdefs.h"
+#include "supextern.h"
 
+void
 path (original,direc,file)
 char *original,*direc,*file;
 {
@@ -69,7 +72,7 @@ char *original,*direc,*file;
 	/* copy and note the end */
 	p = original;
 	y = direc;
-	while (*y++ = *p++) ;		/* copy string */
+	while ((*y++ = *p++) != '\0') ;		/* copy string */
 	/* y now points to first char after null */
 	--y;	/* y now points to null */
 	--y;	/* y now points to last char of string before null */

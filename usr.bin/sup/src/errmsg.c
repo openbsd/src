@@ -1,4 +1,4 @@
-/*	$OpenBSD: errmsg.c,v 1.2 1996/06/26 05:39:39 deraadt Exp $	*/
+/*	$OpenBSD: errmsg.c,v 1.3 1997/04/01 07:34:59 todd Exp $	*/
 
 /*
  * Copyright (c) 1991 Carnegie Mellon University
@@ -33,9 +33,11 @@
  *	BBN uses a negative OR zero value.
  */
 
-extern int	errno;
-extern int	sys_nerr;
-extern char	*sys_errlist[];
+#include "supcdefs.h"
+#include "supextern.h"
+
+#if !defined(__NetBSD__) && !defined(__OpenBSD__)
+static char *itoa __P((char *, unsigned));
 
 static char *itoa(p,n)
 char *p;
@@ -46,10 +48,15 @@ unsigned n;
     *p++ = (n%10)+'0';
     return(p);
 }
+#endif
 
 char *errmsg(cod)
 int cod;
 {
+#if !defined(__NetBSD__) && !defined(__OpenBSD__)
+	extern int	errno;
+	extern int	sys_nerr;
+	extern char	*sys_errlist[];
 	static char unkmsg[] = "Unknown error ";
 	static char unk[sizeof(unkmsg)+11];		/* trust us */
 
@@ -62,4 +69,7 @@ int cod;
 	*itoa(&unk[sizeof(unkmsg)-1],cod) = '\0';
 
 	return(unk);
+#else
+	return strerror(cod);
+#endif
 }

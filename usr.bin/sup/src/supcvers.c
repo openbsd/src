@@ -1,4 +1,4 @@
-/*	$OpenBSD: supcvers.c,v 1.2 1996/06/26 05:39:53 deraadt Exp $	*/
+/*	$OpenBSD: supcvers.c,v 1.3 1997/04/01 07:35:39 todd Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -27,23 +27,6 @@
 /*
  **********************************************************************
  * HISTORY
- * $Log: supcvers.c,v $
- * Revision 1.2  1996/06/26 05:39:53  deraadt
- * rcsid
- *
- * Revision 1.1  1995/12/16 11:46:59  deraadt
- * add sup to the tree
- *
- * Revision 1.1.1.1  1993/05/21 14:52:19  cgd
- * initial import of CMU's SUP to NetBSD
- *
- * Revision 1.8  92/08/11  12:07:51  mrt
- * 	Added use-rel-suffix option. Picked up STUMP changes.
- * 	[V7.26]
- * 
- * Revision 1.7  92/02/08  18:24:23  mja
- * 	Support for -k/-K and "keep" option. [V7.25]
- * 	[92/01/17            vdelvecc]
  * 
  * 27-Dec-87  Glenn Marcy (gm0w) at Carnegie-Mellon University
  *	Added crosspatch support.  Removed nameserver support. [V7.24]

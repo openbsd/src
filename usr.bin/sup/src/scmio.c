@@ -1,4 +1,4 @@
-/*	$OpenBSD: scmio.c,v 1.2 1996/06/26 05:39:47 deraadt Exp $	*/
+/*	$OpenBSD: scmio.c,v 1.3 1997/04/01 07:35:24 todd Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -110,27 +110,6 @@
  *
  **********************************************************************
  * HISTORY
- * $Log: scmio.c,v $
- * Revision 1.2  1996/06/26 05:39:47  deraadt
- * rcsid
- *
- * Revision 1.1  1995/12/16 11:46:52  deraadt
- * add sup to the tree
- *
- * Revision 1.2  1993/05/24 17:57:26  brezak
- * Remove netcrypt.c. Remove unneeded files. Cleanup make.
- *
- * Revision 1.1.1.1  1993/05/21  14:52:17  cgd
- * initial import of CMU's SUP to NetBSD
- *
- * Revision 1.7  92/09/09  22:04:41  mrt
- * 	Removed the data encryption routines from here to netcrypt.c
- * 	[92/09/09            mrt]
- * 
- * Revision 1.6  92/08/11  12:05:57  mrt
- * 	Brad's changes: Delinted,Added forward declarations of 
- * 	static functions. Added copyright.
- * 	[92/07/24            mrt]
  * 
  * 27-Dec-87  Glenn Marcy (gm0w) at Carnegie-Mellon University
  *	Added crosspatch support.
@@ -174,7 +153,8 @@
 #include <sys/stat.h>
 #include <sys/file.h>
 #include <sys/time.h>
-#include "sup.h"
+#include "supcdefs.h"
+#include "supextern.h"
 #include "supmsg.h"
 
 extern int errno;
@@ -195,7 +175,6 @@ extern int errno;
  ***    G L O B A L   V A R I A B L E S    ***
  *********************************************/
 
-extern int scmerr ();			/* error printing routine */
 extern int netfile;			/* network file descriptor */
 
 int scmdebug;				/* scm debug flag */
@@ -212,12 +191,17 @@ struct buf {
 } buffers[2];
 struct buf *bufptr;			/* buffer pointer */
 
+static int writedata __P((int, char *));
+static int writeblock __P((int, char *));
+static int readdata __P((int, char *));
+static int readcount __P((int *));
+
 
 /***********************************************
  ***    O U T P U T   T O   N E T W O R K    ***
  ***********************************************/
 
-static
+static int
 writedata (count,data)		/* write raw data to network */
 int count;
 char *data;
@@ -264,7 +248,7 @@ char *data;
 	return (SCMOK);
 }
 
-static
+static int
 writeblock (count,data)		/* write data block */
 int count;
 char *data;
@@ -277,6 +261,7 @@ char *data;
 	return (x);
 }
 
+int
 writemsg (msg)		/* write start of message */
 int msg;
 {
@@ -293,6 +278,7 @@ int msg;
 	return (writedata(sizeof(int),(char *)&x));
 }
 
+int
 writemend ()		/* write end of message */
 {
 	register int count;
@@ -314,6 +300,7 @@ writemend ()		/* write end of message */
 	return (writedata (count, data));
 }
 
+int
 writeint (i)		/* write int as data block */
 int i;
 {
@@ -324,6 +311,7 @@ int i;
 	return (writeblock(sizeof(int),(char *)&x));
 }
 
+int
 writestring (p)		/* write string as data block */
 char *p;
 {
@@ -347,11 +335,12 @@ char *p;
 	return (writeblock(len,p));
 }
 
+int
 writefile (f)		/* write open file as a data block */
 int f;
 {
 	char buf[FILEXFER];
-	register int number,sum,filesize,x;
+	register int number = 0,sum = 0,filesize,x;
 	int y;
 	struct stat statbuf;
 
@@ -386,6 +375,7 @@ int f;
 	return (x);
 }
 
+int
 writemnull (msg)	/* write message with no data */
 int msg;
 {
@@ -395,6 +385,7 @@ int msg;
 	return (x);
 }
 
+int
 writemint (msg,i)		/* write message of one int */
 int msg,i;
 {
@@ -405,6 +396,7 @@ int msg,i;
 	return (x);
 }
 
+int
 writemstr (msg,p)		/* write message of one string */
 int msg;
 char *p;
@@ -420,7 +412,7 @@ char *p;
  ***    I N P U T   F R O M   N E T W O R K    ***
  *************************************************/
 
-static
+static int
 readdata (count,data)		/* read raw data from network */
 int count;
 char *data;
@@ -518,17 +510,19 @@ int *count;
 	int y;
 	x = readdata (sizeof(int),(char *)&y);
 	if (x != SCMOK)  return (x);
-	x = readdata (-sizeof(int),(char *)&y);
+	x = readdata (- ((int)(sizeof(int))),(char *)&y);
 	if (x != SCMOK)  return (x);
 	*count = byteswap(y);
 	return (SCMOK);
 }
 
+int
 readflush ()
 {
 	return (readdata (0, (char *)NULL));
 }
 
+int
 readmsg (msg)		/* read header for expected message */
 int msg;		/* if message is unexpected, send back SCMHUH */
 {
@@ -553,6 +547,7 @@ int msg;		/* if message is unexpected, send back SCMHUH */
 	return (SCMEOF);
 }
 
+int
 readmend ()
 {
 	register int x;
@@ -564,6 +559,7 @@ readmend ()
 	return (x);
 }
 
+int
 readskip ()			/* skip over one input block */
 {
 	register int x;
@@ -638,6 +634,7 @@ register char **buf;
 	return (SCMOK);
 }
 
+int
 readfile (f)		/* read data block into open file */
 int f;
 {
@@ -668,6 +665,7 @@ int f;
 	return (x);
 }
 
+int
 readmnull (msg)		/* read null message */
 int msg;
 {
@@ -677,6 +675,7 @@ int msg;
 	return (x);
 }
 
+int
 readmint (msg,buf)		/* read int message */
 int msg,*buf;
 {
@@ -702,6 +701,7 @@ char **buf;
  ***    C R O S S P A T C H     ***
  **********************************/
 
+void
 crosspatch ()
 {
 	fd_set ibits, obits, xbits;

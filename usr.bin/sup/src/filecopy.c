@@ -1,4 +1,4 @@
-/*	$OpenBSD: filecopy.c,v 1.2 1996/06/26 05:39:41 deraadt Exp $	*/
+/*	$OpenBSD: filecopy.c,v 1.3 1997/04/01 07:35:05 todd Exp $	*/
 
 /*
  * Copyright (c) 1991 Carnegie Mellon University
@@ -54,6 +54,8 @@
  */
 
 #define BUFFERSIZE 10240
+#include "supcdefs.h"
+#include "supextern.h"
 
 int filecopy (here,there)
 int here,there;

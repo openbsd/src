@@ -1,4 +1,4 @@
-/*	$OpenBSD: stree.c,v 1.3 1997/01/17 07:13:21 millert Exp $	*/
+/*	$OpenBSD: stree.c,v 1.4 1997/04/01 07:35:27 todd Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -29,29 +29,6 @@
  *
  **********************************************************************
  * HISTORY
- * $Log: stree.c,v $
- * Revision 1.3  1997/01/17 07:13:21  millert
- * r?index -> strr?chr
- *
- * Revision 1.2  1996/06/26 05:39:48  deraadt
- * rcsid
- *
- * Revision 1.1  1995/12/16 11:46:53  deraadt
- * add sup to the tree
- *
- * Revision 1.1.1.1  1993/05/21 14:52:17  cgd
- * initial import of CMU's SUP to NetBSD
- *
- * Revision 1.4  92/08/11  12:06:32  mrt
- * 	Added copyright. Delinted
- * 	[92/08/10            mrt]
- * 
- * 
- * Revision 1.3  89/08/15  15:30:57  bww
- * 	Changed code in Tlookup to Tsearch for each subpart of path.
- * 	Added indent formatting code to Tprint.
- * 	From "[89/06/24            gm0w]" at CMU.
- * 	[89/08/15            bww]
  * 
  * 20-May-87  Glenn Marcy (gm0w) at Carnegie-Mellon University
  *	Added code to please lint.
@@ -68,14 +45,27 @@
 #include <libc.h>
 #include <c.h>
 #include <sys/param.h>
-#include "sup.h"
+#include "supcdefs.h"
+#include "supextern.h"
 
-#define Static	/* static		/* comment for debugging */
+#define Static		static		/* comment for debugging */
+
+Static TREE *Tmake __P((char *));
+Static TREE *Trotll __P((TREE *, TREE *));
+Static TREE *Trotlh __P((TREE *, TREE *));
+Static TREE *Trothl __P((TREE *, TREE *));
+Static TREE *Trothh __P((TREE *, TREE *));
+Static void Tbalance __P((TREE **));
+Static TREE *Tinsertavl __P((TREE **, char *, int, int *));
+Static int Tsubprocess __P((TREE *, int, int (*f )(TREE *, void *), void *));
+Static int Tprintone __P((TREE *, void *));
+
 
 /*************************************************************
  ***    T R E E   P R O C E S S I N G   R O U T I N E S    ***
  *************************************************************/
 
+void
 Tfree (t)
 register TREE **t;
 {
@@ -174,7 +164,7 @@ register TREE *tp,*th;
     return(th);
 }
 
-Static
+Static void
 Tbalance (t)
 TREE **t;
 {
@@ -301,8 +291,8 @@ Static
 int Tsubprocess (t,reverse,f,argp)
 TREE *t;
 int reverse;
-int (*f)();
-int *argp;
+int (*f) __P((TREE *, void *));
+void *argp;
 {
 	register int x = SCMOK;
 	process_level++;
@@ -324,42 +314,44 @@ int *argp;
 /* VARARGS2 */
 int Trprocess (t,f,args)
 TREE *t;
-int (*f)();
-int args;
+int (*f) __P((TREE *, void *));
+void *args;
 {
 	if (t == NULL)  return (SCMOK);
 	process_level = 0;
-	return (Tsubprocess (t,TRUE,f,&args));
+	return (Tsubprocess (t,TRUE,f,args));
 }
 
 /* VARARGS2 */
 int Tprocess (t,f,args)
 TREE *t;
-int (*f)();
-int args;
+int (*f) __P((TREE *, void *));
+void *args;
 {
 	if (t == NULL)  return (SCMOK);
 	process_level = 0;
-	return (Tsubprocess (t,FALSE,f,&args));
+	return (Tsubprocess (t,FALSE,f,args));
 }
 
 Static
-int Tprintone (t)
+int Tprintone (t, v)
 TREE *t;
+void *v;
 {
 	int i;
 	for (i = 0; i < (process_level*2); i++)
 		(void) putchar(' ');
-	printf ("Node at %X name '%s' flags %o hi %X lo %X\n",t,t->Tname,t->Tflags,t->Thi,t->Tlo);
+	printf ("Node at %p name '%s' flags %o hi %p lo %p\n",t,t->Tname,t->Tflags,t->Thi,t->Tlo);
 	return (SCMOK);
 }
 
+void
 Tprint (t,p)		/* print tree -- for debugging */
 TREE *t;
 char *p;
 {
 	printf ("%s\n",p);
-	(void) Tprocess (t,Tprintone);
+	(void) Tprocess (t,Tprintone, NULL);
 	printf ("End of tree\n");
 	(void) fflush (stdout);
 }

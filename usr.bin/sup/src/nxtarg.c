@@ -1,4 +1,4 @@
-/*	$OpenBSD: nxtarg.c,v 1.2 1996/06/26 05:39:44 deraadt Exp $	*/
+/*	$OpenBSD: nxtarg.c,v 1.3 1997/04/01 07:35:12 todd Exp $	*/
 
 /*
  * Copyright (c) 1991 Carnegie Mellon University
@@ -54,9 +54,10 @@
  *
  *  Originally	from klg (Ken Greer); IUS/SUS UNIX.
  */
+#include "supcdefs.h"
+#include "supextern.h"
 
 char _argbreak;
-char *skipto();
 
 char *nxtarg (q,brk)
 char **q,*brk;
@@ -67,7 +68,7 @@ char **q,*brk;
 	while (*front && (*front == ' ' || *front == '\t')) front++;
 	/* find break character at end */
 	if (brk == 0)  brk = " ";
-	back = skipto (front,brk);
+	back = skipto ((unsigned char *) front,(unsigned char *) brk);
 	_argbreak = *back;
 	*q = (*back ? back+1 : back);	/* next arg start loc */
 	/* elim trailing blanks and tabs */

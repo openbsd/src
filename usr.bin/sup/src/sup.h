@@ -1,4 +1,4 @@
-/*	$OpenBSD: sup.h,v 1.2 1996/06/26 05:39:50 deraadt Exp $	*/
+/*	$OpenBSD: sup.h,v 1.3 1997/04/01 07:35:29 todd Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -40,38 +40,6 @@
  *	Modified SUP to use gzip based compression when sending files
  *	across the network to save BandWidth
  *
- * $Log: sup.h,v $
- * Revision 1.2  1996/06/26 05:39:50  deraadt
- * rcsid
- *
- * Revision 1.1  1995/12/16 11:46:55  deraadt
- * add sup to the tree
- *
- * Revision 1.3  1995/06/03 21:21:54  christos
- * Changes to write ascii timestamps in the when files.
- * Looked into making it 64 bit clean, but it is hopeless.
- * Added little program to convert from the old timestamp files
- * into the new ones.
- *
- * Revision 1.2  1993/08/04 17:46:15  brezak
- * Changes from nate for gzip'ed sup
- *
- * Revision 1.1.1.1  1993/05/21  14:52:18  cgd
- * initial import of CMU's SUP to NetBSD
- *
- * Revision 1.10  92/08/11  12:06:42  mrt
- * 	Added definition for DEBUGFPORTNUM, the debugging port number.
- * 	Changed so that last and when file names could include
- * 	the relase name if any.
- * 	[92/07/23            mrt]
- * 
- * Revision 1.9  91/04/29  14:39:03  mja
- * 	Reduce MAXCHILDREN from 8 to 3.
- * 
- * Revision 1.8  89/08/23  14:55:30  gm0w
- * 	Moved coll.dir from supservers to supfiles.
- * 	[89/08/23            gm0w]
- * 
  * 18-Mar-88  Glenn Marcy (gm0w) at Carnegie-Mellon University
  *	Added host=<hostfile> support to releases file.
  *
@@ -266,8 +234,8 @@ typedef struct tliststruct TREELIST;
 #define MAXCHILDREN 3			/* maximum number of children allowed
 					   to sup at the same time */
 
-/* scm and stree external declarations */
-char *remotehost();
-TREE *Tinsert(),*Tsearch(),*Tlookup();
-long getwhen();
-int putwhen();
+#ifdef __STDC__
+# include <stdarg.h>
+#else
+# include <varargs.h>
+#endif

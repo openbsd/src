@@ -1,4 +1,4 @@
-/*	$OpenBSD: supcmisc.c,v 1.3 1996/07/31 11:11:29 niklas Exp $	*/
+/*	$OpenBSD: supcmisc.c,v 1.4 1997/04/01 07:35:35 todd Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -28,34 +28,6 @@
  * sup misc. routines, include list processing.
  **********************************************************************
  * HISTORY
- * $Log: supcmisc.c,v $
- * Revision 1.3  1996/07/31 11:11:29  niklas
- * Better use time_t instead of long when dealing with times
- *
- * Revision 1.2  1996/06/26 05:39:52  deraadt
- * rcsid
- *
- * Revision 1.1  1995/12/16 11:46:57  deraadt
- * add sup to the tree
- *
- * Revision 1.2  1995/06/03 21:21:57  christos
- * Changes to write ascii timestamps in the when files.
- * Looked into making it 64 bit clean, but it is hopeless.
- * Added little program to convert from the old timestamp files
- * into the new ones.
- *
- * Revision 1.1.1.1  1993/05/21 14:52:18  cgd
- * initial import of CMU's SUP to NetBSD
- *
- * Revision 1.5  92/08/11  12:07:22  mrt
- * 	Added release to FILEWHEN name.
- * 	Brad's changes: delinted and updated variable arguement usage.
- * 	[92/07/26            mrt]
- * 
- * Revision 1.3  89/08/15  15:31:28  bww
- * 	Updated to use v*printf() in place of _doprnt().
- * 	From "[89/04/19            mja]" at CMU.
- * 	[89/08/15            bww]
  * 
  * 27-Dec-87  Glenn Marcy (gm0w) at Carnegie-Mellon University
  *	Fixed bug in ugconvert() which left pw uninitialized.
@@ -67,12 +39,8 @@
  **********************************************************************
  */
 
-#if __STDC__
-#include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
 #include "supcdefs.h"
+#include "supextern.h"
 
 struct liststruct {		/* uid and gid lists */
 	char *Lname;		/* name */
@@ -90,20 +58,21 @@ static LIST *uidL[LISTSIZE];		/* uid and gid lists */
 static LIST *gidL[LISTSIZE];
 
 extern COLLECTION *thisC;		/* collection list pointer */
-#if __STDC__
-int notify (char *, ...);
-#endif
+
+static int Lhash __P((char *));
+static void Linsert __P((LIST **, char *, int));
+static LIST *Llookup __P((LIST **, char *));
 
 /*************************************************
  ***    P R I N T   U P D A T E   T I M E S    ***
  *************************************************/
 
+void
 prtime ()
 {
 	char buf[STRINGLENGTH];
 	char relsufix[STRINGLENGTH];
 	time_t twhen;
-	int f;
 
 	if ((thisC->Cflags&CFURELSUF) && thisC->Crelease)
 		(void) sprintf (relsufix,".%s",thisC->Crelease);
@@ -173,7 +142,7 @@ char *name;
 	return (((len&HASHMASK)<<HASHBITS)|(((int)c)&HASHMASK));
 }
 
-static
+static void
 Linsert (table,name,number)
 LIST **table;
 char *name;
@@ -201,7 +170,7 @@ char *name;
 	return (l);
 }
 
-ugconvert (uname,gname,uid,gid,mode)
+void ugconvert (uname,gname,uid,gid,mode)
 char *uname,*gname;
 int *uid,*gid,*mode;
 {
@@ -219,18 +188,18 @@ int *uid,*gid,*mode;
 		first = FALSE;
 	}
 	pw = NULL;
-	if (u = Llookup (uidL,uname))
+	if ((u = Llookup (uidL,uname)) != NULL)
 		*uid = u->Lnumber;
-	else if (pw = getpwnam (uname)) {
+	else if ((pw = getpwnam (uname)) != NULL) {
 		Linsert (uidL,salloc(uname),pw->pw_uid);
 		*uid = pw->pw_uid;
 	}
 	if (u || pw) {
-		if (g = Llookup (gidL,gname)) {
+		if ((g = Llookup (gidL,gname)) != NULL) {
 			*gid = g->Lnumber;
 			return;
 		}
-		if (gr = getgrnam (gname)) {
+		if ((gr = getgrnam (gname)) != NULL) {
 			Linsert (gidL,salloc(gname),gr->gr_gid);
 			*gid = gr->gr_gid;
 			return;
@@ -261,7 +230,8 @@ int *uid,*gid,*mode;
  ***    U T I L I T Y   R O U T I N E S    ***
  *********************************************/
 
-#if __STDC__
+void
+#ifdef __STDC__
 notify (char *fmt,...)		/* record error message */
 #else
 /*VARARGS*//*ARGSUSED*/
@@ -269,18 +239,17 @@ notify (va_alist)		/* record error message */
 va_dcl
 #endif
 {
-#if !__STDC__
-	char *fmt;
-#endif
 	char buf[STRINGLENGTH];
 	char collrelname[STRINGLENGTH];
 	time_t tloc;
 	static FILE *noteF = NULL;	/* mail program on pipe */
 	va_list ap;
 
-#if __STDC__
+#ifdef __STDC__
 	va_start(ap,fmt);
 #else
+	char *fmt;
+
 	va_start(ap);
 	fmt = va_arg(ap,char *);
 #endif
@@ -317,19 +286,23 @@ va_dcl
 	(void) fflush (noteF);
 }
 
+void
 lockout (on)		/* lock out interrupts */
 int on;
 {
-	register int x;
-	static int lockmask;
+	static sigset_t oset;
+	sigset_t nset;
 
 	if (on) {
-		x = sigmask (SIGHUP) | sigmask (SIGINT) |
-		    sigmask (SIGQUIT) | sigmask (SIGTERM);
-		lockmask = sigblock (x);
+		sigemptyset(&nset);
+		sigaddset(&nset, SIGHUP);
+		sigaddset(&nset, SIGINT);
+		sigaddset(&nset, SIGTERM);
+		sigaddset(&nset, SIGQUIT);
+		(void) sigprocmask(SIG_BLOCK, &nset, &oset);
 	}
 	else {
-		(void) sigsetmask (lockmask);
+		(void) sigprocmask(SIG_SETMASK, &oset, NULL);
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: salloc.c,v 1.2 1996/06/26 05:39:46 deraadt Exp $	*/
+/*	$OpenBSD: salloc.c,v 1.3 1997/04/01 07:35:18 todd Exp $	*/
 
 /*
  * Copyright (c) 1991 Carnegie Mellon University
@@ -35,7 +35,9 @@
  *
  **********************************************************************
  */
-char *malloc();
+#include "supcdefs.h"
+#include "supextern.h"
+
 
 char *salloc(p)
 char *p;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: supcname.c,v 1.3 1997/01/17 07:18:08 millert Exp $	*/
+/*	$OpenBSD: supcname.c,v 1.4 1997/04/01 07:35:36 todd Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -28,25 +28,6 @@
  * sup client name server interface
  **********************************************************************
  * HISTORY
- * $Log: supcname.c,v $
- * Revision 1.3  1997/01/17 07:18:08  millert
- * more r?index -> strr?chr
- *
- * Revision 1.2  1996/06/26 05:39:53  deraadt
- * rcsid
- *
- * Revision 1.1  1995/12/16 11:46:58  deraadt
- * add sup to the tree
- *
- * Revision 1.2  1995/09/16 19:12:14  glass
- * if the function returns nothing, declare it void
- *
- * Revision 1.1.1.1  1993/05/21 14:52:18  cgd
- * initial import of CMU's SUP to NetBSD
- *
- * Revision 1.4  92/08/11  12:07:32  mrt
- * 	Added copyright.
- * 	[92/08/10            mrt]
  * 
  * 21-Dec-87  Glenn Marcy (gm0w) at Carnegie-Mellon University
  *	Changed to no longer use a name server.
@@ -68,6 +49,7 @@
  */
 
 #include "supcdefs.h"
+#include "supextern.h"
 
 extern COLLECTION *firstC;		/* collection list pointer */
 
@@ -94,7 +76,7 @@ void getnams ()
 	f = fopen (buf,"r");
 	if (f == NULL)  logquit (1,"Can't open %s",buf);
 	while ((p = fgets (buf,STRINGLENGTH,f)) != NULL) {
-		if (q = strchr (p,'\n'))  *q = '\0';
+		if ((q = strchr (p,'\n')) != NULL)  *q = '\0';
 		if (strchr ("#;:",*p))  continue;
 		q = nxtarg (&p,"= \t");
 		p = skipover (p," \t");

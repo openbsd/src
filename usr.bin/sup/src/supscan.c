@@ -1,4 +1,4 @@
-/*	$OpenBSD: supscan.c,v 1.4 1997/01/17 07:18:11 millert Exp $	*/
+/*	$OpenBSD: supscan.c,v 1.5 1997/04/01 07:35:49 todd Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -40,55 +40,6 @@
  *
  **********************************************************************
  * HISTORY
- * $Log: supscan.c,v $
- * Revision 1.4  1997/01/17 07:18:11  millert
- * more r?index -> strr?chr
- *
- * Revision 1.3  1996/07/31 11:11:35  niklas
- * Better use time_t instead of long when dealing with times
- *
- * Revision 1.2  1996/06/26 05:39:56  deraadt
- * rcsid
- *
- * Revision 1.1  1995/12/16 11:47:01  deraadt
- * add sup to the tree
- *
- * Revision 1.1.1.1  1993/05/21 14:52:19  cgd
- * initial import of CMU's SUP to NetBSD
- *
- * Revision 1.14  92/08/11  12:08:30  mrt
- * 	Picked up Brad's deliniting and variable argument changes
- * 	[92/08/10            mrt]
- * 
- * Revision 1.13  92/02/08  18:04:44  dlc
- * 	Once again revised localhost().  Do not use gethostbyname() at
- * 	all, but assume that the host names in the coll.host file are at
- * 	least a prefix of the fully qualified name.  Modcoll (and related
- * 	scripts) will maintain this fact.
- * 	[92/02/08            dlc]
- * 
- * Revision 1.12  91/08/17  23:35:31  dlc
- * 	Changes to localhost() function:
- * 		- Use host name in kernel for local host name; assume it is
- * 		  fully qualified.
- * 		- If gethostbyname() of host to see if we are the repository
- * 		  fails, with TRY_AGAIN or NO_RECOVERY, then use the "host"
- * 		  parameter.  Print a diagnostic in this case.
- * 	[91/08/17            dlc]
- * 
- * Revision 1.11  90/04/04  10:53:01  dlc
- * 	Changed localhost to retry getting the local host name 4 times with
- * 	30 second sleep intervals before aborting; after 4 tries, things are
- * 	probably too messed up for the supscan to do anything useful
- * 	[90/04/04            dlc]
- * 
- * Revision 1.10  89/08/03  19:49:33  mja
- * 	Updated to use v*printf() in place of _doprnt().
- * 	[89/04/19            mja]
- * 
- * Revision 1.9  89/06/18  14:41:37  gm0w
- * 	Fixed up some notify messages of errors to use "SUP:" prefix.
- * 	[89/06/18            gm0w]
  * 
  * 13-May-88  Glenn Marcy (gm0w) at Carnegie-Mellon University
  *	Changed goaway to longjmp back to top-level to scan next
@@ -138,12 +89,8 @@
 #endif
 #include <sys/time.h>
 #include <sys/types.h>
-#include "sup.h"
-
-#ifdef	lint
-/*VARARGS1*//*ARGSUSED*/
-static void quit(status) {};
-#endif	/* lint */
+#include "supcdefs.h"
+#include "supextern.h"
 
 #define PGMVERSION 6
 
@@ -151,13 +98,13 @@ static void quit(status) {};
  ***    D A T A   S T R U C T U R E S    ***
  *******************************************/
 
-struct collstruct {			/* one per collection to be upgraded */
+struct scan_collstruct {		/* one per collection to be upgraded */
 	char *Cname;			/* collection name */
 	char *Cbase;			/* local base directory */
 	char *Cprefix;			/* local collection pathname prefix */
-	struct collstruct *Cnext;	/* next collection */
+	struct scan_collstruct *Cnext;	/* next collection */
 };
-typedef struct collstruct COLLECTION;
+typedef struct scan_collstruct SCAN_COLLECTION;
 
 /*********************************************
  ***    G L O B A L   V A R I A B L E S    ***
@@ -165,12 +112,12 @@ typedef struct collstruct COLLECTION;
 
 int trace;				/* -v flag */
 
-COLLECTION *firstC;			/* collection list pointer */
+SCAN_COLLECTION *firstC;		/* collection list pointer */
 char *collname;				/* collection name */
 char *basedir;				/* base directory name */
 char *prefix;				/* collection pathname prefix */
 time_t lasttime = 0;			/* time of last upgrade */
-time_t scantime;				/* time of this scan */
+time_t scantime;			/* time of this scan */
 int newonly = FALSE;			/* new files only */
 jmp_buf sjbuf;				/* jump location for errors */
 
@@ -178,15 +125,27 @@ TREELIST *listTL;	/* list of all files specified by <coll>.list */
 TREE *listT;		/* final list of files in collection */
 TREE *refuseT = NULL;	/* list of all files specified by <coll>.list */
 
+
+void usage __P((void));
+void init __P((int, char **));
+static SCAN_COLLECTION *getscancoll __P((char *, char *, char *));
+int localhost __P((char *));
+int main __P((int, char **));
+
 /*************************************
  ***    M A I N   R O U T I N E    ***
  *************************************/
 
+int
 main (argc,argv)
 int argc;
 char **argv;
 {
-	register COLLECTION *c;
+	SCAN_COLLECTION *c;
+#if __GNUC__
+	/* Avoid longjmp clobbering */
+	(void) &c;
+#endif
 
 	init (argc,argv);		/* process arguments */
 	for (c = firstC; c; c = c->Cnext) {
@@ -208,7 +167,7 @@ char **argv;
 				ctime (&scantime));
 		(void) fflush (stdout);
 	}
-	while (c = firstC) {
+	while ((c = firstC) != NULL) {
 		firstC = firstC->Cnext;
 		free (c->Cname);
 		free (c->Cbase);
@@ -222,6 +181,7 @@ char **argv;
  ***    I N I T I A L I Z A T I O N    ***
  *****************************************/
 
+void
 usage ()
 {
 	fprintf (stderr,"Usage: supscan [ -v ] collection [ basedir ]\n");
@@ -230,15 +190,16 @@ usage ()
 	exit (1);
 }
 
+void
 init (argc,argv)
 int argc;
 char **argv;
 {
 	char buf[STRINGLENGTH],fbuf[STRINGLENGTH],*p,*q;
 	FILE *f;
-	COLLECTION **c, *getcoll();
+	SCAN_COLLECTION **c;
 	int fflag,sflag;
-	char *filename;
+	char *filename = NULL;
 
 	trace = FALSE;
 	fflag = FALSE;
@@ -285,7 +246,7 @@ char **argv;
 			collname = nxtarg (&p," \t=");
 			p = skipover (p," \t=");
 			if (!localhost (p))  continue;
-			*c = getcoll(filename,salloc (collname),
+			*c = getscancoll(filename,salloc (collname),
 					(char *)NULL);
 			if (*c)  c = &((*c)->Cnext);
 		}
@@ -297,13 +258,13 @@ char **argv;
 		c = &firstC;
 		if ((f = fopen (filename,"r")) == NULL)
 			quit (1,"supscan: Unable to open %s\n",filename);
-		while (p = fgets (buf,STRINGLENGTH,f)) {
+		while ((p = fgets (buf,STRINGLENGTH,f)) != NULL) {
 			q = strchr (p,'\n');
 			if (q)  *q = 0;
 			if (strchr ("#;:",*p))  continue;
 			q = nxtarg (&p," \t=");
 			p = skipover (p," \t=");
-			*c = getcoll(filename,salloc (q),salloc (p));
+			*c = getscancoll(filename,salloc (q),salloc (p));
 			if (*c)  c = &((*c)->Cnext);
 		}
 		(void) fclose (f);
@@ -311,21 +272,21 @@ char **argv;
 	}
 	if (argc < 2 || argc > 3)
 		usage ();
-	firstC = getcoll(filename,salloc (argv[1]),
+	firstC = getscancoll(filename,salloc (argv[1]),
 			argc > 2 ? salloc (argv[2]) : (char *)NULL);
 }
 
-COLLECTION *
-getcoll(filename, collname, basedir)
+static SCAN_COLLECTION *
+getscancoll(filename, collname, basedir)
 register char *filename,*collname,*basedir;
 {
 	char buf[STRINGLENGTH],*p,*q;
 	FILE *f;
-	COLLECTION *c;
+	SCAN_COLLECTION *c;
 
 	if (basedir == NULL) {
-		if (f = fopen (filename,"r")) {
-			while (p = fgets (buf,STRINGLENGTH,f)) {
+		if ((f = fopen (filename,"r")) != NULL) {
+			while ((p = fgets (buf,STRINGLENGTH,f)) != NULL) {
 				q = strchr (p,'\n');
 				if (q)  *q = 0;
 				if (strchr ("#;:",*p))  continue;
@@ -350,8 +311,8 @@ register char *filename,*collname,*basedir;
 	}
 	prefix = NULL;
 	(void) sprintf (buf,FILEPREFIX,collname);
-	if (f = fopen (buf,"r")) {
-		while (p = fgets (buf,STRINGLENGTH,f)) {
+	if ((f = fopen (buf,"r")) != NULL) {
+		while ((p = fgets (buf,STRINGLENGTH,f)) != NULL) {
 			q = strchr (p,'\n');
 			if (q) *q = 0;
 			if (strchr ("#;:",*p))  continue;
@@ -365,7 +326,7 @@ register char *filename,*collname,*basedir;
 		}
 		(void) fclose (f);
 	}
-	if ((c = (COLLECTION *) malloc (sizeof(COLLECTION))) == NULL)
+	if ((c = (SCAN_COLLECTION *) malloc (sizeof(SCAN_COLLECTION))) == NULL)
 		quit (1,"supscan: can't malloc collection structure\n");
 	c->Cname = collname;
 	c->Cbase = basedir;
@@ -373,7 +334,9 @@ register char *filename,*collname,*basedir;
 	c->Cnext = NULL;
 	return (c);
 }
-#if __STDC__
+
+void
+#ifdef __STDC__
 goaway (char *fmt,...)
 #else
 /*VARARGS*//*ARGSUSED*/
@@ -381,14 +344,13 @@ goaway (va_alist)
 va_dcl
 #endif
 {
-#if !__STDC__
-	char *fmt;
-#endif
 	va_list ap;
 
-#if __STDC__
+#ifdef __STDC__
 	va_start(ap,fmt);
 #else
+	char *fmt;
+
 	va_start(ap);
 	fmt = va_arg(ap,char *);
 #endif
