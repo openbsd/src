@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_lookup.c,v 1.13 2001/02/21 23:24:31 csapuntz Exp $	*/
+/*	$OpenBSD: ufs_lookup.c,v 1.14 2001/02/27 09:47:55 art Exp $	*/
 /*	$NetBSD: ufs_lookup.c,v 1.7 1996/02/09 22:36:06 christos Exp $	*/
 
 /*
@@ -374,7 +374,6 @@ searchloop:
 				}
 				dp->i_ino = ep->d_ino;
 				dp->i_reclen = ep->d_reclen;
-				brelse(bp);
 				goto found;
 			}
 		}
@@ -478,6 +477,7 @@ found:
 		dp->i_ffs_size = entryoffsetinblock + DIRSIZ(FSFMT(vdp), ep);
 		dp->i_flag |= IN_CHANGE | IN_UPDATE;
 	}
+	brelse(bp);
 
 	/*
 	 * Found component in pathname.
