@@ -18,7 +18,7 @@
 # archive site. Check with Archie if you don't know where that can be.)
 #
 
-# $Id: Configure,v 1.1.1.1 1996/08/19 10:11:33 downsj Exp $
+# $Id: Configure,v 1.2 1996/09/06 01:33:53 dm Exp $
 #
 # Generated on Wed Feb 21 14:26:18 EST 1996 [metaconfig 3.0 PL60]
 
@@ -86,10 +86,11 @@ PATH=.$p_$PATH
 export PATH
 
 : Sanity checks
-if test ! -t 0; then
-	echo "Say 'sh $me', not 'sh <$me'"
-	exit 1
-fi
+# WRONG: This makes it impossible to compile perl non-interactively
+#if test ! -t 0; then
+#	echo "Say 'sh $me', not 'sh <$me'"
+#	exit 1
+#fi
 
 : On HP-UX, large Configure scripts may exercise a bug in /bin/sh
 if test -f /hp-ux -a -f /bin/ksh; then
