@@ -1,4 +1,4 @@
-.\"	$Id: minherit.2,v 1.2 1996/01/12 21:08:46 niklas Exp $
+.\"	$Id: minherit.2,v 1.3 1996/08/06 23:18:23 deraadt Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -49,7 +49,8 @@ The
 .Fn minherit
 system call
 changes the specified pages to have the inheritance characteristic
-.Fa inherit .
+.Fa inherit ,
+which can be set to VM_INHERIT_NONE, VM_INHERIT_COPY, or VM_INHERIT_SHARE.
 Not all implementations will guarantee that the inheritance characteristic
 can be set on a page basis;
 the granularity of changes may be as large as an entire region.
