@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.353 2000/12/15 16:21:33 jason Exp 
+ *		OpenBSD: pcidevs,v 1.355 2001/01/18 00:58:54 mickey Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -5469,6 +5469,18 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "RhineII-2",
 	},
 	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C686A_ACM,
+	    0,
+	    "VIA",
+	    "VT82C686A (Apollo 133) AC-97 Modem",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_RHINEII,
+	    0,
+	    "VIA",
+	    "RhineII",
+	},
+	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8363_AGP,
 	    0,
 	    "VIA",
@@ -5503,12 +5515,6 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "VIA",
 	    "VT8605 (ProSavage PM133) PCI-AGP",
-	},
-	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_RHINEII,
-	    0,
-	    "VIA",
-	    "RhineII",
 	},
 	{
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_60x0,
