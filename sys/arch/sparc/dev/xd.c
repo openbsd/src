@@ -36,7 +36,7 @@
  * x d . c   x y l o g i c s   7 5 3 / 7 0 5 3   v m e / s m d   d r i v e r
  *
  * author: Chuck Cranor <chuck@ccrc.wustl.edu>
- * id: $Id: xd.c,v 1.3 1996/01/12 20:20:51 deraadt Exp $
+ * id: $Id: xd.c,v 1.4 1996/01/12 23:09:08 chuck Exp $
  * started: 27-Feb-95
  * references: [1] Xylogics Model 753 User's Manual
  *                 part number: 166-753-001, Revision B, May 21, 1988.
@@ -353,23 +353,18 @@ int xdcmatch(parent, match, aux)
 	struct romaux *ra = &ca->ca_ra;
 	struct xdc *xdc;
 	int     del = 0;
-	void	*vaddr;
 
 	if (strcmp(cf->cf_driver->cd_name, ra->ra_name))
 		return (0);
 
 	if (cputyp == CPU_SUN4) {
-		vaddr = ra->ra_vaddr;
-		if ((u_long) ra->ra_paddr & PGOFSET)
-			(u_long) vaddr |= ((u_long) ra->ra_paddr & PGOFSET);
-		xdc = (struct xdc *) vaddr;
+		xdc = (struct xdc *) ra->ra_vaddr;
 		if (probeget(&xdc->xdc_csr, 1) == -1)
 			return (0);
 		xdc->xdc_csr = XDC_RESET;
 		XDC_WAIT(xdc, del, XDC_RESETUSEC, XDC_RESET);
 		if (del <= 0)
 			return (0);
-		ra->ra_len = NBPG;
 	}
 	return (1);
 }
@@ -394,9 +389,6 @@ xdcattach(parent, self, aux)
 
 	ca->ca_ra.ra_vaddr = mapiodev(ca->ca_ra.ra_reg, 0,
 	    ca->ca_ra.ra_len, ca->ca_bustype);
-	if ((u_long) ca->ca_ra.ra_paddr & PGOFSET)
-		(u_long) ca->ca_ra.ra_vaddr |=
-				((u_long) ca->ca_ra.ra_paddr & PGOFSET);
 
 	xdc->xdc = (struct xdc *) ca->ca_ra.ra_vaddr;
 	pri = ca->ca_ra.ra_intr[0].int_pri;
