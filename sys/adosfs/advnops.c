@@ -1,4 +1,4 @@
-/*	$OpenBSD: advnops.c,v 1.26 2003/09/23 16:51:11 millert Exp $	*/
+/*	$OpenBSD: advnops.c,v 1.27 2003/10/17 18:25:06 tedu Exp $	*/
 /*	$NetBSD: advnops.c,v 1.32 1996/10/13 02:52:09 christos Exp $	*/
 
 /*
@@ -202,7 +202,7 @@ adosfs_getattr(v)
 		vap->va_nlink = 1 + (ap->linkto != 0);
 		/*
 		 * round up to nearest blocks add number of file list 
-		 * blocks needed and mutiply by number of bytes per block.
+		 * blocks needed and multiply by number of bytes per block.
 		 */
 		fblks = howmany(ap->fsize, amp->dbsize);
 		fblks += howmany(fblks, ANODENDATBLKENT(ap));
@@ -291,7 +291,7 @@ adosfs_read(v)
 		/*
 		 * read ahead could possibly be worth something
 		 * but not much as ados makes little attempt to 
-		 * make things contigous
+		 * make things contiguous
 		 */
 		error = bread(sp->a_vp, lbn * amp->secsperblk, amp->bsize,
 		    NOCRED, &bp);
@@ -666,7 +666,7 @@ reterr:
 }
 
 /*
- * Print out the contents of a adosfs vnode.
+ * Print out the contents of an adosfs vnode.
  */
 /* ARGSUSED */
 int
@@ -758,7 +758,7 @@ adosfs_readdir(v)
 	useri = uoff / sizeof(ad);
 
 	/*
-	 * if no slots available or offset requested is not on a slot boundry
+	 * if no slots available or offset requested is not on a slot boundary
 	 */
 	if (uavail < 1 || uoff % sizeof(ad)) {
 		error = EINVAL;
