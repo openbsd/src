@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_motorola.c,v 1.8 2001/12/12 17:30:08 millert Exp $ */
+/*	$OpenBSD: pmap_motorola.c,v 1.9 2001/12/12 18:36:21 millert Exp $ */
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -1689,15 +1689,15 @@ pmap_extract(pmap, va, pap)
 {
 	boolean_t rv = FALSE;
 	paddr_t pa;
-	u_int pte;
+	pt_entry_t *pte;
 
 	PMAP_DPRINTF(PDB_FOLLOW,
 	    ("pmap_extract(%p, %lx) -> ", pmap, va));
 
 	if (pmap_ste_v(pmap, va)) {
-		pte = *(u_int *)pmap_pte(pmap, va);
-		if (pmap_pte_v(&pte)) {
-			pa = (pte & PG_FRAME) | (va & ~PG_FRAME);
+		pte = pmap_pte(pmap, va);
+		if (pmap_pte_v(pte)) {
+			pa = pmap_pte_pa(pte) | (va & ~PG_FRAME);
 			if (pap != NULL)
 				*pap = pa;
 			rv = TRUE;
