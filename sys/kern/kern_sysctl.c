@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.56 2001/08/18 03:32:16 art Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.57 2001/09/07 22:03:21 angelos Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -455,7 +455,11 @@ hw_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		err = sysctl_diskinit(0, p);
 		if (err)
 			return err;
-		return (sysctl_rdstring(oldp, oldlenp, newp, disknames));
+		if (disknames)
+			return (sysctl_rdstring(oldp, oldlenp, newp,
+			    disknames));
+		else
+			return (sysctl_rdstring(oldp, oldlenp, newp, ""));
 	case HW_DISKSTATS:
 		err = sysctl_diskinit(1, p);
 		if (err)
