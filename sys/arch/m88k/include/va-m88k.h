@@ -1,4 +1,4 @@
-/*	$OpenBSD: va-m88k.h,v 1.2 2004/05/19 21:40:30 miod Exp $	*/
+/*	$OpenBSD: va-m88k.h,v 1.3 2004/06/07 20:44:18 miod Exp $	*/
 
 /* Define __gnuc_va_list.  */
 
@@ -21,6 +21,8 @@ typedef struct __va_list_tag {
 __extension__ ({							\
    (AP) = (struct __va_list_tag *)__builtin_alloca(sizeof(__gnuc_va_list)); \
   __builtin_memcpy ((AP), __builtin_saveregs (), sizeof(__gnuc_va_list)); \
+  if ((AP)->__va_arg > 8)						\
+ 	(AP)->__va_stk += ((AP)->__va_arg - 8);				\
   })
 
 #ifdef _STDARG_H /* stdarg.h support */
@@ -64,6 +66,10 @@ __extension__(*({							\
 	__ptr = (TYPE *) (void *) ((AP)->__va_reg +			\
 	    (AP)->__va_arg - __va_size(TYPE));				\
     } else {								\
+	if (((unsigned int)((AP)->__va_stk) & 4) != 0 &&		\
+	    __alignof__(*(TYPE *)0) > 4) {				\
+	    (AP)->__va_stk++;						\
+} \
 	__ptr = (TYPE *) (AP)->__va_stk;				\
 	(AP)->__va_stk += __va_size(TYPE);				\
     }									\
