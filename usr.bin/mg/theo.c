@@ -59,7 +59,8 @@ static char *talk[] = {
 	"idler!",
 	"slackass!",
 	"lazy bum!",
-	"Stop slacking your lazy bum!",
+	"Stop slacking you lazy bum!",
+	"slacker slacker lazy bum bum bum slacker!"
 };
 
 static int ntalk = sizeof(talk)/sizeof(talk[0]);
