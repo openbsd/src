@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.37 1998/05/05 19:07:18 deraadt Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.38 1998/06/26 01:28:28 deraadt Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -497,6 +497,8 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	{{T_SEQUENTIAL, T_REMOV,
 	 "WangDAT ", "Model 3200      ", "02.2"}, SDEV_NOSYNCWIDE},
 
+	{{T_SCANNER, T_FIXED,
+	 "RICOH   ", "IS60            ", "1R08"}, SDEV_NOLUNS},
 	{{T_SCANNER, T_FIXED,
 	 "UMAX    ", "Astra 1200S     ", "V2.9"}, SDEV_NOLUNS},
 	{{T_SCANNER, T_FIXED,
