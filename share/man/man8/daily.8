@@ -1,0 +1,257 @@
+.\"	$OpenBSD: daily.8,v 1.1 2003/07/28 20:55:59 jmc Exp $
+.\"
+.\" Copyright (c) 2003 Jason McIntyre <jmc@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd July 25, 2003
+.Dt DAILY 8
+.Os
+.Sh NAME
+.Nm daily , weekly , monthly
+.Nd periodic system maintenance
+.Sh SYNOPSIS
+.Nm /etc/daily
+.Nm /etc/weekly
+.Nm /etc/monthly
+.Sh DESCRIPTION
+The three files
+.Pa /etc/daily ,
+.Pa /etc/weekly ,
+and
+.Pa /etc/monthly
+are shell scripts run on a periodic basis by the clock daemon,
+.Xr cron 8 .
+They take care of some basic administrative tasks.
+The results are mailed to root.
+.Pp
+.Sy Note :
+The scripts are all run as part of root's
+.Xr crontab 5 .
+However, it is strongly suggested that the root mail account
+be an alias that forwards messages to a real user or set of users.
+Otherwise, root's mail will simply accumulate in
+.Pa /var/mail
+until the partition holding it runs out of space.
+See
+.Xr newaliases 8
+for further details.
+.Pp
+These scripts should not be altered.
+Local additions should be made to the files
+.Pa /etc/daily.local ,
+.Pa /etc/weekly.local ,
+and
+.Pa /etc/monthly.local ,
+which will be executed by
+.Pa /etc/daily ,
+.Pa /etc/weekly ,
+and
+.Pa /etc/monthly ,
+respectively.
+The
+.Pa *.local
+files are executed first, which makes it convenient to do any necessary
+cleanup and backup before the script is run.
+.Ss /etc/daily
+This script is run daily.
+It currently does the following:
+.Bl -dash
+.It
+Runs the script
+.Pa /etc/daily.local ,
+if it exists.
+.It
+Removes scratch and junk files from
+.Pa /tmp
+and
+.Pa /var/tmp .
+.It
+Removes stale files from the
+.Xr rwhod 8
+database.
+.It
+Checks for core dumps.
+.It
+Removes system messages older than 21 days for the
+.Xr msgs 1
+utility.
+.It
+Purges accounting records from
+.Pa /var/account ,
+if they exist.
+See
+.Xr accton 8
+and
+.Xr sa 8 .
+.It
+Creates a backup root file system which is updated daily.
+This only happens if the following conditions are met:
+.Bl -enum -offset indent
+.It
+.Ev ROOTBACKUP
+must be set to 1.
+It should be added to root's
+.Xr crontab 5 :
+.Pp
+.Dl ROOTBACKUP=1
+.It
+The mount directory
+.Pa /altroot
+must exist, and there must be an
+.Pa /etc/fstab
+entry specifying
+.Sq xx
+for the mount options, e.g.
+.Pp
+.Dl /dev/wd0j /altroot ffs xx 0 0
+.El
+.It
+Checks disk status.
+Reports on the amount of disk used/available via
+.Xr df 1 .
+Reports on which file systems need to be dumped via
+.Xr dump 8 .
+.It
+Reports on the status of the mail queue via
+.Xr mailq 8 .
+.It
+Reports networking statistics via
+.Xr netstat 1 .
+.It
+Gives an uptime for every machine which exists in
+.Pa /var/rwho ,
+via the
+.Xr ruptime 1
+utility.
+.It
+Runs the
+.Xr calendar 1
+utility unless the environment variable
+.Ev CALENDAR
+is set to 0 in root's
+.Xr crontab 5
+or the host is a
+.Xr yp 8
+client.
+.It
+If
+.Ev CHECKFILESYSTEMS
+is set to 1 in root's crontab,
+runs
+.Xr fsck 8
+with the no-write flag
+.Pq Fl n .
+.It
+If the file
+.Pa /etc/Distfile
+exists, runs the
+.Xr rdist 1
+utility.
+.It
+Runs the system security check script,
+.Pa /etc/security .
+See
+.Xr security 8
+for further details.
+.El
+.Ss /etc/weekly
+This script is run weekly.
+It currently does the following:
+.Bl -dash
+.It
+Runs the script
+.Pa /etc/weekly.local ,
+if it exists.
+.It
+Rebuilds the
+.Xr locate 1
+database, if there is an existing
+.Pa /var/db/locate.database
+file.
+.It
+Rebuilds the
+.Xr whatis 1
+database(s) via
+.Xr makewhatis 8 .
+.El
+.Ss /etc/monthly
+This script is run monthly.
+It currently does the following:
+.Bl -dash
+.It
+Runs the script
+.Pa /etc/monthly.local ,
+if it exists.
+.El
+.Sh ENVIRONMENT
+.Bl -tag -width "CHECKFILESYSTEMS" -compact
+.It Ev CALENDAR
+Determines whether to run calendar.
+.It Ev CHECKFILESYSTEMS
+Determines whether to run fsck with the no-write flag.
+.It Ev ROOTBACKUP
+Determines whether to make a backup of the root file system.
+.El
+.Sh FILES
+.Bl -tag -width "/var/cron/tabs/root" -compact
+.It Pa /etc/daily
+Daily maintenance script.
+.It Pa /etc/daily.local
+Site specific daily maintenance script.
+.It Pa /etc/weekly
+Weekly maintenance script.
+.It Pa /etc/weekly.local
+Site specific weekly maintenance script.
+.It Pa /etc/monthly
+Monthly maintenance script.
+.It Pa /etc/monthly.local
+Site specific monthly maintenance script.
+.It Pa /var/cron/tabs/root
+Root
+.Xr crontab 5 .
+.El
+.Sh SEE ALSO
+.Xr calendar 1 ,
+.Xr crontab 1 ,
+.Xr df 1 ,
+.Xr locate 1 ,
+.Xr msgs 1 ,
+.Xr netstat 1 ,
+.Xr rdist 1 ,
+.Xr ruptime 1 ,
+.Xr rwho 1 ,
+.Xr whatis 1 ,
+.Xr crontab 5 ,
+.Xr accton 8 ,
+.Xr cron 8 ,
+.Xr dump 8 ,
+.Xr fsck 8 ,
+.Xr mailq 8 ,
+.Xr makewhatis 8 ,
+.Xr sa 8 ,
+.Xr security 8 ,
+.Xr yp 8
+.Sh HISTORY
+This manual page first appeared in
+.Ox 3.4 .
+.Sh CAVEATS
+If the host machine is not running 24/7, these scripts may never be run.
+.Pp
+Be careful when adding local additions.
+Services such as
+.Qq www
+have their own users, and should be run as such, not as root.
+It may be more appropriate to create a separate
+.Xr crontab 5
+for such services.
