@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_var.h,v 1.3 1996/03/03 22:30:50 niklas Exp $	*/
+/*	$OpenBSD: tcp_var.h,v 1.4 1996/09/12 06:19:57 tholo Exp $	*/
 /*	$NetBSD: tcp_var.h,v 1.17 1996/02/13 23:44:24 christos Exp $	*/
 
 /*
@@ -181,6 +181,7 @@ struct	tcpstat {
 	u_long	tcps_timeoutdrop;	/* conn. dropped in rxmt timeout */
 	u_long	tcps_rexmttimeo;	/* retransmit timeouts */
 	u_long	tcps_persisttimeo;	/* persist timeouts */
+	u_long	tcps_persistdrop;	/* connections dropped in persist */
 	u_long	tcps_keeptimeo;		/* keepalive timeouts */
 	u_long	tcps_keepprobe;		/* keepalive probes sent */
 	u_long	tcps_keepdrops;		/* connections dropped in keepalive */
