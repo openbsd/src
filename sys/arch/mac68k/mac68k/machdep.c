@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.102 2003/01/04 22:11:47 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.103 2003/02/24 17:37:59 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.207 1998/07/08 04:39:34 thorpej Exp $	*/
 
 /*
@@ -273,6 +273,20 @@ mac68k_init()
 			    atop(low[i]), atop(high[i]),
 			    VM_FREELIST_DEFAULT);
 	}
+
+	/*
+	 * Initialize the I/O mem extent map.
+	 * Note: we don't have to check the return value since
+	 * creation of a fixed extent map will never fail (since
+	 * descriptor storage has already been allocated).
+	 *
+	 * N.B. The iomem extent manages _all_ physical addresses
+	 * on the machine.  When the amount of RAM is found, all
+	 * extents of RAM are allocated from the map.
+	 */
+	iomem_ex = extent_create("iomem", 0x0, 0xffffffff, M_DEVBUF,
+	    (caddr_t)iomem_ex_storage, sizeof(iomem_ex_storage),
+	    EX_NOCOALESCE|EX_NOWAIT);
 
 	/* Initialize the VIAs */
 	via_init();
@@ -2428,20 +2442,6 @@ mac68k_set_io_offsets(base)
 	vm_offset_t base;
 {
 	extern volatile u_char *sccA;
-
-	/*
-	 * Initialize the I/O mem extent map.
-	 * Note: we don't have to check the return value since
-	 * creation of a fixed extent map will never fail (since
-	 * descriptor storage has already been allocated).
-	 *
-	 * N.B. The iomem extent manages _all_ physical addresses
-	 * on the machine.  When the amount of RAM is found, all
-	 * extents of RAM are allocated from the map.
-	 */
-	iomem_ex = extent_create("iomem", 0x0, 0xffffffff, M_DEVBUF,
-	    (caddr_t)iomem_ex_storage, sizeof(iomem_ex_storage),
-	    EX_NOCOALESCE|EX_NOWAIT);
 
 	switch (current_mac_model->class) {
 	case MACH_CLASSQ:
