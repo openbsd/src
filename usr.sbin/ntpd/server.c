@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.8 2004/07/11 03:05:50 dtucker Exp $ */
+/*	$OpenBSD: server.c,v 1.9 2004/07/13 17:27:57 alexander Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -108,7 +108,8 @@ server_dispatch(int fd)
 
 	rectime = gettime();
 
-	ntp_getmsg(buf, size, &query);
+	if (ntp_getmsg(buf, size, &query) == -1)
+		return (0);
 
 	bzero(&reply, sizeof(reply));
 	reply.status = 0 | (query.status & VERSIONMASK);
