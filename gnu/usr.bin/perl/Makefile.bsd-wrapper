@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.28 1999/11/23 05:17:20 millert Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.29 1999/11/26 07:51:32 millert Exp $
 #
 # Build wrapper for Perl 5.005_03.
 #
@@ -107,6 +107,8 @@ CLEANFILES=	config.sh Policy.sh ${MANALL}
 	@if [ ${.CURDIR} != ${.OBJDIR} ]; then ${LNDIR} -s -e obj -e obj.${MACHINE_ARCH} -e Makefile.bsd-wrapper ${.CURDIR}; fi
 
 all:	perl.build ${MANALL}
+
+beforedepend:	config.sh config.h
 
 perl.build:	perl.lib
 	(cd ${.OBJDIR}; ${MAKE})
