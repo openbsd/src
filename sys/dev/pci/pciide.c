@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.118 2003/03/28 16:12:28 grange Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.119 2003/03/28 23:49:48 millert Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -3228,7 +3228,7 @@ sis_chip_map(sc, pa)
 		 * have problems with UDMA
 		 */
 		if (rev >= 0xd0 &&
-		    (PCI_PRODUCT(pchb_id) != PCI_PRODUCT_SIS_SiS530 ||
+		    (PCI_PRODUCT(pchb_id) != PCI_PRODUCT_SIS_530 ||
 		    PCI_REVISION(pchb_class) >= 0x03))
 			sc->sc_wdcdev.cap |= WDC_CAPABILITY_UDMA;
 	}
