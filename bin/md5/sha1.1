@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sha1.1,v 1.18 2004/05/04 18:32:51 jmc Exp $
+.\"	$OpenBSD: sha1.1,v 1.19 2004/05/16 18:31:31 otto Exp $
 .\"
 .\" Copyright (c) 2003, 2004 Todd C. Miller <Todd.Miller@courtesan.com>
 .\"
@@ -78,6 +78,18 @@ Runs a built-in test script.
 The SHA-1
 sum of each file listed on the command line is printed after the options
 are processed.
+.Pp
+The
+.Nm
+command is shorthand for
+.Bd -literal -offset indent
+cksum -a sha1
+.Ed
+.Pp
+The
+.Xr cksum 1
+command can also be used to compute digests from the SHA-2 family:
+sha256, sha384 and sha512.
 .Sh SEE ALSO
 .Xr cksum 1 ,
 .Xr md5 1 ,
