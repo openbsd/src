@@ -1,4 +1,4 @@
-/*	$OpenBSD: nm.c,v 1.6 1997/05/31 08:26:19 deraadt Exp $	*/
+/*	$OpenBSD: nm.c,v 1.7 1998/05/11 20:34:58 niklas Exp $	*/
 /*	$NetBSD: nm.c,v 1.7 1996/01/14 23:04:03 pk Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)nm.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: nm.c,v 1.6 1997/05/31 08:26:19 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: nm.c,v 1.7 1998/05/11 20:34:58 niklas Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -62,6 +62,11 @@ static char rcsid[] = "$OpenBSD: nm.c,v 1.6 1997/05/31 08:26:19 deraadt Exp $";
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#ifdef MID_MACHINE_OVERRIDE
+#undef MID_MACHINE
+#define MID_MACHINE MID_MACHINE_OVERRIDE
+#endif
 
 int ignore_bad_archive_entries = 1;
 int print_only_external_symbols;

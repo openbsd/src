@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.29 1998/05/11 07:43:12 niklas Exp $
+#	$OpenBSD: Makefile,v 1.30 1998/05/11 20:34:54 niklas Exp $
 
 #
 # For more information on building in tricky environments, please see
@@ -231,7 +231,8 @@ cross-nm:
 	    BSDOBJDIR=${CROSSDIR}/usr/obj \
 	    BSDSRCDIR=${.CURDIR} MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
 	    ${MAKE} obj)
-	(cd usr.bin/nm; MAKEOBJDIR=obj.${MACHINE}.${TARGET} ${MAKE} NOMAN=)
+	(cd usr.bin/nm; MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
+	    ${MAKE} TARGET_MACHINE_ARCH=${TARGET} NOMAN=)
 	(cd usr.bin/nm; \
 	    DESTDIR=${CROSSDIR} MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
 	    ${MAKE} NOMAN= install)
