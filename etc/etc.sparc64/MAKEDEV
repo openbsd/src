@@ -1,7 +1,7 @@
 
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.3 2001/09/04 18:53:36 todd Exp $
+#	$OpenBSD: MAKEDEV,v 1.4 2001/09/04 19:14:04 todd Exp $
 #
 # Copyright (c) 2001 Todd T. Fries <todd@OpenBSD.org>
 # All rights reserved.
@@ -61,21 +61,23 @@
 #	pty*	set of 16 master and slave pseudo terminals
 #
 # Special purpose devices:
+#	ses*	SES/SAF-TE SCSI devices
 #	fd		makes fd/* for the fdescfs
 #	bwtwo*	
+#	xfs*	XFS filesystem devices
 #	cgthree*	
+#	ss*		SCSI scanners
+#	uk*		SCSI Unknown device
+#	audio*	audio device
 #	cgsix*	
-#	cgfourteen*	
-#	bpf*	Berkeley Packet Filter
 #	pf*	Packet Filter
 #	altq/	ALTQ control interface
-#	lkm		loadable kernel modules interface
-#	audio*	audio device
+#	cgfourteen*	
+#	tcx*	
+#	bpf*	Berkeley Packet Filter
 #	tun*	network tunnel driver
+#	lkm		loadable kernel modules interface
 #	*random	inkernal random data source
-#	uk*		SCSI Unknown device
-#	ss*		SCSI scanners
-#	ses*	SES/SAF-TE SCSI devices
 #
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 T=$0
@@ -274,6 +276,7 @@ bwtwo*) M bwtwo$U c 27 $U 666;;
 cgthree*) M cgthree$U c 55 $U 666;;
 cgsix*) M cgsix$U c 67 $U 666;;
 cgfourteen*) M cgfourteen$U c 99 $U 666;;
+tcx*) M tcx$U c 109 $U 666;;
 fd)
 	RMlist="mkdir -p fd;$RMlist"
 	n=0
@@ -354,6 +357,7 @@ ch*) M ch$U c 19 $U 660 operator;;
 lkm) 
 	M lkm c 112 0 640 kmem
 	;;
+xfs*) M xfs$U c 51 $U 600;;
 *random)
 	n=0
 	for pre in " " s u p a
