@@ -21,7 +21,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-tcp.c,v 1.8 1999/09/16 17:59:50 brad Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-tcp.c,v 1.9 1999/11/26 18:16:55 provos Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -306,8 +306,8 @@ tcp_print(register const u_char *bp, register u_int length,
 							s -= th->ack;
 							e -= th->ack;
 						}
-					(void) printf("{%u:%u} ", s, e);
 					}
+					(void) printf("{%u:%u} ", s, e);
 				}
 				break;
 			}
