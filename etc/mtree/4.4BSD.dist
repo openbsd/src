@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.67 1999/02/26 02:40:42 beck Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.68 1999/02/26 18:32:22 mickey Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -960,6 +960,11 @@ amiga
 # ./usr/share/man/cat4/amiga
 ..
 
+# ./usr/share/man/cat4/arc
+arc
+# ./usr/share/man/cat4/arc
+..
+
 # ./usr/share/man/cat4/arm32
 arm32
 # ./usr/share/man/cat4/arm32
@@ -1172,6 +1177,11 @@ amiga
 # ./usr/share/man/man4/amiga
 ..
 
+# ./usr/share/man/man4/arc
+arc
+# ./usr/share/man/man4/arc
+..
+
 # ./usr/share/man/man4/arm32
 arm32
 # ./usr/share/man/man4/arm32
@@ -1263,9 +1273,9 @@ man7
 # ./usr/share/man/man8
 man8
 
-# ./usr/share/man/man8/amiga
+# ./usr/share/man/man8/alpha
 alpha
-# ./usr/share/man/man8/amiga
+# ./usr/share/man/man8/alpha
 ..
 
 # ./usr/share/man/man8/amiga
