@@ -1,7 +1,7 @@
 /* options.h - specify the conditionally-compiled features
  * vix 28mar92 [moved out of the Makefile because they were getting too big]
  *
- * $Id: options.h,v 1.3 1998/02/22 10:18:57 deraadt Exp $
+ * $Id: options.h,v 1.4 1998/06/25 18:32:40 downsj Exp $
  */
 
 /*
@@ -118,7 +118,7 @@
 /*#define XSTATS	/* extended statistics, syslogged periodically (bg) */
 /*#define BIND_NOTIFY	/* experimental - do not enable in customer products */
 #define LOC_RR		/* support for LOC record parsing (ckd/vix) */
-#define SORT_RESPONSE	/* should we try to sort responses optimally? (vix) */
+/*#define SORT_RESPONSE	/* should we try to sort responses optimally? (vix) */
 
 /*--------------------------------------------*
  * no user-servicable parts beyond this point *
