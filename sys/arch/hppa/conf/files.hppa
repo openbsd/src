@@ -1,4 +1,4 @@
-#	$OpenBSD: files.hppa,v 1.22 2000/04/18 19:31:00 mickey Exp $
+#	$OpenBSD: files.hppa,v 1.23 2000/04/18 19:52:10 mickey Exp $
 #
 # hppa-specific configuration info
 
@@ -158,7 +158,7 @@ file	arch/hppa/gsc/harmony.c		harmony
 
 # fax/modem/voice on harmony
 attach	com at harmony with com_harmony
-fle	arch/hppa/gsc/com_harmony.c	com_harmony
+file	arch/hppa/gsc/com_harmony.c	com_harmony
 
 # HPA4011A/B w/ TMS380C26PQL, TMS38054FNL
 #device	tms: tokenring
