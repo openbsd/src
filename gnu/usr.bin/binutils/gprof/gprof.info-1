@@ -1,0 +1,1121 @@
+This is gprof.info, produced by makeinfo version 4.0 from gprof.texi.
+
+START-INFO-DIR-ENTRY
+* gprof: (gprof).                Profiling your program's execution
+END-INFO-DIR-ENTRY
+
+   This file documents the gprof profiler of the GNU system.
+
+   Copyright (C) 1988, 92, 97, 98, 99, 2000 Free Software Foundation,
+Inc.
+
+   Permission is granted to make and distribute verbatim copies of this
+manual provided the copyright notice and this permission notice are
+preserved on all copies.
+
+   Permission is granted to copy and distribute modified versions of
+this manual under the conditions for verbatim copying, provided that
+the entire resulting derived work is distributed under the terms of a
+permission notice identical to this one.
+
+   Permission is granted to copy and distribute translations of this
+manual into another language, under the above conditions for modified
+versions.
+
+
+File: gprof.info,  Node: Top,  Next: Introduction,  Up: (dir)
+
+Profiling a Program: Where Does It Spend Its Time?
+**************************************************
+
+   This manual describes the GNU profiler, `gprof', and how you can use
+it to determine which parts of a program are taking most of the
+execution time.  We assume that you know how to write, compile, and
+execute programs.  GNU `gprof' was written by Jay Fenlason.
+
+* Menu:
+
+* Introduction::        What profiling means, and why it is useful.
+
+* Compiling::           How to compile your program for profiling.
+* Executing::           Executing your program to generate profile data
+* Invoking::            How to run `gprof', and its options
+
+* Output::		Interpreting `gprof''s output
+
+* Inaccuracy::          Potential problems you should be aware of
+* How do I?::           Answers to common questions
+* Incompatibilities::   (between GNU `gprof' and Unix `gprof'.)
+* Details::             Details of how profiling is done
+
+
+File: gprof.info,  Node: Introduction,  Next: Compiling,  Prev: Top,  Up: Top
+
+Introduction to Profiling
+*************************
+
+   Profiling allows you to learn where your program spent its time and
+which functions called which other functions while it was executing.
+This information can show you which pieces of your program are slower
+than you expected, and might be candidates for rewriting to make your
+program execute faster.  It can also tell you which functions are being
+called more or less often than you expected.  This may help you spot
+bugs that had otherwise been unnoticed.
+
+   Since the profiler uses information collected during the actual
+execution of your program, it can be used on programs that are too
+large or too complex to analyze by reading the source.  However, how
+your program is run will affect the information that shows up in the
+profile data.  If you don't use some feature of your program while it
+is being profiled, no profile information will be generated for that
+feature.
+
+   Profiling has several steps:
+
+   * You must compile and link your program with profiling enabled.
+     *Note Compiling::.
+
+   * You must execute your program to generate a profile data file.
+     *Note Executing::.
+
+   * You must run `gprof' to analyze the profile data.  *Note
+     Invoking::.
+
+   The next three chapters explain these steps in greater detail.
+
+   Several forms of output are available from the analysis.
+
+   The "flat profile" shows how much time your program spent in each
+function, and how many times that function was called.  If you simply
+want to know which functions burn most of the cycles, it is stated
+concisely here.  *Note Flat Profile::.
+
+   The "call graph" shows, for each function, which functions called
+it, which other functions it called, and how many times.  There is also
+an estimate of how much time was spent in the subroutines of each
+function.  This can suggest places where you might try to eliminate
+function calls that use a lot of time.  *Note Call Graph::.
+
+   The "annotated source" listing is a copy of the program's source
+code, labeled with the number of times each line of the program was
+executed.  *Note Annotated Source::.
+
+   To better understand how profiling works, you may wish to read a
+description of its implementation.  *Note Implementation::.
+
+
+File: gprof.info,  Node: Compiling,  Next: Executing,  Prev: Introduction,  Up: Top
+
+Compiling a Program for Profiling
+*********************************
+
+   The first step in generating profile information for your program is
+to compile and link it with profiling enabled.
+
+   To compile a source file for profiling, specify the `-pg' option when
+you run the compiler.  (This is in addition to the options you normally
+use.)
+
+   To link the program for profiling, if you use a compiler such as `cc'
+to do the linking, simply specify `-pg' in addition to your usual
+options.  The same option, `-pg', alters either compilation or linking
+to do what is necessary for profiling.  Here are examples:
+
+     cc -g -c myprog.c utils.c -pg
+     cc -o myprog myprog.o utils.o -pg
+
+   The `-pg' option also works with a command that both compiles and
+links:
+
+     cc -o myprog myprog.c utils.c -g -pg
+
+   If you run the linker `ld' directly instead of through a compiler
+such as `cc', you may have to specify a profiling startup file
+`gcrt0.o' as the first input file instead of the usual startup file
+`crt0.o'.  In addition, you would probably want to specify the
+profiling C library, `libc_p.a', by writing `-lc_p' instead of the
+usual `-lc'.  This is not absolutely necessary, but doing this gives
+you number-of-calls information for standard library functions such as
+`read' and `open'.  For example:
+
+     ld -o myprog /lib/gcrt0.o myprog.o utils.o -lc_p
+
+   If you compile only some of the modules of the program with `-pg',
+you can still profile the program, but you won't get complete
+information about the modules that were compiled without `-pg'.  The
+only information you get for the functions in those modules is the
+total time spent in them; there is no record of how many times they
+were called, or from where.  This will not affect the flat profile
+(except that the `calls' field for the functions will be blank), but
+will greatly reduce the usefulness of the call graph.
+
+   If you wish to perform line-by-line profiling, you will also need to
+specify the `-g' option, instructing the compiler to insert debugging
+symbols into the program that match program addresses to source code
+lines.  *Note Line-by-line::.
+
+   In addition to the `-pg' and `-g' options, you may also wish to
+specify the `-a' option when compiling.  This will instrument the
+program to perform basic-block counting.  As the program runs, it will
+count how many times it executed each branch of each `if' statement,
+each iteration of each `do' loop, etc.  This will enable `gprof' to
+construct an annotated source code listing showing how many times each
+line of code was executed.
+
+
+File: gprof.info,  Node: Executing,  Next: Invoking,  Prev: Compiling,  Up: Top
+
+Executing the Program
+*********************
+
+   Once the program is compiled for profiling, you must run it in order
+to generate the information that `gprof' needs.  Simply run the program
+as usual, using the normal arguments, file names, etc.  The program
+should run normally, producing the same output as usual.  It will,
+however, run somewhat slower than normal because of the time spent
+collecting and the writing the profile data.
+
+   The way you run the program--the arguments and input that you give
+it--may have a dramatic effect on what the profile information shows.
+The profile data will describe the parts of the program that were
+activated for the particular input you use.  For example, if the first
+command you give to your program is to quit, the profile data will show
+the time used in initialization and in cleanup, but not much else.
+
+   Your program will write the profile data into a file called
+`gmon.out' just before exiting.  If there is already a file called
+`gmon.out', its contents are overwritten.  There is currently no way to
+tell the program to write the profile data under a different name, but
+you can rename the file afterward if you are concerned that it may be
+overwritten.
+
+   In order to write the `gmon.out' file properly, your program must
+exit normally: by returning from `main' or by calling `exit'.  Calling
+the low-level function `_exit' does not write the profile data, and
+neither does abnormal termination due to an unhandled signal.
+
+   The `gmon.out' file is written in the program's _current working
+directory_ at the time it exits.  This means that if your program calls
+`chdir', the `gmon.out' file will be left in the last directory your
+program `chdir''d to.  If you don't have permission to write in this
+directory, the file is not written, and you will get an error message.
+
+   Older versions of the GNU profiling library may also write a file
+called `bb.out'.  This file, if present, contains an human-readable
+listing of the basic-block execution counts.  Unfortunately, the
+appearance of a human-readable `bb.out' means the basic-block counts
+didn't get written into `gmon.out'.  The Perl script `bbconv.pl',
+included with the `gprof' source distribution, will convert a `bb.out'
+file into a format readable by `gprof'.
+
+
+File: gprof.info,  Node: Invoking,  Next: Output,  Prev: Executing,  Up: Top
+
+`gprof' Command Summary
+***********************
+
+   After you have a profile data file `gmon.out', you can run `gprof'
+to interpret the information in it.  The `gprof' program prints a flat
+profile and a call graph on standard output.  Typically you would
+redirect the output of `gprof' into a file with `>'.
+
+   You run `gprof' like this:
+
+     gprof OPTIONS [EXECUTABLE-FILE [PROFILE-DATA-FILES...]] [> OUTFILE]
+
+Here square-brackets indicate optional arguments.
+
+   If you omit the executable file name, the file `a.out' is used.  If
+you give no profile data file name, the file `gmon.out' is used.  If
+any file is not in the proper format, or if the profile data file does
+not appear to belong to the executable file, an error message is
+printed.
+
+   You can give more than one profile data file by entering all their
+names after the executable file name; then the statistics in all the
+data files are summed together.
+
+   The order of these options does not matter.
+
+* Menu:
+
+* Output Options::      Controlling `gprof''s output style
+* Analysis Options::    Controlling how `gprof' analyses its data
+* Miscellaneous Options::
+* Deprecated Options::  Options you no longer need to use, but which
+                            have been retained for compatibility
+* Symspecs::            Specifying functions to include or exclude
+
+
+File: gprof.info,  Node: Output Options,  Next: Analysis Options,  Up: Invoking
+
+Output Options
+==============
+
+   These options specify which of several output formats `gprof' should
+produce.
+
+   Many of these options take an optional "symspec" to specify
+functions to be included or excluded.  These options can be specified
+multiple times, with different symspecs, to include or exclude sets of
+symbols.  *Note Symspecs::.
+
+   Specifying any of these options overrides the default (`-p -q'),
+which prints a flat profile and call graph analysis for all functions.
+
+`-A[SYMSPEC]'
+`--annotated-source[=SYMSPEC]'
+     The `-A' option causes `gprof' to print annotated source code.  If
+     SYMSPEC is specified, print output only for matching symbols.
+     *Note Annotated Source::.
+
+`-b'
+`--brief'
+     If the `-b' option is given, `gprof' doesn't print the verbose
+     blurbs that try to explain the meaning of all of the fields in the
+     tables.  This is useful if you intend to print out the output, or
+     are tired of seeing the blurbs.
+
+`-C[SYMSPEC]'
+`--exec-counts[=SYMSPEC]'
+     The `-C' option causes `gprof' to print a tally of functions and
+     the number of times each was called.  If SYMSPEC is specified,
+     print tally only for matching symbols.
+
+     If the profile data file contains basic-block count records,
+     specifying the `-l' option, along with `-C', will cause basic-block
+     execution counts to be tallied and displayed.
+
+`-i'
+`--file-info'
+     The `-i' option causes `gprof' to display summary information
+     about the profile data file(s) and then exit.  The number of
+     histogram, call graph, and basic-block count records is displayed.
+
+`-I DIRS'
+`--directory-path=DIRS'
+     The `-I' option specifies a list of search directories in which to
+     find source files.  Environment variable GPROF_PATH can also be
+     used to convey this information.  Used mostly for annotated source
+     output.
+
+`-J[SYMSPEC]'
+`--no-annotated-source[=SYMSPEC]'
+     The `-J' option causes `gprof' not to print annotated source code.
+     If SYMSPEC is specified, `gprof' prints annotated source, but
+     excludes matching symbols.
+
+`-L'
+`--print-path'
+     Normally, source filenames are printed with the path component
+     suppressed.  The `-L' option causes `gprof' to print the full
+     pathname of source filenames, which is determined from symbolic
+     debugging information in the image file and is relative to the
+     directory in which the compiler was invoked.
+
+`-p[SYMSPEC]'
+`--flat-profile[=SYMSPEC]'
+     The `-p' option causes `gprof' to print a flat profile.  If
+     SYMSPEC is specified, print flat profile only for matching symbols.
+     *Note Flat Profile::.
+
+`-P[SYMSPEC]'
+`--no-flat-profile[=SYMSPEC]'
+     The `-P' option causes `gprof' to suppress printing a flat profile.
+     If SYMSPEC is specified, `gprof' prints a flat profile, but
+     excludes matching symbols.
+
+`-q[SYMSPEC]'
+`--graph[=SYMSPEC]'
+     The `-q' option causes `gprof' to print the call graph analysis.
+     If SYMSPEC is specified, print call graph only for matching symbols
+     and their children.  *Note Call Graph::.
+
+`-Q[SYMSPEC]'
+`--no-graph[=SYMSPEC]'
+     The `-Q' option causes `gprof' to suppress printing the call graph.
+     If SYMSPEC is specified, `gprof' prints a call graph, but excludes
+     matching symbols.
+
+`-y'
+`--separate-files'
+     This option affects annotated source output only.  Normally,
+     `gprof' prints annotated source files to standard-output.  If this
+     option is specified, annotated source for a file named
+     `path/FILENAME' is generated in the file `FILENAME-ann'.  If the
+     underlying filesystem would truncate `FILENAME-ann' so that it
+     overwrites the original `FILENAME', `gprof' generates annotated
+     source in the file `FILENAME.ann' instead (if the original file
+     name has an extension, that extension is _replaced_ with `.ann').
+
+`-Z[SYMSPEC]'
+`--no-exec-counts[=SYMSPEC]'
+     The `-Z' option causes `gprof' not to print a tally of functions
+     and the number of times each was called.  If SYMSPEC is specified,
+     print tally, but exclude matching symbols.
+
+`--function-ordering'
+     The `--function-ordering' option causes `gprof' to print a
+     suggested function ordering for the program based on profiling
+     data.  This option suggests an ordering which may improve paging,
+     tlb and cache behavior for the program on systems which support
+     arbitrary ordering of functions in an executable.
+
+     The exact details of how to force the linker to place functions in
+     a particular order is system dependent and out of the scope of this
+     manual.
+
+`--file-ordering MAP_FILE'
+     The `--file-ordering' option causes `gprof' to print a suggested
+     .o link line ordering for the program based on profiling data.
+     This option suggests an ordering which may improve paging, tlb and
+     cache behavior for the program on systems which do not support
+     arbitrary ordering of functions in an executable.
+
+     Use of the `-a' argument is highly recommended with this option.
+
+     The MAP_FILE argument is a pathname to a file which provides
+     function name to object file mappings.  The format of the file is
+     similar to the output of the program `nm'.
+
+          c-parse.o:00000000 T yyparse
+          c-parse.o:00000004 C yyerrflag
+          c-lang.o:00000000 T maybe_objc_method_name
+          c-lang.o:00000000 T print_lang_statistics
+          c-lang.o:00000000 T recognize_objc_keyword
+          c-decl.o:00000000 T print_lang_identifier
+          c-decl.o:00000000 T print_lang_type
+          ...
+
+     To create a MAP_FILE with GNU `nm', type a command like `nm
+     --extern-only --defined-only -v --print-file-name program-name'.
+
+`-T'
+`--traditional'
+     The `-T' option causes `gprof' to print its output in
+     "traditional" BSD style.
+
+`-w WIDTH'
+`--width=WIDTH'
+     Sets width of output lines to WIDTH.  Currently only used when
+     printing the function index at the bottom of the call graph.
+
+`-x'
+`--all-lines'
+     This option affects annotated source output only.  By default,
+     only the lines at the beginning of a basic-block are annotated.
+     If this option is specified, every line in a basic-block is
+     annotated by repeating the annotation for the first line.  This
+     behavior is similar to `tcov''s `-a'.
+
+`--demangle'
+`--no-demangle'
+     These options control whether C++ symbol names should be demangled
+     when printing output.  The default is to demangle symbols.  The
+     `--no-demangle' option may be used to turn off demangling.
+
+
+File: gprof.info,  Node: Analysis Options,  Next: Miscellaneous Options,  Prev: Output Options,  Up: Invoking
+
+Analysis Options
+================
+
+`-a'
+`--no-static'
+     The `-a' option causes `gprof' to suppress the printing of
+     statically declared (private) functions.  (These are functions
+     whose names are not listed as global, and which are not visible
+     outside the file/function/block where they were defined.)  Time
+     spent in these functions, calls to/from them, etc, will all be
+     attributed to the function that was loaded directly before it in
+     the executable file.  This option affects both the flat profile
+     and the call graph.
+
+`-c'
+`--static-call-graph'
+     The `-c' option causes the call graph of the program to be
+     augmented by a heuristic which examines the text space of the
+     object file and identifies function calls in the binary machine
+     code.  Since normal call graph records are only generated when
+     functions are entered, this option identifies children that could
+     have been called, but never were.  Calls to functions that were
+     not compiled with profiling enabled are also identified, but only
+     if symbol table entries are present for them.  Calls to dynamic
+     library routines are typically _not_ found by this option.
+     Parents or children identified via this heuristic are indicated in
+     the call graph with call counts of `0'.
+
+`-D'
+`--ignore-non-functions'
+     The `-D' option causes `gprof' to ignore symbols which are not
+     known to be functions.  This option will give more accurate
+     profile data on systems where it is supported (Solaris and HPUX for
+     example).
+
+`-k FROM/TO'
+     The `-k' option allows you to delete from the call graph any arcs
+     from symbols matching symspec FROM to those matching symspec TO.
+
+`-l'
+`--line'
+     The `-l' option enables line-by-line profiling, which causes
+     histogram hits to be charged to individual source code lines,
+     instead of functions.  If the program was compiled with
+     basic-block counting enabled, this option will also identify how
+     many times each line of code was executed.  While line-by-line
+     profiling can help isolate where in a large function a program is
+     spending its time, it also significantly increases the running
+     time of `gprof', and magnifies statistical inaccuracies.  *Note
+     Sampling Error::.
+
+`-m NUM'
+`--min-count=NUM'
+     This option affects execution count output only.  Symbols that are
+     executed less than NUM times are suppressed.
+
+`-n[SYMSPEC]'
+`--time[=SYMSPEC]'
+     The `-n' option causes `gprof', in its call graph analysis, to
+     only propagate times for symbols matching SYMSPEC.
+
+`-N[SYMSPEC]'
+`--no-time[=SYMSPEC]'
+     The `-n' option causes `gprof', in its call graph analysis, not to
+     propagate times for symbols matching SYMSPEC.
+
+`-z'
+`--display-unused-functions'
+     If you give the `-z' option, `gprof' will mention all functions in
+     the flat profile, even those that were never called, and that had
+     no time spent in them.  This is useful in conjunction with the
+     `-c' option for discovering which routines were never called.
+
+
+File: gprof.info,  Node: Miscellaneous Options,  Next: Deprecated Options,  Prev: Analysis Options,  Up: Invoking
+
+Miscellaneous Options
+=====================
+
+`-d[NUM]'
+`--debug[=NUM]'
+     The `-d NUM' option specifies debugging options.  If NUM is not
+     specified, enable all debugging.  *Note Debugging::.
+
+`-ONAME'
+`--file-format=NAME'
+     Selects the format of the profile data files.  Recognized formats
+     are `auto' (the default), `bsd', `4.4bsd', `magic', and `prof'
+     (not yet supported).
+
+`-s'
+`--sum'
+     The `-s' option causes `gprof' to summarize the information in the
+     profile data files it read in, and write out a profile data file
+     called `gmon.sum', which contains all the information from the
+     profile data files that `gprof' read in.  The file `gmon.sum' may
+     be one of the specified input files; the effect of this is to
+     merge the data in the other input files into `gmon.sum'.
+
+     Eventually you can run `gprof' again without `-s' to analyze the
+     cumulative data in the file `gmon.sum'.
+
+`-v'
+`--version'
+     The `-v' flag causes `gprof' to print the current version number,
+     and then exit.
+
+
+File: gprof.info,  Node: Deprecated Options,  Next: Symspecs,  Prev: Miscellaneous Options,  Up: Invoking
+
+Deprecated Options
+==================
+
+     These options have been replaced with newer versions that use
+     symspecs.
+
+`-e FUNCTION_NAME'
+     The `-e FUNCTION' option tells `gprof' to not print information
+     about the function FUNCTION_NAME (and its children...) in the call
+     graph.  The function will still be listed as a child of any
+     functions that call it, but its index number will be shown as
+     `[not printed]'.  More than one `-e' option may be given; only one
+     FUNCTION_NAME may be indicated with each `-e' option.
+
+`-E FUNCTION_NAME'
+     The `-E FUNCTION' option works like the `-e' option, but time
+     spent in the function (and children who were not called from
+     anywhere else), will not be used to compute the
+     percentages-of-time for the call graph.  More than one `-E' option
+     may be given; only one FUNCTION_NAME may be indicated with each
+     `-E' option.
+
+`-f FUNCTION_NAME'
+     The `-f FUNCTION' option causes `gprof' to limit the call graph to
+     the function FUNCTION_NAME and its children (and their
+     children...).  More than one `-f' option may be given; only one
+     FUNCTION_NAME may be indicated with each `-f' option.
+
+`-F FUNCTION_NAME'
+     The `-F FUNCTION' option works like the `-f' option, but only time
+     spent in the function and its children (and their children...)
+     will be used to determine total-time and percentages-of-time for
+     the call graph.  More than one `-F' option may be given; only one
+     FUNCTION_NAME may be indicated with each `-F' option.  The `-F'
+     option overrides the `-E' option.
+
+   Note that only one function can be specified with each `-e', `-E',
+`-f' or `-F' option.  To specify more than one function, use multiple
+options.  For example, this command:
+
+     gprof -e boring -f foo -f bar myprogram > gprof.output
+
+lists in the call graph all functions that were reached from either
+`foo' or `bar' and were not reachable from `boring'.
+
+
+File: gprof.info,  Node: Symspecs,  Prev: Deprecated Options,  Up: Invoking
+
+Symspecs
+========
+
+   Many of the output options allow functions to be included or excluded
+using "symspecs" (symbol specifications), which observe the following
+syntax:
+
+       filename_containing_a_dot
+     | funcname_not_containing_a_dot
+     | linenumber
+     | ( [ any_filename ] `:' ( any_funcname | linenumber ) )
+
+   Here are some sample symspecs:
+
+`main.c'
+     Selects everything in file `main.c'--the dot in the string tells
+     `gprof' to interpret the string as a filename, rather than as a
+     function name.  To select a file whose name does not contain a
+     dot, a trailing colon should be specified.  For example, `odd:' is
+     interpreted as the file named `odd'.
+
+`main'
+     Selects all functions named `main'.
+
+     Note that there may be multiple instances of the same function name
+     because some of the definitions may be local (i.e., static).
+     Unless a function name is unique in a program, you must use the
+     colon notation explained below to specify a function from a
+     specific source file.
+
+     Sometimes, function names contain dots.  In such cases, it is
+     necessary to add a leading colon to the name.  For example,
+     `:.mul' selects function `.mul'.
+
+     In some object file formats, symbols have a leading underscore.
+     `gprof' will normally not print these underscores.  When you name a
+     symbol in a symspec, you should type it exactly as `gprof' prints
+     it in its output.  For example, if the compiler produces a symbol
+     `_main' from your `main' function, `gprof' still prints it as
+     `main' in its output, so you should use `main' in symspecs.
+
+`main.c:main'
+     Selects function `main' in file `main.c'.
+
+`main.c:134'
+     Selects line 134 in file `main.c'.
+
+
+File: gprof.info,  Node: Output,  Next: Inaccuracy,  Prev: Invoking,  Up: Top
+
+Interpreting `gprof''s Output
+*****************************
+
+   `gprof' can produce several different output styles, the most
+important of which are described below.  The simplest output styles
+(file information, execution count, and function and file ordering) are
+not described here, but are documented with the respective options that
+trigger them.  *Note Output Options::.
+
+* Menu:
+
+* Flat Profile::        The flat profile shows how much time was spent
+                            executing directly in each function.
+* Call Graph::          The call graph shows which functions called which
+                            others, and how much time each function used
+                            when its subroutine calls are included.
+* Line-by-line::        `gprof' can analyze individual source code lines
+* Annotated Source::    The annotated source listing displays source code
+                            labeled with execution counts
+
+
+File: gprof.info,  Node: Flat Profile,  Next: Call Graph,  Up: Output
+
+The Flat Profile
+================
+
+   The "flat profile" shows the total amount of time your program spent
+executing each function.  Unless the `-z' option is given, functions
+with no apparent time spent in them, and no apparent calls to them, are
+not mentioned.  Note that if a function was not compiled for profiling,
+and didn't run long enough to show up on the program counter histogram,
+it will be indistinguishable from a function that was never called.
+
+   This is part of a flat profile for a small program:
+
+     Flat profile:
+     
+     Each sample counts as 0.01 seconds.
+       %   cumulative   self              self     total
+      time   seconds   seconds    calls  ms/call  ms/call  name
+      33.34      0.02     0.02     7208     0.00     0.00  open
+      16.67      0.03     0.01      244     0.04     0.12  offtime
+      16.67      0.04     0.01        8     1.25     1.25  memccpy
+      16.67      0.05     0.01        7     1.43     1.43  write
+      16.67      0.06     0.01                             mcount
+       0.00      0.06     0.00      236     0.00     0.00  tzset
+       0.00      0.06     0.00      192     0.00     0.00  tolower
+       0.00      0.06     0.00       47     0.00     0.00  strlen
+       0.00      0.06     0.00       45     0.00     0.00  strchr
+       0.00      0.06     0.00        1     0.00    50.00  main
+       0.00      0.06     0.00        1     0.00     0.00  memcpy
+       0.00      0.06     0.00        1     0.00    10.11  print
+       0.00      0.06     0.00        1     0.00     0.00  profil
+       0.00      0.06     0.00        1     0.00    50.00  report
+     ...
+
+The functions are sorted by first by decreasing run-time spent in them,
+then by decreasing number of calls, then alphabetically by name.  The
+functions `mcount' and `profil' are part of the profiling apparatus and
+appear in every flat profile; their time gives a measure of the amount
+of overhead due to profiling.
+
+   Just before the column headers, a statement appears indicating how
+much time each sample counted as.  This "sampling period" estimates the
+margin of error in each of the time figures.  A time figure that is not
+much larger than this is not reliable.  In this example, each sample
+counted as 0.01 seconds, suggesting a 100 Hz sampling rate.  The
+program's total execution time was 0.06 seconds, as indicated by the
+`cumulative seconds' field.  Since each sample counted for 0.01
+seconds, this means only six samples were taken during the run.  Two of
+the samples occurred while the program was in the `open' function, as
+indicated by the `self seconds' field.  Each of the other four samples
+occurred one each in `offtime', `memccpy', `write', and `mcount'.
+Since only six samples were taken, none of these values can be regarded
+as particularly reliable.  In another run, the `self seconds' field for
+`mcount' might well be `0.00' or `0.02'.  *Note Sampling Error::, for a
+complete discussion.
+
+   The remaining functions in the listing (those whose `self seconds'
+field is `0.00') didn't appear in the histogram samples at all.
+However, the call graph indicated that they were called, so therefore
+they are listed, sorted in decreasing order by the `calls' field.
+Clearly some time was spent executing these functions, but the paucity
+of histogram samples prevents any determination of how much time each
+took.
+
+   Here is what the fields in each line mean:
+
+`% time'
+     This is the percentage of the total execution time your program
+     spent in this function.  These should all add up to 100%.
+
+`cumulative seconds'
+     This is the cumulative total number of seconds the computer spent
+     executing this functions, plus the time spent in all the functions
+     above this one in this table.
+
+`self seconds'
+     This is the number of seconds accounted for by this function alone.
+     The flat profile listing is sorted first by this number.
+
+`calls'
+     This is the total number of times the function was called.  If the
+     function was never called, or the number of times it was called
+     cannot be determined (probably because the function was not
+     compiled with profiling enabled), the "calls" field is blank.
+
+`self ms/call'
+     This represents the average number of milliseconds spent in this
+     function per call, if this function is profiled.  Otherwise, this
+     field is blank for this function.
+
+`total ms/call'
+     This represents the average number of milliseconds spent in this
+     function and its descendants per call, if this function is
+     profiled.  Otherwise, this field is blank for this function.  This
+     is the only field in the flat profile that uses call graph
+     analysis.
+
+`name'
+     This is the name of the function.   The flat profile is sorted by
+     this field alphabetically after the "self seconds" and "calls"
+     fields are sorted.
+
+
+File: gprof.info,  Node: Call Graph,  Next: Line-by-line,  Prev: Flat Profile,  Up: Output
+
+The Call Graph
+==============
+
+   The "call graph" shows how much time was spent in each function and
+its children.  From this information, you can find functions that,
+while they themselves may not have used much time, called other
+functions that did use unusual amounts of time.
+
+   Here is a sample call from a small program.  This call came from the
+same `gprof' run as the flat profile example in the previous chapter.
+
+     granularity: each sample hit covers 2 byte(s) for 20.00% of 0.05 seconds
+     
+     index % time    self  children    called     name
+                                                      <spontaneous>
+     [1]    100.0    0.00    0.05                 start [1]
+                     0.00    0.05       1/1           main [2]
+                     0.00    0.00       1/2           on_exit [28]
+                     0.00    0.00       1/1           exit [59]
+     -----------------------------------------------
+                     0.00    0.05       1/1           start [1]
+     [2]    100.0    0.00    0.05       1         main [2]
+                     0.00    0.05       1/1           report [3]
+     -----------------------------------------------
+                     0.00    0.05       1/1           main [2]
+     [3]    100.0    0.00    0.05       1         report [3]
+                     0.00    0.03       8/8           timelocal [6]
+                     0.00    0.01       1/1           print [9]
+                     0.00    0.01       9/9           fgets [12]
+                     0.00    0.00      12/34          strncmp <cycle 1> [40]
+                     0.00    0.00       8/8           lookup [20]
+                     0.00    0.00       1/1           fopen [21]
+                     0.00    0.00       8/8           chewtime [24]
+                     0.00    0.00       8/16          skipspace [44]
+     -----------------------------------------------
+     [4]     59.8    0.01        0.02       8+472     <cycle 2 as a whole>	[4]
+                     0.01        0.02     244+260         offtime <cycle 2> [7]
+                     0.00        0.00     236+1           tzset <cycle 2> [26]
+     -----------------------------------------------
+
+   The lines full of dashes divide this table into "entries", one for
+each function.  Each entry has one or more lines.
+
+   In each entry, the primary line is the one that starts with an index
+number in square brackets.  The end of this line says which function
+the entry is for.  The preceding lines in the entry describe the
+callers of this function and the following lines describe its
+subroutines (also called "children" when we speak of the call graph).
+
+   The entries are sorted by time spent in the function and its
+subroutines.
+
+   The internal profiling function `mcount' (*note Flat Profile::) is
+never mentioned in the call graph.
+
+* Menu:
+
+* Primary::       Details of the primary line's contents.
+* Callers::       Details of caller-lines' contents.
+* Subroutines::   Details of subroutine-lines' contents.
+* Cycles::        When there are cycles of recursion,
+                   such as `a' calls `b' calls `a'...
+
+
+File: gprof.info,  Node: Primary,  Next: Callers,  Up: Call Graph
+
+The Primary Line
+----------------
+
+   The "primary line" in a call graph entry is the line that describes
+the function which the entry is about and gives the overall statistics
+for this function.
+
+   For reference, we repeat the primary line from the entry for function
+`report' in our main example, together with the heading line that shows
+the names of the fields:
+
+     index  % time    self  children called     name
+     ...
+     [3]    100.0    0.00    0.05       1         report [3]
+
+   Here is what the fields in the primary line mean:
+
+`index'
+     Entries are numbered with consecutive integers.  Each function
+     therefore has an index number, which appears at the beginning of
+     its primary line.
+
+     Each cross-reference to a function, as a caller or subroutine of
+     another, gives its index number as well as its name.  The index
+     number guides you if you wish to look for the entry for that
+     function.
+
+`% time'
+     This is the percentage of the total time that was spent in this
+     function, including time spent in subroutines called from this
+     function.
+
+     The time spent in this function is counted again for the callers of
+     this function.  Therefore, adding up these percentages is
+     meaningless.
+
+`self'
+     This is the total amount of time spent in this function.  This
+     should be identical to the number printed in the `seconds' field
+     for this function in the flat profile.
+
+`children'
+     This is the total amount of time spent in the subroutine calls
+     made by this function.  This should be equal to the sum of all the
+     `self' and `children' entries of the children listed directly
+     below this function.
+
+`called'
+     This is the number of times the function was called.
+
+     If the function called itself recursively, there are two numbers,
+     separated by a `+'.  The first number counts non-recursive calls,
+     and the second counts recursive calls.
+
+     In the example above, the function `report' was called once from
+     `main'.
+
+`name'
+     This is the name of the current function.  The index number is
+     repeated after it.
+
+     If the function is part of a cycle of recursion, the cycle number
+     is printed between the function's name and the index number (*note
+     Cycles::).  For example, if function `gnurr' is part of cycle
+     number one, and has index number twelve, its primary line would be
+     end like this:
+
+          gnurr <cycle 1> [12]
+
+
+File: gprof.info,  Node: Callers,  Next: Subroutines,  Prev: Primary,  Up: Call Graph
+
+Lines for a Function's Callers
+------------------------------
+
+   A function's entry has a line for each function it was called by.
+These lines' fields correspond to the fields of the primary line, but
+their meanings are different because of the difference in context.
+
+   For reference, we repeat two lines from the entry for the function
+`report', the primary line and one caller-line preceding it, together
+with the heading line that shows the names of the fields:
+
+     index  % time    self  children called     name
+     ...
+                     0.00    0.05       1/1           main [2]
+     [3]    100.0    0.00    0.05       1         report [3]
+
+   Here are the meanings of the fields in the caller-line for `report'
+called from `main':
+
+`self'
+     An estimate of the amount of time spent in `report' itself when it
+     was called from `main'.
+
+`children'
+     An estimate of the amount of time spent in subroutines of `report'
+     when `report' was called from `main'.
+
+     The sum of the `self' and `children' fields is an estimate of the
+     amount of time spent within calls to `report' from `main'.
+
+`called'
+     Two numbers: the number of times `report' was called from `main',
+     followed by the total number of non-recursive calls to `report'
+     from all its callers.
+
+`name and index number'
+     The name of the caller of `report' to which this line applies,
+     followed by the caller's index number.
+
+     Not all functions have entries in the call graph; some options to
+     `gprof' request the omission of certain functions.  When a caller
+     has no entry of its own, it still has caller-lines in the entries
+     of the functions it calls.
+
+     If the caller is part of a recursion cycle, the cycle number is
+     printed between the name and the index number.
+
+   If the identity of the callers of a function cannot be determined, a
+dummy caller-line is printed which has `<spontaneous>' as the "caller's
+name" and all other fields blank.  This can happen for signal handlers.
+
+
+File: gprof.info,  Node: Subroutines,  Next: Cycles,  Prev: Callers,  Up: Call Graph
+
+Lines for a Function's Subroutines
+----------------------------------
+
+   A function's entry has a line for each of its subroutines--in other
+words, a line for each other function that it called.  These lines'
+fields correspond to the fields of the primary line, but their meanings
+are different because of the difference in context.
+
+   For reference, we repeat two lines from the entry for the function
+`main', the primary line and a line for a subroutine, together with the
+heading line that shows the names of the fields:
+
+     index  % time    self  children called     name
+     ...
+     [2]    100.0    0.00    0.05       1         main [2]
+                     0.00    0.05       1/1           report [3]
+
+   Here are the meanings of the fields in the subroutine-line for `main'
+calling `report':
+
+`self'
+     An estimate of the amount of time spent directly within `report'
+     when `report' was called from `main'.
+
+`children'
+     An estimate of the amount of time spent in subroutines of `report'
+     when `report' was called from `main'.
+
+     The sum of the `self' and `children' fields is an estimate of the
+     total time spent in calls to `report' from `main'.
+
+`called'
+     Two numbers, the number of calls to `report' from `main' followed
+     by the total number of non-recursive calls to `report'.  This
+     ratio is used to determine how much of `report''s `self' and
+     `children' time gets credited to `main'.  *Note Assumptions::.
+
+`name'
+     The name of the subroutine of `main' to which this line applies,
+     followed by the subroutine's index number.
+
+     If the caller is part of a recursion cycle, the cycle number is
+     printed between the name and the index number.
+
+
+File: gprof.info,  Node: Cycles,  Prev: Subroutines,  Up: Call Graph
+
+How Mutually Recursive Functions Are Described
+----------------------------------------------
+
+   The graph may be complicated by the presence of "cycles of
+recursion" in the call graph.  A cycle exists if a function calls
+another function that (directly or indirectly) calls (or appears to
+call) the original function.  For example: if `a' calls `b', and `b'
+calls `a', then `a' and `b' form a cycle.
+
+   Whenever there are call paths both ways between a pair of functions,
+they belong to the same cycle.  If `a' and `b' call each other and `b'
+and `c' call each other, all three make one cycle.  Note that even if
+`b' only calls `a' if it was not called from `a', `gprof' cannot
+determine this, so `a' and `b' are still considered a cycle.
+
+   The cycles are numbered with consecutive integers.  When a function
+belongs to a cycle, each time the function name appears in the call
+graph it is followed by `<cycle NUMBER>'.
+
+   The reason cycles matter is that they make the time values in the
+call graph paradoxical.  The "time spent in children" of `a' should
+include the time spent in its subroutine `b' and in `b''s
+subroutines--but one of `b''s subroutines is `a'!  How much of `a''s
+time should be included in the children of `a', when `a' is indirectly
+recursive?
+
+   The way `gprof' resolves this paradox is by creating a single entry
+for the cycle as a whole.  The primary line of this entry describes the
+total time spent directly in the functions of the cycle.  The
+"subroutines" of the cycle are the individual functions of the cycle,
+and all other functions that were called directly by them.  The
+"callers" of the cycle are the functions, outside the cycle, that
+called functions in the cycle.
+
+   Here is an example portion of a call graph which shows a cycle
+containing functions `a' and `b'.  The cycle was entered by a call to
+`a' from `main'; both `a' and `b' called `c'.
+
+     index  % time    self  children called     name
+     ----------------------------------------
+                      1.77        0    1/1        main [2]
+     [3]     91.71    1.77        0    1+5    <cycle 1 as a whole> [3]
+                      1.02        0    3          b <cycle 1> [4]
+                      0.75        0    2          a <cycle 1> [5]
+     ----------------------------------------
+                                       3          a <cycle 1> [5]
+     [4]     52.85    1.02        0    0      b <cycle 1> [4]
+                                       2          a <cycle 1> [5]
+                         0        0    3/6        c [6]
+     ----------------------------------------
+                      1.77        0    1/1        main [2]
+                                       2          b <cycle 1> [4]
+     [5]     38.86    0.75        0    1      a <cycle 1> [5]
+                                       3          b <cycle 1> [4]
+                         0        0    3/6        c [6]
+     ----------------------------------------
+
+(The entire call graph for this program contains in addition an entry
+for `main', which calls `a', and an entry for `c', with callers `a' and
+`b'.)
+
+     index  % time    self  children called     name
+                                                  <spontaneous>
+     [1]    100.00       0     1.93    0      start [1]
+                      0.16     1.77    1/1        main [2]
+     ----------------------------------------
+                      0.16     1.77    1/1        start [1]
+     [2]    100.00    0.16     1.77    1      main [2]
+                      1.77        0    1/1        a <cycle 1> [5]
+     ----------------------------------------
+                      1.77        0    1/1        main [2]
+     [3]     91.71    1.77        0    1+5    <cycle 1 as a whole> [3]
+                      1.02        0    3          b <cycle 1> [4]
+                      0.75        0    2          a <cycle 1> [5]
+                         0        0    6/6        c [6]
+     ----------------------------------------
+                                       3          a <cycle 1> [5]
+     [4]     52.85    1.02        0    0      b <cycle 1> [4]
+                                       2          a <cycle 1> [5]
+                         0        0    3/6        c [6]
+     ----------------------------------------
+                      1.77        0    1/1        main [2]
+                                       2          b <cycle 1> [4]
+     [5]     38.86    0.75        0    1      a <cycle 1> [5]
+                                       3          b <cycle 1> [4]
+                         0        0    3/6        c [6]
+     ----------------------------------------
+                         0        0    3/6        b <cycle 1> [4]
+                         0        0    3/6        a <cycle 1> [5]
+     [6]      0.00       0        0    6      c [6]
+     ----------------------------------------
+
+   The `self' field of the cycle's primary line is the total time spent
+in all the functions of the cycle.  It equals the sum of the `self'
+fields for the individual functions in the cycle, found in the entry in
+the subroutine lines for these functions.
+
+   The `children' fields of the cycle's primary line and subroutine
+lines count only subroutines outside the cycle.  Even though `a' calls
+`b', the time spent in those calls to `b' is not counted in `a''s
+`children' time.  Thus, we do not encounter the problem of what to do
+when the time in those calls to `b' includes indirect recursive calls
+back to `a'.
+
+   The `children' field of a caller-line in the cycle's entry estimates
+the amount of time spent _in the whole cycle_, and its other
+subroutines, on the times when that caller called a function in the
+cycle.
+
+   The `calls' field in the primary line for the cycle has two numbers:
+first, the number of times functions in the cycle were called by
+functions outside the cycle; second, the number of times they were
+called by functions in the cycle (including times when a function in
+the cycle calls itself).  This is a generalization of the usual split
+into non-recursive and recursive calls.
+
+   The `calls' field of a subroutine-line for a cycle member in the
+cycle's entry says how many time that function was called from
+functions in the cycle.  The total of all these is the second number in
+the primary line's `calls' field.
+
+   In the individual entry for a function in a cycle, the other
+functions in the same cycle can appear as subroutines and as callers.
+These lines show how many times each function in the cycle called or
+was called from each other function in the cycle.  The `self' and
+`children' fields in these lines are blank because of the difficulty of
+defining meanings for them when recursion is going on.
+

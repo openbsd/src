@@ -1079,7 +1079,8 @@ elf_hppa_relocate_section (output_bfd, info, input_bfd, input_section,
 		relocation = 0;
 	    }
 	  /* Allow undefined symbols in shared libraries.  */
-          else if (info->shared && !info->no_undefined)
+          else if (info->shared && !info->no_undefined
+		   && ELF_ST_VISIBILITY (h->other) == STV_DEFAULT)
 	    {
 	      if (info->symbolic)
 		(*info->callbacks->undefined_symbol)

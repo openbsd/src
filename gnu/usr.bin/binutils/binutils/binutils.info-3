@@ -1,0 +1,182 @@
+This is binutils.info, produced by makeinfo version 4.0 from
+binutils.texi.
+
+START-INFO-DIR-ENTRY
+* Binutils: (binutils).         The GNU binary utilities.
+* ar: (binutils)ar.               Create, modify, and extract from archives
+* nm: (binutils)nm.               List symbols from object files
+* objcopy: (binutils)objcopy.	  Copy and translate object files
+* objdump: (binutils)objdump.     Display information from object files
+* ranlib: (binutils)ranlib.       Generate index to archive contents
+* readelf: (binutils)readelf.	  Display the contents of ELF format files.
+* size: (binutils)size.           List section sizes and total size
+* strings: (binutils)strings.     List printable strings from files
+* strip: (binutils)strip.         Discard symbols
+* c++filt: (binutils)c++filt.	  Filter to demangle encoded C++ symbols
+* cxxfilt: (binutils)c++filt.     MS-DOS name for c++filt
+* addr2line: (binutils)addr2line. Convert addresses to file and line
+* nlmconv: (binutils)nlmconv.     Converts object code into an NLM
+* windres: (binutils)windres.	  Manipulate Windows resources
+* dlltool: (binutils)dlltool.	  Create files needed to build and use DLLs
+END-INFO-DIR-ENTRY
+
+   Copyright (C) 1991, 92, 93, 94, 95, 96, 97, 98, 99, 2000 Free
+Software Foundation, Inc.
+
+   Permission is granted to make and distribute verbatim copies of this
+manual provided the copyright notice and this permission notice are
+preserved on all copies.
+
+   Permission is granted to copy and distribute modified versions of
+this manual under the conditions for verbatim copying, provided also
+that the entire resulting derived work is distributed under the terms
+of a permission notice identical to this one.
+
+   Permission is granted to copy and distribute translations of this
+manual into another language, under the above conditions for modified
+versions.
+
+
+File: binutils.info,  Node: Index,  Prev: Reporting Bugs,  Up: Top
+
+Index
+*****
+
+* Menu:
+
+* .stab:                                 objdump.
+* addr2line:                             addr2line.
+* address to file name and line number:  addr2line.
+* all header information, object file:   objdump.
+* ar:                                    ar.
+* ar compatibility:                      ar.
+* architecture:                          objdump.
+* architectures available:               objdump.
+* archive contents:                      ranlib.
+* archive headers:                       objdump.
+* archives:                              ar.
+* base files:                            dlltool.
+* bug criteria:                          Bug Criteria.
+* bug reports:                           Bug Reporting.
+* bugs:                                  Reporting Bugs.
+* bugs, reporting:                       Bug Reporting.
+* c++filt:                               c++filt.
+* changing object addresses:             objcopy.
+* changing section address:              objcopy.
+* changing section LMA:                  objcopy.
+* changing section VMA:                  objcopy.
+* changing start address:                objcopy.
+* collections of files:                  ar.
+* compatibility, ar:                     ar.
+* contents of archive:                   ar cmdline.
+* crash:                                 Bug Criteria.
+* creating archives:                     ar cmdline.
+* cxxfilt:                               c++filt.
+* dates in archive:                      ar cmdline.
+* debug symbols:                         objdump.
+* debugging symbols:                     nm.
+* deleting from archive:                 ar cmdline.
+* demangling C++ symbols:                c++filt.
+* demangling in nm:                      nm.
+* demangling in objdump <1>:             addr2line.
+* demangling in objdump:                 objdump.
+* disassembling object code:             objdump.
+* disassembly architecture:              objdump.
+* disassembly endianness:                objdump.
+* disassembly, with source:              objdump.
+* discarding symbols:                    strip.
+* DLL:                                   dlltool.
+* dlltool:                               dlltool.
+* dynamic relocation entries, in object file: objdump.
+* dynamic symbol table entries, printing: objdump.
+* dynamic symbols:                       nm.
+* ELF core notes:                        readelf.
+* ELF dynamic section information:       readelf.
+* ELF file header information:           readelf.
+* ELF file information:                  readelf.
+* ELF object file format:                objdump.
+* ELF program header information:        readelf.
+* ELF reloc information:                 readelf.
+* ELF section information:               readelf.
+* ELF segment information:               readelf.
+* ELF symbol table information:          readelf.
+* ELF version sections informations:     readelf.
+* endianness:                            objdump.
+* error on valid input:                  Bug Criteria.
+* external symbols:                      nm.
+* extract from archive:                  ar cmdline.
+* fatal signal:                          Bug Criteria.
+* file name:                             nm.
+* header information, all:               objdump.
+* input .def file:                       dlltool.
+* input file name:                       nm.
+* libraries:                             ar.
+* listings strings:                      strings.
+* machine instructions:                  objdump.
+* moving in archive:                     ar cmdline.
+* MRI compatibility, ar:                 ar scripts.
+* name duplication in archive:           ar cmdline.
+* name length:                           ar.
+* nm:                                    nm.
+* nm compatibility:                      nm.
+* nm format:                             nm.
+* not writing archive index:             ar cmdline.
+* objdump:                               objdump.
+* object code format <1>:                addr2line.
+* object code format <2>:                strings.
+* object code format <3>:                size.
+* object code format <4>:                objdump.
+* object code format:                    nm.
+* object file header:                    objdump.
+* object file information:               objdump.
+* object file sections:                  objdump.
+* object formats available:              objdump.
+* operations on archive:                 ar cmdline.
+* printing from archive:                 ar cmdline.
+* printing strings:                      strings.
+* quick append to archive:               ar cmdline.
+* radix for section sizes:               size.
+* ranlib:                                ranlib.
+* readelf:                               readelf.
+* relative placement in archive:         ar cmdline.
+* relocation entries, in object file:    objdump.
+* removing symbols:                      strip.
+* repeated names in archive:             ar cmdline.
+* replacement in archive:                ar cmdline.
+* reporting bugs:                        Reporting Bugs.
+* scripts, ar:                           ar scripts.
+* section addresses in objdump:          objdump.
+* section headers:                       objdump.
+* section information:                   objdump.
+* section sizes:                         size.
+* sections, full contents:               objdump.
+* size:                                  size.
+* size display format:                   size.
+* size number format:                    size.
+* sorting symbols:                       nm.
+* source code context:                   objdump.
+* source disassembly:                    objdump.
+* source file name:                      nm.
+* source filenames for object files:     objdump.
+* stab:                                  objdump.
+* start-address:                         objdump.
+* stop-address:                          objdump.
+* strings:                               strings.
+* strings, printing:                     strings.
+* strip:                                 strip.
+* symbol index <1>:                      ranlib.
+* symbol index:                          ar.
+* symbol index, listing:                 nm.
+* symbol line numbers:                   nm.
+* symbol table entries, printing:        objdump.
+* symbols:                               nm.
+* symbols, discarding:                   strip.
+* undefined symbols:                     nm.
+* Unix compatibility, ar:                ar cmdline.
+* updating an archive:                   ar cmdline.
+* version:                               Top.
+* VMA in objdump:                        objdump.
+* wide output, printing:                 objdump.
+* writing archive index:                 ar cmdline.
+
+

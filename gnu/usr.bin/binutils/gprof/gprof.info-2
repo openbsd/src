@@ -1,0 +1,760 @@
+This is gprof.info, produced by makeinfo version 4.0 from gprof.texi.
+
+START-INFO-DIR-ENTRY
+* gprof: (gprof).                Profiling your program's execution
+END-INFO-DIR-ENTRY
+
+   This file documents the gprof profiler of the GNU system.
+
+   Copyright (C) 1988, 92, 97, 98, 99, 2000 Free Software Foundation,
+Inc.
+
+   Permission is granted to make and distribute verbatim copies of this
+manual provided the copyright notice and this permission notice are
+preserved on all copies.
+
+   Permission is granted to copy and distribute modified versions of
+this manual under the conditions for verbatim copying, provided that
+the entire resulting derived work is distributed under the terms of a
+permission notice identical to this one.
+
+   Permission is granted to copy and distribute translations of this
+manual into another language, under the above conditions for modified
+versions.
+
+
+File: gprof.info,  Node: Line-by-line,  Next: Annotated Source,  Prev: Call Graph,  Up: Output
+
+Line-by-line Profiling
+======================
+
+   `gprof''s `-l' option causes the program to perform "line-by-line"
+profiling.  In this mode, histogram samples are assigned not to
+functions, but to individual lines of source code.  The program usually
+must be compiled with a `-g' option, in addition to `-pg', in order to
+generate debugging symbols for tracking source code lines.
+
+   The flat profile is the most useful output table in line-by-line
+mode.  The call graph isn't as useful as normal, since the current
+version of `gprof' does not propagate call graph arcs from source code
+lines to the enclosing function.  The call graph does, however, show
+each line of code that called each function, along with a count.
+
+   Here is a section of `gprof''s output, without line-by-line
+profiling.  Note that `ct_init' accounted for four histogram hits, and
+13327 calls to `init_block'.
+
+     Flat profile:
+     
+     Each sample counts as 0.01 seconds.
+       %   cumulative   self              self     total
+      time   seconds   seconds    calls  us/call  us/call  name
+      30.77      0.13     0.04     6335     6.31     6.31  ct_init
+     
+     
+     		     Call graph (explanation follows)
+     
+     
+     granularity: each sample hit covers 4 byte(s) for 7.69% of 0.13 seconds
+     
+     index % time    self  children    called     name
+     
+                     0.00    0.00       1/13496       name_too_long
+                     0.00    0.00      40/13496       deflate
+                     0.00    0.00     128/13496       deflate_fast
+                     0.00    0.00   13327/13496       ct_init
+     [7]      0.0    0.00    0.00   13496         init_block
+
+   Now let's look at some of `gprof''s output from the same program run,
+this time with line-by-line profiling enabled.  Note that `ct_init''s
+four histogram hits are broken down into four lines of source code -
+one hit occurred on each of lines 349, 351, 382 and 385.  In the call
+graph, note how `ct_init''s 13327 calls to `init_block' are broken down
+into one call from line 396, 3071 calls from line 384, 3730 calls from
+line 385, and 6525 calls from 387.
+
+     Flat profile:
+     
+     Each sample counts as 0.01 seconds.
+       %   cumulative   self
+      time   seconds   seconds    calls  name
+       7.69      0.10     0.01           ct_init (trees.c:349)
+       7.69      0.11     0.01           ct_init (trees.c:351)
+       7.69      0.12     0.01           ct_init (trees.c:382)
+       7.69      0.13     0.01           ct_init (trees.c:385)
+     
+     
+     		     Call graph (explanation follows)
+     
+     
+     granularity: each sample hit covers 4 byte(s) for 7.69% of 0.13 seconds
+     
+       % time    self  children    called     name
+     
+                 0.00    0.00       1/13496       name_too_long (gzip.c:1440)
+                 0.00    0.00       1/13496       deflate (deflate.c:763)
+                 0.00    0.00       1/13496       ct_init (trees.c:396)
+                 0.00    0.00       2/13496       deflate (deflate.c:727)
+                 0.00    0.00       4/13496       deflate (deflate.c:686)
+                 0.00    0.00       5/13496       deflate (deflate.c:675)
+                 0.00    0.00      12/13496       deflate (deflate.c:679)
+                 0.00    0.00      16/13496       deflate (deflate.c:730)
+                 0.00    0.00     128/13496       deflate_fast (deflate.c:654)
+                 0.00    0.00    3071/13496       ct_init (trees.c:384)
+                 0.00    0.00    3730/13496       ct_init (trees.c:385)
+                 0.00    0.00    6525/13496       ct_init (trees.c:387)
+     [6]  0.0    0.00    0.00   13496         init_block (trees.c:408)
+
+
+File: gprof.info,  Node: Annotated Source,  Prev: Line-by-line,  Up: Output
+
+The Annotated Source Listing
+============================
+
+   `gprof''s `-A' option triggers an annotated source listing, which
+lists the program's source code, each function labeled with the number
+of times it was called.  You may also need to specify the `-I' option,
+if `gprof' can't find the source code files.
+
+   Compiling with `gcc ... -g -pg -a' augments your program with
+basic-block counting code, in addition to function counting code.  This
+enables `gprof' to determine how many times each line of code was
+executed.  For example, consider the following function, taken from
+gzip, with line numbers added:
+
+      1 ulg updcrc(s, n)
+      2     uch *s;
+      3     unsigned n;
+      4 {
+      5     register ulg c;
+      6
+      7     static ulg crc = (ulg)0xffffffffL;
+      8
+      9     if (s == NULL) {
+     10         c = 0xffffffffL;
+     11     } else {
+     12         c = crc;
+     13         if (n) do {
+     14             c = crc_32_tab[...];
+     15         } while (--n);
+     16     }
+     17     crc = c;
+     18     return c ^ 0xffffffffL;
+     19 }
+
+   `updcrc' has at least five basic-blocks.  One is the function
+itself.  The `if' statement on line 9 generates two more basic-blocks,
+one for each branch of the `if'.  A fourth basic-block results from the
+`if' on line 13, and the contents of the `do' loop form the fifth
+basic-block.  The compiler may also generate additional basic-blocks to
+handle various special cases.
+
+   A program augmented for basic-block counting can be analyzed with
+`gprof -l -A'.  I also suggest use of the `-x' option, which ensures
+that each line of code is labeled at least once.  Here is `updcrc''s
+annotated source listing for a sample `gzip' run:
+
+                     ulg updcrc(s, n)
+                         uch *s;
+                         unsigned n;
+                 2 ->{
+                         register ulg c;
+     
+                         static ulg crc = (ulg)0xffffffffL;
+     
+                 2 ->    if (s == NULL) {
+                 1 ->	c = 0xffffffffL;
+                 1 ->    } else {
+                 1 ->	c = crc;
+                 1 ->        if (n) do {
+             26312 ->            c = crc_32_tab[...];
+     26312,1,26311 ->        } while (--n);
+                         }
+                 2 ->    crc = c;
+                 2 ->    return c ^ 0xffffffffL;
+                 2 ->}
+
+   In this example, the function was called twice, passing once through
+each branch of the `if' statement.  The body of the `do' loop was
+executed a total of 26312 times.  Note how the `while' statement is
+annotated.  It began execution 26312 times, once for each iteration
+through the loop.  One of those times (the last time) it exited, while
+it branched back to the beginning of the loop 26311 times.
+
+
+File: gprof.info,  Node: Inaccuracy,  Next: How do I?,  Prev: Output,  Up: Top
+
+Inaccuracy of `gprof' Output
+****************************
+
+* Menu:
+
+* Sampling Error::      Statistical margins of error
+* Assumptions::         Estimating children times
+
+
+File: gprof.info,  Node: Sampling Error,  Next: Assumptions,  Up: Inaccuracy
+
+Statistical Sampling Error
+==========================
+
+   The run-time figures that `gprof' gives you are based on a sampling
+process, so they are subject to statistical inaccuracy.  If a function
+runs only a small amount of time, so that on the average the sampling
+process ought to catch that function in the act only once, there is a
+pretty good chance it will actually find that function zero times, or
+twice.
+
+   By contrast, the number-of-calls and basic-block figures are derived
+by counting, not sampling.  They are completely accurate and will not
+vary from run to run if your program is deterministic.
+
+   The "sampling period" that is printed at the beginning of the flat
+profile says how often samples are taken.  The rule of thumb is that a
+run-time figure is accurate if it is considerably bigger than the
+sampling period.
+
+   The actual amount of error can be predicted.  For N samples, the
+_expected_ error is the square-root of N.  For example, if the sampling
+period is 0.01 seconds and `foo''s run-time is 1 second, N is 100
+samples (1 second/0.01 seconds), sqrt(N) is 10 samples, so the expected
+error in `foo''s run-time is 0.1 seconds (10*0.01 seconds), or ten
+percent of the observed value.  Again, if the sampling period is 0.01
+seconds and `bar''s run-time is 100 seconds, N is 10000 samples,
+sqrt(N) is 100 samples, so the expected error in `bar''s run-time is 1
+second, or one percent of the observed value.  It is likely to vary
+this much _on the average_ from one profiling run to the next.
+(_Sometimes_ it will vary more.)
+
+   This does not mean that a small run-time figure is devoid of
+information.  If the program's _total_ run-time is large, a small
+run-time for one function does tell you that that function used an
+insignificant fraction of the whole program's time.  Usually this means
+it is not worth optimizing.
+
+   One way to get more accuracy is to give your program more (but
+similar) input data so it will take longer.  Another way is to combine
+the data from several runs, using the `-s' option of `gprof'.  Here is
+how:
+
+  1. Run your program once.
+
+  2. Issue the command `mv gmon.out gmon.sum'.
+
+  3. Run your program again, the same as before.
+
+  4. Merge the new data in `gmon.out' into `gmon.sum' with this command:
+
+          gprof -s EXECUTABLE-FILE gmon.out gmon.sum
+
+  5. Repeat the last two steps as often as you wish.
+
+  6. Analyze the cumulative data using this command:
+
+          gprof EXECUTABLE-FILE gmon.sum > OUTPUT-FILE
+
+
+File: gprof.info,  Node: Assumptions,  Prev: Sampling Error,  Up: Inaccuracy
+
+Estimating `children' Times
+===========================
+
+   Some of the figures in the call graph are estimates--for example, the
+`children' time values and all the the time figures in caller and
+subroutine lines.
+
+   There is no direct information about these measurements in the
+profile data itself.  Instead, `gprof' estimates them by making an
+assumption about your program that might or might not be true.
+
+   The assumption made is that the average time spent in each call to
+any function `foo' is not correlated with who called `foo'.  If `foo'
+used 5 seconds in all, and 2/5 of the calls to `foo' came from `a',
+then `foo' contributes 2 seconds to `a''s `children' time, by
+assumption.
+
+   This assumption is usually true enough, but for some programs it is
+far from true.  Suppose that `foo' returns very quickly when its
+argument is zero; suppose that `a' always passes zero as an argument,
+while other callers of `foo' pass other arguments.  In this program,
+all the time spent in `foo' is in the calls from callers other than `a'.
+But `gprof' has no way of knowing this; it will blindly and incorrectly
+charge 2 seconds of time in `foo' to the children of `a'.
+
+   We hope some day to put more complete data into `gmon.out', so that
+this assumption is no longer needed, if we can figure out how.  For the
+nonce, the estimated figures are usually more useful than misleading.
+
+
+File: gprof.info,  Node: How do I?,  Next: Incompatibilities,  Prev: Inaccuracy,  Up: Top
+
+Answers to Common Questions
+***************************
+
+How do I find which lines in my program were executed the most times?
+     Compile your program with basic-block counting enabled, run it,
+     then use the following pipeline:
+
+          gprof -l -C OBJFILE | sort -k 3 -n -r
+
+     This listing will show you the lines in your code executed most
+     often, but not necessarily those that consumed the most time.
+
+How do I find which lines in my program called a particular function?
+     Use `gprof -l' and lookup the function in the call graph.  The
+     callers will be broken down by function and line number.
+
+How do I analyze a program that runs for less than a second?
+     Try using a shell script like this one:
+
+          for i in `seq 1 100`; do
+            fastprog
+            mv gmon.out gmon.out.$i
+          done
+          
+          gprof -s fastprog gmon.out.*
+          
+          gprof fastprog gmon.sum
+
+     If your program is completely deterministic, all the call counts
+     will be simple multiples of 100 (i.e. a function called once in
+     each run will appear with a call count of 100).
+
+
+File: gprof.info,  Node: Incompatibilities,  Next: Details,  Prev: How do I?,  Up: Top
+
+Incompatibilities with Unix `gprof'
+***********************************
+
+   GNU `gprof' and Berkeley Unix `gprof' use the same data file
+`gmon.out', and provide essentially the same information.  But there
+are a few differences.
+
+   * GNU `gprof' uses a new, generalized file format with support for
+     basic-block execution counts and non-realtime histograms.  A magic
+     cookie and version number allows `gprof' to easily identify new
+     style files.  Old BSD-style files can still be read.  *Note File
+     Format::.
+
+   * For a recursive function, Unix `gprof' lists the function as a
+     parent and as a child, with a `calls' field that lists the number
+     of recursive calls.  GNU `gprof' omits these lines and puts the
+     number of recursive calls in the primary line.
+
+   * When a function is suppressed from the call graph with `-e', GNU
+     `gprof' still lists it as a subroutine of functions that call it.
+
+   * GNU `gprof' accepts the `-k' with its argument in the form
+     `from/to', instead of `from to'.
+
+   * In the annotated source listing, if there are multiple basic
+     blocks on the same line, GNU `gprof' prints all of their counts,
+     separated by commas.
+
+   * The blurbs, field widths, and output formats are different.  GNU
+     `gprof' prints blurbs after the tables, so that you can see the
+     tables without skipping the blurbs.
+
+
+File: gprof.info,  Node: Details,  Prev: Incompatibilities,  Up: Top
+
+Details of Profiling
+********************
+
+* Menu:
+
+* Implementation::      How a program collects profiling information
+* File Format::         Format of `gmon.out' files
+* Internals::           `gprof''s internal operation
+* Debugging::           Using `gprof''s `-d' option
+
+
+File: gprof.info,  Node: Implementation,  Next: File Format,  Up: Details
+
+Implementation of Profiling
+===========================
+
+   Profiling works by changing how every function in your program is
+compiled so that when it is called, it will stash away some information
+about where it was called from.  From this, the profiler can figure out
+what function called it, and can count how many times it was called.
+This change is made by the compiler when your program is compiled with
+the `-pg' option, which causes every function to call `mcount' (or
+`_mcount', or `__mcount', depending on the OS and compiler) as one of
+its first operations.
+
+   The `mcount' routine, included in the profiling library, is
+responsible for recording in an in-memory call graph table both its
+parent routine (the child) and its parent's parent.  This is typically
+done by examining the stack frame to find both the address of the
+child, and the return address in the original parent.  Since this is a
+very machine-dependent operation, `mcount' itself is typically a short
+assembly-language stub routine that extracts the required information,
+and then calls `__mcount_internal' (a normal C function) with two
+arguments - `frompc' and `selfpc'.  `__mcount_internal' is responsible
+for maintaining the in-memory call graph, which records `frompc',
+`selfpc', and the number of times each of these call arcs was traversed.
+
+   GCC Version 2 provides a magical function
+(`__builtin_return_address'), which allows a generic `mcount' function
+to extract the required information from the stack frame.  However, on
+some architectures, most notably the SPARC, using this builtin can be
+very computationally expensive, and an assembly language version of
+`mcount' is used for performance reasons.
+
+   Number-of-calls information for library routines is collected by
+using a special version of the C library.  The programs in it are the
+same as in the usual C library, but they were compiled with `-pg'.  If
+you link your program with `gcc ... -pg', it automatically uses the
+profiling version of the library.
+
+   Profiling also involves watching your program as it runs, and
+keeping a histogram of where the program counter happens to be every
+now and then.  Typically the program counter is looked at around 100
+times per second of run time, but the exact frequency may vary from
+system to system.
+
+   This is done is one of two ways.  Most UNIX-like operating systems
+provide a `profil()' system call, which registers a memory array with
+the kernel, along with a scale factor that determines how the program's
+address space maps into the array.  Typical scaling values cause every
+2 to 8 bytes of address space to map into a single array slot.  On
+every tick of the system clock (assuming the profiled program is
+running), the value of the program counter is examined and the
+corresponding slot in the memory array is incremented.  Since this is
+done in the kernel, which had to interrupt the process anyway to handle
+the clock interrupt, very little additional system overhead is required.
+
+   However, some operating systems, most notably Linux 2.0 (and
+earlier), do not provide a `profil()' system call.  On such a system,
+arrangements are made for the kernel to periodically deliver a signal
+to the process (typically via `setitimer()'), which then performs the
+same operation of examining the program counter and incrementing a slot
+in the memory array.  Since this method requires a signal to be
+delivered to user space every time a sample is taken, it uses
+considerably more overhead than kernel-based profiling.  Also, due to
+the added delay required to deliver the signal, this method is less
+accurate as well.
+
+   A special startup routine allocates memory for the histogram and
+either calls `profil()' or sets up a clock signal handler.  This
+routine (`monstartup') can be invoked in several ways.  On Linux
+systems, a special profiling startup file `gcrt0.o', which invokes
+`monstartup' before `main', is used instead of the default `crt0.o'.
+Use of this special startup file is one of the effects of using `gcc
+... -pg' to link.  On SPARC systems, no special startup files are used.
+Rather, the `mcount' routine, when it is invoked for the first time
+(typically when `main' is called), calls `monstartup'.
+
+   If the compiler's `-a' option was used, basic-block counting is also
+enabled.  Each object file is then compiled with a static array of
+counts, initially zero.  In the executable code, every time a new
+basic-block begins (i.e. when an `if' statement appears), an extra
+instruction is inserted to increment the corresponding count in the
+array.  At compile time, a paired array was constructed that recorded
+the starting address of each basic-block.  Taken together, the two
+arrays record the starting address of every basic-block, along with the
+number of times it was executed.
+
+   The profiling library also includes a function (`mcleanup') which is
+typically registered using `atexit()' to be called as the program
+exits, and is responsible for writing the file `gmon.out'.  Profiling
+is turned off, various headers are output, and the histogram is
+written, followed by the call-graph arcs and the basic-block counts.
+
+   The output from `gprof' gives no indication of parts of your program
+that are limited by I/O or swapping bandwidth.  This is because samples
+of the program counter are taken at fixed intervals of the program's
+run time.  Therefore, the time measurements in `gprof' output say
+nothing about time that your program was not running.  For example, a
+part of the program that creates so much data that it cannot all fit in
+physical memory at once may run very slowly due to thrashing, but
+`gprof' will say it uses little time.  On the other hand, sampling by
+run time has the advantage that the amount of load due to other users
+won't directly affect the output you get.
+
+
+File: gprof.info,  Node: File Format,  Next: Internals,  Prev: Implementation,  Up: Details
+
+Profiling Data File Format
+==========================
+
+   The old BSD-derived file format used for profile data does not
+contain a magic cookie that allows to check whether a data file really
+is a `gprof' file.  Furthermore, it does not provide a version number,
+thus rendering changes to the file format almost impossible.  GNU
+`gprof' uses a new file format that provides these features.  For
+backward compatibility, GNU `gprof' continues to support the old
+BSD-derived format, but not all features are supported with it.  For
+example, basic-block execution counts cannot be accommodated by the old
+file format.
+
+   The new file format is defined in header file `gmon_out.h'.  It
+consists of a header containing the magic cookie and a version number,
+as well as some spare bytes available for future extensions.  All data
+in a profile data file is in the native format of the host on which the
+profile was collected.  GNU `gprof' adapts automatically to the
+byte-order in use.
+
+   In the new file format, the header is followed by a sequence of
+records.  Currently, there are three different record types: histogram
+records, call-graph arc records, and basic-block execution count
+records.  Each file can contain any number of each record type.  When
+reading a file, GNU `gprof' will ensure records of the same type are
+compatible with each other and compute the union of all records.  For
+example, for basic-block execution counts, the union is simply the sum
+of all execution counts for each basic-block.
+
+Histogram Records
+-----------------
+
+   Histogram records consist of a header that is followed by an array of
+bins.  The header contains the text-segment range that the histogram
+spans, the size of the histogram in bytes (unlike in the old BSD
+format, this does not include the size of the header), the rate of the
+profiling clock, and the physical dimension that the bin counts
+represent after being scaled by the profiling clock rate.  The physical
+dimension is specified in two parts: a long name of up to 15 characters
+and a single character abbreviation.  For example, a histogram
+representing real-time would specify the long name as "seconds" and the
+abbreviation as "s".  This feature is useful for architectures that
+support performance monitor hardware (which, fortunately, is becoming
+increasingly common).  For example, under DEC OSF/1, the "uprofile"
+command can be used to produce a histogram of, say, instruction cache
+misses.  In this case, the dimension in the histogram header could be
+set to "i-cache misses" and the abbreviation could be set to "1"
+(because it is simply a count, not a physical dimension).  Also, the
+profiling rate would have to be set to 1 in this case.
+
+   Histogram bins are 16-bit numbers and each bin represent an equal
+amount of text-space.  For example, if the text-segment is one thousand
+bytes long and if there are ten bins in the histogram, each bin
+represents one hundred bytes.
+
+Call-Graph Records
+------------------
+
+   Call-graph records have a format that is identical to the one used in
+the BSD-derived file format.  It consists of an arc in the call graph
+and a count indicating the number of times the arc was traversed during
+program execution.  Arcs are specified by a pair of addresses: the
+first must be within caller's function and the second must be within
+the callee's function.  When performing profiling at the function
+level, these addresses can point anywhere within the respective
+function.  However, when profiling at the line-level, it is better if
+the addresses are as close to the call-site/entry-point as possible.
+This will ensure that the line-level call-graph is able to identify
+exactly which line of source code performed calls to a function.
+
+Basic-Block Execution Count Records
+-----------------------------------
+
+   Basic-block execution count records consist of a header followed by a
+sequence of address/count pairs.  The header simply specifies the
+length of the sequence.  In an address/count pair, the address
+identifies a basic-block and the count specifies the number of times
+that basic-block was executed.  Any address within the basic-address can
+be used.
+
+
+File: gprof.info,  Node: Internals,  Next: Debugging,  Prev: File Format,  Up: Details
+
+`gprof''s Internal Operation
+============================
+
+   Like most programs, `gprof' begins by processing its options.
+During this stage, it may building its symspec list
+(`sym_ids.c:sym_id_add'), if options are specified which use symspecs.
+`gprof' maintains a single linked list of symspecs, which will
+eventually get turned into 12 symbol tables, organized into six
+include/exclude pairs - one pair each for the flat profile
+(INCL_FLAT/EXCL_FLAT), the call graph arcs (INCL_ARCS/EXCL_ARCS),
+printing in the call graph (INCL_GRAPH/EXCL_GRAPH), timing propagation
+in the call graph (INCL_TIME/EXCL_TIME), the annotated source listing
+(INCL_ANNO/EXCL_ANNO), and the execution count listing
+(INCL_EXEC/EXCL_EXEC).
+
+   After option processing, `gprof' finishes building the symspec list
+by adding all the symspecs in `default_excluded_list' to the exclude
+lists EXCL_TIME and EXCL_GRAPH, and if line-by-line profiling is
+specified, EXCL_FLAT as well.  These default excludes are not added to
+EXCL_ANNO, EXCL_ARCS, and EXCL_EXEC.
+
+   Next, the BFD library is called to open the object file, verify that
+it is an object file, and read its symbol table (`core.c:core_init'),
+using `bfd_canonicalize_symtab' after mallocing an appropriately sized
+array of symbols.  At this point, function mappings are read (if the
+`--file-ordering' option has been specified), and the core text space
+is read into memory (if the `-c' option was given).
+
+   `gprof''s own symbol table, an array of Sym structures, is now built.
+This is done in one of two ways, by one of two routines, depending on
+whether line-by-line profiling (`-l' option) has been enabled.  For
+normal profiling, the BFD canonical symbol table is scanned.  For
+line-by-line profiling, every text space address is examined, and a new
+symbol table entry gets created every time the line number changes.  In
+either case, two passes are made through the symbol table - one to
+count the size of the symbol table required, and the other to actually
+read the symbols.  In between the two passes, a single array of type
+`Sym' is created of the appropriate length.  Finally,
+`symtab.c:symtab_finalize' is called to sort the symbol table and
+remove duplicate entries (entries with the same memory address).
+
+   The symbol table must be a contiguous array for two reasons.  First,
+the `qsort' library function (which sorts an array) will be used to
+sort the symbol table.  Also, the symbol lookup routine
+(`symtab.c:sym_lookup'), which finds symbols based on memory address,
+uses a binary search algorithm which requires the symbol table to be a
+sorted array.  Function symbols are indicated with an `is_func' flag.
+Line number symbols have no special flags set.  Additionally, a symbol
+can have an `is_static' flag to indicate that it is a local symbol.
+
+   With the symbol table read, the symspecs can now be translated into
+Syms (`sym_ids.c:sym_id_parse').  Remember that a single symspec can
+match multiple symbols.  An array of symbol tables (`syms') is created,
+each entry of which is a symbol table of Syms to be included or
+excluded from a particular listing.  The master symbol table and the
+symspecs are examined by nested loops, and every symbol that matches a
+symspec is inserted into the appropriate syms table.  This is done
+twice, once to count the size of each required symbol table, and again
+to build the tables, which have been malloced between passes.  From now
+on, to determine whether a symbol is on an include or exclude symspec
+list, `gprof' simply uses its standard symbol lookup routine on the
+appropriate table in the `syms' array.
+
+   Now the profile data file(s) themselves are read
+(`gmon_io.c:gmon_out_read'), first by checking for a new-style
+`gmon.out' header, then assuming this is an old-style BSD `gmon.out' if
+the magic number test failed.
+
+   New-style histogram records are read by `hist.c:hist_read_rec'.  For
+the first histogram record, allocate a memory array to hold all the
+bins, and read them in.  When multiple profile data files (or files
+with multiple histogram records) are read, the starting address, ending
+address, number of bins and sampling rate must match between the
+various histograms, or a fatal error will result.  If everything
+matches, just sum the additional histograms into the existing in-memory
+array.
+
+   As each call graph record is read (`call_graph.c:cg_read_rec'), the
+parent and child addresses are matched to symbol table entries, and a
+call graph arc is created by `cg_arcs.c:arc_add', unless the arc fails
+a symspec check against INCL_ARCS/EXCL_ARCS.  As each arc is added, a
+linked list is maintained of the parent's child arcs, and of the child's
+parent arcs.  Both the child's call count and the arc's call count are
+incremented by the record's call count.
+
+   Basic-block records are read (`basic_blocks.c:bb_read_rec'), but
+only if line-by-line profiling has been selected.  Each basic-block
+address is matched to a corresponding line symbol in the symbol table,
+and an entry made in the symbol's bb_addr and bb_calls arrays.  Again,
+if multiple basic-block records are present for the same address, the
+call counts are cumulative.
+
+   A gmon.sum file is dumped, if requested (`gmon_io.c:gmon_out_write').
+
+   If histograms were present in the data files, assign them to symbols
+(`hist.c:hist_assign_samples') by iterating over all the sample bins
+and assigning them to symbols.  Since the symbol table is sorted in
+order of ascending memory addresses, we can simple follow along in the
+symbol table as we make our pass over the sample bins.  This step
+includes a symspec check against INCL_FLAT/EXCL_FLAT.  Depending on the
+histogram scale factor, a sample bin may span multiple symbols, in
+which case a fraction of the sample count is allocated to each symbol,
+proportional to the degree of overlap.  This effect is rare for normal
+profiling, but overlaps are more common during line-by-line profiling,
+and can cause each of two adjacent lines to be credited with half a
+hit, for example.
+
+   If call graph data is present, `cg_arcs.c:cg_assemble' is called.
+First, if `-c' was specified, a machine-dependent routine (`find_call')
+scans through each symbol's machine code, looking for subroutine call
+instructions, and adding them to the call graph with a zero call count.
+A topological sort is performed by depth-first numbering all the
+symbols (`cg_dfn.c:cg_dfn'), so that children are always numbered less
+than their parents, then making a array of pointers into the symbol
+table and sorting it into numerical order, which is reverse topological
+order (children appear before parents).  Cycles are also detected at
+this point, all members of which are assigned the same topological
+number.  Two passes are now made through this sorted array of symbol
+pointers.  The first pass, from end to beginning (parents to children),
+computes the fraction of child time to propagate to each parent and a
+print flag.  The print flag reflects symspec handling of
+INCL_GRAPH/EXCL_GRAPH, with a parent's include or exclude (print or no
+print) property being propagated to its children, unless they
+themselves explicitly appear in INCL_GRAPH or EXCL_GRAPH.  A second
+pass, from beginning to end (children to parents) actually propagates
+the timings along the call graph, subject to a check against
+INCL_TIME/EXCL_TIME.  With the print flag, fractions, and timings now
+stored in the symbol structures, the topological sort array is now
+discarded, and a new array of pointers is assembled, this time sorted
+by propagated time.
+
+   Finally, print the various outputs the user requested, which is now
+fairly straightforward.  The call graph (`cg_print.c:cg_print') and
+flat profile (`hist.c:hist_print') are regurgitations of values already
+computed.  The annotated source listing
+(`basic_blocks.c:print_annotated_source') uses basic-block information,
+if present, to label each line of code with call counts, otherwise only
+the function call counts are presented.
+
+   The function ordering code is marginally well documented in the
+source code itself (`cg_print.c').  Basically, the functions with the
+most use and the most parents are placed first, followed by other
+functions with the most use, followed by lower use functions, followed
+by unused functions at the end.
+
+
+File: gprof.info,  Node: Debugging,  Prev: Internals,  Up: Details
+
+Debugging `gprof'
+-----------------
+
+   If `gprof' was compiled with debugging enabled, the `-d' option
+triggers debugging output (to stdout) which can be helpful in
+understanding its operation.  The debugging number specified is
+interpreted as a sum of the following options:
+
+2 - Topological sort
+     Monitor depth-first numbering of symbols during call graph analysis
+
+4 - Cycles
+     Shows symbols as they are identified as cycle heads
+
+16 - Tallying
+     As the call graph arcs are read, show each arc and how the total
+     calls to each function are tallied
+
+32 - Call graph arc sorting
+     Details sorting individual parents/children within each call graph
+     entry
+
+64 - Reading histogram and call graph records
+     Shows address ranges of histograms as they are read, and each call
+     graph arc
+
+128 - Symbol table
+     Reading, classifying, and sorting the symbol table from the object
+     file.  For line-by-line profiling (`-l' option), also shows line
+     numbers being assigned to memory addresses.
+
+256 - Static call graph
+     Trace operation of `-c' option
+
+512 - Symbol table and arc table lookups
+     Detail operation of lookup routines
+
+1024 - Call graph propagation
+     Shows how function times are propagated along the call graph
+
+2048 - Basic-blocks
+     Shows basic-block records as they are read from profile data (only
+     meaningful with `-l' option)
+
+4096 - Symspecs
+     Shows symspec-to-symbol pattern matching operation
+
+8192 - Annotate source
+     Tracks operation of `-A' option
+
+

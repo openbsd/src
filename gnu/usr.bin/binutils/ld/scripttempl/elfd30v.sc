@@ -121,7 +121,8 @@ SECTIONS
   .rodata	${RELOCATING-0} : { *(.rodata) }	${RELOCATING+ > ${DATA_MEMORY}}
 
   /* C++ exception support.  */
-  .eh_frame	${RELOCATING-0} : { *(.eh_frame) }	${RELOCATING+ > ${DATA_MEMORY}}
+  .eh_frame	${RELOCATING-0} : { KEEP (*(.eh_frame)) }	${RELOCATING+ > ${DATA_MEMORY}}
+  .gcc_except_table ${RELOCATING-0} : { *(.gcc_except_table) }	${RELOCATING+ > ${DATA_MEMORY}}
 
   ${RELOCATING+${CTOR}}
   ${RELOCATING+${DTOR}}
@@ -213,7 +214,3 @@ SECTIONS
   PROVIDE (__stack = ${STACK_START_ADDR});
 }
 EOF
-
-
-
-
