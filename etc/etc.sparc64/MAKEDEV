@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.12 2001/09/05 14:31:51 todd Exp $
+#	$OpenBSD: MAKEDEV,v 1.13 2001/09/05 14:42:14 todd Exp $
 #
 # Copyright (c) 2001 Todd T. Fries <todd@OpenBSD.org>
 # All rights reserved.
@@ -366,10 +366,10 @@ audio*)M sound$U	c 69 $U
 	M mixer$U	c 69 $(($U+16))
 	M audio$U	c 69 $(($U+128))
 	M audioctl$U	c 69 $(($U+192))
-	[ -e audio ] || ln -s audio$U audio
-	[ -e mixer ] || ln -s mixer$U mixer
-	[ -e sound ] || ln -s sound$U sound
-	[ -e audioctl ] || ln -s audioctl$U audioctl;;
+	MKlist="$MKlist;[ -e audio ] || ln -s audio$U audio"
+	MKlist="$MKlist;[ -e mixer ] || ln -s mixer$U mixer"
+	MKlist="$MKlist;[ -e sound ] || ln -s sound$U sound"
+	MKlist="$MKlist;[ -e audioctl ] || ln -s audioctl$U audioctl";;
 pf*)M pf c 73 0 600;;
 altq)RMlist="mkdir -p altq;$RMlist"
 	for d in altq cbq wfq afm fifoq red rio localq hfsc cdnr blue priq; do
