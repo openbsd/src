@@ -96,8 +96,11 @@ dfoo ()
 extern void start() __asm__("start");
 extern void _start() __asm__("_start");
 extern void __start() __asm__("__start");
+extern void ___start() __asm__("$START$");
+int global __asm__("$global$");
 
 void start() {}
 void _start() {}
 void __start() {}
+void ___start() {}
 void mainCRTStartup() {}

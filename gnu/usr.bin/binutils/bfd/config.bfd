@@ -129,7 +129,7 @@ case "${targ}" in
     targ_underscore=yes
     ;;
 
-  hppa*-*-*elf* | hppa*-*-lites* | hppa*-*-sysv4*)
+  hppa*-*-*elf* | hppa*-*-lites* | hppa*-*-sysv4* | hppa*-*-openbsd*)
     targ_defvec=bfd_elf32_hppa_vec
     ;;
 #if defined (HOST_HPPAHPUX) || defined (HOST_HPPABSD) || defined (HOST_HPPAOSF)

@@ -1,7 +1,13 @@
-LIBGCC1=libgcc1.null
-CROSS_LIBGCC1=libgcc1.null
+LIBGCC1=libgcc1-asm.a
+CROSS_LIBGCC1=libgcc1-asm.a
 ADA_CFLAGS=-mdisable-indexing
+LIB1ASMSRC=pa/lib1funcs.asm
+LIB1ASMFUNCS=_divI _divU _modI _modU _remI _remU
 LIB2FUNCS_EXTRA=lib2funcs.asm ee.asm ee_fp.asm
+
+lib1funcs.asm: $(srcdir)/config/pa/lib1funcs.asm
+	rm -f lib1funcs.asm
+	cp $(srcdir)/config/pa/lib1funcs.asm .
 
 lib2funcs.asm: $(srcdir)/config/pa/lib2funcs.asm
 	rm -f lib2funcs.asm

@@ -117,6 +117,7 @@ m68*-*-psos*)		targ_emul=m68kpsos ;;
 m68*-*-rtems*)		targ_emul=m68kcoff ;;
 hppa*-*-*elf*)		targ_emul=hppaelf ;;
 hppa*-*-lites*)		targ_emul=hppaelf ;;
+hppa*-*-openbsd*)	targ_emul=hppaelf ;;
 vax-dec-ultrix* | vax-dec-bsd*) targ_emul=vax ;;
 mips*-dec-ultrix*)	targ_emul=mipslit ;;
 mips*-dec-osf*)		targ_emul=mipslit ;;

@@ -44,6 +44,7 @@ hppa*-*-bsd*)		gdb_host=hppabsd ;;
 hppa*-*-hiux*)		gdb_host=hppahpux ;;
 hppa*-*-hpux*)		gdb_host=hppahpux ;;
 hppa*-*-osf*)		gdb_host=hppaosf ;;
+hppa*-*-openbsd*)	gdb_host=obsd ;;
 
 i[3456]86-ncr-*)	gdb_host=ncr3000 ;;
 i[3456]86-sequent-bsd*)	gdb_host=symmetry ;;  # dynix

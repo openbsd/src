@@ -3165,6 +3165,13 @@ for machine in $build $host $target; do
 		use_collect2=yes
 		fixincludes=Makefile.in
 		;;
+	hppa*-*-openbsd*)
+		target_cpu_default=1
+		tm_file="${tm_file} pa/pa-openbsd.h pa/pa-gas.h"
+		xm_file=pa/xm-openbsd.h
+		use_collect2=yes
+		fixincludes=Makefile.in
+		;;
 	i370-*-mvs*)
 		;;
 	i[34567]86-ibm-aix*)		# IBM PS/2 running AIX

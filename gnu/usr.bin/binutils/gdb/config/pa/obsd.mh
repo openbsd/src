@@ -1,0 +1,8 @@
+# Host: Big-endian HP-PA running OpenBSD/HPPA
+XDEPFILES= 
+XM_FILE= xm-hppaobsd.h
+NAT_FILE= nm-obsd.h
+NATDEPFILES= infptrace.o inftarg.o corelow.o hppaobsd-nat.o fork-child.o
+
+MMALLOC = 
+MMALLOC_CFLAGS = -DNO_MMALLOC 

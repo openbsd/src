@@ -130,6 +130,7 @@ changequote([,])dnl
 
       hppa-*-*elf*)         fmt=elf em=hppa ;;
       hppa-*-lites*)        fmt=elf em=hppa ;;
+      hppa-*-openbsd*)      fmt=elf em=hppa ;;
       hppa-*-osf*)          fmt=som em=hppa ;;
       hppa-*-hpux*)         fmt=som em=hppa ;;
       hppa-*-bsd*)          fmt=som em=hppa ;;
