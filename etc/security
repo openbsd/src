@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: security,v 1.28 1998/05/10 18:11:04 todd Exp $
+#	$OpenBSD: security,v 1.29 1998/07/11 05:01:11 marc Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -152,7 +152,11 @@ for i in $list ; do
 		unset PATH
 		/bin/csh -f -s << end-of-csh > /dev/null 2>&1
 			source $i
-			/bin/ls -ldgT \$path > $TMP1
+			if (\$?path) then
+				/bin/ls -ldgT \$path > $TMP1
+			else
+				cat /dev/null > $TMP1
+			endif
 end-of-csh
 		PATH=$SAVE_PATH
 		awk '{
@@ -179,6 +183,7 @@ if [ $umaskset = "no" -o -s $OUTPUT ] ; then
 fi
 
 > $OUTPUT
+> $TMP2
 rhome=/root
 umaskset=no
 list="/etc/profile ${rhome}/.profile"
@@ -193,13 +198,20 @@ for i in $list; do
 		     $2 % 10 < 2 \
 			{ print "Root umask is other writeable" }' >> $OUTPUT
 		SAVE_PATH=$PATH
-		unset PATH
+		SAVE_ENV=$ENV
+		unset PATH ENV
 		/bin/sh << end-of-sh > /dev/null 2>&1
 			. $i
-			list=\`echo \$PATH | /usr/bin/sed -e 's/:/ /g'\`
-			/bin/ls -ldgT \$list > $TMP1
+			if [ X"\$PATH" != "X" ]; then
+				list=\`echo \$PATH | /usr/bin/sed -e 's/:/ /g'\`
+				/bin/ls -ldgT \$list > $TMP1
+			else
+				> $TMP1
+			fi
+			echo \$ENV >> $TMP2
 end-of-sh
 		PATH=$SAVE_PATH
+		ENV=$SAVE_ENV
 		awk '{
 			if ($10 ~ /^\.$/) {
 				print "The root path includes .";
@@ -228,8 +240,9 @@ fi
 # check anyway.
 > $OUTPUT
 rhome=/root
-list="/etc/ksh.kshrc ${rhome}/.kshrc"
-for i in $list; do
+list="/etc/ksh.kshrc `cat $TMP2`"
+(cd $rhome
+ for i in $list; do
 	if [ -s $i ] ; then
 		egrep umask $i |
 		awk '$2 % 100 < 20 \
@@ -241,8 +254,12 @@ for i in $list; do
 			unset PATH
 			/bin/ksh << end-of-sh > /dev/null 2>&1
 				. $i
-				list=\`echo \$PATH | /usr/bin/sed -e 's/:/ /g'\`
-				/bin/ls -ldgT \$list > $TMP1
+				if [ X"\$PATH" != "X" ]; then
+					list=\`echo \$PATH | /usr/bin/sed -e 's/:/ /g'\`
+					/bin/ls -ldgT \$list > $TMP1
+				else
+					> $TMP1
+				fi
 end-of-sh
 			PATH=$SAVE_PATH
 			awk '{
@@ -259,7 +276,8 @@ end-of-sh
 		fi
 
 	fi
-done
+ done
+)
 if [ -s $OUTPUT ] ; then
 	printf "\nChecking root ksh paths, umask values:\n$list\n"
 	cat $OUTPUT
