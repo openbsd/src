@@ -1,4 +1,4 @@
-.\"	$OpenBSD: altqd.8,v 1.3 2001/07/30 21:53:52 deraadt Exp $
+.\"	$OpenBSD: altqd.8,v 1.4 2001/08/17 22:26:48 deraadt Exp $
 .\"	$KAME: altqd.8,v 1.5 2001/07/19 11:07:33 kjc Exp $
 .\"
 .\" Copyright (C) 2000
@@ -92,9 +92,17 @@ enters the command mode, ALTQ is enabled on all the
 interfaces listed in the configuration file.
 .El
 .Sh FILES
-.Pa /etc/altq.conf ,
-.Pa /var/run/altqd.pid ,
-.Pa /var/run/altq_quip
+.Bl -tag -width /var/rnu/altqd.pid -compact
+.It Pa /etc/altq.conf
+configuration file
+.It Pa /var/run/altqd.pid
+pid of the running
+.Nm
+.It Pa /var/run/altq_quip
+Unix domain socket for communicating with
+.Xr altqstat 1
+.El
 .Sh SEE ALSO
 .Xr altq.conf 5 ,
+.Xr altqstat 1 ,
 .Xr altq 9
