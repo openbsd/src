@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.127 2001/06/05 09:21:38 angelos Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.128 2001/06/05 11:31:31 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -1196,9 +1196,6 @@ tdb_add_inp(struct tdb *tdb, struct inpcb *inp, int inout)
         inp->inp_tdb_out = tdb;
         TAILQ_INSERT_TAIL(&tdb->tdb_inp_out, inp, inp_tdb_out_next);
     }
-
-    DPRINTF(("tdb_add_inp: tdb: %p, inp: %p, direction: %s\n", tdb, inp,
-	     inout ? "in" : "out"));
 }
 
 /* Return a printable string for the IPv4 address. */
