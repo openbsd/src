@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.47 1999/12/08 12:34:23 itojun Exp $
+#	$OpenBSD: Makefile,v 1.48 1999/12/09 15:18:15 itojun Exp $
 
 # not yet done: catman
 
@@ -17,7 +17,7 @@ SUBDIR=	ac accton adduser amd arp bootpd bootpgw bootpef bootptest \
 	vipw vnconfig zdump zic
 
 # IPv6
-SUBDIR+=ifmcstat
+SUBDIR+=ifmcstat rtsold
 
 .if (${AFS} == "yes")
 SUBDIR+=afs
