@@ -1,4 +1,4 @@
-/*	$OpenBSD: read_entry.c,v 1.1 1999/01/18 19:10:22 millert Exp $	*/
+/*	$OpenBSD: read_entry.c,v 1.2 1999/01/22 04:50:43 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -48,6 +48,7 @@
 
 #include <term.h>
 #include <tic.h>
+#include <term_entry.h>
 
 MODULE_ID("$From: read_entry.c,v 1.47 1998/12/20 02:51:50 tom Exp $")
 
@@ -324,6 +325,12 @@ int _nc_read_entry(const char *const tn, char *const filename, TERMTYPE *const t
 {
 char		*envp;
 char		ttn[MAX_ALIAS + 3];
+
+#ifdef __OpenBSD__
+	/* First check the BSD terminfo.db file */
+	if (_nc_read_bsd_terminfo_entry(tn, filename, tp) == 1)
+		return 1;
+#endif /* __OpenBSD__ */
 
 	/* truncate the terminal name to prevent dangerous buffer airline */
 	(void) sprintf(ttn, "%c/%.*s", *tn, MAX_ALIAS, tn);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: read_bsd_terminfo.c,v 1.1 1999/01/18 19:10:22 millert Exp $	*/
+/*	$OpenBSD: read_bsd_terminfo.c,v 1.2 1999/01/22 04:50:43 millert Exp $	*/
 
 /*
  * Copyright (c) 1998 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: read_bsd_terminfo.c,v 1.1 1999/01/18 19:10:22 millert Exp $";
+static char rcsid[] = "$OpenBSD: read_bsd_terminfo.c,v 1.2 1999/01/22 04:50:43 millert Exp $";
 #endif
 
 #include <curses.priv.h>
@@ -40,7 +40,7 @@ static char rcsid[] = "$OpenBSD: read_bsd_terminfo.c,v 1.1 1999/01/18 19:10:22 m
 #include <term.h>	/* lines, columns, cur_term */
 #include <term_entry.h>
 
-#define PVECSIZ 32
+#define PVECSIZ 3 * 2
 #define	_PATH_TERMINFO	"/usr/share/misc/terminfo"
 
 /*
@@ -49,92 +49,113 @@ static char rcsid[] = "$OpenBSD: read_bsd_terminfo.c,v 1.1 1999/01/18 19:10:22 m
  * Returns 1 on success, 0 on failure.
  */
 int
-_nc_read_bsd_terminfo_entry(tn, tp)
-     const char *tn;
-     TERMTYPE *const tp;
+_nc_read_bsd_terminfo_entry(tn, filename, tp)
+    const char *const tn;
+    char *const filename;
+    TERMTYPE *const tp;
 {
     char  *p;
-    char  *dummy;
+    char  *capbuf;
     char **fname;
-    int    i;
+    int    i, pathcnt;
     char   envterm[PATH_MAX];		/* local copy of $TERMINFO */
     char   hometerm[PATH_MAX];		/* local copy of $HOME/.terminfo */
-    char  *pathvec[PVECSIZ];		/* to point to names in pathbuf */
+    char  *pathvec[PVECSIZ];		/* list of possible terminfo files */
     char   namecpy[MAX_NAME_SIZE+1];
     long   num;
     size_t len;
 
     fname = pathvec;
+    pathcnt = 1;
     /* $TERMINFO may hold a path to a terminfo file */
     if (!issetugid() && (p = getenv("TERMINFO")) != NULL) {
 	len = strlcpy(envterm, p, sizeof(envterm));
 	if (len < sizeof(envterm))
+	    pathcnt++;
 	    *fname++ = envterm;
+	    *fname++ = NULL;
     }
 
     /* Also check $HOME/.terminfo if it exists */
     if (!issetugid() && (p = getenv("HOME")) != NULL) {
 	len = snprintf(hometerm, sizeof(hometerm), "%s/.terminfo", p);
 	if (len < sizeof(hometerm))
+	    pathcnt++;
 	    *fname++ = hometerm;
+	    *fname++ = NULL;
     }
 
-    /* Finally we check the system terminfo file and mark the end of vector */
+    /* Finally we check the system terminfo file */
     *fname++ = _PATH_TERMINFO;
-    *fname = (char *) 0;
+    *fname = NULL;
 
+    /* Don't prepent any hardcoded entries. */
     (void) cgetset(NULL);
-    dummy = NULL;
-    i = cgetent(&dummy, pathvec, (char *)tn);      
-	
-    if (i == 0) {
-	_nc_init_entry(tp);
 
-	/* Set terminal name(s) */
-	if ((p = strchr(dummy, ':')) != NULL)
-	    *p = '\0';
-	if ((tp->str_table = tp->term_names = strdup(dummy)) == NULL)
-	    return (0);
-	_nc_set_type(_nc_first_name(tp->term_names));
-	if (p)
-	    *p = ':';
+    /*
+     * We can't pass a normal vector in to cgetent(3) because
+     * we need to know which of the paths in pathvec we actually
+     * used (for the filename copyout parameter).
+     * Therefore, we kludge things a bit...
+     */
+    for (fname = pathvec, i = 1; fname != pathvec + pathcnt * 2 && i != 0; ) {
+	capbuf = NULL;
+	i = cgetent(&capbuf, fname, (char *)tn);      
+	    
+	if (i == 0) {
+	    /* Set copyout parameter and init term description */
+	    (void)strlcpy(filename, *fname, PATH_MAX);
+	    _nc_init_entry(tp);
 
-	/* Truncate overly-long names and aliases */
-	(void)strlcpy(namecpy, tp->term_names, sizeof(namecpy));
-	if ((p = strrchr(namecpy, '|')) != (char *)NULL)
-	    *p = '\0';
-	p = strtok(namecpy, "|");
-	if (strlen(p) > MAX_ALIAS)
-	    _nc_warning("primary name may be too long");
-	while ((p = strtok((char *)NULL, "|")) != (char *)NULL)
+	    /* Set terminal name(s) */
+	    if ((p = strchr(capbuf, ':')) != NULL)
+		*p = '\0';
+	    if ((tp->str_table = tp->term_names = strdup(capbuf)) == NULL)
+		return (0);
+	    _nc_set_type(_nc_first_name(tp->term_names));
+	    if (p)
+		*p = ':';
+
+	    /* Truncate overly-long names and aliases */
+	    (void)strlcpy(namecpy, tp->term_names, sizeof(namecpy));
+	    if ((p = strrchr(namecpy, '|')) != (char *)NULL)
+		*p = '\0';
+	    p = strtok(namecpy, "|");
 	    if (strlen(p) > MAX_ALIAS)
-		_nc_warning("alias `%s' may be too long", p);
+		_nc_warning("primary name may be too long");
+	    while ((p = strtok((char *)NULL, "|")) != (char *)NULL)
+		if (strlen(p) > MAX_ALIAS)
+		    _nc_warning("alias `%s' may be too long", p);
 
-	/* Copy capabilities */
-	for (i = 0 ; i < BOOLCOUNT ; i++) {
-	    if (cgetcap(dummy, (char *)boolnames[i], ':') == NULL)
-		tp->Booleans[i] = FALSE;
-	    else
-		tp->Booleans[i] = TRUE;
+	    /* Copy capabilities */
+	    for (i = 0 ; i < BOOLCOUNT ; i++) {
+		if (cgetcap(capbuf, (char *)boolnames[i], ':') == NULL)
+		    tp->Booleans[i] = FALSE;
+		else
+		    tp->Booleans[i] = TRUE;
+	    }
+	    for (i = 0 ; i < NUMCOUNT ; i++) {
+		if (cgetnum(capbuf, (char *)numnames[i], &num) < 0)
+		    tp->Numbers[i] = 0;
+		else
+		    tp->Numbers[i] = (int)num;
+	    }
+	    for (i = 0 ; i < STRCOUNT ; i++) {
+		if (cgetstr(capbuf, (char *)strnames[i], &p) < 0)
+		    tp->Strings[i] = NULL;
+		else
+		    tp->Strings[i] = p;
+	    }
+	    i = 0;
 	}
-	for (i = 0 ; i < NUMCOUNT ; i++) {
-	    if (cgetnum(dummy, (char *)numnames[i], &num) < 0)
-		tp->Numbers[i] = 0;
-	    else
-		tp->Numbers[i] = (int)num;
-	}
-	for (i = 0 ; i < STRCOUNT ; i++) {
-	    if (cgetstr(dummy, (char *)strnames[i], &p) < 0)
-		tp->Strings[i] = NULL;
-	    else
-		tp->Strings[i] = p;
-	}
-	i = 0;
+	/* Increment by two since we have that NULL in there */
+	fname += 2;
+
+	/* We are done with the returned getcap buffer now; free it */
+	cgetclose();
+	if (capbuf)
+	    free(capbuf);
     }
-
-    /* We are done with the returned getcap buffer now; free it */
-    if (dummy)
-	free(dummy);
 
     return ((i == 0));
 }

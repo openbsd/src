@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_setup.c,v 1.1 1999/01/18 19:10:19 millert Exp $	*/
+/*	$OpenBSD: lib_setup.c,v 1.2 1999/01/22 04:50:43 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -240,14 +240,9 @@ static int grab_entry(const char *const tn, TERMTYPE *const tp)
 /* return 1 if entry found, 0 if not found, -1 if database not accessible */
 {
 	char	filename[PATH_MAX];
-	int	status = 0;
-	int	_nc_read_bsd_terminfo_entry(const char *, TERMTYPE *); /* XXX */
+	int	status;
 
-#ifdef __OpenBSD__
-	status = _nc_read_bsd_terminfo_entry(tn, tp);
-#endif /* __OpenBSD__ */
-
-	if (status != 1 && (status = _nc_read_entry(tn, filename, tp)) != 1) {
+	if ((status = _nc_read_entry(tn, filename, tp)) != 1) {
 
 #ifndef PURE_TERMINFO
 		/*
