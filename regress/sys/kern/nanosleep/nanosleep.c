@@ -1,4 +1,4 @@
-/*	$OpenBSD: nanosleep.c,v 1.2 2002/02/17 05:33:33 art Exp $	*/
+/*	$OpenBSD: nanosleep.c,v 1.3 2002/02/17 05:37:20 art Exp $	*/
 /*
  *	Written by Artur Grabowski <art@openbsd.org> 2002 Public Domain.
  */
@@ -113,7 +113,7 @@ with_signal(void)
 	rts.tv_sec = 0;
 	rts.tv_nsec = 0;
 	if (nanosleep(&ts, &rts) == 0) {
-		warn("with-signal: nanosleep");
+		warnx("with-signal: nanosleep");
 		return 1;
 	}
 	if (rts.tv_sec == 0 && rts.tv_nsec == 0) {
@@ -195,7 +195,7 @@ time_elapsed_with_signal(void)
 	}
 
 	if (nanosleep(&ts, &rts) == 0) {
-		warn("nanosleep");
+		warnx("nanosleep");
 		return 1;
 	}
 
