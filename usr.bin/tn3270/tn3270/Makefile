@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.10 1998/03/19 15:20:03 graichen Exp $
+#	$OpenBSD: Makefile,v 1.11 1998/03/23 21:18:22 pefo Exp $
 
 .include "../../Makefile.inc"
 
@@ -7,15 +7,6 @@ CFLAGS +=-I${.CURDIR}/../../../lib
 CFLAGS +=-I${.CURDIR}/../../telnet
 LDADD += -locurses -ltermcap -ltelnet
 DPADD += ${LIBOLDCURSES} ${LIBTERMCAP} ${LIBTELNET}
-
-.include <bsd.own.mk> # for KERBEROS
-
-.if (${KERBEROS} == "yes")
-CFLAGS+=-DENCRYPTION -DAUTHENTICATION -DKRB4
-LDADD+= -lkrb -ldes
-DPADD+= ${LIBDES} ${LIBKRB}
-SRCS += authenc.c
-.endif
 
 SRCS += apilib.c api_bsd.c api_exch.c asc_ebc.c astosc.c dctype.c
 SRCS += disp_asc.c ebc_disp.c
