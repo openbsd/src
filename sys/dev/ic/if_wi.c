@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.74 2002/07/10 20:21:16 fgsch Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.75 2002/07/16 13:46:43 fgsch Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -124,7 +124,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.74 2002/07/10 20:21:16 fgsch Exp $";
+	"$OpenBSD: if_wi.c,v 1.75 2002/07/16 13:46:43 fgsch Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -132,7 +132,6 @@ static u_int8_t	wi_mcast_addr[6] = { 0x01, 0x60, 0x1D, 0x00, 0x01, 0x00 };
 #endif
 
 STATIC void wi_reset(struct wi_softc *);
-STATIC void wi_cor_reset(struct wi_softc *);
 STATIC int wi_ioctl(struct ifnet *, u_long, caddr_t);
 STATIC void wi_start(struct ifnet *);
 STATIC void wi_watchdog(struct ifnet *);
@@ -167,11 +166,6 @@ STATIC int wi_get_pm(struct wi_softc *, struct ieee80211_power *);
 
 STATIC int wi_get_debug(struct wi_softc *, struct wi_req *);
 STATIC int wi_set_debug(struct wi_softc *, struct wi_req *);
-
-int	wi_intr(void *);
-int	wi_attach(struct wi_softc *);
-void	wi_init(struct wi_softc *);
-void	wi_stop(struct wi_softc *);
 
 /* Autoconfig definition of driver back-end */
 struct cfdriver wi_cd = {
