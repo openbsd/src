@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpr.c,v 1.1 2002/06/15 05:55:59 fgsch Exp $	*/
+/*	$OpenBSD: gpr.c,v 1.2 2002/06/15 06:43:19 fgsch Exp $	*/
 
 /*
  * Copyright (c) 2002, Federico G. Schwindt
@@ -245,6 +245,8 @@ gpr_detach(struct device *dev, int flags)
 
 	pcmcia_io_unmap(sc->sc_pf, sc->sc_iowin);
 	pcmcia_io_free(sc->sc_pf, &sc->sc_pioh);
+	pcmcia_mem_unmap(sc->sc_pf, sc->sc_memwin);
+	pcmcia_mem_free(sc->sc_pf, &sc->sc_pmemh);
 
 	return (0);
 }
