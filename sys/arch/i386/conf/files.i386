@@ -1,4 +1,4 @@
-#	$OpenBSD: files.i386,v 1.124 2004/06/16 18:22:19 grange Exp $
+#	$OpenBSD: files.i386,v 1.125 2004/06/22 09:47:01 mickey Exp $
 #
 # new style config file for i386 architecture
 #
@@ -307,6 +307,7 @@ file	arch/i386/pci/pci_addr_fixup.c	pcibios
 file	arch/i386/pci/opti82c558.c	pcibios
 file	arch/i386/pci/opti82c700.c	pcibios
 file	arch/i386/pci/piix.c		pcibios
+file	arch/i386/pci/rccosb4.c		pcibios
 file	arch/i386/pci/sis85c503.c	pcibios
 file	arch/i386/pci/via82c586.c	pcibios
 file	arch/i386/pci/via8231.c		pcibios

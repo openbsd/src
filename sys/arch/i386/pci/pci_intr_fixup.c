@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_intr_fixup.c,v 1.33 2004/06/13 21:49:16 niklas Exp $	*/
+/*	$OpenBSD: pci_intr_fixup.c,v 1.34 2004/06/22 09:47:01 mickey Exp $	*/
 /*	$NetBSD: pci_intr_fixup.c,v 1.10 2000/08/10 21:18:27 soda Exp $	*/
 
 /*
@@ -159,6 +159,11 @@ const struct pciintr_icu_table {
 	  opti82c558_init },
 	{ PCI_VENDOR_OPTI,	PCI_PRODUCT_OPTI_82C700,
 	  opti82c700_init },
+
+	{ PCI_VENDOR_RCC,	PCI_PRODUCT_RCC_ROSB4,
+	  osb4_init },
+	{ PCI_VENDOR_RCC,	PCI_PRODUCT_RCC_CSB5,
+	  osb4_init },
 
 	{ PCI_VENDOR_VIATECH,	PCI_PRODUCT_VIATECH_VT82C596A,
 	  via82c586_init, },
