@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.20 1997/07/14 21:31:33 angelos Exp $	*/
+/*	$OpenBSD: inet.c,v 1.21 1997/07/28 01:47:43 deraadt Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-static char *rcsid = "$OpenBSD: inet.c,v 1.20 1997/07/14 21:31:33 angelos Exp $";
+static char *rcsid = "$OpenBSD: inet.c,v 1.21 1997/07/28 01:47:43 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -434,12 +434,14 @@ igmp_stats(off, name)
 struct rpcnams {
 	struct rpcnams *next;
 	in_port_t port;
+	int	  proto;
 	char	*rpcname;
 };
 
 char *
-getrpcportnam(port)
+getrpcportnam(port, proto)
 	in_port_t port;
+	int proto;
 {
 	struct sockaddr_in server_addr;
 	register struct hostent *hp;
@@ -481,6 +483,7 @@ getrpcportnam(port)
 			n->next = rpcn;
 			rpcn = n;
 			n->port = head->pml_map.pm_port;
+			n->proto = head->pml_map.pm_prot;
 
 			rpc = getrpcbynumber(head->pml_map.pm_prog);
 			if (rpc)
@@ -494,7 +497,7 @@ getrpcportnam(port)
 	}
 
 	for (n = rpcn; n; n = n->next)
-		if (n->port == port)
+		if (n->port == port && n->proto == proto)
 			return (n->rpcname);
 	return (NULL);
 }
@@ -512,6 +515,7 @@ inetprint(in, port, proto, local)
 {
 	struct servent *sp = 0;
 	char line[80], *cp, *nam;
+	int proton;
 	int width;
 
 	sprintf(line, "%.*s.", (Aflag && !nflag) ? 12 : 16, inetname(in));
@@ -520,7 +524,8 @@ inetprint(in, port, proto, local)
 		sp = getservbyport((int)port, proto);
 	if (sp || port == 0)
 		sprintf(cp, "%.8s", sp ? sp->s_name : "*");
-	else if (local && !nflag && (nam = getrpcportnam(ntohs(port))))
+	else if (local && !nflag && (nam = getrpcportnam(ntohs(port),
+	    (strcmp(proto, "tcp") == 0 ? IPPROTO_TCP : IPPROTO_UDP))))
 		sprintf(cp, "%d[%.8s]", ntohs(port), nam);
 	else
 		sprintf(cp, "%d", ntohs(port));
