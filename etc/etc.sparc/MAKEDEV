@@ -45,6 +45,7 @@
 # Pseudo terminals:
 #	tty*	set of 16 slave psuedo terminals
 #	pty*	set of 16 master pseudo terminals
+#	ptm	pty master device
 # Printers:
 # Console ports:
 #	ttyC0	wscons screen 0
@@ -392,6 +393,10 @@ wscons)
 	R ttyC4 ttyC5 ttyC6 ttyC7 ttyC8 ttyC9 ttyCa ttyCb
 	;;
 
+ptm)
+	M ptm c 125 0 666
+	;;
+
 pty*)
 	if [ $U -gt 15 ]; then
 		echo bad unit for pty in: $i
@@ -487,9 +492,9 @@ all)
 	R tun3 bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9 pty0
 	R pty1 pty2 fd1 fd1B fd1C fd1D fd1E fd1F fd1G fd1H fd0 fd0B
 	R fd0C fd0D fd0E fd0F fd0G fd0H xfs0 ss0 ss1 ch0 ses0 cuaa
-	R cuab cuac cuad ttya ttyb ttyc ttyd wscons audio0 uk0 random
-	R lkm pf systrace xd0 xd1 xd2 xd3 raid0 raid1 raid2 raid3 std
-	R st0 st1 fd
+	R cuab cuac cuad ttya ttyb ttyc ttyd ptm wscons audio0 uk0
+	R random lkm pf systrace xd0 xd1 xd2 xd3 raid0 raid1 raid2
+	R raid3 std st0 st1 fd
 	;;
 
 presto*|xd*|xy*|sd*|raid*|ccd*)

@@ -44,6 +44,7 @@
 # Pseudo terminals:
 #	tty*	set of 16 slave psuedo terminals
 #	pty*	set of 16 master pseudo terminals
+#	ptm	pty master device
 # Printers:
 #	ppi*	HP-IB plotters
 # Call units:
@@ -343,6 +344,10 @@ fd)
 	MKlist="$MKlist;chmod 555 fd"
 	;;
 
+ptm)
+	M ptm c 52 0 666
+	;;
+
 pty*)
 	if [ $U -gt 15 ]; then
 		echo bad unit for pty in: $i
@@ -402,7 +407,7 @@ all)
 	R ite0 ct0 ct1 hd0 hd1 hd2 dcm0 dcm1 dcm2 dcm3 dca0 dca1 st0
 	R st1 hil grf0 ccd0 ccd1 ccd2 ccd3 vnd0 vnd1 vnd2 vnd3 sd0 sd1
 	R sd2 sd3 sd4 rd0 tun0 tun1 tun2 tun3 bpf0 bpf1 bpf2 bpf3 bpf4
-	R bpf5 bpf6 bpf7 bpf8 bpf9 pty0 pty1 pty2 xfs0 local ppi0
+	R bpf5 bpf6 bpf7 bpf8 bpf9 pty0 pty1 pty2 xfs0 ptm local ppi0
 	R apci0 random lkm pf systrace std fd
 	;;
 

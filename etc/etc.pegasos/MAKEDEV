@@ -52,6 +52,7 @@
 # Pseudo terminals:
 #	tty*	set of 16 slave psuedo terminals
 #	pty*	set of 16 master pseudo terminals
+#	ptm	pty master device
 # USB devices:
 #	usb*	Bus control devices used by usbd for attach/detach
 #	uhid*	Generic HID devices
@@ -361,6 +362,10 @@ usb*)
 	M usb$u c 61 $U 660
 	;;
 
+ptm)
+	M ptm c 77 0 666
+	;;
+
 pty*)
 	if [ $U -gt 15 ]; then
 		echo bad unit for pty in: $i
@@ -465,7 +470,7 @@ fd)
 all)
 	R ccd0 ccd1 ccd2 ccd3 vnd0 vnd1 vnd2 vnd3 sd0 sd1 sd2 sd3 sd4
 	R cd0 cd1 rd0 tun0 tun1 tun2 tun3 bpf0 bpf1 bpf2 bpf3 bpf4
-	R bpf5 bpf6 bpf7 bpf8 bpf9 pty0 pty1 pty2 xfs0 ss0 ss1 ch0
+	R bpf5 bpf6 bpf7 bpf8 bpf9 pty0 pty1 pty2 xfs0 ss0 ss1 ch0 ptm
 	R local wscons pci iop0 iop1 usbs tuner0 radio0 audio0 uk0
 	R random lkm tty00 tty01 tty02 tty03 apm crypto pf systrace
 	R wd0 wd1 wd2 wd3 raid0 raid1 raid2 raid3 std st0 st1 fd

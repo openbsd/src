@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.105 2003/11/03 03:35:40 tedu Exp $	*/
+/*	$OpenBSD: conf.c,v 1.106 2004/02/10 01:31:21 millert Exp $	*/
 /*	$NetBSD: conf.c,v 1.75 1996/05/03 19:40:20 christos Exp $	*/
 
 /*
@@ -308,7 +308,8 @@ struct cdevsw	cdevsw[] =
 	cdev_usbdev_init(NUSCANNER,uscanner),	/* 77: USB scanners */
 	cdev_systrace_init(NSYSTRACE,systrace),	/* 78: system call tracing */
  	cdev_oci_init(NBIO,bio),	/* 79: ioctl tunnel */
-	cdev_ch_init(NGPR,gpr)		/* 80: GPR400 SmartCard reader */
+	cdev_ch_init(NGPR,gpr),		/* 80: GPR400 SmartCard reader */
+	cdev_ptm_init(NPTY,ptm),	/* 81: pseudo-tty ptm device */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 

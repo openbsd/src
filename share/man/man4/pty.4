@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pty.4,v 1.10 2003/06/02 23:30:12 millert Exp $
+.\"	$OpenBSD: pty.4,v 1.11 2004/02/10 01:31:20 millert Exp $
 .\"	$NetBSD: pty.4,v 1.4 1998/03/21 03:14:30 fair Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -66,8 +66,14 @@ device.
 In configuring, if an optional
 .Ar count
 is given in
-the specification, that number of pseudo terminal pairs are configured;
-the default count is 64.
+the specification, space for that number of pseudo terminal pairs is
+preallocated.
+If the count is missing or is less than 2, a default count of 8 is used.
+This is not a hard limit--space for additional pseudo terminal pairs
+is allocated on demand up to the limit imposed by the
+.Li kern.tty.maxptys
+.Xr sysctl 8
+(256 by default).
 .Pp
 The following
 .Xr ioctl 2
@@ -158,7 +164,7 @@ protocol equivalents with the remote peer.
 .It Dv TIOCUCNTL
 Enable/disable a mode that allows a small number of simple user
 .Xr ioctl 2
-commands to be passed through the pseudo-terminal,
+commands to be passed through the pseudo terminal,
 using a protocol similar to that of
 .Dv TIOCPKT .
 The
@@ -213,17 +219,75 @@ can be used when doing remote line
 editing in a window manager, or whenever flow controlled input
 is required.
 .El
+.Pp
+The standard way to allocate
+.Nm
+devices is through the
+.Dv PTMGET
+.Xr ioctl 2
+call on the
+.Pa /dev/ptm
+device.
+The
+.Dv PTMGET
+command allocates a free pseudo terminal, changes its ownership to
+the caller, revokes the access privileges for all previous users,
+opens the file descriptors for the master and slave devices and returns
+them to the caller in
+.Fa struct ptmget .
+.Bd -literal -offset indent
+struct ptmget {
+	int	cfd;
+	int	sfd;
+	char	cn[16];
+	char	sn[16];
+};
+.Ed
+.Pp
+The
+.Va cfd
+and
+.Va sfd
+fields are the file descriptors for the controlling and slave terminals.
+The
+.Va cn
+and
+.Va sn
+fields are the file names of the controlling and slave devices.
 .Sh FILES
-.Bl -tag -width /dev/tty[p-r][0-9a-f]x -compact
-.It Pa /dev/pty[p-r][0-9a-f]
+.Bl -tag -width /dev/tty[p-zP-T][0-9a-f]x -compact
+.It Pa /dev/pty[p-zP-T][0-9a-f]
 master pseudo terminals
-.It Pa /dev/tty[p-r][0-9a-f]
+.It Pa /dev/tty[p-zP-T][0-9a-f]
 slave pseudo terminals
+.It Pa /dev/ptm
+pseudo terminal management device
 .El
 .Sh SEE ALSO
-.Xr tty 4
+.Xr openpty 3 ,
+.Xr tty 4 ,
+.Xr sysctl 8
 .Sh HISTORY
 The
 .Nm
 driver appeared in
 .Bx 4.2 .
+The
+.Pa /dev/ptm
+device was added in
+.Ox 3.5 .
+.Sh CAVEATS
+The
+.Pa ptm
+device will only work on systems where the
+.Pa /dev
+directory has been properly populated with
+.Xr pty 4
+device nodes following the naming convention used in
+.Ox .
+Since
+.Pa ptm
+impersonates the super user for some operations it needs to perform
+to complete the allocation of a pseudo terminal, the
+.Pa /dev
+directory must also be writeable by the super user.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.72 2003/09/23 16:51:13 millert Exp $	*/
+/*	$OpenBSD: conf.h,v 1.73 2004/02/10 01:31:21 millert Exp $	*/
 /*	$NetBSD: conf.h,v 1.33 1996/05/03 20:03:32 christos Exp $	*/
 
 /*-
@@ -275,7 +275,13 @@ extern struct cdevsw cdevsw[];
 	dev_init(c,n,tty), dev_init(c,n,poll), (dev_type_mmap((*))) enodev, \
 	D_TTY | D_KQFILTER, dev_init(c,n,kqfilter) }
 
-/* open, close, read, ioctl, poll, kqfilter -- XXX should be a generic device */
+/* open, close, read, write, ioctl, mmap */
+#define cdev_ptm_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
+	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
+	0, (dev_type_poll((*))) enodev, (dev_type_mmap((*))) enodev }
+
+/* open, close, read, ioctl, poll, kqfilter XXX should be a generic device */
 #define cdev_log_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
 	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
@@ -532,6 +538,8 @@ cdev_decl(pts);
 #define	ptctty		ptytty
 #define	ptcioctl	ptyioctl
 cdev_decl(ptc);
+
+cdev_decl(ptm);
 
 cdev_decl(ctty);
 

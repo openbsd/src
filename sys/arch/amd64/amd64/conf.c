@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.2 2004/02/03 12:09:47 mickey Exp $	*/
+/*	$OpenBSD: conf.c,v 1.3 2004/02/10 01:31:21 millert Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -293,6 +293,8 @@ struct cdevsw	cdevsw[] =
 	cdev_usbdev_init(NUSCANNER,uscanner),	/* 77: USB scanners */
 	cdev_systrace_init(NSYSTRACE,systrace),	/* 78: system call tracing */
  	cdev_oci_init(NBIO,bio),	/* 79: ioctl tunnel */
+	cdev_notdef(),			/* 80: gpr? XXX */
+	cdev_ptm_init(NPTY,ptm),	/* 81: pseudo-tty ptm device */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 

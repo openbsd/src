@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.1 2003/10/31 03:54:33 drahn Exp $ */
+/*	$OpenBSD: conf.c,v 1.2 2004/02/10 01:31:21 millert Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -235,6 +235,7 @@ struct cdevsw cdevsw[] = {
 	cdev_usbdev_init(NUSCANNER,uscanner), /* 74: usb scanner */
 	cdev_bktr_init(NBKTR,bktr),	/* 75: Bt848 video capture device */
 	cdev_radio_init(NRADIO, radio),	/* 76: generic radio I/O */
+	cdev_ptm_init(NPTY,ptm),	/* 77: pseudo-tty ptm device */
 };
 int nchrdev = sizeof cdevsw / sizeof cdevsw[0];
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.29 2003/12/09 04:25:56 mickey Exp $	*/
+/*	$OpenBSD: conf.c,v 1.30 2004/02/10 01:31:21 millert Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -165,6 +165,7 @@ struct cdevsw   cdevsw[] =
 	cdev_audio_init(NAUDIO,audio),	/* 35: /dev/audio */
 	cdev_crypto_init(NCRYPTO,crypto), /* 36: /dev/crypto */
 	cdev_ses_init(NSES,ses),	/* 37: SCSI SES/SAF-TE */
+	cdev_ptm_init(NPTY,ptm),	/* 38: pseudo-tty ptm device */
 	cdev_lkm_dummy(),
 	cdev_lkm_dummy(),
 	cdev_lkm_dummy(),

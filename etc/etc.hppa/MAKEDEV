@@ -41,6 +41,7 @@
 # Pseudo terminals:
 #	tty*	set of 16 slave psuedo terminals
 #	pty*	set of 16 master pseudo terminals
+#	ptm	pty master device
 # Printers:
 #	lpt*	IEEE 1284 centronics printer
 # Console ports:
@@ -340,6 +341,10 @@ lpt*|lpa*)
 	M $n$U c 30 $(($U+$f)) 600
 	;;
 
+ptm)
+	M ptm c 38 0 666
+	;;
+
 pty*)
 	if [ $U -gt 15 ]; then
 		echo bad unit for pty in: $i
@@ -425,9 +430,9 @@ all)
 	R cd0 cd1 rd0 tun0 tun1 tun2 tun3 bpf0 bpf1 bpf2 bpf3 bpf4
 	R bpf5 bpf6 bpf7 bpf8 bpf9 pty0 pty1 pty2 fd1 fd1B fd1C fd1D
 	R fd1E fd1F fd1G fd1H fd0 fd0B fd0C fd0D fd0E fd0F fd0G fd0H
-	R xfs0 ss0 ss1 ch0 ses0 wscons pci audio0 uk0 random lpa0 lpa1
-	R lpa2 lpt0 lpt1 lpt2 lkm tty00 tty01 tty02 tty03 crypto pf
-	R systrace std st0 st1 fd
+	R xfs0 ss0 ss1 ch0 ses0 ptm wscons pci audio0 uk0 random lpa0
+	R lpa1 lpa2 lpt0 lpt1 lpt2 lkm tty00 tty01 tty02 tty03 crypto
+	R pf systrace std st0 st1 fd
 	;;
 
 sd*|ccd*)

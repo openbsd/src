@@ -42,6 +42,7 @@
 # Pseudo terminals:
 #	tty*	set of 16 slave psuedo terminals
 #	pty*	set of 16 master pseudo terminals
+#	ptm	pty master device
 # Graphics devices:
 #	grf*	custom chip (grf0), Retina Z2/Z3 (grf1/grf2),
 #		Cirrus boards (grf3), A2410 (grf4) video or
@@ -298,6 +299,10 @@ bpf*)
 	M bpf$U c 22 $U 600
 	;;
 
+ptm)
+	M ptm c 52 0 666
+	;;
+
 pty*)
 	if [ $U -gt 15 ]; then
 		echo bad unit for pty in: $i
@@ -362,8 +367,8 @@ all)
 	R ttye0 ccd0 ccd1 ccd2 ccd3 cd0 cd1 rd0 tun0 tun1 tun2 tun3
 	R bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9 pty0 pty1
 	R pty2 xfs0 ss0 ss1 ch0 vnd0 vnd1 vnd2 vnd3 sd0 sd1 sd2 sd3
-	R sd4 local grf0 grf1 grf2 grf3 adb asc0 uk0 random lkm tty00
-	R tty01 pf systrace std st0 st1 fd
+	R sd4 ptm local grf0 grf1 grf2 grf3 adb asc0 uk0 random lkm
+	R tty00 tty01 pf systrace std st0 st1 fd
 	;;
 
 sd*|ccd*)

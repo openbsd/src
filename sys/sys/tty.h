@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.h,v 1.17 2004/02/10 01:19:47 millert Exp $	*/
+/*	$OpenBSD: tty.h,v 1.18 2004/02/10 01:31:21 millert Exp $	*/
 /*	$NetBSD: tty.h,v 1.30.4.1 1996/06/02 09:08:13 mrg Exp $	*/
 
 /*-
@@ -61,6 +61,18 @@
 	{ "maxptys", CTLTYPE_INT }, \
 	{ "nptys", CTLTYPE_INT }, \
 }
+
+/* ptmget, for /dev/ptm pty getting ioctl PTMGET */
+
+struct ptmget {
+	int	cfd;
+	int	sfd;
+	char	cn[16];
+	char	sn[16];
+};
+#define PTMGET _IOR('t', 1, struct ptmget) /* get ptys */
+#define PATH_PTMDEV	"/dev/ptm"
+#define TTY_GID		4	/* XXX evil hardcoding of tty gid */
 
 /*
  * Clists are actually ring buffers. The c_cc, c_cf, c_cl fields have

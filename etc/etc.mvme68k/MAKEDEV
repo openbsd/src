@@ -44,6 +44,7 @@
 # Pseudo terminals:
 #	tty*	set of 16 slave psuedo terminals
 #	pty*	set of 16 master pseudo terminals
+#	ptm	pty master device
 # Printers:
 #	par0	Printer port
 # Special purpose devices:
@@ -293,6 +294,10 @@ lp*)
 	esac
 	;;
 
+ptm)
+	M ptm c 52 0 666
+	;;
+
 pty*)
 	if [ $U -gt 15 ]; then
 		echo bad unit for pty in: $i
@@ -402,7 +407,7 @@ all)
 	R vnd2 vnd3 sd0 sd1 sd2 sd3 sd4 cd0 cd1 rd0 tun0 tun1 tun2
 	R tun3 bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9 pty0
 	R pty1 pty2 xfs0 ss0 ss1 ch0 vmel0 vmes0 flash0 nvram0 sram0
-	R uk0 random lkm pf systrace std st0 st1 fd
+	R ptm uk0 random lkm pf systrace std st0 st1 fd
 	;;
 
 sd*|ccd*)

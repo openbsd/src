@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.1 2004/02/01 05:09:48 drahn Exp $	*/
+/*	$OpenBSD: conf.c,v 1.2 2004/02/10 01:31:21 millert Exp $	*/
 /*	$NetBSD: conf.c,v 1.10 2002/04/19 01:04:38 wiz Exp $	*/
 
 /*
@@ -374,6 +374,7 @@ struct cdevsw cdevsw[] = {
 	cdev_notdef(),                          /* 95: removed device */
 	cdev_notdef(),                          /* 96: removed device */
 	cdev_radio_init(NRADIO,radio),		/* 97: generic radio I/O */
+	cdev_ptm_init(NPTY,ptm),		/* 98: pseudo-tty ptm device */
 };
 
 int nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: openpty.3,v 1.11 2003/06/02 20:18:42 millert Exp $
+.\"	$OpenBSD: openpty.3,v 1.12 2004/02/10 01:31:20 millert Exp $
 .\" Copyright (c) 1995
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -78,6 +78,24 @@ is non-null, the window size of the slave will be set to the values in
 .Fa winp .
 .Pp
 The
+.Fn openpty
+function works in the following way:
+first it attempts to allocate the pseudo-tty through the
+.Pa /dev/ptm
+device (see
+.Xr pty 4
+for details) and if that fails it searches for a free psuedo-tty by iterating
+through all existing pseudo-tty devices in
+.Pa /dev .
+When a free pseudo-tty is found, its ownership is changed to
+the UID of the caller, permissions are set to correct values,
+and all earlier uses of that device are revoked (see
+.Xr revoke 2
+for details).
+The first method can work for any user, the second method requires
+super-user privileges in most cases.
+.Pp
+The
 .Fn login_tty
 function prepares for a login on the tty
 .Fa fd
@@ -132,6 +150,7 @@ returns the process ID of the child process.
 .Sh FILES
 .Bl -tag -width /dev/[pt]ty[pqrstuvwxyzPQRST][0123456789abcdef] -compact
 .It Pa /dev/[pt]ty[pqrstuvwxyzPQRST][0123456789abcdef]
+.It Pa /dev/ptm
 .El
 .Sh ERRORS
 .Fn openpty
@@ -154,4 +173,6 @@ or
 .Fn fork
 fails.
 .Sh SEE ALSO
-.Xr fork 2
+.Xr fork 2 ,
+.Xr revoke 2 ,
+.Xr pty 4

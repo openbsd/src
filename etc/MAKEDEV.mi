@@ -1,6 +1,6 @@
 include(MAKEDEV.sub)dnl
 dnl
-vers(a, {-$OpenBSD: MAKEDEV.mi,v 1.67 2004/02/05 22:22:15 todd Exp $-})dnl
+vers(a, {-$OpenBSD: MAKEDEV.mi,v 1.68 2004/02/10 01:31:20 millert Exp $-})dnl
 dnl
 divert(1)dnl
 {-#-}
@@ -186,6 +186,7 @@ target(all, ppi, 0)dnl
 target(all, view0, 0, 1, 2, 3, 4, 5)dnl
 target(all, local)dnl
 target(all, gpr, 0)dnl
+target(all, ptm)dnl
 dnl
 _mkdev(all, {-all-}, {-dnl
 show_target(all)dnl
@@ -405,6 +406,8 @@ __devitem(wsmouse, wsmouse*, wscons mice)dnl
 _mkdev(wsmouse, wsmouse*, {-M wsmouse$U c major_wsmouse_c $U 600-})dnl
 __devitem(quad, quadmouse, "quadrature mouse")dnl
 __devtitle(pty, Pseudo terminals)dnl
+__devitem(ptm, ptm, pty master device)dnl
+_mkdev(ptm, ptm, {-M ptm c major_ptm_c 0 666-})dnl
 __devitem(tty, tty*, set of 16 slave psuedo terminals)dnl
 __devitem(pty, pty*, set of 16 master pseudo terminals)dnl
 _mkdev(pty, pty*, {-if [ $U -gt 15 ]; then

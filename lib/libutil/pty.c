@@ -1,4 +1,4 @@
-/*	$OpenBSD: pty.c,v 1.10 2003/06/02 20:18:42 millert Exp $	*/
+/*	$OpenBSD: pty.c,v 1.11 2004/02/10 01:31:20 millert Exp $	*/
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,7 +30,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /* from: static char sccsid[] = "@(#)pty.c	8.1 (Berkeley) 6/4/93"; */
-static const char rcsid[] = "$Id: pty.c,v 1.10 2003/06/02 20:18:42 millert Exp $";
+static const char rcsid[] = "$Id: pty.c,v 1.11 2004/02/10 01:31:20 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/cdefs.h>
@@ -44,6 +44,7 @@ static const char rcsid[] = "$Id: pty.c,v 1.10 2003/06/02 20:18:42 millert Exp $
 #include <stdio.h>
 #include <string.h>
 #include <grp.h>
+#include <sys/tty.h>
 
 #include "util.h"
 
@@ -60,7 +61,41 @@ openpty(amaster, aslave, name, termp, winp)
 	register const char *cp1, *cp2;
 	register int master, slave, ttygid;
 	struct group *gr;
+	struct ptmget ptm;
+	int fd;
 
+	/* Try to use /dev/ptm and the PTMGET ioctl to get a properly set up
+	 * and owned pty/tty pair. If this fails, (because we might not have
+	 * the ptm device, etc.) fall back to using the traditional method
+	 * of walking through the pty entries in /dev for the moment, until
+	 * there is less chance of people being seriously boned by running
+	 * kernels without /dev/ptm in them.
+	 */
+
+	fd = open(PATH_PTMDEV, O_RDWR, 0);
+	if (fd == -1)
+		goto walkit;
+	if ((ioctl(fd, PTMGET, &ptm) == -1)) {
+		close(fd); 
+		goto walkit;
+	}
+	close(fd);
+	master = ptm.cfd;
+	slave = ptm.sfd;
+	if (name) {
+		/*
+		 * Manual page says "at least 16 characters".
+		 */
+		strlcpy(name, ptm.sn, 16);
+	}
+	*amaster = master;
+	*aslave = slave;
+	if (termp)
+		(void) tcsetattr(slave, TCSAFLUSH, termp);
+	if (winp)
+		(void) ioctl(slave, TIOCSWINSZ, (char *)winp);
+	return (0);
+ walkit:
 	if ((gr = getgrnam("tty")) != NULL)
 		ttygid = gr->gr_gid;
 	else

@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.47 2003/06/02 23:27:43 millert Exp $	*/
+/*	$OpenBSD: conf.c,v 1.48 2004/02/10 01:31:20 millert Exp $	*/
 /*	$NetBSD: conf.c,v 1.16 1996/10/18 21:26:57 cgd Exp $	*/
 
 /*-
@@ -192,6 +192,7 @@ struct cdevsw	cdevsw[] =
 #endif
 	cdev_notdef(),			/* 53: ALTQ (deprecated) */
 	cdev_iop_init(NIOP, iop),	/* 54: I2O IOP control interface */
+	cdev_ptm_init(NPTY,ptm),	/* 55: pseudo-tty ptm device */
 };
 int	nchrdev = sizeof (cdevsw) / sizeof (cdevsw[0]);
 
