@@ -462,11 +462,12 @@ svr4_getsiginfo(si, sig, code, addr)
  * will return to the user pc, psl.
  */
 void
-svr4_sendsig(catcher, sig, mask, code, addr)
+svr4_sendsig(catcher, sig, mask, code, type, val)
 	sig_t catcher;
 	int sig, mask;
 	u_long code;
-	caddr_t addr;
+	int type;
+	union sigval val;
 {
 	register struct proc *p = curproc;
 	register struct trapframe *tf;
@@ -500,7 +501,7 @@ svr4_sendsig(catcher, sig, mask, code, addr)
 	/*
 	 * Build the argument list for the signal handler.
 	 */
-	svr4_getsiginfo(&frame.sf_si, sig, code, addr);
+	svr4_getsiginfo(&frame.sf_si, sig, code, val.sival_ptr);
 	svr4_getcontext(p, &frame.sf_uc, mask, oonstack);
 	frame.sf_signum = frame.sf_si.svr4_si_signo;
 	frame.sf_sip = &fp->sf_si;
