@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.14 1998/03/27 07:47:54 millert Exp $	*/
+/*	$OpenBSD: sd.c,v 1.15 1998/04/25 00:38:15 millert Exp $	*/
 /*	$NetBSD: sd.c,v 1.34 1997/07/10 18:14:10 kleink Exp $	*/
 
 /*
@@ -55,6 +55,8 @@
 #include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/stat.h>
+
+#include <ufs/ffs/fs.h>			/* for BBSIZE and SBSIZE */
 
 #include <hp300/dev/scsireg.h>
 #include <hp300/dev/scsivar.h>
@@ -464,6 +466,10 @@ sdgetinfo(dev)
 		lp->d_secpercyl = lp->d_nsectors * lp->d_ntracks;
 		lp->d_rpm = 3600;
 		lp->d_interleave = 1;
+
+		/* XXX - these values for BBSIZE and SBSIZE assume ffs */
+		lp->d_bbsize = BBSIZE;
+		lp->d_sbsize = SBSIZE;
 
 		lp->d_partitions[RAW_PART].p_offset = 0;
 		lp->d_partitions[RAW_PART].p_size =

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hd.c,v 1.7 1998/03/27 08:37:06 millert Exp $	*/
+/*	$OpenBSD: hd.c,v 1.8 1998/04/25 00:38:16 millert Exp $	*/
 /*	$NetBSD: rd.c,v 1.33 1997/07/10 18:14:08 kleink Exp $	*/
 
 /*
@@ -59,6 +59,8 @@
 #include <sys/ioctl.h>
 #include <sys/proc.h>
 #include <sys/stat.h>
+
+#include <ufs/ffs/fs.h>			/* for BBSIZE and SBSIZE */
 
 #include <hp300/dev/hpibvar.h>
 
@@ -502,6 +504,10 @@ hdgetinfo(dev)
 		lp->d_ncylinders = 1;
 	}
 	lp->d_secpercyl = lp->d_nsectors * lp->d_ntracks;
+
+	/* XXX - these values for BBSIZE and SBSIZE assume ffs */
+	lp->d_bbsize = BBSIZE;
+	lp->d_sbsize = SBSIZE;
 
 	lp->d_partitions[RAW_PART].p_offset = 0;
 	lp->d_partitions[RAW_PART].p_size =

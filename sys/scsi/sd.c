@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.27 1998/03/27 18:40:53 millert Exp $	*/
+/*	$OpenBSD: sd.c,v 1.28 1998/04/25 00:38:13 millert Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*
@@ -69,6 +69,8 @@
 #include <scsi/scsi_all.h>
 #include <scsi/scsi_disk.h>
 #include <scsi/scsiconf.h>
+
+#include <ufs/ffs/fs.h>			/* for BBSIZE and SBSIZE */
 
 #define	SDOUTSTANDING	4
 #define	SDRETRIES	4
@@ -415,7 +417,7 @@ sdclose(dev, flag, fmt, p)
 	sd->sc_dk.dk_openmask = sd->sc_dk.dk_copenmask | sd->sc_dk.dk_bopenmask;
 
 	if (sd->sc_dk.dk_openmask == 0) {
-		/* XXXX Must wait for I/O to complete! */
+		/* XXX Must wait for I/O to complete! */
 
 		scsi_prevent(sd->sc_link, PR_ALLOW,
 		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_NOT_READY);
@@ -823,6 +825,10 @@ sdgetdisklabel(dev, sd)
 	lp->d_rpm = 3600;
 	lp->d_interleave = 1;
 	lp->d_flags = 0;
+
+	/* XXX - these values for BBSIZE and SBSIZE assume ffs */
+	lp->d_bbsize = BBSIZE;
+	lp->d_sbsize = SBSIZE;
 
 	lp->d_partitions[RAW_PART].p_offset = 0;
 	lp->d_partitions[RAW_PART].p_size =
