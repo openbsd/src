@@ -1,4 +1,4 @@
-/*	$OpenBSD: pflogd.c,v 1.29 2004/05/23 19:00:26 deraadt Exp $	*/
+/*	$OpenBSD: pflogd.c,v 1.30 2004/08/08 19:04:25 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 Theo de Raadt
@@ -489,7 +489,7 @@ dump_packet(u_char *user, const struct pcap_pkthdr *h, const u_char *sp)
 		return;
 	}
 
- append:	
+ append:
 	memcpy(bufpos, h, sizeof(*h));
 	memcpy(bufpos + sizeof(*h), sp, h->caplen);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsirand.c,v 1.20 2003/09/24 20:40:19 deraadt Exp $	*/
+/*	$OpenBSD: fsirand.c,v 1.21 2004/08/08 19:04:25 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: fsirand.c,v 1.20 2003/09/24 20:40:19 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: fsirand.c,v 1.21 2004/08/08 19:04:25 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -180,7 +180,7 @@ fsirand(char *device)
 	ibufsize = sizeof(struct ufs1_dinode) * sblock->fs_ipg;
 	if (oldibufsize < ibufsize) {
 		struct ufs1_dinode *ib;
-		
+
 		if ((ib = realloc(inodebuf, ibufsize)) == NULL)
 			errx(1, "Can't allocate memory for inode buffer");
 		inodebuf = ib;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pt_tcp.c,v 1.11 2004/05/08 15:23:02 pedro Exp $	*/
+/*	$OpenBSD: pt_tcp.c,v 1.12 2004/08/08 19:04:25 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2004 Pedro Martelletto <pedro@openbsd.org>
@@ -73,7 +73,7 @@ portal_tcp(struct portal_cred *pcr, char *key, char **v, int ks, int *fdp)
 
 		if (tc > 4)
 			return (EINVAL);
-	
+
 		if (tc > 3) {
 			if (!strcmp(tp[tc - 1], "priv")) {
 				if (pcr->pcr_uid == 0)

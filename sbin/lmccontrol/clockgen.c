@@ -1,5 +1,5 @@
-/* $OpenBSD: clockgen.c,v 1.2 2002/06/09 08:13:07 todd Exp $ */
-/* $Id: clockgen.c,v 1.2 2002/06/09 08:13:07 todd Exp $ */
+/* $OpenBSD: clockgen.c,v 1.3 2004/08/08 19:04:25 deraadt Exp $ */
+/* $Id: clockgen.c,v 1.3 2004/08/08 19:04:25 deraadt Exp $ */
 
 /*-
  * Copyright (c) 1997-1999 LAN Media Corporation (LMC)
@@ -85,7 +85,7 @@ lmc_av9110_freq(u_int32_t target, lmc_av9110_t *av)
 						f = iFvco / (x * r);
 						if (f >= target)
 							if ((av->f == 0) || (f - target < av->f - target)) {
-						
+
 							av->n = n;
 							av->m = m;
 							if (v == 1)

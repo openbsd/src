@@ -1,4 +1,4 @@
-/*	$OpenBSD: badsect.c,v 1.13 2004/03/03 05:03:36 tedu Exp $	*/
+/*	$OpenBSD: badsect.c,v 1.14 2004/08/08 19:04:25 deraadt Exp $	*/
 /*	$NetBSD: badsect.c,v 1.10 1995/03/18 14:54:28 cgd Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static char sccsid[] = "@(#)badsect.c	8.1 (Berkeley) 6/5/93";
 #else
-static const char rcsid[] = "$OpenBSD: badsect.c,v 1.13 2004/03/03 05:03:36 tedu Exp $";
+static const char rcsid[] = "$OpenBSD: badsect.c,v 1.14 2004/08/08 19:04:25 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -101,19 +101,19 @@ main(int argc, char *argv[])
 		fprintf(stderr, "usage: badsect bbdir blkno [ blkno ]\n");
 		exit(1);
 	}
-	if (chdir(argv[1]) < 0 || stat(".", &stbuf) < 0) 
+	if (chdir(argv[1]) < 0 || stat(".", &stbuf) < 0)
 		err(2, "%s", argv[1]);
-	
+
 	strlcpy(name, _PATH_DEV, sizeof name);
 	len = strlen(name);
-	if ((dirp = opendir(name)) == NULL) 
+	if ((dirp = opendir(name)) == NULL)
 		err(3, "%s", name);
-	
+
 	while ((dp = readdir(dirp)) != NULL) {
 		strlcpy(&name[len], dp->d_name, sizeof name - len);
-		if (stat(name, &devstat) < 0) 
+		if (stat(name, &devstat) < 0)
 			err(4, "%s", name);
-		
+
 		if (stbuf.st_dev == devstat.st_rdev &&
 		    S_ISBLK(devstat.st_mode))
 			break;
@@ -129,13 +129,13 @@ main(int argc, char *argv[])
 	name[len] = 'r';
 	strlcpy(&name[len+1], dp->d_name, sizeof name - (len+1));
 	closedir(dirp);
-	if (dp == NULL) 
+	if (dp == NULL)
 		err(5, "Cannot find dev 0%o corresponding to %s\n",
 			stbuf.st_rdev, argv[1]);
-	
-	if ((fsi = open(name, 0)) < 0) 
+
+	if ((fsi = open(name, 0)) < 0)
 		err(6, "%s", name);
-	
+
 	fs = &sblock;
 	rdfs(SBOFF, SBSIZE, (char *)fs);
 	dev_bsize = fs->fs_fsize / fsbtodb(fs, 1);

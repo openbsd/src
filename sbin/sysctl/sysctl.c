@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.114 2004/07/28 17:15:12 tholo Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.115 2004/08/08 19:04:25 deraadt Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)sysctl.c	8.5 (Berkeley) 5/9/95";
 #else
-static const char rcsid[] = "$OpenBSD: sysctl.c,v 1.114 2004/07/28 17:15:12 tholo Exp $";
+static const char rcsid[] = "$OpenBSD: sysctl.c,v 1.115 2004/08/08 19:04:25 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -520,9 +520,9 @@ parse(char *string, int flags)
 				return;
 
 			if ((mib[2] == IPPROTO_TCP &&
-			     mib[3] == TCPCTL_BADDYNAMIC) ||
+			    mib[3] == TCPCTL_BADDYNAMIC) ||
 			    (mib[2] == IPPROTO_UDP &&
-			     mib[3] == UDPCTL_BADDYNAMIC)) {
+			    mib[3] == UDPCTL_BADDYNAMIC)) {
 
 				special |= BADDYNAMIC;
 
@@ -788,9 +788,9 @@ parse(char *string, int flags)
 		if (!nflag)
 			(void)printf("%s%s", string, equ);
 		(void)printf("bootdev = 0x%x, "
-			     "cylinders = %u, heads = %u, sectors = %u\n",
-			     pdi->bsd_dev, pdi->bios_cylinders,
-			     pdi->bios_heads, pdi->bios_sectors);
+		    "cylinders = %u, heads = %u, sectors = %u\n",
+		    pdi->bsd_dev, pdi->bios_cylinders,
+		    pdi->bios_heads, pdi->bios_sectors);
 		return;
 	}
 	if (special & BIOSDEV) {
@@ -1654,9 +1654,9 @@ sysctl_malloc(char *string, char **bufpp, int mib[], int flags, int *typep)
 		ptr = strstr(buf, name);
  tryagain:
 		if (ptr == NULL) {
-		       warnx("fourth level name %s in %s is invalid", name,
-			     string);
-		       return (-1);
+			warnx("fourth level name %s in %s is invalid", name,
+			    string);
+			return (-1);
 		}
 		if ((*(ptr + strlen(name)) != ',') &&
 		    (*(ptr + strlen(name)) != '\0')) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.111 2004/08/03 05:36:32 mcbride Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.112 2004/08/08 19:04:25 deraadt Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -77,7 +77,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.111 2004/08/03 05:36:32 mcbride Exp $";
+static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.112 2004/08/08 19:04:25 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -1261,7 +1261,7 @@ setifpowersavesleep(const char *val, int d)
 	struct ieee80211_power power;
 	const char *errmsg = NULL;
 	int len;
-	
+
 	(void)strlcpy(power.i_name, name, sizeof(power.i_name));
 	if (ioctl(s, SIOCG80211POWER, (caddr_t)&power) == -1) {
 		warn("SIOCG80211POWER");
@@ -1575,9 +1575,9 @@ unsigned long get_ts_map(int ts_flag, int ts_start, int ts_stop)
 			mask = 1 << (i - 1);
 			map |=mask;
 		}
-	} else { /* Single channel */ 
+	} else { /* Single channel */
 		mask = 1 << (ts_stop - 1);
-		map |= mask; 
+		map |= mask;
 	}
 	return map;
 }
@@ -2287,7 +2287,7 @@ in_getprefix(const char *plen, int which)
 	const char *errmsg = NULL;
 	u_char *cp;
 	int len;
-	
+
 	len = strtonum(plen, 0, 32, &errmsg);
 	if (errmsg)
 		errx(1, "prefix %s: %s", plen, errmsg);
@@ -2393,7 +2393,7 @@ in6_getprefix(const char *plen, int which)
 	len = strtonum(plen, 0, 128, &errmsg);
 	if (errmsg)
 		errx(1, "prefix %s: %s", plen, errmsg);
-	
+
 	sin6->sin6_len = sizeof(*sin6);
 	if (which != MASK)
 		sin6->sin6_family = AF_INET6;
@@ -2653,7 +2653,7 @@ getifgroups(void)
 
 	memset(&ifgr, 0, sizeof(ifgr));
 	strlcpy(ifgr.ifgr_name, name, IFNAMSIZ);
-	
+
 	if (ioctl(s, SIOCGIFGROUP, (caddr_t)&ifgr) == -1)
 		if (errno == EINVAL || errno == ENOTTY)
 			return;
@@ -2665,10 +2665,10 @@ getifgroups(void)
 	    sizeof(struct ifgroup));
 	if (ifgr.ifgr_groups == NULL)
 		err(1, "getifgroups");
-	
+
 	if (ioctl(s, SIOCGIFGROUP, (caddr_t)&ifgr) == -1)
 		err(1, "SIOCGIFGROUP");
-	
+
 	if (len -= sizeof(struct ifgroup)) {
 		len += sizeof(struct ifgroup);
 		printf("\tgroups: ");
@@ -2881,7 +2881,7 @@ setpfsync_syncpeer(const char *val, int d)
 
 	preq.pfsyncr_syncpeer.s_addr = ((struct sockaddr_in *)
 	    peerres->ai_addr)->sin_addr.s_addr;
-		
+
 	if (ioctl(s, SIOCSETPFSYNC, (caddr_t)&ifr) == -1)
 		err(1, "SIOCSETPFSYNC");
 }
@@ -2909,7 +2909,7 @@ setpfsync_maxupd(const char *val, int d)
 	const char *errmsg = NULL;
 	struct pfsyncreq preq;
 	int maxupdates;
-	
+
 	maxupdates = strtonum(val, 0, 255, &errmsg);
 	if (errmsg)
 		errx(1, "maxupd %s: %s", val, errmsg);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_optimize.c,v 1.1 2004/07/16 23:44:24 frantzen Exp $ */
+/*	$OpenBSD: pfctl_optimize.c,v 1.2 2004/08/08 19:04:25 deraadt Exp $ */
 
 /*
  * Copyright (c) 2004 Mike Frantzen <frantzen@openbsd.org>
@@ -542,7 +542,7 @@ combine_rules(struct pfctl *pf, struct superblock *block)
 			    sizeof(p1->por_rule.src.addr));
 			p1->por_rule.src.addr.type = PF_ADDR_TABLE;
 			strlcpy(p1->por_rule.src.addr.v.tblname,
-			    p1->por_src_tbl->pt_name, 
+			    p1->por_src_tbl->pt_name,
 			    sizeof(p1->por_rule.src.addr.v.tblname));
 
 			pfr_buf_clear(p1->por_src_tbl->pt_buf);
@@ -573,7 +573,7 @@ combine_rules(struct pfctl *pf, struct superblock *block)
 			    sizeof(p1->por_rule.dst.addr));
 			p1->por_rule.dst.addr.type = PF_ADDR_TABLE;
 			strlcpy(p1->por_rule.dst.addr.v.tblname,
-			    p1->por_dst_tbl->pt_name, 
+			    p1->por_dst_tbl->pt_name,
 			    sizeof(p1->por_rule.dst.addr.v.tblname));
 
 			pfr_buf_clear(p1->por_dst_tbl->pt_buf);
@@ -988,7 +988,6 @@ remove_from_skipsteps(struct skiplist *head, struct superblock *block,
 			next = TAILQ_NEXT(sk, ps_entry);
 			assert(next == NULL || next->ps_count <= sk->ps_count);
 #endif /* OPT_DEBUG */
-			
 		}
 	}
 }
@@ -1324,7 +1323,7 @@ addrs_combineable(struct pf_rule_addr *a, struct pf_rule_addr *b)
 		return (0);
 	if (a->neg != b->neg || a->port_op != b->port_op ||
 	    a->port[0] != b->port[0] || a->port[1] != b->port[1])
-	   	return (0);
+		return (0);
 	return (1);
 }
 
@@ -1397,13 +1396,13 @@ superblock_inclusive(struct superblock *block, struct pf_opt_rule *por)
 
 			if (closest >= 0)
 				DEBUG("superblock break @ %d on %s+%xh",
-			    	    por->por_rule.nr,
+				    por->por_rule.nr,
 				    pf_rule_desc[closest].prf_name,
 				    i - pf_rule_desc[closest].prf_offset -
 				    pf_rule_desc[closest].prf_size);
 			else
 				DEBUG("superblock break @ %d on field @ %d",
-			    	    por->por_rule.nr, i);
+				    por->por_rule.nr, i);
 			return (0);
 		}
 	}
@@ -1475,7 +1474,7 @@ exclude_supersets(struct pf_rule *super, struct pf_rule *sub)
 	    super->src.addr.v.a.mask.addr32[3] == 0)
 		memset(&sub->src.addr, 0, sizeof(sub->src.addr));
 	else if (super->src.addr.type == PF_ADDR_ADDRMASK &&
-	    sub->src.addr.type == PF_ADDR_ADDRMASK && 
+	    sub->src.addr.type == PF_ADDR_ADDRMASK &&
 	    super->src.neg == sub->src.neg &&
 	    super->af == sub->af &&
 	    unmask(&super->src.addr.v.a.mask, super->af) <
@@ -1503,7 +1502,7 @@ exclude_supersets(struct pf_rule *super, struct pf_rule *sub)
 	    super->dst.addr.v.a.mask.addr32[3] == 0)
 		memset(&sub->dst.addr, 0, sizeof(sub->dst.addr));
 	else if (super->dst.addr.type == PF_ADDR_ADDRMASK &&
-	    sub->dst.addr.type == PF_ADDR_ADDRMASK && 
+	    sub->dst.addr.type == PF_ADDR_ADDRMASK &&
 	    super->dst.neg == sub->dst.neg &&
 	    super->af == sub->af &&
 	    unmask(&super->dst.addr.v.a.mask, super->af) <
