@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.13 2005/03/25 13:45:30 moritz Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.14 2005/03/26 18:39:10 otto Exp $	*/
 
 /*
  * Copyright (c) 2003 Can Erkin Acar
@@ -49,16 +49,34 @@
 #include "pfctl_parser.h"
 
 /*
- * tcpdump goes through three states: STATE_INIT is where the
- * descriptors and output files are opened. STATE_RUNNING is packet
- * processing part. It is not allowed to go back in states.
+ * tcpdump goes through five states: STATE_INIT is where the
+ * bpf device and the input file is opened. In STATE_BPF, the
+ * pcap filter gets set. STATE_FILTER is used for parsing
+ * /etc/services and /etc/protocols and opening the output
+ * file. STATE_RUN is the packet processing part.
  */
+
 enum priv_state {
 	STATE_INIT,		/* initial state */
 	STATE_BPF,		/* input file/device opened */
 	STATE_FILTER,		/* filter applied */
 	STATE_RUN,		/* running and accepting network traffic */
 	STATE_QUIT		/* shutting down */
+};
+
+#define ALLOW(action)	(1 << (action))
+
+static const int allowed[] = {
+	/* INIT */	ALLOW(PRIV_OPEN_BPF) | ALLOW(PRIV_OPEN_DUMP) |
+			ALLOW(PRIV_SETFILTER),
+	/* BPF */	ALLOW(PRIV_SETFILTER),
+	/* FILTER */	ALLOW(PRIV_OPEN_OUTPUT) | ALLOW(PRIV_GETSERVENTRIES) |
+			ALLOW(PRIV_GETPROTOENTRIES) |
+			ALLOW(PRIV_ETHER_NTOHOST) | ALLOW(PRIV_INIT_DONE),
+	/* RUN */	ALLOW(PRIV_GETHOSTBYADDR) | ALLOW(PRIV_ETHER_NTOHOST) |
+			ALLOW(PRIV_GETRPCBYNUMBER) | ALLOW(PRIV_GETLINES) |
+			ALLOW(PRIV_LOCALTIME),
+	/* QUIT */	0
 };
 
 struct ftab {
@@ -142,7 +160,6 @@ priv_init(int argc, char **argv)
 				err(1, "seteuid() failed");
 			if (setuid(pw->pw_uid) == -1)
 				err(1, "setuid() failed");
-
 		} else {
 			/* Child - drop suid privileges */
 			gid = getgid();
@@ -217,51 +234,51 @@ priv_init(int argc, char **argv)
 			break;
 		switch (cmd) {
 		case PRIV_OPEN_BPF:
-			test_state(STATE_INIT, STATE_BPF);
+			test_state(cmd, STATE_BPF);
 			parent_open_bpf(socks[0], &bpfd);
 			break;
 		case PRIV_OPEN_DUMP:
-			test_state(STATE_INIT, STATE_BPF);
+			test_state(cmd, STATE_BPF);
 			parent_open_dump(socks[0], RFileName);
 			break;
 		case PRIV_OPEN_OUTPUT:
-			test_state(STATE_FILTER, STATE_RUN);
+			test_state(cmd, STATE_RUN);
 			parent_open_output(socks[0], WFileName);
 			break;
 		case PRIV_SETFILTER:
-			test_state(STATE_INIT, STATE_FILTER);
+			test_state(cmd, STATE_FILTER);
 			parent_setfilter(socks[0], cmdbuf, &bpfd);
 			break;
 		case PRIV_INIT_DONE:
-			test_state(STATE_FILTER, STATE_RUN);
+			test_state(cmd, STATE_RUN);
 			parent_init_done(socks[0], &bpfd);
 			break;
 		case PRIV_GETHOSTBYADDR:
-			test_state(STATE_RUN, STATE_RUN);
+			test_state(cmd, STATE_RUN);
 			parent_gethostbyaddr(socks[0]);
 			break;
 		case PRIV_ETHER_NTOHOST:
-			test_state(STATE_BPF, cur_state);
+			test_state(cmd, cur_state);
 			parent_ether_ntohost(socks[0]);
 			break;
 		case PRIV_GETRPCBYNUMBER:
-			test_state(STATE_RUN, STATE_RUN);
+			test_state(cmd, STATE_RUN);
 			parent_getrpcbynumber(socks[0]);
 			break;
 		case PRIV_GETSERVENTRIES:
-			test_state(STATE_FILTER, STATE_FILTER);
+			test_state(cmd, STATE_FILTER);
 			parent_getserventries(socks[0]);
 			break;
 		case PRIV_GETPROTOENTRIES:
-			test_state(STATE_FILTER, STATE_FILTER);
+			test_state(cmd, STATE_FILTER);
 			parent_getprotoentries(socks[0]);
 			break;
 		case PRIV_LOCALTIME:
-			test_state(STATE_RUN, STATE_RUN);
+			test_state(cmd, STATE_RUN);
 			parent_localtime(socks[0]);
 			break;
 		case PRIV_GETLINES:
-			test_state(STATE_RUN, STATE_RUN);
+			test_state(cmd, STATE_RUN);
 			parent_getlines(socks[0]);
 			break;
 		default:
@@ -809,14 +826,17 @@ must_write(int fd, const void *buf, size_t n)
 
 /* test for a given state, and possibly increase state */
 static void
-test_state(int expect, int next)
+test_state(int action, int next)
 {
-	if (cur_state < expect) {
-		logmsg(LOG_ERR, "[priv] Invalid state: %d < %d",
-		    cur_state, expect);
+	if (cur_state < 0 || cur_state > STATE_QUIT) {
+		logmsg(LOG_ERR, "[priv] Invalid state: %d", cur_state);
 		_exit(1);
 	}
-
+	if ((allowed[cur_state] & ALLOW(action)) == 0) {
+		logmsg(LOG_ERR, "[priv] Invalid action %d in state %d",
+		    action, cur_state);
+		_exit(1);
+	}
 	if (next < cur_state) {
 		logmsg(LOG_ERR, "[priv] Invalid next state: %d < %d",
 		    next, cur_state);
