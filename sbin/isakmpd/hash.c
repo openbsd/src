@@ -1,4 +1,4 @@
-/*	$OpenBSD: hash.c,v 1.6 2001/04/15 16:09:16 ho Exp $	*/
+/*	$OpenBSD: hash.c,v 1.7 2001/06/29 20:38:15 angelos Exp $	*/
 /*	$EOM: hash.c,v 1.10 1999/04/17 23:20:34 niklas Exp $	*/
 
 /*
@@ -43,6 +43,7 @@
 #include "sysdep.h"
 
 #include "hash.h"
+#include "log.h"
 
 void hmac_init (struct hash *, unsigned char *, int);
 void hmac_final (unsigned char *, struct hash *);
@@ -77,6 +78,8 @@ struct hash *
 hash_get (enum hashes hashtype)
 {
   int i;
+
+  LOG_DBG ((LOG_CRYPTO, 60, "hash_get: requested algorithm %d", hashtype));
 
   for (i = 0; i < sizeof hashes / sizeof hashes[0]; i++)
     if (hashtype == hashes[i].type)

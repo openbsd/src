@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp.c,v 1.33 2001/06/29 20:22:58 niklas Exp $	*/
+/*	$OpenBSD: udp.c,v 1.34 2001/06/29 20:38:16 angelos Exp $	*/
 /*	$EOM: udp.c,v 1.57 2001/01/26 10:09:57 niklas Exp $	*/
 
 /*
@@ -150,7 +150,10 @@ udp_make (struct sockaddr *laddr)
     }
 
   /* Make sure we don't get our traffic encrypted.  */
-  sysdep_cleartext (s);
+  if (sysdep_cleartext (s) == -1)
+    {
+      goto err;
+    }
 
   /*
    * In order to have several bound specific address-port combinations
