@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.92 2004/07/11 07:17:58 deraadt Exp $
+$OpenBSD: usbdevs,v 1.93 2004/07/11 07:39:56 deraadt Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -266,7 +266,7 @@ vendor MICROTECH	0x07af	Microtech
 vendor OLYMPUS		0x07b4	Olympus
 vendor ABOCOM		0x07b8	AboCom Systems
 vendor KEISOKUGIKEN	0x07c1	Keisokugiken
-vendor ONSPEC		0x07c4	OnSpec Electronic
+vendor ONSPEC		0x07c4	OnSpec
 vendor APG		0x07c5	APG Cash Drawer
 vendor BUG		0x07c8	B.U.G.
 vendor ALLIEDTELESYN	0x07c9	Allied Telesyn International
