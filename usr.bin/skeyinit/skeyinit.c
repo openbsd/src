@@ -1,4 +1,4 @@
-/*	$OpenBSD: skeyinit.c,v 1.37 2002/06/06 20:56:02 aaron Exp $	*/
+/*	$OpenBSD: skeyinit.c,v 1.38 2002/06/07 21:35:26 millert Exp $	*/
 
 /* OpenBSD S/Key (skeyinit.c)
  *
@@ -39,8 +39,8 @@
 #endif
 
 void	usage(void);
-void	secure_mode(int *, char *, char *, char *, char *, size_t);
-void	normal_mode(char *, int, char *, char *, char *);
+void	secure_mode(int *, char *, char *, char *, size_t);
+void	normal_mode(char *, int, char *, char *);
 void	timedout(int);
 void	convert_db(void);
 void	enable_db(int);
@@ -50,7 +50,7 @@ main(int argc, char **argv)
 {
 	int     rval, i, l, n, defaultsetup, rmkey, hexmode, enable, convert;
 	char	hostname[MAXHOSTNAMELEN];
-	char	seed[SKEY_MAX_SEED_LEN + 2], defaultseed[SKEY_MAX_SEED_LEN + 1];
+	char	seed[SKEY_MAX_SEED_LEN + 1];
 	char    buf[256], key[SKEY_BINKEY_SIZE], filename[PATH_MAX], *ht;
 	char    lastc, me[UT_NAMESIZE + 1], *p, *auth_type;
 	struct skey skey;
@@ -63,7 +63,7 @@ main(int argc, char **argv)
 	/* Build up a default seed based on the hostname and time */
 	if (gethostname(hostname, sizeof(hostname)) < 0)
 		err(1, "gethostname");
-	for (i = 0, p = defaultseed; hostname[i] && i < SKEY_NAMELEN; i++) {
+	for (i = 0, p = seed; hostname[i] && i < SKEY_NAMELEN; i++) {
 		if (isalpha(hostname[i])) {
 			if (isupper(hostname[i]))
 				hostname[i] = tolower(hostname[i]);
@@ -226,14 +226,14 @@ main(int argc, char **argv)
 			if (l > 0) {
 				lastc = skey.seed[l - 1];
 				if (isdigit(lastc) && lastc != '9') {
-					(void)strcpy(defaultseed, skey.seed);
-					defaultseed[l - 1] = lastc + 1;
+					(void)strcpy(seed, skey.seed);
+					seed[l - 1] = lastc + 1;
 				}
 				if (isdigit(lastc) && lastc == '9' && l < 16) {
-					(void)strcpy(defaultseed, skey.seed);
-					defaultseed[l - 1] = '0';
-					defaultseed[l] = '0';
-					defaultseed[l + 1] = '\0';
+					(void)strcpy(seed, skey.seed);
+					seed[l - 1] = '0';
+					seed[l] = '0';
+					seed[l + 1] = '\0';
 				}
 			}
 			break;
@@ -267,9 +267,9 @@ main(int argc, char **argv)
 
 	alarm(180);
 	if (!defaultsetup)
-		secure_mode(&n, key, seed, defaultseed, buf, sizeof(buf));
+		secure_mode(&n, key, seed, buf, sizeof(buf));
 	else
-		normal_mode(pp->pw_name, n, key, seed, defaultseed);
+		normal_mode(pp->pw_name, n, key, seed);
 	alarm(0);
 
 	/* XXX - why use malloc here? */
@@ -283,18 +283,17 @@ main(int argc, char **argv)
 	(void)fclose(skey.keyfile);
 
 	(void)printf("\nID %s skey is otp-%s %d %s\n", pp->pw_name,
-		     skey_get_algorithm(), n, seed);
+	    skey_get_algorithm(), n, seed);
 	(void)printf("Next login password: %s\n\n",
 	    hexmode ? put8(buf, key) : btoe(buf, key));
 	exit(0);
 }
 
 void
-secure_mode(int *count, char *key, char *seed, char *defaultseed, char *buf,
-    size_t bufsiz)
+secure_mode(int *count, char *key, char *seed, char *buf, size_t bufsiz)
 {
+	char *p, newseed[SKEY_MAX_SEED_LEN + 2];
 	int i, n;
-	char *p;
 
 	(void)puts("You need the 6 words generated from the \"skey\" command.");
 	for (i = 0; ; i++) {
@@ -316,19 +315,16 @@ secure_mode(int *count, char *key, char *seed, char *defaultseed, char *buf,
 		if (i >= 2)
 			exit(1);
 
-		(void)printf("Enter new seed [default %s]: ",
-			     defaultseed);
-		(void)fgets(seed, SKEY_MAX_SEED_LEN+2, stdin); /* XXX */
+		(void)printf("Enter new seed [default %s]: ", seed);
+		(void)fgets(newseed, sizeof(newseed), stdin); /* XXX */
 		clearerr(stdin);
-		rip(seed);
-		if (strlen(seed) > SKEY_MAX_SEED_LEN) {
+		rip(newseed);
+		if (strlen(newseed) > SKEY_MAX_SEED_LEN) {
 			(void)fprintf(stderr, "ERROR: Seed must be between 1 "
 			    "and %d characters in length\n", SKEY_MAX_SEED_LEN);
 			continue;
 		}
-		if (seed[0] == '\0')
-			(void)strcpy(seed, defaultseed);
-		for (p = seed; *p; p++) {
+		for (p = newseed; *p; p++) {
 			if (isspace(*p)) {
 				(void)fputs("ERROR: Seed must not contain "
 				    "any spaces\n", stderr);
@@ -345,6 +341,8 @@ secure_mode(int *count, char *key, char *seed, char *defaultseed, char *buf,
 		if (*p == '\0')
 			break;  /* Valid seed */
 	}
+	if (newseed[0] != '\0')
+		(void)strcpy(seed, newseed);
 
 	for (i = 0; ; i++) {
 		if (i >= 2)
@@ -372,18 +370,15 @@ secure_mode(int *count, char *key, char *seed, char *defaultseed, char *buf,
 }
 
 void
-normal_mode(char *username, int n, char *key, char *seed, char *defaultseed)
+normal_mode(char *username, int n, char *key, char *seed)
 {
 	int i, nn;
-	char passwd[SKEY_MAX_PW_LEN+2], passwd2[SKEY_MAX_PW_LEN+2];
+	char passwd[SKEY_MAX_PW_LEN+2], key2[SKEY_BINKEY_SIZE];
 
 	/* Get user's secret passphrase */
 	for (i = 0; ; i++) {
-		memset(passwd, 0, sizeof(passwd));
-		memset(passwd2, 0, sizeof(passwd2));
-
 		if (i > 2)
-			exit(1);
+			errx(1, "S/Key entry not updated");
 
 		if (readpassphrase("Enter secret passphrase: ", passwd,
 		    sizeof(passwd), 0) == NULL || passwd[0] == '\0')
@@ -411,17 +406,27 @@ normal_mode(char *username, int n, char *key, char *seed, char *defaultseed)
 		}
 		/* XXX - should check for passphrase that is really too long */
 
-		if (readpassphrase("Again secret passphrase: ", passwd2,
-		    sizeof(passwd2), 0) && strcmp(passwd, passwd2) == 0)
+		/* Crunch seed and passphrase into starting key */
+		nn = keycrunch(key, seed, passwd);
+		memset(passwd, 0, sizeof(passwd));
+		if (nn != 0)
+			err(2, "key crunch failed");
+
+		if (readpassphrase("Again secret passphrase: ", passwd,
+		    sizeof(passwd), 0) == NULL || passwd[0] == '\0')
+			exit(1);
+
+		/* Crunch seed and passphrase into starting key */
+		nn = keycrunch(key2, seed, passwd);
+		memset(passwd, 0, sizeof(passwd));
+		if (nn != 0)
+			err(2, "key crunch failed");
+
+		if (memcmp(key, key2, sizeof(key2)) == 0)
 			break;
 
 		(void)fputs("Passphrases do not match.\n", stderr);
 	}
-
-	/* Crunch seed and passphrase into starting key */
-	(void)strcpy(seed, defaultseed);
-	if (keycrunch(key, seed, passwd) != 0)
-		err(2, "key crunch failed");
 
 	nn = n;
 	while (nn-- != 0)
