@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_fcntl.c,v 1.11 1997/12/17 03:30:40 deraadt Exp $	 */
+/*	$OpenBSD: svr4_fcntl.c,v 1.12 1997/12/17 07:25:51 deraadt Exp $	 */
 /*	$NetBSD: svr4_fcntl.c,v 1.14 1995/10/14 20:24:24 christos Exp $	 */
 
 /*
@@ -390,33 +390,38 @@ svr4_sys_fcntl(p, v, retval)
 		if (error)
 			return error;
 
+		SCARG(&ofst, fd) = SCARG(uap, fd);
+		SCARG(&ofst, sb) = stackgap_alloc(&sg,
+		    sizeof(struct stat));
+		if ((error = sys_fstat(p, &ofst, retval)) != 0)
+			return error;
+		if ((error = copyin(SCARG(&ofst, sb), &ost,
+		    sizeof ost)) != 0)
+			return error;
+
+		SCARG(&ols, fd) = SCARG(uap, fd);
+		SCARG(&ols, whence) = SEEK_CUR;
+		SCARG(&ols, offset) = 0;
+		if ((error = sys_lseek(p, &ols, (register_t *)&cur)) != 0)
+			return error;
+
 		off = (off_t)ifl.l_start;
 		switch (ifl.l_whence) {
 		case 0:
 			off = (off_t)ifl.l_start;
 			break;
 		case 1:
-			SCARG(&ofst, fd) = SCARG(uap, fd);
-			SCARG(&ofst, sb) = stackgap_alloc(&sg,
-			    sizeof(struct stat));
-			if ((error = sys_fstat(p, &ofst, retval)) != 0)
-				return error;
-			if ((error = copyin(SCARG(&ofst, sb), &ost,
-			    sizeof ost)) != 0)
-				return error;
 			off = ost.st_size + (off_t)ifl.l_start;
 			break;
 		case 2:
-			SCARG(&ols, fd) = SCARG(uap, fd);
-			SCARG(&ols, whence) = SEEK_CUR;
-			SCARG(&ols, offset) = 0;
-			if ((error = sys_lseek(p, &ols, (register_t *)&cur)) != 0)
-				return error;
 			off = cur - (off_t)ifl.l_start;
 			break;
 		default:
 			return EINVAL;
 		}
+
+		if (ifl.l_len != 0 && off + ifl.l_len != ost.st_size)
+			return EINVAL;	/* Sorry, cannot truncate in middle */
 
 		SCARG(&nuap, fd) = SCARG(uap, fd);
 		SCARG(&nuap, length) = off;
