@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.344 2000/11/08 18:04:41 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.345 2000/11/16 01:10:12 aaron Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -3727,6 +3727,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Symbios Logic",
 	    "53c895A",
+	},
+	{
+	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_1010,
+	    0,
+	    "Symbios Logic",
+	    "53c1010",
 	},
 	{
 	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_875J,
