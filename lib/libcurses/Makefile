@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.34 1999/01/18 19:06:57 millert Exp $
+#	$OpenBSD: Makefile,v 1.35 1999/01/18 19:30:36 millert Exp $
 
 # Uncomment this to enable tracing in libcurses
 #CURSESTRACE=-DTRACE
@@ -164,6 +164,10 @@ MLINKS+= termcap.3 tgetent.3 termcap.3 tgetflag.3 termcap.3 tgetnum.3 \
 
 CLEANFILES+= nomacros.h codes.c comp_captab.c expanded.c fallback.c lib_gen.c \
 	lib_keyname.c names.c unctrl.c keys.tries make_hash make_keys
+
+.if make(install)
+SUBDIR+= doc
+.endif
 
 beforedepend: nomacros.h codes.c comp_captab.c expanded.c fallback.c lib_gen.c \
 	lib_keyname.c names.c unctrl.c keys.tries make_hash make_keys
