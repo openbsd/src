@@ -27,7 +27,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "includes.h"
-RCSID("$OpenBSD: auth2.c,v 1.4 2000/05/01 07:45:08 markus Exp $");
+RCSID("$OpenBSD: auth2.c,v 1.5 2000/05/01 23:13:39 djm Exp $");
 
 #include <openssl/dsa.h>
 #include <openssl/rsa.h>
@@ -93,8 +93,12 @@ void
 do_authentication2()
 {
 	/* turn off skey/kerberos, not supported by SSH2 */
+#ifdef SKEY
 	options.skey_authentication = 0;
+#endif
+#ifdef KRB4
 	options.kerberos_authentication = 0;
+#endif
 
 	dispatch_init(&protocol_error);
 	dispatch_set(SSH2_MSG_SERVICE_REQUEST, &input_service_request);
