@@ -1,4 +1,4 @@
-/*	$OpenBSD: expand.c,v 1.5 1997/09/16 11:13:59 deraadt Exp $	*/
+/*	$OpenBSD: expand.c,v 1.6 1997/09/16 23:03:10 millert Exp $	*/
 
 /*
  * Copyright (c) 1991 Carnegie Mellon University
@@ -242,8 +242,8 @@ pend:
 doit:
 			savec = *pm;
 			*pm = 0;
-			strcpy(lm, pl);
-			strcat(restbuf, pe + 1);
+			snprintf(lm, sizeof(restbuf) - (lm - restbuf),
+			    "%s%s", pl, pe + 1);
 			*pm = savec;
 			if (s == 0) {
 				spathp = pathp;
