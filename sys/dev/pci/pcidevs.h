@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.590 2003/01/26 20:00:12 mickey Exp 
+ *		OpenBSD: pcidevs,v 1.591 2003/02/03 08:22:57 jason Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -572,6 +572,7 @@
 #define	PCI_VENDOR_NETOCTAVE	0x170b		/* Netoctave */
 #define	PCI_VENDOR_ALTIMA	0x173b		/* Altima */
 #define	PCI_VENDOR_ANTARES	0x1754		/* Antares Microsystems */
+#define	PCI_VENDOR_LANERGY	0x1812		/* Lanergy */
 #define	PCI_VENDOR_SYMPHONY2	0x1c1c		/* Symphony Labs */
 #define	PCI_VENDOR_TEKRAM2	0x1de1		/* Tekram Technology */
 #define	PCI_VENDOR_HINT	0x3388		/* Hint */
@@ -1572,6 +1573,9 @@
 #define	PCI_PRODUCT_LMC_DS3	0x0004		/* DS3 */
 #define	PCI_PRODUCT_LMC_SSI	0x0005		/* SSI */
 #define	PCI_PRODUCT_LMC_DS1	0x0006		/* DS1 */
+
+/* Lanergy */
+#define	PCI_PRODUCT_LANERGY_APPIAN_PCI_LITE	0x0001		/* Appian Lite */
 
 /* Lava */
 #define	PCI_PRODUCT_LAVA_TWOSP_2S	0x0100		/* Dual Serial */

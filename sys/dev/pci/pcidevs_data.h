@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.590 2003/01/26 20:00:12 mickey Exp 
+ *		OpenBSD: pcidevs,v 1.591 2003/02/03 08:22:57 jason Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -3165,6 +3165,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_LMC, PCI_PRODUCT_LMC_DS1,
 	    "DS1",
+	},
+	{
+	    PCI_VENDOR_LANERGY, PCI_PRODUCT_LANERGY_APPIAN_PCI_LITE,
+	    "Appian Lite",
 	},
 	{
 	    PCI_VENDOR_LAVA, PCI_PRODUCT_LAVA_TWOSP_2S,
@@ -8333,6 +8337,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_ANTARES,
 	    "Antares Microsystems",
+	},
+	{
+	    PCI_VENDOR_LANERGY,
+	    "Lanergy",
 	},
 	{
 	    PCI_VENDOR_SYMPHONY2,
