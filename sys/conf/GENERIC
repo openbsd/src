@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.61 2000/01/09 22:00:16 itojun Exp $
+#	$OpenBSD: GENERIC,v 1.62 2000/03/02 10:50:29 art Exp $
 #
 #	Machine-independent option; used by all architectures for their
 #	GENERIC kernel
@@ -13,6 +13,7 @@ option		SWAPPAGER	# paging; REQUIRED
 option		DEVPAGER	# mmap() of devices
 
 option		DDB		# in-kernel debugger
+#option		DDB_SAFE_CONSOLE # allow break into ddb during boot
 #makeoptions	DEBUG="-g"	# compile full symbol table
 #makeoptions	PROF="-pg"	# build profiled kernel
 #option		GPROF		# kernel profiling, kgmon(8)

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.46 2000/02/24 16:09:14 chris Exp $
+.\"	$OpenBSD: options.4,v 1.47 2000/03/02 10:50:28 art Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -159,6 +159,9 @@ Compiles in a kernel debugger for diagnosing kernel problems. See
 for details.
 .Em NOTE:
 not available on all architectures.
+.It Cd option DDB_SAFE_CONSOLE
+Allows a break into the kernel debugger during boot. Useful when
+debugging problems that can cause init(8) to fail.
 .It Cd option KGDB
 Compiles in a remote kernel debugger stub for diagnosing kernel problems
 using the
