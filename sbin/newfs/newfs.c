@@ -1,4 +1,4 @@
-/*	$OpenBSD: newfs.c,v 1.33 2002/04/23 18:54:12 espie Exp $	*/
+/*	$OpenBSD: newfs.c,v 1.34 2002/05/06 19:25:06 millert Exp $	*/
 /*	$NetBSD: newfs.c,v 1.20 1996/05/16 07:13:03 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.8 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: newfs.c,v 1.33 2002/04/23 18:54:12 espie Exp $";
+static char rcsid[] = "$OpenBSD: newfs.c,v 1.34 2002/05/06 19:25:06 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -167,7 +167,7 @@ int	minfree = MINFREE;	/* free space threshold */
 int	opt = DEFAULTOPT;	/* optimization preference (space or time) */
 int	reqopt = -1;		/* opt preference has not been specified */
 int	density;		/* number of bytes per inode */
-int	maxcontig = 8;		/* max contiguous blocks to allocate */
+int	maxcontig = 0;		/* max contiguous blocks to allocate */
 int	rotdelay = ROTDELAY;	/* rotational delay between blocks */
 int	maxbpg;			/* maximum blocks per file in a cyl group */
 int	nrpos = NRPOS;		/* # of distinguished rotational positions */
