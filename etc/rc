@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.250 2004/08/07 00:50:25 deraadt Exp $
+#	$OpenBSD: rc,v 1.251 2004/08/21 08:17:28 hshoexer Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -238,9 +238,8 @@ if [ "X${named_flags}" != X"NO" ]; then
 fi
 
 # $isakmpd_flags is imported from /etc/rc.conf;
-# If $isakmpd_flags == NO or /etc/isakmpd/isakmpd.policy doesn't exist, then
-# isakmpd isn't run.
-if [ "X${isakmpd_flags}" != X"NO" -a -e /etc/isakmpd/isakmpd.policy ]; then
+# If $isakmpd_flags == NO, isakmpd isn't run.
+if [ "X${isakmpd_flags}" != X"NO" ]; then
 	echo 'starting isakmpd';	isakmpd ${isakmpd_flags}
 fi
 
