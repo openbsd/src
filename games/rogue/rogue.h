@@ -1,4 +1,4 @@
-/*	$OpenBSD: rogue.h,v 1.10 2003/03/11 04:47:39 david Exp $	*/
+/*	$OpenBSD: rogue.h,v 1.11 2003/05/11 05:45:48 pjanzen Exp $	*/
 /*	$NetBSD: rogue.h,v 1.4 1995/04/24 12:25:04 cgd Exp $	*/
 
 /*
@@ -694,7 +694,6 @@ void	start_window(void);
 void	steal_gold(object *);
 void	steal_item(object *);
 void	sting(object *);
-void	stop_window(void);
 void	stop_window(void);
 void	take_a_nap(void);
 void	take_from_pack(object *, object *);
