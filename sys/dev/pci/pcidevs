@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.587 2003/01/16 20:40:13 deraadt Exp $
+	$OpenBSD: pcidevs,v 1.588 2003/01/17 02:41:07 deraadt Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -37,7 +37,7 @@
  *
  *	http://members.hyperlink.net.au/~chart/pci.htm
  *
- * A list to be available at:
+ * A list used to be available at:
  *	http://www.yourvote.com/pci/
  * But is no longer available because the fuckheads at PCI-SIG such as
  * Alan Deikman <Alan.Deikman@znyx.com> sicked their lawyers on the
