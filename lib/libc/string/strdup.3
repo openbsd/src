@@ -1,5 +1,7 @@
-.\" Copyright (c) 1990, 1991 The Regents of the University of California.
-.\" All rights reserved.
+.\" $OpenBSD: strdup.3,v 1.4 1997/08/20 04:18:51 millert Exp $
+.\"
+.\" Copyright (c) 1990, 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -29,9 +31,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: strdup.3,v 1.3 1996/10/29 23:41:57 michaels Exp $
+.\"     @(#)strdup.3	8.1 (Berkeley) 6/9/93
 .\"
-.Dd April 19, 1991
+.Dd June 9, 1993
 .Dt STRDUP 3
 .Os
 .Sh NAME
@@ -52,13 +54,14 @@ does the copy, and returns a pointer to it.
 The pointer may subsequently be used as an
 argument to the function
 .Xr free 3 .
+.Pp
+If insufficient memory is available, NULL is returned.
 .Sh SEE ALSO
-.Xr free 3 ,
-.Xr malloc 3 ,
-.Xt strcpy 3 ,
-.Xt strlen 3
+.Xr free 3
+.Xr malloc 3
+.Xr strcpy 3
+.Xr strlen 3
 .Sh HISTORY
 The
 .Fn strdup
-function is
-.Ud .
+function first appeared in 4.4BSD.
