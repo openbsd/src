@@ -1,4 +1,4 @@
-	$OpenBSD: syscalls.master,v 1.14 1999/12/06 19:36:42 aaron Exp $
+	$OpenBSD: syscalls.master,v 1.15 2000/02/28 13:29:30 jasoni Exp $
 ;	$NetBSD: syscalls.master,v 1.15 1995/12/18 14:35:10 fvdl Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
@@ -62,7 +62,7 @@
 13	STD		{ int linux_sys_time(linux_time_t *t); }
 14	STD		{ int linux_sys_mknod(char *path, int mode, int dev); }
 15	STD		{ int linux_sys_chmod(char *path, int mode); }
-16	STD		{ int linux_sys_chown(char *path, int uid, int gid); }
+16	STD		{ int linux_sys_lchown(char *path, int uid, int gid); }
 17	STD		{ int linux_sys_break(char *nsize); }
 18	OBSOL		ostat
 19	NOARGS		{ long compat_43_sys_lseek(int fd, long offset, \
@@ -259,3 +259,37 @@
 				struct timespec *rmtp); }
 163	STD		{ int linux_sys_mremap(void *old_address, size_t old_size, \
 			    size_t new_size, long flags); }
+164	STD		{ int linux_sys_setresuid(uid_t ruid, uid_t euid, \
+			    uid_t suid); }
+165	STD		{ int linux_sys_getresuid(uid_t *ruid, uid_t *euid, \
+			    uid_t *suid); }
+166	UNIMPL		vm86
+167	UNIMPL		query_module
+168	NOARGS		{ int sys_poll(struct pollfd *fds, u_int nfds, \
+			    int timeout); }
+169	UNIMPL		nfsservctl
+;170	UNIMPL		setresgid
+;171	UNIMPL		getresgid
+170	STD		{ int linux_sys_setresgid(gid_t rgid, gid_t egid, \
+			    gid_t sgid); }
+171	STD		{ int linux_sys_getresgid(gid_t *rgid, gid_t *egid, \
+			    gid_t *sgid); }
+172	UNIMPL		prctl
+173	UNIMPL		rt_sigreturn
+174	UNIMPL		rt_sigaction
+175	UNIMPL		rt_sigprocmask
+176	UNIMPL		rt_sigpending
+177	UNIMPL		rt_sigtimedwait
+178	UNIMPL		rt_queueinfo
+179	UNIMPL		rt_sigsuspend
+180	UNIMPL		pread
+181	UNIMPL		pwrite
+182	STD		{ int linux_sys_chown(char *path, int uid, int gid); }
+183	UNIMPL		getcwd
+184	UNIMPL		capget
+185	UNIMPL		capset
+186	UNIMPL		sigaltstack
+187	UNIMPL		sendfile
+188	UNIMPL		getpmsg
+189	UNIMPL		putpmsg
+190	UNIMPL		vfork

@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_file.c,v 1.9 1997/11/13 06:37:48 deraadt Exp $	*/
+/*	$OpenBSD: linux_file.c,v 1.10 2000/02/28 13:29:29 jasoni Exp $	*/
 /*	$NetBSD: linux_file.c,v 1.15 1996/05/20 01:59:09 fvdl Exp $	*/
 
 /*
@@ -707,6 +707,28 @@ linux_sys_fchown(p, v, retval)
 		(gid_t)-1 : SCARG(uap, gid);
 	
 	return sys_fchown(p, &bfa, retval);
+}
+
+int
+linux_sys_lchown(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct linux_sys_lchown_args /* {
+		syscallarg(char *) path;
+		syscallarg(int) uid;
+		syscallarg(int) gid;
+	} */ *uap = v;
+	struct sys_lchown_args bla;
+
+	SCARG(&bla, path) = SCARG(uap, path);
+	SCARG(&bla, uid) = ((linux_uid_t)SCARG(uap, uid) == (linux_uid_t)-1) ?
+		(uid_t)-1 : SCARG(uap, uid);
+	SCARG(&bla, gid) = ((linux_gid_t)SCARG(uap, gid) == (linux_gid_t)-1) ?
+		(gid_t)-1 : SCARG(uap, gid);
+
+	return sys_lchown(p, &bla, retval);
 }
 
 int

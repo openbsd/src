@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_misc.c,v 1.25 1999/12/06 19:36:41 aaron Exp $	*/
+/*	$OpenBSD: linux_misc.c,v 1.26 2000/02/28 13:29:30 jasoni Exp $	*/
 /*	$NetBSD: linux_misc.c,v 1.27 1996/05/20 01:59:21 fvdl Exp $	*/
 
 /*
@@ -192,6 +192,105 @@ linux_sys_wait4(p, v, retval)
 	}
 
 	return 0;
+}
+
+int
+linux_sys_setresgid(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct linux_sys_setresgid_args /* {
+		syscallarg(gid_t) rgid;
+		syscallarg(gid_t) egid;
+		syscallarg(gid_t) sgid;
+	} */ *uap = v;
+	struct pcred *pc = p->p_cred;
+	gid_t rgid, egid, sgid;
+	int error;
+
+	rgid = SCARG(uap, rgid);
+	egid = SCARG(uap, egid);
+	sgid = SCARG(uap, sgid);
+
+	/*
+	 * Note: These checks are a little different than the NetBSD
+	 * setregid(2) call performs.  This precisely follows the
+	 * behavior of the Linux kernel.
+	 */
+	if (rgid != (gid_t)-1 &&
+	    rgid != pc->p_rgid &&
+	    rgid != pc->pc_ucred->cr_gid &&
+	    rgid != pc->p_svgid &&
+	    (error = suser(pc->pc_ucred, &p->p_acflag)))
+		return (error);
+
+	if (egid != (gid_t)-1 &&
+	    egid != pc->p_rgid &&
+	    egid != pc->pc_ucred->cr_gid &&
+	    egid != pc->p_svgid &&
+	    (error = suser(pc->pc_ucred, &p->p_acflag)))
+		return (error);
+
+	if (sgid != (gid_t)-1 &&
+	    sgid != pc->p_rgid &&
+	    sgid != pc->pc_ucred->cr_gid &&
+	    sgid != pc->p_svgid &&
+	    (error = suser(pc->pc_ucred, &p->p_acflag)))
+		return (error);
+
+	/*
+	 * Now assign the real, effective, and saved GIDs.
+	 * Note that Linux, unlike NetBSD in setregid(2), does not
+	 * set the saved UID in this call unless the user specifies
+	 * it.
+	 */
+	if (rgid != (gid_t)-1)
+		pc->p_rgid = rgid;
+
+	if (egid != (gid_t)-1) {
+		pc->pc_ucred = crcopy(pc->pc_ucred);
+		pc->pc_ucred->cr_gid = egid;
+	}
+
+	if (sgid != (gid_t)-1)
+		pc->p_svgid = sgid;
+
+	if (rgid != (gid_t)-1 && egid != (gid_t)-1 && sgid != (gid_t)-1)
+		p->p_flag |= P_SUGID;
+	return (0);
+}
+
+int
+linux_sys_getresgid(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct linux_sys_getresgid_args /* {
+		syscallarg(gid_t *) rgid;
+		syscallarg(gid_t *) egid;
+		syscallarg(gid_t *) sgid;
+	} */ *uap = v;
+	struct pcred *pc = p->p_cred;
+	int error;
+
+	/*
+	 * Linux copies these values out to userspace like so:
+	 *
+	 *	1. Copy out rgid.
+	 *	2. If that succeeds, copy out egid.
+	 *	3. If both of those succeed, copy out sgid.
+	 */
+	if ((error = copyout(&pc->p_rgid, SCARG(uap, rgid),
+			     sizeof(gid_t))) != 0)
+		return (error);
+
+	if ((error = copyout(&pc->pc_ucred->cr_uid, SCARG(uap, egid),
+			     sizeof(gid_t))) != 0)
+		return (error);
+
+	return (copyout(&pc->p_svgid, SCARG(uap, sgid), sizeof(gid_t)));
 }
 
 /*
@@ -1237,6 +1336,108 @@ linux_sys___sysctl(p, v, retval)
 	SCARG(&bsa, newlen) = ls.newlen;
 
 	return sys___sysctl(p, &bsa, retval);
+}
+
+int
+linux_sys_setresuid(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct linux_sys_setresuid_args /* {
+		syscallarg(uid_t) ruid;
+		syscallarg(uid_t) euid;
+		syscallarg(uid_t) suid;
+	} */ *uap = v;
+	struct pcred *pc = p->p_cred;
+	uid_t ruid, euid, suid;
+	int error;
+
+	ruid = SCARG(uap, ruid);
+	euid = SCARG(uap, euid);
+	suid = SCARG(uap, suid);
+
+	/*
+	 * Note: These checks are a little different than the NetBSD
+	 * setreuid(2) call performs.  This precisely follows the
+	 * behavior of the Linux kernel.
+	 */
+	if (ruid != (uid_t)-1 &&
+	    ruid != pc->p_ruid &&
+	    ruid != pc->pc_ucred->cr_uid &&
+	    ruid != pc->p_svuid &&
+	    (error = suser(pc->pc_ucred, &p->p_acflag)))
+		return (error);
+
+	if (euid != (uid_t)-1 &&
+	    euid != pc->p_ruid &&
+	    euid != pc->pc_ucred->cr_uid &&
+	    euid != pc->p_svuid &&
+	    (error = suser(pc->pc_ucred, &p->p_acflag)))
+		return (error);
+
+	if (suid != (uid_t)-1 &&
+	    suid != pc->p_ruid &&
+	    suid != pc->pc_ucred->cr_uid &&
+	    suid != pc->p_svuid &&
+	    (error = suser(pc->pc_ucred, &p->p_acflag)))
+		return (error);
+
+	/*
+	 * Now assign the new real, effective, and saved UIDs.
+	 * Note that Linux, unlike NetBSD in setreuid(2), does not
+	 * set the saved UID in this call unless the user specifies
+	 * it.
+	 */
+	if (ruid != (uid_t)-1) {
+		(void)chgproccnt(pc->p_ruid, -1);
+		(void)chgproccnt(ruid, 1);
+		pc->p_ruid = ruid;
+	}
+
+	if (euid != (uid_t)-1) {
+		pc->pc_ucred = crcopy(pc->pc_ucred);
+		pc->pc_ucred->cr_uid = euid;
+	}
+
+	if (suid != (uid_t)-1)
+		pc->p_svuid = suid;
+
+	if (ruid != (uid_t)-1 && euid != (uid_t)-1 && suid != (uid_t)-1)
+		p->p_flag |= P_SUGID;
+	return (0);
+}
+
+int
+linux_sys_getresuid(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct linux_sys_getresuid_args /* {
+		syscallarg(uid_t *) ruid;
+		syscallarg(uid_t *) euid;
+		syscallarg(uid_t *) suid;
+	} */ *uap = v;
+	struct pcred *pc = p->p_cred;
+	int error;
+
+	/*
+	 * Linux copies these values out to userspace like so:
+	 *
+	 *	1. Copy out ruid.
+	 *	2. If that succeeds, copy out euid.
+	 *	3. If both of those succeed, copy out suid.
+	 */
+	if ((error = copyout(&pc->p_ruid, SCARG(uap, ruid),
+			     sizeof(uid_t))) != 0)
+		return (error);
+
+	if ((error = copyout(&pc->pc_ucred->cr_uid, SCARG(uap, euid),
+			     sizeof(uid_t))) != 0)
+		return (error);
+
+	return (copyout(&pc->p_svuid, SCARG(uap, suid), sizeof(uid_t)));
 }
 
 int
