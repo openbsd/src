@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_kbd.c,v 1.23 1999/09/21 00:52:42 aaron Exp $	*/
+/*	$OpenBSD: pcvt_kbd.c,v 1.24 1999/09/27 01:50:19 aaron Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -1490,7 +1490,7 @@ regular:
 		{
 			if (!vsp->scrolling)
 			{
-				vsp->scrolling += vsp->screen_rows - 1;
+				vsp->scrolling += vsp->screen_rows - 2;
 				if (vsp->Scrollback)
 				{
 					scrollback_save_screen();
