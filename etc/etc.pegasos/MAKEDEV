@@ -3,8 +3,8 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.pegasos/MAKEDEV.md,v 1.7 2004/03/12 04:54:05 deraadt Exp 
-#	OpenBSD: MAKEDEV.common,v 1.4 2004/03/12 04:54:04 deraadt Exp 
+#	OpenBSD: etc.pegasos/MAKEDEV.md,v 1.8 2004/04/11 18:05:23 millert Exp 
+#	OpenBSD: MAKEDEV.common,v 1.6 2004/04/11 18:05:22 millert Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.72 2004/02/16 18:58:53 miod Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.12 2004/02/20 19:13:01 miod Exp 
 #
@@ -44,8 +44,8 @@
 #	tty[0-7][0-9a-f]	NS16x50 serial ports
 # Pseudo terminals:
 #	ptm	pty master device
-#	pty*	Set of 16 master pseudo terminals
-#	tty*	Set of 16 slave pseudo terminals
+#	pty*	Set of 62 pseudo terminals
+tty_dev
 # Console ports:
 #	ttyC0	Minimal wscons devices
 #	ttyC-F*	wscons display devices
@@ -394,13 +394,17 @@ pty*)
 		echo bad unit for pty in: $i
 		continue
 	fi
-	set -A tbl p q r s t u v w x y z P Q R S T
-	name=${tbl[$U]}
+	set -A letters p q r s t u v w x y z P Q R S T
+	set -A suffixes 0 1 2 3 4 5 6 7 8 9 a b c d e f g h i j k l m n o p q \
+	    r s t u v w x y z A B C D E F G H I J K L M N O P Q R S T U V W X \
+	    Y Z
+
+	name=${letters[$U]}
 	n=0
-	while [ $n -lt 16 ]
+	while [ $n -lt 62 ]
 	do
-		nam=$name$(hex $n)
-		off=$(($U*16))
+		nam=$name${suffixes[$n]}
+		off=$(($U*62))
 		M tty$nam c 4 $(($off+$n))
 		M pty$nam c 5 $(($off+$n))
 		n=$(($n+1))
@@ -457,10 +461,10 @@ ramdisk)
 all)
 	R ccd0 ccd1 ccd2 ccd3 vnd0 vnd1 vnd2 vnd3 sd0 sd1 sd2 sd3 sd4
 	R cd0 cd1 rd0 tun0 tun1 tun2 tun3 bpf0 bpf1 bpf2 bpf3 bpf4
-	R bpf5 bpf6 bpf7 bpf8 bpf9 pty0 pty1 pty2 xfs0 ss0 ss1 ch0 ptm
-	R local wscons pci iop0 iop1 uall tuner0 radio0 audio0 uk0
-	R random lkm tty00 tty01 tty02 tty03 crypto pf systrace wd0
-	R wd1 wd2 wd3 raid0 raid1 raid2 raid3 std st0 st1 fd
+	R bpf5 bpf6 bpf7 bpf8 bpf9 pty0 xfs0 ss0 ss1 ch0 ptm local
+	R wscons pci iop0 iop1 uall tuner0 radio0 audio0 uk0 random
+	R lkm tty00 tty01 tty02 tty03 crypto pf systrace wd0 wd1 wd2
+	R wd3 raid0 raid1 raid2 raid3 std st0 st1 fd
 	;;
 
 wd*|sd*|raid*|ccd*)

@@ -3,8 +3,8 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.hp300/MAKEDEV.md,v 1.19 2004/02/20 19:13:08 miod Exp 
-#	OpenBSD: MAKEDEV.common,v 1.4 2004/03/12 04:54:04 deraadt Exp 
+#	OpenBSD: etc.hp300/MAKEDEV.md,v 1.21 2004/04/11 18:05:23 millert Exp 
+#	OpenBSD: MAKEDEV.common,v 1.6 2004/04/11 18:05:22 millert Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.72 2004/02/16 18:58:53 miod Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.12 2004/02/20 19:13:01 miod Exp 
 #
@@ -45,8 +45,8 @@
 #	dcm*	HP200/300 4 port serial mux interface
 # Pseudo terminals:
 #	ptm	pty master device
-#	pty*	Set of 16 master pseudo terminals
-#	tty*	Set of 16 slave pseudo terminals
+#	pty*	Set of 62 pseudo terminals
+tty_dev
 # Console ports:
 #	grf*	Raw interface to HP300 graphics devices
 #	ite*	Terminal emulator interface to HP300 graphics devices
@@ -351,13 +351,17 @@ pty*)
 		echo bad unit for pty in: $i
 		continue
 	fi
-	set -A tbl p q r s t u v w x y z P Q R S T
-	name=${tbl[$U]}
+	set -A letters p q r s t u v w x y z P Q R S T
+	set -A suffixes 0 1 2 3 4 5 6 7 8 9 a b c d e f g h i j k l m n o p q \
+	    r s t u v w x y z A B C D E F G H I J K L M N O P Q R S T U V W X \
+	    Y Z
+
+	name=${letters[$U]}
 	n=0
-	while [ $n -lt 16 ]
+	while [ $n -lt 62 ]
 	do
-		nam=$name$(hex $n)
-		off=$(($U*16))
+		nam=$name${suffixes[$n]}
+		off=$(($U*62))
 		M tty$nam c 4 $(($off+$n))
 		M pty$nam c 5 $(($off+$n))
 		n=$(($n+1))
@@ -409,8 +413,8 @@ all)
 	R ite0 ct0 ct1 hd0 hd1 hd2 dcm0 dcm1 dcm2 dcm3 dca0 dca1 st0
 	R st1 hil grf0 ccd0 ccd1 ccd2 ccd3 vnd0 vnd1 vnd2 vnd3 sd0 sd1
 	R sd2 sd3 sd4 rd0 tun0 tun1 tun2 tun3 bpf0 bpf1 bpf2 bpf3 bpf4
-	R bpf5 bpf6 bpf7 bpf8 bpf9 pty0 pty1 pty2 xfs0 ptm local ppi0
-	R apci0 random lkm pf systrace std fd
+	R bpf5 bpf6 bpf7 bpf8 bpf9 pty0 xfs0 ptm local ppi0 apci0
+	R random lkm pf systrace std fd
 	;;
 
 sd*|hd*|ccd*)
