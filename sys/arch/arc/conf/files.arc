@@ -1,4 +1,4 @@
-#	$OpenBSD: files.arc,v 1.7 1996/09/19 00:30:37 imp Exp $
+#	$OpenBSD: files.arc,v 1.8 1996/09/24 21:30:00 niklas Exp $
 #
 # maxpartitions must be first item in files.${ARCH}
 #
@@ -28,6 +28,7 @@ file	arch/arc/arc/arcbios.c
 #	Machine-independent ATAPI drivers 
 #
 include "../../../dev/atapi/files.atapi"
+major	{ acd = 5 }
 
 #
 #	System BUS types
@@ -87,6 +88,7 @@ define  pcmcia {}			# XXX dummy decl...
 define  pci {}				# XXX dummy decl...
 
 include	"../../../dev/isa/files.isa"
+major	{ wd = 4 }
 
 #	Real time clock, must have one..
 device	clock
