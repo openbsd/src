@@ -1,7 +1,6 @@
-.\" $OpenBSD: skeyinfo.1,v 1.4 1996/10/08 01:20:56 michaels Exp $
+.\" $OpenBSD: skeyinfo.1,v 1.1 1997/07/23 04:10:53 millert Exp $
 .\"
-.\"
-.Dd 9 June 1994
+.Dd 22 July 1997
 .Dt SKEYINFO 1
 .Os
 .Sh NAME
@@ -9,11 +8,14 @@
 .Nd obtain the next S/Key challenge for a user
 .Sh SYNOPSIS
 .Nm skeyinfo
+.Op Fl v
 .Op Ar user
 .Sh DESCRIPTION
 .Nm skeyinfo
 prints out the next S/Key challenge for the specified user or for the
-current user if no user is specified.
+current user if no user is specified.  If the
+.Fl v
+flag is given, the hash algorithm is printed as well.
 .Sh EXAMPLE
 % skey -n <number of passwords to print> `skeyinfo` | lpr
 .sp
