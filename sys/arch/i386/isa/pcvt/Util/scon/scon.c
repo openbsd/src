@@ -653,6 +653,7 @@ char *vga_type(int number)
 		"S3 868",
 		"S3 968",
 		"S3 765 (Trio64 V+)",
+		"S3 ViRGE",
 		"Unknown S3",
  		"CL-GD5402",
  		"CL-GD5402r1",

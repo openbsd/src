@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_ext.c,v 1.9 1997/04/15 15:22:35 deraadt Exp $	*/
+/*	$OpenBSD: pcvt_ext.c,v 1.10 1997/05/29 02:20:57 mickey Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -473,6 +473,10 @@ vga_chipset(void)
 							return VGA_S3_765;
 						else
 							return VGA_S3_764;
+					case 0x3d:
+						outb(addr_6845, 0x38);
+						outb(addr_6845+1, old1byte);
+						return VGA_S3_ViRGE;
 					case 0x80:
 						outb(addr_6845, 0x38);
 						outb(addr_6845+1, old1byte);
@@ -640,6 +644,7 @@ vga_string(int number)
 		"s3 868",
 		"s3 968",
 		"s3 765 (Trio64 V+)",
+		"s3 ViRGE",
 		"unknown s3",
 		"cl-gd5402",
 		"cl-gd5402r1",
