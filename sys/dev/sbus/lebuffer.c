@@ -1,4 +1,4 @@
-/*	$OpenBSD: lebuffer.c,v 1.3 2003/02/17 01:29:21 henric Exp $	*/
+/*	$OpenBSD: lebuffer.c,v 1.4 2003/03/05 21:53:07 jason Exp $	*/
 /*	$NetBSD: lebuffer.c,v 1.12 2002/03/11 16:00:57 pk Exp $ */
 
 /*-
@@ -151,6 +151,8 @@ lebufattach(parent, self, aux)
 
 	sbt->cookie = sc;
 	sbt->parent = sc->sc_bustag;
+	sbt->asi = sbt->parent->asi;
+	sbt->sasi = sbt->parent->sasi;
 
 	/* search through children */
 	for (node = firstchild(node); node; node = nextsibling(node)) {
