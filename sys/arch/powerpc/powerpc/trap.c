@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.62 2003/12/21 15:17:32 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.63 2004/06/24 22:35:56 drahn Exp $	*/
 /*	$NetBSD: trap.c,v 1.3 1996/10/13 03:31:37 christos Exp $	*/
 
 /*
@@ -318,11 +318,11 @@ trap(struct trapframe *frame)
 			
 			map = kernel_map;
 			va = frame->dar;
-			if ((va >> ADDR_SR_SHIFT) == USER_SR) {
+			if ((va >> ADDR_SR_SHIFT) == PPC_USER_SR) {
 				sr_t user_sr;
 				
 				asm ("mfsr %0, %1"
-				     : "=r"(user_sr) : "K"(USER_SR));
+				     : "=r"(user_sr) : "K"(PPC_USER_SR));
 				va &= ADDR_PIDX | ADDR_POFF;
 				va |= user_sr << ADDR_SR_SHIFT;
 				map = &p->p_vmspace->vm_map;

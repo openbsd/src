@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.23 2004/04/19 22:55:50 deraadt Exp $	*/
+/*	$OpenBSD: param.h,v 1.24 2004/06/24 22:35:56 drahn Exp $	*/
 /*	$NetBSD: param.h,v 1.1 1996/09/30 16:34:28 ws Exp $	*/
 
 /*-
@@ -107,17 +107,17 @@
 /*
  * Segment handling stuff
  */
-#define	SEGMENT_LENGTH	0x10000000
-#define	SEGMENT_MASK	0xf0000000
+#define	PPC_SEGMENT_LENGTH	0x10000000
+#define	PPC_SEGMENT_MASK	0xf0000000
 
 /*
  * Fixed segments
  */
-#define	USER_SR		13
-#define	KERNEL_SR	14
-#define	KERNEL_SEG0	0xfffff0
-#define	KERNEL_SEGMENT	(KERNEL_SEG0 + KERNEL_SR)
-#define	USER_ADDR	((void *)(USER_SR << ADDR_SR_SHIFT))
+#define	PPC_USER_SR		13
+#define	PPC_KERNEL_SR	14
+#define	PPC_KERNEL_SEG0	0xfffff0
+#define	PPC_KERNEL_SEGMENT	(PPC_KERNEL_SEG0 + PPC_KERNEL_SR)
+#define	PPC_USER_ADDR	((void *)(PPC_USER_SR << ADDR_SR_SHIFT))
 
 /*
  * Some system constants

@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.6 2004/01/29 21:30:02 miod Exp $	*/
+/*	$OpenBSD: locore.S,v 1.7 2004/06/24 22:35:56 drahn Exp $	*/
 /*	$NetBSD: locore.S,v 1.2 1996/10/16 19:33:09 ws Exp $	*/
 
 /*
@@ -238,7 +238,7 @@ _C_LABEL(sw1):
 	or.	30,30,30		/* old process was exiting? */
 	beq	switch_exited
 
-	mfsr	10,USER_SR		/* save USER_SR for copyin/copyout */
+	mfsr	10,PPC_USER_SR		/* save USER_SR for copyin/copyout */
 	mfcr	11			/* save cr */
 	mr	12,2			/* save r2 */
 	stwu	1,-SFRAMELEN(1)		/* still running on old stack */
@@ -265,14 +265,14 @@ switch_exited:
 
 	addic.	5,5,64
 	li	6,0
-	mfsr	8,KERNEL_SR		/* save kernel SR */
+	mfsr	8,PPC_KERNEL_SR		/* save kernel SR */
 1:
 	addis	6,6,-0x10000000@ha	/* set new procs segment registers */
 	or.	6,6,6			/* This is done from the real address pmap */
 	lwzu	7,-4(5)			/* so we don't have to worry */
 	mtsrin	7,6			/* about accessibility */
 	bne	1b
-	mtsr	KERNEL_SR,8		/* restore kernel SR */
+	mtsr	PPC_KERNEL_SR,8		/* restore kernel SR */
 	isync
 
 	lwz	1,PCB_SP(4)		/* get new procs SP */
@@ -285,7 +285,7 @@ switch_exited:
 	mr	2,12			/* get saved r2 */
 	mtcr	11			/* get saved cr */
 	isync
-	mtsr	USER_SR,10		/* get saved USER_SR */
+	mtsr	PPC_USER_SR,10		/* get saved USER_SR */
 	isync
 
 switch_return:
@@ -788,9 +788,9 @@ _C_LABEL(ddbsize) = .-_C_LABEL(ddblow)
 	lis	2,_C_LABEL(curpm)@ha;	/* get real address of pmap */	\
 	lwz	2,_C_LABEL(curpm)@l(2);					\
 	lwz	3,PM_USRSR(2);						\
-	mtsr	USER_SR,3;						\
+	mtsr	PPC_USER_SR,3;						\
 	lwz	3,PM_KERNELSR(2);					\
-	mtsr	KERNEL_SR,3;						\
+	mtsr	PPC_KERNEL_SR,3;					\
 1:	mfsprg	2,1;			/* restore cr */		\
 	mtcr	2;							\
 	lwz	2,savearea(0);						\
@@ -826,9 +826,9 @@ realtrap:
  */
 s_trap:
 /* First have to enable KERNEL mapping */
-	lis	31,KERNEL_SEGMENT@ha
-	addi	31,31,KERNEL_SEGMENT@l
-	mtsr	KERNEL_SR,31
+	lis	31,PPC_KERNEL_SEGMENT@ha
+	addi	31,31,PPC_KERNEL_SEGMENT@l
+	mtsr	PPC_KERNEL_SR,31
 	FRAME_SETUP(tempsave)
 /* Now we can recover interrupts again: */
 	mfmsr	7
@@ -996,9 +996,9 @@ s_isitrap:
 	stw	4,12(1);						\
 	stw	3,8(1);							\
 /* interrupts are recoverable here, and enable translation */		\
-	lis	3,(KERNEL_SEGMENT|SR_SUKEY|SR_PRKEY)@ha;		\
-	addi	3,3,(KERNEL_SEGMENT|SR_SUKEY|SR_PRKEY)@l;		\
-	mtsr	KERNEL_SR,3;						\
+	lis	3,(PPC_KERNEL_SEGMENT|SR_SUKEY|SR_PRKEY)@ha;		\
+	addi	3,3,(PPC_KERNEL_SEGMENT|SR_SUKEY|SR_PRKEY)@l;		\
+	mtsr	PPC_KERNEL_SR,3;					\
 	mfmsr	5;							\
 	ori	5,5,(PSL_IR|PSL_DR|PSL_RI);				\
 	mtmsr	5;							\
@@ -1037,7 +1037,7 @@ intr_exit:
 	lis	3,_C_LABEL(curpm)@ha	/* get current pmap real address */
 	lwz	3,_C_LABEL(curpm)@l(3)
 	lwz	3,PM_KERNELSR(3)
-	mtsr	KERNEL_SR,3		/* Restore kernel SR */
+	mtsr	PPC_KERNEL_SR,3		/* Restore kernel SR */
 	lis	3,_C_LABEL(astpending)@ha	/* Test AST pending */
 	lwz	4,_C_LABEL(astpending)@l(3)
 	andi.	4,4,1

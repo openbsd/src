@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.87 2004/05/20 09:20:42 kettenis Exp $ */
+/*	$OpenBSD: pmap.c,v 1.88 2004/06/24 22:35:56 drahn Exp $ */
 
 /*
  * Copyright (c) 2001, 2002 Dale Rahn.
@@ -526,7 +526,8 @@ pmap_enter(pm, va, pa, prot, flags)
 			/* set the current sr if not kernel used segments
 			 * and this pmap is the currently active pmap
 			 */
-			if (sn != USER_SR && sn != KERNEL_SR && curpm == pm)
+			if (sn != PPC_USER_SR && sn != PPC_KERNEL_SR &&
+			    curpm == pm)
 				ppc_mtsrin(pm->pm_sr[sn],
 				     sn << ADDR_SR_SHIFT);
 		}
@@ -654,7 +655,8 @@ pmap_remove_pg(pmap_t pm, vaddr_t va)
 			/* set the current sr if not kernel used segments
 			 * and this pmap is the currently active pmap
 			 */
-			if (sn != USER_SR && sn != KERNEL_SR && curpm == pm)
+			if (sn != PPC_USER_SR && sn != PPC_KERNEL_SR &&
+			    curpm == pm)
 				ppc_mtsrin(pm->pm_sr[sn],
 				     sn << ADDR_SR_SHIFT);
 		}
@@ -738,7 +740,8 @@ _pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, int flags, int cache)
 			/* set the current sr if not kernel used segments
 			 * and this pmap is the currently active pmap
 			 */
-			if (sn != USER_SR && sn != KERNEL_SR && curpm == pm)
+			if (sn != PPC_USER_SR && sn != PPC_KERNEL_SR &&
+			    curpm == pm)
 				ppc_mtsrin(pm->pm_sr[sn],
 				     sn << ADDR_SR_SHIFT);
 		}
@@ -801,7 +804,8 @@ pmap_kremove_pg(vaddr_t va)
 			/* set the current sr if not kernel used segments
 			 * and this pmap is the currently active pmap
 			 */
-			if (sn != USER_SR && sn != KERNEL_SR && curpm == pm)
+			if (sn != PPC_USER_SR && sn != PPC_KERNEL_SR &&
+			    curpm == pm)
 				ppc_mtsrin(pm->pm_sr[sn],
 				     sn << ADDR_SR_SHIFT);
 		}
@@ -1430,7 +1434,7 @@ pmap_bootstrap(u_int kernelstart, u_int kernelend)
 	}
 	vp1 = pmap_steal_avail(sizeof (struct pmapvp), 4);
 	bzero (vp1, sizeof(struct pmapvp));
-	pmap_kernel()->pm_vp[KERNEL_SR] = vp1;
+	pmap_kernel()->pm_vp[PPC_KERNEL_SR] = vp1;
 
 	for (i = 0; i < VP_IDX1_SIZE; i++) {
 		vp2 = vp1->vp[i] = pmap_steal_avail(sizeof (struct pmapvp), 4);
@@ -1454,13 +1458,13 @@ pmap_bootstrap(u_int kernelstart, u_int kernelend)
 	/*
 	 * Initialize kernel pmap and hardware.
 	 */
-#if NPMAPS >= KERNEL_SEGMENT / 16
-	usedsr[KERNEL_SEGMENT / 16 / (sizeof usedsr[0] * 8)]
-		|= 1 << ((KERNEL_SEGMENT / 16) % (sizeof usedsr[0] * 8));
+#if NPMAPS >= PPC_KERNEL_SEGMENT / 16
+	usedsr[PPC_KERNEL_SEGMENT / 16 / (sizeof usedsr[0] * 8)]
+		|= 1 << ((PPC_KERNEL_SEGMENT / 16) % (sizeof usedsr[0] * 8));
 #endif
 	for (i = 0; i < 16; i++) {
-		pmap_kernel()->pm_sr[i] = (KERNEL_SEG0 + i) | SR_NOEXEC;
-		ppc_mtsrin(KERNEL_SEG0 + i, i << ADDR_SR_SHIFT);
+		pmap_kernel()->pm_sr[i] = (PPC_KERNEL_SEG0 + i) | SR_NOEXEC;
+		ppc_mtsrin(PPC_KERNEL_SEG0 + i, i << ADDR_SR_SHIFT);
 	}
 	asm volatile ("sync; mtsdr1 %0; isync"
 	    :: "r"((u_int)pmap_ptable | (pmap_ptab_mask >> 10)));
@@ -1538,9 +1542,9 @@ pmap_setusr(pmap_t pm, vaddr_t va)
 
 	/* user address range lock?? */
 	asm volatile ("mfsr %0,%1"
-	    : "=r" (oldsr): "n"(USER_SR));
+	    : "=r" (oldsr): "n"(PPC_USER_SR));
 	asm volatile ("isync; mtsr %0,%1; isync"
-	    :: "n"(USER_SR), "r"(sr));
+	    :: "n"(PPC_USER_SR), "r"(sr));
 	return oldsr;
 }
 
@@ -1548,7 +1552,7 @@ void
 pmap_popusr(u_int32_t sr)
 {
 	asm volatile ("isync; mtsr %0,%1; isync"
-	    :: "n"(USER_SR), "r"(sr));
+	    :: "n"(PPC_USER_SR), "r"(sr));
 }
 
 int
@@ -1564,8 +1568,8 @@ copyin(udaddr, kaddr, len)
 	void *oldh = curpcb->pcb_onfault;
 
 	while (len > 0) {
-		p = USER_ADDR + ((u_int)udaddr & ~SEGMENT_MASK);
-		l = (USER_ADDR + SEGMENT_LENGTH) - p;
+		p = PPC_USER_ADDR + ((u_int)udaddr & ~PPC_SEGMENT_MASK);
+		l = (PPC_USER_ADDR + PPC_SEGMENT_LENGTH) - p;
 		if (l > len)
 			l = len;
 		oldsr = pmap_setusr(curpcb->pcb_pm, (vaddr_t)udaddr);
@@ -1597,8 +1601,8 @@ copyout(kaddr, udaddr, len)
 	void *oldh = curpcb->pcb_onfault;
 
 	while (len > 0) {
-		p = USER_ADDR + ((u_int)udaddr & ~SEGMENT_MASK);
-		l = (USER_ADDR + SEGMENT_LENGTH) - p;
+		p = PPC_USER_ADDR + ((u_int)udaddr & ~PPC_SEGMENT_MASK);
+		l = (PPC_USER_ADDR + PPC_SEGMENT_LENGTH) - p;
 		if (l > len)
 			l = len;
 		oldsr = pmap_setusr(curpcb->pcb_pm, (vaddr_t)udaddr);
@@ -1633,8 +1637,8 @@ copyinstr(const void *udaddr, void *kaddr, size_t len, size_t *done)
 	void *oldh = curpcb->pcb_onfault;
 
 	while (len > 0) {
-		p = USER_ADDR + ((u_int)uaddr & ~SEGMENT_MASK);
-		l = (USER_ADDR + SEGMENT_LENGTH) - p;
+		p = PPC_USER_ADDR + ((u_int)uaddr & ~PPC_SEGMENT_MASK);
+		l = (PPC_USER_ADDR + PPC_SEGMENT_LENGTH) - p;
 		up = p;
 		if (l > len)
 			l = len;
@@ -1689,8 +1693,8 @@ copyoutstr(const void *kaddr, void *udaddr, size_t len, size_t *done)
 	void *oldh = curpcb->pcb_onfault;
 
 	while (len > 0) {
-		p = USER_ADDR + ((u_int)uaddr & ~SEGMENT_MASK);
-		l = (USER_ADDR + SEGMENT_LENGTH) - p;
+		p = PPC_USER_ADDR + ((u_int)uaddr & ~PPC_SEGMENT_MASK);
+		l = (PPC_USER_ADDR + PPC_SEGMENT_LENGTH) - p;
 		up = p;
 		if (l > len)
 			l = len;
@@ -1743,7 +1747,8 @@ pmap_syncicache_user_virt(pmap_t pm, vaddr_t va)
 	int l;
 
 	if (pm != pmap_kernel()) {
-		start = ((u_int)USER_ADDR + ((u_int)va & ~SEGMENT_MASK));
+		start = ((u_int)PPC_USER_ADDR + ((u_int)va &
+		    ~PPC_SEGMENT_MASK));
 		/* will only ever be page size, will not cross segments */
 
 		/* USER SEGMENT LOCK - MPXXX */
@@ -1980,7 +1985,7 @@ pte_spill_r(u_int32_t va, u_int32_t msr, u_int32_t dsisr, int exec_fault)
 	 */
 	if (!(msr & PSL_PR)) {
 		/* lookup is done physical to prevent faults */
-		if (VP_SR(va) == USER_SR) {
+		if (VP_SR(va) == PPC_USER_SR) {
 			return 0;
 		} else {
 			pm = pmap_kernel();

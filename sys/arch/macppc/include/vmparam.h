@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.12 2004/01/23 21:20:54 millert Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.13 2004/06/24 22:35:56 drahn Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.1 1996/09/30 16:34:38 ws Exp $	*/
 
 /*-
@@ -87,13 +87,13 @@
 #define	VM_MIN_ADDRESS		((vm_offset_t)0)
 #define	VM_MAXUSER_ADDRESS	((vm_offset_t)0xfffff000)
 #define	VM_MAX_ADDRESS		VM_MAXUSER_ADDRESS
-#define	VM_MIN_KERNEL_ADDRESS	((vm_offset_t)(KERNEL_SR << ADDR_SR_SHIFT))
+#define	VM_MIN_KERNEL_ADDRESS	((vm_offset_t)(PPC_KERNEL_SR << ADDR_SR_SHIFT))
 
 /* ppc_kvm_stolen is so that vm space can be stolen before vm is fully
  * initialized.
  */
 extern vm_offset_t ppc_kvm_stolen;
-#define VM_KERN_ADDRESS_SIZE  (SEGMENT_LENGTH - (32 * 1024 * 1024))
+#define VM_KERN_ADDRESS_SIZE  (PPC_SEGMENT_LENGTH - (32 * 1024 * 1024))
 #define	VM_MAX_KERNEL_ADDRESS	(VM_MIN_KERNEL_ADDRESS + VM_KERN_ADDRESS_SIZE)
 
 #define	VM_PHYS_SIZE		(USRIOSIZE * PAGE_SIZE)

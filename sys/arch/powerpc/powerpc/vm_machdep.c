@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.37 2003/10/15 02:43:09 drahn Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.38 2004/06/24 22:35:56 drahn Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.1 1996/09/30 16:34:57 ws Exp $	*/
 
 /*
@@ -114,11 +114,13 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack, size_t stacksize,
 	/*
 	 * Below that, we allocate the switch frame:
 	 */
-	stktop2 -= roundup(sizeof *sf, 16);	/* must match SFRAMELEN in genassym */
+	/* must match SFRAMELEN in genassym */
+	stktop2 -= roundup(sizeof *sf, 16);
+
 	sf = (struct switchframe *)stktop2;
 	bzero((void *)sf, sizeof *sf);		/* just in case */
 	sf->sp = (int)cf;
-	sf->user_sr = pmap_kernel()->pm_sr[USER_SR]; /* again, just in case */
+	sf->user_sr = pmap_kernel()->pm_sr[PPC_USER_SR]; /* just in case */
 	pcb->pcb_sp = (int)stktop2;
 	pcb->pcb_spl = 0;
 }
@@ -129,7 +131,7 @@ cpu_swapin(struct proc *p)
 	struct pcb *pcb = &p->p_addr->u_pcb;
 	
 	pmap_extract(pmap_kernel(),
-		(vm_offset_t)pcb->pcb_pm, (paddr_t *)&pcb->pcb_pmreal);
+	    (vm_offset_t)pcb->pcb_pm, (paddr_t *)&pcb->pcb_pmreal);
 }
 
 /*

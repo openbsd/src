@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.45 2004/05/06 20:15:08 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.46 2004/06/24 22:35:56 drahn Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -970,7 +970,7 @@ bus_mem_add_mapping(bpa, size, cacheable, bshp)
 
 		vaddr = VM_MIN_KERNEL_ADDRESS + ppc_kvm_stolen;
 		ppc_kvm_stolen -= alloc_size;
-		if (ppc_kvm_stolen > SEGMENT_LENGTH) {
+		if (ppc_kvm_stolen > PPC_SEGMENT_LENGTH) {
 			panic("ppc_kvm_stolen, out of space");
 		}
 	} else {
@@ -1011,7 +1011,7 @@ mapiodev(pa, len)
 		/* need to steal vm space before kernel vm is initialized */
 		va = VM_MIN_KERNEL_ADDRESS + ppc_kvm_stolen;
 		ppc_kvm_stolen += size;
-		if (ppc_kvm_stolen > SEGMENT_LENGTH) {
+		if (ppc_kvm_stolen > PPC_SEGMENT_LENGTH) {
 			panic("ppc_kvm_stolen: out of space");
 		}
 	} else {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_machdep.c,v 1.24 2004/03/17 15:47:59 drahn Exp $	*/
+/*	$OpenBSD: ofw_machdep.c,v 1.25 2004/06/24 22:35:56 drahn Exp $	*/
 /*	$NetBSD: ofw_machdep.c,v 1.1 1996/09/30 16:34:50 ws Exp $	*/
 
 /*
@@ -186,7 +186,7 @@ restore_ofw_mapping()
 
 	pmap_pinit(&ofw_pmap);
 
-	ofw_pmap.pm_sr[KERNEL_SR] = KERNEL_SEGMENT;
+	ofw_pmap.pm_sr[PPC_KERNEL_SR] = PPC_KERNEL_SEGMENT;
 
 	for (i = 0; i < N_mapping; i++) {
 		vm_offset_t pa = ofw_mapping[i].pa;
