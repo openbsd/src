@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_file.c,v 1.9 2003/06/26 16:34:53 deraadt Exp $ */
+/*	$OpenBSD: kvm_file.c,v 1.10 2004/04/28 03:16:31 millert Exp $ */
 /*	$NetBSD: kvm_file.c,v 1.5 1996/03/18 22:33:18 thorpej Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_file.c	8.1 (Berkeley) 6/4/93";
 #else
-static char *rcsid = "$OpenBSD: kvm_file.c,v 1.9 2003/06/26 16:34:53 deraadt Exp $";
+static char *rcsid = "$OpenBSD: kvm_file.c,v 1.10 2004/04/28 03:16:31 millert Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -61,7 +61,7 @@ static char *rcsid = "$OpenBSD: kvm_file.c,v 1.9 2003/06/26 16:34:53 deraadt Exp
 #include <sys/sysctl.h>
 
 #include <limits.h>
-#include <ndbm.h>
+#include <db.h>
 #include <paths.h>
 
 #include "kvm_private.h"
