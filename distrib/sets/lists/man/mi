@@ -533,7 +533,6 @@
 ./usr/share/man/cat3/ftrylockfile.0
 ./usr/share/man/cat3/funlockfile.0
 ./usr/share/man/cat3/mpool.0
-./usr/share/man/cat3/pthread_atfork.0
 ./usr/share/man/cat3/pthread_cancel.0
 ./usr/share/man/cat3/pthread_cleanup_pop.0
 ./usr/share/man/cat3/pthread_cleanup_push.0
