@@ -1,4 +1,4 @@
-.\"	$OpenBSD: installboot.8,v 1.4 1997/09/04 22:36:23 mickey Exp $
+.\"	$OpenBSD: installboot.8,v 1.5 1997/09/04 22:44:12 deraadt Exp $
 .\"
 .\"
 .\" Copyright (c) 1997 Michael Shalayeff
@@ -64,31 +64,31 @@ triples that are stored in
 .Ar biosboot
 along with lots of other information.
 .It Fl s Ar spt
-Use the
-.Ar spt
-for sectors-per-track value, defaults to d_nsectors from disk label.
+Used to specify the sectors-per-track value if the drive has
+sector translation activated.  If not specified, this defaults
+to d_nsectors from the disklabel.
 .It Fl h Ar tpc
-Use the
-.Ar tpc
-for tracks-per-cylinder value, defaults to d_ntracks from disk label.
+Used to specify the tracks-per-cylinder value if the drive has
+sector translation activated.  If not specified, this defaults
+to d_ntracks from the disklabel.
 .El
 .Pp
 The arguments are:
 .Bl -tag -width biosboot
 .It Ar boot
-the name of the second-stage boot program in the file system
+The name of the second-stage boot program in the file system
 where the first-stage boot program is to be installed.
 .It Ar biosboot
-the name of the prototype file for the first stage boot program.
+The name of the prototype file for the first stage boot program.
 .It Ar rawdev
-the name of the raw device in which the first-stage boot program
+The name of the raw device in which the first-stage boot program
 is to be installed.  This should correspond to the raw partition
 of the block device on which the file system containing
 .Ar boot
 is mounted.
 .El
 .Sh BUGS
-You have disklabel type to be set to some value different from 'unknown'.
+The disklabel d_type field must be set to a value other than "unknown".
 .Pp
 You cannot run
 .Nm installboot
