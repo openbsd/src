@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_softdep_stub.c,v 1.7 2004/07/13 21:04:29 millert Exp $	*/
+/*	$OpenBSD: ffs_softdep_stub.c,v 1.8 2004/12/07 06:06:51 deraadt Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -154,18 +154,16 @@ softdep_freefile(pvp, ino, mode)
 	panic("softdep_freefile called");
 }
 
-int 
-softdep_setup_directory_add(bp, dp, diroffset, newinum, newdirbp, isnewblk)
+void
+softdep_setup_directory_add(bp, dp, diroffset, newinum, newdirbp)
 	struct buf *bp;
 	struct inode *dp;
 	off_t diroffset;
 	long newinum;
 	struct buf *newdirbp;
-	int isnewblk;
 {
 
 	panic("softdep_setup_directory_add called");
-	return (0);
 }
 
 void 
