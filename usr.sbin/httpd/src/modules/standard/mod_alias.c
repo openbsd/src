@@ -136,7 +136,7 @@ static const char *add_alias_internal(cmd_parms *cmd, void *dummy, char *f, char
 
     /* XX r can NOT be relative to DocumentRoot here... compat bug. */
 
-    ap_server_strip_chroot(r, 0);
+    ap_server_strip_chroot(r, 1);
 
     if (use_regex) {
 	new->regexp = ap_pregcomp(cmd->pool, f, REG_EXTENDED);
