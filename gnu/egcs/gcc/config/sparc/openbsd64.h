@@ -30,6 +30,20 @@ Boston, MA 02111-1307, USA.  */
 
 #include <openbsd.h>
 
+#undef TARGET_VERSION
+#define TARGET_VERSION fprintf (stderr, " (sparc64 OpenBSD ELF)")
+
+/* A 64 but v9 complier in a Medium/Mid code model.  */
+
+/* XXX - do we really want HARD_QUAD? */
+#undef TARGET_DEFAULT
+#define TARGET_DEFAULT \
+(MASK_V9 + MASK_PTR64 + MASK_64BIT + MASK_HARD_QUAD \
+ + MASK_APP_REGS + MASK_EPILOGUE + MASK_FPU + MASK_STACK_BIAS)
+
+#undef SPARC_DEFAULT_CMODEL
+#define SPARC_DEFAULT_CMODEL CM_MEDMID
+
 /* Run-time target specifications.  */
 #undef CPP_PREDEFINES
 #define CPP_PREDEFINES "-D__unix__ -D__sparc__ -D__sparc64__ -D__sparcv9__ -D__sparc_v9__ -D__arch64__ -D__ELF__ -D__OpenBSD__ -Asystem(unix) -Asystem(OpenBSD) -Acpu(sparc) -Amachine(sparc)"
@@ -37,12 +51,25 @@ Boston, MA 02111-1307, USA.  */
 #undef CPP_SUBTARGET_SPEC
 #define CPP_SUBTARGET_SPEC ""
 
+#undef MD_EXEC_PREFIX
+#undef MD_STARTFILE_PREFIX
+
+#undef ASM_SPEC
+#define ASM_SPEC "\
+%{v:-V} -s %{fpic:-K PIC} %{fPIC:-K PIC} \
+%{mlittle-endian:-EL} \
+%(asm_cpu) %(asm_arch) \
+"
+
 /* Layout of source language data types.  */
 #undef WCHAR_TYPE
 #define WCHAR_TYPE "int"
 
 #undef WCHAR_TYPE_SIZE
 #define WCHAR_TYPE_SIZE 32
+
+#undef LONG_DOUBLE_TYPE_SIZE
+#define LONG_DOUBLE_TYPE_SIZE 128
 
 #undef LINK_SPEC
 #define LINK_SPEC \
