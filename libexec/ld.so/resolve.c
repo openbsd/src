@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.c,v 1.4 2001/06/08 06:46:59 art Exp $ */
+/*	$OpenBSD: resolve.c,v 1.5 2001/09/25 14:06:48 art Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -117,14 +117,16 @@ d_un.d_val;
 	if(object->Dyn.info[DT_JMPREL])
 		object->Dyn.info[DT_JMPREL] += loff;
 
-	object->buckets = object->dyn.hash;
-	if(object->buckets != 0) {
-		object->nbuckets = *object->buckets++;
-		object->nchains  = *object->buckets++;
+	if (object->Dyn.info[DT_HASH] != 0) {
+		Elf_Word *hashtab = (Elf_Word *)object->Dyn.info[DT_HASH];
+
+		object->nbuckets = hashtab[0];
+		object->nchains  = hashtab[1];
+		object->buckets = hashtab + 2;
 		object->chains   = object->buckets + object->nbuckets;
 	}
 
-	if(dl_data) {
+	if (dl_data) {
 		object->phdrp = (Elf_Phdr *) dl_data[AUX_phdr];
 		object->phdrc = dl_data[AUX_phnum];
 	}
@@ -185,7 +187,7 @@ _dl_find_symbol(const char *name, elf_object_t *startlook,
 	const Elf_Sym *weak_sym = 0;
 	Elf_Addr weak_offs = 0;
 
-	while(*p) {
+	while (*p) {
 		unsigned long g;
 		h = (h << 4) + *p++;
 		if((g = h & 0xf0000000)) {
@@ -194,39 +196,41 @@ _dl_find_symbol(const char *name, elf_object_t *startlook,
 		h &= ~g;
 	}
 
-	for(object = startlook; object; object = (myself ? 0 : object->next)) {
+	for (object = startlook; object; object = (myself ? 0 : object->next)) {
 		const Elf_Sym *symt;
 		const char	*strt;
-		u_int32_t	si;
+		long	si;
 
 		symt = object->dyn.symtab;
 		strt = object->dyn.strtab;
 
-		for(si = object->buckets[h % object->nbuckets];
-			si != STN_UNDEF; si = object->chains[si]) {
+
+		for (si = object->buckets[h % object->nbuckets];
+		    si != STN_UNDEF; si = object->chains[si]) {
 			const Elf_Sym *sym = symt + si;
 
-			if(sym->st_value == 0 ||
-			   sym->st_shndx == SHN_UNDEF) {
+			if (sym->st_value == 0 ||
+			    sym->st_shndx == SHN_UNDEF) {
 				continue;
 			}
 
-			if(ELF_ST_TYPE(sym->st_info) != STT_NOTYPE &&
-			   ELF_ST_TYPE(sym->st_info) != STT_OBJECT &&
-			   ELF_ST_TYPE(sym->st_info) != STT_FUNC) {
+			if (ELF_ST_TYPE(sym->st_info) != STT_NOTYPE &&
+			    ELF_ST_TYPE(sym->st_info) != STT_OBJECT &&
+			    ELF_ST_TYPE(sym->st_info) != STT_FUNC) {
 				continue;
 			}
 
-			if(sym != *ref && _dl_strcmp(strt+sym->st_name, name)) {
+
+			if (sym != *ref &&
+			    _dl_strcmp(strt + sym->st_name, name)) {
 				continue;
 			}
 
-			if(ELF_ST_BIND(sym->st_info) == STB_GLOBAL) {
+			if (ELF_ST_BIND(sym->st_info) == STB_GLOBAL) {
 				*ref = sym;
 				return(object->load_offs);
-			}
-			else if(ELF_ST_BIND(sym->st_info) == STB_WEAK) {
-				if(!weak_sym) {
+			} else if (ELF_ST_BIND(sym->st_info) == STB_WEAK) {
+				if (!weak_sym) {
 					weak_sym = sym;
 					weak_offs = object->load_offs;
 				}
@@ -234,9 +238,9 @@ _dl_find_symbol(const char *name, elf_object_t *startlook,
 		}
 	}
 	if (warnnotfound) {
-		if(!weak_sym &&
-			*ref && ELF_ST_BIND((*ref)->st_info) != STB_WEAK)
-		{
+		if (!weak_sym &&
+		    *ref &&
+		    ELF_ST_BIND((*ref)->st_info) != STB_WEAK) {
 			_dl_printf("%s: undefined symbol '%s'\n",
 				_dl_progname, name);
 		}
