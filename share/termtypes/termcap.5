@@ -1,4 +1,4 @@
-.\"	$OpenBSD: termcap.5,v 1.13 2003/07/02 08:00:01 jmc Exp $
+.\"	$OpenBSD: termcap.5,v 1.14 2003/07/11 13:53:47 jmc Exp $
 .\"
 .\" Copyright (c) 1985, 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -80,7 +80,6 @@ in 132-column mode would be
 .Dq vt100-w .
 .Pp
 The following suffixes should be used where possible:
-.Pp
 .Bd -filled
 .Bl -column indent "With automatic margins (usually default)xx"
 .Sy Suffix	Meaning	Example
@@ -99,7 +98,6 @@ The characters in the
 function
 field in the table have the following meanings
 (more than one may apply to a capability):
-.Pp
 .Bd -unfilled
 N	Indicates numeric parameter(s).
 P	Indicates that padding may be specified.
@@ -113,7 +111,6 @@ capabilities have no
 equivalents, since they were considered useless,
 or are subsumed by other capabilities.
 New software should not rely on them at all.
-.Pp
 .Bl -column indent indent indent
 .Sy Name	Type	Notes	Description
 .It "ae	str	(P)	End alternate character set."
@@ -412,7 +409,6 @@ The following entry, which describes the Concept\-100, is among the more
 complex entries in the
 .Nm
 file as of this writing.
-.Pp
 .Bd -literal
 ca\||\|concept100\||\|c100\||\|concept\||\|c104\||\|concept100-4p\||\|HDS Concept\-100:\e
 	:al=3*\eE^R:am:bl=^G:cd=16*\eE^C:ce=16\eE^U:cl=2*^L:cm=\eEa%+ %+ :\e
@@ -794,8 +790,8 @@ no output
 .It "%r	reverse order of two parameters, no output"
 .It "%i	increment by one, no output"
 .It "%n	exclusive-or all parameters with 0140 (Datamedia 2500)"
-.It "%B" Ta Tn BCD No "(16*(value/10)) + (value%10), no output"
-.It "%D	Reverse coding (value \- 2*(value%16)), no output (Delta Data)."
+.It "\&%B" Ta Tn BCD No "(16*(value/10)) + (value%10), no output"
+.It "\&%D" Ta "Reverse coding (value \- 2*(value%16)), no output (Delta Data)."
 .El
 .Pp
 Consider the Hewlett-Packard 2645, which, to get to row 3 and column 12, needs
