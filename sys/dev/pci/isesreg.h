@@ -1,4 +1,4 @@
-/*	$OpenBSD: isesreg.h,v 1.3 2001/06/23 23:29:47 ho Exp $ $	*/
+/*	$OpenBSD: isesreg.h,v 1.4 2001/06/24 17:06:18 ho Exp $ $	*/
 
 /*
  * Copyright (c) 2000 Håkan Olsson (ho@crt.se)
@@ -247,37 +247,38 @@ static const char *ises_sw_mode[] =
 
 /*	Command name		Code	   Len	RLen    Desc                 */
 #define ISES_CMD_CHIP_ID	0x00	/* 0	3	Read chipID */
-/* LNAU commands */			
-#define ISES_CMD_LRESET_1	0x01	/* 0	0	LNAU 1 reset */
-#define ISES_CMD_LRSFLG_1	0x02	/* 0	0	LNAU 1 flags reset */
-#define ISES_CMD_LUPLOAD_1	0x03	/* 0	64	*/
-#define ISES_CMD_LW_A_1		0x04	/* ?64	0	*/
-#define ISES_CMD_LW_B_1		0x05	/* ?64	0	*/
-#define ISES_CMD_LW_N_1		0x06	/* ?64	0	*/
-#define ISES_CMD_LW_Bq_1	0x07	/* ?32	0	*/
-#define ISES_CMD_LW_Nq_1	0x08	/* ?32	0	*/
-#define ISES_CMD_LW_Bp_1	0x09	/* ?34	0	*/
-#define ISES_CMD_LW_Np_1	0x0a	/* ?34	0	*/
-#define ISES_CMD_LW_U_1		0x0b	/* ?34	0	*/
-#define ISES_CMD_LMOD_1		0x0c	/* 0	0	*/
-#define ISES_CMD_LMULMOD_1	0x0d	/* 0	0	*/
-#define ISES_CMD_LEXPMOD_1	0x0e	/* 0	0	*/
-#define ISES_CMD_LECMOD_1	0x0f	/* 0	0	*/
-#define ISES_CMD_LRESET_2	0x10	/* 0	0	*/
-#define ISES_CMD_LRSFLG_2	0x11	/* 0	0	*/
-#define ISES_CMD_LUPLOAD_2	0x12	/* 0	64	*/
-#define ISES_CMD_LW_A_2		0x13	/* ?64	0	*/
-#define ISES_CMD_LW_B_2		0x14	/* ?64	0	*/
-#define ISES_CMD_LW_N_2		0x15	/* ?64	0	*/
-#define ISES_CMD_LW_Bq_2	0x16	/* ?32	0	*/
-#define ISES_CMD_LW_Nq_2	0x17	/* ?32	0	*/
-#define ISES_CMD_LW_Bp_2	0x18	/* ?34	0	*/
-#define ISES_CMD_LW_Np_2	0x19	/* ?34	0	*/
-#define ISES_CMD_LW_U_2		0x1a	/* ?34	0	*/
-#define ISES_CMD_LMOD_2		0x1b	/* 0	0	*/
-#define ISES_CMD_LMULMOD_2	0x1c	/* 0	0	*/
-#define ISES_CMD_LEXPMOD_2	0x1d	/* 0	0	*/
-#define ISES_CMD_LECMOD_2	0x1e	/* 0	0	*/
+/* LNAU commands - LNAU 1 */			
+#define ISES_CMD_LRESET_1	0x01	/* 0	0	LNAU reset */
+#define ISES_CMD_LRSFLG_1	0x02	/* 0	0	LNAU flags reset */
+#define ISES_CMD_LUPLOAD_1	0x03	/* 0	64	Upload result */
+#define ISES_CMD_LW_A_1		0x04	/* ?64	0	Load A register */
+#define ISES_CMD_LW_B_1		0x05	/* ?64	0	Load B register */
+#define ISES_CMD_LW_N_1		0x06	/* ?64	0	Load N register */
+#define ISES_CMD_LW_Bq_1	0x07	/* ?32	0	Load Bq register */
+#define ISES_CMD_LW_Nq_1	0x08	/* ?32	0	Load Nq register */
+#define ISES_CMD_LW_Bp_1	0x09	/* ?34	0	Load Bp register */
+#define ISES_CMD_LW_Np_1	0x0a	/* ?34	0	Load Np register */
+#define ISES_CMD_LW_U_1		0x0b	/* ?34	0	Load U register */
+#define ISES_CMD_LMOD_1		0x0c	/* 0	0	Start A % N */
+#define ISES_CMD_LMULMOD_1	0x0d	/* 0	0	Start (A*B) % N */
+#define ISES_CMD_LEXPMOD_1	0x0e	/* 0	0	Start (A^B) % N */
+#define ISES_CMD_LEXPCRTMOD_1	0x0f	/* 0	0	Start (A^B)%N w/ CRT */
+/* LNAU commands - LNAU 2 */
+#define ISES_CMD_LRESET_2	0x10	/* 0	0	Reset */
+#define ISES_CMD_LRSFLG_2	0x11	/* 0	0	Flags reset */
+#define ISES_CMD_LUPLOAD_2	0x12	/* 0	64	Upload result */
+#define ISES_CMD_LW_A_2		0x13	/* ?64	0	Load A register */
+#define ISES_CMD_LW_B_2		0x14	/* ?64	0	Load B register */
+#define ISES_CMD_LW_N_2		0x15	/* ?64	0	Load N register */
+#define ISES_CMD_LW_Bq_2	0x16	/* ?32	0	Load Bq register */
+#define ISES_CMD_LW_Nq_2	0x17	/* ?32	0	Load Nq register */
+#define ISES_CMD_LW_Bp_2	0x18	/* ?34	0	Load Bp register */
+#define ISES_CMD_LW_Np_2	0x19	/* ?34	0	Load Np register */
+#define ISES_CMD_LW_U_2		0x1a	/* ?34	0	Load U register */
+#define ISES_CMD_LMOD_2		0x1b	/* 0	0	Start A % N */
+#define ISES_CMD_LMULMOD_2	0x1c	/* 0	0	Start (A*B) % N */
+#define ISES_CMD_LEXPMOD_2	0x1d	/* 0	0	Start (A^B) % N */
+#define ISES_CMD_LEXPCRTMOD_2	0x1e	/* 0	0	Start (A^B)%N w/ CRT */
 /* BCHU commands */
 #define ISES_CMD_RST_BERR	0x1f	/* 0	0	Reset BERR */
 #define ISES_CMD_BR_BERR	0x20	/* 0	0	Read BERR */
