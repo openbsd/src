@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ti.c,v 1.7 1999/10/25 19:39:18 jason Exp $	*/
+/*	$OpenBSD: if_ti.c,v 1.8 1999/10/28 03:26:33 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -491,14 +491,6 @@ void ti_handle_events(sc)
 		switch(e->ti_event) {
 		case TI_EV_LINKSTAT_CHANGED:
 			sc->ti_linkstat = e->ti_code;
-			if (e->ti_code == TI_EV_CODE_LINK_UP)
-				printf("%s: 10/100 link up\n",
-				    sc->sc_dv.dv_xname);
-			else if (e->ti_code == TI_EV_CODE_GIG_LINK_UP)
-				printf("%s: gigabit link up\n",
-				    sc->sc_dv.dv_xname);
-			else if (e->ti_code == TI_EV_CODE_LINK_DOWN)
-				printf("%s: link down\n", sc->sc_dv.dv_xname);
 			break;
 		case TI_EV_ERROR:
 			if (e->ti_code == TI_EV_CODE_ERR_INVAL_CMD)
