@@ -23,6 +23,9 @@ SSLCONF=	OpenBSD-alpha
 .if ${MACHINE_ARCH} == "sparc"
 SSLCONF=	OpenBSD-bigendian
 .else
+.if ${MACHINE_ARCH} == "m88k"
+SSLCONF=	OpenBSD-bigendian
+.else
 ##UNTESTED!	
 SSLCONF=	OpenBSD-bigendian
 .endif
@@ -30,7 +33,7 @@ SSLCONF=	OpenBSD-bigendian
 .endif
 .endif
 .endif
-
+.endif
 
 MUNGEDFILES =  	${.OBJDIR}/${SSL_SRC}/crypto/bf/bf_locl.h \
 		${.OBJDIR}/${SSL_SRC}/crypto/bn/bn.h \
