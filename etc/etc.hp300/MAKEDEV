@@ -3,11 +3,11 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.hp300/MAKEDEV.md,v 1.3 2002/02/14 04:37:15 todd Exp 
+#	OpenBSD: etc.hp300/MAKEDEV.md,v 1.5 2002/03/26 00:57:46 miod Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.41 2002/02/25 01:10:26 todd Exp 
-#	OpenBSD: MAKEDEV.sub,v 1.6 2002/02/14 05:50:37 todd Exp 
+#	OpenBSD: MAKEDEV.sub,v 1.7 2002/02/16 01:19:52 deraadt Exp 
 #
-#	$OpenBSD: MAKEDEV,v 1.49 2002/02/25 05:20:37 todd Exp $
+#	$OpenBSD: MAKEDEV,v 1.50 2002/03/26 00:58:02 miod Exp $
 #
 # Copyright (c) 2001,2002 Todd T. Fries <todd@OpenBSD.org>
 # All rights reserved.
@@ -291,35 +291,10 @@ hil*)
 	for U in 0 1 2 3 4 5 6 7
 	do
 		M hil$U c 14 $U
-		if [ -f /usr/sbin/hilinfo ]
-		then
-			case `/usr/sbin/hilinfo -t hil$U` in
-			mouse)
-				if [ ! -f locator ]
-				then
-					MKlist="$MKlist;ln hil$U locator"
-					RMlist="$RMlist locator"
-				fi
-				;;
-			keyboard)
-				if [ ! -f keyboard ]
-				then
-					MKlist="$MKlist;ln hil$U keyboard"
-					RMlist="$RMlist keyboard"
-				fi
-				;;
-			*)
-				;;
-			esac
-		fi
 	done
-	if [ ! -f /usr/sbin/hilinfo ]
-	then
-		MKlist="$MKlist;ln hil1 keyboard"
-		MKlist="$MKlist;ln hil3 locator"
-		RMlist="$RMlist keyboard locator"
-	fi
-#	echo "hil: use MAKEDEV.hpux to make HP-UX names for devices"
+	MKlist="$MKlist;ln hil1 keyboard"
+	MKlist="$MKlist;ln hil3 locator"
+	RMlist="$RMlist keyboard locator"
 	;;
 
 altq)
