@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.187 1999/10/09 19:41:07 downsj Exp $
+$OpenBSD: pcidevs,v 1.188 1999/10/26 04:15:39 downsj Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -505,6 +505,7 @@ vendor ALTEON		0x12ae	Alteon
 vendor PICTUREEL	0x12c5	Picture Elements
 vendor STB2		0x12d2	NVidia/SGS-Thomson
 vendor DIAMOND2		0x12eb	Diamond Multimedia (2nd ID)
+vendor SIIG		0x131f	SIIG
 vendor LMC		0x1376	LAN Media Corp
 vendor NETGEAR		0x1385	Netgear
 vendor CMI		0x13f6	C-Media Electronics Inc.
@@ -1073,6 +1074,45 @@ product NETVIN NV5000		0x5000	NetVin 5000
 /* Newbridge / Tundra products */
 product NEWBRIDGE CA91CX42	0x0000	Universe VME
 
+/* SIIG products */
+product SIIG	1000		0x1000	Serial PCI
+product SIIG	1001		0x1001	Serial PCI
+product SIIG	1002		0x1002	Serial PCI
+product SIIG	1010		0x1010	I/O PCI
+product SIIG	1011		0x1011	I/O PCI
+product SIIG	1012		0x1012	I/O PCI
+product SIIG	1020		0x1020	Parallel PCI
+product SIIG	1021		0x1021	Parallel Dual PCI
+product SIIG	1030		0x1030	Serial Dual PCI
+product SIIG	1031		0x1031	Serial Dual PCI
+product	SIIG	1032		0x1032	Serial Dual PCI
+product SIIG	1034		0x1034	2S1P PCI
+product	SIIG	1035		0x1035	2S1P PCI
+product SIIG	1036		0x1036	2S1P PCI
+product SIIG	1050		0x1050	4S PCI
+product SIIG	1051		0x1051	4S PCI
+product SIIG	1052		0x1052	4S PCI
+product SIIG	2000		0x2000	Serial PCI
+product SIIG	2001		0x2001	Serial PCI
+product SIIG	2002		0x2002	Serial PCI
+product SIIG	2010		0x2010	I/O PCI
+product SIIG	2011		0x2011	I/O PCI
+product SIIG	2012		0x2012	I/O PCI
+product SIIG	2020		0x2020	Parallel PCI
+product SIIG	2021		0x2021	Parallel Dual PCI
+product SIIG	2030		0x2030	Serial Dual PCI
+product SIIG	2031		0x2031	Serial Dual PCI
+product SIIG	2032		0x2032	Serial Dual PCI
+product SIIG	2040		0x2040	2P1S PCI
+product SIIG	2041		0x2041	2P1S PCI
+product SIIG	2042		0x2042	2P1S PCI
+product SIIG	2050		0x2050	4S PCI
+product SIIG	2051		0x2051	4S PCI
+product SIIG	2052		0x2052	4S PCI
+product SIIG	2060		0x2060	2S1P PCI
+product SIIG	2061		0x2061	2S1P PCI
+product SIIG	2062		0x2062	2S1P PCI
+
 /* NCR/Symbios Logic products */
 product SYMBIOS 810		0x0001	53c810
 product SYMBIOS 820		0x0002	53c820
@@ -1128,6 +1168,10 @@ product PCTECH RZ1000		0x1000	RZ1000
 
 /* Pequr products */
 product PEQUR PCIBRIDGE		0x0200	PCI
+
+/* PLX products */
+product PLX	1076		0x1076	I/O PCI
+product PLX	9050		0x9050	I/O PCI
 
 /* Promise products */
 product PROMISE DC5030		0x5300	DC5030
