@@ -1,4 +1,4 @@
-# $OpenBSD: PackageInfo.pm,v 1.4 2003/12/09 19:22:36 espie Exp $
+# $OpenBSD: PackageInfo.pm,v 1.5 2004/01/27 00:14:42 espie Exp $
 #
 # Copyright (c) 2003 Marc Espie.
 # 
@@ -82,7 +82,7 @@ sub installed_packages()
 	if (!defined $list) {
 		$list = {};
 
-		opendir(my $dir, $pkg_db) or die "Bad pkg_db";
+		opendir(my $dir, $pkg_db) or die "Bad pkg_db: $!";
 		while (my $e = readdir($dir)) {
 			next if $e eq '.' or $e eq '..';
 			next unless -d "$pkg_db/$e";
