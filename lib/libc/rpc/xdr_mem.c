@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: xdr_mem.c,v 1.5 1996/09/15 09:31:43 tholo Exp $";
+static char *rcsid = "$OpenBSD: xdr_mem.c,v 1.6 1996/11/14 06:33:13 etheisen Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -42,6 +42,7 @@ static char *rcsid = "$OpenBSD: xdr_mem.c,v 1.5 1996/09/15 09:31:43 tholo Exp $"
  *
  */
 
+#include <string.h>
 
 #include <rpc/types.h>
 #include <rpc/xdr.h>
