@@ -1,4 +1,4 @@
-/*	$NetBSD: mon.h,v 1.20 1996/12/17 21:11:08 gwr Exp $	*/
+/*	$NetBSD: mon.h,v 1.19 1996/11/20 18:57:12 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -103,44 +103,44 @@ typedef struct bootparam {
  *       translate these structs into Sprite format.
  */
 typedef struct {
-	char	*initSp;		/* Initial system stack ptr  
-					 * for hardware */
-	int	(*startMon)__P((void));	/* Initial PC for hardware */
+	char		*initSp;		/* Initial system stack ptr  
+						 * for hardware */
+	int		(*startMon)();		/* Initial PC for hardware */
 
-	int	*diagberr;		/* Bus err handler for diags */
+	int		*diagberr;		/* Bus err handler for diags */
 
 	/* 
 	 * Monitor and hardware revision and identification
 	 */
 
-	struct bootparam **bootParam;	/* Info for bootstrapped pgm */
- 	u_int	*memorySize;		/* Usable memory in bytes */
+	struct bootparam **bootParam;		/* Info for bootstrapped pgm */
+ 	unsigned	*memorySize;		/* Usable memory in bytes */
 
 	/* 
 	 * Single-character input and output 
 	 */
 
-	u_char	(*getChar)__P((void));	/* Get char from input source */
-	int	(*putChar)__P((int));	/* Put char to output sink */
-	int	(*mayGet)__P((void));	/* Maybe get char, or -1 */
-	int	(*mayPut)__P((int));	/* Maybe put char, or -1 */
-	u_char	*echo;		/* Should getchar echo? */
-	u_char	*inSource;	/* Input source selector */
-	u_char	*outSink;	/* Output sink selector */
+	unsigned char	(*getChar)();		/* Get char from input source */
+	int		(*putChar)();		/* Put char to output sink */
+	int		(*mayGet)();		/* Maybe get char, or -1 */
+	int		(*mayPut)();		/* Maybe put char, or -1 */
+	unsigned char	*echo;			/* Should getchar echo? */
+	unsigned char	*inSource;		/* Input source selector */
+	unsigned char	*outSink;		/* Output sink selector */
 
 	/* 
 	 * Keyboard input (scanned by monitor nmi routine) 
 	 */
 
-	int	(*getKey)__P((void));	/* Get next key if one exists */
-	int	(*initGetKey)__P((void*)); /* Initialize get key */
-	u_int	*translation;		/* Kbd translation selector 
-					   (see keyboard.h in sun 
-					    monitor code) */
-	u_char	*keyBid;		/* Keyboard ID byte */
-	int	*screen_x;		/* V2: Screen x pos (R/O) */
-	int	*screen_y;		/* V2: Screen y pos (R/O) */
-	struct keybuf	*keyBuf;	/* Up/down keycode buffer */
+	int		(*getKey)();		/* Get next key if one exists */
+	int		(*initGetKey)();	/* Initialize get key */
+	unsigned int	*translation;		/* Kbd translation selector 
+						   (see keyboard.h in sun 
+						    monitor code) */
+	unsigned char	*keyBid;		/* Keyboard ID byte */
+	int		*screen_x;		/* V2: Screen x pos (R/O) */
+	int		*screen_y;		/* V2: Screen y pos (R/O) */
+	struct keybuf	*keyBuf;		/* Up/down keycode buffer */
 
 	/*
 	 * Monitor revision level.
@@ -152,52 +152,51 @@ typedef struct {
 	 * Frame buffer output and terminal emulation 
 	 */
 
-	int	(*fbWriteChar)__P((int)); /* Write a character to FB */
-	int	*fbAddr;		/* Address of frame buffer */
-	char	**font;			/* Font table for FB */
-	/* Quickly write string to FB */
-	int	(*fbWriteStr)__P((char *buf, int len));
+	int		(*fbWriteChar)();	/* Write a character to FB */
+	int		*fbAddr;		/* Address of frame buffer */
+	char		**font;			/* Font table for FB */
+	int		(*fbWriteStr)();	/* Quickly write string to FB */
 
 	/* 
 	 * Reboot interface routine -- resets and reboots system.  No return. 
 	 */
 
-	int	(*reBoot)__P((char *));	/* e.g. reBoot("xy()vmunix") */
+	int		(*reBoot)();		/* e.g. reBoot("xy()vmunix") */
 
 	/* 
 	 * Line input and parsing 
 	 */
 
-	u_char	*lineBuf;	/* The line input buffer */
-	u_char	**linePtr;	/* Cur pointer into linebuf */
-	int		*lineSize;	/* length of line in linebuf */
-	int	(*getLine)__P((int));	/* Get line from user */
-	u_char	(*getNextChar)__P((void)); /* Get next char from linebuf */
-	u_char	(*peekNextChar)__P((void));	/* Peek at next char */
+	unsigned char	*lineBuf;		/* The line input buffer */
+	unsigned char	**linePtr;		/* Cur pointer into linebuf */
+	int		*lineSize;		/* length of line in linebuf */
+	int		(*getLine)();		/* Get line from user */
+	unsigned char	(*getNextChar)();	/* Get next char from linebuf */
+	unsigned char	(*peekNextChar)();	/* Peek at next char */
 	int		*fbThere;		/* =1 if frame buffer there */
-	int		(*getNum)__P((void));	/* Grab hex num from line */
+	int		(*getNum)();		/* Grab hex num from line */
 
 	/* 
 	 * Print formatted output to current output sink 
 	 */
 
-	int	(*printf)__P((char *, ...));	/* Like kernel printf */
-	int	(*printHex)__P((int,int));	/* Format N digits in hex */
+	int		(*printf)();		/* Similar to "Kernel printf" */
+	int		(*printHex)();		/* Format N digits in hex */
 
 	/*
 	 * Led stuff 
 	 */
 
-	u_char	*leds;			/* RAM copy of LED register */
-	int	(*setLeds)__P((int));	/* Sets LED's and RAM copy */
+	unsigned char	*leds;			/* RAM copy of LED register */
+	int		(*setLeds)();		/* Sets LED's and RAM copy */
 
 	/* 
 	 * Non-maskable interrupt  (nmi) information
 	 */ 
 
-	int	(*nmiAddr)__P((void*));	/* Addr for level 7 vector */
-	int	(*abortEntry)__P((void*)); /* Entry for keyboard abort */
-	int	*nmiClock;		/* Counts up in msec */
+	int		(*nmiAddr)();		/* Addr for level 7 vector */
+	int		(*abortEntry)();	/* Entry for keyboard abort */
+	int		*nmiClock;		/* Counts up in msec */
 
 	/*
 	 * Frame buffer type: see <sun/fbio.h>
@@ -209,28 +208,24 @@ typedef struct {
 	 * Assorted other things 
 	 */
 
-	u_int	romvecVersion;		/* Version # of Romvec */ 
-	struct globram  *globRam;	/* monitor global variables */
-	caddr_t		kbdZscc;	/* Addr of keyboard in use */
+	unsigned	romvecVersion;		/* Version # of Romvec */ 
+	struct globram  *globRam;		/* monitor global variables */
+	caddr_t		kbdZscc;		/* Addr of keyboard in use */
 
-	int	*keyrInit;		/* ms before kbd repeat */
-	u_char	*keyrTick; 		/* ms between repetitions */
-	u_int	*memoryAvail;		/* V1: Main mem usable size */
-	long	*resetAddr;		/* where to jump on a reset */
-	long	*resetMap;		/* pgmap entry for resetaddr */
-					/* Really struct pgmapent *  */
-	int	(*exitToMon)__P((void)); /* Exit from user program */
-	u_char	**memorybitmap;		/* V1: &{0 or &bits} */
-
-	/* Set seg in all contexts */
-	void	(*setcxsegmap)__P((int,int,int));
-
-	/* V2: Handler for 'v' cmd */
-	void	(**vector_cmd)__P((int, char*));
-	int	dummy1z;
-	int	dummy2z;
-	int	dummy3z;
-	int	dummy4z;
+	int		*keyrInit;		/* ms before kbd repeat */
+	unsigned char	*keyrTick; 		/* ms between repetitions */
+	unsigned	*memoryAvail;		/* V1: Main mem usable size */
+	long		*resetAddr;		/* where to jump on a reset */
+	long		*resetMap;		/* pgmap entry for resetaddr */
+						/* Really struct pgmapent *  */
+	int		(*exitToMon)();		/* Exit from user program */
+	unsigned char	**memorybitmap;		/* V1: &{0 or &bits} */
+	void		(*setcxsegmap)();	/* Set seg in any context */
+	void		(**vector_cmd)();	/* V2: Handler for 'v' cmd */
+	int		dummy1z;
+	int		dummy2z;
+	int		dummy3z;
+	int		dummy4z;
 } MachMonRomVector;
 
 /*
@@ -239,7 +234,7 @@ typedef struct {
  *
  * getChar -- Return the next character from the input source
  *
- *     u_char getChar()
+ *     unsigned char getChar()
  *
  * putChar -- Write the given character to the output source.
  *
@@ -270,12 +265,12 @@ typedef struct {
  * fbWriteChar -- Write a character to the frame buffer
  *
  *	void fwritechar(ch)
- *	    u_char ch;
+ *	    unsigned char ch;
  *
  * fbWriteStr -- Write a string to the frame buffer.
  *
  *   	void fwritestr(addr,len)
- *  	    register u_char *addr;	/ * String to be written * /
+ *  	    register unsigned char *addr;	/ * String to be written * /
  *  	    register short len;			/ * Length of string * /
  *
  * getLine -- read the next input line into a global buffer
@@ -285,11 +280,11 @@ typedef struct {
  *
  * getNextChar -- return the next character from the global line buffer.
  *
- *	u_char getNextChar()
+ *	unsigned char getNextChar()
  *
  * peekNextChar -- look at the next character in the global line buffer.
  *
- *	u_char peekNextChar()
+ *	unsigned char peekNextChar()
  *
  * getNum -- Grab hex num from the global line buffer.
  *

@@ -80,6 +80,3 @@ void zs_abort();
  */
 #define	ZSTTY_MAJOR 	12		/* XXX */
 #define	ZSTTY_DEF_CFLAG 	(CREAD | CS8 | HUPCL)
-
-/* Zilog Serial hardware interrupts (hard-wired at 6) */
-#define splzs()         spl6()

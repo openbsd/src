@@ -1,4 +1,4 @@
-/*	$NetBSD: obmem.c,v 1.12 1996/12/17 21:10:52 gwr Exp $	*/
+/*	$NetBSD: obmem.c,v 1.11 1996/11/20 18:56:57 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -60,9 +60,9 @@ struct cfdriver obmem_cd = {
 };
 
 static int
-obmem_match(parent, cf, aux)
+obmem_match(parent, vcf, aux)
 	struct device *parent;
-	void *cf, *aux;
+	void *vcf, *aux;
 {
 	struct confargs *ca = aux;
 
@@ -73,7 +73,8 @@ obmem_match(parent, cf, aux)
 
 static void
 obmem_attach(parent, self, args)
-	struct device *parent, *self;
+	struct device *parent;
+	struct device *self;
 	void *args;
 {
 	printf("\n");

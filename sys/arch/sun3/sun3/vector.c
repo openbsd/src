@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.c,v 1.16 1996/12/17 21:11:43 gwr Exp $	*/
+/*	$NetBSD: vector.c,v 1.15 1996/11/20 18:57:40 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -50,6 +50,12 @@
                   badtrap, badtrap, badtrap, badtrap, \
                   badtrap, badtrap, badtrap, badtrap
 
+void addrerr(), badtrap(), buserr(), chkinst(), coperr(), fmterr(),
+    fpfline(),  fpunsupp(), illinst(), privinst(), trace(), trap0(),
+    trap1(), trap12(), trap15(), trap2(), trapvinst(), zerodiv(), fpfault();
+
+void _isr_autovec();
+
 #define fpbsun fpfault
 #define fpdz fpfault
 #define fpinex fpfault
@@ -58,7 +64,7 @@
 #define fpsnan fpfault
 #define fpunfl fpfault
 
-void *vector_table[NVECTORS] = {
+void (*vector_table[NVECTORS])() = {
 	(void*)0xfffe000,		/* 0: NOT USED (reset SP) */
 	(void*)0xfef0000,		/* 1: NOT USED (reset PC) */
 	buserr,				/* 2: bus error */

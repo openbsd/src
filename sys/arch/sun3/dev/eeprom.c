@@ -1,11 +1,8 @@
-/*	$NetBSD: eeprom.c,v 1.13 1996/12/17 21:10:40 gwr Exp $	*/
+/*	$NetBSD: eeprom.c,v 1.8 1996/03/26 15:16:06 gwr Exp $	*/
 
-/*-
- * Copyright (c) 1996 The NetBSD Foundation, Inc.
+/*
+ * Copyright (c) 1994 Gordon W. Ross
  * All rights reserved.
- *
- * This code is derived from software contributed to The NetBSD Foundation
- * by Gordon W. Ross.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -15,25 +12,19 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
+ * 3. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
- * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
- * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 /*
@@ -42,9 +33,6 @@
  * handle the painful task of updating the EEPROM contents.
  * After a write, it must not be touched for 10 milliseconds.
  * (See the Sun-3 Architecture Manual sec. 5.9)
- *
- * XXX: Should just keep a copy of the EEPROM contents in RAM
- * (read it once at init time) to avoid the eeprom_uio hair.
  */
 
 #include <sys/param.h>
@@ -53,7 +41,6 @@
 #include <sys/conf.h>
 #include <sys/buf.h>
 #include <sys/malloc.h>
-#include <sys/proc.h>
 
 #include <machine/autoconf.h>
 #include <machine/obio.h>
@@ -68,7 +55,7 @@ static int ee_update(caddr_t buf, int off, int cnt);
 static char *eeprom_va;
 static int ee_busy, ee_want;
 
-static int  eeprom_match __P((struct device *, void *, void *));
+static int  eeprom_match __P((struct device *, void *vcf, void *args));
 static void eeprom_attach __P((struct device *, struct device *, void *));
 
 struct cfattach eeprom_ca = {
@@ -91,15 +78,23 @@ eeprom_match(parent, vcf, args)
     struct device *parent;
     void *vcf, *args;
 {
-	struct cfdata *cf = vcf;
+    struct cfdata *cf = vcf;
 	struct confargs *ca = args;
+	int pa;
 
 	/* This driver only supports one unit. */
 	if (cf->cf_unit != 0)
 		return (0);
 
-	/* Validate the given address. */
-	if (ca->ca_paddr != OBIO_EEPROM)
+	if ((pa = cf->cf_paddr) == -1) {
+		/* Use our default PA. */
+		pa = OBIO_EEPROM;
+	} else {
+		/* Validate the given PA. */
+		if (pa != OBIO_EEPROM)
+			return (0);
+	}
+	if (pa != ca->ca_paddr)
 		return (0);
 
 	if (eeprom_va == NULL)
@@ -114,14 +109,13 @@ eeprom_attach(parent, self, args)
 	struct device *self;
 	void *args;
 {
+	struct confargs *ca = args;
 
 	printf("\n");
 }
 
 
-/* Take the lock. */
-static int
-ee_take __P((void))
+static int ee_take()	/* Take the lock. */
 {
 	int error = 0;
 	while (ee_busy) {
@@ -136,9 +130,7 @@ ee_take __P((void))
 	return error;
 }
 
-/* Give the lock. */
-static void
-ee_give __P((void))
+static void ee_give()	/* Give the lock. */
 {
 	ee_busy = 0;
 	if (ee_want) {
@@ -147,11 +139,7 @@ ee_give __P((void))
 	}
 }
 
-/*
- * XXX - Just keep a soft copy of the eeprom?
- */
-int
-eeprom_uio(struct uio *uio)
+int eeprom_uio(struct uio *uio)
 {
 	int error;
 	int off;	/* NOT off_t */
@@ -202,8 +190,7 @@ eeprom_uio(struct uio *uio)
 /*
  * Update the EEPROM from the passed buf.
  */
-static int
-ee_update(char *buf, int off, int cnt)
+static int ee_update(char *buf, int off, int cnt)
 {
 	volatile char *ep;
 	char *bp;

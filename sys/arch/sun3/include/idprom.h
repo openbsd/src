@@ -1,4 +1,4 @@
-/*	$NetBSD: idprom.h,v 1.13 1996/12/17 21:11:07 gwr Exp $	*/
+/*	$NetBSD: idprom.h,v 1.12 1996/11/20 18:57:10 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -53,24 +53,8 @@ struct idprom {
 #define IDPROM_VERSION 1
 #define IDPROM_SIZE (sizeof(struct idprom))
 
-/* values for cpu_machine_id */
-
-#define CPU_ARCH_MASK  0xf0
-#define SUN3_ARCH      0x10
-#define SUN3_IMPL_MASK 0x0f
-#define SUN3_MACH_160  0x01
-#define SUN3_MACH_50   0x02
-#define SUN3_MACH_260  0x03
-#define SUN3_MACH_110  0x04
-#define SUN3_MACH_60   0x07
-#define SUN3_MACH_E    0x08
-
 #ifdef	_KERNEL
-
 extern struct idprom identity_prom;
-extern u_char cpu_machine_id;
-
-int idprom_init __P((void));
+int idprom_init();
 void idprom_etheraddr __P((u_char *));
-
-#endif	/* _KERNEL */
+#endif

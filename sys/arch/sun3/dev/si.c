@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.32 1996/12/17 21:10:53 gwr Exp $	*/
+/*	$NetBSD: si.c,v 1.31 1996/11/20 18:56:59 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -91,6 +91,8 @@
 #include <scsi/scsiconf.h>
 
 #include <machine/autoconf.h>
+#include <machine/isr.h>
+#include <machine/obio.h>
 #include <machine/dvma.h>
 
 #define DEBUG XXX
@@ -142,21 +144,6 @@ struct cfdriver si_cd = {
 	NULL, "si", DV_DULL
 };
 
-#ifdef __OpenBSD__
-int     ncrprint __P((void *, const char *));
-
-int
-ncrprint(aux, name)
-     void *aux;
-     const char *name;
-{
-
-        if (name != NULL)
-                printf("%s: scsibus ", name);
-        return UNCONF;
-}
-#endif
-
 
 void
 si_attach(sc)
@@ -185,9 +172,7 @@ si_attach(sc)
 	/*
 	 * Fill in the prototype scsi_link.
 	 */
-#ifndef __OpenBSD__
 	ncr_sc->sc_link.channel = SCSI_CHANNEL_ONLY_ONE;
-#endif
 	ncr_sc->sc_link.adapter_softc = sc;
 	ncr_sc->sc_link.adapter_target = 7;
 	ncr_sc->sc_link.adapter = &si_ops;
@@ -195,7 +180,7 @@ si_attach(sc)
 
 #ifdef	DEBUG
 	if (si_debug)
-		printf("si: Set TheSoftC=%p TheRegs=%p\n", sc, regs);
+		printf("si: Set TheSoftC=%x TheRegs=%x\n", sc, regs);
 	ncr_sc->sc_link.flags |= si_link_flags;
 #endif
 
@@ -228,11 +213,7 @@ si_attach(sc)
 	si_reset_adapter(ncr_sc);
 	ncr5380_init(ncr_sc);
 	ncr5380_reset_scsibus(ncr_sc);
-#ifdef __OpenBSD__
-	config_found(&(ncr_sc->sc_dev), &(ncr_sc->sc_link), ncrprint);
-#else
 	config_found(&(ncr_sc->sc_dev), &(ncr_sc->sc_link), scsiprint);
-#endif
 }
 
 static void
@@ -421,7 +402,7 @@ found:
 	dh->dh_dvma = (u_long) dvma_mapin((char *)addr, xlen);
 	if (!dh->dh_dvma) {
 		/* Can't remap segment */
-		printf("si_dma_alloc: can't remap %p/0x%x\n",
+		printf("si_dma_alloc: can't remap %x/%x\n",
 			dh->dh_addr, dh->dh_maplen);
 		dh->dh_flags = 0;
 		return;
@@ -476,6 +457,7 @@ si_dma_poll(ncr_sc)
 {
 	struct si_softc *sc = (struct si_softc *)ncr_sc;
 	struct sci_req *sr = ncr_sc->sc_current;
+	struct si_dma_handle *dh = sr->sr_dma_hand;
 	volatile struct si_regs *si = sc->sc_regs;
 	int tmo;
 

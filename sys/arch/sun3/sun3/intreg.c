@@ -1,4 +1,4 @@
-/*	$NetBSD: intreg.c,v 1.6 1996/12/17 21:11:28 gwr Exp $	*/
+/*	$NetBSD: intreg.c,v 1.5 1996/11/20 18:57:32 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -50,18 +50,18 @@
 #include <machine/cpu.h>
 #include <machine/mon.h>
 #include <machine/obio.h>
+#include <machine/isr.h>
 
 #include "interreg.h"
-#include "machdep.h"
 
 struct intreg_softc {
 	struct device sc_dev;
 	volatile u_char *sc_reg;
 };
 
-static int  intreg_match __P((struct device *, void *, void *));
+static int  intreg_match __P((struct device *, void *vcf, void *args));
 static void intreg_attach __P((struct device *, struct device *, void *));
-static int soft1intr __P((void *));
+static int soft1intr();
 
 struct cfattach intreg_ca = {
 	sizeof(struct intreg_softc), intreg_match, intreg_attach
@@ -75,8 +75,7 @@ volatile u_char *interrupt_reg;
 
 
 /* called early (by internal_configure) */
-void
-intreg_init()
+void intreg_init()
 {
 	interrupt_reg = obio_find_mapping(OBIO_INTERREG, 1);
 	if (!interrupt_reg)
@@ -91,8 +90,9 @@ intreg_match(parent, vcf, args)
     struct device *parent;
     void *vcf, *args;
 {
-	struct cfdata *cf = vcf;
+    struct cfdata *cf = vcf;
 	struct confargs *ca = args;
+	int pa;
 
 	/* This driver only supports one unit. */
 	if (cf->cf_unit != 0)
@@ -113,6 +113,7 @@ intreg_attach(parent, self, args)
 	void *args;
 {
 	struct intreg_softc *sc = (void *)self;
+	struct cfdata *cf = self->dv_cfdata;
 
 	printf("\n");
 
@@ -129,12 +130,11 @@ intreg_attach(parent, self, args)
  *	Network software interrupt
  *	Soft clock interrupt
  */
-static int
-soft1intr(arg)
+int soft1intr(arg)
 	void *arg;
 {
 	union sun3sir sir;
-	int s;
+	int n, s;
 
 	s = splhigh();
 	sir.sir_any = sun3sir.sir_any;

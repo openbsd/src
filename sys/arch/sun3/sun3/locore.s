@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.41 1996/12/17 21:11:31 gwr Exp $	*/
+/*	$NetBSD: locore.s,v 1.40 1996/11/06 20:19:54 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -134,9 +134,9 @@ L_high_code:
  * cpu_set_kpc() to arrange for a call to a kernel function
  * before the new process does its rte out to user mode.
  */
-	clrw	sp@-			| vector offset/frame type
+  	clrw	sp@-			| vector offset/frame type
 	clrl	sp@-			| PC - filled in by "execve"
-	movw	#PSL_USER,sp@-		| in user mode
+  	movw	#PSL_USER,sp@-		| in user mode
 	clrl	sp@-			| stack adjust count and padding
 	lea	sp@(-64),sp		| construct space for D0-D7/A0-A7
 	lea	_proc0,a0		| proc0 in a0
@@ -154,7 +154,7 @@ _proc_do_uret:
 	movl	a0,usp			|   user SP
 	moveml	sp@+,#0x7FFF		| load most registers (all but SSP)
 	addql	#8,sp			| pop SSP and stack adjust count
-	rte
+  	rte
 
 /*
  * proc_trampoline:
@@ -246,12 +246,12 @@ Lbe10:
 
 /*
  * the sun3 specific code
- *
+ *	
  * our mission: figure out whether what we are looking at is
  *              bus error in the UNIX sense, or
  *	        a memory error i.e a page fault
  *
- * [this code replaces similarly mmu specific code in the hp300 code]
+ * [this code replaces similarly mmu specific code in the hp300 code]	
  */
 sun3_mmu_specific:
 	clrl d0				| make sure top bits are cleard too
@@ -571,7 +571,7 @@ Lbrkpt2:
 	jne	Lbrkpt3			| yes, done
 #endif
 #ifdef	DDB
-	| Let DDB handle it.
+	| Let DDB handle it.	
 	movl	a2,sp@-			| push frame ptr
 	movl	d2,sp@-			| push trap type
 	jbsr	_kdb_trap		| handle the trap
@@ -616,8 +616,6 @@ _trap12:
 /*
  * Interrupt handlers.  Most are auto-vectored,
  * and hard-wired the same way on all sun3 models.
- * Format in the stack is:
- *   d0,d1,a0,a1, sr, pc, vo
  */
 
 #define INTERRUPT_SAVEREG \
@@ -626,36 +624,53 @@ _trap12:
 #define INTERRUPT_RESTORE \
 	moveml	sp@+,#0x0303
 
+.align 4
 /*
  * This is the common auto-vector interrupt handler,
  * for which the CPU provides the vector=0x18+level.
  * These are installed in the interrupt vector table.
  */
-	.align	2
-	.globl	__isr_autovec, _isr_autovec
+	.globl	__isr_autovec
 __isr_autovec:
 	INTERRUPT_SAVEREG
-	jbsr	_isr_autovec
+	movw	sp@(22),sp@-		| push exception vector info
+	clrw	sp@-
+	jbsr	_isr_autovec		| C dispatcher
+	addql	#4,sp
 	INTERRUPT_RESTORE
-	jra	rei
+	jra rei			/* XXX - Just do rte here? */
 
 /* clock: see clock.c */
-	.align	2
-	.globl	__isr_clock, _clock_intr
+.globl __isr_clock, _interrupt_reg, _clock_intr, _clock_va
+.align 4
 __isr_clock:
-	INTERRUPT_SAVEREG
+	INTERRUPT_SAVEREG 	| save a0, a1, d0, d1
+	movl	_clock_va, a0
+	movl	_interrupt_reg, a1
+	tstb a0@(INTERSIL_INTR_OFFSET)
+	andb #~IREG_CLOCK_ENAB_5, a1@
+	orb #IREG_CLOCK_ENAB_5, a1@
+	tstb a0@(INTERSIL_INTR_OFFSET)
+| used to have "timebomb" check here...
+	lea	sp@(16),a1		| a1 = &clockframe
+	movl	a1,sp@-
 	jbsr	_clock_intr
+	addql	#4,sp
 	INTERRUPT_RESTORE
 	jra	rei
 
 | Handler for all vectored interrupts (i.e. VME interrupts)
-	.align	2
-	.globl	__isr_vectored, _isr_vectored
+	.globl	_isr_vectored
+	.globl	__isr_vectored
 __isr_vectored:
 	INTERRUPT_SAVEREG
-	jbsr	_isr_vectored
+	movw	sp@(22),sp@-		| push exception vector info
+	clrw	sp@-
+	jbsr	_isr_vectored		| C dispatcher
+	addql	#4,sp			|
 	INTERRUPT_RESTORE
-	jra	rei
+	jra	rei			| all done
+
 
 #undef	INTERRUPT_SAVEREG
 #undef	INTERRUPT_RESTORE
@@ -936,7 +951,7 @@ ENTRY(switch_exit)
 	.data
 	.globl _Idle_count
 _Idle_count:
-	.long	0
+	.long   0
 	.text
 
 	.globl	Idle
@@ -944,7 +959,7 @@ Lidle:
 	stop	#PSL_LOWIPL
 Idle:
 	movw	#PSL_HIGHIPL,sr
-	addql	#1, _Idle_count
+	addql   #1, _Idle_count
 	tstl	_whichqs
 	jeq	Lidle
 	movw	#PSL_LOWIPL,sr
@@ -957,7 +972,7 @@ Lbadsw:
 
 /*
  * cpu_switch()
- * Hacked for sun3
+ * Hacked for sun3	
  * XXX - Arg 1 is a proc pointer (curproc) but this doesn't use it.
  * XXX - Sould we use p->p_addr instead of curpcb? -gwr
  */
@@ -1219,6 +1234,8 @@ ENTRY(_remque)
 
 /*
  * Save and restore 68881 state.
+ * Pretty awful looking since our assembler does not
+ * recognize FP mnemonics.
  */
 ENTRY(m68881_save)
 	movl	sp@(4),a0		| save area pointer

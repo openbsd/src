@@ -1,4 +1,4 @@
-/*	$NetBSD: i82586.h,v 1.4 1996/12/13 19:54:08 gwr Exp $ */
+/*	$NetBSD: i82586.h,v 1.3 1995/10/08 23:41:36 gwr Exp $ */
 
 /*-
  * Copyright (c) 1992, University of Vermont and State Agricultural College.
@@ -236,7 +236,7 @@ struct ie_xmit_buf {
  * Multicast setup command.
  */
 
-#define MAXMCAST 250		/* must fit in transmit buffer */
+#define MAXMCAST 50		/* must fit in transmit buffer */
 
 struct ie_mcast_cmd {
 	struct ie_cmd_common com;	/* common part */

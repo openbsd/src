@@ -1,4 +1,4 @@
-/*	$NetBSD: idprom.c,v 1.15 1996/12/17 21:10:43 gwr Exp $	*/
+/*	$NetBSD: idprom.c,v 1.13 1996/11/20 18:56:50 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -43,12 +43,13 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/kernel.h>
 
 #include <machine/autoconf.h>
 #include <machine/control.h>
 #include <machine/idprom.h>
 #include <machine/mon.h>
+
+extern long hostid;	/* in kern_sysctl.c */
 
 /*
  * This structure is what this driver is all about.
@@ -56,12 +57,47 @@
  */
 struct idprom identity_prom;
 
+int idpromopen(dev, oflags, devtype, p)
+	dev_t dev;
+	int oflags;
+	int devtype;
+	struct proc *p;
+{
+	return 0;
+}
+
+int idpromclose(dev, fflag, devtype, p)
+	dev_t dev;
+	int fflag;
+	int devtype;
+	struct proc *p;
+{
+	return 0;
+}
+
+idpromread(dev, uio, ioflag)
+	dev_t dev;
+	struct uio *uio;
+	int ioflag;
+{
+	int error, unit, length;
+
+	error = 0;
+	while (uio->uio_resid > 0 && error == 0) {
+		if (uio->uio_offset >= IDPROM_SIZE)
+			break; /* past or at end */
+		length = min(uio->uio_resid,
+					 (IDPROM_SIZE - (int)uio->uio_offset));
+		error = uiomove((caddr_t) &identity_prom, length, uio);
+	}
+	return error;
+}
+
 /*
  * This is called very early during startup to
  * get a copy of the idprom from control space.
  */
-int
-idprom_init()
+int idprom_init()
 {
 	struct idprom *idp;
 	char *src, *dst;

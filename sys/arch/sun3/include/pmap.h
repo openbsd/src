@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.16 1996/12/17 21:11:10 gwr Exp $	*/
+/*	$NetBSD: pmap.h,v 1.15 1996/11/20 18:57:16 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -56,9 +56,6 @@ typedef struct pmap *pmap_t;
 
 #ifdef _KERNEL
 struct pmap	kernel_pmap_store;
-struct pcb;
-void   pmap_activate __P((pmap_t pmap, struct pcb *pcbp));
-void pmap_deactivate __P((pmap_t pmap, struct pcb *pcbp));
 
 #define	pmap_kernel()			(&kernel_pmap_store)
 

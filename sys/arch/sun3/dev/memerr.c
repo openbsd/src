@@ -1,4 +1,4 @@
-/*	$NetBSD: memerr.c,v 1.7 1996/12/17 21:10:50 gwr Exp $ */
+/*	$NetBSD: memerr.c,v 1.6 1996/11/13 07:05:14 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -49,9 +49,7 @@
 #include <sys/device.h>
 
 #include <machine/autoconf.h>
-#include <machine/control.h>
 #include <machine/cpu.h>
-#include <machine/idprom.h>
 #include <machine/obio.h>
 #include <machine/pte.h>
 
@@ -73,7 +71,7 @@ struct memerr_softc {
 	/* XXX: counters? */
 };
 
-static int  memerr_match __P((struct device *, void *, void *));
+static int  memerr_match __P((struct device *, void *vcf, void *args));
 static void memerr_attach __P((struct device *, struct device *, void *));
 static int  memerr_interrupt __P((void *));
 static void memerr_correctable __P((struct memerr_softc *));
@@ -92,7 +90,7 @@ memerr_match(parent, vcf, args)
     struct device *parent;
     void *vcf, *args;
 {
-	struct cfdata *cf = vcf;
+    struct cfdata *cf = vcf;
 	struct confargs *ca = args;
 
 	/* This driver only supports one unit. */
@@ -172,7 +170,7 @@ memerr_interrupt(arg)
 {
 	struct memerr_softc *sc = arg;
 	volatile struct memerr *me = sc->sc_reg;
-	u_char csr, ctx;
+	u_char csr, ctx, err;
 	u_int pa, va;
 	int pte;
 

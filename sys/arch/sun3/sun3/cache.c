@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.6 1996/12/17 21:11:16 gwr Exp $	*/
+/*	$NetBSD: cache.c,v 1.5 1996/11/20 18:57:24 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -57,13 +57,11 @@
 #include <machine/control.h>
 #include <machine/vmparam.h>
 
-#include "machdep.h"
+#include "cache.h"
 
 #define	CACHE_LINE	16	/* bytes */
 #define	VAC_FLUSH_INCR	512	/* bytes */
 #define VADDR_MASK	0xfFFffFF	/* 28 bits */
-
-static void cache_clear_tags __P((void));
 
 void
 cache_flush_page(pgva)

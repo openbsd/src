@@ -1,8 +1,8 @@
-/*	$NetBSD: mem.c,v 1.20 1996/12/17 21:11:36 gwr Exp $	*/
+/*	$NetBSD: mem.c,v 1.19 1995/08/08 21:09:01 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
- * Copyright (c) 1993 Adam Glass
+ * Copyright (c) 1993 Adam Glass 
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1982, 1986, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -47,35 +47,34 @@
  */
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/buf.h>
 #include <sys/conf.h>
-#include <sys/malloc.h>
-#include <sys/proc.h>
+#include <sys/buf.h>
+#include <sys/systm.h>
 #include <sys/uio.h>
+#include <sys/malloc.h>
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 #include <vm/vm_map.h>
 
 #include <machine/cpu.h>
-#include <machine/eeprom.h>
 #include <machine/pte.h>
 #include <machine/pmap.h>
 
-#include "machdep.h"
+extern int eeprom_uio();
+extern vm_offset_t avail_start, avail_end;
 
-#define	mmread	mmrw
-cdev_decl(mm);
+vm_offset_t vmmap;	/* XXX - poor name...
+                     * It is a virtual page, not a map.
+                     */
+caddr_t zeropage;
 
-static caddr_t zeropage;
 
 /*ARGSUSED*/
 int
-mmopen(dev, flag, mode, p)
+mmopen(dev, flag, mode)
 	dev_t dev;
 	int flag, mode;
-	struct proc *p;
 {
 
 	return (0);
@@ -83,10 +82,9 @@ mmopen(dev, flag, mode, p)
 
 /*ARGSUSED*/
 int
-mmclose(dev, flag, mode, p)
+mmclose(dev, flag, mode)
 	dev_t dev;
 	int flag, mode;
-	struct proc *p;
 {
 
 	return (0);
@@ -133,7 +131,7 @@ mmrw(dev, uio, flags)
 		case 0:
 			v = uio->uio_offset;
 			/* allow reads only in RAM */
-			if (v >= avail_end) {
+			if (v < 0 || v >= avail_end) {
 				error = EFAULT;
 				goto unlock;
 			}

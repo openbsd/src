@@ -1,4 +1,4 @@
-/*	$NetBSD: fbvar.h,v 1.4 1996/12/17 21:10:42 gwr Exp $	*/
+/*	$NetBSD: fbvar.h,v 1.3 1996/10/29 19:27:37 gwr Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -49,8 +49,6 @@
  * following in order to participate.
  */
 
-struct fbcmap;
-
 struct fbdevice {
 	struct	fbtype fb_fbtype;	/* see fbio.h */
 	struct	fbdriver *fb_driver;	/* pointer to driver */
@@ -73,16 +71,13 @@ struct fbdriver {
 	int 	(*fbd_close) __P((dev_t, int, int, struct proc *));
 	int 	(*fbd_mmap) __P((dev_t, int, int));
 	/* These are the internal ioctl functions */
-	int 	(*fbd_gattr) __P((struct fbdevice *,  void *));
-	int 	(*fbd_gvideo) __P((struct fbdevice *, void *));
-	int 	(*fbd_svideo) __P((struct fbdevice *, void *));
-	int 	(*fbd_getcmap) __P((struct fbdevice *, void *));
-	int 	(*fbd_putcmap) __P((struct fbdevice *, void *));
+	int 	(*fbd_gattr) __P((struct fbdevice *, struct fbgattr *));
+	int 	(*fbd_gvideo) __P((struct fbdevice *, int *));
+	int 	(*fbd_svideo) __P((struct fbdevice *, int *));
+	int 	(*fbd_getcmap) __P((struct fbdevice *, struct fbcmap *));
+	int 	(*fbd_putcmap) __P((struct fbdevice *, struct fbcmap *));
 };
 
-int 	fbioctlfb __P((struct fbdevice *, u_long, caddr_t));
-
 void	fb_attach __P((struct fbdevice *, int));
-int 	fb_noioctl __P((struct fbdevice *, void *));
-void	fb_unblank __P((void));
-
+int 	fbioctlfb __P((struct fbdevice *, u_long, caddr_t));
+extern int enoioctl();

@@ -1,4 +1,4 @@
-/*	$NetBSD: cg2.c,v 1.8 1996/12/17 21:10:38 gwr Exp $	*/
+/*	$NetBSD: cg2.c,v 1.7 1996/10/13 03:47:26 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -53,13 +53,10 @@
  */
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/ioctl.h>
 #include <sys/malloc.h>
 #include <sys/mman.h>
-#include <sys/proc.h>
 #include <sys/tty.h>
 
 #include <vm/vm.h>
@@ -70,8 +67,6 @@
 #include <machine/cg2reg.h>
 
 #include "fbvar.h"
-
-cdev_decl(cg2);
 
 #define	CMSIZE 256
 
@@ -107,17 +102,21 @@ struct cfdriver cgtwo_cd = {
 	NULL, "cgtwo", DV_DULL
 };
 
-static int  cg2gattr __P((struct fbdevice *,  void *));
-static int  cg2gvideo __P((struct fbdevice *, void *));
-static int	cg2svideo __P((struct fbdevice *, void *));
-static int	cg2getcmap __P((struct fbdevice *, void *));
-static int	cg2putcmap __P((struct fbdevice *, void *));
+/* frame buffer generic driver */
+int cg2open(), cg2close(), cg2mmap();
+
+static int  cg2gattr __P((struct fbdevice *, struct fbgattr *));
+static int  cg2gvideo __P((struct fbdevice *, int *));
+static int	cg2svideo __P((struct fbdevice *, int *));
+static int	cg2getcmap __P((struct fbdevice *, struct fbcmap *));
+static int	cg2putcmap __P((struct fbdevice *, struct fbcmap *));
 
 static struct fbdriver cg2fbdriver = {
 	cg2open, cg2close, cg2mmap, cg2gattr,
 	cg2gvideo, cg2svideo,
 	cg2getcmap, cg2putcmap };
 
+static void cg2loadcmap __P((struct cg2_softc *, int, int));
 static int cg2intr __P((void*));
 
 /*
@@ -159,6 +158,7 @@ cg2attach(parent, self, args)
 	struct fbdevice *fb = &sc->sc_fb;
 	struct confargs *ca = args;
 	struct fbtype *fbt;
+	int i, ramsize, pa;
 
 	sc->sc_phys = ca->ca_paddr;
 	sc->sc_pmtype = PMAP_NC | PMAP_VME16;
@@ -238,6 +238,7 @@ cg2mmap(dev, off, prot)
 	int off, prot;
 {
 	struct cg2_softc *sc = cgtwo_cd.cd_devs[minor(dev)];
+	int realoff;
 
 	if (off & PGOFSET)
 		panic("cg2mmap");
@@ -257,11 +258,10 @@ cg2mmap(dev, off, prot)
  */
 
 /* FBIOGATTR: */
-static int  cg2gattr(fb, data)
+static int  cg2gattr(fb, fba)
 	struct fbdevice *fb;
-	void *data;
+	struct fbgattr *fba;
 {
-	struct fbgattr *fba = data;
 
 	fba->real_type = fb->fb_fbtype.fb_type;
 	fba->owner = 0;		/* XXX - TIOCCONS stuff? */
@@ -275,11 +275,10 @@ static int  cg2gattr(fb, data)
 }
 
 /* FBIOGVIDEO: */
-static int  cg2gvideo(fb, data)
+static int  cg2gvideo(fb, on)
 	struct fbdevice *fb;
-	void *data;
+	int *on;
 {
-	int *on = data;
 	struct cg2_softc *sc = fb->fb_private;
 
 	*on = sc->sc_ctlreg->status.reg.video_enab;
@@ -287,11 +286,10 @@ static int  cg2gvideo(fb, data)
 }
 
 /* FBIOSVIDEO: */
-static int cg2svideo(fb, data)
+static int cg2svideo(fb, on)
 	struct fbdevice *fb;
-	void *data;
+	int *on;
 {
-	int *on = data;
 	struct cg2_softc *sc = fb->fb_private;
 
 	sc->sc_ctlreg->status.reg.video_enab = (*on) & 1;
@@ -300,11 +298,10 @@ static int cg2svideo(fb, data)
 }
 
 /* FBIOGETCMAP: */
-static int cg2getcmap(fb, data)
+static int cg2getcmap(fb, cmap)
 	struct fbdevice *fb;
-	void *data;
+	struct fbcmap *cmap;
 {
-	struct fbcmap *cmap = data;
 	struct cg2_softc *sc = fb->fb_private;
 	u_char red[CMSIZE], green[CMSIZE], blue[CMSIZE];
 	int error, start, count, ecount;
@@ -342,11 +339,10 @@ static int cg2getcmap(fb, data)
 }
 
 /* FBIOPUTCMAP: */
-static int cg2putcmap(fb, data)
+static int cg2putcmap(fb, cmap)
 	struct fbdevice *fb;
-	void *data;
+	struct fbcmap *cmap;
 {
-	struct fbcmap *cmap = data;
 	struct cg2_softc *sc = fb->fb_private;
 	u_char red[CMSIZE], green[CMSIZE], blue[CMSIZE];
 	int error, start, count, ecount;

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_memrw.c,v 1.14 1996/12/17 21:11:20 gwr Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.13 1996/11/20 18:57:28 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -53,24 +53,16 @@
  */
 
 #include <sys/param.h>
-#include <sys/systm.h>
 #include <sys/proc.h>
 
 #include <vm/vm.h>
 
-#include <machine/control.h>
 #include <machine/pte.h>
 #include <machine/db_machdep.h>
 
 #include <ddb/db_access.h>
 
-#include "machdep.h"
-
-extern char etext[];	/* defined by the linker */
-extern char	kernel_text[];	/* locore.s */
-
-static void db_write_text __P((char *, size_t size, char *));
-
+#include "cache.h"
 
 /*
  * Read bytes from kernel address space for debugger.
@@ -106,18 +98,20 @@ db_read_bytes(addr, size, data)
  * Makes text page writable temporarily.
  */
 static void
-db_write_text(dst, size, data)
-	register char *dst;
+db_write_text(addr, size, data)
+	vm_offset_t	addr;
 	register size_t	size;
 	register char	*data;
 {
-	int		oldpte, tmppte;
+	register char *dst;
+	int		ch, oldpte, tmppte;
 	vm_offset_t pgva, prevpg;
 
 	/* Prevent restoring a garbage PTE. */
 	if (size <= 0)
 		return;
 
+	dst = (char*)addr;
 	pgva = sun3_trunc_page((long)dst);
 
 	goto firstpage;
@@ -147,7 +141,7 @@ db_write_text(dst, size, data)
 #endif
 			oldpte = get_pte(pgva);
 			if ((oldpte & PG_VALID) == 0) {
-				printf(" address %p not a valid page\n", dst);
+				printf(" address 0x%x not a valid page\n", dst);
 				return;
 			}
 			tmppte = oldpte | PG_WRITE | PG_NC;
@@ -171,6 +165,7 @@ db_write_text(dst, size, data)
 /*
  * Write bytes to kernel address space for debugger.
  */
+extern char	kernel_text[], etext[];
 void
 db_write_bytes(addr, size, data)
 	vm_offset_t	addr;

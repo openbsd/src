@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.79 1996/12/17 21:35:30 gwr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.77 1996/10/13 03:47:51 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -78,33 +78,34 @@
 #include <sys/shm.h>
 #endif
 
+#include <machine/cpu.h>
+#include <machine/reg.h>
+#include <machine/psl.h>
+#include <machine/pte.h>
+#include <machine/mon.h> 
+#include <machine/isr.h>
+#include <machine/kcore.h>
+
+#include <dev/cons.h>
+
 #include <vm/vm.h>
 #include <vm/vm_map.h>
 #include <vm/vm_kern.h>
 #include <vm/vm_page.h>
 
-#include <dev/cons.h>
+#include <net/netisr.h>
 
-#include <machine/cpu.h>
-#include <machine/reg.h>
-#include <machine/psl.h>
-#include <machine/pte.h>
-#include <machine/mon.h>
-#include <machine/dvma.h>
-#include <machine/kcore.h>
-#include <machine/db_machdep.h>
-
-#include "machdep.h"
+#include "cache.h"
 
 extern char *cpu_string;
 extern char version[];
 extern short exframesize[];
+extern vm_offset_t vmmap;	/* XXX - poor name.  See mem.c */
+extern int cold;
 
-int	physmem;
-int	fpu_type;
-int	msgbufmapped;
-
-vm_offset_t vmmap;
+int physmem;
+int fpu_type;
+int msgbufmapped;
 
 /*
  * safepri is a safe priority for sleep to set for a spin-wait
@@ -126,10 +127,9 @@ int	bufpages = BUFPAGES;
 #else
 int	bufpages = 0;
 #endif
-label_t *nofault;
+long *nofault;
 
-static void identifycpu __P((void));
-static void initcpu __P((void));
+void identifycpu();
 
 /*
  * Console initialization: called early on from main,
@@ -138,7 +138,8 @@ static void initcpu __P((void));
  */
 void consinit()
 {
-	cninit();
+    extern void cninit();
+    cninit();
 
 #ifdef KGDB
 	/* XXX - Ask on console for kgdb_dev? */
@@ -153,7 +154,7 @@ void consinit()
 	ddb_init();
 	if (boothowto & RB_KDB)
 		Debugger();
-#endif DDB
+#endif
 }
 
 /*
@@ -169,7 +170,6 @@ void consinit()
  */
 #define	valloc(name, type, num) \
 	v = (caddr_t)(((name) = (type *)v) + (num))
-static caddr_t allocsys __P((caddr_t));
 static caddr_t
 allocsys(v)
 	register caddr_t v;
@@ -212,8 +212,6 @@ allocsys(v)
 		if (nbuf < 16)
 			nbuf = 16;
 	}
-	if (nbuf > 200)		/* XXX Sorry, our kvm space is too small */
-		nbuf = 200;
 	if (nswbuf == 0) {
 		nswbuf = (nbuf / 2) &~ 1;	/* force even */
 		if (nswbuf > 256)
@@ -238,15 +236,15 @@ cpu_startup()
 {
 	caddr_t v;
 	int sz, i;
-	vm_size_t size;
+	vm_size_t size;	
 	int base, residual;
 	vm_offset_t minaddr, maxaddr;
-
+	
 	/*
 	 * The msgbuf was set up earlier (in sun3_startup.c)
 	 * just because it was more convenient to do there.
 	 */
-
+	
 	/*
 	 * Good {morning,afternoon,evening,night}.
 	 */
@@ -394,7 +392,6 @@ setregs(p, pack, stack, retval)
 	if (fpu_type) {
 		m68881_restore(&p->p_addr->u_pcb.pcb_fpregs);
 	}
-	p->p_md.md_flags = 0;
 	/* XXX - HPUX sigcode hack would go here... */
 }
 
@@ -424,7 +421,6 @@ identifycpu()
 /*
  * machine dependent system variables.
  */
-int
 cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	int *name;
 	u_int namelen;
@@ -434,7 +430,6 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	size_t newlen;
 	struct proc *p;
 {
-	int error;
 	dev_t consdev;
 
 	/* all sysctl names at this level are terminal */
@@ -447,24 +442,12 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 			consdev = cn_tab->cn_dev;
 		else
 			consdev = NODEV;
-		error = sysctl_rdstruct(oldp, oldlenp, newp,
-		    &consdev, sizeof consdev);
-		break;
-
-#if 0	/* XXX - Not yet... */
-	case CPU_ROOT_DEVICE:
-		error = sysctl_rdstring(oldp, oldlenp, newp, root_device);
-		break;
-
-	case CPU_BOOTED_KERNEL:
-		error = sysctl_rdstring(oldp, oldlenp, newp, booted_kernel);
-		break;
-#endif
-
+		return (sysctl_rdstruct(oldp, oldlenp, newp, &consdev,
+		    sizeof consdev));
 	default:
-		error = EOPNOTSUPP;
+		return (EOPNOTSUPP);
 	}
-	return (error);
+	/* NOTREACHED */
 }
 
 #define SS_RTEFRAME	1
@@ -534,7 +517,7 @@ sendsig(catcher, sig, mask, code)
 		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
 	} else
 		fp = (struct sigframe *)(frame->f_regs[SP] - fsize);
-	if ((unsigned)fp <= USRSTACK - ctob(p->p_vmspace->vm_ssize))
+	if ((unsigned)fp <= USRSTACK - ctob(p->p_vmspace->vm_ssize)) 
 		(void)grow(p, (unsigned)fp);
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
@@ -560,7 +543,7 @@ sendsig(catcher, sig, mask, code)
 		return;
 	}
 	kfp = (struct sigframe *)malloc((u_long)fsize, M_TEMP, M_WAITOK);
-	/*
+	/* 
 	 * Build the argument list for the signal handler.
 	 */
 	kfp->sf_signum = sig;
@@ -746,7 +729,7 @@ sys_sigreturn(p, v, retval)
 	 */
 	if (flags & SS_RTEFRAME) {
 		register int sz;
-
+		
 		/* grab frame type and validate */
 		sz = tstate.ss_frame.f_format;
 		if (sz > 15 || (sz = exframesize[sz]) < 0)
@@ -787,8 +770,7 @@ sys_sigreturn(p, v, retval)
  * XXX - Put waittime checks in there too?
  */
 int waittime = -1;	/* XXX - Who else looks at this? -gwr */
-static void
-reboot_sync __P((void))
+static void reboot_sync()
 {
 	extern struct proc proc0;
 	struct buf *bp;
@@ -806,7 +788,6 @@ reboot_sync __P((void))
 
 /*
  * Common part of the BSD and SunOS reboot system calls.
- * Warning: OpenBSD doesn't use a second arg to boot()
  */
 int reboot2(howto, user_boot_string)
 	int howto;
@@ -906,7 +887,7 @@ long	dumplo = 0; 		/* blocks */
 vm_offset_t dumppage_va;
 vm_offset_t dumppage_pa;
 
-#define	DUMP_EXTRA 	3	/* CPU-dependent extra pages */
+#define		DUMP_EXTRA	3	/* CPU-dependent extra pages */
 
 /*
  * This is called by cpu_startup to set dumplo, dumpsize.
@@ -920,7 +901,7 @@ dumpconf()
 {
 	int nblks;	/* size of dump area */
 	int maj;
-	int (*getsize)__P((dev_t));
+	int (*getsize)();
 
 	if (dumpdev == NODEV)
 		return;
@@ -936,7 +917,7 @@ dumpconf()
 		return;
 
 	/* Position dump image near end of space, page aligned. */
-	dumpsize = physmem + DUMP_EXTRA;	/* pages */
+	dumpsize = physmem + DUMP_EXTRA; /* pages */
 	dumplo = nblks - ctod(dumpsize);
 	dumplo &= ~(ctod(1)-1);
 
@@ -959,12 +940,11 @@ extern vm_offset_t avail_start;
  *   pagemap (2*NBPG)
  *   physical memory...
  */
-void
 dumpsys()
 {
 	struct bdevsw *dsw;
 	kcore_seg_t	*kseg_p;
-	cpu_kcore_hdr_t *chdr_p;
+	cpu_kcore_hdr_t	*chdr_p;
 	char *vaddr;
 	vm_offset_t paddr;
 	int psize, todo, chunk;
@@ -977,7 +957,7 @@ dumpsys()
 	if (dumppage_va == 0)
 		return;
 
-	/*
+	/* 
 	 * For dumps during autoconfiguration,
 	 * if dump device has already configured...
 	 */
@@ -1018,14 +998,14 @@ dumpsys()
 	blkno += btodb(NBPG);
 
 	/* translation RAM (page zero) */
-	pmap_get_pagemap((int*)vaddr, 0);
+	pmap_get_pagemap(vaddr, 0);
 	error = (*dsw->d_dump)(dumpdev, blkno, vaddr, NBPG);
 	if (error)
 		goto fail;
 	blkno += btodb(NBPG);
 
 	/* translation RAM (page one) */
-	pmap_get_pagemap((int*)vaddr, NBPG);
+	pmap_get_pagemap(vaddr, NBPG);
 	error = (*dsw->d_dump)(dumpdev, blkno, vaddr, NBPG);
 	if (error)
 		goto fail;
@@ -1080,7 +1060,6 @@ fail:
 	printf(" dump error=%d\n", error);
 }
 
-static void
 initcpu()
 {
 	/* XXX: Enable RAM parity/ECC checking? */
@@ -1093,32 +1072,57 @@ initcpu()
 #endif
 }
 
-/* called from locore.s */
-void straytrap __P((struct trapframe));
-void
 straytrap(frame)
-	struct trapframe frame;
+	struct frame frame;
 {
-	printf("unexpected trap; vector=0x%x at pc=0x%x\n",
-		frame.tf_vector, frame.tf_pc);
+	printf("unexpected trap; vector offset 0x%x from 0x%x\n",
+		frame.f_vector, frame.f_pc);
 #ifdef	DDB
-	/* XXX - Yuck!  Make DDB use "struct trapframe" instead! */
-	kdb_trap(-1, (struct mc68020_saved_state *) &frame);
+	kdb_trap(-1, &frame);
 #endif
 }
 
 /* from hp300: badaddr() */
-/* peek_byte(), peek_word() moved to autoconf.c */
+int
+peek_word(addr)
+	register caddr_t addr;
+{
+	label_t		faultbuf;
+	register int x;
+
+	nofault = (long*)&faultbuf;
+	if (setjmp(&faultbuf)) {
+		nofault = NULL;
+		return(-1);
+	}
+	x = *(volatile u_short *)addr;
+	nofault = NULL;
+	return(x);
+}
+
+/* from hp300: badbaddr() */
+int
+peek_byte(addr)
+	register caddr_t addr;
+{
+	label_t 	faultbuf;
+	register int x;
+
+	nofault = (long*)&faultbuf;
+	if (setjmp(&faultbuf)) {
+		nofault = NULL;
+		return(-1);
+	}
+	x = *(volatile u_char *)addr;
+	nofault = NULL;
+	return(x);
+}
 
 /* XXX: parityenable() ? */
-
-static void dumpmem __P((int *, int, int));
-static char *hexstr __P((int, int));
 
 /*
  * Print a register and stack dump.
  */
-void
 regdump(fp, sbytes)
 	struct frame *fp; /* must not be register */
 	int sbytes;
@@ -1126,6 +1130,7 @@ regdump(fp, sbytes)
 	static int doingdump = 0;
 	register int i;
 	int s;
+	extern char *hexstr();
 
 	if (doingdump)
 		return;
@@ -1161,12 +1166,12 @@ regdump(fp, sbytes)
 
 #define KSADDR	((int *)((u_int)curproc->p_addr + USPACE - NBPG))
 
-static void
 dumpmem(ptr, sz, ustack)
 	register int *ptr;
 	int sz, ustack;
 {
 	register int i, val;
+	extern char *hexstr();
 
 	for (i = 0; i < sz; i++) {
 		if ((i & 7) == 0)
@@ -1187,7 +1192,7 @@ dumpmem(ptr, sz, ustack)
 	printf("\n");
 }
 
-static char *
+char *
 hexstr(val, len)
 	register int val;
 	int len;
@@ -1210,11 +1215,10 @@ hexstr(val, len)
 /*
  * cpu_exec_aout_makecmds():
  *	cpu-dependent a.out format hook for execve().
- *
+ * 
  * Determine if the given exec package refers to something which we
  * understand and, if so, set up the vmcmds for it.
  */
-int
 cpu_exec_aout_makecmds(p, epp)
 	struct proc *p;
 	struct exec_package *epp;

@@ -1,4 +1,4 @@
-/*	$NetBSD: control.h,v 1.15 1996/12/17 21:11:02 gwr Exp $	*/
+/*	$NetBSD: control.h,v 1.14 1996/11/20 18:57:06 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -84,19 +84,17 @@
 
 #include <sys/types.h>
 
-/* ctrlsp.S */
 unsigned char get_control_byte __P((char *));
 unsigned int get_control_word __P((char *));
 void set_control_byte __P((char *, unsigned char));
 void set_control_word __P((char *, unsigned int));
 
-/* control.c */
 int get_context __P((void));
 void set_context __P((int));
-
+     
 vm_offset_t get_pte __P((vm_offset_t va));
 void set_pte __P((vm_offset_t, vm_offset_t));
-
+     
 unsigned char get_segmap __P((vm_offset_t));
 void set_segmap __P((vm_offset_t va, unsigned char));
 void set_segmap_allctx __P((vm_offset_t va, unsigned char));

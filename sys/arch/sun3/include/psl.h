@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.11 1996/12/17 21:11:11 gwr Exp $	*/
+/*	$NetBSD: psl.h,v 1.10 1996/11/20 18:57:17 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -101,12 +101,12 @@ extern __inline__ int _spl(int new)
 #define splclock()      spl5()
 #define splstatclock()  splclock()
 
+/* Zilog Serial hardware interrupts (hard-wired at 6) */
+#define splzs()         spl6()
+
 /* Block out all interrupts (except NMI of course). */
 #define splhigh()       spl7()
 #define splsched()      spl7()
-
-/* Get current sr value (debug, etc.) */
-extern int getsr __P((void));
 
 #endif	/* KERNEL && !_LOCORE */
 #endif	/* PSL_C */

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_obio.c,v 1.7 1996/12/17 21:10:45 gwr Exp $	*/
+/*	$NetBSD: if_ie_obio.c,v 1.6 1996/11/20 18:56:51 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -58,6 +58,7 @@
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
 #include <machine/dvma.h>
+#include <machine/isr.h>
 #include <machine/obio.h>
 #include <machine/idprom.h>
 #include <machine/vmparam.h>
@@ -108,6 +109,7 @@ ie_obio_attach(parent, self, args)
 	void *args;
 {
 	struct ie_softc *sc = (void *) self;
+	struct cfdata *cf = self->dv_cfdata;
 	struct confargs *ca = args;
 
 	sc->hard_type = IE_OBIO;

@@ -1,8 +1,9 @@
-/*	$NetBSD: proc.h,v 1.8 1996/11/25 22:09:11 gwr Exp $	*/
+/*	$NetBSD: proc.h,v 1.7 1994/11/21 21:34:06 gwr Exp $	*/
 
 /*
- * Copyright (c) 1991, 1993
- *	The Regents of the University of California.  All rights reserved.
+ * Copyright (c) 1994 Gordon W. Ross
+ * Copyright (c) 1991 Regents of the University of California.
+ * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,7 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: proc.h	8.1 (Berkeley) 6/10/93
+ *	from: @(#)proc.h	7.1 (Berkeley) 5/15/91
+ *	proc.h,v 1.2 1993/05/22 07:58:30 cgd Exp
  */
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.38 1996/12/17 21:11:14 gwr Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.37 1996/11/20 18:57:22 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -46,10 +46,11 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/map.h>
+#include <sys/buf.h>
 #include <sys/dkstat.h>
+#include <sys/conf.h>
 #include <sys/dmap.h>
 #include <sys/reboot.h>
 
@@ -59,11 +60,14 @@
 
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
-#include <machine/control.h>
+#include <machine/isr.h>
 #include <machine/pte.h>
 #include <machine/pmap.h>
 
-#include "machdep.h"
+extern int soft1intr();
+
+void swapgeneric();
+void swapconf(), dumpconf();
 
 int cold;
 
@@ -92,13 +96,13 @@ swapconf()
 	struct swdevt *swp;
 	u_int maj;
 	int nblks;
-
+	
 	for (swp = swdevt; swp->sw_dev != NODEV; swp++) {
 
 		maj = major(swp->sw_dev);
 		if (maj > nblkdev) /* paranoid? */
 			break;
-
+		
 		if (bdevsw[maj].d_psize) {
 			nblks = (*bdevsw[maj].d_psize)(swp->sw_dev);
 			if (nblks > 0 &&
@@ -135,6 +139,8 @@ int bus_scan(parent, child, aux)
 	cfmatch_t mf;
 
 #ifdef	DIAGNOSTIC
+	if (parent->dv_cfdata->cf_driver->cd_indirect)
+		panic("bus_scan: indirect?");
 	if (cf->cf_fstate == FSTATE_STAR)
 		panic("bus_scan: FSTATE_STAR");
 #endif
@@ -257,7 +263,7 @@ char *
 bus_mapin(bustype, paddr, sz)
 	int bustype, paddr, sz;
 {
-	int off, pa, pmt;
+	int off, pa, pgs, pmt;
 	vm_offset_t va, retval;
 
 	if (bustype & ~3)
@@ -290,39 +296,4 @@ bus_mapin(bustype, paddr, sz)
 #endif
 
 	return ((char*)retval);
-}
-
-int
-peek_word(addr)
-	register caddr_t addr;
-{
-	label_t		faultbuf;
-	register int x;
-
-	nofault = &faultbuf;
-	if (setjmp(&faultbuf)) {
-		nofault = NULL;
-		return(-1);
-	}
-	x = *(volatile u_short *)addr;
-	nofault = NULL;
-	return(x);
-}
-
-/* from hp300: badbaddr() */
-int
-peek_byte(addr)
-	register caddr_t addr;
-{
-	label_t 	faultbuf;
-	register int x;
-
-	nofault = &faultbuf;
-	if (setjmp(&faultbuf)) {
-		nofault = NULL;
-		return(-1);
-	}
-	x = *(volatile u_char *)addr;
-	nofault = NULL;
-	return(x);
-}
+}	

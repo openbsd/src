@@ -1,4 +1,4 @@
-/*	$NetBSD: dvma.h,v 1.5 1996/12/17 21:11:05 gwr Exp $	*/
+/*	$NetBSD: dvma.h,v 1.4 1996/11/20 18:57:08 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -75,16 +75,14 @@
 #define	DVMA_SPACE_START	0x0FF00000
 #define DVMA_SPACE_END  	0x0FFFE000
 
-void dvma_init __P((void));
-
 /* Allocate/free actual pages of DVMA space. */
-caddr_t dvma_malloc __P((size_t bytes));
+caddr_t dvma_malloc(size_t bytes);
 void dvma_free(caddr_t addr, size_t bytes);
 
 /* Remap/unmap kernel memory in DVMA space. */
-caddr_t dvma_mapin __P((char *kva, int len));
-void dvma_mapout __P((caddr_t dvma_addr, int len));
+caddr_t dvma_mapin(char *kva, int len);
+void dvma_mapout(caddr_t dvma_addr, int len);
 
 /* Convert a kernel DVMA pointer to a slave address. */
-long dvma_kvtopa __P((long kva, int bus));
+long dvma_kvtopa(long kva, int bus);
 

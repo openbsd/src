@@ -1,11 +1,8 @@
-/*	$NetBSD: swapgeneric.c,v 1.19 1996/12/17 21:11:41 gwr Exp $	*/
+/*	$NetBSD: swapgeneric.c,v 1.14 1995/04/26 23:30:08 gwr Exp $	*/
 
-/*-
- * Copyright (c) 1996 The NetBSD Foundation, Inc.
+/*
+ * Copyright (c) 1994 Gordon W. Ross
  * All rights reserved.
- *
- * This code is derived from software contributed to The NetBSD Foundation
- * by Gordon W. Ross.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -15,25 +12,22 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
+ * 3. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
+ * 4. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
+ *      This product includes software developed by Gordon W. Ross
  *
- * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
- * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
- * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 /*
@@ -50,20 +44,11 @@
 #include <sys/systm.h>
 #include <sys/reboot.h>
 
-#include <dev/cons.h>
-
 #include <machine/mon.h>
-#include "machdep.h"
-
-static int net_mkunit __P((int ctlr, int unit));
-static int sd_mkunit  __P((int ctlr, int unit));
-static int xx_mkunit  __P((int ctlr, int unit));
-static struct genconf * gc_lookup __P((char *));
-
-
+  
 #ifdef	NFSCLIENT
-extern char	*nfsbootdevname;          /* nfs_boot.c */
-#endif	/* NFSCLIENT */
+extern char	*nfsbootdevname;	/* nfs_boot.c */
+#else	/* NFSCLIENT */
 
 int (*mountroot) __P((void)) = NULL;
 
@@ -81,16 +66,14 @@ char boot_ifname[NAMESZ];
 /*
  * Functions to convert PROM ctlr/unit into our unit numbers
  */
-static int
-net_mkunit(ctlr, unit)
+static int net_mkunit(ctlr, unit)
 	int ctlr, unit;
 {
 	/* XXX - Not sure which is set. */
 	return (ctlr + unit);
 }
 
-static int
-sd_mkunit(ctlr, unit)
+static int sd_mkunit(ctlr, unit)
 	int ctlr, unit;
 {
 	int target, lun;
@@ -101,8 +84,7 @@ sd_mkunit(ctlr, unit)
 	return (target * 2 + lun);
 }
 
-static int
-xx_mkunit(ctlr, unit)
+static int xx_mkunit(ctlr, unit)
 	int ctlr, unit;
 {
 	return (ctlr * 2 + unit);
@@ -115,14 +97,14 @@ xx_mkunit(ctlr, unit)
 static struct genconf {
 	char gc_name[4];
 	int  gc_major;
-	int  (*gc_mkunit) __P((int, int));
+	int  (*gc_mkunit)();
 } genconf[] = {
-	{ {"ie"}, -1, net_mkunit },
-	{ {"le"}, -1, net_mkunit },
-	{ {"sd"},  7, sd_mkunit },
-	{ {"xy"},  3, xx_mkunit },
-	{ {"xd"}, 10, xx_mkunit },
-	{ {0}, 0, 0 },
+	{ "ie", -1, net_mkunit },
+	{ "le", -1, net_mkunit },
+	{ "sd",	7,  sd_mkunit },
+	{ "xy",	3,  xx_mkunit },
+	{ "xd",	10, xx_mkunit },
+	{ 0 },
 };
 
 static struct genconf *
@@ -141,8 +123,7 @@ gc_lookup(name)
 	return NULL;
 }
 
-static void
-gc_print_all __P((void))
+static void gc_print_all()
 {
 	struct genconf *gc;
 
@@ -156,7 +137,7 @@ gc_print_all __P((void))
 	}
 	printf("\n");
 }
-
+	
 
 struct devspec {
 	int  major;
@@ -165,20 +146,11 @@ struct devspec {
 	char name[4];
 };
 
-static int ds_parse __P((struct devspec *, char *));
-static int ds_tostr __P((struct devspec *, char *));
-static void ds_from_boot __P((struct devspec *));
-static void ds_query __P((struct devspec *, char *));
-static dev_t ds_todev __P((struct devspec *));
-static void gets __P((char *cp));
-
-
 /*
  * Set devspec from a string like: "sd0a"
  * Return length of recognized part.
  */
-static int
-ds_parse(ds, str)
+static int ds_parse(ds, str)
 	struct devspec *ds;
 	char *str;
 {
@@ -222,11 +194,11 @@ ds_parse(ds, str)
  * Format a devspec into a string like: "sd0a"
  * Returns length of string.
  */
-static int
-ds_tostr(ds, str)
+static int ds_tostr(ds, str)
 	struct devspec *ds;
 	char *str;
 {
+	struct genconf *gc;
 	int unit, part;
 	char *p;
 
@@ -258,8 +230,7 @@ ds_tostr(ds, str)
  * Set the devspec to the device we booted from.
  * (Just converts PROM boot parameters.)
  */
-static void
-ds_from_boot(ds)
+static void ds_from_boot(ds)
 	struct devspec *ds;
 {
 	MachMonBootParam *bpp;
@@ -291,13 +262,14 @@ ds_from_boot(ds)
  * Fill in the devspec by asking the operator.
  * The ds passed may hold a default value.
  */
-static void
-ds_query(ds, what)
+static void ds_query(ds, what)
 	struct devspec *ds;
 	char *what;
 {
+	struct genconf *gc;
+	char *p;
+	int len, minor;
 	char buf[64];
-	int len;
 
 	for (;;) {
 		len = ds_tostr(ds, buf);
@@ -316,8 +288,7 @@ ds_query(ds, what)
 	}
 }
 
-static dev_t
-ds_todev(ds)
+static dev_t ds_todev(ds)
 	struct devspec *ds;
 {
 	int minor;
@@ -331,9 +302,11 @@ ds_todev(ds)
  * Choose the root and swap device, either by asking,
  * (if RB_ASKNAME) or from the PROM boot parameters.
  */
-void
 swapgeneric()
 {
+	struct genconf *gc;
+	dev_t root, swap, dump;
+	int minor;
 	struct devspec ds;
 	char buf[NAMESZ];
 
@@ -392,7 +365,6 @@ swapgeneric()
 }
 
 /* XXX - Isn't this in some common file? */
-static void
 gets(cp)
 	char *cp;
 {
