@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccons.c,v 1.39 1998/02/22 13:03:00 deraadt Exp $	*/
+/*	$OpenBSD: pccons.c,v 1.40 1998/03/16 09:12:39 downsj Exp $	*/
 /*	$NetBSD: pccons.c,v 1.99.4.1 1996/06/04 20:03:53 cgd Exp $	*/
 
 /*-
@@ -156,8 +156,6 @@ void pc_xmode_off __P((void));
 
 void	pcstart __P((struct tty *));
 int	pcparam __P((struct tty *, struct termios *));
-
-char	partab[];
 
 int kbd_cmd __P((u_char, u_char));
 void set_cursor_shape __P((void));
