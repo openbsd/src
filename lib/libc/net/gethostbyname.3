@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gethostbyname.3,v 1.10 1999/02/27 21:55:27 deraadt Exp $
+.\"	$OpenBSD: gethostbyname.3,v 1.11 1999/05/21 18:18:09 deraadt Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -52,7 +52,7 @@
 .Ft struct hostent *
 .Fn gethostbyname2 "const char *name" "int af"
 .Ft struct hostent *
-.Fn gethostbyaddr "const char *addr" "int len" "int type"
+.Fn gethostbyaddr "const char *addr" "int len" "int af"
 .Ft struct hostent *
 .Fn gethostent void
 .Ft void
@@ -72,15 +72,17 @@ functions
 each return a pointer to an object with the
 following structure describing an internet host
 referenced by name or by address, respectively.
-This structure contains either the information obtained from the name server,
-.Xr named 8 ,
+This structure contains either information obtained from the name server (ie.
+.Xr resolver 3
+and
+.Xr named 8 ), Ns
 broken-out fields from a line in 
 .Pa /etc/hosts ,
 or database entries supplied by the
 .Xr yp 8
-system .
-If the local name server is not running these routines do a lookup in
-.Pa /etc/hosts .
+system.
+.Xr resolv.conf 5
+describes how the particular database is chosen.
 .Bd -literal
 struct	hostent {
 	char	*h_name;	/* official name of host */
@@ -111,17 +113,13 @@ The first address in
 this is for backward compatibility.
 .El
 .Pp
-When using the nameserver,
+The function
 .Fn gethostbyname
 will search for the named host in the current domain and its parents
-unless the name ends in a dot.
-If the name contains no dot, and if the environment variable
-.Dq Ev HOSTALIASES
-contains the name of an alias file, the alias file will first be searched
-for an alias matching the input name.
-See
-.Xr hostname 7
-for the domain search procedure and the alias file format.
+using the search lookup semantics detailed in
+.Xr resolv.conf 5
+and
+.Xr hostname 7 .
 .Pp
 .Fn gethostbyname2
 is an advanced form of
@@ -130,6 +128,15 @@ which allows lookups in address families other than
 .Dv AF_INET ,
 for example
 .Dv AF_INET6 .
+.Pp
+The
+.Fn gethostbyaddr
+function will search for the specified address of length
+.Dv len
+in the address family
+.Dv af .
+The only address family currently supported is
+.Dv AF_INET .
 .Pp
 The
 .Fn sethostent
@@ -170,8 +177,9 @@ The contents of the error message is the same as that returned by
 with argument
 .Fa h_errno .
 .Sh FILES
-.Bl -tag -width /etc/hosts -compact
+.Bl -tag -width /etc/resolv.conf -compact
 .It Pa /etc/hosts
+.It Pa /etc/resolv.conf
 .El
 .Sh DIAGNOSTICS
 Error return status from 
@@ -211,15 +219,19 @@ for example, a mail-forwarder may be registered for this domain.
 .Sh SEE ALSO
 .Xr resolver 3 ,
 .Xr hosts 5 ,
+.Xr resolv.conf 5 ,
 .Xr hostname 7 ,
 .Xr named 8
 .Sh CAVEAT
-The
+If the search routines in
+.Xr resolv.conf 5
+decide to read the
+.Pa /etc/hosts
+file,
 .Fn gethostent
-function
-reads the next line of
-.Pa /etc/hosts ,
-opening the file if necessary.
+and other functions will
+read the next line of the file,
+re-opening the file if necessary.
 .Pp
 The
 .Fn sethostent
