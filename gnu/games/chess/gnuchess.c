@@ -25,7 +25,7 @@
 */
 
 #ifndef lint
-static char rcsid[] = "$Id: gnuchess.c,v 1.1.1.1 1995/10/18 08:41:10 deraadt Exp $";
+static char rcsid[] = "$Id: gnuchess.c,v 1.2 1995/12/21 14:50:10 deraadt Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -641,7 +641,7 @@ struct BookEntry *p;
 }
 
 
-#define UpdateSearchStatus\
+#define UpdateSearchStatus \
 {\
   if (post) ShowCurrentMove(pnt,node->f,node->t);\
   if (pnt > TrPnt[1])\
