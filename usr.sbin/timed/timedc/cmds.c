@@ -36,7 +36,7 @@ static char sccsid[] = "@(#)cmds.c	5.1 (Berkeley) 5/11/93";
 #endif /* not lint */
 
 #ifdef sgi
-#ident "$Revision: 1.7 $"
+#ident "$Revision: 1.8 $"
 #endif
 
 #include "timedc.h"
@@ -336,8 +336,12 @@ msite(int argc, char *argv[])
 				printf("master timedaemon at %s is %s\n",
 				       tgtname, msg.tsp_name);
 			} else {
-				printf("received wrong ack: %s\n",
-				       tsptype[msg.tsp_type]);
+				if (msg.tsp_type >= TSPTYPENUMBER)
+					printf("received unknown ack: %u\n",
+					    msg.tsp_type);
+				else
+					printf("received wrong ack: %s\n",
+					    tsptype[msg.tsp_type]);
 			}
 		} else {
 			printf("communication error with %s\n", tgtname);
@@ -470,14 +474,19 @@ tracing(int argc, char *argv[])
 			return;
 		}
 		bytehostorder(&msg);
-		if (msg.tsp_type == TSP_ACK)
+		if (msg.tsp_type == TSP_ACK) {
 			if (onflag)
 				printf("timed tracing enabled\n");
 			else
 				printf("timed tracing disabled\n");
-		else
-			printf("wrong ack received: %s\n",
-						tsptype[msg.tsp_type]);
+		} else  {
+			if (msg.tsp_type >= TSPTYPENUMBER)
+				printf("unknown ack received: %u\n",
+				    msg.tsp_type);
+			else
+				printf("wrong ack received: %s\n",
+				    tsptype[msg.tsp_type]);
+		}
 	} else
 		printf("communication error\n");
 }
