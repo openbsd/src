@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_param.h,v 1.1 2001/11/06 00:30:38 art Exp $	*/
-/*	$NetBSD: uvm_param.h,v 1.1 2000/06/26 14:59:04 mrg Exp $	*/
+/*	$OpenBSD: uvm_param.h,v 1.2 2001/11/12 01:26:10 art Exp $	*/
+/*	$NetBSD: uvm_param.h,v 1.5 2001/03/09 01:02:12 chs Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -111,7 +111,10 @@ typedef int	boolean_t;
 #define VM_UVMEXP	4		/* struct uvmexp */
 #define VM_SWAPENCRYPT	5		/* int */
 #define VM_NKMEMPAGES	6		/* int - # kmem_map pages */
-#define	VM_MAXID	7		/* number of valid vm ids */
+#define	VM_ANONMIN	7
+#define	VM_VTEXTMIN	8
+#define	VM_VNODEMIN	9
+#define	VM_MAXID	9		/* number of valid vm ids */
 
 #define	CTL_VM_NAMES { \
 	{ 0, 0 }, \
@@ -121,6 +124,9 @@ typedef int	boolean_t;
 	{ "uvmexp", CTLTYPE_STRUCT }, \
 	{ "swapencrypt", CTLTYPE_NODE }, \
 	{ "nkmempages", CTLTYPE_INT }, \
+	{ "anonmin", CTLTYPE_INT }, \
+	{ "vtextmin", CTLTYPE_INT }, \
+	{ "vnodemin", CTLTYPE_INT }, \
 }
 
 struct _ps_strings {
@@ -149,7 +155,7 @@ struct _ps_strings {
  *	No rounding is used.
  */
 #ifdef _KERNEL
-#define	atop(x)		(((unsigned long)(x)) >> PAGE_SHIFT)
+#define	atop(x)		(((paddr_t)(x)) >> PAGE_SHIFT)
 #define	ptoa(x)		((vaddr_t)((vaddr_t)(x) << PAGE_SHIFT))
 
 /*
@@ -160,6 +166,10 @@ struct _ps_strings {
 #define	trunc_page(x)	((x) & ~PAGE_MASK)
 
 extern psize_t		mem_size;	/* size of physical memory (bytes) */
+#ifdef UBC
+extern int		ubc_nwins;	/* number of UBC mapping windows */
+extern int		ubc_winsize;	/* size of a UBC mapping window */
+#endif
 
 #else
 /* out-of-kernel versions of round_page and trunc_page */

@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_mmap.c,v 1.26 2001/11/09 03:32:23 art Exp $	*/
-/*	$NetBSD: uvm_mmap.c,v 1.45 2000/11/24 23:30:01 soren Exp $	*/
+/*	$OpenBSD: uvm_mmap.c,v 1.27 2001/11/12 01:26:09 art Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.49 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -177,12 +177,9 @@ sys_mincore(p, v, retval)
 	for (/* nothing */;
 	     entry != &map->header && entry->start < end;
 	     entry = entry->next) {
-#ifdef DIAGNOSTIC
-		if (UVM_ET_ISSUBMAP(entry))
-			panic("mincore: user map has submap");
-		if (start < entry->start)
-			panic("mincore: hole");
-#endif
+		KASSERT(!UVM_ET_ISSUBMAP(entry));
+		KASSERT(start >= entry->start);
+
 		/* Make sure there are no holes. */
 		if (entry->end < end &&
 		     (entry->next == &map->header ||
@@ -198,10 +195,7 @@ sys_mincore(p, v, retval)
 		 * are always considered resident (mapped devices).
 		 */
 		if (UVM_ET_ISOBJ(entry)) {
-#ifdef DIAGNOSTIC
-			if (UVM_OBJ_IS_KERN_OBJECT(entry->object.uvm_obj))
-				panic("mincore: user map has kernel object");
-#endif
+			KASSERT(!UVM_OBJ_IS_KERN_OBJECT(entry->object.uvm_obj));
 			if (entry->object.uvm_obj->pgops->pgo_releasepg
 			    == NULL) {
 				for (/* nothing */; start < lim;
@@ -414,11 +408,6 @@ sys_mmap(p, v, retval)
 		 * so just change it to MAP_SHARED.
 		 */
 		if (vp->v_type == VCHR && (flags & MAP_PRIVATE) != 0) {
-#if defined(DIAGNOSTIC)
-			printf("WARNING: converted MAP_PRIVATE device mapping "
-			    "to MAP_SHARED (pid %d comm %s)\n", p->p_pid,
-			    p->p_comm);
-#endif
 			flags = (flags & ~MAP_PRIVATE) | MAP_SHARED;
 		}
 
@@ -1137,6 +1126,7 @@ uvm_mmap(map, addr, size, prot, maxprot, flags, handle, foff, locklimit)
 			uobj = uvn_attach((void *) vp, (flags & MAP_SHARED) ?
 			   maxprot : (maxprot & ~VM_PROT_WRITE));
 
+#ifndef UBC
 			/*
 			 * XXXCDC: hack from old code
 			 * don't allow vnodes which have been mapped
@@ -1166,11 +1156,25 @@ uvm_mmap(map, addr, size, prot, maxprot, flags, handle, foff, locklimit)
 					uvm_vnp_uncache(vp);
 				}
 			}
-
+#else
+			/* XXX for now, attach doesn't gain a ref */
+			VREF(vp);
+#endif
 		} else {
 			uobj = udv_attach((void *) &vp->v_rdev,
-			    (flags & MAP_SHARED) ?
-			    maxprot : (maxprot & ~VM_PROT_WRITE), foff, size);
+			    (flags & MAP_SHARED) ? maxprot :
+			    (maxprot & ~VM_PROT_WRITE), foff, size);
+			/*
+			 * XXX Some devices don't like to be mapped with
+			 * XXX PROT_EXEC, but we don't really have a
+			 * XXX better way of handling this, right now
+			 */
+			if (uobj == NULL && (prot & PROT_EXEC) == 0) {
+				maxprot &= ~VM_PROT_EXECUTE;
+				uobj = udv_attach((void *) &vp->v_rdev,
+				    (flags & MAP_SHARED) ? maxprot :
+				    (maxprot & ~VM_PROT_WRITE), foff, size);
+			}
 			advice = UVM_ADV_RANDOM;
 		}
 		

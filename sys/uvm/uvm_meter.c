@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_meter.c,v 1.14 2001/11/07 02:55:50 art Exp $	*/
-/*	$NetBSD: uvm_meter.c,v 1.14 2000/11/24 18:54:31 chs Exp $	*/
+/*	$OpenBSD: uvm_meter.c,v 1.15 2001/11/12 01:26:09 art Exp $	*/
+/*	$NetBSD: uvm_meter.c,v 1.17 2001/03/09 01:02:12 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -132,6 +132,7 @@ uvm_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	struct proc *p;
 {
 	struct vmtotal vmtotals;
+	int rv, t;
 	struct _ps_strings _ps = { PS_STRINGS };
 
 	switch (name[0]) {
@@ -169,6 +170,44 @@ uvm_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	case VM_PSSTRINGS:
 		return (sysctl_rdstruct(oldp, oldlenp, newp, &_ps,
 		    sizeof(_ps)));
+	case VM_ANONMIN:
+		t = uvmexp.anonminpct;
+		rv = sysctl_int(oldp, oldlenp, newp, newlen, &t);
+		if (rv) {
+			return rv;
+		}
+		if (t + uvmexp.vtextminpct + uvmexp.vnodeminpct > 95 || t < 0) {
+			return EINVAL;
+		}
+		uvmexp.anonminpct = t;
+		uvmexp.anonmin = t * 256 / 100;
+		return rv;
+
+	case VM_VTEXTMIN:
+		t = uvmexp.vtextminpct;
+		rv = sysctl_int(oldp, oldlenp, newp, newlen, &t);
+		if (rv) {
+			return rv;
+		}
+		if (uvmexp.anonminpct + t + uvmexp.vnodeminpct > 95 || t < 0) {
+			return EINVAL;
+		}
+		uvmexp.vtextminpct = t;
+		uvmexp.vtextmin = t * 256 / 100;
+		return rv;
+
+	case VM_VNODEMIN:
+		t = uvmexp.vnodeminpct;
+		rv = sysctl_int(oldp, oldlenp, newp, newlen, &t);
+		if (rv) {
+			return rv;
+		}
+		if (uvmexp.anonminpct + uvmexp.vtextminpct + t > 95 || t < 0) {
+			return EINVAL;
+		}
+		uvmexp.vnodeminpct = t;
+		uvmexp.vnodemin = t * 256 / 100;
+		return rv;
 	default:
 		return (EOPNOTSUPP);
 	}

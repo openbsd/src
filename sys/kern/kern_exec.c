@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.59 2001/11/06 19:53:20 miod Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.60 2001/11/12 01:26:09 art Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -383,7 +383,7 @@ sys_execve(p, v, retval)
 	 * Prepare vmspace for remapping. Note that uvmspace_exec can replace
 	 * p_vmspace!
 	 */
-	uvmspace_exec(p);
+	uvmspace_exec(p, VM_MIN_ADDRESS, VM_MAXUSER_ADDRESS);
 
 	vm = p->p_vmspace;
 	/* Now map address space */

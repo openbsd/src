@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_page_i.h,v 1.9 2001/11/09 03:32:23 art Exp $	*/
-/*	$NetBSD: uvm_page_i.h,v 1.14 2000/11/27 07:47:42 chs Exp $	*/
+/*	$OpenBSD: uvm_page_i.h,v 1.10 2001/11/12 01:26:10 art Exp $	*/
+/*	$NetBSD: uvm_page_i.h,v 1.16 2001/01/28 23:30:45 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -93,7 +93,7 @@ uvm_lock_fpageq()
 {
 	int s;
 
-	s = splimp();
+	s = splvm();
 	simple_lock(&uvm.fpageqlock);
 	return (s);
 }
@@ -132,7 +132,7 @@ uvm_pagelookup(obj, off)
 
 	buck = &uvm.page_hash[uvm_pagehash(obj,off)];
 
-	s = splimp();
+	s = splvm();
 	simple_lock(&uvm.hashlock);
 	TAILQ_FOREACH(pg, buck, hashq) {
 		if (pg->uobject == obj && pg->offset == off) {
@@ -194,11 +194,12 @@ uvm_pageunwire(pg)
 }
 
 /*
- * uvm_pagedeactivate: deactivate page -- no pmaps have access to page
+ * uvm_pagedeactivate: deactivate page
  *
  * => caller must lock page queues
  * => caller must check to make sure page is not wired
  * => object that page belongs to must be locked (so we can adjust pg->flags)
+ * => caller must clear the reference on the page before calling
  */
 
 PAGE_INLINE void
@@ -218,8 +219,17 @@ uvm_pagedeactivate(pg)
 			TAILQ_INSERT_TAIL(&uvm.page_inactive_obj, pg, pageq);
 		pg->pqflags |= PQ_INACTIVE;
 		uvmexp.inactive++;
+#ifndef UBC
 		pmap_clear_reference(pg);
-		if (pmap_is_modified(pg))
+#endif
+		/*
+		 * update the "clean" bit.  this isn't 100%
+		 * accurate, and doesn't have to be.  we'll
+		 * re-sync it after we zap all mappings when
+		 * scanning the inactive list.
+		 */
+		if ((pg->flags & PG_CLEAN) != 0 &&
+		    pmap_is_modified(pg))
 			pg->flags &= ~PG_CLEAN;
 	}
 }

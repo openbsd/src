@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_extern.h,v 1.32 2001/11/10 18:42:31 art Exp $	*/
-/*	$NetBSD: uvm_extern.h,v 1.52 2000/11/27 04:36:40 nisimura Exp $	*/
+/*	$OpenBSD: uvm_extern.h,v 1.33 2001/11/12 01:26:09 art Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.57 2001/03/09 01:02:12 chs Exp $	*/
 
 /*
  *
@@ -269,20 +269,29 @@ struct uvmexp {
 	int inactive;   /* number of pages that we free'd but may want back */
 	int paging;	/* number of pages in the process of being paged out */
 	int wired;      /* number of wired pages */
-	int zeropages;	/* number of zero'd pages */
+
+	int zeropages;		/* number of zero'd pages */
 	int reserve_pagedaemon; /* number of pages reserved for pagedaemon */
-	int reserve_kernel; /* number of pages reserved for kernel */
+	int reserve_kernel;	/* number of pages reserved for kernel */
+	int anonpages;		/* number of pages used by anon pagers */
+	int vnodepages;		/* number of pages used by vnode page cache */
+	int vtextpages;		/* number of pages used by vtext vnodes */
 
 	/* pageout params */
 	int freemin;    /* min number of free pages */
 	int freetarg;   /* target number of free pages */
 	int inactarg;   /* target number of inactive pages */
 	int wiredmax;   /* max number of wired pages */
+	int anonmin;	/* min threshold for anon pages */
+	int vtextmin;	/* min threshold for vtext pages */
+	int vnodemin;	/* min threshold for vnode pages */
+	int anonminpct;	/* min percent anon pages */
+	int vtextminpct;/* min percent vtext pages */
+	int vnodeminpct;/* min percent vnode pages */
 
 	/* swap */
 	int nswapdev;	/* number of configured swap devices in system */
 	int swpages;	/* number of PAGE_SIZE'ed swap pages */
-	int swpguniq;	/* number of swap pages in use, not also in RAM */
 	int swpginuse;	/* number of swap pages in use */
 	int swpgonly;	/* number of swap pages in use, not also in RAM */
 	int nswget;	/* number of times fault calls uvm_swap_get() */
@@ -346,7 +355,10 @@ struct uvmexp {
 	int pdpageouts;	/* number of times daemon started a pageout */
 	int pdpending;	/* number of times daemon got a pending pagout */
 	int pddeact;	/* number of pages daemon deactivates */
-	
+	int pdreanon;	/* anon pages reactivated due to min threshold */
+	int pdrevnode;	/* vnode pages reactivated due to min threshold */
+	int pdrevtext;	/* vtext pages reactivated due to min threshold */
+
 	/* kernel memory objects: managed by uvm_km_kmemalloc() only! */
 	struct uvm_object *kmem_object;
 	struct uvm_object *mb_object;
@@ -519,7 +531,7 @@ struct vmspace		*uvmspace_alloc __P((vaddr_t, vaddr_t,
 				boolean_t));
 void			uvmspace_init __P((struct vmspace *, struct pmap *,
 				vaddr_t, vaddr_t, boolean_t));
-void			uvmspace_exec __P((struct proc *));
+void			uvmspace_exec __P((struct proc *, vaddr_t, vaddr_t));
 struct vmspace		*uvmspace_fork __P((struct vmspace *));
 void			uvmspace_free __P((struct vmspace *));
 void			uvmspace_share __P((struct proc *, struct proc *));

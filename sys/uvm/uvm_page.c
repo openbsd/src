@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_page.c,v 1.30 2001/11/10 18:42:31 art Exp $	*/
-/*	$NetBSD: uvm_page.c,v 1.44 2000/11/27 08:40:04 chs Exp $	*/
+/*	$OpenBSD: uvm_page.c,v 1.31 2001/11/12 01:26:09 art Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.51 2001/03/09 01:02:12 chs Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,13 +71,14 @@
  * uvm_page.c: page ops.
  */
 
+#define UVM_PAGE                /* pull in uvm_page.h functions */
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/sched.h>
 #include <sys/kernel.h>
+#include <sys/vnode.h>
 
-#define UVM_PAGE                /* pull in uvm_page.h functions */
 #include <uvm/uvm.h>
 
 /*
@@ -102,12 +103,6 @@ int vm_nphysseg = 0;				/* XXXCDC: uvm.nphysseg */
  * problems for either cpu caches or DMA latency.
  */
 boolean_t vm_page_zero_enable = FALSE;
-
-#ifdef UBC
-u_long uvm_pgcnt_anon;
-u_long uvm_pgcnt_vnode;
-extern struct uvm_pagerops uvm_vnodeops;
-#endif
 
 /*
  * local variables
@@ -157,13 +152,9 @@ uvm_pageinsert(pg)
 	struct pglist *buck;
 	int s;
 
-#ifdef DIAGNOSTIC
-	if (pg->flags & PG_TABLED)
-		panic("uvm_pageinsert: already inserted");
-#endif
-
+	KASSERT((pg->flags & PG_TABLED) == 0);
 	buck = &uvm.page_hash[uvm_pagehash(pg->uobject,pg->offset)];
-	s = splimp();
+	s = splvm();
 	simple_lock(&uvm.hashlock);
 	TAILQ_INSERT_TAIL(buck, pg, hashq);	/* put in hash */
 	simple_unlock(&uvm.hashlock);
@@ -190,17 +181,17 @@ uvm_pageremove(pg)
 
 	KASSERT(pg->flags & PG_TABLED);
 	buck = &uvm.page_hash[uvm_pagehash(pg->uobject,pg->offset)];
-	s = splimp();
+	s = splvm();
 	simple_lock(&uvm.hashlock);
 	TAILQ_REMOVE(buck, pg, hashq);
 	simple_unlock(&uvm.hashlock);
 	splx(s);
 
-#ifdef UBC
-	if (pg->uobject->pgops == &uvm_vnodeops) {
-		uvm_pgcnt_vnode--;
+	if (UVM_OBJ_IS_VTEXT(pg->uobject)) {
+		uvmexp.vtextpages--;
+	} else if (UVM_OBJ_IS_VNODE(pg->uobject)) {
+		uvmexp.vnodepages--;
 	}
-#endif
 
 	/* object should be locked */
 	TAILQ_REMOVE(&pg->uobject->memq, pg, listq);
@@ -227,8 +218,9 @@ uvm_page_init(kvm_startp, kvm_endp)
 	paddr_t paddr;
 
 	/*
-	 * step 1: init the page queues and page queue locks
+	 * init the page queues and page queue locks
 	 */
+
 	for (lcv = 0; lcv < VM_NFREELIST; lcv++) {
 		for (i = 0; i < PGFL_NQUEUES; i++)
 			TAILQ_INIT(&uvm.page_free[lcv].pgfl_queues[i]);
@@ -240,8 +232,8 @@ uvm_page_init(kvm_startp, kvm_endp)
 	simple_lock_init(&uvm.fpageqlock);
 
 	/*
-	 * step 2: init the <obj,offset> => <page> hash table. for now
-	 * we just have one bucket (the bootstrap bucket).   later on we
+	 * init the <obj,offset> => <page> hash table.  for now
+	 * we just have one bucket (the bootstrap bucket).  later on we
 	 * will allocate new buckets as we dynamically resize the hash table.
 	 */
 
@@ -252,7 +244,7 @@ uvm_page_init(kvm_startp, kvm_endp)
 	simple_lock_init(&uvm.hashlock);	/* init hash table lock */
 
 	/* 
-	 * step 3: allocate vm_page structures.
+	 * allocate vm_page structures.
 	 */
 
 	/*
@@ -294,8 +286,7 @@ uvm_page_init(kvm_startp, kvm_endp)
 	memset(pagearray, 0, pagecount * sizeof(struct vm_page));
 					 
 	/*
-	 * step 4: init the vm_page structures and put them in the correct
-	 * place...
+	 * init the vm_page structures and put them in the correct place.
 	 */
 
 	for (lcv = 0 ; lcv < vm_nphysseg ; lcv++) {
@@ -306,6 +297,7 @@ uvm_page_init(kvm_startp, kvm_endp)
 			panic("uvm_page_init");  /* XXXCDC: shouldn't happen? */
 			/* n = pagecount; */
 		}
+
 		/* set up page array pointers */
 		vm_physmem[lcv].pgs = pagearray;
 		pagearray += n;
@@ -326,7 +318,7 @@ uvm_page_init(kvm_startp, kvm_endp)
 	}
 
 	/*
-	 * step 5: pass up the values of virtual_space_start and
+	 * pass up the values of virtual_space_start and
 	 * virtual_space_end (obtained by uvm_pageboot_alloc) to the upper
 	 * layers of the VM.
 	 */
@@ -335,23 +327,29 @@ uvm_page_init(kvm_startp, kvm_endp)
 	*kvm_endp = trunc_page(virtual_space_end);
 
 	/*
-	 * step 6: init locks for kernel threads
+	 * init locks for kernel threads
 	 */
 
 	simple_lock_init(&uvm.pagedaemon_lock);
 	simple_lock_init(&uvm.aiodoned_lock);
 
 	/*
-	 * step 7: init reserve thresholds
+	 * init reserve thresholds
 	 * XXXCDC - values may need adjusting
 	 */
 	uvmexp.reserve_pagedaemon = 4;
 	uvmexp.reserve_kernel = 6;
+	uvmexp.anonminpct = 10;
+	uvmexp.vnodeminpct = 10;
+	uvmexp.vtextminpct = 5;
+	uvmexp.anonmin = uvmexp.anonminpct * 256 / 100;
+	uvmexp.vnodemin = uvmexp.vnodeminpct * 256 / 100;
+	uvmexp.vtextmin = uvmexp.vtextminpct * 256 / 100;
 
   	/*
-	 * step 8: determine if we should zero pages in the idle
-	 * loop.
+	 * determine if we should zero pages in the idle loop.
 	 */
+
 	uvm.page_idle_zero = vm_page_zero_enable;
 
 	/*
@@ -802,7 +800,7 @@ uvm_page_rehash()
 	 * now replace the old buckets with the new ones and rehash everything
 	 */
 
-	s = splimp();
+	s = splvm();
 	simple_lock(&uvm.hashlock);
 	uvm.page_hash = newbuckets;
 	uvm.page_nhash = bucketcount;
@@ -897,6 +895,10 @@ uvm_pagealloc_strat(obj, off, anon, flags, strat, free_list)
 
 	KASSERT(obj == NULL || anon == NULL);
 	KASSERT(off == trunc_page(off));
+
+	LOCK_ASSERT(obj == NULL || simple_lock_held(&obj->vmobjlock));
+	LOCK_ASSERT(anon == NULL || simple_lock_held(&anon->an_lock));
+
 	s = uvm_lock_fpageq();
 
 	/*
@@ -1022,9 +1024,7 @@ uvm_pagealloc_strat(obj, off, anon, flags, strat, free_list)
 	if (anon) {
 		anon->u.an_page = pg;
 		pg->pqflags = PQ_ANON;
-#ifdef UBC
-		uvm_pgcnt_anon++;
-#endif
+		uvmexp.anonpages++;
 	} else {
 		if (obj)
 			uvm_pageinsert(pg);
@@ -1224,11 +1224,10 @@ uvm_pagefree(pg)
 		pg->wire_count = 0;
 		uvmexp.wired--;
 	}
-#ifdef UBC
+
 	if (pg->uanon) {
-		uvm_pgcnt_anon--;
+		uvmexp.anonpages--;
 	}
-#endif
 
 	/*
 	 * and put on free queue
@@ -1292,6 +1291,8 @@ uvm_page_unbusy(pgs, npgs)
 			}
 		} else {
 			UVMHIST_LOG(ubchist, "unbusying pg %p", pg,0,0,0);
+			KASSERT(pg->wire_count ||
+				(pg->pqflags & (PQ_ACTIVE|PQ_INACTIVE)));
 			pg->flags &= ~(PG_WANTED|PG_BUSY);
 			UVM_PAGE_OWN(pg, NULL);
 		}

@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_object.h,v 1.5 2001/01/29 02:07:47 niklas Exp $	*/
-/*	$NetBSD: uvm_object.h,v 1.8 1999/05/25 20:30:09 thorpej Exp $	*/
+/*	$OpenBSD: uvm_object.h,v 1.6 2001/11/12 01:26:09 art Exp $	*/
+/*	$NetBSD: uvm_object.h,v 1.11 2001/03/09 01:02:12 chs Exp $	*/
 
 /*
  *
@@ -82,5 +82,19 @@ struct uvm_object {
 
 #define	UVM_OBJ_IS_INTRSAFE_OBJECT(uobj)				\
 	((uobj)->uo_refs == UVM_OBJ_KERN_INTRSAFE)
+
+#ifdef _KERNEL
+
+extern struct uvm_pagerops uvm_vnodeops;
+
+#define	UVM_OBJ_IS_VNODE(uobj)						\
+	((uobj)->pgops == &uvm_vnodeops)
+
+#define	UVM_OBJ_IS_VTEXT(uobj)						\
+	((uobj)->pgops == &uvm_vnodeops &&				\
+	 ((struct vnode *)uobj)->v_flag & VTEXT)
+
+
+#endif /* _KERNEL */
 
 #endif /* _UVM_UVM_OBJECT_H_ */

@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_stat.h,v 1.9 2001/08/11 10:57:22 art Exp $	*/
-/*	$NetBSD: uvm_stat.h,v 1.18 2000/04/11 08:12:14 pk Exp $	*/
+/*	$OpenBSD: uvm_stat.h,v 1.10 2001/11/12 01:26:10 art Exp $	*/
+/*	$NetBSD: uvm_stat.h,v 1.19 2001/02/04 10:55:58 mrg Exp $	*/
 
 /*
  *
@@ -131,6 +131,7 @@ LIST_HEAD(uvm_history_head, uvm_history);
 /* and these are the bit values of each history */
 #define	UVMHIST_MAPHIST		0x00000001	/* maphist */
 #define	UVMHIST_PDHIST		0x00000002	/* pdhist */
+#define	UVMHIST_UBCHIST		0x00000004	/* ubchist */
 
 #ifdef _KERNEL
 

@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_map.h,v 1.14 2001/11/07 02:55:50 art Exp $	*/
-/*	$NetBSD: uvm_map.h,v 1.22 2000/09/13 15:00:25 thorpej Exp $	*/
+/*	$OpenBSD: uvm_map.h,v 1.15 2001/11/12 01:26:09 art Exp $	*/
+/*	$NetBSD: uvm_map.h,v 1.24 2001/02/18 21:19:08 chs Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -386,6 +386,7 @@ int		uvm_unmap_remove __P((vm_map_t, vaddr_t, vaddr_t,
 
 static __inline boolean_t vm_map_lock_try __P((vm_map_t));
 static __inline void vm_map_lock __P((vm_map_t));
+extern const char vmmapbsy[];
 
 static __inline boolean_t
 vm_map_lock_try(map)
@@ -426,17 +427,14 @@ vm_map_lock(map)
 	simple_lock(&map->flags_lock);
 	while (map->flags & VM_MAP_BUSY) {
 		map->flags |= VM_MAP_WANTLOCK;
-		ltsleep(&map->flags, PVM, "vmmapbsy", 0, &map->flags_lock);
+		ltsleep(&map->flags, PVM, (char *)vmmapbsy, 0, &map->flags_lock);
 	}
 
 	error = lockmgr(&map->lock, LK_EXCLUSIVE|LK_SLEEPFAIL|LK_INTERLOCK,
 	    &map->flags_lock, curproc);
 
 	if (error) {
-#ifdef DIAGNOSTIC
-		if (error != ENOLCK)
-			panic("vm_map_lock: failed to get lock");
-#endif
+		KASSERT(error == ENOLCK);
 		goto try_again;
 	}
 

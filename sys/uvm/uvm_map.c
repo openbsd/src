@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_map.c,v 1.30 2001/11/09 03:32:23 art Exp $	*/
-/*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.31 2001/11/12 01:26:09 art Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.93 2001/02/11 01:34:23 eeh Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -92,6 +92,7 @@
 
 struct uvm_cnt uvm_map_call, map_backmerge, map_forwmerge;
 struct uvm_cnt uvm_mlk_call, uvm_mlk_hint;
+const char vmmapbsy[] = "vmmapbsy";
 
 /*
  * pool for vmspace structures.
@@ -207,7 +208,7 @@ uvm_mapent_alloc(map)
 		me->flags = 0;
 		/* me can't be null, wait ok */
 	} else {
-		s = splimp();	/* protect kentry_free list with splimp */
+		s = splvm();	/* protect kentry_free list with splvm */
 		simple_lock(&uvm.kentry_lock);
 		me = uvm.kentry_free;
 		if (me) uvm.kentry_free = me->next;
@@ -242,7 +243,7 @@ uvm_mapent_free(me)
 	if ((me->flags & UVM_MAP_STATIC) == 0) {
 		pool_put(&uvm_map_entry_pool, me);
 	} else {
-		s = splimp();	/* protect kentry_free list with splimp */
+		s = splvm();	/* protect kentry_free list with splvm */
 		simple_lock(&uvm.kentry_lock);
 		me->next = uvm.kentry_free;
 		uvm.kentry_free = me;
@@ -1585,7 +1586,7 @@ uvm_map_extract(srcmap, start, len, dstmap, dstaddrp, flags)
 		while (entry->start < end && entry != &srcmap->header) {
 			if (copy_ok) {
 				oldoffset = (entry->start + fudge) - start;
-				elen = min(end, entry->end) -
+				elen = MIN(end, entry->end) -
 				    (entry->start + fudge);
 				pmap_copy(dstmap->pmap, srcmap->pmap,
 				    dstaddr + oldoffset, elen,
@@ -2438,8 +2439,6 @@ uvm_map_pageable_all(map, flags, limit)
  * => we may sleep while cleaning if SYNCIO [with map read-locked]
  */
 
-int	amap_clean_works = 1;	/* XXX for now, just in case... */
-
 int
 uvm_map_clean(map, start, end, flags)
 	vm_map_t map;
@@ -2477,8 +2476,10 @@ uvm_map_clean(map, start, end, flags)
 			vm_map_unlock_read(map);
 			return (KERN_INVALID_ARGUMENT);
 		}
-		if (end > current->end && (current->next == &map->header ||
-		    current->end != current->next->start)) {
+		if (end <= current->end) {
+			break;
+		}
+		if (current->end != current->next->start) {
 			vm_map_unlock_read(map);
 			return (KERN_INVALID_ADDRESS);
 		}
@@ -2486,7 +2487,7 @@ uvm_map_clean(map, start, end, flags)
 
 	error = KERN_SUCCESS;
 
-	for (current = entry; current->start < end; current = current->next) {
+	for (current = entry; start < end; current = current->next) {
 		amap = current->aref.ar_amap;	/* top layer */
 		uobj = current->object.uvm_obj;	/* bottom layer */
 		KASSERT(start >= current->start);
@@ -2499,22 +2500,13 @@ uvm_map_clean(map, start, end, flags)
 		 *	(2) We're not deactivating or freeing pages.
 		 */
 
-		if (amap == NULL ||
-		    (flags & (PGO_DEACTIVATE|PGO_FREE)) == 0)
-			goto flush_object;
-
-		/* XXX for now, just in case... */
-		if (amap_clean_works == 0)
+		if (amap == NULL || (flags & (PGO_DEACTIVATE|PGO_FREE)) == 0)
 			goto flush_object;
 
 		amap_lock(amap);
-
 		offset = start - current->start;
-		size = (end <= current->end ? end : current->end) -
-		    start;
-
-		for (/* nothing */; size != 0; size -= PAGE_SIZE,
-		     offset += PAGE_SIZE) {
+		size = MIN(end, current->end) - start;
+		for ( ; size != 0; size -= PAGE_SIZE, offset += PAGE_SIZE) {
 			anon = amap_lookup(&current->aref, offset);
 			if (anon == NULL)
 				continue;
@@ -2563,10 +2555,8 @@ uvm_map_clean(map, start, end, flags)
 				}
 				KASSERT(pg->uanon == anon);
 
-				/* zap all mappings for the page. */
-				pmap_page_protect(pg, VM_PROT_NONE);
-
 				/* ...and deactivate the page. */
+				pmap_clear_reference(pg);
 				uvm_pagedeactivate(pg);
 
 				uvm_unlock_pageq();
@@ -2598,11 +2588,7 @@ uvm_map_clean(map, start, end, flags)
 			default:
 				panic("uvm_map_clean: wierd flags");
 			}
-#ifdef DIAGNOSTIC
-			panic("uvm_map_clean: unreachable code");
-#endif
 		}
-
 		amap_unlock(amap);
 
  flush_object:
@@ -2611,8 +2597,7 @@ uvm_map_clean(map, start, end, flags)
 		 */
 
 		offset = current->offset + (start - current->start);
-		size = (end <= current->end ? end : current->end) - start;
-
+		size = MIN(end, current->end) - start;
 		if (uobj != NULL) {
 			simple_lock(&uobj->vmobjlock);
 			rv = uobj->pgops->pgo_flush(uobj, offset,
@@ -2776,8 +2761,9 @@ uvmspace_unshare(p)
  */
 
 void
-uvmspace_exec(p)
+uvmspace_exec(p, start, end)
 	struct proc *p;
+	vaddr_t start, end;
 {
 	struct vmspace *nvm, *ovm = p->p_vmspace;
 	vm_map_t map = &ovm->vm_map;
@@ -2817,7 +2803,16 @@ uvmspace_exec(p)
 		/*
 		 * now unmap the old program
 		 */
-		uvm_unmap(map, VM_MIN_ADDRESS, VM_MAXUSER_ADDRESS);
+		uvm_unmap(map, map->min_offset, map->max_offset);
+
+		/*
+		 * resize the map
+		 */
+		vm_map_lock(map);
+		map->min_offset = start;
+		map->max_offset = end;
+		vm_map_unlock(map);
+	
 
 	} else {
 
@@ -2826,7 +2821,7 @@ uvmspace_exec(p)
 		 * it is still being used for others.   allocate a new vmspace
 		 * for p
 		 */
-		nvm = uvmspace_alloc(map->min_offset, map->max_offset, 
+		nvm = uvmspace_alloc(start, end,
 			 (map->flags & VM_MAP_PAGEABLE) ? TRUE : FALSE);
 
 		/*
@@ -2861,6 +2856,11 @@ uvmspace_free(vm)
 		 * all of the mappings and pages they hold, then call the pmap
 		 * module to reclaim anything left.
 		 */
+#ifdef SYSVSHM
+		/* Get rid of any SYSV shared memory segments. */
+		if (vm->vm_shm != NULL)
+			shmexit(vm);
+#endif
 		vm_map_lock(&vm->vm_map);
 		if (vm->vm_map.nentries) {
 			(void)uvm_unmap_remove(&vm->vm_map,

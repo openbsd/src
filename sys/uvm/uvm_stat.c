@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_stat.c,v 1.8 2001/11/07 02:55:50 art Exp $	 */
-/*	$NetBSD: uvm_stat.c,v 1.15 2000/11/24 07:25:52 chs Exp $	 */
+/*	$OpenBSD: uvm_stat.c,v 1.9 2001/11/12 01:26:10 art Exp $	 */
+/*	$NetBSD: uvm_stat.c,v 1.18 2001/03/09 01:02:13 chs Exp $	 */
 
 /*
  *
@@ -180,6 +180,9 @@ uvm_hist(bitmask)
 	if ((bitmask & UVMHIST_PDHIST) || bitmask == 0)
 		hists[i++] = &pdhist;
 
+	if ((bitmask & UVMHIST_UBCHIST) || bitmask == 0)
+		hists[i++] = &ubchist;
+
 	hists[i] = NULL;
 
 	uvmhist_dump_histories(hists);
@@ -213,6 +216,11 @@ uvmexp_print(void (*pr)(const char *, ...))
 	(*pr)("  %d VM pages: %d active, %d inactive, %d wired, %d free\n",
 	    uvmexp.npages, uvmexp.active, uvmexp.inactive, uvmexp.wired,
 	    uvmexp.free);
+	(*pr)("  min  %d%% (%d) anon, %d%% (%d) vnode, %d%% (%d) vtext\n",
+	    uvmexp.anonminpct, uvmexp.anonmin, uvmexp.vnodeminpct,
+	    uvmexp.vnodemin, uvmexp.vtextminpct, uvmexp.vtextmin);
+	(*pr)("  pages  %d anon, %d vnode, %d vtext\n",
+	    uvmexp.anonpages, uvmexp.vnodepages, uvmexp.vtextpages);
 	(*pr)("  freemin=%d, free-target=%d, inactive-target=%d, "
 	    "wired-max=%d\n", uvmexp.freemin, uvmexp.freetarg, uvmexp.inactarg,
 	    uvmexp.wiredmax);

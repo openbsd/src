@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_swap.c,v 1.39 2001/11/10 18:42:32 art Exp $	*/
-/*	$NetBSD: uvm_swap.c,v 1.40 2000/11/17 11:39:39 mrg Exp $	*/
+/*	$OpenBSD: uvm_swap.c,v 1.40 2001/11/12 01:26:10 art Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.46 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -131,6 +131,7 @@ struct swapdev {
 	int			swd_drumoffset;	/* page0 offset in drum */
 	int			swd_drumsize;	/* #pages in drum */
 	struct extent		*swd_ex;	/* extent for this swapdev */
+	char			swd_exname[12];	/* name of extent above */
 	struct vnode		*swd_vp;	/* backing vnode */
 	CIRCLEQ_ENTRY(swapdev)	swd_next;	/* priority circleq */
 
@@ -678,7 +679,8 @@ sys_swapctl(p, v, retval)
 			     sdp != (void *)&spp->spi_swapdev && misc-- > 0;
 			     sdp = CIRCLEQ_NEXT(sdp, swd_next)) {
 				sdp->swd_inuse = 
-				    btodb(sdp->swd_npginuse << PAGE_SHIFT);
+				    btodb((u_int64_t)sdp->swd_npginuse <<
+				    PAGE_SHIFT);
 				error = copyout(&sdp->swd_se, sep,
 				    sizeof(struct swapent));
 
@@ -760,10 +762,9 @@ sys_swapctl(p, v, retval)
 	case SWAP_DUMPDEV:
 		if (vp->v_type != VBLK) {
 			error = ENOTBLK;
-			goto out;
+			break;
 		}
 		dumpdev = vp->v_rdev;
-		
 		break;
 
 	case SWAP_CTL:
@@ -866,9 +867,7 @@ sys_swapctl(p, v, retval)
 		/*
 		 * do the real work.
 		 */
-		if ((error = swap_off(p, sdp)) != 0)
-			goto out;
-
+		error = swap_off(p, sdp);
 		break;
 
 	default:
@@ -911,7 +910,6 @@ swap_on(p, sdp)
 	extern int (**nfsv2_vnodeop_p) __P((void *));
 #endif /* defined(NFSCLIENT) */
 	dev_t dev;
-	char *name;
 	UVMHIST_FUNC("swap_on"); UVMHIST_CALLED(pdhist);
 
 	/*
@@ -1022,11 +1020,11 @@ swap_on(p, sdp)
 	/*
 	 * now we need to allocate an extent to manage this swap device
 	 */
-	name = malloc(12, M_VMSWAP, M_WAITOK);
-	sprintf(name, "swap0x%04x", count++);
+	snprintf(sdp->swd_exname, sizeof(sdp->swd_exname), "swap0x%04x",
+	    count++);
 
 	/* note that extent_create's 3rd arg is inclusive, thus "- 1" */
-	sdp->swd_ex = extent_create(name, 0, npages - 1, M_VMSWAP,
+	sdp->swd_ex = extent_create(sdp->swd_exname, 0, npages - 1, M_VMSWAP,
 				    0, 0, EX_WAITOK);
 	/* allocate the `saved' region from the extent so it won't be used */
 	if (addr) {
@@ -1061,15 +1059,19 @@ swap_on(p, sdp)
 		printf("leaving %d pages of swap\n", size);
 	}
 
+  	/*
+	 * try to add anons to reflect the new swap space.
+	 */
+
+	error = uvm_anon_add(size);
+	if (error) {
+		goto bad;
+	}
+
 	/*
 	 * add a ref to vp to reflect usage as a swap device.
 	 */
 	vref(vp);
-
-  	/*
-	 * add anons to reflect the new swap space
-	 */
-	uvm_anon_add(size);
 
 #ifdef UVM_SWAP_ENCRYPT
 	if (uvm_doswapencrypt)
@@ -1087,12 +1089,17 @@ swap_on(p, sdp)
 	simple_unlock(&uvm.swap_data_lock);
 	return (0);
 
-bad:
 	/*
-	 * failure: close device if necessary and return error.
+	 * failure: clean up and return error.
 	 */
-	if (vp != rootvp)
+
+bad:
+	if (sdp->swd_ex) {
+		extent_destroy(sdp->swd_ex);
+	}
+	if (vp != rootvp) {
 		(void)VOP_CLOSE(vp, FREAD|FWRITE, p->p_ucred, p);
+	}
 	return (error);
 }
 
@@ -1106,7 +1113,6 @@ swap_off(p, sdp)
 	struct proc *p;
 	struct swapdev *sdp;
 {
-	void *name;
 	UVMHIST_FUNC("swap_off"); UVMHIST_CALLED(pdhist);
 	UVMHIST_LOG(pdhist, "  dev=%x", sdp->swd_dev,0,0,0);
 
@@ -1131,13 +1137,7 @@ swap_off(p, sdp)
 		simple_unlock(&uvm.swap_data_lock);
 		return ENOMEM;
 	}
-
-#ifdef DIAGNOSTIC
-	if (sdp->swd_npginuse != sdp->swd_npgbad) {
-		panic("swap_off: sdp %p - %d pages still in use (%d bad)\n",
-		      sdp, sdp->swd_npginuse, sdp->swd_npgbad);
-	}
-#endif
+	KASSERT(sdp->swd_npginuse == sdp->swd_npgbad);
 
 	/*
 	 * done with the vnode and saved creds.
@@ -1167,9 +1167,7 @@ swap_off(p, sdp)
 	 */
 	extent_free(swapmap, sdp->swd_drumoffset, sdp->swd_drumsize,
 		    EX_WAITOK);
-	name = (void *)sdp->swd_ex->ex_name;
 	extent_destroy(sdp->swd_ex);
-	free(name, M_VMSWAP);
 	free(sdp, M_VMSWAP);
 	simple_unlock(&uvm.swap_data_lock);
 	return (0);
@@ -1246,7 +1244,7 @@ swstrategy(bp)
 	 */
 
 	pageno -= sdp->swd_drumoffset;	/* page # on swapdev */
-	bn = btodb(pageno << PAGE_SHIFT);	/* convert to diskblock */
+	bn = btodb((u_int64_t)pageno << PAGE_SHIFT); /* convert to diskblock */
 
 	UVMHIST_LOG(pdhist, "  %s: mapoff=%x bn=%x bcount=%ld",
 		((bp->b_flags & B_READ) == 0) ? "write" : "read",
@@ -1297,8 +1295,9 @@ sw_reg_strategy(sdp, bp, bn)
 {
 	struct vnode	*vp;
 	struct vndxfer	*vnx;
-	daddr_t		nbn, byteoff;
+	daddr_t		nbn;
 	caddr_t		addr;
+	off_t		byteoff;
 	int		s, off, nra, error, sz, resid;
 	UVMHIST_FUNC("sw_reg_strategy"); UVMHIST_CALLED(pdhist);
 
@@ -1320,7 +1319,7 @@ sw_reg_strategy(sdp, bp, bn)
 	error = 0;
 	bp->b_resid = bp->b_bcount;	/* nothing transferred yet! */
 	addr = bp->b_data;		/* current position in buffer */
-	byteoff = dbtob(bn);
+	byteoff = dbtob((u_int64_t)bn);
 
 	for (resid = bp->b_resid; resid; resid -= sz) {
 		struct vndbuf	*nbp;
@@ -1564,11 +1563,7 @@ sw_reg_iodone(bp)
 			biodone(pbp);
 		}
 	} else if (pbp->b_resid == 0) {
-#ifdef DIAGNOSTIC
-		if (vnx->vx_pending != 0)
-			panic("sw_reg_iodone: vnx pending: %d",vnx->vx_pending);
-#endif
-
+		KASSERT(vnx->vx_pending == 0);
 		if ((vnx->vx_flags & VX_BUSY) == 0) {
 			UVMHIST_LOG(pdhist, "  iodone error=%d !",
 			    pbp, vnx->vx_error, 0, 0);
@@ -1709,6 +1704,7 @@ uvm_swap_free(startslot, nslots)
 	/*
 	 * ignore attempts to free the "bad" slot.
 	 */
+
 	if (startslot == SWSLOT_BAD) {
 		return;
 	}
@@ -1718,18 +1714,12 @@ uvm_swap_free(startslot, nslots)
 	 * in the extent, and return.   must hold pri lock to do 
 	 * lookup and access the extent.
 	 */
+
 	simple_lock(&uvm.swap_data_lock);
 	sdp = swapdrum_getsdp(startslot);
-
-#ifdef DIAGNOSTIC
-	if (uvmexp.nswapdev < 1)
-		panic("uvm_swap_free: uvmexp.nswapdev < 1\n");
-	if (sdp == NULL) {
-		printf("uvm_swap_free: startslot %d, nslots %d\n", startslot,
-		    nslots);
-		panic("uvm_swap_free: unmapped address\n");
-	}
-#endif
+	KASSERT(uvmexp.nswapdev >= 1);
+	KASSERT(sdp != NULL);
+	KASSERT(sdp->swd_npginuse >= nslots);
 	if (extent_free(sdp->swd_ex, startslot - sdp->swd_drumoffset, nslots,
 			EX_MALLOCOK|EX_NOWAIT) != 0) {
 		printf("warning: resource shortage: %d pages of swap lost\n",
@@ -1738,10 +1728,6 @@ uvm_swap_free(startslot, nslots)
 
 	sdp->swd_npginuse -= nslots;
 	uvmexp.swpginuse -= nslots;
-#ifdef DIAGNOSTIC
-	if (sdp->swd_npginuse < 0)
-		panic("uvm_swap_free: inuse < 0");
-#endif
 #ifdef UVM_SWAP_ENCRYPT
 	{
 		int i;
@@ -1794,11 +1780,7 @@ uvm_swap_get(page, swslot, flags)
 	int	result;
 
 	uvmexp.nswget++;
-#ifdef DIAGNOSTIC
-	if ((flags & PGO_SYNCIO) == 0)
-		printf("uvm_swap_get: ASYNC get requested?\n");
-#endif
-
+	KASSERT(flags & PGO_SYNCIO);
 	if (swslot == SWSLOT_BAD) {
 		return VM_PAGER_ERROR;
 	}
@@ -1856,7 +1838,7 @@ uvm_swap_io(pps, startslot, npages, flags)
 	/*
 	 * convert starting drum slot to block number
 	 */
-	startblk = btodb(startslot << PAGE_SHIFT);
+	startblk = btodb((u_int64_t)startslot << PAGE_SHIFT);
 
 	/*
 	 * first, map the pages into the kernel (XXX: currently required
