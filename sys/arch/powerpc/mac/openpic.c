@@ -1,4 +1,4 @@
-/*	$OpenBSD: openpic.c,v 1.7 2000/09/06 02:04:50 rahnds Exp $	*/
+/*	$OpenBSD: openpic.c,v 1.8 2000/09/07 18:03:28 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -190,20 +190,16 @@ openpic_collect_preconf_intr()
 {
 	int i;
 	for (i = 0; i < ppc_configed_intr_cnt; i++) {
+#ifdef DEBUG
 		printf("\n\t%s irq %d level %d fun %x arg %x",
-			ppc_configed_intr[i].ih_what,
-			ppc_configed_intr[i].ih_irq,
-			ppc_configed_intr[i].ih_level,
-			ppc_configed_intr[i].ih_fun,
-			ppc_configed_intr[i].ih_arg
-			);
-		openpic_intr_establish(NULL,
-			ppc_configed_intr[i].ih_irq,
-			IST_LEVEL,
-			ppc_configed_intr[i].ih_level,
-			ppc_configed_intr[i].ih_fun,
-			ppc_configed_intr[i].ih_arg,
-			ppc_configed_intr[i].ih_what);
+		    ppc_configed_intr[i].ih_what, ppc_configed_intr[i].ih_irq,
+		    ppc_configed_intr[i].ih_level, ppc_configed_intr[i].ih_fun,
+		    ppc_configed_intr[i].ih_arg);
+#endif
+		openpic_intr_establish(NULL, ppc_configed_intr[i].ih_irq,
+		    IST_LEVEL, ppc_configed_intr[i].ih_level,
+		    ppc_configed_intr[i].ih_fun, ppc_configed_intr[i].ih_arg,
+		    ppc_configed_intr[i].ih_what);
 	}
 }
 
