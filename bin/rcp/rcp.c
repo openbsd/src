@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcp.c,v 1.29 2002/05/09 18:44:46 millert Exp $	*/
+/*	$OpenBSD: rcp.c,v 1.30 2002/06/09 05:30:08 todd Exp $	*/
 /*	$NetBSD: rcp.c,v 1.9 1995/03/21 08:19:06 cgd Exp $	*/
 
 /*
@@ -861,7 +861,7 @@ void
 usage()
 {
 #ifdef KERBEROS
-	(void)fprintf(stderr, "usage: %s [-Kpx] [-k realm] f1 f2\n", 
+	(void)fprintf(stderr, "usage: %s [-Kpx] [-k realm] f1 f2\n",
             __progname);
  	(void)fprintf(stderr, "       %s [-Kprx] [-k realm] f1 ... fn directory\n",
             __progname);
