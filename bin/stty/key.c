@@ -1,4 +1,4 @@
-/*	$OpenBSD: key.c,v 1.6 1996/12/17 19:09:30 tholo Exp $	*/
+/*	$OpenBSD: key.c,v 1.7 1997/07/23 19:26:47 kstailey Exp $	*/
 /*	$NetBSD: key.c,v 1.11 1995/09/07 06:57:11 jtc Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)key.c	8.4 (Berkeley) 2/20/95";
 #else
-static char rcsid[] = "$OpenBSD: key.c,v 1.6 1996/12/17 19:09:30 tholo Exp $";
+static char rcsid[] = "$OpenBSD: key.c,v 1.7 1997/07/23 19:26:47 kstailey Exp $";
 #endif
 #endif /* not lint */
 
@@ -107,10 +107,10 @@ static struct key {
 
 static int
 c_key(a, b)
-        const void *a, *b;
+	const void *a, *b;
 {
 
-        return (strcmp(((struct key *)a)->name, ((struct key *)b)->name));
+	return (strcmp(((struct key *)a)->name, ((struct key *)b)->name));
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cchar.c,v 1.5 1996/08/02 12:10:03 deraadt Exp $	*/
+/*	$OpenBSD: cchar.c,v 1.6 1997/07/23 19:26:46 kstailey Exp $	*/
 /*	$NetBSD: cchar.c,v 1.10 1996/05/07 18:20:05 jtc Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cchar.c	8.5 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: cchar.c,v 1.5 1996/08/02 12:10:03 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: cchar.c,v 1.6 1997/07/23 19:26:46 kstailey Exp $";
 #endif
 #endif /* not lint */
 
@@ -91,9 +91,9 @@ const struct cchar cchars2[] = {
 
 static int
 c_cchar(a, b)
-        const void *a, *b;
+	const void *a, *b;
 {
-        return (strcmp(((struct cchar *)a)->name, ((struct cchar *)b)->name));
+	return (strcmp(((struct cchar *)a)->name, ((struct cchar *)b)->name));
 }
 
 int
