@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: MAKEDEV,v 1.57 1999/05/26 21:56:13 jason Exp $
+#	$OpenBSD: MAKEDEV,v 1.58 1999/07/18 17:07:48 deraadt Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -55,6 +55,7 @@
 #	fd*	Floppy disk drives (3 1/2", 5 1/4")
 #	vnd*	"file" pseudo-disks
 #	ccd*	concatenated disk devices
+#	raid*	RAIDframe disk devices
 #
 # Pseudo terminals:
 #	pty*	set of 16 master and slave pseudo terminals
@@ -201,6 +202,7 @@ all)
 	sh $this ss0 ss1
 	sh $this pty0 vnd0 vnd1 vnd2 vnd3 audio tun0 tun1 tun2 tun3
 	sh $this ccd0 ccd1 ccd2 ccd3
+	sh $this raid0 raid1 raid2 raid3
 	sh $this bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9
 	sh $this ipl
 	sh $this bwtwo0 cgtwo0 cgthree0 cgfour0 cgsix0
@@ -408,7 +410,7 @@ fd*)
 	umask 77
 	;;
 
-ccd*|sd*|xd*|xy*|cd*)
+ccd*|sd*|xd*|xy*|cd*|raid*)
 	umask 2
 	unit=`unt $i`
 	if [ 0$unit -gt 15 ]
@@ -418,6 +420,7 @@ ccd*|sd*|xd*|xy*|cd*)
 	fi
 	case $i in
 	ccd*) name=ccd; blk=9; chr=23;;
+	raid*) name=raid; blk=25; chr=123;;
 	sd*) name=sd; blk=7; chr=17;;
 	xd*) name=xd; blk=10; chr=42;;
 	xy*) name=xy; blk=3; chr=9;;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.21 1999/02/01 00:30:43 jason Exp $	*/
+/*	$OpenBSD: conf.c,v 1.22 1999/07/18 17:07:49 deraadt Exp $	*/
 /*	$NetBSD: conf.c,v 1.40 1996/04/11 19:20:03 thorpej Exp $ */
 
 /*
@@ -61,6 +61,7 @@
 #include "audio.h"
 #include "vnd.h"
 #include "ccd.h"
+#include "raid.h"
 #include "ch.h"
 #include "ss.h"
 #include "uk.h"
@@ -118,6 +119,7 @@ struct bdevsw	bdevsw[] =
 	bdev_lkm_dummy(),		/* 22 */
 	bdev_lkm_dummy(),		/* 23 */
 	bdev_lkm_dummy(),		/* 24 */
+	bdev_disk_init(NRAID,raid),	/* 25: RAIDframe disk driver */
 };
 int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 
@@ -250,6 +252,7 @@ struct cdevsw	cdevsw[] =
 	cdev_uk_init(NUK,uk),		/* 120: unknown SCSI */
 	cdev_ss_init(NSS,ss),           /* 121: SCSI scanner */
 	cdev_ksyms_init(NKSYMS,ksyms),	/* 122: Kernel symbols device */
+	cdev_disk_init(NRAID,raid),     /* 123: RAIDframe disk driver */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
