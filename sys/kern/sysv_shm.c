@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_shm.c,v 1.16 2001/05/05 21:26:44 art Exp $	*/
+/*	$OpenBSD: sysv_shm.c,v 1.17 2001/05/16 17:14:36 millert Exp $	*/
 /*	$NetBSD: sysv_shm.c,v 1.50 1998/10/21 22:24:29 tron Exp $	*/
 
 /*
@@ -89,15 +89,15 @@ struct shmmap_state {
 	int shmid;
 };
 
-static int shm_find_segment_by_key __P((key_t));
-static void shm_deallocate_segment __P((struct shmid_ds *));
-static int shm_delete_mapping __P((struct vmspace *, struct shmmap_state *));
-static int shmget_existing __P((struct proc *, struct sys_shmget_args *,
-				int, int, register_t *));
-static int shmget_allocate_segment __P((struct proc *, struct sys_shmget_args *,
-					int, register_t *));
+int shm_find_segment_by_key __P((key_t));
+void shm_deallocate_segment __P((struct shmid_ds *));
+int shm_delete_mapping __P((struct vmspace *, struct shmmap_state *));
+int shmget_existing __P((struct proc *, struct sys_shmget_args *,
+			 int, int, register_t *));
+int shmget_allocate_segment __P((struct proc *, struct sys_shmget_args *,
+				 int, register_t *));
 
-static int
+int
 shm_find_segment_by_key(key)
 	key_t key;
 {
@@ -128,7 +128,7 @@ shm_find_segment_by_shmid(shmid)
 	return shmseg;
 }
 
-static void
+void
 shm_deallocate_segment(shmseg)
 	struct shmid_ds *shmseg;
 {
@@ -149,7 +149,7 @@ shm_deallocate_segment(shmseg)
 	shm_nused--;
 }
 
-static int
+int
 shm_delete_mapping(vm, shmmap_s)
 	struct vmspace *vm;
 	struct shmmap_state *shmmap_s;
@@ -359,7 +359,7 @@ sys_shmctl(p, v, retval)
 	return 0;
 }
 
-static int
+int
 shmget_existing(p, uap, mode, segnum, retval)
 	struct proc *p;
 	struct sys_shmget_args /* {
@@ -399,7 +399,7 @@ shmget_existing(p, uap, mode, segnum, retval)
 	return 0;
 }
 
-static int
+int
 shmget_allocate_segment(p, uap, mode, retval)
 	struct proc *p;
 	struct sys_shmget_args /* {
@@ -605,66 +605,4 @@ shmid_n2o(n, o)
 	o->shm_ctime = n->shm_ctime;
 	o->shm_internal = n->shm_internal;
 	ipc_n2o(&n->shm_perm, &o->shm_perm);
-}
-
-
-int
-sys_oshmctl(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	struct sys_shmctl_args /* {
-		syscallarg(int) shmid;
-		syscallarg(int) cmd;
-		syscallarg(struct shmid_ds *) buf;
-	} */ *uap = v;
-	int error;
-	struct ucred *cred = p->p_ucred;
-	struct oshmid_ds oinbuf;
-	struct shmid_ds *shmseg;
-
-	shmseg = shm_find_segment_by_shmid(SCARG(uap, shmid));
-	if (shmseg == NULL)
-		return EINVAL;
-	switch (SCARG(uap, cmd)) {
-	case IPC_STAT:
-		if ((error = ipcperm(cred, &shmseg->shm_perm, IPC_R)) != 0)
-			return error;
-		shmid_n2o(shmseg, &oinbuf);
-		error = copyout((caddr_t)&oinbuf, SCARG(uap, buf),
-		    sizeof(oinbuf));
-		if (error)
-			return error;
-		break;
-	case IPC_SET:
-		if ((error = ipcperm(cred, &shmseg->shm_perm, IPC_M)) != 0)
-			return error;
-		error = copyin(SCARG(uap, buf), (caddr_t)&oinbuf,
-		    sizeof(oinbuf));
-		if (error)
-			return error;
-		shmseg->shm_perm.uid = oinbuf.shm_perm.uid;
-		shmseg->shm_perm.gid = oinbuf.shm_perm.gid;
-		shmseg->shm_perm.mode =
-		    (shmseg->shm_perm.mode & ~ACCESSPERMS) |
-		    (oinbuf.shm_perm.mode & ACCESSPERMS);
-		shmseg->shm_ctime = time.tv_sec;
-		break;
-	case IPC_RMID:
-		if ((error = ipcperm(cred, &shmseg->shm_perm, IPC_M)) != 0)
-			return error;
-		shmseg->shm_perm.key = IPC_PRIVATE;
-		shmseg->shm_perm.mode |= SHMSEG_REMOVED;
-		if (shmseg->shm_nattch <= 0) {
-			shm_deallocate_segment(shmseg);
-			shm_last_free = IPCID_TO_IX(SCARG(uap, shmid));
-		}
-		break;
-	case SHM_LOCK:
-	case SHM_UNLOCK:
-	default:
-		return EINVAL;
-	}
-	return 0;
 }
