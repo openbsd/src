@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.28 2003/12/23 01:06:21 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.29 2003/12/23 16:11:06 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -1301,9 +1301,8 @@ getpeerbyip(in_addr_t ip)
 void
 session_down(struct peer *peer)
 {
-	if (!session_quit)
-		imsg_compose(&ibuf_rde, IMSG_SESSION_DOWN, peer->conf.id,
-		    NULL, 0);
+	imsg_compose(&ibuf_rde, IMSG_SESSION_DOWN, peer->conf.id,
+	    NULL, 0);
 }
 
 void
