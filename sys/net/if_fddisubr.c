@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fddisubr.c,v 1.13 1997/07/27 05:28:35 deraadt Exp $	*/
+/*	$OpenBSD: if_fddisubr.c,v 1.14 1997/09/27 02:35:58 deraadt Exp $	*/
 /*	$NetBSD: if_fddisubr.c,v 1.5 1996/05/07 23:20:21 christos Exp $	*/
 
 /*
@@ -131,7 +131,7 @@ fddi_output(ifp, m0, dst, rt0)
 {
 	u_int16_t type;
 	int s, error = 0;
-	u_char edst[6], esrc[6];
+ 	u_char edst[6];
 	register struct mbuf *m = m0;
 	register struct rtentry *rt;
 	struct mbuf *mcopy = (struct mbuf *)0;
@@ -178,7 +178,7 @@ fddi_output(ifp, m0, dst, rt0)
 #ifdef IPX
 	case AF_IPX:
 		type = htons(ETHERTYPE_IPX);
-		bcopy((caddr_t)&(((struct sockaddr_ipx*)dst)->sipx_addr.x_host),
+ 		bcopy((caddr_t)&(((struct sockaddr_ipx*)dst)->sipx_addr.x_host),
 		    (caddr_t)edst, sizeof (edst));
 		if (!bcmp((caddr_t)edst, (caddr_t)&ipx_thishost, sizeof(edst)))
 			return (looutput(ifp, m, dst, rt));
@@ -190,7 +190,7 @@ fddi_output(ifp, m0, dst, rt0)
 #ifdef NS
 	case AF_NS:
 		type = htons(ETHERTYPE_NS);
-		bcopy((caddr_t)&(((struct sockaddr_ns *)dst)->sns_addr.x_host),
+ 		bcopy((caddr_t)&(((struct sockaddr_ns *)dst)->sns_addr.x_host),
 		    (caddr_t)edst, sizeof (edst));
 		if (!bcmp((caddr_t)edst, (caddr_t)&ns_thishost, sizeof(edst)))
 			return (looutput(ifp, m, dst, rt));
@@ -288,10 +288,8 @@ fddi_output(ifp, m0, dst, rt0)
 	case AF_UNSPEC:
 	{
 		struct ether_header *eh;
-
 		eh = (struct ether_header *)dst->sa_data;
-		bcopy((caddr_t)eh->ether_dhost, (caddr_t)edst, sizeof (edst));
-		bcopy((caddr_t)eh->ether_shost, (caddr_t)esrc, sizeof (esrc));
+ 		bcopy((caddr_t)eh->ether_dhost, (caddr_t)edst, sizeof (edst));
 		if (*edst & 1)
 			m->m_flags |= (M_BCAST|M_MCAST);
 		type = TYPEHTONS(eh->ether_type);
@@ -304,24 +302,28 @@ fddi_output(ifp, m0, dst, rt0)
 		fh = mtod(m, struct fddi_header *);
 		error = EPROTONOSUPPORT;
 		switch (fh->fddi_fc & (FDDIFC_C|FDDIFC_L|FDDIFC_F)) {
-			case FDDIFC_LLC_ASYNC:
+			case FDDIFC_LLC_ASYNC: {
 				/* legal priorities are 0 through 7 */
 				if ((fh->fddi_fc & FDDIFC_Z) > 7)
-					goto bad;
+			        	goto bad;
 				break;
-			case FDDIFC_LLC_SYNC:
+			}
+			case FDDIFC_LLC_SYNC: {
 				/* FDDIFC_Z bits reserved, must be zero */
 				if (fh->fddi_fc & FDDIFC_Z)
 					goto bad;
 				break;
-			case FDDIFC_SMT:
+			}
+			case FDDIFC_SMT: {
 				/* FDDIFC_Z bits must be non zero */
 				if ((fh->fddi_fc & FDDIFC_Z) == 0)
 					goto bad;
 				break;
-			default:
+			}
+			default: {
 				/* anything else is too dangerous */
-				goto bad;
+               	 		goto bad;
+			}
 		}
 		error = 0;
 		if (fh->fddi_dhost[0] & 1)
@@ -346,8 +348,7 @@ fddi_output(ifp, m0, dst, rt0)
 		l = mtod(m, struct llc *);
 		l->llc_control = LLC_UI;
 		l->llc_dsap = l->llc_ssap = LLC_SNAP_LSAP;
-		l->llc_snap.org_code[0] = l->llc_snap.org_code[1] =
-		    l->llc_snap.org_code[2] = 0;
+		l->llc_snap.org_code[0] = l->llc_snap.org_code[1] = l->llc_snap.org_code[2] = 0;
 		bcopy((caddr_t) &type, (caddr_t) &l->llc_snap.ether_type,
 			sizeof(u_short));
 	}
@@ -360,16 +361,12 @@ fddi_output(ifp, m0, dst, rt0)
 		senderr(ENOBUFS);
 	fh = mtod(m, struct fddi_header *);
 	fh->fddi_fc = FDDIFC_LLC_ASYNC|FDDIFC_LLC_PRIO4;
-	bcopy((caddr_t)edst, (caddr_t)fh->fddi_dhost, sizeof (edst));
-	if (dst->sa_family == AF_UNSPEC)
-		bcopy((caddr_t)esrc, (caddr_t)fh->fddi_shost,
-		    sizeof(fh->fddi_shost));
-	else
-		bcopy((caddr_t)ac->ac_enaddr, (caddr_t)fh->fddi_shost,
-		    sizeof(fh->fddi_shost));
+ 	bcopy((caddr_t)edst, (caddr_t)fh->fddi_dhost, sizeof (edst));
 #if NBPFILTER > 0
-queue_it:
+  queue_it:
 #endif
+ 	bcopy((caddr_t)ac->ac_enaddr, (caddr_t)fh->fddi_shost,
+	    sizeof(fh->fddi_shost));
 	s = splimp();
 	/*
 	 * Queue message on interface, and start output if interface
