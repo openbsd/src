@@ -1,4 +1,4 @@
-.\"	$OpenBSD: event.3,v 1.5 2002/09/30 18:38:05 jsyn Exp $
+.\"	$OpenBSD: event.3,v 1.6 2002/11/10 03:21:48 fgsch Exp $
 .\"
 .\" Copyright (c) 2000 Artur Grabowski <art@openbsd.org>
 .\" All rights reserved.
@@ -293,9 +293,9 @@ return 0.
 Otherwise, -1 is returned and the global variable errno is
 set to indicate the error.
 .Sh SEE ALSO
-.Xr timeout 9 ,
+.Xr kqueue 2 ,
 .Xr select 2 ,
-.Xr kqueue 2
+.Xr timeout 9
 .Sh HISTORY
 The
 .Nm event
