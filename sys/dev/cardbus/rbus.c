@@ -1,4 +1,4 @@
-/*	$OpenBSD: rbus.c,v 1.7 2003/10/21 10:07:33 jmc Exp $ */
+/*	$OpenBSD: rbus.c,v 1.8 2004/07/09 19:12:40 brad Exp $ */
 /*	$NetBSD: rbus.c,v 1.3 1999/11/06 06:20:53 soren Exp $	*/
 /*
  * Copyright (c) 1999
@@ -94,11 +94,11 @@ rbus_space_alloc_subregion(rbt, substart, subend, addr, size, mask, align, flags
   bus_addr_t decodesize = mask + 1;
   bus_addr_t boundary, search_addr;
   int val;
-  bus_addr_t result;
+  u_long result;
   int exflags = EX_FAST | EX_NOWAIT | EX_MALLOCOK;
 
   DPRINTF(("rbus_space_alloc: addr %lx, size %lx, mask %lx, align %lx\n",
-	   addr, size, mask, align));
+	   (u_long)addr, (u_long)size, (u_long)mask, (u_long)align));
 
   addr += rbt->rb_offset;
 
@@ -123,14 +123,14 @@ rbus_space_alloc_subregion(rbt, substart, subend, addr, size, mask, align, flags
 
     if (decodesize == align) {
       if(extent_alloc_subregion(rbt->rb_ext, substart, subend, size, align, 0,
-				0, exflags, (u_long *)&result)) {
+				0, exflags, &result)) {
 	return 1;
       }
     } else if (decodesize == 0) {
-      /* maybe, the resister is overflowed. */
+      /* maybe, the register is overflowed. */
       
       if (extent_alloc_subregion(rbt->rb_ext, addr, addr + size, size,
-				 1, 0, 0, exflags, (u_long *)&result)) {
+				 1, 0, 0, exflags, &result)) {
 	return 1;
       }
     } else {
@@ -146,9 +146,10 @@ rbus_space_alloc_subregion(rbt, substart, subend, addr, size, mask, align, flags
       val = 1;
       for (; search_addr + size <= subend; search_addr += boundary) {
 	val = extent_alloc_subregion(rbt->rb_ext,search_addr, search_addr+size,
-				size, align, 0, 0, exflags, (u_long *)&result);
+				size, align, 0, 0, exflags, &result);
         DPRINTF(("rbus: trying [%lx:%lx] %lx\n",
-            search_addr, search_addr+size, align));
+	    (u_long)search_addr,
+	    (u_long)search_addr+size, (u_long)align));
 	if (val == 0) {
 	  break;
 	}
@@ -170,13 +171,11 @@ rbus_space_alloc_subregion(rbt, substart, subend, addr, size, mask, align, flags
       *addrp = result + rbt->rb_offset;
     }
     return 0;
-
   } else {
     /* error!! */
     DPRINTF(("rbus: no rbus type\n"));
     return 1;
   }
-  return 1;
 }
 
 
@@ -254,7 +253,8 @@ rbus_new_body(bt, parent, ex, start, end, offset, flags)
   rb->rb_flags = flags;
   rb->rb_ext = ex;
 
-  DPRINTF(("rbus_new_body: [%lx, %lx] type %s name [%s]\n", start, end,
+  DPRINTF(("rbus_new_body: [%lx, %lx] type %s name [%s]\n",
+	   (u_long)start, (u_long)end,
 	   flags == RBUS_SPACE_SHARE ? "share" :
 	   flags == RBUS_SPACE_DEDICATE ? "dedicated" :
 	   flags == RBUS_SPACE_ASK_PARENT ? "parent" : "invalid",
