@@ -1,9 +1,8 @@
-#	$OpenBSD: Makefile,v 1.3 1997/09/21 11:35:13 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.4 2001/02/04 06:07:20 pjanzen Exp $
 
 PROG=	adventure
 SRCS=	main.c init.c done.c save.c subr.c vocab.c wizard.c io.c data.c crc.c
 MAN=	adventure.6
-CFLAGS+=-traditional-cpp
 HIDEGAME=hidegame
 CLEANFILES+=setup data.c
 

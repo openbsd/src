@@ -1,4 +1,4 @@
-/*	$OpenBSD: vocab.c,v 1.7 1998/11/29 19:45:10 pjanzen Exp $	*/
+/*	$OpenBSD: vocab.c,v 1.8 2001/02/04 06:07:20 pjanzen Exp $	*/
 /*	$NetBSD: vocab.c,v 1.2 1995/03/21 12:05:13 cgd Exp $	*/
 
 /*-
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)vocab.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: vocab.c,v 1.7 1998/11/29 19:45:10 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: vocab.c,v 1.8 2001/02/04 06:07:20 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -142,7 +142,7 @@ drop(object, where)
 
 int
 vocab(word, type, value)	/* look up or store a word	*/
-	char	*word;
+	const char *word;
 	int	type;		/* -2 for store, -1 for user word, >=0 for canned lookup*/
 	int	value;		/* used for storing only	*/
 {

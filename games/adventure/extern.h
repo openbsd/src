@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.2 1998/09/02 06:36:07 pjanzen Exp $	*/
+/*	$OpenBSD: extern.h,v 1.3 2001/02/04 06:07:20 pjanzen Exp $	*/
 /*	$NetBSD: extern.h,v 1.3 1997/10/11 01:55:27 lukem Exp $	*/
 
 /*
@@ -88,7 +88,7 @@ int liq __P((void));
 int liqloc __P((int));
 int bitset __P((int, int));
 int forced __P((int));
-int dark __P((int));
+int dark __P((void));
 int pct __P((int));
 int fdwarf __P((void));
 int march __P((void));
