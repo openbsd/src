@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.63 2003/04/07 17:09:42 mickey Exp $	*/
+/*	$OpenBSD: trap.c,v 1.64 2003/04/11 00:24:09 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -194,8 +194,11 @@ trap(type, frame)
 		}
 	}
 #endif
-	if (trapnum != T_INTERRUPT)
+	if (trapnum != T_INTERRUPT) {
+		uvmexp.traps++;
 		mtctl(frame->tf_eiem, CR_EIEM);
+	} else
+		uvmexp.intrs++;
 
 	switch (type) {
 	case T_NONEXIST:
