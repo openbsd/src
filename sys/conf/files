@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.183 2001/01/23 04:19:42 krw Exp $
+#	$OpenBSD: files,v 1.184 2001/01/24 09:38:02 hugh Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -261,7 +261,7 @@ file adosfs/adlookup.c			adosfs
 file adosfs/adutil.c			adosfs
 file adosfs/advfsops.c			adosfs
 file adosfs/advnops.c			adosfs
-file ddb/db_access.c			ddb
+file ddb/db_access.c			ddb | kgdb
 file ddb/db_aout.c			ddb
 file ddb/db_break.c			ddb
 file ddb/db_command.c			ddb
@@ -271,7 +271,7 @@ file ddb/db_input.c			ddb
 file ddb/db_lex.c			ddb
 file ddb/db_output.c			ddb
 file ddb/db_print.c			ddb
-file ddb/db_run.c			ddb
+file ddb/db_run.c			ddb | kgdb
 file ddb/db_sym.c			ddb
 file ddb/db_trap.c			ddb
 file ddb/db_variables.c			ddb
@@ -396,6 +396,7 @@ file kern/kern_synch.c
 file kern/kern_time.c
 file kern/kern_timeout.c
 file kern/kern_xxx.c
+file kern/kgdb_stub.c			kgdb
 file kern/subr_autoconf.c
 file kern/subr_disk.c
 file kern/subr_extent.c

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccomvar.h,v 1.10 2000/08/16 19:15:35 mickey Exp $	*/
+/*	$OpenBSD: pccomvar.h,v 1.11 2001/01/24 09:38:02 hugh Exp $	*/
 /*	$NetBSD: comvar.h,v 1.5 1996/05/05 19:50:47 christos Exp $	*/
 
 /*
@@ -56,6 +56,7 @@ struct com_softc {
 	int sc_halt;
 
 	int sc_iobase;
+	int sc_frequency;
 #ifdef COM_HAYESP
 	int sc_hayespbase;
 #endif
@@ -81,6 +82,7 @@ struct com_softc {
 #define	COM_HW_FIFO	0x02
 #define	COM_HW_HAYESP	0x04
 #define	COM_HW_CONSOLE	0x40
+#define COM_HW_KGDB	0x80
 	u_char sc_swflags;
 #define	COM_SW_SOFTCAR	0x01
 #define	COM_SW_CLOCAL	0x02
@@ -131,6 +133,17 @@ void	comcninit	__P((struct consdev *));
 int	comcngetc	__P((dev_t));
 void	comcnputc	__P((dev_t, int));
 void	comcnpollc	__P((dev_t, int));
+int	com_common_getc	__P((bus_space_tag_t, bus_space_handle_t));
+void	com_common_putc	__P((bus_space_tag_t, bus_space_handle_t, int));
+
+#if defined(DDB) || defined(KGDB)
+void	com_enable_debugport	__P((struct com_softc *));
+#endif /* DDB || KGDB */
+
+#ifdef KGDB
+int	com_kgdb_attach	__P((bus_space_tag_t, int, int, int, tcflag_t));
+int	kgdbintr	__P((void *));
+#endif /* KGDB */
 
 extern int comconsaddr;
 extern int comconsinit;

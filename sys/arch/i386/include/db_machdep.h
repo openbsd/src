@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.4 1997/08/07 09:09:38 niklas Exp $	*/
+/*	$OpenBSD: db_machdep.h,v 1.5 2001/01/24 09:38:01 hugh Exp $	*/
 /*	$NetBSD: db_machdep.h,v 1.9 1996/05/03 19:23:59 christos Exp $	*/
 
 /* 
@@ -38,8 +38,8 @@
 #include <vm/vm.h>
 #include <machine/trap.h>
 
-typedef	vm_offset_t	db_addr_t;	/* address - unsigned */
-typedef	int		db_expr_t;	/* expression - signed */
+typedef	vaddr_t		db_addr_t;	/* address - unsigned */
+typedef	long		db_expr_t;	/* expression - signed */
 
 typedef struct trapframe db_regs_t;
 db_regs_t	ddb_regs;	/* register state */
@@ -87,8 +87,8 @@ db_regs_t	ddb_regs;	/* register state */
 	 ((user) && (addr) < VM_MAX_ADDRESS))
 
 #if 0
-boolean_t 	db_check_access __P((vm_offset_t, int, task_t));
-boolean_t	db_phys_eq __P((task_t, vm_offset_t, task_t, vm_offset_t));
+boolean_t 	db_check_access __P((vaddr_t, int, task_t));
+boolean_t	db_phys_eq __P((task_t, vaddr_t, task_t, vaddr_t));
 #endif
 
 /* macros for printing OS server dependent task name */
@@ -97,6 +97,13 @@ boolean_t	db_phys_eq __P((task_t, vm_offset_t, task_t, vm_offset_t));
 #define DB_TASK_NAME_TITLE	"COMMAND                "
 #define DB_TASK_NAME_LEN	23
 #define DB_NULL_TASK_NAME	"?                      "
+
+/*
+ * Constants for KGDB.
+ */
+typedef	long		kgdb_reg_t;
+#define	KGDB_NUMREGS	14
+#define	KGDB_BUFLEN	512
 
 #if 0
 void		db_task_name(/* task_t */);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.142 2001/01/23 21:59:18 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.143 2001/01/24 09:37:58 hugh Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -112,6 +112,10 @@
 #include <sys/shm.h>
 #endif
 
+#ifdef KGDB
+#include <sys/kgdb.h>
+#endif
+
 #include <dev/cons.h>
 #include <stand/boot/bootarg.h>
 
@@ -169,6 +173,18 @@ extern struct proc *npxproc;
 #endif
 
 #include "bios.h"
+#include "com.h"
+#include "pccom.h"
+
+#if (NCOM > 0 || NPCCOM > 0)
+#include <sys/termios.h>
+#include <dev/ic/comreg.h>
+#if NCOM > 0
+#include <dev/ic/comvar.h>
+#elif NPCCOM > 0
+#include <arch/i386/isa/pccomvar.h>
+#endif
+#endif /* NCOM > 0 || NPCCOM > 0 */
 
 /*
  * The following defines are for the code in setup_buffers that tries to
@@ -270,6 +286,32 @@ void	consinit __P((void));
 int	bus_mem_add_mapping __P((bus_addr_t, bus_size_t,
 	    int, bus_space_handle_t *));
 
+#ifdef KGDB
+#ifndef KGDB_DEVNAME
+#ifdef __i386__
+#define KGDB_DEVNAME "pccom"
+#else
+#define KGDB_DEVNAME "com"
+#endif
+#endif /* KGDB_DEVNAME */
+char kgdb_devname[] = KGDB_DEVNAME;
+#if (NCOM > 0 || NPCCOM > 0)
+#ifndef KGDBADDR
+#define KGDBADDR 0x3f8
+#endif
+int comkgdbaddr = KGDBADDR;
+#ifndef KGDBRATE
+#define KGDBRATE TTYDEF_SPEED
+#endif
+int comkgdbrate = KGDBRATE;
+#ifndef KGDBMODE
+#define KGDBMODE ((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8) /* 8N1 */
+#endif
+int comkgdbmode = KGDBMODE;
+#endif /* NCOM  || NPCCOM */
+void kgdb_port_init __P((void));
+#endif /* KGDB */
+
 #ifdef APERTURE
 #ifdef INSECURE
 int allowaperture = 1;
@@ -327,7 +369,7 @@ cpu_startup()
 
 	printf("%s", version);
 	startrtclock();
-	
+
 	identifycpu();
 	printf("real mem  = %u (%uK)\n", ctob(physmem), ctob(physmem)/1024);
 
@@ -1555,7 +1597,7 @@ boot(howto)
 	if ((howto & (RB_DUMP | RB_HALT)) == RB_DUMP) {
 		/* Save registers. */
 		savectx(&dumppcb);
-		
+
 		dumpsys();
 	}
 
@@ -2196,9 +2238,12 @@ init386(first_avail)
 		Debugger();
 #endif
 #ifdef KGDB
-	if (boothowto & RB_KDB)
-		kgdb_connect(0);
-#endif
+	kgdb_port_init();
+	if (boothowto & RB_KDB) {
+		kgdb_debug_init = 1;
+		kgdb_connect(1);
+	}
+#endif /* KGDB */
 }
 
 struct queue {
@@ -2271,6 +2316,21 @@ consinit()
 	initted = 1;
 	cninit();
 }
+
+#ifdef KGDB
+void
+kgdb_port_init()
+{
+
+#if (NCOM > 0 || NPCCOM > 0)
+	if (!strcmp(kgdb_devname, "com") || !strcmp(kgdb_devname, "pccom")) {
+		bus_space_tag_t tag = I386_BUS_SPACE_IO;
+		com_kgdb_attach(tag, comkgdbaddr, comkgdbrate, COM_FREQ,
+		    comkgdbmode);
+	}
+#endif
+}
+#endif /* KGDB */
 
 void
 cpu_reset()

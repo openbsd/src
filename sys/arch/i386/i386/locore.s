@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.52 2000/06/16 19:11:25 millert Exp $	*/
+/*	$OpenBSD: locore.s,v 1.53 2001/01/24 09:37:58 hugh Exp $	*/
 /*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
 
 /*-
@@ -1984,13 +1984,8 @@ ENTRY(savectx)
 
 #define	TRAP(a)		pushl $(a) ; jmp _alltraps
 #define	ZTRAP(a)	pushl $0 ; TRAP(a)
-#ifdef KGDB
-#define	BPTTRAP(a)	testb $(PSL_I>>8),13(%esp) ; jz 1f ; sti ; 1: ; \
-			pushl $(a) ; jmp _bpttraps
-#else
 #define	BPTTRAP(a)	testb $(PSL_I>>8),13(%esp) ; jz 1f ; sti ; 1: ; \
 			TRAP(a)
-#endif
 
 	.text
 IDTVEC(div)
@@ -2139,19 +2134,6 @@ calltrap:
 	jmp	2b
 4:	.asciz	"WARNING: SPL NOT LOWERED ON TRAP EXIT\n"
 #endif /* DIAGNOSTIC */
-
-#ifdef KGDB
-/*
- * This code checks for a kgdb trap, then falls through
- * to the regular trap code.
- */
-NENTRY(bpttraps)
-	INTRENTRY
-	testb	$SEL_RPL,TF_CS(%esp)
-	jne	calltrap
-	call	_kgdb_trap_glue		
-	jmp	calltrap
-#endif /* KGDB */
 
 /*
  * Old call gate entry for syscall

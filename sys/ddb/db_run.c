@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_run.c,v 1.12 1999/06/17 18:17:08 art Exp $	*/
+/*	$OpenBSD: db_run.c,v 1.13 2001/01/24 09:38:03 hugh Exp $	*/
 /*	$NetBSD: db_run.c,v 1.8 1996/02/05 01:57:12 christos Exp $	*/
 
 /* 
@@ -41,9 +41,17 @@
 #include <machine/db_machdep.h>
 
 #include <ddb/db_run.h>
-#include <ddb/db_lex.h>
 #include <ddb/db_break.h>
 #include <ddb/db_access.h>
+
+#ifdef SOFTWARE_SSTEP
+db_breakpoint_t	db_not_taken_bkpt = 0;
+db_breakpoint_t	db_taken_bkpt = 0;
+#endif
+
+#ifndef KGDB
+
+#include <ddb/db_lex.h>
 #include <ddb/db_watch.h>
 #include <ddb/db_output.h>
 #include <ddb/db_sym.h>
@@ -61,11 +69,6 @@ int	db_run_mode;
 boolean_t	db_sstep_print;
 int		db_loop_count;
 int		db_call_depth;
-
-#ifdef SOFTWARE_SSTEP
-db_breakpoint_t	db_not_taken_bkpt = 0;
-db_breakpoint_t	db_taken_bkpt = 0;
-#endif
 
 boolean_t
 db_stop_at_pc(regs, is_breakpoint)
@@ -236,83 +239,6 @@ db_single_step(regs)
 	}
 }
 
-#ifdef	SOFTWARE_SSTEP
-/*
- *	Software implementation of single-stepping.
- *	If your machine does not have a trace mode
- *	similar to the vax or sun ones you can use
- *	this implementation, done for the mips.
- *	Just define the above conditional and provide
- *	the functions/macros defined below.
- *
- * extern boolean_t
- *	inst_branch(ins),	returns true if the instruction might branch
- * extern unsigned
- *	branch_taken(ins, pc, getreg_val, regs),
- *				return the address the instruction might
- *				branch to
- *	getreg_val(regs, reg),	return the value of a user register,
- *				as indicated in the hardware instruction
- *				encoding, e.g. 8 for r8
- *			
- * next_instr_address(pc, bd)	returns the address of the first
- *				instruction following the one at "pc",
- *				which is either in the taken path of
- *				the branch (bd==1) or not.  This is
- *				for machines (mips) with branch delays.
- *
- *	A single-step may involve at most 2 breakpoints -
- *	one for branch-not-taken and one for branch taken.
- *	If one of these addresses does not already have a breakpoint,
- *	we allocate a breakpoint and save it here.
- *	These breakpoints are deleted on return.
- */			
-
-void
-db_set_single_step(regs)
-	register db_regs_t *regs;
-{
-	db_addr_t pc = PC_REGS(regs);
-#ifndef SOFTWARE_SSTEP_EMUL
-	db_addr_t brpc;
-	u_int inst;
-
-	/*
-	 * User was stopped at pc, e.g. the instruction
-	 * at pc was not executed.
-	 */
-	inst = db_get_value(pc, sizeof(int), FALSE);
-	if (inst_branch(inst) || inst_call(inst) || inst_return(inst)) {
-	    brpc = branch_taken(inst, pc, getreg_val, regs);
-	    if (brpc != pc) {	/* self-branches are hopeless */
-		db_taken_bkpt = db_set_temp_breakpoint(brpc);
-	    }
-#if 0
-	    /* XXX this seems like a true bug, no?  */
-	    pc = next_instr_address(pc, 1);
-#endif
-	}
-#endif /*SOFTWARE_SSTEP_EMUL*/
-	pc = next_instr_address(pc, 0);
-	db_not_taken_bkpt = db_set_temp_breakpoint(pc);
-}
-
-void
-db_clear_single_step(regs)
-	db_regs_t *regs;
-{
-	if (db_taken_bkpt != 0) {
-	    db_delete_temp_breakpoint(db_taken_bkpt);
-	    db_taken_bkpt = 0;
-	}
-	if (db_not_taken_bkpt != 0) {
-	    db_delete_temp_breakpoint(db_not_taken_bkpt);
-	    db_not_taken_bkpt = 0;
-	}
-}
-
-#endif	SOFTWARE_SSTEP
-
 extern int	db_cmd_loop_done;
 
 /* single-step */
@@ -407,3 +333,81 @@ db_continue_cmd(addr, have_addr, count, modif)
 
 	db_cmd_loop_done = 1;
 }
+#endif /* NO KGDB */
+
+#ifdef	SOFTWARE_SSTEP
+/*
+ *	Software implementation of single-stepping.
+ *	If your machine does not have a trace mode
+ *	similar to the vax or sun ones you can use
+ *	this implementation, done for the mips.
+ *	Just define the above conditional and provide
+ *	the functions/macros defined below.
+ *
+ * extern boolean_t
+ *	inst_branch(ins),	returns true if the instruction might branch
+ * extern unsigned
+ *	branch_taken(ins, pc, getreg_val, regs),
+ *				return the address the instruction might
+ *				branch to
+ *	getreg_val(regs, reg),	return the value of a user register,
+ *				as indicated in the hardware instruction
+ *				encoding, e.g. 8 for r8
+ *			
+ * next_instr_address(pc, bd)	returns the address of the first
+ *				instruction following the one at "pc",
+ *				which is either in the taken path of
+ *				the branch (bd==1) or not.  This is
+ *				for machines (mips) with branch delays.
+ *
+ *	A single-step may involve at most 2 breakpoints -
+ *	one for branch-not-taken and one for branch taken.
+ *	If one of these addresses does not already have a breakpoint,
+ *	we allocate a breakpoint and save it here.
+ *	These breakpoints are deleted on return.
+ */			
+
+void
+db_set_single_step(regs)
+	register db_regs_t *regs;
+{
+	db_addr_t pc = PC_REGS(regs);
+#ifndef SOFTWARE_SSTEP_EMUL
+	db_addr_t brpc;
+	u_int inst;
+
+	/*
+	 * User was stopped at pc, e.g. the instruction
+	 * at pc was not executed.
+	 */
+	inst = db_get_value(pc, sizeof(int), FALSE);
+	if (inst_branch(inst) || inst_call(inst) || inst_return(inst)) {
+	    brpc = branch_taken(inst, pc, getreg_val, regs);
+	    if (brpc != pc) {	/* self-branches are hopeless */
+		db_taken_bkpt = db_set_temp_breakpoint(brpc);
+	    }
+#if 0
+	    /* XXX this seems like a true bug, no?  */
+	    pc = next_instr_address(pc, 1);
+#endif
+	}
+#endif /*SOFTWARE_SSTEP_EMUL*/
+	pc = next_instr_address(pc, 0);
+	db_not_taken_bkpt = db_set_temp_breakpoint(pc);
+}
+
+void
+db_clear_single_step(regs)
+	db_regs_t *regs;
+{
+	if (db_taken_bkpt != 0) {
+	    db_delete_temp_breakpoint(db_taken_bkpt);
+	    db_taken_bkpt = 0;
+	}
+	if (db_not_taken_bkpt != 0) {
+	    db_delete_temp_breakpoint(db_not_taken_bkpt);
+	    db_not_taken_bkpt = 0;
+	}
+}
+
+#endif	SOFTWARE_SSTEP

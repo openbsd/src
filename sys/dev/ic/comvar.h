@@ -1,4 +1,4 @@
-/*	$OpenBSD: comvar.h,v 1.17 2000/11/08 15:42:48 art Exp $	*/
+/*	$OpenBSD: comvar.h,v 1.18 2001/01/24 09:38:04 hugh Exp $	*/
 /*	$NetBSD: comvar.h,v 1.5 1996/05/05 19:50:47 christos Exp $	*/
 
 /*
@@ -87,6 +87,7 @@ struct com_softc {
 	int sc_halt;
 
 	int sc_iobase;
+	int sc_frequency;
 #ifdef COM_HAYESP
 	int sc_hayespbase;
 #endif
@@ -110,6 +111,7 @@ struct com_softc {
 #define	COM_HW_FIFO	0x02
 #define	COM_HW_HAYESP	0x04
 #define	COM_HW_CONSOLE	0x40
+#define	COM_HW_KGDB	0x80
 	u_char sc_swflags;
 #define	COM_SW_SOFTCAR	0x01
 #define	COM_SW_CLOCAL	0x02
@@ -145,16 +147,29 @@ int comprobeHAYESP __P((bus_space_handle_t hayespioh, struct com_softc *sc));
 #endif
 void	comdiag		__P((void *));
 int	comspeed	__P((long));
+u_char	com_cflag2lcr	__P((tcflag_t));
 int	comparam	__P((struct tty *, struct termios *));
 void	comstart	__P((struct tty *));
 void	compoll		__P((void *));
 
 struct consdev;
 void	comcnprobe	__P((struct consdev *));
+int	comcnattach	__P((bus_space_tag_t, int, int, int, tcflag_t));
 void	comcninit	__P((struct consdev *));
 int	comcngetc	__P((dev_t));
 void	comcnputc	__P((dev_t, int));
 void	comcnpollc	__P((dev_t, int));
+int	com_common_getc	__P((bus_space_tag_t, bus_space_handle_t));
+void	com_common_putc	__P((bus_space_tag_t, bus_space_handle_t, int));
+
+#if defined(DDB) || defined(KGDB)
+void	com_enable_debugport	__P((struct com_softc *));
+#endif
+
+#ifdef KGDB
+int	com_kgdb_attach	__P((bus_space_tag_t, int, int, int, tcflag_t));
+int	kgdbintr __P((void *));
+#endif
 
 int comcnattach __P((bus_space_tag_t, int, int, int, tcflag_t));
 

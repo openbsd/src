@@ -1,4 +1,4 @@
-/*	$OpenBSD: com.c,v 1.56 2000/11/08 15:42:48 art Exp $	*/
+/*	$OpenBSD: com.c,v 1.57 2001/01/24 09:38:04 hugh Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*
@@ -156,6 +156,7 @@ int	comdefaultrate = TTYDEF_SPEED;
 int	comconsaddr;
 int	comconsinit;
 int	comconsattached;
+int	comconsrate;
 bus_space_tag_t comconsiot;
 bus_space_handle_t comconsioh;
 tcflag_t comconscflag = TTYDEF_CFLAG;
@@ -165,11 +166,16 @@ int	comsopen = 0;
 int	comevents = 0;
 
 #ifdef KGDB
-#include <machine/remote-sl.h>
-extern int kgdb_dev;
-extern int kgdb_rate;
-extern int kgdb_debug_init;
-#endif
+#include <sys/kgdb.h>
+
+static int com_kgdb_addr;
+static bus_space_tag_t com_kgdb_iot;
+static bus_space_handle_t com_kgdb_ioh;
+static int com_kgdb_attached;
+
+int    com_kgdb_getc __P((void *));
+void   com_kgdb_putc __P((void *, int));
+#endif /* KGDB */
 
 #define	DEVUNIT(x)	(minor(x) & 0x7f)
 #define	DEVCUA(x)	(minor(x) & 0x80)
@@ -351,6 +357,10 @@ comprobe(parent, match, aux)
 #endif
 		return(0);			/* This cannot happen */
 
+#ifdef KGDB
+	if (iobase == com_kgdb_addr)
+		goto out;
+#endif
 	/* if it's in use as console, it's there. */
 	if (iobase == comconsaddr && !comconsattached)
 		goto out;
@@ -413,12 +423,25 @@ comattach(parent, self, aux)
 			/* No console support! */
 			ioh = ia->ia_ioh;
 		} else {
+#ifdef KGDB
+			if ((iobase != comconsaddr) &&
+			    (iobase != com_kgdb_addr)) {
+#else
 			if (iobase != comconsaddr) {
+#endif
 				if (bus_space_map(iot, iobase, COM_NPORTS, 0,
 				    &ioh))
 					panic("comattach: io mapping failed");
 			} else
+#ifdef KGDB
+				if (iobase == comconsaddr) {
+					ioh = comconsioh;
+				} else {
+					ioh = com_kgdb_ioh;
+				}
+#else
 				ioh = comconsioh;
+#endif
 		}
 		irq = ia->ia_irq;
 	} else
@@ -602,33 +625,40 @@ comattach(parent, self, aux)
 		if (IS_ISA(parent) || IS_ISAPNP(parent)) {
 			struct isa_attach_args *ia = aux;
 
+#ifdef KGDB
+			if (iobase == com_kgdb_addr) {
+				sc->sc_ih = isa_intr_establish(ia->ia_ic, irq,
+				    IST_EDGE, IPL_HIGH, kgdbintr, sc,
+				    sc->sc_dev.dv_xname);
+			} else {
+				sc->sc_ih = isa_intr_establish(ia->ia_ic, irq,
+				    IST_EDGE, IPL_TTY, comintr, sc,
+				    sc->sc_dev.dv_xname);
+			}
+#else
 			sc->sc_ih = isa_intr_establish(ia->ia_ic, irq,
 			    IST_EDGE, IPL_TTY, comintr, sc,
 			    sc->sc_dev.dv_xname);
+#endif /* KGDB */
 		} else
 #endif
 			panic("comattach: IRQ but can't have one");
 	}
 #endif
 #ifdef KGDB
-	if (kgdb_dev == makedev(commajor, unit)) {
-		if (ISSET(sc->sc_hwflags, COM_HW_CONSOLE))
-			kgdb_dev = -1;	/* can't debug over console port */
-		else {
-			cominit(iot, ioh, kgdb_rate);
-			if (kgdb_debug_init) {
-				/*
-				 * Print prefix of device name,
-				 * let kgdb_connect print the rest.
-				 */
-				printf("%s: ", sc->sc_dev.dv_xname);
-				kgdb_connect(1);
-			} else
-				printf("%s: kgdb enabled\n",
-				    sc->sc_dev.dv_xname);
-		}
+	/*
+	 * Allow kgdb to "take over" this port.  If this is
+	 * the kgdb device, it has exclusive use.
+	 */
+
+	if (iot == com_kgdb_iot && iobase == com_kgdb_addr &&
+	    !ISSET(sc->sc_hwflags, COM_HW_CONSOLE)) {
+		printf("%s: kgdb\n", sc->sc_dev.dv_xname);
+		SET(sc->sc_hwflags, COM_HW_KGDB);
+		com_enable_debugport(sc);
+		com_kgdb_attached = 1;
 	}
-#endif
+#endif /* KGDB */
 
 	/* XXX maybe move up some? */
 	if (ISSET(sc->sc_hwflags, COM_HW_CONSOLE)) {
@@ -652,6 +682,24 @@ comattach(parent, self, aux)
 	if (!sc->enable)
 		sc->enabled = 1;
 }
+
+#ifdef KGDB
+void
+com_enable_debugport(sc)
+	struct com_softc *sc;
+{
+	int s;
+
+	/* Turn on line break interrupt, set carrier. */
+	s = splhigh();
+	SET(sc->sc_ier, IER_ERXRDY);
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, com_ier, sc->sc_ier);
+	SET(sc->sc_mcr, MCR_DTR | MCR_RTS | MCR_IENABLE);
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, com_mcr, sc->sc_mcr);
+	
+	splx(s);
+}
+#endif /* KGDB */
 
 int
 com_detach(self, flags)
@@ -702,7 +750,11 @@ com_activate(self, act)
 		break;
 
 	case DVACT_DEACTIVATE:
+#ifdef KGDB
+		if (sc->sc_hwflags & (COM_HW_CONSOLE|COM_HW_KGDB)) {
+#else
 		if (sc->sc_hwflags & COM_HW_CONSOLE) {
+#endif /* KGDB */
 			rv = EBUSY;
 			break;
 		}
@@ -736,6 +788,14 @@ comopen(dev, flag, mode, p)
 	sc = com_cd.cd_devs[unit];
 	if (!sc)
 		return ENXIO;
+
+#ifdef KGDB
+	/*
+	 * If this is the kgdb port, no other use is permitted.
+	 */
+	if (ISSET(sc->sc_hwflags, COM_HW_KGDB))
+		return (EBUSY);
+#endif /* KGDB */
 
 	s = spltty();
 	if (!sc->sc_tty) {
@@ -1520,6 +1580,62 @@ out:
 	timeout(compoll, NULL, 1);
 }
 
+#ifdef KGDB
+
+/*
+ * If a line break is set, or data matches one of the characters
+ * gdb uses to signal a connection, then start up kgdb. Just gobble
+ * any other data. Done in a stand alone function because comintr
+ * does tty stuff and we don't have one.
+ */
+
+int
+kgdbintr(arg)
+	void *arg;
+{
+	struct com_softc *sc = arg;
+	bus_space_tag_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
+	u_char lsr, data, msr, delta;
+
+	if (!ISSET(sc->sc_hwflags, COM_HW_KGDB))
+		return(0);
+
+	for (;;) {
+		lsr = bus_space_read_1(iot, ioh, com_lsr);
+		if (ISSET(lsr, LSR_RXRDY)) {
+			do {
+				data = bus_space_read_1(iot, ioh, com_data);
+				if (data == 3 || data == '$' || data == '+' ||
+				    ISSET(lsr, LSR_BI)) {
+					kgdb_connect(1);
+					data = 0;
+				}
+				lsr = bus_space_read_1(iot, ioh, com_lsr);
+			} while (ISSET(lsr, LSR_RXRDY));
+
+		}
+		if (ISSET(lsr, LSR_BI|LSR_FE|LSR_PE|LSR_OE))
+			printf("weird lsr %02x\n", lsr);
+
+		msr = bus_space_read_1(iot, ioh, com_msr);
+
+		if (msr != sc->sc_msr) {
+			delta = msr ^ sc->sc_msr;
+			sc->sc_msr = msr;
+			if (ISSET(delta, MSR_DCD)) {
+				if (!ISSET(sc->sc_swflags, COM_SW_SOFTCAR)) {
+					CLR(sc->sc_mcr, sc->sc_dtr);
+					bus_space_write_1(iot, ioh, com_mcr, sc->sc_mcr);
+				}
+			}
+		}
+		if (ISSET(bus_space_read_1(iot, ioh, com_iir), IIR_NOPEND))
+			return (1);
+	}
+}
+#endif /* KGDB */
+
 int
 comintr(arg)
 	void *arg;
@@ -1740,16 +1856,69 @@ comcnprobe(cp)
 #endif
 }
 
+/*
+ * The following functions are polled getc and putc routines, shared
+ * by the console and kgdb glue.
+ */
+
+int
+com_common_getc(iot, ioh)
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh;
+{
+	int s = splhigh();
+	u_char stat, c;
+
+	/* block until a character becomes available */
+	while (!ISSET(stat = bus_space_read_1(iot, ioh, com_lsr), LSR_RXRDY))
+		continue;
+
+	c = bus_space_read_1(iot, ioh, com_data);
+	/* clear any interrupts generated by this transmission */
+	stat = bus_space_read_1(iot, ioh, com_iir);
+	splx(s);
+	return (c);
+}
+
+void
+com_common_putc(iot, ioh, c)
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh;
+	int c;
+{
+	int s = splhigh();
+	int timo;
+
+	/* wait for any pending transmission to finish */
+	timo = 150000;
+	while (!ISSET(bus_space_read_1(iot, ioh, com_lsr), LSR_TXRDY) && --timo)
+		continue;
+
+	bus_space_write_1(iot, ioh, com_data, c);
+
+	/* wait for this transmission to complete */
+	timo = 1500000;
+	while (!ISSET(bus_space_read_1(iot, ioh, com_lsr), LSR_TXRDY) && --timo)
+		continue;
+
+	splx(s);
+}
+
+/*
+ * Following are all routines needed for COM to act as console
+ */
+
 void
 comcninit(cp)
 	struct consdev *cp;
 {
 
-	if (bus_space_map(comconsiot, CONADDR, COM_NPORTS, 0, &comconsioh))
+	comconsaddr = CONADDR;
+
+	if (bus_space_map(comconsiot, comconsaddr, COM_NPORTS, 0, &comconsioh))
 		panic("comcninit: mapping failed");
 
 	cominit(comconsiot, comconsioh, comdefaultrate);
-	comconsaddr = CONADDR;
 	comconsinit = 0;
 }
 
@@ -1763,12 +1932,14 @@ cominit(iot, ioh, rate)
 	u_char stat;
 
 	bus_space_write_1(iot, ioh, com_lcr, LCR_DLAB);
-	rate = comspeed(comdefaultrate);
+	rate = comspeed(rate); /* XXX not comdefaultrate? */
 	bus_space_write_1(iot, ioh, com_dlbl, rate);
 	bus_space_write_1(iot, ioh, com_dlbh, rate >> 8);
 	bus_space_write_1(iot, ioh, com_lcr, LCR_8BITS);
+	bus_space_write_1(iot, ioh, com_mcr, MCR_DTR | MCR_RTS);
 	bus_space_write_1(iot, ioh, com_ier, IER_ERXRDY | IER_ETXRDY);
-	bus_space_write_1(iot, ioh, com_fifo, FIFO_ENABLE | FIFO_RCV_RST | FIFO_XMT_RST | FIFO_TRIGGER_4);
+	bus_space_write_1(iot, ioh, com_fifo,
+	    FIFO_ENABLE | FIFO_RCV_RST | FIFO_XMT_RST | FIFO_TRIGGER_1);
 	stat = bus_space_read_1(iot, ioh, com_iir);
 	splx(s);
 }
@@ -1803,17 +1974,7 @@ int
 comcngetc(dev)
 	dev_t dev;
 {
-	int s = splhigh();
-	bus_space_tag_t iot = comconsiot;
-	bus_space_handle_t ioh = comconsioh;
-	u_char stat, c;
-
-	while (!ISSET(stat = bus_space_read_1(iot, ioh, com_lsr), LSR_RXRDY))
-		;
-	c = bus_space_read_1(iot, ioh, com_data);
-	stat = bus_space_read_1(iot, ioh, com_iir);
-	splx(s);
-	return c;
+	return (com_common_getc(comconsiot, comconsioh));
 }
 
 /*
@@ -1824,33 +1985,18 @@ comcnputc(dev, c)
 	dev_t dev;
 	int c;
 {
-	int s = splhigh();
+#if 0
+	/* XXX not needed? */
 	bus_space_tag_t iot = comconsiot;
 	bus_space_handle_t ioh = comconsioh;
-	u_char stat;
-	register int timo;
 
-#ifdef KGDB
-	if (dev != kgdb_dev)
-#endif
 	if (comconsinit == 0) {
 		cominit(iot, ioh, comdefaultrate);
 		comconsinit = 1;
 	}
-	/* wait for any pending transmission to finish */
-	timo = 50000;
-	while (!ISSET(stat = bus_space_read_1(iot, ioh, com_lsr), LSR_TXRDY) && --timo)
-		;
-	bus_space_write_1(iot, ioh, com_data, c);
-	/* wait for this transmission to complete */
-	timo = 1500000;
-	while (!ISSET(stat = bus_space_read_1(iot, ioh, com_lsr), LSR_TXRDY) && --timo)
-		;
-#if 0 /* I don't think sooooo (pefo) */
-	/* clear any interrupts generated by this transmission */
-	stat = bus_space_read_1(iot, ioh, com_iir);
 #endif
-	splx(s);
+	com_common_putc(comconsiot, comconsioh, c);
+
 }
 
 void
@@ -1860,3 +2006,51 @@ comcnpollc(dev, on)
 {
 
 }
+
+#ifdef KGDB
+int
+com_kgdb_attach(iot, iobase, rate, frequency, cflag)
+	bus_space_tag_t iot;
+	int iobase;
+	int rate, frequency;
+	tcflag_t cflag;
+{
+	if (iot == comconsiot && iobase == comconsaddr) {
+		return (EBUSY); /* cannot share with console */
+	}
+
+	com_kgdb_iot = iot;
+	com_kgdb_addr = iobase;
+
+	if (bus_space_map(com_kgdb_iot, com_kgdb_addr, COM_NPORTS, 0,
+	    &com_kgdb_ioh))
+		panic("com_kgdb_attach: mapping failed");
+
+	/* XXX We currently don't respect KGDBMODE? */
+	cominit(com_kgdb_iot, com_kgdb_ioh, rate);
+
+	kgdb_attach(com_kgdb_getc, com_kgdb_putc, NULL);
+	kgdb_dev = 123; /* unneeded, only to satisfy some tests */
+
+	return (0);
+}
+
+/* ARGSUSED */
+int
+com_kgdb_getc(arg)
+	void *arg;
+{
+
+	return (com_common_getc(com_kgdb_iot, com_kgdb_ioh));
+}
+
+/* ARGSUSED */
+void
+com_kgdb_putc(arg, c)
+	void *arg;
+	int c;
+{
+
+	return (com_common_putc(com_kgdb_iot, com_kgdb_ioh, c));
+}
+#endif /* KGDB */

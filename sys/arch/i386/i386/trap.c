@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.34 2000/11/10 18:15:38 art Exp $	*/
+/*	$OpenBSD: trap.c,v 1.35 2001/01/24 09:37:59 hugh Exp $	*/
 /*	$NetBSD: trap.c,v 1.95 1996/05/05 06:50:02 mycroft Exp $	*/
 
 #undef DEBUG
@@ -74,6 +74,10 @@
 #include <machine/trap.h>
 #ifdef DDB
 #include <machine/db_machdep.h>
+#endif
+
+#ifdef KGDB
+#include <sys/kgdb.h>
 #endif
 
 #ifdef COMPAT_IBCS2
@@ -231,7 +235,7 @@ trap(frame)
 
 	/* trace trap */
 	case T_TRCTRAP: {
-#ifdef DDB
+#if defined(DDB) || defined(KGDB)
 		/* Make sure nobody is single stepping into kernel land.
 		 * The syscall has to turn off the trace bit itself.  The
 		 * easiest way, is to simply not call the debugger, until
@@ -251,6 +255,21 @@ trap(frame)
 
 	default:
 	we_re_toast:
+#ifdef KGDB
+		if (kgdb_trap(type, &frame))
+			return;
+		else {
+			/*
+			 * If this is a breakpoint, don't panic
+			 * if we're not connected.
+			 */
+			if (type == T_BPTFLT) {
+				printf("kgdb: ignored %s\n", trap_type[type]);
+				return;
+			}
+		}
+#endif
+
 #ifdef DDB
 		if (kdb_trap(type, 0, &frame))
 			return;
@@ -512,6 +531,15 @@ trap(frame)
 		break;
 	}
 
+#if 0  /* Should this be left out?  */
+#if !defined(DDB) && !defined(KGDB)
+	/* XXX need to deal with this when DDB is present, too */
+	case T_TRCTRAP: /* kernel trace trap; someone single stepping lcall's */
+			/* syscall has to turn off the trace bit itself */
+		return;
+#endif
+#endif
+
 	case T_BPTFLT|T_USER:		/* bpt instruction fault */
 		sv.sival_int = rcr2();
 		trapsignal(p, SIGTRAP, type &~ T_USER, TRAP_BRKPT, sv);
@@ -524,16 +552,22 @@ trap(frame)
 		trapsignal(p, SIGTRAP, type &~ T_USER, TRAP_TRACE, sv);
 		break;
 
-#include "isa.h"
 #if	NISA > 0
 	case T_NMI:
 	case T_NMI|T_USER:
-#ifdef DDB
+#if defined(DDB) || defined(KGDB)
 		/* NMI can be hooked up to a pushbutton for debugging */
 		printf ("NMI ... going to debugger\n");
-		if (kdb_trap (type, 0, &frame))
+#ifdef KGDB
+		if (kgdb_trap(type, &frame))
 			return;
 #endif
+#ifdef DDB
+		if (kdb_trap(type, 0, &frame))
+			return;
+#endif
+			return;
+#endif /* DDB || KGDB */
 		/* machine/parity/power fail/"kitchen sink" faults */
 		if (isa_nmi() == 0)
 			return;
