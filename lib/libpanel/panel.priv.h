@@ -1,4 +1,4 @@
-/*	$OpenBSD: panel.priv.h,v 1.7 2001/01/22 18:02:11 millert Exp $	*/
+/*	$OpenBSD: panel.priv.h,v 1.8 2001/02/28 22:58:53 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 2000 Free Software Foundation, Inc.                        *
@@ -28,7 +28,7 @@
  * authorization.                                                           *
  ****************************************************************************/
 
-/* $From: panel.priv.h,v 1.15 2000/12/10 00:27:20 tom Exp $ */
+/* $From: panel.priv.h,v 1.17 2001/02/24 23:47:05 tom Exp $ */
 
 #ifndef _PANEL_PRIV_H
 #define _PANEL_PRIV_H
@@ -152,10 +152,8 @@
         If the "touch" flag is set, the panel gets touched before it is
         updated. 
 ---------------------------------------------------------------------------*/
-#define PANEL_UPDATE(pan,panstart,touch)\
+#define PANEL_UPDATE(pan,panstart)\
 {  PANEL* pan2 = ((panstart) ? (panstart) : _nc_bottom_panel);\
-   if (touch)\
-      Touchpan(pan);\
    while(pan2) {\
       if ((pan2 != pan) && PANELS_OVERLAPPED(pan,pan2)) {\
         int y,ix1,ix2,iy1,iy2;\
@@ -194,12 +192,12 @@
 
 #define HIDE_PANEL(pan,err,err_if_unlinked)\
   if (IS_LINKED(pan)) {\
-    PANEL_UPDATE(pan,(PANEL*)0,TRUE);\
+    Touchpan(pan);\
+    PANEL_UPDATE(pan,(PANEL*)0);\
     PANEL_UNLINK(pan,err);\
   } \
   else {\
-    if (err_if_unlinked)\
-      err = ERR;\
+      err = err_if_unlinked;\
   }
 
 #endif /* _PANEL_PRIV_H */

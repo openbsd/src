@@ -1,4 +1,4 @@
-/*	$OpenBSD: p_hide.c,v 1.4 2001/01/22 18:02:09 millert Exp $	*/
+/*	$OpenBSD: p_hide.c,v 1.5 2001/02/28 22:58:53 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
@@ -38,7 +38,7 @@
  */
 #include "panel.priv.h"
 
-MODULE_ID("$From: p_hide.c,v 1.6 2000/12/10 02:20:44 tom Exp $")
+MODULE_ID("$From: p_hide.c,v 1.7 2001/02/24 23:46:45 tom Exp $")
 
 NCURSES_EXPORT(int)
 hide_panel (register PANEL *pan)
@@ -51,7 +51,7 @@ hide_panel (register PANEL *pan)
   dBug(("--> hide_panel %s", USER_PTR(pan->user)));
   dStack("<u%d>",1,pan);
 
-  HIDE_PANEL(pan,err,TRUE);
+  HIDE_PANEL(pan,err,ERR);
 
   dStack("<u%d>",9,pan);
 

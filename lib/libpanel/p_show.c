@@ -1,4 +1,4 @@
-/*	$OpenBSD: p_show.c,v 1.4 2001/01/22 18:02:10 millert Exp $	*/
+/*	$OpenBSD: p_show.c,v 1.5 2001/02/28 22:58:53 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
@@ -38,7 +38,7 @@
  */
 #include "panel.priv.h"
 
-MODULE_ID("$From: p_show.c,v 1.8 2000/12/10 02:20:44 tom Exp $")
+MODULE_ID("$From: p_show.c,v 1.9 2001/02/24 23:46:50 tom Exp $")
 
 NCURSES_EXPORT(int)
 show_panel (PANEL *pan)
@@ -53,7 +53,7 @@ show_panel (PANEL *pan)
 
   dBug(("--> show_panel %s", USER_PTR(pan->user)));
 
-  HIDE_PANEL(pan,err,FALSE);
+  HIDE_PANEL(pan,err,OK);
 
   dStack("<lt%d>",1,pan);
   assert(_nc_bottom_panel == _nc_stdscr_pseudo_panel);

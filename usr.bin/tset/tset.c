@@ -1,4 +1,4 @@
-/*	$OpenBSD: tset.c,v 1.22 2001/01/29 01:58:24 niklas Exp $	*/
+/*	$OpenBSD: tset.c,v 1.23 2001/02/28 22:58:52 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
@@ -105,7 +105,7 @@ char *ttyname(int fd);
 #include <dump_entry.h>
 #include <transform.h>
 
-MODULE_ID("$From: tset.c,v 0.48 2000/11/04 22:50:15 tom Exp $")
+MODULE_ID("$From: tset.c,v 0.49 2001/02/24 23:29:33 tom Exp $")
 
 extern char **environ;
 
@@ -161,14 +161,14 @@ failed(const char *msg)
 static void
 cat(char *file)
 {
-    register int fd, nr, nw;
+    register int fd, nr;
     char buf[BUFSIZ];
 
     if ((fd = open(file, O_RDONLY, 0)) < 0)
 	failed(file);
 
     while ((nr = read(fd, buf, sizeof(buf))) > 0)
-	if ((nw = write(STDERR_FILENO, buf, (size_t) nr)) == -1)
+	if (write(STDERR_FILENO, buf, (size_t) nr) == -1)
 	    failed("write to stderr");
     if (nr != 0)
 	failed(file);
@@ -497,7 +497,7 @@ mapped(const char *type)
 static const char *
 get_termcap_entry(char *userarg)
 {
-    int rval, errret;
+    int errret;
     char *p;
     const char *ttype;
 #if HAVE_GETTTYNAM
@@ -590,8 +590,8 @@ get_termcap_entry(char *userarg)
 	    ttype = askuser(0);
     }
     /* Find the terminfo entry.  If it doesn't exist, ask the user. */
-    while ((rval = setupterm((NCURSES_CONST char *) ttype, STDOUT_FILENO,
-			     &errret)) != OK) {
+    while (setupterm((NCURSES_CONST char *) ttype, STDOUT_FILENO, &errret)
+	   != OK) {
 	if (errret == 0) {
 	    (void) fprintf(stderr, "tset: unknown terminal type %s\n",
 			   ttype);

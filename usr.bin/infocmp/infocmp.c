@@ -1,4 +1,4 @@
-/*	$OpenBSD: infocmp.c,v 1.12 2001/01/22 18:02:18 millert Exp $	*/
+/*	$OpenBSD: infocmp.c,v 1.13 2001/02/28 22:58:52 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
@@ -43,7 +43,7 @@
 #include <term_entry.h>
 #include <dump_entry.h>
 
-MODULE_ID("$From: infocmp.c,v 1.59 2000/11/05 00:22:07 tom Exp $")
+MODULE_ID("$From: infocmp.c,v 1.60 2001/02/24 22:03:12 tom Exp $")
 
 #define L_CURL "{"
 #define R_CURL "}"
@@ -712,7 +712,6 @@ file_comparison(int argc, char *argv[])
     /* someday we may allow comparisons on more files */
     int filecount = 0;
     ENTRY *heads[MAXCOMPARE];
-    ENTRY *tails[MAXCOMPARE];
     ENTRY *qp, *rp;
     int i, n;
 
@@ -746,7 +745,6 @@ file_comparison(int argc, char *argv[])
 	}
 
 	heads[filecount] = _nc_head;
-	tails[filecount] = _nc_tail;
 	filecount++;
     }
 

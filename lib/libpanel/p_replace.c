@@ -1,4 +1,4 @@
-/*	$OpenBSD: p_replace.c,v 1.4 2001/01/22 18:02:09 millert Exp $	*/
+/*	$OpenBSD: p_replace.c,v 1.5 2001/02/28 22:58:53 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
@@ -38,7 +38,7 @@
  */
 #include "panel.priv.h"
 
-MODULE_ID("$From: p_replace.c,v 1.6 2000/12/10 02:20:44 tom Exp $")
+MODULE_ID("$From: p_replace.c,v 1.7 2001/02/24 23:41:38 tom Exp $")
 
 NCURSES_EXPORT(int)
 replace_panel (PANEL *pan, WINDOW *win)
@@ -46,8 +46,10 @@ replace_panel (PANEL *pan, WINDOW *win)
   if(!pan)
     return(ERR);
 
-  if (IS_LINKED(pan))
-    PANEL_UPDATE(pan,(PANEL*)0, TRUE);
+  if (IS_LINKED(pan)) {
+    Touchpan(pan);
+    PANEL_UPDATE(pan,(PANEL*)0);
+  }
   
   pan->win = win;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: panel.c,v 1.8 2001/01/22 18:02:10 millert Exp $	*/
+/*	$OpenBSD: panel.c,v 1.9 2001/02/28 22:58:53 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
@@ -36,7 +36,7 @@
 /* panel.c -- implementation of panels library, some core routines */
 #include "panel.priv.h"
 
-MODULE_ID("$From: panel.c,v 1.19 2000/12/10 02:20:43 tom Exp $")
+MODULE_ID("$From: panel.c,v 1.20 2001/02/24 23:17:26 tom Exp $")
 
 #ifdef TRACE
 #ifndef TRACE_TXT
@@ -137,6 +137,6 @@ _nc_Touchline
 #ifndef TRACE
 #  ifndef __GNUC__
      /* Some C compilers need something defined in a source file */
-     static char GCC_UNUSED dummy;
+     void _nc_dummy_panel(void) { }
 #  endif
 #endif
