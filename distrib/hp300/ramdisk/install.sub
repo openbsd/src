@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.3 1997/02/23 19:10:53 downsj Exp $
+#	$OpenBSD: install.sub,v 1.4 1997/04/21 07:32:12 downsj Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -40,12 +40,13 @@
 #	OpenBSD installation/upgrade script - common subroutines.
 
 ROOTDISK=""				# filled in below
-VERSION=2.0				# filled in automatically (see list)
+VERSION=2.1				# filled in automatically (see list)
 export VERSION
 
 ALLSETS="base comp etc games man misc text"	# default install sets
 UPGRSETS="base comp games man misc text"	# default upgrade sets
 SNAPSETS="bin dev etc sbin usr.bin usr.games usr.include usr.lib usr.libexec usr.misc usr.sbin usr.share var"			# default snapshot tarfiles
+KERNSETS="bsd-gen bsd-dl"			# kernel sets
 THESETS=					# one of the above
 
 local_sets_dir=""			# Path searched for sets by install_sets
@@ -163,18 +164,12 @@ dir_has_sets() {
 		if [ -f $_dir/${_file}.tgz ]; then
 			return 0
 		fi
+		# Kernel sets...
+		if [ -f $_dir/${_file}.gz ]; then
+			return 0
+		fi
 	done
 	return 1
-}
-
-twiddle() {
-# spin the propeller so we don't get bored
-	while : ; do  
-		sleep 1; echo -n "\010/";
-		sleep 1; echo -n "\010-";
-		sleep 1; echo -n "\010\\\\";
-		sleep 1; echo -n "\010|";
-	done >> /dev/tty & echo $!
 }
 
 get_localdir() {
@@ -598,9 +593,6 @@ __install_ftp_2
 
 install_from_mounted_fs() {
 	# $1 - directory containing installation sets
-	# We need to export the final path to the istall sets
-	SETSDIR=$1
-	export SETSDIR
 
 	local _filename
 	local _sets
@@ -608,12 +600,15 @@ install_from_mounted_fs() {
 	local _f
 
 	_sets=""
+	_ksets=""
 	if dir_has_sets $1 $THESETS; then
 		for _f in $THESETS ; do
 			if [ -f $1/${_f}.tar.gz ]; then
 				_sets="$_sets ${_f}.tar.gz"
 			elif [ -f $1/${_f}.tgz ]; then
 				_sets="$_sets ${_f}.tgz"
+			elif [ -f $1/${_f}.gz ]; then
+				_ksets="$_ksets ${_f}.gz"
 			fi
 		done
 	else
@@ -661,6 +656,54 @@ install_from_mounted_fs() {
 
 		# Extract file
 		cat $_filename | (cd /mnt; pax -r -pe -z)
+		echo "Extraction complete."
+		_setsdone="$_f $_setsdone"
+
+	done
+
+	while : ; do
+		echo "The following kernel sets are available for extraction:"
+		echo "NOTE:  Only one kernel set should be extracted.  The"
+		echo "final one extracted will be the booted kernel."
+		echo "(marked sets have already been extracted)"
+		echo ""
+
+		_next=""
+		for _f in $_ksets ; do
+			if isin $_f $_setsdone; then
+				echo -n "[X] "
+				_next=""
+			else
+				echo -n "    "
+				if [ -z "$_next" ]; then _next=$_f; fi
+			fi
+			echo $_f
+		done
+		echo ""
+
+		# Get the name of the file.
+		if [ "X$_next" = "X" ]; then resp=n; else resp=y; fi
+		echo -n "Continue extraction [$resp]?"
+		getresp "$resp"
+		if [ "$resp" = "n" ]; then
+			break
+		fi
+
+		echo -n "File name [$_next]? "
+		getresp "$_next"
+		_f=$resp
+		_filename="/$1/$_f"
+
+		# Ensure file exists
+		if [ ! -f $_filename ]; then
+			echo "File $_filename does not exist.  Check to make"
+			echo "sure you entered the information properly."
+			continue
+		fi
+
+		# Extract file
+		gzip -d < $_filename > /mnt/bsd
+		chmod 755 /mnt/bsd
 		echo "Extraction complete."
 		_setsdone="$_f $_setsdone"
 
@@ -1275,9 +1318,7 @@ unmount_fs()
 
 	if [ $_fast = 0 ]; then
 		echo -n	"Syncing disks..."
-		_pid=`twiddle`
-		sync; sleep 4; sync; sleep 2; sync; sleep 2
-		kill $_pid
+		sync; sync; sync; sync
 		echo	"done."
 	fi
 

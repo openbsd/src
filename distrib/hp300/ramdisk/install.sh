@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.2 1997/02/23 19:10:52 downsj Exp $
+#	$OpenBSD: install.sh,v 1.3 1997/04/21 07:32:12 downsj Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -91,10 +91,10 @@ echo -n "Is this a (s)napshot or (r)elease? [s] "
 getresp "s"
 case "$resp" in
 	s*|S*)
-		THESETS="$SNAPSETS"
+		THESETS="$SNAPSETS $KERNSETS"
 		;;
 	r*|R*)
-		THESETS="$ALLSETS"
+		THESETS="$ALLSETS $KERNSETS"
 		;;
 	*)
 		md_not_going_to_install
@@ -401,12 +401,13 @@ install_sets $ALLSETS $MDSETS
 	if [ ! -x /mnt/dev/MAKEDEV ]; then
 		echo "No /dev/MAKEDEV installed, something is wrong here..."
 	else
-		echo -n "Making devices..."
-		pid=`twiddle`
-		cd /mnt/dev
-		sh MAKEDEV all
-		kill $pid
-		echo "done."
+		# Check if a device exists... snapshots have a dev.tar.gz
+		if [ ! -e /mnt/dev/rsd0a ]; then
+			echo -n "Making devices..."
+			cd /mnt/dev
+			sh MAKEDEV all
+			echo "done."
+		fi
 	fi
 	md_copy_kernel
 
