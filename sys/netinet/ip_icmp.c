@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.13 1998/12/31 12:40:34 deraadt Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.14 1998/12/31 12:55:46 deraadt Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -148,7 +148,7 @@ icmp_error(n, type, code, dest, destifp)
 	icp->icmp_code = code;
 	bcopy((caddr_t)oip, (caddr_t)&icp->icmp_ip, icmplen);
 	nip = &icp->icmp_ip;
-	nip->ip_len = htons((u_int16_t)(nip->ip_len + oiplen));
+	nip->ip_len = htons((u_int16_t)(ntohs(nip->ip_len) + oiplen));
 
 	m0.m_next = NULL;			/* correct nip->ip_sum */
 	m0.m_data = (char *)nip;
