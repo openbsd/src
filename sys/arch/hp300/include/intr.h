@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.13 2004/09/30 16:22:59 millert Exp $	*/
+/*	$OpenBSD: intr.h,v 1.14 2005/01/14 22:39:29 miod Exp $	*/
 /*	$NetBSD: intr.h,v 1.2 1997/07/24 05:43:08 scottr Exp $	*/
 
 /*-
@@ -125,15 +125,10 @@ extern	unsigned short hp300_impipl;
 #define	IPL_STATCLOCK	6
 #define	IPL_HIGH	7
 
-/* These spl calls are _not_ to be used by machine-independent code. */
-#define	splhil()	_splraise(PSL_S|PSL_IPL1)
-#define	splkbd()	splhil()
-#define	splsoft()	spl1()
-
 /* These spl calls are used by machine-independent code. */
-#define	spllowersoftclock()	splsoft()
-#define	splsoftclock()		splsoft()
-#define	splsoftnet()		splsoft()
+#define	spllowersoftclock()	spl1()
+#define	splsoftclock()		spl1()
+#define	splsoftnet()		spl1()
 #define	splbio()		_splraise(hp300_bioipl)
 #define	splnet()		_splraise(hp300_netipl)
 #define	spltty()		_splraise(hp300_ttyipl)

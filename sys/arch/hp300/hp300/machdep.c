@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.97 2005/01/14 19:11:56 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.98 2005/01/14 22:39:27 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.121 1999/03/26 23:41:29 mycroft Exp $	*/
 
 /*
@@ -89,9 +89,6 @@
 #define	MAXMEM	64*1024	/* XXX - from cmap.h */
 #include <uvm/uvm_extern.h>
 
-#include <hp300/dev/hilreg.h>
-#include <hp300/dev/hilioctl.h>
-#include <hp300/dev/hilvar.h>
 #ifdef USELEDS
 #include <hp300/hp300/leds.h>
 #endif
@@ -99,7 +96,7 @@
 /* the following is used externally (sysctl_hw) */
 char	machine[] = MACHINE;	/* from <machine/param.h> */
 
-struct vm_map *exec_map = NULL;  
+struct vm_map *exec_map = NULL;
 struct vm_map *phys_map = NULL;
 
 extern paddr_t avail_start, avail_end;
@@ -224,12 +221,12 @@ consinit()
 	conscode = 1024;		/* invalid */
 
 	/*
-	 * Initialize the DIO resource map.
+	 * Initialize the bus resource map.
 	 */
 	extio = extent_create("extio",
 	    (u_long)extiobase, (u_long)extiobase + ctob(eiomapsize),
 	    M_DEVBUF, extiospace, sizeof(extiospace), EX_NOWAIT);
-	    
+
 	/*
 	 * Initialize the console before we print anything out.
 	 */
@@ -321,7 +318,7 @@ cpu_startup()
 
 		while (curbufsize) {
 			pg = uvm_pagealloc(NULL, 0, NULL, 0);
-			if (pg == NULL) 
+			if (pg == NULL)
 				panic("cpu_startup: not enough memory for "
 				    "buffer cache");
 
@@ -1076,6 +1073,7 @@ nmihand(frame)
 		return;
 	innmihand = 1;
 
+#if 0	/* XXX */
 	/* Check for keyboard <CRTL>+<SHIFT>+<RESET>. */
 	if (kbdnmi()) {
 #ifdef DDB
@@ -1085,13 +1083,16 @@ nmihand(frame)
 #endif /* DDB */
 		goto nmihand_out;	/* no more work to do */
 	}
+#endif
 
 	if (parityerror(&frame))
 		return;
 	/* panic?? */
 	printf("unexpected level 7 interrupt ignored\n");
 
+#if 0
 nmihand_out:
+#endif
 	innmihand = 0;
 }
 
@@ -1227,7 +1228,7 @@ done:
 /*
  * cpu_exec_aout_makecmds():
  *	cpu-dependent a.out format hook for execve().
- * 
+ *
  * Determine of the given exec package refers to something which we
  * understand and, if so, set up the vmcmds for it.
  */

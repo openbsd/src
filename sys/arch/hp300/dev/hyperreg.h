@@ -1,4 +1,4 @@
-/*	$OpenBSD: grf_hyreg.h,v 1.3 2003/06/02 23:27:44 millert Exp $	*/
+/*	$OpenBSD: hyperreg.h,v 1.1 2005/01/14 22:39:25 miod Exp $	*/
 /*	$NetBSD: grf_hyreg.h,v 1.2 1994/10/26 07:23:57 cgd Exp $	*/
 
 /*
@@ -40,40 +40,38 @@
  *	@(#)grf_hyreg.h	8.1 (Berkeley) 6/10/93
  */
 
-#include <hp300/dev/iotypes.h>	/* XXX */
-
 struct hyboxfb {
-  u_char 	:8;
-  vu_char 	reset;			/* reset register		0x01 */
-  vu_char	fb_address;		/* frame buffer address 	0x02 */
-  vu_char	interrupt;		/* interrupt register		0x03 */
-  u_char	:8;
-  vu_char	fbwmsb;			/* frame buffer width MSB	0x05 */
-  u_char	:8;
-  vu_char	fbwlsb;			/* frame buffer width MSB	0x07 */
-  u_char	:8;
-  vu_char	fbhmsb;			/* frame buffer height MSB	0x09 */
-  u_char	:8;
-  vu_char	fbhlsb;			/* frame buffer height MSB	0x0b */
-  u_char	:8;
-  vu_char	dwmsb;			/* display width MSB		0x0d */
-  u_char	:8;
-  vu_char	dwlsb;			/* display width MSB		0x0f */
-  u_char	:8;
-  vu_char	dhmsb;			/* display height MSB		0x11 */
-  u_char	:8;
-  vu_char	dhlsb;			/* display height MSB		0x13 */
-  u_char	:8;
-  vu_char	fbid;			/* Scondary frame buffer id	0x15 */
-  u_char	:8;
-  vu_char	bits;			/* square(0)/double-high(1) 	0x17 */
-  u_char	f1[0x5b-0x17-1];
-  vu_char	num_planes;		/* number of color planes       0x5b */
-  u_char	:8;
-  vu_char	fbomsb;			/* frame buffer offset MSB	0x5d */
-  u_char	:8;
-  vu_char	fbolsb;			/* frame buffer offset LSB	0x5f */
-  u_char	f2[0x4000-0x5f-1];
-  vu_char	nblank;			/* display enable planes      0x4000 */
+	u_int8_t :8;
+	u_int8_t reset;			/* reset register		0x01 */
+	u_int8_t fb_address;		/* frame buffer address 	0x02 */
+	u_int8_t interrupt;		/* interrupt register		0x03 */
+	u_int8_t :8;
+	u_int8_t fbwmsb;		/* frame buffer width MSB	0x05 */
+	u_int8_t :8;
+	u_int8_t fbwlsb;		/* frame buffer width MSB	0x07 */
+	u_int8_t :8;
+	u_int8_t fbhmsb;		/* frame buffer height MSB	0x09 */
+	u_int8_t :8;
+	u_int8_t fbhlsb;		/* frame buffer height MSB	0x0b */
+	u_int8_t :8;
+	u_int8_t dwmsb;			/* display width MSB		0x0d */
+	u_int8_t :8;
+	u_int8_t dwlsb;			/* display width MSB		0x0f */
+	u_int8_t :8;
+	u_int8_t dhmsb;			/* display height MSB		0x11 */
+	u_int8_t :8;
+	u_int8_t dhlsb;			/* display height MSB		0x13 */
+	u_int8_t :8;
+	u_int8_t fbid;			/* Scondary frame buffer id	0x15 */
+	u_int8_t :8;
+	u_int8_t bits;			/* square(0)/double-high(1) 	0x17 */
+	u_int8_t f1[0x5b-0x17-1];
+	u_int8_t num_planes;		/* number of color planes       0x5b */
+	u_int8_t :8;
+	u_int8_t fbomsb;		/* frame buffer offset MSB	0x5d */
+	u_int8_t :8;
+	u_int8_t fbolsb;		/* frame buffer offset LSB	0x5f */
+	u_int8_t f2[0x4000-0x5f-1];
+	u_int8_t nblank;		/* display enable planes      0x4000 */
 };
 

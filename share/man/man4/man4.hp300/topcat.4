@@ -1,4 +1,4 @@
-.\"	$OpenBSD: topcat.4,v 1.9 2005/01/11 22:34:13 miod Exp $
+.\"	$OpenBSD: topcat.4,v 1.10 2005/01/14 22:39:21 miod Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     from: @(#)tc.4	8.1 (Berkeley) 6/9/93
 .\"
-.Dd January 11, 2005
+.Dd January 12, 2005
 .Dt TOPCAT 4 hp300
 .Os
 .Sh NAME
@@ -45,9 +45,9 @@ and
 Kathmandu
 frame buffers
 .Sh SYNOPSIS
-.Cd "topcat* at intio?"
-.Cd "topcat* at dio?"
-.Cd "grf*    at topcat?"
+.Cd "topcat*    at intio?"
+.Cd "topcat*    at dio?"
+.Cd "wsdisplay* at topcat?"
 .Sh DESCRIPTION
 The
 HP98543, HP98544, HP98545A and HP98547A Topcat,
@@ -79,9 +79,7 @@ are accelerated frame buffers, with the following resolution and color depth:
 The
 .Nm
 driver provides a frame buffer abstraction to the
-.Xr grf 4
-driver, and the associated
-.Xr ite 4
+.Xr wscons 4
 console framework.
 .Pp
 The Topcat display cards are not user configurable.
@@ -94,10 +92,12 @@ switches selector to define the
 .Dq select code .
 A select code of 1 will use the same settings as the Topcat cards.
 .Sh SEE ALSO
-.Xr ioctl 2 ,
 .Xr dvbox 4 ,
 .Xr gbox 4 ,
 .Xr grf 4 ,
 .Xr hyper 4 ,
 .Xr intro 4 ,
-.Xr rbox 4
+.Xr rbox 4 ,
+.Xr sti 4 ,
+.Xr wscons 4 ,
+.Xr wsdisplay 4

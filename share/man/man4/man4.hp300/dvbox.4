@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dvbox.4,v 1.6 2005/01/08 19:47:38 miod Exp $
+.\"	$OpenBSD: dvbox.4,v 1.7 2005/01/14 22:39:21 miod Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     from: @(#)dv.4	8.1 (Berkeley) 6/9/93
 .\"
-.Dd March 16, 2003
+.Dd January 12, 2005
 .Dt DVBOX 4 hp300
 .Os
 .Sh NAME
@@ -42,9 +42,9 @@
 .Tn HP98730
 DaVinci frame buffer
 .Sh SYNOPSIS
-.Cd "dvbox* at intio?"
-.Cd "dvbox* at dio?"
-.Cd "grf*   at dvbox?"
+.Cd "dvbox*     at intio?"
+.Cd "dvbox*     at dio?"
+.Cd "wsdisplay* at dvbox?"
 .Sh DESCRIPTION
 The
 .Tn HP98730
@@ -59,9 +59,7 @@ frame buffer extensions, it is possible to add overlay planes.
 The
 .Nm
 driver provides a frame buffer abstraction to the
-.Xr grf 4
-driver, and the associated
-.Xr ite 4
+.Xr wscons 4
 console framework.
 .Pp
 The DaVinci can be configured at either the ``internal'' address
@@ -70,13 +68,14 @@ or at an external select code less than 32.
 The hardware installation manual describes the procedure for
 setting these values.
 .Sh SEE ALSO
-.Xr ioctl 2 ,
 .Xr gbox 4 ,
-.Xr grf 4 ,
 .Xr hyper 4 ,
 .Xr intro 4 ,
 .Xr rbox 4 ,
-.Xr topcat 4
+.Xr sti 4 ,
+.Xr topcat 4 ,
+.Xr wscons 4 ,
+.Xr wsdisplay 4
 .Sh BUGS
 This driver has not been tested with all possible combinations of frame
 buffer boards and scan boards installed in the device.

@@ -1,14 +1,13 @@
 #
-#	$OpenBSD: ttys,v 1.6 2002/06/09 06:15:14 todd Exp $
+#	$OpenBSD: ttys,v 1.7 2005/01/14 22:39:15 miod Exp $
 #
 # name	getty				type	status		comments
 #
-# If the console is marked insecure, single-user requires
-# the root password.
-console "/usr/libexec/getty Pc"		hp300h	on  secure
-
-# Hardwired lines are marked off, by default, so getty(8)
-# is quiet when they don't exist.
+# main console device
+console "/usr/libexec/getty std.9600"	vt220	on  secure
+# graphics console
+ttyC0	"/usr/libexec/getty std.9600"	vt220	off secure
+# serial lines
 tty00	"/usr/libexec/getty std.9600"	unknown off secure
 tty01	"/usr/libexec/getty std.9600"	unknown off secure
 tty02	"/usr/libexec/getty std.9600"	unknown off secure

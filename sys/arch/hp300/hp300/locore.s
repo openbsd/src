@@ -1,9 +1,9 @@
-/*	$OpenBSD: locore.s,v 1.46 2005/01/14 19:11:56 miod Exp $	*/
+/*	$OpenBSD: locore.s,v 1.47 2005/01/14 22:39:27 miod Exp $	*/
 /*	$NetBSD: locore.s,v 1.91 1998/11/11 06:41:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Theo de Raadt
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -72,7 +72,14 @@
 #include <hp300/hp300/leds.h>
 #endif
 #include <hp300/dev/dioreg.h>
-#include <hp300/dev/grfreg.h>
+#include <hp300/dev/diofbreg.h>
+
+#include "sgc.h"
+#if NSGC > 0
+#include <hp300/dev/sgcreg.h>
+#endif
+
+#define	SYSFLAG		0xfffffed2
 
 #define MMUADDR(ar)	movl	_C_LABEL(MMUbase),ar
 #define CLKADDR(ar)	movl	_C_LABEL(CLKbase),ar
@@ -150,8 +157,8 @@ ASENTRY_NOPROFILE(start)
 	movl	#CACHE_OFF,d0
 	movc	d0,cacr			| clear and disable on-chip cache(s)
 
-/* check for internal HP-IB in SYSFLAG */
-	btst	#5,0xfffffed2		| internal HP-IB?
+	/* check for internal HP-IB in SYSFLAG */
+	btst	#5,SYSFLAG			| internal HP-IB?
 	jeq	Lhaveihpib		| yes, have HP-IB just continue
 	RELOC(internalhpib, a0)
 	movl	#0,a0@			| no, clear associated address
@@ -369,6 +376,35 @@ dioloop:
 	addql	#1, d2			| and slot number
 	cmpl	#256, d2
 	jne	dioloop
+
+#if NSGC > 0
+	/*
+	 * Probe for SGC devices, slots 0 to 3.
+	 * Only do the probe on machines which might have an SGC bus.
+	 */
+	RELOC(machineid,a0)
+	cmpl	#HP_400,a0@
+	jeq	sgcprobe
+	cmpl	#HP_425,a0@
+	jeq	sgcprobe
+	cmpl	#HP_433,a0@
+	jne	eiodone
+sgcprobe:
+	clrl	d2			| first slot...
+	movl	#SGC_BASE, a0		| and first address
+sgcloop:
+	ASRELOC(phys_badaddr, a3)
+	jbsr	a3@			| probe address
+	movl	#SGC_DEVSIZE, d1
+	tstl	d0			| success?
+	jne	2f			| no, skip
+	addl	d1, d3			| yes, count it
+2:
+	addl	d1, a0			| next slot address...
+	addql	#1, d2			| and slot number
+	cmpl	#SGC_NSLOTS, d2
+	jne	sgcloop
+#endif
 
 eiodone:
 	moveq	#PGSHIFT, d2
@@ -628,7 +664,7 @@ GLOBAL(proc_trampoline)
 
 /*
  * Trap/interrupt vector routines
- */ 
+ */
 #include <m68k/m68k/trap_subr.s>
 
 	.data
@@ -655,7 +691,7 @@ ENTRY_NOPROFILE(buserr60)
 	movl	a0,sp@(FR_SP)		|   in the savearea
 	movel	sp@(FR_HW+12),d0	| FSLW
 	btst	#2,d0			| branch prediction error?
-	jeq	Lnobpe			
+	jeq	Lnobpe
 	movc	cacr,d2
 	orl	#IC60_CABC,d2		| clear all branch cache entries
 	movc	d2,cacr
@@ -675,7 +711,7 @@ Lnobpe:
 Lberr3:
 	movl	d1,sp@-
 	movl	d0,sp@-			| code is FSLW now.
-	andw	#0x1f80,d0 
+	andw	#0x1f80,d0
 	jeq	Lberr60			| it is a bus error
 	movl	#T_MMUFLT,sp@-		| show that we are an MMU fault
 	jra	_ASM_LABEL(faultstkadj)	| and deal with it
@@ -929,7 +965,7 @@ ENTRY_NOPROFILE(trap0)
 	movw	#SPL1,sr
 	tstb	_C_LABEL(ssir)
 	jne	Lsir1
-Ltrap1:	
+Ltrap1:
 	movl	sp@(FR_SP),a0		| grab and restore
 	movl	a0,usp			|   user SP
 	moveml	sp@+,#0x7FFF		| restore most registers
@@ -1080,13 +1116,6 @@ Lbrkpt3:
 #define INTERRUPT_RESTOREREG	moveml	sp@+,#0x0303
 
 ENTRY_NOPROFILE(spurintr)	/* level 0 */
-	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
-	jra	_ASM_LABEL(rei)
-
-ENTRY_NOPROFILE(lev1intr)	/* level 1: HIL XXX this needs to go away */
-	INTERRUPT_SAVEREG
-	jbsr	_C_LABEL(hilint)
-	INTERRUPT_RESTOREREG
 	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
 	jra	_ASM_LABEL(rei)
 
@@ -1241,7 +1270,7 @@ Lgotsir:
 	moveml	#0xFFFF,sp@-		| save all registers
 	movl	usp,a1			| including
 	movl	a1,sp@(FR_SP)		|    the users SP
-Lsir1:	
+Lsir1:
 	clrl	sp@-			| VA == none
 	clrl	sp@-			| code == none
 	movl	#T_SSIR,sp@-		| type == software interrupt
@@ -1264,7 +1293,7 @@ Ldorte:
 
 /*
  * Primitives
- */ 
+ */
 
 /*
  * Use common m68k support routines.
@@ -1979,7 +2008,7 @@ ASLOCAL(_bsave)
 ASLOCAL(_ssave)
 	.long	0
 	.text
-	
+
 /*
  * Handle the nitty-gritty of rebooting the machine.
  * Basically we just turn off the MMU and jump to the appropriate ROM routine.

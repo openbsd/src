@@ -1,4 +1,4 @@
-/*	$OpenBSD: dca.c,v 1.21 2005/01/08 22:13:53 miod Exp $	*/
+/*	$OpenBSD: dca.c,v 1.22 2005/01/14 22:39:25 miod Exp $	*/
 /*	$NetBSD: dca.c,v 1.35 1997/05/05 20:58:18 thorpej Exp $	*/
 
 /*
@@ -58,6 +58,7 @@
 #include <sys/device.h>
 
 #include <machine/autoconf.h>
+#include <machine/bus.h>
 #include <machine/cpu.h>
 #include <machine/intr.h>
 
@@ -299,7 +300,7 @@ dcaopen(dev, flag, mode, p)
 	struct dcadevice *dca;
 	u_char code;
 	int s, error = 0;
- 
+
 	if (unit >= dca_cd.cd_ndevs ||
 	    (sc = dca_cd.cd_devs[unit]) == NULL)
 		return (ENXIO);
@@ -346,7 +347,7 @@ dcaopen(dev, flag, mode, p)
                         dca->dca_fifo = FIFO_ENABLE | FIFO_RCV_RST |
                             FIFO_XMT_RST |
 			    (tp->t_ispeed <= 1200 ? FIFO_TRIGGER_1 :
-			    FIFO_TRIGGER_14);   
+			    FIFO_TRIGGER_14);
 
 		/* Flush any pending I/O */
 		while ((dca->dca_iir & IIR_IMASK) == IIR_RXRDY)
@@ -385,7 +386,7 @@ dcaopen(dev, flag, mode, p)
 		while (sc->sc_cua ||
 		    ((tp->t_cflag & CLOCAL) == 0 &&
 		    (tp->t_state & TS_CARR_ON) == 0)) {
-			tp->t_state |= TS_WOPEN; 
+			tp->t_state |= TS_WOPEN;
 			error = ttysleep(tp, (caddr_t)&tp->t_rawq,
 			    TTIPRI | PCATCH, ttopen, 0);
 			if (!DCACUA(dev) && sc->sc_cua && error == EINTR)
@@ -407,7 +408,7 @@ dcaopen(dev, flag, mode, p)
 
 	return (error);
 }
- 
+
 /*ARGSUSED*/
 int
 dcaclose(dev, flag, mode, p)
@@ -420,7 +421,7 @@ dcaclose(dev, flag, mode, p)
 	struct dcadevice *dca;
 	int unit;
 	int s;
- 
+
 	unit = DCAUNIT(dev);
 
 	sc = dca_cd.cd_devs[unit];
@@ -451,7 +452,7 @@ dcaclose(dev, flag, mode, p)
 #endif
 	return (0);
 }
- 
+
 int
 dcaread(dev, uio, flag)
 	dev_t dev;
@@ -464,7 +465,7 @@ dcaread(dev, uio, flag)
 	int error, of;
 
 	sc = dca_cd.cd_devs[unit];
- 
+
 	tp = sc->sc_tty;
 	of = sc->sc_oflows;
 	error = (*linesw[tp->t_line].l_read)(tp, uio, flag);
@@ -476,7 +477,7 @@ dcaread(dev, uio, flag)
 		log(LOG_WARNING, "%s: silo overflow\n", sc->sc_dev.dv_xname);
 	return (error);
 }
- 
+
 int
 dcawrite(dev, uio, flag)
 	dev_t dev;
@@ -485,7 +486,7 @@ dcawrite(dev, uio, flag)
 {
 	struct dca_softc *sc = dca_cd.cd_devs[DCAUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
- 
+
 	return ((*linesw[tp->t_line].l_write)(tp, uio, flag));
 }
 
@@ -497,7 +498,7 @@ dcatty(dev)
 
 	return (sc->sc_tty);
 }
- 
+
 int
 dcaintr(arg)
 	void *arg;
@@ -679,7 +680,7 @@ dcaioctl(dev, cmd, data, flag, p)
 	struct tty *tp = sc->sc_tty;
 	struct dcadevice *dca = sc->sc_dca;
 	int error;
- 
+
 	error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, data, flag, p);
 	if (error >= 0)
 		return (error);
@@ -769,7 +770,7 @@ dcaparam(tp, t)
 	int cfcr, cflag = t->c_cflag;
 	int ospeed = ttspeedtab(t->c_ospeed, dcaspeedtab);
 	int s;
- 
+
 	/* check requested parameters */
         if (ospeed < 0 || (t->c_ispeed && t->c_ispeed != t->c_ospeed))
                 return (EINVAL);
@@ -835,7 +836,7 @@ dcaparam(tp, t)
 	splx(s);
 	return (0);
 }
- 
+
 void
 dcastart(tp)
 	struct tty *tp;
@@ -843,7 +844,7 @@ dcastart(tp)
 	int s, c, unit = DCAUNIT(tp->t_dev);
 	struct dca_softc *sc = dca_cd.cd_devs[unit];
 	struct dcadevice *dca = sc->sc_dca;
- 
+
 	s = spltty();
 
 	if (tp->t_state & (TS_TIMEOUT|TS_TTSTOP))
@@ -869,7 +870,7 @@ dcastart(tp)
 				fifoout[c]++;
 #endif
 		} else
-			dca->dca_data = getc(&tp->t_outq); 
+			dca->dca_data = getc(&tp->t_outq);
 	}
 
 out:
@@ -894,7 +895,7 @@ dcastop(tp, flag)
 	splx(s);
 	return (0);
 }
- 
+
 int
 dcamctl(sc, bits, how)
 	struct dca_softc *sc;
@@ -1043,7 +1044,7 @@ dcacnprobe(cp)
 	if (conforced)
 		return;
 
-	console_scan(dca_console_scan, cp);
+	console_scan(dca_console_scan, cp, HP300_BUS_DIO);
 
 #ifdef KGDB
 	/* XXX this needs to be fixed. */

@@ -1,7 +1,6 @@
-.\"	$OpenBSD: hyper.4,v 1.7 2005/01/14 22:39:21 miod Exp $
+.\"	$OpenBSD: sgc.4,v 1.1 2005/01/14 22:39:21 miod Exp $
 .\"
-.\" Copyright (c) 2003, Miodrag Vallat.
-.\" All rights reserved.
+.\" Copyright (c) 2005, Miodrag Vallat
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -25,48 +24,29 @@
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
 .Dd January 12, 2005
-.Dt HYPER 4 hp300
+.Dt SGC 4 hp300
 .Os
 .Sh NAME
-.Nm hyper
-.Nd
-.Tn HP A1096A
-Hyperion frame buffer
+.Nm sgc
+.Nd Standard Graphics Connection bus
 .Sh SYNOPSIS
-.Cd "hyper*     at dio?"
-.Cd "wsdisplay* at hyper?"
+.Cd "sgc0 at mainbus0"
 .Sh DESCRIPTION
-The Hyperion is a monochrome, high-resolution frame buffer.
-.Pp
+The SGC bus was designed by
+.Tn HP
+as a standard interface to connect graphics products to workstations.
 The
 .Nm
-driver provides a frame buffer abstraction to the
-.Xr wscons 4
-console framework.
-.Sh SELECT CODE
-The
-.Dq select code
-for the Hyperion card can be set with the JP01 and JP02 jumpers.
-These jumpers are located in the upper right corner of the board, when it is
-placed component side up, with the video connector to the left.
-Numbering the jumper pins from 1 to 3 from left to right,
-the following combinations are available:
-.Bl -column "JP02" "JP01" -offset indent
-.It Sy "JP02" Ta Sy "JP01" Ta Sy "Select code"
-.It " "
-.It Li "1-2" Ta "1-2" Ta 135
-.It Li "1-2" Ta "2-3" Ta 134
-.It Li "2-3" Ta "1-2" Ta "133 (factory settings)"
-.It Li "2-3" Ta "2-3" Ta 132
+driver provides support for the SGC bus found on some HP 9000/4xx series
+workstations.
+.Sh SUPPORTED DEVICES
+The following SGC devices are supported:
+.Ss Framebuffers
+.Bl -tag -width xxxxxx -offset indent -compact
+.It Xr sti 4
+HP Standard Text Interface compatible frame buffers
 .El
-.Pp
-Leaving a jumper open is equivalent to shorting pins 1 and 2.
 .Sh SEE ALSO
-.Xr dvbox 4 ,
-.Xr gbox 4 ,
+.Xr dio 4 ,
 .Xr intro 4 ,
-.Xr rbox 4 ,
-.Xr sti 4 ,
-.Xr topcat 4 ,
-.Xr wscons 4 ,
-.Xr wsdisplay 4
+.Xr sti 4

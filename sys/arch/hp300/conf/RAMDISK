@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.20 2004/09/16 09:14:03 mickey Exp $
+#	$OpenBSD: RAMDISK,v 1.21 2005/01/14 22:39:23 miod Exp $
 #
 # Ram disk kernel.
 #
@@ -6,19 +6,19 @@
 machine hp300 m68k
 
 # Support for various CPU types
-option	 	HP320
-option	 	HP330		# includes 318, 319
-option	 	HP340
+option		HP320
+option		HP330		# includes 318, 319
+option		HP340
 option		HP345
-option	 	HP350
-option	 	HP360
-option	 	HP370
-option	 	HP375
-option	 	HP380
+option		HP350
+option		HP360
+option		HP370
+option		HP375
+option		HP380
 option		HP385
-option	 	HP400
-option	 	HP425
-option	 	HP433
+option		HP400
+option		HP425
+option		HP433
 
 maxusers	32
 
@@ -41,14 +41,12 @@ option		INET		# IP + ICMP + TCP + UDP
 option		BOOT_CONFIG	# add support for boot -c
 
 # Options for HP hardware
-option	 	USELEDS		# make the lights twinkle
+option		USELEDS		# make the lights twinkle
 #option		CONSCODE="9"	# force console at this select code
-option	 	UK_KEYBOARD	# include United Kingdom HIL keymap
-option	 	SE_KEYBOARD	# include Swedish HIL keymap
 
 # Verbose descriptions of unconfigured DIO devices
 # (Warning: this compiles in a large string table)
-option	 	DIOVERBOSE	# recognize "unknown" DIO devices
+option		DIOVERBOSE	# recognize "unknown" DIO devices
 
 # Options for the ramdisk.
 option		MINIROOTSIZE=4096
@@ -60,6 +58,15 @@ mainbus0	at root		# root "bus"
 
 intio0		at mainbus0	# internal i/o space
 dio0		at mainbus0	# DIO/DIO-II bus
+#sgc0		at mainbus0	# SGC bus on some 4xx models
+
+# Human Interface Loop devices
+hil0		at intio?	# HIL controller
+hilkbd*		at hil?		# keyboards
+wskbd*		at hilkbd? mux 1
+#hilms*		at hil?		# mice, buttons and tablets
+#wsmouse*	at hilms? mux 0
+#hilid*		at hil?		# ID module
 
 # Frodo utility chip found on 4xx's
 frodo0		at intio?
@@ -71,31 +78,30 @@ apci*		at frodo?		# tty flavor
 # Davinci framebuffer
 dvbox*		at intio?
 dvbox*		at dio?
+wsdisplay*	at dvbox?
 
 # Gatorbox framebuffer
 gbox*		at intio?
 gbox*		at dio?
+wsdisplay*	at gbox?
 
 # Hyperion framebuffer
 hyper*		at dio?
+wsdisplay*	at hyper?
 
 # Renaissance framebuffer
 rbox*		at intio?
 rbox*		at dio?
+wsdisplay*	at rbox?
 
 # Topcat/catseye framebuffers
 topcat*		at intio?
 topcat*		at dio?
+wsdisplay*	at topcat?
 
-# Framebuffer abstraction
-grf*		at dvbox?
-grf*		at gbox?
-grf*		at hyper?
-grf*		at rbox?
-grf*		at topcat?
-
-# Internal Terminal Emulator
-ite*		at grf?
+# SGC framebuffers
+#sti*		at sgc?
+#wsdisplay*	at sti?
 
 dca0		at dio? scode 9	flags 1	# DCA serial interfaces
 dca*		at dio?

@@ -1,4 +1,4 @@
-/*	$OpenBSD: clockreg.h,v 1.4 2003/06/02 23:27:45 millert Exp $	*/
+/*	$OpenBSD: clockreg.h,v 1.5 2005/01/14 22:39:27 miod Exp $	*/
 /*	$NetBSD: clockreg.h,v 1.5 1994/10/26 07:25:26 cgd Exp $	*/
 
 /*
@@ -96,6 +96,8 @@ struct clkreg {
 /*
  * HP300 battery-backed clock
  */
+
+#define	BBCADDR		(u_int8_t *)(IIOV(0x420000))
 
 struct bbc_tm {
 	int	tm_sec;

@@ -1,5 +1,5 @@
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.22 2004/08/03 21:46:46 miod Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.23 2005/01/14 22:39:15 miod Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001-2004 Todd T. Fries <todd@OpenBSD.org>
@@ -41,7 +41,6 @@ _mkdev(ct, ct*|mt*,
 		echo bad unit for tape in: $1
 		;;
 	esac-})dnl
-__devitem(grf, grf*, Raw interface to HP300 graphics devices)dnl
 dnl
 dnl
 _TITLE(make)
@@ -71,14 +70,17 @@ _DEV(ptm, 52)
 _DEV(pty, 5)
 _DEV(tty, 4)
 _TITLE(cons)
-_DEV(grf, 10)
-_DEV(ite)
+_DEV(wscons)
+_DEV(wsdisp, 40)
+_DEV(wskbd, 41)
+_DEV(wsmux, 43)
+_TITLE(point)
+_DEV(wsmouse, 42)
 _TITLE(prn)
 _DEV(ppi, 11)
 _TITLE(spec)
 _DEV(bpf, 22)
 _DEV(fdesc, 21)
-_DEV(hil, 14)
 _DEV(lkm, 24)
 _DEV(pf, 33)
 _DEV(rnd, 32)
@@ -93,7 +95,7 @@ dnl
 ramdisk)
 	_recurse std ct0 ct1 st0 st1 hd0 hd1 hd2 hd3 hd4
 	_recurse sd0 sd1 sd2 sd3 sd4 cd0 cd1 rd0 pty0
-	_recurse hil grf0 apci0 ite0 dca0 dcm0 dcm1
+	_recurse apci0 dca0 dcm0 dcm1
 	_recurse bpf0 bpf1 tun0 tun1 lkm random
 	;;
 
@@ -160,37 +162,6 @@ ppi*)
 	esac
 	;;
 
-ite*)
-	case $U in
-	0|1|2|3)
-		M ttye$U c 13 $U 600
-		;;
-	*)
-		echo bad unit for ite in: $i
-		;;
-	esac
-	;;
-
-grf*)
-	case $U in
-	0|1|2|3)
-		M grf$U c major_grf_c $U 600
-		;;
-	*)
-		echo bad unit for grf in: $i
-		;;
-	esac
-	;;
-
-hil)
-	for U in 0 1 2 3 4 5 6 7
-	do
-		M hil$U c 14 $U 600
-	done
-	MKlist="$MKlist;ln hil1 keyboard"
-	MKlist="$MKlist;ln hil3 locator"
-	RMlist="$RMlist keyboard locator"
-	;;
 dnl
 target(all, ses, 0)dnl
 target(all, ch, 0)dnl
@@ -209,14 +180,10 @@ target(all, st, 0, 1)dnl
 target(all, uk, 0)dnl
 target(all, vnd, 0, 1, 2, 3)dnl
 target(all, ccd, 0, 1, 2, 3)dnl
-target( all, grf, 0)dnl
-dnl XXX target( all, hil, 0, 1, 2, 3, 4, 5, 6, 7)dnl
-target( all, hil, )dnl
 target( all, dca, 0, 1)dnl
 target( all, dcm, 0, 1, 2, 3)dnl
 target( all, hd, 0, 1, 2)dnl
 target( all, ct, 0, 1)dnl
-target( all, ite, 0)dnl
 target( all, ttye, 0, 1, 2, 3, 4, 5, 6)dnl
 target(ramd, cd, 0, 1)dnl
 target(ramd, ct, 0, 1)dnl
@@ -225,10 +192,7 @@ target(ramd, sd, 0, 1, 2)dnl
 target(ramd, st, 0, 1)dnl
 target(ramd, rd, 0, 1)dnl
 target(ramd, pty, 0)dnl
-target(ramd, hil, )dnl
-target(ramd, grf, 0)dnl
 target(ramd, apci, 0)dnl
-target(ramd, ite, 0)dnl
 target(ramd, dca, 0)dnl
 target(ramd, dcm, 0, 1)dnl
 target(ramd, bpf, 0, 1)dnl

@@ -1,4 +1,4 @@
-vers(a, {-$OpenBSD: MAKEDEV.common,v 1.13 2005/01/10 07:53:57 dlg Exp $-})dnl
+vers(a, {-$OpenBSD: MAKEDEV.common,v 1.14 2005/01/14 22:39:11 miod Exp $-})dnl
 divert(1)dnl
 dnl
 dnl Common device definitions.
@@ -470,8 +470,6 @@ _mkdev(fdesc, fd, {-RMlist="mkdir -p fd;$RMlist" n=0
 	while [ $n -lt 64 ];do M fd/$n c major_fdesc_c $n;n=Add($n, 1);done
 	MKlist="$MKlist;chmod 555 fd"-})dnl
 __devitem(grf_mac, grf*, Raw interface to the mac68k graphics devices,grf)dnl
-__devitem(ite, ite*, Terminal emulator interface to HP300 graphics devices)dnl
-__devitem({-hil-}, {-hil-}, HP-HIL input devices)dnl
 __devitem(oppr, openprom,PROM settings,openprom)dnl
 _cdev(oppr, openprom, 70, 0)dnl
 __devitem(cry, crypto, Hardware crypto access driver,crypto)dnl
@@ -534,7 +532,6 @@ __devitem(bpp, bpp*, Parallel port)dnl
 _mkdev(bpp, {-bpp*-}, {-M bpp$U c major_bpp_c $U 600-}, 600)dnl
 __devitem(xfs, xfs*, XFS filesystem node, mount_xfs 8)dnl
 _mcdev(xfs, xfs*, xfs, {-major_xfs_c-}, 600)dnl
-__devitem(hil, hil, HP-HIL input devices)dnl
 __devitem(rmidi, rmidi*, Raw MIDI devices,midi)dnl
 _mcdev(rmidi, rmidi*, rmidi, {-major_rmidi_c-}, 666)dnl
 __devtitle(plat, Platform-specific devices)dnl

@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.325 2005/01/14 12:04:02 grange Exp $
+#	$OpenBSD: files,v 1.326 2005/01/14 22:39:31 miod Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -312,7 +312,7 @@ file	dev/ic/lpt.c		lpt & (lpt_isa | lpt_localbus | lpt_gsc | lpt_puc | lpt_apio 
 
 # STI (hp graphics)
 device	sti: wsemuldisplaydev
-file	dev/ic/sti.c		sti & (sti_pci | sti_gedoens)
+file	dev/ic/sti.c		sti & (sti_pci | sti_gedoens | sti_sgc) needs-flag
 
 # Initio ULTRA WIDE/ULTRA2 WIDE SCSI Controllers
 device	iha: scsi

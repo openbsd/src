@@ -1,4 +1,4 @@
-.\"	$OpenBSD: intro.4,v 1.20 2004/08/03 21:46:49 miod Exp $
+.\"	$OpenBSD: intro.4,v 1.21 2005/01/14 22:39:21 miod Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     from: @(#)intro.4	8.1 (Berkeley) 6/5/93
 .\"
-.Dd July 27, 2004
+.Dd January 12, 2005
 .Dt INTRO 4 hp300
 .Os
 .Sh NAME
@@ -64,7 +64,7 @@ The networking support is introduced in
 .Sh DEVICE SUPPORT
 This section describes the hardware supported on the
 .Tn HP
-9000/300 series.
+9000/300 and 9000/400 series.
 Software support for these devices comes in two forms.
 A hardware device may be supported with a character or block
 .Em device driver ,
@@ -123,9 +123,6 @@ frame buffer.
 .Tn HP98700
 .Dq Gatorbox
 frame buffer.
-.It Xr grf 4
-Generic frame buffer interface for
-.Xr ite 4 .
 .It Xr hd 4
 CS/80 disk interface.
 .It Xr hil 4
@@ -136,8 +133,6 @@ Built-in and 98625 HP-IB interface.
 .Tn A1096A
 .Dq Hyperion
 frame buffer.
-.It Xr ite 4
-HP Internal Terminal Emulator.
 .It Xr le 4
 98643 LANCE-based Ethernet interface.
 .It Xr ppi 4
@@ -146,8 +141,12 @@ HP-IB printer/plotter interface.
 .Tn HP98720
 .Dq Renaissance
 frame buffer.
+.It Xr sgc 4
+Standard Graphics Connection bus.
 .It Xr spc 4
 HP 98658 SCSI host adaptor.
+.It Xr sti 4
+SGC frame buffers.
 .It Xr topcat 4
 .Tn HP98544
 .Dq Topcat ,

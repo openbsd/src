@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gbox.4,v 1.6 2005/01/08 19:47:38 miod Exp $
+.\"	$OpenBSD: gbox.4,v 1.7 2005/01/14 22:39:21 miod Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     from: @(#)gb.4	8.1 (Berkeley) 6/9/93
 .\"
-.Dd March 16, 2003
+.Dd January 12, 2005
 .Dt GBOX 4 hp300
 .Os
 .Sh NAME
@@ -42,9 +42,9 @@
 .Tn HP98700
 Gatorbox frame buffer
 .Sh SYNOPSIS
-.Cd "gbox* at intio?"
-.Cd "gbox* at dio?"
-.Cd "grf*  at gbox?"
+.Cd "gbox*      at intio?"
+.Cd "gbox*      at dio?"
+.Cd "wsdisplay* at gbox?"
 .Sh DESCRIPTION
 The
 .Tn HP98700
@@ -60,9 +60,7 @@ The 98710 also has some acceleration features.
 The
 .Nm
 driver provides a frame buffer abstraction to the
-.Xr grf 4
-driver, and the associated
-.Xr ite 4
+.Xr wscons 4
 console framework.
 .Pp
 The 98700 can be used as the only graphics device on a system, in which case
@@ -86,10 +84,11 @@ The
 .%T 98700H Installation Guide
 contains further configuration information.
 .Sh SEE ALSO
-.Xr ioctl 2 ,
 .Xr dvbox 4 ,
-.Xr grf 4 ,
 .Xr hyper 4 ,
 .Xr intro 4 ,
 .Xr rbox 4 ,
-.Xr topcat 4
+.Xr sti 4 ,
+.Xr topcat 4 ,
+.Xr wscons 4 ,
+.Xr wsdisplay 4

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.25 2005/01/08 22:13:54 miod Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.26 2005/01/14 22:39:29 miod Exp $	*/
 /*	$NetBSD: cpu.h,v 1.28 1998/02/13 07:41:51 scottr Exp $	*/
 
 /*
@@ -196,8 +196,6 @@ int	kvtop(caddr_t);
 #define	ROMBASE		(0x00000000)
 #define	INTIOBASE	(0x00400000)
 #define	INTIOTOP	(0x00600000)
-#define	EXTIOBASE	(0x00600000)
-#define	EXTIOTOP	(0x20000000)
 #define	MAXADDR		(0xFFFFF000)
 
 /*

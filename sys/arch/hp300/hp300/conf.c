@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.36 2004/08/03 21:46:58 miod Exp $	*/
+/*	$OpenBSD: conf.c,v 1.37 2005/01/14 22:39:27 miod Exp $	*/
 /*	$NetBSD: conf.c,v 1.39 1997/05/12 08:17:53 thorpej Exp $	*/
 
 /*-
@@ -77,25 +77,11 @@ struct bdevsw	bdevsw[] =
 };
 int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 
-/* open, close, ioctl, poll, mmap -- XXX should be a map device */
-#define	cdev_grf_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) nullop, \
-	(dev_type_write((*))) nullop, dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) enodev, 0, dev_init(c,n,poll), \
-	dev_init(c,n,mmap) }
-
 /* open, close, read, write, ioctl -- XXX should be a generic device */
 #define	cdev_ppi_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
 	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) nullop, \
 	0, (dev_type_poll((*))) enodev, (dev_type_mmap((*))) enodev }
-
-/* open, close, read, ioctl, poll, mmap -- XXX should be a map device */
-#define	cdev_hil_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	(dev_type_write((*))) nullop, dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) enodev, 0, dev_init(c,n,poll), \
-	dev_init(c,n,mmap) }
 
 #define	mmread	mmrw
 #define	mmwrite	mmrw
@@ -103,18 +89,12 @@ cdev_decl(mm);
 #include "pty.h"
 cdev_decl(ct);
 cdev_decl(hd);
-#include "grf.h"
-cdev_decl(grf);
 #include "ppi.h"
 cdev_decl(ppi);
 #include "dca.h"
 cdev_decl(dca);
 #include "apci.h"
 cdev_decl(apci);
-#include "ite.h"
-cdev_decl(ite);
-/* XXX shouldn't this be optional? */
-cdev_decl(hil);
 #include "dcm.h"
 cdev_decl(dcm);
 cdev_decl(mt);
@@ -126,9 +106,11 @@ cdev_decl(fd);
 #include <xfs/nxfs.h>
 cdev_decl(xfs_dev);
 #endif
-
+#include "wsdisplay.h"
+#include "wskbd.h"
+#include "wsmouse.h"
+#include "wsmux.h"
 #include "pf.h"
-
 #include "systrace.h"
 
 struct cdevsw	cdevsw[] =
@@ -143,11 +125,11 @@ struct cdevsw	cdevsw[] =
 	cdev_tape_init(NCT,ct),		/* 7: cs80 cartridge tape */
 	cdev_disk_init(NSD,sd),		/* 8: SCSI disk */
 	cdev_disk_init(NHD,hd),		/* 9: HPIB disk */
-	cdev_grf_init(NGRF,grf),	/* 10: frame buffer */
+	cdev_notdef(),			/* 10: vas frame buffer */
 	cdev_ppi_init(NPPI,ppi),	/* 11: printer/plotter interface */
 	cdev_tty_init(NDCA,dca),	/* 12: built-in single-port serial */
-	cdev_tty_init(NITE,ite),	/* 13: console terminal emulator */
-	cdev_hil_init(1,hil),		/* 14: human interface loop */
+	cdev_notdef(),			/* 13: was console terminal emulator */
+	cdev_notdef(),			/* 14: was human interface loop */
 	cdev_tty_init(NDCM,dcm),	/* 15: 4-port serial */
 	cdev_tape_init(NMT,mt),		/* 16: magnetic reel tape */
 	cdev_disk_init(NCCD,ccd),	/* 17: concatenated disk */
@@ -173,10 +155,10 @@ struct cdevsw	cdevsw[] =
 	cdev_uk_init(NUK,uk),		/* 37 */
 	cdev_ss_init(NSS,ss),		/* 38 */
 	cdev_ch_init(NCH,ch),		/* 39 */
-	cdev_notdef(),			/* 40 */
-	cdev_notdef(),			/* 41 */
-	cdev_notdef(),			/* 42 */
-	cdev_notdef(),			/* 43 */
+	cdev_wsdisplay_init(NWSDISPLAY,wsdisplay), /* 40: frame buffers */
+	cdev_mouse_init(NWSKBD,wskbd),	/* 41: keyboards */
+	cdev_mouse_init(NWSMOUSE,wsmouse), /* 42: mice */
+	cdev_mouse_init(NWSMUX,wsmux),	/* 43: ws multiplexor */
 	cdev_notdef(),			/* 44 */
 	cdev_notdef(),			/* 45 */
 	cdev_notdef(),			/* 46 */
@@ -187,7 +169,6 @@ struct cdevsw	cdevsw[] =
 #ifdef XFS
 	cdev_xfs_init(NXFS,xfs_dev),	/* 51: xfs communication device */
 #else
-	
 	cdev_notdef(),			/* 51 */
 #endif
 	cdev_ptm_init(NPTY,ptm),	/* 52: pseudo-tty ptm device */
@@ -285,29 +266,34 @@ int nchrtoblktbl = sizeof(chrtoblktbl) / sizeof(chrtoblktbl[0]);
  */
 #include <dev/cons.h>
 
-#define dvboxcngetc		itecngetc
-#define dvboxcnputc		itecnputc
-#define dvboxcnpollc		nullcnpollc
+#define dvboxcngetc		wscngetc
+#define dvboxcnputc		wscnputc
+#define dvboxcnpollc		wscnpollc
 cons_decl(dvbox);
 
-#define gboxcngetc		itecngetc
-#define gboxcnputc		itecnputc
-#define gboxcnpollc		nullcnpollc
+#define gboxcngetc		wscngetc
+#define gboxcnputc		wscnputc
+#define gboxcnpollc		wscnpollc
 cons_decl(gbox);
 
-#define hypercngetc		itecngetc
-#define hypercnputc		itecnputc
-#define hypercnpollc		nullcnpollc
+#define hypercngetc		wscngetc
+#define hypercnputc		wscnputc
+#define hypercnpollc		wscnpollc
 cons_decl(hyper);
 
-#define rboxcngetc		itecngetc
-#define rboxcnputc		itecnputc
-#define rboxcnpollc		nullcnpollc
+#define rboxcngetc		wscngetc
+#define rboxcnputc		wscnputc
+#define rboxcnpollc		wscnpollc
 cons_decl(rbox);
 
-#define topcatcngetc		itecngetc
-#define topcatcnputc		itecnputc
-#define topcatcnpollc		nullcnpollc
+#define sticngetc		wscngetc
+#define sticnputc		wscnputc
+#define sticnpollc		wscnpollc
+cons_decl(sti);
+
+#define topcatcngetc		wscngetc
+#define topcatcnputc		wscnputc
+#define topcatcnpollc		wscnpollc
 cons_decl(topcat);
 
 #define dcacnpollc		nullcnpollc
@@ -323,10 +309,11 @@ cons_decl(dcm);
 #include "gbox.h"
 #include "hyper.h"
 #include "rbox.h"
+#include "sti.h"
 #include "topcat.h"
 
 struct	consdev constab[] = {
-#if NITE > 0
+#if NWSDISPLAY > 0
 #if NDVBOX > 0
 	cons_init(dvbox),
 #endif
@@ -339,10 +326,13 @@ struct	consdev constab[] = {
 #if NRBOX > 0
 	cons_init(rbox),
 #endif
+#if NSTI > 0
+	cons_init(sti),
+#endif
 #if NTOPCAT > 0
 	cons_init(topcat),
 #endif
-#endif /* NITE > 0 */
+#endif /* NWSDISPLAY > 0 */
 #if NDCA > 0
 	cons_init(dca),
 #endif
