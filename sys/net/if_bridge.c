@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.19 1999/10/26 03:40:17 jason Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.20 1999/10/27 03:41:48 jason Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -865,8 +865,12 @@ bridge_input(ifp, eh, m)
 		while (ifl != NULL) {
 			ac = (struct arpcom *)ifl->ifp;
 			if (bcmp(ac->ac_enaddr, eh->ether_dhost,
-			    ETHER_ADDR_LEN) == 0)
+			    ETHER_ADDR_LEN) == 0) {
+				bridge_rtupdate(sc,
+				    (struct ether_addr *)&eh->ether_dhost[0],
+				    ifp, 0, IFBAF_DYNAMIC);
 				return (m);
+			}
 			ifl = LIST_NEXT(ifl, next);
 		}
 		M_PREPEND(m, sizeof(*eh), M_DONTWAIT);
