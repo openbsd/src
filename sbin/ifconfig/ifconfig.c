@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.104 2004/06/26 00:01:36 pb Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.105 2004/06/26 03:12:08 pb Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -77,7 +77,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.104 2004/06/26 00:01:36 pb Exp $";
+static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.105 2004/06/26 03:12:08 pb Exp $";
 #endif
 #endif /* not lint */
 
@@ -142,7 +142,6 @@ int	flags, setaddr, setipdst, doalias;
 u_long	metric, mtu;
 int	clearaddr, s;
 int	newaddr = 0;
-int	nsellength = 1;
 int	af = AF_INET;
 int	dflag, mflag, lflag, uflag;
 int	explicit_prefix = 0;
@@ -318,7 +317,6 @@ const struct	cmd {
 	{ NULL, /*illegal*/0,		0,		NULL },
 };
 
-void	adjust_nsellength(void);
 int	getinfo(struct ifreq *, int);
 void	getsock(int);
 void	printif(struct ifreq *, int);
@@ -2486,7 +2484,7 @@ usage(void)
 	    "\t[vlan vlan_tag vlandev parent_iface] [-vlandev] [vhid n]\n"
 	    "\t[advbase n] [advskew n] [maxupd n] [pass passphrase]\n"
 	    "\t[state init | backup | master] [syncif iface] [-syncif]\n"
-	    "\t[phase n] [range netrange] [snpaoffset n] [nsellength n]\n"
+	    "\t[phase n] [range netrange]\n"
 	    "\t[802.2] [802.2tr] [802.3] [snap] [EtherII]\n"
 #endif
 	    "       ifconfig -A | -Am | -a | -am [address_family]\n"
