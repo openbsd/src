@@ -1,0 +1,137 @@
+.\"	$OpenBSD: boot_mvme68k.8,v 1.1 2003/03/16 18:46:46 miod Exp $
+.\"
+.\" Copyright (c) 2003, Miodrag Vallat.
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistribution of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. The name of the author may not be used to endorse or promote products
+.\"    derived from this software without specific prior written permission
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+.\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd March 16, 2003
+.Dt BOOT_MVME68K 8 mvme68k
+.Os
+.Sh NAME
+.Nm boot_mvme68k
+.Nd mvme68k system bootstrapping procedures
+.Sh DESCRIPTION
+.Ss Cold starts
+When powered on, the mvme68k
+.Tn BUG
+firmware will proceed to its initialization, and
+will boot an operating system if autoboot is enabled.
+By sending a
+.Dq break
+to the serial line during the initialization sequence,
+it is possible to stop the boot process and interact with the
+.Tn BUG .
+.Ss Warm starts
+After a panic, or if the system is rebooted via
+.Xr reboot 8
+or
+.Xr shutdown 8 ,
+the
+.Tn BUG
+firmware will only restart the operating system if autoboot is enabled
+and
+.Dq Auto Boot at power-up only 
+is disabled in the
+.Tn BUG
+environment.
+.Ss Boot process options
+The
+.Tn BUG
+firmware will let the user enter a boot device identification, kernel filename
+and boot options.
+If no filename is specified,
+.Pa /bsd
+will be used by default.
+.Pp
+The following boot options are recognized:
+.Bl -tag -width "-XXX" -offset indent -compact
+.Pp
+.It Fl a
+Prompt for the root filesystem device after the devices have been configured.
+.It Fl b
+On the next system reboot, always halt the system, even if a reboot is
+required.
+.It Fl c
+Enter the
+.Dq User Kernel Configuration
+mode upon startup
+.Pq see Xr boot_config 8 .
+.It Fl d
+Enter the debugger,
+.Xr ddb 4 ,
+as soon as the kernel console has been initialized.
+.It Fl s
+Boot the system single-user.
+The system will be booted multi-user unless this option is specified.
+.El
+.Ss Abnormal system termination
+In case of system crashes, the kernel will usually enter the kernel
+debugger,
+.Xr ddb 4 ,
+unless it is not present in the kernel, or it is disabled via the
+.Em ddb.panic
+sysctl.
+Upon leaving ddb, or if ddb was not entered, the kernel will halt the system
+if it was still in device configuration phase, or attempt a dump to the
+configured dump device, if possible.
+The crash dump will then be recovered by
+.Xr savecore 8
+during the next multi-user boot cycle.
+It is also possible to force other behaviours from ddb.
+.Sh FILES
+.Bl -tag -width /usr/mdec/installboot -compact
+.It Pa /bsd
+default system kernel
+.It Pa /usr/mdec/bootxx
+primary bootstrap code for
+.Dq ffs
+file system on SCSI disks
+.It Pa /usr/mdec/bootsd
+secondary bootstrap code for SCSI disks (usually also installed as
+.Pa /bootsd )
+.It Pa /usr/mdec/bootst
+SCSI tape bootstrap code
+.It Pa /usr/mdec/netboot
+network bootstrap code
+.It Pa /usr/mdec/sboot
+network bootstrap code in S-Records, for older
+.Tn BUG
+firmware lacking the
+.Li NBO
+command.
+.It Pa /usr/mdec/rboot
+network bootstrap code in S-Records, suitable for user eeprom burning.
+.It Pa /usr/mdec/stboot
+.Tn Motorola
+VID block put as first file on bootable SCSI tapes
+.El
+.Sh SEE ALSO
+.Xr ddb 4 ,
+.Xr boot_config 8 ,
+.Xr halt 8 ,
+.Xr init 8 ,
+.Xr installboot 8 ,
+.Xr reboot 8 ,
+.Xr savecore 8 ,
+.Xr shutdown 8
