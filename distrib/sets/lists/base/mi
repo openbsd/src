@@ -2207,6 +2207,7 @@
 ./usr/share/sendmail/m4/version.m4
 ./usr/share/sendmail/mailer
 ./usr/share/sendmail/mailer/cyrus.m4
+./usr/share/sendmail/mailer/cyrusv2.m4
 ./usr/share/sendmail/mailer/fax.m4
 ./usr/share/sendmail/mailer/local.m4
 ./usr/share/sendmail/mailer/mail11.m4
