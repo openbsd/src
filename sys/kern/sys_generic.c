@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_generic.c,v 1.15 1998/07/28 22:36:42 millert Exp $	*/
+/*	$OpenBSD: sys_generic.c,v 1.16 1999/02/14 19:02:21 millert Exp $	*/
 /*	$NetBSD: sys_generic.c,v 1.24 1996/03/29 00:25:32 cgd Exp $	*/
 
 /*
@@ -182,7 +182,8 @@ sys_readv(p, v, retval)
 	auio.uio_resid = 0;
 	for (i = 0; i < SCARG(uap, iovcnt); i++, iov++) {
 		/* Don't allow sum > SSIZE_MAX */
-		if ((ssize_t)(auio.uio_resid += iov->iov_len) <= 0) {
+		if (iov->iov_len > SSIZE_MAX ||
+		    (auio.uio_resid += iov->iov_len) > SSIZE_MAX) {
 			error = EINVAL;
 			goto done;
 		}
@@ -336,7 +337,8 @@ sys_writev(p, v, retval)
 	auio.uio_resid = 0;
 	for (i = 0; i < SCARG(uap, iovcnt); i++, iov++) {
 		/* Don't allow sum > SSIZE_MAX */
-		if ((ssize_t)(auio.uio_resid += iov->iov_len) <= 0) {
+		if (iov->iov_len > SSIZE_MAX ||
+		    (auio.uio_resid += iov->iov_len) > SSIZE_MAX) {
 			error = EINVAL;
 			goto done;
 		}
