@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.15 2004/05/01 00:39:22 deraadt Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.16 2004/05/10 20:50:21 canacar Exp $	*/
 /*	$NetBSD: bpf.c,v 1.5.2.1 1995/11/14 08:45:42 thorpej Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "@(#)bpf.c	8.1 (Berkeley) 6/4/93";*/
-static char rcsid[] = "$OpenBSD: bpf.c,v 1.15 2004/05/01 00:39:22 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: bpf.c,v 1.16 2004/05/10 20:50:21 canacar Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -179,12 +179,42 @@ BpfOpen(void)
 	{
 #define	RMP	((struct rmp_packet *)0)
 		static struct bpf_insn bpf_insn[] = {
-		    { BPF_LD|BPF_B|BPF_ABS,  0, 0, (long)&RMP->hp_llc.dsap },
+		    /* make sure it is a 802.3 packet */
+		    { BPF_LD|BPF_H|BPF_ABS,  0, 0, (u_int32_t)&RMP->hp_hdr.len },
+		    { BPF_JMP|BPF_JGE|BPF_K, 7, 0, 0x600 },
+
+		    { BPF_LD|BPF_B|BPF_ABS,  0, 0, (u_int32_t)&RMP->hp_llc.dsap },
 		    { BPF_JMP|BPF_JEQ|BPF_K, 0, 5, IEEE_DSAP_HP },
-		    { BPF_LD|BPF_H|BPF_ABS,  0, 0, (long)&RMP->hp_llc.cntrl },
+		    { BPF_LD|BPF_H|BPF_ABS,  0, 0, (u_int32_t)&RMP->hp_llc.cntrl },
 		    { BPF_JMP|BPF_JEQ|BPF_K, 0, 3, IEEE_CNTL_HP },
-		    { BPF_LD|BPF_H|BPF_ABS,  0, 0, (long)&RMP->hp_llc.dxsap },
+		    { BPF_LD|BPF_H|BPF_ABS,  0, 0, (u_int32_t)&RMP->hp_llc.dxsap },
 		    { BPF_JMP|BPF_JEQ|BPF_K, 0, 1, HPEXT_DXSAP },
+		    { BPF_RET|BPF_K,         0, 0, RMP_MAX_PACKET },
+		    { BPF_RET|BPF_K,         0, 0, 0x0 }
+		};
+
+		static struct bpf_insn bpf_wf_insn[] = {
+		    /* make sure it is a 802.3 packet */
+		    { BPF_LD|BPF_H|BPF_ABS,  0, 0, (u_int32_t)&RMP->hp_hdr.len },
+		    { BPF_JMP|BPF_JGE|BPF_K, 12, 0, 0x600 },
+
+		    /* check the SNAP header */
+		    { BPF_LD|BPF_B|BPF_ABS,  0, 0, (u_int32_t)&RMP->hp_llc.dsap },
+		    { BPF_JMP|BPF_JEQ|BPF_K, 0, 10, IEEE_DSAP_HP },
+		    { BPF_LD|BPF_H|BPF_ABS,  0, 0, (u_int32_t)&RMP->hp_llc.cntrl },
+		    { BPF_JMP|BPF_JEQ|BPF_K, 0, 8, IEEE_CNTL_HP },
+
+		    { BPF_LD|BPF_H|BPF_ABS,  0, 0, (u_int32_t)&RMP->hp_llc.sxsap },
+		    { BPF_JMP|BPF_JEQ|BPF_K, 0, 6, HPEXT_DXSAP },
+		    { BPF_LD|BPF_H|BPF_ABS,  0, 0, (u_int32_t)&RMP->hp_llc.dxsap },
+		    { BPF_JMP|BPF_JEQ|BPF_K, 0, 4, HPEXT_SXSAP },
+
+		    /* check return type code */
+		    { BPF_LD|BPF_B|BPF_ABS,  0, 0,
+		        (u_int32_t)&RMP->rmp_proto.rmp_raw.rmp_type },
+		    { BPF_JMP|BPF_JEQ|BPF_K, 1, 0, RMP_BOOT_REPL },
+		    { BPF_JMP|BPF_JEQ|BPF_K, 0, 1, RMP_READ_REPL },
+
 		    { BPF_RET|BPF_K,         0, 0, RMP_MAX_PACKET },
 		    { BPF_RET|BPF_K,         0, 0, 0x0 }
 		};
@@ -193,8 +223,22 @@ BpfOpen(void)
 			sizeof(bpf_insn)/sizeof(bpf_insn[0]), bpf_insn
 		};
 
+		static struct bpf_program bpf_w_pgm = {
+			sizeof(bpf_wf_insn)/sizeof(bpf_wf_insn[0]), bpf_wf_insn
+		};
+
 		if (ioctl(BpfFd, BIOCSETF, (caddr_t)&bpf_pgm) < 0) {
 			syslog(LOG_ERR, "bpf: ioctl(BIOCSETF): %m");
+			DoExit();
+		}
+
+		if (ioctl(BpfFd, BIOCSETWF, (caddr_t)&bpf_w_pgm) < 0) {
+			syslog(LOG_ERR, "bpf: ioctl(BIOCSETWF): %m");
+			DoExit();
+		}
+
+		if (ioctl(BpfFd, BIOCLOCK) < 0) {
+			syslog(LOG_ERR, "bpf: ioctl(BIOCLOCK): %m");
 			DoExit();
 		}
 	}
