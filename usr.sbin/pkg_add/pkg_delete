@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_delete,v 1.63 2004/10/26 17:23:15 espie Exp $
+# $OpenBSD: pkg_delete,v 1.64 2004/10/26 17:37:04 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -334,19 +334,6 @@ sub delete
 	my ($self, $state) = @_;
 
 	$self->run($state, "DEINSTALL");
-}
-
-package OpenBSD::PackingElement::FUNDISPLAY;
-use OpenBSD::Error;
-use OpenBSD::PackageInfo;
-
-sub delete
-{
-	my ($self, $state) = @_;
-	my $dir = $state->{dir};
-
-	my $pager = $ENV{'PAGER'} || "/usr/bin/more";
-	System("$pager $dir".UNDISPLAY);
 }
 
 package main;
