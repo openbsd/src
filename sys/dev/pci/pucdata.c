@@ -1,4 +1,4 @@
-/*	$OpenBSD: pucdata.c,v 1.38 2004/08/18 19:58:14 millert Exp $	*/
+/*	$OpenBSD: pucdata.c,v 1.39 2004/11/21 03:56:44 deraadt Exp $	*/
 /*	$NetBSD: pucdata.c,v 1.6 1999/07/03 05:55:23 cgd Exp $	*/
 
 /*
@@ -826,6 +826,17 @@ const struct puc_device_description puc_devices[] = {
 	    {
 		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ*4 },
 		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ*4 },
+	    },
+	},
+
+	/*
+	 * Lava Computers LavaPort-single serial port.
+	 */
+	{   /* "Lava Computers high-speed port", */
+	    {	PCI_VENDOR_LAVA, PCI_PRODUCT_LAVA_LAVAPORT_2,	0, 0	},
+	    {	0xffff,	0xfffc,					0, 0	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ*4 },
 	    },
 	},
 
