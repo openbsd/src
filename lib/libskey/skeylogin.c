@@ -12,7 +12,7 @@
  *
  * S/KEY verification check, lookups, and authentication.
  * 
- * $OpenBSD: skeylogin.c,v 1.26 1998/07/03 01:38:04 millert Exp $
+ * $OpenBSD: skeylogin.c,v 1.27 1998/07/03 02:02:01 angelos Exp $
  */
 
 #include <sys/param.h>
@@ -434,7 +434,8 @@ int
 skey_authenticate(username)
 	char *username;
 {
-	int i, fd, ptr;
+	int i, fd;
+	u_int ptr;
 	u_char hseed[SKEY_MAX_SEED_LEN], flg = 1, *up;
 	char pbuf[SKEY_MAX_PW_LEN+1], skeyprompt[SKEY_MAX_CHALLENGE+1];
 	struct skey skey;
@@ -473,14 +474,14 @@ skey_authenticate(username)
 
 				if ((lseek(fd, ptr % (sb.st_size - SKEY_MAX_SEED_LEN), SEEK_SET) != -1) && (read(fd, hseed, SKEY_MAX_SEED_LEN) == SKEY_MAX_SEED_LEN)) {
 					memset(up, 0, strlen(up));
-					
+
 					/* Hash secret value with username */
 					SHA1Init(&ctx);
 					SHA1Update(&ctx, hseed,
 						   SKEY_MAX_SEED_LEN);
 					SHA1Update(&ctx, username,
 						   strlen(username));
-					SHA1Final(up, &ctx);
+					SHA1End(&ctx, up);
 					
 					/* Zero out */
 					memset(hseed, 0, SKEY_MAX_SEED_LEN);
@@ -488,16 +489,16 @@ skey_authenticate(username)
 					/* Now hash the hash */
 					SHA1Init(&ctx);
 					SHA1Update(&ctx, up, strlen(up));
-					SHA1Final(up, &ctx);
+					SHA1End(&ctx, up);
 					
 					ptr = hash_collapse(up + 4);
-
-					for (i = 4;
-					     i < SKEY_MAX_SEED_LEN;
-					     i++) {
+					
+					for (i = 4; i < 9; i++) {
 						pbuf[i] = (ptr % 10) + '0';
 						ptr /= 10;
 					}
+
+					pbuf[i] = '\0';
 
 					/* Sequence number */
 					ptr = ((up[2] + up[3]) % 99) + 1;
