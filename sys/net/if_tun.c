@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.55 2003/12/16 20:33:25 markus Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.56 2004/01/05 23:53:24 mpf Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -220,6 +220,10 @@ tun_clone_destroy(ifp)
 {
 	struct tun_softc *tp = ifp->if_softc;
 	int s;
+
+	if (!SLIST_EMPTY(&tp->tun_rsel.si_note) ||
+	    !SLIST_EMPTY(&tp->tun_wsel.si_note))
+		return(EBUSY);
 
 	s = splimp();
 	LIST_REMOVE(tp, tun_list);
