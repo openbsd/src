@@ -1,4 +1,4 @@
-/*	$OpenBSD: in4_cksum.c,v 1.3 2001/06/24 23:38:47 angelos Exp $	*/
+/*	$OpenBSD: in4_cksum.c,v 1.4 2001/06/24 23:45:16 angelos Exp $	*/
 
 /*	$NetBSD: in_cksum.c,v 1.13 1996/10/13 02:03:03 christos Exp $	*/
 
@@ -114,7 +114,9 @@ in4_cksum(m, nxt, off, len)
 	if (nxt != 0) {
 		/* pseudo header */
 		if (off < sizeof(struct ipovly))
-			panic("offset too short");
+			panic("in4_cksum: offset too short");
+		if (m->m_len < sizeof(struct ip))
+			panic("in4_cksum: bad mbuf chain");
 		bzero(&ipov, sizeof(ipov));
 		ipov.ih_len = htons(len);
 		ipov.ih_pr = nxt;
