@@ -1,4 +1,4 @@
-/*	$OpenBSD: ancontrol.c,v 1.11 2001/04/15 23:19:13 ericj Exp $	*/
+/*	$OpenBSD: ancontrol.c,v 1.12 2001/04/16 00:39:39 tholo Exp $	*/
 /*
  * Copyright 1997, 1998, 1999
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -1253,21 +1253,24 @@ an_readkeyinfo(iface)
 	for (i = 0; i < 4; i++) {
 		areq.an_len = sizeof(struct an_ltv_key);
 		an_getval(iface, &areq);
-		switch (k->klen) {
-		case 0:
+		for (; i < k->kindex && i < 4; i++)
 			printf("\tKey %d is unset\n", i);
-			break;
-		case 5:
-			printf("\tKey %d is set  40 bits\n", i);
-			break;
-		case 13:
-			printf("\tKey %d is set 128 bits\n", i);
-			break;
-		default:
-			printf("\tKey %d has an unknown size %d\n", i, k->klen);
-			break;
+		if (i < 4) {
+			switch (k->klen) {
+			case 0:
+				printf("\tKey %d is unset\n", i);
+				break;
+			case 5:
+				printf("\tKey %d is set  40 bits\n", i);
+				break;
+			case 13:
+				printf("\tKey %d is set 128 bits\n", i);
+				break;
+			default:
+				printf("\tKey %d has an unknown size %d\n", i, k->klen);
+				break;
+			}
 		}
-
 		areq.an_type = AN_RID_WEP_PERMANENT;	/* read next key */
 	}
 	k->kindex = 0xffff;
@@ -1403,6 +1406,10 @@ main(argc, argv)
 			default:
 				errx(1, "must specify RX or TX diversity");
 			}
+			arg = optarg;
+			break;
+		case 'e':
+			act = ACT_SET_KEYS;
 			arg = optarg;
 			break;
 		case 'f':
