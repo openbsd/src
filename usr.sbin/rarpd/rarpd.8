@@ -18,7 +18,7 @@
 .\" THIS SOFTWARE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR IMPLIED
 .\" WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
 .\" MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
-.\" @(#) $Id: rarpd.8,v 1.11 2000/12/17 21:33:00 millert Exp $
+.\" @(#) $Id: rarpd.8,v 1.12 2004/05/08 20:17:49 deraadt Exp $
 .\"
 .Dd October 26, 1990
 .Dt RARPD 8
@@ -28,7 +28,7 @@
 .Nd reverse ARP daemon
 .Sh SYNOPSIS
 .Nm rarpd
-.Op Fl adfl
+.Op Fl adflt
 .Op Ar interface
 .Sh DESCRIPTION
 .Nm
@@ -44,14 +44,6 @@ and
 databases.
 If a host does not exist in both databases, the translation cannot
 proceed and a reply will not be sent.
-.\" .Pp
-.\" Additionally, a request is honored only if the server
-.\" (i.e., the host that rarpd is running on)
-.\" can "boot" the target; that is, if the directory
-.\" .Pa /tftpboot/ Ns Em ipaddr
-.\" exists, where
-.\" .Rm ipaddr
-.\" is the target IP address.
 .Pp
 In normal operation,
 .Nm
@@ -78,6 +70,15 @@ Run in the foreground.
 .It Fl l
 Log all requests to
 .Xr syslog 3 .
+.It Fl t
+Only honour a requests if if the server
+(i.e., the host that rarpd is running on)
+can "boot" the target; that is, if a file or directory called
+.Pa /tftpboot/ Ns Em ipaddr
+exists, where
+.Pa ipaddr
+is the target IP address expressed in uppercase hexidecimal
+(only the first 8 characters of filenames are checked).
 .El
 .Sh FILES
 .Bl -tag -width /var/run/rarpd.pid -compact

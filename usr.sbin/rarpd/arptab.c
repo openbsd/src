@@ -69,6 +69,7 @@ static char sccsid[] = "@(#)arp.c	8.2 (Berkeley) 1/2/94";
 #include <paths.h>
 #include <syslog.h>
 #include <string.h>
+#include <err.h>
 
 static pid_t pid;
 static int s = -1;
@@ -77,20 +78,19 @@ void
 getsocket(void)
 {
 	s = socket(PF_ROUTE, SOCK_RAW, 0);
-	if (s < 0) {
-		perror("arp: socket");
-		exit(1);
-	}
+	if (s < 0)
+		err(1, "arp: socket");
 }
 
 struct	sockaddr_in so_mask = {8, 0, 0, { 0xffffffff}};
 struct	sockaddr_inarp blank_sin = {sizeof(blank_sin), AF_INET }, sin_m;
 struct	sockaddr_dl blank_sdl = {sizeof(blank_sdl), AF_LINK }, sdl_m;
 int	expire_time, flags, export_only, doing_proxy;
+
 struct	{
 	struct	rt_msghdr m_rtm;
 	char	m_space[512];
-}	m_rtmsg;
+} m_rtmsg;
 
 int	arptab_set(u_char *, u_int32_t);
 int	rtmsg(int);
@@ -102,8 +102,8 @@ int
 arptab_set(u_char *eaddr, u_int32_t host)
 {
 	struct sockaddr_inarp *sin = &sin_m;
-	struct sockaddr_dl *sdl;
 	struct rt_msghdr *rtm = &(m_rtmsg.m_rtm);
+	struct sockaddr_dl *sdl;
 	struct timeval time;
 	int rt;
 
@@ -131,10 +131,16 @@ tryagain:
 	if (sin->sin_addr.s_addr == sin_m.sin_addr.s_addr) {
 		if (sdl->sdl_family == AF_LINK &&
 		    (rtm->rtm_flags & RTF_LLINFO) &&
-		    !(rtm->rtm_flags & RTF_GATEWAY)) switch (sdl->sdl_type) {
-		case IFT_ETHER: case IFT_FDDI: case IFT_ISO88023:
-		case IFT_ISO88024: case IFT_ISO88025:
-			goto overwrite;
+		    !(rtm->rtm_flags & RTF_GATEWAY))
+			switch (sdl->sdl_type) {
+			case IFT_ETHER:
+			case IFT_FDDI:
+			case IFT_ISO88023:
+			case IFT_ISO88024:
+			case IFT_ISO88025:
+				goto overwrite;
+			default:
+				break;
 		}
 		if (doing_proxy == 0) {
 			syslog(LOG_ERR, "arptab_set: can only proxy for %s",
@@ -175,7 +181,6 @@ int
 rtmsg(int cmd)
 {
 	static int seq;
-	int rlen;
 	struct rt_msghdr *rtm = &m_rtmsg.m_rtm;
 	char *cp = m_rtmsg.m_space;
 	int l;
@@ -224,7 +229,7 @@ doit:
 	l = rtm->rtm_msglen;
 	rtm->rtm_seq = ++seq;
 	rtm->rtm_type = cmd;
-	if ((rlen = write(s, (char *)&m_rtmsg, l)) < 0) {
+	if (write(s, (char *)&m_rtmsg, l) < 0) {
 		if (errno != ESRCH && errno != EEXIST) {
 			syslog(LOG_ERR, "writing to routing socket: %m");
 			return (-1);

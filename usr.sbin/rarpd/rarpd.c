@@ -1,4 +1,4 @@
-/*	$OpenBSD: rarpd.c,v 1.42 2004/05/05 01:16:39 deraadt Exp $ */
+/*	$OpenBSD: rarpd.c,v 1.43 2004/05/08 20:17:49 deraadt Exp $ */
 /*	$NetBSD: rarpd.c,v 1.25 1998/04/23 02:48:33 mrg Exp $	*/
 
 /*
@@ -28,15 +28,15 @@ char    copyright[] =
 #endif				/* not lint */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: rarpd.c,v 1.42 2004/05/05 01:16:39 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: rarpd.c,v 1.43 2004/05/08 20:17:49 deraadt Exp $";
 #endif
 
 
 /*
  * rarpd - Reverse ARP Daemon
  *
- * Usage:	rarpd -a [ -d ] [ -f ] [ -l ]
- *		rarpd [ -d ] [ -f ] [ -l ] interface
+ * Usage:	rarpd -a [-d] [-f] [-l] [-t]
+ *		rarpd [-d] [-f] [-l] [-t] interface
  */
 
 #include <stdio.h>
@@ -102,55 +102,50 @@ void   update_arptab(u_char *, u_int32_t);
 void   err(int, const char *,...);
 void   debug(const char *,...);
 u_int32_t ipaddrtonetmask(u_int32_t);
-
-#ifdef REQUIRE_TFTPBOOT
 int    rarp_bootable(u_int32_t);
-#endif
 
 int	aflag = 0;		/* listen on "all" interfaces  */
-int     dflag = 0;		/* print debugging messages */
-int     fflag = 0;		/* don't fork */
-int     lflag = 0;		/* log all replies */
+int	dflag = 0;		/* print debugging messages */
+int	fflag = 0;		/* don't fork */
+int	lflag = 0;		/* log all replies */
+int	tflag = 0;		/* tftpboot check */
 
 int
 main(int argc, char *argv[])
 {
-	int op, devnull, f;
-	char   *ifname, *hostname;
 	extern char *__progname;
-	extern char *optarg;
 	extern int optind, opterr;
+	int op, devnull, f;
+	char   *ifname;
 	pid_t pid;
 
 	/* All error reporting is done through syslogs. */
 	openlog(__progname, LOG_PID | LOG_CONS, LOG_DAEMON);
 
 	opterr = 0;
-	while ((op = getopt(argc, argv, "adfl")) != -1) {
+	while ((op = getopt(argc, argv, "adflt")) != -1) {
 		switch (op) {
 		case 'a':
 			++aflag;
 			break;
-
 		case 'd':
 			++dflag;
 			break;
-
 		case 'f':
 			++fflag;
 			break;
-
 		case 'l':
 			++lflag;
 			break;
-
+		case 't':
+			++tflag;
+			break;
 		default:
 			usage();
 			/* NOTREACHED */
 		}
 	}
 	ifname = argv[optind++];
-	hostname = ifname ? argv[optind] : 0;
 	if ((aflag && ifname) || (!aflag && ifname == 0))
 		usage();
 
@@ -263,8 +258,8 @@ init_all(void)
 void
 usage(void)
 {
-	(void) fprintf(stderr, "usage: rarpd -a [-dfl]\n");
-	(void) fprintf(stderr, "       rarpd [-dfl] interface\n");
+	(void) fprintf(stderr, "usage: rarpd -a [-dflt]\n");
+	(void) fprintf(stderr, "       rarpd [-dflt] interface\n");
 	exit(1);
 }
 
@@ -309,7 +304,7 @@ static struct bpf_program filter = {
 int
 rarp_open(char *device)
 {
-	int     fd, immediate;
+	int	fd, immediate;
 	struct ifreq ifr;
 	u_int   dlt;
 
@@ -321,8 +316,9 @@ rarp_open(char *device)
 		err(FATAL, "BIOCIMMEDIATE: %s", strerror(errno));
 		/* NOTREACHED */
 	}
+
 	(void) strncpy(ifr.ifr_name, device, sizeof ifr.ifr_name);
-	if (ioctl(fd, BIOCSETIF, (caddr_t) & ifr) < 0) {
+	if (ioctl(fd, BIOCSETIF, (caddr_t)&ifr) < 0) {
 		if (aflag) {	/* for -a skip not ethernet interfaces */
 			close(fd);
 			return -1;
@@ -330,9 +326,12 @@ rarp_open(char *device)
 		err(FATAL, "BIOCSETIF: %s", strerror(errno));
 		/* NOTREACHED */
 	}
-	/* Check that the data link layer is an Ethernet; this code won't work
-	 * with anything else. */
-	if (ioctl(fd, BIOCGDLT, (caddr_t) & dlt) < 0) {
+
+	/*
+	 * Check that the data link layer is an Ethernet; this code
+	 * won't work with anything else.
+	 */
+	if (ioctl(fd, BIOCGDLT, (caddr_t) &dlt) < 0) {
 		err(FATAL, "BIOCGDLT: %s", strerror(errno));
 		/* NOTREACHED */
 	}
@@ -345,7 +344,7 @@ rarp_open(char *device)
 		/* NOTREACHED */
 	}
 	/* Set filter program. */
-	if (ioctl(fd, BIOCSETF, (caddr_t) & filter) < 0) {
+	if (ioctl(fd, BIOCSETF, (caddr_t)&filter) < 0) {
 		err(FATAL, "BIOCSETF: %s", strerror(errno));
 		/* NOTREACHED */
 	}
@@ -394,18 +393,16 @@ rarp_check(u_char *p, int len)
 void
 rarp_loop(void)
 {
-	u_char *buf, *bp, *ep;
-	int     cc, fd;
+	int	cc, fd, fdsn, bufsize, maxfd = 0;
 	fd_set  *fdsp, *lfdsp;
-	int	fdsn;
-	int     bufsize, maxfd = 0;
+	u_char *buf, *bp, *ep;
 	struct if_info *ii;
 
 	if (iflist == 0) {
 		err(FATAL, "no interfaces");
 		/* NOTREACHED */
 	}
-	if (ioctl(iflist->ii_fd, BIOCGBLEN, (caddr_t) & bufsize) < 0) {
+	if (ioctl(iflist->ii_fd, BIOCGBLEN, (caddr_t)&bufsize) < 0) {
 		err(FATAL, "BIOCGBLEN: %s", strerror(errno));
 		/* NOTREACHED */
 	}
@@ -453,8 +450,8 @@ rarp_loop(void)
 			 * lseek() to 0 will fix things. */
 			if (cc < 0) {
 				if (errno == EINVAL &&
-				    (lseek(fd, 0, SEEK_CUR) + bufsize) < 0) {
-					(void) lseek(fd, 0, 0);
+				    (lseek(fd, (off_t)0, SEEK_CUR) + bufsize) < 0) {
+					(void) lseek(fd, (off_t)0, 0);
 					goto again;
 				}
 				err(FATAL, "read: %s", strerror(errno));
@@ -475,11 +472,7 @@ rarp_loop(void)
 			}
 		}
 	}
-	free(fdsp);
-	free(lfdsp);
 }
-
-#ifdef REQUIRE_TFTPBOOT
 
 #ifndef TFTP_DIR
 #define TFTP_DIR "/tftpboot"
@@ -494,13 +487,13 @@ int
 rarp_bootable(u_int32_t addr)
 {
 	struct dirent *dent;
-	DIR *d;
 	char    ipname[40];
 	static DIR *dd = 0;
+	DIR *d;
 
 	(void) snprintf(ipname, sizeof ipname, "%08X", addr);
 	/* If directory is already open, rewind it.  Otherwise, open it. */
-	if (d = dd)
+	if ((d = dd))
 		rewinddir(d);
 	else {
 		if (chdir(TFTP_DIR) == -1) {
@@ -514,12 +507,12 @@ rarp_bootable(u_int32_t addr)
 		}
 		dd = d;
 	}
-	while (dent = readdir(d))
+	while ((dent = readdir(d)))
 		if (strncmp(dent->d_name, ipname, 8) == 0)
 			return 1;
 	return 0;
 }
-#endif /* REQUIRE_TFTPBOOT */
+
 
 /*
  * Given a list of IP addresses, 'alist', return the first address that
@@ -542,11 +535,11 @@ choose_ipaddr(u_int32_t **alist, u_int32_t net, u_int32_t netmask)
 void
 rarp_process(struct if_info *ii, u_char *pkt)
 {
+	char    ename[MAXHOSTNAMELEN];
+	u_int32_t  target_ipaddr;
 	struct ether_header *ep;
 	struct ether_addr *ea;
 	struct hostent *hp;
-	u_int32_t  target_ipaddr;
-	char    ename[MAXHOSTNAMELEN];
 	struct	in_addr in;
 	struct if_addr *ia;
 
@@ -583,9 +576,7 @@ rarp_process(struct if_info *ii, u_char *pkt)
 		}
 		return;
 	}
-#ifdef REQUIRE_TFTPBOOT
-	if (rarp_bootable(htonl(target_ipaddr)))
-#endif
+	if (tflag == 0 || rarp_bootable(htonl(target_ipaddr)))
 		rarp_reply(ii, ia, ep, target_ipaddr, hp);
 	debug("reply sent");
 }
@@ -601,8 +592,8 @@ lookup_addrs(char *ifname, struct if_info *p)
 	struct sockaddr_dl *sdl;
 	u_char *eaddr = p->ii_eaddr;
 	struct if_addr *ia, **iap = &p->ii_addrs;
-	int found = 0;
 	struct in_addr in;
+	int found = 0;
 
 	if (getifaddrs(&ifap) != 0) {
 		err(FATAL, "getifaddrs: %s", strerror(errno));
@@ -615,11 +606,9 @@ lookup_addrs(char *ifname, struct if_info *p)
 		sdl = (struct sockaddr_dl *) ifa->ifa_addr;
 		if (sdl->sdl_family == AF_LINK &&
 		    sdl->sdl_type == IFT_ETHER && sdl->sdl_alen == 6) {
-			memcpy((caddr_t)eaddr, (caddr_t)LLADDR(sdl),
-			    6);
+			memcpy((caddr_t)eaddr, (caddr_t)LLADDR(sdl), 6);
 			if (dflag)
-				fprintf(stderr,
-				    "%s: %x:%x:%x:%x:%x:%x\n",
+				fprintf(stderr, "%s: %x:%x:%x:%x:%x:%x\n",
 				    ifa->ifa_name,
 				    eaddr[0], eaddr[1], eaddr[2],
 				    eaddr[3], eaddr[4], eaddr[5]);
@@ -668,15 +657,14 @@ void
 update_arptab(u_char *ep, u_int32_t ipaddr)
 {
 #ifdef SIOCSARP
-	int     s;
-	struct arpreq request;
 	struct sockaddr_in *sin;
-
-	u_char *eaddr;
+	struct arpreq request;
 	u_int32_t host;
+	u_char *eaddr;
+	int s;
 
 	request.arp_flags = 0;
-	sin = (struct sockaddr_in *) & request.arp_pa;
+	sin = (struct sockaddr_in *)&request.arp_pa;
 	sin->sin_family = AF_INET;
 	sin->sin_addr.s_addr = ipaddr;
 	request.arp_ha.sa_family = AF_UNSPEC;
@@ -690,9 +678,8 @@ update_arptab(u_char *ep, u_int32_t ipaddr)
 	if (s < 0) {
 		err(NONFATAL, "socket: %s", strerror(errno));
 	} else {
-		if (ioctl(s, SIOCSARP, (caddr_t) & request) < 0) {
+		if (ioctl(s, SIOCSARP, (caddr_t)&request) < 0)
 		    err(NONFATAL, "SIOCSARP: %s", strerror(errno));
-		}
 		(void) close(s);
 	}
 #else
@@ -737,11 +724,10 @@ void
 rarp_reply(struct if_info *ii, struct if_addr *ia, struct ether_header *ep,
     u_int32_t ipaddr, struct hostent *hp)
 {
-	int     n;
 	struct ether_arp *ap = (struct ether_arp *) (ep + 1);
-	int     len;
+	int len, n;
 
-	update_arptab((u_char *) & ap->arp_sha, ipaddr);
+	update_arptab((u_char *)&ap->arp_sha, ipaddr);
 
 	/* Build the rarp reply by modifying the rarp request in place. */
 	ep->ether_type = htons(ETHERTYPE_REVARP);
@@ -767,9 +753,8 @@ rarp_reply(struct if_info *ii, struct if_addr *ia, struct ether_header *ep,
 
 	len = sizeof(*ep) + sizeof(*ap);
 	n = write(ii->ii_fd, (char *) ep, len);
-	if (n != len) {
+	if (n != len)
 		err(NONFATAL, "write: only %d of %d bytes written", n, len);
-	}
 }
 /*
  * Get the netmask of an IP address.  This routine is used if
@@ -806,9 +791,8 @@ err(int fatal, const char *fmt,...)
 	va_start(ap, fmt);
 	vsyslog(LOG_ERR, fmt, ap);
 	va_end(ap);
-	if (fatal) {
+	if (fatal)
 		exit(1);
-	}
 	/* NOTREACHED */
 }
 
