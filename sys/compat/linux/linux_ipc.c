@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_ipc.c,v 1.4 1997/11/26 09:17:41 deraadt Exp $	*/
+/*	$OpenBSD: linux_ipc.c,v 1.5 2000/07/23 22:35:38 jasoni Exp $	*/
 /*	$NetBSD: linux_ipc.c,v 1.10 1996/04/05 00:01:44 christos Exp $	*/
 
 /*
@@ -161,7 +161,7 @@ linux_sys_ipc(p, v, retval)
 
 #if defined(SYSVMSG) || defined(SYSVSEM) || defined(SYSVSHM)
 /*
- * Convert between Linux and NetBSD ipc_perm structures. Only the
+ * Convert between Linux and OpenBSD ipc_perm structures. Only the
  * order of the fields is different.
  */
 void
@@ -202,7 +202,7 @@ bsd_to_linux_ipc_perm(bpp, lpp)
  */
 
 /*
- * Convert between Linux and NetBSD semid_ds structures.
+ * Convert between Linux and OpenBSD semid_ds structures.
  */
 void
 bsd_to_linux_semid_ds(bs, ls)
@@ -600,7 +600,7 @@ linux_shmget(p, uap, retval)
 }
 
 /*
- * Convert between Linux and NetBSD shmid_ds structures.
+ * Convert between Linux and OpenBSD shmid_ds structures.
  * The order of the fields is once again the difference, and
  * we also need a place to store the internal data pointer
  * in, which is unfortunately stored in this structure.
@@ -644,7 +644,7 @@ bsd_to_linux_shmid_ds(bsp, lsp)
 /*
  * shmctl. Not implemented (for now): IPC_INFO, SHM_INFO, SHM_STAT
  * SHM_LOCK and SHM_UNLOCK are passed on, but currently not implemented
- * by NetBSD itself.
+ * by OpenBSD itself.
  *
  * The usual structure conversion and massaging is done.
  */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_ipc.h,v 1.2 1996/04/17 05:23:53 mickey Exp $	*/
+/*	$OpenBSD: linux_ipc.h,v 1.3 2000/07/23 22:35:38 jasoni Exp $	*/
 /*	$NetBSD: linux_ipc.h,v 1.1 1995/02/28 23:25:47 fvdl Exp $	*/
 
 /*
@@ -37,7 +37,7 @@
 
 /*
  * Structs and values to handle the SYSV ipc/shm/msg calls implemented
- * in Linux. Most values match the NetBSD values (as they are both derived
+ * in Linux. Most values match the OpenBSD values (as they are both derived
  * from SysV values). Values that are the same may not be defined here.
  */
 

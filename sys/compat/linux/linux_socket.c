@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_socket.c,v 1.17 1999/02/10 08:04:26 deraadt Exp $	*/
+/*	$OpenBSD: linux_socket.c,v 1.18 2000/07/23 22:35:38 jasoni Exp $	*/
 /*	$NetBSD: linux_socket.c,v 1.14 1996/04/05 00:01:50 christos Exp $	*/
 
 /*
@@ -625,7 +625,7 @@ linux_shutdown(p, uap, retval)
 }
 
 /*
- * Convert socket option level from Linux to NetBSD value. Only SOL_SOCKET
+ * Convert socket option level from Linux to OpenBSD value. Only SOL_SOCKET
  * is different, the rest matches IPPROTO_* on both systems.
  */
 int
@@ -648,7 +648,7 @@ linux_to_bsd_sopt_level(llevel)
 }
 
 /*
- * Convert Linux socket level socket option numbers to NetBSD values.
+ * Convert Linux socket level socket option numbers to OpenBSD values.
  */
 int
 linux_to_bsd_so_sockopt(lopt)
@@ -686,7 +686,7 @@ linux_to_bsd_so_sockopt(lopt)
 }
 
 /*
- * Convert Linux IP level socket option number to NetBSD values.
+ * Convert Linux IP level socket option number to OpenBSD values.
  */
 int
 linux_to_bsd_ip_sockopt(lopt)
@@ -716,7 +716,7 @@ linux_to_bsd_ip_sockopt(lopt)
 }
 
 /*
- * Convert Linux TCP level socket option number to NetBSD values.
+ * Convert Linux TCP level socket option number to OpenBSD values.
  */
 int
 linux_to_bsd_tcp_sockopt(lopt)
@@ -734,7 +734,7 @@ linux_to_bsd_tcp_sockopt(lopt)
 }
 
 /*
- * Convert Linux UDP level socket option number to NetBSD values.
+ * Convert Linux UDP level socket option number to OpenBSD values.
  */
 int
 linux_to_bsd_udp_sockopt(lopt)
