@@ -1,4 +1,4 @@
-/*	$NetBSD: stdio.h,v 1.17 1996/01/20 01:36:30 jtc Exp $	*/
+/*	$NetBSD: stdio.h,v 1.18 1996/04/25 18:29:21 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -41,7 +41,7 @@
 #ifndef	_STDIO_H_
 #define	_STDIO_H_
 
-#if !defined(_ANSI_SOURCE) && !defined(__STRICT_ANSI_)
+#if !defined(_ANSI_SOURCE) && !defined(__STRICT_ANSI__)
 #include <sys/types.h>
 #endif
 
