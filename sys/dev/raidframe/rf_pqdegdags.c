@@ -1,4 +1,4 @@
-/*	$OpenBSD: rf_pqdegdags.c,v 1.2 1999/02/16 00:03:11 niklas Exp $	*/
+/*	$OpenBSD: rf_pqdegdags.c,v 1.3 1999/10/29 08:57:18 todd Exp $	*/
 /*	$NetBSD: rf_pqdegdags.c,v 1.3 1999/02/05 00:06:15 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -382,7 +382,7 @@ RF_CREATE_DAG_FUNC_DECL(rf_PQ_DDLargeWrite)
        failed data units will do the correct thing. So in this case,
        the dag looks like
 
-            full stripe read of surviving data units (not being overwriten)
+            full stripe read of surviving data units (not being overwritten)
 	    write new data (ignoring failed units)   compute P&Q
 	                                             write P&Q
 
