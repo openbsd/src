@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdhosts.c,v 1.4 1997/09/11 19:47:35 deraadt Exp $ */
+/*	$OpenBSD: stdhosts.c,v 1.5 2001/11/19 09:01:29 deraadt Exp $ */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -32,7 +32,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: stdhosts.c,v 1.4 1997/09/11 19:47:35 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: stdhosts.c,v 1.5 2001/11/19 09:01:29 deraadt Exp $";
 #endif
 
 #include <sys/types.h>
@@ -55,95 +55,88 @@ int size;
 			int len = strlen(buf);
 			done += len;
 			if (len > 1 && buf[len-2] == '\\' &&
-					buf[len-1] == '\n') {
+			    buf[len-1] == '\n') {
 				int ch;
 				buf += len - 2;
 				size -= len - 2;
-				*buf = '\n'; buf[1] = '\0';
+				*buf = '\n';
+				buf[1] = '\0';
 				/*
 				 * Skip leading white space on next line
 				 */
 				while ((ch = getc(fp)) != EOF &&
-					isascii(ch) && isspace(ch))
-						;
+				    isascii(ch) && isspace(ch))
+					;
 				(void) ungetc(ch, fp);
-			} else {
+			} else
 				return done;
-			}
 		}
 	} while (size > 0 && !feof(fp));
-
 	return done;
 }
 
 int
-main (argc,argv)
-int argc;
-char *argv[];
+main(argc, argv)
+	int argc;
+	char *argv[];
 {
-  FILE	*data_file;
-  char	 data_line[1024];
-  int	 usage = 0;
-  int	 line_no = 0;
-  int	 len;
-  char	*p,*k,*v;
-  struct in_addr host_addr;
+	FILE	*data_file;
+	char	 data_line[1024];
+	int	 usage = 0;
+	int	 line_no = 0;
+	int	 len;
+	char	*p, *k, *v;
+	struct in_addr host_addr;
 
-  if (argc > 2) {
-    usage++;
-  }
+	if (argc > 2)
+		usage++;
 
-  if (usage) {
-    fprintf(stderr,
-	    "%s",
-	    "usage: stdhosts [file]\n");
-    exit(1);
-  }
+	if (usage) {
+		fprintf(stderr, "usage: stdhosts [file]\n");
+		exit(1);
+	}
 
-  if (argc == 2) {
-    data_file = fopen(argv[argc-1], "r");
-  } else {
-    data_file = stdin;
-  }
+	if (argc == 2)
+		data_file = fopen(argv[argc-1], "r");
+	else
+		data_file = stdin;
   
-  while (read_line(data_file,data_line,sizeof(data_line))) {
-    
-    line_no++;
-    len = strlen(data_line);
-    
-    if (len > 0) {
-      if (data_line[0] == '#')
-	continue;
-    }
+	while (read_line(data_file, data_line, sizeof(data_line))) {
+		line_no++;
+		len = strlen(data_line);
+		if (len > 0) {
+			if (data_line[0] == '#')
+				continue;
+		}
 
-    /*
-     * Check if we have the whole line
-     */ 
+		/*
+		 * Check if we have the whole line
+		 */ 
 
-    if (data_line[len-1] != '\n') {
-      if (argc == 2) {
-	fprintf(stderr, "line %d in \"%s\" is too long", line_no, argv[1]);
-      } else {
-	fprintf(stderr, "line %d in \"stdin\" is too long", line_no);
-      }
-    } else {
-      data_line[len-1] = '\0';
-    }
+		if (data_line[len-1] != '\n') {
+			if (argc == 2)
+				fprintf(stderr,
+				    "line %d in \"%s\" is too long",
+				    line_no, argv[1]);
+			else
+				fprintf(stderr,
+				    "line %d in \"stdin\" is too long", line_no);
+		} else
+			data_line[len-1] = '\0';
 
-    p = (char *) &data_line;
+		p = (char *) &data_line;
+		k = p;				/* save start of key */
+		while (!isspace(*p))	/* find first "space" */
+			p++;
+		while (isspace(*p))	/* replace space with <NUL> */
+			*p = '\0'; p++;
+		
+		v = p;			/* save start of value */
+		while(*p != '\0')	/* find end of string */
+			p++;
 
-    k  = p;					/* save start of key */
-    while (!isspace(*p)) { p++; };		/* find first "space" */
-    while (isspace(*p)) { *p = '\0'; p++; };	/* replace space with <NUL> */
-    
-    v = p;					/* save start of value */
-    while(*p != '\0') { p++; };			/* find end of string */
-
-    (void)inet_aton(k,&host_addr);
-    printf("%s %s\n",inet_ntoa(host_addr),v);
-
-  }
-
-  return(0);
-  
+		(void)inet_aton(k, &host_addr);
+		printf("%s %s\n", inet_ntoa(host_addr),v);
+	}
+	return(0);
 }

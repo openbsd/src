@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkalias.c,v 1.6 2001/02/05 14:47:17 deraadt Exp $ */
+/*	$OpenBSD: mkalias.c,v 1.7 2001/11/19 09:01:28 deraadt Exp $ */
 
 /*
  * Copyright (c) 1997 Mats O Jansson <moj@stacken.kth.se>
@@ -32,7 +32,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: mkalias.c,v 1.6 2001/02/05 14:47:17 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: mkalias.c,v 1.7 2001/11/19 09:01:28 deraadt Exp $";
 #endif
 
 #include <ctype.h>
@@ -53,18 +53,16 @@ extern char *__progname;		/* from crt0.o */
 
 void
 split_address(address, len, user, host)
-char *address;
-int    len;
-char  *user, *host;
+	char *address;
+	int    len;
+	char  *user, *host;
 {
-	char *c,*s,*r;
+	char *c, *s, *r;
 	int  i = 0;
 
-	if (index(address,'@')) {
-		
+	if (index(address, '@')) {
 		s = user;
-		
-		for(c = address; i < len; i++) {
+		for (c = address; i < len; i++) {
 			if (*c == '@') {
 				*s = '\0';
 				s = host;
@@ -77,11 +75,9 @@ char  *user, *host;
 	
 	}
 		
-	if (r = rindex(address,'!')) {
-		
+	if (r = rindex(address, '!')) {
 		s = host;
-		
-		for(c = address; i < len; i++) {
+		for (c = address; i < len; i++) {
 			if (c == r) {
 				*s = '\0';
 				s = user;
@@ -91,21 +87,20 @@ char  *user, *host;
 			c++;
 		}
 		*s = '\0';
-		
 	}
-		
 }
 
 int
 check_host(address, host, dflag, uflag, Eflag)
-char *address, *host;
-int   dflag, uflag, Eflag;
+	char *address, *host;
+	int   dflag, uflag, Eflag;
 {
 	char answer[PACKETSZ];
 	int  status;
 
-	if ((dflag && index(address,'@')) ||
-	    (uflag && index(address,'!'))) return(0);
+	if ((dflag && index(address, '@')) ||
+	    (uflag && index(address, '!')))
+		return(0);
 
 	if ((_res.options & RES_INIT) == 0)
 		res_init();
@@ -115,32 +110,32 @@ int   dflag, uflag, Eflag;
 	if (status == -1)
 		status = res_search(host, C_IN, T_A, answer, sizeof(answer));
 
-	if ((status == -1) && Eflag)
+	if (status == -1 && Eflag)
 		status = res_search(host, C_IN, T_MX, answer, sizeof(answer));
 
 	return(status == -1);
 }
 
 void
-capitalize(name,len)
-char *name;
-int len;
+capitalize(name, len)
+	char *name;
+	int len;
 {
 	char last = ' ';
 	char *c;
 	int  i = 0;
 
-	for(c = name; i < len; i++) {
-		if (*c == '.') last = '.';
+	for (c = name; i < len; i++) {
+		if (*c == '.')
+			last = '.';
 		c++;
 	}
 	
 	i = 0;
 	if (last == '.') {
-		for(c = name; i < len; i++) {
-			if (last == '.') {
+		for (c = name; i < len; i++) {
+			if (last == '.')
 				*c = toupper(*c);
-			}
 			last = *c++;
 		}
 	}
@@ -148,9 +143,9 @@ int len;
 }
 
 int
-main (argc,argv)
-int argc;
-char *argv[];
+main(argc, argv)
+	int argc;
+	char *argv[];
 {
 	int	usage = 0;
 	int	eflag = 0;
@@ -164,14 +159,14 @@ char *argv[];
 	char	*input = NULL;
 	char	*output = NULL;
 	DBM	*db;
-	datum	key,val;
+	datum	key, val;
 	char	*slash;
 	DBM	*new_db = NULL;
 	static	char mapname[] = "ypdbXXXXXXXXXX";
-	char	db_mapname[MAXPATHLEN],db_outfile[MAXPATHLEN],
+	char	db_mapname[MAXPATHLEN], db_outfile[MAXPATHLEN],
 		db_tempname[MAXPATHLEN];
 	int	status;
-	char	user[4096],host[4096]; /* XXX: DB bsize = 4096 in ypdb.c */
+	char	user[4096], host[4096]; /* XXX: DB bsize = 4096 in ypdb.c */
 	char	datestr[11];
 	char	myname[MAXHOSTNAMELEN];
 	
@@ -279,47 +274,49 @@ fail:
 	     key.dptr != NULL;
 	     key = ypdb_nextkey(db)) {
 		
-	        val = ypdb_fetch(db,key);
+	        val = ypdb_fetch(db, key);
 
-		if (val.dptr == NULL) continue;		/* No value */
-		if ((*key.dptr == '@') && (key.dsize == 1))
+		if (val.dptr == NULL)
+			continue;			/* No value */
+		if (*key.dptr == '@' && key.dsize == 1)
 			continue;			/* Sendmail token */
 		if (strncmp(key.dptr, "YP_", 3)==0)	/* YP token */
 			continue;
-		if (index(val.dptr,',')) continue;	/* List... */
-		if (index(val.dptr,'|')) continue;	/* Pipe... */
+		if (index(val.dptr, ','))
+			continue;			/* List... */
+		if (index(val.dptr, '|'))
+			continue;			/* Pipe... */
 
-		if (!((index(val.dptr,'@')) ||
-		      (index(val.dptr,'!')))) continue;	/* Skip local users */
+		if (!(index(val.dptr, '@') || index(val.dptr, '!')))
+			continue;		/* Skip local users */
 
-		split_address(val.dptr,val.dsize,user,host);
+		split_address(val.dptr, val.dsize, user, host);
 
 		if (eflag && check_host(val.dptr, host, dflag, uflag, Eflag)) {
 			printf("Invalid host %s in %*.*s:%*.*s\n",
-			       host,
-			       key.dsize, key.dsize, key.dptr,
-			       val.dsize, val.dsize, val.dptr);
+			    host,
+			    key.dsize, key.dsize, key.dptr,
+			    val.dsize, val.dsize, val.dptr);
 			continue;
 		}
 
-		if (nflag) {
-			capitalize(key.dptr,key.dsize);
-		}
+		if (nflag)
+			capitalize(key.dptr, key.dsize);
 
 		if (new_db != NULL) {
 			status = ypdb_store(new_db, val, key, YPDB_INSERT);
 			if (status != 0) {
 				printf("%s: problem storing %*.*s %*.*s\n",
-				       __progname,
-				       val.dsize, val.dsize, val.dptr,
-				       key.dsize, key.dsize, key.dptr);
+				   __progname,
+				   val.dsize, val.dsize, val.dptr,
+				   key.dsize, key.dsize, key.dptr);
 			}
 		}
 
 		if (vflag) {
 			printf("%*.*s --> %*.*s\n",
-			       val.dsize, val.dsize, val.dptr,
-			       key.dsize, key.dsize, key.dptr);
+			   val.dsize, val.dsize, val.dptr,
+			   key.dsize, key.dsize, key.dptr);
 		}
 
 	}
@@ -333,9 +330,9 @@ fail:
 		status = ypdb_store(new_db, key, val, YPDB_INSERT);
 		if (status != 0) {
 			printf("%s: problem storing %*.*s %*.*s\n",
-			       __progname,
-			       key.dsize, key.dsize, key.dptr,
-			       val.dsize, val.dsize, val.dptr);
+			   __progname,
+			   key.dsize, key.dsize, key.dptr,
+			   val.dsize, val.dsize, val.dptr);
 		}
 	}
 
@@ -348,26 +345,22 @@ fail:
 		status = ypdb_store(new_db, key, val, YPDB_INSERT);
 		if (status != 0) {
 			printf("%s: problem storing %*.*s %*.*s\n",
-			       __progname,
-			       key.dsize, key.dsize, key.dptr,
-			       val.dsize, val.dsize, val.dptr);
+			   __progname,
+			   key.dsize, key.dsize, key.dptr,
+			   val.dsize, val.dsize, val.dptr);
 		}
 	}
-
-	
 
 	ypdb_close(db);
 
 	if (new_db != NULL) {
 		ypdb_close(new_db);
-		if (rename(db_mapname,db_outfile) < 0) {
+		if (rename(db_mapname, db_outfile) < 0) {
 			perror("rename");
 			fprintf(stderr,"rename %s -> %s failed!\n", db_mapname,
-				db_outfile);
+			    db_outfile);
 			exit(1);
 		}
 	}
-	
 	return(0);
-	
 }
