@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxp.c,v 1.39 2002/06/14 21:34:59 todd Exp $	*/
+/*	$OpenBSD: fxp.c,v 1.40 2002/10/17 15:12:12 drahn Exp $	*/
 /*	$NetBSD: if_fxp.c,v 1.2 1997/06/05 02:01:55 thorpej Exp $	*/
 
 /*
@@ -123,33 +123,34 @@ fxp_lwcopy(src, dst)
 /*
  * Template for default configuration parameters.
  * See struct fxp_cb_config for the bit definitions.
+ * Note, cb_command is filled in later.
  */
 static u_char fxp_cb_config_template[] = {
 	0x0, 0x0,		/* cb_status */
-	0x80, 0x2,		/* cb_command */
+	0x0, 0x0,		/* cb_command */
 	0xff, 0xff, 0xff, 0xff,	/* link_addr */
-	0x16,	/*  0 */
-	0x8,	/*  1 */
-	0x0,	/*  2 */
-	0x0,	/*  3 */
-	0x0,	/*  4 */
-	0x80,	/*  5 */
-	0xb2,	/*  6 */
-	0x3,	/*  7 */
-	0x1,	/*  8 */
-	0x0,	/*  9 */
-	0x26,	/* 10 */
-	0x0,	/* 11 */
-	0x60,	/* 12 */
-	0x0,	/* 13 */
-	0xf2,	/* 14 */
-	0x48,	/* 15 */
-	0x0,	/* 16 */
-	0x40,	/* 17 */
-	0xf3,	/* 18 */
-	0x0,	/* 19 */
-	0x3f,	/* 20 */
-	0x5	/* 21 */
+	0x16,	/*  0 Byte count. */
+	0x08,	/*  1 Fifo limit */
+	0x00,	/*  2 Adaptive ifs */
+	0x00,	/*  3 void1 */
+	0x00,	/*  4 rx_dma_bytecount */
+	0x80,	/*  5 tx_dma_bytecount */
+	0xb2,	/*  6 ctrl 1*/
+	0x03,	/*  7 ctrl 2*/
+	0x01,	/*  8 mediatype */
+	0x00,	/*  9 void2 */
+	0x26,	/* 10 ctrl3 */
+	0x00,	/* 11 linear priority */
+	0x60,	/* 12 interfrm_spacing */
+	0x00,	/* 13 void31 */
+	0xf2,	/* 14 void32 */
+	0x48,	/* 15 promiscous */
+	0x00,	/* 16 void41 */
+	0x40,	/* 17 void42 */
+	0xf3,	/* 18 stripping */
+	0x00,	/* 19 fdx_pin */
+	0x3f,	/* 20 multi_ia */
+	0x05	/* 21 mc_all */
 };
 
 int fxp_mediachange(struct ifnet *);
@@ -611,6 +612,7 @@ fxp_read_eeprom(sc, data, offset, words)
 			CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL, reg);
 			DELAY(1);
 		}
+		data[i] = htole16(data[i]);
 		CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL, 0);
 		DELAY(1);
 	}
@@ -684,13 +686,13 @@ fxp_start(ifp)
 		txc = txs->tx_cb;
 		txc->tbd_number = txs->tx_map->dm_nsegs;
 		txc->cb_status = 0;
-		txc->cb_command = FXP_CB_COMMAND_XMIT | FXP_CB_COMMAND_SF;
+		txc->cb_command = htole16(FXP_CB_COMMAND_XMIT | FXP_CB_COMMAND_SF);
 		txc->tx_threshold = tx_threshold;
 		for (seg = 0; seg < txs->tx_map->dm_nsegs; seg++) {
 			txc->tbd[seg].tb_addr =
-			    txs->tx_map->dm_segs[seg].ds_addr;
+			    htole32(txs->tx_map->dm_segs[seg].ds_addr);
 			txc->tbd[seg].tb_size =
-			    txs->tx_map->dm_segs[seg].ds_len;
+			    htole32(txs->tx_map->dm_segs[seg].ds_len);
 		}
 		FXP_TXCB_SYNC(sc, txs,
 		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
@@ -704,13 +706,14 @@ fxp_start(ifp)
 		ifp->if_timer = 5;
 
 		txs = sc->sc_cbt_prod;
-		txs->tx_cb->cb_command |= FXP_CB_COMMAND_I | FXP_CB_COMMAND_S;
+		txs->tx_cb->cb_command |=
+		    htole16(FXP_CB_COMMAND_I | FXP_CB_COMMAND_S);
 		FXP_TXCB_SYNC(sc, txs,
 		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 
 		FXP_TXCB_SYNC(sc, sc->sc_cbt_prev,
 		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
-		sc->sc_cbt_prev->tx_cb->cb_command &= ~FXP_CB_COMMAND_S;
+		sc->sc_cbt_prev->tx_cb->cb_command &= htole16(~FXP_CB_COMMAND_S);
 		FXP_TXCB_SYNC(sc, sc->sc_cbt_prev,
 		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 
@@ -768,7 +771,7 @@ fxp_intr(arg)
 			    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
 			while ((txcnt > 0) &&
-			    (txs->tx_cb->cb_status & FXP_CB_STATUS_C)) {
+			   (txs->tx_cb->cb_status & htole16(FXP_CB_STATUS_C))) {
 				if (txs->tx_mbuf != NULL) {
 					FXP_MBUF_SYNC(sc, txs->tx_map,
 					    BUS_DMASYNC_POSTWRITE);
@@ -813,10 +816,10 @@ rcvloop:
 
 			if (*(u_int16_t *)(rfap +
 			    offsetof(struct fxp_rfa, rfa_status)) &
-			    FXP_RFA_STATUS_C) {
+			    htole16(FXP_RFA_STATUS_C)) {
 				if (*(u_int16_t *)(rfap +
 				    offsetof(struct fxp_rfa, rfa_status)) &
-				    FXP_RFA_STATUS_RNR)
+				    htole16(FXP_RFA_STATUS_RNR))
 					rnr = 1;
 
 				/*
@@ -833,9 +836,9 @@ rcvloop:
 				if (fxp_add_rfabuf(sc, m) == 0) {
 					u_int16_t total_len;
 
-					total_len = *(u_int16_t *)(rfap +
+					total_len = htole16(*(u_int16_t *)(rfap +
 					    offsetof(struct fxp_rfa,
-					    actual_size)) &
+					    actual_size))) &
 					    (MCLBYTES - 1);
 					if (total_len <
 					    sizeof(struct ether_header)) {
@@ -887,6 +890,7 @@ fxp_stats_update(arg)
 	struct fxp_stats *sp = &sc->sc_ctrl->stats;
 	int s;
 
+	FXP_STATS_SYNC(sc, BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 	ifp->if_opackets += sp->tx_good;
 	ifp->if_collisions += sp->tx_total_collisions;
 	if (sp->rx_good) {
@@ -930,6 +934,7 @@ fxp_stats_update(arg)
 	 * If there is no pending command, start another stats
 	 * dump. Otherwise punt for now.
 	 */
+	FXP_STATS_SYNC(sc, BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 	if (CSR_READ_1(sc, FXP_CSR_SCB_COMMAND) == 0) {
 		/*
 		 * Start another stats dump.
@@ -1123,6 +1128,7 @@ fxp_init(xsc)
 	prm = (ifp->if_flags & IFF_PROMISC) ? 1 : 0;
 	allm = (ifp->if_flags & IFF_ALLMULTI) ? 1 : 0;
 
+#if 0
 	cbp->cb_status =	0;
 	cbp->cb_command =	FXP_CB_COMMAND_CONFIG | FXP_CB_COMMAND_EL;
 	cbp->link_addr =	0xffffffff;	/* (no) next command */
@@ -1157,28 +1163,64 @@ fxp_init(xsc)
 	cbp->fdx_pin_en =	1;	/* (enable) FDX# pin */
 	cbp->multi_ia =		0;	/* (don't) accept multiple IAs */
 	cbp->mc_all =		allm;
+#else
+	cbp->cb_command = htole16(FXP_CB_COMMAND_CONFIG | FXP_CB_COMMAND_EL);
+	if (allm) 
+		cbp->mc_all |= 0x08;		/* accept all multicasts */
+	else
+		cbp->mc_all &= ~0x08;		/* reject all multicasts */
+
+	if (prm) {
+		cbp->promiscuous |= 1;		/* promiscuous mode */
+		cbp->ctrl1 |= 0x80;		/* save bad frames */
+		cbp->ctrl2 &= ~0x01;		/* save short packets */
+		cbp->stripping &= ~0x01;	/* don't truncate rx packets */
+	}
+	else {
+		cbp->promiscuous &= ~1;		/* no promiscuous mode */
+		cbp->ctrl1 &= ~0x80;		/* discard bad frames */
+		cbp->ctrl2 |= 0x01;		/* discard short packets */
+		cbp->stripping |= 0x01;		/* truncate rx packets */
+	}
+
+	if(!sc->phy_10Mbps_only)			/* interface mode */
+		cbp->mediatype |= 0x01;
+	else
+		cbp->mediatype &= ~0x01;
+
+	if(sc->not_82557)			/* long packets */
+		cbp->stripping |= 0x08;
+	else
+		cbp->stripping &= ~0x08;
+
+	cbp->tx_dma_bytecount = 0; /* (no) tx DMA max, dma_dce = 0 ??? */
+ 	cbp->ctrl1 |= 0x08;	/* ci_int = 1 */
+	cbp->ctrl3 |= 0x08;	/* nsai */
+	cbp->fifo_limit = 0x08; /* tx and rx fifo limit */
+	cbp->fdx_pin |= 0x80;	/* Enable full duplex setting by pin */
+#endif
 
 	/*
 	 * Start the config command/DMA.
 	 */
 	fxp_scb_wait(sc);
+	FXP_CFG_SYNC(sc, BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 	CSR_WRITE_4(sc, FXP_CSR_SCB_GENERAL, sc->tx_cb_map->dm_segs->ds_addr +
 	    offsetof(struct fxp_ctrl, u.cfg));
 	fxp_scb_cmd(sc, FXP_SCB_COMMAND_CU_START);
 	/* ...and wait for it to complete. */
-	FXP_CFG_SYNC(sc, BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 	do {
 		DELAY(1);
 		FXP_CFG_SYNC(sc, BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
-	} while ((cbp->cb_status & FXP_CB_STATUS_C) == 0);
+	} while ((cbp->cb_status & htole16(FXP_CB_STATUS_C)) == 0);
 
 	/*
 	 * Now initialize the station address.
 	 */
 	cb_ias = &sc->sc_ctrl->u.ias;
-	cb_ias->cb_status = 0;
-	cb_ias->cb_command = FXP_CB_COMMAND_IAS | FXP_CB_COMMAND_EL;
-	cb_ias->link_addr = 0xffffffff;
+	cb_ias->cb_status = htole16(0);
+	cb_ias->cb_command = htole16(FXP_CB_COMMAND_IAS | FXP_CB_COMMAND_EL);
+	cb_ias->link_addr = htole32(0xffffffff);
 	bcopy(sc->sc_arpcom.ac_enaddr, (void *)cb_ias->macaddr,
 	    sizeof(sc->sc_arpcom.ac_enaddr));
 
@@ -1186,15 +1228,15 @@ fxp_init(xsc)
 	 * Start the IAS (Individual Address Setup) command/DMA.
 	 */
 	fxp_scb_wait(sc);
+	FXP_IAS_SYNC(sc, BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 	CSR_WRITE_4(sc, FXP_CSR_SCB_GENERAL, sc->tx_cb_map->dm_segs->ds_addr +
 	    offsetof(struct fxp_ctrl, u.ias));
 	fxp_scb_cmd(sc, FXP_SCB_COMMAND_CU_START);
 	/* ...and wait for it to complete. */
-	FXP_IAS_SYNC(sc, BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 	do {
 		DELAY(1);
 		FXP_IAS_SYNC(sc, BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
-	} while (!(cb_ias->cb_status & FXP_CB_STATUS_C));
+	} while (!(cb_ias->cb_status & htole16(FXP_CB_STATUS_C)));
 
 	/* Again, this time really upload the multicast addresses */
 	fxp_mc_setup(sc, 1);
@@ -1205,11 +1247,11 @@ fxp_init(xsc)
 	bzero(sc->sc_ctrl->tx_cb, sizeof(struct fxp_cb_tx) * FXP_NTXCB);
 	txp = sc->sc_ctrl->tx_cb;
 	for (i = 0; i < FXP_NTXCB; i++) {
-		txp[i].cb_command = FXP_CB_COMMAND_NOP;
-		txp[i].link_addr = sc->tx_cb_map->dm_segs->ds_addr +
-		    offsetof(struct fxp_ctrl, tx_cb[(i + 1) & FXP_TXCB_MASK]);
-		txp[i].tbd_array_addr = sc->tx_cb_map->dm_segs->ds_addr +
-		    offsetof(struct fxp_ctrl, tx_cb[i].tbd[0]);
+		txp[i].cb_command = htole16(FXP_CB_COMMAND_NOP);
+		txp[i].link_addr = htole32(sc->tx_cb_map->dm_segs->ds_addr +
+		    offsetof(struct fxp_ctrl, tx_cb[(i + 1) & FXP_TXCB_MASK]));
+		txp[i].tbd_array_addr =htole32(sc->tx_cb_map->dm_segs->ds_addr +
+		    offsetof(struct fxp_ctrl, tx_cb[i].tbd[0]));
 	}
 	/*
 	 * Set the suspend flag on the first TxCB and start the control
@@ -1217,8 +1259,8 @@ fxp_init(xsc)
 	 */
 	sc->sc_cbt_prev = sc->sc_cbt_prod = sc->sc_cbt_cons = sc->txs;
 	sc->sc_cbt_cnt = 1;
-	sc->sc_ctrl->tx_cb[0].cb_command = FXP_CB_COMMAND_NOP |
-	    FXP_CB_COMMAND_S | FXP_CB_COMMAND_I;
+	sc->sc_ctrl->tx_cb[0].cb_command = htole16(FXP_CB_COMMAND_NOP |
+	    FXP_CB_COMMAND_S | FXP_CB_COMMAND_I);
 	bus_dmamap_sync(sc->sc_dmat, sc->tx_cb_map, 0,
 	    sc->tx_cb_map->dm_mapsize,
 	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
@@ -1345,7 +1387,7 @@ fxp_add_rfabuf(sc, oldm)
 	rfap = m->m_data;
 	m->m_data += sizeof(struct fxp_rfa);
 	*(u_int16_t *)(rfap + offsetof(struct fxp_rfa, size)) =
-	    MCLBYTES - sizeof(struct fxp_rfa) - RFA_ALIGNMENT_FUDGE;
+	    htole16(MCLBYTES - sizeof(struct fxp_rfa) - RFA_ALIGNMENT_FUDGE);
 
 	/*
 	 * Initialize the rest of the RFA.  Note that since the RFA
@@ -1354,7 +1396,7 @@ fxp_add_rfabuf(sc, oldm)
 	 */
 	*(u_int16_t *)(rfap + offsetof(struct fxp_rfa, rfa_status)) = 0;
 	*(u_int16_t *)(rfap + offsetof(struct fxp_rfa, rfa_control)) =
-	    FXP_RFA_CONTROL_EL;
+	    htole16(FXP_RFA_CONTROL_EL);
 	*(u_int16_t *)(rfap + offsetof(struct fxp_rfa, actual_size)) = 0;
 
 	v = -1;
@@ -1363,25 +1405,29 @@ fxp_add_rfabuf(sc, oldm)
 	fxp_lwcopy(&v,
 	    (u_int32_t *)(rfap + offsetof(struct fxp_rfa, rbd_addr)));
 
+	bus_dmamap_sync(sc->sc_dmat, rxmap, 0, MCLBYTES,
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+
 	/*
 	 * If there are other buffers already on the list, attach this
 	 * one to the end by fixing up the tail to point to this one.
 	 */
 	if (sc->rfa_headm != NULL) {
 		sc->rfa_tailm->m_next = m;
-		v = rxmap->dm_segs[0].ds_addr + RFA_ALIGNMENT_FUDGE;
+		v = htole32(rxmap->dm_segs[0].ds_addr + RFA_ALIGNMENT_FUDGE);
 		rfap = sc->rfa_tailm->m_ext.ext_buf + RFA_ALIGNMENT_FUDGE;
 		fxp_lwcopy(&v,
 		    (u_int32_t *)(rfap + offsetof(struct fxp_rfa, link_addr)));
 		*(u_int16_t *)(rfap + offsetof(struct fxp_rfa, rfa_control)) &=
-		    ~FXP_RFA_CONTROL_EL;
+		    htole16((u_int16_t)~FXP_RFA_CONTROL_EL);
+		/* XXX we only need to sync the control struct */
+		bus_dmamap_sync(sc->sc_dmat,
+		    *((bus_dmamap_t *)sc->rfa_tailm->m_ext.ext_buf), 0,
+			MCLBYTES, BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 	} else
 		sc->rfa_headm = m;
 
 	sc->rfa_tailm = m;
-
-	bus_dmamap_sync(sc->sc_dmat, rxmap, 0, MCLBYTES,
-	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 	return (m == oldm);
 }
@@ -1576,9 +1622,9 @@ fxp_mc_setup(sc, doit)
 	/*
 	 * Initialize multicast setup descriptor.
 	 */
-	mcsp->cb_status = 0;
-	mcsp->cb_command = FXP_CB_COMMAND_MCAS | FXP_CB_COMMAND_EL;
-	mcsp->link_addr = -1;
+	mcsp->cb_status = htole16(0);
+	mcsp->cb_command = htole16(FXP_CB_COMMAND_MCAS | FXP_CB_COMMAND_EL);
+	mcsp->link_addr = htole32(-1);
 
 	nmcasts = 0;
 	if (!(ifp->if_flags & IFF_ALLMULTI)) {
@@ -1605,7 +1651,7 @@ fxp_mc_setup(sc, doit)
 	}
 	if (doit == 0)
 		return;
-	mcsp->mc_cnt = nmcasts * ETHER_ADDR_LEN;
+	mcsp->mc_cnt = htole16(nmcasts * ETHER_ADDR_LEN);
 
 	/*
 	 * Wait until command unit is not active. This should never
@@ -1617,13 +1663,13 @@ fxp_mc_setup(sc, doit)
 	 * Start the multicast setup command.
 	 */
 	fxp_scb_wait(sc);
+	FXP_MCS_SYNC(sc, BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 	CSR_WRITE_4(sc, FXP_CSR_SCB_GENERAL, sc->tx_cb_map->dm_segs->ds_addr +
 	    offsetof(struct fxp_ctrl, u.mcs));
 	fxp_scb_cmd(sc, FXP_SCB_COMMAND_CU_START);
 
-	FXP_MCS_SYNC(sc, BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 	do {
 		DELAY(1);
 		FXP_MCS_SYNC(sc, BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
-	} while (!(mcsp->cb_status & FXP_CB_STATUS_C));
+	} while (!(mcsp->cb_status & htole16(FXP_CB_STATUS_C)));
 }

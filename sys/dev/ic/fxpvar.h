@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxpvar.h,v 1.12 2002/06/09 03:14:18 todd Exp $	*/
+/*	$OpenBSD: fxpvar.h,v 1.13 2002/10/17 15:12:12 drahn Exp $	*/
 /*	$NetBSD: if_fxpvar.h,v 1.1 1997/06/05 02:01:58 thorpej Exp $	*/
 
 /*                  
@@ -144,6 +144,10 @@ extern int fxp_detach(struct fxp_softc *);
 #define	FXP_CFG_SYNC(sc, p)						\
     bus_dmamap_sync((sc)->sc_dmat, (sc)->tx_cb_map,			\
 	offsetof(struct fxp_ctrl, u.cfg), sizeof(struct fxp_cb_config), (p))
+
+#define	FXP_STATS_SYNC(sc, p)						\
+    bus_dmamap_sync((sc)->sc_dmat, (sc)->tx_cb_map,			\
+	offsetof(struct fxp_ctrl, stats), sizeof(struct fxp_stats), (p)) 
 
 #define	FXP_MBUF_SYNC(sc, m, p)						\
     bus_dmamap_sync((sc)->sc_dmat, (m), 0, (m)->dm_mapsize, (p))

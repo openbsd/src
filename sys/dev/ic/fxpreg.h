@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxpreg.h,v 1.3 2001/08/09 21:12:51 jason Exp $	*/
+/*	$OpenBSD: fxpreg.h,v 1.4 2002/10/17 15:12:12 drahn Exp $	*/
 
 /*
  * Copyright (c) 1995, David Greenman
@@ -111,65 +111,41 @@ struct fxp_cb_ias {
 	volatile u_int32_t link_addr;
 	volatile u_int8_t macaddr[6];
 };
-/* I hate bit-fields :-( */
+/* I hate bit-fields :-( */ /* SO WHY USE IT, EH? */
+
+/*
+ *  Bitfields cleaned out since it is not endian compatible. OK
+ *  you can define a big endian structure but can never be 100% safe...
+ *
+ *  ANY PROGRAMER TRYING THE STUNT WITH BITFIELDS IN A DEVICE DRIVER
+ *  SHOULD BE PUT UP AGAINST THE WALL, BLINDFOLDED AND SHOT!
+ */
 struct fxp_cb_config {
-	volatile u_int16_t	cb_status;
-	volatile u_int16_t	cb_command;
-	volatile u_int32_t	link_addr;
-	volatile u_int		byte_count:6,
-				:2;
-	volatile u_int		rx_fifo_limit:4,
-				tx_fifo_limit:3,
-				:1;
-	volatile u_int8_t	adaptive_ifs;
-	volatile u_int		:8;
-	volatile u_int		rx_dma_bytecount:7,
-				:1;
-	volatile u_int		tx_dma_bytecount:7,
-				dma_bce:1;
-	volatile u_int		late_scb:1,
-				:1,
-				tno_int:1,
-				ci_int:1,
-				:3,
-				save_bf:1;
-	volatile u_int		disc_short_rx:1,
-				underrun_retry:2,
-				:5;
-	volatile u_int		mediatype:1,
-				:7;
-	volatile u_int		:8;
-	volatile u_int		:3,
-				nsai:1,
-				preamble_length:2,
-				loopback:2;
-	volatile u_int		linear_priority:3,
-				:5;
-	volatile u_int		linear_pri_mode:1,
-				:3,
-				interfrm_spacing:4;
-	volatile u_int		:8;
-	volatile u_int		:8;
-	volatile u_int		promiscuous:1,
-				bcast_disable:1,
-				:5,
-				crscdt:1;
-	volatile u_int		:8;
-	volatile u_int		:8;
-	volatile u_int		stripping:1,
-				padding:1,
-				rcv_crc_xfer:1,
-				long_rx:1,		/* 82558/82559 */
-				:4;
-	volatile u_int		:6,
-				force_fdx:1,
-				fdx_pin_en:1;
-	volatile u_int		:6,
-				multi_ia:1,
-				:1;
-	volatile u_int		:3,
-				mc_all:1,
-				:4;
+        volatile u_int16_t      cb_status;
+        volatile u_int16_t      cb_command;
+        volatile u_int32_t      link_addr;
+        volatile u_int8_t       byte_count;
+        volatile u_int8_t       fifo_limit;
+        volatile u_int8_t       adaptive_ifs;
+        volatile u_int8_t       void1;
+        volatile u_int8_t       rx_dma_bytecount;
+        volatile u_int8_t       tx_dma_bytecount;
+        volatile u_int8_t       ctrl1;
+        volatile u_int8_t       ctrl2;
+        volatile u_int8_t       mediatype;
+        volatile u_int8_t       void2;
+        volatile u_int8_t       ctrl3;
+        volatile u_int8_t       linear_priority;
+        volatile u_int8_t       interfrm_spacing;
+        volatile u_int8_t       void3;
+        volatile u_int8_t       void4;
+        volatile u_int8_t       promiscuous;
+        volatile u_int8_t       void5;
+        volatile u_int8_t       void6;
+        volatile u_int8_t       stripping;
+        volatile u_int8_t       fdx_pin;
+        volatile u_int8_t       multi_ia;
+        volatile u_int8_t       mc_all;
 };
 
 #define MAXMCADDR 80
@@ -188,11 +164,9 @@ struct fxp_cb_mcs {
  * no attempt is made to allocate physically contiguous memory.
  * 
  */
-#ifdef __alpha__ /* XXX - should be conditional on pointer size */
-#define FXP_NTXSEG      30
-#else
-#define FXP_NTXSEG      31
-#endif
+#define	SZ_TXCB		16	/* TX control block head size = 4 32 bit words */
+#define	SZ_TBD		8	/* Fragment ptr/size block size */
+#define FXP_NTXSEG      ((256 - SZ_TXCB) / SZ_TBD)
 
 struct fxp_tbd {
 	volatile u_int32_t tb_addr;
