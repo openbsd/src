@@ -1,4 +1,4 @@
-/*	$OpenBSD: who.c,v 1.8 2000/03/21 21:54:51 ericj Exp $	*/
+/*	$OpenBSD: who.c,v 1.9 2000/03/22 17:07:37 millert Exp $	*/
 /*	$NetBSD: who.c,v 1.4 1994/12/07 04:28:49 jtc Exp $	*/
 
 /*
@@ -47,11 +47,12 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)who.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: who.c,v 1.8 2000/03/21 21:54:51 ericj Exp $";
+static char rcsid[] = "$OpenBSD: who.c,v 1.9 2000/03/22 17:07:37 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <paths.h>
 #include <pwd.h>
 #include <utmp.h>
 #include <stdio.h>
@@ -114,13 +115,6 @@ main(argc, argv)
 
 	if (show_quick) {
 		only_current_term = show_term = show_idle = show_labels = 0;
-	}
-
-	if (show_term || show_idle) {
-		if (chdir("/dev")) {
-			err(1, "cannot change directory to /dev");
-			/* NOTREACHED */
-		}
 	}
 
 	if (show_labels)
@@ -225,7 +219,7 @@ output(up)
 	struct utmp *up;
 {
 	struct stat sb;
-	char line[sizeof (up->ut_line) + 1];
+	char line[sizeof(_PATH_DEV) + sizeof (up->ut_line)];
 	char state = '?';
 	static time_t now = 0;
 	time_t idle = 0;
@@ -234,8 +228,8 @@ output(up)
 		if (now == 0)
 			time(&now);
 		
-		strncpy(line, up->ut_line, sizeof (up->ut_line));
-		line[sizeof (up->ut_line)] = '\0';
+		strcpy(line, _PATH_DEV);
+		strncat(line, up->ut_line, sizeof (up->ut_line));
 
 		if (stat(line, &sb) == 0) {
 			state = (sb.st_mode & 020) ? '+' : '-';
