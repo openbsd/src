@@ -1,4 +1,4 @@
-!	$Id: SRT0.S,v 1.3 1995/11/17 21:49:51 deraadt Exp $
+|	$Id: SRT0.S,v 1.4 1995/11/17 22:05:43 deraadt Exp $
 
 | Copyright (c) 1995 Theo de Raadt
 | 
