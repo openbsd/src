@@ -1,4 +1,4 @@
-/*	$OpenBSD: microtime.s,v 1.6 1996/04/28 22:29:06 mickey Exp $	*/
+/*	$OpenBSD: microtime.s,v 1.7 1996/04/29 00:42:25 mickey Exp $	*/
 /*	$NetBSD: microtime.s,v 1.16 1995/04/17 12:06:47 cgd Exp $	*/
 
 /*-
@@ -23,7 +23,7 @@
  *
  * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * IMPLIED WArRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
  * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
  * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
  * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
@@ -37,7 +37,6 @@
 #include <machine/asm.h>
 #include <dev/isa/isareg.h>
 #include <i386/isa/timerreg.h>
-#include "rnd.h"
 
 #define	IRQ_BIT(irq_num)	(1 << ((irq_num) % 8))
 #define	IRQ_BYTE(irq_num)	((irq_num) / 8)
@@ -49,7 +48,7 @@
 #ifndef HZ
 ENTRY(microtime)
 
-#if defined(I586_CPU) && (defined(NTP) || NRND)
+#if defined(I586_CPU) && defined(NTP) 
 	movl	_pentium_mhz, %ecx
 	testl	%ecx, %ecx
 	jne	pentium_microtime
@@ -139,7 +138,7 @@ common_microtime:
 
 	ret
 
-#if defined(I586_CPU) && (defined(NTP) || NRND)
+#if defined(I586_CPU) && defined(NTP)
 	.align	2, 0x90
 pentium_microtime:
 	cli
