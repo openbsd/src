@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.150 2003/03/28 21:32:30 jmc Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.151 2003/04/09 15:25:16 todd Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -54,6 +54,11 @@ ca
 # ./etc/isakmpd/certs
 certs
 # ./etc/isakmpd/certs
+..
+
+# ./etc/isakmpd/crls
+crls
+# ./etc/isakmpd/crls
 ..
 
 # ./etc/isakmpd/keynote
