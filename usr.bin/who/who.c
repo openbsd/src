@@ -1,4 +1,4 @@
-/*	$OpenBSD: who.c,v 1.4 1997/03/25 21:28:12 deraadt Exp $	*/
+/*	$OpenBSD: who.c,v 1.5 1997/07/28 17:38:53 flipk Exp $	*/
 /*	$NetBSD: who.c,v 1.4 1994/12/07 04:28:49 jtc Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)who.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: who.c,v 1.4 1997/03/25 21:28:12 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: who.c,v 1.5 1997/07/28 17:38:53 flipk Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -60,13 +60,18 @@ static char rcsid[] = "$OpenBSD: who.c,v 1.4 1997/03/25 21:28:12 deraadt Exp $";
 #include <unistd.h>
 #include <time.h>
 #include <err.h>
+#include <locale.h>
 
-void output __P((struct utmp *));
-void who_am_i __P((FILE *));
-void usage __P((void));
+void  output		__P((struct utmp *));
+void  output_labels	__P((void));
+void  who_am_i		__P((FILE *));
+void  usage		__P((void));
+FILE *file		__P((char *));
+
 int only_current_term;		/* show info about the current terminal only */
 int show_term;			/* show term state */
 int show_idle;			/* show idle time */
+int show_labels;		/* show column labels */
 
 int
 main(argc, argv)
@@ -74,10 +79,13 @@ main(argc, argv)
 	char **argv;
 {
 	struct utmp usr;
-	FILE *ufp, *file();
+	FILE *ufp;
 	int c;
 
-	while ((c = getopt(argc, argv, "mTu")) != -1) {
+	setlocale(LC_ALL, "");
+
+	only_current_term = show_term = show_idle = show_labels = 0;
+	while ((c = getopt(argc, argv, "HmTu")) != -1) {
 		switch (c) {
 		case 'm':
 			only_current_term = 1;
@@ -87,6 +95,9 @@ main(argc, argv)
 			break;
 		case 'u':
 			show_idle = 1;
+			break;
+		case 'H':
+			show_labels = 1;
 			break;
 		default:
 			usage();
@@ -100,6 +111,9 @@ main(argc, argv)
 		err(1, "cannot change directory to /dev");
 		/* NOTREACHED */
 	}
+
+	if (show_labels)
+		output_labels();
 
 	switch (argc) {
 	case 0:					/* who */
@@ -146,9 +160,9 @@ who_am_i(ufp)
 	char *t;
 
 	/* search through the utmp and find an entry for this tty */
-	if (p = ttyname(0)) {
+	if ((p = ttyname(0))) {
 		/* strip any directory component */
-		if (t = strrchr(p, '/'))
+		if ((t = strrchr(p, '/')))
 			p = t + 1;
 		while (fread((char *)&usr, sizeof(usr), 1, ufp) == 1)
 			if (*usr.ut_name && !strcmp(usr.ut_line, p)) {
@@ -173,9 +187,9 @@ output(up)
 {
 	struct stat sb;
 	char line[sizeof (up->ut_line) + 1];
-	char state;
+	char state = '?';
 	static time_t now = 0;
-	time_t idle;
+	time_t idle = 0;
 
 	if (show_term || show_idle) {
 		if (now == 0)
@@ -219,6 +233,25 @@ output(up)
 	(void)putchar('\n');
 }
 
+void
+output_labels()
+{
+	(void)printf("%-*.*s ", UT_NAMESIZE, UT_NAMESIZE, "USER");
+
+	if (show_term)
+		(void)printf("S ");
+
+	(void)printf("%-*.*s ", UT_LINESIZE, UT_LINESIZE, "LINE");
+	(void)printf("WHEN         ");
+
+	if (show_idle)
+		(void)printf("IDLE  ");
+
+	(void)printf("\t%.*s", UT_HOSTSIZE, "FROM");
+
+	(void)putchar('\n');
+}
+
 FILE *
 file(name)
 	char *name;
@@ -235,6 +268,6 @@ file(name)
 void
 usage()
 {
-	(void)fprintf(stderr, "usage: who [-mTu] [ file ]\n       who am i\n");
+	(void)fprintf(stderr, "usage: who [-mTuH] [ file ]\n       who am i\n");
 	exit(1);
 }
