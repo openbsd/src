@@ -1,4 +1,4 @@
-.\"     $OpenBSD: atw.4,v 1.12 2005/03/06 21:49:00 jmc Exp $
+.\"     $OpenBSD: atw.4,v 1.13 2005/03/09 09:45:02 jmc Exp $
 .\"	$NetBSD: atw.4,v 1.8 2004/06/06 04:05:49 wiz Exp $
 .\"
 .\" Copyright (c) 2003
@@ -40,7 +40,7 @@
 .Sh DESCRIPTION
 The
 .Nm
-driver supports PCI/Cardbus 802.11b wireless adapters based on the
+driver supports PCI/CardBus 802.11b wireless adapters based on the
 ADMtek ADM8211.
 .Pp
 The ADM8211 is a bus-mastering 802.11 Media Access Controller (MAC)
@@ -206,18 +206,18 @@ and enable WEP encryption using that key.
 .Sh HARDWARE
 The
 .Nm
-driver supports PCI and Cardbus cards using revision 0x11 and 0x15
+driver supports PCI and CardBus cards using revision 0x11 and 0x15
 of the ADM8211 (aka ADM8211A).
 This includes:
 .Pp
 .Bl -tag -width Ds -offset indent -compact
-.It 3Com OfficeConnect 3CRSHPW796 Cardbus
+.It 3Com OfficeConnect 3CRSHPW796 CardBus
 .It Belkin F5D6001 PCI (version 2 only)
-.It Blitz NetWave Point Cardbus
-.It D-Link DWL-650 Rev. \&L1 Cardbus
+.It Blitz NetWave Point CardBus
+.It D-Link DWL-650 Rev. \&L1 CardBus
 .It D-Link DWL-520 Rev. \&C1 PCI
 .It LanReady WP2000 PCI
-.It TrendNet TEW-221PC Cardbus
+.It TrendNet TEW-221PC CardBus
 .It Xterasys XN2511B PCI
 .El
 .Pp
@@ -228,7 +228,7 @@ driver does not yet support cards using revision 0x20 (ADM8211B) or
 This includes:
 .Pp
 .Bl -tag -width Ds -offset indent -compact
-.It SMC 2635W Cardbus
+.It SMC 2635W CardBus
 .El
 .Sh EXAMPLES
 The following
