@@ -1,4 +1,4 @@
-/*	$NetBSD: pio.h,v 1.11 1995/04/22 03:59:59 mycroft Exp $	*/
+/*	$NetBSD: pio.h,v 1.12 1995/12/20 07:53:09 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993, 1995 Charles M. Hannum.  All rights reserved.
@@ -53,19 +53,19 @@
 #define	inb(port) \
 	(__use_immediate_port(port) ? __inbc(port) : __inb(port))
 
-static __inline u_char
+static __inline u_int8_t
 __inbc(int port)
 {
-	u_char	data;
-	__asm __volatile("inb %1,%0" : "=a" (data) : "i" (port));
+	u_int8_t data;
+	__asm __volatile("inb %1,%0" : "=a" (data) : "id" (port));
 	return data;
 }
 
-static __inline u_char
+static __inline u_int8_t
 __inb(int port)
 {
-	u_char	data;
-	__asm __volatile("inb %%dx,%0" : "=a" (data) : "d" (port));
+	u_int8_t data;
+	__asm __volatile("inb %w1,%0" : "=a" (data) : "d" (port));
 	return data;
 }
 
@@ -81,19 +81,19 @@ insb(int port, void *addr, int cnt)
 #define	inw(port) \
 	(__use_immediate_port(port) ? __inwc(port) : __inw(port))
 
-static __inline u_short
+static __inline u_int16_t
 __inwc(int port)
 {
-	u_short	data;
-	__asm __volatile("inw %1,%0" : "=a" (data) : "i" (port));
+	u_int16_t data;
+	__asm __volatile("inw %1,%0" : "=a" (data) : "id" (port));
 	return data;
 }
 
-static __inline u_short
+static __inline u_int16_t
 __inw(int port)
 {
-	u_short	data;
-	__asm __volatile("inw %%dx,%0" : "=a" (data) : "d" (port));
+	u_int16_t data;
+	__asm __volatile("inw %w1,%0" : "=a" (data) : "d" (port));
 	return data;
 }
 
@@ -109,19 +109,19 @@ insw(int port, void *addr, int cnt)
 #define	inl(port) \
 	(__use_immediate_port(port) ? __inlc(port) : __inl(port))
 
-static __inline u_int
+static __inline u_int32_t
 __inlc(int port)
 {
-	u_int	data;
-	__asm __volatile("inl %1,%0" : "=a" (data) : "i" (port));
+	u_int32_t data;
+	__asm __volatile("inl %1,%0" : "=a" (data) : "id" (port));
 	return data;
 }
 
-static __inline u_int
+static __inline u_int32_t
 __inl(int port)
 {
-	u_int	data;
-	__asm __volatile("inl %%dx,%0" : "=a" (data) : "d" (port));
+	u_int32_t data;
+	__asm __volatile("inl %w1,%0" : "=a" (data) : "d" (port));
 	return data;
 }
 
@@ -138,15 +138,15 @@ insl(int port, void *addr, int cnt)
 	(__use_immediate_port(port) ? __outbc(port, data) : __outb(port, data))
 
 static __inline void
-__outbc(int port, u_char data)
+__outbc(int port, u_int8_t data)
 {
-	__asm __volatile("outb %0,%1" : : "a" (data), "i" (port));
+	__asm __volatile("outb %0,%1" : : "a" (data), "id" (port));
 }
 
 static __inline void
-__outb(int port, u_char data)
+__outb(int port, u_int8_t data)
 {
-	__asm __volatile("outb %0,%%dx" : : "a" (data), "d" (port));
+	__asm __volatile("outb %0,%w1" : : "a" (data), "d" (port));
 }
 
 static __inline void
@@ -162,15 +162,15 @@ outsb(int port, void *addr, int cnt)
 	(__use_immediate_port(port) ? __outwc(port, data) : __outw(port, data))
 
 static __inline void
-__outwc(int port, u_short data)
+__outwc(int port, u_int16_t data)
 {
-	__asm __volatile("outw %0,%1" : : "a" (data), "i" (port));
+	__asm __volatile("outw %0,%1" : : "a" (data), "id" (port));
 }
 
 static __inline void
-__outw(int port, u_short data)
+__outw(int port, u_int16_t data)
 {
-	__asm __volatile("outw %0,%%dx" : : "a" (data), "d" (port));
+	__asm __volatile("outw %0,%w1" : : "a" (data), "d" (port));
 }
 
 static __inline void
@@ -186,15 +186,15 @@ outsw(int port, void *addr, int cnt)
 	(__use_immediate_port(port) ? __outlc(port, data) : __outl(port, data))
 
 static __inline void
-__outlc(int port, u_int data)
+__outlc(int port, u_int32_t data)
 {
-	__asm __volatile("outl %0,%1" : : "a" (data), "i" (port));
+	__asm __volatile("outl %0,%1" : : "a" (data), "id" (port));
 }
 
 static __inline void
-__outl(int port, u_int data)
+__outl(int port, u_int32_t data)
 {
-	__asm __volatile("outl %0,%%dx" : : "a" (data), "d" (port));
+	__asm __volatile("outl %0,%w1" : : "a" (data), "d" (port));
 }
 
 static __inline void
