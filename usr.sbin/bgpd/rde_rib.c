@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.58 2004/08/13 14:03:20 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.59 2004/08/17 15:39:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -92,6 +92,8 @@ path_update(struct rde_peer *peer, struct rde_aspath *nasp,
 		} else {
 			/* already registered */
 			path_put(nasp);
+			/* update last change */
+			p->lastchange = time(NULL);
 		}
 	} else if ((asp = path_lookup(nasp, peer)) == NULL) {
 		/* path not available */
