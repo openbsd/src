@@ -115,7 +115,7 @@
 
     See HISTORY file for additional revisions.
 
-    $OpenBSD: alias_db.c,v 1.13 2000/08/13 22:05:47 brian Exp $
+    $OpenBSD: alias_db.c,v 1.14 2000/08/15 10:31:00 brian Exp $
 */
 
 
@@ -2664,13 +2664,13 @@ static char *fireWallField;     /* bool array for entries */
 
 #define fw_setfield(field, num)                         \
 do {                                                    \
-    (field)[num] = 1;                                   \
+    (field)[(num) - fireWallBaseNum] = 1;               \
 } /*lint -save -e717 */ while(0) /*lint -restore */
 #define fw_clrfield(field, num)                         \
 do {                                                    \
-    (field)[num] = 0;                                   \
+    (field)[(num) - fireWallBaseNum] = 0;               \
 } /*lint -save -e717 */ while(0) /*lint -restore */
-#define fw_tstfield(field, num) ((field)[num])
+#define fw_tstfield(field, num) ((field)[(num) - fireWallBaseNum])
 
 void
 PacketAliasSetFWBase(unsigned int base, unsigned int num) {
@@ -2727,8 +2727,7 @@ PunchFWHole(struct alias_link *link) {
              fw_tstfield(fireWallField, fwhole);
          fwhole++)
         ;
-    if (fwhole >= fireWallBaseNum + fireWallNumNums ||
-        fw_tstfield(fireWallField, fwhole)) {
+    if (fwhole == fireWallBaseNum + fireWallNumNums) {
         for (fwhole = fireWallBaseNum;
              fwhole < fireWallActiveNum &&
                  fw_tstfield(fireWallField, fwhole);
