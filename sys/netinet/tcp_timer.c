@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_timer.c,v 1.2 1996/03/03 22:30:48 niklas Exp $	*/
+/*	$OpenBSD: tcp_timer.c,v 1.3 1996/03/14 08:09:49 tholo Exp $	*/
 /*	$NetBSD: tcp_timer.c,v 1.14 1996/02/13 23:44:09 christos Exp $	*/
 
 /*
@@ -117,7 +117,7 @@ tcp_slowtimo()
 	for (; ip != (struct inpcb *)&tcbtable.inpt_queue; ip = ipnxt) {
 		ipnxt = ip->inp_queue.cqe_next;
 		tp = intotcpcb(ip);
-		if (tp == 0)
+		if (tp == 0 || tp->t_state == TCPS_LISTEN)
 			continue;
 		for (i = 0; i < TCPT_NTIMERS; i++) {
 			if (tp->t_timer[i] && --tp->t_timer[i] == 0) {
