@@ -1,4 +1,4 @@
-#	$OpenBSD: DISKLESS,v 1.25 2005/01/14 22:39:23 miod Exp $
+#	$OpenBSD: DISKLESS,v 1.26 2005/01/18 19:13:23 miod Exp $
 #	$NetBSD: GENERIC,v 1.23 1997/01/31 06:12:57 thorpej Exp $
 #
 # Generic kernel - one size fits all.
@@ -30,6 +30,8 @@ maxusers	16
 # Options for HP hardware
 option		USELEDS		# make the lights twinkle
 #option		CONSCODE="9"	# force console at this select code
+
+option		WSDISPLAY_COMPAT_RAWKBD		# provide raw scancodes
 
 option		COMPAT_HPUX	# HP-UX binary compatibility
 option		COMPAT_M68K4K	# compat. with NetBSD/m68k4k binaries
