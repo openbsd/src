@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.2 2004/02/03 12:09:47 mickey Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.3 2004/02/08 03:15:04 deraadt Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $	*/
 
 /*-
@@ -100,6 +100,10 @@ int	cold = 1;	/* if 1, still working on cold-start */
 struct device *booted_device;
 int booted_partition;
 dev_t bootdev;
+
+#ifdef RAMDISK_HOOKS
+static struct device fakerdrootdev = { DV_DISK, {}, NULL, 0, "rd0", NULL };
+#endif
 
 /*
  * Determine i/o configuration for a machine.
@@ -504,6 +508,7 @@ static	struct nam2blk {
 } nam2blk[] = {
 	{ "wd",		0 },	/* 0 = wd */
 	{ "sd",		4 },	/* 2 = sd */
+	{ "rd",		17 },	/* 17 = rd */
 	{ "raid",	19 },	/* 19 = raid */
 };
 
