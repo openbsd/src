@@ -26,7 +26,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-ipsec.c,v 1.2 1999/09/21 20:54:58 jakob Exp $ (XXX)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-ipsec.c,v 1.3 1999/10/29 09:44:07 ho Exp $ (XXX)";
 #endif
 
 #include <sys/param.h>
@@ -82,9 +82,11 @@ void esp_print(register const u_char *bp, register u_int len,
  * IPSec/AH header
  */
 struct ah_hdr {
-	u_int ah_dummy;
-	u_int ah_spi;
-	u_int ah_seq;
+	u_char  ah_nxt_hdr;
+	u_char  ah_pl_len;
+	u_short ah_reserved;
+	u_int   ah_spi;
+	u_int   ah_seq;
 };
 
 ah_print(register const u_char *bp, register u_int len,
@@ -92,6 +94,7 @@ ah_print(register const u_char *bp, register u_int len,
 {
 	const struct ip *ip;
 	const struct ah_hdr *ah;
+	u_int pl_len;
 
 	ip = (const struct ip *)bp2;
 	ah = (const struct ah_hdr *)bp;
@@ -100,5 +103,53 @@ ah_print(register const u_char *bp, register u_int len,
 		     ipaddr_string(&ip->ip_src),
 		     ipaddr_string(&ip->ip_dst),
 		     ntohl(ah->ah_spi), ntohl(ah->ah_seq), len);
+
+	if (vflag) {
+	        (void)printf("\n\t[ ");
+
+	        pl_len = (ah->ah_pl_len + 2) << 2; /* RFC2402, sec 2.2 */
+
+		if (len - pl_len <= 0) {
+		        (void)printf("truncated");
+			goto out;
+		}
+		
+		switch (ah->ah_nxt_hdr) { 
+
+		case IPPROTO_IPIP: /* Tunnel Mode, IP-in-IP */
+		        ip_print(bp + pl_len, len - pl_len); 
+			break;
+
+	        case IPPROTO_ICMP: /* From here and down; Transport mode */
+		        icmp_print(bp + pl_len, (const u_char *) ip);
+			break;
+
+	        case IPPROTO_TCP:
+		        tcp_print(bp + pl_len, len - pl_len, 
+				  (const u_char *) ip);
+			break;
+
+	        case IPPROTO_UDP:
+		        udp_print(bp + pl_len, len - pl_len, 
+				  (const u_char *) ip);
+			break;
+
+		case IPPROTO_ESP:
+		        esp_print(bp + pl_len, len - pl_len, 
+				  (const u_char *) ip);
+			break;
+
+		case IPPROTO_AH:
+		        ah_print(bp + pl_len, len - pl_len, 
+				 (const u_char *) ip);
+			break;
+
+		default:
+		        (void)printf("ip-proto-%d len %d", ah->ah_nxt_hdr,
+				     len - pl_len);
+		}
+out:
+		(void)printf(" ]");
+	}
 
 }
