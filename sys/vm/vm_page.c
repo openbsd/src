@@ -1,5 +1,44 @@
-/*    $OpenBSD: vm_page.c,v 1.6 1997/07/25 06:03:10 mickey Exp $    */
-/*    $NetBSD: vm_page.c,v 1.28 1996/02/05 01:54:05 christos Exp $    */
+/*    $OpenBSD: vm_page.c,v 1.7 1997/09/22 20:44:52 niklas Exp $    */
+/*	$NetBSD: vm_page.c,v 1.31 1997/06/06 23:10:23 thorpej Exp $	*/
+
+#define	VM_PAGE_ALLOC_MEMORY_STATS
+
+/*-
+ * Copyright (c) 1997 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
+ * NASA Ames Research Center.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /* 
  * Copyright (c) 1991, 1993
@@ -110,6 +149,7 @@ simple_lock_data_t	vm_page_queue_free_lock;
 boolean_t vm_page_startup_initialized;
 
 vm_page_t	vm_page_array;
+int		vm_page_count;
 #ifndef MACHINE_NONCONTIG
 long		first_page;
 long		last_page;
@@ -117,7 +157,6 @@ vm_offset_t	first_phys_addr;
 vm_offset_t	last_phys_addr;
 #else
 u_long		first_page;
-int		vm_page_count;
 #endif /* MACHINE_NONCONTIG */
 vm_size_t	page_mask;
 int		page_shift;
@@ -168,7 +207,6 @@ vm_page_bootstrap(startp, endp)
 	extern	vm_offset_t	kentry_data;
 	extern	vm_size_t	kentry_data_size;
 
-
 	/*
 	 * Initialize the locks
 	 */
@@ -195,13 +233,13 @@ vm_page_bootstrap(startp, endp)
 	 * map (they should use their own maps).
 	 */
 	kentry_data_size = round_page(MAX_KMAP*sizeof(struct vm_map) +
-				      MAX_KMAPENT*sizeof(struct vm_map_entry));
-	kentry_data = (vm_offset_t) pmap_steal_memory(kentry_data_size);
+	    MAX_KMAPENT*sizeof(struct vm_map_entry));
+	kentry_data = (vm_offset_t)pmap_steal_memory(kentry_data_size);
 	
 	/*
 	 * Validate these zone addresses.
 	 */
-	bzero((caddr_t) kentry_data, kentry_data_size);
+	bzero((caddr_t)kentry_data, kentry_data_size);
 
 	/*
 	 * Allocate (and initialize) the virtual-to-physical
@@ -270,12 +308,11 @@ vm_page_startup(start, end)
 {
 	register vm_page_t	m;
 	register struct pglist	*bucket;
-	vm_size_t		npages;
+	int			npages;
 	int			i;
 	vm_offset_t		pa;
 	extern	vm_offset_t	kentry_data;
 	extern	vm_size_t	kentry_data_size;
-
 
 	/*
 	 * Initialize the locks
@@ -340,7 +377,7 @@ vm_page_startup(start, end)
 	 * map (they should use their own maps).
 	 */
 	kentry_data_size = round_page(MAX_KMAP*sizeof(struct vm_map) +
-				      MAX_KMAPENT*sizeof(struct vm_map_entry));
+	    MAX_KMAPENT*sizeof(struct vm_map_entry));
 	kentry_data = (vm_offset_t) pmap_bootstrap_alloc(kentry_data_size);
 
 	/*
@@ -348,35 +385,36 @@ vm_page_startup(start, end)
 	 * available for use (taking into account the overhead
 	 * of a page structure per page).
 	 */
-	cnt.v_free_count = npages = (*end - *start + sizeof(struct vm_page))
-		/ (PAGE_SIZE + sizeof(struct vm_page));
+	cnt.v_free_count = vm_page_count = (*end - *start +
+	     sizeof(struct vm_page)) / (PAGE_SIZE + sizeof(struct vm_page));
 
 	/*
 	 * Record the extent of physical memory that the
 	 * virtual memory system manages.
 	 */
 	first_page = *start;
-	first_page += npages*sizeof(struct vm_page);
+	first_page += vm_page_count * sizeof(struct vm_page);
 	first_page = atop(round_page(first_page));
-	last_page  = first_page + npages - 1;
+	last_page = first_page + vm_page_count - 1;
 
 	first_phys_addr = ptoa(first_page);
-	last_phys_addr  = ptoa(last_page) + PAGE_MASK;
-
+	last_phys_addr = ptoa(last_page) + PAGE_MASK;
 
 	/*
 	 * Allocate and clear the mem entry structures.
 	 */
 	m = vm_page_array = (vm_page_t)
-		pmap_bootstrap_alloc(npages * sizeof(struct vm_page));
+	    pmap_bootstrap_alloc(vm_page_count * sizeof(struct vm_page));
+	bzero(vm_page_array, vm_page_count * sizeof(struct vm_page));
 
 	/*
 	 * Initialize the mem entry structures now, and
 	 * put them in the free queue.
 	 */
 	pa = first_phys_addr;
+	npages = vm_page_count;
 	while (npages--) {
-		m->flags = 0;
+		m->flags = PG_FREE;
 		m->object = NULL;
 		m->phys_addr = pa;
 		TAILQ_INSERT_TAIL(&vm_page_queue_free, m, pageq);
@@ -406,30 +444,22 @@ pmap_steal_memory(size)
 {
 	vm_offset_t	addr, vaddr, paddr;
 
-#ifdef i386	/* XXX i386 calls pmap_steal_memory before vm_mem_init() */
-	if (cnt.v_page_size == 0)		/* XXX */
-		vm_set_page_size();
-#endif
-
 	/*
 	 * We round the size to an integer multiple.
 	 */
-	
 	size = (size + 3) &~ 3; /* XXX */
 	
 	/*
 	 * If this is the first call to pmap_steal_memory,
 	 * we have to initialize ourself.
 	 */
-	
-	if (virtual_space_start == virtual_space_end) {
+		if (virtual_space_start == virtual_space_end) {
 		pmap_virtual_space(&virtual_space_start, &virtual_space_end);
 		
 		/*
 		 * The initial values must be aligned properly, and
 		 * we don't trust the pmap module to do it right.
 		 */
-		
 		virtual_space_start = round_page(virtual_space_start);
 		virtual_space_end = trunc_page(virtual_space_end);
 	}
@@ -437,17 +467,14 @@ pmap_steal_memory(size)
 	/*
 	 * Allocate virtual memory for this request.
 	 */
-	
 	addr = virtual_space_start;
 	virtual_space_start += size;
 	
 	/*
 	 * Allocate and map physical pages to back new virtual pages.
 	 */
-	
-	for (vaddr = round_page(addr);
-	     vaddr < addr + size;
-	     vaddr += PAGE_SIZE) {
+	for (vaddr = round_page(addr); vaddr < addr + size;
+	    vaddr += PAGE_SIZE) {
 		if (!pmap_next_page(&paddr))
 			panic("pmap_steal_memory");
 		
@@ -455,9 +482,8 @@ pmap_steal_memory(size)
 		 * XXX Logically, these mappings should be wired,
 		 * but some pmap modules barf if they are.
 		 */
-		
 		pmap_enter(pmap_kernel(), vaddr, paddr,
-			   VM_PROT_READ|VM_PROT_WRITE, FALSE);
+		    VM_PROT_READ|VM_PROT_WRITE, FALSE);
 	}
 	
 	return addr;
@@ -494,16 +520,15 @@ pmap_startup(startp, endp)
 
 	vm_page_array = (vm_page_t)
 	    pmap_steal_memory(vm_page_count * sizeof(*vm_page_array));
+	bzero(vm_page_array, vm_page_count * sizeof(*vm_page_array));
 
 #ifdef	DIAGNOSTIC
 	/*
 	 * Initialize everyting in case the holes are stepped in,
 	 * and set PA to something that will cause a panic...
 	 */
-	for (i = 0; i < vm_page_count; i++) {
-		bzero(&vm_page_array[i], sizeof(*vm_page_array));
+	for (i = 0; i < vm_page_count; i++)
 		vm_page_array[i].phys_addr = 0xdeadbeef;
-	}
 #endif
 
 	/*
@@ -587,7 +612,7 @@ vm_page_insert(mem, object, offset)
 	simple_lock(&bucket_lock);
 	TAILQ_INSERT_TAIL(bucket, mem, hashq);
 	simple_unlock(&bucket_lock);
-	(void) splx(spl);
+	(void)splx(spl);
 
 	/*
 	 * Now link into the object's list of backed pages.
@@ -604,7 +629,7 @@ vm_page_insert(mem, object, offset)
 
 /*
  * vm_page_remove:		[ internal use only ]
- * 			NOTE: used by device pager as well -wfj
+ * XXX: used by device pager as well
  *
  * Removes the given mem entry from the object/offset-page
  * table and the object page list.
@@ -707,8 +732,9 @@ vm_page_rename(mem, new_object, new_offset)
 	if (mem->object == new_object)
 		return;
 
-	vm_page_lock_queues();	/* keep page from moving out from
-				   under pageout daemon */
+	/* Keep page from moving out from under pageout daemon */
+	vm_page_lock_queues();
+
 	vm_page_remove(mem);
 	vm_page_insert(mem, new_object, new_offset);
 	vm_page_unlock_queues();
@@ -759,7 +785,7 @@ vm_page_alloc(object, offset)
 	 */
 	if (cnt.v_free_count < cnt.v_free_min ||
 	    (cnt.v_free_count < cnt.v_free_target &&
-	     cnt.v_inactive_count < cnt.v_inactive_target))
+	    cnt.v_inactive_count < cnt.v_inactive_target))
 		thread_wakeup(&vm_pages_needed);
 	return (mem);
 }
@@ -794,6 +820,7 @@ vm_page_free(mem)
 
 		spl = splimp();
 		simple_lock(&vm_page_queue_free_lock);
+		mem->flags |= PG_FREE;
 		TAILQ_INSERT_TAIL(&vm_page_queue_free, mem, pageq);
 
 		cnt.v_free_count++;
@@ -957,4 +984,239 @@ vm_page_copy(src_m, dest_m)
 
 	dest_m->flags &= ~PG_CLEAN;
 	pmap_copy_page(VM_PAGE_TO_PHYS(src_m), VM_PAGE_TO_PHYS(dest_m));
+}
+
+#ifdef VM_PAGE_ALLOC_MEMORY_STATS
+#define	STAT_INCR(v)	(v)++
+#define	STAT_DECR(v)	do { \
+		if ((v) == 0) \
+			printf("%s:%d -- Already 0!\n", __FILE__, __LINE__); \
+		else \
+			(v)--; \
+	} while (0)
+u_long	vm_page_alloc_memory_npages;
+#else
+#define	STAT_INCR(v)
+#define	STAT_DECR(v)
+#endif
+
+/*
+ *	vm_page_alloc_memory:
+ *
+ *	Allocate physical pages conforming to the restrictions
+ *	provided:
+ *
+ *		size		The size of the allocation,
+ *				rounded to page size.
+ *
+ *		low		The low address of the allowed
+ *				allocation range.
+ *
+ *		high		The high address of the allowed
+ *				allocation range.
+ *
+ *		alignment	Allocation must be aligned to this
+ *				power-of-two boundary.
+ *
+ *		boundary	No segment in the allocation may
+ *				cross this power-of-two boundary
+ *				(relative to zero).
+ *
+ *	The allocated pages are placed at the tail of `rlist'; `rlist'
+ *	is assumed to be properly initialized by the caller.  The
+ *	number of memory segments that the allocated memory may
+ *	occupy is specified in the `nsegs' arguement.
+ *
+ *	Returns 0 on success or an errno value to indicate mode
+ *	of failure.
+ *
+ *	XXX This implementation could be improved.  It only
+ *	XXX allocates a single segment.
+ */
+int
+vm_page_alloc_memory(size, low, high, alignment, boundary, rlist, nsegs,
+    waitok)
+	vm_size_t size;
+	vm_offset_t low, high, alignment, boundary;
+	struct pglist *rlist;
+	int nsegs, waitok;
+{
+	vm_offset_t try, idxpa, lastidxpa;
+	int s, tryidx, idx, end, error;
+	vm_page_t m;
+	u_long pagemask;
+#ifdef DEBUG
+	vm_page_t tp;
+#endif
+
+#ifdef DIAGNOSTIC
+	if ((alignment & (alignment - 1)) != 0)
+		panic("vm_page_alloc_memory: alignment must be power of 2");
+
+	if ((boundary & (boundary - 1)) != 0)
+		panic("vm_page_alloc_memory: boundary must be power of 2");
+#endif
+
+	/*
+	 * Our allocations are always page granularity, so our alignment
+	 * must be, too.
+	 */
+	if (alignment < PAGE_SIZE)
+		alignment = PAGE_SIZE;
+
+	size = round_page(size);
+	try = roundup(low, alignment);
+
+	if (boundary != 0 && boundary < size)
+		return (EINVAL);
+
+	pagemask = ~(boundary - 1);
+
+	/* Default to "lose". */
+	error = ENOMEM;
+
+	/*
+	 * Block all memory allocation and lock the free list.
+	 */
+	s = splimp();
+	simple_lock(&vm_page_queue_free_lock);
+
+	/* Are there even any free pages? */
+	if (vm_page_queue_free.tqh_first == NULL)
+		goto out;
+
+	for (;; try += alignment) {
+		if (try + size > high) {
+			/*
+			 * We've run past the allowable range.
+			 */
+			goto out;
+		}
+
+		/*
+		 * Make sure this is a managed physical page.
+		 */
+		if (IS_VM_PHYSADDR(try) == 0)
+			continue;
+
+		tryidx = idx = VM_PAGE_INDEX(try);
+		end = idx + (size / PAGE_SIZE);
+		if (end > vm_page_count) {
+			/*
+			 * No more physical memory.
+			 */
+			goto out;
+		}
+
+		/*
+		 * Found a suitable starting page.  See of the range
+		 * is free.
+		 */
+		for (; idx < end; idx++) {
+			if (VM_PAGE_IS_FREE(&vm_page_array[idx]) == 0) {
+				/*
+				 * Page not available.
+				 */
+				break;
+			}
+
+			idxpa = VM_PAGE_TO_PHYS(&vm_page_array[idx]);
+
+			/*
+			 * Make sure this is a managed physical page.
+			 * XXX Necessary?  I guess only if there
+			 * XXX are holes in the vm_page_array[].
+			 */
+			if (IS_VM_PHYSADDR(idxpa) == 0)
+				break;
+
+			if (idx > tryidx) {
+				lastidxpa =
+				    VM_PAGE_TO_PHYS(&vm_page_array[idx - 1]);
+
+				if ((lastidxpa + PAGE_SIZE) != idxpa) {
+					/*
+					 * Region not contiguous.
+					 */
+					break;
+				}
+				if (boundary != 0 &&
+				    ((lastidxpa ^ idxpa) & pagemask) != 0) {
+					/*
+					 * Region crosses boundary.
+					 */
+					break;
+				}
+			}
+		}
+
+		if (idx == end) {
+			/*
+			 * Woo hoo!  Found one.
+			 */
+			break;
+		}
+	}
+
+	/*
+	 * Okay, we have a chunk of memory that conforms to
+	 * the requested constraints.
+	 */
+	idx = tryidx;
+	while (idx < end) {
+		m = &vm_page_array[idx];
+#ifdef DEBUG
+		for (tp = vm_page_queue_free.tqh_first; tp != NULL;
+		    tp = tp->pageq.tqe_next) {
+			if (tp == m)
+				break;
+		}
+		if (tp == NULL)
+			panic("vm_page_alloc_memory: page not on freelist");
+#endif
+		TAILQ_REMOVE(&vm_page_queue_free, m, pageq);
+		cnt.v_free_count--;
+		m->flags = PG_CLEAN;
+		m->object = NULL;
+		m->wire_count = 0;
+		TAILQ_INSERT_TAIL(rlist, m, pageq);
+		idx++;
+		STAT_INCR(vm_page_alloc_memory_npages);
+	}
+	error = 0;
+
+ out:
+	simple_unlock(&vm_page_queue_free_lock);
+	splx(s);
+	return (error);
+}
+
+/*
+ *	vm_page_free_memory:
+ *
+ *	Free a list of pages previously allocated by vm_page_alloc_memory().
+ *	The pages are assumed to have no mappings.
+ */
+void
+vm_page_free_memory(list)
+	struct pglist *list;
+{
+	vm_page_t m;
+	int s;
+
+	/*
+	 * Block all memory allocation and lock the free list.
+	 */
+	s = splimp();
+	simple_lock(&vm_page_queue_free_lock);
+
+	while ((m = list->tqh_first) != NULL) {
+		TAILQ_REMOVE(list, m, pageq);
+		m->flags = PG_FREE;
+		TAILQ_INSERT_TAIL(&vm_page_queue_free, m, pageq);
+		STAT_DECR(vm_page_alloc_memory_npages);
+	}
+
+	simple_unlock(&vm_page_queue_free_lock);
+	splx(s);
 }

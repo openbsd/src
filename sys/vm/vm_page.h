@@ -1,5 +1,5 @@
-/*	$OpenBSD: vm_page.h,v 1.3 1996/08/13 22:22:17 niklas Exp $	*/
-/*	$NetBSD: vm_page.h,v 1.18 1995/03/26 20:39:13 jtc Exp $	*/
+/*	$OpenBSD: vm_page.h,v 1.4 1997/09/22 20:44:53 niklas Exp $	*/
+/*	$NetBSD: vm_page.h,v 1.20 1997/06/06 23:10:25 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -140,6 +140,7 @@ struct vm_page {
 #define	PG_FAKE		0x0200		/* page is placeholder for pagein (O) */
 #define	PG_FILLED	0x0400		/* client flag to set when filled */
 #define	PG_DIRTY	0x0800		/* client flag to set when dirty */
+#define	PG_FREE		0x1000		/* XXX page is on free list */
 #define	PG_FAULTING	0x2000		/* page is being faulted in */
 #define	PG_PAGEROWNED	0x4000		/* DEBUG: async paging op in progress */
 #define	PG_PTPAGE	0x8000		/* DEBUG: is a user page table page */
@@ -220,15 +221,23 @@ int		vm_page_count;		/* How many pages do we manage? */
 #define IS_VM_PHYSADDR(pa) \
 		((pa) >= first_phys_addr && (pa) <= last_phys_addr)
 
-#define PHYS_TO_VM_PAGE(pa) \
-		(&vm_page_array[atop(pa) - first_page ])
+#define	VM_PAGE_INDEX(pa) \
+		(atop((pa)) - first_page)
 #else
-#define IS_VM_PHYSADDR(pa) \
-		(pmap_page_index(pa) >= 0)
+#define	IS_VM_PHYSADDR(pa) \
+({ \
+	int __pmapidx = pmap_page_index(pa); \
+	(__pmapidx >= 0 && __pmapidx >= first_page); \
+})
 
-#define PHYS_TO_VM_PAGE(pa) \
-		(&vm_page_array[pmap_page_index(pa) - first_page])
+#define	VM_PAGE_INDEX(pa) \
+		(pmap_page_index((pa)) - first_page)
 #endif /* MACHINE_NONCONTIG */
+
+#define	PHYS_TO_VM_PAGE(pa) \
+		(&vm_page_array[VM_PAGE_INDEX((pa))])
+
+#define	VM_PAGE_IS_FREE(entry)	((entry)->flags & PG_FREE)
 
 extern
 simple_lock_data_t	vm_page_queue_lock;	/* lock on active and inactive
@@ -286,6 +295,10 @@ void		 pmap_startup __P((vm_offset_t *, vm_offset_t *));
 
 void		 vm_page_activate __P((vm_page_t));
 vm_page_t	 vm_page_alloc __P((vm_object_t, vm_offset_t));
+int		 vm_page_alloc_memory __P((vm_size_t, vm_offset_t,
+			vm_offset_t, vm_offset_t, vm_offset_t,
+			struct pglist *, int, int));
+void		 vm_page_free_memory __P((struct pglist *));
 #ifdef MACHINE_NONCONTIG
 void		 vm_page_bootstrap __P((vm_offset_t *, vm_offset_t *));
 #endif
