@@ -1,4 +1,4 @@
-/*	$OpenBSD: hil.c,v 1.9 2003/03/28 00:20:03 miod Exp $	*/
+/*	$OpenBSD: hil.c,v 1.10 2003/05/27 07:01:55 mickey Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  * All rights reserved.
@@ -112,17 +112,19 @@ static void hildatawait(struct hil_softc *);
 static __inline void
 hilwait(struct hil_softc *sc)
 {
+	DELAY(1);
 	while (bus_space_read_1(sc->sc_bst, sc->sc_bsh, HILP_STAT) & HIL_BUSY) {
-		/* nothing */
+		DELAY(1);
 	}
 }
 
 static __inline void
 hildatawait(struct hil_softc *sc)
 {
+	DELAY(1);
 	while (!(bus_space_read_1(sc->sc_bst, sc->sc_bsh, HILP_STAT) &
 	    HIL_DATA_RDY)) {
-		/* nothing */
+		DELAY(1);
 	}
 }
 
@@ -202,6 +204,7 @@ hil_attach_deferred(void *v)
 	if (bus_space_read_1(sc->sc_bst, sc->sc_bsh, HILP_STAT) &
 	    HIL_DATA_RDY) {
 		db = bus_space_read_1(sc->sc_bst, sc->sc_bsh, HILP_DATA);
+		DELAY(1);
 	}
 
 	/*
@@ -252,6 +255,7 @@ hil_intr(void *v)
 	stat = bus_space_read_1(sc->sc_bst, sc->sc_bsh, HILP_STAT);
 	c = bus_space_read_1(sc->sc_bst, sc->sc_bsh,
 	    HILP_DATA);	/* clears interrupt */
+	DELAY(1);
 	hil_process_int(sc, stat, c);
 
 	return (1);
@@ -512,6 +516,7 @@ send_hil_cmd(struct hil_softc *sc, u_int cmd, u_int8_t *data, u_int dlen,
 	while (dlen--) {
 	  	hilwait(sc);
 		bus_space_write_1(sc->sc_bst, sc->sc_bsh, HILP_DATA, *data++);
+		DELAY(1);
 	}
 	if (rdata) {
 		do {
@@ -520,6 +525,7 @@ send_hil_cmd(struct hil_softc *sc, u_int cmd, u_int8_t *data, u_int dlen,
 			    HILP_STAT);
 			*rdata = bus_space_read_1(sc->sc_bst, sc->sc_bsh,
 			    HILP_DATA);
+			DELAY(1);
 		} while (((status >> HIL_SSHIFT) & HIL_SMASK) != HIL_68K);
 	}
 	splx(s);
@@ -566,6 +572,7 @@ send_device_cmd(struct hil_softc *sc, u_int device, u_int cmd)
 		hildatawait(sc);
 		status = bus_space_read_1(sc->sc_bst, sc->sc_bsh, HILP_STAT);
 		c = bus_space_read_1(sc->sc_bst, sc->sc_bsh, HILP_DATA);
+		DELAY(1);
 		hil_process_int(sc, status, c);
 	} while (sc->sc_cmddone == 0);
 
@@ -664,6 +671,7 @@ pollon(struct hil_softc *sc)
 	bus_space_write_1(sc->sc_bst, sc->sc_bsh, HILP_CMD, HIL_SETARR);
 	hilwait(sc);
 	bus_space_write_1(sc->sc_bst, sc->sc_bsh, HILP_DATA, 0);
+	DELAY(1);
 }
 
 void
@@ -691,6 +699,7 @@ hil_poll_data(struct hildev_softc *dev, u_int8_t *stat, u_int8_t *data)
 		return -1;
 
 	c = bus_space_read_1(sc->sc_bst, sc->sc_bsh, HILP_DATA);
+	DELAY(1);
 
 	if (hil_process_poll(sc, s, c)) {
 		/* Discard any data not for us */
