@@ -93,12 +93,13 @@ Installing applications from the ftp.openbsd.org package collection:
 
 	Packages available include:
 
-		bash-2.01.1.tgz               pgp-usa-2.6.3.tgz
-		emacs-20.2.tgz                pine-3.96.tgz
-		ghostscript-5.10.tgz          screen-3.7.4.tgz
-		gmake-3.76.1.tgz              ssh-intl-1.2.22.tgz
-		ircii-2.8.2-epic3.004.tgz     ssh-usa-1.2.22.tgz
-		pgp-intl-2.6.3.tgz            tcsh-6.07.02.tgz
+		bash-2.01.1.tgz               pine-3.96.tgz
+		emacs-20.2.tgz                screen-3.7.4.tgz    
+		ghostscript-5.10.tgz          ssh-intl-1.2.22.tgz 
+		gmake-3.76.1.tgz              ssh-usa-1.2.22.tgz  
+		ircii-2.8.2-epic3.004.tgz     tcsh-6.07.02.tgz    
+		pgp-intl-2.6.3.tgz            unzip-5.3.1.tgz
+		pgp-usa-2.6.3.tgz
 
 	Note: these packages may not exist for all architectures; other
 	packages may be added.
