@@ -1,4 +1,4 @@
-/*	$OpenBSD: c_ksh.c,v 1.6 1997/06/18 22:42:27 kstailey Exp $	*/
+/*	$OpenBSD: c_ksh.c,v 1.7 1997/06/19 13:58:37 kstailey Exp $	*/
 
 /*
  * built-in Korn commands: c_*
@@ -76,7 +76,7 @@ c_cd(wp)
 		 * we could try to find another substitution. For now
 		 * we don't
 		 */
-		if ((cp = strstr(current_wd, wp[0])) == NULL) {
+		if ((cp = strstr(current_wd, wp[0])) == (char *) 0) {
 			bi_errorf("bad substitution");
 			return 1;
 		}
@@ -95,10 +95,10 @@ c_cd(wp)
 	}
 
 	Xinit(xs, xp, PATH, ATEMP);
-	/* xp will have a bogus value after make_path() - set it to NULL
+	/* xp will have a bogus value after make_path() - set it to 0
 	 * so that if it's used, it will cause a dump
 	 */
-	xp = NULL;
+	xp = (char *) 0;
 
 	cdpath = str_val(global("CDPATH"));
 	do {
@@ -112,7 +112,7 @@ c_cd(wp)
 			simplify_path(Xstring(xs, xp));
 			rval = chdir(try = Xstring(xs, xp));
 		}
-	} while (rval < 0 && cdpath != NULL);
+	} while (rval < 0 && cdpath != (char *) 0);
 
 	if (rval < 0) {
 		if (cdnode)
@@ -135,9 +135,9 @@ c_cd(wp)
 		 * so it can't set current_wd when changing to a:foo.
 		 * Handle this by calling getcwd()...
 		 */
-		pwd = ksh_get_wd(NULL, 0);
+		pwd = ksh_get_wd((char *) 0, 0);
 #else /* OS2 */
-		pwd = NULL;
+		pwd = (char *) 0;
 #endif /* OS2 */
 	} else
 #ifdef S_ISLNK
@@ -187,14 +187,14 @@ c_pwd(wp)
 	}
 #ifdef S_ISLNK
 	p = current_wd[0] ? (physical ? get_phys_path(current_wd) : current_wd)
-			  : NULL;
+			  : (char *) 0;
 #else /* S_ISLNK */
-	p = current_wd[0] ? current_wd : NULL;
+	p = current_wd[0] ? current_wd : (char *) 0;
 #endif /* S_ISLNK */
 	if (p && eaccess(p, R_OK) < 0)
-		p = NULL;
+		p = (char *) 0;
 	if (!p) {
-		p = ksh_get_wd(NULL, 0);
+		p = ksh_get_wd((char *) 0, 0);
 		if (!p) {
 			bi_errorf("can't get current directory - %s",
 				strerror(errno));
@@ -595,7 +595,7 @@ c_typeset(wp)
  		break;
  	}
  
-	fieldstr = basestr = NULL;
+	fieldstr = basestr = (char *) 0;
 	builtin_opt.flags |= GF_PLUSOPT;
 	/* at&t ksh seems to have 0-9 as options, which are multiplied
 	 * to get a number that is used with -L, -R, -Z or -i (eg, -1R2
@@ -872,7 +872,7 @@ c_alias(wp)
 	/* "hash -r" means reset all the tracked aliases.. */
 	if (rflag) {
 		static const char *const args[] = {
-			    "unalias", "-ta", NULL
+			    "unalias", "-ta", (const char *) 0
 			};
 
 		if (!tflag || *wp) {
@@ -926,7 +926,7 @@ c_alias(wp)
 				afree((void*)ap->val.s, APERM);
 			}
 			/* ignore values for -t (at&t ksh does this) */
-			newval = tflag ? search(alias, path, X_OK, NULL)
+			newval = tflag ? search(alias, path, X_OK, (int *) 0)
 					: val;
 			if (newval) {
 				ap->val.s = str_save(newval, APERM);
@@ -1003,7 +1003,7 @@ c_let(wp)
 	int rv = 1;
 	long val;
 
-	if (wp[1] == NULL) /* at&t ksh does this */
+	if (wp[1] == (char *) 0) /* at&t ksh does this */
 		bi_errorf("no arguments");
 	else
 		for (wp++; *wp; wp++)
@@ -1044,7 +1044,7 @@ c_jobs(wp)
 		}
 	wp += builtin_opt.optind;
 	if (!*wp)
-		if (j_jobs(NULL, flag, nflag))
+		if (j_jobs((char *) 0, flag, nflag))
 			rv = 1;
 	else
 		for (; *wp; wp++)
@@ -1115,7 +1115,7 @@ int
 c_kill(wp)
 	char **wp;
 {
-	Trap *t = NULL;
+	Trap *t = (Trap *) 0;
 	char *p;
 	int lflag = 0;
 	int i, n, rv, sig;
@@ -1265,12 +1265,12 @@ c_getopts(wp)
 		return 1;
 	}
 
-	if (e->loc->next == NULL) {
+	if (e->loc->next == (struct block *) 0) {
 		internal_errorf(0, "c_getopts: no argv");
 		return 1;
 	}
 	/* Which arguments are we parsing... */
-	if (*wp == NULL)
+	if (*wp == (char *) 0)
 		wp = e->loc->next->argv;
 	else
 		*--wp = e->loc->next->argv[0];
@@ -1286,7 +1286,7 @@ c_getopts(wp)
 	      return 1;
 	}
 
-	user_opt.optarg = NULL;
+	user_opt.optarg = (char *) 0;
 	optc = ksh_getopt(wp, &user_opt, options);
 
 	if (optc >= 0 && optc != '?' && (user_opt.info & GI_PLUS)) {
@@ -1311,7 +1311,7 @@ c_getopts(wp)
 		getopts_noset = 0;
 	}
 
-	if (user_opt.optarg == NULL)
+	if (user_opt.optarg == (char *) 0)
 		unset(global("OPTARG"), 0);
 	else
 		setstr(global("OPTARG"), user_opt.optarg);
@@ -1351,7 +1351,7 @@ c_bind(wp)
 	wp += builtin_opt.optind;
 
 	if (*wp == NULL)	/* list all */
-		rv = x_bind(NULL, NULL, 0, list);
+		rv = x_bind((char*)NULL, (char*)NULL, 0, list);
 
 	for (; *wp != NULL; wp++) {
 		cp = strchr(*wp, '=');

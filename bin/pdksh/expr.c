@@ -1,4 +1,4 @@
-/*	$OpenBSD: expr.c,v 1.3 1997/06/18 22:42:34 kstailey Exp $	*/
+/*	$OpenBSD: expr.c,v 1.4 1997/06/19 13:58:41 kstailey Exp $	*/
 
 /*
  * Korn expression evaluation
@@ -177,7 +177,7 @@ v_evaluate(vp, expr, error_ok)
 	curstate.expression = curstate.tokp = expr;
 	curstate.noassign = 0;
 	curstate.prev = es;
-	curstate.evaling = NULL;
+	curstate.evaling = (struct tbl *) 0;
 	es = &curstate;
 
 	newenv(E_ERRH);
@@ -207,7 +207,7 @@ v_evaluate(vp, expr, error_ok)
 	v = intvar(evalexpr(MAX_PREC));
 
 	if (es->tok != END)
-		evalerr(ET_UNEXPECTED, NULL);
+		evalerr(ET_UNEXPECTED, (char *) 0);
 
 	if (vp->flag & INTEGER)
 		setint_v(vp, v);
@@ -314,7 +314,7 @@ evalexpr(prec)
 			vl = es->val;
 			token();
 		} else {
-			evalerr(ET_UNEXPECTED, NULL);
+			evalerr(ET_UNEXPECTED, (char *) 0);
 			/*NOTREACHED*/
 		}
 		if (es->tok == O_PLUSPLUS || es->tok == O_MINUSMINUS) {
@@ -590,7 +590,7 @@ intvar(vp)
 		vp->flag |= EXPRINEVAL;
 		v_evaluate(vq, str_val(vp), FALSE);
 		vp->flag &= ~EXPRINEVAL;
-		es->evaling = NULL;
+		es->evaling = (struct tbl *) 0;
 	}
 	return vq;
 }

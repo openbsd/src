@@ -1,4 +1,4 @@
-/*	$OpenBSD: edit.c,v 1.5 1997/06/18 22:42:31 kstailey Exp $	*/
+/*	$OpenBSD: edit.c,v 1.6 1997/06/19 13:58:39 kstailey Exp $	*/
 
 /*
  * Command line editing - common code
@@ -459,7 +459,7 @@ x_complete_word(str, slen, is_command, nwordsp, ret)
 				str, slen, &words);
 	*nwordsp = nwords;
 	if (nwords == 0) {
-		*ret = NULL;
+		*ret = (char *) 0;
 		return -1;
 	}
 
@@ -490,10 +490,10 @@ x_print_expansions(nwords, words, is_command)
 
 		/* Special case for 1 match (prefix is whole word) */
 		if (nwords == 1)
-			prefix_len = x_basename(words[0], NULL);
+			prefix_len = x_basename(words[0], (char *) 0);
 		/* Any (non-trailing) slashes in non-common word suffixes? */
 		for (i = 0; i < nwords; i++)
-			if (x_basename(words[i] + prefix_len, NULL)
+			if (x_basename(words[i] + prefix_len, (char *) 0)
 							> prefix_len)
 				break;
 		/* All in same directory? */
@@ -505,7 +505,7 @@ x_print_expansions(nwords, words, is_command)
 			XPinit(l, nwords + 1);
 			for (i = 0; i < nwords; i++)
 				XPput(l, words[i] + prefix_len);
-			XPput(l, NULL);
+			XPput(l, (char *) 0);
 		}
 	}
 
@@ -585,7 +585,7 @@ x_file_glob(flags, str, slen, wordsp)
 	}
 	afree(toglob, ATEMP);
 
-	*wordsp = nwords ? words : NULL;
+	*wordsp = nwords ? words : (char **) 0;
 
 	return nwords;
 }
@@ -649,7 +649,7 @@ x_command_glob(flags, str, slen, wordsp)
 	nwords = XPsize(w);
 
 	if (!nwords) {
-		*wordsp = NULL;
+		*wordsp = (char **) 0;
 		XPfree(w);
 		return 0;
 	}
@@ -667,7 +667,7 @@ x_command_glob(flags, str, slen, wordsp)
 			alloc(sizeof(struct path_order_info) * nwords, ATEMP);
 		for (i = 0; i < nwords; i++) {
 			info[i].word = words[i];
-			info[i].base = x_basename(words[i], NULL);
+			info[i].base = x_basename(words[i], (char *) 0);
 			if (!last_info || info[i].base != last_info->base
 			    || FILENCMP(words[i],
 					last_info->word, info[i].base) != 0)
@@ -799,7 +799,7 @@ x_cf_glob(flags, buf, buflen, pos, startp, endp, wordsp, is_commandp)
 	nwords = (is_command ? x_command_glob : x_file_glob)(flags,
 				    buf + *startp, len, &words);
 	if (nwords == 0) {
-		*wordsp = NULL;
+		*wordsp = (char **) 0;
 		return 0;
 	}
 
@@ -824,7 +824,7 @@ add_glob(str, slen)
 	bool_t saw_slash = FALSE;
 
 	if (slen < 0)
-		return (NULL);
+		return (char *) 0;
 
 	toglob = str_nsave(str, slen + 1, ATEMP); /* + 1 for "*" */
 	toglob[slen] = '\0';
@@ -909,7 +909,7 @@ x_basename(s, se)
 {
 	const char *p;
 
-	if (se == NULL)
+	if (se == (char *) 0)
 		se = s + strlen(s);
 	if (s == se)
 		return 0;
@@ -993,7 +993,7 @@ glob_path(flags, pat, wp, path)
 		/* Check that each match is executable... */
 		words = (char **) XPptrv(*wp);
 		for (i = j = oldsize; i < newsize; i++) {
-			if (search_access(words[i], X_OK, NULL) >= 0) {
+			if (search_access(words[i], X_OK, (int *) 0) >= 0) {
 				words[j] = words[i];
 				if (!(flags & XCF_FULLPATH))
 					memmove(words[j], words[j] + pathlen,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.5 1997/06/18 22:42:40 kstailey Exp $	*/
+/*	$OpenBSD: misc.c,v 1.6 1997/06/19 13:58:45 kstailey Exp $	*/
 
 /*
  * Miscellaneous functions
@@ -378,7 +378,7 @@ parse_args(argv, what, setargsp)
 			break;
 
 		  case 'o':
-			if (go.optarg == NULL) {
+			if (go.optarg == (char *) 0) {
 				/* lone -o: print options
 				 *
 				 * Note that on the command line, -o requires
@@ -453,7 +453,7 @@ parse_args(argv, what, setargsp)
 			return -1;
 		}
 	} else
-		array = NULL;	/* keep gcc happy */
+		array = (char *) 0;	/* keep gcc happy */
 	if (sortargs) {
 		for (i = go.optind; argv[i]; i++)
 			;
@@ -803,7 +803,7 @@ pat_scan(p, pe, match_sep)
 		if ((*p & 0x80) && strchr("*+?@!", *p & 0x7f))
 			nest++;
 	}
-	return NULL;
+	return (const unsigned char *) 0;
 }
 
 
@@ -915,7 +915,7 @@ ksh_getopt_reset(go, flags)
 	int flags;
 {
 	go->optind = 1;
-	go->optarg = NULL;
+	go->optarg = (char *) 0;
 	go->p = 0;
 	go->flags = flags;
 	go->info = 0;
@@ -967,7 +967,7 @@ ksh_getopt(argv, go, options)
 			go->info |= GI_MINUSMINUS;
 			return EOF;
 		}
-		if (arg == NULL
+		if (arg == (char *) 0
 		    || ((flag != '-' || (go->info & GI_PLUS))
 			&& (!(go->flags & GF_PLUSOPT) || (go->info & GI_MINUS)
 			    || flag != '+'))
@@ -1006,7 +1006,7 @@ ksh_getopt(argv, go, options)
 		else if (argv[go->optind])
 			go->optarg = argv[go->optind++];
 		else if (*o == ';')
-			go->optarg = NULL;
+			go->optarg = (char *) 0;
 		else {
 			if (options[0] == ':') {
 				go->buf[0] = c;
@@ -1035,13 +1035,13 @@ ksh_getopt(argv, go, options)
 				go->optarg = argv[go->optind - 1] + go->p;
 				go->p = 0;
 			} else
-				go->optarg = NULL;
+				go->optarg = (char *) 0;;
 		} else {
 			if (argv[go->optind] && digit(argv[go->optind][0])) {
 				go->optarg = argv[go->optind++];
 				go->p = 0;
 			} else
-				go->optarg = NULL;
+				go->optarg = (char *) 0;;
 		}
 	}
 	return c;
@@ -1277,7 +1277,7 @@ ksh_get_wd(buf, bsize)
 		errno = EACCES;
 		if (b != buf)
 			afree(b, ATEMP);
-		return NULL;
+		return (char *) 0;
 	}
 	len = strlen(b) + 1;
 	if (!buf)
@@ -1285,7 +1285,7 @@ ksh_get_wd(buf, bsize)
 	else if (buf != b) {
 		if (len > bsize) {
 			errno = ERANGE;
-			return NULL;
+			return (char *) 0;
 		}
 		memcpy(buf, b, len);
 		afree(b, ATEMP);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.c,v 1.8 1997/06/18 22:42:34 kstailey Exp $	*/
+/*	$OpenBSD: exec.c,v 1.9 1997/06/19 13:58:41 kstailey Exp $	*/
 
 /*
  * execute command tree
@@ -206,7 +206,7 @@ execute(t, flags)
 		e->type = E_ERRH;
 		i = ksh_sigsetjmp(e->jbuf, 0);
 		if (i) {
-			sigprocmask(SIG_SETMASK, &omask, NULL);
+			sigprocmask(SIG_SETMASK, &omask, (sigset_t *) 0);
 			quitenv();
 			unwind(i);
 			/*NOTREACHED*/
@@ -227,7 +227,7 @@ execute(t, flags)
 		ksh_dup2(pv[0], 0, FALSE);
 		close(pv[0]);
 		coproc.write = pv[1];
-		coproc.job = NULL;
+		coproc.job = (void *) 0;
 
 		if (coproc.readw >= 0)
 			ksh_dup2(coproc.readw, 1, FALSE);
@@ -241,7 +241,7 @@ execute(t, flags)
 			++coproc.id;
 		}
 # ifdef JOB_SIGS
-		sigprocmask(SIG_SETMASK, &omask, NULL);
+		sigprocmask(SIG_SETMASK, &omask, (sigset_t *) 0);
 		e->type = E_EXEC; /* no more need for error handler */
 # endif /* JOB_SIGS */
 
@@ -602,7 +602,7 @@ comexec(t, tp, ap, flags)
 				}
 				break;
 			}
-			if (include(tp->u.fpath, 0, NULL, 0) < 0) {
+			if (include(tp->u.fpath, 0, (char **) 0, 0) < 0) {
 				warningf(TRUE,
 			    "%s: can't open function definition file %s - %s",
 					cp, tp->u.fpath, strerror(errno));
@@ -736,7 +736,7 @@ scriptexec(tp, ap)
 
 	shell = str_val(global(EXECSHELL_STR));
 	if (shell && *shell)
-		shell = search(shell, path, X_OK, NULL);
+		shell = search(shell, path, X_OK, (int *) 0);
 	if (!shell || !*shell)
 		shell = EXECSHELL;
 
@@ -763,7 +763,7 @@ scriptexec(tp, ap)
 			while (*cp && (*cp == ' ' || *cp == '\t'))
 				cp++;
 			if (*cp && *cp != '\n') {
-				char *a0 = cp, *a1 = NULL;
+				char *a0 = cp, *a1 = (char *) 0;
 # ifdef OS2
 				char *a2 = cp;
 # endif /* OS2 */
@@ -799,8 +799,7 @@ scriptexec(tp, ap)
 					if (a1)
 						*tp->args-- = a1;
 # ifdef OS2
-					if (a0 != a2 && search_access(a0, X_OK,
-					    NULL))
+					if (a0 != a2 && search_access(a0, X_OK, (int *) 0))
 						a0 = a2;
 # endif /* OS2 */
 					shell = a0;
@@ -816,7 +815,7 @@ scriptexec(tp, ap)
 
 			 shell = str_val(global("EXECSHELL"));
 			 if (shell && *shell)
-				 shell = search(shell, path, X_OK, NULL);
+				 shell = search(shell, path, X_OK, (int *) 0);
 			 if (!shell || !*shell) {
 				 shell = p;
 				 *tp->args-- = "/c";
@@ -859,7 +858,7 @@ findfunc(name, h, create)
 	int	create;
 {
 	struct block *l;
-	struct tbl *tp = NULL;
+	struct tbl *tp = (struct tbl *) 0;
 
 	for (l = e->loc; l; l = l->next) {
 		tp = tsearch(&l->funs, name, h);
@@ -869,7 +868,7 @@ findfunc(name, h, create)
 			tp = tenter(&l->funs, name, h);
 			tp->flag = DEFINED;
 			tp->type = CFUNC;
-			tp->val.t = NULL;
+			tp->val.t = (struct op *) 0;
 			break;
 		}
 	}
@@ -983,7 +982,7 @@ findcom(name, flags)
 		tp = findfunc(name, h, FALSE);
 		if (tp && !(tp->flag & ISSET)) {
 			if ((fpath = str_val(global("FPATH"))) == null) {
-				tp->u.fpath = NULL;
+				tp->u.fpath = (char *) 0;
 				tp->u2.errno_ = 0;
 			} else
 				tp->u.fpath = search(name, fpath, R_OK,
@@ -1035,7 +1034,7 @@ findcom(name, flags)
 		} else if ((flags & FC_FUNC)
 			   && (fpath = str_val(global("FPATH"))) != null
 			   && (npath = search(name, fpath, R_OK,
-					      &tp->u2.errno_)) != NULL)
+					      &tp->u2.errno_)) != (char *) 0)
 		{
 			/* An undocumented feature of at&t ksh is that it
 			 * searches FPATH if a command is not found, even
@@ -1105,10 +1104,10 @@ search_access(path, mode, errnop)
 	 *	 exec.c(search())).
 	 */
 	static char *xsuffixes[] = { ".ksh", ".exe", ".", ".sh", ".cmd",
-				     ".com", ".bat", NULL
+				     ".com", ".bat", (char *) 0
 				   };
 	static char *rsuffixes[] = { ".ksh", ".", ".sh", ".cmd", ".bat",
-				      NULL
+				      (char *) 0
 				   };
 	int i;
 	char *mpath = (char *) path;
@@ -1254,7 +1253,7 @@ call_builtin(tp, wp)
 	shf_flush(shl_stdout);
 	shl_stdout_ok = 0;
 	builtin_flag = 0;
-	builtin_argv0 = NULL;
+	builtin_argv0 = (char *) 0;
 	return rv;
 }
 
@@ -1278,13 +1277,13 @@ iosetup(iop, tp)
 
 	/* Used for tracing and error messages to print expanded cp */
 	iotmp = *iop;
-	iotmp.name = (iotype == IOHERE) ? NULL : cp;
+	iotmp.name = (iotype == IOHERE) ? (char *) 0 : cp;
 	iotmp.flag |= IONAMEXP;
 
 	if (Flag(FXTRACE))
 		shellf("%s%s\n",
 			PS4_SUBSTITUTE(str_val(global("PS4"))),
-			snptreef(NULL, 32, "%R", &iotmp));
+			snptreef((char *) 0, 32, "%R", &iotmp));
 
 	switch (iotype) {
 	  case IOREAD:
@@ -1326,7 +1325,7 @@ iosetup(iop, tp)
 				&emsg)) < 0)
 		{
 			warningf(TRUE, "%s: %s",
-				snptreef(NULL, 32, "%R", &iotmp), emsg);
+				snptreef((char *) 0, 32, "%R", &iotmp), emsg);
 			return -1;
 		}
 		break;
@@ -1367,7 +1366,7 @@ iosetup(iop, tp)
 		if (ksh_dup2(u, iop->unit, TRUE) < 0) {
 			warningf(TRUE,
 				"could not finish (dup) redirection %s: %s",
-				snptreef(NULL, 32, "%R", &iotmp),
+				snptreef((char *) 0, 32, "%R", &iotmp),
 				strerror(errno));
 			if (iotype != IODUP)
 				close(u);
@@ -1404,7 +1403,7 @@ herein(hname, sub)
 	int fd;
 
 	/* ksh -c 'cat << EOF' can cause this... */
-	if (hname == NULL) {
+	if (hname == (char *) 0) {
 		warningf(TRUE, "here document missing");
 		return -2; /* special to iosetup(): don't print error */
 	}
@@ -1435,7 +1434,7 @@ herein(hname, sub)
 		if (yylex(ONEWORD) != LWORD)
 			internal_errorf(1, "herein: yylex");
 		shf_close(shf);
-		shf = NULL;
+		shf = (struct shf *) 0;
 		cp = evalstr(yylval.cp, 0);
 
 		/* write expanded input to another temp file */
@@ -1447,11 +1446,11 @@ herein(hname, sub)
 		shf_puts(cp, shf);
 		if (shf_close(shf) == EOF) {
 			close(fd);
-			shf = NULL;
+			shf = (struct shf *) 0;
 			errorf("error writing %s: %s", h->name,
 				strerror(errno));
 		}
-		shf = NULL;
+		shf = (struct shf *) 0;
 
 		quitenv();
 	} else {
@@ -1474,7 +1473,7 @@ do_selectargs(ap, print_menu)
 	bool_t print_menu;
 {
 	static const char *const read_args[] = {
-					"read", "-r", "REPLY", NULL
+					"read", "-r", "REPLY", (char *) 0
 				    };
 	char *s;
 	int i, argct;
@@ -1491,7 +1490,7 @@ do_selectargs(ap, print_menu)
 			pr_menu(ap);
 		shellf("%s", str_val(global("PS3")));
 		if (call_builtin(findcom("read", FC_BI), (char **) read_args))
-			return (NULL);
+			return (char *) 0;
 		s = str_val(global("REPLY"));
 		if (*s) {
 			i = atoi(s);
@@ -1630,7 +1629,7 @@ dbteste_getopnd(te, op, do_eval)
 	char *s = *te->pos.wp;
 
 	if (!s)
-		return (NULL);
+		return (char *) 0;
 
 	te->pos.wp++;
 

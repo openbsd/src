@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.3 1997/06/18 22:42:46 kstailey Exp $	*/
+/*	$OpenBSD: trap.c,v 1.4 1997/06/19 13:58:48 kstailey Exp $	*/
 
 /*
  * signal handling
@@ -123,7 +123,7 @@ trapsig(i)
 		(*p->shtrap)(i);
 #ifdef V7_SIGNALS
 	if (sigtraps[i].cursig == trapsig) /* this for SIGCHLD,SIGALRM */
-		sigaction(i, &Sigact_trap, NULL);
+		sigaction(i, &Sigact_trap, (struct sigaction *) 0);
 #endif /* V7_SIGNALS */
 	return RETSIGVAL;
 }
@@ -203,7 +203,7 @@ runtraps(flag)
 		fatal_trap = 0;
 	for (p = sigtraps, i = SIGNALS+1; --i >= 0; p++)
 		if (p->set && (!flag
-			       || ((p->flags & flag) && p->trap == NULL)))
+			       || ((p->flags & flag) && p->trap == (char *) 0)))
 			runtrap(p);
 }
 
@@ -217,7 +217,7 @@ runtrap(p)
 	int	UNINITIALIZED(old_changed);
 
 	p->set = 0;
-	if (trapstr == NULL) { /* SIG_DFL */
+	if (trapstr == (char *) 0) { /* SIG_DFL */
 		if (p->flags & TF_FATAL) {
 			/* eg, SIGHUP */
 			exstat = 128 + i;
@@ -235,7 +235,7 @@ runtrap(p)
 	if (i == SIGEXIT_ || i == SIGERR_) {	/* avoid recursion on these */
 		old_changed = p->flags & TF_CHANGED;
 		p->flags &= ~TF_CHANGED;
-		p->trap = NULL;
+		p->trap = (char *) 0;
 	}
 	oexstat = exstat;
 	command(trapstr);
@@ -263,7 +263,7 @@ cleartraps()
 	for (i = SIGNALS+1, p = sigtraps; --i >= 0; p++) {
 		p->set = 0;
 		if ((p->flags & TF_USER_SET) && (p->trap && p->trap[0]))
-			settrap(p, NULL);
+			settrap(p, (char *) 0);
 	}
 }
 
@@ -395,7 +395,7 @@ setsig(p, f, flags)
 		sigemptyset(&sigact.sa_mask);
 		sigact.sa_flags = KSH_SA_FLAGS;
 		sigact.sa_handler = f;
-		sigaction(p->signal, &sigact, NULL);
+		sigaction(p->signal, &sigact, (struct sigaction *) 0);
 	}
 
 	return 1;

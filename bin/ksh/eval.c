@@ -1,4 +1,4 @@
-/*	$OpenBSD: eval.c,v 1.3 1997/06/18 22:42:33 kstailey Exp $	*/
+/*	$OpenBSD: eval.c,v 1.4 1997/06/19 13:58:40 kstailey Exp $	*/
 
 /*
  * Expansion - quoting, separation, substitution, globbing
@@ -201,7 +201,7 @@ expand(cp, wp, f)
 	doblank = 0;
 	make_magic = 0;
 	word = (f&DOBLANK) ? IFS_WS : IFS_WORD;
-	st_head.next = NULL;
+	st_head.next = (SubType *) 0;
 	st = &st_head;
 
 	while (1) {
@@ -292,7 +292,7 @@ expand(cp, wp, f)
 					end = (char *) wdscan(sp, CSUBST);
 					endc = *end;
 					*end = EOS;
-					str = snptreef(NULL, 64, "%S",
+					str = snptreef((char *) 0, 64, "%S",
 							varname - 1);
 					*end = endc;
 					errorf("%s: bad substitution", str);
@@ -306,7 +306,7 @@ expand(cp, wp, f)
 
 						newst = (SubType *) alloc(
 							sizeof(SubType), ATEMP);
-						newst->next = NULL;
+						newst->next = (SubType *) 0;
 						newst->prev = st;
 						st->next = newst;
 					}
@@ -696,7 +696,7 @@ varsub(xp, sp, word, stypep)
 	if (sp[0] == '\0')	/* Bad variable name */
 		return -1;
 
-	xp->var = NULL;
+	xp->var = (struct tbl *) 0;
 
 	/* ${#var}, string length or array size */
 	if (sp[0] == '#' && (c = sp[1]) != '\0') {
@@ -845,7 +845,7 @@ comsub(xp, cp)
 
 		if ((io->flag&IOTYPE) != IOREAD)
 			errorf("funny $() command: %s",
-				snptreef(NULL, 32, "%R", io));
+				snptreef((char *) 0, 32, "%R", io));
 		shf = shf_open(name = evalstr(io->name, DOTILDE), O_RDONLY, 0,
 			SHF_MAPHI|SHF_CLEXEC);
 		if (shf == NULL)
@@ -854,7 +854,7 @@ comsub(xp, cp)
 	} else {
 		int ofd1, pv[2];
 		openpipe(pv);
-		shf = shf_fdopen(pv[0], SHF_RD, NULL);
+		shf = shf_fdopen(pv[0], SHF_RD, (struct shf *) 0);
 		ofd1 = savefd(1, 0);	/* fd 1 may be closed... */
 		ksh_dup2(pv[1], 1, FALSE);
 		close(pv[1]);
@@ -1206,7 +1206,7 @@ maybe_expand_tilde(p, dsp, dpp, isassign)
 		p += 2;
 	}
 	*tp = '\0';
-	r = (p[0] == EOS || p[0] == CHAR || p[0] == CSUBST) ? tilde(Xstring(ts, tp)) : NULL;
+	r = (p[0] == EOS || p[0] == CHAR || p[0] == CSUBST) ? tilde(Xstring(ts, tp)) : (char *) 0;
 	Xfree(ts, tp);
 	if (r) {
 		while (*r) {
@@ -1243,7 +1243,7 @@ tilde(cp)
 		dp = homedir(cp);
 	/* If HOME, PWD or OLDPWD are not set, don't expand ~ */
 	if (dp == null)
-		dp = NULL;
+		dp = (char *) 0;
 	return dp;
 }
 
@@ -1298,7 +1298,7 @@ alt_expand(wp, start, exp_start, end, fdo)
 
 	/* find matching close brace, if any */
 	if (p) {
-		comma = NULL;
+		comma = (char *) 0;
 		count = 1;
 		for (p += 2; *p && count; p++) {
 			if (ISMAGIC(*p)) {

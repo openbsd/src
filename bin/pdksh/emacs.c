@@ -1,4 +1,4 @@
-/*	$OpenBSD: emacs.c,v 1.3 1997/06/18 22:42:32 kstailey Exp $	*/
+/*	$OpenBSD: emacs.c,v 1.4 1997/06/19 13:58:39 kstailey Exp $	*/
 
 /*
  *  Emacs-like command line editing and history
@@ -339,7 +339,7 @@ x_emacs(buf, len)
 	xlp_valid = TRUE;
 	xmp = NULL;
 	x_curprefix = 0;
-	macroptr = NULL;
+	macroptr = (char *) 0;
 	x_histp = histptr + 1;
 	x_last_command = XFUNC_error;
 
@@ -422,7 +422,7 @@ x_ins_string(c)
 	macroptr = x_atab[c>>8][c & CHARMASK];
 	if (macroptr && !*macroptr) {
 		/* XXX bell? */
-		macroptr = NULL;
+		macroptr = (char *) 0;
 	}
 	return KSTD;
 }
@@ -1053,7 +1053,7 @@ x_redraw(limit)
 	if (xbp == xbuf)
 	{
 	  pprompt(prompt + prompt_skip, 0);
-	  x_col = promptlen(prompt, NULL);
+	  x_col = promptlen(prompt, (const char **) 0);
 	}
 	x_displen = xx_cols - 2 - x_col;
 	xlp_valid = FALSE;
@@ -1736,7 +1736,7 @@ do_complete(flags, type)
 	int is_command;
 	int do_glob = 1;
 	Comp_type t = type;
-	char *comp_word = NULL;
+	char *comp_word = (char *) 0;
 
 	if (type == CT_COMPLIST) {
 		do_glob = 0;
@@ -1868,7 +1868,7 @@ x_e_getc()
 		if (macroptr)  {
 			c = *macroptr++;
 			if (!*macroptr)
-				macroptr = NULL;
+				macroptr = (char *) 0;
 		} else
 			c = x_getc();
 	}

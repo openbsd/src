@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.6 1997/06/18 22:42:40 kstailey Exp $	*/
+/*	$OpenBSD: main.c,v 1.7 1997/06/19 13:58:45 kstailey Exp $	*/
 
 /*
  * startup, main loop, enviroments and error handling
@@ -109,7 +109,7 @@ main(argc, argv)
 	/* make sure argv[] is sane */
 	if (!*argv) {
 		static const char	*empty_argv[] = {
-					    "pdksh", NULL
+					    "pdksh", (char *) 0
 					};
 
 		argv = (char **) empty_argv;
@@ -159,7 +159,7 @@ main(argc, argv)
 	def_path = DEFAULT__PATH;
 #if defined(HAVE_CONFSTR) && defined(_CS_PATH)
 	{
-		size_t len = confstr(_CS_PATH, NULL, 0);
+		size_t len = confstr(_CS_PATH, (char *) 0, 0);
 		char *new;
 
 		if (len > 0) {
@@ -225,7 +225,7 @@ main(argc, argv)
 		    || stat(pwd, &s_pwd) < 0 || stat(".", &s_dot) < 0
 		    || s_pwd.st_dev != s_dot.st_dev
 		    || s_pwd.st_ino != s_dot.st_ino)
-			pwdx = NULL;
+			pwdx = (char *) 0;
 		set_current_wd(pwdx);
 		if (current_wd[0])
 			simplify_path(current_wd);
@@ -237,7 +237,7 @@ main(argc, argv)
 	}
 	setint(global("PPID"), (long) getppid());
 #ifdef KSH
-	setint(global("RANDOM"), (long) time(NULL));
+	setint(global("RANDOM"), (long) time((time_t *)0));
 #endif /* KSH */
 	setstr(global(version_param), ksh_version);
 
@@ -265,7 +265,7 @@ main(argc, argv)
 
 	/* this to note if monitor is set on command line (see below) */
 	Flag(FMONITOR) = 127;
-	argi = parse_args(argv, OF_CMDLINE, NULL);
+	argi = parse_args(argv, OF_CMDLINE, (int *) 0);
 	if (argi < 0)
 		exit(1);
 
@@ -283,7 +283,7 @@ main(argc, argv)
 		 * This changes the behavior of 'ksh arg' to search
 		 * the users search path but it can't be helped.
 		 */
-		s->file = search(argv[argi++], path, R_OK, NULL);
+		s->file = search(argv[argi++], path, R_OK, (int *) 0);
 		if (!s->file || !*s->file)
 		        s->file = argv[argi - 1];
 #else
@@ -299,13 +299,14 @@ main(argc, argv)
 		Flag(FSTDIN) = 1;
 		s = pushs(SSTDIN, ATEMP);
 		s->file = "<stdin>";
-		s->u.shf = shf_fdopen(0, SHF_RD | can_seek(0), NULL);
+		s->u.shf = shf_fdopen(0, SHF_RD | can_seek(0),
+				      (struct shf *) 0);
 		if (isatty(0) && isatty(2)) {
 			Flag(FTALKING) = 1;
 			/* The following only if isatty(0) */
 			s->flags |= SF_TTY;
 			s->u.shf->flags |= SHF_INTERRUPT;
-			s->file = NULL;
+			s->file = (char *) 0;
 		}
 	}
 
@@ -353,20 +354,22 @@ main(argc, argv)
 		if (!Flag(FPRIVILEGED)
 		    && strcmp(profile = substitute("$INIT/profile.ksh", 0),
 			      "/profile.ksh"))
-			include(profile, 0, NULL, 1);
-		else if (include("/etc/profile.ksh", 0, NULL, 1) < 0)
-			include("c:/usr/etc/profile.ksh", 0, NULL, 1);
+			include(profile, 0, (char **) 0, 1);
+		else if (include("/etc/profile.ksh", 0, (char **) 0, 1) < 0)
+			include("c:/usr/etc/profile.ksh", 0, (char **) 0, 1);
 		if (!Flag(FPRIVILEGED))
-			include(substitute("$HOME/profile.ksh", 0), 0, NULL, 1);
+			include(substitute("$HOME/profile.ksh", 0), 0,
+				(char **) 0, 1);
 #else /* OS2 */
-		include(KSH_SYSTEM_PROFILE, 0, NULL, 1);
+		include(KSH_SYSTEM_PROFILE, 0, (char **) 0, 1);
 		if (!Flag(FPRIVILEGED))
-			include(substitute("$HOME/.profile", 0), 0, NULL, 1);
+			include(substitute("$HOME/.profile", 0), 0,
+				(char **) 0, 1);
 #endif /* OS2 */
 	}
 
 	if (Flag(FPRIVILEGED))
-		include("/etc/suid_profile", 0, NULL, 1);
+		include("/etc/suid_profile", 0, (char **) 0, 1);
 	else {
 		char *env_file;
 
@@ -385,10 +388,11 @@ main(argc, argv)
 #endif /* DEFAULT_ENV */
 		env_file = substitute(env_file, DOTILDE);
 		if (*env_file != '\0')
-			include(env_file, 0, NULL, 1);
+			include(env_file, 0, (char **) 0, 1);
 #ifdef OS2
 		else if (Flag(FTALKING))
-			include(substitute("$HOME/kshrc.ksh", 0), 0, NULL, 1);
+			include(substitute("$HOME/kshrc.ksh", 0), 0,
+				(char **) 0, 1);
 #endif /* OS2 */
 	}
 
@@ -397,7 +401,8 @@ main(argc, argv)
 	if (restricted) {
 		static const char *const restr_com[] = {
 						"typeset", "-r", "PATH",
-						    "ENV", "SHELL", NULL
+						    "ENV", "SHELL",
+						(char *) 0
 					    };
 		shcomexec((char **) restr_com);
 		/* After typeset command... */
@@ -438,7 +443,7 @@ include(name, argc, argv, intr_ok)
 		old_argv = e->loc->argv;
 		old_argc = e->loc->argc;
 	} else {
-		old_argv = NULL;
+		old_argv = (char **) 0;
 		old_argc = 0;
 	}
 	sold = source;
@@ -724,7 +729,7 @@ cleanup_parents_env()
 				if (ep->savefd[fd] > 0)
 					close(ep->savefd[fd]);
 	}
-	e->oenv = NULL;
+	e->oenv = (struct env *) 0;
 }
 
 /* Called just before an execve cleanup stuff temporary files */

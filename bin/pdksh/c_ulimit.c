@@ -1,4 +1,4 @@
-/*	$OpenBSD: c_ulimit.c,v 1.2 1997/06/18 22:42:30 kstailey Exp $	*/
+/*	$OpenBSD: c_ulimit.c,v 1.3 1997/06/19 13:58:39 kstailey Exp $	*/
 
 /*
 	ulimit -- handle "ulimit" builtin
@@ -107,7 +107,7 @@ c_ulimit(wp)
 #ifdef RLIMIT_SWAP
 		{ "swap(kbytes)", RLIMIT_SWAP, RLIMIT_SWAP, 1024, 'w' },
 #endif
-		{ NULL }
+		{ (char *) 0 }
 	    };
 	static char	options[3 + NELEM(limits)];
 	rlim_t		UNINITIALIZED(val);

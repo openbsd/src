@@ -1,4 +1,4 @@
-/*	$OpenBSD: path.c,v 1.2 1997/06/18 22:42:42 kstailey Exp $	*/
+/*	$OpenBSD: path.c,v 1.3 1997/06/19 13:58:46 kstailey Exp $	*/
 
 #include "sh.h"
 #include "ksh_stat.h"
@@ -14,8 +14,8 @@
 
 /*
  * $Log: path.c,v $
- * Revision 1.2  1997/06/18 22:42:42  kstailey
- * (foo *)0 -> NULL
+ * Revision 1.3  1997/06/19 13:58:46  kstailey
+ * back out
  *
  * Revision 1.1.1.1  1996/08/14 06:19:11  downsj
  * Import pdksh 5.2.7.
@@ -111,7 +111,7 @@ make_path(cwd, file, cdpathp, xsp, phys_pathp)
 			for (pend = plist; *pend && *pend != PATHSEP; pend++)
 				;
 			plen = pend - plist;
-			*cdpathp = *pend ? ++pend : NULL;
+			*cdpathp = *pend ? ++pend : (char *) 0;
 		}
 
 		if ((use_cdpath == 0 || !plen || ISRELPATH(plist))
@@ -140,7 +140,7 @@ make_path(cwd, file, cdpathp, xsp, phys_pathp)
 	memcpy(xp, file, len);
 
 	if (!use_cdpath)
-		*cdpathp = NULL;
+		*cdpathp = (char *) 0;
 
 	return rval;
 }
@@ -233,7 +233,7 @@ set_current_wd(path)
 	int len;
 	char *p = path;
 
-	if (!p && !(p = ksh_get_wd(NULL, 0)))
+	if (!p && !(p = ksh_get_wd((char *) 0, 0)))
 		p = null;
 
 	len = strlen(p) + 1;
@@ -258,7 +258,7 @@ get_phys_path(path)
 	xp = do_phys_path(&xs, xp, path);
 
 	if (!xp)
-		return NULL;
+		return (char *) 0;
 
 	if (Xlength(xs, xp) == 0)
 		Xput(xs, xp, DIRSEP);
@@ -307,7 +307,7 @@ do_phys_path(xsp, xp, path)
 		if (llen < 0) {
 			/* EINVAL means it wasn't a symlink... */
 			if (errno != EINVAL)
-				return NULL;
+				return (char *) 0;
 			continue;
 		}
 		lbuf[llen] = '\0';
@@ -316,7 +316,7 @@ do_phys_path(xsp, xp, path)
 		xp = ISABSPATH(lbuf) ? Xstring(*xsp, xp)
 				     : Xrestpos(*xsp, xp, savepos);
 		if (!(xp = do_phys_path(xsp, xp, lbuf)))
-			return NULL;
+			return (char *) 0;
 	}
 	return xp;
 }

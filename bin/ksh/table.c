@@ -1,4 +1,4 @@
-/*	$OpenBSD: table.c,v 1.3 1997/06/18 22:42:45 kstailey Exp $	*/
+/*	$OpenBSD: table.c,v 1.4 1997/06/19 13:58:47 kstailey Exp $	*/
 
 /*
  * dynamic hashed associative table for commands and variables
@@ -126,7 +126,7 @@ tenter(tp, n, h)
 	p->type = 0;
 	p->areap = tp->areap;
 	p->u2.field = 0;
-	p->u.array = NULL;
+	p->u.array = (struct tbl *)0;
 	memcpy(p->name, n, len);
 
 	/* enter in tp->tbls */

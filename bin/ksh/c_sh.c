@@ -1,4 +1,4 @@
-/*	$OpenBSD: c_sh.c,v 1.4 1997/06/18 22:42:28 kstailey Exp $	*/
+/*	$OpenBSD: c_sh.c,v 1.5 1997/06/19 13:58:38 kstailey Exp $	*/
 
 /*
  * built-in Bourne commands
@@ -185,7 +185,7 @@ c_dot(wp)
 
 	if ((cp = wp[builtin_opt.optind]) == NULL)
 		return 0;
-	file = search(cp, path, R_OK, NULL);
+	file = search(cp, path, R_OK, (int *) 0);
 	if (file == NULL) {
 		bi_errorf("%s: not found", cp);
 		return 1;
@@ -199,7 +199,7 @@ c_dot(wp)
 			;
 	} else {
 		argc = 0;
-		argv = NULL;
+		argv = (char **) 0;
 	}
 	i = include(file, argc, argv, 0);
 	if (i < 0) { /* should not happen */
@@ -219,8 +219,8 @@ c_wait(wp)
 	if (ksh_getopt(wp, &builtin_opt, null) == '?')
 		return 1;
 	wp += builtin_opt.optind;
-	if (*wp == NULL) {
-		while (waitfor(NULL, &sig) >= 0)
+	if (*wp == (char *) 0) {
+		while (waitfor((char *) 0, &sig) >= 0)
 			;
 		rv = sig;
 	} else {
@@ -357,7 +357,7 @@ c_read(wp)
 						/* set prompt in case this is
 						 * called from .profile or $ENV
 						 */
-						set_prompt(PS2, NULL);
+						set_prompt(PS2, (Source *) 0);
 						pprompt(prompt, 0);
 					}
 				} else if (c != EOF)
@@ -526,7 +526,7 @@ c_brkcont(wp)
 	char **wp;
 {
 	int n, quit;
-	struct env *ep, *last_ep = NULL;
+	struct env *ep, *last_ep = (struct env *) 0;
 	char *arg;
 
 	if (ksh_getopt(wp, &builtin_opt, null) == '?')
@@ -643,7 +643,7 @@ c_unset(wp)
 			}
 			unset(vp, strchr(id, '[') ? 1 : 0);
 		} else {		/* unset function */
-			if (define(id, NULL))
+			if (define(id, (struct op *) NULL))
 				ret = 1;
 		}
 	return ret;

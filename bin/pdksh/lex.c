@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.c,v 1.6 1997/06/18 22:42:38 kstailey Exp $	*/
+/*	$OpenBSD: lex.c,v 1.7 1997/06/19 13:58:44 kstailey Exp $	*/
 
 /*
  * lexical analysis and source input
@@ -574,8 +574,8 @@ Done:
 					ungetsc(c2);
 			}
 
-			iop->name = NULL;
-			iop->delim = NULL;
+			iop->name = (char *) 0;
+			iop->delim = (char *) 0;
 			yylval.iop = iop;
 			return REDIR;
 		    }
@@ -1011,7 +1011,7 @@ getsc_line(s)
 #endif /* HISTORY */
 	}
 	if (interactive)
-		set_prompt(PS2, NULL);
+		set_prompt(PS2, (Source *) 0);
 }
 
 void
@@ -1035,8 +1035,8 @@ set_prompt(to, s)
 			Area *saved_atemp;
 
 			ps1 = str_val(global("PS1"));
-			shf = shf_sopen(NULL, strlen(ps1) * 2,
-				SHF_WR | SHF_DYNAMIC, NULL);
+			shf = shf_sopen((char *) 0, strlen(ps1) * 2,
+				SHF_WR | SHF_DYNAMIC, (struct shf *) 0);
 			while (*ps1) {
 				if (*ps1 != '!' || *++ps1 == '!')
 					shf_putchar(*ps1++, shf);

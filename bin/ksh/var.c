@@ -1,4 +1,4 @@
-/*	$OpenBSD: var.c,v 1.4 1997/06/18 22:42:48 kstailey Exp $	*/
+/*	$OpenBSD: var.c,v 1.5 1997/06/19 13:58:49 kstailey Exp $	*/
 
 #include "sh.h"
 #include "ksh_time.h"
@@ -102,7 +102,7 @@ initvar()
 			{ "SECONDS",		V_SECONDS },
 			{ "TMOUT",		V_TMOUT },
 #endif /* KSH */
-			{ NULL,			0 }
+			{ (char *) 0,	0 }
 		};
 	int i;
 	struct tbl *tp;
@@ -255,7 +255,7 @@ local(n, copy)
 	vp = tenter(&l->vars, n, h);
 	if (copy && !(vp->flag & DEFINED)) {
 		struct block *ll = l;
-		struct tbl *vq = NULL;
+		struct tbl *vq = (struct tbl *) 0;
 
 		while ((ll = ll->next) && !(vq = tsearch(&ll->vars, n, h)))
 			;
@@ -651,11 +651,11 @@ typeset(var, set, clr, field, base)
 			if (fake_assign) {
 				if (t->flag & INTEGER) {
 					s = str_val(t);
-					free_me = NULL;
+					free_me = (char *) 0;
 				} else {
 					s = t->val.s + t->type;
 					free_me = (t->flag & ALLOC) ? t->val.s
-								  : NULL;
+								  : (char *) 0;
 				}
 				t->flag &= ~ALLOC;
 			}
@@ -719,7 +719,7 @@ unset(vp, array_ref)
 				afree((void *) tmp->val.s, tmp->areap);
 			afree(tmp, tmp->areap);
 		}
-		vp->u.array = NULL;
+		vp->u.array = (struct tbl *) 0;
 	}
 	/* If foo[0] is being unset, the remainder of the array is kept... */
 	vp->flag &= SPECIAL | (array_ref ? ARRAY|DEFINED : 0);
@@ -867,7 +867,7 @@ getspec(vp)
 #ifdef KSH
 	  case V_SECONDS:
 		vp->flag &= ~SPECIAL;
-		setint(vp, (long) (time(NULL) - seconds));
+		setint(vp, (long) (time((time_t *)0) - seconds));
 		vp->flag |= SPECIAL;
 		break;
 	  case V_RANDOM:
@@ -910,7 +910,7 @@ setspec(vp)
 	  case V_TMPDIR:
 		if (tmpdir) {
 			afree(tmpdir, APERM);
-			tmpdir = NULL;
+			tmpdir = (char *) 0;
 		}
 		/* Use tmpdir iff it is an absolute path, is writable and
 		 * searchable and is a directory...
@@ -963,7 +963,7 @@ setspec(vp)
 		break;
 	  case V_SECONDS:
 		vp->flag &= ~SPECIAL;
-		seconds = time(NULL) - intval(vp);
+		seconds = time((time_t*) 0) - intval(vp);
 		vp->flag |= SPECIAL;
 		break;
 	  case V_TMOUT:
@@ -992,15 +992,15 @@ unsetspec(vp)
 		/* should not become unspecial */
 		if (tmpdir) {
 			afree(tmpdir, APERM);
-			tmpdir = NULL;
+			tmpdir = (char *) 0;
 		}
 		break;
 #ifdef KSH
 	  case V_MAIL:
-		mbset(NULL);
+		mbset((char *) 0);
 		break;
 	  case V_MAILPATH:
-		mpset(NULL);
+		mpset((char *) 0);
 		break;
 	  case V_TMOUT:
 		/* at&t ksh doesn't do this. TMOUT becomes unspecial so

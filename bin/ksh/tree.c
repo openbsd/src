@@ -1,4 +1,4 @@
-/*	$OpenBSD: tree.c,v 1.3 1997/06/18 22:42:47 kstailey Exp $	*/
+/*	$OpenBSD: tree.c,v 1.4 1997/06/19 13:58:48 kstailey Exp $	*/
 
 /*
  * command tree climbing
@@ -592,9 +592,9 @@ iocopy(iow, ap)
 		q = (struct ioword *) alloc(sizeof(*p), ap);
 		ior[i] = q;
 		*q = *p;
-		if (p->name != NULL)
+		if (p->name != (char *) 0)
 			q->name = wdcopy(p->name, ap);
-		if (p->delim != NULL)
+		if (p->delim != (char *) 0)
 			q->delim = wdcopy(p->delim, ap);
 	}
 	ior[i] = NULL;
