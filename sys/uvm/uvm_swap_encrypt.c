@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap_encrypt.c,v 1.13 2004/11/29 23:01:37 hshoexer Exp $	*/
+/*	$OpenBSD: uvm_swap_encrypt.c,v 1.14 2005/03/26 16:06:46 deraadt Exp $	*/
 
 /*
  * Copyright 1999 Niels Provos <provos@citi.umich.edu>
@@ -45,7 +45,7 @@
 struct swap_key *kcur = NULL;
 rijndael_ctx swap_ctxt;
 
-int uvm_doswapencrypt = 0;
+int uvm_doswapencrypt = 1;
 u_int uvm_swpkeyscreated = 0;
 u_int uvm_swpkeysdeleted = 0;
 
