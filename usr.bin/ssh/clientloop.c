@@ -16,7 +16,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: clientloop.c,v 1.29 2000/07/16 08:27:21 markus Exp $");
+RCSID("$OpenBSD: clientloop.c,v 1.30 2000/08/19 18:48:11 markus Exp $");
 
 #include "xmalloc.h"
 #include "ssh.h"
@@ -28,6 +28,9 @@ RCSID("$OpenBSD: clientloop.c,v 1.29 2000/07/16 08:27:21 markus Exp $");
 #include "compat.h"
 #include "channels.h"
 #include "dispatch.h"
+
+#include "buffer.h"
+#include "bufaux.h"
 
 /* Flag indicating that stdin should be redirected from /dev/null. */
 extern int stdin_null_flag;
@@ -722,6 +725,35 @@ client_process_buffered_input_packets()
 	dispatch_run(DISPATCH_NONBLOCK, &quit_pending);
 }
 
+/* scan stdin buf[] for '~' before sending data to the peer */
+
+int
+simple_escape_filter(Buffer *bin, char *buf, int len)
+{
+	unsigned int i;
+	unsigned char ch;
+	for (i = 0; i < len; i++) {
+		ch = buf[i];
+		if (escape_pending) {
+			escape_pending = 0;
+			if (ch == '.') {
+				quit_pending = 1;
+				return -1;
+			}
+			if (ch != escape_char)
+				buffer_put_char(bin, escape_char);
+		} else {
+			if (last_was_cr && ch == escape_char) {
+				escape_pending = 1;
+				continue;
+			}	
+		}
+		last_was_cr = (ch == '\n' || ch == '\r');
+		buffer_put_char(bin, ch);
+	}
+	return 0;
+}
+
 /*
  * Implements the interactive session with the server.  This is called after
  * the user has been authenticated, and a command has been started on the
@@ -730,7 +762,7 @@ client_process_buffered_input_packets()
  */
 
 int
-client_loop(int have_pty, int escape_char_arg)
+client_loop(int have_pty, int escape_char_arg, int ssh2_chan_id)
 {
 	extern Options options;
 	double start_time, total_time;
@@ -779,6 +811,9 @@ client_loop(int have_pty, int escape_char_arg)
 	/* Check if we should immediately send eof on stdin. */
 	if (!compat20)
 		client_check_initial_eof_on_stdin();
+
+	if (compat20 && escape_char != -1)
+		channel_register_filter(ssh2_chan_id, simple_escape_filter);
 
 	/* Main loop of the client for the interactive session mode. */
 	while (!quit_pending) {
@@ -989,6 +1024,7 @@ client_input_channel_open(int type, int plen)
 		/* XXX move to channels.c */
 		sock = x11_connect_display();
 		if (sock >= 0) {
+/*XXX MAXPACK */
 			id = channel_new("x11", SSH_CHANNEL_X11_OPEN,
 			    sock, sock, -1, 4*1024, 32*1024, 0,
 			    xstrdup("x11"));

@@ -1,4 +1,4 @@
-/* RCSID("$OpenBSD: channels.h,v 1.14 2000/06/20 01:39:40 markus Exp $"); */
+/* RCSID("$OpenBSD: channels.h,v 1.15 2000/08/19 18:48:11 markus Exp $"); */
 
 #ifndef CHANNELS_H
 #define CHANNELS_H
@@ -22,6 +22,7 @@
  * and cleared in channel_free.
  */
 typedef void channel_callback_fn(int id, void *arg);
+typedef int channel_filter_fn(Buffer *b, char *buf, int len);
 
 typedef struct Channel {
 	int     type;		/* channel type/state */
@@ -61,6 +62,9 @@ typedef struct Channel {
 	void	*cb_arg;
 	int	cb_event;
 	channel_callback_fn	*dettach_user;
+
+	/* filter */
+	channel_filter_fn	*input_filter;
 }       Channel;
 
 #define CHAN_EXTENDED_IGNORE		0
@@ -73,6 +77,7 @@ void	channel_request(int id, char *service, int wantconfirm);
 void	channel_request_start(int id, char *service, int wantconfirm);
 void	channel_register_callback(int id, int mtype, channel_callback_fn *fn, void *arg);
 void	channel_register_cleanup(int id, channel_callback_fn *fn);
+void	channel_register_filter(int id, channel_filter_fn *fn);
 void	channel_cancel_cleanup(int id);
 Channel	*channel_lookup(int id);
 

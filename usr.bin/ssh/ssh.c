@@ -11,7 +11,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: ssh.c,v 1.59 2000/08/19 02:07:23 deraadt Exp $");
+RCSID("$OpenBSD: ssh.c,v 1.60 2000/08/19 18:48:11 markus Exp $");
 
 #include <openssl/evp.h>
 #include <openssl/dsa.h>
@@ -861,7 +861,7 @@ ssh_session(void)
 	}
 
 	/* Enter the interactive session. */
-	return client_loop(have_tty, tty_flag ? options.escape_char : -1);
+	return client_loop(have_tty, tty_flag ? options.escape_char : -1, 0);
 }
 
 void
@@ -944,9 +944,16 @@ int
 ssh_session2(void)
 {
 	int window, packetmax, id;
-	int in  = dup(STDIN_FILENO);
-	int out = dup(STDOUT_FILENO);
-	int err = dup(STDERR_FILENO);
+	int in, out, err;
+
+	/* If requested, let ssh continue in the background. */
+	if (fork_after_authentication_flag)
+		if (daemon(1, 1) < 0)
+			fatal("daemon() failed: %.200s", strerror(errno));
+
+	in  = dup(STDIN_FILENO);
+	out = dup(STDOUT_FILENO);
+	err = dup(STDERR_FILENO);
 
 	if (in < 0 || out < 0 || err < 0)
 		fatal("dump in/out/err failed");
@@ -962,13 +969,13 @@ ssh_session2(void)
 		packetmax = window/2;
 	}
 
+/*XXX MAXPACK */
 	id = channel_new(
 	    "session", SSH_CHANNEL_OPENING, in, out, err,
 	    window, packetmax, CHAN_EXTENDED_WRITE, xstrdup("client-session"));
 
-
 	channel_open(id);
 	channel_register_callback(id, SSH2_MSG_CHANNEL_OPEN_CONFIRMATION, client_init, (void *)0);
 
-	return client_loop(tty_flag, tty_flag ? options.escape_char : -1);
+	return client_loop(tty_flag, tty_flag ? options.escape_char : -1, id);
 }
