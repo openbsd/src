@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.18 1997/09/05 04:32:42 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.19 1997/10/25 05:09:56 millert Exp $	*/
 
 /*
  * main.c - Point-to-Point Protocol main module
@@ -20,7 +20,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: main.c,v 1.18 1997/09/05 04:32:42 millert Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.19 1997/10/25 05:09:56 millert Exp $";
 #endif
 
 #include <stdio.h>
@@ -452,11 +452,11 @@ main(argc, argv)
 
 	/*
 	 * Set line speed, flow control, etc.
-	 * Previously, if we had a connection script, we would set CLOCAL
-	 * while the script was running.  But then, if CD was negated
-	 * before the script finished, we would miss it.
+	 * Note that unless modem_chat is set the chat script has
+	 * no way of noticing if carrier drops.  This is a necessary
+	 * evil for systems without cua devices.
 	 */
-	set_up_tty(ttyfd, 0);
+	set_up_tty(ttyfd, (modem_chat == 0));
 
 	/* run connection script */
 	if (connector && connector[0]) {

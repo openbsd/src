@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.9 1997/09/05 04:32:43 millert Exp $	*/
+/*	$OpenBSD: options.c,v 1.10 1997/10/25 05:09:57 millert Exp $	*/
 
 /*
  * options.c - handles option processing for PPP.
@@ -23,7 +23,7 @@
 #if 0
 static char rcsid[] = "Id: options.c,v 1.39 1997/07/14 03:53:34 paulus Exp";
 #else
-static char rcsid[] = "$OpenBSD: options.c,v 1.9 1997/09/05 04:32:43 millert Exp $";
+static char rcsid[] = "$OpenBSD: options.c,v 1.10 1997/10/25 05:09:57 millert Exp $";
 #endif
 #endif
 
@@ -89,6 +89,7 @@ int	default_device = 1;	/* Using /dev/tty or equivalent */
 char	devnam[MAXPATHLEN] = "/dev/tty";	/* Device name */
 int	crtscts = 0;		/* Use hardware flow control */
 int	modem = 1;		/* Use modem control lines */
+int	modem_chat = 0;		/* Use modem control lines during chat */
 int	inspeed = 0;		/* Input/Output speed requested */
 u_int32_t netmask = 0;		/* IP netmask to set on interface */
 int	lockflag = 0;		/* Create lock file to lock the serial dev */
@@ -180,6 +181,7 @@ static int setnocrtscts __P((char **));
 static int setxonxoff __P((char **));
 static int setnodetach __P((char **));
 static int setmodem __P((char **));
+static int setmodem_chat __P((char **));
 static int setlocal __P((char **));
 static int setlock __P((char **));
 static int setname __P((char **));
@@ -327,6 +329,7 @@ static struct cmd {
     {"passive", 0, setpassive},	/* Set passive mode */
     {"silent", 0, setsilent},	/* Set silent mode */
     {"modem", 0, setmodem},	/* Use modem control lines */
+    {"modem_chat", 0, setmodem_chat}, /* Use modem control lines during chat */
     {"local", 0, setlocal},	/* Don't use modem control lines */
     {"lock", 0, setlock},	/* Lock serial device (with lock file) */
     {"name", 1, setname},	/* Set local name for authentication */
@@ -440,6 +443,7 @@ Usage: %s [ options ], where options are:\n\
 	defaultroute	Add default route through interface\n\
 	file <f>	Take options from file <f>\n\
 	modem		Use modem control lines\n\
+	modem_chat	Use modem control lines during chat\n\
 	mru <n>		Set MRU value to <n> for negotiation\n\
 	netmask <n>	Set interface netmask to <n>\n\
 See pppd(8) for more options.\n\
@@ -1866,6 +1870,14 @@ setmodem(argv)
     char **argv;
 {
     modem = 1;
+    return 1;
+}
+
+static int
+setmodem_chat(argv)
+    char **argv;
+{
+    modem_chat = 1;
     return 1;
 }
 
