@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.175 2004/10/17 18:47:08 grange Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.176 2004/10/17 19:00:45 grange Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -1241,6 +1241,7 @@ pciide_dma_init(v, channel, drive, databuf, datalen, flags)
 {
 	struct pciide_softc *sc = v;
 	int error, seg;
+	struct pciide_channel *cp = &sc->pciide_channels[channel];
 	struct pciide_dma_maps *dma_maps =
 	    &sc->pciide_channels[channel].dma_maps[drive];
 #ifndef BUS_DMA_RAW
@@ -1310,7 +1311,7 @@ pciide_dma_init(v, channel, drive, databuf, datalen, flags)
 	    dma_maps->dmamap_table->dm_segs[0].ds_addr);
 	/* set read/write */
 	PCIIDE_DMACMD_WRITE(sc, channel,
-	    (flags & WDC_DMA_READ) ? IDEDMA_CMD_WRITE : 0);
+	    ((flags & WDC_DMA_READ) ? IDEDMA_CMD_WRITE : 0) | cp->idedma_cmd);
 	/* remember flags */
 	dma_maps->dma_flags = flags;
 	return 0;
@@ -1337,6 +1338,7 @@ pciide_dma_finish(v, channel, drive, force)
 	int force;
 {
 	struct pciide_softc *sc = v;
+	struct pciide_channel *cp = &sc->pciide_channels[channel];
 	u_int8_t status;
 	int error = 0;
 	struct pciide_dma_maps *dma_maps =
@@ -1353,8 +1355,8 @@ pciide_dma_finish(v, channel, drive, force)
 
 	/* stop DMA channel */
 	PCIIDE_DMACMD_WRITE(sc, channel,
-	    (dma_maps->dma_flags & WDC_DMA_READ) ?
-	    0x00 : IDEDMA_CMD_WRITE);
+	    ((dma_maps->dma_flags & WDC_DMA_READ) ?
+	    0x00 : IDEDMA_CMD_WRITE) | cp->idedma_cmd);
 
 	/* Unload the map of the data buffer */
 	bus_dmamap_sync(sc->sc_dmat, dma_maps->dmamap_xfer, 0,

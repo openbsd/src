@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciidevar.h,v 1.15 2004/10/17 18:47:08 grange Exp $	*/
+/*	$OpenBSD: pciidevar.h,v 1.16 2004/10/17 19:00:46 grange Exp $	*/
 /*	$NetBSD: pciidevar.h,v 1.6 2001/01/12 16:04:00 bouyer Exp $	*/
 
 /*
@@ -91,6 +91,13 @@ struct pciide_softc {
 			bus_dmamap_t    dmamap_xfer;
 			int dma_flags;
 		} dma_maps[2];
+		/*
+		 * Some controllers require certain bits to
+		 * always be set for proper operation of the
+		 * controller.  Set those bits here, if they're
+		 * required.
+		 */
+		uint8_t		idedma_cmd;
 	} pciide_channels[PCIIDE_MAX_CHANNELS];
 
 	/* Chip-specific private data */
