@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)amd.c	8.1 (Berkeley) 6/6/93
- *	$Id: amd.c,v 1.1.1.1 1995/10/18 08:47:10 deraadt Exp $
+ *	$Id: amd.c,v 1.2 2001/03/02 06:22:21 deraadt Exp $
  */
 
 #ifndef lint
@@ -50,10 +50,16 @@ static char copyright[] =
  */
 
 #include "am.h"
-#include <sys/signal.h>
+#include <signal.h>
 #include <sys/ioctl.h>
+#include <sys/stat.h>
 #include <fcntl.h>
+#include <unistd.h>
 #include <setjmp.h>
+
+#include <rpc/rpc.h>
+#include <rpcsvc/ypclnt.h>
+#include <rpcsvc/yp_prot.h>
 
 char pid_fsname[16 + MAXHOSTNAMELEN];	/* "kiska.southseas.nz:(pid%d)" */
 char *progname;				/* "amd" */
@@ -186,6 +192,7 @@ static int daemon_mode(P_void)
 	return getppid();
 }
 
+int
 main(argc, argv)
 int argc;
 char *argv[];
@@ -244,7 +251,7 @@ char *argv[];
 	 * Partially initialise hostd[].  This
 	 * is completed in get_args().
 	 */
-	if (domdot = strchr(hostname, '.')) {
+	if ((domdot = strchr(hostname, '.'))) {
 		/*
 		 * Hostname already contains domainname.
 		 * Split out hostname and domainname
@@ -291,6 +298,11 @@ char *argv[];
 	 * Determine command-line arguments
 	 */
 	get_args(argc, argv);
+
+	if (mkdir(auto_dir, 0755) == -1) {
+		if (errno != EEXIST)
+			plog(XLOG_FATAL, "mkdir(autodir = %s: %m", auto_dir);
+	}
 
 	/*
 	 * Get our own IP address so that we
