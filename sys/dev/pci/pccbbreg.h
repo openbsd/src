@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccbbreg.h,v 1.2 2000/07/06 19:49:11 aaron Exp $ */
+/*	$OpenBSD: pccbbreg.h,v 1.3 2003/06/25 21:53:45 mickey Exp $ */
 /*	$NetBSD: pccbbreg.h,v 1.5 2000/06/07 09:02:47 haya Exp $	*/
 /*
  * Copyright (c) 1999 HAYAKAWA Koichi.  All rights reserved.
@@ -135,6 +135,9 @@
 # define TOPIC_SLOT_CTRL_CLOCK_2      0x00000800 /* PCI Clock/2 */
 # define TOPIC_SLOT_CTRL_CLOCK_1      0x00000400 /* PCI Clock */
 # define TOPIC_SLOT_CTRL_CLOCK_0      0x00000000 /* no clock */
+# define TOPIC97_SLOT_CTRL_STSIRQP    0x00000400 /* status change intr pulse */
+# define TOPIC97_SLOT_CTRL_IRQP       0x00000200 /* function intr pulse */
+# define TOPIC97_SLOT_CTRL_PCIINT     0x00000100 /* intr routing to PCI INT */
 
 # define TOPIC_SLOT_CTRL_CARDBUS      0x80000000
 # define TOPIC_SLOT_CTRL_VS1          0x04000000
@@ -155,7 +158,14 @@
 # define TOPIC97_REG_CTRL_CAUDIO_OFF  0x00000002
 # define TOPIC_REG_CTRL_CAUDIO_INVERT 0x00000001
 
+/*
+ * Additional (subset of) Topic100 registers from
+ * Toshiba datasheet (Draft Rev. 01.4) 98/10/07
+ */
 
+#define TOPIC100_PMCSR		0x84	/* Power mgmt ctrl/stat register */
+# define TOPIC100_PMCSR_MASK		0x00000003
+# define TOPIC100_PMCSR_D0		0x0
 
 /* socket event register (CB_SOCKET_EVENT) elements */
 #define CB_SOCKET_EVENT_CSTS 0x01 /* CARDSTS event occurs */
