@@ -1,4 +1,4 @@
-/*	$OpenBSD: getnameinfo.c,v 1.28 2004/06/07 21:11:23 marc Exp $	*/
+/*	$OpenBSD: getnameinfo.c,v 1.29 2004/09/15 19:01:28 deraadt Exp $	*/
 /*	$KAME: getnameinfo.c,v 1.45 2000/09/25 22:43:56 itojun Exp $	*/
 
 /*
@@ -110,7 +110,6 @@ getnameinfo(sa, salen, host, hostlen, serv, servlen, flags)
 	int family, i;
 	const char *addr;
 	u_int32_t v4a;
-	int h_error;
 	char numserv[512];
 	char numaddr[512];
 
@@ -240,7 +239,6 @@ getnameinfo(sa, salen, host, hostlen, serv, servlen, flags)
 		_THREAD_PRIVATE_MUTEX_LOCK(serv_mutex);
 		hp = gethostbyaddr(addr, afd->a_addrlen, afd->a_af);
 		_THREAD_PRIVATE_MUTEX_UNLOCK(serv_mutex);
-		h_error = h_errno;
 
 		if (hp) {
 #if 0
