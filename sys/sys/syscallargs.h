@@ -877,6 +877,11 @@ struct sys_undelete_args {
 	syscallarg(char *) path;
 };
 
+struct sys_futimes_args {
+	syscallarg(int) fd;
+	syscallarg(struct timeval *) tptr;
+};
+
 struct sys___semctl_args {
 	syscallarg(int) semid;
 	syscallarg(int) semnum;
@@ -1168,6 +1173,7 @@ int	sys___sysctl	__P((struct proc *, void *, register_t *));
 int	sys_mlock	__P((struct proc *, void *, register_t *));
 int	sys_munlock	__P((struct proc *, void *, register_t *));
 int	sys_undelete	__P((struct proc *, void *, register_t *));
+int	sys_futimes	__P((struct proc *, void *, register_t *));
 #ifdef LKM
 int	sys_lkmnosys	__P((struct proc *, void *, register_t *));
 int	sys_lkmnosys	__P((struct proc *, void *, register_t *));
