@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr_reg.h,v 1.5 1997/03/03 00:25:04 millert Exp $	*/
+/*	$OpenBSD: ncr_reg.h,v 1.6 1997/10/11 09:12:20 pefo Exp $	*/
 /*	$NetBSD: ncr_reg.h,v 1.10 1997/01/10 05:57:14 perry Exp $	*/
 
 /**************************************************************************
@@ -281,6 +281,12 @@ struct ncr_reg {
 
 typedef U_INT32 ncrcmd;
 
+#if BYTE_ORDER == BIG_ENDIAN
+#define	SCR_BO(x)	(((x) >> 24) | (((x) >> 8) & 0xff00) | \
+			 ((x) << 24) | (((x) & 0xff00) << 8))
+#else
+#define	SCR_BO(x)	(x)
+#endif
 /*-----------------------------------------------------------
 **
 **	SCSI phases
