@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_script.c,v 1.16 2002/08/22 22:04:42 art Exp $	*/
+/*	$OpenBSD: exec_script.c,v 1.17 2002/09/18 22:01:15 art Exp $	*/
 /*	$NetBSD: exec_script.c,v 1.13 1996/02/04 02:15:06 christos Exp $	*/
 
 /*
@@ -69,7 +69,7 @@ exec_script_makecmds(p, epp)
 	int error, hdrlinelen, shellnamelen, shellarglen;
 	char *hdrstr = epp->ep_hdr;
 	char *cp, *shellname, *shellarg, *oldpnbuf;
-	char **shellargp, **tmpsap;
+	char **shellargp = NULL, **tmpsap;
 	struct vnode *scriptvp;
 #ifdef SETUIDSCRIPTS
 	uid_t script_uid = -1;
@@ -281,12 +281,13 @@ fail:
 	FREE(epp->ep_ndp->ni_cnd.cn_pnbuf, M_NAMEI);
 
 	/* free the fake arg list, because we're not returning it */
-	tmpsap = shellargp;
-	while (*tmpsap != NULL) {
-		free(*tmpsap, M_EXEC);
-		tmpsap++;
+	if ((tmpsap = shellargp) != NULL) {
+		while (*tmpsap != NULL) {
+			free(*tmpsap, M_EXEC);
+			tmpsap++;
+		}
+		FREE(shellargp, M_EXEC);
 	}
-	FREE(shellargp, M_EXEC);
 
 	/*
 	 * free any vmspace-creation commands,
