@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.238 2004/03/03 01:06:44 deraadt Exp $
+#	$OpenBSD: rc,v 1.239 2004/03/05 23:54:47 henning Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -440,6 +440,10 @@ fi
 # If $mrouted_flags == NO, then mrouted isn't run.
 if [ "X${mrouted_flags}" != X"NO" ]; then
 	echo -n ' mrouted';		mrouted $mrouted_flags
+fi
+
+if [ "X${bgpd_flags}" != X"NO" ]; then
+	echo -n ' bgpd';		/usr/sbin/bgpd $bgpd_flags
 fi
 
 # $dhcpd_flags is imported from /etc/rc.conf
