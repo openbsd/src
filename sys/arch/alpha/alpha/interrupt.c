@@ -1,5 +1,4 @@
-/*	$OpenBSD: interrupt.c,v 1.8 1999/09/25 16:23:49 pjanzen Exp $	*/
-/*	$NetBSD: interrupt.c,v 1.14 1996/11/13 22:20:54 cgd Exp $	*/
+/* $NetBSD: interrupt.c,v 1.44 2000/05/23 05:12:53 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -27,149 +26,205 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
+/*
+ * Additional Copyright (c) 1997 by Matthew Jacob for NASA/Ames Research Center.
+ * Redistribute and modify at will, leaving only this additional copyright
+ * notice.
+ */
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/vmmeter.h>
 #include <sys/sched.h>
-
-#include <machine/autoconf.h>
-#include <machine/reg.h>
-#include <machine/frame.h>
-
-#ifdef EVCNT_COUNTERS
+#include <sys/kernel.h>
+#include <sys/systm.h>
 #include <sys/device.h>
-#else
-#include <machine/intrcnt.h>
-#endif
 
-extern int schedhz;
+#include <vm/vm.h>
+
+#include <uvm/uvm_extern.h>
+
+#include <machine/atomic.h>
+#include <machine/autoconf.h>
+#include <machine/cpu.h>
+#include <machine/reg.h>
+#include <machine/rpb.h>
+#include <machine/frame.h>
+#include <machine/cpuconf.h>
+#include <machine/intrcnt.h>
+#include <machine/alpha.h>
+
+#if defined(MULTIPROCESSOR)
+#include <sys/device.h>
+#endif
 
 static u_int schedclk2;
 
-struct logout {
-#define	LOGOUT_RETRY	0x1000000000000000	/* Retry bit. */
-#define	LOGOUT_LENGTH	0xffff			/* Length mask. */
-	u_int64_t q1;				/* Retry and length */
-	/* Unspecified. */
-};
-
-void	interrupt __P((u_long, u_long, u_long, struct trapframe *));
-void	machine_check __P((struct trapframe *, u_long, u_long));
-void	nullintr __P((void *, u_long));
-void	real_clockintr __P((void *, u_long));
-
-static void	(*iointr) __P((void *, u_long)) = nullintr;
-static void	(*clockintr) __P((void *, u_long)) = nullintr;
-static volatile int mc_expected, mc_received;
-
-#ifdef EVCNT_COUNTERS
-struct evcnt	clock_intr_evcnt;	/* event counter for clock intrs. */
-#endif
-
 void
 interrupt(a0, a1, a2, framep)
-	u_long a0, a1, a2;
+	unsigned long a0, a1, a2;
 	struct trapframe *framep;
 {
 	struct proc *p;
-
-	if (a0 == 1) {			/* clock interrupt */
-		cnt.v_intr++;
-		(*clockintr)(framep, a1);
-		if((++schedclk2 & 0x3f) == 0
-		    && (p = curproc) != NULL
-		    && schedhz)
-			schedclock(p);
-	} else if (a0 == 3) {		/* I/O device interrupt */
-		cnt.v_intr++;
-		(*iointr)(framep, a1);
-	} else if (a0 == 2)		/* machine check or correctable error */
-		machine_check(framep, a1, a2);
-	else {
-		/*
-		 * Not expected or handled:
-		 *	0	Interprocessor interrupt
-		 *	4	Performance counter
-		 */
-		panic("unexpected interrupt: type 0x%lx, vec 0x%lx",
-		    a0, a1);
-	}
-}
-
-void
-nullintr(framep, vec)
-	void *framep;
-	u_long vec;
-{
-}
-
-void
-real_clockintr(framep, vec)
-	void *framep;
-	u_long vec;
-{
-
-#ifdef EVCNT_COUNTERS
-	clock_intr_evcnt.ev_count++;
-#else
-	intrcnt[INTRCNT_CLOCK]++;
+#if defined(MULTIPROCESSOR)
+	u_long cpu_id = alpha_pal_whami();
 #endif
-	hardclock(framep);
-}
+	extern int schedhz;
 
-void
-set_clockintr()
-{
+	switch (a0) {
+	case ALPHA_INTR_XPROC:	/* interprocessor interrupt */
+#if defined(MULTIPROCESSOR)
+	    {
+		struct cpu_info *ci = &cpu_info[cpu_id];
+		u_long pending_ipis, bit;
 
-	if (clockintr != nullintr)
-		panic("set clockintr twice");
+#if 0
+		printf("CPU %lu got IPI\n", cpu_id);
+#endif
 
-	clockintr = real_clockintr;
+#ifdef DIAGNOSTIC
+		if (ci->ci_dev == NULL) {
+			/* XXX panic? */
+			printf("WARNING: no device for ID %lu\n", cpu_id);
+			return;
+		}
+#endif
+
+		pending_ipis = atomic_loadlatch_ulong(&ci->ci_ipis, 0);
+		for (bit = 0; bit < ALPHA_NIPIS; bit++)
+			if (pending_ipis & (1UL << bit))
+				(*ipifuncs[bit])();
+
+		/*
+		 * Handle inter-console messages if we're the primary
+		 * CPU.
+		 */
+		if (cpu_id == hwrpb->rpb_primary_cpu_id &&
+		    hwrpb->rpb_txrdy != 0)
+			cpu_iccb_receive();
+	    }
+#else
+		printf("WARNING: received interprocessor interrupt!\n");
+#endif /* MULTIPROCESSOR */
+		break;
+		
+	case ALPHA_INTR_CLOCK:	/* clock interrupt */
+#if defined(MULTIPROCESSOR)
+		/* XXX XXX XXX */
+		if (cpu_id != hwrpb->rpb_primary_cpu_id)
+			return;
+#endif
+		uvmexp.intrs++;
+		intrcnt[INTRCNT_CLOCK]++;
+		if (platform.clockintr) {
+			(*platform.clockintr)((struct clockframe *)framep);
+			if((++schedclk2 & 0x3f) == 0
+			&& (p = curproc) != NULL
+			&& schedhz)
+				schedclock(p);
+		}
+		break;
+
+	case ALPHA_INTR_ERROR:	/* Machine Check or Correctable Error */
+		a0 = alpha_pal_rdmces();
+		if (platform.mcheck_handler)
+			(*platform.mcheck_handler)(a0, framep, a1, a2);
+		else
+			machine_check(a0, framep, a1, a2);
+		break;
+
+	case ALPHA_INTR_DEVICE:	/* I/O device interrupt */
+#if defined(MULTIPROCESSOR)
+		/* XXX XXX XXX */
+		if (cpu_id != hwrpb->rpb_primary_cpu_id)
+			return;
+#endif
+		uvmexp.intrs++;
+		if (platform.iointr)
+			(*platform.iointr)(framep, a1);
+		break;
+
+	case ALPHA_INTR_PERF:	/* performance counter interrupt */
+		printf("WARNING: received performance counter interrupt!\n");
+		break;
+
+	case ALPHA_INTR_PASSIVE:
+#if 0
+		printf("WARNING: received passive release interrupt vec "
+		    "0x%lx\n", a1);
+#endif
+		break;
+
+	default:
+		printf("unexpected interrupt: type 0x%lx vec 0x%lx "
+		    "a2 0x%lx"
+#if defined(MULTIPROCESSOR)
+		    " cpu %lu"
+#endif
+		    "\n", a0, a1, a2
+#if defined(MULTIPROCESSOR)
+		    , cpu_id
+#endif
+		    );
+		panic("interrupt");
+		/* NOTREACHED */
+	}
 }
 
 void
 set_iointr(niointr)
-	void (*niointr) __P((void *, u_long));
+	void (*niointr) __P((void *, unsigned long));
 {
-
-	if (iointr != nullintr)
+	if (platform.iointr)
 		panic("set iointr twice");
-
-	iointr = niointr;
+	platform.iointr = niointr;
 }
 
+
 void
-machine_check(framep, vector, param)
+machine_check(mces, framep, vector, param)
+	unsigned long mces;
 	struct trapframe *framep;
-	u_long vector, param;
+	unsigned long vector, param;
 {
-	u_long mces;
 	const char *type;
+	struct mchkinfo *mcp;
 
-	mces = alpha_pal_rdmces();
-
-	/* If not a machine check, we have no clue ho we got here. */
-	if ((mces & ALPHA_MCES_MIP) == 0) {
+	mcp = &curcpu()->ci_mcinfo;
+	/* Make sure it's an error we know about. */
+	if ((mces & (ALPHA_MCES_MIP|ALPHA_MCES_SCE|ALPHA_MCES_PCE)) == 0) {
 		type = "fatal machine check or error (unknown type)";
 		goto fatal;
 	}
 
-	/* If we weren't expecting it, then we punt. */
-	if (!mc_expected) {
-		type = "unexpected machine check";
-		goto fatal;
+	/* Machine checks. */
+	if (mces & ALPHA_MCES_MIP) {
+		/* If we weren't expecting it, then we punt. */
+		if (!mcp->mc_expected) {
+			type = "unexpected machine check";
+			goto fatal;
+		}
+		mcp->mc_expected = 0;
+		mcp->mc_received = 1;
 	}
 
-	mc_expected = 0;
-	mc_received = 1;
+	/* System correctable errors. */
+	if (mces & ALPHA_MCES_SCE)
+		printf("Warning: received system correctable error.\n");
+
+	/* Processor correctable errors. */
+	if (mces & ALPHA_MCES_PCE)
+		printf("Warning: received processor correctable error.\n"); 
 
 	/* Clear pending machine checks and correctable errors */
 	alpha_pal_wrmces(mces);
 	return;
 
 fatal:
+	/* Clear pending machine checks and correctable errors */
+	alpha_pal_wrmces(mces);
+
 	printf("\n");
 	printf("%s:\n", type);
 	printf("\n");
@@ -191,14 +246,25 @@ badaddr(addr, size)
 	void *addr;
 	size_t size;
 {
+	return(badaddr_read(addr, size, NULL));
+}
+
+int
+badaddr_read(addr, size, rptr)
+	void *addr;
+	size_t size;
+	void *rptr;
+{
+	struct mchkinfo *mcp = &curcpu()->ci_mcinfo;
 	long rcpt;
+	int rv;
 
 	/* Get rid of any stale machine checks that have been waiting.  */
 	alpha_pal_draina();
 
 	/* Tell the trap code to expect a machine check. */
-	mc_received = 0;
-	mc_expected = 1;
+	mcp->mc_received = 0;
+	mcp->mc_expected = 1;
 
 	/* Read from the test address, and make sure the read happens. */
 	alpha_mb();
@@ -220,16 +286,42 @@ badaddr(addr, size)
 		break;
 
 	default:
-		panic("badaddr: invalid size (%ld)", size);
+		panic("badaddr: invalid size (%ld)\n", size);
 	}
 	alpha_mb();
+	alpha_mb();	/* MAGIC ON SOME SYSTEMS */
 
 	/* Make sure we took the machine check, if we caused one. */
 	alpha_pal_draina();
 
 	/* disallow further machine checks */
-	mc_expected = 0;
+	mcp->mc_expected = 0;
 
+	rv = mcp->mc_received;
+	mcp->mc_received = 0;
+
+	/*
+	 * And copy back read results (if no fault occurred).
+	 */
+	if (rptr && rv == 0) {
+		switch (size) {
+		case sizeof (u_int8_t):
+			*(volatile u_int8_t *)rptr = rcpt;
+			break;
+
+		case sizeof (u_int16_t):
+			*(volatile u_int16_t *)rptr = rcpt;
+			break;
+
+		case sizeof (u_int32_t):
+			*(volatile u_int32_t *)rptr = rcpt;
+			break;
+
+		case sizeof (u_int64_t):
+			*(volatile u_int64_t *)rptr = rcpt;
+			break;
+		}
+	}
 	/* Return non-zero (i.e. true) if it's a bad address. */
-	return (mc_received);
+	return (rv);
 }

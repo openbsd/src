@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcasic.c,v 1.7 1997/01/24 19:58:21 niklas Exp $	*/
+/*	$OpenBSD: tcasic.c,v 1.8 2000/11/08 16:01:26 art Exp $	*/
 /*	$NetBSD: tcasic.c,v 1.14 1996/12/05 01:39:45 cgd Exp $	*/
 
 /*
@@ -71,10 +71,10 @@ tcasicmatch(parent, cfdata, aux)
 #endif
 	void *aux;
 {
-	struct confargs *ca = aux;
+	struct mainbus_attach_args *ma = aux;
 
         /* Make sure that we're looking for a TurboChannel ASIC. */
-        if (strcmp(ca->ca_name, tcasic_cd.cd_name))
+        if (strcmp(ma->ma_name, tcasic_cd.cd_name))
                 return (0);
 
         /* Make sure that the system supports a TurboChannel ASIC. */

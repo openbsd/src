@@ -1,5 +1,4 @@
-/*	$OpenBSD: shared_intr.c,v 1.7 1999/02/08 18:14:11 millert Exp $	*/
-/*	$NetBSD: shared_intr.c,v 1.1 1996/11/17 02:03:08 cgd Exp $	*/
+/* $NetBSD: shared_intr.c,v 1.13 2000/03/19 01:46:18 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -33,6 +32,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/syslog.h>
@@ -40,9 +40,9 @@
 
 #include <machine/intr.h>
 
-extern int cold;
-
 static const char *intr_typename __P((int));
+
+extern int cold;
 
 static const char *
 intr_typename(type)
@@ -82,6 +82,7 @@ alpha_shared_intr_alloc(n)
 		intr[i].intr_dfltsharetype = IST_NONE;
 		intr[i].intr_nstrays = 0;
 		intr[i].intr_maxstrays = 5;
+		intr[i].intr_private = NULL;
 	}
 
 	return (intr);
@@ -113,38 +114,6 @@ alpha_shared_intr_dispatch(intr, num)
 	}
 
 	return (handled);
-}
-
-/*
- * Just check to see if an IRQ is available/can be shared.
- * 0 = interrupt not available
- * 1 = interrupt shareable
- * 2 = interrupt all to ourself
- */
-int
-alpha_shared_intr_check(intr, num, type)
-	struct alpha_shared_intr *intr;
-	unsigned int num;
-	int type;
-{
-
-	switch (intr[num].intr_sharetype) {
-	case IST_UNUSABLE:
-		return (0);
-		break;
-	case IST_NONE:
-		return (2);
-		break;
-	case IST_LEVEL:
-		if (type == intr[num].intr_sharetype)
-			break;
-	case IST_EDGE:
-	case IST_PULSE:
-		if ((type != IST_NONE) && (intr[num].intr_q.tqh_first != NULL))
-			return (0);
-	}
-
-	return (1);
 }
 
 void *
@@ -199,14 +168,32 @@ alpha_shared_intr_establish(intr, num, type, level, fn, arg, basename)
 		break;
 	}
 
+	ih->ih_intrhead = intr;
 	ih->ih_fn = fn;
 	ih->ih_arg = arg;
 	ih->ih_level = level;
+	ih->ih_num = num;
 
 	intr[num].intr_sharetype = type;
 	TAILQ_INSERT_TAIL(&intr[num].intr_q, ih, ih_q);
 
 	return (ih);
+}
+
+void
+alpha_shared_intr_disestablish(intr, cookie, basename)
+	struct alpha_shared_intr *intr;
+	void *cookie;
+	const char *basename;
+{
+	struct alpha_shared_intrhand *ih = cookie;
+	unsigned int num = ih->ih_num;
+
+	/*
+	 * Just remove it from the list and free the entry.  We let
+	 * the caller deal with resetting the share type, if appropriate.
+	 */
+	TAILQ_REMOVE(&intr[num].intr_q, ih, ih_q);
 }
 
 int
@@ -249,14 +236,10 @@ alpha_shared_intr_set_maxstrays(intr, num, newmaxstrays)
 	unsigned int num;
 	int newmaxstrays;
 {
-
-#ifdef DIAGNOSTIC
-	if (alpha_shared_intr_isactive(intr, num))
-		panic("alpha_shared_intr_set_maxstrays on active intr");
-#endif
-
+	int s = splhigh();
 	intr[num].intr_maxstrays = newmaxstrays;
 	intr[num].intr_nstrays = 0;
+	splx(s);
 }
 
 void
@@ -275,4 +258,23 @@ alpha_shared_intr_stray(intr, num, basename)
 		log(LOG_ERR, "stray %s %d%s\n", basename, num,
 		    intr[num].intr_nstrays >= intr[num].intr_maxstrays ?
 		      "; stopped logging" : "");
+}
+
+void
+alpha_shared_intr_set_private(intr, num, v)
+	struct alpha_shared_intr *intr;
+	unsigned int num;
+	void *v;
+{
+
+	intr[num].intr_private = v;
+}
+
+void *
+alpha_shared_intr_get_private(intr, num)
+	struct alpha_shared_intr *intr;
+	unsigned int num;
+{
+
+	return (intr[num].intr_private);
 }

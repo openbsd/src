@@ -1,5 +1,71 @@
-/*	$OpenBSD: trap.c,v 1.19 2000/06/08 22:25:16 niklas Exp $	*/
-/*	$NetBSD: trap.c,v 1.19 1996/11/27 01:28:30 cgd Exp $	*/
+/* $NetBSD: trap.c,v 1.52 2000/05/24 16:48:33 thorpej Exp $ */
+
+/*-
+ * Copyright (c) 2000 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
+ * NASA Ames Research Center.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/*
+ * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *      This product includes software developed by Christopher G. Demetriou
+ *	for the NetBSD Project.
+ * 4. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -39,29 +105,20 @@
 #include <sys/ktrace.h>
 #endif
 
+#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
+
 #include <machine/cpu.h>
 #include <machine/reg.h>
-
+#include <machine/alpha.h>
 #ifdef DDB
 #include <machine/db_machdep.h>
 #endif
+#include <alpha/alpha/db_instruction.h>		/* for handle_opdec() */
 
 #ifdef COMPAT_OSF1
 #include <compat/osf1/osf1_syscall.h>
 #endif
-
-static __inline void userret __P((struct proc *, u_int64_t, u_quad_t));
-void trap __P((const u_long, const u_long, const u_long, const u_long,
-     struct trapframe *));
-int unaligned_fixup __P((u_long, u_long, u_long, struct proc *));
-void syscall __P((u_int64_t, struct trapframe *));
-void child_return __P((struct proc *));
-void ast __P((struct trapframe *));
-u_long Sfloat_to_reg __P((u_int));
-u_int reg_to_Sfloat __P((u_long));
-u_long Tfloat_reg_cvt __P((u_long));
-
-struct proc *fpcurproc;		/* current user of the FPU */
 
 void		userret __P((struct proc *, u_int64_t, u_quad_t));
 
@@ -76,6 +133,35 @@ unsigned long	Gfloat_reg_cvt __P((unsigned long));
 
 int		unaligned_fixup __P((unsigned long, unsigned long,
 		    unsigned long, struct proc *));
+int		handle_opdec(struct proc *p, u_int64_t *ucodep);
+
+static void printtrap __P((const unsigned long, const unsigned long,
+      const unsigned long, const unsigned long, struct trapframe *, int, int));
+
+/*
+ * Initialize the trap vectors for the current processor.
+ */
+void
+trap_init()
+{
+
+	/*
+	 * Point interrupt/exception vectors to our own.
+	 */
+	alpha_pal_wrent(XentInt, ALPHA_KENTRY_INT); 
+	alpha_pal_wrent(XentArith, ALPHA_KENTRY_ARITH);
+	alpha_pal_wrent(XentMM, ALPHA_KENTRY_MM);
+	alpha_pal_wrent(XentIF, ALPHA_KENTRY_IF);
+	alpha_pal_wrent(XentUna, ALPHA_KENTRY_UNA); 
+	alpha_pal_wrent(XentSys, ALPHA_KENTRY_SYS);
+
+	/*
+	 * Clear pending machine checks and error reports, and enable
+	 * system- and processor-correctable error reporting.
+	 */
+	alpha_pal_wrmces(alpha_pal_rdmces() & 
+	    ~(ALPHA_MCES_DSC|ALPHA_MCES_DPC));
+}
 
 /*
  * Define the code needed before returning to user mode, for
@@ -87,26 +173,25 @@ userret(p, pc, oticks)
 	u_int64_t pc;
 	u_quad_t oticks;
 {
-	int sig, s;
+	int sig;
+	struct cpu_info *ci = curcpu();
+
+	/* Do any deferred user pmap operations. */
+	PMAP_USERRET(vm_map_pmap(&p->p_vmspace->vm_map));
 
 	/* take pending signals */
 	while ((sig = CURSIG(p)) != 0)
 		postsig(sig);
 	p->p_priority = p->p_usrpri;
-	if (want_resched) {
+	if (ci->ci_want_resched) {
 		/*
-		 * Since we are curproc, a clock interrupt could
-		 * change our priority without changing run queues
-		 * (the running process is not kept on a run queue).
-		 * If this happened after we setrunqueue ourselves but
-		 * before we switch()'ed, we might not be on the queue
-		 * indicated by our priority.
+		 * We are being preempted.
 		 */
-		s = splstatclock();
-		setrunqueue(p);
-		p->p_stats->p_ru.ru_nivcsw++;
-		mi_switch();
-		splx(s);
+		preempt(NULL);
+
+		ci = curcpu();
+
+		PMAP_USERRET(vm_map_pmap(&p->p_vmspace->vm_map));
 		while ((sig = CURSIG(p)) != 0)
 			postsig(sig);
 	}
@@ -123,15 +208,56 @@ userret(p, pc, oticks)
 	curpriority = p->p_priority;
 }
 
-char	*trap_type[] = {
-	"interrupt",			/*  0 ALPHA_KENTRY_INT */
-	"arithmetic trap",		/*  1 ALPHA_KENTRY_ARITH */
-	"memory management fault",	/*  2 ALPHA_KENTRY_MM */
-	"instruction fault",		/*  3 ALPHA_KENTRY_IF */
-	"unaligned access fault",	/*  4 ALPHA_KENTRY_UNA */
-	"system call",			/*  5 ALPHA_KENTRY_SYS */
-};
-int	trap_types = sizeof trap_type / sizeof trap_type[0];
+static void
+printtrap(a0, a1, a2, entry, framep, isfatal, user)
+	const unsigned long a0, a1, a2, entry;
+	struct trapframe *framep;
+	int isfatal, user;
+{
+	char ubuf[64];
+	const char *entryname;
+
+	switch (entry) {
+	case ALPHA_KENTRY_INT:
+		entryname = "interrupt";
+		break;
+	case ALPHA_KENTRY_ARITH:
+		entryname = "arithmetic trap";
+		break;
+	case ALPHA_KENTRY_MM:
+		entryname = "memory management fault";
+		break;
+	case ALPHA_KENTRY_IF:
+		entryname = "instruction fault";
+		break;
+	case ALPHA_KENTRY_UNA:
+		entryname = "unaligned access fault";
+		break;
+	case ALPHA_KENTRY_SYS:
+		entryname = "system call";
+		break;
+	default:
+		sprintf(ubuf, "type %lx", entry);
+		entryname = (const char *) ubuf;
+		break;
+	}
+
+	printf("\n");
+	printf("%s %s trap:\n", isfatal? "fatal" : "handled",
+	       user ? "user" : "kernel");
+	printf("\n");
+	printf("    trap entry = 0x%lx (%s)\n", entry, entryname);
+	printf("    a0         = 0x%lx\n", a0);
+	printf("    a1         = 0x%lx\n", a1);
+	printf("    a2         = 0x%lx\n", a2);
+	printf("    pc         = 0x%lx\n", framep->tf_regs[FRAME_PC]);
+	printf("    ra         = 0x%lx\n", framep->tf_regs[FRAME_RA]);
+	printf("    curproc    = %p\n", curproc);
+	if (curproc != NULL)
+		printf("        pid = %d, comm = %s\n", curproc->p_pid,
+		       curproc->p_comm);
+	printf("\n");
+}
 
 /*
  * Trap is called from locore to handle most types of processor traps.
@@ -147,28 +273,33 @@ trap(a0, a1, a2, entry, framep)
 {
 	register struct proc *p;
 	register int i;
-	u_long ucode;
+	u_int64_t ucode;
 	u_quad_t sticks;
-	caddr_t v;
 	int user;
+#if defined(DDB)
+	int call_debugger = 1;
+#endif
+	caddr_t v;
 	int typ;
 	union sigval sv;
 
-	cnt.v_trap++;
+	uvmexp.traps++;
 	p = curproc;
-	v = 0;
 	ucode = 0;
 	user = (framep->tf_regs[FRAME_PS] & ALPHA_PSL_USERMODE) != 0;
-#ifdef DDB
-	framep->tf_regs[FRAME_SP] = (long)framep + FRAME_SIZE*8;
-#endif
 	if (user)  {
 		sticks = p->p_sticks;
 		p->p_md.md_tf = framep;
-	} else {
-#ifdef DIAGNOSTIC
-		sticks = 0xdeadbeef;		/* XXX for -Wuninitialized */
+#if	0
+/* This is to catch some wierd stuff on the UDB (mj) */
+		if (framep->tf_regs[FRAME_PC] > 0 && 
+		    framep->tf_regs[FRAME_PC] < 0x120000000) {
+			printf("PC Out of Whack\n");
+			printtrap(a0, a1, a2, entry, framep, 1, user);
+		}
 #endif
+	} else {
+		sticks = 0;		/* XXX bogus -Wuninitialized warning */
 	}
 
 	switch (entry) {
@@ -182,12 +313,7 @@ trap(a0, a1, a2, entry, framep)
 			if ((i = unaligned_fixup(a0, a1, a2, p)) == 0)
 				goto out;
 
-			ucode = VM_PROT_NONE;	/* XXX determine */
-			v = (caddr_t)a0;
-			if (i == SIGBUS)
-				typ = BUS_ADRALN;
-			else
-				typ = SEGV_MAPERR;
+			ucode = a0;		/* VA */
 			break;
 		}
 
@@ -202,7 +328,7 @@ trap(a0, a1, a2, entry, framep)
 		 * user are properly aligned, and so if the kernel
 		 * does cause an unaligned access it's a kernel bug.
 		 */
-		goto we_re_toast;
+		goto dopanic;
 
 	case ALPHA_KENTRY_ARITH:
 		/* 
@@ -211,52 +337,61 @@ trap(a0, a1, a2, entry, framep)
 		 * user has requested that.
 		 */
 		if (user) {
-sigfpe:			i = SIGFPE;
-			v = NULL;		/* XXX determine */
-			ucode = a0;		/* exception summary */
-			typ = FPE_FLTINV;	/* XXX? */
+#ifdef COMPAT_OSF1
+			extern struct emul emul_osf1;
+
+			/* just punt on OSF/1.  XXX THIS IS EVIL */
+			if (p->p_emul == &emul_osf1) 
+				goto out;
+#endif
+			i = SIGFPE;
+			ucode =  a0;		/* exception summary */
 			break;
 		}
 
 		/* Always fatal in kernel.  Should never happen. */
-		goto we_re_toast;
+		goto dopanic;
 
 	case ALPHA_KENTRY_IF:
 		/*
 		 * These are always fatal in kernel, and should never
-		 * happen, unless they're breakpoints of course.
+		 * happen.  (Debugger entry is handled in XentIF.)
 		 */
-		if (!user)
-			goto we_re_toast;
+		if (!user) {
+#if defined(DDB)
+			/*
+			 * ...unless a debugger is configured.  It will
+			 * inform us if the trap was handled.
+			 */
+			if (alpha_debug(a0, a1, a2, entry, framep))
+				goto out;
 
+			/*
+			 * Debugger did NOT handle the trap, don't
+			 * call the debugger again!
+			 */
+			call_debugger = 0;
+#endif
+			goto dopanic;
+		}
+		i = 0;
 		switch (a0) {
 		case ALPHA_IF_CODE_GENTRAP:
-			if (framep->tf_regs[FRAME_A0] == -2) /* weird! */
-				goto sigfpe;
+			if (framep->tf_regs[FRAME_A0] == -2) { /* weird! */
+				i = SIGFPE;
+				ucode =  a0;	/* exception summary */
+				break;
+			}
+			/* FALLTHROUTH */
 		case ALPHA_IF_CODE_BPT:
 		case ALPHA_IF_CODE_BUGCHK:
-			/* XXX what is the address?  Guess on a1 for now */
-			v = (caddr_t)a1;
-			ucode = 0;		/* XXX determine */
+			ucode = a0;		/* trap type */
 			i = SIGTRAP;
-			typ = TRAP_BRKPT;
 			break;
 
 		case ALPHA_IF_CODE_OPDEC:
-			/* XXX what is the address?  Guess on a1 for now */
-			v = (caddr_t)a1;
-			ucode = 0;		/* XXX determine */
-#ifdef NEW_PMAP
-{
-int instr;
-printf("REAL SIGILL: PC = 0x%lx, RA = 0x%lx\n", framep->tf_regs[FRAME_PC], framep->tf_regs[FRAME_RA]);
-printf("INSTRUCTION (%d) = 0x%lx\n", copyin((void*)framep->tf_regs[FRAME_PC] - 4, &instr, 4), instr);
-regdump(framep);
-panic("foo");
-}
-#endif
-			i = SIGILL;
-			typ = ILL_ILLOPC;
+			if ((i = handle_opdec(p, &ucode)) == 0)
+				goto out;
 			break;
 
 		case ALPHA_IF_CODE_FEN:
@@ -267,7 +402,7 @@ panic("foo");
 			if (fpcurproc == p) {
 				printf("trap: fp disabled for fpcurproc == %p",
 				    p);
-				goto we_re_toast;
+				goto dopanic;
 			}
 	
 			alpha_pal_wrfen(1);
@@ -282,49 +417,31 @@ panic("foo");
 
 		default:
 			printf("trap: unknown IF type 0x%lx\n", a0);
-			goto we_re_toast;
+			goto dopanic;
 		}
 		break;
 
 	case ALPHA_KENTRY_MM:
-#ifdef NEW_PMAP
-		printf("mmfault: 0x%lx, 0x%lx, %d\n", a0, a1, a2);
-#endif
 		switch (a1) {
 		case ALPHA_MMCSR_FOR:
 		case ALPHA_MMCSR_FOE:
-#ifdef NEW_PMAP
-			printf("mmfault for/foe in\n");
-#endif
 			pmap_emulate_reference(p, a0, user, 0);
-#ifdef NEW_PMAP
-			printf("mmfault for/foe out\n");
-#endif
 			goto out;
 
 		case ALPHA_MMCSR_FOW:
-#ifdef NEW_PMAP
-			printf("mmfault fow in\n");
-#endif
 			pmap_emulate_reference(p, a0, user, 1);
-#ifdef NEW_PMAP
-			printf("mmfault fow out\n");
-#endif
 			goto out;
 
 		case ALPHA_MMCSR_INVALTRANS:
 		case ALPHA_MMCSR_ACCESS:
 	    	{
-			register vm_offset_t va;
-			register struct vmspace *vm;
+			register vaddr_t va;
+			register struct vmspace *vm = NULL;
 			register vm_map_t map;
 			vm_prot_t ftype;
 			int rv;
 			extern vm_map_t kernel_map;
 
-#ifdef NEW_PMAP
-			printf("mmfault invaltrans/access in\n");
-#endif
 			/*
 			 * If it was caused by fuswintr or suswintr,
 			 * just punt.  Note that we check the faulting
@@ -337,15 +454,9 @@ panic("foo");
 			    p->p_addr->u_pcb.pcb_onfault ==
 			      (unsigned long)fswintrberr &&
 			    p->p_addr->u_pcb.pcb_accessaddr == a0) {
-#ifdef NEW_PMAP
-				printf("mmfault nfintr in\n");
-#endif
 				framep->tf_regs[FRAME_PC] =
 				    p->p_addr->u_pcb.pcb_onfault;
 				p->p_addr->u_pcb.pcb_onfault = 0;
-#ifdef NEW_PMAP
-				printf("mmfault nfintr out\n");
-#endif
 				goto out;
 			}
 
@@ -375,18 +486,12 @@ panic("foo");
 				break;
 #ifdef DIAGNOSTIC
 			default:		/* XXX gcc -Wuninitialized */
-				goto we_re_toast;
+				goto dopanic;
 #endif
 			}
 	
-			va = trunc_page((vm_offset_t)a0);
-#ifdef NEW_PMAP
-			printf("mmfault going to vm_fault\n");
-#endif
-			rv = vm_fault(map, va, ftype, FALSE);
-#ifdef NEW_PMAP
-			printf("mmfault back from vm_fault\n");
-#endif
+			va = trunc_page((vaddr_t)a0);
+			rv = uvm_fault(map, va, 0, ftype);
 			/*
 			 * If this was a stack access we keep track of the
 			 * maximum accessed stack size.  Also, if vm_fault
@@ -395,28 +500,23 @@ panic("foo");
 			 * we need to reflect that as an access error.
 			 */
 			if (map != kernel_map &&
-			    (caddr_t)va >= vm->vm_maxsaddr) {
+			    (caddr_t)va >= vm->vm_maxsaddr &&
+			    va < USRSTACK) {
 				if (rv == KERN_SUCCESS) {
 					unsigned nss;
 	
-					nss = clrnd(btoc(USRSTACK -
-					    (unsigned long)va));
+					nss = btoc(USRSTACK -
+					    (unsigned long)va);
 					if (nss > vm->vm_ssize)
 						vm->vm_ssize = nss;
 				} else if (rv == KERN_PROTECTION_FAILURE)
 					rv = KERN_INVALID_ADDRESS;
 			}
 			if (rv == KERN_SUCCESS) {
-#ifdef NEW_PMAP
-				printf("mmfault vm_fault success\n");
-#endif
 				goto out;
 			}
 
 			if (!user) {
-#ifdef NEW_PMAP
-				printf("mmfault check copyfault\n");
-#endif
 				/* Check for copyin/copyout fault */
 				if (p != NULL &&
 				    p->p_addr->u_pcb.pcb_onfault != 0) {
@@ -425,30 +525,36 @@ panic("foo");
 					p->p_addr->u_pcb.pcb_onfault = 0;
 					goto out;
 				}
-				goto we_re_toast;
+				goto dopanic;
 			}
-			v = (caddr_t)a0;
 			ucode = ftype;
-			i = SIGSEGV;
+			v = (caddr_t)a0;
 			typ = SEGV_MAPERR;
+			if (rv == KERN_RESOURCE_SHORTAGE) {
+				printf("UVM: pid %d (%s), uid %d killed: "
+				       "out of swap\n", p->p_pid, p->p_comm,
+				       p->p_cred && p->p_ucred ?
+				       p->p_ucred->cr_uid : -1);
+				i = SIGKILL;
+			} else {
+				i = SIGSEGV;
+			}
 			break;
 		    }
 
 		default:
 			printf("trap: unknown MMCSR value 0x%lx\n", a1);
-			goto we_re_toast;
+			goto dopanic;
 		}
 		break;
 
 	default:
-	we_re_toast:
-#ifdef DDB
-		if (kdb_trap(entry, a0, framep))
-			return;
-#endif
 		goto dopanic;
 	}
 
+#ifdef DEBUG
+	printtrap(a0, a1, a2, entry, framep, 1, user);
+#endif
 	sv.sival_ptr = v;
 	trapsignal(p, i, ucode, typ, sv);
 out:
@@ -457,30 +563,18 @@ out:
 	return;
 
 dopanic:
-	{
-		const char *entryname = "???";
-
-		if (entry > 0 && entry < trap_types)
-			entryname = trap_type[entry];
-
-		printf("\n");
-		printf("fatal %s trap:\n", user ? "user" : "kernel");
-		printf("\n");
-		printf("    trap entry = 0x%lx (%s)\n", entry, entryname);
-		printf("    a0         = 0x%lx\n", a0);
-		printf("    a1         = 0x%lx\n", a1);
-		printf("    a2         = 0x%lx\n", a2);
-		printf("    pc         = 0x%lx\n", framep->tf_regs[FRAME_PC]);
-		printf("    ra         = 0x%lx\n", framep->tf_regs[FRAME_RA]);
-		printf("    curproc    = %p\n", curproc);
-		if (curproc != NULL)
-			printf("        pid = %d, comm = %s\n", curproc->p_pid,
-			    curproc->p_comm);
-		printf("\n");
-	}
+	printtrap(a0, a1, a2, entry, framep, 1, user);
 
 	/* XXX dump registers */
-	/* XXX kernel debugger */
+
+#if defined(DDB)
+	if (call_debugger && alpha_debug(a0, a1, a2, entry, framep)) {
+		/*
+		 * The debugger has handled the trap; just return.
+		 */
+		goto out;
+	}
+#endif
 
 	panic("trap");
 }
@@ -516,10 +610,10 @@ syscall(code, framep)
 #endif
 
 #if notdef				/* can't happen, ever. */
-	if ((framep->tf_regs[FRAME_PS] & ALPHA_PSL_USERMODE) == 0) {
+	if ((framep->tf_regs[FRAME_PS] & ALPHA_PSL_USERMODE) == 0)
 		panic("syscall");
 #endif
-	cnt.v_syscall++;
+	uvmexp.syscalls++;
 	p = curproc;
 	p->p_md.md_tf = framep;
 	opc = framep->tf_regs[FRAME_PC] - 4;
@@ -589,9 +683,6 @@ syscall(code, framep)
 #endif
 #ifdef SYSCALL_DEBUG
 	scdebug_call(p, code, args + hidden);
-#ifdef NEW_PMAP
-	printf("called from 0x%lx, ra 0x%lx\n", framep->tf_regs[FRAME_PC], framep->tf_regs[FRAME_RA]);
-#endif
 #endif
 	if (error == 0) {
 		rval[0] = 0;
@@ -611,6 +702,8 @@ syscall(code, framep)
 	case EJUSTRETURN:
 		break;
 	default:
+		if (p->p_emul->e_errno)
+			error = p->p_emul->e_errno[error];
 		framep->tf_regs[FRAME_V0] = error;
 		framep->tf_regs[FRAME_A3] = 1;
 		break;
@@ -623,9 +716,6 @@ syscall(code, framep)
 	p = curproc;
 #ifdef SYSCALL_DEBUG
 	scdebug_ret(p, code, error, rval);
-#ifdef NEW_PMAP
-	printf("outgoing pc 0x%lx, ra 0x%lx\n", framep->tf_regs[FRAME_PC], framep->tf_regs[FRAME_RA]);
-#endif
 #endif
 
 	userret(p, framep->tf_regs[FRAME_PC], sticks);
@@ -639,9 +729,10 @@ syscall(code, framep)
  * Process the tail end of a fork() for the child.
  */
 void
-child_return(p)
-	struct proc *p;
+child_return(arg)
+	void *arg;
 {
+	struct proc *p = arg;
 
 	/*
 	 * Return values in the frame set by cpu_fork().
@@ -665,6 +756,8 @@ ast(framep)
 	register struct proc *p;
 	u_quad_t sticks;
 
+	curcpu()->ci_astpending = 0;
+
 	p = curproc;
 	sticks = p->p_sticks;
 	p->p_md.md_tf = framep;
@@ -672,9 +765,8 @@ ast(framep)
 	if ((framep->tf_regs[FRAME_PS] & ALPHA_PSL_USERMODE) == 0)
 		panic("ast and not user");
 
-	cnt.v_soft++;
+	uvmexp.softs++;
 
-	astpending = 0;
 	if (p->p_flag & P_OWEUPC) {
 		p->p_flag &= ~P_OWEUPC;
 		ADDUPROF(p);
@@ -714,21 +806,20 @@ const static int reg_to_framereg[32] = {
 	}
 
 #define	unaligned_load(storage, ptrf, mod)				\
-	if (copyin((caddr_t)va, &(storage), sizeof (storage)) == 0 &&	\
-	    (regptr = ptrf(p, reg)) != NULL)				\
-		signal = 0;						\
-	else								\
+	if (copyin((caddr_t)va, &(storage), sizeof (storage)) != 0)	\
 		break;							\
-	*regptr = mod (storage);
+	signal = 0;							\
+	if ((regptr = ptrf(p, reg)) != NULL)				\
+		*regptr = mod (storage);
 
 #define	unaligned_store(storage, ptrf, mod)				\
-	if ((regptr = ptrf(p, reg)) == NULL)				\
-		break;							\
-	(storage) = mod (*regptr);					\
-	if (copyout(&(storage), (caddr_t)va, sizeof (storage)) == 0)	\
-		signal = 0;						\
+	if ((regptr = ptrf(p, reg)) != NULL)				\
+		(storage) = mod (*regptr);				\
 	else								\
-		break;
+		(storage) = 0;						\
+	if (copyout(&(storage), (caddr_t)va, sizeof (storage)) != 0)	\
+		break;							\
+	signal = 0;
 
 #define	unaligned_load_integer(storage)					\
 	unaligned_load(storage, irp, )
@@ -863,38 +954,60 @@ Gfloat_reg_cvt(input)
 extern int	alpha_unaligned_print, alpha_unaligned_fix;
 extern int	alpha_unaligned_sigbus;
 
+struct unaligned_fixup_data {
+	const char *type;	/* opcode name */
+	int fixable;		/* fixable, 0 if fixup not supported */
+	int size;		/* size, 0 if unknown */
+	int acc;		/* useracc type; B_READ or B_WRITE */
+};
+
+#define	UNKNOWN()	{ "0x%lx", 0, 0, 0 }
+#define	FIX_LD(n,s)	{ n, 1, s, B_READ }
+#define	FIX_ST(n,s)	{ n, 1, s, B_WRITE }
+#define	NOFIX_LD(n,s)	{ n, 0, s, B_READ }
+#define	NOFIX_ST(n,s)	{ n, 0, s, B_WRITE }
+
 int
 unaligned_fixup(va, opcode, reg, p)
 	unsigned long va, opcode, reg;
 	struct proc *p;
 {
-	int doprint, dofix, dosigbus;
-	int signal, size;
-	const char *type;
+	const struct unaligned_fixup_data tab_unknown[1] = {
+		UNKNOWN(),
+	};
+	const struct unaligned_fixup_data tab_0c[0x02] = {
+		FIX_LD("ldwu", 2),	FIX_ST("stw", 2),
+	};
+	const struct unaligned_fixup_data tab_20[0x10] = {
+#ifdef FIX_UNALIGNED_VAX_FP
+		FIX_LD("ldf", 4),	FIX_LD("ldg", 8),
+#else
+		NOFIX_LD("ldf", 4),	NOFIX_LD("ldg", 8),
+#endif
+		FIX_LD("lds", 4),	FIX_LD("ldt", 8),
+#ifdef FIX_UNALIGNED_VAX_FP
+		FIX_ST("stf", 4),	FIX_ST("stg", 8),
+#else
+		NOFIX_ST("stf", 4),	NOFIX_ST("stg", 8),
+#endif
+		FIX_ST("sts", 4),	FIX_ST("stt", 8),
+		FIX_LD("ldl", 4),	FIX_LD("ldq", 8),
+		NOFIX_LD("ldl_c", 4),	NOFIX_LD("ldq_c", 8),
+		FIX_ST("stl", 4),	FIX_ST("stq", 8),
+		NOFIX_ST("stl_c", 4),	NOFIX_ST("stq_c", 8),
+	};
+	const struct unaligned_fixup_data *selected_tab;
+	int doprint, dofix, dosigbus, signal;
 	unsigned long *regptr, longdata;
 	int intdata;		/* signed to get extension when storing */
-	struct {
-		const char *type;	/* opcode name */
-		int size;		/* size, 0 if fixup not supported */
-	} tab[0x10] = {
-#ifdef FIX_UNALIGNED_VAX_FP
-		{ "ldf",	4 },	{ "ldg",	8 },
-#else
-		{ "ldf",	0 },	{ "ldg",	0 },
-#endif
-		{ "lds",	4 },	{ "ldt",	8 },
-#ifdef FIX_UNALIGNED_VAX_FP
-		{ "stf",	4 },	{ "stg",	8 },
-#else
-		{ "stf",	0 },	{ "stg",	0 },
-#endif
-		{ "sts",	4 },	{ "stt",	8 },
-		{ "ldl",	4 },	{ "ldq",	8 },
-		{ "ldl_l",	0 },	{ "ldq_l",	0 },	/* can't fix */
-		{ "stl",	4 },	{ "stq",	8 },
-		{ "stl_c",	0 },	{ "stq_c",	0 },	/* can't fix */
-	};
-	int typ;
+	u_int16_t worddata;	/* unsigned to _avoid_ extension */
+
+	/*
+	 * Read USP into frame in case it's the register to be modified.
+	 * This keeps us from having to check for it in lots of places
+	 * later.
+	 */
+	p->p_md.md_tf->tf_regs[FRAME_SP] = alpha_pal_rdusp();
 
 	/*
 	 * Figure out what actions to take.
@@ -910,20 +1023,24 @@ unaligned_fixup(va, opcode, reg, p)
 	 * Find out which opcode it is.  Arrange to have the opcode
 	 * printed if it's an unknown opcode.
 	 */
-	if (opcode >= 0x20 && opcode <= 0x2f) {
-		type = tab[opcode - 0x20].type;
-		size = tab[opcode - 0x20].size;
-	} else {
-		type = "0x%lx";
-		size = 0;
-	}
+	if (opcode >= 0x0c && opcode <= 0x0d)
+		selected_tab = &tab_0c[opcode - 0x0c];
+	else if (opcode >= 0x20 && opcode <= 0x2f)
+		selected_tab = &tab_20[opcode - 0x20];
+	else
+		selected_tab = tab_unknown;
 
 	/*
 	 * See if the user can access the memory in question.
-	 * Even if it's an unknown opcode, SEGV if the access
-	 * should have failed.
+	 * If it's an unknown opcode, we don't know whether to
+	 * read or write, so we don't check.
+	 *
+	 * We adjust the PC backwards so that the instruction will
+	 * be re-run.
 	 */
-	if (!useracc((caddr_t)va, size ? size : 1, B_WRITE)) {
+	if (selected_tab->size != 0 &&
+	   !uvm_useracc((caddr_t)va, selected_tab->size, selected_tab->acc)) {
+		p->p_md.md_tf->tf_regs[FRAME_PC] -= 4;
 		signal = SIGSEGV;
 		goto out;
 	}
@@ -932,10 +1049,12 @@ unaligned_fixup(va, opcode, reg, p)
 	 * If we're supposed to be noisy, squawk now.
 	 */
 	if (doprint) {
-		uprintf("pid %d (%s): unaligned access: va=0x%lx pc=0x%lx ra=0x%lx op=",
-		    p->p_pid, p->p_comm, va, p->p_md.md_tf->tf_regs[FRAME_PC],
-		    p->p_md.md_tf->tf_regs[FRAME_PC]);
-		uprintf(type, opcode);
+		uprintf(
+		"pid %d (%s): unaligned access: va=0x%lx pc=0x%lx ra=0x%lx op=",
+		    p->p_pid, p->p_comm, va,
+		    p->p_md.md_tf->tf_regs[FRAME_PC] - 4,
+		    p->p_md.md_tf->tf_regs[FRAME_RA]);
+		uprintf(selected_tab->type,opcode);
 		uprintf("\n");
 	}
 
@@ -952,9 +1071,18 @@ unaligned_fixup(va, opcode, reg, p)
 	 * unaligned_{load,store}_* clears the signal flag.
 	 */
 	signal = SIGBUS;
-	typ = BUS_ADRALN;
-	if (dofix && size != 0) {
+	if (dofix && selected_tab->fixable) {
 		switch (opcode) {
+		case 0x0c:			/* ldwu */
+			/* XXX ONLY WORKS ON LITTLE-ENDIAN ALPHA */
+			unaligned_load_integer(worddata);
+			break;
+
+		case 0x0d:			/* stw */
+			/* XXX ONLY WORKS ON LITTLE-ENDIAN ALPHA */
+			unaligned_store_integer(worddata);
+			break;
+
 #ifdef FIX_UNALIGNED_VAX_FP
 		case 0x20:			/* ldf */
 			unaligned_load_floating(intdata, Ffloat_to_reg);
@@ -1021,5 +1149,172 @@ unaligned_fixup(va, opcode, reg, p)
 		signal = SIGBUS;
 
 out:
+	/*
+	 * Write back USP.
+	 */
+	alpha_pal_wrusp(p->p_md.md_tf->tf_regs[FRAME_SP]);
+
 	return (signal);
+}
+
+/*
+ * Reserved/unimplemented instruction (opDec fault) handler
+ *
+ * Argument is the process that caused it.  No useful information
+ * is passed to the trap handler other than the fault type.  The
+ * address of the instruction that caused the fault is 4 less than
+ * the PC stored in the trap frame.
+ *
+ * If the instruction is emulated successfully, this function returns 0.
+ * Otherwise, this function returns the signal to deliver to the process,
+ * and fills in *ucodep with the code to be delivered.
+ */
+int
+handle_opdec(p, ucodep)
+	struct proc *p;
+	u_int64_t *ucodep;
+{
+	alpha_instruction inst;
+	register_t *regptr, memaddr;
+	u_int64_t inst_pc;
+	int sig;
+
+	/*
+	 * Read USP into frame in case it's going to be used or modified.
+	 * This keeps us from having to check for it in lots of places
+	 * later.
+	 */
+	p->p_md.md_tf->tf_regs[FRAME_SP] = alpha_pal_rdusp();
+
+	inst_pc = memaddr = p->p_md.md_tf->tf_regs[FRAME_PC] - 4;
+	if (copyin((caddr_t)inst_pc, &inst, sizeof (inst)) != 0) {
+		/*
+		 * really, this should never happen, but in case it
+		 * does we handle it.
+		 */
+		printf("WARNING: handle_opdec() couldn't fetch instruction\n");
+		goto sigsegv;
+	}
+
+	switch (inst.generic_format.opcode) {
+	case op_ldbu:
+	case op_ldwu:
+	case op_stw:
+	case op_stb:
+		regptr = irp(p, inst.mem_format.rb);
+		if (regptr != NULL)
+			memaddr = *regptr;
+		else
+			memaddr = 0;
+		memaddr += inst.mem_format.displacement;
+
+		regptr = irp(p, inst.mem_format.ra);
+
+		if (inst.mem_format.opcode == op_ldwu ||
+		    inst.mem_format.opcode == op_stw) {
+			if (memaddr & 0x01) {
+				sig = unaligned_fixup(memaddr,
+				    inst.mem_format.opcode,
+				    inst.mem_format.ra, p);
+				if (sig)
+					goto unaligned_fixup_sig;
+				break;
+			}
+		}
+
+		if (inst.mem_format.opcode == op_ldbu) {
+			u_int8_t b;
+
+			/* XXX ONLY WORKS ON LITTLE-ENDIAN ALPHA */
+			if (copyin((caddr_t)memaddr, &b, sizeof (b)) != 0)
+				goto sigsegv;
+			if (regptr != NULL)
+				*regptr = b;
+		} else if (inst.mem_format.opcode == op_ldwu) {
+			u_int16_t w;
+
+			/* XXX ONLY WORKS ON LITTLE-ENDIAN ALPHA */
+			if (copyin((caddr_t)memaddr, &w, sizeof (w)) != 0)
+				goto sigsegv;
+			if (regptr != NULL)
+				*regptr = w;
+		} else if (inst.mem_format.opcode == op_stw) {
+			u_int16_t w;
+
+			/* XXX ONLY WORKS ON LITTLE-ENDIAN ALPHA */
+			w = (regptr != NULL) ? *regptr : 0;
+			if (copyout(&w, (caddr_t)memaddr, sizeof (w)) != 0)
+				goto sigsegv;
+		} else if (inst.mem_format.opcode == op_stb) {
+			u_int8_t b;
+
+			/* XXX ONLY WORKS ON LITTLE-ENDIAN ALPHA */
+			b = (regptr != NULL) ? *regptr : 0;
+			if (copyout(&b, (caddr_t)memaddr, sizeof (b)) != 0)
+				goto sigsegv;
+		}
+		break;
+
+	case op_intmisc:
+		if (inst.operate_generic_format.function == op_sextb &&
+		    inst.operate_generic_format.ra == 31) {
+			int8_t b;
+
+			if (inst.operate_generic_format.is_lit) {
+				b = inst.operate_lit_format.literal;
+			} else {
+				if (inst.operate_reg_format.sbz != 0)
+					goto sigill;
+				regptr = irp(p, inst.operate_reg_format.rb);
+				b = (regptr != NULL) ? *regptr : 0;
+			}
+
+			regptr = irp(p, inst.operate_generic_format.rc);
+			if (regptr != NULL)
+				*regptr = b;
+			break;
+		}
+		if (inst.operate_generic_format.function == op_sextw &&
+		    inst.operate_generic_format.ra == 31) {
+			int16_t w;
+
+			if (inst.operate_generic_format.is_lit) {
+				w = inst.operate_lit_format.literal;
+			} else {
+				if (inst.operate_reg_format.sbz != 0)
+					goto sigill;
+				regptr = irp(p, inst.operate_reg_format.rb);
+				w = (regptr != NULL) ? *regptr : 0;
+			}
+
+			regptr = irp(p, inst.operate_generic_format.rc);
+			if (regptr != NULL)
+				*regptr = w;
+			break;
+		}
+		goto sigill;
+
+	default:
+		goto sigill;
+	}
+
+	/*
+	 * Write back USP.  Note that in the error cases below,
+	 * nothing will have been successfully modified so we don't
+	 * have to write it out.
+	 */
+	alpha_pal_wrusp(p->p_md.md_tf->tf_regs[FRAME_SP]);
+
+	return (0);
+
+sigill:
+	*ucodep = ALPHA_IF_CODE_OPDEC;			/* trap type */
+	return (SIGILL);
+
+sigsegv:
+	sig = SIGSEGV;
+	p->p_md.md_tf->tf_regs[FRAME_PC] = inst_pc;	/* re-run instr. */
+unaligned_fixup_sig:
+	*ucodep = memaddr;				/* faulting address */
+	return (sig);
 }

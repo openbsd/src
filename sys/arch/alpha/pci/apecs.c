@@ -1,4 +1,4 @@
-/*	$OpenBSD: apecs.c,v 1.8 1997/01/24 19:57:32 niklas Exp $	*/
+/*	$OpenBSD: apecs.c,v 1.9 2000/11/08 16:01:16 art Exp $	*/
 /*	$NetBSD: apecs.c,v 1.16 1996/12/05 01:39:34 cgd Exp $	*/
 
 /*
@@ -80,10 +80,10 @@ apecsmatch(parent, match, aux)
 #endif
 	void *aux;
 {
-	struct confargs *ca = aux;
+	struct mainbus_attach_args *ma = aux;
 
 	/* Make sure that we're looking for an APECS. */
-	if (strcmp(ca->ca_name, apecs_cd.cd_name) != 0)
+	if (strcmp(ma->ma_name, apecs_cd.cd_name) != 0)
 		return (0);
 
 	if (apecsfound)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lca.c,v 1.7 1997/01/24 19:57:41 niklas Exp $	*/
+/*	$OpenBSD: lca.c,v 1.8 2000/11/08 16:01:19 art Exp $	*/
 /*	$NetBSD: lca.c,v 1.14 1996/12/05 01:39:35 cgd Exp $	*/
 
 /*
@@ -80,10 +80,10 @@ lcamatch(parent, match, aux)
 #endif
 	void *aux;
 {
-	struct confargs *ca = aux;
+	struct mainbus_attach_args *ma = aux;
 
 	/* Make sure that we're looking for a LCA. */
-	if (strcmp(ca->ca_name, lca_cd.cd_name) != 0)
+	if (strcmp(ma->ma_name, lca_cd.cd_name) != 0)
 		return (0);
 
 	if (lcafound)

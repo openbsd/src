@@ -1,4 +1,4 @@
-/*	$OpenBSD: loadfile.c,v 1.7 1998/09/04 17:03:24 millert Exp $	*/
+/*	$OpenBSD: loadfile.c,v 1.8 2000/11/08 16:01:24 art Exp $	*/
 /*	$NetBSD: loadfile.c,v 1.3 1997/04/06 08:40:59 cgd Exp $	*/
 
 /*
@@ -65,7 +65,8 @@ static int elf_exec __P((int, Elf_Ehdr *, u_int64_t *));
 #endif
 int loadfile __P((char *, u_int64_t *));
 
-vm_offset_t ffp_save, ptbr_save, esym;
+paddr_t ffp_save, ptbr_save;
+vaddr_t ssym, esym;
 
 /*
  * Open 'filename', read in program and return the entry point or -1 if error.
@@ -218,6 +219,7 @@ coff_exec(fd, coff, entryp)
 		ffp_save += symhdr.estrMax;
 		printf("+%d]", symhdr.estrMax);
 		esym = ((ffp_save + sizeof(int) - 1) & ~(sizeof(int) - 1));
+		ssym = (vaddr_t)symtab;
 	}
 
 	ffp_save = ALPHA_K0SEG_TO_PHYS((ffp_save + PGOFSET & ~PGOFSET)) >>

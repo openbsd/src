@@ -1,5 +1,4 @@
-/*	$OpenBSD: param.h,v 1.12 2000/07/06 13:38:30 ericj Exp $	*/
-/*	$NetBSD: param.h,v 1.15 1996/11/13 21:13:19 cgd Exp $	*/
+/* $NetBSD: param.h,v 1.30 2000/06/09 16:03:04 thorpej Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -59,18 +58,20 @@
  * Round p (pointer or byte index) up to a correctly-aligned value for all
  * data types (int, long, ...).   The result is u_long and must be cast to
  * any desired pointer type.
+ *
+ * ALIGNED_POINTER is a boolean macro that checks whether an address
+ * is valid to fetch data elements of type t from on this architecture.
+ * This does not reflect the optimal alignment, just the possibility
+ * (within reasonable limits). 
+ *
  */
-#define	ALIGNBYTES	7
-#define	ALIGN(p)	(((u_long)(p) + ALIGNBYTES) &~ ALIGNBYTES)
+#define	ALIGNBYTES		7
+#define	ALIGN(p)		(((u_long)(p) + ALIGNBYTES) &~ ALIGNBYTES)
+#define ALIGNED_POINTER(p,t)	((((u_long)(p)) & (sizeof(t)-1)) == 0)
 
 #define	NBPG		(1 << ALPHA_PGSHIFT)		/* bytes/page */
 #define	PGOFSET		(NBPG-1)			/* byte off. into pg */
 #define	PGSHIFT		ALPHA_PGSHIFT			/* LOG2(NBPG) */
-#define	NPTEPG		(1 << (PGSHIFT-PTESHIFT))	/* pte's/page */
-
-#define	SEGSHIFT	(PGSHIFT + (PGSHIFT-PTESHIFT))	/* LOG2(NBSEG) */
-#define	NBSEG		(1 << SEGSHIFT)			/* bytes/segment (8M) */
-#define	SEGOFSET	(NBSEG-1)			/* byte off. into seg */
 
 #define	KERNBASE	0xfffffc0000230000	/* start of kernel virtual */
 #define	BTOPKERNBASE	((u_long)KERNBASE >> PGSHIFT)
@@ -78,30 +79,39 @@
 #define	DEV_BSIZE	512
 #define	DEV_BSHIFT	9		/* log2(DEV_BSIZE) */
 #define	BLKDEV_IOSIZE	2048
+#ifndef	MAXPHYS
 #define	MAXPHYS		(64 * 1024)	/* max raw I/O transfer size */
+#endif
 
-#define	CLSIZE		1
-#define	CLSIZELOG2	0
+#define CLSIZE		1
+#define CLSIZELOG2	0
 
-/* NOTE: SSIZE, SINCR and UPAGES must be multiples of CLSIZE */
 #define	SSIZE		1		/* initial stack size/NBPG */
 #define	SINCR		1		/* increment of stack/NBPG */
 
 #define	UPAGES		2			/* pages of u-area */
 #define	USPACE		(UPAGES * NBPG)		/* total size of u-area */
 
+#ifndef MSGBUFSIZE
+#define MSGBUFSIZE	NBPG		/* default message buffer size */
+#endif
+
 /*
  * Constants related to network buffer management.
- * MCLBYTES must be no larger than CLBYTES (the software page size), and,
+ * MCLBYTES must be no larger than NBPG (the software page size), and,
  * on machines that exchange pages of input or output buffers with mbuf
  * clusters (MAPPED_MBUFS), MCLBYTES must also be an integral multiple
  * of the hardware page size.
  */
 #define	MSIZE		256		/* size of an mbuf */
-#define	MCLSHIFT	11
-#define	MCLBYTES	(1 << MCLSHIFT)	/* large enough for ether MTU */
+#ifndef MCLSHIFT
+# define	MCLSHIFT	11	/* convert bytes to m_buf clusters */
+					/* 2K cluster can hold Ether frame */
+#endif	/* MCLSHIFT */
+#define	MCLBYTES	(1 << MCLSHIFT)	/* size of a m_buf cluster */
 #define	MCLOFSET	(MCLBYTES - 1)
 #ifndef NMBCLUSTERS
+
 #ifdef GATEWAY
 #define	NMBCLUSTERS	1024		/* map size, max cluster allocation */
 #else
@@ -109,16 +119,13 @@
 #endif
 #endif
 
-#ifndef MSGBUFSIZE
-#define MSGBUFSIZE	1*NBPG
-#endif
-
 /*
  * Size of kernel malloc arena in CLBYTES-sized logical pages
  */ 
 #ifndef NKMEMCLUSTERS
-#define	NKMEMCLUSTERS	(4096*1024/CLBYTES)	/* XXX? */
+#define NKMEMCLUSTERS	(4096*1024/NBPG)	/* XXX? */
 #endif
+
 
 /* pages ("clicks") to disk blocks */
 #define	ctod(x)		((x) << (PGSHIFT - DEV_BSHIFT))
@@ -148,20 +155,20 @@
 #define	alpha_btop(x)		((unsigned long)(x) >> PGSHIFT)
 #define	alpha_ptob(x)		((unsigned long)(x) << PGSHIFT)
 
-#include <machine/intr.h>
-
 #ifdef _KERNEL
 #ifndef _LOCORE
 
-void	delay __P((unsigned long));
+#include <machine/intr.h>
+
+void	delay(unsigned long);
 #define	DELAY(n)	delay(n)
 
 /* XXX THE FOLLOWING PROTOTYPE BELONGS IN INTR.H */
-int spl0 __P((void));					/* drop ipl to zero */
+int spl0 __P((void));			/* drop ipl to zero */
 /* XXX END INTR.H */
 
 /* XXX THE FOLLOWING PROTOTYPE SHOULD BE A BUS.H INTERFACE */
-vm_offset_t alpha_XXX_dmamap __P((vm_offset_t));
+paddr_t alpha_XXX_dmamap(vaddr_t);
 /* XXX END BUS.H */
 
 #endif

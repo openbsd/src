@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.9 1999/07/30 19:05:49 deraadt Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.10 2000/11/08 16:00:54 art Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.16 1996/11/13 21:13:04 cgd Exp $	*/
 
 /*
@@ -87,6 +87,7 @@ static int getstr __P((char *cp, int size));
 void
 configure()
 {
+	extern int cold;
 
 	parse_prom_bootdev();
 
@@ -100,6 +101,8 @@ configure()
 	if (config_rootfound("mainbus", "mainbus") == NULL)
 		panic("no mainbus found");
 	(void)spl0();
+
+	hwrpb_restart_setup();
 
 	if (booted_device == NULL)
 		printf("WARNING: can't figure what device matches \"%s\"\n",
@@ -525,8 +528,7 @@ parse_prom_bootdev()
 	booted_partition = 0;
 	bootdev_data = NULL;
 
-        prom_getenv(PROM_E_BOOTED_DEV, boot_dev, sizeof(boot_dev));
-	bcopy(boot_dev, hacked_boot_dev, sizeof hacked_boot_dev);
+	bcopy(bootinfo.booted_dev, hacked_boot_dev, sizeof hacked_boot_dev);
 #if 0
 	printf("parse_prom_bootdev: boot dev = \"%s\"\n", boot_dev);
 #endif
@@ -603,8 +605,6 @@ device_register(dev, aux)
 	struct device *dev;
 	void *aux;
 {
-	extern const struct cpusw *cpu_fn_switch;
-
 	if (bootdev_data == NULL) {
 		/*
 		 * There is no hope.
@@ -613,5 +613,6 @@ device_register(dev, aux)
 		return;
 	}
 
-	(*cpu_fn_switch->device_register)(dev, aux);
+	if (platform.device_register)
+		(*platform.device_register)(dev, aux);
 }

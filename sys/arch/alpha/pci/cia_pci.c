@@ -1,5 +1,4 @@
-/*	$OpenBSD: cia_pci.c,v 1.5 1997/01/24 19:57:39 niklas Exp $	*/
-/*	$NetBSD: cia_pci.c,v 1.7 1996/11/23 06:46:50 cgd Exp $	*/
+/* $NetBSD: cia_pci.c,v 1.25 2000/06/29 08:58:46 mrg Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -32,17 +31,14 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <vm/vm.h>
 
-#include <machine/autoconf.h>	/* badaddr proto */
+#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <alpha/pci/ciareg.h>
 #include <alpha/pci/ciavar.h>
-
-#include <machine/rpb.h>	/* XXX for eb164 CIA firmware workarounds. */
-#include "dec_eb164.h"		/* XXX for eb164 CIA firmware workarounds. */
 
 void		cia_attach_hook __P((struct device *, struct device *,
 		    struct pcibus_attach_args *));
@@ -117,72 +113,86 @@ cia_conf_read(cpv, tag, offset)
 	struct cia_config *ccp = cpv;
 	pcireg_t *datap, data;
 	int s, secondary, ba;
-	int32_t old_haxr2;					/* XXX */
-#if NDEC_EB164
-	extern int cputype;					/* XXX */
-#endif
+	u_int32_t old_cfg, errbits;
 
-#ifdef DIAGNOSTIC
+#ifdef __GNUC__
 	s = 0;					/* XXX gcc -Wuninitialized */
-	old_haxr2 = 0;				/* XXX gcc -Wuninitialized */
+	old_cfg = 0;				/* XXX gcc -Wuninitialized */
 #endif
 
-#if NDEC_EB164
 	/*
-	 * Some (apparently-common) revisions of EB164 firmware do the
-	 * Wrong thing with PCI master aborts, which are caused by
-	 * accesing the configuration space of devices that don't
-	 * exist (for example).
+	 * Some (apparently-common) revisions of EB164 and AlphaStation
+	 * firmware do the Wrong thing with PCI master and target aborts,
+	 * which are caused by accesing the configuration space of devices
+	 * that don't exist (for example).
 	 *
-	 * On EB164's we clear the CIA error register's PCI master
-	 * abort bit before touching PCI configuration space and
-	 * check it afterwards.  If it indicates a master abort,
-	 * the device wasn't there so we return 0xffffffff.
+	 * To work around this, we clear the CIA error register's PCI
+	 * master and target abort bits before touching PCI configuration
+	 * space and check it afterwards.  If it indicates a master or target
+	 * abort, the device wasn't there so we return 0xffffffff.
 	 */
-	if (cputype == ST_EB164) {
-		/* clear the PCI master abort bit in CIA error register */
-		REGVAL(CIA_CSR_CIA_ERR) = 0x00000080;		/* XXX */
-		alpha_mb();
-		alpha_pal_draina();	
-	}
-#endif
+	REGVAL(CIA_CSR_CIA_ERR) = CIA_ERR_RCVD_MAS_ABT|CIA_ERR_RCVD_TAR_ABT;
+	alpha_mb();
+	alpha_pal_draina();	
 
 	/* secondary if bus # != 0 */
-	pci_decompose_tag(&ccp->cc_pc, tag, &secondary, 0, 0);
+	alpha_pci_decompose_tag(&ccp->cc_pc, tag, &secondary, 0, 0);
 	if (secondary) {
 		s = splhigh();
-		old_haxr2 = REGVAL(CIA_CSRS + 0x480);		/* XXX */
+		old_cfg = REGVAL(CIA_CSR_CFG);
 		alpha_mb();
-		REGVAL(CIA_CSRS + 0x480) = old_haxr2 | 0x1;	/* XXX */
+		REGVAL(CIA_CSR_CFG) = old_cfg | 0x1;
 		alpha_mb();
 	}
 
-	datap = (pcireg_t *)ALPHA_PHYS_TO_K0SEG(CIA_PCI_CONF |
-	    tag << 5UL |					/* XXX */
-	    (offset & ~0x03) << 5 |				/* XXX */
-	    0 << 5 |						/* XXX */
-	    0x3 << 3);						/* XXX */
+	/*
+	 * We just inline the BWX support, since this is the only
+	 * difference between BWX and swiz for config space.
+	 */
+	if (ccp->cc_flags & CCF_PCI_USE_BWX) {
+		if (secondary) {
+			datap =
+			    (pcireg_t *)ALPHA_PHYS_TO_K0SEG(CIA_EV56_BWCONF1 |
+				tag | (offset & ~0x03));
+		} else {
+			datap =
+			    (pcireg_t *)ALPHA_PHYS_TO_K0SEG(CIA_EV56_BWCONF0 |
+				tag | (offset & ~0x03));
+		}
+	} else {
+		datap = (pcireg_t *)ALPHA_PHYS_TO_K0SEG(CIA_PCI_CONF |
+		    tag << 5UL |				/* XXX */
+		    (offset & ~0x03) << 5 |			/* XXX */
+		    0 << 5 |					/* XXX */
+		    0x3 << 3);					/* XXX */
+	}
 	data = (pcireg_t)-1;
+	alpha_mb();
 	if (!(ba = badaddr(datap, sizeof *datap)))
 		data = *datap;
+	alpha_mb();
+	alpha_mb();
 
 	if (secondary) {
 		alpha_mb();
-		REGVAL(CIA_CSRS + 0x480) = old_haxr2;		/* XXX */
+		REGVAL(CIA_CSR_CFG) = old_cfg;
 		alpha_mb();
 		splx(s);
 	}
 
-#if NDEC_EB164
-	if (cputype == ST_EB164) {
-		alpha_pal_draina();	
-		/* check CIA error register for PCI master abort */
-		if (REGVAL(CIA_CSR_CIA_ERR) & 0x00000080) {	/* XXX */
-			ba = 1;
-			data = 0xffffffff;
-		}
+	alpha_pal_draina();	
+	alpha_mb();
+	errbits = REGVAL(CIA_CSR_CIA_ERR);
+	if (errbits & (CIA_ERR_RCVD_MAS_ABT|CIA_ERR_RCVD_TAR_ABT)) {
+		ba = 1;
+		data = 0xffffffff;
 	}
-#endif
+
+	if (errbits) {
+		REGVAL(CIA_CSR_CIA_ERR) = errbits;
+		alpha_mb();
+		alpha_pal_draina();
+	}
 
 #if 0
 	printf("cia_conf_read: tag 0x%lx, reg 0x%lx -> %x @ %p%s\n", tag, reg,
@@ -202,33 +212,52 @@ cia_conf_write(cpv, tag, offset, data)
 	struct cia_config *ccp = cpv;
 	pcireg_t *datap;
 	int s, secondary;
-	int32_t old_haxr2;					/* XXX */
+	u_int32_t old_cfg;
 
-#ifdef DIAGNOSTIC
+#ifdef __GNUC__
 	s = 0;					/* XXX gcc -Wuninitialized */
-	old_haxr2 = 0;				/* XXX gcc -Wuninitialized */
+	old_cfg = 0;				/* XXX gcc -Wuninitialized */
 #endif
 
 	/* secondary if bus # != 0 */
-	pci_decompose_tag(&ccp->cc_pc, tag, &secondary, 0, 0);
+	alpha_pci_decompose_tag(&ccp->cc_pc, tag, &secondary, 0, 0);
 	if (secondary) {
 		s = splhigh();
-		old_haxr2 = REGVAL(CIA_CSRS + 0x480);		/* XXX */
+		old_cfg = REGVAL(CIA_CSR_CFG);
 		alpha_mb();
-		REGVAL(CIA_CSRS + 0x480) = old_haxr2 | 0x1;	/* XXX */
+		REGVAL(CIA_CSR_CFG) = old_cfg | 0x1;
 		alpha_mb();
 	}
 
-	datap = (pcireg_t *)ALPHA_PHYS_TO_K0SEG(CIA_PCI_CONF |
-	    tag << 5UL |					/* XXX */
-	    (offset & ~0x03) << 5 |				/* XXX */
-	    0 << 5 |						/* XXX */
-	    0x3 << 3);						/* XXX */
+	/*
+	 * We just inline the BWX support, since this is the only
+	 * difference between BWX and swiz for config space.
+	 */
+	if (ccp->cc_flags & CCF_PCI_USE_BWX) {
+		if (secondary) {
+			datap =
+			    (pcireg_t *)ALPHA_PHYS_TO_K0SEG(CIA_EV56_BWCONF1 |
+				tag | (offset & ~0x03));
+		} else {
+			datap =
+			    (pcireg_t *)ALPHA_PHYS_TO_K0SEG(CIA_EV56_BWCONF0 |
+				tag | (offset & ~0x03));
+		}
+	} else {
+		datap = (pcireg_t *)ALPHA_PHYS_TO_K0SEG(CIA_PCI_CONF |
+		    tag << 5UL |				/* XXX */
+		    (offset & ~0x03) << 5 |			/* XXX */
+		    0 << 5 |					/* XXX */
+		    0x3 << 3);					/* XXX */
+	}
+	alpha_mb();
 	*datap = data;
+	alpha_mb();
+	alpha_mb();
 
 	if (secondary) {
 		alpha_mb();
-		REGVAL(CIA_CSRS + 0x480) = old_haxr2;		/* XXX */
+		REGVAL(CIA_CSR_CFG) = old_cfg;
 		alpha_mb();
 		splx(s);
 	}

@@ -1,5 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.4 1996/10/30 22:39:34 niklas Exp $	*/
-/*	$NetBSD: vmparam.h,v 1.3 1996/07/09 00:28:25 cgd Exp $	*/
+/* $NetBSD: vmparam.h,v 1.18 2000/05/22 17:13:54 thorpej Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,17 +42,26 @@
  *	@(#)vmparam.h	8.2 (Berkeley) 4/22/94
  */
 
+#ifndef	_ALPHA_VMPARAM_H_
+#define	_ALPHA_VMPARAM_H_
+
 /*
  * Machine dependent constants for Alpha.
  */
+
 /*
  * USRTEXT is the start of the user text/data space, while USRSTACK
  * is the top (end) of the user stack.  Immediately above the user stack
  * resides the user structure, which is UPAGES long and contains the
  * kernel stack.
+ *
+ * Digital UNIX (formerly DEC OSF/1) places the stack below the
+ * text segment (i.e. growing downward from 4G).  We may want to
+ * consider doing that at some point, but it might require changes
+ * to the exec code.
  */
-#define	USRTEXT		CLBYTES
-#define	USRSTACK	VM_MAXUSER_ADDRESS
+#define	USRTEXT		NBPG
+#define	USRSTACK	((vaddr_t)0x0000000200000000)		/* 8G */
 
 /*
  * Virtual memory related constants, all in bytes
@@ -75,16 +83,6 @@
 #endif
 
 /*
- * Default sizes of swap allocation chunks (see dmap.h).
- * The actual values may be changed in vminit() based on MAXDSIZ.
- * With MAXDSIZ of 16Mb and NDMAP of 38, dmmax will be 1024.
- * DMMIN should be at least ctod(1) so that vtod() works.
- * vminit() insures this.
- */
-#define	DMMIN	32			/* smallest swap allocation */
-#define	DMMAX	4096			/* largest potential swap allocation */
-
-/*
  * PTEs for mapping user space into the kernel for phyio operations.
  * 64 pte's are enough to cover 8 disks * MAXBSIZE.
  */
@@ -101,18 +99,6 @@
 #endif
 
 /*
- * Boundary at which to place first MAPMEM segment if not explicitly
- * specified.  Should be a power of two.  This allows some slop for
- * the data segment to grow underneath the first mapped segment.
- */
-#define MMSEG		0x200000
-
-/*
- * The size of the clock loop.
- */
-#define	LOOPPAGES	(maxfree - firstfree)
-
-/*
  * The time for a process to be blocked before being very swappable.
  * This is a number of seconds which the system takes as being a non-trivial
  * amount of real time.  You probably shouldn't change this;
@@ -124,31 +110,38 @@
 #define	MAXSLP 		20
 
 /*
- * A swapped in process is given a small amount of core without being bothered
- * by the page replacement algorithm.  Basically this says that if you are
- * swapped in you deserve some resources.  We protect the last SAFERSS
- * pages against paging and will just swap you out rather than paging you.
- * Note that each process has at least UPAGES+CLSIZE pages which are not
- * paged anyways, in addition to SAFERSS.
- */
-#define	SAFERSS		10		/* nominal ``small'' resident set size
-					   protected against replacement */
-
-/*
  * Mach derived constants
  */
 
 /* user/kernel map constants */
-#define VM_MIN_ADDRESS		((vm_offset_t)ALPHA_USEG_BASE) /* 0 */
-#define VM_MAXUSER_ADDRESS	((vm_offset_t)0x0000000200000000) /* 8G XXX */
+#define VM_MIN_ADDRESS		((vaddr_t)ALPHA_USEG_BASE)	    /* 0 */
+#define VM_MAXUSER_ADDRESS	((vaddr_t)(ALPHA_USEG_END + 1L))    /* 4T */
 #define VM_MAX_ADDRESS		VM_MAXUSER_ADDRESS
-#define VM_MIN_KERNEL_ADDRESS	((vm_offset_t)ALPHA_K1SEG_BASE)
-#define VM_MAX_KERNEL_ADDRESS	((vm_offset_t)ALPHA_K1SEG_END)
+#define VM_MIN_KERNEL_ADDRESS	((vaddr_t)ALPHA_K1SEG_BASE)
+#define VM_MAX_KERNEL_ADDRESS	((vaddr_t)ALPHA_K1SEG_END)
 
 /* virtual sizes (bytes) for various kernel submaps */
 #define VM_MBUF_SIZE		(NMBCLUSTERS*MCLBYTES)
-#define VM_KMEM_SIZE		(NKMEMCLUSTERS*CLBYTES)
-#define VM_PHYS_SIZE		(USRIOSIZE*CLBYTES)
+#define VM_KMEM_SIZE		(NKMEMCLUSTERS*NBPG)
+#define VM_PHYS_SIZE		(USRIOSIZE*NBPG)
 
 /* some Alpha-specific constants */
-#define	VPTBASE		((vm_offset_t)0xfffffffc00000000) /* Virt. pg table */
+#define	VPTBASE		((vaddr_t)0xfffffffc00000000)	/* Virt. pg table */
+
+#define MACHINE_NEW_NONCONTIG
+
+#define	VM_PHYSSEG_MAX		16		/* XXX */
+#define	VM_PHYSSEG_STRAT	VM_PSTRAT_BSEARCH
+#define	VM_PHYSSEG_NOADD			/* no more after vm_mem_init */
+
+#define	VM_NFREELIST		1
+#define	VM_FREELIST_DEFAULT	0
+
+/*
+ * pmap-specific data stored in the vm_physmem[] array.
+ */
+struct pmap_physseg {
+	struct pv_head *pvhead;		/* pv list of this seg */
+};
+
+#endif	/* ! _ALPHA_VMPARAM_H_ */

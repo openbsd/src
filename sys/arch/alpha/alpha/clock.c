@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.9 1999/09/25 16:23:49 pjanzen Exp $	*/
+/*	$OpenBSD: clock.c,v 1.10 2000/11/08 16:00:56 art Exp $	*/
 /*	$NetBSD: clock.c,v 1.14 1996/11/23 06:31:57 cgd Exp $	*/
 
 /*
@@ -50,6 +50,7 @@
 
 #include <machine/rpb.h>
 #include <machine/autoconf.h>
+#include <machine/cpuconf.h>
 
 #include <alpha/alpha/clockvar.h>
 
@@ -132,7 +133,7 @@ cpu_initclocks()
 	 * hardclock, which would then fall over because p->p_stats
 	 * isn't set at that time.
 	 */
-	set_clockintr();
+	platform.clockintr = hardclock;
 	schedhz = 16;
 
 	/*

@@ -1,5 +1,4 @@
-/*	$OpenBSD: prom_disp.s,v 1.4 1996/10/30 22:38:24 niklas Exp $	*/
-/*	$NetBSD: prom_disp.s,v 1.5 1996/09/17 21:17:14 cgd Exp $	*/
+/* $NetBSD: prom_disp.s,v 1.8 1997/11/03 04:22:03 ross Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -38,6 +37,7 @@
 	.text
 	.align	4
 
+inc3:	.stabs	__FILE__,132,0,0,inc3; .loc	1 __LINE__
 /*
  * Dispatcher routine.  Implements prom's calling machinery, saves our
  * callee-saved registers as required by C.

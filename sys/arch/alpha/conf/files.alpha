@@ -1,4 +1,4 @@
-#	$OpenBSD: files.alpha,v 1.34 2000/08/12 20:11:32 ericj Exp $
+#	$OpenBSD: files.alpha,v 1.35 2000/11/08 16:01:07 art Exp $
 #	$NetBSD: files.alpha,v 1.32 1996/11/25 04:03:21 cgd Exp $
 #
 # alpha-specific configuration info
@@ -12,6 +12,9 @@ maxusers 2 8 64
 define	alpha_shared_intr
 file	arch/alpha/dev/shared_intr.c	alpha_shared_intr | dec_eb164 |
 					dec_kn20aa
+
+define	alpha_sgmap
+file	arch/alpha/common/sgmap_common.c alpha_sgmap | dec_3000_500
 
 #
 # Bus-independent devices
@@ -132,7 +135,6 @@ major { wd = 0 }
 #device	jeisa at ibus: eisabus
 
 file	arch/alpha/isa/isa_machdep.c	isa
-file    arch/alpha/pci/pciide_machdep.c  pci
 
 device	pckbc { }
 attach	pckbc at isa
@@ -168,6 +170,11 @@ include "dev/eisa/files.eisa"
 
 # include "dev/pci/files.pci" XXX SEE ABOVE
 
+file    arch/alpha/pci/pciide_machdep.c  pci
+
+define	alpha_pci_sgmap_pte64
+file	arch/alpha/pci/pci_sgmap_pte64.c	alpha_pci_sgmap_pte64
+
 device	apecs: pcibus
 attach	apecs at mainbus
 file	arch/alpha/pci/apecs.c		apecs
@@ -182,19 +189,23 @@ file	arch/alpha/pci/lca_bus_io.c	lca
 file	arch/alpha/pci/lca_bus_mem.c	lca
 file	arch/alpha/pci/lca_pci.c	lca
 
-device	cia: pcibus
+device	cia: pcibus, alpha_sgmap, alpha_pci_sgmap_pte64
 attach	cia at mainbus
 file	arch/alpha/pci/cia.c		cia
+file	arch/alpha/pci/cia_dma.c	cia
+file	arch/alpha/pci/cia_pci.c	cia
 file	arch/alpha/pci/cia_bus_io.c	cia
 file	arch/alpha/pci/cia_bus_mem.c	cia
-file	arch/alpha/pci/cia_pci.c	cia
+file	arch/alpha/pci/cia_bwx_bus_io.c	cia
+file	arch/alpha/pci/cia_bwx_bus_mem.c	cia
+
 
 file	arch/alpha/pci/pci_2100_a50.c	dec_2100_a50
 file	arch/alpha/pci/pci_axppci_33.c	dec_axppci_33
 file	arch/alpha/pci/pci_eb164.c	dec_eb164
 file	arch/alpha/pci/pci_eb164_intr.s	dec_eb164
 file	arch/alpha/pci/pci_kn20aa.c	dec_kn20aa
-
+file	arch/alpha/pci/pci_550.c	dec_550
 
 #
 # PCI Bus devices
@@ -243,8 +254,7 @@ file	arch/alpha/alpha/interrupt.c
 file	arch/alpha/alpha/machdep.c
 file	arch/alpha/alpha/mainbus.c
 file	arch/alpha/alpha/mem.c
-file	arch/alpha/alpha/pmap.c			new_pmap
-file	arch/alpha/alpha/pmap.old.c		!new_pmap
+file	arch/alpha/alpha/pmap.c
 file	arch/alpha/alpha/process_machdep.c
 file	arch/alpha/alpha/prom.c
 file	arch/alpha/alpha/support.c
@@ -252,6 +262,7 @@ file	arch/alpha/alpha/sys_machdep.c
 file	arch/alpha/alpha/trap.c
 file	arch/alpha/alpha/vm_machdep.c
 file	arch/alpha/alpha/disksubr.c
+file	arch/alpha/common/bus_dma.c
 file	dev/cons.c
 
 
@@ -275,6 +286,7 @@ file	arch/alpha/alpha/dec_3000_500.c		dec_3000_500	needs-flag
 file	arch/alpha/alpha/dec_axppci_33.c	dec_axppci_33	needs-flag
 file	arch/alpha/alpha/dec_eb164.c		dec_eb164	needs-flag
 file	arch/alpha/alpha/dec_kn20aa.c		dec_kn20aa	needs-flag
+file	arch/alpha/alpha/dec_550.c		dec_550		needs-flag
 
 # OSF/1 Binary Compatibility (COMPAT_OSF1)
 include "compat/osf1/files.osf1"

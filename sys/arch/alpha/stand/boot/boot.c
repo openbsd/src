@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.11 1998/03/05 23:08:17 deraadt Exp $	*/
+/*	$OpenBSD: boot.c,v 1.12 2000/11/08 16:01:25 art Exp $	*/
 /*	$NetBSD: boot.c,v 1.10 1997/01/18 01:58:33 cgd Exp $	*/
 
 /*
@@ -48,6 +48,7 @@
 
 #include <machine/rpb.h>
 #include <machine/prom.h>
+#include <machine/autoconf.h>
 
 #define _KERNEL
 #include "include/pte.h"
@@ -59,7 +60,11 @@ char boot_flags[128];
 
 extern char bootprog_name[], bootprog_rev[], bootprog_date[], bootprog_maker[];
 
-vm_offset_t ffp_save, ptbr_save, esym;
+struct bootinfo_v1 bootinfo_v1;
+
+extern paddr_t ffp_save, ptbr_save;
+
+extern vaddr_t ssym, esym;
 
 int debug;
 
@@ -107,11 +112,31 @@ main()
 			win = (loadfile(name = *namep, &entry) == 0);
 
 	printf("\n");
-	if (win) {
-		(void)printf("Entering %s at 0x%lx...\n", name, entry);
-		(*(void (*)())entry)(ffp_save, ptbr_save, esym);
-	}
+	if (!win)
+		goto fail;
 
+	/*
+	 * Fill in the bootinfo for the kernel.
+	 */
+	bzero(&bootinfo_v1, sizeof(bootinfo_v1));
+	bootinfo_v1.ssym = ssym;
+	bootinfo_v1.esym = esym;
+	bcopy(name, bootinfo_v1.booted_kernel,
+	    sizeof(bootinfo_v1.booted_kernel));
+	bcopy(boot_flags, bootinfo_v1.boot_flags,
+	    sizeof(bootinfo_v1.boot_flags));
+	bootinfo_v1.hwrpb = (void *)HWRPB_ADDR;
+	bootinfo_v1.hwrpbsize = ((struct rpb *)HWRPB_ADDR)->rpb_size;
+	bootinfo_v1.cngetc = NULL;
+	bootinfo_v1.cnputc = NULL;
+	bootinfo_v1.cnpollc = NULL;
+
+	(void)printf("Entering %s at 0x%lx...\n", name, entry);
+	(*(void (*)(u_int64_t, u_int64_t, u_int64_t, void *, u_int64_t,
+		u_int64_t))entry)(ffp_save, ptbr_save, BOOTINFO_MAGIC,
+		&bootinfo_v1, 1, 0);
+
+fail:
 	(void)printf("Boot failed!  Halting...\n");
 	halt();
 }

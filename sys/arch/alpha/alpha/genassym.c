@@ -1,7 +1,8 @@
-/*	$OpenBSD: genassym.c,v 1.6 1999/09/26 11:07:32 kstailey Exp $	*/
-/*	$NetBSD: genassym.c,v 1.9 1996/08/20 23:00:24 cgd Exp $	*/
+/* $NetBSD: genassym.c,v 1.27 2000/05/26 00:36:42 thorpej Exp $ */
 
 /*
+ * Copyright (c) 1994, 1995 Gordon W. Ross
+ * Copyright (c) 1993 Adam Glass
  * Copyright (c) 1982, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -33,9 +34,33 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)genassym.c	8.3 (Berkeley) 1/4/94
+ *	from: @(#)genassym.c	8.3 (Berkeley) 1/4/94
  */
 
+/*
+ * This program is designed so that it can be both:
+ * (1) Run on the native machine to generate assym.h
+ * (2) Converted to assembly that genassym.awk will
+ *     translate into the same assym.h as (1) does.
+ * The second method is done as follows:
+ *   m68k-xxx-gcc [options] -S .../genassym.c
+ *   awk -f genassym.awk < genassym.s > assym.h
+ *
+ * Using actual C code here (instead of genassym.cf)
+ * has the advantage that "make depend" automatically
+ * tracks dependencies of this C code on the (many)
+ * header files used here.  Also, the awk script used
+ * to convert the assembly output to assym.h is much
+ * smaller and simpler than sys/kern/genassym.sh.
+ *
+ * Both this method and the genassym.cf method have the
+ * disadvantage that they depend on gcc-specific features.
+ * This method depends on the format of assembly output for
+ * data, and the genassym.cf method depends on features of
+ * the gcc asm() statement (inline assembly).
+ */
+
+#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 #include <sys/param.h>
 #include <sys/buf.h>
 #include <sys/map.h>
@@ -44,152 +69,184 @@
 #include <sys/msgbuf.h>
 #include <sys/syscall.h>
 #include <sys/user.h>
-#include <sys/syscall.h>
 
 #include <machine/cpu.h>
 #include <machine/reg.h>
 #include <machine/frame.h>
 #include <machine/rpb.h>
+#include <machine/vmparam.h>
 
-#include <stddef.h>
-#include <stdio.h>
-#include <err.h>
+#include <vm/vm.h>
 
-#ifdef COMPAT_NETBSD
-# include <compat/netbsd/netbsd_syscall.h>
+/* Note: Avoid /usr/include for cross compilation! */
+extern void printf __P((const char *fmt, ...));
+extern void exit __P((int));
+
+#define	offsetof(type, member) ((size_t)(&((type *)0)->member))
+
+#ifdef	__STDC__
+#define def(name, value) 	{ #name, value }
+#define	def1(name)	 	{ #name, name }
+#define	off(name, type, member)	{ #name, offsetof(type, member) }
+#else
+#define def(name, value) 	{ "name", value }
+#define	def1(name)	 	{ "name", name }
+#define	off(name, type, member)	{ "name", offsetof(type, member) }
 #endif
 
-void	def __P((char *, long));
-int	main __P((int argc, char **argv));
+/*
+ * Note: genassym.awk cares about the form of this structure,
+ * as well as the names and placement of the "asdefs" array
+ * and the "nassefs" variable below.  Clever, but fragile.
+ */
+struct nv {
+	char n[28];
+	long v;
+};
 
-#define	off(what, s, m)	def(what, (int)offsetof(s, m))
+struct nv assyms[] = {
+	/* general constants */
+	def1(NBPG),
+	def1(PGSHIFT),
+	def1(VM_MAX_ADDRESS),
 
-void
-def(what, val)
-	char *what;
-	long val;
-{
+	/* Register offsets, for stack frames. */
+	def1(FRAME_V0),
+	def1(FRAME_T0),
+	def1(FRAME_T1),
+	def1(FRAME_T2),
+	def1(FRAME_T3),
+	def1(FRAME_T4),
+	def1(FRAME_T5),
+	def1(FRAME_T6),
+	def1(FRAME_T7),
+	def1(FRAME_S0),
+	def1(FRAME_S1),
+	def1(FRAME_S2),
+	def1(FRAME_S3),
+	def1(FRAME_S4),
+	def1(FRAME_S5),
+	def1(FRAME_S6),
+	def1(FRAME_A3),
+	def1(FRAME_A4),
+	def1(FRAME_A5),
+	def1(FRAME_T8),
+	def1(FRAME_T9),
+	def1(FRAME_T10),
+	def1(FRAME_T11),
+	def1(FRAME_RA),
+	def1(FRAME_T12),
+	def1(FRAME_AT),
+	def1(FRAME_SP),
 
-	if (printf("#define\t%s\t%ld\n", what, val) < 0)
-		err(1, "printf");
-}
+	def1(FRAME_SW_SIZE),
+
+	def1(FRAME_PS),
+	def1(FRAME_PC),
+	def1(FRAME_GP),
+	def1(FRAME_A0),
+	def1(FRAME_A1),
+	def1(FRAME_A2),
+
+	def1(FRAME_SIZE),
+
+	/* bits of the PS register */
+	def1(ALPHA_PSL_USERMODE),
+	def1(ALPHA_PSL_IPL_MASK),
+	def1(ALPHA_PSL_IPL_0),
+	def1(ALPHA_PSL_IPL_SOFT),
+	def1(ALPHA_PSL_IPL_HIGH),
+
+	/* pte bits */
+	def1(ALPHA_PTE_VALID),
+	def1(ALPHA_PTE_ASM),
+	def1(ALPHA_PTE_KR),
+	def1(ALPHA_PTE_KW),
+
+	/* Important offsets into the proc struct & associated constants */
+	off(P_FORW, struct proc, p_forw),
+	off(P_BACK, struct proc, p_back),
+	off(P_ADDR, struct proc, p_addr),
+	off(P_VMSPACE, struct proc, p_vmspace),
+	off(P_STAT, struct proc, p_stat),
+	off(P_MD_FLAGS, struct proc, p_md.md_flags),
+	off(P_MD_PCBPADDR, struct proc, p_md.md_pcbpaddr),
+	off(PH_LINK, struct prochd, ph_link),
+	off(PH_RLINK, struct prochd, ph_rlink),
+
+	/* XXXXX - Extremly bogus! */
+	def(SONPROC, SRUN),
+	/* XXX */
+
+	/* offsets needed by cpu_switch() to switch mappings. */
+	off(VM_MAP_PMAP, struct vmspace, vm_map.pmap), 
+
+	/* Important offsets into the user struct & associated constants */
+	def1(UPAGES),
+	off(U_PCB, struct user, u_pcb),
+	off(U_PCB_HWPCB, struct user, u_pcb.pcb_hw),
+	off(U_PCB_HWPCB_KSP, struct user, u_pcb.pcb_hw.apcb_ksp),
+	off(U_PCB_CONTEXT, struct user, u_pcb.pcb_context[0]),
+	off(U_PCB_ONFAULT, struct user, u_pcb.pcb_onfault),
+	off(U_PCB_ACCESSADDR, struct user, u_pcb.pcb_accessaddr),
+
+	/* Offsets into struct fpstate, for save, restore */
+	off(FPREG_FPR_REGS, struct fpreg, fpr_regs[0]),
+	off(FPREG_FPR_CR, struct fpreg, fpr_cr),
+
+	/* Important other addresses */
+	def1(HWRPB_ADDR),		/* Restart parameter block */
+	def1(VPTBASE),			/* Virtual Page Table base */
+
+	/* Offsets into the HWRPB. */
+	off(RPB_PRIMARY_CPU_ID, struct rpb, rpb_primary_cpu_id),
+
+	/* Kernel entries */
+	def1(ALPHA_KENTRY_ARITH),
+	def1(ALPHA_KENTRY_MM),
+	def1(ALPHA_KENTRY_IF),
+	def1(ALPHA_KENTRY_UNA),
+
+	/* errno values */
+	def1(ENAMETOOLONG),
+	def1(EFAULT),
+
+	/* Syscalls called from sigreturn. */
+	def1(SYS_sigreturn),
+	def1(SYS_exit),
+
+	/* CPU info */
+	off(CPU_INFO_CURPROC, struct cpu_info, ci_curproc),
+	off(CPU_INFO_FPCURPROC, struct cpu_info, ci_fpcurproc),
+	off(CPU_INFO_CURPCB, struct cpu_info, ci_curpcb),
+	off(CPU_INFO_IDLE_PCB_PADDR, struct cpu_info, ci_idle_pcb_paddr),
+	off(CPU_INFO_WANT_RESCHED, struct cpu_info, ci_want_resched),
+	off(CPU_INFO_ASTPENDING, struct cpu_info, ci_astpending),
+	def(CPU_INFO_SIZEOF, sizeof(struct cpu_info)),
+};
+int nassyms = sizeof(assyms)/sizeof(assyms[0]);
+
+int main __P((int argc, char **argv));
 
 int
 main(argc, argv)
 	int argc;
 	char **argv;
 {
+	char *name;
+	long i, val;
 
-	/* general constants */
-	def("NBPG", NBPG);
-	def("PGSHIFT", PGSHIFT);
-	def("VM_MAX_ADDRESS", VM_MAX_ADDRESS);
+	for (i = 0; i < nassyms; i++) {
+		name = assyms[i].n;
+		val  = assyms[i].v;
 
-	/* Register offsets, for stack frames. */
-	def("FRAME_V0", FRAME_V0);
-	def("FRAME_T0", FRAME_T0);
-	def("FRAME_T1", FRAME_T1);
-	def("FRAME_T2", FRAME_T2);
-	def("FRAME_T3", FRAME_T3);
-	def("FRAME_T4", FRAME_T4);
-	def("FRAME_T5", FRAME_T5);
-	def("FRAME_T6", FRAME_T6);
-	def("FRAME_T7", FRAME_T7);
-	def("FRAME_S0", FRAME_S0);
-	def("FRAME_S1", FRAME_S1);
-	def("FRAME_S2", FRAME_S2);
-	def("FRAME_S3", FRAME_S3);
-	def("FRAME_S4", FRAME_S4);
-	def("FRAME_S5", FRAME_S5);
-	def("FRAME_S6", FRAME_S6);
-	def("FRAME_A3", FRAME_A3);
-	def("FRAME_A4", FRAME_A4);
-	def("FRAME_A5", FRAME_A5);
-	def("FRAME_T8", FRAME_T8);
-	def("FRAME_T9", FRAME_T9);
-	def("FRAME_T10", FRAME_T10);
-	def("FRAME_T11", FRAME_T11);
-	def("FRAME_RA", FRAME_RA);
-	def("FRAME_T12", FRAME_T12);
-	def("FRAME_AT", FRAME_AT);
-	def("FRAME_SP", FRAME_SP);
-
-	def("FRAME_SW_SIZE", FRAME_SW_SIZE);
-
-	def("FRAME_PS", FRAME_PS);
-	def("FRAME_PC", FRAME_PC);
-	def("FRAME_GP", FRAME_GP);
-	def("FRAME_A0", FRAME_A0);
-	def("FRAME_A1", FRAME_A1);
-	def("FRAME_A2", FRAME_A2);
-
-	def("FRAME_SIZE", FRAME_SIZE);
-
-	/* bits of the PS register */
-	def("ALPHA_PSL_USERMODE", ALPHA_PSL_USERMODE);
-	def("ALPHA_PSL_IPL_MASK", ALPHA_PSL_IPL_MASK);
-	def("ALPHA_PSL_IPL_0", ALPHA_PSL_IPL_0);
-	def("ALPHA_PSL_IPL_SOFT", ALPHA_PSL_IPL_SOFT);
-	def("ALPHA_PSL_IPL_HIGH", ALPHA_PSL_IPL_HIGH);
-
-	/* pte bits */
-	def("ALPHA_PTE_VALID", ALPHA_PTE_VALID);
-	def("ALPHA_PTE_ASM", ALPHA_PTE_ASM);
-	def("ALPHA_PTE_KR", ALPHA_PTE_KR);
-	def("ALPHA_PTE_KW", ALPHA_PTE_KW);
-
-	/* Important offsets into the proc struct & associated constants */
-	off("P_FORW", struct proc, p_forw);
-	off("P_BACK", struct proc, p_back);
-	off("P_ADDR", struct proc, p_addr);
-	off("P_VMSPACE", struct proc, p_vmspace);
-	off("P_MD_FLAGS", struct proc, p_md.md_flags);
-	off("P_MD_PCBPADDR", struct proc, p_md.md_pcbpaddr);
-	off("PH_LINK", struct prochd, ph_link);
-	off("PH_RLINK", struct prochd, ph_rlink);
-
-#ifndef NEW_PMAP
-	/* offsets needed by cpu_switch(), et al., to switch mappings. */
-	off("VM_PMAP_STPTE", struct vmspace, vm_pmap.pm_stpte);
-	def("USTP_OFFSET", kvtol1pte(VM_MIN_ADDRESS) * sizeof(pt_entry_t));
-#else /* NEW_PMAP */
-	off("VM_PMAP", struct vmspace, vm_pmap);
-#endif /* NEW_PMAP */
-
-	/* Important offsets into the user struct & associated constants */
-	def("UPAGES", UPAGES);
-	off("U_PCB", struct user, u_pcb);
-	off("PCB_HWPCB", struct pcb, pcb_hw);
-	off("PCB_HWPCB_KSP", struct pcb, pcb_hw.apcb_ksp);
-	off("PCB_CONTEXT", struct pcb, pcb_context[0]);
-	off("PCB_ONFAULT", struct pcb, pcb_onfault);
-	off("PCB_ACCESSADDR", struct pcb, pcb_accessaddr);
-
-	/* Offsets into struct fpstate, for save, restore */
-	off("FPREG_FPR_REGS", struct fpreg, fpr_regs[0]);
-	off("FPREG_FPR_CR", struct fpreg, fpr_cr);
-
-	/* Important other addresses */
-	def("HWRPB_ADDR", HWRPB_ADDR);		/* Restart parameter block */
-	def("VPTBASE", VPTBASE);		/* Virtual Page Table base */
-
-	/* Kernel entries */
-	def("ALPHA_KENTRY_ARITH", ALPHA_KENTRY_ARITH);
-	def("ALPHA_KENTRY_MM", ALPHA_KENTRY_MM);
-	def("ALPHA_KENTRY_IF", ALPHA_KENTRY_IF);
-	def("ALPHA_KENTRY_UNA", ALPHA_KENTRY_UNA);
-
-	/* errno values */
-	def("ENAMETOOLONG", ENAMETOOLONG);
-	def("EFAULT", EFAULT);
-
-	/* Syscalls called from sigreturn. */
-	def("SYS_sigreturn", SYS_sigreturn);
-	def("SYS_exit", SYS_exit);
-#ifdef COMPAT_NETBSD
-	def("NETBSD_SYS___sigreturn14", NETBSD_SYS___sigreturn14);
-	def("NETBSD_SYS_exit", NETBSD_SYS_exit);
-#endif
+		printf("#define\t%s\t", name);
+		/* Hack to make the output easier to verify. */
+		if ((val < 0) || (val > 999))
+			printf("0x%lx\n", val);
+		else
+			printf("%ld\n", val);
+	}
 
 	exit(0);
 }

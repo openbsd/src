@@ -1,107 +1,182 @@
-/*	$OpenBSD: db_interface.c,v 1.9 2000/01/03 19:19:41 deraadt Exp $	*/
+/* $NetBSD: db_interface.c,v 1.8 1999/10/12 17:08:57 jdolecek Exp $ */
 
-/*
- * Copyright (c) 1997 Niklas Hallqvist.  All rights reserverd.
+/* 
+ * Mach Operating System
+ * Copyright (c) 1992,1991,1990 Carnegie Mellon University
+ * All Rights Reserved.
+ * 
+ * Permission to use, copy, modify and distribute this software and its
+ * documentation is hereby granted, provided that both the copyright
+ * notice and this permission notice appear in all copies of the
+ * software, derivative works or modified versions, and any portions
+ * thereof, and that both notices appear in supporting documentation.
+ * 
+ * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS ``AS IS''
+ * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND FOR
+ * ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
+ * 
+ * Carnegie Mellon requests users of this software to return to
+ * 
+ *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
+ *  School of Computer Science
+ *  Carnegie Mellon University
+ *  Pittsburgh PA 15213-3890
+ * 
+ * any improvements or extensions that they make and grant Carnegie the
+ * rights to redistribute these changes.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by Niklas Hallqvist.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
- * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
- * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
- * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
- * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *	db_interface.c,v 2.4 1991/02/05 17:11:13 mrt (CMU)
  */
 
-#include <sys/types.h>
+/*
+ * Parts of this file are derived from Mach 3:
+ *
+ *	File: alpha_instruction.c
+ *	Author: Alessandro Forin, Carnegie Mellon University
+ *	Date:	6/92
+ */
+
+/*
+ * Interface to DDB.
+ *
+ * Modified for NetBSD/alpha by:
+ *
+ *	Christopher G. Demetriou, Carnegie Mellon University
+ *
+ *	Jason R. Thorpe, Numerical Aerospace Simulation Facility,
+ *	NASA Ames Research Center
+ */
+
 #include <sys/param.h>
+#include <sys/proc.h>
+#include <sys/reboot.h>
 #include <sys/systm.h>
 
 #include <vm/vm.h>
 
-#include <machine/db_machdep.h>
-#include <machine/frame.h>
-
-#include <ddb/db_access.h>
-#include <ddb/db_command.h>
-#include <ddb/db_output.h>
-#include <ddb/db_run.h>
-#include <ddb/db_sym.h>
-#include <ddb/db_var.h>
-#include <ddb/db_variables.h>
-#include <ddb/db_extern.h>
-
 #include <dev/cons.h>
 
-extern label_t *db_recover;
-extern char    *trap_type[];
-extern int	trap_types;
+#include <machine/db_machdep.h>
+#include <machine/pal.h>
+#include <machine/prom.h>
 
-void kdbprinttrap __P((int, int));
+#include <alpha/alpha/db_instruction.h>
 
-/*
- * These entries must be in the same order as the CPU registers.
- * You can add things at the end.
- */
-struct db_variable db_regs[] = {
-	{ "v0", (long *)&ddb_regs.tf_regs[FRAME_V0], FCN_NULL, },	/*0*/
-	{ "t0", (long *)&ddb_regs.tf_regs[FRAME_T0], FCN_NULL, },	/*1*/
-	{ "t1", (long *)&ddb_regs.tf_regs[FRAME_T1], FCN_NULL, },	/*2*/
-	{ "t2", (long *)&ddb_regs.tf_regs[FRAME_T2], FCN_NULL, },	/*3*/
-	{ "t3", (long *)&ddb_regs.tf_regs[FRAME_T3], FCN_NULL, },	/*4*/
-	{ "t4", (long *)&ddb_regs.tf_regs[FRAME_T4], FCN_NULL, },	/*5*/
-	{ "t5", (long *)&ddb_regs.tf_regs[FRAME_T5], FCN_NULL, },	/*6*/
-	{ "t6", (long *)&ddb_regs.tf_regs[FRAME_T6], FCN_NULL, },	/*7*/
-	{ "t7", (long *)&ddb_regs.tf_regs[FRAME_T7], FCN_NULL, },	/*8*/
-	{ "s0", (long *)&ddb_regs.tf_regs[FRAME_S0], FCN_NULL, },	/*9*/
-	{ "s1", (long *)&ddb_regs.tf_regs[FRAME_S1], FCN_NULL, },	/*10*/
-	{ "s2", (long *)&ddb_regs.tf_regs[FRAME_S2], FCN_NULL, },	/*11*/
-	{ "s3", (long *)&ddb_regs.tf_regs[FRAME_S3], FCN_NULL, },	/*12*/
-	{ "s4", (long *)&ddb_regs.tf_regs[FRAME_S4], FCN_NULL, },	/*13*/
-	{ "s5", (long *)&ddb_regs.tf_regs[FRAME_S5], FCN_NULL, },	/*14*/
-	{ "s6", (long *)&ddb_regs.tf_regs[FRAME_S6], FCN_NULL, },	/*15*/
-	{ "a0", (long *)&ddb_regs.tf_regs[FRAME_A0], FCN_NULL, },	/*16*/
-	{ "a1", (long *)&ddb_regs.tf_regs[FRAME_A1], FCN_NULL, },	/*17*/
-	{ "a2", (long *)&ddb_regs.tf_regs[FRAME_A2], FCN_NULL, },	/*18*/
-	{ "a3", (long *)&ddb_regs.tf_regs[FRAME_A3], FCN_NULL, },	/*19*/
-	{ "a4", (long *)&ddb_regs.tf_regs[FRAME_A4], FCN_NULL, },	/*20*/
-	{ "a5", (long *)&ddb_regs.tf_regs[FRAME_A5], FCN_NULL, },	/*21*/
-	{ "t8", (long *)&ddb_regs.tf_regs[FRAME_T8], FCN_NULL, },	/*22*/
-	{ "t9", (long *)&ddb_regs.tf_regs[FRAME_T9], FCN_NULL, },	/*23*/
-	{ "t10", (long *)&ddb_regs.tf_regs[FRAME_T10], FCN_NULL, },	/*24*/
-	{ "t11", (long *)&ddb_regs.tf_regs[FRAME_T11], FCN_NULL, },	/*25*/
-	{ "ra", (long *)&ddb_regs.tf_regs[FRAME_RA], FCN_NULL, },	/*26*/
-	{ "t12", (long *)&ddb_regs.tf_regs[FRAME_T12], FCN_NULL, },	/*27*/
-	{ "at", (long *)&ddb_regs.tf_regs[FRAME_AT], FCN_NULL, },	/*28*/
-	{ "gp", (long *)&ddb_regs.tf_regs[FRAME_GP], FCN_NULL, },	/*29*/
-	{ "sp", (long *)&ddb_regs.tf_regs[FRAME_SP], FCN_NULL, },	/*30*/
-	{ "pc", (long *)&ddb_regs.tf_regs[FRAME_PC], FCN_NULL, },	/*not*/
-	{ "ps", (long *)&ddb_regs.tf_regs[FRAME_PS], FCN_NULL, },	/*not*/
-};
+#include <ddb/db_sym.h>
+#include <ddb/db_command.h>
+#include <ddb/db_extern.h>
+#include <ddb/db_access.h>
+#include <ddb/db_output.h>
+#include <ddb/db_variables.h>
+#include <ddb/db_interface.h>
 
-struct db_variable *db_eregs = db_regs + sizeof(db_regs)/sizeof(db_regs[0]);
+
+extern label_t	*db_recover;
+
+#if 0
+extern char *trap_type[];
+extern int trap_types;
+#endif
+
 int	db_active = 0;
 
-void
-Debugger()
+void	db_mach_halt __P((db_expr_t, int, db_expr_t, char *));
+void	db_mach_reboot __P((db_expr_t, int, db_expr_t, char *));
+
+struct db_command db_machine_cmds[] = {
+	{ "halt",	db_mach_halt,	0,	0 },
+	{ "reboot",	db_mach_reboot,	0,	0 },
+	{ (char *)0, },
+};
+
+struct db_variable db_regs[] = {
+	{	"v0",	&ddb_regs.tf_regs[FRAME_V0],	FCN_NULL	},
+	{	"t0",	&ddb_regs.tf_regs[FRAME_T0],	FCN_NULL	},
+	{	"t1",	&ddb_regs.tf_regs[FRAME_T1],	FCN_NULL	},
+	{	"t2",	&ddb_regs.tf_regs[FRAME_T2],	FCN_NULL	},
+	{	"t3",	&ddb_regs.tf_regs[FRAME_T3],	FCN_NULL	},
+	{	"t4",	&ddb_regs.tf_regs[FRAME_T4],	FCN_NULL	},
+	{	"t5",	&ddb_regs.tf_regs[FRAME_T5],	FCN_NULL	},
+	{	"t6",	&ddb_regs.tf_regs[FRAME_T6],	FCN_NULL	},
+	{	"t7",	&ddb_regs.tf_regs[FRAME_T7],	FCN_NULL	},
+	{	"s0",	&ddb_regs.tf_regs[FRAME_S0],	FCN_NULL	},
+	{	"s1",	&ddb_regs.tf_regs[FRAME_S1],	FCN_NULL	},
+	{	"s2",	&ddb_regs.tf_regs[FRAME_S2],	FCN_NULL	},
+	{	"s3",	&ddb_regs.tf_regs[FRAME_S3],	FCN_NULL	},
+	{	"s4",	&ddb_regs.tf_regs[FRAME_S4],	FCN_NULL	},
+	{	"s5",	&ddb_regs.tf_regs[FRAME_S5],	FCN_NULL	},
+	{	"s6",	&ddb_regs.tf_regs[FRAME_S6],	FCN_NULL	},
+	{	"a0",	&ddb_regs.tf_regs[FRAME_A0],	FCN_NULL	},
+	{	"a1",	&ddb_regs.tf_regs[FRAME_A1],	FCN_NULL	},
+	{	"a2",	&ddb_regs.tf_regs[FRAME_A2],	FCN_NULL	},
+	{	"a3",	&ddb_regs.tf_regs[FRAME_A3],	FCN_NULL	},
+	{	"a4",	&ddb_regs.tf_regs[FRAME_A4],	FCN_NULL	},
+	{	"a5",	&ddb_regs.tf_regs[FRAME_A5],	FCN_NULL	},
+	{	"t8",	&ddb_regs.tf_regs[FRAME_T8],	FCN_NULL	},
+	{	"t9",	&ddb_regs.tf_regs[FRAME_T9],	FCN_NULL	},
+	{	"t10",	&ddb_regs.tf_regs[FRAME_T10],	FCN_NULL	},
+	{	"t11",	&ddb_regs.tf_regs[FRAME_T11],	FCN_NULL	},
+	{	"ra",	&ddb_regs.tf_regs[FRAME_RA],	FCN_NULL	},
+	{	"t12",	&ddb_regs.tf_regs[FRAME_T12],	FCN_NULL	},
+	{	"at",	&ddb_regs.tf_regs[FRAME_AT],	FCN_NULL	},
+	{	"gp",	&ddb_regs.tf_regs[FRAME_GP],	FCN_NULL	},
+	{	"sp",	&ddb_regs.tf_regs[FRAME_SP],	FCN_NULL	},
+	{	"pc",	&ddb_regs.tf_regs[FRAME_PC],	FCN_NULL	},
+	{	"ps",	&ddb_regs.tf_regs[FRAME_PS],	FCN_NULL	},
+	{	"ai",	&ddb_regs.tf_regs[FRAME_T11],	FCN_NULL	},
+	{	"pv",	&ddb_regs.tf_regs[FRAME_T12],	FCN_NULL	},
+};
+struct db_variable *db_eregs = db_regs + sizeof(db_regs)/sizeof(db_regs[0]);
+
+/*
+ * ddb_trap - field a kernel trap
+ */
+int
+ddb_trap(a0, a1, a2, entry, regs)
+	unsigned long a0, a1, a2, entry;
+	db_regs_t *regs;
 {
-  	__asm__ ("bpt");
+	int s;
+
+	if (entry != ALPHA_KENTRY_IF ||
+	    (a0 != ALPHA_IF_CODE_BPT && a0 != ALPHA_IF_CODE_BUGCHK)) {
+		if (db_recover != 0) {
+			/* This will longjmp back into db_command_loop() */
+			db_error("Caught exception in ddb.\n");
+			/* NOTREACHED */
+		}
+
+		/*
+		 * Tell caller "We did NOT handle the trap."
+		 * Caller should panic, or whatever.
+		 */
+		return (0);
+	}
+
+	/*
+	 * alpha_debug() switches us to the debugger stack.
+	 */
+
+	ddb_regs = *regs;
+
+	s = splhigh();
+
+	db_active++;
+	cnpollc(TRUE);		/* Set polling mode, unblank video */
+
+	db_trap(entry, a0);	/* Where the work happens */
+
+	cnpollc(FALSE);		/* Resume interrupt mode */
+	db_active--;
+
+	splx(s);
+
+	*regs = ddb_regs;
+
+	/*
+	 * Tell caller "We HAVE handled the trap."
+	 */
+	return (1);
 }
 
 /*
@@ -109,16 +184,15 @@ Debugger()
  */
 void
 db_read_bytes(addr, size, data)
-	vm_offset_t addr;
-	size_t size;
-	char *data;
+	vaddr_t		addr;
+	register size_t	size;
+	register char	*data;
 {
-	char *src = (char*)addr;
+	register char	*src;
 
-	while (size > 0) {
-		--size;
+	src = (char *)addr;
+	while (size-- > 0)
 		*data++ = *src++;
-	}
 }
 
 /*
@@ -126,163 +200,335 @@ db_read_bytes(addr, size, data)
  */
 void
 db_write_bytes(addr, size, data)
-	vm_offset_t addr;
-	size_t size;
-	char *data;
+	vaddr_t		addr;
+	register size_t	size;
+	register char	*data;
 {
-	char *dst = (char *)addr;
+	register char	*dst;
 
-	while (size > 0) {
-		--size;
+	dst = (char *)addr;
+	while (size-- > 0)
 		*dst++ = *data++;
-	}
 	alpha_pal_imb();
 }
 
-/*
- * Print trap reason.
- */
 void
-kdbprinttrap(type, code)
-	int type, code;
+Debugger()
 {
-	db_printf("kernel: ");
-	if (type >= trap_types || type < 0)
-		db_printf("type %d", type);
-	else
-		db_printf("%s", trap_type[type]);
-	db_printf(" trap, code=%x\n", code);
+
+	__asm __volatile("call_pal 0x81");		/* bugchk */
 }
 
 /*
- *  kdb_trap - field a BPT trap
+ * This is called before ddb_init() to install the
+ * machine-specific command table.  (see machdep.c)
  */
-int
-kdb_trap(type, code, regs)
-	int type, code;
-	db_regs_t *regs;
+void
+db_machine_init()
 {
-	int s;
 
-	switch (type) {
-	case -1:			/* keyboard interrupt */
-		break;
-	case ALPHA_KENTRY_IF:		/* breakpoint */
-		if (code == ALPHA_IF_CODE_BPT)
-			break;
-	default:
-		if (!db_panic)
-			return (0);
+	db_machine_commands_install(db_machine_cmds);
+}
 
-		kdbprinttrap(type, code);
-		if (db_recover != 0) {
-			db_error("Faulted in DDB; continuing...\n");
-			/*NOTREACHED*/
+/*
+ * Alpha-specific ddb commands:
+ *
+ *	halt		set halt bit in rpb and halt
+ *	reboot		set reboot bit in rpb and halt
+ */
+
+void
+db_mach_halt(addr, have_addr, count, modif)
+	db_expr_t	addr;
+	int		have_addr;
+	db_expr_t	count;
+	char *		modif;
+{
+
+	prom_halt(1);
+}
+
+void
+db_mach_reboot(addr, have_addr, count, modif)
+	db_expr_t	addr;
+	int		have_addr;
+	db_expr_t	count;
+	char *		modif;
+{
+
+	prom_halt(0);
+}
+
+/*
+ * Map Alpha register numbers to trapframe/db_regs_t offsets.
+ */
+static int reg_to_frame[32] = {
+	FRAME_V0,
+	FRAME_T0,
+	FRAME_T1,
+	FRAME_T2,
+	FRAME_T3,
+	FRAME_T4,
+	FRAME_T5,
+	FRAME_T6,
+	FRAME_T7,
+
+	FRAME_S0,
+	FRAME_S1,
+	FRAME_S2,
+	FRAME_S3,
+	FRAME_S4,
+	FRAME_S5,
+	FRAME_S6,
+
+	FRAME_A0,
+	FRAME_A1,
+	FRAME_A2,
+	FRAME_A3,
+	FRAME_A4,
+	FRAME_A5,
+
+	FRAME_T8,
+	FRAME_T9,
+	FRAME_T10,
+	FRAME_T11,
+	FRAME_RA,
+	FRAME_T12,
+	FRAME_AT,
+	FRAME_GP,
+	FRAME_SP,
+	-1,		/* zero */
+};
+
+u_long
+db_register_value(regs, regno)
+	db_regs_t *regs;
+	int regno;
+{
+
+	if (regno > 31 || regno < 0) {
+		db_printf(" **** STRANGE REGISTER NUMBER %d **** ", regno);
+		return (0);
+	}
+
+	if (regno == 31)
+		return (0);
+
+	return (regs->tf_regs[reg_to_frame[regno]]);
+}
+
+/*
+ * Support functions for software single-step.
+ */
+
+boolean_t
+db_inst_call(ins)
+	int ins;
+{
+	alpha_instruction insn;
+
+	insn.bits = ins;
+	return ((insn.branch_format.opcode == op_bsr) ||
+	    ((insn.jump_format.opcode == op_j) &&
+	     (insn.jump_format.action & 1)));
+}
+
+boolean_t
+db_inst_return(ins)
+	int ins;
+{
+	alpha_instruction insn;
+
+	insn.bits = ins;
+	return ((insn.jump_format.opcode == op_j) &&
+	    (insn.jump_format.action == op_ret));
+}
+
+boolean_t
+db_inst_trap_return(ins)
+	int ins;
+{
+	alpha_instruction insn;
+
+	insn.bits = ins;
+	return ((insn.pal_format.opcode == op_pal) &&
+	    (insn.pal_format.function == PAL_OSF1_rti));
+}
+
+boolean_t
+db_inst_branch(ins)
+	int ins;
+{
+	alpha_instruction insn;
+
+	insn.bits = ins;
+	switch (insn.branch_format.opcode) {
+	case op_j:
+	case op_br:
+	case op_fbeq:
+	case op_fblt:
+	case op_fble:
+	case op_fbne:
+	case op_fbge:
+	case op_fbgt:
+	case op_blbc:
+	case op_beq:
+	case op_blt:
+	case op_ble:
+	case op_blbs:
+	case op_bne:
+	case op_bge:
+	case op_bgt:
+		return (TRUE);
+	}
+
+	return (FALSE);
+}
+
+boolean_t
+db_inst_unconditional_flow_transfer(ins)
+	int ins;
+{
+	alpha_instruction insn;
+
+	insn.bits = ins;
+	switch (insn.branch_format.opcode) {
+	case op_j:
+	case op_br:
+		return (TRUE);
+
+	case op_pal:
+		switch (insn.pal_format.function) {
+		case PAL_OSF1_retsys:
+		case PAL_OSF1_rti:
+		case PAL_OSF1_callsys:
+			return (TRUE);
 		}
 	}
 
-	/* XXX Should switch to kdb`s own stack here. */
-
-	ddb_regs = *regs;
-
-	s = splhigh();
-	db_active++;
-	cnpollc(TRUE);
-	db_trap(type, code);
-	cnpollc(FALSE);
-	db_active--;
-	splx(s);
-
-	*regs = ddb_regs;
-	return (1);
+	return (FALSE);
 }
 
-register_t
-getreg_val(regs, reg)
-	db_regs_t *regs;
-	int reg;
+#if 0
+boolean_t
+db_inst_spill(ins, regn)
+	int ins, regn;
 {
-	return ((register_t)*db_regs[reg].valuep);
+	alpha_instruction insn;
+
+	insn.bits = ins;
+	return ((insn.mem_format.opcode == op_stq) &&
+	    (insn.mem_format.rd == regn));
+}
+#endif
+
+boolean_t
+db_inst_load(ins)
+	int ins;
+{
+	alpha_instruction insn;
+
+	insn.bits = ins;
+	
+	/* Loads. */
+	if (insn.mem_format.opcode == op_ldbu ||
+	    insn.mem_format.opcode == op_ldq_u ||
+	    insn.mem_format.opcode == op_ldwu)
+		return (TRUE);
+	if ((insn.mem_format.opcode >= op_ldf) &&
+	    (insn.mem_format.opcode <= op_ldt))
+		return (TRUE);
+	if ((insn.mem_format.opcode >= op_ldl) &&
+	    (insn.mem_format.opcode <= op_ldq_l))
+		return (TRUE);
+
+	/* Prefetches. */
+	if (insn.mem_format.opcode == op_special) {
+		/* Note: MB is treated as a store. */
+		if ((insn.mem_format.displacement == (short)op_fetch) ||
+		    (insn.mem_format.displacement == (short)op_fetch_m))
+			return (TRUE);
+	}
+
+	return (FALSE);
 }
 
-/* XXX Where do jsr_coroutine fit in?  We do not use it anyhow so... */
-int
-inst_call(ins)
-	u_int ins;
+boolean_t
+db_inst_store(ins)
+	int ins;
 {
-	return ((ins & 0xfc000000) == 0xd0000000 ||	/* bsr */
-	    (ins & 0xfc00c000) == 0x68004000);		/* jsr */
-}
+	alpha_instruction insn;
 
-int
-inst_branch(ins)
-	u_int ins;
-{
-	return ((ins & 0xc0000000) == 0xc0000000 &&	/* 30 - 3F */
-	    !((ins & 0xfc000000) == 0xd0000000 ||	/* but !34 (bsr) */
-	    (ins & 0xfc00c000) == 0x68000000));		/* nor jmp */
-}
+	insn.bits = ins;
 
-int
-inst_load(ins)
-	u_int ins;
-{
-	char *nm = opcode[ins >> 26].opc_name;
+	/* Stores. */
+	if (insn.mem_format.opcode == op_stw ||
+	    insn.mem_format.opcode == op_stb ||
+	    insn.mem_format.opcode == op_stq_u)
+		return (TRUE);
+	if ((insn.mem_format.opcode >= op_stf) &&
+	    (insn.mem_format.opcode <= op_stt))
+		return (TRUE);
+	if ((insn.mem_format.opcode >= op_stl) &&
+	    (insn.mem_format.opcode <= op_stq_c))
+		return (TRUE);
 
-	return (nm[0] == 'l' && nm[1] == 'd');
-}
+	/* Barriers. */
+	if (insn.mem_format.opcode == op_special) {
+		if (insn.mem_format.displacement == op_mb)
+			return (TRUE);
+	}
 
-int
-inst_store(ins)
-	u_int ins;
-{
-	char *nm = opcode[ins >> 26].opc_name;
-
-	return (nm[0] == 's' && nm[1] == 't');
+	return (FALSE);
 }
 
 db_addr_t
-branch_taken(ins, pc, getreg, regs)
-	u_int ins;
+db_branch_taken(ins, pc, regs)
+	int ins;
 	db_addr_t pc;
-	register_t (*getreg) __P((db_regs_t *, int));
 	db_regs_t *regs;
 {
-	int offset;
+	long signed_immediate;
+	alpha_instruction insn;
+	db_addr_t newpc;
 
-	if (opcode[ins >> 26].opc_fmt == OPC_BR) {
-		offset = ins & 0xfffff;
-		if (offset & 0x80000)
-			offset = offset - 0x100000;
-		return (pc + sizeof(int) + offset * sizeof(int));
-	} else
-		return (db_addr_t)(*getreg)(regs, (ins >> 16) & 0x1f);
-}
+	insn.bits = ins;
+	switch (insn.branch_format.opcode) {
+	/*
+	 * Jump format: target PC is (contents of instruction's "RB") & ~3.
+	 */
+	case op_j:
+		newpc = db_register_value(regs, insn.jump_format.rb) & ~3;
+		break;
 
-db_addr_t
-next_instr_address(pc, branch)
-	db_addr_t pc;
-	int branch;
-{
-	if (!branch)
-		return (pc + sizeof(int));
-	return (branch_taken(*(u_int *)pc, pc, getreg_val, DDB_REGS));
-}
+	/*
+	 * Branch format: target PC is
+	 *	(new PC) + (4 * sign-ext(displacement)).
+	 */
+	case op_br:
+	case op_fbeq:
+	case op_fblt:
+	case op_fble:
+	case op_bsr:
+	case op_fbne:
+	case op_fbge:
+	case op_fbgt:
+	case op_blbc:
+	case op_beq:
+	case op_blt:
+	case op_ble:
+	case op_blbs:
+	case op_bne:
+	case op_bge:
+	case op_bgt:
+		signed_immediate = insn.branch_format.displacement;
+		newpc = (pc + 4) + (signed_immediate << 2);
+		break;
 
-/*
- * Validate an address for use as a breakpoint.  We cannot let some
- * addresses have breakpoints as the ddb code itself uses that codepath.
- * Recursion and kernel stack space exhaustion will follow.
- */
-int
-db_valid_breakpoint(addr)
-	db_addr_t addr;
-{
-	char *name;
-	db_expr_t offset;
+	default:
+		printf("DDB: db_inst_branch_taken on non-branch!\n");
+		newpc = pc;	/* XXX */
+	}
 
-	db_find_sym_and_offset(addr, &name, &offset);
-	if (name && strcmp(name, "alpha_pal_swpipl") == 0)
-		return (0);
-	return (1);
+	return (newpc);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.4 1997/01/24 19:57:16 niklas Exp $	*/
+/*	$OpenBSD: proc.h,v 1.5 2000/11/08 16:01:13 art Exp $	*/
 /*	$NetBSD: proc.h,v 1.2 1995/03/24 15:01:36 cgd Exp $	*/
 
 /*
@@ -28,6 +28,7 @@
  * rights to redistribute these changes.
  */
 
+#include <machine/cpu.h>
 /*
  * Machine-dependent part of the proc struct for the Alpha.
  */

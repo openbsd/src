@@ -1,5 +1,4 @@
-/*	$OpenBSD: prom.c,v 1.6 2000/06/08 11:57:21 art Exp $	*/
-/*	$NetBSD: prom.c,v 1.12 1996/11/13 21:13:11 cgd Exp $	*/
+/* $NetBSD: prom.c,v 1.39 2000/03/06 21:36:05 thorpej Exp $ */
 
 /* 
  * Copyright (c) 1992, 1994, 1995, 1996 Carnegie Mellon University
@@ -28,19 +27,18 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <vm/vm.h>
+#include <sys/lock.h>
 #include <sys/proc.h>
 #include <sys/user.h>
 
+#include <machine/cpu.h>
 #include <machine/rpb.h>
+#include <machine/alpha.h>
+#define	ENABLEPROM
 #include <machine/prom.h>
-#ifdef NEW_PMAP
-#include <vm/vm.h>
-#include <vm/pmap.h>
-#endif
 
 #include <dev/cons.h>
-
-u_int64_t hwrpb_checksum __P((void));
 
 /* XXX this is to fake out the console routines, while booting. */
 struct consdev promcons = { NULL, NULL, promcngetc, promcnputc,
@@ -48,26 +46,51 @@ struct consdev promcons = { NULL, NULL, promcngetc, promcnputc,
 
 struct rpb	*hwrpb;
 int		alpha_console;
-int		prom_mapped = 1;	/* Is PROM still mapped? */
 
 extern struct prom_vec prom_dispatch_v;
 
-pt_entry_t	*rom_ptep, rom_pte, saved_pte;	/* XXX */
+struct simplelock prom_slock;
 
-#ifdef NEW_PMAP
-#define	rom_ptep   (curproc ? &curproc->p_vmspace->vm_map.pmap->dir[0] : rom_ptep)
-#endif
+#ifdef _PMAP_MAY_USE_PROM_CONSOLE
+int		prom_mapped = 1;	/* Is PROM still mapped? */
+
+pt_entry_t	prom_pte, saved_pte[1];	/* XXX */
+static pt_entry_t *prom_lev1map __P((void));
+
+static pt_entry_t *
+prom_lev1map()
+{
+	struct alpha_pcb *apcb;
+
+	/*
+	 * Find the level 1 map that we're currently running on.
+	 */
+	apcb = (struct alpha_pcb *)ALPHA_PHYS_TO_K0SEG(curpcb);
+
+	return ((pt_entry_t *)ALPHA_PHYS_TO_K0SEG(apcb->apcb_ptbr << PGSHIFT));
+}
+#endif /* _PMAP_MAY_USE_PROM_CONSOLE */
 
 void
-init_prom_interface()
+init_prom_interface(rpb)
+	struct rpb *rpb;
 {
 	struct crb *c;
-	char buf[4];
 
-	c = (struct crb*)((char*)hwrpb + hwrpb->rpb_crb_off);
+	c = (struct crb *)((char *)rpb + rpb->rpb_crb_off);
 
         prom_dispatch_v.routine_arg = c->crb_v_dispatch;
         prom_dispatch_v.routine = c->crb_v_dispatch->entry_va;
+
+	simple_lock_init(&prom_slock);
+}
+
+void
+init_bootstrap_console()
+{
+	char buf[4];
+
+	init_prom_interface(hwrpb);
 
 	prom_getenv(PROM_E_TTY_DEV, buf, 4);
 	alpha_console = buf[0] - '0';
@@ -75,6 +98,74 @@ init_prom_interface()
 	/* XXX fake out the console routines, for now */
 	cn_tab = &promcons;
 }
+
+#ifdef _PMAP_MAY_USE_PROM_CONSOLE
+static void prom_cache_sync __P((void));
+#endif
+
+int
+prom_enter()
+{
+	int s;
+
+	s = splhigh();
+	simple_lock(&prom_slock);
+
+#ifdef _PMAP_MAY_USE_PROM_CONSOLE
+	/*
+	 * If we have not yet switched out of the PROM's context
+	 * (i.e. the first one after alpha_init()), then the PROM
+	 * is still mapped, regardless of the `prom_mapped' setting.
+	 */
+	if (prom_mapped == 0 && curpcb != 0) {
+		if (!pmap_uses_prom_console())
+			panic("prom_enter");
+		{
+			pt_entry_t *lev1map;
+
+			lev1map = prom_lev1map();	/* XXX */
+			saved_pte[0] = lev1map[0];	/* XXX */
+			lev1map[0] = prom_pte;		/* XXX */
+		}
+		prom_cache_sync();			/* XXX */
+	}
+#endif
+	return s;
+}
+
+void
+prom_leave(s)
+	int s;
+{
+
+#ifdef _PMAP_MAY_USE_PROM_CONSOLE
+	/*
+	 * See comment above.
+	 */
+	if (prom_mapped == 0 && curpcb != 0) {
+		if (!pmap_uses_prom_console())
+			panic("prom_leave");
+		{
+			pt_entry_t *lev1map;
+
+			lev1map = prom_lev1map();	/* XXX */
+			lev1map[0] = saved_pte[0];	/* XXX */
+		}
+		prom_cache_sync();			/* XXX */
+	}
+#endif
+	simple_unlock(&prom_slock);
+	splx(s);
+}
+
+#ifdef _PMAP_MAY_USE_PROM_CONSOLE
+static void
+prom_cache_sync __P((void))
+{
+	ALPHA_TBIA();
+	alpha_pal_imb();
+}
+#endif
 
 /*
  * promcnputc:
@@ -92,31 +183,17 @@ promcnputc(dev, c)
 	int c;
 {
         prom_return_t ret;
-	u_char *to = (u_char *)0x20000000;
+	unsigned char *to = (unsigned char *)0x20000000;
 	int s;
 
-#ifdef notdef /* XXX */
-	if (!prom_mapped)
-		return;
-#endif
-
-	s = splhigh();
-	if (!prom_mapped) {					/* XXX */
-		saved_pte = *rom_ptep;				/* XXX */
-		*rom_ptep = rom_pte;				/* XXX */
-		ALPHA_TBIA();					/* XXX */
-	}							/* XXX */
+	s = prom_enter();	/* splhigh() and map prom */
 	*to = c;
 
 	do {
 		ret.bits = prom_putstr(alpha_console, to, 1);
 	} while ((ret.u.retval & 1) == 0);
 
-	if (!prom_mapped) {					/* XXX */
-		*rom_ptep = saved_pte;				/* XXX */
-		ALPHA_TBIA();					/* XXX */
-	}							/* XXX */
-	splx(s);
+	prom_leave(s);		/* unmap prom and splx(s) */
 }
 
 /*
@@ -131,24 +208,10 @@ promcngetc(dev)
         prom_return_t ret;
 	int s;
 
-#ifdef notdef /* XXX */
-	if (!prom_mapped)
-		return (-1);
-#endif
-
         for (;;) {
-		s = splhigh();
-		if (!prom_mapped) {				/* XXX */
-			saved_pte = *rom_ptep;			/* XXX */
-			*rom_ptep = rom_pte;			/* XXX */
-			ALPHA_TBIA();				/* XXX */
-		}						/* XXX */
+		s = prom_enter();
                 ret.bits = prom_getc(alpha_console);
-		if (!prom_mapped) {				/* XXX */
-			*rom_ptep = saved_pte;			/* XXX */
-			ALPHA_TBIA();				/* XXX */
-		}						/* XXX */
-		splx(s);
+		prom_leave(s);
                 if (ret.u.status == 0 || ret.u.status == 1)
                         return (ret.u.retval);
         }
@@ -167,23 +230,9 @@ promcnlookc(dev, cp)
         prom_return_t ret;
 	int s;
 
-#ifdef notdef /* XXX */
-	if (!prom_mapped)
-		return (-1);
-#endif
-
-	s = splhigh();
-	if (!prom_mapped) {					/* XXX */
-		saved_pte = *rom_ptep;				/* XXX */
-		*rom_ptep = rom_pte;				/* XXX */
-		ALPHA_TBIA();					/* XXX */
-	}							/* XXX */
+	s = prom_enter();
 	ret.bits = prom_getc(alpha_console);
-	if (!prom_mapped) {					/* XXX */
-		*rom_ptep = saved_pte;				/* XXX */
-		ALPHA_TBIA();					/* XXX */
-	}
-	splx(s);
+	prom_leave(s);
 	if (ret.u.status == 0 || ret.u.status == 1) {
 		*cp = ret.u.retval;
 		return 1;
@@ -200,24 +249,10 @@ prom_getenv(id, buf, len)
 	prom_return_t ret;
 	int s;
 
-#ifdef notdef /* XXX */
-	if (!prom_mapped)
-		return (-1);
-#endif
-
-	s = splhigh();
-	if (!prom_mapped) {					/* XXX */
-		saved_pte = *rom_ptep;				/* XXX */
-		*rom_ptep = rom_pte;				/* XXX */
-		ALPHA_TBIA();					/* XXX */
-	}							/* XXX */
+	s = prom_enter();
 	ret.bits = prom_getenv_disp(id, to, len);
 	bcopy(to, buf, len);
-	if (!prom_mapped) {					/* XXX */
-		*rom_ptep = saved_pte;				/* XXX */
-		ALPHA_TBIA();					/* XXX */
-	}							/* XXX */
-	splx(s);
+	prom_leave(s);
 
 	if (ret.u.status & 0x4)
 		ret.u.retval = 0;
@@ -241,7 +276,7 @@ prom_halt(halt)
 	 * Set "boot request" part of the CPU state depending on what
 	 * we want to happen when we halt.
 	 */
-	p = (struct pcs *)((char *)hwrpb + hwrpb->rpb_pcs_off);
+	p = LOCATE_PCS(hwrpb, hwrpb->rpb_primary_cpu_id);
 	p->pcs_flags &= ~(PCS_RC | PCS_HALT_REQ);
 	if (halt)
 		p->pcs_flags |= PCS_HALT_STAY_HALTED;
@@ -260,8 +295,9 @@ hwrpb_checksum()
 	u_int64_t *p, sum;
 	int i;
 
-#define	offsetof(type, member)	((size_t)(&((type *)0)->member)) /* XXX */
-
+#ifndef offsetof
+#define offsetof(type, member)  ((size_t)(&((type *)0)->member)) /* XXX */
+#endif
 	for (i = 0, p = (u_int64_t *)hwrpb, sum = 0;
 	    i < (offsetof(struct rpb, rpb_checksum) / sizeof (u_int64_t));
 	    i++, p++)
@@ -271,27 +307,32 @@ hwrpb_checksum()
 }
 
 void
+hwrpb_primary_init()
+{
+	struct pcs *p;
+
+	p = LOCATE_PCS(hwrpb, hwrpb->rpb_primary_cpu_id);
+
+	/* Initialize the primary's HWPCB and the Virtual Page Table Base. */
+	bcopy(&proc0.p_addr->u_pcb.pcb_hw, p->pcs_hwpcb,
+	    sizeof proc0.p_addr->u_pcb.pcb_hw);
+	hwrpb->rpb_vptb = VPTBASE;
+
+	hwrpb->rpb_checksum = hwrpb_checksum();
+}
+
+void
 hwrpb_restart_setup()
 {
 	struct pcs *p;
 
 	/* Clear bootstrap-in-progress flag since we're done bootstrapping */
-	p = (struct pcs *)((char *)hwrpb + hwrpb->rpb_pcs_off);
+	p = LOCATE_PCS(hwrpb, hwrpb->rpb_primary_cpu_id);
 	p->pcs_flags &= ~PCS_BIP;
-
-	bcopy(&proc0.p_addr->u_pcb.pcb_hw, p->pcs_hwpcb,
-	    sizeof proc0.p_addr->u_pcb.pcb_hw);
-	hwrpb->rpb_vptb = VPTBASE;
 
 	/* when 'c'ontinuing from console halt, do a dump */
 	hwrpb->rpb_rest_term = (u_int64_t)&XentRestart;
 	hwrpb->rpb_rest_term_val = 0x1;
-
-#if 0
-	/* don't know what this is really used by, so don't mess with it. */
-	hwrpb->rpb_restart = (u_int64_t)&XentRestart;
-	hwrpb->rpb_restart_val = 0x2;
-#endif
 
 	hwrpb->rpb_checksum = hwrpb_checksum();
 
@@ -299,14 +340,22 @@ hwrpb_restart_setup()
 }
 
 u_int64_t
-console_restart(ra, ai, pv)
-	u_int64_t ra, ai, pv;
+console_restart(framep)
+	struct trapframe *framep;
 {
 	struct pcs *p;
 
 	/* Clear restart-capable flag, since we can no longer restart. */
-	p = (struct pcs *)((char *)hwrpb + hwrpb->rpb_pcs_off);
+	p = LOCATE_PCS(hwrpb, hwrpb->rpb_primary_cpu_id);
 	p->pcs_flags &= ~PCS_RC;
+
+	/* Fill in the missing frame slots */
+
+	framep->tf_regs[FRAME_PS] = p->pcs_halt_ps;
+	framep->tf_regs[FRAME_PC] = p->pcs_halt_pc;
+	framep->tf_regs[FRAME_T11] = p->pcs_halt_r25;
+	framep->tf_regs[FRAME_RA] = p->pcs_halt_r26;
+	framep->tf_regs[FRAME_T12] = p->pcs_halt_r27;
 
 	panic("user requested console halt");
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: process_machdep.c,v 1.4 1996/10/30 22:38:23 niklas Exp $	*/
+/*	$OpenBSD: process_machdep.c,v 1.5 2000/11/08 16:01:03 art Exp $	*/
 /*	$NetBSD: process_machdep.c,v 1.7 1996/07/11 20:14:21 cgd Exp $	*/
 
 /*
@@ -119,7 +119,6 @@ process_read_fpregs(p, regs)
 	struct proc *p;
 	struct fpreg *regs;
 {
-	extern struct proc *fpcurproc;
 
 	if (p == fpcurproc) {
 		alpha_pal_wrfen(1);
@@ -136,7 +135,6 @@ process_write_fpregs(p, regs)
 	struct proc *p;
 	struct fpreg *regs;
 {
-	extern struct proc *fpcurproc;
 
 	if (p == fpcurproc)
 		fpcurproc = NULL;

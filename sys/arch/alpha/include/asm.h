@@ -1,5 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.7 1999/09/26 11:07:32 kstailey Exp $	*/
-/*	$NetBSD: asm.h,v 1.11 1996/11/30 02:48:57 jtc Exp $	*/
+/* $NetBSD: asm.h,v 1.23 2000/06/23 12:18:45 kleink Exp $ */
 
 /* 
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -179,6 +178,17 @@
  *			end for the encoding of this 32bit value.
  *	 "f_mask"	is the same, for floating point registers.
  *
+ * Note, 10/31/97: This is interesting but it isn't the way gcc outputs
+ * frame directives and it isn't the way the macros below output them
+ * either. Frame directives look like this:
+ *
+ *		.frame	$15,framesize,$26,0
+ *
+ * If no fp is set up then $30 should be used instead of $15.
+ * Also, gdb expects to find a <lda sp,-framesize(sp)> at the beginning
+ * of a procedure. Don't use things like sub sp,framesize,sp for this
+ * reason. End Note 10/31/97. ross@netbsd.org
+ *
  * Note that registers should be saved starting at "old_sp-8", where the
  * return address should be stored. Other registers follow at -16-24-32..
  * starting from register 0 (if saved) and up. Then float registers (ifany)
@@ -223,6 +233,38 @@
 	jsr	at_reg,_mcount;					\
 	.set at
 #endif
+/*
+ * PALVECT, ESETUP, and ERSAVE
+ *	Declare a palcode transfer point, and carefully construct
+ *	gdb symbols with an unusual _negative_ register-save offset
+ *	so that gdb can find the otherwise lost PC and then
+ *	invert the vector for traceback. Also, fix up framesize,
+ *	allowing for the palframe for the same reason.
+ */
+
+#define PALVECT(_name_)						\
+	ESETUP(_name_);						\
+	ERSAVE()
+
+#define	ESETUP(_name_)						\
+	.loc	1 __LINE__;					\
+	.globl	_name_;						\
+	.ent	_name_ 0;					\
+_name_:;							\
+	.set	noat;						\
+	lda	sp,-(FRAME_SW_SIZE*8)(sp);			\
+	.frame	$30,(FRAME_SW_SIZE+6)*8,$26,0;   /* give gdb the real size */\
+	.mask	0x4000000,-0x28;				\
+	.set	at
+
+#define	ERSAVE()						\
+	.set	noat;						\
+	stq	at_reg,(FRAME_AT*8)(sp);			\
+	.set	at;						\
+	stq	ra,(FRAME_RA*8)(sp);				\
+	.loc	1 __LINE__;					\
+	bsr	ra,exception_save_regs         /* jmp/CALL trashes pv/t12 */
+
 
 /*
  * LEAF
@@ -370,6 +412,7 @@ _name_:
  *	Function invocation
  */
 #define	CALL(_name_)						\
+	.loc	1 __LINE__;					\
 	jsr	ra,_name_;					\
 	ldgp	gp,0(ra)
 /* but this would cover longer jumps
@@ -430,7 +473,7 @@ _name_	=	_value_
 _name_:;							\
 	.mask	_i_mask_|IM_EXC,0;				\
 	.frame	sp,MSS_SIZE,ra;				
-/*	.livereg _i_mask_|IM_EXC,0
+/*	.livereg _i_mask_|IM_EXC,0	*/
 /* should have been
 	.proc	_name_,1;					\
 	.frame	MSS_SIZE,$31,_i_mask_,0;			\
@@ -541,69 +584,8 @@ label:	ASCIZ msg;						\
 #define	FM_V1	FM_T0
 #define	FM_V0	0x00000001
 
-/*
- * PAL "function" codes (used as arguments to call_pal instructions).
- *
- * Those marked with "P" are privileged, and those marked with "U"
- * are unprivileged.
- */
-
-/* Common PAL function codes. */
-#define	PAL_halt		0x0000			/* P */
-#define	PAL_draina		0x0002			/* P */
-#define	PAL_cserve		0x0009			/* P */
-#define	PAL_swppal		0x000a			/* P */
-#define	PAL_bpt			0x0080			/* U */
-#define	PAL_bugchk		0x0081			/* U */
-#define	PAL_imb			0x0086			/* U */
-#define	PAL_rdunique		0x009e			/* U */
-#define	PAL_wrunique		0x009f			/* U */
-#define	PAL_gentrap		0x00aa			/* U */
-
-/* VMS PAL function codes. */
-#define	PAL_VMS_ldqp		0x0003			/* P */
-#define	PAL_VMS_stqp		0x0004			/* P */
-#define	PAL_VMS_mtpr_fen	0x000c			/* P */
-#define	PAL_VMS_mtpr_ipir	0x000d			/* P */
-#define	PAL_VMS_mfpr_ipl	0x000e			/* P */
-#define	PAL_VMS_mtpr_ipl	0x000f			/* P */
-#define	PAL_VMS_mfpr_mces	0x0010			/* P */
-#define	PAL_VMS_mtpr_mces	0x0011			/* P */
-#define	PAL_VMS_mfpr_prbr	0x0013			/* P */
-#define	PAL_VMS_mtpr_prbr	0x0014			/* P */
-#define	PAL_VMS_mfpr_ptbr	0x0015			/* P */
-#define	PAL_VMS_mtpr_scbb	0x0017			/* P */
-#define	PAL_VMS_mtpr_sirr	0x0018			/* P */
-#define	PAL_VMS_mtpr_tbia	0x001b			/* P */
-#define	PAL_VMS_mtpr_tbiap	0x001c			/* P */
-#define	PAL_VMS_mtpr_tbis	0x001d			/* P */
-#define	PAL_VMS_mfpr_usp	0x0022			/* P */
-#define	PAL_VMS_mtpr_usp	0x0023			/* P */
-#define	PAL_VMS_mfpr_vptb	0x0029			/* P */
-#define	PAL_VMS_mfpr_whami	0x003f			/* P */
-#define	PAL_VMS_rei		0x0092			/* U */
-
-/* OSF/1 PAL function codes. */
-#define	PAL_OSF1_rdmces		0x0010			/* P */
-#define	PAL_OSF1_wrmces		0x0011			/* P */
-#define	PAL_OSF1_wrfen		0x002b			/* P */
-#define	PAL_OSF1_wrvptptr	0x002d			/* P */
-#define	PAL_OSF1_swpctx		0x0030			/* P */
-#define	PAL_OSF1_wrval		0x0031			/* P */
-#define	PAL_OSF1_rdval		0x0032			/* P */
-#define	PAL_OSF1_tbi		0x0033			/* P */
-#define	PAL_OSF1_wrent		0x0034			/* P */
-#define	PAL_OSF1_swpipl		0x0035			/* P */
-#define	PAL_OSF1_rdps		0x0036			/* P */
-#define	PAL_OSF1_wrkgp		0x0037			/* P */
-#define	PAL_OSF1_wrusp		0x0038			/* P */
-#define	PAL_OSF1_rdusp		0x003a			/* P */
-#define	PAL_OSF1_whami		0x003c			/* P */
-#define	PAL_OSF1_retsys		0x003d			/* P */
-#define	PAL_OSF1_rti		0x003f			/* P */
-#define	PAL_OSF1_callsys	0x0083			/* U */
-#define	PAL_OSF1_imb		0x0086			/* U */
-
+/* Pull in PAL "function" codes. */
+#include <machine/pal.h>
 
 /*
  * System call glue.
@@ -636,3 +618,41 @@ label:	ASCIZ msg;						\
 	.weak alias;						\
 	alias = sym
 #endif
+
+/*
+ * WARN_REFERENCES: create a warning if the specified symbol is referenced
+ * (ELF only).
+ */
+#ifdef __ELF__
+#ifdef __STDC__
+#define	WARN_REFERENCES(_sym,_msg)				\
+	.section .gnu.warning. ## _sym ; .ascii _msg ; .text
+#else
+#define	WARN_REFERENCES(_sym,_msg)				\
+	.section .gnu.warning./**/_sym ; .ascii _msg ; .text
+#endif /* __STDC__ */
+#endif /* __ELF__ */
+
+/*
+ * Kernel RCS ID tag and copyright macros
+ */
+
+#ifdef _KERNEL
+
+#ifdef __ELF__
+#define	__KERNEL_SECTIONSTRING(_sec, _str)				\
+	.section _sec ; .asciz _str ; .text
+#else /* __ELF__ */
+#define	__KERNEL_SECTIONSTRING(_sec, _str)				\
+	.data ; .asciz _str ; .align 3 ; .text
+#endif /* __ELF__ */
+
+#define	__KERNEL_RCSID(_n, _s)		__KERNEL_SECTIONSTRING(.ident, _s)
+#define	__KERNEL_COPYRIGHT(_n, _s)	__KERNEL_SECTIONSTRING(.copyright, _s)
+
+#ifdef NO_KERNEL_RCSIDS
+#undef __KERNEL_RCSID
+#define	__KERNEL_RCSID(_n, _s)		/* nothing */
+#endif
+
+#endif /* _KERNEL */
