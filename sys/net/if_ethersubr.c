@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.73 2003/12/10 07:22:42 itojun Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.74 2004/01/09 10:44:32 markus Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -998,7 +998,10 @@ ether_ifdetach(ifp)
 		free(enm, M_IFMADDR);
 	}
 
+#if 0
+	/* moved to if_detach() */
 	if_free_sadl(ifp);
+#endif
 }
 
 #if 0

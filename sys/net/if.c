@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.80 2003/12/31 11:18:25 cedric Exp $	*/
+/*	$OpenBSD: if.c,v 1.81 2004/01/09 10:44:32 markus Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -327,11 +327,12 @@ if_free_sadl(ifp)
 
 	s = splnet();
 	rtinit(ifa, RTM_DELETE, 0);
+#if 0
 	TAILQ_REMOVE(&ifp->if_addrlist, ifa, ifa_list);
-
+	ifnet_addrs[ifp->if_index] = NULL;
+#endif
 	ifp->if_sadl = NULL;
 
-	ifnet_addrs[ifp->if_index] = NULL;
 	splx(s);
 }
 
@@ -554,9 +555,15 @@ do { \
 			TAILQ_REMOVE(&in_ifaddr, (struct in_ifaddr *)ifa,
 			    ia_list);
 #endif
+		/* XXX if_free_sadl needs this */
+		if (ifa == ifnet_addrs[ifp->if_index])
+			continue;
+
 		free(ifa, M_IFADDR);
 	}
-	ifp->if_sadl = NULL;
+	if_free_sadl(ifp);
+
+	free(ifnet_addrs[ifp->if_index], M_IFADDR);
 	ifnet_addrs[ifp->if_index] = NULL;
 
 	free(ifp->if_addrhooks, M_TEMP);
