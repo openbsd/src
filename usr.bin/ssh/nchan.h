@@ -27,7 +27,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* RCSID("$Id: nchan.h,v 1.7 2000/04/03 07:07:15 markus Exp $"); */
+/* RCSID("$OpenBSD: nchan.h,v 1.8 2000/06/20 01:39:43 markus Exp $"); */
 
 #ifndef NCHAN_H
 #define NCHAN_H

@@ -45,7 +45,7 @@
  */
 
 #include "includes.h"
-RCSID("$Id: scp.c,v 1.31 2000/06/18 03:16:09 markus Exp $");
+RCSID("$OpenBSD: scp.c,v 1.32 2000/06/20 01:39:44 markus Exp $");
 
 #include "ssh.h"
 #include "xmalloc.h"
@@ -1005,7 +1005,7 @@ run_err(const char *fmt,...)
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: scp.c,v 1.31 2000/06/18 03:16:09 markus Exp $
+ *	$OpenBSD: scp.c,v 1.32 2000/06/20 01:39:44 markus Exp $
  */
 
 char *

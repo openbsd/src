@@ -13,7 +13,7 @@
  *
  */
 
-/* RCSID("$Id: crc32.h,v 1.5 2000/04/14 10:30:31 markus Exp $"); */
+/* RCSID("$OpenBSD: crc32.h,v 1.6 2000/06/20 01:39:40 markus Exp $"); */
 
 #ifndef CRC32_H
 #define CRC32_H

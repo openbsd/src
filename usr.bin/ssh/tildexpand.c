@@ -6,7 +6,7 @@
  */
 
 #include "includes.h"
-RCSID("$Id: tildexpand.c,v 1.6 1999/12/06 19:10:38 deraadt Exp $");
+RCSID("$OpenBSD: tildexpand.c,v 1.7 2000/06/20 01:39:45 markus Exp $");
 
 #include "xmalloc.h"
 #include "ssh.h"

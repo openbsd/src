@@ -10,7 +10,7 @@
  */
 
 #include "includes.h"
-RCSID("$Id: ttymodes.c,v 1.6 2000/04/14 10:30:34 markus Exp $");
+RCSID("$OpenBSD: ttymodes.c,v 1.7 2000/06/20 01:39:45 markus Exp $");
 
 #include "packet.h"
 #include "ssh.h"

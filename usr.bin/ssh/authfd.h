@@ -13,7 +13,7 @@
  *
  */
 
-/* RCSID("$Id: authfd.h,v 1.7 2000/04/14 10:30:30 markus Exp $"); */
+/* RCSID("$OpenBSD: authfd.h,v 1.8 2000/06/20 01:39:38 markus Exp $"); */
 
 #ifndef AUTHFD_H
 #define AUTHFD_H
