@@ -1,4 +1,4 @@
-/*	$OpenBSD: vis.h,v 1.4 2003/06/03 02:56:17 millert Exp $	*/
+/*	$OpenBSD: vis.h,v 1.1 2003/08/01 19:10:20 avsm Exp $	*/
 /*	$NetBSD: vis.h,v 1.4 1994/10/26 00:56:41 cgd Exp $	*/
 
 /*-
