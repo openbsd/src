@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wireg.h,v 1.27 2002/09/10 08:21:35 fgsch Exp $	*/
+/*	$OpenBSD: if_wireg.h,v 1.28 2002/09/12 03:48:31 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -291,19 +291,20 @@
 #define WI_AUX_DATA		0x3E
 
 #define WI_COR_OFFSET		0x40	/* COR attribute offset of card */
+#define WI_COR_IOMODE		0x41	/* Enable i/o mode with level irqs */
 
 #define WI_PLX_LOCALRES		0x14	/* PLX chip's local registers */
 #define WI_PLX_MEMRES		0x18	/* Prism attribute memory (PLX) */
 #define WI_PLX_IORES		0x1C	/* Prism I/O space (PLX) */
 #define WI_PLX_INTCSR		0x4C	/* PLX Interrupt CSR */
-#define WI_PLX_INTEN		0x40	/* Interrupt Enable bit */
-#define WI_PLX_COR_VALUE	0x41	/* Enable with irq in level trigger */
+#define WI_PLX_INTEN		0x40	/* PCI Interrupt Enable bit */
+#define WI_PLX_LINT1STAT	0x04	/* Local interrupt 1 status bit */
 #define WI_PLX_COR_OFFSET	0x3E0	/* COR attribute offset of card */
+
+#define	WI_DRVR_MAGIC		0x4A2D	/* Magic number for card detection */
 
 #define WI_TMD_LOCALRES		0x14	/* TMD chip's local registers */
 #define WI_TMD_IORES		0x18	/* Prism I/O space (TMD) */
-#define WI_TMD_COR_OFFSET	0x00	/* COR attribute offset of Prism2 */
-#define WI_TMD_COR_VALUE	0x45
 
 /*
  * PCI Host Interface Registers (HFA3842 Specific)
