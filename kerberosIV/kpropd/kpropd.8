@@ -73,6 +73,9 @@ This file receives a new or updated
 database propagated from the Kerberos master.
 The default is the database
 .Pa /etc/kerberosIV/principal.db .
+.It Fl i
+Run stand-alone.  If this flag is not given, it is assumed to have
+been started by inetd.
 .It Fl l
 Specifies the name of the log file to be used.  The default is:
 .Pa /var/log/kpropd.log .
