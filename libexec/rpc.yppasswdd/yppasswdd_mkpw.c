@@ -1,4 +1,4 @@
-/*	$OpenBSD: yppasswdd_mkpw.c,v 1.22 2002/05/22 06:35:44 deraadt Exp $	*/
+/*	$OpenBSD: yppasswdd_mkpw.c,v 1.23 2002/06/20 03:43:41 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -32,7 +32,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: yppasswdd_mkpw.c,v 1.22 2002/05/22 06:35:44 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: yppasswdd_mkpw.c,v 1.23 2002/06/20 03:43:41 deraadt Exp $";
 #endif
 
 #include <sys/param.h>
@@ -59,8 +59,7 @@ extern char make_arg[];
 extern char *dir;
 
 char *
-ok_shell(name)
-	char *name;
+ok_shell(char *name)
 {
 	char *p, *sh;
 
@@ -76,8 +75,7 @@ ok_shell(name)
 }
 
 int
-badchars(base)
-	char *base;
+badchars(char *base)
 {
 	int ampr = 0;
 	char *s;
@@ -96,9 +94,7 @@ badchars(base)
 }
 
 int
-subst(s, from, to)
-	char *s;
-	char from, to;
+subst(char *s, char from, char to)
 {
 	int	n = 0;
 
@@ -113,11 +109,10 @@ subst(s, from, to)
 }
 
 int
-make_passwd(argp)
-	yppasswd *argp;
+make_passwd(yppasswd *argp)
 {
 	struct passwd pw;
-	int     pfd, tfd;
+	int     pfd = -1, tfd;
 	char	buf[10], *bp = NULL, *p, *t;
 	int	n;
 	ssize_t cnt;
@@ -137,6 +132,8 @@ make_passwd(argp)
 	if (fstat(pfd, &st))
 		goto fail;
 	p = bp = malloc((resid = st.st_size) + 1);
+	if (bp == NULL)
+		goto fail;
 	do {
 		cnt = read(pfd, p, resid);
 		if (cnt < 0)
@@ -203,9 +200,10 @@ make_passwd(argp)
 	if (!noshell)
 		pw.pw_shell = argp->newpw.pw_shell;
 
-	for (n = 0, p = pw.pw_gecos; *p; p++)
+	for (n = 0, p = pw.pw_gecos; *p; p++) {
 		if (*p == '&')
 			n = n + strlen(pw.pw_name) - 1;
+	}
 	if (strlen(pw.pw_name) + 1 + strlen(pw.pw_passwd) + 1 +
 	    strlen((snprintf(buf, sizeof buf, "%u", pw.pw_uid), buf)) + 1 +
 	    strlen((snprintf(buf, sizeof buf, "%u", pw.pw_gid), buf)) + 1 +

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc.yppasswdd.c,v 1.11 2001/12/09 14:58:30 miod Exp $	*/
+/*	$OpenBSD: rpc.yppasswdd.c,v 1.12 2002/06/20 03:43:41 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -32,7 +32,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: rpc.yppasswdd.c,v 1.11 2001/12/09 14:58:30 miod Exp $";
+static char rcsid[] = "$OpenBSD: rpc.yppasswdd.c,v 1.12 2002/06/20 03:43:41 deraadt Exp $";
 #endif
 
 #include <sys/types.h>
@@ -63,19 +63,16 @@ char   *tempname;
 char   *dir;
 
 void
-usage()
+usage(void)
 {
-	fprintf(stderr, "%s%s%s",
-	    "usage: rpc.yppasswdd ",
-	    "[-d dir] [-noshell] [-nogecos] [-nopw]\n",
-	    "                     [-m arg1 arg2 ... ]\n");
+	fprintf(stderr,
+	    "usage: rpc.yppasswdd [-d dir] [-noshell] [-nogecos] [-nopw]\n"
+	    "       [-m arg1 arg2 ... ]\n");
 	exit(1);
 }
 
 int
-main(argc, argv)
-	int     argc;
-	char   *argv[];
+main(int argc, char *argv[])
 {
 	SVCXPRT *transp;
 	int     i = 1;
@@ -103,8 +100,8 @@ main(argc, argv)
 					}
 					i++;
 				}
-			} else if (strcmp("-d", argv[i]) == 0
-			    && i < argc + 1) {
+			} else if (strcmp("-d", argv[i]) == 0 &&
+			    i < argc + 1) {
 				i++;
 				dir = argv[i];
 			} else
@@ -147,9 +144,7 @@ main(argc, argv)
 }
 
 static void
-yppasswddprog_1(rqstp, transp)
-	struct svc_req *rqstp;
-	SVCXPRT *transp;
+yppasswddprog_1(struct svc_req *rqstp, SVCXPRT *transp)
 {
 	union {
 		yppasswd yppasswdproc_update_1_arg;
@@ -180,7 +175,7 @@ yppasswddprog_1(rqstp, transp)
 }
 
 void
-sig_child()
+sig_child(void)
 {
 	int save_errno = errno;
 
