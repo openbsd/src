@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.449 2001/10/04 20:05:07 gluk Exp $
+	$OpenBSD: pcidevs,v 1.450 2001/10/04 23:33:39 mickey Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -1170,10 +1170,13 @@ product IBM 0x000a 		0x000a	ISA w/PnP
 product IBM 0x0017 		0x0017	CPU
 product IBM 0x0018 		0x0018	Auto LANStreamer
 product IBM GXT150P		0x001b	GXT-150P 2D Accelerator
+product IBM 82G2675		0x001d	82G2675
 product IBM 0x0020		0x0020	MCA
 product IBM 82351		0x0022	82351 PCI-PCI
+product IBM SERVERAID		0x002e	ServeRAID
 product IBM 0x0036		0x0036	Miami/PCI
 product IBM OLYMPIC		0x003e	Olympic
+product IBM I82557B		0x0057	i82557B 10/100
 product IBM FIREGL2		0x0170	FireGL2
 
 /* IDT products */
