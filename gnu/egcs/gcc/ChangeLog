@@ -1,3 +1,212 @@
+Fri May 26 10:30:02 2000  Richard Earnshaw (rearnsha@arm.com)
+
+	* arm.md (negdi2): Add clobber of condition code register.
+
+Wed May 24 00:25:45 2000  Alexandre Oliva  <oliva@lsd.ic.unicamp.br>
+
+	2000-05-22  Richard Henderson  <rth@cygnus.com>
+	* function.c (thread_prologue_and_epilogue_insns): Make sure 
+	existing line number notes appear after the prologue.
+
+2000-05-16  Franz Sirl  <Franz.Sirl-kernel@lauterbach.com>
+ 
+	* sysv4.h (CPP_OS_LINUX_SPEC): Define __unix and __linux according
+	to given options.
+
+2000-05-14  Franz Sirl  <Franz.Sirl-kernel@lauterbach.com>
+
+	* rs6000/rs6000.md (nonlocal_goto_receiver): Add length attribute.
+
+Wed Apr 12 00:42:19 2000  Jeffrey A Law  (law@cygnus.com)
+
+	2000-02-19  Richard Henderson  <rth@cygnus.com>
+        * c-typeck.c (add_pending_init): Don't abort for multiple
+        fields at the same offset.
+        (pending_init_member): Test the correct member.
+
+	Wed Apr 12 00:44:31 2000  Jeffrey A Law  (law@cygnus.com)
+	* config/i386/freebsd-elf.h (DEFAULT_VTABLE_THUNKS): Changed to 2.
+
+	Tue Nov  9 17:14:40 1999  H.J. Lu  <hjl@gnu.org>
+        * invoke.texi (-fvtable-thunks): Document that Linux/GNU uses
+        version 2 as default.
+
+	Tue Nov  9 10:16:55 1999  H.J. Lu  <hjl@gnu.org>
+        * alpha/linux-elf.h (DEFAULT_VTABLE_THUNKS): Changed to 2.
+        * arm/linux-elf.h: Likewise.
+        * rs6000/linux.h: Likewise.
+        * sparc/linux.h: Likewise.
+
+	Mon Nov  8 14:41:34 1999  H.J. Lu  <hjl@gnu.org>
+        * config/linux.h (DEFAULT_VTABLE_THUNKS): Changed to 2.
+
+	Sun May  2 08:49:27 1999  Martin von Löwis  <loewis@informatik.hu-berlin.de>
+        * invoke.texi (-fvtable-thunks): Document numeric argument.
+
+2000-04-11  Alexandre Oliva  <oliva@lsd.ic.unicamp.br>
+
+	* config/elfos.h (SELECT_SECTION): Decide whether to use a data or
+	const section to output a CONSTRUCTOR based on the same conditions
+	used for VAR_DECLs.
+
+Mon Apr  3 02:31:32 2000  Jeffrey A Law  (law@cygnus.com)
+
+	2000-01-20  Michael Hayes  <m.hayes@elec.canterbury.ac.nz>
+        * unroll.c (loop_iterations): Don't abort if REG_USERVAR_P set
+        on iteration_var.
+
+Wed Mar 22 13:11:54 2000  David Edelsohn  <edelsohn@gnu.org>
+
+	* rs6000.c (reg_or_u_cint_operand): New function.
+	(logical_operand): Handle 64-bit hosts.
+	(logical_u_operand): New function.
+	(non_logical_cint_operand): Handle 64-bit hosts.
+	(non_logical_u_cint_operand): New function.
+	(expand_block_move): Allow 8 DImode loads for PowerPC64.
+	* rs6000.h (PREDICATE_CODES): Define new functions.
+	* rs6000.md (iordi3, xordi3): Constant int must be unsigned 32-bits.
+	(movdi_64): Bracket code intended for 64-bit hosts.  Create
+	CONST_DOUBLE for 32-bit values.
+
+	* glimits.h (__LONG_MAX__): Recognize 64-bit AIX too.
+
+Wed Mar 22 13:11:54 2000  Gabriel Paubert  <paubert@iram.es>
+
+	* rs6000.md: Correct instructions length attributes and
+	constraints on unsigned compare instructions.
+	(*ne0): Disable for PowerPC64.
+	
+Tue Mar  7 21:41:17 2000  Jeffrey A Law  (law@cygnus.com)
+
+	* cccp.c (handle_directive): Initialize backslash_newlines_p.
+
+	Wed Jan 19 20:39:17 2000  Jim Wilson  <wilson@cygnus.com>
+	* fixinc/inclhack.tpl: Test for directory before trying to cd into it.
+	* fixinc/fixincl.sh, fixinc/inclhack.sh: Regenerate.
+
+	Tue Oct 12 09:45:19 1999  Jonathan Larmour  <jlarmour@cygnus.co.uk>
+	* config/rs6000/eabi-ctors.c (__do_global_ctors): Run through
+	__CTOR_LIST__ in opposite order, which is the correct order for sorted
+	constructors.
+	(__do_global_dtors): similarly for __DTOR_LIST__.
+
+	2000-01-05  Bernd Schmidt  <bernds@cygnus.co.uk>
+	* reload1.c (choose_reload_regs): When disabling a reload, also
+	set reload_spill_index to -1.
+
+	Thu Nov  4 15:52:35 1999  Andrew Haley  <aph@cygnus.com>
+	* reload1.c (reload_reg_free_for_value_p): Don't use a register
+	that is in reload_reg_used.
+
+	2000-01-18  Clinton Popetz  <cpopetz@cygnus.com>
+	* loop.c (check_dbra_loop): When checking a loop for
+	reversability, check the source of any stores to ensure they 
+	don't depend on an initial value.
+
+	Sat Jan  8 12:12:46 2000  Nick Clifton  <nickc@cygnus.com>
+	* config/v850/v850.c (expand_epilogue): Interrupt functions no
+	longer allocate extra stack for function calls.
+
+Fri Feb 18 13:32:32 2000  Martin von Loewis  <loewis@informatik.hu-berlin.de>
+
+	* gcc.texi (Bug Reporting): Refer to bugs.html.
+	(Bug Lists): Likewise.
+	* system.h (GCCBUGURL): New preprocessor define.
+	(abort): Use it.
+	* gcc.c (main): Likewise.
+
+Thu Feb  3 10:53:45 2000  Richard Henderson  <rth@cygnus.com>
+
+	Wed Nov  3 10:10:58 1999  Richard Henderson  <rth@cygnus.com>
+        * c-decl.c (duplicate_decls): Copy DECL_MODE too.
+
+Thu Jan 20 10:02:07 2000  Richard Henderson  <rth@cygnus.com>
+
+	2000-01-03  Anthony Green  <green@cygnus.com>
+        * config/i386/i386.md (builtin_setjmp_receiver): New pattern.
+        Restore the pic register if required.
+
+Fri Jan  7 14:40:05 2000  Richard Henderson  <rth@cygnus.com>
+
+	Thu Oct 28 18:06:50 1999  Richard Kenner  <kenner@vlsi1.ultra.nyu.edu>
+        * stmt.c (expand_value_return): Correctly convert VAL when promoting
+	function return.
+
+Tue Jan  4 02:22:27 2000  Jeffrey A Law  (law@cygnus.com)
+
+	Mon Oct 18 18:50:51 1999  Andreas Schwab  <schwab@suse.de>
+	* config/m68k/m68k.h (INITIAL_FRAME_POINTER_OFFSET): Add one word
+	if the pic register is used.
+
+	Sat Sep 25 13:11:07 1999  Jeffrey A Law  (law@cygnus.com)
+	* cse.c: Update comments.
+	(cse_insn): When converting a conditional/computed jump into
+	an unconditional jump, always make sure a BARRIER immediately
+	follows the converted jump.  Do not delete unreachable code.
+	(cse_basic_block): Do not delete unreachable code.
+	* toplev.c (rest_of_compilation): Move call to
+	delete_trivially_dead_insns after the conditional call to
+	jump_optimize.
+
+
+Wed Dec 29 22:47:43 1999  Jeffrey A Law  (law@cygnus.com)
+
+	1999-12-12  Stephen L Moshier <moshier@mediaone.net>
+	* loop.c (load_mems): Don't hoist written floating point mem
+	if -ffloat-store.
+
+	* cppinit.c (is_idchar): Only use special initialization for
+	gcc-2.8 and later versions of the compiler.
+
+	Wed Oct 27 01:42:26 1999  Scott Christley  <scottc@net-community.com>
+	* sparc.md (call): Don't bound structure return size to 0xfff.
+
+Mon Dec 27 07:32:59 1999  Jeffrey A Law  (law@cygnus.com)
+
+	Fri Sep  3 10:16:37 HST 1999  Glen Nakamura  <glen.nakamura@usa.net>
+	* cccp.c (rescan): Fixed obp pointer handling around call to
+	check_expand subroutine.
+
+	Thu Sep 16 00:46:35 1999  Geoff Keating  <geoffk@cygnus.com>
+	* loop.c (basic_induction_var): A non-integer variable which is
+	being set by a paradoxical subreg is probably not a biv.
+
+	1999-08-31 12:20 -0700 Zack Weinberg <zack@bitmover.com>
+	* loop.c (check_dbra_loop): Check bl->biv->add_val is a
+	CONST_INT before using its INTVAL.
+
+	Tue Nov  2 15:27:31 1999  Alexandre Oliva  <oliva@lsd.ic.unicamp.br>
+	* configure.in (m68k-hp-hpux*, xm_alloca.h): The underscore should
+	have been an hyphen, fixed.
+	* configure: Rebuilt.
+
+Thu Dec 23 11:59:56 1999  Jeffrey A Law  (law@cygnus.com)
+
+	1999-12-23  Martin v. Löwis  <loewis@informatik.hu-berlin.de>
+        * fold-const.c (operand_equal_p): Use memcmp to compare string
+        constants.
+        Suggested by D. J. Bernstein
+
+	Thu Dec 16 02:26:11 1999  Jeffrey A Law  (law@cygnus.com)
+	* h8300.md (HImode preinc peephole): Fix typo.
+
+	1999-12-14  Bernd Schmidt  <bernds@cygnus.co.uk>
+        * loop.c (check_dbra_loop): Can't reverse a biv that has
+	maybe_multiple set.
+
+1999-12-07  Martin v. Löwis  <loewis@informatik.hu-berlin.de>
+
+	* invoke.texi (C Dialect Options): Remove -flang-c9x, add -std
+	documentation.
+
+Sun Oct 31 22:32:17 1999  Alexandre Oliva  <oliva@lsd.ic.unicamp.br>
+
+	* config/i386/sol2gas.h: I had installed the wrong version of Sept
+	22's patch in the release branch.  Fixed.
+	* configure.in: Likewise.
+	* configure: Rebuilt.
+	Reported by Jason Beardsley <jbeardsley@origin.ea.com>
+
 Sun Oct 24 23:54:10 PDT 1999 Jeff Law  (law@cygnus.com)
 
 	* gcc-2.95.2 Released.
