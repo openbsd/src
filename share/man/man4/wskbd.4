@@ -1,7 +1,7 @@
-.\" $OpenBSD: wskbd.4,v 1.7 2002/09/26 22:09:53 miod Exp $
+.\" $OpenBSD: wskbd.4,v 1.8 2003/02/11 20:10:33 miod Exp $
 .\" $NetBSD: wskbd.4,v 1.5 2000/03/20 11:51:59 pk Exp $
 .\"
-.Dd March 20, 1999
+.Dd February 11, 2003
 .Dt WSKBD 4
 .Os
 .Sh NAME
@@ -17,6 +17,8 @@
 .Cd wskbd* at comkbd? console ? mux 1
 .Cd wskbd* at zskbd? console ? mux 1
 (Sun serial keyboard)
+.Cd wskbd* at hilkbd? console ? mux 1
+(HIL keyboard)
 .Sh DESCRIPTION
 The
 .Nm
@@ -116,6 +118,7 @@ driver supports it.
 .Sh SEE ALSO
 .Xr akbd 4 ,
 .Xr comkbd 4 ,
+.Xr hilkbd 4 ,
 .Xr intro 4 ,
 .Xr wscons 4 ,
 .Xr wsmux 4 ,
