@@ -1,5 +1,5 @@
-/*	$OpenBSD: pf_key_v2.c,v 1.7 1999/04/19 20:58:30 niklas Exp $	*/
-/*	$EOM: pf_key_v2.c,v 1.11 1999/04/15 18:55:08 niklas Exp $	*/
+/*	$OpenBSD: pf_key_v2.c,v 1.8 1999/04/27 21:01:28 niklas Exp $	*/
+/*	$EOM: pf_key_v2.c,v 1.12 1999/04/25 15:50:19 niklas Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist.  All rights reserved.
@@ -55,10 +55,6 @@
 #include "sa.h"
 #include "timer.h"
 #include "transport.h"
-
-/* Rounding needed for PF_ROUTE.  XXX Really OpenBSD-specific.  */
-#define ROUNDUP(a) \
-  ((a) > 0 ? (1 + (((a) - 1) | (sizeof (long) - 1))) : sizeof (long))
 
 /*
  * PF_KEY v2 always work with 64-bit entities and aligns on 64-bit boundaries.
