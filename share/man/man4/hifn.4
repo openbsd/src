@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hifn.4,v 1.30 2002/07/16 19:42:48 jason Exp $
+.\"	$OpenBSD: hifn.4,v 1.31 2002/09/12 07:08:14 deraadt Exp $
 .\"
 .\" Copyright (c) 2000 Theo de Raadt
 .\" All rights reserved.
@@ -68,8 +68,10 @@ Contains a 7951 and supports symmetric and random number operations.
 The
 .Nm
 driver registers itself to accelerate DES, Triple-DES, ARC4, MD5,
-MD5-HMAC, SHA1, and SHA1-HMAC operations in
-.Xr ipsec 4 .
+MD5-HMAC, SHA1, and SHA1-HMAC operations for
+.Xr ipsec 4
+and
+.Xr crypto 4 .
 .Pp
 The
 .Tn Hifn 7951
@@ -87,6 +89,7 @@ to the driver, but all vendors currently just use the obvious ID which is
 13 bytes of 0.
 .Sh SEE ALSO
 .Xr crypt 3 ,
+.Xr crypto 4 ,
 .Xr ipsec 4 ,
 .Xr random 4 ,
 .Xr crypto 9

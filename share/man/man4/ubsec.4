@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ubsec.4,v 1.16 2002/09/04 15:21:44 jason Exp $
+.\"	$OpenBSD: ubsec.4,v 1.17 2002/09/12 07:08:14 deraadt Exp $
 .\"
 .\" Copyright (c) 2000 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -49,7 +49,7 @@ was not very fast, lacked a RNG, and had a number of other bugs.
 A faster and fixed version of the original, with a random number
 unit and large number engine added.
 .It Broadcom BCM5801
-A BCM5805 without public key or random number generator.
+A BCM5805 without public key engine or random number generator.
 .It Broadcom BCM5802
 A slower version of the BCM5805.
 .It Broadcom BCM5805
@@ -65,14 +65,23 @@ Faster version of the BCM5820.
 The
 .Nm
 driver registers itself to accelerate DES, Triple-DES, MD5-HMAC,
-and SHA1-HMAC operations in
-.Xr ipsec 4 .
+and SHA1-HMAC operations for
+.Xr ipsec 4
+and
+.Xr crypto 4 .
+.Pp
+On those models which contain a public key engine (almost all of the
+more recent ones), this feature is registered with the
+.Xr crypto 4
+subsystem.
+.Pp
 On all models except the Bluesteel 5501 and Broadcom 5801, the driver
-also registers itself to provide random data to the
+registers itself to provide random data to the
 .Xr random 4
 subsystem.
 .Sh SEE ALSO
 .Xr crypt 3 ,
+.Xr crypto 4 ,
 .Xr ipsec 4 ,
 .Xr random 4 ,
 .Xr crypto 9

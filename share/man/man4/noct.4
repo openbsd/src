@@ -1,4 +1,4 @@
-.\"	$OpenBSD: noct.4,v 1.3 2002/07/16 19:43:31 jason Exp $
+.\"	$OpenBSD: noct.4,v 1.4 2002/09/12 07:08:14 deraadt Exp $
 .\"
 .\" Copyright (c) 2002 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -45,18 +45,23 @@ driver supports cards based on the
 .Tn NSP2000
 packet processor.
 The
-.Tn NSP2000 contains a public key processor, random number generator, and
+.Tn NSP2000
+contains a public key processor, random number generator, and
 packet processor.
 The random number generator provides random bits to the
 .Xr random 4
 subsystem.
 .Pp
-Currently, the he packet processor registers with the
+Currently, the packet processor registers with the
 .Xr crypto 9
-subsystem only to support MD5, SHA1, DES-CBC, and Triple-DES.
+subsystem only to support MD5, SHA1, DES-CBC, and Triple-DES for
+.Xr ipsec 4
+and
+.Xr crypto 4 .
 The public key engine is not yet supported.
 .Sh SEE ALSO
 .Xr crypt 3 ,
+.Xr crypto 4 ,
 .Xr ipsec 4 ,
 .Xr random 4 ,
 .Xr crypto 9
