@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.21 2001/01/24 21:23:05 drahn Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.22 2001/02/16 05:18:06 drahn Exp $	*/
 /*	$NetBSD: pmap.c,v 1.1 1996/09/30 16:34:52 ws Exp $	*/
 
 /*
@@ -1329,8 +1329,14 @@ pmap_extract(pm, va)
 	int s = splimp();
 	
 	if (!(ptp = pte_find(pm, va))) {
+		/* return address 0 if not mapped??? */
+		o = 0;
+		if (pm == pmap_kernel() && va < 0x80000000){
+			/* if in kernel, va==pa for 0 - 0x80000000 */
+			o = va;
+		}
 		splx(s);
-		return 0;
+		return o;
 	}
 	o = (ptp->pte_lo & PTE_RPGN) | (va & ADDR_POFF);
 	splx(s);
