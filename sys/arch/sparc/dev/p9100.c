@@ -1,4 +1,4 @@
-/*	$OpenBSD: p9100.c,v 1.1 1999/09/06 03:46:16 jason Exp $	*/
+/*	$OpenBSD: p9100.c,v 1.2 1999/09/06 04:46:38 jason Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -243,7 +243,6 @@ p9100attach(parent, self, args)
 
 	P9100_SELECT_SCR(sc);
 	i = sc->sc_ctl->ctl_scr.scr;
-	printf(":%08x", i);
 	switch ((i >> 26) & 7) {
 	case 5:
 		sc->sc_fb.fb_type.fb_depth = 32;
@@ -267,7 +266,7 @@ p9100attach(parent, self, args)
 	sc->sc_fb.fb_type.fb_cmsize = getpropint(node, "cmsize", 256);
 	sc->sc_fb.fb_type.fb_size =
 	    sc->sc_fb.fb_type.fb_height * sc->sc_fb.fb_linebytes;
-	printf(": rev %x, %d x %d, depth %d", i,
+	printf(": rev %x, %d x %d, depth %d", i & 7,
 	    sc->sc_fb.fb_type.fb_width, sc->sc_fb.fb_type.fb_height,
 	    sc->sc_fb.fb_type.fb_depth);
 
