@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.49 2003/12/30 13:03:27 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.50 2003/12/30 13:06:00 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -347,6 +347,7 @@ bgp_fsm(struct peer *peer, enum session_events event)
 			break;
 		default:
 			/* ignore */
+			break;
 		}
 		break;
 	case STATE_CONNECT:
@@ -624,6 +625,7 @@ change_state(struct peer *peer, enum session_state state,
 		session_up(peer);
 		break;
 	default:		/* something seriously fucked */
+		break;
 	}
 
 	log_statechange(peer, state, event);
@@ -1327,6 +1329,7 @@ session_dispatch_imsg(struct imsgbuf *ibuf, int idx)
 			logit(LOG_INFO, "SE reconfigured");
 			break;
 		default:
+			break;
 		}
 		imsg_free(&imsg);
 	}
