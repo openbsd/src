@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdc.c,v 1.26 2003/10/03 16:44:49 miod Exp $	*/
+/*	$OpenBSD: pdc.c,v 1.27 2003/10/31 18:31:41 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -29,6 +29,8 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include "com.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,6 +77,7 @@ void pdctimeout(void *v);
 int pdcparam(struct tty *tp, struct termios *);
 int pdccnlookc(dev_t dev, int *cp);
 
+#if NCOM_GSC > 0
 /* serial console speed table */
 static int pdc_speeds[] = {
 	B50,
@@ -94,6 +97,7 @@ static int pdc_speeds[] = {
 	B115200,
 	B230400,
 };
+#endif
 
 void
 pdc_init()
@@ -124,7 +128,6 @@ pdc_init()
 	cn_tab = &constab[0];
 
 	/* setup the console */
-#include "com.h"
 #if NCOM_GSC > 0
 	if (PAGE0->mem_cons.pz_class == PCL_DUPLEX) {
 		struct pz_device *pzd = &PAGE0->mem_cons;
