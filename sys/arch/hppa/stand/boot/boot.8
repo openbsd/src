@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot.8,v 1.9 2003/10/04 10:33:04 jmc Exp $
+.\"	$OpenBSD: boot.8,v 1.10 2003/10/04 16:47:40 jmc Exp $
 .\"
 .\" Copyright (c) 2002 Miodrag Vallat
 .\" Copyright (c) 1997-2002 Michael Shalayeff
@@ -104,6 +104,18 @@ If you do not,
 will proceed to load the kernel with the current parameters after the
 timeout period has expired.
 .El
+.Pp
+By default,
+.Nm
+attempts to load the kernel executable
+.Pa /bsd .
+If that fails, it will attempt to load
+.Pa /obsd
+and then
+.Pa /bsd.old .
+If it fails to find any of these files,
+and no alternative kernel image has been specified,
+the system will be unable to boot.
 .Sh COMMANDS
 The following commands are accepted at the
 .Nm
@@ -279,23 +291,21 @@ system bootstrap's startup file
 kernel image
 .El
 .Sh EXAMPLES
-.Li boot> boot
+Boot the default kernel:
 .Pp
-Boot the default kernel.
-.Pp
-.Li # echo \&"boot\&" > /etc/boot.conf
+.Dl boot> boot
 .Pp
 Remove the 5 second pause at boot-time permanently, causing
 .Nm
-to load the kernel immediately without prompting.
+to load the kernel immediately without prompting:
 .Pp
-.Li boot> machine console rs232.9600.8.none
+.Dl # echo \&"boot\&" > /etc/boot.conf
 .Pp
 Use serial console on the first serial port, with the usual 9600 8N1 settings.
 A null modem cable should connect the specified serial port to a terminal.
 Useful for debugging.
 .Pp
-.Li boot> boot sd1a:/bsd -c
+.Dl boot> machine console rs232.9600.8.none
 .Pp
 Boot the kernel named
 .Pa /bsd
@@ -310,6 +320,8 @@ Once booted, such changes can be made permanent by using
 .Xr config 8 Ns 's
 .Fl e
 option.
+.Pp
+.Dl boot> boot sd1a:/bsd -c
 .Sh SEE ALSO
 .Xr gzip 1 ,
 .Xr autoconf 4 ,
