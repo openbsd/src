@@ -61,18 +61,55 @@ struct mips_regnum
 };
 extern const struct mips_regnum *mips_regnum (struct gdbarch *gdbarch);
 
-enum {
+/* Register numbers of various important registers.  Note that some of
+   these values are "real" register numbers, and correspond to the
+   general registers of the machine, and some are "phony" register
+   numbers which are too large to be actual register numbers as far as
+   the user is concerned but do serve to get the desired values when
+   passed to read_register.  */
+
+enum
+{
+  MIPS_ZERO_REGNUM = 0,		/* Read-only register, always 0.  */
+  MIPS_AT_REGNUM = 1,
+  MIPS_V0_REGNUM = 2,		/* Function integer return value.  */
+  MIPS_A0_REGNUM = 4,		/* Loc of first arg during a subr call */
+  MIPS_T9_REGNUM = 25,		/* Contains address of callee in PIC.  */
   MIPS_SP_REGNUM = 29,
+  MIPS_RA_REGNUM = 31,
+  MIPS_PS_REGNUM = 32,		/* Contains processor status.  */
   MIPS_EMBED_LO_REGNUM = 33,
   MIPS_EMBED_HI_REGNUM = 34,
   MIPS_EMBED_BADVADDR_REGNUM = 35,
   MIPS_EMBED_CAUSE_REGNUM = 36,
   MIPS_EMBED_PC_REGNUM = 37,
-  MIPS_EMBED_FP0_REGNUM = 38
+  MIPS_EMBED_FP0_REGNUM = 38,
+  MIPS_UNUSED_REGNUM = 73,	/* Never used, FIXME */
+  MIPS_FIRST_EMBED_REGNUM = 74,	/* First CP0 register for embedded use.  */
+  MIPS_PRID_REGNUM = 89,	/* Processor ID.  */
+  MIPS_LAST_EMBED_REGNUM = 89	/* Last one.  */
 };
 
 /* Defined in mips-tdep.c and used in remote-mips.c */
 extern void deprecated_mips_set_processor_regs_hack (void);
 
+/* Instruction sizes and other useful constants.  */
+enum
+{
+  MIPS_INSN16_SIZE = 2,
+  MIPS_INSN32_SIZE = 4,
+  /* The number of floating-point or integer registers.  */
+  MIPS_NUMREGS = 32
+};
+
+/* Single step based on where the current instruction will take us.  */
+extern void mips_software_single_step (enum target_signal, int);
+
+/* Tell if the program counter value in MEMADDR is in a MIPS16
+   function.  */
+extern int mips_pc_is_mips16 (bfd_vma memaddr);
+
+/* Return the currently configured (or set) saved register size. */
+extern unsigned int mips_abi_regsize (struct gdbarch *gdbarch);
 
 #endif /* MIPS_TDEP_H */
