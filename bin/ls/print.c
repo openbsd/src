@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.8 1998/05/18 20:36:31 deraadt Exp $	*/
+/*	$OpenBSD: print.c,v 1.9 1998/08/15 20:23:20 deraadt Exp $	*/
 /*	$NetBSD: print.c,v 1.15 1996/12/11 03:25:39 thorpej Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.5 (Berkeley) 7/28/94";
 #else
-static char rcsid[] = "$OpenBSD: print.c,v 1.8 1998/05/18 20:36:31 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: print.c,v 1.9 1998/08/15 20:23:20 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -152,12 +152,16 @@ printcol(dp)
 	 * of pointers.
 	 */
 	if (dp->entries > lastentries) {
-		lastentries = dp->entries;
-		if ((array =
+		FTSENT **a;
+
+		if ((a =
 		    realloc(array, dp->entries * sizeof(FTSENT *))) == NULL) {
 			warn(NULL);
 			printscol(dp);
+			return;			
 		}
+		lastentries = dp->entries;
+		array = a;
 	}
 	for (p = dp->list, num = 0; p; p = p->fts_link)
 		if (p->fts_number != NO_PRINT)
