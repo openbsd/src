@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.80 2001/06/27 22:05:20 jasoni Exp $ */
+/*	$OpenBSD: pf.c,v 1.81 2001/06/27 22:41:25 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -66,11 +66,12 @@
 
 struct pf_tree_node {
 	struct pf_tree_key {
-		u_int32_t	 addr[2];
+		struct in_addr	 addr[2];
 		u_int16_t	 port[2];
 		u_int8_t	 proto;
 	}			 key;
 	void			*state;
+	struct pf_tree_node	*parent;
 	struct pf_tree_node	*left;
 	struct pf_tree_node	*right;
 	signed char		 balance;
@@ -190,13 +191,13 @@ tree_key_compare(struct pf_tree_key *a, struct pf_tree_key *b)
 		return (-1);
 	if (a->proto   > b->proto  )
 		return ( 1);
-	if (a->addr[0] < b->addr[0])
+	if (a->addr[0].s_addr < b->addr[0].s_addr)
 		return (-1);
-	if (a->addr[0] > b->addr[0])
+	if (a->addr[0].s_addr > b->addr[0].s_addr)
 		return ( 1);
-	if (a->addr[1] < b->addr[1])
+	if (a->addr[1].s_addr < b->addr[1].s_addr)
 		return (-1);
-	if (a->addr[1] > b->addr[1])
+	if (a->addr[1].s_addr > b->addr[1].s_addr)
 		return ( 1);
 	if (a->port[0] < b->port[0])
 		return (-1);
@@ -413,9 +414,9 @@ insert_state(struct pf_state *state)
 	struct pf_tree_key key;
 
 	key.proto = state->proto;
-	key.addr[0] = state->lan.addr;
+	key.addr[0].s_addr = state->lan.addr;
 	key.port[0] = state->lan.port;
-	key.addr[1] = state->ext.addr;
+	key.addr[1].s_addr = state->ext.addr;
 	key.port[1] = state->ext.port;
 	/* sanity checks can be removed later, should never occur */
 	if (find_state(tree_lan_ext, &key) != NULL)
@@ -427,9 +428,9 @@ insert_state(struct pf_state *state)
 	}
 
 	key.proto   = state->proto;
-	key.addr[0] = state->ext.addr;
+	key.addr[0].s_addr = state->ext.addr;
 	key.port[0] = state->ext.port;
-	key.addr[1] = state->gwy.addr;
+	key.addr[1].s_addr = state->gwy.addr;
 	key.port[1] = state->gwy.port;
 	if (find_state(tree_ext_gwy, &key) != NULL)
 		printf("pf: ERROR! insert invalid\n");
@@ -455,9 +456,9 @@ purge_expired_states(void)
 		next = TAILQ_NEXT(cur, entries);
 		if (cur->expire <= pftv.tv_sec) {
 			key.proto = cur->proto;
-			key.addr[0] = cur->lan.addr;
+			key.addr[0].s_addr = cur->lan.addr;
 			key.port[0] = cur->lan.port;
-			key.addr[1] = cur->ext.addr;
+			key.addr[1].s_addr = cur->ext.addr;
 			key.port[1] = cur->ext.port;
 			/* sanity checks can be removed later */
 			if (find_state(tree_lan_ext, &key) != cur)
@@ -466,9 +467,9 @@ purge_expired_states(void)
 			if (find_state(tree_lan_ext, &key) != NULL)
 				printf("pf: ERROR! remove failed\n");
 			key.proto   = cur->proto;
-			key.addr[0] = cur->ext.addr;
+			key.addr[0].s_addr = cur->ext.addr;
 			key.port[0] = cur->ext.port;
-			key.addr[1] = cur->gwy.addr;
+			key.addr[1].s_addr = cur->gwy.addr;
 			key.port[1] = cur->gwy.port;
 			if (find_state(tree_ext_gwy, &key) != cur)
 				printf("pf: ERROR! remove invalid\n");
@@ -1624,9 +1625,9 @@ pf_test_state_tcp(int direction, struct ifnet *ifp, struct mbuf *m,
 	int rewrite = 0;
 
 	key.proto   = IPPROTO_TCP;
-	key.addr[0] = h->ip_src.s_addr;
+	key.addr[0] = h->ip_src;
 	key.port[0] = th->th_sport;
-	key.addr[1] = h->ip_dst.s_addr;
+	key.addr[1] = h->ip_dst;
 	key.port[1] = th->th_dport;
 
 	s = find_state((direction == PF_IN) ? tree_ext_gwy : tree_lan_ext,
@@ -1782,9 +1783,9 @@ pf_test_state_udp(int direction, struct ifnet *ifp, struct mbuf *m,
 	int rewrite = 0;
 
 	key.proto   = IPPROTO_UDP;
-	key.addr[0] = h->ip_src.s_addr;
+	key.addr[0] = h->ip_src;
 	key.port[0] = uh->uh_sport;
-	key.addr[1] = h->ip_dst.s_addr;
+	key.addr[1] = h->ip_dst;
 	key.port[1] = uh->uh_dport;
 
 	s = find_state((direction == PF_IN) ? tree_ext_gwy : tree_lan_ext,
@@ -1860,9 +1861,9 @@ pf_test_state_icmp(int direction, struct ifnet *ifp, struct mbuf *m,
 		struct pf_tree_key key;
 
 		key.proto   = IPPROTO_ICMP;
-		key.addr[0] = h->ip_src.s_addr;
+		key.addr[0] = h->ip_src;
 		key.port[0] = ih->icmp_id;
-		key.addr[1] = h->ip_dst.s_addr;
+		key.addr[1] = h->ip_dst;
 		key.port[1] = ih->icmp_id;
 
 		s = find_state((direction == PF_IN) ? tree_ext_gwy :
@@ -1928,9 +1929,9 @@ pf_test_state_icmp(int direction, struct ifnet *ifp, struct mbuf *m,
 				((th.th_flags & TH_FIN) ? 1 : 0);
 
 			key.proto   = IPPROTO_TCP;
-			key.addr[0] = h2.ip_dst.s_addr;
+			key.addr[0] = h2.ip_dst;
 			key.port[0] = th.th_dport;
-			key.addr[1] = h2.ip_src.s_addr;
+			key.addr[1] = h2.ip_src;
 			key.port[1] = th.th_sport;
 
 			s = find_state((direction == PF_IN) ? tree_ext_gwy :
@@ -2002,9 +2003,9 @@ pf_test_state_icmp(int direction, struct ifnet *ifp, struct mbuf *m,
 			}
 
 			key.proto   = IPPROTO_UDP;
-			key.addr[0] = h2.ip_dst.s_addr;
+			key.addr[0] = h2.ip_dst;
 			key.port[0] = uh.uh_dport;
-			key.addr[1] = h2.ip_src.s_addr;
+			key.addr[1] = h2.ip_src;
 			key.port[1] = uh.uh_sport;
 
 			s = find_state(direction == PF_IN ? tree_ext_gwy :
