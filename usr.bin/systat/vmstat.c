@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmstat.c,v 1.22 2001/05/04 16:48:34 ericj Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.23 2001/06/22 14:57:21 lebel Exp $	*/
 /*	$NetBSD: vmstat.c,v 1.5 1996/05/10 23:16:40 thorpej Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 1/12/94";
 #endif
-static char rcsid[] = "$OpenBSD: vmstat.c,v 1.22 2001/05/04 16:48:34 ericj Exp $";
+static char rcsid[] = "$OpenBSD: vmstat.c,v 1.23 2001/06/22 14:57:21 lebel Exp $";
 #endif /* not lint */
 
 /*
@@ -310,8 +310,7 @@ fetchkre()
 	time_t now;
 
 	time(&now);
-	strncpy(buf, ctime(&now), sizeof buf-1);
-	buf[sizeof buf-1] = '\0';
+	strlcpy(buf, ctime(&now), sizeof buf);
 	getinfo(&s, state);
 }
 
