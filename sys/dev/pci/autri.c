@@ -1,4 +1,4 @@
-/*	$OpenBSD: autri.c,v 1.1 2001/11/26 16:38:38 mickey Exp $	*/
+/*	$OpenBSD: autri.c,v 1.2 2001/11/26 18:10:52 mickey Exp $	*/
 
 /*
  * Copyright (c) 2001 SOMEYA Yoshihiko and KUROSAWA Takahiro.
@@ -102,18 +102,18 @@ int	autri_read_codec __P((void *sc, u_int8_t a, u_int16_t *d));
 int	autri_write_codec __P((void *sc, u_int8_t a, u_int16_t d));
 void	autri_reset_codec __P((void *sc));
 
-static void autri_powerhook(int why,void *addr);
-static int  autri_init __P((void *sc));
-static struct autri_dma *autri_find_dma __P((struct autri_softc *, void *));
-static void autri_setup_channel __P((struct autri_softc *sc,int mode,
+void autri_powerhook(int why,void *addr);
+int  autri_init __P((void *sc));
+struct autri_dma *autri_find_dma __P((struct autri_softc *, void *));
+void autri_setup_channel __P((struct autri_softc *sc,int mode,
 				    struct audio_params *param));
-static void autri_enable_interrupt __P((struct autri_softc *sc, int ch));
-static void autri_disable_interrupt __P((struct autri_softc *sc, int ch));
-static void autri_startch __P((struct autri_softc *sc, int ch, int ch_intr));
-static void autri_stopch __P((struct autri_softc *sc, int ch, int ch_intr));
-static void autri_enable_loop_interrupt __P((void *sc));
+void autri_enable_interrupt __P((struct autri_softc *sc, int ch));
+void autri_disable_interrupt __P((struct autri_softc *sc, int ch));
+void autri_startch __P((struct autri_softc *sc, int ch, int ch_intr));
+void autri_stopch __P((struct autri_softc *sc, int ch, int ch_intr));
+void autri_enable_loop_interrupt __P((void *sc));
 #if 0
-static void autri_disable_loop_interrupt __P((void *sc));
+void autri_disable_loop_interrupt __P((void *sc));
 #endif
 
 struct cfdriver autri_cd = {
@@ -151,7 +151,7 @@ int	autri_query_devinfo __P((void *addr, mixer_devinfo_t *dip));
 int	autri_get_portnum_by_name
     __P((struct autri_softc *, char *, char *, char *));
 
-static struct audio_hw_if autri_hw_if = {
+struct audio_hw_if autri_hw_if = {
 	autri_open,
 	autri_close,
 	NULL,			/* drain */
@@ -615,22 +615,22 @@ autri_attach(parent, self, aux)
 	midi_attach_mi(&autri_midi_hw_if, sc, &sc->sc_dev);
 #endif
 
+	sc->sc_old_power = PWR_RESUME;
 	powerhook_establish(autri_powerhook, sc);
 }
 
-static void
+void
 autri_powerhook(int why,void *addr)
 {
-	static int old = PWR_RESUME;
 	struct autri_softc *sc = addr;
 
-	if (why == PWR_RESUME && old == PWR_SUSPEND) {
+	if (why == PWR_RESUME && sc->sc_old_power == PWR_SUSPEND) {
 		DPRINTF(("PWR_RESUME\n"));
 		autri_init(sc);
 		/*autri_reset_codec(&sc->sc_codec);*/
 		(sc->sc_codec.codec_if->vtbl->restore_ports)(sc->sc_codec.codec_if);
 	}
-	old = why;
+	sc->sc_old_power = why;
 }
 
 int
@@ -753,7 +753,7 @@ autri_init(sc_)
 	return 0;
 }
 
-static void
+void
 autri_enable_loop_interrupt(sc_)
 	void *sc_;
 {
@@ -770,7 +770,7 @@ autri_enable_loop_interrupt(sc_)
 }
 
 #if 0
-static void
+void
 autri_disable_loop_interrupt(sc_)
 	void *sc_;
 {
@@ -1210,7 +1210,7 @@ autri_free(addr, ptr, pool)
 	}
 }
 
-static struct autri_dma *
+struct autri_dma *
 autri_find_dma(sc, addr)
 	struct autri_softc *sc;
 	void *addr;
@@ -1261,7 +1261,7 @@ autri_get_props(addr)
 		AUDIO_PROP_FULLDUPLEX);
 }
 
-static void
+void
 autri_setup_channel(sc, mode, param)
 	struct autri_softc *sc;
 	int mode;
@@ -1486,7 +1486,7 @@ autri_trigger_input(addr, start, end, blksize, intr, arg, param)
 }
 
 #if 0
-static int
+int
 autri_halt(sc)
 	struct autri_softc *sc;
 {
@@ -1498,7 +1498,7 @@ autri_halt(sc)
 }
 #endif
 
-static void
+void
 autri_enable_interrupt(sc, ch)
 	struct autri_softc *sc;
 	int ch;
@@ -1511,7 +1511,7 @@ autri_enable_interrupt(sc, ch)
 	autri_reg_set_4(sc, reg, 1 << ch);
 }
 
-static void
+void
 autri_disable_interrupt(sc, ch)
 	struct autri_softc *sc;
 	int ch;
@@ -1524,7 +1524,7 @@ autri_disable_interrupt(sc, ch)
 	autri_reg_clear_4(sc, reg, 1 << ch);
 }
 
-static void
+void
 autri_startch(sc, ch, ch_intr)
 	struct autri_softc *sc;
 	int ch, ch_intr;
@@ -1539,7 +1539,7 @@ autri_startch(sc, ch, ch_intr)
 	autri_reg_set_4(sc, reg, chmask);
 }
 
-static void
+void
 autri_stopch(sc, ch, ch_intr)
 	struct autri_softc *sc;
 	int ch, ch_intr;
