@@ -1,5 +1,5 @@
-.\"	$OpenBSD: altqd.8,v 1.1.1.1 2001/06/27 18:23:17 kjc Exp $
-.\"	$KAME: altqd.8,v 1.4 2001/04/09 16:26:28 thorpej Exp $
+.\"	$OpenBSD: altqd.8,v 1.2 2001/07/25 10:44:33 kjc Exp $
+.\"	$KAME: altqd.8,v 1.5 2001/07/19 11:07:33 kjc Exp $
 .\"
 .\" Copyright (C) 2000
 .\" Sony Computer Science Laboratories Inc.  All rights reserved.
@@ -37,56 +37,53 @@
 .Sh DESCRIPTION
 .Nm
 is a daemon program that reads a configuration file and then sets up
-the ALTQ state of network interfaces.  After configuring the ALTQ
-state,
+the ALTQ state of network interfaces.
+After configuring the ALTQ state,
 .Nm
 will detach and become a daemon.
-
+.Pp
 The signal SIGINT or SIGTERM will shutdown
 .Nm
 , and the signal SIGHUP will restart
-.Nm
-\&.
+.Nm .
 .Pp
 The following options are available:
 .Bl -tag -width Fl -offset indent
 .It Fl f
-Specify a configuration file to read instead of the default.  The
-default file is
-.Pa /etc/altq.conf
-\&.
+Specify a configuration file to read instead of the default.
+The default file is
+.Pa /etc/altq.conf .
 .It Fl d
 Debug mode.
 .Nm
 does not detach and goes into the command mode.
 .It Fl v
-Print debugging information.  This option implies
-.Fl d
-\&.
+Print debugging information.
+This option implies
+.Fl d .
 .It Fl D
 Dummy mode.
 .Nm
 does not issue altq system calls.
 .El
-
 .Sh COMMANDS
 When
 .Fl d
 option is provided,
 .Nm
 goes into the command mode after reading the configuration file and
-setting up the ALTQ state.  Each command is a single line, starting
-with the command verb.
+setting up the ALTQ state.
+Each command is a single line, starting with the command verb.
 .Pp
 The basic commands are as follows:
 .Bl -tag -width help -offset indent
-.It Sy help Em or Sy ?
+.It Cm help|?
 Display a complete list of commands and their syntax.
-.It Sy quit
+.It Cm quit
 Exit.
-.It Sy altq reload
+.It Cm altq Ar reload
 reload the configuration file and reinitialize ALTQ.
-.It Sy altq Em iface_name Op enable|disable
+.It Cm altq Ar iface_name Op enable|disable
 Enables or disables ALTQ on the interface named
 .Em iface_name .
 When
@@ -94,7 +91,6 @@ When
 enters the command mode, ALTQ is enabled on all the
 interfaces listed in the configuration file.
 .El
-
 .Sh FILES
 .Pa /etc/altq.conf ,
 .Pa /var/run/altqd.pid
