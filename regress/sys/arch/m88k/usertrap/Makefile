@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 2003/09/01 19:45:28 miod Exp $
+#	$OpenBSD: Makefile,v 1.1 2004/04/24 13:19:15 miod Exp $
 
 PROG=	trap
 
