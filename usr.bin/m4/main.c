@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.18 1999/11/17 15:34:13 espie Exp $	*/
+/*	$OpenBSD: main.c,v 1.19 1999/11/20 17:48:59 espie Exp $	*/
 /*	$NetBSD: main.c,v 1.12 1997/02/08 23:54:49 cgd Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.18 1999/11/17 15:34:13 espie Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.19 1999/11/20 17:48:59 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -440,7 +440,7 @@ inspect(tp)
 	char *name = tp;
 	char *etp = tp+MAXTOK;
 	ndptr p;
-	unsigned long h = 0;
+	unsigned h = 0;
 
 	while ((isalnum(c = gpbc()) || c == '_') && tp < etp)
 		h = (h << 5) + h + (*tp++ = c);
@@ -450,8 +450,8 @@ inspect(tp)
 
 	*tp = EOS;
 
-	for (p = hashtab[h%HASHSIZE]; p != nil; p = p->nxtptr)
-		if (STREQ(name, p->name))
+	for (p = hashtab[h % HASHSIZE]; p != nil; p = p->nxtptr)
+		if (h == p->hv && STREQ(name, p->name))
 			break;
 	return p;
 }
@@ -467,16 +467,17 @@ static void
 initkwds()
 {
 	size_t i;
-	int h;
+	unsigned h;
 	ndptr p;
 
 	for (i = 0; i < MAXKEYS; i++) {
 		h = hash(keywrds[i].knam);
 		p = (ndptr) xalloc(sizeof(struct ndblock));
-		p->nxtptr = hashtab[h];
-		hashtab[h] = p;
+		p->nxtptr = hashtab[h % HASHSIZE];
+		hashtab[h % HASHSIZE] = p;
 		p->name = keywrds[i].knam;
 		p->defn = null;
+		p->hv = h;
 		p->type = keywrds[i].ktyp | STATIC;
 	}
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: look.c,v 1.5 1999/11/17 15:34:13 espie Exp $	*/
+/*	$OpenBSD: look.c,v 1.6 1999/11/20 17:48:59 espie Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -57,14 +57,14 @@ static char sccsid[] = "@(#)look.c	8.1 (Berkeley) 6/6/93";
 
 static void freent __P((ndptr));
 
-int
+unsigned
 hash(name)
 	const char *name;
 {
-	unsigned long h = 0;
+	unsigned h = 0;
 	while (*name)
 		h = (h << 5) + h + *name++;
-	return (h % HASHSIZE);
+	return (h);
 }
 
 /*
@@ -75,9 +75,11 @@ lookup(name)
 	const char *name;
 {
 	ndptr p;
+	unsigned h;
 
-	for (p = hashtab[hash(name)]; p != nil; p = p->nxtptr)
-		if (STREQ(name, p->name))
+	h = hash(name);
+	for (p = hashtab[h % HASHSIZE]; p != nil; p = p->nxtptr)
+		if (h == p->hv && STREQ(name, p->name))
 			break;
 	return (p);
 }
@@ -90,14 +92,15 @@ ndptr
 addent(name)
 	const char *name;
 {
-	int h;
+	unsigned h;
 	ndptr p;
 
 	h = hash(name);
 	p = (ndptr) xalloc(sizeof(struct ndblock));
-	p->nxtptr = hashtab[h];
-	hashtab[h] = p;
+	p->nxtptr = hashtab[h % HASHSIZE];
+	hashtab[h % HASHSIZE] = p;
 	p->name = xstrdup(name);
+	p->hv = h;
 	return p;
 }
 
@@ -125,14 +128,14 @@ remhash(name, all)
 	ndptr xp, tp, mp;
 
 	h = hash(name);
-	mp = hashtab[h];
+	mp = hashtab[h % HASHSIZE];
 	tp = nil;
 	while (mp != nil) {
-		if (STREQ(mp->name, name)) {
+		if (mp->hv == h && STREQ(mp->name, name)) {
 			mp = mp->nxtptr;
 			if (tp == nil) {
-				freent(hashtab[h]);
-				hashtab[h] = mp;
+				freent(hashtab[h % HASHSIZE]);
+				hashtab[h % HASHSIZE] = mp;
 			}
 			else {
 				xp = tp->nxtptr;

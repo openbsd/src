@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdef.h,v 1.7 1999/09/14 08:35:17 espie Exp $	*/
+/*	$OpenBSD: mdef.h,v 1.8 1999/11/20 17:49:00 espie Exp $	*/
 /*	$NetBSD: mdef.h,v 1.7 1996/01/13 23:25:27 pk Exp $	*/
 
 /*
@@ -124,6 +124,7 @@ struct ndblock {                /* hastable structure         */
         char    *name;          /* entry name..               */
         char    *defn;          /* definition..               */
         int     type;           /* type of the entry..        */
+	unsigned hv;
         ndptr   nxtptr;         /* link to next entry..       */
 };
  

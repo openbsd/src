@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.11 1999/11/17 15:34:13 espie Exp $	*/
+/*	$OpenBSD: extern.h,v 1.12 1999/11/20 17:48:59 espie Exp $	*/
 /*	$NetBSD: extern.h,v 1.3 1996/01/13 23:25:24 pk Exp $	*/
 
 /*-
@@ -53,7 +53,7 @@ extern FILE 	*fopen_trypath __P((const char *filename));
 
 /* look.c */
 extern ndptr	addent __P((const char *));
-extern int	hash __P((const char *));
+extern unsigned	hash __P((const char *));
 extern ndptr	lookup __P((const char *));
 extern void	remhash __P((const char *, int));
 
