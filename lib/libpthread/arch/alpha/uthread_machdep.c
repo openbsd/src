@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_machdep.c,v 1.1 2000/09/25 05:44:13 d Exp $	*/
+/*	$OpenBSD: uthread_machdep.c,v 1.2 2002/05/10 10:17:22 art Exp $	*/
 /* David Leonard, <d@csee.uq.edu.au>. Public domain. */
 
 /*
@@ -30,9 +30,10 @@ _thread_machdep_init(statep, base, len, entry)
 {
 	struct frame *f;
 
-	f = (struct frame *)(((long)base + len - sizeof *f) & ~ALIGNBYTES);
-	f->ra = f->t12 = (long)entry;
-	statep->sp = (long)f;
+	f = (struct frame *)(((u_int64_t)base + len - sizeof *f) & ~ALIGNBYTES);
+	f->ra = f->t12 = (u_int64_t)entry;
+
+	statep->sp = (u_int64_t)f;
 }
 
 void
