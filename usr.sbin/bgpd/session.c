@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.203 2004/11/18 15:42:59 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.204 2004/11/18 16:30:05 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -61,6 +61,7 @@ int	session_setup_socket(struct peer *);
 void	session_accept(int);
 int	session_connect(struct peer *);
 void	session_tcp_established(struct peer *);
+void	session_capa_ann_none(struct peer *);
 int	session_capa_mp_add(struct buf *, u_int16_t, u_int8_t);
 void	session_open(struct peer *);
 void	session_keepalive(struct peer *);
@@ -531,10 +532,13 @@ void
 init_peer(struct peer *p)
 {
 	p->fd = p->wbuf.fd = -1;
-	p->capa.announce = p->conf.capabilities;
+
 	p->capa.ann_mp_v4 = SAFI_UNICAST;
 	p->capa.ann_mp_v6 = SAFI_NONE;
 	p->capa.ann_refresh = 1;
+	if (!p->conf.capabilities)
+		session_capa_ann_none(p);
+
 	if (p->conf.if_depend[0])
 		imsg_compose(ibuf_main, IMSG_IFINFO, 0, 0, -1,
 		    p->conf.if_depend, sizeof(p->conf.if_depend));
@@ -1126,6 +1130,14 @@ session_tcp_established(struct peer *peer)
 		log_warn("getpeername");
 }
 
+void
+session_capa_ann_none(struct peer *peer)
+{
+	peer->capa.ann_mp_v4 = SAFI_NONE;
+	peer->capa.ann_mp_v4 = SAFI_NONE;
+	peer->capa.ann_refresh = 0;
+}
+
 int
 session_capa_mp_add(struct buf *buf, u_int16_t afi, u_int8_t safi)
 {
@@ -1155,21 +1167,18 @@ session_open(struct peer *p)
 	u_int8_t		 op_type, op_len = 0, optparamlen = 0;
 	u_int8_t		 capa_code, capa_len;
 
-	if (p->capa.announce) {
-		/* multiprotocol extensions, RFC 2858 */
-		if (p->capa.ann_mp_v4)
-			op_len += 2 + 4;	/* 1 code + 1 len + 4 data */
-		if (p->capa.ann_mp_v6)
-			op_len += 2 + 4;	/* 1 code + 1 len + 4 data */
+	/* multiprotocol extensions, RFC 2858 */
+	if (p->capa.ann_mp_v4)
+		op_len += 2 + 4;	/* 1 code + 1 len + 4 data */
+	if (p->capa.ann_mp_v6)
+		op_len += 2 + 4;	/* 1 code + 1 len + 4 data */
 
-		/* route refresh, RFC 2918 */
-		if (p->capa.ann_refresh)
-			op_len += 2;	/* 1 code + 1 len, no data */
+	/* route refresh, RFC 2918 */
+	if (p->capa.ann_refresh)
+		op_len += 2 + 0;	/* 1 code + 1 len, no data */
 
-		if (op_len > 0)
-			optparamlen = sizeof(op_type) + sizeof(op_len) + op_len;
-	}
-
+	if (op_len > 0)
+		optparamlen = sizeof(op_type) + sizeof(op_len) + op_len;
 	len = MSGSIZE_OPEN_MIN + optparamlen;
 
 	memset(&msg.header.marker, 0xff, sizeof(msg.header.marker));
@@ -1197,7 +1206,7 @@ session_open(struct peer *p)
 	errs += buf_add(buf, &msg.bgpid, sizeof(msg.bgpid));
 	errs += buf_add(buf, &msg.optparamlen, sizeof(msg.optparamlen));
 
-	if (p->capa.announce && optparamlen) {
+	if (optparamlen) {
 		op_type = OPT_PARAM_CAPABILITIES;
 		errs += buf_add(buf, &op_type, sizeof(op_type));
 		errs += buf_add(buf, &op_len, sizeof(op_len));
@@ -1892,7 +1901,7 @@ parse_notification(struct peer *peer)
 			log_peer_warnx(&peer->conf, "received \"unsupported "
 			    "capability\" notification without data part, "
 			    "disabling capability announcements altogether");
-			peer->capa.announce = 0;
+			session_capa_ann_none(peer);
 		}
 
 		while (datalen > 0) {
@@ -1934,7 +1943,7 @@ parse_notification(struct peer *peer)
 				    "for unknown capability %u, disabling "
 				    "capability announcements altogether",
 				    capa_code);
-				peer->capa.announce = 0;
+				session_capa_ann_none(peer);
 				break;
 			}
 		}
@@ -1943,7 +1952,7 @@ parse_notification(struct peer *peer)
 	}
 
 	if (errcode == ERR_OPEN && subcode == ERR_OPEN_OPT) {
-		peer->capa.announce = 0;
+		session_capa_ann_none(peer);
 		return (1);
 	}
 

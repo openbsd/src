@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.h,v 1.69 2004/11/18 15:24:49 henning Exp $ */
+/*	$OpenBSD: session.h,v 1.70 2004/11/18 16:30:05 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -147,7 +147,6 @@ struct peer_stats {
 };
 
 struct peer_capa {
-	u_int8_t	announce;
 	u_int8_t	ann_mp_v4;
 	u_int8_t	ann_mp_v6;
 	u_int8_t	ann_refresh;
