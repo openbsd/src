@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohash_int.h,v 1.1 2001/03/02 13:27:07 espie Exp $	*/
+/*	$OpenBSD: ohash_int.h,v 1.2 2004/06/22 20:00:16 espie Exp $	*/
 
 #include <sys/types.h>
 #include <stddef.h>
@@ -17,4 +17,3 @@ struct _ohash_record {
 /* Don't bother changing the hash table if the change is small enough.  */
 #define MINSIZE		(1UL << 4)
 #define MINDELETED	4
-
