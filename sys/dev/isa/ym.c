@@ -1,4 +1,4 @@
-/* $OpenBSD: ym.c,v 1.2 1998/11/03 21:15:02 downsj Exp $ */
+/* $OpenBSD: ym.c,v 1.3 1998/12/29 09:10:30 deraadt Exp $ */
 
 
 /*
@@ -121,6 +121,7 @@ ym_attach(sc)
 			    ad1848_intr, &sc->sc_ad1848, sc->sc_dev.dv_xname);
 
   ad1848_attach(&sc->sc_ad1848);
+  printf("\n");
   sc->sc_ad1848.parent = sc;
 
   /* Establish chip in well known mode */

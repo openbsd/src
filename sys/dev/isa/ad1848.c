@@ -1,4 +1,4 @@
-/*	$OpenBSD: ad1848.c,v 1.13 1998/07/16 22:37:44 deraadt Exp $	*/
+/*	$OpenBSD: ad1848.c,v 1.14 1998/12/29 09:10:29 deraadt Exp $	*/
 /*	$NetBSD: ad1848.c,v 1.45 1998/01/30 02:02:38 augustss Exp $	*/
 
 /*
@@ -583,7 +583,8 @@ ad1848_attach(sc)
     /* Set default port */
     (void) ad1848_set_rec_port(sc, MIC_IN_PORT);
 
-    printf(": %s", sc->chip_name);
+    if (sc->chip_name)
+	printf(": %s", sc->chip_name);
 #undef WAITREADY
 }
 
