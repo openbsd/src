@@ -1,4 +1,4 @@
-/*	$OpenBSD: ac97.c,v 1.49 2005/01/17 05:42:41 jaredy Exp $	*/
+/*	$OpenBSD: ac97.c,v 1.50 2005/01/30 21:43:02 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Constantine Sapuntzakis
@@ -363,8 +363,8 @@ const struct ac97_codecid {
 	{ 0x20,	0xf8, 7, 0,	"CS4298" },
 	{ 0x28,	0xf8, 7, 0,	"CS4294" },
 	{ 0x30,	0xf8, 7, 0,	"CS4299" },
-	{ 0x40,	0xf8, 7, 0,	"CS4201" },
-	{ 0x50,	0xf8, 7, 0,	"CS4205" },
+	{ 0x48,	0xf8, 7, 0,	"CS4201" },
+	{ 0x58,	0xf8, 7, 0,	"CS4205" },
 	{ 0x60,	0xf8, 7, 0,	"CS4291" },
 	{ 0x70,	0xf8, 7, 0,	"CS4202" },
 }, ac97_cx[] = {
