@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.9 2001/06/22 16:05:27 hin Exp $
+# $OpenBSD: Makefile,v 1.10 2001/07/11 09:26:22 hin Exp $
 
 LIB	= kafs
 
@@ -16,13 +16,6 @@ SRCS=	afssys_openbsd.c \
 	common.c \
 	kafs_locl.h \
 	afssysdefs.h
-
-.include <bsd.own.mk> # for KERBEROS5
-
-.if (${KERBEROS5:L} == "yes")
-SRCS+=	afskrb5.c
-CFLAGS+=-DKRB5 -I${DESTDIR}/usr/include/kerberosV
-.endif
 
 MAN=	kafs.3
 MLINKS=	kafs.3 k_hasafs.3 \
