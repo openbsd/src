@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_proto.c,v 1.22 2000/01/11 07:57:23 angelos Exp $	*/
+/*	$OpenBSD: in_proto.c,v 1.23 2000/01/17 05:17:24 itojun Exp $	*/
 /*	$NetBSD: in_proto.c,v 1.14 1996/02/18 18:58:32 christos Exp $	*/
 
 /*
@@ -198,26 +198,26 @@ struct protosw inetsw[] = {
 #if NGIF > 0
 { SOCK_RAW,	&inetdomain,	IPPROTO_IPV4,	PR_ATOMIC|PR_ADDR,
   in_gif_input,	rip_output, 	0,		rip_ctloutput,
-  0,	  
+  rip_usrreq,
   0,		0,		0,		0,		ip4_sysctl
 },
 #ifdef INET6
 { SOCK_RAW,	&inetdomain,	IPPROTO_IPV6,	PR_ATOMIC|PR_ADDR,
-  in_gif_input,	0,	 	0,		0,
-  0,	  
+  in_gif_input,	rip_output,	 0,		0,
+  rip_usrreq,	/*XXX*/
   0,		0,		0,		0,
 },
 #endif /* INET6 */
 #else /* NGIF */
 { SOCK_RAW,	&inetdomain,	IPPROTO_IPIP,	PR_ATOMIC|PR_ADDR,
   ip4_input,	rip_output,	0,		rip_ctloutput,
-  rip_usrreq,	/* XXX */
+  rip_usrreq,
   0,		0,		0,		0,		ip4_sysctl
 },
 #ifdef INET6
 { SOCK_RAW,	&inetdomain,	IPPROTO_IPV6,	PR_ATOMIC|PR_ADDR,
   ip4_input,	rip_output, 	0,		rip_ctloutput,
-  0,	  
+  rip_usrreq,	/*XXX*/
   0,		0,		0,		0,
 },
 #endif /* INET6 */
