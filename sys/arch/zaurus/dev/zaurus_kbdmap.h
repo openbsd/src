@@ -1,4 +1,4 @@
-/* $OpenBSD: zaurus_kbdmap.h,v 1.7 2005/01/14 01:26:44 drahn Exp $ */
+/* $OpenBSD: zaurus_kbdmap.h,v 1.8 2005/01/14 16:39:15 miod Exp $ */
 
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@openbsd.org>
@@ -28,7 +28,7 @@ static const keysym_t zkbd_keydesc_us[] = {
     KC(8),	KS_1,		KS_exclam,
     KC(9),	KS_2,		KS_quotedbl,
     KC(10),	KS_q,
-    KC(11),	KS_w,		 KS_W,		KS_asciicircum,
+    KC(11),	KS_w,		KS_W,		KS_asciicircum,
     KC(12),	KS_a,
     KC(13),	KS_z,
     /* KC(14),	US, (left japanese) */

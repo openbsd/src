@@ -1,4 +1,4 @@
-/* $OpenBSD: zaurus_kbd.c,v 1.3 2005/01/14 04:35:22 drahn Exp $ */
+/* $OpenBSD: zaurus_kbd.c,v 1.4 2005/01/14 16:39:15 miod Exp $ */
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@openbsd.org>
  *
@@ -33,7 +33,7 @@
 
 #include <zaurus/dev/zaurus_kbdmap.h>
 
-int
+const int
 gpio_sense_pins_c3000[] = {
 	12,
 	17,
@@ -45,7 +45,7 @@ gpio_sense_pins_c3000[] = {
 	-1
 };
 
-int
+const int
 gpio_strobe_pins_c3000[] = {
 	88,
 	23,
@@ -62,12 +62,11 @@ gpio_strobe_pins_c3000[] = {
 };
 
 
-
 struct zkbd_softc {
 	struct device sc_dev;
 
-	int *sc_sense_array;
-	int *sc_strobe_array;
+	const int *sc_sense_array;
+	const int *sc_strobe_array;
 	int sc_nsense;
 	int sc_nstrobe;
 
@@ -79,11 +78,13 @@ struct zkbd_softc {
 	char *sc_keystate;
 
 	struct timeout sc_roll_to;
-	struct timeout sc_rawrepeat_ch;
 
 	/* wskbd bits */
 	struct device   *sc_wskbddev;
+#ifdef WSDISPLAY_COMPAT_RAWKBD
 	int sc_rawkbd;
+	struct timeout sc_rawrepeat_ch;
+#endif
 };
 
 int zkbd_match(struct device *, void *, void *);
@@ -98,6 +99,7 @@ int zkbd_hinge(void *v);
 struct cfattach zkbd_ca = {
 	sizeof(struct zkbd_softc), zkbd_match, zkbd_attach
 };
+
 struct cfdriver zkbd_cd = {
 	NULL, "zkbd", DV_DULL
 };
@@ -156,9 +158,9 @@ zkbd_attach(struct device *parent, struct device *self, void *aux)
 	} /* XXX */
 
 	sc->sc_okeystate = malloc((sc->sc_nsense * sc->sc_nstrobe),
-	    M_MBUF, M_NOWAIT);
+	    M_DEVBUF, M_NOWAIT);
 	sc->sc_keystate = malloc((sc->sc_nsense * sc->sc_nstrobe),
-	    M_MBUF, M_NOWAIT);
+	    M_DEVBUF, M_NOWAIT);
 
 	/* set all the strobe bits */
 	for (i = 0; i < sc->sc_nstrobe; i++) {
@@ -178,13 +180,13 @@ zkbd_attach(struct device *parent, struct device *self, void *aux)
 		pxa2x0_gpio_intr_establish(pin, IST_EDGE_BOTH, IPL_BIO,
 		    zkbd_irq, sc, sc->sc_dev.dv_xname);
 	}
-	pxa2x0_gpio_intr_establish(sc->sc_onkey_pin, IST_EDGE_RISING, IPL_BIO,
+	pxa2x0_gpio_intr_establish(sc->sc_onkey_pin, IST_EDGE_RISING, IPL_TTY,
 	    zkbd_on, sc, sc->sc_dev.dv_xname);
-	pxa2x0_gpio_intr_establish(sc->sc_sync_pin, IST_EDGE_RISING, IPL_BIO,
+	pxa2x0_gpio_intr_establish(sc->sc_sync_pin, IST_EDGE_RISING, IPL_TTY,
 	    zkbd_sync, sc, sc->sc_dev.dv_xname);
-	pxa2x0_gpio_intr_establish(sc->sc_swa_pin, IST_EDGE_BOTH, IPL_BIO,
+	pxa2x0_gpio_intr_establish(sc->sc_swa_pin, IST_EDGE_BOTH, IPL_TTY,
 	    zkbd_hinge, sc, sc->sc_dev.dv_xname);
-	pxa2x0_gpio_intr_establish(sc->sc_swb_pin, IST_EDGE_BOTH, IPL_BIO,
+	pxa2x0_gpio_intr_establish(sc->sc_swb_pin, IST_EDGE_BOTH, IPL_TTY,
 	    zkbd_hinge, sc, sc->sc_dev.dv_xname);
 
 	a.console = 0;
@@ -207,6 +209,7 @@ zkbd_irq(void *v)
 
 	return 1;
 }
+
 void
 zkbd_poll(void *v)
 {
@@ -237,7 +240,7 @@ zkbd_poll(void *v)
 		pxa2x0_gpio_set_dir(pin, GPIO_OUT);
 
 		/* wait activate (and discharge, overlapped) delay */
-		delay (10);
+		delay(10);
 
 		/* read row */
 		for (i = 0; i < sc->sc_nsense; i++) {
@@ -286,7 +289,7 @@ printf("key %d %s\n", i, sc->sc_keystate[i] ? "pressed" : "released");
 		}
 	}
 	if (keysdown)
-		timeout_add(&(sc->sc_roll_to), hz/4); /* how long?*/
+		timeout_add(&(sc->sc_roll_to), hz / 4); /* how long?*/
 	else 
 		timeout_del(&(sc->sc_roll_to)); /* always cancel? */
 }
@@ -333,7 +336,7 @@ zkbd_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 	switch (cmd) {
 
 	case WSKBDIO_GTYPE:
-		*(int *)data = WSKBD_TYPE_ADB;
+		*(int *)data = WSKBD_TYPE_ZAURUS;
 		return 0;
 	case WSKBDIO_SETLEDS:
 		return 0;
@@ -363,4 +366,3 @@ void
 zkbd_cnpollc(void *v, int on)
 {
 }
-
