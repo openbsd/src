@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dc_pci.c,v 1.25 2002/02/17 05:27:39 nate Exp $	*/
+/*	$OpenBSD: if_dc_pci.c,v 1.26 2002/03/04 22:39:35 nate Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -121,6 +121,10 @@ dc_pci_match(parent, match, aux)
 	struct dc_type *t;
 
         if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_DEC &&
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_DEC_21140)
+		return (1);
+
+        if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_DEC &&
 	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_DEC_21142 &&
 	    PCI_REVISION(pa->pa_class) == 0x21)
 		return (1);
@@ -128,7 +132,11 @@ dc_pci_match(parent, match, aux)
 	for (t = dc_devs; t->dc_vid != 0; t++) {
 		if ((PCI_VENDOR(pa->pa_id) == t->dc_vid) &&
 		    (PCI_PRODUCT(pa->pa_id) == t->dc_did)) {
+#ifdef __alpha__
+			return (1);
+#else
 			return (2);
+#endif
 		}
 	}
 
