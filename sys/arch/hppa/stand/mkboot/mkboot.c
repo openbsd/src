@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkboot.c,v 1.4 1998/08/29 01:46:53 mickey Exp $	*/
+/*	$OpenBSD: mkboot.c,v 1.5 1998/09/29 07:12:58 mickey Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: mkboot.c,v 1.4 1998/08/29 01:46:53 mickey Exp $";
+static char rcsid[] = "$OpenBSD: mkboot.c,v 1.5 1998/09/29 07:12:58 mickey Exp $";
 #endif /* not lint */
 #endif
 
@@ -251,6 +251,8 @@ putfile(from_file, to)
 		entry = ntohl(elf_header.e_entry) +
 			ntohl(elf_segments[elf_load_image_segment].p_offset) -
 			ntohl(elf_segments[elf_load_image_segment].p_vaddr);
+	} else if (*(u_char *)&ex == 0x1f && ((u_char *)&ex)[1] == 0x8b) {
+		entry = 0;
 	} else
 		errx(1, "%s: bad magic number\n", from_file);
 
