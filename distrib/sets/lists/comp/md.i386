@@ -40,6 +40,8 @@
 ./usr/include/i386/pcvt_mouse.h
 ./usr/include/i386/pio.h
 ./usr/include/i386/pmap.h
+./usr/include/i386/pmap.new.h
+./usr/include/i386/pmap.old.h
 ./usr/include/i386/proc.h
 ./usr/include/i386/profile.h
 ./usr/include/i386/psl.h

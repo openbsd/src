@@ -470,6 +470,10 @@
 ./usr/include/dev/raidframe/rf_types.h
 ./usr/include/dev/raidframe/rf_utils.h
 ./usr/include/dev/ramdisk.h
+./usr/include/dev/rasops
+./usr/include/dev/rasops/rasops.h
+./usr/include/dev/rasops/rasops_bitops.h
+./usr/include/dev/rasops/rasops_masks.h
 ./usr/include/dev/rcons
 ./usr/include/dev/rcons/raster.h
 ./usr/include/dev/rcons/rcons.h
@@ -536,6 +540,17 @@
 ./usr/include/dev/wscons/wsksymvar.h
 ./usr/include/dev/wscons/wsmousevar.h
 ./usr/include/dev/wscons/wsmuxvar.h
+./usr/include/dev/wsfont
+./usr/include/dev/wsfont/bold8x16.h
+./usr/include/dev/wsfont/gallant12x22.h
+./usr/include/dev/wsfont/lucida16x29.h
+./usr/include/dev/wsfont/omron12x20.h
+./usr/include/dev/wsfont/qvss8x15.h
+./usr/include/dev/wsfont/sony12x24.h
+./usr/include/dev/wsfont/sony8x16.h
+./usr/include/dev/wsfont/vt220l8x10.h
+./usr/include/dev/wsfont/vt220l8x8.h
+./usr/include/dev/wsfont/wsfont.h
 ./usr/include/dirent.h
 ./usr/include/disktab.h
 ./usr/include/elf_abi.h
@@ -1005,6 +1020,9 @@
 ./usr/include/ranlib.h
 ./usr/include/re_comp.h
 ./usr/include/readline/history.h
+./usr/include/readline/rlconf.h
+./usr/include/readline/rlstdc.h
+./usr/include/readline/tilde.h
 ./usr/include/readpassphrase.h
 ./usr/include/regex.h
 ./usr/include/regexp.h
@@ -1498,6 +1516,8 @@
 ./usr/lib/libpcap_p.a
 ./usr/lib/libperl.a
 ./usr/lib/libperl_p.a
+./usr/lib/libreadline_p.a
+./usr/lib/libreadline_pic.a
 ./usr/lib/libresolv.a
 ./usr/lib/libresolv_p.a
 ./usr/lib/librpcsvc.a
@@ -3413,6 +3433,7 @@
 ./usr/share/man/cat3/readdir.0
 ./usr/share/man/cat3/readdir_r.0
 ./usr/share/man/cat3/readlabelfs.0
+./usr/share/man/cat3/readline.0
 ./usr/share/man/cat3/readpassphrase.0
 ./usr/share/man/cat3/realloc.0
 ./usr/share/man/cat3/realpath.0
