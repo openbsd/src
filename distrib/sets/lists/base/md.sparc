@@ -2095,3 +2095,6 @@
 ./usr/sbin/eeprom
 ./usr/sbin/fdformat
 ./usr/sbin/wsconscfg
+./usr/libdata/perl5/site_perl/sparc-openbsd/dev/usb/umass_quirks.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/dev/usb/umass_scsi.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/dev/usb/umassvar.ph

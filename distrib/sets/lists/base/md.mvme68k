@@ -2118,3 +2118,6 @@
 ./usr/mdec/rboot
 ./usr/mdec/sboot
 ./usr/mdec/stboot
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/usb/umass_quirks.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/usb/umass_scsi.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/usb/umassvar.ph

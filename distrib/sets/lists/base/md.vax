@@ -2028,3 +2028,6 @@
 ./usr/mdec/raboot
 ./usr/mdec/sdboot
 ./usr/mdec/xxboot
+./usr/libdata/perl5/site_perl/vax-openbsd/dev/usb/umass_quirks.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/dev/usb/umass_scsi.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/dev/usb/umassvar.ph

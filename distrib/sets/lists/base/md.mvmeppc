@@ -2089,3 +2089,6 @@
 ./usr/mdec/installboot
 ./usr/mdec/mbr
 ./usr/sbin/wsconscfg
+./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/umass_quirks.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/umass_scsi.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/umassvar.ph

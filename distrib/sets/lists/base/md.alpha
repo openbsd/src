@@ -2104,3 +2104,6 @@
 ./usr/sbin/wsconscfg
 ./usr/sbin/wsfontload
 ./usr/sbin/wsmoused
+./usr/libdata/perl5/site_perl/alpha-openbsd/dev/usb/umass_quirks.ph
+./usr/libdata/perl5/site_perl/alpha-openbsd/dev/usb/umass_scsi.ph
+./usr/libdata/perl5/site_perl/alpha-openbsd/dev/usb/umassvar.ph

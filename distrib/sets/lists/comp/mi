@@ -649,6 +649,9 @@
 ./usr/include/dev/usb/uhcivar.h
 ./usr/include/dev/usb/uhidev.h
 ./usr/include/dev/usb/ukbdvar.h
+./usr/include/dev/usb/umass_quirks.h
+./usr/include/dev/usb/umass_scsi.h
+./usr/include/dev/usb/umassvar.h
 ./usr/include/dev/usb/umct.h
 ./usr/include/dev/usb/umidi_quirks.h
 ./usr/include/dev/usb/umidireg.h
@@ -4157,8 +4160,8 @@
 ./usr/share/man/cat3/scalbnf.0
 ./usr/share/man/cat3/scale_form.0
 ./usr/share/man/cat3/scale_menu.0
-./usr/share/man/cat3/scandir.0
 ./usr/share/man/cat3/scan_scaled.0
+./usr/share/man/cat3/scandir.0
 ./usr/share/man/cat3/scanf.0
 ./usr/share/man/cat3/scanw.0
 ./usr/share/man/cat3/scr_dump.0
