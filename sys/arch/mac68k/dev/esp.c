@@ -126,11 +126,13 @@ static __inline__ void
 dma_intr(sc)
 	struct dma_softc *sc;
 {
+	register struct esp_softc	*sc_esp;
 	register u_char	*p;
+	register u_int	espphase, espstat, espintr;
 	register int	cnt;
 
 	if (sc->sc_active == 0) {
-		printf("dma_intr--inactive\n");
+		printf("dma_intr--inactive DMA\n");
 		return;
 	}
 
@@ -139,32 +141,51 @@ dma_intr(sc)
 		return;
 	}
 
-	p = *sc->sc_dmaaddr;
 	cnt = *sc->sc_pdmalen;
-	if (sc->sc_datain) {
-		if (cnt) {
-			*p++ = ESP_READ_REG(sc->sc_esp, ESP_FIFO);
-			*sc->sc_dmaaddr = p;
-			--(*sc->sc_pdmalen);
-		} else {
-			printf("data in, but no count!\n");
-		}
+	if (*sc->sc_pdmalen == 0) {
+		printf("data interrupt, but no count left.");
 	}
-	if (sc->sc_esp->sc_phase == DATA_IN_PHASE) {
-		ESPCMD(sc->sc_esp, ESPCMD_TRANS);
-	} else if (   (sc->sc_esp->sc_phase == DATA_OUT_PHASE)
-		   || (sc->sc_esp->sc_phase == MESSAGE_OUT_PHASE)) {
-		if (cnt) {
-			ESP_WRITE_REG(sc->sc_esp, ESP_FIFO, *p++);
-			*sc->sc_dmaaddr = p;
-			--(*sc->sc_pdmalen);
-		} else {
-			printf("data out, but no count!\n");
+
+	p = *sc->sc_dmaaddr;
+	sc_esp = sc->sc_esp;
+	espphase = sc_esp->sc_phase;
+	espstat = (u_int) sc_esp->sc_espstat;
+	espintr = (u_int) sc_esp->sc_espintr;
+	do {
+		if (sc->sc_datain) {
+			*p++ = ESP_READ_REG(sc_esp, ESP_FIFO);
+			cnt--;
+			if (espphase == DATA_IN_PHASE) {
+				ESPCMD(sc_esp, ESPCMD_TRANS);
+			} else {
+				sc->sc_active = 0;
+			}
+	 	} else {
+			if (   (espphase == DATA_OUT_PHASE)
+			    || (espphase == MESSAGE_OUT_PHASE)) {
+				ESP_WRITE_REG(sc_esp, ESP_FIFO, *p++);
+				cnt--;
+				ESPCMD(sc_esp, ESPCMD_TRANS);
+			} else {
+				sc->sc_active = 0;
+			}
 		}
-		ESPCMD(sc->sc_esp, ESPCMD_TRANS);
-	} else {
-		sc->sc_active = 0;
-	}
+
+		if (sc->sc_active) {
+			while (!DMA_ISINTR(sc));
+			espstat = ESP_READ_REG(sc_esp, ESP_STAT);
+			espintr = ESP_READ_REG(sc_esp, ESP_INTR);
+			espphase = (espintr & ESPINTR_DIS)
+				    ? /* Disconnected */ BUSFREE_PHASE
+				    : espstat & ESPSTAT_PHASE;
+		}
+	} while (sc->sc_active && (espintr & ESPINTR_BS));
+	sc_esp->sc_phase = espphase;
+	sc_esp->sc_espstat = (u_char) espstat;
+	sc_esp->sc_espintr = (u_char) espintr;
+	*sc->sc_dmaaddr = p;
+	*sc->sc_pdmalen = cnt;
+
 	if (*sc->sc_pdmalen == 0) {
 		sc->sc_tc = ESPSTAT_TC;
 	}
@@ -1668,6 +1689,7 @@ espintr(sc)
 		/* and what do the registers say... */
 		espreadregs(sc);
 
+errintr:
 		sc->sc_intrcnt.ev_count++;
 
 		/*
@@ -1756,6 +1778,9 @@ espintr(sc)
 		if (DMA_ISACTIVE(sc->sc_dma)) {
 			DMA_INTR(sc->sc_dma);
 			/* If DMA active here, then go back to work... */
+			if (   (sc->sc_espstat & ESPSTAT_GE)
+			    || (sc->sc_espintr & ESPINTR_ERR))
+				goto errintr;
 			if (DMA_ISACTIVE(sc->sc_dma))
 				return 1;
 
