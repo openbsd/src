@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.6 2004/08/11 17:05:31 pefo Exp $ */
+/*	$OpenBSD: clock.c,v 1.7 2004/09/16 09:23:21 pefo Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -379,7 +379,7 @@ resettodr()
 
 	/* compute the day of week. 1 is Sunday*/
 	t2 = time.tv_sec / SECDAY;
-	c.dow = (t2 + 5) % 7;	/* 1/1/1970 was thursday */
+	c.dow = (t2 + 5) % 7 + 1;	/* 1/1/1970 was thursday */
 
 	/* compute the year */
 	t2 = time.tv_sec / SECDAY;
