@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.86 2004/02/21 00:47:42 krw Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.87 2004/03/10 01:37:40 krw Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -108,6 +108,9 @@ int scsidebug_buses = SCSIDEBUG_BUSES;
 int scsidebug_targets = SCSIDEBUG_TARGETS;
 int scsidebug_luns = SCSIDEBUG_LUNS;
 int scsidebug_level = SCSIDEBUG_LEVEL;
+
+int scsiforcelun_buses = SCSIFORCELUN_BUSES;
+int scsiforcelun_targets = SCSIFORCELUN_TARGETS;
 
 int scsi_autoconf = SCSI_AUTOCONF;
 
@@ -614,7 +617,7 @@ scsi_probedev(scsi, inqbuflun0, target, lun)
 	struct scsi_link *sc_link;
 	static struct scsi_inquiry_data inqbuf;
 	const struct scsi_quirk_inquiry_pattern *finger;
-	int priority, rslt;
+	int priority, rslt = 0;
 	struct scsibus_attach_args sa;
 	struct cfdata *cf;
 
@@ -669,24 +672,10 @@ scsi_probedev(scsi, inqbuflun0, target, lun)
 #endif /* SCSI_2_DEF */
 
 	/* Now go ask the device all about itself. */
-	rslt = scsi_inquire(sc_link, &inqbuf, scsi_autoconf | SCSI_SILENT);
-
-	if (lun == 0 && rslt != 0) {
-		/* A bad LUN 0 INQUIRY means no further LUNs possible. */
-		SC_DEBUG(sc_link, SDEV_DB2, ("No LUN 0. rslt == %i\n", rslt));
-		rslt = EINVAL;
-		goto bad;
-	} else if (rslt != 0) {
-		/* Just a failed LUN INQUIRY, try the next LUN. */
-		SC_DEBUG(sc_link, SDEV_DB2, ("Bad LUN. rslt == %i\n", rslt));
-		rslt = 0;
-		goto bad;
-	} else if (lun == 0) {
-		bcopy(&inqbuf, inqbuflun0, sizeof *inqbuflun0);
-	} else if (memcmp(&inqbuf, inqbuflun0, sizeof inqbuf) == 0) {
-		/* The device can't distinguish between LUNs. */
-		SC_DEBUG(sc_link, SDEV_DB1, ("IDENTIFY not supported.\n"));
-		rslt = EINVAL;
+	if (scsi_inquire(sc_link, &inqbuf, scsi_autoconf | SCSI_SILENT) != 0) {
+		SC_DEBUG(sc_link, SDEV_DB2, ("Bad LUN. rslt = %i\n", rslt));
+		if (lun == 0)
+			rslt = EINVAL;
 		goto bad;
 	}
 
@@ -699,12 +688,27 @@ scsi_probedev(scsi, inqbuflun0, target, lun)
 		goto bad;
 
 	case SID_QUAL_LU_OK:
-		if ((inqbuf.device & SID_TYPE) == T_NODEVICE)
+		if ((inqbuf.device & SID_TYPE) == T_NODEVICE) {
+			SC_DEBUG(sc_link, SDEV_DB1,
+		    	    ("Bad LUN. SID_TYPE = T_NODEVICE\n"));
 			goto bad;
+		}
 		break;
 
 	default:
 		break;
+	}
+
+	if (lun == 0)
+		bcopy(&inqbuf, inqbuflun0, sizeof *inqbuflun0);
+	else if (((1 << sc_link->scsibus) & scsiforcelun_buses) &&
+	    ((1 << target) & scsiforcelun_targets))
+		    ;
+	else if (memcmp(&inqbuf, inqbuflun0, sizeof inqbuf) == 0) {
+		/* The device doesn't distinguish between LUNs. */
+		SC_DEBUG(sc_link, SDEV_DB1, ("IDENTIFY not supported.\n"));
+		rslt = EINVAL;
+		goto bad;
 	}
 
 	finger = (const struct scsi_quirk_inquiry_pattern *)scsi_inqmatch(
