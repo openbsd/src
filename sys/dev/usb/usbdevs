@@ -1,4 +1,4 @@
-	$OpenBSD: usbdevs,v 1.4 1999/08/29 10:31:13 fgsch Exp $
+	$OpenBSD: usbdevs,v 1.5 1999/08/29 12:58:22 maja Exp $
 /*	$NetBSD: usbdevs,v 1.40 1999/08/28 10:00:56 augustss Exp $	*/
 
 /*
@@ -182,6 +182,7 @@ product VISION VC6452V002	0x0002	VC6452V002 Camera
 
 /* ATen products */
 product ATEN UC1284		0x2001	Parallel printer adapter
+product ATEN UC10T		0x2002	Ethernet adapter
 
 /* Peracom products */
 product PERACOM SERIAL1		0x0001	Serial Converter
