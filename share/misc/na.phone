@@ -1,3 +1,4 @@
+#	$OpenBSD: na.phone,v 1.6 1997/02/27 15:45:03 kstailey Exp $
 #	@(#)na.phone	5.1 (Berkeley) 2/12/90
 # Area Code : City : State/Province : State/Province Abbrev.
 201:Ashbury Park:New Jersey:NJ
