@@ -10,31 +10,31 @@ myarchname="$archname"
 prefix='/usr'
 prefixexp='/usr'
 
-archlib="/usr/lib/perl5/${archname}/${version}"
+installarchlib="/usr/lib/perl5/${archname}/${version}"
+archlib="${installarchlib}:/usr/local/lib/perl5/${archname}/${version}"
 archlibexp="${archlib}"
-installarchlib="${archlib}"
 
-privlib='/usr/lib/perl5'
+installprivlib="/usr/lib/perl5"
+privlib="${installprivlib}:/usr/local/lib/perl5"
 privlibexp="${privlib}"
-installprivlib="${privlib}"    
 
-sitearch="/usr/lib/perl5/site_perl/${archname}"
+installsitearch="/usr/lib/perl5/site_perl/${archname}"
+sitearch="${installsitearch}:/usr/local/lib/perl5/site_perl/${archname}"
 sitearchexp="${sitearch}"
-installsitearch="${sitearch}"
 
-sitelib='/usr/lib/perl5/site_perl'
+installsitelib="/usr/lib/perl5/site_perl"
+sitelib="${installsitelib}:/usr/local/lib/perl5/site_perl"
 sitelibexp="${sitelib}"
-installsitelib="${sitelib}"
 
 # We install the man oages ourselves until installman gets smarter
 man1dir=''
 man1direxp=''
 installman1dir=''
-man1ext='0'
+man1ext='cat1'
 man3dir=''
 man3direxp=''
 installman3dir=''
-man3ext='0'
+man3ext='cat3p'
 
 # Never hardcode developer info into a distribution
 cf_by='root'
