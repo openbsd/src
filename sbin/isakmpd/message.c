@@ -1,4 +1,4 @@
-/* $OpenBSD: message.c,v 1.97 2005/03/05 12:25:12 ho Exp $	 */
+/* $OpenBSD: message.c,v 1.98 2005/03/05 12:35:03 ho Exp $	 */
 /* $EOM: message.c,v 1.156 2000/10/10 12:36:39 provos Exp $	 */
 
 /*
@@ -652,8 +652,6 @@ message_validate_delete(struct message *msg, struct payload *p)
 
 /*
  * Validate the hash payload P in message MSG.
- * XXX Currently hash payloads are processed by the particular exchanges,
- * except INFORMATIONAL.  This should be actually done here.
  */
 static int
 message_validate_hash(struct message *msg, struct payload *p)
@@ -663,7 +661,7 @@ message_validate_hash(struct message *msg, struct payload *p)
 	struct hash    *hash;
 	struct payload *hashp = payload_first(msg, ISAKMP_PAYLOAD_HASH);
 	struct prf     *prf;
-	u_int8_t       *comp_hash, *rest;
+	u_int8_t       *rest;
 	u_int8_t        message_id[ISAKMP_HDR_MESSAGE_ID_LEN];
 	size_t          rest_len;
 
@@ -671,42 +669,24 @@ message_validate_hash(struct message *msg, struct payload *p)
 	if (msg->exchange && (msg->exchange->type != ISAKMP_EXCH_INFO))
 		return 0;
 
-	if (isakmp_sa == NULL) {
-		log_print("message_validate_hash: invalid hash information");
-		message_drop(msg, ISAKMP_NOTIFY_INVALID_HASH_INFORMATION,
-		    0, 1, 1);
-		return -1;
-	}
+	if (isakmp_sa == NULL)
+		goto invalid;
+
 	isa = isakmp_sa->data;
 	hash = hash_get(isa->hash);
+	if (hash == NULL)
+		goto invalid;
 
-	if (hash == NULL) {
-		log_print("message_validate_hash: invalid hash information");
-		message_drop(msg, ISAKMP_NOTIFY_INVALID_HASH_INFORMATION,
-		    0, 1, 1);
-		return -1;
-	}
 	/* If no SKEYID_a, we can not do anything (should not happen).  */
-	if (!isa->skeyid_a) {
-		log_print("message_validate_hash: invalid hash information");
-		message_drop(msg, ISAKMP_NOTIFY_INVALID_HASH_INFORMATION,
-		    0, 1, 1);
-		return -1;
-	}
+	if (!isa->skeyid_a)
+		goto invalid;
+		
 	/* Allocate the prf and start calculating our HASH(1). */
 	LOG_DBG_BUF((LOG_MISC, 90, "message_validate_hash: SKEYID_a",
 	    isa->skeyid_a, isa->skeyid_len));
 	prf = prf_alloc(isa->prf_type, hash->type, isa->skeyid_a,
 	    isa->skeyid_len);
 	if (!prf) {
-		message_free(msg);
-		return -1;
-	}
-	comp_hash = (u_int8_t *)malloc(hash->hashsize);
-	if (!comp_hash) {
-		log_error("message_validate_hash: malloc (%lu) failed",
-		    (unsigned long)hash->hashsize);
-		prf_free(prf);
 		message_free(msg);
 		return -1;
 	}
@@ -723,20 +703,12 @@ message_validate_hash(struct message *msg, struct payload *p)
 	LOG_DBG_BUF((LOG_MISC, 90,
 	    "message_validate_hash: payloads after HASH(1)", rest, rest_len));
 	prf->Update(prf->prfctx, rest, rest_len);
-	prf->Final(comp_hash, prf->prfctx);
+	prf->Final(hash->digest, prf->prfctx);
 	prf_free(prf);
 
-	if (memcmp(hashp->p + ISAKMP_HASH_DATA_OFF, comp_hash,
-	    hash->hashsize)) {
-		log_print("message_validate_hash: invalid hash value for %s "
-		    "payload", payload_first(msg, ISAKMP_PAYLOAD_DELETE) ?
-		    "DELETE" : "NOTIFY");
-		message_drop(msg, ISAKMP_NOTIFY_INVALID_HASH_INFORMATION,
-		    0, 1, 1);
-		free(comp_hash);
-		return -1;
-	}
-	free(comp_hash);
+	if (memcmp(hashp->p + ISAKMP_HASH_DATA_OFF, hash->digest,
+	    hash->hashsize))
+		goto invalid;
 
 	/* Mark the HASH as handled. */
 	hashp->flags |= PL_MARK;
@@ -745,6 +717,11 @@ message_validate_hash(struct message *msg, struct payload *p)
 	msg->flags |= MSG_AUTHENTICATED;
 
 	return 0;
+
+  invalid:
+	log_print("message_validate_hash: invalid hash information");
+	message_drop(msg, ISAKMP_NOTIFY_INVALID_HASH_INFORMATION, 0, 1, 1);
+	return -1;
 }
 
 /* Validate the identification payload P in message MSG.  */
