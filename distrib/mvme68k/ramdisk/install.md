@@ -1,4 +1,4 @@
-#       $OpenBSD: install.md,v 1.23 2002/11/07 01:28:52 krw Exp $
+#       $OpenBSD: install.md,v 1.24 2003/09/09 18:45:50 miod Exp $
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
@@ -45,22 +45,20 @@ md_set_term() {
 }
 
 md_installboot() {
-	echo Installing boot block...
+	echo "Installing boot block..."
 	cp /mnt/usr/mdec/bootsd /mnt/bootsd
 	/mnt/usr/mdec/installboot -v /mnt/bootsd /mnt/usr/mdec/bootxx /dev/r${1}a
 }
 
 md_checkfordisklabel() {
 	# $1 is the disk to check
-	local rval
+	local rval=0
 
-	disklabel $1 >> /dev/null 2> /tmp/checkfordisklabel
+	disklabel $1 >/dev/null 2>/tmp/checkfordisklabel
 	if grep "no disk label" /tmp/checkfordisklabel; then
 		rval=1
 	elif grep "disk label corrupted" /tmp/checkfordisklabel; then
 		rval=2
-	else
-		rval=0
 	fi
 
 	rm -f /tmp/checkfordisklabel
@@ -69,52 +67,18 @@ md_checkfordisklabel() {
 
 md_prep_disklabel()
 {
-	local _disk
+	local _disk=$1
 
-	_disk=$1
 	md_checkfordisklabel $_disk
 	case $? in
-	0)	ask "Do you wish to edit the disklabel on $_disk?" y
+	1)	echo "WARNING: Disk $_disk has no label. You will be creating a new one.\n"
 		;;
-	1)	echo "WARNING: Disk $_disk has no label"
-		ask "Do you want to create one with the disklabel editor?" y
-		;;
-	2)	echo "WARNING: Label on disk $_disk is corrupted"
-		ask "Do you want to try and repair the damage using the disklabel editor?" y
+	2)	echo "WARNING: Label on disk $_disk is corrupted. You will be repairing it.\n"
 		;;
 	esac
 
-	case "$resp" in
-	y*|Y*)	;;
-	*)	return ;;
-	esac
-
-	# display example
-	cat << __EOT
-
-Here is an example of what the partition information will look like once
-you have entered the disklabel editor. Disk partition sizes and offsets
-are in sector (most likely 512 bytes) units. Make sure these size/offset
-pairs are on cylinder boundaries (the number of sector per cylinder is
-given in the 'sectors/cylinder' entry, which is not shown here).
-
-Do not change any parameters except the partition layout and the label name.
-It's probably also wisest not to touch the '16 partitions:' line, even
-in case you have defined less than sixteen partitions.
-
-[Example]
-16 partitions:
-#        size   offset    fstype   [fsize bsize   cpg]
-  a:    50176        0    4.2BSD     1024  8192    16   # (Cyl.    0 - 111)
-  b:    64512    50176      swap                        # (Cyl.  112 - 255)
-  c:   640192        0   unknown                        # (Cyl.    0 - 1428)
-  d:   525504   114688    4.2BSD     1024  8192    16   # (Cyl.  256 - 1428)
-[End of example]
-
-__EOT
-	ask "Press [Enter] to continue"
-	disklabel -W ${_disk}
-	disklabel -f /tmp/fstab.${_disk} -E ${_disk}
+	disklabel -W $_disk
+	disklabel -f /tmp/fstab.$_disk -E $_disk
 }
 
 md_congrats() {
