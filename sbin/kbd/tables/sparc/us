@@ -1,4 +1,4 @@
-/*	$OpenBSD: us,v 1.1 1999/07/18 17:21:13 maja Exp $	*/
+/*	$OpenBSD: us,v 1.2 1999/07/23 09:03:17 maja Exp $	*/
 
 /*
  * Copyright (c) 1999 Mats O Jansson
@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  */
 
-    { "us", "default", "reset", "type_4_layout_00", "type_4_layout_01" },
+    { "us", "reset", "type_4_layout_00", "type_4_layout_01" },
 /*	unshift	shift	alt gr	control	*/
 	ALL(HOLE)						/*   0 */
 	ALL(BB(SYSTEMBIT))					/*   1 */

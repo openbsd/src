@@ -1,4 +1,4 @@
-/*	$OpenBSD: kbd_sparc.c,v 1.3 1999/07/20 21:02:25 maja Exp $ */
+/*	$OpenBSD: kbd_sparc.c,v 1.4 1999/07/23 09:03:16 maja Exp $ */
 
 /*
  * Copyright (c) 1999 Mats O Jansson.  All rights reserved.
@@ -37,6 +37,8 @@
 
 #define	NUM_KEYS	128	/* Number of scan codes */
 #define	NUM_NAMES	10	/* Number of names for a map */
+
+#define	PATH_KBD	"/dev/kbd"
 
 #define ALL(s)	(s), (s), (s), (s),
 #define BB(s)	(FUNNY+(s))
@@ -149,10 +151,47 @@ struct {
 
 extern char *__progname;
 
+char *
+kbd_find_default()
+{
+	int i, j, fd, r, ok;
+	int t = KB_SUN4;
+	int l = 0;
+	char defaultmap[30];
+	char *ret;
+
+	/* Generate the default map name */
+	
+	fd = open(PATH_KBD, O_RDONLY);
+	if (fd != -1) {
+		r = ioctl(fd, KIOCTYPE, &t);
+		r = ioctl(fd, KIOCLAYOUT, &l);
+		close(fd);
+	}
+	snprintf(defaultmap,sizeof(defaultmap),"type_%d_layout_%02x\0",t,l);
+
+	/* Check if it exist, if not use "type_4_layout_00" */ 
+	
+	ret = keymaps[0].name[0];
+	
+	for (i = 0; keymaps[i].name[0]; i++) {
+		ok = 0;
+		for (j = 1; j < NUM_NAMES && keymaps[i].name[j]; j++)
+			ok |= (strcmp(keymaps[i].name[j],defaultmap) == 0);
+		if (ok) ret = keymaps[i].name[0]; 
+	}	  
+
+	return(ret);
+
+}
+
 void
 kbd_list()
 {
 	int i, j;
+	char *defmap;
+
+	defmap = kbd_find_default();
 
 	printf("tables available:\n%-16s %s\n\n",
 		"encoding", "nick names");
@@ -160,6 +199,7 @@ kbd_list()
 		printf("%-16s",keymaps[i].name[0]);
 		for (j = 1; j < NUM_NAMES && keymaps[i].name[j]; j++)
 			printf(" %s", keymaps[i].name[j]);
+		if (keymaps[i].name[0] == defmap) printf(" default");
 		printf("\n");
 	}	  
 }
@@ -169,11 +209,15 @@ kbd_set(name, verbose)
 	char *name;
 	int verbose;
 {
-	int i, j, fd, t, l, r;
+	int i, j, fd, r;
 	keymap_t *map = NULL;
 	int x[] = { KIOC_NOMASK, KIOC_SHIFTMASK,
 		    KIOC_ALTGMASK, KIOC_CTRLMASK };
 	struct kiockey k;
+
+	if(strcmp(name,"default") == 0) {
+		name = kbd_find_default();
+	}
 	
 	for (i = 0; keymaps[i].name[0]; i++)
 		for (j = 0; j < NUM_NAMES && keymaps[i].name[j]; j++)
@@ -189,14 +233,12 @@ kbd_set(name, verbose)
 		exit(1);
 	}
 
-	fd = open("/dev/kbd", O_RDWR);
+	fd = open(PATH_KBD, O_RDWR);
 	if (fd == -1) {
-		perror("/dev/kbd");
+		perror(PATH_KBD);
 		exit(1);
 	}		
 
-	r = ioctl(fd, KIOCTYPE, &t);
-	r = ioctl(fd, KIOCLAYOUT, &l);
 	for (i = 0; i < 128; i++) {
 		for (j = 0; j < 4; j++) {
 			k.kio_tablemask = x[j];
