@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.25 2001/05/30 20:35:39 miod Exp $	*/
+/*	$OpenBSD: param.h,v 1.26 2001/06/13 07:38:42 miod Exp $	*/
 /*	$NetBSD: param.h,v 1.34 1996/03/04 05:04:40 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@
  *	from: @(#)param.h	8.1 (Berkeley) 6/10/93
  */
 
-#ifndef	MACHINE
+#ifndef	_MACHINE_PARAM_H_
 
 /*
  * Machine dependent constants for the Sun3 series.
@@ -109,11 +109,12 @@
  */
 
 #include <machine/psl.h>
-
 #if defined(_KERNEL) && !defined(_LOCORE)
+#include <machine/cpu.h>
+
 extern void _delay __P((unsigned));
 #define delay(us)	_delay((us)<<8)
 #define	DELAY(n)	delay(n)
 #endif	/* _KERNEL && !_LOCORE */
 
-#endif	/* MACHINE */
+#endif	/* _MACHINE_PARAM_H_ */

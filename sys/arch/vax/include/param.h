@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.17 2001/05/13 02:37:30 millert Exp $ */
+/*	$OpenBSD: param.h,v 1.18 2001/06/13 07:38:47 miod Exp $ */
 /*      $NetBSD: param.h,v 1.39 1999/10/22 21:14:34 ragge Exp $    */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -211,6 +211,8 @@
 
 /* Prototype needed for delay() */
 #ifndef	_LOCORE
+#include <machine/cpu.h>
+
 void	delay __P((int));
 /* inline macros used inside kernel */
 #include <machine/macros.h>
