@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.382 2001/03/28 21:04:07 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.383 2001/03/28 23:52:23 chris Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -300,7 +300,7 @@
 #define	PCI_VENDOR_JAZZ	0x1100		/* Jazz Multimedia */
 #define	PCI_VENDOR_INITIO	0x1101		/* Initio */
 #define	PCI_VENDOR_CREATIVELABS	0x1102		/* Creative Labs */
-#define	PCI_VENDOR_TRIONES	0x1103		/* Triones Technologies */
+#define	PCI_VENDOR_TRIONES	0x1103		/* HighPoint */
 #define	PCI_VENDOR_RASTEROPS	0x1104		/* RasterOps */
 #define	PCI_VENDOR_SIGMA	0x1105		/* Sigma Designs */
 #define	PCI_VENDOR_VIATECH	0x1106		/* VIA */
@@ -1756,8 +1756,8 @@
 #define	PCI_PRODUCT_TRIDENT_BLADE_3D	0x9880		/* Blade 3D */
 
 /* Triones/HighPoint Technologies products */
-#define	PCI_PRODUCT_TRIONES_HPT343	0x0003		/* HPT343 EIDE */
-#define	PCI_PRODUCT_TRIONES_HPT366	0x0004		/* HPT36x/37x EIDE */
+#define	PCI_PRODUCT_TRIONES_HPT343	0x0003		/* HPT343/345 IDE */
+#define	PCI_PRODUCT_TRIONES_HPT366	0x0004		/* HPT36x/370 IDE */
 
 /* TriTech Microelectronics products*/
 #define	PCI_PRODUCT_TRITECH_TR25202	0xfc02		/* Pyramid3D TR25202 */

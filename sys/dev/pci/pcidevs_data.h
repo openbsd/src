@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.382 2001/03/28 21:04:07 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.383 2001/03/28 23:52:23 chris Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -3616,11 +3616,11 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_TRIONES, PCI_PRODUCT_TRIONES_HPT343,
-	    "HPT343 EIDE",
+	    "HPT343/345 IDE",
 	},
 	{
 	    PCI_VENDOR_TRIONES, PCI_PRODUCT_TRIONES_HPT366,
-	    "HPT36x/37x EIDE",
+	    "HPT36x/370 IDE",
 	},
 	{
 	    PCI_VENDOR_TRITECH, PCI_PRODUCT_TRITECH_TR25202,
@@ -5244,7 +5244,7 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	},
 	{
 	    PCI_VENDOR_TRIONES,
-	    "Triones Technologies",
+	    "HighPoint",
 	},
 	{
 	    PCI_VENDOR_RASTEROPS,
