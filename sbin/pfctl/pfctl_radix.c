@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_radix.c,v 1.14 2003/06/27 15:35:00 cedric Exp $ */
+/*	$OpenBSD: pfctl_radix.c,v 1.15 2003/06/28 12:26:22 cedric Exp $ */
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -40,7 +40,6 @@
 #include <errno.h>
 #include <string.h>
 #include <ctype.h>
-#include <stdio.h>
 #include <stdio.h>
 #include <err.h>
 
