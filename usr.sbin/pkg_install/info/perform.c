@@ -1,7 +1,7 @@
-/*	$OpenBSD: perform.c,v 1.9 2001/04/08 16:45:47 espie Exp $	*/
+/*	$OpenBSD: perform.c,v 1.10 2001/04/18 14:34:31 espie Exp $	*/
 
 #ifndef lint
-static const char *rcsid = "$OpenBSD: perform.c,v 1.9 2001/04/08 16:45:47 espie Exp $";
+static const char *rcsid = "$OpenBSD: perform.c,v 1.10 2001/04/18 14:34:31 espie Exp $";
 #endif
 
 /* This is OpenBSD pkg_install, based on:
@@ -78,6 +78,7 @@ pkg_do(char *pkg)
 	char           *cp = NULL;
 	int             code = 0;
 	char           *pkg2 = 0; /* hold full name of package, storage to free */
+	int             len;
 
 	set_pkg(pkg);
 
@@ -87,7 +88,6 @@ pkg_do(char *pkg)
 			isTMP = TRUE;
 		}
 	} else if (fexists(pkg) && isfile(pkg)) {
-		int             len;
 
 		if (*pkg != '/') {
 			if (!getcwd(fname, FILENAME_MAX)) {
@@ -100,8 +100,17 @@ pkg_do(char *pkg)
 			strcpy(fname, pkg);
 		cp = fname;
 	} else {
-		if ((cp = fileFindByPath(NULL, pkg)) != NULL)
-			strncpy(fname, cp, FILENAME_MAX);
+		if ((cp = fileFindByPath(NULL, pkg)) != NULL) {
+		    strncpy(fname, cp, FILENAME_MAX);
+		    if (*cp != '/') {
+			if (!getcwd(fname, FILENAME_MAX)) {
+			    cleanup(0);
+			    err(1, "fatal error during execution: getcwd");
+			}
+			len = strlen(fname);
+			snprintf(&fname[len], FILENAME_MAX - len, "/%s", cp);
+		    }
+		}
 	}
 	if (cp) {
 		if (isURL(pkg)) {
@@ -270,7 +279,9 @@ pkg_perform(char **pkgs)
 
 		if (!(isdir(tmp) || islinktodir(tmp)))
 			return 1;
-		if ((dirp = opendir(tmp)) != (DIR *) NULL) {
+		if (chdir(tmp) != 0)
+			return 1;
+		if ((dirp = opendir(".")) != (DIR *) NULL) {
 			while ((dp = readdir(dirp)) != (struct dirent *) NULL) {
 				if (strcmp(dp->d_name, ".") && strcmp(dp->d_name, "..")) {
 					err_cnt += pkg_do(dp->d_name);
