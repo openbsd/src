@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.312 2000/09/14 09:53:09 niklas Exp 
+ *		OpenBSD: pcidevs,v 1.313 2000/09/14 10:08:40 niklas Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -515,6 +515,7 @@
 #define	PCI_VENDOR_STB2	0x12d2		/* NVidia/SGS-Thomson */
 #define	PCI_VENDOR_AUREAL	0x12eb		/* Aureal */
 #define	PCI_VENDOR_ADMTEK	0x1317		/* ADMtek */
+#define	PCI_VENDOR_ALTATECH	0x1318		/* Alta Technology */
 #define	PCI_VENDOR_FORTEMEDIA	0x1319		/* Forte Media */
 #define	PCI_VENDOR_SIIG	0x131f		/* SIIG */
 #define	PCI_VENDOR_LMC	0x1376		/* LAN Media Corp */
@@ -702,6 +703,9 @@
 /* Alliance products */
 #define	PCI_PRODUCT_ALLIANCE_AT22	0x6424		/* AT22 */
 #define	PCI_PRODUCT_ALLIANCE_AT24	0x6424		/* AT24 */
+
+/* Alta Technology products */
+#define	PCI_PRODUCT_ALTATECH_GNIC2	0x0911		/* PMC/GNIC2 */
 
 /* Alteon products */
 #define	PCI_PRODUCT_ALTEON_ACENIC	0x0001		/* Acenic */
@@ -922,7 +926,7 @@
 #define	PCI_PRODUCT_CYRIX_GXMPCI	0x0001		/* GXm Host-PCI */
 #define	PCI_PRODUCT_CYRIX_GXMISA	0x0002		/* GXm PCI-ISA */
 
-/* Dell Computer */
+/* Dell Computer products */
 #define	PCI_PRODUCT_DELL_DELL_PERC_2SI	0x0001		/* PERC 2/Si */
 #define	PCI_PRODUCT_DELL_DELL_PERC_3DI	0x0002		/* PERC 3/Di */
 #define	PCI_PRODUCT_DELL_DELL_PERC_3SI	0x0003		/* PERC 3/Si */
