@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.12 1996/10/27 04:56:51 tholo Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.13 1996/10/27 08:01:26 tholo Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -79,8 +79,9 @@ void killproc __P((struct proc *, char *));
 #define CANSIGNAL(p, pc, q, signum) \
 	((pc)->pc_ucred->cr_uid == 0 || \
 	    (pc)->p_ruid == (q)->p_cred->p_ruid || \
-	    (pc)->pc_ucred->cr_uid == (q)->p_cred->p_svuid || \
+	    (pc)->p_ruid == (q)->p_cred->p_svuid || \
 	    (pc)->pc_ucred->cr_uid == (q)->p_cred->p_ruid || \
+	    (pc)->pc_ucred->cr_uid == (q)->p_cred->p_svuid || \
 	    (pc)->p_ruid == (q)->p_ucred->cr_uid || \
 	    (pc)->pc_ucred->cr_uid == (q)->p_ucred->cr_uid || \
 	    ((signum) == SIGCONT && (q)->p_session == (p)->p_session))
@@ -105,7 +106,7 @@ sys_sigaction(p, v, retval)
 
 	signum = SCARG(uap, signum);
 	if (signum <= 0 || signum >= NSIG ||
-	    signum == SIGKILL || signum == SIGSTOP)
+	    (SCARG(uap, nsa) && (signum == SIGKILL || signum == SIGSTOP)))
 		return (EINVAL);
 	sa = &vec;
 	if (SCARG(uap, osa)) {
