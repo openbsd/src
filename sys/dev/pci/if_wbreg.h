@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wbreg.h,v 1.2 1999/09/03 01:48:39 jason Exp $	*/
+/*	$OpenBSD: if_wbreg.h,v 1.3 1999/09/27 18:17:01 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -365,7 +365,6 @@ struct wb_softc {
 	bus_space_tag_t		wb_btag;
 	struct wb_type		*wb_info;	/* 3Com adapter info */
 	struct wb_type		*wb_pinfo;	/* phy info */
-	u_int8_t		wb_unit;	/* interface number */
 	u_int8_t		wb_type;
 	u_int8_t		wb_phy_addr;	/* PHY address */
 	u_int8_t		wb_tx_pend;	/* TX pending */

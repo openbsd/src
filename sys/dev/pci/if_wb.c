@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wb.c,v 1.2 1999/09/03 01:48:38 jason Exp $	*/
+/*	$OpenBSD: if_wb.c,v 1.3 1999/09/27 18:17:01 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -145,8 +145,8 @@ struct wb_type wb_phys[] = {
 	{ 0, 0, "<MII-compliant physical interface>" }
 };
 
-int wb_probe	__P((struct device *, void *, void *));
-void wb_attach	__P((struct device *, struct device *, void *));
+int wb_probe		__P((struct device *, void *, void *));
+void wb_attach		__P((struct device *, struct device *, void *));
 
 int wb_newbuf		__P((struct wb_softc *, struct wb_chain_onefrag *,
     struct mbuf *));
@@ -162,21 +162,20 @@ void wb_start		__P((struct ifnet *));
 int wb_ioctl		__P((struct ifnet *, u_long, caddr_t));
 void wb_init		__P((void *));
 void wb_stop		__P((struct wb_softc *));
-void wb_watchdog		__P((struct ifnet *));
-void wb_shutdown		__P((void *));
+void wb_watchdog	__P((struct ifnet *));
+void wb_shutdown	__P((void *));
 int wb_ifmedia_upd	__P((struct ifnet *));
 void wb_ifmedia_sts	__P((struct ifnet *, struct ifmediareq *));
 
 void wb_eeprom_putbyte	__P((struct wb_softc *, int));
 void wb_eeprom_getword	__P((struct wb_softc *, int, u_int16_t *));
-void wb_read_eeprom	__P((struct wb_softc *, caddr_t, int,
-							int, int));
-void wb_mii_sync		__P((struct wb_softc *));
-void wb_mii_send		__P((struct wb_softc *, u_int32_t, int));
+void wb_read_eeprom	__P((struct wb_softc *, caddr_t, int, int, int));
+void wb_mii_sync	__P((struct wb_softc *));
+void wb_mii_send	__P((struct wb_softc *, u_int32_t, int));
 int wb_mii_readreg	__P((struct wb_softc *, struct wb_mii_frame *));
 int wb_mii_writereg	__P((struct wb_softc *, struct wb_mii_frame *));
-u_int16_t wb_phy_readreg	__P((struct wb_softc *, int));
 void wb_phy_writereg	__P((struct wb_softc *, int, int));
+u_int16_t wb_phy_readreg	__P((struct wb_softc *, int));
 
 void wb_autoneg_xmit	__P((struct wb_softc *));
 void wb_autoneg_mii	__P((struct wb_softc *, int, int));
@@ -184,7 +183,7 @@ void wb_setmode_mii	__P((struct wb_softc *, int));
 void wb_getmode_mii	__P((struct wb_softc *));
 void wb_setcfg		__P((struct wb_softc *, int));
 u_int8_t wb_calchash	__P((caddr_t));
-void wb_setmulti		__P((struct wb_softc *));
+void wb_setmulti	__P((struct wb_softc *));
 void wb_reset		__P((struct wb_softc *));
 int wb_list_rx_init	__P((struct wb_softc *));
 int wb_list_tx_init	__P((struct wb_softc *));
@@ -663,8 +662,8 @@ void wb_autoneg_mii(sc, flag, verbose)
 	phy_sts = wb_phy_readreg(sc, PHY_BMSR);
 	if (!(phy_sts & PHY_BMSR_CANAUTONEG)) {
 		if (verbose)
-			printf("wb%d: autonegotiation not supported\n",
-							sc->wb_unit);
+			printf("%s: autonegotiation not supported\n",
+			    sc->sc_dev.dv_xname);
 		ifm->ifm_media = IFM_ETHER|IFM_10_T|IFM_HDX;	
 		return;
 	}
@@ -703,17 +702,19 @@ void wb_autoneg_mii(sc, flag, verbose)
 		sc->wb_autoneg = 0;
 		break;
 	default:
-		printf("wb%d: invalid autoneg flag: %d\n", sc->wb_unit, flag);
+		printf("%s: invalid autoneg flag: %d\n",
+		    sc->sc_dev.dv_xname, flag);
 		return;
 	}
 
 	if (wb_phy_readreg(sc, PHY_BMSR) & PHY_BMSR_AUTONEGCOMP) {
 		if (verbose)
-			printf("wb%d: autoneg complete, ", sc->wb_unit);
+			printf("%s: autoneg complete, ", sc->sc_dev.dv_xname);
 		phy_sts = wb_phy_readreg(sc, PHY_BMSR);
 	} else {
 		if (verbose)
-			printf("wb%d: autoneg not complete, ", sc->wb_unit);
+			printf("%s: autoneg not complete, ",
+			    sc->sc_dev.dv_xname);
 	}
 
 	media = wb_phy_readreg(sc, PHY_BMCR);
@@ -853,14 +854,14 @@ void wb_setmode_mii(sc, media)
 	 * If an autoneg session is in progress, stop it.
 	 */
 	if (sc->wb_autoneg) {
-		printf("wb%d: canceling autoneg session\n", sc->wb_unit);
+		printf("%s: canceling autoneg session\n", sc->sc_dev.dv_xname);
 		ifp->if_timer = sc->wb_autoneg = sc->wb_want_auto = 0;
 		bmcr = wb_phy_readreg(sc, PHY_BMCR);
 		bmcr &= ~PHY_BMCR_AUTONEGENBL;
 		wb_phy_writereg(sc, PHY_BMCR, bmcr);
 	}
 
-	printf("wb%d: selecting MII, ", sc->wb_unit);
+	printf("%s: selecting MII, ", sc->sc_dev.dv_xname);
 
 	bmcr = wb_phy_readreg(sc, PHY_BMCR);
 
@@ -920,8 +921,8 @@ void wb_setcfg(sc, bmcr)
 		}
 
 		if (i == WB_TIMEOUT)
-			printf("wb%d: failed to force tx and "
-				"rx to idle state\n", sc->wb_unit);
+			printf("%s: failed to force tx and "
+				"rx to idle state\n", sc->sc_dev.dv_xname);
 	}
 
 	if (bmcr & PHY_BMCR_SPEEDSEL)
@@ -953,7 +954,7 @@ void wb_reset(sc)
 			break;
 	}
 	if (i == WB_TIMEOUT)
-		printf("wb%d: reset never completed!\n", sc->wb_unit);
+		printf("%s: reset never completed!\n", sc->sc_dev.dv_xname);
 
 	/* Wait a little while for the chip to get its brains in order. */
 	DELAY(1000);
@@ -1010,18 +1011,14 @@ wb_attach(parent, self, aux)
 	struct ifnet *ifp = &sc->arpcom.ac_if;
 	bus_addr_t iobase;
 	bus_size_t iosize;
-	int i, media = IFM_ETHER|IFM_100_TX|IFM_FDX;
+	int i, media = IFM_ETHER|IFM_100_TX|IFM_FDX, s;
 	u_int round;
 	caddr_t roundptr;
 	u_int16_t phy_vid, phy_did, phy_sts;
 	struct wb_type		*p;
 	u_int32_t command;
 
-#if 0
 	s = splimp();
-#endif
-
-	sc->wb_unit = sc->sc_dev.dv_unit;
 
 	/*
 	 * Handle power management nonsense.
@@ -1078,7 +1075,7 @@ wb_attach(parent, self, aux)
 	}
 	sc->wb_btag = pa->pa_iot;
 #else
-	if (!(command & PCI_COMMAND_IO_ENABLE)) {
+	if (!(command & PCI_COMMAND_MEM_ENABLE)) {
 		printf(": failed to enable memory mapping!\n");
 		goto fail;
 	}
@@ -1124,7 +1121,7 @@ wb_attach(parent, self, aux)
 				M_DEVBUF, M_NOWAIT);
 	if (sc->wb_ldata_ptr == NULL) {
 		printf("%s: no memory for list buffers!\n",sc->sc_dev.dv_xname);
-		return;
+		goto fail;
 	}
 
 	sc->wb_ldata = (struct wb_list_data *)sc->wb_ldata_ptr;
@@ -1180,7 +1177,7 @@ wb_attach(parent, self, aux)
 		if (sc->wb_pinfo == NULL)
 			sc->wb_pinfo = &wb_phys[PHY_UNKNOWN];
 	} else {
-		printf("wb%d: MII without any phy!\n", sc->wb_unit);
+		printf("%s: MII without any phy!\n", sc->sc_dev.dv_xname);
 		goto fail;
 	}
 
@@ -1209,9 +1206,7 @@ wb_attach(parent, self, aux)
 	shutdownhook_establish(wb_shutdown, sc);
 
 fail:
-#if 0
 	splx(s);
-#endif
 	return;
 }
 
@@ -1349,8 +1344,8 @@ void wb_rxeof(sc)
 			 || WB_RXBYTES(cur_rx->wb_ptr->wb_status) == 0) {
 			ifp->if_ierrors++;
 			wb_reset(sc);
-			printf("wb%x: receiver babbling: possible chip "
-				"bug, forcing reset\n", sc->wb_unit);
+			printf("%s: receiver babbling: possible chip "
+				"bug, forcing reset\n", sc->sc_dev.dv_xname);
 			ifp->if_flags |= IFF_OACTIVE;
 			ifp->if_timer = 2;
 			return;
@@ -1822,8 +1817,8 @@ void wb_init(xsc)
 
 	/* Init circular RX list. */
 	if (wb_list_rx_init(sc) == ENOBUFS) {
-		printf("wb%d: initialization failed: no "
-			"memory for rx buffers\n", sc->wb_unit);
+		printf("%s: initialization failed: no "
+			"memory for rx buffers\n", sc->sc_dev.dv_xname);
 		wb_stop(sc);
 		(void)splx(s);
 		return;
@@ -2027,11 +2022,11 @@ void wb_watchdog(ifp)
 	}
 
 	ifp->if_oerrors++;
-	printf("wb%d: watchdog timeout\n", sc->wb_unit);
+	printf("%s: watchdog timeout\n", sc->sc_dev.dv_xname);
 
 	if (!(wb_phy_readreg(sc, PHY_BMSR) & PHY_BMSR_LINKSTAT))
-		printf("wb%d: no carrier - transceiver cable problem?\n",
-								sc->wb_unit);
+		printf("%s: no carrier - transceiver cable problem?\n",
+		    sc->sc_dev.dv_xname);
 
 	wb_stop(sc);
 	wb_reset(sc);
