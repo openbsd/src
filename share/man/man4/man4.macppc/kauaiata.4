@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kauaiata.4,v 1.1 2003/06/11 18:50:26 drahn Exp $
+.\"	$OpenBSD: kauaiata.4,v 1.2 2003/06/12 17:53:25 jmc Exp $
 .\"
 .\" Copyright (c) 2003 Dale Rahn.
 .\" All rights reserved.
@@ -29,19 +29,21 @@
 .Os
 .Sh NAME
 .Nm kauaiata
-.Nd ATA100 HD controller on pci bus
+.Nd ATA100 HD controller on PCI bus
 .Sh SYNOPSIS
 .Cd "kauaiata* at pci?"
 .Sh DESCRIPTION
 The
 .Nm
-device serves as a bridge to wdc_obio. The DBDMA based controller
-logic which was on the macobio was copied and placed on the pci bus
+device serves as a bridge to wdc_obio.
+The DBDMA based controller logic which was on the
+.Xr macobio 4
+was copied and placed on the PCI bus.
 This driver adapts the PCI configuration data into the form expected
 by wdc_obio.
 .Sh SEE ALSO
-.Xr wdc 4 ,
 .Xr macobio 4 ,
+.Xr wdc 4
 .Sh HISTORY
 The
 .Nm
