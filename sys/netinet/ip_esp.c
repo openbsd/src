@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.c,v 1.73 2002/06/18 23:03:26 angelos Exp $ */
+/*	$OpenBSD: ip_esp.c,v 1.74 2002/07/05 23:20:53 angelos Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -980,8 +980,8 @@ esp_output_cb(void *op)
 	s = spltdb();
 
 	tdb = gettdb(tc->tc_spi, &tc->tc_dst, tc->tc_proto);
-	FREE(tc, M_XDATA);
 	if (tdb == NULL) {
+		FREE(tc, M_XDATA);
 		espstat.esps_notdb++;
 		DPRINTF(("esp_output_cb(): TDB is expired while in crypto\n"));
 		goto baddone;
@@ -998,12 +998,14 @@ esp_output_cb(void *op)
 			return crypto_dispatch(crp);
 		}
 
+		FREE(tc, M_XDATA);
 		espstat.esps_noxform++;
 		DPRINTF(("esp_output_cb(): crypto error %d\n",
 		    crp->crp_etype));
 		error = crp->crp_etype;
 		goto baddone;
-	}
+	} else
+		FREE(tc, M_XDATA);
 
 	/* Shouldn't happen... */
 	if (m == NULL) {

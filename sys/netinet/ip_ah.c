@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah.c,v 1.69 2002/06/26 00:13:47 angelos Exp $ */
+/*	$OpenBSD: ip_ah.c,v 1.70 2002/07/05 23:20:53 angelos Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -1241,8 +1241,6 @@ ah_output_cb(void *op)
 
 	/* Check for crypto errors. */
 	if (crp->crp_etype) {
-		FREE(tc, M_XDATA);
-
 		if (tdb->tdb_cryptoid != 0)
 			tdb->tdb_cryptoid = crp->crp_sid;
 
@@ -1251,6 +1249,7 @@ ah_output_cb(void *op)
 			return crypto_dispatch(crp);
 		}
 
+		FREE(tc, M_XDATA);
 		ahstat.ahs_noxform++;
 		DPRINTF(("ah_output_cb(): crypto error %d\n", crp->crp_etype));
 		error = crp->crp_etype;
