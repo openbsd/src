@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.own.mk,v 1.25 1999/06/22 12:54:05 art Exp $
+#	$OpenBSD: bsd.own.mk,v 1.26 1999/10/29 14:15:19 art Exp $
 #	$NetBSD: bsd.own.mk,v 1.24 1996/04/13 02:08:09 thorpej Exp $
 
 # Host-specific overrides
@@ -9,7 +9,11 @@
 .endif
 
 # XXX - This is temporary until everyone uses UVM
+.if (${MACHINE_ARCH} == "sparc")
+UVM?=		yes
+.else
 UVM?=		no
+.endif
 
 # Set `SKEY' to `yes' to build with support for S/key authentication.
 SKEY?=		yes
