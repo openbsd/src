@@ -1,4 +1,4 @@
-/*	$NetBSD: private.h,v 1.3 1995/03/14 18:49:49 jtc Exp $	*/
+/*	$NetBSD: private.h,v 1.4 1996/01/08 22:50:57 jtc Exp $	*/
 
 #ifndef PRIVATE_H
 #define PRIVATE_H
@@ -23,7 +23,7 @@
 
 #ifndef lint
 #ifndef NOID
-static char	privatehid[] = "@(#)private.h	7.33";
+static char	privatehid[] = "@(#)private.h	7.35";
 #endif /* !defined NOID */
 #endif /* !defined lint */
 
@@ -54,7 +54,6 @@ static char	privatehid[] = "@(#)private.h	7.33";
 
 #include "sys/types.h"	/* for time_t */
 #include "stdio.h"
-#include "ctype.h"
 #include "errno.h"
 #include "string.h"
 #include "limits.h"	/* for CHAR_BIT */
@@ -73,6 +72,9 @@ static char	privatehid[] = "@(#)private.h	7.33";
 #define R_OK	4
 #endif /* !defined R_OK */
 #endif /* !(HAVE_UNISTD_H - 0) */
+
+/* Unlike <ctype.h>'s isdigit, this also works if c < 0 | c > UCHAR_MAX.  */
+#define is_digit(c) ((unsigned)(c) - '0' <= 9)
 
 /*
 ** Workarounds for compilers/systems.
@@ -162,12 +164,19 @@ extern int	unlink P((const char * filename));
 #ifndef INT_STRLEN_MAXIMUM
 /*
 ** 302 / 1000 is log10(2.0) rounded up.
-** Subtract one for the sign bit;
-** add one for integer division truncation;
-** add one more for a minus sign.
+** If type is signed:
+**	subtract one for the sign bit;
+**	add one for integer division truncation;
+**	add one more for a minus sign.
+** If type is unsigned:
+**	do not subtract one since there is no sign bit;
+**	add one for integer division truncation;
+**	do not add one more for a minus sign.
 */
 #define INT_STRLEN_MAXIMUM(type) \
-	((sizeof(type) * CHAR_BIT - 1) * 302 / 1000 + 2)
+		((((type) -1) < 0) ? \
+			((sizeof(type) * CHAR_BIT - 1) * 302 / 1000 + 2) : \
+			((sizeof(type) * CHAR_BIT) * 302 / 1000 + 1))
 #endif /* !defined INT_STRLEN_MAXIMUM */
 
 /*

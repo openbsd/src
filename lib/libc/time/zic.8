@@ -1,4 +1,4 @@
-.\"	$NetBSD: zic.8,v 1.3 1995/08/22 19:28:18 jtc Exp $
+.\"	$NetBSD: zic.8,v 1.4 1996/01/08 22:50:59 jtc Exp $
 .TH ZIC 8
 .SH NAME
 zic \- time zone compiler
@@ -324,14 +324,13 @@ A link line has the form
 .sp
 .nf
 .ti +.5i
-.if t .ta \w'Link\0\0'u +\w'LINK-FROM\0\0'u
-.if n .ta \w'Link\0\0'u +\w'US/Eastern\0\0'u
+.ta \w'Link\0\0'u +\w'Europe/Istanbul\0\0'u
 Link	LINK-FROM	LINK-TO
 .sp
 For example:
 .sp
 .ti +.5i
-Link	US/Eastern	EST5EDT
+Link	Europe/Istanbul	Asia/Istanbul
 .sp
 .fi
 The
@@ -407,4 +406,4 @@ the earliest transition time recorded in the compiled file is correct.
 /usr/share/zoneinfo	standard directory used for created files
 .SH "SEE ALSO"
 ctime(3), tzfile(5), zdump(8)
-.\" @(#)zic.8	7.11
+.\" @(#)zic.8	7.12
