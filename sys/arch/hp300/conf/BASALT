@@ -1,4 +1,4 @@
-#	$NetBSD: BASALT,v 1.3 1995/11/28 08:48:18 thorpej Exp $
+#	$NetBSD: BASALT,v 1.4 1995/12/29 17:16:29 thorpej Exp $
 #
 # BASALT - thorpej's hp380
 #
@@ -9,7 +9,7 @@ ident		BASALT
 
 # Need to set locally
 timezone	8 dst
-maxusers	16
+maxusers	32
 
 # Standard system options
 options		SWAPPAGER		# swap pager (anonymous and swap space)
