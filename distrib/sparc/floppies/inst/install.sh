@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.7 1997/02/10 16:42:53 deraadt Exp $
+#	$OpenBSD: install.sh,v 1.8 1997/05/01 11:27:12 niklas Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # All rights reserved.
@@ -146,30 +146,41 @@ esac
 echo	"You will now enter the disk geometry information"
 echo	""
 
-bytes_per_sect=`cat /kern/msgbuf \
-	| sed -n -e /^${drivename}:/p -e /^${drivename}:/q \
-	| awk '{ print $9 }'`
+# 1st arg is 1 more than arg needed
+args () 
+{
+	eval echo \$$1
+}
+
+bytes_pser_sect=`cat /kern/msgbuf | sed -n -e /^${drivename}:/p -e /^${drivename}:/q`
+bytes_pser_sect=`args 10 $bytes_pser_sect `
+
+echo here
+bytes_per_sect=`cat /kern/msgbuf | sed -n -e /^${drivename}:/p -e /^${drivename}:/q`
+echo no here
+bytes_per_sect=`args 10 $bytes_per_sect`
+
 echo -n "Number of bytes per disk sector? [$bytes_per_sect] "
 getresp $bytes_per_sect
 bytes_per_sect="$resp"
 
-cyls_per_disk=`cat /kern/msgbuf \
-	| sed -n -e /^${drivename}:/p -e /^${drivename}:/q \
-	| awk '{ print $3 }'`
+cyls_per_disk=`cat /kern/msgbuf | sed -n -e /^${drivename}:/p -e /^${drivename}:/q`
+cyls_per_disk=`args 4 $cyls_per_disk`
+
 echo -n "Number of disk cylinders? [$cyls_per_disk]"
 getresp $cyls_per_disk
 cyls_per_disk="$resp"
 
-tracks_per_cyl=`cat /kern/msgbuf \
-	| sed -n -e /^${drivename}:/p -e /^${drivename}:/q \
-	| awk '{ print $5 }'`
+tracks_per_cyl=`cat /kern/msgbuf | sed -n -e /^${drivename}:/p -e /^${drivename}:/q`
+tracks_per_cyl=`args 6 $tracks_per_cyl`
+
 echo -n "Number of disk tracks (heads) per disk cylinder? [$tracks_per_cyl]"
 getresp $tracks_per_cyl
 tracks_per_cyl="$resp"
 
-sects_per_track=`cat /kern/msgbuf \
-	| sed -n -e /^${drivename}:/p -e /^${drivename}:/q \
-	| awk '{ print $7 }'`
+sects_per_track=`sed -n -e /^${drivename}:/p -e /^${drivename}:/q /kern/msgbuf`
+sects_per_track=`args 8 $sects_per_track`
+
 echo -n "Number of disk sectors per disk track? [$sects_per_track]"
 getresp $sects_per_track
 sects_per_track="$resp"
@@ -204,8 +215,17 @@ while [ "X${sizemult}" = "X" ]; do
 	esac
 done
 
-	part_offset=0
-
+echo -n ""
+echo -n "Size of OpenBSD portion of disk (in $sizeunit) ? [$maxdisk] "
+getresp "$maxdisk"
+partition=$resp
+partition_sects=`expr $resp \* $sizemult`
+part_offset=0
+if [ $partition_sects -lt $disksize ]; then
+        echo -n "Offset of OpenBSD portion of disk (in $sizeunit)? "
+        getresp
+        part_offset=$resp
+fi
 badspacesec=0
 if [ "$sect_fwd" = "sf:" ]; then
 	badspacecyl=`expr $sects_per_track + 126`
