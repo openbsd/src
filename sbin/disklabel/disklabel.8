@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disklabel.8,v 1.36 2000/04/04 16:29:27 millert Exp $
+.\"	$OpenBSD: disklabel.8,v 1.37 2000/06/04 18:19:45 millert Exp $
 .\"	$NetBSD: disklabel.8,v 1.9 1995/03/18 14:54:38 cgd Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1991, 1993
@@ -375,6 +375,9 @@ thinks (the
 geometry is simply what the label said before
 .Nm
 made any changes).
+.It D
+Sets the disk label to the default values as reported by the kernel.
+This similates the case where there is no disk label.
 .It m Op part
 Modify parameters for an existing partition.
 If no partition is specified, the user will be prompted for one.
@@ -413,6 +416,10 @@ Toggle
 .Dq expert mode .
 By default, some settings are reserved for experts only (such as the
 block and fragment size on ffs partitions).
+.It z
+Zeroes out the existing partition table, leaving only the
+.Dq c
+partition.  The drive parameters are not changed.
 .El
 .Pp
 In the restore form of the command, the prototype file used to create

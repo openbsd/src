@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.70 2000/05/05 19:10:35 millert Exp $	*/
+/*	$OpenBSD: editor.c,v 1.71 2000/06/04 18:19:45 millert Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -28,7 +28,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.70 2000/05/05 19:10:35 millert Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.71 2000/06/04 18:19:45 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -111,6 +111,7 @@ int	get_offset __P((struct disklabel *, int));
 int	get_size __P((struct disklabel *, int, u_int32_t *, int));
 void	get_geometry __P((int, struct disklabel **, struct disklabel **));
 void	set_geometry __P((struct disklabel *, struct disklabel *, struct disklabel *, struct disklabel *, char *));
+void	zero_partitions __P((struct disklabel *, u_int32_t *));
 
 static u_int32_t starting_sector;
 static u_int32_t ending_sector;
@@ -251,6 +252,15 @@ editor(lp, f, dev, fstabfile)
 				lastlabel = tmplabel;
 			break;
 
+		case 'D':
+			tmplabel = label;
+			label = lastlabel;
+			lastlabel = tmplabel;
+			if (ioctl(f, DIOCGPDINFO, &label) < 0)
+				err(4, "ioctl DIOCGDINFO");
+			editor_countfree(&label, &freesectors);
+			break;
+
 		case 'd':
 			tmplabel = lastlabel;
 			lastlabel = label;
@@ -263,6 +273,14 @@ editor(lp, f, dev, fstabfile)
 				lastlabel = tmplabel;
 			if (mountpoints != NULL && mpequal(omountpoints, tmpmountpoints))
 				mpcopy(omountpoints, tmpmountpoints);
+			break;
+
+		case 'e':
+			tmplabel = lastlabel;
+			lastlabel = label;
+			edit_parms(&label, &freesectors);
+			if (memcmp(&label, &lastlabel, sizeof(label)) == 0)
+				lastlabel = tmplabel;
 			break;
 
 		case 'g':
@@ -417,15 +435,14 @@ editor(lp, f, dev, fstabfile)
 			return(1);
 			break;
 
-		case '\n':
+		case 'z':
+			tmplabel = label;
+			label = lastlabel;
+			lastlabel = tmplabel;
+			zero_partitions(&label, &freesectors);
 			break;
 
-		case 'e':
-			tmplabel = lastlabel;
-			lastlabel = label;
-			edit_parms(&label, &freesectors);
-			if (memcmp(&label, &lastlabel, sizeof(label)) == 0)
-				lastlabel = tmplabel;
+		case '\n':
 			break;
 
 		default:
@@ -461,7 +478,8 @@ editor_add(lp, mp, freep, p)
 	/* XXX - make more like other editor_* */
 	if (p != NULL) {
 		partno = p[0] - 'a';
-		if (partno < 0 || partno == 2 || partno >= MAXPARTITIONS) {
+		if (partno < 0 || partno == RAW_PART ||
+		    partno >= MAXPARTITIONS) {
 			fprintf(stderr,
 			    "Partition must be between 'a' and '%c' "
 			    "(excluding 'c').\n", 'a' + MAXPARTITIONS - 1);
@@ -476,7 +494,8 @@ editor_add(lp, mp, freep, p)
 	} else {
 		/* Find first unused partition that is not 'c' */
 		for (partno = 0; partno < MAXPARTITIONS; partno++, p++) {
-			if (lp->d_partitions[partno].p_size == 0 && partno != 2)
+			if (lp->d_partitions[partno].p_size == 0 &&
+			    partno != RAW_PART)
 				break;
 		}
 		if (partno < MAXPARTITIONS) {
@@ -758,7 +777,7 @@ editor_delete(lp, mp, freep, p)
 	}
 	if (p[0] == '*') {
 		for (c = 0; c < lp->d_npartitions; c++) {
-			if (c == 2)
+			if (c == RAW_PART)
 				continue;
 
 			/* Update free sector count. */
@@ -779,7 +798,7 @@ editor_delete(lp, mp, freep, p)
 	else if (c >= lp->d_npartitions || (lp->d_partitions[c].p_fstype ==
 	    FS_UNUSED && lp->d_partitions[c].p_size == 0))
 		fprintf(stderr, "Partition '%c' is not in use.\n", 'a' + c);
-	else if (c == 2)
+	else if (c == RAW_PART)
 		fputs(
 "You may not delete the 'c' partition.  The 'c' partition must exist and\n"
 "should span the entire disk.  By default it is of type 'unused' and so\n"
@@ -959,7 +978,7 @@ editor_change(lp, freep, p)
 			*freep += pp->p_size - newsize;
 		}
 	} else {
-		if (partno == 2 && newsize +
+		if (partno == RAW_PART && newsize +
 		    pp->p_offset > lp->d_secperunit) {
 			fputs("'c' partition may not be larger than the disk\n",
 			    stderr);
@@ -1196,7 +1215,7 @@ has_overlap(lp, freep, resolve)
 	/* Get a sorted list of the partitions */
 	spp = sort_partitions(lp, &npartitions);
 
-	if (npartitions < 2) {
+	if (npartitions < RAW_PART) {
 		(void)free(spp);
 		return(0);			/* nothing to do */
 	}
@@ -1778,7 +1797,7 @@ editor_help(arg)
 		break;
 	case 'M':
 		puts(
-"The 'M' command pipes the entire OpenBSD manual page for disklabel though\n"
+"The 'M' command pipes the entire OpenBSD manual page for disk label through\n"
 "the pager specified by the PAGER environment variable or 'less' if PAGER is\n"
 "not set.  It is especially useful during install when the normal system\n"
 "manual is not available.\n");
@@ -1822,6 +1841,11 @@ editor_help(arg)
 "'c' for cylinders, 'k' for kilobytes, 'm' for megabytes, 'g' for gigabytes or\n"
 "no suffix for sectors (usually 512 bytes).  You may also enter '*' to change\n"
 "the size to be the total number of free sectors remaining.\n");
+		break;
+	case 'D':
+		puts(
+"The 'D' command will set the disk label to the default values as reported\n"
+"by the disk itself.  This similates the case where there is no disk label.\n");
 		break;
 	case 'd':
 		puts(
@@ -1880,10 +1904,21 @@ editor_help(arg)
 "The 'q' command quits the label editor.  If any changes have been made you\n"
 "will be asked whether or not to save the changes to the on-disk label.\n");
 		break;
+	case 'X':
+		puts(
+"The 'X' command toggles disklabel in to/out of 'expert mode'.  By default,\n"
+"some settings are reserved for experts only (such as the block and fragment\n"
+"size on ffs partitions).\n");
+		break;
 	case 'x':
 		puts(
 "The 'x' command exits the label editor without saving any changes to the\n"
 "on-disk label.\n");
+		break;
+	case 'z':
+		puts(
+"The 'z' command zeroes out the existing partition table, leaving only the 'c'\n"
+"partition.  The drive parameters are not changed.\n");
 		break;
 	default:
 		puts("Available commands:");
@@ -1894,6 +1929,7 @@ editor_help(arg)
 		puts("\tb         - set OpenBSD disk boundaries.");
 		puts("\tc [part]  - change partition size.");
 		puts("\td [part]  - delete partition.");
+		puts("\tD         - set label to default.");
 		puts("\tg [d|b]   - Use [d]isk or [b]ios geometry.");
 		puts("\tm [part]  - modify existing partition.");
 		puts("\tn [part]  - set the mount point for a partition.");
@@ -1904,6 +1940,7 @@ editor_help(arg)
 		puts("\tq         - quit and save changes.");
 		puts("\tx         - exit without saving changes.");
 		puts("\tX         - toggle expert mode.");
+		puts("\tz         - zero out partition table.");
 		puts("\t? [cmnd]  - this message or command specific help.");
 		puts(
 "Numeric parameters may use suffixes to indicate units:\n\t"
@@ -2090,7 +2127,8 @@ get_size(lp, partno, freep, new)
 		} else {
 			if (ui == pp->p_size)
 				break;			/* no change */
-			if (partno == 2 && ui + pp->p_offset > lp->d_secperunit) {
+			if (partno == RAW_PART &&
+			    ui + pp->p_offset > lp->d_secperunit) {
 				fputs("'c' partition may not be larger than the disk\n",
 				    stderr);
 			} else if (pp->p_fstype == FS_UNUSED ||
@@ -2449,4 +2487,18 @@ set_geometry(lp, dgp, bgp, ugp, p)
 		fputs("You must enter either 'd', 'b', or 'u'.\n", stderr);
 		break;
 	}
+}
+
+void
+zero_partitions(lp, freep)
+	struct disklabel *lp;
+	u_int32_t *freep;
+{
+	int i;
+
+	for (i = 0; i < MAXPARTITIONS; i++)
+		memset(&lp->d_partitions[i], 0, sizeof(struct partition));
+	lp->d_partitions[RAW_PART].p_offset = starting_sector;
+	lp->d_partitions[RAW_PART].p_size = ending_sector - starting_sector;
+	editor_countfree(lp, freep);
 }
