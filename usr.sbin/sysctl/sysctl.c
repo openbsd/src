@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.42 1999/10/28 03:34:03 angelos Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.43 1999/12/10 10:12:56 itojun Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.5 (Berkeley) 5/9/95";
 #else
-static char *rcsid = "$OpenBSD: sysctl.c,v 1.42 1999/10/28 03:34:03 angelos Exp $";
+static char *rcsid = "$OpenBSD: sysctl.c,v 1.43 1999/12/10 10:12:56 itojun Exp $";
 #endif
 #endif /* not lint */
 
@@ -74,6 +74,13 @@ static char *rcsid = "$OpenBSD: sysctl.c,v 1.42 1999/10/28 03:34:03 angelos Exp 
 #include <netinet/tcp.h>
 #include <netinet/tcp_timer.h>
 #include <netinet/tcp_var.h>
+
+#ifdef INET6
+#include <netinet6/ip6.h>
+#include <netinet6/icmp6.h>
+#include <netinet6/ip6_var.h>
+#include <netinet6/pim6_var.h>
+#endif
 
 #include <netipx/ipx.h>
 #include <netipx/ipx_var.h>
@@ -155,6 +162,9 @@ void parse_baddynamic __P((int *, size_t, char *, void **, size_t *, int, int));
 void usage __P((void));
 int findname __P((char *, char *, char **, struct list *));
 int sysctl_inet __P((char *, char **, int *, int, int *));
+#ifdef INET6
+int sysctl_inet6 __P((char *, char **, int *, int, int *));
+#endif
 int sysctl_ipx __P((char *, char **, int *, int, int *));
 int sysctl_fs __P((char *, char **, int *, int, int *));
 int sysctl_bios __P((char *, char **, int *, int, int *));
@@ -391,6 +401,15 @@ parse(string, flags)
 			}
 			break;
 		}
+#ifdef INET6
+		if (mib[1] == PF_INET6) {
+			len = sysctl_inet6(string, &bufp, mib, flags, &type);
+			if (len < 0)
+				return;
+
+			break;
+		}
+#endif
 		if (mib[1] == PF_IPX) {
 			len = sysctl_ipx(string, &bufp, mib, flags, &type);
 			if (len >= 0)
@@ -1062,6 +1081,92 @@ sysctl_inet(string, bufpp, mib, flags, typep)
 	*typep = lp->list[indx].ctl_type;
 	return(4);
 }
+
+#ifdef INET6
+struct ctlname inet6name[] = CTL_IPV6PROTO_NAMES;
+struct ctlname ip6name[] = IPV6CTL_NAMES;
+struct ctlname icmp6name[] = ICMPV6CTL_NAMES;
+struct ctlname pim6name[] = PIMCTL_NAMES;
+struct list inet6list = { inet6name, IPV6PROTO_MAXID };
+struct list inet6vars[] = {
+/*0*/	{ 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+/*10*/	{ 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 },
+	{ 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 },
+/*20*/	{ 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 },
+	{ 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 },
+/*30*/	{ 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 },
+	{ 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 },
+/*40*/	{ 0, 0 },
+	{ ip6name, IPV6CTL_MAXID },	/* ipv6 */
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 },
+/*50*/	{ 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ icmp6name, ICMPV6CTL_MAXID },	/* icmp6 */
+	{ 0, 0 },
+/*60*/	{ 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 },
+	{ 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 },
+/*70*/	{ 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 },
+	{ 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 },
+/*80*/	{ 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 },
+	{ 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 },
+/*90*/	{ 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 },
+	{ 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 },
+/*100*/	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ pim6name, PIMCTL_MAXID },	/* pim6 */
+};
+
+/*
+ * handle internet6 requests
+ */
+int
+sysctl_inet6(string, bufpp, mib, flags, typep)
+	char *string;
+	char **bufpp;
+	int mib[];
+	int flags;
+	int *typep;
+{
+	struct list *lp;
+	int indx;
+
+	if (*bufpp == NULL) {
+		listall(string, &inet6list);
+		return(-1);
+	}
+	if ((indx = findname(string, "third", bufpp, &inet6list)) == -1)
+		return(-1);
+	mib[2] = indx;
+	if (indx < IPV6PROTO_MAXID && inet6vars[indx].list != NULL)
+		lp = &inet6vars[indx];
+	else if (!flags)
+		return(-1);
+	else {
+		warnx("%s: no variables defined for this protocol", string);
+		return(-1);
+	}
+	if (*bufpp == NULL) {
+		listall(string, lp);
+		return(-1);
+	}
+	if ((indx = findname(string, "fourth", bufpp, lp)) == -1)
+		return(-1);
+	mib[3] = indx;
+	*typep = lp->list[indx].ctl_type;
+	return(4);
+}
+#endif
 
 struct ctlname ipxname[] = CTL_IPXPROTO_NAMES;
 struct ctlname ipxpname[] = IPXCTL_NAMES;

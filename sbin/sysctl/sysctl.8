@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.8,v 1.31 1999/10/28 03:34:03 angelos Exp $
+.\"	$OpenBSD: sysctl.8,v 1.32 1999/12/10 10:12:56 itojun Exp $
 .\"	$NetBSD: sysctl.8,v 1.4 1995/09/30 07:12:49 thorpej Exp $
 .\"
 .\" Copyright (c) 1993
@@ -173,6 +173,29 @@ privilege can change the value.
 .It net.inet.udp.baddynamic	array	yes
 .It net.inet.esp.enable	integer	yes
 .It net.inet.ah.enable	integer	yes
+.It net.inet6.ip6.forwarding	integer	yes
+.It net.inet6.ip6.redirect	integer	yes
+.It net.inet6.ip6.hlim	integer	yes
+.It net.inet6.ip6.maxfragpackets	integer	yes
+.It net.inet6.ip6.accept_rtadv	integer	yes
+.It net.inet6.ip6.keepfaith	integer	yes
+.It net.inet6.ip6.log_interval	integer	yes
+.It net.inet6.ip6.hdrnestlimit	integer	yes
+.It net.inet6.ip6.dad_count	integer	yes
+.It net.inet6.ip6.auto_flowlabel	integer	yes
+.It net.inet6.ip6.defmcasthlim	integer	yes
+.It net.inet6.ip6.gifhlim	integer	yes
+.It net.inet6.ip6.kame_version	string	no
+.It net.inet6.ip6.use_deprecated	integer	yes
+.It net.inet6.icmp6.rediraccept	integer	yes
+.It net.inet6.icmp6.redirtimeout	integer	yes
+.It net.inet6.icmp6.errratelimit	integer	yes
+.It net.inet6.icmp6.nd6_prune	integer	yes
+.It net.inet6.icmp6.nd6_delay	integer	yes
+.It net.inet6.icmp6.nd6_umaxtries	integer	yes
+.It net.inet6.icmp6.nd6_mmaxtries	integer	yes
+.It net.inet6.icmp6.nd6_useloopback	integer	yes
+.It net.inet6.icmp6.nd6_proxyall	integer	yes
 .It net.ipx.ipx.recvspace	integer	yes
 .It net.ipx.ipx.sendspace	integer	yes
 .It debug.syncprt	integer	yes
