@@ -1,4 +1,4 @@
-/*	$OpenBSD: siop.c,v 1.37 2004/10/13 23:33:02 krw Exp $ */
+/*	$OpenBSD: siop.c,v 1.38 2005/03/12 17:36:25 martin Exp $ */
 /*	$NetBSD: siop.c,v 1.65 2002/11/08 22:04:41 bouyer Exp $	*/
 
 /*
@@ -369,8 +369,7 @@ siop_intr(v)
 	}
 	/* use DSA to find the current siop_cmd */
 	dsa = bus_space_read_4(sc->sc_c.sc_rt, sc->sc_c.sc_rh, SIOP_DSA);
-	for (cbdp = TAILQ_FIRST(&sc->cmds); cbdp != NULL;
-	    cbdp = TAILQ_NEXT(cbdp, next)) {
+	TAILQ_FOREACH(cbdp, &sc->cmds, next) {
 		if (dsa >= cbdp->xferdma->dm_segs[0].ds_addr &&
 	    	    dsa < cbdp->xferdma->dm_segs[0].ds_addr + PAGE_SIZE) {
 			dsa -= cbdp->xferdma->dm_segs[0].ds_addr;
