@@ -173,10 +173,12 @@ ee_num16(ktent, arg)
 }
 
 static	struct strvaltabent scrsizetab[] = {
-	{ "1152x900",		EE_SCR_1152X900 },
-	{ "1024x1024",		EE_SCR_1024X1024 },
-	{ "1600x1280",		EE_SCR_1600X1280 },
-	{ "1440x1440",		EE_SCR_1440X1440 },
+	{ "640x480",		EED_SCR_640X480 },
+	{ "1152x900",		EED_SCR_1152X900 },
+	{ "1024x1024",		EED_SCR_1024X1024 },
+	{ "1600x1280",		EED_SCR_1600X1280 },
+	{ "1280x1024",		EED_SCR_1280X1024 },
+	{ "1440x1440",		EED_SCR_1440X1440 },
 	{ NULL,			0 },
 };
 
@@ -353,11 +355,11 @@ ee_kbdtype(ktent, arg)
 }
 
 static	struct strvaltabent constab[] = {
-	{ "b&w",		EE_CONS_BW },
-	{ "ttya",		EE_CONS_TTYA },
-	{ "ttyb",		EE_CONS_TTYB },
-	{ "color",		EE_CONS_COLOR },
-	{ "p4opt",		EE_CONS_P4OPT },
+	{ "b&w",		EED_CONS_BW },
+	{ "ttya",		EED_CONS_TTYA },
+	{ "ttyb",		EED_CONS_TTYB },
+	{ "color",		EED_CONS_COLOR },
+	{ "p4opt",		EED_CONS_P4 },
 	{ NULL,			0 },
 };
 
