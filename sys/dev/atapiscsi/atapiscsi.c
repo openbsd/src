@@ -1,4 +1,4 @@
-/*      $OpenBSD: atapiscsi.c,v 1.20 1999/12/11 10:15:02 csapuntz Exp $     */
+/*      $OpenBSD: atapiscsi.c,v 1.21 1999/12/11 20:53:03 csapuntz Exp $     */
 
 /*
  * This code is derived from code with the copyright below.
@@ -77,7 +77,6 @@
 #define DEBUG_POLL   0x40
 #define DEBUG_ERRORS 0x80   /* Debug error handling code */
 
-#define WDCDEBUG
 #ifdef WDCDEBUG
 int wdcdebug_atapi_mask = 0;
 #define WDCDEBUG_PRINT(args, level) \
@@ -98,7 +97,7 @@ int wdcdebug_atapi_mask = 0;
 void  wdc_atapi_minphys __P((struct buf *bp));
 void  wdc_atapi_start __P((struct channel_softc *,struct wdc_xfer *));
 
-void  timer_handler __P((void *));
+void  wdc_atapi_timer_handler __P((void *));
 
 int   wdc_atapi_real_start __P((struct channel_softc *, struct wdc_xfer *,
     int));
@@ -120,7 +119,7 @@ int   wdc_atapi_send_packet __P((struct channel_softc *, struct wdc_xfer *,
 int   wdc_atapi_dma_flags __P((struct wdc_xfer *));
 
 int   wdc_atapi_ctrl __P((struct channel_softc *, struct wdc_xfer *, int));
-int   wdc_atapi_in_data_phase __P((struct wdc_xfer *, int, int));
+char  *wdc_atapi_in_data_phase __P((struct wdc_xfer *, int, int));
 
 int   wdc_atapi_intr __P((struct channel_softc *, struct wdc_xfer *, int));
 
@@ -151,7 +150,8 @@ struct atapiscsi_softc {
 	struct device  sc_dev;
 	struct  scsi_link  sc_adapterlink;
 	struct channel_softc *chp;
-	enum atapi_state { as_none, as_cmdout, as_data } protocol_phase;
+	enum atapi_state { as_none, as_cmdout, as_data, as_completed };
+	enum atapi_state protocol_phase;
 
 	int retries;
 	int diagnostics_printed;
@@ -539,7 +539,7 @@ wdc_atapi_start(chp, xfer)
 
 
 void
-timer_handler(arg)
+wdc_atapi_timer_handler(arg)
 	void *arg;
 {
 	struct wdc_xfer *xfer = arg;
@@ -580,7 +580,7 @@ wdc_atapi_the_poll_machine(chp, xfer)
 	struct wdc_xfer *xfer;	
 {
 	int  idx = 0, ret;
-	int  current_timeout;
+	int  current_timeout = 10;
 
 	xfer->timeout = -1;
 
@@ -646,7 +646,7 @@ wdc_atapi_the_machine(chp, xfer, ctxt)
 	xfer->claim_irq = 0;
 	xfer->delay = 0;
 
-	ret = (xfer->next)(chp, xfer, now >= xfer->endtime);
+	ret = (xfer->next)(chp, xfer, xfer->endtime && (now >= xfer->endtime));
 
 	if (xfer->timeout != -1) {
 		now = (u_int64_t)time.tv_sec * 1000 + 
@@ -685,7 +685,7 @@ wdc_atapi_the_machine(chp, xfer, ctxt)
 
 	case DONE:
 		if (xfer->c_flags & C_POLL_MACHINE)
-			untimeout (timer_handler, xfer);
+			untimeout (wdc_atapi_timer_handler, xfer);
 
 		wdc_free_xfer(chp, xfer);
 		wdcstart(chp);
@@ -693,7 +693,7 @@ wdc_atapi_the_machine(chp, xfer, ctxt)
 		return (claim_irq);
 	}
 
-	timeout(timer_handler, xfer, timeout_delay);
+	timeout(wdc_atapi_timer_handler, xfer, timeout_delay);
 	xfer->c_flags |= C_POLL_MACHINE;
 	return (claim_irq);
 }
@@ -723,12 +723,15 @@ wdc_atapi_real_start(chp, xfer, timeout)
 	struct wdc_xfer *xfer;
 	int timeout;
 {
+#ifdef WDCDEBUG
 	struct scsi_xfer *sc_xfer = xfer->cmd;
+#endif
 	struct ata_drive_datas *drvp = &chp->ch_drive[xfer->drive];
 
 	WDCDEBUG_PRINT(("wdc_atapi_start %s:%d:%d, scsi flags 0x%x\n",
 	    chp->wdc->sc_dev.dv_xname, chp->channel, drvp->drive,
 	    sc_xfer->flags), DEBUG_XFERS);
+
 	/* Adjust C_DMA, it may have changed if we are requesting sense */
 	if (!(xfer->c_flags & C_POLL) && 
 	    (drvp->drive_flags & (DRIVE_DMA | DRIVE_UDMA)) &&
@@ -858,7 +861,6 @@ wdc_atapi_intr_command(chp, xfer, timeout)
 	int cmdlen = (drvp->atapi_cap & ACAP_LEN) ? 16 : 12;
 	int  dma_flags;
 
-	xfer->claim_irq = 1;
 	dma_flags = wdc_atapi_dma_flags(xfer);
 
 	bzero(cmd, sizeof(cmd));
@@ -888,7 +890,10 @@ wdc_atapi_intr_command(chp, xfer, timeout)
 
 	wdc_output_bytes(drvp, cmd, cmdlen);
 
-	as->protocol_phase = as_data;
+	if (xfer->c_bcount == 0)
+		as->protocol_phase = as_completed;
+	else
+		as->protocol_phase = as_data;
 
 	/* Start the DMA channel if necessary */
 	if (xfer->c_flags & C_DMA) {
@@ -922,13 +927,19 @@ wdc_atapi_intr_command(chp, xfer, timeout)
 }
 
 
-int
+char *
 wdc_atapi_in_data_phase(xfer, len, ire)
 	struct wdc_xfer *xfer;
 	int len, ire;
 {
 	struct scsi_xfer *sc_xfer = xfer->cmd;
+	struct atapiscsi_softc *as = sc_xfer->sc_link->adapter_softc;
 	char *message;
+
+	if (as->protocol_phase != as_data) {
+		message = "unexpected data phase";
+		goto unexpected_state;
+	}
 
 	if (ire & WDCI_CMD) {
 		message = "unexpectedly in command phase";
@@ -960,11 +971,11 @@ wdc_atapi_in_data_phase(xfer, len, ire)
 	}
 
 
-	return (1);
+	return (0);
 
  unexpected_state:
 
-	return (0);
+	return (message);
 }
 
 int
@@ -976,14 +987,25 @@ wdc_atapi_intr_data(chp, xfer, timeout)
 	struct scsi_xfer *sc_xfer = xfer->cmd;
 	struct ata_drive_datas *drvp = &chp->ch_drive[xfer->drive];
 	int len, ire;
+	char *message;
 
 	len = (CHP_READ_REG(chp, wdr_cyl_hi) << 8) |
 	    CHP_READ_REG(chp, wdr_cyl_lo);
 	ire = CHP_READ_REG(chp, wdr_ireason);
 
-	if (!wdc_atapi_in_data_phase(xfer, len, ire))
-		return (CONTINUE_POLL);
-	
+	if ((message = wdc_atapi_in_data_phase(xfer, len, ire))) {
+		if (!timeout)
+			return (CONTINUE_POLL);	
+	}
+
+	if (timeout) {
+		printf ("wdc_atapi_intr_data: error: %s\n", message);
+		
+		xfer->next = wdc_atapi_reset;
+		return (GOTO_NEXT);
+	}
+
+
 	if (xfer->c_bcount >= len) {
 	  WDCDEBUG_PRINT(("wdc_atapi_intr: c_bcount %d len %d st 0x%x err 0x%x "
 			  "ire 0x%x\n", xfer->c_bcount,
@@ -1156,31 +1178,27 @@ wdc_atapi_intr_for_us(chp, xfer, timeout)
 
 	WDCDEBUG_PRINT(("ATAPI_INTR\n"), DEBUG_INTR);
 
-	/* If we missed an IRQ and were using DMA, flag it as a DMA error */
+	if (timeout) {
+		printf("%s:%d:%d: device timeout, c_bcount=%d, c_skip=%d\n",
+		    chp->wdc->sc_dev.dv_xname, chp->channel, xfer->drive,
+		    xfer->c_bcount, xfer->c_skip);
 
-	/* We should really wait_for_unbusy here too before 
-	   switching drives. */
+		if (xfer->c_flags & C_DMA)
+			drvp->n_dmaerrs++;
+		
+		sc_xfer->error = XS_TIMEOUT;
+		xfer->next = wdc_atapi_reset;
+		return (GOTO_NEXT);
+	}
+
+
 	CHP_WRITE_REG(chp, wdr_sdh, WDSD_IBM | (xfer->drive << 4));
 	DELAY (1);
 
 	wdc_atapi_update_status(chp);
 
-	if (chp->ch_status & WDCS_BSY) {
-		if (timeout) {
-			printf("%s:%d:%d: device timeout, c_bcount=%d, c_skip=%d\n",
-			    chp->wdc->sc_dev.dv_xname, chp->channel, xfer->drive,
-			    xfer->c_bcount, xfer->c_skip);
-
-			if (xfer->c_flags & C_DMA)
-				drvp->n_dmaerrs++;
-
-			sc_xfer->error = XS_TIMEOUT;
-			xfer->next = wdc_atapi_reset;
-			return (GOTO_NEXT);
-		} else {
-			return (CONTINUE_POLL);
-		}
-	}
+	if (chp->ch_status & WDCS_BSY)
+		return (CONTINUE_POLL);
 
 	if (as->protocol_phase != as_cmdout &&
 	    (xfer->c_flags & C_MEDIA_ACCESS) &&
@@ -1191,17 +1209,11 @@ wdc_atapi_intr_for_us(chp, xfer, timeout)
 
 	xfer->claim_irq = 1;
 
-	if ((xfer->c_flags & C_TIMEOU) && (xfer->c_flags & C_DMA))
-		drvp->n_dmaerrs++;
-
 	if (chp->ch_status & WDCS_DRQ) {
 		if (as->protocol_phase == as_cmdout)
 			return (wdc_atapi_intr_command(chp, xfer, timeout));
-	       
-		if (!(xfer->c_flags & C_DMA))
-			return (wdc_atapi_intr_data(chp, xfer, timeout));
-		else
-			return (CONTINUE_POLL);
+
+		return (wdc_atapi_intr_data(chp, xfer, timeout));
 	}
 	
 	return (wdc_atapi_intr_complete(chp, xfer, timeout));
@@ -1217,31 +1229,32 @@ wdc_atapi_ctrl(chp, xfer, timeout)
 	struct ata_drive_datas *drvp = &chp->ch_drive[xfer->drive];
 	char *errstring = NULL;
 
-	/* Ack interrupt done in wait_for_unbusy */
+	if (timeout) {
+		if (drvp->state != IDENTIFY)
+			goto timeout;
+		else {
+			printf ("wdc_atapi_ctrl: timeout during IDENTIFY."
+			    "Should not happen\n");
+
+			sc_xfer->error = XS_DRIVER_STUFFUP;
+			xfer->next = wdc_atapi_done;
+			return (GOTO_NEXT);
+		}
+	}
+
 	CHP_WRITE_REG(chp, wdr_sdh, WDSD_IBM | (xfer->drive << 4));
 	delay (1);
 
-	if (timeout) {
-		if (drvp->state == IDENTIFY_WAIT ||
-		    drvp->state == PIOMODE ||
-		    drvp->state == PIOMODE_WAIT ||
-		    drvp->state == DMAMODE_WAIT)
-			goto timeout;
-	} else {
-		wdc_atapi_update_status(chp);
+	wdc_atapi_update_status(chp);
 	
-		if (chp->ch_status & WDCS_BSY)
-			return (CONTINUE_POLL);
-	}
+	if (chp->ch_status & WDCS_BSY)
+		return (CONTINUE_POLL);
 
 	xfer->claim_irq = 1;
 
 	WDCDEBUG_PRINT(("wdc_atapi_ctrl %s:%d:%d state %d\n",
 	    chp->wdc->sc_dev.dv_xname, chp->channel, drvp->drive, drvp->state),
 	    DEBUG_INTR | DEBUG_FUNCS);
-
-	/* Don't timeout during configuration */
-	xfer->c_flags &= ~C_TIMEOU;
 
 	switch (drvp->state) {
 		/* You need to send an ATAPI drive an ATAPI-specific
