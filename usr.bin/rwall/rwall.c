@@ -1,4 +1,4 @@
-/*	$OpenBSD: rwall.c,v 1.5 1999/05/30 08:21:15 deraadt Exp $	*/
+/*	$OpenBSD: rwall.c,v 1.6 2001/11/05 13:11:07 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1993 Christopher G. Demetriou
@@ -42,7 +42,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)wall.c	5.14 (Berkeley) 3/2/91";*/
-static char rcsid[] = "$OpenBSD: rwall.c,v 1.5 1999/05/30 08:21:15 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: rwall.c,v 1.6 2001/11/05 13:11:07 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -124,7 +124,7 @@ makemsg(fname)
 	time_t now;
 	FILE *fp;
 	int fd;
-	char *whom, hostname[MAXHOSTNAMELEN], lbuf[100], tmpname[64];
+	char *whom, hostname[MAXHOSTNAMELEN], lbuf[100], tmpname[MAXPATHLEN];
 
 	snprintf(tmpname, sizeof(tmpname), "%s/wall.XXXXXX", _PATH_TMP);	
 	if ((fd = mkstemp(tmpname)) == -1 || !(fp = fdopen(fd, "r+"))) {

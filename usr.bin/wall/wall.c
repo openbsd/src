@@ -1,4 +1,4 @@
-/*	$OpenBSD: wall.c,v 1.16 2001/09/06 14:21:47 deraadt Exp $	*/
+/*	$OpenBSD: wall.c,v 1.17 2001/11/05 13:11:07 deraadt Exp $	*/
 /*	$NetBSD: wall.c,v 1.6 1994/11/17 07:17:58 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)wall.c	8.2 (Berkeley) 11/16/93";
 #endif
-static const char rcsid[] = "$OpenBSD: wall.c,v 1.16 2001/09/06 14:21:47 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: wall.c,v 1.17 2001/11/05 13:11:07 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -166,7 +166,7 @@ makemsg(char *fname)
 	time_t now, time();
 	FILE *fp;
 	int fd;
-	char *p, *whom, hostname[MAXHOSTNAMELEN], lbuf[100], tmpname[64];
+	char *p, *whom, hostname[MAXHOSTNAMELEN], lbuf[100], tmpname[MAXPATHLEN];
 	char tmpbuf[5];
 	char *ttynam;
 
