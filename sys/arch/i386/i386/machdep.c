@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.79 1998/02/18 01:47:42 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.80 1998/02/18 21:13:48 marc Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -1888,7 +1888,7 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 			return (sysctl_int(oldp, oldlenp, newp, newlen, 
 			    &allowaperture));
 #else
-		return (sysctl_rdint(oldp, oldlenp, newp, 0);
+		return (sysctl_rdint(oldp, oldlenp, newp, 0));
 #endif
 	default:
 		return EOPNOTSUPP;
