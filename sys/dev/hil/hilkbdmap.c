@@ -1,4 +1,4 @@
-/*	$OpenBSD: hilkbdmap.c,v 1.3 2003/02/26 20:22:54 miod Exp $	*/
+/*	$OpenBSD: hilkbdmap.c,v 1.4 2004/04/06 18:51:22 miod Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  * All rights reserved.
@@ -68,7 +68,7 @@ const keysym_t hilkbd_keydesc_us[] = {
     KC(27),			KS_x,
     KC(28),			KS_z,
 
-    KC(31),  KS_Cmd_Debugger,	KS_Escape,	KS_Delete,
+    KC(31), KS_Cmd_Debugger,	KS_Escape,	KS_Delete,
     KC(33), KS_Cmd_Screen9,	KS_f10,		/* also KS_KP_F2 */
     KC(35), KS_Cmd_Screen10,	KS_f11,		/* also KS_KP_F3 */
     KC(36),			KS_KP_Delete,	KS_KP_Decimal,
@@ -183,6 +183,52 @@ const keysym_t hilkbd_keydesc_sv[] = {
 };
 
 /*
+ * 0f. German
+ */
+
+const keysym_t hilkbd_keydesc_de[] = {
+    KC(2),   KS_Mode_switch,			KS_Multi_key,
+    KC(28),		KS_y,
+    KC(49),		KS_z,
+    KC(54),		KS_q,		KS_Q,		KS_at,
+    KC(56),		KS_7,		KS_slash,	KS_braceleft,
+    KC(57),		KS_6,		KS_ampersand,
+    KC(58),		KS_5,		KS_percent,
+    KC(59),		KS_4,		KS_dollar,
+    KC(60),		KS_3,		KS_paragraph,	KS_threesuperior,
+    KC(61),		KS_2,		KS_quotedbl,	KS_twosuperior,
+    KC(62),		KS_1,		KS_exclam,
+    KC(63),		KS_dead_circumflex,	KS_dead_abovering,
+    KC(88),		KS_8,		KS_parenleft,	KS_bracketleft,
+    KC(89),		KS_9,		KS_parenright,	KS_bracketright,
+    KC(90),		KS_0,		KS_equal,	KS_braceright,
+    KC(91),		KS_ssharp,	KS_question,	KS_backslash,
+    KC(92),		KS_dead_acute,	KS_dead_grave,
+    KC(99),		KS_udiaeresis,
+    KC(100),		KS_plus,	KS_asterisk,	KS_dead_tilde,
+#if 0
+    KC(101),		KS_sterling,	KS_dead_abovering,
+#endif
+    KC(107),		KS_odiaeresis,
+    KC(108),		KS_adiaeresis,
+    KC(112),		KS_m,		KS_M,		KS_mu,
+    KC(113),		KS_comma,	KS_semicolon,
+    KC(114),		KS_period,	KS_colon,
+    KC(115),		KS_minus,	KS_underscore,
+    KC(116),		KS_numbersign,	KS_apostrophe,
+    KC(118),		KS_less,	KS_greater, 	KS_bar,	KS_brokenbar,
+};
+
+const keysym_t hilkbd_keydesc_de_nodead[] = {
+    KC(63),		KS_asciicircum,	KS_degree,
+    KC(92),		KS_apostrophe,	KS_grave,
+    KC(100),		KS_plus,	KS_asterisk,	KS_asciitilde,
+#if 0
+    KC(101),		KS_sterling,	KS_degree,
+#endif
+};
+
+/*
  * 17. English
  */
 
@@ -242,6 +288,8 @@ const keysym_t hilkbd_keydesc_fr[] = {
 
 const struct wscons_keydesc hilkbd_keydesctab[] = {
 	KBD_MAP(KB_US,			0,	hilkbd_keydesc_us),
+	KBD_MAP(KB_DE,			KB_US,	hilkbd_keydesc_de),
+	KBD_MAP(KB_DE | KB_NODEAD,	KB_DE,	hilkbd_keydesc_de_nodead),
 	KBD_MAP(KB_FR,			KB_US,	hilkbd_keydesc_fr),
 	KBD_MAP(KB_UK,			KB_US,	hilkbd_keydesc_uk),
 	KBD_MAP(KB_SV,			KB_US,	hilkbd_keydesc_sv),
@@ -267,7 +315,7 @@ const kbd_t hilkbd_layouts[MAXHILKBDLAYOUT] = {
 	-1,	/* 0c Korean */
 	-1,	/* 0d Dutch */
 	KB_SV,	/* 0e Swedish */
-	-1,	/* 0f German */
+	KB_DE,	/* 0f German */
 	-1,	/* 10 Simplified Chinese */
 	-1,	/* 11 Traditional Chinese */
 	-1,	/* 12 Swiss French 2 */
