@@ -1,4 +1,4 @@
-/*	$OpenBSD: cl.c,v 1.18 2001/12/19 07:04:41 smurph Exp $ */
+/*	$OpenBSD: cl.c,v 1.19 2002/01/07 03:05:57 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Dale Rahn. All rights reserved.
@@ -1643,9 +1643,6 @@ cl_rxintr(arg)
 	int i;
 	u_char reoir;
 	u_char buffer[CL_FIFO_MAX +1];
-#ifdef DDB
-	int wantddb = 0;
-#endif
 	
 	rir = sc->cl_reg->cl_rir;
 	if((rir & 0x40) == 0x0) {
@@ -1678,10 +1675,6 @@ cl_rxintr(arg)
 		reoir = 0x08;
 	} else
 	if (risrl & 0x01) {
-#ifdef DDB
-		if (sc->sc_cl[channel].cl_consio)
-			wantddb = 1;
-#endif
 		cl_break(sc, channel);
 		reoir = 0x08;
 	}
@@ -1805,10 +1798,6 @@ log(LOG_WARNING, "cl_txintr: DMAMODE channel %x dmabsts %x risrl %x risrh %x\n",
 		reoir = 0x08;
 		sc->cl_reg->cl_reoir = reoir;
 	}
-#ifdef DDB
-	if (wantddb != 0 && db_console != 0)
-		Debugger();
-#endif
 	return 1;
 }
 
@@ -1853,7 +1842,7 @@ cl_break (sc, channel)
 	int channel;
 {
 #ifdef DDB
-	if (db_console != 0)
+	if (sc->sc_cl[channel].cl_consio && db_console != 0)
 		Debugger();
 #else
 	log(LOG_WARNING, "%s%d[%d]: break detected\n", cl_cd.cd_name, 0, channel);
