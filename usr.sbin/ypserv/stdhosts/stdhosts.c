@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdhosts.c,v 1.8 2002/07/19 02:38:40 deraadt Exp $ */
+/*	$OpenBSD: stdhosts.c,v 1.9 2003/02/11 01:08:27 maja Exp $ */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -32,7 +32,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: stdhosts.c,v 1.8 2002/07/19 02:38:40 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: stdhosts.c,v 1.9 2003/02/11 01:08:27 maja Exp $";
 #endif
 
 #include <sys/types.h>
@@ -127,8 +127,8 @@ main(int argc, char *argv[])
 		while (*p != '\0')	/* find end of string */
 			p++;
 
-		(void)inet_aton(k, &host_addr);
-		printf("%s %s\n", inet_ntoa(host_addr),v);
+		if (inet_aton(k, &host_addr))
+			printf("%s %s\n", inet_ntoa(host_addr),v);
 	}
 	return(0);
 }
