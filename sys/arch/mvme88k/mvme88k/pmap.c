@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.99 2003/12/28 14:10:58 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.100 2003/12/30 06:45:55 miod Exp $	*/
 /*
  * Copyright (c) 2001, 2002, 2003 Miodrag Vallat
  * Copyright (c) 1998-2001 Steve Murphree, Jr.
@@ -890,7 +890,7 @@ pmap_bootstrap(vaddr_t load_start, paddr_t *phys_start, paddr_t *phys_end,
 	 */
 	if (brdtyp == BRD_187 || brdtyp == BRD_197) {
 		*phys_start = vaddr;
-		etherlen = ETHERPAGES * NBPG;
+		etherlen = ETHERPAGES * PAGE_SIZE;
 		etherbuf = (void *)vaddr;
 
 		vaddr = pmap_map(vaddr, *phys_start, *phys_start + etherlen,
@@ -1005,7 +1005,8 @@ pmap_bootstrap(vaddr_t load_start, paddr_t *phys_start, paddr_t *phys_end,
 	 * Switch to using new page tables
 	 */
 
-	kernel_pmap->pm_apr = (atop(kmap) << PG_SHIFT) | CACHE_WT | APR_V;
+	kernel_pmap->pm_apr =
+	    (atop(kmap) << PG_SHIFT) | CACHE_GLOBAL | CACHE_WT | APR_V;
 #ifdef DEBUG
 	if ((pmap_con_dbg & (CD_BOOT | CD_FULL)) == (CD_BOOT | CD_FULL)) {
 		show_apr(kernel_pmap->pm_apr);
@@ -1098,27 +1099,25 @@ void
 pmap_zero_page(struct vm_page *pg)
 {
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
-	vaddr_t srcva;
+	vaddr_t va;
 	int spl;
-	int cpu;
-	pt_entry_t *srcpte;
+	int cpu = cpu_number();
+	pt_entry_t *pte;
 
 	CHECK_PAGE_ALIGN(pa, "pmap_zero_page");
 
-	cpu = cpu_number();
-	srcva = (vaddr_t)(phys_map_vaddr1 + (cpu << PAGE_SHIFT));
-	srcpte = pmap_pte(kernel_pmap, srcva);
+	va = (vaddr_t)(phys_map_vaddr1 + (cpu << PAGE_SHIFT));
+	pte = pmap_pte(kernel_pmap, va);
 
 	SPLVM(spl);
-	cmmu_flush_tlb(TRUE, srcva, PAGE_SIZE);
-	*srcpte = pa |
-	    m88k_protection(kernel_pmap, VM_PROT_READ | VM_PROT_WRITE) |
-	    CACHE_GLOBAL | PG_V;
+
+	cmmu_flush_tlb(TRUE, va, PAGE_SIZE);
+	*pte = m88k_protection(kernel_pmap, VM_PROT_READ | VM_PROT_WRITE) |
+	    CACHE_WT | CACHE_GLOBAL | PG_V | pa;
+
 	SPLX(spl);
 
-	bzero((void *)srcva, PAGE_SIZE);
-	/* force the data out */
-	cmmu_flush_remote_data_cache(cpu, pa, PAGE_SIZE);
+	bzero((void *)va, PAGE_SIZE);
 }
 
 /*
@@ -1168,7 +1167,8 @@ pmap_create(void)
 	if (pmap_extract(kernel_pmap, (vaddr_t)segdt,
 	    (paddr_t *)&stpa) == FALSE)
 		panic("pmap_create: pmap_extract failed!");
-	pmap->pm_apr = (atop(stpa) << PG_SHIFT) | CACHE_GLOBAL | APR_V;
+	pmap->pm_apr =
+	    (atop(stpa) << PG_SHIFT) | CACHE_WT | CACHE_GLOBAL | APR_V;
 
 #ifdef DEBUG
 	if (!PAGE_ALIGNED(stpa))
@@ -2427,39 +2427,30 @@ pmap_copy_page(struct vm_page *srcpg, struct vm_page *dstpg)
 	paddr_t dst = VM_PAGE_TO_PHYS(dstpg);
 	vaddr_t dstva, srcva;
 	int spl;
-	pt_entry_t template, *dstpte, *srcpte;
+	pt_entry_t *dstpte, *srcpte;
 	int cpu = cpu_number();
 
 	CHECK_PAGE_ALIGN(src, "pmap_copy_page - src");
 	CHECK_PAGE_ALIGN(dst, "pmap_copy_page - dst");
 
-	template = m88k_protection(kernel_pmap, VM_PROT_READ | VM_PROT_WRITE) |
-	    CACHE_GLOBAL | PG_V;
-
-	/*
-	 * Map source physical address.
-	 */
 	srcva = (vaddr_t)(phys_map_vaddr1 + (cpu << PAGE_SHIFT));
 	dstva = (vaddr_t)(phys_map_vaddr2 + (cpu << PAGE_SHIFT));
-
 	srcpte = pmap_pte(kernel_pmap, srcva);
 	dstpte = pmap_pte(kernel_pmap, dstva);
 
 	SPLVM(spl);
-	cmmu_flush_tlb(TRUE, srcva, PAGE_SIZE);
-	*srcpte = template | src;
 
-	/*
-	 * Map destination physical address.
-	 */
+	cmmu_flush_tlb(TRUE, srcva, PAGE_SIZE);
+	*srcpte = m88k_protection(kernel_pmap, VM_PROT_READ) |
+	    CACHE_WT | CACHE_GLOBAL | PG_V | src;
+
 	cmmu_flush_tlb(TRUE, dstva, PAGE_SIZE);
-	*dstpte = template | dst;
+	*dstpte = m88k_protection(kernel_pmap, VM_PROT_READ | VM_PROT_WRITE) |
+	    CACHE_WT | CACHE_GLOBAL | PG_V | dst;
+
 	SPLX(spl);
 
 	bcopy((void *)srcva, (void *)dstva, PAGE_SIZE);
-	/* flush source, dest out of cache? */
-	cmmu_flush_remote_data_cache(cpu, src, PAGE_SIZE);
-	cmmu_flush_remote_data_cache(cpu, dst, PAGE_SIZE);
 }
 
 /*
