@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.5 2004/02/10 07:28:36 jmc Exp $
+#	$OpenBSD: Makefile,v 1.6 2004/04/09 12:10:04 jmc Exp $
 
 # Missing or not installed:
 # 02.learn 03.shell 05.dc 08.mh 14.jove
@@ -11,9 +11,13 @@ SUBDIR=	01.begin 17.msmacros 18.msdiffs 19.memacros 20.meref
 
 Title.ps: ${FILES}
 	groff Title > ${.TARGET}
+Title.txt: ${FILES}
+	groff -Tascii Title > ${.TARGET}
 
 contents.ps: ${FILES}
 	groff -ms 00.contents > ${.TARGET}
+contents.txt: ${FILES}
+	groff -Tascii -ms 00.contents > ${.TARGET}
 
 beforeinstall:
 	install -c -o ${DOCOWN} -g ${DOCGRP} -m ${DOCMODE} ${FILES} \
