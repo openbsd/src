@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.44 2002/04/13 03:08:44 deraadt Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.45 2002/06/08 08:08:28 niklas Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.20 1996/05/03 19:41:56 christos Exp $	*/
 
 /*-
@@ -86,6 +86,10 @@ dev_t	bootdev = 0;		/* bootdevice, initialized in locore.s */
 void
 cpu_configure()
 {
+	/*
+	 * Note, on i386, configure is not running under splhigh unlike other
+	 * architectures.  This fact is used by the pcmcia irq line probing.
+	 */
 
 	startrtclock();
 
