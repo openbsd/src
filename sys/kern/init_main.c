@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.36 1999/02/26 04:44:43 art Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.37 1999/03/01 04:41:38 deraadt Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -105,9 +105,9 @@ extern void nfs_init __P((void));
 #endif
 
 char	copyright[] =
-"Copyright (c) 1982, 1986, 1989, 1991, 1993\n\tThe Regents of the University of California.  All rights reserved.\n";
-char	copyright_openbsd[] =
-"Copyright (c) 1995-1999 OpenBSD. All rights reserved.  http://www.OpenBSD.org\n\n";
+"Copyright (c) 1982, 1986, 1989, 1991, 1993\n"
+"\tThe Regents of the University of California.  All rights reserved.\n"
+"Copyright (c) 1995-1999 OpenBSD. All rights reserved.  http://www.OpenBSD.org\n";
 
 /* Components of the first process -- never freed. */
 struct	session session0;
@@ -200,7 +200,7 @@ main(framep)
 	config_init();		/* init autoconfiguration data structures */
 	consinit();
 	printf(copyright);
-	printf(copyright_openbsd);
+	printf("\n");
 
 #if defined(UVM)
 	uvm_init();
