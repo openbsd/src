@@ -1,4 +1,4 @@
-/*	$OpenBSD: com.c,v 1.31 1997/03/06 07:07:43 tholo Exp $	*/
+/*	$OpenBSD: com.c,v 1.32 1997/03/12 20:17:37 pefo Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*-
@@ -1433,23 +1433,27 @@ ohfudge:
  */
 #include <dev/cons.h>
 
+#if NCOM_PICA
+#include <arc/arc/arctype.h>
+	extern int cputype;
+#undef CONADDR
+	extern int CONADDR;
+#endif
+
 void
 comcnprobe(cp)
 	struct consdev *cp;
 {
 	/* XXX NEEDS TO BE FIXED XXX */
+#ifdef arc
+	bus_space_tag_t iot = &arc_bus;
+#else
 	bus_space_tag_t iot = 0;
+#endif
 	bus_space_handle_t ioh;
 	int found;
-#if NCOM_PICA
-	/* XXX */
-#include <arc/arc/arctype.h>
-	extern int cputype;
 
-	if(cputype != ACER_PICA_61)
-		return;
-#endif
-
+	comconsiot = iot;
 	if (bus_space_map(iot, CONADDR, COM_NPORTS, 0, &ioh)) {
 		cp->cn_pri = CN_DEAD;
 		return;
@@ -1480,10 +1484,6 @@ comcninit(cp)
 	struct consdev *cp;
 {
 
-#if 0
-	XXX NEEDS TO BE FIXED XXX
-	comconsiot = ???;
-#endif
 	if (bus_space_map(comconsiot, CONADDR, COM_NPORTS, 0, &comconsioh))
 		panic("comcninit: mapping failed");
 
