@@ -1,4 +1,4 @@
-.\"	$OpenBSD: afterboot.8,v 1.48 2000/07/18 01:27:41 deraadt Exp $
+.\"	$OpenBSD: afterboot.8,v 1.49 2000/10/06 18:18:39 aaron Exp $
 .Dd October 20, 1997
 .Dt AFTERBOOT 8
 \!\" Originally created by Marshall M. Midden -- 1997-10-20, m4@umn.edu
@@ -39,17 +39,20 @@ All significant and easily fixed problems will be reported at
 The web page will mention if a problem is security related.
 It is recommended that you check this page regularly.
 .Ss Login
-Login on the console as
+Login as
 .Dq Ic root .
-You will not be able to login over the network \(em only on the console.
-This behavior is controlled through the
-.Pa /etc/ttys
-file.
-See
-.Xr ttys 5
-for more information.
+You can do so on the console, or over the network using
+.Xr ssh 1 .
+If you wish to deny root logins over the network, edit the
+.Pa /etc/sshd.conf
+file and set
+.Cm PermitRootLogin
+to
+.Dq no
+(see
+.Xr sshd 8 ) .
 .Pp
-Upon successful login, you may see the message
+Upon successful login on the console, you may see the message
 .Dq Don't login as root, use su .
 For security reasons, it is bad practice to login as root during regular use
 and maintenance of the system.
