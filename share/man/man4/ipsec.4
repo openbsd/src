@@ -1,4 +1,4 @@
-.\" $OpenBSD: ipsec.4,v 1.48 2001/10/05 14:45:53 mpech Exp $
+.\" $OpenBSD: ipsec.4,v 1.49 2002/02/19 21:11:22 miod Exp $
 .\"
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -297,8 +297,8 @@ interfaces, but special care should be taken because of the interactions
 between NAT and the IPsec flow matching, especially on the packet output path.
 Inside the TCP/IP stack, packets go through the following stages:
 .Bd -literal -offset indent
-UL/R -> [X] -> PF/NAT(enc0) -> IPSec -> PF/NAT(IF) -> IF
-UL/R <-------- PF/NAT(enc0) <- IPSec -> PF/NAT(IF) <- IF
+UL/R -> [X] -> PF/NAT(enc0) -> IPsec -> PF/NAT(IF) -> IF
+UL/R <-------- PF/NAT(enc0) <- IPsec -> PF/NAT(IF) <- IF
 .Ed
 .Pp
 With
@@ -311,7 +311,7 @@ The
 Stage on the output path represents the point where the packet
 is matched against the IPsec flow database (SPD) to determine if and how
 the packet has to be IPsec-processed.
-If, at this point, it is determined that the packet should be IPSec-processed,
+If, at this point, it is determined that the packet should be IPsec-processed,
 it is processed by the PF/NAT code.
 Unless PF drops the packet, it will then be IPsec-processed, even if the
 packet has been modified by NAT.

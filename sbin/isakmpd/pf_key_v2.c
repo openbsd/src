@@ -1,4 +1,4 @@
-/*      $OpenBSD: pf_key_v2.c,v 1.95 2002/01/25 13:07:23 ho Exp $  */
+/*      $OpenBSD: pf_key_v2.c,v 1.96 2002/02/19 21:11:19 miod Exp $  */
 /*	$EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	*/
 
 /*
@@ -530,7 +530,7 @@ pf_key_v2_open (void)
   struct sadb_msg msg;
   struct pf_key_v2_msg *regmsg = 0, *ret = 0;
 
-  /* Open the socket we use to speak to IPSec. */
+  /* Open the socket we use to speak to IPsec. */
   pf_key_v2_socket = -1;
   fd = socket (PF_KEY, SOCK_RAW, PF_KEY_V2);
   if (fd == -1)
