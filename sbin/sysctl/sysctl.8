@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.8,v 1.58 2001/01/04 06:07:22 angelos Exp $
+.\"	$OpenBSD: sysctl.8,v 1.59 2001/01/04 07:50:33 angelos Exp $
 .\"	$NetBSD: sysctl.8,v 1.4 1995/09/30 07:12:49 thorpej Exp $
 .\"
 .\" Copyright (c) 1993
@@ -143,12 +143,7 @@ privilege can change the value.
 .It kern.sysvshm	integer	no
 .It kern.arandom	u_int	no
 .It kern.malloc.buckets	string	no
-.It kern.malloc.bucket.<sz>.calls	quad	no
-.It kern.malloc.bucket.<sz>.total_allocated	quad	no
-.It kern.malloc.bucket.<sz>.total_free	quad	no
-.It kern.malloc.bucket.<sz>.elements	quad	no
-.It kern.malloc.bucket.<sz>.high_watermark	quad	no
-.It kern.malloc.bucket.<sz>.could_free	quad	no
+.It kern.malloc.bucket.<sz>	string	no
 .It vm.loadavg	struct	no
 .It vm.psstrings	struct	no
 .It vm.swapencrypt.enable	integer	yes

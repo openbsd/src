@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.56 2001/01/04 06:07:22 angelos Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.57 2001/01/04 07:50:33 angelos Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.5 (Berkeley) 5/9/95";
 #else
-static char *rcsid = "$OpenBSD: sysctl.c,v 1.56 2001/01/04 06:07:22 angelos Exp $";
+static char *rcsid = "$OpenBSD: sysctl.c,v 1.57 2001/01/04 07:50:33 angelos Exp $";
 #endif
 #endif /* not lint */
 
@@ -170,6 +170,7 @@ int	Aflag, aflag, nflag, wflag;
 #define	BIOSDEV		0x00000080
 #define	MAJ2DEV		0x00000100
 #define	UNSIGNED	0x00000200
+#define KMEMBUCKETS     0x00000400
 
 /* prototypes */
 void debuginit __P((void));
@@ -336,6 +337,8 @@ parse(string, flags)
 			len = sysctl_malloc(string, &bufp, mib, flags, &type);
 			if (len < 0)
 				return;
+			if (mib[2] == KERN_MALLOC_BUCKET)
+			        special |= KMEMBUCKETS;
 			newsize = 0;
 			break;
 		case KERN_VNODE:
@@ -586,6 +589,13 @@ parse(string, flags)
 			warn("%s", string);
 			return;
 		}
+	}
+	if (special & KMEMBUCKETS) {
+	        struct kmembuckets *kb = (struct kmembuckets *)buf;
+		if (!nflag)
+		        (void)printf("%s = ", string);
+		(void)printf("calls = %qu, total_allocated = %qu, total_free = %qu, elements = %qu, high_watermark = %qu, could_free = %qu\n", kb->kb_calls, kb->kb_total, kb->kb_totalfree, kb->kb_elmpercl, kb->kb_highwat, kb->kb_couldfree);
+		return;
 	}
 	if (special & CLOCK) {
 		struct clockinfo *clkp = (struct clockinfo *)buf;
@@ -1262,25 +1272,16 @@ sysctl_malloc(string, bufpp, mib, flags, typep)
 			for (i = 1;
 			     (lp.list[i].ctl_name = strsep(&buf, ",")) != NULL;
 			     i++) {
-			        lp.list[i].ctl_type = CTLTYPE_QUAD;
+			        lp.list[i].ctl_type = CTLTYPE_STRUCT;
 			}
 			lp.list[i].ctl_name = buf;
-			lp.list[i].ctl_type = CTLTYPE_QUAD;
+			lp.list[i].ctl_type = CTLTYPE_STRUCT;
 			listall(string, &lp);
 			free(lp.list);
 			return(-1);
 		}
 		mib[3] = atoi(name);
-		if (*bufpp == NULL) {
-		        listall(string, &kernbucketlist);
-			return(-1);
-		}
-		if ((indx = findname(string, "fifth", bufpp,
-				     &kernbucketlist)) == -1)
-		        return (-1);
-		mib[4] = indx;
-		*typep = CTLTYPE_QUAD;
-		return(5);
+		return(4);
 	} else {
 	        *typep = CTLTYPE_STRING;
 	        return(3);
