@@ -1,4 +1,4 @@
-.\"	$OpenBSD: adduser.8,v 1.23 2001/07/20 19:09:46 mpech Exp $
+.\"	$OpenBSD: adduser.8,v 1.24 2001/09/07 20:34:11 millert Exp $
 .\"
 .\" Copyright (c) 1995-1996 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
 .\" All rights reserved.
@@ -46,7 +46,7 @@
 .Op Fl dotdir Ar directory
 .Oo
 .Fl e
-.Ar method No \&| Fl encrypt_method Ar method
+.Ar method No \&| Fl encryption Ar method
 .Oc
 .Op Fl group Ar login_group
 .Op Fl h | help | ?
@@ -55,7 +55,6 @@
 .Op Fl noconfig
 .Op Fl shell Ar shell
 .Op Fl s | silent | q | quiet
-.Op Fl uid Ar uid
 .Op Fl uid_start Ar uid
 .Op Fl uid_end Ar uid
 .Op Fl v | verbose
@@ -102,7 +101,7 @@ their owner.
 .\" don't allow group or world to write files and allow only owner
 .\" to read/execute/write .rhost, .Xauthority, .kermrc, .netrc, Mail,
 .\" prv, iscreen, term.
-.It Fl encrypt Ns No , Fl e Ar method
+.It Fl encryption Ns No , Fl e Ar method
 Encrypt local passwords using
 .Ar method
 of encryption as described in
@@ -137,10 +136,14 @@ Specify the default shell for new users.
 .Fl quiet Ns No , Fl q
 .Xc
 Causes the program to print fewer warnings, questions, and bug reports.
-.It Fl uid Ar uid
+.It Fl uid_start Ar uid
 Use UIDs from
 .Ar uid
 up when automatically generating UIDs.
+.It Fl uid_end Ar uid
+Do not use UIDs higher than 
+.Ar uid
+when generating UIDs.
 .It Fl unencrypted
 Causes the program to assume that the password given in batch mode is
 unencrypted.
@@ -348,6 +351,8 @@ user database
 group database
 .It Pa /etc/shells
 shell database
+.It Pa /etc/ptmp
+lock file for the passwd database
 .It Pa /etc/adduser.conf
 configuration file for
 .Nm adduser
