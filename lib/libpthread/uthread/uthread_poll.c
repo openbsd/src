@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_poll.c,v 1.3 1999/11/25 07:01:41 d Exp $	*/
+/*	$OpenBSD: uthread_poll.c,v 1.4 2000/01/06 08:28:53 d Exp $	*/
 /*
  * Copyright (c) 1999 Daniel Eischen <eischen@vigrid.com>
  * All rights reserved.
@@ -49,7 +49,7 @@ poll(struct pollfd fds[], int nfds, int timeout)
 {
 	struct timespec	ts;
 	int		numfds = nfds;
-	int             i, ret = 0, found = 0;
+	int             i, ret = 0;
 	struct pthread_poll_data data;
 
 	if (numfds > _thread_dtablesize) {
