@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_conv.c,v 1.10 2003/07/29 19:26:38 mickey Exp $	*/
+/*	$OpenBSD: msdosfs_conv.c,v 1.11 2004/03/31 18:48:15 millert Exp $	*/
 /*	$NetBSD: msdosfs_conv.c,v 1.24 1997/10/17 11:23:54 ws Exp $	*/
 
 /*-
@@ -654,6 +654,9 @@ winChkName(un, unlen, wep, chksum)
 	if ((unlen -= i) <= 0)
 		return -1;
 	un += i;
+
+	if ((wep->weCnt&WIN_LAST) && unlen > WIN_CHARS)
+		return -1;
 	
 	/*
 	 * Compare the name parts
