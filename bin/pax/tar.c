@@ -1,4 +1,4 @@
-/*	$OpenBSD: tar.c,v 1.15 2000/01/21 05:11:36 tholo Exp $	*/
+/*	$OpenBSD: tar.c,v 1.16 2001/01/04 20:31:25 todd Exp $	*/
 /*	$NetBSD: tar.c,v 1.5 1995/03/21 09:07:49 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)tar.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: tar.c,v 1.15 2000/01/21 05:11:36 tholo Exp $";
+static char rcsid[] = "$OpenBSD: tar.c,v 1.16 2001/01/04 20:31:25 todd Exp $";
 #endif
 #endif /* not lint */
 
@@ -312,7 +312,7 @@ tar_chksm(blk, len)
 {
 	register char *stop;
 	register char *pt;
-	u_long chksm = BLNKSUM;	/* inital value is checksum field sum */
+	u_long chksm = BLNKSUM;	/* initial value is checksum field sum */
 
 	/*
 	 * add the part of the block before the checksum field

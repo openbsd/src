@@ -5,7 +5,7 @@
 # options=[enc,auth] (default options=enc,auth)
 # user=<username> (use this users secrets)
 # tsrc,tdst=ipaddr/ipmask (for tunnel accepted)
-# Seperate by newlines
+# Separate by newlines
 # Example:
 #dst=134.100.106.2 port=468 options=enc,auth user=provos
 #tsrc=134.100.106.0/255.255.255.255

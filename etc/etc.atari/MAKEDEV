@@ -212,7 +212,7 @@ fd*)
 	umask 77
 	;;
 
-rd0)	# Ramdisk, only usefull for boot-floppy
+rd0)	# Ramdisk, only useful for boot-floppy
 	umask 2; rm -f rd0
 	mknod rd0 b 1 0
 	umask 77

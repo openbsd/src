@@ -1,4 +1,4 @@
-/*	$OpenBSD: monop.c,v 1.2 1998/09/20 23:36:52 pjanzen Exp $	*/
+/*	$OpenBSD: monop.c,v 1.3 2001/01/04 20:41:31 todd Exp $	*/
 /*	$NetBSD: monop.c,v 1.3 1995/03/23 08:34:52 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)monop.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: monop.c,v 1.2 1998/09/20 23:36:52 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: monop.c,v 1.3 2001/01/04 20:41:31 todd Exp $";
 #endif
 #endif /* not lint */
 
@@ -179,7 +179,7 @@ again:
 	printf("%s (%d) goes first\n", cur_p->name, max_pl + 1);
 }
 /*
- *	This routine initalizes the monopoly structures.
+ *	This routine initializes the monopoly structures.
  */
 static void
 init_monops()
