@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mailer.conf.5,v 1.6 2001/07/20 19:09:47 mpech Exp $
+.\"	$OpenBSD: mailer.conf.5,v 1.7 2002/09/18 07:33:48 deraadt Exp $
 .\"	$NetBSD: mailer.conf.5,v 1.1 1999/03/25 16:40:17 is Exp $
 .\"
 .\" Copyright (c) 1998
@@ -49,7 +49,7 @@ which is typically a symbolic link to
 (On a typical system,
 .Xr newaliases 8
 and
-.Xr mailq 1
+.Xr mailq 8
 would be set up this way.)
 The second member of each pair is the name of the program to
 actually execute when the first name is invoked.
@@ -89,7 +89,7 @@ newaliases	/usr/local/sbin/sendmail
 .El
 .Sh SEE ALSO
 .Xr mail 1 ,
-.Xr mailq 1 ,
+.Xr mailq 8 ,
 .Xr mailwrapper 8 ,
 .Xr newaliases 8 ,
 .Xr sendmail 8
@@ -99,5 +99,5 @@ Perry E. Metzger <perry@piermont.com>
 The entire reason this program exists is a crock. Instead, a command
 for how to submit mail should be standardized, and all the "behave
 differently if invoked with a different name" behavior of things like
-.Xr mailq 1
+.Xr mailq 8
 should go away.

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rm.1,v 1.18 2002/02/11 18:43:51 mpech Exp $
+.\"	$OpenBSD: rm.1,v 1.19 2002/09/18 07:33:47 deraadt Exp $
 .\"	$NetBSD: rm.1,v 1.8 1995/07/25 19:37:30 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994
@@ -110,7 +110,7 @@ Equivalent to
 .It Fl W
 Attempts to undelete the named files.
 Currently, this option can only be used to recover
-files covered by whiteouts.
+files covered by whiteouts on union mounts.
 .El
 .Pp
 The
