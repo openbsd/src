@@ -1,5 +1,5 @@
-/*	$OpenBSD: vm86.h,v 1.4 1996/04/21 22:16:48 deraadt Exp $	*/
-/*	$NetBSD: vm86.h,v 1.5 1996/04/12 05:57:45 mycroft Exp $	*/
+/*	$OpenBSD: vm86.h,v 1.5 1996/05/02 13:44:03 deraadt Exp $	*/
+/*	$NetBSD: vm86.h,v 1.6 1996/04/18 10:04:32 mycroft Exp $	*/
 
 #define	VM86_USE_VIF
 
@@ -49,8 +49,8 @@
 #define		VM86_SIGNAL	2
 #define		VM86_UNKNOWN	3
 
-#define	VM86_SETDIRECT	(~PSL_USERSTATIC)
-#define	VM86_GETDIRECT	(VM86_SETDIRECT|PSL_MBO|PSL_MBZ)
+#define	VM86_REALFLAGS	(~PSL_USERSTATIC)
+#define	VM86_VIRTFLAGS	(PSL_USERSTATIC & ~(PSL_MBO | PSL_MBZ))
 
 #define	VM86_SETDIRECT	(~PSL_USERSTATIC)
 #define	VM86_GETDIRECT	(VM86_SETDIRECT|PSL_MBO|PSL_MBZ)
@@ -128,8 +128,8 @@ set_vflags(p, flags)
 	struct pcb *pcb = &p->p_addr->u_pcb;
 
 	flags &= ~pcb->vm86_flagmask;
-	SETFLAGS(pcb->vm86_eflags, flags, ~VM86_GETDIRECT);
-	SETFLAGS(tf->tf_eflags, flags, VM86_SETDIRECT);
+	SETFLAGS(pcb->vm86_eflags, flags, VM86_VIRTFLAGS);
+	SETFLAGS(tf->tf_eflags, flags, VM86_REALFLAGS);
 #ifndef VM86_USE_VIF
 	if ((pcb->vm86_eflags & (PSL_I|PSL_VIP)) == (PSL_I|PSL_VIP))
 #else
@@ -144,10 +144,10 @@ get_vflags(p)
 {
 	struct trapframe *tf = p->p_md.md_regs;
 	struct pcb *pcb = &p->p_addr->u_pcb;
-	int flags = 0;
+	int flags = PSL_MBO;
 
-	SETFLAGS(flags, pcb->vm86_eflags, ~VM86_GETDIRECT);
-	SETFLAGS(flags, tf->tf_eflags, VM86_GETDIRECT);
+	SETFLAGS(flags, pcb->vm86_eflags, VM86_VIRTFLAGS);
+	SETFLAGS(flags, tf->tf_eflags, VM86_REALFLAGS);
 	return (flags);
 }
 
@@ -160,8 +160,8 @@ set_vflags_short(p, flags)
 	struct pcb *pcb = &p->p_addr->u_pcb;
 
 	flags &= ~pcb->vm86_flagmask;
-	SETFLAGS(pcb->vm86_eflags, flags, ~VM86_GETDIRECT & 0xffff);
-	SETFLAGS(tf->tf_eflags, flags, VM86_SETDIRECT & 0xffff);
+	SETFLAGS(pcb->vm86_eflags, flags, VM86_VIRTFLAGS & 0xffff);
+	SETFLAGS(tf->tf_eflags, flags, VM86_REALFLAGS & 0xffff);
 #ifndef VM86_USE_VIF
 	if ((pcb->vm86_eflags & (PSL_I|PSL_VIP)) == (PSL_I|PSL_VIP))
 		vm86_return(p, VM86_STI);
@@ -174,10 +174,10 @@ get_vflags_short(p)
 {
 	struct trapframe *tf = p->p_md.md_regs;
 	struct pcb *pcb = &p->p_addr->u_pcb;
-	int flags = 0;
+	int flags = PSL_MBO;
 
-	SETFLAGS(flags, pcb->vm86_eflags, ~VM86_GETDIRECT & 0xffff);
-	SETFLAGS(flags, tf->tf_eflags, VM86_GETDIRECT & 0xffff);
+	SETFLAGS(flags, pcb->vm86_eflags, VM86_VIRTFLAGS & 0xffff);
+	SETFLAGS(flags, tf->tf_eflags, VM86_REALFLAGS & 0xffff);
 	return (flags);
 }
 #else
