@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.53 1998/03/12 08:13:52 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.54 1998/03/12 08:59:45 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -1533,7 +1533,7 @@ __install_sets_1
 		# If that's the case, bypass the menu the first time.
 		if [ X"$_yup" = X"FALSE" ]; then
 			echo -n	"Install from (f)tp, h(ttp), (t)ape, (C)D-ROM,"
-			echo -n "(N)FS or local (d)isk? "
+			echo -n " (N)FS or local (d)isk? "
 			getresp ""
 			case "$resp" in
 			d*|D*)
