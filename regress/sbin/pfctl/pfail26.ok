@@ -2,4 +2,3 @@ stdin:3: anchor name 'too-long-anchor1' too long
 stdin:4: anchor name 'too-long-anchor2' too long
 stdin:5: anchor name 'too-long-anchor3' too long
 stdin:6: anchor name 'too-long-anchor4' too long
-pfctl: Syntax error in config file: pf rules not loaded

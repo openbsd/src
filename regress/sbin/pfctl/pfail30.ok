@@ -14,4 +14,3 @@ stdin:15: binat ip versions must match
 stdin:16: no translation address with matching address family found.
 stdin:17: binat ip versions must match
 stdin:18: binat ip versions must match
-pfctl: Syntax error in config file: pf rules not loaded

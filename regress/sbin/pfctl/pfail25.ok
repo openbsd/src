@@ -9,4 +9,3 @@ stdin:8: fragcache cannot be respecified
 stdin:9: fragcache cannot be respecified
 stdin:10: fragcache cannot be respecified
 stdin:11: random-id cannot be respecified
-pfctl: Syntax error in config file: pf rules not loaded

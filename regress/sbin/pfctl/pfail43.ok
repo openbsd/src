@@ -6,4 +6,3 @@ no IP address found for 1.1.1.1.1
 stdin:6: could not parse host specification
 no IP address found for 1.1.1.1.1
 stdin:7: could not parse host specification
-pfctl: Syntax error in config file: pf rules not loaded

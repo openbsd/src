@@ -7,6 +7,5 @@ stdin:4: rule expands to no valid combination
 stdin:5: port only applies to tcp/udp
 stdin:5: skipping rule due to errors
 stdin:5: rule expands to no valid combination
-pfctl: Syntax error in config file: pf rules not loaded
 pass in all
 pass in all
