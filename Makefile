@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.83 2002/02/22 23:31:11 art Exp $
+#	$OpenBSD: Makefile,v 1.84 2002/05/15 15:55:01 mickey Exp $
 
 #
 # For more information on building in tricky environments, please see
@@ -184,7 +184,7 @@ cross-binutils-old: cross-gas cross-ar cross-ld cross-strip cross-size \
 	cross-ranlib cross-nm
 
 cross-binutils-links: cross-dirs
-	for cmd in ar as ld nm ranlib size strip; do \
+	for cmd in ar as ld nm ranlib objcopy objdump size strings strip; do \
 	    if [ ! -e ${CROSSDIR}/usr/bin/$$cmd -a -e ${CROSSDIR}/usr/bin/`cat ${CROSSDIR}/TARGET_CANON`-$$cmd ]; then \
 		ln -sf ${CROSSDIR}/usr/bin/`cat ${CROSSDIR}/TARGET_CANON`-$$cmd \
 		${CROSSDIR}/usr/bin/$$cmd ;\
