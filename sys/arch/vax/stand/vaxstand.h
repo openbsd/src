@@ -1,4 +1,4 @@
-/*	$OpenBSD: vaxstand.h,v 1.5 1998/02/03 11:48:30 maja Exp $ */
+/*	$OpenBSD: vaxstand.h,v 1.6 1998/05/11 07:35:24 niklas Exp $ */
 /*	$NetBSD: vaxstand.h,v 1.6 1997/03/15 13:04:31 ragge Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -49,10 +49,5 @@ extern int cpunumber;
          (int(*)(struct open_file *, ...))open, \
          (int(*)(struct open_file *))close, \
          (int(*)(struct open_file *,u_long, void *))ioctl}
-
-/*
- * Easy-to-use definitions
- */
-#define	min(x,y) (x < y ? x : y)
 
 char *index();
