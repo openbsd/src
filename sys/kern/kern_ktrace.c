@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_ktrace.c,v 1.13 2000/04/06 13:25:26 art Exp $	*/
+/*	$OpenBSD: kern_ktrace.c,v 1.14 2000/04/18 16:22:16 art Exp $	*/
 /*	$NetBSD: kern_ktrace.c,v 1.23 1996/02/09 18:59:36 christos Exp $	*/
 
 /*
@@ -50,6 +50,8 @@
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
+
+#include <vm/vm.h>
 
 struct ktr_header *ktrgetheader __P((struct proc *, int));
 int ktrops __P((struct proc *, struct proc *, int, int, struct vnode *));
@@ -179,33 +181,38 @@ ktrgenio(vp, fd, rw, iov, len, error)
 	caddr_t cp;
 	int resid = len, cnt;
 	struct proc *p = curproc;	/* XXX */
-	
+	int buflen;
+
 	if (error)
 		return;
+
 	p->p_traceflag |= KTRFAC_ACTIVE;
+
+	buflen = min(PAGE_SIZE, len + sizeof(struct ktr_genio));
+
 	kth = ktrgetheader(p, KTR_GENIO);
-	MALLOC(ktp, struct ktr_genio *, sizeof(struct ktr_genio) + len,
-		M_TEMP, M_WAITOK);
+	MALLOC(ktp, struct ktr_genio *, buflen, M_TEMP, M_WAITOK);
 	ktp->ktr_fd = fd;
 	ktp->ktr_rw = rw;
-	cp = (caddr_t)((char *)ktp + sizeof (struct ktr_genio));
-	while (resid > 0) {
-		if ((cnt = iov->iov_len) > resid)
-			cnt = resid;
-		if (copyin(iov->iov_base, cp, (unsigned)cnt))
-			goto done;
-		cp += cnt;
-		resid -= cnt;
-		iov++;
-	}
 	kth->ktr_buf = (caddr_t)ktp;
-	kth->ktr_len = sizeof (struct ktr_genio) + len;
+	kth->ktr_len = buflen;
 
-	ktrwrite(vp, kth);
+	cp = (caddr_t)((char *)ktp + sizeof (struct ktr_genio));
+
+	buflen -= sizeof(struct ktr_genio);
+	while (resid > 0) {
+		cnt = min(iov->iov_len, buflen);
+		if (copyin(iov->iov_base, cp, cnt))
+			goto done;
+		ktrwrite(vp, kth);
+		if ((iov->iov_len -= cnt) <= 0)
+			iov++;
+	}
 done:
-	FREE(kth, M_TEMP);
 	FREE(ktp, M_TEMP);
+	FREE(kth, M_TEMP);
 	p->p_traceflag &= ~KTRFAC_ACTIVE;
+	
 }
 
 void
