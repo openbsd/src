@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.18 2002/02/18 18:51:11 jason Exp $
+dnl	$OpenBSD: hardware,v 1.19 2002/03/14 01:50:04 jason Exp $
 OpenBSD/MACHINE OSREV runs on the following classes of machines:
 	- SBUS based workstations:
 		Ultra 1
@@ -61,7 +61,8 @@ Supported devices {:-include-:}:
 		onboard 16550 compatibles (com)
 		SBus MAGMA cards including: 4Sp, 8Sp, 12Sp, 16Sp,
 			LC2+1Sp, 2+1Sp, 4+1Sp, 8+2Sp, and 2+1HS Sp
-		SBus Serial Parallel Interface (SUNW,spif)
+		SBus Serial Parallel Interface (spif)
+		Aurora SBus sio2 Serial Interface (asio)
 
 	Sound devices:
 		onboard SBus CS4321 (audiocs)
