@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.25 1997/08/31 07:41:51 downsj Exp $	*/
+/*	$OpenBSD: cd.c,v 1.26 1997/09/11 11:20:43 deraadt Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -115,7 +115,6 @@ void	cddone __P((struct scsi_xfer *));
 u_long	cd_size __P((struct cd_softc *, int));
 int	cd_get_mode __P((struct cd_softc *, struct cd_mode_data *, int));
 int	cd_set_mode __P((struct cd_softc *, struct cd_mode_data *));
-int	cd_play __P((struct cd_softc *, int, int ));
 int	cd_play_big __P((struct cd_softc *, int, int ));
 int	cd_play_tracks __P((struct cd_softc *, int, int, int, int ));
 int	cd_play_msf __P((struct cd_softc *, int, int, int, int, int, int ));
@@ -1173,24 +1172,6 @@ cd_set_mode(cd, data)
 	return scsi_scsi_cmd(cd->sc_link, (struct scsi_generic *)&scsi_cmd,
 	    sizeof(scsi_cmd), (u_char *)data, sizeof(*data), CDRETRIES, 20000,
 	    NULL, SCSI_DATA_OUT);
-}
-
-/*
- * Get scsi driver to send a "start playing" command
- */
-int
-cd_play(cd, blkno, nblks)
-	struct cd_softc *cd;
-	int blkno, nblks;
-{
-	struct scsi_play scsi_cmd;
-
-	bzero(&scsi_cmd, sizeof(scsi_cmd));
-	scsi_cmd.opcode = PLAY;
-	_lto4b(blkno, scsi_cmd.blk_addr);
-	_lto2b(nblks, scsi_cmd.xfer_len);
-	return scsi_scsi_cmd(cd->sc_link, (struct scsi_generic *)&scsi_cmd,
-	    sizeof(scsi_cmd), 0, 0, CDRETRIES, 200000, NULL, 0);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: acd.c,v 1.27 1997/08/08 21:47:00 niklas Exp $	*/
+/*	$OpenBSD: acd.c,v 1.28 1997/09/11 11:20:45 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996 Manuel Bouyer.  All rights reserved.
@@ -139,7 +139,6 @@ int	acd_get_mode __P((struct acd_softc *, struct atapi_mode_data *, int,
 	    int, int));
 int	acd_set_mode __P((struct acd_softc *, struct atapi_mode_data *, int));
 int	acd_setchan __P((struct acd_softc *, u_char, u_char, u_char, u_char));
-int	acd_play __P((struct acd_softc *, int, int));
 int	acd_play_big __P((struct acd_softc *, int, int));
 int	acd_load_toc __P((struct acd_softc *, struct cd_toc *));
 int	acd_play_tracks __P((struct acd_softc *, int, int, int, int));
@@ -1224,25 +1223,6 @@ acd_setchan(acd, c0, c1, c2, c3)
 	data.page_audio.port[3].channels = c3;
 
 	return acd_set_mode(acd, &data, AUDIOPAGESIZE);
-}
-
-/*
- * Get atapi driver to send a "start playing" command
- */
-int
-acd_play(acd, blkno, nblks)
-	struct acd_softc *acd;
-	int blkno, nblks;
-{
-	struct atapi_play atapi_cmd;
-
-	bzero(&atapi_cmd, sizeof(atapi_cmd));
-	atapi_cmd.opcode = ATAPI_PLAY_AUDIO;
-	_lto4b(blkno, atapi_cmd.lba);
-	_lto2b(nblks, atapi_cmd.length);
-
-	return atapi_exec_cmd(acd->ad_link, &atapi_cmd, sizeof(atapi_cmd),
-	    NULL, 0, 0, 0);
 }
 
 /*
