@@ -1,4 +1,4 @@
-/*	$OpenBSD: cac.c,v 1.1 2000/12/17 21:35:06 mickey Exp $	*/
+/*	$OpenBSD: cac.c,v 1.2 2000/12/17 23:07:16 mickey Exp $	*/
 /*	$NetBSD: cac.c,v 1.14 2000/11/08 19:20:35 ad Exp $	*/
 
 /*
@@ -593,6 +593,7 @@ cac_scsi_cmd(xs)
 	}
 
 	xs->error = XS_NOERROR;
+	dinfo = &sc->sc_dinfos[target];
 
 	switch (xs->cmd->opcode) {
 	case TEST_UNIT_READY:
@@ -618,7 +619,6 @@ cac_scsi_cmd(xs)
 			scsi_done(xs);
 			return (COMPLETE);
 		}
-		dinfo = &sc->sc_dinfos[target];
 		bzero(&inq, sizeof inq);
 		inq.device = T_DIRECT;
 		inq.dev_qual2 = 0;
@@ -644,7 +644,6 @@ cac_scsi_cmd(xs)
 			scsi_done(xs);
 			return (COMPLETE);
 		}
-		dinfo = &sc->sc_dinfos[target];
 		bzero(&mpd, sizeof mpd);
 		switch (((struct scsi_mode_sense *)xs->cmd)->page) {
 		case 4:
@@ -681,7 +680,6 @@ cac_scsi_cmd(xs)
 			scsi_done(xs);
 			return (COMPLETE);
 		}
-		dinfo = &sc->sc_dinfos[target];
 		bzero(&rcd, sizeof rcd);
 		_lto4b( CAC_GET2(dinfo->ncylinders) * CAC_GET1(dinfo->nheads) *
 		    CAC_GET1(dinfo->nsectors), rcd.addr);
