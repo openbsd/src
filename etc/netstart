@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.64 2000/03/10 13:21:51 todd Exp $
+#	$OpenBSD: netstart,v 1.65 2000/03/12 04:18:47 itojun Exp $
 
 # Returns true if $1 contains only alphanumerics
 isalphanumeric() {
@@ -53,6 +53,11 @@ if ifconfig lo0 inet6 >/dev/null 2>&1; then
 	# disallow "internal" addresses to appear on the wire.
 	route add -inet6 ::ffff:0.0.0.0 -prefixlen 96 ::1 -reject
 	route add -inet6 ::0.0.0.0 -prefixlen 96 ::1 -reject
+	# disallow packets to malicious 6to4 prefix
+	route add -inet6 2002:e000:: -prefixlen 20 ::1 -reject
+	route add -inet6 2002:7f00:: -prefixlen 24 ::1 -reject
+	route add -inet6 2002:0000:0000:: -prefixlen 48 ::1 -reject
+	route add -inet6 2002:ffff:ffff:: -prefixlen 48 ::1 -reject
 
 	rtsolif=""
 else
