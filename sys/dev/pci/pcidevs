@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.162 1999/07/18 21:07:52 csapuntz Exp $
+$OpenBSD: pcidevs,v 1.163 1999/07/20 04:19:04 deraadt Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -97,7 +97,7 @@ vendor COMPCOMM		0x1035	Comp. & Comm. Research Lab
 vendor FUTUREDOMAIN	0x1036	Future Domain
 vendor HITACHIMICRO	0x1037	Hitach Microsystems
 vendor AMP		0x1038	AMP
-vendor SIS		0x1039	Silicon Integrated System
+vendor SIS		0x1039	SIS
 vendor SEIKOEPSON	0x103a	Seiko Epson
 vendor TATUNGAMERICA	0x103b	Tatung Co. of America
 vendor HP		0x103c	Hewlett-Packard
@@ -1170,7 +1170,7 @@ product SIS 5581		0x5581	5581
 product SIS 5582		0x5582	5582
 product SIS 5591		0x5591	5591 Host-PCI
 product SIS 5596		0x5596	5596
-product SIS 5597_IDE		0x5597  5597/5598 IDE controller
+product SIS 5597		0x5597  5597
 product SIS 5598		0x5598	5598
 product SIS 6204		0x6204	6204
 product SIS 6205		0x6205	6205
