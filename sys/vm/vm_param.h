@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_param.h,v 1.12 1997/11/13 18:35:39 deraadt Exp $	*/
+/*	$OpenBSD: vm_param.h,v 1.13 1997/12/12 08:46:00 deraadt Exp $	*/
 /*	$NetBSD: vm_param.h,v 1.12 1995/03/26 20:39:16 jtc Exp $	*/
 
 /* 
@@ -78,8 +78,12 @@
  * This belongs in types.h, but breaks too many existing programs.
  */
 typedef	int	boolean_t;
+#ifndef TRUE
 #define	TRUE	1
+#endif
+#ifndef FALSE
 #define	FALSE	0
+#endif
 
 /*
  *	The machine independent pages are refered to as PAGES.  A page
