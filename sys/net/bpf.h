@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.h,v 1.25 2004/02/06 22:38:58 tedu Exp $	*/
+/*	$OpenBSD: bpf.h,v 1.26 2004/04/26 08:10:10 otto Exp $	*/
 /*	$NetBSD: bpf.h,v 1.15 1996/12/13 07:57:33 mikel Exp $	*/
 
 /*
@@ -235,7 +235,7 @@ struct bpf_insn {
 	u_int16_t code;
 	u_char 	  jt;
 	u_char 	  jf;
-	int32_t	  k;
+	u_int32_t k;
 };
 
 /*
