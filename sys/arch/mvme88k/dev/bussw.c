@@ -1,4 +1,4 @@
-/*	$OpenBSD: busswitch.c,v 1.6 2001/12/16 23:49:46 miod Exp $ */
+/*	$OpenBSD: bussw.c,v 1.3 2001/12/19 04:02:25 smurph Exp $ */
 
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
@@ -45,42 +45,45 @@
 #include <machine/mioctl.h>
 #include <machine/vmparam.h>
 
-#include <mvme88k/dev/busswitchreg.h>
+#include <mvme88k/dev/busswreg.h>
+#include <mvme88k/dev/busswfunc.h>
 
-struct busswitchsoftc {
+struct bussw_softc {
 	struct device		sc_dev;
 	void *		sc_paddr;
 	void *		sc_vaddr;
 	int		sc_len;
-   struct busswitchreg * sc_busswitch;
+	struct intrhand sc_abih;	/* `abort' switch */
+	struct bussw_reg        *sc_bussw;
 };
 
-void	busswitchattach	__P((struct device *, struct device *, void *));
-int	busswitchmatch __P((struct device *, void *, void *));
+void    bussw_attach    __P((struct device *, struct device *, void *));
+int     bussw_match __P((struct device *, void *, void *));
 
-struct cfattach busswitch_ca = { 
-        sizeof(struct busswitchsoftc), busswitchmatch, busswitchattach
+struct cfattach bussw_ca = { 
+	sizeof(struct bussw_softc), bussw_match, bussw_attach
 }; 
  
-struct cfdriver busswitch_cd = {
-        NULL, "busswitch", DV_DULL, 0
+struct cfdriver bussw_cd = {
+	NULL, "bussw", DV_DULL, 0
 };
 
-int busswitch_print __P((void *args, const char *bus));
-int busswitch_scan __P((struct device *parent, void *child, void *args));
+int bussw_print __P((void *args, const char *bus));
+int bussw_scan __P((struct device *parent, void *child, void *args));
+int busswabort __P((void *));
 
 int
-busswitchmatch(parent, vcf, args)
+bussw_match(parent, vcf, args)
 	struct device *parent;
 	void *vcf, *args;
 {
 	struct confargs *ca = args;
-   struct busswitchreg *busswitch;
+	struct bussw_reg *bussw;
    /* Don't match if wrong cpu */
 	if (cputyp != CPU_197) return (0);
 	
-   busswitch = (struct busswitchreg *)(IIOV(ca->ca_paddr));
-	if (badvaddr((vm_offset_t)busswitch, 4) <= 0){
+	bussw = (struct bussw_reg *)(IIOV(ca->ca_paddr));
+	if (badvaddr((vm_offset_t)bussw, 4)) {
 	    printf("==> busswitch: failed address check.\n");
 	    return (0);
 	}
@@ -88,24 +91,34 @@ busswitchmatch(parent, vcf, args)
 }
 
 void
-busswitchattach(parent, self, args)
+bussw_attach(parent, self, args)
 	struct device *parent, *self;
 	void *args;
 {
 	struct confargs *ca = args;
-	struct busswitchsoftc	*sc = (struct busswitchsoftc *)self;
+	struct bussw_softc      *sc = (struct bussw_softc *)self;
+        struct bussw_reg *bs;
 
-	sc->sc_paddr = ca->ca_paddr;
-	sc->sc_vaddr = ca->ca_vaddr;
-
+	sc->sc_vaddr = sc->sc_paddr = ca->ca_paddr;
+	bs = sc->sc_bussw = (struct bussw_reg *)sc->sc_vaddr;
+	bs->bs_intr2 |= BS_VECBASE;
+	bs->bs_gcsr |= BS_GCSR_XIPL;
 	/*
-   printf(": rev %d\n", sc->sc_busswitch->chiprev);
+	 * pseudo driver, abort interrupt handler
    */
-   printf(": rev %d\n", 0);
+	sc->sc_abih.ih_fn = busswabort;
+	sc->sc_abih.ih_arg = 0;
+	sc->sc_abih.ih_wantframe = 1;
+	sc->sc_abih.ih_ipl = IPL_NMI;	/* level 8!! */
+	busswintr_establish(BS_ABORTIRQ, &sc->sc_abih);
+	bs->bs_intr1 |= BS_INTR1_ABORT_IEN;
+
+	printf(": rev %d\n", BS_CHIPREV(bs));
+	config_search(bussw_scan, self, args);
 }
 
 int
-busswitch_print(args, bus)
+bussw_print(args, bus)
 	void *args;
 	const char *bus;
 {
@@ -119,12 +132,12 @@ busswitch_print(args, bus)
 }
 
 int
-busswitch_scan(parent, child, args)
+bussw_scan(parent, child, args)
 	struct device *parent;
 	void *child, *args;
 {
 	struct cfdata *cf = child;
-	struct busswitchsoftc *sc = (struct busswitchsoftc *)parent;
+	struct bussw_softc *sc = (struct bussw_softc *)parent;
 	struct confargs oca;
 
 	if (parent->dv_cfdata->cf_driver->cd_indirect) {
@@ -143,11 +156,40 @@ busswitch_scan(parent, child, args)
 		oca.ca_paddr = (void *)-1;
 	}
 	oca.ca_bustype = BUS_BUSSWITCH;
-	oca.ca_master = (void *)sc->sc_busswitch;
+	oca.ca_master = (void *)sc->sc_bussw;
 	oca.ca_name = cf->cf_driver->cd_name;
 	if ((*cf->cf_attach->ca_match)(parent, cf, &oca) == 0)
 		return (0);
-	config_attach(parent, cf, &oca, busswitch_print);
+	config_attach(parent, cf, &oca, bussw_print);
 	return (1);
+}
+
+int
+busswintr_establish(vec, ih)
+	int vec;
+	struct intrhand *ih;
+{
+	if (vec >= BS_NVEC) {
+		printf("bussw: illegal vector: 0x%x\n", vec);
+		panic("busswintr_establish");
+	}
+	return (intr_establish(BS_VECBASE+vec, ih));
+}
+
+int
+busswabort(eframe)
+	void *eframe;
+{
+	struct frame *frame = eframe;
+
+	struct bussw_softc *sc = (struct bussw_softc *)bussw_cd.cd_devs[0];
+        struct bussw_reg *bs  = sc->sc_bussw;
+	
+	if (bs->bs_intr1 & BS_INTR1_ABORT_INT) {
+		bs->bs_intr1 |= BS_INTR1_ABORT_ICLR;
+		nmihand(frame);
+		return 1;
+	}
+	return 0;
 }
 
