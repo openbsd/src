@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.35 1997/08/29 18:05:40 mickey Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.36 1997/09/03 22:39:12 mickey Exp $	*/
 /*	$NetBSD: disklabel.c,v 1.30 1996/03/14 19:49:24 ghudson Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: disklabel.c,v 1.35 1997/08/29 18:05:40 mickey Exp $";
+static char rcsid[] = "$OpenBSD: disklabel.c,v 1.36 1997/09/03 22:39:12 mickey Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -1511,8 +1511,7 @@ usage()
 	    "`proto' is the output from the read cmd form; -R is powerful.\n");
 #ifdef SEEALSO
 	fprintf(stderr,
-	    "The manpage %s describes procedures specific to "
-	    "this architecture.\n", SEEALSO);
+	    "For procedures specific to this architecture see: %s\n", SEEALSO);
 #endif
 	exit(1);
 }
