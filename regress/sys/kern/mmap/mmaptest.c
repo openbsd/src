@@ -1,4 +1,4 @@
-/*	$Id: mmaptest.c,v 1.4 2004/07/22 15:11:37 miod Exp $	*/
+/*	$OpenBSD: mmaptest.c,v 1.5 2004/10/10 03:08:30 mickey Exp $	*/
 
 /*
  * Copyright (c) 2001 Niklas Hallqvist.  All rights reserved.
@@ -54,7 +54,7 @@ main(int argc, char **argv)
 	if (sz == -1)
 		err(1, "sysconf");
 	if (ftruncate(fd, sz) == -1)
-		err (1, "ftruncate");
+		err(1, "ftruncate");
 	v = mmap(0, sz, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
 	if (v == MAP_FAILED)
 		err(1, "mmap");
