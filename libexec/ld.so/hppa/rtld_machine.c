@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.6 2004/06/07 15:19:59 mickey Exp $	*/
+/*	$OpenBSD: rtld_machine.c,v 1.7 2005/01/09 17:57:40 mickey Exp $	*/
 
 /*
  * Copyright (c) 2004 Michael Shalayeff
@@ -52,6 +52,8 @@ struct hppa_plabel {
 	SPLAY_ENTRY(hppa_plabel) node;
 } hppa_plabel_t;
 SPLAY_HEAD(_dl_md_plabels, hppa_plabel) _dl_md_plabel_root;
+
+void	_hppa_dl_set_dp(Elf_Addr *dp);	/* from ldasm.S */
 
 static __inline int
 _dl_md_plcmp(hppa_plabel_t *a, hppa_plabel_t *b)
@@ -130,6 +132,14 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 		    addr, object->load_name));
 		object->dyn.fini = (void *)addr;
 	}
+
+	/*
+	 * this is normally done by the crt0 code but we have to make
+	 * sure it's set here to allow constructors to call functions
+	 * that are overriden in the user binary (that are un-pic)
+	 */
+	if (object->obj_type == OBJTYPE_EXE)
+		_hppa_dl_set_dp(object->dyn.pltgot);
 
 	for (i = 0; i < numrela; i++, rela++) {
 		const elf_object_t *sobj;

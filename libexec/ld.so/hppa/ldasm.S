@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.2 2004/05/25 21:56:49 deraadt Exp $	*/
+/*	$OpenBSD: ldasm.S,v 1.3 2005/01/09 17:57:40 mickey Exp $	*/
 
 /*
  * Copyright (c) 2004 Michael Shalayeff
@@ -59,6 +59,9 @@ ENTRY(_dl_start,32)
 	ADDR(_DYNAMIC, arg2)
 	stw	arg2, HPPA_FRAME_ARG(1)(r3)
 
+	/* make sure to get a fault until it's set proper */
+	ldi	-1, %dp
+
 	ldw	0(arg0), arg0
 	ldo	4(r3), arg1			/* dl_data */
 	bl	_dl_boot_bind, rp
@@ -93,6 +96,11 @@ ENTRY(_hppa_dl_dtors,0)
 	b	_dl_dtors
 	nop
 EXIT(_hppa_dl_dtors)
+
+LEAF_ENTRY(_hppa_dl_set_dp)
+	bv	r0(rp)
+	copy	arg0, r27
+EXIT(_hppa_dl_set_dp)
 
 /*
  * void hppa_call(void (*arg)(void), void *r19, Elf_Addr func);
