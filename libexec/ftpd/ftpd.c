@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.54 1999/04/29 21:38:43 downsj Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.55 1999/07/20 19:55:06 deraadt Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -225,6 +225,7 @@ static struct passwd *
 static char	*sgetsave __P((char *));
 static void	 reapchild __P((int));
 static int	 check_host __P((struct sockaddr_in *));
+static void	 usage __P((void));
 
 void	 logxfer __P((char *, off_t, time_t));
 
@@ -241,6 +242,16 @@ curdir()
 	return (guest ? path+1 : path);
 }
 
+char *argstr = "AdDhlMSt:T:u:UvP";
+
+static void
+usage()
+{
+	syslog(LOG_ERR,
+	    "usage: ftpd [-AdDhlMSUv] [-t timeout] [-T maxtimeout] [-u mask]");
+	exit(2);
+}
+
 int
 main(argc, argv, envp)
 	int argc;
@@ -250,7 +261,6 @@ main(argc, argv, envp)
 	int addrlen, ch, on = 1, tos;
 	char *cp, line[LINE_MAX];
 	FILE *fd;
-	char *argstr = "AdDhlMSt:T:u:UvP";
 	struct hostent *hp;
 
 	tzset();	/* in case no timezone database in ~ftp */
@@ -325,7 +335,7 @@ main(argc, argv, envp)
 			break;
 
 		default:
-			warnx("unknown flag -%c ignored", optopt);
+			usage();
 			break;
 		}
 	}
