@@ -1,4 +1,4 @@
-/*	$OpenBSD: nsphy.c,v 1.3 1999/01/04 04:26:46 jason Exp $	*/
+/*	$OpenBSD: nsphy.c,v 1.4 1999/01/04 04:44:05 jason Exp $	*/
 /*	$NetBSD: nsphy.c,v 1.16 1998/11/05 04:08:02 thorpej Exp $	*/
 
 /*-
@@ -265,7 +265,10 @@ nsphy_service(sc, mii, cmd)
 			    mii_anar(ife->ifm_media));
 
 			reg = 0;
-			reg |= BMCR_ISO | BMCR_S100;
+			reg |= BMCR_S100;
+			if ((sc->mii_flags & MIIF_NOISOLATE) == 0)
+				reg |= BMCR_ISO;
+
 			if ((ife->ifm_media & IFM_GMASK) == IFM_FDX)
 				reg |= BMCR_FDX;
 			PHY_WRITE(sc, MII_BMCR, reg);
