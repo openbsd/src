@@ -1,4 +1,4 @@
-/*	$OpenBSD: user.c,v 1.14 1998/09/14 03:54:35 rahnds Exp $	*/
+/*	$OpenBSD: user.c,v 1.15 2000/09/12 00:17:47 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -201,7 +201,8 @@ USER_print_disk(disk)
 
 		/* Print out extended partitions too */
 		for (offset = i = 0; i < 4; i++)
-			if (mbr.part[i].id == DOSPTYP_EXTEND) {
+			if (mbr.part[i].id == DOSPTYP_EXTEND ||
+			    mbr.part[i].id == DOSPTYP_EXTENDL) {
 				offset = mbr.part[i].bs;
 				if (firstoff == 0)
 					firstoff = offset;
