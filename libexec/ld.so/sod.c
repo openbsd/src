@@ -1,4 +1,4 @@
-/*	$OpenBSD: sod.c,v 1.14 2002/07/12 20:18:30 drahn Exp $	*/
+/*	$OpenBSD: sod.c,v 1.15 2002/07/29 22:43:36 art Exp $	*/
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -204,7 +204,8 @@ _dl_findhint(name, major, minor, prefered_path)
 {
 	struct hints_bucket	*bp;
 
-	/* If not mapped, and we have not tried before, try to map the
+	/*
+	 * If not mapped, and we have not tried before, try to map the
 	 * hints, if previous attempts failed hheader is -1 and we
 	 * do not wish to retry it.
 	 */
