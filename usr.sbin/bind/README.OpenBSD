@@ -1,4 +1,4 @@
-$OpenBSD: README.OpenBSD,v 1.4 2003/10/19 18:19:11 jakob Exp $
+$OpenBSD: README.OpenBSD,v 1.5 2003/10/20 19:30:07 jakob Exp $
 
 - arc4random() support (integrated in 9.3.0-snapshot)
 - call tzset before chroot
@@ -14,3 +14,4 @@ $OpenBSD: README.OpenBSD,v 1.4 2003/10/19 18:19:11 jakob Exp $
 - add nslookup(8) manpage
 - listen to IPv6 interfaces by default
 - add support for SSHFP resource records
+- strlcpy/strlcat/snprintf fixes
