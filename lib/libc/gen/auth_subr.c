@@ -1,4 +1,4 @@
-/*	$OpenBSD: auth_subr.c,v 1.28 2004/08/09 01:39:31 millert Exp $	*/
+/*	$OpenBSD: auth_subr.c,v 1.29 2004/08/30 18:14:33 millert Exp $	*/
 
 /*
  * Copyright (c) 2000-2002,2004 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -976,7 +976,7 @@ _recv_fd(auth_session_t *as, int fd)
 {
 	struct msghdr msg;
 	struct cmsghdr *cmp;
-	char cmsgbuf[CMSG_LEN(sizeof(int))];
+	char cmsgbuf[CMSG_SPACE(sizeof(int))];
 
 	memset(&msg, 0, sizeof(msg));
 	msg.msg_control = cmsgbuf;
@@ -996,7 +996,7 @@ _recv_fd(auth_session_t *as, int fd)
 		else if (cmp->cmsg_type != SCM_RIGHTS)
 			syslog(LOG_ERR, "unexpected cmsg_type %d",
 			    cmp->cmsg_type);
-		else if (cmp->cmsg_len != sizeof(cmsgbuf))
+		else if (cmp->cmsg_len != CMSG_LEN(sizeof(int)))
 			syslog(LOG_ERR, "bad cmsg_len %d",
 			    cmp->cmsg_len);
 		else {

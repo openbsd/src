@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_skey.c,v 1.15 2004/08/11 17:09:25 millert Exp $	*/
+/*	$OpenBSD: login_skey.c,v 1.16 2004/08/30 18:14:33 millert Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001, 2004 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -261,18 +261,18 @@ send_fd(int sock)
 {
 	struct msghdr msg;
 	struct cmsghdr *cmp;
-	char cmsgbuf[CMSG_LEN(sizeof(int))];
+	char cmsgbuf[CMSG_SPACE(sizeof(int))];
 
 	memset(&msg, 0, sizeof(msg));
 	msg.msg_control = cmsgbuf;
-	msg.msg_controllen = sizeof(cmsgbuf);
+	msg.msg_controllen = CMSG_LEN(sizeof(int));
 
-	cmp = (struct cmsghdr *)cmsgbuf;
-	cmp->cmsg_len = sizeof(cmsgbuf);
+	cmp = CMSG_FIRSTHDR(&msg);
+	cmp->cmsg_len = CMSG_LEN(sizeof(int));
 	cmp->cmsg_level = SOL_SOCKET;
 	cmp->cmsg_type = SCM_RIGHTS;
 
-	*(int *)CMSG_DATA(cmsgbuf) = fileno(skey.keyfile);
+	*(int *)CMSG_DATA(cmp) = fileno(skey.keyfile);
 
 	if (sendmsg(sock, &msg, 0) < 0)
 		syslog(LOG_ERR, "sendmsg: %m");
