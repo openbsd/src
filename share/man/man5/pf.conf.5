@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.64 2002/07/04 10:51:18 henning Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.65 2002/07/05 14:32:45 henning Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -323,6 +323,11 @@ These statistics can be viewed using
 In this example pf is told to collect statistics on the interface named dc0:
 .Bd -literal
     set loginterface dc0
+.Ed
+.Pp
+One can unset the loginterface using
+.Bd -literal
+    set loginterface none
 .Ed
 .Pp
 .Ss limit
