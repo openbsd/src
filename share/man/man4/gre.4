@@ -1,4 +1,4 @@
-.\" $OpenBSD: gre.4,v 1.12 2002/06/10 02:45:30 itojun Exp $
+.\" $OpenBSD: gre.4,v 1.13 2002/06/10 23:08:41 itojun Exp $
 .\" $NetBSD: gre.4,v 1.10 1999/12/22 14:55:49 kleink Exp $
 .\"
 .\" Copyright 1998 (c) The NetBSD Foundation, Inc.
@@ -110,16 +110,9 @@ The operation mode can also be given as
 .Bl -tag -width bbb
 .It link0
 IPPROTO_GRE
-.It link2
+.It -link0
 IPPROTO_MOBILE
 .El
-.Pp
-to
-.Xr ifconfig 8 .
-As the linkN flags are not mutually exclusive, modes must be set by applying
-positive and negative flags, e.g.,
-.Xr ifconfig 8
-link0 -link1 -link2
 .It GREGPROTO:
 Query operation mode.
 .El
@@ -143,7 +136,8 @@ Host X-- Host A  ----------------tunnel---------- cisco D------Host E
    On host A (OpenBSD):
 
    # route add default B
-   # ifconfig greN  A D netmask 0xffffffff linkX up
+   # ifconfig greN A D netmask 0xffffffff linkX up
+   # ifconfig greN tunnel A D
    # route add E D
 
    On Host D (Cisco):
@@ -162,6 +156,7 @@ Host X-- Host A  ----------------tunnel---------- cisco D------Host E
 
    # route add default C
    # ifconfig greN D A
+   # ifconfig greN tunnel D A
 .Pp
 To reach Host A over the tunnel (from host D), there has to be an
 alias on Host A for the Ethernet interface:
