@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.20 2003/09/29 11:23:38 jmc Exp $	*/
+/*	$OpenBSD: main.c,v 1.21 2003/12/22 22:17:38 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.6 1995/05/21 16:54:10 mycroft Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #endif
-static const char rcsid[] = "$OpenBSD: main.c,v 1.20 2003/09/29 11:23:38 jmc Exp $";
+static const char rcsid[] = "$OpenBSD: main.c,v 1.21 2003/12/22 22:17:38 deraadt Exp $";
 #endif /* not lint */
 
 /* Many bug fixes are from Jim Guyton <guyton@rand-unix> */
@@ -161,11 +161,11 @@ main(int argc, char *argv[])
 		errx(1, "udp/tftp: unknown service");
 	f = socket(AF_INET, SOCK_DGRAM, 0);
 	if (f < 0)
-		err(3, "tftp: socket");
+		err(3, "socket");
 	bzero((char *)&s_in, sizeof (s_in));
 	s_in.sin_family = AF_INET;
 	if (bind(f, (struct sockaddr *)&s_in, sizeof (s_in)) < 0)
-		err(1, "tftp: bind");
+		err(1, "bind");
 	strlcpy(mode, "netascii", sizeof mode);
 	signal(SIGINT, intr);
 	if (argc > 1) {
