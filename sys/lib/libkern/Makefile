@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.12 1998/03/18 20:47:04 mickey Exp $
+#	$OpenBSD: Makefile,v 1.13 1999/05/21 15:01:39 mickey Exp $
 #	$NetBSD: Makefile,v 1.31 1996/08/10 04:01:31 mycroft Exp $
 
 LIB=	kern
@@ -40,10 +40,10 @@ install:
 lib${LIB}.o:: ${OBJS}
 	@echo building standard ${LIB} library
 	@rm -f lib${LIB}.o
-	@${LD} -r -o lib${LIB}.o `lorder ${OBJS} | tsort`
+	@${LD} -r -o lib${LIB}.o `${LORDER} ${OBJS} | tsort`
 
 POBJS+=	${OBJS:.o=.po} mcount.po
 lib${LIB}.po:: ${POBJS}
 	@echo building profiled ${LIB} library
 	@rm -f lib${LIB}.po
-	@${LD} -r -o lib${LIB}.po `lorder ${POBJS} | tsort`
+	@${LD} -r -o lib${LIB}.po `${LORDER} ${POBJS} | tsort`
