@@ -1,5 +1,4 @@
-#	from: @(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
-#	$Id: 4.4BSD.dist,v 1.13 1996/05/04 08:14:35 deraadt Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.14 1996/05/26 10:26:15 deraadt Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -117,18 +116,18 @@ hide            gname=games uname=games mode=0700
 ..
 
 # ./usr/include
-include		gname=bin uname=bin mode=0555
+include		gname=bin uname=bin mode=0755
 
 # ./usr/include/arpa
-arpa		gname=bin uname=bin mode=0555
+arpa		gname=bin uname=bin mode=0755
 # ./usr/include/arpa
 ..
 
 # ./usr/include/g++
-g++		gname=bin uname=bin mode=0555
+g++		gname=bin uname=bin mode=0755
 
 # ./usr/include/g++/gen
-gen		gname=bin uname=bin mode=0555
+gen		gname=bin uname=bin mode=0755
 # ./usr/include/g++/gen
 ..
 
@@ -141,22 +140,22 @@ std             gname=bin uname=bin mode=0555
 ..
 
 # ./usr/include/kerberosIV
-kerberosIV		gname=bin uname=bin mode=0555
+kerberosIV		gname=bin uname=bin mode=0755
 # ./usr/include/kerberosIV
 ..
 
 # ./usr/include/protocols
-protocols		gname=bin uname=bin mode=0555
+protocols		gname=bin uname=bin mode=0755
 # ./usr/include/protocols
 ..
 
 # ./usr/include/rpc
-rpc		gname=bin uname=bin mode=0555
+rpc		gname=bin uname=bin mode=0755
 # ./usr/include/rpc
 ..
 
 # ./usr/include/rpcsvc
-rpcsvc		gname=bin uname=bin mode=0555
+rpcsvc		gname=bin uname=bin mode=0755
 # ./usr/include/rpcsvc
 ..
 
@@ -1270,6 +1269,17 @@ mm
 ..
 
 # ./usr/share/tmac
+..
+
+# ./usr/share/vi
+vi
+
+# ./usr/share/vi/catalog
+catalog
+# ./usr/share/vi/catalog
+..
+
+# ./usr/share/vi
 ..
 
 # ./usr/share/zoneinfo

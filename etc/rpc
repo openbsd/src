@@ -1,5 +1,6 @@
 #
-# rpc 88/08/01 4.0 RPCSRC; from 1.12   88/02/07 SMI
+#	$OpenBSD: rpc,v 1.2 1996/05/26 10:25:29 deraadt Exp $
+# from: rpc 88/08/01 4.0 RPCSRC; from 1.12   88/02/07 SMI
 #
 portmapper	100000	portmap sunrpc
 rstatd		100001	rstat rstat_svc rup perfmeter

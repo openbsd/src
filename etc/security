@@ -1,9 +1,7 @@
 #!/bin/sh -
 #
-#	from: @(#)security	8.1 (Berkeley) 6/9/93
-#	$Id: security,v 1.2 1995/12/18 16:56:37 deraadt Exp $
+#	$OpenBSD: security,v 1.3 1996/05/26 10:25:29 deraadt Exp $
 #
-
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 
 umask 077

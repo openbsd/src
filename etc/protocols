@@ -1,10 +1,9 @@
 #
 # Internet (IP) protocols
 #
-#	from: @(#)protocols	5.1 (Berkeley) 4/17/89
-#	$Id: protocols,v 1.1.1.1 1995/10/18 08:37:57 deraadt Exp $
+#	$OpenBSD: protocols,v 1.2 1996/05/26 10:25:26 deraadt Exp $
 #
-# Updated for NetBSD based on RFC 1340, Assigned Numbers (July 1992).
+# Updated based on RFC 1340, Assigned Numbers (July 1992).
 #
 ip	0	IP		# internet protocol, pseudo protocol number
 icmp	1	ICMP		# internet control message protocol
@@ -21,7 +20,7 @@ xns-idp	22	XNS-IDP		# Xerox NS IDP
 rdp	27	RDP		# "reliable datagram" protocol
 iso-tp4	29	ISO-TP4		# ISO Transport Protocol class 4
 xtp	36	XTP		# Xpress Tranfer Protocol
-idpr-cmtp	39	IDPR-CMTP	# IDPR Control Message Transport
+idpr-cmtp 39	IDPR-CMTP	# IDPR Control Message Transport
 vmtp	81	VMTP		# Versatile Message Transport
 ospf	89	OSPFIGP		# Open Shortest Path First IGP
 ipip	94	IPIP		# Yet Another IP encapsulation

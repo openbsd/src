@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	@(#)weekly	5.14 (Berkeley) 6/23/91
+#	$OpenBSD: weekly,v 1.3 1996/05/26 10:25:32 deraadt Exp $
 #
 
 PATH=/bin:/sbin:/usr/sbin:/usr/bin:/usr/libexec

@@ -1,3 +1,5 @@
+#	$OpenBSD: bootptab,v 1.2 1996/05/26 10:25:17 deraadt Exp $
+#
 # /etc/bootptab: database for bootp server (/etc/bootpd)
 # Last update Mon 11/7/88 18:03
 # Blank lines and lines beginning with '#' are ignored.
@@ -7,27 +9,37 @@
 #	first field -- hostname
 #			(may be full domain name and probably should be)
 #
-#	hd -- home directory
-#	bf -- bootfile
-#	cs -- cookie servers
-#	df -- dumpfile
-#	dn -- domain name
-#	ds -- domain name servers
-#	gw -- gateways
-#	ha -- hardware address
-#	ht -- hardware type
-#	im -- impress servers
-#	ip -- host IP address
-#	lg -- log servers
-#	lp -- LPR servers
-#	ns -- IEN-116 name servers
-#	rl -- resource location protocol servers
-#	rp -- root path
-#	sm -- subnet mask
-#	sw -- swap server
-#	tc -- template host (points to similar host entry)
-#	to -- time offset (seconds)
-#	ts -- time servers
+#            bf   Bootfile
+#            bs   Bootfile size in 512-octet blocks
+#            cs   Cookie server address list
+#            df   Merit dump file
+#            dn   Domain name
+#            ds   Domain name server address list
+#            ef   Extension file
+#            gw   Gateway address list
+#            ha   Host hardware address
+#            hd   Bootfile home directory
+#            hn   Send client's hostname to client
+#            ht   Host hardware type (see Assigned Numbers RFC)
+#            im   Impress server address list
+#            ip   Host IP address
+#            lg   Log server address list
+#            lp   LPR server address list
+#            ns   IEN-116 name server address list
+#            nt   NTP (time) Server (RFC 1129)
+#            ra   Reply address override
+#            rl   Resource location protocol server address list
+#            rp   Root path to mount as root
+#            sa   TFTP server address client should use
+#            sm   Host subnet mask
+#            sw   Swap server address
+#            tc   Table continuation (points to similar "template" host entry)
+#            td   TFTP root directory used by "secure" TFTP servers
+#            to   Time offset in seconds from UTC
+#            ts   Time server address list
+#            vm   Vendor magic cookie selector
+#            yd   YP (NIS) domain name
+#            ys   YP (NIS) server address
 
 #
 # Be careful about including backslashes where they're needed.  Weird (bad)

@@ -1,5 +1,4 @@
-#	$NetBSD: rc,v 1.54 1995/10/08 18:11:43 thorpej Exp $
-#	from: @(#)rc	8.2 (Berkeley) 3/17/94
+#	$OpenBSD: rc,v 1.11 1996/05/26 10:25:27 deraadt Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.

@@ -1,3 +1,4 @@
+#	$OpenBSD: ipf.rules,v 1.2 1996/05/26 10:25:24 deraadt Exp $
 #
 # IP filtering rules.  See the ipf(5) man page for more
 # information on the format of this file, and /usr/share/ipf

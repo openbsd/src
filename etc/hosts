@@ -1,3 +1,4 @@
+#	$OpenBSD: hosts,v 1.2 1996/05/26 10:25:23 deraadt Exp $
 #
 # Host Database
 # This file should contain the addresses and aliases
@@ -6,7 +7,7 @@
 # before the nameserver is started.
 #
 #
-127.1		localhost localhost.my.domain
+127.0.0.1	localhost localhost.my.domain
 #
 # Imaginary network.
 0.2		myname.my.domain myname

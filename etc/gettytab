@@ -1,4 +1,4 @@
-#	from: @(#)gettytab	5.14 (Berkeley) 3/27/91
+#	$OpenBSD: gettytab,v 1.2 1996/05/26 10:25:22 deraadt Exp $
 #
 # Most of the table entries here are just copies of the old getty table,
 # it is by no means certain, or even likely, that any of them are optimal

@@ -1,3 +1,5 @@
+#	$OpenBSD: ftpchroot,v 1.2 1996/05/26 10:25:21 deraadt Exp $
+#
 # list of users given ftp access to a chrooted area.
 # read by ftpd(8).
 joeuser

@@ -1,4 +1,4 @@
-#	@(#)phones	5.2 (Berkeley) 6/30/90
+#	$OpenBSD: phones,v 1.2 1996/05/26 10:25:25 deraadt Exp $
 #
 # phones -- remote host phone number data base
 # see tip(1), phones(5)
