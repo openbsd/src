@@ -104,7 +104,7 @@ obio_attach(parent, self, aux)
 	int32_t intr[5];
 	char name[32];
 
-	printf("obio ver %x\n", (PCI_PRODUCT(pa->pa_id)));
+	printf("obio ver %x", (PCI_PRODUCT(pa->pa_id)));
 
 	switch (PCI_PRODUCT(pa->pa_id)) {
 
@@ -187,6 +187,8 @@ obio_print(aux, obio)
 {
 	struct confargs *ca = aux;
 
+#if 0
+/* no reason to clutter the screen with unneccessary printfs */
 	if (obio)
 		printf("%s at %s", ca->ca_name, obio);
 
@@ -194,6 +196,8 @@ obio_print(aux, obio)
 		printf(" offset 0x%x", ca->ca_reg[0]);
 
 	return UNCONF;
+#endif
+	return QUIET;
 }
 
 typedef int mac_intr_handle_t;
