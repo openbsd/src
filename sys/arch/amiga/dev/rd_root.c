@@ -1,4 +1,4 @@
-/*	$OpenBSD: rd_root.c,v 1.1 1997/05/14 20:00:15 niklas Exp $	*/
+/*	$OpenBSD: rd_root.c,v 1.2 1997/05/29 01:14:22 niklas Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -43,7 +43,7 @@ extern int boothowto;
 
 /*
  * This array will be patched to contain a file-system image.
- * See the program:  src/distrib/sun3/common/rdsetroot.c
+ * See the program:  src/distrib/common/rdsetroot.c
  */
 int rd_root_size = ROOTBYTES;
 char rd_root_image[ROOTBYTES] = "|This is the root ramdisk!\n";
