@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.h,v 1.50 2002/01/23 10:24:00 art Exp $	*/
+/*	$OpenBSD: malloc.h,v 1.51 2002/01/23 15:46:48 art Exp $	*/
 /*	$NetBSD: malloc.h,v 1.39 1998/07/12 19:52:01 augustss Exp $	*/
 
 /*
@@ -70,17 +70,14 @@
 #define	M_RTABLE	5	/* routing tables */
 /* 6 - free */
 #define	M_FTABLE	7	/* fragment reassembly header */
-#define	M_ZOMBIE	8	/* zombie proc status */
+/* 8 - free */
 #define	M_IFADDR	9	/* interface address */
 #define	M_SOOPTS	10	/* socket options */
 #define	M_SYSCTL	11	/* sysctl buffers (persistent storage) */
 #define	M_NAMEI		12	/* namei path name buffer */
 /* 13 - free */
 #define	M_IOCTLOPS	14	/* ioctl data buffer */
-/* 15 - free */
-#define	M_CRED		16	/* credentials */
-#define	M_PGRP		17	/* process group header */
-#define	M_SESSION	18	/* session header */
+/* 15-18 - free */
 #define	M_IOV		19	/* large iov's */
 #define	M_MOUNT		20	/* vfs mount struct */
 /* 21 - free */
@@ -187,7 +184,7 @@
 	"routetbl",	/* 5 M_RTABLE */ \
 	NULL,		/* 6 */ \
 	"fragtbl",	/* 7 M_FTABLE */ \
-	"zombie",	/* 8 M_ZOMBIE */ \
+	NULL, \
 	"ifaddr",	/* 9 M_IFADDR */ \
 	"soopts",	/* 10 M_SOOPTS */ \
 	"sysctl",	/* 11 M_SYSCTL */ \
@@ -195,9 +192,9 @@
 	NULL, \
 	"ioctlops",	/* 14 M_IOCTLOPS */ \
 	NULL, \
-	"cred",		/* 16 M_CRED */ \
-	"pgrp",		/* 17 M_PGRP */ \
-	"session",	/* 18 M_SESSION */ \
+	NULL, \
+	NULL, \
+	NULL, \
 	"iov",		/* 19 M_IOV */ \
 	"mount",	/* 20 M_MOUNT */ \
 	NULL, \

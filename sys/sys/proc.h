@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.52 2002/01/20 11:27:52 art Exp $	*/
+/*	$OpenBSD: proc.h,v 1.53 2002/01/23 15:46:48 art Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -290,7 +290,7 @@ struct	pcred {
 #define	SESSHOLD(s)	((s)->s_count++)
 #define	SESSRELE(s) {							\
 	if (--(s)->s_count == 0)					\
-		FREE(s, M_SESSION);					\
+		pool_put(&session_pool, s);				\
 }
 
 #define	PHOLD(p) {							\
@@ -339,6 +339,9 @@ extern struct proc *initproc;		/* Process slots for init, pager. */
 extern struct proc *syncerproc;		/* filesystem syncer daemon */
 
 extern struct pool proc_pool;		/* memory pool for procs */
+extern struct pool rusage_pool;		/* memory pool for zombies */
+extern struct pool ucred_pool;		/* memory pool for ucreds */
+extern struct pool session_pool;	/* memory pool for sessions */
 
 #define	NQS	32			/* 32 run queues. */
 int	whichqs;			/* Bit mask summary of non-empty Q's. */
