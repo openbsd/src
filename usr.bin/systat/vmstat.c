@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmstat.c,v 1.47 2004/05/22 18:06:12 henning Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.48 2004/06/11 05:55:43 deraadt Exp $	*/
 /*	$NetBSD: vmstat.c,v 1.5 1996/05/10 23:16:40 thorpej Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 1/12/94";
 #endif
-static char rcsid[] = "$OpenBSD: vmstat.c,v 1.47 2004/05/22 18:06:12 henning Exp $";
+static char rcsid[] = "$OpenBSD: vmstat.c,v 1.48 2004/06/11 05:55:43 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -147,6 +147,8 @@ static struct nlist namelist[] = {
 #if defined(__i386__)
 #define	X_INTRHAND	4		/* no sysctl */
 	{ "_intrhand" },
+#define	X_APICINTRHAND	5		/* no sysctl */
+	{ "_apic_intrhand" },
 #endif
 	{ "" },
 };
@@ -186,6 +188,10 @@ initkre(void)
 	if (namelist[0].n_type == 0) {
 		if ((ret = kvm_nlist(kd, namelist)) == -1)
 			errx(1, "%s", kvm_geterr(kd));
+#if defined(__i386__)
+		else if (ret > 1 && namelist[X_APICINTRHAND].n_value == 0)
+			nlisterr(namelist);
+#endif
 		else if (ret)
 			nlisterr(namelist);
 		if (namelist[0].n_type == 0) {
@@ -199,6 +205,7 @@ initkre(void)
 	if (nintr == 0) {
 #if defined(__i386__)
 		struct intrhand *intrhand[16], *ihp, ih;
+		struct intrhand *apicintrhand[256];
 		char iname[16];
 		int namelen, n;
 
@@ -213,6 +220,20 @@ initkre(void)
 				ihp = ih.ih_next;
 			}
 		}
+		if (namelist[X_APICINTRHAND].n_value) {
+			NREAD(X_APICINTRHAND, apicintrhand, sizeof(apicintrhand));
+			for (namelen = 0, i = 0; i < 256; i++) {
+				ihp = apicintrhand[i];
+				while (ihp) {
+					nintr++;
+					KREAD(ihp, &ih, sizeof(ih));
+					KREAD(ih.ih_what, iname, 16);
+					namelen += strlen(iname) + 1;
+					printf("apic handler %x %s\n", i, iname);
+					ihp = ih.ih_next;
+				}
+			}
+		}		
 		intrloc = calloc(nintr, sizeof (long));
 		intrname = calloc(nintr, sizeof (char *));
 		cp = intrnamebuf = malloc(namelen);
@@ -225,6 +246,19 @@ initkre(void)
 				strlcpy(cp, iname, intrnamebuf + namelen - cp);
 				cp += strlen(iname) + 1;
 				ihp = ih.ih_next;
+			}
+		}
+		if (namelist[X_APICINTRHAND].n_value) {
+			for (i = 0, n = 0; i < 256; i++) {
+				ihp = apicintrhand[i];
+				while (ihp) {
+					KREAD(ihp, &ih, sizeof(ih));
+					KREAD(ih.ih_what, iname, 16);
+					intrname[n++] = cp;
+					strlcpy(cp, iname, intrnamebuf + namelen - cp);
+					cp += strlen(iname) + 1;
+					ihp = ih.ih_next;
+				}
 			}
 		}
 #else
@@ -638,6 +672,7 @@ getinfo(struct Info *s, enum state st)
 	size_t size;
 #if defined(__i386__)
 	struct intrhand *intrhand[16], *ihp, ih;
+	struct intrhand *apicintrhand[256];
 	int i, n;
 #endif
 
@@ -650,6 +685,17 @@ getinfo(struct Info *s, enum state st)
 			KREAD(ihp, &ih, sizeof(ih));
 			s->intrcnt[n++] = ih.ih_count;
 			ihp = ih.ih_next;
+		}
+	}
+	if (namelist[X_APICINTRHAND].n_value) {
+		NREAD(X_APICINTRHAND, apicintrhand, sizeof(apicintrhand));
+		for (i = 0, n = 0; i < 256; i++) {
+			ihp = apicintrhand[i];
+			while (ihp) {
+				KREAD(ihp, &ih, sizeof(ih));
+				s->intrcnt[n++] = ih.ih_count;
+				ihp = ih.ih_next;
+			}
 		}
 	}
 #else

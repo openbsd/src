@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.82 2004/02/15 02:45:47 tedu Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.83 2004/06/11 05:54:55 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: vmstat.c,v 1.82 2004/02/15 02:45:47 tedu Exp $";
+static const char rcsid[] = "$OpenBSD: vmstat.c,v 1.83 2004/06/11 05:54:55 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -106,7 +106,9 @@ struct nlist namelist[] = {
 #if defined(__i386__)
 #define	X_INTRHAND	(X_END)		/* no sysctl */
 	{ "_intrhand" },
-#define	X_INTRSTRAY	(X_END+1)	/* no sysctl */
+#define	X_APICINTRHAND	(X_END+1)		/* no sysctl */
+	{ "_apic_intrhand" },
+#define	X_INTRSTRAY	(X_END+2)	/* no sysctl */
 	{ "_intrstray" },
 #endif
 	{ "" },
@@ -705,6 +707,7 @@ void
 dointr(void)
 {
 	struct intrhand *intrhand[16], *ihp, ih;
+	struct intrhand *apicintrhand[256];
 	u_long inttotal = 0;
 	time_t uptime;
 	u_long intrstray[16];
@@ -724,17 +727,40 @@ dointr(void)
 			ihp = intrhand[i];
 			while (ihp) {
 				if (kvm_read(kd, (u_long)ihp, &ih,
-					     sizeof(ih)) != sizeof(ih))
+				    sizeof(ih)) != sizeof(ih))
 					errx(1, "vmstat: ih: %s",
-					     kvm_geterr(kd));
+					    kvm_geterr(kd));
 				if (kvm_read(kd, (u_long)ih.ih_what, iname,
-					     16) != 16)
+				    16) != 16)
 					errx(1, "vmstat: ih_what: %s",
-					     kvm_geterr(kd));
+					    kvm_geterr(kd));
 				snprintf(fname, sizeof fname, "irq%d/%s", i,
-					 iname);
+				    iname);
 				printf("%-16.16s %10lu %8lu\n", fname,
-				       ih.ih_count, ih.ih_count / uptime);
+				    ih.ih_count, ih.ih_count / uptime);
+				inttotal += ih.ih_count;
+				ihp = ih.ih_next;
+			}
+		}
+	}
+	{
+		kread(X_APICINTRHAND, apicintrhand, sizeof(apicintrhand));
+
+		for (i = 0; i < 256; i++) {
+			ihp = apicintrhand[i];
+			while (ihp) {
+				if (kvm_read(kd, (u_long)ihp, &ih,
+				    sizeof(ih)) != sizeof(ih))
+					errx(1, "vmstat: ih: %s",
+					    kvm_geterr(kd));
+				if (kvm_read(kd, (u_long)ih.ih_what, iname,
+				    16) != 16)
+					errx(1, "vmstat: ih_what: %s",
+					    kvm_geterr(kd));
+				snprintf(fname, sizeof fname, "irq%d/%s", i,
+				    iname);
+				printf("%-16.16s %10lu %8lu\n", fname,
+				    ih.ih_count, ih.ih_count / uptime);
 				inttotal += ih.ih_count;
 				ihp = ih.ih_next;
 			}
