@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_quota.c,v 1.9 2001/11/22 04:41:38 csapuntz Exp $	*/
+/*	$OpenBSD: ufs_quota.c,v 1.10 2002/02/20 18:40:49 csapuntz Exp $	*/
 /*	$NetBSD: ufs_quota.c,v 1.8 1996/02/09 22:36:09 christos Exp $	*/
 
 /*
@@ -70,6 +70,7 @@ struct dquot {
 	u_int16_t dq_type;		/* quota type of this dquot */
 	u_int32_t dq_id;		/* identifier this applies to */
 	struct  vnode *dq_vp;           /* file backing this quota */
+	struct  ucred  *dq_cred;        /* credentials for writing file */
 	struct	dqblk dq_dqb;		/* actual usage & quotas */
 };
 /*
@@ -900,6 +901,8 @@ dqget(vp, id, ump, type, dqp)
 	dq->dq_id = id;
 	dq->dq_vp = dqvp;
 	dq->dq_type = type;
+	crhold(ump->um_cred[type]);
+	dq->dq_cred = ump->um_cred[type];
 	auio.uio_iov = &aiov;
 	auio.uio_iovcnt = 1;
 	aiov.iov_base = (caddr_t)&dq->dq_dqb;
@@ -909,7 +912,7 @@ dqget(vp, id, ump, type, dqp)
 	auio.uio_segflg = UIO_SYSSPACE;
 	auio.uio_rw = UIO_READ;
 	auio.uio_procp = (struct proc *)0;
-	error = VOP_READ(dqvp, &auio, 0, ump->um_cred[type]);
+	error = VOP_READ(dqvp, &auio, 0, dq->dq_cred);
 	if (auio.uio_resid == sizeof(struct dqblk) && error == 0)
 		bzero((caddr_t)&dq->dq_dqb, sizeof(struct dqblk));
 	if (vp != dqvp)
@@ -963,6 +966,8 @@ dqrele(vp, dq)
 		(void) dqsync(vp, dq);
 	if (--dq->dq_cnt > 0)
 		return;
+	crfree(dq->dq_cred);
+	dq->dq_cred = NOCRED;
 	TAILQ_INSERT_TAIL(&dqfreelist, dq, dq_freelist);
 }
 
@@ -979,7 +984,6 @@ dqsync(vp, dq)
 	struct iovec aiov;
 	struct uio auio;
 	int error;
-	struct ufsmount *ump = VFSTOUFS(vp->v_mount);
 
 	if (dq == NODQUOT)
 		panic("dqsync: dquot");
@@ -987,6 +991,7 @@ dqsync(vp, dq)
 		return (0);
 	if ((dqvp = dq->dq_vp) == NULLVP)
 		panic("dqsync: file");
+
 	if (vp != dqvp)
 		vn_lock(dqvp, LK_EXCLUSIVE | LK_RETRY, p);
 	while (dq->dq_flags & DQ_LOCK) {
@@ -1008,7 +1013,7 @@ dqsync(vp, dq)
 	auio.uio_segflg = UIO_SYSSPACE;
 	auio.uio_rw = UIO_WRITE;
 	auio.uio_procp = (struct proc *)0;
-	error = VOP_WRITE(dqvp, &auio, 0, ump->um_cred[dq->dq_type]);
+	error = VOP_WRITE(dqvp, &auio, 0, dq->dq_cred);
 	if (auio.uio_resid && error == 0)
 		error = EIO;
 	if (dq->dq_flags & DQ_WANT)
