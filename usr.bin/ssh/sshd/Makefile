@@ -4,8 +4,6 @@ PROG=	sshd
 BINOWN=	root
 BINMODE=555
 BINDIR=	/usr/sbin
-LDADD=	-lcrypto -ldes -lutil -lz
-DPADD=	${LIBCRYPTO} ${LIBDES} ${LIBUTIL} ${LIBZ}
 MAN=	sshd.8
 
 SRCS=	sshd.c auth-rhosts.c auth-passwd.c auth-rsa.c auth-rh-rsa.c \
@@ -32,3 +30,6 @@ minfd.h: gen_minfd
 	./gen_minfd $(USER_SHELLS) > minfd.h
 
 .include <bsd.prog.mk>
+
+LDADD+=	-lcrypto -ldes -lutil -lz
+DPADD+=	${LIBCRYPTO} ${LIBDES} ${LIBUTIL} ${LIBZ}

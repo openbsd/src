@@ -4,8 +4,6 @@ PROG=	ssh
 BINOWN=	root
 BINMODE=4555
 BINDIR=	/usr/bin
-LDADD=	-lcrypto -ldes -lutil -lz
-DPADD=	${LIBCRYPTO} ${LIBDES} ${LIBUTIL} ${LIBZ}
 MAN=	ssh.1
 LINKS=	${BINDIR}/ssh ${BINDIR}/slogin
 MLINKS=	ssh.1 slogin.1
@@ -28,3 +26,6 @@ minfd.h: gen_minfd
 	./gen_minfd $(USER_SHELLS) > minfd.h
 
 .include <bsd.prog.mk>
+
+LDADD+=	-ldes -lutil -lz -lcrypto
+DPADD+=	${LIBCRYPTO} ${LIBDES} ${LIBUTIL} ${LIBZ}
