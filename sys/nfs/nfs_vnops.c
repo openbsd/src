@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.26 2000/02/02 04:59:07 millert Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.27 2001/02/09 22:26:05 mickey Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -2414,7 +2414,7 @@ nfs_sillyrename(dvp, vp, cnp)
 bad:
 	vrele(sp->s_dvp);
 	crfree(sp->s_cred);
-	free((caddr_t)sp, M_NFSREQ);
+	FREE((caddr_t)sp, M_NFSREQ);
 	return (error);
 }
 
