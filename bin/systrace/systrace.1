@@ -1,4 +1,4 @@
-.\"	$OpenBSD: systrace.1,v 1.35 2003/08/20 00:18:34 deraadt Exp $
+.\"	$OpenBSD: systrace.1,v 1.36 2003/09/04 12:17:44 jmc Exp $
 .\"
 .\" Copyright 2002 Niels Provos <provos@citi.umich.edu>
 .\" All rights reserved.
@@ -38,6 +38,7 @@
 .Nd generate and enforce system call policies
 .Sh SYNOPSIS
 .Nm systrace
+.Bk -words
 .Op Fl AaitUu
 .Op Fl c Ar uid:gid
 .Op Fl d Ar policydir
@@ -45,6 +46,7 @@
 .Op Fl g Ar gui
 .Op Fl p Ar pid
 .Ar command ...
+.Ek
 .Sh DESCRIPTION
 The
 .Nm
@@ -106,7 +108,7 @@ knows about.
 .It Fl g Ar gui
 Specifies an alternative location for the notification user interface.
 .It Fl i
-Inherits the policy - child processes inherit policy of the parent binary.
+Inherits the policy \- child processes inherit policy of the parent binary.
 .It Fl p Ar pid
 Specifies the pid of a process that
 .Nm
@@ -131,7 +133,7 @@ are translated to
 .El
 .Ss POLICY
 The policy is specified via the following grammar:
-.Bd -literal -offset 4
+.Bd -literal -offset 3n
 filter = expression "then" action errorcode logcode
 expression = symbol | "not" expression | "(" expression ")" |
     expression "and" expression | expression "or" expression
@@ -227,14 +229,19 @@ system call.
 .Pp
 Policy entries may contain an appended predicate.
 Predicates have the following format:
-.Bd -literal -offset 4
+.Bd -literal -offset 3n
 ", if" {"user", "group"} {"=", "!=", "\*[Lt]", "\*[Gt]" } {number, string}
 .Ed
 .Pp
 A rule is added to the configured policy only if its predicate
 evaluates to true.
 .Pp
-The environment variables $HOME, $USER and $CWD are substituted in rules.
+The environment variables
+.Ev $HOME ,
+.Ev $USER
+and
+.Ev $CWD
+are substituted in rules.
 Comments, begun by an unquoted
 .Sq \&#
 character and continuing to the end of the line, are ignored.
@@ -246,7 +253,7 @@ privilege elevation feature instead.
 Single system calls can be executed with higher privileges if
 specified by the policy.
 For example,
-.Bd -literal -offset 4
+.Bd -literal -offset 3n
 native-bind: sockaddr eq "inet-[0.0.0.0]:22" then permit as root
 .Ed
 .Pp
@@ -258,7 +265,7 @@ process is executed as root.
 The following statements can be appended after the
 .Va permit
 in a policy to elevate the privileges for the matching system call:
-.Bd -literal -offset 4
+.Bd -literal -offset 3n
 as user
 as user:group
 as :group
@@ -288,7 +295,7 @@ replaced by the underscore character.
 An excerpt from a sample
 .Xr ls 1
 policy might look as follows:
-.Bd -literal -offset 4
+.Bd -literal -offset 2n
 Policy: /bin/ls, Emulation: native
 [...]
    native-fsread: filename eq "$HOME" then permit
