@@ -1,4 +1,4 @@
-/*	$OpenBSD: isakmpd.c,v 1.27 2001/01/27 12:03:33 niklas Exp $	*/
+/*	$OpenBSD: isakmpd.c,v 1.28 2001/04/07 20:36:47 ho Exp $	*/
 /*	$EOM: isakmpd.c,v 1.54 2000/10/05 09:28:22 niklas Exp $	*/
 
 /*
@@ -256,7 +256,7 @@ report (void)
 
   if (!report)
     {
-      log_error ("fopen (\"%s\", \"w\") failed");
+      log_error ("fopen (\"%s\", \"w\") failed", report_file);
       return;
     }
 
