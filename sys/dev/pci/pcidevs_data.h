@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.368 2001/02/21 23:44:13 chris Exp 
+ *		OpenBSD: pcidevs,v 1.369 2001/02/22 01:34:29 chris Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -3679,8 +3679,8 @@ static const struct pci_known_product pci_known_products[] = {
 	    "VT82C561",
 	},
 	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C586A_IDE,
-	    "VT82C586A IDE",
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C571,
+	    "VT82C571 IDE",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C576,
@@ -3739,8 +3739,8 @@ static const struct pci_known_product pci_known_products[] = {
 	    "VT82C570M PCI-ISA",
 	},
 	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C586_IDE,
-	    "VT82C586 IDE",
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C416,
+	    "VT82C416 IDE",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C1595,
