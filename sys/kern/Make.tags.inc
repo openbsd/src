@@ -7,12 +7,23 @@
 # there is a struct tag with the same name (eg., vmmeter).  The real
 # solution would probably be for ctags to generate "struct vmmeter" tags.
 
-COMM=	/sys/conf/*.[ch] \
-	/sys/dev/*.[ch] /sys/dev/scsi/*.[ch] \
-	/sys/kern/*.[ch] /sys/libkern/*.[ch] \
+COMM=	/sys/adosfs/*.[ch] \
+	/sys/compat/*/*.[ch] \
+	/sys/conf/*.[ch] \
+	/sys/ddb/*.[ch] \
+	/sys/dev/*.[ch] /sys/dev/*/*.[ch] \
+	/sys/gnu/*.[ch] \
+	/sys/isofs/*/*.[ch] \
+	/sys/kern/*.[ch] \
+	/sys/lib/libkern/*.[ch] \
 	/sys/miscfs/*/*.[ch] \
-	/sys/net/*.[ch] /sys/netccitt/*.[ch] /sys/netinet/*.[ch] \
-	/sys/netiso/*.[ch] /sys/netns/*.[ch] \
-	/sys/nfs/*.[ch] /sys/sys/*.[ch] \
+	/sys/net/*.[ch] \
+	/sys/netccitt/*.[ch] \
+	/sys/netinet/*.[ch] \
+	/sys/netiso/*.[ch] \
+	/sys/netns/*.[ch] \
+	/sys/nfs/*.[ch] \
+	/sys/scsi/*.[ch] \
 	/sys/ufs/*/*.[ch] \
-	/sys/vm/*.[ch]
+	/sys/vm/*.[ch] \
+	/sys/sys/*.[ch]
