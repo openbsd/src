@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.112 2002/11/20 10:55:26 pb Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.113 2002/11/23 05:24:19 mcbride Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -300,7 +300,7 @@ A
 .Em nat
 rule specifies that IP addresses are to be changed as the packet
 traverses the given interface.
-This technique allows a single IP address
+This technique allows one or more IP addresses
 on the translating host to support network traffic for a larger range of
 machines on an "inside" network.
 Although in theory any IP address can be used on the inside, it is strongly
@@ -601,6 +601,68 @@ The
 option creates a duplicate of the packet and routes it like
 .Em route-to.
 The original packet gets routed as it normally would.
+.Sh POOL OPTIONS
+.Ss <pooltype>
+For 
+.Em nat
+and
+.Em rdr
+rules, (as well as for the
+.Em route-to
+,
+.Em reply-to
+and
+.Em dup-to
+rule options) for which there is a single redirection address which has a
+subnet mask smaller than 32 for IPv4 or 128 for IPv6 (more than one IP
+address), a variety of different methods for assigning this address can be
+used: 
+.Bl -tag -width Fl
+.It Em bitmask
+The
+.Em bitmask
+option applies the network portion of the redirection address to the address
+to be modified (source with nat, destination with rdr).
+.It Em random
+The
+.Em random
+option selects an address at random within the defined block of addresses.
+.It Em source-hash
+The
+.Em source-hash
+option uses a hash of the source address to determine the redirection address,
+ensuring that the redirection address is always the same for a given source.
+The option can additionally be modified as follows:
+.Bl -tag -width "random" -compact -offset indent
+.It Em key
+The
+.Em key
+option for
+.Em source-hash
+allows you to specify a string used by pfctl to generate a key which is hashed
+in with the source address.
+.It Em random
+The
+.Em random
+option for
+.Em source-hash
+randomly generates a key for source-hash every time the ruleset is reloaded.
+.El
+.It Em round-robin
+The
+.Em round-robin
+option loops through the redirection address(s).
+.El
+.Pp
+When more than one redirection address is specified, 
+.Em round-robin
+is the only permitted pool type.
+.Ss static-port
+With
+.Em nat
+rules, the
+.Em static-port
+option prevents pf from modifying the source port on tcp and udp packets.
 .Sh MACROS
 .Em pfctl
 supports macro definition and expansion like:
@@ -1192,7 +1254,9 @@ pf_rule        = action ( "in" | "out" )
                  [ "label" string ] .
 
 nat_rule       = [ "no" ] "nat" "on" ifspec  [ af ] [ protospec ] hosts
-                 [ "->" address [ portspec ] ] .
+		 "from" ipspec "to" ipspec [ portspec ]
+		 [ "->" ( redirhost | "{" redirhost-list "}" ) [ portspec ] ]
+		 [ pooltype ] [ "static-port" ].
 
 binat_rule     = [ "no" ] "binat" "on" interface-name [ af ]
 		 [ "proto" ( proto-name | proto-number ) ]
@@ -1201,7 +1265,8 @@ binat_rule     = [ "no" ] "binat" "on" interface-name [ af ]
 
 rdr_rule       = [ "no" ] "rdr" "on" ifspec [ af ] [ protospec ]
 		 "from" ipspec "to" ipspec [ portspec ]
-		 [ "->" address [ portspec ] ] .
+		 [ "->" ( redirhost | "{" redirhost-list "}" ) [ portspec ] ]
+		 [ pooltype ] .
 
 antispoof_rule = "antispoof" [ "log" ] [ "quick" ]
 		 "for" ( interface-name | "{" interface-list "}" )
@@ -1228,12 +1293,9 @@ icmp6code	= ( icmp6-code-name | icmp6-code-number ) .
 ifspec         = ( [ "!" ] interface-name ) | "{" interface-list "}"
 interface-list = [ "!" ] interface-name [ [ "," ] interface-list ] .
 route          = "fastroute" |
-                 "route-to" "(" interface-name address ")" |
-                 "route-to" interface-name |
-                 "reply-to" "(" interface-name address ")" |
-                 "reply-to" interface-name |
-                 "dup-to" "(" interface-name address ")" |
-                 "dup-to" interface-name
+                 ( "route-to" | "reply-to" | "dup-to" )
+		 ( routehost | "{" routehost-list "}" )
+		 [ pooltype ] .
 af	       = "inet" | "inet6" .
 
 protospec      = "proto" ( proto-name | proto-number | "{" proto-list "}" ) .
@@ -1247,9 +1309,13 @@ hosts          = "all" |
 
 ipspec         = "any" | host | "{" host-list "}" .
 host           = [ "!" ] address [ "/" mask-bits ] .
+redirhost      = address [ "/" mask-bits ] .
+routehost      = ( interface-name [ address [ "/" mask-bits ] ] )
 address        = ( interface-name | "(" interface-name ")" | host-name |
                    ipv4-dotted-quad | ipv6-coloned-hex ) .
 host-list      = host [ [ "," ] host-list ] .
+redirost-list  = redirhost [ [","] redirhost-list ] .
+routehost-list = routehost [ [","] routehost-list ] .
 
 port           = "port" ( unary-op | binary-op | "{" op-list "}" ) .
 portspec       = "port" ( number | name ) [ ":" ( "*" | number | name ) ] .
@@ -1291,6 +1357,8 @@ seconds        = number .
 
 limit-list     = limit [ [ "," ] limit-list ] . 
 limit          = ( "states" | "frags" ) number .
+
+pooltype       = ( "bitmask" | "random" | "source-hash" | "round-robin" ) .
 
 queue-list     = string [ [ "," ] string ] .
 cbq-def        = "cbq" [ "(" cbq-type [ [ "," ] cbq-type ] ")" ] .
