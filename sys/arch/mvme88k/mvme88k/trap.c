@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.18 2001/08/24 22:52:22 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.19 2001/08/26 14:31:12 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -101,7 +101,7 @@ unsigned traptrace = 0;
 #define SYSTEMMODE(PSR) (((struct psr*)&(PSR))->psr_mode != 0)
 
 /* sigh */
-extern int procfs_domem __P((struct proc *, struct proc *, struct pfsnode *pfsp, struct uio *uio));
+extern int procfs_domem __P((struct proc *, struct proc *, void *, struct uio *));
 
 extern void regdump __P((struct trapframe *f));
 

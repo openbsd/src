@@ -1,4 +1,4 @@
-/*	$OpenBSD: process.S,v 1.10 2001/08/24 22:53:15 miod Exp $	*/
+/*	$OpenBSD: process.S,v 1.11 2001/08/26 14:31:12 miod Exp $	*/
 /*
  * Copyright (c) 1996 Nivas Madhur
  * All rights reserved.
@@ -141,9 +141,6 @@ ENTRY(cpu_switch)
 	or.u	r11, r0, hi16(_curproc)
 	ld	r11,r11, lo16(_curproc)
 
-	or.u	r12, r0, hi16(_lastproc)
-	st	r11, r12, lo16(_lastproc)/* lastproc = curproc */
-
 	or.u	r11, r0, hi16(_curproc)
 	st	r0, r11, lo16(_curproc)	/* curproc = NULL */
 
@@ -235,11 +232,6 @@ Lsw2:
 	or.u	r11, r0, hi16(_curproc)
 	st	r9,  r11,lo16(_curproc)		/* curproc = p */
 	
-#ifdef notyet
-	or.u	r2, r0, hi16(_lastproc)
-	ld	r2, r2, lo16(_lastproc)
-#endif /* notyet */
-
 	/* huh??? */
 	or.u	r10, r0, hi16(_curpcb)
 	ld	r10,r10, lo16(_curpcb)

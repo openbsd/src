@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.31 2001/08/11 23:21:14 art Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.32 2001/08/26 14:31:12 miod Exp $	*/
 
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -61,14 +61,23 @@
 
 #include <uvm/uvm_extern.h>
 
+#include <machine/cmmu.h>
 #include <machine/cpu.h>
 #include <machine/cpu_number.h>
 #include <machine/locore.h>
-#include <machine/cmmu.h>
 #include <machine/pte.h>
+#include <machine/trap.h>
 
 extern struct extent *iomap_extent;
 extern vm_map_t   iomap_map;
+
+vm_offset_t iomap_mapin __P((vm_offset_t, vm_size_t, boolean_t));
+void iomap_mapout __P((vm_offset_t, vm_size_t));
+void *mapiodev __P((void *, int));
+void unmapiodev __P((void *, int));
+vm_offset_t mapiospace __P((caddr_t, int));
+void unmapiospace __P((vm_offset_t));
+int badpaddr __P((caddr_t, int));
 
 /*
  * Finish a fork operation, with process p2 nearly set up.
@@ -90,10 +99,8 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack, size_t stacksize)
 		void *proc;
 	} *ksfp;
 	extern struct pcb *curpcb;
-	extern void proc_do_uret(), child_return();
-	extern void proc_trampoline();
-	extern void savectx();
-        extern void save_u_area();
+	extern void proc_trampoline __P((void));
+        extern void save_u_area __P((struct proc *, vm_offset_t));
 
 	cpu = cpu_number();
 /*	
@@ -108,7 +115,7 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack, size_t stacksize)
 	p2->p_md.md_tf = USER_REGS(p2);
 
 	/*XXX these may not be necessary nivas */
-	save_u_area(p2, p2->p_addr);
+	save_u_area(p2, (vm_offset_t)p2->p_addr);
 #ifdef notneeded 
 	pmap_activate(p2);
 #endif /* notneeded */
@@ -143,8 +150,6 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack, size_t stacksize)
 
 	p2->p_addr->u_pcb.kernel_state.pcb_sp = (u_int)ksfp;
 	p2->p_addr->u_pcb.kernel_state.pcb_pc = (u_int)proc_trampoline;
-
-	return;
 }
 
 void
@@ -176,8 +181,6 @@ cpu_set_kpc(struct proc *p, void (*func)(void *), void *arg)
 void
 cpu_exit(struct proc *p)
 {
-	extern volatile void switch_exit();
-
 	(void) splimp();
 
 	uvmexp.swtch++;
@@ -188,7 +191,6 @@ cpu_exit(struct proc *p)
 int
 cpu_coredump(struct proc *p, struct vnode *vp, struct ucred *cred, struct core *corep)
 {
-
 	return (vn_rdwr(UIO_WRITE, vp, (caddr_t) p->p_addr, ctob(UPAGES),
 	    (off_t)0, UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT, cred, NULL, p));
 }
@@ -202,7 +204,8 @@ cpu_coredump(struct proc *p, struct vnode *vp, struct ucred *cred, struct core *
 void
 cpu_swapin(struct proc *p)
 {
-        extern void save_u_area();
+        extern void save_u_area __P((struct proc *, vm_offset_t));
+
 	save_u_area(p, (vm_offset_t)p->p_addr);
 }
 
@@ -457,8 +460,6 @@ badvaddr(vm_offset_t va, int size)
 	case 4:
 		x = *(volatile unsigned long *)va;
 		break;
-	default:
-		break;	
 	}
 	return(x);
 }
@@ -470,7 +471,7 @@ badpaddr(caddr_t pa, int size)
 	int val;
 
 	/*
-	 * Do not allow crossing the page boundary.
+	 * Do not allow crossing a page boundary.
 	 */
 	if (((int)pa & PGOFSET) + size > NBPG) {
 		return -1;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmmu.h,v 1.4 2001/08/11 01:55:52 miod Exp $ */
+/*	$OpenBSD: cmmu.h,v 1.5 2001/08/26 14:31:07 miod Exp $ */
 /* 
  * Mach Operating System
  * Copyright (c) 1993-1992 Carnegie Mellon University
@@ -76,7 +76,7 @@ void show_apr(unsigned value);
 void show_sctr(unsigned value);
 #endif
 
-#if DDB
+#ifdef DDB
 void cmmu_show_translation(unsigned, unsigned, unsigned, int);
 void cmmu_cache_state(unsigned, unsigned);
 void show_cmmu_info(unsigned);
@@ -87,17 +87,11 @@ void show_cmmu_info(unsigned);
  */
 
 unsigned cmmu_cpu_number(void);
-#if !DDB
-static
-#endif /* !DDB */
 unsigned cmmu_remote_get(unsigned cpu, unsigned r, unsigned data);
 unsigned cmmu_get_idr(unsigned data);
 void cmmu_init(void);
 void cmmu_shutdown_now(void);
 void cmmu_parity_enable(void);
-#if !DDB
-static
-#endif /* !DDB */
 void setup_board_config(void);
 void setup_cmmu_config(void);
 void cmmu_dump_config(void);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: m18x_cmmu.c,v 1.12 2001/08/24 22:48:26 miod Exp $	*/
+/*	$OpenBSD: m18x_cmmu.c,v 1.13 2001/08/26 14:31:12 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -187,6 +187,8 @@ void m18x_cmmu_set __P((int reg, unsigned val, int flags, int num,
 void m18x_cmmu_sync_cache __P((vm_offset_t physaddr, int size));
 void m18x_cmmu_sync_inval_cache __P((vm_offset_t physaddr, int size));
 void m18x_cmmu_inval_cache __P((vm_offset_t physaddr, int size));
+int m18x_cmmu_alive __P((int));
+void m18x_cmmu_store __P((int, int, unsigned));
 
 #ifdef CMMU_DEBUG
 void
@@ -283,8 +285,7 @@ struct board_config {
 	int supported;
 	int ncpus;
 	int ncmmus;
-} bd_config[] =
-{
+} bd_config[] = {
 	/* sup, CPU MMU */
 	{  1,  4,  8}, /* 4P128 - 4P512 */
 	{  1,  2,  8}, /* 2P128 - 2P512 */
@@ -308,8 +309,7 @@ struct board_config {
  * Structure for accessing MMUS properly.
  */
 
-struct cmmu cmmu[MAX_CMMUS] =
-{
+struct cmmu cmmu[MAX_CMMUS] = {
 	/* addr    cpu       mode           access
       alive   addr mask */
 	{(void *)VME_CMMU_I0, -1, INST_CMMU, CMMU_ACS_BOTH, 
@@ -368,8 +368,6 @@ m18x_setup_board_config()
 		max_cmmus = bd_config[vme188_config].ncmmus;
 		break;
 #endif /* MVME188 */
-	default:
-		panic("m18x_setup_board_config: Unknown CPU type.");
 	}
 	cpu_cmmu_ratio = max_cmmus / max_cpus;
 	switch (bd_config[vme188_config].supported) {
@@ -649,18 +647,16 @@ m18x_cmmu_dump_config()
 				  cmmu[cmmu_num].cmmu_addr_match ? "TRUE" : "FALSE");
 		}
 #endif /* MVME188 */
-	default:
-		DEBUG_MSG("Unknown CPU\n\n");
 	}
 }
 
 /* To be implemented as a macro for speedup - XXX-em */
-static void 
+void
 m18x_cmmu_store(mmu, reg, val)
 	int mmu, reg;
 	unsigned val;
 {
-	*(volatile unsigned *)(reg + (char*)(cmmu[mmu].cmmu_regs)) = val;
+	*(volatile unsigned *)(reg + (char *)(cmmu[mmu].cmmu_regs)) = val;
 }
 
 int 

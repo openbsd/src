@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.11 2001/08/12 21:34:48 miod Exp $ */
+/*	$OpenBSD: db_machdep.h,v 1.12 2001/08/26 14:31:07 miod Exp $ */
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -42,9 +42,9 @@
 
 #include <vm/vm_param.h>
 
-#define BKPT_SIZE        (4)                /* number of bytes in bkpt inst. */
-#define BKPT_INST       (0xF000D082U)             /* tb0, 0,r0, vector 132 */
-#define BKPT_SET(inst)  (BKPT_INST)
+#define BKPT_SIZE	(4)		/* number of bytes in bkpt inst. */
+#define BKPT_INST	(0xF000D082U)	/* tb0, 0,r0, vector 132 */
+#define BKPT_SET(inst)	(BKPT_INST)
 
 /* Entry trap for the debugger - used for inline assembly breaks*/
 #define ENTRY_ASM       	"tb0 0, r0, 132"

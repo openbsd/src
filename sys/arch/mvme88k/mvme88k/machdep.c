@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.55 2001/08/24 22:54:51 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.56 2001/08/26 14:31:12 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -80,17 +80,18 @@
 
 #include <net/netisr.h>
 
-#include <machine/locore.h>
+#include <machine/asm_macro.h>   /* enable/disable interrupts */
+#include <machine/bug.h>
+#include <machine/cmmu.h>
 #include <machine/cpu.h>
 #include <machine/cpu_number.h>
-#include <machine/asm_macro.h>   /* enable/disable interrupts */
-#include <machine/reg.h>
-#include <machine/trap.h>
-#include <machine/bug.h>
-#include <machine/prom.h>
+#include <machine/kcore.h>
+#include <machine/locore.h>
 #include <machine/m88100.h>  		/* DMT_VALID        */
 #include <machine/m882xx.h>  		/* CMMU stuff       */
-#include <machine/kcore.h>
+#include <machine/prom.h>
+#include <machine/reg.h>
+#include <machine/trap.h>
 
 #include <dev/cons.h>
 
@@ -110,9 +111,9 @@
 #endif /* DDB */
 
 #if DDB
-   #define DEBUG_MSG db_printf
+#define DEBUG_MSG db_printf
 #else
-   #define DEBUG_MSG printf
+#define DEBUG_MSG printf
 #endif /* DDB */
 static int waittime = -1;
 
@@ -122,7 +123,7 @@ vm_offset_t interrupt_stack[MAX_CPUS] = {0};
 /* machine dependant function pointers. */
 struct funcp mdfp;
 
-/* forwards */
+/* prototypes */
 void m88100_Xfp_precise __P((void));
 void m88110_Xfp_precise __P((void));
 void setupiackvectors __P((void));
@@ -130,6 +131,13 @@ void regdump __P((struct trapframe *f));
 void dumpsys __P((void));
 void consinit __P((void));
 void kdb_init __P((void));
+vm_offset_t size_memory __P((void));
+int getcpuspeed __P((void));
+int getscsiid __P((void));
+void identifycpu __P((void));
+void save_u_area __P((struct proc *, vm_offset_t));
+void load_u_area __P((struct proc *));
+void dumpconf __P((void));
 
 volatile unsigned char *ivec[] = {
 	(unsigned char *)0xFFFE0003, /* not used, no such thing as int 0 */
@@ -161,24 +169,23 @@ u_char *int_mask_level = (u_char *)INT_MASK_LEVEL;
 u_char *int_pri_level = (u_char *)INT_PRI_LEVEL;
 #endif /* defined(MVME187) || defined(MVME197) */
 
-u_char *iackaddr;
+#if defined(MVME187) || defined(MVME197)
 volatile u_char *pcc2intr_mask;
 volatile u_char *pcc2intr_ipl;
 volatile vm_offset_t bugromva;
-volatile vm_offset_t kernelva;
-volatile vm_offset_t utilva;
 volatile vm_offset_t sramva;
 volatile vm_offset_t obiova;
+#endif /* defined(MVME187) || defined(MVME197) */
+#ifdef MVME188
+volatile vm_offset_t utilva;
+#endif
 
 int ssir;
 int want_ast;
 int want_resched;
 
 int physmem;	  /* available physical memory, in pages */
-vm_offset_t avail_end, avail_start, avail_next;
-int foodebug = 0;    /* for size_memory() */
 int longformat = 1;  /* for regdump() */
-int BugWorks = 0;
 /*
  * safepri is a safe priority for sleep to set for a spin-wait
  * during autoconfiguration or after a panic.
@@ -204,7 +211,6 @@ vm_map_t   iomap_map;
 /*
  * Declare these as initialized data so we can patch them.
  */
-int   nswbuf = 0;
 #ifdef	NBUF
 int   nbuf = NBUF;
 #else
@@ -215,18 +221,18 @@ int   bufpages = BUFPAGES;
 #else
 int   bufpages = 0;
 #endif
-int *nofault;
 
 caddr_t allocsys __P((caddr_t));
 
 /*
  * Info for CTL_HW
  */
-char  machine[] = "mvme88k";	 /* cpu "architecture" */
+char  machine[] = MACHINE;	 /* cpu "architecture" */
 char  cpu_model[120];
 extern unsigned master_cpu;
 
 struct bugenv bugargs;
+
 struct kernel {
 	void *entry;
 	void *symtab;
@@ -247,25 +253,12 @@ int bootdev;   /* read in locore.S */
 int cputyp;
 int cpuspeed = 25;   /* 25 MHZ XXX should be read from NVRAM */
 
-#ifndef roundup
-   #define roundup(value, stride) (((unsigned)(value) + (stride) - 1) & ~((stride)-1))
-#endif /* roundup */
-
-vm_size_t   mem_size;
-vm_size_t   rawmem_size;
 vm_offset_t first_addr = 0;
 vm_offset_t last_addr = 0;
 
-vm_offset_t avail_start, avail_next, avail_end;
+vm_offset_t avail_start, avail_end;
 vm_offset_t virtual_avail, virtual_end;
-vm_offset_t pcc2consvaddr, clconsvaddr;
-vm_offset_t miniroot;
 
-void     *end_loaded;
-int      bootdev;
-int      no_symbols = 1;
-
-struct proc *lastproc;
 pcb_t    curpcb;
 extern struct user *proc0paddr;
 
@@ -285,7 +278,7 @@ static struct consdev bootcons = {
 	bootcngetc, 
 	(void (*))bootcnputc,
 	bootcnpollc, NULL, makedev(14,0), 1};
-void  cmmu_init(void);
+
 /*
  * Console initialization: called early on from main,
  * before vm init or startup.  Do enough configuration
@@ -315,7 +308,7 @@ consinit()
  * until we find non-memory.
  */
 vm_offset_t
-size_memory(void)
+size_memory()
 {
 	volatile unsigned int *look;
 	unsigned int *max;
@@ -332,8 +325,7 @@ size_memory(void)
 		unsigned save;
 
 		/* if can't access, we've reached the end */
-		if (foodebug) printf("%x\n", look);
-		if (badwordaddr((void*)look)) {
+		if (badwordaddr((vaddr_t)look)) {
 #if defined(DEBUG)
 			printf("%x\n", look);
 #endif
@@ -362,7 +354,7 @@ size_memory(void)
 }
 
 int
-getcpuspeed(void)
+getcpuspeed()
 {
 	struct bugbrdid brdid;
 	int speed = 0;
@@ -379,7 +371,7 @@ getcpuspeed(void)
 }
 
 int
-getscsiid(void)
+getscsiid()
 {
 	struct bugbrdid brdid;
 	int scsiid = 0;
@@ -436,7 +428,7 @@ load_u_area(struct proc *p)
  * These function pointers are set in dev/clock.c and dev/sclock.c
  */
 void 
-cpu_initclocks(void)
+cpu_initclocks()
 {
 #ifdef DEBUG
 	printf("cpu_initclocks(): ");
@@ -590,8 +582,6 @@ cpu_startup()
 		}
 		break;
 #endif
-	default:
-		panic("startup: unknown cpu type.");
 	}
 
 	/*
@@ -668,7 +658,7 @@ cpu_startup()
 	}
 	iomap_extent = extent_create("iomap", iomapbase,
 	    iomapbase + IOMAP_SIZE, M_DEVBUF, NULL, 0, EX_NOWAIT);
-	if (iomap_extent == 0)
+	if (iomap_extent == NULL)
 		panic("unable to allocate extent for iomap");
 
 	mb_map = uvm_km_suballoc(kernel_map, (vaddr_t *)&mbutl, &maxaddr,
@@ -678,30 +668,10 @@ cpu_startup()
 	printf("using %d buffers containing %d bytes of memory\n", nbuf,
 	    bufpages * PAGE_SIZE);
 
-#if 0 /* #ifdef MFS */
-	/*
-	 * Check to see if a mini-root was loaded into memory. It resides
-	 * at the start of the next page just after the end of BSS.
-	 */
-	{
-		extern void *smini;
-
-		if (miniroot && (boothowto & RB_MINIROOT)) {
-			boothowto |= RB_DFLTROOT;
-			mfs_initminiroot(miniroot);
-		}
-	}
-#endif
-
 	/*
 	 * Set up buffers, so they can be used to read disk labels.
 	 */
 	bufinit();
-
-	/*
-	 * Configure the system.
-	 */
-	nofault = NULL;
 
 	/*
 	 * zero out intr_handlers
@@ -709,6 +679,9 @@ cpu_startup()
 	bzero((void *)intr_handlers, 256 * sizeof(struct intrhand *));
 	setupiackvectors();
 
+	/*
+	 * Configure the system.
+	 */
 	if (boothowto & RB_CONFIG) {
 #ifdef BOOT_CONFIG
 		user_config();
@@ -783,11 +756,6 @@ allocsys(v)
 	if (bufpages > nbuf * MAXBSIZE / PAGE_SIZE)
 		bufpages = nbuf * MAXBSIZE / PAGE_SIZE;
 
-	if (nswbuf == 0) {
-		nswbuf = (nbuf / 2) &~ 1;  /* force even */
-		if (nswbuf > 256)
-			nswbuf = 256;	  /* sanity */
-	}
 	valloc(buf, struct buf, nbuf);
 
 	return v;
@@ -1107,22 +1075,29 @@ register_t *retval;
 	return (EJUSTRETURN);
 }
 
-void
+__dead void
 _doboot()
 {
 	cmmu_shutdown_now();
 	bugreturn();
+	/*NOTREACHED*/
+	for (;;);		/* appease gcc */
 }
 
-void
+__dead void
 boot(howto)
 	register int howto;
 {
+	/* If system is cold, just halt. */
+	if (cold) {
+		howto |= RB_HALT;
+		goto haltsys;
+	}
+
 	/* take a snap shot before clobbering any registers */
-#if 0
 	if (curproc && curproc->p_addr)
 		savectx(curpcb);
-#endif 
+
 	boothowto = howto;
 	if ((howto & RB_NOSYNC) == 0 && waittime < 0) {
 		extern struct proc proc0;
@@ -1144,24 +1119,26 @@ boot(howto)
 	/* Disable interrupts. */
 	splhigh();
 
+	/* If rebooting and a dump is requested, do it. */
+	if (howto & RB_DUMP)
+		dumpsys();
+
+haltsys:
+	/* Run any shutdown hooks. */
+	doshutdownhooks();
+
 	if (howto & RB_HALT) {
 		printf("halted\n\n");
 	} else {
-		/* If rebooting and a dump is requested, do it. */
-		if (howto & RB_DUMP)
-			dumpsys();
-
-		/* Run any shutdown hooks. */
-		doshutdownhooks();
+		doboot();
 	}
-	doboot();
-	/*NOTREACHED*/
 	for (;;);  /* to keep compiler happy, and me from going crazy */
+	/*NOTREACHED*/
 }
 
 #ifdef MVME188
 void 
-m188_reset(void)
+m188_reset()
 {
 	volatile int cnt;
 
@@ -1348,7 +1325,7 @@ void
 setupiackvectors()
 {
 	register u_char *vaddr;
-#undef MAP_VEC /* Swicthing to new virtual addresses XXX smurph */
+#undef MAP_VEC /* Switching to new virtual addresses XXX smurph */
 #ifdef MAP_VEC
 	extern vm_offset_t iomap_mapin(vm_offset_t, vm_size_t,  boolean_t);
 #endif
@@ -1394,8 +1371,6 @@ setupiackvectors()
 #endif
 		break;
 #endif /* MVME197 */
-	default:
-		panic("setupiackvectors: unknow cpu");
 	}
 #ifdef DEBUG
 	printf("interrupt ACK address mapped at 0x%x\n", vaddr);
@@ -1417,7 +1392,7 @@ setupiackvectors()
 
 /* gets an interrupt stack for slave processors */
 vm_offset_t 
-get_slave_stack(void)
+get_slave_stack()
 {
 	vm_offset_t addr = 0;
 	addr = (vm_offset_t)uvm_km_zalloc(kernel_map, INTSTACK_SIZE + 4096);
@@ -1439,7 +1414,7 @@ get_slave_stack(void)
  *
  * Called from "mvme88k/locore.S"
  */
-void slave_pre_main(void)
+void slave_pre_main()
 {
    set_cpu_number(cmmu_cpu_number()); /* Determine cpu number by CMMU */
    splhigh();
@@ -1448,7 +1423,7 @@ void slave_pre_main(void)
 
 /* dummy main routine for slave processors */
 int
-slave_main(void)
+slave_main()
 {
 	printf("slave CPU%d started\n", cpu_number());
 	while (-1); /* spin forever */
@@ -1618,7 +1593,7 @@ m188_ext_int(u_int v, struct m88100_saved_state *eframe)
 		/* find the first bit set in the current mask */
 		intbit = ff1(cur_mask);
 		if (OBIO_INTERRUPT_MASK & (1 << intbit)) {
-			if (guarded_access(ivec[level], 4, &vec) == EFAULT) {
+			if (guarded_access(ivec[level], 4, (u_char *)&vec) == EFAULT) {
 				printf("Unable to get vector for this vmebus interrupt (level %x)\n", level);
 				goto out_m188;
 			}
@@ -1638,7 +1613,7 @@ m188_ext_int(u_int v, struct m88100_saved_state *eframe)
 				panic("m188_ext_int");
 			}
 		} else if (VME_INTERRUPT_MASK & (1 << intbit)) {
-			if (guarded_access(ivec[level], 4, &vec) == EFAULT) {
+			if (guarded_access(ivec[level], 4, (u_char *)&vec) == EFAULT) {
 				printf("Unable to get vector for this vmebus interrupt (level %x)\n", level);
 				goto out_m188;
 			}
@@ -2068,7 +2043,7 @@ dosoftint()
 }
 
 int
-spl0(void)
+spl0()
 {
 	int x;
 	x = splsoftclock();
@@ -2206,11 +2181,12 @@ regdump(struct trapframe *f)
  */
 
 void
-mvme_bootstrap(void)
+mvme_bootstrap()
 {
 	extern int kernelstart;
-	extern vm_offset_t size_memory(void);
 	extern struct consdev *cn_tab;
+	extern void set_tcfp __P((void));
+
 	struct bugbrdid brdid;
 
 	cold = 1;  /* we are still booting */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmmu.c,v 1.11 2001/05/21 22:19:50 miod Exp $	*/
+/*	$OpenBSD: cmmu.c,v 1.12 2001/08/26 14:31:12 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -60,10 +60,11 @@
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/simplelock.h>
+
 #include <machine/board.h>
+#include <machine/cmmu.h>
 #include <machine/cpus.h>
 #include <machine/cpu_number.h>
-#include <machine/cmmu.h>
 #if defined(MVME187) || defined(MVME188)
 #include <machine/m882xx.h>
 #endif /* defined(MVME187) || defined(MVME188) */
@@ -86,7 +87,6 @@ unsigned cache_policy = /*CACHE_INH*/ 0;
 unsigned cpu_sets[MAX_CPUS];
 unsigned number_cpus = 0;
 unsigned master_cpu = 0;
-int      vme188_config;
 int      max_cpus, max_cmmus;
 int      cpu_cmmu_ratio;
 

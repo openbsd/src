@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.39 2001/08/12 19:28:38 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.40 2001/08/26 14:31:12 miod Exp $	*/
 /*
  * Copyright (c) 1996 Nivas Madhur
  * All rights reserved.
@@ -66,6 +66,7 @@
 #include <machine/cpu_number.h>
 #include <machine/m882xx.h>		/* CMMU stuff */
 #include <machine/pmap_table.h>
+#include <machine/pte.h>
 
 #include <mvme88k/dev/pcctworeg.h>
 #include <mvme88k/dev/clreg.h>
@@ -73,7 +74,7 @@
 /*
  *  VM externals
  */
-extern vm_offset_t      avail_start, avail_next, avail_end;
+extern vm_offset_t      avail_start, avail_end;
 extern vm_offset_t      virtual_avail, virtual_end;
 
 /*
@@ -330,6 +331,15 @@ extern vm_offset_t bugromva;
 extern vm_offset_t sramva;
 extern vm_offset_t obiova;
 
+void flush_atc_entry __P((long, vm_offset_t, int));
+unsigned int m88k_protection __P((pmap_t, vm_prot_t));
+pt_entry_t *pmap_expand_kmap __P((vm_offset_t, vm_prot_t));
+void pmap_free_tables __P((pmap_t));
+void pmap_remove_range __P((pmap_t, vm_offset_t, vm_offset_t));
+void pmap_copy_on_write __P((vm_offset_t));
+void pmap_expand __P((pmap_t, vm_offset_t));
+void cache_flush_loop __P((int, vm_offset_t, int));
+
 /*
  * Rooutine:	FLUSH_ATC_ENTRY
  *
@@ -548,7 +558,7 @@ pmap_map(vm_offset_t virt, vm_offset_t start, vm_offset_t end, vm_prot_t prot)
 	pt_entry_t	*pte;
 	pte_template_t	template;
 #ifdef MVME197
-	static m197_atc_initialized = FALSE;
+	static int m197_atc_initialized = FALSE;
 #endif
 	/*
 	 * cache mode is passed in the top 16 bits.
@@ -624,7 +634,6 @@ pmap_map(vm_offset_t virt, vm_offset_t start, vm_offset_t end, vm_prot_t prot)
  * Calls:
  *	m88k_protection
  *	BATC_BLK_ALIGNED
- *	cmmu_store
  *	pmap_pte
  *	pmap_expand_kmap
  *
@@ -1268,7 +1277,6 @@ pmap_bootstrap(vm_offset_t load_start,
 		printf("running virtual - avail_next 0x%x\n", *phys_start);
 	}
 #endif
-	avail_next = *phys_start;
 } /* pmap_bootstrap() */
 
 

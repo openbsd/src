@@ -1,4 +1,4 @@
-/*	$OpenBSD: board.h,v 1.10 2001/08/12 12:03:02 heko Exp $ */
+/*	$OpenBSD: board.h,v 1.11 2001/08/26 14:31:07 miod Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * All rights reserved.
@@ -53,13 +53,11 @@
  * it'll be unsigned in both ANSI and traditional.
  */
 #if defined(_LOCORE)
-#	define U(num)	num
+#define U(num)	num
+#elif defined(__STDC__)
+#define U(num)	num ## U
 #else
-#  if defined(__STDC__)
-#	define U(num)	num ## U
-#  else
-#	define U(num)	num/**/U
-#  endif
+#define U(num)	num/**/U
 #endif
 #define UDEFINED
 

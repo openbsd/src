@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_table.c,v 1.6 2001/07/04 08:09:24 niklas Exp $	*/
+/*	$OpenBSD: pmap_table.c,v 1.7 2001/08/26 14:31:12 miod Exp $	*/
 
 /* 
  * Mach Operating System
@@ -93,9 +93,6 @@ pmap_table_build(endoftext)
 		bt = m197_board_table;
 		break;
 #endif 
-	default:
-		panic("pmap_table_build: Unknown CPU type.");
-		/* NOT REACHED */
 	}
 
 	/* round off all entries to nearest segment */

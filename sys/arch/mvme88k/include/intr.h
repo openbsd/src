@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.2 2001/03/16 00:05:24 miod Exp $	*/
+/*	$OpenBSD: intr.h,v 1.3 2001/08/26 14:31:07 miod Exp $	*/
 /*
  * Copyright (C) 2000 Steve Murphree, Jr.
  * All rights reserved.
@@ -84,7 +84,7 @@ extern int intrcnt[M88K_NIRQ];
 #ifdef _KERNEL
 #ifndef _LOCORE
 unsigned setipl __P((unsigned level));
-#if DDB
+#ifdef DDB
 unsigned db_setipl __P((unsigned level));
 #endif 
 int spl0 __P((void));
@@ -121,7 +121,7 @@ above...
 
 #define splx(x)		((x) ? setipl((x)) : spl0())
 
-#if DDB
+#ifdef DDB
 #define db_splx(x)	db_setipl((x))
 #define db_splhigh()    db_setipl(IPL_HIGH)
 #endif /* DDB */

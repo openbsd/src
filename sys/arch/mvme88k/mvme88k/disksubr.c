@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.15 2001/04/14 00:11:45 miod Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.16 2001/08/26 14:31:12 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1995 Dale Rahn.
@@ -325,7 +325,7 @@ setdisklabel(olp, nlp, openmask, clp)
 int
 writedisklabel(dev, strat, lp, clp)
 	dev_t dev;
-	void (*strat)();
+	void (*strat) __P((struct buf *));
 	register struct disklabel *lp;
 	struct cpu_disklabel *clp;
 {

@@ -1,4 +1,4 @@
-/* $OpenBSD: locore_c_routines.c,v 1.12 2001/08/07 22:18:07 miod Exp $	*/
+/* $OpenBSD: locore_c_routines.c,v 1.13 2001/08/26 14:31:12 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -25,37 +25,33 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
-/*
- * HISTORY
- *****************************************************************RCS**/
-/* This file created by Omron Corporation, 1990. */
 
 #include "assym.h"
 
 #include <sys/types.h>
 #include <sys/systm.h>
 
-#include <machine/param.h>
-#include <machine/cpu_number.h>		/* cpu_number()		*/
-#include <machine/board.h>		/* m188 bit defines	*/
-#include <machine/m88100.h>		/* DMT_VALID		*/
 #include <machine/asm.h>		/* END_OF_VECTOR_LIST, etc.	*/
 #include <machine/asm_macro.h>		/* enable/disable interrupts	*/
+#include <machine/board.h>		/* m188 bit defines	*/
+#include <machine/cmmu.h>
+#include <machine/cpu_number.h>		/* cpu_number()		*/
 #include <machine/locore.h>
+#include <machine/m88100.h>		/* DMT_VALID		*/
+#include <machine/param.h>
+
 #ifdef DDB
-   #include <ddb/db_output.h>		/* db_printf()		*/
+#include <ddb/db_output.h>		/* db_printf()		*/
 #endif /* DDB */
 
-
 #if defined(DDB) && defined(JEFF_DEBUG)
-   #define DATA_DEBUG  1
+#define DATA_DEBUG
 #endif
 
-
 #if DDB
-   #define DEBUG_MSG db_printf
+#define DEBUG_MSG db_printf
 #else
-   #define DEBUG_MSG printf
+#define DEBUG_MSG printf
 #endif /* DDB */
 
 /*
@@ -65,22 +61,19 @@
 #define DMT_HALF	2
 #define DMT_WORD	4
 
-extern volatile unsigned int * int_mask_reg[MAX_CPUS]; /* in machdep.c */
-extern volatile u_char *int_mask_level;   /* in machdep.c */
-extern unsigned master_cpu;      /* in cmmu.c */
+extern volatile u_char *int_mask_level;	/* machdep.c */
 
 static struct {
 	unsigned char    offset;
 	unsigned char    size;
-} dmt_en_info[16] =
-{
+} dmt_en_info[16] = {
 	{0, 0}, {3, DMT_BYTE}, {2, DMT_BYTE}, {2, DMT_HALF},
 	{1, DMT_BYTE}, {0, 0}, {0, 0}, {0, 0},
 	{0, DMT_BYTE}, {0, 0}, {0, 0}, {0, 0},
 	{0, DMT_HALF}, {0, 0}, {0, 0}, {0, DMT_WORD}
 };
 
-#if DATA_DEBUG
+#ifdef DATA_DEBUG
 int data_access_emulation_debug = 0;
 static char *bytes[] =
 {
@@ -89,10 +82,15 @@ static char *bytes[] =
    "x___", "x__x", "x_x_", "x_xx",
    "xx__", "xx_x", "xxx_", "xxxx",
 };
-   #define DAE_DEBUG(stuff) {						\
+#define DAE_DEBUG(stuff) {						\
 	if (data_access_emulation_debug != 0) { stuff ;}   }
 #else
-   #define DAE_DEBUG(stuff)
+#define DAE_DEBUG(stuff)
+#endif
+
+void setlevel __P((int));
+#ifdef DDB
+void db_setlevel __P((int));
 #endif
 
 #if defined(MVME187) || defined(MVME188)
@@ -137,8 +135,10 @@ dae_print(unsigned *eframe)
 
 	}
 }
+#endif /* defined(MVME187) || defined(MVME188) */
 
-void data_access_emulation(unsigned *eframe)
+void
+data_access_emulation(unsigned *eframe)
 {
    register int x;
    register struct dmt_reg *dmtx;
@@ -280,7 +280,6 @@ void data_access_emulation(unsigned *eframe)
    }
    eframe[EF_DMT0] = 0;
 }
-#endif /* defined(MVME187) || defined(MVME188) */
 
 /*
  ***********************************************************************
@@ -297,21 +296,14 @@ typedef struct {
    word_two;
 } m88k_exception_vector_area;
 
+void vector_init __P((m88k_exception_vector_area *, unsigned *));
+
 #define BRANCH(FROM, TO) (EMPTY_BR | ((unsigned)(TO) - (unsigned)(FROM)) >> 2)
 
-#if 0
-   #define SET_VECTOR(NUM, to, VALUE) {                                       \
-	unsigned _NUM = (unsigned)(NUM);                                   \
-	unsigned _VALUE = (unsigned)(VALUE);                               \
-	vector[_NUM].word_one = NO_OP; 	                                   \
-	vector[_NUM].word_two = BRANCH(&vector[_NUM].word_two, _VALUE);    \
-}
-#else
-   #define SET_VECTOR(NUM, to, VALUE) {                                       \
+#define SET_VECTOR(NUM, to, VALUE) {                                       \
 	vector[NUM].word_one = NO_OP; 	                                   \
 	vector[NUM].word_two = BRANCH(&vector[NUM].word_two, VALUE);    \
 }
-#endif 
 /*
  * vector_init(vector, vector_init_list)
  *
@@ -325,22 +317,14 @@ vector_init(m88k_exception_vector_area *vector, unsigned *vector_init_list)
 {
 	unsigned num;
 	unsigned vec;
-#if defined(MVME187) || defined(MVME188)
-	extern void sigsys(), sigtrap(), stepbpt(), userbpt();
-	extern void syscall_handler();
-#endif /* defined(MVME187) || defined(MVME188) */
-#ifdef MVME197
-	extern void m197_sigsys(), m197_sigtrap(), m197_stepbpt(), m197_userbpt();
-	extern void m197_syscall_handler();
-#endif /* MVME197 */
 
 	for (num = 0; (vec = vector_init_list[num]) != END_OF_VECTOR_LIST; num++) {
 		if (vec != PREDEFINED_BY_ROM)
 			SET_VECTOR(num, to, vec);
-		asm ("or  r0, r0, r0");
-		asm ("or  r0, r0, r0");
-		asm ("or  r0, r0, r0");
-		asm ("or  r0, r0, r0");
+		__asm__ ("or  r0, r0, r0");
+		__asm__ ("or  r0, r0, r0");
+		__asm__ ("or  r0, r0, r0");
+		__asm__ ("or  r0, r0, r0");
 	}
 
 	switch (cputyp) {
@@ -388,9 +372,11 @@ vector_init(m88k_exception_vector_area *vector, unsigned *vector_init_list)
 }
 
 #ifdef MVME188
+#if 0
 unsigned int int_mask_shadow[MAX_CPUS] = {0,0,0,0};
-unsigned int m188_curspl[MAX_CPUS] = {0,0,0,0};
 unsigned int blocked_interrupts_mask;
+#endif
+unsigned int m188_curspl[MAX_CPUS] = {0,0,0,0};
 
 unsigned int int_mask_val[INT_LEVEL] = {
 	MASK_LVL_0, 
@@ -419,6 +405,7 @@ safe_level(mask, curlevel)
 	printf("safe_level: no safe level for mask 0x%08x level %d found\n",
 	       mask, curlevel);
 	panic("safe_level");
+	/* NOTREACHED */
 }
 
 void
@@ -473,6 +460,7 @@ db_setlevel(int level)
 }
 #endif /* DDB */
 
+#if 0
 void
 block_obio_interrupt(unsigned mask)
 {
@@ -484,6 +472,7 @@ unblock_obio_interrupt(unsigned mask)
 {
 	blocked_interrupts_mask |= ~mask;
 }
+#endif
 #endif  /* MVME188 */
 
 unsigned 
@@ -492,7 +481,7 @@ spl(void)
 	unsigned curspl;
 	m88k_psr_type psr; /* proccessor status register */
 #ifdef MVME188
-	int cpu = 0;
+	int cpu = 0;	/* prevent warning */
 #endif 
 	psr = disable_interrupts_return_psr();
 	switch (cputyp) {
@@ -508,8 +497,6 @@ spl(void)
 		curspl = *int_mask_level;
 		break;
 #endif /* defined(MVME187) || defined(MVME197) */
-	default:
-		panic("spl: Can't determine cpu type!");
 	}
 	set_psr(psr);
 	return curspl;
@@ -522,25 +509,23 @@ db_spl(void)
 	unsigned curspl;
 	m88k_psr_type psr; /* proccessor status register */
 #ifdef MVME188
-	int cpu = 0;
+	int cpu = 0;	/* prevent warning */
 #endif 
 
 	psr = disable_interrupts_return_psr();
 	switch (cputyp) {
-   #ifdef MVME188
+#ifdef MVME188
 	case CPU_188:
 		cpu = cpu_number();
 		curspl = m188_curspl[cpu];
 		break;
-   #endif /* MVME188 */
-   #if defined(MVME187) || defined(MVME197)
+#endif /* MVME188 */
+#if defined(MVME187) || defined(MVME197)
 	case CPU_187:
 	case CPU_197:
 		curspl = *int_mask_level;
 		break;
-   #endif /* defined(MVME187) || defined(MVME197) */
-	default:
-		panic("db_spl: Can't determine cpu type!");
+#endif /* defined(MVME187) || defined(MVME197) */
 	}
 	set_psr(psr);
 	return curspl;
@@ -567,10 +552,10 @@ setipl(unsigned level)
 	unsigned curspl;
 	m88k_psr_type psr; /* proccessor status register */
 #ifdef MVME188
-	int cpu = 0;
+	int cpu = 0;	/* prevent warning */
 #endif 
 	if (level > 7) {
-		level = 0;	/* assume this for the time being */
+		level = 0;	/* XXX assume this for the time being */
 	}
 
 	psr = disable_interrupts_return_psr();
@@ -589,8 +574,6 @@ setipl(unsigned level)
 		*int_mask_level = level;
 		break;
 #endif /* defined(MVME187) || defined(MVME197) */
-	default:
-		panic("setipl: Can't determine cpu type!");
 	}
 
 	flush_pipeline();
@@ -610,7 +593,7 @@ db_setipl(unsigned level)
 	unsigned curspl;
 	m88k_psr_type psr; /* proccessor status register */
 #ifdef MVME188
-	int cpu = 0;
+	int cpu = 0;	/* prevent warning */
 #endif 
 
 	psr = disable_interrupts_return_psr();
@@ -629,8 +612,6 @@ db_setipl(unsigned level)
 		*int_mask_level = level;
 		break;
 #endif /* defined(MVME187) || defined(MVME197) */
-	default:
-		panic("db_setipl: Can't determine cpu type!");
 	}
 
 	flush_pipeline();
@@ -670,4 +651,3 @@ test_and_set(lock)
 #endif 
 }
 #endif
-

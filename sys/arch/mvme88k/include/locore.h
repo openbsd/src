@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.h,v 1.9 2001/03/18 01:47:53 miod Exp $	*/
+/*	$OpenBSD: locore.h,v 1.10 2001/08/26 14:31:07 miod Exp $	*/
 
 #ifndef _MACHINE_LOCORE_H_
 #define _MACHINE_LOCORE_H_
@@ -37,6 +37,9 @@ void set_cpu_number __P((unsigned number));
 void doboot __P((void));
 int db_are_interrupts_disabled __P((void));
 
+void fubail __P((void));
+void subail __P((void));
+
 #if defined(MVME187) || defined(MVME188)
 int guarded_access __P((volatile unsigned char *address,
     unsigned len, u_char *vec));
@@ -51,8 +54,10 @@ void data_access_emulation __P((unsigned *eframe));
 #endif 
 #ifdef MVME188
 unsigned int safe_level __P((unsigned mask, unsigned curlevel));
+#if 0
 void block_obio_interrupt __P((unsigned mask));
 void unblock_obio_interrupt __P((unsigned mask));
+#endif
 #endif 
 unsigned spl __P((void));
 unsigned getipl __P((void));
@@ -86,6 +91,8 @@ void sbc_ext_int __P((u_int v, struct m88100_saved_state *eframe));
 
 /* eh.S */
 
+struct proc;
+void proc_do_uret __P((struct proc *));
 #if defined(MVME187) || defined(MVME188)
 void sigsys __P((void));
 void sigtrap __P((void));
@@ -100,5 +107,9 @@ void m197_stepbpt __P((void));
 void m197_userbpt __P((void));
 void m197_syscall_handler __P((void));
 #endif 
+
+/* process.S */
+void savectx __P((struct pcb *));
+void switch_exit __P((struct proc *));
 
 #endif /* _MACHINE_LOCORE_H_ */
