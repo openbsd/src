@@ -1,5 +1,5 @@
-/*	$OpenBSD: ike_phase_1.c,v 1.12 2000/02/01 02:46:18 niklas Exp $	*/
-/*	$EOM: ike_phase_1.c,v 1.16 2000/01/31 22:33:45 niklas Exp $	*/
+/*	$OpenBSD: ike_phase_1.c,v 1.13 2000/02/11 10:22:25 niklas Exp $	*/
+/*	$EOM: ike_phase_1.c,v 1.19 2000/02/07 02:08:13 ho Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist.  All rights reserved.
@@ -1128,7 +1128,8 @@ attribute_unacceptable (u_int16_t type, u_int8_t *value, u_int16_t len,
 	  LIST_INSERT_HEAD (&vs->attrs, node, link);
 	  return 0;
 	}
-      log_print ("attribute_unacceptable: got %s, expected %s", map, str);
+      log_print ("attribute_unacceptable: %s: got %s, expected %s",
+		 tag, constant_lookup (map, decode_16 (value)), str);
       return 1;
 
     case IKE_ATTR_GROUP_PRIME:
