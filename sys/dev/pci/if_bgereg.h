@@ -1,4 +1,4 @@
-/* $OpenBSD: if_bgereg.h,v 1.15 2004/12/12 19:11:26 brad Exp $ */
+/* $OpenBSD: if_bgereg.h,v 1.16 2004/12/16 14:30:32 brad Exp $ */
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -532,6 +532,7 @@
 #define BGE_RX_BD_RULES_CTL15		0x04F8
 #define BGE_RX_BD_RULES_MASKVAL15	0x04FC
 #define BGE_RX_RULES_CFG		0x0500
+#define BGE_MAX_RX_FRAME_LOWAT		0x0504
 #define BGE_SERDES_CFG			0x0590
 #define BGE_SERDES_STS			0x0594
 #define BGE_SGDIG_CFG			0x05B0

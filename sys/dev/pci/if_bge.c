@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.43 2004/12/12 19:11:26 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.44 2004/12/16 14:30:31 brad Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -1132,6 +1132,7 @@ bge_blockinit(sc)
 	struct bge_softc *sc;
 {
 	struct bge_rcb		*rcb;
+	struct ifnet		*ifp = &sc->arpcom.ac_if;
 	vaddr_t			rcb_addr;
 	int			i;
 
@@ -1168,14 +1169,23 @@ bge_blockinit(sc)
 	}
 
 	/* Configure mbuf pool watermarks */
+	/* new broadcom docs strongly recommend these: */
 	if ((sc->bge_quirks & BGE_QUIRK_5705_CORE) == 0) {
-		CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_READDMA_LOWAT, 0x50);
-		CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_MACRX_LOWAT, 0x20);
+		if (ifp->if_mtu > ETHER_MAX_LEN) {
+			CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_READDMA_LOWAT, 0x50);
+			CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_MACRX_LOWAT, 0x20);
+			CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_HIWAT, 0x60);
+		} else {
+			/* Values from Linux driver... */
+			CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_READDMA_LOWAT, 304);
+			CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_MACRX_LOWAT, 152);
+			CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_HIWAT, 380);
+		}
 	} else {
 		CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_READDMA_LOWAT, 0x0);
 		CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_MACRX_LOWAT, 0x10);
+		CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_HIWAT, 0x60);
 	}
-	CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_HIWAT, 0x60);
 
 	/* Configure DMA resource watermarks */
 	CSR_WRITE_4(sc, BGE_BMAN_DMA_DESCPOOL_LOWAT, 5);
@@ -1895,9 +1905,9 @@ bge_attach(parent, self, aux)
 	/* Set default tuneable values. */
 	sc->bge_stat_ticks = BGE_TICKS_PER_SEC;
 	sc->bge_rx_coal_ticks = 150;
-	sc->bge_tx_coal_ticks = 150;
 	sc->bge_rx_max_coal_bds = 64;
-	sc->bge_tx_max_coal_bds = 128;
+	sc->bge_tx_coal_ticks = 300;
+	sc->bge_tx_max_coal_bds = 400;
 
 	/* 5705 limits RX return ring to 512 entries. */
 	if ((sc->bge_quirks & BGE_QUIRK_5705_CORE) == 0)
@@ -2828,6 +2838,8 @@ bge_init(xsc)
 
 	/* Turn on receiver */
 	BGE_SETBIT(sc, BGE_RX_MODE, BGE_RXMODE_ENABLE);
+
+	CSR_WRITE_4(sc, BGE_MAX_RX_FRAME_LOWAT, 2);
 
 	/* Tell firmware we're alive. */
 	BGE_SETBIT(sc, BGE_MODE_CTL, BGE_MODECTL_STACKUP);
