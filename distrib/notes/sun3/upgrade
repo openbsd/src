@@ -1,0 +1,70 @@
+
+There is no automated upgrade program in this release.
+(This is the first official release for the Sun3 anyway.)
+However, it is possible to upgrade your system manually.
+
+Manual upgrade procedure:
+
+	* Place _at least_ the `base' binary set in a filesystem
+	  accessible to the target machine.  A local filesystem
+	  is preferred, since there may be incompatibilities
+	  between the NetBSD 1.1 kernel and older route(8)
+	  binaries.
+
+	* Back up your pre-existing kernel and copy the 1.1
+	  kernel into your root partition.
+
+	* Reboot with the 1.1 kernel into single-user mode.
+
+	* Check all filesystems:
+
+		/sbin/fsck -p
+
+	* Mount all local filesystems:
+
+		/sbin/mount -a -t nonfs
+
+	* If you keep /usr or /usr/share on an NFS server, you
+	  will want to mount those filesystems as well.  To do
+	  this, you will need to enable the network:
+
+		sh /etc/netstart
+
+	  NOTE: the route(8) commands may fail due to potential
+	  incompatibilities between route(8) and the NetBSD 1.1
+	  kernel.  Once you have enabled the network, mount the
+	  NFS filesystems.  If you use amd(8), you may or may not
+	  have to mount these filesystems manually.  Your mileage
+	  may vary.
+
+	* Make sure you are in the root filesystem and extract
+	  the `base' binary set:
+
+		cd /
+		tar --unlink -zxvpf /path/to/base11.tar.gz
+
+	  NOTE: the `--unlink' option is _very_ important!
+
+	* Install a new boot block:
+
+		cd /usr/mdec
+		cp -p ./ufsboot /mnt/ufsboot
+		sync ; sleep 1 ; sync
+		./installboot /mnt/ufsboot bootxx /dev/rsd0a
+		# Substitute your root partition here -^
+
+	* Sync the filesystems:
+
+		sync
+
+	* At this point you may extract any other binary sets
+	  you may have placed on local filesystems, or you may
+	  wish to extract additional sets at a later time.
+	  To extract these sets, use the following commands:
+
+		cd /
+		tar --unlink -zxvpf <path to set>
+
+NOTE: you SHOULD NOT extract the `etc' set if upgrading.  Instead,
+you should extract that set into another area and carefully merge
+the changes by hand.

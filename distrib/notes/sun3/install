@@ -1,0 +1,174 @@
+
+Installing NetBSD is a relatively complex process, but if you have
+this document in hand it should not be too difficult.
+
+There are several ways to install NetBSD onto your disk.  If your
+machine has a tape drive the easiest way is "Installing from tape"
+(details below).  If your machine is on a network with a suitable
+NFS server, then "Installing from NFS" is the next best method.
+Otherwise, if you have another Sun machine running SunOS you can
+initialize the disk on that machine and then move the disk.
+(Installing from SunOS is not recommended.)
+
+
+* Installing from tape:
+
+Create the NetBSD/sun3 1.1 boot tape as described in the section
+entitled "Preparing a boot tape" and boot the tape.  At the PROM
+monitor prompt, use one of the commands:
+	>b st()
+	>b st(0,8,0)
+The first example will use the tape on SCSI target 4, where the
+second will use SCSI target 5.  The '>' is the monitor prompt.
+
+After the tape loads, you should see many lines of configuration
+messages, and then the following "welcome" screen:
+
+	Welcome to the NetBSD/sun3 RAMDISK root!
+
+This environment is designed to do only three things:
+1:  Partititon your disk (use the command:  edlabel /dev/rsd0c)
+2:  Copy a miniroot image into the swap partition  (/dev/rsd0b)
+3:  Reboot (using the swap partition, i.e. /dev/sd?b).
+
+Copying the miniroot can be done several ways, allowing
+the source of the miniroot image to be on any of these:
+    boot tape,  NFS server, TFTP server, rsh server
+
+The easiest is loading from tape, which is done as follows:
+	mt -f /dev/nrst0 rewind
+	mt -f /dev/nrst0 fsf 2
+	dd bs=32k if=/dev/nrst0 of=/dev/rsd0b
+(For help with other methods, please see the install notes.)
+
+To reboot using the swap partition, first use "halt",
+then at the PROM monitor prompt use a command like:
+	b sd(,,1) -s
+
+To view this message again, type:  cat /.welcome
+
+[ End of "welcome" screen. ]
+
+Copy the miniroot as described in the welcome message, and
+reboot from that just installed miniroot.  See the section
+entitled "Booting the miniroot" for details.
+
+
+* Installing from NFS:
+
+Before you can install from NFS, you must have already configured
+your NFS server to support your machine as a diskless client.
+Instructions for configuring the server are found in the section
+entitled "Getting the NetBSD System onto Useful Media" above.
+
+First, at the Sun PROM monitor prompt, enter a boot command
+using the network interface as the boot device.  On desktop
+machines this is "le", and "ie" on the others.  Examples:
+
+	>b le() -s
+	>b ie() -s
+
+After the boot program loads the RAMDISK kernel, you should
+see the welcome screen as shown in the "tape boot" section
+above.  You must configure the network interface before you
+can use any network resources.  For example the command:
+
+	ssh> ifconfig le0 inet 192.233.20.198 up
+
+will bring up the network interface with that address.  The next
+step is to copy the miniroot from your server.  This can be done
+using either NFS or remote shell.  (In the examples that follow,
+the server has IP address 192.233.20.195)
+
+To load the miniroot from an NFS file:
+
+	ssh> mount -r 192.233.20.195:/server/path /mnt
+	ssh> dd if=/mnt/miniroot of=/dev/rsd0b bs=8k
+
+To load the miniroot using rsh to the server:
+
+	ssh> run -b dd if=/dev/pipe of=/dev/rsd0b bs=8k
+	ssh> run -o /dev/pipe rsh 192.233.20.195 zcat miniroot.gz
+
+Note that "ssh" does not use "sh" syntax.  It is a very small
+shell designed for the ramdisk kernel.  The first command of the
+above pair runs a "dd" in the background reading /dev/pipe.  The
+second of the pair runs an "rsh" command with its standard output
+redirected to /dev/pipe.  In ssh, the "help" command will show you
+a list of commands and options (there are only a few).
+
+
+* Booting the miniroot:
+
+If the miniroot was installed on partition 'b' of the disk with
+SCSI target ID=0 then the PROM boot command would be:
+	>b sd(0,0,1) -s
+With SCSI target ID=2, the the PROM is:
+	>b sd(0,10,1) -s
+
+The numbers in parentheses above are:
+	controller (usually zero)
+	unit number (SCSI ID * 8, in hexadecimal)
+	partition number
+
+Miniroot install program:
+------------------------
+
+The miniroot's install program is very simple to use.  It will guide
+you through the entire process, and is well automated.  Additional
+improvements are planned for future releases.
+
+The miniroot's install program will:
+
+	* Allow you to place disklabels on additional disks.
+	  The disk we are installing on should already have
+	  been partitioned using the RAMDISK kernel.
+
+	  Note that partition sizes and offsets are expressed
+	  in sectors.  When you fill out the disklabel, you will
+	  need to specify partition types and filesystem parameters.
+	  If you're unsure what the these values should be, use the
+	  following:
+
+		fstype: 4.2BSD
+		fsize: 1024
+		bsize: 4096
+		cpg: 16
+
+	  If the partition will be a swap partition, use the following:
+
+		fstype: swap
+		fsize: 0 (or blank)
+		bsize: 0 (or blank)
+		cpg: 0 (or blank)
+
+	  The number of partitions is fixed at 8 (by the Sun PROM).
+
+	* Create filesystems on target partitions.
+
+	* Allow you to set up your system's network configuration.
+	  Remember to specify host names without the domain name
+	  appended to the end.  For example use `foo' instead of
+	  `foo.bar.org'.  If, during the process of configuring
+	  the network interfaces, you make a mistake, you will
+	  be able to re-configure that interface by simply selecting
+	  it for configuration again.
+
+	* Mount target filesystems.  You will be given the opportunity
+	  to manually edit the resulting /etc/fstab.
+
+	* Extract binary sets from the media of your choice.
+
+	* Copy configuration information gathered during the
+	  installation process to your root filesystem.
+
+	* Make device nodes in your root filesystem.
+
+	* Copy a new kernel onto your root partition.
+
+	* Install a new boot block.
+
+	* Check your filesystems for integrity.
+
+First-time installation on a system through a method other than the
+installation program is possible, but strongly discouraged.

@@ -1,0 +1,55 @@
+
+NetBSD/sun3 1.1 runs on most Sun3 machines, including:
+		3/50, 3/60, 3/110
+		3/75, 3/150, 3/160
+		3/260, 3/280
+
+NetBSD/sun3 1.1 does not run on the Sun3/80 (sun3x class)
+because the sun3x MMU and other devices are very different.
+
+The minimal configuration requires 4M of RAM and ~80MB of disk space.
+To install the entire system requires much more disk space (approx.
+100MB additional space is necessary for full sources).  To run X
+or compile the system, more RAM is recommended.  Good performance
+requires 8MB of RAM, or 16 MB when running the X Window System.
+
+The following Sun3 hardware is supported:
+
+	Serial ports (RS232):
+		built-in ttya, ttyb
+
+	Video adapters:
+		bwtwo, cgtwo, cgfour
+
+	Network interfaces:
+		On-board Lance Ethernet (le)
+		On-board or VME Intel Ethernet (ie)
+
+	SCSI:  (Most SCSI disks, tapes, CD-ROMs, etc.)
+		On-board "si" (SCSI-3)  [Note 1]
+		VME "si" (SCSI-3) board [Note 1]
+
+	SMD Disks:  (the big, heavy ones 8^)
+		Xylogics 450/451  [Note 2]
+		Xylogics 753/7053 [Note 2]
+
+	Input devices:
+		Sun keyboard and mouse
+
+	Miscellaneous:
+		Battery-backed real-time clock.
+
+Note 1:
+    The "si" driver now supports DMA and disconnect/reselect
+    but due to the imaturity of the DMA code, those features
+    are disabled by default.  To enable DMA (and get faster
+    SCSI performance) patch the variable si_options in the
+    file /usr/src/sys/arch/sun3/dev/ncr_si.c as indicated.
+
+Note 2:
+    SMD disk support is almost ready, but could not be tested
+    in time for this release.  Drivers are provided for the
+    Xylogics 450/451 and Xylogics 753/7053 VME boards only as
+    source code.  They compile but have never touched a disk.
+
+If it's not on this list, there is no support for it in this release.

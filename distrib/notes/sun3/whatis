@@ -1,0 +1,22 @@
+
+NetBSD 1.1 is the first "full" release of NetBSD for the sun3,
+including a full set of binaries.  This binary distribution is
+referred to elsewhere in this document by the name NetBSD/sun3.
+This release offers improved stability and many new features.
+
+New features added since the 1.0 release include:
+* Native boot programs for disk, network, and tape
+* Automated installation tools (using a "miniroot")
+* New SCSI driver supporting DMA, interrupts, and
+  disconnect/reselect with SCSI-2 devices (optional)
+* Frame buffer drivers for bwtwo, cgtwo, and cgthree,
+  all compatible with SunOS and the X Window System
+* Support for the Virtually Addressed Cache (VAC) on
+  Sun3/260 models (and vastly improved performance)
+* SMD disk drivers -- almost (still need testing)
+
+Old features (from 1.0 and earier) worth mentioning:
+* SunOS 4.1 compatibility (runs most Sun3 applications)
+* Supports most SCSI devices (CD-ROM, etc)
+* Diskless boot capability
+* Built-in kernel debugger

@@ -1,0 +1,25 @@
+
+Sun3 machines usually need little or no preparation before installing
+NetBSD, other than the usual, well advised precaution of BACKING UP
+ALL DATA on any attached storage devices.
+
+You will need to know the SCSI target ID of the drive on which you
+will install NetBSD.  Note that SunOS/sun3 uses confusing names for
+the SCSI devcies: target 1 is sd2, target 2 is sd4, etc.
+
+It might be a good time to run the diagnostics on your Sun3.  First,
+attach a terminal to the "ttya" serial port, then set the "Diag/Norm"
+switch to the Diagnostic position, and power-on the machine.  The
+Diag. switch setting forces console interaction to occur on ttya.
+
+The console location (ttya, ttyb, or keyboard/display) is controlled
+by address 0x1F in the EEPROM, which you can examine and change in
+the PROM monitor by entering "q1f" followed by a numeric value (or
+just a '.' if you don't want to change it).  Console values are:
+	00: default graphics display
+	10: tty a (9600-N-8-1)
+	11: tty b (1200-N-8-1)
+	20: Color option board on P4
+
+NetBSD will use the EEPROM setting to determine which device to
+use as the console, so you should make sure it is correct.

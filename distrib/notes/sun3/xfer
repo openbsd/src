@@ -1,0 +1,125 @@
+
+Installation is supported from several media types, including:
+	* Tape
+	* NFS
+	* CD-ROM
+	* FTP
+
+Note that installing on a "bare" machine requires some bootable
+device; either a tape drive or Sun-compatible NFS server.
+
+The procedure for transferring the distribution sets onto
+installation media depends on the type of media.  Instructions
+for each type of media are given below.
+
+In order to create installation media, you will need all the 
+files in these two directories:
+	.../NetBSD-1.1/sun3/install
+	.../NetBSD-1-1/sun3/binary
+
+* Creating boot/install tapes:
+
+Installing from tape is the simplest method of all.
+This method uses two tapes; one called the "boot"
+tape, and another called the "install" tape.
+
+The boot tape is created as follows:
+
+	cd .../NetBSD-1.1/sun3/install
+	set T = /dev/nrst0
+	mt -f $T rewind
+	dd if=tapeboot of=$T bs=8k conv=sync
+	dd if=netbsd-rd of=$T bs=8k conv=sync
+	gzip -d < miniroot.gz | dd of=$T bs=8k
+	mt -f $T rewind
+
+The install tape is created as follows:
+
+	cd .../NetBSD-1.1/sun3/install
+	set T = /dev/nrst0
+	mt -f $T rewind
+	foreach f (base etc comp games man misc text)
+	  gzip -d < $f.gz | dd of=$T bs=8k
+	end
+	mt -f $T rewind
+
+If the tapes do not work as expected, you may need to explicitly
+set the EOF mark at the end of each tape segment.  It may also be
+necessary to use the `conv=osync' argument to dd(1).  Note that
+this argument is incompatible with the `bs=' argument.  Consult
+the tape-related manual pages on the system where the tapes are
+created for more details.
+
+* Boot/Install from NFS server:
+
+If your machine has a disk and network connection, but no tape drive,
+it may be convenient for you to install NetBSD over the network.  This
+involves temporarily booting your machine over NFS, just long enough
+so you can initialize its disk.  This method requires that you have
+access to an NFS server on your network so you can configure it to
+support diskless boot for your machine.  Configuring the NFS server
+is normally a task for a system administrator, and is not trivial.
+
+If you are using a NetBSD system as the boot-server, have a look at
+the diskless(8) manual page for guidelines on how to proceed with
+this.  If the server runs another operating system, consult the
+documentation that came with it (i.e. add_client(8) on SunOS).
+
+Your Sun3 expects to be able to download a second stage bootstrap
+program via TFTP after having acquired its IP address through RARP
+when instructed to boot "over the net".  It will look for a filename
+derived from the machine's IP address expressed in hexadecimal.  For
+example, a sun3 which has been assigned IP address 130.115.144.11
+will make an TFTP request for `8273900B'.  Normally, this file is a
+symbolic link to the NetBSD/sun3 "netboot" program, which should be
+located in a place where the TFTP daemon can find it (remember, many
+TFTP daemons run in a chroot'ed environment).  The netboot program
+may be found in the install directory of this distribution.
+
+The netboot program will query a bootparamd server to find the
+NFS server address and path name for its root, and then load a
+kernel from that location.  The server should have a copy of the
+netbsd-rd kernel in the root area for your client (no other files
+are needed in the client root) and /etc/bootparams on the server
+should have an entry for your client and its root directory.
+The client will need access to the miniroot image, which can be
+provided using NFS or remote shell.  If using NFS, miniroot.gz
+must be expanded on the server, because there is no gzip program
+in the RAMDISK image.  The unzipped miniroot takes 8MB of space.
+
+If you will be installing NetBSD on several clients, it may be useful
+to know that you can use a single NFS root for all the clients as long
+as they only use the netbsd-rd kernel.  There will be no conflict
+between clients because the RAM-disk kernel will not use the NFS root.
+No swap file is needed; the RAM-disk kernel does not use that either.
+
+* Install/Upgrade from CD-ROM:
+
+This method requires that you boot from another device (i.e. tape
+or network, as described above).  You may need to make a boot tape
+on another machine using the files provided on the CD-ROM.  Once
+you have booted netbsd-rd (the RAM-disk kernel) and loaded the
+miniroot, you can load any of the distribution sets directly from
+the CD-ROM.  The "install" program in the miniroot automates the
+work required to mount the CD-ROM and extract the files.
+
+* Install/Upgrade via FTP:
+
+This method requires that you boot from another device (i.e. tape
+or network, as described above).  You may need to make a boot tape
+on another machine using the files in .../install (which you get
+via FTP).  Once you have booted netbsd-rd (the RAM-disk kernel)
+and loaded the miniroot, you can load any of the distribution sets
+over the net using FTP.  The "install" program in the miniroot
+automates the work required to configure the network interface and
+transfer the files.
+
+This method, of course, requires network access to an FTP server.
+This might be a local system, or it might even be ftp.NetBSD.ORG
+itself.  If you wish to use ftp.NetBSD.ORG as your FTP file
+server, you may want to keep the following information handy:
+
+	IP Address: 205.149.163.23
+	Login: anonymous
+	Password: <your e-mail address>
+	Server path: /pub/NetBSD/NetBSD-1.1/sun3/binary
