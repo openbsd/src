@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_hangman.c,v 1.16 2001/02/10 10:42:35 niklas Exp $	*/
+/*	$OpenBSD: db_hangman.c,v 1.17 2001/06/29 04:52:17 mickey Exp $	*/
 
 /*
  * Copyright (c) 1996 Theo de Raadt, Michael Shalayeff
@@ -47,24 +47,13 @@
 #define	TOLOWER(c)	(('A'<=(c)&&(c)<='Z')?(c)-'A'+'a':(c))
 #define	ISALPHA(c)	(('a'<=(c)&&(c)<='z')||('A'<=(c)&&(c)<='Z'))
 
-/*
- * if [ `size db_hangman.o | awk 'BEGIN {getline} {print $$1+$$2}'` -gt 1024 ];
- * then
- *	echo 'hangman is too big!!!'
- * fi
- *
- */
-
-static __inline size_t db_random __P((size_t));
-static __inline char *db_randomsym __P((size_t *));
 void	 db_hang __P((int, char *, char *));
-static __inline int db_hangon __P((void));
 
 static int	skill;
+u_long		db_plays, db_guesses;
 
 static __inline size_t
-db_random(mod)
-	size_t	mod;
+db_random(size_t mod)
 {
 	return arc4random() % mod;
 }
@@ -96,8 +85,7 @@ db_hang_forall(stab, sym, name, suff, pre, varg)
 }
 
 static __inline char *
-db_randomsym(lenp)
-	size_t	*lenp;
+db_randomsym(size_t *lenp)
 {
 	extern db_symtab_t db_symtabs[];
 	db_symtab_t *stab;
@@ -139,16 +127,16 @@ db_randomsym(lenp)
 	return (q);
 }
 
-static char hangpic[]=
-    "\n88888 \r\n"
-    "9 7 6 \r\n"
-    "97  5 \r\n"
-    "9  423\r\n"
-    "9   2 \r\n"
-    "9  1 0\r\n"
-    "9\r\n"
-    "9  ";
-static char substchar[]="\\/|\\/O|/-|";
+static const char hangpic[]=
+	"\n88888 \r\n"
+	"9 7 6 \r\n"
+	"97  5 \r\n"
+	"9  423\r\n"
+	"9   2 \r\n"
+	"9  1 0\r\n"
+	"9\r\n"
+	"9  ";
+static const char substchar[]="\\/|\\/O|/-|";
 
 void
 db_hang(tries, word, abc)
@@ -156,7 +144,7 @@ db_hang(tries, word, abc)
 	register char	*word;
 	register char	*abc;
 {
-	register char	*p;
+	register const char	*p;
 
 	for(p=hangpic; *p; p++)
 		cnputc((*p>='0' && *p<='9') ? ((tries<=(*p)-'0') ?
@@ -194,6 +182,8 @@ db_hangon(void)
 		word = db_randomsym(&len);
 		if (word == NULL)
 			return (0);
+
+		db_plays++;
 	}
 
 	{
@@ -234,6 +224,7 @@ db_hangon(void)
 	db_hang(tries, word, abc);
 	cnputc('\n');
 	word = NULL;
+	db_guesses++;
 
 	return (!tries);
 }
