@@ -1,6 +1,6 @@
 #-*- mode: Fundamental; tab-width: 4; -*-
 # ex:ts=4
-#	$OpenBSD: bsd.port.mk,v 1.37 1998/07/13 03:11:14 todd Exp $
+#	$OpenBSD: bsd.port.mk,v 1.38 1998/07/17 04:10:20 form Exp $
 #	$NetBSD: $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
@@ -850,12 +850,16 @@ IGNORE=	"uses X11, but ${X11BASE} not found"
 IGNORE=	"is marked as broken: ${BROKEN}"
 .elif defined(ONLY_FOR_ARCHS)
 .for __ARCH in ${ONLY_FOR_ARCHS}
-.if ${MACHINE} == "${__ARCH}"
+.if ( ${MACHINE} == "${__ARCH}" || ${MACHINE_ARCH} == "${__ARCH}" )
 __ARCH_OK=	1
 .endif
 .endfor
 .if !defined(__ARCH_OK)
+.if ( ${MACHINE} != ${MACHINE_ARCH} )
+IGNORE= "is only for ${ONLY_FOR_ARCHS}, not ${MACHINE} \(${MACHINE_ARCH}\)"
+.else
 IGNORE= "is only for ${ONLY_FOR_ARCHS}, not ${MACHINE}"
+.endif
 .endif
 .elif defined(COMES_WITH)
 .if ( ${OPSYS_VER} >= ${COMES_WITH} )
