@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.3 2004/02/07 17:00:12 miod Exp $	*/
+/*	$OpenBSD: locore.S,v 1.4 2004/02/20 20:49:57 deraadt Exp $	*/
 /*	$NetBSD: locore.S,v 1.2 2003/04/26 19:34:45 fvdl Exp $	*/
 
 /*
@@ -600,7 +600,7 @@ NENTRY(sigcode)
 	movq	%rsp,%rdi
 	pushq	%rdi			/* fake return address */
 	movq	$SYS_sigreturn,%rax
-	syscall
+	int	$0x80
 	movq	$SYS_exit,%rax
 	syscall
 	.globl	_C_LABEL(esigcode)
