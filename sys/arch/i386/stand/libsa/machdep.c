@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.17 1997/10/12 21:14:23 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.18 1997/10/17 15:03:27 weingart Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -143,6 +143,7 @@ machdep()
 	cninit();     CKPT('3');
 #ifndef _TEST
 	memprobe();   CKPT('4');
+	diskprobe();  CKPT('6');
 #endif
 
 	if ((BIOS_vars.bios_apm_detail = apm_check())) {

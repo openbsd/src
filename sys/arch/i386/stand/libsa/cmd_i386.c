@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd_i386.c,v 1.9 1997/10/09 22:23:00 deraadt Exp $	*/
+/*	$OpenBSD: cmd_i386.c,v 1.10 1997/10/17 15:03:23 weingart Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff, Tobias Weingartner
@@ -33,6 +33,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/disklabel.h>
 #include <machine/biosvar.h>
 #include "debug.h"
 #include "biosdev.h"
@@ -41,24 +42,39 @@
 
 static int Xdiskinfo __P((void));
 static int Xregs __P((void));
+static int Xboot __P((void));
+static int Xmemory __P((void));
+
+/* From gidt.S */
+int bootbuf __P((int, int));
+
+/* From probedisk.c */
+extern bios_diskinfo_t bios_diskinfo[];
+
 
 const struct cmd_table cmd_machine[] = {
 	{ "diskinfo", CMDT_CMD, Xdiskinfo },
 	{ "regs",     CMDT_CMD, Xregs },
+	{ "boot",     CMDT_CMD, Xboot },
+	{ "memory",   CMDT_CMD, Xmemory },
 	{ NULL, 0 }
 };
 
 static int
 Xdiskinfo()
 {
-	u_int32_t di;
 	int i;
 
-	printf("Disk\tCylinders\tHeads\tSectors\n");
-	for(i = 0x80; i < 0x84; i++){
-		if ((di = biosdinfo(i)))
-			printf("0x%x\t  %d   \t%d\t%d\n", i,
-			       BIOSNTRACKS(di), BIOSNHEADS(di), BIOSNSECTS(di));
+	printf("Disk\tBIOS#\tCylinders\tHeads\tSectors\n");
+	for(i = 0; bios_diskinfo[i].bios_number != -1 && i < 10; i++){
+		int d = bios_diskinfo[i].bios_number;
+
+		printf("%cd%d\t 0x%x\t %s%d   \t%d\t%d\n",
+			(d & 0x80)?'h':'f', (d & 0x80)?d - 128:d, d,
+			(bios_diskinfo[i].bios_cylinders < 100)?"  ":" ",
+			bios_diskinfo[i].bios_cylinders,
+			bios_diskinfo[i].bios_heads,
+			bios_diskinfo[i].bios_sectors);
 	}
 
 	return 0;
@@ -70,3 +86,78 @@ Xregs()
 	DUMP_REGS;
 	return 0;
 }
+
+static int
+Xboot()
+{
+	int dev, part, st;
+	char *buf = (void *)0x7c00;
+
+	if(cmd.argc != 2) {
+		printf("machine boot {fd,hd}[0123][abcd]\n");
+		return 0;
+	}
+
+	/* Check arg */
+	if(cmd.argv[1][0] != 'f' && cmd.argv[1][0] != 'h')
+		goto bad;
+	if(cmd.argv[1][1] != 'd')
+		goto bad;
+	if(cmd.argv[1][2] < '0' || cmd.argv[1][2] > '3')
+		goto bad;
+	if(cmd.argv[1][3] < 'a' || cmd.argv[1][3] > 'd')
+		goto bad;
+
+	printf("Booting from %s ", cmd.argv[1]);
+
+	dev = (cmd.argv[1][0] == 'h')?0x80:0;
+	dev += (cmd.argv[1][2] - '0');
+	part = (cmd.argv[1][3] - 'a');
+
+	printf("[%x,%d]\n", dev, part);
+
+	/* Read boot sector from device */
+	st = biosd_rw(F_READ, dev, 0, 0, 1, 1, buf);
+	if(st) goto bad;
+
+	/* Frob boot flag in buffer from HD */
+	if(dev & 0x80){
+		int i, j;
+
+		for(i = 0, j = DOSPARTOFF; i < 4; i++, j += 16)
+			if(part == i)
+				buf[j] = 0x80;
+			else
+				buf[j] = 0x00;
+	}
+
+	printf("%x %x %x %x %x\n", buf[0], buf[1], buf[2], buf[3], buf[4]);
+
+	/* Load %dl, ljmp */
+	bootbuf(dev, part);
+
+bad:
+	printf("Invalid device!\n");
+	return 0;
+}
+
+int
+Xmemory()
+{
+	struct BIOS_MAP *tm = memory_map;
+	int count, total = 0;
+
+	for(count = 0; tm[count].type != BIOS_MAP_END; count++){
+		printf("Region %d: type %u at 0x%x for %uKB\n", count,
+			tm[count].type, tm[count].addr, tm[count].size/1024);
+
+		if(tm[count].type == BIOS_MAP_FREE)
+			total += tm[count].size;
+	}
+
+	printf("Low ram: %dKB  High ram: %dKB\n", cnvmem, extmem);
+	printf("Total free memory: %dKB\n", total/1024);
+
+	return 0;
+}
+

@@ -1,4 +1,4 @@
-/*	$OpenBSD: memprobe.c,v 1.14 1997/10/12 21:01:01 mickey Exp $	*/
+/*	$OpenBSD: memprobe.c,v 1.15 1997/10/17 15:03:28 weingart Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -37,35 +37,193 @@
 #include "libsa.h"
 
 static int addrprobe __P((u_int));
-u_int cnvmem, extmem;
+u_int cnvmem, extmem;		/* XXX - remove */
+struct BIOS_MAP *memory_map;
 
-void
-memprobe()
+struct E820_desc_t {
+	u_int32_t addr_lo;
+	u_int32_t addr_hi;
+	u_int32_t size_lo;
+	u_int32_t size_hi;
+	u_int32_t type;
+} __attribute__ ((packed));
+static struct E820_desc_t Desc;
+
+
+#define E820_MAX_MAPENT	10
+
+/* BIOS int 15, AX=E820
+ *
+ * This is the "prefered" method.
+ */
+struct BIOS_MAP *
+bios_E820()
 {
-	int ram;
+	static struct BIOS_MAP bm[E820_MAX_MAPENT];		/* This is easier */
+	int E820Present = 0;
+	int eax = 0, count = 0;
+	volatile int ebx = 0;
 
-	__asm __volatile(DOINT(0x12) : "=a" (cnvmem)
-			 :: "%ecx", "%edx", "cc");
-	cnvmem &= 0xffff;
+	do {
+		BIOS_regs.biosr_es = ((unsigned)(&Desc) >> 4);
+		__asm __volatile(
+			"movl %2, %%ebx\n\t"
+			"movl $0x534D4150, %%edx\n\t"
+			DOINT(0x15) "\n\t"
+			"movl %%eax, %%edx\n\t"
+			"setc %b0\n\t"
+			"movzbl %b0, %0\n\t"
+			"cmpl $0x534D4150, %%edx\n\t"
+			"je 1f\n\t"
+			"incl %%eax\n\t"
+			"1:\n\t"
+			: "=a" (eax)
+			: "0" (0xE820),
+			  "1" (ebx),
+			  "c" (sizeof(Desc)),
+			  "D" ((unsigned)(&Desc) & 0xF)
+			: "%eax", "%ebx", "%ecx", "%edx", "%esi", "%edi", "cc", "memory");
+			ebx = BIOS_regs.biosr_bx;
 
-	printf("%d Kb conventional memory.\n", cnvmem);
+			if(eax) break;		/* Not present, or done */
 
-	/* probe extended memory
-	 *
-	 * There is no need to do this in assembly language.  This is
-	 * much easier to debug in C anyways.
-	 */
-	for(ram = 1024; ram < 512*1024; ram += 4){
+			/* We are ignoring the upper 32 bits in the 64 bit
+			 * integer returned.  If anyone has a PC where the
+			 * upper 32 bits are not zeros, *please* tell me! ;)
+			 *
+			 * NOTE: the BIOS_MAP_* numbers are the same, save for
+			 * the "zero" case, which we remap to reserved.
+			 */
+			bm[count].addr = Desc.addr_lo;
+			bm[count].size = Desc.size_lo;
+			bm[count].type = (Desc.type)?Desc.type:BIOS_MAP_RES;
 
-		if(!(ram % 64))
-			printf("Probing memory: %d KB\r", ram-1024);
-		if(addrprobe(ram))
-			break;
+			E820Present = 1;
+	} while((++count < E820_MAX_MAPENT) && (ebx != 0));	/* Do not re-oder! */
+
+	if(E820Present){
+		printf("int 0x15 [E820]\n");
+		bm[count].type = BIOS_MAP_END;
+		return(bm);
 	}
 
-	printf("%d Kb extended memory.\n", ram-1024);
-	extmem = ram - 1024;
+	return(NULL);
 }
+
+
+/* BIOS int 15, AX=E801
+ *
+ * Only used if int 15, AX=E820 does not work.
+ * This should work for more than 64MB.
+ */
+struct BIOS_MAP *
+bios_E801()
+{
+	static struct BIOS_MAP bm[3];
+	int eax, edx = 0;
+
+	/* Test for 0xE801 */
+	__asm __volatile(
+		DOINT(0x15) "\n\t"
+		"setc %b0\n\t"
+		"movzbl %b0, %0\n\t"
+		: "=a" (eax)
+		: "a" (0xE801)
+		);
+
+	/* Make a memory map from info */
+	if(!eax){
+		printf("int 0x15 [E801], ");
+
+		__asm __volatile(
+			DOINT(0x15) "\n\t"
+			: "=a" (eax), "=d" (edx)
+			: "a" (0xE801)
+			);
+
+		/* Make sure only valid bits */
+		eax &= 0xFFFF;
+		edx &= 0xFFFF;
+
+		/* Fill out BIOS map */
+		bm[0].addr = (1024 * 1024);			/* 1MB */
+		bm[0].size = eax * 1024;
+		bm[0].type = BIOS_MAP_FREE;
+
+		bm[1].addr = (1024 * 1024) * 16;	/* 16MB */
+		bm[1].size = (edx * 1024) * 64;
+		bm[1].type = BIOS_MAP_FREE;
+
+		bm[2].type = BIOS_MAP_END;
+
+		return(bm);
+	}
+
+	return(NULL);
+}
+
+
+/* BIOS int 15, AX=8800
+ *
+ * Only used if int 15, AX=E801 does not work.
+ * Machines with this are restricted to 64MB.
+ */
+struct BIOS_MAP *
+bios_8800()
+{
+	static struct BIOS_MAP bm[2];
+	int eax, mem;
+
+	__asm __volatile(
+		DOINT(0x15) "\n\t"
+		"movl %%eax, %%ecx\n\t"
+		"setc %b0\n\t"
+		"movzbl %b0, %0\n\t"
+		: "=a" (eax), "=c" (mem)
+		: "a" (0x8800)
+		);
+
+	if(eax) return(NULL);
+
+	printf("int 0x15 [8800], ");
+
+	/* Fill out a BIOS_MAP */
+	bm[0].addr = 1024*1024;		/* 1MB */
+	bm[0].size = (mem & 0xFFFF) * 1024;
+	bm[0].type = BIOS_MAP_FREE;
+
+	bm[1].type = BIOS_MAP_END;
+
+	return(bm);
+}
+
+
+/* BIOS int 0x12 Get Conventional Memory
+ *
+ * Only used if int 15, AX=E820 does not work.
+ */
+struct BIOS_MAP *
+bios_int12()
+{
+	static struct BIOS_MAP bm[2];
+	int mem;
+
+	printf("int 0x12\n");
+
+	__asm __volatile(DOINT(0x12) : "=a" (mem)
+			 :: "%ecx", "%edx", "cc");
+	mem &= 0xffff;
+
+	/* Fill out a BIOS_MAP */
+	bm[0].addr = 0;
+	bm[0].size = mem * 1024;
+	bm[0].type = BIOS_MAP_FREE;
+
+	bm[1].type = BIOS_MAP_END;
+
+	return(bm);
+}
+
 
 /* addrprobe(kloc): Probe memory at address kloc * 1024.
  *
@@ -77,6 +235,8 @@ memprobe()
  * return values just written on non-existent memory...
  *
  * BTW: These machines are pretty broken IMHO.
+ *
+ * XXX - Does not detect aliased memory.
  */
 static int
 addrprobe(kloc)
@@ -121,4 +281,128 @@ addrprobe(kloc)
 	return ret;
 }
 
+
+/* Probe for all extended memory.
+ *
+ * This is only used as a last resort.  If we resort to this
+ * routine, we are getting pretty desparate.  Hopefully nobody
+ * has to rely on this after all the work above.
+ *
+ * XXX - Does not detect aliases memory.
+ * XXX - Could be destructive, as it does write.
+ */
+struct BIOS_MAP *
+badprobe()
+{
+	static struct BIOS_MAP bm[2];
+	int ram;
+
+	printf("Physical, ");
+	/* probe extended memory
+	 *
+	 * There is no need to do this in assembly language.  This is
+	 * much easier to debug in C anyways.
+	 */
+	for(ram = 1024; ram < 512*1024; ram += 4)
+		if(addrprobe(ram))
+			break;
+
+	bm[0].addr = 1024 * 1024;
+	bm[0].size = (ram - 1024) * 1024;
+	bm[0].type = BIOS_MAP_FREE;
+
+	bm[1].type = BIOS_MAP_END;
+
+	return(bm);
+}
+
+
+int
+count(map)
+	struct BIOS_MAP *map;
+{
+	int i;
+
+	for(i = 0; map[i].type != BIOS_MAP_END; i++) ;
+
+	return(i);
+}
+
+
+struct BIOS_MAP *
+combine(a, b)
+	struct BIOS_MAP *a, *b;
+{
+	struct BIOS_MAP *res;
+	int size, i;
+
+	/* Sanity checks */
+	if(!b) return(a);
+	if(!a) return(b);
+
+	size = (count(a) + count(b) + 1) * sizeof(struct BIOS_MAP);
+	res = alloc(size);
+
+	/* Again */
+	if(!res) return(NULL);		/* We are in deep doggie-doo */
+
+	for(i = 0; a[i].type != BIOS_MAP_END; i++)
+		res[i] = a[i];
+	size = count(a);
+	for(; b[i - size].type != BIOS_MAP_END; i++)
+		res[i] = b[i - size];
+
+	res[i].type = BIOS_MAP_END;
+	return(res);
+}
+
+
+void
+memprobe()
+{
+	struct BIOS_MAP *tm, *em, *bm;	/* total, extended, base */
+	int count, total = 0;
+
+	printf("Probing memory: ");
+	tm = em = bm = NULL;
+
+	tm = bios_E820();
+	if(!tm){
+		em = bios_E801();
+		if(!em) em = bios_8800();
+		if(!em) em = badprobe();
+		bm = bios_int12();
+
+		tm = combine(bm, em);
+	}
+
+	/* Register in global var */
+	memory_map = tm;
+	printf("mem0:");
+
+	/* Get total free memory */
+	for(count = 0; tm[count].type != BIOS_MAP_END; count++) {
+		if(tm[count].type == BIOS_MAP_FREE) {
+			total += tm[count].size;
+
+			printf(" %dKB", tm[count].size/1024);
+		}
+	}
+	printf("\n");
+
+	/* XXX - Compatibility, remove later */
+	cnvmem = extmem = 0;
+	for(count = 0; tm[count].type != BIOS_MAP_END; count++) {
+		if((tm[count].addr < 0xFFFFF) && (tm[count].type == BIOS_MAP_FREE)){
+
+			cnvmem += tm[count].size; 
+		}
+		if((tm[count].addr > 0xFFFFF) && (tm[count].type == BIOS_MAP_FREE)){
+
+			extmem += tm[count].size; 
+		}
+	}
+	cnvmem /= 1024;
+	extmem /= 1024;
+}
 

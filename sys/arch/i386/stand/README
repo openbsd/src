@@ -1,4 +1,4 @@
-$OpenBSD: README,v 1.10 1997/09/02 21:41:29 kstailey Exp $
+$OpenBSD: README,v 1.11 1997/10/17 15:03:16 weingart Exp $
 
 # hmm, no copyright
 
@@ -92,14 +92,14 @@ things work without -DSAVE_MEMORY, and don't with it defined.
 Mon Apr 21 15:25:42 EDT 1997
 ----------------------------
 
-Now memory limits are not in concern. No any restrictions on placement
-and sizes of code/data. It would be an idea to move PMMM code from kernel
-into /boot to use low memory somehow, then remember that upper 64k are
-used by apm, so do not grow too much... Low 64k are used for real mode
+Now memory limits are not a concern. No more restrictions on placement
+and size of code/data. It would be an idea to move PMMM code from kernel
+into /boot to use low memory somehow.  Also remember that the upper 64k is
+used by apm, so do not grow heap too much... Low 64k is used for real mode
 IDT, BIOS data, stack for /boot, so stack is big enough (about 60k).
 All the magic w/ prot-real mode interface now in one place <libsa/gidt.S>.
 BIOS (and DOS soon) interrupt entry points are now just as simple as
-they are in real mode (just use a macro BIOSINT, which shifts int#
+they are in real mode (just use a macro BIOSINT, which shifts int number
 by 0x20, that all! ;).
 
 
@@ -114,22 +114,33 @@ to use sleep instead, it's known to work.
 Thu Jul 17 21:24:42 EDT 1997
 ----------------------------
 
-Return to the way when code have to be less then 64k, or better say that
+Return to the way when code has to be less then 64k, or better say that
 whole gidt.S code must be in the 1st 64k of /boot .text section.
 This saves about 2k of code (idt initialization).
 APM information is now gathered and passed to the locore.s upon kernel
-startup as pointer to the struct apm_connect_info.
+startup as a pointer to the struct apm_connect_info.
 
 
 Wed Aug 27 16:30:51 EDT 1997
 ----------------------------
 
-BIOS boot device number is passed to kernel along with BIOS geometry for that
-drive and other info. APM connect info is passed as well not in that
-apm0 structure, so apm0 will become a slave on bios0 soon.
+BIOS boot device number is passed to the kernel along with BIOS geometry
+for that drive and other info. APM connect info is passed as well not in
+that apm0 structure, so apm0 will become a slave on bios0 soon.
 To get your /boot installed properly on a hardrive you have to load /bsd
 from that hd/partition (since only boot drive geometry is passed).
 The passed geometry will be used for all the drives, if you
 will try to installboot on other disks (floppies and pseudo-disks will
 honor the disklabel), that might be useful on some bioses,
 esp. SCSI HAs which use fixed translated geometry for all the drives.
+
+
+Mon Oct 13 16:41:18 CDT 1997
+----------------------------
+
+Clean up memprobe some, adding support for querying the BIOS for the
+memory map.  Resort to the old invasive probe if all else fails.  Add
+preliminary support for passing a memory map to the kernel, instead of
+cnvmem/extmem.  This should make weird boards easier to support in the
+future.
+

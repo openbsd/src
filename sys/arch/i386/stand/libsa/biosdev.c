@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosdev.c,v 1.36 1997/10/07 08:56:19 mickey Exp $	*/
+/*	$OpenBSD: biosdev.c,v 1.37 1997/10/17 15:03:21 weingart Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -52,13 +52,13 @@ struct biosdisk {
 };
 
 /*
- *
  * return a word that represents the max number
  * of sectors and heads for this device
  *
  */
 u_int32_t
-biosdinfo(int dev)
+biosdinfo(dev)
+	int dev;
 {
 	u_int f, rv;
 	__asm __volatile (DOINT(0x13) "; setc %b0\n\t"
@@ -71,10 +71,37 @@ biosdinfo(int dev)
 }
 
 /*
+ * Probe if given bios disk exists.
+ *
+ * NOTE: This seems to hang on certain machines.  Use biosdinfo()
+ * first, and verify with biosdprobe() IFF biosdinfo() succeeds
+ * first.
+ *
+ * XXX - biosdinfo() and biosdprobe() should be integrated into 1 fcn.
+ */
+u_int32_t
+biosdprobe(dev)
+	int dev;
+{
+	u_int32_t val = 0;
+
+	__asm __volatile (
+		DOINT(0x13) "\n\t"
+		"setc %b0 \n\t"
+		: "=a" (val)
+		: "0" (0x1500),
+		  "d" (dev)
+		: "%ecx", "%edx", "cc");
+
+	return(val & 0xffff);
+}
+
+/*
  * reset disk system
  */
 static __inline int
-biosdreset(int dev)
+biosdreset(dev)
+	int dev;
 {
 	int rv;
 	__asm __volatile (DOINT(0x13) "; setc %b0" : "=a" (rv)
@@ -82,8 +109,11 @@ biosdreset(int dev)
 	return (rv & 0xff)? rv >> 8 : 0;
 }
 
-static __inline int
-biosd_rw(int rw, int dev, int cyl, int head, int sect, int nsect, void* buf)
+__inline int
+biosd_rw(rw, dev, cyl, head, sect, nsect, buf)
+	int rw, dev, cyl, head;
+	int sect, nsect;
+	void* buf;
 {
 	int rv;
 	BIOS_regs.biosr_es = (u_int32_t)buf >> 4;
@@ -110,7 +140,8 @@ biosd_rw(int rw, int dev, int cyl, int head, int sect, int nsect, void* buf)
  * check the features supported by the bios for the drive
  */
 static __inline int
-EDDcheck (int dev)
+EDDcheck (dev)
+	int dev;
 {
 	int rv, bm, sgn;
 	__asm __volatile(DOINT(0x13) "; setc %b0"
@@ -120,7 +151,11 @@ EDDcheck (int dev)
 }
 
 int
-EDD_rw(int rw, int dev, u_int64_t daddr, u_int32_t nblk, void *buf)
+EDD_rw(rw, dev, daddr, nblk, buf)
+	int rw, dev;
+	u_int64_t daddr;
+	u_int32_t nblk;
+	void *buf;
 {
 	int rv;
 	struct EDD_CB cb;
@@ -332,8 +367,10 @@ biosopen(struct open_file *f, ...)
 
 	return 0;
 }
+
 static __inline const char *
-biosdisk_err(u_int error)
+biosdisk_err(error)
+	u_int error;
 {
 	static const u_char errs[] = 
 /* ignored	"\x00" "successful completion\0" */
@@ -379,7 +416,8 @@ biosdisk_err(u_int error)
 }
 
 static __inline int
-biosdisk_errno(u_int error)
+biosdisk_errno(error)
+	u_int error;
 {
 	static const struct biosdisk_errors {
 		u_char error;
@@ -410,8 +448,13 @@ biosdisk_errno(u_int error)
 }
 
 int
-biosstrategy(void *devdata, int rw,
-	daddr_t blk, size_t size, void *buf, size_t *rsize)
+biosstrategy(devdata, rw, blk, size, buf, rsize)
+	void *devdata;
+	int rw;
+	daddr_t blk;
+	size_t size;
+	void *buf;
+	size_t *rsize;
 {
 	u_int8_t error = 0;
 	register struct biosdisk *bd = (struct biosdisk *)devdata;
@@ -498,14 +541,18 @@ biosstrategy(void *devdata, int rw,
 }
 
 int
-biosclose(struct open_file *f)
+biosclose(f)
+	struct open_file *f;
 {
 	free(f->f_devdata, 0);
 	return 0;
 }
 
 int
-biosioctl(struct open_file *f, u_long cmd, void *data)
+biosioctl(f, cmd, data)
+	struct open_file *f;
+	u_long cmd;
+	void *data;
 {
 	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosvar.h,v 1.16 1997/10/14 01:04:25 weingart Exp $	*/
+/*	$OpenBSD: biosvar.h,v 1.17 1997/10/17 15:03:15 weingart Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -129,6 +129,26 @@ struct BIOS_MAP {
 	u_int32_t size;		/* Size of block */
 	int type;		/* Type of block */
 };
+
+/* Info about disk from the bios, plus the mapping from
+ * BIOS numbers to BSD major (driver?) number.
+ *
+ * Also, do not bother with BIOSN*() macros, just parcel
+ * the info out, and use it like this.  This makes for less
+ * of a dependance on BIOSN*() macros having to be the same
+ * across /boot, /bsd, and userland.
+ */
+typedef struct _bios_diskinfo {
+	/* BIOS section */
+	signed int bios_number;			/* BIOS number of drive (or -1) */
+	unsigned int bios_cylinders;	/* BIOS cylinders */
+	unsigned int bios_heads;		/* BIOS heads */
+	unsigned int bios_sectors;		/* BIOS sectors */
+
+	/* BSD section */
+	signed int bsd_major;			/* Major number of driver (or -1) */
+} bios_diskinfo_t;
+
 
 #ifdef _KERNEL
 #include <machine/bus.h>

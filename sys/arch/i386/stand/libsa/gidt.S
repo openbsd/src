@@ -1,4 +1,4 @@
-/*	$OpenBSD: gidt.S,v 1.15 1997/09/02 17:05:12 mickey Exp $	*/
+/*	$OpenBSD: gidt.S,v 1.16 1997/10/17 15:03:24 weingart Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -415,4 +415,12 @@ intno	= . - 1
 	popl	%ds
 	popal
 	iret
+
+/* Call buffer at 07c0:0000 in real mode to simulate a BIOS boot */
+ENTRY(bootbuf)
+	popl	%eax		/* Don't need return address */
+	popl	%edx		/* Device */
+	popl	%eax		/* Partition - Not used, overwritten */
+	prot2real		/* Switch */
+	ljmp $0x7c0, $0x000
 
