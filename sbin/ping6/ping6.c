@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.22 2000/12/31 05:03:52 itojun Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.23 2001/01/12 18:01:43 deraadt Exp $	*/
 /*	$KAME: ping6.c,v 1.109 2000/12/27 11:32:37 itojun Exp $	*/
 
 /*
@@ -1020,16 +1020,19 @@ main(argc, argv)
 /*
  * onalrm --
  *	This routine transmits another ping6.
+ * XXX almost certainly not race-safe?
  */
 /* ARGSUSED */
 void
 onalrm(signo)
 	int signo;
 {
+	int save_errno = errno;
 	struct itimerval itimer;
 
 	if (!npackets || ntransmitted < npackets) {
 		pinger();
+		errno = save_errno;
 		return;
 	}
 
@@ -1051,6 +1054,7 @@ onalrm(signo)
 
 	(void)signal(SIGALRM, onint);
 	(void)setitimer(ITIMER_REAL, &itimer, NULL);
+	errno = save_errno;
 }
 
 /*
