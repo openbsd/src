@@ -70,13 +70,6 @@ file	arch/powerpc/powerpc/opendev.c
 major	{ ofdisk = 4 }
 
 
-include "dev/pci/files.pci"
-
-device	mpcpcibr {} : pcibus
-attach	mpcpcibr at mainbus
-file	arch/powerpc/pci/mpcpcibus.c			mpcpcibr
-#file	arch/powerpc/pci/pci_addr_fixup.c		mpcpcibr
-
 device	memc {}
 attach	memc at mainbus
 file	arch/powerpc/mac/uni_n.c			memc
@@ -86,6 +79,18 @@ major	{sd = 2}
 major	{cd = 3}
 
 include "../../../scsi/files.scsi"
+
+#
+# I2O
+#
+include "../../../dev/i2o/files.i2o"
+
+include "dev/pci/files.pci"
+
+device	mpcpcibr {} : pcibus
+attach	mpcpcibr at mainbus
+file	arch/powerpc/pci/mpcpcibus.c			mpcpcibr
+#file	arch/powerpc/pci/pci_addr_fixup.c		mpcpcibr
 
 #
 # "workstation console" routines
