@@ -125,7 +125,7 @@ srv_find_realm(krb5_context context, krb5_krbhst_info ***res, int *count,
 	    else
 		hi->port = rr->u.srv->port;
 
-	    strlcpy(hi->hostname, rr->u.srv->target, len);
+	    strlcpy(hi->hostname, rr->u.srv->target, len + 1);
 	}
 
     *count = num_srv;
