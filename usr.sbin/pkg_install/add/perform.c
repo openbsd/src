@@ -1,7 +1,7 @@
-/*	$OpenBSD: perform.c,v 1.22 2001/11/26 05:04:33 deraadt Exp $	*/
+/*	$OpenBSD: perform.c,v 1.23 2003/04/03 19:42:53 avsm Exp $	*/
 
 #ifndef lint
-static const char *rcsid = "$OpenBSD: perform.c,v 1.22 2001/11/26 05:04:33 deraadt Exp $";
+static const char *rcsid = "$OpenBSD: perform.c,v 1.23 2003/04/03 19:42:53 avsm Exp $";
 #endif
 
 /*
@@ -90,7 +90,7 @@ pkg_do(char *pkg)
     code = 0;
     zapLogDir = 0;
     LogDir[0] = '\0';
-    strcpy(playpen, FirstPen);
+    strlcpy(playpen, FirstPen, sizeof(playpen));
     dbdir = (tmp = getenv(PKG_DBDIR)) ? tmp : DEF_LOG_DIR;
 
     snprintf(solve_deps, sizeof solve_deps, "pkg%s dependencies solve %s",
@@ -127,7 +127,7 @@ pkg_do(char *pkg)
 		return 1;
 	    }
 	    where_to = Home;
-	    strcpy(pkg_fullname, pkg);
+	    strlcpy(pkg_fullname, pkg, sizeof(pkg_fullname));
 	    system(solve_deps);
 	    cfile = fopen(CONTENTS_FNAME, "r");
 	    if (!cfile) {
@@ -139,7 +139,7 @@ pkg_do(char *pkg)
 	    read_plist(&Plist, cfile);
 	    fclose(cfile);
 	} else {
-	    strlcpy(pkg_fullname, ensure_tgz(pkg), sizeof pkg_fullname);
+	    strlcpy(pkg_fullname, ensure_tgz(pkg), sizeof(pkg_fullname));
 	    if (strcmp(pkg, "-")) {
 		if (!ispkgpattern(pkg_fullname)
 		    && stat(pkg_fullname, &sb) == FAIL) {
@@ -244,7 +244,7 @@ pkg_do(char *pkg)
 	char *s;
 
 	if ((s=strrchr(PkgName, '-')) != NULL){
-	    strcpy(buf, PkgName);
+	    strlcpy(buf, PkgName, sizeof(buf));
 	    /* try to find a better version number */
 	    if (!isdigit(s[1])) {
 	    	char *t;
@@ -254,7 +254,7 @@ pkg_do(char *pkg)
 				break;
 			}
 	    }
-	    strcpy(buf+(s-PkgName+1), isdigit(s[1]) ? "[0-9]*" : "*");
+	    strlcpy(buf+(s-PkgName+1), isdigit(s[1]) ? "[0-9]*" : "*", sizeof(buf)-(s-PkgName+1));
 
             if (findmatchingname(dbdir, buf, check_if_installed, installed)) {
 		pwarnx("other version '%s' already installed", installed);
@@ -512,8 +512,8 @@ pkg_do(char *pkg)
 		    /* this shouldn't happen... X-) */
 		}
 	    }
-	    strcat(contents, "/");
-	    strcat(contents, REQUIRED_BY_FNAME);
+	    strlcat(contents, "/", sizeof(contents));
+	    strlcat(contents, REQUIRED_BY_FNAME, sizeof(contents));
  
 	    cfile = fopen(contents, "a");
 	    if (!cfile)
