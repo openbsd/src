@@ -374,6 +374,10 @@ parse_args (pargc, pargv)
   static const struct option std_longopts[] = {
 #define OPTION_HELP (OPTION_STD_BASE)
     {"help", no_argument, NULL, OPTION_HELP},
+    /* getopt allows abbreviations, so we do this to stop it from
+       treating -k as an abbreviation for --keep-locals.  Some
+       ports use -k to enable PIC assembly.  */
+    {"keep-locals", no_argument, NULL, 'L'},
     {"keep-locals", no_argument, NULL, 'L'},
     {"mri", no_argument, NULL, 'M'},
 #define OPTION_NOCPP (OPTION_STD_BASE + 1)
