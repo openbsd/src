@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.5 2005/03/31 17:18:24 joris Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.6 2005/04/01 09:44:00 joris Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -108,6 +108,12 @@ cvs_startcmd(struct cvs_cmd *cmd, int argc, char **argv)
 				return (EX_PROTOCOL);
 		}
 	}
+
+	/* if we are the version command, don't bother going
+	 * any further now, we did everything we had to.
+	 */
+	if (cmd->cmd_op == CVS_OP_VERSION)
+		return (0);
 
 	if (c->cmd_examine != NULL)
 		cvs_file_examine(cvs_files, c->cmd_examine, NULL);
