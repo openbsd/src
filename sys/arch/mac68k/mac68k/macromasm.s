@@ -1,5 +1,5 @@
-/*	$OpenBSD: macromasm.s,v 1.8 1997/04/14 18:48:04 gene Exp $	*/
-/*	$NetBSD: macromasm.s,v 1.11 1996/05/25 14:45:37 briggs Exp $	*/
+/*	$OpenBSD: macromasm.s,v 1.9 2005/02/20 18:08:08 martin Exp $	*/
+/*	$NetBSD: macromasm.s,v 1.18 2000/11/15 07:15:36 scottr Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -37,6 +37,8 @@
 
 
 #include "assym.h"
+#include <machine/asm.h>
+#include <machine/trap.h>
 
 
 	/* Define this symbol as global with (v) value */
@@ -104,8 +106,7 @@
 	loglob(VBLQueue, 0x160)		/* Vertical blanking Queue, unused ? */
 	loglob(VBLQueue_head, 0x162)	/* Vertical blanking Queue, head */
 	loglob(VBLQueue_tail, 0x166)	/* Vertical blanking Queue, tail */
-	loglob(jDTInstall, 0xD9C)	/* short-cut to deferred task mgr */
-					/* trap handler */
+	loglob(jDTInstall, 0xd9c)	/* Deferred task mgr trap handler */
 
 	loglob(InitEgretJTVec, 0x2010)	/* pointer to a jump table for */
 					/* InitEgret on AV machines */
@@ -425,7 +426,6 @@ LGR_enter:
  * 1010 line emulator; A-line trap
  * (we fake MacOS traps from here)
  */
-	.global _mrg_aline_user
 	.global _mrg_aline_super
 	.global _mrg_ToolBoxtraps
 	.global _alinetrap
@@ -437,8 +437,9 @@ _alinetrap:
 	movw	sp@(FR_HW + 4), d0	| retrieve status register
 	andw	#PSL_S, d0	| supervisor state?
 	bne	Lalnosup	| branch if supervisor
-	jbsr	_mrg_aline_user | user a-line trap
-	bra	Lalrts
+	addql	#4, sp		| pop frame ptr
+	movql	#T_ILLINST, d0	| user-mode fault
+	jra	_ASM_LABEL(fault)
 Lalnosup:
 #define FR_PC (FR_HW+2)
 	movl	sp@(FR_PC + 4), a0	| retrieve PC

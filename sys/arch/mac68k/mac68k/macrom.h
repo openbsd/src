@@ -1,5 +1,5 @@
-/*	$OpenBSD: macrom.h,v 1.11 2004/11/26 21:21:28 miod Exp $	*/
-/*	$NetBSD: macrom.h,v 1.9 1996/05/25 14:45:35 briggs Exp $	*/
+/*	$OpenBSD: macrom.h,v 1.12 2005/02/20 18:08:08 martin Exp $	*/
+/*	$NetBSD: macrom.h,v 1.12 2000/11/15 07:15:36 scottr Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -78,12 +78,10 @@ extern caddr_t		ExpandMem;	/* pointer to Expanded Memory used by */
 extern u_int16_t	VBLQueue;	/* Vertical blanking Queue, unused ? */
 extern caddr_t		VBLQueue_head;	/* Vertical blanking Queue, head */
 extern caddr_t		VBLQueue_tail;	/* Vertical blanking Queue, tail */
-extern caddr_t		jDTInstall;	/* short-cut to deferred task mgr */
-					/* trap handler */
+extern caddr_t		jDTInstall;	/* Deferred task mgr trap handler */
 
 extern u_int32_t	**InitEgretJTVec; /* pointer to a jump table for */
 					  /* InitEgret on AV machines */
-extern caddr_t	jCacheFlush;		/* pointer to CacheFlush */
 
 	/* Types */
 
@@ -106,62 +104,37 @@ typedef struct {
 	/* Trap Flesh; these functions are C, not Pascal */
 
 /* trap tests */
-int MyOwnTrap(
-	void);
-void KnownRTS(
-	void);
+int	MyOwnTrap(void);
+void	KnownRTS(void);
 
-#ifdef MRG_ADB		/* These routines are defined here
-			 * if using the MRG_ADB method for accessing
-			 * the ADB/PRAM/RTC. They are 
-			 * defined in adb_direct.h */
+#ifdef MRG_ADB
+/*
+ * These functions are defined in adb_direct.c if we are not using
+ * the MRG method of accessing the ADB/PRAM/RTC.
+ */
 /* ADB Manager */
-int SetADBInfo(
-	ADBSetInfoBlock *info,
-	int		adbAddr);
-int CountADBs(  
-	void);
-int GetIndADB(
-	ADBDataBlock	*info,
-	int		index);
-int GetADBInfo(
-	ADBDataBlock	*info,
-	int		adbAddr);
-void ADBReInit(
-	void);
-int ADBOp(
-	Ptr	buffer, 	/* note different order of parameters */
-	Ptr	compRout,
-	Ptr	data,
-	short	commandNum);
-void ADBAlternateInit(
-	void);
+int	SetADBInfo(ADBSetInfoBlock *info, int adbAddr);
+int	CountADBs(void);
+int	GetIndADB(ADBDataBlock *info, int index);
+int	GetADBInfo(ADBDataBlock *info, int adbAddr);
+void	ADBReInit(void);
+	/* note different order of parameters */
+int	ADBOp(Ptr buffer, Ptr compRout, Ptr data, short commandNum);
+void	ADBAlternateInit(void);
 #endif
 
 /* Memory Manager */
-Ptr NewPtr(
-	int size);
-int DisposPtr(
-	Ptr ptr);
-int GetPtrSize(
-	Ptr ptr);
-int SetPtrSize(
-	Ptr ptr,
-	int newbytes);
+Ptr	NewPtr(int size);
+int	DisposPtr(Ptr ptr);
+int	GetPtrSize(Ptr ptr);
+int	SetPtrSize(Ptr ptr, int newbytes);
 
 /* Resource Manager */
-Handle GetResource(
-	u_int theType,
-	short	theID);
-short ResError(
-	void);
-short mrg_CountResources(
-	u_int32_t type);
-short Count_Resources(
-	u_int32_t rsrc_type);
-caddr_t *mrg_GetIndResource(
-	u_int16_t index,
-	u_int32_t type);
+Handle	GetResource(u_int theType, short theID);
+short	ResError(void);
+short	mrg_CountResources(u_int32_t type);
+short	Count_Resources(u_int32_t rsrc_type);
+caddr_t	*mrg_GetIndResource(u_int16_t index, u_int32_t type);
 
 
 	/* Mac ROM Glue globals for BSD kernel */
@@ -180,7 +153,7 @@ extern u_char mrg_ResError[];
 
 
 	/* Dump instruction trace */
-void dumptrace(void);
+void	dumptrace(void);
 
 
 	/* Stuff for configuring ROM Glue */
@@ -235,6 +208,8 @@ int	mrg_adbintr(void);
 int	mrg_pmintr(void);
 void	mrg_fixupROMBase(caddr_t, caddr_t);
 int	mrg_Delay(void);
+void	mrg_DTInstall(void);
+void	mrg_execute_deferred(void);
 void	mrg_VBLQueue(void);
 void	mrg_init_stub_1(void);
 void	mrg_init_stub_2(void);
@@ -251,11 +226,9 @@ int	mrg_DisposPtr(void);
 int	mrg_GetPtrSize(void);
 int	mrg_SetPtrSize(void);
 int	mrg_PostEvent(void);
-int	mrg_GetTrapAddress(void);
 int	mrg_SetTrapAddress(void);
 void	mrg_StripAddress(void);
 void	mrg_aline_super(struct frame *);
-void	mrg_aline_user(void);
 void	mrg_init(void);
 void	mrg_FixDiv(void);
 void	mrg_FixMul(void);
@@ -267,6 +240,6 @@ int	mach_cputype(void);
 
 /* trace all instructions, not just flow changes. */
 #define tron() \
-	__asm("movw sr, d0 ; orw #0x8000, d0 ; movw d0, sr" : : : "d0")
+	asm("movw sr, d0 ; orw #0x8000, d0 ; movw d0, sr" : : : "d0")
 #define troff() \
-	__asm("movw sr, d0 ; andw #0x3fff, d0 ; movw d0, sr" : : : "d0")
+	asm("movw sr, d0 ; andw #0x3fff, d0 ; movw d0, sr" : : : "d0")
