@@ -1,5 +1,5 @@
 dnl
-dnl	$OpenBSD: m4.common,v 1.27 2001/10/14 20:59:33 miod Exp $
+dnl	$OpenBSD: m4.common,v 1.28 2001/12/02 00:15:42 miod Exp $
 dnl
 dnl simulate an include path with a macro 'includeit'.
 define(`includeit',`sinclude('INCLUDE/`$1)sinclude('INCLUDE/../`$1)')dnl
@@ -104,7 +104,8 @@ define({:-OpenBSDetc-:},
 		 system from scratch, but should NOT be used if you are
 		 upgrading.  (If you are upgrading, it's recommended that
 		 you get a copy of this set and CAREFULLY upgrade your
-		 configuration files by hand.)showsize($1,$2)-:})dnl
+		 configuration files by hand, see the section named "Upgrading
+		 a previously-installed OpenBSD System" below.)showsize($1,$2)-:})dnl
 dnl
 dnl
 dnl OpenBSDgame( compressed size, uncompressed size )

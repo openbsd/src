@@ -47,14 +47,17 @@ this directory are as follows:
 		 This MacOS program is used to load the OpenBSD kernel and
 		 start the operating system.  In all cases, you will need to
 		 download this file.
+		 [ 416K binhexed, 740K uncompressed ]
 
 	Installer_1.2.sea.hqx
 		 This is the MacOS program used to install downloaded sets
 		 (such as those from the bins directory) onto a BSD partition.
 		 It is necessary in either the case of a fresh install or an
 		 upgrade.
+		 [ 736K binhexed, 1.5M uncompressed ]
 
 	Mkfs_1.45.sea.hqx
 		 A MacOS program to build BSD filesystems on various
 		 partitions you have created (see below).  You will need this
 		 if you are performing a new installation.
+		 [ 96K binhexed, 100K uncompressed ]

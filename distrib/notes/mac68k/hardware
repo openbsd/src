@@ -21,9 +21,9 @@ and/or FPU are required if they are not provided by default with the
 machine.
 	Mac II, Mac IIx, Mac IIcx, Mac IIci, Mac SE/30,
 	Mac IIsi, Mac IIvx, Mac IIvi, Performa 600, Centris 650,
-	Color Classic, Classic II, LC520, LC550, Mac LCIII, Performa 4xx, 
-	LCII, LCIII, MacTV, Quadra 610, Quadra 650, Quadra 840, Quadra
-	840AV, Quadra 800, Quadra 700, Duo Series,
+	Color Classic, Classic II, LC520, LC550, Performa 4xx,  LCII,
+	LCIII, MacTV, Quadra 610, Quadra 700, Quadra 650, Quadra 800,
+	Quadra 840AV, some Duo Series,
 	Powerbook 180 and 180c, PB140, PB145, PB145B, PB160, PB170, PB165,
 	PB165c
 
@@ -38,12 +38,19 @@ Supported devices on all of the above systems {:-include-:}:
 	Ethernet cards based on the Natl. Semiconductor 8390
 		(Asante, Apple, and a few others)
 	Some ethernet cards based on the SONIC chip including internal
-		Ethernet on many of Apple's Quadras.
+		Ethernet on many of Apple's non-AV Quadras/Centrises and
+		PowerBook 500 series.
 	
 Some systems will boot and are usable from an external terminal
 (serial tty or SL/IP):
 	LC475, Performa 475, Quadra 605
 	possibly others
+
+Some systems are reportedly almost supported:
+	LC/Performa575 (if 68LC040 replaced with a 68040)
+	LC/Performa630 (if 68LC040 replaced with a 68040, and booted from an
+		external SCSI drive)
+	PowerBook 550c (but the internal SCSI drive is not supported yet)
 
 What isn't supported, but often asked about:
 	PowerPC-based Macs.  They are supported by the OpenBSD/macppc
@@ -53,3 +60,6 @@ What isn't supported, but often asked about:
 		itself contains a major bug which is presently being worked
 		on.  However, machines such as the Centris 605 don't work
 		right now.
+	LCPDS ethernet cards.
+	Apple Communication Slot (CS) ethernet cards.
+	Quadra/Centris AV series' onboard MACE ethernet.
