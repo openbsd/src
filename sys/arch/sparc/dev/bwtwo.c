@@ -89,11 +89,10 @@ int		bwtwoioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
 int		bwtwommap __P((dev_t, int, int));
 static void	bwtwounblank __P((struct device *));
 
-struct cfdriver bwtwocd =
-    { NULL, "bwtwo", bwtwomatch, bwtwoattach,
-      DV_DULL, sizeof(struct bwtwo_softc) };
-
-/* XXX we do not handle frame buffer interrupts (do not know how) */
+struct cfdriver bwtwocd = {
+	NULL, "bwtwo", bwtwomatch, bwtwoattach,
+	DV_DULL, sizeof(struct bwtwo_softc)
+};
 
 /* frame buffer generic driver */
 static struct fbdriver bwtwofbdriver = {
@@ -102,10 +101,6 @@ static struct fbdriver bwtwofbdriver = {
 
 extern int fbnode;
 extern struct tty *fbconstty;
-extern int (*v_putc)();
-extern int nullop();
-static int bwtwo_cnputc();
-static struct bwtwo_softc *bwcons;
 
 /*
  * Match a bwtwo.
