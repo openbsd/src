@@ -1,4 +1,4 @@
-/*      $OpenBSD: pf_key_v2.c,v 1.100 2002/05/28 10:09:46 ho Exp $  */
+/*      $OpenBSD: pf_key_v2.c,v 1.101 2002/05/31 02:16:55 angelos Exp $  */
 /*	$EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	*/
 
 /*
@@ -798,6 +798,51 @@ pf_key_v2_get_spi (size_t *sz, u_int8_t proto, struct sockaddr *src,
   return 0;
 }
 
+static void
+pf_key_v2_setup_sockaddr (void *res, struct sockaddr *src,
+			  struct sockaddr *dst, in_port_t port, int ingress)
+{
+  struct sockaddr_in *ip4_sa;
+  struct sockaddr_in6 *ip6_sa;
+  u_int8_t *p;
+
+  switch (src->sa_family)
+    {
+    case AF_INET:
+      ip4_sa = (struct sockaddr_in *)res;
+      ip4_sa->sin_family = AF_INET;
+      ip4_sa->sin_len = sizeof *ip4_sa;
+      ip4_sa->sin_port = port;
+      if (dst)
+	p = (u_int8_t *)(ingress
+			 ? &((struct sockaddr_in *)src)->sin_addr.s_addr
+			 : &((struct sockaddr_in *)dst)->sin_addr.s_addr);
+      else
+	p = (u_int8_t *)&((struct sockaddr_in *)src)->sin_addr.s_addr;
+      ip4_sa->sin_addr.s_addr = *((in_addr_t *)p);
+      break;
+
+    case AF_INET6:
+      ip6_sa = (struct sockaddr_in6 *)res;
+      ip6_sa->sin6_family = AF_INET6;
+      ip6_sa->sin6_len = sizeof *ip6_sa;
+      ip6_sa->sin6_port = port;
+      if (dst)
+	p = (u_int8_t *)(ingress
+			 ? &((struct sockaddr_in6 *)src)->sin6_addr.s6_addr
+			 : &((struct sockaddr_in6 *)dst)->sin6_addr.s6_addr);
+      else
+	p = (u_int8_t *)&((struct sockaddr_in6 *)src)->sin6_addr.s6_addr;
+      memcpy (ip6_sa->sin6_addr.s6_addr, p, sizeof (struct in6_addr));
+      break;
+
+    default:
+      log_print ("pf_key_v2_setup_sockaddr: unknown family %d\n",
+		 src->sa_family);
+      break;
+    }
+}
+
 /*
  * Store/update a PF_KEY_V2 security association with full information from the
  * IKE SA and PROTO into the kernel.  INCOMING is set if we are setting the
@@ -822,7 +867,10 @@ pf_key_v2_set_spi (struct sa *sa, struct proto *proto, int incoming,
   struct pf_key_v2_msg *update = 0, *ret = 0;
   struct ipsec_proto *iproto = proto->data;
 #if defined (SADB_X_CREDTYPE_NONE) || defined (SADB_X_AUTHTYPE_NONE)
+  struct ipsec_sa *isa = sa->data;
   struct sadb_x_cred *cred;
+  struct sadb_protocol flowtype;
+  
 #endif
   size_t len;
 #ifdef KAME
@@ -1442,6 +1490,74 @@ pf_key_v2_set_spi (struct sa *sa, struct proto *proto, int incoming,
  doneauth:
 #endif /* SADB_X_AUTHTYPE_NONE */
 
+#ifdef SADB_X_EXT_FLOW_TYPE
+    /* Setup the flow type extension.  */
+  bzero (&flowtype, sizeof flowtype);
+  flowtype.sadb_protocol_exttype = SADB_X_EXT_PROTOCOL;
+  flowtype.sadb_protocol_len = sizeof flowtype / PF_KEY_V2_CHUNK;
+  flowtype.sadb_protocol_direction
+    = incoming ? IPSP_DIRECTION_IN : IPSP_DIRECTION_OUT;
+  flowtype.sadb_protocol_proto = isa->tproto;
+
+  if (pf_key_v2_msg_add (update, (struct sadb_ext *)&flowtype, 0) == -1)
+    goto cleanup;
+
+  len = sizeof *addr + PF_KEY_V2_ROUND (sysdep_sa_len (isa->src_net));
+  addr = calloc (1, len);
+  if (!addr)
+    goto cleanup;
+  addr->sadb_address_exttype =
+      incoming ? SADB_X_EXT_DST_FLOW : SADB_X_EXT_SRC_FLOW;
+  addr->sadb_address_len = len / PF_KEY_V2_CHUNK;
+  addr->sadb_address_reserved = 0;
+  pf_key_v2_setup_sockaddr (addr + 1, isa->src_net, 0, isa->sport, 0);
+  if (pf_key_v2_msg_add (update, (struct sadb_ext *)addr,
+			 PF_KEY_V2_NODE_MALLOCED) == -1)
+    goto cleanup;
+  addr = 0;
+
+  addr = calloc (1, len);
+  if (!addr)
+    goto cleanup;
+  addr->sadb_address_exttype =
+      incoming ? SADB_X_EXT_DST_MASK : SADB_X_EXT_SRC_MASK;
+  addr->sadb_address_len = len / PF_KEY_V2_CHUNK;
+  addr->sadb_address_reserved = 0;
+  pf_key_v2_setup_sockaddr (addr + 1, isa->src_mask, 0,
+      isa->sport ? 0xffff : 0, 0);
+  if (pf_key_v2_msg_add (update, (struct sadb_ext *)addr,
+			 PF_KEY_V2_NODE_MALLOCED) == -1)
+    goto cleanup;
+  addr = 0;
+
+  addr = calloc (1, len);
+  if (!addr)
+    goto cleanup;
+  addr->sadb_address_exttype =
+      incoming ? SADB_X_EXT_SRC_FLOW : SADB_X_EXT_DST_FLOW;
+  addr->sadb_address_len = len / PF_KEY_V2_CHUNK;
+  addr->sadb_address_reserved = 0;
+  pf_key_v2_setup_sockaddr (addr + 1, isa->dst_net, 0, isa->dport, 0);
+  if (pf_key_v2_msg_add (update, (struct sadb_ext *)addr,
+			 PF_KEY_V2_NODE_MALLOCED) == -1)
+    goto cleanup;
+  addr = 0;
+
+  addr = calloc (1, len);
+  if (!addr)
+    goto cleanup;
+  addr->sadb_address_exttype =
+      incoming ? SADB_X_EXT_SRC_MASK : SADB_X_EXT_DST_MASK;
+  addr->sadb_address_len = len / PF_KEY_V2_CHUNK;
+  addr->sadb_address_reserved = 0;
+  pf_key_v2_setup_sockaddr (addr + 1, isa->dst_mask, 0,
+      isa->dport ? 0xffff : 0, 0);
+  if (pf_key_v2_msg_add (update, (struct sadb_ext *)addr,
+			 PF_KEY_V2_NODE_MALLOCED) == -1)
+    goto cleanup;
+  addr = 0;
+#endif /* SADB_X_EXT_FLOW_TYPE */
+
   /* XXX Here can sensitivity extensions be setup.  */
 
 #ifdef USE_DEBUG
@@ -1520,51 +1636,6 @@ pf_key_v2_mask6_to_bits (u_int8_t *mask)
   int n;
   bit_ffc (mask, 128, &n);
   return n;
-}
-
-static void
-pf_key_v2_setup_sockaddr (void *res, struct sockaddr *src,
-			  struct sockaddr *dst, in_port_t port, int ingress)
-{
-  struct sockaddr_in *ip4_sa;
-  struct sockaddr_in6 *ip6_sa;
-  u_int8_t *p;
-
-  switch (src->sa_family)
-    {
-    case AF_INET:
-      ip4_sa = (struct sockaddr_in *)res;
-      ip4_sa->sin_family = AF_INET;
-      ip4_sa->sin_len = sizeof *ip4_sa;
-      ip4_sa->sin_port = port;
-      if (dst)
-	p = (u_int8_t *)(ingress
-			 ? &((struct sockaddr_in *)src)->sin_addr.s_addr
-			 : &((struct sockaddr_in *)dst)->sin_addr.s_addr);
-      else
-	p = (u_int8_t *)&((struct sockaddr_in *)src)->sin_addr.s_addr;
-      ip4_sa->sin_addr.s_addr = *((in_addr_t *)p);
-      break;
-
-    case AF_INET6:
-      ip6_sa = (struct sockaddr_in6 *)res;
-      ip6_sa->sin6_family = AF_INET6;
-      ip6_sa->sin6_len = sizeof *ip6_sa;
-      ip6_sa->sin6_port = port;
-      if (dst)
-	p = (u_int8_t *)(ingress
-			 ? &((struct sockaddr_in6 *)src)->sin6_addr.s6_addr
-			 : &((struct sockaddr_in6 *)dst)->sin6_addr.s6_addr);
-      else
-	p = (u_int8_t *)&((struct sockaddr_in6 *)src)->sin6_addr.s6_addr;
-      memcpy (ip6_sa->sin6_addr.s6_addr, p, sizeof (struct in6_addr));
-      break;
-
-    default:
-      log_print ("pf_key_v2_setup_sockaddr: unknown family %d\n",
-		 src->sa_family);
-      break;
-    }
 }
 
 /*
@@ -2159,7 +2230,7 @@ pf_key_v2_convert_id (u_int8_t *id, int idlen, size_t *reslen, int *idtype)
 }
 #endif
 
-/* Enable a flow given a SA.  */
+/* Enable a flow given an SA.  */
 int
 pf_key_v2_enable_sa (struct sa *sa, struct sa *isakmp_sa)
 {
@@ -2884,14 +2955,19 @@ pf_key_v2_acquire (struct pf_key_v2_msg *pmsg)
   tproto = sproto->sadb_protocol_proto;
 
 #ifdef SADB_X_EXT_LOCAL_CREDENTIALS
-  cred
-    = (struct sadb_x_cred *)pf_key_v2_find_ext (ret,
-						SADB_X_EXT_LOCAL_CREDENTIALS);
+  ext = pf_key_v2_find_ext (pmsg, SADB_X_EXT_LOCAL_CREDENTIALS);
+  if (ext)
+    cred = (struct sadb_x_cred *) ext->seg;
+  else
+    cred = 0;
 #endif
 
 #ifdef SADB_X_EXT_LOCAL_AUTH
-  sauth = (struct sadb_x_cred *)pf_key_v2_find_ext (ret,
-						    SADB_X_EXT_LOCAL_AUTH);
+  ext = pf_key_v2_find_ext (pmsg, SADB_X_EXT_LOCAL_AUTH);
+  if (ext)
+    sauth = (struct sadb_x_cred *) ext->seg;
+  else
+    sauth = 0;
 #endif
 
   bzero (ssflow, sizeof ssflow);
@@ -3688,7 +3764,7 @@ pf_key_v2_acquire (struct pf_key_v2_msg *pmsg)
       /* Phase 1 configuration. */
       if (!conf_get_str (confname, "exchange_type"))
         {
-#ifdef SADB_X_CREDTYPE_NONE
+#ifdef SADB_X_EXT_LOCAL_AUTH
 	  /* We may have been provided with authentication material. */
 	  if (sauth)
 	    {
@@ -3782,7 +3858,7 @@ pf_key_v2_acquire (struct pf_key_v2_msg *pmsg)
 		  break;
 
 		default:
-		  log_print ("pf_key_v2_set_spi: unknown authentication "
+		  log_print ("pf_key_v2_acquire: unknown authentication "
 			     "material type %d received from kernel",
 			     sauth->sadb_x_cred_type);
 		  conf_end (af, 0);
@@ -3790,7 +3866,7 @@ pf_key_v2_acquire (struct pf_key_v2_msg *pmsg)
 		}
 	    }
 	  else /* Fall through */
-#endif /* SADB_X_CREDTYPE_NONE */
+#endif /* SADB_X_EXT_LOCAL_AUTH */
 	  /* XXX Default transform set should be settable. */
 	  if (conf_set (af, confname, "Transforms", "3DES-SHA-RSA_SIG", 0, 0))
 	    {
