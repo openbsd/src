@@ -1,4 +1,4 @@
-/* $OpenBSD: vga.c,v 1.20 2001/03/16 14:02:36 mickey Exp $ */
+/* $OpenBSD: vga.c,v 1.21 2001/03/22 12:43:47 mickey Exp $ */
 /* $NetBSD: vga.c,v 1.28.2.1 2000/06/30 16:27:47 simonb Exp $ */
 
 /*
@@ -89,6 +89,7 @@ struct vgascreen {
 struct vga_config {
 	struct vga_handle hdl;
 
+	int vc_type;
 	int nscreens;
 	LIST_HEAD(, vgascreen) screens;
 	struct vgascreen *active; /* current display */
@@ -543,6 +544,7 @@ vga_extended_attach(self, iot, memt, type, map)
 		vga_init(vc, iot, memt);
 	}
 
+	vc->vc_type = type;
 #ifdef arc
 	vc->vc_mmap = map;
 #endif
@@ -605,21 +607,13 @@ vga_ioctl(v, cmd, data, flag, p)
 	int flag;
 	struct proc *p;
 {
-#if 0
 	struct vga_config *vc = v;
-#endif
 
 	switch (cmd) {
-#if 0
 	case WSDISPLAYIO_GTYPE:
 		*(int *)data = vc->vc_type;
 		/* XXX should get detailed hardware information here */
 		return 0;
-#else
-	case WSDISPLAYIO_GTYPE:
-		*(int *)data = WSDISPLAY_TYPE_UNKNOWN;
-		return 0;
-#endif
 
 	case WSDISPLAYIO_GINFO:
 	case WSDISPLAYIO_GETCMAP:
