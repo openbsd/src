@@ -1022,6 +1022,12 @@ cfline(line, f)
 		if (*buf == '*')
 			pri = LOG_PRIMASK + 1;
 		else {
+			/* ignore trailing spaces */
+			int i;
+			for (i=strlen(buf)-1; i >= 0 && buf[i] == ' '; i--) {
+				buf[i]='\0';
+			}
+
 			pri = decode(buf, prioritynames);
 			if (pri < 0) {
 				(void)snprintf(ebuf, sizeof ebuf,
