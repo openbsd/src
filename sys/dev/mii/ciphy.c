@@ -1,4 +1,4 @@
-/*	$OpenBSD: ciphy.c,v 1.5 2005/03/26 04:40:09 krw Exp $	*/
+/*	$OpenBSD: ciphy.c,v 1.6 2005/03/28 03:11:06 krw Exp $	*/
 /*	$FreeBSD: ciphy.c,v 1.1 2004/09/10 20:57:45 wpaul Exp $	*/
 /*
  * Copyright (c) 2004
@@ -247,36 +247,9 @@ setit:
 		if (IFM_INST(ife->ifm_media) != sc->mii_inst)
 			return (0);
 
-		/*
-		 * Is the interface even up?
-		 */
-		if ((mii->mii_ifp->if_flags & IFF_UP) == 0)
+		if (mii_phy_tick(sc) == EJUSTRETURN)
 			return (0);
-
-		/*
-		 * Only used for autonegotiation.
-		 */
-		if (IFM_SUBTYPE(ife->ifm_media) != IFM_AUTO)
-			break;
-
-		/*
-		 * Check to see if we have link.  If we do, we don't
-		 * need to restart the autonegotiation process.  Read
-		 * the BMSR twice in case it's latched.
-		 */
-		reg = PHY_READ(sc, MII_BMSR) | PHY_READ(sc, MII_BMSR);
-		if (reg & BMSR_LINK)
-			break;
-
-		/*
-		 * Only retry autonegotiation every mii_anegticks seconds.
-		 */
-		if (++sc->mii_ticks <= sc->mii_anegticks)
-			break;
-		
-		sc->mii_ticks = 0;
-		mii_phy_auto(sc, 0);
-		return (0);
+		break;
 	}
 
 	/* Update the media status. */
