@@ -1,4 +1,4 @@
-/*	$OpenBSD: sb_isa.c,v 1.2 1998/04/26 21:02:57 provos Exp $	*/
+/*	$OpenBSD: sb_isa.c,v 1.3 1998/04/28 00:03:24 deraadt Exp $	*/
 /*	$NetBSD: sb_isa.c,v 1.15 1997/11/30 15:32:25 drochner Exp $	*/
 
 /*
@@ -108,20 +108,15 @@ sbfind(parent, sc, ia)
 {
 	int rc = 0;
 
-	if (!SB_BASE_VALID(ia->ia_iobase)) {
-		printf("sb: configured iobase 0x%x invalid\n", ia->ia_iobase);
+	if (!SB_BASE_VALID(ia->ia_iobase))
 		return 0;
-	}
 
 	sc->sc_iot = ia->ia_iot;
 
 	/* Map i/o space [we map 24 ports which is the max of the sb and pro */
 	if (bus_space_map(sc->sc_iot, ia->ia_iobase, SBP_NPORT, 0,
-	    &sc->sc_ioh)) {
-		printf("sb: can't map i/o space 0x%x/%d in probe\n",
-		    ia->ia_iobase, SBP_NPORT);
+	    &sc->sc_ioh))
 		return 0;
-	}
 
 	sc->sc_iobase = ia->ia_iobase;
 	sc->sc_irq = ia->ia_irq;
@@ -168,10 +163,8 @@ sb_isa_attach(parent, self, aux)
 
 	if (!sbfind(parent, sc, ia) || 
 	    bus_space_map(sc->sc_iot, ia->ia_iobase, ia->ia_iosize, 
-			  0, &sc->sc_ioh)) {
-		printf("%s: sbfind failed\n", sc->sc_dev.dv_xname);
+			  0, &sc->sc_ioh))
 		return;
-	}
 	sc->sc_isa = parent;
 	sbattach(sc);
 }
