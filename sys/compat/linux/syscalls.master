@@ -1,4 +1,4 @@
-	$OpenBSD: syscalls.master,v 1.17 2000/03/13 08:18:30 jasoni Exp $
+	$OpenBSD: syscalls.master,v 1.18 2000/03/18 21:36:02 ian Exp $
 ;	$NetBSD: syscalls.master,v 1.15 1995/12/18 14:35:10 fvdl Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
@@ -299,4 +299,4 @@
 187	UNIMPL		sendfile
 188	UNIMPL		getpmsg
 189	UNIMPL		putpmsg
-190	UNIMPL		vfork
+190	STD		{ int sys_vfork(void); }
