@@ -1,4 +1,4 @@
-.\"	$OpenBSD: find.1,v 1.26 2000/03/07 21:11:08 aaron Exp $
+.\"	$OpenBSD: find.1,v 1.27 2000/06/07 15:25:30 deraadt Exp $
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -213,6 +213,11 @@ If
 is numeric and there is no such group name, then
 .Ar gname
 is treated as a group ID.
+.It Ic -iname Ar pattern
+True if the last component of the pathname being examined
+matches
+.Ar pattern .
+Case insensitive.
 .It Ic -inum Ar n
 True if the file has inode number
 .Ar n .
@@ -513,6 +518,7 @@ The options and primaries
 .Ic -empty ,
 .Ic -follow ,
 .Ic -fstype ,
+.Ic -iname ,
 .Ic -inum ,
 .Ic -links ,
 .Ic -ls ,
@@ -524,6 +530,9 @@ and
 .Ic -print0
 are extensions to
 .St -p1003.2 .
+The
+.Ic -iname
+option was inspired by GNU find.
 .Pp
 Historically, the
 .Fl d ,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: function.c,v 1.17 1999/12/04 22:42:32 millert Exp $	*/
+/*	$OpenBSD: function.c,v 1.18 2000/06/07 15:25:30 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)function.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$OpenBSD: function.c,v 1.17 1999/12/04 22:42:32 millert Exp $";
+static char rcsid[] = "$OpenBSD: function.c,v 1.18 2000/06/07 15:25:30 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -907,6 +907,31 @@ c_name(pattern)
 	PLAN *new;
 
 	new = palloc(N_NAME, f_name);
+	new->c_data = pattern;
+	return (new);
+}
+
+/*
+ * -iname functions --
+ *
+ *	Similar to -name, but does case insensitive matching
+ *	
+ */
+int
+f_iname(plan, entry)
+	PLAN *plan;
+	FTSENT *entry;
+{
+	return (!fnmatch(plan->c_data, entry->fts_name, FNM_CASEFOLD));
+}
+ 
+PLAN *
+c_iname(pattern)
+	char *pattern;
+{
+	PLAN *new;
+
+	new = palloc(N_INAME, f_iname);
 	new->c_data = pattern;
 	return (new);
 }
