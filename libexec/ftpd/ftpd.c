@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.66 2000/01/14 20:58:21 ericj Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.67 2000/01/18 05:02:05 millert Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -1959,7 +1959,7 @@ pwd()
 	char path[MAXPATHLEN];
 
 	if (getcwd(path, sizeof path) == (char *)NULL)
-		reply(550, "%s.", path);
+		reply(550, "Can't get current directory: %s.", path);
 	else
 		replydirname(path, "is current directory.");
 }
