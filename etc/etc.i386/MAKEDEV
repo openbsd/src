@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.84 2000/10/16 14:57:56 aaron Exp $
+#	$OpenBSD: MAKEDEV,v 1.85 2000/11/23 10:00:01 deraadt Exp $
 #	$NetBSD: MAKEDEV,v 1.40 1996/03/31 00:50:47 perry Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -159,18 +159,18 @@ dodisk ()
 
 unt()
 {
-        # XXX pdksh can't seem to deal with locally scoped variables
-        # in ${foo#$bar} expansions
-        arg="$1"
-        tmp="${arg#[a-zA-Z]*}"
-        tmp="${tmp%*[a-zA-Z]}"
-        while [ "$tmp" != "$arg" ]
-        do
-                arg=$tmp
-                tmp="${arg#[a-zA-Z]*}"
-                tmp="${tmp%*[a-zA-Z]}"
-        done
-        echo $arg
+	# XXX pdksh can't seem to deal with locally scoped variables
+	# in ${foo#$bar} expansions
+	arg="$1"
+	tmp="${arg#[a-zA-Z]*}"
+	tmp="${tmp%*[a-zA-Z]}"
+	while [ "$tmp" != "$arg" ]
+	do
+		arg=$tmp
+		tmp="${arg#[a-zA-Z]*}"
+		tmp="${tmp%*[a-zA-Z]}"
+	done
+	echo $arg
 }
 
 for i
@@ -227,7 +227,7 @@ std)
 	mknod kmem		c 2 1	; chmod 640 kmem ; chown root.kmem kmem
 	mknod mem		c 2 0	; chmod 640 mem	; chown root.kmem mem
 	mknod null		c 2 2	; chmod 666 null
-	mknod xf86              c 2 4   ; chmod 600 xf86 ; chown root xf86
+	mknod xf86		c 2 4   ; chmod 600 xf86 ; chown root xf86
 	mknod zero		c 2 12	; chmod 666 zero
 	mknod io		c 2 14	; chmod 640 io ; chown root.kmem io
 	mknod tty		c 1 0	; chmod 666 tty
@@ -302,7 +302,7 @@ ttyc*)
 	mknod cuac$unit c 38 $(( $unit + 128 ))
 	chown uucp.dialer ttyc$unit cuac$unit
 	chmod 660 ttyc$unit cuac$unit
-        ;;
+	;;
 
 fd)
 	rm -f fd/*
@@ -331,9 +331,9 @@ wt*)
 
 fd*)
 	umask 2
-        unit=${i##fd}
+	unit=${i##fd}
 	typnam=${unit#?}
-        unit=${unit%%[!0-9]}
+	unit=${unit%%[!0-9]}
 	case $typnam in
 	"")	typnum=0;;	# no type specified, assume A
 	A)	typnam=; typnum=0;;
@@ -445,8 +445,8 @@ pty*)
 	do
 		nam=$name`hex $n`
 		rm -f {tty,pty}$nam
-                mknod tty$nam c 5 "$(( $offset + $n ))"
-                mknod pty$nam c 6 "$(( $offset + $n ))"
+		mknod tty$nam c 5 "$(( $offset + $n ))"
+		mknod pty$nam c 6 "$(( $offset + $n ))"
 		let n=n+1
 	done
 	umask 77
