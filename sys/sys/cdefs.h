@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdefs.h,v 1.5 1996/09/27 17:34:44 maja Exp $	*/
+/*	$OpenBSD: cdefs.h,v 1.6 2001/08/07 19:13:23 art Exp $	*/
 /*	$NetBSD: cdefs.h,v 1.16 1996/04/03 20:46:39 christos Exp $	*/
 
 /*
@@ -61,6 +61,16 @@
 #endif
 
 /*
+ * Macro to test if we're using a specific version of gcc or later.
+ */
+#ifdef __GNUC__
+#define __GNUC_PREREQ__(ma, mi) \
+	((__GNUC__ > (ma)) || (__GNUC__ == (ma) && __GNUC_MINOR__ >= (mi)))
+#else
+#define __GNUC_PREREQ__(ma, mi) 0
+#endif
+
+/*
  * The __CONCAT macro is used to concatenate parts of symbol names, e.g.
  * with "#define OLD(foo) __CONCAT(old,foo)", OLD(foo) produces oldfoo.
  * The __CONCAT macro is a bit tricky -- make sure you don't put spaces
@@ -117,13 +127,49 @@
  * these work for GNU C++ (modulo a slight glitch in the C++ grammar
  * in the distribution version of 2.5.5).
  */
-#if !defined(__GNUC__) || __GNUC__ < 2 || \
-	(__GNUC__ == 2 && __GNUC_MINOR__ < 5)
+
+#if !__GNUC_PREREQ__(2, 5)
 #define	__attribute__(x)	/* delete __attribute__ if non-gcc or gcc1 */
 #if defined(__GNUC__) && !defined(__STRICT_ANSI__)
 #define	__dead		__volatile
 #define	__pure		__const
 #endif
+#endif
+
+/*
+ * GNU C version 2.96 adds explicit branch prediction so that
+ * the CPU back-end can hint the processor and also so that
+ * code blocks can be reordered such that the predicted path
+ * sees a more linear flow, thus improving cache behavior, etc.
+ *
+ * The following two macros provide us with a way to utilize this
+ * compiler feature.  Use __predict_true() if you expect the expression
+ * to evaluate to true, and __predict_false() if you expect the
+ * expression to evaluate to false.
+ *
+ * A few notes about usage:
+ *
+ *	* Generally, __predict_false() error condition checks (unless
+ *	  you have some _strong_ reason to do otherwise, in which case
+ *	  document it), and/or __predict_true() `no-error' condition
+ *	  checks, assuming you want to optimize for the no-error case.
+ *
+ *	* Other than that, if you don't know the likelihood of a test
+ *	  succeeding from empirical or other `hard' evidence, don't
+ *	  make predictions.
+ *
+ *	* These are meant to be used in places that are run `a lot'.
+ *	  It is wasteful to make predictions in code that is run
+ *	  seldomly (e.g. at subsystem initialization time) as the
+ *	  basic block reordering that this affects can often generate
+ *	  larger code.
+ */
+#if __GNUC_PREREQ__(2, 96)
+#define __predict_true(exp)	__builtin_expect(((exp) != 0), 1)
+#define __predict_false(exp)	__builtin_expect(((exp) != 0), 0)
+#else
+#define __predict_true(exp)	((exp) != 0)
+#define __predict_false(exp)	((exp) != 0)
 #endif
 
 #ifdef __KPRINTF_ATTRIBUTE__
