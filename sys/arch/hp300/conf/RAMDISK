@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.5 1997/07/06 08:06:40 downsj Exp $
+#	$OpenBSD: RAMDISK,v 1.6 1997/10/20 01:49:02 downsj Exp $
 #
 # Ram disk kernel.
 #
@@ -11,16 +11,16 @@ include "../../../conf/GENERIC"
 # Support for various CPU types
 option	 	HP320
 option	 	HP330		# includes 318, 319
-option		HP340
+option	 	HP340
 option		HP345
-option		HP350
-option		HP360
-option		HP370
-option		HP375
-option		HP380
-option		HP400
-option		HP425
-option		HP433
+option	 	HP350
+option	 	HP360
+option	 	HP370
+option	 	HP375
+option	 	HP380
+option	 	HP400
+option	 	HP425
+option	 	HP433
 
 # Need to set locally
 maxusers	8
@@ -44,6 +44,7 @@ option	 	SE_KEYBOARD	# include Swedish HIL keymap
 #option	 	COMPAT_HPUX	# HP-UX binary compatibility
 
 #option	 	COMPAT_M68K4K	# compat. with NetBSD/m68k4k binaries
+#option		COMPAT_SUNOS	# SunOS/sun3 binaries
 
 # Verbose descriptions of unconfigured DIO devices
 # (Warning: this compiles in a large string table)
