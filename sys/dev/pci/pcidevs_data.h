@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.140 1999/05/09 07:10:44 downsj Exp 
+ *	OpenBSD: pcidevs,v 1.141 1999/05/13 07:00:03 downsj Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -2731,6 +2731,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Toshiba (2nd ID)",
 	    "PCI-FIRO",
+	},
+	{
+	    PCI_VENDOR_TRIDENT, PCI_PRODUCT_TRIDENT_4DWAVE,
+	    0,
+	    "Trident",
+	    "4DWAVE",
 	},
 	{
 	    PCI_VENDOR_TRIDENT, PCI_PRODUCT_TRIDENT_TGUI_9320,

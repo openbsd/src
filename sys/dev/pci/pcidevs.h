@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.140 1999/05/09 07:10:44 downsj Exp 
+ *	OpenBSD: pcidevs,v 1.141 1999/05/13 07:00:03 downsj Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -1213,6 +1213,7 @@
 #define	PCI_PRODUCT_TOSHIBA2_TFIRO	0x0701		/* PCI-FIRO */
 
 /* Trident products */
+#define	PCI_PRODUCT_TRIDENT_4DWAVE	0x2000		/* 4DWAVE */
 #define	PCI_PRODUCT_TRIDENT_TGUI_9320	0x9320		/* TGUI 9320 */
 #define	PCI_PRODUCT_TRIDENT_TGUI_9350	0x9350		/* TGUI 9350 */
 #define	PCI_PRODUCT_TRIDENT_TGUI_9360	0x9360		/* TGUI 9360 */
