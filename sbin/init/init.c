@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.35 2004/03/16 01:11:09 tedu Exp $	*/
+/*	$OpenBSD: init.c,v 1.36 2005/03/13 13:53:23 markus Exp $	*/
 /*	$NetBSD: init.c,v 1.22 1996/05/15 23:29:33 jtc Exp $	*/
 
 /*-
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)init.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: init.c,v 1.35 2004/03/16 01:11:09 tedu Exp $";
+static char rcsid[] = "$OpenBSD: init.c,v 1.36 2005/03/13 13:53:23 markus Exp $";
 #endif
 #endif /* not lint */
 
@@ -1300,6 +1300,9 @@ nice_death(void)
 		kill(sp->se_process, SIGHUP);
 	}
 
+	/* terminate the accounting process */
+	acct(NULL);
+
 	/* NB: should send a message to the session logger to avoid blocking. */
 	logwtmp("~", "shutdown", "");
 
@@ -1369,6 +1372,9 @@ death(void)
 	int i;
 	pid_t pid;
 	static const int death_sigs[3] = { SIGHUP, SIGTERM, SIGKILL };
+
+	/* terminate the accounting process */
+	acct(NULL);
 
 	for (sp = sessions; sp; sp = sp->se_next)
 		sp->se_flags |= SE_SHUTDOWN;
