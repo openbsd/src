@@ -1,4 +1,4 @@
-/*      $OpenBSD: ata.c,v 1.6 2000/07/20 07:40:32 csapuntz Exp $      */
+/*      $OpenBSD: ata.c,v 1.7 2000/10/28 18:08:45 csapuntz Exp $      */
 /*      $NetBSD: ata.c,v 1.9 1999/04/15 09:41:09 bouyer Exp $      */
 /*
  * Copyright (c) 1998 Manuel Bouyer.  All rights reserved.
@@ -44,19 +44,7 @@
 #include <dev/ata/atavar.h>
 #include <dev/ic/wdcreg.h>
 #include <dev/ic/wdcvar.h>
-
-#define WDCDEBUG
-
-#define DEBUG_FUNCS  0x08
-#define DEBUG_PROBE  0x10
-#ifdef WDCDEBUG
-extern int wdcdebug_mask; /* init'ed in wdc.c */
-#define WDCDEBUG_PRINT(args, level) \
-        if (wdcdebug_mask & (level)) \
-		printf args
-#else
-#define WDCDEBUG_PRINT(args, level)
-#endif
+#include <dev/ic/wdcdbg.h>
 
 #define ATAPARAMS_SIZE 512
 
@@ -101,7 +89,6 @@ ata_get_params(drvp, flags, prms)
 	{
 		int ret;
 		if ((ret = wdc_exec_command(drvp, &wdc_c)) != WDC_COMPLETE) {
-			printf ("WDC_EXEC_COMMAND: %d\n");
 			return CMD_AGAIN;
 		}
 	}
@@ -109,8 +96,7 @@ ata_get_params(drvp, flags, prms)
 	if (wdc_c.flags & (AT_ERROR | AT_TIMEOU | AT_DF)) {
 		struct channel_softc *chp = drvp->chnl_softc;
 
-		WDCDEBUG_PRINT(("IDENTIFY failed: 0x%x\n", wdc_c.flags)
-		    , DEBUG_PROBE);
+		WDCDEBUG_PRINT_PROBE(("IDENTIFY failed: 0x%x\n", wdc_c.flags));
 
 		/* Andreas Gunnarsson reports a setup with a flash
 		   disk where the ATA drive remains comatose until
@@ -118,7 +104,8 @@ ata_get_params(drvp, flags, prms)
 		if (try == 0 && (drvp->drive_flags & DRIVE_ATA) &&
 		    (wdc_c.flags & AT_TIMEOU) &&
 		    !(chp->ch_flags & WDCS_BSY)) {
-			WDCDEBUG_PRINT(("Retrying IDENTIFY\n"), DEBUG_PROBE);
+			WDCDEBUG_PRINT_PROBE
+			    (("Retrying IDENTIFY\n"));
 			try++;
 			goto again;
 		}

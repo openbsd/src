@@ -1,4 +1,4 @@
-/*      $OpenBSD: atapiscsi.c,v 1.30 2000/08/11 03:59:47 csapuntz Exp $     */
+/*      $OpenBSD: atapiscsi.c,v 1.31 2000/10/28 18:08:45 csapuntz Exp $     */
 
 /*
  * This code is derived from code with the copyright below.
@@ -78,7 +78,7 @@
 #define READY		6
 
 
-#define WDCDEBUG
+#define WDCDEBUG_PROBE
 
 #define DEBUG_INTR   0x01
 #define DEBUG_XFERS  0x02
@@ -89,13 +89,20 @@
 #define DEBUG_POLL   0x40
 #define DEBUG_ERRORS 0x80   /* Debug error handling code */
 
-#if defined(WDCDEBUG)
 int wdcdebug_atapi_mask = 0;
+
+#if defined(WDCDEBUG)
 #define WDCDEBUG_PRINT(args, level) \
 	if (wdcdebug_atapi_mask & (level)) \
 		printf args
 #else
 #define WDCDEBUG_PRINT(args, level)
+#endif
+
+#if defined(WDCDEBUG) || defined(WDCDEBUG_PROBE)
+#define WDCDEBUG_PRINT_PROBE(args)  if (wdcdebug_atapi_mask & DEBUG_PROBE) printf args
+#else
+#define WDCDEBUG_PRINT_PROBE(args)
 #endif
 
 /* 10 ms, this is used only before sending a cmd.  */
@@ -236,10 +243,8 @@ atapiscsi_attach(parent, self, aux)
 
 	printf("\n");
 
-#ifdef WDCDEBUG
 	if (chp->wdc->sc_dev.dv_cfdata->cf_flags & WDC_OPTION_PROBE_VERBOSE)
 		wdcdebug_atapi_mask |= DEBUG_PROBE;
-#endif
 
 	as->chp = chp;
 	as->sc_adapterlink.adapter_softc = as;
@@ -264,10 +269,9 @@ atapiscsi_attach(parent, self, aux)
 
 			wdc_probe_caps(drvp, id); 
 
-			WDCDEBUG_PRINT(
-			    ("general config %04x capabilities %04x ",
-			    id->atap_config, id->atap_capabilities1),
-			    DEBUG_PROBE);
+			WDCDEBUG_PRINT_PROBE(
+				("general config %04x capabilities %04x ",
+				id->atap_config, id->atap_capabilities1));
 
 			/* Tape drives do funny DSC stuff */
 			if (ATAPI_CFG_TYPE(id->atap_config) == 
@@ -281,8 +285,8 @@ atapiscsi_attach(parent, self, aux)
 			drvp->atapi_cap |=
 			    (id->atap_config & ATAPI_CFG_DRQ_MASK);
 
-			WDCDEBUG_PRINT(("driver caps %04x\n", drvp->atapi_cap),
-			    DEBUG_PROBE);
+			WDCDEBUG_PRINT_PROBE(
+				("driver caps %04x\n", drvp->atapi_cap));
 		} else
 			drvp->drive_flags &= ~DRIVE_ATAPI;
 	}
@@ -313,10 +317,8 @@ atapiscsi_attach(parent, self, aux)
 		}
 	}
 
-#ifdef WDCDEBUG
 	if (chp->wdc->sc_dev.dv_cfdata->cf_flags & WDC_OPTION_PROBE_VERBOSE)
 		wdcdebug_atapi_mask &= ~DEBUG_PROBE;
-#endif
 }
 
 void
@@ -364,8 +366,8 @@ wdc_atapi_get_params(chp, drive, id)
 	 * ATAPI devices one day.
 	 */
 	if ((drvp->drive_flags & DRIVE_ATAPI) == 0) {
-		WDCDEBUG_PRINT(("wdc_atapi_get_params: drive %d not present\n",
-		    drive), DEBUG_PROBE);
+		WDCDEBUG_PRINT_PROBE(("wdc_atapi_get_params: drive %d not present\n",
+		    drive));
 		return (-1);
 	}
 	bzero(&wdc_c, sizeof(struct wdc_command));
@@ -381,10 +383,10 @@ wdc_atapi_get_params(chp, drive, id)
 		panic("wdc_atapi_get_params");
 	}
 	if (wdc_c.flags & (AT_ERROR | AT_TIMEOU | AT_DF)) {
-		WDCDEBUG_PRINT(("wdc_atapi_get_params: ATAPI_SOFT_RESET "
+		WDCDEBUG_PRINT_PROBE(("wdc_atapi_get_params: ATAPI_SOFT_RESET "
 		    "failed for drive %s:%d:%d: error 0x%x\n",
 		    chp->wdc->sc_dev.dv_xname, chp->channel, drive, 
-		    wdc_c.r_error), DEBUG_PROBE);
+		    wdc_c.r_error));
 		return (-1);
 	}
 	drvp->state = 0;
@@ -396,10 +398,9 @@ wdc_atapi_get_params(chp, drive, id)
 
  retry:
 	if (ata_get_params(drvp, at_poll, id) != 0) {
-		WDCDEBUG_PRINT(("wdc_atapi_get_params: ATAPI_IDENTIFY_DEVICE "
+		WDCDEBUG_PRINT_PROBE(("wdc_atapi_get_params: ATAPI_IDENTIFY_DEVICE "
 		    "failed for drive %s:%d:%d\n",
-		    chp->wdc->sc_dev.dv_xname, chp->channel, drive), 
-		    DEBUG_PROBE);
+		    chp->wdc->sc_dev.dv_xname, chp->channel, drive));
 
 		if (retries--) {
 			delay(100000);
