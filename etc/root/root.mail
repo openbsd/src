@@ -19,22 +19,21 @@ installed with further documentation resources; to read info pages type "info".
 If you have installed the X11 packages during the install process, you can find
 further information regarding configuration in the file /usr/X11R6/README.
 
-Binary packages of the following packages are available on most architectures:
-	bash-2.01.1		emacs-20.2		gmake-3.76.1
-	id-utils-3.2		ircii-2.8.2-epic3.004	pine-3.96
-	screen-3.7.4		tcsh-6.07.02		unzip-5.3.1
-The files are in the directory
-	CD2:/packages/   (ie. mount /dev/cd0a /cdrom; cd /cdrom/packages)
-or	ftp://ftp.openbsd.org/pub/OpenBSD/2.4/packages/
+Several popular binary packages (pre-compiled applications) are available
+for most architetures.  If you installed from a CD-ROM the packages
+are on the same CD-ROM you installed from in the directory 2.4/packages.
+Those packages (and others) are also available via ftp at
+ftp://ftp.openbsd.org/pub/OpenBSD/2.4/packages/
+
 Select your architecture and download the tarballs of your choice.  For example
 to install the emacs package for i386, execute
-   # mount /dev/cd0a /cdrom; pkg_add /cdrom/packages/i386/emacs-20.2.tgz
+   # mount /dev/cd0a /cdrom; pkg_add /cdrom/2.4/packages/i386/emacs-20.3.tgz
 or # pkg_add ftp://ftp.openbsd.org/pub/OpenBSD/2.4/packages/i386/emacs-20.2.tgz
 
 Other important packages which are not permitted on the CD (due to patents) are
 available on our FTP servers (as described above).  In particular, we provide
 the USA and international versions of both SSH and PGP.  The filenames are:
-	ssh-usa-1.2.22.tgz	ssh-intl-1.2.22.tgz	pgp-usa-2.6.3.tgz
+	ssh-usa-1.2.26.tgz	ssh-intl-1.2.26.tgz	pgp-usa-2.6.3.tgz
 	pgp-intl-2.6.3.tgz
 You are STRONGLY urged to install one of the above ssh packages and use ssh
 instead of telnet, rlogin, or rsh.
