@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.285 2003/01/09 18:42:44 dhartmei Exp $	*/
+/*	$OpenBSD: parse.y,v 1.286 2003/01/09 19:02:21 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -71,18 +71,18 @@ static int		 blockpolicy = PFRULE_DROP;
 static int		 require_order = 1;
 
 enum {
-	PFCTL_STATE_NONE = 0,
-	PFCTL_STATE_OPTION = 1,
-	PFCTL_STATE_SCRUB = 2,
-	PFCTL_STATE_QUEUE = 3,
-	PFCTL_STATE_NAT = 4,
-	PFCTL_STATE_FILTER = 5
+	PFCTL_STATE_NONE,
+	PFCTL_STATE_OPTION,
+	PFCTL_STATE_SCRUB,
+	PFCTL_STATE_QUEUE,
+	PFCTL_STATE_NAT,
+	PFCTL_STATE_FILTER
 };
 
 enum pfctl_iflookup_mode {
-	PFCTL_IFLOOKUP_HOST = 0,
-	PFCTL_IFLOOKUP_NET = 1,
-	PFCTL_IFLOOKUP_BCAST = 2
+	PFCTL_IFLOOKUP_HOST,
+	PFCTL_IFLOOKUP_NET,
+	PFCTL_IFLOOKUP_BCAST
 };
 
 struct node_if {
