@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pegasos,v 1.1 2003/10/31 03:54:33 drahn Exp $
+#	$OpenBSD: files.pegasos,v 1.2 2003/11/14 11:19:43 miod Exp $
 
 #
 # pegasos-specific configuration info
@@ -11,6 +11,9 @@ file	arch/pegasos/pegasos/autoconf.c
 file	arch/pegasos/pegasos/clock.c
 file	arch/pegasos/pegasos/conf.c
 file	arch/pegasos/pegasos/disksubr.c			disk
+file	arch/pegasos/pegasos/hfsdisksubr.c		disk
+file	arch/pegasos/pegasos/mbrdisksubr.c		disk
+file	arch/pegasos/pegasos/rdbdisksubr.c		disk
 file	arch/pegasos/pegasos/machdep.c
 file	arch/pegasos/pegasos/wscons_machdep.c
 file	arch/pegasos/pegasos/mem.c
