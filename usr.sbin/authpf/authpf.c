@@ -1,4 +1,4 @@
-/*	$OpenBSD: authpf.c,v 1.23 2002/06/25 08:14:38 henning Exp $	*/
+/*	$OpenBSD: authpf.c,v 1.24 2002/10/25 18:33:13 camield Exp $	*/
 
 /*
  * Copyright (C) 1998 - 2002 Bob Beck (beck@openbsd.org).
@@ -103,7 +103,7 @@ static __dead void do_death(int);
 int
 main(int argc, char *argv[])
 {
-	int lockcnt = 0, pidfd;
+	int lockcnt = 0, n, pidfd;
 	FILE *config;
 	struct in_addr ina;
 	struct passwd *pw;
@@ -119,7 +119,10 @@ main(int argc, char *argv[])
 		exit(1);
 	}
 
-	strlcpy(ipsrc, cp, sizeof(ipsrc));
+	if (strlcpy(ipsrc, cp, sizeof(ipsrc)) >= sizeof(ipsrc)) {
+		syslog(LOG_ERR, "SSH_CLIENT variable too long");
+		exit(1);
+	}
 	cp = strchr(ipsrc, ' ');
 	if (!cp) {
 		syslog(LOG_ERR, "Corrupt SSH_CLIENT variable %s", ipsrc);
@@ -151,10 +154,22 @@ main(int argc, char *argv[])
 		goto die;
 	}
 
-	strlcpy(luser, pw->pw_name, sizeof(luser));
+	/*
+	 * Paranoia, but this data _does_ come from outside authpf, and
+	 * truncation would be bad.
+	 */
+	if (strlcpy(luser, pw->pw_name, sizeof(luser)) >= sizeof(luser)) {
+		syslog(LOG_ERR, "username too long: %s", pw->pw_name);
+		goto die;
+	}
 
-        /* Make our entry in /var/run as /var/run/authpf-ipaddr */
-        snprintf(pidfile, sizeof pidfile, "%s/%s", PATH_PIDFILE, ipsrc);
+	/* Make our entry in /var/authpf as /var/authpf/ipaddr */
+	n = snprintf(pidfile, sizeof(pidfile), "%s/%s", PATH_PIDFILE, ipsrc);
+	if (n < 0 || (u_int)n >= sizeof(pidfile)) {
+		syslog(LOG_ERR, "path to pidfile too long");
+		goto die;
+	}
+		
 	
 	/*
 	 * If someone else is already using this ip, then this person
@@ -173,7 +188,7 @@ main(int argc, char *argv[])
 
 	do {
 		int save_errno, otherpid = -1;
-		char otherluser[33];
+		char otherluser[MAXLOGNAME];
 
 		if ((pidfd = open(pidfile, O_RDWR|O_CREAT, 0644)) == -1 ||
 		    (pidfp = fdopen(pidfd, "r+")) == NULL) {
@@ -191,10 +206,10 @@ main(int argc, char *argv[])
 		/* Mark our pid, and username to our file. */   
 
 		rewind(pidfp);
-		if (fscanf(pidfp, "%d\n%32s\n", &otherpid, otherluser) != 2) 
+		/* 31 == MAXLOGNAME - 1 */
+		if (fscanf(pidfp, "%d\n%31s\n", &otherpid, otherluser) != 2)
 			otherpid = -1;
-		syslog(LOG_DEBUG,
-		    "Tried to lock %s, in use by pid %d: %s",
+		syslog(LOG_DEBUG, "Tried to lock %s, in use by pid %d: %s",
 		    pidfile, otherpid, strerror(save_errno));
 
 		if (otherpid > 0) {
@@ -472,11 +487,12 @@ allowed_luser(char *luser)
 static int
 check_luser(char *luserdir, char *luser)
 {
-	char tmp[1024];
 	FILE *f;
+	int n;
+	char tmp[MAXPATHLEN];
 
-	if (snprintf(tmp, sizeof(tmp), "%s/%s", luserdir, luser) >=
-	    sizeof(tmp)) {
+	n = snprintf(tmp, sizeof(tmp), "%s/%s", luserdir, luser);
+	if (n < 0 || (u_int)n >= sizeof(tmp)) {
 		syslog(LOG_ERR, "Provided banned directory line too long (%s)",
 		    luserdir);
 		return(0);
@@ -535,7 +551,7 @@ changefilter(int add, char *luser, char *ipsrc)
 	struct pfioc_rdr	pd;
 	struct pfioc_rule	pr;
 	struct pfctl		pf;
-	int rcount, wcount;
+	int n, rcount, wcount;
 	FILE *fin = NULL;
 
 	memset(&pf, 0, sizeof(pf));
@@ -568,8 +584,9 @@ changefilter(int add, char *luser, char *ipsrc)
 
 	fflush(fin);
 
-	if (snprintf(rulesfile, sizeof rulesfile, "%s/%s/authpf.rules",
-	    PATH_USER_DIR, luser) >= sizeof rulesfile) {
+	n = snprintf(rulesfile, sizeof(rulesfile), "%s/%s/authpf.rules",
+	    PATH_USER_DIR, luser);
+	if (n < 0 || (u_int)n >= sizeof(rulesfile)) {
 		syslog(LOG_ERR, "user path too long, exiting");
 		goto error;
 	}
@@ -583,7 +600,7 @@ changefilter(int add, char *luser, char *ipsrc)
 		}
 	}
 	if (from_fd == -1) {
-		snprintf(rulesfile, sizeof rulesfile, PATH_PFRULES);
+		snprintf(rulesfile, sizeof(rulesfile), PATH_PFRULES);
 		if  ((from_fd = open(rulesfile, O_RDONLY, 0)) == -1) {
 			syslog(LOG_ERR, "can't open %s (%m)", rulesfile);
 			if (unlink(template) == -1)
