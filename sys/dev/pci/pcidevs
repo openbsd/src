@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.589 2003/01/20 02:07:52 deraadt Exp $
+	$OpenBSD: pcidevs,v 1.590 2003/01/26 20:00:12 mickey Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -874,6 +874,7 @@ product APPLE UNINORTH5         0x0035  UniNorth Host-PCI Bridge
 product APPLE UNINORTH6         0x0036  UniNorth Host-PCI Bridge
 
 /* ARC Logic products */
+product ARC USB			0x0003	USB
 product ARC 1000PV		0xa091	1000PV
 product ARC 2000PV		0xa099	2000PV
 product ARC 2000MT		0xa0a1	2000MT
@@ -1285,10 +1286,15 @@ product HAUPPAUGE WINTV		0x13eb	WinTV
 
 /* Hewlett-Packard products */
 product HP A4977A		0x1005	A4977A Visualize EG
+product HP VISUALIZE_FX4	0x1008	Visualize FX4
+product HP TACH_TL		0x1028	Tach TL FibreChannel
+product HP TACH_XL2		0x1029	Tach XL2 FibreChannel
 product HP J2585A		0x1030	J2585A
 product HP J2585B		0x1031	J2585B
-product HP 82557B		0x1200	82557B 10/100 NIC
+product HP DIVA			0x1048	Diva Serial Multiport
+product HP VISUALIZE_FXE	0x108b	Visualize FXe
 product HP NETRAID_4M		0x10c2	NetRaid-4M
+product HP 82557B		0x1200	82557B 10/100 NIC
 
 /* Hifn products */
 product HIFN 7751		0x0005	7751
@@ -1321,6 +1327,7 @@ product IBM 0x0036		0x0036	Miami/PCI
 product IBM OLYMPIC		0x003e	Olympic
 product IBM I82557B		0x0057	i82557B 10/100
 product IBM FIREGL2		0x0170	FireGL2
+product IBM PCIX		0x01a7	PCI-X to PCI-X
 
 /* IDT products */
 product IDT 77201		0x0001	77201/77211 ATM (NICStAR)
@@ -1533,6 +1540,9 @@ product INTEL 21154		0xb154	S21154AE/BE PCI-PCI
 /* Intergraph products */
 product INTERGRAPH 4D50T	0x00e4	Powerstorm 4D50T
 
+/* Interphase products */
+product INTERPHASE 5526		0x0004	5526 FibreChannel
+
 /* Intersil products */
 product INTERSIL MINI_PCI_WLAN	0x3873	PRISM2.5 Mini-PCI WLAN
 
@@ -1698,6 +1708,8 @@ product NDC NCP130A2 		0x0131	NCP130 Rev A2
 /* National Semiconductor products */
 product NS DP83810		0x0001	DP83810 10/100
 product NS PC87415		0x0002	PC87415 IDE
+product NS PC87560		0x000e	87560 Legacy I/O
+product NS USB			0x0012	USB
 product NS DP83815		0x0020	DP83815 10/100
 product NS DP83820		0x0022	DP83820 1/10/100/1000
 product NS NS87410		0xd001	NS87410
