@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.12 1997/04/04 19:56:35 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.13 1997/04/14 02:24:04 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.18 1996/08/31 20:58:20 mycroft Exp $	*/
 
 /*
@@ -82,6 +82,8 @@ static int mksymlinks __P((void));
 static int hasparent __P((struct devi *));
 static int cfcrosscheck __P((struct config *, const char *, struct nvlist *));
 static void optiondelta __P((void));
+
+int	madedir = 0;
 
 int
 main(argc, argv)
@@ -553,6 +555,7 @@ setupdirs()
 			    builddir, strerror(errno));
 			exit(2);
 		}
+		madedir = 1;
 	} else if (!S_ISDIR(st.st_mode)) {
 		(void)fprintf(stderr, "config: %s is not a directory\n",
 			      builddir);
@@ -645,7 +648,7 @@ optiondelta()
 		fclose(fp);
 	}
 	free(newopts);
-	if (ret == 0)
+	if (ret == 0 || madedir == 1)
 		return;
 	(void)printf("Kernel options have changed -- you must run \"make clean\"\n");
 }
