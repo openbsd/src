@@ -1,4 +1,4 @@
-/*	$OpenBSD: nice.c,v 1.2 1996/06/26 05:37:31 deraadt Exp $	*/
+/*	$OpenBSD: nice.c,v 1.3 2000/11/07 09:04:21 kevlo Exp $	*/
 /*	$NetBSD: nice.c,v 1.9 1995/08/31 23:30:58 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "@(#)nice.c	5.4 (Berkeley) 6/1/90";
 #endif
-static char rcsid[] = "$OpenBSD: nice.c,v 1.2 1996/06/26 05:37:31 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: nice.c,v 1.3 2000/11/07 09:04:21 kevlo Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -61,7 +61,7 @@ static char rcsid[] = "$OpenBSD: nice.c,v 1.2 1996/06/26 05:37:31 deraadt Exp $"
 
 #define	DEFNICE	10
 
-static void usage();
+static void usage __P((void));
 
 int
 main(argc, argv)
