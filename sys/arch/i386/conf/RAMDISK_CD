@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.2 1999/08/15 13:11:10 deraadt Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.3 1999/09/01 05:15:34 deraadt Exp $
 #	from: OpenBSD: INST,v 1.19 1996/11/05 03:49:13 tholo Exp 
 #
 #	Install kernels no longer support X.
@@ -213,6 +213,7 @@ vr*	at pci? dev ? function ?		# VIA Rhine ethernet
 pn*	at pci? dev ? function ?		# Lite-On PNIC ethernet
 wb*	at pci? dev ? function ?		# Winbond W89C840F ethernet
 ti*	at pci? dev ? function ?		# Alteon Tigon 1Gb ethernet
+ax*	at pci? dev ? function ?		# ASIX AX88140A ethernet
 
 # Media Independent Interface (mii) drivers
 #exphy*	at mii? phy ?				# 3Com internal PHYs
