@@ -1,4 +1,4 @@
-/*	$OpenBSD: ebusreg.h,v 1.3 2001/10/01 05:48:11 jason Exp $	*/
+/*	$OpenBSD: ebusreg.h,v 1.4 2001/10/01 18:08:04 jason Exp $	*/
 /*	$NetBSD: ebusreg.h,v 1.1 1999/06/04 13:29:13 mrg Exp $	*/
 
 /*
@@ -110,7 +110,7 @@ struct ebus_interrupt_map_mask {
 #define	EBDCSR_DIAGRD		0x00000800	/* diagnostic read done */
 #define	EBDCSR_DIAGWR		0x00001000	/* diagnostic write done */
 #define	EBDCSR_CNTEN		0x00002000	/* count enable */
-#define	EBDCSR_TC		0x00004000	/* tc */
+#define	EBDCSR_TC		0x00004000	/* terminal count */
 #define	EBDCSR_CSRDRNDIS	0x00010000	/* disable csr drain */
 #define	EBDCSR_BURSTMASK	0x000c0000	/* burst size mask */
 #define	EBDCSR_BURST_1		0x00080000	/* burst 1 */
