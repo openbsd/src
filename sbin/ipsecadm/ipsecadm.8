@@ -1,4 +1,4 @@
-.\" $OpenBSD: ipsecadm.8,v 1.36 2000/11/11 04:54:38 angelos Exp $
+.\" $OpenBSD: ipsecadm.8,v 1.37 2001/03/22 03:35:19 angelos Exp $
 .\"
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -80,6 +80,10 @@ modifiers are:
 .Fl proxy ,
 .Fl spi ,
 .Fl enc ,
+.Fl srcid_type ,
+.Fl srcid ,
+.Fl dstid_type ,
+.Fl dstid ,
 .Fl auth ,
 .Fl authkey ,
 .Fl authkeyfile ,
@@ -96,6 +100,10 @@ Allowed modifiers are:
 .Fl proxy ,
 .Fl spi ,
 .Fl enc ,
+.Fl srcid_type ,
+.Fl srcid ,
+.Fl dstid_type ,
+.Fl dstid ,
 .Fl halfiv ,
 .Fl forcetunnel ,
 .Fl key ,
@@ -109,6 +117,10 @@ Allowed modifiers are:
 .Fl src ,
 .Fl proxy ,
 .Fl spi ,
+.Fl srcid_type ,
+.Fl srcid ,
+.Fl dstid_type ,
+.Fl dstid ,
 .Fl forcetunnel ,
 .Fl auth ,
 .Fl key ,
@@ -122,6 +134,10 @@ Allowed modifiers are:
 .Fl src ,
 .Fl proxy ,
 .Fl spi ,
+.Fl srcid_type ,
+.Fl srcid ,
+.Fl dstid_type ,
+.Fl dstid ,
 .Fl forcetunnel ,
 .Fl auth ,
 .Fl key ,
