@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_arcsubr.c,v 1.15 2003/06/02 23:28:11 millert Exp $	*/
+/*	$OpenBSD: if_arcsubr.c,v 1.16 2003/08/18 11:01:41 dhartmei Exp $	*/
 /*	$NetBSD: if_arcsubr.c,v 1.8 1996/05/07 02:40:29 thorpej Exp $	*/
 
 /*
@@ -145,7 +145,8 @@ arc_output(ifp, m0, dst, rt0)
 			adst = ntohl(SIN(dst)->sin_addr.s_addr) & 0xFF;
 
 		/* If broadcasting on a simplex interface, loopback a copy */
-		if ((m->m_flags & M_BCAST) && (ifp->if_flags & IFF_SIMPLEX))
+		if ((m->m_flags & M_BCAST) && (ifp->if_flags & IFF_SIMPLEX) &&
+		    m_tag_find(m, PACKET_TAG_PF_ROUTED, NULL) == NULL)
 			mcopy = m_copy(m, 0, (int)M_COPYALL);
 		if (ifp->if_flags & IFF_LINK0) {
 			atype = ARCTYPE_IP;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tokensubr.c,v 1.11 2003/06/02 23:28:12 millert Exp $	*/
+/*	$OpenBSD: if_tokensubr.c,v 1.12 2003/08/18 11:01:41 dhartmei Exp $	*/
 /*	$NetBSD: if_tokensubr.c,v 1.7 1999/05/30 00:39:07 bad Exp $	*/
 
 /*
@@ -201,7 +201,8 @@ token_output(ifp, m0, dst, rt0)
 			riflen = (ntohs(rif->tr_rcf) & TOKEN_RCF_LEN_MASK) >> 8;
 		}
 		/* If broadcasting on a simplex interface, loopback a copy. */
-		if ((m->m_flags & M_BCAST) && (ifp->if_flags & IFF_SIMPLEX))
+		if ((m->m_flags & M_BCAST) && (ifp->if_flags & IFF_SIMPLEX) &&
+		    m_tag_find(m, PACKET_TAG_PF_ROUTED, NULL) == NULL)
 			mcopy = m_copy(m, 0, (int)M_COPYALL);
 		etype = htons(ETHERTYPE_IP);
 		break;

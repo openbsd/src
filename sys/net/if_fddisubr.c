@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fddisubr.c,v 1.32 2003/06/02 23:28:12 millert Exp $	*/
+/*	$OpenBSD: if_fddisubr.c,v 1.33 2003/08/18 11:01:41 dhartmei Exp $	*/
 /*	$NetBSD: if_fddisubr.c,v 1.5 1996/05/07 23:20:21 christos Exp $	*/
 
 /*
@@ -202,7 +202,8 @@ fddi_output(ifp, m0, dst, rt0)
 		if (!arpresolve(ac, rt, m, dst, edst))
 			return (0);	/* if not yet resolved */
 		/* If broadcasting on a simplex interface, loopback a copy */
-		if ((m->m_flags & M_BCAST) && (ifp->if_flags & IFF_SIMPLEX))
+		if ((m->m_flags & M_BCAST) && (ifp->if_flags & IFF_SIMPLEX) &&
+		    m_tag_find(m, PACKET_TAG_PF_ROUTED, NULL) == NULL)
 			mcopy = m_copy(m, 0, (int)M_COPYALL);
 		type = htons(ETHERTYPE_IP);
 		break;

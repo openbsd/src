@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.384 2003/08/17 15:36:48 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.385 2003/08/18 11:01:41 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -4525,22 +4525,24 @@ pf_route(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 	if (ifp == NULL)
 		goto bad;
 
-	if (oifp != ifp) {
-		mtag = m_tag_find(m0, PACKET_TAG_PF_ROUTED, NULL);
-		if (mtag == NULL) {
-			mtag = m_tag_get(PACKET_TAG_PF_ROUTED, 0, M_NOWAIT);
-			if (mtag == NULL)
-				goto bad;
-			m_tag_prepend(m0, mtag);
-			if (pf_test(PF_OUT, ifp, &m0) != PF_PASS)
-				goto bad;
-			else if (m0 == NULL)
-				goto done;
-			if (m0->m_len < sizeof(struct ip))
-				panic("pf_route: m0->m_len < "
-				    "sizeof(struct ip)");
-			ip = mtod(m0, struct ip *);
-		}
+	mtag = m_tag_find(m0, PACKET_TAG_PF_ROUTED, NULL);
+	if (mtag == NULL) {
+		struct m_tag *mtag;
+
+		mtag = m_tag_get(PACKET_TAG_PF_ROUTED, 0, M_NOWAIT);
+		if (mtag == NULL)
+			goto bad;
+		m_tag_prepend(m0, mtag);
+	}
+
+	if (oifp != ifp && mtag == NULL) {
+		if (pf_test(PF_OUT, ifp, &m0) != PF_PASS)
+			goto bad;
+		else if (m0 == NULL)
+			goto done;
+		if (m0->m_len < sizeof(struct ip))
+			panic("pf_route: m0->m_len < sizeof(struct ip)");
+		ip = mtod(m0, struct ip *);
 	}
 
 	/* Copied from ip_output. */
