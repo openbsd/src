@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_aobj.c,v 1.16 2001/11/05 22:14:54 art Exp $	*/
-/*	$NetBSD: uvm_aobj.c,v 1.32 2000/06/26 14:21:17 mrg Exp $	*/
+/*	$OpenBSD: uvm_aobj.c,v 1.17 2001/11/06 01:35:04 art Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.33 2000/06/27 17:29:19 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -49,8 +49,6 @@
 #include <sys/malloc.h>
 #include <sys/pool.h>
 #include <sys/kernel.h>
-
-#include <vm/vm.h>
 
 #include <uvm/uvm.h>
 

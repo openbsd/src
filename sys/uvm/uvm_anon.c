@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_anon.c,v 1.11 2001/11/05 22:14:54 art Exp $	*/
-/*	$NetBSD: uvm_anon.c,v 1.6 2000/06/26 14:21:16 mrg Exp $	*/
+/*	$OpenBSD: uvm_anon.c,v 1.12 2001/11/06 01:35:04 art Exp $	*/
+/*	$NetBSD: uvm_anon.c,v 1.7 2000/06/27 17:29:18 mrg Exp $	*/
 
 /*
  *
@@ -43,8 +43,6 @@
 #include <sys/malloc.h>
 #include <sys/pool.h>
 #include <sys/kernel.h>
-
-#include <vm/vm.h>
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_swap.h>

@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_page.c,v 1.25 2001/11/05 22:14:54 art Exp $	*/
-/*	$NetBSD: uvm_page.c,v 1.38 2000/06/26 14:21:18 mrg Exp $	*/
+/*	$OpenBSD: uvm_page.c,v 1.26 2001/11/06 01:35:04 art Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.39 2000/06/27 17:29:31 mrg Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -75,8 +75,6 @@
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/sched.h>
-
-#include <vm/vm.h>
 
 #define UVM_PAGE                /* pull in uvm_page.h functions */
 #include <uvm/uvm.h>

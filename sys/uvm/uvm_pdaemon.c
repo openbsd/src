@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_pdaemon.c,v 1.14 2001/11/05 22:14:54 art Exp $	*/
-/*	$NetBSD: uvm_pdaemon.c,v 1.20 2000/06/26 14:21:18 mrg Exp $	*/
+/*	$OpenBSD: uvm_pdaemon.c,v 1.15 2001/11/06 01:35:04 art Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.21 2000/06/27 17:29:33 mrg Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -76,8 +76,6 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/pool.h>
-
-#include <vm/vm.h>
 
 #include <uvm/uvm.h>
 

@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_meter.c,v 1.12 2001/08/11 10:57:22 art Exp $	*/
-/*	$NetBSD: uvm_meter.c,v 1.12 2000/05/26 00:36:53 thorpej Exp $	*/
+/*	$OpenBSD: uvm_meter.c,v 1.13 2001/11/06 01:35:04 art Exp $	*/
+/*	$NetBSD: uvm_meter.c,v 1.13 2000/06/27 17:29:27 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -45,7 +45,7 @@
 #include <sys/proc.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 #include <sys/sysctl.h>
 #include <sys/exec.h>
 

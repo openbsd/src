@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_extern.h,v 1.25 2001/11/06 00:24:55 art Exp $	*/
-/*	$NetBSD: uvm_extern.h,v 1.43 2000/06/26 14:21:17 mrg Exp $	*/
+/*	$OpenBSD: uvm_extern.h,v 1.26 2001/11/06 01:35:04 art Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.45 2000/06/27 16:16:43 mrg Exp $	*/
 
 /*
  *
@@ -35,6 +35,41 @@
  * from: Id: uvm_extern.h,v 1.1.2.21 1998/02/07 01:16:53 chs Exp
  */
 
+/*-
+ * Copyright (c) 1991, 1992, 1993
+ *	The Regents of the University of California.  All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the University of
+ *	California, Berkeley and its contributors.
+ * 4. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ *	@(#)vm_extern.h	8.5 (Berkeley) 5/3/95
+ */
+
 #ifndef _UVM_UVM_EXTERN_H_
 #define _UVM_UVM_EXTERN_H_
 
@@ -48,6 +83,28 @@
  *
  * NOTE: vm system calls are prototyped in syscallargs.h
  */
+
+/*
+ * typedefs, necessary for standard UVM headers.
+ */
+
+typedef unsigned int  uvm_flag_t;
+typedef int vm_fault_t;
+
+typedef int vm_inherit_t;	/* XXX: inheritance codes */
+typedef off_t voff_t;		/* XXX: offset within a uvm_object */
+
+union vm_map_object;
+typedef union vm_map_object vm_map_object_t;
+
+struct vm_map_entry;
+typedef struct vm_map_entry *vm_map_entry_t;
+
+struct vm_map;
+typedef struct vm_map *vm_map_t;
+
+struct vm_page;
+typedef struct vm_page  *vm_page_t;
 
 /*
  * defines
@@ -302,6 +359,44 @@ struct uvmexp {
 };
 
 #ifdef _KERNEL
+extern struct uvmexp uvmexp;
+#endif
+
+/*
+ * Finally, bring in standard UVM headers.
+ */
+#include <sys/vmmeter.h>
+#include <sys/queue.h>
+#include <uvm/uvm_param.h>
+#include <sys/lock.h>
+#include <uvm/uvm_page.h>
+#include <uvm/uvm_pmap.h>
+#include <uvm/uvm_map.h>
+#include <uvm/uvm_fault.h>
+#include <uvm/uvm_pager.h>
+
+/*
+ * Shareable process virtual address space.
+ * May eventually be merged with vm_map.
+ * Several fields are temporary (text, data stuff).
+ */
+struct vmspace {
+	struct	vm_map vm_map;	/* VM address map */
+	int	vm_refcnt;	/* number of references */
+	caddr_t	vm_shm;		/* SYS5 shared memory private data XXX */
+/* we copy from vm_startcopy to the end of the structure on fork */
+#define vm_startcopy vm_rssize
+	segsz_t vm_rssize; 	/* current resident set size in pages */
+	segsz_t vm_swrss;	/* resident set size before last swap */
+	segsz_t vm_tsize;	/* text size (pages) XXX */
+	segsz_t vm_dsize;	/* data size (pages) XXX */
+	segsz_t vm_ssize;	/* stack size (pages) */
+	caddr_t	vm_taddr;	/* user virtual address of text XXX */
+	caddr_t	vm_daddr;	/* user virtual address of data XXX */
+	caddr_t vm_maxsaddr;	/* user VA at max stack growth */
+};
+
+#ifdef _KERNEL
 
 /*
  * the various kernel maps, owned by MD code
@@ -312,7 +407,6 @@ extern struct vm_map *kmem_map;
 extern struct vm_map *mb_map;
 extern struct vm_map *phys_map;
 
-extern struct uvmexp uvmexp;
 
 /*
  * macros
@@ -324,14 +418,35 @@ extern struct uvmexp uvmexp;
 
 #endif /* _KERNEL */
 
-/*
- * typedefs 
- */
+#ifdef	pmap_resident_count
+#define vm_resident_count(vm) (pmap_resident_count((vm)->vm_map.pmap))
+#else
+#define vm_resident_count(vm) ((vm)->vm_rssize)
+#endif
 
-typedef unsigned int  uvm_flag_t;
-typedef int vm_fault_t;
+/* XXX clean up later */
+struct buf;
+struct loadavg;
+struct proc;
+struct pmap;
+struct vmspace;
+struct vmtotal;
+struct mount;
+struct vnode;
+struct core;
 
 #ifdef _KERNEL
+
+/* vm_machdep.c */
+void		vmapbuf __P((struct buf *, vsize_t));
+void		vunmapbuf __P((struct buf *, vsize_t));
+void		pagemove __P((caddr_t, caddr_t, size_t));
+#ifndef	cpu_swapin
+void		cpu_swapin __P((struct proc *));
+#endif
+#ifndef	cpu_swapout
+void		cpu_swapout __P((struct proc *));
+#endif
 
 /* uvm_aobj.c */
 struct uvm_object	*uao_create __P((vsize_t, int));

@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_amap.c,v 1.11 2001/11/05 22:14:54 art Exp $	*/
-/*	$NetBSD: uvm_amap.c,v 1.23 2000/06/26 14:21:16 mrg Exp $	*/
+/*	$OpenBSD: uvm_amap.c,v 1.12 2001/11/06 01:35:04 art Exp $	*/
+/*	$NetBSD: uvm_amap.c,v 1.24 2000/06/27 17:29:17 mrg Exp $	*/
 
 /*
  *
@@ -49,8 +49,6 @@
 #include <sys/proc.h>
 #include <sys/malloc.h>
 #include <sys/pool.h>
-
-#include <vm/vm.h>
 
 #define UVM_AMAP_C		/* ensure disabled inlines are in */
 #include <uvm/uvm.h>

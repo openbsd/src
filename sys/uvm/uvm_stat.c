@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_stat.c,v 1.6 2001/07/26 19:37:13 art Exp $	 */
-/*	$NetBSD: uvm_stat.c,v 1.13 2000/01/11 06:57:50 chs Exp $	 */
+/*	$OpenBSD: uvm_stat.c,v 1.7 2001/11/06 01:35:04 art Exp $	 */
+/*	$NetBSD: uvm_stat.c,v 1.14 2000/06/27 17:29:35 mrg Exp $	 */
 
 /*
  *
@@ -41,8 +41,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-
-#include <vm/vm.h>
 
 #include <uvm/uvm.h>
 

@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_vnode.c,v 1.21 2001/11/05 22:14:54 art Exp $	*/
-/*	$NetBSD: uvm_vnode.c,v 1.34 2000/06/26 14:21:19 mrg Exp $	*/
+/*	$OpenBSD: uvm_vnode.c,v 1.22 2001/11/06 01:35:04 art Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.35 2000/06/27 17:29:37 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -61,8 +61,6 @@
 #include <sys/conf.h>
 
 #include <miscfs/specfs/specdev.h>
-
-#include <vm/vm.h>
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_vnode.h>

@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_unix.c,v 1.13 2001/08/11 10:57:22 art Exp $	*/
-/*	$NetBSD: uvm_unix.c,v 1.12 2000/03/30 12:31:50 augustss Exp $	*/
+/*	$OpenBSD: uvm_unix.c,v 1.14 2001/11/06 01:35:04 art Exp $	*/
+/*	$NetBSD: uvm_unix.c,v 1.13 2000/06/27 17:29:36 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -60,9 +60,7 @@
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 
-#include <vm/vm.h>
 #include <uvm/uvm.h>
-
 
 /*
  * sys_obreak: set break
