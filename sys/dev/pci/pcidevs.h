@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.549 2002/09/24 19:45:32 nate Exp 
+ *		OpenBSD: pcidevs,v 1.550 2002/09/30 18:12:53 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -494,7 +494,7 @@
 #define	PCI_VENDOR_PMCSIERRA	0x11f8		/* PMC-Sierra */
 #define	PCI_VENDOR_CYCLADES	0x120e		/* Cyclades */
 #define	PCI_VENDOR_ESSENTIAL	0x120f		/* Essential Communications */
-#define	PCI_VENDOR_2MICRO	0x1217		/* 2 Micro Inc */
+#define	PCI_VENDOR_O2MICRO	0x1217		/* O2 Micro Inc */
 #define	PCI_VENDOR_3DFX	0x121a		/* 3DFX Interactive */
 #define	PCI_VENDOR_ARIEL	0x1220		/* Ariel */
 #define	PCI_VENDOR_AZTECH	0x122d		/* Aztech */
