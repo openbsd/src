@@ -1,5 +1,6 @@
 ./dev/scan0
 ./dev/scan1
+./sbin/edlabel
 ./sbin/ldconfig
 ./usr/bin/ldd
 ./usr/include/sparc

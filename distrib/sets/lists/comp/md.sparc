@@ -1,4 +1,3 @@
-./sbin/edlabel
 ./usr/bin/gdb
 ./usr/include/dlfcn.h
 ./usr/include/link.h
