@@ -1,4 +1,4 @@
-/*	$OpenBSD: aha.c,v 1.39 2001/06/27 04:45:58 art Exp $	*/
+/*	$OpenBSD: aha.c,v 1.40 2001/11/30 17:24:19 art Exp $	*/
 /*	$NetBSD: aha.c,v 1.11 1996/05/12 23:51:23 mycroft Exp $	*/
 
 #undef AHADIAG
@@ -60,6 +60,9 @@
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/timeout.h>
+
+#include <uvm/uvm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/intr.h>
 #include <machine/pio.h>
@@ -1011,6 +1014,10 @@ aha_init(sc)
 	struct aha_devices devices;
 	struct aha_setup setup;
 	struct aha_mailbox mailbox;
+	struct pglist pglist;
+	struct vm_page *pg;
+	vaddr_t va;
+	vsize_t size;
 	int i;
 
 	/*
@@ -1082,11 +1089,25 @@ aha_init(sc)
 	 * Set up initial mail box for round-robin operation.
 	 */
 
-	/* XXX KLUDGE!  Should use bus_dmamem_alloc when busified.  */
-	wmbx = (struct aha_mbx *)uvm_pagealloc_contig(sizeof(struct aha_mbx),
-	    0, 0xffffff, PAGE_SIZE);
-	if (wmbx == NULL)
+	/*
+	 * XXX - this vm juggling is so wrong. use bus_dma instead!
+	 */
+	size = round_page(sizeof(struct aha_mbx));
+	if (uvm_pglistalloc(size, 0, 0xffffff, PAGE_SIZE, 0, &pglist, 1, 0) ||
+	    uvm_map(kernel_map, &va, size, NULL, UVM_UNKNOWN_OFFSET, 0,
+		UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL, UVM_INH_NONE,
+			UVM_ADV_RANDOM, 0)))
 		panic("aha_init: could not allocate mailbox");
+
+	wmbx = (struct aha_mbx *)va;
+	for (pg = TAILQ_FIRST(&pglist); pg != NULL;pg = TAILQ_NEXT(pg, pageq)) {
+		pmap_kenter_pa(va, VM_PAGE_TO_PHYS(pg),
+			VM_PROT_READ|VM_PROT_WRITE);
+		va += PAGE_SIZE;
+	}
+	/*
+	 * XXXEND
+	 */
 
 	for (i = 0; i < AHA_MBX_SIZE; i++) {
 		wmbx->mbo[i].cmd = AHA_MBO_FREE;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le_ioasic.c,v 1.7 2001/11/06 19:53:20 miod Exp $	*/
+/*	$OpenBSD: if_le_ioasic.c,v 1.8 2001/11/30 17:24:19 art Exp $	*/
 /*	$NetBSD: if_le_ioasic.c,v 1.2 1996/05/07 02:24:56 thorpej Exp $	*/
 
 /*
@@ -97,11 +97,33 @@ le_ioasic_attach(parent, self, aux)
 	void *aux;
 {
 	struct ioasicdev_attach_args *d = aux;
-	register struct le_softc *lesc = (void *)self;
-	register struct am7990_softc *sc = &lesc->sc_am7990;
+	struct le_softc *lesc = (void *)self;
+	struct am7990_softc *sc = &lesc->sc_am7990;
 	caddr_t le_iomem;
+	struct pglist pglist;
+	struct vm_page *pg;
+	vaddr_t va;
+	vsize_t size;
 
-	le_iomem = (caddr_t)uvm_pagealloc_contig(LE_IOASIC_MEMSIZE, 0, 0, LE_IOASIC_MEMALIGN);
+	/*
+	 * XXX - this vm juggling is so wrong. use bus_dma instead!
+	 */
+	size = round_page(LE_IOASIC_MEMSIZE);
+	if (uvm_pglistalloc(size, 0, 0, LE_IOASIC_MEMALIGN, 0, &pglist, 1, 0) ||
+	    uvm_map(kernel_map, &va, size, NULL, UVM_UNKNOWN_OFFSET, 0,
+		UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL, UVM_INH_NONE,
+			UVM_ADV_RANDOM, 0)))
+		panic("aha_init: could not allocate mailbox");
+
+	le_iomem = (caddr_t)va;
+	for (pg = TAILQ_FIRST(&pglist); pg != NULL;pg = TAILQ_NEXT(pg, pageq)) {
+		pmap_kenter_pa(va, VM_PAGE_TO_PHYS(pg),
+			VM_PROT_READ|VM_PROT_WRITE);
+		va += PAGE_SIZE;
+	}
+	/*
+	 * XXXEND
+	 */
 
 	lesc->sc_r1 = (struct lereg1 *)
 		TC_DENSE_TO_SPARSE(TC_PHYS_TO_UNCACHED(d->iada_addr));
