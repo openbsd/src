@@ -1,8 +1,8 @@
-#	$OpenBSD: Makefile.inc,v 1.4 1997/09/21 11:50:36 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.5 1998/04/06 20:17:19 pefo Exp $
 #	etc.powerpc/Makefile.inc -- powerpc-specific etc Makefile targets
 
 .ifdef DESTDIR
-snap_md: binutils bsd bootblocks
+snap_md: binutils bsd distrib
 
 binutils:
 	cd ${DESTDIR} && tar cf - usr/*openbsd* \
@@ -15,7 +15,8 @@ bsd:
 	cp ${.CURDIR}/../sys/arch/powerpc/compile/GENERIC/bsd \
 	    ${DESTDIR}/snapshot/bsd
 
-bootblocks:
-	cp ${DESTDIR}/usr/mdec/*boot* ${DESTDIR}/snapshot
+distrib:
+	cd ${.CURDIR}/../distrib && make cleandir && \
+	    make && make install
 
 .endif	# DESTDIR check

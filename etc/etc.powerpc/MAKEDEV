@@ -1,5 +1,5 @@
 #!/bin/sh -
-#       $OpenBSD: MAKEDEV,v 1.14 1997/12/08 21:27:42 mickey Exp $
+#       $OpenBSD: MAKEDEV,v 1.15 1998/04/06 20:17:16 pefo Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -342,9 +342,9 @@ cd*)
 	case $unit in
 	0|1|2|3|4|5|6)
 		mknod ${name}${unit}a	b $blk `expr $unit '*' 8 + 0`
-		mknod ${name}${unit}d	b $blk `expr $unit '*' 8 + 3`
+		mknod ${name}${unit}c	b $blk `expr $unit '*' 8 + 2`
 		mknod r${name}${unit}a	c $chr `expr $unit '*' 8 + 0`
-		mknod r${name}${unit}d	c $chr `expr $unit '*' 8 + 3`
+		mknod r${name}${unit}c	c $chr `expr $unit '*' 8 + 2`
 		chgrp operator ${name}${unit}[a-h] r${name}${unit}[a-h]
 		chmod 640 ${name}${unit}[a-h] r${name}${unit}[a-h]
 		;;
