@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.8 1997/01/16 04:04:27 kstailey Exp $	*/
+/*	$OpenBSD: locore.s,v 1.9 1997/02/03 21:30:13 kstailey Exp $	*/
 /*	$NetBSD: locore.s,v 1.40 1996/11/06 20:19:54 cgd Exp $	*/
 
 /*
@@ -770,7 +770,7 @@ Ldorte:
  * Stack looks like:
  *
  *	sp+0 ->	signal number
- *	sp+4	signal specific code
+ *	sp+4	pointer to siginfo (sip)
  *	sp+8	pointer to signal context frame (scp)
  *	sp+12	address of handler
  *	sp+16	saved hardware state
