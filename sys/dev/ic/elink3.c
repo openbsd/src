@@ -1,4 +1,4 @@
-/*	$OpenBSD: elink3.c,v 1.48 2001/05/22 18:59:54 angelos Exp $	*/
+/*	$OpenBSD: elink3.c,v 1.49 2001/05/26 06:57:19 angelos Exp $	*/
 /*	$NetBSD: elink3.c,v 1.32 1997/05/14 00:22:00 thorpej Exp $	*/
 
 /*
@@ -1405,7 +1405,7 @@ epget(sc, totlen)
 		sc->next_mb = (sc->next_mb + 1) % MAX_MBS;
 		m->m_data = m->m_pktdat;
 		m->m_flags = M_PKTHDR;
-		TAILQ_INIT(&m->m_pkthdr.tags);
+		m_tag_init(m);
 	}
 	m->m_pkthdr.rcvif = ifp;
 	m->m_pkthdr.len = totlen;
