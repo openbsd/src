@@ -8,7 +8,7 @@
  *
  * S/KEY verification check, lookups, and authentication.
  * 
- * $Id: skeylogin.c,v 1.7 1996/09/30 04:10:46 millert Exp $
+ * $Id: skeylogin.c,v 1.8 1996/10/02 03:49:36 millert Exp $
  */
 
 #include <sys/param.h>
@@ -17,7 +17,6 @@
 #endif
 #include <sys/stat.h>
 #include <sys/time.h>
-#include <sys/timeb.h>
 #include <sys/resource.h>
 
 #include <stdio.h>
@@ -231,7 +230,8 @@ skeyverify(mp, response)
 	rip(mp->buf);
 	mp->logname = strtok(mp->buf, " \t");
 	cp = strtok(NULL, " \t") ;
-	cp = strtok(NULL, " \t") ;
+	if (isalpha(*cp))
+		cp = strtok(NULL, " \t") ;
 	mp->seed = strtok(NULL, " \t");
 	mp->val = strtok(NULL, " \t");
 	/* And convert file value to hex for comparison */
@@ -253,8 +253,14 @@ skeyverify(mp, response)
 	btoa8(mp->val,key);
 	mp->n--;
 	(void)fseek(mp->keyfile, mp->recstart, SEEK_SET);
-	(void)fprintf(mp->keyfile, "%s %s %04d %-16s %s %-21s\n",
-	    mp->logname, skey_get_algorithm(), mp->n, mp->seed, mp->val, tbuf);
+	/* Don't save algorithm type for md4 (keep record length same) */
+	if (strcmp(skey_get_algorithm(), "md4") == 0)
+		(void)fprintf(mp->keyfile, "%s %04d %-16s %s %-21s\n",
+			      mp->logname, mp->n, mp->seed, mp->val, tbuf);
+	else
+		(void)fprintf(mp->keyfile, "%s %s %04d %-16s %s %-21s\n",
+			      mp->logname, skey_get_algorithm(), mp->n,
+			      mp->seed, mp->val, tbuf);
 
 	(void)fclose(mp->keyfile);
 	

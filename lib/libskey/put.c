@@ -8,7 +8,7 @@
  *
  * Dictionary lookup and extraction.
  *
- * $Id: put.c,v 1.3 1996/09/30 04:10:43 millert Exp $
+ * $Id: put.c,v 1.4 1996/10/02 03:49:37 millert Exp $
  */
 
 #include <stdio.h>
@@ -23,7 +23,7 @@ static void insert __P ((char *s, int x, int start, int length));
 static int wsrch __P ((char *w, int low, int high));
 
 /* Dictionary for integer-word translations */
-char Wp[2048][4] = {
+static char Wp[2048][4] = {
   "A",
   "ABE",
   "ACE",

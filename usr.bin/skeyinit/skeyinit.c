@@ -1,4 +1,4 @@
-/*	$OpenBSD: skeyinit.c,v 1.11 1996/09/30 18:49:55 millert Exp $	*/
+/*	$OpenBSD: skeyinit.c,v 1.12 1996/10/02 03:49:34 millert Exp $	*/
 /*	$NetBSD: skeyinit.c,v 1.6 1995/06/05 19:50:48 pk Exp $	*/
 
 /* S/KEY v1.1b (skeyinit.c)
@@ -141,7 +141,8 @@ main(argc, argv)
 				exit(skeyzero(&skey, pp->pw_name));
 
 			(void)printf("[Updating %s]\n", pp->pw_name);
-			(void)printf("Old key: %s\n", skey.seed);
+			(void)printf("Old key: [%s] %s\n", skey_get_algorithm(),
+				     skey.seed);
 
 			/*
 			 * Lets be nice if they have a skey.seed that
@@ -284,13 +285,19 @@ main(argc, argv)
 
 	btoa8(skey.val, key);
 
-	(void)fprintf(skey.keyfile, "%s %s %04d %-16s %s %-21s\n",
-	    pp->pw_name, skey_get_algorithm(), n, seed, skey.val, tbuf);
+	/* Don't save algorithm type for md4 (keep record length same) */
+	if (strcmp(skey_get_algorithm(), "md4") == 0)
+		(void)fprintf(skey.keyfile, "%s s %04d %-16s %s %-21s\n",
+		    pp->pw_name, n, seed, skey.val, tbuf);
+	else
+		(void)fprintf(skey.keyfile, "%s %s %04d %-16s %s %-21s\n",
+		    pp->pw_name, skey_get_algorithm(), n, seed, skey.val, tbuf);
 	(void)fclose(skey.keyfile);
 
 	(void)setpriority(PRIO_PROCESS, 0, 0);
 
-	(void)printf("\nID %s skey is %d %s\n", pp->pw_name, n, seed);
+	(void)printf("\nID %s skey is otp-%s %d %s\n", pp->pw_name,
+		     skey_get_algorithm(), n, seed);
 	(void)printf("Next login password: %s\n\n",
 		     hexmode ? put8(buf, key) : btoe(buf, key));
 	exit(0);
