@@ -1,4 +1,4 @@
-/*	$OpenBSD: dirname.c,v 1.2 1998/06/21 22:13:40 millert Exp $	*/
+/*	$OpenBSD: dirname.c,v 1.3 1999/05/28 22:00:21 espie Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -28,7 +28,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: dirname.c,v 1.2 1998/06/21 22:13:40 millert Exp $";
+static char rcsid[] = "$OpenBSD: dirname.c,v 1.3 1999/05/28 22:00:21 espie Exp $";
 #endif /* not lint */
 
 #include <errno.h>
@@ -38,7 +38,7 @@ static char rcsid[] = "$OpenBSD: dirname.c,v 1.2 1998/06/21 22:13:40 millert Exp
 
 char *
 dirname(path)
-	char *path;
+	const char *path;
 {
 	static char bname[MAXPATHLEN];
 	register char *endp;
