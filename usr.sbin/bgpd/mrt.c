@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.c,v 1.40 2004/08/10 13:46:28 claudio Exp $ */
+/*	$OpenBSD: mrt.c,v 1.41 2004/08/10 13:50:10 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -46,6 +46,7 @@ static int		mrt_open(struct mrt *, time_t);
 		u_char		t = (b);				\
 		if (buf_add((x), &t, sizeof(t)) == -1) {		\
 			log_warnx("mrt_dump1: buf_add error");		\
+			buf_free((x));					\
 			return (-1);					\
 		}							\
 	} while (0)
@@ -56,6 +57,7 @@ static int		mrt_open(struct mrt *, time_t);
 		t = htons((s));						\
 		if (buf_add((x), &t, sizeof(t)) == -1) {		\
 			log_warnx("mrt_dump2: buf_add error");		\
+			buf_free((x));					\
 			return (-1);					\
 		}							\
 	} while (0)
@@ -66,6 +68,7 @@ static int		mrt_open(struct mrt *, time_t);
 		t = htonl((l));						\
 		if (buf_add((x), &t, sizeof(t)) == -1) {		\
 			log_warnx("mrt_dump3: buf_add error");		\
+			buf_free((x));					\
 			return (-1);					\
 		}							\
 	} while (0)
@@ -75,6 +78,7 @@ static int		mrt_open(struct mrt *, time_t);
 		u_int32_t	t = (l);				\
 		if (buf_add((x), &t, sizeof(t)) == -1) {		\
 			log_warnx("mrt_dump4: buf_add error");		\
+			buf_free((x));					\
 			return (-1);					\
 		}							\
 	} while (0)
@@ -115,6 +119,7 @@ mrt_dump_bgp_msg(struct mrt *mrt, void *pkg, u_int16_t pkglen,
 		    buf_add(buf, &peer->remote_addr.v6,
 		    sizeof(peer->remote_addr.v6)) == -1) {
 			log_warnx("mrt_dump_bgp_msg: buf_add error");
+			buf_free(buf);
 			return (-1);
 		}
 		break;
@@ -122,6 +127,7 @@ mrt_dump_bgp_msg(struct mrt *mrt, void *pkg, u_int16_t pkglen,
 
 	if (buf_add(buf, pkg, pkglen) == -1) {
 		log_warnx("mrt_dump_bgp_msg: buf_add error");
+		buf_free(buf);
 		return (-1);
 	}
 
@@ -167,6 +173,7 @@ mrt_dump_state(struct mrt *mrt, u_int16_t old_state, u_int16_t new_state,
 		    buf_add(buf, &peer->remote_addr.v6,
 		    sizeof(peer->remote_addr.v6)) == -1) {
 			log_warnx("mrt_dump_bgp_msg: buf_add error");
+			buf_free(buf);
 			return (-1);
 		}
 		break;
