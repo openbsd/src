@@ -1,4 +1,4 @@
-/*	$OpenBSD: nofn.c,v 1.7 2002/11/21 19:34:25 jason Exp $	*/
+/*	$OpenBSD: nofn.c,v 1.8 2003/05/07 23:54:26 avsm Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -243,7 +243,8 @@ nofn_rng_read(sc)
 		reg = PK_READ_4(sc, NOFN_PK_SR);
 		if (reg & PK_SR_UFLOW) {
 			ret = -1;
-			printf("%s: rng underflow, disabling.\n");
+			printf("%s: rng underflow, disabling.\n",
+			    sc->sc_dev.dv_xname);
 			nofn_rng_disable(sc);
 			break;
 		}
@@ -318,7 +319,8 @@ nofn_rng_disable(sc)
 		REG_WRITE_4(sc, NOFN_PCI_INT_MASK, sc->sc_intrmask);
 		break;
 	default:
-		printf("%s: nofn_rng_disable: unknown rev %x\n", sc->sc_revid);
+		printf("%s: nofn_rng_disable: unknown rev %x\n", 
+		    sc->sc_dev.dv_xname, sc->sc_revid);
 		break;
 	}
 
@@ -361,7 +363,8 @@ nofn_rng_enable(sc)
 		sc->sc_intrmask |= PCIINTMASK_RNGRDY;
 		break;
 	default:
-		printf("%s: nofn_rng_enable: unknown rev %x\n", sc->sc_revid);
+		printf("%s: nofn_rng_enable: unknown rev %x\n", 
+		    sc->sc_dev.dv_xname, sc->sc_revid);
 		break;
 	}
 
