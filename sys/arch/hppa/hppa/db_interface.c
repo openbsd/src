@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.14 2001/01/12 23:08:56 mickey Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.15 2001/01/30 21:45:32 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999-2000 Michael Shalayeff
@@ -244,7 +244,7 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 	register_t fp, pc, rp, nargs, *argp;
 	db_sym_t sym;
 	db_expr_t off;
-	const char *name;
+	char *name;
 	char **argnp, *argnames[HPPA_FRAME_NARGS];
 
 	if (USERMODE(pc))
