@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.66 2003/06/02 23:28:11 millert Exp $	*/
+/*	$OpenBSD: if.c,v 1.67 2003/07/23 22:48:00 itojun Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -114,6 +114,7 @@ int	if_mark_unignore(struct radix_node *, void *);
 int	ifqmaxlen = IFQ_MAXLEN;
 int	netisr;
 
+void	if_detach_queues(struct ifnet *, struct ifqueue *);
 void	if_detached_start(struct ifnet *);
 int	if_detached_ioctl(struct ifnet *, u_long, caddr_t);
 void	if_detached_watchdog(struct ifnet *);
@@ -458,6 +459,48 @@ if_detach(ifp)
 #ifdef INET6
 	in6_ifdetach(ifp);
 #endif
+
+	/*
+	 * remove packets came from ifp, from software interrupt queues.
+	 * net/netisr_dispatch.h is not usable, as some of them use
+	 * strange queue names.
+	 */
+#define IF_DETACH_QUEUES(x) \
+do { \
+	extern struct ifqueue x; \
+	if_detach_queues(ifp, & x); \
+} while (0)
+#ifdef INET
+	IF_DETACH_QUEUES(arpintrq);
+	IF_DETACH_QUEUES(ipintrq);
+#endif
+#ifdef INET6
+	IF_DETACH_QUEUES(ip6intrq);
+#endif
+#ifdef IPX
+	IF_DETACH_QUEUES(ipxintrq);
+#endif
+#ifdef NS
+	IF_DETACH_QUEUES(nsintrq);
+#endif
+#ifdef NETATALK
+	IF_DETACH_QUEUES(atintrq1);
+	IF_DETACH_QUEUES(atintrq2);
+#endif
+#ifdef ISO
+	IF_DETACH_QUEUES(clnlintrq);
+#endif
+#ifdef CCITT
+	IF_DETACH_QUEUES(llcintrq);
+#endif
+#ifdef NATM
+	IF_DETACH_QUEUES(natmintrq);
+#endif
+#ifdef DECNET
+	IF_DETACH_QUEUES(decnetintrq);
+#endif
+#undef IF_DETACH_QUEUES
+
 	/*
 	 * XXX transient ifp refs?  inpcb.ip_moptions.imo_multicast_ifp?
 	 * Other network stacks than INET?
@@ -492,6 +535,41 @@ if_detach(ifp)
 	}
 
 	splx(s);
+}
+
+void
+if_detach_queues(ifp, q)
+	struct ifnet *ifp;
+	struct ifqueue *q;
+{
+	struct mbuf *m, *prev, *next;
+
+	prev = NULL;
+	for (m = q->ifq_head; m; m = next) {
+		next = m->m_nextpkt;
+#ifdef DIAGNOSTIC
+		if ((m->m_flags & M_PKTHDR) == 0) {
+			prev = m;
+			continue;
+		}
+#endif
+		if (m->m_pkthdr.rcvif != ifp) {
+			prev = m;
+			continue;
+		}
+
+		if (prev)
+			prev->m_nextpkt = m->m_nextpkt;
+		else
+			q->ifq_head = m->m_nextpkt;
+		if (q->ifq_tail == m)
+			q->ifq_tail = prev;
+		q->ifq_len--;
+
+		m->m_nextpkt = NULL;
+		m_freem(m);
+		IF_DROP(q);
+	}
 }
 
 /*
