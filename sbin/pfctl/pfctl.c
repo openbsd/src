@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.107 2002/12/18 16:00:03 henning Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.108 2002/12/18 16:28:40 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -494,6 +494,27 @@ pfctl_show_rules(int dev, int opts, int format)
 			break;
 		default:
 			print_rule(&pr.rule, opts & PF_OPT_VERBOSE2);
+			if (opts & PF_OPT_VERBOSE2) {
+				const char *t[PF_SKIP_COUNT] = { "a",
+				    "i", "d", "f", "p", "sa", "sp",
+				    "da", "dp" };
+				int i;
+
+				printf("[ Skip steps: ");
+				for (i = 0; i < PF_SKIP_COUNT; ++i) {
+					if (pr.rule.skip[i].nr ==
+					    pr.rule.nr + 1)
+						continue;
+					printf("%s=", t[i]);
+					if (pr.rule.skip[i].nr == -1)
+						printf("end ");
+					else if (pr.rule.skip[i].nr !=
+					    pr.rule.nr + 1)
+						printf("%u ",
+						    pr.rule.skip[i].nr);
+				}
+				printf("]\n");
+			}
 			if (opts & PF_OPT_VERBOSE)
 				printf("[ Evaluations: %-8llu  Packets: %-8llu  "
 				    "Bytes: %-10llu  States: %-6u]\n\n",

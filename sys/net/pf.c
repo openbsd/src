@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.273 2002/12/18 16:03:25 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.274 2002/12/18 16:28:40 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -699,7 +699,7 @@ pf_print_flags(u_int8_t f)
 		do { \
 			if (a & 1 << i) { \
 				if (c) \
-					r->skip[i] = TAILQ_NEXT(s, entries); \
+					r->skip[i].ptr = TAILQ_NEXT(s, entries); \
 				else \
 					a ^= 1 << i; \
 			} \
@@ -716,7 +716,7 @@ pf_calc_skip_steps(struct pf_rulequeue *rules)
 		a = 0;
 		for (i = 0; i < PF_SKIP_COUNT; ++i) {
 			a |= 1 << i;
-			r->skip[i] = TAILQ_NEXT(r, entries);
+			r->skip[i].ptr = TAILQ_NEXT(r, entries);
 		}
 		s = TAILQ_NEXT(r, entries);
 		while (a && s != NULL) {
@@ -1577,30 +1577,30 @@ pf_match_translation(int direction, struct ifnet *ifp, u_int8_t proto,
 
 		r->evaluations++;
 		if (r->action == PF_SCRUB)
-			r = r->skip[PF_SKIP_ACTION];
+			r = r->skip[PF_SKIP_ACTION].ptr;
 		else if (r->ifp != NULL && ((r->ifp != ifp && !r->ifnot) ||
 		    (r->ifp == ifp && r->ifnot)))
-			r = r->skip[PF_SKIP_IFP];
+			r = r->skip[PF_SKIP_IFP].ptr;
 		else if (r->direction && r->direction != direction)
-			r = r->skip[PF_SKIP_DIR];
+			r = r->skip[PF_SKIP_DIR].ptr;
 		else if (r->af && r->af != af)
-			r = r->skip[PF_SKIP_AF];
+			r = r->skip[PF_SKIP_AF].ptr;
 		else if (r->proto && r->proto != proto)
-			r = r->skip[PF_SKIP_PROTO];
+			r = r->skip[PF_SKIP_PROTO].ptr;
 		else if (!PF_AZERO(&src->addr.mask, af) &&
 		    !PF_MATCHA(src->not,
 		    &src->addr.addr, &src->addr.mask, saddr, af))
-			r = r->skip[PF_SKIP_SRC_ADDR];
+			r = r->skip[PF_SKIP_SRC_ADDR].ptr;
 		else if (src->port_op && !pf_match_port(src->port_op,
 		    src->port[0], src->port[1], sport))
-			r = r->skip[PF_SKIP_SRC_PORT];
+			r = r->skip[PF_SKIP_SRC_PORT].ptr;
 		else if (!PF_AZERO(&r->dst.addr.mask, af) &&
 		    !PF_MATCHA(r->dst.not,
 		    &r->dst.addr.addr, &r->dst.addr.mask, daddr, af))
-			r = r->skip[PF_SKIP_DST_ADDR];
+			r = r->skip[PF_SKIP_DST_ADDR].ptr;
 		else if (r->dst.port_op && !pf_match_port(r->dst.port_op,
 		    r->dst.port[0], r->dst.port[1], dport))
-			r = r->skip[PF_SKIP_DST_PORT];
+			r = r->skip[PF_SKIP_DST_PORT].ptr;
 		else if (r->anchorname[0] && r->anchor == NULL)
 			r = TAILQ_NEXT(r, entries);
 		else if (r->anchor == NULL)
@@ -1800,34 +1800,34 @@ pf_test_tcp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 	while (r != NULL) {
 		r->evaluations++;
 		if (r->action == PF_SCRUB)
-			r = r->skip[PF_SKIP_ACTION];
+			r = r->skip[PF_SKIP_ACTION].ptr;
 		else if (r->ifp != NULL && ((r->ifp != ifp && !r->ifnot) ||
 		    (r->ifp == ifp && r->ifnot)))
-			r = r->skip[PF_SKIP_IFP];
+			r = r->skip[PF_SKIP_IFP].ptr;
 		else if (r->direction && r->direction != direction)
-			r = r->skip[PF_SKIP_DIR];
+			r = r->skip[PF_SKIP_DIR].ptr;
 		else if (r->af && r->af != af)
-			r = r->skip[PF_SKIP_AF];
+			r = r->skip[PF_SKIP_AF].ptr;
 		else if (r->proto && r->proto != IPPROTO_TCP)
-			r = r->skip[PF_SKIP_PROTO];
+			r = r->skip[PF_SKIP_PROTO].ptr;
 		else if (r->src.noroute && pf_routable(saddr, af))
 			r = TAILQ_NEXT(r, entries);
 		else if (!r->src.noroute &&
 		    !PF_AZERO(&r->src.addr.mask, af) && !PF_MATCHA(r->src.not,
 		    &r->src.addr.addr, &r->src.addr.mask, saddr, af))
-			r = r->skip[PF_SKIP_SRC_ADDR];
+			r = r->skip[PF_SKIP_SRC_ADDR].ptr;
 		else if (r->src.port_op && !pf_match_port(r->src.port_op,
 		    r->src.port[0], r->src.port[1], th->th_sport))
-			r = r->skip[PF_SKIP_SRC_PORT];
+			r = r->skip[PF_SKIP_SRC_PORT].ptr;
 		else if (r->dst.noroute && pf_routable(daddr, af))
 			r = TAILQ_NEXT(r, entries);
 		else if (!r->dst.noroute &&
 		    !PF_AZERO(&r->dst.addr.mask, af) && !PF_MATCHA(r->dst.not,
 		    &r->dst.addr.addr, &r->dst.addr.mask, daddr, af))
-			r = r->skip[PF_SKIP_DST_ADDR];
+			r = r->skip[PF_SKIP_DST_ADDR].ptr;
 		else if (r->dst.port_op && !pf_match_port(r->dst.port_op,
 		    r->dst.port[0], r->dst.port[1], th->th_dport))
-			r = r->skip[PF_SKIP_DST_PORT];
+			r = r->skip[PF_SKIP_DST_PORT].ptr;
 		else if (r->tos && !(r->tos & pd->tos))
 			r = TAILQ_NEXT(r, entries);
 		else if (r->rule_flag & PFRULE_FRAGMENT)
@@ -2047,36 +2047,36 @@ pf_test_udp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 	while (r != NULL) {
 		r->evaluations++;
 		if (r->action == PF_SCRUB)
-			r = r->skip[PF_SKIP_ACTION];
+			r = r->skip[PF_SKIP_ACTION].ptr;
 		else if (r->ifp != NULL && ((r->ifp != ifp && !r->ifnot) ||
 		    (r->ifp == ifp && r->ifnot)))
-			r = r->skip[PF_SKIP_IFP];
+			r = r->skip[PF_SKIP_IFP].ptr;
 		else if (r->direction && r->direction != direction)
-			r = r->skip[PF_SKIP_DIR];
+			r = r->skip[PF_SKIP_DIR].ptr;
 		else if (r->af && r->af != af)
-			r = r->skip[PF_SKIP_AF];
+			r = r->skip[PF_SKIP_AF].ptr;
 		else if (r->proto && r->proto != IPPROTO_UDP)
-			r = r->skip[PF_SKIP_PROTO];
+			r = r->skip[PF_SKIP_PROTO].ptr;
 		else if (r->src.noroute && pf_routable(saddr, af))
 			r = TAILQ_NEXT(r, entries);
 		else if (!r->src.noroute &&
 		    !PF_AZERO(&r->src.addr.mask, af) &&
 		    !PF_MATCHA(r->src.not, &r->src.addr.addr, &r->src.addr.mask,
 		    saddr, af))
-			r = r->skip[PF_SKIP_SRC_ADDR];
+			r = r->skip[PF_SKIP_SRC_ADDR].ptr;
 		else if (r->src.port_op && !pf_match_port(r->src.port_op,
 		    r->src.port[0], r->src.port[1], uh->uh_sport))
-			r = r->skip[PF_SKIP_SRC_PORT];
+			r = r->skip[PF_SKIP_SRC_PORT].ptr;
 		else if (r->dst.noroute && pf_routable(daddr, af))
 			r = TAILQ_NEXT(r, entries);
 		else if (!r->dst.noroute &&
 		    !PF_AZERO(&r->dst.addr.mask, af) &&
 		    !PF_MATCHA(r->dst.not, &r->dst.addr.addr, &r->dst.addr.mask,
 			daddr, af))
-			r = r->skip[PF_SKIP_DST_ADDR];
+			r = r->skip[PF_SKIP_DST_ADDR].ptr;
 		else if (r->dst.port_op && !pf_match_port(r->dst.port_op,
 		    r->dst.port[0], r->dst.port[1], uh->uh_dport))
-			r = r->skip[PF_SKIP_DST_PORT];
+			r = r->skip[PF_SKIP_DST_PORT].ptr;
 		else if (r->tos && !(r->tos & pd->tos))
 			r = TAILQ_NEXT(r, entries);
 		else if (r->rule_flag & PFRULE_FRAGMENT)
@@ -2320,28 +2320,28 @@ pf_test_icmp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 	while (r != NULL) {
 		r->evaluations++;
 		if (r->action == PF_SCRUB)
-			r = r->skip[PF_SKIP_ACTION];
+			r = r->skip[PF_SKIP_ACTION].ptr;
 		else if (r->ifp != NULL && ((r->ifp != ifp && !r->ifnot) ||
 		    (r->ifp == ifp && r->ifnot)))
-			r = r->skip[PF_SKIP_IFP];
+			r = r->skip[PF_SKIP_IFP].ptr;
 		else if (r->direction && r->direction != direction)
-			r = r->skip[PF_SKIP_DIR];
+			r = r->skip[PF_SKIP_DIR].ptr;
 		else if (r->af && r->af != af)
-			r = r->skip[PF_SKIP_AF];
+			r = r->skip[PF_SKIP_AF].ptr;
 		else if (r->proto && r->proto != pd->proto)
-			r = r->skip[PF_SKIP_PROTO];
+			r = r->skip[PF_SKIP_PROTO].ptr;
 		else if (r->src.noroute && pf_routable(saddr, af))
 			r = TAILQ_NEXT(r, entries);
 		else if (!r->src.noroute &&
 		    !PF_AZERO(&r->src.addr.mask, af) && !PF_MATCHA(r->src.not,
 		    &r->src.addr.addr, &r->src.addr.mask, saddr, af))
-			r = r->skip[PF_SKIP_SRC_ADDR];
+			r = r->skip[PF_SKIP_SRC_ADDR].ptr;
 		else if (r->dst.noroute && pf_routable(daddr, af))
 			r = TAILQ_NEXT(r, entries);
 		else if (!r->dst.noroute &&
 		    !PF_AZERO(&r->dst.addr.mask, af) && !PF_MATCHA(r->dst.not,
 		    &r->dst.addr.addr, &r->dst.addr.mask, daddr, af))
-			r = r->skip[PF_SKIP_DST_ADDR];
+			r = r->skip[PF_SKIP_DST_ADDR].ptr;
 		else if (r->type && r->type != icmptype + 1)
 			r = TAILQ_NEXT(r, entries);
 		else if (r->code && r->code != icmpcode + 1)
@@ -2518,28 +2518,28 @@ pf_test_other(struct pf_rule **rm, int direction, struct ifnet *ifp,
 	while (r != NULL) {
 		r->evaluations++;
 		if (r->action == PF_SCRUB)
-			r = r->skip[PF_SKIP_ACTION];
+			r = r->skip[PF_SKIP_ACTION].ptr;
 		else if (r->ifp != NULL && ((r->ifp != ifp && !r->ifnot) ||
 		    (r->ifp == ifp && r->ifnot)))
-			r = r->skip[PF_SKIP_IFP];
+			r = r->skip[PF_SKIP_IFP].ptr;
 		else if (r->direction && r->direction != direction)
-			r = r->skip[PF_SKIP_DIR];
+			r = r->skip[PF_SKIP_DIR].ptr;
 		else if (r->af && r->af != af)
-			r = r->skip[PF_SKIP_AF];
+			r = r->skip[PF_SKIP_AF].ptr;
 		else if (r->proto && r->proto != pd->proto)
-			r = r->skip[PF_SKIP_PROTO];
+			r = r->skip[PF_SKIP_PROTO].ptr;
 		else if (r->src.noroute && pf_routable(pd->src, af))
 			r = TAILQ_NEXT(r, entries);
 		else if (!r->src.noroute &&
 		    !PF_AZERO(&r->src.addr.mask, af) && !PF_MATCHA(r->src.not,
 		    &r->src.addr.addr, &r->src.addr.mask, pd->src, af))
-			r = r->skip[PF_SKIP_SRC_ADDR];
+			r = r->skip[PF_SKIP_SRC_ADDR].ptr;
 		else if (r->dst.noroute && pf_routable(pd->dst, af))
 			r = TAILQ_NEXT(r, entries);
 		else if (!r->src.noroute &&
 		    !PF_AZERO(&r->dst.addr.mask, af) && !PF_MATCHA(r->dst.not,
 		    &r->dst.addr.addr, &r->dst.addr.mask, pd->dst, af))
-			r = r->skip[PF_SKIP_DST_ADDR];
+			r = r->skip[PF_SKIP_DST_ADDR].ptr;
 		else if (r->tos && !(r->tos & pd->tos))
 			r = TAILQ_NEXT(r, entries);
 		else if (r->rule_flag & PFRULE_FRAGMENT)
@@ -2658,28 +2658,28 @@ pf_test_fragment(struct pf_rule **rm, int direction, struct ifnet *ifp,
 	while (r != NULL) {
 		r->evaluations++;
 		if (r->action == PF_SCRUB)
-			r = r->skip[PF_SKIP_ACTION];
+			r = r->skip[PF_SKIP_ACTION].ptr;
 		else if (r->ifp != NULL && ((r->ifp != ifp && !r->ifnot) ||
 		    (r->ifp == ifp && r->ifnot)))
-			r = r->skip[PF_SKIP_IFP];
+			r = r->skip[PF_SKIP_IFP].ptr;
 		else if (r->direction && r->direction != direction)
-			r = r->skip[PF_SKIP_DIR];
+			r = r->skip[PF_SKIP_DIR].ptr;
 		else if (r->af && r->af != af)
-			r = r->skip[PF_SKIP_AF];
+			r = r->skip[PF_SKIP_AF].ptr;
 		else if (r->proto && r->proto != pd->proto)
-			r = r->skip[PF_SKIP_PROTO];
+			r = r->skip[PF_SKIP_PROTO].ptr;
 		else if (r->src.noroute && pf_routable(pd->src, af))
 			r = TAILQ_NEXT(r, entries);
 		else if (!r->src.noroute &&
 		    !PF_AZERO(&r->src.addr.mask, af) && !PF_MATCHA(r->src.not,
 		    &r->src.addr.addr, &r->src.addr.mask, pd->src, af))
-			r = r->skip[PF_SKIP_SRC_ADDR];
+			r = r->skip[PF_SKIP_SRC_ADDR].ptr;
 		else if (r->dst.noroute && pf_routable(pd->dst, af))
 			r = TAILQ_NEXT(r, entries);
 		else if (!r->src.noroute &&
 		    !PF_AZERO(&r->dst.addr.mask, af) && !PF_MATCHA(r->dst.not,
 		    &r->dst.addr.addr, &r->dst.addr.mask, pd->dst, af))
-			r = r->skip[PF_SKIP_DST_ADDR];
+			r = r->skip[PF_SKIP_DST_ADDR].ptr;
 		else if (r->tos && !(r->tos & pd->tos))
 			r = TAILQ_NEXT(r, entries);
 		else if (r->src.port_op || r->dst.port_op ||

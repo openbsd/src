@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.26 2002/12/17 12:30:13 mcbride Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.27 2002/12/18 16:28:40 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -656,7 +656,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		struct pfioc_rule *pr = (struct pfioc_rule *)addr;
 		struct pf_ruleset *ruleset;
 		struct pf_rule *rule;
-		int rs_num;
+		int rs_num, i;
 
 		ruleset = pf_find_ruleset(pr->anchor, pr->ruleset);
 		if (ruleset == NULL) {
@@ -680,6 +680,12 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		bcopy(rule, &pr->rule, sizeof(struct pf_rule));
 		pf_dynaddr_copyout(&pr->rule.src.addr);
 		pf_dynaddr_copyout(&pr->rule.dst.addr);
+		for (i = 0; i < PF_SKIP_COUNT; ++i)
+			if (rule->skip[i].ptr == NULL)
+				pr->rule.skip[i].nr = -1;
+			else
+				pr->rule.skip[i].nr =
+				    rule->skip[i].ptr->nr;
 		splx(s);
 		break;
 	}

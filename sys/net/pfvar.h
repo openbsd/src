@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.112 2002/12/17 12:30:13 mcbride Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.113 2002/12/18 16:28:40 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -290,7 +290,10 @@ struct pf_rule {
 #define PF_SKIP_DST_ADDR	7
 #define PF_SKIP_DST_PORT	8
 #define PF_SKIP_COUNT		9
-	struct pf_rule		*skip[PF_SKIP_COUNT];
+	union {
+		struct pf_rule	*ptr;
+		u_int32_t	 nr;
+	}			 skip[PF_SKIP_COUNT];
 #define PF_RULE_LABEL_SIZE	 64
 	char			 label[PF_RULE_LABEL_SIZE];
 	u_int32_t		 timeout[PFTM_MAX];
