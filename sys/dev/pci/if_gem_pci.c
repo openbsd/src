@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gem_pci.c,v 1.5 2001/12/14 02:43:56 drahn Exp $	*/
+/*	$OpenBSD: if_gem_pci.c,v 1.6 2002/01/28 01:04:02 jason Exp $	*/
 /*	$NetBSD: if_gem_pci.c,v 1.1 2001/09/16 00:11:42 eeh Exp $ */
 
 /*
@@ -127,6 +127,7 @@ gem_attach_pci(parent, self, aux)
 #endif
 	const char *intrstr;
 	int type;
+	char enaddr[ETHER_ADDR_LEN];
 
 	if (pa->pa_memt) {
 		type = PCI_MAPREG_TYPE_MEM;
@@ -151,28 +152,18 @@ gem_attach_pci(parent, self, aux)
 	sc->sc_bustag = gsc->gsc_memt;
 	sc->sc_h = gsc->gsc_memh;
 
-#if 0
-/* SBUS compatible stuff? */
-	sc->sc_seb = gsc->gsc_memh;
-	sc->sc_etx = gsc->gsc_memh + 0x2000;
-	sc->sc_erx = gsc->gsc_memh + 0x4000;
-	sc->sc_mac = gsc->gsc_memh + 0x6000;
-	sc->sc_mif = gsc->gsc_memh + 0x7000;
-#endif
 #ifdef __sparc__
-	myetheraddr(sc->sc_enaddr);
+	myetheraddr(enaddr);
 #endif
 #ifdef __powerpc__ 
-        pci_ether_hw_addr(pa->pa_pc, sc->sc_enaddr);
+        pci_ether_hw_addr(pa->pa_pc, enaddr);
 #endif
-
-	sc->sc_burst = 16;	/* XXX */
 
 	printf("\n");
 	/*
 	 * call the main configure
 	 */
-	gem_config(sc);
+	gem_attach(sc, enaddr);
 
 	if (pci_intr_map(pa, &intrhandle) != 0) {
 		printf("%s: couldn't map interrupt\n",

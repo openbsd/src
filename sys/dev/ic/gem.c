@@ -1,5 +1,5 @@
-/*	$OpenBSD: gem.c,v 1.14 2002/01/25 16:51:57 jason Exp $	*/
-/*	$NetBSD: gem.c,v 1.1 2001/09/16 00:11:43 eeh Exp $ */
+/*	$OpenBSD: gem.c,v 1.15 2002/01/28 01:04:02 jason Exp $	*/
+/*	$NetBSD: gem.c,v 1.11 2001/11/17 00:56:04 thorpej Exp $ */
 
 /*
  * 
@@ -37,6 +37,8 @@
 #include "bpfilter.h"
 #include "vlan.h"
 
+#include <sys/cdefs.h>
+
 #include <sys/param.h>
 #include <sys/systm.h> 
 #include <sys/timeout.h>
@@ -59,6 +61,9 @@
 
 #ifdef INET
 #include <netinet/in.h>
+#include <netinet/in_systm.h>
+#include <netinet/in_var.h>
+#include <netinet/ip.h>
 #include <netinet/if_ether.h>
 #endif
 
@@ -82,10 +87,6 @@
 
 #define TRIES	10000
 
-struct cfdriver gem_cd = {
-	NULL, "gem", DV_IFNET
-};
-
 void		gem_start __P((struct ifnet *));
 void		gem_stop __P((struct ifnet *, int));
 int		gem_ioctl __P((struct ifnet *, u_long, caddr_t));
@@ -105,7 +106,6 @@ int		gem_disable_tx(struct gem_softc *sc);
 void		gem_rxdrain(struct gem_softc *sc);
 int		gem_add_rxbuf(struct gem_softc *sc, int idx);
 void		gem_setladrf __P((struct gem_softc *));
-int		gem_encap __P((struct gem_softc *, struct mbuf *, u_int32_t *));
 
 /* MII methods & callbacks */
 static int	gem_mii_readreg __P((struct device *, int, int));
@@ -120,10 +120,8 @@ int		gem_put __P((struct gem_softc *, int, struct mbuf *));
 void		gem_read __P((struct gem_softc *, int, int));
 int		gem_eint __P((struct gem_softc *, u_int));
 int		gem_rint __P((struct gem_softc *));
-int		gem_tint __P((struct gem_softc *, u_int32_t));
+int		gem_tint __P((struct gem_softc *));
 void		gem_power __P((int, void *));
-
-static int	ether_cmp __P((u_char *, u_char *));
 
 #ifdef GEM_DEBUG
 #define	DPRINTF(sc, x)	if ((sc)->sc_arpcom.ac_if.if_flags & IFF_DEBUG) \
@@ -134,20 +132,19 @@ static int	ether_cmp __P((u_char *, u_char *));
 
 
 /*
- * gem_config:
+ * gem_attach:
  *
  *	Attach a Gem interface to the system.
  */
 void
-gem_config(sc)
+gem_attach(sc, enaddr)
 	struct gem_softc *sc;
+	uint8_t *enaddr;
 {
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	struct mii_data *mii = &sc->sc_mii;
 	struct mii_softc *child;
 	int i, error;
-
-	bcopy(sc->sc_enaddr, sc->sc_arpcom.ac_enaddr, ETHER_ADDR_LEN);
 
 	/* Make sure the chip is stopped. */
 	ifp->if_softc = sc;
@@ -165,7 +162,6 @@ gem_config(sc)
 		goto fail_0;
 	}
 
-	/* XXX should map this in with correct endianness */
 	if ((error = bus_dmamem_map(sc->sc_dmatag, &sc->sc_cdseg, sc->sc_cdnseg,
 	    sizeof(struct gem_control_data), (caddr_t *)&sc->sc_control_data,
 	    BUS_DMA_COHERENT)) != 0) {
@@ -211,7 +207,9 @@ gem_config(sc)
 
 	/* Announce ourselves. */
 	printf("%s: Ethernet address %s\n", sc->sc_dev.dv_xname,
-	    ether_sprintf(sc->sc_enaddr));
+	    ether_sprintf(enaddr));
+
+	bcopy(enaddr, sc->sc_arpcom.ac_enaddr, ETHER_ADDR_LEN);
 
 	/* Initialize ifnet structure. */
 	strcpy(ifp->if_xname, sc->sc_dev.dv_xname);
@@ -294,6 +292,11 @@ gem_config(sc)
 		ifmedia_set(&sc->sc_media, IFM_ETHER|IFM_AUTO);
 	}
 
+#if 0
+	/* claim 802.1q capability */
+	sc->sc_arpcom.ac_capabilities |= ETHERCAP_VLAN_MTU;
+#endif
+
 	/* Attach the interface. */
 	if_attach(ifp);
 	ether_ifattach(ifp);
@@ -301,6 +304,23 @@ gem_config(sc)
 	sc->sc_sh = shutdownhook_establish(gem_shutdown, sc);
 	if (sc->sc_sh == NULL)
 		panic("gem_config: can't establish shutdownhook");
+
+#if NRND > 0
+	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname,
+			  RND_TYPE_NET, 0);
+#endif
+
+
+#if notyet
+	/*
+	 * Add a suspend hook to make sure we come back up after a
+	 * resume.
+	 */
+	sc->sc_powerhook = powerhook_establish(gem_power, sc);
+	if (sc->sc_powerhook == NULL)
+		printf("%s: WARNING: unable to establish power hook\n",
+		    sc->sc_dev.dv_xname);
+#endif
 
 	timeout_set(&sc->sc_tick_ch, gem_tick, sc);
 	return;
@@ -333,30 +353,14 @@ gem_tick(arg)
 	void *arg;
 {
 	struct gem_softc *sc = arg;
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
-	bus_space_tag_t t = sc->sc_bustag;
-	bus_space_handle_t mac = sc->sc_h;
 	int s;
 
-	s = splimp();
-
-	/* unload collisions counters */
-	ifp->if_collisions +=
-	    bus_space_read_4(t, mac, GEM_MAC_NORM_COLL_CNT) +
-	    bus_space_read_4(t, mac, GEM_MAC_FIRST_COLL_CNT) +
-	    bus_space_read_4(t, mac, GEM_MAC_EXCESS_COLL_CNT) +
-	    bus_space_read_4(t, mac, GEM_MAC_LATE_COLL_CNT);
-
-	/* clear the hardware counters */
-	bus_space_write_4(t, mac, GEM_MAC_NORM_COLL_CNT, 0);
-	bus_space_write_4(t, mac, GEM_MAC_FIRST_COLL_CNT, 0);
-	bus_space_write_4(t, mac, GEM_MAC_EXCESS_COLL_CNT, 0);
-	bus_space_write_4(t, mac, GEM_MAC_LATE_COLL_CNT, 0);
-
+	s = splnet();
 	mii_tick(&sc->sc_mii);
 	splx(s);
 
 	timeout_add(&sc->sc_tick_ch, hz);
+	
 }
 
 void
@@ -368,7 +372,7 @@ gem_reset(sc)
 	int i;
 	int s;
 
-	s = splimp();
+	s = splnet();
 	DPRINTF(sc, ("%s: gem_reset\n", sc->sc_dev.dv_xname));
 	gem_reset_rx(sc);
 	gem_reset_tx(sc);
@@ -416,8 +420,6 @@ void
 gem_stop(struct ifnet *ifp, int disable)
 {
 	struct gem_softc *sc = (struct gem_softc *)ifp->if_softc;
-	struct gem_sxd *sd;
-	u_int32_t i;
 
 	DPRINTF(sc, ("%s: gem_stop\n", sc->sc_dev.dv_xname));
 
@@ -425,27 +427,8 @@ gem_stop(struct ifnet *ifp, int disable)
 	mii_down(&sc->sc_mii);
 
 	/* XXX - Should we reset these instead? */
-	gem_disable_rx(sc);
-	gem_disable_rx(sc);
-
-	/*
-	 * Release any queued transmit buffers.
-	 */
-	for (i = 0; i < GEM_NTXDESC; i++) {
-		sd = &sc->sc_txd[i];
-		if (sd->sd_map != NULL) {
-			bus_dmamap_sync(sc->sc_dmatag, sd->sd_map, 0,
-			    sd->sd_map->dm_mapsize, BUS_DMASYNC_POSTWRITE);
-			bus_dmamap_unload(sc->sc_dmatag, sd->sd_map);
-			bus_dmamap_destroy(sc->sc_dmatag, sd->sd_map);
-			sd->sd_map = NULL;
-		}
-		if (sd->sd_mbuf != NULL) {
-			m_freem(sd->sd_mbuf);
-			sd->sd_mbuf = NULL;
-		}
-	}
-	sc->sc_tx_cnt = sc->sc_tx_prod = sc->sc_tx_cons = 0;
+	gem_reset_rx(sc);
+	gem_reset_tx(sc);
 
 	if (disable) {
 		gem_rxdrain(sc);
@@ -477,7 +460,7 @@ gem_reset_rx(struct gem_softc *sc)
 	gem_disable_rx(sc);
 	bus_space_write_4(t, h, GEM_RX_CONFIG, 0);
 	/* Wait till it finishes */
-	for (i = TRIES; i--; delay(100))
+	for (i=TRIES; i--; delay(100))
 		if ((bus_space_read_4(t, h, GEM_RX_CONFIG) & 1) == 0)
 			break;
 	if ((bus_space_read_4(t, h, GEM_RX_CONFIG) & 1) != 0)
@@ -490,7 +473,7 @@ gem_reset_rx(struct gem_softc *sc)
 	/* Finally, reset the ERX */
 	bus_space_write_4(t, h, GEM_RESET, GEM_RESET_RX);
 	/* Wait till it finishes */
-	for (i = TRIES; i--; delay(100))
+	for (i=TRIES; i--; delay(100))
 		if ((bus_space_read_4(t, h, GEM_RESET) & GEM_RESET_RX) == 0)
 			break;
 	if ((bus_space_read_4(t, h, GEM_RESET) & GEM_RESET_RX) != 0) {
@@ -519,7 +502,7 @@ gem_reset_tx(struct gem_softc *sc)
 	gem_disable_tx(sc);
 	bus_space_write_4(t, h, GEM_TX_CONFIG, 0);
 	/* Wait till it finishes */
-	for (i = TRIES; i--; delay(100))
+	for (i=TRIES; i--; delay(100))
 		if ((bus_space_read_4(t, h, GEM_TX_CONFIG) & 1) == 0)
 			break;
 	if ((bus_space_read_4(t, h, GEM_TX_CONFIG) & 1) != 0)
@@ -532,7 +515,7 @@ gem_reset_tx(struct gem_softc *sc)
 	/* Finally, reset the ETX */
 	bus_space_write_4(t, h, GEM_RESET, GEM_RESET_TX);
 	/* Wait till it finishes */
-	for (i = TRIES; i--; delay(100))
+	for (i=TRIES; i--; delay(100))
 		if ((bus_space_read_4(t, h, GEM_RESET) & GEM_RESET_TX) == 0)
 			break;
 	if ((bus_space_read_4(t, h, GEM_RESET) & GEM_RESET_TX) != 0) {
@@ -560,7 +543,7 @@ gem_disable_rx(struct gem_softc *sc)
 	bus_space_write_4(t, h, GEM_MAC_RX_CONFIG, cfg);
 
 	/* Wait for it to finish */
-	for (i = TRIES; i--; delay(100)) 
+	for (i=TRIES; i--; delay(100)) 
 		if ((bus_space_read_4(t, h, GEM_MAC_RX_CONFIG) &
 			GEM_MAC_RX_ENABLE) == 0)
 			return (0);
@@ -584,7 +567,7 @@ gem_disable_tx(struct gem_softc *sc)
 	bus_space_write_4(t, h, GEM_MAC_TX_CONFIG, cfg);
 
 	/* Wait for it to finish */
-	for (i = TRIES; i--; delay(100)) 
+	for (i=TRIES; i--; delay(100)) 
 		if ((bus_space_read_4(t, h, GEM_MAC_TX_CONFIG) &
 			GEM_MAC_TX_ENABLE) == 0)
 			return (0);
@@ -610,6 +593,7 @@ gem_meminit(struct gem_softc *sc)
 	}
 	GEM_CDTXSYNC(sc, 0, GEM_NTXDESC,
 	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+	sc->sc_tx_cons = sc->sc_tx_prod = 0;
 
 	/*
 	 * Initialize the receive descriptor and receive job
@@ -671,7 +655,6 @@ gem_ringsize(int sz)
 		v = GEM_RING_SZ_8192;
 		break;
 	default:
-		v = GEM_RING_SZ_32;
 		printf("gem: invalid Receive Descriptor ring size\n");
 		break;
 	}
@@ -691,7 +674,7 @@ gem_init(struct ifnet *ifp)
 	int s;
 	u_int32_t v;
 
-	s = splimp();
+	s = splnet();
 
 	DPRINTF(sc, ("%s: gem_init: calling stop\n", sc->sc_dev.dv_xname));
 	/*
@@ -718,19 +701,18 @@ gem_init(struct ifnet *ifp)
 
 	/* step 4. TX MAC registers & counters */
 	gem_init_regs(sc);
-	v = (GEM_MTU) | (0x2000 << 16) /* Burst size */;
-	bus_space_write_4(t, h, GEM_MAC_MAC_MAX_FRAME, v);
+	bus_space_write_4(t, h, GEM_MAC_MAC_MAX_FRAME,
+	    GEM_MTU | (0x2000 << 16));
 
 	/* step 5. RX MAC registers & counters */
 	gem_setladrf(sc);
 
 	/* step 6 & 7. Program Descriptor Ring Base Addresses */
-	bus_space_write_4(t, h, GEM_TX_RING_PTR_HI, 
-	    (((uint64_t)GEM_CDTXADDR(sc,0)) >> 32));
+	/* NOTE: we use only 32-bit DMA addresses here. */
+	bus_space_write_4(t, h, GEM_TX_RING_PTR_HI, 0);
 	bus_space_write_4(t, h, GEM_TX_RING_PTR_LO, GEM_CDTXADDR(sc, 0));
 
-	bus_space_write_4(t, h, GEM_RX_RING_PTR_HI, 
-	    (((uint64_t)GEM_CDRXADDR(sc,0)) >> 32));
+	bus_space_write_4(t, h, GEM_RX_RING_PTR_HI, 0);
 	bus_space_write_4(t, h, GEM_RX_RING_PTR_LO, GEM_CDRXADDR(sc, 0));
 
 	/* step 8. Global Configuration & Interrupt Mask */
@@ -748,11 +730,11 @@ gem_init(struct ifnet *ifp)
 	/* step 9. ETX Configuration: use mostly default values */
 
 	/* Enable DMA */
-	bus_space_write_4(t, h, GEM_TX_KICK, 0);
 	v = gem_ringsize(GEM_NTXDESC /*XXX*/);
 	bus_space_write_4(t, h, GEM_TX_CONFIG, 
 		v|GEM_TX_CONFIG_TXDMA_EN|
 		((0x400<<10)&GEM_TX_CONFIG_TXFIFO_TH));
+	bus_space_write_4(t, h, GEM_TX_KICK, 0);
 
 	/* step 10. ERX Configuration */
 
@@ -773,6 +755,9 @@ gem_init(struct ifnet *ifp)
 
 	/* step 11. Configure Media */
 	gem_mii_statchg(&sc->sc_dev);
+
+/* XXXX Serial link needs a whole different setup. */
+
 
 	/* step 12. RX_MAC Configuration Register */
 	v = bus_space_read_4(t, h, GEM_MAC_RX_CONFIG);
@@ -800,31 +785,14 @@ gem_init(struct ifnet *ifp)
 	return (0);
 }
 
-/*
- * Compare two Ether/802 addresses for equality, inlined and unrolled for
- * speed.
- */
-static __inline__ int
-ether_cmp(a, b)
-	u_char *a, *b;
-{       
-        
-	if (a[5] != b[5] || a[4] != b[4] || a[3] != b[3] ||
-	    a[2] != b[2] || a[1] != b[1] || a[0] != b[0])
-		return (0);
-	return (1);
-}
-
-
 void
 gem_init_regs(struct gem_softc *sc)
 {
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	bus_space_tag_t t = sc->sc_bustag;
 	bus_space_handle_t h = sc->sc_h;
-	u_int32_t v;
 
 	/* These regs are not cleared on reset */
-	sc->sc_inited = 0;
 	if (!sc->sc_inited) {
 
 		/* Wooo.  Magic values. */
@@ -834,15 +802,17 @@ gem_init_regs(struct gem_softc *sc)
 
 		bus_space_write_4(t, h, GEM_MAC_MAC_MIN_FRAME, ETHER_MIN_LEN);
 		/* Max frame and max burst size */
-		v = (GEM_MTU) | (0x2000 << 16) /* Burst size */;
-		bus_space_write_4(t, h, GEM_MAC_MAC_MAX_FRAME, v);
+		bus_space_write_4(t, h, GEM_MAC_MAC_MAX_FRAME,
+			(ifp->if_mtu+18) | (0x2000<<16)/* Burst size */);
 		bus_space_write_4(t, h, GEM_MAC_PREAMBLE_LEN, 0x7);
 		bus_space_write_4(t, h, GEM_MAC_JAM_SIZE, 0x4);
 		bus_space_write_4(t, h, GEM_MAC_ATTEMPT_LIMIT, 0x10);
 		/* Dunno.... */
 		bus_space_write_4(t, h, GEM_MAC_CONTROL_TYPE, 0x8088);
 		bus_space_write_4(t, h, GEM_MAC_RANDOM_SEED,
-			((sc->sc_enaddr[5]<<8)|sc->sc_enaddr[4])&0x3ff);
+		    ((sc->sc_arpcom.ac_enaddr[5] << 8) |
+		     (sc->sc_arpcom.ac_enaddr[4]) << 0) & 0x3ff);
+
 		/* Secondary MAC addr set to 0:0:0:0:0:0 */
 		bus_space_write_4(t, h, GEM_MAC_ADDR3, 0);
 		bus_space_write_4(t, h, GEM_MAC_ADDR4, 0);
@@ -877,18 +847,123 @@ gem_init_regs(struct gem_softc *sc)
 	bus_space_write_4(t, h, GEM_MAC_RX_CODE_VIOL, 0);
 
 	/* Un-pause stuff */
+#if 0
+	bus_space_write_4(t, h, GEM_MAC_SEND_PAUSE_CMD, 0x1BF0);
+#else
 	bus_space_write_4(t, h, GEM_MAC_SEND_PAUSE_CMD, 0);
+#endif
 
 	/*
 	 * Set the station address.
 	 */
 	bus_space_write_4(t, h, GEM_MAC_ADDR0, 
-		(sc->sc_enaddr[4]<<8) | sc->sc_enaddr[5]);
+	    (sc->sc_arpcom.ac_enaddr[4] << 8) | sc->sc_arpcom.ac_enaddr[5]);
 	bus_space_write_4(t, h, GEM_MAC_ADDR1, 
-		(sc->sc_enaddr[2]<<8) | sc->sc_enaddr[3]);
+	    (sc->sc_arpcom.ac_enaddr[2] << 8) | sc->sc_arpcom.ac_enaddr[3]);
 	bus_space_write_4(t, h, GEM_MAC_ADDR2, 
-		(sc->sc_enaddr[0]<<8) | sc->sc_enaddr[1]);
+	    (sc->sc_arpcom.ac_enaddr[0] << 8) | sc->sc_arpcom.ac_enaddr[1]);
+}
 
+
+
+void
+gem_start(ifp)
+	struct ifnet *ifp;
+{
+	struct gem_softc *sc = (struct gem_softc *)ifp->if_softc;
+	struct mbuf *m0;
+	u_int32_t prod;
+
+	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
+		return;
+
+	prod = sc->sc_tx_prod;
+	for (;;) {
+		IFQ_POLL(&ifp->if_snd, m0);
+		if (m0 == NULL)
+			break;
+
+		if (sc->sc_tx_cnt == (GEM_NTXDESC - 2)) {
+			ifp->if_flags |= IFF_OACTIVE;
+			break;
+		}
+
+		IFQ_DEQUEUE(&ifp->if_snd, m0);
+		if (m0 == NULL)
+			break;
+
+		m_copydata(m0, 0, m0->m_pkthdr.len,
+		    &sc->sc_control_data->gcd_txbufs[prod][0]);
+		bus_dmamap_sync(sc->sc_dmatag, sc->sc_cddmamap,
+		    offsetof(struct gem_control_data, gcd_txbufs[prod][0]),
+		    m0->m_pkthdr.len, BUS_DMASYNC_PREWRITE);
+
+		sc->sc_txdescs[prod].gd_addr =
+		    GEM_DMA_WRITE(sc, sc->sc_cddmamap->dm_segs[0].ds_addr +
+		    offsetof(struct gem_control_data, gcd_txbufs[prod][0]));
+		sc->sc_txdescs[prod].gd_flags = GEM_DMA_WRITE(sc,
+		    (m0->m_pkthdr.len & GEM_TD_BUFSIZE) |
+		    GEM_TD_START_OF_PACKET | GEM_TD_END_OF_PACKET);
+
+		m_freem(m0);
+
+		GEM_CDTXSYNC(sc, prod, 1,
+		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+
+		if (++prod == GEM_NTXDESC)
+			prod = 0;
+		++sc->sc_tx_cnt;
+	}
+	if (prod != sc->sc_tx_prod)
+		bus_space_write_4(sc->sc_bustag, sc->sc_h, GEM_TX_KICK, prod);
+	sc->sc_tx_prod = prod;
+}
+
+/*
+ * Transmit interrupt.
+ */
+int
+gem_tint(sc)
+	struct gem_softc *sc;
+{
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	bus_space_tag_t t = sc->sc_bustag;
+	bus_space_handle_t mac = sc->sc_h;
+	u_int32_t hwcons, cons;
+
+	/*
+	 * Unload collision counters
+	 */
+	ifp->if_collisions +=
+	    bus_space_read_4(t, mac, GEM_MAC_NORM_COLL_CNT) +
+	    bus_space_read_4(t, mac, GEM_MAC_FIRST_COLL_CNT) +
+	    bus_space_read_4(t, mac, GEM_MAC_EXCESS_COLL_CNT) +
+	    bus_space_read_4(t, mac, GEM_MAC_LATE_COLL_CNT);
+
+	/*
+	 * then clear the hardware counters.
+	 */
+	bus_space_write_4(t, mac, GEM_MAC_NORM_COLL_CNT, 0);
+	bus_space_write_4(t, mac, GEM_MAC_FIRST_COLL_CNT, 0);
+	bus_space_write_4(t, mac, GEM_MAC_EXCESS_COLL_CNT, 0);
+	bus_space_write_4(t, mac, GEM_MAC_LATE_COLL_CNT, 0);
+
+	/*
+	 * Go through our Tx list and free mbufs for those
+	 * frames that have been transmitted.
+	 */
+	cons = sc->sc_tx_cons;
+	hwcons = bus_space_read_4(t, mac, GEM_TX_COMPLETION);
+	while (cons != hwcons) {
+		if (++cons == GEM_NTXDESC)
+			cons = 0;
+		--sc->sc_tx_cnt;
+	}
+	sc->sc_tx_cons = cons;
+
+	ifp->if_flags &= ~IFF_OACTIVE;
+
+	return (1);
 }
 
 /*
@@ -907,6 +982,7 @@ gem_rint(sc)
 	u_int64_t rxstat;
 	int i, len;
 
+	DPRINTF(sc, ("%s: gem_rint\n", sc->sc_dev.dv_xname));
 	/*
 	 * XXXX Read the lastrx only once at the top for speed.
 	 */
@@ -1059,7 +1135,7 @@ gem_eint(sc, status)
 		return (1);
 	}
 
-	printf("%s: status=%b\n", sc->sc_dev.dv_xname, status, GEM_INTR_BITS);
+	printf("%s: status=%x\n", sc->sc_dev.dv_xname, status);
 	return (1);
 }
 
@@ -1073,16 +1149,22 @@ gem_intr(v)
 	bus_space_handle_t seb = sc->sc_h;
 	u_int32_t status;
 	int r = 0;
+#ifdef GEM_DEBUG
+	char bits[128];
+#endif
 
 	status = bus_space_read_4(t, seb, GEM_STATUS);
-	DPRINTF(sc, ("%s: gem_intr: cplt %xstatus %b\n",
-		sc->sc_dev.dv_xname, (status>>19), status, GEM_INTR_BITS));
+	DPRINTF(sc, ("%s: gem_intr: cplt %xstatus %s\n",
+		sc->sc_dev.dv_xname, (status>>19),
+		bitmask_snprintf(status, GEM_INTR_BITS, bits, sizeof(bits))));
 
 	if ((status & (GEM_INTR_RX_TAG_ERR | GEM_INTR_BERR)) != 0)
 		r |= gem_eint(sc, status);
 
-	if ((status & (GEM_INTR_TX_EMPTY | GEM_INTR_TX_INTME)) != 0)
-		r |= gem_tint(sc, status);
+	if ((status & 
+		(GEM_INTR_TX_EMPTY | GEM_INTR_TX_INTME))
+		!= 0)
+		r |= gem_tint(sc);
 
 	if ((status & (GEM_INTR_RX_DONE | GEM_INTR_RX_NOBUF)) != 0)
 		r |= gem_rint(sc);
@@ -1118,7 +1200,7 @@ gem_watchdog(ifp)
 	++ifp->if_oerrors;
 
 	/* Try to get more packets going. */
-	gem_init(ifp);
+	gem_start(ifp);
 }
 
 /*
@@ -1165,6 +1247,17 @@ gem_mii_readreg(self, phy, reg)
 #ifdef GEM_DEBUG1
 	if (sc->sc_debug)
 		printf("gem_mii_readreg: phy %d reg %d\n", phy, reg);
+#endif
+
+#if 0
+	/* Select the desired PHY in the MIF configuration register */
+	v = bus_space_read_4(t, mif, GEM_MIF_CONFIG);
+	/* Clear PHY select bit */
+	v &= ~GEM_MIF_CONFIG_PHY_SEL;
+	if (phy == GEM_PHYAD_EXTERNAL)
+		/* Set PHY select bit to get at external device */
+		v |= GEM_MIF_CONFIG_PHY_SEL;
+	bus_space_write_4(t, mif, GEM_MIF_CONFIG, v);
 #endif
 
 	/* Construct the frame command */
@@ -1241,8 +1334,8 @@ gem_mii_statchg(dev)
 
 #ifdef GEM_DEBUG
 	if (sc->sc_debug)
-		printf("gem_mii_statchg: status change: phy = %d\n",
-		    sc->sc_phys[instance]);
+		printf("gem_mii_statchg: status change: phy = %d\n", 
+			sc->sc_phys[instance];);
 #endif
 
 
@@ -1321,35 +1414,39 @@ gem_ioctl(ifp, cmd, data)
 
 	s = splimp();
 
-	switch (cmd) {
+	if ((error = ether_ioctl(ifp, &sc->sc_arpcom, cmd, data)) > 0) {
+		splx(s);
+		return error;
+	}
 
+	switch (cmd) {
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
-
 		switch (ifa->ifa_addr->sa_family) {
 #ifdef INET
 		case AF_INET:
 			gem_init(ifp);
 			arp_ifinit(&sc->sc_arpcom, ifa);
 			break;
-#endif
+#endif /* INET */
 #ifdef NS
+		/* XXX - This code is probably wrong. */
 		case AF_NS:
 		    {
 			struct ns_addr *ina = &IA_SNS(ifa)->sns_addr;
 
 			if (ns_nullhost(*ina))
-				ina->x_host =
-				    *(union ns_host *)LLADDR(ifp->if_sadl);
-			else {
-				memcpy(LLADDR(ifp->if_sadl),
-				    ina->x_host.c_host, sizeof(sc->sc_enaddr));
-			}	
+				ina->x_host = 
+				    *(union ns_host *)(sc->sc_arpcom.ac_enaddr);
+			else
+				bcopy(ina->x_host.c_host,
+				    sc->sc_arpcom.ac_enaddr,
+				    sizeof(sc->sc_arpcom.ac_enaddr));
 			/* Set new address. */
 			gem_init(ifp);
 			break;
 		    }
-#endif
+#endif /* NS */
 		default:
 			gem_init(ifp);
 			break;
@@ -1366,37 +1463,34 @@ gem_ioctl(ifp, cmd, data)
 			gem_stop(ifp, 1);
 			ifp->if_flags &= ~IFF_RUNNING;
 		} else if ((ifp->if_flags & IFF_UP) != 0 &&
-		    	   (ifp->if_flags & IFF_RUNNING) == 0) {
+			   (ifp->if_flags & IFF_RUNNING) == 0) {
 			/*
 			 * If interface is marked up and it is stopped, then
 			 * start it.
 			 */
 			gem_init(ifp);
-		} else if ((ifp->if_flags & IFF_UP) != 0) {
+		} else {
 			/*
 			 * Reset the interface to pick up changes in any other
 			 * flags that affect hardware registers.
 			 */
-			/*gem_stop(sc);*/
+			gem_stop(ifp, 0);
 			gem_init(ifp);
 		}
-#ifdef HMEDEBUG
-		sc->sc_debug = (ifp->if_flags & IFF_DEBUG) != 0 ? 1 : 0;
-#endif
 		break;
 
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
 		error = (cmd == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &sc->sc_arpcom) :
-		    ether_delmulti(ifr, &sc->sc_arpcom);
+			ether_addmulti(ifr, &sc->sc_arpcom):
+			ether_delmulti(ifr, &sc->sc_arpcom);
 
 		if (error == ENETRESET) {
 			/*
 			 * Multicast list has changed; set the hardware filter
 			 * accordingly.
 			 */
-			gem_setladrf(sc);
+			gem_init(ifp);
 			error = 0;
 		}
 		break;
@@ -1407,11 +1501,12 @@ gem_ioctl(ifp, cmd, data)
 		break;
 
 	default:
-		error = EINVAL;
 		break;
 	}
 
-	splx(s);
+	if (ifp->if_flags & IFF_UP)
+		gem_start(ifp);
+
 	return (error);
 }
 
@@ -1473,7 +1568,7 @@ gem_setladrf(sc)
 
 	ETHER_FIRST_MULTI(step, ac, enm);
 	while (enm != NULL) {
-		if (ether_cmp(enm->enm_addrlo, enm->enm_addrhi)) {
+		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
 			/*
 			 * We must listen to a range of multicast addresses.
 			 * For now, just accept all multicasts, rather than
@@ -1537,145 +1632,46 @@ chipit:
 	bus_space_write_4(t, h, GEM_MAC_RX_CONFIG, v);
 }
 
-int
-gem_encap(sc, mhead, bixp)
-	struct gem_softc *sc;
-	struct mbuf *mhead;
-	u_int32_t *bixp;
-{
-	u_int64_t flags;
-	u_int32_t cur, frag, i;
-	bus_dmamap_t map;
-
-	cur = frag = *bixp;
-
-	if (bus_dmamap_create(sc->sc_dmatag, MCLBYTES, GEM_NTXDESC,
-	    MCLBYTES, 0, BUS_DMA_NOWAIT, &map) != 0) {
-		return (ENOBUFS);
-	}
-
-	if (bus_dmamap_load_mbuf(sc->sc_dmatag, map, mhead,
-	    BUS_DMA_NOWAIT) != 0) {
-		bus_dmamap_destroy(sc->sc_dmatag, map);
-		return (ENOBUFS);
-	}
-
-	if ((sc->sc_tx_cnt + map->dm_nsegs) > (GEM_NTXDESC - 2)) {
-		bus_dmamap_unload(sc->sc_dmatag, map);
-		bus_dmamap_destroy(sc->sc_dmatag, map);
-		return (ENOBUFS);
-	}
-
-	bus_dmamap_sync(sc->sc_dmatag, map, 0, map->dm_mapsize,
-	    BUS_DMASYNC_PREWRITE);
-
-	for (i = 0; i < map->dm_nsegs; i++) {
-		sc->sc_txdescs[frag].gd_addr =
-		    GEM_DMA_WRITE(sc, map->dm_segs[i].ds_addr);
-		flags = (map->dm_segs[i].ds_len & GEM_TD_BUFSIZE) |
-		    (i == 0 ? GEM_TD_START_OF_PACKET : 0) |
-		    ((i == (map->dm_nsegs - 1)) ? GEM_TD_END_OF_PACKET : 0);
-		sc->sc_txdescs[frag].gd_flags = GEM_DMA_WRITE(sc, flags);
-		bus_dmamap_sync(sc->sc_dmatag, sc->sc_cddmamap,
-		    GEM_CDTXOFF(frag), sizeof(struct gem_desc),
-		    BUS_DMASYNC_PREWRITE);
-		cur = frag;
-		if (++frag == GEM_NTXDESC)
-			frag = 0;
-	}
-
-	sc->sc_tx_cnt += map->dm_nsegs;
-	sc->sc_txd[cur].sd_map = map;
-	sc->sc_txd[cur].sd_mbuf = mhead;
-
-	bus_space_write_4(sc->sc_bustag, sc->sc_h, GEM_TX_KICK, frag);
-
-	*bixp = frag;
-
-	/* sync descriptors */
-
-	return (0);
-}
+#if notyet
 
 /*
- * Transmit interrupt.
+ * gem_power:
+ *
+ *	Power management (suspend/resume) hook.
  */
-int
-gem_tint(sc, status)
-	struct gem_softc *sc;
-	u_int32_t status;
-{
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
-	struct gem_sxd *sd;
-	u_int32_t cons, hwcons;
-
-	hwcons = status >> 19;
-	cons = sc->sc_tx_cons;
-	while (cons != hwcons) {
-		sd = &sc->sc_txd[cons];
-		if (sd->sd_map != NULL) {
-			bus_dmamap_sync(sc->sc_dmatag, sd->sd_map, 0,
-			    sd->sd_map->dm_mapsize, BUS_DMASYNC_POSTWRITE);
-			bus_dmamap_unload(sc->sc_dmatag, sd->sd_map);
-			bus_dmamap_destroy(sc->sc_dmatag, sd->sd_map);
-			sd->sd_map = NULL;
-		}
-		if (sd->sd_mbuf != NULL) {
-			m_freem(sd->sd_mbuf);
-			sd->sd_mbuf = NULL;
-		}
-		sc->sc_tx_cnt--;
-		if (++cons == GEM_NTXDESC)
-			cons = 0;
-	}
-	sc->sc_tx_cons = cons;
-
-	gem_start(ifp);
-
-	if (sc->sc_tx_cnt == 0)
-		ifp->if_timer = 0;
-
-	return (1);
-}
-
 void
-gem_start(ifp)
-	struct ifnet *ifp;
+gem_power(why, arg)
+	int why;
+	void *arg;
 {
-	struct gem_softc *sc = ifp->if_softc;
-	struct mbuf *m;
-	u_int32_t bix;
+	struct gem_softc *sc = arg;
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	int s;
 
-	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
-		return;
-
-	bix = sc->sc_tx_prod;
-	while (sc->sc_txd[bix].sd_mbuf == NULL) {
-		IFQ_POLL(&ifp->if_snd, m);
-		if (m == NULL)
-			break;
-
-#if NBPFILTER > 0
-		/*
-		 * If BPF is listening on this interface, let it see the
-		 * packet before we commit it to the wire.
-		 */
-		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m);
+	s = splnet();
+	switch (why) {
+	case PWR_SUSPEND:
+	case PWR_STANDBY:
+		gem_stop(ifp, 1);
+		if (sc->sc_power != NULL)
+			(*sc->sc_power)(sc, why);
+		break;
+	case PWR_RESUME:
+		if (ifp->if_flags & IFF_UP) {
+			if (sc->sc_power != NULL)
+				(*sc->sc_power)(sc, why);
+			gem_init(ifp);
+		}
+		break;
+	case PWR_SOFTSUSPEND:
+	case PWR_SOFTSTANDBY:
+	case PWR_SOFTRESUME:
+		break;
+	}
+	splx(s);
+}
 #endif
 
-		/*
-		 * Encapsulate this packet and start it going...
-		 * or fail...
-		 */
-		if (gem_encap(sc, m, &bix)) {
-			ifp->if_flags |= IFF_OACTIVE;
-			break;
-		}
-
-		IFQ_DEQUEUE(&ifp->if_snd, m);
-		ifp->if_timer = 5;
-	}
-
-	sc->sc_tx_prod = bix;
-}
+struct cfdriver gem_cd = {
+	NULL, "gem", DV_IFNET
+};
