@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.65 2001/06/01 19:29:13 mickey Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.66 2001/06/01 20:08:31 mickey Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.5 (Berkeley) 5/9/95";
 #else
-static char *rcsid = "$OpenBSD: sysctl.c,v 1.65 2001/06/01 19:29:13 mickey Exp $";
+static char *rcsid = "$OpenBSD: sysctl.c,v 1.66 2001/06/01 20:08:31 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -254,17 +254,21 @@ listall(prefix, lp)
 	char *prefix;
 	struct list *lp;
 {
-	int lvl2;
 	char *cp, name[BUFSIZ];
+	int lvl2, len;
 
 	if (lp->list == NULL)
 		return;
-	cp = name + strlcpy(name, prefix, BUFSIZ);
+	if ((len = strlcpy(name, prefix, sizeof(name))) >= sizeof(name))
+		warn("%s: name too long", prefix);
+	cp = name + len++;
 	*cp++ = '.';
 	for (lvl2 = 0; lvl2 < lp->size; lvl2++) {
 		if (lp->list[lvl2].ctl_name == NULL)
 			continue;
-		(void)strcpy(cp, lp->list[lvl2].ctl_name);
+		if (strlcpy(cp, lp->list[lvl2].ctl_name,
+		    sizeof(name) - len) >= sizeof(name) - len)
+			warn("%s: name too long", lp->list[lvl2].ctl_name);
 		parse(name, Aflag);
 	}
 }
