@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ftp-proxy.8,v 1.27 2002/12/01 17:05:06 henning Exp $
+.\"	$OpenBSD: ftp-proxy.8,v 1.28 2002/12/19 01:27:56 deraadt Exp $
 .\"
 .\" Copyright (c) 1996-2001
 .\"	Obtuse Systems Corporation, All rights reserved.
@@ -205,6 +205,7 @@ runs as user "proxy" to allow the backchannel connections, as in the following e
   block in on $ext_if proto tcp all
   pass  in on $ext_if proto tcp from any to $ext_if user proxy keep state
 .Ed
+.Pp
 These examples do not cover the connections from the proxy to the
 foreign ftp server. If one does not pass outgoing connections by default
 additional rules are needed.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp-proxy.c,v 1.24 2002/07/07 08:54:50 jufi Exp $ */
+/*	$OpenBSD: ftp-proxy.c,v 1.25 2002/12/19 01:27:56 deraadt Exp $ */
 
 /*
  * Copyright (c) 1996-2001
@@ -201,7 +201,7 @@ drop_privs(void)
 	if (User != NULL) {
 		pw = getpwnam(User);
 		if (pw == NULL) {
-			syslog(LOG_ERR, "can't find user %s", User);
+			syslog(LOG_ERR, "cannot find user %s", User);
 			exit(EX_USAGE);
 		}
 		uid = pw->pw_uid;
@@ -211,19 +211,19 @@ drop_privs(void)
 	if (Group != NULL) {
 		gr = getgrnam(Group);
 		if (gr == NULL) {
-			syslog(LOG_ERR, "can't find group %s", Group);
+			syslog(LOG_ERR, "cannot find group %s", Group);
 			exit(EX_USAGE);
 		}
 		gid = gr->gr_gid;
 	}
 
 	if (gid != 0 && (setegid(gid) == -1 || setgid(gid) == -1)) {
-		syslog(LOG_ERR, "can't drop group privs (%m)");
+		syslog(LOG_ERR, "cannot drop group privs (%m)");
 		exit(EX_CONFIG);
 	}
 
 	if (uid != 0 && (seteuid(uid) == -1 || setuid(uid) == -1)) {
-		syslog(LOG_ERR, "can't drop root privs (%m)");
+		syslog(LOG_ERR, "cannot drop root privs (%m)");
 		exit(EX_CONFIG);
 	}
 }
@@ -255,13 +255,15 @@ check_host(struct sockaddr_in *client_sin, struct sockaddr_in *server_sin)
 		i = getnameinfo((struct sockaddr *) &client_sin->sin_addr,
 		    sizeof(&client_sin->sin_addr), cname, sizeof(cname),
 		    NULL, 0, NI_NAMEREQD);
-		if (i == -1)
+
+		if (i != 0 && i != EAI_NONAME && i != EAI_AGAIN)
 			strlcpy(cname, STRING_UNKNOWN, sizeof(cname));
 
 		i = getnameinfo((struct sockaddr *)&server_sin->sin_addr,
 		    sizeof(&server_sin->sin_addr), sname, sizeof(sname),
 		    NULL, 0, NI_NAMEREQD);
-		if (i == -1)
+
+		if (i != 0 && i != EAI_NONAME && i != EAI_AGAIN)
 			strlcpy(sname, STRING_UNKNOWN, sizeof(sname));
 	} else {
 		/*
@@ -277,8 +279,7 @@ check_host(struct sockaddr_in *client_sin, struct sockaddr_in *server_sin)
 	request_set(&request, RQ_CLIENT_NAME, cname, RQ_SERVER_NAME, sname, 0);
 
 	if (!hosts_access(&request)) {
-		syslog(LOG_NOTICE, "tcpwrappers rejected: %s -> %s",
-		    ClientName, RealServerName);
+		syslog(LOG_NOTICE, "connection rejected by tcpwrappers");
 		return(0);
 	}
 	return(1);
@@ -314,7 +315,7 @@ show_xfer_stats(void)
 
 	if (client_data_bytes == 0 && server_data_bytes == 0) {
 		syslog(LOG_INFO,
-		  "data transfer completed (no bytes transferred)");
+		  "data transfer complete (no bytes transferred)");
 		return;
 	}
 
@@ -326,7 +327,7 @@ show_xfer_stats(void)
 		idelta = delta + 0.5;
 		if (idelta >= 60*60) {
 			i = snprintf(tbuf, len,
-			    "data transfer completed (%dh %dm %ds",
+			    "data transfer complete (%dh %dm %ds",
 			    idelta / (60*60), (idelta % (60*60)) / 60,
 			    idelta % 60);
 			if (i >= len)
@@ -334,14 +335,14 @@ show_xfer_stats(void)
 			len -= i;
 		} else {
 			i = snprintf(tbuf, len,
-			    "data transfer completed (%dm %ds", idelta / 60,
+			    "data transfer complete (%dm %ds", idelta / 60,
 			    idelta % 60);
 			if (i >= len)
 				goto logit;
 			len -= i;
 		}
 	} else {
-		i = snprintf(tbuf, len, "data transfer completed (%.1fs",
+		i = snprintf(tbuf, len, "data transfer complete (%.1fs",
 		    delta);
 		if (i >= len)
 			goto logit;
@@ -350,7 +351,7 @@ show_xfer_stats(void)
 
 	if (client_data_bytes > 0) {
 		i = snprintf(&tbuf[strlen(tbuf)], len,
-		    ", %d (%.1fKB/s) to server", client_data_bytes,
+		    ", %d bytes to server) (%.1fKB/s", client_data_bytes,
 		    (client_data_bytes / delta) / (double)1024);
 		if (i >= len)
 			goto logit;
@@ -358,7 +359,7 @@ show_xfer_stats(void)
 	}
 	if (server_data_bytes > 0) {
 		i = snprintf(&tbuf[strlen(tbuf)], len,
-		    ", %d (%.1fKB/s) to client", server_data_bytes,
+		    ", %d bytes to client) (%.1fKB/s", server_data_bytes,
 		    (server_data_bytes / delta) / (double)1024);
 		if (i >= len)
 			goto logit;
@@ -392,7 +393,7 @@ log_control_command (char *cmd, int client)
 		    (strncasecmp(cmd, "stor " ,5) == 0))
 			level = LOG_INFO;
 	}
-	syslog(level, "%s %s", (client?"from client:":"server reply:"),
+	syslog(level, "%s %s", client ? "client:" : " server:",
 	    logstring);
 }
 
@@ -425,11 +426,11 @@ new_dataconn(int server)
 		    min_port, max_port, -1, 1, &server_listen_sa);
 
 		if (server_listen_socket == -1) {
-			syslog(LOG_INFO, "bind of server socket failed (%m)");
+			syslog(LOG_INFO, "server socket bind() failed (%m)");
 			exit(EX_OSERR);
 		}
 		if (listen(server_listen_socket, 5) != 0) {
-			syslog(LOG_INFO, "server socket listen failed (%m)");
+			syslog(LOG_INFO, "server socket listen() failed (%m)");
 			exit(EX_OSERR);
 		}
 	} else {
@@ -439,12 +440,12 @@ new_dataconn(int server)
 
 		if (client_listen_socket == -1) {
 			syslog(LOG_NOTICE,
-			    "can't get client listen socket (%m)");
+			    "cannot get client listen socket (%m)");
 			exit(EX_OSERR);
 		}
 		if (listen(client_listen_socket, 5) != 0) {
 			syslog(LOG_NOTICE,
-			    "can't listen on client socket (%m)");
+			    "cannot listen on client socket (%m)");
 			exit(EX_OSERR);
 		}
 	}
@@ -471,7 +472,7 @@ connect_pasv_backchannel(void)
 	    (struct sockaddr *)&listen_sa, &salen);
 
 	if (client_data_socket < 0) {
-		syslog(LOG_NOTICE, "accept failed (%m)");
+		syslog(LOG_NOTICE, "accept() failed (%m)");
 		exit(EX_OSERR);
 	}
 	close(client_listen_socket);
@@ -481,12 +482,12 @@ connect_pasv_backchannel(void)
 	server_data_socket = get_backchannel_socket(SOCK_STREAM, min_port,
 	    max_port, -1, 1, &listen_sa);
 	if (server_data_socket < 0) {
-		syslog(LOG_NOTICE, "backchannel failed (%m)");
+		syslog(LOG_NOTICE, "get_backchannel_socket() failed (%m)");
 		exit(EX_OSERR);
 	}
 	if (connect(server_data_socket, (struct sockaddr *) &server_listen_sa,
 	    sizeof(server_listen_sa)) != 0) {
-		syslog(LOG_NOTICE, "connect failed (%m)");
+		syslog(LOG_NOTICE, "connect() failed (%m)");
 		exit(EX_NOHOST);
 	}
 	client_data_bytes = 0;
@@ -513,7 +514,7 @@ connect_port_backchannel(void)
 	server_data_socket = accept(server_listen_socket,
 	    (struct sockaddr *)&listen_sa, &salen);
 	if (server_data_socket < 0) {
-		syslog(LOG_NOTICE, "accept failed (%m)");
+		syslog(LOG_NOTICE, "accept() failed (%m)");
 		exit(EX_OSERR);
 	}
 	close(server_listen_socket);
@@ -530,7 +531,7 @@ connect_port_backchannel(void)
 		client_data_socket =  get_backchannel_socket(SOCK_STREAM,
 		    min_port, max_port, -1, 1, &listen_sa);
 		if (client_data_socket < 0) {
-			syslog(LOG_NOTICE,  "backchannel failed (%m)");
+			syslog(LOG_NOTICE,  "get_backchannel_socket() failed (%m)");
 			exit(EX_OSERR);
 		}
 
@@ -549,20 +550,20 @@ connect_port_backchannel(void)
 
 		if (setsockopt(client_data_socket, SOL_SOCKET, SO_REUSEADDR,
 		    &salen, sizeof(salen)) == -1) {
-			syslog(LOG_NOTICE, "setsockopt failed (%m)");
+			syslog(LOG_NOTICE, "setsockopt() failed (%m)");
 			exit(EX_OSERR);
 		}
 
 		if (bind(client_data_socket, (struct sockaddr *)&listen_sa,
 		    sizeof(listen_sa)) == - 1) {
-			syslog(LOG_NOTICE, "bind to port 20 failed (%m)");
+			syslog(LOG_NOTICE, "data channel bind() failed (%m)");
 			exit(EX_OSERR);
 		}
 	}
 
 	if (connect(client_data_socket, (struct sockaddr *) &client_listen_sa,
 	    sizeof(client_listen_sa)) != 0) {
-		syslog(LOG_INFO, "can't connect data connection (%m)");
+		syslog(LOG_INFO, "cannot connect data channel (%m)");
 		exit(EX_NOHOST);
 	}
 
@@ -605,7 +606,7 @@ do_client_cmd(struct csiob *client, struct csiob *server)
 			 * error before they send a password
 			 */
 			snprintf(tbuf, sizeof(tbuf),
-			    "500 Only anonymous ftp is allowed\r\n");
+			    "500 Only anonymous FTP is allowed\r\n");
 			j = 0;
 			i = strlen(tbuf);
 			do {
@@ -682,12 +683,12 @@ do_client_cmd(struct csiob *client, struct csiob *server)
 		snprintf(tbuf, sizeof(tbuf), "EPRT |%d|%s|%u|\r\n", 1,
 		    inet_ntoa(server->sa.sin_addr),
 		    ntohs(server_listen_sa.sin_port));
-		debuglog(1, "to server(modified):  %s", tbuf);
+		debuglog(1, "to server (modified): %s", tbuf);
 		sendbuf = tbuf;
 		goto out;
 parsefail:
 		snprintf(tbuf, sizeof(tbuf),
-		    "500 Invalid argument, rejected\r\n");
+		    "500 Invalid argument; rejected\r\n");
 		sendbuf = NULL;
 		goto out;
 protounsupp:
@@ -705,7 +706,7 @@ out:
 		if (res)
 			freeaddrinfo(res);
 		if (sendbuf == NULL) {
-			debuglog(1, "to client(modified):  %s", tbuf);
+			debuglog(1, "to client (modified): %s", tbuf);
 			i = strlen(tbuf);
 			do {
 				rv = send(client->fd, tbuf + j, i - j, 0);
@@ -735,7 +736,7 @@ out:
 
 		snprintf(tbuf, sizeof(tbuf),
 		    "500 EPSV command not understood\r\n");
-		debuglog(1, "to client(modified):  %s", tbuf);
+		debuglog(1, "to client (modified): %s", tbuf);
 		j = 0;
 		i = strlen(tbuf);
 		do {
@@ -805,7 +806,7 @@ out:
 		    ((u_char *)&server_listen_sa.sin_port)[0],
 		    ((u_char *)&server_listen_sa.sin_port)[1]);
 
-		debuglog(1, "to server(modified):  %s", tbuf);
+		debuglog(1, "to server (modified): %s", tbuf);
 
 		sendbuf = tbuf;
 	} else
@@ -844,7 +845,7 @@ do_server_reply(struct csiob *server, struct csiob *client)
 		 * exit - we don't pass this on for fear of hurting
 		 * our other end, which might be poorly implemented.
 		 */
-		syslog(LOG_NOTICE, "Long (> 512 bytes) ftp control reply");
+		syslog(LOG_NOTICE, "long FTP control reply");
 		exit(EX_DATAERR);
 	}
 
@@ -927,7 +928,7 @@ do_server_reply(struct csiob *server, struct csiob *client)
 		    ((u_char *)iap)[2], ((u_char *)iap)[3],
 		    ((u_char *)&client_listen_sa.sin_port)[0],
 		    ((u_char *)&client_listen_sa.sin_port)[1]);
-		debuglog(1, "to client(modified):  %s", tbuf);
+		debuglog(1, "to client (modified): %s", tbuf);
 		sendbuf = tbuf;
 	} else {
  sendit:
@@ -1047,16 +1048,16 @@ main(int argc, char *argv[])
 	 * for ftp.
 	 */
 	if (Use_Rdns)
-		flags = NI_NUMERICHOST | NI_NUMERICSERV;
-	else
 		flags = 0;
+	else
+		flags = NI_NUMERICHOST | NI_NUMERICSERV;
 
 	i = getnameinfo((struct sockaddr *)&client_iob.sa,
 	    sizeof(client_iob.sa), ClientName, sizeof(ClientName), NULL, 0,
 	    flags);
 
-	if (i == -1) {
-		syslog (LOG_ERR, "getnameinfo failed (%m)");
+	if (i != 0 && i != EAI_NONAME && i != EAI_AGAIN) {
+		debuglog(2, "name resolution failure (client)");
 		exit(EX_OSERR);
 	}
 
@@ -1064,8 +1065,8 @@ main(int argc, char *argv[])
 	    sizeof(real_server_sa), RealServerName, sizeof(RealServerName),
 	    NULL, 0, flags);
 
-	if (i == -1) {
-		syslog (LOG_ERR, "getnameinfo failed (%m)");
+	if (i != 0 && i != EAI_NONAME && i != EAI_AGAIN) {
+		debuglog(2, "name resolution failure (server)");
 		exit(EX_OSERR);
 	}
 
@@ -1074,18 +1075,16 @@ main(int argc, char *argv[])
 
 	client_iob.fd = 0;
 
-	debuglog(1, "client is %s:%u", ClientName,
-	    ntohs(client_iob.sa.sin_port));
-
-	debuglog(1, "target server is %s:%u", RealServerName,
-	    ntohs(real_server_sa.sin_port));
+	syslog(LOG_INFO, "accepted connection from %s:%u to %s:%u", ClientName,
+		ntohs(client_iob.sa.sin_port), RealServerName,
+		ntohs(real_server_sa.sin_port));
 
 	server_iob.fd = get_backchannel_socket(SOCK_STREAM, min_port, max_port,
 	    -1,	1, &server_iob.sa);
 
 	if (connect(server_iob.fd, (struct sockaddr *)&real_server_sa,
 	    sizeof(real_server_sa)) != 0) {
-		syslog(LOG_INFO, "Can't connect to %s:%u (%m)", RealServerName,
+		syslog(LOG_INFO, "cannot connect to %s:%u (%m)", RealServerName,
 		    ntohs(real_server_sa.sin_port));
 		exit(EX_NOHOST);
 	}
@@ -1101,7 +1100,12 @@ main(int argc, char *argv[])
 	i = getnameinfo((struct sockaddr *)&server_iob.sa,
 	    sizeof(server_iob.sa), OurName, sizeof(OurName), NULL, 0, flags);
 
-	debuglog(1, "our end of socket to server is %s:%u", OurName,
+	if (i != 0 && i != EAI_NONAME && i != EAI_AGAIN) {
+		debuglog(2, "name resolution failure (local)");
+		exit(EX_OSERR);
+	}
+
+	debuglog(1, "local socket is %s:%u", OurName,
 	    ntohs(server_iob.sa.sin_port));
 
 	/* ignore SIGPIPE */
@@ -1110,13 +1114,13 @@ main(int argc, char *argv[])
 	(void)sigemptyset(&new_sa.sa_mask);
 	new_sa.sa_flags = SA_RESTART;
 	if (sigaction(SIGPIPE, &new_sa, &old_sa) != 0) {
-		syslog(LOG_ERR, "sigaction failed (%m)");
+		syslog(LOG_ERR, "sigaction() failed (%m)");
 		exit(EX_OSERR);
 	}
 
 	if (setsockopt(client_iob.fd, SOL_SOCKET, SO_OOBINLINE, (char *)&one,
 	    sizeof(one)) == -1) {
-		syslog(LOG_NOTICE, "Can't set SO_OOBINLINE (%m) - exiting");
+		syslog(LOG_NOTICE, "cannot set SO_OOBINLINE (%m)");
 		exit(EX_OSERR);
 	}
 
@@ -1144,7 +1148,7 @@ main(int argc, char *argv[])
 
 	if (client_iob.line_buffer == NULL || client_iob.io_buffer == NULL ||
 	    server_iob.line_buffer == NULL || server_iob.io_buffer == NULL) {
-		syslog (LOG_NOTICE,  "Insufficient memory (malloc failed)");
+		syslog (LOG_NOTICE, "insufficient memory");
 		exit(EX_UNAVAILABLE);
 	}
 
@@ -1165,14 +1169,14 @@ main(int argc, char *argv[])
 		if (server_data_socket > maxfd)
 			maxfd = server_data_socket;
 
-		debuglog(3, "client is %s, server is %s",
+		debuglog(3, "client is %s; server is %s",
 		    client_iob.alive ? "alive" : "dead",
 		    server_iob.alive ? "alive" : "dead");
 
 		fdsp = (fd_set *)calloc(howmany(maxfd + 1, NFDBITS),
 		    sizeof(fd_mask));
 		if (fdsp == NULL) {
-			syslog(LOG_NOTICE, "Insufficient memory");
+			syslog(LOG_NOTICE, "insufficient memory");
 			exit(EX_UNAVAILABLE);
 		}
 
@@ -1216,7 +1220,7 @@ main(int argc, char *argv[])
 				 * for any passing mourners.
 				 */
 				syslog(LOG_INFO,
-				    "timeout, no data for %ld seconds",
+				    "timeout: no data for %ld seconds",
 				    timeout_seconds);
 				exit(EX_OK);
 			}
@@ -1224,14 +1228,14 @@ main(int argc, char *argv[])
 				if (errno == EINTR || errno == EAGAIN)
 					goto doselect;
 				syslog(LOG_NOTICE,
-				    "select failed (%m) - exiting");
+				    "select() failed (%m)");
 				exit(EX_OSERR);
 			}
 			if (client_data_socket >= 0 &&
 			    FD_ISSET(client_data_socket, fdsp)) {
 				int rval;
 
-				debuglog(3, "xfer client to server");
+				debuglog(3, "transfer: client to server");
 				rval = xfer_data("client to server",
 				    client_data_socket,
 				    server_data_socket,
@@ -1248,7 +1252,7 @@ main(int argc, char *argv[])
 			    FD_ISSET(server_data_socket, fdsp)) {
 				int rval;
 
-				debuglog(3, "xfer server to client");
+				debuglog(3, "transfer: server to client");
 				rval = xfer_data("server to client",
 				    server_data_socket,
 				    client_data_socket,
@@ -1292,5 +1296,9 @@ main(int argc, char *argv[])
 			server_iob.alive = 0;
 		}
 	}
+
+	if (Verbose)
+		syslog(LOG_INFO, "session ended");
+
 	exit(EX_OK);
 }
