@@ -1,4 +1,4 @@
-/* $Id: sectok.c,v 1.4 2001/07/02 20:07:09 rees Exp $ */
+/* $Id: sectok.c,v 1.5 2001/07/17 16:14:25 rees Exp $ */
 
 /*
 copyright 2000
@@ -399,8 +399,10 @@ sectok_apdu(int fd, int cla, int ins, int p1, int p2,
     readerInfo *reader = &readers[fd];
     struct SCARD_IO_HEADER garbage;
 
-    if (reader->driverLoaded == 0)
-	return STECLOSED;
+    if (reader->driverLoaded == 0) {
+	*swp = STECLOSED;
+	return -1;
+    }
 
     cmd[0] = cla;
     cmd[1] = ins;
@@ -426,15 +428,19 @@ sectok_apdu(int fd, int cla, int ins, int p1, int p2,
 	    cmd[2] = cmd[3] = 0;
 	    cmd[4] = rsp[n-1];
 	    n = sizeof rsp;
-	    if (reader->data(garbage, cmd, 5, rsp, &n, NULL))
+	    if (reader->data(garbage, cmd, 5, rsp, &n, NULL)) {
+		*swp = STECOMM;
 		return -1;
+	    }
 	}
     } else {
 	/* Get "out" data */
 	cmd[4] = olen;
 	n = sizeof rsp;
-	if (reader->data(garbage, cmd, 5, rsp, &n, NULL))
+	if (reader->data(garbage, cmd, 5, rsp, &n, NULL)) {
+	    *swp = STECOMM;
 	    return -1;
+	}
     }
 
     if (n >= 2) {
