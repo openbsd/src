@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxp.c,v 1.66 2005/01/15 18:48:12 brad Exp $	*/
+/*	$OpenBSD: fxp.c,v 1.67 2005/02/03 00:37:48 kevlo Exp $	*/
 /*	$NetBSD: if_fxp.c,v 1.2 1997/06/05 02:01:55 thorpej Exp $	*/
 
 /*
@@ -163,7 +163,7 @@ void fxp_load_ucode(struct fxp_softc *);
 void fxp_stop(struct fxp_softc *, int);
 void fxp_watchdog(struct ifnet *);
 int fxp_add_rfabuf(struct fxp_softc *, struct mbuf *);
-int fxp_mdi_read(struct device *, int, int);
+volatile int fxp_mdi_read(struct device *, int, int);
 void fxp_mdi_write(struct device *, int, int, int);
 void fxp_autosize_eeprom(struct fxp_softc *);
 void fxp_statchg(struct device *);
