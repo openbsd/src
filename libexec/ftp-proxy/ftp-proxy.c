@@ -1,4 +1,4 @@
-/* $OpenBSD: ftp-proxy.c,v 1.10 2001/08/19 18:24:13 beck Exp $ */
+/* $OpenBSD: ftp-proxy.c,v 1.11 2001/08/19 20:43:56 beck Exp $ */
 
 /*
  * Copyright (c) 1996-2001
@@ -185,35 +185,33 @@ check_host(struct sockaddr_in *client_sin, struct sockaddr_in *server_sin)
 	    client_sin, RQ_SERVER_SIN, server_sin, RQ_CLIENT_ADDR,
 	    inet_ntoa(client_sin->sin_addr), 0);
 
-	if (Use_Rdns) {
+	if (Use_Rdns)  {
 		/*
 		 * We already looked these up, but we have to do it again
 		 * for tcp wrapper, to ensure that we get the DNS name, since
 		 * the tcp wrapper cares about these things, and we don't
 		 * want to pass in a printed address as a name.
 		 */
-		if (Use_Rdns)  {
-			i = getnameinfo(
-			    (struct sockaddr *) &client_sin->sin_addr,
-			    sizeof(&client_sin->sin_addr), cname,
-			    sizeof(cname), NULL, 0, NI_NAMEREQD);
-			if (i == -1)
-				strlcpy(cname, STRING_UNKNOWN, sizeof(cname));
-
-			i = getnameinfo(
-			    (struct sockaddr *)&server_sin->sin_addr,
-			    sizeof(&server_sin->sin_addr), sname,
-			    sizeof(sname), NULL, 0, NI_NAMEREQD);
-			if (i == -1)
-				strlcpy(sname, STRING_UNKNOWN, sizeof(sname));
-		} else {
-			/*
-			 * ensure the TCP wrapper doesn't start doing
-			 * reverse DNS lookups if we aren't supposed to.
-			 */
+		i = getnameinfo(
+			(struct sockaddr *) &client_sin->sin_addr,
+			sizeof(&client_sin->sin_addr), cname,
+			sizeof(cname), NULL, 0, NI_NAMEREQD);
+		if (i == -1)
 			strlcpy(cname, STRING_UNKNOWN, sizeof(cname));
+		
+		i = getnameinfo(
+			(struct sockaddr *)&server_sin->sin_addr,
+			sizeof(&server_sin->sin_addr), sname,
+			sizeof(sname), NULL, 0, NI_NAMEREQD);
+		if (i == -1)
 			strlcpy(sname, STRING_UNKNOWN, sizeof(sname));
-		}
+	} else {
+		/*
+		 * ensure the TCP wrapper doesn't start doing
+		 * reverse DNS lookups if we aren't supposed to.
+		 */
+		strlcpy(cname, STRING_UNKNOWN, sizeof(cname));
+		strlcpy(sname, STRING_UNKNOWN, sizeof(sname));
 	}
 
 	request_set(&request, RQ_SERVER_ADDR, inet_ntoa(server_sin->sin_addr),
