@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vnops.c,v 1.26 2003/06/02 23:28:22 millert Exp $	*/
+/*	$OpenBSD: ext2fs_vnops.c,v 1.27 2003/07/06 09:07:18 tedu Exp $	*/
 /*	$NetBSD: ext2fs_vnops.c,v 1.1 1997/06/11 09:34:09 bouyer Exp $	*/
 
 /*
@@ -1232,73 +1232,6 @@ ext2fs_advlock(v)
 
 	return (lf_advlock(&ip->i_lockf, ip->i_e2fs_size, ap->a_id, ap->a_op,
 	    ap->a_fl, ap->a_flags));
-}
-
-/*
- * Initialize the vnode associated with a new inode, handle aliased
- * vnodes.
- */
-int
-ext2fs_vinit(mntp, specops, fifoops, vpp)
-	struct mount *mntp;
-	int (**specops)(void *);
-	int (**fifoops)(void *);
-	struct vnode **vpp;
-{
-	struct inode *ip;
-	struct vnode *vp, *nvp;
-	struct proc *p = curproc;
-
-	vp = *vpp;
-	ip = VTOI(vp);
-	switch(vp->v_type = IFTOVT(ip->i_e2fs_mode)) {
-	case VCHR:
-	case VBLK:
-		vp->v_op = specops;
-		if ((nvp = checkalias(vp, ip->i_din.e2fs_din.e2di_rdev, mntp))
-			!= NULL) {
-			/*
-			 * Discard unneeded vnode, but save its inode.
-			 */
-			ufs_ihashrem(ip);
-			VOP_UNLOCK(vp, 0, p);
-			nvp->v_data = vp->v_data;
-			vp->v_data = NULL;
-			vp->v_op = spec_vnodeop_p;
-			vrele(vp);
-			vgone(vp);
-			/*
-			 * Reinitialize aliased inode.
-			 */
-			vp = nvp;
-			ip->i_vnode = vp;
-			ufs_ihashins(ip);
-		}
-		break;
-	case VFIFO:
-#ifdef FIFO
-		vp->v_op = fifoops;
-		break;
-#else
-		return (EOPNOTSUPP);
-#endif
-	case VNON:
-	case VBAD:
-	case VSOCK:
-	case VLNK:
-	case VDIR:
-	case VREG:
-		break;
-	}
-	if (ip->i_number == ROOTINO)
-                vp->v_flag |= VROOT;
-	/*
-	 * Initialize modrev times
-	 */
-	SETHIGH(ip->i_modrev, mono_time.tv_sec);
-	SETLOW(ip->i_modrev, mono_time.tv_usec * 4294);
-	*vpp = vp;
-	return (0);
 }
 
 /*
