@@ -953,7 +953,7 @@ init(signo)
 		 */
 		for (p = cline; isspace(*p); ++p)
 			continue;
-		if (*p == NULL)
+		if (*p == '\0')
 			continue;
 		if (*p == '#') {
 			p++;
@@ -976,9 +976,13 @@ init(signo)
 			prog[i] = 0;
 			continue;
 		}
-		for (p = strchr(cline, '\0'); isspace(*--p);)
-			continue;
-		*++p = '\0';
+		p = cline + strlen(cline);
+		while (p > cline)
+			if (!isspace(*--p)) {
+				p++;
+				break;
+			}
+		*p = '\0';
 		f = (struct filed *)calloc(1, sizeof(*f));
 		*nextp = f;
 		nextp = &f->f_next;
