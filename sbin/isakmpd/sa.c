@@ -1,5 +1,5 @@
-/*	$OpenBSD: sa.c,v 1.25 2000/02/25 17:23:38 niklas Exp $	*/
-/*	$EOM: sa.c,v 1.99 2000/02/20 19:58:42 niklas Exp $	*/
+/*	$OpenBSD: sa.c,v 1.26 2000/04/07 22:06:44 niklas Exp $	*/
+/*	$EOM: sa.c,v 1.100 2000/04/07 19:05:01 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -80,7 +80,8 @@ sa_init ()
   bucket_mask = (1 << INITIAL_BUCKET_BITS) - 1;
   sa_tab = malloc ((bucket_mask + 1) * sizeof (struct sa_list));
   if (!sa_tab)
-    log_fatal ("init_sa: out of memory");
+    log_fatal ("sa_init: malloc (%s) failed",
+	       (bucket_mask + 1) * sizeof (struct sa_list));
   for (i = 0; i <= bucket_mask; i++)
     {
       LIST_INIT (&sa_tab[i]);

@@ -1,5 +1,5 @@
-/*	$OpenBSD: ui.c,v 1.13 2000/03/08 08:42:38 niklas Exp $	*/
-/*	$EOM: ui.c,v 1.38 2000/03/07 20:22:14 niklas Exp $	*/
+/*	$OpenBSD: ui.c,v 1.14 2000/04/07 22:06:44 niklas Exp $	*/
+/*	$EOM: ui.c,v 1.39 2000/04/07 19:05:01 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -77,18 +77,19 @@ ui_init ()
 	if ((st.st_mode & S_IFMT) == S_IFREG)
 	  {
 	    errno = EEXIST;
-	    log_fatal ("could not create FIFO \"%s\"", ui_fifo);
+	    log_fatal ("ui_init: could not create FIFO \"%s\"", ui_fifo);
 	  }
 
       /* No need to know about errors.  */
       unlink (ui_fifo);
       if (mkfifo (ui_fifo, 0600) == -1)
-	log_fatal ("mkfifo");
+	log_fatal ("ui_init: mkfifo (\"%s\", 0600) failed");
 
       /* XXX Is O_RDWR needed on some OSes?  Photurisd seems to imply that.  */
       ui_socket = open (ui_fifo, O_RDONLY | O_NONBLOCK, 0);
       if (ui_socket == -1)
-	log_fatal (ui_fifo);
+	log_fatal ("ui_init: open (\"%s\", O_RDONLY | O_NONBLOCK, 0) failed",
+		   ui_fifo);
     }
 }
 
@@ -299,7 +300,7 @@ ui_handler ()
       buf = malloc (sz);
       if (!buf)
 	{
-	  log_print ("malloc (%d) failed", sz);
+	  log_print ("ui_handler: malloc (%d) failed", sz);
 	  return;
 	}
       p = buf;
@@ -312,7 +313,7 @@ ui_handler ()
       new_buf = realloc (buf, sz * 2);
       if (!new_buf)
 	{
-	  log_print ("realloc (%p, %d) failed", buf, sz * 2);
+	  log_print ("ui_handler: realloc (%p, %d) failed", buf, sz * 2);
 	  free (buf);
 	  buf = 0;
 	  return;
@@ -326,7 +327,7 @@ ui_handler ()
   n = read (ui_socket, p, resid);
   if (n == -1)
     {
-      log_error ("read (%d, %p, %d)", ui_socket, p, resid);
+      log_error ("ui_handler: read (%d, %p, %d)", ui_socket, p, resid);
       return;
     }
 

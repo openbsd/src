@@ -1,5 +1,5 @@
-/*	$OpenBSD: isakmpd.c,v 1.20 2000/02/25 17:23:39 niklas Exp $	*/
-/*	$EOM: isakmpd.c,v 1.45 2000/02/20 19:58:39 niklas Exp $	*/
+/*	$OpenBSD: isakmpd.c,v 1.21 2000/04/07 22:06:44 niklas Exp $	*/
+/*	$EOM: isakmpd.c,v 1.46 2000/04/07 19:03:25 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -291,7 +291,7 @@ main (int argc, char *argv[])
   if (!debug)
     {
       if (daemon (0, 0))
-	log_fatal ("main: daemon");
+	log_fatal ("main: daemon (0, 0) failed");
       /* Switch to syslog.  */
       log_to (0);
     }
@@ -310,10 +310,10 @@ main (int argc, char *argv[])
   mask_size = howmany (n, NFDBITS) * sizeof (fd_mask);
   rfds = (fd_set *)malloc (mask_size);
   if (!rfds)
-    log_fatal ("main: malloc (%d)", mask_size);
+    log_fatal ("main: malloc (%d) failed", mask_size);
   wfds = (fd_set *)malloc (mask_size);
   if (!wfds)
-    log_fatal ("main: malloc (%d)", mask_size);
+    log_fatal ("main: malloc (%d) failed", mask_size);
 
   while (1)
     {

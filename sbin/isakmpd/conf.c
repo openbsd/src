@@ -1,5 +1,5 @@
-/*	$OpenBSD: conf.c,v 1.11 2000/02/25 17:23:38 niklas Exp $	*/
-/*	$EOM: conf.c,v 1.20 2000/02/20 19:58:36 niklas Exp $	*/
+/*	$OpenBSD: conf.c,v 1.12 2000/04/07 22:06:44 niklas Exp $	*/
+/*	$EOM: conf.c,v 1.21 2000/04/07 19:03:25 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -315,25 +315,26 @@ conf_reinit (void)
   fd = open (conf_path, O_RDONLY);
   if (fd == -1)
     {
-      log_error ("open (\"%s\", O_RDONLY) failed", conf_path);
+      log_error ("conf_reinit: open (\"%s\", O_RDONLY) failed", conf_path);
       return;
     }
   if (fstat (fd, &st) == -1)
     {
-      log_error ("fstat (%d, &st) failed", fd);
+      log_error ("conf_reinit: fstat (%d, &st) failed", fd);
       goto fail;
     }
   sz = st.st_size;
   new_conf_addr = malloc (sz);
   if (!new_conf_addr)
     {
-      log_error ("malloc (%d) failed", sz);
+      log_error ("conf_reinit: malloc (%d) failed", sz);
       goto fail;
     }
   /* XXX I assume short reads won't happen here.  */
   if (read (fd, new_conf_addr, sz) != sz)
     {
-      log_error ("read (%d, %p, %d) failed", fd, new_conf_addr, sz);
+      log_error ("conf_reinit: read (%d, %p, %d) failed", fd, new_conf_addr,
+		 sz);
       goto fail;
     }
   close (fd);
