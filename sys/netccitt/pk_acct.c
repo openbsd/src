@@ -1,4 +1,4 @@
-/*	$OpenBSD: pk_acct.c,v 1.2 1996/03/04 07:36:38 niklas Exp $	*/
+/*	$OpenBSD: pk_acct.c,v 1.3 1997/11/08 19:56:26 millert Exp $	*/
 /*	$NetBSD: pk_acct.c,v 1.9 1996/02/13 22:05:11 christos Exp $	*/
 
 /*
@@ -80,7 +80,7 @@ pk_accton (path)
 	if ((error = vn_open (&nd, FWRITE, 0644)) != 0)
 		return (error);
 	vp = nd.ni_vp;
-	VOP_UNLOCK(vp);
+	VOP_UNLOCK(vp, 0, p);
 	if (vp -> v_type != VREG) {
 		vrele (vp);
 		return (EACCES);
