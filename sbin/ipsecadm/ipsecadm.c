@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsecadm.c,v 1.15 1999/03/27 21:04:18 provos Exp $ */
+/* $OpenBSD: ipsecadm.c,v 1.16 1999/03/29 04:52:53 provos Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and 
@@ -483,7 +483,7 @@ main(int argc, char **argv)
 	}
 
 	if (!strcmp(argv[i] + 1, "spi2") && spi2 == 0 && 
-	    (iscmd(mode, GRP_SPI) || iscmd(mode, BINDSA) && (i + 1 < argc))
+	    (iscmd(mode, GRP_SPI) || iscmd(mode, BINDSA)) && (i + 1 < argc))
 	{
 	    if ((spi2 = htonl(strtoul(argv[i + 1], NULL, 16))) == 0)
 	    {
@@ -691,7 +691,7 @@ main(int argc, char **argv)
 	}
 
 	if (!strcmp(argv[i] + 1, "dst2") && 
-	    (iscmd(mode, GRP_SPI) || iscmd(mode, BINDSA) && (i + 1 < argc))
+	    (iscmd(mode, GRP_SPI) || iscmd(mode, BINDSA)) && (i + 1 < argc))
 	{
 	    sad8.sadb_address_len = (sizeof(sad8) +
 				     sizeof(struct sockaddr_in)) / 8;
