@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gpioctl.8,v 1.4 2004/11/03 15:08:10 aaron Exp $
+.\"	$OpenBSD: gpioctl.8,v 1.5 2004/12/02 05:11:40 grange Exp $
 .\"
 .\" Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
 .\"
@@ -133,6 +133,15 @@ To change pin flags, a new flags set separated by spaces must be
 specified after the
 .Ar pin
 number.
+.Pp
+The
+.Fl q
+option causes
+.Nm
+to operate quietly i.e. nothing is printed to stdout.
+The
+.Fl h
+option displays usage summary.
 .Sh FILES
 .Bl -tag -width "/dev/gpiou" -compact
 .It /dev/gpio Ns Ar u
