@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: log.c,v 1.10 2000/02/27 01:38:27 brian Exp $
+ *	$OpenBSD: log.c,v 1.11 2000/08/28 23:25:28 brian Exp $
  */
 
 #include <sys/types.h>
@@ -51,6 +51,7 @@ static const char * const LogNames[] = {
   "Connect",
   "Debug",
   "DNS",
+  "Filter",			/* Log discarded packets */
   "HDLC",
   "ID0",
   "IPCP",

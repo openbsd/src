@@ -1,4 +1,4 @@
-.\" $OpenBSD: ppp.8,v 1.93 2000/08/15 10:26:37 brian Exp $
+.\" $OpenBSD: ppp.8,v 1.94 2000/08/28 23:25:28 brian Exp $
 .Dd 20 September 1995
 .nr XX \w'\fC00'
 .Dt PPP 8
@@ -2166,6 +2166,8 @@ Log Chat lines containing the string "CONNECT".
 Log debug information.
 .It Li DNS
 Log DNS QUERY packets.
+.It Li Filter
+Log packets permitted by the dial filter and denied by any filter.
 .It Li HDLC
 Dump HDLC packet in hex.
 .It Li ID0
