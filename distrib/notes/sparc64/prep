@@ -1,4 +1,4 @@
-dnl	$OpenBSD: prep,v 1.13 2003/02/17 17:26:48 miod Exp $
+dnl	$OpenBSD: prep,v 1.14 2003/02/18 03:26:14 henric Exp $
 If your UltraSPARC machine is somewhat old, it might need a firmware update
 before it can be used under OpenBSD. You are advised to try to install
 OpenBSD first; if it can't boot or fails mysteriously, you might need to
@@ -83,7 +83,7 @@ dnl XXX uncomment machine entries as they become supported
 	Enterprise 220R	106455
 	Enterprise 250	106503
 dnl	Enterprise 420R	109082
-dnl	Enterprise 450	106122
+	Enterprise 450	106122
 dnl	Enterprise 3x00/4x00/5x00/6x00	103346
 dnl	Fire 3800/4800/4810/6800	112883
 dnl	Fire V480	113034
