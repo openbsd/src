@@ -1,5 +1,5 @@
-/*	$OpenBSD: fpu_compare.c,v 1.1 2001/09/08 22:33:51 jason Exp $	*/
-/*	$NetBSD: fpu_compare.c,v 1.2 1994/11/20 20:52:37 deraadt Exp $ */
+/*	$OpenBSD: fpu_compare.c,v 1.2 2001/09/10 20:39:04 jason Exp $	*/
+/*	$NetBSD: fpu_compare.c,v 1.3 2001/08/26 05:46:31 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,7 +78,7 @@ void
 fpu_compare(struct fpemu *fe, int cmpe)
 {
 	register struct fpn *a, *b;
-	register int cc, r3, r2, r1, r0;
+	register int cc;
 	FPU_DECL_CARRY
 
 	a = &fe->fe_f1;
@@ -148,18 +148,14 @@ fpu_compare(struct fpemu *fe, int cmpe)
 	}
 	/*
 	 * Only numbers remain.  To compare two numbers in magnitude, we
-	 * simply subtract their mantissas.
+	 * simply subtract them.
 	 */
-	FPU_SUBS(r3, a->fp_mant[0], b->fp_mant[0]);
-	FPU_SUBCS(r2, a->fp_mant[1], b->fp_mant[1]);
-	FPU_SUBCS(r1, a->fp_mant[2], b->fp_mant[2]);
-	FPU_SUBC(r0, a->fp_mant[3], b->fp_mant[3]);
-	if (r0 < 0)				/* underflow: |a| < |b| */
-		cc = diff(FSR_CC_LT);
-	else if ((r0 | r1 | r2 | r3) != 0)	/* |a| > |b| */
-		cc = diff(FSR_CC_GT);
+	a = fpu_sub(fe);
+	if (a->fp_class == FPC_ZERO)
+		cc = FSR_CC_EQ;
 	else
-		cc = FSR_CC_EQ;		/* |a| == |b| */
+		cc = diff(FSR_CC_GT);
+
 done:
 	fe->fe_fsr = (fe->fe_fsr & ~FSR_FCC) | (cc << FSR_FCC_SHIFT);
 }
