@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.38 2002/04/01 20:42:18 markus Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.39 2002/04/02 00:31:59 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -124,7 +124,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.38 2002/04/01 20:42:18 markus Exp $";
+	"$OpenBSD: if_wi.c,v 1.39 2002/04/02 00:31:59 mickey Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -492,11 +492,10 @@ wi_rxeof(sc)
 		bcopy((char *)&rx_frame.wi_type,
 		    (char *)&eh->ether_type, ETHER_TYPE_LEN);
 
-		if (wi_read_data(sc, id, WI_802_11_OFFSET,
-		    mtod(m, caddr_t) + sizeof(struct ether_header),
-		    m->m_len + 2)) {
-			m_freem(m);
+		if (wi_read_data(sc, id, WI_802_11_OFFSET, mtod(m, caddr_t) +
+		    sizeof(struct ether_header), m->m_len + 2)) {
 			ifp->if_ierrors++;
+			m_freem(m);
 			return;
 		}
 	} else {
@@ -1240,21 +1239,22 @@ wi_ioctl(ifp, command, data)
 
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {
-			if (ifp->if_flags & IFF_RUNNING &&
-			    ifp->if_flags & IFF_PROMISC &&
-			    !(sc->wi_if_flags & IFF_PROMISC)) {
-				WI_SETVAL(WI_RID_PROMISC, 1);
-			} else if (ifp->if_flags & IFF_RUNNING &&
-			    !(ifp->if_flags & IFF_PROMISC) &&
-			    sc->wi_if_flags & IFF_PROMISC) {
+			if (sc->wi_ptype == WI_PORTTYPE_AP) {
 				WI_SETVAL(WI_RID_PROMISC, 0);
+			} else {
+				if (ifp->if_flags & IFF_RUNNING &&
+				    ifp->if_flags & IFF_PROMISC &&
+				    !(sc->wi_if_flags & IFF_PROMISC)) {
+					WI_SETVAL(WI_RID_PROMISC, 1);
+				} else if (ifp->if_flags & IFF_RUNNING &&
+				    !(ifp->if_flags & IFF_PROMISC) &&
+				    sc->wi_if_flags & IFF_PROMISC) {
+					WI_SETVAL(WI_RID_PROMISC, 0);
+				}
 			}
 			wi_init(sc);
-		} else {
-			if (ifp->if_flags & IFF_RUNNING) {
-				wi_stop(sc);
-			}
-		}
+		} else if (ifp->if_flags & IFF_RUNNING)
+			wi_stop(sc);
 		sc->wi_if_flags = ifp->if_flags;
 		error = 0;
 		break;
@@ -1454,8 +1454,15 @@ wi_init(xsc)
 	   (char *)&mac.wi_mac_addr, ETHER_ADDR_LEN);
 	wi_write_record(sc, (struct wi_ltv_gen *)&mac);
 
-	/* Initialize promisc mode. */
-	if (ifp->if_flags & IFF_PROMISC) {
+	/*
+	 * Initialize promisc mode.
+	 *	Being in the Host-AP mode causes
+	 *	great deal of pain if promisc mode is set.
+	 *	Therefore we avoid confusing the firmware
+	 *	and always reset promisc mode in Host-AP regime,
+	 *	it shows us all the packets anyway.
+	 */
+	if (sc->wi_ptype != WI_PORTTYPE_AP && ifp->if_flags & IFF_PROMISC) {
 		WI_SETVAL(WI_RID_PROMISC, 1);
 	} else {
 		WI_SETVAL(WI_RID_PROMISC, 0);
@@ -1703,10 +1710,10 @@ nextpkt:
 		bcopy((char *)&eh->ether_dhost,
 		    (char *)&tx_frame.wi_addr1, ETHER_ADDR_LEN);
 		if (sc->wi_ptype == WI_PORTTYPE_AP) {
-			tx_frame.wi_tx_ctl = WI_ENC_TX_MGMT; /* XXX */
-			tx_frame.wi_frame_ctl |= WI_FCTL_FROMDS;
+			tx_frame.wi_tx_ctl = htole16(WI_ENC_TX_MGMT); /* XXX */
+			tx_frame.wi_frame_ctl |= htole16(WI_FCTL_FROMDS);
 			if (sc->wi_use_wep)
-				tx_frame.wi_frame_ctl |= WI_FCTL_WEP;
+				tx_frame.wi_frame_ctl |= htole16(WI_FCTL_WEP);
 			bcopy((char *)&sc->arpcom.ac_enaddr,
 			    (char *)&tx_frame.wi_addr2, ETHER_ADDR_LEN);
 			bcopy((char *)&eh->ether_shost,
