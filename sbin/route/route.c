@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.44 2002/02/16 21:27:37 millert Exp $	*/
+/*	$OpenBSD: route.c,v 1.45 2002/05/20 23:06:27 itojun Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)route.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: route.c,v 1.44 2002/02/16 21:27:37 millert Exp $";
+static char rcsid[] = "$OpenBSD: route.c,v 1.45 2002/05/20 23:06:27 itojun Exp $";
 #endif
 #endif /* not lint */
 
@@ -115,6 +115,9 @@ void	 pmsg_common(struct rt_msghdr *);
 void	 pmsg_addrs(char *, int);
 void	 bprintf(FILE *, int, u_char *);
 void	 mask_addr(void);
+#ifdef INET6
+static int inet6_makenetandmask(struct sockaddr_in6 *);
+#endif
 int	 getaddr(int, char *, struct hostent **);
 int	 rtmsg(int, int);
 int	 x25_makemask(void);
@@ -897,7 +900,7 @@ inet_makenetandmask(net, sin, bits)
 /*
  * XXX the function may need more improvement...
  */
-static void
+static int
 inet6_makenetandmask(sin6)
 	struct sockaddr_in6 *sin6;
 {
@@ -918,8 +921,10 @@ inet6_makenetandmask(sin6)
 
 	if (plen) {
 		rtm_addrs |= RTA_NETMASK;
-		prefixlen(plen);
+		return prefixlen(plen);
 	}
+
+	return -1;
 }
 #endif
 
@@ -1015,9 +1020,10 @@ getaddr(which, s, hpp)
 			su->sin6.sin6_scope_id = 0;
 		}
 #endif
-		if (which == RTA_DST)
-			inet6_makenetandmask(&su->sin6);
 		freeaddrinfo(res);
+		if (which == RTA_DST)
+			if (inet6_makenetandmask(&su->sin6) == 128)
+				return (1);
 		return (0);
 	    }
 #endif
