@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disktab.5,v 1.8 2003/06/02 23:30:14 millert Exp $
+.\"	$OpenBSD: disktab.5,v 1.9 2003/12/18 11:55:47 jmc Exp $
 .\"	$NetBSD: disktab.5,v 1.4 1994/11/30 19:31:15 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -83,6 +83,8 @@ floppy).
 .It "\&ts	num	One-cylinder seek time in usec (default: 0)."
 .It "\&il	num	Sector interleave (n:1) (default: 1)."
 .It "\&d[0-4]	num	Drive-type-dependent parameters."
+.It "\&b0	str	Pathname to primary bootstrap."
+.It "\&b1	str	Pathname to secondary bootstrap."
 .It "\&bs	num	Boot block size (default:"
 .Dv BBSIZE ) .
 .It "\&sb	num	Superblock size (default: "
