@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.726 2004/05/04 06:26:59 grange Exp $
+$OpenBSD: pcidevs,v 1.727 2004/05/05 04:17:10 mickey Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -928,6 +928,7 @@ product DEC 21152		0x0024	21152 PCI-PCI
 product DEC 21153		0x0025	21153 PCI-PCI
 product DEC 21154		0x0026	21154 PCI-PCI
 product DEC CPQ42XX		0x0046	Compaq SMART RAID 42xx
+product DEC SWXCR		0x1065	SWXCR RAID
 
 /* Dell Computer products */
 product DELL PERC_2SI		0x0001	PERC 2/Si
@@ -1556,8 +1557,12 @@ product MOXA C168H		0x1680	C168H
 product MRTMAGMA DMA4		0x0011	DMA4 serial
 
 /* Mylex products */
-product MYLEX 960P		0x0001	DAC960P RAID
+product MYLEX 960P_V2		0x0001	DAC960P V2 RAID
+product MYLEX 960P_V3		0x0002	DAC960P V3 RAID
+product MYLEX 960P_V4		0x0010	DAC960P V4 RAID
+product MYLEX 960P_V5		0x0020	DAC960P V5 RAID
 product MYLEX ACCELERAID	0x0050	AcceleRAID
+product MYLEX EXTREMERAID	0xba56	eXtremeRAID
 
 /* Myson Century products */
 product MYSON MTD800		0x0800	MTD800 10/100
