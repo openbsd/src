@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.21 2004/08/11 11:45:57 dlg Exp $ */
+/*	$OpenBSD: ehci.c,v 1.22 2004/09/30 11:33:56 dlg Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -897,7 +897,7 @@ ehci_activate(device_ptr_t self, enum devact act)
  * Handle suspend/resume.
  *
  * We need to switch to polling mode here, because this routine is
- * called from an intterupt context.  This is all right since we
+ * called from an interrupt context.  This is all right since we
  * are almost suspended anyway.
  */
 void

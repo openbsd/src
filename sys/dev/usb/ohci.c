@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci.c,v 1.50 2004/09/11 03:33:40 dlg Exp $ */
+/*	$OpenBSD: ohci.c,v 1.51 2004/09/30 11:33:56 dlg Exp $ */
 /*	$NetBSD: ohci.c,v 1.139 2003/02/22 05:24:16 tsutsui Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
@@ -970,7 +970,7 @@ ohci_shutdown(void *v)
  * Handle suspend/resume.
  *
  * We need to switch to polling mode here, because this routine is
- * called from an intterupt context.  This is all right since we
+ * called from an interrupt context.  This is all right since we
  * are almost suspended anyway.
  */
 void
