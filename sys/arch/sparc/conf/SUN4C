@@ -1,4 +1,4 @@
-#	$OpenBSD: SUN4C,v 1.39 2003/03/06 21:48:25 miod Exp $
+#	$OpenBSD: SUN4C,v 1.40 2003/03/09 02:30:45 miod Exp $
 # 	$NetBSD: GENERIC,v 1.48 1997/08/23 19:19:01 mjacob Exp $
 
 # Machine architecture; required by config(8)
@@ -120,6 +120,10 @@ wsdisplay* at cgsix?
 # Sun "cgtwelve" (GS) accelerated 24-bit framebuffer.
 cgtwelve*	at sbus? slot ? offset ? flags 0x0000
 wsdisplay* at cgtwelve?
+
+# Sun "leo" (ZX) accelerated 24-bit framebuffer.
+zx*	at sbus? slot ? offset ?
+wsdisplay* at zx?
 
 # Vigra VS10 or VS12 framebuffer.
 vigra*	at sbus? slot ? offset ?
