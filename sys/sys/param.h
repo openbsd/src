@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.33 2001/04/06 04:42:05 csapuntz Exp $	*/
+/*	$OpenBSD: param.h,v 1.34 2001/04/06 04:46:18 csapuntz Exp $	*/
 /*	$NetBSD: param.h,v 1.23 1996/03/17 01:02:29 thorpej Exp $	*/
 
 /*-
@@ -195,7 +195,7 @@
 #define	MAX(a,b) (((a)>(b))?(a):(b))
 
 /* Macros for calculating the offset of a field */
-#ifndef offsetof
+#if !defined(offsetof) && defined(_KERNEL)
 #define offsetof(s, e) ((unsigned int)&((s *)0)->e)
 #endif
 
