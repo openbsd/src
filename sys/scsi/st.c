@@ -273,14 +273,14 @@ int	st_touch_tape __P((struct st_softc *));
 int	st_write_filemarks __P((struct st_softc *, int number, int flags));
 int	st_load __P((struct st_softc *, u_int type, int flags));
 int	st_mode_select __P((struct st_softc *, int flags));
-void    ststrategy();
-int	st_check_eod();
-void    ststart();
-void	st_unmount();
-int	st_mount_tape();
-void	st_loadquirks();
-void	st_identify_drive();
-int	st_interpret_sense();
+void    ststrategy __P((struct buf *));
+int	st_check_eod __P((struct st_softc *, boolean, int *, int));
+void    ststart __P((struct st_softc *));
+void	st_unmount __P((struct st_softc *, boolean));
+int	st_mount_tape __P((dev_t, int));
+void	st_loadquirks __P((struct st_softc *));
+void	st_identify_drive __P((struct st_softc *, struct scsi_inquiry_data *));
+int	st_interpret_sense __P((struct scsi_xfer *));
 
 struct scsi_device st_switch = {
 	st_interpret_sense,
@@ -305,6 +305,7 @@ struct scsi_device st_switch = {
 #define	ST_BLANK_READ	0x0200	/* BLANK CHECK encountered already */
 #define	ST_2FM_AT_EOD	0x0400	/* write 2 file marks at EOD */
 #define	ST_MOUNTED	0x0800	/* Device is presently mounted */
+#define	ST_DONTBUFFER	0x1000	/* Disable buffering/caching */
 
 #define	ST_PER_ACTION	(ST_AT_FILEMARK | ST_EIO_PENDING | ST_BLANK_READ)
 #define	ST_PER_MOUNT	(ST_INFO_VALID | ST_BLOCK_SET | ST_WRITTEN | \
@@ -1109,9 +1110,6 @@ stioctl(dev, cmd, arg, flag, p)
 			if (!error)
 				error = st_space(st, number, SP_BLKS, flags);
 			break;
-		case MTERASE:	/* erase */
-			error = st_erase(st, FALSE, flags);
-			break;
 		case MTREW:	/* rewind */
 			error = st_rewind(st, 0, flags);
 			break;
@@ -1131,7 +1129,13 @@ stioctl(dev, cmd, arg, flag, p)
 				error = st_space(st, 1, SP_EOM, flags);
 			break;
 		case MTCACHE:	/* enable controller cache */
+			st->flags &= ~ST_DONTBUFFER;
+			goto try_new_value;
 		case MTNOCACHE:	/* disable controller cache */
+			st->flags |= ST_DONTBUFFER;
+			goto try_new_value;
+		case MTERASE:	/* erase volume */
+			error = st_erase(st, number, flags);
 			break;
 		case MTSETBSIZ:	/* Set block size for device */
 #ifdef	NOTYET
@@ -1157,9 +1161,10 @@ stioctl(dev, cmd, arg, flag, p)
 			goto try_new_value;
 
 		case MTSETDNSTY:	/* Set density for device and mode */
-			if (number > SCSI_2_MAX_DENSITY_CODE)
+			if (number > SCSI_2_MAX_DENSITY_CODE) {
 				error = EINVAL;
-			else
+				break;
+			} else
 				st->density = number;
 			goto try_new_value;
 
@@ -1388,8 +1393,12 @@ st_mode_select(st, flags)
 
 	bzero(&scsi_select, scsi_select_len);
 	scsi_select.header.blk_desc_len = sizeof(struct scsi_blk_desc);
-	scsi_select.header.dev_spec |= SMH_DSP_BUFF_MODE_ON;
+	scsi_select.header.dev_spec &= ~SMH_DSP_BUFF_MODE;
 	scsi_select.blk_desc.density = st->density;
+	if (st->flags & ST_DONTBUFFER)
+		scsi_select.header.dev_spec |= SMH_DSP_BUFF_MODE_OFF;
+	else
+		scsi_select.header.dev_spec |= SMH_DSP_BUFF_MODE_ON;
 	if (st->flags & ST_FIXEDBLOCKS)
 		lto3b(st->blksize, scsi_select.blk_desc.blklen);
 	if (st->page_0_size)
@@ -1401,6 +1410,36 @@ st_mode_select(st, flags)
 	return scsi_scsi_cmd(sc_link, (struct scsi_generic *) &cmd,
 	    sizeof(cmd), (u_char *) &scsi_select, scsi_select_len,
 	    ST_RETRIES, 5000, NULL, flags | SCSI_DATA_OUT);
+}
+
+/*
+ * issue an erase command
+ */
+int
+st_erase(st, full, flags)
+	struct st_softc *st;
+	int full, flags;
+{
+	struct scsi_erase cmd;
+
+	/*
+	 * Full erase means set LONG bit in erase command, which asks
+	 * the drive to erase the entire unit.  Without this bit, we're
+	 * asking the drive to write an erase gap.
+	 */
+	bzero(&cmd, sizeof(cmd));
+	cmd.opcode = ERASE;
+	if (full)
+		cmd.byte2 = SE_IMMED|SE_LONG;
+	else
+		cmd.byte2 = SE_IMMED;
+
+	/*
+	 * XXX We always do this asynchronously, for now.  How long should
+	 * we wait if we want to (eventually) to it synchronously?
+	 */
+	return (scsi_scsi_cmd(st->sc_link, (struct scsi_generic *)&cmd,
+	    sizeof(cmd), 0, 0, ST_RETRIES, 5000, NULL, flags));
 }
 
 /*
@@ -1613,41 +1652,6 @@ st_rewind(st, immediate, flags)
 	return scsi_scsi_cmd(st->sc_link, (struct scsi_generic *) &cmd,
 	    sizeof(cmd), 0, 0, ST_RETRIES, immediate ? 5000 : 300000, NULL,
 	    flags);
-}
-
-/*
- * Erase the tape
- */ 
-int 
-st_erase(st, immediate, flags)
-	struct st_softc *st;
-	u_int immediate;
-	int flags;
-{
-	struct scsi_erase scsi_cmd;
-	int error;
-	int nmarks;
-
-	error = st_check_eod(st, FALSE, &nmarks, flags);
-	if (error)
-		return (error);
-	/*
-	 * Archive Viper 2525 technical manual 5.7 (ERASE 19h):
-	 * tape has to be positioned to BOT first before erase command
-	 * is issued or command is rejected. So we rewind the tape first
-	 * and exit with an error, if the tape can't be rewinded.
-	 */
-	error = st_rewind(st, FALSE, SCSI_SILENT);
-	if (error)
-		return (error);
-	st->flags &= ~ST_PER_ACTION;
-	bzero(&scsi_cmd, sizeof(scsi_cmd));
-	scsi_cmd.opcode = ERASE;
-	scsi_cmd.byte2 = SE_LONG | (immediate ? SE_IMMED : 0);
-	return (scsi_scsi_cmd(st->sc_link, (struct scsi_generic *) &scsi_cmd,
-	    sizeof(scsi_cmd), 0, 0, ST_RETRIES,
-	    immediate ? 5000 : 300000,		/* 5 sec or 5 min */
-	    NULL, flags));
 }
 
 /*

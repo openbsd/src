@@ -137,6 +137,41 @@ struct scsi_block_limits_data {
 	u_char	min_length_0;	/* Least significant */
 };
 
+/* See SCSI-II spec 9.3.3.1 */
+struct scsi_tape_dev_conf_page {
+	u_char	pagecode;	/* 0x10 */
+	u_char	pagelength;	/* 0x0e */
+	u_char	byte2;
+#define	SMT_CAP			0x40	/* change active partition */
+#define	SMT_CAF			0x20	/* change active format */
+#define	SMT_AFMASK		0x1f	/* active format mask */
+	u_char	active_partition;
+	u_char	wb_full_ratio;
+	u_char	rb_empty_ratio;
+	u_char	wrdelay_time_1;		/* MSB */
+	u_char	wrdelay_time_0;		/* LSB */
+	u_char	byte8;
+#define	SMT_DBR			0x80	/* data buffer recovery */
+#define	SMT_BIS			0x40	/* block identifiers supported */
+#define	SMT_RSMK		0x20	/* report setmarks */
+#define	SMT_AVC			0x10	/* automatic velocity control */
+#define SMT_SOCF_MASK		0xc0	/* stop on consecutive formats */
+#define	SMT_RBO			0x20	/* recover buffer order */
+#define	SMT_REW			0x10	/* report early warning */
+	u_char	gap_size;
+	u_char	byte10;
+#define	SMT_EODDEFINED		0xe0	/* EOD defined */
+#define	SMT_EEG			0x10	/* enable EOD generation */
+#define	SMT_SEW			0x80	/* synchronize at early warning */
+	u_char	ew_bufsize_2;		/* MSB */
+	u_char	ew_bufsize_1;		/* ... */
+	u_char	ew_bufsize_0;		/* LSB */
+	u_char	sel_comp_alg;
+#define	SMT_COMP_NONE		0x00
+#define	SMT_COMP_DEFAULT	0x01
+	u_char	reserved;
+};
+
 /* defines for the device specific byte in the mode select/sense header */
 #define	SMH_DSP_SPEED		0x0F
 #define	SMH_DSP_BUFF_MODE	0x70
