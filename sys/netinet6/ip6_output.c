@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.21 2001/02/08 18:46:23 itojun Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.22 2001/02/16 08:22:06 itojun Exp $	*/
 /*	$KAME: ip6_output.c,v 1.152 2001/02/02 15:36:33 jinmei Exp $	*/
 
 /*
@@ -1287,8 +1287,8 @@ ip6_ctloutput(op, so, level, optname, mp)
 	struct mbuf **mp;
 {
 	int privileged;
-	register struct inpcb *inp = sotoinpcb(so);
-	register struct mbuf *m = *mp;
+	struct inpcb *inp = sotoinpcb(so);
+	struct mbuf *m = *mp;
 	int error, optval;
 	int optlen;
 #ifdef IPSEC
@@ -1755,10 +1755,10 @@ ip6_ctloutput(op, so, level, optname, mp)
 static int
 ip6_pcbopts(pktopt, m, so)
 	struct ip6_pktopts **pktopt;
-	register struct mbuf *m;
+	struct mbuf *m;
 	struct socket *so;
 {
-	register struct ip6_pktopts *opt = *pktopt;
+	struct ip6_pktopts *opt = *pktopt;
 	int error = 0;
 	struct proc *p = curproc;	/* XXX */
 	int priv = 0;
@@ -2085,8 +2085,8 @@ ip6_setmoptions(optname, im6op, m)
 static int
 ip6_getmoptions(optname, im6o, mp)
 	int optname;
-	register struct ip6_moptions *im6o;
-	register struct mbuf **mp;
+	struct ip6_moptions *im6o;
+	struct mbuf **mp;
 {
 	u_int *hlim, *loop, *ifindex;
 
@@ -2131,7 +2131,7 @@ ip6_getmoptions(optname, im6o, mp)
  */
 void
 ip6_freemoptions(im6o)
-	register struct ip6_moptions *im6o;
+	struct ip6_moptions *im6o;
 {
 	struct in6_multi_mship *imm;
 
@@ -2156,7 +2156,7 @@ ip6_setpktoptions(control, opt, priv)
 	struct ip6_pktopts *opt;
 	int priv;
 {
-	register struct cmsghdr *cm = 0;
+	struct cmsghdr *cm = 0;
 
 	if (control == 0 || opt == 0)
 		return(EINVAL);
@@ -2319,8 +2319,8 @@ ip6_setpktoptions(control, opt, priv)
 void
 ip6_mloopback(ifp, m, dst)
 	struct ifnet *ifp;
-	register struct mbuf *m;
-	register struct sockaddr_in6 *dst;
+	struct mbuf *m;
+	struct sockaddr_in6 *dst;
 {
 	struct mbuf *copym;
 	struct ip6_hdr *ip6;

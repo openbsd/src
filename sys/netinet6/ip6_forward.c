@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_forward.c,v 1.9 2000/07/27 16:05:07 itojun Exp $	*/
+/*	$OpenBSD: ip6_forward.c,v 1.10 2001/02/16 08:22:06 itojun Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.44 2000/07/27 13:43:21 itojun Exp $	*/
 
 /*
@@ -82,8 +82,8 @@ ip6_forward(m, srcrt)
 	int srcrt;
 {
 	struct ip6_hdr *ip6 = mtod(m, struct ip6_hdr *);
-	register struct sockaddr_in6 *dst;
-	register struct rtentry *rt;
+	struct sockaddr_in6 *dst;
+	struct rtentry *rt;
 	int error, type = 0, code = 0;
 	struct mbuf *mcopy = NULL;
 	long time_second = time.tv_sec;

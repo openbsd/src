@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_cksum.c,v 1.6 2000/09/09 16:13:34 itojun Exp $	*/
+/*	$OpenBSD: in6_cksum.c,v 1.7 2001/02/16 08:22:05 itojun Exp $	*/
 /*	$KAME: in6_cksum.c,v 1.9 2000/09/09 15:33:31 itojun Exp $	*/
 
 /*
@@ -92,13 +92,13 @@
 
 int
 in6_cksum(m, nxt, off, len)
-	register struct mbuf *m;
+	struct mbuf *m;
 	u_int8_t nxt;
 	u_int32_t off, len;
 {
-	register u_int16_t *w;
-	register int sum = 0;
-	register int mlen = 0;
+	u_int16_t *w;
+	int sum = 0;
+	int mlen = 0;
 	int byte_swapped = 0;
 #if 0
 	int srcifid = 0, dstifid = 0;

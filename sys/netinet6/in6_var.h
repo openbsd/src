@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_var.h,v 1.10 2000/04/17 04:44:50 itojun Exp $	*/
+/*	$OpenBSD: in6_var.h,v 1.11 2001/02/16 08:22:06 itojun Exp $	*/
 /*	$KAME: in6_var.h,v 1.31 2000/03/25 07:23:46 sumikawa Exp $	*/
 
 /*
@@ -506,7 +506,7 @@ struct	in6_multistep {
 /* struct ifnet *ifp; */					\
 /* struct in6_multi *in6m; */					\
 do {								\
-	register struct in6_ifaddr *ia;				\
+	struct in6_ifaddr *ia;					\
 								\
 	IFP_TO_IA6((ifp), ia);					\
 	if (ia == NULL)						\

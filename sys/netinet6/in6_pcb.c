@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_pcb.c,v 1.23 2001/02/08 18:46:23 itojun Exp $	*/
+/*	$OpenBSD: in6_pcb.c,v 1.24 2001/02/16 08:22:05 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -139,13 +139,13 @@ u_char inet6ctlerrmap[PRC_NCMDS] = {
  */
 int
 in6_pcbbind(inp, nam)
-	register struct inpcb *inp;
+	struct inpcb *inp;
 	struct mbuf *nam;
 {
-	register struct socket *so = inp->inp_socket;
+	struct socket *so = inp->inp_socket;
 
-	register struct inpcbtable *head = inp->inp_table;
-	register struct sockaddr_in6 *sin6;
+	struct inpcbtable *head = inp->inp_table;
+	struct sockaddr_in6 *sin6;
 	struct proc *p = curproc;		/* XXX */
 	u_short lport = 0;
 	int wild = INPLOOKUP_IPV6, reuseport = (so->so_options & SO_REUSEPORT);
@@ -431,7 +431,7 @@ portloop:
  */
 int
 in6_pcbconnect(inp, nam)
-	register struct inpcb *inp;
+	struct inpcb *inp;
 	struct mbuf *nam;
 {
 	struct in6_addr *in6a = NULL;
@@ -563,7 +563,7 @@ in6_pcbnotify(head, dst, fport_arg, la, lport_arg, cmd, notify)
 	int cmd;
 	void (*notify) __P((struct inpcb *, int));
 {
-	register struct inpcb *inp, *ninp;
+	struct inpcb *inp, *ninp;
 	struct in6_addr *faddr,laddr = *la;
 	u_short fport = fport_arg, lport = lport_arg;
 	int errno, nmatch = 0;
@@ -643,10 +643,10 @@ in6_pcbnotify(head, dst, fport_arg, la, lport_arg, cmd, notify)
  */
 int
 in6_setsockaddr(inp, nam)
-	register struct inpcb *inp;
+	struct inpcb *inp;
 	struct mbuf *nam;
 {
-	register struct sockaddr_in6 *sin6;
+	struct sockaddr_in6 *sin6;
 
 	nam->m_len = sizeof(struct sockaddr_in6);
 	sin6 = mtod(nam,struct sockaddr_in6 *);
@@ -668,10 +668,10 @@ in6_setsockaddr(inp, nam)
  */
 int
 in6_setpeeraddr(inp, nam)
-	register struct inpcb *inp;
+	struct inpcb *inp;
 	struct mbuf *nam;
 {
-	register struct sockaddr_in6 *sin6;
+	struct sockaddr_in6 *sin6;
 
 	nam->m_len = sizeof(struct sockaddr_in6);
 	sin6 = mtod(nam,struct sockaddr_in6 *);

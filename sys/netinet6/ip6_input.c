@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.22 2001/02/08 14:51:22 itojun Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.23 2001/02/16 08:22:06 itojun Exp $	*/
 /*	$KAME: ip6_input.c,v 1.172 2001/02/08 11:18:05 itojun Exp $	*/
 
 /*
@@ -148,8 +148,8 @@ static struct mbuf *ip6_pullexthdr __P((struct mbuf *, size_t, int));
 void
 ip6_init()
 {
-	register struct ip6protosw *pr;
-	register int i;
+	struct ip6protosw *pr;
+	int i;
 
 	pr = (struct ip6protosw *)pffindproto(PF_INET6, IPPROTO_RAW, SOCK_RAW);
 	if (pr == 0)
@@ -693,7 +693,7 @@ ip6_hopopts_input(plenp, rtalertp, mp, offp)
 	struct mbuf **mp;
 	int *offp;
 {
-	register struct mbuf *m = *mp;
+	struct mbuf *m = *mp;
 	int off = *offp, hbhlen;
 	struct ip6_hbh *hbh;
 	u_int8_t *opt;
@@ -925,10 +925,10 @@ ip6_unknown_opt(optp, m, off)
  */
 void
 ip6_savecontrol(in6p, mp, ip6, m)
-	register struct inpcb *in6p;
-	register struct mbuf **mp;
-	register struct ip6_hdr *ip6;
-	register struct mbuf *m;
+	struct inpcb *in6p;
+	struct mbuf **mp;
+	struct ip6_hdr *ip6;
+	struct mbuf *m;
 {
 # define in6p_flags	inp_flags
 	int privileged = 0;

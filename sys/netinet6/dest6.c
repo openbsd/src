@@ -1,4 +1,4 @@
-/*	$OpenBSD: dest6.c,v 1.3 2000/02/07 06:09:09 itojun Exp $	*/
+/*	$OpenBSD: dest6.c,v 1.4 2001/02/16 08:22:04 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -57,7 +57,7 @@ dest6_input(mp, offp, proto)
 	struct mbuf **mp;
 	int *offp, proto;
 {
-	register struct mbuf *m = *mp;
+	struct mbuf *m = *mp;
 	int off = *offp, dstoptlen, optlen;
 	struct ip6_dest *dstopts;
 	u_int8_t *opt;
