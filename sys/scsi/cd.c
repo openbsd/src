@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.63 2002/06/08 23:59:47 art Exp $	*/
+/*	$OpenBSD: cd.c,v 1.64 2002/06/09 00:01:49 art Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -605,6 +605,8 @@ cdstart(v)
 	struct scsi_generic *cmdp;
 	int blkno, nblks, cmdlen;
 	struct partition *p;
+
+	splassert(IPL_BIO);
 
 	SC_DEBUG(sc_link, SDEV_DB2, ("cdstart "));
 	/*
