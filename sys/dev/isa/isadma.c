@@ -1,4 +1,4 @@
-/*	$OpenBSD: isadma.c,v 1.11 1996/12/11 12:57:31 niklas Exp $	*/
+/*	$OpenBSD: isadma.c,v 1.12 1996/12/11 22:38:06 niklas Exp $	*/
 /*	$NetBSD: isadma.c,v 1.19 1996/04/29 20:03:26 christos Exp $	*/
 
 #include <sys/param.h>
@@ -32,8 +32,11 @@ static struct isadma_softc *isadma_sc;	/*XXX ugly */
 static struct dma_info dma_info[8];
 static u_int8_t dma_finished;
 
-/* high byte of address is stored in this port for i-th dma channel */
-static bus_addr_t dmapageport[2][4] = {
+/*
+ * high byte of address is stored in this port (offset IO_DMAPG) for i-th
+ * dma channel
+ */
+static short dmapageport[2][4] = {
 	{0x7, 0x3, 0x1, 0x2},
 	{0xf, 0xb, 0x9, 0xa}
 };
@@ -85,17 +88,14 @@ isadmaattach(parent, self, aux)
 	struct isadma_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
 	int i;
 
 	printf("\n");
 	iot = sc->sc_iot = ia->ia_iot;
-	if (bus_space_map(iot, IO_DMA1, DMA_NREGS(1), 0, &ioh))
+	if (bus_space_map(iot, IO_DMA1, DMA_NREGS(1), 0, &sc->sc_ioh1))
 	    	panic("isadmaattach: couldn't map I/O ports at IO_DMA1");
-	sc->sc_ioh1 = ioh;
-	if (bus_space_map(iot, IO_DMA2, DMA_NREGS(2), 0, &ioh))
+	if (bus_space_map(iot, IO_DMA2, DMA_NREGS(2), 0, &sc->sc_ioh2))
 		panic("isadmaattach: couldn't map I/O ports at IO_DMA2");
-	sc->sc_ioh2 = ioh;
 
 	/* XXX the constants below is a bit ugly, I know... */
 	for (i = 0; i < 8; i++) {
