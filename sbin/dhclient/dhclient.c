@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.16 2004/02/24 13:36:13 henning Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.17 2004/02/24 14:36:17 henning Exp $	*/
 
 /* DHCP Client. */
 
@@ -270,21 +270,11 @@ main(int argc, char *argv[])
 	sockaddr_broadcast.sin_len = sizeof(sockaddr_broadcast);
 	inaddr_any.s_addr = INADDR_ANY;
 
-	/* Parse the dhclient.conf file. */
 	read_client_conf();
-
-	/* Lock the leases file */
-	fd = open(path_dhclient_db, O_RDONLY | O_EXLOCK | O_CREAT, 0);
-	if (fd < 0)
+	if ((fd = open(path_dhclient_db, O_RDONLY|O_EXLOCK|O_CREAT, 0)) == -1)
 		error("can't open and lock %s: %m", path_dhclient_db);
-
-	/* Parse the lease database. */
 	read_client_leases();
-
-	/* Rewrite the lease database... */
 	rewrite_client_leases();
-
-	/* Close and unlock */
 	close(fd);
 
 	if (interface_link_status(ip->name)) {
@@ -295,8 +285,7 @@ main(int argc, char *argv[])
 	} else
 		error("no link on interface %s", ip->name);
 
-	routefd = socket(PF_ROUTE, SOCK_RAW, 0);
-	if (routefd != -1)
+	if ((routefd = socket(PF_ROUTE, SOCK_RAW, 0)) != -1)
 		add_protocol("AF_ROUTE", routefd, routehandler, interfaces);
 
 	/* set up the interfaces. */
@@ -538,22 +527,14 @@ dhcpack(struct packet *packet)
 	if (packet->interface->client->xid != packet->raw->xid ||
 	    (packet->interface->hw_address.hlen != packet->raw->hlen) ||
 	    (memcmp(packet->interface->hw_address.haddr,
-	    packet->raw->chaddr, packet->raw->hlen))) {
-#ifdef DEBUG
-		debug("DHCPACK in wrong transaction.");
-#endif
+	    packet->raw->chaddr, packet->raw->hlen)))
 		return;
-	}
 
 	if (ip->client->state != S_REBOOTING &&
 	    ip->client->state != S_REQUESTING &&
 	    ip->client->state != S_RENEWING &&
-	    ip->client->state != S_REBINDING) {
-#ifdef DEBUG
-		debug("DHCPACK in wrong state.");
-#endif
+	    ip->client->state != S_REBINDING)
 		return;
-	}
 
 	note("DHCPACK from %s", piaddr(packet->client_addr));
 
@@ -762,22 +743,14 @@ dhcpoffer(struct packet *packet)
 	char *name = packet->options[DHO_DHCP_MESSAGE_TYPE].len ?
 	    "DHCPOFFER" : "BOOTREPLY";
 
-#ifdef DEBUG_PACKET
-	dump_packet(packet);
-#endif
-
 	/* If we're not receptive to an offer right now, or if the offer
 	   has an unrecognizable transaction id, then just drop it. */
 	if (ip->client->state != S_SELECTING ||
 	    packet->interface->client->xid != packet->raw->xid ||
 	    (packet->interface->hw_address.hlen != packet->raw->hlen) ||
 	    (memcmp(packet->interface->hw_address.haddr,
-	    packet->raw->chaddr, packet->raw->hlen))) {
-#ifdef DEBUG
-		debug("%s in wrong transaction.", name);
-#endif
+	    packet->raw->chaddr, packet->raw->hlen)))
 		return;
-	}
 
 	note("%s from %s", name, piaddr(packet->client_addr));
 
@@ -972,22 +945,14 @@ dhcpnak(struct packet *packet)
 	if (packet->interface->client->xid != packet->raw->xid ||
 	    (packet->interface->hw_address.hlen != packet->raw->hlen) ||
 	    (memcmp(packet->interface->hw_address.haddr,
-	    packet->raw->chaddr, packet->raw->hlen))) {
-#ifdef DEBUG
-		debug("DHCPNAK in wrong transaction.");
-#endif
+	    packet->raw->chaddr, packet->raw->hlen)))
 		return;
-	}
 
 	if (ip->client->state != S_REBOOTING &&
 	    ip->client->state != S_REQUESTING &&
 	    ip->client->state != S_RENEWING &&
-	    ip->client->state != S_REBINDING) {
-#ifdef DEBUG
-		debug("DHCPNAK in wrong state.");
-#endif
+	    ip->client->state != S_REBINDING)
 		return;
-	}
 
 	note("DHCPNAK from %s", piaddr(packet->client_addr));
 
@@ -1466,11 +1431,6 @@ make_discover(struct interface_info *ip, struct client_lease *lease)
 	    0, sizeof(ip->client->packet.giaddr));
 	memcpy(ip->client->packet.chaddr,
 	    ip->hw_address.haddr, ip->hw_address.hlen);
-
-#ifdef DEBUG_PACKET
-	dump_packet(sendpkt);
-	dump_raw((unsigned char *)ip->client->packet, sendpkt->packet_length);
-#endif
 }
 
 
@@ -1583,11 +1543,6 @@ make_request(struct interface_info *ip, struct client_lease * lease)
 	    sizeof(ip->client->packet.giaddr));
 	memcpy(ip->client->packet.chaddr,
 	    ip->hw_address.haddr, ip->hw_address.hlen);
-
-#ifdef DEBUG_PACKET
-	dump_packet(sendpkt);
-	dump_raw((unsigned char *)ip->client->packet, sendpkt->packet_length);
-#endif
 }
 
 void
@@ -1669,11 +1624,6 @@ make_decline(struct interface_info *ip, struct client_lease *lease)
 	    sizeof(ip->client->packet.giaddr));
 	memcpy(ip->client->packet.chaddr,
 	    ip->hw_address.haddr, ip->hw_address.hlen);
-
-#ifdef DEBUG_PACKET
-	dump_packet(sendpkt);
-	dump_raw((unsigned char *)ip->client->packet, sendpkt->packet_length);
-#endif
 }
 
 void
@@ -1731,12 +1681,6 @@ make_release(struct interface_info *ip, struct client_lease *lease)
 	    sizeof(ip->client->packet.giaddr));
 	memcpy(ip->client->packet.chaddr,
 	    ip->hw_address.haddr, ip->hw_address.hlen);
-
-#ifdef DEBUG_PACKET
-	dump_packet(sendpkt);
-	dump_raw((unsigned char *)ip->client->packet,
-	    ip->client->packet_length);
-#endif
 }
 
 void
