@@ -1,4 +1,4 @@
-.\" $OpenBSD: lmc.4,v 1.16 2003/03/06 04:03:40 david Exp $
+.\" $OpenBSD: lmc.4,v 1.17 2003/03/20 07:26:33 jmc Exp $
 .\"
 .\" Copyright (c) 1999 Chris Cappuccio
 .\"
@@ -58,7 +58,9 @@ The ability to set cable length is not currently implemented.
 Using the
 .Xr sppp 4
 driver, you can also use the ppp protocol.
-In either case, the lmc interface should be configured as a point-to-point
+In either case, the
+.Nm
+interface should be configured as a point-to-point
 link.
 .Sh DIAGNOSTICS
 .Bl -diag
@@ -67,25 +69,25 @@ A fatal initialization error has occurred.
 .It "lmc%d: couldn't establish interrupt"
 A fatal initialization error has occurred.
 .It "lmc%d: enabling keepalive"
-Cisco HDLC keepalive packets will be transmitted
+Cisco HDLC keepalive packets will be transmitted.
 .It "lmc%d: disabling keepalive"
-Cisco HDLC keepalive packets will not be transmitted
+Cisco HDLC keepalive packets will not be transmitted.
 .It "lmc%d: clock internal"
-The card is using internal clocking for the line
+The card is using internal clocking for the line.
 .It "lmc%d: clock external"
-The card is using external clocking for the line
+The card is using external clocking for the line.
 .It "lmc%d: asserting DTR and RTS"
-The card is sending DTR and RTS signals on the line
+The card is sending DTR and RTS signals on the line.
 .It "lmc%d: deasserting DTR and RTS"
-The card is not sending DTR and RTS signals on the line
+The card is not sending DTR and RTS signals on the line.
 .It "lmc%d: Abnormal interrupt"
 The card received an incomplete request.
 This may be a sign of a hardware fault.
 .It "lmc%d: tx_intr: failed to dequeue mbuf?!?"
-Only available if compiled with LMC_DEBUG
+Only available if compiled with LMC_DEBUG.
 .It "lmc%d: txput: tx not running"
-Problem from tulip,
-Only available if compiled with LMC_DEBUG
+Problem from tulip.
+Only available if compiled with LMC_DEBUG.
 .El
 .Sh SEE ALSO
 .Xr netintro 4 ,

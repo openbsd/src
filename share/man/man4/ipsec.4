@@ -1,4 +1,4 @@
-.\" $OpenBSD: ipsec.4,v 1.52 2003/01/13 19:16:34 kjell Exp $
+.\" $OpenBSD: ipsec.4,v 1.53 2003/03/20 07:26:33 jmc Exp $
 .\"
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -116,7 +116,7 @@ follows the
 .Tn IP
 header).
 Replay protection requires authentication and
-integrity (these two go always together).
+integrity (these two always go together).
 Confidentiality (encryption) can be used with or without
 authentication/integrity.
 Similarly, one could use authentication/integrity with or without
@@ -153,11 +153,11 @@ When two peers have established matching
 .Tn SAs
 (one at each end),
 packets protected with one end's
-.Tn SA ,
+.Tn SA
 may be verified and/or decrypted
 using the information in the other end's
 .Tn SA.
-The only issue remaining left is to ensure that both ends have matching
+The only issue remaining is to ensure that both ends have matching
 .Tn SAs .
 This may be done manually, or automatically using a key management daemon.
 .Pp
@@ -199,15 +199,15 @@ confidentiality.
 Both the algorithm and the encryption key are parameters of the SA.
 .Pp
 .Ss Security Parameter Indexes (SPIs)
-In order to identify a SA we need to have a unique name for it.
+In order to identify an SA we need to have a unique name for it.
 This name is a triplet, consisting of the destination address, security
 parameter index (aka SPI) and the security protocol (ESP or AH).
-Since the destination address is part of the name, a SA is necessarily a
+Since the destination address is part of the name, an SA is necessarily a
 unidirectional construct.
 For a bidirectional communication channel, two SAs are required, one
 outgoing and one incoming, where the destination address is our local
 IP address.
-The SPI is just a number that helps us making the name unique, it can be
+The SPI is just a number that helps us make the name unique, it can be
 arbitrarily chosen in the range 0x100 - 0xffffffff.
 The security protocol number should be 50 for
 .Tn ESP
@@ -232,7 +232,7 @@ Tunnel mode can be used for establishing VPNs, virtual
 private networks, where parts of the networks can be spread out over an
 unsafe public network, but security gateways at each subnet are responsible
 for encrypting and decrypting the data passing over the public net.
-A SA will hold information telling if it is a tunnel or transport mode SA,
+An SA will hold information telling if it is a tunnel or transport mode SA,
 and for tunnels, it will contain values to fill in into the outer
 .Tn IP
 header.
@@ -240,7 +240,7 @@ header.
 .Ss Lifetimes
 The SA also holds a couple of other parameters, especially useful for
 automatic keying, called lifetimes, which puts a limit on how much we can
-use a SA for protecting our data.
+use an SA for protecting our data.
 These limits can be in wall-clock time or in volume of our data.
 .Pp
 .Ss IPsec Examples
@@ -412,8 +412,7 @@ A list of all security associations in the kernel tables can be
 obtained via the kernfs file
 .Aq Pa ipsec
 (typically in
-.Aq Pa /kern/ipsec
-).
+.Aq Pa /kern/ipsec ) .
 .Sh DIAGNOSTICS
 A socket operation may fail with one of the following errors returned:
 .Bl -tag -width [EINVAL]

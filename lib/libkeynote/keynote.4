@@ -1,4 +1,4 @@
-.\" $OpenBSD: keynote.4,v 1.22 2002/05/01 08:03:30 mpech Exp $
+.\" $OpenBSD: keynote.4,v 1.23 2003/03/20 07:26:33 jmc Exp $
 .\"
 .\" The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
 .\"
@@ -202,7 +202,7 @@ requested by other principals.
 An assertion identifies the principal that made it, which other principals
 are being authorized, and the conditions under which the authorization
 applies.
-The syntax of assertions is given
+The syntax of assertions is given in
 .Xr keynote 5 .
 .Pp
 A special principal, whose identifier is
@@ -387,7 +387,7 @@ The identifier of the principal(s) requesting the action.
 The action attribute set describing the action.
 .It
 The set of compliance values of interest to the application,
-ordered from _MIN_TRUST to _MAX_TRUST
+ordered from _MIN_TRUST to _MAX_TRUST.
 .It
 The policy and credential assertions that should be included in
 the evaluation.
@@ -486,7 +486,7 @@ is listed in the query as an authorizer of the action.
 Otherwise, the Direct Authorization Value of
 .Aq X
 is _MIN_TRUST.
-.Sh ASSERTION COMPLIANC VALUE
+.Sh ASSERTION COMPLIANCE VALUE
 The Assertion Compliance Value of an assertion is the lowest order
 (minimum) of the assertion's Conditions Compliance Value and its
 Licensee Compliance Value.

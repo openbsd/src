@@ -1,4 +1,4 @@
-.\"	$OpenBSD: iop.4,v 1.6 2002/09/26 07:55:40 miod Exp $
+.\"	$OpenBSD: iop.4,v 1.7 2003/03/20 07:26:33 jmc Exp $
 .\"	$NetBSD: iop.4,v 1.7 2001/03/20 13:09:19 ad Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -59,12 +59,12 @@ I/O processors conforming to the
 specification, revision 1.5 and above.
 .Sh IOCTL INTERFACE
 The following structures and constants are defined in
-.Pa dev/i2o/iopio.h .
+.Aq Pa dev/i2o/iopio.h .
 Note that the headers
-.Pa sys/types.h ,
-.Pa sys/device.h
+.Aq Pa sys/types.h ,
+.Aq Pa sys/device.h
 and
-.Pa dev/i2o/i2o.h
+.Aq Pa dev/i2o/i2o.h
 are prerequisites and must therefore be included beforehand.
 .Bl -tag -width OTTF
 .It Dv IOPIOCPT (struct ioppt)
@@ -143,8 +143,8 @@ control device for IOP unit
 .Xr intro 4 ,
 .Xr ioprbs 4 ,
 .Xr iopsp 4 ,
-.Xr scsibus 4 ,
 .Xr pci 4 ,
+.Xr scsibus 4 ,
 .Xr iopctl 8
 .Pp
 http://www.intelligent-io.com/
