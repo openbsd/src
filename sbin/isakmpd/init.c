@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.22 2003/05/16 20:31:15 ho Exp $	*/
+/*	$OpenBSD: init.c,v 1.23 2003/05/18 20:46:29 ho Exp $	*/
 /*	$EOM: init.c,v 1.25 2000/03/30 14:27:24 ho Exp $	*/
 
 /*
@@ -100,7 +100,7 @@ init (void)
 void
 reinit (void)
 {
-  log_print ("reinitializing daemon");
+  log_print ("isakmpd: reinitializing daemon");
 
   /*
    * XXX Remove all(/some?) pending exchange timers? - they may not be
