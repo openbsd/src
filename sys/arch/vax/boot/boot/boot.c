@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.8 2001/10/04 00:21:09 miod Exp $ */
+/*	$OpenBSD: boot.c,v 1.9 2002/02/13 02:42:20 deraadt Exp $ */
 /*	$NetBSD: boot.c,v 1.4 1999/10/23 14:42:22 ragge Exp $ */
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -256,7 +256,8 @@ loadpcs()
 		i = cp - line + 1;
 	} else
 		i = 0;
-	strcpy(pcs + i, "pcs750.bin");
+	strncpy(pcs + i, "pcs750.bin", sizeof(pcs) - i - 1);
+	pcs[sizeof(pcs)-1] = '\0';
 	i = open(pcs, 0);
 	if (i < 0) {
 		printf("bad luck - missing pcs750.bin :-(\n");
