@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.29 2000/03/21 23:31:26 mickey Exp $	*/
+/*	$OpenBSD: if.c,v 1.30 2000/03/22 11:28:42 itojun Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -631,35 +631,6 @@ ifunit(name)
 
 	return (NULL);
 }
-
-
-/*
- * Map interface name in a sockaddr_dl to
- * interface structure pointer.
- */
-struct ifnet *
-if_withname(sa)
-	struct sockaddr *sa;
-{
-	char ifname[IFNAMSIZ+1];
-	struct sockaddr_dl *sdl = (struct sockaddr_dl *)sa;
-
-	if ( (sa->sa_family != AF_LINK) || (sdl->sdl_nlen == 0) ||
-	     (sdl->sdl_nlen > IFNAMSIZ) )
-		return NULL;
-
-	/*
-	 * ifunit wants a null-terminated name.  It may not be null-terminated
-	 * in the sockaddr.  We don't want to change the caller's sockaddr,
-	 * and there might not be room to put the trailing null anyway, so we
-	 * make a local copy that we know we can null terminate safely.
-	 */
-
-	bcopy(sdl->sdl_data, ifname, sdl->sdl_nlen);
-	ifname[sdl->sdl_nlen] = '\0';
-	return ifunit(ifname);
-}
-
 
 /*
  * Interface ioctls.

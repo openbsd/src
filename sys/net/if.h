@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.h,v 1.16 2000/03/21 23:31:26 mickey Exp $	*/
+/*	$OpenBSD: if.h,v 1.17 2000/03/22 11:28:42 itojun Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -413,7 +413,6 @@ void	ifinit __P((void));
 int	ifioctl __P((struct socket *, u_long, caddr_t, struct proc *));
 int	ifpromisc __P((struct ifnet *, int));
 struct	ifnet *ifunit __P((char *));
-struct  ifnet *if_withname __P((struct sockaddr *));
 
 struct	ifaddr *ifa_ifwithaddr __P((struct sockaddr *));
 struct	ifaddr *ifa_ifwithaf __P((int));
