@@ -1,4 +1,4 @@
-/*	$OpenBSD: whois.c,v 1.3 1997/01/15 23:43:39 millert Exp $	*/
+/*	$OpenBSD: whois.c,v 1.4 1998/02/24 10:09:50 deraadt Exp $	*/
 /*	$NetBSD: whois.c,v 1.5 1994/11/14 05:13:25 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)whois.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: whois.c,v 1.3 1997/01/15 23:43:39 millert Exp $";
+static char rcsid[] = "$OpenBSD: whois.c,v 1.4 1998/02/24 10:09:50 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -54,9 +54,15 @@ static char rcsid[] = "$OpenBSD: whois.c,v 1.3 1997/01/15 23:43:39 millert Exp $
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sysexits.h>
 #include <unistd.h>
 
-#define	NICHOST	"whois.internic.net"
+#define	NICHOST		"whois.internic.net"
+#define	DNICHOST	"nic.ddn.mil"
+#define	ANICHOST	"whois.arin.net"
+#define	RNICHOST	"whois.ripe.net"
+#define	PNICHOST	"whois.apnic.net"
+#define	WHOIS_PORT	43
 
 static void usage();
 
@@ -76,10 +82,22 @@ main(argc, argv)
 	char *host;
 
 	host = NICHOST;
-	while ((ch = getopt(argc, argv, "h:")) != -1)
+	while ((ch = getopt(argc, argv, "adh:pr")) != -1)
 		switch((char)ch) {
+		case 'a':
+			host = ANICHOST;
+			break;
+		case 'd':
+			host = DNICHOST;
+			break;
 		case 'h':
 			host = optarg;
+			break;
+		case 'p':
+			host = PNICHOST;
+			break;
+		case 'r':
+			host = RNICHOST;
 			break;
 		case '?':
 		default:
@@ -91,42 +109,35 @@ main(argc, argv)
 	if (!argc)
 		usage();
 
-	hp = gethostbyname(host);
-	if (hp == NULL) {
-		(void)fprintf(stderr, "whois: %s: ", host);
-		herror((char *)NULL);
-		exit(1);
+	s = socket(PF_INET, SOCK_STREAM, 0);
+	if (s < 0)
+		err(EX_OSERR, "socket");
+
+	memset(&sin, 0, sizeof sin);
+	sin.sin_len = sizeof sin;
+	sin.sin_family = AF_INET;
+
+	if (inet_aton(host, &sin.sin_addr) == 0) {
+		hp = gethostbyname2(host, AF_INET);
+		if (hp == NULL)
+			errx(EX_NOHOST, "%s: %s", host, hstrerror(h_errno));
+		host = hp->h_name;
+		sin.sin_addr = *(struct in_addr *)hp->h_addr_list[0];
 	}
-	host = hp->h_name;
-	s = socket(hp->h_addrtype, SOCK_STREAM, 0);
-	if (s < 0) {
-		perror("whois: socket");
-		exit(1);
-	}
-	bzero((caddr_t)&sin, sizeof (sin));
-	sin.sin_family = hp->h_addrtype;
-	if (bind(s, (struct sockaddr *)&sin, sizeof(sin)) < 0) {
-		perror("whois: bind");
-		exit(1);
-	}
-	bcopy(hp->h_addr, (char *)&sin.sin_addr, hp->h_length);
+
 	sp = getservbyname("whois", "tcp");
-	if (sp == NULL) {
-		(void)fprintf(stderr, "whois: whois/tcp: unknown service\n");
-		exit(1);
-	}
-	sin.sin_port = sp->s_port;
-	if (connect(s, (struct sockaddr *)&sin, sizeof(sin)) < 0) {
-		perror("whois: connect");
-		exit(1);
-	}
+	if (sp == NULL)
+		sin.sin_port = htons(WHOIS_PORT);
+	else
+		sin.sin_port = sp->s_port;
+
+	if (connect(s, (struct sockaddr *)&sin, sizeof(sin)) < 0)
+		err(EX_OSERR, "connect");
+
 	sfi = fdopen(s, "r");
 	sfo = fdopen(s, "w");
-	if (sfi == NULL || sfo == NULL) {
-		perror("whois: fdopen");
-		(void)close(s);
-		exit(1);
-	}
+	if (sfi == NULL || sfo == NULL)
+		err(EX_OSERR, "fdopen");
 	while (argc-- > 1)
 		(void)fprintf(sfo, "%s ", *argv++);
 	(void)fprintf(sfo, "%s\r\n", *argv);
@@ -139,6 +150,6 @@ main(argc, argv)
 static void
 usage()
 {
-	(void)fprintf(stderr, "usage: whois [-h hostname] name ...\n");
-	exit(1);
+	(void)fprintf(stderr, "usage: whois [-adpr] [-h hostname] name ...\n");
+	exit(EX_USAGE);
 }
