@@ -1,4 +1,4 @@
-# $OpenBSD: Ustar.pm,v 1.3 2003/12/10 17:45:11 espie Exp $
+# $OpenBSD: Ustar.pm,v 1.4 2003/12/19 00:29:20 espie Exp $
 #
 # Copyright (c) 2002 Marc Espie.
 # 
@@ -56,7 +56,7 @@ sub new
 {
     my ($class, $fh) = @_;
 
-    return bless { fh => $fh, swallow => 0, unput => 0} , $class;
+    return bless { fh => $fh, swallow => 0} , $class;
 }
 
 
@@ -98,19 +98,9 @@ sub skip
     $self->{swallow} = 0;
 }
 
-sub unput
-{
-    my $self = shift;
-    $self->{unput} = 1;
-}
-
 sub next
 {
     my $self = shift;
-    if ($self->{unput}) {
-    	$self->{unput} = 0;
-	return $self->{current};
-    }
     # get rid of the current object
     $self->skip();
     my $header;
@@ -178,7 +168,6 @@ sub next
     } else {
     	die "Unsupported type";
     }
-    $self->{current} = $result;
     return $result;
 }
 

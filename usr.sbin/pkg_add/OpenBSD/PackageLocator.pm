@@ -1,4 +1,4 @@
-# $OpenBSD: PackageLocator.pm,v 1.5 2003/11/06 17:59:23 espie Exp $
+# $OpenBSD: PackageLocator.pm,v 1.6 2003/12/19 00:29:20 espie Exp $
 #
 # Copyright (c) 2003 Marc Espie.
 # 
@@ -203,8 +203,7 @@ sub find
 
 	if ($_ eq '-') {
 		my $location = OpenBSD::PackageLocation->new('-');
-		my $package = openAbsolute($location, '');
-		bless $package, $class;
+		my $package = $class->openAbsolute($location, '');
 		return $package;
 	}
 	$_.=".tgz" unless m/\.tgz$/;
@@ -217,19 +216,18 @@ sub find
 
 		my ($pkgname, $path) = fileparse($_);
 		my $location = OpenBSD::PackageLocation->new($path);
-		$package = openAbsolute($location, $pkgname);
+		$package = $class->openAbsolute($location, $pkgname);
 		if (defined $package) {
 			push(@pkgpath, $location);
 		}
 	} else {
 		for my $p (@pkgpath) {
-			$package = openAbsolute($p, $_);
+			$package = $class->openAbsolute($p, $_);
 			last if defined $package;
 		}
 	}
-	return $package unless defined $package;
-	$packages{$_} = $package;
-	bless $package, $class;
+	$packages{$_} = $package if defined($package);
+	return $package;
 }
 
 sub info
@@ -243,36 +241,91 @@ sub close
 	my $self = shift;
 	close($self->{fh}) if defined $self->{fh};
 	$self->{fh} = undef;
-	$self->{archive} = undef;
+	$self->{_archive} = undef;
 }
 
-sub openAbsolute
+sub _open
 {
-	my ($location, $name) = @_;
-	my $fh = $location->open($name);
+	my $self = shift;
+
+	my $fh = $self->{location}->open($self->{name});
+	$self->{fh} = $fh;
 	if (!defined $fh) {
 		return undef;
 	}
 	my $archive = new OpenBSD::Ustar $fh;
-	my $dir = OpenBSD::Temp::dir();
+	$self->{_archive} = $archive;
+}
 
-	my $self = { name => $_, fh => $fh, archive => $archive, dir => $dir };
+sub openAbsolute
+{
+	my ($class, $location, $name) = @_;
+	my $self = { location => $location, name => $name};
+	bless $self, $class;
+
+	if (!$self->_open()) {
+		return undef;
+	}
+	my $dir = OpenBSD::Temp::dir();
+	$self->{dir} = $dir;
+
 	# check that Open worked
-	while (my $e = $archive->next()) {
+	while (my $e = $self->next()) {
 		if ($e->isFile() && is_info_name($e->{name})) {
 			$e->{name}=$dir.$e->{name};
 			$e->create();
 		} else {
-			$archive->unput();
+			$self->unput();
 			last;
 		}
 	}
 	if (-f $dir.CONTENTS) {
+#		$self->close();
 		return $self;
 	} else {
-		CORE::close($fh);
+		$self->close();
 		return undef;
 	}
+}
+
+sub reopen
+{
+	my $self = shift;
+#	print "Reopening ", $self->{name}, "\n";
+	if (!$self->_open()) {
+		return undef;
+	}
+	while (my $e = $self->{_archive}->next()) {
+#		print "Scanning ", $e->{name}, "\n";
+		if ($e->{name} eq $self->{_current}->{name}) {
+			$self->{_current} = $e;
+			return $self;
+		}
+	}
+	return undef;
+}
+
+# proxy for archive operations
+sub next
+{
+	my $self = shift;
+
+	if (!defined $self->{fh}) {
+		if (!$self->reopen()) {
+			return undef;
+		}
+	}
+	if (!$self->{_unput}) {
+		$self->{_current} = $self->{_archive}->next();
+	}
+	$self->{_unput} = 0;
+	return $self->{_current};
+}
+
+sub unput
+{
+	my $self = shift;
+	$self->{_unput} = 1;
 }
 
 # allows the autoloader to work correctly

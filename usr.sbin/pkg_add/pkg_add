@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.17 2003/12/10 11:12:22 espie Exp $
+# $OpenBSD: pkg_add,v 1.18 2003/12/19 00:29:20 espie Exp $
 #
 # Copyright (c) 2003 Marc Espie.
 # 
@@ -344,9 +344,8 @@ sub really_add($)
 			system($dir.INSTALL, $pkgname, "PRE-INSTALL") == 0 or die "install script borked";
 		}
 	}
-	my $archive=$handle->{archive};
 
-	if (!defined $archive) {
+	if (!defined $handle) {
 		print STDERR "Archive in $pkgname broken\n";
 		$errors++;
 		return;
@@ -355,7 +354,7 @@ sub really_add($)
 
 	$plist->{done} = [];
 	for my $item (@{$plist->{items}}) {
-		$item->install($archive, $opt_v, $opt_n);
+		$item->install($handle, $opt_v, $opt_n);
 		push(@{$plist->{done}}, $item);
 		last if $interrupted;
 	}
