@@ -1,4 +1,4 @@
-/*	$OpenBSD: prftest.c,v 1.3 1998/12/21 01:02:35 niklas Exp $	*/
+/*	$OpenBSD: prftest.c,v 1.4 2001/07/01 19:28:12 niklas Exp $	*/
 /*	$EOM: prftest.c,v 1.2 1998/10/07 16:40:50 niklas Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
 #include "hash.h"
 #include "prf.h"
 
-int test_prf(char *, enum hashes, char *, int, char *, int, char *);
+int test_prf (char *, enum hashes, char *, int, char *, int, char *);
 
 #define nibble2c(x) ((x) >= 10 ? ('a'-10+(x)) : ('0' + (x)))
 
@@ -57,25 +57,25 @@ main (void)
 {
   char key[100];
     
-  memset(key, 11, 20);
+  memset (key, 11, 20);
   test_prf ("PRF MD5 Test Case 1", HASH_MD5,
-	     key, 16, "Hi There", 8, "9294727a3638bb1c13f48ef8158bfc9d");
+	    key, 16, "Hi There", 8, "9294727a3638bb1c13f48ef8158bfc9d");
   test_prf ("PRF MD5 Test Case 2", HASH_MD5,
-	     "Jefe", 4,
-	     "what do ya want for nothing?", 28,
-	     "750c783e6ab0b503eaa86e310a5db738");
+	    "Jefe", 4,
+	    "what do ya want for nothing?", 28,
+	    "750c783e6ab0b503eaa86e310a5db738");
   test_prf ("PRF SHA1 Test Case 1", HASH_SHA1,
-	     key, 20, "Hi There", 8, 
-	     "b617318655057264e28bc0b6fb378c8ef146be00");
+	    key, 20, "Hi There", 8, 
+	    "b617318655057264e28bc0b6fb378c8ef146be00");
   test_prf ("PRF SHA1 Test Case 2",  HASH_SHA1,
-	     "Jefe", 4, "what do ya want for nothing?", 28, 
-	     "effcdf6ae5eb2fa2d27416d5f184df9c259a7c79");
+	    "Jefe", 4, "what do ya want for nothing?", 28, 
+	    "effcdf6ae5eb2fa2d27416d5f184df9c259a7c79");
   
-  return 1;
+  return 0;
 }
 
 int
-test_prf(char *test, enum hashes hash, char *key, int klen,
+test_prf (char *test, enum hashes hash, char *key, int klen,
 	  char *data, int dlen, char *cmp)
 {
   char output[2*HASH_MAX+1];
@@ -83,34 +83,34 @@ test_prf(char *test, enum hashes hash, char *key, int klen,
   struct prf *prf;
   int i;
 
-  printf("Testing %s: ", test);
+  printf ("Testing %s: ", test);
 
-  prf = prf_alloc(PRF_HMAC, hash, key, klen);
-  if (prf == NULL) 
+  prf = prf_alloc (PRF_HMAC, hash, key, klen);
+  if (!prf) 
     {
-      printf("prf_alloc() returned NULL\n");
+      printf("prf_alloc () failed\n");
       return 0;
     }
 
-  prf->Init(prf->prfctx);
-  prf->Update(prf->prfctx, data, dlen);
-  prf->Final(digest, prf->prfctx);
+  prf->Init (prf->prfctx);
+  prf->Update (prf->prfctx, data, dlen);
+  prf->Final (digest, prf->prfctx);
 
-  prf_free(prf);
+  prf_free (prf);
 
-  for (i=0; i<prf->blocksize; i++)
+  for (i = 0; i < prf->blocksize; i++)
     {
-      output[2*i] = nibble2c((digest[i] >> 4) & 0xf);
-      output[2*i+1] = nibble2c(digest[i] & 0xf);
+      output[2 * i] = nibble2c ((digest[i] >> 4) & 0xf);
+      output[2 * i + 1] = nibble2c (digest[i] & 0xf);
     }
-  output[2*i] = 0;
+  output[2 * i] = 0;
 
-  if (!strcmp(output, cmp)) 
+  if (strcmp (output, cmp) == 0) 
     {
-      printf("OKAY\n");
+      printf ("OKAY\n");
       return 1;
     }
 
-  printf("%s <-> %s\n", output, cmp);
+  printf ("%s <-> %s\n", output, cmp);
   return 0;
 }
