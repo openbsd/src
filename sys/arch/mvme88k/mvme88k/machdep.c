@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.114 2003/09/28 22:13:45 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.115 2003/10/02 10:19:11 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -1770,6 +1770,7 @@ m187_ext_int(u_int v, struct m88100_saved_state *eframe)
 	mask = *md.intr_mask & 0x07;
 	level = *md.intr_ipl & 0x07;
 
+#ifdef DIAGNOSTIC
 	/*
 	 * It is really bizarre for the mask and level to the be the same.
 	 * pcc2 for 187 blocks all interrupts at and below the mask value,
@@ -1789,11 +1790,7 @@ m187_ext_int(u_int v, struct m88100_saved_state *eframe)
 	if (level == 0) {
 		panic("Bogons... level %x and mask %x", level, mask);
 	}
-
-	/* and block interrupts at level or lower */
-	setipl(level);
-	/* and stash it away in the trap frame */
-	eframe->mask = mask;
+#endif
 
 	uvmexp.intrs++;
 
@@ -1806,6 +1803,9 @@ m187_ext_int(u_int v, struct m88100_saved_state *eframe)
 	flush_pipeline();
 	flush_pipeline();
 
+	/* block interrupts at level or lower */
+	setipl(level);
+
 	enable_interrupt();
 
 	if ((intr = intr_handlers[vec]) == NULL) {
@@ -1814,11 +1814,13 @@ m187_ext_int(u_int v, struct m88100_saved_state *eframe)
 		printf("Spurious interrupt (level %x and vec %x)\n",
 		       level, vec);
 	} else {
+#ifdef DIAGNOSTIC
 		if (intr && intr->ih_ipl != level) {
 			panic("Handler ipl %x not the same as level %x. "
 			    "vec = 0x%x",
 			    intr->ih_ipl, level, vec);
 		}
+#endif
 
 		/*
 		 * Walk through all interrupt handlers in the chain for the
@@ -1856,7 +1858,7 @@ m187_ext_int(u_int v, struct m88100_saved_state *eframe)
 	 * Restore the mask level to what it was when the interrupt
 	 * was taken.
 	 */
-	setipl(eframe->mask);
+	setipl(mask);
 }
 #endif /* MVME187 */
 
