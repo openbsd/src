@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: bundle.c,v 1.42 2000/07/11 22:13:02 brian Exp $
+ *	$OpenBSD: bundle.c,v 1.43 2000/08/15 10:08:46 brian Exp $
  */
 
 #include <sys/param.h>
@@ -1122,16 +1122,16 @@ bundle_ShowLinks(struct cmdargs const *arg)
   for (dl = arg->bundle->links; dl; dl = dl->next) {
     prompt_Printf(arg->prompt, "Name: %s [%s, %s]",
                   dl->name, mode2Nam(dl->physical->type), datalink_State(dl));
-    if (dl->physical->link.throughput.rolling && dl->state == DATALINK_OPEN)
+    if (dl->physical->link.stats.total.rolling && dl->state == DATALINK_OPEN)
       prompt_Printf(arg->prompt, " bandwidth %d, %llu bps (%llu bytes/sec)",
                     dl->mp.bandwidth ? dl->mp.bandwidth :
                                        physical_GetSpeed(dl->physical),
-                    dl->physical->link.throughput.OctetsPerSecond * 8,
-                    dl->physical->link.throughput.OctetsPerSecond);
+                    dl->physical->link.stats.total.OctetsPerSecond * 8,
+                    dl->physical->link.stats.total.OctetsPerSecond);
     prompt_Printf(arg->prompt, "\n");
   }
 
-  t = &arg->bundle->ncp.mp.link.throughput;
+  t = &arg->bundle->ncp.mp.link.stats.total;
   secs = t->downtime ? 0 : throughput_uptime(t);
   if (secs > t->SamplePeriod)
     secs = t->SamplePeriod;

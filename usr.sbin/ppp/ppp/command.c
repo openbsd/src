@@ -17,7 +17,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $OpenBSD: command.c,v 1.45 2000/07/19 11:06:32 brian Exp $
+ * $OpenBSD: command.c,v 1.46 2000/08/15 10:08:48 brian Exp $
  *
  */
 #include <sys/param.h>
@@ -2599,7 +2599,7 @@ ClearCommand(struct cmdargs const *arg)
       log_Printf(LogWARN, "A link must be specified for ``clear physical''\n");
       return 1;
     }
-    t = &cx->physical->link.throughput;
+    t = &cx->physical->link.stats.total;
   } else if (strcasecmp(arg->argv[arg->argn], "ipcp") == 0)
     t = &arg->bundle->ncp.ipcp.throughput;
   else
