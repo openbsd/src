@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp_new.c,v 1.11 1997/11/15 00:07:08 deraadt Exp $	*/
+/*	$OpenBSD: ip_esp_new.c,v 1.12 1997/11/18 00:12:15 provos Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -727,7 +727,7 @@ esp_new_input(struct mbuf *m, struct tdb *tdb)
      * Verify correct decryption by checking the last padding bytes.
      */
 
-    if (xd->edx_flags & ESP_NEW_FLAG_OPADDING)
+    if ((xd->edx_flags & ESP_NEW_FLAG_NPADDING) == 0)
     {
         if ((blk[6] != blk[5]) && (blk[6] != 0))
 	{
@@ -782,7 +782,7 @@ esp_new_input(struct mbuf *m, struct tdb *tdb)
     ipo.ip_len += (ipo.ip_hl << 2) -  2 * sizeof(u_int32_t) - xd->edx_ivlen -
 		  blk[6] - 1 - alen;
 
-    if (xd->edx_flags & ESP_NEW_FLAG_OPADDING)
+    if ((xd->edx_flags & ESP_NEW_FLAG_NPADDING) == 0)
       ipo.ip_len -= 1;
 
     ipo.ip_len = htons(ipo.ip_len);
@@ -802,7 +802,7 @@ esp_new_input(struct mbuf *m, struct tdb *tdb)
     espstat.esps_ibytes += ntohs(ip->ip_len) - (ip->ip_hl << 2) + 
                            blk[6] + 1 + alen;
 
-    if (xd->edx_flags & ESP_NEW_FLAG_OPADDING)
+    if ((xd->edx_flags & ESP_NEW_FLAG_NPADDING) == 0)
     {
 	tdb->tdb_cur_bytes++;
 	espstat.esps_ibytes++;
@@ -950,10 +950,10 @@ esp_new_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
     for (i = 0; i < padding - 2; i++)
       pad[i] = i + 1;
 
-    if (xd->edx_flags & ESP_NEW_FLAG_OPADDING)
-      pad[padding - 2] = padding - 2;
-    else
+    if (xd->edx_flags & ESP_NEW_FLAG_NPADDING)
       pad[padding - 2] = padding - 1;
+    else
+      pad[padding - 2] = padding - 2;
 
     pad[padding - 1] = nh;
 
