@@ -4040,6 +4040,7 @@
 ./var/db/ns
 ./var/db/pkg
 ./var/empty
+./var/empty/dev
 ./var/games
 ./var/games/hackdir
 ./var/games/hackdir/save
