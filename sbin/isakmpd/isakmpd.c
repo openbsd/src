@@ -1,9 +1,10 @@
-/*	$OpenBSD: isakmpd.c,v 1.24 2000/06/08 20:51:31 niklas Exp $	*/
-/*	$EOM: isakmpd.c,v 1.52 2000/05/14 20:24:13 angelos Exp $	*/
+/*	$OpenBSD: isakmpd.c,v 1.25 2000/10/07 06:58:37 niklas Exp $	*/
+/*	$EOM: isakmpd.c,v 1.54 2000/10/05 09:28:22 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
  * Copyright (c) 1999, 2000 Angelos D. Keromytis.  All rights reserved.
+ * Copyright (c) 1999, 2000 Håkan Olsson.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -98,7 +99,7 @@ static void
 usage ()
 {
   fprintf (stderr,
-	   "usage: %s [-d] [-c config-file] [-D class=level] [-f fifo]\n"
+	   "usage: %s [-c config-file] [-d] [-D class=level] [-f fifo]\n"
 	   "          [-i pid-file] [-n] [-p listen-port] [-P local-port]\n"
 	   "          [-r seed] [-R report-file]\n",
 	   sysdep_progname ());
