@@ -1,4 +1,4 @@
-/*	$OpenBSD: bktr_tuner.c,v 1.1 2001/03/28 03:27:10 fgsch Exp $	*/
+/*	$OpenBSD: bktr_tuner.c,v 1.2 2002/04/30 23:18:38 mickey Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_tuner.c,v 1.9 2000/10/19 07:33:28 roger Exp $ */
 
 /*
@@ -315,7 +315,7 @@ static const struct TUNER tuners[] = {
  * IF freq: 45.75 mHz
  */
 #define OFFSET	6.00
-static int nabcst[] = {
+static const int nabcst[] = {
 	83,	(int)( 45.75 * FREQFACTOR),	0,
 	14,	(int)(471.25 * FREQFACTOR),	(int)(OFFSET * FREQFACTOR),
 	 7,	(int)(175.25 * FREQFACTOR),	(int)(OFFSET * FREQFACTOR),
@@ -338,7 +338,7 @@ static int nabcst[] = {
  * IF freq: 45.75 mHz
  */
 #define OFFSET	6.00
-static int irccable[] = {
+static const int irccable[] = {
 	116,    (int)( 45.75 * FREQFACTOR),     0,
 	100,    (int)(649.25 * FREQFACTOR),     (int)(OFFSET * FREQFACTOR),
 	95,	(int)( 91.25 * FREQFACTOR),	(int)(OFFSET * FREQFACTOR),
@@ -364,7 +364,7 @@ static int irccable[] = {
  * IF freq: 45.75 mHz
  */
 #define OFFSET  6.00
-static int hrccable[] = {
+static const int hrccable[] = {
 	116,    (int)( 45.75 * FREQFACTOR),     0,
 	100,    (int)(648.00 * FREQFACTOR),     (int)(OFFSET * FREQFACTOR),
 	95,	(int)( 90.00 * FREQFACTOR),	(int)(OFFSET * FREQFACTOR),
@@ -520,7 +520,7 @@ static int hrccable[] = {
  * 121	 3890	000	IFFREQ
  * 
  */
-static int weurope[] = {
+static const int weurope[] = {
        121,     (int)( 38.90 * FREQFACTOR),     0, 
        100,     (int)(303.25 * FREQFACTOR),     (int)(8.00 * FREQFACTOR), 
         90,     (int)(231.25 * FREQFACTOR),     (int)(7.00 * FREQFACTOR),
@@ -550,7 +550,7 @@ static int weurope[] = {
  */
 #define OFFSET  6.00
 #define IF_FREQ 45.75
-static int jpnbcst[] = {
+static const int jpnbcst[] = {
 	62,     (int)(IF_FREQ * FREQFACTOR),    0,
 	13,     (int)(471.25 * FREQFACTOR),     (int)(OFFSET * FREQFACTOR),
 	 8,     (int)(193.25 * FREQFACTOR),     (int)(OFFSET * FREQFACTOR),
@@ -575,7 +575,7 @@ static int jpnbcst[] = {
  */
 #define OFFSET  6.00
 #define IF_FREQ 45.75
-static int jpncable[] = {
+static const int jpncable[] = {
 	63,     (int)(IF_FREQ * FREQFACTOR),    0,
 	23,     (int)(223.25 * FREQFACTOR),     (int)(OFFSET * FREQFACTOR),
 	22,     (int)(165.25 * FREQFACTOR),     (int)(OFFSET * FREQFACTOR),
@@ -606,7 +606,7 @@ static int jpncable[] = {
  * IF freq: 38.90 MHz
  */
 #define IF_FREQ 38.90
-static int xussr[] = {
+static const int xussr[] = {
       107,     (int)(IF_FREQ * FREQFACTOR),    0,
        78,     (int)(231.25 * FREQFACTOR),     (int)(8.00 * FREQFACTOR), 
        70,     (int)(111.25 * FREQFACTOR),     (int)(8.00 * FREQFACTOR),
@@ -624,7 +624,7 @@ static int xussr[] = {
  */
 #define OFFSET	7.00
 #define IF_FREQ 38.90 
-static int australia[] = {
+static const int australia[] = {
        83,     (int)(IF_FREQ * FREQFACTOR),    0,
        28,     (int)(527.25 * FREQFACTOR),     (int)(OFFSET * FREQFACTOR),
        10,     (int)(209.25 * FREQFACTOR),     (int)(OFFSET * FREQFACTOR),
@@ -642,7 +642,7 @@ static int australia[] = {
  */
 #define OFFSET 8.00
 #define IF_FREQ 38.90
-static int france[] = {
+static const int france[] = {
         69,     (int)(IF_FREQ * FREQFACTOR),     0,
         21,     (int)(471.25 * FREQFACTOR),     (int)(OFFSET * FREQFACTOR), /* 21 -> 69 */
          5,     (int)(176.00 * FREQFACTOR),     (int)(OFFSET * FREQFACTOR), /* 5 -> 10 */
@@ -654,8 +654,8 @@ static int france[] = {
 #undef OFFSET
 #undef IF_FREQ
 
-static struct {
-        int     *ptr;
+static const struct {
+        const int     *ptr;
         char    name[BT848_MAX_CHNLSET_NAME_LEN];
 } freqTable[] = {
         {NULL,          ""},
