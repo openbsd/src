@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: auth_unix.c,v 1.9 1997/11/08 20:51:23 deraadt Exp $";
+static char *rcsid = "$OpenBSD: auth_unix.c,v 1.10 1998/07/09 06:11:56 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -177,7 +177,7 @@ authunix_create_default()
 	gid_t gids[NGRPS];
 	int gids2[NGRPS];
 
-	if (gethostname(machname, MAX_MACHINE_NAME) == -1)
+	if (gethostname(machname, sizeof machname) == -1)
 		return (NULL);
 	machname[MAX_MACHINE_NAME] = 0;
 	uid = geteuid();
