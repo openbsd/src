@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_altq.c,v 1.48 2003/04/03 05:08:59 kjc Exp $	*/
+/*	$OpenBSD: pfctl_altq.c,v 1.49 2003/04/03 14:41:46 henning Exp $	*/
 
 /*
  * Copyright (C) 2002
@@ -597,8 +597,8 @@ eval_pfqueue_priq(struct pfctl *pf, struct pf_altq *pa)
 		}
 	}
 
-	/* qid is tied to priority with priq */
-	pa->qid = pa->priority + 1;
+	if (pa->qid == 0)
+		pa->qid = ++max_qid;
 
 	return (0);
 }
