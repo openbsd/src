@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_rwlock.c,v 1.1 2003/11/18 06:11:10 tedu Exp $	*/
+/*	$OpenBSD: kern_rwlock.c,v 1.2 2003/11/18 18:12:14 tedu Exp $	*/
 /*
  * Copyright (c) 2002, 2003 Artur Grabowski <art@openbsd.org>
  * All rights reserved. 
@@ -31,8 +31,6 @@
 
 /* XXX - temporary measure until proc0 is properly aligned */
 #define RW_PROC(p) (((unsigned long)p) & ~RWLOCK_MASK)
-
-#define RWLOCK_TEST
 
 #ifndef __HAVE_MD_RWLOCK
 /*
