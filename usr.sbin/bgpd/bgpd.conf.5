@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.22 2004/05/07 10:06:15 djm Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.23 2004/05/08 20:00:44 henning Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -359,6 +359,63 @@ The shared secret can either be given as a password or hexadecimal key.
 tcp md5sig password mekmidasdigoat
 tcp md5sig key deadbeef
 .Ed
+.It Ar ipsec (ah|esp) (in|out) spi <number> <authspec> [<encspec>]
+Enable IPsec with static keying.
+There have to be at least two "ipsec" statements per peer with manual
+keying, one per direction.
+.Ar authspec
+specifies the authentication algorithm and key.
+It can be
+.Bd -literal -offset indent
+sha1 <key>
+md5 <key>
+.Ed
+.Pp
+.Ar encspec
+specifies the encryption algorithm and key.
+.Ar ah
+does not support encryption.
+With
+.Ar esp ,
+encryption is optional.
+.Ar encspec
+can be
+.Bd -literal -offset indent
+3des <key>
+3des-cbc <key>
+aes <key>
+aes-128-cbc <key>
+.Ed
+.Pp
+Keys have to be given in hexadecimal format.
+.It Ar ipsec (ah|esp) ike
+Enable IPsec with dynamic keying.
+In this mode,
+.Ar bgpd
+sets up the flows, and a key management daemon such as
+.Xr isakmpd 8
+is responsible for the session keys.
+With
+.Xr isakmpd 8 ,
+it is sufficient to copy the peer's public key, found in
+.Pa /etc/isakmpd/private/local.pub
+to the local machine. It has to be stored in a file
+named after the peer's IP address and has to be stored in
+.Pa /etc/isakmpd/pubkeys/ipv4/ .
+The local public key has to be copied to the peer in the same way.
+A simple
+.Pa /etc/isakmpd/isakmpd.policy
+file is needed as well, it can be as simple as
+.Bd -literal -offset indent
+Authorizer: "POLICY"
+Comment: This bare-bones assertion accepts everything
+.Ed
+.Pp
+After starting the
+.Xr isakmpd 8
+and
+.Ar bgpd
+daemons on both sides the session should be established.
 .El
 .Sh FILTER
 .Ar bgpd
@@ -563,8 +620,11 @@ configuration file.
 .El
 .Sh SEE ALSO
 .Xr strftime 3 ,
+.Xr ipsec 4 ,
 .Xr tcp 4 ,
-.Xr bgpd 8
+.Xr bgpd 8 ,
+.Xr ipsecadm 8 ,
+.Xr isakmpd 8
 .Sh HISTORY
 The
 .Nm
