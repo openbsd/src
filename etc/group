@@ -46,6 +46,7 @@ _mopd:*:78:
 _tftpd:*:79:
 _rbootd:*:80:
 _afs:*:81:
+_pppoe:*:82:
 dialer:*:117:
 nogroup:*:32766:
 nobody:*:32767:

@@ -1,4 +1,4 @@
-#	$OpenBSD: ftpusers,v 1.21 2004/05/06 03:44:59 deraadt Exp $
+#	$OpenBSD: ftpusers,v 1.22 2004/05/06 16:49:02 deraadt Exp $
 #
 # list of users disallowed any ftp access.
 # read by ftpd(8).
@@ -33,3 +33,4 @@ _mopd
 _tftpd
 _rbootd
 _afs
+_pppoe
