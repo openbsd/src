@@ -1,4 +1,4 @@
-/*	$OpenBSD: systrace-translate.c,v 1.8 2002/07/20 04:19:53 provos Exp $	*/
+/*	$OpenBSD: systrace-translate.c,v 1.9 2002/07/30 06:07:06 itojun Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -231,7 +231,7 @@ print_argv(char *buf, size_t buflen, struct intercept_translate *tl)
 	return (0);
 }
 
-struct intercept_translate argv = {
+struct intercept_translate trargv = {
 	"argv",
 	get_argv, print_argv,
 };
