@@ -1,4 +1,4 @@
-.\"     $OpenBSD: nc.1,v 1.31 2004/03/12 10:10:00 jmc Exp $
+.\"     $OpenBSD: nc.1,v 1.32 2004/07/15 15:07:52 markus Exp $
 .\"
 .\" Copyright (c) 1996 David Sacerdote
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .Sh SYNOPSIS
 .Nm nc
 .Bk -words
-.Op Fl 46dhklnrStUuvz
+.Op Fl 46DdhklnrStUuvz
 .Op Fl i Ar interval
 .Op Fl p Ar source_port
 .Op Fl s Ar source_ip_address
@@ -91,6 +91,8 @@ to use IPv4 addresses only.
 Forces
 .Nm
 to use IPv6 addresses only.
+.It Fl D
+Enable debugging on the socket.
 .It Fl d
 Do not attempt to read from stdin.
 .It Fl h

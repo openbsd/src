@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.72 2004/03/12 10:10:00 jmc Exp $ */
+/* $OpenBSD: netcat.c,v 1.73 2004/07/15 15:07:52 markus Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  *
@@ -73,6 +73,7 @@ int	uflag;					/* UDP - Default to TCP */
 int	vflag;					/* Verbosity */
 int	xflag;					/* Socks proxy */
 int	zflag;					/* Port Scan Flag */
+int	Dflag;					/* sodebug */
 int	Sflag;					/* TCP MD5 signature option */
 
 int timeout = -1;
@@ -114,7 +115,7 @@ main(int argc, char *argv[])
 	endp = NULL;
 	sv = NULL;
 
-	while ((ch = getopt(argc, argv, "46UX:dhi:klnp:rs:tuvw:x:zS")) != -1) {
+	while ((ch = getopt(argc, argv, "46Ddhi:klnp:rSs:tUuvw:X:x:z")) != -1) {
 		switch (ch) {
 		case '4':
 			family = AF_INET;
@@ -183,6 +184,9 @@ main(int argc, char *argv[])
 			break;
 		case 'z':
 			zflag = 1;
+			break;
+		case 'D':
+			Dflag = 1;
 			break;
 		case 'S':
 			Sflag = 1;
@@ -486,6 +490,11 @@ remote_connect(char *host, char *port, struct addrinfo hints)
 			    &x, sizeof(x)) == -1)
 				err(1, NULL);
 		}
+		if (Dflag) {
+			if (setsockopt(s, SOL_SOCKET, SO_DEBUG,
+			    &x, sizeof(x)) == -1)
+				err(1, NULL);
+		}
 
 		if (connect(s, res0->ai_addr, res0->ai_addrlen) == 0)
 			break;
@@ -540,6 +549,11 @@ local_listen(char *host, char *port, struct addrinfo hints)
 			ret = setsockopt(s, IPPROTO_TCP, TCP_MD5SIG,
 			    &x, sizeof(x));
 			if (ret == -1)
+				err(1, NULL);
+		}
+		if (Dflag) {
+			if (setsockopt(s, SOL_SOCKET, SO_DEBUG,
+			    &x, sizeof(x)) == -1)
 				err(1, NULL);
 		}
 
@@ -753,6 +767,7 @@ help(void)
 	fprintf(stderr, "\tCommand Summary:\n\
 	\t-4		Use IPv4\n\
 	\t-6		Use IPv6\n\
+	\t-D		Enable the debug socket option\n\
 	\t-d		Detach from stdin\n\
 	\t-h		This help text\n\
 	\t-i secs\t	Delay interval for lines sent, ports scanned\n\
@@ -778,7 +793,7 @@ help(void)
 void
 usage(int ret)
 {
-	fprintf(stderr, "usage: nc [-46dhklnrStUuvz] [-i interval] [-p source_port]\n");
+	fprintf(stderr, "usage: nc [-46DdhklnrStUuvz] [-i interval] [-p source_port]\n");
 	fprintf(stderr, "\t  [-s source_ip_address] [-w timeout] [-X socks_version]\n");
 	fprintf(stderr, "\t  [-x proxy_address[:port]] [hostname] [port[s]]\n");
 	if (ret)
