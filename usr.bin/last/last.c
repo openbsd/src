@@ -1,4 +1,4 @@
-/*	$OpenBSD: last.c,v 1.3 1997/01/15 23:42:41 millert Exp $	*/
+/*	$OpenBSD: last.c,v 1.4 1997/07/20 07:54:09 jdm Exp $	*/
 /*	$NetBSD: last.c,v 1.6 1994/12/24 16:49:02 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)last.c	8.2 (Berkeley) 4/2/94";
 #endif
-static char rcsid[] = "$OpenBSD: last.c,v 1.3 1997/01/15 23:42:41 millert Exp $";
+static char rcsid[] = "$OpenBSD: last.c,v 1.4 1997/07/20 07:54:09 jdm Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -64,6 +64,7 @@ static char rcsid[] = "$OpenBSD: last.c,v 1.3 1997/01/15 23:42:41 millert Exp $"
 
 #define	NO	0				/* false/no */
 #define	YES	1				/* true/yes */
+#define ATOI2(ar)       ((ar)[0] - '0') * 10 + ((ar)[1] - '0'); (ar) += 2;
 
 static struct utmp	buf[1024];		/* utmp read buffer */
 
@@ -87,12 +88,17 @@ TTY	*ttylist;				/* head of linked list */
 static time_t	currentout;			/* current logout value */
 static long	maxrec;				/* records to display */
 static char	*file = _PATH_WTMP;		/* wtmp file */
+static time_t	snaptime;		        /* if != 0, we will only
+	                                         * report users logged in
+		                                 * at this snapshot time
+						 */
 
 void	 addarg __P((int, char *));
 TTY	*addtty __P((char *));
 void	 hostconv __P((char *));
 void	 onintr __P((int));
 char	*ttyconv __P((char *));
+time_t	 dateconv __P((char *));
 int	 want __P((struct utmp *, int));
 void	 wtmp __P((void));
 
@@ -107,7 +113,8 @@ main(argc, argv)
 	char *p;
 
 	maxrec = -1;
-	while ((ch = getopt(argc, argv, "0123456789f:h:t:")) != -1)
+	snaptime = 0;
+	while ((ch = getopt(argc, argv, "0123456789f:h:t:d:")) != -1)
 		switch (ch) {
 		case '0': case '1': case '2': case '3': case '4':
 		case '5': case '6': case '7': case '8': case '9':
@@ -135,10 +142,15 @@ main(argc, argv)
 		case 't':
 			addarg(TTY_TYPE, ttyconv(optarg));
 			break;
+		case 'd':
+			snaptime = dateconv(optarg);
+			break;
 		case '?':
 		default:
 			(void)fprintf(stderr,
-	"usage: last [-#] [-f file] [-t tty] [-h hostname] [user ...]\n");
+				      "usage: last [-#] [-f file] [-t tty]"
+				      " [-h host] [-d [MMDD]hhmm[.SS]]"
+			              " [user ...]\n");
 			exit(1);
 		}
 
@@ -170,7 +182,7 @@ wtmp()
 	time_t	bl, delta;			/* time difference */
 	int	bytes, wfd;
 	char	*ct, *crmsg;
-
+	int 	snapfound = 0;		        /* found snapshot entry? */
 	if ((wfd = open(file, O_RDONLY, 0)) < 0 || fstat(wfd, &stb) == -1)
 		err(1, "%s", file);
 	bl = (stb.st_size + sizeof(buf) - 1) / sizeof(buf);
@@ -195,7 +207,20 @@ wtmp()
 				currentout = -bp->ut_time;
 				crmsg = strncmp(bp->ut_name, "shutdown",
 				    UT_NAMESIZE) ? "crash" : "shutdown";
-				if (want(bp, NO)) {
+				/* 
+				 * if we're in snapshop mode, we want to
+				 * exit if this shutdown/reboot appears
+				 * while we we are tracking the active
+				 * range
+				 */
+				if (snaptime && snapfound)
+					return;
+				/* 
+				 * don't print shutdown/reboot entries
+				 * unless flagged for and not in snapshot
+				 * mode
+				 */ 
+				if (!snaptime && want(bp, NO)) {
 					ct = ctime(&bp->ut_time);
 				printf("%-*.*s  %-*.*s %-*.*s %10.10s %5.5s \n",
 					    UT_NAMESIZE, UT_NAMESIZE,
@@ -214,7 +239,7 @@ wtmp()
 			 */
 			if ((bp->ut_line[0] == '{' || bp->ut_line[0] == '|')
 			    && !bp->ut_line[1]) {
-				if (want(bp, NO)) {
+				if (want(bp, NO) && !snaptime) {
 					ct = ctime(&bp->ut_time);
 				printf("%-*.*s  %-*.*s %-*.*s %10.10s %5.5s \n",
 				    UT_NAMESIZE, UT_NAMESIZE, bp->ut_name,
@@ -236,7 +261,16 @@ wtmp()
 				if (!strncmp(T->tty, bp->ut_line, UT_LINESIZE))
 					break;
 			}
-			if (bp->ut_name[0] && want(bp, YES)) {
+			/* 
+			 * print record if not in snapshot mode and wanted
+			 * or in snapshot mode and in snapshot range
+			 */
+			if (bp->ut_name[0] &&
+			    ((!snaptime && want(bp, YES)) ||
+			     (bp->ut_time < snaptime && 
+			      (T->logout > snaptime || !T->logout ||
+			       T->logout < 0)))) {
+				snapfound = 1;
 				ct = ctime(&bp->ut_time);
 				printf("%-*.*s  %-*.*s %-*.*s %10.10s %5.5s ",
 				UT_NAMESIZE, UT_NAMESIZE, bp->ut_name,
@@ -407,6 +441,80 @@ ttyconv(arg)
 		return (arg + 5);
 	return (arg);
 }
+
+/* 
+ * dateconv --
+ * 	Convert the snapshot time in command line given in the format
+ * 	[[CC]YY]MMDDhhmm[.SS]] to a time_t.
+ * 	Derived from atime_arg1() in usr.bin/touch/touch.c
+ */
+time_t
+dateconv(arg)
+        char *arg;
+{
+        time_t timet;
+        struct tm *t;
+        int yearset;
+        char *p;
+
+        /* Start with the current time. */
+        if (time(&timet) < 0)
+                err(1, "time");
+        if ((t = localtime(&timet)) == NULL)
+                err(1, "localtime");
+
+        /* [[CC]YY]MMDDhhmm[.SS] */
+        if ((p = strchr(arg, '.')) == NULL)
+                t->tm_sec = 0; 		/* Seconds defaults to 0. */
+        else {
+                if (strlen(p + 1) != 2)
+                        goto terr;
+                *p++ = '\0';
+                t->tm_sec = ATOI2(p);
+        }
+
+        yearset = 0;
+        switch (strlen(arg)) {
+        case 12:                	/* CCYYMMDDhhmm */
+                t->tm_year = ATOI2(arg);
+                t->tm_year *= 100;
+                yearset = 1;
+                /* FALLTHOUGH */
+        case 10:                	/* YYMMDDhhmm */
+                if (yearset) {
+                        yearset = ATOI2(arg);
+                        t->tm_year += yearset;
+                } else {
+                        yearset = ATOI2(arg);
+                        if (yearset < 69)
+                                t->tm_year = yearset + 2000;
+                        else
+                                t->tm_year = yearset + 1900;
+                }
+                t->tm_year -= 1900;     /* Convert to UNIX time. */
+                /* FALLTHROUGH */
+        case 8:				/* MMDDhhmm */
+                t->tm_mon = ATOI2(arg);
+                --t->tm_mon;    	/* Convert from 01-12 to 00-11 */
+                t->tm_mday = ATOI2(arg);
+                t->tm_hour = ATOI2(arg);
+                t->tm_min = ATOI2(arg);
+                break;
+        case 4:				/* hhmm */
+                t->tm_hour = ATOI2(arg);
+                t->tm_min = ATOI2(arg);
+                break;
+        default:
+                goto terr;
+        }
+        t->tm_isdst = -1;       	/* Figure out DST. */
+        timet = mktime(t);
+        if (timet == -1)
+terr:           errx(1,
+        "out of range or illegal time specification: [[CC]YY]MMDDhhmm[.SS]");
+        return timet;
+}
+
 
 /*
  * onintr --
