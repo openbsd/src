@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.11 2002/12/02 16:31:53 naddy Exp $	*/
+/*	$OpenBSD: util.c,v 1.12 2002/12/02 23:17:36 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -42,7 +42,7 @@
  * Ideally, a scheme to compile these stubs from libc should be used, but
  * this would end up dragging too much code from libc here.
  */
-long __guard[8] = {0,0,0,0,0,0,0,0};
+long __guard[8] = {0, 0, 0, 0, 0, 0, 0, 0};
 void
 __stack_smash_handler(char func[], int damaged)
 {
