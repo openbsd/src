@@ -91,6 +91,7 @@ try (dir, base)
   return 0;
 }
 
+#if defined(__MSDOS__) && !defined(__GO32__)
 /* Return a prefix for temporary file names or NULL if unable to find one.
    The current directory is chosen if all else fails so the program is
    exited if a temporary directory can't be found (mktemp fails).
@@ -140,6 +141,8 @@ choose_temp_base ()
     abort ();
   return temp_filename;
 }
+#endif
+
 /* Return a temporary file name (as a string) or NULL if unable to create
    one.  */
 
