@@ -33,31 +33,30 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: malloc.3,v 1.15 1999/06/29 18:36:21 aaron Exp $
+.\"	$OpenBSD: malloc.3,v 1.16 1999/11/09 22:12:36 aaron Exp $
 .\"
 .Dd August 27, 1996
 .Dt MALLOC 3
 .Os
 .Sh NAME
 .Nm malloc ,
-.Nd general memory allocation function
-.Pp
+.Nm calloc ,
+.Nm realloc ,
 .Nm free ,
 .Nm cfree
-.Nd free up memory allocated with malloc, calloc or realloc
-.Pp
-.Nm realloc
-.Nd reallocation of memory function
+.Nd memory allocation and deallocation
 .Sh SYNOPSIS
 .Fd #include <stdlib.h>
 .Ft void *
 .Fn malloc "size_t size"
+.Ft void *
+.Fn calloc "size_t nmemb" "size_t size"
+.Ft void *
+.Fn realloc "void *ptr" "size_t size"
 .Ft void
 .Fn free "void *ptr"
 .Ft void
 .Fn cfree "void *ptr"
-.Ft void *
-.Fn realloc "void *ptr" "size_t size"
 .Ft char *
 .Va malloc_options
 .Sh DESCRIPTION
@@ -78,6 +77,14 @@ coercion) for storage of any type of object. If the space is of
 or larger, the memory returned will be page-aligned.
 .Pp
 Allocation of a zero size object returns a pointer to a zero size object.
+.Pp
+The
+.Fn calloc
+function allocates space for an array of
+.Fa nmemb
+objects, each of whose size is
+.Fa size .
+The space is initialized to all bits zero.
 .Pp
 The
 .Fn free
@@ -231,13 +238,17 @@ See above.
 .Sh RETURN VALUES
 The
 .Fn malloc
-function returns
+and
+.Fn calloc
+functions return
 a pointer to the allocated space if successful; otherwise
 a null pointer is returned.
 .Pp
 The
 .Fn free
-function returns no value.
+and
+.Fn cfree
+functions return no value.
 .Pp
 The
 .Fn realloc
@@ -286,14 +297,16 @@ A pointer to a free chunk is attempted freed again.
 .Pp
 ``junk pointer, too high to make sense.''
 The pointer doesn't make sense.  It's above the area of memory that
-malloc knows something about.
+.Fn malloc
+knows something about.
 This could be a pointer from some
 .Xr mmap 2 'ed
 memory.
 .Pp
 ``junk pointer, too low to make sense.''
 The pointer doesn't make sense.  It's below the area of memory that
-malloc knows something about.
+.Fn malloc
+knows something about.
 This pointer probably came from your data or bss segments.
 .Pp
 ``malloc() has never been called.''
@@ -304,7 +317,9 @@ realloc'ed.
 The pointer passed to free or realloc has been modified.
 .Pp
 ``pointer to wrong page.''
-The pointer that malloc is trying to free is not pointing to
+The pointer that
+.Fn malloc
+is trying to free is not pointing to
 a sensible page.
 .Pp
 ``recursive call.''
@@ -338,14 +353,20 @@ The
 function conforms to
 .St -ansiC .
 .Sh HISTORY
-The present implementation of malloc started out as a filesystem on a drum
-attached to a 20bit binary challenged computer built with discrete germanium
+The present implementation of
+.Fn malloc
+started out as a filesystem on a drum
+attached to a 20-bit binary challenged computer built with discrete germanium
 transistors, and it has since graduated to handle primary storage rather than
 secondary.
 .Pp
-The main difference from other malloc implementations are believed to be that
+The main difference from other
+.Fn malloc
+implementations are believed to be that
 the free pages are not accessed until allocated.
-Most malloc implementations will store a data structure containing a,
+Most
+.Fn malloc
+implementations will store a data structure containing a,
 possibly double-, linked list in the free chunks of memory, used to tie
 all the free memory together.
 That is a quite suboptimal thing to do.

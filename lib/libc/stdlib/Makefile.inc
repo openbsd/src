@@ -33,12 +33,12 @@ SRCS+=	abs.c div.c labs.c ldiv.c
 .endif
 
 MAN+=	a64l.3 abort.3 abs.3 alloca.3 atexit.3 atof.3 atoi.3 atol.3 bsearch.3 \
-	calloc.3 div.3 exit.3 getenv.3 getopt.3 getsubopt.3 labs.3 ldiv.3 \
+	div.3 exit.3 getenv.3 getopt.3 getsubopt.3 labs.3 ldiv.3 \
 	malloc.3 memory.3 qabs.3 qdiv.3 qsort.3 radixsort.3 rand48.3 rand.3 \
 	random.3 realpath.3 strtod.3 strtol.3 strtoul.3 system.3 tsearch.3
 
 MLINKS+=getenv.3 setenv.3 getenv.3 unsetenv.3 getenv.3 putenv.3
-MLINKS+=malloc.3 free.3 malloc.3 realloc.3
+MLINKS+=malloc.3 free.3 malloc.3 realloc.3 malloc.3 calloc.3
 MLINKS+=malloc.3 cfree.3 malloc.3 malloc.conf.5
 MLINKS+=qsort.3 heapsort.3 qsort.3 mergesort.3
 MLINKS+=rand.3 srand.3
