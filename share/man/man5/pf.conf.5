@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.235 2003/05/12 01:25:32 dhartmei Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.236 2003/05/12 04:22:04 dhartmei Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -319,8 +319,8 @@ set timeout { adaptive.start 6000, adaptive.end 12000 }
 set limit states 10000
 .Ed
 .Pp
-With 10500 state table entries, the timeout values are scaled to 25%
-(tcp.first 30, tcp.established 21600).
+With 9000 state table entries, the timeout values are scaled to 50%
+(tcp.first 60, tcp.established 43200).
 .Pp
 .It Ar set loginterface
 Enable collection of packet and byte count statistics for the given interface.
