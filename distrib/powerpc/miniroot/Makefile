@@ -21,7 +21,7 @@ all: ${CBIN} ${IMAGE}
 DISKTYPE=       rdroot
 NBLKS=          4096
 # old format, minfree, opt, b/i  trks, sects, cpg
-NEWFSARGS= -t ffs -m 0 -o space -u 32 -c 16
+NEWFSARGS= -t ffs -m 0 -o space -c 16
 
 ${IMAGE}:	do_prep do_mount do_files do_umount_copy do_unconfig
 	mv -f ${IMAGE}.tmp ${IMAGE}

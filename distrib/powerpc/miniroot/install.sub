@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.4 1997/02/21 15:39:03 rahnds Exp $
+#	$OpenBSD: install.sub,v 1.5 1997/02/21 17:42:11 rahnds Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@ export VERSION
 
 ALLDIST="base comp etc games man misc text"	# default install sets
 ALLSNAP_1="etc games man misc text bin dev sbin"
-ALLSNAP_2="usr.bin usr.binutils usr .games usr.include"
+ALLSNAP_2="usr.bin usr.binutils usr.games usr.include bsd"
 ALLSNAP_3="usr.lib usr.libexec usr.misc usr.sbin usr.share var"
 ALLSETS="${ALLDIST} ${ALLSNAP_1} ${ALLSNAP_2} ${ALLSNAP_3}"
 

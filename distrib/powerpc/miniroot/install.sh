@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.1 1997/01/31 05:11:05 rahnds Exp $
+#	$OpenBSD: install.sh,v 1.2 1997/02/21 17:42:09 rahnds Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -386,16 +386,19 @@ install_sets $ALLSETS $MDSETS
 		ln -s /usr/share/zoneinfo/$TZ /mnt/etc/localtime
 		echo "done."
 	fi
-	if [ ! -x /mnt/dev/MAKEDEV ]; then
-		echo "No /dev/MAKEDEV installed, something is wrong here..."
-	else
-		echo -n "Making devices..."
-		pid=`twiddle`
-		cd /mnt/dev
-		sh MAKEDEV all
-		kill $pid
-		echo "done."
-	fi
+	
+	echo "if dev.tar.gz was not extracted it will be necessary"
+	echo "to go to /mnt/dev and run \"sh MAKEDEV all\""
+#	if [ ! -x /mnt/dev/MAKEDEV ]; then
+#		echo "No /dev/MAKEDEV installed, something is wrong here..."
+#	else
+#		echo -n "Making devices..."
+#		pid=`twiddle`
+#		cd /mnt/dev
+#		sh MAKEDEV all
+#		kill $pid
+#		echo "done."
+#	fi
 	md_copy_kernel
 
 	md_installboot ${ROOTDISK}
