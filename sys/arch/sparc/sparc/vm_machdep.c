@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.37 2001/11/28 13:47:39 art Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.38 2001/12/07 10:47:38 art Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.30 1997/03/10 23:55:40 pk Exp $ */
 
 /*
@@ -114,54 +114,85 @@ extern int has_iocache;
 #endif
 
 caddr_t
-dvma_malloc_space(len, kaddr, flags, space)
-	size_t	len;
-	void	*kaddr;
-	int	flags;
+dvma_malloc_space(size_t len, void *kaddr, int flags, int space)
 {
+	int waitok = (flags & M_NOWAIT) == 0;
+	vsize_t maplen, tmplen;
 	vaddr_t	kva;
 	vaddr_t	dva;
+	int s;
 
 	len = round_page(len);
-	kva = (vaddr_t)malloc(len, M_DEVBUF, flags);
-	if (kva == NULL)
+	/* XXX - verify if maybe uvm_km_valloc from kernel_map would be ok. */
+	s = splbio();
+	kva = uvm_km_valloc(kmem_map, len);
+	splx(s);
+	if (kva == 0)
 		return (NULL);
 
+	for (maplen = 0; maplen < len; maplen += PAGE_SIZE) {
+		struct vm_page *pg;
+		paddr_t pa;
+
+again:
+		pg = uvm_pagealloc(NULL, 0, NULL, 0);
+		if (pg == NULL) {
+			if (waitok) {
+				uvm_wait("dvmapg");
+				goto again;
+			}
+			goto dropit;
+		}
+		pa = VM_PAGE_TO_PHYS(pg);
 #if defined(SUN4M)
-	if (!has_iocache)
+		if (!has_iocache)
 #endif
-		kvm_uncache((caddr_t)kva, atop(len));
+			pa |= PMAP_NC;
+		pmap_kenter_pa(kva + maplen, pa, VM_PROT_ALL);
+	}
 
 	*(vaddr_t *)kaddr = kva;
-	dva = dvma_mapin_space(kernel_map, kva, len, (flags & M_NOWAIT) ? 0 : 1, space);
+	dva = dvma_mapin_space(kernel_map, kva, len, waitok ? 1 : 0, space);
 	if (dva == NULL) {
-		free((void *)kva, M_DEVBUF);
-		return (NULL);
+		goto dropit;
 	}
 	return (caddr_t)dva;
+dropit:
+	for (tmplen = 0; tmplen < maplen; tmplen += PAGE_SIZE) {
+		paddr_t pa;
+
+		if (pmap_extract(pmap_kernel(), kva + tmplen, &pa) == FALSE)
+			panic("dvma_malloc_space: pmap_extract");
+
+		pmap_kremove(kva + tmplen, PAGE_SIZE);
+		uvm_pagefree(PHYS_TO_VM_PAGE(pa));
+	}
+
+	uvm_km_free(kmem_map, kva, len);
+
+	return (NULL);
 }
 
 void
-dvma_free(dva, len, kaddr)
-	caddr_t	dva;
-	size_t	len;
-	void	*kaddr;
+dvma_free(caddr_t dva, size_t len, void *kaddr)
 {
+	size_t tmplen;
 	vaddr_t	kva = *(vaddr_t *)kaddr;
 
 	len = round_page(len);
 
 	dvma_mapout((vaddr_t)dva, kva, len);
-	/*
-	 * Even if we're freeing memory here, we can't be sure that it will
-	 * be unmapped, so we must recache the memory range to avoid impact
-	 * on other kernel subsystems.
-	 */
-#if defined(SUN4M)
-	if (!has_iocache)
-#endif
-		kvm_recache(kaddr, atop(len));
-	free((void *)kva, M_DEVBUF);
+	for (tmplen = 0; tmplen < len; tmplen += PAGE_SIZE) {
+		paddr_t pa;
+
+		if (pmap_extract(pmap_kernel(), kva + tmplen, &pa) == FALSE)
+			panic("dvma_malloc_space: pmap_extract");
+
+		pmap_kremove(kva + tmplen, PAGE_SIZE);
+		uvm_pagefree(PHYS_TO_VM_PAGE(pa));
+	}
+
+	uvm_km_free(kmem_map, kva, len);
 }
 
 u_long dvma_cachealign = 0;
