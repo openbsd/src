@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_qstats.c,v 1.6 2003/01/10 08:00:23 henning Exp $ */
+/*	$OpenBSD: pfctl_qstats.c,v 1.7 2003/01/10 08:03:28 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer
@@ -151,10 +151,8 @@ pfctl_insert_altq_node(struct pf_altq_node **root,
 	struct pf_altq_node	*node;
 
 	node = calloc(1, sizeof(struct pf_altq_node));
-	if (node == NULL) {
-		errx(1, "pfctl_insert_altq_node: calloc");
-		return;
-	}
+	if (node == NULL)
+		err(1, "pfctl_insert_altq_node: calloc");
 	memcpy(&node->altq, &altq, sizeof(struct pf_altq));
 	memcpy(&node->qstats, &qstats, sizeof(qstats));
 	node->next = node->children = NULL;
@@ -171,10 +169,8 @@ pfctl_insert_altq_node(struct pf_altq_node **root,
 		struct pf_altq_node *parent;
 
 		parent = pfctl_find_altq_node(*root, altq.parent, altq.ifname);
-		if (parent == NULL) {
+		if (parent == NULL)
 			errx(1, "parent %s not found", altq.parent);
-			return;
-		}
 		if (parent->children == NULL)
 			parent->children = node;
 		else {
@@ -275,7 +271,6 @@ print_priqstats(struct priq_classstats qstats)
 	printf("[ qlength: %3d/%3d ]\n",
 	    qstats.qlength, qstats.qlimit);
 }
-
 
 void
 pfctl_free_altq_node(struct pf_altq_node *node)
