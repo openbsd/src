@@ -18,9 +18,7 @@ along with GNU CC; see the file COPYING.  If not, write to
 the Free Software Foundation, 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  */
 
-/* Default mips is little endian, unless otherwise specified.  */
-
-/* Definitions needed for OpenBSD, avoid picking mips 'defaults'.  */
+/* Definitions needed for OpenBSD, to avoid picking mips 'defaults'.  */
 
 /* GAS must know this.  */
 #define SUBTARGET_ASM_SPEC "%{fPIC:-KPIC} %|"
@@ -36,9 +34,8 @@ Boston, MA 02111-1307, USA.  */
    it as it is until we have some kind of profiling working.  */
 #define LIB_SPEC OBSD_LIB_SPEC
 
-/* We are little endian by default, unless an includer thinks otherwise.
-   This is important to set as mips/mips.h defaults to big unless DECSTATION
-   is defined.  */
+/* By default, OpenBSD mips is little endian.  This is important to set
+   here as mips/mips.h defaults to big endian unless DECSTATION.  */
 #ifndef TARGET_ENDIAN_DEFAULT
 #define TARGET_ENDIAN_DEFAULT 0
 #endif
@@ -69,7 +66,7 @@ Boston, MA 02111-1307, USA.  */
 
 /* Layout of source language data types.  */
 
-/* This must agree with <machine/ansi.h>  */
+/* This must agree with <machine/ansi.h>.  */
 #undef SIZE_TYPE
 #define SIZE_TYPE "unsigned int"
 
@@ -82,11 +79,10 @@ Boston, MA 02111-1307, USA.  */
 #undef WCHAR_TYPE_SIZE
 #define WCHAR_TYPE_SIZE 32
 
-/* Controlling the compilation driver. */
+/* Controlling the compilation driver.  */
 
-/* LINK_SPEC appropriate for OpenBSD.  Support for GCC options 
-   -static, -assert, and -nostdlib. Dynamic loader control.
-   XXX Why don't we offer -R support ? */
+/* LINK_SPEC appropriate for OpenBSD:  support for GCC options 
+   -static, -assert, and -nostdlib. Dynamic loader control.  */
 #undef LINK_SPEC
 #define LINK_SPEC \
   "%{G*} %{EB} %{EL} %{mips1} %{mips2} %{mips3} \

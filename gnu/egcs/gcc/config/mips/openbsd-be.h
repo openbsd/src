@@ -1,4 +1,4 @@
-/* Configuration file for a mips big endian OpenBSD target.
+/* Configuration fragment for a mips big-endian OpenBSD target
    Copyright (C) 1999 Free Software Foundation, Inc.
 
 This file is part of GNU CC.
@@ -19,4 +19,3 @@ the Free Software Foundation, 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  */
 
 #define TARGET_ENDIAN_DEFAULT MASK_BIG_ENDIAN
-#include <mips/openbsd.h>
