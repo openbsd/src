@@ -25,7 +25,7 @@ changecom(,)dnl
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $OpenBSD: ppp.8.m4,v 1.15 2004/05/23 17:25:22 jmc Exp $
+.\" $OpenBSD: ppp.8.m4,v 1.16 2004/05/25 09:36:48 jmc Exp $
 .\"
 .Dd September 20, 1995
 .Dt PPP 8
@@ -2171,13 +2171,17 @@ set device /dev/cua00
 set speed 115200
 .Ed
 .Pp
-Cuaa0 is the first serial port on
-.Fx .
-If you're running
-.Nm
-on
-.Ox ,
-cua00 is the first.
+The first serial port is cua00.
+The modem will attach at either
+.Xr com 4 ,
+.Xr pccom 4 ,
+or
+.Xr ucom 4 .
+So, for example, if the modem attaches at
+.Dq pccom3 ,
+device should be set to
+.Pa /dev/cua03 .
+.Pp
 A speed of 115200 should be specified
 if you have a modem capable of bit rates of 28800 or more.
 In general, the serial speed should be about four times the modem speed.
