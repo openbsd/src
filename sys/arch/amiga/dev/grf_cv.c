@@ -1,4 +1,4 @@
-/*	$OpenBSD: grf_cv.c,v 1.12 1996/11/23 21:45:13 kstailey Exp $	*/
+/*	$OpenBSD: grf_cv.c,v 1.13 1996/11/24 20:23:44 niklas Exp $	*/
 /*	$NetBSD: grf_cv.c,v 1.14 1996/05/19 21:05:27 veego Exp $	*/
 
 /*
@@ -267,7 +267,7 @@ struct cfattach grfcv_ca = {
 struct cfdriver grfcv_cd = {
 	NULL, "grfcv", DV_DULL, NULL, 0
 };
-static struct cfdata *cfdata;
+static struct cfdata *grfcv_cfdata;
 
 
 /*
@@ -332,7 +332,7 @@ grfcvmatch(pdp, match, auxp)
 #ifdef CV64CONSOLE
 	if (amiga_realconfig == 0) {
 		cvcons_unit = cfp->cf_unit;
-		cfdata = cfp;
+		grfcv_cfdata = cfp;
 	}
 #endif
 
@@ -400,7 +400,7 @@ grfcvattach(pdp, dp, auxp)
 	/*
 	 * attach grf
 	 */
-	if (amiga_config_found(cfdata, &gp->g_device, gp, grfcvprint)) {
+	if (amiga_config_found(grfcv_cfdata, &gp->g_device, gp, grfcvprint)) {
 		if (dp != NULL)
 			printf("grfcv: CyberVision64 with %dMB being used\n", cv_fbsize/0x100000);
 		attachflag = 1;

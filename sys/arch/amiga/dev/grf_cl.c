@@ -1,4 +1,4 @@
-/*	$OpenBSD: grf_cl.c,v 1.7 1996/11/23 21:45:11 kstailey Exp $	*/
+/*	$OpenBSD: grf_cl.c,v 1.8 1996/11/24 20:23:42 niklas Exp $	*/
 /*      $NetBSD: grf_cl.c,v 1.11.4.1 1996/05/27 10:50:40 is Exp $        */
 
 /*
@@ -180,7 +180,7 @@ struct cfattach grfcl_ca = {
 struct cfdriver grfcl_cd = {
 	NULL, "grfcl", DV_DULL, NULL, 0
 };
-static struct cfdata *cfdata;
+static struct cfdata *grfcl_cfdata;
 
 int
 grfclmatch(pdp, match, auxp)
@@ -263,7 +263,7 @@ grfclmatch(pdp, match, auxp)
 
 #ifdef CL5426CONSOLE
 	if (amiga_realconfig == 0) {
-		cfdata = cfp;
+		grfcl_cfdata = cfp;
 	}
 #endif
 
@@ -321,7 +321,7 @@ grfclattach(pdp, dp, auxp)
 	/*
 	 * attach grf (once)
 	 */
-	if (amiga_config_found(cfdata, &gp->g_device, gp, grfclprint)) {
+	if (amiga_config_found(grfcl_cfdata, &gp->g_device, gp, grfclprint)) {
 		attachflag = 1;
 		printf("grfcl: %dMB ", cl_fbsize / 0x100000);
 		switch (cltype) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: grf_ul.c,v 1.10 1996/11/23 21:45:17 kstailey Exp $	*/
+/*	$OpenBSD: grf_ul.c,v 1.11 1996/11/24 20:23:49 niklas Exp $	*/
 /*	$NetBSD: grf_ul.c,v 1.17 1996/05/09 20:31:25 is Exp $	*/
 
 #define UL_DEBUG
@@ -454,7 +454,7 @@ struct cfdriver grful_cd = {
 /*
  * only used in console init
  */
-static struct cfdata *cfdata;
+static struct cfdata *grful_cfdata;
 
 /*
  * we make sure to only init things once.  this is somewhat
@@ -497,7 +497,7 @@ grfulmatch(pdp, match, auxp)
 #ifdef ULOWELLCONSOLE 
 		if (amiga_realconfig == 0) {
 			ulconunit = cfp->cf_unit;
-			cfdata = cfp;
+			grful_cfdata = cfp;
 		} 
 	}
 #endif
@@ -566,7 +566,7 @@ grfulattach(pdp, dp, auxp)
 	/*
 	 * attach grf
 	 */
-	amiga_config_found(cfdata, &gp->g_device, gp, grfulprint);
+	amiga_config_found(grful_cfdata, &gp->g_device, gp, grfulprint);
 }
 
 int

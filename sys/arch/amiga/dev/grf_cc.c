@@ -1,4 +1,4 @@
-/*	$OpenBSD: grf_cc.c,v 1.4 1996/11/23 21:45:10 kstailey Exp $	*/
+/*	$OpenBSD: grf_cc.c,v 1.5 1996/11/24 20:23:41 niklas Exp $	*/
 /*	$NetBSD: grf_cc.c,v 1.19 1996/04/21 21:11:08 veego Exp $	*/
 
 /*
@@ -77,7 +77,7 @@ struct cfdriver grfcc_cd = {
 /* 
  * only used in console init
  */
-static struct cfdata *cfdata;
+static struct cfdata *grfcc_cfdata;
 
 /*
  * we make sure to only init things once.  this is somewhat
@@ -110,7 +110,7 @@ grfccmatch(pdp, match, auxp)
 			return(0);
 		if (amiga_realconfig == 0) {
 			ccconunit = cfp->cf_unit;
-			cfdata = cfp;
+			grfcc_cfdata = cfp;
 		}
 	}
 	return(1);
@@ -152,7 +152,7 @@ grfccattach(pdp, dp, auxp)
 	/*
 	 * attach grf
 	 */
-	amiga_config_found(cfdata, &gp->g_device, gp, grfccprint);
+	amiga_config_found(grfcc_cfdata, &gp->g_device, gp, grfccprint);
 }
 
 int

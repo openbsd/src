@@ -1,4 +1,4 @@
-/*	$OpenBSD: grf_rt.c,v 1.8 1996/11/23 21:45:16 kstailey Exp $	*/
+/*	$OpenBSD: grf_rt.c,v 1.9 1996/11/24 20:23:48 niklas Exp $	*/
 /*	$NetBSD: grf_rt.c,v 1.27.4.1 1996/05/26 17:26:43 is Exp $	*/
 
 /*
@@ -792,7 +792,7 @@ struct cfdriver grfrt_cd = {
 /*
  * only used in console init
  */
-static struct cfdata *cfdata;
+static struct cfdata *grfrt_cfdata;
 
 /*
  * we make sure to only init things once.  this is somewhat
@@ -838,7 +838,7 @@ grfrtmatch(pdp, match, auxp)
 #ifdef RETINACONSOLE
 		if (amiga_realconfig == 0) {
 			rtconunit = cfp->cf_unit;
-			cfdata = cfp;
+			grfrt_cfdata = cfp;
 		}
 	}
 #endif
@@ -886,7 +886,7 @@ grfrtattach(pdp, dp, auxp)
 	/*
 	 * attach grf
 	 */
-	amiga_config_found(cfdata, &gp->g_device, gp, grfrtprint);
+	amiga_config_found(grfrt_cfdata, &gp->g_device, gp, grfrtprint);
 }
 
 int

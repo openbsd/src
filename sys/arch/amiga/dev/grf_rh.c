@@ -1,4 +1,4 @@
-/*	$OpenBSD: grf_rh.c,v 1.10 1996/11/23 21:45:15 kstailey Exp $	*/
+/*	$OpenBSD: grf_rh.c,v 1.11 1996/11/24 20:23:47 niklas Exp $	*/
 /*	$NetBSD: grf_rh.c,v 1.17.4.3 1996/09/06 00:40:22 jtc Exp $	*/
 
 /*
@@ -1536,7 +1536,7 @@ struct cfdriver grfrh_cd = {
 	NULL, "grfrh", DV_DULL, NULL, 0
 };
 
-static struct cfdata *cfdata;
+static struct cfdata *grfrh_cfdata;
 
 int
 grfrhmatch(pdp, match, auxp)
@@ -1571,7 +1571,7 @@ grfrhmatch(pdp, match, auxp)
 #ifdef RETINACONSOLE
 		if (amiga_realconfig == 0) {
 			rhconunit = cfp->cf_unit;
-			cfdata = cfp;
+			grfrh_cfdata = cfp;
 		}
 	}
 #endif
@@ -1614,7 +1614,7 @@ grfrhattach(pdp, dp, auxp)
 	/*
 	 * attach grf
 	 */
-	amiga_config_found(cfdata, &gp->g_device, gp, grfrhprint);
+	amiga_config_found(grfrh_cfdata, &gp->g_device, gp, grfrhprint);
 }
 
 int

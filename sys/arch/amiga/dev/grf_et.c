@@ -179,7 +179,7 @@ struct cfdriver grfet_cd = {
 	NULL, "grfet", DV_DULL, NULL, 0
 };
 
-static struct cfdata *cfdata;
+static struct cfdata *grfet_cfdata;
 
 int
 grfetmatch(pdp, match, auxp)
@@ -258,7 +258,7 @@ grfetmatch(pdp, match, auxp)
 
 #ifdef TSENGCONSOLE
 	if (amiga_realconfig == 0) {
-		cfdata = cfp;
+		grfet_cfdata = cfp;
 	}
 #endif
 
@@ -317,7 +317,7 @@ grfetattach(pdp, dp, auxp)
 	/*
 	 * attach grf (once)
 	 */
-	if (amiga_config_found(cfdata, &gp->g_device, gp, grfetprint)) {
+	if (amiga_config_found(grfet_cfdata, &gp->g_device, gp, grfetprint)) {
 		attachflag = 1;
 		printf("grfet: %dMB ", et_fbsize / 0x100000);
 		switch (ettype) {

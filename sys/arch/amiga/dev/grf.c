@@ -1,4 +1,4 @@
-/*	$OpenBSD: grf.c,v 1.6 1996/11/23 21:45:10 kstailey Exp $	*/
+/*	$OpenBSD: grf.c,v 1.7 1996/11/24 20:23:40 niklas Exp $	*/
 /*	$NetBSD: grf.c,v 1.27 1996/05/19 20:06:20 is Exp $	*/
 
 /*
@@ -113,7 +113,7 @@ struct cfdriver grf_cd = {
 /*
  * only used in console init.
  */
-static struct cfdata *cfdata;
+static struct cfdata *grf_cfdata;
 
 /*
  * match if the unit of grf matches its perspective 
@@ -128,7 +128,7 @@ grfmatch(pdp, match, auxp)
 
 	if (cfp->cf_unit != ((struct grf_softc *)pdp)->g_unit)
 		return(0);
-	cfdata = cfp;
+	grf_cfdata = cfp;
 	return(1);
 }
 
@@ -168,7 +168,7 @@ grfattach(pdp, dp, auxp)
 	/*
 	 * try and attach an ite
 	 */
-	amiga_config_found(cfdata, dp, gp, grfprint);
+	amiga_config_found(grf_cfdata, dp, gp, grfprint);
 }
 
 int
