@@ -1,4 +1,4 @@
-/*	$OpenBSD: urlphy.c,v 1.6 2004/09/29 09:51:07 dlg Exp $ */
+/*	$OpenBSD: urlphy.c,v 1.7 2004/10/17 23:01:12 deraadt Exp $ */
 /*	$NetBSD: urlphy.c,v 1.1 2002/03/28 21:07:53 ichiro Exp $	*/
 /*
  * Copyright (c) 2001, 2002
@@ -104,6 +104,12 @@ urlphy_attach(struct device *parent, struct device *self, void *aux)
 	struct mii_softc *sc = (struct mii_softc *)self;
 	struct mii_attach_args *ma = aux;
 	struct mii_data *mii = ma->mii_data;
+
+	if (MII_MODEL(ma->mii_id2) == MII_MODEL_REALTEK_RTL8201L) {
+		printf(": %s, rev. %d\n", MII_STR_REALTEK_RTL8201L,
+		    MII_REV(ma->mii_id2));
+	} else
+		printf(": RTL internal phy\n");
 
 	DPRINTF(("%s: %s: enter\n", sc->mii_dev.dv_xname, __func__));
 
