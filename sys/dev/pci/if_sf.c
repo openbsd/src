@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sf.c,v 1.6 2000/03/01 22:49:57 aaron Exp $ */
+/*	$OpenBSD: if_sf.c,v 1.7 2000/08/02 19:23:54 aaron Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -30,7 +30,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/pci/if_sf.c,v 1.18 1999/12/05 20:02:44 wpaul Exp $
+ * $FreeBSD: src/sys/pci/if_sf.c,v 1.23 2000/07/14 19:11:02 wpaul Exp $
  */
 
 /*
@@ -1094,6 +1094,11 @@ void sf_init(xsc)
 	} else {
 		SF_CLRBIT(sc, SF_RXFILT, SF_RXFILT_BROAD);
 	}
+
+	/*
+	 * Load the multicast filter.
+	 */
+	sf_setmulti(sc);
 
 	/* Init the completion queue indexes */
 	csr_write_4(sc, SF_CQ_CONSIDX, 0);
