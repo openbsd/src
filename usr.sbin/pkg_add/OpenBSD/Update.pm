@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Update.pm,v 1.48 2004/12/27 22:40:42 espie Exp $
+# $OpenBSD: Update.pm,v 1.49 2004/12/28 13:56:08 espie Exp $
 #
 # Copyright (c) 2004 Marc Espie <espie@openbsd.org>
 #
@@ -146,8 +146,12 @@ sub validate_depend
 	}
 	return unless OpenBSD::PkgSpec::match($self->{pattern}, $toreplace);
 	if (!OpenBSD::PkgSpec::match($self->{pattern}, $replacement)) {
-		$state->{okay} = 0;
-		Warn "Can't update forward dependency of $wanting on $toreplace\n";
+		if ($state->{forced}->{updatedepends}) {
+		    Warn "Forward dependency of $wanting on $toreplace doesn't match, forcing it\n";
+		} else {
+		    $state->{okay} = 0;
+		    Warn "Can't update forward dependency of $wanting on $toreplace\n";
+		}
 	}
 }
 
@@ -207,8 +211,12 @@ sub validate_depend
 	}
 	return unless OpenBSD::PkgSpec::match($self->{pattern}, $toreplace);
 	if (!OpenBSD::PkgSpec::match($self->{pattern}, $replacement)) {
-		$state->{okay} = 0;
-		Warn "Can't update forward dependency of $wanting on $toreplace\n";
+		if ($state->{forced}->{updatedepends}) {
+		    Warn "Forward dependency of $wanting on $toreplace doesn't match, forcing it\n";
+		} else {
+		    $state->{okay} = 0;
+		    Warn "Can't update forward dependency of $wanting on $toreplace\n";
+		}
 	}
 }
 
@@ -221,8 +229,12 @@ sub validate_depend
 
 	return unless OpenBSD::PkgSpec::match($self->{pattern}, $toreplace);
 	if (!OpenBSD::PkgSpec::match($self->{pattern}, $replacement)) {
-		$state->{okay} = 0;
-		Warn "Can't update forward dependency of $wanting on $toreplace\n";
+		if ($state->{forced}->{updatedepends}) {
+		    Warn "Forward dependency of $wanting on $toreplace doesn't match, forcing it\n";
+		} else {
+		    $state->{okay} = 0;
+		    Warn "Can't update forward dependency of $wanting on $toreplace\n";
+		}
 	}
 }
 
@@ -245,21 +257,25 @@ sub can_do
 	$plist->visit('can_update', 0, $state);
 	if ($state->{okay} == 0) {
 		Warn "Old package ", $plist->pkgname(), " contains unsafe operations\n";
-	}
-	if ($state->{forced}->{update}) {
-		$state->{okay} = 1;
+		if ($state->{forced}->{update}) {
+			Warn "(forcing update)\n";
+			$state->{okay} = 1;
+		}
 	}
 	my @wantlist = OpenBSD::RequiredBy->new($toreplace)->list();
+	my @r = ();
 	for my $wanting (@wantlist) {
-		next if defined $ignore->{$wanting};
-		print "Verifying dependencies still match for $wanting\n" if $state->{verbose};
-		my $p2 = OpenBSD::PackingList->from_installation($wanting,
-		    \&OpenBSD::PackingList::DependOnly);
-		$p2->visit('validate_depend', $state, $wanting, $toreplace, $replacement);
+		push(@r, $wanting) if !defined $ignore->{$wanting};
 	}
-
-	if ($state->{forced}->{updatedepends}) {
-		$state->{okay} = 1;
+	if (@r) {
+		print "Verifying dependencies still match for ", 
+		    join(', ', @r), "\n" if $state->{verbose};
+		for my $wanting (@wantlist) {
+			my $p2 = OpenBSD::PackingList->from_installation(
+			    $wanting, \&OpenBSD::PackingList::DependOnly);
+			$p2->visit('validate_depend', $state, $wanting, 
+			    $toreplace, $replacement);
+		}
 	}
 
 	if ($state->{okay}) {
@@ -285,8 +301,12 @@ sub is_safe
 	if ($state->{okay} == 0) {
 		Warn "New package ", $plist->pkgname(), 
 		    " contains unsafe operations\n";
+		if ($state->{forced}->{update}) {
+			Warn "(forcing update)\n";
+			$state->{okay} = 1;
+		}
 	}
-	return $state->{okay} || $state->{forced}->{update};
+	return $state->{okay};
 }
 
 # create a packing-list with only the libraries we want to keep around.
@@ -416,6 +436,9 @@ sub save_old_libraries
 				$old_plist->to_installation();
 			}
 			add_installed($stub_name);
+
+			require OpenBSD::PkgCfl;
+			OpenBSD::PkgCfl::register($stub_list, $state);
 
 			walk_depends_closure($old_plist->pkgname(), $stub_name, $state);
 		} else {
