@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.120 2003/07/29 18:17:59 grange Exp $
+dnl	$OpenBSD: hardware,v 1.121 2003/08/01 07:03:21 grange Exp $
 OpenBSD/MACHINE OSREV works across a broad range of standard PC's and
 clones, with a wide variety of processors and I/O bus architectures.  It
 can be expected to install and run with minimal difficulties on most
@@ -83,6 +83,9 @@ Supported hardware {:-include-:}:
 		    VT8231, VT8366, VT8233, VT8235
 		(Other PCI IDE-compliant controllers should work, but
 		 those not listed above may not be capable of DMA modes)
+	SATA Controllers
+		Promise PDC20376 (only parallel ATA mode tested)
+		Silicon Image SiI3112
 	SCSI Host Adapters
 		Adaptec AHA-1540, AHA-154xA, AHA-154xB, AHA-1542C,
 		    AHA-1542CF, AHA-1542CP, AHA-1640 [B] [C]
