@@ -1,4 +1,4 @@
-/*	$OpenBSD: process.c,v 1.4 2000/06/28 23:52:58 deraadt Exp $ */
+/*	$OpenBSD: process.c,v 1.5 2000/07/03 13:55:28 maja Exp $ */
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: process.c,v 1.4 2000/06/28 23:52:58 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: process.c,v 1.5 2000/07/03 13:55:28 maja Exp $";
 #endif
 
 #include "os.h"
@@ -438,7 +438,7 @@ mopProcessDL(fd, ii, pkt, index, dst, src, trans, len)
 {
 	u_char  tmpc;
 	u_short moplen;
-	u_char  pfile[17], mopcode;
+	u_char  pfile[128], mopcode;
 	char    filename[FILENAME_MAX];
 	char    line[100];
 	int     i,nfd,iindex;
@@ -487,6 +487,8 @@ mopProcessDL(fd, ii, pkt, index, dst, src, trans, len)
 		rpr_pgty = mopGetChar(pkt,index);	/* Program Type */
 		
 		tmpc = mopGetChar(pkt,index);		/* Software ID Len */
+		if (tempc > sizeof(pfile))
+			return;
 		for (i = 0; i < tmpc; i++) {
 			pfile[i] = mopGetChar(pkt,index);
 			pfile[i+1] = '\0';
