@@ -211,7 +211,7 @@ struct nlist *symbase;
 #define IS_GLOBAL_DEFINED(sp) \
 		  (((sp)->n_type & N_EXT) && ((sp)->n_type & N_TYPE) != N_UNDF)
 
-#ifdef __sparc
+#ifdef __sparc__
 /* is the relocation entry dependent on a symbol? */
 #define IS_SYMBOL_RELOC(rp)   \
 	((rp)->r_extern || \
