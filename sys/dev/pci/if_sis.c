@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sis.c,v 1.5 2000/07/06 23:25:17 aaron Exp $ */
+/*	$OpenBSD: if_sis.c,v 1.6 2000/08/25 17:39:25 aaron Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -30,12 +30,15 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/pci/if_sis.c,v 1.18 2000/07/06 19:21:07 wpaul Exp $
+ * $FreeBSD: src/sys/pci/if_sis.c,v 1.21 2000/08/22 23:26:51 wpaul Exp $
  */
 
 /*
  * SiS 900/SiS 7016 fast ethernet PCI NIC driver. Datasheets are
  * available from http://www.sis.com.tw.
+ *
+ * This driver also supports the NatSemi DP83815. Datasheets are
+ * available from http://www.national.com.
  *
  * Written by Bill Paul <wpaul@ee.columbia.edu>
  * Electrical Engineering Department
@@ -392,19 +395,8 @@ void sis_miibus_statchg(self)
 	struct device		*self;
 {
 	struct sis_softc	*sc = (struct sis_softc *)self;
-	struct mii_data		*mii;
 
-	mii = &sc->sc_mii;
-
-	if ((mii->mii_media_active & IFM_GMASK) == IFM_FDX) {
-		SIS_SETBIT(sc, SIS_TX_CFG,
-		    (SIS_TXCFG_IGN_HBEAT|SIS_TXCFG_IGN_CARR));
-		SIS_SETBIT(sc, SIS_RX_CFG, SIS_RXCFG_RX_TXPKTS);
-	} else {
-		SIS_CLRBIT(sc, SIS_TX_CFG,
-		    (SIS_TXCFG_IGN_HBEAT|SIS_TXCFG_IGN_CARR));
-		SIS_CLRBIT(sc, SIS_RX_CFG, SIS_RXCFG_RX_TXPKTS);
-	}
+	sis_init(sc);
 
 	return;
 }
@@ -1064,12 +1056,24 @@ void sis_tick(xsc)
 {
 	struct sis_softc	*sc = (struct sis_softc *)xsc;
 	struct mii_data		*mii;
+	struct ifnet		*ifp;
 	int			s;
 
 	s = splimp();
 
+	ifp = &sc->arpcom.ac_if;
+
 	mii = &sc->sc_mii;
 	mii_tick(mii);
+
+	if (!sc->sis_link) {
+		mii_pollstat(mii);
+		if (mii->mii_media_status & IFM_ACTIVE &&
+		    IFM_SUBTYPE(mii->mii_media_active) != IFM_NONE)
+			sc->sis_link++;
+			if (ifp->if_snd.ifq_head != NULL)
+				sis_start(ifp);
+	}
 	timeout(sis_tick, sc, hz);
 
 	splx(s);
@@ -1106,12 +1110,14 @@ int sis_intr(arg)
 
 		claimed = 1;
 
-		if ((status & SIS_ISR_TX_OK) ||
+		if ((status & SIS_ISR_TX_DESC_OK) ||
 		    (status & SIS_ISR_TX_ERR) ||
+		    (status & SIS_ISR_TX_OK) ||
 		    (status & SIS_ISR_TX_IDLE))
 			sis_txeof(sc);
 
-		if (status & SIS_ISR_RX_OK)
+		if ((status & SIS_ISR_RX_DESC_OK) ||
+		    (status & SIS_ISR_RX_OK))
 			sis_rxeof(sc);
 
 		if ((status & SIS_ISR_RX_ERR) ||
@@ -1198,6 +1204,9 @@ void sis_start(ifp)
 	u_int32_t		idx;
 
 	sc = ifp->if_softc;
+
+	if (!sc->sis_link)
+		return;
 
 	idx = sc->sis_cdata.sis_tx_prod;
 
@@ -1339,8 +1348,23 @@ void sis_init(xsc)
 
 	/* Set RX configuration */
 	CSR_WRITE_4(sc, SIS_RX_CFG, SIS_RXCFG);
+
 	/* Set TX configuration */
-	CSR_WRITE_4(sc, SIS_TX_CFG, SIS_TXCFG);
+	if (IFM_SUBTYPE(mii->mii_media_active) == IFM_10_T)
+		CSR_WRITE_4(sc, SIS_TX_CFG, SIS_TXCFG_10);
+	else
+		CSR_WRITE_4(sc, SIS_TX_CFG, SIS_TXCFG_100);
+
+	/* Set full/half duplex mode. */
+	if ((mii->mii_media_active & IFM_GMASK) == IFM_FDX) {
+		SIS_SETBIT(sc, SIS_TX_CFG,
+		    (SIS_TXCFG_IGN_HBEAT|SIS_TXCFG_IGN_CARR));
+		SIS_SETBIT(sc, SIS_RX_CFG, SIS_RXCFG_RX_TXPKTS);
+	} else {
+		SIS_CLRBIT(sc, SIS_TX_CFG,
+		    (SIS_TXCFG_IGN_HBEAT|SIS_TXCFG_IGN_CARR));
+		SIS_CLRBIT(sc, SIS_RX_CFG, SIS_RXCFG_RX_TXPKTS);
+	}
 
 	/*
 	 * Enable interrupts.
@@ -1352,7 +1376,24 @@ void sis_init(xsc)
 	SIS_CLRBIT(sc, SIS_CSR, SIS_CSR_TX_DISABLE|SIS_CSR_RX_DISABLE);
 	SIS_SETBIT(sc, SIS_CSR, SIS_CSR_RX_ENABLE);
 
+#ifdef notdef
 	mii_mediachg(mii);
+#endif
+
+	/*
+	 * Page 75 of the DP83815 manual recommends the
+	 * following register settings "for optimum
+	 * performance." Note however that at least three
+	 * of the registers are listed as "reserved" in
+	 * the register map, so who knows what they do.
+	 */
+	if (sc->sis_type == SIS_TYPE_83815) {
+		CSR_WRITE_4(sc, NS_PHY_PAGE, 0x0001);
+		CSR_WRITE_4(sc, NS_PHY_CR, 0x189C);
+		CSR_WRITE_4(sc, NS_PHY_TDATA, 0x0000);
+		CSR_WRITE_4(sc, NS_PHY_DSPCFG, 0x5040);
+		CSR_WRITE_4(sc, NS_PHY_SDCFG, 0x008C);
+	}
 
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
@@ -1371,11 +1412,19 @@ int sis_ifmedia_upd(ifp)
 	struct ifnet		*ifp;
 {
 	struct sis_softc	*sc;
+	struct mii_data		*mii;
 
 	sc = ifp->if_softc;
 
-	if (ifp->if_flags & IFF_UP)
-		sis_init(sc);
+	mii = &sc->sc_mii;
+	sc->sis_link = 0;
+	if (mii->mii_instance) {
+		struct mii_softc	*miisc;
+		for (miisc = LIST_FIRST(&mii->mii_phys); miisc != NULL;
+		    miisc = LIST_NEXT(miisc, mii_list))
+			mii_phy_reset(miisc);
+	}
+	mii_mediachg(mii);
 
 	return(0);
 }
@@ -1513,6 +1562,8 @@ void sis_stop(sc)
 	DELAY(1000);
 	CSR_WRITE_4(sc, SIS_TX_LISTPTR, 0);
 	CSR_WRITE_4(sc, SIS_RX_LISTPTR, 0);
+
+	sc->sis_link = 0;
 
 	/*
 	 * Free data in the RX lists.
