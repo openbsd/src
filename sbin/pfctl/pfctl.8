@@ -1,4 +1,4 @@
-.\" $OpenBSD: pfctl.8,v 1.47 2002/06/03 16:18:53 kjell Exp $
+.\" $OpenBSD: pfctl.8,v 1.48 2002/06/11 05:45:10 henning Exp $
 .\"
 .\" Copyright (c) 2001 Kjell Wooding.  All rights reserved.
 .\"
@@ -32,11 +32,10 @@
 .Nd control the packet filter (PF) and network address translation (NAT) device
 .Sh SYNOPSIS
 .Nm pfctl
-.Op Fl dehnqrvz
+.Op Fl deqhnrvz
 .Op Fl F Ar modifier
-.Op Fl N Ar file
 .Op Fl O Ar level
-.Op Fl R Ar file
+.Op Fl f Ar file
 .Op Fl k Ar host
 .Op Fl l Ar interface
 .Op Fl m Ar modifier
@@ -67,12 +66,12 @@ is used to redirect connections to different hosts and/or ports.
 A combination of both translations, bidirectional NAT, is also
 supported.
 Translation rules are described in
-.Xr nat.conf 5 .
+.Xr pf.conf 5 .
 .Pp
 When the variable pf=YES is set in
 .Xr rc.conf 8 ,
-the rule files specified with the variables pf_rules and nat_rules
-are loaded automatically by the
+the rule file specified with the variable pf_rules
+is loaded automatically by the
 .Xr rc 8
 scripts and the packet filter is enabled.
 .Pp
@@ -108,6 +107,8 @@ Flush the filter information (statistics that are not bound to rules).
 .It Fl F Ar all
 Flush all of the above.
 .El
+.It Fl f Ar file
+Load config file.
 .It Fl k Ar host
 Kill all of the state entries from the specified host.
 A second
@@ -150,8 +151,6 @@ Display all maxima, cannot be set.
 .El
 .It Fl n
 Do not actually load rules, just parse them.
-.It Fl N Ar file
-Load a NAT rules file.
 .It Fl O Ar modifier
 Optimize the engine to one of the following network topographies or
 environments:
@@ -183,8 +182,6 @@ more is planned in future revisions of the finite state machines (FSMs).
 Only print errors and warnings.
 .It Fl r
 Perform reverse DNS lookups on states when displaying them.
-.It Fl R Ar file
-Load a filter rules file into the filter.
 .It Fl s Ar modifier
 Show filter parameters.
 Modifier names may be abbreviated:
@@ -297,15 +294,12 @@ Generate debug messages for various errors.
 Clear per-rule statistics.
 .El
 .Sh FILES
-.Bl -tag -width "/etc/nat.conf" -compact
+.Bl -tag -width "/etc/pf.conf" -compact
 .It Pa /etc/pf.conf
 Packet filter rules file.
-.It Pa /etc/nat.conf
-Rules for Network Address Translation.
 .El
 .Sh SEE ALSO
 .Xr pf 4 ,
-.Xr nat.conf 5 ,
 .Xr pf.conf 5 ,
 .Xr ftp-proxy 8 ,
 .Xr rc 8 ,
