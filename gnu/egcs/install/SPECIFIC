@@ -1,0 +1,497 @@
+
+              Host/Target specific installation notes for GCC
+                                      
+   Please read this document carefully _before_ installing the GNU
+   Compiler Collection on your machine.
+     * [1]alpha*-dec-osf*
+     * [2]hppa*-hp-hpux*
+     * [3]hppa*-hp-hpux9
+     * [4]hppa*-hp-hpux10
+     * [5]i?86-*-linux*
+     * [6]i?86-*-sco3.2v5*
+     * [7]i?86-*-udk
+     * [8]*-ibm-aix*
+     * [9]m68k-*-nextstep*
+     * [10]m68k-sun-sunos4.1.1
+     * [11]mips*-sgi-irix[45]
+     * [12]mips*-sgi-irix6
+     * [13]powerpc-*-linux-gnu*
+     * [14]sparc-sun-solaris2.7
+     * [15]sparc-sun-sunos*
+     * [16]sparc-unknown-linux-gnulibc1
+     * [17]sparc64-*-*
+     * [18]GCC with Windows or OS/2
+     _________________________________________________________________
+   
+  alpha*-dec-linux*
+  
+   GNU/Linux Alpha EV56 or PCA56 hosts running Red Hat 4.2 or 5.0 may see
+   errors of this sort:
+  Error: Unknown pseudo-op:  `.arch'
+
+   This is a signal that a new assembler is needed if you want to
+   generate BWX insns for your machine.
+   
+   The version of GCC shipped with Red Hat 4.2 (2.7.0.2) has a fault
+   wherein it will silently generate incorrect code. The version shipped
+   with Red Hat 5.0 (2.8.0.1) is not broken, but required an extra
+   -m21164a argument on the command-line. In order to visibly trap
+   2.7.0.2, I now issue DEC's .arch pseudo into the assembly. Relieving
+   the problem of mucking with command-line arguments for 2.8.0.1 is a
+   pleasant side effect.
+   
+   If you've got Red Hat 5.0 installed, you may grab binutils 2.9.1 and
+   be happy. If you've got Red Hat 4.2, bugs make it much harder to
+   upgrade pieces on your own, and you are better off upgrading the
+   entire system.
+   
+   In either case, your problem may be bypassed by not emitting BWX code
+   by default. Do this by using
+  configure alphaev5-unknown-linux-gnulibc1
+
+   if you have RH 4.2, or
+  configure alphaev5-unknown-linux-gnu
+
+   if you have RH 5.0.
+   
+   The following error:
+  Error: macro requires $at register while noat in effect
+
+   also indicates that you should upgrade to a newer version of the
+   assembler, 2.9 or later. If you can not upgrade the assembler, the
+   compiler option "-Wa,-m21164a" may work around this problem.
+     _________________________________________________________________
+   
+  alpha*-dec-osf*
+  
+   If you install a shared libstdc++ and, when you link a non-trivial C++
+   program (for example, gcc/testsuite/g++.other/delete3.C), the linker
+   reports a couple of errors about multiply-defined symbols (for
+   example, nothrow, __throw and terminate(void)), you've probably got a
+   linker bug, for which there's no known fix. The officially recommended
+   work-around is to remove the shared libstdc++.
+   
+   An alternative solution is to arrange that all symbols from libgcc get
+   copied to the shared libstdc++; see detailed solution below.
+   (Surprising as it may seem, this does indeed fix the problem!) _Beware_
+   that this may bring you binary-compatibility problems in the future,
+   if you don't use the same work-around next time you build libstdc++:
+   if programs start to depend on libstdc++ to provide symbols that used
+   to be only in libgcc, you must arrange that libstdc++ keeps providing
+   them, otherwise the programs will have to be relinked.
+   
+   The magic spell is to add -Wl,-all,-lgcc,-none to the definition of
+   macro SHDEPS in libstdc++/config/dec-osf.ml _before_
+   alpha*-dec-osf*/libstdc++/Makefile is created (a [19]patch that does
+   just that is available). If the Makefile already exists, run
+   ./config.status within directory alpha*-dec-osf*/libstdc++ (and
+   alpha*-dec-osf*/ieee/libstdc++, if it also exists). Remove any
+   existing libstdc++.so* from such directories, and run make
+   all-target-libstdc++ in the top-level directory, then make
+   install-target-libstdc++.
+   
+   If you have already removed the build tree, you may just remove
+   libstdc++.so.2.10.0 from the install tree and re-create it with the
+   command gcc -shared -o libstdc++.so.2.10.0
+   -Wl,-all,-lstdc++,-lgcc,-none -lm. If the ieee sub-directory exists,
+   repeat this command in it, with the additional flag -mieee.
+     _________________________________________________________________
+   
+  hppa*-hp-hpux*
+  
+   We _highly_ recommend using gas/binutils-2.8 or newer on all hppa
+   platforms; you may encounter a variety of problems when using the HP
+   assembler.
+   
+   If you wish to use pa-risc 2.0 architecture support, you must use
+   either the HP assembler or a recent [20]snapshot of gas.
+   
+   More specific information to hppa*-hp-hpux* targets follows.
+     _________________________________________________________________
+   
+  hppa*-hp-hpux9
+  
+   The HP assembler has major problems on this platform. We've tried to
+   work around the worst of the problems. However, those workarounds may
+   be causing linker crashes in some circumstances; the workarounds also
+   probably prevent shared libraries from working. Use the GNU assembler
+   to avoid these problems.
+   
+   The configuration scripts for GCC will also trigger a bug in the hpux9
+   shell. To avoid this problem set CONFIG_SHELL to /bin/ksh and SHELL to
+   /bin/ksh in your environment.
+     _________________________________________________________________
+   
+  hppa*-hp-hpux10
+  
+   For hpux10.20, we _highly_ recommend you pick up the latest sed patch
+   PHCO_15468 from HP. HP has two sites which provide patches free of
+   charge:
+     * [21]US, Canada, Asia-Pacific, and Latin-America
+     * [22]Europe
+       
+   The HP assembler on these systems is much better than the hpux9
+   assembler, but still has some problems. Most notably the assembler
+   inserts timestamps into each object file it creates, causing the
+   3-stage comparison test to fail during a `make bootstrap'. You should
+   be able to continue by saying `make all' after getting the failure
+   from `make bootstrap'.
+     _________________________________________________________________
+   
+  i?86-*-linux*
+  
+   You will need binutils-2.9.1.0.15 or newer for exception handling to
+   work.
+   
+   If you receive Signal 11 errors when building on GNU/Linux, then it is
+   possible you have a hardware problem. Further information on this can
+   be found on [23]www.bitwizard.nl.
+     _________________________________________________________________
+   
+  i?86-*-sco3.2v5*
+  
+   If you are building languages other than C, you must follow the
+   instructions about invoking `make bootstrap' because the native
+   OpenServer compiler will build a cc1plus that will not correctly parse
+   many valid C++ programs including those in libgcc.a. _You must do a
+   `make bootstrap' if you are building with the native compiler._
+   
+   Use of the `-march-pentiumpro' flag can result in unrecognized opcodes
+   when using the native assembler. While it's rather rare to see these
+   emitted by GCC yet, errors of the basic form:
+  /usr/tmp/ccaNlqBc.s:22:unknown instruction: fcomip
+  /usr/tmp/ccaNlqBc.s:50:unknown instruction: fucomip
+
+   are symptoms of this problem. You may work around this by not building
+   affected files with that flag or by using the GNU assembler. Users of
+   GNU assembler should see the note below for hazards on doing so.
+   
+   If you choose to configure with --enable-shared you should also
+   specificy --with-gnu-as --disable-multilib even if you are not using
+   the GNU assembler. In doing so you will give up the ability to
+   generate COFF executables as described below. This combination of
+   flags is necessary to suppress negative interactions with multilibing.
+   
+   The native SCO assembler that is provided with the OS at no charge is
+   normally required. If, however, you must be able to use the GNU
+   assembler you may configure this package using the flags
+   --with-gnu-as. You must use a recent version of GNU binutils; version
+   2.9.1 seems to work well. If you select this option, you will be
+   unable to reliably build COFF images. In general, the --with-gnu-as
+   option isn't as well tested as the native assembler.
+   
+   Unlike various prereleases of GCC that used -belf and defaulted to
+   COFF, you must now use the -melf and -mcoff flags to toggle between
+   the two object file formats. ELF is now the default.
+   
+   Look in gcc/config/i386/sco5.h (search for "messy") for additional
+   OpenServer-specific flags.
+   
+   Systems based on OpenServer before 5.0.4 (`uname -X' will tell you
+   what you're running) require TLS597 from ftp.sco.com/TLS for C++
+   constructors and destructors to work right.
+   
+   The system linker in (at least) 5.0.4 and 5.0.5 will sometimes do the
+   wrong thing for a construct that GCC will emit for PIC code. This can
+   be seen as execution testsuite failures when using -fPIC on
+   921215-1.c, 931002-1.c, nestfunc-1.c, and gcov-1.c. For 5.0.5, an
+   updated linker that will cure this problem is available. You must
+   install both [24]ftp://ftp.sco.com/Supplements/rs505a/ and
+   [25]OSS499A.
+   
+   The dynamic linker in OpenServer 5.0.5 (earlier versions may show the
+   same problem) aborts on certain g77-compiled programs. It's
+   particluarly likely to be triggered by building Fortran code with the
+   -fPIC flag. Although it's conceivable that the error could be
+   triggered by other code, only G77-compiled code has been observed to
+   cause this abort. If you are getting core dumps immediately upon
+   execution of your g77 program - and especially if it's compiled with
+   -fPIC - try applying [26]`sco_osr5_g77.patch' to your libf2c and
+   rebuilding GCC. Affected faults, when analyzed in a debugger, will
+   show a stack backtrace with a fault occurring in rtld() and the
+   program running as /usr/lib/ld.so.1. This problem has been reported to
+   SCO engineering and will hopefully be addressed in later releases.
+     _________________________________________________________________
+   
+  i?86-*-udk
+  
+   This target emulates the SCO Universal Development Kit and requires
+   that package be installed. (If it is installed, you will have a
+   /udk/usr/ccs/bin/cc file present.) It's very much like the
+   i?86-*-unixware7* target but is meant to be used when hosting on a
+   system where UDK isn't the default compiler such as OpenServer 5 or
+   Unixware 2. This target will generate binaries that will run on
+   OpenServer, Unixware 2, or Unixware 7, with the same warnings and
+   caveats as the SCO UDK.
+   
+   You can stage1 with either your native compiler or with UDK. If you
+   don't do a full bootstrap when initially building with your native
+   compiler you will have an utterly unusable pile of bits as your
+   reward.
+   
+   This target is a little tricky to build because we have to distinguish
+   it from the native tools (so it gets headers, startups, and libraries
+   from the right place) while making the tools not think we're actually
+   building a cross compiler. The easiest way to do this is with a
+   configure command like this:
+  CC=/udk/usr/ccs/bin/cc _/your/path/to/_gcc/configure --host=i686-pc-udk --tar
+get=i686-pc-udk --exec-prefix=udk-
+
+   _You should substitute 'i686' in the above command with the
+   appropriate processor for your host._
+   
+   You should follow this with a `make bootstrap' then `make install'.
+   You can then access the UDK-targeted GCC tools by adding udk- before
+   the commonly known name. For example, to invoke the C compiler, you
+   would use `udk-gcc'. They will coexist peacefully with any
+   native-target GCC tools you may have installed.
+     _________________________________________________________________
+   
+  *-ibm-aix*
+  
+   AIX Make frequently has problems with GCC makefiles. GNU Make 3.76 or
+   newer is recommended to build on this platform.
+   
+   Some versions of the AIX binder (linker) can fail with a relocation
+   overflow severe error when the -bbigtoc option is used to link
+   GCC-produced object files into an executable that overflows the TOC. A
+   fix for APAR IX75823 (OVERFLOW DURING LINK WHEN USING GCC AND
+   -BBIGTOC) is available from IBM Customer Support and from its
+   [27]service.boulder.ibm.com website as PTF U455193.
+   
+   Binutils does not support AIX 4.3 (at least through release 2.9). GNU
+   as and GNU ld will not work properly and one should not configure GCC
+   to use those GNU utilities. Use the native AIX tools which do
+   interoperate with GCC.
+   
+   AIX 4.3 utilizes a new "large format" archive to support both 32-bit
+   and 64-bit object modules. The routines provided in AIX 4.3.0 and AIX
+   4.3.1 to parse archive libraries did not handle the new format
+   correctly. These routines are used by GCC and result in error messages
+   during linking such as "not a COFF file". The version of the routines
+   shipped with AIX 4.3.1 should work for a 32-bit environment. The -g
+   option of the archive command may be used to create archives of 32-bit
+   objects using the original "small format". A correct version of the
+   routines is shipped with AIX 4.3.2.
+   
+   The initial assembler shipped with AIX 4.3.0 generates incorrect
+   object files. A fix for APAR IX74254 (64BIT DISASSEMBLED OUPUT FROM
+   COMPILER FAILS TO ASSEMBLE/BIND) is available from IBM Customer
+   Support and from its [28]service.boulder.ibm.com website as PTF
+   U453956. This fix is incorporated in AIX 4.3.1 and above.
+   
+   The AIX 4.3.2.1 linker (bos.rte.bind_cmds Level 4.3.2.1) will dump
+   core with a segmentation fault when invoked by any version of GCC. A
+   fix for APAR IX87327 will be available from IBM Customer Support.
+     _________________________________________________________________
+   
+  m68k-*-nextstep*
+  
+   You absolutely _must_ use GNU sed and GNU make on this platform.
+   
+   On NEXTSTEP 3.x where x < 3 the build of GCC will abort during stage1
+   with an error message like this:
+  _eh
+  /usr/tmp/ccbbsZ0U.s:987:Unknown pseudo-op: .section
+  /usr/tmp/ccbbsZ0U.s:987:Rest of line ignored. 1st junk character
+  valued 95 (_).
+
+   The reason for this is the fact that NeXT's assembler for these
+   versions of the operating system does not support the .section pseudo
+   op that's needed for full C++ exception functionality.
+   
+   As NeXT's assembler is a derived work from GNU as, a free replacement
+   that does can be obtained at
+   [29]ftp://ftp.next.peak.org:/next-ftp/next/apps/devtools/as.3.3.NIHS.s
+   .tar.gz.
+   
+   If you try to build the integrated C++ & C++ runtime libraries on this
+   system you will run into trouble with include files. The way to get
+   around this is to use the following sequence. Note you must have write
+   permission to the directory _prefix_ you secified in the configuration
+   preocess of GCC for this sequence to work.
+  cd bld-gcc
+  make all-texinfo all-bison all-byacc all-binutils all-gas all-ld
+  cd gcc
+  make bootstrap
+  make install-headers-tar
+  cd ..
+  make bootstrap3
+     _________________________________________________________________
+   
+  m68k-sun-sunos4.1.1
+  
+   It is reported that you may need the GNU assembler on this platform.
+     _________________________________________________________________
+   
+  mips*-sgi-irix[45]
+  
+   You must use GAS on these platforms, as the native assembler can not
+   handle the code for exception handling support. Either of these
+   messages indicates that you are using the MIPS assembler when instead
+   you should be using GAS:
+  as0: Error: ./libgcc2.c, line 1:Badly delimited numeric literal
+  .4byte $LECIE1-$LSCIE1
+  as0: Error: ./libgcc2.c, line 1:malformed statement
+
+   or:
+  as0: Error: /src/bld-gcc/gcc/libgcc2.c, line 1:undefined symbol in expression
+  .word $LECIE1-$LSCIE1
+
+   These systems don't have ranlib, which various components in GCC need;
+   you should be able to avoid this problem by installing GNU binutils,
+   which includes a functional ranlib for this system.
+   
+   You may get the following warning on irix4 platforms, it can be safely
+   ignored.
+  warning: foo.o does not have gp tables for all its sections.
+
+   When building GCC, the build process loops rebuilding cc1 over and
+   over again. This happens on mips-sgi-irix5.2, and possibly other
+   platforms.
+   It has been reported that this is a known bug in the make shipped with
+   IRIX 5.2. We recommend you use GNU make instead of the vendor supplied
+   make program; however, you may have success with "smake" on IRIX 5.2
+   if you do not have GNU make available.
+   
+   See [30]http://reality.sgi.com/ariel/freeware for more information
+   about using GCC on IRIX platforms.
+     _________________________________________________________________
+   
+  mips*-sgi-irix6
+  
+   You must _not_ use GAS on irix6 platforms; doing so will only cause
+   problems.
+   
+   These systems don't have ranlib, which various components in GCC need;
+   you should be able to avoid this problem by making a dummy script
+   called ranlib which just exits with zero status and placing it in your
+   path.
+   
+   GCC does not currently support generating O32 ABI binaries in the
+   mips-sgi-irix6 configurations. It used to be possible to create a GCC
+   with O32 ABI only support by configuring it for the mips-sgi-irix5
+   target. See the link below for details.
+   
+   GCC does not correctly pass/return structures which are smaller than
+   16 bytes and which are not 8 bytes. The problem is very involved and
+   difficult to fix. It affects a number of other targets also, but IRIX
+   6 is affected the most, because it is a 64 bit target, and 4 byte
+   structures are common. The exact problem is that structures are being
+   padded at the wrong end, e.g. a 4 byte structure is loaded into the
+   lower 4 bytes of the register when it should be loaded into the upper
+   4 bytes of the register.
+   
+   GCC is consistent with itself, but not consistent with the SGI C
+   compiler [and the SGI supplied runtime libraries], so the only
+   failures that can happen are when there are library functions that
+   take/return such structures. There are very few such library
+   functions. I can only recall seeing two of them: inet_ntoa, and
+   semctl.
+   
+   See [31]http://reality.sgi.com/ariel/freeware for more information
+   about using GCC on IRIX platforms.
+     _________________________________________________________________
+   
+  powerpc-*-linux-gnu*
+  
+   You will need [32]binutils-2.9.4.0.8 or newer for a working GCC. It is
+   strongly recommended to recompile binutils if you initially built it
+   with gcc-2.7.2.x.
+     _________________________________________________________________
+   
+  sparc-sun-solaris2.7
+  
+   Sun patch 107058-01 (1999-01-13) for SPARC Solaris 7 triggers a bug in
+   the dynamic linker. This problem (Sun bug 4210064) affects GCC 2.8 and
+   later, including all EGCS releases. To avoid this problem, do not
+   install Sun patch 107058-01 until after Sun releases a patch for bug
+   4210064. Sun has a fix for this bug but (as of 1999-06-24) has not yet
+   released it as a patch.
+     _________________________________________________________________
+   
+  sparc-sun-sunos*
+  
+   A bug in the SunOS4 linker will cause it to crash when linking -fPIC
+   compiled objects (and will therefore not allow you to build shared
+   libraries).
+   
+   To fix this problem you can either use the most recent version of
+   binutils or get the latest SunOS4 linker patch (patch ID 100170-10)
+   from Sun's patch site.
+     _________________________________________________________________
+   
+  sparc-unknown-linux-gnulibc1
+  
+   It has been reported that you might need [33]binutils-2.8.1.0.23 for
+   this platform, too.
+     _________________________________________________________________
+   
+  sparc64-*-*
+  
+   GCC version 2.95 is not able to compile code correctly for sparc64
+   targets. Users of the Linux kernel, at least, can use the sparc32
+   program to start up a new shell invocation with an environment that
+   causes configure to recognize (via uname -a) the system as sparc-*-*
+   instead.
+   
+   _all ELF targets (SVR4, Solaris, etc.)_
+   C++ support is significantly better on ELF targets if you use the GNU
+   linker; duplicate copies of inlines, vtables and template
+   instantiations will be discarded automatically.
+     _________________________________________________________________
+   
+  GCC with Windows or OS/2
+  
+   GCC does not currently support Windows, either natively or with the
+   cygwin32 dll. However Mumit Khan has been working on supporting
+   Windows with GCC. You should check out his site if you're interested
+   in Windows support. [34]GNU Win32 related projects
+   
+   GCC does not currently support OS/2. However, Andrew Zabolotny has
+   been working on a generic os/2 port with pgcc. The current code code
+   can be found at [35]http://www.goof.com/pcg/os2/.
+     _________________________________________________________________
+   
+   [36]Return to the GCC Installation page
+   
+   _Last modified on August 15, 1999._
+
+References
+
+   1. file://localhost/egcs/omelette/tmp/12663/gcc-2.95.1/install/specific.html#alpha*-dec-osf*
+   2. file://localhost/egcs/omelette/tmp/12663/gcc-2.95.1/install/specific.html#hppa*-hp-hpux*
+   3. file://localhost/egcs/omelette/tmp/12663/gcc-2.95.1/install/specific.html#hppa*-hp-hpux9
+   4. file://localhost/egcs/omelette/tmp/12663/gcc-2.95.1/install/specific.html#hppa*-hp-hpux10
+   5. file://localhost/egcs/omelette/tmp/12663/gcc-2.95.1/install/specific.html#ix86-*-linux*
+   6. file://localhost/egcs/omelette/tmp/12663/gcc-2.95.1/install/specific.html#ix86-*-sco3.2v5*
+   7. file://localhost/egcs/omelette/tmp/12663/gcc-2.95.1/install/specific.html#ix86-*-udk
+   8. file://localhost/egcs/omelette/tmp/12663/gcc-2.95.1/install/specific.html#*-ibm-aix*
+   9. file://localhost/egcs/omelette/tmp/12663/gcc-2.95.1/install/specific.html#m68k-*-nextstep*
+  10. file://localhost/egcs/omelette/tmp/12663/gcc-2.95.1/install/specific.html#m68k-sun-sunos4.1.1
+  11. file://localhost/egcs/omelette/tmp/12663/gcc-2.95.1/install/specific.html#mips*-sgi-irix[45]
+  12. file://localhost/egcs/omelette/tmp/12663/gcc-2.95.1/install/specific.html#mips*-sgi-irix6
+  13. file://localhost/egcs/omelette/tmp/12663/gcc-2.95.1/install/specific.html#powerpc-*-linux-gnu*
+  14. file://localhost/egcs/omelette/tmp/12663/gcc-2.95.1/install/specific.html#sparc-sun-solaris2.7
+  15. file://localhost/egcs/omelette/tmp/12663/gcc-2.95.1/install/specific.html#sparc-sun-sunos*
+  16. file://localhost/egcs/omelette/tmp/12663/gcc-2.95.1/install/specific.html#sparc-unknown-linux-gnulibc1
+  17. file://localhost/egcs/omelette/tmp/12663/gcc-2.95.1/install/specific.html#sparc64-*-*
+  18. file://localhost/egcs/omelette/tmp/12663/gcc-2.95.1/install/specific.html#win+os2
+  19. file://localhost/egcs/omelette/tmp/12663/gcc-2.95.1/install/dec-osf-shlibstdc++.patch
+  20. ftp://sourceware.cygnus.com/pub/binutils/snapshots
+  21. http://us-support.external.hp.com/
+  22. http://europe-support.external.hp.com/
+  23. http://www.bitwizard.nl/sig11/
+  24. ftp://ftp.sco.com/Supplements/rs505a/
+  25. ftp://ftp.sco.com/SLS/
+  26. file://localhost/egcs/omelette/tmp/12663/gcc-2.95.1/install/sco_osr5_g77.patch
+  27. http://service.boulder.ibm.com/
+  28. http://service.boulder.ibm.com/
+  29. ftp://ftp.next.peak.org/next-ftp/next/apps/devtools/as.3.3.NIHS.s.tar.gz
+  30. http://reality.sgi.com/ariel/freeware/
+  31. http://reality.sgi.com/ariel/freeware/
+  32. ftp://ftp.varesearch.com/pub/support/hjl/binutils
+  33. ftp://ftp.yggdrasil.com/private/hjl
+  34. http://www.xraylith.wisc.edu/~khan/software/gnu-win32/
+  35. http://www.goof.com/pcg/os2/
+  36. file://localhost/egcs/omelette/tmp/12663/gcc-2.95.1/install/index.html

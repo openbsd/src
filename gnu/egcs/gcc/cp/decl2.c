@@ -633,6 +633,12 @@ lang_decode_option (argc, argv)
           found = 1;
           cp_deprecated ("-fexternal-templates");
         }
+      else if (!strcmp (p, "handle-signatures"))
+        {
+          flag_handle_signatures = 1;
+          found = 1;
+          cp_deprecated ("-fhandle-signatures");
+        }
       else if (!strcmp (p, "new-abi"))
 	{
 	  flag_new_abi = 1;
@@ -3814,7 +3820,8 @@ reparse_absdcl_as_casts (decl, expr)
       expr = build_c_cast (type, expr);
     }
 
-  if (warn_old_style_cast)
+  if (warn_old_style_cast && ! in_system_header
+      && current_lang_name != lang_name_c)
     warning ("use of old-style cast");
 
   return expr;
@@ -3988,7 +3995,7 @@ build_expr_from_tree (t)
       else 
 	{
 	  tree fn = TREE_OPERAND (t, 0);
-	  
+
 	  /* We can get a TEMPLATE_ID_EXPR here on code like:
 
 	       x->f<2>();
@@ -3999,7 +4006,9 @@ build_expr_from_tree (t)
 	     build_expr_from_tree.  So, just use build_expr_from_tree
 	     when we really need it.  */
 	  if (TREE_CODE (fn) == TEMPLATE_ID_EXPR)
-	    fn = build_expr_from_tree (fn);
+	    fn = lookup_template_function
+	      (TREE_OPERAND (fn, 0),
+	       build_expr_from_tree (TREE_OPERAND (fn, 1)));
 
 	  return build_method_call
 	    (build_expr_from_tree (TREE_OPERAND (t, 1)),
@@ -4488,6 +4497,12 @@ set_decl_namespace (decl, scope, friendp)
       /* Since decl is a function, old should contain a function decl. */
       if (!is_overloaded_fn (old))
 	goto complain;
+      if (processing_template_decl || processing_specialization)
+	/* We have not yet called push_template_decl to turn the
+	   FUNCTION_DECL into a TEMPLATE_DECL, so the declarations
+	   won't match.  But, we'll check later, when we construct the
+	   template.  */
+	return;
       for (; old; old = OVL_NEXT (old))
 	if (decls_match (decl, OVL_CURRENT (old)))
 	  return;

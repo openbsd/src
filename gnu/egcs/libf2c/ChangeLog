@@ -1,3 +1,20 @@
+Mon Aug 16 01:29:24 PDT 1999 Jeff Law  (law@cygnus.com)
+
+	* gcc-2.95.1 Released.
+
+Fri Aug  6 23:32:29 1999  Daniel Jacobowitz <drow@drow.them.org>
+
+	* Makefile.in (FLAGS_TO_PASS): Include prefix, exec_prefix,
+	libdir, libsubdir and tooldir.
+
+Wed Jul 28 21:39:31 PDT 1999 Jeff Law  (law@cygnus.com)
+
+	* gcc-2.95 Released.
+
+	* libF77/Version.c: No longer a prerelease.
+	* libI77/Version.c: No longer a prerelease.
+	* libU77/Version.c: No longer a prerelease.
+
 Wed Jul  7 15:58:16 1999  Craig Burley  <craig@jcb-sc.com>
 
 	* libU77/date_.c (G77_date_y2kbug_0): G77_time_0 returns

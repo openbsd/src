@@ -1,3 +1,194 @@
+Mon Aug 16 01:29:24 PDT 1999 Jeff Law  (law@cygnus.com)
+
+	* gcc-2.95.1 Released.
+
+1999-08-13  Michael Meissner  <meissner@cygnus.com>
+
+	* Makefile.in (GCC_FOR_TARGET): Move -B./ after the tooldir -B.
+
+Fri Aug 13 01:42:24 1999  Jeffrey A Law  (law@cygnus.com)
+
+	Tue Aug  3 00:03:41 1999  Kaveh R. Ghazi  <ghazi@caip.rutgers.edu>
+        * fixincludes: Fix the return type of bsearch, char* -> void*.
+        * fixinc/inclhack.def: Likewise.
+
+Fri Aug 13 01:29:57 1999  Alexandre Oliva  <oliva@dcc.unicamp.br>
+
+	* dwarfout.c (fundamental_type_code): Return FT_boolean for
+	INTEGER_TYPE with precision==1, it's __java_boolean.
+
+1999-08-11  Richard Earnshaw (rearnsha@arm.com)
+
+        * emit-rtl.c (mark_reg_pointer): Don't increase the alignment of
+        a register that is already known to be a pointer.
+
+1999-08-11  Bruce Korb  <ddsinc09@ix.netcom.com>
+
+	* fixinc/inclhack.tpl: Only install assert.h conditionally.
+	* fixinc/inclhack.sh: Regenerated.
+	* fixinc/fixincl.sh: Regenerated.
+
+Wed Aug 11 00:34:22 1999  Joe Buck  <jbuck@synopsys.com>
+
+	* invoke.texi: s/GNU CC/GCC/ for consistency with gcc.texi.
+	Fix documentation of -ansi flag to describe its C++ behavior.
+	Remove bogus reference to GCC 2.9.
+
+Tue Aug 10 22:40:36 1999  Jeffrey A Law  (law@cygnus.com)
+
+	Thu Aug  5 22:27:15 1999  J"orn Rennecke <amylaar@cygnus.co.uk>
+	* config/sh/lib1funcs.asm (___movstrSI0): Change or r0,r0,r0 to nop.
+	(___mulsi3): Use '!' comment character.
+
+Sat Aug  7 00:06:30 1999  Jeffrey A Law  (law@cygnus.com)
+
+	* gcc.texi: Update bug reporting text.
+
+	Tue Jul 20 17:07:54 1999  Richard Henderson  <rth@cygnus.com>
+	* rs6000.h (struct rs6000_args): Add sysv_gregno.
+	* rs6000.c (init_cumulative_args): Init sysv_gregno.
+	(function_arg_boundary): Align DFmode.
+	(function_arg_advance): Restructure for ABI_V4; use sysv_gregno
+	to get fp reg and stack overflow correct.
+	(function_arg): Likewise.
+	(function_arg_pass_by_reference): True for TFmode for ABI_V4.
+	(setup_incoming_varargs): Restructure for ABI_V4; use
+	function_arg_advance to skip final named argument.
+	(expand_builtin_saveregs): Properly unskip the last integer arg
+	when doing varargs.  Adjust overflow location calculation.
+	* ginclude/va-ppc.h (struct __va_list_tag): Make gpr and fpr
+	explicitly unsigned.
+	(__VA_FP_REGSAVE): Use new OFS argument instead of AP->fpr directly.
+	(__VA_GP_REGSAVE): Similarly.
+	(__va_longlong_p): Delete.
+	(__va_arg_type_violation): New declaration.
+	(va_arg): Restructure.  Flag promotion errors.  Align double.
+	TFmode passed by reference.
+	* rs6000.md (movdi_32+1): Use GEN_INT after arithmetic
+	in the HOST_BITS_PER_WIDE_INT > 32 case.
+
+1999-08-6 Herman A.J. ten Brugge <Haj.Ten.Brugge@net.HCC.nl>
+
+	* reg-stack.c (change_stack) Fixed problem with negative array index.
+
+Fri Aug  6 20:41:08 1999  Jeffrey A Law  (law@cygnus.com)
+
+	Mon Jul 19 15:09:29 1999  David Edelsohn  <edelsohn@gnu.org>
+	* rs6000.md (arithmetic, logical, and shift Rc combiner patterns):
+	Disable patterns performing SImode comparisons with SImode values
+	if TARGET_POWERPC64 and instruction does not sign-extend or does
+	not mask to narrower than SImode, i.e. where bit 31 and bit 63 may
+	differ for signed quantities.
+	(indirect_jump): Add expander to choose RTL based on TARGET_64BIT.
+	(tablejump): Patterns contingent on TARGET_64BIT not TARGET_POWERPC64.
+	(decrement_and_branch_on_count): Add 64-bit variant.
+
+Thu Aug  5 02:40:42 1999  Jeffrey A Law  (law@cygnus.com)
+
+	* gcc.c: Update URLs and mail addresses.
+	* gcc.texi: Likewise.
+
+Thu Aug  5 01:14:13 1999  Daniel Jacobowitz <drow@false.org>
+
+	* rs6000.c (current_file_function_operand): Return zero for
+	weak functions.
+	(rs6000_encode_section_info): Do not set SYMBOL_REF_FLAG for
+	weak symbols.
+	* rs6000.h (ENCODE_SECTION_NIFO): Do not set SYMBOL_REF_FLAG
+	for weak symbols.
+
+Thu Aug  5 00:56:30 1999  Geoffrey Keating   <geoffk@cygnus.com>
+
+	* rs6000.c (rs6000_stack_info): For ABI_V4/ABI_SOLARIS -fpic, always
+	allocate space in the stack frame for the PIC register.
+
+Thu Aug  5 00:20:47 1999  Jeffrey A Law  (law@cygnus.com)
+
+	* m68k.md (xordi3, anddi3): These patterns are not available on
+	the coldfire.
+
+Wed Aug  4 23:39:20 1999  Mark Mitchell  <mark@codesourcery.com>
+
+	* real.c (GET_REAL): Don't violate ANSI/ISO aliasing rules.
+	(PUT_REAL): Likewise.
+
+Wed Aug  4 02:15:32 1999  Richard Henderson <rth@cygnus.com>
+
+	* jump.c (delete_insn): Delete the addr_vec when deleting a tablejump.
+
+Wed Aug  4 01:08:44 1999  Jeffrey A Law  (law@cygnus.com)
+
+        * flow.c (delete_unreachable_blocks): Do not call merge_blocks
+        or tidy_fallthru_edge if the last insn in the block is not
+        an unconditional jump or a simple conditional jump.
+
+Tue Aug  3 03:51:20 1999  Jeffrey A Law  (law@cygnus.com)
+
+	* cse.c (cse_insn): Fix dumb thinko in last change.
+
+Mon Aug  2 23:45:45 1999  Hans-Peter Nilsson  <hp@bitrange.com>
+
+	* dwarf2out.c (add_location_or_const_value_attribute): Correct
+	test for sizes of passed and declared parameter types.
+
+Mon Aug  2 12:45:09 1999  Richard Henderson  <rth@cygnus.com>
+
+	* alpha.c (override_options): Don't force ALPHA_TP_PROG for ev6.
+
+Mon Aug  2 01:34:22 1999  Jeffrey A Law  (law@cygnus.com)
+
+	* fix-header.c (main): When testing for CONTINUED, use string
+	equality, not pointer equality.
+
+Mon Aug  2 01:27:24 1999  Dan Nicolaescu  <dann@ics.uci.edu>
+
+	* sparc.c (sparc_block_profiler): Use the %g2 register, not %o0.
+
+Sun Aug  1 22:46:42 1999  Jeffrey A Law  (law@cygnus.com)
+
+	* cse.c (cse_insn): Fix loop which deletes insns after a jump
+	that has become an unconditional jump.
+
+	* m68k.c (output_function_prologue): Fix typo in CPU32 case.
+	(output_function_epilogue): Similarly.
+
+	Tue Jul 20 12:37:30 1999  Hans-Peter Nilsson  <hp@bitrange.com>
+        * dwarf2out.c (output_abbrev_section): Terminate with a zero.
+
+	Thu Jul 15 15:40:09 1999  Jim Wilson  <wilson@cygnus.com>
+	* tree.c (build_type_attribute_variant): Move current_obstack restore
+	after build_qualified_type call.
+
+	Fri Jun  4 03:20:40 1999  J"orn Rennecke <amylaar@cygnus.co.uk>
+	* sh.c (fixup_addr_diff_vecs): Emit braf reference label.
+	(braf_label_ref_operand): Delete.
+	* sh.h (PREDICATE_CODES): Remove braf_label_ref_operand.
+	* sh.md (casesi_jump_2): Operand1 is now the inside of a
+	label_ref, and has no predicate.
+	The patten has a predicate to guard against invalid substitutions.
+	(dummy_jump): Delete.
+	(casesi): Update use of casesi_jump_2.
+
+Thu Jul 31 12:34:45 1999  Joe Buck  <jbuck@synopsys.com>
+
+	* gcc.texi: Use terms "GNU Compiler Collection" and "GCC".
+	Also update copyright.
+
+Wed Jul 28 21:39:31 PDT 1999 Jeff Law  (law@cygnus.com)
+
+	* gcc-2.95 Released.
+
+	* verison.c: No longer a prerelease.
+
+Wed Jul 28 13:49:03 1999  Jeffrey A Law  (law@cygnus.com)
+
+	* README: Update.
+
+Sun Jul 25 21:40:33 1999  Jeffrey A Law  (law@cygnus.com)
+
+	* gcc.texi: More changes related to list conversion.
+	* invoke.texi: Likewise.
+
 Sat Jul 17 23:58:24 1999  David Edelsohn  <edelsohn@gnu.org>
 
 	* rs6000.md (insv, extzv): Remove SImode dependence in named

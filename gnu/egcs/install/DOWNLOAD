@@ -1,0 +1,39 @@
+
+                              Downloading GCC
+                                      
+   GCC is distributed via FTP tarballs compressed with gzip or bzip2. It
+   is possible to download a full distribution or specific components.
+   
+   The full distribution includes the C, C++, Objective-C, Fortran, Java,
+   and Chill compilers. The full distribution also includes runtime
+   libraries for C++, Objective-C and Fortran. In the future the GNU
+   compiler testsuites will be included in the full distribution.
+   
+   If you choose to download specific components, you must download the
+   core gcc distribution plus any language specific distributions you
+   wish to use. The core distribution includes the C language front-end
+   as well as the shared componenets. Each language has a tarball which
+   includes the language front-end as well as the language runtime (when
+   appropriate).
+   
+   Unpack the core distribution as well as any language specific
+   distributions in the same directory.
+   
+   XXX FSF mirror sites
+   
+   [1]FTP download from egcs.cygnus.com (USA California)
+   
+   [2]FTP download from go.cygnus.com (USA California -- High speed link
+   provided by Stanford)
+   
+   GCC releases are available on many [3]FTP mirror sites. If possible,
+   please use one of these.
+     _________________________________________________________________
+   
+   _Last modified on July 16, 1999._
+
+References
+
+   1. ftp://egcs.cygnus.com/pub/egcs/releases/index.html
+   2. ftp://go.cygnus.com/pub/sourceware.cygnus.com/pub/egcs/releases/index.html
+   3. file://localhost/egcs/omelette/tmp/12663/gcc-2.95.1/mirrors.html

@@ -1,0 +1,13 @@
+
+                   Installation Instructions: Testing GCC
+                                      
+   The testsuite has been temporarily removed from the gcc distributions
+   until the copyright status of some tests can be determined. It is
+   hoped that the testsuite will be included in the gcc releases again
+   soon.
+   
+   Until the testsuite is included it is impossible to run the testsuite.
+   Sorry.
+     _________________________________________________________________
+   
+   _Last modified on July 15, 1999._

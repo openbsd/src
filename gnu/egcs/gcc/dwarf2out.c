@@ -5135,6 +5135,11 @@ output_abbrev_section ()
 
       fprintf (asm_out_file, "\t%s\t0,0\n", ASM_BYTE_OP);
     }
+
+  /* We need to properly terminate the abbrev table for this
+     compilation unit, as per the standard, and not rely on
+     workarounds in e.g. gdb.  */
+  fprintf (asm_out_file, "\t%s\t0\n", ASM_BYTE_OP);
 }
 
 /* Output location description stack opcode's operands (if any).  */
@@ -7183,7 +7188,8 @@ add_location_or_const_value_attribute (die, decl)
 	    rtl = DECL_INCOMING_RTL (decl);
 	  else if (! BYTES_BIG_ENDIAN
 		   && TREE_CODE (declared_type) == INTEGER_TYPE
-		   && TYPE_SIZE (declared_type) <= TYPE_SIZE (passed_type))
+		   && (GET_MODE_SIZE (TYPE_MODE (declared_type))
+		       <= GET_MODE_SIZE (TYPE_MODE (passed_type))))
 		rtl = DECL_INCOMING_RTL (decl);
 	}
 

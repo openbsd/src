@@ -1,9 +1,10 @@
-This directory has been obsoleted for egcs snapshots and CVS access.
+The installation instructions are no longer in this directory.  Instead
+they can be found in the "install" directory at the toplevel of the GCC
+distribution (ie gcc-2.95/install).  For HTML browsing start with
+install/index.html, for plaintext, start with install/INDEX.
 
-Instead check out the toplevel "wwwdocs" as a sibling of your egcs
-tree or read these files via the egcs web site
-http://egcs.cygnus.com
+Moving the installation instructions in this manner makes it significantly
+easier to share code between the distribution and the web pages.
 
-
-Copies of the relevant files will be copied into this directory for
-releases.
+This directory (INSTALL) will be completely removed in the next major
+GCC release.
