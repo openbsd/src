@@ -14,7 +14,7 @@ Functions for reading the configuration files.
 */
 
 #include "includes.h"
-RCSID("$Id: readconf.c,v 1.11 1999/10/12 21:04:21 markus Exp $");
+RCSID("$Id: readconf.c,v 1.12 1999/10/15 21:39:02 markus Exp $");
 
 #include "ssh.h"
 #include "cipher.h"
@@ -115,7 +115,7 @@ static struct
   { "forwardagent", oForwardAgent },
   { "forwardx11", oForwardX11 },
   { "gatewayports", oGatewayPorts },
-  { "useprivilegedports", oUsePrivilegedPort },
+  { "useprivilegedport", oUsePrivilegedPort },
   { "rhostsauthentication", oRhostsAuthentication },
   { "passwordauthentication", oPasswordAuthentication },
   { "rsaauthentication", oRSAAuthentication },
