@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ohash_init.3,v 1.4 2001/09/24 12:19:24 espie Exp $
+.\"	$OpenBSD: ohash_init.3,v 1.5 2002/07/01 07:48:28 espie Exp $
 .\"
 .\" Copyright (c) 1999 Marc Espie.
 .\"
@@ -211,7 +211,7 @@ and
 to dump relevant information to disk before aborting.
 .Sh THREAD SAFETY
 The open hashing functions are not thread-safe by design.
-In particular, in a threaded envirnonment, there is no guarantee that a
+In particular, in a threaded environment, there is no guarantee that a
 .Qq slot
 will not move between a
 .Fn ohash_lookup*
