@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ksh.1,v 1.18 1999/05/30 17:44:56 aaron Exp $
+.\"	$OpenBSD: ksh.1,v 1.19 1999/06/03 09:50:31 aaron Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
 .\"     The Regents of the University of California.  All rights reserved.
@@ -1256,7 +1256,7 @@ commands to format information columns.
 .It Ev EDITOR
 If the
 .Ev VISUAL
-parameter is not set, this parameter controls the command line editing mode for
+parameter is not set, this parameter controls the command-line editing mode for
 interactive shells. See
 .Ev VISUAL
 parameter below for how this works.
@@ -1402,7 +1402,7 @@ can be put in the prompt by placing
 .Ql !!
 in
 .Ev PS1 .
-Note that since the command line editors try to figure out how long the prompt
+Note that since the command-line editors try to figure out how long the prompt
 is (so they know how far it is to the edge of the screen), escape codes in
 the prompt tend to mess things up. You can tell the shell not to count cetain
 sequences (such as escape codes) by prefixing your prompt with a non-printing
@@ -1465,7 +1465,7 @@ set, or does not contain the absolute path of a writable directory, temporary
 files are created in
 .Pa /tmp .
 .It Ev VISUAL
-If set, this parameter controls the command line editing mode for interactive
+If set, this parameter controls the command-line editing mode for interactive
 shells. If the last component of the path specified in this parameter contains
 the string
 .Dq vi ,
@@ -2316,7 +2316,7 @@ argument to the
 test may be left out and defaults to 1).
 .El
 .Ss Command execution
-After evaluation of command line arguments, redirections and parameter
+After evaluation of command-line arguments, redirections and parameter
 assignments, the type of command is determined; a special built-in, a function,
 a regular built-in, or the name of a file to execute found using the
 .Ev PATH
@@ -2379,7 +2379,7 @@ differently from the
 .Tn POSIX
 special and regular commands.
 .Pp
-Once the type of the command has been determined, any command line parameter
+Once the type of the command has been determined, any command-line parameter
 assignments are performed and exported for the duration of the command.
 .Pp
 The following described the special and regular built-in commands:
@@ -3078,11 +3078,11 @@ Background jobs are run with lower priority.
 .It Ic braceexapnd
 Enable brace expansion (a.k.a., alternation).
 .It Ic emacs
-Enable BRL emacs-like command line editing (interactive shells only); see
+Enable BRL emacs-like command-line editing (interactive shells only); see
 .Sx Emacs interactive input line editing
 below.
 .It Ic gmacs
-Enable gmacs-like command line editing (interactive shells only). Currently
+Enable gmacs-like command-line editing (interactive shells only). Currently
 identical to emacs editing except that transpose (^T) acts slightly
 differently.
 .It Ic ignoreeof
@@ -3133,17 +3133,17 @@ mode. See
 .Sx POSIX mode
 above.
 .It Ic vi
-Enable vi-like command line editing (interactive shells only).
+Enable vi-like command-line editing (interactive shells only).
 .It Ic viraw
 No effect. In the original Korn shell, unless
 .Ic viraw
-was set, the vi command line mode would let the tty driver do the work until
+was set, the vi command-line mode would let the tty driver do the work until
 .Tn ESC
 (^[) was entered.
 .Nm pdksh
 is always in viraw mode.
 .It Ic vi-esccomplete
-In vi command line editing, do command and file name completion when escape
+In vi command-line editing, do command and file name completion when escape
 (^[) is entered in command mode.
 .It Ic vi-show8
 Prefix characters with the eighth bit set with
@@ -3151,7 +3151,7 @@ Prefix characters with the eighth bit set with
 If this option is not set, characters in the range 128-160 are printed as is,
 which may cause problems.
 .It Ic vi-tabcomplete
-In vi command line editing, do command and file name completion when tab (^I)
+In vi command-line editing, do command and file name completion when tab (^I)
 is entered in insert mode.
 .El
 .Pp
@@ -4187,7 +4187,7 @@ Immediately after a
 replaces the inserted text string with the next previously killed text string.
 .El
 .Ss Vi interactive input line editing
-The vi command line editor in ksh has basically the same commands as the vi
+The vi command-line editor in ksh has basically the same commands as the vi
 editor (see
 .Xr vi 1 ) ,
 with the following exceptions:
