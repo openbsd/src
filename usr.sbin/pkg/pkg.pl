@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg.pl,v 1.1 2001/04/02 10:11:16 espie Exp $
+# $OpenBSD: pkg.pl,v 1.2 2001/04/13 17:05:24 espie Exp $
 #
 # Copyright (c) 2001 Marc Espie.
 # 
@@ -191,7 +191,6 @@ sub subpattern_match
 		($stemspec, $vspec, $flavorspec) = ($p, '', '');
 	}
 
-	print "$stemspec, $vspec, $flavorspec\n" if $verbose;
 	$p = "$stemspec-\.\*" if $vspec ne '';
 
 	# First trim down the list
@@ -211,7 +210,6 @@ sub subpattern_match
 	    	}
 	}
 		
-	print join(', ', @result), "\n";
 	return @result;
 }
 
@@ -280,7 +278,7 @@ sub solve_dependencies
 	# create all the new pkgdep stuff
 
 	for my $check (@todo) {
-		print "Handling dependencies for $check\n" if $verbose;
+		print "pkg: Handling dependencies for $check\n" if $verbose;
 		for my $dep (@{$verify{$check}}) {
 			print "  checking ", $dep->[0], " (", $dep->[1], 
 			    ") -> " if $verbose;
