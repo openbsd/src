@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcic2.c,v 1.5 2004/05/04 16:59:31 grange Exp $	*/
+/*	$OpenBSD: tcic2.c,v 1.6 2004/07/22 15:11:37 miod Exp $	*/
 /*	$NetBSD: tcic2.c,v 1.3 2000/01/13 09:38:17 joda Exp $	*/
 
 #undef	TCICDEBUG
@@ -133,7 +133,7 @@ tcic_check_reserved_bits(iot, ioh)
 		return 0;
 
 	DPRINTF(("tcic: chkrsvd 4\n"));
-	/* R_IENA bits 7,2 are reserverd. */
+	/* R_IENA bits 7,2 are reserved. */
 	val = bus_space_read_1(iot, ioh, TCIC_R_IENA);
 	if (val & TCIC_IENA_RSVD)
 		return 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: alpha_trace.c,v 1.6 2003/06/03 21:09:02 deraadt Exp $	*/
+/*	$OpenBSD: alpha_trace.c,v 1.7 2004/07/22 15:11:37 miod Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  * All rights reserved. 
@@ -25,8 +25,8 @@
  */
 
 /*
- * Copyright (c) 1997 Niklas Hallqvist.  All rights reserverd.
- * Copyright (c) 1997 Theo de Raadt.  All rights reserverd.
+ * Copyright (c) 1997 Niklas Hallqvist.  All rights reserved.
+ * Copyright (c) 1997 Theo de Raadt.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions

@@ -1,7 +1,7 @@
-/*      $OpenBSD: des3.c,v 1.6 2003/07/31 21:48:07 deraadt Exp $  */
+/*      $OpenBSD: des3.c,v 1.7 2004/07/22 15:11:37 miod Exp $  */
 
 /*
- * Copyright (c) 2002 Markus Friedl.  All rights reserverd.
+ * Copyright (c) 2002 Markus Friedl.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions

@@ -1,7 +1,7 @@
-/*      $OpenBSD: md5.c,v 1.5 2003/09/02 23:52:17 david Exp $  */
+/*      $OpenBSD: md5.c,v 1.6 2004/07/22 15:11:35 miod Exp $  */
 
 /*
- * Copyright (c) 2002 Markus Friedl.  All rights reserverd.
+ * Copyright (c) 2002 Markus Friedl.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
