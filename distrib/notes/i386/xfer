@@ -31,40 +31,6 @@ Obviously, the steps necessary to prepare the distribution sets for
 installation or upgrade depend on which installation medium you
 choose.  The steps for the various media types are outlined below.
 
-To install or upgrade OpenBSD using DOS floppies, you need to do the
-following:
-
-	Count the number of "set_name.xx" files that make up the
-	distribution sets you want to install or upgrade.  You will
-	need one fifth that number of 1.2M floppies, or one sixth that
-	number of 1.44M floppies.  You should only use one size of
-	floppy for the install or upgrade procedure; you can't use
-	some 1.2M floppies and some 1.44M floppies.
-
-	Format all of the floppies with DOS.  DO NOT make any of them
-	bootable DOS floppies, i.e. don't use "format/s" to format
-	them.  (If the floppies are bootable, then the DOS system
-	files that make them bootable will take up some space, and you
-	won't be able to fit as many distribution set parts per disk.)
-	If you're using floppies that are formatted for DOS by their
-	manufacturers, they probably aren't bootable, and you can use
-	them out of the box.
-
-	Place all of the "set_name.xx" files on the DOS disks, five
-	per disk if you're using 1.2M disks, six per disk if you're
-	using 1.44M disks.  How you do this is up to you; there are
-	many possibilities.  You could, for instance, use a DOS
-	terminal program to download them on to the floppies, or use
-	a UN*X-like system capable of reading and writing DOS file
-	systems (either with "mtools" or a real DOS file system)
-	to place them on the disk.
-
-	Once you have the files on DOS disks, you can proceed to the
-	next step in the installation or upgrade process.  If you're
-	installing OpenBSD from scratch, go to the section on preparing
-	your hard disk, below.  If you're upgrading an existing
-	installation, go directly to the section on upgrading.
-
 To install or upgrade OpenBSD using a tape, you need to do the
 following:
 
@@ -81,14 +47,14 @@ following:
 	(If you can't figure it out, ask your system administrator.)
 	In the above example, "<dist_directories>" are the
 	distribution sets' directories, for the distribution sets you
-	wish to place on the tape.  For instance, to put the "base20"
-	and "etc20" distributions on tape (in order to do the absolute
+	wish to place on the tape.  For instance, to put the "base21"
+	and "etc21" distributions on tape (in order to do the absolute
 	minimum installation to a new disk), you would do the
 	following:
 
 		cd .../1.2		# the top of the tree
 		cd i386/
-		tar cf <tape_device> base20 etc20
+		tar cf <tape_device> base21 etc21
 
 	(Note that you still need to fill in "<tape_device>" in the
 	example.)
@@ -130,32 +96,6 @@ NFS, you must do the following:
 	disk, below.  If you're upgrading an existing installation, go
 	directly to the section on upgrading.
 
-To install or upgrade OpenBSD by using FTP to get the installation
-sets, you must do the following:
-
-	NOTE:	This method of installation is recommended only for
-		those already familiar with using BSD network
-		configuration and management commands.  If you aren't,
-		this documentation should help, but is not intended to
-		be all-encompassing.
-
-	The preparations for this installation/upgrade method are
-	easy; all you make sure that there's some FTP site from which
-	you can retrieve the OpenBSD distribution when you're about to
-	install or upgrade.  You need to know the numeric IP address
-	of that site, and, if it's not on a network directly connected
-	to the machine on which you're installing or upgrading OpenBSD,
-	you need to know the numeric IP address of the router closest
-	to the OpenBSD machine.  Finally, you need to know the numeric
-	IP address of the OpenBSD machine itself.
-
-	Once you have this information, you can proceed to the next
-	step in the installation or upgrade process.  If you're
-	installing OpenBSD from scratch, go to the section on
-	preparing your hard disk, below.  If you're upgrading an
-	existing installation, go directly to the section on
-	upgrading.
-
 If you are upgrading OpenBSD, you also have the option of installing
 OpenBSD by putting the new distribution sets somewhere in your existing
 file system, and using them from there.  To do that, you must do the
@@ -164,7 +104,7 @@ following:
 	Place the distribution sets you wish to upgrade somewhere in
 	your current file system tree.  At a bare minimum, you must
 	upgrade the "base" binary distribution, and so must put the
-	"base20" set somewhere in your file system.  If you wish,
+	"base21" set somewhere in your file system.  If you wish,
 	you can do the other sets, as well, but you should NOT upgrade
 	the "etc" distribution; the "etc" distribution contains system
 	configuration files that you should review and update by hand.
