@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx.c,v 1.21 2004/12/13 04:07:25 krw Exp $	*/
+/*	$OpenBSD: aic79xx.c,v 1.22 2004/12/13 05:49:03 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -7502,7 +7502,8 @@ ahd_search_scb_list(struct ahd_softc *ahd, int target, char channel,
 			/* FALLTHROUGH */
 		case SEARCH_REMOVE:
 			ahd_rem_wscb(ahd, scbid, prev, next, tid);
-			if (prev == SCB_LIST_NULL)
+			*list_tail = prev;
+			if (SCBID_IS_NULL(prev))
 				*list_head = next;
 			break;
 		case SEARCH_PRINT:
