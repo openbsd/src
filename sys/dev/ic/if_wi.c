@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.13 2001/06/25 19:33:09 drahn Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.14 2001/06/25 19:36:13 drahn Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -120,7 +120,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.13 2001/06/25 19:33:09 drahn Exp $";
+	"$OpenBSD: if_wi.c,v 1.14 2001/06/25 19:36:13 drahn Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -598,7 +598,7 @@ wi_read_record(sc, ltv)
 	struct wi_ltv_gen	*ltv;
 {
 	u_int8_t		*ptr;
-	int			i, len, code;
+	int			len, code;
 	struct wi_ltv_gen	*oltv, p2ltv;
 
 	if (sc->sc_prism2) {
@@ -696,6 +696,7 @@ wi_write_record(sc, ltv)
 	struct wi_ltv_gen	*ltv;
 {
 	u_int8_t		*ptr;
+	int			i;
 	struct wi_ltv_gen	p2ltv;
 
 	if (sc->sc_prism2) {
