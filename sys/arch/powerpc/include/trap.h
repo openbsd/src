@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.h,v 1.2 2001/03/29 18:52:19 drahn Exp $	*/
+/*	$OpenBSD: trap.h,v 1.3 2001/06/10 18:45:02 drahn Exp $	*/
 /*	$NetBSD: trap.h,v 1.1 1996/09/30 16:34:35 ws Exp $	*/
 
 /*
@@ -64,5 +64,22 @@
 
 /* Trap was in user mode */
 #define	EXC_USER	0x10000
+
+/*
+ * EXC_ALI sets bits in the DSISR and DAR to provide enough
+ * information to recover from the unaligned access without needing to
+ * parse the offending instruction. This includes certain bits of the
+ * opcode, and information about what registers are used. The opcode
+ * indicator values below come from Appendix F of Book III of "The
+ * PowerPC Architecture".
+ */
+
+#define EXC_ALI_OPCODE_INDICATOR(dsisr) ((dsisr >> 10) & 0x7f)
+#define EXC_ALI_LFD	0x09
+#define EXC_ALI_STFD	0x0b
+
+/* Macros to extract register information */
+#define EXC_ALI_RST(dsisr) ((dsisr >> 5) & 0x1f)   /* source or target */
+#define EXC_ALI_RA(dsisr) (dsisr & 0x1f)
 
 #endif	/* _MACHINE_TRAP_H_ */

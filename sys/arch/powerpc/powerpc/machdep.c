@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.62 2001/06/08 08:09:22 art Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.63 2001/06/10 18:45:02 drahn Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -154,6 +154,7 @@ initppc(startkernel, endkernel, args)
 	extern trapcode, trapsize;
 	extern dsitrap, dsisize;
 	extern isitrap, isisize;
+	extern alitrap, alisize;
 	extern decrint, decrsize;
 	extern tlbimiss, tlbimsize;
 	extern tlbdlmiss, tlbdlmsize;
@@ -260,6 +261,9 @@ where = 3;
 			break;
 		case EXC_ISI:
 			bcopy(&isitrap, (void *)EXC_ISI, (size_t)&isisize);
+			break;
+		case EXC_ALI:
+			bcopy(&alitrap, (void *)EXC_ALI, (size_t)&alisize);
 			break;
 #endif
 		case EXC_DECR:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.24 2001/03/30 05:13:46 drahn Exp $	*/
+/*	$OpenBSD: trap.c,v 1.25 2001/06/10 18:45:02 drahn Exp $	*/
 /*	$NetBSD: trap.c,v 1.3 1996/10/13 03:31:37 christos Exp $	*/
 
 /*
@@ -54,6 +54,8 @@
 #include <machine/psl.h>
 #include <machine/trap.h>
 #include <machine/db_machdep.h>
+
+static int fix_unaligned __P((struct proc *p, struct trapframe *frame));
 
 /* These definitions should probably be somewhere else				XXX */
 #define	FIRSTARG	3		/* first argument is in reg 3 */
@@ -338,8 +340,18 @@ syscall_bad:
 		break;
 
 	case EXC_ALI|EXC_USER:
-		/* alignment exception, kill process */
-		trapsignal(p, SIGSEGV, VM_PROT_EXECUTE, SEGV_MAPERR, sv);
+		/* alignment exception 
+		 * we check to see if this can be fixed up
+		 * by the code that fixes the typical gcc misaligned code
+		 * then kill the process if not.
+		 */
+		if (fix_unaligned(p, frame) == 0) {
+			frame->srr0 += 4;
+		} else {
+			sv.sival_int = frame->srr0;
+			trapsignal(p, SIGSEGV, VM_PROT_EXECUTE, SEGV_MAPERR,
+				sv);
+		}
 		break;
 
 	default:
@@ -588,4 +600,53 @@ copyout(kaddr, udaddr, len)
 	}
 	curpcb->pcb_onfault = 0;
 	return 0;
+}
+
+/*
+ * For now, this only deals with the particular unaligned access case
+ * that gcc tends to generate.  Eventually it should handle all of the
+ * possibilities that can happen on a 32-bit PowerPC in big-endian mode.
+ */
+
+static int
+fix_unaligned(p, frame)
+	struct proc *p;
+	struct trapframe *frame;
+{
+	int indicator = EXC_ALI_OPCODE_INDICATOR(frame->dsisr);
+
+	switch (indicator) {
+	case EXC_ALI_LFD:
+	case EXC_ALI_STFD:
+		{
+			int reg = EXC_ALI_RST(frame->dsisr);
+			double *fpr = &p->p_addr->u_pcb.pcb_fpu.fpr[reg];
+
+			/* Juggle the FPU to ensure that we've initialized
+			 * the FPRs, and that their current state is in
+			 * the PCB.
+			 */
+			if (fpuproc != p) {
+				if (fpuproc)
+					save_fpu(fpuproc);
+				enable_fpu(p);
+			}
+			save_fpu(p);
+
+			if (indicator == EXC_ALI_LFD) {
+				if (copyin((void *)frame->dar, fpr,
+				    sizeof(double)) != 0)
+					return -1;
+				enable_fpu(p);
+			} else {
+				if (copyout(fpr, (void *)frame->dar,
+				    sizeof(double)) != 0)
+					return -1;
+			}
+			return 0;
+		}
+		break;
+	}
+
+	return -1;
 }
