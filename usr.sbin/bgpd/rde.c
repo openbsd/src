@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.113 2004/05/21 11:48:56 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.114 2004/05/21 12:10:22 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1278,6 +1278,13 @@ rde_shutdown(void)
 	peerself.remote_bgpid = 0;
 	peerself.state = PEER_DOWN;
 	for (asp = LIST_FIRST(&peerself.path_h); asp != NULL; asp = nasp) {
+		nasp = LIST_NEXT(asp, peer_l);
+		path_remove(asp);
+	}
+
+	peerdynamic.remote_bgpid = 0;
+	peerdynamic.state = PEER_DOWN;
+	for (asp = LIST_FIRST(&peerdynamic.path_h); asp != NULL; asp = nasp) {
 		nasp = LIST_NEXT(asp, peer_l);
 		path_remove(asp);
 	}
