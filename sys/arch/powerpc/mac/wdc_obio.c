@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdc_obio.c,v 1.7 2001/02/20 04:26:34 drahn Exp $	*/
+/*	$OpenBSD: wdc_obio.c,v 1.8 2001/03/25 13:11:58 csapuntz Exp $	*/
 /*	$NetBSD: wdc_obio.c,v 1.4 1999/06/14 08:53:06 tsubai Exp $	*/
 
 /*-
@@ -106,8 +106,8 @@ struct cfdriver wdc_cd = {
 
 
 static int	wdc_obio_dma_init __P((void *, int, int, void *, size_t, int));
-static void 	wdc_obio_dma_start __P((void *, int, int, int));
-static int	wdc_obio_dma_finish __P((void *, int, int, int));
+static void 	wdc_obio_dma_start __P((void *, int, int));
+static int	wdc_obio_dma_finish __P((void *, int, int));
 static void	adjust_timing __P((struct channel_softc *));
 
 int
@@ -343,7 +343,7 @@ wdc_obio_dma_init(v, channel, drive, databuf, datalen, read)
 }
 
 static void
-wdc_obio_dma_start(v, channel, drive, read)
+wdc_obio_dma_start(v, channel, drive)
 	void *v;
 	int channel, drive;
 {
@@ -353,10 +353,9 @@ wdc_obio_dma_start(v, channel, drive, read)
 }
 
 static int
-wdc_obio_dma_finish(v, channel, drive, read)
+wdc_obio_dma_finish(v, channel, drive)
 	void *v;
 	int channel, drive;
-	int read;
 {
 	struct wdc_obio_softc *sc = v;
 

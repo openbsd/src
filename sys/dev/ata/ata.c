@@ -1,4 +1,4 @@
-/*      $OpenBSD: ata.c,v 1.9 2001/01/29 02:18:33 niklas Exp $      */
+/*      $OpenBSD: ata.c,v 1.10 2001/03/25 13:11:55 csapuntz Exp $      */
 /*      $NetBSD: ata.c,v 1.9 1999/04/15 09:41:09 bouyer Exp $      */
 /*
  * Copyright (c) 1998 Manuel Bouyer.  All rights reserved.
@@ -193,6 +193,30 @@ ata_set_mode(drvp, mode, flags)
 		return CMD_ERR;
 	}
 	return CMD_OK;
+}
+
+void
+ata_dmaerr(drvp)
+	struct ata_drive_datas *drvp;
+{
+	/*
+	 * Downgrade decision: if we get NERRS_MAX in NXFER.
+	 * We start with n_dmaerrs set to NERRS_MAX-1 so that the
+	 * first error within the first NXFER ops will immediatly trigger
+	 * a downgrade.
+	 * If we got an error and n_xfers is bigger than NXFER reset counters.
+	 */
+	drvp->n_dmaerrs++;
+	if (drvp->n_dmaerrs >= NERRS_MAX && drvp->n_xfers <= NXFER) {
+		wdc_downgrade_mode(drvp);
+		drvp->n_dmaerrs = NERRS_MAX-1;
+		drvp->n_xfers = 0;
+		return;
+	}
+	if (drvp->n_xfers > NXFER) {
+		drvp->n_dmaerrs = 1; /* just got an error */
+		drvp->n_xfers = 1; /* restart counting from this error */
+	}
 }
 
 void

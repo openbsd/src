@@ -1,4 +1,4 @@
-/*      $OpenBSD: atapiscsi.c,v 1.38 2001/03/15 23:08:16 csapuntz Exp $     */
+/*      $OpenBSD: atapiscsi.c,v 1.39 2001/03/25 13:11:56 csapuntz Exp $     */
 
 /*
  * This code is derived from code with the copyright below.
@@ -123,7 +123,6 @@ void  wdc_atapi_intr_for_us __P((struct channel_softc *, struct wdc_xfer *,
     int, struct atapi_return_args *));
 void  wdc_atapi_send_packet __P((struct channel_softc *, struct wdc_xfer *,
     int, struct atapi_return_args *));
-int   wdc_atapi_dma_flags __P((struct wdc_xfer *));
 void  wdc_atapi_ctrl __P((struct channel_softc *, struct wdc_xfer *, 
     int, struct atapi_return_args *));
 
@@ -712,12 +711,16 @@ wdc_atapi_the_machine(chp, xfer, ctxt)
 			xfer->endticks =
 			    max((retargs.timeout * hz) / 1000, 1) + 1 + ticks;
 
-		if (retargs.claim_irq) claim_irq = retargs.claim_irq;
-		
+		if (retargs.claim_irq) {
+			claim_irq = retargs.claim_irq;
+			if (chp->wdc->cap & WDC_CAPABILITY_IRQACK)
+				chp->wdc->irqack(chp);		
+		}
+
 		if (xfer->next == NULL) {
 			if (xfer->c_flags & C_POLL_MACHINE)
 				timeout_del(&xfer->atapi_poll_to);
-			
+
 			wdc_free_xfer(chp, xfer);
 			wdcstart(chp);
 			
@@ -741,6 +744,7 @@ wdc_atapi_the_machine(chp, xfer, ctxt)
 
 	timeout_add(&xfer->atapi_poll_to, timeout_delay);
 	xfer->c_flags |= C_POLL_MACHINE;
+
 	return (claim_irq);
 }
 
@@ -887,20 +891,6 @@ wdc_atapi_send_packet(chp, xfer, timeout, ret)
 	return;
 }
 
-int
-wdc_atapi_dma_flags(xfer)
-	struct wdc_xfer *xfer;
-{
-	struct scsi_xfer *sc_xfer = xfer->cmd;
-	int dma_flags;
-
-	dma_flags = ((sc_xfer->flags & SCSI_DATA_IN) ||
-	    (xfer->c_flags & C_SENSE)) ?  WDC_DMA_READ : 0;
-	dma_flags |= (xfer->c_flags & C_POLL) ? WDC_DMA_POLL : 0;
-
-	return (dma_flags);
-}
-
 void
 wdc_atapi_intr_command(chp, xfer, timeout, ret)
 	struct channel_softc *chp;
@@ -915,9 +905,8 @@ wdc_atapi_intr_command(chp, xfer, timeout, ret)
 	u_int8_t cmd[16];
 	struct scsi_sense *cmd_reqsense;
 	int cmdlen = (drvp->atapi_cap & ACAP_LEN) ? 16 : 12;
-	int  dma_flags;
-
-	dma_flags = wdc_atapi_dma_flags(xfer);
+	int dma_flags = ((sc_xfer->flags & SCSI_DATA_IN) ||
+	    (xfer->c_flags & C_SENSE)) ?  WDC_DMA_READ : 0;
 
 	bzero(cmd, sizeof(cmd));
 
@@ -949,8 +938,7 @@ wdc_atapi_intr_command(chp, xfer, timeout, ret)
 	/* Start the DMA channel if necessary */
 	if (xfer->c_flags & C_DMA) {
 		(*chp->wdc->dma_start)(chp->wdc->dma_arg,
-		    chp->channel, xfer->drive, 
-		    dma_flags);
+		    chp->channel, xfer->drive);
 	}
 
 	if (xfer->c_bcount == 0 || (xfer->c_flags & C_DMA))
@@ -1063,14 +1051,6 @@ wdc_atapi_intr_data(chp, xfer, timeout, ret)
 		}
 	}
 
-	if (timeout) {
-		printf ("wdc_atapi_intr_data: error: %s\n", message);
-		
-		sc_xfer->error = XS_RESET;
-		xfer->next = wdc_atapi_reset;
-		return;
-	}
-
 	
 	if (xfer->c_bcount >= len) {
 		WDCDEBUG_PRINT(("wdc_atapi_intr: c_bcount %d len %d "
@@ -1133,18 +1113,18 @@ wdc_atapi_intr_complete(chp, xfer, timeout, ret)
 	struct scsi_xfer *sc_xfer = xfer->cmd;
 	struct ata_drive_datas *drvp = &chp->ch_drive[xfer->drive];
 	struct atapiscsi_softc *as = sc_xfer->sc_link->adapter_softc;
-	int dma_err = 0;
-	int dma_flags = wdc_atapi_dma_flags(xfer);
 
 	WDCDEBUG_PRINT(("PHASE_COMPLETED\n"), DEBUG_INTR);
 
-	/* turn off DMA channel */
 	if (xfer->c_flags & C_DMA) {
-		dma_err = (*chp->wdc->dma_finish)(chp->wdc->dma_arg,
-		     chp->channel, xfer->drive, dma_flags);
+		chp->wdc->dma_status =
+		    (*chp->wdc->dma_finish)(chp->wdc->dma_arg, chp->channel,
+			xfer->drive);
 
-		/* Assume everything was transferred */
-		xfer->c_bcount = 0;
+		if (chp->wdc->dma_status & WDC_DMAST_UNDER) 
+			xfer->c_bcount = 1;
+		else
+			xfer->c_bcount = 0;
 	}
 
 	as->protocol_phase = as_none;
@@ -1199,7 +1179,7 @@ wdc_atapi_intr_complete(chp, xfer, timeout, ret)
 		}		
 	}
 
-        if (dma_err < 0) { 
+        if (chp->wdc->dma_status & ~WDC_DMAST_UNDER) {
 		drvp->n_dmaerrs++;
 		sc_xfer->error = XS_RESET;
 
@@ -1248,34 +1228,28 @@ wdc_atapi_intr_for_us(chp, xfer, timeout, ret)
 #endif
 	wdc_atapi_update_status(chp);
 
-	if (timeout) {
-		printf("%s:%d:%d: device timeout, c_bcount=%d, c_skip=%d\n",
-		    chp->wdc->sc_dev.dv_xname, chp->channel, xfer->drive,
-		    xfer->c_bcount, xfer->c_skip);
+	if (chp->ch_status & WDCS_BSY) {
+		if (timeout)
+			goto timeout;
 
-		if (xfer->c_flags & C_DMA)
-			drvp->n_dmaerrs++;
-		
-		sc_xfer->error = XS_TIMEOUT;
-		xfer->next = wdc_atapi_reset;
 		return;
 	}
-
-
-	if (chp->ch_status & WDCS_BSY)
-		return;
 
 	if (!wdc_atapi_drive_selected(chp, xfer->drive))
 	{
 		CHP_WRITE_REG(chp, wdr_sdh, WDSD_IBM | (xfer->drive << 4));
 		delay (1);
-		
-		return;
+
+		if (!timeout)
+			return;
 	}
 
 	if (as->protocol_phase != as_cmdout &&
 	    (xfer->c_flags & C_MEDIA_ACCESS) &&
 	    !(chp->ch_status & (WDCS_DSC | WDCS_DRQ))) {
+		if (timeout)
+			goto timeout;
+
 		ret->delay = 100;
 		return;
 	}
@@ -1287,8 +1261,12 @@ wdc_atapi_intr_for_us(chp, xfer, timeout, ret)
 
 	switch (as->protocol_phase) {
 	case as_cmdout:
-		if (!(chp->ch_status & WDCS_DRQ))
+		if (timeout)
+			goto timeout;
+
+		if (!(chp->ch_status & WDCS_DRQ)) {
 			return;
+		}
 
 		wdc_atapi_intr_command(chp, xfer, timeout, ret);
 		return;
@@ -1296,6 +1274,9 @@ wdc_atapi_intr_for_us(chp, xfer, timeout, ret)
 	case as_data:
 		if ((chp->ch_status & WDCS_DRQ) ||
 		    (ireason & 3) != 3) {
+			if (timeout)
+				goto timeout;
+
 			wdc_atapi_intr_data(chp, xfer, timeout, ret);
 			return;
 		}
@@ -1303,6 +1284,9 @@ wdc_atapi_intr_for_us(chp, xfer, timeout, ret)
 	case as_completed:
 		if ((chp->ch_status & WDCS_DRQ) ||
 		    (ireason & 3) != 3) {
+			if (timeout)
+				goto timeout;
+
 			ret->delay = 100;
 			return;
 		}
@@ -1316,6 +1300,24 @@ wdc_atapi_intr_for_us(chp, xfer, timeout, ret)
 		xfer->next = wdc_atapi_reset;
 		return;
 	}
+
+	return;
+timeout:
+	printf("%s:%d:%d: device timeout, c_bcount=%d, c_skip=%d\n",
+	    chp->wdc->sc_dev.dv_xname, chp->channel, xfer->drive,
+	    xfer->c_bcount, xfer->c_skip);
+	
+	if (xfer->c_flags & C_DMA) {
+		chp->wdc->dma_status =
+		    (*chp->wdc->dma_finish)(chp->wdc->dma_arg, 
+			chp->channel, xfer->drive);
+		
+		drvp->n_dmaerrs++;
+	}
+	
+	sc_xfer->error = XS_TIMEOUT;
+	xfer->next = wdc_atapi_reset;
+	return;
 }
 
 void
@@ -1397,6 +1399,8 @@ wdc_atapi_ctrl(chp, xfer, timeout, ret)
 		break;
 	
 	case IDENTIFY_WAIT:
+		if (chp->wdc->cap & WDC_CAPABILITY_IRQACK)
+			chp->wdc->irqack(chp);
 		/* We don't really care if this operation failed.
 		   It's just there to wake the drive from its stupor. */
 		if (!(chp->ch_status & WDCS_ERR)) {
@@ -1424,6 +1428,8 @@ piomode:
 		ret->expect_irq = 1;
 		break;
 	case PIOMODE_WAIT:
+		if (chp->wdc->cap & WDC_CAPABILITY_IRQACK)
+			chp->wdc->irqack(chp);
 		if (chp->ch_status & WDCS_ERR) {
 			if (drvp->PIO_mode < 3) {
 				drvp->PIO_mode = 3;
@@ -1463,6 +1469,8 @@ piomode:
 		break;
 
 	case DMAMODE_WAIT:
+		if (chp->wdc->cap & WDC_CAPABILITY_IRQACK)
+			chp->wdc->irqack(chp);
 		if (chp->ch_status & WDCS_ERR)
 			drvp->drive_flags &= ~(DRIVE_DMA | DRIVE_UDMA);
 	/* fall through */

@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdc.c,v 1.27 2001/03/15 23:08:16 csapuntz Exp $     */
+/*      $OpenBSD: wdc.c,v 1.28 2001/03/25 13:11:51 csapuntz Exp $     */
 /*	$NetBSD: wdc.c,v 1.68 1999/06/23 19:00:17 bouyer Exp $ */
 
 
@@ -81,7 +81,7 @@
 #include <sys/malloc.h>
 #include <sys/syslog.h>
 #include <sys/proc.h>
-
+#include <sys/pool.h>
 #include <vm/vm.h>
 
 #include <machine/intr.h>
@@ -101,7 +101,7 @@
 #define WDCNDELAY_DEBUG	50
 #endif
 
-LIST_HEAD(xfer_free_list, wdc_xfer) xfer_free_list;
+struct pool wdc_xfer_pool;
 
 static void  __wdcerror	  __P((struct channel_softc*, char *));
 static int   __wdcwait_reset  __P((struct channel_softc *, int));
@@ -669,9 +669,11 @@ wdcattach(chp)
 		wdcdebug_mask |= DEBUG_PROBE;
 #endif
 
-	/* init list only once */
+	/* initialise global data */
 	if (inited == 0) {
-		LIST_INIT(&xfer_free_list);
+		/* Initialize the wdc_xfer pool. */
+		pool_init(&wdc_xfer_pool, sizeof(struct wdc_xfer), 0,
+		    0, 0, "wdcspl", 0, NULL, NULL, M_DEVBUF);
 		inited++;
 	}
 	TAILQ_INIT(&chp->ch_queue->sc_xfer);
@@ -906,9 +908,9 @@ wdcintr(arg)
 	}
 
 	WDCDEBUG_PRINT(("wdcintr\n"), DEBUG_INTR);
-	timeout_del(&chp->ch_timo);
-	chp->ch_flags &= ~WDCF_IRQ_WAIT;
 	xfer = chp->ch_queue->sc_xfer.tqh_first;
+	chp->ch_flags &= ~WDCF_IRQ_WAIT;
+	timeout_del(&chp->ch_timo);
         ret = xfer->c_intr(chp, xfer, 1);
 	if (ret == 0)	/* irq was not for us, still waiting for irq */
 		chp->ch_flags |= WDCF_IRQ_WAIT;
@@ -1522,18 +1524,9 @@ wdc_exec_command(drvp, wdc_c)
 			WDCDEBUG_PRINT(("wdc_exec_command sleeping"),
 				       DEBUG_FUNCS);
 
-			while (!(wdc_c->flags & AT_DONE)) {
-				int error;
-				error = tsleep(wdc_c, PRIBIO, "wdccmd", 0);
-
-				if (error) {
-					printf ("tsleep error: %d\n", error);
-				}
+			while ((wdc_c->flags & AT_DONE) == 0) {
+				tsleep(wdc_c, PRIBIO, "wdccmd", 0);
 			}
-
-			WDCDEBUG_PRINT(("wdc_exec_command waking"),
-				       DEBUG_FUNCS);
-
 			ret = WDC_COMPLETE;
 		} else {
 			ret = WDC_QUEUED;
@@ -1558,11 +1551,11 @@ __wdccommand_start(chp, xfer)
 	/*
 	 * Disable interrupts if we're polling
 	 */
-
+#if 0
 	if (xfer->c_flags & C_POLL) {
 		wdc_disable_intr(chp);
 	}
-
+#endif
 	/*
 	 * For resets, we don't really care to make sure that
 	 * the bus is free
@@ -1616,6 +1609,8 @@ __wdccommand_intr(chp, xfer, irq)
 		WDCDEBUG_PRINT(("__wdccommand_intr returned\n"), DEBUG_INTR);
 		return 1;
 	}
+        if (chp->wdc->cap & WDC_CAPABILITY_IRQACK)
+                chp->wdc->irqack(chp);
 	if (wdc_c->flags & AT_READ) {
 		wdc_input_bytes(drvp, data, bcount);
 	} else if (wdc_c->flags & AT_WRITE) {
@@ -1654,9 +1649,11 @@ __wdccommand_done(chp, xfer)
 		/* XXX CHP_READ_REG(chp, wdr_precomp); - precomp
 		   isn't a readable register */
 	}
+#if 0
 	if (xfer->c_flags & C_POLL) {
 		wdc_enable_intr(chp);
 	}
+#endif
 	wdc_free_xfer(chp, xfer);
 	WDCDEBUG_PRINT(("__wdccommand_done before callback\n"), DEBUG_INTR);
 
@@ -1759,33 +1756,10 @@ wdc_get_xfer(flags)
 	int s;
 
 	s = splbio();
-	if ((xfer = xfer_free_list.lh_first) != NULL) {
-		LIST_REMOVE(xfer, free_list);
-		splx(s);
-#ifdef DIAGNOSTIC
-		if ((xfer->c_flags & C_INUSE) != 0)
-			panic("wdc_get_xfer: xfer already in use\n");
-#endif
-	} else {
-		splx(s);
-		WDCDEBUG_PRINT(("wdc:making xfer %d\n",wdc_nxfer), DEBUG_XFERS);
-		xfer = malloc(sizeof(*xfer), M_DEVBUF,
-		    ((flags & WDC_NOSLEEP) != 0 ? M_NOWAIT : M_WAITOK));
-		if (xfer == NULL)
-			return 0;
-#ifdef DIAGNOSTIC
-		xfer->c_flags &= ~C_INUSE;
-#endif
-#ifdef WDCDEBUG
-		wdc_nxfer++;
-#endif
-	}
-#ifdef DIAGNOSTIC
-	if ((xfer->c_flags & C_INUSE) != 0)
-		panic("wdc_get_xfer: xfer already in use\n");
-#endif
-	bzero(xfer, sizeof(struct wdc_xfer));
-	xfer->c_flags = C_INUSE;
+	xfer = pool_get(&wdc_xfer_pool,
+	    ((flags & WDC_NOSLEEP) != 0 ? PR_NOWAIT : PR_WAITOK));
+	splx(s);
+	memset(xfer, 0, sizeof(struct wdc_xfer));
 	return xfer;
 }
 
@@ -1802,8 +1776,7 @@ wdc_free_xfer(chp, xfer)
 	s = splbio();
 	chp->ch_flags &= ~WDCF_ACTIVE;
 	TAILQ_REMOVE(&chp->ch_queue->sc_xfer, xfer, c_xferchain);
-	xfer->c_flags &= ~C_INUSE;
-	LIST_INSERT_HEAD(&xfer_free_list, xfer, free_list);
+	pool_put(&wdc_xfer_pool, xfer);
 	splx(s);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide_cmd_reg.h,v 1.3 2000/06/26 17:51:17 chris Exp $	*/
+/*	$OpenBSD: pciide_cmd_reg.h,v 1.4 2001/03/25 13:11:55 csapuntz Exp $	*/
 /*	$NetBSD: pciide_cmd_reg.h,v 1.7 2000/06/26 10:07:52 bouyer Exp $	*/
 
 /*
@@ -37,6 +37,10 @@
  * Registers definitions for CMD Technologies's PCI 064x IDE controllers.
  * Available from http://www.cmd.com/
  */
+
+/* Interesting revision of the 0646 */
+#define CMD0646U2_REV 0x05
+#define CMD0646U_REV 0x03
 
 /* Configuration (RO) */
 #define CMD_CONF 0x50

@@ -1,4 +1,4 @@
-/*	$OpenBSD: atavar.h,v 1.5 2000/04/10 07:06:16 csapuntz Exp $	*/
+/*	$OpenBSD: atavar.h,v 1.6 2001/03/25 13:11:56 csapuntz Exp $	*/
 /*	$NetBSD: atavar.h,v 1.13 1999/03/10 13:11:43 bouyer Exp $	*/
 
 /*
@@ -79,10 +79,10 @@ struct ata_drive_datas {
     /* 0x20-0x40 reserved for ATAPI_CFG_DRQ_MASK */
     u_int8_t atapi_cap;
 
-    /* Number of DMA errors. Reset to 0 after every successful transfers. */
     u_int8_t n_dmaerrs;
-    /* downgrade mode after this many successive errors */
-#define NERRS_MAX 2
+    u_int32_t n_xfers;
+#define NERRS_MAX 4
+#define NXFER 1000
 
     char drive_name[31];
     int  cf_flags;
@@ -168,6 +168,7 @@ void wdc_reset_channel __P((struct ata_drive_datas *));
 
 int wdc_ata_addref __P((struct ata_drive_datas *));
 void wdc_ata_delref __P((struct ata_drive_datas *));
+void wdc_ata_kill_pending __P((struct ata_drive_datas *));
 
 struct ataparams;
 int ata_get_params __P((struct ata_drive_datas*, u_int8_t,
@@ -178,4 +179,5 @@ int ata_set_mode __P((struct ata_drive_datas*, u_int8_t, u_int8_t));
 #define CMD_ERR   1
 #define CMD_AGAIN 2
 
+void ata_dmaerr __P((struct ata_drive_datas *));
 void ata_perror __P((struct ata_drive_datas *, int, char *));
