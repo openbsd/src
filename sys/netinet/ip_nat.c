@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_nat.c,v 1.32 2000/05/24 21:59:11 kjell Exp $	*/
+/*	$OpenBSD: ip_nat.c,v 1.33 2000/07/03 04:50:05 aaron Exp $	*/
 
 /*
  * Copyright (C) 1995-1998 by Darren Reed.
@@ -614,9 +614,9 @@ void
 nat_ifdetach(ifp)
 	struct ifnet *ifp;
 {
-	ipnat_t *n, **np;
+	ipnat_t *n, **np = &nat_list;
 
-	for (np = &nat_list; (n = *np) != NULL; np = &n->in_next) {
+	while ((n = *np)) {
 		*np = n->in_next;
 		if (!n->in_use) {
 			if (n->in_apr)
@@ -627,7 +627,6 @@ nat_ifdetach(ifp)
 			n->in_flags |= IPN_DELETE;
 			n->in_next = NULL;
 		}
-		n = NULL;
 	}
 }
 
