@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.27 2001/07/25 13:25:32 art Exp $ */
+/*	$OpenBSD: vm_machdep.c,v 1.28 2001/08/05 20:35:43 miod Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -175,27 +175,22 @@ pagemove(from, to, size)
 	size_t size;
 {
 	vm_offset_t pa;
+	boolean_t rv;
 
 #ifdef DEBUG
 	if ((size & PAGE_MASK) != 0)
 		panic("pagemove");
 #endif
 	while (size > 0) {
-		pmap_extract(pmap_kernel(), (vm_offset_t)from, &pa);
+		rv = pmap_extract(pmap_kernel(), (vm_offset_t)from, &pa);
 #ifdef DEBUG
-#if 0
-		if (pa == 0)
+		if (rv == FALSE)
 			panic("pagemove 2");
-		if (pmap_extract(pmap_kernel(), (vm_offset_t)to, XXX) != 0)
+		if (pmap_extract(pmap_kernel(), (vm_offset_t)to, NULL) == TRUE)
 			panic("pagemove 3");
 #endif
-#endif
-		pmap_remove(pmap_kernel(),
-			    (vm_offset_t)from, (vm_offset_t)from + PAGE_SIZE);
-		pmap_enter(pmap_kernel(),
-			   (vm_offset_t)to, pa, 
-            VM_PROT_READ|VM_PROT_WRITE,
-            VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
+		pmap_kremove((vm_offset_t)from, PAGE_SIZE);
+		pmap_kenter_pa((vm_offset_t)to, pa, VM_PROT_READ|VM_PROT_WRITE);
 		from += PAGE_SIZE;
 		to += PAGE_SIZE;
 		size -= PAGE_SIZE;

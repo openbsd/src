@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.28 2001/07/25 13:25:32 art Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.29 2001/08/05 20:35:46 miod Exp $	*/
 
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -422,8 +422,8 @@ mapiospace(caddr_t pa, int len)
 
 	pa = (caddr_t)trunc_page((paddr_t)pa);
 
-	pmap_enter(kernel_pmap, phys_map_vaddr1, (vm_offset_t)pa,
-		   VM_PROT_READ|VM_PROT_WRITE, PMAP_WIRED);
+	pmap_kenter_pa(phys_map_vaddr1, (vm_offset_t)pa,
+	    VM_PROT_READ|VM_PROT_WRITE);
 	
 	return (phys_map_vaddr1 + off);
 }
@@ -437,7 +437,7 @@ unmapiospace(vm_offset_t va)
 {
 	va = trunc_page(va);
 
-	pmap_remove(kernel_pmap, va, va + NBPG);
+	pmap_kremove(va, PAGE_SIZE);
 }
 
 int
@@ -492,30 +492,26 @@ pagemove(from, to, size)
 	caddr_t from, to;
 	size_t size;
 {
-	vm_offset_t pa;
+	paddr_t pa;
+	boolean_t rv;
 
 #ifdef DEBUG
 	if ((size & PAGE_MASK) != 0)
 		panic("pagemove");
 #endif
 	while (size > 0) {
-		pmap_extract(kernel_pmap, (vm_offset_t)from, &pa);
+		rv = pmap_extract(kernel_pmap, (vaddr_t)from, &pa);
 #ifdef DEBUG
-#if 0
-		if (pa == 0)
+		if (rv == FALSE)
 			panic("pagemove 2");
-		if (pmap_extract(kernel_pmap, (vm_offset_t)to, XXX) != 0)
+		if (pmap_extract(kernel_pmap, (vaddr_t)to, NULL) == TRUE)
 			panic("pagemove 3");
 #endif
-#endif
-		pmap_remove(kernel_pmap,
-			    (vm_offset_t)from, (vm_offset_t)from + NBPG);
-		pmap_enter(kernel_pmap,
-			   (vm_offset_t)to, pa, VM_PROT_READ|VM_PROT_WRITE,
-			   VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
-		from += NBPG;
-		to += NBPG;
-		size -= NBPG;
+		pmap_kremove((vaddr_t)from, PAGE_SIZE);
+		pmap_kenter_pa((vaddr_t)to, pa, VM_PROT_READ|VM_PROT_WRITE);
+		from += PAGE_SIZE;
+		to += PAGE_SIZE;
+		size -= PAGE_SIZE;
 	}
 }
 
@@ -524,7 +520,6 @@ kvtop(va)
 	vm_offset_t va;
 {
 	vm_offset_t pa;
-	extern pmap_t kernel_pmap;
 
 	pmap_extract(kernel_pmap, va, &pa);
 	return ((u_int)pa);
