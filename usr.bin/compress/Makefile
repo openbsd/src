@@ -1,8 +1,8 @@
-#	$OpenBSD: Makefile,v 1.15 2003/07/13 04:43:34 millert Exp $
+#	$OpenBSD: Makefile,v 1.16 2003/07/29 11:54:33 otto Exp $
 
 PROG=	compress
 SRCS=	main.c zopen.c gzopen.c
-MAN=	compress.1 zmore.1 zdiff.1
+MAN=	compress.1 zmore.1 zdiff.1 zforce.1
 LINKS=	${BINDIR}/compress ${BINDIR}/uncompress \
 	${BINDIR}/compress ${BINDIR}/zcat \
 	${BINDIR}/compress ${BINDIR}/gzip \
@@ -22,8 +22,9 @@ DPADD=${LIBZ}
 
 afterinstall:
 	install -c -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
-	    ${.CURDIR}/zmore ${.CURDIR}/zdiff ${DESTDIR}${BINDIR}
-#	    ${.CURDIR}/zforce ${.CURDIR}/gzexe ${.CURDIR}/znew \
-#	    ${DESTDIR}${BINDIR}
+	    ${.CURDIR}/zmore ${.CURDIR}/zdiff \
+	    ${.CURDIR}/zforce \
+	    ${DESTDIR}${BINDIR}
+#	    ${.CURDIR}/gzexe ${.CURDIR}/znew \
 
 .include <bsd.prog.mk>
