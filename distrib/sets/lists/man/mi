@@ -509,6 +509,7 @@
 ./usr/share/man/cat1/pushd.0
 ./usr/share/man/cat1/pwd.0
 ./usr/share/man/cat1/quota.0
+./usr/share/man/cat1/radioctl.0
 ./usr/share/man/cat1/rcp.0
 ./usr/share/man/cat1/rcs.0
 ./usr/share/man/cat1/rcsclean.0
@@ -884,8 +885,10 @@
 ./usr/share/man/cat4/alpha/cy.0
 ./usr/share/man/cat4/alpha/esp.0
 ./usr/share/man/cat4/alpha/intro.0
+./usr/share/man/cat4/alpha/kmem.0
 ./usr/share/man/cat4/alpha/le.0
 ./usr/share/man/cat4/alpha/lpt.0
+./usr/share/man/cat4/alpha/mem.0
 ./usr/share/man/cat4/alpha/pms.0
 ./usr/share/man/cat4/alpha/scc.0
 ./usr/share/man/cat4/alpha/wd.0
@@ -1003,6 +1006,7 @@
 ./usr/share/man/cat4/i386
 ./usr/share/man/cat4/i386/apm.0
 ./usr/share/man/cat4/i386/autoconf.0
+./usr/share/man/cat4/i386/az.0
 ./usr/share/man/cat4/i386/bios.0
 ./usr/share/man/cat4/i386/bktr.0
 ./usr/share/man/cat4/i386/gus.0
@@ -1024,6 +1028,8 @@
 ./usr/share/man/cat4/i386/pss.0
 ./usr/share/man/cat4/i386/sb.0
 ./usr/share/man/cat4/i386/sea.0
+./usr/share/man/cat4/i386/sf2r.0
+./usr/share/man/cat4/i386/sf4r.0
 ./usr/share/man/cat4/i386/speaker.0
 ./usr/share/man/cat4/i386/spkr.0
 ./usr/share/man/cat4/i386/uha.0
@@ -1134,6 +1140,7 @@
 ./usr/share/man/cat4/pty.0
 ./usr/share/man/cat4/puc.0
 ./usr/share/man/cat4/qsphy.0
+./usr/share/man/cat4/radio.0
 ./usr/share/man/cat4/raid.0
 ./usr/share/man/cat4/random.0
 ./usr/share/man/cat4/ray.0
@@ -1195,6 +1202,9 @@
 ./usr/share/man/cat4/sparc/zs.0
 ./usr/share/man/cat4/sparc64
 ./usr/share/man/cat4/sparc64/autoconf.0
+./usr/share/man/cat4/sparc64/intro.0
+./usr/share/man/cat4/sparc64/kmem.0
+./usr/share/man/cat4/sparc64/mem.0
 ./usr/share/man/cat4/spp.0
 ./usr/share/man/cat4/sppp.0
 ./usr/share/man/cat4/sqphy.0
@@ -1846,7 +1856,9 @@
 ./usr/share/man/cat8/sparc/installboot.0
 ./usr/share/man/cat8/sparc/makedev.0
 ./usr/share/man/cat8/sparc64
+./usr/share/man/cat8/sparc64/MAKEDEV.0
 ./usr/share/man/cat8/sparc64/installboot.0
+./usr/share/man/cat8/sparc64/makedev.0
 ./usr/share/man/cat8/spppcontrol.0
 ./usr/share/man/cat8/spray.0
 ./usr/share/man/cat8/sprayd.0
@@ -1901,7 +1913,6 @@
 ./usr/share/man/cat8/vax/boot_vax.0
 ./usr/share/man/cat8/vax/drtest.0
 ./usr/share/man/cat8/vax/format.0
-./usr/share/man/cat8/vax/installboot.0
 ./usr/share/man/cat8/vax/makedev.0
 ./usr/share/man/cat8/verify_krb5_conf.0
 ./usr/share/man/cat8/vipw.0
@@ -1941,6 +1952,7 @@
 ./usr/share/man/cat9/mvme68k
 ./usr/share/man/cat9/mvme88k
 ./usr/share/man/cat9/mvmeppc
+./usr/share/man/cat9/radio.0
 ./usr/share/man/cat9/sparc
 ./usr/share/man/cat9/sparc64
 ./usr/share/man/cat9/sun3

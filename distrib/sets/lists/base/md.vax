@@ -206,6 +206,7 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/ic/ispvar.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/ic/lemacreg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/ic/lemacvar.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/dev/ic/lm700x.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/ic/lptreg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/ic/lptvar.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/ic/lsi64854reg.ph
@@ -256,6 +257,7 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/ic/stivar.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/ic/tcic2reg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/ic/tcic2var.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/dev/ic/tea5757.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/ic/tropicreg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/ic/tropicvar.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/ic/twereg.ph
@@ -449,6 +451,8 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pcmcia/pcmciadevs.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pcmcia/pcmciareg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pcmcia/pcmciavar.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/dev/radio_if.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/dev/radiovar.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/raidframe
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/raidframe/rf_acctrace.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/raidframe/rf_alloclist.ph
@@ -1264,6 +1268,7 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/protosw.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/ptrace.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/queue.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/sys/radioio.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/reboot.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/resource.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/resourcevar.ph

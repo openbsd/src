@@ -214,6 +214,7 @@
 ./usr/include/dev/ic/ispvar.h
 ./usr/include/dev/ic/lemacreg.h
 ./usr/include/dev/ic/lemacvar.h
+./usr/include/dev/ic/lm700x.h
 ./usr/include/dev/ic/lptreg.h
 ./usr/include/dev/ic/lptvar.h
 ./usr/include/dev/ic/lsi64854reg.h
@@ -264,6 +265,7 @@
 ./usr/include/dev/ic/stivar.h
 ./usr/include/dev/ic/tcic2reg.h
 ./usr/include/dev/ic/tcic2var.h
+./usr/include/dev/ic/tea5757.h
 ./usr/include/dev/ic/tropicreg.h
 ./usr/include/dev/ic/tropicvar.h
 ./usr/include/dev/ic/twereg.h
@@ -457,6 +459,8 @@
 ./usr/include/dev/pcmcia/pcmciadevs.h
 ./usr/include/dev/pcmcia/pcmciareg.h
 ./usr/include/dev/pcmcia/pcmciavar.h
+./usr/include/dev/radio_if.h
+./usr/include/dev/radiovar.h
 ./usr/include/dev/raidframe
 ./usr/include/dev/raidframe/rf_acctrace.h
 ./usr/include/dev/raidframe/rf_alloclist.h
@@ -1335,6 +1339,7 @@
 ./usr/include/sys/protosw.h
 ./usr/include/sys/ptrace.h
 ./usr/include/sys/queue.h
+./usr/include/sys/radioio.h
 ./usr/include/sys/reboot.h
 ./usr/include/sys/resource.h
 ./usr/include/sys/resourcevar.h

@@ -367,6 +367,7 @@
 ./usr/bin/pstruct
 ./usr/bin/purgestat
 ./usr/bin/quota
+./usr/bin/radioctl
 ./usr/bin/rcs
 ./usr/bin/rcs2log
 ./usr/bin/rcsclean
