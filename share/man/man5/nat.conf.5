@@ -1,4 +1,4 @@
-.\"	$OpenBSD: nat.conf.5,v 1.20 2002/01/08 09:31:55 dhartmei Exp $
+.\"	$OpenBSD: nat.conf.5,v 1.21 2002/01/08 16:28:12 dhartmei Exp $
 .\"
 .\" Copyright (c) 2001 Ian Darwin.  All rights reserved.
 .\"
@@ -62,7 +62,7 @@ to another host and optionally a different port.
 .Sh GRAMMAR
 Syntax for filter rules in BNF:
 .Bd -literal
-rule      = "no" ( nat_rule | binat_rule | rdr_rule ) .
+rule      = [ "no" ] ( nat_rule | binat_rule | rdr_rule ) .
 
 nat_rule  = "nat" "on" [ "!" ] ifname [ protospec ] "from" ipspec
             "to" ipspec [ "->" address ] .
