@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.60 2000/01/02 06:42:13 itojun Exp $
+#	$OpenBSD: netstart,v 1.61 2000/01/02 06:43:42 itojun Exp $
 
 # Returns true if $1 contains only alphanumerics
 isalphanumeric() {
@@ -138,7 +138,7 @@ for hn in /etc/hostname.*; do
 		    cmd="$cmd broadcast $bcaddr"
 		fi
 		[ "$alias" ] && rtcmd="; route -n add -host $name 127.0.0.1"
-	    ;;
+		;;
 	    inet6) [ "$mask" ] && cmd="$cmd prefixlen $mask"
 		cmd="$cmd $bcaddr"
 		;;
