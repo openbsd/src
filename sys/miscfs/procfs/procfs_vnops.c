@@ -1,4 +1,4 @@
-/*	$OpenBSD: procfs_vnops.c,v 1.32 2004/06/24 19:35:25 tholo Exp $	*/
+/*	$OpenBSD: procfs_vnops.c,v 1.33 2004/10/19 12:42:28 pedro Exp $	*/
 /*	$NetBSD: procfs_vnops.c,v 1.40 1996/03/16 23:52:55 christos Exp $	*/
 
 /*
@@ -1040,7 +1040,7 @@ procfs_readdir(v)
 			default:
 				while (pcnt < i) {
 					pcnt++;
-					p = p->p_list.le_next;
+					p = LIST_NEXT(p, p_list);
 					if (!p)
 						goto done;
 				}
@@ -1048,7 +1048,7 @@ procfs_readdir(v)
 				d.d_namlen = snprintf(d.d_name, sizeof(d.d_name),
 				    "%ld", (long)p->p_pid);
 				d.d_type = DT_REG;
-				p = p->p_list.le_next;
+				p = LIST_NEXT(p, p_list);
 				break;
 			}
 
