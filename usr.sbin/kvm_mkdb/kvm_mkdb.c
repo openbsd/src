@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_mkdb.c,v 1.7 1999/03/24 04:51:23 millert Exp $	*/
+/*	$OpenBSD: kvm_mkdb.c,v 1.8 1999/03/24 05:25:55 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "from: @(#)kvm_mkdb.c	8.3 (Berkeley) 5/4/95";
 #else
-static char *rcsid = "$OpenBSD: kvm_mkdb.c,v 1.7 1999/03/24 04:51:23 millert Exp $";
+static char *rcsid = "$OpenBSD: kvm_mkdb.c,v 1.8 1999/03/24 05:25:55 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -68,7 +68,7 @@ static char *rcsid = "$OpenBSD: kvm_mkdb.c,v 1.7 1999/03/24 04:51:23 millert Exp
 #include "extern.h"
 
 void usage __P((void));
-int kvm_mkdb __P((char *, char *, int));
+int kvm_mkdb __P((int, char *, char *, int));
 
 HASHINFO openinfo = {
 	4096,		/* bsize */
@@ -85,7 +85,7 @@ main(argc, argv)
 	char *argv[];
 {
 	struct rlimit rl;
-	int rval, ch, verbose = 0;
+	int fd, rval, ch, verbose = 0;
 	char *nlistpath, *nlistname;
 
 	/* Increase our data size to the max if we can. */
@@ -113,33 +113,34 @@ main(argc, argv)
 	/* If no kernel specified use _PATH_KSYMS and fall back to _PATH_UNIX */
 	if (argc > 0) {
 		nlistpath = argv[0];
-		nlistname = basename(argv[0]);
-		rval = kvm_mkdb(nlistpath, nlistname, verbose);
+		nlistname = basename(nlistpath);
+		if ((fd = open(nlistpath, O_RDONLY, 0)) == -1)
+			err(1, "can't open %s", nlistpath);
+		rval = kvm_mkdb(fd, nlistpath, nlistname, verbose);
 	} else {
 		nlistname = basename(_PATH_UNIX);
-		nlistpath = _PATH_KSYMS;
-		if ((rval = kvm_mkdb(nlistpath, nlistname, verbose)) != 0) {
-			nlistpath = _PATH_UNIX;
-			rval = kvm_mkdb(nlistpath, nlistname, verbose);
+		if ((fd = open((nlistpath = _PATH_KSYMS), O_RDONLY, 0)) == -1 ||
+		    (rval = kvm_mkdb(fd, nlistpath, nlistname, verbose)) != 0) {
+			if (fd != -1)
+				warnx("will try again using %s instead",
+				    _PATH_UNIX);
+			if ((fd = open((nlistpath = _PATH_UNIX), O_RDONLY, 0)) == -1)
+				err(1, "can't open %s", nlistpath);
+			rval = kvm_mkdb(fd, nlistpath, nlistname, verbose);
 		}
 	}
 	exit(rval);
 }
 
 int
-kvm_mkdb(nlistpath, nlistname, verbose)
+kvm_mkdb(fd, nlistpath, nlistname, verbose)
+	int fd;
 	char *nlistpath;
 	char *nlistname;
 	int verbose;
 {
 	DB *db;
-	int fd;
 	char dbtemp[MAXPATHLEN], dbname[MAXPATHLEN];
-
-	if ((fd = open(nlistpath, O_RDONLY, 0)) == -1) {
-		warn("can't open %s", nlistpath);
-		return(1);
-	}
 
 	(void)snprintf(dbtemp, sizeof(dbtemp), "%skvm_%s.tmp",
 	    _PATH_VARDB, nlistname);
