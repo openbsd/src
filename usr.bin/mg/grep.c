@@ -1,4 +1,4 @@
-/*	$OpenBSD: grep.c,v 1.9 2003/11/09 00:16:36 vincent Exp $	*/
+/*	$OpenBSD: grep.c,v 1.10 2004/01/15 20:55:47 vincent Exp $	*/
 /*
  * Copyright (c) 2001 Artur Grabowski <art@openbsd.org>.  All rights reserved.
  *
@@ -213,11 +213,13 @@ retry:
 	lineno = strtol(ln, &lp1, 10);
 	if (lp != lp1 + 1)
 		goto fail;
-	free(line);
 
 	adjf = adjustname(fname);
+	free(line);
+
 	if (adjf == NULL)
 		return (FALSE);
+
 	if ((bp = findbuffer(adjf)) == NULL)
 		return FALSE;
 	if ((wp = popbuf(bp)) == NULL)
