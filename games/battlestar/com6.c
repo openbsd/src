@@ -1,4 +1,4 @@
-/*	$OpenBSD: com6.c,v 1.15 2000/09/24 21:55:23 pjanzen Exp $	*/
+/*	$OpenBSD: com6.c,v 1.16 2001/02/04 02:19:42 pjanzen Exp $	*/
 /*	$NetBSD: com6.c,v 1.5 1995/04/27 21:30:23 mycroft Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)com6.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: com6.c,v 1.15 2000/09/24 21:55:23 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: com6.c,v 1.16 2001/02/04 02:19:42 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -124,7 +124,7 @@ post(ch)
 	date[24] = '\0';
 
 	if (score_fp != NULL) {
-		fprintf(score_fp, "%s  %8s  %c%20s", date, username, ch, rate());
+		fprintf(score_fp, "%s  %31s  %c%20s", date, username, ch, rate());
 		if (wiz)
 			fprintf(score_fp, "   wizard\n");
 		else
