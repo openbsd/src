@@ -1,4 +1,4 @@
-/*	$OpenBSD: cksum.c,v 1.5 2000/11/21 13:22:40 aaron Exp $	*/
+/*	$OpenBSD: cksum.c,v 1.6 2000/11/21 18:03:18 aaron Exp $	*/
 /*	$NetBSD: cksum.c,v 1.7 1995/09/02 05:45:18 jtc Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)cksum.c	8.2 (Berkeley) 4/28/95";
 #endif
-static char rcsid[] = "$OpenBSD: cksum.c,v 1.5 2000/11/21 13:22:40 aaron Exp $";
+static char rcsid[] = "$OpenBSD: cksum.c,v 1.6 2000/11/21 18:03:18 aaron Exp $";
 #endif /* not lint */
 
 #include <sys/cdefs.h>
@@ -135,6 +135,9 @@ main(argc, argv)
 void
 usage()
 {
-	(void)fprintf(stderr, "usage: %s [-o 1 | 2] [file ...]\n", __progname);
+	if (!strcmp(__progname, "cksum"))
+		(void)fprintf(stderr, "usage: cksum [-o 1 | 2] [file ...]\n");
+	else
+		(void)fprintf(stderr, "usage: %s [file ...]\n", __progname);
 	exit(1);
 }
