@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb.c,v 1.26 2002/08/19 20:16:04 jason Exp $	*/
+/*	$OpenBSD: vgafb.c,v 1.27 2002/09/10 03:18:59 jason Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -86,6 +86,7 @@ struct wsscreen_descr vgafb_stdscreen = {
 	0, 0,	/* will be filled in -- XXX shouldn't, it's global. */
 	NULL,
 	0, 0,
+	WSSCREEN_UNDERLINE | WSSCREEN_HILIT |
 	WSSCREEN_REVERSE | WSSCREEN_WSCOLORS
 };
 

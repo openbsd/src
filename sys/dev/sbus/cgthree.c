@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgthree.c,v 1.24 2002/08/31 21:18:48 jason Exp $	*/
+/*	$OpenBSD: cgthree.c,v 1.25 2002/09/10 03:18:59 jason Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -139,6 +139,7 @@ struct wsscreen_descr cgthree_stdscreen = {
 	0, 0,	/* will be filled in -- XXX shouldn't, it's global. */
 	0,
 	0, 0,
+	WSSCREEN_UNDERLINE | WSSCREEN_HILIT |
 	WSSCREEN_REVERSE | WSSCREEN_WSCOLORS
 };
 

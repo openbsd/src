@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwtwo.c,v 1.4 2002/08/12 16:18:59 jason Exp $	*/
+/*	$OpenBSD: bwtwo.c,v 1.5 2002/09/10 03:18:59 jason Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -138,7 +138,7 @@ struct wsscreen_descr bwtwo_stdscreen = {
 	0, 0,	/* will be filled in -- XXX shouldn't, it's global. */
 	0,
 	0, 0,
-	WSSCREEN_REVERSE
+	WSSCREEN_UNDERLINE | WSSCREEN_REVERSE
 };
 
 const struct wsscreen_descr *bwtwo_scrlist[] = {
