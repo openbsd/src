@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.57 2003/04/29 21:39:34 jason Exp $	*/
+/*	$OpenBSD: dc.c,v 1.58 2003/04/29 21:44:06 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -717,7 +717,7 @@ dc_miibus_readreg(self, phy, reg)
 			phy_reg = DC_AL_ANER;
 			break;
 		default:
-			printf("dc%s: phy_read: bad phy register %x\n",
+			printf("%s: phy_read: bad phy register %x\n",
 			    sc->sc_dev.dv_xname, reg);
 			return (0);
 			break;
@@ -1906,14 +1906,14 @@ dc_newbuf(sc, i, m)
 	if (m == NULL) {
 		MGETHDR(m_new, M_DONTWAIT, MT_DATA);
 		if (m_new == NULL) {
-			printf("dc%s: no memory for rx list "
+			printf("%s: no memory for rx list "
 			    "-- packet dropped!\n", sc->sc_dev.dv_xname);
 			return (ENOBUFS);
 		}
 
 		MCLGET(m_new, M_DONTWAIT);
 		if (!(m_new->m_flags & M_EXT)) {
-			printf("dc%s: no memory for rx list "
+			printf("%s: no memory for rx list "
 			    "-- packet dropped!\n", sc->sc_dev.dv_xname);
 			m_freem(m_new);
 			return (ENOBUFS);
@@ -2620,14 +2620,14 @@ dc_coal(sc, m_head)
 	m = *m_head;
 	MGETHDR(m_new, M_DONTWAIT, MT_DATA);
 	if (m_new == NULL) {
-		printf("dc%s: no memory for tx list", sc->sc_dev.dv_xname);
+		printf("%s: no memory for tx list", sc->sc_dev.dv_xname);
 		return (ENOBUFS);
 	}
 	if (m->m_pkthdr.len > MHLEN) {
 		MCLGET(m_new, M_DONTWAIT);
 		if (!(m_new->m_flags & M_EXT)) {
 			m_freem(m_new);
-			printf("dc%s: no memory for tx list",
+			printf("%s: no memory for tx list",
 			    sc->sc_dev.dv_xname);
 			return (ENOBUFS);
 		}
