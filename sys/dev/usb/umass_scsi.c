@@ -1,4 +1,4 @@
-/*	$OpenBSD: umass_scsi.c,v 1.8 2004/07/21 07:43:41 dlg Exp $ */
+/*	$OpenBSD: umass_scsi.c,v 1.9 2004/07/22 02:40:21 dlg Exp $ */
 /*	$NetBSD: umass_scsipi.c,v 1.9 2003/02/16 23:14:08 augustss Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -175,14 +175,12 @@ umass_scsi_cmd(struct scsi_xfer *xs)
 	struct umass_softc *sc = sc_link->adapter_softc;
 	struct umass_scsi_softc *scbus = (struct umass_scsi_softc *)sc->bus;
 
-	struct scsi_generic *cmd, trcmd;
+	struct scsi_generic *cmd;
 	int cmdlen, dir, s;
 
 #ifdef UMASS_DEBUG
 	microtime(&sc->tv);
 #endif
-
-	memset(&trcmd, 0, sizeof(trcmd));
 
 	DIF(UDMASS_UPPER, sc_link->flags |= SCSIDEBUG_LEVEL);
 
