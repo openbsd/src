@@ -1,4 +1,4 @@
-/*	$OpenBSD: checkout.c,v 1.2 2004/07/26 17:30:30 jfb Exp $	*/
+/*	$OpenBSD: checkout.c,v 1.3 2004/07/28 02:01:29 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -72,7 +72,7 @@ cvs_checkout(int argc, char **argv)
 
 	cvs_root = cvsroot_get(".");
 	if (cvs_root->cr_method != CVS_METHOD_LOCAL) {
-		cvs_client_connect();
+		cvs_client_connect(cvs_root);
 	}
 
 	cvs_client_sendarg(argv[0], 0);
