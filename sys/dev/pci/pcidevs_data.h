@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.700 2003/12/17 17:25:22 jason Exp 
+ *	OpenBSD: pcidevs,v 1.701 2003/12/20 19:17:26 grange Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -3219,6 +3219,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "82801DB IDE",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801DBM_LPC,
+	    "82801DBM LPC",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801DB_USB_4,
 	    "82801DB USB",
 	},
@@ -3417,10 +3421,6 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82855PE_AGP,
 	    "82855PE AGP",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801DBM,
-	    "82801DBM LPC",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_RCU32,
