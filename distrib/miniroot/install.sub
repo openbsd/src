@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.79 1998/07/09 00:02:34 millert Exp $
+#	$OpenBSD: install.sub,v 1.80 1998/09/11 22:45:52 millert Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997,1998 Todd Miller, Theo de Raadt
@@ -221,6 +221,11 @@ basename () {
 	IFS="$_oifs"
 	while [ "$#" -gt 10 ]; do shift 10; done
 	eval echo \$$#
+}
+
+get_ifdevs() {
+        # return available network devices
+	/sbin/ifconfig -a | egrep -v '^([[:space:]]|(lo|enc|ppp|sl|tun)[[:digit:]])' | cut -f 1 -d :
 }
 
 dir_has_sets() {
@@ -462,7 +467,7 @@ configurenetwork() {
 	local _ouranswer
 	local _reprompt
 
-	_IFS=`md_get_ifdevs`
+	_IFS=`get_ifdevs`
 	_ifsdone=""
 	_ouranswer=""
 	_reprompt=1

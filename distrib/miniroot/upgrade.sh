@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: upgrade.sh,v 1.8 1997/07/09 15:15:35 millert Exp $
+#	$OpenBSD: upgrade.sh,v 1.9 1998/09/11 22:45:53 millert Exp $
 #	$NetBSD: upgrade.sh,v 1.2.4.5 1996/08/27 18:15:08 gwr Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -52,7 +52,6 @@ MODE="upgrade"
 #	md_copy_kernel()	- copy a kernel to the installed disk
 #	md_get_diskdevs()	- return available disk devices
 #	md_get_cddevs()		- return available CD-ROM devices
-#	md_get_ifdevs()		- return available network interfaces
 #	md_get_partition_range() - return range of valid partition letters
 #	md_installboot()	- install boot-blocks on disk
 #	md_labeldisk()		- put label on a disk
