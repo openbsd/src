@@ -1,4 +1,4 @@
-/*	$OpenBSD: dumpfs.c,v 1.12 2001/11/05 07:39:16 mpech Exp $	*/
+/*	$OpenBSD: dumpfs.c,v 1.13 2001/12/01 19:13:21 deraadt Exp $	*/
 /*	$NetBSD: dumpfs.c,v 1.12 1997/04/26 05:41:33 lukem Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)dumpfs.c	8.2 (Berkeley) 2/2/94";
 #else
-static char rcsid[] = "$OpenBSD: dumpfs.c,v 1.12 2001/11/05 07:39:16 mpech Exp $";
+static char rcsid[] = "$OpenBSD: dumpfs.c,v 1.13 2001/12/01 19:13:21 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -145,7 +145,7 @@ dumpfs(name)
 	if (afs.fs_postblformat != FS_42POSTBLFMT) {
 		i++;
 		if (afs.fs_inodefmt >= FS_44INODEFMT) {
-			int max, siz;
+			int max;
 
 			i++;
 			max = afs.fs_maxcontig;
