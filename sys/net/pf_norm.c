@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.11 2001/09/15 03:54:40 frantzen Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.12 2001/09/15 16:47:07 dhartmei Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -96,16 +96,16 @@ int			 pf_normalize_tcp(int, struct ifnet *, struct mbuf *,
 #define DPFPRINTF(x)		if (pf_status.debug) printf x
 
 #if NPFLOG > 0
-#define PFLOG_PACKET(x,a,b,c,d,e) \
+#define PFLOG_PACKET(i,x,a,b,c,d,e) \
         do { \
                 if (b == AF_INET) { \
                         HTONS(((struct ip *)x)->ip_len); \
                         HTONS(((struct ip *)x)->ip_off); \
-                        pflog_packet(a,b,c,d,e); \
+                        pflog_packet(i,a,b,c,d,e); \
                         NTOHS(((struct ip *)x)->ip_len); \
                         NTOHS(((struct ip *)x)->ip_off); \
                 } else { \
-                        pflog_packet(a,b,c,d,e); \
+                        pflog_packet(i,a,b,c,d,e); \
                 } \
         } while (0)
 #else
@@ -535,7 +535,7 @@ pf_normalize_ip(struct mbuf **m0, int dir, struct ifnet *ifp, u_short *reason)
  drop:
 	REASON_SET(reason, PFRES_NORM);
 	if (r != NULL && r->log)
-		PFLOG_PACKET(h, m, AF_INET, dir, *reason, r);
+		PFLOG_PACKET(ifp, h, m, AF_INET, dir, *reason, r);
 	return (PF_DROP);
 
  bad:
@@ -547,7 +547,7 @@ pf_normalize_ip(struct mbuf **m0, int dir, struct ifnet *ifp, u_short *reason)
 
 	REASON_SET(reason, PFRES_FRAG);
 	if (r != NULL && r->log)
-		PFLOG_PACKET(h, m, AF_INET, dir, *reason, r);
+		PFLOG_PACKET(ifp, h, m, AF_INET, dir, *reason, r);
 
 	return (PF_DROP);
 }
@@ -654,6 +654,6 @@ pf_normalize_tcp(int dir, struct ifnet *ifp, struct mbuf *m, int ipoff,
  tcp_drop:
 	REASON_SET(&reason, PFRES_NORM);
 	if (rm != NULL && rm->log)
-		PFLOG_PACKET(h, m, AF_INET, dir, reason, rm);
+		PFLOG_PACKET(ifp, h, m, AF_INET, dir, reason, rm);
 	return (PF_DROP);
 }

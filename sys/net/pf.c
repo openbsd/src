@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.150 2001/09/15 03:54:40 frantzen Exp $ */
+/*	$OpenBSD: pf.c,v 1.151 2001/09/15 16:47:07 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -251,20 +251,20 @@ int			 pf_normalize_tcp(int, struct ifnet *, struct mbuf *,
 
 
 #if NPFLOG > 0
-#define	PFLOG_PACKET(x,a,b,c,d,e) \
+#define	PFLOG_PACKET(i,x,a,b,c,d,e) \
 	do { \
 		if (b == AF_INET) { \
 			HTONS(((struct ip *)x)->ip_len); \
 			HTONS(((struct ip *)x)->ip_off); \
-			pflog_packet(a,b,c,d,e); \
+			pflog_packet(i,a,b,c,d,e); \
 			NTOHS(((struct ip *)x)->ip_len); \
 			NTOHS(((struct ip *)x)->ip_off); \
 		} else { \
-			pflog_packet(a,b,c,d,e); \
+			pflog_packet(i,a,b,c,d,e); \
 		} \
 	} while (0)
 #else
-#define	PFLOG_PACKET(x,a,b,c,d,e)	((void)0)
+#define	PFLOG_PACKET(i,x,a,b,c,d,e)	((void)0)
 #endif
 
 #define	STATE_TRANSLATE(s) \
@@ -629,27 +629,19 @@ pf_tree_remove(struct pf_tree_node **n, struct pf_tree_node *p,
 }
 
 int
-pflog_packet(struct mbuf *m, int af, u_short dir, u_short reason,
-    struct pf_rule *rm)
+pflog_packet(struct ifnet *ifp, struct mbuf *m, int af, u_short dir,
+    u_short reason, struct pf_rule *rm)
 {
 #if NBPFILTER > 0
-	struct ifnet *ifn, *ifp = NULL;
+	struct ifnet *ifn;
 	struct pfloghdr hdr;
 	struct mbuf m1;
 
-	if (m == NULL)
-		return(-1);
+	if (ifp == NULL || m == NULL || rm == NULL)
+		return (-1);
 
 	hdr.af = htonl(af);
-	/* Set the right interface name */
-	if (rm != NULL)
-		ifp = rm->ifp;
-	if (m->m_pkthdr.rcvif != NULL)
-		ifp = m->m_pkthdr.rcvif;
-	if (ifp != NULL)
-		memcpy(hdr.ifname, ifp->if_xname, sizeof(hdr.ifname));
-	else
-		strcpy(hdr.ifname, "unkn");
+	memcpy(hdr.ifname, ifp->if_xname, sizeof(hdr.ifname));
 
 	hdr.rnr = htons(rm->nr);
 	hdr.reason = htons(reason);
@@ -2807,7 +2799,7 @@ pf_test_tcp(int direction, struct ifnet *ifp, struct mbuf *m,
 
 		/* XXX will log packet before rewrite */
 		if (rm->log)
-			PFLOG_PACKET(h, m, af, direction, reason, rm);
+			PFLOG_PACKET(ifp, h, m, af, direction, reason, rm);
 
 		if ((rm->action == PF_DROP) &&
 		    ((rm->rule_flag & PFRULE_RETURNRST) || rm->return_icmp)) {
@@ -3027,7 +3019,7 @@ pf_test_udp(int direction, struct ifnet *ifp, struct mbuf *m,
 
 		/* XXX will log packet before rewrite */
 		if (rm->log)
-			PFLOG_PACKET(h, m, af, direction, reason, rm);
+			PFLOG_PACKET(ifp, h, m, af, direction, reason, rm);
 
 		if ((rm->action == PF_DROP) && rm->return_icmp) {
 			/* undo NAT/RST changes, if they have taken place */
@@ -3253,7 +3245,7 @@ pf_test_icmp(int direction, struct ifnet *ifp, struct mbuf *m,
 
 		/* XXX will log packet before rewrite */
 		if (rm->log)
-			PFLOG_PACKET(h, m, af, direction, reason, rm);
+			PFLOG_PACKET(ifp, h, m, af, direction, reason, rm);
 
 		if (rm->action != PF_PASS)
 			return (PF_DROP);
@@ -3398,7 +3390,7 @@ pf_test_other(int direction, struct ifnet *ifp, struct mbuf *m,
 		rm->bytes += pd->tot_len;
 		REASON_SET(&reason, PFRES_MATCH);
 		if (rm->log)
-			PFLOG_PACKET(h, m, af, direction, reason, rm);
+			PFLOG_PACKET(ifp, h, m, af, direction, reason, rm);
 
 		if (rm->action != PF_PASS)
 			return (PF_DROP);
@@ -4405,7 +4397,7 @@ done:
 			r0.nr = -1;
 			r = &r0;
 		}
-		PFLOG_PACKET(h, m, AF_INET, dir, reason, r);
+		PFLOG_PACKET(ifp, h, m, AF_INET, dir, reason, r);
 	}
 	return (action);
 }
@@ -4535,7 +4527,7 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0)
 		struct icmp6_hdr ih;
 		pd.hdr.icmp6 = &ih;
 
-		if (!pf_pull_hdr(m, off, &ih, sizeof(&ih),
+		if (!pf_pull_hdr(m, off, &ih, sizeof(ih),
 		    &action, &reason, AF_INET6)) {
 			log = action != PF_PASS;
 			goto done;
@@ -4573,7 +4565,7 @@ done:
 			r0.nr = -1;
 			r = &r0;
 		}
-		PFLOG_PACKET(h, m, AF_INET6, dir, reason, r);
+		PFLOG_PACKET(ifp, h, m, AF_INET6, dir, reason, r);
 	}
 	return (action);
 }
