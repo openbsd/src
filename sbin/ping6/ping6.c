@@ -1,5 +1,5 @@
-/*	$OpenBSD: ping6.c,v 1.28 2001/02/04 00:37:21 itojun Exp $	*/
-/*	$KAME: ping6.c,v 1.121 2001/02/01 16:43:01 itojun Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.29 2001/05/09 11:39:45 itojun Exp $	*/
+/*	$KAME: ping6.c,v 1.125 2001/05/09 11:17:33 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -160,7 +160,6 @@ static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 
 #define	F_FLOOD		0x0001
 #define	F_INTERVAL	0x0002
-#define	F_NUMERIC	0x0004
 #define	F_PINGFILLED	0x0008
 #define	F_QUIET		0x0010
 #define	F_RROUTE	0x0020
@@ -441,7 +440,7 @@ main(argc, argv)
 				errx(1, "illegal preload value -- %s", optarg);
 			break;
 		case 'n':
-			options |= F_NUMERIC;
+			options &= ~F_HOSTNAME;
 			break;
 		case 'N':
 			options |= F_NIGROUP;
@@ -552,8 +551,7 @@ main(argc, argv)
 
 	/* getaddrinfo */
 	bzero(&hints, sizeof(struct addrinfo));
-	if ((options & F_NUMERIC) != 0)
-		hints.ai_flags = AI_CANONNAME;
+	hints.ai_flags = AI_CANONNAME;
 	hints.ai_family = AF_INET6;
 	hints.ai_socktype = SOCK_RAW;
 	hints.ai_protocol = IPPROTO_ICMPV6;
@@ -876,11 +874,6 @@ main(argc, argv)
 		src.sin6_port = ntohs(DUMMY_PORT);
 		src.sin6_scope_id = dst.sin6_scope_id;
 
-
-#ifdef USE_SIN6_SCOPE_ID
-		src.sin6_scope_id = dst.sin6_scope_id;
-#endif
-
 #ifdef USE_RFC2292BIS
 		if (pktinfo &&
 		    setsockopt(dummy, IPPROTO_IPV6, IPV6_PKTINFO,
@@ -1026,11 +1019,12 @@ main(argc, argv)
 		cc = select(s + 1, fdmaskp, NULL, NULL, tv);
 		if (cc < 0) {
 			if (errno != EINTR) {
-				warn("recvmsg");
+				warn("select");
 				sleep(1);
 			}
 			continue;
-		}
+		} else if (cc == 0)
+			continue;
 
 		fromlen = sizeof(from);
 		m.msg_name = (caddr_t)&from;
