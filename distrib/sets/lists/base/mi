@@ -1441,7 +1441,6 @@
 ./usr/share/man/cat8/wgrisc
 ./usr/share/man/cat9
 ./usr/share/man/cat9/i386
-./usr/share/man/makewhatis.sed
 ./usr/share/man/man1
 ./usr/share/man/man2
 ./usr/share/man/man3
@@ -2682,3 +2681,4 @@
 ./var/yp/Makefile.yp.dist
 ./var/yp/README
 ./usr/sbin/rip6query
+./usr/sbin/usbdevs
