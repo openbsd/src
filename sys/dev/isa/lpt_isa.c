@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpt_isa.c,v 1.6 1997/10/07 05:33:25 mickey Exp $	*/
+/*	$OpenBSD: lpt_isa.c,v 1.7 1997/10/07 05:36:07 mickey Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -148,6 +148,7 @@ lpt_isa_probe(parent, match, aux)
 	bus_space_write_1(iot, ioh, lpt_control, 0);
 
 	ia->ia_msize = 0;
+	ia->ia_iosize = iosz;
 
 	rv = 1;
 
@@ -176,8 +177,6 @@ lpt_isa_attach(parent, self, aux)
 	sc->sc_state = 0;
 
 	iot = sc->sc_iot = ia->ia_iot;
-	if (ia->ia_iosize == -1)
-		ia->ia_iosize = LPT_NPORTS;
 	if (bus_space_map(iot, ia->ia_iobase, ia->ia_iosize, 0, &ioh))
 		panic("lpt_isa_attach: couldn't map I/O ports");
 	sc->sc_ioh = ioh;
