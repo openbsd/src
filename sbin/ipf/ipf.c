@@ -1,4 +1,4 @@
-/*     $OpenBSD: ipf.c,v 1.13 1999/02/05 05:58:42 deraadt Exp $      */
+/*     $OpenBSD: ipf.c,v 1.14 1999/02/07 00:55:16 deraadt Exp $      */
 /*
  * Copyright (C) 1993-1998 by Darren Reed.
  *
@@ -45,7 +45,7 @@
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)ipf.c	1.23 6/5/96 (C) 1993-1995 Darren Reed";
-static const char rcsid[] = "@(#)$Id: ipf.c,v 1.13 1999/02/05 05:58:42 deraadt Exp $";
+static const char rcsid[] = "@(#)$Id: ipf.c,v 1.14 1999/02/07 00:55:16 deraadt Exp $";
 #endif
 
 static	void	frsync __P((void));
@@ -57,6 +57,7 @@ extern	char	*index __P((const char *, int));
 #endif
 
 extern	char	*optarg;
+extern	int	optreset;
 
 void	zerostats __P((void));
 int	main __P((int, char *[]));
@@ -73,13 +74,27 @@ static	void	closedevice __P((void));
 static	char	*getline __P((char *, size_t, FILE *));
 static	char	*ipfname = IPL_NAME;
 
+#define OPTS	"AdDEf:F:Il:noPrsUvyzZ"
+
+void usage()
+{
+	fprintf(stderr, "usage: ipf [-AdDEInorsUvyzZ] [-l block|pass|nomatch] "
+	    "[-F i|o|a|s|S] -f file ...\n");
+	exit(1);
+}
+
 int main(argc,argv)
 int argc;
 char *argv[];
 {
 	int c;
 
-	while ((c = getopt(argc, argv, "AdDEf:F:Il:noPrsUvyzZ")) != -1) {
+	while ((c = getopt(argc, argv, OPTS)) != -1)
+		if (c == '?')
+			usage();
+
+	optreset = 1;
+	while ((c = getopt(argc, argv, OPTS)) != -1) {
 		switch (c)
 		{
 		case 'A' :
