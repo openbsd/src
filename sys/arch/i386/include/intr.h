@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.10 2001/12/04 00:00:36 niklas Exp $	*/
+/*	$OpenBSD: intr.h,v 1.11 2001/12/13 23:38:27 niklas Exp $	*/
 /*	$NetBSD: intr.h,v 1.5 1996/05/13 06:11:28 mycroft Exp $	*/
 
 /*
@@ -116,12 +116,13 @@ static __inline void softintr __P((int));
  */
 static __inline int
 splraise(ncpl)
-	register int ncpl;
+	int ncpl;
 {
-	register int ocpl = cpl;
+	int ocpl = cpl;
 
 	if (ncpl > ocpl)
 		cpl = ncpl;
+	__asm __volatile("");
 	return (ocpl);
 }
 
@@ -131,8 +132,9 @@ splraise(ncpl)
  */
 static __inline void
 splx(ncpl)
-	register int ncpl;
+	int ncpl;
 {
+	__asm __volatile("");
 	cpl = ncpl;
 	if (ipending & IUNMASK(ncpl))
 		Xspllower();
@@ -144,9 +146,9 @@ splx(ncpl)
  */
 static __inline int
 spllower(ncpl)
-	register int ncpl;
+	int ncpl;
 {
-	register int ocpl = cpl;
+	int ocpl = cpl;
 
 	splx(ncpl);
 	return (ocpl);
@@ -188,7 +190,7 @@ spllower(ncpl)
  */
 static __inline void
 softintr(mask)
-	register int mask;
+	int mask;
 {
 	__asm __volatile("orl %0,_ipending" : : "ir" (mask));
 }
