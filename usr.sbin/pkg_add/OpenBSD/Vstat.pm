@@ -1,4 +1,4 @@
-# $OpenBSD: Vstat.pm,v 1.3 2003/12/26 16:34:05 espie Exp $
+# $OpenBSD: Vstat.pm,v 1.4 2004/03/10 08:21:40 espie Exp $
 #
 # Copyright (c) 2003 Marc Espie.
 # 
@@ -45,10 +45,12 @@ my $blocksize = 512;
 sub create_mntpoint($)
 {
 	my $mntpoint = shift;
-	my $n = $dirinfo->{"$mntpoint"};
+	my $dev = (stat $mntpoint)[0];
+	my $n = $dirinfo->{"$dev"};
 	if (!defined $n) {
-		$n = { mnt => $mntpoint, used => 0 };
+		$n = { mnt => $mntpoint, dev => $dev, used => 0 };
 		bless $n, "OpenBSD::Vstat::MountPoint";
+		$dirinfo->{"$dev"} = $n;
 		$dirinfo->{"$mntpoint"} = $n;
 		push(@$mnts, $n);
 	}
@@ -101,21 +103,40 @@ sub _dirstat($);
 sub _dirstat($)
 {
 	my $dname = shift;
-	
-	if (!defined $dirinfo->{"$dname"}) {
-		return $dirinfo->{"$dname"} = _dirstat(dirname($dname));
+	my $dev = (stat $dname)[0];
+
+	if (!defined $dev) {
+		if (!defined $dirinfo->{"$dname"}) {
+			return $dirinfo->{"$dname"} = _dirstat(dirname($dname));
+		} else {
+			return $dirinfo->{"$dname"};
+		}
 	} else {
-		return $dirinfo->{"$dname"};
+		if (!defined $dirinfo->{"$dev"}) {
+			return $dirinfo->{"$dev"} = _dirstat(dirname($dname));
+		} else {
+			return $dirinfo->{"$dev"};
+		}
 	}
 }
 
 sub filestat($)
 {
 	my $fname = shift;
-	if (!defined $dirinfo->{"$fname"}) {
-		return _dirstat(dirname($fname));
+	my $dev = (stat $fname)[0];
+
+	if (!defined $dev) {
+		if (!defined $dirinfo->{"$fname"}) {
+			return _dirstat(dirname($fname));
+		} else {
+			return $dirinfo->{"$fname"};
+		}
 	} else {
-		return $dirinfo->{"$fname"};
+		if (!defined $dirinfo->{"$dev"}) {
+			return _dirstat(dirname($fname));
+		} else {
+			return $dirinfo->{"$dev"};
+		}
 	}
 }
 
