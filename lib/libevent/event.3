@@ -1,4 +1,4 @@
-.\"	$OpenBSD: event.3,v 1.1.1.1 2002/06/15 18:01:37 provos Exp $
+.\"	$OpenBSD: event.3,v 1.2 2002/06/25 15:39:38 mpech Exp $
 .\"
 .\" Copyright (c) 2000 Artur Grabowski <art@openbsd.org>
 .\" All rights reserved.
@@ -37,17 +37,17 @@
 .Nm event_add ,
 .Nm event_del ,
 .Nm event_pending ,
-.Nm event_initalized ,
+.Nm event_initialized ,
 .Nm timeout_set ,
 .Nm timeout_add ,
 .Nm timeout_del
 .Nm timeout_pending ,
-.Nm timeout_initalized ,
+.Nm timeout_initialized ,
 .Nm signal_set ,
 .Nm signal_add ,
 .Nm signal_del
 .Nm signal_pending ,
-.Nm signal_initalized ,
+.Nm signal_initialized
 .Nd execute a function when a specific event occurs
 .Sh SYNOPSIS
 .Fd #include <event.h>
@@ -99,7 +99,7 @@ on a file descriptor occurs or after at a given time has passed.
 .Pp
 The
 .Nm event
-API needs to be initalized with
+API needs to be initialized with
 .Fn event_init
 before it can be used.
 .Pp
@@ -158,7 +158,7 @@ The event will be prepared to call the function specified by the
 .Fa fn
 argument with an
 .Fa int
-argument indicating the file descriptor, with a
+argument indicating the file descriptor, a
 .Fa short
 argument indicating the type of event, and a
 .Fa void *
@@ -169,8 +169,8 @@ The
 .Fa fd
 indicates the file descriptor that should be monitored for events.
 The events can be either
-.Va EV_READ,
-.Va EV_WRITE,
+.Va EV_READ ,
+.Va EV_WRITE ,
 or both.
 Indicating that an application can read or write from the file descriptor
 respectively without blocking.
@@ -198,8 +198,8 @@ structure can be used repeatedly with
 .Fn event_add
 and
 .Fn event_del
-and does not need to be reinitialized unless you wish to
-change the function called and/or the argument to it.
+and does not need to be reinitialized unless the function called and/or
+the argument to it are to be changed.
 .Pp
 The function
 .Fn event_add
