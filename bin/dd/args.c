@@ -105,6 +105,7 @@ jcl(argv)
 	in.dbsz = out.dbsz = 512;
 
 	while (oper = *++argv) {
+		oper = strdup(oper);
 		if ((arg = strchr(oper, '=')) == NULL)
 			errx(1, "unknown operand %s", oper);
 		*arg++ = '\0';
