@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.22 1997/07/24 22:11:59 deraadt Exp $
+#	$OpenBSD: netstart,v 1.23 1997/07/25 00:06:03 provos Exp $
 
 # set these to "NO" to turn them off.  otherwise, they're used as flags
 routed_flags=-q
@@ -11,7 +11,7 @@ rbootd_flags=NO		# for 'normal' use: rbootd_flags=""
 sendmail_flags=NO	# for 'normal' use: sendmail_flags="-bd -q30m"
 named_flags=NO		# for 'normal' use: named_flags=""
 timed_flags=NO		# for 'normal' use: timed_flags=""
-photurisd_flags="-f"    # for 'normal' use: photurisd_flags="-f"
+photurisd_flags=""      # for 'normal' use: photurisd_flags=""
 
 # set the following to "YES" to turn them on
 rwhod=NO

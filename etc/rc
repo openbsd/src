@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.39 1997/07/22 17:11:56 kstailey Exp $
+#	$OpenBSD: rc,v 1.40 1997/07/25 00:06:02 provos Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -98,6 +98,13 @@ fi
 
 if [ X"${rfc1323}" = X"NO" ]; then
 	echo 'disabling rfc1323'; 	sysctl -w net.inet.tcp.rfc1323=0
+fi
+
+# $photurisd_flags is imported from /etc/netstart;
+# If $photurisd_flags == NO or /etc/photuris/ doesn't exist, then
+# photurisd isn't run.
+if [ "X${photurisd_flags}" != X"NO" -a -d /etc/photuris ]; then
+	echo 'starting photurisd';	photurisd ${photurisd_flags}
 fi
 
 # clean up left-over files
@@ -310,13 +317,6 @@ fi
 # rbootd isn't run.
 if [ "X${rbootd_flags}" != X"NO" -a -r /etc/rbootd.conf ]; then
 	echo -n ' rbootd';		rbootd ${rbootd_flags}
-fi
-
-# $photurisd_flags is imported from /etc/netstart;
-# If $photurisd_flags == NO or /etc/photuris/ doesn't exist, then
-# photurisd isn't run.
-if [ "X${photurisd_flags}" != X"NO" -a -d /etc/photuris ]; then
-	echo -n ' photurisd';		photurisd ${photurisd_flags}
 fi
 
 if [ -x /usr/sbin/screenblank ]; then
