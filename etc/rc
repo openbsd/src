@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.41 1997/07/31 02:23:45 downsj Exp $
+#	$OpenBSD: rc,v 1.42 1997/08/19 21:55:14 niklas Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -156,7 +156,10 @@ if [ X${nfs_server} = X"YES" -a -r /etc/exports ]; then
 	rm -f /var/db/mountdtab	
 	echo -n > /var/db/mountdtab
 	echo -n ' mountd';		mountd
-	echo -n ' nfsd';		nfsd -tun 4
+	echo -n ' nfsd';		nfsd ${nfsd_flags}
+	if [ X${lockd} = X"YES" ]; then
+		echo -n ' rpc.lockd';	rpc.lockd
+	fi
 fi
 
 # $nfs_client is imported from /etc/netstart;
