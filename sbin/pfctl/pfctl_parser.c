@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.118 2002/12/06 11:03:36 henning Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.119 2002/12/07 20:25:40 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -817,23 +817,23 @@ print_rule(struct pf_rule *r, int verbose)
 		printf(" ");
 	}
 	if (r->type) {
-		const struct icmptypeent *p;
+		const struct icmptypeent *it;
 
-		p = geticmptypebynumber(r->type-1, r->af);
+		it = geticmptypebynumber(r->type-1, r->af);
 		if (r->af != AF_INET6)
 			printf("icmp-type");
 		else
 			printf("ipv6-icmp-type");
-		if (p != NULL)
-			printf(" %s ", p->name);
+		if (it != NULL)
+			printf(" %s ", it->name);
 		else
 			printf(" %u ", r->type-1);
 		if (r->code) {
-			const struct icmpcodeent *p;
+			const struct icmpcodeent *ic;
 
-			p = geticmpcodebynumber(r->type-1, r->code-1, r->af);
-			if (p != NULL)
-				printf("code %s ", p->name);
+			ic = geticmpcodebynumber(r->type-1, r->code-1, r->af);
+			if (ic != NULL)
+				printf("code %s ", ic->name);
 			else
 				printf("code %u ", r->code-1);
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.240 2002/12/07 20:09:57 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.241 2002/12/07 20:25:40 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -2422,10 +2422,10 @@ struct keywords {
 
 #define FREE_LIST(T,r) \
 	do { \
-		T *p, *n = r; \
-		while (n != NULL) { \
-			p = n; \
-			n = n->next; \
+		T *p, *node = r; \
+		while (node != NULL) { \
+			p = node; \
+			node = node->next; \
 			free(p); \
 		} \
 	} while (0)
@@ -2468,7 +2468,7 @@ expand_label_if(const char *name, char *label, const char *ifname)
 
 void
 expand_label_addr(const char *name, char *label, sa_family_t af,
-    struct node_host *host)
+    struct node_host *h)
 {
 	char tmp[PF_RULE_LABEL_SIZE];
 	char *p;
@@ -2478,25 +2478,25 @@ expand_label_addr(const char *name, char *label, sa_family_t af,
 
 		strlcat(tmp, label, p-label+1);
 
-		if (host->not)
+		if (h->not)
 			strlcat(tmp, "! ", PF_RULE_LABEL_SIZE);
-		if (host->addr.addr_dyn != NULL) {
+		if (h->addr.addr_dyn != NULL) {
 			strlcat(tmp, "(", PF_RULE_LABEL_SIZE);
-			strlcat(tmp, host->addr.addr.pfa.ifname,
+			strlcat(tmp, h->addr.addr.pfa.ifname,
 			    PF_RULE_LABEL_SIZE);
 			strlcat(tmp, ")", PF_RULE_LABEL_SIZE);
-		} else if (!af || (PF_AZERO(&host->addr.addr, af) &&
-		    PF_AZERO(&host->addr.mask, af)))
+		} else if (!af || (PF_AZERO(&h->addr.addr, af) &&
+		    PF_AZERO(&h->addr.mask, af)))
 			strlcat(tmp, "any", PF_RULE_LABEL_SIZE);
 		else {
 			char a[48];
 			int bits;
 
-			if (inet_ntop(af, &host->addr.addr, a,
+			if (inet_ntop(af, &h->addr.addr, a,
 			    sizeof(a)) == NULL)
 				strlcat(a, "?", sizeof(a));
 			strlcat(tmp, a, PF_RULE_LABEL_SIZE);
-			bits = unmask(&host->addr.mask, af);
+			bits = unmask(&h->addr.mask, af);
 			a[0] = 0;
 			if ((af == AF_INET && bits < 32) ||
 			    (af == AF_INET6 && bits < 128))
@@ -2605,7 +2605,7 @@ expand_altq(struct pf_altq *a, struct node_if *interfaces,
 	struct	pf_altq pa, pb;
 	char	qname[PF_QNAME_SIZE];
 	struct	node_queue *n;
-	int	errors = 0;
+	int	errs = 0;
 
 	LOOP_THROUGH(struct node_if, interface, interfaces,
 		memcpy(&pa, a, sizeof(struct pf_altq));
@@ -2613,14 +2613,14 @@ expand_altq(struct pf_altq *a, struct node_if *interfaces,
 
 		if (interface->not) {
 			yyerror("altq on ! <interface> is not supported");
-			errors++;
+			errs++;
 		} else {
 			if (eval_pfaltq(pf, &pa, bwspec.bw_absolute,
 			    bwspec.bw_percent))
-				errors++;
+				errs++;
 			else
 				if (pfctl_add_altq(pf, &pa))
-					errors++;
+					errs++;
 
 			if (pf->opts & PF_OPT_VERBOSE) {
 				print_altq(&pf->paltq->altq, 0);
@@ -2646,10 +2646,10 @@ expand_altq(struct pf_altq *a, struct node_if *interfaces,
 			pb.scheduler = pa.scheduler;
 			pb.pq_u.cbq_opts.flags = pa.pq_u.cbq_opts.flags;
 			if (eval_pfqueue(pf, &pb, pa.ifbandwidth, 0))
-				errors++;
+				errs++;
 			else
 				if (pfctl_add_altq(pf, &pb))
-					errors++;
+					errs++;
 
 			LOOP_THROUGH(struct node_queue, queue, nqueues,
 				n = calloc(1, sizeof(struct node_queue));
@@ -2672,7 +2672,7 @@ expand_altq(struct pf_altq *a, struct node_if *interfaces,
 	FREE_LIST(struct node_if, interfaces);
 	FREE_LIST(struct node_queue, nqueues);
 
-	return(errors);
+	return(errs);
 }
 
 int
@@ -3177,7 +3177,7 @@ char	pushback_buffer[MAXPUSHBACK];
 int	pushback_index = 0;
 
 int
-lgetc(FILE *fin)
+lgetc(FILE *f)
 {
 	int c, next;
 
@@ -3195,12 +3195,12 @@ lgetc(FILE *fin)
 	if (pushback_index)
 		return (pushback_buffer[--pushback_index]);
 
-	while ((c = getc(fin)) == '\\') {
-		next = getc(fin);
+	while ((c = getc(f)) == '\\') {
+		next = getc(f);
 		if (next != '\n') {
 			if (isspace(next))
 				yyerror("whitespace after \\");
-			ungetc(next, fin);
+			ungetc(next, f);
 			break;
 		}
 		yylval.lineno = lineno;
@@ -3209,9 +3209,9 @@ lgetc(FILE *fin)
 	if (c == '\t' || c == ' ') {
 		/* Compress blanks to a single space. */
 		do {
-			c = getc(fin);
+			c = getc(f);
 		} while (c == '\t' || c == ' ');
-		ungetc(c, fin);
+		ungetc(c, f);
 		c = ' ';
 	}
 
