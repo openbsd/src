@@ -1,5 +1,5 @@
 dnl
-dnl	$OpenBSD: m4.common,v 1.9 2000/04/27 00:36:47 todd Exp $
+dnl	$OpenBSD: m4.common,v 1.10 2000/05/06 20:32:48 miod Exp $
 dnl
 dnl simulate an include path with a macro 'includeit'.
 define(`includeit',`sinclude('INCLUDE/`$1)sinclude('INCLUDE/../`$1)')dnl
@@ -317,7 +317,9 @@ define({:-OpenBSDTAPEInstall-:},
 
 		Next you will have to provide the file number of the set
 		that is to be extracted.  Note that the file number starts
-		at 1, which is the first file written to the tape.
+		at 1, which is the first file written to the tape, unless
+		you have created a bootable tape, in which case the file
+		number starts at 3.
 
 		The install program will not automatically detect whether
 		an image has been compressed, so it will ask for that
