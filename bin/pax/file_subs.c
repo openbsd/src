@@ -1,4 +1,4 @@
-/*	$OpenBSD: file_subs.c,v 1.21 2002/10/18 15:38:11 millert Exp $	*/
+/*	$OpenBSD: file_subs.c,v 1.22 2003/02/03 09:06:43 jmc Exp $	*/
 /*	$NetBSD: file_subs.c,v 1.4 1995/03/21 09:07:18 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static const char sccsid[] = "@(#)file_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-static const char rcsid[] = "$OpenBSD: file_subs.c,v 1.21 2002/10/18 15:38:11 millert Exp $";
+static const char rcsid[] = "$OpenBSD: file_subs.c,v 1.22 2003/02/03 09:06:43 jmc Exp $";
 #endif
 #endif /* not lint */
 
@@ -93,7 +93,7 @@ file_creat(ARCHD *arcn)
 	 * detect this, we use O_EXCL. For example when trying to create a
 	 * file and a character device or fifo exists with the same name, we
 	 * can accidently open the device by mistake (or block waiting to open).
-	 * If we find that the open has failed, then spend the effore to
+	 * If we find that the open has failed, then spend the effort to
 	 * figure out why. This strategy was found to have better average
 	 * performance in common use than checking the file (and the path)
 	 * first with lstat.

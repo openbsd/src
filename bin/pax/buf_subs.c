@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf_subs.c,v 1.15 2002/10/18 15:38:11 millert Exp $	*/
+/*	$OpenBSD: buf_subs.c,v 1.16 2003/02/03 09:06:43 jmc Exp $	*/
 /*	$NetBSD: buf_subs.c,v 1.5 1995/03/21 09:07:08 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static const char sccsid[] = "@(#)buf_subs.c	8.2 (Berkeley) 4/18/94";
 #else
-static const char rcsid[] = "$OpenBSD: buf_subs.c,v 1.15 2002/10/18 15:38:11 millert Exp $";
+static const char rcsid[] = "$OpenBSD: buf_subs.c,v 1.16 2003/02/03 09:06:43 jmc Exp $";
 #endif
 #endif /* not lint */
 
@@ -205,9 +205,9 @@ cp_start(void)
  *	start of this record so a flush of this buffer will replace the record
  *	in the archive.
  *	A major problem is rewriting this last record. For archives stored
- *	on disk files, this is trival. However, many devices are really picky
+ *	on disk files, this is trivial. However, many devices are really picky
  *	about the conditions under which they will allow a write to occur.
- *	Often devices restrict the conditions where writes can be made writes,
+ *	Often devices restrict the conditions where writes can be made,
  *	so it may not be feasable to append archives stored on all types of
  *	devices.
  * Return:

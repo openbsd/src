@@ -1,4 +1,4 @@
-/*	$OpenBSD: pat_rep.c,v 1.23 2002/11/29 20:15:43 deraadt Exp $	*/
+/*	$OpenBSD: pat_rep.c,v 1.24 2003/02/03 09:06:43 jmc Exp $	*/
 /*	$NetBSD: pat_rep.c,v 1.4 1995/03/21 09:07:33 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static const char sccsid[] = "@(#)pat_rep.c	8.2 (Berkeley) 4/18/94";
 #else
-static const char rcsid[] = "$OpenBSD: pat_rep.c,v 1.23 2002/11/29 20:15:43 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: pat_rep.c,v 1.24 2003/02/03 09:06:43 jmc Exp $";
 #endif
 #endif /* not lint */
 
@@ -294,8 +294,8 @@ pat_chk(void)
  *
  *	NOTE: When the -c option is used, we are called when there was no match
  *	by pat_match() (that means we did match before the inverted sense of
- *	the logic). Now this seems really strange at first, but with -c  we
- *	need to keep track of those patterns that cause a archive member to NOT
+ *	the logic). Now this seems really strange at first, but with -c we
+ *	need to keep track of those patterns that cause an archive member to NOT
  *	be selected (it found an archive member with a specified pattern)
  * Return:
  *	0 if the pattern pointed at by arcn->pat was tagged as creating a
@@ -385,7 +385,7 @@ pat_sel(ARCHD *arcn)
 	 * we are then done with this pattern, so we delete it from the list
 	 * because it can never be used for another match.
 	 * Seems kind of strange to do for a -c, but the pax spec is really
-	 * vague on the interaction of -c -n and -d. We assume that when -c
+	 * vague on the interaction of -c, -n and -d. We assume that when -c
 	 * and the pattern rejects a member (i.e. it matched it) it is done.
 	 * In effect we place the order of the flags as having -c last.
 	 */

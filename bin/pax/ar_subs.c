@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar_subs.c,v 1.22 2002/10/18 15:38:11 millert Exp $	*/
+/*	$OpenBSD: ar_subs.c,v 1.23 2003/02/03 09:06:43 jmc Exp $	*/
 /*	$NetBSD: ar_subs.c,v 1.5 1995/03/21 09:07:06 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static const char sccsid[] = "@(#)ar_subs.c	8.2 (Berkeley) 4/18/94";
 #else
-static const char rcsid[] = "$OpenBSD: ar_subs.c,v 1.22 2002/10/18 15:38:11 millert Exp $";
+static const char rcsid[] = "$OpenBSD: ar_subs.c,v 1.23 2003/02/03 09:06:43 jmc Exp $";
 #endif
 #endif /* not lint */
 
@@ -228,7 +228,7 @@ extract(void)
 
 		/*
 		 * with -u or -D only extract when the archive member is newer
-		 * than the file with the same name in the file system (nos
+		 * than the file with the same name in the file system (no
 		 * test of being the same type is required).
 		 * NOTE: this test is done BEFORE name modifications as
 		 * specified by pax. this operation can be confusing to the
@@ -413,7 +413,8 @@ wr_archive(ARCHD *arcn, int is_app)
 		return;
 
 	/*
-	 * if this not append, and there are no files, we do no write a trailer
+	 * if this is not append, and there are no files, we do not write a 
+	 * trailer
 	 */
 	wr_one = is_app;
 
