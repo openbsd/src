@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.18 2001/07/17 10:31:08 mts Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.19 2001/07/17 10:55:02 mts Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.68 1999/08/21 02:19:05 thorpej Exp $	*/
 
 /* 
@@ -1060,10 +1060,10 @@ uvm_unmap_remove(map, start, end, entry_list)
 
 		/* critical! prevents stale hint */
 		/* XXX: need SAVE_HINT with three parms */
-		simple_lock(map->hint_lock);
+		simple_lock(&map->hint_lock);
 		if (map->hint == entry)
 		    map->hint = entry->prev;
-		simple_unlock(map->hint_lock);
+		simple_unlock(&map->hint_lock);
 
 		uvm_map_entry_unlink(map, entry);
 		map->size -= len;
