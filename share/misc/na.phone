@@ -1,4 +1,4 @@
-#	$OpenBSD: na.phone,v 1.12 2000/10/23 19:25:11 aaron Exp $
+#	$OpenBSD: na.phone,v 1.13 2001/07/13 16:22:17 millert Exp $
 #	@(#)na.phone	8.1 (Berkeley) 6/8/93
 #
 # Area Code : City : State/Province : State/Province Abbrev.
@@ -46,6 +46,7 @@
 303:Aurora:Colorado:CO
 303:Boulder:Colorado:CO
 303:Denver:Colorado:CO
+303:Longmont:Colorado:CO
 304::West Virginia:WV
 305:Cape Canaveral:Florida:FL
 305:Cape Kennedy:Florida:FL
@@ -259,6 +260,10 @@
 719:Fairplay:Colorado:CO
 719:Lamar:Colorado:CO
 719:South Fork:Colorado:CO
+720:Aurora:Colorado:CO
+720:Boulder:Colorado:CO
+720:Denver:Colorado:CO
+720:Longmont:Colorado:CO
 732::New Jersey:NJ
 757:Norfolk:Virginia:VI
 758::St Lucia:LC
