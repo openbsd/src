@@ -1,4 +1,4 @@
-.\"	$OpenBSD: whois.1,v 1.5 1999/06/05 01:21:51 aaron Exp $
+.\"	$OpenBSD: whois.1,v 1.6 1999/10/03 00:42:34 deraadt Exp $
 .\"	$NetBSD: whois.1,v 1.5 1995/08/31 21:51:32 jtc Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
@@ -69,11 +69,22 @@ database.  It contains points of contact for subdomains of
 Use the specified host instead of the default NIC
 (whois.internic.net).
 Either a host name or an IP address may be specified.
+.It Fl m
+Use the Route Arbiter Database
+.Pq Tn RADB
+database. It contains route policy specifications for a large
+number of operators' networks.
 .It Fl p
 Use the Asia/Pacific Network Information Center
 .Pq Tn APNIC
 database.  It contains network numbers used in East Asia, Australia,
 New Zealand, and the Pacific islands.
+.It Fl q
+Construct the name of a whois server to use from the top-level domain
+.Pq Tn TLD
+of the supplied (single) argument, and appending ".whois-servers.net".
+This effectively allows a suitable whois server to be selected
+automatically for a large number of TLDs.
 .It Fl r
 Use the R\(aaeseaux IP Europ\(aaeens
 .Pq Tn RIPE

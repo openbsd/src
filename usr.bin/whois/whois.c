@@ -1,4 +1,4 @@
-/*	$OpenBSD: whois.c,v 1.5 1999/08/16 20:24:36 art Exp $	*/
+/*	$OpenBSD: whois.c,v 1.6 1999/10/03 00:42:34 deraadt Exp $	*/
 /*	$NetBSD: whois.c,v 1.5 1994/11/14 05:13:25 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)whois.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: whois.c,v 1.5 1999/08/16 20:24:36 art Exp $";
+static char rcsid[] = "$OpenBSD: whois.c,v 1.6 1999/10/03 00:42:34 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -64,6 +64,8 @@ static char rcsid[] = "$OpenBSD: whois.c,v 1.5 1999/08/16 20:24:36 art Exp $";
 #define	ANICHOST	"whois.arin.net"
 #define	RNICHOST	"whois.ripe.net"
 #define	PNICHOST	"whois.apnic.net"
+#define	MNICHOST	"whois.ra.net"
+#define	QNICHOST_TAIL	".whois-servers.net"
 #define	WHOIS_PORT	43
 
 static void usage();
@@ -82,9 +84,13 @@ main(argc, argv)
 	struct servent *sp;
 	int s;
 	char *host;
+	char *qnichost;
+	int use_qnichost;
+	int i, j;
 
 	host = NICHOST;
-	while ((ch = getopt(argc, argv, "adh:pr")) != -1)
+	use_qnichost = 0;
+	while ((ch = getopt(argc, argv, "adh:pmqr")) != -1)
 		switch((char)ch) {
 		case 'a':
 			host = ANICHOST;
@@ -95,8 +101,14 @@ main(argc, argv)
 		case 'h':
 			host = optarg;
 			break;
+		case 'm':
+			host = MNICHOST;
+			break;
 		case 'p':
 			host = PNICHOST;
+			break;
+		case 'q':
+			use_qnichost = 1;
 			break;
 		case 'r':
 			host = RNICHOST;
@@ -110,6 +122,22 @@ main(argc, argv)
 
 	if (!argc)
 		usage();
+
+	if (use_qnichost != 0) {
+		if (argc == 1) {
+			for (i = j = 0; (*argv)[i]; i++)
+				if ((*argv)[i] == '.') j = i;
+			if (j != 0) {
+				qnichost = (char *) calloc(i - j + 1 + \
+				    strlen(QNICHOST_TAIL), sizeof(char));
+				if (!qnichost)
+					err(1, "malloc");
+				strcpy(qnichost, *argv + j + 1);
+				strcat(qnichost, QNICHOST_TAIL);
+				host = qnichost;
+			}
+		}
+	}
 
 	s = socket(PF_INET, SOCK_STREAM, 0);
 	if (s < 0)
@@ -152,6 +180,6 @@ main(argc, argv)
 static void
 usage()
 {
-	(void)fprintf(stderr, "usage: whois [-adpr] [-h hostname] name ...\n");
+	(void)fprintf(stderr, "usage: whois [-admpqr] [-h hostname] name ...\n");
 	exit(EX_USAGE);
 }
