@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.49 2002/02/04 19:52:21 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.50 2002/02/06 19:37:02 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2001 Michael Shalayeff
@@ -588,6 +588,8 @@ $syscall
 	 * 9 words, which very much overkill for an average of 3.
 	 * we keep it at 10, since bundling will keep it
 	 * at the same speed as 9 anyway.
+	 *
+	 * TODO: setup the onfault handler
 	 */
 	stw	arg0, 1*4(sr1, t3)	/* XXX can use ,bc */
 	stw	arg1, 2*4(sr1, t3)
