@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 2004/08/24 15:34:59 tom Exp $
+#	$OpenBSD: Makefile,v 1.3 2004/10/09 21:15:21 mickey Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
@@ -47,6 +47,7 @@ SRCS+=	adler32.c crc32.c inflate.c inftrees.c
 
 ${PROG}: $(OBJS) $(DPADD)
 	$(LD) $(LDFLAGS) -o ${PROG} $(OBJS) $(LDADD)
+	@$(SIZE) $(PROG)
 	@if [ -x ${.OBJDIR}/${PROG} ]; then \
 		objcopy -O binary ${PROG} ${.OBJDIR}/.tmp;\
 		mv -f ${.OBJDIR}/.tmp ${.OBJDIR}/${PROG}; \
