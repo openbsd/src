@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.20 1997/03/27 12:06:45 niklas Exp $	*/
+/*	$OpenBSD: locore.s,v 1.21 1997/04/29 00:46:27 michaels Exp $	*/
 /*	$NetBSD: locore.s,v 1.72 1996/12/17 11:09:10 is Exp $	*/
 
 /*
@@ -1058,15 +1058,15 @@ Lunshadow:
 	jbsr	_m68881_restore		| restore it (does not kill a1)
 	addql	#4,sp
 #endif
-/* flush TLB and turn on caches */
 
-	
+/* flush TLB and turn on caches */
 	jbsr	_TBIA			| invalidate TLB
+#ifndef APOLLO	/* XXX: unknown reason at the moment. */
 	movl	#CACHE_ON,d0
 	tstl	d5
 	jeq	Lcacheon
 | is this needed? MLH
-	.word	0xf4f8		| cpusha bc - push & invalidate caches
+	.word	0xf4f8			| cpusha bc - push & invalidate caches
 	movl	#CACHE40_ON,d0
 #ifdef M68060
 	btst	#7,_machineid+3
@@ -1075,6 +1075,10 @@ Lunshadow:
 #endif
 Lcacheon:
 	movc	d0,cacr			| clear cache(s)
+#else 	/* APOLLO */
+        movl    #0x00808000,d0
+	movc    d0,cacr
+#endif
 /* final setup for C code */
 
 	movw	#PSL_LOWIPL,sr		| lower SPL
