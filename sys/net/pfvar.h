@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.12 2001/06/25 22:53:39 dhartmei Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.13 2001/06/26 04:17:11 frantzen Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -74,8 +74,9 @@ struct pf_state_host {
 };
 
 struct pf_state_peer {
-	u_int32_t	seqlo;
-	u_int32_t	seqhi;
+	u_int32_t	seqlo;		/* Max sequence number sent 	*/
+	u_int32_t	seqhi;		/* Max the other end ACKd + win	*/
+	u_int16_t	max_win;
 	u_int8_t	state;
 };
 

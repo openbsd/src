@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.42 2001/06/26 04:02:50 provos Exp $ */
+/*	$OpenBSD: pf.c,v 1.43 2001/06/26 04:17:11 frantzen Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -53,6 +53,7 @@
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <netinet/tcp.h>
+#include <netinet/tcp_seq.h>
 #include <netinet/udp.h>
 #include <netinet/ip_icmp.h>
 
@@ -517,8 +518,10 @@ print_state(int direction, struct pf_state *s)
 	print_host(s->gwy.addr, s->gwy.port);
 	printf(" ");
 	print_host(s->ext.addr, s->ext.port);
-	printf(" [%lu+%lu]", s->src.seqlo, s->src.seqhi - s->src.seqlo);
-	printf(" [%lu+%lu]", s->dst.seqlo, s->dst.seqhi - s->dst.seqlo);
+	printf(" [lo=%lu high=%lu win=%u]", s->src.seqlo, s->src.seqhi,
+		 s->src.max_win);
+	printf(" [lo=%lu high=%lu win=%u]", s->dst.seqlo, s->dst.seqhi,
+		 s->dst.max_win);
 	printf(" %u:%u", s->src.state, s->dst.state);
 }
 
@@ -1322,11 +1325,16 @@ pf_test_tcp(int direction, struct ifnet *ifp, struct mbuf **m, int off,
 				s->gwy.port	= s->lan.port;
 			}
 		}
-		s->src.seqlo	= ntohl(th->th_seq) + len; /* ??? */
+		s->src.seqlo	= ntohl(th->th_seq) + len +
+			((th->th_flags & TH_SYN) ? 1 : 0) +
+			((th->th_flags & TH_FIN) ? 1 : 0);
 		s->src.seqhi	= s->src.seqlo + 1;
+		s->src.max_win	= MAX(ntohs(th->th_win), 1);
+
+		s->dst.seqlo	= 0;	/* Haven't seen these yet */
+		s->dst.seqhi	= 1;
+		s->dst.max_win	= 1;
 		s->src.state	= 1;
-		s->dst.seqlo	= 0;
-		s->dst.seqhi	= 0;
 		s->dst.state	= 0;
 		s->creation	= pftv.tv_sec;
 		s->expire	= pftv.tv_sec + 60;
@@ -1436,11 +1444,13 @@ pf_test_udp(int direction, struct ifnet *ifp, struct mbuf **m, int off,
 				s->gwy.port	= s->lan.port;
 			}
 		}
-		s->src.seqlo	= 0;
+		s->src.seqlo 	= 0;
 		s->src.seqhi	= 0;
+		s->src.max_win	= 0;
 		s->src.state	= 1;
 		s->dst.seqlo	= 0;
 		s->dst.seqhi	= 0;
+		s->dst.max_win	= 0;
 		s->dst.state	= 0;
 		s->creation	= pftv.tv_sec;
 		s->expire	= pftv.tv_sec + 30;
@@ -1526,9 +1536,11 @@ pf_test_icmp(int direction, struct ifnet *ifp, struct mbuf **m, int off,
 		}
 		s->src.seqlo	= 0;
 		s->src.seqhi	= 0;
+		s->src.max_win	= 0;
 		s->src.state	= 0;
 		s->dst.seqlo	= 0;
 		s->dst.seqhi	= 0;
+		s->dst.max_win	= 0;
 		s->dst.state	= 0;
 		s->creation	= pftv.tv_sec;
 		s->expire	= pftv.tv_sec + 20;
@@ -1556,7 +1568,11 @@ pf_test_state_tcp(int direction, struct ifnet *ifp, struct mbuf **m, int off,
 	s = find_state((direction == PF_IN) ? tree_ext_gwy : tree_lan_ext, &key);
 	if (s != NULL) {
 		u_int16_t len = h->ip_len - off - (th->th_off << 2);
+		u_int16_t win = ntohs(th->th_win);
 		u_int32_t seq = ntohl(th->th_seq), ack = ntohl(th->th_ack);
+		u_int32_t end = seq + len + ((th->th_flags & TH_SYN) ? 1 : 0) +
+			((th->th_flags & TH_FIN) ? 1 : 0);
+		int ackskew;
 		struct pf_state_peer *src, *dst;
 
 		if (direction == s->direction) {
@@ -1567,30 +1583,64 @@ pf_test_state_tcp(int direction, struct ifnet *ifp, struct mbuf **m, int off,
 			dst = &s->src;
 		}
 
-		/* some senders do that instead of ACKing FIN */
-		if (th->th_flags == TH_RST && !ack && !len &&
-		    (seq == src->seqhi || seq == src->seqhi-1) &&
-		    src->state >= 4 && dst->state >= 3)
-			ack = dst->seqhi;
+		if (src->seqlo == 0) {
+			/* First packet from this end.  Set its state */
+			src->seqlo = end;
+			src->seqhi = end + 1;
+			src->max_win = 1;	
+		}
 
-		if ((dst->seqhi >= dst->seqlo ?
-		    (ack >= dst->seqlo) && (ack <= dst->seqhi) :
-		    (ack >= dst->seqlo) || (ack <= dst->seqhi)) ||
-		    (seq == src->seqlo) || (seq == src->seqlo-1)) {
+		if ((th->th_flags & TH_ACK) == 0) {
+			/* Let it pass through the ack skew check */
+			ack = dst->seqlo;
+		} else if (ack == 0 &&
+			(th->th_flags & (TH_ACK|TH_RST)) == (TH_ACK|TH_RST)) {
+			/* According to Guido, broken tcp stacks dont set ack */
+			ack = dst->seqlo;
+		}
+
+		if (seq == end) {
+			/* Ease sequencing restrictions on no data packets */
+			seq = src->seqlo;
+			end = seq;
+		}
+
+		ackskew = dst->seqlo - ack;
+
+#define MAXACKWINDOW (0xffff + 1500)
+		if (SEQ_GEQ(src->seqhi, end) &&
+				/* Last octet inside other's window space */
+			SEQ_GEQ(seq, src->seqlo - dst->max_win) &&
+				/* Retrans: not more than one window back */
+			(ackskew >= -MAXACKWINDOW) &&
+				/* Acking not more than one window back */
+			(ackskew <= MAXACKWINDOW)) {
+				/* Acking not more than one window forward */
+
+			if (ackskew < 0) {
+				/* The sequencing algorithm is exteremely lossy
+				 * when there is fragmentation since the full
+				 * packet length can not be determined.  So we
+				 * deduce how much data passed by what the other
+				 * endpoint ACKs.  Thanks Guido!
+				 *  (Why MAXACKWINDOW is used)
+				 */
+				dst->seqlo = ack;
+			}
 
 			s->packets++;
 			s->bytes += len;
 
-			/* update sequence number range */
-			if (th->th_flags & TH_ACK)
-				dst->seqlo = ack;
-			if (th->th_flags & (TH_SYN | TH_FIN))
-				len++;
-			if (th->th_flags & TH_SYN) {
-				src->seqhi = seq + len;
-				src->seqlo = src->seqhi - 1;
-			} else if (seq + len - src->seqhi < 65536)
-				src->seqhi = seq + len;
+			/* update max window */
+			if (src->max_win < win)
+				src->max_win = win;
+			/* syncronize sequencing */
+			if (SEQ_GT(end, src->seqlo))
+				src->seqlo = end;
+			/* slide the window of what the other end can send */
+			if (SEQ_GEQ(ack + win, dst->seqhi))
+				dst->seqhi = ack + MAX(win, 1);
+
 
 			/* update states */
 			if (th->th_flags & TH_SYN)
@@ -1599,7 +1649,7 @@ pf_test_state_tcp(int direction, struct ifnet *ifp, struct mbuf **m, int off,
 			if (th->th_flags & TH_FIN)
 				if (src->state < 3)
 					src->state = 3;
-			if ((th->th_flags & TH_ACK) && ack == dst->seqhi) {
+			if (th->th_flags & TH_ACK) {
 				if (dst->state == 1)
 					dst->state = 2;
 				else if (dst->state == 3)
@@ -1632,11 +1682,17 @@ pf_test_state_tcp(int direction, struct ifnet *ifp, struct mbuf **m, int off,
 			}
 
 		} else {
+			// XXX Remove these printfs before release
 			printf("pf: BAD state: ");
 			print_state(direction, s);
 			print_flags(th->th_flags);
 			printf(" seq=%lu ack=%lu len=%u ", seq, ack, len);
 			printf("\n");
+			printf("State failure: %c %c %c %c\n",
+				SEQ_GEQ(src->seqhi, end) ? ' ' : '1',
+				SEQ_GEQ(seq, src->seqlo - dst->max_win)?' ':'2',
+				(ackskew >= -MAXACKWINDOW) ? ' ' : '3',
+				(ackskew <= MAXACKWINDOW) ? ' ' : '4');
 			s = NULL;
 		}
 
@@ -1777,10 +1833,11 @@ pf_test_state_icmp(int direction, struct ifnet *ifp, struct mbuf **m, int off,
 		switch (h2->ip_p) {
 		case IPPROTO_TCP: {
 			struct tcphdr *th;
-			u_int32_t seq;
+			u_int32_t seq, end;
 			struct pf_state *s;
 			struct pf_tree_key key;
-			struct pf_state_peer *src;
+			struct pf_state_peer *src, *dst;
+			int ackskew;
 
 			th = pull_hdr(ifp, m, off, off2, sizeof(*th), h2,
 			    &dummy);
@@ -1790,6 +1847,9 @@ pf_test_state_icmp(int direction, struct ifnet *ifp, struct mbuf **m, int off,
 				return NULL;
 			}
 			seq = ntohl(th->th_seq);
+			end = seq + h2->ip_len - ((h2->ip_hl + th->th_off)<<2) +
+				((th->th_flags & TH_SYN) ? 1 : 0) +
+				((th->th_flags & TH_FIN) ? 1 : 0);
 
 			key.proto   = IPPROTO_TCP;
 			key.addr[0] = h2->ip_dst.s_addr;
@@ -1803,10 +1863,17 @@ pf_test_state_icmp(int direction, struct ifnet *ifp, struct mbuf **m, int off,
 				return (NULL);
 
 			src = (direction == s->direction) ?  &s->dst : &s->src;
+			dst = (direction == s->direction) ?  &s->src : &s->dst;
 
-			if ((src->seqhi >= src->seqlo ?
-			    (seq < src->seqlo) || (seq > src->seqhi) :
-			    (seq < src->seqlo) && (seq > src->seqhi))) {
+			if ((th->th_flags & TH_ACK) == 0 && th->th_ack == 0)
+				ackskew = 0;
+			else
+				ackskew = dst->seqlo - ntohl(th->th_ack);
+			if (!SEQ_GEQ(src->seqhi, end) ||
+				!SEQ_GEQ(seq, src->seqlo - dst->max_win) ||
+				!(ackskew >= -MAXACKWINDOW) ||
+				!(ackskew <= MAXACKWINDOW)) {
+
 				printf("pf: BAD ICMP state: ");
 				print_state(direction, s);
 				print_flags(th->th_flags);
