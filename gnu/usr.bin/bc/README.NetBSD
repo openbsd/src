@@ -1,8 +1,0 @@
-This is GNU bc 1.03.
-
-The original GNU distribution included GNU dc in the same distribution.
-GNU dc part is found in the NetBSD source tree in /usr/src/gnu/usr.bin/dc.
-
-With all the files located in the bc and dc directories, an "original" 
-bc-1.03 distribution could be regenerated.  (It require GNU autoconf 2.0.)
-
