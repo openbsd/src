@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509test.c,v 1.13 2001/01/26 12:35:47 niklas Exp $	*/
+/*	$OpenBSD: x509test.c,v 1.14 2001/01/27 11:24:44 niklas Exp $	*/
 /*	$EOM: x509test.c,v 1.9 2000/12/21 15:24:25 ho Exp $	*/
 
 /*
@@ -59,15 +59,12 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-#if MP_FLAVOUR == MP_FLAVOUR_GMP
-#  include <gmp.h>
-#endif
-
 #include "conf.h"
-#include "libcrypto.h"
-#include "log.h"
 #include "ipsec_num.h"
 #include "isakmp_fld.h"
+#include "libcrypto.h"
+#include "log.h"
+#include "math_mp.h"
 #include "x509.h"
 
 u_int32_t file_sz;

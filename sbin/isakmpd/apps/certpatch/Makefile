@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.3 2000/04/07 22:06:36 niklas Exp $
+#	$OpenBSD: Makefile,v 1.4 2001/01/27 11:24:39 niklas Exp $
 #	$EOM: Makefile,v 1.6 2000/03/28 21:22:06 ho Exp $
 
 #
@@ -40,11 +40,20 @@ BINDIR=		/usr/sbin
 TOPSRC=		${.CURDIR}/../..
 TOPOBJ!=	cd ${TOPSRC}; printf "all:\n\t@pwd\n" |${MAKE} -f-
 OS!=		awk '/^OS=/ { print $$2 }' ${.CURDIR}/../../Makefile
+FEATURES!=	awk '/^FEATURES=/ { print $$0 }' ${.CURDIR}/../../Makefile | sed 's/FEATURES=.//'
 .PATH:		${TOPSRC} ${TOPSRC}/sysdep/${OS} ${TOPOBJ}
 CFLAGS+=	-I${TOPSRC} -I${TOPSRC}/sysdep/${OS} -I${TOPOBJ} -Wall
 LDADD+=		-lcrypto
 DPADD+=		${LIBCRYPTO}
 MAN=		certpatch.8
+
+.if ${FEATURES:Mgmp} == "gmp"
+CFLAGS+=	-DMP_FLAVOUR=MP_FLAVOUR_GMP
+LDADD+=		-lgmp
+DPADD+=		${LIBGMP}
+.else
+CFLAGS+=	-DMP_FLAVOUR=MP_FLAVOUR_OPENSSL
+.endif
 
 .include "${TOPSRC}/sysdep/${OS}/Makefile.sysdep"
 # Override LIBSYSDEPDIR definition from Makefile.sysdep

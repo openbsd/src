@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsakeygen.c,v 1.11 2001/01/26 11:08:24 niklas Exp $	*/
+/*	$OpenBSD: rsakeygen.c,v 1.12 2001/01/27 11:24:43 niklas Exp $	*/
 /*	$EOM: rsakeygen.c,v 1.10 2000/12/21 15:18:53 ho Exp $	*/
 
 /*
@@ -41,12 +41,9 @@
 #include <stdio.h>
 #include <string.h>
 
-#if MP_FLAVOUR == MP_FLAVOUR_GMP
-#  include <gmp.h>
-#endif
-
 #include "libcrypto.h"
 #include "log.h"
+#include "math_mp.h"
 
 #define nibble2bin(y) (tolower (y) < 'a' ? (y) - '0' : tolower (y) - 'a' + 10)
 #define hexchar2bin(x) ((nibble2bin ((x)[0]) << 4) + nibble2bin ((x)[1]))

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.10 2000/10/07 07:00:53 niklas Exp $
+#	$OpenBSD: Makefile,v 1.11 2001/01/27 11:24:44 niklas Exp $
 #	$EOM: Makefile,v 1.16 2000/09/28 12:53:27 niklas Exp $
 
 #
@@ -50,6 +50,14 @@ CFLAGS+=	-I${TOPSRC} -I${TOPSRC}/sysdep/${OS} -I${TOPOBJ} -Wall \
 		-DUSE_X509
 NOMAN=
 DEBUG=		-g
+
+.if ${FEATURES:Mgmp} == "gmp"
+CFLAGS+=	-DMP_FLAVOUR=MP_FLAVOUR_GMP
+LDADD+=		-lgmp
+DPADD+=		${LIBGMP}
+.else
+CFLAGS+=	-DMP_FLAVOUR=MP_FLAVOUR_OPENSSL
+.endif
 
 .include "${TOPSRC}/sysdep/${OS}/Makefile.sysdep"
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: certpatch.c,v 1.12 2001/01/26 11:08:22 niklas Exp $	*/
+/*	$OpenBSD: certpatch.c,v 1.13 2001/01/27 11:24:39 niklas Exp $	*/
 /*	$EOM: certpatch.c,v 1.11 2000/12/21 14:50:09 ho Exp $	*/
 
 /*
@@ -58,10 +58,6 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-#if MP_FLAVOUR == MP_FLAVOUR_GMP
-#  include <gmp.h>
-#endif
-
 #include "sysdep.h"
 
 #ifdef KAME
@@ -76,8 +72,9 @@
 #include <openssl/pem.h>
 
 #include "conf.h"
-#include "log.h"
 #include "ipsec_num.h"
+#include "log.h"
+#include "math_mp.h"
 #include "x509.h"
 
 #define IDTYPE_IP	"ip"

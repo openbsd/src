@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.sysdep,v 1.13 2001/01/26 11:09:22 niklas Exp $
+#	$OpenBSD: Makefile.sysdep,v 1.14 2001/01/27 11:24:45 niklas Exp $
 #	$EOM: Makefile.sysdep,v 1.18 2001/01/26 10:55:22 niklas Exp $
 
 #
@@ -50,7 +50,7 @@ USE_LIBCRYPTO=	defined
 .ifdef FEATURES
 .if ${FEATURES:Mpolicy} == "policy"
 .if ${MACHINE_ARCH} != "alpha" && ${MACHINE_ARCH} != "vax" && ${MACHINE_ARCH} != "m88k"
-SRCS+=		keynote_compat.c
+POLICY+=	keynote_compat.c
 .endif
 USE_KEYNOTE=	defined
 .endif
