@@ -1,4 +1,4 @@
-.\"	$OpenBSD: le.4,v 1.1 2003/12/27 23:59:47 miod Exp $
+.\"	$OpenBSD: le.4,v 1.2 2003/12/30 21:27:14 miod Exp $
 .\"
 .\" Copyright (c) 2003 Paul Weissmann
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd December 27, 2003
+.Dd December 30, 2003
 .Dt LE 4 mvme88k
 .Os
 .Sh NAME
@@ -35,6 +35,9 @@
 .Cd "le0 at vmes0 addr 0xffff1200 ipl 1 len 0x100"
 .Cd "le1 at vmes0 addr 0xffff1400 ipl 1 len 0x100"
 .Cd "le2 at vmes0 addr 0xffff1600 ipl 1 len 0x100"
+.Cd "le3 at vmes0 addr 0xffff5400 ipl 1 len 0x100"
+.Cd "le4 at vmes0 addr 0xffff5600 ipl 1 len 0x100"
+.Cd "le5 at vmes0 addr 0xffffa400 ipl 1 len 0x100"
 .Sh DESCRIPTION
 The
 .Nm
@@ -61,23 +64,25 @@ matching the
 .Em addr
 locator on the configuration line
 .Pc
-is defined through two sets of DIP switches,
+is defined through three sets of DIP switches,
 .Dq SW1
 and
 .Dq SW2 ,
 located in the middle of the board, near the space between the two
-VME connectors.
+VME connectors, and
+.Dq SW3 ,
+closer to the AM7990DC chip at the bottom edge.
 .Pp
 The only supported configurations are:
-.Bl -column "xxxxxxxx" "xxxxxxxx" "0xffffffff"
-.It Li SW1 Ta SW2 Ta Address Ta Configuration
+.Bl -column "xxxxxxxx" "xxxxxxxx" "xxxxxxxx" "0xffffffff"
+.It Li SW1 Ta SW2 Ta SW3 Ta Address
 .It " "
-.It Li "UUU_UU_U" Ta "U__U____" Ta "0xffff1200" Ta "1st board"
-.It Li "UUU_U_UU" Ta "U__U_U__" Ta "0xffff1400" Ta "2nd board"
-.It Li "UUU_U__U" Ta "U__UU___" Ta "0xffff1600" Ta "3rd board"
-.It Li "U_U_U_UU" Ta "U__UUU__" Ta "0xffff5400" Ta "4th board"
-.It Li "U_U_U__U" Ta "U_U_____" Ta "0xffff5600" Ta "5th board"
-.It Li "_U_UU_UU" Ta "U_U__U__" Ta "0xffffa400" Ta "6th board"
+.It Li "UUU_UU_U" Ta "U__U____" Ta "______U_" Ta "0xffff1200"
+.It Li "UUU_U_UU" Ta "U__U_U__" Ta "______U_" Ta "0xffff1400"
+.It Li "UUU_U__U" Ta "U__UU___" Ta "______U_" Ta "0xffff1600"
+.It Li "U_U_U_UU" Ta "U__UUU__" Ta "______U_" Ta "0xffff5400"
+.It Li "U_U_U__U" Ta "U_U_____" Ta "______U_" Ta "0xffff5600"
+.It Li "_U_UU_UU" Ta "U_U__U__" Ta "______U_" Ta "0xffffa400"
 .El
 .Sh SEE ALSO
 .Xr arp 4 ,
@@ -87,7 +92,3 @@ The only supported configurations are:
 .Xr vme 4 ,
 .Xr hostname.if 5 ,
 .Xr ifconfig 8
-.Sh BUGS
-The
-.Nm
-driver currently does not support the last three board address settings.

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: le.4,v 1.10 2003/06/06 10:29:42 jmc Exp $
+.\"	$OpenBSD: le.4,v 1.11 2003/12/30 21:27:12 miod Exp $
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -33,17 +33,20 @@
 .\"	from: Header: le.4,v 1.2 92/10/13 05:31:33 leres Exp
 .\"	from: @(#)le.4	8.1 (Berkeley) 6/9/93
 .\"
-.Dd August 30, 1994
+.Dd December 30, 2003
 .Dt LE 4 mvme68k
 .Os
 .Sh NAME
 .Nm le
 .Nd Ethernet driver for AMD7990(LANCE)-based boards
 .Sh SYNOPSIS
-.Cd "le* at pcc0 offset 0x1800 ipl 1" Pq "onboard interface"
+.Cd "le* at pcc0 offset 0x1800 ipl 1                      " Pq "MVME147"
 .Cd "le* at vmes0 addr 0xffff1200 ipl 1 vec 0x74 len 0x100" Pq "MVME376"
 .Cd "le* at vmes0 addr 0xffff1400 ipl 1 vec 0x75 len 0x100" Pq "MVME376"
 .Cd "le* at vmes0 addr 0xffff1600 ipl 1 vec 0x76 len 0x100" Pq "MVME376"
+.Cd "le* at vmes0 addr 0xffff5400 ipl 1 vec 0x77 len 0x100" Pq "MVME376"
+.Cd "le* at vmes0 addr 0xffff5600 ipl 1 vec 0x78 len 0x100" Pq "MVME376"
+.Cd "le* at vmes0 addr 0xffffa400 ipl 1 vec 0x79 len 0x100" Pq "MVME376"
 .Sh DESCRIPTION
 The
 .Nm
@@ -73,6 +76,33 @@ MVME147 onboard ethernet interface
 .It Em MVME376
 MVME376 VMEbus ethernet card
 .El
+.Sh HARDWARE CONFIGURATION
+For MVME376, the card's base address
+.Po
+matching the
+.Em addr
+locator on the configuration line
+.Pc
+is defined through three sets of DIP switches,
+.Dq SW1
+and
+.Dq SW2 ,
+located in the middle of the board, near the space between the two
+VME connectors, and
+.Dq SW3 ,
+closer to the AM7990DC chip at the bottom edge.
+.Pp
+The only supported configurations are:
+.Bl -column "xxxxxxxx" "xxxxxxxx" "xxxxxxxx" "0xffffffff"
+.It Li SW1 Ta SW2 Ta SW3 Ta Address
+.It " "
+.It Li "UUU_UU_U" Ta "U__U____" Ta "______U_" Ta "0xffff1200"
+.It Li "UUU_U_UU" Ta "U__U_U__" Ta "______U_" Ta "0xffff1400"
+.It Li "UUU_U__U" Ta "U__UU___" Ta "______U_" Ta "0xffff1600"
+.It Li "U_U_U_UU" Ta "U__UUU__" Ta "______U_" Ta "0xffff5400"
+.It Li "U_U_U__U" Ta "U_U_____" Ta "______U_" Ta "0xffff5600"
+.It Li "_U_UU_UU" Ta "U_U__U__" Ta "______U_" Ta "0xffffa400"
+.El
 .Sh SEE ALSO
 .Xr arp 4 ,
 .Xr ie 4 ,
@@ -85,4 +115,4 @@ MVME376 VMEbus ethernet card
 The mvme68k
 .Nm
 interface first appeared in
-.Ox 2.0
+.Ox 2.0 .
