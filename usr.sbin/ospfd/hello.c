@@ -1,4 +1,4 @@
-/*	$OpenBSD: hello.c,v 1.3 2005/02/07 05:50:59 david Exp $ */
+/*	$OpenBSD: hello.c,v 1.4 2005/02/09 15:51:30 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -83,10 +83,14 @@ send_hello(struct iface *iface)
 	hello->rtr_priority = iface->priority;
 	hello->rtr_dead_interval = htonl(iface->dead_interval);
 
-	if (iface->dr)
+	if (iface->dr) {
 		hello->d_rtr = iface->dr->addr.s_addr;
-	if (iface->bdr)
+		iface->self->dr.s_addr = iface->dr->addr.s_addr;
+	}
+	if (iface->bdr) {
 		hello->bd_rtr = iface->bdr->addr.s_addr;
+		iface->self->bdr.s_addr = iface->bdr->addr.s_addr;
+	}
 	ptr += sizeof(*hello);
 
 	/* active neighbor(s) */
