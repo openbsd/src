@@ -1,4 +1,4 @@
-/*	$OpenBSD: job.c,v 1.13 1999/10/05 22:06:24 espie Exp $	*/
+/*	$OpenBSD: job.c,v 1.14 1999/11/11 11:35:17 espie Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: job.c,v 1.13 1999/10/05 22:06:24 espie Exp $";
+static char rcsid[] = "$OpenBSD: job.c,v 1.14 1999/11/11 11:35:17 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -1970,7 +1970,7 @@ JobOutput(job, cp, endp, msg)
     register char *ecp;
 
     if (commandShell->noPrint) {
-	ecp = Str_FindSubstring(cp, commandShell->noPrint);
+	ecp = strstr(cp, commandShell->noPrint);
 	while (ecp != NULL) {
 	    if (cp != ecp) {
 		*ecp = '\0';
@@ -1998,7 +1998,7 @@ JobOutput(job, cp, endp, msg)
 		while (*cp == ' ' || *cp == '\t' || *cp == '\n') {
 		    cp++;
 		}
-		ecp = Str_FindSubstring(cp, commandShell->noPrint);
+		ecp = strstr(cp, commandShell->noPrint);
 	    } else {
 		return cp;
 	    }

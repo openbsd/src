@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.10 1998/12/20 23:38:11 deraadt Exp $	*/
+/*	$OpenBSD: util.c,v 1.11 1999/11/11 11:35:17 espie Exp $	*/
 /*	$NetBSD: util.c,v 1.10 1996/12/31 17:56:04 christos Exp $	*/
 
 /*
@@ -6,7 +6,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: util.c,v 1.10 1998/12/20 23:38:11 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: util.c,v 1.11 1999/11/11 11:35:17 espie Exp $";
 #endif
 
 #include <stdio.h>
@@ -418,5 +418,35 @@ snprintf(va_alist)
 	rv = vsnprintf(s, n, fmt, ap);
 	va_end(ap);
 	return rv;
+}
+#endif
+
+#ifdef NEED_STRSTR
+char *
+strstr(string, substring)
+	const char *string;		/* String to search. */
+	const char *substring;		/* Substring to find in string */
+{
+	const char *a, *b;
+
+	/*
+	 * First scan quickly through the two strings looking for a single-
+	 * character match.  When it's found, then compare the rest of the
+	 * substring.
+	 */
+
+	for (b = substring; *string != 0; string += 1) {
+		if (*string != *b)
+			continue;
+		a = string;
+		for (;;) {
+			if (*b == 0)
+				return (char *)string;
+			if (*a++ != *b++)
+				break;
+		}
+		b = substring;
+	}
+	return NULL;
 }
 #endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: var.c,v 1.14 1999/11/10 14:11:49 espie Exp $	*/
+/*	$OpenBSD: var.c,v 1.15 1999/11/11 11:35:17 espie Exp $	*/
 /*	$NetBSD: var.c,v 1.18 1997/03/18 19:24:46 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: var.c,v 1.14 1999/11/10 14:11:49 espie Exp $";
+static char rcsid[] = "$OpenBSD: var.c,v 1.15 1999/11/11 11:35:17 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -1089,7 +1089,7 @@ VarSubstitute (word, addSpace, buf, patternp)
 	    done = FALSE;
 	    origSize = Buf_Size(buf);
 	    while (!done) {
-		cp = Str_FindSubstring(word, pattern->lhs);
+		cp = strstr(word, pattern->lhs);
 		if (cp != (char *)NULL) {
 		    if (addSpace && (((cp - word) + pattern->rightLen) != 0)){
 			Buf_AddByte(buf, (Byte)' ');

@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.8 1999/11/11 11:33:02 espie Exp $	*/
+/*	$OpenBSD: extern.h,v 1.9 1999/11/11 11:35:17 espie Exp $	*/
 /*	$NetBSD: nonints.h,v 1.12 1996/11/06 17:59:19 christos Exp $	*/
 
 /*-
@@ -108,7 +108,6 @@ void str_init __P((void));
 void str_end __P((void));
 char *str_concat __P((char *, char *, int));
 char **brk_string __P((char *, int *, Boolean, char **));
-char *Str_FindSubstring __P((char *, char *));
 int Str_Match __P((char *, char *));
 char *Str_SYSVMatch __P((char *, char *, int *len));
 void Str_SYSVSubst __P((Buffer, char *, char *, int));
