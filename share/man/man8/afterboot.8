@@ -1,4 +1,4 @@
-.\"	$OpenBSD: afterboot.8,v 1.64 2001/10/05 14:45:54 mpech Exp $
+.\"	$OpenBSD: afterboot.8,v 1.65 2001/10/14 02:14:13 millert Exp $
 .Dd October 20, 1997
 .Dt AFTERBOOT 8
 \!\" Originally created by Marshall M. Midden -- 1997-10-20, m4@umn.edu
@@ -490,9 +490,9 @@ after changes.
 .Ss Sendmail
 .Ox
 ships with a default
-.Pa /etc/mail/sendmail.cf
+.Pa /etc/mail/localhost.cf
 file that will work for simple installations; it was generated from
-.Pa openbsd-proto.mc
+.Pa openbsd-localhost.mc
 in
 .Pa /usr/share/sendmail/cf .
 Please see
@@ -500,16 +500,21 @@ Please see
 and
 .Pa /usr/share/doc/smm/08.sendmailop/op.me
 for information on generating your own sendmail configuration files.
-For the default installation, sendmail is configured to only process
-jobs that have been the queued and to not accept messages over the network.
+For the default installation, sendmail is configured to only accept
+connections from the local host and to not accept connections on
+any external interfaces.
 This makes it possible to send mail locally, but not receive mail from remote
 servers, which is ideal if you have one central incoming mail machine and
 several clients.
-To cause sendmail to accept network connections, modify the
+To cause sendmail to accept external network connections, modify the
 .Dq sendmail_flags
 variable in
 .Pa /etc/rc.conf
+to use the
+.Pa /etc/mail/sendmail.cf file
 in accordance with the comments therein.
+This file was generated from
+.Pa openbsd-proto.mc .
 Note that sendmail now also listens on port 587 by default.
 This is to implement the RFC2476 message submission protocol.
 You may disable this via the
@@ -518,6 +523,9 @@ option in your sendmail .mc file.
 See
 .Pa /usr/share/sendmail/README
 for more information.
+The
+.Pa /etc/mail/localhost.cf
+file already has this disabled.
 .Ss DHCP server
 If this is a
 DHCP
