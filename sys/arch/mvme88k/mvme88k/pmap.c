@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.69 2003/08/01 07:48:24 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.70 2003/08/01 18:39:12 miod Exp $	*/
 /*
  * Copyright (c) 2001, 2002, 2003 Miodrag Vallat
  * Copyright (c) 1998-2001 Steve Murphree, Jr.
@@ -156,7 +156,7 @@ kpdt_entry_t	kpdt_free;
 #define	M1x7_PDT_SIZE 0
 #endif
 
-#if defined(MVME188) && defined(MVME187) || defined(MVME197)
+#if defined(MVME188) && (defined(MVME187) || defined(MVME197))
 #define	OBIO_PDT_SIZE	((brdtyp == BRD_188) ? M188_PDT_SIZE : M1x7_PDT_SIZE)
 #else
 #define	OBIO_PDT_SIZE	MAX(M188_PDT_SIZE, M1x7_PDT_SIZE)
@@ -2924,6 +2924,7 @@ pmap_kremove(vaddr_t va, vsize_t len)
 {
 	int spl;
 	u_int users;
+	vaddr_t e;
 
 #ifdef DEBUG
 	if ((pmap_con_dbg & (CD_RM | CD_NORM)) == (CD_RM | CD_NORM))
@@ -2936,8 +2937,8 @@ pmap_kremove(vaddr_t va, vsize_t len)
 	PMAP_LOCK(kernel_pmap, spl);
 	users = kernel_pmap->pm_cpus;
 
-	for (len >>= PAGE_SHIFT; len != 0; len--, va += PAGE_SIZE) {
-		vaddr_t e = va + PAGE_SIZE;
+	e = va + round_page(len);
+	for (; va < e; va += PAGE_SIZE) {
 		sdt_entry_t *sdt;
 		pt_entry_t *pte;
 
