@@ -1218,3 +1218,5 @@
 ./usr/share/man/cat8/mount_afs.0
 ./usr/share/man/cat8/mount_xfs.0
 ./usr/share/man/cat4/ifmedia.0
+./usr/share/man/cat4/powerpc
+./usr/share/man/cat4/powerpc/com.0

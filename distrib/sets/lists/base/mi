@@ -1940,6 +1940,7 @@
 ./var/games/hackdir/save
 ./var/games/larn
 ./var/games/phantasia
+./var/games/tetris.scores
 ./var/games/rogue.scores
 ./var/games/save
 ./var/log
