@@ -1,4 +1,5 @@
-/*	$NetBSD: conf.c,v 1.68 1995/12/09 05:53:00 mycroft Exp $	*/
+/*	$OpenBSD: conf.c,v 1.11 1996/04/18 19:18:06 niklas Exp $	*/
+/*	$NetBSD: conf.c,v 1.71 1996/03/14 21:27:33 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -126,11 +127,10 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 		 
 /* open, close, read, ioctl */
 #define cdev_ss_init(c,n) { \
-        dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
+	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
 	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
 	(dev_type_stop((*))) enodev, 0, seltrue, \
 	(dev_type_mmap((*))) enodev }
-
 
 cdev_decl(cn);
 cdev_decl(ctty);
@@ -166,7 +166,7 @@ cdev_decl(cd);
 cdev_decl(lpt);
 #include "ch.h"
 cdev_decl(ch);
-dev_decl(fd,open);
+dev_decl(filedesc,open);
 #include "bpfilter.h"
 cdev_decl(bpf);
 #include "pcmciabus.h"
@@ -233,7 +233,7 @@ struct cdevsw	cdevsw[] =
 	cdev_ss_init(NSS,ss),           /* 19: SCSI scanner */
 	cdev_notdef(),			/* 20 */
 	cdev_notdef(),			/* 21 */
-	cdev_fd_init(1,fd),		/* 22: file descriptor pseudo-device */
+	cdev_fd_init(1,filedesc),	/* 22: file descriptor pseudo-device */
 	cdev_bpftun_init(NBPFILTER,bpf),/* 23: Berkeley packet filter */
 	cdev_notdef(),			/* 24 */
 	cdev_joy_init(NJOY,joy),	/* 25: Game adapter */

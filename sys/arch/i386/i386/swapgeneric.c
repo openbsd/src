@@ -1,4 +1,4 @@
-/*	$OpenBSD: swapgeneric.c,v 1.2 1996/04/17 05:18:58 mickey Exp $	*/
+/*	$OpenBSD: swapgeneric.c,v 1.3 1996/04/18 19:18:12 niklas Exp $	*/
 /*	$NetBSD: swapgeneric.c,v 1.9 1994/11/04 09:57:52 mycroft Exp $	*/
 
 /*-
@@ -54,6 +54,8 @@
 #include "sd.h"
 #include "cd.h"
 #include "mcd.h"
+
+void	gets __P((char *));
 
 /*
  * Generic configuration;  all in one

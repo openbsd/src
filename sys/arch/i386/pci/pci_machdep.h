@@ -1,4 +1,5 @@
-/*	$NetBSD: pci_machdep.h,v 1.3 1995/04/17 12:08:00 cgd Exp $	*/
+/*	$OpenBSD: pci_machdep.h,v 1.2 1996/04/18 19:22:23 niklas Exp $	*/
+/*	$NetBSD: pci_machdep.h,v 1.4 1996/03/14 02:37:59 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -60,5 +61,25 @@ typedef union {
  */
 typedef u_int32_t pcireg_t;
 
+/*
+ * PCs which use Configuration Mechanism #2 are limited to 16
+ * devices per bus.
+ */
+#define	PCI_MAX_DEVICE_NUMBER	(pci_mode == 2 ? 16 : 32)
+
+/*
+ * Hook for PCI bus attach function to do any necessary machine-specific
+ * operations.
+ */
+
+#define	pci_md_attach_hook(parent, sc, pba)				\
+	do {								\
+		if (pba->pba_bus == 0)					\
+			printf(": configuration mode %d", pci_mode);	\
+	} while (0);
+
+/*
+ * Miscellaneous variables and functions.
+ */
 extern int pci_mode;
 extern int pci_mode_detect __P((void));

@@ -1,5 +1,5 @@
-/*	$OpenBSD: machdep.c,v 1.11 1996/04/18 04:19:49 mickey Exp $	*/
-/*	$NetBSD: machdep.c,v 1.191 1996/03/01 21:49:49 scottr Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.12 1996/04/18 19:18:11 niklas Exp $	*/
+/*	$NetBSD: machdep.c,v 1.194 1996/03/08 20:19:48 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -413,6 +413,7 @@ identifycpu()
 #endif
 #ifndef I586_CPU
 	case CPUCLASS_586:
+		printf("NOTICE: this kernel does not support Pentium CPU class\n");
 #ifdef I486_CPU
 		printf("NOTICE: lowering CPU class to i486\n");
 		cpu_class = CPUCLASS_486;
@@ -421,6 +422,7 @@ identifycpu()
 #endif
 #ifndef I486_CPU
 	case CPUCLASS_486:
+		printf("NOTICE: this kernel does not support i486 CPU class\n");
 #ifdef I386_CPU
 		printf("NOTICE: lowering CPU class to i386\n");
 		cpu_class = CPUCLASS_386;
@@ -429,7 +431,8 @@ identifycpu()
 #endif
 #ifndef I386_CPU
 	case CPUCLASS_386:
-		panic("CPU class not configured");
+		printf("NOTICE: this kernel does not support i386 CPU class\n");
+		panic("no appropriate CPU class available");
 #endif
 	default:
 		break;
@@ -703,8 +706,9 @@ boot(howto)
 		howto |= RB_HALT;
 		goto haltsys;
 	}
+
 	boothowto = howto;
-	if ((howto&RB_NOSYNC) == 0 && waittime < 0) {
+	if ((howto & RB_NOSYNC) == 0 && waittime < 0) {
 		waittime = 0;
 		vfs_shutdown();
 		/*
@@ -713,21 +717,24 @@ boot(howto)
 		 */
 		resettodr();
 	}
+
+	/* Disable interrupts. */
 	splhigh();
+
+	/* Do a dump if requested. */
+	if ((howto & (RB_DUMP | RB_HALT)) == RB_DUMP)
+		dumpsys();
+
 haltsys:
 	doshutdownhooks();
+
 	if (howto & RB_HALT) {
 		printf("\n");
 		printf("The operating system has halted.\n");
 		printf("Please press any key to reboot.\n\n");
 		cngetc();
-	} else {
-		if (howto & RB_DUMP) {
-			savectx(&dumppcb, 0);
-			dumppcb.pcb_cr3 = rcr3();
-			dumpsys();
-		}
 	}
+
 	printf("rebooting...\n");
 	cpu_reset();
 	for(;;) ;
@@ -804,6 +811,9 @@ dumpsys()
 	int (*dump) __P((dev_t, daddr_t, caddr_t, size_t));
 	int error = 0;
 	int c;
+
+	/* Save registers. */
+	savectx(&dumppcb);
 
 	msgbufmapped = 0;	/* don't record dump msgs in msgbuf */
 	if (dumpdev == NODEV)
@@ -1106,11 +1116,19 @@ init386(first_avail)
 	/*
 	 * Use BIOS values stored in RTC CMOS RAM, since probing
 	 * breaks certain 386 AT relics.
+	 *
+	 * XXX Not only does probing break certain 386 AT relics, but
+	 * not all BIOSes (Dell, Compaq, others) report the correct
+	 * amount of extended memory.
 	 */
 	biosbasemem = (mc146818_read(NULL, NVRAM_BASEHI) << 8) |
 	    mc146818_read(NULL, NVRAM_BASELO);
+#ifdef EXTMEM_SIZE
+	biosextmem = EXTMEM_SIZE;
+#else
 	biosextmem = (mc146818_read(NULL, NVRAM_EXTHI) << 8) |
 	    mc146818_read(NULL, NVRAM_EXTLO);
+#endif /* EXTMEM_SIZE */
 
 	/* Round down to whole pages. */
 	biosbasemem &= -(NBPG / 1024);
@@ -1408,4 +1426,48 @@ cpu_reset()
 	pmap_update(); 
 
 	for (;;);
+}
+
+int
+bus_mem_map(t, bpa, size, cacheable, mhp)
+	bus_chipset_tag_t t;
+	bus_mem_addr_t bpa;
+	bus_mem_size_t size;
+	int cacheable;
+	bus_mem_handle_t *mhp;
+{
+	u_long pa, endpa;
+	vm_offset_t va;
+
+	pa = i386_trunc_page(bpa);
+	endpa = i386_round_page(bpa + size);
+
+	va = kmem_alloc_pageable(kernel_map, endpa - pa);
+	if (va == 0)
+		return (1);
+	*mhp = (caddr_t)(va + (bpa & PGOFSET));
+
+	for (; pa < endpa; pa += NBPG, va += NBPG) {
+                pmap_enter(pmap_kernel(), va, pa, VM_PROT_READ | VM_PROT_WRITE,
+                    TRUE);
+                if (!cacheable)
+                        pmap_changebit(pa, PG_N, ~0);
+                else
+                        pmap_changebit(pa, 0, ~PG_N);
+        }
+ 
+        return 0;
+}
+
+void
+bus_mem_unmap(t, memh, size)
+	bus_chipset_tag_t t;
+	bus_mem_handle_t memh;
+	bus_mem_size_t size;
+{
+	vm_offset_t va, endva;
+
+	va = i386_trunc_page(memh);
+	endva = i386_round_page(memh);
+	kmem_free(kmem_map, va, endva - va);
 }

@@ -1,4 +1,5 @@
-/*	$NetBSD: disksubr.c,v 1.18 1995/01/13 10:30:08 mycroft Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.2 1996/04/18 19:18:07 niklas Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.19 1996/03/09 20:52:59 ghudson Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -43,6 +44,9 @@
 
 #define	b_cylin	b_resid
 
+int fat_types[] = { DOSPTYP_FAT12, DOSPTYP_FAT16S,
+		    DOSPTYP_FAT16B, DOSPTYP_FAT16C, -1 };
+
 /*
  * Attempt to read a disk label from a device
  * using the indicated stategy routine.
@@ -66,11 +70,12 @@ readdisklabel(dev, strat, lp, osdep)
 	struct cpu_disklabel *osdep;
 {
 	struct dos_partition *dp = osdep->dosparts;
+	struct partition *pp;
 	struct dkbad *bdp = &osdep->bad;
 	struct buf *bp;
 	struct disklabel *dlp;
 	char *msg = NULL;
-	int dospartoff, cyl, i;
+	int dospartoff, cyl, i, *ip;
 
 	/* minimal requirements for archtypal disk label */
 	if (lp->d_secsize == 0)
@@ -109,7 +114,16 @@ readdisklabel(dev, strat, lp, osdep)
 			/* XXX how do we check veracity/bounds of this? */
 			bcopy(bp->b_data + DOSPARTOFF, dp,
 			    NDOSPART * sizeof(*dp));
-			for (i = 0; i < NDOSPART; i++, dp++)
+			for (i = 0; i < NDOSPART; i++, dp++) {
+				/* Install in partition e, f, g, or h. */
+				pp = &lp->d_partitions[RAW_PART + 1 + i];
+				pp->p_offset = dp->dp_start;
+				pp->p_size = dp->dp_size;
+				for (ip = fat_types; *ip != -1; ip++) {
+				    if (dp->dp_typ == *ip)
+					pp->p_fstype = FS_MSDOS;
+				}
+
 				/* is this ours? */
 				if (dp->dp_size && dp->dp_typ == DOSPTYP_386BSD
 				    && dospartoff == 0) {
@@ -128,8 +142,9 @@ readdisklabel(dev, strat, lp, osdep)
 					lp->d_secpercyl =
 					    lp->d_ntracks * lp->d_nsectors;
 				}
+			}
+			lp->d_npartitions = RAW_PART + 1 + i;
 		}
-			
 	}
 	
 	/* next, dig out disk label */
