@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cnw.c,v 1.1 1999/08/13 20:34:17 fgsch Exp $	*/
+/*	$OpenBSD: if_cnw.c,v 1.2 1999/08/24 07:11:09 fgsch Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -409,7 +409,6 @@ cnw_attach(parent, self, aux)
 	}
 	sc->sc_memt = sc->sc_pcmemh.memt;
 	sc->sc_memh = sc->sc_pcmemh.memh;
-	printf(": %s\n", PCMCIA_STR_XIRCOM_XIR_CNW);
 
 	/* Finish setup of softc */
 	sc->sc_domain = cnw_domain;
