@@ -1,4 +1,4 @@
-/*	$OpenBSD: man.c,v 1.5 1997/01/15 23:42:52 millert Exp $	*/
+/*	$OpenBSD: man.c,v 1.6 1997/09/10 04:16:30 deraadt Exp $	*/
 /*	$NetBSD: man.c,v 1.7 1995/09/28 06:05:34 tls Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)man.c	8.17 (Berkeley) 1/31/95";
 #else
-static char rcsid[] = "$OpenBSD: man.c,v 1.5 1997/01/15 23:42:52 millert Exp $";
+static char rcsid[] = "$OpenBSD: man.c,v 1.6 1997/09/10 04:16:30 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -382,7 +382,7 @@ manual(page, tag, pg)
 	ENTRY *ep, *e_sufp, *e_tag;
 	TAG *missp, *sufp;
 	int anyfound, cnt, found;
-	char *p, buf[128];
+	char *p, buf[MAXPATHLEN];
 
 	anyfound = 0;
 	buf[0] = '*';
