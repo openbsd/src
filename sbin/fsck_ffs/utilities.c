@@ -1,4 +1,4 @@
-/*	$OpenBSD: utilities.c,v 1.15 2002/02/23 21:23:46 deraadt Exp $	*/
+/*	$OpenBSD: utilities.c,v 1.16 2002/08/20 21:57:56 deraadt Exp $	*/
 /*	$NetBSD: utilities.c,v 1.18 1996/09/27 22:45:20 christos Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)utilities.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: utilities.c,v 1.15 2002/02/23 21:23:46 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: utilities.c,v 1.16 2002/08/20 21:57:56 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -514,10 +514,12 @@ void
 catchquit(n)
 	int n;
 {
-	extern int returntosingle;
+	extern volatile sig_atomic_t returntosingle;
+	char buf[1024];
 
-	/* XXX signal race */
-	printf("returning to single-user after filesystem check\n");
+	snprintf(buf, sizeof buf,
+	    "returning to single-user after filesystem check\n");
+	write(STDOUT_FILENO, buf, strlen(buf));
 	returntosingle = 1;
 	(void)signal(SIGQUIT, SIG_DFL);
 }
@@ -531,7 +533,6 @@ voidquit(n)
 	int n;
 {
 
-	/* XXX signal race */
 	sleep(1);
 	(void)signal(SIGQUIT, SIG_IGN);
 	(void)signal(SIGQUIT, SIG_DFL);
