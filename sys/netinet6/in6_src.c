@@ -1,9 +1,10 @@
-/*	$OpenBSD: in6_src.c,v 1.4 2000/02/28 11:55:22 itojun Exp $	*/
+/*	$OpenBSD: in6_src.c,v 1.5 2000/06/13 10:12:01 itojun Exp $	*/
+/*	$KAME: in6_src.c,v 1.23 2000/06/12 08:15:27 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -15,7 +16,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -292,7 +293,7 @@ in6_selectsrc(dstsock, opts, mopts, ro, laddr, errorp)
 
 /*
  * Default hop limit selection. The precedence is as follows:
- * 1. Hoplimit valued specified via ioctl.
+ * 1. Hoplimit value specified via ioctl.
  * 2. (If the outgoing interface is detected) the current
  *     hop limit of the interface specified by router advertisement.
  * 3. The system default hoplimit.
@@ -308,4 +309,114 @@ in6_selecthlim(inp, ifp)
 		return(nd_ifinfo[ifp->if_index].chlim);
 	else
 		return(ip6_defhlim);
+}
+
+/*
+ * generate kernel-internal form (scopeid embedded into s6_addr16[1]).
+ * If the address scope of is link-local, embed the interface index in the
+ * address.  The routine determines our precedence
+ * between advanced API scope/interface specification and basic API
+ * specification.
+ *
+ * this function should be nuked in the future, when we get rid of
+ * embedded scopeid thing.
+ *
+ * XXX actually, it is over-specification to return ifp against sin6_scope_id.
+ * there can be multiple interfaces that belong to a particular scope zone
+ * (in specification, we have 1:N mapping between a scope zone and interfaces).
+ * we may want to change the function to return something other than ifp.
+ */
+int
+in6_embedscope(in6, sin6, in6p, ifpp)
+	struct in6_addr *in6;
+	const struct sockaddr_in6 *sin6;
+	struct inpcb *in6p;
+	struct ifnet **ifpp;
+{
+	struct ifnet *ifp = NULL;
+	u_int32_t scopeid;
+
+	*in6 = sin6->sin6_addr;
+	scopeid = sin6->sin6_scope_id;
+	if (ifpp)
+		*ifpp = NULL;
+
+	/*
+	 * don't try to read sin6->sin6_addr beyond here, since the caller may
+	 * ask us to overwrite existing sockaddr_in6
+	 */
+
+	if (IN6_IS_SCOPE_LINKLOCAL(in6)) {
+		struct in6_pktinfo *pi;
+
+		/*
+		 * KAME assumption: link id == interface id
+		 */
+
+		if (in6p->inp_outputopts6 &&
+		    (pi = in6p->inp_outputopts6->ip6po_pktinfo) &&
+		    pi->ipi6_ifindex) {
+			ifp = ifindex2ifnet[pi->ipi6_ifindex];
+			in6->s6_addr16[1] = htons(pi->ipi6_ifindex);
+		} else if (IN6_IS_ADDR_MULTICAST(in6)
+			&& in6p->inp_moptions6
+			&& in6p->inp_moptions6->im6o_multicast_ifp) {
+			ifp = in6p->inp_moptions6->im6o_multicast_ifp;
+			in6->s6_addr16[1] = htons(ifp->if_index);
+		} else if (scopeid) {
+			/* boundary check */
+			if (scopeid < 0 || if_index < scopeid)
+				return ENXIO;  /* XXX EINVAL? */
+			ifp = ifindex2ifnet[scopeid];
+			/*XXX assignment to 16bit from 32bit variable */
+			in6->s6_addr16[1] = htons(scopeid & 0xffff);
+		}
+
+		if (ifpp)
+			*ifpp = ifp;
+	}
+
+	return 0;
+}
+
+/*
+ * generate standard sockaddr_in6 from embedded form.
+ * touches sin6_addr and sin6_scope_id only.
+ *
+ * this function should be nuked in the future, when we get rid of
+ * embedded scopeid thing.
+ */
+int
+in6_recoverscope(sin6, in6, ifp)
+	struct sockaddr_in6 *sin6;
+	const struct in6_addr *in6;
+	struct ifnet *ifp;
+{
+	u_int32_t scopeid;
+
+	sin6->sin6_addr = *in6;
+
+	/*
+	 * don't try to read *in6 beyond here, since the caller may
+	 * ask us to overwrite existing sockaddr_in6
+	 */
+
+	sin6->sin6_scope_id = 0;
+	if (IN6_IS_SCOPE_LINKLOCAL(in6)) {
+		/*
+		 * KAME assumption: link id == interface id
+		 */
+		scopeid = ntohs(sin6->sin6_addr.s6_addr16[1]);
+		if (scopeid) {
+			/* sanity check */
+			if (scopeid < 0 || if_index < scopeid)
+				return ENXIO;
+			if (ifp && ifp->if_index != scopeid)
+				return ENXIO;
+			sin6->sin6_addr.s6_addr16[1] = 0;
+			sin6->sin6_scope_id = scopeid;
+		}
+	}
+
+	return 0;
 }

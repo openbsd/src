@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_pcb.c,v 1.14 2000/06/03 13:04:39 itojun Exp $	*/
+/*	$OpenBSD: in6_pcb.c,v 1.15 2000/06/13 10:12:01 itojun Exp $	*/
 
 /*
 %%% copyright-nrl-95
@@ -153,6 +153,13 @@ in6_pcbbind(inp, nam)
        */
       if (sin6->sin6_family != AF_INET6)
 	return EAFNOSUPPORT;
+
+      /* KAME hack: embed scopeid */
+      if (in6_embedscope(&sin6->sin6_addr, sin6, inp, NULL) != 0)
+	return EINVAL;
+      /* this must be cleared for ifa_ifwithaddr() */
+      sin6->sin6_scope_id = 0;
+
       lport = sin6->sin6_port;
 
       if (IN6_IS_ADDR_MULTICAST(&sin6->sin6_addr))
@@ -383,10 +390,10 @@ in6_pcbconnect(inp, nam)
 {
 	struct in6_addr *in6a = NULL;
 	struct sockaddr_in6 *sin6 = mtod(nam, struct sockaddr_in6 *);
-	struct in6_pktinfo *pi;
 	struct ifnet *ifp = NULL;	/* outgoing interface */
 	int error = 0;
 	struct in6_addr mapped;
+	struct sockaddr_in6 tmp;
 
 	(void)&in6a;				/* XXX fool gcc */
 
@@ -408,36 +415,15 @@ in6_pcbconnect(inp, nam)
 			return EINVAL;
 	}
 
-	/*
-	 * If the scope of the destination is link-local, embed the interface
-	 * index in the address.
-	 */
-	if (IN6_IS_SCOPE_LINKLOCAL(&sin6->sin6_addr)) {
-		/* XXX boundary check is assumed to be already done. */
-		/* XXX sin6_scope_id is weaker than advanced-api. */
-		if (inp->inp_outputopts6 &&
-		    (pi = inp->inp_outputopts6->ip6po_pktinfo) &&
-		    pi->ipi6_ifindex) {
-			sin6->sin6_addr.s6_addr16[1] = htons(pi->ipi6_ifindex);
-			ifp = ifindex2ifnet[pi->ipi6_ifindex];
-		}
-		else if (IN6_IS_ADDR_MULTICAST(&sin6->sin6_addr) &&
-			 inp->inp_moptions6 &&
-			 inp->inp_moptions6->im6o_multicast_ifp) {
-			sin6->sin6_addr.s6_addr16[1] =
-				htons(inp->inp_moptions6->im6o_multicast_ifp->if_index);
-			ifp = ifindex2ifnet[inp->inp_moptions6->im6o_multicast_ifp->if_index];
-		} else if (sin6->sin6_scope_id) {
-			/* boundary check */
-			if (sin6->sin6_scope_id < 0 
-			 || if_index < sin6->sin6_scope_id) {
-				return ENXIO;  /* XXX EINVAL? */
-			}
-			sin6->sin6_addr.s6_addr16[1]
-				= htons(sin6->sin6_scope_id & 0xffff);/*XXX*/
-			ifp = ifindex2ifnet[sin6->sin6_scope_id];
-		}
-	}
+	/* protect *sin6 from overwrites */
+	tmp = *sin6;
+	sin6 = &tmp;
+
+	/* KAME hack: embed scopeid */
+	if (in6_embedscope(&sin6->sin6_addr, sin6, inp, &ifp) != 0)
+	  return EINVAL;
+	/* this must be cleared for ifa_ifwithaddr() */
+	sin6->sin6_scope_id = 0;
 
 	/* Source address selection. */
 	if (IN6_IS_ADDR_V4MAPPED(&inp->inp_laddr6)
