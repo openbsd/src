@@ -1,4 +1,4 @@
-/*	$OpenBSD: ce4231.c,v 1.2 2001/10/02 00:26:24 jason Exp $	*/
+/*	$OpenBSD: ce4231.c,v 1.3 2002/01/11 17:26:34 jason Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -433,6 +433,10 @@ ce4231_open(addr, flags)
 	    ce4231_read(sc, SP_MISC_INFO) | MODE2);
 
 	ce4231_setup_output(sc);
+
+	ce4231_write(sc, SP_PIN_CONTROL,
+	    ce4231_read(sc, SP_PIN_CONTROL) | INTERRUPT_ENABLE);
+
 	return (0);
 }
 
@@ -490,6 +494,8 @@ ce4231_close(addr)
 
 	ce4231_halt_input(sc);
 	ce4231_halt_output(sc);
+	ce4231_write(sc, SP_PIN_CONTROL,
+	    ce4231_read(sc, SP_PIN_CONTROL) & (~INTERRUPT_ENABLE));
 	sc->sc_open = 0;
 }
 
