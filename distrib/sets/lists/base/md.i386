@@ -706,7 +706,7 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/net/if_sppp.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/pcap-int.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/ataio.ph
-./usr/lib/gcc-lib/i386-unknown-openbsd2.5/2.95
-./usr/lib/gcc-lib/i386-unknown-openbsd2.5/2.95/include
+./usr/lib/gcc-lib/i386-unknown-openbsd2.5/2.95.1
+./usr/lib/gcc-lib/i386-unknown-openbsd2.5/2.95.1/include
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/sched.ph
 ./sbin/wicontrol
