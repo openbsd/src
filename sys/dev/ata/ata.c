@@ -1,4 +1,4 @@
-/*      $OpenBSD: ata.c,v 1.4 1999/11/17 01:22:55 csapuntz Exp $      */
+/*      $OpenBSD: ata.c,v 1.5 2000/04/07 11:22:46 niklas Exp $      */
 /*      $NetBSD: ata.c,v 1.9 1999/04/15 09:41:09 bouyer Exp $      */
 /*
  * Copyright (c) 1998 Manuel Bouyer.  All rights reserved.
@@ -68,7 +68,7 @@ ata_get_params(drvp, flags, prms)
 	int i;
 	u_int16_t *p;
 
-	WDCDEBUG_PRINT(("wdc_ata_get_parms\n"), DEBUG_FUNCS);
+	WDCDEBUG_PRINT(("ata_get_parms\n"), DEBUG_FUNCS);
 
 	bzero(tb, sizeof(tb));
 	bzero(prms, sizeof(struct ataparams));
@@ -156,7 +156,7 @@ ata_set_mode(drvp, mode, flags)
 {
 	struct wdc_command wdc_c;
 
-	WDCDEBUG_PRINT(("wdc_ata_set_mode=0x%x\n", mode), DEBUG_FUNCS);
+	WDCDEBUG_PRINT(("ata_set_mode=0x%x\n", mode), DEBUG_FUNCS);
 	bzero(&wdc_c, sizeof(struct wdc_command));
 
 	wdc_c.r_command = SET_FEATURES;
