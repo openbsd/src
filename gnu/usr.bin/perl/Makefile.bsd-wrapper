@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.bsd-wrapper,v 1.33 2000/04/06 17:03:36 millert Exp $
+# $OpenBSD: Makefile.bsd-wrapper,v 1.34 2000/04/07 02:52:54 millert Exp $
 #
 # Build wrapper for Perl 5.6.0
 #
@@ -22,6 +22,11 @@ POD2MAN=	/usr/bin/pod2man
 POD2MAN=	./perl -I ./lib ./pod/pod2man
 .endif
 H2PH=		/usr/bin/h2ph
+
+# Need -fPIC, not -fpic on sparc
+.if ($(TARGET_MACHINE_ARCH) == sparc)
+PICFLAG=-fPIC
+.endif
 
 .ifndef NOMAN
 MANALL=	Win32.cat1 a2p.cat1 c2ph.cat1 dprofpp.cat1 find2perl.cat1 \
