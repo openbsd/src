@@ -1,4 +1,4 @@
-/*	$OpenBSD: brgphy.c,v 1.11 2002/05/04 11:30:06 fgsch Exp $	*/
+/*	$OpenBSD: brgphy.c,v 1.12 2002/11/20 14:14:21 nate Exp $	*/
 
 /*
  * Copyright (c) 2000
@@ -85,7 +85,8 @@ int brgphy_probe(parent, match, aux)
 	     MII_MODEL(ma->mii_id2) == MII_MODEL_xxBROADCOM_BCM5401 ||
 	     MII_MODEL(ma->mii_id2) == MII_MODEL_xxBROADCOM_BCM5411 ||
 	     MII_MODEL(ma->mii_id2) == MII_MODEL_xxBROADCOM_BCM5421S ||
-	     MII_MODEL(ma->mii_id2) == MII_MODEL_xxBROADCOM_BCM5701))
+	     MII_MODEL(ma->mii_id2) == MII_MODEL_xxBROADCOM_BCM5701 ||
+	     MII_MODEL(ma->mii_id2) == MII_MODEL_xxBROADCOM_BCM5703))
 		return(10);
 
 	return(0);
@@ -112,6 +113,8 @@ brgphy_attach(parent, self, aux)
 		model = MII_STR_xxBROADCOM_BCM5421S;
 	if (MII_MODEL(ma->mii_id2) == MII_MODEL_xxBROADCOM_BCM5701)
 		model = MII_STR_xxBROADCOM_BCM5701;
+	if (MII_MODEL(ma->mii_id2) == MII_MODEL_xxBROADCOM_BCM5703)
+		model = MII_STR_xxBROADCOM_BCM5703;
 
 	printf(": %s, rev. %d\n", model, MII_REV(ma->mii_id2));
 
