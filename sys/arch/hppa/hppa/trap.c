@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.72 2004/04/07 18:24:19 mickey Exp $	*/
+/*	$OpenBSD: trap.c,v 1.73 2004/04/21 23:09:30 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -476,7 +476,16 @@ child_return(arg)
 	void *arg;
 {
 	struct proc *p = (struct proc *)arg;
-	userret(p, p->p_md.md_regs->tf_iioq_head, 0);
+	struct trapframe *tf = p->p_md.md_regs;
+
+	/*
+	 * Set up return value registers as libc:fork() expects
+	 */
+	tf->tf_ret0 = 0;
+	tf->tf_ret1 = 1;	/* ischild */
+	tf->tf_t1 = 0;		/* errno */
+
+	userret(p, tf->tf_iioq_head, 0);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
 		ktrsysret(p, SYS_fork, 0, 0);

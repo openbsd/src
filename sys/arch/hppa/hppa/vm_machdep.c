@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.52 2004/04/07 18:24:19 mickey Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.53 2004/04/21 23:09:30 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999-2004 Michael Shalayeff
@@ -198,13 +198,6 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	tf->tf_sr7 = HPPA_SID_KERNEL;
 	mfctl(CR_EIEM, tf->tf_eiem);
 	tf->tf_ipsw = PSL_C | PSL_Q | PSL_P | PSL_D | PSL_I /* | PSL_L */;
-
-	/*
-	 * Set up return value registers as libc:fork() expects
-	 */
-	tf->tf_ret0 = p1->p_pid;
-	tf->tf_ret1 = 1;	/* ischild */
-	tf->tf_t1 = 0;		/* errno */
 
 	/*
 	 * If specified, give the child a different stack.
