@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypwhich.c,v 1.3 1996/05/21 21:32:44 deraadt Exp $
+/*	$OpenBSD: ypwhich.c,v 1.4 1996/06/05 23:56:00 deraadt Exp $
 /*	$NetBSD: ypwhich.c,v 1.6 1996/05/13 02:43:48 thorpej Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$Id: ypwhich.c,v 1.3 1996/05/21 21:32:44 deraadt Exp $";
+static char rcsid[] = "$Id: ypwhich.c,v 1.4 1996/06/05 23:56:00 deraadt Exp $";
 #endif
 
 #include <sys/param.h>
@@ -48,8 +48,6 @@ static char rcsid[] = "$Id: ypwhich.c,v 1.3 1996/05/21 21:32:44 deraadt Exp $";
 #include <rpc/xdr.h>
 #include <rpcsvc/yp.h>
 #include <rpcsvc/ypclnt.h>
-
-extern bool_t xdr_domainname();
 
 struct ypalias {
 	char *alias, *name;
