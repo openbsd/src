@@ -1,8 +1,8 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.80 2001/11/18 22:48:58 krw Exp $
+#	$OpenBSD: install.sh,v 1.81 2001/11/25 19:40:51 krw Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
-# Copyright (c) 1997,1998 Todd Miller, Theo de Raadt
+# Copyright (c) 1997-2001 Todd Miller, Theo de Raadt, Ken Westerback
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -343,11 +343,13 @@ done
 
 echo
 echo 'Please enter the initial password that the root account will have.'
+_oifs="$IFS"
+IFS=
 resp=
 while [ "X${resp}" = X"" ]; do
 	echo -n "Password (will not echo): "
 	stty -echo
-	getresp -n "${_password}"
+	getresp -n ""
 	stty echo
 	echo
 	_password="$resp"
@@ -362,6 +364,7 @@ while [ "X${resp}" = X"" ]; do
 		resp=
 	fi
 done
+IFS="$_oifs"
 
 md_questions
 
@@ -412,7 +415,7 @@ cd /
 remount_fs /tmp/fstab.shadow
 md_installboot ${ROOTDISK}
 
-_encr=`echo "${_password}" | /mnt/usr/bin/encrypt -b 7`
+_encr=`/mnt/usr/bin/encrypt -b 7 "${_password}"`
 echo "1,s@^root::@root:${_encr}:@
 w
 q" | ed /mnt/etc/master.passwd 2> /dev/null
