@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.41 1998/09/08 20:26:41 marc Exp $
+#	$OpenBSD: netstart,v 1.42 1998/09/10 16:01:32 marc Exp $
 
 # /etc/myname contains my symbolic name
 #
@@ -38,10 +38,6 @@ ifconfig lo0 inet localhost
 route -n add -host $hostname localhost
 route -n add -net 127 127.0.0.1 -reject
 
-if [ "X${dhcp_client}" != X"NO" ]; then
-# Do DHCP discovery
-      dhclient ${dhcp_client}
-else
 # configure all of the non-loopback interfaces which we know about.
 # do this by reading /etc/hostname.* files, where * is the name
 # of a given interface.
@@ -51,6 +47,10 @@ else
 #
 # addr_family hostname netmask broadcast_addr options
 # dest dest_addr
+#
+# OR
+#
+# dhcp 
 #
 # addr_family is the address family of the interface, generally inet
 # hostname is the host name that belongs to the interface, in /etc/hosts.
@@ -62,10 +62,14 @@ else
 # has a "destination" (i.e. it's a point-to-point link, like SLIP).
 # dest_addr is the hostname of the other end of the link, in /etc/hosts
 #
+# dhcp is simply the string "dhcp" (no quotes, though) if the interface
+# is to be configured using DHCP.  See dhclient(8) and dhclient.conf(5)
+# for details.
+#
 # the only required contents of the file are the addr_family field
 # and the hostname.
 
-    (
+(
     tmp="$IFS"
     IFS="$IFS."
     set -- `echo /etc/hostname*`
@@ -78,34 +82,38 @@ else
             read af name mask bcaddr extras
             read dt dtaddr
 
-            if [ ! -n "$name" ]; then
-                echo "/etc/hostname.$1: invalid network configuration file"
-                exit
-            fi
+	    # check to see if device should be configure by dhcp
+	    if [ "$af" = "dhcp" ]; then
+		cmd="/sbin/dhclient $1";
+	    else
+		if [ ! -n "$name" ]; then
+		    echo "/etc/hostname.$1: invalid network configuration file"
+		    exit
+		fi
 
-	    cmd="ifconfig $1 $af $name "
-	    if [ "${dt}" = "dest" ]; then cmd="$cmd $dtaddr"; fi
-	    if [ -n "$mask" ]; then cmd="$cmd netmask $mask"; fi
-	    if [ -n "$bcaddr" -a "X$bcaddr" != "XNONE" ]; then
-		cmd="$cmd broadcast $bcaddr";
+		cmd="ifconfig $1 $af $name "
+		if [ "${dt}" = "dest" ]; then cmd="$cmd $dtaddr"; fi
+		if [ -n "$mask" ]; then cmd="$cmd netmask $mask"; fi
+		if [ -n "$bcaddr" -a "X$bcaddr" != "XNONE" ]; then
+		    cmd="$cmd broadcast $bcaddr";
+		fi
+		cmd="$cmd $extras";
 	    fi
-	    cmd="$cmd $extras"
 
 	    $cmd
         ) < /etc/hostname.$1
         shift
     done
-    )
+)
 
 # /etc/mygate, if it exists, contains the name of my gateway host
 # that name must be in /etc/hosts.
-    if [ -f /etc/mygate ]; then
+if [ -f /etc/mygate ]; then
 	route -n add -host default `cat /etc/mygate`
 
 	# default multicast route for hosts with a gateway
 	route -n add -net 224.0.0.0 -interface default
-    else
+else
 	# default multicast route
 	route -n add -net 224.0.0.0 -interface $hostname
-    fi
 fi
