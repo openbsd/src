@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.81 2000/08/04 22:52:49 fgsch Exp $
+#	$OpenBSD: MAKEDEV,v 1.82 2000/08/16 15:38:27 marc Exp $
 #	$NetBSD: MAKEDEV,v 1.40 1996/03/31 00:50:47 perry Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -557,13 +557,20 @@ pms*)
 	chown root.wheel psm${unit}
 	;;
 
-mouse*)						# (XXX)
-	name=${i##mouse-}
-	if [ ! -c $name ]; then
-		/bin/sh $0 $name	# make the appropriate device
-	fi
-	rm -f mouse
-	ln -s $name mouse
+mouse*)					# (XXX)
+	case $i in
+	mouse-*)
+		name=${i##mouse-}
+		if [ ! -c $name ]; then
+			/bin/sh $0 $name	# make the appropriate device
+		fi
+		rm -f mouse
+		ln -s $name mouse
+		;;
+	*)
+		echo no such device: use mouse-\${dev}, e.g. mouse-cua00
+		;;
+	esac
 	;;
 
 audio*)
