@@ -1,10 +1,10 @@
-/*	$OpenBSD: pcmciadevs.h,v 1.115 2004/06/01 17:44:34 millert Exp $	*/
+/*	$OpenBSD: pcmciadevs.h,v 1.116 2004/06/04 16:02:47 millert Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcmciadevs,v 1.112 2004/06/01 17:35:58 millert Exp 
+ *		OpenBSD: pcmciadevs,v 1.113 2004/06/04 16:02:34 millert Exp 
  */
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
@@ -152,7 +152,7 @@
 #define	PCMCIA_CIS_ADAPTEC_APA1460_2	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_ADAPTEC_APA1460_2	0x0002
 #define	PCMCIA_CIS_ADAPTEC2_AWN8030	{ NULL, NULL, NULL, NULL }
-#define	PCMCIA_PRODUCT_ADAPTEC2_AWN8030	0x0002
+#define	PCMCIA_PRODUCT_ADAPTEC2_AWN8030	0x0021
 
 /* Aironet */
 #define	PCMCIA_CIS_AIRONET_PC4500	{ NULL, NULL, NULL, NULL }
