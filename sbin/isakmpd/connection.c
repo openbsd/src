@@ -1,4 +1,4 @@
-/*	$OpenBSD: connection.c,v 1.20 2001/07/02 02:28:35 deraadt Exp $	*/
+/*	$OpenBSD: connection.c,v 1.21 2001/07/05 12:36:49 ho Exp $	*/
 /*	$EOM: connection.c,v 1.28 2000/11/23 12:21:18 niklas Exp $	*/
 
 /*
@@ -57,6 +57,8 @@
 
 /* How often should we check that connections we require to be up, are up?  */
 #define CHECK_INTERVAL 60
+
+static void connection_passive_teardown (char *);
 
 struct connection
 {
@@ -406,7 +408,7 @@ connection_teardown (char *name)
 }
 
 /* Remove the passive connection named NAME.  */
-void
+static void
 connection_passive_teardown (char *name)
 {
   struct connection_passive *conn;

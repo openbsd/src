@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp.c,v 1.42 2001/07/03 07:54:20 ho Exp $	*/
+/*	$OpenBSD: udp.c,v 1.43 2001/07/05 12:36:57 ho Exp $	*/
 /*	$EOM: udp.c,v 1.57 2001/01/26 10:09:57 niklas Exp $	*/
 
 /*
@@ -91,6 +91,9 @@ static int udp_send_message (struct message *);
 static void udp_get_dst (struct transport *, struct sockaddr **);
 static void udp_get_src (struct transport *, struct sockaddr **);
 static char *udp_decode_ids (struct transport *);
+#if 0
+static in_port_t udp_decode_port (char *);
+#endif
 
 static struct transport_vtbl udp_transport_vtbl = {
   { 0 }, "udp",
@@ -732,11 +735,14 @@ udp_decode_ids (struct transport *t)
 
   return result;
 }
+
+#if 0
 /*
  * Take a string containing an ext representation of port and return a
  * binary port number in host byte order.  Return zero if anything goes wrong.
+ * XXX Currently unused.
  */
-in_port_t
+static in_port_t
 udp_decode_port (char *port_str)
 {
   char *port_str_end;
@@ -762,3 +768,4 @@ udp_decode_port (char *port_str)
 
   return port_long;
 }
+#endif

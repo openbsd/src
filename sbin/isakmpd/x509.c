@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.61 2001/07/05 07:28:00 angelos Exp $	*/
+/*	$OpenBSD: x509.c,v 1.62 2001/07/05 12:37:00 ho Exp $	*/
 /*	$EOM: x509.c,v 1.54 2001/01/16 18:42:16 ho Exp $	*/
 
 /*
@@ -68,6 +68,11 @@
 #include "sa.h"
 #include "util.h"
 #include "x509.h"
+
+static u_int16_t x509_hash (u_int8_t *, size_t);
+static void x509_hash_init (void);
+static X509 *x509_hash_find (u_int8_t *, size_t);
+static int x509_hash_enter (X509 *);
 
 /*
  * X509_STOREs do not support subjectAltNames, so we have to build
@@ -518,7 +523,7 @@ x509_generate_kn (int id, X509 *cert)
 }
 #endif /* USE_POLICY */
 
-u_int16_t
+static u_int16_t
 x509_hash (u_int8_t *id, size_t len)
 {
   int i;
@@ -539,8 +544,8 @@ x509_hash (u_int8_t *id, size_t len)
   return bucket;
 }
 
-void
-x509_hash_init ()
+static void
+x509_hash_init (void)
 {
   struct x509_hash *certh;
   int i;
@@ -572,7 +577,7 @@ x509_hash_init ()
 }
 
 /* Lookup a certificate by an ID blob.  */
-X509 *
+static X509 *
 x509_hash_find (u_int8_t *id, size_t len)
 {
   struct x509_hash *cert;
@@ -612,7 +617,7 @@ x509_hash_find (u_int8_t *id, size_t len)
   return 0;
 }
 
-int
+static int
 x509_hash_enter (X509 *cert)
 {
   u_int16_t bucket = 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: isakmpd.c,v 1.32 2001/07/01 19:59:13 niklas Exp $	*/
+/*	$OpenBSD: isakmpd.c,v 1.33 2001/07/05 12:36:53 ho Exp $	*/
 /*	$EOM: isakmpd.c,v 1.54 2000/10/05 09:28:22 niklas Exp $	*/
 
 /*
@@ -65,6 +65,8 @@
 #include "policy.h"
 #endif
 
+static void usage (void);
+
 /*
  * Set if -d is given, currently just for running in the foreground and log
  * to stderr instead of syslog.
@@ -101,7 +103,7 @@ static char *pcap_file = 0;
 static int sigusr2ed = 0;
 
 static void
-usage ()
+usage (void)
 {
   fprintf (stderr,
 	   "usage: %s [-c config-file] [-d] [-D class=level] [-f fifo]\n"

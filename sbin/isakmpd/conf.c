@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.32 2001/07/01 19:48:43 niklas Exp $	*/
+/*	$OpenBSD: conf.c,v 1.33 2001/07/05 12:36:47 ho Exp $	*/
 /*	$EOM: conf.c,v 1.48 2000/12/04 02:04:29 angelos Exp $	*/
 
 /*
@@ -56,6 +56,12 @@
 #include "conf.h"
 #include "log.h"
 #include "util.h"
+
+static char *conf_get_trans_str (int, char *, char *);
+static void conf_load_defaults (int);
+#if 0
+static int conf_find_trans_xf (int, char *);
+#endif
 
 struct conf_trans {
   TAILQ_ENTRY (conf_trans) link;
@@ -320,7 +326,7 @@ conf_parse (int trans, char *buf, size_t sz)
  */
 
 /* Find the value for a section+tag in the transaction list.  */
-char *
+static char *
 conf_get_trans_str (int trans, char *section, char *tag)
 {
   struct conf_trans *node, *nf = 0;
@@ -338,7 +344,9 @@ conf_get_trans_str (int trans, char *section, char *tag)
   return nf ? nf->value : 0;
 }
 
-int
+#if 0
+/* XXX Currently unused.  */
+static int
 conf_find_trans_xf (int phase, char *xf)
 {
   struct conf_trans *node;
@@ -359,8 +367,9 @@ conf_find_trans_xf (int phase, char *xf)
       }
   return 0;
 }
+#endif
 
-void
+static void
 conf_load_defaults (int tr)
 {
   int enc, auth, hash, proto, mode, pfs;

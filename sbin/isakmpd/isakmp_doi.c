@@ -1,4 +1,4 @@
-/*	$OpenBSD: isakmp_doi.c,v 1.13 2001/07/01 20:43:39 niklas Exp $	*/
+/*	$OpenBSD: isakmp_doi.c,v 1.14 2001/07/05 12:36:52 ho Exp $	*/
 /*	$EOM: isakmp_doi.c,v 1.42 2000/09/12 16:29:41 ho Exp $	*/
 
 /*
@@ -47,6 +47,7 @@
 #include "doi.h"
 #include "exchange.h"
 #include "isakmp.h"
+#include "isakmp_doi.h"
 #include "ipsec.h"
 #include "log.h"
 #include "message.h"
@@ -112,7 +113,7 @@ static struct doi isakmp_doi = {
 
 /* Requires doi_init to already have been called.  */
 void
-isakmp_doi_init ()
+isakmp_doi_init (void)
 {
   doi_register (&isakmp_doi);
 }

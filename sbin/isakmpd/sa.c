@@ -1,4 +1,4 @@
-/*	$OpenBSD: sa.c,v 1.46 2001/07/01 19:48:44 niklas Exp $	*/
+/*	$OpenBSD: sa.c,v 1.47 2001/07/05 12:36:55 ho Exp $	*/
 /*	$EOM: sa.c,v 1.112 2000/12/12 00:22:52 niklas Exp $	*/
 
 /*
@@ -74,6 +74,9 @@
  */
 #define MAX_BUCKET_BITS 16
 
+#if 0
+static void sa_resize (void);
+#endif
 static void sa_dump (char *, struct sa *);
 static void sa_soft_expire (void *);
 static void sa_hard_expire (void *);
@@ -84,7 +87,7 @@ static LIST_HEAD (sa_list, sa) *sa_tab;
 static int bucket_mask;
 
 void
-sa_init ()
+sa_init (void)
 {
   int i;
 
@@ -99,9 +102,10 @@ sa_init ()
     }
 }
 
+#if 0
 /* XXX We don't yet resize.  */
-void
-sa_resize ()
+static void
+sa_resize (void)
 {
   int new_mask = (bucket_mask + 1) * 2 - 1;
   int i;
@@ -119,6 +123,7 @@ sa_resize ()
 
   /* XXX Rehash existing entries.  */
 }
+#endif
 
 /* Lookup an SA with the help from a user-supplied checking function.  */
 struct sa *

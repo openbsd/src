@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.h,v 1.10 2001/07/01 19:59:14 niklas Exp $	*/
+/*	$OpenBSD: util.h,v 1.11 2001/07/05 12:36:59 ho Exp $	*/
 /*	$EOM: util.h,v 1.10 2000/10/24 13:33:39 niklas Exp $	*/
 
 /*
@@ -69,6 +69,7 @@ extern int text2sockaddr (char *, char *, struct sockaddr **);
 extern int sockaddr_len (struct sockaddr *);
 extern u_int8_t *sockaddr_data (struct sockaddr *);
 extern int zero_test (const u_int8_t *, size_t);
+extern int ones_test (const u_int8_t *, size_t);
 extern int check_file_secrecy (char *, off_t *);
 
 #endif /* _UTIL_H_ */
