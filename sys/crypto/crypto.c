@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto.c,v 1.29 2001/11/13 17:45:59 deraadt Exp $	*/
+/*	$OpenBSD: crypto.c,v 1.30 2001/11/13 18:54:32 deraadt Exp $	*/
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -178,6 +178,7 @@ crypto_get_driverid(u_int8_t flags)
 		    !(crypto_drivers[i].cc_flags & CRYPTOCAP_F_CLEANUP) &&
 		    crypto_drivers[i].cc_sessions == 0) {
 			crypto_drivers[i].cc_sessions = 1; /* Mark */
+			crypto_drivers[i].cc_flags = flags;
 			splx(s);
 			return i;
 		}
