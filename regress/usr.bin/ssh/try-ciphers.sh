@@ -1,4 +1,4 @@
-#	$OpenBSD: try-ciphers.sh,v 1.5 2002/02/18 12:52:26 markus Exp $
+#	$OpenBSD: try-ciphers.sh,v 1.6 2002/03/15 13:08:56 markus Exp $
 #	Placed in the Public Domain.
 
 tid="try ciphers"
@@ -10,7 +10,7 @@ for c in $ciphers; do
 	for m in $macs; do
 		trace "proto 2 cipher $c mac $m"
 		verbose "test $tid: proto 2 cipher $c mac $m"
-		ssh -F $OBJ/ssh_proxy -2 -m $m -c $c somehost true
+		${SSH} -F $OBJ/ssh_proxy -2 -m $m -c $c somehost true
 		if [ $? -ne 0 ]; then
 			fail "ssh -2 failed with mac $m cipher $c"
 		fi
@@ -21,7 +21,7 @@ ciphers="3des blowfish"
 for c in $ciphers; do
 	trace "proto 1 cipher $c"
 	verbose "test $tid: proto 1 cipher $c"
-	ssh -F $OBJ/ssh_proxy -1 -c $c somehost true
+	${SSH} -F $OBJ/ssh_proxy -1 -c $c somehost true
 	if [ $? -ne 0 ]; then
 		fail "ssh -1 failed with cipher $c"
 	fi

@@ -1,4 +1,4 @@
-#	$OpenBSD: test-exec.sh,v 1.9 2002/02/18 14:30:12 markus Exp $
+#	$OpenBSD: test-exec.sh,v 1.10 2002/03/15 13:08:56 markus Exp $
 #	Placed in the Public Domain.
 
 PORT=4242
@@ -31,6 +31,37 @@ else
 	exit 2
 fi
 unset SSH_AUTH_SOCK
+
+# defaults
+SSH=ssh
+SSHD=sshd
+SSHAGENT=ssh-agent
+SSHADD=ssh-add
+SSHKEYGEN=ssh-keygen
+SSHKEYSCAN=ssh-keyscan
+
+if [ "x$TEST_SSH_SSH" != "x" ]; then
+	SSH=${TEST_SSH_SSH}
+fi
+if [ "x$TEST_SSH_SSHD" != "x" ]; then
+	SSHD=${TEST_SSH_SSHD}
+fi
+if [ "x$TEST_SSH_SSHAGENT" != "x" ]; then
+	SSHAGENT=${TEST_SSH_SSHAGENT}
+fi
+if [ "x$TEST_SSH_SSHADD" != "x" ]; then
+	SSHADD=${TEST_SSH_SSHADD}
+fi
+if [ "x$TEST_SSH_SSHKEYGEN" != "x" ]; then
+	SSHKEYGEN=${TEST_SSH_SSHKEYGEN}
+fi
+if [ "x$TEST_SSH_SSHKEYSCAN" != "x" ]; then
+	SSHKEYSCAN=${TEST_SSH_SSHKEYSCAN}
+fi
+
+# these should be used in tests
+export SSH SSHD SSHAGENT SSHADD SSHKEYGEN SSHKEYSCAN
+#echo $SSH $SSHD $SSHAGENT $SSHADD $SSHKEYGEN $SSHKEYSCAN
 
 # helper
 cleanup ()
@@ -112,7 +143,6 @@ Host *
 	PubkeyAuthentication	yes
 	ChallengeResponseAuthentication	no
 	HostbasedAuthentication	no
-	KerberosAuthentication	no
 	PasswordAuthentication	no
 	RhostsAuthentication	no
 	RhostsRSAAuthentication	no
@@ -124,7 +154,8 @@ trace "generate keys"
 for t in rsa rsa1; do
 	# generate user key
 	rm -f $OBJ/$t
-	ssh-keygen -q -N '' -t $t  -f $OBJ/$t || fail "ssh-keygen for $t failed"
+	${SSHKEYGEN} -q -N '' -t $t  -f $OBJ/$t ||\
+		fail "ssh-keygen for $t failed"
 
 	# known hosts file for client
 	(
@@ -148,17 +179,17 @@ chmod 644 $OBJ/authorized_keys_$USER
 # create a proxy version of the client config
 (
 	cat $OBJ/ssh_config
-	echo proxycommand sshd -i -f $OBJ/sshd_proxy
+	echo proxycommand ${SSHD} -i -f $OBJ/sshd_proxy
 ) > $OBJ/ssh_proxy
 
 # check proxy config
-sshd -t -f $OBJ/sshd_proxy	|| fatal "sshd_proxy broken"
+${SSHD} -t -f $OBJ/sshd_proxy	|| fatal "sshd_proxy broken"
 
 start_sshd ()
 {
 	# start sshd
-	$SUDO sshd -f $OBJ/sshd_config -t	|| fatal "sshd_config broken"
-	$SUDO sshd -f $OBJ/sshd_config
+	$SUDO ${SSHD} -f $OBJ/sshd_config -t	|| fatal "sshd_config broken"
+	$SUDO ${SSHD} -f $OBJ/sshd_config
 
 	trace "wait for sshd"
 	i=0;

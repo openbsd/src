@@ -1,4 +1,4 @@
-#	$OpenBSD: ssh-com.sh,v 1.2 2002/02/16 01:09:47 markus Exp $
+#	$OpenBSD: ssh-com.sh,v 1.3 2002/03/15 13:08:56 markus Exp $
 #	Placed in the Public Domain.
 
 tid="connect to ssh.com server"
@@ -50,13 +50,13 @@ sed "s/HostKeyAlias.*/HostKeyAlias ssh2-localhost-with-alias/" \
 
 # we need a DSA key for
 rm -f                             ${OBJ}/dsa ${OBJ}/dsa.pub
-ssh-keygen -q -N '' -t dsa -f	  ${OBJ}/dsa
+${SSHKEYGEN} -q -N '' -t dsa -f	  ${OBJ}/dsa
 
 # setup userdir, try rsa first
 mkdir -p ${OBJ}/${USER}
 cp /dev/null ${OBJ}/${USER}/authorization
 for t in rsa dsa; do
-	ssh-keygen -e -f ${OBJ}/$t.pub	>  ${OBJ}/${USER}/$t.com
+	${SSHKEYGEN} -e -f ${OBJ}/$t.pub	>  ${OBJ}/${USER}/$t.com
 	echo Key $t.com			>> ${OBJ}/${USER}/authorization
 	echo IdentityFile ${OBJ}/$t	>> ${OBJ}/ssh_config_com
 done
@@ -64,7 +64,7 @@ done
 # convert and append DSA hostkey
 (
 	echo -n 'ssh2-localhost-with-alias,127.0.0.1,::1 '
-	ssh-keygen -if ${SRC}/dsa_ssh2.pub
+	${SSHKEYGEN} -if ${SRC}/dsa_ssh2.pub
 ) >> $OBJ/known_hosts
 
 # go for it
@@ -75,7 +75,7 @@ for v in ${VERSIONS}; do
 	fi
 	trace "sshd2 ${v}"
 	PROXY="proxycommand ${sshd2} -qif ${OBJ}/sshd2_config 2> /dev/null"
-	ssh -qF ${OBJ}/ssh_config_com -o "${PROXY}" dummy exit 0
+	${SSH} -qF ${OBJ}/ssh_config_com -o "${PROXY}" dummy exit 0
         if [ $? -ne 0 ]; then
                 fail "ssh connect to sshd2 ${v} failed"
         fi
@@ -96,7 +96,8 @@ for v in ${VERSIONS}; do
 	for m in $macs; do
 	for c in $ciphers; do
 		trace "sshd2 ${v} cipher $c mac $m"
-		ssh -c $c -m $m -qF ${OBJ}/ssh_config_com -o "${PROXY}" dummy exit 0
+		verbose "test ${tid}: sshd2 ${v} cipher $c mac $m"
+		${SSH} -c $c -m $m -qF ${OBJ}/ssh_config_com -o "${PROXY}" dummy exit 0
 		if [ $? -ne 0 ]; then
 			fail "ssh connect to sshd2 ${v} with $c/$m failed"
 		fi
