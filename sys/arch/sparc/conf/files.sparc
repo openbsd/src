@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc,v 1.39 2001/05/11 06:41:48 deraadt Exp $
+#	$OpenBSD: files.sparc,v 1.40 2001/05/11 07:13:16 deraadt Exp $
 #	$NetBSD: files.sparc,v 1.44 1997/08/31 21:29:16 pk Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
@@ -90,9 +90,6 @@ include "../../../scsi/files.scsi"
 major { sd = 7 }
 major { vnd = 8 }
 major { cd = 18 }
-
-# RAM Disk for install floppy
-file dev/rd.c					ramdisk_hooks
 major	{rd = 17}
 
 device dma {}

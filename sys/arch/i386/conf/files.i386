@@ -1,4 +1,4 @@
-#	$OpenBSD: files.i386,v 1.84 2001/05/11 06:41:35 deraadt Exp $
+#	$OpenBSD: files.i386,v 1.85 2001/05/11 07:13:15 deraadt Exp $
 #	$NetBSD: files.i386,v 1.73 1996/05/07 00:58:36 thorpej Exp $
 #
 # new style config file for i386 architecture
@@ -58,9 +58,6 @@ include "../../../scsi/files.scsi"
 major	{sd = 4}
 major	{st = 5}
 major	{cd = 6}
-
-# RAM Disk for install floppy
-file dev/rd.c				ramdisk_hooks
 major	{rd = 17}
 
 #

@@ -72,9 +72,6 @@ major	{ ofdisk = 4 }
 
 file	arch/powerpc/mac/uni_n.c ofbus
 
-file	dev/rd.c				ramdisk_hooks
-major   {rd = 17}
-
 include "dev/pci/files.pci"
 
 device	mpcpcibr {} : pcibus
@@ -82,9 +79,10 @@ attach	mpcpcibr at mainbus
 file	arch/powerpc/pci/mpcpcibus.c		mpcpcibr
 #file	arch/powerpc/pci/pci_addr_fixup.c	mpcpcibr
 
-
+major   {rd = 17}
 major	{sd = 2}		# hey this was 0 but at slot 2 in bdevsw XXX
 major	{cd = 3}
+
 include "../../../scsi/files.scsi"
 
 #
