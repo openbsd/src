@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide_hpt_reg.h,v 1.2 2001/08/03 22:03:44 chris Exp $	*/
+/*	$OpenBSD: pciide_hpt_reg.h,v 1.3 2002/07/06 14:35:47 gluk Exp $	*/
 /*      $NetBSD: pciide_hpt_reg.h,v 1.4 2001/07/23 14:55:27 bouyer Exp $       */
 
 /*
@@ -34,20 +34,22 @@
 
 
 /*
- * Register definitions for the Highpoint HPT366 UDMA/66 * and HPT370 UDMA/100
- * PCI IDE controller.  
+ * Register definitions for Highpoint PCI IDE controllers.
  *
  * The HPT366 has 2 PCI IDE functions, each of them has only one channel.
- * The HPT370 has the 2 channels on the same PCI IDE function.
+ * The HPT370 and HPT372 has the 2 channels on the same PCI IDE function.
  */
 
 /*
- * The HPT366 and HPT370 have the save vendor/device ID but not the
- * same revision
+ * The HPT366, HPT370 and HPT372 have the save vendor/device ID but not the
+ * same revision.
  */
 #define HPT366_REV 0x01
 #define HPT370_REV 0x03
 #define HPT370A_REV 0x04
+#define HPT372_REV 0x05
+#define HPT372A_REV 0x01
+#define HPT374_REV 0x07
 
 #define HPT_IDETIM(chan, drive) (0x40 + ((drive) * 4) + ((chan) * 8))
 #define HPT_IDETIM_BUFEN		0x80000000
@@ -115,6 +117,15 @@
 #define HPT_CSEL_PCIWR			0x04 /* 370 only */
 #define HPT_CSEL_CBLID(chan)		 (0x01 << (1 - (chan)))
 
+#define HPT_SC2		0x5b
+#define HPT_SC2_OSC_OK	0x80
+#define HPT_SC2_OSC_EN	0x20
+#define HPT_SC2_ECLK	0x10
+#define HPT_SC2_BPIO	0x08
+#define HPT_SC2_DMARQW	0x04
+#define HPT_SC2_SCLK	0x02
+#define HPT_SC2_MAEN	0x01
+
 static u_int32_t hpt366_pio[] =
 	{0x00d0a7aa, 0x00c8a753, 0x00c8a742, 0x00c8a731};
 static u_int32_t hpt366_dma[] =
@@ -129,3 +140,11 @@ static u_int32_t hpt370_dma[] =
 static u_int32_t hpt370_udma[] = 
 	{0x16514e31, 0x164d4e31, 0x16494e31, 0x166d4e31, 0x16454e31,
 	 0x1a85f442};
+
+static u_int32_t hpt374_pio[] =
+	{0x0ac1f48a, 0x0ac1f465, 0x0a81f454, 0x0a81f443, 0x0a81f442};
+static u_int32_t hpt374_dma[] =
+	{0x228082ea, 0x22808254, 0x22808242};
+static u_int32_t hpt374_udma[] =
+	{0x121882ea, 0x12148254, 0x120c8242, 0x128c8242, 0x12ac8242,
+	 0x12848242, 0x12808242};

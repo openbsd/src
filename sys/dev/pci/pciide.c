@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.85 2002/06/08 23:32:51 chris Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.86 2002/07/06 14:35:47 gluk Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -420,6 +420,14 @@ const struct pciide_product_desc pciide_triones_products[] =  {
 	{ PCI_PRODUCT_TRIONES_HPT366,	/* Highpoint HPT36x/37x IDE */
 	  IDE_PCI_CLASS_OVERRIDE,
 	  hpt_chip_map,
+	},
+	{ PCI_PRODUCT_TRIONES_HPT372A,	/* Highpoint HPT372A IDE */
+	  IDE_PCI_CLASS_OVERRIDE,
+	  hpt_chip_map
+	},
+	{ PCI_PRODUCT_TRIONES_HPT374,	/* Highpoint HPT374 IDE */
+	  IDE_PCI_CLASS_OVERRIDE,
+	  hpt_chip_map
 	}
 };
 
@@ -3466,7 +3474,11 @@ hpt_chip_map(sc, pa)
 	} else {
 		interface = PCIIDE_INTERFACE_BUS_MASTER_DMA |
 		    PCIIDE_INTERFACE_PCI(0);
-		if (revision == HPT370_REV || revision == HPT370A_REV)
+               if ((sc->sc_pp->ide_product == PCI_PRODUCT_TRIONES_HPT366 &&
+		   (revision == HPT370_REV || revision == HPT370A_REV ||
+		    revision == HPT372_REV)) ||
+		    sc->sc_pp->ide_product == PCI_PRODUCT_TRIONES_HPT372A ||
+		    sc->sc_pp->ide_product == PCI_PRODUCT_TRIONES_HPT374)
 			interface |= PCIIDE_INTERFACE_PCI(1);
 	}
 
@@ -3485,7 +3497,8 @@ hpt_chip_map(sc, pa)
 
 	sc->sc_wdcdev.set_modes = hpt_setup_channel;
 	sc->sc_wdcdev.channels = sc->wdc_chanarray;
-	if (revision < HPT370_REV) {
+	if (sc->sc_pp->ide_product == PCI_PRODUCT_TRIONES_HPT366 &&
+	    revision == HPT366_REV) {
 		sc->sc_wdcdev.UDMA_cap = 4;
 		/*
 		 * The 366 has 2 PCI IDE functions, one for primary and one
@@ -3504,13 +3517,21 @@ hpt_chip_map(sc, pa)
 		sc->sc_wdcdev.nchannels = 1;
 	} else {
 		sc->sc_wdcdev.nchannels = 2;
-		/*
-		 * XXX disable udma5 for now. 
-		 */
-		if (revision == HPT370_REV)
-			sc->sc_wdcdev.UDMA_cap = 4;
-		else
-			sc->sc_wdcdev.UDMA_cap = 5;
+		if (sc->sc_pp->ide_product == PCI_PRODUCT_TRIONES_HPT374 ||
+		    sc->sc_pp->ide_product == PCI_PRODUCT_TRIONES_HPT372A) 
+			sc->sc_wdcdev.UDMA_cap = 6;
+		else if (sc->sc_pp->ide_product == PCI_PRODUCT_TRIONES_HPT366) {
+			if (revision == HPT372_REV)
+				sc->sc_wdcdev.UDMA_cap = 6;
+			else
+				sc->sc_wdcdev.UDMA_cap = 5;
+			if (revision == HPT370_REV) {
+				/*
+				 * XXX disable udma5 for now. 
+				 */
+				sc->sc_wdcdev.UDMA_cap = 4;
+			}
+		}
 	}
 	for (i = 0; i < sc->sc_wdcdev.nchannels; i++) {
 		cp = &sc->pciide_channels[i];
@@ -3539,15 +3560,28 @@ hpt_chip_map(sc, pa)
 		wdcattach(&cp->wdc_channel);
 		hpt_setup_channel(&cp->wdc_channel);
 	}
-	if (revision == HPT370_REV || revision == HPT370A_REV) {
+	if ((sc->sc_pp->ide_product == PCI_PRODUCT_TRIONES_HPT366 &&
+	    (revision == HPT370_REV || revision == HPT370A_REV ||
+	    revision == HPT372_REV)) ||
+	    sc->sc_pp->ide_product == PCI_PRODUCT_TRIONES_HPT372A ||
+	    sc->sc_pp->ide_product == PCI_PRODUCT_TRIONES_HPT374) {
 		/*
-		 * HPT370_REV has a bit to disable interrupts, make sure
-		 * to clear it
+		 * HPT370 and highter has a bit to disable interrupts,
+		 * make sure to clear it
 		 */
 		pciide_pci_write(sc->sc_pc, sc->sc_tag, HPT_CSEL,
 		    pciide_pci_read(sc->sc_pc, sc->sc_tag, HPT_CSEL) &
 		    ~HPT_CSEL_IRQDIS);
 	}
+	/* set clocks, etc (mandatory on 372/4, optional otherwise) */
+	if (sc->sc_pp->ide_product == PCI_PRODUCT_TRIONES_HPT372A ||
+	    sc->sc_pp->ide_product == PCI_PRODUCT_TRIONES_HPT374 ||
+	    (sc->sc_pp->ide_product == PCI_PRODUCT_TRIONES_HPT366 &&
+	    revision == HPT372_REV))
+		pciide_pci_write(sc->sc_pc, sc->sc_tag, HPT_SC2,
+		    (pciide_pci_read(sc->sc_pc, sc->sc_tag, HPT_SC2) &
+		     HPT_SC2_MAEN) | HPT_SC2_OSC_EN);
+
 	return;
 }
 
@@ -3587,7 +3621,9 @@ hpt_setup_channel(chp)
 			    drvp->UDMA_mode > 2)
 				drvp->UDMA_mode = 2;
 			after = (sc->sc_wdcdev.nchannels == 2) ?
-			    hpt370_udma[drvp->UDMA_mode] :
+			    ((sc->sc_wdcdev.UDMA_cap == 6) ?
+			    hpt374_udma[drvp->UDMA_mode] :
+			    hpt370_udma[drvp->UDMA_mode]) :
 			    hpt366_udma[drvp->UDMA_mode];
 			idedma_ctl |= IDEDMA_CTL_DRV_DMA(drive);
 		} else if (drvp->drive_flags & DRIVE_DMA) {
@@ -3601,13 +3637,17 @@ hpt_setup_channel(chp)
 				drvp->DMA_mode = drvp->PIO_mode - 2;
 			}
 			after = (sc->sc_wdcdev.nchannels == 2) ?
-			    hpt370_dma[drvp->DMA_mode] :
+			    ((sc->sc_wdcdev.UDMA_cap == 6) ?
+			    hpt374_dma[drvp->DMA_mode] :
+			    hpt370_dma[drvp->DMA_mode]) :
 			    hpt366_dma[drvp->DMA_mode];
 			idedma_ctl |= IDEDMA_CTL_DRV_DMA(drive);
 		} else {
 			/* PIO only */
 			after = (sc->sc_wdcdev.nchannels == 2) ?
-			    hpt370_pio[drvp->PIO_mode] :
+			    ( (sc->sc_wdcdev.UDMA_cap == 6) ?
+			    hpt374_pio[drvp->PIO_mode] :
+			    hpt370_pio[drvp->PIO_mode]) :
 			    hpt366_pio[drvp->PIO_mode];
 		}
 		pci_conf_write(sc->sc_pc, sc->sc_tag,
