@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_prefix.c,v 1.7 2004/01/11 21:47:20 claudio Exp $ */
+/*	$OpenBSD: rde_prefix.c,v 1.8 2004/01/16 11:14:43 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -21,6 +21,7 @@
 
 #include <errno.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "bgpd.h"
 #include "ensure.h"
