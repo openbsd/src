@@ -1,7 +1,7 @@
-/*	$OpenBSD: basename.c,v 1.11 2003/06/17 21:56:23 millert Exp $	*/
+/*	$OpenBSD: basename.c,v 1.12 2004/11/25 16:21:25 millert Exp $	*/
 
 /*
- * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 1997, 2004 Todd C. Miller <Todd.Miller@courtesan.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: basename.c,v 1.11 2003/06/17 21:56:23 millert Exp $";
+static char rcsid[] = "$OpenBSD: basename.c,v 1.12 2004/11/25 16:21:25 millert Exp $";
 #endif /* not lint */
 
 #include <errno.h>
@@ -29,23 +29,26 @@ char *
 basename(const char *path)
 {
 	static char bname[MAXPATHLEN];
-	register const char *endp, *startp;
+	size_t len;
+	const char *endp, *startp;
 
 	/* Empty or NULL string gets treated as "." */
 	if (path == NULL || *path == '\0') {
-		(void)strlcpy(bname, ".", sizeof bname);
-		return(bname);
+		bname[0] = '.';
+		bname[1] = '\0';
+		return (bname);
 	}
 
-	/* Strip trailing slashes */
+	/* Strip any trailing slashes */
 	endp = path + strlen(path) - 1;
 	while (endp > path && *endp == '/')
 		endp--;
 
-	/* All slashes become "/" */
+	/* All slashes becomes "/" */
 	if (endp == path && *endp == '/') {
-		(void)strlcpy(bname, "/", sizeof bname);
-		return(bname);
+		bname[0] = '/';
+		bname[1] = '\0';
+		return (bname);
 	}
 
 	/* Find the start of the base */
@@ -53,10 +56,12 @@ basename(const char *path)
 	while (startp > path && *(startp - 1) != '/')
 		startp--;
 
-	if (endp - startp + 2 > sizeof(bname)) {
+	len = endp - startp + 1;
+	if (len >= sizeof(bname)) {
 		errno = ENAMETOOLONG;
-		return(NULL);
+		return (NULL);
 	}
-	strlcpy(bname, startp, endp - startp + 2);
-	return(bname);
+	memcpy(bname, startp, len);
+	bname[len] = '\0';
+	return (bname);
 }
