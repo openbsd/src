@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.16 1996/06/08 09:12:39 downsj Exp $	*/
+/*	$OpenBSD: conf.c,v 1.17 1996/07/06 23:59:36 downsj Exp $	*/
 /*	$NetBSD: conf.c,v 1.75 1996/05/03 19:40:20 christos Exp $	*/
 
 /*
@@ -185,6 +185,8 @@ cdev_decl(joy);
 cdev_decl(apm);
 #include "rnd.h"
 cdev_decl(rnd);
+#include "pccom.h"
+cdev_decl(pccom);
 
 cdev_decl(ipl);
 #ifdef IPFILTER
@@ -245,6 +247,7 @@ struct cdevsw	cdevsw[] =
 #endif
 	cdev_gen_ipf(NIPF,ipl),         /* 44 ip filtering */
 	cdev_rnd_init(NRND,rnd),	/* 45 random data source */
+	cdev_tty_init(NPCCOM,pccom),	/* 46: serial port */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -365,6 +368,7 @@ chrtoblk(dev)
 
 cons_decl(pc);
 cons_decl(com);
+cons_decl(pccom);
 
 struct	consdev constab[] = {
 #if NPC + NVT > 0
@@ -372,6 +376,9 @@ struct	consdev constab[] = {
 #endif
 #if NCOM > 0
 	cons_init(com),
+#endif
+#if NPCCOM > 0
+	cons_init(pccom),
 #endif
 	{ 0 },
 };
