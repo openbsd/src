@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.5 2002/05/11 00:20:18 espie Exp $
+# $OpenBSD: Makefile,v 1.6 2002/06/10 18:30:05 hin Exp $
 
 PROG	= afslog
 
@@ -7,7 +7,7 @@ KRBDEPTH=../..
 
 .PATH:	${KRBSRC}/appl/afsutil
 
-CFLAGS	+= -I.
+CFLAGS	+= -I. -I/usr/include/kerberosV
 DPADD	+= ${LIBKAFS} ${LIBKRB5} ${LIBKRB} ${LIBDES} ${LIBCRYPTO} ${LIBASN1}
 LDADD	+= -lkafs -lkrb5 -lkrb -ldes -lcrypto -lasn1 ${LIBROKEN}
 
