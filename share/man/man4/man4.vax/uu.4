@@ -1,4 +1,4 @@
-.\"	$OpenBSD: uu.4,v 1.5 2001/10/05 14:45:54 mpech Exp $
+.\"	$OpenBSD: uu.4,v 1.6 2002/10/15 11:59:02 deraadt Exp $
 .\"	$NetBSD: uu.4,v 1.3 1996/03/03 17:14:14 thorpej Exp $
 .\"
 .\" Copyright (c) 1983, 1991 Regents of the University of California.
@@ -43,7 +43,7 @@
 .Tn TU58 Ns / Tn DECtape II UNIBUS
 cassette interface
 .Sh SYNOPSIS
-.Cd "options UUDMA"
+.Cd "option UUDMA"
 .Cd "device uu0 at uba0 csr 0176500 vector uurintr uuxintr"
 .Sh DESCRIPTION
 The
@@ -91,7 +91,7 @@ etc.
 Assembly language code to assist the driver in handling
 the receipt of data (using a pseudo-dma approach) should
 be included when using this driver; specify
-.Sq Li options UUDMA
+.Sq Li option UUDMA
 in the configuration file.
 .Sh FILES
 .Bl -tag -width /dev/uu?a -compact

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: raid.4,v 1.19 2002/09/26 07:55:40 miod Exp $
+.\"	$OpenBSD: raid.4,v 1.20 2002/10/15 11:59:02 deraadt Exp $
 .\"     $NetBSD: raid.4,v 1.20 2001/09/22 16:03:58 wiz Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -240,7 +240,7 @@ in this case), specifies the number of RAIDframe drivers to configure.
 To turn on component auto-detection and auto-configuration of RAID
 sets, simply add:
 .Bd -unfilled -offset indent
-options    RAID_AUTOCONFIG
+option	RAID_AUTOCONFIG
 .Ed
 .Pp
 to the kernel configuration file.
@@ -270,7 +270,7 @@ result in data loss.
 .Pp
 Additional debug information can be sent to the console by specifying:
 .Bd -unfilled -offset indent
-options    RAIDDEBUG
+option	RAIDDEBUG
 .Ed
 .Pp
 .Sh WARNINGS

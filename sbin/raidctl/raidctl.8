@@ -1,4 +1,4 @@
-.\"	$OpenBSD: raidctl.8,v 1.25 2002/08/08 10:55:13 tdeval Exp $
+.\"	$OpenBSD: raidctl.8,v 1.26 2002/10/15 11:59:01 deraadt Exp $
 .\"     $NetBSD: raidctl.8,v 1.24 2001/07/10 01:30:52 lukem Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1094,7 +1094,7 @@ supported in general, however, as mentioned earlier.)  Note that in
 order to enable component auto-detection and auto-configuration of
 RAID devices, the line:
 .Bd -unfilled -offset indent
-options    RAID_AUTOCONFIG
+option	RAID_AUTOCONFIG
 .Ed
 .Pp
 must be in the kernel configuration file.  See
