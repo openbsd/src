@@ -1,4 +1,4 @@
-.\"	$OpenBSD: malloc.9,v 1.15 2001/04/14 22:55:12 art Exp $
+.\"	$OpenBSD: malloc.9,v 1.16 2001/05/14 05:11:40 angelos Exp $
 .\"	$NetBSD: malloc.9,v 1.2 1996/10/30 05:29:54 lukem Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -141,16 +141,14 @@ Zombie proc status
 Interface address.
 .It Dv M_SOOPTS
 Socket options.
-.It Dv M_SONAME
-Socket name.
+.It Dv M_SYSCTL
+Sysctl persistent buffers.
 .It Dv M_NAMEI
 Namei path name buffer.
 .It Dv M_GPROF
 Kernel profiling buffer.
 .It Dv M_IOCTLOPS
 Ioctl data buffer.
-.It Dv M_MAPMEM
-Mapped memory descriptors.
 .It Dv M_CRED
 Credentials.
 .It Dv M_PGRP
@@ -161,8 +159,6 @@ Session header.
 Large iov's.
 .It Dv M_MOUNT
 Vfs mount struct.
-.It Dv M_FHANDLE
-Network file handle.
 .It Dv M_NFSREQ
 NFS request header.
 .It Dv M_NFSMNT
@@ -249,12 +245,8 @@ Allocated tty structures.
 Argument lists & other mem used by exec.
 .It Dv M_MISCFSMNT
 Miscfs mount structures.
-.It Dv M_MISCFSNODE
-Miscfs vnode private part.
 .It Dv M_ADOSFSMNT
 Adosfs mount structures.
-.It Dv M_ADOSFSNODE
-ADosfs vnode private part.
 .It Dv M_ANODE
 Adosfs anode structures and tables.
 .It Dv M_IPQ
@@ -305,14 +297,6 @@ Directory entry deleted.
 VM page buckets.
 .It Dv M_VMSWAP
 VM swap structures.
-.It Dv M_DISCQ
-IPv6 discq.
-.It Dv M_FRAGQ
-IPv6 fragq.
-.It Dv M_SECA
-Sec Assoc.
-.It Dv M_I6IFP
-IPv6 if info.
 .It Dv M_RAIDFRAME
 Raidframe data.
 .It Dv M_UVMAMAP
@@ -327,8 +311,37 @@ USB general.
 USB device driver.
 .It Dv M_USBHC
 USB host controller.
+.It Dv M_PIPE
+Pipe structures.
+.It Dv M_MEMDESC
+Memory range.
+.It Dv M_DEBUG
+.Xr malloc 9
+debug structures.
+.It Dv M_KNOTE
+Kernel event queue.
+.It Dv M_CRYPTO_DATA
+Cryptographic framewrok data buffers.
+.It Dv M_IPSEC_POLICY
+.Xr ipsec 4
+SPD structures.
+.It Dv M_CREDENTIALS
+.Xr ipsec 4
+related credentials.
+.It Dv M_PACKET_TAGS
+Packet-attached information tags.
+.It Dv M_CRYPTO_OPS
+Cryptographic framework operation request structures.
+.It Dv M_IP6OPT
+IPv6 options.
+.It Dv M_IP6NDP
+IPv6 neighbour discovery structures.
+.It Dv M_IP6RR
+IPv6 router renumbering prefix.
+.It Dv M_RR_ADDR
+IPv6 router renumbering interface identifiers.
 .It Dv M_TEMP
-Misc temporary data buffers.
+Miscellaneous temporary data buffers.
 .El
 .Pp
 Statistics based on the
