@@ -42,7 +42,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)edquota.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: edquota.c,v 1.22 1999/06/15 17:08:25 millert Exp $";
+static char *rcsid = "$Id: edquota.c,v 1.23 1999/06/15 17:21:25 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -90,7 +90,7 @@ int	alldigits __P((char *s));
 int	readprivs __P((struct quotause *, int));
 int	hasquota __P((struct fstab *, int, char **));
 int	cvtatos __P((time_t, char *, time_t *));
-u_int	getentry __P((char *, int));
+int	getentry __P((char *, int, u_int *));
 
 void
 usage()
@@ -108,7 +108,7 @@ main(argc, argv)
 	int argc;
 {
 	register struct quotause *qup, *protoprivs, *curprivs;
-	register u_int id, protoid;
+	u_int id, protoid;
 	register int quotatype, tmpfd;
 	char *protoname = NULL;
 	int ch;
@@ -141,7 +141,7 @@ main(argc, argv)
 	argc -= optind;
 	argv += optind;
 	if (pflag) {
-		if ((protoid = getentry(protoname, quotatype)) == -1)
+		if (getentry(protoname, quotatype, &protoid) == -1)
 			exit(1);
 		protoprivs = getprivs(protoid, quotatype);
 		for (qup = protoprivs; qup; qup = qup->next) {
@@ -149,7 +149,7 @@ main(argc, argv)
 			qup->dqblk.dqb_itime = 0;
 		}
 		while (argc-- > 0) {
-			if ((id = getentry(*argv++, quotatype)) == -1)
+			if (getentry(*argv++, quotatype, &id) == -1)
 				continue;
 			putprivs(id, quotatype, protoprivs);
 		}
@@ -170,7 +170,7 @@ main(argc, argv)
 		exit(0);
 	}
 	for ( ; argc > 0; argc--, argv++) {
-		if ((id = getentry(*argv, quotatype)) == -1)
+		if (getentry(*argv, quotatype, &id) == -1)
 			continue;
 		curprivs = getprivs(id, quotatype);
 		if (writeprivs(curprivs, tmpfd, *argv, quotatype) == 0)
@@ -189,31 +189,38 @@ main(argc, argv)
  * an identifier. This routine must agree with the kernel routine
  * getinoquota as to the interpretation of quota types.
  */
-u_int
-getentry(name, quotatype)
+int
+getentry(name, quotatype, idp)
 	char *name;
 	int quotatype;
+	u_int *idp;
 {
 	struct passwd *pw;
 	struct group *gr;
-	u_long id;
+	u_int id;
 
 	switch(quotatype) {
 	case USRQUOTA:
-		if ((pw = getpwnam(name)))
-			return(pw->pw_uid);
-		else if (alldigits(name)) {
-			if ((id = strtoul(name, NULL, 10)) <= UID_MAX)
-				return((uid_t)id);
+		if ((pw = getpwnam(name))) {
+			*idp = pw->pw_uid;
+			return 0;
+		} else if (alldigits(name)) {
+			if ((id = strtoul(name, NULL, 10)) <= UID_MAX) {
+				*idp = id;
+				return 0;
+			}
 		}
 		warnx("%s: no such user", name);
 		break;
 	case GRPQUOTA:
-		if ((gr = getgrnam(name)))
-			return(gr->gr_gid);
-		else if (alldigits(name)) {
-			if ((id = strtoul(name, NULL, 10)) <= GID_MAX)
-				return((gid_t)id);
+		if ((gr = getgrnam(name))) {
+			*idp = gr->gr_gid;
+			return 0;
+		} else if (alldigits(name)) {
+			if ((id = strtoul(name, NULL, 10)) <= GID_MAX) {
+				*idp = id;
+				return (0);
+			}
 		}
 		warnx("%s: no such group", name);
 		break;
@@ -237,6 +244,7 @@ getprivs(id, quotatype)
 	register struct quotause *qup, *quptail;
 	struct quotause *quphead;
 	int qcmd, qupsize, fd;
+	u_int mid;
 	char *qfpathname;
 	static int warned = 0;
 
@@ -260,6 +268,12 @@ getprivs(id, quotatype)
 				    "Quotas are not compiled into this kernel");
 				sleep(3);
 			}
+			if (getentry(quotagroup, GRPQUOTA, &mid) == -1) {
+				warned++;
+				(void)fprintf(stderr, "Warning: "
+				    "group %s not known, skipping %s\n",
+				    quotagroup, fs->fs_file);
+			}
 			if ((fd = open(qfpathname, O_RDONLY)) < 0) {
 				fd = open(qfpathname, O_RDWR|O_CREAT, 0640);
 				if (fd < 0 && errno != ENOENT) {
@@ -270,8 +284,7 @@ getprivs(id, quotatype)
 				(void)fprintf(stderr, "Creating quota file %s\n",
 				    qfpathname);
 				sleep(3);
-				(void)fchown(fd, getuid(),
-				    getentry(quotagroup, GRPQUOTA));
+				(void)fchown(fd, getuid(), mid);
 				(void)fchmod(fd, 0640);
 			}
 			lseek(fd, (off_t)(id * sizeof(struct dqblk)), SEEK_SET);
