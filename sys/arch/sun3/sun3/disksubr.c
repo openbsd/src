@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.15 2000/07/02 17:51:35 miod Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.16 2002/02/19 02:50:59 deraadt Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.14 1996/09/26 18:10:21 gwr Exp $	*/
 
 /*
@@ -71,7 +71,7 @@ static __inline u_long sun_extended_sum __P((struct sun_disklabel *));
 
 /*
  * Attempt to read a disk label from a device
- * using the indicated stategy routine.
+ * using the indicated strategy routine.
  * The label must be partly set up before this:
  * secpercyl, secsize and anything required for a block i/o read
  * operation in the driver's strategy/start routines
