@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.21 2001/03/22 23:36:51 niklas Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.22 2001/03/23 14:26:10 art Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.61 1996/05/03 19:42:35 christos Exp $	*/
 
 /*-
@@ -330,13 +330,15 @@ setredzone(pte, vaddr)
  */
 void
 pagemove(from, to, size)
-	register caddr_t from, to;
+	caddr_t from, to;
 	size_t size;
 {
-	register pt_entry_t *fpte, *tpte;
+	pt_entry_t *fpte, *tpte;
 
-	if (size % CLBYTES)
+#ifdef DIAGNOSTIC
+	if ((size & PAGE_MASK) != 0)
 		panic("pagemove");
+#endif
 	fpte = kvtopte(from);
 	tpte = kvtopte(to);
 	while (size > 0) {
