@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ne_pcmcia.c,v 1.39 2001/03/29 01:39:33 aaron Exp $	*/
+/*	$OpenBSD: if_ne_pcmcia.c,v 1.40 2001/03/31 15:01:34 aaron Exp $	*/
 /*	$NetBSD: if_ne_pcmcia.c,v 1.17 1998/08/15 19:00:04 thorpej Exp $	*/
 
 /*
@@ -174,6 +174,10 @@ const struct ne2000dev {
     { PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
       PCMCIA_CIS_TAMARACK_NE2000,
       0, -1, { 0x00, 0x47, 0x43 } },
+
+    { PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
+      PCMCIA_CIS_GVC_NIC2000P,
+      0, 0x0ff0, { 0x00, 0x00, 0xe8 } },
 
     /*
      * You have to add new entries which contains
@@ -582,7 +586,7 @@ again:
 		}
 	}
 	if (i == NE2000_NDEVS) {
-		printf("%s: can't match ethernet vendor code\n",
+		printf(": can't match ethernet vendor code\n",
 		    dsc->sc_dev.dv_xname);
 		goto fail_5;
 	}
