@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.2 2004/02/11 06:43:05 miod Exp $	*/
+/*	$OpenBSD: conf.h,v 1.3 2005/01/22 04:04:32 uwe Exp $	*/
 /*	$NetBSD: conf.h,v 1.7 2002/04/19 01:04:39 wiz Exp $	*/
 
 /*
@@ -79,6 +79,13 @@ cdev_decl(fd);
 /* open, close, read, ioctl */
 #define	cdev_prof_init(c,n)	cdev__ocri_init(c,n)
 
+/* open, close, ioctl, kqueue */
+#define cdev_apm_init(c,n) { \
+        dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
+        (dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
+	(dev_type_stop((*))) enodev, 0, (dev_type_poll((*))) enodev, \
+	(dev_type_mmap((*))) enodev, D_KQFILTER, dev_init(c,n,kqfilter) }
+
 cdev_decl(physcon);
 cdev_decl(vidcconsole);
 cdev_decl(biconsdev);
@@ -113,5 +120,6 @@ cdev_decl(ld);
 cdev_decl(mlx);
 cdev_decl(mly);
 cdev_decl(plcom);
+cdev_decl(apm);
 
 #endif	/* _ARM_CONF_H_ */
