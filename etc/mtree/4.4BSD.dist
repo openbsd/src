@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.167 2004/06/29 16:31:18 millert Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.168 2004/06/29 21:55:03 millert Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -574,6 +574,12 @@ bind
 curses
 
 # ./usr/share/doc/html/curses
+..
+
+# ./usr/share/doc/html/milter
+milter
+
+# ./usr/share/doc/html/milter
 ..
 
 # ./usr/share/doc/html
