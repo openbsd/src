@@ -2157,29 +2157,29 @@ mx_attach(parent, self, aux)
 #ifdef MX_USEIOSPACE
 	if (!(command & PCI_COMMAND_IO_ENABLE)) {
 		printf(": failed to enable I/O ports\n");
-		return;
+		goto fail;
 	}
 	if (pci_io_find(pc, pa->pa_tag, MX_PCI_LOIO, &iobase, &iosize)) {
 		printf(": failed to find i/o space\n");
-		return;
+		goto fail;
 	}
 	if (bus_space_map(pa->pa_iot, iobase, iosize, 0, &sc->mx_bhandle)) {
 		printf(": failed map i/o space\n");
-		return;
+		goto fail;
 	}
 	sc->mx_btag = pa->pa_iot;
 #else
 	if (!(command & PCI_COMMAND_MEM_ENABLE)) {
 		printf(": failed to enable memory mapping\n");
-		return;
+		goto fail;
 	}
 	if (pci_mem_find(pc, pa->pa_tag, MX_PCI_LOMEM, &iobase, &iosize)) {
 		printf(": failed to find memory space\n");
-		return;
+		goto fail;
 	}
 	if (bus_space_map(pa->pa_memt, iobase, iosize, 0, &sc->mx_bhandle)) {
 		printf(": failed map memory space\n");
-		return;
+		goto fail;
 	}
 	sc->mx_btag = pa->pa_memt;
 #endif
@@ -2187,7 +2187,7 @@ mx_attach(parent, self, aux)
 	if (pci_intr_map(pc, pa->pa_intrtag, pa->pa_intrpin,
 	    pa->pa_intrline, &ih)) {
 		printf(": couldn't map interrupt\n");
-		return;
+		goto fail;
 	}
 	intrstr = pci_intr_string(pc, ih);
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, mx_intr, sc,
@@ -2197,7 +2197,7 @@ mx_attach(parent, self, aux)
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
-		return;
+		goto fail;
 	}
 	printf(": %s", intrstr);
 
@@ -2225,7 +2225,7 @@ mx_attach(parent, self, aux)
 	    M_DEVBUF, M_NOWAIT);
 	if (sc->mx_ldata_ptr == NULL) {
 		printf("%s: no memory for list buffers\n", sc->sc_dev.dv_xname);
-		return;
+		goto fail;
 	}
 	sc->mx_ldata = (struct mx_list_data *)sc->mx_ldata_ptr;
 	round = (unsigned int)sc->mx_ldata_ptr & 0xf;
@@ -2278,7 +2278,7 @@ mx_attach(parent, self, aux)
 		else {
 			printf("%s: MII without any phy!\n",
 			    sc->sc_dev.dv_xname);
-			return;
+			goto fail;
 		}
 	}
 
@@ -2311,6 +2311,7 @@ mx_attach(parent, self, aux)
 	    DLT_EN10MB, sizeof(struct ether_header));
 #endif
 	shutdownhook_establish(mx_shutdown, sc);
+fail:
 	splx(s);
 }
 
