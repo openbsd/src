@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdisk.c,v 1.28 1997/10/21 22:49:33 provos Exp $	*/
+/*	$OpenBSD: fdisk.c,v 1.29 1997/10/28 03:12:14 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -138,17 +138,17 @@ main(argc, argv)
 	if (DISK_getmetrics(&disk, usermetrics))
 		errx(1, "Can't get disk geometry, please use [-chs] to specify.");
 
+
+	/* Print out current MBRs on disk */
+	if ((i_flag + m_flag) == 0)
+		exit(USER_print_disk(&disk));
+
 	/* Parse mbr template, to pass on later */
 	if ((fd = open(mbrfile, O_RDONLY)) < 0)
 		err(1, "open mbr file");
 	MBR_read(fd, 0, mbr_buf);
 	close(fd);
 	MBR_parse(mbr_buf, 0, 0, &mbr);
-
-
-	/* Print out current MBRs on disk */
-	if ((i_flag + m_flag) == 0)
-		exit(USER_print_disk(&disk));
 
 	/* Punt if no i or m */
 	if ((i_flag + m_flag) != 1)
