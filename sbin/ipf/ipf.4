@@ -1,0 +1,154 @@
+.TH IPF 4
+.SH NAME
+ipf - packet filtering kernel interface
+.SH SYNOPSIS
+#include <sys/ip_fil.h>
+.SH IOCTLS
+.PP
+To add and delete rules to the filter list, three 'basic' ioctls are provided
+for use.  The ioctl's are called as:
+.LP
+.nf
+	ioctl(fd, SIOCADDFR, struct frentry *)
+	ioctl(fd, SIOCDELFR, struct frentry *)
+	ioctl(fd, SIOCIPFFL, int *)
+.fi
+.PP
+However, the full complement is as follows:
+.LP
+.nf
+	ioctl(fd, SIOCADAFR, struct frentry *) (same as SUICADDFR)
+	ioctl(fd, SIOCRMAFR, struct frentry *) (same as SUICDELFR)
+	ioctl(fd, SIOCADIFR, struct frentry *)
+	ioctl(fd, SIOCRMIFR, struct frentry *)
+	ioctl(fd, SIOCINAFR, struct frentry *)
+	ioctl(fd, SIOCINIFR, struct frentry *)
+	ioctl(fd, SIOCIPFFL, int *)
+.fi
+.PP
+The variations, SIOCADAFR vs SIOCADIFR, allow operation on the two lists,
+active and inactive, respectively.  All of these ioctl's are implemented
+as being routing ioctls and thus the same rules for the various routing
+ioctls and the file descriptor are employed, mainly being that the fd must
+be that of the device associated with the module (ie /dev/ipl).  In addition
+to this, these ioctl's will only succeed if made as root.
+.LP
+.PP
+The three groups of ioctls above perform adding rules to the end of the
+list (SIOCAD*), deletion of rules from any place in the list (SIOCRM*)
+and insertion of a rule into the list (SIOCIN*).  The rule place into
+which it is inserted is stored in the "fr_hits" field, below.
+.LP
+.nf
+
+typedef struct  frentry {
+        struct  frentry *fr_next;
+        struct  ifnet   *fr_ifa;
+        u_int   fr_hits;
+
+        /*
+         * Fields after this may not change whilst in the kernel.
+         */
+        struct  ip      fr_ip;
+        struct  ip      fr_mip;
+
+        u_short fr_icmpm;       /* data for ICMP packets (mask) */
+        u_short fr_icmp;
+
+        char    fr_tcpfm;       /* tcp flags mask */
+        char    fr_tcpf;        /* tcp flags */
+
+        u_char  fr_scmp;        /* data for port comparisons */
+        u_char  fr_dcmp;
+        u_short fr_dport;
+        u_short fr_sport;
+        u_short fr_stop;        /* top port for <> and >< */
+        u_short fr_dtop;        /* top port for <> and >< */
+        u_short fr_flags;       /* per-rule flags && options */
+        char    fr_ifname[IFNAMSIZ];
+} frentry_t;
+.fi
+.PP
+Flags which are recognised in fr_pass:
+.nf
+
+	FR_BLOCK        0x0001    /* do not allow packet to pass */
+	FR_PASS         0x0002    /* allow packet to pass */
+	FR_OUTQUE       0x0004    /* outgoing packets */
+	FR_QUICK        0x0008    /* quick-match and return */
+	FR_LOGP         0x0010    /* Log-pass */
+	FR_INQUE        0x0020    /* ingoing packets */
+	FR_LOGB         0x0040    /* Log-fail */
+	FR_LOG          0x0080    /* Log */
+	FR_RETRST       0x0100    /* return a TCP RST packet if blocked */
+	FR_OPTFRAG      0x0200    /* filter packets which are fragments */
+	FR_OPTSHORT     0x0400    /* filter short TCP packets */
+	FR_RETICMP      0x0800    /* return an ICMP packet if blocked */
+	FR_TCPUDP       0x1000    /* TCP/UCP implied comparison involved */
+.fi
+.PP
+Values for fr_scomp and fr_dcomp (source and destination port value
+comparisons) :
+.LP
+.nf
+	FR_NONE         0
+	FR_EQUAL        1
+	FR_NEQUAL       2
+	FR_LESST        3
+	FR_GREATERT     4
+	FR_LESSTE       5
+	FR_GREATERTE    6
+	FR_OUTRANGE     7
+	FR_INRANGE      8
+.fi
+.PP
+The third ioctl, SIOCIPFFL, flushes either the input filter list, the
+output filter list or both and it returns the number of filters removed
+from the list(s).  The values which it will take and recognise are FR_INQUE
+and FR_OUTQUE (see above).
+
+\fBGeneral Logging Flags\fP
+There are two flags which can be set to log packets independantly of the
+rules used.  These allow for packets which are either passed or blocked
+to be logged.  To set (and clear)/get these flags, two ioctls are
+provided:
+.IP SIOCSETFF 16
+Takes an unsigned integer as the parameter.  The flags are then set to
+those provided (clearing/setting all in one).
+.nf
+
+	FF_LOGPASS	1
+	FF_LOGBLOCK	2
+.fi
+.IP SIOCGETFF 16
+Takes a pointer to an unsigned integer as the parameter.  A copy of the
+fags currently in used is copied to user space.
+.LP
+\fBFilter statistics\fP
+Statistics on the various operations performed by this package on packets
+is kept inside the kernel.  These statistics apply to packets traversing
+through the kernel.  To retrieve this structure, use this ioctl:
+.nf
+
+	ioctl(fd, SIOCGETFS, struct friostat *)
+
+struct	friostat        {
+	struct  filterstats     f_st[2];
+	struct  frentry *f_fin;
+	struct  frentry *f_fout;
+};
+
+struct	filterstats {
+        u_long  fr_pass;    /* packets allowed */
+        u_long  fr_block;   /* packets denied */
+        u_long  fr_ppkl;    /* packets allowed and logged */
+        u_long  fr_bpkl;    /* packets denied and logged */
+        u_long  fr_pkl;	    /* packets logged */
+        u_long  fr_skip;    /* packets to be logged but buffer full */
+};
+.fi
+.SH BUGS
+It would be nice if there were more flexibility when adding and deleting
+filter rules.
+.SH SEE ALSO
+ipfstat(1), ipf(1), ipf(5)

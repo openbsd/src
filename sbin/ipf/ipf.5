@@ -1,0 +1,259 @@
+.LP
+.TH IPF 5
+.SH NAME
+ipf - IP packet filtering format.
+.SH DESCRIPTION
+.PP
+A rule file for \fBipf\fP may have any name or even be stdin.  As
+\fBipfstat\fP produces parseable rules as output when displaying the internal
+kernel filter lists, it is quite plausible to use its output to feed back
+into \fBipf\fP.  Thus, to remove all filters on input packets, the following
+could be done:
+.nf
+
+\fC# ipfstat -i | ipf -rf -\fP
+.fi
+.PP
+The format used by \fBipf\fP for construction of filtering rules can be
+described using the following grammar in BNF:
+\fC
+.nf
+filter-rule = [ insert ] action in-out [ options ] [ tos ] [ ttl ]
+              [ proto ] [ ip ] .
+
+insert  = "@" decnumber
+action  = block | "pass" | log .
+in-out  = "in" | "out" .
+options = [ log ] [ "quick" ] [ "on" interface-name] .
+tos     = "tos" decnumber | "tos" hexnumber .
+ttl     = "ttl" decnumber .
+proto   = "proto" protocol .
+ip      = srcdst [ flags ] [ with withopt ] [ icmp ] .
+
+block   = "block" [ "return-icmp" ] [ "return-rst" ].
+log	= "log" [ "body" ] .
+protocol = "tcp/udp" | "udp" | "tcp" | "icmp" | decnumber .
+srcdst  = "all" | fromto .
+fromto  = "from" object "to" object .
+
+object  = addr [ port-comp | port-range ] .
+addr    = "any" | nummask | host-name [ "mask" ipaddr | hexnumber ] .
+port-comp = "port" compare port-num .
+port-range = "port" port-num range port-num .
+flags   = "flags" flag { flag } [ "/" flag { flag } ] .
+with    = "with" | "and"  .
+icmp    = "icmp-type" icmp-type .
+
+nummask = host-name [ "/" decnumber ] .
+host-name = ipaddr | hostname | "any" .
+ipaddr  = host-num "." host-num "." host-num "." host-num .
+host-num = digit [ digit [ digit ] ] .
+port-num = service-name | decnumber .
+
+withopt = [ "not" | "no" ] opttype [ withopt ] .
+opttype = "ipopts" | "short" | "frag" | "opt" ipopts .
+ipopts  = "nop" | "rr" | "ts" | "security" | "sec-class" [ "=" seclvl ] |
+	  "lsrr" | "satid" | "rsrr" .
+seclvl  = "unclass" | "confid" | "reserv-1" | "reserv-2" | "reserv-3" |
+	  "reserv-4" | "secret" | "topsecret" .
+icmp-type = "unreach" | "echo" | "echorep" | "squench" | "redir" |
+            "timex" | "paramprob" | "timest" | "timestrep" | "inforeq" |
+            "inforep" | "maskreq" | "maskrep"  | decnumber .
+
+hexnumber = "0" "x" hexstring .
+hexstring = hexdigit [ hexstring ] .
+decnumber = digit [ decnumber ] .
+
+compare = "=" | "!=" | "<" | ">" | "<=" | ">=" | "eq" | "ne" | "lt" | "gt" |
+	  "le" | "ge" .
+range   = "<>" | "><" .
+hexdigit = digit | "a" | "b" | "c" | "d" | "e" | "f" .
+digit   = "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" .
+flag    = "F" | "S" | "R" | "P" | "A" | "U" .
+.fi
+.PP
+The "briefest" valid rule is of the form:
+.nf
+
+       block in
+       pass in
+       log in
+.fi
+.PP
+These can also be written like:
+.nf
+       block in all pass in from any to any
+.fi
+.PP
+The action, one of either block, log or pass, indicates what to do with
+the packet if it matches the rest of the filter rule.  Block indicates that
+the packet should be dropped here and not let through, log write the packet
+header to the \fBipl\fP packet logging psuedo-device (and has no further
+effect on validity of packet to be allowed through the filter) and pass which
+will allow the packet through.  Each rule MUST have one of these three
+keywords.
+.PP
+In response to blocking a packet, the filter may be instructed to send a
+reply packet, either an ICMP unreachable (\fBreturn-icmp\fP)or a TCP
+"reset" (\fBreturn-rst\fP).  An ICMP packet may be generated in response
+to any IP packet but a TCP reset may only be used with a rule which is
+being applied to TCP packets.
+.PP
+When a packet header is logged with the \fBlog\fP keyword, the optional
+\fBbody\fP keyword indicates that the first 128 bytes of the packet contents
+will be logged to the \fBipl\fP packet logging psuedo-device after the
+headers.
+.PP
+The next word must be either \fBin\fP or \fBout\fP.  As each packet moving
+through the kernel is either an inbound packet or outbound, there is a
+requirement that each filter rule be explicitly stated as to which side of
+the IO it is to be used on.
+.PP
+The list of options is brief, and indeed all are optional.  The presence
+of the \fBlog\fP option indicates, that should this be the last matching
+rule, the packet header will be written to the \fBipl\fP log. The \fBquick\fP
+option allows "short-cut" rules in order to speed up the filter.  If a
+packet header matches a filter rule which is marked as \fBquick\fP, it will
+result in a quick-match and stop processing at this point.  This is good for
+rules such as "block in quick from any to any with ipopts" which will match
+any packet with a non-standard header length (IP options present) and abort
+further processing, recording a match and also that the packet should be
+blocked.  If this command is missing, the rule is taken to be a
+"fall-through" rule, meaning that the result of the match is used
+(block/pass) and that it will continue processing to see if there are any
+more matches.  This allows for effects such as this:
+.LP
+.nf
+        block in from any to any port < 6000
+        pass in from any to any port >= 6000
+        block in from any to port > 6003
+.fi
+.PP
+which sets up the range 6000-6003 as being permitted and all others being
+denied.  Another (easier) way to do the same is:
+.LP
+.nf
+        block in from any to any port 6000 <> 6003
+        pass in from any to any port 5999 >< 6004
+.fi
+.PP
+Note that both the "block" and "pass" are needed here to affect a result
+as a failed "block" does not imply a pass, only that the rule hasn't taken
+effect.  To then allow ports < 1024, a rule such as:
+.LP
+.nf
+        pass in quick from any to any port < 1024
+.fi
+.PP
+would be needed before the first block.  Expect to see a "between" operator
+as soon as I can work out how to fit in in.
+.PP
+The \fBon\fP command allows an interface name to be incorporated into the
+matching procedure.  That it is a match and not actually associated with
+the interface itself is a result of the way this was implemented.  Indeed,
+there is nothing to stop you using this with every rule if you so wish.
+If it is absent, the rule is taken to be applied to a packet regardless of
+the interface it is present on.
+.PP
+The \fBall\fP command is essentially an alias for "from any to any" with
+no other commands.
+.PP
+Using \fBtos\fP, packets with different service capabilities can be filtered
+upon.  Individual service levels or combinations can be filtered upon.  The
+value for the TOS mask can either be represented as a hex number or a
+decimal integer value.
+.PP
+Packets may also be selected by their \fBttl\fP value.  The value given in
+the filter rule must exactly match that in the packet for a match to occur.
+This value can only be given as a decimal integer value.
+.PP
+The \fBproto\fP command allows a specific protocol to be matched against.
+All protocol names found in \fB/etc/protocols\fP are recognised and maybe
+used.  However, the protocol may also be given as a DECIMAL number, allowing
+for rules to match your own protocols, or new ones which would out-date any
+attempted listing.
+.PP
+To match against BOTH source and destination addresses, the \fBfrom\fP and
+\fBto\fP commands are used.  They both support a large variety of valid
+syntaxes, including the "x/y" format.  There is a special case for the
+hostname \fBany\fP which is taken to be 0.0.0.0/0 and matches all IP numbers.
+If a \fBport\fP match is included, then it is only applied to TCP/UDP
+packets.  If the \fBproto\fP command is left out, packets from both protocols
+are compared.  The hostname may either be a valid hostname, from either the
+hosts file or DNS (depending on your configuration and library) or of the
+dotted numeric form.  There is no special designation for networks but
+network names are recognised.
+.PP
+"x/y" indicates that a mask of y consecutive bits set is generated, starting
+with the MSB, so a value of 16 would give 0xffff0000.
+.PP
+"x mask y" indicates that the mask y is in dotted IP notation or a hexadecimal
+number of the form 0x12345678.
+.PP
+Only the presence of "any" has an implied mask, in all other situations,
+a hostname MUST be accompanied by a mask.  It is possible to give "any" a
+hostmask, but in the context of this language, it is non-sensical.
+.PP
+When composing
+\fBport\fP comparisons, either the service name may be used or an integer
+port number.
+.PP
+The \fBwith\fP command is used to nominate irregular attributes that some
+packets ma have associated with them.  Alternatively, the keyword \fBand\fP
+maybe used in place of \fBwith\fP.  This is provided to make the rules more
+readable and serves no other purpose.  To filter IP options, in general,
+use \fBipopts\fP.  For more specific filtering on IP options, individual
+options can be listed.  When listed, all those listed must be found in a
+packet to cause a match.
+.PP
+Before any option used after the \fBwith\fP keyword, the word \fBnot\fp
+maybe inserted to cause the filter rule to only match if the option(s) is
+not present.
+.PP
+The \fBflags\fP command is only effective for TCP filtering.  Each of the
+letters possible represents one of the possible flags that can be set in the
+TCP header.  The association is as follows:
+.LP
+.nf
+        F - FIN
+        S - SYN
+        R - RST
+        P - PUSH
+        A - ACK
+        U - URG
+.fi
+.PP
+The various flag symbols maybe used in combination, so that "SA" would
+represent a SYN-ACK combination present in a packet.  There is nothing
+preventing combinations, such as "SFR".  However, to guard against weird
+abberations, it is necessary to state which flags you are filtering against.
+To allow this, it is possible to set a mask indicating which TCP flags you
+wich to compare (ie those you deem significant).  This is done by appending
+"/<flags>" to the set of TCP flags you wish to match against. eg:
+.LP
+.nf
+	... flags S
+			# becomes "flags S/AUPRFS" and will match a
+			# packet with ONLY the SYN flag set.
+
+	... flags SA
+			# becomes "flags SA/AUPRFS" and will match any
+			# packet with only the SYN and ACK flags set.
+
+	... flags S/SA
+			# will match any packet with just the SYN flag set
+			# out of the SYN-ACK pair; the common "establish"
+			# keyword action.  "S/SA" will NOT match a packet
+			# with BOTH SYN and ACK set, but WILL match "SFP".
+.fi
+.PP
+The last parameter set for the filter rule is the optional \fBicmp-type\fP.
+It is only effective when used with \fB"proto icmp"\fP and must NOT be used
+in conjuction with \fBflags\fP.  There are a number of types which can be
+refered to by an abbreviation recognised by this language or the numbers
+with which they are associated can be used.
+.SH FILES
+/etc/services
+/etc/hosts
+.SH SEE ALSO
+ipf(1), ipftest(1)

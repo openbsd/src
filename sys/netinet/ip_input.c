@@ -82,6 +82,10 @@ u_char	ip_protox[IPPROTO_MAX];
 int	ipqmaxlen = IFQ_MAXLEN;
 struct	in_ifaddrhead in_ifaddr;
 struct	ifqueue ipintrq;
+#if defined(IPFILTER) || defined(IPFILTER_LKM)
+int	fr_nullcheck();
+int	(*fr_checkp) __P((struct ip *, int, struct ifnet *, int)) = fr_nullcheck;
+#endif
 
 char *
 inet_ntoa(ina)
@@ -231,6 +235,14 @@ next:
 			m_adj(m, ip->ip_len - m->m_pkthdr.len);
 	}
 
+#if defined(IPFILTER) || defined(IPFILTER_LKM)
+	/*
+	 * Check if we want to allow this packet to be processed.
+	 * Consider it to be bad if not.
+	 */
+	if ((*fr_checkp)(ip, hlen, m->m_pkthdr.rcvif, 0))
+		goto bad;
+#endif
 	/*
 	 * Process options and, if not destined for us,
 	 * ship it on.  ip_dooptions returns 1 when an
@@ -1173,3 +1185,10 @@ ip_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 	}
 	/* NOTREACHED */
 }
+
+#if defined(IPFILTER) || defined(IPFILTER_LKM)
+int	fr_nullcheck()
+{
+	return 0;
+}
+#endif

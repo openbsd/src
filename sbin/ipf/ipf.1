@@ -1,0 +1,60 @@
+.TH IPF 1
+.SH NAME
+ipf - alters packet filtering lists for IP packet input and ouput
+.SH SYNOPSIS
+ipf [-AEDIsnovdr] [-F <i|o|a>] -f <\fIfilename\fP>
+[ -f <\fIfilename\fP> [...]]
+.SH DESCRIPTION
+.PP
+\fBipf\fP opens the filenames listed (treating "-" as stdin) and parses the
+file for a set of rules which are to be added or removed from the packet
+filter rule set.
+.PP
+Each rule processed by \fBipf\fP
+is added to the kernels internal lists if there are no parsing problems.
+Rules are added to the end of the internal lists, matching the order in
+which they appear when given to \fBipf\fP.
+.SH OPTIONS
+.IP -A
+set the list to make changes to the active list (default).
+.IP -E
+Enable the filter (if disabled).  Not effective for loadable kernel versions.
+.IP -D
+Disable the filter (if enabled).  Not effective for loadable kernel versions.
+.IP -F
+this option specifies which filter list to flush.  The parameter should
+either be "i" (input), "o" (output) or "a" (remove all filter rules).
+Either a single letter or an entire word starting with the appropriate
+letter maybe used.  This option maybe before, or after, any other with
+the order on the command line being that used to execute options.
+.IP -d
+turn debug mode on.  Causes a hexdump of filter rules to be generated as
+it processes each one.
+.IP -f
+this option specifies which files
+\fBipf\fP should use to get input from for modifying the pack filter rule
+lists.
+.IP -I
+set the list to make changes to the inactive list.
+.IP -n
+This flag (no-change) prevents \fBipf\fP from actually making any ioctl
+calls or doing anything which would alter the currently running kernel.
+.IP -o
+Force rules by default to be added/deleted to/from the output list, rather
+than the (default) input list.
+.IP -s
+swap the active filter list in use to be the "other" one.
+.IP -r
+remove matching filter rules rather than add them to the internal lists
+.IP -v
+turn verbose mode on.  Displays information relating to rule processing.
+.DT
+.SH SEE ALSO
+ipfstat(1), ipftest(1), ipf(5)
+.SH DIAGNOSTICS
+.PP
+Needs to be run as root for the packet filtering lists to actually
+be affected inside the kernel.
+.SH BUGS
+.PP
+If you find any, please send email to me at darrenr@arbld.unimelb.edu.au
