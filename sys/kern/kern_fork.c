@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.14 1999/02/19 19:21:42 art Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.15 1999/02/23 18:17:19 art Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -114,17 +114,6 @@ fork1(p1, forktype, rforkflags, retval)
 	int dupfd = 1, cleanfd = 0;
 	vm_offset_t uaddr;
 
-	/*
-	 * Allocate a pcb and kernel stack for the process
-	 */
-#if defined(arc) || defined(mips_cachealias)
-	uaddr = kmem_alloc_upage(kernel_map, USPACE);
-#else
-	uaddr = kmem_alloc_pageable(kernel_map, USPACE);
-#endif
-	if (uaddr == 0)
-		return ENOMEM;
-
 	if (forktype == ISRFORK) {
 		dupfd = 0;
 		if ((rforkflags & RFPROC) == 0)
@@ -159,6 +148,17 @@ fork1(p1, forktype, rforkflags, retval)
 		(void)chgproccnt(uid, -1);
 		return (EAGAIN);
 	}
+
+	/*
+	 * Allocate a pcb and kernel stack for the process
+	 */
+#if defined(arc) || defined(mips_cachealias)
+	uaddr = kmem_alloc_upage(kernel_map, USPACE);
+#else
+	uaddr = kmem_alloc_pageable(kernel_map, USPACE);
+#endif
+	if (uaddr == 0)
+		return ENOMEM;
 
 	/* Allocate new proc. */
 	MALLOC(newproc, struct proc *, sizeof(struct proc), M_PROC, M_WAITOK);
