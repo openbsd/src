@@ -188,7 +188,7 @@ int f, n;
     }
     if((stat = eread("Rename %s to: ", toname, NFILEN, EFNEW | EFCR, frname))
 	!= TRUE) return stat;
-    return Xrename(frname, toname) >= 0;
+    return rename(frname, toname) >= 0;
 }
 #endif
 

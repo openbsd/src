@@ -1,5 +1,5 @@
 /*
- *		sys V fileio.c
+ *		POSIX fileio.c
  */
 #include	"def.h"
 
@@ -304,9 +304,6 @@ register char *fn;
 
 #ifndef NO_STARTUP
 #include <sys/file.h>
-#ifndef F_OK
-#define F_OK 04			/* for stupid Sys V		*/
-#endif
 
 /*
  * Find a startup file for the user and return its name. As a service
@@ -348,6 +345,7 @@ notfound:
 #endif
 
 #ifndef NO_DIRED
+#include <sys/wait.h>
 #include "kbd.h"
 
 /*
@@ -437,43 +435,6 @@ register char *fn;
     bcopy(&lp->l_text[56], cp, llength(lp) - 56);
     cp[llength(lp) - 56] = '\0';
     return lgetc(lp, 2) == 'd';
-}
-
-/*
- * I, a System V novice, could only figure out how to do unlinkdir()
- * and rename() as exec's of the appropriate functions.  So sue me.
- * --Stephen Walton, December 1987
- */
-
-unlinkdir(f)
-char *f;
-{
-	int status, pid, wpid;
-
-	if ((pid = fork()) == 0)
-		execl("/bin/rmdir", "rmdir", f, (char *)NULL);
-	else if (pid > 0)
-		while ((wpid = wait(&status)) && wpid != pid)
-			;
-	else
-		return FALSE;
-	return status == 0;
-}
-
-Xrename(f1, f2)
-char *f1, *f2;
-{
-
-	int status, pid, wpid;
-
-	if ((pid = fork()) == 0)
-		execl("/bin/mv", "mv", f1, f2, (char *)NULL);
-	else if (pid > 0)
-		while ((wpid = wait(&status)) && wpid != pid)
-			;
-	else
-		return FALSE;
-	return status == 0;
 }
 #endif NO_DIRED
 

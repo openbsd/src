@@ -8,7 +8,8 @@
 
 #define	KBLOCK	8192			/* Kill grow.			*/
 #define	GOOD	0			/* Good exit status.		*/
-#define	MAXPATH	256			/* Maximum length of path for chdir */
+#define SYMBLINK	1		/* Handle symbolic links	*/  
+#define	MAXPATH	PATH_MAX		/* Maximum length of path for chdir */
 
 typedef int	RSIZE;			/* Type for file/region sizes	*/
 typedef short	KCHAR;			/* Type for internal keystrokes	*/
@@ -26,10 +27,11 @@ typedef short	KCHAR;			/* Type for internal keystrokes	*/
 #define MALLOCROUND(m)	(m+=7,m&=~7)	/* round up to 8 byte boundry	*/
 
 #define	fncmp		strcmp		/* file name comparison		*/
+#define	unlinkdir(fn)	rmdir(fn)	/* unlink directory		*/
 #define	gettermtype()	getenv("TERM")	/* determine terminal type	*/
 
 struct fileinfo {
-	unsigned short fi_mode;
-	unsigned short fi_uid;
-	unsigned short fi_gid;
+	mode_t fi_mode;
+	uid_t fi_uid;
+	gid_t short fi_gid;
 };
