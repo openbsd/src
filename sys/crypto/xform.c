@@ -1,4 +1,4 @@
-/*	$OpenBSD: xform.c,v 1.12 2001/07/05 17:53:28 deraadt Exp $	*/
+/*	$OpenBSD: xform.c,v 1.13 2001/08/08 15:12:09 jjbg Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -183,14 +183,12 @@ struct auth_hash auth_hash_key_sha1 = {
 	(void (*)(u_int8_t *, void *)) SHA1Final 
 };
 
-#ifdef IPCOMP
 /* Compression instance */
 struct comp_algo comp_algo_deflate = {
 	CRYPTO_DEFLATE_COMP, "Deflate",
 	90, deflate_compress,
 	deflate_decompress
 };
-#endif
 
 /*
  * Encryption wrapper routines.
@@ -403,8 +401,6 @@ SHA1Update_int(void *ctx, u_int8_t *buf, u_int16_t len)
 	return 0;
 }
 
-#ifdef IPCOMP
-
 /*
  * And compression
  */
@@ -426,5 +422,3 @@ deflate_decompress(data, size, out)
 {
 	return deflate_global(data, size, 1, out);
 }
-
-#endif
