@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.92 2004/06/25 11:04:03 itojun Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.93 2004/07/03 05:57:12 itojun Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -1091,6 +1091,11 @@ pf_normalize_ip6(struct mbuf **m0, int dir, struct pfi_kif *kif,
 	int			 terminal;
 	int			 nxt;
 	struct pf_fragment6	*frag6;
+
+#if 1
+	if (dir == PF_FORWARD)
+		return (PF_PASS);
+#endif
 
 	r = TAILQ_FIRST(pf_main_ruleset.rules[PF_RULESET_SCRUB].active.ptr);
 	while (r != NULL) {
