@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_prot.c,v 1.11 1997/11/13 07:11:11 deraadt Exp $	*/
+/*	$OpenBSD: kern_prot.c,v 1.12 1997/11/17 05:57:45 deraadt Exp $	*/
 /*	$NetBSD: kern_prot.c,v 1.33 1996/02/09 18:59:42 christos Exp $	*/
 
 /*
@@ -234,7 +234,7 @@ sys_getgroups(p, v, retval)
 		return (EINVAL);
 	ngrp = pc->pc_ucred->cr_ngroups;
 	error = copyout((caddr_t)pc->pc_ucred->cr_groups,
-			(caddr_t)SCARG(uap, gidset), ngrp * sizeof(gid_t));
+	    (caddr_t)SCARG(uap, gidset), ngrp * sizeof(gid_t));
 	if (error)
 		return (error);
 	*retval = ngrp;
