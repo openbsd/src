@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd.c,v 1.16 2001/04/30 21:19:45 csapuntz Exp $ */
+/*	$OpenBSD: wd.c,v 1.17 2001/07/12 02:44:17 csapuntz Exp $ */
 /*	$NetBSD: wd.c,v 1.193 1999/02/28 17:15:27 explorer Exp $ */
 
 /*
@@ -572,7 +572,14 @@ __wdstart(wd, bp)
 	case WDC_QUEUED:
 		break;
 	case WDC_COMPLETE:
-		wddone(wd);
+		/* 
+		 * This code is never executed because we never set
+		 * the ATA_POLL flag above
+		 */
+#if 0
+		if (wd->sc_wdc_bio.flags & ATA_POLL)
+			wddone(wd);
+#endif
 		break;
 	default:
 		panic("__wdstart: bad return code from wdc_ata_bio()");
