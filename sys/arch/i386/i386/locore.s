@@ -440,7 +440,7 @@ try586:	/* Use the `cpuid' instruction. */
 #ifdef NTP
 	xorl %eax,%eax
 	xorl %edx,%edx
-	movl $10,%ecx
+	movl $0x10,%ecx
 	.byte 0xf, 0x30			# wrmsr (or trap on non-pentium :-)
 #endif
 
