@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pci.4,v 1.16 2000/09/29 05:33:37 aaron Exp $
+.\"	$OpenBSD: pci.4,v 1.17 2000/10/14 18:31:36 aaron Exp $
 .\"	$NetBSD: pci.4,v 1.29 2000/04/01 00:32:23 tsarna Exp $
 .\"
 .\" Copyright (c) 2000 Theo de Raadt.  All rights reserved.
@@ -38,7 +38,6 @@
 .Nm pci
 .Nd introduction to PCI bus support
 .Sh SYNOPSIS
-.Pp
 .Cd "pci* at mainbus? bus ?"
 .Cd "pci* at pchb? bus ?"
 .Cd "pci* at ppb? bus ?"
@@ -77,8 +76,7 @@ devices.
 The system includes machine-independent
 .Tn PCI
 drivers, sorted by device type and driver name:
-.Pp
-.Ss SCSI interfaces
+.Ss SCSI host adapters
 .Bl -tag -width speaker -offset ind
 .It Xr adw 4 , Xr adv 4
 AdvanSys PCI
@@ -92,12 +90,6 @@ interfaces.
 Buslogic BT-9xx
 .Tn SCSI
 interfaces.
-.It Xr dpt 4
-DPT SmartCache/SmartRAID III and IV SCSI interfaces.
-.It Xr gdt 4
-ICP-Vortex GDT
-.Tn RAID
-interfaces.
 .It Xr isp 4
 QLogic ISP-1020, ISP-1040, and ISP-2100
 .Tn SCSI
@@ -108,12 +100,20 @@ interfaces.
 Symbios Logic/NCR 53c8xx-family
 .Tn SCSI
 interfaces.
+.El
+.Ss RAID and cache controllers
+.Bl -tag -width speaker -offset ind
+.It Xr dpt 4
+DPT SmartCache/SmartRAID III and IV SCSI interfaces.
+.It Xr gdt 4
+ICP-Vortex GDT
+.Tn RAID
+interfaces.
 .It Xr twe 4
 3ware Escalade
 .Tn RAID
 interfaces.
 .El
-.Pp
 .Ss Network interfaces
 .Bl -tag -width speaker -offset ind
 .It Xr an 4
@@ -121,10 +121,10 @@ Aironet Communications 4500/4800 IEEE 802.11DS wireless network adapter.
 .It Xr dc 4
 Various Tulip-like Ethernet
 interfaces such as the DEC/Intel 21143;
-Macronix 98713, 98713A, 98715, 98715A and 98725;
-Davicom DM9100 and DM9102;
+Macronix 98713, 98713A, 98715, 98715A, 98725, 98727, and 98732;
+Davicom DM9100, DM9102, and DM9102A;
 ASIX Electronics AX88140A and AX88141;
-ADMtek AL981 Comet and AN985 Centaur;
+ADMtek AL981 Comet and AN983 Centaur-P;
 Lite-On 82c168 and 82c169 PNIC;
 and
 Lite-On/Macronix 82c115 PNIC II.
@@ -188,14 +188,20 @@ Intel Gigabit Ethernet interfaces.
 .It Xr xl 4
 3Com 3c555, 3c556, 3c900, 3c905, 3c980, and 3cSOHO Ethernet interfaces.
 .El
-.Pp
+.Ss Cryptography accelerators
+.Bl -tag -width speaker -offset ind
+.It Xr hifn 4
+Hi/fn 7751
+.Tn Symmetric Encryption Accelerator.
+.It Xr ubsec 4
+Broadcom Bluesteelnet uBsec 5501, 5601, and 5805.
+.El
 .Ss Serial interfaces
 .Bl -tag -width speaker -offset ind
 .It Xr cy 4
 Cyclades Cyclom-4Y, -8Y, and -16Y asynchronous serial communications devices.
 devices.
 .El
-.Pp
 .Ss Audio devices
 .Bl -tag -width cmpci(4) -offset ind
 .It Xr eap 4
@@ -218,7 +224,6 @@ Intel 82801AA/AB and 440MX sound devices.
 .It Xr clcs 4
 Cirrus Logic CrystalClear CS4280 sound devices.
 .El
-.Pp
 .Ss Miscellaneous devices
 .Bl -tag -width speaker -offset ind
 .It Xr bktr 4
@@ -230,9 +235,6 @@ video capture boards.
 Yenta compatible
 .Tn CardBus
 bridges.
-.It Xr hifn 4
-Hi/fn 7751
-.Tn Symmetric Encryption Accelerator.
 .It Xr ohci 4
 USB OHCI host controller.
 .It Xr pcic 4
@@ -258,7 +260,6 @@ USB UHCI host controller.
 .It Xr wdt 4
 ICS PCI-WDT500/501 watchdog timer devices.
 .El
-.Pp
 .Sh SEE ALSO
 .Xr cardbus 4 ,
 .Xr intro 4 ,
