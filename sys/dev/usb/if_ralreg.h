@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ralreg.h,v 1.2 2005/03/16 21:21:40 damien Exp $  */
+/*	$OpenBSD: if_ralreg.h,v 1.3 2005/03/17 12:46:54 damien Exp $  */
 
 /*-
  * Copyright (c) 2005
@@ -139,6 +139,7 @@
 
 struct ural_tx_desc {
 	uint32_t	flags;
+#define RAL_TX_RETRY(x)		((x) << 4)
 #define RAL_TX_NOT_LAST		(1 << 8)
 #define RAL_TX_NEED_ACK		(1 << 9)
 #define RAL_TX_INSERT_TIMESTAMP	(1 << 10)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ral.c,v 1.4 2005/03/17 11:04:30 dlg Exp $  */
+/*	$OpenBSD: if_ral.c,v 1.5 2005/03/17 12:46:54 damien Exp $  */
 
 /*-
  * Copyright (c) 2005
@@ -1152,6 +1152,7 @@ ural_tx_data(struct ural_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 
 	if (!IEEE80211_IS_MULTICAST(wh->i_addr1)) {
 		flags |= RAL_TX_NEED_ACK;
+		flags |= RAL_TX_RETRY(7);
 
 		dur = ural_txtime(RAL_ACK_SIZE, ural_ack_rate(rate),
 		    ic->ic_flags) + RAL_SIFS;
