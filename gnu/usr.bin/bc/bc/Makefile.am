@@ -1,7 +1,7 @@
 ## Process this file with automake to produce Makefile.in
-bin_PROGRAMS = bc
+bin_PROGRAMS = gnubc
 
-bc_SOURCES = main.c bc.y scan.l execute.c load.c storage.c util.c global.c
+gnubc_SOURCES = main.c bc.y scan.l execute.c load.c storage.c util.c global.c
 
 EXTRA_DIST = bc.h fix-libmath_h libmath.b sbc.y
 noinst_HEADERS = libmath.h

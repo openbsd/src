@@ -66,7 +66,7 @@ YACC = @YACC@
 
 bin_PROGRAMS = gnubc
 
-bc_SOURCES = main.c bc.y scan.l execute.c load.c storage.c util.c global.c
+gnubc_SOURCES = main.c bc.y scan.l execute.c load.c storage.c util.c global.c
 
 EXTRA_DIST = bc.h fix-libmath_h libmath.b sbc.y
 noinst_HEADERS = libmath.h
@@ -94,11 +94,11 @@ DEFS = @DEFS@ -I. -I$(srcdir) -I..
 CPPFLAGS = @CPPFLAGS@
 LDFLAGS = @LDFLAGS@
 LIBS = @LIBS@
-bc_OBJECTS =  main.o bc.o scan.o execute.o load.o storage.o util.o \
+gnubc_OBJECTS =  main.o bc.o scan.o execute.o load.o storage.o util.o \
 global.o
-bc_LDADD = $(LDADD)
-bc_DEPENDENCIES =  ../lib/libbc.a
-bc_LDFLAGS = 
+gnubc_LDADD = $(LDADD)
+gnubc_DEPENDENCIES =  ../lib/libbc.a
+gnubc_LDFLAGS = 
 LEX_OUTPUT_ROOT = @LEX_OUTPUT_ROOT@
 LEXLIB = @LEXLIB@
 CFLAGS = @CFLAGS@
@@ -113,8 +113,8 @@ DISTFILES = $(DIST_COMMON) $(SOURCES) $(HEADERS) $(TEXINFOS) $(EXTRA_DIST)
 
 TAR = tar
 GZIP = --best
-SOURCES = $(bc_SOURCES)
-OBJECTS = $(bc_OBJECTS)
+SOURCES = $(gnubc_SOURCES)
+OBJECTS = $(gnubc_OBJECTS)
 
 all: Makefile $(PROGRAMS) $(HEADERS)
 
@@ -172,9 +172,9 @@ distclean-compile:
 
 maintainer-clean-compile:
 
-bc: $(bc_OBJECTS) $(bc_DEPENDENCIES)
+gnubc: $(gnubc_OBJECTS) $(gnubc_DEPENDENCIES)
 	@rm -f bc
-	$(LINK) $(bc_LDFLAGS) $(bc_OBJECTS) $(bc_LDADD) $(LIBS)
+	$(LINK) $(gnubc_LDFLAGS) $(gnubc_OBJECTS) $(gnubc_LDADD) $(LIBS)
 #.y.c:
 #	$(YACC) $(YFLAGS) $< && mv y.tab.c $*.c
 #	if test -f y.tab.h; then \

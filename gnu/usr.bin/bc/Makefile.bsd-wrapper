@@ -1,14 +1,14 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.1.1.1 1998/06/29 00:19:01 millert Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.2 1998/06/29 13:01:20 deraadt Exp $
+
+SUBDIR=bcwrap
 
 MAN=	doc/bc.1 doc/dc.1
 #CLEANFILES=
 LDFLAGS+=	-s ${LDSTATIC}
 GNUCFLAGS=	CFLAGS="${CFLAGS}" LDFLAGS="${LDFLAGS}"
 
-all:	config.status wrapper
+all:	config.status
 	${MAKE} ${GNUCFLAGS}
-
-wrapper:
 	cd ${.CURDIR}/bcwrap && ${MAKE}
 
 .FORCE:	.IGNORE
@@ -38,9 +38,9 @@ maninstall:
 .endif
 
 install: maninstall
-	cd ${.CURDIR}/bcwrap && ${MAKE} install
 	${MAKE} ${GNUCFLAGS} prefix=${DESTDIR}/usr \
-		bindir=${DESTDIR}/usr/bin infodir=${PREFIX}/usr/share/info
+		bindir=${DESTDIR}/usr/bin infodir=${PREFIX}/usr/share/info install
+	cd ${.CURDIR}/bcwrap && ${MAKE} install
 
 clean cleandir:
 	-@if [ -e Makefile ]; then ${MAKE} distclean; fi
