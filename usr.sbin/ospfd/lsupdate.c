@@ -1,4 +1,4 @@
-/*	$OpenBSD: lsupdate.c,v 1.5 2005/02/09 22:34:05 claudio Exp $ */
+/*	$OpenBSD: lsupdate.c,v 1.6 2005/03/17 21:17:12 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -41,7 +41,7 @@ lsa_flood(struct iface *iface, struct nbr *originator, struct lsa_hdr *lsa_hdr,
 {
 	struct in_addr		 addr;
 	struct nbr		*nbr;
-	struct lsa_entry	*le;
+	struct lsa_entry	*le = NULL;
 	int			 queued = 0, dont_ack = 0;
 	int			 r;
 
@@ -54,8 +54,11 @@ lsa_flood(struct iface *iface, struct nbr *originator, struct lsa_hdr *lsa_hdr,
 		if (!(nbr->state & NBR_STA_FLOOD))
 			continue;
 
-		le = ls_retrans_list_get(nbr, lsa_hdr);
-		if (le)
+		if (iface->state & IF_STA_DROTHER)
+			if ((le = ls_retrans_list_get(iface->self, lsa_hdr)))
+			    ls_retrans_list_free(nbr, le);
+
+		if ((le = ls_retrans_list_get(nbr, lsa_hdr)))
 			ls_retrans_list_free(nbr, le);
 
 		if (!(nbr->state & NBR_STA_FULL) &&
@@ -80,9 +83,14 @@ lsa_flood(struct iface *iface, struct nbr *originator, struct lsa_hdr *lsa_hdr,
 			continue;
 		}
 
-		ls_retrans_list_add(nbr, data);	/* XXX error handling */
 		queued = 1;
+		if (iface->state & IF_STA_DROTHER) {
+			if (!queued)
+				ls_retrans_list_add(iface->self, data);
+		} else
+			ls_retrans_list_add(nbr, data);
 	}
+
 	if (!queued)
 		return (0);
 
@@ -253,15 +261,15 @@ recv_ls_update(struct nbr *nbr, char *buf, u_int16_t len)
 }
 
 /* link state retransmit list */
-int
+void
 ls_retrans_list_add(struct nbr *nbr, struct lsa_hdr *lsa)
 {
+	struct timeval		 tv;
 	struct lsa_entry	*le;
 	struct lsa_ref		*ref;
 
-	ref = lsa_cache_get(lsa);
-	if (ref == NULL)
-		return (1);
+	if ((ref = lsa_cache_get(lsa)) == NULL)
+		fatalx("King Bula sez: somebody forgot to lsa_cache_add");
 
 	if ((le = calloc(1, sizeof(*le))) == NULL)
 		fatal("ls_retrans_list_add");
@@ -269,7 +277,13 @@ ls_retrans_list_add(struct nbr *nbr, struct lsa_hdr *lsa)
 	le->le_ref = ref;
 	TAILQ_INSERT_TAIL(&nbr->ls_retrans_list, le, entry);
 
-	return (0);
+	if (!evtimer_pending(&nbr->ls_retrans_timer, NULL)) {
+		timerclear(&tv);
+		tv.tv_sec = nbr->iface->rxmt_interval;
+
+		if (evtimer_add(&nbr->ls_retrans_timer, &tv) == -1)
+			log_warn("ls_retrans_list_add: evtimer_add failed");
+	}
 }
 
 int
@@ -279,7 +293,7 @@ ls_retrans_list_del(struct nbr *nbr, struct lsa_hdr *lsa_hdr)
 
 	le = ls_retrans_list_get(nbr, lsa_hdr);
 	if (le == NULL)
-		return (1);
+		return (-1);
 	if (lsa_hdr->seq_num == le->le_ref->hdr.seq_num &&
 	    lsa_hdr->ls_chksum == le->le_ref->hdr.ls_chksum) {
 		ls_retrans_list_free(nbr, le);
@@ -289,7 +303,7 @@ ls_retrans_list_del(struct nbr *nbr, struct lsa_hdr *lsa_hdr)
 	log_warnx("ls_retrans_list_del: invalid LS ack received, neigbor %s",
 	     inet_ntoa(nbr->id));
 
-	return (1);
+	return (-1);
 }
 
 struct lsa_entry *
@@ -328,6 +342,48 @@ bool
 ls_retrans_list_empty(struct nbr *nbr)
 {
 	return (TAILQ_EMPTY(&nbr->ls_retrans_list));
+}
+
+void
+ls_retrans_timer(int fd, short event, void *bula)
+{
+	struct timeval		 tv;
+	struct in_addr		 addr;
+	struct nbr		*nbr = bula;
+	struct lsa_entry	*le;
+	
+	if (nbr->iface->self == nbr) {
+		if (!(nbr->iface->state & IF_STA_DROTHER)) {
+			/*
+			 * Iick, we are suddenly DR or BDDR so convert this
+			 * retrans list into a real flood. I'm not 100% sure if
+			 * using iface->self as originator is correct but we
+			 * will flood the whole net with this and that's the
+			 * idea.
+			 */
+			while ((le = TAILQ_FIRST(&nbr->ls_retrans_list)) !=
+			    NULL) {
+				lsa_flood(nbr->iface, nbr, &le->le_ref->hdr,
+				    le->le_ref->data, le->le_ref->len);
+				ls_retrans_list_free(nbr, le);
+			}
+			return;
+		}
+		inet_aton(AllDRouters, &addr);
+	} else
+		memcpy(&addr, &nbr->addr, sizeof(addr));
+
+		
+	if ((le = TAILQ_FIRST(&nbr->ls_retrans_list)) != NULL) {
+		send_ls_update(nbr->iface, addr, le->le_ref->data,
+		    le->le_ref->len);
+
+		timerclear(&tv);
+		tv.tv_sec = nbr->iface->rxmt_interval;
+
+		if (evtimer_add(&nbr->ls_retrans_timer, &tv) == -1)
+			log_warn("ls_retrans_list_add: evtimer_add failed");
+	}
 }
 
 LIST_HEAD(lsa_cache_head, lsa_ref);

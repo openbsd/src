@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.11 2005/02/10 14:05:48 claudio Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.12 2005/03/17 21:17:12 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -286,6 +286,7 @@ nbr_new(u_int32_t nbr_id, struct iface *iface, int self)
 	evtimer_set(&nbr->inactivity_timer, nbr_itimer, nbr);
 	evtimer_set(&nbr->db_tx_timer, db_tx_timer, nbr);
 	evtimer_set(&nbr->lsreq_tx_timer, ls_req_tx_timer, nbr);
+	evtimer_set(&nbr->ls_retrans_timer, ls_retrans_timer, nbr);
 	evtimer_set(&nbr->adj_timer, nbr_adj_timer, nbr);
 
 	log_debug("nbr_new: neighbor ID %s, peerid %lu",

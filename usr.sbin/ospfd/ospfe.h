@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.h,v 1.7 2005/03/07 10:28:14 claudio Exp $ */
+/*	$OpenBSD: ospfe.h,v 1.8 2005/03/17 21:17:12 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -111,6 +111,7 @@ struct nbr {
 	struct event		 inactivity_timer;
 	struct event		 db_tx_timer;
 	struct event		 lsreq_tx_timer;
+	struct event		 ls_retrans_timer;
 	struct event		 adj_timer;
 
 	struct nbr_stats	 stats;
@@ -231,12 +232,14 @@ int		 lsa_flood(struct iface *, struct nbr *, struct lsa_hdr *,
 int		 send_ls_update(struct iface *, struct in_addr, void *, int);
 void		 recv_ls_update(struct nbr *, char *, u_int16_t);
 
-int		 ls_retrans_list_add(struct nbr *, struct lsa_hdr *);
+void		 ls_retrans_list_add(struct nbr *, struct lsa_hdr *);
 int		 ls_retrans_list_del(struct nbr *, struct lsa_hdr *);
 struct lsa_entry	*ls_retrans_list_get(struct nbr *, struct lsa_hdr *);
 void		 ls_retrans_list_free(struct nbr *, struct lsa_entry *);
 void		 ls_retrans_list_clr(struct nbr *);
 bool		 ls_retrans_list_empty(struct nbr *);
+void		 ls_retrans_timer(int, short, void *);
+
 
 void		 lsa_cache_init(u_int32_t);
 struct lsa_ref	*lsa_cache_add(void *, u_int16_t);

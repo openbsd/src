@@ -1,4 +1,4 @@
-/*	$OpenBSD: lsack.c,v 1.5 2005/02/08 12:56:48 claudio Exp $ */
+/*	$OpenBSD: lsack.c,v 1.6 2005/03/17 21:17:12 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -102,8 +102,13 @@ recv_ls_ack(struct nbr *nbr, char *buf, u_int16_t len)
 		while (len >= sizeof(lsa_hdr)) {
 			memcpy(&lsa_hdr, buf, sizeof(lsa_hdr));
 
-			if (lsa_hdr_check(nbr, &lsa_hdr))
+			if (lsa_hdr_check(nbr, &lsa_hdr)) {
+				/* try both list in case of DROTHER */
+				if (nbr->iface->state & IF_STA_DROTHER)
+					ls_retrans_list_del(nbr->iface->self,
+					    &lsa_hdr);
 				ls_retrans_list_del(nbr, &lsa_hdr);
+			}
 
 			buf += sizeof(lsa_hdr);
 			len -= sizeof(lsa_hdr);
