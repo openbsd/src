@@ -1,4 +1,4 @@
-#     $OpenBSD: BSD.local.dist,v 1.9 2002/01/18 16:46:52 brad Exp $
+#     $OpenBSD: BSD.local.dist,v 1.10 2002/04/16 19:02:19 espie Exp $
 #     $FreeBSD: BSD.local.dist,v 1.32 1997/09/12 05:44:11 asami Exp $
 #
 
@@ -21,6 +21,8 @@
         ..
         cat3            
         ..
+	cat3p
+	..
         cat4            
         ..
         cat5            
@@ -44,6 +46,8 @@
             ..
             cat3            
             ..
+	    cat3p
+	    ..
             cat4            
             ..
             cat5            
@@ -89,6 +93,8 @@
         ..
         man3
         ..
+	man3p
+	..
         man4
         ..
         man5
