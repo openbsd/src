@@ -1,4 +1,4 @@
-/*	$OpenBSD: signal.h,v 1.10 2004/01/12 21:33:15 miod Exp $ */
+/*	$OpenBSD: signal.h,v 1.11 2004/01/12 23:55:10 miod Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * All rights reserved.
@@ -33,6 +33,8 @@
 #ifndef __MACHINE_SIGNAL_H__
 #define __MACHINE_SIGNAL_H__
 
+#include <machine/reg.h>
+
 typedef int sig_atomic_t;
 
 /*
@@ -48,43 +50,7 @@ struct  sigcontext {
         int     sc_onstack;             /* sigstack state to restore */
         int     sc_mask;                /* signal mask to restore */
 	/* begin machine dependent portion */
-	int	sc_regs[32];
-#define	sc_sp	sc_regs[31]
-	int	sc_ps;
-	int	sc_fpsr;
-	int	sc_fpcr;
-	int	sc_xip;
-	int	sc_nip;
-	int	sc_fip;
-	int	sc_ssbr;
-#define sc_duap	sc_ssbr	/* mc88110 */
-	int	sc_dmt0;
-#define sc_dsr	sc_dmt0	/* mc88110 */
-	int	sc_dmd0;
-#define sc_dlar	sc_dmd0	/* mc88110 */
-	int	sc_dma0;
-#define sc_dpar	sc_dma0	/* mc88110 */
-	int	sc_dmt1;
-#define sc_isr	sc_dmt1	/* mc88110 */
-	int	sc_dmd1;
-#define sc_ilar	sc_dmd1	/* mc88110 */
-	int	sc_dma1;
-#define sc_ipar	sc_dma1	/* mc88110 */
-	int	sc_dmt2;
-#define sc_isap sc_dmt2	/* mc88110 */
-	int	sc_dmd2;
-#define sc_dsap sc_dmd2	/* mc88110 */
-	int	sc_dma2;
-#define sc_iuap sc_dma2	/* mc88110 */
-	int	sc_fpecr;
-	int	sc_fphs1;
-	int	sc_fpls1;
-	int	sc_fphs2;
-	int	sc_fpls2;
-	int	sc_fppt;
-	int	sc_fprh;
-	int	sc_fprl;
-	int	sc_fpit;
+	struct reg sc_regs;
 
 	/* XXX this structure needs to be a multiple of 8 bytes for now */
 	int	sc_pad;

@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.129 2004/01/12 17:30:26 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.130 2004/01/12 23:55:12 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -907,63 +907,8 @@ sendsig(catcher, sig, mask, code, type, val)
 	 * Copy the whole user context into signal context that we
 	 * are building.
 	 */
-	bcopy((caddr_t)tf->tf_r, (caddr_t)sf.sf_sc.sc_regs,
-	      sizeof(sf.sf_sc.sc_regs));
-
-	/*
-	 * Be sure to keep the xip values intact, especially on 88100: should
-	 * we return back to the process, it must be in the same instruction
-	 * fetching state, or bad things will happen...
-	 */
-	if (cputyp != CPU_88110) {
-		/* mc88100 */
-		sf.sf_sc.sc_xip = tf->tf_sxip;
-		sf.sf_sc.sc_nip = tf->tf_snip;
-		sf.sf_sc.sc_fip = tf->tf_sfip;
-	} else {
-		/* mc88110 */
-		sf.sf_sc.sc_xip = tf->tf_exip;
-		sf.sf_sc.sc_nip = tf->tf_enip;
-		sf.sf_sc.sc_fip = 0;
-	}
-	sf.sf_sc.sc_ps = tf->tf_epsr;
-	sf.sf_sc.sc_sp  = tf->tf_r[31];
-	sf.sf_sc.sc_fpsr = tf->tf_fpsr;
-	sf.sf_sc.sc_fpcr = tf->tf_fpcr;
-	if (cputyp != CPU_88110) {
-		/* mc88100 */
-		sf.sf_sc.sc_ssbr = tf->tf_ssbr;
-		sf.sf_sc.sc_dmt0 = tf->tf_dmt0;
-		sf.sf_sc.sc_dmd0 = tf->tf_dmd0;
-		sf.sf_sc.sc_dma0 = tf->tf_dma0;
-		sf.sf_sc.sc_dmt1 = tf->tf_dmt1;
-		sf.sf_sc.sc_dmd1 = tf->tf_dmd1;
-		sf.sf_sc.sc_dma1 = tf->tf_dma1;
-		sf.sf_sc.sc_dmt2 = tf->tf_dmt2;
-		sf.sf_sc.sc_dmd2 = tf->tf_dmd2;
-		sf.sf_sc.sc_dma2 = tf->tf_dma2;
-	} else {
-		/* mc88110 */
-		sf.sf_sc.sc_dsr  = tf->tf_dsr;
-		sf.sf_sc.sc_dlar = tf->tf_dlar;
-		sf.sf_sc.sc_dpar = tf->tf_dpar;
-		sf.sf_sc.sc_isr  = tf->tf_isr;
-		sf.sf_sc.sc_ilar = tf->tf_ilar;
-		sf.sf_sc.sc_ipar = tf->tf_ipar;
-		sf.sf_sc.sc_isap = tf->tf_isap;
-		sf.sf_sc.sc_dsap = tf->tf_dsap;
-		sf.sf_sc.sc_iuap = tf->tf_iuap;
-		sf.sf_sc.sc_duap = tf->tf_duap;
-	}
-	sf.sf_sc.sc_fpecr = tf->tf_fpecr;
-	sf.sf_sc.sc_fphs1 = tf->tf_fphs1;
-	sf.sf_sc.sc_fpls1 = tf->tf_fpls1;
-	sf.sf_sc.sc_fphs2 = tf->tf_fphs2;
-	sf.sf_sc.sc_fpls2 = tf->tf_fpls2;
-	sf.sf_sc.sc_fppt = tf->tf_fppt;
-	sf.sf_sc.sc_fprh = tf->tf_fprh;
-	sf.sf_sc.sc_fprl = tf->tf_fprl;
-	sf.sf_sc.sc_fpit = tf->tf_fpit;
+	bcopy((const void *)&tf->tf_regs, (void *)&sf.sf_sc.sc_regs,
+	    sizeof(sf.sf_sc.sc_regs));
 
 	if (copyout((caddr_t)&sf, (caddr_t)fp, sizeof sf)) {
 		/*
@@ -1030,7 +975,7 @@ sys_sigreturn(p, v, retval)
 	if (sigdebug & SDB_FOLLOW)
 		printf("sigreturn: pid %d, scp %x\n", p->p_pid, scp);
 #endif
-	if ((int)scp & 3 ||
+	if (((vaddr_t)scp & 3) != 0 ||
 	    copyin((caddr_t)scp, (caddr_t)&ksc, sizeof(struct sigcontext)))
 		return (EINVAL);
 
@@ -1042,56 +987,8 @@ sys_sigreturn(p, v, retval)
 	 *	 bcopy(sc_reg to tf, sizeof sigcontext - 2 words)
 	 * XXX nivas
 	 */
-	bcopy((caddr_t)scp->sc_regs, (caddr_t)tf->tf_r, sizeof(scp->sc_regs));
-	if (cputyp != CPU_88110) {
-		/* mc88100 */
-		tf->tf_sxip = scp->sc_xip;
-		tf->tf_snip = scp->sc_nip;
-		tf->tf_sfip = scp->sc_fip;
-	} else {
-		/* mc88110 */
-		tf->tf_exip = scp->sc_xip;
-		tf->tf_enip = scp->sc_nip;
-		tf->tf_sfip = 0;
-	}
-	tf->tf_epsr = scp->sc_ps;
-	tf->tf_r[31] = scp->sc_sp;
-	tf->tf_fpsr = scp->sc_fpsr;
-	tf->tf_fpcr = scp->sc_fpcr;
-	if (cputyp != CPU_88110) {
-		/* mc88100 */
-		tf->tf_ssbr = scp->sc_ssbr;
-		tf->tf_dmt0 = scp->sc_dmt0;
-		tf->tf_dmd0 = scp->sc_dmd0;
-		tf->tf_dma0 = scp->sc_dma0;
-		tf->tf_dmt1 = scp->sc_dmt1;
-		tf->tf_dmd1 = scp->sc_dmd1;
-		tf->tf_dma1 = scp->sc_dma1;
-		tf->tf_dmt2 = scp->sc_dmt2;
-		tf->tf_dmd2 = scp->sc_dmd2;
-		tf->tf_dma2 = scp->sc_dma2;
-	} else {
-		/* mc88110 */
-		tf->tf_dsr  = scp->sc_dsr;
-		tf->tf_dlar = scp->sc_dlar;
-		tf->tf_dpar = scp->sc_dpar;
-		tf->tf_isr  = scp->sc_isr;
-		tf->tf_ilar = scp->sc_ilar;
-		tf->tf_ipar = scp->sc_ipar;
-		tf->tf_isap = scp->sc_isap;
-		tf->tf_dsap = scp->sc_dsap;
-		tf->tf_iuap = scp->sc_iuap;
-		tf->tf_duap = scp->sc_duap;
-	}
-	tf->tf_fpecr = scp->sc_fpecr;
-	tf->tf_fphs1 = scp->sc_fphs1;
-	tf->tf_fpls1 = scp->sc_fpls1;
-	tf->tf_fphs2 = scp->sc_fphs2;
-	tf->tf_fpls2 = scp->sc_fpls2;
-	tf->tf_fppt = scp->sc_fppt;
-	tf->tf_fprh = scp->sc_fprh;
-	tf->tf_fprl = scp->sc_fprl;
-	tf->tf_fpit = scp->sc_fpit;
+	bcopy((const void *)&scp->sc_regs, (caddr_t)&tf->tf_regs,
+	    sizeof(scp->sc_regs));
 
 	/*
 	 * Restore the user supplied information
@@ -1101,6 +998,7 @@ sys_sigreturn(p, v, retval)
 	else
 		p->p_sigacts->ps_sigstk.ss_flags &= ~SS_ONSTACK;
 	p->p_sigmask = scp->sc_mask & ~sigcantmask;
+
 	return (EJUSTRETURN);
 }
 
