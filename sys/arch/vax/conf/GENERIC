@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.7 1997/01/15 23:24:29 maja Exp $
+#	$OpenBSD: GENERIC,v 1.8 1997/05/28 23:09:37 niklas Exp $
 #	$NetBSD: GENERIC,v 1.19 1997/01/11 11:15:38 ragge Exp $
 #
 # GENERIC VAX configuration file; all supported devices.
@@ -7,69 +7,68 @@
 machine	vax
 
 # Here are all different supported CPU types listed.
-options         "VAX8600"
-options         "VAX8200"
-options         "VAX780"
-options         "VAX750"
-options         "VAX630"	# MV II
-options         "VAX650"	# MV III, 3600, 3800, 3900
-options		"VAX410"	# VS 2000
-options		"VAX43"		# VS 3100/76
+option		"VAX8600"
+option		"VAX8200"
+option		"VAX780"
+option		"VAX750"
+option		"VAX630"	# MV II
+option		"VAX650"	# MV III, 3600, 3800, 3900
+option		"VAX410"	# VS 2000
+option		"VAX43"		# VS 3100/76
 
 # Kernel identification
-options         GENERIC
+option		GENERIC
 
 # Max users on system; this is just a hint
 maxusers	8
 
 # Paging system, we always have them all.
-options		SWAPPAGER, DEVPAGER
+option		SWAPPAGER, DEVPAGER
 
 # Kernel compiled-in symbolic debugger & system call tracer
-options		DDB
-options		KTRACE
-options		DIAGNOSTIC
+option		DDB
+option		KTRACE
+option		DIAGNOSTIC
 
 # Network support
-#options		GATEWAY
-options         INET
+#option		GATEWAY
+option		INET
 
 # All supported filesystem types
-options		FFS,QUOTA
-options		LFS
-options		MFS
-options		NFSCLIENT
-options		NFSSERVER
-options		FDESC
-options		FIFO
-options		KERNFS
-options		NULLFS
-options		PROCFS
-options		UMAPFS
-options		UNION
+option		FFS,QUOTA
+option		MFS
+option		NFSCLIENT
+option		NFSSERVER
+option		FDESC
+option		FIFO
+option		KERNFS
+option		NULLFS
+option		PROCFS
+option		UMAPFS
+option		UNION
 
 # System V shared memory & semaphores support.
-options		SYSVMSG
-options		SYSVSEM
-options		SYSVSHM
+option		SYSVMSG
+option		SYSVSEM
+option		SYSVSHM
 
 # What executables to look for.
-options		EXEC_AOUT
-options		EXEC_SCRIPT
+option		EXEC_AOUT
+option		EXEC_SCRIPT
 
 # Old compat stuff; needed to run 4.3BSD Reno programs.
 # Note that if COMPAT_ULTRIX is set, you lose compatibility with
 # 4.3BSD Reno programs and get Ultrix compatibility instead.
 # (They cannot coexist).
-options		COMPAT_43
-options		COMPAT_09
-options		COMPAT_10
-options		COMPAT_11
-options		COMPAT_12
-#options		COMPAT_ULTRIX
-#options		TCP_COMPAT_42
+option		COMPAT_43
+option		COMPAT_09
+option		COMPAT_10
+option		COMPAT_11
+option		COMPAT_12
+#option		COMPAT_ULTRIX
+#option		TCP_COMPAT_42
 
-options		LKM
+option		LKM
 
 # Kernel(s) to compile
 config          bsd          swap generic
