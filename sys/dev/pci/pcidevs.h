@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.490 2002/02/18 10:15:44 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.493 2002/03/19 14:27:00 nate Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -45,7 +45,7 @@
  *
  * There is a Vendor ID search engine available at:
  *
- *	http://www.pcisig.com/app/search/by_vendor_id/
+ *	http://www.pcisig.com/membership/vid_search/
  */
 
 /*
@@ -558,6 +558,7 @@
 #define	PCI_VENDOR_EUMITCOM	0x1638		/* Eumitcom */
 #define	PCI_VENDOR_NETSEC	0x1660		/* NetSec */
 #define	PCI_VENDOR_GLOBALSUN	0x16ab		/* Global Sun */
+#define	PCI_VENDOR_ALTIMA	0x173b		/* Altima */
 #define	PCI_VENDOR_ANTARES	0x1754		/* Antares Microsystems */
 #define	PCI_VENDOR_SYMPHONY2	0x1c1c		/* Symphony Labs */
 #define	PCI_VENDOR_TEKRAM2	0x1de1		/* Tekram Technology */
@@ -776,6 +777,9 @@
 #define	PCI_PRODUCT_ALTEON_ACENICT	0x0002		/* Acenic Copper */
 #define	PCI_PRODUCT_ALTEON_BCM5700	0x0003		/* BCM5700 (Broadcom) */
 #define	PCI_PRODUCT_ALTEON_BCM5701	0x0004		/* BCM5701 (Broadcom) */
+
+/* Altima products */
+#define	PCI_PRODUCT_ALTIMA_AC100X	0x03e8		/* AC100X */
 
 /* AMD products */
 #define	PCI_PRODUCT_AMD_PCNET_PCI	0x2000		/* 79c970 PCnet-PCI LANCE */
