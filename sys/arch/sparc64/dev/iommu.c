@@ -1,4 +1,4 @@
-/*	$OpenBSD: iommu.c,v 1.17 2002/05/13 19:43:48 jason Exp $	*/
+/*	$OpenBSD: iommu.c,v 1.18 2002/07/24 19:07:43 jason Exp $	*/
 /*	$NetBSD: iommu.c,v 1.47 2002/02/08 20:03:45 eeh Exp $	*/
 
 /*
@@ -183,7 +183,7 @@ iommu_init(name, is, tsbsize, iovabase)
 	 */
 	if (is->is_sb[0] || is->is_sb[1])
 		(void)pmap_extract(pmap_kernel(), (vaddr_t)&is->is_flush[0],
-		    (paddr_t *)&is->is_flushpa);
+		    &is->is_flushpa);
 
 	/*
 	 * now actually start up the IOMMU
@@ -398,7 +398,7 @@ iommu_strbuf_flush_done(is)
 
 	if (!is->is_sb[0] && !is->is_sb[1])
 		return (0);
-				
+
 	/*
 	 * Streaming buffer flushes:
 	 * 
