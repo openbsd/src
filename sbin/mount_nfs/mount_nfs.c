@@ -1,5 +1,5 @@
-/*	$OpenBSD: mount_nfs.c,v 1.5 1996/05/08 08:53:03 niklas Exp $	*/
-/*	$NetBSD: mount_nfs.c,v 1.12 1996/04/13 01:31:43 jtc Exp $	*/
+/*	$OpenBSD: mount_nfs.c,v 1.6 1996/05/28 12:37:57 deraadt Exp $	*/
+/*	$NetBSD: mount_nfs.c,v 1.12.4.1 1996/05/25 22:48:05 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mount_nfs.c	8.11 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$NetBSD: mount_nfs.c,v 1.12 1996/04/13 01:31:43 jtc Exp $";
+static char rcsid[] = "$NetBSD: mount_nfs.c,v 1.12.4.1 1996/05/25 22:48:05 fvdl Exp $";
 #endif
 #endif /* not lint */
 
@@ -106,6 +106,7 @@ static char rcsid[] = "$NetBSD: mount_nfs.c,v 1.12 1996/04/13 01:31:43 jtc Exp $
 #define ALTF_NQNFS	0x400
 #define ALTF_SOFT	0x800
 #define ALTF_TCP	0x1000
+#define ALTF_NFSV2	0x2000
 
 const struct mntopt mopts[] = {
 	MOPT_STDOPTS,
@@ -128,6 +129,7 @@ const struct mntopt mopts[] = {
 	{ "nqnfs", 0, ALTF_NQNFS, 1 },
 	{ "soft", 0, ALTF_SOFT, 1 },
 	{ "tcp", 0, ALTF_TCP, 1 },
+	{ "nfsv2", 0, ALTF_NFSV2, 1 },
 	{ NULL }
 };
 
@@ -318,8 +320,17 @@ main(argc, argv)
 			if(altflags & ALTF_KERB)
 				nfsargsp->flags |= NFSMNT_KERB;
 #endif
-			if(altflags & ALTF_NFSV3)
-				nfsargsp->flags |= NFSMNT_NFSV3;
+			if(altflags & ALTF_NFSV3) {
+				if (force2)
+					errx(1,"conflicting version options");
+				force3 = 1;
+			}
+			if(altflags & ALTF_NFSV2) {
+				if (force3)
+					errx(1,"conflicting version options");
+				force2 = 1;
+				nfsargsp->flags &= ~NFSMNT_NFSV3;
+			}
 			if(altflags & ALTF_RDIRPLUS)
 				nfsargsp->flags |= NFSMNT_RDIRPLUS;
 			if(altflags & ALTF_MNTUDP)
@@ -330,8 +341,12 @@ main(argc, argv)
 			if(altflags & ALTF_SEQPACKET)
 				nfsargsp->sotype = SOCK_SEQPACKET;
 #endif
-			if(altflags & ALTF_NQNFS)
-				nfsargsp->flags |= (NFSMNT_NQNFS|NFSMNT_NFSV3);
+			if(altflags & ALTF_NQNFS) {
+				if (force2)
+					errx(1,"nqnfs only available with v3");
+				force3 = 1;
+				nfsargsp->flags |= NFSMNT_NQNFS;
+			}
 			if(altflags & ALTF_SOFT)
 				nfsargsp->flags |= NFSMNT_SOFT;
 			if(altflags & ALTF_TCP) {
@@ -349,7 +364,10 @@ main(argc, argv)
 			break;
 #endif
 		case 'q':
-			nfsargsp->flags |= (NFSMNT_NQNFS | NFSMNT_NFSV3);
+			if (force2)
+				errx(1,"nqnfs only available with v3");
+			force3 = 1;
+			nfsargsp->flags |= NFSMNT_NQNFS;
 			break;
 		case 'R':
 			num = strtol(optarg, &p, 10);
@@ -776,7 +794,7 @@ __dead void
 usage()
 {
 	(void)fprintf(stderr, "usage: mount_nfs %s\n%s\n%s\n%s\n",
-"[-bcdiKklMPqsT] [-a maxreadahead] [-D deadthresh]",
+"[-23bcdiKklMPqsT] [-a maxreadahead] [-D deadthresh]",
 "\t[-g maxgroups] [-L leaseterm] [-m realm] [-o options] [-R retrycnt]",
 "\t[-r readsize] [-t timeout] [-w writesize] [-x retrans]",
 "\trhost:path node");
