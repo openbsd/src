@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.12 2001/05/23 22:20:34 art Exp $	*/
+/*	$OpenBSD: buffer.c,v 1.13 2001/05/23 22:26:24 art Exp $	*/
 
 /*
  *		Buffer handling.
@@ -299,8 +299,7 @@ anycb(f)
 	for (bp = bheadp; bp != NULL; bp = bp->b_bufp) {
 		if (*(bp->b_fname) != '\0'
 		    && (bp->b_flag & BFCHG) != 0) {
-			(void) strcpy(prompt, "Save file ");
-			(void) strcpy(prompt + 10, bp->b_fname);
+			sprintf(prompt, "Save file %s", bp->b_fname);
 			if ((f == TRUE || (save = eyorn(prompt)) == TRUE)
 			    && buffsave(bp) == TRUE) {
 				bp->b_flag &= ~BFCHG;
