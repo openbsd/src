@@ -1,4 +1,4 @@
-/*	$OpenBSD: modstat.c,v 1.17 2002/01/09 18:19:28 ericj Exp $	*/
+/*	$OpenBSD: modstat.c,v 1.18 2002/05/24 07:03:35 ericj Exp $	*/
 
 /*
  * Copyright (c) 1993 Terrence R. Lambert.
@@ -57,7 +57,6 @@ static char *type_names[] = {
 	"EXEC",
 	"MISC"
 };
-static int devfd;
 
 static void
 usage()
@@ -114,6 +113,7 @@ main(argc, argv)
 	int c, modnum = -1;
 	char *modname = NULL;
 	char *endptr;
+	int devfd;
 
 	while ((c = getopt(argc, argv, "i:n:")) != -1) {
 		switch (c) {
@@ -121,7 +121,6 @@ main(argc, argv)
 			modnum = (int)strtol(optarg, &endptr, 0);
 			if (modnum < 0 || modnum > INT_MAX || *endptr != '\0')
 				errx(1, "%s: not a valid number", optarg);
-			modnum = atoi(optarg);
 			break;
 		case 'n':
 			modname = optarg;
