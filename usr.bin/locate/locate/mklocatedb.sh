@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$OpenBSD: mklocatedb.sh,v 1.9 2003/02/08 10:19:30 pvalchev Exp $
+#	$OpenBSD: mklocatedb.sh,v 1.10 2003/06/24 23:49:23 millert Exp $
 #
 # Copyright (c) September 1995 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
 # All rights reserved.
@@ -30,7 +30,7 @@
 # 
 # usage: mklocatedb [-presort] < filelist > database
 #
-# $Id: mklocatedb.sh,v 1.9 2003/02/08 10:19:30 pvalchev Exp $
+# $Id: mklocatedb.sh,v 1.10 2003/06/24 23:49:23 millert Exp $
 
 
 # The directory containing locate subprograms
@@ -68,7 +68,7 @@ trap 'rm -f $bigrams $filelist' 0 1 2 3 5 10 15
 
 if $sortcmd $sortopt > $filelist; then
         $bigram < $filelist | $sort -nr | 
-                awk 'NR <= 128 { printf $2 }' > $bigrams &&
+                awk 'NR <= 128 { print $2 }' > $bigrams &&
         $code $bigrams < $filelist 
 else
         echo "`basename $0`: cannot build locate database" >&2
