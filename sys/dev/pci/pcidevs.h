@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.458 2001/10/31 06:14:19 nate Exp 
+ *		OpenBSD: pcidevs,v 1.457 2001/10/25 16:43:02 mickey Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1464,8 +1464,10 @@
 #define	PCI_PRODUCT_MOT_MPC106	0x0002		/* MPC106 Host-PCI */
 #define	PCI_PRODUCT_MOT_SM56	0x5600		/* SM56 */
 #define	PCI_PRODUCT_MOT_RAVEN	0x4801		/* Raven Host-PCI */
+
 /* Mylex products */
 #define	PCI_PRODUCT_MYLEX_960P	0x0001		/* DAC960P RAID */
+#define	PCI_PRODUCT_MYLEX_ACCELERAID	0x0050		/* AcceleRAID */
 
 /* Mutech products */
 #define	PCI_PRODUCT_MUTECH_MV1000	0x0001		/* MV1000 */

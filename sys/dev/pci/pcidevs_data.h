@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.458 2001/10/31 06:14:19 nate Exp 
+ *		OpenBSD: pcidevs,v 1.457 2001/10/25 16:43:02 mickey Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -2757,6 +2757,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_MYLEX, PCI_PRODUCT_MYLEX_960P,
 	    "DAC960P RAID",
+	},
+	{
+	    PCI_VENDOR_MYLEX, PCI_PRODUCT_MYLEX_ACCELERAID,
+	    "AcceleRAID",
 	},
 	{
 	    PCI_VENDOR_MUTECH, PCI_PRODUCT_MUTECH_MV1000,
