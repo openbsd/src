@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82596.c,v 1.17 2002/12/11 19:35:51 mickey Exp $	*/
+/*	$OpenBSD: i82596.c,v 1.18 2002/12/19 01:25:21 mickey Exp $	*/
 /*	$NetBSD: i82586.c,v 1.18 1998/08/15 04:42:42 mycroft Exp $	*/
 
 /*-
@@ -359,10 +359,10 @@ i82596_cmd_wait(sc)
 		bus_space_barrier(sc->bt, sc->bh, off, 2,
 				  BUS_SPACE_BARRIER_READ);
 		if ((sc->ie_bus_read16)(sc, off) == 0) {
-#ifdef I82596_DEBUG1
+#ifdef I82596_DEBUG
 			if (sc->sc_debug & IED_CMDS)
 				printf("%s: cmd_wait after %d usec\n",
-				    sc->sc_dev.dv_xname, (90000 - i) * 10);
+				    sc->sc_dev.dv_xname, (180000 - i) * 5);
 #endif
 			return (0);
 		}
