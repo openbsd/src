@@ -1,5 +1,5 @@
-/*	$OpenBSD: audio.c,v 1.4 1996/02/27 09:43:15 niklas Exp $	*/
-/*	$NetBSD: audio.c,v 1.17 1996/02/16 02:25:43 mycroft Exp $	*/
+/*	$OpenBSD: audio.c,v 1.5 1996/03/02 00:29:19 niklas Exp $	*/
+/*	$NetBSD: audio.c,v 1.20 1996/02/20 11:47:22 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -626,7 +626,7 @@ audio_init_play(sc)
 	int s = splaudio();
 
 	sc->sc_mode |= AUMODE_PLAY;
-	sc->sc_rblks = 0;
+	sc->sc_rblks = sc->sc_wblks = 0;
 	if (sc->hw_if->speaker_ctl)
 		sc->hw_if->speaker_ctl(sc->hw_hdl, SPKR_ON);
 	splx(s);
@@ -647,7 +647,7 @@ audio_drain(sc)
 		 * timeout.
 		 */
 		error = audio_sleep_timo(&sc->sc_wchan, "aud dr", 60*hz);
-		if (error != 0)
+		if (error)
 			return (error);
 	}
 	return (0);
@@ -738,7 +738,7 @@ audio_read(dev, uio, ioflag)
 					return (EWOULDBLOCK);
 				}
 				error = audio_sleep(&sc->sc_rchan, "aud hr");
-				if (error != 0) {
+				if (error) {
 					splx(s);
 					return (error);
 				}
@@ -747,7 +747,9 @@ audio_read(dev, uio, ioflag)
 			error = audio_silence_copyout(sc, blocksize, uio);
 			if (error)
 				break;
+			s = splaudio();
 			--sc->sc_rblks;
+			splx(s);
 		} while (uio->uio_resid >= blocksize);
 		return (error);
 	}
@@ -763,7 +765,7 @@ audio_read(dev, uio, ioflag)
 				audiostartr(sc);
 			error = audio_sleep(&sc->sc_rchan, "aud rd");
 			splx(s);
-			if (error != 0)
+			if (error)
 				return (error);
 		}
 		hp = cb->hp;
@@ -796,6 +798,7 @@ audio_clear(sc)
 	}
 	AU_RING_INIT(&sc->rr);
 	AU_RING_INIT(&sc->pr);
+	sc->sc_rblks = sc->sc_wblks = 0;
 
 	splx(s);
 }
@@ -1028,16 +1031,26 @@ audio_write(dev, uio, ioflag)
 
 		/* wrap the ring buffer if at end */
 		s = splaudio();
-		if (tp >= cb->ep)
-			tp = cb->bp;
-		cb->tp = tp;
-		++cb->nblk;	/* account for buffer filled */
+		if ((sc->sc_mode & AUMODE_PLAY_ALL) == 0 && sc->sc_wblks)
+			/*
+			 * discard the block if we sent out a silence
+			 * packet that hasn't yet been countered
+			 * by user data.  (They must supply enough
+			 * data to catch up to "real time").
+			 */
+			sc->sc_wblks--;
+		else {
+			if (tp >= cb->ep)
+				tp = cb->bp;
+			cb->tp = tp;
+			++cb->nblk;	/* account for buffer filled */
 
-		/*
-		 * If output isn't active, start it up.
-		 */
-		if (sc->sc_pbus == 0)
-			audiostartp(sc);
+			/*
+			 * If output isn't active, start it up.
+			 */
+			if (sc->sc_pbus == 0)
+				audiostartp(sc);
+		}
 		splx(s);
 	}
 	return (error);
@@ -1060,6 +1073,15 @@ audio_ioctl(dev, cmd, addr, flag, p)
 	          IOCPARM_LEN(cmd), IOCGROUP(cmd), cmd&0xff));
 	switch (cmd) {
 
+	case FIOASYNC:
+		if (*(int *)addr) {
+			if (sc->sc_async)
+				return (EBUSY);
+			sc->sc_async = p;
+		} else
+			sc->sc_async = 0;
+		break;
+
 	case AUDIO_FLUSH:
 		DPRINTF(("AUDIO_FLUSH\n"));
 		audio_clear(sc);
@@ -1075,11 +1097,15 @@ audio_ioctl(dev, cmd, addr, flag, p)
 		break;
 
 	/*
-	 * Number of read samples dropped.  We don't know where or
+	 * Number of read (write) samples dropped.  We don't know where or
 	 * when they were dropped.
 	 */
 	case AUDIO_RERROR:
-		*(int *)addr = sc->rr.cb_drops != 0;
+		*(int *)addr = sc->rr.cb_drops;
+		break;
+
+	case AUDIO_PERROR:
+		*(int *)addr = sc->pr.cb_drops;
 		break;
 
 	/*
@@ -1310,7 +1336,8 @@ audio_pint(sc)
 					   audio_pint, (void *)sc)) {
 			DPRINTF(("audio_pint zero failed: %d\n", err));
 			audio_clear(sc);
-		}
+		} else
+			++sc->sc_wblks;
 	}
 
 #ifdef AUDIO_DEBUG
@@ -1321,6 +1348,8 @@ audio_pint(sc)
 		if (cb->nblk <= sc->sc_lowat) {
 			audio_wakeup(&sc->sc_wchan);
 			selwakeup(&sc->sc_wsel);
+			if (sc->sc_async)
+				psignal(sc->sc_async, SIGIO);
 		}
 	}
 
@@ -1332,6 +1361,8 @@ audio_pint(sc)
 	if (hw->full_duplex) {
 		audio_wakeup(&sc->sc_rchan);
 		selwakeup(&sc->sc_rsel);
+		if (sc->sc_async)
+			psignal(sc->sc_async, SIGIO);
 	}
 }
 
@@ -1386,6 +1417,8 @@ audio_rint(sc)
 
 	    	audio_wakeup(&sc->sc_rchan);
 	    	selwakeup(&sc->sc_rsel);
+		if (sc->sc_async)
+			psignal(sc->sc_async, SIGIO);
 	}
 }
 
@@ -1408,7 +1441,7 @@ audiosetinfo(sc, ai)
 			audio_clear(sc);
 		cleared = 1;
 		error = hw->set_out_sr(sc->hw_hdl, p->sample_rate);
-		if (error != 0)
+		if (error)
 			return(error);
 		sc->sc_50ms = 50 * hw->get_out_sr(sc->hw_hdl) / 1000;
 	}
@@ -1417,7 +1450,7 @@ audiosetinfo(sc, ai)
 			audio_clear(sc);
 		cleared = 1;
 		error = hw->set_in_sr(sc->hw_hdl, r->sample_rate);
-		if (error != 0)
+		if (error)
 			return(error);
 		sc->sc_50ms = 50 * hw->get_in_sr(sc->hw_hdl) / 1000;
 	}
@@ -1426,7 +1459,7 @@ audiosetinfo(sc, ai)
 			audio_clear(sc);
 		cleared = 1;
 		error = hw->set_encoding(sc->hw_hdl, p->encoding);
-		if (error != 0)
+		if (error)
 			return(error);
 		sc->sc_pencoding = p->encoding;
 	}	
@@ -1435,7 +1468,7 @@ audiosetinfo(sc, ai)
 			audio_clear(sc);
 		cleared = 1;
 		error = hw->set_encoding(sc->hw_hdl, r->encoding);
-		if (error != 0)
+		if (error)
 			return(error);
 		sc->sc_rencoding = r->encoding;
 	}
@@ -1444,7 +1477,7 @@ audiosetinfo(sc, ai)
 			audio_clear(sc);
 		cleared = 1;
 		error = hw->set_precision(sc->hw_hdl, p->precision);
-		if (error != 0)
+		if (error)
 			return(error);
 		
 		sc->sc_blksize = audio_blocksize = audio_calc_blksize(sc);
@@ -1458,7 +1491,7 @@ audiosetinfo(sc, ai)
 			audio_clear(sc);
 		cleared = 1;
 		error = hw->set_precision(sc->hw_hdl, r->precision);
-		if (error != 0)
+		if (error)
 			return(error);
 		
 		sc->sc_blksize = audio_blocksize = audio_calc_blksize(sc);
@@ -1472,7 +1505,7 @@ audiosetinfo(sc, ai)
 			audio_clear(sc);
 		cleared = 1;
 		error = hw->set_channels(sc->hw_hdl, p->channels);
-		if (error != 0)
+		if (error)
 			return(error);
 
 		sc->sc_blksize = audio_blocksize = audio_calc_blksize(sc);
@@ -1486,7 +1519,7 @@ audiosetinfo(sc, ai)
 			audio_clear(sc);
 		cleared = 1;
 		error = hw->set_channels(sc->hw_hdl, r->channels);
-		if (error != 0)
+		if (error)
 			return(error);
 
 		sc->sc_blksize = audio_blocksize = audio_calc_blksize(sc);
@@ -1500,7 +1533,7 @@ audiosetinfo(sc, ai)
 			audio_clear(sc);
 		cleared = 1;
 		error = hw->set_out_port(sc->hw_hdl, p->port);
-		if (error != 0)
+		if (error)
 			return(error);
 	}
 	if (r->port != ~0) {
@@ -1508,7 +1541,7 @@ audiosetinfo(sc, ai)
 			audio_clear(sc);
 		cleared = 1;
 		error = hw->set_in_port(sc->hw_hdl, r->port);
-		if (error != 0)
+		if (error)
 			return(error);
 	}
 	if (p->gain != ~0) {
@@ -1516,14 +1549,18 @@ audiosetinfo(sc, ai)
 		ct.type = AUDIO_MIXER_VALUE;
 		ct.un.value.num_channels = 1;
 		ct.un.value.level[AUDIO_MIXER_LEVEL_MONO] = p->gain;
-		hw->set_port(sc->hw_hdl, &ct);
+		error = hw->set_port(sc->hw_hdl, &ct);
+		if (error)
+			return(error);
 	}
 	if (r->gain != ~0) {
 		ct.dev = hw->get_in_port(sc->hw_hdl);
 		ct.type = AUDIO_MIXER_VALUE;
 		ct.un.value.num_channels = 1;
 		ct.un.value.level[AUDIO_MIXER_LEVEL_MONO] = r->gain;
-		hw->set_port(sc->hw_hdl, &ct);
+		error = hw->set_port(sc->hw_hdl, &ct);
+		if (error)
+			return(error);
 	}
 	
 	if (p->pause != (u_char)~0) {
@@ -1593,7 +1630,7 @@ audiosetinfo(sc, ai)
 			audio_init_record(sc);
 	}
 	error = hw->commit_settings(sc->hw_hdl);
-	if (error != 0)
+	if (error)
 		return (error);
 
 	if (cleared) {

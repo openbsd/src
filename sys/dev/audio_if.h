@@ -1,4 +1,5 @@
-/*	$NetBSD: audio_if.h,v 1.5 1995/07/19 19:58:23 brezak Exp $	*/
+/*	$OpenBSD: audio_if.h,v 1.3 1996/03/02 00:29:20 niklas Exp $	*/
+/*	$NetBSD: audio_if.h,v 1.6 1995/12/24 02:30:58 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Havard Eidnes.
