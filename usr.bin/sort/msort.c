@@ -1,4 +1,4 @@
-/*	$OpenBSD: msort.c,v 1.2 1997/01/22 06:43:53 millert Exp $	*/
+/*	$OpenBSD: msort.c,v 1.3 1997/01/22 06:53:15 millert Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)msort.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: msort.c,v 1.2 1997/01/22 06:43:53 millert Exp $";
+static char rcsid[] = "$OpenBSD: msort.c,v 1.3 1997/01/22 06:53:15 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -119,7 +119,7 @@ fmerge(binno, files, nfiles, get, outfp, fput, ftbl)
 				for (i = 0; i < last; i++)
 					if (!(l_fstack[i+MAXFCT-1-16].fp =
 					    fopen(files.names[j + i], "r")))
-						err(2, "%s", files.names[j+i]);
+						err(2, files.names[j+i]);
 				merge(MAXFCT-1-16, last, get, tout, put, ftbl);
 			}
 			else {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: files.c,v 1.2 1997/01/22 06:43:51 millert Exp $	*/
+/*	$OpenBSD: files.c,v 1.3 1997/01/22 06:53:13 millert Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)files.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: files.c,v 1.2 1997/01/22 06:43:51 millert Exp $";
+static char rcsid[] = "$OpenBSD: files.c,v 1.3 1997/01/22 06:53:13 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -155,7 +155,7 @@ makeline(flno, filelist, nfiles, buffer, bufend, dummy2)
 		} else if (!fp) {
 			if (fileno  >= nfiles) return(EOF);
 			if (!(fp = fopen(filelist.names[fileno], "r")))
-				err(2, "%s", filelist.names[fileno]);
+				err(2, filelist.names[fileno]);
 			++fileno;
 		}
 		while ((pos < end) && ((c = getc(fp)) != EOF)) {
@@ -221,7 +221,7 @@ makekey(flno, filelist, nfiles, buffer, bufend, ftbl)
 				return (EOF);
 			dbdesc = fopen(filelist.names[fileno], "r");
 			if (!dbdesc)
-				err(2, "%s", filelist.names[fileno]);
+				err(2, filelist.names[fileno]);
 			++fileno;
 			get = seq;
 		}
