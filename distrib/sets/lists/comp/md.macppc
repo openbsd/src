@@ -191,6 +191,11 @@
 ./usr/libdata/ldscripts/elf32ppcsim.xr
 ./usr/libdata/ldscripts/elf32ppcsim.xs
 ./usr/libdata/ldscripts/elf32ppcsim.xu
+./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/umct.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/umidi_quirks.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/umidireg.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/umidivar.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/hash.ph
 ./usr/share/man/cat1/gdb.0
 ./usr/share/man/cat1/objcopy.0
 ./usr/share/man/cat1/objdump.0

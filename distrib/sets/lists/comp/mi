@@ -625,6 +625,10 @@
 ./usr/include/dev/usb/uhcivar.h
 ./usr/include/dev/usb/uhidev.h
 ./usr/include/dev/usb/ukbdvar.h
+./usr/include/dev/usb/umct.h
+./usr/include/dev/usb/umidi_quirks.h
+./usr/include/dev/usb/umidireg.h
+./usr/include/dev/usb/umidivar.h
 ./usr/include/dev/usb/urio.h
 ./usr/include/dev/usb/usb.h
 ./usr/include/dev/usb/usb_mem.h
@@ -1360,6 +1364,7 @@
 ./usr/include/sys/filedesc.h
 ./usr/include/sys/filio.h
 ./usr/include/sys/gmon.h
+./usr/include/sys/hash.h
 ./usr/include/sys/ioccom.h
 ./usr/include/sys/ioctl.h
 ./usr/include/sys/ioctl_compat.h

@@ -129,5 +129,10 @@
 ./usr/lib/libwrap_pic.a
 ./usr/lib/libz_pic.a
 ./usr/lib/scrt0.o
+./usr/libdata/perl5/site_perl/sparc-openbsd/dev/usb/umct.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/dev/usb/umidi_quirks.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/dev/usb/umidireg.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/dev/usb/umidivar.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/sys/hash.ph
 ./usr/share/man/cat1/gdb.0
 ./usr/share/man/cat1/objdump.0
