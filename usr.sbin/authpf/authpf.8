@@ -1,4 +1,4 @@
-.\" $OpenBSD: authpf.8,v 1.15 2002/06/24 07:59:48 deraadt Exp $
+.\" $OpenBSD: authpf.8,v 1.16 2002/06/24 09:59:54 dhartmei Exp $
 .\"
 .\" Copyright (c) 2002 Bob Beck (beck@openbsd.org>.  All rights reserved.
 .\"
@@ -413,7 +413,7 @@ pass in log quick on $internal_if proto tcp from $user_ip/32 to any \\
 pass in quick on $internal_if proto tcp from $user_ip/32 to any \\
  port { 21, 22, 80, 443 }
 pass in quick proto udp from $user_ip/32 to $ipsec_gw/32 port = isakmp \\
- keep-state
+ keep state
 pass in quick proto esp from $user_ip/32 to $ipsec_gw/32
 .Ed
 .Sh FILES
