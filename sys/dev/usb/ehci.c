@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.35 2005/02/28 12:35:44 pascoe Exp $ */
+/*	$OpenBSD: ehci.c,v 1.36 2005/03/06 05:12:00 pascoe Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -868,12 +868,11 @@ ehci_idone(struct ehci_xfer *ex)
 void
 ehci_waitintr(ehci_softc_t *sc, usbd_xfer_handle xfer)
 {
-	int timo = xfer->timeout;
-	int usecs;
+	int timo;
 	u_int32_t intrs;
 
 	xfer->status = USBD_IN_PROGRESS;
-	for (usecs = timo * 1000000 / hz; usecs > 0; usecs -= 1000) {
+	for (timo = xfer->timeout; timo >= 0; timo--) {
 		usb_delay_ms(&sc->sc_bus, 1);
 		if (sc->sc_dying)
 			break;
