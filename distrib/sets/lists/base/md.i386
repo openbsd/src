@@ -712,7 +712,6 @@
 ./usr/sbin/ispcvt
 ./usr/sbin/kcon
 ./usr/sbin/loadfont
-./usr/sbin/mcon
 ./usr/sbin/memconfig
 ./usr/sbin/pccon
 ./usr/sbin/scon
