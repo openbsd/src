@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2000, 2002 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -40,7 +40,7 @@
 #include <fs.h>
 #include "arladeb.h"
 
-RCSID("$KTH: arladebu.c,v 1.3 2000/10/02 22:30:38 lha Exp $");
+RCSID("$arla: arladebu.c,v 1.5 2002/07/24 06:01:07 lha Exp $");
 
 #define all (ADEBERROR | ADEBWARN | ADEBDISCONN | ADEBFBUF |		\
 	     ADEBMSG | ADEBKERNEL | ADEBCLEANER | ADEBCALLBACK |	\
@@ -65,6 +65,7 @@ struct units arla_deb_units[] = {
     { "initialization",	ADEBINIT },
     { "connection",	ADEBCONN },
     { "miscellaneous",	ADEBMISC },
+    { "invalidator",	ADEBINVALIDATOR },
     { "default",	ARLA_DEFAULT_LOG },
     { "none",		0 },
     { NULL }

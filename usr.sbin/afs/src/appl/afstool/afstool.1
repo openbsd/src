@@ -1,0 +1,149 @@
+.\" Copyright (c) 2003 Kungliga Tekniska Högskolan
+.\" (Royal Institute of Technology, Stockholm, Sweden).
+.\" All rights reserved.
+.\" 
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 
+.\" 3. Neither the name of the Institute nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\" 
+.\" THIS SOFTWARE IS PROVIDED BY THE INSTITUTE AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE INSTITUTE OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"	$arla: afstool.1,v 1.12 2003/03/06 16:35:02 lha Exp $
+.Dd March 4, 2003
+.Dt AFSTOOL 1
+.Os
+.Sh NAME
+.Nm afstool
+.Nd tool for AFS maintence
+.Sh SYNOPSIS
+.Nm
+.Ar command
+.Op Ar args
+.Sh DESCRIPTION
+The
+.Nm
+probes, display, modifies and maintain the
+.Nm AFS
+system
+.Pp
+The commands are:
+.Pp
+.Bl -inset -compact
+.It Ic cachemanager localcell
+.It Ic cachemanager whoareyou
+.It Ic fileserver flushcps
+.It Ic fileserver getcapabilities
+.It Ic fileserver gettime
+.It Ic version
+.It Ic ubik debug
+.El
+.Pp
+For each subclass there are some common commands
+.Pp
+.Bl -inset -compact
+.It Ic apropos
+.It Ic help
+.El
+.Pp
+All the detail of the commands 
+.Nm
+commands:
+.Pp
+.Bl -inset
+.It Ic cachemanager localcell
+.Op Fl -port Ar portnumber
+.Op Fl -cell Ar cellname
+.Op Fl -no-auth
+.Ar host ...
+.Bd -filled -offset indent -compact
+Query a callback manager on
+.Ar hostname
+(or localhost if not given) for the local cellname on
+.Ar port
+is default 7001 (the port arlad is using).
+.Ed
+.It Ic cachemanager whoareyou
+.Op Fl -port Ar portnumber
+.Op Fl -cell Ar cellname
+.Op Fl -no-auth
+.Ar hostname ...
+.Bd -filled -offset indent -compact
+Query a callback manager on
+.Ar hostname
+(or localhost if not given) for interface information. The
+.Ar port
+is default 7001 (the port arlad is using).
+.Ed
+.It Ic fileserver flushcps
+.Op Fl -hosts=cache-managers
+.Op Fl -viceids=vice-ids
+.Op Fl -cell=cellname
+.Op Fl -no-auth
+.Op Fl -verbose
+.Ar host ...
+.Bd -filled -offset indent -compact
+Flush the Current Protection Set (CPS) from the fileserver either
+specifed by AFS user-id (viceid) or hostname/address of cache-managers.
+.Ed
+.It Ic fileserver getcapabilities
+.Op Fl -cell=cellname
+.Op Fl -no-auth
+.Op Fl -verbose
+.Ar host ...
+.Bd -filled -offset indent -compact
+Displays the capabilities of the fileserver.
+.Ed
+.It Ic fileserver gettime
+.Op Fl -cell=cellname
+.Op Fl -no-auth
+.Op Fl -verbose
+.Ar host ...
+.Bd -filled -offset indent -compact
+Fetches the time from the fileserver.
+.Ed
+.It Ic version
+.Bd -filled -offset indent -compact
+Display the version number of
+.Nm
+.Ed
+.It Ic ubik debug
+.Op Fl -port=portname
+.Op Fl -cell=cellname
+.Op Fl -no-auth
+.Op Fl -verbose
+.Ar host ...
+.Bd -filled -offset indent -compact
+print ubik debug information from ubik voting service.
+Common ubik servers are running on the
+.Nm afs3-prserver (7002),
+and
+.Nm afs3-vlserver (7003).
+.Ed
+.El
+.Sh SEE ALSO
+.Xr fs 8 ,
+.Xr pts 1 ,
+.Xr vos 8
+.Sh AUTHORS
+The Arla project <http://www.stacken.kth.se/project/arla/>.

@@ -1,0 +1,104 @@
+@c Copyright (c) 2002 Kungliga Tekniska Högskolan
+@c (Royal Institute of Technology, Stockholm, Sweden).
+@c All rights reserved.
+
+@c $arla: pioctl.texi,v 1.5 2002/06/02 17:52:28 lha Exp $
+
+@chapter Arla pioctl's
+
+This chaper documents arla pioctl's. Arla's pioct are in the @code{A}
+range of the pioctls. OpenAFS uses @code{O} and orignal Transarc uses
+@code{V}.
+
+@enumerate
+
+@code{AIOC_STATISTICS}
+
+XXX max constants
+
+@enumerate
+
+@item
+@code{opcode STATISTICS_OPCODE_LIST}
+
+Get a specific host/partition entry.
+
+@item
+@code{opcode STATISTICS_OPCODE_GETENTRY}
+
+Get a specific entry. The 5 values that are passed in are: opcode
+(STATISTICS_OPCODE_GETENTRY), ipv4-host-address, partition,
+type-of-data, slot in the histogram.
+
+Possible types of data are:
+
+@enumerate
+
+@item
+@code{STATISTICS_REQTYPE_FETCHSTATUS}
+
+@item
+@code{STATISTICS_REQTYPE_FETCHDATA}
+
+@item
+@code{STATISTICS_REQTYPE_BULKSTATUS}
+
+@item
+@code{STATISTICS_REQTYPE_STOREDATA}
+
+@item
+@code{STATISTICS_REQTYPE_STORESTATUS}
+
+@end enumerate
+
+@end enumerate
+
+@code{AIOC_PTSNAMETOID}
+
+Return a pts name to id for a cell, the cell is referenced by the file
+that is passed into the request, or by name.
+
+XXX document format
+
+@code{AIOC_GETCACHEPARAMS}
+
+Common format In: an int32_t that is the opcode.  Out: a int64_t that
+describes the requisted value.
+
+@enumerate
+
+@item
+@code{GETCACHEPARAMS_OPCODE_HIGHBYTES}
+        
+Get the high bytes watermark.
+
+@item
+@code{GETCACHEPARAMS_OPCODE_USEDBYTES}
+        
+Get the current used bytes.
+
+@item
+@code{GETCACHEPARAMS_OPCODE_LOWBYTES}
+
+Get the low bytes watermark.
+
+@item
+@code{GETCACHEPARAMS_OPCODE_HIGHVNODES}
+
+Get the high vnode watermark.
+
+@item
+@code{GETCACHEPARAMS_OPCODE_USEDVNODES}
+        
+Get the current used vnodes.
+
+@item
+@code{GETCACHEPARAMS_OPCODE_LOWVNODES}
+
+Get the low vnode watermark.
+
+@end enumerate
+
+
+@end enumerate
+

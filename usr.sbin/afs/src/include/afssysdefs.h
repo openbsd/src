@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  */
 
-/* $KTH: afssysdefs.h,v 1.1.2.5 2001/03/04 05:09:46 lha Exp $ */
+/* $arla: afssysdefs.h,v 1.7 2003/04/03 20:02:49 lha Exp $ */
 
 /*
  * This section is for machines using single entry point AFS syscalls!
@@ -87,8 +87,12 @@
 #endif
 
 #if defined(__FreeBSD__)
+#if __FreeBSD_version >= 500000
 #define AFS_SYSCALL 339
+#else
+#define AFS_SYSCALL 210
 #endif
+#endif /* __FreeBSD__ */
 
 #if defined(__OpenBSD__)
 #define AFS_SYSCALL 208

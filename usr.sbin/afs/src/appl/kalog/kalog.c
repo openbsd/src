@@ -35,7 +35,7 @@
 #include <config.h>
 #endif
 
-RCSID("$KTH: kalog.c,v 1.4 2001/01/08 16:52:36 lha Exp $");
+RCSID("$arla: kalog.c,v 1.8 2003/01/17 03:30:21 lha Exp $");
 
 #include <sys/types.h>
 #include <stdio.h>
@@ -50,7 +50,11 @@ RCSID("$KTH: kalog.c,v 1.4 2001/01/08 16:52:36 lha Exp $");
 #include <arlalib.h>
 
 #include <ka.cs.h>
+#ifdef HAVE_OPENSSL
+#include <openssl/des.h>
+#else
 #include <des.h>
+#endif
 #include <krb.h>
 
 #include <ka-procs.h>
@@ -58,6 +62,7 @@ RCSID("$KTH: kalog.c,v 1.4 2001/01/08 16:52:36 lha Exp $");
 #include <roken.h>
 #include <err.h>
 
+#include <vers.h>
 
 static void
 parse_user (char *argv1, const char **user, const char **cell)
@@ -89,8 +94,9 @@ main (int argc, char **argv)
     const char *user;
 
     set_progname (argv[0]);
+    tzset();
 
-    method = log_open (get_progname(), "/dev/stderr:notime");
+    method = log_open (getprogname(), "/dev/stderr:notime");
     if (method == NULL)
 	errx (1, "log_open failed");
     cell_init(0, method);
@@ -100,11 +106,14 @@ main (int argc, char **argv)
 
     if (argc == 1)
 	user = get_default_username();
-    else if (argc == 2)
+    else if (strcmp("-version", argv[1]) == 0) {
+	print_version(NULL);
+	return 0;
+    } else if (argc == 2)
 	parse_user (argv[1], &user, &cellname);
     else {
-	fprintf (stderr, "usage: %s [username[@cell]]\n",
-		 get_progname());
+	fprintf (stderr, "usage: %s [-version] [username[@cell]]\n",
+		 getprogname());
 	exit (1);
     }
 

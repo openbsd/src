@@ -1,8 +1,8 @@
-@c Copyright (c) 2000 Kungliga Tekniska Högskolan
+@c Copyright (c) 2000, 2001 Kungliga Tekniska Högskolan
 @c (Royal Institute of Technology, Stockholm, Sweden).
 @c All rights reserved.
 
-@c $KTH: real-world.texi,v 1.3 2000/12/01 08:32:24 lha Exp $
+@c $arla: real-world.texi,v 1.11 2002/12/20 08:44:34 lha Exp $
 
 @node AFS and the real world, Parts of Arla, Organization of data, Top
 @comment  node-name,  next,  previous,  up
@@ -13,9 +13,10 @@ This chapter tries to describe problems that you see in the real (not
 that perfect) world and show possible solutions to these problems.
 
 @menu
-* NAT::				Really evil stuff.
+* NAT::				Truly evil stuff.
 * Samba::			Export AFS to Windows computers.
 * Integration with Kerberos:: 	How to integrate Kerberos with AFS.
+* Kerberos tickets and AFS tokens:: History and tools
 @end menu
 
 @node NAT, Samba, AFS and the real world, AFS and the real world
@@ -26,8 +27,9 @@ that perfect) world and show possible solutions to these problems.
 @cindex Masquerading
 @cindex PAT
 @cindex ALG
-There's something evil out there that's called NAT.  For whatever
-reasons, people are using it and will continue doing so.
+There's something evil out there that's called NAT, which stands for
+Network Address Translation. For whatever reasons, people are using it
+and will continue doing so.
 
 First of all, it seemed like AFS should work just fine through NAT, you
 just appear to be coming from the NAT-address and some random port
@@ -45,14 +47,29 @@ they have a rather short timeout:
 300 seconds
 @end table
 
-And if the client doesn't transmit any traffic to a particular host
-for that amount of time, it will get mapped into a new address.  And
-then the server will just figure out it has a new client, right?
+If the client doesn't transmit any traffic to a particular host for that
+amount of time, it will get mapped to one of the IP address of the
+NAT-server (if you happen to run PAT, the port will be randomized too).
 
-Wrong, the rx-connection is cached on the connection id, not the
-host/port pair. This is right, but the connection is never updated in
-the original rx-code. This have the unfortunate effect that the server
-keep talking to the old client.
+The authors of Rx realized that keeping a Rx connection associated with
+(IP-address,port) pair was a bad idea. One example is that you get
+problems with multi-homed hosts. So Rx keeps its own connection id data in
+the packet. With this feature client and server should be able to detect
+address changes.
+
+Unfortunately, the use of the orignal Rx-code stops this from happening
+in Transarc/OpenAFS code. The code keeps track of incoming packets and
+keeps track of the right peer (client). But it never updates the
+IP-address,port pair in its data structure, so the answer packet will go
+to the old IP-address,port pair.
+
+If you can control your NAT machine you can have static mapping for
+your AFS hosts. Transarc/OpenAFS and Arla uses source port 7001 (Arla
+older then 0.36 uses source port 4711). You can also try to use
+Natkeep @url{http://mit.edu/zacheiss/www/natkeep/} if you run an old
+Arla or Transarc/OpenAFS client. Arla 0.36 and later have support for
+polling the servers at the right interval to prevent NAT from dropping
+information about your session.
 
 @node Samba, Integration with Kerberos, NAT, AFS and the real world
 @comment  node-name,  next,  previous,  up
@@ -60,29 +77,203 @@ keep talking to the old client.
 
 @cindex Samba
 
-The major problem with getting AFS to exported read-write to SMB
-(Windows fileshareing) using Samba is how to transfer the user token to
+The major problem when exporting the AFS filespace read-write to SMB
+(Windows fileshareing) using Samba is the transfer of the user token to
 the smb-server. The simple may is to use clear-text password between the
-samba-server and the client, and then get tokens for the user with this
-password. This solution is clearly not acceptable for AFS administrators
-that are security aware.
+Windows client and the samba-server, and then to get tokens for the user
+with this password. This solution is clearly not acceptable for security
+aware AFS administrators.
 
 Describe here how to make AFS work "securely" with samba.
 
-@node Integration with Kerberos, , Samba, AFS and the real world
+On solution is to use @code{kimpersonate} + store afs key on
+fileserver (talk to Love).
+
+@node Integration with Kerberos, Kerberos tickets and AFS tokens, Samba, AFS and the real world
 @comment  node-name,  next,  previous,  up
 @section Integration with Kerberos
 
-Kerberos 4 and 5 can be integrated quite well with AFS. This is many due
-to that the security model used in AFS is in fact Keberos. The kaserver
-is a Kerberos 4 server with pre-authentication. Kaserver also provides a
-feature that you can only try a password N times, and after that you are
-locked out for half-an-hour. This feature require that
-pre-authentication is used, but since the ka-server provides a Kerberos
-4 interface (that doesn't use pre-authentication) is mostly worthless.
+@cindex ThisCell
+@cindex TheseCells
+@cindex KeyFile
+@cindex kaserver
+@cindex kerberosserver
 
-Many sites indeed uses a kerberosserver instead of a kaserver. One of
-the resons are that they want to use Kerberos 5 (with for example
-Windows 2000).
+Kerberos 4 and 5 can be integrated quite well with AFS. This is mainly
+due to the fact that the security model used in AFS is Kerberos. The
+kaserver is a Kerberos 4 server with pre-authentication. The kaserver
+also provides a feature that limits the number of password retries, and
+after that you are locked out for half an hour. This feature can only be
+used in the ka interface as it requires pre-authentication, but since
+the kaserver provides a Kerberos 4 interface (without pre-authentication
+and without this limitation) it is quite worthless.
 
-More text here how to create KeyFile, and describe TheseCells.
+Many sites indeed use a kerberosserver instead of a kaserver. One of
+the reasons is that they want to use Kerberos 5 (which is required
+for Windows 2000).
+
+To use a kerberosserver, you have to put the same key into the AFS
+KeyFile and the principal named afs of your kerberos realm. If you have
+a cell which has another name than lowercase of your realmname, the
+instance is the cellname. As the cellname often contains dots, this can
+be quite confusing in Kerberos 4: afs.stacken.kth.se@@STACKEN.KTH.SE. The
+first dot is the seperator between principal and instance, the other
+dots are part of the name. The simplest way to do create a KeyFile on
+your AFS server is to use heimdal's kadmin to generate and extract a
+KeyFile. It has an option designed to do so. Be aware that the serial
+number of the afs principal must match on all kerberos servers and
+all KeyFiles on all AFS servers.
+
+The default cellname to get a kerberos ticket for is contained in the
+configuration file @file{ThisCell}. If you got more than one cell, you
+want to list all cells to get tickets for in the @file{TheseCells} file.
+
+@comment Still more text here on KeyFile and TheseCells?
+
+@node Kerberos tickets and AFS tokens, , Integration with Kerberos, AFS and the real world
+@comment  node-name,  next,  previous,  up
+@section Kerberos tickets and AFS tokens
+
+@cindex Tickets
+@cindex Tokens
+@cindex kinit
+@cindex kauth
+@cindex afslog
+@cindex aklog
+@cindex klog
+@cindex kalog
+
+To further confuse the poor user, AFS and Kerberos programmers decided
+that they wanted to store their credentials at different places. In AFS,
+the kernel was a natural place to store the credentials (named token)
+since the CMU/Transarc AFS/OpenAFS implementation lives in the
+kernel. The Kerberos people on the other hand thought that storing the
+credentials (named ticket) in a file would be a good idea.
+
+So know you have to synchronize the credentials if you just want to
+enter your password once. There are several tools that can do that for
+you. The question is what tools to use for what problem.
+
+To add to the confusion not all tools talk to both Kerberos and
+kaservers. There is also a bogus user-id in the token that is supposed
+to be the same as your pts-user-id. Not that it makes any difference,
+but some people get confused when unknown numbers show up in the token.
+The easily confused people are often the ones that have more than one
+principal in the same realm/cell (read sysadmins).
+
+If you want to get your ticket from your Kerberos server, you use
+@code{kinit}, and then use @code{afslog} or @code{aklog} to get AFS
+tokens and push them to the kernel (and AFS daemon). Some @code{kinit}
+(and @code{kauth}) can do both for you, use @code{kinit --afslog} or
+simply @code{kauth}. Note that @code{kinit} and @code{kauth} don't
+get set your AFS-token user-id right, and thus can be confusing
+for people who think that this is important.
+
+The @code{klog} program that you get with Transarc/OpenAFS talks to the
+kaserver and behaves just-right in the sense that it talks to the pts
+server to get the AFS-token user-id right, but @code{klog} talks only to
+the kaserver which will not work for people with a Kerberos server.
+@code{Klog} in Arla was written by Chris Wing
+@email{wingc@@engin.umich.edu} as a part of a packet called
+@code{afsutils}, they did the right thing and talked to the pts-server
+to get the user-id. However, it uses Kerberos libs to talk to the
+server. These libraries require the files @file{/etc/krb.conf} and
+@file{/etc/krb.realms} to be setup correctly for their cell/realm. Not
+that easy.
+
+A long time ago Ken Hornstein @email{kenh@@cmf.nrl.navy.mil} wrote the
+AFS Migration Kit that helped you to migrate from AFS to MIT Kerberos 5.
+It included a tool named aklog that could convert a Kerberos tickets to
+tokens. This tool was also rewritten in Arla by Brandon S. Allbery
+@email{allbery@@ece.cmu.edu}. @code{aklog} can't get you new
+credentials, it just converts old ones to new ones.
+
+Then Transarc decided that they needed to fix a security hole in their
+kaserver, and while doing that, they managed to break a part in the 
+kaserver so it ceased to work for kerberos requests. 
+
+First the defect existed unnoticed for a long time, later Transarc has
+not managed to distribute a working version of the kaserver. Due to this,
+a lot of sites run a kaserver with this defect. Instead of installing
+working authentification servers from another sources, people started to
+whine again and Love @email{lha@@stacken.kth.se} wrote the tool
+@code{kalog} that talked the ka-protocol (but didn't do the AFS user-id
+right) to work around that problem.
+
+All tools that use Kerberos 4 need a working @file{/etc/krb.conf} and
+@file{/etc/krb.realms}. Kerberos 5 programs need @file{/etc/krb5.conf}.
+AFS aware tools need @file{/usr/arla/etc/CellServDB} or
+@file{/usr/vice/etc/CellServDB}.
+
+Also the Kerberos implementations from KTH (kth-krb and Heimdal) include
+AFS support to make your life more pleasant. One thing is that you can
+have a file @file{$HOME/.TheseCells} that lists the cells you use and the
+Kerberos tools will try to get tickes and tokens for those cells.
+Heimdal contains support for converting a Kerberos 4 srvtab to an AFS
+KeyFile.
+
+Below is a table that describes what tools does what, what
+inheritance(s) they have, and what protocol(s) they speak. From the
+inheritance (also in a table below) it is possible to deduct what
+configuration files the tools use.
+
+@multitable {Transarc/OpenAFS klog} {MIT Kerberos} {Kerberos} {Converts tickets}
+@item Tool
+@tab Inheritance
+@tab Protocol
+@tab Produces
+
+@item Transarc/OpenAFS klog
+@tab afs authlib
+@tab KA
+@tab Ticket and tokens
+
+@item Arla klog
+@tab Kerberos and libkafs
+@tab Kerberos
+@tab Ticket and tokens
+
+@item AFS Migration kit's aklog
+@tab MIT Kerberos and Ken Hornstein's afslib
+@tab Kerberos
+@tab Converts Kerberos tickets to tokens
+
+@item Arla's aklog
+@tab Kerberos and libkafs
+@tab Kerberos
+@tab Converts Kerberos tickets to tokens
+
+@item kth-krb's and Heimdal's afslog
+@tab Kerberos and libkafs
+@tab Kerberos
+@tab Converts Kerberos tickets to tokens
+
+@item kalog
+@tab arla and libkafs
+@tab KA
+@tab Get initial ticket, store tokens and tickets
+
+@end multitable
+
+Inheritance table
+
+@table @samp
+
+@item afs authlib
+Reads @file{CellServDB} and @file{ThisCell} in @file{/usr/vice/etc}
+
+@item Kerberos and libkafs
+Kerberos 4 uses @file{/etc/krb.conf} and
+@file{/etc/krb.realms}. Kerberos 5 uses @file{/etc/krb5.conf}.
+
+@item arla
+Arla uses @file{CellServDB} and @file{ThisCell} in @file{/usr/vice/etc}
+and @file{/usr/arla/etc}
+
+@item libkafs
+Libkafs uses DNS and @file{CellServDB} in @file{/usr/vice/etc} and
+@file{/usr/arla/etc} to figure out what ticket it should convert into
+tables. The file @file{TheseCells} and @file{$HOME/.TheseCells} is used
+to get extra tokens.
+
+@end table

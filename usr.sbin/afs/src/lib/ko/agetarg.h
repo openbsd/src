@@ -31,7 +31,7 @@
  * SUCH DAMAGE. 
  */
 
-/* $KTH: agetarg.h,v 1.4.2.1 2001/03/04 04:30:56 lha Exp $ */
+/* $arla: agetarg.h,v 1.6 2001/01/22 08:06:53 lha Exp $ */
 
 #ifndef __AGETARG_H__
 #define __AGETARG_H__

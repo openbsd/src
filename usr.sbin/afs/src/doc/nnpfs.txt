@@ -1,0 +1,498 @@
+
+NNPFS DOCUMENTATION
+=================
+
+$arla: nnpfs.txt,v 1.13 2002/10/20 23:21:38 lha Exp $
+
+This is not the truth, but close to.
+
+
+TODO
+#include <nnpfs/nnpfs_attr.h>
+
+
+LIMITATIONS and CONSTANTS
+=========================
+
+You can install messages to nnpfs of max size ``MAX_XMSG_SIZE''.
+
+The kernel can at most hold rights of size ``MAXRIGHTS''.
+
+A nnpfs handle have the size of ``MAXHANDLE'', and that is at least 16
+bytes.
+
+The anonymous user had id ``NNPFS_ANONYMOUSID''.
+
+The nnpfs-fh-open-handle has the size of ``CACHEHANDLESIZE'', and it
+is an opaque data-structure.
+
+PAGS
+====
+
+Pags are a hack to separate processes of same UID to make them have
+different access-rights. Pags are saved over setuid(2)/initgroups(2)
+calls. Nnpfs uses a struct ``nnpfs_cred'' to pass over the UID and the pag.
+
+
+TOKENS
+======
+
+This section does not apply to 0.36 or older
+
+Tokens describe what parts of the node are valid, and what rights npfs
+has on those parts.
+
+Open token are requests to open a file, note that OPEN tokens are
+diffrent from DATA token, OPEN are if there is right to open data.
+DATA is if there is data installed.
+
+NNPFS_OPEN_R
+NNPFS_OPEN_W
+
+NNPFS_OPEN_{R,W}_PRE must never be requested by nnpfs in messages to
+the userland daemon. The are installed into the kernel when the
+userland daemon allows async open.
+
+NNPFS_OPEN_R_PRE
+NNPFS_OPEN_W_PRE
+
+Async is used for OPEN when the kernel have a NNPFS_OPEN_{R,W}_PRE and
+wants to notify the user land daemon that it has opened the file.
+
+NNPFS_ASYNC
+
+Attribute token, apply to all attribute except size.
+
+NNPFS_ATTR_R		       /* Attributes valid */
+NNPFS_ATTR_W		       /* Attributes valid and modifiable */
+
+Tokens that apply to node data.
+
+NNPFS_DATA_R		       /* Data valid */
+NNPFS_DATA_W		       /* Data valid and modifiable */
+
+Token that apply to locking of node
+
+NNPFS_LOCK_R		       /* Data Shared locks */
+NNPFS_LOCK_W		       /* Data Exclusive locks */
+
+XXX How should invalid node modify above ?
+
+XXX OPEN vs GETDATA should 
+XXX Should it be LOOKUP and GETDATA ?
+XXX Do DATA really need to be _{R,W} ?
+
+
+MESSAGES
+========
+
+Are passed through the nnpfs device somehow.
+
+Each message is prepended by a header including the 32-bit fields
+`size'', ``opcode'', ``sequence_num'', ``pad1'' (in that
+order). ``Size'' is the size of the WHOLE message. ``Opcode'' is the
+opcode (described below). ``sequence_num'' is a messages specific field
+that is used for replying the the sender of the message (if so is
+needed).
+
+All messages (and the nnpfs_header) are padded to 64-bit boundary to
+avoid bit unaligned data in the kernel. The padding is called padN,
+where N is a number.
+
+Note that the total size of the data sent to the kernel may consist
+of several messages for performance reasons. Each data blob sent to
+the kernel must contain complete messages, the nnpfs implementation
+does not do any de-fragmentation.
+
+Nnpfs parses each individual message with the help of its size in
+the message header.
+
+The following opcodes are defined (values from 0 to 
+NNPFS_MSG_COUNT - 1):
+
+The sender of the message is listed after the opcode name.
+
+NNPFS_MSG_VERSION (user-land)
+
+	Probe the kernel module to send its nnpfs version.
+	The kernel module returns an integer which
+	identifies the capabilities of this nnpfs version.
+
+	The user-land process must use this to check if it can support
+	this version. It must not use the nnpfs implementation when it
+	doesn't support it.
+
+NNPFS_MSG_WAKEUP (user-land|nnpfs)
+
+        Wake up a message with `seqnum', and pass on `error' as return
+        value.
+
+NNPFS_MSG_WAKEUP_DATA (user-land)
+
+        Wake up a kernel-thread with `seqnum', and pass on `error'
+        as return value. Add also a data blob for generic use.
+	
+	Data blob used for ??
+
+NNPFS_MSG_GETROOT (nnpfs)
+
+	GETROOT is called to get the root-node with the ``cred''
+
+	Its only called from nnpfs to get the root-node, this might be
+	several times per mount depending on file system.
+
+	User-Land answers with a NNPFS_MSG_INSTALLROOT 
+
+NNPFS_MSG_INSTALLROOT (user-land)
+
+	INSTALLROOT is called to insert a root node.
+
+        INSTALLROOT MUST only be called on the request of GETROOT.
+
+        The node to install is in ``node''.
+
+        The only return value of the message is the integer return value.
+
+        Multiple INSTALLROOT must be ignored by the nnpfs-implementation, and
+        the return value EBUSY MUST be returned.
+
+NNPFS_MSG_GETNODE (nnpfs)
+
+	GETNODE is called to get the node named ``named'' in the
+	directory ``parent_handle'' with ``cred''.
+
+	While there is no error in the returning WAKEUP call and there
+	is corresponding node in cache the nnpfs-implementation should
+	loop until there is an error.
+
+NNPFS_MSG_INSTALLNODE (user-land)
+
+	Insert the ``node'' of ``name'' in the directory ``parent_handle''
+	into the cache.
+
+	The user-land MUST NOT install the ``node'' twice.
+
+	The nnpfs-implementation SHOULD NOT install same node several
+	times in the same ``parent_handle'', that is if ``node'' has
+	same parent and same name (observe that same handle can be
+	installed several times in the case of hard-links).
+
+NNPFS_MSG_GETATTR (nnpfs)
+
+	Get the attributes for the node described by ``handle'' that
+	already have been installed by INSTALLNODE with the ``cred''.
+
+	The nnpfs-implementation should loop until there is an error,
+	or the node is the cache with appropriate pag in the cred
+	part of the node.
+
+NNPFS_MSG_INSTALLATTR (user-land)
+
+	Should update the installed ``node's'' attribute.
+
+	If the node found in ``node.handle'' isn't in the installed
+	the nnpfs-implementation SHOULD return ENOENT.
+
+	Note that it isn't an error if the node isn't in the
+	nnpfs-cache since it might have been deleted from the
+	nnpfs-cache before the message was sent to nnpfs (that is, the
+	NNPFS_MSG_INVALIDNODE message is still in the queue to
+	user-land).
+
+NNPFS_MSG_GETDATA (nnpfs)
+
+	Get data for the node described in ``handle''. Otherwise same
+	as GETATTR.
+
+NNPFS_MSG_INSTALLDATA (user-land)
+
+	Install data for the node described by ``node.handle''. The
+	vnode/inode that contains the data is pointed out by
+	``cache_handle'' if the underlying OS supports openfh/getfh.
+
+	The cache file is also pointed out by the name ``cache_name'',
+	and that name is relative to the current working directory of
+	the user-land process that did the installdata process.
+
+	In addition to the data, installdata also updates the
+	attributes of the node.
+
+	If the ``flag & NNPFS_ID_HANDLE_VALID'' is not set,
+	``cache_name'' will be used instead.
+
+	If the ``flag & NNPFS_ID_INVALID_DNLC'' is set the
+	nnpfs-implementation should flush all name cache related to this
+	node. The nnpfs-implementation SHOULD check that this is a
+	directory-node.
+
+NNPFS_MSG_INACTIVENODE (nnpfs)
+
+	The message that nnpfs sends to the user-land daemon when
+	``handle'' no longer exists in the nnpfs-cache.
+
+	To tell what state the node is in ``flag'' is set to
+	appropriate value. ``NNPFS_NOREFS'' tells the user-land daemon
+	that the nnpfs still has the node cached but nothing is using it
+	and it can be removed at any time. ``NNPFS_DELETE'' means that
+	this node already has been dropped from the cache and can't be
+	used anymore.
+
+NNPFS_MSG_INVALIDNODE (user-land)
+
+	Used to hint the kernel that node described by ``handle''
+	should be dropped from the nnpfs-cache. Doesn't mean that the
+	node has to be dropped from the cache immediately, just that
+	it should be deleted when it's no longer used.
+
+	This is typically used by user-land process need to propagates broken
+	call-backs/oplocks to nnpfs.
+
+	The user-land MUST NOT remove the node from the cache until it
+	receives a NNPFS_MSG_INACTIVENODE.
+
+NNPFS_MSG_OPEN (nnpfs)
+
+	Passed to the user-land to inform that ``handle'' has been
+	opened with ``cred'' to do what is described in ``tokens''.
+
+	Can be the same as NNPFS_MSG_GETDATA if no locking is implemented.	
+
+NNPFS_MSG_PUTDATA (nnpfs)
+
+	Syncs data associated to ``handle'' from nnpfs-cache to
+	user-land. The associating ``cred.uid'' and ``cred.pag'' are
+	sent along the data.
+
+	As a side effect, ``attr'' will contain the mtime of the node.
+	and user-land may use that to update the modification time of
+	the data.
+
+	The nature of the operation is described by ``flag''.
+
+	NNPFS_READ:    unused
+	NNPFS_WRITE:   Data is expected to be written to user-land
+	NNPFS_NOBLOCK: The operations is expected to be non-blocking (async)
+	NNPFS_APPEND:  unused
+	NNPFS_FSYNC:   Flag which can be used that it is expected that user-land
+		     syncs the data to the next level (whatever that is).
+
+       enum { NNPFS_READ = 1, NNPFS_WRITE = 2, NNPFS_NONBLOCK = 4, NNPFS_APPEND = 8, NNPFS_FSYNC};
+
+NNPFS_MSG_PUTATTR (nnpfs)
+
+	Syncs attributes (like times, mode bits and size) associated to
+	``handle'' from nnpfs-cache to user-land. The associating
+	``cred.uid'' and ``cred.pag'' are sent along the data.
+        
+/* Directory manipulating messages. */
+
+NNPFS_MSG_CREATE (nnpfs)
+
+	Instructs user-land to create a new file node entry in
+	``parent_handle'' named ``name'' with the attributes in
+	``attr'' and authenticated with ``cred.uid'' and ``cred.pag''.
+	``mode''.
+
+NNPFS_MSG_MKDIR (nnpfs)
+
+	Instructs user-land to create a new directory node entry in
+	``parent_handle'' named ``name'' with the attributes in
+	``attr'' and authenticated with ``cred.uid'' and ``cred.pag''.
+	
+NNPFS_MSG_LINK (nnpfs)
+
+	Instructs user-land to create a new "hard" link node entry in
+	``parent_handle'' named ``name'' using ``from_handle'' as the
+	source with the attributes in ``attr'' and authenticated with
+	``cred.uid'' and ``cred.pag''.
+
+NNPFS_MSG_SYMLINK (nnpfs)
+
+	Instructs user-land to create a new symbolic link node entry in
+	``parent_handle'' named ``name'' pointing on ``contents'' as
+	the source with the attributes in ``attr'' and authenticated
+	with ``cred.uid'' and ``cred.pag''.
+
+NNPFS_MSG_REMOVE (nnpfs)
+
+	Instructs user-land to remove a file node in ``parent_handle''
+	named ``name'' with the attributes in ``attr'' and
+	authenticated with ``cred.uid'' and ``cred.pag''.
+
+NNPFS_MSG_RMDIR (nnpfs)
+
+	Instructs user-land to remove a directory node in
+	``parent_handle'' named ``name'' with the attributes in
+	``attr'' and authenticated with ``cred.uid'' and ``cred.pag''.
+	
+NNPFS_MSG_RENAME (nnpfs)
+
+	Instructs user-land to rename a node in ``parent_handle'' named
+	``old_name'' to ``new_name'' authenticated with ``cred.uid''
+	and ``cred.pag''.
+
+NNPFS_MSG_PIOCTL (nnpfs)
+
+	If the nnpfs-cache manager get a pioctl and can not take care of
+	it itself, it forwards it to user-land. Associated with the
+	pioctl there are the ``opcode'' of the pioctl, a ``insize'',
+	``outsize'' and ``cred''. 
+
+NNPFS_MSG_WAKEUP_DATA (user-land)
+
+NNPFS_MSG_UPDATEFID (user-land)
+
+NNPFS_MSG_ADVLOCK (nnpfs/user-land)
+
+NNPFS_MSG_GC_NODES (user-land)
+
+	NNPFS_MSG_GC_NODES is almost the equivalent of
+	NNPFS_MSG_INVALIDNODE, with the difference that the node isn't
+	invalid, its the the user-land process that wants to free it.
+
+__END__;
+
+/* NNPFS_MSG_OPEN */
+struct nnpfs_message_open {
+  struct nnpfs_message_header header;
+  struct nnpfs_cred cred;
+  nnpfs_handle handle;
+  u_int32_t tokens;
+  u_int32_t pad1;
+};
+
+/* NNPFS_MSG_PUTDATA */
+struct nnpfs_message_putdata {
+  struct nnpfs_message_header header;
+  nnpfs_handle handle;
+  struct nnpfs_attr attr;		/* XXX ??? */
+  struct nnpfs_cred cred;
+  u_int32_t flag;
+  u_int32_t pad1;
+};
+
+/* NNPFS_MSG_PUTATTR */
+struct nnpfs_message_putattr {
+  struct nnpfs_message_header header;
+  nnpfs_handle handle;
+  struct nnpfs_attr attr;
+  struct nnpfs_cred cred;
+};
+
+/* NNPFS_MSG_CREATE */
+struct nnpfs_message_create {
+  struct nnpfs_message_header header;
+  nnpfs_handle parent_handle;
+  char name[256];		/* XXX */
+  struct nnpfs_attr attr;
+  u_int32_t mode;
+  u_int32_t pad1;
+  struct nnpfs_cred cred;
+};
+
+/* NNPFS_MSG_MKDIR */
+struct nnpfs_message_mkdir {
+  struct nnpfs_message_header header;
+  nnpfs_handle parent_handle;
+  char name[256];		/* XXX */
+  struct nnpfs_attr attr;
+  struct nnpfs_cred cred;
+};
+
+/* NNPFS_MSG_LINK */
+struct nnpfs_message_link {
+  struct nnpfs_message_header header;
+  nnpfs_handle parent_handle;
+  char name[256];		/* XXX */
+  nnpfs_handle from_handle;
+  struct nnpfs_cred cred;
+};
+
+/* NNPFS_MSG_SYMLINK */
+struct nnpfs_message_symlink {
+  struct nnpfs_message_header header;
+  nnpfs_handle parent_handle;
+  char name[256];		/* XXX */
+  char contents[2048];		/* XXX */
+  struct nnpfs_attr attr;
+  struct nnpfs_cred cred;
+};
+
+/* NNPFS_MSG_REMOVE */
+struct nnpfs_message_remove {
+  struct nnpfs_message_header header;
+  nnpfs_handle parent_handle;
+  char name[256];		/* XXX */
+  struct nnpfs_cred cred;
+};
+
+/* NNPFS_MSG_RMDIR */
+struct nnpfs_message_rmdir {
+  struct nnpfs_message_header header;
+  nnpfs_handle parent_handle;
+  char name[256];		/* XXX */
+  struct nnpfs_cred cred;
+};
+
+/* NNPFS_MSG_RENAME */
+struct nnpfs_message_rename {
+  struct nnpfs_message_header header;
+  nnpfs_handle old_parent_handle;
+  char old_name[256];		/* XXX */
+  nnpfs_handle new_parent_handle;
+  char new_name[256];		/* XXX */
+  struct nnpfs_cred cred;
+};
+
+/* NNPFS_MSG_PIOCTL */
+struct nnpfs_message_pioctl {
+  struct nnpfs_message_header header;
+  u_int32_t opcode ;
+  u_int32_t pad1;
+  nnpfs_cred cred;
+  u_int32_t insize;
+  u_int32_t outsize;
+  char msg[2048] ;    /* XXX */
+  nnpfs_handle handle;
+};
+
+
+/* NNPFS_MESSAGE_WAKEUP_DATA */
+struct nnpfs_message_wakeup_data {
+  struct nnpfs_message_header header;
+  u_int32_t sleepers_sequence_num;	/* Where to send wakeup */
+  u_int32_t error;			/* Return value */
+  u_int32_t len;
+  u_int32_t pad1;
+  char msg[2048] ;    /* XXX */
+};
+
+/* NNPFS_MESSAGE_UPDATEFID */
+struct nnpfs_message_updatefid {
+  struct nnpfs_message_header header;
+  nnpfs_handle old_handle;
+  nnpfs_handle new_handle;
+};
+
+/* NNPFS_MESSAGE_ADVLOCK */
+struct nnpfs_message_advlock {
+  struct nnpfs_message_header header;
+  nnpfs_handle handle;
+  struct nnpfs_cred cred;
+  nnpfs_locktype_t locktype;
+#define NNPFS_WR_LOCK 1 /* Write lock */
+#define NNPFS_RD_LOCK 2 /* Read lock */
+#define NNPFS_UN_LOCK 3 /* Unlock */
+#define NNPFS_BR_LOCK 4 /* Break lock (inform that we don't want the lock) */
+  nnpfs_lockid_t lockid;
+};
+
+/* NNPFS_MESSAGE_GC_NODES */
+struct nnpfs_message_gc_nodes {
+  struct nnpfs_message_header header;
+#define NNPFS_GC_NODES_MAX_HANDLE 50
+  u_int32_t len;
+  u_int32_t pad1;
+  nnpfs_handle handle[NNPFS_GC_NODES_MAX_HANDLE];
+};
+#endif /* _xmsg_h */

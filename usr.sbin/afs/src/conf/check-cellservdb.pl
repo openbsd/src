@@ -1,5 +1,5 @@
 #!/usr/pkg/bin/perl -w
-# $KTH: check-cellservdb.pl,v 1.4 2000/08/30 21:26:13 lha Exp $
+# $arla: check-cellservdb.pl,v 1.4 2000/08/30 21:26:13 lha Exp $
 #
 #  Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
 #  (Royal Institute of Technology, Stockholm, Sweden).

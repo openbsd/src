@@ -1,0 +1,1849 @@
+2001-12-20  Love  <lha@stacken.kth.se>
+
+	* configure.in (netbsd,openbsd): make sure we pass in -I$SYS to
+	incl (KERNEL_CPPFLAGS) since the <bsd.lkm.mk> might not set it.
+
+2001-12-18  Love  <lha@stacken.kth.se>
+
+	* xfs/bsd/xfs_vnodeops-bsd.c: '(xfs_putpages): support NetBSD 1.5Y'
+
+2001-12-10  Magnus Ahltorp  <ahltorp@nada.kth.se>
+
+	* arlad/fcache.c (update_attr_entry): throw data when node is in
+	kernel but doesn't use data
+
+2001-12-05  Love  <lha@stacken.kth.se>
+
+	* rx/rxperf.c: implement recv, indent, add some missing breaks,
+	protect rx_debugFile with RXDEBUG
+
+2001-11-24  Mattias Amnefelt  <mattiasa@e.kth.se>
+
+	* rx/rxdebug.c: print byte and packetcounters as unsigned
+
+2001-11-18  Mattias Amnefelt  <mattiasa@e.kth.se>
+
+	* arlad/fcache.c (read_data) don't initiate a call if we have
+	enough data, end call if we can't start FetchData
+
+2001-11-16  Mattias Amnefelt  <mattiasa@e.kth.se>
+
+	* appl/vos/vos_{un,}lock.c send request to syncsite
+	* rx/rxdebug.c: servers do return statistics
+	* appl/vos/vos_listvldb.c: handle partitions > 'z'
+
+2001-11-07  Magnus Ahltorp  <ahltorp@nada.kth.se>
+
+	* appl/lib/arlalib.c (arlalib_first_db): Use default cell if NULL
+
+	* rxdef/Makefile.in: Added pts.cs.o and ubik.cs.o to FSSERVEROBJS
+
+2001-11-07  Mattias Amnefelt  <mattiasa@e.kth.se>
+
+	* xfs/bsd/xfs/xfs_locl.h: move definition of d_thread_t outside of
+	#ifndef osf
+
+2001-11-02  Tomas Olsson  <tol@stacken.kth.se>
+
+	* rx/Makefile.in: rxperf: don't link with roken
+	* rx/rxperf.c ({{warn,err},x}): implement more thoroughly
+	
+2001-11-01  Love  <lha@dynarc.se>
+
+	* tests/run-tests.in: add option -large that avoids running tests
+	that uses up large amount of diskspace (like
+	copy-and-diff-gnu-mirror)
+	
+	* tests/copy-and-diff-gnu-mirror: don't run if $LARGE isn't set
+	
+	* tests/blocks-new-file.c: stat uses a filename, not a fd
+	
+2001-10-29  Assar Westerlund  <assar@kth.se>
+
+	* tests/blocks-new-file.c: new test for previous fix
+	* xfs/bsd/xfs_vnodeops-common.c, xfs/bsd/xfs_node-osf.c,
+	xfs/bsd/xfs_node-bsd.c: make sure of updating vattr::va_bytes when
+	(and only when) we have a valid length
+
+2001-10-24  Magnus Ahltorp  <ahltorp@nada.kth.se>
+
+	* lib/bufdir/fbuf.c: msync doesn't take protection flags
+
+	* lib/bufdir/fbuf.c: Added msync before munmap where necessary
+
+	* appl/afsutils/Makefile.in: Added LDFLAGS
+
+	* appl/bos/Makefile.in: Added LDFLAGS
+
+	* appl/fs/Makefile.in: Added LDFLAGS
+
+	* appl/pts/Makefile.in: Added LDFLAGS
+
+	* appl/udebug/Makefile.in: Added LDFLAGS
+
+	* appl/vos/Makefile.in: Added LDFLAGS
+
+	* lib/ko/Makefile.in: Added LDFLAGS
+
+	* cf/check-kerberos.m4: Added support for Mac OS X built-in
+	kerberos and kth-krb with openssl
+
+	* configure.in: Don't use libroken in tf_util test.
+
+2001-10-22  Love  <lha@stacken.kth.se>
+
+	* configure.in: 1.465.2.57->1.465.2.58: freebsd[45]): when build
+	with --enable-smp tag on APIC_IO since its needed (true for alpha
+	too ?)
+
+2001-10-22  Magnus Ahltorp  <ahltorp@nada.kth.se>
+
+	* configure.in: Only compile kalog if there is a tf_init
+
+	* configure.in: Added appl/mac/make-mac-package.sh and
+	appl/mac/install/arla.info
+
+	* appl/mac/install: Added installation package files
+
+	* appl/mac/make-mac-package.sh.in: Added
+
+	* appl/mac/make-mac-package.sh: Removed
+
+	* appl/mac/Arla_Configuration/Controller.m (auth:) Bail out if not
+	unlocked
+
+2001-10-21  Magnus Ahltorp  <ahltorp@nada.kth.se>
+
+	* arlad/arla-cli.c: Added arla_put.
+
+2001-10-19  Magnus Ahltorp  <ahltorp@nada.kth.se>
+
+	* xfs/bsd/xfs/xfs_locl.h: xfs_set_vp_size is called ubc_setsize on
+	Darwin
+
+	* xfs/bsd/xfs_vnodeops-common.c: Added xfs_handle_stale
+	(xfs_open_valid): Call xfs_handle_stale
+
+	* xfs/bsd/xfs_message.c (xfs_message_invalidnode): Call
+	ubc_setsize if node is in use by ubc, but noone else
+
+	* xfs/bsd/xfs_vnodeops-common.c (xfs_read_common): Do not print
+	out random memory
+
+2001-10-19  Love  <lha@stacken.kth.se>
+
+	* xfs/bsd/xfs_vnodeops-bsd.c (xfs_mmap):
+	s/HAVE_GENFS_MMAP/HAVE_KERNEL_GENFS_MMAP/
+
+	* tests/Makefile.in: add mmap-cat
+	* tests/mmap-cat.c: add mmap cat from 0.35 branch
+	
+2001-10-16  Magnus Ahltorp  <ahltorp@nada.kth.se>
+
+	* xfs/bsd/xfs_message.c (xfs_message_invalidnode): Don't treat as
+	used if only UBC uses it.
+
+	* xfs/bsd/xfs_vnodeops-common.c (xfs_inactive_common): Clear dirty
+	flag when fsync fails
+
+2001-10-16  Mattias Amnefelt  <mattiasa@e.kth.se>
+
+	* lib/ko/gensysname.c: added solaris 2.8
+
+2001-10-16  Magnus Ahltorp  <ahltorp@nada.kth.se>
+
+	* arlad/messages.c (xfs_message_getroot): Set tokens in
+	installroot message
+
+2001-10-15  Love  <lha@stacken.kth.se>
+
+	* configure.in
+	* appl/afsutils/Makefile.in
+	* appl/amon/Makefile.in
+	* appl/asrvutil/Makefile.in
+	* appl/bos/Makefile.in
+	* appl/fs/Makefile.in
+	* appl/kalog/Makefile.in
+	* appl/pts/Makefile.in
+	* appl/udebug/Makefile.in
+	* appl/vos/Makefile.in
+	* arlad/Makefile.in
+	* cf/check-sl.m4
+	* include/Makefile.in
+	* lib/Makefile.in
+	* lib/ko/Makefile.in
+	* milko/appl/perf/Makefile.in
+	* milko/appl/sked/Makefile.in:
+	make it possible to link to another libsl
+	
+	* lib/ko/slcompat.c: added sl_apropos to be able to link with
+	older libsl
+	* cf/check-roken.m4: adding missing ``with'' in the helptext
+	
+2001-10-14  Love  <lha@stacken.kth.se>
+	
+	* arlad/arla-cli.c: replace SL_BADCOMMAND with -1 to make it
+	compatible with older libsl
+
+	* appl/fs/fs.c: replace SL_BADCOMMAND with -1 to make it
+	compatible with older libsl
+
+2001-10-14  Tomas Olsson  <tol@stacken.kth.se>
+
+	* rxdef/common.h: added AFS_SET{MIN,MAX}QUOTA
+
+2001-10-14  Magnus Ahltorp  <ahltorp@nada.kth.se>
+
+	* appl/mac/Arla_Configuration/Controller.m: Don't try to execute
+	things with privileges if there aren't any.
+
+2001-10-14  Love  <lha@stacken.kth.se>
+
+	* conf/CellServDB: mc.vanderbilt.edu removed, from David Krause
+	<david.w.krause@vanderbilt.edu> on arla-drinkers
+	
+2001-10-12  Tomas Olsson  <tol@stacken.kth.se>
+
+	* rxdef/pts.xg: add prheader_disk, trim prentry_disk, drop contentry
+
+2001-10-11  Assar Westerlund  <assar@sics.se>
+
+	* xfs/bsd/xfs/xfs_vfsops.h (xfs_mount_common_sys): add prototype
+	* xfs/bsd/xfs_vfsops-common.c (xfs_mount_common_sys): export
+	* xfs/bsd/xfs_vfsops-freebsd.c (xfs_mount_freebsd): simplify and
+	handle kernel-pointer version
+
+	* xfs/bsd: port to FreeBSD-current, from Andrea Campi
+	<andrea@webcom.it> with small modifictions
+	* configure.in: check for sys/lock.h and sys/selinfo.h, used on
+	fbsd-current
+
+2001-10-09  Love  <lha@stacken.kth.se>
+
+	* arlad/fcache.c (get_attr_bulk): avoid updating entries that are
+	locked, rewrite the install-kernel behave case to do the same way
+	as update case
+
+	* tests/run-tests.in: ARLA_TESTS: add hardlink3
+	* tests/hardlink3: hardlink test
+	
+	* include/kafs.h: 1.32.2.1->1.32.2.2: add ARLAIOCTL support
+	
+	* arlad/messages.c (aioc_statistics): rename from vioc_statistics
+	(xfs_message_pioctl): add cases for AIOCs
+
+	* rx/Makefile.in: BSD-make can't handle $< in non-implicit rules
+	
+	* rx/rxperf.c: add support for opening rx_debugFile
+	
+2001-10-07  Magnus Ahltorp  <ahltorp@nada.kth.se>
+
+	* arlad/fcache.c (getroot): Use normal codepath in dynroot case
+
+	* arlad/dynroot.c (dynroot_isvolumep): Volume is called root.afs
+	
+	* arlad/dynroot.c (dynroot_fetch_vldbN): Volume is called root.afs
+	and has only RO
+
+	* configure.in: Build appl/mac/Arla_Configuration with normal make
+
+	* appl/mac/Arla_Configuration/dialog.nib: Added
+	* appl/mac/Arla_Configuration/Makefile.in: Build with normal make
+	* appl/mac/Arla_Configuration/Info.plist.in: Added
+	* appl/mac/Arla_Configuration/PkgInfo: Added
+	* appl/mac/Arla_Configuration/Arla_Configuration.pbproj: Removed
+	* appl/mac/Arla_Configuration/English.lproj: Removed
+
+	* appl/mac/arlacmm: Added contextual menu module for Mac OS X
+
+2001-10-04  Assar Westerlund  <assar@sics.se>
+
+	* appl/lib/ka-procs.c (ka_authenticate): handle k_afsklog
+	* appl/afsutils/klog.c (get_afs_token), appl/afsutils/aklog.c
+	(krb_afslog_uid): k_afslog -> k_afsklog_uid
+	(which always was the old name)
+
+2001-10-03  Magnus Ahltorp  <ahltorp@nada.kth.se>
+
+	* rxdef/vldb.xg: Trimmed down disk_vlentry. Make server tables
+	variable size.
+	* ydr/output.c (encode_string): Correct parenthesis error
+
+2001-10-02  Love  <lha@stacken.kth.se>
+
+	* cf/check-kerberos.m4: 1.38->1.38.2.1: replace -lroken with
+	$LIB_roken
+
+2001-10-01  Mattias Amnefelt  <mattiasa@e.kth.se>
+
+	* arlad/fcache.c (get_root_of_volume): always try to get the best
+	credential
+
+2001-09-30  Magnus Ahltorp  <ahltorp@nada.kth.se>
+
+	* ydr/output.c (generate_function_definition): Added const to
+	function definitions
+
+2001-09-28  Magnus Ahltorp  <ahltorp@nada.kth.se>
+
+	* appl/vos/vos.c: Added vos zap
+
+	* appl/vos/Makefile.in: Added vos zap
+
+	* appl/vos/vos_local.h: Added vos zap
+
+	* appl/vos/vos_zap.c: Added
+
+2001-09-28  Mattias Amnefelt  <mattiasa@e.kth.se>
+
+	* arlad/conn.h: increase fuzz by a factor of 1000
+
+2001-09-26  Love  <lha@stacken.kth.se>
+	
+	* rx/Makefile.in: build rx_trace
+	
+2001-09-26  Mattias Amnefelt  <mattiasa@e.kth.se>
+
+	* appl/vos/vos_listpart.c: null terminate agetarg list
+
+2001-09-25  Magnus Ahltorp  <ahltorp@nada.kth.se>
+
+	* xfs/linux/xfs_inodeops.c (xfs_lookup): Fetch xnode if not
+	present
+	(xfs_permission): Fetch xnode if not present
+
+	* arlad/fcache.c (cleaner): Always check cleanergen. Only throw
+	entries without kernelp.
+	(unlink_lru_entry): Only throw entries without kernelp.
+	(update_attr_entry): Only throw entries without kernelp.
+
+2001-09-25  Mattias Amnefelt  <mattiasa@e.kth.se>
+
+	* appl/fs: split into multiple files
+
+2001-09-24  Love  <lha@stacken.kth.se>
+
+	* appl/vos/vos_examine.c (printvolstat): print out if volume is
+	locked, fixes arla/20
+ 	* appl/vos/vos_common.c: added vol_getopname
+	* appl/vos/vos_local.h: added vol_getopname
+	* rxdef/vldb.xg: define VLOP operations
+	
+2001-09-22  Assar Westerlund  <assar@sics.se>
+
+	* arlad/messages.c (try_again): do not invalidate the volcache
+	entry on VNOVOL, it's done in fcache.c:try_next_fs now
+	* arlad/fcache.c (try_next_fs): send in fid too.  and mark
+	volcache entry as invalid on VNOVOL and VMOVED.  this way we
+	actually mark volcache entries as invalid and refresh them even
+	when there are other r/o clones that work
+
+2001-09-21  Mattias Amnefelt  <mattiasa@e.kth.se>
+
+	* rx/rxdebug.c (GetVersion) Check return codes
+
+2001-09-19  Mattias Amnefelt  <mattiasa@e.kth.se>
+
+	* appl/vos/vos_examine.c: Print info from vldb even if we can't
+	reach fileserver
+	* appl/vos/vos_examine.c: (printvolstat) only print volumeid when 
+	clone exists	
+
+2001-09-18  Mattias Amnefelt  <mattiasa@e.kth.se>
+
+	* appl/vos/vos_backup.c: added verbose messages
+
+2001-09-17  Assar Westerlund  <assar@sics.se>
+
+	* arlad/afsdir_check.c (getentry): fail and print a useful error
+	instead of asserting on the magic cookie
+
+2001-09-17  Mattias Amnefelt  <mattiasa@e.kth.se>
+
+	* appl/vos/vos_listvol.c: argument partition is
+	aarg_optional_swless
+	* appl/vos/vos_listvldb.c: take volume as argument, print
+	volumeids
+	* appl/vos/vos_local.h (vos_listvldb_iter): added argument volname
+	* appl/vos/vos_backup.c (vos_backupsys): send volumename to
+	vos_listvldb_iter
+	
+2001-09-17  Magnus Ahltorp  <ahltorp@nada.kth.se>
+
+	* arlad/{messages.c,discon_log.c,discon_log.h}: Clean up
+	prototypes. Truncate disconnected log.
+
+	* arlad/conn.h: conn_isalivep: Added prototype
+
+2001-09-17  Love  <lha@stacken.kth.se>
+
+	* xfs/bsd/xfs_node-bsd.c: 1.47.2.3->1.47.2.4:
+	(free_all_xfs_nodes): if we have a vfs_deallocate_syncvnode, use
+	that to free the syncer-node, indent
+	* configure.in: 1.465.2.46->1.465.2.47: check for
+	vfs_deallocate_syncvnode
+
+2001-09-17  Mattias Amnefelt  <mattiasa@e.kth.se>
+
+	* appl/vos/vos.8: listvldb doesn't require dbserver
+	* appl/vos/vos.8: updated info about backup and backupsys
+
+2001-09-16  Magnus Ahltorp  <ahltorp@nada.kth.se>
+
+	* arlad/arla-cli.c: Added rmdir and rm
+
+	* xfs/linux/{xfs_dev.c,xfs_inodeops.c,xfs_message.c,xfs_node.c,
+	xfs_vfsops.c}: Send inactive messages when node is stale and no
+	longer referenced
+	
+	* xfs/linux/xfs_inodeops.c: Handle daemon restarts properly
+	* xfs/linux/xfs_message.c: Handle daemon restarts properly
+	* xfs/linux/xfs_node.c: Handle daemon restarts properly
+	* xfs/linux/xfs_vfsops.c: Handle daemon restarts properly
+	* xfs/linux/xfs/xfs_fs.h: Handle daemon restarts properly
+	* xfs/linux/xfs/xfs_locl.h: Handle daemon restarts properly
+
+2001-09-16  Magnus Ahltorp  <ahltorp@nada.kth.se>
+
+	* arlad/messages.c (xfs_message_remove): only installattr when
+	node is in kernel
+
+	* arlad/fcache.c (write_attr): return 0 when disconnected
+
+2001-09-16  Love  <lha@stacken.kth.se>
+
+	* xfs/bsd/xfs_vfsops-netbsd.c: check for vfs_reinit
+	* configure.in: check for vfs_reinit
+
+2001-09-14  Love  <lha@stacken.kth.se>
+
+	* arlad/conn.c: remove unused constant, add comment to unconfuse me
+
+2001-09-14  Mattias Amnefelt  <mattiasa@e.kth.se>
+
+	* lib/ko/gensysname.c: find better sysname for alpha osf
+	* appl/fs/fs.c (fsversion_cmd): test for correct number of
+	arguments
+	* rx/rxdebug.c: Use agetarg instead of libcmd
+	* rx/Makefile.in: link rxdebug with libko
+	* Makefile.in: build rx after libko
+	
+2001-09-14  Tomas Olsson  <tol@stacken.kth.se>
+
+	* tests/create-symlinks.c (verify_contents): readlink doesn't
+	terminate content string
+	* tests/deep-tree: adjust test size to todays hectic lifestyle
+	* tests/many-dirs: rm-rf what we've done
+	* tests/ga-test.c (test_simple_string): test partial matching
+	* lib/ko/agetarg.c (arg_match_long): set matched arg number
+	correctly for partials
+	* appl/vos/vos_createentry.c (vos_createentry): return if argument
+	parsing fails
+	* appl/vos/vos_createvolume.c (vos_createvolume): spelling
+
+2001-09-14  Love  <lha@stacken.kth.se>
+
+	* arlad/arla_local.h: export afs_BusyWaitPeriod
+	* arlad/arla.c: set afs_BusyWaitPeriod to 15 (as transarc/openafs does)
+	* arlad/messages.c (try_again): when fileserver busy or
+	restarting, wait afs_BusyWaitPeriod seconds, this is the same
+	timeout as transarc/openafs has.
+	
+2001-09-13  Love  <lha@stacken.kth.se>
+
+	* arlad/messages.c (vioc_new_cell): memset dbs, make sure we a
+	static entry (timeout == 0)
+
+2001-09-13  Assar Westerlund  <assar@sics.se>
+
+	* arlad/fcache.c (find_first_fs), arlad/volcache.c
+	(get_info_loop): set INT_MAX as rtt on known `dead' connections,
+	so that they are only tried when all others have failed 
+	* arlad/conn.c (conn_get): always return connections, even if we
+	think they are dead
+	(conn_isalivep): new function
+
+2001-09-12  Mattias Amnefelt  <mattiasa@e.kth.se>
+
+	* configure.in: changed incluee to include in check for issignal
+
+2001-09-10  Assar Westerlund  <assar@sics.se>
+
+	* xfs/linux/xfs_message.c (xfs_message_installattr): limit offset
+	to size of file
+
+	* arlad/messages.c (xfs_message_getdata): do not fetch or prefetch
+	data behind the end of the file
+
+	* xfs/linux/xfs_syscalls.c (fhopen_call): dentry_open already
+	calls get_write_access, do not do it here
+
+	* xfs/linux/xfs_message.c (xfs_message_installdata): set error as
+	a negative pointer.  also remember to path_release after a
+	successful path_walk
+
+2001-09-10  Love  <lha@stacken.kth.se>
+
+	* configure.in: added tools/{,gnats/}Makefile
+	* tools/gnats: arla-send-pr & co
+	* Makefile.in (SUBDIR): added tools
+	
+2001-09-09  Mattias Amnefelt  <mattiasa@e.kth.se>
+
+	* arlad/fcache.c: EPERM is reason to turn off fhopen too
+
+2001-09-08  Assar Westerlund  <assar@sics.se>
+
+	* configure.in: move some of the header files checks to be run
+	with the kernel flags this allows finding miscfs/syncfs/syncfs.h
+	on NetBSD
+	* configure.in, xfs/bsd/xfs/xfs_locl.h: try miscfs/syncfs/syncfs.h
+
+	* arlad/arla-cli.c (main): initialize random number generator
+	* arlad/arlad.c (main): initialize random number generator
+
+	* xfs/linux/xfs_inodeops.c (xfs_setattr): always send the size
+	(for regular files), and the mtime to the daemon
+
+2001-09-08  Magnus Ahltorp  <ahltorp@nada.kth.se>
+
+	* arlad/fcache.c (do_read_data): return ENETDOWN if not connected
+	(fcache_reobtain_callbacks): Lock fcachentry. Use update_attr_entry
+	and break the kernel's callback
+
+	* arlad/messages.c (viocconnect): open discon_log in cwd and give
+	up callbacks
+
+	* arlad/darla.c (DARLA_Open): Call open with mode
+
+	* arlad/arla-cli.c: Added mkdir, use arguments as commands if
+	present
+
+	* arlad/arla_local.h, arlad/arlad.c: arla_start is local to arlad
+	and arla-cli
+
+2001-09-07  Assar Westerlund  <assar@sics.se>
+
+	* configure.in (APPL_SUBDIRS): changed value sightly
+	* appl/Makefile.in (SUBDIRS): update conditional part
+
+2001-09-07  Magnus Ahltorp  <ahltorp@nada.kth.se>
+
+	* config.guess, config.sub: update to newer versions
+
+2001-09-07  Love  <lha@stacken.kth.se>
+
+	* conf/CellServDB: added dynarc.se
+
+2001-09-06  Magnus Ahltorp  <ahltorp@nada.kth.se>
+
+	* xfs/bsd/xfs/xfs_dev.h: Handle three-argument selrecord
+
+	* xfs/bsd/xfs_dev-bsd.c: Handle three-argument selrecord
+
+	* xfs/solaris/xfs_node.c (new_xfs_node): Set tokens from message
+
+	* xfs/irix/xfs_node.c (new_xfs_node): Set tokens from message
+
+2001-09-05  Magnus Ahltorp  <ahltorp@nada.kth.se>
+
+	* appl/fs/fs.c (get_statistics): More features
+
+	* xfs/linux/xfs_node.c (new_xfs_node): Set tokens from message
+
+	* xfs/linux/{xfs_node.c,xfs_inodeops.c}: Handle NULL xnodes and
+	free xnodes on device close
+
+	* xfs/bsd/xfs_node-bsd.c (new_xfs_node): Set tokens from message
+
+2001-09-04  Magnus Ahltorp  <ahltorp@nada.kth.se>
+
+	* configure.in, cf/bsd-func-selrecord.m4: Added selrecord test
+
+2001-09-04  Love  <lha@stacken.kth.se>
+
+	* arlad/fcache.c (find_first_fs): don't use entries maked by the
+	vldb server as VLSF_DONTUSE, there are volumes marked up my the
+	vldb server as non released volumes.
+	
+2001-09-04  Magnus Ahltorp  <ahltorp@nada.kth.se>
+
+	* arlad/conn.c: 1.64->1.65: (re_probe): If sleeping already,
+	choose the earliest wakeup
+
+2001-09-03  Love  <lha@stacken.kth.se>
+
+	* xfs/bsd/xfs_node-bsd.c (free_all_xfs_nodes/xfs_vflush): do magic
+	with syncer-node on freebsd, this is since FreeBSD > 4.3 changed
+	vflush api so we have to remove the mnt_syncer node first before
+	calling vflush to avoid dying in a deadlock. break out vflush to a
+	common function xfs_vflush().
+
+2001-09-01  Magnus Ahltorp  <ahltorp@nada.kth.se>
+
+	* arlad/fcache.c (add_time_statistics): update the correct pointer
+	(get_attr_bulk): collect statistics
+	(get_attr_bulk): avoid lockup when preferred entry == entry
+	(followmountpoint): set parent fid before fcache_verify_attr
+
+2001-08-31  Magnus Ahltorp  <ahltorp@nada.kth.se>
+
+	* util/hash.c (hashtabcleantab): Free the correct pointer
+
+2001-08-23  Love  <lha@stacken.kth.se>
+
+	* appl/vos/vos_common.c (getlistparts): break up to two parts, one
+	that get a already existing conn and one that doesn't
+	(printlistvol): use new getlistparts_conn()
+	* appl/lib/arlalib.h: add a new class for auth_flags update
+	signatures
+	* appl/lib/arlalib.c: arlalib_getsecurecontext(): don't cache
+	cred, fewer ifdefs
+	arlalib_getconnbyaddr(): update usage of arlalib_getsecurecontext()
+
+	* doc/: Added themis to the documentation
+	
+2001-08-20  Magnus Ahltorp  <ahltorp@nada.kth.se>
+
+	* configure.in: Check for getattrlist and setattrlist
+
+2001-08-16  Mattias Amnefelt  <mattiasa@e.kth.se>
+
+	* doc/themis.texi: changed text about Q flag
+
+2001-08-10  Love  <lha@stacken.kth.se>
+
+	* appl/vos/vos_common.c: print out not attached volumes too,
+	suggestion from haba@pdc.kth.se
+
+2001-08-08  Assar Westerlund  <assar@sics.se>
+
+	* configure.in: add support for $SYSDIR
+
+2001-08-06  Assar Westerlund  <assar@stacken.kth.se>
+
+	* xfs/bsd/xfs_vfsops-bsd.c (xfs_fhopen): use p_ucred instead of
+	the less portable p_cred->pc_ucred
+
+	* xfs/bsd/Makefile.in (load): try to make it do the same thing
+	with the symbols as startarla does
+
+2001-08-05  Assar Westerlund  <assar@stacken.kth.se>
+
+	* xfs/bsd/xfs_vnodeops-common.c: print size_t's correctly
+	* arlad/messages.c: print size_t's correctly
+
+2001-08-02  Love  <lha@stacken.kth.se>
+
+	* lib/ko/Makefile.in: Avoid creating a empty sysname.c when
+	gensysname failes
+
+2001-07-26  Love  <lha@stacken.kth.se>
+
+	* arlad/{dump_state.c,state.c,state.h,Makefile.in,
+	arla_local.h,fcache.c,fcache.h,d,volcache.c,volcache.h}:
+	Store the fcache data in a FCacheEntry independ format Store the
+	volcache data in a VolCacheEntry independ format
+	Create a simple tool to dump the stable storage filse
+
+	* appl/afsutils/Makefile.in, appl/amon/Makefile.in,
+	appl/asrvutil/Makefile.in, appl/bos/Makefile.in,
+	appl/fs/Makefile.in, appl/pts/Makefile.in,
+	appl/udebug/Makefile.in, appl/vos/Makefile.in,
+	appl/kalog/Makefile.in, appl/themis/Makefile.in,
+	milko/appl/perf/Makefile.in, milko/bos/Makefile.in,
+	milko/fs/Makefile.in, milko/pts/Makefile.in,
+	milko/vldb/Makefile.in, configure.in: remove the old
+	MILKO_RXKAD_LIBS hack and replace it with top_builddir
+
+2001-07-26  Assar Westerlund  <assar@stacken.kth.se>
+
+	* xfs/bsd/xfs_vnodeops-bsd.c (xfs_symlink): also handle OpenBSD
+	current (aka version 200107)
+
+	* xfs/linux/xfs_message.c (xfs_message_installnode): print
+	pointers with %p
+
+	* xfs/linux/xfs_dev.c (xfs_devwrite): do not set dumpable
+	* arlad/arlad.c (arla_start): set dumpable with prctl if possible
+	* arlad/arla_local.h: add sys/prctl.h
+	* configure.in: check for sys/prctl.h
+
+2001-07-24  Assar Westerlund  <assar@sics.se>
+
+	* xfs/bsd/xfs_vnodeops-bsd.c (xfs_remove): call ubc_uncache after
+	vput:ing (on osx/darwin)
+	* xfs/bsd/xfs_vnodeops-bsd.c (xfs_symlink): NetBSD 1.5X and above
+	doesn't vput the created symlink
+
+2001-07-23  Magnus Ahltorp  <ahltorp@nada.kth.se>
+
+	* xfs/linux/xfs_vfsops.c (print_nodes): Print all nodes
+
+2001-07-23  Assar Westerlund  <assar@stacken.kth.se>
+
+	* xfs/linux/xfs_syscalls.c (fhget_call): make `dentry' const and
+	never dput it
+	(user_path2dentry): define it differently for 2.3
+	(sys_afs_int): move dput to the end of the function and call
+	path_release in 2.3
+
+2001-07-22  Magnus Ahltorp  <ahltorp@nada.kth.se>
+
+	* tests/asu.c: Include atypes.h
+
+2001-07-22  Assar Westerlund  <assar@stacken.kth.se>
+
+	* xfs/linux/xfs_syscalls.c (xfs_debug_print): call print_dentry
+	* xfs/linux/xfs_common.c (print_dentry): add
+	(print_aliases): const-ize
+	(print_childs): rename to print_children, constize
+
+2001-07-19  Assar Westerlund  <assar@stacken.kth.se>
+
+	* xfs/bsd/xfs_vfsops-osf.c: add xfs dead vnode operations
+	(make_dead_vnode): use these and make the dead vnode have a mount point
+	
+	* rx/rx.c: (rx_PrintPeerStats): fix printf format
+	
+2001-07-19  Love  <lha@stacken.kth.se>
+
+	* rx/{rx.c,rx.h,rx_globs.h}: performance patch from Bjoern
+	Groenvall <bg@sics.se>
+	* arlad/{fcache.c,volcache.c}: update to match with bg's patch
+
+2001-07-16  Love  <lha@stacken.kth.se>
+
+	* Release 0.35.5, see the branch for relevant patches
+
+2001-07-16  Assar Westerlund  <assar@sics.se>
+
+	* xfs/bsd/xfs_vnodeops-common.c: make all functions vput/vrele
+	agonstic.  fix callers.
+	* xfs/bsd/xfs_vnodeops-osf.c: add correct vrele:ing
+
+	* xfs/bsd/Makefile.in (osf): add CFLAGS
+	(bsd): look for vnode_if.h first in $(SYS)/sys
+
+2001-07-15  Assar Westerlund  <assar@chicken.stacken.kth.se>
+
+	* appl/amon/Makefile.in (LIBS): add roken
+
+2001-07-15  Mattias Amnefelt  <mattiasa@e.kth.se>
+
+	* xfs/bsd/xfs_dev-common.c: define xfs_block_sigset in all cases
+	where it's used
+
+2001-07-15  Love  <lha@stacken.kth.se>
+
+	* arlad/inter.c (cm_{,sym}link): pass parent directory to
+	fcache_verify_attr
+
+	* arlad/fcache.c (fcache_verify_attr): if we don't have a parent,
+	don't bulkstat, this is to avoid possible deadlock
+	
+	* arlad/messages.c: pass up parent to fcache_verify_attr() to
+	avoid deadlock in bulkstatus code
+
+	* lwp/lock.h: print thread-id before the lock message
+	
+2001-07-15  Assar Westerlund  <assar@sics.se>
+
+	* tests/intr-read.c: new test for SIGALRM interrupting open
+
+	* xfs/bsd/xfs_dev-common.c (xfs_message_rpc): block the
+	appropriate signals (SIGIO, SIGALRM, SIGVTALRM) also on OSF 5.x
+
+	* appl/Makefile.in (SUBDIRS): make `lib' conditional
+	* configure.in (APPL_SUBDIRS): add `lib'
+
+2001-07-15  Love  <lha@stacken.kth.se>
+
+	* xfs/bsd/xfs_dev-common.c (xfs_message_rpc): comment on what os
+	releases that uses what signal confusion, make the osf code
+	also use xfs_block_sigset()
+	
+	* arlad/fcache.c: (get_attr_bulk): when getting the fid to install
+	the addr, use a fid will some !random value in it
+	
+2001-07-14  Love  <lha@stacken.kth.se>
+
+	* lib/cmd/Makefile.in: link testc with @LIBS@
+	* configure.in: check for get_progname set_progname warnerr
+
+2001-07-14  Magnus Ahltorp  <ahltorp@nada.kth.se>
+
+	* configure.in, appl/themis: Added Themis
+
+2001-07-13  Magnus Ahltorp  <ahltorp@nada.kth.se>
+
+	* appl/fs/fs.c: Added getstatistics
+
+2001-07-12  Magnus Ahltorp  <ahltorp@nada.kth.se>
+
+	* appl/vos/{vos_common.c,vos_examine.c,vos_local.h,vos_syncsite.c,
+	vos_vldbexamine.c}: Use arlalib_host_to_name
+	* appl/lib/arlalib.[ch]: Added arlalib_host_to_name
+	* appl/lib/{arlalib.h,fs_lib.c}: Added collection of statistics
+	* arlad/messages.c: Added collection of statistics
+	* arlad/fcache.[ch]: Added collection of statistics
+	* include/kafs.h: Added VIOC_STATISTICS opcodes and reqtypes
+
+2001-07-11  Love  <lha@stacken.kth.se>
+
+	* lib/ko/kocell.c (cell_foreach): avoid passing up the dynroot cell
+	(cell_iterate_func): use constant
+	(cell_new): make sure we don't create a dynroot cell
+
+2001-07-11  Magnus Ahltorp  <ahltorp@nada.kth.se>
+
+	* util/hash.[ch]: Added hashtabrelease
+	* include/kafs.h: Added VIOC_PREFETCHTAPE, VIOC_RESIDENCY_CMD and
+	VIOC_STATISTICS
+	* xfs/linux/xfs_inodeops.c (xfs_data_valid): if we have knowledge
+	about a directory, we believe it, even if we don't think we have
+	enough data about it
+
+2001-07-11  Mattias Amnefelt  <mattiasa@e.kth.se>
+
+	* arlad/fcache.c (fcache_get_data): set wanted_length if we don't
+	have data or if it's not up-to-date
+	* xfs/bsd/xfs_vnodeops-common.c (xfs_data_valid): if we have
+	knowledge about a directory, we believe it, even if we don't think
+	we have enough data about it
+	* xfs/bsd/bin/startarla.in: added support for dux
+	* xfs/bsd/bin/Makefile.in: build startarla on dux
+
+2001-07-09  Love  <lha@stacken.kth.se>
+
+	* lib/ko/kocell.c (host_sort): don't use E->name, since it might
+	be NULL in case we did a ``fs newcell'', noted by Nickolai
+	Zeldovich <kolya@mit.edu>
+
+2001-07-06  Mattias Amnefelt  <mattiasa@e.kth.se>
+
+	* conf/CellServDB: changed vldb for it.kth.se according to
+	<elu@it.kth.se>
+
+2001-07-06  Love  <lha@stacken.kth.se>
+
+	* rx/rx_pkt.c (rxi_SendDebugPacket): truncate the iov to the size
+	of the outgoing packet
+
+2001-07-05  Magnus Ahltorp  <ahltorp@nada.kth.se>
+
+	* appl/pts/pts.c: membership: Move error handling to outside of
+	the server trying loop. Handle non-existing users and groups.
+
+	* appl/lib/arlalib.c (arlalib_try_next_db): Use ARLA_CALL_DEAD
+	instead of RX_CALL_DEAD
+
+2001-06-27  Mattias Amnefelt  <mattiasa@e.kth.se>
+
+	* xfs/bsd/xfs_node-osf.c (free_all_xfs_nodes): vflush the
+	mountpoint after relasing the root vnode
+	* xfs/bsd/xfs_vnodeops-osf.c (xfs_getpage, xfs_putpage): send
+	wanted size to xfs_data_valid
+
+2001-06-21  Love  <lha@stacken.kth.se>
+
+	* xfs/linux/xfs_inodeops.c (xfs_data_valid): move the check that
+	offset will not extend over the end of since to the inside of the
+	loop
+
+	* arlad/fcache.c (fcache_get_data): don't specialcase directories,
+	since that will mean we never will get data from then in som
+	cases. Assert that we always never give length when fetching
+	directories.
+
+2001-06-17  Magnus Ahltorp  <ahltorp@nada.kth.se>
+
+	* arlad/{aix-subr.c,arla-cli.c,bsd-subr.c,hpux-subr.c,inter.c,
+	inter.h,irix-subr.c,messages.c,solaris-subr.c,subr.c,subr.h,
+	sunos-subr.c,unknown-subr.c}: Change cm_setattr, cm_ftruncate and
+	cm_access to take FCacheEntry. Make all cm functions return int.
+	Change all callers.
+
+	* arlad/{arla-cli.c,inter.c,inter.h}: Change arla-cli.c:walk() to
+	inter.c:cm_walk(). Make it take separate arguments for start fid
+	and result. Change all callers.
+
+2001-06-16  Magnus Ahltorp  <ahltorp@nada.kth.se>
+
+	* arlad/inter.c (cm_close): Remove erroneous fcache_release
+
+	* arlad/{inter.c,inter.h,messages.c}: Change cm_create, cm_mkdir,
+	cm_link, cm_symlink and cm_rename to take FCacheEntry
+
+	* arlad/{inter.c,inter.h,messages.c}: Change cm_remove and
+	cm_rmdir to take FCacheEntry
+
+	* arlad/{arla-cli.c,inter.c,inter.h,messages.c}: Change cm_lookup
+	to take FCacheEntry
+
+	* arlad/inter.c (cm_getattr): Don't do fcache_release()
+
+2001-06-15  Assar Westerlund  <assar@sics.se>
+
+	* conf/CellServDB: add openafs.org
+
+2001-06-11  Love  <lha@stacken.kth.se>
+
+	* arlad/DynRootDB.5: clarify what happens if .Nm doesn't exist
+	
+2001-06-10  Magnus Ahltorp  <ahltorp@nada.kth.se>
+
+	* arlad/{inter.c,inter.h,messages.c}: Change cm_getattr to take
+	FCacheEntry
+
+2001-06-08  Magnus Ahltorp  <ahltorp@nada.kth.se>
+
+	* arlad/{inter.c,inter.h,messages.c}: Change cm_open and cm_close
+	to take FCacheEntry
+
+	* arlad/{adir.c,fcache.c,subr.c}, lib/bufdir/fdir.[ch]: Change
+	fdir_readdir to take a VenusFid instead of a VenusFid*
+
+	* arlad/{adir.c,adir.h,arla-cli.c,fcache.c,fcache.h,inter.c,
+	messages.c}: Change fcache_get_data to take FCacheEntry instead of
+	getting one itself. Changed all callers.
+
+2001-06-06  Magnus Ahltorp  <ahltorp@nada.kth.se>
+
+	* arlad/fcache.[ch]: Fix fcache recovery
+
+2001-06-06  Assar Westerlund  <assar@sics.se>
+
+	* xfs/solaris/bin: move startarla, mount_xfs from bin to sbin
+
+2001-06-05  Mattias Amnefelt  <mattiasa@e.kth.se>
+
+	* xfs/bsd/xfs_node-osf.c: do locking and handle ndp:s better
+        * xfs/bsd/xfs_vfsops-osf.c: test for vfs_swapvp and vfs_smoothsync
+        * xfs/bsd/xfs_syscalls_common.c: don't use fhlookup on dux
+        * configure.in: test for vfs_swapvp and vfs_smoothsync in struct
+        vfsops (for dux)
+	
+2001-06-05  Magnus Ahltorp  <ahltorp@nada.kth.se>
+
+	* arlad/{adir.c,adir.h,inter.c,messages.c}: Renamed from
+	adir_lookup_fcacheentry to adir_lookup. Removed old adir_lookup.
+	Use new adir_lookup instead.
+
+	* arlad/{discon_log.c,reconnect.c}: Disable nonworking functions.
+	
+2001-05-29  Assar Westerlund  <assar@sics.se>
+
+	* configure.in: test for genfs_mmap
+	* xfs/bsd/xfs_vnodeops-bsd.c (xfs_mmap): call genfs_mmap if it
+	exists
+
+2001-05-28  Magnus Ahltorp  <ahltorp@nada.kth.se>
+
+	* arlad/{dynroot.c,dynroot.h,fcache.c}: Make dynroot add
+	CallerAccess to creds
+
+2001-05-26  Mattias Amnefelt  <mattiasa@e.kth.se>
+
+	* xfs/bsd/xfs_{vnodeops,node}-osf.c: general update of the osf/1
+	code. Doesn't crash immidiately
+	* lib/sl/lex.l,ydr/lex.l: build with lex on dux 4.0d
+	* arlad/Makefile.in: use correct syntax
+	* cf/osf-func-vfs-name-hash.m4: function to find out more about 
+	vfs_name_hash()
+	* cf/try-compile-kernel.m4: use KERNEL_CC if it is defined
+	* configure.in: find out more about vfs_name_hash on osf/1
+	* appl/{afsutils,amon,asrvutil,bos,fs,kalog,pts,udebug,vos}/Makefile.in
+	lib/ko/Makefile.in: build working makefile even if @LIBS@ is empty
+
+2001-05-22  Assar Westerlund  <assar@sics.se>
+
+	* xfs/bsd/xfs_vnodeops-common.c (xfs_write_common): set the offset
+	of the xnode to the length of the cache file
+
+2001-05-22  Mattias Amnefelt  <mattiasa@e.kth.se>
+
+	* conf/CellServDB: Changed afsdb2.isk.kth.se
+
+2001-05-22  Harald Barth  <haba@pdc.kth.se>
+
+	* doc/Makefile.in: Added eps to pdf rule to be able to run texi to
+	                   pdf generation.
+
+2001-05-21  Harald Barth  <haba@pdc.kth.se>
+
+	* doc/real-world.texi: Spell and grammar. Added stuff about KeyFile.
+	* doc/storage.texi, doc/arla.texi: Spell and grammar.
+
+2001-05-17  Love  <lha@stacken.kth.se>
+
+	* xfs/bsd/bin/startarla.in: remove symbol file before loading
+	kernel module
+	* xfs/bsd/bin/startarla.in: use /var/db so the data is kept after
+	a crash
+
+2001-05-17  Magnus Ahltorp  <ahltorp@nada.kth.se>
+
+	* arlad/messages.c (viocgetcacheparms): Return lowbytes and
+	lowvnodes.
+
+	* arlad/fcache.[ch]: Added fcache_lowbytes and fcache_lowvnodes.
+
+2001-05-15  Assar Westerlund  <assar@sics.se>
+
+	* xfs/linux/xfs_vfsops.c (xfs_read_super): bail out on too large
+	minor devices
+
+	* xfs/linux/xfs_dev.c (xfs_devopen): move initialization of
+	inactive_list to xfs_init_device.  This should handle the case of
+	mounting the device before opening it.
+
+	* cf/bsd-uvm-only.m4: add sys/queue.h
+
+2001-05-13  Assar Westerlund  <assar@sics.se>
+
+	* appl/afsutils/Makefile.in (LIBS): add another RXKAD_LIBS to be
+	consistent with other Makefiles
+
+2001-05-07  Love  <lha@stacken.kth.se>
+
+	* xfs/bsd/bin/startarla.in: 1.18->1.18.2.2: Store the output file
+	from [k]modload and [k]modstat in /var/run so it will be possible
+	to debug the kernel core.
+
+2001-05-07  Assar Westerlund  <assar@sics.se>
+
+	* xfs/bsd/xfs/xfs_locl.h: add <sys/mutex.h>
+	* xfs/bsd/xfs_syscalls-wrap-freebsd.c
+	(freebsd_old_setgroups_func): static-ize
+	(AFS_SYSCALL): remove, this is already defined in afssysdefs.h
+
+	* xfs/bsd/xfs_vnodeops-bsd.c (get_pages_endlength): only for
+	HAVE_VOP_GETPAGES
+
+	* xfs/bsd/xfs_syscalls-wrap-macos.c (old_setgroups_func): use the
+	common one instead
+
+	* xfs/linux/xfs_inodeops.c (xfs_write_file): xfs_inode -> inode
+	
+2001-05-06  Magnus Ahltorp  <ahltorp@nada.kth.se>
+
+	* xfs/bsd/xfs_vnodeops-common.c (xfs_write_common): Fetch whole
+	file
+
+	* arlad/messages.c: Assert or set attrusedp when setting datausedp
+	(break_callback): Don't clear kernelp, attrusedp and datausedp
+
+	* arlad/inter.c (cm_open): assert attrusedp when setting datausedp
+
+	* arlad/fcache.c (stale): Don't clear attrusedp and datausedp
+	(fcache_get_data): Don't set wanted_length if a directory that has data
+	(fcache_update_length): Set wanted_length and fetched_length
+
+	* xfs/linux/xfs_inodeops.c (xfs_write_file): Fetch whole file when
+	writing
+
+	* lib/bufdir/fbuf.c (mmap_copyrx2fd): Adjust mmap offset to
+	pagesize
+
+	* tests/Makefile.in: still-there-p: Added $(ROKEN_LIBS)
+
+2001-04-30  Love  <lha@stacken.kth.se>
+
+	* arlad/arlad.8: Added reference to DynRootDB
+	
+	* arlad/DynRootDB.5: new file
+	
+	* arlad/arla-cli.c (main): sleep for a some time to let the
+	create_nodes thread start when we are using dynroot, otherwise it
+	will never had a change to start before we enter editline/readline
+	
+	* lib/ko/ko.h: change suid information to a flag, added dynroot
+	flag and functioncall
+
+	* lib/ko/kocell.c: change suid information to a flag, added a
+	simple_file_parse, added parsing of DynRootDB file
+	
+	* arlad/{arla.c,arla_local.h,arlad.c,arladeb.c,arladeb.h,arlad.8}:
+	added option --cpu-usage
+
+	* util/log.[ch]: added support for printing cpu usage on each line
+
+	* configure.in: check for getrusage
+	
+2001-04-28  Harald Barth  <haba@pdc.kth.se>
+
+	* doc/real-world.texi: Enhanced spelling, grammar and readability.
+	Hopefully in a way that didn't harm content.
+
+2001-04-27  Mattias Amnefelt  <mattiasa@e.kth.se>
+
+	* xfs/bsd/xfs_node-osf.c (xfs_dnlc_purge_mp) don't use
+	cache_purgevfs() if not available
+	* xfs/bsd/xfs_syscalls-wrap-osf.c: use sy_info in struct sysent on
+	dux 5.1
+	* xfs/bsd/xfs_vfsops-osf.c: added xfs_mountroot, xfs_swapvp,
+	xfs_smoothsync from dux vfsops
+	* configure.in: test for sys/vfs_proto.h sys/vnode.h and
+	function cache_purgevfs()
+	* configure.in: test for vfs_mountroot in vfsops and sy_info in
+	sysent
+
+2001-04-27  Love  <lha@stacken.kth.se>
+
+	* doc/real-world.texi: Wrote more about tickets and tokens. Added
+	more stuff to NAT section inspired by Harald Barth <haba@pdc.kth.se>,
+	added some tables that describes the situation
+
+2001-04-18  Love  <lha@stacken.kth.se>
+
+	* conf/CellServDB: mit cells zone.mit.edu and ops.mit.edu have
+	moved From Nickolai Zeldovich <kolya@MIT.EDU>
+	
+	* appl/lib/tokens.c: (arlalib_token_iter): return right thing,
+	From Nickolai Zeldovich <kolya@MIT.EDU>
+
+	* appl/bos/bos_listusers.c (printusers): only print user when we
+	are are getting back good data From Nickolai Zeldovich
+	<kolya@MIT.EDU>
+
+	* arlad/fcache.c (getacl): fix problem that `opaque' can be
+	uninitialized when returning errors, when caller might do stupid
+	things.	From Nickolai Zeldovich <kolya@MIT.EDU>
+
+2001-04-16  Love  <lha@stacken.kth.se>
+
+	* cf: Quote argument to undefine, patch by 
+	Hidvegi <hzoli@austin.ibm.com>
+
+	* tests: Added write3
+
+2001-04-12  Magnus Ahltorp  <ahltorp@nada.kth.se>
+
+	* configure.in: Compile with -traditional-cpp on Mac OS X
+
+2001-04-12  Love  <lha@stacken.kth.se>
+
+	* xfs/bsd/xfs_vnodeops-bsd.c: (get_pages_endlength): extract
+	endsize from a get_pages_args
+	(xfs_getpages): use get_pages_endlength
+
+	* xfs/bsd/xfs_vnodeops-common.c: (xfs_lookup_common): fixes for
+	printf format strings
+
+	* configure.in: add test for vop_getpages_args->a_offset
+	
+2001-04-08  Love  <lha@stacken.kth.se>
+
+	* arlad/arlad.c: move paths to defines
+	
+	* NEWS: more things
+	
+	* INSTALL: spelling
+	
+2001-04-04  Love  <lha@stacken.kth.se>
+
+	* arlad/fcache.c (find_first_fs): memset context, in case we fail
+	to update the volume, context will contains data that
+	free_fs_server_context() will grok.
+
+2001-04-05  Magnus Ahltorp  <ahltorp@nada.kth.se>
+
+	* configure.in, cf/check-kernel.m4,
+	xfs/bsd/xfs_syscalls-wrap-macos.c, xfs_vnodeops-bsd.c: Make it
+	build on Mac OS X release
+
+2001-03-25  Love  <lha@stacken.kth.se>
+
+	* xfs/linux/xfs_dev.c (xfs_message_rpc): ignore SIGSTOP, this make
+	ptrace() work
+
+2001-03-23  Love  <lha@stacken.kth.se>
+
+	* arlad/fcache.c (get_attr_bulk): if parent entry is missing data,
+	bail out and force regular get_attr
+	
+2001-03-20  Mattias Amnefelt  <mattiasa@e.kth.se>
+
+	* rxdef/vldb.xg: use nvldbentry in ReleaseEntryN
+	* appl/vos/vos_common.c (get_vlentry): try to find dbserver if
+	it's not given
+	* vos_listvldb.c (listvldb_iter): use VL_ListAttributes interface, 
+	and allow to mask on servername and partition
+	* appl/vos: added backup and backupsys commands
+	
+2001-03-19  Mattias Amnefelt  <mattiasa@e.kth.se>
+
+	* xfs/bsd/xfs_node-osf.c: 
+	(xfs_dnlc_enter): set ni_makeentry when calling cache_lookup
+	(xfs_cnp_init): compute cache correctly
+	* xfs/bsd/xfs_vnodeops-osf.c: set name in ndp->cn_nameptr when 
+	symlinking
+
+2001-03-18  Love  <lha@stacken.kth.se>
+
+	* arlad/.gdbinit: add some more debugging stuff
+	
+	* xfs/linux/xfs_inodeops.c: implement struct
+	inode_operations->revalidate
+
+2001-03-17  Love  <lha@stacken.kth.se>
+
+	* arlad/volcache.c (clones_exists): return TRUE if there is a
+	clone
+	(get_info_byname): when there are no clones add add_clones_to_hashtab
+	(add_entry_byname): remove add_clones_to_hashtab
+	(volume_uptodatep): add a condition that a volume is uptodate when
+	there exist (a) clone(s).
+
+2001-03-15  Magnus Ahltorp  <ahltorp@nada.kth.se>
+
+	* xfs/bsd/xfs_node-osf.c, xfs/bsd/xfs_node-bsd.c,
+	 xfs/bsd/xfs_message.c, xfs/bsd/xfs_vnodeops-common.c,
+	 xfs/bsd/xfs/xfs_vnodeops.h, xfs/bsd/xfs/xfs_node.h: Added support
+	 for incremental fetch
+	
+2001-03-14  Magnus Ahltorp  <ahltorp@nada.kth.se>
+
+	* rx/rxdebug.c (MakeCall): check return codes
+
+2001-03-13  Mattias Amnefelt  <mattiasa@e.kth.se>
+
+	* xfs/bsd/xfs_vnodeops-osf.c: xfs_{mkdir,create}: set
+	ndp->cn_nameptr before calling lookup
+
+2001-03-12  Love  <lha@stacken.kth.se>
+
+	* arlad/volcache.c (getbyname): remove leftover type code
+	(add_to_hashtab): split to two functions,
+	add_{clones,name}_to_hashtab
+	(add_entry_byname): add code for sleeping when there are multiple
+	lookups (add_entry_byid): disable so the id-lookup can't create
+	entries since that creates a race-condtion that isn't possible to
+	solve.
+	(volcache_getbyname): when there are a lookup in process, wait
+	(volcache_getbyid): ditto
+
+	* Release 0.35.3, see the branch for relevant patches
+	
+	* arlad/volcache.h (VolCacheEntry): add two flags fields that is
+	used to signal when a lookup is in progress, and with ther are
+	waiting threads.
+
+	* tests/write2: improve test to make it work when it failes
+	
+	* arlad/volcache.c (getbyname): there is no `type' argument
+	(add_entry_byname): update getbyname usage, check if there already
+	exists an entry for this name with we return from get_info* before
+	adding the new entry to the hashtab.
+	(add_entry_byid): ditto
+
+	* arlad/fcache.c (getroot): remove sleep-waiting on multiple
+	getroot calls
+
+2001-03-11  Assar Westerlund  <assar@sics.se>
+
+	* xfs/bsd/xfs_vfsops-bsd.c (xfs_fhtovp): repair broken code
+	(xfs_fhopen): handle error conditions better
+	add comments to some #else/#endif
+
+2001-03-11  Mattias Amnefelt  <mattiasa@e.kth.se>
+
+	* lib/ko/kocell.c: manage cells without dbservers
+
+2001-03-09  Assar Westerlund  <assar@sics.se>
+
+	* arlad/fcache.c (fcache_reinit): allow unchanged, increasing or
+ 	decreasing high watermark for vnodes
+
+	* arlad/kernel.c (kernel_interface): sleep waiting for free
+	threads on overload
+
+	* arlad/kernel.c (kernel_interface): only print `all workers busy'
+	once (and say how many)
+
+2001-03-08  Magnus Ahltorp  <ahltorp@nada.kth.se>
+
+	* xfs/aix/xfs_vnodeops.c, xfs/bsd/xfs_vnodeops-common.c,
+	xfs/irix/xfs_vnodeops.c, xfs/solaris/xfs_vnodeops.c,
+	xfs/sunos/xfs_vnodeops.c: (xfs_data_valid): Set offset to file
+	length
+
+	* arlad/messages.c: Added xfs_message_open
+
+	* xfs/linux/xfs/xfs_node.h, xfs/linux/xfs_message.c,
+	xfs/linux/xfs_node.c, xfs/linux/xfs_inodeops.c: Added support for
+	incremental fetch
+	
+	* arlad/inter.{c,h}: Return fetched length in length field
+
+	* xfs/include/xfs/xfs_message.h, arlad/messages.{c,h}: Added
+	support for incremental fetch
+
+	* xfs/linux/xfs_inodeops.c (xfs_setattr): fixed typo
+
+2001-03-08  Assar Westerlund  <assar@sics.se>
+
+	* xfs/solaris/xfs_syscalls.c: return EFAULT if copyin*/copyout*
+	fails.  do not copy in `struct ViceIoctl' it not a AFSCALL_PIOCTL.
+	only call set_errno if an error actually has occured
+	
+2001-03-07  Magnus Ahltorp  <ahltorp@nada.kth.se>
+
+	* arlad/fcache.c: Fetch from correct offset and to correct offset.
+	Reset fields on invalidation.
+
+2001-03-07  Mattias Amnefelt  <mattiasa@e.kth.se>
+
+	* xfs/bsd/xfs_vnodeops-osf.c (xfs_lookup): Need to set pointer to
+	the parent directory.
+
+2001-03-06  Love  <lha@stacken.kth.se>
+
+	* xfs/linux/xfs/xfs_fs.h: export xfs_setattr
+ 	* xfs/linux/xfs_inodeops.c: (xfs_setattr): only set time and size
+	when we have a valid attribute for it (ie when asked to change it)
+	(xfs_truncatate): remove unused code
+	* xfs/linux/xfs_vfsops.c: implement xfs_notify_change with
+	xfs_setattr
+
+2001-03-04  Love  <lha@stacken.kth.se>
+
+	* include/afssysdefs.h: solaris8 uses 65, freebsd uses 339
+	
+2001-03-03  Mattias Amnefelt  <mattiasa@e.kth.se>
+
+	* xfs/bsd/xfs/xfs_locl.h, xfs/bsd/xfs_vnodeops-common.c: use
+	va_size_t instead of u_quad_t
+	* xfs/bsd/xfs_vfsops-common.c: Wrap vfs_getnewfsid in autoconf
+	ifdef
+	* xfs/bsd/xfs_node-osf.c: new function xfs_dnlc_lock, doing dnlc
+	locking on osf
+	* xfs/bsd/xfs_message.c: there is no vrecycle on osf
+	* xfs/bsd/xfs_common.c, xfs/bsd/xfs_common-bsd.c: moved memcpy to
+	xfs_common.c
+
+2001-02-28  Magnus Ahltorp  <ahltorp@nada.kth.se>
+
+	* arlad/{adir.c, arla-cli.c, fcache.c, fcache.h, inter.c, inter.h,
+	messages.c}: Added basic incremental fetch functionality
+
+2001-02-28  Assar Westerlund  <assar@sics.se>
+
+	* xfs/bsd/xfs_vfsops-openbsd.c, xfs_vfsops-freebsd.c (xfs_vfsops):
+	use xfs_mount_common when possible
+	* configure.in (bsd): add a test for type of vfs_mount
+
+2001-02-26  Assar Westerlund  <assar@sics.se>
+
+	* appl/vos/vos_examine.c (printvolstat): clarify error message
+	when clone not found
+	* appl/vos/vos_examine.c (printvolstat): print information about
+	the current clone use get_servername
+	* appl/vos/vos_common.c (get_servername): add
+	* arlad/volcache.c: use volname_canonicalize, volname_specific
+	* lib/ko/vlmisc.c (volname_canonicalize, volname_specific,
+	volname_suffix): new functions
+
+2001-02-21  Love  <lha@stacken.kth.se>
+
+	* lwp/make-process.o.sh.in (HOST_CPU): catch the s390 case
+	
+	* lwp/process.s390.S: add support for S/390 written by
+	<Neale.Ferguson@SoftwareAG-usa.com> and <adam@sinenomine.net>
+	
+	* lwp/lwp_asm.c: increase STACK_HEADROOM for s/390
+	
+2001-02-21  Assar Westerlund  <assar@sics.se>
+
+	* xfs/linux/bin/arla.init.in: send /dev/xfs0 to mount
+
+2001-02-20  Magnus Ahltorp  <ahltorp@nada.kth.se>
+
+	* include/afssysdefs.h: OpenBSD has syscall 208
+
+2001-02-19  Magnus Ahltorp  <ahltorp@nada.kth.se>
+
+	* arlad/fcache.c (fcache_update_length): correct variable spelling
+
+	* xfs/bsd/xfs_vfsops-bsd.c: Rewrite fhtovp and checkexp code.
+
+	* xfs/bsd/xfs_node-bsd.c (xfs_node_find): assign value to variable
+	_before_ using it
+
+2001-02-18  Love  <lha@stacken.kth.se>
+
+	* arlad/fcache.c (fcache_update_length): remove consistency check
+	that the len that is passed in is the lenght of the cachefile
+	since this might not be the case if its possible to write to the
+	cachefile from useland while the file is being closed.
+	
+2001-02-14  Love  <lha@stacken.kth.se>
+
+	* xfs/solaris/xfs_message.c (xfs_message_installdata): move out
+	where we hold the xfs-vnode to avoid being it cleaned out under
+	our feets by dnlc_purge_vp() From assar
+	
+	* appl/lib/ka-procs.c (get_password): fix problem noted by John
+	Callaghan <jpc@msu.edu>
+
+	* doc/timeline.texi: change wording
+	
+2001-02-13  Assar Westerlund  <assar@sics.se>
+
+	* arlad/fcache.c (fcache_update_length): rewrite the assert:s in a
+	more robust way
+
+2001-02-11  Love  <lha@stacken.kth.se>
+
+	* arlad/arlad.8: fix mandoc bug
+	
+2001-02-11  Assar Westerlund  <assar@sics.se>
+
+	* xfs/solaris/xfs_vnodeops.c (xfs_inactive): check the v_count of
+ 	the node since due to a race condition we can get nodes that
+ 	shouldn't really be thrown away here
+	(xfs_getpage, xfs_putpage): read the cache node from the xfs_node
+	after calling xfs_data_valid
+
+	* arlad/volcache.c (try_reuse): rename to mark_unused and do not
+ 	drop vol ref to parent
+	(this is done in recycle)
+	* arlad/volcache.c: re-do some of the ref-counting logic and make
+ 	it simpler
+
+	* xfs/solaris/bin/startarla.in: only create /dev/xfs0 symlink if
+ 	it doesn't exist
+
+	* tests/Makefile.in: add -lroken before any external libraries
+ 	consistenly
+	(SOURCES): no .o sources
+
+2001-02-11  Love  <lha@stacken.kth.se>
+
+	* arlad/messages.c (try_again): send key to bitbucket if we get a
+	back a unknown key
+
+2001-02-09  Assar Westerlund  <assar@sics.se>
+
+	* xfs/bsd/xfs_message.c: adapt to changing mutex interface in
+	fbsd5-current
+
+2001-02-08  Love  <lha@stacken.kth.se>
+
+	* doc/timeline.texi: when bg started hacking rxkad
+	
+2001-02-05  Magnus Ahltorp  <ahltorp@nada.kth.se>
+
+	* xfs/solaris/xfs_node.c: Corrected bad function call and
+	declaration
+
+2001-02-05  Assar Westerlund  <assar@sics.se>
+
+	* arlad/arladeb.c (arla_vwarnx_with_fid): adapt to new
+ 	volcache_getname
+	* arlad/fcache.c (fcache_store_state): fix arla_warnx
+	(getvolstat): use new volcache_getname
+	* arlad/volcache.h (volcacheentry): only store one name pointer
+ 	(the canonical name)
+	(volcache_getname): update prototype
+	* arlad/volcache.c: re-structure so that we only keep the
+ 	canonical name for a volume
+	(volcache_getname): copy name out instead of returning it
+
+2001-02-04  Assar Westerlund  <assar@sics.se>
+
+	* xfs/bsd/xfs_node-bsd.c (xfs_node_find): use LIST_FOREACH
+
+2001-02-01  Love  <lha@stacken.kth.se>
+
+	* xfs/bsd/xfs_vfsops-macos.c: warp xfs_mount to avoid typecast
+	
+	* xfs/bsd/Makefile.in: use @BSD_WERROR@ to turn on -Werror
+	
+	* configure.in: use AC_WERROR to turn on -Werror on those
+	bsd-unixes that can handle it.
+
+	* xfs/bsd/xfs/xfs_locl.h: added some missing prototypes
+	* cf/kernel-need-proto.m4: need-proto for kernel
+	
+2001-02-01  Assar Westerlund  <assar@sics.se>
+
+	* configure.in: check for krb_get_default_principal
+	* appl/afsutils/aklog.c: add a fallback krb_get_default_principal
+ 	for non-kth krb4 libraries
+
+	* xfs/include/xfs/xfs_message.h: remove unneeded sys/param.h and
+ 	linux/param.h that conflict with other header files
+
+	* cf/prog-cc-flags.m4: remove -Wbad-function-cast, it's not
+ 	obviously useful and breaks on fbsd
+
+	* xfs/linux/Makefile.in (CFLAGS): add -Werror
+
+	* xfs/linux/xfs_inodeops.c (xfs_d_delete): handle both returning
+ 	void and not
+	* configure.in (linux): test for struct dcache_operations.d_delete
+ 	returning void
+
+2001-02-01  Love  <lha@stacken.kth.se>
+
+	* xfs/bsd/Makefile.in: -Werror
+	
+	* xfs/bsd/xfs_syscalls-wrap-osf.c (wrap_old_setgroups_func):
+	provide wrapper function for setgroups
+
+	* xfs/bsd/xfs_wrap-bsd.c: remove freebsd lkm code
+	
+	* xfs/bsd/xfs_syscalls-bsd.c:(old_setgroups_func): moved to common
+	code.
+
+	* xfs/bsd/xfs_syscalls-wrap-bsd.c (old_setgroups_func): remove,
+	moved to common-code
+
+	* xfs/bsd/xfs_vfsops-freebsd.c: remove pre 3.0 code provide a
+	wrapper function around xfs_mount
+	
+	* xfs/bsd/xfs/xfs_vfsops-bsd.h (xfs_mount): make userdata void *
+	* xfs/bsd/xfs_vfsops-bsd.c (xfs_mount): make userdata void *
+	
+	* xfs/bsd/xfs_wrap-osf.c (xfs_syscall_num): remove since is
+	defined extern in <xfs/xfs_syscalls.h>
+
+	* xfs/bsd/xfs_vfsops-netbsd.c: if NetBSD-1.5P or later,
+	vnodeopv_desc should be const
+
+	* xfs/bsd/xfs_syscalls-common.c (xfs_setgroups): syscalls take
+	three arguments, make it so.
+
+	* xfs/bsd/xfs_syscalls-wrap-bsd.c
+	(xfs_syscallsent): check for sy_flags
+	(old_setgroups_func): syscalls take three arguments, make it so.
+
+	* xfs/bsd/xfs/xfs_syscalls.h: syscalls take three arguments, make
+	it so.
+
+	* configure.in: check if struct sysent have a sy_flags
+	
+	* xfs/bsd/xfs_syscalls-common.c (xfs_setgroups): syscalls take
+	three arguments, make it so.
+
+	* xfs/bsd/xfs_syscalls-wrap-bsd.c
+	(xfs_syscallsent): check for sy_flags
+	(old_setgroups_func): syscalls take three arguments, make it so.
+
+	* xfs/bsd/xfs/xfs_syscalls.h: syscalls take three arguments, make
+	it so.
+
+	* configure.in: check if struct sysent have a sy_flags
+	
+2001-01-31  Love  <lha@stacken.kth.se>
+
+	* arlad/fcache.c (fcache_store_state): if arla i killed before
+	fcache_init has be called, then lrulist is NULL.
+	
+	* xfs/bsd/xfs_vnodeops-bsd.c (xfs_readdir): avoid looping when
+	there is a (incorrect) entry with d_reclen == 0. Patch from: Chris
+	Csanady <ccsanady@iastate.edu>
+
+2001-01-30  Love  <lha@stacken.kth.se>
+
+	* Release 0.35.2, see the branch for relevant patches
+
+	* xfs/linux/xfs_vfsops.c (xfs_replace_root): update
+	xfsf_attr2inode usage
+
+	* Release 0.35.1, see the branch for relevant patches
+
+	* xfs/*/xfs_message.c (xfs_message_installattr): don't clear
+	node
+	(xfs_message_installdata): clear node
+	* xfs/*/xfs_node.c (xfs_attr2inode): only clean node if needed
+	(new_xfs_node): clean node
+
+	* xfs/linux/xfs_dev.c (xfs_message_rpc): mark message as worken
+	before calling wakeup()
+
+2001-01-29  Mattias Amnefelt  <mattiasa@e.kth.se>
+
+	* volumeserver.xg (AFSVolClone): changed argument to string
+	newName
+
+2001-01-29  Love  <lha@stacken.kth.se>
+
+	* conf/CellServDB: added biocenter.helsinki.fi
+	
+	* arlad/bsd-subr.c: make XFS_DIRENT_BLOCKSIZE smaller since
+	otherwise linux emulation code under freebsd will lose any entries
+	that have its end past 512 bytes.
+
+2001-01-28  Magnus Ahltorp  <ahltorp@nada.kth.se>
+
+	* configure.in: Fixed fatal typo in pthreads detection
+
+2001-01-28  Love  <lha@stacken.kth.se>
+
+	* xfs/linux/xfs_inodeops.c (xfs_lookup): fill in the whole getnode
+	message inside the look, since xfs_message_rpc() might clobber it.
+	
+2001-01-28  Assar Westerlund  <assar@sics.se>
+
+	* xfs/bsd/xfs_message.c: handle v_interlock being a mutex (fbsd
+ 	5-current) use correct ifdef for vgonel
+	* configure.in: test for sys/mutex.h (fbsd 5-current)
+
+	* xfs/bsd/xfs_vnodeops-bsd.c: use zfree if it exists and there is
+ 	no zfreei (on fbsd 5-current)
+	* configure.in: check for krenel zfree
+
+2001-01-27  Assar Westerlund  <assar@sics.se>
+
+	* tests/run-tests.in (ARLA_TESTS): do not run compare-inum-mp,
+	since it doesn't currently work.  it really should but it's hard
+	and there's no real point in having it here and scaring the users.
+
+2001-01-25  Love  <lha@stacken.kth.se>
+
+	* appl/fs/fs.1 (incompat): document
+	* appl/fs/fs.c (incompat_cmd): report what pioctl interface we use
+	* appl/lib/fs_lib.c (fs_incompat_renumber): tries to detect what
+	pioctl interface we have
+	* appl/lib/arlalib.h (fs_incompat_renumber): new function
+	
+	* xfs/solaris/bin/startarla.in: install solaris 8 syscall number
+	
+	* arlad/messages.c (*): use new conn_clearcred
+	* arlad/conn.c (conn_clearcred): propagate new argument flag to
+	cred_cred
+	(clear_cred): use mask to decide if this entry should be killed.
+
+	* arlad/arlad.c (main): call tzset
+	
+	* xfs/bsd/xfs_node-bsd.c (xfs_attr2vattr): make it optional to
+	reset the va struct
+	(new_xfs_node): force reset of xfs_attr2vattr
+	* xfs/bsd/xfs_node-osf.c (xfs_attr2vattr): make it optional to
+	reset the va struct
+	(new_xfs_node): force reset of xfs_attr2vattr
+
+	* arlad: roll forward the flag-to-fcacheentry2xfsnode experiment
+	again
+	* lib/ko/agetarg.c: fix helpstring generation for
+	aarg_optional_swless
+
+2001-01-22  Love  <lha@stacken.kth.se>
+
+	* appl/fs/fs.1: update setquota and mkmount
+	
+	* appl/vos/vos_status.c: use strftime instead of ctime
+	* util/log.c (log_vprint_file): print timezone
+	* appl/kalog/kalog.c: call tzset()
+	* appl/vos/vos.c: call tzset()
+	
+	* appl/fs/fs.c (setquota_cmd, mkmount_cmd): rewrite with agetarg.
+	From Nickolai Zeldovich <kolya@MIT.EDU>
+	
+	* appl/udebug/udebug.c: set_progname() and tzset()
+	
+	* lib/ko/agetarg.[ch]: Add an "aarg_optional_swless" to agetarg,
+	to allow matching of optional switchless arguments. From Nickolai
+	Zeldovich <kolya@MIT.EDU>
+	
+	* rxdef/pts.xg (ListOwned): over is a INOUT
+	From Nickolai Zeldovich <kolya@MIT.EDU>.
+	
+	* ydr/output.c (genencodein): remeber to encode INOUT arguments
+	too. From Nickolai Zeldovich <kolya@MIT.EDU>.
+
+	* appl/vos/vos_examine.c (print_volume): use strftime instead of
+	ctime. Bugrapport from Nickolai Zeldovich <kolya@MIT.EDU>
+
+	* appl/pts/pts.c (pts listowned): remove debug output, correct
+	usage output. From Nickolai Zeldovich <kolya@MIT.EDU>
+	
+2001-01-21  Love  <lha@stacken.kth.se>
+
+	* appl/afsutils/tokens.c: use arlalib_token_iter
+	* appl/lib/tokens.c (arlalib_token_iter): memset data that
+	contains the token
+
+2001-01-15  Love  <lha@stacken.kth.se>
+
+	* include/kafs.h: update arla pioctl's that are assigned to
+	assigned to arla, added comments for arla pioctls
+	
+	WARNING this break compability with older versions of arla !
+
+2001-01-14  Marcus Sundberg  <mackan@stacken.kth.se>
+
+	* configure.in: Removed some Linux checks that are no longer used
+	by the code.
+	* xfs/linux/xfs_inodeops.c: No need to have two identical
+	xfs_file_operations.
+	(xfs_fsync): new argument int datasync, zero means fsync(2),
+	non-zero means fdatasync(2).
+	(xfs_as_writepage): writepage no longer takes a struct file *.
+
+2001-01-09  Love  <lha@stacken.kth.se>
+
+	revert the flag-to-fcacheentry2xfsnode experiment
+	* arlad/messages.h: revert 1.17
+	* arlad/messages.c: revert 1.231
+	* arlad/fcache.c: revert 1.311
+	
+	* arlad/messages.c (xfs_message_pioctl): implement VIOCCKBACK
+	(vioc_ckback): invalidate all volumes and mountpoints
+
+	* arlad/fcache.h (fcache_invalidate_mp): new function
+	* arlad/fcache.c (invalidate_mp): mark mps as stale
+	(fcache_invalidate_mp): mark all mps as stale
+
+	* arlad/volcache.h (volcache_invalidate_all): new function
+	* arlad/volcache.c (inval): invalidate volume
+	(volcache_invalidate_all): invalidate all volumes
+
+	* appl/fs/fs.1: document checkvolumes
+	* appl/lib/arlalib.h (fs_checkvolumes): new function
+	* appl/fs/fs.c (checkvolumes_cmd): implement
+	(cmds): add pointer to checkvolumes command
+	* appl/lib/fs_lib.c (fs_checkvolumes): check cached volumes
+	
+	* xfs/bsd/bin/Makefile.in (MANPAGES): added xfs.4
+	* xfs/bsd/bin/xfs.4: added simplistic manualpage
+	
+	* Release 0.35 - branched here, see branch for ChangeLog
+
+	* lib/ko/agetarg.c (print_arg): fix formating error in help text
+	From Nickolai Zeldovich <kolya@MIT.EDU>
+	
+	* arlad/cred.c (cred_expire): dont try to get username since we
+	are probably chroot()ed From Nickolai Zeldovich <kolya@MIT.EDU>
+	
+	* appl/vos/vos_partinfo.c (args): end end argument with a aarg_end
+	From Nickolai Zeldovich <kolya@mit.edu>.
+	
+2001-01-08  Love  <lha@stacken.kth.se>
+
+	* appl/kalog/kalog.c (main): use koerr_gettext to print error from
+	ka_authenticate
+
+	* lib/ko/koerror.c: ka errors
+	
+	* xfs/bsd/bin/umount_xfs.8: simplistic manualpage
+	* xfs/bsd/bin/mount_xfs.8: simplistic manualpage
+	* xfs/bsd/bin/Makefile.in (MANPAGES): mount_ffs.8, umount_xfs.8
+	(install,uninstall): manualpages
+
+	* lib/ko/agetarg.c (agetarg): fixed broken short option mandatory
+	handleing
+
+2001-01-07  Love  <lha@stacken.kth.se>
+
+	* arlad/fcache.c (purge_cred, fcache_get_data): update use of
+	install_attr()
+	* arlad/messages.c (install_attr): update take a flag field for
+	fcacheentry2xfsnode()
+	(fcacheentry2xfsnode): update to take a flag field and use it.
+	(*): update to new signature of install_attr() and
+	fcacheentry2xfsnode()
+
+	* arlad/messages.h (FCACHE2XFSNODE_{ATTR,RIGHT,ALL}): flags for
+	fcacheentry2xfsnode()
+	(fcacheentry2xfsnode): update to take a flag field
+
+	* rx/rx.c (rxi_CheckCall): return -2 is the call is freed.
+	(rxi_ReapConnections): check if rxi_CheckCall returns -2, in that
+	case the hash-bucket might have changed and we need to restart.
+
+	* lib/ko/agetarg.c: make mandatory work for real
+	
+	* util/log.c (log_open): pass on name to lower open, free name
+	
+	* appl/lib/Makefile.in: add tokens.c
+	* appl/lib/arlalib.c (arlalib_get_cred_afs): get token from kernel
+	(arlalib_get_cred_krb): rename from arlalib_get_cred
+	(arlalib_getsecurecontext): use arlalib_get_cred_afs()
+	* appl/lib/tokens.c (arlalib_token_iter): new func to iterate all
+	tokens.
+
+	* xfs/bsd/xfs_dev-common.c (xfs_block_sigset): new function that
+	remove signals we want to block from a sigset_t in some diffrent
+	ways.
+	(xfs_message_rpc): use xfs_block_sigset(); if there is a p_sigctx, use it.
+
+	* xfs/solaris/xfs_vnodeops.c (xfs_map): remove the check that the
+	mapping is off the end of the file, solaris vm works that way.
+	
+	* xfs/linux/xfs_message.c (xfs_invalid_xnode): don't mark
+	directories as STALE
+	* xfs/bsd/xfs_message.c (xfs_message_invalidnode): don't mark
+	directories as STALE
+
+	* rx/rx.c (rxi_FindPeer): init connQueue
+	
+2001-01-06  Love  <lha@stacken.kth.se>
+
+	* rx/rx.c (rxi_InsertPeer): change all connection that used the
+	original peer that is about to die.
+	(rx_NewConnection,rxi_FindConnection): attach this conn to the peer
+	(rx_DestroyConnection): when the connection dies, deattach it
+	from the peer.
+
+	* rx/rx.h (rx_connection): add a queue_item that attaches this
+	connection to its peer.
+	
+2001-01-06  Simon Josefsson  <jas@nada.kth.se>
+
+	* conf/CellServDB (extundo.com): add.
+
+2001-01-06  Love  <lha@stacken.kth.se>
+
+	* appl/fs/fs.c (newcell_cmd): mark cell as mandatory and remove
+	check
+
+2001-01-05  Love  <lha@stacken.kth.se>
+
+	* rx/rx.c (rxi_DecongestionEvent): decrement the refcount after we
+	are done, so that the peer doesn't get reclaimed if we block in
+	rxi_Start(). From Nickolai Zeldovich <kolya@mit.edu>.
+
+	* appl/fs/fs.c (afs_listacl): just return if there a access
+	failure.  From Nickolai Zeldovich <kolya@mit.edu>
+	
+	* arlad/fcache.c (getacl): reset the opaque data structure in case
+	we fail, make sure we free data when we fail. 
+	From Nickolai Zeldovich <kolya@mit.edu>
+	
+	* arlad/fcache.c (get_attr_bulk): pull out the host from the rx
+	connection in case we need it later, then we don't need to used
+	freed memory.  From Nickolai Zeldovich <kolya@mit.edu>.
+	
+2001-01-04  Love  <lha@stacken.kth.se>
+
+	* lib/ko/agetarg.c (agetarg): check that the mandatory arguments
+	are filled in, from Nickolai Zeldovich <kolya@mit.edu>
+
+	* appl/fs/fs.c (cmds): added "df" from Nickolai Zeldovich
+	<kolya@mit.edu>
+
+2001-01-04  Mattias Amnefelt  <mattiasa@e.kth.se>
+
+	* appl/pts/pts.c (member_cmd): set conn_context to null before 
+	using it.
+
+2001-01-02  Love  <lha@stacken.kth.se>
+
+	* xfs/bsd/xfs_vnodeops-bsd.c (xfs_getpages): use VOP_GETPAGES()
+	for BSDs that doesn't have vnode_pager_generic_getpages().
+	
+	* xfs/linux/bin/Makefile.in: install startarla in $prefix/sbin
+	
+2001-01-01  Assar Westerlund  <assar@sics.se>
+
+	* xfs/bsd/xfs_syscalls-common.c (fhget_call): re-structure
+	* xfs/bsd/xfs_syscalls-common.c (fhget_call): always vrelease `vp'
+	(fhopen_call): check `vp' first
+	(xfs_pioctl_call): handle the weird case of someone sending a filename
+	to debug
+
+For older ChangeLog entries see ChangeLog.2000

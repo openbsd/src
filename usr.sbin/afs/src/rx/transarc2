@@ -1,0 +1,31 @@
+Date: Fri,  7 Jun 1996 10:56:41 -0400 (EDT)
+From: Tony_Mauro@transarc.com
+To: Derrick J Brashear <shadow+@andrew.cmu.edu>
+Subject: returning to TR-20916 (Rx redistributability)
+
+Dear Derrick:
+
+Back in March, I opened report TR-20916 in response to your question
+about whether it was true that Rx is freely redistributable, as
+represented to you by Jim Doyle of Boston University.  I apologize
+that there has been such a long delay in any further action, but I'd
+like to work now on resolving it.  Mike Kazar has confirmed for me
+that he made parts of Rx freely redistributable with Alfred Spector's
+approval, so I don't anticipate a problem, but I'd like to clear
+things with our licensing/contracts dept too.  As a first step, can
+you please send me a copy of the copyright from the header that Jim
+mentions?
+
+  From what I understand, Rx was developed at CMU as part of a DARPA
+  funded research project jointly funded by IBM.  Rx was picked up by
+  the AFS group and then used.. So, by all rights, the Rx stack is in
+  the public domain because the DARPA funding requirement placed it
+  there... You can read the copyright in the header for the full
+  legalese.
+
+With this in hand, I'll be in a better position to answer our
+Licensing guy's questions.
+
+Thank you.
+
+Tony Mauro

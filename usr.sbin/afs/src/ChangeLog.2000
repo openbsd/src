@@ -13,6 +13,10 @@
 	compiling for Darwin. fhget/fhopen leaks vnodes when used on
 	Darwin.
 
+2000-12-29  Assar Westerlund  <assar@sics.se>
+
+	* xfs/linux/xfs_inodeops.c: clarify some printk messages
+
 2000-12-23  Love  <lha@stacken.kth.se>
 
 	* conf/CellServDB (zepa.net): added first cell w/o hosts

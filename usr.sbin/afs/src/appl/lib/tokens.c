@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001 Kungliga Tekniska Högskolan
+ * Copyright (c) 2001, 2002 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -33,7 +33,7 @@
 
 #include "appl_locl.h"
 
-RCSID("$KTH: tokens.c,v 1.1.2.2 2001/04/18 13:53:36 lha Exp $");
+RCSID("$arla: tokens.c,v 1.9 2003/02/01 17:01:11 lha Exp $");
 
 /*
  * Iterate over all tokens and apply `func' on all of them, passing
@@ -44,11 +44,11 @@ RCSID("$KTH: tokens.c,v 1.1.2.2 2001/04/18 13:53:36 lha Exp $");
 int
 arlalib_token_iter (const char *cell, arlalib_token_iter_func func, void *arg)
 {
-    u_int32_t i;
-    unsigned char data[256];
+    uint32_t i;
+    unsigned char data[4256];
     struct ViceIoctl parms;
     char token_cell[128];
-    unsigned char secret[128];
+    unsigned char secret[4000];
     size_t secret_sz;
     struct ClearToken ct;
     int ret;
@@ -56,10 +56,8 @@ arlalib_token_iter (const char *cell, arlalib_token_iter_func func, void *arg)
     if (!k_hasafs())
 	return ENOSYS;
 
-    i = 0;
-
-    while (1) {
-	u_int32_t sz;
+    for (i = 0;; i++) {
+	uint32_t sz;
 	unsigned char *t = data;
 
 	parms.in = (void *)&i;
@@ -67,45 +65,46 @@ arlalib_token_iter (const char *cell, arlalib_token_iter_func func, void *arg)
 	parms.out = (void *)data;
 	parms.out_size = sizeof(data); 
 	
-	if (k_pioctl(NULL, VIOCGETTOK, &parms, 0) != 0)
-	    break;
+	if(k_pioctl(NULL, VIOCGETTOK, &parms, 0) != 0) {
+	    if(errno == EDOM)
+		break;
+	    return EINVAL;
+	}
 
+	/* secret token, v4 or v5 ticket */
 	memcpy (&sz, t, sizeof(sz));
 	t += sizeof(sz);
+	if (parms.out_size < t - data + sz)
+	    continue;
 	if (sz > sizeof(secret))
-	    goto next_token;
+	    continue;
 	memcpy (secret, t, sz);
 	secret_sz = sz;
 	t += sz;
 
+	/* clear token */
 	memcpy (&sz, t, sizeof(sz));
 	t += sizeof(sz);
+	if (parms.out_size < t - data + sz)
+	    continue;
 	if (sz != sizeof(ct))
-	    goto next_token;
+	    continue;
 	memcpy (&ct, t, sz);
 	t += sz;
 
-	memcpy (&sz, t, sizeof(sz)); /* primary cell */
-	t += sizeof(sz);
-
+	t += 4; /* skip primary cell flag */
+	
+	/* cell name */
+	data[sizeof(data) - 1] = '\0'; /* it should be zero terminated, 
+					  but make sure it is */
 	strlcpy(token_cell, t, sizeof(token_cell));
 	
-	if (cell) {
-	    if (strcasecmp(token_cell, cell) == 0) {
-		ret = (*func) (secret, secret_sz, &ct, cell, arg);
-		memset (data, 0, sizeof(data));
-		return ret;
-	    }
-	} else {
+	if (cell == NULL || strcasecmp(token_cell, cell) == 0) {
 	    ret = (*func) (secret, secret_sz, &ct, token_cell, arg);
-	    if (ret) {
-		memset (data, 0, sizeof(data));
+	    memset (data, 0, sizeof(data));
+	    if (cell != NULL)
 		return ret;
-	    }
 	}
-	    
-    next_token:
-	i++;
     }
     memset (data, 0, sizeof(data));
     if (cell)

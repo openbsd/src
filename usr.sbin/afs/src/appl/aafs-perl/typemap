@@ -1,0 +1,4 @@
+TYPEMAP
+
+aafs_cell *		T_PTROBJ
+aafs_volume *		T_PTROBJ

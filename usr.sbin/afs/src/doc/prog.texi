@@ -1,0 +1,58 @@
+@c Copyright (c) 2002 Kungliga Tekniska Högskolan
+@c (Royal Institute of Technology, Stockholm, Sweden).
+@c All rights reserved.
+
+@c $arla: prog.texi,v 1.4 2002/09/07 10:43:57 lha Exp $
+
+@node Programming, Oddities, Porting, Top
+@comment  node-name,  next,  previous,  up
+@chapter Programming
+
+This chapter is programming documentation of arla's internal parts.
+
+This is just to cover the ideas of the implemation, but documentation
+of the actual code, please see commends in the source code for that.
+
+@menu
+* Arla pioctl's::	Documentation of arla pioctl's
+* Disco with arla::	Disconnected mode
+* afsUUID::		afs UUID
+@c * NNPFS interface::
+@end menu
+
+@node Arla pioctl's, Disco with arla, Programming, Programming
+@comment  node-name,  next,  previous,  up
+
+@include pioctl.texi
+
+@node Disco with arla, afsUUID, Arla pioctl's, Programming
+@comment  node-name,  next,  previous,  up
+
+@include prog-disco.texi
+
+@node afsUUID, , Disco with arla, Programming
+@comment  node-name,  next,  previous,  up
+
+@chapter afsUUID
+
+@cindex afsUUID
+@cindex DCE UUID
+
+@code{AFS} uses a @code{DCE UUID} (Microsoft GUID is a another version
+of a DCE UUID) is identify file servers and callback managers. The
+callback manager regenerate its @code{uuid} every time it restarts.
+
+The fileserver stores its @code{uuid} on disk and uses it to identify
+it self when registering its addresses with the VLDB-server.
+
+The @code{afsUUID} is special in some implementations since it uses
+the ip-address as the node identifier instead of the mac-address (IEEE
+OUI + node address).  Also the time in DCE is based on Unix epoch
+instead of DCE epoch. This will cause problems in about 287 years when
+the old generated afs UUID till start to collide with new genrated DCE
+UUIDs. Hopefully people have a solution to this problem then.
+
+@c
+@c I have a promise from Derrick that they will solve the problem before 
+@c I die, Love
+@c

@@ -32,7 +32,7 @@
  */
 
 /*
- * $KTH: ka-procs.h,v 1.2 2000/10/15 21:39:32 assar Exp $
+ * $arla: ka-procs.h,v 1.4 2002/05/16 22:09:43 hin Exp $
  */
 
 #ifndef _ARLA_KA_PROCS_H
@@ -41,10 +41,10 @@
 #include <ka.h>
 
 struct ka_Answer {
-    u_int32_t challange;
+    uint32_t challange;
     des_cblock sessionkey;
-    u_int32_t start_time;
-    u_int32_t end_time;
+    uint32_t start_time;
+    uint32_t end_time;
     int kvno;
     char user[MAXKANAMELEN];
     char instance[MAXKANAMELEN];
@@ -60,7 +60,7 @@ typedef struct ka_Answer ka_ticket_data_t;
 
 /*
  * `ka_cell_query' will be used to enable the interface to query
- * diffrent servers then in the cell database.
+ * different servers then in the cell database.
  */
 
 struct ka_cell_query {
@@ -76,13 +76,13 @@ typedef enum  { KA_AUTH_TICKET = 1,
 
 int
 ka_authenticate (const char *user, const char *instance, const char *cell,
-		 const char *password, u_int32_t lifetime,
+		 const char *password, uint32_t lifetime,
 		 ka_auth_flags_t flags);
 
 int
 ka_auth (const char *user, const char *instance, const char *cell,
 	 des_cblock *key, ka_auth_data_t *adata,
-	 u_int32_t lifetime, struct ka_cell_query *cinfo);
+	 uint32_t lifetime, struct ka_cell_query *cinfo);
 
 int
 ka_getticket (const char *suser, const char *sinstance, const char *srealm,

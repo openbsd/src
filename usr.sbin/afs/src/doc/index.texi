@@ -2,7 +2,7 @@
 @c (Royal Institute of Technology, Stockholm, Sweden).
 @c All rights reserved.
 
-@c $KTH: index.texi,v 1.1 2000/11/25 11:39:24 lha Exp $
+@c $arla: index.texi,v 1.1 2000/11/25 11:39:24 lha Exp $
 
 @node  Index, , Acknowledgments, Top
 @comment  node-name,  next,  previous,  up

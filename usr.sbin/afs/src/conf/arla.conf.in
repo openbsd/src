@@ -1,0 +1,62 @@
+#
+# Arlad config file
+#
+# $arla: arla.conf.in,v 1.2 2002/12/19 13:45:25 lha Exp $
+#
+# The upper limit of (arlad) vnodes (think files and directories)
+# (high-water mark)
+#
+high_vnodes @ARLA_CONF_HIGHVNODES@
+#
+# The number of used vnodes we try to have
+# (low-water mark)
+#
+low_vnodes @ARLA_CONF_LOWVNODES@
+#
+# The upper limit of bytes in the cache
+# (high-water mark)
+#
+high_bytes @ARLA_CONF_HIGHBYTES@
+#
+# The number of bytes we try to use
+# (low-water mark)
+#
+low_bytes @ARLA_CONF_LOWBYTES@
+#
+# The number of credentials in arla, both unauthentic,
+# and authentic (like Kerberos V4 creds)
+#
+numcreds 100
+#
+# The maximum connections arla will have to all servers
+#
+numconns 100
+#
+# The number of volumes stored in cache.
+#
+numvols 100
+#
+# Dynamic root, generates your /afs directory from CellServDB or
+# DynRootDB. Useful when you don't want to use your cell's root.afs.
+#
+#dynroot [yes|true|no|false]
+#
+# The sysname is possible to specify in the configuration file. Its
+# overridden by the command like argument --sysname=
+#
+#sysname nbsd_16pre
+#
+# Rxkad encryption level, this sets the minimum encryption level for
+# rxkad.
+#
+#rxkad-level [clear|auth|crypt]
+#
+# Fetch block size, this is the amount of the data that the
+# cachemanager will fetch more then the user requested. It used since
+# most new fileservers will have their peek fetch-rate larger then 64K
+# that is the default fetch block size.
+# 
+#fetch_block 4M
+#
+#
+# The End.
