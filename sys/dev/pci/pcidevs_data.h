@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.452 2001/10/05 20:55:09 jason Exp 
+ *		OpenBSD: pcidevs,v 1.454 2001/10/07 22:25:34 jason Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1665,6 +1665,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_DOLPHIN, PCI_PRODUCT_DOLPHIN_PCISCI,
 	    "PCI-SCI",
+	},
+	{
+	    PCI_VENDOR_DTCTECH, PCI_PRODUCT_DTCTECH_DMX3194U,
+	    "DMX3194U SCSI",
 	},
 	{
 	    PCI_VENDOR_EMULEX, PCI_PRODUCT_EMULEX_LPPFC,
@@ -6721,6 +6725,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_SIIG,
 	    "SIIG",
+	},
+	{
+	    PCI_VENDOR_DTCTECH,
+	    "DTC Tech",
 	},
 	{
 	    PCI_VENDOR_PCTEL,
