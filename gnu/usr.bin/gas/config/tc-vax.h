@@ -1,4 +1,4 @@
-/*	$OpenBSD: tc-vax.h,v 1.4 2001/11/14 16:21:02 hugh Exp $	*/
+/*	$OpenBSD: tc-vax.h,v 1.5 2004/06/03 07:36:14 miod Exp $	*/
 
 /*
  * This file is tc-vax.h.
@@ -9,7 +9,6 @@
 #define AOUT_MACHTYPE 150
 
 #define	LOCAL_LABELS_FB
-#define NO_LISTING
 
  /* use this to compare against gas-1.38 */
 #ifdef OLD_GAS

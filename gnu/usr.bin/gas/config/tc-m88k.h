@@ -1,4 +1,4 @@
-/*	$OpenBSD: tc-m88k.h,v 1.4 2003/08/01 07:40:19 miod Exp $	*/
+/*	$OpenBSD: tc-m88k.h,v 1.5 2004/06/03 07:36:14 miod Exp $	*/
 
 /* m88k.h -- Assembler for the Motorola 88000
    Contributed by Devon Bowen of Buffalo University
@@ -27,7 +27,6 @@
 
 #define	AOUT_MACHTYPE	MID_M88K
 
-#define NO_LISTING
 #define NO_DOT_PSEUDOS
 
 #define ALLOW_ATSIGN
