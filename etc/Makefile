@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.46 1997/04/20 10:19:24 maja Exp $
+#	$OpenBSD: Makefile,v 1.47 1997/04/25 18:50:01 deraadt Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	US/Pacific
@@ -176,6 +176,7 @@ distrib-dirs:
 
 snapshot: distribution snap_pre snap_tar snap_md
 	cd ${DESTDIR}/snapshot && cksum * > CKSUMS
+	cd ${DESTDIR}/snapshot && md5 * > MD5
 
 snap_pre:
 	/bin/rm -rf ${DESTDIR}/snapshot
