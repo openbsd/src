@@ -1,4 +1,4 @@
-/*	$OpenBSD: library.c,v 1.7 2002/05/22 06:07:00 deraadt Exp $	*/
+/*	$OpenBSD: library.c,v 1.8 2002/05/27 20:32:08 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "@(#)library.c	8.3 (Berkeley) 5/24/95";*/
-static char rcsid[] = "$OpenBSD: library.c,v 1.7 2002/05/22 06:07:00 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: library.c,v 1.8 2002/05/27 20:32:08 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -553,8 +553,8 @@ mmap_segment (fsp, segment, segbuf, use_mmap)
 	seg_byte = datobyte(fsp, seg_daddr);
 	ssize = seg_size(lfsp);
 
-	strcpy(mntfromname, "/dev/r");
-	strcat(mntfromname, fsp->fi_statfsp->f_mntfromname+5);
+	strlcpy(mntfromname, "/dev/r", sizeof mntfromname);
+	strlcat(mntfromname, fsp->fi_statfsp->f_mntfromname+5, sizeof mntfromname);
 
 	if ((fid = open(mntfromname, O_RDONLY, (mode_t)0)) < 0) {
 		err(0, "mmap_segment: bad open");
