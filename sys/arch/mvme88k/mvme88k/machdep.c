@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.83 2002/01/07 02:34:04 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.84 2002/01/10 21:45:33 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -1757,8 +1757,8 @@ m187_ext_int(u_int v, struct m88100_saved_state *eframe)
 	u_char vec;
 
 	/* get level and mask */
-	__asm __volatile("ld.b	%0,%1" : "=r" (mask) : "" (*md.intr_mask));
-	__asm __volatile("ld.b	%0,%1" : "=r" (level) : "" (*md.intr_ipl));
+	mask = *md.intr_mask;
+	level = *md.intr_ipl;
 
 	/*
 	 * It is really bizarre for the mask and level to the be the same.
@@ -1792,13 +1792,13 @@ m187_ext_int(u_int v, struct m88100_saved_state *eframe)
 	}
 
 	/* generate IACK and get the vector */
-	__asm __volatile("tb1	0, r0, 0"); 
+	flush_pipeline();
 	if (guarded_access(ivec[level], 1, &vec) == EFAULT) {
 		panic("Unable to get vector for this interrupt (level %x)\n", level);
 	}
-	__asm __volatile("tb1	0, r0, 0"); 
-	__asm __volatile("tb1	0, r0, 0"); 
-	__asm __volatile("tb1	0, r0, 0"); 
+	flush_pipeline();
+	flush_pipeline();
+	flush_pipeline();
 
 	if (vec > 0xFF) {
 		panic("interrupt vector %x greater than 255", vec);
@@ -1873,8 +1873,8 @@ m197_ext_int(u_int v, struct m88100_saved_state *eframe)
 	u_char vec;
 
 	/* get src and mask */
-	__asm __volatile("ld.b	%0,%1" : "=r" (mask) : "" (*md.intr_mask));
-	__asm __volatile("ld.b	%0,%1" : "=r" (src) : "" (*md.intr_src));
+	mask = *md.intr_mask;
+	src = *md.intr_src;
 	
 	if (v == T_NON_MASK) {
 		/* This is the abort switch */
@@ -1882,7 +1882,7 @@ m197_ext_int(u_int v, struct m88100_saved_state *eframe)
 		vec = BS_ABORTVEC;
 	} else {
 		/* get level  */
-		__asm __volatile("ld.b	%0,%1" : "=r" (level) : "" (*md.intr_ipl));
+		level = *md.intr_ipl;
 	}
 
 	/*
@@ -1907,13 +1907,13 @@ m197_ext_int(u_int v, struct m88100_saved_state *eframe)
 
 	if (v != T_NON_MASK) {
 		/* generate IACK and get the vector */
-		__asm __volatile("tb1	0, r0, 0"); 
+		flush_pipeline();
 		if (guarded_access(ivec[level], 1, &vec) == EFAULT) {
 			panic("Unable to get vector for this interrupt (level %x)\n", level);
 		}
-		__asm __volatile("tb1	0, r0, 0"); 
-		__asm __volatile("tb1	0, r0, 0"); 
-		__asm __volatile("tb1	0, r0, 0");
+		flush_pipeline();
+		flush_pipeline();
+		flush_pipeline();
 	}
 
 	if (vec > 0xFF) {

@@ -1,4 +1,4 @@
-/* $OpenBSD: locore_c_routines.c,v 1.21 2001/12/22 19:27:48 smurph Exp $	*/
+/* $OpenBSD: locore_c_routines.c,v 1.22 2002/01/10 21:45:33 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -328,10 +328,10 @@ vector_init(m88k_exception_vector_area *vector, unsigned *vector_init_list)
 	for (num = 0; (vec = vector_init_list[num]) != END_OF_VECTOR_LIST; num++) {
 		if (vec != PREDEFINED_BY_ROM)
 			SET_VECTOR(num, to, vec);
-		__asm__ ("or  r0, r0, r0");
-		__asm__ ("or  r0, r0, r0");
-		__asm__ ("or  r0, r0, r0");
-		__asm__ ("or  r0, r0, r0");
+		__asm__ (NOP_STRING);
+		__asm__ (NOP_STRING);
+		__asm__ (NOP_STRING);
+		__asm__ (NOP_STRING);
 	}
 
 	switch (cputyp) {
