@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_kbd.c,v 1.13 1998/02/05 16:48:34 deraadt Exp $	*/
+/*	$OpenBSD: pcvt_kbd.c,v 1.14 1998/02/22 22:06:14 niklas Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -619,7 +619,7 @@ kbd_code_init1(void)
 static
 void ovlinit(int force)
 {
-	register i;
+	int i;
 
 	if(force || ovlinitflag==0)
 	{
@@ -1634,7 +1634,7 @@ rmkeydef(int key)
 static int
 setkeydef(Ovl_tbl *data)
 {
-	register i;
+	int i;
 
 	if( data->keynum > MAXKEYNUM		 ||
 	    (data->type & KBD_MASK) == KBD_BREAK ||

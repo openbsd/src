@@ -1,4 +1,4 @@
-/*	$OpenBSD: npx.c,v 1.14 1997/04/17 03:44:52 tholo Exp $	*/
+/*	$OpenBSD: npx.c,v 1.15 1998/02/22 22:06:11 niklas Exp $	*/
 /*	$NetBSD: npx.c,v 1.57 1996/05/12 23:12:24 mycroft Exp $	*/
 
 #if 0
@@ -376,6 +376,7 @@ npxintr(arg)
 	register struct save87 *addr;
 	struct intrframe *frame = arg;
 	int code;
+	union sigval sv;
 
 	cnt.v_trap++;
 	iprintf(("Intr"));
@@ -461,7 +462,8 @@ npxintr(arg)
 			code = FPE_FLTRES;
 		else
 			code = 0;		/* XXX unknown */
-		trapsignal(p, SIGFPE, T_ARITHTRAP, code, frame->if_eip);
+		sv.sival_int = frame->if_eip;
+		trapsignal(p, SIGFPE, T_ARITHTRAP, code, sv);
 	} else {
 		/*
 		 * Nested interrupt.  These losers occur when:
