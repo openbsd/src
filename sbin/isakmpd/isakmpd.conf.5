@@ -1,5 +1,5 @@
-.\" $OpenBSD: isakmpd.conf.5,v 1.38 2000/06/08 20:51:00 niklas Exp $
-.\" $EOM: isakmpd.conf.5,v 1.45 2000/05/26 21:49:07 angelos Exp $
+.\" $OpenBSD: isakmpd.conf.5,v 1.39 2000/08/03 07:24:14 niklas Exp $
+.\" $EOM: isakmpd.conf.5,v 1.46 2000/07/05 11:03:32 ho Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
 .\"
@@ -166,6 +166,10 @@ ISAKMP SA negotiation parameter root
 .Bl -tag -width 12n
 .It Em <IP-address>
 A name of the ISAKMP peer at the given IP-address.
+.It Em Default
+A name of the default ISAKMP peer.  Incoming
+Phase 1 connections from other IP-addresses will use this peer name.
+.It ""
 This name is used as the section name for further information to be found.
 Look at <ISAKMP-peer> below.
 .El
@@ -256,21 +260,25 @@ The constant
 as ISAKMP-peers and IPSec-connections
 really are handled by the same code inside isakmpd.
 .It Em Transport
-The name of the transport protocol, normally
-.Li udp .
+The name of the transport protocol, defaults to
+.Li UDP .
+.It Em Port
+In case of 
+.Li UDP , 
+the 
+.Li UDP 
+port number to send to.
+This is optional, the
+default value is 500 which is the IANA-registered number for ISAKMP.
 .It Em Listen-address
 The Local IP-address to use, if we are multi-homed, or have aliases.
 .It Em Address
-The IP-address of the peer.
-.It Em Port
-In case of UDP, the UDP port number to send to.
-This is optional, the
-default value is 500 which is the IANA-registered number for ISAKMP.
+If existent, the IP-address of the peer.
 .It Em Configuration
 The name of the ISAKMP-configuration section to use.
 Look at <ISAKMP-configuration> below.
 .It Em Authentication
-Authentication data for this specific peer.
+If existent, authentication data for this specific peer.
 In the case of preshared key, this is the key value itself.
 .It Em ID
 If existent, the name of the section that describes the
@@ -283,9 +291,6 @@ Look at <Phase1-ID> below.
 A comma-separated list of flags controlling the further
 handling of the ISAKMP SA.
 Currently there are no specific ISAKMP SA flags defined.
-.It Em Next-hop
-A Linux FreeS/WAN specific value which should be the IP address of the
-next hop along the path to reach the peer, usually a router.
 .El
 .It Em <Phase1-ID>
 .Bl -tag -width 12n
@@ -529,17 +534,17 @@ Listen-on=		10.1.0.2
 [Phase 2]
 Connections=		IPsec-east-west
 
+# Default values are commented out.
 [ISAKMP-peer-west]
 Phase=			1
-Transport=		udp
+#Transport=		udp
 Local-address=		10.1.0.2
 Address=		10.1.0.1
-# Default values for "Port" commented out
 #Port=			isakmp
 #Port=			500
 Configuration=		Default-main-mode
 Authentication=		mekmitasdigoat
-Flags=			Stayalive
+#Flags=
 
 [IPsec-east-west]
 Phase=			2
@@ -547,7 +552,7 @@ ISAKMP-peer=		ISAKMP-peer-west
 Configuration=		Default-quick-mode
 Local-ID=		Net-east
 Remote-ID=		Net-west
-Flags=			Stayalive
+#Flags=
 
 [Net-west]
 ID-type=		IPV4_ADDR_SUBNET
