@@ -5,7 +5,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: s_ceilf.S,v 1.7 2003/07/26 19:25:01 salo Exp $")
+RCSID("$NetBSD: s_ceilf.S,v 1.8 2004/07/16 18:40:24 drochner Exp $")
 
 ENTRY(ceilf)
 #ifdef __i386__
@@ -34,7 +34,7 @@ ENTRY(ceilf)
 	movw	%dx,-12(%rsp)
 	fldcw	-12(%rsp)
 	movss	%xmm0,-4(%rsp)
-	fldl	-4(%rsp)
+	flds	-4(%rsp)
 	frndint
 	fldcw	-8(%rsp)
 	fstps	-4(%rsp)
