@@ -304,7 +304,7 @@ application/x-shockwave-flash	swf
 application/x-stuffit		sit
 application/x-sv4cpio		sv4cpio
 application/x-sv4crc		sv4crc
-application/x-tar		tar
+application/x-tar		tar tgz
 application/x-tcl		tcl
 application/x-tex		tex
 application/x-texinfo		texinfo texi
