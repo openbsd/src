@@ -1,4 +1,4 @@
-/*	$OpenBSD: getterm.c,v 1.9 1996/08/31 01:58:50 tholo Exp $	*/
+/*	$OpenBSD: getterm.c,v 1.10 1996/09/03 05:11:11 tholo Exp $	*/
 
 /*
  * Copyright (c) 1996 SigmaSoft, Th. Lockert <tholo@sigmasoft.com>
@@ -31,7 +31,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: getterm.c,v 1.9 1996/08/31 01:58:50 tholo Exp $";
+static char rcsid[] = "$OpenBSD: getterm.c,v 1.10 1996/09/03 05:11:11 tholo Exp $";
 #endif
 
 #include <stdlib.h>
@@ -102,8 +102,9 @@ _ti_gettermcap(name)
 	else {
 	    if ((home = getenv("HOME")) != NULL) {
 		/* set up default */
-		p += strlen(home);	/* path, looking in */
-		strcpy(pathbuf, home);	/* $HOME first */
+		strncpy(pathbuf, home, MAXPATHLEN - strlen(_PATH_CAPDEF) - 1);	/* $HOME first */
+		pathbuf[MAXPATHLEN - strlen(_PATH_CAPDEF) - 1] = '\0';
+		p += strlen(pathbuf);	/* path, looking in */
 		*p++ = '/';
 	    }	/* if no $HOME look in current directory */
 	    strncpy(p, _PATH_CAPDEF, MAXPATHLEN - (p - pathbuf));
@@ -248,7 +249,8 @@ _ti_getterminfo(name)
 	if ((home = getenv("HOME")) != NULL) {
 	    /* set up default */
 	    p += strlen(home);	/* path, looking in */
-	    strcpy(pathbuf, home);	/* $HOME first */
+		strncpy(pathbuf, home, MAXPATHLEN - strlen(_PATH_INFODEF) - 1);	/* $HOME first */
+		pathbuf[MAXPATHLEN - strlen(_PATH_INFODEF) - 1] = '\0';
 	    *p++ = '/';
 	}	/* if no $HOME look in current directory */
 	strncpy(p, _PATH_INFODEF, MAXPATHLEN - (p - pathbuf));

@@ -106,8 +106,9 @@ tgetent(bp, name)
 		else {
 			if ((home = getenv("HOME")) != NULL) {
 				/* set up default */
-				p += strlen(home);	/* path, looking in */
-				strcpy(pathbuf, home);	/* $HOME first */
+				strncpy(pathbuf, home, PBUFSIZ - strlen(_PATH_DEF) - 1);	/* $HOME first */
+				pathbuf[PBUFSIZ - strlen(_PATH_DEF) - 1] = '\0';
+				p += strlen(pathbuf);	/* path, looking in */
 				*p++ = '/';
 			}	/* if no $HOME look in current directory */
 			strncpy(p, _PATH_DEF, PBUFSIZ - (p - pathbuf));
@@ -115,6 +116,7 @@ tgetent(bp, name)
 	}
 	else				/* user-defined name in TERMCAP */
 		strncpy(pathbuf, cp, PBUFSIZ);	/* still can be tokenized */
+	pathbuf[PBUFSIZ] = '\0';
 
 	*fname++ = pathbuf;	/* tokenize path into vector of names */
 	while (*++p)
