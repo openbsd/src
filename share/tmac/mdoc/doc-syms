@@ -1,4 +1,4 @@
-.\"	$OpenBSD: doc-syms,v 1.20 1999/04/18 19:09:24 jason Exp $
+.\"	$OpenBSD: doc-syms,v 1.21 1999/04/21 20:35:06 alex Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -466,6 +466,9 @@
 .			as b1 (``\\*(tNXPG4.2\\*(aa'')
 .		\}
 .       \}
+.	if "\\*(A\\n(aP"-susv2" \{\
+.		ds b1 \&\\*(tNVersion 2 of the Single UNIX Specification\\*(aa
+.	\}
 .	ie \\n(aC>\\n(aP \{\
 .		nr aP \\n(aP+1
 .		nR
