@@ -1,8 +1,8 @@
-/*	$OpenBSD: krb-protos.h,v 1.2 1998/02/18 11:53:42 art Exp $	*/
-/* $KTH: krb-protos.h,v 1.3 1997/12/05 08:54:38 joda Exp $ */
+/*	$OpenBSD: krb-protos.h,v 1.3 1998/05/18 02:12:45 art Exp $	*/
+/*	$KTH: 	krb-protos.h,v 1.7 1998/04/04 17:56:36 assar Exp $	*/
 
 /*
- * Copyright (c) 1997 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997, 1998 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -44,6 +44,11 @@
 
 #include <stdarg.h>
 #include <time.h>
+
+#ifdef __GNUC__
+struct in_addr;
+struct sockaddr_in;
+#endif
 
 void
 afs_string_to_key __P((
@@ -571,6 +576,16 @@ krb_unparse_name_r __P((
 
 int
 krb_use_admin_server __P((int flag));
+
+int
+krb_verify_user_srvtab __P((
+	char *name,
+	char *instance,
+	char *realm,
+	char *password,
+	int secure,
+	char *linstance,
+	char *srvtab));
 
 int
 krb_verify_user __P((

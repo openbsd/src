@@ -1,5 +1,5 @@
-/*	$OpenBSD: kadm.h,v 1.4 1998/02/25 15:50:40 art Exp $	*/
-/* $KTH: kadm.h,v 1.13 1997/08/17 07:30:24 assar Exp $ */
+/*	$OpenBSD: kadm.h,v 1.5 1998/05/18 02:12:46 art Exp $	*/
+/* $KTH: kadm.h,v 1.15 1998/04/23 22:17:52 joda Exp $ */
 
 /*
  * This source code is no longer held under any constraint of USA
@@ -101,9 +101,6 @@ typedef struct {
     u_int8_t  max_life;
 } Kadm_vals;                    /* The basic values structure in Kadm */
 
-/* Kadm_vals structure for passing db fields into the server routines */
-#define FLDSZ        4
-
 /* Need to define fields types here */
 #define KADM_NAME       31
 #define KADM_INST       30
@@ -162,7 +159,6 @@ int kadm_add __P((Kadm_vals *));
 int kadm_del __P((Kadm_vals *));
 void kadm_vals_to_prin __P((u_char *, Principal *, Kadm_vals *));
 void kadm_prin_to_vals __P((u_char *, Kadm_vals *, Principal *));
-
-
+int kadm_check_pw __P((const char*));
 
 #endif /* KADM_DEFS */

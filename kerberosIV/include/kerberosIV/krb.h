@@ -1,5 +1,5 @@
-/*	$OpenBSD: krb.h,v 1.7 1997/12/12 05:30:11 art Exp $	*/
-/*      $KTH: krb.h,v 1.85 1997/10/24 10:18:16 assar Exp $      */
+/*	$OpenBSD: krb.h,v 1.8 1998/05/18 02:12:43 art Exp $	*/
+/*	$KTH: krb.h,v 1.92 1998/05/13 18:57:32 assar Exp $	*/
 
 /*
  * Copyright 1987, 1988 by the Student Information Processing Board
@@ -49,6 +49,11 @@ extern int krb_ignore_ip_address; /* To turn off IP address comparison */
 extern int krb_no_long_lifetimes; /* To disable AFS compatible lifetimes */
 extern int krbONE;
 #define         HOST_BYTE_ORDER (* (char *) &krbONE)
+
+/* Debug variables */
+extern int krb_debug;
+extern int krb_ap_req_debug;
+extern int krb_dns_debug;
 
 /* Text describing error codes */
 #define		MAX_KRB_ERRORS	256
@@ -318,10 +323,6 @@ struct krb_host {
 #define   K_LOCK_UN   8		/* Unlock */
 
 extern char *krb4_version;
-
-struct in_addr;
-
-struct sockaddr_in;
 
 typedef int (*key_proc_t) __P((char*, char*, char*, void*, des_cblock*));
 
