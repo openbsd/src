@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.42 2003/05/16 19:54:05 krw Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.43 2003/06/26 02:00:56 krw Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -714,15 +714,11 @@ scsi_interpret_sense(xs)
 				delay(1000000);
 				return ERESTART;
 			}
-			if ((xs->flags & SCSI_SILENT) != 0)
-				return EIO;
 			error = EIO;
 			break;
 		case SKEY_ILLEGAL_REQUEST:
 			if ((xs->flags & SCSI_IGNORE_ILLEGAL_REQUEST) != 0)
 				return 0;
-			if ((xs->flags & SCSI_SILENT) != 0)
-				return EIO;
 			error = EINVAL;
 			break;
 		case SKEY_UNIT_ATTENTION:
@@ -735,8 +731,6 @@ scsi_interpret_sense(xs)
 			    /* XXX Should reupload any transient state. */
 			    (sc_link->flags & SDEV_REMOVABLE) == 0)
 				return ERESTART;
-			if ((xs->flags & SCSI_SILENT) != 0)
-				return EIO;
 			error = EIO;
 			break;
 		case SKEY_WRITE_PROTECT:
