@@ -1,5 +1,5 @@
-/*	$OpenBSD: sa.c,v 1.27 2000/04/07 22:10:30 niklas Exp $	*/
-/*	$EOM: sa.c,v 1.101 2000/04/07 22:05:57 niklas Exp $	*/
+/*	$OpenBSD: sa.c,v 1.28 2000/05/02 14:36:04 niklas Exp $	*/
+/*	$EOM: sa.c,v 1.102 2000/04/12 03:10:57 provos Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -701,7 +701,7 @@ sa_setup_expirations (struct sa *sa)
       seconds = sa->seconds * (850 + sysdep_random () % 100) / 1000;
       LOG_DBG ((LOG_TIMER, 95,
 		"sa_setup_expirations: SA %p soft timeout in %qd seconds",
-		seconds));
+		sa, seconds));
       expiration.tv_sec += seconds;
       sa->soft_death
 	= timer_add_event ("sa_soft_expire", sa_soft_expire, sa, &expiration);
@@ -718,7 +718,7 @@ sa_setup_expirations (struct sa *sa)
       gettimeofday(&expiration, 0);
       LOG_DBG ((LOG_TIMER, 95,
 		"sa_setup_expirations: SA %p hard timeout in %qd seconds",
-		sa->seconds));
+		sa, sa->seconds));
       expiration.tv_sec += sa->seconds;
       sa->death
 	= timer_add_event ("sa_hard_expire", sa_hard_expire, sa, &expiration);
