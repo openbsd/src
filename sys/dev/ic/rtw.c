@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtw.c,v 1.5 2005/01/09 21:46:56 jsg Exp $	*/
+/*	$OpenBSD: rtw.c,v 1.6 2005/01/10 06:49:19 jsg Exp $	*/
 /* $NetBSD: rtw.c,v 1.29 2004/12/27 19:49:16 dyoung Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
@@ -101,7 +101,7 @@ int rtw_debug = 0;
 	sc->sc_attach_state = state;				\
 } while (0)
 
-int rtw_dwelltime = 1000;	/* milliseconds */
+int rtw_dwelltime = 200;	/* milliseconds per channel */
 
 void rtw_start(struct ifnet *);
 void rtw_srom_defaults(struct rtw_srom *, u_int32_t *, u_int8_t *,
