@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.132 2003/06/30 17:49:14 krw Exp $
+#	$OpenBSD: install.sh,v 1.133 2003/07/02 16:42:19 krw Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -191,19 +191,21 @@ if [ ! -f /etc/fstab ]; then
 				;;
 			done)	break
 				;;
-			/*)	_pp=`grep " $resp\$" $FILESYSTEMS | cutword 1`
-				if [ -z "$_pp" ]; then
-					# Mount point wasn't specified on a previous disk. Has it
-					# been specified on this one?
+			/*)	set -- $(grep " $resp\$" $FILESYSTEMS)
+				_pp=$1
+				if [[ -z $_pp ]]; then
+					# Mount point wasn't specified on a
+					# previous disk. Has it been specified
+					# on this one?
 					_j=0
 					for _pp in ${_partitions[*]} ""; do
-						if [ $_i -ne $_j ]; then
-							[ "$resp" = "${_mount_points[$_j]}" ] && break
+						if [[ $_i -ne $_j ]]; then
+							[[ $resp == ${_mount_points[$_j]} ]] && break
 						fi
 						: $(( _j += 1 ))
 					done
 				fi
-				if [ "$_pp" ]; then
+				if [[ -n $_pp ]]; then
 					echo "Invalid response: $_pp is already being mounted at $resp."
 					continue
 				fi

@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.309 2003/06/30 17:49:14 krw Exp $
+#	$OpenBSD: install.sub,v 1.310 2003/07/02 16:42:19 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2003 Todd Miller, Theo de Raadt, Ken Westerback
@@ -164,7 +164,9 @@ get_cddevs() {
 }
 
 get_ifdevs() {
-	ifconfig -a | egrep -v '^([[:space:]]|(lo|enc|gre|ppp|sl|tun|bridge|pflog|vlan|gif)[[:digit:]])' | cutword -t: 1
+	ifconfig -a \
+	    | egrep -v '^[[:space:]]|(bridge|enc|gif|gre|lo|pflog|pfsync|ppp|sl|tun|vlan)[[:digit:]]+:' \
+	    | sed -ne 's/^\(.*\):.*/\1/p'
 }
 
 # Ask for a password, saving the input in $resp.
@@ -298,24 +300,6 @@ rmel() {
 	for _b; do
 		[ "$_a" != "$_b" ] && echo -n "$_b "
 	done
-}
-
-# read lines on stdin, return Nth element of each line, like cut(1)
-cutword () {
-	local _a _n _oifs=$IFS
-
-	# optional field separator
-	case $1 in
-	-t?*) IFS=${1#-t}; shift;;
-	esac
-
-	_n=$1
-	while read _a; do
-		set -- $_a
-		[ "$1" ] || break
-		eval echo \$$_n
-	done
-	IFS=$_oifs
 }
 
 bsort() {
@@ -901,7 +885,7 @@ ftp_error () {
 # Note:	_ftp_server_ip, _ftp_server_dir, _ftp_server_login,
 #	_ftp_server_password, and _ftp_active must be global.
 install_url() {
-	local _url_type=$1 _file_list _url_base _oifs _prompt _line
+	local _url_type=$1 _file_list _url_base _oifs _prompt
 
 	donetconfig
 
@@ -948,12 +932,11 @@ install_url() {
 			# A numeric hostname is ignored. A number is only used
 			# as a line number in $SERVERLIST.
 			[[ -s $SERVERLIST ]] || continue
-			_line=$(sed -ne "${resp}p" $SERVERLIST)
-			[[ -n $_line ]] || { echo "There is no line $resp." ; continue ; }
-			echo "Using	$_line"
-			_line=$(echo $_line | cutword -t' ' 1)
-			eval _${_url_type}_server_ip=${_line%%/*}
-			eval _${_url_type}_server_dir=${_line#*/}/$SETDIR
+			set -- $(sed -ne "${resp}p" $SERVERLIST)
+			[[ $# < 1 ]] && { echo "There is no line $resp." ; continue ; }
+			echo "Using	$*"
+			eval _${_url_type}_server_ip=${1%%/*}
+			eval _${_url_type}_server_dir=${1#*/}/$SETDIR
 			# Repeat loop to get user to confirm server address.
  			;;
 		*)	eval _${_url_type}_server_ip=$resp
