@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.2 2001/06/24 21:40:51 dhartmei Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.3 2001/06/24 23:16:35 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -30,14 +30,19 @@
  *
  */
 
+#include <sys/types.h>
+#include <sys/ioctl.h>
+#include <sys/socket.h>
+#include <net/if.h>
+#include <netinet/in.h>
+#include <net/pfvar.h>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/ioctl.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <errno.h>
-#include <netinet/in.h>
 
 #include "pfctl_parser.h"
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.2 2001/06/24 21:40:51 dhartmei Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.3 2001/06/24 23:16:36 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -30,18 +30,23 @@
  *
  */
 
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <net/if.h>
+#include <netinet/in.h>
+#include <net/pfvar.h>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
 #include <netdb.h>
-#include <netinet/in.h>
 
 #include "pfctl_parser.h"
 
 static void		 print_addr (u_int32_t);
-static void		 print_host (struct host *);
-static void		 print_seq (struct peer *);
+static void		 print_host (struct state_host *);
+static void		 print_seq (struct state_peer *);
 static void		 print_port (u_int8_t, u_int16_t, u_int16_t, char *);
 static void		 print_flags (u_int8_t);
 static char		*next_word (char **);
@@ -61,7 +66,7 @@ print_addr(u_int32_t a)
 }
 
 static void
-print_host(struct host *h)
+print_host(struct state_host *h)
 {
 	u_int32_t a = ntohl(h->addr);
 	u_int16_t p = ntohs(h->port);
@@ -69,7 +74,7 @@ print_host(struct host *h)
 }
 
 static void
-print_seq(struct peer *p)
+print_seq(struct state_peer *p)
 {
 	printf("[%u + %u]", p->seqlo, p->seqhi - p->seqlo);
 }
@@ -184,8 +189,9 @@ print_status(struct status *s)
 void
 print_state(struct state *s)
 {
-	struct peer *src, *dst;
+	struct state_peer *src, *dst;
 	u_int8_t hrs, min, sec;
+
 	if (s->direction == PF_OUT) {
 		src = &s->src;
 		dst = &s->dst;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.h,v 1.2 2001/06/24 21:40:51 dhartmei Exp $ */
+/*	$OpenBSD: pfctl_parser.h,v 1.3 2001/06/24 23:16:36 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -32,8 +32,6 @@
 
 #ifndef _PFM_PARSER_H_
 #define _PFM_PARSER_H_
-
-#include <net/pfvar.h>
 
 char	*next_line (char **);
 int	 parse_rule (int, char *, struct rule *);
