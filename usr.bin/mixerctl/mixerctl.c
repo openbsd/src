@@ -1,4 +1,4 @@
-/*	$OpenBSD: mixerctl.c,v 1.5 1999/07/19 20:54:21 mickey Exp $	*/
+/*	$OpenBSD: mixerctl.c,v 1.6 2002/01/09 18:12:24 mickey Exp $	*/
 /*	$NetBSD: mixerctl.c,v 1.11 1998/04/27 16:55:23 augustss Exp $	*/
 
 /*
@@ -68,7 +68,7 @@ mixer_devinfo_t *infos;
 char *
 catstr(p, q)
 	char *p;
-        char *q;
+	char *q;
 {
 	char *r = malloc(strlen(p) + strlen(q) + 2);
 	strcpy(r, p);
@@ -91,8 +91,8 @@ findfield(name)
 void
 prfield(p, sep, prvalset)
 	struct field *p;
-        char *sep;
-        int prvalset;
+	char *sep;
+	int prvalset;
 {
 	mixer_ctrl_t *m;
 	int i, n;
@@ -129,7 +129,7 @@ prfield(p, sep, prvalset)
 		if (m->un.value.num_channels == 1)
 			fprintf(out, "%d", m->un.value.level[0]);
 		else
-			fprintf(out, "%d,%d", m->un.value.level[0], 
+			fprintf(out, "%d,%d", m->un.value.level[0],
 			       m->un.value.level[1]);
 		if (prvalset)
 			fprintf(out, " %s", p->infp->un.v.units.name);
@@ -143,7 +143,7 @@ prfield(p, sep, prvalset)
 int
 rdfield(p, q)
 	struct field *p;
-        char *q;
+	char *q;
 {
 	mixer_ctrl_t *m;
 	int v, v0, v1, mask;
@@ -246,7 +246,7 @@ rdfield(p, q)
 int
 main(argc, argv)
 	int argc;
-        char **argv;
+	char **argv;
 {
 	int fd, i, j, ch, pos;
 	int aflag = 0, wflag = 0, vflag = 0;
@@ -290,8 +290,8 @@ main(argc, argv)
 	}
 	argc -= optind;
 	argv += optind;
-    
-	fd = open(file, O_RDWR);
+
+	fd = open(file, wflag? O_RDWR : O_RDONLY);
 	if (fd < 0)
 		err(1, "%s", file);
 
@@ -340,7 +340,7 @@ main(argc, argv)
 			for(pos = infos[i].next; pos != AUDIO_MIXER_LAST;
 			    pos = infos[pos].next) {
 				fields[j] = rfields[pos];
-				fields[j].name = catstr(rfields[i].name, 
+				fields[j].name = catstr(rfields[i].name,
 							infos[pos].label.name);
 				infos[pos].type = -1;
 				j++;
@@ -351,7 +351,7 @@ main(argc, argv)
 	for(i = 0; i < j; i++) {
 		int cls = fields[i].infp->mixer_class;
 		if (cls >= 0 && cls < ndev)
-			fields[i].name = catstr(infos[cls].label.name, 
+			fields[i].name = catstr(infos[cls].label.name,
 						fields[i].name);
 	}
 
