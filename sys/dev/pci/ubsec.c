@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.14 2000/06/19 02:50:30 jason Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.15 2000/06/19 03:58:27 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -740,7 +740,6 @@ ubsec_callback(q)
 {
 	struct cryptop *crp = (struct cryptop *)q->q_crp;
 	struct cryptodesc *crd;
-	int i;
 
 	if ((crp->crp_flags & CRYPTO_F_IMBUF) && (q->q_src_m != q->q_dst_m)) {
 		m_freem(q->q_src_m);
