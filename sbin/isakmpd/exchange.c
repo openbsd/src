@@ -1,5 +1,5 @@
-/*	$OpenBSD: exchange.c,v 1.9 1999/03/02 15:48:23 niklas Exp $	*/
-/*	$EOM: exchange.c,v 1.65 1999/03/02 15:42:59 niklas Exp $	*/
+/*	$OpenBSD: exchange.c,v 1.10 1999/03/24 14:42:18 niklas Exp $	*/
+/*	$EOM: exchange.c,v 1.68 1999/03/24 10:59:11 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -582,8 +582,6 @@ exchange_establish_p1 (struct transport *t, u_int8_t type, u_int32_t doi,
 {
   struct exchange *exchange;
   struct message *msg;
-  struct sockaddr *dst;
-  int dst_len;
   char *tag = 0;
   char *str;
   char *name = args;
@@ -603,7 +601,6 @@ exchange_establish_p1 (struct transport *t, u_int8_t type, u_int32_t doi,
       /* XXX Similar code can be found in exchange_setup_p1.  Share?  */
 
       /* Find out our phase 1 mode.  */
-      t->vtbl->get_dst (t, &dst, &dst_len);
       tag = conf_get_str (name, "Configuration");
       if (!tag)
 	{
@@ -806,7 +803,10 @@ exchange_setup_p1 (struct message *msg, u_int32_t doi)
 
   /* XXX Similar code can be found in exchange_establish_p1.  Share?  */
 
-  /* Find out our inbound phase 1 mode.  */
+  /*
+   * Find out our inbound phase 1 mode.
+   * XXX Assumes IPv4.
+   */
   t->vtbl->get_dst (t, &dst, &dst_len);
   name = conf_get_str ("Phase 1",
 		       inet_ntoa (((struct sockaddr_in *)dst)->sin_addr));
@@ -1032,11 +1032,14 @@ exchange_finalize (struct message *msg)
 
       /* Setup the SA flags.  */
       sa->flags |= SA_FLAG_READY;
-      attrs = conf_get_list (sa->name, "Attributes");
-      if (attrs)
-	for (attr = TAILQ_FIRST (&attrs->fields); attr;
-	     attr = TAILQ_NEXT (attr, link))
-	  sa->flags |= sa_flag (attr->field);
+      if (exchange->name)
+	{
+	  attrs = conf_get_list (exchange->name, "Attributes");
+	  if (attrs)
+	    for (attr = TAILQ_FIRST (&attrs->fields); attr;
+		 attr = TAILQ_NEXT (attr, link))
+	      sa->flags |= sa_flag (attr->field);
+	}
 
       sa->exch_type = exchange->type;
     }
