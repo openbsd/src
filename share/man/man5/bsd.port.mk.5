@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.119 2003/08/11 20:14:35 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.120 2003/08/15 00:10:01 espie Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -1221,6 +1221,12 @@ Don't override unless really needed.
 .It Ev PORTSDIR
 Root of the ports tree (default:
 .Pa /usr/ports ) .
+.It Ev PORTSDIR_PATH
+Path used by dependencies and
+.Pa bsd.port.subdir.mk
+to look up package specifications.
+Defaults to
+.Pa ${PORTSDIR}:${PORTSDIR}/mystuff .
 .It Ev PKGDIR
 Location for packaging information (packing list, port description, port
 short description).
@@ -1555,7 +1561,9 @@ Default setup of ${PKGREPOSITORY}.
 Default setup of ${BULK_COOKIES_DIR}.
 .It Pa ${PORTSDIR}/mystuff
 Extra directory used to store local ports before committing them.
-All depend targets will look there after the normal lookup fails.
+All depend targets will normally look there after the normal lookup fails.
+See
+.Ev PORTSDIR_PATH .
 .El
 .Sh OBSOLETE TARGETS
 .Bl -tag -width do-configure
