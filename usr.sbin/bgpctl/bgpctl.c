@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.27 2004/01/17 18:06:04 henning Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.28 2004/01/17 18:27:37 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -633,7 +633,7 @@ show_interface_msg(struct imsg *imsg)
 	switch (imsg->hdr.type) {
 	case IMSG_CTL_SHOW_INTERFACE:
 		k = imsg->data;
-		printf("%-20u", k->ifindex);
+		printf("%-20s", k->ifname);
 		if (k->flags & IFF_UP)
 			printf("UP ");
 		printf("\n");
