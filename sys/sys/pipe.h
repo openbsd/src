@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipe.h,v 1.10 2002/03/14 01:27:14 millert Exp $	*/
+/*	$OpenBSD: pipe.h,v 1.11 2003/10/03 16:38:03 miod Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -53,7 +53,6 @@ struct pipebuf {
 	u_int	out;		/* out pointer */
 	u_int	size;		/* size of buffer */
 	caddr_t	buffer;		/* kva of buffer */
-	struct	vm_object *object;	/* VM object containing buffer */
 };
 
 /*
