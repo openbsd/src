@@ -1,5 +1,5 @@
-/*	$OpenBSD: policy.c,v 1.9 2000/02/25 17:23:41 niklas Exp $	*/
-/*	$EOM: policy.c,v 1.18 2000/02/20 19:58:41 niklas Exp $ */
+/*	$OpenBSD: policy.c,v 1.10 2000/04/07 22:04:02 niklas Exp $	*/
+/*	$EOM: policy.c,v 1.20 2000/04/06 19:50:34 niklas Exp $ */
 
 /*
  * Copyright (c) 1999, 2000 Angelos D. Keromytis.  All rights reserved.
@@ -80,7 +80,7 @@
 #define POLICY_FILE_DEFAULT "/etc/isakmpd/isakmpd.policy"
 #endif /* POLICY_FILE_DEFAULT */
 
-#if defined (HAVE_DLOPEN) && !defined (USE_KEYNOTE)
+#if defined (HAVE_DLOPEN) && !defined (USE_KEYNOTE) && 0
 
 void *libkeynote = 0;
 
@@ -178,7 +178,7 @@ policy_callback (char *name)
   static char local_filter_addr_upper[64], local_filter_addr_lower[64];
   static char ah_group_desc[32], esp_group_desc[32], comp_group_desc[32];
   static char remote_ike_address[64], local_ike_address[64];
-  static char *remote_id_type, remote_id_addr_upper[64];
+  static char *remote_id_type, remote_id_addr_upper[64], *phase_1;
   static char remote_id_addr_lower[64], *remote_id_proto, remote_id_port[32];
   static char remote_filter_port[32], local_filter_port[32];
   static char *remote_filter_proto, *local_filter_proto, *pfs, *initiator;
@@ -193,7 +193,7 @@ policy_callback (char *name)
       || strcmp (name, KEYNOTE_CALLBACK_INITIALIZE) == 0)
     {
       esp_present = ah_present = comp_present = pfs = "no";
-      ah_hash_alg = ah_auth_alg = "";
+      ah_hash_alg = ah_auth_alg = phase_1 = "";
       esp_auth_alg = esp_enc_alg = comp_alg = ah_encapsulation = "";
       esp_encapsulation = comp_encapsulation = remote_filter_type = "";
       local_filter_type = remote_id_type = initiator = "";
@@ -604,6 +604,17 @@ policy_callback (char *name)
 					   (struct sockaddr **) &sin, &fmt);
       my_inet_ntop4 (&(sin->sin_addr.s_addr), remote_ike_address,
 		     sizeof remote_ike_address - 1, 0);
+
+      switch (policy_isakmp_sa->exch_type)
+      {
+	  case ISAKMP_EXCH_AGGRESSIVE:
+	      phase_1 = "aggressive";
+	      break;
+
+ 	  case ISAKMP_EXCH_ID_PROT:
+	      phase_1 = "main";
+	      break;
+      }
 
       if (policy_isakmp_sa->initiator)
         {
@@ -1124,6 +1135,9 @@ policy_callback (char *name)
       /* Unset dirty now.  */
       dirty = 0;
     }
+
+  if (strcmp (name, "phase_1") == 0)
+    return phase_1;
 
   if (strcmp (name, "GMTTimeOfDay") == 0)
     {
