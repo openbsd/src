@@ -1,4 +1,4 @@
-/*	$OpenBSD: newsyslog.c,v 1.81 2004/07/11 17:21:21 millert Exp $	*/
+/*	$OpenBSD: newsyslog.c,v 1.82 2004/09/14 22:25:33 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1999, 2002, 2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -72,7 +72,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: newsyslog.c,v 1.81 2004/07/11 17:21:21 millert Exp $";
+static const char rcsid[] = "$OpenBSD: newsyslog.c,v 1.82 2004/09/14 22:25:33 deraadt Exp $";
 #endif /* not lint */
 
 #ifndef CONF
@@ -1086,6 +1086,7 @@ openmail(void)
 	return (NULL);
 }
 
+/* ARGSUSED */
 void
 child_killer(int signo)
 {

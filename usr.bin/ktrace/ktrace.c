@@ -1,4 +1,4 @@
-/*	$OpenBSD: ktrace.c,v 1.17 2003/06/10 22:20:47 deraadt Exp $	*/
+/*	$OpenBSD: ktrace.c,v 1.18 2004/09/14 22:25:06 deraadt Exp $	*/
 /*	$NetBSD: ktrace.c,v 1.4 1995/08/31 23:01:44 jtc Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ktrace.c	8.2 (Berkeley) 4/28/95";
 #endif
-static char *rcsid = "$OpenBSD: ktrace.c,v 1.17 2003/06/10 22:20:47 deraadt Exp $";
+static char *rcsid = "$OpenBSD: ktrace.c,v 1.18 2004/09/14 22:25:06 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -192,6 +192,7 @@ usage(void)
 	exit(1);
 }
 
+/* ARGSUSED */
 static void
 no_ktrace(int signo)
 {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: apmd.c,v 1.30 2004/05/21 19:00:05 deraadt Exp $	*/
+/*	$OpenBSD: apmd.c,v 1.31 2004/09/14 22:27:46 deraadt Exp $	*/
 
 /*
  *  Copyright (c) 1995, 1996 John T. Kohl
@@ -71,6 +71,7 @@ void make_noise(int howmany);
 void do_etc_file(const char *file);
 void sockunlink(void);
 
+/* ARGSUSED */
 void
 sigexit(int signo)
 {

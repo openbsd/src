@@ -1,4 +1,4 @@
-/*	$OpenBSD: portmap.c,v 1.31 2004/03/16 01:11:09 tedu Exp $	*/
+/*	$OpenBSD: portmap.c,v 1.32 2004/09/14 22:28:50 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 Theo de Raadt (OpenBSD). All rights reserved.
@@ -40,7 +40,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "from: @(#)portmap.c	5.4 (Berkeley) 4/19/91";
 #else
-static char rcsid[] = "$OpenBSD: portmap.c,v 1.31 2004/03/16 01:11:09 tedu Exp $";
+static char rcsid[] = "$OpenBSD: portmap.c,v 1.32 2004/09/14 22:28:50 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -651,6 +651,7 @@ callit(struct svc_req *rqstp, SVCXPRT *xprt)
 	exit(0);
 }
 
+/* ARGSUSED */
 void
 reap(int signo)
 {
