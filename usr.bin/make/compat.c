@@ -1,4 +1,4 @@
-/*	$OpenBSD: compat.c,v 1.8 1997/04/28 01:52:36 millert Exp $	*/
+/*	$OpenBSD: compat.c,v 1.9 1998/01/02 05:56:33 deraadt Exp $	*/
 /*	$NetBSD: compat.c,v 1.14 1996/11/06 17:59:01 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)compat.c	8.2 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: compat.c,v 1.8 1997/04/28 01:52:36 millert Exp $";
+static char rcsid[] = "$OpenBSD: compat.c,v 1.9 1998/01/02 05:56:33 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -287,7 +287,7 @@ CompatRunCommand (cmdp, gnp)
 	} else {
 	    (void)execv(av[0], av);
 	}
-	exit(1);
+	_exit(1);
     }
     free(cmdStart);
     Lst_Replace (cmdNode, (ClientData) NULL);
