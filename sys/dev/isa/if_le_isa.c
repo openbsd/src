@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le_isa.c,v 1.7 1997/07/06 18:08:31 niklas Exp $	*/
+/*	$OpenBSD: if_le_isa.c,v 1.8 1997/08/08 08:23:32 downsj Exp $	*/
 /*	$NetBSD: if_le_isa.c,v 1.2 1996/05/12 23:52:56 mycroft Exp $	*/
 
 /*-
@@ -351,6 +351,7 @@ le_isa_attach(parent, self, aux)
 
 	sc->sc_rdcsr = le_isa_rdcsr;
 	sc->sc_wrcsr = le_isa_wrcsr;
+	sc->sc_hwreset = NULL;
 	sc->sc_hwinit = NULL;
 
 	printf("%s", sc->sc_dev.dv_xname);

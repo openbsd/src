@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le.c,v 1.6 1997/01/16 09:24:45 niklas Exp $	*/
+/*	$OpenBSD: if_le.c,v 1.7 1997/08/08 08:30:14 downsj Exp $	*/
 /*	$NetBSD: if_le.c,v 1.22 1996/12/23 09:10:18 veego Exp $	*/
 
 /*-
@@ -144,6 +144,7 @@ le_zbus_attach(parent, self, aux)
 
 	sc->sc_rdcsr = lerdcsr;
 	sc->sc_wrcsr = lewrcsr;
+	sc->sc_hwreset = NULL;
 	sc->sc_hwinit = NULL;
 
 	sc->sc_conf3 = LE_C3_BSWP;

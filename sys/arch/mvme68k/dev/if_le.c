@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le.c,v 1.10 1996/08/20 05:17:08 deraadt Exp $ */
+/*	$OpenBSD: if_le.c,v 1.11 1997/08/08 08:31:50 downsj Exp $ */
 
 /*-
  * Copyright (c) 1982, 1992, 1993
@@ -152,6 +152,7 @@ leattach(parent, self, aux)
 
 	sc->sc_rdcsr = lerdcsr;
 	sc->sc_wrcsr = lewrcsr;
+	sc->sc_hwreset = NULL;
 	sc->sc_hwinit = NULL;
 
 	am7990_config(sc);

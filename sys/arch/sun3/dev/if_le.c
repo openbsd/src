@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le.c,v 1.9 1997/01/16 04:03:49 kstailey Exp $	*/
+/*	$OpenBSD: if_le.c,v 1.10 1997/08/08 08:27:39 downsj Exp $	*/
 /*	$NetBSD: if_le.c,v 1.33 1996/11/20 18:56:52 gwr Exp $	*/
 
 /*-
@@ -160,6 +160,7 @@ le_attach(parent, self, aux)
 
 	sc->sc_rdcsr = lerdcsr;
 	sc->sc_wrcsr = lewrcsr;
+	sc->sc_hwreset = NULL;
 	sc->sc_hwinit = NULL;
 
 	am7990_config(sc);

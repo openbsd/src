@@ -210,6 +210,7 @@ le_pci_attach(parent, self, aux)
 
 	sc->sc_rdcsr = le_pci_rdcsr;
 	sc->sc_wrcsr = le_pci_wrcsr;
+	sc->sc_hwreset = NULL;
 	sc->sc_hwinit = NULL;
 
 	printf("%s", sc->sc_dev.dv_xname);
