@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.54 2003/02/12 20:43:36 dhartmei Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.55 2003/02/18 08:05:15 camield Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -943,9 +943,6 @@ pf_normalize_ip(struct mbuf **m0, int dir, struct ifnet *ifp, u_short *reason)
 	}
 
  no_fragment:
-	if (dir != PF_OUT)
-		return (PF_PASS);
-
 	/* At this point, only IP_DF is allowed in ip_off */
 	h->ip_off &= IP_DF;
 
@@ -959,9 +956,6 @@ pf_normalize_ip(struct mbuf **m0, int dir, struct ifnet *ifp, u_short *reason)
 	return (PF_PASS);
 
  fragment_pass:
-	if (dir != PF_OUT)
-		return (PF_PASS);
-
 	/* Enforce a minimum ttl, may cause endless packet loops */
 	if (r->min_ttl && h->ip_ttl < r->min_ttl)
 		h->ip_ttl = r->min_ttl;
