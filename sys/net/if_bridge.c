@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.74 2001/07/27 22:31:47 jason Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.75 2001/08/12 00:09:29 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -139,9 +139,10 @@ int		bridge_addrule __P((struct bridge_iflist *,
 int		bridge_flushrule __P((struct bridge_iflist *));
 int	bridge_brlconf __P((struct bridge_softc *, struct ifbrlconf *));
 u_int8_t bridge_filterrule __P((struct brl_head *, struct ether_header *));
+#if NPF > 0
 struct mbuf *bridge_filter __P((struct bridge_softc *, int, struct ifnet *,
     struct ether_header *, struct mbuf *m));
-
+#endif
 
 #define	ETHERADDR_IS_IP_MCAST(a) \
 	/* struct etheraddr *a;	*/				\
@@ -1042,11 +1043,11 @@ bridgeintr_frame(sc, m)
 		m_freem(m);
 		return;
 	}
-
+#if NPF > 0
 	m = bridge_filter(sc, BRIDGE_IN, src_if, &eh, m);
 	if (m == NULL)
 		return;
-
+#endif
 	/*
 	 * If the packet is a multicast or broadcast OR if we don't
 	 * know any better, forward it to all interfaces.
@@ -1085,9 +1086,11 @@ bridgeintr_frame(sc, m)
 		m_freem(m);
 		return;
 	}
+#if NPF > 0
 	m = bridge_filter(sc, BRIDGE_OUT, dst_if, &eh, m);
 	if (m == NULL)
 		return;
+#endif
 
 #ifdef ALTQ
 	if (ALTQ_IS_ENABLED(&dst_if->if_snd))
@@ -1325,9 +1328,11 @@ bridge_broadcast(sc, ifp, eh, m)
 			}
 		}
 
+#if NPF > 0
 		mc = bridge_filter(sc, BRIDGE_OUT, dst_if, eh, mc);
 		if (mc == NULL)
 			continue;
+#endif
 
 #ifdef ALTQ
 		if (ALTQ_IS_ENABLED(&dst_if->if_snd))
