@@ -1,4 +1,4 @@
-/*	$OpenBSD: microtime.s,v 1.9 1997/12/17 08:54:49 downsj Exp $	*/
+/*	$OpenBSD: microtime.s,v 1.10 1997/12/30 23:35:19 mickey Exp $	*/
 /*	$NetBSD: microtime.s,v 1.16 1995/04/17 12:06:47 cgd Exp $	*/
 
 /*-
@@ -151,7 +151,10 @@ pentium_microtime:
 	.byte	0x0f, 0x31	# RDTSC
 	subl	_pentium_base_tsc,%eax
 	sbbl	_pentium_base_tsc+4,%edx
-	divl	%ecx		# convert to usec
+	orl	%ecx, %ecx
+	jnz	1f
+	incl	%ecx
+1:	divl	%ecx		# convert to usec
 	jmp	common_microtime
 #endif
 #endif
