@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_disasm.c,v 1.8 2002/05/16 13:01:41 art Exp $	*/
+/*	$OpenBSD: db_disasm.c,v 1.9 2003/02/26 18:25:29 tedu Exp $	*/
 /*	$NetBSD: db_disasm.c,v 1.11 1996/05/03 19:41:58 christos Exp $	*/
 
 /* 
@@ -911,7 +911,7 @@ db_read_address(loc, short_addr, regmodrm, addrp)
 			break;
 		}
 	} else {
-		if (mod != 3 && rm == 4) {
+		if (rm == 4) {
 			get_value_inc(sib, loc, 1, FALSE);
 			rm = sib_base(sib);
 			index = sib_index(sib);

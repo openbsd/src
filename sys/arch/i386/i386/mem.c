@@ -1,5 +1,5 @@
 /*	$NetBSD: mem.c,v 1.31 1996/05/03 19:42:19 christos Exp $	*/
-/*	$OpenBSD: mem.c,v 1.24 2003/01/16 04:15:17 art Exp $ */
+/*	$OpenBSD: mem.c,v 1.25 2003/02/26 18:25:29 tedu Exp $ */
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -204,8 +204,6 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 		default:
 			return (ENXIO);
 		}
-		if (error)
-			break;
 		iov->iov_base += c;
 		iov->iov_len -= c;
 		uio->uio_offset += c;
