@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.43 2005/03/13 02:30:31 pascoe Exp $ */
+/*	$OpenBSD: ehci.c,v 1.44 2005/03/13 02:32:57 pascoe Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -143,6 +143,8 @@ struct ehci_pipe {
 		/* XXX */
 	} u;
 };
+
+Static u_int8_t		ehci_reverse_bits(u_int8_t, int);
 
 Static void		ehci_power(int, void *);
 
@@ -324,11 +326,26 @@ Static struct usbd_pipe_methods ehci_device_isoc_methods = {
 	ehci_device_isoc_done,
 };
 
+/*
+ * Reverse a number with nbits bits.  Used to evenly distribute lower-level
+ * interrupt heads in the periodic schedule.
+ * Suitable for use with EHCI_IPOLLRATES <= 9.
+ */
+Static u_int8_t
+ehci_reverse_bits(u_int8_t c, int nbits)
+{
+	c = ((c >> 1) & 0x55) | ((c << 1) & 0xaa);
+	c = ((c >> 2) & 0x33) | ((c << 2) & 0xcc);
+	c = ((c >> 4) & 0x0f) | ((c << 4) & 0xf0);
+
+	return c >> (8 - nbits);
+}
+
 usbd_status
 ehci_init(ehci_softc_t *sc)
 {
 	u_int32_t version, sparams, cparams, hcr;
-	u_int i;
+	u_int i, j;
 	usbd_status err;
 	ehci_soft_qh_t *sqh;
 
@@ -452,11 +469,11 @@ ehci_init(ehci_softc_t *sc)
 		sqh->sqtd = NULL;
 	}
 	/* Point the frame list at the last level (128ms). */
-	for (i = 0; i < sc->sc_flsize; i++) {
-		sc->sc_flist[i] = htole32(EHCI_LINK_QH |
-		    sc->sc_islots[EHCI_IQHIDX(EHCI_IPOLLRATES - 1,
-		    i)].sqh->physaddr);
-	}
+	for (i = 0; i < (1 << (EHCI_IPOLLRATES - 1)); i++)
+		for (j = i; j < sc->sc_flsize; j += 1 << (EHCI_IPOLLRATES - 1))
+			sc->sc_flist[j] = htole32(EHCI_LINK_QH | sc->sc_islots[
+			    EHCI_IQHIDX(EHCI_IPOLLRATES - 1, ehci_reverse_bits(
+			    i, EHCI_IPOLLRATES - 1))].sqh->physaddr);
 
 	/* Allocate dummy QH that starts the async list. */
 	sqh = ehci_alloc_sqh(sc);
