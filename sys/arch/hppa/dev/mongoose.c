@@ -1,4 +1,4 @@
-/*	$OpenBSD: mongoose.c,v 1.2 1999/08/16 02:53:50 mickey Exp $	*/
+/*	$OpenBSD: mongoose.c,v 1.3 1999/09/10 18:03:46 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998,1999 Michael Shalayeff
@@ -87,7 +87,7 @@ struct cfattach mongoose_ca = {
 };
 
 struct cfdriver mongoose_cd = {
-	NULL, "mongoose", DV_DULL
+	NULL, "mg", DV_DULL
 };
 
 int mgprint __P((void *aux, const char *pnp));
