@@ -1,4 +1,4 @@
-.\"	$OpenBSD: brconfig.8,v 1.51 2004/09/29 02:25:19 mcbride Exp $
+.\"	$OpenBSD: brconfig.8,v 1.52 2004/12/14 08:58:21 camield Exp $
 .\"
 .\" Copyright (c) 1999-2001 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -169,14 +169,14 @@ are not entered into the address cache.
 Remove all Ethernet MAC filtering rules from
 .Ar interface .
 .It Cm link0
-Setting this flag stops all non-IP multicast packets from
+Setting this flag stops all IP multicast packets from
 being forwarded by the bridge.
 .It Cm -link0
 Clear the
 .Cm link0
 flag on the bridge interface.
 .It Cm link1
-Setting this flags stops all IP multicast packets from
+Setting this flag stops all non-IP multicast packets from
 being forwarded by the bridge.
 .It Cm -link1
 Clear the
