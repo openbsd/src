@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.c,v 1.1.1.1 2000/06/18 07:30:41 jason Exp $	*/
+/*	$OpenBSD: common.c,v 1.2 2000/10/09 22:52:18 brian Exp $	*/
 
 /*
  * Copyright (c) 2000 Network Security Technologies, Inc. http://www.netsec.net
@@ -139,7 +139,7 @@ bpf_to_ppp(pppfd, len, pkt)
 
 	r = writev(pppfd, iov, 2);
 	if (r < 0) {
-		if (errno == EINTR || errno == EPIPE)
+		if (errno == EINTR || errno == EPIPE || errno == ENOBUFS)
 			return (0);
 		return (-1);
 	}
@@ -189,7 +189,9 @@ ppp_to_bpf(bfd, pppfd, myea, rmea, id)
 	iov[3].iov_base = &ph;		iov[3].iov_len = sizeof(ph);
 	iov[4].iov_base = pktbuf;	iov[4].iov_len = r;
 
-	return (writev(bfd, iov, 5));
+	r = writev(bfd, iov, 5);
+
+	return (r == -1 && errno == ENOBUFS ? 0 : r);
 }
 
 void
