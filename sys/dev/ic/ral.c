@@ -1,4 +1,4 @@
-/*	$OpenBSD: ral.c,v 1.23 2005/03/11 20:11:00 damien Exp $  */
+/*	$OpenBSD: ral.c,v 1.24 2005/03/11 20:14:59 damien Exp $  */
 
 /*-
  * Copyright (c) 2005
@@ -2226,33 +2226,38 @@ ral_disable_rf_tune(struct ral_softc *sc)
 	DPRINTFN(2, ("disabling RF autotune\n"));
 }
 
+/*
+ * Refer to IEEE Std 802.11-1999 pp. 123 for more information on TSF
+ * synchronization.
+ */
 void
 ral_enable_tsf_sync(struct ral_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
+	uint16_t logcwmin, preload;
 	uint32_t tmp;
 
 	/* first, disable TSF synchronization */
 	RAL_WRITE(sc, RAL_CSR14, 0);
 
-	/* set beacon interval and CfpMaxDuration in 1/16TU */
 	tmp = 16 * ic->ic_bss->ni_intval;
 	RAL_WRITE(sc, RAL_CSR12, tmp);
 
-	/* set CFP Period to 0 */
 	RAL_WRITE(sc, RAL_CSR13, 0);
 
-	/* set bcncsr1 (CWMin + preload) */
-	tmp = 5 << 16 | (IEEE80211_DUR_DS_LONG_PREAMBLE + 240);
+	logcwmin = 5;
+	preload = (ic->ic_opmode == IEEE80211_M_IBSS) ? 1024 : 384;
+	tmp = logcwmin << 16 | preload;
 	RAL_WRITE(sc, RAL_BCNCSR1, tmp);
 
-	if (ic->ic_opmode == IEEE80211_M_IBSS)
+	/* finally, enable TSF synchronization */
+	if (ic->ic_opmode == IEEE80211_M_STA)
+		RAL_WRITE(sc, RAL_CSR14, RAL_CSR14_TSF_SYNC_BSS |
+		    RAL_CSR14_TSF_AUTOCOUNT | RAL_CSR14_BCN_RELOAD);
+	else
 		RAL_WRITE(sc, RAL_CSR14, RAL_CSR14_TSF_SYNC_IBSS |
 		    RAL_CSR14_TSF_AUTOCOUNT | RAL_CSR14_BCN_RELOAD |
 		    RAL_CSR14_GENERATE_BEACON);
-	else
-		RAL_WRITE(sc, RAL_CSR14, RAL_CSR14_TSF_SYNC_BSS |
-		    RAL_CSR14_TSF_AUTOCOUNT | RAL_CSR14_BCN_RELOAD);
 
 	DPRINTF(("enabling TSF synchronization\n"));
 }
