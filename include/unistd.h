@@ -1,4 +1,4 @@
-/*	$OpenBSD: unistd.h,v 1.18 1998/02/10 02:44:38 deraadt Exp $ */
+/*	$OpenBSD: unistd.h,v 1.19 1998/02/16 09:46:03 deraadt Exp $ */
 /*	$NetBSD: unistd.h,v 1.26.4.1 1996/05/28 02:31:51 mrg Exp $	*/
 
 /*-
@@ -138,7 +138,7 @@ int	 nfssvc __P((int, void *));
 int	 nice __P((int));
 void	 psignal __P((unsigned int, const char *));
 extern __const char *__const sys_siglist[];
-int	 profil __P((char *, size_t, u_long, u_int));
+int	 profil __P((char *, size_t, unsigned long, unsigned int));
 int	 rcmd __P((char **, int, const char *,
 		const char *, const char *, int *));
 int	 rcmdsh __P((char **, int, const char *,
@@ -153,7 +153,9 @@ int	 rresvport __P((int *));
 int	 ruserok __P((const char *, int, const char *, const char *));
 int	 quotactl __P((const char *, int, int, char *));
 char	*sbrk __P((int));
+#ifndef _XOPEN_SOURCE
 int	 select __P((int, fd_set *, fd_set *, fd_set *, struct timeval *));
+#endif
 int	 setdomainname __P((const char *, int));
 int	 setegid __P((gid_t));
 int	 seteuid __P((uid_t));
@@ -176,7 +178,7 @@ void	 sync __P((void));
 int	 syscall __P((int, ...));
 int	 truncate __P((const char *, off_t));
 int	 ttyslot __P((void));
-u_int	 ualarm __P((u_int, u_int));
+unsigned int	 ualarm __P((unsigned int, unsigned int));
 int	 undelete __P((const char *));
 int	 usleep __P((useconds_t));
 void	*valloc __P((size_t));			/* obsoleted by malloc() */
