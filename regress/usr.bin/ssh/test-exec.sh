@@ -1,4 +1,4 @@
-#	$OpenBSD: test-exec.sh,v 1.23 2004/06/25 01:25:12 djm Exp $
+#	$OpenBSD: test-exec.sh,v 1.24 2004/11/25 09:39:27 dtucker Exp $
 #	Placed in the Public Domain.
 
 USER=`id -un`
@@ -172,7 +172,6 @@ Host *
 	ChallengeResponseAuthentication	no
 	HostbasedAuthentication	no
 	PasswordAuthentication	no
-	RhostsAuthentication	no
 	RhostsRSAAuthentication	no
 	BatchMode		yes
 	StrictHostKeyChecking	yes
