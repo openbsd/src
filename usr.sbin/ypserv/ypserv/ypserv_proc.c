@@ -28,7 +28,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$Id: ypserv_proc.c,v 1.1 1995/11/01 16:56:37 deraadt Exp $";
+static char rcsid[] = "$Id: ypserv_proc.c,v 1.2 1996/01/20 02:42:19 chuck Exp $";
 #endif
 
 #include <rpc/rpc.h>
@@ -36,6 +36,7 @@ static char rcsid[] = "$Id: ypserv_proc.c,v 1.1 1995/11/01 16:56:37 deraadt Exp 
 #include <rpcsvc/ypclnt.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
+#include <sys/param.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include "ypdb.h"
@@ -48,6 +49,12 @@ static char rcsid[] = "$Id: ypserv_proc.c,v 1.1 1995/11/01 16:56:37 deraadt Exp 
 #include "yplog.h"
 #include "ypdef.h"
 
+#ifdef DEBUG
+#define YPLOG yplog
+#else /* DEBUG */
+#define YPLOG if (!ok) yplog
+#endif /* DEBUG */
+
 extern ypresp_val ypdb_get_record();
 extern ypresp_key_val ypdb_get_first();
 extern ypresp_key_val ypdb_get_next();
@@ -55,424 +62,328 @@ extern ypresp_order ypdb_get_order();
 extern ypresp_master ypdb_get_master();
 extern bool_t ypdb_xdr_get_all();
 extern void ypdb_close_all();
-extern int acl_access_ok;
 
+static char *True = "true";
+static char *False = "FALSE";
+#define TORF(N) ((N) ? True : False)
 void *
-ypproc_null_2_svc(argp, rqstp, transp)
+ypproc_null_2_svc(argp, rqstp)
 	void *argp;
         struct svc_req *rqstp;
-	SVCXPRT *transp;
 {
-	static char res;
+	static char *result;
+	struct sockaddr_in *caller = svc_getcaller(rqstp->rq_xprt);
+	int ok = acl_check_host(&caller->sin_addr);
 
-	bzero((char *)&res, sizeof(res));
+	YPLOG("null_2: caller=[%s].%d, auth_ok=%s",
+	  inet_ntoa(caller->sin_addr), ntohs(caller->sin_port), TORF(ok));
 
-	yplog_date("ypproc_null_2: this code isn't tested");
-	yplog_call(transp);
-	
-	if (!svc_sendreply(transp, xdr_void, (char *) &res)) {
-		svcerr_systemerr(transp);
+	if (!ok) {
+		svcerr_auth(rqstp->rq_xprt, AUTH_FAILED);
+		return(NULL);
 	}
-	
-	if (!svc_freeargs(transp, xdr_void, (caddr_t) argp)) {
-		(void)fprintf(stderr, "unable to free arguments\n");
-		exit(1);
-	}
-	
-	return ((void *)&res);
+
+	result = NULL;
+
+	return ((void *)&result);
 }
 
 bool_t *
-ypproc_domain_2_svc(argp, rqstp, transp)
+ypproc_domain_2_svc(argp, rqstp)
 	domainname *argp;
         struct svc_req *rqstp;
-	SVCXPRT *transp;
 {
-	static bool_t res;
-	static bool_t domain_served;
-	static char   domain_path[255];
-	struct	stat	finfo;
+	static bool_t result; /* is domain_served? */
+	struct sockaddr_in *caller = svc_getcaller(rqstp->rq_xprt);
+	int ok = acl_check_host(&caller->sin_addr);
+	static char domain_path[MAXPATHLEN];
+	struct stat finfo;
 
-	bzero((char *)&res, sizeof(res));
-
-	if (acl_access_ok) {
-	  sprintf(domain_path,"%s/%s",YP_DB_PATH,*argp);
-	  domain_served = (bool_t) ((stat(domain_path, &finfo) == 0) &&
+	snprintf(domain_path, sizeof(domain_path), "%s/%s", YP_DB_PATH, *argp);
+	result = (bool_t) ((stat(domain_path, &finfo) == 0) &&
 				    (finfo.st_mode & S_IFDIR));
-	} else {
-	  domain_served = FALSE;
+
+	YPLOG("domain_2: caller=[%s].%d, auth_ok=%s, domain=%s, served=%s",
+	  inet_ntoa(caller->sin_addr), ntohs(caller->sin_port), 
+	  TORF(ok), *argp, TORF(result));
+
+	if (!ok) {
+		svcerr_auth(rqstp->rq_xprt, AUTH_FAILED);
+		return(NULL);
 	}
 
-#ifdef DEBUG
-	yplog_date("ypproc_domain_2:");
-	yplog_call(transp);
-	yplog_str("  domain: "); yplog_cat(*argp); yplog_cat("\n");
-	yplog_str("  served: ");
-	if (domain_served) {
-	  yplog_cat("true\n");
-	} else {
-	  yplog_cat("false\n");
-	}
-#endif
-
-	res = domain_served;
-	  
-	if (!svc_sendreply(transp, xdr_bool, (char *) &res)) {
-	  svcerr_systemerr(transp);
-	}
-
-	if (!svc_freeargs(transp, xdr_domainname, (caddr_t) argp)) {
-		(void)fprintf(stderr, "unable to free arguments\n");
-		exit(1);
-	}
-
-	return (&res);
+	return (&result);
 }
 
 bool_t *
-ypproc_domain_nonack_2_svc(argp, rqstp, transp)
+ypproc_domain_nonack_2_svc(argp, rqstp)
 	domainname *argp;
         struct svc_req *rqstp;
-	SVCXPRT *transp;
 {
-	static bool_t res;
-	static bool_t domain_served;
-	static char   domain_path[255];
-	struct	stat	finfo;
+	static bool_t result; /* is domain served? */
+	struct sockaddr_in *caller = svc_getcaller(rqstp->rq_xprt);
+	int ok = acl_check_host(&caller->sin_addr);
+	static char domain_path[MAXPATHLEN];
+	struct stat finfo;
 
-	bzero((char *)&res, sizeof(res));
-
-	if (acl_access_ok) {
-	  sprintf(domain_path,"%s/%s",YP_DB_PATH,*argp);
-	  domain_served = (bool_t) ((stat(domain_path, &finfo) == 0) &&
+	snprintf(domain_path, sizeof(domain_path), "%s/%s", YP_DB_PATH, *argp);
+	result = (bool_t) ((stat(domain_path, &finfo) == 0) &&
 				    (finfo.st_mode & S_IFDIR));
-	} else {
-	  domain_served = FALSE;
-	}
-	
-#ifdef DEBUG
-	yplog_date("ypproc_domain_nonack_2:");
-	yplog_call(transp);
-	yplog_str("  domain: "); yplog_cat(*argp); yplog_cat("\n");
-	yplog_str("  served: ");
-	if (domain_served) {
-	  yplog_cat("true\n");
-	} else {
-	  yplog_cat("false\n");
-	}
-#endif
 
-	if (domain_served) {
-	  
-	  res = domain_served;
-	  
-	  if (!svc_sendreply(transp, xdr_bool, (char *) &res)) {
-	  	svcerr_systemerr(transp);
-	  }
-	
-	} else {
+	YPLOG(
+	  "domain_nonack_2: caller=[%s].%d, auth_ok=%s, domain=%s, served=%s",
+	  inet_ntoa(caller->sin_addr), ntohs(caller->sin_port), TORF(ok), 
+	  *argp, TORF(result));
 
-	  res = (bool_t) FALSE;
-
-	  svcerr_decode(transp);
-	  
+	if (!ok) {
+		svcerr_auth(rqstp->rq_xprt, AUTH_FAILED);
+		return(NULL);
 	}
 
-	if (!svc_freeargs(transp, xdr_domainname, (caddr_t) argp)) {
-		(void)fprintf(stderr, "unable to free arguments\n");
-		exit(1);
+	if (!result) {
+		return(NULL); /* don't send nack */
 	}
 
-	return (&res);
+	return (&result);
 }
 
 ypresp_val *
-ypproc_match_2_svc(argp, rqstp, transp)
+ypproc_match_2_svc(argp, rqstp)
 	ypreq_key *argp;
         struct svc_req *rqstp;
-	SVCXPRT *transp;
 {
 	static ypresp_val res;
+	struct sockaddr_in *caller = svc_getcaller(rqstp->rq_xprt);
+	int ok = acl_check_host(&caller->sin_addr);
 
-	bzero((char *)&res, sizeof(res));
+	YPLOG(
+	  "match_2: caller=[%s].%d, auth_ok=%s, domain=%s, map=%s, key=%.*s",
+	  inet_ntoa(caller->sin_addr), ntohs(caller->sin_port), TORF(ok), 
+	  argp->domain, argp->map, argp->key.keydat_len, argp->key.keydat_val);
+
+	if (!ok) {
+		svcerr_auth(rqstp->rq_xprt, AUTH_FAILED);
+		return(NULL);
+	}
+
+	res = ypdb_get_record(argp->domain,argp->map,argp->key, FALSE);
 	
 #ifdef DEBUG
-	yplog_date("ypproc_match_2:");
-	yplog_call(transp);
-	yplog_str("  domain: "); yplog_cat(argp->domain); yplog_cat("\n");
-	yplog_str("     map: "); yplog_cat(argp->map); yplog_cat("\n");
-	yplog_str("     key: "); yplog_cat(argp->key.keydat_val);
-	yplog_cat("\n");
+	yplog("  match2_status: %s", yperr_string(ypprot_err(res.stat)));
 #endif
-
-	if (acl_access_ok) {
-	  res = ypdb_get_record(argp->domain,argp->map,argp->key, FALSE);
-	} else {
-	  res.stat = YP_NODOM;
-	}
-	
-#ifdef DEBUG
-	yplog_str("  status: ");
-	yplog_cat(yperr_string(ypprot_err(res.stat)));
-	yplog_cat("\n");
-#endif
-
-	if (!svc_sendreply(transp, xdr_ypresp_val, (char *) &res)) {
-		svcerr_systemerr(transp);
-	}
-
-	if (!svc_freeargs(transp, xdr_ypreq_key, (caddr_t) argp)) {
-		(void)fprintf(stderr, "unable to free arguments\n");
-		exit(1);
-	}
 
 	return (&res);
 }
 
 ypresp_key_val *
-ypproc_first_2_svc(argp, rqstp, transp)
-	ypreq_key *argp;
+ypproc_first_2_svc(argp, rqstp)
+	ypreq_nokey *argp;
         struct svc_req *rqstp;
-	SVCXPRT *transp;
 {
 	static ypresp_key_val res;
+	struct sockaddr_in *caller = svc_getcaller(rqstp->rq_xprt);
+	int ok = acl_check_host(&caller->sin_addr);
 
-	bzero((char *)&res, sizeof(res));
+	YPLOG( "first_2: caller=[%s].%d, auth_ok=%s, domain=%s, map=%s",
+	  inet_ntoa(caller->sin_addr), ntohs(caller->sin_port), TORF(ok), 
+	  argp->domain, argp->map);
 	
-#ifdef DEBUG
-	yplog_date("ypproc_first_2:");
-	yplog_call(transp);
-	yplog_str("  domain: "); yplog_cat(argp->domain); yplog_cat("\n");
-	yplog_str("     map: "); yplog_cat(argp->map); yplog_cat("\n");
-#endif
-
-	if (acl_access_ok) {
-	  res = ypdb_get_first(argp->domain,argp->map,FALSE);
-	} else {
-	  res.stat = YP_NODOM;
+	if (!ok) {
+		svcerr_auth(rqstp->rq_xprt, AUTH_FAILED);
+		return(NULL);
 	}
+
+	res = ypdb_get_first(argp->domain,argp->map,FALSE);
 
 #ifdef DEBUG
-	yplog_str("  status: ");
-	yplog_cat(yperr_string(ypprot_err(res.stat)));
-	yplog_cat("\n");
+	yplog("  first2_status: %s", yperr_string(ypprot_err(res.stat)));
 #endif
-
-	if (!svc_sendreply(transp, xdr_ypresp_key_val, (char *) &res)) {
-		svcerr_systemerr(transp);
-	}
-
-	if (!svc_freeargs(transp, xdr_ypreq_key, (caddr_t) argp)) {
-		(void)fprintf(stderr, "unable to free arguments\n");
-		exit(1);
-	}
 
 	return (&res);
 }
 
 ypresp_key_val *
-ypproc_next_2_svc(argp, rqstp, transp)
+ypproc_next_2_svc(argp, rqstp)
 	ypreq_key *argp;
         struct svc_req *rqstp;
-	SVCXPRT *transp;
 {
 	static ypresp_key_val res;
+	struct sockaddr_in *caller = svc_getcaller(rqstp->rq_xprt);
+	int ok = acl_check_host(&caller->sin_addr);
 
-	bzero((char *)&res, sizeof(res));
-	
-#ifdef DEBUG
-	yplog_date("ypproc_next_2:");
-	yplog_call(transp);
-	yplog_str("  domain: "); yplog_cat(argp->domain); yplog_cat("\n");
-	yplog_str("     map: "); yplog_cat(argp->map); yplog_cat("\n");
-	yplog_str("     key: "); yplog_cat(argp->key.keydat_val);
-	yplog_cat("\n");
-#endif
+	YPLOG(
+	  "next_2: caller=[%s].%d, auth_ok=%s, domain=%s, map=%s, key=%.*s",
+	  inet_ntoa(caller->sin_addr), ntohs(caller->sin_port), TORF(ok), 
+	  argp->domain, argp->map, argp->key.keydat_len, argp->key.keydat_val);
 
-	if (acl_access_ok) {
-	  res = ypdb_get_next(argp->domain,argp->map,argp->key,FALSE);
-	} else {
-	  res.stat = YP_NODOM;
+	if (!ok) {
+		svcerr_auth(rqstp->rq_xprt, AUTH_FAILED);
+		return(NULL);
 	}
+
+	res = ypdb_get_next(argp->domain,argp->map,argp->key,FALSE);
+
 
 #ifdef DEBUG
-	yplog_str("  status: ");
-	yplog_cat(yperr_string(ypprot_err(res.stat)));
-	yplog_cat("\n");
+	yplog("  next2_status: %s", yperr_string(ypprot_err(res.stat)));
 #endif
-
-	if (!svc_sendreply(transp, xdr_ypresp_key_val, (char *) &res)) {
-		svcerr_systemerr(transp);
-	}
-	
-	if (!svc_freeargs(transp, xdr_ypreq_key, (caddr_t) argp)) {
-		(void)fprintf(stderr, "unable to free arguments\n");
-		exit(1);
-	}
 
 	return (&res);
 }
 
 ypresp_xfr *
-ypproc_xfr_2_svc(argp, rqstp, transp)
+ypproc_xfr_2_svc(argp, rqstp)
 	ypreq_xfr *argp;
         struct svc_req *rqstp;
-	SVCXPRT *transp;
 {
 	static ypresp_xfr res;
+	struct sockaddr_in *caller = svc_getcaller(rqstp->rq_xprt);
+	int ok = acl_check_host(&caller->sin_addr);
 	pid_t	pid;
-	char	tid[10];
-	char	prog[10];
-	char	port[10];
+	char	tid[11];
+	char	prog[11];
+	char	port[11];
 	char	ypxfr_proc[] = YPXFR_PROC;
-	struct sockaddr_in *sin;
 	char	*ipadd;
 
 	bzero((char *)&res, sizeof(res));
 	
-	yplog_date("ypproc_xfr_2: this code isn't yet implemented");
-	yplog_call(transp);
-	
+	YPLOG("xfr_2: caller=[%s].%d, auth_ok=%s, domain=%s, tid=%s, prog=%s",
+	  inet_ntoa(caller->sin_addr), ntohs(caller->sin_port), TORF(ok), 
+	  argp->map_parms.domain, argp->transid, argp->prog);
+	YPLOG("       ipadd=%s, port=%s, map=%s", inet_ntoa(caller->sin_addr),
+	  argp->port, argp->map_parms.map);
+
+	if (!ok) {
+		svcerr_auth(rqstp->rq_xprt, AUTH_FAILED);
+		return(NULL);
+	}
+
 	pid = vfork();
 
 	if (pid == -1) {
-		
-		/* An error has occurred */
-		
-		return(&res);
+		svcerr_systemerr(rqstp->rq_xprt);
+		return(NULL);
 		
 	}
 
 	if (pid == 0) {
 		
-		sprintf(tid,"%d",argp->transid);
-		sprintf(prog, "%d", argp->prog);
-		sprintf(port, "%d", argp->port);
-		sin = svc_getcaller(transp);
-		ipadd = inet_ntoa(sin->sin_addr);
+		snprintf(tid, sizeof(tid), "%d",argp->transid);
+		snprintf(prog, sizeof(prog), "%d", argp->prog);
+		snprintf(port, sizeof(port), "%d", argp->port);
+		ipadd = inet_ntoa(caller->sin_addr);
 
 		execl(ypxfr_proc, "ypxfr", "-d", argp->map_parms.domain,
 		      "-C",tid, prog, ipadd, port, argp->map_parms.map, NULL);
 		exit(1);
 	}
 	
-	if (!svc_sendreply(transp, xdr_void, (char *) &res)) {
-		svcerr_systemerr(transp);
-	}
-
-	if (!svc_freeargs(transp, xdr_ypreq_xfr, (caddr_t) argp)) {
-		(void)fprintf(stderr, "unable to free arguments\n");
-		exit(1);
-	}
+	/*
+	 * XXX: fill in res
+	 */
 
 	return (&res);
 }
 
 void *
-ypproc_clear_2_svc(argp, rqstp, transp)
+ypproc_clear_2_svc(argp, rqstp)
 	void *argp;
         struct svc_req *rqstp;
-	SVCXPRT *transp;
 {
-	static char res;
+	static char *res;
+	struct sockaddr_in *caller = svc_getcaller(rqstp->rq_xprt);
+	int ok = acl_check_host(&caller->sin_addr);
 
-	bzero((char *)&res, sizeof(res));
-	
+	YPLOG( "clear_2: caller=[%s].%d, auth_ok=%s, opt=%s",
+	  inet_ntoa(caller->sin_addr), ntohs(caller->sin_port), TORF(ok),
 #ifdef OPTDB
-	yplog_date("ypproc_clear_2: DB open/close optimization");
+		True
 #else
-	yplog_date("ypproc_clear_2: No optimization");
+		False
 #endif
-	yplog_call(transp);
+	);
+
+	if (!ok) {
+		svcerr_auth(rqstp->rq_xprt, AUTH_FAILED);
+		return(NULL);
+	}
+
+	res = NULL;
 	
 #ifdef OPTDB
         ypdb_close_all();
 #endif
 
-	if (!svc_sendreply(transp, xdr_void, (char *) &res)) {
-		svcerr_systemerr(transp);
-	}
-	
-	if (!svc_freeargs(transp, xdr_void, (caddr_t) argp)) {
-		(void)fprintf(stderr, "unable to free arguments\n");
-		exit(1);
-	}
-	
 	return ((void *)&res);
 }
 
 ypresp_all *
-ypproc_all_2_svc(argp, rqstp, transp)
+ypproc_all_2_svc(argp, rqstp)
 	ypreq_nokey *argp;
         struct svc_req *rqstp;
-	SVCXPRT *transp;
 {
 	static ypresp_all res;
 	pid_t pid;
+	struct sockaddr_in *caller = svc_getcaller(rqstp->rq_xprt);
+	int ok = acl_check_host(&caller->sin_addr);
+
+	YPLOG( "all_2: caller=[%s].%d, auth_ok=%s, domain=%s, map=%s",
+	  inet_ntoa(caller->sin_addr), ntohs(caller->sin_port), TORF(ok),
+	  argp->domain, argp->map);
+
+	if (!ok) {
+		svcerr_auth(rqstp->rq_xprt, AUTH_FAILED);
+		return(NULL);
+	}
 
 	bzero((char *)&res, sizeof(res));
-	
-#ifdef DEBUG
-	yplog_date("ypproc_all_2:");
-	yplog_call(transp);
-	yplog_str("  domain: "); yplog_cat(argp->domain); yplog_cat("\n");
-	yplog_str("     map: "); yplog_cat(argp->map); yplog_cat("\n");
-	yplog_cat("\n");
-#endif
 	
 	pid = fork();
 
 	if (pid) {
 
 	  if (pid == -1) {
-	    /* An error has occurred */
+	    /* XXXCDC An error has occurred */
 	  }
 
-	  return(&res);
+	  return(NULL); /* PARENT: continue */
 	  
 	}
+	/* CHILD: send result, then exit */
 
-	if (!svc_sendreply(transp, ypdb_xdr_get_all, (char *) argp)) {
-		svcerr_systemerr(transp);
+	if (!svc_sendreply(rqstp->rq_xprt, ypdb_xdr_get_all, (char *) argp)) {
+		svcerr_systemerr(rqstp->rq_xprt);
 	}
 
-	if (!svc_freeargs(transp, xdr_ypreq_nokey, (caddr_t) argp)) {
-		(void)fprintf(stderr, "unable to free arguments\n");
-		exit(1);
-	}
-	
+	/* note: no need to free args, we are exiting */
+
 	exit(0);
 }
 
 ypresp_master *
-ypproc_master_2_svc(argp, rqstp, transp)
+ypproc_master_2_svc(argp, rqstp)
 	ypreq_nokey *argp;
         struct svc_req *rqstp;
-	SVCXPRT *transp;
 {
 	static ypresp_master res;
 	static peername nopeer = "";
+	struct sockaddr_in *caller = svc_getcaller(rqstp->rq_xprt);
+	int ok = acl_check_host(&caller->sin_addr);
 
-	bzero((char *)&res, sizeof(res));
-	
-#ifdef DEBUG
-	yplog_date("ypproc_master_2:");
-	yplog_call(transp);
-	yplog_str("  domain: "); yplog_cat(argp->domain); yplog_cat("\n");
-	yplog_str("     map: "); yplog_cat(argp->map); yplog_cat("\n");
-	yplog_cat("\n");
-#endif
+	YPLOG( "master_2: caller=[%s].%d, auth_ok=%s, domain=%s, map=%s",
+	  inet_ntoa(caller->sin_addr), ntohs(caller->sin_port), TORF(ok),
+	  argp->domain, argp->map);
 
-	if (acl_access_ok) {
-	  res = ypdb_get_master(argp->domain,argp->map);
-	} else {
-	  res.stat = YP_NODOM;
+	if (!ok) {
+		svcerr_auth(rqstp->rq_xprt, AUTH_FAILED);
+		return(NULL);
 	}
 
+	res = ypdb_get_master(argp->domain,argp->map);
+
 #ifdef DEBUG
-	yplog_str("  status: ");
-	yplog_cat(yperr_string(ypprot_err(res.stat)));
-	yplog_cat("\n");
+	yplog("  master2_status: %s", yperr_string(ypprot_err(res.stat)));
 #endif
 
 	/* This code was added because a yppoll <unknown-domain> */
@@ -490,70 +401,47 @@ ypproc_master_2_svc(argp, rqstp, transp)
 
 	/* End of fix                                            */
 
-	if (!svc_sendreply(transp, xdr_ypresp_master, (char *) &res)) {
-		svcerr_systemerr(transp);
-	}
-
-	if (!svc_freeargs(transp, xdr_ypreq_nokey, (caddr_t) argp)) {
-		(void)fprintf(stderr, "unable to free arguments\n");
-		exit(1);
-	}
-	
 	return (&res);
 }
 
 
 ypresp_order *
-ypproc_order_2_svc(argp, rqstp, transp)
+ypproc_order_2_svc(argp, rqstp)
 	ypreq_nokey *argp;
         struct svc_req *rqstp;
-	SVCXPRT *transp;
 {
 	static ypresp_order res;
+	struct sockaddr_in *caller = svc_getcaller(rqstp->rq_xprt);
+	int ok = acl_check_host(&caller->sin_addr);
 
-	bzero((char *)&res, sizeof(res));
-	
-#ifdef DEBUG
-	yplog_date("ypproc_order_2:");
-	yplog_call(transp);
-	yplog_str("  domain: "); yplog_cat(argp->domain); yplog_cat("\n");
-	yplog_str("     map: "); yplog_cat(argp->map); yplog_cat("\n");
-	yplog_cat("\n");
-#endif
+	YPLOG( "order_2: caller=[%s].%d, auth_ok=%s, domain=%s, map=%s",
+	  inet_ntoa(caller->sin_addr), ntohs(caller->sin_port), TORF(ok),
+	  argp->domain, argp->map);
 
-	if (acl_access_ok) {
-	  res = ypdb_get_order(argp->domain,argp->map);
-	} else {
-	  res.stat = YP_NODOM;
+	if (!ok) {
+		svcerr_auth(rqstp->rq_xprt, AUTH_FAILED);
+		return(NULL);
 	}
+
+	res = ypdb_get_order(argp->domain,argp->map);
 
 #ifdef DEBUG
-	yplog_str("  status: ");
-	yplog_cat(yperr_string(ypprot_err(res.stat)));
-	yplog_cat("\n");
+	yplog("  order2_status: %s", yperr_string(ypprot_err(res.stat)));
 #endif
 
-	if (!svc_sendreply(transp, xdr_ypresp_order, (char *) &res)) {
-		svcerr_systemerr(transp);
-	}
-
-	if (!svc_freeargs(transp, xdr_ypreq_nokey, (caddr_t) argp)) {
-		(void)fprintf(stderr, "unable to free arguments\n");
-		exit(1);
-	}
-	
 	return (&res);
 }
 
 
 ypresp_maplist *
-ypproc_maplist_2_svc(argp, rqstp, transp)
+ypproc_maplist_2_svc(argp, rqstp)
 	domainname *argp;
         struct svc_req *rqstp;
-	SVCXPRT *transp;
 {
 	static ypresp_maplist res;
-	static char domain_path[255];
+	struct sockaddr_in *caller = svc_getcaller(rqstp->rq_xprt);
+	int ok = acl_check_host(&caller->sin_addr);
+	static char domain_path[MAXPATHLEN];
 	struct stat finfo;
 	DIR   *dirp = NULL;
 	struct dirent *dp;
@@ -562,28 +450,26 @@ ypproc_maplist_2_svc(argp, rqstp, transp)
 	struct ypmaplist *m;
 	char  *map_name;
 
+	YPLOG("maplist_2: caller=[%s].%d, auth_ok=%s, domain=%s",
+	  inet_ntoa(caller->sin_addr), ntohs(caller->sin_port), TORF(ok),
+	  *argp);
+
+	if (!ok) {
+		svcerr_auth(rqstp->rq_xprt, AUTH_FAILED);
+		return(NULL);
+	}
+
 	bzero((char *)&res, sizeof(res));
 	
-#ifdef DEBUG
-	yplog_date("ypproc_maplist_2:");
-	yplog_call(transp);
-	yplog_str("  domain: "); yplog_cat(*argp); yplog_cat("\n");
-#endif
-
-	sprintf(domain_path,"%s/%s",YP_DB_PATH,*argp);
+	snprintf(domain_path,MAXPATHLEN, "%s/%s",YP_DB_PATH,*argp);
 
 	status = YP_TRUE;
 
 	res.maps = NULL;
 
-	if (acl_access_ok) {
-	  if (!((stat(domain_path, &finfo) == 0) &&
-		((finfo.st_mode & S_IFMT) == S_IFDIR))) {
-	    status = YP_NODOM;
-	  }
-	} else {
-	  status = YP_NODOM;
-	}
+	if (!((stat(domain_path, &finfo) == 0) &&
+		((finfo.st_mode & S_IFMT) == S_IFDIR))) 
+		status = YP_NODOM;
 
 	if (status >= 0) {
 	  if ((dirp = opendir(domain_path)) == NULL) {
@@ -629,19 +515,8 @@ ypproc_maplist_2_svc(argp, rqstp, transp)
 	res.stat = status;
 	
 #ifdef DEBUG
-	yplog_str("  status: ");
-	yplog_cat(yperr_string(ypprot_err(res.stat)));
-	yplog_cat("\n");
+	yplog("  maplist_status: %s", yperr_string(ypprot_err(res.stat)));
 #endif
-
-	if (!svc_sendreply(transp, xdr_ypresp_maplist, (char *) &res)) {
-		svcerr_systemerr(transp);
-	}
-	
-	if (!svc_freeargs(transp, xdr_domainname, (caddr_t) argp)) {
-		(void)fprintf(stderr, "unable to free arguments\n");
-		exit(1);
-	}
 
 	return (&res);
 }
