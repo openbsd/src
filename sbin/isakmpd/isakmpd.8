@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.8,v 1.23 2001/04/05 23:31:05 ho Exp $
+.\" $OpenBSD: isakmpd.8,v 1.24 2001/04/09 21:21:57 ho Exp $
 .\" $EOM: isakmpd.8,v 1.23 2000/05/02 00:30:23 niklas Exp $
 .\"
 .\" Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -49,6 +49,8 @@
 .Op Fl n
 .Op Fl p Ar listen-port
 .Op Fl P Ar local-port
+.Op Fl L
+.Op Fl l Ar packetlog-file
 .Op Fl r Ar seed
 .Op Fl R Ar report-file
 .Sh DESCRIPTION
@@ -173,7 +175,20 @@ option specifies the listen port the daemon will bind to.
 .It Fl P Ar local-port
 On the other hand, the port specified to capital
 .Fl P
-will be what the daemon binds its local end to when acting as initiator.
+will be what the daemon binds its local end to when acting as
+initiator.
+.It Fl L
+Enable IKE packet capture. When this option is given, 
+.Nm
+will capture to file an unencrypted copy of the negotiation packets it
+is sending and receiveing. This file can later be read by 
+.Xr tcpdump 8
+and other utilities using 
+.Xr pcap 3 .
+.It Fl l Ar packetlog-file
+As option
+.Fl L
+above, but capture to a specified file.
 .It Fl r Ar seed
 If given a deterministic random number sequence will be used internally.
 This is useful for setting up regression tests.
@@ -295,6 +310,8 @@ above. Same mode requirements as isakmpd.conf.
 .It Pa /var/run/isakmpd.fifo
 The FIFO used to manually control
 .Nm isakmpd .
+.It Pa /var/run/isakmpd.pcap
+The default IKE packet capture file.
 .It Pa /var/run/isakmpd.report
 The report file written when
 .Dv SIGUSR1
@@ -305,8 +322,10 @@ is received.
 .Xr isakmpd.conf 5 ,
 .Xr isakmpd.policy 5 ,
 .Xr openssl 8 ,
+.Xr pcap 3 ,
 .Xr photurisd 8 ,
 .Xr ssl 8 ,
+.Xr tcpdump 8 ,
 .Xr vpn 8
 .Sh HISTORY
 The ISAKMP/Oakley key management protocol is described in the RFCs

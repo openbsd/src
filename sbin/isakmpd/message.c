@@ -1,4 +1,4 @@
-/*	$OpenBSD: message.c,v 1.37 2001/03/13 14:05:19 ho Exp $	*/
+/*	$OpenBSD: message.c,v 1.38 2001/04/09 21:21:57 ho Exp $	*/
 /*	$EOM: message.c,v 1.156 2000/10/10 12:36:39 provos Exp $	*/
 
 /*
@@ -91,6 +91,8 @@ static int message_validate_sa (struct message *, struct payload *);
 static int message_validate_sig (struct message *, struct payload *);
 static int message_validate_transform (struct message *, struct payload *);
 static int message_validate_vendor (struct message *, struct payload *);
+
+static void message_packet_log (struct message *);
 
 static int (*message_validate_payload[]) (struct message *, struct payload *) =
 {
@@ -1060,6 +1062,9 @@ message_recv (struct message *msg)
     msg->orig = buf;
   msg->orig_sz = sz;
 
+  /* IKE packet capture */
+  message_packet_log (msg);
+
   /*
    * Check the overall payload structure at the same time as indexing them by
    * type.
@@ -1154,6 +1159,9 @@ message_send (struct message *msg)
       timer_remove_event (msg->retrans);
       msg->retrans = 0;
     }
+
+  /* IKE packet capture */
+  message_packet_log (msg);
 
   /*
    * If the ISAKMP SA has set up encryption, encrypt the message.
@@ -1474,6 +1482,33 @@ message_dump_raw (char *header, struct message *msg, int class)
   *p = '\0';
   if (p != buf)
     LOG_DBG ((class, 70, "%s: %s", header, buf));
+}
+
+static void
+message_packet_log (struct message *msg)
+{
+#ifdef USE_DEBUG
+  struct sockaddr *src, *dst;
+  int srclen, dstlen;
+
+  /* Don't log retransmissions. Redundant for incoming packets... */
+  if (msg->xmits > 0)
+    return;
+
+  /* Figure out direction. */
+  if (msg->exchange && msg->exchange->initiator ^ (msg->exchange->step % 2))
+    {
+      msg->transport->vtbl->get_src (msg->transport, &src, &srclen);
+      msg->transport->vtbl->get_dst (msg->transport, &dst, &dstlen);
+    }
+  else
+    {
+      msg->transport->vtbl->get_src (msg->transport, &dst, &dstlen);
+      msg->transport->vtbl->get_dst (msg->transport, &src, &srclen);
+    }
+
+  log_packet_iov (src, dst, msg->iov, msg->iovlen);
+#endif /* USE_DEBUG */
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.h,v 1.9 2001/03/13 14:05:18 ho Exp $	*/
+/*	$OpenBSD: log.h,v 1.10 2001/04/09 21:21:57 ho Exp $	*/
 /*	$EOM: log.h,v 1.19 2000/03/30 14:27:23 ho Exp $	*/
 
 /*
@@ -38,6 +38,8 @@
 #define _LOG_H_
 
 #include <sys/types.h>
+#include <sys/socket.h>
+#include <sys/uio.h>
 #include <stdio.h>
 
 /*
@@ -70,7 +72,14 @@ extern void log_debug (int, int, const char *, ...);
 extern void log_debug_buf (int, int, const char *, const u_int8_t *, size_t);
 extern void log_debug_cmd (int, int);
 
-#else /* USE_DEBUG */
+#define PCAP_FILE_DEFAULT "/var/run/isakmpd.pcap"
+extern void log_packet_init (char *);
+extern void log_packet_iov (struct sockaddr *, struct sockaddr *, 
+			    struct iovec *, int);
+extern void log_packet_restart (char *);
+extern void log_packet_stop (void);
+
+#else /* !USE_DEBUG */
 
 #define LOG_DBG(x)
 #define LOG_DBG_BUF(x)

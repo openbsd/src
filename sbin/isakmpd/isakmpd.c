@@ -1,4 +1,4 @@
-/*	$OpenBSD: isakmpd.c,v 1.28 2001/04/07 20:36:47 ho Exp $	*/
+/*	$OpenBSD: isakmpd.c,v 1.29 2001/04/09 21:21:57 ho Exp $	*/
 /*	$EOM: isakmpd.c,v 1.54 2000/10/05 09:28:22 niklas Exp $	*/
 
 /*
@@ -88,6 +88,11 @@ static char *report_file = "/var/run/isakmpd.report";
 /* The default path of the PID file.  */
 static char *pid_file = "/var/run/isakmpd.pid";
 
+#ifdef USE_DEBUG
+/* The path of the IKE packet capture log file.  */
+static char *pcap_file = 0;
+#endif
+
 /*
  * If we receive a USR2 signal, this flag gets set to show we need to
  * rehash our SA soft expiration timers to a uniform distribution.
@@ -101,7 +106,7 @@ usage ()
   fprintf (stderr,
 	   "usage: %s [-c config-file] [-d] [-D class=level] [-f fifo]\n"
 	   "          [-i pid-file] [-n] [-p listen-port] [-P local-port]\n"
-	   "          [-r seed] [-R report-file]\n",
+	   "          [-L] [-l packetlog-file] [-r seed] [-R report-file]\n",
 	   sysdep_progname ());
   exit (1);
 }
@@ -112,9 +117,10 @@ parse_args (int argc, char *argv[])
   int ch;
 #ifdef USE_DEBUG
   int cls, level;
+  int do_packetlog = 0;
 #endif
 
-  while ((ch = getopt (argc, argv, "c:dD:f:i:np:P:r:R:")) != -1) {
+  while ((ch = getopt (argc, argv, "c:dD:f:i:np:P:Ll:r:R:")) != -1) {
     switch (ch) {
     case 'c':
       conf_path = optarg;
@@ -165,6 +171,16 @@ parse_args (int argc, char *argv[])
 	exit (1);
       break;
 
+#ifdef USE_DEBUG
+    case 'l':
+      pcap_file = optarg;
+      /* Fallthrough intended.  */
+
+    case 'L':
+      do_packetlog++;
+      break;
+#endif /* USE_DEBUG */
+
     case 'r':
       srandom (strtoul (optarg, 0, 0));
       regrand = 1;
@@ -181,6 +197,11 @@ parse_args (int argc, char *argv[])
   }
   argc -= optind;
   argv += optind;
+
+#ifdef USE_DEBUG
+  if (do_packetlog && !pcap_file)
+    pcap_file = PCAP_FILE_DEFAULT;
+#endif
 }
 
 /* Reinitialize after a SIGHUP reception.  */
@@ -333,7 +354,7 @@ main (int argc, char *argv[])
       /* Switch to syslog.  */
       log_to (0);
     }
-  
+
   write_pid_file ();
 
   /* Reinitialize on HUP reception.  */
@@ -345,6 +366,12 @@ main (int argc, char *argv[])
   /* Rehash soft expiration timers on USR2 reception.  */
   signal (SIGUSR2, sigusr2);
 
+#ifdef USE_DEBUG
+  /* If we wanted IKE packet capture to file, initialize it now.  */
+  if (pcap_file != 0)
+    log_packet_init (pcap_file);
+#endif
+  
   /* Allocate the file descriptor sets just big enough.  */
   n = getdtablesize ();
   mask_size = howmany (n, NFDBITS) * sizeof (fd_mask);

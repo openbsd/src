@@ -1,4 +1,4 @@
-/*	$OpenBSD: ui.c,v 1.17 2000/10/07 06:57:25 niklas Exp $	*/
+/*	$OpenBSD: ui.c,v 1.18 2001/04/09 21:21:57 ho Exp $	*/
 /*	$EOM: ui.c,v 1.43 2000/10/05 09:25:12 niklas Exp $	*/
 
 /*
@@ -224,6 +224,32 @@ ui_debug (char *cmd)
     }
   log_debug_cmd (cls, level);
 }
+
+static void
+ui_packetlog (char *cmd)
+{
+  char subcmd[81];
+
+  if (sscanf (cmd, "p %80s", subcmd) != 1)
+    goto fail;
+
+  if (strncasecmp (subcmd, "on=", 3) == 0)
+    {
+      /* Start capture to a new file.  */
+      if (subcmd[strlen (subcmd) - 1] == '\n')
+	subcmd[strlen (subcmd) - 1] = 0;
+      log_packet_restart (subcmd + 3);
+    }
+  else if (strcasecmp (subcmd, "on") == 0)
+    log_packet_restart (NULL);
+  else if (strcasecmp (subcmd, "off") == 0)
+    log_packet_stop ();
+
+  return;
+
+ fail:
+  log_print ("ui_packetlog: command \"%s\" malformed", cmd);
+}
 #endif /* USE_DEBUG */
 
 /* Report SAs and ongoing exchanges.  */
@@ -274,6 +300,12 @@ ui_handle_command (char *line)
     case 't':
       ui_teardown (line);
       break;
+
+#ifdef USE_DEBUG
+    case 'p':
+      ui_packetlog (line);
+      break;
+#endif
 
     default:
       log_print ("ui_handle_messages: unrecognized command: '%c'", line[0]);
