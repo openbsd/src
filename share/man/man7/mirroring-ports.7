@@ -1,4 +1,4 @@
-.\" $OpenBSD: mirroring-ports.7,v 1.10 2003/06/06 13:44:30 jmc Exp $
+.\" $OpenBSD: mirroring-ports.7,v 1.11 2003/07/31 10:53:50 espie Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -43,12 +43,17 @@ This target builds
 which can be used on almost any Unix-like machine to mirror
 .Ox
 distfiles.
+The variable
+.Ev RECURSIVE_FETCH_LIST
+can be set to
+.Sq Yes
+if port dependencies  should also be recorded.
 .Pp
 A sample Makefile entry is formatted like this:
 .Bd -literal
 all:: audio/tracker/tracker-5.3
-.PHONY: audio/tracker/tracker-5.3
-audio/tracker/tracker-5.3::  tracker-5.3.tgz
+\&.PHONY: audio/tracker/tracker-5.3
+audio/tracker/tracker-5.3:  tracker-5.3.tgz
 
 tracker-5.3.tgz: $F
         @MAINTAINER="espie@openbsd.org" \\
