@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsh.c,v 1.35 2004/01/17 20:57:15 millert Exp $	*/
+/*	$OpenBSD: rsh.c,v 1.36 2004/01/17 21:42:48 millert Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1990 The Regents of the University of California.
@@ -37,7 +37,7 @@ static const char copyright[] =
 
 #ifndef lint
 /*static const char sccsid[] = "from: @(#)rsh.c	5.24 (Berkeley) 7/1/91";*/
-static const char rcsid[] = "$OpenBSD: rsh.c,v 1.35 2004/01/17 20:57:15 millert Exp $";
+static const char rcsid[] = "$OpenBSD: rsh.c,v 1.36 2004/01/17 21:42:48 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -124,19 +124,14 @@ main(int argc, char *argv[])
 	if (!host && !(host = argv[optind++]))
 		usage();
 
-	/* if no command, login to remote host via rlogin or telnet. */
+	/* if no command, login to remote host via ssh. */
 	if (!argv[optind]) {
 		seteuid(getuid());
 		setuid(getuid());
 		if (asrsh)
-			*argv = "rlogin";
-		execv(_PATH_RLOGIN, argv);
-		if (errno == ENOENT) {
-			if (asrsh)
-				*argv = "telnet";
-			execv(_PATH_TELNET, argv);
-		}
-		errx(1, "can't exec %s", _PATH_TELNET);
+			*argv = "ssh";
+		execv(_PATH_SSH, argv);
+		errx(1, "can't exec %s", _PATH_SSH);
 	}
 
 	argc -= optind;
