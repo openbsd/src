@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahc_eisa.c,v 1.16 2003/12/24 23:41:39 krw Exp $	*/
+/*	$OpenBSD: ahc_eisa.c,v 1.17 2004/08/01 01:36:23 krw Exp $	*/
 /*	$NetBSD: ahc_eisa.c,v 1.10 1996/10/21 22:30:58 thorpej Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: ahc_eisa.c,v 1.16 2003/12/24 23:41:39 krw Exp $
+ *	$Id: ahc_eisa.c,v 1.17 2004/08/01 01:36:23 krw Exp $
  */
 
 #include "eisa.h"
@@ -182,7 +182,7 @@ void *aux;
 	ahc->bugs |= AHC_TMODE_WIDEODD_BUG;
 	ahc->flags |= AHC_PAGESCBS;
 	
-	if (ahc_reset(ahc) != 0)
+	if (ahc_reset(ahc, /*reinit*/FALSE) != 0)
 		return;
 	
 	/* See if we are edge triggered */

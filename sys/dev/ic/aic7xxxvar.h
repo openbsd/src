@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxxvar.h,v 1.19 2004/04/12 22:12:32 jmc Exp $	*/
+/*	$OpenBSD: aic7xxxvar.h,v 1.20 2004/08/01 01:36:23 krw Exp $	*/
 /*
  * Core definitions and data structures shareable across OS platforms.
  *
@@ -38,9 +38,9 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aic7xxxvar.h,v 1.19 2004/04/12 22:12:32 jmc Exp $
+ * $Id: aic7xxxvar.h,v 1.20 2004/08/01 01:36:23 krw Exp $
  *
- * $FreeBSD: /repoman/r/ncvs/src/sys/dev/aic7xxx/aic7xxx.h,v 1.44 2003/01/20 20:44:55 gibbs Exp $
+ * $FreeBSD: src/sys/dev/aic7xxx/aic7xxx.h,v 1.50 2003/12/17 00:02:09 gibbs Exp $
  */
 /*
  * Ported from FreeBSD by Pascal Renauld, Network Storage Solutions, Inc. - April 2003
@@ -55,29 +55,6 @@
 #include <dev/microcode/aic7xxx/aic7xxx_reg.h>
 
 #include <dev/ic/aic7xxx_cam.h>
-
-#define	AIC_OP_OR	0x0
-#define	AIC_OP_AND	0x1
-#define AIC_OP_XOR	0x2
-#define	AIC_OP_ADD	0x3
-#define	AIC_OP_ADC	0x4
-#define	AIC_OP_ROL	0x5
-#define	AIC_OP_BMOV	0x6
-
-#define	AIC_OP_JMP	0x8
-#define AIC_OP_JC	0x9
-#define AIC_OP_JNC	0xa
-#define AIC_OP_CALL	0xb
-#define	AIC_OP_JNE	0xc
-#define	AIC_OP_JNZ	0xd
-#define	AIC_OP_JE	0xe
-#define	AIC_OP_JZ	0xf
-
-/* Pseudo Ops */
-#define	AIC_OP_SHL	0x10
-#define	AIC_OP_SHR	0x20
-#define	AIC_OP_ROR	0x30
-
 /************************* Forward Declarations *******************************/
 struct ahc_platform_data;
 struct scb_platform_data;
@@ -123,7 +100,7 @@ struct seeprom_descriptor;
 #define	SCB_GET_CHANNEL(ahc, scb) \
 	SCSIID_CHANNEL(ahc, (scb)->hscb->scsiid)
 #define	SCB_GET_LUN(scb) \
-	((scb)->hscb->lun)
+	((scb)->hscb->lun & LID)
 #define SCB_GET_TARGET_OFFSET(ahc, scb)	\
 	(SCB_GET_TARGET(ahc, scb))
 #define SCB_GET_TARGET_MASK(ahc, scb) \
@@ -274,7 +251,7 @@ typedef enum {
 	 */
 	AHC_AIC7850_FE	= AHC_SPIOCAP|AHC_AUTOPAUSE|AHC_TARGETMODE|AHC_ULTRA,
 	AHC_AIC7860_FE	= AHC_AIC7850_FE,
-	AHC_AIC7870_FE	= AHC_TARGETMODE,
+	AHC_AIC7870_FE	= AHC_TARGETMODE|AHC_AUTOPAUSE,
 	AHC_AIC7880_FE	= AHC_AIC7870_FE|AHC_ULTRA,
 	/*
 	 * Although we have space for both the initiator and
@@ -396,7 +373,9 @@ typedef enum {
 	AHC_LSCBS_ENABLED     = 0x2000000, /* 64Byte SCBs enabled */
 	AHC_SCB_CONFIG_USED   = 0x4000000, /* No SEEPROM but SCB2 had info. */
 	AHC_NO_BIOS_INIT      = 0x8000000, /* No BIOS left over settings. */
-	AHC_DISABLE_PCI_PERR  = 0x10000000
+	AHC_DISABLE_PCI_PERR  = 0x10000000,
+	AHC_HAS_TERM_LOGIC    = 0x20000000,
+	AHC_SHUTDOWN_RECOVERY = 0x40000000 /* Terminate recovery thread. */
 } ahc_flag;
 
 /************************* Hardware  SCB Definition ***************************/
@@ -570,8 +549,7 @@ struct ahc_pci_busdata {
  * The current state of this SCB.
  */
 typedef enum {
-	SCB_FREE		= 0x0000,
-	SCB_REQUEUE		= 0x0001,
+	SCB_FLAG_NONE		= 0x0000,
 	SCB_OTHERTCL_TIMEOUT	= 0x0002,/*
 					  * Another device was active
 					  * during the first timeout for
@@ -607,7 +585,10 @@ typedef enum {
 					  * don't want to upset the user.  This
 					  * flag is typically used during DV.
 					  */
-	SCB_FREEZE_QUEUE	= 0x8000
+	SCB_TIMEDOUT		= 0x8000 /*
+					  * SCB has timed out and is on the
+					  * timedout list.
+					  */
 } scb_flag;
 
 struct scb {
@@ -742,7 +723,7 @@ struct ahc_tmode_lstate;
 
 #define AHC_WIDTH_UNKNOWN	0xFF
 #define AHC_PERIOD_UNKNOWN	0xFF
-#define AHC_OFFSET_UNKNOWN	0x0
+#define AHC_OFFSET_UNKNOWN	0xFF
 #define AHC_PPR_OPTS_UNKNOWN	0xFF
 
 /*
@@ -928,31 +909,37 @@ typedef enum {
 /*********************** Software Configuration Structure *********************/
 TAILQ_HEAD(scb_tailq, scb);
 
-struct ahc_suspend_channel_state {
-	uint8_t	scsiseq;
-	uint8_t	sxfrctl0;
-	uint8_t	sxfrctl1;
-	uint8_t	simode0;
-	uint8_t	simode1;
-	uint8_t	seltimer;
-	uint8_t	seqctl;
+struct ahc_aic7770_softc {
+	/*
+	 * Saved register state used for chip_init().
+	 */
+	uint8_t busspd;
+	uint8_t bustime;
 };
 
-struct ahc_suspend_state {
-	struct	ahc_suspend_channel_state channel[2];
-	uint8_t	optionmode;
-	uint8_t	dscommand0;
-	uint8_t	dspcistatus;
-	/* hsmailbox */
-	uint8_t	crccontrol1;
-	uint8_t	scbbaddr;
-	/* Host and sequencer SCB counts */
-	uint8_t	dff_thrsh;
-	uint8_t	*scratch_ram;
-	uint8_t	*btt;
+struct ahc_pci_softc {
+	/*
+	 * Saved register state used for chip_init().
+	 */
+	uint32_t  devconfig;
+	uint16_t  targcrccnt;
+	uint8_t   command;
+	uint8_t   csize_lattime;
+	uint8_t   optionmode;
+	uint8_t   crccontrol1;
+	uint8_t   dscommand0;
+	uint8_t   dspcistatus;
+	uint8_t   scbbaddr;
+	uint8_t   dff_thrsh;
+};
+
+union ahc_bus_softc {
+	struct ahc_aic7770_softc aic7770_softc;
+	struct ahc_pci_softc pci_softc;
 };
 
 typedef void (*ahc_bus_intr_t)(struct ahc_softc *);
+typedef int (*ahc_bus_chip_init_t)(struct ahc_softc *);
 typedef void ahc_callback_t (void *);
 
 struct ahc_softc {
@@ -997,6 +984,11 @@ struct ahc_softc {
 	struct scb_tailq	  untagged_queues[AHC_NUM_TARGETS];
 
 	/*
+	 * Bus attachment specific data.
+	 */
+	union ahc_bus_softc	  bus_softc;
+
+	/*
 	 * Platform specific data.
 	 */
 	struct ahc_platform_data *platform_data;
@@ -1010,6 +1002,12 @@ struct ahc_softc {
 	 * Bus specific device information.
 	 */
 	ahc_bus_intr_t		  bus_intr;
+
+	/*
+	 * Bus specific initialization required
+	 * after a chip reset.
+	 */
+	ahc_bus_chip_init_t	  bus_chip_init;
 
 	/*
 	 * Target mode related state kept on a per enabled lun basis.
@@ -1061,6 +1059,7 @@ struct ahc_softc {
 
 	/* Channel Names ('A', 'B', etc.) */
 	char			  channel;
+	char			  channel_b;
 
 	/* Initiator Bus ID */
 	uint8_t			  our_id;
@@ -1076,6 +1075,11 @@ struct ahc_softc {
 	 */
 	struct target_cmd	 *targetcmds;
 	uint8_t			  tqinfifonext;
+
+	/*
+	 * Cached copy of the sequencer control register.
+	 */
+	uint8_t			  seqctl;
 
 	/*
 	 * Incoming and outgoing message handling.
@@ -1111,9 +1115,6 @@ struct ahc_softc {
 	 */
 	bus_addr_t		  dma_bug_buf;
 
-	/* Information saved through suspend/resume cycles */
-	struct ahc_suspend_state  suspend_state;
-
 	/* Number of enabled target mode device on this card */
 	u_int			  enabled_luns;
 
@@ -1123,7 +1124,16 @@ struct ahc_softc {
 	/* PCI cacheline size. */
 	u_int			  pci_cachesize;
 
-	u_int			  stack_size;
+	/*
+	 * Count of parity errors we have seen as a target.
+	 * We auto-disable parity error checking after seeing
+	 * AHC_PCI_TARGET_PERR_THRESH number of errors.
+	 */
+	u_int			  pci_target_perr_count;
+#define		AHC_PCI_TARGET_PERR_THRESH	10
+
+	/* Maximum number of sequencer instructions supported. */
+	u_int			  instruction_ram_size;
 
 	/* Per-Unit descriptive information */
 	char			 *name;
@@ -1172,17 +1182,17 @@ struct ahc_pci_identity {
 	uint64_t		 id_mask;
 	ahc_device_setup_t	*setup;
 };
-extern struct ahc_pci_identity ahc_pci_ident_table [];
+extern struct ahc_pci_identity ahc_pci_ident_table[];
 extern const u_int ahc_num_pci_devs;
 
 /***************************** VL/EISA Declarations ***************************/
 struct aic7770_identity {
 	uint32_t		 full_id;
 	uint32_t		 id_mask;
-	char			*name;
+	const char		*name;
 	ahc_device_setup_t	*setup;
 };
-extern struct aic7770_identity aic7770_ident_table [];
+extern struct aic7770_identity aic7770_ident_table[];
 extern const int ahc_num_aic7770_devs;
 
 #define AHC_EISA_SLOT_OFFSET	0xc00
@@ -1207,40 +1217,45 @@ int			 aic7770_config(struct ahc_softc *,
 
 /************************** SCB and SCB queue management **********************/
 int		ahc_probe_scbs(struct ahc_softc *);
-void		ahc_run_untagged_queues(struct ahc_softc *);
-void		ahc_run_untagged_queue(struct ahc_softc *, struct scb_tailq *);
-void		ahc_qinfifo_requeue_tail(struct ahc_softc *, struct scb *);
-int		ahc_match_scb(struct ahc_softc *, struct scb *,
-		    int, char, int, u_int, role_t);
+void		ahc_run_untagged_queues(struct ahc_softc *ahc);
+void		ahc_run_untagged_queue(struct ahc_softc *ahc,
+				       struct scb_tailq *queue);
+void		ahc_qinfifo_requeue_tail(struct ahc_softc *ahc,
+					 struct scb *scb);
+int		ahc_match_scb(struct ahc_softc *ahc, struct scb *scb,
+			      int target, char channel, int lun,
+			      u_int tag, role_t role);
 
 /****************************** Initialization ********************************/
 int			 ahc_softc_init(struct ahc_softc *);
 void			 ahc_controller_info(struct ahc_softc *, char *, size_t);
-int			 ahc_init(struct ahc_softc *);
-void			 ahc_intr_enable(struct ahc_softc *, int);
-void			 ahc_pause_and_flushwork(struct ahc_softc *);
-int			 ahc_suspend(struct ahc_softc *); 
-int			 ahc_resume(struct ahc_softc *);
+int			 ahc_chip_init(struct ahc_softc *ahc);
+int			 ahc_init(struct ahc_softc *ahc);
+void			 ahc_intr_enable(struct ahc_softc *ahc, int enable);
+void			 ahc_pause_and_flushwork(struct ahc_softc *ahc);
+int			 ahc_suspend(struct ahc_softc *ahc); 
+int			 ahc_resume(struct ahc_softc *ahc);
 void			 ahc_softc_insert(struct ahc_softc *);
-struct ahc_softc	*ahc_find_softc(struct ahc_softc *);
+struct ahc_softc	*ahc_find_softc(struct ahc_softc *ahc);
 void			 ahc_set_unit(struct ahc_softc *, int);
 void			 ahc_set_name(struct ahc_softc *, char *);
-void			 ahc_alloc_scbs(struct ahc_softc *);
-void			 ahc_free(struct ahc_softc *);
-int			 ahc_reset(struct ahc_softc *);
-void			 ahc_shutdown(void *);
+void			 ahc_alloc_scbs(struct ahc_softc *ahc);
+void			 ahc_free(struct ahc_softc *ahc);
+int			 ahc_reset(struct ahc_softc *ahc, int reinit);
+void			 ahc_shutdown(void *arg);
 
 /*************************** Interrupt Services *******************************/
 void			ahc_pci_intr(struct ahc_softc *);
 void			ahc_clear_intstat(struct ahc_softc *);
 void			ahc_run_qoutfifo(struct ahc_softc *);
 #ifdef AHC_TARGET_MODE
-void			ahc_run_tqinfifo(struct ahc_softc *, int);
+void			ahc_run_tqinfifo(struct ahc_softc *ahc, int paused);
 #endif
-void			ahc_handle_brkadrint(struct ahc_softc *);
-void			ahc_handle_seqint(struct ahc_softc *, u_int);
-void			ahc_handle_scsiint(struct ahc_softc *, u_int);
-void			ahc_clear_critical_section(struct ahc_softc *);
+void			ahc_handle_brkadrint(struct ahc_softc *ahc);
+void			ahc_handle_seqint(struct ahc_softc *ahc, u_int intstat);
+void			ahc_handle_scsiint(struct ahc_softc *ahc,
+					   u_int intstat);
+void			ahc_clear_critical_section(struct ahc_softc *ahc);
 
 /***************************** Error Recovery *********************************/
 typedef enum {
@@ -1263,18 +1278,25 @@ void			ahc_restart(struct ahc_softc *);
 void			ahc_calc_residual(struct ahc_softc *, struct scb *);
 /*************************** Utility Functions ********************************/
 struct ahc_phase_table_entry*
-			ahc_lookup_phase_entry(int);
-void			ahc_compile_devinfo(struct ahc_devinfo *, u_int, u_int,
-			    u_int, char, role_t);
+			ahc_lookup_phase_entry(int phase);
+void			ahc_compile_devinfo(struct ahc_devinfo *devinfo,
+					    u_int our_id, u_int target,
+					    u_int lun, char channel,
+					    role_t role);
 /************************** Transfer Negotiation ******************************/
-struct ahc_syncrate*	ahc_find_syncrate(struct ahc_softc *, u_int *,
-			    u_int *, u_int);
-u_int			ahc_find_period(struct ahc_softc *, u_int, u_int);
-void			ahc_validate_offset(struct ahc_softc *,
-			    struct ahc_initiator_tinfo *, struct ahc_syncrate *,
-			    u_int *, int, role_t);
-void			ahc_validate_width(struct ahc_softc *,
-			    struct ahc_initiator_tinfo *, u_int *, role_t);
+struct ahc_syncrate*	ahc_find_syncrate(struct ahc_softc *ahc, u_int *period,
+					  u_int *ppr_options, u_int maxsync);
+u_int			ahc_find_period(struct ahc_softc *ahc,
+					u_int scsirate, u_int maxsync);
+void			ahc_validate_offset(struct ahc_softc *ahc,
+					    struct ahc_initiator_tinfo *tinfo,
+					    struct ahc_syncrate *syncrate,
+					    u_int *offset, int wide,
+					    role_t role);
+void			ahc_validate_width(struct ahc_softc *ahc,
+					   struct ahc_initiator_tinfo *tinfo,
+					   u_int *bus_width,
+					   role_t role);
 /*
  * Negotiation types.  These are used to qualify if we should renegotiate
  * even if our goal and current transport parameters are identical.
@@ -1293,7 +1315,8 @@ void			ahc_set_syncrate(struct ahc_softc *,
 			    struct ahc_devinfo *, struct ahc_syncrate *,
 			    u_int, u_int, u_int, u_int, int);
 void			ahc_scb_devinfo(struct ahc_softc *,
-			    struct ahc_devinfo *, struct scb *);
+					struct ahc_devinfo *, struct scb *);
+
 
 typedef enum {
 	AHC_QUEUE_NONE,
@@ -1301,8 +1324,9 @@ typedef enum {
 	AHC_QUEUE_TAGGED
 } ahc_queue_alg;
 
-void			ahc_set_tags(struct ahc_softc *, struct ahc_devinfo *,
-			    ahc_queue_alg);
+void			ahc_set_tags(struct ahc_softc *ahc,
+				     struct ahc_devinfo *devinfo,
+				     ahc_queue_alg alg);
 
 /**************************** Target Mode *************************************/
 #ifdef AHC_TARGET_MODE
@@ -1327,23 +1351,27 @@ extern uint32_t ahc_debug;
 #define AHC_SHOW_MESSAGES	0x0020
 #define	AHC_SHOW_DV		0x0040
 #define AHC_SHOW_SELTO		0x0080
-#define AHC_SHOW_CMDS		0x0100
 #define AHC_SHOW_QFULL		0x0200
 #define AHC_SHOW_QUEUE		0x0400
 #define AHC_SHOW_TQIN		0x0800
 #define AHC_SHOW_MASKED_ERRORS	0x1000
 #define AHC_DEBUG_SEQUENCER	0x2000
 #endif
-void			ahc_print_scb(struct scb *);
-void			ahc_print_devinfo(struct ahc_softc *,
-			    struct ahc_devinfo *);
-void			ahc_dump_card_state(struct ahc_softc *);
-int			ahc_print_register(ahc_reg_parse_entry_t *, u_int,
-			    const char *, u_int, u_int, u_int *, u_int);
+void			ahc_print_scb(struct scb *scb);
+void			ahc_print_devinfo(struct ahc_softc *ahc,
+					  struct ahc_devinfo *dev);
+void			ahc_dump_card_state(struct ahc_softc *ahc);
+int			ahc_print_register(ahc_reg_parse_entry_t *table,
+					   u_int num_entries,
+					   const char *name,
+					   u_int address,
+					   u_int value,
+					   u_int *cur_column,
+					   u_int wrap_point);
 /******************************* SEEPROM *************************************/
-int		ahc_acquire_seeprom(struct ahc_softc *,
-		    struct seeprom_descriptor *);
-void		ahc_release_seeprom(struct seeprom_descriptor *);
+int		ahc_acquire_seeprom(struct ahc_softc *ahc,
+				    struct seeprom_descriptor *sd);
+void		ahc_release_seeprom(struct seeprom_descriptor *sd);
 
 void		ahc_check_extport(struct ahc_softc *, u_int *);
 #endif /* _AIC7XXXVAR_H_ */

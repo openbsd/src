@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahc_pci.c,v 1.43 2004/01/05 01:09:18 krw Exp $	*/
+/*	$OpenBSD: ahc_pci.c,v 1.44 2004/08/01 01:36:24 krw Exp $	*/
 /*
  * Product specific probe and attach routines for:
  *      3940, 2940, aic7895, aic7890, aic7880,
@@ -40,7 +40,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: ahc_pci.c,v 1.43 2004/01/05 01:09:18 krw Exp $
+ * $Id: ahc_pci.c,v 1.44 2004/08/01 01:36:24 krw Exp $
  *
  * //depot/aic7xxx/aic7xxx/aic7xxx_pci.c#57 $
  *
@@ -639,6 +639,7 @@ static int ahc_ext_scbram_present(struct ahc_softc *ahc);
 static void ahc_scbram_config(struct ahc_softc *ahc, int enable,
 				  int pcheck, int fast, int large);
 static void ahc_probe_ext_scbram(struct ahc_softc *ahc);
+static int  ahc_pci_chip_init(struct ahc_softc *ahc);
 
 int ahc_pci_probe(struct device *, void *, void *);
 void ahc_pci_attach(struct device *, struct device *, void *);
@@ -723,6 +724,17 @@ ahc_pci_attach(parent, self, aux)
 	pci_intr_handle_t  ih;
 	const char        *intrstr;
 	struct ahc_pci_busdata *bd;
+	int i;
+
+	/*
+	 * Instead of ahc_alloc() as in FreeBSD, do the few relevant
+	 * initializations manually.
+	 */
+	LIST_INIT(&ahc->pending_scbs);
+	ahc->channel = 'A';
+	ahc->seqctl = FASTMODE;
+	for (i = 0; i < AHC_NUM_TARGETS; i++)
+		TAILQ_INIT(&ahc->untagged_queues[i]);
 
 	ahc->dev_softc = pa;
 
@@ -849,6 +861,7 @@ ahc_pci_attach(parent, self, aux)
 		goto error_out;
 
 	ahc->bus_intr = ahc_pci_intr;
+	ahc->bus_chip_init = ahc_pci_chip_init;
 
 	/* Remember how the card was setup in case there is no SEEPROM */
 	if ((ahc_inb(ahc, HCNTRL) & POWRDN) == 0) {
@@ -865,7 +878,7 @@ ahc_pci_attach(parent, self, aux)
 		scsiseq = 0;
 	}
 
-	error = ahc_reset(ahc);
+	error = ahc_reset(ahc, /*reinit*/FALSE);
 	if (error != 0)
 		goto error_out;
 
@@ -1009,6 +1022,36 @@ ahc_pci_attach(parent, self, aux)
 	if ((sxfrctl1 & STPWEN) != 0)
 		ahc->flags |= AHC_TERM_ENB_A;
 
+	/*
+	 * Save chip register configuration data for chip resets
+	 * that occur during runtime and resume events.
+	 */
+	ahc->bus_softc.pci_softc.devconfig =
+	    pci_conf_read(pa->pa_pc, pa->pa_tag, DEVCONFIG);
+	ahc->bus_softc.pci_softc.command =
+	    pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
+	ahc->bus_softc.pci_softc.csize_lattime =
+	    pci_conf_read(pa->pa_pc, pa->pa_tag, CSIZE_LATTIME);
+	ahc->bus_softc.pci_softc.dscommand0 = ahc_inb(ahc, DSCOMMAND0);
+	ahc->bus_softc.pci_softc.dspcistatus = ahc_inb(ahc, DSPCISTATUS);
+	if ((ahc->features & AHC_DT) != 0) {
+		u_int sfunct;
+
+		sfunct = ahc_inb(ahc, SFUNCT) & ~ALT_MODE;
+		ahc_outb(ahc, SFUNCT, sfunct | ALT_MODE);
+		ahc->bus_softc.pci_softc.optionmode = ahc_inb(ahc, OPTIONMODE);
+		ahc->bus_softc.pci_softc.targcrccnt = ahc_inw(ahc, TARGCRCCNT);
+		ahc_outb(ahc, SFUNCT, sfunct);
+		ahc->bus_softc.pci_softc.crccontrol1 =
+		    ahc_inb(ahc, CRCCONTROL1);
+	}
+	if ((ahc->features & AHC_MULTI_FUNC) != 0)
+		ahc->bus_softc.pci_softc.scbbaddr = ahc_inb(ahc, SCBBADDR);
+
+	if ((ahc->features & AHC_ULTRA2) != 0)
+		ahc->bus_softc.pci_softc.dff_thrsh = ahc_inb(ahc, DFF_THRSH);
+
+	/* Core initialization */
 	if (ahc_init(ahc))
 		goto error_out;
 
@@ -1371,6 +1414,31 @@ ahc_pci_intr(struct ahc_softc *ahc)
 }
 
 static int
+ahc_pci_chip_init(struct ahc_softc *ahc)
+{
+	ahc_outb(ahc, DSCOMMAND0, ahc->bus_softc.pci_softc.dscommand0);
+	ahc_outb(ahc, DSPCISTATUS, ahc->bus_softc.pci_softc.dspcistatus);
+	if ((ahc->features & AHC_DT) != 0) {
+		u_int sfunct;
+
+		sfunct = ahc_inb(ahc, SFUNCT) & ~ALT_MODE;
+		ahc_outb(ahc, SFUNCT, sfunct | ALT_MODE);
+		ahc_outb(ahc, OPTIONMODE, ahc->bus_softc.pci_softc.optionmode);
+		ahc_outw(ahc, TARGCRCCNT, ahc->bus_softc.pci_softc.targcrccnt);
+		ahc_outb(ahc, SFUNCT, sfunct);
+		ahc_outb(ahc, CRCCONTROL1,
+			 ahc->bus_softc.pci_softc.crccontrol1);
+	}
+	if ((ahc->features & AHC_MULTI_FUNC) != 0)
+		ahc_outb(ahc, SCBBADDR, ahc->bus_softc.pci_softc.scbbaddr);
+
+	if ((ahc->features & AHC_ULTRA2) != 0)
+		ahc_outb(ahc, DFF_THRSH, ahc->bus_softc.pci_softc.dff_thrsh);
+
+	return (ahc_chip_init(ahc));
+}
+
+static int
 ahc_aic785X_setup(struct ahc_softc *ahc)
 {
 	uint8_t rev;
@@ -1382,6 +1450,7 @@ ahc_aic785X_setup(struct ahc_softc *ahc)
 	rev = PCI_REVISION(ahc->bd->class);
 	if (rev >= 1)
 		ahc->bugs |= AHC_PCI_2_1_RETRY_BUG;
+	ahc->instruction_ram_size = 512;
 	return (0);
 }
 
@@ -1397,6 +1466,7 @@ ahc_aic7860_setup(struct ahc_softc *ahc)
 	rev = PCI_REVISION(ahc->bd->class);
 	if (rev >= 1)
 		ahc->bugs |= AHC_PCI_2_1_RETRY_BUG;
+	ahc->instruction_ram_size = 512;
 	return (0);
 }
 
@@ -1420,6 +1490,7 @@ ahc_aic7870_setup(struct ahc_softc *ahc)
 	ahc->chip = AHC_AIC7870;
 	ahc->features = AHC_AIC7870_FE;
 	ahc->bugs |= AHC_TMODE_WIDEODD_BUG|AHC_CACHETHEN_BUG|AHC_PCI_MWI_BUG;
+	ahc->instruction_ram_size = 512;
 	return (0);
 }
 
@@ -1471,6 +1542,7 @@ ahc_aic7880_setup(struct ahc_softc *ahc)
 	} else {
 		ahc->bugs |= AHC_CACHETHEN_BUG|AHC_PCI_MWI_BUG;
 	}
+	ahc->instruction_ram_size = 512;
 	return (0);
 }
 
@@ -1516,6 +1588,7 @@ ahc_aic7890_setup(struct ahc_softc *ahc)
 	rev = PCI_REVISION(ahc->bd->class);
 	if (rev == 0)
 		ahc->bugs |= AHC_AUTOFLUSH_BUG|AHC_CACHETHEN_BUG;
+	ahc->instruction_ram_size = 768;
 	return (0);
 }
 
@@ -1528,6 +1601,7 @@ ahc_aic7892_setup(struct ahc_softc *ahc)
 	ahc->features = AHC_AIC7892_FE;
 	ahc->flags |= AHC_NEWEEPROM_FMT;
 	ahc->bugs |= AHC_SCBCHAN_UPLOAD_BUG;
+	ahc->instruction_ram_size = 1024;
 	return (0);
 }
 
@@ -1581,6 +1655,7 @@ ahc_aic7895_setup(struct ahc_softc *ahc)
 	pci_conf_write(ahc->bd->pc, ahc->bd->tag, DEVCONFIG, devconfig);
 #endif
 	ahc->flags |= AHC_NEWEEPROM_FMT;
+	ahc->instruction_ram_size = 512;
 	return (0);
 }
 
@@ -1592,6 +1667,7 @@ ahc_aic7896_setup(struct ahc_softc *ahc)
 	ahc->features = AHC_AIC7896_FE;
 	ahc->flags |= AHC_NEWEEPROM_FMT;
 	ahc->bugs |= AHC_CACHETHEN_DIS_BUG;
+	ahc->instruction_ram_size = 768;
 	return (0);
 }
 
@@ -1603,6 +1679,7 @@ ahc_aic7899_setup(struct ahc_softc *ahc)
 	ahc->features = AHC_AIC7899_FE;
 	ahc->flags |= AHC_NEWEEPROM_FMT;
 	ahc->bugs |= AHC_SCBCHAN_UPLOAD_BUG;
+	ahc->instruction_ram_size = 1024;
 	return (0);
 }
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: aic7xxx.seq,v 1.16 2004/02/08 00:38:09 krw Exp $ */
+/* $OpenBSD: aic7xxx.seq,v 1.17 2004/08/01 01:36:23 krw Exp $ */
 /*
  * Adaptec 274x/284x/294x device driver firmware for Linux and FreeBSD.
  *
@@ -38,10 +38,10 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $FreeBSD: /repoman/r/ncvs/src/sys/dev/aic7xxx/aic7xxx.seq,v 1.123 2003/01/20 20:44:55 gibbs Exp $
+ * $FreeBSD: src/sys/dev/aic7xxx/aic7xxx.seq,v 1.126 2003/12/17 00:02:09 gibbs Exp $
  */
 
-VERSION = "$NetBSD: aic7xxx.seq,v 1.15 2003/05/03 18:11:31 wiz Exp $"
+VERSION = "$Id: aic7xxx.seq,v 1.17 2004/08/01 01:36:23 krw Exp $"
 PATCH_ARG_LIST = "struct ahc_softc *ahc"
 PREFIX = "ahc_"
 
@@ -438,7 +438,7 @@ select_out:
 	mov	SCBPTR, WAITING_SCBH;
 	mov	WAITING_SCBH,SCB_NEXT;
 	mov	SAVED_SCSIID, SCB_SCSIID;
-	mov	SAVED_LUN, SCB_LUN;
+	and	SAVED_LUN, LID, SCB_LUN;
 	call	set_transfer_settings;
 	if ((ahc->flags & AHC_TARGETROLE) != 0) {
 		test	SSTAT0, TARGET	jz initiator_select;
@@ -462,7 +462,7 @@ select_out:
 		/*
 		 * Start out with a simple identify message.
 		 */
-		or	SCB_LUN, MSG_IDENTIFYFLAG call target_outb;
+		or	SAVED_LUN, MSG_IDENTIFYFLAG call target_outb;
 
 		/*
 		 * If we are the result of a tagged command, send
@@ -770,16 +770,12 @@ idle_sg_avail:
 		/* Does the hardware have space for another SG entry? */
 		test	DFSTATUS, PRELOAD_AVAIL jz return;
 		bmov 	HADDR, CCSGRAM, 7;
-		test	HCNT[0], 0x1 jz . + 2;
-		xor	DATA_COUNT_ODD, 0x1;
 		bmov	SCB_RESIDUAL_DATACNT[3], CCSGRAM, 1;
 		if ((ahc->flags & AHC_39BIT_ADDRESSING) != 0) {
 			mov	SCB_RESIDUAL_DATACNT[3] call set_hhaddr;
 		}
 		call	sg_advance;
 		mov	SINDEX, SCB_RESIDUAL_SGPTR[0];
-		test	DATA_COUNT_ODD, 0x1 jz . + 2;
-		or	SINDEX, ODD_SEG;
 		test	SCB_RESIDUAL_DATACNT[3], SG_LAST_SEG jz . + 2;
 		or	SINDEX, LAST_SEG;
 		mov	SG_CACHE_PRE, SINDEX;
@@ -877,7 +873,6 @@ data_phase_initialize:
 		call	calc_mwi_residual;
 	}
 	and	SCB_RESIDUAL_SGPTR[0], ~SG_FULL_RESID;
-	and	DATA_COUNT_ODD, 0x1, HCNT[0];
 
 	if ((ahc->features & AHC_ULTRA2) == 0) {
 		if ((ahc->features & AHC_CMD_CHAN) != 0) {
@@ -912,8 +907,6 @@ data_phase_inbounds:
 		mov	SINDEX, SCB_RESIDUAL_SGPTR[0];
 		test	SCB_RESIDUAL_DATACNT[3], SG_LAST_SEG jz . + 2;
 		or	SINDEX, LAST_SEG;
-		test	DATA_COUNT_ODD, 0x1 jz . + 2;
-		or	SINDEX, ODD_SEG;
 		mov	SG_CACHE_PRE, SINDEX;
 		mov	DFCNTRL, DMAPARAMS;
 ultra2_dma_loop:
@@ -1008,10 +1001,8 @@ sgptr_fixup:
 		adc	SCB_RESIDUAL_SGPTR[3], -1;
 sgptr_fixup_done:
 		and	SCB_RESIDUAL_SGPTR[0], SG_ADDR_MASK, SG_CACHE_SHADOW;
-		clr	DATA_COUNT_ODD;
-		test	SG_CACHE_SHADOW, ODD_SEG jz . + 2;
-		or	DATA_COUNT_ODD, 0x1;
-		clr	SCB_RESIDUAL_DATACNT[3]; /* We are not the last seg */
+		/* We are not the last seg */
+		and	SCB_RESIDUAL_DATACNT[3], ~SG_LAST_SEG;
 residuals_correct:
 		/*
 		 * Go ahead and shut down the DMA engine now.
@@ -1055,11 +1046,19 @@ ultra2_fifoflush:
 			 * LAST_SEG_DONE to come true on a completed transfer
 			 * and then test to see if the data FIFO is non-empty.
 			 */
-			test	SCB_RESIDUAL_SGPTR[0], SG_LIST_NULL jz . + 4;
+			test	SCB_RESIDUAL_SGPTR[0], SG_LIST_NULL
+				jz ultra2_wait_fifoemp;
 			test	SG_CACHE_SHADOW, LAST_SEG_DONE jz .;
+			/*
+			 * FIFOEMP can lag LAST_SEG_DONE.  Wait a few
+			 * clocks before calling this an overrun.
+			 */
+			test	DFSTATUS, FIFOEMP jnz ultra2_fifoempty;
+			test	DFSTATUS, FIFOEMP jnz ultra2_fifoempty;
 			test	DFSTATUS, FIFOEMP jnz ultra2_fifoempty;
 			/* Overrun */
 			jmp	data_phase_loop;
+ultra2_wait_fifoemp:
 			test	DFSTATUS, FIFOEMP jz .;
 		}
 ultra2_fifoempty:
@@ -1248,9 +1247,6 @@ sg_load_done:
 		} else {
 			call	set_stcnt_from_hcnt;
 		}
-		/* Track odd'ness */
-		test	HCNT[0], 0x1 jz . + 2;
-		xor	DATA_COUNT_ODD, 0x1;
 
 		if ((ahc->flags & AHC_TARGETROLE) != 0) {
 			test	SSTAT0, TARGET jnz data_phase_loop;
@@ -1352,7 +1348,7 @@ residual_update_done:
 		 */
 		test	DFCNTRL, DIRECTION jz target_ITloop;
 		test	SSTAT1, REQINIT	jnz .;
-		test	DATA_COUNT_ODD, 0x1 jz target_ITloop;
+		test	SCB_LUN, SCB_XFERLEN_ODD jz target_ITloop;
 		test	SCSIRATE, WIDEXFER jz target_ITloop;
 		/*
 		 * Issue an Ignore Wide Residue Message.
@@ -1512,7 +1508,7 @@ p_mesgout:
 	cmp	SINDEX, MSG_IDENTIFYFLAG jne p_mesgout_from_host;
 	test	SCB_CONTROL,MK_MESSAGE	jnz host_message_loop;
 p_mesgout_identify:
-	or	SINDEX, MSG_IDENTIFYFLAG|DISCENB, SCB_LUN;
+	or	SINDEX, MSG_IDENTIFYFLAG|DISCENB, SAVED_LUN;
 	test	SCB_CONTROL, DISCENB jnz . + 2;
 	and	SINDEX, ~DISCENB;
 /*
@@ -1589,7 +1585,7 @@ if ((ahc->features & AHC_WIDE) != 0) {
 	mvi	ARG_1	call inb_next;
 	cmp	ARG_1, 0x01 jne mesgin_reject;
 	test	SCB_RESIDUAL_SGPTR[0], SG_LIST_NULL jz . + 2;
-	test	DATA_COUNT_ODD, 0x1	jz mesgin_done;
+	test	SCB_LUN, SCB_XFERLEN_ODD jnz mesgin_done;
 	mvi	IGN_WIDE_RES call set_seqint;
 	jmp	mesgin_done;
 }
@@ -1718,7 +1714,7 @@ mesgin_disconnect:
 	}
 	test	SCB_CONTROL, TAG_ENB jnz await_busfree;
 	mov	ARG_1, SCB_TAG;
-	mov	SAVED_LUN, SCB_LUN;
+	and	SAVED_LUN, LID, SCB_LUN;
 	mov	SCB_SCSIID	call set_busy_target;
 	jmp	await_busfree;
 
@@ -1861,7 +1857,7 @@ mesgin_identify:
 		 * at a time.  So, if the lun doesn't match, look
 		 * for a tag message.
 		 */
-		mov	A, SCB_LUN;
+		and	A, LID, SCB_LUN;
 		cmp	SAVED_LUN, A	je setup_SCB_id_lun_okay;
 		if ((ahc->flags & AHC_PAGESCBS) != 0) {
 			/*
@@ -1919,7 +1915,7 @@ setup_SCB:
 		or	SEQ_FLAGS, 0x8;
 	}
 setup_SCB_id_okay:
-	mov	A, SCB_LUN;
+	and	A, LID, SCB_LUN;
 	cmp	SAVED_LUN, A	jne not_found_cleanup_scb;
 setup_SCB_id_lun_okay:
 	if ((ahc->flags & AHC_SEQUENCER_DEBUG) != 0) {

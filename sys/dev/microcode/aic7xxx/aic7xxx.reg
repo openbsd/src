@@ -1,4 +1,4 @@
-/* $OpenBSD: aic7xxx.reg,v 1.9 2004/02/08 00:38:09 krw Exp $ */
+/* $OpenBSD: aic7xxx.reg,v 1.10 2004/08/01 01:36:23 krw Exp $ */
 /*
  * Aic7xxx register and scratch ram definitions.
  *
@@ -38,9 +38,9 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $FreeBSD: /repoman/r/ncvs/src/sys/dev/aic7xxx/aic7xxx.reg,v 1.43 2003/01/20 20:44:55 gibbs Exp $
+ * $FreeBSD: src/sys/dev/aic7xxx/aic7xxx.reg,v 1.46 2003/12/17 00:02:09 gibbs Exp $
  */
-VERSION = "$NetBSD: aic7xxx.reg,v 1.2 2003/04/19 19:26:10 fvdl Exp $"
+VERSION = "$Id: aic7xxx.reg,v 1.10 2004/08/01 01:36:23 krw Exp $"
 
 /*
  * This file is processed by the aic7xxx_asm utility for use in assembling
@@ -1081,7 +1081,8 @@ scb {
 		mask	OID				0x0f
 	}
 	SCB_LUN {
-		mask	LID				0xff
+		field	SCB_XFERLEN_ODD			0x80
+		mask	LID				0x3f
 		size	1
 	}
 	SCB_TAG {
@@ -1240,7 +1241,6 @@ register SG_CACHE_PRE {
 	access_mode WO
 	address			0x0fc
 	mask	SG_ADDR_MASK	0xf8
-	field	ODD_SEG		0x04
 	field	LAST_SEG	0x02
 	field	LAST_SEG_DONE	0x01
 }
@@ -1249,7 +1249,6 @@ register SG_CACHE_SHADOW {
 	access_mode RO
 	address			0x0fc
 	mask	SG_ADDR_MASK	0xf8
-	field	ODD_SEG		0x04
 	field	LAST_SEG	0x02
 	field	LAST_SEG_DONE	0x01
 }
@@ -1479,14 +1478,6 @@ scratch_ram {
 		field	ENAUTOATNI	0x04
 		field	ENAUTOATNP	0x02
 	}
-
-	/*
-	 * Track whether the transfer byte count for
-	 * the current data phase is odd.
-	 */
-	DATA_COUNT_ODD {
-		size		1
-	}
 }
 
 scratch_ram {
@@ -1581,7 +1572,7 @@ const BUS_32_BIT		0x02
 const MAX_OFFSET_8BIT		0x0f
 const MAX_OFFSET_16BIT		0x08
 const MAX_OFFSET_ULTRA2		0x7f
-const MAX_OFFSET		0xff
+const MAX_OFFSET		0x7f
 const HOST_MSG			0xff
 
 /* Target mode command processing constants */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxx_inline.h,v 1.7 2003/12/24 22:45:45 krw Exp $	*/
+/*	$OpenBSD: aic7xxx_inline.h,v 1.8 2004/08/01 01:36:23 krw Exp $	*/
 /*	$NetBSD: aic7xxx_inline.h,v 1.4 2003/11/02 11:07:44 wiz Exp $	*/
 
 /*
@@ -389,7 +389,7 @@ ahc_free_scb(struct ahc_softc *ahc, struct scb *scb)
 	hscb = scb->hscb;
 	/* Clean up for the next user */
 	ahc->scb_data->scbindex[hscb->tag] = NULL;
-	scb->flags = SCB_FREE;
+	scb->flags = SCB_FLAG_NONE;
 	hscb->control = 0;
 
 	SLIST_INSERT_HEAD(&ahc->scb_data->free_scbs, scb, links.sle);
@@ -459,6 +459,14 @@ ahc_queue_scb(struct ahc_softc *ahc, struct scb *scb)
 	 || scb->hscb->next == SCB_LIST_NULL)
 		panic("Attempt to queue invalid SCB tag %x:%x\n",
 		      scb->hscb->tag, scb->hscb->next);
+
+	/*
+	 * Setup data "oddness".
+	 */
+	scb->hscb->lun &= LID;
+	if (ahc_get_transfer_length(scb) & 0x1)
+		scb->hscb->lun |= SCB_XFERLEN_ODD;
+
 	/*
 	 * Keep a history of SCBs we've downloaded in the qinfifo.
 	 */
@@ -587,7 +595,7 @@ ahc_intr(struct ahc_softc *ahc)
 		 * so just return.  This is likely just a shared
 		 * interrupt.
 		 */
-		return 0;
+		return (0);
 	}
 	/*
 	 * Instead of directly reading the interrupt status register,
@@ -604,6 +612,7 @@ ahc_intr(struct ahc_softc *ahc)
 
         if (intstat & CMDCMPLT) {
 		ahc_outb(ahc, CLRINT, CLRCMDINT);
+
 		/*
 		 * Ensure that the chip sees that we've cleared
 		 * this interrupt before we walk the output fifo.
@@ -653,7 +662,7 @@ ahc_intr(struct ahc_softc *ahc)
 	if ((intstat & SCSIINT) != 0)
 		ahc_handle_scsiint(ahc, intstat);
 
-	return 1;
+	return (1);
 }
 
 #endif  /* _AIC7XXX_INLINE_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxx_cam.h,v 1.1 2003/12/24 22:45:45 krw Exp $	*/
+/*	$OpenBSD: aic7xxx_cam.h,v 1.2 2004/08/01 01:36:23 krw Exp $	*/
 /*	$NetBSD: aic7xxx_cam.h,v 1.3 2003/04/20 11:17:20 fvdl Exp $	*/
 
 /*
@@ -89,7 +89,11 @@
 #define	scsipi_printaddr(sc_link)	sc_print_addr(sc_link)
 #define scsipi_done(xs)			scsi_done(xs)
 
-#define	callout_reset(timer, timeout, func, arg) timeout_add(timer, (timeout))
+#define	callout_reset(timer, timeout, func, arg) do {	\
+	if (!timeout_initialized((timer)))		\
+		timeout_set((timer), (func), (arg));	\
+	timeout_add((timer), (timeout));		\
+} while (0)
 
 #define xs_control	flags
 #define xs_callout	stimeout
