@@ -1,4 +1,4 @@
-/*	$OpenBSD: names.c,v 1.11 2000/06/30 16:00:16 millert Exp $	*/
+/*	$OpenBSD: names.c,v 1.12 2000/08/23 21:24:08 mickey Exp $	*/
 /*	$NetBSD: names.c,v 1.5 1996/06/08 19:48:32 christos Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)names.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: names.c,v 1.11 2000/06/30 16:00:16 millert Exp $";
+static char rcsid[] = "$OpenBSD: names.c,v 1.12 2000/08/23 21:24:08 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -492,16 +492,16 @@ cat(n1, n2)
  * Return an error if the name list won't fit.
  */
 char **
-unpack(np)
-	struct name *np;
+unpack(sm, np)
+	struct name *np, *sm;
 {
 	char **ap, **top;
-	struct name *n;
 	int t, extra, metoo, verbose;
 
-	n = np;
-	if ((t = count(n)) == 0)
+	if ((t = count(np)) == 0)
 		errx(1, "No names to unpack");
+	t += count(sm);
+
 	/*
 	 * Compute the number of extra arguments we will need.
 	 * We need at least four extra -- one for "send-mail", one for the
@@ -523,10 +523,13 @@ unpack(np)
 		*ap++ = "-m";
 	if (verbose)
 		*ap++ = "-v";
+	for (; sm != NIL; sm = sm->n_flink)
+		if ((sm->n_type & GDEL) == 0)
+			*ap++ = sm->n_name;
 	*ap++ = "--";
-	for (; n != NIL; n = n->n_flink)
-		if ((n->n_type & GDEL) == 0)
-			*ap++ = n->n_name;
+	for (; np != NIL; np = np->n_flink)
+		if ((np->n_type & GDEL) == 0)
+			*ap++ = np->n_name;
 	*ap = NULL;
 	return(top);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: send.c,v 1.11 2000/06/30 16:00:18 millert Exp $	*/
+/*	$OpenBSD: send.c,v 1.12 2000/08/23 21:24:08 mickey Exp $	*/
 /*	$NetBSD: send.c,v 1.6 1996/06/08 19:48:39 christos Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)send.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: send.c,v 1.11 2000/06/30 16:00:18 millert Exp $";
+static char rcsid[] = "$OpenBSD: send.c,v 1.12 2000/08/23 21:24:08 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -346,7 +346,7 @@ mail1(hp, printheaders)
 		fputs(". . . message lost, sorry.\n", stderr);
 		return;
 	}
-	namelist = unpack(cat(hp->h_smopts, to));
+	namelist = unpack(hp->h_smopts, to);
 	if (debug) {
 		char **t;
 

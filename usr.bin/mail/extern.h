@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.14 2000/04/26 15:47:31 millert Exp $	*/
+/*	$OpenBSD: extern.h,v 1.15 2000/08/23 21:24:08 mickey Exp $	*/
 /*	$NetBSD: extern.h,v 1.7 1997/07/09 05:22:00 mikel Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)extern.h	8.2 (Berkeley) 4/20/95
- *	$OpenBSD: extern.h,v 1.14 2000/04/26 15:47:31 millert Exp $
+ *	$OpenBSD: extern.h,v 1.15 2000/08/23 21:24:08 mickey Exp $
  */
 
 struct name;
@@ -256,7 +256,7 @@ int	 type __P((void *));
 int	 type1 __P((int *, int, int));
 int	 undeletecmd __P((void *));
 void	 unmark __P((int));
-char	**unpack __P((struct name *));
+char	**unpack __P((struct name *, struct name *));
 int	 unread __P((void *));
 void	 unregister_file __P((FILE *));
 int	 unset __P((void *));
