@@ -1,4 +1,4 @@
-/* $OpenBSD: wskbd.c,v 1.3 2000/11/15 20:00:40 aaron Exp $ */
+/* $OpenBSD: wskbd.c,v 1.4 2000/11/24 14:05:25 aaron Exp $ */
 /* $NetBSD: wskbd.c,v 1.38 2000/03/23 07:01:47 thorpej Exp $ */
 
 /*
@@ -164,6 +164,7 @@ struct wskbd_softc {
 	struct wskbd_keyrepeat_data sc_keyrepeat_data;
 
 	int	sc_repeating;		/* we've called timeout() */
+	int	sc_repkey;
 	struct timeout sc_repeat_ch;
 
 	int	sc_translating;		/* xlate to chars for emulation */
@@ -521,6 +522,11 @@ wskbd_detach(self, flags)
 #if NWSMUX > 0
 	int mux;
 
+	if (sc->sc_repeating) {
+		sc->sc_repeating = 0;
+		timeout_del(&sc->sc_repeat_ch);
+	}
+
 	mux = sc->sc_dv.dv_cfdata->wskbddevcf_mux;
 	if (mux != WSMOUSEDEVCF_MUX_DEFAULT)
 		wsmux_detach(mux, &sc->sc_dv);
@@ -570,11 +576,6 @@ wskbd_input(dev, type, value)
 	int put;
 
 #if NWSDISPLAY > 0
-	if (sc->sc_repeating) {
-		sc->sc_repeating = 0;
-		timeout_del(&sc->sc_repeat_ch);
-	}
-
 	/*
 	 * If /dev/wskbd is not connected in event mode translate and
 	 * send upstream.
@@ -1397,43 +1398,43 @@ wskbd_translate(id, type, value)
 	switch (kp->group1[0]) {
 	case KS_Shift_L:
 		update_modifier(id, type, 0, MOD_SHIFT_L);
-		break;
+		goto kbrep;
 
 	case KS_Shift_R:
 		update_modifier(id, type, 0, MOD_SHIFT_R);
-		break;
+		goto kbrep;
 
 	case KS_Shift_Lock:
 		update_modifier(id, type, 1, MOD_SHIFTLOCK);
-		break;
+		goto kbrep;
 
 	case KS_Caps_Lock:
 		update_modifier(id, type, 1, MOD_CAPSLOCK);
-		break;
+		goto kbrep;
 
 	case KS_Control_L:
 		update_modifier(id, type, 0, MOD_CONTROL_L);
-		break;
+		goto kbrep;
 
 	case KS_Control_R:
 		update_modifier(id, type, 0, MOD_CONTROL_R);
-		break;
+		goto kbrep;
 
 	case KS_Alt_L:
 		update_modifier(id, type, 0, MOD_META_L);
-		break;
+		goto kbrep;
 
 	case KS_Alt_R:
 		update_modifier(id, type, 0, MOD_META_R);
-		break;
+		goto kbrep;
 
 	case KS_Mode_switch:
 		update_modifier(id, type, 0, MOD_MODESHIFT);
-		break;
+		goto kbrep;
 
 	case KS_Num_Lock:
 		update_modifier(id, type, 1, MOD_NUMLOCK);
-		break;
+		goto kbrep;
 
 #if NWSDISPLAY > 0
 	case KS_Hold_Screen:
@@ -1441,9 +1442,22 @@ wskbd_translate(id, type, value)
 			update_modifier(id, type, 1, MOD_HOLDSCREEN);
 			wskbd_holdscreen(sc, id->t_modifiers & MOD_HOLDSCREEN);
 		}
-		break;
+		goto kbrep;
 #endif
 	}
+
+	if (sc->sc_repeating) {
+		if ((type == WSCONS_EVENT_KEY_UP && value != sc->sc_repkey) ||
+		    (type == WSCONS_EVENT_KEY_DOWN && value == sc->sc_repkey))
+			return (0);
+	}
+
+kbrep:
+	if (sc->sc_repeating) {
+		sc->sc_repeating = 0;
+		timeout_del(&sc->sc_repeat_ch);
+	}
+	sc->sc_repkey = value;
 
 	/* If this is a key release or we are in command mode, we are done */
 	if (type != WSCONS_EVENT_KEY_DOWN || iscommand) {
