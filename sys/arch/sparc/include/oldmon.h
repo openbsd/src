@@ -1,4 +1,4 @@
-/*	$OpenBSD: oldmon.h,v 1.6 2001/08/08 02:26:35 millert Exp $	*/
+/*	$OpenBSD: oldmon.h,v 1.7 2001/08/08 13:48:21 art Exp $	*/
 /*	$NetBSD: oldmon.h,v 1.11 1996/03/31 22:21:38 pk Exp $ */
 
 /*
@@ -234,7 +234,7 @@ struct om_vector {
 	long	*resetMap;		/* pgmap entry for resetaddr */
 					/* Really struct pgmapent *  */
 
-	__dead void (*exitToMon) __P((void)); /* Exit from user program */
+	void	(*exitToMon) __P((void)) __attribute__((__noreturn__));/* Exit from user program */
 	u_char	**memorybitmap;		/* V1: &{0 or &bits} */
 	void	(*setcxsegmap)		/* Set seg in any context */
 		    __P((int, caddr_t, int));
