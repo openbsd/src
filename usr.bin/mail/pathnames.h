@@ -1,4 +1,4 @@
-/*	$OpenBSD: pathnames.h,v 1.5 2001/01/16 05:36:08 millert Exp $	*/
+/*	$OpenBSD: pathnames.h,v 1.6 2001/10/04 04:23:26 pvalchev Exp $	*/
 /*	$NetBSD: pathnames.h,v 1.4 1996/06/08 19:48:34 christos Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
 /* executables */
 #define _PATH_EX	"/usr/bin/ex"
 #define _PATH_MORE	"/usr/bin/more"
-#define _PATH_LS	"/usr/bin/ls"
+#define _PATH_LS	"/bin/ls"
 #define _PATH_LOCKSPOOL	"/usr/libexec/lockspool"
 
 /* directories & files */
