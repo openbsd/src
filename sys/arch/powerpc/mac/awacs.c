@@ -80,6 +80,8 @@ struct awacs_softc {
 int awacs_match(struct device *, void *, void *);
 void awacs_attach(struct device *, struct device *, void *);
 int awacs_intr(void *);
+int awacs_tx_intr(void *);
+int awacs_rx_intr(void *);
 
 int awacs_open(void *, int);
 void awacs_close(void *);
@@ -182,6 +184,11 @@ struct audio_device awacs_device = {
 #define AWACS_RATE_7350		0x00000700
 #define AWACS_RATE_MASK		0x00000700
 
+#define AWACS_CTL_CNTRLERR 	(1 << 11)
+#define AWACS_CTL_PORTCHG 	(1 << 12)
+#define AWACS_INT_CNTRLERR 	(1 << 13)
+#define AWACS_INT_PORTCHG 	(1 << 14)
+
 /* codec control */
 #define AWACS_CODEC_ADDR0	0x00000000
 #define AWACS_CODEC_ADDR1	0x00001000
@@ -252,22 +259,22 @@ awacs_attach(parent, self, aux)
 
 	mac_intr_establish(parent, ca->ca_intr[0], IST_LEVEL, IPL_AUDIO, awacs_intr,
 		sc, "awacs");
-	mac_intr_establish(parent, ca->ca_intr[2], IST_LEVEL, IPL_AUDIO, awacs_intr,
-		sc, "awacs");
+	mac_intr_establish(parent, ca->ca_intr[2], IST_LEVEL, IPL_AUDIO, awacs_tx_intr,
+		sc, "awacs/tx");
 #if 0
 	/* do not use this for now, since both are tied to same freq
 	 * we can service both in the same interrupt, lowering
 	 * interrupt load by half
 	 */
 	mac_intr_establish(parent, ca->ca_intr[4], IST_LEVEL, IPL_AUDIO, awacs_intr,
-		sc, "awacs");
+		sc, "awacs/rx");
 #endif
 
 	printf(": irq %d,%d,%d\n",
 		ca->ca_intr[0], ca->ca_intr[2], ca->ca_intr[4]);
 
 	sc->sc_soundctl = AWACS_INPUT_SUBFRAME0 | AWACS_OUTPUT_SUBFRAME0 |
-		AWACS_RATE_44100;
+		AWACS_RATE_44100 | AWACS_INT_PORTCHG;
 	awacs_write_reg(sc, AWACS_SOUND_CTRL, sc->sc_soundctl);
 
 	sc->sc_codecctl0 = AWACS_CODEC_ADDR0 | AWACS_CODEC_EMSEL0;
@@ -300,6 +307,8 @@ awacs_attach(parent, self, aux)
 
 	/* Enable interrupts and looping mode. */
 	/* XXX ... */
+	awacs_halt_output(sc);
+	awacs_halt_input(sc);
 
 	audio_attach_mi(&awacs_hw_if, sc, &sc->sc_dev);
 }
@@ -335,6 +344,29 @@ awacs_write_codec(sc, value)
 
 int
 awacs_intr(v)
+	void *v;
+{
+	int reason;
+	struct awacs_softc *sc = v;
+	int error;
+	reason = awacs_read_reg(sc, AWACS_SOUND_CTRL);
+
+	if (reason & AWACS_CTL_CNTRLERR) {
+		/* change outputs ?? */
+		printf("should change inputs\n");
+	}
+	if (reason & AWACS_CTL_PORTCHG) {
+		error =  (awacs_read_reg(sc, AWACS_CODEC_STATUS) >> 16) && 0xf;
+		if (error != 0) {
+			printf("AWACS error 0x%x\n", error);
+		}
+
+	}
+	awacs_write_reg(sc, AWACS_SOUND_CTRL, reason); /* clear interrupt */
+	return 1;
+}
+int
+awacs_tx_intr(v)
 	void *v;
 {
 	struct awacs_softc *sc = v;
@@ -552,6 +584,7 @@ awacs_halt_output(h)
 
 	dbdma_stop(sc->sc_odma);
 	dbdma_reset(sc->sc_odma);
+	dbdma_stop(sc->sc_odma);
 	return 0;
 }
 
