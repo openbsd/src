@@ -1,4 +1,4 @@
-/*	$OpenBSD: df.c,v 1.10 1997/04/14 17:23:38 kstailey Exp $	*/
+/*	$OpenBSD: df.c,v 1.11 1997/04/14 17:34:03 kstailey Exp $	*/
 /*	$NetBSD: df.c,v 1.21.2.1 1995/11/01 00:06:11 jtc Exp $	*/
 
 /*
@@ -49,7 +49,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)df.c	8.7 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: df.c,v 1.10 1997/04/14 17:23:38 kstailey Exp $";
+static char rcsid[] = "$OpenBSD: df.c,v 1.11 1997/04/14 17:34:03 kstailey Exp $";
 #endif
 #endif /* not lint */
 
@@ -336,20 +336,22 @@ prthumanval(bytes)
 
 	unit = unit_adjust(&bytes);
 
-	if (bytes > 10)
+	if (bytes == 0)
+		(void)printf("      0   ");
+	else if (bytes > 10)
 		(void)printf(" %5.0f%c  ", bytes, " KMGTPE"[unit]);
 	else
 		(void)printf(" %5.1f%c  ", bytes, " KMGTPE"[unit]);
 }
 
 void
-prthuman(sfsp, used, availblks)
+prthuman(sfsp, used)
 	struct statfs *sfsp;
-	long used, availblks;
+	long used;
 {
 	prthumanval((double)(sfsp->f_blocks) * (double)(sfsp->f_bsize));
 	prthumanval((double)(used) * (double)(sfsp->f_bsize));
-	prthumanval((double)(availblks) * (double)(sfsp->f_bsize));
+	prthumanval((double)(sfsp->f_bavail) * (double)(sfsp->f_bsize));
 }
 
 /*
@@ -395,7 +397,7 @@ prtstat(sfsp, maxwidth)
 	used = sfsp->f_blocks - sfsp->f_bfree;
 	availblks = sfsp->f_bavail + used;
 	if (hflag)
-		prthuman(sfsp, used, availblks);
+		prthuman(sfsp, used);
 	else
 		(void)printf(" %*ld %8ld %8ld", headerlen,
 		    fsbtoblk(sfsp->f_blocks, sfsp->f_bsize, blocksize),
