@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_ulreg.h,v 1.2 1995/10/07 19:54:59 chopps Exp $	*/
+/*	$NetBSD: grf_ulreg.h,v 1.3 1995/12/31 01:22:03 chopps Exp $	*/
 
 /*
  * Copyright (c) 1995 Ignatios Souvatzis
@@ -60,8 +60,11 @@ struct gspregs {
 
 /* address macros */
 
-#define GSPSETHADRS(gsp,adrs) (gsp)->hstadrh = (adrs)>>16; (gsp)->hstadrl = (adrs)
-#define GSPGETHADRS(gsp) ((gsp)->hstadrh << 16 | (gsp)->hstadrl)
+#define GSPSETHADRS(gsp,adrs)	do {	\
+    (gsp)->hstadrh = (adrs) >> 16;	\
+    (gsp)->hstadrl = (adrs) & 0xFFFF;	\
+    } while (0)
+#define GSPGETHADRS(gsp)	((gsp)->hstadrh << 16 | (gsp)->hstadrl)
 
 /* Standard addresses in GSP memory */
 
