@@ -1,4 +1,4 @@
-/*	$OpenBSD: brconfig.c,v 1.7 2000/06/30 16:00:08 millert Exp $	*/
+/*	$OpenBSD: brconfig.c,v 1.8 2000/07/03 17:21:26 jason Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -435,6 +435,7 @@ bridge_show_all(s)
 			continue;
 		bridge_status(s, ifrp->ifr_name);
 	}
+	free(inbuf);
 	return (0);
 }
 
@@ -731,7 +732,7 @@ bridge_addrs(s, brdg, delim)
 		printb("flags", ifba->ifba_flags, IFBAFBITS);
 		printf("\n");
 	}
-
+	free(inbuf);
 	return (0);
 }
 
