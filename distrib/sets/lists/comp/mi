@@ -2817,3 +2817,8 @@
 ./usr/share/mk/bsd.sys.mk
 ./var/db/libc.tags
 ./usr/include/netinet/ip_skipjack.h
+./usr/include/dev/pci/aeonreg.h
+./usr/include/dev/pci/aeonvar.h
+./usr/include/netinet6/debug.h
+./usr/include/netinet6/debug_inet6.h
+./usr/include/netinet6/osdep.h
