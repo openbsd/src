@@ -1,4 +1,4 @@
-/*	$OpenBSD: tip.c,v 1.21 2003/09/20 18:15:32 millert Exp $	*/
+/*	$OpenBSD: tip.c,v 1.22 2003/10/15 22:33:18 deraadt Exp $	*/
 /*	$NetBSD: tip.c,v 1.13 1997/04/20 00:03:05 mellon Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static char sccsid[] = "@(#)tip.c	8.1 (Berkeley) 6/6/93";
 #endif
-static const char rcsid[] = "$OpenBSD: tip.c,v 1.21 2003/09/20 18:15:32 millert Exp $";
+static const char rcsid[] = "$OpenBSD: tip.c,v 1.22 2003/10/15 22:33:18 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -212,6 +212,7 @@ cucommon:
 	}
 
 	tcgetattr(0, &defterm);
+	gotdefterm = 1;
 	term = defterm;
 	term.c_lflag &= ~(ICANON|IEXTEN|ECHO);
 	term.c_iflag &= ~(INPCK|ICRNL);
@@ -251,6 +252,7 @@ cleanup()
 	(void)uu_unlock(uucplock);
 	if (odisc)
 		ioctl(0, TIOCSETD, (char *)&odisc);
+	unraw();
 	exit(0);
 }
 
@@ -306,7 +308,8 @@ raw()
 void
 unraw()
 {
-	tcsetattr(0, TCSADRAIN, &defterm);
+	if (gotdefterm)
+		tcsetattr(0, TCSADRAIN, &defterm);
 }
 
 static	jmp_buf promptbuf;
