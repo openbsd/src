@@ -11,7 +11,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: ssh.c,v 1.58 2000/07/16 08:27:22 markus Exp $");
+RCSID("$OpenBSD: ssh.c,v 1.59 2000/08/19 02:07:23 deraadt Exp $");
 
 #include <openssl/evp.h>
 #include <openssl/dsa.h>
@@ -243,8 +243,8 @@ main(int ac, char **av)
 		cp = strrchr(av0, '/') + 1;
 	else
 		cp = av0;
-	if (strcmp(cp, "rsh") != 0 && strcmp(cp, "ssh") != 0 &&
-	    strcmp(cp, "rlogin") != 0 && strcmp(cp, "slogin") != 0)
+	if (strcmp(cp, "rsh") && strcmp(cp, "ssh") && strcmp(cp, "rlogin") &&
+	    strcmp(cp, "slogin") && strcmp(cp, "remsh"))
 		host = cp;
 
 	for (optind = 1; optind < ac; optind++) {
