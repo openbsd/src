@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.26 1999/02/26 05:05:38 art Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.27 1999/04/22 19:37:43 art Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -373,6 +373,10 @@ sys_execve(p, v, retval)
 	/* adjust "active stack depth" for process VSZ */
 	pack.ep_ssize = len;	/* maybe should go elsewhere, but... */
 
+	/*
+	 * Prepare vmspace for remapping. Note that uvmspace_exec can replace
+	 * p_vmspace!
+	 */
 #if defined(UVM)
 	uvmspace_exec(p);
 #else
@@ -389,6 +393,7 @@ sys_execve(p, v, retval)
 	    VM_MAXUSER_ADDRESS - VM_MIN_ADDRESS);
 #endif
 
+	vm = p->p_vmspace;
 	/* Now map address space */
 	vm->vm_taddr = (char *)pack.ep_taddr;
 	vm->vm_tsize = btoc(pack.ep_tsize);
