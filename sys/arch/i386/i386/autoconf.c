@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.23 1996/12/06 15:59:20 deraadt Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.24 1996/12/15 01:34:49 deraadt Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.20 1996/05/03 19:41:56 christos Exp $	*/
 
 /*-
@@ -271,7 +271,7 @@ void
 setconf()
 {
 	register struct genericconf *gc;
-	int unit;
+	int unit, part = 0;
 #if 0
 	int swaponroot = 0;
 #endif
@@ -306,8 +306,16 @@ retry:
 			}
 #endif
 
-			unit = 0;
+			unit = -2;
 			do {
+				if (unit != -2 && *num >= 'a' &&
+				    *num <= 'a'+MAXPARTITIONS-1 &&
+				    num[1] == '\0') {
+					part = *num++ - 'a';
+					break;
+				}
+				if (unit == -2)
+					unit = 0;
 				unit = (unit * 10) + *num - '0';
 				if (*num < '0' || *num > '9')
 					unit = -1;
@@ -320,9 +328,10 @@ retry:
 			    gc->gc_driver->cd_devs[unit] == NULL) {
 				printf("%d: no such unit\n", unit);
 			} else {
-				printf("root on %s%da\n", gc->gc_name, unit);
+				printf("root on %s%d%c\n", gc->gc_name, unit,
+				    'a' + part);
 				rootdev = makedev(gc->gc_major,
-				    unit * MAXPARTITIONS);
+				    unit * MAXPARTITIONS + part);
 				goto doswap;
 			}
 		}
@@ -330,7 +339,8 @@ retry:
 		for (gc = genericconf; gc->gc_driver; gc++) {
 			for (unit=0; unit < gc->gc_driver->cd_ndevs; unit++) {
 				if (gc->gc_driver->cd_devs[unit])
-					printf("%s%d ", gc->gc_name, unit);
+					printf("%s%d[a-%c] ", gc->gc_name,
+					    unit, 'a'+MAXPARTITIONS-1);
 			}
 		}
 		printf("\n");
