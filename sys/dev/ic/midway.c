@@ -1,5 +1,5 @@
-/*	$OpenBSD: midway.c,v 1.9 1996/07/11 00:17:10 chuck Exp $	*/
-/*	(sync'd to midway.c 1.58)	*/
+/*	$OpenBSD: midway.c,v 1.10 1996/07/11 22:47:04 chuck Exp $	*/
+/*	(sync'd to midway.c 1.59)	*/
 
 /*
  *
@@ -340,7 +340,7 @@ STATIC	void en_init __P((struct en_softc *));
 STATIC	int en_ioctl __P((struct ifnet *, EN_IOCTL_CMDT, caddr_t));
 STATIC	int en_k2sz __P((int));
 STATIC	void en_loadvc __P((struct en_softc *, int));
-STATIC	void en_mfix __P((struct en_softc *, struct mbuf *));
+STATIC	int en_mfix __P((struct en_softc *, struct mbuf **, struct mbuf *));
 STATIC	struct mbuf *en_mget __P((struct en_softc *, u_int, u_int *));
 STATIC	int en_rxctl __P((struct en_softc *, struct atm_pseudoioctl *, int));
 STATIC	void en_txdma __P((struct en_softc *, int));
@@ -663,7 +663,7 @@ done_probe:
   sc->vtrash = sc->otrash = sc->mfix = sc->txmbovr = sc->dmaovr = 0;
   sc->txoutspace = sc->txdtqout = sc->launch = sc->lheader = sc->ltail = 0;
   sc->hwpull = sc->swadd = sc->rxqnotus = sc->rxqus = sc->rxoutboth = 0;
-  sc->rxdrqout = sc->ttrash = sc->rxmbufout = 0;
+  sc->rxdrqout = sc->ttrash = sc->rxmbufout = sc->mfixfail = 0;
 #endif
   sc->need_drqs = sc->need_dtqs = 0;
 
@@ -1274,9 +1274,9 @@ struct ifnet *ifp;
 {
     struct en_softc *sc = (struct en_softc *) ifp->if_softc;
     struct ifqueue *ifq = &ifp->if_snd; /* if INPUT QUEUE */
-    struct mbuf *m, *lastm;
+    struct mbuf *m, *lastm, *prev;
     struct atm_pseudohdr *ap, *new_ap;
-    int txchan, c, mlen, got, need, toadd, cellcnt;
+    int txchan, c, mlen, got, need, toadd, cellcnt, first;
     u_int32_t atm_vpi, atm_vci, atm_flags, *dat, aal;
     u_int8_t *cp;
 
@@ -1304,15 +1304,28 @@ struct ifnet *ifp;
 
       lastm = m;
       mlen = 0;
+      prev = NULL;
       while (1) {
 	if ( (mtod(lastm, u_int) % sizeof(u_int32_t)) != 0 ||
-	  ((lastm->m_len % sizeof(u_int32_t)) != 0 && lastm->m_next))
-	  en_mfix(sc, lastm);
+	  ((lastm->m_len % sizeof(u_int32_t)) != 0 && lastm->m_next)) {
+	  first = (lastm == m);
+	  if (en_mfix(sc, &lastm, prev) == 0) {	/* failed? */
+	    m_freem(m);
+	    m = NULL;
+            break;
+          }
+	  if (first)
+	    m = lastm;		/* update */
+        }
 	mlen += lastm->m_len;
 	if (lastm->m_next == NULL)
 	  break;
+        prev = lastm;
 	lastm = lastm->m_next;
       }
+
+      if (m == NULL)		/* happens only if mfix fails */
+        continue;
 
       ap = mtod(m, struct atm_pseudohdr *);
 
@@ -1447,15 +1460,18 @@ struct ifnet *ifp;
  * en_mfix: fix a stupid mbuf
  */
 
-STATIC void en_mfix(sc, m)
+STATIC int en_mfix(sc, mm, prev)
 
 struct en_softc *sc;
-struct mbuf *m;
+struct mbuf **mm, *prev;
 
 {
-  u_char *d = mtod(m, u_char *), *cp;
-  int off = ((u_int) d) % sizeof(u_int32_t);
+  struct mbuf *m, *new;
+  u_char *d, *cp;
+  int off;
   struct mbuf *nxt;
+
+  m = *mm;
 
   EN_COUNT(sc->mfix);			/* count # of calls */
 #ifdef EN_DEBUG
@@ -1463,17 +1479,42 @@ struct mbuf *m;
 	m->m_data, m->m_len);
 #endif
 
+  d = mtod(m, u_char *);
+  off = ((u_int) d) % sizeof(u_int32_t);
+
   if (off) {
-    bcopy(d, d - off, m->m_len);   /* ALIGN! (with costly data copy...) */
-    d -= off;
-    m->m_data = (caddr_t)d;
+    if ((m->m_flags & M_EXT) == 0) {
+      bcopy(d, d - off, m->m_len);   /* ALIGN! (with costly data copy...) */
+      d -= off;
+      m->m_data = (caddr_t)d;
+    } else {
+      /* can't write to an M_EXT mbuf since it may be shared */
+      MGET(new, M_DONTWAIT, MT_DATA);
+      if (!new) {
+        EN_COUNT(sc->mfixfail);
+        return(0);
+      }
+      MCLGET(new, M_DONTWAIT);
+      if ((new->m_flags & M_EXT) == 0) {
+        m_free(new);
+        EN_COUNT(sc->mfixfail);
+        return(0);
+      }
+      bcopy(d, new->m_data, m->m_len);	/* ALIGN! (with costly data copy...) */
+      new->m_len = m->m_len;
+      new->m_next = m->m_next;
+      if (prev)
+        prev->m_next = new;
+      m_free(m);
+      *mm = m = new;	/* note: 'd' now invalid */
+    }
   }
 
   off = m->m_len % sizeof(u_int32_t);
   if (off == 0)
-    return;
+    return(1);
 
-  d = d + m->m_len;
+  d = mtod(m, u_char *) + m->m_len;
   off = sizeof(u_int32_t) - off;
   
   nxt = m->m_next;
@@ -1490,10 +1531,8 @@ struct mbuf *m;
     nxt->m_len--; 
     nxt->m_data = (caddr_t)cp;
   }
-  return;
+  return(1);
 }
-
-
 
 
 /*
@@ -2590,7 +2629,8 @@ int unit, level;
 
     if (level & END_STATS) {
       printf("  en_stats:\n");
-      printf("    %d mbufs fixed by mfix (should be zero)\n", sc->mfix);
+      printf("    %d mbufs fixed by mfix (%d failures)\n", 
+						sc->mfix, sc->mfixfail);
       printf("    %d rx dma overflow interrupts\n", sc->dmaovr);
       printf("    %d times we ran out of TX space and stalled\n", 
 							sc->txoutspace);
