@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.17 2002/07/01 19:31:37 deraadt Exp $	*/
+/*	$OpenBSD: options.c,v 1.18 2002/12/23 21:07:43 mickey Exp $	*/
 
 /*
  * options.c - handles option processing for PPP.
@@ -46,7 +46,7 @@
 #if 0
 static char rcsid[] = "Id: options.c,v 1.42 1998/03/26 04:46:06 paulus Exp $";
 #else
-static char rcsid[] = "$OpenBSD: options.c,v 1.17 2002/07/01 19:31:37 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: options.c,v 1.18 2002/12/23 21:07:43 mickey Exp $";
 #endif
 #endif
 
@@ -1974,8 +1974,11 @@ setnoauth(argv)
     char **argv;
 {
     if (auth_required && privileged_option < auth_req_info.priv) {
-	option_error("cannot override auth option set by %s",
-		     auth_req_info.source);
+	if (auth_req_info.source == NULL)
+	    option_error("cannot override default auth option");
+	else
+	    option_error("cannot override auth option set by %s",
+	        auth_req_info.source);
 	return 0;
     }
     auth_required = 0;
