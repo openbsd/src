@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4280.c,v 1.21 2004/12/19 16:06:22 deraadt Exp $	*/
+/*	$OpenBSD: cs4280.c,v 1.22 2004/12/19 16:10:46 deraadt Exp $	*/
 /*	$NetBSD: cs4280.c,v 1.5 2000/06/26 04:56:23 simonb Exp $	*/
 
 /*
@@ -877,12 +877,10 @@ int
 cs4280_download_image(sc)
 	struct cs4280_softc *sc;
 {
-	int idx, err;
+	int idx, err = 0;
 	u_int32_t offset = 0;
 	static u_char *cs4280_firmware;
 	static size_t cs4280_firmwarelen;
-
-	err = 0;
 
 	if (cs4280_firmware == NULL) {
 		err = loadfirmware("cs4280", &cs4280_firmware,
