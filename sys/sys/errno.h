@@ -1,4 +1,4 @@
-/*	$OpenBSD: errno.h,v 1.9 2002/05/01 13:36:18 drahn Exp $	*/
+/*	$OpenBSD: errno.h,v 1.10 2002/07/01 07:58:53 pjanzen Exp $	*/
 /*	$NetBSD: errno.h,v 1.10 1996/01/20 01:33:53 jtc Exp $	*/
 
 /*
@@ -144,7 +144,7 @@ extern char *sys_errlist[];
 #ifndef _POSIX_SOURCE
 #define	EPROCLIM	67		/* Too many processes */
 #define	EUSERS		68		/* Too many users */
-#define	EDQUOT		69		/* Disc quota exceeded */
+#define	EDQUOT		69		/* Disk quota exceeded */
 
 /* Network File System */
 #define	ESTALE		70		/* Stale NFS file handle */
