@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_cap.c,v 1.7 2002/01/23 19:04:09 millert Exp $	*/
+/*	$OpenBSD: login_cap.c,v 1.8 2002/01/28 07:05:03 mpech Exp $	*/
 
 /*-
  * Copyright (c) 1995,1997 Berkeley Software Design, Inc. All rights reserved.
@@ -352,13 +352,19 @@ login_getcapnum(lc, cap, def, e)
 	quad_t q;
 
 	errno = 0;
+	res = NULL;
+
     	if (!lc->lc_cap)
 		return (def);
 
 	switch (stat = cgetstr(lc->lc_cap, cap, &res)) {
 	case -1:
+		if (res)
+			free(res);
 		return (def);
 	case -2:
+		if (res)
+			free(res);
 		syslog(LOG_ERR, "%s: getting capability %s: %m",
 		    lc->lc_class, cap);
 		errno = ERANGE;
@@ -366,24 +372,31 @@ login_getcapnum(lc, cap, def, e)
 	default:
 		if (stat >= 0) 
 			break;
+		if (res)
+			free(res);
 		syslog(LOG_ERR, "%s: unexpected error with capability %s",
 		    lc->lc_class, cap);
 		errno = ERANGE;
 		return (e);
 	}
 
-	if (strcasecmp(res, "infinity") == 0)
-		return (RLIM_INFINITY);
-
 	errno = 0;
+
+	if (strcasecmp(res, "infinity") == 0) {
+		free(res);
+		return (RLIM_INFINITY);
+	}
+
     	q = strtoq(res, &ep, 0);
 	if (!ep || ep == res || ep[0] ||
 	    ((q == QUAD_MIN || q == QUAD_MAX) && errno == ERANGE)) {
+		free(res);
 		syslog(LOG_ERR, "%s:%s=%s: invalid number",
 		    lc->lc_class, cap, res);
 		errno = ERANGE;
 		return (e);
 	}
+	free(res);
 	return (q);
 }
 
@@ -400,14 +413,19 @@ login_getcapsize(lc, cap, def, e)
 	quad_t q;
 
 	errno = 0;
+	res = NULL;
 
     	if (!lc->lc_cap)
 		return (def);
 
 	switch (stat = cgetstr(lc->lc_cap, cap, &res)) {
 	case -1:
+		if (res)
+			free(res);
 		return (def);
 	case -2:
+		if (res)
+			free(res);
 		syslog(LOG_ERR, "%s: getting capability %s: %m",
 		    lc->lc_class, cap);
 		errno = ERANGE;
@@ -415,6 +433,8 @@ login_getcapsize(lc, cap, def, e)
 	default:
 		if (stat >= 0) 
 			break;
+		if (res)
+			free(res);
 		syslog(LOG_ERR, "%s: unexpected error with capability %s",
 		    lc->lc_class, cap);
 		errno = ERANGE;
@@ -425,11 +445,13 @@ login_getcapsize(lc, cap, def, e)
 	q = strtolimit(res, &ep, 0);
 	if (!ep || ep == res || (ep[0] && ep[1]) ||
 	    ((q == QUAD_MIN || q == QUAD_MAX) && errno == ERANGE)) {
+		free(res);
 		syslog(LOG_ERR, "%s:%s=%s: invalid size",
 		    lc->lc_class, cap, res);
 		errno = ERANGE;
 		return (e);
 	}
+	free(res);
 	return (q);
 }
 
