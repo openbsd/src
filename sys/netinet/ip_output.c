@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.75 2000/06/18 07:30:45 itojun Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.76 2000/06/18 21:54:40 angelos Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -182,9 +182,9 @@ ip_output(m0, va_alist)
 	 */
 	if (inp != NULL && inp->inp_tdb != NULL &&
 	    ip->ip_src.s_addr == INADDR_ANY &&
-	    tdb->tdb_dst.sa.sa_family == AF_INET &&
-	    tdb->tdb_dst.sin.sin_addr.s_addr != AF_INET) {
-	        ip->ip_src.s_addr = tdb->tdb_dst.sin.sin_addr.s_addr;
+	    tdb->tdb_src.sa.sa_family == AF_INET &&
+	    tdb->tdb_src.sin.sin_addr.s_addr != INADDR_ANY) {
+	        ip->ip_src.s_addr = tdb->tdb_src.sin.sin_addr.s_addr;
 		splx(s);
 		goto skip_routing;
 	}
