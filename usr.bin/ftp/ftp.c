@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp.c,v 1.14 1997/03/14 05:40:20 millert Exp $	*/
+/*	$OpenBSD: ftp.c,v 1.15 1997/03/14 23:25:46 millert Exp $	*/
 /*	$NetBSD: ftp.c,v 1.23 1997/03/13 06:23:17 lukem Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-static char rcsid[] = "$OpenBSD: ftp.c,v 1.14 1997/03/14 05:40:20 millert Exp $";
+static char rcsid[] = "$OpenBSD: ftp.c,v 1.15 1997/03/14 23:25:46 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -843,6 +843,7 @@ recvrequest(cmd, local, remote, lmode, printnames)
 			(void)signal(SIGINT, oldintr);
 		if (oldinti)
 			(void)signal(SIGINFO, oldinti);
+		progress = oprogress;
 		code = -1;
 		return;
 	}
