@@ -45,6 +45,13 @@ for kernels compiled with the
 .Nm COMPAT_SUNOS
 option enabled.
 .Pp
+Compatibility with SunOS version 5 and later, better known as Solaris,
+is
+.Em not
+addressed by these instructions; please read the
+.Xr compat_svr4 8
+manual page instead.
+.Pp
 The exceptions include programs that use the SunOS kvm library,
 and various system calls, ioctl()'s, or kernel semantics
 that are difficult to emulate.
@@ -99,6 +106,8 @@ This will place the SunOS libraries on your OpenBSD machine
 in a location where the SunOS compatibility code will look for
 first, where they do not conflict with the standard libraries.
 .Pp
+.Sh SEE ALSO
+.Xr compat_svr4 8
 .Sh BUGS
 A list of things which fail to work in compatibility mode should
 be here.
