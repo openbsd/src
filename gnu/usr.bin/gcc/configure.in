@@ -273,8 +273,9 @@ for machine in $build $host $target; do
 		tm_file=${cpu_type}/openbsd.h
 		# On OpenBSD systems, the headers are okay
 		fixincludes=Makefile.in
-		tmake_file=t-libc-ok
-		xmake_file=x-openbsd
+		tmake_file="t-libc-ok t-openbsd"
+		# avoid surprises, always provide an xm-openbsd file 
+		xm_file=${cpu_type}/xm-openbsd.h
 		;;
 	esac
 	case $machine in
@@ -348,7 +349,8 @@ for machine in $build $host $target; do
  		fi
 		;;
 	alpha-*-openbsd*)
-		# nothing special
+		# default x-alpha is only appropriate for dec-osf.
+		xmake_file=none
 		;;
 	alpha*-dec-osf*)
 		if [[ x$stabs = xyes ]]
@@ -679,7 +681,6 @@ for machine in $build $host $target; do
 		;;
 	hppa*-*-openbsd*)
 		target_cpu_default=1
-		xm_file="${cpu_type}/xm-openbsd.h"
 		tmake_file=pa/t-openbsd
 		use_collect2=yes
 		;;
@@ -1609,7 +1610,7 @@ for machine in $build $host $target; do
 		fi
 		;;
 	m88k-*-openbsd*)
-		tmake_file=m88k/t-openbsd
+		tmake_file="${tmake_file} m88k/t-openbsd"
 		;;
 	m88k-*-sysv3*)
 		tm_file=m88k/sysv3.h
@@ -1809,9 +1810,11 @@ for machine in $build $host $target; do
 		;;
 	mips*el-*-openbsd*)  		    # MIPS running OpenBSD
 		tm_file=${cpu_type}/openbsd-le.h
+		xmake_file=none
 		;;
 	mips*-*-openbsd*)	    # MIPS big-endian running OpenBSD
 		tm_file=${cpu_type}/openbsd-be.h
+		xmake_file=none
 		;;
 	mips-sony-bsd* | mips-sony-newsos*)	# Sony NEWS 3600 or risc/news.
 		tm_file=mips/news4.h
@@ -2175,9 +2178,9 @@ for machine in $build $host $target; do
 		xmake_file=romp/x-mach
 		use_collect2=yes
 		;;
-	powerpc-*-*bsd*)
+	powerpc-*-openbsd*)
 	   tmake_file=rs6000/t-openbsd
-		xmake_file=rs6000/x-openbsd
+		xmake_file=none
 		;;
 	powerpc-*-sysv* | powerpc-*-elf*)
 		tm_file=rs6000/sysv4.h
