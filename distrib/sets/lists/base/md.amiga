@@ -1011,7 +1011,6 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/usb/if_auereg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/usb/if_cuereg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/usb/if_kuereg.ph
-./usr/libdata/perl5/site_perl/m68k-openbsd/dev/usb/kue_fw.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/usb/ohcireg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/usb/ohcivar.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/usb/uaudioreg.ph
@@ -1033,7 +1032,6 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/usb/usbdi_util.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/usb/usbdivar.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/usb/usbhid.ph
-./usr/libdata/perl5/site_perl/m68k-openbsd/dev/usb/uyap_firmware.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/vndioctl.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/wscons
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/wscons/ascii.ph
@@ -1292,6 +1290,8 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/miscfs/fdesc/fdesc.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/miscfs/fifofs
 ./usr/libdata/perl5/site_perl/m68k-openbsd/miscfs/fifofs/fifo.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/miscfs/genfs
+./usr/libdata/perl5/site_perl/m68k-openbsd/miscfs/genfs/genfs.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/miscfs/kernfs
 ./usr/libdata/perl5/site_perl/m68k-openbsd/miscfs/kernfs/kernfs.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/miscfs/nullfs
@@ -1861,6 +1861,7 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/uvm/uvm_stat.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/uvm/uvm_swap.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/uvm/uvm_swap_encrypt.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/uvm/uvm_vnode.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/varargs.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/vis.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/xfs
@@ -1899,5 +1900,3 @@
 ./usr/share/keymaps/amiga/fr.map
 ./usr/share/keymaps/amiga/sw.map
 ./usr/share/keymaps/amiga/us.map
-./usr/libdata/perl5/site_perl/m68k-openbsd/miscfs/genfs
-./usr/libdata/perl5/site_perl/m68k-openbsd/miscfs/genfs/genfs.ph

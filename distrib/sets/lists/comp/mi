@@ -581,7 +581,6 @@
 ./usr/include/dev/usb/if_auereg.h
 ./usr/include/dev/usb/if_cuereg.h
 ./usr/include/dev/usb/if_kuereg.h
-./usr/include/dev/usb/kue_fw.h
 ./usr/include/dev/usb/ohcireg.h
 ./usr/include/dev/usb/ohcivar.h
 ./usr/include/dev/usb/uaudioreg.h
@@ -603,7 +602,6 @@
 ./usr/include/dev/usb/usbdi_util.h
 ./usr/include/dev/usb/usbdivar.h
 ./usr/include/dev/usb/usbhid.h
-./usr/include/dev/usb/uyap_firmware.h
 ./usr/include/dev/vndioctl.h
 ./usr/include/dev/wscons
 ./usr/include/dev/wscons/ascii.h
@@ -1462,6 +1460,7 @@
 ./usr/include/uvm/uvm_stat.h
 ./usr/include/uvm/uvm_swap.h
 ./usr/include/uvm/uvm_swap_encrypt.h
+./usr/include/uvm/uvm_vnode.h
 ./usr/include/varargs.h
 ./usr/include/vis.h
 ./usr/include/xfs

@@ -953,7 +953,6 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/if_auereg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/if_cuereg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/if_kuereg.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/kue_fw.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/ohcireg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/ohcivar.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/uaudioreg.ph
@@ -975,7 +974,6 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/usbdi_util.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/usbdivar.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/usbhid.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/uyap_firmware.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/vndioctl.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/wscons
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/wscons/ascii.ph
@@ -1201,6 +1199,8 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/miscfs/fdesc/fdesc.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/miscfs/fifofs
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/miscfs/fifofs/fifo.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/miscfs/genfs
+./usr/libdata/perl5/site_perl/powerpc-openbsd/miscfs/genfs/genfs.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/miscfs/kernfs
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/miscfs/kernfs/kernfs.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/miscfs/nullfs
@@ -1819,6 +1819,7 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/uvm/uvm_stat.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/uvm/uvm_swap.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/uvm/uvm_swap_encrypt.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/uvm/uvm_vnode.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/varargs.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/vis.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/xfs
@@ -1851,5 +1852,3 @@
 ./usr/mdec/installboot
 ./usr/mdec/mbr
 ./usr/sbin/wsconscfg
-./usr/libdata/perl5/site_perl/powerpc-openbsd/miscfs/genfs
-./usr/libdata/perl5/site_perl/powerpc-openbsd/miscfs/genfs/genfs.ph

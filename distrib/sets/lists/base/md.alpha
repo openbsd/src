@@ -1009,7 +1009,6 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/usb/if_auereg.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/usb/if_cuereg.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/usb/if_kuereg.ph
-./usr/libdata/perl5/site_perl/alpha-openbsd/dev/usb/kue_fw.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/usb/ohcireg.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/usb/ohcivar.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/usb/uaudioreg.ph
@@ -1031,7 +1030,6 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/usb/usbdi_util.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/usb/usbdivar.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/usb/usbhid.ph
-./usr/libdata/perl5/site_perl/alpha-openbsd/dev/usb/uyap_firmware.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/vndioctl.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/wscons
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/wscons/ascii.ph
@@ -1257,6 +1255,8 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/miscfs/fdesc/fdesc.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/miscfs/fifofs
 ./usr/libdata/perl5/site_perl/alpha-openbsd/miscfs/fifofs/fifo.ph
+./usr/libdata/perl5/site_perl/alpha-openbsd/miscfs/genfs
+./usr/libdata/perl5/site_perl/alpha-openbsd/miscfs/genfs/genfs.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/miscfs/kernfs
 ./usr/libdata/perl5/site_perl/alpha-openbsd/miscfs/kernfs/kernfs.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/miscfs/nullfs
@@ -1826,6 +1826,7 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/uvm/uvm_stat.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/uvm/uvm_swap.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/uvm/uvm_swap_encrypt.ph
+./usr/libdata/perl5/site_perl/alpha-openbsd/uvm/uvm_vnode.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/varargs.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/vis.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/xfs
@@ -1860,5 +1861,3 @@
 ./usr/mdec/setnetbootinfo
 ./usr/sbin/wsconscfg
 ./usr/sbin/wsfontload
-./usr/libdata/perl5/site_perl/alpha-openbsd/miscfs/genfs
-./usr/libdata/perl5/site_perl/alpha-openbsd/miscfs/genfs/genfs.ph
