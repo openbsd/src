@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.22 1998/01/10 01:37:52 deraadt Exp $	*/
+/*	$OpenBSD: st.c,v 1.23 1998/02/16 06:06:38 deraadt Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -167,6 +167,13 @@ struct st_quirk_inquiry_pattern st_quirk_patterns[] = {
 	{{T_SEQUENTIAL, T_REMOV,
 	 "ARCHIVE ", "VIPER 150  21247", ""},     {0, 12, {
 		{0, 0, 0},				/* minor 0-3 */
+		{0, 0, QIC_150},			/* minor 4-7 */
+		{0, 0, QIC_120},			/* minor 8-11 */
+		{0, 0, QIC_24}				/* minor 12-15 */
+	}}},
+	{{T_SEQUENTIAL, T_REMOV,
+	 "ARCHIVE ", "VIPER 150  21531", ""},     {0, 12, {
+		{ST_Q_SENSE_HELP, 0, 0},		/* minor 0-3 */
 		{0, 0, QIC_150},			/* minor 4-7 */
 		{0, 0, QIC_120},			/* minor 8-11 */
 		{0, 0, QIC_24}				/* minor 12-15 */
