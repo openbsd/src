@@ -35,10 +35,9 @@ Boston, MA 02111-1307, USA.  */
 
 /* A 64 but v9 complier in a Medium/Mid code model.  */
 
-/* XXX - do we really want HARD_QUAD? */
 #undef TARGET_DEFAULT
 #define TARGET_DEFAULT \
-(MASK_V9 + MASK_PTR64 + MASK_64BIT + MASK_HARD_QUAD \
+(MASK_V9 + MASK_PTR64 + MASK_64BIT /* + MASK_HARD_QUAD */ \
  + MASK_APP_REGS + MASK_EPILOGUE + MASK_FPU + MASK_STACK_BIAS)
 
 #undef SPARC_DEFAULT_CMODEL
