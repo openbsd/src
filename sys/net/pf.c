@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.109 2001/07/11 16:14:15 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.110 2001/07/13 01:52:10 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -676,7 +676,7 @@ pfattach(int num)
 
 	pool_sethiwat(&pf_frag_pl, PFFRAG_FRAG_HIWAT);
 	pool_sethardlimit(&pf_frent_pl, PFFRAG_FRENT_HIWAT, NULL, 0);
-	
+
 	TAILQ_INIT(&pf_fragqueue);
 	TAILQ_INIT(&pf_rules[0]);
 	TAILQ_INIT(&pf_rules[1]);
@@ -1153,19 +1153,19 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		struct pf_state *st;
 		struct pf_tree_key key;
 		int direction = pnl->direction;
-	
+
 		key.proto = pnl->proto;
 
 		/*
 		 * userland gives us source and dest of connetion, reverse
-		 * the lookup so we ask for what happens with the return 
+		 * the lookup so we ask for what happens with the return
 		 * traffic, enabling us to find it in the state tree.
 		 */
 		key.addr[1].s_addr = pnl->saddr;
 		key.port[1] = pnl->sport;
 		key.addr[0].s_addr = pnl->daddr;
 		key.port[0] = pnl->dport;
-		
+
 		if (!pnl->proto || !pnl->saddr || !pnl->daddr ||
 		    !pnl->dport || !pnl->sport)
 			error = EINVAL;
@@ -1187,7 +1187,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 					pnl->rsaddr = pnl->saddr;
 					pnl->rsport = pnl->sport;
 				}
-			} else 
+			} else
 				error = ENOENT;
 			splx(s);
 		}
@@ -1431,7 +1431,7 @@ pf_get_rdr(struct ifnet *ifp, u_int8_t proto, u_int32_t saddr, u_int32_t daddr,
 		    (!r->proto || r->proto == proto) &&
 		    pf_match_addr(r->snot, r->saddr, r->smask, saddr) &&
 		    pf_match_addr(r->dnot, r->daddr, r->dmask, daddr) &&
-		    (ntohs(dport) >= ntohs(r->dport)) && 
+		    (ntohs(dport) >= ntohs(r->dport)) &&
 		    (ntohs(dport) <= ntohs(r->dport2)))
 			rm = r;
 		else
@@ -1458,7 +1458,7 @@ u_int16_t
 pf_map_port_range(struct pf_rdr *rdr, u_int16_t port)
 {
 	u_int32_t nport;
-	
+
 	nport = ntohs(rdr->rport) - ntohs(rdr->dport) + ntohs(port);
 	/* wrap around if necessary */
 	if (nport > 65535)
@@ -1551,8 +1551,7 @@ pf_test_tcp(int direction, struct ifnet *ifp, struct mbuf *m,
 			return (PF_DROP);
 	}
 
-	if (((rm != NULL) && rm->keep_state) || (nat != NULL) || (rdr != NULL))
-	    {
+	if (((rm != NULL) && rm->keep_state) || (nat != NULL) || (rdr != NULL)) {
 		/* create new state */
 		u_int16_t len;
 		struct pf_state *s;
@@ -1656,7 +1655,7 @@ pf_test_udp(int direction, struct ifnet *ifp, struct mbuf *m,
 				nport = rdr->rport;
 
 			pf_change_ap(&h->ip_dst.s_addr, &uh->uh_dport,
-			    &h->ip_sum, &uh->uh_sum, rdr->raddr, 
+			    &h->ip_sum, &uh->uh_sum, rdr->raddr,
 			    nport);
 
 			rewrite++;
@@ -2326,7 +2325,7 @@ pf_purge_expired_fragments(void)
 	timerclear(&expire);
 	expire.tv_sec = FRAG_EXPIRE;
 	timersub(&now, &expire, &expire);
-	
+
 	while ((frag = TAILQ_LAST(&pf_fragqueue, pf_fragqueue)) != NULL) {
 		if (timercmp(&frag->fr_timeout, &expire, >))
 			break;
@@ -2349,7 +2348,7 @@ pf_flush_fragments(void)
 
 	DPFPRINTF((__FUNCTION__": trying to free > %d frents\n",
 		   pf_nfrents - goal));
-	
+
 	while (goal < pf_nfrents) {
 		frag = TAILQ_LAST(&pf_fragqueue, pf_fragqueue);
 		if (frag == NULL)
@@ -2395,7 +2394,7 @@ pf_find_fragment(struct ip *ip)
 		struct pf_fragment *frag;
 
 		pf_ip2key(&key, ip);
-		
+
 		frag = (struct pf_fragment *)pf_find_state(tree_fragment,
 		    &key);
 
@@ -2404,7 +2403,7 @@ pf_find_fragment(struct ip *ip)
 			TAILQ_REMOVE(&pf_fragqueue, frag, frag_next);
 			TAILQ_INSERT_HEAD(&pf_fragqueue, frag, frag_next);
 		}
-		
+
 		return (frag);
 }
 
@@ -2414,7 +2413,7 @@ void
 pf_remove_fragment(struct pf_fragment *frag)
 {
 		struct pf_tree_key key;
-		
+
 		key.proto = frag->fr_p;
 		key.addr[0] = frag->fr_src;
 		key.addr[1] = frag->fr_dst;
@@ -2445,7 +2444,7 @@ pf_reassemble(struct mbuf **m0, struct pf_fragment *frag,
 	/* Create a new reassembly queue for this packet */
 	if (frag == NULL) {
 		struct pf_tree_key key;
-		
+
 		frag = pool_get(&pf_frag_pl, M_NOWAIT);
 		if (frag == NULL) {
 			pf_flush_fragments();
@@ -2484,7 +2483,7 @@ pf_reassemble(struct mbuf **m0, struct pf_fragment *frag,
 	}
 
 	KASSERT(frep != NULL || frea != NULL);
-	
+
 	if (frep != NULL) {
 		u_int16_t precut;
 
@@ -2504,7 +2503,7 @@ pf_reassemble(struct mbuf **m0, struct pf_fragment *frag,
 	for (; frea != NULL && ip->ip_len + off > frea->fr_ip->ip_off;
 	    frea = next) {
 		u_int16_t aftercut;
-		
+
 		aftercut = (ip->ip_len + off) - frea->fr_ip->ip_off;
 		DPFPRINTF((__FUNCTION__": adjust overlap %d\n", aftercut));
 		if (aftercut < frea->fr_ip->ip_len) {
@@ -2534,7 +2533,7 @@ pf_reassemble(struct mbuf **m0, struct pf_fragment *frag,
 		LIST_INSERT_HEAD(&frag->fr_queue, frent, fr_next);
 	else
 		LIST_INSERT_AFTER(frep, frent, fr_next);
-	
+
 	/* Check if we are completely reassembled */
 	if (!(frag->fr_flags & PFFRAG_SEENLAST))
 		return (NULL);
@@ -2543,7 +2542,7 @@ pf_reassemble(struct mbuf **m0, struct pf_fragment *frag,
 	off = 0;
 	for (frep = LIST_FIRST(&frag->fr_queue); frep; frep = next) {
 		next = LIST_NEXT(frep, fr_next);
-		
+
 		off += frep->fr_ip->ip_len;
 		if (off < frag->fr_max &&
 		    (next == NULL || next->fr_ip->ip_off != off)) {
@@ -2588,7 +2587,7 @@ pf_reassemble(struct mbuf **m0, struct pf_fragment *frag,
 
 	/* Remove from fragment queue */
 	pf_remove_fragment(frag);
-	
+
 	hlen = ip->ip_hl << 2;
 	ip->ip_len = off + hlen;
 	m->m_len += hlen;
@@ -2604,9 +2603,8 @@ pf_reassemble(struct mbuf **m0, struct pf_fragment *frag,
 	}
 
 	DPFPRINTF((__FUNCTION__": complete: %p(%d)\n", m, ip->ip_len));
-	
 	return (m);
-	
+
  drop_fragment:
 	/* Oops - fail safe - drop packet */
 	m_freem(m);
@@ -2640,11 +2638,11 @@ pf_normalize_ip(struct mbuf **m0, int dir, struct ifnet *ifp, u_short *reason)
 
 	if (hlen > h->ip_len)
 		goto drop;
-	
+
 	/* We will need other tests here */
 	if (!fragoff && !mff)
 		goto no_fragment;
-	
+
 	/* Now we are dealing with a fragmented packet */
 	frag = pf_find_fragment(h);
 
@@ -2656,7 +2654,7 @@ pf_normalize_ip(struct mbuf **m0, int dir, struct ifnet *ifp, u_short *reason)
 
 	h->ip_len -= hlen;
 	h->ip_off <<= 3;
-	
+
 	/* All fragments are 8 byte aligned */
 	if (mff && (h->ip_len & 0x7)) {
 		DPFPRINTF((__FUNCTION__": mff and %d\n", h->ip_len));
@@ -2697,11 +2695,11 @@ pf_normalize_ip(struct mbuf **m0, int dir, struct ifnet *ifp, u_short *reason)
 		return (PF_DROP);
 
 	h = mtod(m, struct ip *);
-	
+
  no_fragment:
 	if (dir != PF_OUT)
 		return (PF_PASS);
-	    
+
 	return (PF_PASS);
 
  drop:
@@ -2709,10 +2707,10 @@ pf_normalize_ip(struct mbuf **m0, int dir, struct ifnet *ifp, u_short *reason)
 	if (r != NULL && r->log)
 		PFLOG_PACKET(h, m, AF_INET, dir, *reason, r);
 	return (PF_DROP);
-	
+
  bad:
 	DPFPRINTF((__FUNCTION__": dropping bad fragment\n"));
-	
+
 	/* Free assoicated fragments */
 	if (frag != NULL)
 		pf_free_fragment(frag);
@@ -2794,7 +2792,7 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0)
 	}
 	m = *m0;
 	h = mtod(m, struct ip *);
-	
+
 	off = h->ip_hl << 2;
 
 	switch (h->ip_p) {
