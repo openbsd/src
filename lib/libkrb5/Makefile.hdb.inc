@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.hdb.inc,v 1.3 2003/05/17 20:07:23 mho Exp $
+# $OpenBSD: Makefile.hdb.inc,v 1.4 2003/05/17 21:17:39 mho Exp $
 
 DIR_HDB=	${KRB5SRC}/lib/hdb
 HDR_HDB=	hdb.h hdb-protos.h hdb-private.h
@@ -6,7 +6,7 @@ HDR_GEN+=	hdb_err.h hdb_asn1.h
 
 .PATH:	${KRB5SRC}/lib/hdb
 
-gen_files= \
+gen_files_hdb= \
 	hdb_asn1.h \
 	asn1_Key.c \
 	asn1_Event.c \
@@ -15,7 +15,7 @@ gen_files= \
         asn1_Salt.c \
 	asn1_GENERATION.c
 
-gen_files+=\
+gen_files_hdb+=\
 	hdb_err.h \
 	hdb_err.c
 
@@ -26,7 +26,7 @@ SRCS+=	keytab.c \
 	mkey.c \
 	ndbm.c \
 	print.c \
-	${gen_files}
+	${gen_files_hdb}
 
 CFLAGS+=	-I${KRB5SRC}/lib/hdb -I${KRB5SRC}/lib/asn1
 

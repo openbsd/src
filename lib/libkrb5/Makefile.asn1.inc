@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.asn1.inc,v 1.3 2003/05/17 20:07:23 mho Exp $
+# $OpenBSD: Makefile.asn1.inc,v 1.4 2003/05/17 21:17:39 mho Exp $
 
 .PATH:	${KRB5SRC}/lib/asn1
 
@@ -8,7 +8,7 @@ HDR_GEN+=	krb5_asn1.h asn1_err.h
 
 .PATH:	${KRB5SRC}/lib/asn1
 
-gen_files= \
+gen_files_asn1= \
 	krb5_asn1.h \
 	asn1_APOptions.c                \
 	asn1_AP_REP.c                   \
@@ -62,7 +62,8 @@ gen_files= \
 	asn1_TransitedEncoding.c	\
 	asn1_UNSIGNED.c
 
-gen_files+=\
+
+gen_files_asn1+=\
 	asn1_err.h \
 	asn1_err.c
 
@@ -71,7 +72,8 @@ SRCS+=	der_get.c \
 	der_free.c \
 	der_length.c \
 	der_copy.c \
-	${gen_files}
+	${gen_files_asn1}
+
 
 CFLAGS+=	-I${KRB5SRC}/lib/asn1
 

@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.krb5.inc,v 1.4 2003/05/17 20:07:23 mho Exp $
+# $OpenBSD: Makefile.krb5.inc,v 1.5 2003/05/17 21:17:39 mho Exp $
 
 DIR_KRB5INC=	${.CURDIR}/../../kerberosV/include
 DIR_KRB5LIB=	${KRB5SRC}/lib/krb5
@@ -134,7 +134,7 @@ MLINKS+=krb5_verify_user.3 krb5_verify_user_lrealm.3
 
 .PATH:	${KRB5SRC}/lib/krb5
 
-gen_files= \
+gen_files_krb5= \
 	heim_err.h \
 	k524_err.h \
 	krb5_err.h \
@@ -235,7 +235,7 @@ SRCS+=	add_et_list.c \
 	krb5_err.c \
 	heim_err.c \
 	k524_err.c \
-	${gen_files}
+	${gen_files_krb5}
 
 CFLAGS+=-I${KRB5SRC}/lib/krb5 -I${KRB5SRC}/lib/ \
 	-I${KRB5SRC}/lib/asn1 -I../asn1 -I. \
