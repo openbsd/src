@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.16 1997/01/04 12:47:11 niklas Exp $
+#	$OpenBSD: GENERIC,v 1.17 1997/01/05 02:08:05 niklas Exp $
 #	$NetBSD: GENERIC,v 1.57.4.4 1996/09/06 00:34:18 jtc Exp $
 
 #
@@ -192,8 +192,8 @@ uk*	at scsibus? target ? lun ?	# unknown scsi
 ggbus*	at zbus0			# Goldengate bridge
 isa*	at ggbus?
 
-#cross*	at zbus0			# CrossLink bridge
-#isa*	at cross?
+cross*	at zbus0			# CrossLink bridge
+isa*	at cross?
 
 #isapnp0	at isa?
 
