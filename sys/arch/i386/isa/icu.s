@@ -1,4 +1,4 @@
-/*	$OpenBSD: icu.s,v 1.3 1996/04/30 21:54:40 mickey Exp $	*/
+/*	$OpenBSD: icu.s,v 1.4 1996/06/30 21:43:42 chuck Exp $	*/
 /*	$NetBSD: icu.s,v 1.45 1996/01/07 03:59:34 mycroft Exp $	*/
 
 /*-
@@ -163,6 +163,9 @@ IDTVEC(softnet)
 #endif
 #ifdef CCITT
 	DONET(NETISR_CCITT, _ccittintr)
+#endif
+#ifdef NATM
+	DONET(NETISR_NATM, _natmintr)
 #endif
 #include "ppp.h"
 #if NPPP > 0
