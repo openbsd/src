@@ -1,10 +1,7 @@
-# $OpenBSD: Makefile,v 1.12 2001/11/21 21:55:52 espie Exp $
-
-NOMAN=
-NOPROG=
+# $OpenBSD: Makefile,v 1.13 2002/01/01 23:07:13 art Exp $
 
 # We don't pass t7, t13, t14...
-regress: t1 t2 t3 t4 t5 t6 t8 t9 t10 t11 t12 t7 t13 t14
+REGRESSTARGETS=t1 t2 t3 t4 t5 t6 t7 t8 t9 t10 t11 t12 t13 t14
 
 MALLOC_OPTIONS?=AZJ
 t1: t1.out
@@ -81,4 +78,4 @@ t1.out:
 
 CLEANFILES+=t1.out z.a a.a a.b
 
-.include <bsd.prog.mk>
+.include <bsd.regress.mk>
