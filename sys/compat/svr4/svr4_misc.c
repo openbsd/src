@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_misc.c,v 1.17 1997/11/14 21:22:52 deraadt Exp $	 */
+/*	$OpenBSD: svr4_misc.c,v 1.18 1997/12/02 00:07:04 deraadt Exp $	 */
 /*	$NetBSD: svr4_misc.c,v 1.42 1996/12/06 03:22:34 christos Exp $	 */
 
 /*
@@ -48,6 +48,7 @@
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
+#include <sys/ktrace.h>
 #include <sys/mman.h>
 #include <sys/mount.h>
 #include <sys/resource.h>
@@ -1337,4 +1338,38 @@ svr4_sys_nice(p, v, retval)
 		return error;
 
 	return 0;
+}
+
+/* ARGSUSED */
+int
+svr4_sys_setegid(p, v, retval)
+        struct proc *p;
+        void *v;
+        register_t *retval;
+{
+        struct sys_setegid_args /* {
+                syscallarg(gid_t) egid;
+        } */ *uap = v;
+
+#if defined(COMPAT_LINUX) && defined(i386)
+	if (SCARG(uap, egid) > 60000) {
+		/*
+		 * One great fuckup deserves another.  The Linux people
+		 * made this their personality system call.  But we can't
+		 * tell if a binary is SVR4 or Linux until they do that
+		 * system call, in some cases.  So when we get it, and the
+		 * value is out of some magical range, switch to Linux
+		 * emulation and pray.
+		 */
+		extern struct emul emul_linux_elf;
+
+		p->p_emul = &emul_linux_elf;
+#ifdef KTRACE
+		if (KTRPOINT(p, KTR_EMUL))
+			ktremul(p->p_tracep, p->p_emul->e_name);
+#endif
+		return (0);
+	}
+#endif
+        return sys_setegid(p, v, retval);
 }
