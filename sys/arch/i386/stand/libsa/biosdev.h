@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosdev.h,v 1.14 1997/08/12 19:24:58 mickey Exp $	*/
+/*	$OpenBSD: biosdev.h,v 1.15 1997/08/12 21:39:01 mickey Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -39,24 +39,6 @@ int biosstrategy __P((void *, int, daddr_t, size_t, void *, size_t *));
 int biosopen __P((struct open_file *, ...));
 int biosclose __P((struct open_file *));
 int biosioctl __P((struct open_file *, u_long, void *));
-
-/* bioskbd.S */
-int kbd_probe __P((void));
-void kbd_putc __P((int c));
-int kbd_getc __P((void));
-int kbd_ischar __P((void));
-
-/* bioscom.S */
-#define COM_PROTO(n) \
-int com##n##_probe __P((void)); \
-void com##n##_putc __P((int c)); \
-int com##n##_getc __P((void)); \
-int com##n##_ischar __P((void));
-COM_PROTO(0)
-COM_PROTO(1)
-COM_PROTO(2)
-COM_PROTO(3)
-#undef COM_PROTO
 
 /* time.c */
 void time_print __P((void));
