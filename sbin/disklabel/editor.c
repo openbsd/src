@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.17 1997/10/17 19:50:43 millert Exp $	*/
+/*	$OpenBSD: editor.c,v 1.18 1997/10/17 20:03:46 millert Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -31,7 +31,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.17 1997/10/17 19:50:43 millert Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.18 1997/10/17 20:03:46 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1163,7 +1163,16 @@ edit_parms(lp, freep)
 	lp->d_ntracks = ui;
 
 	/* sectors/cylinder */
-	lp->d_secpercyl = lp->d_ntracks * lp->d_nsectors;
+	for (;;) {
+		ui = getuint(lp, 0, "sectors/cylinder",
+		    "The number of sectors per cylinder (Usually sectors/track "
+		    "* tracks/cylinder).", lp->d_secpercyl, lp->d_secpercyl, 0);
+		if (ui == UINT_MAX)
+			fputs("Invalid entry\n", stderr);
+		else
+			break;
+	}
+	lp->d_secpercyl = ui;
 
 	/* number of cylinders */
 	for (;;) {
