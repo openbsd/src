@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fcntl.2,v 1.12 1999/05/23 14:10:51 aaron Exp $
+.\"	$OpenBSD: fcntl.2,v 1.13 1999/05/25 22:38:01 aaron Exp $
 .\"	$NetBSD: fcntl.2,v 1.6 1995/02/27 12:32:29 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1993
@@ -43,15 +43,27 @@
 .Sh SYNOPSIS
 .Fd #include <fcntl.h>
 .Ft int
-.Fn fcntl "int fd" "int cmd" "int arg"
+.Fn fcntl "int fd" "int cmd" "..."
 .Sh DESCRIPTION
+The
 .Fn fcntl
-provides for control over descriptors.
+provides control over the properties of a file that is already open.
 The argument
 .Fa fd
 is a descriptor to be operated on by
 .Fa cmd
-as follows:
+as described below.
+The third parameter is called
+.Fa arg
+and is technically a pointer to
+.Fa void ,
+but is interpreted as an
+.Fa int
+by some commands, a pointer to a
+.Fa struct flock
+by others (see below), and ignored by the rest.
+.Pp
+The commands are:
 .Bl -tag -width F_GETOWNX
 .It Dv F_DUPFD
 Return a new descriptor as follows:
@@ -59,7 +71,9 @@ Return a new descriptor as follows:
 .Bl -bullet -compact -offset 4n
 .It
 Lowest numbered available descriptor greater than or equal to
-.Fa arg .
+.Fa arg
+(interpreted as an
+.Fa int ) .
 .It
 Same object references as the original descriptor.
 .It
@@ -89,16 +103,21 @@ is ignored).
 .It Dv F_SETFD
 Set the close-on-exec flag associated with
 .Fa fd
-to the low order bit of
+to the low-order bit of
 .Fa arg
-(0 or 1 as above).
+(interpreted as an
+.Fa int ) .
+The flag should be specified as 0 (do not close-on-exec) or
+1 (do close-on-exec).
 .It Dv F_GETFL
 Get descriptor status flags, as described below
 .Fa ( arg
 is ignored).
 .It Dv F_SETFL
 Set descriptor status flags to
-.Fa arg .
+.Fa arg
+(interpreted as an
+.Fa int ) .
 .It Dv F_GETOWN
 Get the process ID or process group
 currently receiving
@@ -118,9 +137,11 @@ and
 signals;
 process groups are specified by supplying
 .Fa arg
+(interpreted as an
+.Fa int )
 as negative, otherwise 
 .Fa arg
-is interpreted as a process ID.
+is taken as a process ID.
 .El
 .Pp
 The flags for the
@@ -130,7 +151,9 @@ and
 flags are as follows:
 .Bl -tag -width O_NONBLOCKX
 .It Dv O_NONBLOCK
-Non-blocking I/O; if no data is available to a
+Non-blocking
+.Tn I/O ;
+if no data is available to a
 .Xr read 2
 call, or if a
 .Xr write 2
@@ -147,7 +170,9 @@ flag of
 Enable the
 .Dv SIGIO
 signal to be sent to the process group
-when I/O is possible, e.g.,
+when
+.Tn I/O
+is possible, e.g.,
 upon availability of data to be read.
 .El
 .Pp
@@ -174,7 +199,7 @@ taken as a pointer to a
 .Fa "struct flock"
 (see above).
 The information retrieved overwrites the information passed to
-.Nm fcntl
+.Fn fcntl
 in the
 .Fa flock
 structure.
@@ -197,7 +222,7 @@ or exclusive (or write) locks,
 as well as remove either type of lock
 .Dv (F_UNLCK) .
 If a shared or exclusive lock cannot be set,
-.Nm fcntl
+.Fn fcntl
 returns immediately with
 .Er EAGAIN .
 .It Dv F_SETLKW
@@ -206,9 +231,9 @@ This command is the same as
 except that if a shared or exclusive lock is blocked by other locks,
 the process waits until the request can be satisfied.
 If a signal that is to be caught is received while
-.Nm fcntl
+.Fn fcntl
 is waiting for a region, the
-.Nm fcntl
+.Fn fcntl
 will be interrupted if the signal handler has not specified the
 .Dv SA_RESTART
 (see
