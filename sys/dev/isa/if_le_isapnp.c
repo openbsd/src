@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le_isapnp.c,v 1.2 1997/12/26 08:14:40 deraadt Exp $	*/
+/*	$OpenBSD: if_le_isapnp.c,v 1.3 1997/12/26 09:35:37 deraadt Exp $	*/
 /*	$NetBSD: if_le_isa.c,v 1.2 1996/05/12 23:52:56 mycroft Exp $	*/
 
 /*-
@@ -134,7 +134,6 @@ le_isapnp_attach(parent, self, aux)
 	sc->sc_hwreset = NULL;
 	sc->sc_hwinit = NULL;
 
-	printf(" <%s, %s>", ia->ipa_devident, ia->ipa_devclass);
 	am7990_config(sc);
 
 #if NISADMA > 0

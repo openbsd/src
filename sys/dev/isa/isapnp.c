@@ -1,4 +1,4 @@
-/*	$OpenBSD: isapnp.c,v 1.14 1997/12/25 12:06:48 downsj Exp $	*/
+/*	$OpenBSD: isapnp.c,v 1.15 1997/12/26 09:35:38 deraadt Exp $	*/
 /*	$NetBSD: isapnp.c,v 1.9.4.3 1997/10/29 00:40:43 thorpej Exp $	*/
 
 /*
@@ -566,6 +566,8 @@ isapnp_print(aux, str)
 	isapnp_print_region("mem32", ipa->ipa_mem32, ipa->ipa_nmem32);
 	isapnp_print_pin("irq", ipa->ipa_irq, ipa->ipa_nirq);
 	isapnp_print_pin("drq", ipa->ipa_drq, ipa->ipa_ndrq);
+
+	printf(" <%s, %s>", ipa->ipa_devident, ipa->ipa_devclass);
 
 	return UNCONF;
 }

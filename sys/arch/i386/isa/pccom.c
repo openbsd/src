@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccom.c,v 1.16 1997/12/25 14:33:14 downsj Exp $	*/
+/*	$OpenBSD: pccom.c,v 1.17 1997/12/26 09:35:40 deraadt Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*-
@@ -575,8 +575,6 @@ comattach(parent, self, aux)
 		if (IS_ISAPNP(parent)) {
 			/* No console support! */
 			ioh = ia->ia_ioh;
-
-			printf(" <%s, %s>", ia->ipa_devident, ia->ipa_devclass);
 		} else {
 	       		if (iobase != comconsaddr) {
 				if (bus_space_map(iot, iobase, COM_NPORTS, 0, &ioh))
