@@ -1,4 +1,4 @@
-#	$OpenBSD: changelist,v 1.25 2002/06/17 00:16:31 pvalchev Exp $
+#	$OpenBSD: changelist,v 1.26 2002/09/22 23:37:13 millert Exp $
 #
 # List of files which the security script backs up and checks
 # for modifications.
@@ -8,6 +8,8 @@
 #
 
 /etc/Distfile
+/etc/altq.conf
+/etc/boot.conf
 /etc/bootparams
 /etc/bootptab
 /etc/ccd.conf
@@ -21,12 +23,15 @@
 /etc/defaultdomain
 /etc/dhclient.conf
 /etc/dhcpd.conf
+/etc/dhcpd.interfaces
 /etc/distfile
+/etc/ethers
 /etc/exports
 /etc/fbtab
 /etc/fstab
 /etc/ftpchroot
 /etc/ftpusers
+/etc/ftpwelcome
 /etc/gettytab
 /etc/group
 /etc/hosts
@@ -38,13 +43,16 @@
 /etc/ksh.kshrc
 /etc/locate.rc
 /etc/login.conf
+/etc/lynx.cfg
 /etc/mail.rc
 /etc/mailer.conf
 /etc/man.conf
 /etc/master.passwd
+/etc/mk.conf
 /etc/moduli
 /etc/monthly
 /etc/monthly.local
+/etc/motd
 /etc/mrouted.conf
 /etc/mygate
 /etc/myname
