@@ -1,4 +1,4 @@
-.\"	$OpenBSD: extent.9,v 1.8 2003/06/06 20:56:32 jmc Exp $
+.\"	$OpenBSD: extent.9,v 1.9 2003/07/02 08:36:04 jmc Exp $
 .\"	$NetBSD: extent.9,v 1.15 1999/03/16 00:40:47 garbled Exp $
 .\"
 .\" Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -195,10 +195,7 @@ If
 .Fa skew
 is non-zero, it modifies the requested alignment result in the following way:
 the value
-.Po Fa result
-\& -
-.Fa skew
-.Pc
+.Pq Fa result No - Fa skew
 is aligned to
 .Fa alignment
 boundaries.
