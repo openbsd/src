@@ -1,4 +1,4 @@
-/*	$OpenBSD: vs.c,v 1.15 2004/05/09 05:34:00 krw Exp $ */
+/*	$OpenBSD: vs.c,v 1.16 2004/05/20 16:43:51 miod Exp $ */
 
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
@@ -296,11 +296,11 @@ vs_scsicmd(xs)
 		iopb = miopb;
 	} else {
 		cqep = vs_getcqe(sc);
+		if (cqep == NULL) {
+			xs->error = XS_DRIVER_STUFFUP;
+			return (TRY_AGAIN_LATER);
+		}
 		iopb = vs_getiopb(sc);
-	}
-	if (cqep == NULL) {
-		xs->error = XS_DRIVER_STUFFUP;
-		return (TRY_AGAIN_LATER);
 	}
 
 	/* s = splbio();*/
@@ -474,7 +474,7 @@ vs_getiopb(sc)
 	int slot;
 
 	if (mcsb->mcsb_QHDP == 0) {
-		slot = NUM_CQE;
+		slot = NUM_CQE - 1;
 	} else {
 		slot = mcsb->mcsb_QHDP - 1;
 	}
