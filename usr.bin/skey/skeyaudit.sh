@@ -1,5 +1,5 @@
 #!/bin/sh
-# $OpenBSD: skeyaudit.sh,v 1.3 1996/09/27 15:41:36 millert Exp $
+# $OpenBSD: skeyaudit.sh,v 1.4 1996/09/29 04:46:18 millert Exp $
 # This script will look thru the skeykeys file for
 # people with sequence numbers less then LOWLIMIT=12
 # and send them an e-mail reminder to use skeyinit soon
@@ -28,10 +28,10 @@ fi
 
 for i in `$AWK '{print $1}' $KEYDB`
 do
-SEQ=`$GREP "^$i[ 	]" $KEYDB | $AWK '{if ($2 ~ /^MD[0-9]+/) {print $3} else {print $2}}'`
+SEQ=`$GREP "^$i[ 	]" $KEYDB | $AWK '{if ($2 ~ /^[A-z]/) {print $3} else {print $2}}'`
 if [ $SEQ -lt $LOWLIMIT ]
 then
-  KEY=`$GREP "^$i[ 	]" $KEYDB | $AWK '{if ($2 ~ /^MD[0-9]+/) {print $4} else {print $3}}'`
+  KEY=`$GREP "^$i[ 	]" $KEYDB | $AWK '{if ($2 ~ /^[A-z]/) {print $4} else {print $3}}'`
   if [ $SEQ -lt  3 ]
   then
   SUBJECT="IMPORTANT action required"
