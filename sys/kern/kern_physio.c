@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_physio.c,v 1.3 1997/07/25 02:44:22 mickey Exp $	*/
+/*	$OpenBSD: kern_physio.c,v 1.4 1997/07/25 03:25:32 deraadt Exp $	*/
 /*	$NetBSD: kern_physio.c,v 1.28 1997/05/19 10:43:28 pk Exp $	*/
 
 /*-
@@ -96,8 +96,8 @@ physio(strategy, bp, dev, flags, minphys, uio)
 	if (uio->uio_segflg == UIO_USERSPACE)
 		for (i = 0; i < uio->uio_iovcnt; i++)
 			if (!useracc(uio->uio_iov[i].iov_base,
-				     uio->uio_iov[i].iov_len,
-				     (flags == B_READ) ? B_WRITE : B_READ))
+			    uio->uio_iov[i].iov_len,
+			    (flags == B_READ) ? B_WRITE : B_READ))
 				return (EFAULT);
 
 	/* Make sure we have a buffer, creating one if necessary. */
