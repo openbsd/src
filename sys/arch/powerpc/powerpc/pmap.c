@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.63 2002/03/21 05:39:22 drahn Exp $ */
+/*	$OpenBSD: pmap.c,v 1.64 2002/03/21 05:42:43 drahn Exp $ */
 
 /*
  * Copyright (c) 2001, 2002 Dale Rahn. All rights reserved.
@@ -116,7 +116,6 @@ void pmap_remove_pv(struct pte_desc *pted);
 
 
 /* pte hash table routines */
-int pte_insert_path; /* DEBUGGING, where pte_insert was called from */
 void pte_insert(struct pte_desc *pted);
 void pmap_hash_remove(struct pte_desc *pted);
 void pmap_fill_pte(struct pmap *pm, vaddr_t va, paddr_t pa,
@@ -137,10 +136,6 @@ void * pmap_steal_avail(size_t size, int align);
 
 /* asm interface */
 int pte_spill_r(u_int32_t va, u_int32_t msr, u_int32_t access_type);
-#if 0
-u_int32_t kvm_enable(void);
-void kvm_disable(struct pmap *pm, u_int32_t val);
-#endif
 
 u_int32_t pmap_setusr(struct pmap *pm, vaddr_t va);
 void pmap_popusr(u_int32_t oldsr);
@@ -408,14 +403,9 @@ PTED_VALID(struct pte_desc *pted)
  * it multiple times.
  *
  * One issue of making this a single data structure is that two pointers are
- * wasted for every page mapped except for pmap_kernel() mappings, all other
- * processes. What is the cost of that, it is reasonable to change the
- * structure to save that memory?
- *
- * The point of the overflow was to have lookups for wired entries,
- * if all of vmspace is mapped with physical address entries,
- * it is possible to perform the lookup in the table, 
- * thus no linked list for overflows is necessary.
+ * wasted for every page which does not map ram (device mappings), this 
+ * should be a low percentage of mapped pages in the system, so should not
+ * have too noticable unnecssary ram consumption.
  */
 
 
@@ -456,7 +446,6 @@ pmap_attr_save(paddr_t pa, u_int32_t bits)
 	*attr |= (u_int8_t)(bits >> ATTRSHIFT);
 }
 
-int stop_on_kernel=0;
 int
 pmap_enter(pm, va, pa, prot, flags)
 	pmap_t pm;
@@ -471,17 +460,6 @@ pmap_enter(pm, va, pa, prot, flags)
 	int need_sync;
 	int cache;
 
-#if 0
-printf("kernel pmap %x\n", pmap_kernel());
-printf("pmap_enter pm %x va %x pa %x prot %x flags %x\n",
-    pm, va, pa, prot, flags);
-if (pm != pmap_kernel()
-printf("pmap_enter pm %x va %x pa %x prot %x flags %x\n",
-    pm, va, pa, prot, flags);
-if (pm == pmap_kernel() && stop_on_kernel) 
-	Debugger();
-#endif
-
 	/* MP - Aquire lock for this pmap */
 
 	s = splimp();
@@ -494,7 +472,6 @@ if (pm == pmap_kernel() && stop_on_kernel)
 	}
 
 	pm->pm_stats.resident_count++;
-
 
 	/* Do not have pted for this, get one and put it in VP */
 	if (pted == NULL) {
@@ -521,7 +498,6 @@ if (pm == pmap_kernel() && stop_on_kernel)
 	 * we were told to map the page, probably called from vm_fault,
 	 * so map the page!
 	 */
-	pte_insert_path = 1;
 	pte_insert(pted);
 
 	splx(s);
@@ -542,12 +518,13 @@ void
 pmap_remove(struct pmap *pm, vaddr_t va, vaddr_t endva)
 {
 	vaddr_t addr;
+
 	/*
 	 * Should this be optimized for unmapped regions
 	 * rather than perform all of the vp lookups?
 	 * Not yet, still much faster than old version
 	 */
-	for (addr = va; addr < endva; addr+= PAGE_SIZE) {
+	for (addr = va; addr < endva; addr += PAGE_SIZE) {
 		pmap_remove_pg(pm, addr);
 	}
 }
@@ -582,11 +559,6 @@ pmap_remove_pg(struct pmap *pm, vaddr_t va)
 	}
 	pm->pm_stats.resident_count--;
 
-#if 0
-	printf("about to remove %x:%x %x %x %x from hash pted %p\n",
-	    va, pted->pted_va, pted->pted_pte.pte_hi, pted->pted_pte.pte_lo,
-	    pted->pted_pmap, pted);
-#endif
 	pmap_hash_remove(pted);
 
 	pted->pted_pte.pte_hi &= ~PTE_VALID;
@@ -617,9 +589,6 @@ _pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, int flags, int cache)
 	int s;
 	struct pmap *pm;
 	struct pted_pv_head *pvh;
-#if NEED_TO_SYNC_ON_KERNEL_MAP
-	int need_sync;
-#endif
 
 	pm = pmap_kernel();
 
@@ -657,31 +626,16 @@ _pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, int flags, int cache)
 	/* Calculate PTE */
 	pmap_fill_pte(pm, va, pa, pted, prot, flags, cache);
 
-#if 0
-	/*
-	 * Is it necessary to track kernel entries in pv table?
-	 */
-	if (pmap_enter_pv(pted, pvh)) {
-#if NEED_TO_SYNC_ON_KERNEL_MAP
-		need_sync = 1;
-#endif
-	}
-#endif
 	/*
 	 * Insert into HTAB
 	 * we were told to map the page, probably called from vm_fault,
 	 * so map the page!
 	 */
-	pte_insert_path = 2;
 	pte_insert(pted);
 	pted->pted_va |= PTED_VA_WIRED_M;
 
 	splx(s);
 
-#if NEED_TO_SYNC_ON_KERNEL_MAP
-	if (need_sync)
-		pmap_syncicache_user_virt(pm, va);
-#endif
 }
 
 void
@@ -726,11 +680,10 @@ pmap_kremove_pg(vaddr_t va)
 	 * so that we know the mapping information is either valid,
 	 * or that the mapping is not present in the hash table.
 	 */
-
 	pmap_hash_remove(pted);
 
 	if (PTED_MANAGED(pted))
-		pmap_remove_pv(pted); /* XXX - necessary? */
+		pmap_remove_pv(pted);
 
 	/* invalidate pted; */
 	pted->pted_pte.pte_hi &= ~PTE_VALID;
@@ -796,41 +749,6 @@ pmap_hash_remove(struct pte_desc *pted)
 #ifdef USE_WTABLE
 		pmap_wtable [idx] &= ~(1 << PTED_PTEGIDX(pted)); 
 #endif /* USE_WTABLE */
-#if 0
-	} else {
-		int i;
-		int found = 0;
-		sr = ptesr(pm->pm_sr, va);
-		idx = pteidx(sr, va);
-		ptp = pmap_ptable + (idx * 8);
-		for (i = 0; i < 8; i++) {
-			if (ptp[i].pte_hi ==
-			    (pted->pted_pte.pte_hi & ~ PTE_HID)) {
-				printf("found match at entry HID 0 %d"
-				    " hi %x lo %x\n", i, ptp[i].pte_hi,
-				    ptp[i].pte_lo );
-				found = 1;
-				pte_zap(&ptp[i], pted);
-			}
-		}
-
-		idx = idx ^ pmap_ptab_mask;
-		ptp = pmap_ptable + (idx * 8);
-		for (i = 0; i < 8; i++) {
-			if (ptp[i].pte_hi ==
-			    (pted->pted_pte.pte_hi | PTE_HID)) {
-				printf("found match at entry HID 1 %d"
-				    " hi %x lo %x\n", i, ptp[i].pte_hi,
-				    ptp[i].pte_lo );
-				found = 1;
-				pte_zap(&ptp[i], pted);
-			}
-		}
-		if (found == 1) {
-			printf("pmap_hash_remove: found at non-matching idx");
-			pmap_print_pted(pted, printf);
-		}
-#endif
 	}
 }
 
@@ -865,7 +783,8 @@ pmap_fill_pte(struct pmap *pm, vaddr_t va, paddr_t pa, struct pte_desc *pted,
 	} else {
 		pte->pte_lo |= PTE_RO;
 	}
-	pted->pted_va = va;	/* mask? - XXX */
+
+	pted->pted_va = va & ~PAGE_MASK;
 	pted->pted_pmap = pm;
 }
 
@@ -1024,7 +943,7 @@ pmap_pinit(struct pmap *pm)
 
 	/*
 	 * Allocate segment registers for this pmap.
-	 * try not to reuse pmap ids, to spread the hash table useage.
+	 * try not to reuse pmap ids, to spread the hash table usage.
 	 */
 again:
 	for (i = 0; i < NPMAPS; i++) {
@@ -1036,7 +955,7 @@ again:
 			/* pmap create lock? */
 			s = splimp();
 			if ((usedsr[tblidx] & (1 << tbloff)) == 1) {
-				/* DAMN, entry was stolen out from under us */
+				/* entry was stolen out from under us, retry */
 				splx(s); /* pmap create unlock */
 				goto again;
 			}
@@ -1127,9 +1046,13 @@ pmap_release(struct pmap *pm)
 	splx(s);
 }
 
-void pmap_vp_destroy(struct pmap *pm)
+void
+pmap_vp_destroy(struct pmap *pm)
 {
-	int i, j, k;
+	int i, j;
+#ifdef CHECK_IDX2_ENTRIES
+	int k;
+#endif
 	int s;
 	pmapvp_t *vp1;
 	pmapvp_t *vp2;
@@ -1145,6 +1068,8 @@ void pmap_vp_destroy(struct pmap *pm)
 				continue;
 			
 			if (pm->pm_stats.resident_count != 0) 
+#ifdef CHECK_IDX2_ENTRIES
+/* This is ifdefed because it should not happen, and has not been occuring */
 				for (k = 0; k < VP_IDX2_SIZE; k++) {
 					if (vp2->vp[k] != NULL) {
 						printf("PMAP NOT EMPTY"
@@ -1159,6 +1084,7 @@ void pmap_vp_destroy(struct pmap *pm)
 						    (k << VP_IDX2_POS));
 					}
 				}
+#endif
 			/* vp1->vp[j] = NULL; */
 			s = splimp();
 			pool_put(&pmap_vp_pool, vp2);
@@ -1212,22 +1138,6 @@ pmap_avail_setup(void)
 	}
 }
 
-void pmap_dump_mem(void);
-void
-pmap_dump_mem()
-{
-	struct mem_region *mp;
-		 
-	printf("avail: %x\n", pmap_cnt_avail );
-	for (mp = pmap_avail; mp->size != 0; mp++) {
-		printf("%08x %08x\n", mp->start, mp->start + mp->size);
-	}
-	printf("alloc:\n");
-	for (mp = pmap_allocated; mp->size != 0; mp++) {
-		printf("%08x %08x\n", mp->start, mp->start + mp->size);
-	}
-}
-
 
 void
 pmap_avail_fixup(void)
@@ -1254,6 +1164,7 @@ pmap_avail_fixup(void)
 		mp++;
 	}
 }
+
 /* remove a given region from avail memory */
 void
 pmap_remove_avail(paddr_t base, paddr_t end)
@@ -1363,7 +1274,6 @@ pmap_steal_avail(size_t size, int align)
 	    size, align);
 }
 
-
 void *msgbuf_addr;
 
 /*
@@ -1436,26 +1346,6 @@ pmap_bootstrap(u_int kernelstart, u_int kernelend)
 			vp2->vp[k] = pted;
 		}
 	}
-#if 0
-	/* this code is here for when BATs are removed */
-	/* map 32 meg (way too much I know) for kernel and data structures */
-	vp1 = pmap_steal_avail(sizeof (struct pmapvp), 4);
-	bzero (vp1, sizeof (struct pmapvp));
-	pmap_kernel()->pm_vp[0] = vp1;
-	for (i = 0; i < ((32 * 1024 *1024) >> 20); i++) {
-		vp2 = vp1->vp[i] = pmap_steal_avail(sizeof (struct pmapvp), 4);
-		bzero (vp2, sizeof (struct pmapvp));
-		for (k = 0; k < VP_IDX2_SIZE; k++) {
-			struct pte_desc *pted;
-			pted = pmap_steal_avail((sizeof (struct pte_desc)), 4);
-			vp2->vp[k] = pted;
-			bzero (pted, sizeof (struct pte_desc));
-		}
-	}
-	for (i = (SEGMENT_LENGTH >> 20); i < VP_IDX1_SIZE; i++) {
-		vp1->vp[i] = NULL;
-	}
-#endif
 
 	zero_page = VM_MIN_KERNEL_ADDRESS + ppc_kvm_stolen;
 	ppc_kvm_stolen += PAGE_SIZE;
@@ -1481,40 +1371,13 @@ pmap_bootstrap(u_int kernelstart, u_int kernelend)
 		      :: "r"((u_int)pmap_ptable | (pmap_ptab_mask >> 10)));
 
 	pmap_avail_fixup();
-	pmap_dump_mem();
 
-	/* what about all mapping all of "allocated" memory at this point
-	 * so that it is mapped 1-1? 
-	 * Previously this is done with BATs, __BAD__ should use the hash
-	 * like the rest of vm
-	 */
-	for (mp = pmap_allocated; mp->size !=0; mp++) {
-		vaddr_t addr;
-		vm_prot_t prot;
-		for (addr = mp->start ; addr < (vaddr_t)(mp->start+mp->size);
-			addr += PAGE_SIZE)
-		{
-			extern char _etext;
-			prot = VM_PROT_READ;
-			if (addr < 0x10000) {
-				prot |= VM_PROT_EXECUTE|VM_PROT_WRITE;
-			}
-			if (addr >= (((u_long)&_etext) & ~PAGE_MASK)) {
-				prot |= VM_PROT_EXECUTE|VM_PROT_WRITE;
-			}
-
-			/* - XXX not yet. must preallocated mappings first
-			pmap_kenter_pa(addr, addr, prot);
-			*/
-		}
-	}
 
 	tlbia();
 
 	npgs = 0;
 	for (mp = pmap_avail; mp->size; mp++) {
 		npgs += btoc(mp->size);
-		printf("loading %x-%x \n", mp->start, mp->start+mp->size);
 		uvm_page_physload(atop(mp->start), atop(mp->start+mp->size),
 		    atop(mp->start), atop(mp->start+mp->size),
 		    VM_FREELIST_DEFAULT);
@@ -1530,6 +1393,7 @@ void
 pmap_activate(struct proc *p)
 {
 }
+
 /*
  * deactivate a pmap entry
  * NOOP on powerpc
@@ -1569,7 +1433,7 @@ pmap_setusr(struct pmap *pm, vaddr_t va)
 
 	sr = pm->pm_sr[(u_int)va >> ADDR_SR_SHIFT];
 
-	/* user address range lock */
+	/* user address range lock?? */
 	asm volatile ("mfsr %0,%1"
 		      : "=r" (oldsr): "n"(USER_SR));
 	asm volatile ("isync; mtsr %0,%1; isync"
@@ -1803,6 +1667,7 @@ pmap_syncicache_user_virt(struct pmap *pm, vaddr_t va)
 		/* USER SEGMENT UNLOCK -MPXXX */
 	}
 }
+
 /*
  * Change a page to readonly
  */
@@ -1906,6 +1771,7 @@ pmap_protect(struct pmap *pm, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 	}
 	pmap_remove(pm, sva, eva);
 }
+
 /*
  * Restrict given range to physical memory
  */
@@ -1929,6 +1795,7 @@ pmap_real_memory(paddr_t *start, vm_size_t *size)
 	}
 	*size = 0;
 }
+
 /*
  * How much virtual space is available to the kernel?
  */
@@ -2016,16 +1883,13 @@ pte_spill_r(u_int32_t va, u_int32_t msr, u_int32_t dsisr)
 			retcode = 0;
 		} else {
 			retcode = 1;
-			pte_insert_path = 3;
 			pte_insert(pted);
 		}
 	}
 
-
 	return retcode;
 }
 
-int extra_debug = 0;
 int
 pte_spill_v(struct pmap *pm, u_int32_t va, u_int32_t dsisr)
 {
@@ -2049,16 +1913,7 @@ pte_spill_v(struct pmap *pm, u_int32_t va, u_int32_t dsisr)
 		}
 		return 0;
 	}
-	pte_insert_path = 4;
 	pte_insert(pted);
-
- if (extra_debug) {
-	printf("pte_spill_v pm %x va %x dsisr %x, pa %x pted %x ptedpm %x"
-	   " pted va %x\n",
-		pm, va, dsisr, pted->pted_pte.pte_lo, pted, pted->pted_pmap,
-		pted->pted_va);
- }
-
 	return 1;
 }
 
@@ -2090,15 +1945,6 @@ pte_insert(struct pte_desc *pted)
 	ptp += PTED_PTEGIDX(pted); /* increment by index into pteg */
 	if ((pted->pted_pte.pte_hi | (PTED_HID(pted) ? PTE_HID : 0))
 	    == ptp->pte_hi) {
-#if 0
-		if (pte_insert_path != 3) {
-		    printf("pte_insert: mapping already present pm %x va %x"
-			" pted %x path %x hi %x lo %x\n",
-			pted->pted_pmap, pted->pted_va, pted, pte_insert_path,
-			pted->pted_pte.pte_hi, pted->pted_pte.pte_lo );
-			 Debugger();
-		}
-#endif
 		pte_zap(ptp,pted);
 	}
 
@@ -2126,7 +1972,6 @@ pte_insert(struct pte_desc *pted)
 		__asm__ volatile ("sync");
 		ptp[i].pte_hi |= PTE_VALID;
 		__asm volatile ("sync");
-		pte_insert_path = 0;
 		return;
 	}
 	/* first just try fill of secondary hash */
@@ -2142,7 +1987,6 @@ pte_insert(struct pte_desc *pted)
 		__asm__ volatile ("sync");
 		ptp[i].pte_hi |= PTE_VALID;
 		__asm volatile ("sync");
-		pte_insert_path = 0;
 		return;
 	}
 
@@ -2183,10 +2027,9 @@ pte_insert(struct pte_desc *pted)
 	ptp->pte_lo = pted->pted_pte.pte_lo;
 	__asm__ volatile ("sync");
 	ptp->pte_hi |= PTE_VALID;
-	pte_insert_path = 0;
 }
 
-#if 1
+#ifdef DEBUG_PMAP
 void
 print_pteg(struct pmap *pm, vaddr_t va)
 {
@@ -2213,7 +2056,6 @@ print_pteg(struct pmap *pm, vaddr_t va)
 	    ptp[0].pte_lo, ptp[1].pte_lo, ptp[2].pte_lo, ptp[3].pte_lo,
 	    ptp[4].pte_lo, ptp[5].pte_lo, ptp[6].pte_lo, ptp[7].pte_lo);
 }
-#endif
 
 
 /* debugger assist function */
@@ -2358,3 +2200,4 @@ pmap_show_mappings(paddr_t pa)
 	}
 	return 0;
 }
+#endif
