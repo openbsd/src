@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.196 2002/06/07 08:54:48 beck Exp $
+#	$OpenBSD: rc,v 1.197 2002/06/09 21:15:54 hin Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -562,21 +562,6 @@ fi
 
 if [ -f /sbin/kbd -a -f /etc/kbdtype ]; then
 	kbd `cat /etc/kbdtype`
-fi
-
-# KerberosIV runs ONLY on the KDC servers
-# Kadmin runs only on the master server
-if [ X${krb4_master_kdc} = X"YES" ]; then
-	echo 'KerberosIV KDC'
-	/usr/libexec/kerberos >> /var/log/kerberos.log &
-	/usr/libexec/kadmind -n >> /var/log/kadmind.log &
-fi
-
-# Kpropd runs only on Kerberos slave servers
-if [ X${krb4_slave_kdc} = X"YES" ]; then
-	echo 'kerberos slave server'
-	/usr/libexec/kerberos -s >> /var/log/kerberos.log &
-	/usr/libexec/kpropd -i &
 fi
 
 # KerberosV master KDC
