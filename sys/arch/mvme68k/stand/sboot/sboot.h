@@ -1,4 +1,4 @@
-/*	$OpenBSD: sboot.h,v 1.3 1996/05/29 15:30:44 chuck Exp $ */
+/*	$OpenBSD: sboot.h,v 1.4 1996/10/16 13:50:02 mickey Exp $ */
 
 /*
  * Copyright (c) 1995 Charles D. Cranor and Seth Widoff
@@ -35,23 +35,10 @@
  * sboot.h: stuff for MVME147's serial line boot
  */
 
-typedef unsigned short u_short;
-typedef unsigned long u_long;
-typedef unsigned char u_char;
-typedef unsigned int u_int;
-typedef u_long size_t;
-typedef char *caddr_t;
 extern caddr_t end;
-
-#define NULL ((char *)0)
-
-void bcopy __P((const void *, void *, size_t));		/* libc_sa */
-void *memset __P((void *, int, size_t));		/* libc_sa */
-int printf __P((const char *, ...));			/* libc_sa */
 
 /* console */
 void puts __P((char *));
-void putchar __P((char));
 char cngetc __P((void));
 char *ngets __P((char *, int));
 

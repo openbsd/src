@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le.c,v 1.3 1996/04/28 10:49:38 deraadt Exp $ */
+/*	$OpenBSD: if_le.c,v 1.4 1996/10/16 13:50:01 mickey Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -61,6 +61,7 @@
  */
 
 #include <sys/cdefs.h>
+#include <stand.h>
 #include "sboot.h"
 #include "if_lereg.h"
 
