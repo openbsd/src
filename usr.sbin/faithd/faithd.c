@@ -1,4 +1,4 @@
-/*	$OpenBSD: faithd.c,v 1.23 2003/03/13 09:09:46 deraadt Exp $	*/
+/*	$OpenBSD: faithd.c,v 1.24 2003/05/15 00:26:55 itojun Exp $	*/
 /*	$KAME: faithd.c,v 1.58 2002/09/08 01:12:30 itojun Exp $	*/
 
 /*
@@ -266,18 +266,13 @@ daemon_main(int argc, char **argv)
 		if (serverargc >= MAXARGV)
 			exit_stderr("too many arguments");
 
-		len = strlen(argv[NUMPRG]) + 1;
-		serverpath = malloc(len);
+		serverpath = strdup(argv[NUMPRG]);
 		if (!serverpath)
 			exit_stderr("not enough core");
-		strlcpy(serverpath, argv[NUMPRG], len);
 		for (i = 0; i < serverargc; i++) {
-			int len = strlen(argv[i + NUMARG]) + 1;
-
-			serverarg[i] = malloc(len);
+			serverarg[i] = strdup(argv[i + NUMARG]);
 			if (!serverarg[i])
 				exit_stderr("not enough core");
-			strlcpy(serverarg[i], argv[i + NUMARG], len);
 		}
 		serverarg[i] = NULL;
 		/* fall throuth */
@@ -297,7 +292,7 @@ daemon_main(int argc, char **argv)
 	hints.ai_flags = AI_PASSIVE;
 	hints.ai_family = family;
 	hints.ai_socktype = SOCK_STREAM;
-	hints.ai_protocol = 0;
+	hints.ai_protocol = IPPROTO_TCP;
 	error = getaddrinfo(NULL, service, &hints, &res);
 	if (error)
 		exit_failure("getaddrinfo: %s", gai_strerror(error));
