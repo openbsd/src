@@ -1,4 +1,4 @@
-/*	$OpenBSD: commands.c,v 1.4 2002/02/16 21:27:55 millert Exp $	*/
+/*	$OpenBSD: commands.c,v 1.5 2002/05/29 18:33:40 deraadt Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -227,7 +227,8 @@ static char *err_string()
 		{
 		    return(err_listem);
 		}
-		(void) strcat(string, "; ");	  /* we know there's more */
+		/* we know there's more */
+		(void) strlcat(string, "; ", sizeof string);
 	    }
 	    currerr = errp->errno;
 	    first = Yes;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: jot.c,v 1.9 2002/02/16 21:27:47 millert Exp $	*/
+/*	$OpenBSD: jot.c,v 1.10 2002/05/29 18:33:38 deraadt Exp $	*/
 /*	$NetBSD: jot.c,v 1.3 1994/12/02 20:29:43 pk Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)jot.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: jot.c,v 1.9 2002/02/16 21:27:47 millert Exp $";
+static char rcsid[] = "$OpenBSD: jot.c,v 1.10 2002/05/29 18:33:38 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -362,7 +362,7 @@ getformat()
 	} else if (!*(p+1)) {
 		if (sz <= 0)
 			errx(1, "-w word too long");
-		strcat(format, "%");		/* cannot end in single '%' */
+		strlcat(format, "%", sizeof format);	/* cannot end in single '%' */
 	} else {
 		for (; *p && !isalpha(*p); p++)
 			/* Certain nonalphanumerics we can't allow */

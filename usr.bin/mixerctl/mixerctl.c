@@ -1,4 +1,4 @@
-/*	$OpenBSD: mixerctl.c,v 1.7 2002/02/16 21:27:49 millert Exp $	*/
+/*	$OpenBSD: mixerctl.c,v 1.8 2002/05/29 18:33:39 deraadt Exp $	*/
 /*	$NetBSD: mixerctl.c,v 1.11 1998/04/27 16:55:23 augustss Exp $	*/
 
 /*
@@ -70,10 +70,14 @@ catstr(p, q)
 	char *p;
 	char *q;
 {
-	char *r = malloc(strlen(p) + strlen(q) + 2);
-	strcpy(r, p);
-	strcat(r, ".");
-	strcat(r, q);
+	int len;
+	char *r;
+
+	len = strlen(p) + 1 + strlen(q) + 1;
+	r = malloc(len);
+	strlcpy(r, p, len);
+	strlcat(r, ".", len);
+	strlcat(r, q, len);
 	return r;
 }
 

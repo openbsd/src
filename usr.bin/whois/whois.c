@@ -1,4 +1,4 @@
-/*	$OpenBSD: whois.c,v 1.14 2002/02/16 21:27:59 millert Exp $	*/
+/*	$OpenBSD: whois.c,v 1.15 2002/05/29 18:33:40 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)whois.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: whois.c,v 1.14 2002/02/16 21:27:59 millert Exp $";
+static char rcsid[] = "$OpenBSD: whois.c,v 1.15 2002/05/29 18:33:40 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -162,21 +162,22 @@ main(argc, argv)
 				if ((*argv)[i] == '.')
 					j = i;
 			if (j != 0) {
-				qnichost = (char *) calloc(i - j + 1 +
-				    strlen(QNICHOST_TAIL), sizeof(char));
+				int len = i - j + 1 + strlen(QNICHOST_TAIL);
+
+				qnichost = (char *) calloc(len, sizeof(char));
 				if (!qnichost)
 					err(1, "malloc");
-				strcpy(qnichost, *argv + j + 1);
-				strcat(qnichost, QNICHOST_TAIL);
+				strlcpy(qnichost, *argv + j + 1, len);
+				strlcat(qnichost, QNICHOST_TAIL, len);
 				memset(&hints, 0, sizeof(hints));
 				hints.ai_flags = 0;
 				hints.ai_family = AF_UNSPEC;
 				hints.ai_socktype = SOCK_STREAM;
 				error = getaddrinfo(qnichost, "whois",
-						&hints, &res);
+				    &hints, &res);
 				if (error != 0)
 					errx(EX_NOHOST, "%s: %s", qnichost,
-						gai_strerror(error));
+					    gai_strerror(error));
 			}
 		}
 		if (!qnichost) {
@@ -187,7 +188,7 @@ main(argc, argv)
 			error = getaddrinfo(host, "whois", &hints, &res);
 			if (error != 0)
 				errx(EX_NOHOST, "%s: %s", host,
-					gai_strerror(error));
+				    gai_strerror(error));
 		}
 
 		whois(*argv++, res, flags);
