@@ -1,4 +1,4 @@
-/*	$OpenBSD: cap_mkdb.c,v 1.6 2000/09/22 22:22:22 naddy Exp $	*/
+/*	$OpenBSD: cap_mkdb.c,v 1.7 2001/06/18 18:17:58 millert Exp $	*/
 /*	$NetBSD: cap_mkdb.c,v 1.5 1995/09/02 05:47:12 jtc Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)cap_mkdb.c	8.2 (Berkeley) 4/27/95";
 #endif
-static char rcsid[] = "$OpenBSD: cap_mkdb.c,v 1.6 2000/09/22 22:22:22 naddy Exp $";
+static char rcsid[] = "$OpenBSD: cap_mkdb.c,v 1.7 2001/06/18 18:17:58 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -119,7 +119,7 @@ main(argc, argv)
 
 	/*
 	 * The database file is the first argument if no name is specified.
-	 * Make arrangements to unlink it if exit badly.
+	 * Make arrangements to unlink it if we exit badly.
 	 */
 	(void)snprintf(buf, sizeof(buf), "%s.db", capname ? capname : *argv);
 	if ((capname = strdup(buf)) == NULL)
@@ -167,6 +167,8 @@ db_build(ifiles)
 	size_t len, bplen;
 	int st;
 	char *bp, *p, *t;
+
+	cgetusedb(0);		/* disable reading of .db files in getcap(3) */
 
 	data.data = NULL;
 	key.data = NULL;
