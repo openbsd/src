@@ -31,6 +31,10 @@ To get a telnet client and server with kerberos5 support, do the following:
 # cd /usr/src/libexec/telnetd
 # make ; make install 
 
+The krb5.conf and krb5.keytab files have recently been moved to
+/etc/kerberosV directory. If you've previously used this code you should
+move those files.
+
 
 Documentation
 =============
@@ -54,6 +58,10 @@ string "krb5" at the end of the authentication methods. You should now be
 able to login with Kerberos 5 passwords by typing your login name followed
 by ":krb5" on the login prompt.
 
+If you put krb5 first in the list of configuration styles, you will be
+able to login without type ":krb5" at the end, but we do not recommend it
+at this time.
+
 Su does not work at this time, but we expect it to do so in the near future.
 
 
@@ -64,7 +72,9 @@ Things todo, in no particular order:
 
  - Make sure to not try krb5 auth when no ticket exists. (same goes for krb4)
    (i think this is actually ok, but it needs to be verified.)
- - kpasswdd and hack krb5 support in our passwd
+ - hack krb5 support in our passwd - we should probably change to using
+   BSD authentication for password changing aswell.
+ - Password quality checks in kpasswdd
  - krb5-config script
  - kx, kxd
  - krb5 support in login, xdm, xlock, su and sudo
@@ -83,3 +93,4 @@ Things todo, in no particular order:
    programs. So we should document them and give back to the Heimdal project.
  - Fix /etc/rc and companions
  - Example configuration installed when system is installed
+ - GSS-API support in our ftp client and server
