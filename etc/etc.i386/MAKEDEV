@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.31 1996/11/10 21:39:18 downsj Exp $
+#	$OpenBSD: MAKEDEV,v 1.32 1996/11/11 20:47:21 kstailey Exp $
 #	$NetBSD: MAKEDEV,v 1.40 1996/03/31 00:50:47 perry Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -80,6 +80,7 @@
 #	pcmcia*	PCMCIA card drivers
 #	*random	inkernel random number generator
 #	uk*	"unknown SCSI" devices
+#	ss*	SCSI scanners
 #
 
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
@@ -95,7 +96,7 @@ all)
 	sh MAKEDEV lpt0 lpt1 lpt2 ttyC0 ttyC1 ttyC2 bpf0 bpf1 bpf2 bpf3
 	sh MAKEDEV ipl tun0 tun1 tun2
 	sh MAKEDEV speaker lkm mms0 lms0 pms0 audio joy0 joy1 apm pcmcia local
-	sh MAKEDEV random uk0 uk1 pctr
+	sh MAKEDEV random uk0 uk1 ss0 ss1 pctr
 # MISSING:
 #	sh MAKEDEV mouse-?
 	;;
@@ -438,6 +439,17 @@ uk*)
 	mknod uk$unit c 20 $unit
 	chown root.operator uk$unit
 	chmod 640 uk$unit
+	;;
+
+ss*)
+	unit=`expr $i : 'ss\(.*\)'`
+	rm -f ss$unit
+	mknod ss$unit c 19 $unit
+	chown root.operator ss$unit
+	chmod 440 ss$unit
+#	backwards compatibility with older PINTs
+	rm -f scan$unit
+	ln -s ss$unit scan$unit
 	;;
 
 pctr)
