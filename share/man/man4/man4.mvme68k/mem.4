@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mem.4,v 1.8 2003/06/02 23:30:13 millert Exp $
+.\"	$OpenBSD: mem.4,v 1.9 2003/09/02 21:32:13 miod Exp $
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -58,7 +58,7 @@ in the same manner as
 Only kernel virtual addresses that are currently mapped to memory are allowed.
 .Pp
 On the mvme68k,
-physical memory may be discontiguous;
+physical memory is always contiguous;
 kernel virtual memory begins at
 .Ad 0x00000000 .
 .Pp
