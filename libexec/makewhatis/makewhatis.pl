@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 # ex:ts=8 sw=4:
 
-# $OpenBSD: makewhatis.pl,v 1.20 2002/04/02 03:17:16 espie Exp $
+# $OpenBSD: makewhatis.pl,v 1.21 2002/04/16 20:07:07 espie Exp $
 #
 # Copyright (c) 2000 Marc Espie.
 # 
@@ -290,6 +290,7 @@ sub handle_unformated
 		    my @keep = ();
 		    my $nd_seen = 0;
 		    while (<$f>) {
+		    	next if m/^\.\\\"/;
 			last if m/^\.\s*Sh/;
 			s/\s,/,/g;
 			if (s/^\.\s*(\S\S)\s+//) {
