@@ -1,4 +1,4 @@
-#	$OpenBSD: GECKO,v 1.15 2002/03/15 22:51:27 mickey Exp $
+#	$OpenBSD: GECKO,v 1.16 2002/10/01 21:18:17 mickey Exp $
 #
 # HP 9000/712/{60,80,80i,100} boxens
 #
@@ -9,12 +9,13 @@ include	"conf/GENERIC"
 
 maxusers	32
 
-option		HP7100LC_CPU
-option		HP7300LC_CPU
+option	HP7100LC_CPU
+option	HP7300LC_CPU
+option	FPEMUL			# some fp insns are not implemented
 
-#option	 	COMPAT_HPUX	# HP-UX binary compatibility
-#option		COMPAT_LINUX	# MkLinux/Linux binary compatibility
-#option		COMPAT_OSF1	# OSF1 binary compatibility
+#option	COMPAT_HPUX	# HP-UX binary compatibility
+#option	COMPAT_LINUX	# MkLinux/Linux binary compatibility
+#option	COMPAT_OSF1	# OSF1 binary compatibility
 
 config	bsd swap generic
 
