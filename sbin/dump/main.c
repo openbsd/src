@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.22 1998/08/11 20:00:14 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.23 1998/08/11 20:26:59 millert Exp $	*/
 /*	$NetBSD: main.c,v 1.14 1997/06/05 11:13:24 lukem Exp $	*/
 
 /*-
@@ -107,7 +107,7 @@ main(argc, argv)
 	register ino_t ino;
 	register int dirty;
 	register struct dinode *dp;
-	register struct	fstab *dt = NULL;
+	register struct	fstab *dt;
 	register char *map;
 	register int ch;
 	struct tm then;
@@ -116,7 +116,7 @@ main(argc, argv)
 	ino_t maxino;
 	time_t tnow;
 	int dirlist;
-	char *toplevel, *str;
+	char *toplevel, *str, *mount_point = NULL;
 
 	spcl.c_date = 0;
 	(void)time((time_t *)&spcl.c_date);
@@ -350,24 +350,26 @@ main(argc, argv)
 	if (!statfs(disk, &fsbuf) && !strcmp(fsbuf.f_mntonname, disk)) {
 		/* mounted disk? */
 		disk = rawname(fsbuf.f_mntfromname);
+		mount_point = fsbuf.f_mntonname;
 		(void)strlcpy(spcl.c_dev, fsbuf.f_mntfromname,
 		    sizeof(spcl.c_dev));
 		if (dirlist != 0) {
 			(void)snprintf(spcl.c_filesys, sizeof(spcl.c_filesys),
-			    "a subset of %s", fsbuf.f_mntonname);
+			    "a subset of %s", mount_point);
 		} else {
-			(void)strlcpy(spcl.c_filesys, fsbuf.f_mntonname,
+			(void)strlcpy(spcl.c_filesys, mount_point,
 			    sizeof(spcl.c_filesys));
 		}
 	} else if ((dt = fstabsearch(disk)) != NULL) {
 		/* in fstab? */
 		disk = rawname(dt->fs_spec);
+		mount_point = dt->fs_file;
 		(void)strlcpy(spcl.c_dev, dt->fs_spec, sizeof(spcl.c_dev));
 		if (dirlist != 0) {
 			(void)snprintf(spcl.c_filesys, sizeof(spcl.c_filesys),
-			    "a subset of %s", dt->fs_file);
+			    "a subset of %s", mount_point);
 		} else {
-			(void)strlcpy(spcl.c_filesys, dt->fs_file,
+			(void)strlcpy(spcl.c_filesys, mount_point,
 			    sizeof(spcl.c_filesys));
 		}
 	} else {
@@ -388,8 +390,8 @@ main(argc, argv)
  	msg("Date of last level %c dump: %s", lastlevel,
 		spcl.c_ddate == 0 ? "the epoch\n" : ctime(&spcl.c_ddate));
 	msg("Dumping %s ", disk);
-	if (dt != NULL)
-		msgtail("(%s) ", dt->fs_file);
+	if (mount_point != NULL)
+		msgtail("(%s) ", mount_point);
 	if (host)
 		msgtail("to %s on host %s\n", tape, host);
 	else
