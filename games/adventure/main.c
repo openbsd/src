@@ -68,8 +68,9 @@ char **argv;
 	struct text *kk;
 	extern trapdel();
 
-	egid = getegid();
+	/* revoke privs */
 	setegid(getgid());
+	setgid(getgid());
 
 	init();		/* Initialize everything */
 	signal(SIGINT,trapdel);

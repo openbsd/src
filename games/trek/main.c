@@ -155,6 +155,7 @@ int	Mother	= 51 + (51 << 8);
 
 jmp_buf env;
 
+int
 main(argc, argv)
 int	argc;
 char	**argv;
@@ -167,6 +168,8 @@ char	**argv;
 	register char		**av;
 	struct	termios		argp;
 
+	/* revoke privs */
+	setegid(getgid());
 	setgid(getgid());
 
 	av = argv;
