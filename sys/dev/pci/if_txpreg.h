@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_txpreg.h,v 1.18 2001/04/30 05:04:08 jason Exp $ */
+/*	$OpenBSD: if_txpreg.h,v 1.19 2001/05/02 15:00:34 jason Exp $ */
 
 /*
  * Copyright (c) 2001 Aaron Campbell <aaron@monkey.org>.
@@ -506,12 +506,9 @@ struct txp_hostvar {
 #define	TXP_OFFSET2IDX(off)	((off) >> 4)
 
 struct txp_dma_alloc {
-	caddr_t			dma_vaddr;
 	u_int64_t		dma_paddr;
-	bus_size_t		dma_siz;
+	caddr_t			dma_vaddr;
 	bus_dmamap_t		dma_map;
-	bus_dma_segment_t	dma_seg;
-	int			dma_nseg;
 };
 
 struct txp_cmd_ring {

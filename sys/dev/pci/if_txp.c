@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_txp.c,v 1.21 2001/04/30 04:52:20 jason Exp $	*/
+/*	$OpenBSD: if_txp.c,v 1.22 2001/05/02 15:00:32 jason Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -755,7 +755,7 @@ txp_alloc_rings(sc)
 		printf(": can't allocate host ring\n");
 		goto bail_boot;
 	}
-	bzero(sc->sc_host_dma.dma_vaddr, sc->sc_host_dma.dma_siz);
+	bzero(sc->sc_host_dma.dma_vaddr, sizeof(struct txp_hostvar));
 	boot->br_hostvar_lo = sc->sc_host_dma.dma_paddr & 0xffffffff;
 	boot->br_hostvar_hi = sc->sc_host_dma.dma_paddr >> 32;
 	sc->sc_hostvar = (struct txp_hostvar *)sc->sc_host_dma.dma_vaddr;
@@ -766,7 +766,7 @@ txp_alloc_rings(sc)
 		printf(": can't allocate high tx ring\n");
 		goto bail_host;
 	}
-	bzero(sc->sc_txhiring_dma.dma_vaddr, sc->sc_txhiring_dma.dma_siz);
+	bzero(sc->sc_txhiring_dma.dma_vaddr, sizeof(struct txp_tx_desc) * TX_ENTRIES);
 	boot->br_txhipri_lo = sc->sc_txhiring_dma.dma_paddr & 0xffffffff;
 	boot->br_txhipri_hi = sc->sc_txhiring_dma.dma_paddr >> 32;
 	boot->br_txhipri_siz = TX_ENTRIES * sizeof(struct txp_tx_desc);
@@ -781,7 +781,7 @@ txp_alloc_rings(sc)
 		printf(": can't allocate low tx ring\n");
 		goto bail_txhiring;
 	}
-	bzero(sc->sc_txloring_dma.dma_vaddr, sc->sc_txloring_dma.dma_siz);
+	bzero(sc->sc_txloring_dma.dma_vaddr, sizeof(struct txp_tx_desc) * TX_ENTRIES);
 	boot->br_txlopri_lo = sc->sc_txloring_dma.dma_paddr & 0xffffffff;
 	boot->br_txlopri_hi = sc->sc_txloring_dma.dma_paddr >> 32;
 	boot->br_txlopri_siz = TX_ENTRIES * sizeof(struct txp_tx_desc);
@@ -796,7 +796,7 @@ txp_alloc_rings(sc)
 		printf(": can't allocate high rx ring\n");
 		goto bail_txloring;
 	}
-	bzero(sc->sc_rxhiring_dma.dma_vaddr, sc->sc_rxhiring_dma.dma_siz);
+	bzero(sc->sc_rxhiring_dma.dma_vaddr, sizeof(struct txp_rx_desc) * RX_ENTRIES);
 	boot->br_rxhipri_lo = sc->sc_rxhiring_dma.dma_paddr & 0xffffffff;
 	boot->br_rxhipri_hi = sc->sc_rxhiring_dma.dma_paddr >> 32;
 	boot->br_rxhipri_siz = RX_ENTRIES * sizeof(struct txp_rx_desc);
@@ -811,7 +811,7 @@ txp_alloc_rings(sc)
 		printf(": can't allocate low rx ring\n");
 		goto bail_rxhiring;
 	}
-	bzero(sc->sc_rxloring_dma.dma_vaddr, sc->sc_rxloring_dma.dma_siz);
+	bzero(sc->sc_rxloring_dma.dma_vaddr, sizeof(struct txp_rx_desc) * RX_ENTRIES);
 	boot->br_rxlopri_lo = sc->sc_rxloring_dma.dma_paddr & 0xffffffff;
 	boot->br_rxlopri_hi = sc->sc_rxloring_dma.dma_paddr >> 32;
 	boot->br_rxlopri_siz = RX_ENTRIES * sizeof(struct txp_rx_desc);
@@ -826,7 +826,7 @@ txp_alloc_rings(sc)
 		printf(": can't allocate command ring\n");
 		goto bail_rxloring;
 	}
-	bzero(sc->sc_cmdring_dma.dma_vaddr, sc->sc_cmdring_dma.dma_siz);
+	bzero(sc->sc_cmdring_dma.dma_vaddr, sizeof(struct txp_cmd_desc) * CMD_ENTRIES);
 	boot->br_cmd_lo = sc->sc_cmdring_dma.dma_paddr & 0xffffffff;
 	boot->br_cmd_hi = sc->sc_cmdring_dma.dma_paddr >> 32;
 	boot->br_cmd_siz = CMD_ENTRIES * sizeof(struct txp_cmd_desc);
@@ -840,7 +840,7 @@ txp_alloc_rings(sc)
 		printf(": can't allocate response ring\n");
 		goto bail_cmdring;
 	}
-	bzero(sc->sc_rspring_dma.dma_vaddr, sc->sc_rspring_dma.dma_siz);
+	bzero(sc->sc_rspring_dma.dma_vaddr, sizeof(struct txp_rsp_desc) * RSP_ENTRIES);
 	boot->br_resp_lo = sc->sc_rspring_dma.dma_paddr & 0xffffffff;
 	boot->br_resp_hi = sc->sc_rspring_dma.dma_paddr >> 32;
 	boot->br_resp_siz = CMD_ENTRIES * sizeof(struct txp_rsp_desc);
@@ -854,7 +854,7 @@ txp_alloc_rings(sc)
 		printf(": can't allocate rx buffer ring\n");
 		goto bail_rspring;
 	}
-	bzero(sc->sc_rxbufring_dma.dma_vaddr, sc->sc_rxbufring_dma.dma_siz);
+	bzero(sc->sc_rxbufring_dma.dma_vaddr, sizeof(struct txp_rxbuf_desc) * RXBUF_ENTRIES);
 	boot->br_rxbuf_lo = sc->sc_rxbufring_dma.dma_paddr & 0xffffffff;
 	boot->br_rxbuf_hi = sc->sc_rxbufring_dma.dma_paddr >> 32;
 	boot->br_rxbuf_siz = RXBUF_ENTRIES * sizeof(struct txp_rxbuf_desc);
@@ -888,7 +888,7 @@ txp_alloc_rings(sc)
 		printf(": can't allocate response ring\n");
 		goto bail_rxbufring;
 	}
-	bzero(sc->sc_zero_dma.dma_vaddr, sc->sc_zero_dma.dma_siz);
+	bzero(sc->sc_zero_dma.dma_vaddr, sizeof(u_int32_t));
 	boot->br_zero_lo = sc->sc_zero_dma.dma_paddr & 0xffffffff;
 	boot->br_zero_hi = sc->sc_zero_dma.dma_paddr >> 32;
 
@@ -959,38 +959,35 @@ txp_dma_malloc(sc, size, dma, mapflags)
 {
         int r;
 
-	if ((r = bus_dmamem_alloc(sc->sc_dmat, size, PAGE_SIZE, 0,
-	    &dma->dma_seg, 1, &dma->dma_nseg, BUS_DMA_NOWAIT)) != 0) {
+	if ((r = bus_dmamap_create(sc->sc_dmat, size, 1, size, 0,
+	    BUS_DMA_NOWAIT, &dma->dma_map)) != 0)
 		return (r);
-	}
-	if (dma->dma_nseg != 1) {
-		bus_dmamem_free(sc->sc_dmat, &dma->dma_seg, dma->dma_nseg);
-		return (-1);
-	}
-	   
-	if ((r = bus_dmamem_map(sc->sc_dmat, &dma->dma_seg, dma->dma_nseg,
-	    size, &dma->dma_vaddr, mapflags | BUS_DMA_NOWAIT)) != 0) {
-		bus_dmamem_free(sc->sc_dmat, &dma->dma_seg, dma->dma_nseg);
+
+	if ((r = bus_dmamem_alloc(sc->sc_dmat, size, PAGE_SIZE, 0,
+	    dma->dma_map->dm_segs, dma->dma_map->dm_nsegs,
+	    &dma->dma_map->dm_nsegs, BUS_DMA_NOWAIT)) != 0) {
+		bus_dmamap_destroy(sc->sc_dmat, dma->dma_map);
 		return (r);
 	}
 
-	if ((r = bus_dmamap_create(sc->sc_dmat, size, dma->dma_nseg,
-	    size, 0, BUS_DMA_NOWAIT, &dma->dma_map)) != 0) {
-		bus_dmamem_unmap(sc->sc_dmat, dma->dma_vaddr, size);
-		bus_dmamem_free(sc->sc_dmat, &dma->dma_seg, dma->dma_nseg);
+	if ((r = bus_dmamem_map(sc->sc_dmat, dma->dma_map->dm_segs,
+	    dma->dma_map->dm_nsegs, size, &dma->dma_vaddr,
+	    mapflags | BUS_DMA_NOWAIT)) != 0) {
+		bus_dmamem_free(sc->sc_dmat, dma->dma_map->dm_segs,
+		    dma->dma_map->dm_nsegs);
+		bus_dmamap_destroy(sc->sc_dmat, dma->dma_map);
 		return (r);
 	}
 
 	if ((r = bus_dmamap_load(sc->sc_dmat, dma->dma_map, dma->dma_vaddr,
 	    size, NULL, BUS_DMA_NOWAIT)) != 0) {
-		bus_dmamap_destroy(sc->sc_dmat, dma->dma_map);
 		bus_dmamem_unmap(sc->sc_dmat, dma->dma_vaddr, size);
-		bus_dmamem_free(sc->sc_dmat, &dma->dma_seg, dma->dma_nseg);
+		bus_dmamem_free(sc->sc_dmat, dma->dma_map->dm_segs, dma->dma_map->dm_nsegs);
+		bus_dmamap_destroy(sc->sc_dmat, dma->dma_map);
 		return (r);
 	}
 
 	dma->dma_paddr = dma->dma_map->dm_segs[0].ds_addr;
-	dma->dma_siz = size;
 
 	return (0);
 }
@@ -1000,10 +997,10 @@ txp_dma_free(sc, dma)
 	struct txp_softc *sc;
 	struct txp_dma_alloc *dma;
 {
+	bus_dmamem_unmap(sc->sc_dmat, dma->dma_vaddr, dma->dma_map->dm_mapsize);
+	bus_dmamem_free(sc->sc_dmat, dma->dma_map->dm_segs, dma->dma_map->dm_nsegs);
 	bus_dmamap_unload(sc->sc_dmat, dma->dma_map);
 	bus_dmamap_destroy(sc->sc_dmat, dma->dma_map);
-	bus_dmamem_unmap(sc->sc_dmat, dma->dma_vaddr, dma->dma_siz);
-	bus_dmamem_free(sc->sc_dmat, &dma->dma_seg, dma->dma_nseg);
 }
 
 int
