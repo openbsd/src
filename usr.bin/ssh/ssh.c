@@ -11,7 +11,7 @@
  */
 
 #include "includes.h"
-RCSID("$Id: ssh.c,v 1.46 2000/04/12 07:45:44 markus Exp $");
+RCSID("$Id: ssh.c,v 1.47 2000/04/14 10:11:12 markus Exp $");
 
 #include "xmalloc.h"
 #include "ssh.h"
@@ -128,6 +128,7 @@ usage()
 	fprintf(stderr, "  -g          Allow remote hosts to connect to forwarded ports.\n");
 	fprintf(stderr, "  -4          Use IPv4 only.\n");
 	fprintf(stderr, "  -6          Use IPv6 only.\n");
+	fprintf(stderr, "  -2          Force protocol version 2.\n");
 	fprintf(stderr, "  -o 'option' Process the option as if it was read from a configuration file.\n");
 	exit(1);
 }
@@ -266,6 +267,10 @@ main(int ac, char **av)
 			optarg = NULL;
 		}
 		switch (opt) {
+		case '2':
+			options.protocol = SSH_PROTO_2;
+			break;
+
 		case '4':
 			IPv4or6 = AF_INET;
 			break;
