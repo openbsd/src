@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.109 2004/02/10 19:53:33 grange Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.110 2004/02/24 21:45:01 tedu Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)sysctl.c	8.5 (Berkeley) 5/9/95";
 #else
-static const char rcsid[] = "$OpenBSD: sysctl.c,v 1.109 2004/02/10 19:53:33 grange Exp $";
+static const char rcsid[] = "$OpenBSD: sysctl.c,v 1.110 2004/02/24 21:45:01 tedu Exp $";
 #endif
 #endif /* not lint */
 
@@ -193,6 +193,7 @@ int sysctl_inet(char *, char **, int *, int, int *);
 #ifdef INET6
 int sysctl_inet6(char *, char **, int *, int, int *);
 #endif
+int sysctl_bpf(char *, char **, int *, int, int *);
 int sysctl_ipx(char *, char **, int *, int, int *);
 int sysctl_fs(char *, char **, int *, int, int *);
 static int sysctl_vfs(char *, char **, int[], int, int *);
@@ -537,6 +538,12 @@ parse(char *string, int flags)
 			if (len >= 0)
 				break;
 			return;
+		}
+		if (mib[1] == PF_BPF) {
+			len = sysctl_bpf(string, &bufp, mib, flags, &type);
+			if (len < 0)
+				return;
+			break;
 		}
 		if (flags == 0)
 			return;
@@ -1289,6 +1296,7 @@ struct ctlname grename[] = GRECTL_NAMES;
 struct ctlname mobileipname[] = MOBILEIPCTL_NAMES;
 struct ctlname ipcompname[] = IPCOMPCTL_NAMES;
 struct ctlname carpname[] = CARPCTL_NAMES;
+struct ctlname bpfname[] = CTL_NET_BPF_NAMES;
 struct list inetlist = { inetname, IPPROTO_MAXID };
 struct list inetvars[] = {
 	{ ipname, IPCTL_MAXID },	/* ip */
@@ -1405,6 +1413,7 @@ struct list inetvars[] = {
 	{ 0, 0 },
 	{ carpname, CARPCTL_MAXID },
 };
+struct list bpflist = { bpfname, NET_BPF_MAXID };
 
 struct list kernmalloclist = { kernmallocname, KERN_MALLOC_MAXID };
 struct list forkstatlist = { forkstatname, KERN_FORKSTAT_MAXID };
@@ -1883,6 +1892,23 @@ sysctl_ipx(char *string, char **bufpp, int mib[], int flags, int *typep)
 	mib[3] = indx;
 	*typep = lp->list[indx].ctl_type;
 	return (4);
+}
+
+/* handle bpf requests */
+int
+sysctl_bpf(char *string, char **bufpp, int mib[], int flags, int *typep)
+{
+	int indx;
+
+	if (*bufpp == NULL) {
+		listall(string, &bpflist);
+		return (-1);
+	}
+	if ((indx = findname(string, "third", bufpp, &bpflist)) == -1)
+		return (-1);
+	mib[2] = indx;
+	*typep = CTLTYPE_INT;
+	return (3);
 }
 
 /*
