@@ -17,11 +17,8 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
-#if !defined (HOST_BYTE_ORDER)
-#define HOST_BYTE_ORDER LITTLE_ENDIAN
-#endif
+/* Get generic OpenBSD host definitions. */
+#include "xm-obsd.h"
 
 /* The alpha has no siginterrupt routine.  */
 #define NO_SIGINTERRUPT
-
-#define HAVE_TERMIOS
