@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_balloc.c,v 1.16 2001/11/13 00:10:56 art Exp $	*/
+/*	$OpenBSD: ffs_balloc.c,v 1.17 2001/11/13 16:01:10 art Exp $	*/
 /*	$NetBSD: ffs_balloc.c,v 1.3 1996/02/09 22:22:21 christos Exp $	*/
 
 /*
@@ -79,7 +79,8 @@ ffs_balloc(struct inode *ip, off_t startoffset, int size, struct ucred *cred,
 	size = blkoff(fs, startoffset) + size;
 	if (size > fs->fs_bsize)
 		panic("ffs_balloc: blk too big");
-	*bpp = NULL;
+	if (bpp != NULL)
+		*bpp = NULL;
 	if (lbn < 0)
 		return (EFBIG);
 
@@ -94,21 +95,24 @@ ffs_balloc(struct inode *ip, off_t startoffset, int size, struct ucred *cred,
 		if (osize < fs->fs_bsize && osize > 0) {
 			error = ffs_realloccg(ip, nb,
 			    ffs_blkpref(ip, nb, (int)nb, &ip->i_ffs_db[0]),
-			    osize, (int)fs->fs_bsize, cred, &bp, &newb);
+			    osize, (int)fs->fs_bsize, cred, bpp, &newb);
 			if (error)
 				return (error);
 			if (DOINGSOFTDEP(vp))
 				softdep_setup_allocdirect(ip, nb, newb,
-				    ip->i_ffs_db[nb], fs->fs_bsize, osize, bp);
+				    ip->i_ffs_db[nb], fs->fs_bsize, osize,
+				    bpp ? *bpp : NULL);
 
 			ip->i_ffs_size = lblktosize(fs, nb + 1);
 			uvm_vnp_setsize(vp, ip->i_ffs_size);
 			ip->i_ffs_db[nb] = newb;
 			ip->i_flag |= IN_CHANGE | IN_UPDATE;
-			if (flags & B_SYNC)
-				bwrite(bp);
-			else
-				bawrite(bp);
+			if (bpp != NULL) {
+				if (flags & B_SYNC)
+					bwrite(*bpp);
+				else
+					bawrite(*bpp);
+			}
 		}
 	}
 	/*
@@ -117,12 +121,21 @@ ffs_balloc(struct inode *ip, off_t startoffset, int size, struct ucred *cred,
 	if (lbn < NDADDR) {
 		nb = ip->i_ffs_db[lbn];
 		if (nb != 0 && ip->i_ffs_size >= lblktosize(fs, lbn + 1)) {
-			error = bread(vp, lbn, fs->fs_bsize, NOCRED, &bp);
-			if (error) {
-				brelse(bp);
-				return (error);
+			/*
+			 * The block is an already-allocated direct block
+			 * and the file already extends past this block,
+			 * thus this must be a whole block.
+			 * Just read the block (if requested).
+			 */
+
+			if (bpp != NULL) {
+				error = bread(vp, lbn, fs->fs_bsize, NOCRED,
+				    bpp);
+				if (error) {
+					brelse(*bpp);
+					return (error);
+				}
 			}
-			*bpp = bp;
 			return (0);
 		}
 		if (nb != 0) {
@@ -132,23 +145,42 @@ ffs_balloc(struct inode *ip, off_t startoffset, int size, struct ucred *cred,
 			osize = fragroundup(fs, blkoff(fs, ip->i_ffs_size));
 			nsize = fragroundup(fs, size);
 			if (nsize <= osize) {
-				error = bread(vp, lbn, osize, NOCRED, &bp);
-				if (error) {
-					brelse(bp);
-					return (error);
+				/*
+				 * The existing block is already
+				 * at least as big as we want.
+				 * Just read the block (if requested).
+				 */
+				if (bpp != NULL) {
+					error = bread(vp, lbn, osize, NOCRED,
+					    bpp);
+					if (error) {
+						brelse(*bpp);
+						return (error);
+					}
 				}
+				return (0);
 			} else {
+				/*
+				 * The existing block is smaller than we
+				 * want, grow it.
+				 */
 				error = ffs_realloccg(ip, lbn,
 				    ffs_blkpref(ip, lbn, (int)lbn,
 					&ip->i_ffs_db[0]),
-				    osize, nsize, cred, &bp, &newb);
+				    osize, nsize, cred, bpp, &newb);
 				if (error)
 					return (error);
 				if (DOINGSOFTDEP(vp))
 					softdep_setup_allocdirect(ip, lbn,
-					    newb, nb, nsize, osize, bp);
+					    newb, nb, nsize, osize,
+					    bpp ? *bpp : NULL);
 			}
 		} else {
+			/*
+			 * The block was not previously allocated,
+			 * allocate a new block or fragment.
+			 */
+
 			if (ip->i_ffs_size < lblktosize(fs, lbn + 1))
 				nsize = fragroundup(fs, size);
 			else
@@ -158,19 +190,21 @@ ffs_balloc(struct inode *ip, off_t startoffset, int size, struct ucred *cred,
 			    nsize, cred, &newb);
 			if (error)
 				return (error);
-			bp = getblk(vp, lbn, nsize, 0, 0);
-			bp->b_blkno = fsbtodb(fs, newb);
-			if (flags & B_CLRBUF)
-				clrbuf(bp);
+			if (bpp != NULL) {
+				*bpp = getblk(vp, lbn, nsize, 0, 0);
+				(*bpp)->b_blkno = fsbtodb(fs, newb);
+				if (flags & B_CLRBUF)
+					clrbuf(*bpp);
+			}
 			if (DOINGSOFTDEP(vp))
 				softdep_setup_allocdirect(ip, lbn, newb, 0,
-				    nsize, 0, bp);
+				    nsize, 0, bpp ? *bpp : NULL);
 		}
-		ip->i_ffs_db[lbn] = dbtofsb(fs, bp->b_blkno);
+		ip->i_ffs_db[lbn] = newb;
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
-		*bpp = bp;
 		return (0);
 	}
+
 	/*
 	 * Determine the number of levels of indirection.
 	 */
@@ -194,7 +228,7 @@ ffs_balloc(struct inode *ip, off_t startoffset, int size, struct ucred *cred,
 	        error = ffs_alloc(ip, lbn, pref, (int)fs->fs_bsize,
 				  cred, &newb);
 		if (error)
-			return (error);
+			goto fail;
 		nb = newb;
 
 		*allocblk++ = nb;
@@ -218,6 +252,7 @@ ffs_balloc(struct inode *ip, off_t startoffset, int size, struct ucred *cred,
 		*allocib = nb;
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
 	}
+
 	/*
 	 * Fetch through the indirect blocks, allocating as necessary.
 	 */
@@ -291,13 +326,16 @@ ffs_balloc(struct inode *ip, off_t startoffset, int size, struct ucred *cred,
 		}
 		nb = newb;
 		*allocblk++ = nb;
-		nbp = getblk(vp, lbn, fs->fs_bsize, 0, 0);
-		nbp->b_blkno = fsbtodb(fs, nb);
-		if (flags & B_CLRBUF)
-			clrbuf(nbp);
+		if (bpp != NULL) {
+			nbp = getblk(vp, lbn, fs->fs_bsize, 0, 0);
+			nbp->b_blkno = fsbtodb(fs, nb);
+			if (flags & B_CLRBUF)
+				clrbuf(nbp);
+			*bpp = nbp;
+		}
 		if (DOINGSOFTDEP(vp))
 			softdep_setup_allocindir_page(ip, lbn, bp,
-			    indirs[i].in_off, nb, 0, nbp);
+			    indirs[i].in_off, nb, 0, bpp ? *bpp : NULL);
 		bap[indirs[i].in_off] = nb;
 		/*
 		 * If required, write synchronously, otherwise use
@@ -308,21 +346,22 @@ ffs_balloc(struct inode *ip, off_t startoffset, int size, struct ucred *cred,
 		} else {
 			bdwrite(bp);
 		}
-		*bpp = nbp;
 		return (0);
 	}
 	brelse(bp);
-	if (flags & B_CLRBUF) {
-		error = bread(vp, lbn, (int)fs->fs_bsize, NOCRED, &nbp);
-		if (error) {
-			brelse(nbp);
-			goto fail;
+	if (bpp != NULL) {
+		if (flags & B_CLRBUF) {
+			error = bread(vp, lbn, (int)fs->fs_bsize, NOCRED, &nbp);
+			if (error) {
+				brelse(nbp);
+				goto fail;
+			}
+		} else {
+			nbp = getblk(vp, lbn, fs->fs_bsize, 0, 0);
+			nbp->b_blkno = fsbtodb(fs, nb);
 		}
-	} else {
-		nbp = getblk(vp, lbn, fs->fs_bsize, 0, 0);
-		nbp->b_blkno = fsbtodb(fs, nb);
+		*bpp = nbp;
 	}
-	*bpp = nbp;
 	return (0);
 
 fail:
