@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_file.c,v 1.2 1995/12/08 07:54:53 thorpej Exp $	*/
+/*	$NetBSD: hpux_file.c,v 1.3 1996/01/06 12:44:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Jason R. Thorpe.  All rights reserved.
@@ -544,22 +544,6 @@ hpux_sys_stat_6x(p, v, retval)
 	return (copyout(&tmphst, SCARG(uap, sb), sizeof(struct hpux_ostat)));
 }
 
-/* XXX: Set up a machdep callback. */
-#ifdef hp300
-#include "grf.h"
-#define	NHIL	1	/* XXX */
-#endif
-
-#if NGRF > 0
-extern int grfopen __P((dev_t dev, int oflags, int devtype, struct proc *p));
-#endif
-
-#if NHIL > 0
-extern int hilopen __P((dev_t dev, int oflags, int devtype, struct proc *p));
-#endif
-
-#include <sys/conf.h>
-
 /*
  * Convert a NetBSD stat structure to an HP-UX stat structure.
  */
@@ -583,24 +567,12 @@ bsd_to_hpux_stat(sb, hsb)
 	hsb->hst_old_uid = (u_short)sb->st_uid;
 	hsb->hst_old_gid = (u_short)sb->st_gid;
 
-	/* MACHDEP CALLBACK SHOULD GO HERE! */
-	/* XXX: I don't want to talk about it... */
-	if ((sb->st_mode & S_IFMT) == S_IFCHR) {
-#if NGRF > 0
-		if (cdevsw[major(sb->st_rdev)].d_open == grfopen) {
-			hsb->hst_rdev = grfdevno(sb->st_rdev);
-			goto xxx_out;
-		}
-#endif
-#if NHIL > 0
-		if (cdevsw[major(sb->st_rdev)].d_open == hilopen) {
-			hsb->hst_rdev = hildevno(sb->st_rdev);
-			goto xxx_out;
-		}
-#endif
-	}
+	/*
+	 * Call machine-dependent stat conversion.  Is it just me
+	 * who thinks HP-UX device semantics are strange?!
+	 */
+	hpux_cpu_bsd_to_hpux_stat(sb, hsb);
 
- xxx_out:
 	if (sb->st_size < (off_t)(((off_t)1) << 32))
 		hsb->hst_size = (long)sb->st_size;
 	else

@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_exec.c,v 1.2 1995/12/08 07:54:50 thorpej Exp $	*/
+/*	$NetBSD: hpux_exec.c,v 1.3 1996/01/06 12:44:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Jason R. Thorpe.  All rights reserved.
@@ -60,6 +60,8 @@
 #include <compat/hpux/hpux_syscall.h>
 #include <compat/hpux/hpux_syscallargs.h>
 
+#include <machine/hpux_machdep.h>
+
 const char hpux_emul_path[] = "/emul/hpux";
 extern char sigcode[], esigcode[];
 extern struct sysent hpux_sysent[];
@@ -69,7 +71,6 @@ extern int bsdtohpuxerrnomap[];
 static	int exec_hpux_prep_nmagic __P((struct proc *, struct exec_package *));
 static	int exec_hpux_prep_zmagic __P((struct proc *, struct exec_package *));
 static	int exec_hpux_prep_omagic __P((struct proc *, struct exec_package *));
-static	int vmcmd_hpux_copy_exec __P((struct proc *, struct exec_vmcmd *));
 
 struct emul emul_hpux = {
 	"hpux",
@@ -119,10 +120,6 @@ exec_hpux_makecmds(p, epp)
 	}
 
 	if (error == 0) {
-		/* set up command for exec header */
-		NEW_VMCMD(&epp->ep_vmcmds, vmcmd_hpux_copy_exec,
-		    sizeof(struct hpux_exec), (long)epp->ep_hdr, NULLVP, 0, 0);
-
 		/* set up our emulation information */
 		epp->ep_emul = &emul_hpux;
 	} else
@@ -272,45 +269,6 @@ exec_hpux_prep_omagic(p, epp)
 	dsize = epp->ep_dsize + execp->ha_text - roundup(execp->ha_text, NBPG);
 	epp->ep_dsize = (dsize > 0) ? dsize : 0;
 	return (exec_aout_setup_stack(p, epp));
-}
-
-/*
- * We need to stash the exec header in the pcb, so we define
- * this vmcmd to do it for us, since vmcmds are executed once
- * we're committed to the exec (i.e. the old program has been unmapped).
- *
- * The address of the header is in ev->ev_addr and the length is
- * in ev->ev_len.
- */
-static int
-vmcmd_hpux_copy_exec(p, ev)
-	struct proc *p;
-	struct exec_vmcmd *ev;
-{
-	struct hpux_exec *execp = (struct hpux_exec *)ev->ev_addr;
-
-	/*
-	 * In the event some brave soul attempts to use this on a non-hp300,
-	 * attempt to ensure that things don't get trashed when copying
-	 * the exec header into the pcb.
-	 */
-	if (ev->ev_len > sizeof(p->p_addr->u_md.md_exec))
-		return (EINVAL);
-	bcopy((caddr_t)ev->ev_addr, p->p_addr->u_md.md_exec, ev->ev_len);
-
-	/*
-	 * Deal with misc. HP-UX process attributes.
-	 * XXX move to hpux_machdep.c
-	 */
-	if (execp->ha_trsize & HPUXM_VALID) {
-		if (execp->ha_trsize & HPUXM_DATAWT)
-			p->p_md.md_flags &= ~MDP_CCBDATA;
-
-		if (execp->ha_trsize & HPUXM_STKWT)
-			p->p_md.md_flags & ~MDP_CCBSTACK;
-	}
-
-	return (0);
 }
 
 /*

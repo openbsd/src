@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_compat.c,v 1.22 1995/12/09 04:05:52 mycroft Exp $	*/
+/*	$NetBSD: hpux_compat.c,v 1.23 1996/01/06 12:44:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -84,21 +84,10 @@
 #include <compat/hpux/hpux_syscall.h>
 #include <compat/hpux/hpux_syscallargs.h>
 
+#include <machine/hpux_machdep.h>
+
 #ifdef DEBUG
 int unimpresponse = 0;
-#endif
-
-/* 6.0 and later style context */
-#if defined(HP380)
-char hpux_040context[] =
-    "standalone HP-MC68040 HP-MC68881 HP-MC68020 HP-MC68010 localroot default";
-#endif
-#ifdef FPCOPROC
-char hpux_context[] =
-	"standalone HP-MC68881 HP-MC68020 HP-MC68010 localroot default";
-#else
-char hpux_context[] =
-	"standalone HP-MC68020 HP-MC68010 localroot default";
 #endif
 
 #define NERR	83
@@ -411,9 +400,6 @@ hpux_sys_dup(p, v, retval)
 	return (0);
 }
 
-/*
- * XXX: This belongs in hpux_machdep.c !!
- */
 int
 hpux_sys_utssys(p, v, retval)
 	struct proc *p;
@@ -445,47 +431,8 @@ hpux_sys_utssys(p, v, retval)
 		strncpy(ut.version, version, sizeof(ut.version));
 		ut.version[sizeof(ut.version) - 1] = '\0';
 
-		strncpy(ut.machine, "9000/3?0", sizeof(ut.machine));
-		ut.machine[sizeof(ut.machine) - 1] = '\0';
-
-		/* fill in machine type */
-#ifdef HP_320
-		switch (machineid) {
-		case HP_320:
-			ut.machine[6] = '2';
-			break;
-		/* includes 318 and 319 */
-		case HP_330:
-			ut.machine[6] = '3';
-			break;
-		case HP_340:
-			ut.machine[6] = '4';
-			break;
-		case HP_350:
-			ut.machine[6] = '5';
-			break;
-		case HP_360:
-			ut.machine[6] = '6';
-			break;
-		case HP_370:
-			ut.machine[6] = '7';
-			break;
-		/* includes 345 */
-		case HP_375:
-			ut.machine[6] = '7';
-			ut.machine[7] = '5';
-			break;
-		/* includes 425 */
-		case HP_380:
-			ut.machine[6] = '8';
-			break;
-		case HP_433:
-			ut.machine[5] = '4';
-			ut.machine[6] = '3';
-			ut.machine[7] = '3';
-			break;
-		}
-#endif
+		/* Fill in machine-dependent part of uname. */
+		hpux_cpu_uname(&ut);
 
 		error = copyout((caddr_t)&ut,
 		    (caddr_t)SCARG(uap, uts), sizeof(ut));
@@ -511,9 +458,6 @@ hpux_sys_utssys(p, v, retval)
 	return (error);
 }
 
-/*
- * XXX: This belongs in hpux_machdep.c !!
- */
 int
 hpux_sys_sysconf(p, v, retval)
 	struct proc *p;
@@ -535,29 +479,10 @@ hpux_sys_sysconf(p, v, retval)
 
 	/* architecture */
 	case HPUX_SYSCONF_CPUTYPE:
-#ifdef HP_320
-		switch (machineid) {
-		case HP_320:
-		case HP_330:
-		case HP_350:
-			*retval = HPUX_SYSCONF_CPUM020;
-			break;
-		case HP_340:
-		case HP_360:
-		case HP_370:
-		case HP_375:
-			*retval = HPUX_SYSCONF_CPUM030;
-			break;
-		case HP_380:
-		case HP_433:
-			*retval = HPUX_SYSCONF_CPUM040;
-			break;
-		}
-#else
-		*retval = HPUX_SYSCONF_CPUM020;
-#endif
+		*retval = hpux_cpu_sysconf_arch();
 		break;
 	default:
+		/* XXX */
 		uprintf("HP-UX sysconf(%d) not implemented\n",
 		    SCARG(uap, name));
 		return (EINVAL);
@@ -649,36 +574,7 @@ hpux_sys_rtprio(cp, v, retval)
 	return (error);
 }
 
-/*
- * XXX: This belongs in hpux_machdep.c !!
- */
-int
-hpux_sys_advise(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	struct hpux_sys_advise_args *uap = v;
-	int error = 0;
-
-#ifdef hp300
-	switch (SCARG(uap, arg)) {
-	case 0:
-		p->p_md.md_flags |= MDP_HPUXMMAP;
-		break;
-	case 1:
-		ICIA();
-		break;
-	case 2:
-		DCIA();
-		break;
-	default:
-		error = EINVAL;
-		break;
-	}
-#endif
-	return (error);
-}
+/* hpux_sys_advise() is found in hpux_machdep.c */
 
 int
 hpux_sys_ptrace(p, v, retval)
@@ -715,7 +611,7 @@ hpux_sys_ptrace(p, v, retval)
 	case PT_WRITE_U:
 # endif
 		/*
-		 * Big, cheezy hack: hpuxtobsduoff is really intended
+		 * Big, cheezy hack: hpux_to_bsd_uoff is really intended
 		 * to be called in the child context (procxmt) but we
 		 * do it here in the parent context to avoid hacks in
 		 * the MI sys_process.c file.  This works only because
@@ -726,7 +622,7 @@ hpux_sys_ptrace(p, v, retval)
 		if ((cp = pfind(SCARG(uap, pid))) == 0)
 			return (ESRCH);
 		SCARG(uap, addr) =
-		    (int *)hpuxtobsduoff(SCARG(uap, addr), &isps, cp);
+		    (int *)hpux_to_bsd_uoff(SCARG(uap, addr), &isps, cp);
 
 		/*
 		 * Since HP-UX PS is only 16-bits in ar0, requests
@@ -930,7 +826,11 @@ hpux_sys_ioctl(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct hpux_sys_ioctl_args *uap = v;
+	register struct hpux_sys_ioctl_args /* {
+		syscallarg(int) fd;
+		syscallarg(int) com;
+		syscallarg(caddr_t) data;
+	} */ *uap = v;
 	register struct filedesc *fdp = p->p_fd;
 	register struct file *fp;
 	register int com, error;
@@ -942,11 +842,9 @@ hpux_sys_ioctl(p, v, retval)
 
 	com = SCARG(uap, com);
 
-#ifdef COMPAT_HPUX_6X
 	/* XXX */
 	if (com == HPUXTIOCGETP || com == HPUXTIOCSETP)
 		return (getsettty(p, SCARG(uap, fd), com, SCARG(uap, data)));
-#endif
 
 	if (((unsigned)SCARG(uap, fd)) >= fdp->fd_nfiles ||
 	    (fp = fdp->fd_ofiles[SCARG(uap, fd)]) == NULL)
@@ -1065,39 +963,7 @@ hpux_sys_ioctl(p, v, retval)
 	return (error);
 }
 
-/*
- * XXX: This should be in hpux_machdep.c !!
- */
-/*
- * Man page lies, behaviour here is based on observed behaviour.
- */
-int
-hpux_sys_getcontext(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	struct hpux_sys_getcontext_args *uap = v;
-	int error = 0;
-	register int len;
-
-#ifdef HP380
-	if (machineid == HP_380) {
-		len = min(SCARG(uap, len), sizeof(hpux_040context));
-		if (len)
-			error = copyout(hpux_040context, SCARG(uap, buf), len);
-		if (error == 0)
-			*retval = sizeof(hpux_040context);
-		return (error);
-	}
-#endif
-	len = min(SCARG(uap, len), sizeof(hpux_context));
-	if (len)
-		error = copyout(hpux_context, SCARG(uap, buf), (u_int)len);
-	if (error == 0)
-		*retval = sizeof(hpux_context);
-	return (error);
-}
+/* hpux_sys_getcontext() is found in hpux_machdep.c */
 
 /*
  * This is the equivalent of BSD getpgrp but with more restrictions.
@@ -1322,185 +1188,9 @@ hpux_sys_getaccess(p, v, retval)
 	return (error);
 }
 
-/*
- * XXX: This needs to be in hpux_machdep.c !!
- */
-#define UOFF(f)		((int)&((struct user *)0)->f)
-#define HPUOFF(f)	((int)&((struct hpux_user *)0)->f)
+/* hpux_to_bsd_uoff() is found in hpux_machdep.c */
 
-/* simplified FP structure */
-struct bsdfp {
-	int save[54];
-	int reg[24];
-	int ctrl[3];
-};
-
-/*
- * Brutal hack!  Map HP-UX u-area offsets into BSD k-stack offsets.
- *
- * XXX move to hpux_machdep.c
- */
-int
-hpuxtobsduoff(off, isps, p)
-	int *off, *isps;
-	struct proc *p;
-{
-#ifdef hp300
-	register int *ar0 = p->p_md.md_regs;
-	struct hpux_fp *hp;
-	struct bsdfp *bp;
-	register u_int raddr;
-
-	*isps = 0;
-
-	/* u_ar0 field; procxmt puts in U_ar0 */
-	if ((int)off == HPUOFF(hpuxu_ar0))
-		return(UOFF(U_ar0));
-
-#ifdef FPCOPROC
-	/* FP registers from PCB */
-	hp = (struct hpux_fp *)HPUOFF(hpuxu_fp);
-	bp = (struct bsdfp *)UOFF(u_pcb.pcb_fpregs);
-	if (off >= hp->hpfp_ctrl && off < &hp->hpfp_ctrl[3])
-		return((int)&bp->ctrl[off - hp->hpfp_ctrl]);
-	if (off >= hp->hpfp_reg && off < &hp->hpfp_reg[24])
-		return((int)&bp->reg[off - hp->hpfp_reg]);
-#endif
-
-	/*
-	 * Everything else we recognize comes from the kernel stack,
-	 * so we convert off to an absolute address (if not already)
-	 * for simplicity.
-	 */
-	if (off < (int *)ctob(UPAGES))
-		off = (int *)((u_int)off + (u_int)p->p_addr);	/* XXX */
-
-	/*
-	 * General registers.
-	 * We know that the HP-UX registers are in the same order as ours.
-	 * The only difference is that their PS is 2 bytes instead of a
-	 * padded 4 like ours throwing the alignment off.
-	 */
-	if (off >= ar0 && off < &ar0[18]) {
-		/*
-		 * PS: return low word and high word of PC as HP-UX would
-		 * (e.g. &u.u_ar0[16.5]).
-		 *
-		 * XXX we don't do this since HP-UX adb doesn't rely on
-		 * it and passing such an offset to procxmt will cause
-		 * it to fail anyway.  Instead, we just set the offset
-		 * to PS and let hpux_ptrace() shift up the value returned.
-		 */
-		if (off == &ar0[PS]) {
-#if 0
-			raddr = (u_int) &((short *)ar0)[PS*2+1];
-#else
-			raddr = (u_int) &ar0[(int)(off - ar0)];
-#endif
-			*isps = 1;
-		}
-		/*
-		 * PC: off will be &u.u_ar0[16.5] since HP-UX saved PS
-		 * is only 16 bits.
-		 */
-		else if (off == (int *)&(((short *)ar0)[PS*2+1]))
-			raddr = (u_int) &ar0[PC];
-		/*
-		 * D0-D7, A0-A7: easy
-		 */
-		else
-			raddr = (u_int) &ar0[(int)(off - ar0)];
-		return((int)(raddr - (u_int)p->p_addr));	/* XXX */
-	}
-#endif
-	/* everything else */
-	return(-1);
-}
-
-/*
- * Kludge up a uarea dump so that HP-UX debuggers can find out
- * what they need.  IMPORTANT NOTE: we do not EVEN attempt to
- * convert the entire user struct.
- *
- * XXX move to hpux_machdep.c
- */
-int
-hpux_dumpu(vp, cred)
-	struct vnode *vp;
-	struct ucred *cred;
-{
-	int error = 0;
-#ifdef hp300
-	struct proc *p = curproc;
-	struct hpux_user *faku;
-	struct bsdfp *bp;
-	short *foop;
-
-	faku = (struct hpux_user *)malloc((u_long)ctob(1), M_TEMP, M_WAITOK);
-	/*
-	 * Make sure there is no mistake about this
-	 * being a real user structure.
-	 */
-	bzero((caddr_t)faku, ctob(1));
-	/*
-	 * Fill in the process sizes.
-	 */
-	faku->hpuxu_tsize = p->p_vmspace->vm_tsize;
-	faku->hpuxu_dsize = p->p_vmspace->vm_dsize;
-	faku->hpuxu_ssize = p->p_vmspace->vm_ssize;
-	/*
-	 * Fill in the exec header for CDB.
-	 * This was saved back in exec().  As far as I can tell CDB
-	 * only uses this information to verify that a particular
-	 * core file goes with a particular binary.
-	 */
-	bcopy((caddr_t)p->p_addr->u_md.md_exec,
-	      (caddr_t)&faku->hpuxu_exdata, sizeof (struct hpux_exec));
-	/*
-	 * Adjust user's saved registers (on kernel stack) to reflect
-	 * HP-UX order.  Note that HP-UX saves the SR as 2 bytes not 4
-	 * so we have to move it up.
-	 */
-	faku->hpuxu_ar0 = p->p_md.md_regs;
-	foop = (short *) p->p_md.md_regs;
-	foop[32] = foop[33];
-	foop[33] = foop[34];
-	foop[34] = foop[35];
-#ifdef FPCOPROC
-	/*
-	 * Copy 68881 registers from our PCB format to HP-UX format
-	 */
-	bp = (struct bsdfp *) &p->p_addr->u_pcb.pcb_fpregs;
-	bcopy((caddr_t)bp->save, (caddr_t)faku->hpuxu_fp.hpfp_save,
-	      sizeof(bp->save));
-	bcopy((caddr_t)bp->ctrl, (caddr_t)faku->hpuxu_fp.hpfp_ctrl,
-	      sizeof(bp->ctrl));
-	bcopy((caddr_t)bp->reg, (caddr_t)faku->hpuxu_fp.hpfp_reg,
-	      sizeof(bp->reg));
-#endif
-	/*
-	 * Slay the dragon
-	 */
-	faku->hpuxu_dragon = -1;
-	/*
-	 * Dump this artfully constructed page in place of the
-	 * user struct page.
-	 */
-	error = vn_rdwr(UIO_WRITE, vp, (caddr_t)faku, ctob(1), (off_t)0,
-			UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT, cred,
-			(int *)NULL, p);
-	/*
-	 * Dump the remaining UPAGES-1 pages normally
-	 * XXX Spot the wild guess.
-	 */
-	if (!error) 
-		error = vn_rdwr(UIO_WRITE, vp, (caddr_t)p->p_addr + ctob(1),
-				ctob(UPAGES-1), (off_t)ctob(1), UIO_SYSSPACE,
-				IO_NODELOCKED|IO_UNIT, cred, (int *)NULL, p);
-	free((caddr_t)faku, M_TEMP);
-#endif
-	return(error);
-}
+/* hpux_dumpu() is found in hpux_machdep.c */
 
 /*
  * Ancient HP-UX system calls.  Some 9.x executables even use them!
