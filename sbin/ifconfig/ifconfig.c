@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.37 2000/05/15 11:23:51 itojun Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.38 2000/05/22 03:04:11 itojun Exp $	*/
 /*      $NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $      */
 
 /*
@@ -81,7 +81,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static char rcsid[] = "$OpenBSD: ifconfig.c,v 1.37 2000/05/15 11:23:51 itojun Exp $";
+static char rcsid[] = "$OpenBSD: ifconfig.c,v 1.38 2000/05/22 03:04:11 itojun Exp $";
 #endif
 #endif /* not lint */
 
@@ -1417,6 +1417,7 @@ phys_status(force)
 #endif
 #ifdef INET6
 	struct in6_ifreq in6_ifr;
+	int s6;
 #endif /* INET6 */
 
 	force = 0;	/*fool gcc*/
@@ -1425,9 +1426,17 @@ phys_status(force)
 #ifdef INET6
 	bzero(&in6_ifr, sizeof(in6_ifr));
 	strncpy(in6_ifr.ifr_name, name, IFNAMSIZ);
-	srccmd = SIOCGIFPSRCADDR_IN6;
-	dstcmd = SIOCGIFPDSTADDR_IN6;
-	ifrp = (struct ifreq *) &in6_ifr;
+	s6 = socket(AF_INET6, SOCK_DGRAM, 0);
+	if (s6 < 0) {
+		ifrp = &ifr;
+		srccmd = SIOCGIFPSRCADDR;
+		dstcmd = SIOCGIFPDSTADDR;
+	} else {
+		close(s6);
+		srccmd = SIOCGIFPSRCADDR_IN6;
+		dstcmd = SIOCGIFPDSTADDR_IN6;
+		ifrp = (struct ifreq *) &in6_ifr;
+	}
 #else /* INET6 */
 	ifrp = ifr;
 	srccmd = SIOCGIFPSRCADDR;
