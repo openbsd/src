@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdc_pcmcia.c,v 1.2 1999/07/21 04:41:54 fgsch Exp $	*/
+/*	$OpenBSD: wdc_pcmcia.c,v 1.3 1999/07/21 05:23:13 deraadt Exp $	*/
 /*	$NetBSD: wdc_pcmcia.c,v 1.19 1999/02/19 21:49:43 abs Exp $ */
 
 /*-
@@ -321,8 +321,6 @@ wdc_pcmcia_attach(parent, self, aux)
 		return;
 	}
 
-	printf("\n");
-
 	sc->wdc_channel.cmd_iot = sc->sc_pioh.iot;
 	sc->wdc_channel.cmd_ioh = sc->sc_pioh.ioh;
 	sc->wdc_channel.ctl_iot = sc->sc_auxpioh.iot;
@@ -339,8 +337,7 @@ wdc_pcmcia_attach(parent, self, aux)
 	sc->wdc_channel.ch_queue = malloc(sizeof(struct channel_queue),
 	    M_DEVBUF, M_NOWAIT);
 	if (sc->wdc_channel.ch_queue == NULL) {
-		printf("%s: can't allocate memory for command queue",
-		    sc->sc_wdcdev.sc_dev.dv_xname);
+		printf("can't allocate memory for command queue\n");
 		return;
 	}
 	if (quirks & WDC_PCMCIA_NO_EXTRA_RESETS)
@@ -360,10 +357,11 @@ wdc_pcmcia_attach(parent, self, aux)
 	sc->sc_ih = pcmcia_intr_establish(sc->sc_pf, IPL_BIO, wdcintr,
 	    &sc->wdc_channel);
 	if (sc->sc_ih == NULL) {
-		printf("%s: couldn't establish interrupt handler\n",
-		    sc->sc_wdcdev.sc_dev.dv_xname);
+		printf("couldn't establish interrupt handler\n");
 	}
 #endif
+
+	printf("\n");
 
 	wdcattach(&sc->wdc_channel);
 	wdc_final_attach(&sc->wdc_channel);
