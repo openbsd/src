@@ -1,4 +1,4 @@
-/* $OpenBSD: locore_c_routines.c,v 1.39 2004/01/08 14:29:46 miod Exp $	*/
+/* $OpenBSD: locore_c_routines.c,v 1.40 2004/07/22 18:58:04 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -43,20 +43,6 @@
 #ifdef M88100
 #include <machine/m88100.h>
 #endif
-
-#ifdef DDB
-#include <ddb/db_output.h>
-#endif /* DDB */
-
-#if defined(DDB) && defined(JEFF_DEBUG)
-#define DATA_DEBUG
-#endif
-
-#if DDB
-#define DEBUG_MSG db_printf
-#else
-#define DEBUG_MSG printf
-#endif /* DDB */
 
 typedef struct {
 	unsigned word_one, word_two;
@@ -197,7 +183,7 @@ data_access_emulation(unsigned *eframe)
 					switch (dmt_en_info[DMT_ENBITS(dmtx)].size) {
 					case DMT_BYTE:
 					DAE_DEBUG(
-						DEBUG_MSG("[byte %x -> [%x(%c)]\n",
+						printf("[byte %x -> [%x(%c)]\n",
 						    dmdx & 0xff, dmax,
 						    ISSET(dmtx, DMT_DAS) ? 's' : 'u')
 					);
@@ -206,7 +192,7 @@ data_access_emulation(unsigned *eframe)
 						break;
 					case DMT_HALF:
 					DAE_DEBUG(
-						DEBUG_MSG("[half %x -> [%x(%c)]\n",
+						printf("[half %x -> [%x(%c)]\n",
 						    dmdx & 0xffff, dmax,
 						    ISSET(dmtx, DMT_DAS) ? 's' : 'u')
 					);
@@ -215,7 +201,7 @@ data_access_emulation(unsigned *eframe)
 						break;
 					case DMT_WORD:
 					DAE_DEBUG(
-						DEBUG_MSG("[word %x -> [%x(%c)]\n",
+						printf("[word %x -> [%x(%c)]\n",
 						    dmdx, dmax,
 						    ISSET(dmtx, DMT_DAS) ? 's' : 'u')
 					);
@@ -245,9 +231,9 @@ data_access_emulation(unsigned *eframe)
 					}
 					DAE_DEBUG(
 						if (reg == 0)
-							DEBUG_MSG("[no write to r0 done]\n");
+							printf("[no write to r0 done]\n");
 						else
-							DEBUG_MSG("[r%d <- %x]\n", reg, v);
+							printf("[r%d <- %x]\n", reg, v);
 					);
 					if (reg != 0)
 						eframe[EF_R0 + reg] = v;
