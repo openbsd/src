@@ -1,4 +1,4 @@
-#	$OpenBSD: LOKI,v 1.4 1997/12/06 22:08:25 kstailey Exp $
+#	$OpenBSD: LOKI,v 1.5 1998/10/06 23:53:26 kstailey Exp $
 #
 # LOKI, an Alpha AXPPCI33 (NoName) kernel.
 #
@@ -48,9 +48,9 @@ option		COMPAT_43
 
 # Binary compatibility with previous versions of NetBSD.
 #option		COMPAT_09
-option		COMPAT_10
-option		COMPAT_11
-option		COMPAT_12
+#option		COMPAT_10
+#option		COMPAT_11
+#option		COMPAT_12
 
 # OSF/1 binary compatibility -- CURRENTLY DOES NOT WORK
 #option		COMPAT_OSF1
@@ -81,16 +81,12 @@ pci*	at	lca?
 pci*	at	ppb?
 
 # PCI devices
-#de*	at	pci? dev ? function ?		# 21x4[012]-based Ethernet
-ed*	at	pci? dev ? function ?		# NE2000-compat ethernet cards
 ncr*	at	pci? dev ? function ?		# NCR 53c8xx SCSI
 vga*	at	pci? dev ? function ?		# PCI VGA graphics
 ppb*	at	pci? dev ? function ?		# PCI-PCI bridges
 sio*	at	pci? dev ? function ?		# Intel PCI-ISA bridge
 
-# ISA/EISA bus support
-#isa*	at	pceb?
-#eisa*	at	pceb?
+# ISA bus support
 isa*	at	sio?
 
 # ISA devices
@@ -101,9 +97,7 @@ pms*	at	pcppi?				# PS/2-style mouse (aux port)
 com*	at	isa? port 0x3f8 irq 4		# standard serial ports
 com*	at	isa? port 0x2f8 irq 3
 lpt*	at	isa? port 0x3bc irq 7		# standard parallel port
-vga*	at	isa?				# ISA (EISA: XXX) VGA
-ed0	at	isa? port 0x300 iomem 0xcc000 irq 10	# NE2000 Klone
-#wss*	at	isa? port 0x530 irq 9 drq 0	# Windows Sound System
+ne0	at	isa? port 0x300 iomem 0xcc000 irq 10	# NE2000 Klone
 
 # SCSI bus support
 scsibus* at	ncr?
