@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb.c,v 1.13 2002/03/30 00:08:14 jason Exp $	*/
+/*	$OpenBSD: vgafb.c,v 1.14 2002/03/31 17:34:15 jason Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -74,6 +74,7 @@ struct vgafb_softc {
 	struct rcons sc_rcons;
 	struct raster sc_raster;
 	int sc_console;
+	u_int sc_mode;
 	u_int8_t sc_cmap_red[256];
 	u_int8_t sc_cmap_green[256];
 	u_int8_t sc_cmap_blue[256];
@@ -269,6 +270,9 @@ vgafb_ioctl(v, cmd, data, flags, p)
 	case WSDISPLAYIO_GTYPE:
 		*(u_int *)data = WSDISPLAY_TYPE_UNKNOWN;
 		break;
+	case WSDISPLAYIO_SMODE:
+		sc->sc_mode = *(u_int *)data;
+		break;
 	case WSDISPLAYIO_GINFO:
 		wdf = (void *)data;
 		wdf->height = sc->sc_height;
@@ -417,50 +421,48 @@ vgafb_mmap(v, off, prot)
 	int prot;
 {
 	struct vgafb_softc *sc = v;
-#ifdef VGAFB_ALLOW_NATIVE
 	bus_addr_t ba;
 	bus_size_t bs;
-#endif
+	paddr_t pa;
+	vaddr_t va;
 
 	if (off & PGOFSET)
 		return (-1);
 
-#ifdef VGAFB_ALLOW_NATIVE
-	/* See if this is a native mapping of pixel memory */
-	if ((pci_mem_find(sc->sc_pci_chip, sc->sc_pci_tag, sc->sc_mem_cf,
-	    &ba, &bs, NULL) == 0) &&
-	    (off >= ba) && (off < (ba + bs))) {
-		return (bus_space_mmap(sc->sc_mem_t, ba, off - ba, prot,
-		    BUS_SPACE_MAP_LINEAR));
-	}
+	switch (sc->sc_mode) {
+	case WSDISPLAYIO_MODE_MAPPED:
+		if ((pci_mem_find(sc->sc_pci_chip, sc->sc_pci_tag,
+		    sc->sc_mem_cf, &ba, &bs, NULL) == 0) &&
+		    (off >= ba) && (off < (ba + bs)))
+			return (bus_space_mmap(sc->sc_mem_t, ba, off - ba,
+			    prot, BUS_SPACE_MAP_LINEAR));
 
-	/* See if this is a native mapping of memory mapped i/o */
-	if ((pci_mem_find(sc->sc_pci_chip, sc->sc_pci_tag, sc->sc_mmio_cf,
-	    &ba, &bs, NULL) == 0) &&
-	    (off >= ba) && (off < (ba + bs))) {
-		return (bus_space_mmap(sc->sc_mem_t, ba, off - ba, prot,
-		    BUS_SPACE_MAP_LINEAR));
-	}
-#endif
+		if ((pci_mem_find(sc->sc_pci_chip, sc->sc_pci_tag,
+		    sc->sc_mmio_cf, &ba, &bs, NULL) == 0) &&
+		    (off >= ba) && (off < (ba + bs)))
+			return (bus_space_mmap(sc->sc_mem_t, ba, off - ba,
+			    prot, BUS_SPACE_MAP_LINEAR));
 
-	/* Lastly, this might be a request for a "dumb" framebuffer map */
-	if (off >= 0 && off < sc->sc_mem_size) {
-		return (bus_space_mmap(sc->sc_mem_t, sc->sc_mem_addr, off, prot,
-		    BUS_SPACE_MAP_LINEAR));
-	}
+		if (sc->sc_rom_ptr != NULL &&
+		    off >= sc->sc_rom_addr &&
+		    off < sc->sc_rom_addr + sc->sc_rom_size) {
+			off -= sc->sc_rom_addr;
+			va = ((vaddr_t)sc->sc_rom_ptr) + off;
+			if (pmap_extract(pmap_kernel(), va, &pa) == FALSE)
+				return (-1);
+			return (pa);
+		}
+		return (-1);
 
-#ifdef VGAFB_ALLOW_NATIVE
-	/* Don't allow mapping of the shadow rom right now... needs work */
-	if (sc->sc_rom_ptr != NULL &&
-	    off >= sc->sc_rom_addr &&
-	    off < sc->sc_rom_addr + sc->sc_rom_size) {
-		off -= sc->sc_rom_addr;
-		va = ((vaddr_t)sc->sc_rom_ptr) + off;
-		if (pmap_extract(pmap_kernel(), va, &pa) == FALSE)
-			return (-1);
-		return (pa);
+	case WSDISPLAYIO_MODE_DUMBFB:
+		if (off >= 0 && off < sc->sc_mem_size)
+			return (bus_space_mmap(sc->sc_mem_t, sc->sc_mem_addr,
+			    off, prot, BUS_SPACE_MAP_LINEAR));
+		return (-1);
+
+	default:
+		return (-1);
 	}
-#endif
 
 	return (-1);
 }

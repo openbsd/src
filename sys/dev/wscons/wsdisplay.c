@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay.c,v 1.41 2002/03/27 18:54:09 jbm Exp $ */
+/* $OpenBSD: wsdisplay.c,v 1.42 2002/03/31 17:34:15 jason Exp $ */
 /* $NetBSD: wsdisplay.c,v 1.37.4.1 2000/06/30 16:27:53 simonb Exp $ */
 
 /*
@@ -98,6 +98,7 @@ struct wsscreen {
 #define SCR_OPEN 1		/* is it open? */
 #define SCR_WAITACTIVE 2	/* someone waiting on activation */
 #define SCR_GRAPHICS 4		/* graphics mode, no text (emulation) output */
+#define	SCR_DUMBFB 8		/* in use as dumb framebuffer (iff SCR_GRAPHICS) */
 	const struct wscons_syncops *scr_syncops;
 	void *scr_synccookie;
 
@@ -1066,19 +1067,30 @@ wsdisplay_internal_ioctl(sc, scr, cmd, data, flag, p)
 
 	switch (cmd) {
 	case WSDISPLAYIO_GMODE:
-		*(u_int *)data = (scr->scr_flags & SCR_GRAPHICS ?
-		    WSDISPLAYIO_MODE_MAPPED : WSDISPLAYIO_MODE_EMUL);
+		if (scr->scr_flags & SCR_GRAPHICS) {
+			if (scr->scr_flags & SCR_DUMBFB)
+				*(u_int *)data = WSDISPLAYIO_MODE_DUMBFB;
+			else
+				*(u_int *)data = WSDISPLAYIO_MODE_MAPPED;
+		} else
+			*(u_int *)data = WSDISPLAYIO_MODE_EMUL;
 		return (0);
 
 	case WSDISPLAYIO_SMODE:
 #define d (*(int *)data)
-		if (d != WSDISPLAYIO_MODE_EMUL && d != WSDISPLAYIO_MODE_MAPPED)
+		if (d != WSDISPLAYIO_MODE_EMUL &&
+		    d != WSDISPLAYIO_MODE_MAPPED &&
+		    d != WSDISPLAYIO_MODE_DUMBFB)
 			return (EINVAL);
 
 	    if (WSSCREEN_HAS_EMULATOR(scr)) {
 		    scr->scr_flags &= ~SCR_GRAPHICS;
-		    if (d == WSDISPLAYIO_MODE_MAPPED) {
-			    scr->scr_flags |= SCR_GRAPHICS;
+		    if (d == WSDISPLAYIO_MODE_MAPPED ||
+			d == WSDISPLAYIO_MODE_DUMBFB) {
+			    scr->scr_flags |= SCR_GRAPHICS |
+				((d == WSDISPLAYIO_MODE_DUMBFB) ?
+				    SCR_DUMBFB : 0);
+
 			    /*  
 			     * wsmoused cohabitation with X-Window support 
 			     * X-Window is starting  
