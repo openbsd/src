@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.508 2002/05/14 19:57:45 jason Exp 
+ *		OpenBSD: pcidevs,v 1.509 2002/05/14 21:27:20 jason Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -2987,6 +2987,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "GUI Accel",
 	},
 	{
+	    PCI_VENDOR_MOT, PCI_PRODUCT_MOT_MPC105,
+	    "MPC105 PCI bridge",
+	},
+	{
 	    PCI_VENDOR_MOT, PCI_PRODUCT_MOT_MPC106,
 	    "MPC106 Host-PCI",
 	},
@@ -5197,14 +5201,6 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_WINBOND2, PCI_PRODUCT_WINBOND2_W89C940,
 	    "Linksys EtherPCI",
-	},
-	{
-	    PCI_VENDOR_MOT, PCI_PRODUCT_MOT_MPC105,
-	    "MPC105 PCI bridge",
-	},
-	{
-	    PCI_VENDOR_MOT, PCI_PRODUCT_MOT_MPC106,
-	    "MPC106 PCI bridge",
 	},
 	{
 	    PCI_VENDOR_XIRCOM, PCI_PRODUCT_XIRCOM_X3201_3,

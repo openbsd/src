@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.508 2002/05/14 19:57:45 jason Exp 
+ *		OpenBSD: pcidevs,v 1.509 2002/05/14 21:27:20 jason Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1537,6 +1537,7 @@
 #define	PCI_PRODUCT_MITSUBISHIELEC_GUI	0x0304		/* GUI Accel */
 
 /* Motorola products */
+#define	PCI_PRODUCT_MOT_MPC105	0x0001		/* MPC105 PCI bridge */
 #define	PCI_PRODUCT_MOT_MPC106	0x0002		/* MPC106 Host-PCI */
 #define	PCI_PRODUCT_MOT_SM56	0x5600		/* SM56 */
 #define	PCI_PRODUCT_MOT_RAVEN	0x4801		/* Raven Host-PCI */
@@ -2254,10 +2255,6 @@
 
 /* Winbond Electronics products (PCI products set 2) */
 #define	PCI_PRODUCT_WINBOND2_W89C940	0x1980		/* Linksys EtherPCI */
-
-/* Motorola products */
-#define	PCI_PRODUCT_MOT_MPC105	0x0001		/* MPC105 PCI bridge */
-#define	PCI_PRODUCT_MOT_MPC106	0x0002		/* MPC106 PCI bridge */
 
 /* Xircom products */
 #define	PCI_PRODUCT_XIRCOM_X3201_3	0x0002		/* X3201-3 */
