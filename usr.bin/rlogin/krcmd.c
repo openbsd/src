@@ -1,4 +1,4 @@
-/*	$OpenBSD: krcmd.c,v 1.4 1996/07/22 10:09:25 deraadt Exp $	*/
+/*	$OpenBSD: krcmd.c,v 1.5 1996/08/11 19:19:58 tholo Exp $	*/
 /*	$NetBSD: krcmd.c,v 1.2 1995/03/21 07:58:36 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)krcmd.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: krcmd.c,v 1.4 1996/07/22 10:09:25 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: krcmd.c,v 1.5 1996/08/11 19:19:58 tholo Exp $";
 #endif
 #endif /* not lint */
 
@@ -81,6 +81,7 @@ krcmd(ahost, rport, remuser, cmd, fd2p, realm)
 	int		sock = -1, err = 0;
 	KTEXT_ST	ticket;
 	long		authopts = 0L;
+	char myrealm[REALM_SZ];
 
 	err = kcmd(
 		&sock,
@@ -102,7 +103,8 @@ krcmd(ahost, rport, remuser, cmd, fd2p, realm)
 	);
 
 	if (err > KSUCCESS && err < MAX_KRB_ERRORS) {
-		fprintf(stderr, "krcmd: %s\n", krb_err_txt[err]);
+		if (krb_get_lrealm(myrealm, 0) == KSUCCESS)
+			fprintf(stderr, "krcmd: %s\n", krb_err_txt[err]);
 		return(-1);
 	}
 	if (err < 0)
@@ -125,6 +127,7 @@ krcmd_mutual(ahost, rport, remuser, cmd, fd2p, realm, cred, sched)
 	MSG_DAT		msg_dat;
 	struct sockaddr_in	laddr, faddr;
 	long authopts = KOPT_DO_MUTUAL;
+	char myrealm[REALM_SZ];
 
 	err = kcmd(
 		&sock,
@@ -146,7 +149,8 @@ krcmd_mutual(ahost, rport, remuser, cmd, fd2p, realm, cred, sched)
 	);
 
 	if (err > KSUCCESS && err < MAX_KRB_ERRORS) {
-		fprintf(stderr, "krcmd_mutual: %s\n", krb_err_txt[err]);
+		if (krb_get_lrealm(myrealm, 0) == KSUCCESS)
+			fprintf(stderr, "krcmd_mutual: %s\n", krb_err_txt[err]);
 		return(-1);
 	}
 

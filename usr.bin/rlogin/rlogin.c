@@ -1,4 +1,4 @@
-/*	$OpenBSD: rlogin.c,v 1.7 1996/07/27 10:34:31 deraadt Exp $	*/
+/*	$OpenBSD: rlogin.c,v 1.8 1996/08/11 19:20:01 tholo Exp $	*/
 /*	$NetBSD: rlogin.c,v 1.8 1995/10/05 09:07:22 mycroft Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)rlogin.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: rlogin.c,v 1.7 1996/07/27 10:34:31 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: rlogin.c,v 1.8 1996/08/11 19:20:01 tholo Exp $";
 #endif
 #endif /* not lint */
 
@@ -828,8 +828,11 @@ warning(fmt, va_alist)
 	va_dcl
 #endif
 {
+	char myrealm[REALM_SZ];
 	va_list ap;
 
+	if (krb_get_lrealm(myrealm, 0) != KSUCCESS)
+		return;
 	(void)fprintf(stderr, "rlogin: warning, using standard rlogin: ");
 #ifdef __STDC__
 	va_start(ap, fmt);
