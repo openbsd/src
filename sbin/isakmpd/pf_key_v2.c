@@ -1,4 +1,4 @@
-/*      $OpenBSD: pf_key_v2.c,v 1.85 2001/08/19 18:24:29 angelos Exp $  */
+/*      $OpenBSD: pf_key_v2.c,v 1.86 2001/08/23 16:56:46 markus Exp $  */
 /*	$EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	*/
 
 /*
@@ -1944,7 +1944,11 @@ pf_key_v2_flow (struct sockaddr *laddr, struct sockaddr *lmask,
   if (!ret)
     goto cleanup;
   err = ((struct sadb_msg *)TAILQ_FIRST (ret)->seg)->sadb_msg_errno;
-  if (err)
+  if (!delete && err == EEXIST)
+    {
+      LOG_DBG ((LOG_SYSDEP, 50, "pf_key_v2_flow: SPDADD returns EEXIST"));
+    }
+  else if (err)
     {
       log_print ("pf_key_v2_flow: SPD%s: %s", delete ? "DELETE" : "ADD",
 		 strerror (err));
