@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disklabel.8,v 1.8 1997/10/28 05:52:26 millert Exp $
+.\"	$OpenBSD: disklabel.8,v 1.9 1997/10/28 05:58:17 millert Exp $
 .\"	$NetBSD: disklabel.8,v 1.9 1995/03/18 14:54:38 cgd Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1991, 1993
@@ -432,4 +432,13 @@ will not install bootstrap code that overlaps it.
 .Sh BUGS
 When a disk name is given without a full pathname, the constructed
 device name uses the ``a'' partition on the tahoe, the ``c''
-partition on all others.
+partition on all others.  In
+.Fl E
+mode,
+.Nm disklabel
+is far too quick to shuffle partitions around; it should keep a
+free block list and only move partitions around with the user's
+permission.  Also in
+.Fl E
+mode, partitions outside the OpenBSD portion of the disk should
+be changable.
