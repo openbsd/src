@@ -1,4 +1,4 @@
-/*	$OpenBSD: lsupdate.c,v 1.7 2005/03/22 22:13:48 norby Exp $ */
+/*	$OpenBSD: lsupdate.c,v 1.8 2005/03/29 17:26:35 norby Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -180,7 +180,7 @@ send_ls_update(struct iface *iface, struct in_addr addr, void *data, int len)
 	/* age LSA befor sending it out */
 	memcpy(&age, ptr, sizeof(age));
 	age = ntohs(age);
-	if ((age += iface->transfer_delay) >= MAX_AGE)
+	if ((age += iface->transmit_delay) >= MAX_AGE)
 		age = MAX_AGE;
 	age = ntohs(age);
 	memcpy(ptr, &age, sizeof(age));

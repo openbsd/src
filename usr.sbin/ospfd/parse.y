@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.9 2005/03/22 22:13:48 norby Exp $ */
+/*	$OpenBSD: parse.y,v 1.10 2005/03/29 17:26:35 norby Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -65,7 +65,7 @@ int	 check_file_secrecy(int fd, const char *fname);
 
 static struct {
 	u_int32_t	dead_interval;
-	u_int16_t	transfer_delay;
+	u_int16_t	transmit_delay;
 	u_int16_t	hello_interval;
 	u_int16_t	rxmt_interval;
 	u_int16_t	metric;
@@ -194,11 +194,11 @@ conf_main	: METRIC number {
 		| TRANSMITDELAY number {
 			if ($2 < MIN_TRANSMIT_DELAY ||
 			    $2 > MAX_TRANSMIT_DELAY) {
-				yyerror("transfer-delay out of range (%d-%d)",
+				yyerror("transmit-delay out of range (%d-%d)",
 				    MIN_TRANSMIT_DELAY, MAX_TRANSMIT_DELAY);
 				YYERROR;
 			}
-			defaults.transfer_delay = $2;
+			defaults.transmit_delay = $2;
 		}
 		| HELLOINTERVAL number {
 			if ($2 < MIN_HELLO_INTERVAL ||
@@ -333,11 +333,11 @@ areaoptsl	: interface nl
 		| TRANSMITDELAY number nl {
 			if ($2 < MIN_TRANSMIT_DELAY ||
 			    $2 > MAX_TRANSMIT_DELAY) {
-				yyerror("transfer-delay out of range (%d-%d)",
+				yyerror("transmit-delay out of range (%d-%d)",
 				    MIN_TRANSMIT_DELAY, MAX_TRANSMIT_DELAY);
 				YYERROR;
 			}
-			area->transfer_delay = $2;
+			area->transmit_delay = $2;
 		}
 		| HELLOINTERVAL number nl {
 			if ($2 < MIN_HELLO_INTERVAL ||
@@ -417,11 +417,11 @@ interfaceoptsl	: authkey nl
 		| TRANSMITDELAY number nl {
 			if ($2 < MIN_TRANSMIT_DELAY ||
 			    $2 > MAX_TRANSMIT_DELAY) {
-				yyerror("transfer-delay out of range (%d-%d)",
+				yyerror("transmit-delay out of range (%d-%d)",
 				    MIN_TRANSMIT_DELAY, MAX_TRANSMIT_DELAY);
 				YYERROR;
 			}
-			iface->transfer_delay = $2;
+			iface->transmit_delay = $2;
 		}
 		| HELLOINTERVAL number nl {
 			if ($2 < MIN_HELLO_INTERVAL ||
@@ -706,7 +706,7 @@ parse_config(char *filename, int opts)
 	}
 
 	defaults.dead_interval = DEFAULT_RTR_DEAD_TIME;
-	defaults.transfer_delay = DEFAULT_TRANSMIT_DELAY;
+	defaults.transmit_delay = DEFAULT_TRANSMIT_DELAY;
 	defaults.hello_interval = DEFAULT_HELLO_INTERVAL;
 	defaults.rxmt_interval = DEFAULT_RXMT_INTERVAL;
 	defaults.metric = DEFAULT_METRIC;
@@ -861,7 +861,7 @@ conf_get_area(struct in_addr id)
 	LIST_INSERT_HEAD(&conf->area_list, a, entry);
 
 	a->dead_interval = defaults.dead_interval;
-	a->transfer_delay = defaults.transfer_delay;
+	a->transmit_delay = defaults.transmit_delay;
 	a->hello_interval = defaults.hello_interval;
 	a->rxmt_interval = defaults.rxmt_interval;
 	a->metric = defaults.metric;
@@ -888,7 +888,7 @@ conf_get_if(struct kif *kif)
 
 	i = if_new(kif);
 	i->dead_interval = area->dead_interval;
-	i->transfer_delay = area->transfer_delay;
+	i->transmit_delay = area->transmit_delay;
 	i->hello_interval = area->hello_interval;
 	i->rxmt_interval = area->rxmt_interval;
 	i->metric = area->metric;

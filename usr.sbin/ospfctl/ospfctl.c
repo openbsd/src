@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfctl.c,v 1.10 2005/03/26 13:37:16 claudio Exp $ */
+/*	$OpenBSD: ospfctl.c,v 1.11 2005/03/29 17:26:35 norby Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -293,7 +293,7 @@ show_interface_msg(struct imsg *imsg)
 		    inet_ntoa(iface->rtr_id),
 		    print_if_type(iface->type), iface->metric);
 		printf("  Transmit delay is %d sec(s), state %s, priority %d\n",
-		    iface->transfer_delay, print_if_state(iface->state),
+		    iface->transmit_delay, print_if_state(iface->state),
 		    iface->priority);
 		printf("  Designated Router (ID) %s, ",
 		    inet_ntoa(iface->dr_id));

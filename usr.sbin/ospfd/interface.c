@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.12 2005/03/22 22:13:48 norby Exp $ */
+/*	$OpenBSD: interface.c,v 1.13 2005/03/29 17:26:35 norby Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -642,7 +642,7 @@ if_to_ctl(struct iface *iface)
 	ictl.adj_cnt = 0;
 	ictl.baudrate = iface->baudrate;
 	ictl.dead_interval = iface->dead_interval;
-	ictl.transfer_delay = iface->transfer_delay;
+	ictl.transmit_delay = iface->transmit_delay;
 	ictl.hello_interval = iface->hello_interval;
 	ictl.flags = iface->flags;
 	ictl.metric = iface->metric;

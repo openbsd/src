@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.3 2005/02/16 15:23:33 norby Exp $ */
+/*	$OpenBSD: config.c,v 1.4 2005/03/29 17:26:35 norby Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -92,7 +92,7 @@ show_interface(struct iface *iface)
 	log_debug("    area: %s", inet_ntoa(iface->area->id));
 	log_debug("    hello interval: %d", iface->hello_interval);
 	log_debug("    dead interval: %d", iface->dead_interval);
-	log_debug("    transfer delay: %d", iface->transfer_delay);
+	log_debug("    transmit delay: %d", iface->transmit_delay);
 	log_debug("    priority: %d", iface->priority);
 	log_debug("    hello timer: ");
 	log_debug("    wait timer: ");
