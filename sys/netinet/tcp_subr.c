@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.72 2004/01/06 17:38:13 markus Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.73 2004/01/09 12:22:30 markus Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -1057,29 +1057,7 @@ tcp_signature_tdb_init(tdbp, xsp, ii)
 	struct xformsw *xsp;
 	struct ipsecinit *ii;
 {
-	char *c;
-#define isdigit(c)	  (((c) >= '0') && ((c) <= '9'))
-#define isalpha(c)	( (((c) >= 'A') && ((c) <= 'Z')) || \
-			  (((c) >= 'a') && ((c) <= 'z')) )
-
 	if ((ii->ii_authkeylen < 1) || (ii->ii_authkeylen > 80))
-		return (EINVAL);
-
-	c = (char *)ii->ii_authkey;
-
-	while (c < (char *)ii->ii_authkey + ii->ii_authkeylen - 1) {
-		if (isdigit(*c)) {
-			if (*(c + 1) == ' ')
-				return (EINVAL);
-		} else {
-			if (!isalpha(*c))
-				return (EINVAL);
-		}
-
-		c++;
-	}
-
-	if (!isdigit(*c) && !isalpha(*c))
 		return (EINVAL);
 
 	tdbp->tdb_amxkey = malloc(ii->ii_authkeylen, M_XDATA, M_DONTWAIT);
