@@ -295,15 +295,15 @@ process again from scratch.
 		those sets will be marked with an X.
 
 		At this point you may individually select distribution
-		sets to install or enter ``all'' to install all of
+		sets to install or enter "all" to install all of
 		the sets (which is what most users will want to do).
-		You may also enter ``list'' to get a file list or
-		``done'' when you are done selecting distribution sets.
+		You may also enter "list" to get a file list or
+		"done" when you are done selecting distribution sets.
 		(It is also possible to enter an arbitrary filename
 		and have it treated as a file set).
 
 		Once you have selected the file sets you want to install
-		and entered ``done'' you will be prompted to verify that
+		and entered "done" you will be prompted to verify that
 		you really do want to download and install the files.
 		Assuming you acquiesce, the files will begin to download
 		and unpack.  If not, you will be given the option of
