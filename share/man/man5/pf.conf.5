@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.244 2003/05/17 06:44:27 david Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.245 2003/05/17 07:10:34 david Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -1607,14 +1607,14 @@ rules between fast networks is suggested to prevent ACK storms.
 .Sh SYN PROXY
 By default,
 .Xr pf 4
-passes packets part of a
+passes packets that are part of a
 .Xr tcp 4
 handshake between the endpoints.
 The
 .Ar synproxy state
 option can be used to cause
 .Xr pf 4
-to itself complete the handshake with the active endpoint, perform a handshake
+itself to complete the handshake with the active endpoint, perform a handshake
 with the passive endpoint, and then forward packets between the endpoints.
 .Pp
 No packets are sent to the passive endpoint before the active endpoint has
