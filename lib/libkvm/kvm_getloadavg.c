@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_getloadavg.c,v 1.2 1996/05/05 14:57:12 deraadt Exp $ */
+/*	$OpenBSD: kvm_getloadavg.c,v 1.3 2001/11/05 23:04:35 art Exp $ */
 /*	$NetBSD: kvm_getloadavg.c,v 1.2 1996/03/18 22:33:31 thorpej Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_getloadavg.c	8.1 (Berkeley) 6/4/93";
 #else
-static char *rcsid = "$OpenBSD: kvm_getloadavg.c,v 1.2 1996/05/05 14:57:12 deraadt Exp $";
+static char *rcsid = "$OpenBSD: kvm_getloadavg.c,v 1.3 2001/11/05 23:04:35 art Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -47,7 +47,6 @@ static char *rcsid = "$OpenBSD: kvm_getloadavg.c,v 1.2 1996/05/05 14:57:12 deraa
 #include <sys/resource.h>
 #include <sys/proc.h>
 #include <sys/sysctl.h>
-#include <vm/vm_param.h>
 
 #include <db.h>
 #include <fcntl.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_vax.c,v 1.4 2001/03/16 05:46:09 bjc Exp $ */
+/*	$OpenBSD: kvm_vax.c,v 1.5 2001/11/05 23:04:35 art Exp $ */
 /*	$NetBSD: kvm_vax.c,v 1.3 1996/03/18 22:34:06 thorpej Exp $ */
 
 /*-
@@ -54,7 +54,6 @@
 #include <kvm.h>
 
 #include <vm/vm.h>
-#include <vm/vm_param.h>
 
 #include <limits.h>
 #include <db.h>
