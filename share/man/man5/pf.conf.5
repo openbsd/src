@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.218 2003/03/20 01:27:17 david Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.219 2003/03/22 00:10:17 david Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -100,7 +100,7 @@ For example,
 ext_if = \&"kue0\&"
 all_ifs = \&"{\&" $ext_if lo0 \&"}\&"
 pass out on $ext_if from any to any keep state
-pass in \ on $ext_if proto tcp from any to any port 25 keep state
+pass in  on $ext_if proto tcp from any to any port 25 keep state
 .Ed
 .Pp
 .Sh TABLES
@@ -727,12 +727,12 @@ below).
 queue std bandwidth 10% cbq(default)
 queue http bandwidth 60% priority 2 cbq(borrow red) \e
       { employees, developers }
-queue \ developers bandwidth 75% cbq(borrow)
-queue \ employees bandwidth 15%
+queue  developers bandwidth 75% cbq(borrow)
+queue  employees bandwidth 15%
 queue mail bandwidth 10% priority 0 cbq(borrow ecn)
 queue ssh bandwidth 20% cbq(borrow) { ssh_interactive, ssh_bulk }
-queue \ ssh_interactive priority 7
-queue \ ssh_bulk priority 0
+queue  ssh_interactive priority 7
+queue  ssh_bulk priority 0
 
 block return out on dc0 inet all queue std
 pass out on dc0 inet proto tcp from $developerhosts to any port 80 \e
@@ -1085,7 +1085,7 @@ pass in all
 pass in from any to any
 pass in proto tcp from any port <= 1024 to any
 pass in proto tcp from any to any port 25
-pass in proto tcp from 10.0.0.0/8 port >1024 \e
+pass in proto tcp from 10.0.0.0/8 port > 1024 \e
       to ! 10.1.2.3 port != ssh
 .Ed
 .It Ar all
@@ -1143,8 +1143,8 @@ The following example allows only selected users to open outgoing
 connections:
 .Bd -literal -offset indent
 block out proto { tcp, udp } all
-pass \ out proto { tcp, udp } all \e
-   user { < 1000, dhartmei } keep state
+pass  out proto { tcp, udp } all \e
+      user { < 1000, dhartmei } keep state
 .Ed
 .It Ar flags <a>/<b> | /<b>
 This rule only applies to TCP packets that have the flags
@@ -1218,16 +1218,15 @@ For example:
 .Bd -literal -offset indent
 ips = \&"{ 1.2.3.4, 1.2.3.5 }\&"
 pass in proto tcp from any to $ips \e
-      port >1023
-label \&"$dstaddr:$dstport\&"
+      port > 1023 label \&"$dstaddr:$dstport\&"
 .Ed
 .Pp
 expands to
 .Bd -literal -offset indent
-pass in proto tcp from any to 1.2.3.4 \e
-      port >1023 label \&"1.2.3.4:>1023\&"
-pass in proto tcp from any to 1.2.3.5 \e
-      port >1023 label \&"1.2.3.5:>1023\&"
+pass in inet proto tcp from any to 1.2.3.4 \e
+      port > 1023 label \&"1.2.3.4:>1023\&"
+pass in inet proto tcp from any to 1.2.3.5 \e
+      port > 1023 label \&"1.2.3.5:>1023\&"
 .Ed
 .Pp
 The macro expansion for the
@@ -1384,7 +1383,7 @@ For instance:
 .Bd -literal -offset indent
 block all
 pass out proto tcp from any to any flags S/SA keep state
-pass  in proto tcp from any to any port 25 flags S/SA keep state
+pass in  proto tcp from any to any port 25 flags S/SA keep state
 .Ed
 .Pp
 This ruleset blocks everything by default.
@@ -1432,7 +1431,7 @@ allows echo requests (such as those created by
 out, creates state, and matches incoming echo replies correctly to states.
 .Pp
 Note:
-.Ar nat, binat No and Ar rdr
+.Ar nat , binat No and Ar rdr
 rules implicitly create state for connections.
 .Sh STATE MODULATION
 Much of the security derived from TCP is attributable to how well the
@@ -1454,8 +1453,9 @@ only applicable to TCP connections.
 .Pp
 For instance:
 .Bd -literal -offset indent
-block all pass out proto tcp from any to any modulate state
-pass in proto tcp from any to any port 25 flags S/SA modulate state
+block all
+pass out proto tcp from any to any modulate state
+pass in  proto tcp from any to any port 25 flags S/SA modulate state
 .Ed
 .Pp
 There are two caveats associated with state modulation:
@@ -1528,8 +1528,8 @@ antispoof for lo0
 .Pp
 expands to
 .Bd -literal -offset indent
-block in on ! lo0 inet from 127.0.0.1/8 to any
-block in on ! lo0 inet6 from ::1 to any
+block drop in on ! lo0 inet from 127.0.0.1/8 to any
+block drop in on ! lo0 inet6 from ::1 to any
 .Ed
 .Pp
 For non-loopback interfaces, there are additional rules to block incoming
@@ -1543,8 +1543,8 @@ antispoof for wi0 inet
 .Pp
 expands to
 .Bd -literal -offset indent
-block in on ! wi0 inet from 10.0.0.1/24 to any
-block in inet from 10.0.0.1 to any
+block drop in on ! wi0 inet from 10.0.0.0/24 to any
+block drop in inet from 10.0.0.1 to any
 .Ed
 .Pp
 Caveat: Rules created by the
@@ -1708,7 +1708,7 @@ all rulesets in the
 named "spam", and finally passes all outgoing connections and
 incoming connections to port 25.
 .Bd -literal -offset indent
-# echo \&"block in quick from 1.2.3.4 to any\&" \&|
+# echo \&"block in quick from 1.2.3.4 to any\&" \&| \e
       pfctl -a spam:manual -f -
 .Ed
 .Pp
@@ -1740,7 +1740,7 @@ spam are only evaluated for
 packets with destination port 25.
 Hence,
 .Bd -literal -offset indent
-# echo \&"block in quick from 1.2.3.4 to any" \&|
+# echo \&"block in quick from 1.2.3.4 to any" \&| \e
       pfctl -a spam:manual -f -
 .Ed
 .Pp
@@ -1783,9 +1783,9 @@ for one specific server, as well as those generated by the sysadmins
 are not proxied; all other connections are.
 .Bd -literal
 # NO RDR
-no rdr on fxp0 from any to $server port 80
-no rdr on fxp0 from $sysadmins to any port 80
-rdr on fxp0 from any to any port 80 -> 127.0.0.1 port 80
+no rdr on fxp0 proto { tcp, udp } from any to $server port 80
+no rdr on fxp0 proto { tcp, udp } from $sysadmins to any port 80
+rdr on fxp0 proto { tcp, udp } from any to any port 80 -> 127.0.0.1 port 80
 .Ed
 .Pp
 This longer example uses both a NAT and a redirection.
@@ -1965,7 +1965,7 @@ altq-rule      = altq on interface-name queueopts-list
 queue-rule     = queue string queueopts-list queue-list
 
 queueopts-list = queueopts-list queueopts | queueopts
-queueopts      = [ bandwidth number ( b | Kb | Mb | Gb |  %) ] |
+queueopts      = [ bandwidth number ( b | Kb | Mb | Gb | %) ] |
                  [ qlimit number ] | [ tbrsize number ] |
                  [ priority number ] | [ schedulers ] |
                  [ qlimit number ]
