@@ -1,4 +1,4 @@
-/*	$OpenBSD: adw.c,v 1.9 2000/09/06 00:48:01 krw Exp $ */
+/*	$OpenBSD: adw.c,v 1.10 2000/10/15 12:22:15 krw Exp $ */
 /* $NetBSD: adw.c,v 1.23 2000/05/27 18:24:50 dante Exp $	 */
 
 /*
@@ -1303,7 +1303,7 @@ adw_isr_callback(sc, scsiq)
 			 * Lets try resetting the bus and reinitialize
 			 * the host adapter.
 			 */
-			printf("%s: DMA Error. Reseting bus\n",
+			printf("%s: DMA Error. Resetting bus\n",
 				sc->sc_dev.dv_xname);
 			TAILQ_REMOVE(&sc->sc_pending_ccb, ccb, chain);
 			adw_reset_bus(sc);
@@ -1313,7 +1313,7 @@ adw_isr_callback(sc, scsiq)
 		case QHSTA_M_WTM_TIMEOUT:
 		case QHSTA_M_SXFR_WD_TMO:
 			/* The SCSI bus hung in a phase */
-			printf("%s: Watch Dog timer expired. Reseting bus\n",
+			printf("%s: Watch Dog timer expired. Resetting bus\n",
 				sc->sc_dev.dv_xname);
 			TAILQ_REMOVE(&sc->sc_pending_ccb, ccb, chain);
 			adw_reset_bus(sc);
