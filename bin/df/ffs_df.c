@@ -1,0 +1,97 @@
+/*
+ * Copyright (c) 1980, 1990, 1993, 1994
+ *	The Regents of the University of California.  All rights reserved.
+ * (c) UNIX System Laboratories, Inc.
+ * All or some portions of this file are derived from material licensed
+ * to the University of California by American Telephone and Telegraph
+ * Co. or Unix System Laboratories, Inc. and are reproduced herein with
+ * the permission of UNIX System Laboratories, Inc.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the University of
+ *	California, Berkeley and its contributors.
+ * 4. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ */
+
+#ifndef lint
+static char copyright[] =
+"@(#) Copyright (c) 1980, 1990, 1993, 1994\n\
+	The Regents of the University of California.  All rights reserved.\n";
+#endif /* not lint */
+
+#include <unistd.h>
+#include <fcntl.h>
+#include <sys/param.h>
+#include <sys/mount.h>
+#include <ufs/ufs/dinode.h>
+#include <ufs/ffs/fs.h>
+
+int		ffs_df __P((int, char *, struct statfs *));
+
+extern int	bread __P((int, off_t, void *, int));
+extern char	*getmntpt __P((char *));
+
+union {
+	struct fs iu_fs;
+	char dummy[SBSIZE];
+} sb;
+#define sblock sb.iu_fs
+
+int
+ffs_df(rfd, file, sfsp)
+	int rfd;
+	char *file;
+	struct statfs *sfsp;
+{
+	char *mntpt;
+
+	if (bread(rfd, (off_t)SBOFF, &sblock, SBSIZE) == 0) {
+		return (-1);
+	}
+	if (sblock.fs_magic != FS_MAGIC) {
+		return (-1);
+	}
+	sfsp->f_type = 0;
+	sfsp->f_flags = 0;
+	sfsp->f_bsize = sblock.fs_fsize;
+	sfsp->f_iosize = sblock.fs_bsize;
+	sfsp->f_blocks = sblock.fs_dsize;
+	sfsp->f_bfree = sblock.fs_cstotal.cs_nbfree * sblock.fs_frag +
+		sblock.fs_cstotal.cs_nffree;
+	sfsp->f_bavail = (sblock.fs_dsize * (100 - sblock.fs_minfree) / 100) -
+		(sblock.fs_dsize - sfsp->f_bfree);
+	sfsp->f_files = sblock.fs_ncg * sblock.fs_ipg - ROOTINO;
+	sfsp->f_ffree = sblock.fs_cstotal.cs_nifree;
+	sfsp->f_fsid.val[0] = 0;
+	sfsp->f_fsid.val[1] = 0;
+	if ((mntpt = getmntpt(file)) == 0)
+		mntpt = "";
+	memmove(&sfsp->f_mntonname[0], mntpt, MNAMELEN);
+	memmove(&sfsp->f_mntfromname[0], file, MNAMELEN);
+	strncpy(sfsp->f_fstypename, MOUNT_FFS, MFSNAMELEN-1);
+	sfsp->f_fstypename[MFSNAMELEN-1] = '\0';
+	return (0);
+}

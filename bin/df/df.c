@@ -1,4 +1,4 @@
-/*	$OpenBSD: df.c,v 1.15 1997/06/01 07:03:18 downsj Exp $	*/
+/*	$OpenBSD: df.c,v 1.16 1997/06/16 04:37:49 denny Exp $	*/
 /*	$NetBSD: df.c,v 1.21.2.1 1995/11/01 00:06:11 jtc Exp $	*/
 
 /*
@@ -49,7 +49,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)df.c	8.7 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: df.c,v 1.15 1997/06/01 07:03:18 downsj Exp $";
+static char rcsid[] = "$OpenBSD: df.c,v 1.16 1997/06/16 04:37:49 denny Exp $";
 #endif
 #endif /* not lint */
 
@@ -65,14 +65,18 @@ static char rcsid[] = "$OpenBSD: df.c,v 1.15 1997/06/01 07:03:18 downsj Exp $";
 #include <string.h>
 #include <unistd.h>
 
-int	 bread __P((off_t, void *, int));
+int	 bread __P((int, off_t, void *, int));
 char	*getmntpt __P((char *));
 void	 prtstat __P((struct statfs *, int));
-int	 ufs_df __P((char *, struct statfs *));
 int	 selected __P((const char *));
 void	 maketypelist __P((char *));
 long	 regetmntinfo __P((struct statfs **, long));
 void	 usage __P((void));
+
+int		raw_df __P((char *, struct statfs *));
+extern int	ffs_df __P((int, char *, struct statfs *));
+extern int	lfs_df __P((int, char *, struct statfs *));
+extern int	e2fs_df __P((int, char *, struct statfs *));
 
 int	hflag, iflag, kflag, lflag, nflag;
 char	**typelist = NULL;
@@ -134,34 +138,10 @@ main(argc, argv)
 					warn("%s", *argv);
 					continue;
 				}
-			} else if (S_ISCHR(stbuf.st_mode)) {
-				if (!ufs_df(*argv, &mntbuf[mntsize]))
+			} else if (S_ISCHR(stbuf.st_mode) || S_ISBLK(stbuf.st_mode)) {
+				if (!raw_df(*argv, &mntbuf[mntsize]))
 					++mntsize;
 				continue;
-			} else if (S_ISBLK(stbuf.st_mode)) {
-				if ((mntpt = getmntpt(*argv)) == 0) {
-					/* XXX can be DOS'd, not very important */
-					mntpt = mktemp(strdup("/tmp/df.XXXXXXXXXX"));
-					mdev.fspec = *argv;
-					if (mkdir(mntpt, DEFFILEMODE) != 0) {
-						warn("%s", mntpt);
-						continue;
-					}
-					if (mount(MOUNT_FFS, mntpt, MNT_RDONLY,
-					    &mdev) != 0) {
-						(void)rmdir(mntpt);
-						if (!ufs_df(*argv, &mntbuf[mntsize]))
-							++mntsize;
-						continue;
-					} else if (!statfs(mntpt, &mntbuf[mntsize])) {
-						mntbuf[mntsize].f_mntonname[0] = '\0';
-						++mntsize;
-					} else
-						warn("%s", *argv);
-					(void)unmount(mntpt, 0);
-					(void)rmdir(mntpt);
-					continue;
-				}
 			} else
 				mntpt = *argv;
 			/*
@@ -419,71 +399,35 @@ prtstat(sfsp, maxwidth)
 	(void)printf("  %s\n", sfsp->f_mntonname);
 }
 
-/*
- * This code constitutes the pre-system call Berkeley df code for extracting
- * information from filesystem superblocks.
- */
-#include <ufs/ffs/fs.h>
-#include <errno.h>
-#include <fstab.h>
-
-union {
-	struct fs iu_fs;
-	char dummy[SBSIZE];
-} sb;
-#define sblock sb.iu_fs
-
-int	rfd;
-
 int
-ufs_df(file, sfsp)
+raw_df(file, sfsp)
 	char *file;
 	struct statfs *sfsp;
 {
-	char *mntpt;
-	static int synced;
-
-	if (synced++ == 0)
-		sync();
+	int rfd;
 
 	if ((rfd = open(file, O_RDONLY)) < 0) {
 		warn("%s", file);
 		return (-1);
 	}
-	if (bread((off_t)SBOFF, &sblock, SBSIZE) == 0) {
-		(void)close(rfd);
+
+	if (ffs_df(rfd, file, sfsp) == 0) {
+		return (0);
+	} else if (lfs_df(rfd, file, sfsp) == 0) {
+		return (0);
+	} else if (e2fs_df(rfd, file, sfsp) == 0) {
+		return (0);
+	} else {
 		return (-1);
 	}
-	if (sblock.fs_magic != FS_MAGIC) {
-		(void)close(rfd);
-		return (-1);
-	}
-	sfsp->f_type = 0;
-	sfsp->f_flags = 0;
-	sfsp->f_bsize = sblock.fs_fsize;
-	sfsp->f_iosize = sblock.fs_bsize;
-	sfsp->f_blocks = sblock.fs_dsize;
-	sfsp->f_bfree = sblock.fs_cstotal.cs_nbfree * sblock.fs_frag +
-		sblock.fs_cstotal.cs_nffree;
-	sfsp->f_bavail = (sblock.fs_dsize * (100 - sblock.fs_minfree) / 100) -
-		(sblock.fs_dsize - sfsp->f_bfree);
-	if (sfsp->f_bavail < 0)
-		sfsp->f_bavail = 0;
-	sfsp->f_files =  sblock.fs_ncg * sblock.fs_ipg;
-	sfsp->f_ffree = sblock.fs_cstotal.cs_nifree;
-	sfsp->f_fsid.val[0] = 0;
-	sfsp->f_fsid.val[1] = 0;
-	if ((mntpt = getmntpt(file)) == 0)
-		mntpt = "";
-	memmove(&sfsp->f_mntonname[0], mntpt, MNAMELEN);
-	memmove(&sfsp->f_mntfromname[0], file, MNAMELEN);
-	strncpy(sfsp->f_fstypename, MOUNT_FFS, MFSNAMELEN);
-	(void)close(rfd);
-	return (0);
+
+	close (rfd);
+
 }
 
 int
-bread(off, buf, cnt)
+bread(rfd, off, buf, cnt)
+	int rfd;
 	off_t off;
 	void *buf;
 	int cnt;
