@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_bio.c,v 1.31 2001/12/10 02:19:34 art Exp $	*/
+/*	$OpenBSD: nfs_bio.c,v 1.32 2001/12/14 03:16:02 art Exp $	*/
 /*	$NetBSD: nfs_bio.c,v 1.25.4.2 1996/07/08 20:47:04 jtc Exp $	*/
 
 /*
@@ -299,7 +299,12 @@ nfs_write(v)
 	do {
 		void *win;
 		voff_t oldoff = uio->uio_offset;
-		vsize_t bytelen = uio->uio_resid;
+		vsize_t bytelen;
+
+		/*
+		 * XXXART - workaround for compiler bug on 68k. Wieee!
+		 */
+		 *((volatile vsize_t *)&bytelen) = uio->uio_resid;
 
 		nfsstats.biocache_writes++;
 		np->n_flag |= NMODIFIED;
