@@ -1,4 +1,4 @@
-.\" $OpenBSD: pfctl.8,v 1.103 2003/12/15 00:02:03 mcbride Exp $
+.\" $OpenBSD: pfctl.8,v 1.104 2003/12/16 16:43:32 jmc Exp $
 .\"
 .\" Copyright (c) 2001 Kjell Wooding.  All rights reserved.
 .\"
@@ -341,7 +341,7 @@ Comments starting with a "#" are allowed in the text file.
 With these commands, the
 .Fl v
 flag can also be used once or twice, in which case
-.Nm pfctl
+.Nm
 will print the
 detailed result of the operation for each individual address, prefixed by
 one of the following letters:
@@ -366,7 +366,7 @@ The address/network has been cleared (statistics).
 Each table maintains a set of counters that can be retrieved using the
 .Fl v
 flag of
-.Nm pfctl .
+.Nm .
 For example, the following commands define a wide open firewall which will keep
 track of packets going to or coming from the
 .Ox
@@ -374,8 +374,8 @@ ftp server.
 The following commands configure the firewall and send 10 pings to the ftp
 server:
 .Bd -literal -offset indent
-# printf \&"table <test> { ftp.openbsd.org }\en \e
-\  \  pass out to <test> keep state\en" \&| pfctl -f-
+# printf "table <test> { ftp.openbsd.org }\en \e
+    pass out to <test> keep state\en" | pfctl -f-
 # ping -qc10 ftp.openbsd.org
 .Ed
 .Pp
@@ -388,12 +388,12 @@ The time at which the current accounting started is also shown with the
 line.
 .Bd -literal -offset indent
 # pfctl -t test -vTshow
-\ \ \ 129.128.5.191
-\ \ \ \ Cleared: \ \ \ \ Thu Feb 13 18:55:18 2003
-\ \ \ \ In/Block: \ \ \ [ Packets: 0 \ \ \ \ \ \ \ Bytes: 0 \ \ \ \ \ \ \ ]
-\ \ \ \ In/Pass: \ \ \ \ [ Packets: 10 \ \ \ \ \ \ Bytes: 840 \ \ \ \ \ ]
-\ \ \ \ Out/Block: \ \ [ Packets: 0 \ \ \ \ \ \ \ Bytes: 0 \ \ \ \ \ \ \ ]
-\ \ \ \ Out/Pass: \ \ \ [ Packets: 10 \ \ \ \ \ \ Bytes: 840 \ \ \ \ \ ]
+   129.128.5.191
+    Cleared:     Thu Feb 13 18:55:18 2003
+    In/Block:    [ Packets: 0        Bytes: 0        ]
+    In/Pass:     [ Packets: 10       Bytes: 840      ]
+    Out/Block:   [ Packets: 0        Bytes: 0        ]
+    Out/Pass:    [ Packets: 10       Bytes: 840      ]
 .Ed
 .Pp
 Similarly, it is possible to view global information about the tables
@@ -408,19 +408,19 @@ packet statistics for the whole table:
 .Bd -literal -offset indent
 # pfctl -vvsTables
 --a-r-  test
-\ \ \ \ Addresses: \ \ 1
-\ \ \ \ Cleared: \ \ \ \ Thu Feb 13 18:55:18 2003
-\ \ \ \ References: \ [ Anchors: 0 \ \ \ \ \ \ \ Rules: 1 \ \ \ \ \ \ \ ]
-\ \ \ \ Evaluations: [ NoMatch: 3496 \ \ \ \ Match: 1 \ \ \ \ \ \ \ ]
-\ \ \ \ In/Block: \ \ \ [ Packets: 0 \ \ \ \ \ \ \ Bytes: 0 \ \ \ \ \ \ \ ]
-\ \ \ \ In/Pass: \ \ \ \ [ Packets: 10 \ \ \ \ \ \ Bytes: 840 \ \ \ \ \ ]
-\ \ \ \ In/XPass: \ \ \ [ Packets: 0 \ \ \ \ \ \ \ Bytes: 0 \ \ \ \ \ \ \ ]
-\ \ \ \ Out/Block: \ \ [ Packets: 0 \ \ \ \ \ \ \ Bytes: 0 \ \ \ \ \ \ \ ]
-\ \ \ \ Out/Pass: \ \ \ [ Packets: 10 \ \ \ \ \ \ Bytes: 840 \ \ \ \ \ ]
-\ \ \ \ Out/XPass: \ \ [ Packets: 0 \ \ \ \ \ \ \ Bytes: 0 \ \ \ \ \ \ \ ]
+    Addresses:   1
+    Cleared:     Thu Feb 13 18:55:18 2003
+    References:  [ Anchors: 0        Rules: 1        ]
+    Evaluations: [ NoMatch: 3496     Match: 1        ]
+    In/Block:    [ Packets: 0        Bytes: 0        ]
+    In/Pass:     [ Packets: 10       Bytes: 840      ]
+    In/XPass:    [ Packets: 0        Bytes: 0        ]
+    Out/Block:   [ Packets: 0        Bytes: 0        ]
+    Out/Pass:    [ Packets: 10       Bytes: 840      ]
+    Out/XPass:   [ Packets: 0        Bytes: 0        ]
 .Ed
 .Pp
-As we can see here, only one packet - the initial ping request - matched the
+As we can see here, only one packet \- the initial ping request \- matched the
 table; but all packets passing as the result of the state are correctly
 accounted for.
 Reloading the table(s) or ruleset will not affect packet accounting in any way.
@@ -428,14 +428,14 @@ The two
 .Ar XPass
 counters are incremented instead of the
 .Ar Pass
-counters when a \&"stateful\&" packet is passed but doesn't match the table
+counters when a "stateful" packet is passed but doesn't match the table
 anymore.
 This will happen in our example if someone flushes the table while the ping
 command is running.
 .Pp
 When used with a single
 .Fl v ,
-.Nm pfctl
+.Nm
 will only display the first line containing the table flags and name.
 The flags are defined as follows:
 .Pp
