@@ -1,5 +1,5 @@
 %{
-/* $OpenBSD: tokenizer.l,v 1.1 2004/05/12 21:17:03 espie Exp $ */
+/* $OpenBSD: tokenizer.l,v 1.2 2004/05/12 21:28:35 espie Exp $ */
 /*
  * Copyright (c) 2004 Marc Espie <espie@cvs.openbsd.org>
  *
@@ -20,6 +20,7 @@
 #include <errno.h>
 #include <sys/types.h>
 #include <limits.h>
+
 extern int32_t yylval;
 
 int32_t number(void);
@@ -32,19 +33,17 @@ oct	0[0-7]*
 dec	[1-9][0-9]*
 
 %%
-{ws}	{/* just skip it */}
-{hex}	{ yylval = number(); return(NUMBER); }
-{oct}	{ yylval = number(); return(NUMBER); }
-{dec}	{ yylval = number(); return(NUMBER); }
-"<="	{ return(LE); }
-">="	{ return(GE); }
-"<<"	{ return(LSHIFT); }
-">>"	{ return(RSHIFT); }
-"=="	{ return(EQ); }
-"!="	{ return(NE); }
-"&&"	{ return(LAND); }
-"||"	{ return(LOR); }
-.	{ return yytext[0]; }
+{ws}			{/* just skip it */}
+{hex}|{oct}|{dec}	{ yylval = number(); return(NUMBER); }
+"<="			{ return(LE); }
+">="			{ return(GE); }
+"<<"			{ return(LSHIFT); }
+">>"			{ return(RSHIFT); }
+"=="			{ return(EQ); }
+"!="			{ return(NE); }
+"&&"			{ return(LAND); }
+"||"			{ return(LOR); }
+.			{ return yytext[0]; }
 %%
 
 int32_t
@@ -61,4 +60,3 @@ number()
 	return l;
 
 }
-
