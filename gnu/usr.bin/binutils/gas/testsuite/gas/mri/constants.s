@@ -12,3 +12,20 @@ s10	equ	'a'
 s11	equ	A'a'
 s12	equ	'abcd'
 s13	equ	'a''b'
+
+	xdef	foo
+foo
+	moveq.l	#%1010,d0
+	moveq.l	#1010b,d0
+	moveq.l	#@12,d0
+	moveq.l	#12o,d0
+	moveq.l	#12q,d0
+	moveq.l	#10,d0
+	moveq.l	#10d,d0
+	moveq.l	#$a,d0
+	moveq.l	#0ah,d0
+	moveq.l	#'a',d0
+	moveq.l	#A'a',d0
+	nop
+
+	end

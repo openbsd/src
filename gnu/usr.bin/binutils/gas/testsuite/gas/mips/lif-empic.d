@@ -16,6 +16,6 @@ Disassembly of section .text:
 [ 	]*RELOC: 0+000c [A-Z0-9_]*LITERAL[A-Z0-9_]* .lit8.*
 0+0010 <[^>]*> lwc1 \$f[45],-16364\(\$gp\)
 [ 	]*RELOC: 0+0010 [A-Z0-9_]*LITERAL[A-Z0-9_]* .lit8.*
-0+0014 <[^>]*> lui \$a0,16256
-0+0018 <[^>]*> lui \$at,16256
+0+0014 <[^>]*> lui \$a0,0x3f80
+0+0018 <[^>]*> lui \$at,0x3f80
 0+001c <[^>]*> mtc1 \$at,\$f4

@@ -136,26 +136,39 @@
 
 #define error	as_fatal
 
-#define DELETED     ((PTR)1)	/* guarenteed invalid address */
-#define START_POWER    (11)	/* power of two: size of new hash table */
+static char _deleted_[1];
+#define DELETED     ((PTR)_deleted_)	/* guarenteed unique address */
+#define START_POWER    (10)	/* power of two: size of new hash table */
 
 /* TRUE if a symbol is in entry @ ptr.  */
 #define islive(ptr) (ptr->hash_string && ptr->hash_string!=DELETED)
 
-/* Number of slots in hash table.  The wall does not count here.
-   We expect this is always a power of 2.  */
-#define STAT_SIZE      (0)
-#define STAT_ACCESS    (1)	/* number of hash_ask()s */
+enum stat_enum {
+  /* Number of slots in hash table.  The wall does not count here.
+     We expect this is always a power of 2.  */
+  STAT_SIZE = 0,
+  /* Number of hash_ask calls.  */
+  STAT_ACCESS,
+  STAT_ACCESS_w,
+  /* Number of collisions (total).  This may exceed STAT_ACCESS if we
+     have lots of collisions/access.  */
+  STAT_COLLIDE,
+  STAT_COLLIDE_w,
+  /* Slots used right now.  */
+  STAT_USED,
+  /* How many string compares?  */
+  STAT_STRCMP,
+  STAT_STRCMP_w,
+  /* Size of statistics block... this must be last.  */
+  STATLENGTH
+};
 #define STAT__READ     (0)	/* reading */
 #define STAT__WRITE    (1)	/* writing */
-/* Number of collisions (total).  This may exceed STAT_ACCESS if we
-   have lots of collisions/access.  */
-#define STAT_COLLIDE   (3)
-#define STAT_USED      (5)	/* slots used right now */
-#define STATLENGTH     (6)	/* size of statistics block */
-#if STATLENGTH != HASH_STATLENGTH
-Panic! Please make #include "stat.h" agree with previous definitions!
-#endif
+
+/* When we grow a hash table, by what power of two do we increase it?  */
+#define GROW_FACTOR 1
+/* When should we grow it?  */
+#define FULL_VALUE(N)	((N) / 2)
 
 /* #define SUSPECT to do runtime checks */
 /* #define TEST to be a test jig for hash...() */
@@ -169,6 +182,26 @@ Panic! Please make #include "stat.h" agree with previous definitions!
 #undef  START_FULL
 #define START_FULL  (4)
 #endif
+
+struct hash_entry
+{
+  const char *hash_string;	/* points to where the symbol string is */
+  /* NULL means slot is not used */
+  /* DELETED means slot was deleted */
+  PTR hash_value;		/* user's datum, associated with symbol */
+  unsigned long h;
+};
+
+struct hash_control {
+  struct hash_entry *hash_where;/* address of hash table */
+  int hash_sizelog;		/* Log of ( hash_mask + 1 ) */
+  int hash_mask;		/* masks a hash into index into table */
+  int hash_full;		/* when hash_stat[STAT_USED] exceeds this, */
+  /* grow table */
+  struct hash_entry *hash_wall;	/* point just after last (usable) entry */
+  /* here we have some statistics */
+  int hash_stat[STATLENGTH];	/* lies & statistics */
+};
 
 /*------------------ plan ---------------------------------- i = internal
 
@@ -267,7 +300,7 @@ hash_new ()
   retval->hash_where = room;
   retval->hash_wall =
     wall = room + (1 << START_POWER);
-  retval->hash_full = (1 << START_POWER) / 2;
+  retval->hash_full = FULL_VALUE (1 << START_POWER);
   for (entry = room; entry <= wall; entry++)
     entry->hash_string = NULL;
   return retval;
@@ -291,6 +324,7 @@ hash_die (handle)
   free ((char *) handle);
 }
 
+#ifdef TEST
 /*
  *           h a s h _ s a y ( )
  *
@@ -304,7 +338,7 @@ hash_die (handle)
  * Then contents of hash_stat[] are read out (in ascending order)
  * until your buffer or hash_stat[] is exausted.
  */
-void
+static void
 hash_say (handle, buffer, bufsiz)
      struct hash_control *handle;
      int buffer[ /*bufsiz*/ ];
@@ -324,6 +358,7 @@ hash_say (handle, buffer, bufsiz)
 	}
     }
 }
+#endif
 
 /*
  *           h a s h _ d e l e t e ( )
@@ -438,7 +473,7 @@ hash_insert (handle, string, value)
  *
  * Regardless of what was in the symbol table before, after hash_jam()
  * the named symbol has the given value. The symbol is either inserted or
- * (its value is) relpaced.
+ * (its value is) replaced.
  * An error message string is returned, 0 means OK.
  *
  * WARNING: this may decide to grow the hashed symbol table.
@@ -515,69 +550,48 @@ hash_grow (handle)		/* make a hash table grow */
    * attempt to get enough room for a hash table twice as big
    */
   temp = handle->hash_stat[STAT_SIZE];
-  if ((newwhere = ((struct hash_entry *)
-		   xmalloc ((unsigned long) ((temp + temp + 1)
-					     * sizeof (struct hash_entry)))))
-      != NULL)
-    /* +1 for wall slot */
-    {
-      retval = 0;		/* assume success until proven otherwise */
-      /*
-       * have enough room: now we do all the work.
-       * double the size of everything in handle,
-       * note: hash_mask frob works for 1's & for 2's complement machines
-       */
-      handle->hash_mask = handle->hash_mask + handle->hash_mask + 1;
-      handle->hash_stat[STAT_SIZE] <<= 1;
-      newsize = handle->hash_stat[STAT_SIZE];
-      handle->hash_where = newwhere;
-      handle->hash_full <<= 1;
-      handle->hash_sizelog += 1;
-      handle->hash_stat[STAT_USED] = 0;
-      handle->hash_wall =
-	newwall = newwhere + newsize;
-      /*
-       * set all those pesky new slots to vacant.
-       */
-      for (newtrack = newwhere; newtrack <= newwall; newtrack++)
-	{
-	  newtrack->hash_string = NULL;
-	}
-      /*
-       * we will do a scan of the old table, the hard way, using the
-       * new control block to re-insert the data into new hash table.
-       */
-      handle->hash_stat[STAT_USED] = 0;	/* inserts will bump it up to correct */
-      for (oldtrack = oldwhere; oldtrack < oldwall; oldtrack++)
-	if (((string = oldtrack->hash_string) != NULL) && string != DELETED)
-	  if ((retval = hash_jam (handle, string, oldtrack->hash_value)))
-	    break;
+  newwhere = ((struct hash_entry *)
+	      xmalloc ((unsigned long) ((temp << GROW_FACTOR + 1)
+					/* +1 for wall slot */
+					* sizeof (struct hash_entry))));
+  if (newwhere == NULL)
+    return "no_room";
+
+  /*
+   * have enough room: now we do all the work.
+   * double the size of everything in handle.
+   */
+  handle->hash_mask = ((handle->hash_mask + 1) << GROW_FACTOR) - 1;
+  handle->hash_stat[STAT_SIZE] <<= GROW_FACTOR;
+  newsize = handle->hash_stat[STAT_SIZE];
+  handle->hash_where = newwhere;
+  handle->hash_full <<= GROW_FACTOR;
+  handle->hash_sizelog += GROW_FACTOR;
+  handle->hash_wall = newwall = newwhere + newsize;
+  /* Set all those pesky new slots to vacant.  */
+  for (newtrack = newwhere; newtrack <= newwall; newtrack++)
+    newtrack->hash_string = NULL;
+  /* We will do a scan of the old table, the hard way, using the
+   * new control block to re-insert the data into new hash table.  */
+  handle->hash_stat[STAT_USED] = 0;
+  for (oldtrack = oldwhere; oldtrack < oldwall; oldtrack++)
+    if (((string = oldtrack->hash_string) != NULL) && string != DELETED)
+      if ((retval = hash_jam (handle, string, oldtrack->hash_value)))
+	return retval;
 
 #ifdef SUSPECT
-      if (!retval && handle->hash_stat[STAT_USED] != oldused)
-	{
-	  retval = "hash_used";
-	}
+  if (handle->hash_stat[STAT_USED] != oldused)
+    return "hash_used";
 #endif
-      if (!retval)
-	{
-	  /*
-	   * we have a completely faked up control block.
-	   * return the old hash table.
-	   */
-	  free ((char *) oldwhere);
-	  /*
-	   * Here with success. retval is already 0.
-	   */
-	}
-    }
-  else
-    {
-      retval = "no room";
-    }
-  return retval;
+
+  /* We have a completely faked up control block.
+     Return the old hash table.  */
+  free ((char *) oldwhere);
+
+  return 0;
 }
 
+#ifdef TEST
 /*
  *          h a s h _ a p p l y ( )
  *
@@ -606,28 +620,20 @@ hash_grow (handle)		/* make a hash table grow */
  * In future we may use the value returned by your nominated function.
  * One idea is to abort the scan if, after applying the function to a
  * certain node, the function returns a certain code.
- * To be safe, please make your functions of type char *. If you always
- * return NULL, then the scan will complete, visiting every symbol in
- * the table exactly once. ALL OTHER RETURNED VALUES have no meaning yet!
- * Caveat Actor!
  *
  * The function you supply should be of the form:
- *      char * myfunct(string,value)
+ *      void myfunct(string,value)
  *              char * string;        |* the symbol's name *|
  *              char * value;         |* the symbol's value *|
  *      {
  *        |* ... *|
- *        return(NULL);
  *      }
  *
- * The returned value of hash_apply() is (char*)NULL. In future it may return
- * other values. NULL means "completed scan OK". Other values have no meaning
- * yet. (The function has no graceful failures.)
  */
-char *
+void
 hash_apply (handle, function)
      struct hash_control *handle;
-     char *(*function) ();
+     void (*function) ();
 {
   struct hash_entry *entry;
   struct hash_entry *wall;
@@ -640,8 +646,8 @@ hash_apply (handle, function)
 	  (*function) (entry->hash_string, entry->hash_value);
 	}
     }
-  return (NULL);
 }
+#endif
 
 /*
  *          h a s h _ f i n d ( )
@@ -681,19 +687,32 @@ hash_ask (handle, string, access_type)
   const char *s;
   struct hash_entry *slot;
   int collision;	/* count collisions */
+  int strcmps;
+  int hcode;
 
   /* start looking here */
-  slot = handle->hash_where + hash_code (handle, string);
+  hcode = hash_code (handle, string);
+  slot = handle->hash_where + (hcode & handle->hash_mask);
 
   handle->hash_stat[STAT_ACCESS + access_type] += 1;
-  collision = 0;
+  collision = strcmps = 0;
   hash_found = FALSE;
   while (((s = slot->hash_string) != NULL) && s != DELETED)
     {
-      if (string == s || !strcmp (string, s))
-	hash_found = TRUE;
-      if (hash_found)
-	break;
+      if (string == s)
+	{
+	  hash_found = TRUE;
+	  break;
+	}
+      if (slot->h == hcode)
+	{
+	  if (!strcmp (string, s))
+	    {
+	      hash_found = TRUE;
+	      break;
+	    }
+	  strcmps++;
+	}
       collision++;
       slot++;
     }
@@ -710,10 +729,19 @@ hash_ask (handle, string, access_type)
       slot = handle->hash_where;/* now look again */
       while (((s = slot->hash_string) != NULL) && s != DELETED)
 	{
-	  if (string == s || !strcmp (string, s))
+	  if (string == s)
 	    {
 	      hash_found = TRUE;
 	      break;
+	    }
+	  if (slot->h == hcode)
+	    {
+	      if (!strcmp (string, s))
+		{
+		  hash_found = TRUE;
+		  break;
+		}
+	      strcmps++;
 	    }
 	  collision++;
 	  slot++;
@@ -727,7 +755,10 @@ hash_ask (handle, string, access_type)
        */
     }
   handle->hash_stat[STAT_COLLIDE + access_type] += collision;
-  return (slot);		/* also return hash_found */
+  handle->hash_stat[STAT_STRCMP + access_type] += strcmps;
+  if (!hash_found)
+    slot->h = hcode;
+  return slot;			/* also return hash_found */
 }
 
 /*
@@ -755,7 +786,7 @@ hash_code (handle, string)
       h += c;
       h = (h << 3) + (h >> n) + c;
     }
-  return (h & handle->hash_mask);
+  return h;
 #else
   /* from bfd */
   unsigned long h = 0;
@@ -770,8 +801,39 @@ hash_code (handle, string)
     }
   h += len + (len << 17);
   h ^= h >> 2;
-  return h & handle->hash_mask;
+  return h;
 #endif
+}
+
+void
+hash_print_statistics (file, name, h)
+     FILE *file;
+     const char *name;
+     struct hash_control *h;
+{
+  unsigned long sz, used, pct;
+
+  if (h == 0)
+    return;
+
+  sz = h->hash_stat[STAT_SIZE];
+  used = h->hash_stat[STAT_USED];
+  pct = (used * 100 + sz / 2) / sz;
+
+  fprintf (file, "%s hash statistics:\n\t%d/%d slots used (%d%%)\n",
+	   name, used, sz, pct);
+
+#define P(name, off)							\
+  fprintf (file, "\t%-16s %6dr + %6dw = %7d\n", name,			\
+	   h->hash_stat[off+STAT__READ],				\
+	   h->hash_stat[off+STAT__WRITE],				\
+	   h->hash_stat[off+STAT__READ] + h->hash_stat[off+STAT__WRITE])
+
+  P ("accesses:", STAT_ACCESS);
+  P ("collisions:", STAT_COLLIDE);
+  P ("string compares:", STAT_STRCMP);
+
+#undef P
 }
 
 /*
@@ -799,8 +861,8 @@ int number;			/* number 0:TABLES-1 of current hashed */
 
 main ()
 {
-  char (*applicatee ());
-  char *destroy ();
+  void applicatee ();
+  void destroy ();
   char *what ();
   int *ip;
 
@@ -915,24 +977,22 @@ what (description)
   return (retval);
 }
 
-char *
+void
 destroy (string, value)
      char *string;
      char *value;
 {
   free (string);
   free (value);
-  return (NULL);
 }
 
 
-char *
+void
 applicatee (string, value)
      char *string;
      char *value;
 {
   printf ("%.20s-%.20s\n", string, value);
-  return (NULL);
 }
 
 whattable ()			/* determine number: what hash table to use */

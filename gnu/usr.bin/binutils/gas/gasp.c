@@ -1103,7 +1103,21 @@ change_base (idx, in, out)
 
   while (idx < in->len)
     {
-      if (idx < in->len - 1 && in->ptr[idx + 1] == '\'' && ! mri)
+      if (in->ptr[idx] == '\\'
+	  && idx + 1 < in->len
+	  && in->ptr[idx + 1] == '(')
+	{
+	  idx += 2;
+	  while (idx < in->len
+		 && in->ptr[idx] != ')')
+	    {
+	      sb_add_char (out, in->ptr[idx]);
+	      idx++;
+	    }
+	  if (idx < in->len)
+	    idx++;
+	}
+      else if (idx < in->len - 1 && in->ptr[idx + 1] == '\'' && ! mri)
 	{
 	  int base;
 	  int value;
@@ -1761,11 +1775,24 @@ process_assigns (idx, in, buf)
     {
       hash_entry *ptr;
       if (in->ptr[idx] == '\\'
+	  && idx + 1 < in->len
+	  && in->ptr[idx + 1] == '(')
+	{
+	  do
+	    {
+	      sb_add_char (buf, in->ptr[idx]);
+	      idx++;
+	    }
+	  while (idx < in->len && in->ptr[idx - 1] != ')');
+	}
+      else if (in->ptr[idx] == '\\'
+	  && idx + 1 < in->len
 	  && in->ptr[idx + 1] == '&')
 	{
 	  idx = condass_lookup_name (in, idx + 2, buf, 1);
 	}
       else if (in->ptr[idx] == '\\'
+	       && idx + 1 < in->len
 	       && in->ptr[idx + 1] == '$')
 	{
 	  idx = condass_lookup_name (in, idx + 2, buf, 0);

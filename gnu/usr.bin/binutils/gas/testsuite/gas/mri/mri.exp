@@ -13,6 +13,7 @@ if ![istarget "m68*-*-*"] {
 run_dump_test label
 run_dump_test equ
 run_dump_test constants
+run_dump_test immconst
 run_dump_test float
 run_dump_test char
 run_dump_test expr

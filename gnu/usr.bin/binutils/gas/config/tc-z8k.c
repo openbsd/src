@@ -1504,6 +1504,10 @@ md_apply_fix (fixP, val)
       break;
 #endif
 
+    case 0:
+      md_number_to_chars (buf, val, fixP->fx_size);
+      break;
+
     default:
       abort ();
 

@@ -1,6 +1,6 @@
 /* tc-sh.c -- Assemble code for the Hitachi Super-H
 
-   Copyright (C) 1993, 1994, 1995 Free Software Foundation.
+   Copyright (C) 1993, 94, 95, 1996 Free Software Foundation.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -192,6 +192,8 @@ md_begin ()
 
 static int reg_m;
 static int reg_n;
+static int reg_b;
+
 static expressionS immediate;	/* absolute expression */
 
 typedef struct
@@ -209,18 +211,33 @@ parse_reg (src, mode, reg)
      int *mode;
      int *reg;
 {
+  /* We use !isalnum for the next character after the register name, to
+     make sure that we won't accidentally recognize a symbol name such as
+     'sram' as being a reference to the register 'sr'.  */
+
+  if (src[0] == 'r')
+    {
+      if (src[1] >= '0' && src[1] <= '7' && strncmp(&src[2], "_bank", 5) == 0
+	  && ! isalnum (src[7]))
+	{
+	  *mode = A_REG_B;
+	  *reg  = (src[1] - '0');
+	  return 7;
+	}
+    }
+
   if (src[0] == 'r')
     {
       if (src[1] == '1')
 	{
-	  if (src[2] >= '0' && src[2] <= '5')
+	  if (src[2] >= '0' && src[2] <= '5' && ! isalnum (src[3]))
 	    {
 	      *mode = A_REG_N;
 	      *reg = 10 + src[2] - '0';
 	      return 3;
 	    }
 	}
-      if (src[1] >= '0' && src[1] <= '9')
+      if (src[1] >= '0' && src[1] <= '9' && ! isalnum (src[2]))
 	{
 	  *mode = A_REG_N;
 	  *reg = (src[1] - '0');
@@ -228,41 +245,53 @@ parse_reg (src, mode, reg)
 	}
     }
 
-  if (src[0] == 's' && src[1] == 'r')
+  if (src[0] == 's' && src[1] == 's' && src[2] == 'r' && ! isalnum (src[3]))
+    {
+      *mode = A_SSR;
+      return 3;
+    }
+
+  if (src[0] == 's' && src[1] == 'p' && src[2] == 'c' && ! isalnum (src[3]))
+    {
+      *mode = A_SPC;
+      return 3;
+    }
+
+  if (src[0] == 's' && src[1] == 'r' && ! isalnum (src[2]))
     {
       *mode = A_SR;
       return 2;
     }
 
-  if (src[0] == 's' && src[1] == 'p')
+  if (src[0] == 's' && src[1] == 'p' && ! isalnum (src[2]))
     {
       *mode = A_REG_N;
       *reg = 15;
       return 2;
     }
 
-  if (src[0] == 'p' && src[1] == 'r')
+  if (src[0] == 'p' && src[1] == 'r' && ! isalnum (src[2]))
     {
       *mode = A_PR;
       return 2;
     }
-  if (src[0] == 'p' && src[1] == 'c')
+  if (src[0] == 'p' && src[1] == 'c' && ! isalnum (src[2]))
     {
       *mode = A_DISP_PC;
       return 2;
     }
-  if (src[0] == 'g' && src[1] == 'b' && src[2] == 'r')
+  if (src[0] == 'g' && src[1] == 'b' && src[2] == 'r' && ! isalnum (src[3]))
     {
       *mode = A_GBR;
       return 3;
     }
-  if (src[0] == 'v' && src[1] == 'b' && src[2] == 'r')
+  if (src[0] == 'v' && src[1] == 'b' && src[2] == 'r' && ! isalnum (src[3]))
     {
       *mode = A_VBR;
       return 3;
     }
 
-  if (src[0] == 'm' && src[1] == 'a' && src[2] == 'c')
+  if (src[0] == 'm' && src[1] == 'a' && src[2] == 'c' && ! isalnum (src[4]))
     {
       if (src[3] == 'l')
 	{
@@ -274,6 +303,37 @@ parse_reg (src, mode, reg)
 	  *mode = A_MACH;
 	  return 4;
 	}
+    }
+  if (src[0] == 'f' && src[1] == 'r')
+    {
+      if (src[2] == '1')
+	{
+	  if (src[3] >= '0' && src[3] <= '5' && ! isalnum (src[4]))
+	    {
+	      *mode = F_REG_N;
+	      *reg = 10 + src[3] - '0';
+	      return 4;
+	    }
+	}
+      if (src[2] >= '0' && src[2] <= '9' && ! isalnum (src[3]))
+	{
+	  *mode = F_REG_N;
+	  *reg = (src[2] - '0');
+	  return 3;
+	}
+    }
+  if (src[0] == 'f' && src[1] == 'p' && src[2] == 'u' && src[3] == 'l'
+      && ! isalnum (src[4]))
+    {
+      *mode = FPUL_N;
+      return 4;
+    }
+
+  if (src[0] == 'f' && src[1] == 'p' && src[2] == 's' && src[3] == 'c'
+      && src[4] == 'r' && ! isalnum (src[5]))
+    {
+      *mode = FPSCR_N;
+      return 5;
     }
 
   return 0;
@@ -506,16 +566,30 @@ get_operands (info, args, operand)
 	      ptr++;
 	    }
 	  get_operand (&ptr, operand + 1);
+	  if (info->arg[2])
+	    {
+	      if (*ptr == ',')
+		{
+		  ptr++;
+		}
+	      get_operand (&ptr, operand + 2);
+	    }
+	  else
+	    {
+	      operand[2].type = 0;
+	    }
 	}
       else
 	{
 	  operand[1].type = 0;
+	  operand[2].type = 0;
 	}
     }
   else
     {
       operand[0].type = 0;
       operand[1].type = 0;
+      operand[2].type = 0;
     }
   return ptr;
 }
@@ -574,6 +648,10 @@ get_specific (opcode, operands)
 	      if (user->type != A_R0_GBR || user->reg != 0)
 		goto fail;
 	      break;
+	    case F_FR0:
+	      if (user->type != F_REG_N || user->reg != 0)
+		goto fail;
+	      break;
 
 	    case A_REG_N:
 	    case A_INC_N:
@@ -581,6 +659,9 @@ get_specific (opcode, operands)
 	    case A_IND_N:
 	    case A_IND_R0_REG_N:
 	    case A_DISP_REG_N:
+	    case F_REG_N:
+	    case FPUL_N:
+	    case FPSCR_N:
 	      /* Opcode needs rn */
 	      if (user->type != arg)
 		goto fail;
@@ -589,8 +670,16 @@ get_specific (opcode, operands)
 	    case A_GBR:
 	    case A_SR:
 	    case A_VBR:
+	    case A_SSR:
+	    case A_SPC:
 	      if (user->type != arg)
 		goto fail;
+	      break;
+
+            case A_REG_B:
+	      if (user->type != arg)
+		goto fail;
+	      reg_b = user->reg;
 	      break;
 
 	    case A_REG_M:
@@ -605,6 +694,14 @@ get_specific (opcode, operands)
 	      reg_m = user->reg;
 	      break;
 
+	    case F_REG_M:
+	    case FPUL_M:
+	    case FPSCR_M:
+	      /* Opcode needs rn */
+	      if (user->type != arg - F_REG_M + F_REG_N)
+		goto fail;
+	      reg_m = user->reg;
+	      break;
 	
 	    default:
 	      printf ("unhandled %d\n", arg);
@@ -714,6 +811,9 @@ build_Mytes (opcode, operand)
 	    case REG_M:
 	      nbuf[index] = reg_m;
 	      break;
+            case REG_B:
+	      nbuf[index] = reg_b | 0x08;
+	      break;
 	    case DISP_4:
 	      insert (output + low_byte, R_SH_IMM4, 0);
 	      break;
@@ -800,6 +900,15 @@ md_assemble (str)
       return;
     }
 
+  if (sh_relax
+      && ! seg_info (now_seg)->tc_segment_info_data.in_code)
+    {
+      /* Output a CODE reloc to tell the linker that the following
+         bytes are instructions, not data.  */
+      fix_new (frag_now, frag_now_fix (), 2, &abs_symbol, 0, 0, R_SH_CODE);
+      seg_info (now_seg)->tc_segment_info_data.in_code = 1;
+    }
+
   if (opcode->arg[0] == A_BDISP12
       || opcode->arg[0] == A_BDISP8)
     {
@@ -828,6 +937,45 @@ md_assemble (str)
       build_Mytes (opcode, operand);
     }
 
+}
+
+/* This routine is called each time a label definition is seen.  It
+   emits a R_SH_LABEL reloc if necessary.  */
+
+void
+sh_frob_label ()
+{
+  static fragS *last_label_frag;
+  static int last_label_offset;
+
+  if (sh_relax
+      && seg_info (now_seg)->tc_segment_info_data.in_code)
+    {
+      int offset;
+
+      offset = frag_now_fix ();
+      if (frag_now != last_label_frag
+	  || offset != last_label_offset)
+	{	
+	  fix_new (frag_now, offset, 2, &abs_symbol, 0, 0, R_SH_LABEL);
+	  last_label_frag = frag_now;
+	  last_label_offset = offset;
+	}
+    }
+}
+
+/* This routine is called when the assembler is about to output some
+   data.  It emits a R_SH_DATA reloc if necessary.  */
+
+void
+sh_flush_pending_output ()
+{
+  if (sh_relax
+      && seg_info (now_seg)->tc_segment_info_data.in_code)
+    {
+      fix_new (frag_now, frag_now_fix (), 2, &abs_symbol, 0, 0, R_SH_DATA);
+      seg_info (now_seg)->tc_segment_info_data.in_code = 0;
+    }
 }
 
 void
@@ -1039,7 +1187,6 @@ sh_coff_frob_file ()
 	{
 	  symbolS *sym;
 	  bfd_vma val;
-	  bfd_vma paddr;
 	  fixS *fscan;
 	  int iscan;
 	  int count;
@@ -1064,11 +1211,14 @@ sh_coff_frob_file ()
 	  /* Look through the fixups again, this time looking for one
              at the same location as sym.  */
 	  val = S_GET_VALUE (sym);
-	  paddr = segment_info[iseg].scnhdr.s_paddr;
 	  for (fscan = segment_info[iseg].fix_root;
 	       fscan != NULL;
 	       fscan = fscan->fx_next)
-	    if (val == paddr + fscan->fx_frag->fr_address + fscan->fx_where)
+	    if (val == fscan->fx_frag->fr_address + fscan->fx_where
+		&& fscan->fx_r_type != R_SH_ALIGN
+		&& fscan->fx_r_type != R_SH_CODE
+		&& fscan->fx_r_type != R_SH_DATA
+		&& fscan->fx_r_type != R_SH_LABEL)
 	      break;
 	  if (fscan == NULL)
 	    {
@@ -1102,7 +1252,6 @@ sh_coff_frob_file ()
 	  count = 0;
 	  for (iscan = SEG_E0; iscan < SEG_UNKNOWN; iscan++)
 	    {
-	      paddr = segment_info[iscan].scnhdr.s_paddr;
 	      for (fscan = segment_info[iscan].fix_root;
 		   fscan != NULL;
 		   fscan = fscan->fx_next)
@@ -1247,7 +1396,7 @@ md_convert_frag (headers, seg, fragP)
     case C (COND_JUMP, COND32):
     case C (COND_JUMP, UNDEF_WORD_DISP):
       if (fragP->fr_symbol == NULL)
-	as_bad ("at %0xlx, displacement overflows 8-bit field", 
+	as_bad ("at 0x%lx, displacement overflows 8-bit field", 
 		(unsigned long) fragP->fr_address);
       else  
 	as_bad ("at 0x%lx, displacement to %sdefined symbol %s overflows 8-bit field ",
@@ -1329,7 +1478,8 @@ sh_handle_align (frag)
   if (sh_relax
       && frag->fr_type == rs_align
       && frag->fr_address + frag->fr_fix > 0
-      && frag->fr_offset > 1)
+      && frag->fr_offset > 1
+      && now_seg != bss_section)
     fix_new (frag, frag->fr_fix, 2, &abs_symbol, frag->fr_offset, 0,
 	     R_SH_ALIGN);
 }
@@ -1364,7 +1514,10 @@ sh_force_relocation (fix)
   return (fix->fx_pcrel
 	  || SWITCH_TABLE (fix)
 	  || fix->fx_r_type == R_SH_COUNT
-	  || fix->fx_r_type == R_SH_ALIGN);
+	  || fix->fx_r_type == R_SH_ALIGN
+	  || fix->fx_r_type == R_SH_CODE
+	  || fix->fx_r_type == R_SH_DATA
+	  || fix->fx_r_type == R_SH_LABEL);
 }
 
 /* Apply a fixup to the object file.  */
@@ -1432,28 +1585,28 @@ md_apply_fix (fixP, val)
 	 variable val.  */
       val = (val + 2) / 4;
       if (val & ~0xff)
-	as_warn_where (fixP->fx_file, fixP->fx_line, "pcrel too far");
+	as_bad_where (fixP->fx_file, fixP->fx_line, "pcrel too far");
       buf[lowbyte] = val;
       break;
 
     case R_SH_PCRELIMM8BY2:
       val /= 2;
       if (val & ~0xff)
-	as_warn_where (fixP->fx_file, fixP->fx_line, "pcrel too far");
+	as_bad_where (fixP->fx_file, fixP->fx_line, "pcrel too far");
       buf[lowbyte] = val;
       break;
 
     case R_SH_PCDISP8BY2:
       val /= 2;
       if (val < -0x80 || val > 0x7f)
-	as_warn_where (fixP->fx_file, fixP->fx_line, "pcrel too far");
+	as_bad_where (fixP->fx_file, fixP->fx_line, "pcrel too far");
       buf[lowbyte] = val;
       break;
 
     case R_SH_PCDISP:
       val /= 2;
       if (val < -0x800 || val >= 0x7ff)
-	as_warn_where (fixP->fx_file, fixP->fx_line, "pcrel too far");
+	as_bad_where (fixP->fx_file, fixP->fx_line, "pcrel too far");
       buf[lowbyte] = val & 0xff;
       buf[highbyte] |= (val >> 8) & 0xf;
       break;
@@ -1495,6 +1648,9 @@ md_apply_fix (fixP, val)
 
     case R_SH_COUNT:
     case R_SH_ALIGN:
+    case R_SH_CODE:
+    case R_SH_DATA:
+    case R_SH_LABEL:
       /* Nothing to do here.  */
       break;
 
@@ -1594,6 +1750,38 @@ tc_coff_sizemachdep (frag)
   return md_relax_table[frag->fr_subtype].rlx_length;
 }
 
+/* When we align the .text section, insert the correct NOP pattern.  */
+
+int
+sh_do_align (n, fill, len)
+     int n;
+     const char *fill;
+     int len;
+{
+  if ((fill == NULL || (*fill == 0 && len == 1))
+      && (now_seg == text_section
+#ifdef BFD_ASSEMBLER
+	  || (now_seg->flags & SEC_CODE) != 0
+#endif
+	  || strcmp (obj_segment_name (now_seg), ".init") == 0)
+      && n > 1)
+    {
+      static const unsigned char big_nop_pattern[] = { 0x00, 0x09 };
+      static const unsigned char little_nop_pattern[] = { 0x09, 0x00 };
+
+      /* First align to a 2 byte boundary, in case there is an odd
+         .byte.  */
+      frag_align (1, 0);
+      if (target_big_endian)
+	frag_align_pattern (n, big_nop_pattern, sizeof big_nop_pattern);
+      else
+	frag_align_pattern (n, little_nop_pattern, sizeof little_nop_pattern);
+      return 1;
+    }
+
+  return 0;
+}
+
 #ifdef OBJ_COFF
 
 /* Adjust a reloc for the SH.  This is similar to the generic code,
@@ -1673,6 +1861,13 @@ sh_coff_reloc_mangle (seg, fix, intr, paddr)
       /* Store the alignment in the r_offset field.  */
       intr->r_offset = fix->fx_offset;
       /* This reloc is always absolute.  */
+      symbol_ptr = NULL;
+    }
+  else if (fix->fx_r_type == R_SH_CODE
+	   || fix->fx_r_type == R_SH_DATA
+	   || fix->fx_r_type == R_SH_LABEL)
+    {
+      /* These relocs are always absolute.  */
       symbol_ptr = NULL;
     }
 

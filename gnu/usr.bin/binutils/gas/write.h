@@ -99,7 +99,9 @@ struct fix
 
   /* If NULL, no bitfix's to do.  */
   /* Only i960-coff and ns32k use this, and i960-coff stores an
-     integer.  This can probably be folded into tc_fix_data, below.  */
+     integer.  This can probably be folded into tc_fix_data, below.
+     @@ Alpha also uses it, but only to disable certain relocation
+     processing.  */
   bit_fixS *fx_bit_fixP;
 
 #ifdef BFD_ASSEMBLER

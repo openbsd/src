@@ -1,5 +1,6 @@
 /* tc-i960.h - Basic 80960 instruction formats.
-   Copyright (C) 1989, 1990, 1991, 1992 Free Software Foundation, Inc.
+   Copyright (C) 1989, 90, 91, 92, 93, 94, 95, 1996
+   Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -43,7 +44,6 @@
 #define SYMBOLS_NEED_BACKPOINTERS
 #define LOCAL_LABELS_FB 1
 #define BITFIELD_CONS_EXPRESSIONS
-#define MRI_MODE_NEEDS_PSEUDO_DOT 1
 
 /* tailor the coff format */
 #define BFD_ARCH				bfd_arch_i960

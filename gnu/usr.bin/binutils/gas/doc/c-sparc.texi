@@ -25,30 +25,53 @@
 @cindex SPARC options
 @cindex architectures, SPARC
 @cindex SPARC architectures
-The SPARC chip family includes several successive levels (or other
-variants) of chip, using the same core instruction set, but including
-a few additional instructions at each level.
+The SPARC chip family includes several successive levels, using the same
+core instruction set, but including a few additional instructions at
+each level.  There are exceptions to this however.  For details on what
+instructions each variant supports, please see the chip's architecture
+reference manual.
 
 By default, @code{@value{AS}} assumes the core instruction set (SPARC
 v6), but ``bumps'' the architecture level as needed: it switches to
 successively higher architectures as it encounters instructions that
 only exist in the higher levels.
 
+If not configured for SPARC v9 (@code{sparc64-*-*}) GAS will not bump
+passed sparclite by default, an option must be passed to enable the
+v9 instructions.
+
+GAS treats sparclite as being compatible with v8, unless an architecture
+is explicitly requested.  SPARC v9 is always incompatible with sparclite.
+
+@c The order here is the same as the order of enum sparc_opcode_arch_val
+@c to give the user a sense of the order of the "bumping".
+
 @table @code
 @kindex -Av6
 @kindex Av7
 @kindex -Av8
-@kindex -Av9
+@kindex -Asparclet
 @kindex -Asparclite
-@item -Av6 | -Av7 | -Av8 | -Av9 | -Asparclite
+@kindex -Av9
+@kindex -Av9a
+@item -Av6 | -Av7 | -Av8 | -Asparclet | -Asparclite | -Av9 | -Av9a
 Use one of the @samp{-A} options to select one of the SPARC
 architectures explicitly.  If you select an architecture explicitly,
 @code{@value{AS}} reports a fatal error if it encounters an instruction
 or feature requiring a higher level.
 
+@c Leave this commented out until all UltraSPARC insns are supported.
+@c @samp{-Av9a} enables the SPARC v9 instruction set with UltraSPARC extensions.
+
+@item -xarch=v8plus | -xarch=v8plusa
+For compatibility with the Solaris v9 assembler.  These options are
+equivalent to -Av9 and -Av9a, respectively.
+
 @item -bump
-Permit the assembler to ``bump'' the architecture level as required, but
-warn whenever it is necessary to switch to another level.
+Warn whenever it is necessary to switch to another level.
+If an architecture level is explicitly requested, GAS will not issue
+warnings until that level is reached, and will then bump the level
+as required (except between incompatible levels).
 @end table
 
 @ignore

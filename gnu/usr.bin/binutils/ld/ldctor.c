@@ -120,6 +120,7 @@ ldctor_build_sets ()
 {
   static boolean called;
   lang_statement_list_type *old;
+  boolean header_printed;
   struct set_info *p;
 
   /* The emulation code may call us directly, but we only want to do
@@ -133,6 +134,7 @@ ldctor_build_sets ()
 
   lang_list_init (stat_ptr);
 
+  header_printed = false;
   for (p = sets; p != (struct set_info *) NULL; p = p->next)
     {
       struct set_element *e;
@@ -201,6 +203,36 @@ ldctor_build_sets ()
 
       for (e = p->elements; e != (struct set_element *) NULL; e = e->next)
 	{
+	  if (config.map_file != NULL)
+	    {
+	      int len;
+
+	      if (! header_printed)
+		{
+		  minfo ("\nSet                 Symbol\n\n");
+		  header_printed = true;
+		}
+
+	      minfo ("%s", p->h->root.string);
+	      len = strlen (p->h->root.string);
+
+	      if (len >= 19)
+		{
+		  print_nl ();
+		  len = 0;
+		}
+	      while (len < 20)
+		{
+		  print_space ();
+		  ++len;
+		}
+
+	      if (e->name != NULL)
+		minfo ("%T\n", e->name);
+	      else
+		minfo ("%G\n", e->section->owner, e->section, e->value);
+	    }
+
 	  if (link_info.relocateable)
 	    lang_add_reloc (p->reloc, howto, e->section, e->name,
 			    exp_intop (e->value));

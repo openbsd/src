@@ -40,6 +40,8 @@ extern void ldemul_create_output_section_statements PARAMS ((void));
 extern boolean ldemul_place_orphan
   PARAMS ((struct lang_input_statement_struct *, asection *));
 extern int ldemul_parse_args PARAMS ((int, char **));
+extern boolean ldemul_unrecognized_file
+  PARAMS ((struct lang_input_statement_struct *));
 extern boolean ldemul_open_dynamic_archive
   PARAMS ((const char *, struct search_dirs *,
 	   struct lang_input_statement_struct *));
@@ -112,13 +114,16 @@ typedef struct ld_emulation_xfer_struct
 
   /* Run after assigning parsing with the args, but before 
      reading the script.  Used to initialize symbols used in the script. */
-
   void	(*set_symbols) PARAMS ((void));
 
   /* Run to parse args which the base linker doesn't
      understand. Return non zero on sucess. */
-
   int (*parse_args) PARAMS ((int, char **));
+
+  /* Run to handle files which are not recognized as object files or
+     archives.  Return true if the file was handled.  */
+  boolean (*unrecognized_file)
+    PARAMS ((struct lang_input_statement_struct *));
 
 } ld_emulation_xfer_type;
 

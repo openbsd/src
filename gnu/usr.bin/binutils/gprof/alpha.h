@@ -28,4 +28,9 @@
 #define OFFSET_TO_CODE	0
 #define	UNITS_TO_CODE	(OFFSET_TO_CODE / sizeof(UNIT))
 
+/*
+ * Minimum size of an instruction (in bytes):
+ */
+#define MIN_INSN_SIZE	4
+
 #endif /* alpha_h */

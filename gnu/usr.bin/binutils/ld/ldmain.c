@@ -115,8 +115,8 @@ static boolean reloc_dangerous PARAMS ((struct bfd_link_info *, const char *,
 static boolean unattached_reloc PARAMS ((struct bfd_link_info *,
 					 const char *, bfd *, asection *,
 					 bfd_vma));
-static boolean notice_ysym PARAMS ((struct bfd_link_info *, const char *,
-				    bfd *, asection *, bfd_vma));
+static boolean notice PARAMS ((struct bfd_link_info *, const char *,
+			       bfd *, asection *, bfd_vma));
 
 static struct bfd_link_callbacks link_callbacks =
 {
@@ -130,7 +130,7 @@ static struct bfd_link_callbacks link_callbacks =
   reloc_overflow,
   reloc_dangerous,
   unattached_reloc,
-  notice_ysym
+  notice
 };
 
 struct bfd_link_info link_info;
@@ -162,12 +162,13 @@ main (argc, argv)
 
   bfd_init ();
 
+  bfd_set_error_program_name (program_name);
+
   xatexit (remove_output);
 
   /* Initialize the data about options.  */
   trace_files = trace_file_tries = version_printed = false;
   whole_archive = false;
-  config.traditional_format = false;
   config.build_constructors = true;
   config.dynamic_link = false;
   command_line.force_common_definition = false;
@@ -179,6 +180,7 @@ main (argc, argv)
   link_info.shared = false;
   link_info.symbolic = false;
   link_info.static_link = false;
+  link_info.traditional_format = false;
   link_info.strip = strip_none;
   link_info.discard = discard_none;
   link_info.lprefix_len = 1;
@@ -188,8 +190,9 @@ main (argc, argv)
   link_info.create_object_symbols_section = NULL;
   link_info.hash = NULL;
   link_info.keep_hash = NULL;
+  link_info.notice_all = false;
   link_info.notice_hash = NULL;
-
+  link_info.wrap_hash = NULL;
   
   ldfile_add_arch ("");
 
@@ -316,6 +319,11 @@ main (argc, argv)
 
   ldwrite ();
 
+  if (config.map_file != NULL)
+    lang_map ();
+  if (link_info.notice_all)
+    output_cref (config.map_file != NULL ? config.map_file : stdout);
+
   /* Even if we're producing relocateable output, some non-fatal errors should
      be reported in the exit status.  (What non-fatal errors, if any, do we
      want to ignore for relocateable output?)  */
@@ -328,16 +336,57 @@ main (argc, argv)
 		 output_filename);
 	}
 
-      if (output_bfd->iostream)
-	fclose ((FILE *) (output_bfd->iostream));
+      /* The file will be removed by remove_output.  */
 
-      unlink (output_filename);
       xexit (1);
     }
   else
     {
       if (! bfd_close (output_bfd))
 	einfo ("%F%B: final close failed: %E\n", output_bfd);
+
+      /* If the --force-exe-suffix is enabled, and we're making an
+	 executable file and it doesn't end in .exe, copy it to one which does. */
+
+      if (! link_info.relocateable && command_line.force_exe_suffix)
+	{
+	  int len = strlen (output_filename);
+	  if (len < 4 
+	      || (strcasecmp (output_filename + len - 4, ".exe") != 0
+		  && strcasecmp (output_filename + len - 4, ".dll") != 0))
+	    {
+	      FILE *src;
+	      FILE *dst;
+	      const int bsize = 4096;
+	      char *buf = xmalloc (bsize);
+	      int l;
+	      char *dst_name = xmalloc (len + 5);
+	      strcpy (dst_name, output_filename);
+	      strcat (dst_name, ".exe");
+	      src = fopen (output_filename, FOPEN_RB);
+	      dst = fopen (dst_name, FOPEN_WB);
+
+	      if (!src)
+		einfo ("%X%P: unable to open for source of copy `%s'\n", output_filename);
+	      if (!dst)
+		einfo ("%X%P: unable to open for destination of copy `%s'\n", dst_name);
+	      while ((l = fread (buf, 1, bsize, src)) > 0)
+		{
+		  int done = fwrite (buf, 1, l, dst);
+		  if (done != l)
+		    {
+		      einfo ("%P: Error writing file `%s'\n", dst_name);
+		    }
+		}
+	      fclose (src);
+	      if (!fclose (dst))
+		{
+		  einfo ("%P: Error closing file `%s'\n", dst_name);
+		}
+	      free (dst_name);
+	      free (buf);
+	    }
+	}
     }
 
   END_PROGRESS (program_name);
@@ -515,6 +564,25 @@ add_ysym (name)
     einfo ("%P%F: bfd_hash_lookup failed: %E\n");
 }
 
+/* Record a symbol to be wrapped, from the --wrap option.  */
+
+void
+add_wrap (name)
+     const char *name;
+{
+  if (link_info.wrap_hash == NULL)
+    {
+      link_info.wrap_hash = ((struct bfd_hash_table *)
+			     xmalloc (sizeof (struct bfd_hash_table)));
+      if (! bfd_hash_table_init_n (link_info.wrap_hash,
+				   bfd_hash_newfunc,
+				   61))
+	einfo ("%P%F: bfd_hash_table_init failed: %E\n");
+    }
+  if (bfd_hash_lookup (link_info.wrap_hash, name, true, true) == NULL)
+    einfo ("%P%F: bfd_hash_lookup failed: %E\n");
+}
+
 /* Handle the -retain-symbols-file option.  */
 
 void
@@ -616,7 +684,82 @@ add_archive_element (info, abfd, name)
   ldlang_add_file (input);
 
   if (config.map_file != (FILE *) NULL)
-    minfo ("%s needed due to %T\n", abfd->filename, name);
+    {
+      static boolean header_printed;
+      struct bfd_link_hash_entry *h;
+      bfd *from;
+      int len;
+
+      h = bfd_link_hash_lookup (link_info.hash, name, false, false, true);
+
+      if (h == NULL)
+	from = NULL;
+      else
+	{
+	  switch (h->type)
+	    {
+	    default:
+	      from = NULL;
+	      break;
+
+	    case bfd_link_hash_defined:
+	    case bfd_link_hash_defweak:
+	      from = h->u.def.section->owner;
+	      break;
+
+	    case bfd_link_hash_undefined:
+	    case bfd_link_hash_undefweak:
+	      from = h->u.undef.abfd;
+	      break;
+
+	    case bfd_link_hash_common:
+	      from = h->u.c.p->section->owner;
+	      break;
+	    }
+	}
+
+      if (! header_printed)
+	{
+	  char buf[100];
+
+	  sprintf (buf, "%-29s %s\n\n", "Archive member included",
+		   "because of file (symbol)");
+	  minfo ("%s", buf);
+	  header_printed = true;
+	}
+
+      if (bfd_my_archive (abfd) == NULL)
+	{
+	  minfo ("%s", bfd_get_filename (abfd));
+	  len = strlen (bfd_get_filename (abfd));
+	}
+      else
+	{
+	  minfo ("%s(%s)", bfd_get_filename (bfd_my_archive (abfd)),
+		 bfd_get_filename (abfd));
+	  len = (strlen (bfd_get_filename (bfd_my_archive (abfd)))
+		 + strlen (bfd_get_filename (abfd))
+		 + 2);
+	}
+
+      if (len >= 29)
+	{
+	  print_nl ();
+	  len = 0;
+	}
+      while (len < 30)
+	{
+	  print_space ();
+	  ++len;
+	}
+
+      if (from != NULL)
+	minfo ("%B ", from);
+      if (h != NULL)
+	minfo ("(%T)\n", h->root.string);
+      else
+	minfo ("(%s)\n", name);
+    }
 
   if (trace_files || trace_file_tries)
     info_msg ("%I\n", input);
@@ -639,6 +782,17 @@ multiple_definition (info, name, obfd, osec, oval, nbfd, nsec, nval)
      asection *nsec;
      bfd_vma nval;
 {
+  /* If either section has the output_section field set to
+     bfd_abs_section_ptr, it means that the section is being
+     discarded, and this is not really a multiple definition at all.
+     FIXME: It would be cleaner to somehow ignore symbols defined in
+     sections which are being discarded.  */
+  if ((osec->output_section != NULL
+       && bfd_is_abs_section (osec->output_section))
+      || (nsec->output_section != NULL
+	  && bfd_is_abs_section (nsec->output_section)))
+    return true;
+
   einfo ("%X%C: multiple definition of `%T'\n",
 	 nbfd, nsec, nval, name);
   if (obfd != (bfd *) NULL)
@@ -775,7 +929,9 @@ constructor_callback (info, constructor, name, abfd, section, value)
 
   /* Ensure that BFD_RELOC_CTOR exists now, so that we can give a
      useful error message.  */
-  if (bfd_reloc_type_lookup (output_bfd, BFD_RELOC_CTOR) == NULL)
+  if (bfd_reloc_type_lookup (output_bfd, BFD_RELOC_CTOR) == NULL
+      && (link_info.relocateable
+	  || bfd_reloc_type_lookup (abfd, BFD_RELOC_CTOR) == NULL))
     einfo ("%P%F: BFD backend error: BFD_RELOC_CTOR unsupported\n");
 
   s = set_name;
@@ -785,10 +941,6 @@ constructor_callback (info, constructor, name, abfd, section, value)
     strcpy (s, "__CTOR_LIST__");
   else
     strcpy (s, "__DTOR_LIST__");
-
-  if (config.map_file != (FILE *) NULL)
-    fprintf (config.map_file,
-	     "Adding %s to constructor/destructor set %s\n", name, set_name);
 
   h = bfd_link_hash_lookup (info->hash, set_name, true, true, true);
   if (h == (struct bfd_link_hash_entry *) NULL)
@@ -829,6 +981,12 @@ warning_callback (info, warning, symbol, abfd, section, address)
      asection *section;
      bfd_vma address;
 {
+  /* This is a hack to support warn_multiple_gp.  FIXME: This should
+     have a cleaner interface, but what?  */
+  if (! config.warn_multiple_gp
+      && strcmp (warning, "using multiple gp values") == 0)
+    return true;
+
   if (section != NULL)
     einfo ("%C: %s\n", abfd, section, address, warning);
   else if (abfd == NULL)
@@ -1065,20 +1223,27 @@ unattached_reloc (info, name, abfd, section, address)
   return true;
 }
 
-/* This is called when a symbol in notice_hash is found.  Symbols are
-   put in notice_hash using the -y option.  */
+/* This is called if link_info.notice_all is set, or when a symbol in
+   link_info.notice_hash is found.  Symbols are put in notice_hash
+   using the -y option.  */
 
-/*ARGSUSED*/
 static boolean
-notice_ysym (info, name, abfd, section, value)
+notice (info, name, abfd, section, value)
      struct bfd_link_info *info;
      const char *name;
      bfd *abfd;
      asection *section;
      bfd_vma value;
 {
-  einfo ("%B: %s %s\n", abfd,
-	 bfd_is_und_section (section) ? "reference to" : "definition of",
-	 name);
+  if (! info->notice_all
+      || (info->notice_hash != NULL
+	  && bfd_hash_lookup (info->notice_hash, name, false, false) != NULL))
+    einfo ("%B: %s %s\n", abfd,
+	   bfd_is_und_section (section) ? "reference to" : "definition of",
+	   name);
+
+  if (info->notice_all)
+    add_cref (name, abfd, section, value);
+
   return true;
 }

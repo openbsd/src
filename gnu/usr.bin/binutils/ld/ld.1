@@ -1,4 +1,4 @@
-.\" Copyright (c) 1991, 92, 93, 94, 1995 Free Software Foundation
+.\" Copyright (c) 1991, 92, 93, 94, 95, 1996 Free Software Foundation
 .\" See section COPYING for conditions for redistribution
 .TH ld 1 "17 August 1992" "cygnus support" "GNU Development Tools"
 .de BP
@@ -33,6 +33,7 @@ ld \- the GNU linker
 .RB "[\|" "\-c\ "\c
 .I commandfile\c
 \&\|] 
+.RB "[\|" \-\-cref "\|]"
 .RB "[\|" \-d | \-dc | \-dp\c
 \|]
 .br
@@ -45,6 +46,8 @@ ld \- the GNU linker
 .I entry\c
 \&\|] 
 .RB "[\|" \-embedded\-relocs "\|]"
+.RB "[\|" \-E "\|]" 
+.RB "[\|" \-export\-dynamic "\|]"
 .RB "[\|" \-F "\|]" 
 .RB "[\|" "\-F\ "\c
 .I format\c
@@ -118,8 +121,13 @@ ld \- the GNU linker
 .RB "[\|" \-\-version "\|]"
 .RB "[\|" \-warn\-common "\|]" 
 .RB "[\|" \-warn\-constructors "\|]" 
+.RB "[\|" \-warn\-multiple\-gp "\|]" 
 .RB "[\|" \-warn\-once "\|]" 
 .RB "[\|" \-\-whole\-archive "\|]" 
+.RB "[\|" \-\-no\-whole\-archive "\|]" 
+.RB "[\|" "\-\-wrap\ "\c
+.I symbol\c
+\&\|]
 .RB "[\|" \-X "\|]" 
 .RB "[\|" \-x "\|]" 
 .ad b
@@ -402,6 +410,12 @@ line by bracketing it between `\|\c
 \|' characters.
 
 .TP
+.B \-\-cref
+Output a cross reference table.  If a linker map file is being
+generated, the cross reference table is printed to the map file.
+Otherwise, it is printed on the standard output.
+
+.TP
 .B \-d 
 .TP
 .B \-dc
@@ -456,6 +470,15 @@ option to the GNU compiler and assembler.  It causes the linker to
 create a table which may be used at runtime to relocate any data which
 was statically initialized to pointer values.  See the code in
 testsuite/ld-empic for details.
+
+.TP
+.B \-E
+.TP
+.B \-export\-dynamic
+When creating an ELF file, add all symbols to the dynamic symbol table.
+Normally, the dynamic symbol table contains only symbols which are used
+by a dynamic object.  This option is needed for some uses of
+.I dlopen.
 
 .TP
 .B \-F
@@ -722,8 +745,9 @@ option may also be used on SunOS.  By default, on SunOS, the linker
 will form a runtime search patch out of all the
 .B \-L
 options it is given.  If a
-.B \-rpath option is used, the runtime search path
-will be formed exclusively using the
+.B \-rpath
+option is used, the runtime search path will be formed exclusively
+using the
 .B \-rpath
 options, ignoring
 the
@@ -898,17 +922,42 @@ few object file formats.  For formats like COFF or ELF, the linker can
 not detect the use of global constructors.
 
 .TP
+.B \-warn\-multiple\-gp
+Warn if the output file requires multiple global-pointer values.  This
+option is only meaningful for certain processors, such as the Alpha.
+
+.TP
 .B \-warn\-once
 Only warn once for each undefined symbol, rather than once per module
 which refers to it.
 
 .TP
 .B \-\-whole\-archive
-For each archive mentioned on the command line, include every object
-file in the archive in the link, rather than searching the archive for
-the required object files.  This is normally used to turn an archive
-file into a shared library, forcing every object to be included in the
-resulting shared library.
+For each archive mentioned on the command line after the
+.B \-\-whole\-archive
+option, include every object file in the archive in the link, rather
+than searching the archive for the required object files.  This is
+normally used to turn an archive file into a shared library, forcing
+every object to be included in the resulting shared library.
+
+.TP
+.B \-\-no\-whole\-archive
+Turn off the effect of the
+.B \-\-whole\-archive
+option for archives which appear later on the command line.
+
+.TP
+.BI "--wrap " "symbol"
+Use a wrapper function for 
+.I symbol.
+Any undefined reference to
+.I symbol
+will be resolved to
+.BI "__wrap_" "symbol".
+Any undefined reference to
+.BI "__real_" "symbol"
+will be resolved to
+.I symbol.
 
 .TP
 .B \-X 

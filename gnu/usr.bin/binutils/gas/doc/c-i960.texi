@@ -153,7 +153,7 @@ an alignment.  @xref{Lcomm,,@code{.lcomm}}.
 @end table
 
 @table @code
-@cindex @code{extended} directive, i96
+@cindex @code{extended} directive, i960
 @item .extended @var{flonums}
 @code{.extended} expects zero or more flonums, separated by commas; for
 each flonum, @samp{.extended} emits an @sc{ieee} extended-format (80-bit)

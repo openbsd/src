@@ -1,5 +1,5 @@
 /* coff object file format
-   Copyright (C) 1989, 90, 91, 92, 94, 1995 Free Software Foundation, Inc.
+   Copyright (C) 1989, 90, 91, 92, 94, 95, 1996 Free Software Foundation, Inc.
 
    This file is part of GAS.
 
@@ -14,8 +14,9 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with GAS; see the file COPYING.  If not, write to
-   the Free Software Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+   along with GAS; see the file COPYING.  If not, write to the Free
+   Software Foundation, 59 Temple Place - Suite 330, Boston, MA
+   02111-1307, USA.  */
 
 #ifndef OBJ_FORMAT_H
 #define OBJ_FORMAT_H
@@ -415,7 +416,7 @@ typedef struct
 #define C_DEBUG_SECTION		N_DEBUG
 #define C_NTV_SECTION		N_TV
 #define C_PTV_SECTION		P_TV
-#define C_REGISTER_SECTION	20
+#define C_REGISTER_SECTION	50
 
 /*
  *  Macros to extract information from a symbol table entry.
@@ -441,7 +442,8 @@ typedef struct
 #define S_IS_LOCAL(s) \
   ((s)->sy_symbol.ost_entry.n_scnum == C_REGISTER_SECTION \
    || (S_LOCAL_NAME(s) && !flag_keep_locals) \
-   || (strchr (S_GET_NAME (s), '\001') != NULL))
+   || strchr (S_GET_NAME (s), '\001') != NULL \
+   || strchr (S_GET_NAME (s), '\002') != NULL)
 /* True if a symbol is not defined in this file */
 #define S_IS_EXTERN(s)		((s)->sy_symbol.ost_entry.n_scnum == 0 \
 				 && S_GET_VALUE (s) == 0)
@@ -551,6 +553,7 @@ typedef struct
 #define SF_TAG		(0x00080000)	/* Is a tag */
 #define SF_DEBUG	(0x00100000)	/* Is in debug or abs section */
 #define SF_GET_SEGMENT	(0x00200000)	/* Get the section of the forward symbol. */
+#define SF_ADJ_LNNOPTR	(0x00400000)	/* Has a lnnoptr */
 /* All other bits are unused. */
 
 /* Accessors */
@@ -568,6 +571,7 @@ typedef struct
 #define SF_GET_TAGGED(s)	(SF_GET (s) & SF_TAGGED)
 #define SF_GET_TAG(s)		(SF_GET (s) & SF_TAG)
 #define SF_GET_GET_SEGMENT(s)	(SF_GET (s) & SF_GET_SEGMENT)
+#define SF_GET_ADJ_LNNOPTR(s)	(SF_GET (s) & SF_ADJ_LNNOPTR)
 #define SF_GET_I960(s)		(SF_GET (s) & SF_I960_MASK)	/* used by i960 */
 #define SF_GET_BALNAME(s)	(SF_GET (s) & SF_BALNAME)	/* used by i960 */
 #define SF_GET_CALLNAME(s)	(SF_GET (s) & SF_CALLNAME)	/* used by i960 */
@@ -590,6 +594,7 @@ typedef struct
 #define SF_SET_TAGGED(s)	(SF_GET (s) |= SF_TAGGED)
 #define SF_SET_TAG(s)		(SF_GET (s) |= SF_TAG)
 #define SF_SET_GET_SEGMENT(s)	(SF_GET (s) |= SF_GET_SEGMENT)
+#define SF_SET_ADJ_LNNOPTR(s)	(SF_GET (s) |= SF_ADJ_LNNOPTR)
 #define SF_SET_I960(s,v)	(SF_GET (s) |= ((v) & SF_I960_MASK))	/* used by i960 */
 #define SF_SET_BALNAME(s)	(SF_GET (s) |= SF_BALNAME)	/* used by i960 */
 #define SF_SET_CALLNAME(s)	(SF_GET (s) |= SF_CALLNAME)	/* used by i960 */
@@ -768,6 +773,11 @@ extern struct internal_scnhdr text_section_header;
   (SF_GET_GET_SEGMENT (dest) \
    ? (S_SET_SEGMENT (dest, S_GET_SEGMENT (src)), 0) \
    : 0)
+
+#ifdef TE_PE
+#define obj_handle_link_once(t) obj_coff_pe_handle_link_once (t)
+extern void obj_coff_pe_handle_link_once ();
+#endif
 
 #endif /* not BFD_ASSEMBLER */
 

@@ -389,6 +389,12 @@ Wed Sep  6 21:13:06 1995  Ian Lance Taylor  <ian@cygnus.com>
 
 Wed Sep  6 15:03:53 1995  Jim Wilson  <wilson@chestnut.cygnus.com>
 
+	* config/tc-sh.c (get_operands): Read third arg if it exists.
+	Otherwise, clear it.
+	(get_specific, case F_FR0): Add.
+
+Wed Sep  6 15:03:53 1995  Jim Wilson  <wilson@chestnut.cygnus.com>
+
 	* config/tc-sh.c (get_specific): Delete arg_to_test.
 	(md_assemble): Increase operand array from 2 to 3.
 
@@ -1128,6 +1134,11 @@ Mon Aug  7 17:18:10 1995  Ian Lance Taylor  <ian@cygnus.com>
 	(TARG_CPU_DEP_m68k): Depend upon $(srcdir)/config/m68k-parse.h.
 	(m68k-parse.c, m68k-parse.o): New targets.
 
+Mon Aug  7 02:54:20 1995  Jeff Law  (law@snake.cs.utah.edu)
+
+	* config/tc-sh.c (parse_reg): Handle new FP registers.
+	(get_specific): Handle new operand types.
+
 Fri Aug  4 12:29:21 1995  Ian Lance Taylor  <ian@cygnus.com>
 
 	* expr.c (op_encoding): Make non-const.  Don't set '"' to
@@ -1379,14 +1390,12 @@ Wed Jul 19 11:49:25 1995  Ian Lance Taylor  <ian@cygnus.com>
 	* config/tc-m68k.c (md_convert_frag): Likewise.
 	* config/tc-m88k.h (md_convert_frag): Likewise.
 	* config/tc-ns32k.c (md_convert_frag): Likewise.
-	* config/tc-rce.c (md_convert_frag): Likewise.
 	* config/tc-tahoe.c (md_convert_frag): Likewise.
 	* config/tc-vax.c (md_convert_frag): Likewise.
 	* config/tc-w65.c (md_convert_frag): Likewise.
 	* config/tc-z8k.c (md_convert_frag): Likewise.
 	* config/tc-h8300.h (TC_RELOC_MANGLE): Add segment argument.
 	* config/tc-h8500.h (TC_RELOC_MANGLE): Likewise.
-	* config/tc-rce.h (TC_RELOC_MANGLE): Likewise.
 	* config/tc-w65.h (TC_RELOC_MANGLE): Likewise.
 	* config/tc-z8k.h (TC_RELOC_MANGLE): Likewise.
 
@@ -3506,7 +3515,6 @@ Tue Nov 29 13:58:10 1994  Ken Raeburn  <raeburn@cujo.cygnus.com>
 	(SIGTY): Macro deleted.
 	(main): Deleted disabled code for establishing signal handler.
 
-
 Mon Nov 28 11:37:35 1994  Doug Evans  <dje@canuck.cygnus.com>
 
 	* app.c (do_scrub_next_char): Insert missing newline at end of file
@@ -4789,6 +4797,10 @@ Tue Jul 26 18:21:24 1994  Ken Raeburn  (raeburn@cujo.cygnus.com)
 	{R,F}{,L}{2,4}, M, SFR_OK, LIT_OK, FP_OK, REG_ALIGN, MEMOP, I_*):
 	Macros deleted.
 
+	* config/tc-i960.c (ARCH_JX): Define.
+	(arch_tab): Include JX.
+	(targ_has_sfr, targ_has_iclass): Handle JX.
+	(tc_headers_hook): Set flags to F_I960JX for i960JX.
 
 Fri Jul 15 15:36:51 1994  Ken Raeburn  (raeburn@cujo.cygnus.com)
 

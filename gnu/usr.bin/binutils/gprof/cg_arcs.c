@@ -27,6 +27,8 @@
 
 Sym *cycle_header;
 int num_cycles;
+Arc **arcs;
+int numarcs;
 
 /*
  * Return TRUE iff PARENT has an arc to covers the address
@@ -65,7 +67,8 @@ void
 DEFUN (arc_add, (parent, child, count),
        Sym * parent AND Sym * child AND int count)
 {
-  Arc *arc;
+  static int maxarcs = 0;
+  Arc *arc, **newarcs;
 
   DBG (TALLYDEBUG, printf ("[arc_add] %d arcs from %s to %s\n",
 			   count, parent->name, child->name));
@@ -84,6 +87,37 @@ DEFUN (arc_add, (parent, child, count),
   arc->parent = parent;
   arc->child = child;
   arc->count = count;
+
+  /* If this isn't an arc for a recursive call to parent, then add it
+     to the array of arcs.  */
+  if (parent != child)
+    {
+      /* If we've exhausted space in our current array, get a new one
+	 and copy the contents.   We might want to throttle the doubling
+	 factor one day.  */
+      if (numarcs == maxarcs)
+	{
+	  /* Determine how much space we want to allocate.  */
+	  if (maxarcs == 0)
+	    maxarcs = 1;
+	  maxarcs *= 2;
+	
+	  /* Allocate the new array.  */
+	  newarcs = (Arc **)xmalloc(sizeof (Arc *) * maxarcs);
+
+	  /* Copy the old array's contents into the new array.  */
+	  memcpy (newarcs, arcs, numarcs * sizeof (Arc *));
+
+	  /* Free up the old array.  */
+	  free (arcs);
+
+	  /* And make the new array be the current array.  */
+	  arcs = newarcs;
+	}
+
+      /* Place this arc in the arc array.  */
+      arcs[numarcs++] = arc;
+    }
 
   /* prepend this child to the children of this parent: */
   arc->next_child = parent->cg.children;

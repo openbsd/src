@@ -1,5 +1,6 @@
 /* atof_generic.c - turn a string of digits into a Flonum
-   Copyright (C) 1987, 1990, 1991, 1992 Free Software Foundation, Inc.
+   Copyright (C) 1987, 90, 91, 92, 93, 94, 95, 1996
+   Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -246,7 +247,7 @@ atof_generic (address_of_string_pointer,
     --number_of_digits_after_decimal;
 #endif
 
-  if (flag_mri)
+  if (flag_m68k_mri)
     {
       while (c == '_')
 	c = *++p;
@@ -256,7 +257,7 @@ atof_generic (address_of_string_pointer,
       char digits_exponent_sign_char;
 
       c = *++p;
-      if (flag_mri)
+      if (flag_m68k_mri)
 	{
 	  while (c == '_')
 	    c = *++p;

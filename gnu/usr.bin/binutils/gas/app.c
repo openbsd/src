@@ -1,5 +1,6 @@
 /* This is the Assembler Pre-Processor
-   Copyright (C) 1987, 1990, 1991, 1992, 1994 Free Software Foundation, Inc.
+   Copyright (C) 1987, 90, 91, 92, 93, 94, 95, 1996
+   Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -32,6 +33,15 @@
 #endif
 #endif
 
+/* Whether we are scrubbing in m68k MRI mode.  This is different from
+   flag_m68k_mri, because the two flags will be affected by the .mri
+   pseudo-op at different times.  */
+static int scrub_m68k_mri;
+
+/* The pseudo-op which switches in and out of MRI mode.  See the
+   comment in do_scrub_chars.  */
+static const char mri_pseudo[] = ".mri 0";
+
 static char lex[256];
 static const char symbol_chars[] =
 "$._ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
@@ -61,9 +71,12 @@ static int process_escape PARAMS ((int));
    each and every time the assembler is run.  xoxorich. */
 
 void 
-do_scrub_begin ()
+do_scrub_begin (m68k_mri)
+     int m68k_mri;
 {
   const char *p;
+
+  scrub_m68k_mri = m68k_mri;
 
   lex[' '] = LEX_IS_WHITESPACE;
   lex['\t'] = LEX_IS_WHITESPACE;
@@ -71,7 +84,7 @@ do_scrub_begin ()
   lex[';'] = LEX_IS_LINE_SEPARATOR;
   lex[':'] = LEX_IS_COLON;
 
-  if (! flag_mri)
+  if (! m68k_mri)
     {
       lex['"'] = LEX_IS_STRINGQUOTE;
 
@@ -94,7 +107,11 @@ do_scrub_begin ()
       lex[(unsigned char) *p] = LEX_IS_SYMBOL_COMPONENT;
     }				/* declare symbol characters */
 
-  for (p = comment_chars; *p; p++)
+  /* The m68k backend wants to be able to change comment_chars.  */
+#ifndef tc_comment_chars
+#define tc_comment_chars comment_chars
+#endif
+  for (p = tc_comment_chars; *p; p++)
     {
       lex[(unsigned char) *p] = LEX_IS_COMMENT_START;
     }				/* declare comment chars */
@@ -121,7 +138,7 @@ do_scrub_begin ()
       lex['*'] = LEX_IS_TWOCHAR_COMMENT_2ND;
     }
 
-  if (flag_mri)
+  if (m68k_mri)
     {
       lex['\''] = LEX_IS_STRINGQUOTE;
       lex[';'] = LEX_IS_COMMENT_START;
@@ -140,6 +157,8 @@ static char out_buf[20];
 static int add_newlines;
 static char *saved_input;
 static int saved_input_len;
+static const char *mri_state;
+static char mri_last_ch;
 
 /* Data structure for saving the state of app across #include's.  Note that
    app is called asynchronously to the parsing of the .include's, so our
@@ -155,6 +174,9 @@ struct app_save
     int add_newlines;
     char *saved_input;
     int saved_input_len;
+    int scrub_m68k_mri;
+    const char *mri_state;
+    char mri_last_ch;
   };
 
 char *
@@ -170,6 +192,9 @@ app_push ()
   saved->add_newlines = add_newlines;
   saved->saved_input = saved_input;
   saved->saved_input_len = saved_input_len;
+  saved->scrub_m68k_mri = scrub_m68k_mri;
+  saved->mri_state = mri_state;
+  saved->mri_last_ch = mri_last_ch;
 
   /* do_scrub_begin() is not useful, just wastes time. */
 
@@ -193,6 +218,9 @@ app_pop (arg)
   add_newlines = saved->add_newlines;
   saved_input = saved->saved_input;
   saved_input_len = saved->saved_input_len;
+  scrub_m68k_mri = saved->scrub_m68k_mri;
+  mri_state = saved->mri_state;
+  mri_last_ch = saved->mri_last_ch;
 
   free (arg);
 }				/* app_pop() */
@@ -393,7 +421,10 @@ do_scrub_chars (get, tostart, tolen)
 	      if (ch == '"')
 		{
 		  UNGET (ch);
-		  out_string = "\n\t.appfile ";
+		  if (scrub_m68k_mri)
+		    out_string = "\n\tappfile ";
+		  else
+		    out_string = "\n\t.appfile ";
 		  old_state = 7;
 		  state = -1;
 		  PUT (*out_string++);
@@ -459,7 +490,7 @@ do_scrub_chars (get, tostart, tolen)
 	      PUT (ch);
 	    }
 #endif
-	  else if (flag_mri && ch == '\n')
+	  else if (scrub_m68k_mri && ch == '\n')
 	    {
 	      /* Just quietly terminate the string.  This permits lines like
 		   bne	label	loop if we haven't reach end yet
@@ -548,7 +579,61 @@ do_scrub_chars (get, tostart, tolen)
 
       /* flushchar: */
       ch = GET ();
+
     recycle:
+
+#ifdef TC_M68K
+      /* We want to have pseudo-ops which control whether we are in
+         MRI mode or not.  Unfortunately, since m68k MRI mode affects
+         the scrubber, that means that we need a special purpose
+         recognizer here.  */
+      if (mri_state == NULL)
+	{
+	  if ((state == 0 || state == 1)
+	      && ch == mri_pseudo[0])
+	    mri_state = mri_pseudo + 1;
+	}
+      else
+	{
+	  /* We advance to the next state if we find the right
+	     character, or if we need a space character and we get any
+	     whitespace character, or if we need a '0' and we get a
+	     '1' (this is so that we only need one state to handle
+	     ``.mri 0'' and ``.mri 1'').  */
+	  if (ch != '\0'
+	      && (*mri_state == ch
+		  || (*mri_state == ' '
+		      && lex[ch] == LEX_IS_WHITESPACE)
+		  || (*mri_state == '0'
+		      && ch == '1')))
+	    {
+	      mri_last_ch = ch;
+	      ++mri_state;
+	    }
+	  else if (*mri_state != '\0'
+		   || (lex[ch] != LEX_IS_WHITESPACE
+		       && lex[ch] != LEX_IS_NEWLINE))
+	    {
+	      /* We did not get the expected character, or we didn't
+		 get a valid terminating character after seeing the
+		 entire pseudo-op, so we must go back to the
+		 beginning.  */
+	      mri_state = NULL;
+	    }
+	  else
+	    {
+	      /* We've read the entire pseudo-op.  mips_last_ch is
+                 either '0' or '1' indicating whether to enter or
+                 leave MRI mode.  */
+	      do_scrub_begin (mri_last_ch == '1');
+
+	      /* We continue handling the character as usual.  The
+                 main gas reader must also handle the .mri pseudo-op
+                 to control expression parsing and the like.  */
+	    }
+	}
+#endif
+
       if (ch == EOF)
 	{
 	  if (state != 0)
@@ -588,7 +673,7 @@ do_scrub_chars (get, tostart, tolen)
 	      /* cpp never outputs a leading space before the #, so
 		 try to avoid being confused.  */
 	      not_cpp_line = 1;
-	      if (flag_mri)
+	      if (scrub_m68k_mri)
 		{
 		  /* In MRI mode, we keep these spaces.  */
 		  UNGET (ch);
@@ -605,7 +690,7 @@ do_scrub_chars (get, tostart, tolen)
 	     not permitted between the label and the colon.  */
 	  if ((state == 2 || state == 11)
 	      && lex[ch] == LEX_IS_COLON
-	      && ! flag_mri)
+	      && ! scrub_m68k_mri)
 	    {
 	      state = 1;
 	      PUT (ch);
@@ -633,7 +718,7 @@ do_scrub_chars (get, tostart, tolen)
 	      PUT (' ');
 	      break;
 	    case 3:
-	      if (flag_mri)
+	      if (scrub_m68k_mri)
 		{
 		  /* In MRI mode, we keep these spaces.  */
 		  UNGET (ch);
@@ -643,7 +728,7 @@ do_scrub_chars (get, tostart, tolen)
 	      goto recycle;	/* Sp in operands */
 	    case 9:
 	    case 10:
-	      if (flag_mri)
+	      if (scrub_m68k_mri)
 		{
 		  /* In MRI mode, we keep these spaces.  */
 		  state = 3;
@@ -654,7 +739,20 @@ do_scrub_chars (get, tostart, tolen)
 	      state = 10;	/* Sp after symbol char */
 	      goto recycle;
 	    case 11:
-	      state = 1;
+	      if (flag_m68k_mri
+#ifdef LABELS_WITHOUT_COLONS
+		  || 1
+#endif
+		  )
+		state = 1;
+	      else
+		{
+		  /* We know that ch is not ':', since we tested that
+                     case above.  Therefore this is not a label, so it
+                     must be the opcode, and we've just seen the
+                     whitespace after it.  */
+		  state = 3;
+		}
 	      UNGET (ch);
 	      PUT (' ');	/* Sp after label definition.  */
 	      break;
@@ -687,7 +785,7 @@ do_scrub_chars (get, tostart, tolen)
 		  if (ch2 == EOF
 		      || lex[ch2] == LEX_IS_TWOCHAR_COMMENT_1ST)
 		    break;
-		  UNGET (ch);
+		  UNGET (ch2);
 		}
 	      if (ch2 == EOF)
 		as_warn ("end of file in multiline comment");
@@ -853,7 +951,10 @@ do_scrub_chars (get, tostart, tolen)
 	      UNGET (ch);
 	      old_state = 4;
 	      state = -1;
-	      out_string = "\t.appline ";
+	      if (scrub_m68k_mri)
+		out_string = "\tappline ";
+	      else
+		out_string = "\t.appline ";
 	      PUT (*out_string++);
 	      break;
 	    }
@@ -862,12 +963,12 @@ do_scrub_chars (get, tostart, tolen)
 	     start of a line.  If this is also a normal comment
 	     character, fall through.  Otherwise treat it as a default
 	     character.  */
-	  if (strchr (comment_chars, ch) == NULL
-	      && (! flag_mri
+	  if (strchr (tc_comment_chars, ch) == NULL
+	      && (! scrub_m68k_mri
 		  || (ch != '!' && ch != '*')))
 	    goto de_fault;
-	  if (flag_mri
-	      && (ch == '!' || ch == '*')
+	  if (scrub_m68k_mri
+	      && (ch == '!' || ch == '*' || ch == '#')
 	      && state != 1
 	      && state != 10)
 	    goto de_fault;
@@ -901,7 +1002,7 @@ do_scrub_chars (get, tostart, tolen)
 
 	  /* This is a common case.  Quickly copy CH and all the
              following symbol component or normal characters.  */
-	  if (to + 1 < toend)
+	  if (to + 1 < toend && mri_state == NULL)
 	    {
 	      char *s;
 	      int len;

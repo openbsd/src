@@ -66,7 +66,8 @@
 #undef MANY_SEGMENTS
 
 /* Needed only for sparc configuration */
-#undef sparcv9
+#undef SPARC_V9
+#undef SPARC_ARCH64
 
 /* Define if you have the remove function.  */
 #define HAVE_REMOVE

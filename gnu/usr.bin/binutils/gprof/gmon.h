@@ -40,12 +40,17 @@ struct raw_phdr
     char low_pc[sizeof (bfd_vma)];	/* base pc address of sample buffer */
     char high_pc[sizeof (bfd_vma)];	/* max pc address of sampled buffer */
     char ncnt[4];		/* size of sample buffer (plus this header) */
-#ifdef __osf__
+
+#if defined (__alpha__) && defined (__osf__)
     /*
      * DEC's OSF v3.0 uses 4 bytes of padding to bring the header to
      * a size that is a multiple of 8.
      */
     char pad[4];
+#elif defined (BSD44_FORMAT)
+    char version[4];			/* version number */
+    char profrate[4];			/* profiling clock rate */
+    char spare[3*4];			/* reserved */
 #endif
   };
 

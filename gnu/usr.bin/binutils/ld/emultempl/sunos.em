@@ -32,6 +32,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #include "bfd.h"
 #include "sysdep.h"
 #include "bfdlink.h"
+#include "libiberty.h"
 
 #include "ld.h"
 #include "ldmain.h"
@@ -57,6 +58,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #endif
 
 static void gld${EMULATION_NAME}_before_parse PARAMS ((void));
+static void gld${EMULATION_NAME}_set_symbols PARAMS ((void));
 static void gld${EMULATION_NAME}_create_output_section_statements
   PARAMS ((void));
 static void gld${EMULATION_NAME}_find_so
@@ -85,6 +87,46 @@ gld${EMULATION_NAME}_before_parse()
 {
   ldfile_output_architecture = bfd_arch_${ARCH};
   config.dynamic_link = true;
+}
+
+/* This is called after the command line arguments have been parsed,
+   but before the linker script has been read.  If this is a native
+   linker, we add the directories in LD_LIBRARY_PATH to the search
+   list.  */
+
+static void
+gld${EMULATION_NAME}_set_symbols ()
+{
+EOF
+if [ "x${host}" = "x${target}" ] ; then
+  if [ "x${DEFAULT_EMULATION}" = "x${EMULATION_NAME}" ] ; then
+cat >>e${EMULATION_NAME}.c <<EOF
+  const char *env;
+
+  env = (const char *) getenv ("LD_LIBRARY_PATH");
+  if (env != NULL)
+    {
+      char *l;
+
+      l = xstrdup (env);
+      while (1)
+	{
+	  char *c;
+
+	  c = strchr (l, ':');
+	  if (c != NULL)
+	    *c++ = '\0';
+	  if (*l != '\0')
+	    ldfile_add_library_path (l, false);
+	  if (c == NULL)
+	    break;
+	  l = c;
+	}
+    }
+EOF
+  fi
+fi
+cat >>e${EMULATION_NAME}.c <<EOF
 }
 
 /* Despite the name, we use this routine to search for dynamic
@@ -404,12 +446,14 @@ gld${EMULATION_NAME}_after_open ()
 	    continue;
 	}
 EOF
-if [ "x${host_alias}" = "x${target_alias}" ] ; then
+if [ "x${host}" = "x${target}" ] ; then
+  if [ "x${DEFAULT_EMULATION}" = "x${EMULATION_NAME}" ] ; then
 cat >>e${EMULATION_NAME}.c <<EOF
       lib_path = (const char *) getenv ("LD_LIBRARY_PATH");
       if (gld${EMULATION_NAME}_search_needed (lib_path, lname))
 	continue;
 EOF
+  fi
 fi
 cat >>e${EMULATION_NAME}.c <<EOF
       if (command_line.rpath != NULL)
@@ -617,7 +661,8 @@ gld${EMULATION_NAME}_before_allocation ()
 	  if (h->type == bfd_link_hash_undefined
 	      && h->u.undef.abfd != NULL
 	      && (h->u.undef.abfd->flags & DYNAMIC) == 0
-	      && strcmp (h->root.string, "__DYNAMIC") != 0)
+	      && strcmp (h->root.string, "__DYNAMIC") != 0
+	      && strcmp (h->root.string, "__GLOBAL_OFFSET_TABLE_") != 0)
 	    {
 	      find_assign = h->root.string;
 	      found_assign = false;
@@ -964,6 +1009,8 @@ struct ld_emulation_xfer_struct ld_${EMULATION_NAME}_emulation =
   "${OUTPUT_FORMAT}",
   NULL, /* finish */
   gld${EMULATION_NAME}_create_output_section_statements,
-  NULL /* open_dynamic_library */
+  NULL, /* open_dynamic_library */
+  NULL, /* place_orphan */
+  gld${EMULATION_NAME}_set_symbols
 };
 EOF

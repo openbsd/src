@@ -75,6 +75,9 @@ static unsigned short modtype = ('1' << 8) | 'L';
    permitted).  */
 static int textro;
 
+/* Whether to implement Unix like linker semantics.  */
+static int unix_ld;
+
 /* Structure used to hold import file list.  */
 
 struct filelist
@@ -137,6 +140,7 @@ gld${EMULATION_NAME}_parse_args (argc, argv)
 #define OPTION_PD (OPTION_NOSTRCMPCT + 1)
 #define OPTION_PT (OPTION_PD + 1)
 #define OPTION_STRCMPCT (OPTION_PT + 1)
+#define OPTION_UNIX (OPTION_STRCMPCT + 1)
 
   static struct option longopts[] = {
     {"basis", no_argument, NULL, OPTION_IGNORE},
@@ -164,6 +168,7 @@ gld${EMULATION_NAME}_parse_args (argc, argv)
     {"bmodtype", required_argument, NULL, OPTION_MODTYPE},
     {"bnoautoimp", no_argument, NULL, OPTION_NOAUTOIMP},
     {"bnodelcsect", no_argument, NULL, OPTION_IGNORE},
+    {"bnoentry", no_argument, NULL, OPTION_IGNORE},
     {"bnogc", no_argument, &gc, 0},
     {"bnso", no_argument, NULL, OPTION_NOAUTOIMP},
     {"bnostrcmpct", no_argument, NULL, OPTION_NOSTRCMPCT},
@@ -177,6 +182,7 @@ gld${EMULATION_NAME}_parse_args (argc, argv)
     {"bstrcmpct", no_argument, NULL, OPTION_STRCMPCT},
     {"btextro", no_argument, &textro, 1},
     {"static", no_argument, NULL, OPTION_NOAUTOIMP},
+    {"unix", no_argument, NULL, OPTION_UNIX},
     {NULL, no_argument, NULL, 0}
   };
 
@@ -333,7 +339,7 @@ gld${EMULATION_NAME}_parse_args (argc, argv)
       break;
 
     case OPTION_NOSTRCMPCT:
-      config.traditional_format = true;
+      link_info.traditional_format = true;
       break;
 
     case OPTION_PD:
@@ -382,11 +388,54 @@ gld${EMULATION_NAME}_parse_args (argc, argv)
       break;
 
     case OPTION_STRCMPCT:
-      config.traditional_format = false;
+      link_info.traditional_format = false;
+      break;
+
+    case OPTION_UNIX:
+      unix_ld = true;
       break;
     }
 
   return 1;
+}
+
+/* This is called when an input file can not be recognized as a BFD
+   object or an archive.  If the file starts with #!, we must treat it
+   as an import file.  This is for AIX compatibility.  */
+
+static boolean
+gld${EMULATION_NAME}_unrecognized_file (entry)
+     lang_input_statement_type *entry;
+{
+  FILE *e;
+  boolean ret;
+
+  e = fopen (entry->filename, FOPEN_RT);
+  if (e == NULL)
+    return false;
+
+  ret = false;
+
+  if (getc (e) == '#' && getc (e) == '!')
+    {
+      struct filelist *n;
+      struct filelist **flpp;
+
+      n = (struct filelist *) xmalloc (sizeof (struct filelist));
+      n->next = NULL;
+      n->name = entry->filename;
+      flpp = &import_files;
+      while (*flpp != NULL)
+	flpp = &(*flpp)->next;
+      *flpp = n;
+
+      ret = true;
+      entry->loaded = true;
+    }
+
+  fclose (e);
+
+  return ret;
 }
 
 /* This is called after the input files have been opened.  */
@@ -400,9 +449,11 @@ gld${EMULATION_NAME}_after_open ()
   /* Call ldctor_build_sets, after pretending that this is a
      relocateable link.  We do this because AIX requires relocation
      entries for all references to symbols, even in a final
-     executable.  */
+     executable.  Of course, we only want to do this if we are
+     producing an XCOFF output file.  */
   r = link_info.relocateable;
-  link_info.relocateable = true;
+  if (strstr (bfd_get_target (output_bfd), "xcoff") != NULL)
+    link_info.relocateable = true;
   ldctor_build_sets ();
   link_info.relocateable = r;
 
@@ -494,9 +545,10 @@ gld${EMULATION_NAME}_before_allocation ()
   if (! bfd_xcoff_size_dynamic_sections (output_bfd, &link_info, libpath,
 					 entry_symbol, file_align,
 					 maxstack, maxdata,
-					 gc ? true : false,
+					 gc && ! unix_ld ? true : false,
 					 modtype,
 					 textro ? true : false,
+					 unix_ld,
 					 special_sections))
     einfo ("%P%F: failed to set dynamic section sizes: %E\n");
 
@@ -626,7 +678,7 @@ gld${EMULATION_NAME}_read_file (filename, import)
   o = (struct obstack *) xmalloc (sizeof (struct obstack));
   obstack_specify_allocation (o, 0, 0, xmalloc, gld${EMULATION_NAME}_free);
 
-  f = fopen (filename, "r");
+  f = fopen (filename, FOPEN_RT);
   if (f == NULL)
     {
       bfd_set_error (bfd_error_system_call);
@@ -692,7 +744,7 @@ gld${EMULATION_NAME}_read_file (filename, import)
 	      (void) obstack_finish (o);
 	      keep = true;
 	      imppath = s;
-	      impfile = NULL;
+	      file = NULL;
 	      while (! isspace ((unsigned char) *s) && *s != '(' && *s != '\0')
 		{
 		  if (*s == '/')
@@ -986,5 +1038,6 @@ struct ld_emulation_xfer_struct ld_${EMULATION_NAME}_emulation =
   0,	/* place_orphan */
   0,	/* set_symbols */
   gld${EMULATION_NAME}_parse_args,
+  gld${EMULATION_NAME}_unrecognized_file
 };
 EOF

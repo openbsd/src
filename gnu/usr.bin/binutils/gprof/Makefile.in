@@ -40,7 +40,8 @@ SRCS=	$(MY_TARGET).c basic_blocks.c call_graph.c \
 	gmon_io.c gprof.c hertz.c hist.c source.c search_list.c symtab.c \
 	sym_ids.c utils.c
 
-LIBS = ../bfd/libbfd.a ../libiberty/libiberty.a
+LIBDEPS = ../bfd/libbfd.a ../libiberty/libiberty.a
+LIBS = @BFDLIB@ ../libiberty/libiberty.a
 
 OBJS=	$(MY_TARGET).o basic_blocks.o bsd_callg_bl.o call_graph.o \
 	cg_arcs.o cg_dfn.o cg_print.o core.o flat_bl.o fsf_callg_bl.o \
@@ -52,6 +53,7 @@ GEN_FILES = flat_bl.c bsd_callg_bl.c fsf_callg_bl.c
 
 CFLAGS=-g -DDEBUG
 LDFLAGS=
+HLDFLAGS = @HLDFLAGS@
 .c.o:
 	$(CC) -c $(CFLAGS) -I. -I$(srcdir) -I../bfd -I$(srcdir)/../include -I$(srcdir)/../bfd -DMACHINE_H=\"$(MY_TARGET).h\" $(TCFLAGS) $(HCFLAGS) $<
 
@@ -62,7 +64,7 @@ all:	$(GEN_FILES) $(PROG)
 
 .m.c:
 	awk -f $(srcdir)/gen-c-prog.awk > ./$*.c \
-	    FUNCTION=`(echo $*|sed -e 's/_bl//')`_blurb \
+	    FUNCTION=`(echo $*|sed -e 's,.*/,,g' -e 's/_bl//')`_blurb \
 	    FILE=$*.m $(srcdir)/$*.m
 
 diststuff: $(GEN_FILES) info
@@ -100,8 +102,8 @@ install: all
 	$(INSTALL_XFORM) gprof $(bindir)/gprof
 	$(INSTALL_XFORM1) $(srcdir)/gprof.1 $(man1dir)/gprof.1
 
-gprof:	$(OBJS) $(LIBS)
-	$(CC) -o $(PROG) $(LDFLAGS) $(OBJS) $(LIBS)
+gprof:	$(OBJS) $(LIBDEPS)
+	$(CC) -o $(PROG) $(HLDFLAGS) $(LDFLAGS) $(OBJS) $(LIBS)
 
 mostlyclean:
 	-rm -f *.o core gprof nohup.out \

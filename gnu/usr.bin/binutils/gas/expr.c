@@ -1,5 +1,6 @@
 /* expr.c -operands, expressions-
-   Copyright (C) 1987, 1990, 1991, 1992, 1993, 1994 Free Software Foundation, Inc.
+   Copyright (C) 1987, 90, 91, 92, 93, 94, 95, 1996
+   Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -166,7 +167,7 @@ integer_constant (radix, expressionP)
 #define valuesize 32
 #endif
 
-  if (flag_mri && radix == 0)
+  if (flag_m68k_mri && radix == 0)
     {
       int flt = 0;
 
@@ -294,7 +295,7 @@ integer_constant (radix, expressionP)
 	}
     }
 
-  if (flag_mri && suffix != NULL && input_line_pointer - 1 == suffix)
+  if (flag_m68k_mri && suffix != NULL && input_line_pointer - 1 == suffix)
     c = *input_line_pointer++;
 
   if (small)
@@ -563,13 +564,13 @@ operand (expressionP)
     case '9':
       input_line_pointer--;
 
-      integer_constant (flag_mri ? 0 : 10, expressionP);
+      integer_constant (flag_m68k_mri ? 0 : 10, expressionP);
       break;
 
     case '0':
       /* non-decimal radix */
 
-      if (flag_mri)
+      if (flag_m68k_mri)
 	{
 	  char *s;
 
@@ -587,9 +588,13 @@ operand (expressionP)
       c = *input_line_pointer;
       switch (c)
 	{
+	case 'o':
+	case 'O':
+	case 'q':
+	case 'Q':
 	case '8':
 	case '9':
-	  if (flag_mri)
+	  if (flag_m68k_mri)
 	    {
 	      integer_constant (0, expressionP);
 	      break;
@@ -614,14 +619,14 @@ operand (expressionP)
 
 	case 'x':
 	case 'X':
-	  if (flag_mri)
+	  if (flag_m68k_mri)
 	    goto default_case;
 	  input_line_pointer++;
 	  integer_constant (16, expressionP);
 	  break;
 
 	case 'b':
-	  if (LOCAL_LABELS_FB)
+	  if (LOCAL_LABELS_FB && ! flag_m68k_mri)
 	    {
 	      switch (input_line_pointer[1])
 		{
@@ -659,7 +664,7 @@ operand (expressionP)
 	    }
 	case 'B':
 	  input_line_pointer++;
-	  if (flag_mri)
+	  if (flag_m68k_mri)
 	    goto default_case;
 	  integer_constant (2, expressionP);
 	  break;
@@ -672,7 +677,7 @@ operand (expressionP)
 	case '5':
 	case '6':
 	case '7':
-	  integer_constant (flag_mri ? 0 : 8, expressionP);
+	  integer_constant (flag_m68k_mri ? 0 : 8, expressionP);
 	  break;
 
 	case 'f':
@@ -718,6 +723,12 @@ operand (expressionP)
 
 	case 'd':
 	case 'D':
+	  if (flag_m68k_mri)
+	    {
+	      integer_constant (0, expressionP);
+	      break;
+	    }
+	  /* Fall through.  */
 	case 'F':
 	case 'r':
 	case 'e':
@@ -752,21 +763,22 @@ operand (expressionP)
 	  as_bad ("Missing ')' assumed");
 	  input_line_pointer--;
 	}
+      SKIP_WHITESPACE ();
       /* here with input_line_pointer->char after "(...)" */
       return segment;
 
     case 'E':
-      if (! flag_mri || *input_line_pointer != '\'')
+      if (! flag_m68k_mri || *input_line_pointer != '\'')
 	goto de_fault;
       as_bad ("EBCDIC constants are not supported");
       /* Fall through.  */
     case 'A':
-      if (! flag_mri || *input_line_pointer != '\'')
+      if (! flag_m68k_mri || *input_line_pointer != '\'')
 	goto de_fault;
       ++input_line_pointer;
       /* Fall through.  */
     case '\'':
-      if (! flag_mri)
+      if (! flag_m68k_mri)
 	{
 	  /* Warning: to conform to other people's assemblers NO
 	     ESCAPEMENT is permitted for a single quote. The next
@@ -786,7 +798,7 @@ operand (expressionP)
 
     case '"':
       /* Double quote is the bitwise not operator in MRI mode.  */
-      if (! flag_mri)
+      if (! flag_m68k_mri)
 	goto de_fault;
       /* Fall through.  */
     case '!':
@@ -831,10 +843,10 @@ operand (expressionP)
       /* $ is the program counter when in MRI mode, or when DOLLAR_DOT
          is defined.  */
 #ifndef DOLLAR_DOT
-      if (! flag_mri)
+      if (! flag_m68k_mri)
 	goto de_fault;
 #endif
-      if (flag_mri && hex_p (*input_line_pointer))
+      if (flag_m68k_mri && hex_p (*input_line_pointer))
 	{
 	  /* In MRI mode, $ is also used as the prefix for a
              hexadecimal constant.  */
@@ -911,19 +923,19 @@ operand (expressionP)
       break;
 
     case '%':
-      if (! flag_mri)
+      if (! flag_m68k_mri)
 	goto de_fault;
       integer_constant (2, expressionP);
       break;
 
     case '@':
-      if (! flag_mri)
+      if (! flag_m68k_mri)
 	goto de_fault;
       integer_constant (8, expressionP);
       break;
 
     case ':':
-      if (! flag_mri)
+      if (! flag_m68k_mri)
 	goto de_fault;
 
       /* In MRI mode, this is a floating point constant represented
@@ -934,7 +946,7 @@ operand (expressionP)
       break;
 
     case '*':
-      if (! flag_mri || is_part_of_name (*input_line_pointer))
+      if (! flag_m68k_mri || is_part_of_name (*input_line_pointer))
 	goto de_fault;
 
       current_location (expressionP);
@@ -955,7 +967,7 @@ operand (expressionP)
 	  c = get_symbol_end ();
 
 #ifdef TC_I960
-	  /* The MRI i960 assemblers permits
+	  /* The MRI i960 assembler permits
 	         lda sizeof code,g13
 	     */
 	  if (flag_mri
@@ -1219,17 +1231,22 @@ static operator_rankT op_rank[] =
 void
 expr_begin ()
 {
-#ifdef TC_M68K
   /* In MRI mode for the m68k, multiplication and division have lower
      precedence than the bit wise operators.  */
-  if (flag_mri)
+  if (flag_m68k_mri)
     {
       op_rank[O_multiply] = 5;
       op_rank[O_divide] = 5;
       op_rank[O_modulus] = 5;
       op_encoding['"'] = O_bit_not;
     }
-#endif
+
+  /* Verify that X_op field is wide enough.  */
+  {
+    expressionS e;
+    e.X_op = O_max;
+    assert (e.X_op == O_max);
+  }
 }
 
 /* Return the encoding for the operator at INPUT_LINE_POINTER.
@@ -1286,7 +1303,7 @@ operator ()
       /* We accept !! as equivalent to ^ for MRI compatibility.  */
       if (input_line_pointer[1] != '!')
 	{
-	  if (flag_mri)
+	  if (flag_m68k_mri)
 	    return O_bit_inclusive_or;
 	  return op_encoding[c];
 	}

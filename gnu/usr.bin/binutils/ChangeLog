@@ -1,3 +1,19 @@
+Fri Jun  7 18:16:52 1996  Harlan Stenn <harlan@pfcs.com>
+
+	* config.guess (i?86-ncr-sysv*):  Emit minor release numbers.
+	Recognize the NCR 4850 machine and NCR Pentium-based platforms.
+
+Wed Jun  5 00:09:17 1996  Per Bothner  <bothner@wombat.gnu.ai.mit.edu>
+
+	* config.guess:  Combine mips-mips-riscos cases, and use cpp to
+	distinguish sysv/svr4/bsd variants.
+	Based on a patch from Harlan Stenn <harlan@pfcs.com>.
+
+Fri Jun  7 14:24:49 1996  Tom Tromey  <tromey@creche.cygnus.com>
+
+	* configure.in: Added copyright notice.
+	* move-if-change: Added copyright notice.
+
 Thu Jun  6 16:27:05 1996  Michael Meissner  <meissner@tiktok.cygnus.com>
 
 	* configure.in (powerpcle-*-solaris*): Until we get shared

@@ -194,12 +194,30 @@ struct m68k_indexreg
   int scale;
 };
 
+#ifdef OBJ_ELF
+/* The type of a PIC expression.  */
+
+enum pic_relocation
+{
+  pic_none,			/* not pic */
+  pic_plt_pcrel,		/* @PLTPC */
+  pic_got_pcrel,		/* @GOTPC */
+  pic_plt_off,			/* @PLT */
+  pic_got_off			/* @GOT */
+};
+#endif
+
 /* The structure used to hold information about an expression.  */
 
 struct m68k_exp
 {
   /* The size to use.  */
   enum m68k_size size;
+
+#ifdef OBJ_ELF
+  /* The type of pic relocation if any.  */
+  enum pic_relocation pic_reloc;
+#endif
 
   /* The expression itself.  */
   expressionS exp;

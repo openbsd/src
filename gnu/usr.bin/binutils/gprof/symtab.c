@@ -93,10 +93,10 @@ DEFUN (symtab_finalize, (tab), Sym_Table * tab)
 	   * symbols (such as __gnu_compiled, __c89_used, etc.).
 	   */
 	  if ((!src->is_static && dst[-1].is_static)
-	      || ((src->is_static == dst[-1].is_static) &&
-		  (src->name[0] != '_' && dst[-1].name[0] == '_')
-		  || (src->name[0]
-		      && src->name[1] != '_' && dst[-1].name[1] == '_')))
+	      || ((src->is_static == dst[-1].is_static)
+		  && ((src->name[0] != '_' && dst[-1].name[0] == '_')
+		      || (src->name[0]
+			  && src->name[1] != '_' && dst[-1].name[1] == '_'))))
 	    {
 	      DBG (AOUTDEBUG | IDDEBUG,
 		   printf ("[symtab_finalize] favor %s@%c%c over %s@%c%c",

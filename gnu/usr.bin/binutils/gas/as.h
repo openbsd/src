@@ -1,5 +1,6 @@
 /* as.h - global header file
-   Copyright (C) 1987, 1990, 1991, 1992 Free Software Foundation, Inc.
+   Copyright (C) 1987, 90, 91, 92, 93, 94, 95, 1996
+   Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -90,13 +91,6 @@ void *alloca ();
 /* for size_t, pid_t */
 #include <sys/types.h>
 #endif
-
-/* Some systems do declare this, but this seems to be the universal
-   declaration, though the parameter type varies.  (It ought to use
-   `const' but many systems prototype it without.)  Include it here
-   for systems that don't declare it.  If conflicts arise, just add
-   another autoconf test...  */
-extern char *strdup (/* const char * */);
 
 #include <getopt.h>
 /* The first getopt value for machine-independent long options.
@@ -280,12 +274,16 @@ typedef addressT valueT;
 
 #ifdef MANY_SEGMENTS
 #include "bfd.h"
-#define N_SEGMENTS 10
-#define SEG_NORMAL(x) ((x) >= SEG_E0 && (x) <= SEG_E9)
-#define SEG_LIST SEG_E0,SEG_E1,SEG_E2,SEG_E3,SEG_E4,SEG_E5,SEG_E6,SEG_E7,SEG_E8,SEG_E9
+#define N_SEGMENTS 40
+#define SEG_NORMAL(x) ((x) >= SEG_E0 && (x) <= SEG_E39)
+#define SEG_LIST SEG_E0,SEG_E1,SEG_E2,SEG_E3,SEG_E4,SEG_E5,SEG_E6,SEG_E7,SEG_E8,SEG_E9,\
+		 SEG_E10,SEG_E11,SEG_E12,SEG_E13,SEG_E14,SEG_E15,SEG_E16,SEG_E17,SEG_E18,SEG_E19,\
+		 SEG_E20,SEG_E21,SEG_E22,SEG_E23,SEG_E24,SEG_E25,SEG_E26,SEG_E27,SEG_E28,SEG_E29,\
+		 SEG_E30,SEG_E31,SEG_E32,SEG_E33,SEG_E34,SEG_E35,SEG_E36,SEG_E37,SEG_E38,SEG_E39
 #define SEG_TEXT SEG_E0
 #define SEG_DATA SEG_E1
 #define SEG_BSS SEG_E2
+#define SEG_LAST SEG_E39
 #else
 #define N_SEGMENTS 3
 #define SEG_NORMAL(x) ((x) == SEG_TEXT || (x) == SEG_DATA || (x) == SEG_BSS)
@@ -486,8 +484,11 @@ COMMON unsigned char flag_warn_displacement; /* -K */
 /* True if local symbols should be retained.  */
 COMMON int flag_keep_locals; /* -L */
 
-/* True if we are assembling using MRI syntax.  */
+/* True if we are assembling in MRI mode.  */
 COMMON int flag_mri;
+
+/* True if we are assembling in m68k MRI mode.  */
+COMMON int flag_m68k_mri;
 
 /* Should the data section be made read-only and appended to the text
    section?  */
@@ -602,7 +603,7 @@ void as_howmuch PARAMS ((FILE * stream));
 void as_perror PARAMS ((const char *gripe, const char *filename));
 void as_where PARAMS ((char **namep, unsigned int *linep));
 void bump_line_counters PARAMS ((void));
-void do_scrub_begin PARAMS ((void));
+void do_scrub_begin PARAMS ((int));
 void input_scrub_begin PARAMS ((void));
 void input_scrub_close PARAMS ((void));
 void input_scrub_end PARAMS ((void));

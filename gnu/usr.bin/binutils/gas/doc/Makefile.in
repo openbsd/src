@@ -157,7 +157,7 @@ as.me: $(srcdir)/as.texinfo asconfig.texi
 clean mostlyclean: clean-dvi clean-info
 	rm -f asconfig.texi
 
-distclean maintainer-clean realclean:
+distclean:
 	rm -f Makefile config.status asconfig.texi \
 		as.?? as.??s as.aux as.log as.toc \
 		gasp.?? gasp.??s gasp.aux gasp.log gasp.toc
@@ -167,6 +167,8 @@ clean-dvi:
 
 clean-info:
 	rm -f as.info* gasp.info*
+
+maintainer-clean realclean: clean-info distclean
 
 force:
 

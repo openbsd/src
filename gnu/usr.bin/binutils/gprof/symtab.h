@@ -36,9 +36,14 @@ typedef struct sym
     int line_num;		/* source line number */
     unsigned int is_func:1,	/* is this a function entry point? */
       is_static:1,		/* is this a local (static) symbol? */
-      is_bb_head:1;		/* is this the head of a basic-blk? */
+      is_bb_head:1,		/* is this the head of a basic-blk? */
+      mapped:1,			/* this symbol was mapped to another name */
+      has_been_placed:1;	/* have we placed this symbol?  */
     int ncalls;			/* how many times executed */
+    int nuses;			/* how many times this symbol appears in
+				   a particular context */
     struct sym *next;		/* for building chains of syms */
+    struct sym *prev;		/* for building chains of syms */
 
     /* profile-specific information: */
 

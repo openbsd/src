@@ -1,3 +1,123 @@
+Thu Jun  6 12:30:05 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* gas/m68k/all.exp: Pass -m68020 when assembling the disperr.s
+	test.
+
+Fri May 31 10:11:13 1996  Jeffrey A Law  (law@cygnus.com)
+
+	* gas/h8300/h8300.exp: Fix add.l test for H8/300H.
+
+Wed May 29 16:35:43 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* gas/mips/jal-xgot.d: Correct for 64 bit output.
+
+Thu Apr 25 19:31:59 1996  Doug Evans  <dje@canuck.cygnus.com>
+
+	* gas/sparc/sparc.exp: Only run sparclet tests if sparclet.
+
+Wed Apr 24 17:06:18 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* gas/m68k/op68000.d: Add statements now caught by gas.
+
+Mon Apr 22 16:45:12 1996  Doug Evans  <dje@canuck.cygnus.com>
+
+	* gas/sparc/splet.[ds]: New tests for sparclet extensions.
+	* gas/sparc/sparc.exp: Run them.
+
+Mon Apr 15 17:25:18 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* gas/mips/la.d: Updated for April 5 MIPS assembler changes.
+	* gas/mips/lb.d, gas/mips/ld.d, gas/mips/sb.d: Likewise.
+	* gas/mips/uld.d, gas/mips/ulh.d, gas/mips/ulw.d: Likewise.
+	* gas/mips/usd.d, gas/mips/ush.d, gas/mips/usw.d: Likewise.
+
+Wed Apr 10 14:27:51 1996  Jeffrey A Law  (law@cygnus.com)
+
+	* gas/h8300/mov32bug.s: New test.
+	* gas/h8300/h8300.exp: Run it.
+
+Fri Apr  5 10:13:28 1996  Jeffrey A Law  (law@cygnus.com)
+
+	* gas/h8300/{addsubh.s,bitops1h.s,bitops2h.s}: New h8300h tests.
+	* gas/h8300/{bitops3h.s,bitops4h.s,branchesh.s}: New h8300h tests.
+	* gas/h8300/{cbranchh.s,compareh.s,decimalh.s}: New h8300h tests.
+	* gas/h8300/{divmulh.s,incdech.s,logicalh.s}: New h8300h tests.
+	* gas/h8300/{misch.s,movbh.s,movwh.s}: New h8300h tests.
+	* gas/h8300/{pushpoph.s,rotshifth.s}: New h8300h tests.
+	* gas/h8300/h8300.exp: Run them.
+
+	* gas/h8300/{movb.s,movw.s}: Correct predecrement syntax.
+
+	* gas/h8300/h8300.exp: Fix typos in bitops4 and movb tests.
+
+	* gas/h8300/{addsub.s,bitops1.s,bitops2.s}: New h8300 tests.
+	* gas/h8300/{bitops3.s,bitops4.s,branches.s}: New h8300 tests.
+	* gas/h8300/{cbranch.s,compare.s,decimal.s}: New h8300 tests.
+	* gas/h8300/{divmul.s,incdec.s,logical.s}: New h8300 tests.
+	* gas/h8300/{misc.s,movb.s,movw.s}: New h8300 tests.
+	* gas/h8300/{pushpop.s,rotshift.s}: New h8300 tests.
+	* gas/h8300/h8300.exp: Run them.
+
+Fri Mar 15 17:16:24 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* gas/sparc/synth.d: Don't require sparc in the file format, since
+	it won't be there on SunOS.
+
+Thu Mar  7 14:51:23 1996  Doug Evans  <dje@charmed.cygnus.com>
+
+	* gas/sparc/synth.[ds]: New testcase.
+	* gas/sparc/sparc.exp: Run it.
+
+Fri Mar  1 12:01:48 1996  Jeffrey A Law  (law@cygnus.com)
+
+	* gas/all/gas.exp: xfail difference of two undefined symbols
+	and difference of forward references for the h8300.
+
+Thu Feb 22 16:40:31 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* gas/mips/lb-xgot.d: Correct.
+
+Mon Feb 19 02:43:36 1996  Doug Evans  <dje@charmed.cygnus.com>
+
+	* gas/sparc/{asi,membar,prefetch,rdpr,synth64,wrpr}.d: Pass -Av9
+	to gas.
+	* gas/sparc/addend.exp: Execute for any sparc cpu.
+	* gas/sparc/{mismatch.exp,mism-1.s}: New test.
+
+Wed Feb 14 13:49:59 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* gas/mips/jal-xgot.d, gas/mips/la-xgot.d: New tests.
+	* gas/mips/lb-xgot.d, gas/mips/ld-xgot.d: New tests.
+	* gas/mips/lif-xgot.d, gas/mips/ulh-xgot.d: New tests.
+	* gas/mips/mips.exp: Run new tests if svr4pic.
+
+Sat Jan 27 13:27:45 1996  Doug Evans  <dje@charmed.cygnus.com>
+
+	* lib/gas-dg.exp (gas-dg-test): Delete default_flags and libs args.
+
+Fri Jan 26 14:24:01 1996  Jeffrey A Law  (law@cygnus.com)
+
+	* gas/hppa/unsorted/unsorted.exp: Update for objdump changes.
+
+Wed Jan 10 12:40:31 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* gas/mips/*.d: Update for changes to disassembler.
+
+Wed Jan  3 22:59:53 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* gas/mips/ulh-svr4pic.d: Update for tc-mips.c load_address
+ 	change.
+
+Fri Nov 17 10:32:25 1995  Ian Lance Taylor  <ian@cygnus.com>
+
+	* gas/mri/immconst.d: New test.
+	* gas/mri/mri.exp: Run it.
+	* gas/mri/constants.s: Test immediate constants.
+	* gas/mri/constants.d: Corresponding change.
+
+	* gas/m68k/link.s: Add nop to pad to eight byte boundary.
+	* gas/m68k/link.d: Corresponding change.
+
 Sun Nov 12 21:28:11 1995  Jeffrey A Law  (law@cygnus.com)
 
 	* gas/hppa/unsorted/brlenbug.s: New test.
@@ -46,6 +166,10 @@ Mon Sep 25 12:31:46 1995  Ian Lance Taylor  <ian@cygnus.com>
 
 	* gas/mri/mri.exp: Add setup_xfail for arm*-*-* for constants
 	test.
+
+Thu Sep 21 01:26:08 1995  Jeff Law  (law@snake.cs.utah.edu)
+
+	* gas/sh/fp.s (fmac): Update for new assembly syntax.
 
 Mon Sep 18 14:04:34 1995  Ian Lance Taylor  <ian@cygnus.com>
 
@@ -149,6 +273,13 @@ Mon Aug 14 16:03:07 1995  Ian Lance Taylor  <ian@cygnus.com>
 	* gasp/gasp.exp: Run them.  Also, clean up the test names used in
 	pass and fail.
 
+start-sanitize-sh3e
+Sun Aug 13 00:39:24 1995  Jeff Law  (law@snake.cs.utah.edu)
+
+	* gas/sh/basic.exp: Update now that we know the right
+	bit patters for the new sts instructions.
+
+end-sanitize-sh3e
 Thu Aug 10 00:46:21 1995  Ian Lance Taylor  <ian@cygnus.com>
 
 	* gas/mri/char.d: Fix for little endian machines.
@@ -190,6 +321,12 @@ Mon Aug  7 22:39:28 1995  Ian Lance Taylor  <ian@cygnus.com>
 	* gas/m68k/all.exp: Run new tests.  Run schwab test for
 	m68k-*-coff*.
 
+start-sanitize-sh3e
+Mon Aug  7 03:01:32 1995  Jeff Law  (law@snake.cs.utah.edu)
+
+	* gas/sh/*: New tests for the hitachi-sh.
+
+end-sanitize-sh3e
 Tue Aug  1 18:02:47 1995  Ian Lance Taylor  <ian@cygnus.com>
 
 	* gas/mri/*: New tests for MRI mode.

@@ -2174,7 +2174,23 @@ alpha_ip (str, insns)
 
   if (do_add64)
     {
-      emit_add64 (add64_in, add64_out, add64_addend);
+      /* If opcode represents an addq instruction, and the addend we
+         are using fits in a 16 bit range, we can change the addq
+         directly into an lda rather than emitting an lda followed by
+         an addq.  */
+      if (OPCODE (opcode) == 0x10
+	  && OP_FCN (opcode) == 0x20	/* addq */
+	  && add64_in == ZERO
+	  && add64_out == AT
+	  && in_range_signed (add64_addend, 16))
+	{
+	  opcode = (0x20000000	/* lda */
+		    | (((opcode >> SC) & 0x1f) << SA)
+		    | (((opcode >> SA) & 0x1f) << SB)
+		    | (add64_addend & 0xffff));
+	}
+      else
+	emit_add64 (add64_in, add64_out, add64_addend);
     }
 
   insns[0].opcode = opcode;

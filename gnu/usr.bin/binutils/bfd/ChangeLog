@@ -3097,7 +3097,7 @@ Fri Oct 27 18:14:39 1995  Ian Lance Taylor  <ian@cygnus.com>
 
 Fri Oct 27 14:42:15 1995  Niklas Hallqvist  <niklas@appli.se>
 
-	* PORTING, aout-arm.c, aout-encap.c, aout-rce.c, aout-target.h,
+	* PORTING, aout-arm.c, aout-encap.c, aout-target.h,
 	aoutx.h, gen-aout.c, host-aout.c, hp300bsd.c, i386aout.c
 	i386bsd.c, i386dynix.c, i386linux.c, i386lynx.c, i386mach3.c,
 	i386netbsd.c, m68klynx.c, m88kmach3.c, mipsbsd.c, newsos3.c,

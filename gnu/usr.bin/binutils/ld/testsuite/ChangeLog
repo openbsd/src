@@ -1,3 +1,86 @@
+Wed May  1 16:45:13 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* ld-sh/sh.exp: Use -O when compiling with -mrelax.
+
+Mon Apr 29 10:33:10 1996  Andreas Schwab  <schwab@issan.informatik.uni-dortmund.de>
+
+	* ld-shared/shared.exp: Run the shared library tests on
+ 	Linux/m68k.
+
+Fri Apr  5 16:20:55 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* ld-shared/shared.exp: Run the shared library tests on Linux.
+
+Mon Feb 26 12:45:26 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* ld-shared/shared.exp: Don't use -fpic on MIPS targets.
+
+Wed Jan 31 15:09:57 1996  Jeffrey A Law  (law@cygnus.com)
+
+	* ld-srec/srec.exp: Add xfails for hppa*-*-*elf*.
+	* ld-undefined/undefined.exp: Likewise.
+
+Fri Jan 26 18:43:03 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* ld-undefined/undefined.exp: ELF targets should now pass the
+	undefined line test.
+
+Thu Jan 25 15:36:13 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* ld-empic/empic.exp: Update for change to MIPS disassembler.
+
+Mon Jan 15 15:05:53 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* ld-bootstrap/bootstrap.exp: Expect failure for mips*-*-irix5*
+	when doing the --static test.
+	* ld-shared/shared.exp: Run tests on mips*-*-irix5*.
+
+Fri Dec 29 12:33:09 1995  Ian Lance Taylor  <ian@cygnus.com>
+
+	* ld-bootstrap/bootstrap.exp: On AIX, don't pass the -bI option
+	when creating ld-partial.o.
+
+Tue Dec 26 17:37:23 1995  Ian Lance Taylor  <ian@cygnus.com>
+
+	* ld-srec/srec.exp: If powerpc*-*-eabi*, use --defsym to define
+	__eabi.
+
+Tue Dec 19 18:01:01 1995  Ian Lance Taylor  <ian@cygnus.com>
+
+	* ld-srec/srec.exp: Add setup_xfails for XCOFF targets.
+
+Fri Dec 15 16:36:17 1995  Ian Lance Taylor  <ian@cygnus.com>
+
+	* ld-srec/srec.exp: On a29k targets, use --defsym to define
+	V_SPILL and V_FILL.
+	* ld-srec/sr1.c (V_SPILL, V_FILL): Remove definitions.
+	* ld-srec/sr3.cc: Likewise.
+
+	* ld-srec/srec.exp: Remove i960 COFF setup_xfail.
+
+Sat Dec  2 01:20:31 1995  Ian Lance Taylor  <ian@cygnus.com>
+
+	* ld-srec/srec.exp: Don't use [] in setup_xfail expressions.
+
+Fri Dec  1 13:18:18 1995  Ian Lance Taylor  <ian@cygnus.com>
+
+	* ld-srec/srec.exp: Add setup_xfails for MIPS ELF targets.
+
+Wed Nov 29 13:01:10 1995  Ian Lance Taylor  <ian@cygnus.com>
+
+	* ld-srec/srec.exp: Add setup_xfail for i960 COFF targets.
+
+Mon Nov 27 14:36:11 1995  Ian Lance Taylor  <ian@cygnus.com>
+
+	* ld-srec/srec.exp: Add setup_xfail calls for i[345]86-*-aout*.
+
+	* ld-srec/sr1.c (V_SPILL, V_FILL): Define.
+	* ld-srec/sr3.cc: Likewise.
+
+Tue Nov 21 16:05:53 1995  Ian Lance Taylor  <ian@cygnus.com>
+
+	* ld-empic/empic.exp: Update for changes in objdump output.
+
 Wed Nov 15 17:42:48 1995  Ian Lance Taylor  <ian@cygnus.com>
 
 	* ld-srec/srec.exp: New tests.

@@ -1,5 +1,5 @@
 /* tc-mips.c -- assemble code for a MIPS chip.
-   Copyright (C) 1993, 1995 Free Software Foundation, Inc.
+   Copyright (C) 1993, 1995, 1996 Free Software Foundation, Inc.
    Contributed by the OSF and Ralph Campbell.
    Written by Keith Knowles and Ralph Campbell, working independently.
    Modified for ECOFF and R4000 support by Ian Lance Taylor of Cygnus
@@ -18,8 +18,9 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with GAS; see the file COPYING.  If not, write to
-   the Free Software Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+   along with GAS; see the file COPYING.  If not, write to the Free
+   Software Foundation, 59 Temple Place - Suite 330, Boston, MA
+   02111-1307, USA.  */
 
 #include "as.h"
 #include "config.h"
@@ -82,6 +83,10 @@ static char *mips_regmask_frag;
 
 extern int target_big_endian;
 
+/* 1 is we should use the 64 bit MIPS ELF ABI, 0 if we should use the
+   32 bit ABI.  This has no meaning for ECOFF.  */
+static int mips_64;
+
 /* The default target format to use.  */
 const char *
 mips_target_format ()
@@ -93,7 +98,9 @@ mips_target_format ()
     case bfd_target_ecoff_flavour:
       return target_big_endian ? "ecoff-bigmips" : "ecoff-littlemips";
     case bfd_target_elf_flavour:
-      return target_big_endian ? "elf32-bigmips" : "elf32-littlemips";
+      return (target_big_endian
+	      ? (mips_64 ? "elf64-bigmips" : "elf32-bigmips")
+	      : (mips_64 ? "elf64-littlemips" : "elf32-littlemips"));
     default:
       abort ();
     }
@@ -159,6 +166,10 @@ enum mips_pic_level
 };
 
 static enum mips_pic_level mips_pic;
+
+/* 1 if we should generate 32 bit offsets from the GP register in
+   SVR4_PIC mode.  Currently has no meaning in other modes.  */
+static int mips_big_got;
 
 /* 1 if trap instructions should used for overflow rather than break
    instructions.  */
@@ -287,6 +298,31 @@ static int prev_insn_unreordered;
 /* Non-zero if the previous previous instruction was in a .set
    noreorder.  */
 static int prev_prev_insn_unreordered;
+
+/* For ECOFF and ELF, relocations against symbols are done in two
+   parts, with a HI relocation and a LO relocation.  Each relocation
+   has only 16 bits of space to store an addend.  This means that in
+   order for the linker to handle carries correctly, it must be able
+   to locate both the HI and the LO relocation.  This means that the
+   relocations must appear in order in the relocation table.
+
+   In order to implement this, we keep track of each unmatched HI
+   relocation.  We then sort them so that they immediately precede the
+   corresponding LO relocation. */
+
+struct mips_hi_fixup
+{
+  /* Next HI fixup.  */
+  struct mips_hi_fixup *next;
+  /* This fixup.  */
+  fixS *fixp;
+  /* The section this fixup is in.  */
+  segT seg;
+};
+
+/* The list of unmatched HI relocs.  */
+
+static struct mips_hi_fixup *mips_hi_fixup_list;
 
 /* Since the MIPS does not have multiple forms of PC relative
    instructions, we do not have to do relaxing as is done on other
@@ -375,10 +411,12 @@ static int prev_prev_insn_unreordered;
 
 static int insn_uses_reg PARAMS ((struct mips_cl_insn *ip,
 				  unsigned int reg, int fpr));
+static int reg_needs_delay PARAMS ((int));
 static void append_insn PARAMS ((char *place,
 				 struct mips_cl_insn * ip,
 				 expressionS * p,
-				 bfd_reloc_code_real_type r));
+				 bfd_reloc_code_real_type r,
+				 boolean));
 static void mips_no_prev_insn PARAMS ((void));
 static void mips_emit_delays PARAMS ((void));
 #ifdef USE_STDARG
@@ -407,8 +445,6 @@ static void mips_align PARAMS ((int to, int fill, symbolS *label));
 static void s_align PARAMS ((int));
 static void s_change_sec PARAMS ((int));
 static void s_cons PARAMS ((int));
-static void s_mipserr PARAMS ((int));
-static void s_extern PARAMS ((int));
 static void s_float_cons PARAMS ((int));
 static void s_mips_globl PARAMS ((int));
 static void s_option PARAMS ((int));
@@ -461,7 +497,7 @@ static const pseudo_typeS mips_pseudo_table[] =
      chips.  */
   {"asciiz", stringer, 1},
   {"bss", s_change_sec, 'b'},
-  {"err", s_mipserr, 0},
+  {"err", s_err, 0},
   {"half", s_cons, 1},
   {"dword", s_cons, 3},
 
@@ -515,10 +551,20 @@ mips_pop_insert ()
 
 static char *expr_end;
 
+/* Expressions which appear in instructions.  These are set by
+   mips_ip.  */
+
 static expressionS imm_expr;
 static expressionS offset_expr;
+
+/* Relocs associated with imm_expr and offset_expr.  */
+
 static bfd_reloc_code_real_type imm_reloc;
 static bfd_reloc_code_real_type offset_reloc;
+
+/* This is set by mips_ip if imm_reloc is an unmatched HI16_S reloc.  */
+
+static boolean imm_unmatched_hi;
 
 /*
  * This function is called once, at assembler startup time.  It should
@@ -728,18 +774,51 @@ md_begin ()
 
 	seg = now_seg;
 	subseg = now_subseg;
-	sec = subseg_new (".reginfo", (subsegT) 0);
 
-	/* The ABI says this section should be loaded so that the
-	   running program can access it.  */
-	(void) bfd_set_section_flags (stdoutput, sec,
-				      (SEC_ALLOC | SEC_LOAD
-				       | SEC_READONLY | SEC_DATA));
-	(void) bfd_set_section_alignment (stdoutput, sec, 2);
+	if (! mips_64)
+	  {
+	    sec = subseg_new (".reginfo", (subsegT) 0);
+
+	    /* The ABI says this section should be loaded so that the
+	       running program can access it.  */
+	    (void) bfd_set_section_flags (stdoutput, sec,
+					  (SEC_ALLOC | SEC_LOAD
+					   | SEC_READONLY | SEC_DATA));
+	    (void) bfd_set_section_alignment (stdoutput, sec, 2);
+	
+#ifdef OBJ_ELF
+	    mips_regmask_frag = frag_more (sizeof (Elf32_External_RegInfo));
+#endif
+	  }
+	else
+	  {
+	    /* The 64-bit ABI uses a .MIPS.options section rather than
+               .reginfo section.  */
+	    sec = subseg_new (".MIPS.options", (subsegT) 0);
+	    (void) bfd_set_section_flags (stdoutput, sec,
+					  (SEC_ALLOC | SEC_LOAD
+					   | SEC_READONLY | SEC_DATA));
+	    (void) bfd_set_section_alignment (stdoutput, sec, 3);
 
 #ifdef OBJ_ELF
-	mips_regmask_frag = frag_more (sizeof (Elf32_External_RegInfo));
+	    /* Set up the option header.  */
+	    {
+	      Elf_Internal_Options opthdr;
+	      char *f;
+
+	      opthdr.kind = ODK_REGINFO;
+	      opthdr.size = (sizeof (Elf_External_Options)
+			     + sizeof (Elf64_External_RegInfo));
+	      opthdr.section = 0;
+	      opthdr.info = 0;
+	      f = frag_more (sizeof (Elf_External_Options));
+	      bfd_mips_elf_swap_options_out (stdoutput, &opthdr,
+					     (Elf_External_Options *) f);
+
+	      mips_regmask_frag = frag_more (sizeof (Elf64_External_RegInfo));
+	    }
 #endif
+	  }
 
 	if (ECOFF_DEBUGGING)
 	  {
@@ -771,7 +850,10 @@ md_assemble (str)
   struct mips_cl_insn insn;
 
   imm_expr.X_op = O_absent;
+  imm_reloc = BFD_RELOC_UNUSED;
+  imm_unmatched_hi = false;
   offset_expr.X_op = O_absent;
+  offset_reloc = BFD_RELOC_UNUSED;
 
   mips_ip (str, &insn);
   if (insn_error)
@@ -786,11 +868,12 @@ md_assemble (str)
   else
     {
       if (imm_expr.X_op != O_absent)
-	append_insn ((char *) NULL, &insn, &imm_expr, imm_reloc);
+	append_insn ((char *) NULL, &insn, &imm_expr, imm_reloc,
+		     imm_unmatched_hi);
       else if (offset_expr.X_op != O_absent)
-	append_insn ((char *) NULL, &insn, &offset_expr, offset_reloc);
+	append_insn ((char *) NULL, &insn, &offset_expr, offset_reloc, false);
       else
-	append_insn ((char *) NULL, &insn, NULL, BFD_RELOC_UNUSED);
+	append_insn ((char *) NULL, &insn, NULL, BFD_RELOC_UNUSED, false);
     }
 }
 
@@ -838,17 +921,46 @@ insn_uses_reg (ip, reg, fpr)
   return 0;
 }
 
+/* This function returns true if modifying a register requires a
+   delay.  */
+
+static int
+reg_needs_delay (reg)
+     int reg;
+{
+  unsigned long prev_pinfo;
+
+  prev_pinfo = prev_insn.insn_mo->pinfo;
+  if (! mips_noreorder
+      && mips_isa < 4
+      && ((prev_pinfo & INSN_LOAD_COPROC_DELAY)
+	  || (mips_isa < 2
+	      && (prev_pinfo & INSN_LOAD_MEMORY_DELAY))))
+    {
+      /* A load from a coprocessor or from memory.  All load
+	 delays delay the use of general register rt for one
+	 instruction on the r3000.  The r6000 and r4000 use
+	 interlocks.  */
+      know (prev_pinfo & INSN_WRITE_GPR_T);
+      if (reg == ((prev_insn.insn_opcode >> OP_SH_RT) & OP_MASK_RT))
+	return 1;
+    }
+
+  return 0;
+}
+
 /* Output an instruction.  PLACE is where to put the instruction; if
    it is NULL, this uses frag_more to get room.  IP is the instruction
    information.  ADDRESS_EXPR is an operand of the instruction to be
    used with RELOC_TYPE.  */
 
 static void
-append_insn (place, ip, address_expr, reloc_type)
+append_insn (place, ip, address_expr, reloc_type, unmatched_hi)
      char *place;
      struct mips_cl_insn *ip;
      expressionS *address_expr;
      bfd_reloc_code_real_type reloc_type;
+     boolean unmatched_hi;
 {
   register unsigned long prev_pinfo, pinfo;
   char *f;
@@ -1080,10 +1192,24 @@ append_insn (place, ip, address_expr, reloc_type)
 	  /* Don't generate a reloc if we are writing into a variant
 	     frag.  */
 	  if (place == NULL)
-	    fixp = fix_new_exp (frag_now, f - frag_now->fr_literal, 4,
-				address_expr,
-				reloc_type == BFD_RELOC_16_PCREL_S2,
-				reloc_type);
+	    {
+	      fixp = fix_new_exp (frag_now, f - frag_now->fr_literal, 4,
+				  address_expr,
+				  reloc_type == BFD_RELOC_16_PCREL_S2,
+				  reloc_type);
+	      if (unmatched_hi)
+		{
+		  struct mips_hi_fixup *hi_fixup;
+
+		  assert (reloc_type == BFD_RELOC_HI16_S);
+		  hi_fixup = ((struct mips_hi_fixup *)
+			      xmalloc (sizeof (struct mips_hi_fixup)));
+		  hi_fixup->fixp = fixp;
+		  hi_fixup->seg = now_seg;
+		  hi_fixup->next = mips_hi_fixup_list;
+		  mips_hi_fixup_list = hi_fixup;
+		}
+	    }
 	}
     }
 
@@ -1543,6 +1669,8 @@ macro_build (place, counter, ep, name, fmt, va_alist)
 		  || r == BFD_RELOC_LO16
 		  || r == BFD_RELOC_MIPS_GOT16
 		  || r == BFD_RELOC_MIPS_CALL16
+		  || r == BFD_RELOC_MIPS_GOT_LO16
+		  || r == BFD_RELOC_MIPS_CALL_LO16
 		  || (ep->X_op == O_subtract
 		      && now_seg == text_section
 		      && r == BFD_RELOC_PCREL_LO16));
@@ -1554,7 +1682,9 @@ macro_build (place, counter, ep, name, fmt, va_alist)
 		  && (ep->X_op == O_constant
 		      || (ep->X_op == O_symbol
 			  && (r == BFD_RELOC_HI16_S
-			      || r == BFD_RELOC_HI16))
+			      || r == BFD_RELOC_HI16
+			      || r == BFD_RELOC_MIPS_GOT_HI16
+			      || r == BFD_RELOC_MIPS_CALL_HI16))
 		      || (ep->X_op == O_subtract
 			  && now_seg == text_section
 			  && r == BFD_RELOC_PCREL_HI16_S)));
@@ -1597,7 +1727,7 @@ macro_build (place, counter, ep, name, fmt, va_alist)
   va_end (args);
   assert (r == BFD_RELOC_UNUSED ? ep == NULL : ep != NULL);
 
-  append_insn (place, &insn, ep, r);
+  append_insn (place, &insn, ep, r, false);
 }
 
 /*
@@ -1621,7 +1751,7 @@ macro_build_lui (place, counter, ep, regnum)
   else
     {
       high_expr.X_op = O_constant;
-      high_expr.X_add_number = 0;
+      high_expr.X_add_number = ep->X_add_number;
     }
 
   if (high_expr.X_op == O_constant)
@@ -1662,10 +1792,10 @@ macro_build_lui (place, counter, ep, regnum)
   if (r == BFD_RELOC_UNUSED)
     {
       insn.insn_opcode |= high_expr.X_add_number;
-      append_insn (place, &insn, NULL, r);
+      append_insn (place, &insn, NULL, r, false);
     }
   else
-    append_insn (place, &insn, &high_expr, r);
+    append_insn (place, &insn, &high_expr, r, false);
 }
 
 /*			set_at()
@@ -1741,13 +1871,15 @@ load_register (counter, reg, ep, dbl)
 		       (int) BFD_RELOC_LO16);
 	  return;
 	}
-      else if (((ep->X_add_number &~ (offsetT) 0x7fffffff) == 0
-		|| ((ep->X_add_number &~ (offsetT) 0x7fffffff)
-		    == ~ (offsetT) 0x7fffffff))
-	       && (! dbl
-		   || ! ep->X_unsigned
-		   || sizeof (ep->X_add_number) > 4
-		   || (ep->X_add_number & 0x80000000) == 0))
+      else if ((((ep->X_add_number &~ (offsetT) 0x7fffffff) == 0
+		 || ((ep->X_add_number &~ (offsetT) 0x7fffffff)
+		     == ~ (offsetT) 0x7fffffff))
+		&& (! dbl
+		    || ! ep->X_unsigned
+		    || sizeof (ep->X_add_number) > 4
+		    || (ep->X_add_number & 0x80000000) == 0))
+	       || (mips_isa < 3
+		   && (ep->X_add_number &~ 0xffffffff) == 0))
 	{
 	  /* 32 bit values require an lui.  */
 	  macro_build ((char *) NULL, counter, ep, "lui", "t,u", reg,
@@ -1810,6 +1942,23 @@ load_register (counter, reg, ep, dbl)
     freg = 0;
   else
     {
+      if (hi32.X_add_number == 0xffffffff)
+        {
+          if ((lo32.X_add_number & 0xffff8000) == 0xffff8000)
+            {
+              macro_build ((char *) NULL, counter, &lo32, "addiu", "t,r,j", reg, 0,
+                           (int) BFD_RELOC_LO16);
+              return;
+            }
+          if (lo32.X_add_number & 0x80000000)
+            {
+              macro_build ((char *) NULL, counter, &lo32, "lui", "t,u", reg,
+                           (int) BFD_RELOC_HI16);
+              macro_build ((char *) NULL, counter, &lo32, "ori", "t,r,i", reg, reg,
+                           (int) BFD_RELOC_LO16);
+              return;
+            }
+        }
       load_register (counter, reg, &hi32, 0);
       freg = reg;
     }
@@ -1825,6 +1974,15 @@ load_register (counter, reg, ep, dbl)
   else
     {
       expressionS mid16;
+
+      if ((freg == 0) && (lo32.X_add_number == 0xffffffff))
+        {
+	  macro_build ((char *) NULL, counter, &lo32, "lui", "t,u", reg,
+		       (int) BFD_RELOC_HI16);
+          macro_build ((char *) NULL, counter, NULL, "dsrl32", "d,w,<", reg,
+                       reg, 32);
+          return;
+        }
 
       if (freg != 0)
 	{
@@ -1876,7 +2034,8 @@ load_address (counter, reg, ep)
 	   lui		$reg,<sym>		(BFD_RELOC_HI16_S)
 	   addiu	$reg,$reg,<sym>		(BFD_RELOC_LO16)
 	 If we have an addend, we always use the latter form.  */
-      if (ep->X_add_number != 0 || nopic_need_relax (ep->X_add_symbol))
+      if ((valueT) ep->X_add_number >= MAX_GPREL_OFFSET
+          || nopic_need_relax (ep->X_add_symbol))
 	p = NULL;
       else
 	{
@@ -1895,7 +2054,7 @@ load_address (counter, reg, ep)
 		   mips_isa < 3 ? "addiu" : "daddiu",
 		   "t,r,j", reg, reg, (int) BFD_RELOC_LO16);
     }
-  else if (mips_pic == SVR4_PIC)
+  else if (mips_pic == SVR4_PIC && ! mips_big_got)
     {
       expressionS ex;
 
@@ -1924,7 +2083,69 @@ load_address (counter, reg, ep)
 	  if (ex.X_add_number < -0x8000 || ex.X_add_number >= 0x8000)
 	    as_bad ("PIC code offset overflow (max 16 signed bits)");
 	  ex.X_op = O_constant;
-	  macro_build (p, counter, &ex,
+	  macro_build ((char *) NULL, counter, &ex,
+		       mips_isa < 3 ? "addiu" : "daddiu",
+		       "t,r,j", reg, reg, (int) BFD_RELOC_LO16);
+	}
+    }
+  else if (mips_pic == SVR4_PIC)
+    {
+      expressionS ex;
+      int off;
+
+      /* This is the large GOT case.  If this is a reference to an
+	 external symbol, we want
+	   lui		$reg,<sym>		(BFD_RELOC_MIPS_GOT_HI16)
+	   addu		$reg,$reg,$gp
+	   lw		$reg,<sym>($reg)	(BFD_RELOC_MIPS_GOT_LO16)
+	 Otherwise, for a reference to a local symbol, we want
+	   lw		$reg,<sym>($gp)		(BFD_RELOC_MIPS_GOT16)
+	   nop
+	   addiu	$reg,$reg,<sym>		(BFD_RELOC_LO16)
+	 If there is a constant, it must be added in after.  */
+      ex.X_add_number = ep->X_add_number;
+      ep->X_add_number = 0;
+      if (reg_needs_delay (GP))
+	off = 4;
+      else
+	off = 0;
+      frag_grow (32);
+      macro_build ((char *) NULL, counter, ep, "lui", "t,u", reg,
+		   (int) BFD_RELOC_MIPS_GOT_HI16);
+      macro_build ((char *) NULL, counter, (expressionS *) NULL,
+		   mips_isa < 3 ? "addu" : "daddu",
+		   "d,v,t", reg, reg, GP);
+      macro_build ((char *) NULL, counter, ep,
+		   mips_isa < 3 ? "lw" : "ld",
+		   "t,o(b)", reg, (int) BFD_RELOC_MIPS_GOT_LO16, reg);
+      p = frag_var (rs_machine_dependent, 12 + off, 0,
+		    RELAX_ENCODE (12, 12 + off, off, 8 + off, 0,
+				  mips_warn_about_macros),
+		    ep->X_add_symbol, (long) 0, (char *) NULL);
+      if (off > 0)
+	{
+	  /* We need a nop before loading from $gp.  This special
+             check is required because the lui which starts the main
+             instruction stream does not refer to $gp, and so will not
+             insert the nop which may be required.  */
+	  macro_build (p, counter, (expressionS *) NULL, "nop", "");
+	  p += 4;
+	}
+      macro_build (p, counter, ep,
+		   mips_isa < 3 ? "lw" : "ld",
+		   "t,o(b)", reg, (int) BFD_RELOC_MIPS_GOT16, GP);
+      p += 4;
+      macro_build (p, counter, (expressionS *) NULL, "nop", "");
+      p += 4;
+      macro_build (p, counter, ep,
+		   mips_isa < 3 ? "addiu" : "daddiu",
+		   "t,r,j", reg, reg, (int) BFD_RELOC_LO16);
+      if (ex.X_add_number != 0)
+	{
+	  if (ex.X_add_number < -0x8000 || ex.X_add_number >= 0x8000)
+	    as_bad ("PIC code offset overflow (max 16 signed bits)");
+	  ex.X_op = O_constant;
+	  macro_build ((char *) NULL, counter, &ex,
 		       mips_isa < 3 ? "addiu" : "daddiu",
 		       "t,r,j", reg, reg, (int) BFD_RELOC_LO16);
 	}
@@ -2681,7 +2902,7 @@ macro (ip)
 	       addiu	$tempreg,$tempreg,<sym>	(BFD_RELOC_LO16)
 	     If we have a constant, we need two instructions anyhow,
 	     so we may as well always use the latter form.  */
-	  if (offset_expr.X_add_number != 0
+	  if ((valueT) offset_expr.X_add_number >= MAX_GPREL_OFFSET
 	      || nopic_need_relax (offset_expr.X_add_symbol))
 	    p = NULL;
 	  else
@@ -2703,7 +2924,7 @@ macro (ip)
 		       mips_isa < 3 ? "addiu" : "daddiu",
 		       "t,r,j", tempreg, tempreg, (int) BFD_RELOC_LO16);
 	}
-      else if (mips_pic == SVR4_PIC)
+      else if (mips_pic == SVR4_PIC && ! mips_big_got)
 	{
 	  /* If this is a reference to an external symbol, and there
 	     is no constant, we want
@@ -2829,6 +3050,214 @@ macro (ip)
 	      used_at = 1;
 	    }
 	}
+      else if (mips_pic == SVR4_PIC)
+	{
+	  int gpdel;
+
+	  /* This is the large GOT case.  If this is a reference to an
+	     external symbol, and there is no constant, we want
+	       lui	$tempreg,<sym>		(BFD_RELOC_MIPS_GOT_HI16)
+	       addu	$tempreg,$tempreg,$gp
+	       lw	$tempreg,<sym>($tempreg) (BFD_RELOC_MIPS_GOT_LO16)
+	     For a local symbol, we want
+	       lw	$tempreg,<sym>($gp)	(BFD_RELOC_MIPS_GOT16)
+	       nop
+	       addiu	$tempreg,$tempreg,<sym>	(BFD_RELOC_LO16)
+
+	     If we have a small constant, and this is a reference to
+	     an external symbol, we want
+	       lui	$tempreg,<sym>		(BFD_RELOC_MIPS_GOT_HI16)
+	       addu	$tempreg,$tempreg,$gp
+	       lw	$tempreg,<sym>($tempreg) (BFD_RELOC_MIPS_GOT_LO16)
+	       nop
+	       addiu	$tempreg,$tempreg,<constant>
+	     For a local symbol, we want
+	       lw	$tempreg,<sym>($gp)	(BFD_RELOC_MIPS_GOT16)
+	       nop
+	       addiu	$tempreg,$tempreg,<constant> (BFD_RELOC_LO16)
+
+	     If we have a large constant, and this is a reference to
+	     an external symbol, we want
+	       lui	$tempreg,<sym>		(BFD_RELOC_MIPS_GOT_HI16)
+	       addu	$tempreg,$tempreg,$gp
+	       lw	$tempreg,<sym>($tempreg) (BFD_RELOC_MIPS_GOT_LO16)
+	       lui	$at,<hiconstant>
+	       addiu	$at,$at,<loconstant>
+	       addu	$tempreg,$tempreg,$at
+	     For a local symbol, we want
+	       lw	$tempreg,<sym>($gp)	(BFD_RELOC_MIPS_GOT16)
+	       lui	$at,<hiconstant>
+	       addiu	$at,$at,<loconstant>	(BFD_RELOC_LO16)
+	       addu	$tempreg,$tempreg,$at
+	     */
+	  expr1.X_add_number = offset_expr.X_add_number;
+	  offset_expr.X_add_number = 0;
+	  frag_grow (52);
+	  if (reg_needs_delay (GP))
+	    gpdel = 4;
+	  else
+	    gpdel = 0;
+	  macro_build ((char *) NULL, &icnt, &offset_expr, "lui", "t,u",
+		       tempreg, (int) BFD_RELOC_MIPS_GOT_HI16);
+	  macro_build ((char *) NULL, &icnt, (expressionS *) NULL,
+		       mips_isa < 3 ? "addu" : "daddu",
+		       "d,v,t", tempreg, tempreg, GP);
+	  macro_build ((char *) NULL, &icnt, &offset_expr,
+		       dbl ? "ld" : "lw",
+		       "t,o(b)", tempreg, (int) BFD_RELOC_MIPS_GOT_LO16,
+		       tempreg);
+	  if (expr1.X_add_number == 0)
+	    {
+	      int off;
+
+	      if (breg == 0)
+		off = 0;
+	      else
+		{
+		  /* We're going to put in an addu instruction using
+		     tempreg, so we may as well insert the nop right
+		     now.  */
+		  macro_build ((char *) NULL, &icnt, (expressionS *) NULL,
+			       "nop", "");
+		  off = 4;
+		}
+
+	      p = frag_var (rs_machine_dependent, 12 + gpdel, 0,
+			    RELAX_ENCODE (12 + off, 12 + gpdel, gpdel,
+					  8 + gpdel, 0,
+					  (breg == 0
+					   ? mips_warn_about_macros
+					   : 0)),
+			    offset_expr.X_add_symbol, (long) 0,
+			    (char *) NULL);
+	    }
+	  else if (expr1.X_add_number >= -0x8000
+		   && expr1.X_add_number < 0x8000)
+	    {
+	      macro_build ((char *) NULL, &icnt, (expressionS *) NULL,
+			   "nop", "");
+	      macro_build ((char *) NULL, &icnt, &expr1,
+			   mips_isa < 3 ? "addiu" : "daddiu",
+			   "t,r,j", tempreg, tempreg, (int) BFD_RELOC_LO16);
+
+	      p = frag_var (rs_machine_dependent, 12 + gpdel, 0,
+			    RELAX_ENCODE (20, 12 + gpdel, gpdel, 8 + gpdel, 0,
+					  (breg == 0
+					   ? mips_warn_about_macros
+					   : 0)),
+			    offset_expr.X_add_symbol, (long) 0,
+			    (char *) NULL);
+	    }
+	  else
+	    {
+	      int adj, dreg;
+
+	      /* If we are going to add in a base register, and the
+		 target register and the base register are the same,
+		 then we are using AT as a temporary register.  Since
+		 we want to load the constant into AT, we add our
+		 current AT (from the global offset table) and the
+		 register into the register now, and pretend we were
+		 not using a base register.  */
+	      if (breg != treg)
+		{
+		  adj = 0;
+		  dreg = tempreg;
+		}
+	      else
+		{
+		  assert (tempreg == AT);
+		  macro_build ((char *) NULL, &icnt, (expressionS *) NULL,
+			       "nop", "");
+		  macro_build ((char *) NULL, &icnt, (expressionS *) NULL,
+			       mips_isa < 3 ? "addu" : "daddu",
+			       "d,v,t", treg, AT, breg);
+		  dreg = treg;
+		  adj = 8;
+		}
+
+	      /* Set mips_optimize around the lui instruction to avoid
+		 inserting an unnecessary nop after the lw.  */
+	      hold_mips_optimize = mips_optimize;
+	      mips_optimize = 2;
+	      macro_build_lui ((char *) NULL, &icnt, &expr1, AT);
+	      mips_optimize = hold_mips_optimize;
+
+	      macro_build ((char *) NULL, &icnt, &expr1,
+			   mips_isa < 3 ? "addiu" : "daddiu",
+			   "t,r,j", AT, AT, (int) BFD_RELOC_LO16);
+	      macro_build ((char *) NULL, &icnt, (expressionS *) NULL,
+			   mips_isa < 3 ? "addu" : "daddu",
+			   "d,v,t", dreg, dreg, AT);
+
+	      p = frag_var (rs_machine_dependent, 16 + gpdel + adj, 0,
+			    RELAX_ENCODE (24 + adj, 16 + gpdel + adj, gpdel,
+					  8 + gpdel, 0,
+					  (breg == 0
+					   ? mips_warn_about_macros
+					   : 0)),
+			    offset_expr.X_add_symbol, (long) 0,
+			    (char *) NULL);
+
+	      used_at = 1;
+	    }
+
+	  if (gpdel > 0)
+	    {
+	      /* This is needed because this instruction uses $gp, but
+                 the first instruction on the main stream does not.  */
+	      macro_build (p, &icnt, (expressionS *) NULL, "nop", "");
+	      p += 4;
+	    }
+	  macro_build (p, &icnt, &offset_expr,
+		       dbl ? "ld" : "lw",
+		       "t,o(b)", tempreg, (int) BFD_RELOC_MIPS_GOT16, GP);
+	  p += 4;
+	  if (expr1.X_add_number >= -0x8000
+	      && expr1.X_add_number < 0x8000)
+	    {
+	      macro_build (p, &icnt, (expressionS *) NULL, "nop", "");
+	      p += 4;
+	      macro_build (p, &icnt, &expr1,
+			   mips_isa < 3 ? "addiu" : "daddiu",
+			   "t,r,j", tempreg, tempreg, (int) BFD_RELOC_LO16);
+	      /* FIXME: If add_number is 0, and there was no base
+                 register, the external symbol case ended with a load,
+                 so if the symbol turns out to not be external, and
+                 the next instruction uses tempreg, an unnecessary nop
+                 will be inserted.  */
+	    }
+	  else
+	    {
+	      if (breg == treg)
+		{
+		  /* We must add in the base register now, as in the
+                     external symbol case.  */
+		  assert (tempreg == AT);
+		  macro_build (p, &icnt, (expressionS *) NULL, "nop", "");
+		  p += 4;
+		  macro_build (p, &icnt, (expressionS *) NULL,
+			       mips_isa < 3 ? "addu" : "daddu",
+			       "d,v,t", treg, AT, breg);
+		  p += 4;
+		  tempreg = treg;
+		  /* We set breg to 0 because we have arranged to add
+                     it in in both cases.  */
+		  breg = 0;
+		}
+
+	      macro_build_lui (p, &icnt, &expr1, AT);
+	      p += 4;
+	      macro_build (p, &icnt, &expr1,
+			   mips_isa < 3 ? "addiu" : "daddiu",
+			   "t,r,j", AT, AT, (int) BFD_RELOC_LO16);
+	      p += 4;
+	      macro_build (p, &icnt, (expressionS *) NULL,
+			   mips_isa < 3 ? "addu" : "daddu",
+			   "d,v,t", tempreg, tempreg, AT);
+	      p += 4;
+	    }
+	}
       else if (mips_pic == EMBEDDED_PIC)
 	{
 	  /* We use
@@ -2899,30 +3328,78 @@ macro (ip)
 	macro_build ((char *) NULL, &icnt, &offset_expr, "jal", "a");
       else if (mips_pic == SVR4_PIC)
 	{
-	  /* If this is a reference to an external symbol, we want
+	  /* If this is a reference to an external symbol, and we are
+	     using a small GOT, we want
 	       lw	$25,<sym>($gp)		(BFD_RELOC_MIPS_CALL16)
 	       nop
 	       jalr	$25
 	       nop
 	       lw	$gp,cprestore($sp)
 	     The cprestore value is set using the .cprestore
-	     pseudo-op.  If the symbol is not external, we want
+	     pseudo-op.  If we are using a big GOT, we want
+	       lui	$25,<sym>		(BFD_RELOC_MIPS_CALL_HI16)
+	       addu	$25,$25,$gp
+	       lw	$25,<sym>($25)		(BFD_RELOC_MIPS_CALL_LO16)
+	       nop
+	       jalr	$25
+	       nop
+	       lw	$gp,cprestore($sp)
+	     If the symbol is not external, we want
 	       lw	$25,<sym>($gp)		(BFD_RELOC_MIPS_GOT16)
 	       nop
 	       addiu	$25,$25,<sym>		(BFD_RELOC_LO16)
 	       jalr	$25
 	       nop
-	       lw	$gp,cprestore($sp)
-	     */
-	  frag_grow (20);
-	  macro_build ((char *) NULL, &icnt, &offset_expr,
-		       mips_isa < 3 ? "lw" : "ld",
-		       "t,o(b)", PIC_CALL_REG,
-		       (int) BFD_RELOC_MIPS_CALL16, GP);
-	  macro_build ((char *) NULL, &icnt, (expressionS *) NULL, "nop", "");
-	  p = frag_var (rs_machine_dependent, 4, 0,
-			RELAX_ENCODE (0, 4, -8, 0, 0, 0),
-			offset_expr.X_add_symbol, (long) 0, (char *) NULL);
+	       lw $gp,cprestore($sp) */
+	  frag_grow (40);
+	  if (! mips_big_got)
+	    {
+	      macro_build ((char *) NULL, &icnt, &offset_expr,
+			   mips_isa < 3 ? "lw" : "ld",
+			   "t,o(b)", PIC_CALL_REG,
+			   (int) BFD_RELOC_MIPS_CALL16, GP);
+	      macro_build ((char *) NULL, &icnt, (expressionS *) NULL,
+			   "nop", "");
+	      p = frag_var (rs_machine_dependent, 4, 0,
+			    RELAX_ENCODE (0, 4, -8, 0, 0, 0),
+			    offset_expr.X_add_symbol, (long) 0, (char *) NULL);
+	    }
+	  else
+	    {
+	      int gpdel;
+
+	      if (reg_needs_delay (GP))
+		gpdel = 4;
+	      else
+		gpdel = 0;
+	      macro_build ((char *) NULL, &icnt, &offset_expr, "lui", "t,u",
+			   PIC_CALL_REG, (int) BFD_RELOC_MIPS_CALL_HI16);
+	      macro_build ((char *) NULL, &icnt, (expressionS *) NULL,
+			   mips_isa < 3 ? "addu" : "daddu",
+			   "d,v,t", PIC_CALL_REG, PIC_CALL_REG, GP);
+	      macro_build ((char *) NULL, &icnt, &offset_expr,
+			   mips_isa < 3 ? "lw" : "ld",
+			   "t,o(b)", PIC_CALL_REG,
+			   (int) BFD_RELOC_MIPS_CALL_LO16, PIC_CALL_REG);
+	      macro_build ((char *) NULL, &icnt, (expressionS *) NULL,
+			   "nop", "");
+	      p = frag_var (rs_machine_dependent, 12 + gpdel, 0,
+			    RELAX_ENCODE (16, 12 + gpdel, gpdel, 8 + gpdel,
+					  0, 0),
+			    offset_expr.X_add_symbol, (long) 0, (char *) NULL);
+	      if (gpdel > 0)
+		{
+		  macro_build (p, &icnt, (expressionS *) NULL, "nop", "");
+		  p += 4;
+		}
+	      macro_build (p, &icnt, &offset_expr,
+			   mips_isa < 3 ? "lw" : "ld",
+			   "t,o(b)", PIC_CALL_REG,
+			   (int) BFD_RELOC_MIPS_GOT16, GP);
+	      p += 4;
+	      macro_build (p, &icnt, (expressionS *) NULL, "nop", "");
+	      p += 4;
+	    }			   
 	  macro_build (p, &icnt, &offset_expr,
 		       mips_isa < 3 ? "addiu" : "daddiu",
 		       "t,r,j", PIC_CALL_REG, PIC_CALL_REG,
@@ -3136,7 +3613,7 @@ macro (ip)
 	     With a constant we always use the latter case.  */
 	  if (breg == 0)
 	    {
-	      if (offset_expr.X_add_number != 0
+	      if ((valueT) offset_expr.X_add_number >= MAX_GPREL_OFFSET
 		  || nopic_need_relax (offset_expr.X_add_symbol))
 		p = NULL;
 	      else
@@ -3160,7 +3637,7 @@ macro (ip)
 	    }
 	  else
 	    {
-	      if (offset_expr.X_add_number != 0
+	      if ((valueT) offset_expr.X_add_number >= MAX_GPREL_OFFSET
 		  || nopic_need_relax (offset_expr.X_add_symbol))
 		p = NULL;
 	      else
@@ -3188,7 +3665,7 @@ macro (ip)
 			   (int) BFD_RELOC_LO16, tempreg);
 	    }
 	}
-      else if (mips_pic == SVR4_PIC)
+      else if (mips_pic == SVR4_PIC && ! mips_big_got)
 	{
 	  /* If this is a reference to an external symbol, we want
 	       lw	$tempreg,<sym>($gp)	(BFD_RELOC_MIPS_GOT16)
@@ -3220,6 +3697,70 @@ macro (ip)
 			RELAX_ENCODE (0, 4, -8, 0, 0, 0),
 			offset_expr.X_add_symbol, (long) 0,
 			(char *) NULL);
+	  macro_build (p, &icnt, &offset_expr,
+		       mips_isa < 3 ? "addiu" : "daddiu",
+		       "t,r,j", tempreg, tempreg, (int) BFD_RELOC_LO16);
+	  if (breg != 0)
+	    macro_build ((char *) NULL, &icnt, (expressionS *) NULL,
+			 mips_isa < 3 ? "addu" : "daddu",
+			 "d,v,t", tempreg, tempreg, breg);
+	  macro_build ((char *) NULL, &icnt, &expr1, s, fmt, treg,
+		       (int) BFD_RELOC_LO16, tempreg);
+	}
+      else if (mips_pic == SVR4_PIC)
+	{
+	  int gpdel;
+
+	  /* If this is a reference to an external symbol, we want
+	       lui	$tempreg,<sym>		(BFD_RELOC_MIPS_GOT_HI16)
+	       addu	$tempreg,$tempreg,$gp
+	       lw	$tempreg,<sym>($tempreg) (BFD_RELOC_MIPS_GOT_LO16)
+	       <op>	$treg,0($tempreg)
+	     Otherwise we want
+	       lw	$tempreg,<sym>($gp)	(BFD_RELOC_MIPS_GOT16)
+	       nop
+	       addiu	$tempreg,$tempreg,<sym>	(BFD_RELOC_LO16)
+	       <op>	$treg,0($tempreg)
+	     If there is a base register, we add it to $tempreg before
+	     the <op>.  If there is a constant, we stick it in the
+	     <op> instruction.  We don't handle constants larger than
+	     16 bits, because we have no way to load the upper 16 bits
+	     (actually, we could handle them for the subset of cases
+	     in which we are not using $at).  */
+	  assert (offset_expr.X_op == O_symbol);
+	  expr1.X_add_number = offset_expr.X_add_number;
+	  offset_expr.X_add_number = 0;
+	  if (expr1.X_add_number < -0x8000
+	      || expr1.X_add_number >= 0x8000)
+	    as_bad ("PIC code offset overflow (max 16 signed bits)");
+	  if (reg_needs_delay (GP))
+	    gpdel = 4;
+	  else
+	    gpdel = 0;
+	  frag_grow (36);
+	  macro_build ((char *) NULL, &icnt, &offset_expr, "lui", "t,u",
+		       tempreg, (int) BFD_RELOC_MIPS_GOT_HI16);
+	  macro_build ((char *) NULL, &icnt, (expressionS *) NULL,
+		       mips_isa < 3 ? "addu" : "daddu",
+		       "d,v,t", tempreg, tempreg, GP);
+	  macro_build ((char *) NULL, &icnt, &offset_expr,
+		       mips_isa < 3 ? "lw" : "ld",
+		       "t,o(b)", tempreg, (int) BFD_RELOC_MIPS_GOT_LO16,
+		       tempreg);
+	  p = frag_var (rs_machine_dependent, 12 + gpdel, 0,
+			RELAX_ENCODE (12, 12 + gpdel, gpdel, 8 + gpdel, 0, 0),
+			offset_expr.X_add_symbol, (long) 0, (char *) NULL);
+	  if (gpdel > 0)
+	    {
+	      macro_build (p, &icnt, (expressionS *) NULL, "nop", "");
+	      p += 4;
+	    }
+	  macro_build (p, &icnt, &offset_expr,
+		       mips_isa < 3 ? "lw" : "ld",
+		       "t,o(b)", tempreg, (int) BFD_RELOC_MIPS_GOT16, GP);
+	  p += 4;
+	  macro_build (p, &icnt, (expressionS *) NULL, "nop", "");
+	  p += 4;
 	  macro_build (p, &icnt, &offset_expr,
 		       mips_isa < 3 ? "addiu" : "daddiu",
 		       "t,r,j", tempreg, tempreg, (int) BFD_RELOC_LO16);
@@ -3501,7 +4042,7 @@ macro (ip)
 	     If there is a base register, we add it to $at after the
 	     lui instruction.  If there is a constant, we always use
 	     the last case.  */
-	  if (offset_expr.X_add_number != 0
+	  if ((valueT) offset_expr.X_add_number >= MAX_GPREL_OFFSET
 	      || nopic_need_relax (offset_expr.X_add_symbol))
 	    {
 	      p = NULL;
@@ -3582,7 +4123,7 @@ macro (ip)
 		       coproc ? treg : treg + 1,
 		       (int) BFD_RELOC_LO16, AT);
 	}	  
-      else if (mips_pic == SVR4_PIC)
+      else if (mips_pic == SVR4_PIC && ! mips_big_got)
 	{
 	  int off;
 
@@ -3636,6 +4177,106 @@ macro (ip)
 			   RELAX_ENCODE (0, 0, -16 - off, -8, 1, 0),
 			   offset_expr.X_add_symbol, (long) 0,
 			   (char *) NULL);
+	}
+      else if (mips_pic == SVR4_PIC)
+	{
+	  int gpdel, off;
+
+	  /* If this is a reference to an external symbol, we want
+	       lui	$at,<sym>		(BFD_RELOC_MIPS_GOT_HI16)
+	       addu	$at,$at,$gp
+	       lw	$at,<sym>($at)		(BFD_RELOC_MIPS_GOT_LO16)
+	       nop
+	       <op>	$treg,0($at)
+	       <op>	$treg+1,4($at)
+	     Otherwise we want
+	       lw	$at,<sym>($gp)		(BFD_RELOC_MIPS_GOT16)
+	       nop
+	       <op>	$treg,<sym>($at)	(BFD_RELOC_LO16)
+	       <op>	$treg+1,<sym>+4($at)	(BFD_RELOC_LO16)
+	     If there is a base register we add it to $at before the
+	     lwc1 instructions.  If there is a constant we include it
+	     in the lwc1 instructions.  */
+	  used_at = 1;
+	  expr1.X_add_number = offset_expr.X_add_number;
+	  offset_expr.X_add_number = 0;
+	  if (expr1.X_add_number < -0x8000
+	      || expr1.X_add_number >= 0x8000 - 4)
+	    as_bad ("PIC code offset overflow (max 16 signed bits)");
+	  if (reg_needs_delay (GP))
+	    gpdel = 4;
+	  else
+	    gpdel = 0;
+	  if (breg == 0)
+	    off = 0;
+	  else
+	    off = 4;
+	  frag_grow (56);
+	  macro_build ((char *) NULL, &icnt, &offset_expr, "lui", "t,u",
+		       AT, (int) BFD_RELOC_MIPS_GOT_HI16);
+	  macro_build ((char *) NULL, &icnt, (expressionS *) NULL,
+		       mips_isa < 3 ? "addu" : "daddu",
+		       "d,v,t", AT, AT, GP);
+	  macro_build ((char *) NULL, &icnt, &offset_expr,
+		       mips_isa < 3 ? "lw" : "ld",
+		       "t,o(b)", AT, (int) BFD_RELOC_MIPS_GOT_LO16, AT);
+	  macro_build ((char *) NULL, &icnt, (expressionS *) NULL, "nop", "");
+	  if (breg != 0)
+	    macro_build ((char *) NULL, &icnt, (expressionS *) NULL,
+			 mips_isa < 3 ? "addu" : "daddu",
+			 "d,v,t", AT, breg, AT);
+	  macro_build ((char *) NULL, &icnt, &expr1, s, fmt,
+		       coproc ? treg + 1 : treg,
+		       (int) BFD_RELOC_LO16, AT);
+	  expr1.X_add_number += 4;
+
+	  /* Set mips_optimize to 2 to avoid inserting an undesired
+             nop.  */
+	  hold_mips_optimize = mips_optimize;
+	  mips_optimize = 2;
+	  macro_build ((char *) NULL, &icnt, &expr1, s, fmt,
+		       coproc ? treg : treg + 1,
+		       (int) BFD_RELOC_LO16, AT);
+	  mips_optimize = hold_mips_optimize;
+	  expr1.X_add_number -= 4;
+
+	  p = frag_var (rs_machine_dependent, 16 + gpdel + off, 0,
+			RELAX_ENCODE (24 + off, 16 + gpdel + off, gpdel,
+				      8 + gpdel + off, 1, 0),
+			offset_expr.X_add_symbol, (long) 0,
+			(char *) NULL);
+	  if (gpdel > 0)
+	    {
+	      macro_build (p, &icnt, (expressionS *) NULL, "nop", "");
+	      p += 4;
+	    }
+	  macro_build (p, &icnt, &offset_expr,
+		       mips_isa < 3 ? "lw" : "ld",
+		       "t,o(b)", AT, (int) BFD_RELOC_MIPS_GOT16, GP);
+	  p += 4;
+	  macro_build (p, &icnt, (expressionS *) NULL, "nop", "");
+	  p += 4;
+	  if (breg != 0)
+	    {
+	      macro_build (p, &icnt, (expressionS *) NULL,
+			   mips_isa < 3 ? "addu" : "daddu",
+			   "d,v,t", AT, breg, AT);
+	      p += 4;
+	    }
+	  macro_build (p, &icnt, &expr1, s, fmt,
+		       coproc ? treg + 1 : treg,
+		       (int) BFD_RELOC_LO16, AT);
+	  p += 4;
+	  expr1.X_add_number += 4;
+
+	  /* Set mips_optimize to 2 to avoid inserting an undesired
+             nop.  */
+	  hold_mips_optimize = mips_optimize;
+	  mips_optimize = 2;
+	  macro_build (p, &icnt, &expr1, s, fmt,
+		       coproc ? treg : treg + 1,
+		       (int) BFD_RELOC_LO16, AT);
+	  mips_optimize = hold_mips_optimize;
 	}
       else if (mips_pic == EMBEDDED_PIC)
 	{
@@ -3817,9 +4458,9 @@ macro2 (ip)
 
     case M_ROL_I:
       macro_build ((char *) NULL, &icnt, NULL, "sll", "d,w,<", AT, sreg,
-		   imm_expr.X_add_number & 0x1f);
+		   (int) (imm_expr.X_add_number & 0x1f));
       macro_build ((char *) NULL, &icnt, NULL, "srl", "d,w,<", dreg, sreg,
-		   (0 - imm_expr.X_add_number) & 0x1f);
+		   (int) ((0 - imm_expr.X_add_number) & 0x1f));
       macro_build ((char *) NULL, &icnt, NULL, "or", "d,v,t", dreg, dreg, AT);
       break;
 
@@ -3833,9 +4474,9 @@ macro2 (ip)
 
     case M_ROR_I:
       macro_build ((char *) NULL, &icnt, NULL, "srl", "d,w,<", AT, sreg,
-		   imm_expr.X_add_number & 0x1f);
+		   (int) (imm_expr.X_add_number & 0x1f));
       macro_build ((char *) NULL, &icnt, NULL, "sll", "d,w,<", dreg, sreg,
-		   (0 - imm_expr.X_add_number) & 0x1f);
+		   (int) ((0 - imm_expr.X_add_number) & 0x1f));
       macro_build ((char *) NULL, &icnt, NULL, "or", "d,v,t", dreg, dreg, AT);
       break;
 
@@ -4361,12 +5002,11 @@ macro2 (ip)
     as_warn ("Macro used $at after \".set noat\"");
 }
 
+/* This routine assembles an instruction into its binary format.  As a
+   side effect, it sets one of the global variables imm_reloc or
+   offset_reloc to the type of relocation to do if one of the operands
+   is an address expression.  */
 
-/*
-This routine assembles an instruction into its binary format.  As a side
-effect it sets one of the global variables imm_reloc or offset_reloc to the
-type of relocation to do if one of the operands is an address expression.
-*/
 static void
 mips_ip (str, ip)
      char *str;
@@ -4399,8 +5039,7 @@ mips_ip (str, ip)
     }
   if ((insn = (struct mips_opcode *) hash_find (op_hash, str)) == NULL)
     {
-      as_warn ("`%s' not in hash table.", str);
-      insn_error = "ERROR: Unrecognized opcode";
+      insn_error = "unrecognized opcode";
       return;
     }
   argsStart = s;
@@ -4435,7 +5074,8 @@ mips_ip (str, ip)
 	      ++insn;
 	      continue;
 	    }
-	  as_warn ("Instruction not supported on this processor");
+	  insn_error = "opcode not supported on this processor";
+	  return;
 	}
 
       ip->insn_mo = insn;
@@ -4897,6 +5537,12 @@ mips_ip (str, ip)
 			break;
 		      }
 		    new_seg = subseg_new (newname, (subsegT) 0);
+		    if (OUTPUT_FLAVOR == bfd_target_elf_flavour)
+		      bfd_set_section_flags (stdoutput, new_seg,
+					     (SEC_ALLOC
+					      | SEC_LOAD
+					      | SEC_READONLY
+					      | SEC_DATA));
 		    frag_align (*args == 'l' ? 2 : 3, 0);
 		    if (OUTPUT_FLAVOR == bfd_target_elf_flavour)
 		      record_alignment (new_seg, 4);
@@ -4935,7 +5581,10 @@ mips_ip (str, ip)
 			imm_expr.X_add_number =
 			  (imm_expr.X_add_number >> 16) & 0xffff;
 		      else if (c == 'h')
-			imm_reloc = BFD_RELOC_HI16_S;
+			{
+			  imm_reloc = BFD_RELOC_HI16_S;
+			  imm_unmatched_hi = true;
+			}
 		      else
 			imm_reloc = BFD_RELOC_HI16;
 		    }
@@ -5047,7 +5696,10 @@ mips_ip (str, ip)
 			imm_expr.X_add_number =
 			  (imm_expr.X_add_number >> 16) & 0xffff;
 		      else if (c == 'h')
-			imm_reloc = BFD_RELOC_HI16_S;
+			{
+			  imm_reloc = BFD_RELOC_HI16_S;
+			  imm_unmatched_hi = true;
+			}
 		      else
 			imm_reloc = BFD_RELOC_HI16;
 		    }
@@ -5093,7 +5745,7 @@ mips_ip (str, ip)
 	  s = argsStart;
 	  continue;
 	}
-      insn_error = "ERROR: Illegal operands";
+      insn_error = "illegal operands";
       return;
     }
 }
@@ -5321,10 +5973,16 @@ struct option md_longopts[] = {
 
 #define OPTION_CALL_SHARED (OPTION_MD_BASE + 7)
 #define OPTION_NON_SHARED (OPTION_MD_BASE + 8)
+#define OPTION_XGOT (OPTION_MD_BASE + 19)
+#define OPTION_32 (OPTION_MD_BASE + 20)
+#define OPTION_64 (OPTION_MD_BASE + 21)
 #ifdef OBJ_ELF
   {"KPIC", no_argument, NULL, OPTION_CALL_SHARED},
+  {"xgot", no_argument, NULL, OPTION_XGOT},
   {"call_shared", no_argument, NULL, OPTION_CALL_SHARED},
   {"non_shared", no_argument, NULL, OPTION_NON_SHARED},
+  {"32", no_argument, NULL, OPTION_32},
+  {"64", no_argument, NULL, OPTION_64},
 #endif
 
   {NULL, no_argument, NULL, 0}
@@ -5545,9 +6203,9 @@ md_parse_option (c, arg)
       g_switch_value = 0x7fffffff;
       break;
 
-  /* When generating ELF code, we permit -KPIC and -call_shared to
-     select SVR4_PIC, and -non_shared to select no PIC.  This is
-     intended to be compatible with Irix 5.  */
+      /* When generating ELF code, we permit -KPIC and -call_shared to
+	 select SVR4_PIC, and -non_shared to select no PIC.  This is
+	 intended to be compatible with Irix 5.  */
     case OPTION_CALL_SHARED:
       if (OUTPUT_FLAVOR != bfd_target_elf_flavour)
 	{
@@ -5572,6 +6230,13 @@ md_parse_option (c, arg)
       mips_pic = NO_PIC;
       break;
 
+      /* The -xgot option tells the assembler to use 32 offsets when
+         accessing the got in SVR4_PIC mode.  It is for Irix
+         compatibility.  */
+    case OPTION_XGOT:
+      mips_big_got = 1;
+      break;
+
     case 'G':
       if (! USE_GLOBAL_POINTER_OPT)
 	{
@@ -5586,6 +6251,28 @@ md_parse_option (c, arg)
       else
 	g_switch_value = atoi (arg);
       g_switch_seen = 1;
+      break;
+
+      /* The -32 and -64 options tell the assembler to output the 32
+         bit or the 64 bit MIPS ELF format.  */
+    case OPTION_32:
+      mips_64 = 0;
+      break;
+
+    case OPTION_64:
+      {
+	const char **list, **l;
+
+	list = bfd_target_list ();
+	for (l = list; *l != NULL; l++)
+	  if (strcmp (*l, "elf64-bigmips") == 0
+	      || strcmp (*l, "elf64-littlemips") == 0)
+	    break;
+	if (*l == NULL)
+	  as_fatal ("No compiled in support for 64 bit object file format");
+	free (list);
+	mips_64 = 1;
+      }
       break;
 
     default:
@@ -5613,6 +6300,7 @@ MIPS options:\n\
 -mips3, -mcpu=r4000	generate code for r4000\n\
 -mips4, -mcpu=r8000	generate code for r8000\n\
 -mcpu=vr4300		generate code for vr4300\n\
+-mcpu=vr4100		generate code for vr4100\n\
 -m4650			permit R4650 instructions\n\
 -no-m4650		do not permit R4650 instructions\n\
 -m4010			permit R4010 instructions\n\
@@ -5627,7 +6315,10 @@ MIPS options:\n\
 #ifdef OBJ_ELF
   fprintf(stream, "\
 -KPIC, -call_shared	generate SVR4 position independent code\n\
--non_shared		do not generate position independent code\n");
+-non_shared		do not generate position independent code\n\
+-xgot			assume a 32 bit GOT\n\
+-32			create 32 bit object file (default)\n\
+-64			create 64 bit object file\n");
 #endif
 }
 
@@ -5669,21 +6360,101 @@ cons_fix_new_mips (frag, where, nbytes, exp)
      expressionS *exp;
 {
   /* If we are assembling in 32 bit mode, turn an 8 byte reloc into a
-     4 byte reloc.  
-     FIXME: There is no way to select anything but 32 bit mode right
-     now.  */
-  if (nbytes == 8)
+     4 byte reloc.  */
+  if (nbytes == 8 && ! mips_64)
     {
       if (byte_order == BIG_ENDIAN)
 	where += 4;
       nbytes = 4;
     }
 
-  if (nbytes != 2 && nbytes != 4)
+  if (nbytes != 2 && nbytes != 4 && nbytes != 8)
     as_bad ("Unsupported reloc size %d", nbytes);
 
   fix_new_exp (frag_now, where, (int) nbytes, exp, 0,
-	       nbytes == 2 ? BFD_RELOC_16 : BFD_RELOC_32);
+	       (nbytes == 2
+		? BFD_RELOC_16
+		: (nbytes == 4 ? BFD_RELOC_32 : BFD_RELOC_64)));
+}
+
+/* Sort any unmatched HI16_S relocs so that they immediately precede
+   the corresponding LO reloc.  This is called before md_apply_fix and
+   tc_gen_reloc.  Unmatched HI16_S relocs can only be generated by
+   explicit use of the %hi modifier.  */
+
+void
+mips_frob_file ()
+{
+  struct mips_hi_fixup *l;
+
+  for (l = mips_hi_fixup_list; l != NULL; l = l->next)
+    {
+      segment_info_type *seginfo;
+      int pass;
+
+      assert (l->fixp->fx_r_type == BFD_RELOC_HI16_S);
+
+      /* Check quickly whether the next fixup happens to be a matching
+         %lo.  */
+      if (l->fixp->fx_next != NULL
+	  && l->fixp->fx_next->fx_r_type == BFD_RELOC_LO16
+	  && l->fixp->fx_addsy == l->fixp->fx_next->fx_addsy
+	  && l->fixp->fx_offset == l->fixp->fx_next->fx_offset)
+	continue;
+
+      /* Look through the fixups for this segment for a matching %lo.
+         When we find one, move the %hi just in front of it.  We do
+         this in two passes.  In the first pass, we try to find a
+         unique %lo.  In the second pass, we permit multiple %hi
+         relocs for a single %lo (this is a GNU extension).  */
+      seginfo = seg_info (l->seg);
+      for (pass = 0; pass < 2; pass++)
+	{
+	  fixS *f, *prev;
+
+	  prev = NULL;
+	  for (f = seginfo->fix_root; f != NULL; f = f->fx_next)
+	    {
+	      /* Check whether this is a %lo fixup which matches l->fixp.  */
+	      if (f->fx_r_type == BFD_RELOC_LO16
+		  && f->fx_addsy == l->fixp->fx_addsy
+		  && f->fx_offset == l->fixp->fx_offset
+		  && (pass == 1
+		      || prev == NULL
+		      || prev->fx_r_type != BFD_RELOC_HI16_S
+		      || prev->fx_addsy != f->fx_addsy
+		      || prev->fx_offset !=  f->fx_offset))
+		{
+		  fixS **pf;
+
+		  /* Move l->fixp before f.  */
+		  for (pf = &seginfo->fix_root;
+		       *pf != l->fixp;
+		       pf = &(*pf)->fx_next)
+		    assert (*pf != NULL);
+
+		  *pf = l->fixp->fx_next;
+
+		  l->fixp->fx_next = f;
+		  if (prev == NULL)
+		    seginfo->fix_root = l->fixp;
+		  else
+		    prev->fx_next = l->fixp;
+
+		  break;
+		}
+
+	      prev = f;
+	    }
+
+	  if (f != NULL)
+	    break;
+
+	  if (pass == 1)
+	    as_warn_where (l->fixp->fx_file, l->fixp->fx_line,
+			   "Unmatched %%hi reloc");
+	}
+    }
 }
 
 /* When generating embedded PIC code we need to use a special
@@ -5742,6 +6513,10 @@ md_apply_fix (fixP, valueP)
     case BFD_RELOC_MIPS_CALL16:
     case BFD_RELOC_MIPS_GOT16:
     case BFD_RELOC_MIPS_GPREL32:
+    case BFD_RELOC_MIPS_GOT_HI16:
+    case BFD_RELOC_MIPS_GOT_LO16:
+    case BFD_RELOC_MIPS_CALL_HI16:
+    case BFD_RELOC_MIPS_CALL_LO16:
       if (fixP->fx_pcrel)
 	as_bad_where (fixP->fx_file, fixP->fx_line,
 		      "Invalid PC relative reloc");
@@ -6170,13 +6945,6 @@ s_cons (log_size)
 }
 
 static void
-s_mipserr (x)
-     int x;
-{
-  as_fatal ("Encountered `.err', aborting assembly");
-}
-
-static void
 s_float_cons (type)
      int type;
 {
@@ -6210,12 +6978,18 @@ s_mips_globl (x)
   char *name;
   int c;
   symbolS *symbolP;
+  flagword flag;
 
   name = input_line_pointer;
   c = get_symbol_end ();
   symbolP = symbol_find_or_make (name);
   *input_line_pointer = c;
   SKIP_WHITESPACE ();
+
+  /* On Irix 5, every global symbol that is not explicitly labelled as
+     being a function is apparently labelled as being an object.  */
+  flag = BSF_OBJECT;
+
   if (! is_end_of_line[(unsigned char) *input_line_pointer])
     {
       char *secname;
@@ -6229,8 +7003,10 @@ s_mips_globl (x)
       *input_line_pointer = c;
 
       if (sec != NULL && (sec->flags & SEC_CODE) != 0)
-	symbolP->bsym->flags |= BSF_FUNCTION;
+	flag = BSF_FUNCTION;
     }
+
+  symbolP->bsym->flags |= flag;
 
   S_SET_EXTERNAL (symbolP);
   demand_empty_rest_of_line ();
@@ -6409,6 +7185,9 @@ s_cpload (ignore)
   ex.X_add_symbol = symbol_find_or_make ("_gp_disp");
   ex.X_op_symbol = NULL;
   ex.X_add_number = 0;
+
+  /* In ELF, this symbol is implicitly an STT_OBJECT symbol.  */
+  ex.X_add_symbol->bsym->flags |= BSF_OBJECT;
 
   macro_build_lui ((char *) NULL, &icnt, &ex, GP);
   macro_build ((char *) NULL, &icnt, &ex, "addiu", "t,r,j", GP, GP,
@@ -6752,18 +7531,29 @@ tc_gen_reloc (section, fixp)
   if (fixp->fx_frag->fr_opcode != NULL
       && (fixp->fx_r_type == BFD_RELOC_MIPS_GPREL
 	  || fixp->fx_r_type == BFD_RELOC_MIPS_GOT16
-	  || fixp->fx_r_type == BFD_RELOC_MIPS_CALL16))
+	  || fixp->fx_r_type == BFD_RELOC_MIPS_CALL16
+	  || fixp->fx_r_type == BFD_RELOC_MIPS_GOT_HI16
+	  || fixp->fx_r_type == BFD_RELOC_MIPS_GOT_LO16
+	  || fixp->fx_r_type == BFD_RELOC_MIPS_CALL_HI16
+	  || fixp->fx_r_type == BFD_RELOC_MIPS_CALL_LO16))
     {
       arelent *reloc2;
 
       /* If this is not the last reloc in this frag, then we have two
-	 GPREL relocs, both of which are being replaced.  Let the
-	 second one handle all of them.  */
+	 GPREL relocs, or a GOT_HI16/GOT_LO16 pair, or a
+	 CALL_HI16/CALL_LO16, both of which are being replaced.  Let
+	 the second one handle all of them.  */
       if (fixp->fx_next != NULL
 	  && fixp->fx_frag == fixp->fx_next->fx_frag)
 	{
-	  assert (fixp->fx_r_type == BFD_RELOC_MIPS_GPREL
-		  && fixp->fx_next->fx_r_type == BFD_RELOC_MIPS_GPREL);
+	  assert ((fixp->fx_r_type == BFD_RELOC_MIPS_GPREL
+		   && fixp->fx_next->fx_r_type == BFD_RELOC_MIPS_GPREL)
+		  || (fixp->fx_r_type == BFD_RELOC_MIPS_GOT_HI16
+		      && (fixp->fx_next->fx_r_type
+			  == BFD_RELOC_MIPS_GOT_LO16))
+		  || (fixp->fx_r_type == BFD_RELOC_MIPS_CALL_HI16
+		      && (fixp->fx_next->fx_r_type
+			  == BFD_RELOC_MIPS_CALL_LO16)));
 	  retval[0] = NULL;
 	  return retval;
 	}
@@ -6797,10 +7587,17 @@ tc_gen_reloc (section, fixp)
 	}
       else if (mips_pic == SVR4_PIC)
 	{
-	  if (fixp->fx_r_type != BFD_RELOC_MIPS_GOT16)
+	  switch (fixp->fx_r_type)
 	    {
-	      assert (fixp->fx_r_type == BFD_RELOC_MIPS_CALL16);
+	    default:
+	      abort ();
+	    case BFD_RELOC_MIPS_GOT16:
+	      break;
+	    case BFD_RELOC_MIPS_CALL16:
+	    case BFD_RELOC_MIPS_GOT_LO16:
+	    case BFD_RELOC_MIPS_CALL_LO16:
 	      fixp->fx_r_type = BFD_RELOC_MIPS_GOT16;
+	      break;
 	    }
 	}
       else
@@ -6896,19 +7693,38 @@ mips_local_label (name)
 void
 mips_elf_final_processing ()
 {
-  Elf32_RegInfo s;
+  /* Write out the register information.  */
+  if (! mips_64)
+    {
+      Elf32_RegInfo s;
 
-  /* Write out the .reginfo section.  */
-  s.ri_gprmask = mips_gprmask;
-  s.ri_cprmask[0] = mips_cprmask[0];
-  s.ri_cprmask[1] = mips_cprmask[1];
-  s.ri_cprmask[2] = mips_cprmask[2];
-  s.ri_cprmask[3] = mips_cprmask[3];
-  /* The gp_value field is set by the MIPS ELF backend.  */
+      s.ri_gprmask = mips_gprmask;
+      s.ri_cprmask[0] = mips_cprmask[0];
+      s.ri_cprmask[1] = mips_cprmask[1];
+      s.ri_cprmask[2] = mips_cprmask[2];
+      s.ri_cprmask[3] = mips_cprmask[3];
+      /* The gp_value field is set by the MIPS ELF backend.  */
 
-  bfd_mips_elf32_swap_reginfo_out (stdoutput, &s,
-				   ((Elf32_External_RegInfo *)
-				    mips_regmask_frag));
+      bfd_mips_elf32_swap_reginfo_out (stdoutput, &s,
+				       ((Elf32_External_RegInfo *)
+					mips_regmask_frag));
+    }
+  else
+    {
+      Elf64_Internal_RegInfo s;
+
+      s.ri_gprmask = mips_gprmask;
+      s.ri_pad = 0;
+      s.ri_cprmask[0] = mips_cprmask[0];
+      s.ri_cprmask[1] = mips_cprmask[1];
+      s.ri_cprmask[2] = mips_cprmask[2];
+      s.ri_cprmask[3] = mips_cprmask[3];
+      /* The gp_value field is set by the MIPS ELF backend.  */
+
+      bfd_mips_elf64_swap_reginfo_out (stdoutput, &s,
+				       ((Elf64_External_RegInfo *)
+					mips_regmask_frag));
+    }
 
   /* Set the MIPS ELF flag bits.  FIXME: There should probably be some
      sort of BFD interface for this.  */

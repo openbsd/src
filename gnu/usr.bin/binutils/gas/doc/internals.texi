@@ -745,6 +745,46 @@ examined to make this determination.
 
 @end deftypefun
 
+@node Hash tables
+@section Hash tables
+@cindex hash tables
+
+@deftypefun {struct hash_control *} hash_new (void)
+
+Creates the hash table control structure.
+
+@end deftypefun
+
+@deftypefun void hash_die (struct hash_control *)
+
+@end deftypefun
+
+@deftypefun PTR hash_delete (struct hash_control *, const char *)
+
+Deletes entry from the hash table, returns the value it had.
+
+@end deftypefun
+
+@deftypefun PTR hash_replace (struct hash_control *, const char *, PTR)
+
+Updates the value for an entry already in the table, returning the old value.
+If no entry was found, just returns NULL.
+
+@end deftypefun
+
+@deftypefun {const char *} hash_insert (struct hash_control *, const char *, PTR)
+
+Inserting a value already in the table is an error.
+Returns an error message or NULL.
+
+@end deftypefun
+
+@deftypefun {const char *} hash_jam (struct hash_control *, const char *, PTR)
+
+Inserts if the value isn't already present, updates it if it is.
+
+@end deftypefun
+
 @node Writing a new target
 @section Writing a new target
 

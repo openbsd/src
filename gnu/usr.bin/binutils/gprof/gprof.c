@@ -33,6 +33,7 @@
 #define VERSION "2.6"
 
 const char *whoami;
+const char *function_mapping_file;
 const char *a_out_name = A_OUTNAME;
 long hz = HZ_WRONG;
 
@@ -50,6 +51,7 @@ bool ignore_zeros = TRUE;
 bool line_granularity = FALSE;
 bool print_descriptions = TRUE;
 bool print_path = FALSE;
+bool ignore_non_functions = FALSE;
 File_Format file_format = FF_AUTO;
 
 bool first_output = TRUE;
@@ -67,7 +69,7 @@ bfd *abfd;
  */
 static char *default_excluded_list[] =
 {
-  "_gprof_mcount", "mcount", "_mcount", "__mcleanup",
+  "_gprof_mcount", "mcount", "_mcount", "__mcount", "__mcleanup",
   "<locore>", "<hicore>",
   0
 };
@@ -76,6 +78,7 @@ static struct option long_options[] =
 {
   {"line", no_argument, 0, 'l'},
   {"no-static", no_argument, 0, 'a'},
+  {"ignore-non-functions", no_argument, 0, 'D'},
 
     /* output styles: */
 
@@ -87,6 +90,8 @@ static struct option long_options[] =
   {"no-graph", optional_argument, 0, 'Q'},
   {"exec-counts", optional_argument, 0, 'C'},
   {"no-exec-counts", optional_argument, 0, 'Z'},
+  {"function-ordering", no_argument, 0, 'r'},
+  {"file-ordering", required_argument, 0, 'R'},
   {"file-info", no_argument, 0, 'i'},
   {"sum", no_argument, 0, 's'},
 
@@ -129,16 +134,17 @@ static void
 DEFUN (usage, (stream, status), FILE * stream AND int status)
 {
   fprintf (stream, "\
-Usage: %s [-[abchilLsTvwxyz]] [-[ACeEfFJnNOpPqQZ][name]] [-I dirs]\n\
+Usage: %s [-[abcDhilLsTvwxyz]] [-[ACeEfFJnNOpPqQZ][name]] [-I dirs]\n\
 	[-d[num]] [-k from/to] [-m min-count] [-t table-length]\n\
 	[--[no-]annotated-source[=name]] [--[no-]exec-counts[=name]]\n\
 	[--[no-]flat-profile[=name]] [--[no-]graph[=name]]\n\
 	[--[no-]time=name] [--all-lines] [--brief] [--debug[=level]]\n\
+	[--function-ordering] [--file-ordering]\n\
 	[--directory-path=dirs] [--display-unused-functions]\n\
 	[--file-format=name] [--file-info] [--help] [--line] [--min-count=n]\n\
 	[--no-static] [--print-path] [--separate-files]\n\
 	[--static-call-graph] [--sum] [--table-length=len] [--traditional]\n\
-	[--version] [--width=n]\n\
+	[--version] [--width=n] [--ignore-non-functions]\n\
 	[image-file] [profile-file...]\n",
 	   whoami);
   done (status);
@@ -156,7 +162,7 @@ DEFUN (main, (argc, argv), int argc AND char **argv)
   xmalloc_set_program_name (whoami);
 
   while ((ch = getopt_long (argc, argv,
-	"aA::bBcCd::e:E:f:F:hiI:J::k:lLm:n::N::O:p::P::q::Q::st:Tvw:xyzZ::",
+	"aA::bBcCdD::e:E:f:F:hiI:J::k:lLm:n::N::O:p::P::q::Q::st:Tvw:xyzZ::",
 			    long_options, 0))
 	 != EOF)
     {
@@ -205,6 +211,9 @@ DEFUN (main, (argc, argv), int argc AND char **argv)
 #ifndef DEBUG
 	  printf ("%s: debugging not supported; -d ignored\n", whoami);
 #endif	/* DEBUG */
+	  break;
+	case 'D':
+	  ignore_non_functions = TRUE;
 	  break;
 	case 'E':
 	  sym_id_add (optarg, EXCL_TIME);
@@ -317,6 +326,15 @@ DEFUN (main, (argc, argv), int argc AND char **argv)
 	  output_style |= STYLE_CALL_GRAPH;
 	  user_specified |= STYLE_CALL_GRAPH;
 	  break;
+	case 'r':
+	  output_style |= STYLE_FUNCTION_ORDER;
+	  user_specified |= STYLE_FUNCTION_ORDER;
+	  break;
+	case 'R':
+	  output_style |= STYLE_FILE_ORDER;
+	  user_specified |= STYLE_FILE_ORDER;
+	  function_mapping_file = optarg;
+	  break;
 	case 'Q':
 	  if (optarg)
 	    {
@@ -386,6 +404,16 @@ DEFUN (main, (argc, argv), int argc AND char **argv)
 	}
     }
 
+  /* Don't allow both ordering options, they modify the arc data in-place.  */
+  if ((user_specified & STYLE_FUNCTION_ORDER)
+      && (user_specified & STYLE_FILE_ORDER))
+    {
+      fprintf (stderr,"\
+%s: Only one of --function-ordering and --file-ordering may be specified.\n",
+	       whoami);
+      done (1);
+    }
+
   /* append value of GPROF_PATH to source search list if set: */
   str = (char *) getenv ("GPROF_PATH");
   if (str)
@@ -409,7 +437,7 @@ DEFUN (main, (argc, argv), int argc AND char **argv)
     {
       sym_id_add (*sp, EXCL_TIME);
       sym_id_add (*sp, EXCL_GRAPH);
-#ifdef __osf__
+#ifdef __alpha__
       sym_id_add (*sp, EXCL_FLAT);
 #endif
     }
@@ -575,6 +603,14 @@ DEFUN (main, (argc, argv), int argc AND char **argv)
   if (output_style & STYLE_ANNOTATED_SOURCE)
     {
       print_annotated_source ();
+    }
+  if (output_style & STYLE_FUNCTION_ORDER)
+    {
+      cg_print_function_ordering ();
+    }
+  if (output_style & STYLE_FILE_ORDER)
+    {
+      cg_print_file_ordering ();
     }
   return 0;
 }

@@ -27,11 +27,12 @@ extern FLONUM_TYPE generic_floating_point_number;	/* Flonums returned here. */
 
 extern const char EXP_CHARS[];
 /* Precision in LittleNums. */
-#define MAX_PRECISION (6)
+/* Don't count the gap in the m68k extended precision format.  */
+#define MAX_PRECISION (5)
 #define F_PRECISION (2)
 #define D_PRECISION (4)
-#define X_PRECISION (6)
-#define P_PRECISION (6)
+#define X_PRECISION (5)
+#define P_PRECISION (5)
 
 /* Length in LittleNums of guard bits. */
 #define GUARD (2)
@@ -258,6 +259,15 @@ gen_to_words (words, precision, exponent_bits)
   int exponent_skippage;
   LITTLENUM_TYPE word1;
   LITTLENUM_TYPE *lp;
+  LITTLENUM_TYPE *words_end;
+
+  words_end = words + precision;
+#ifdef TC_M68K
+  if (precision == X_PRECISION)
+    /* On the m68k the extended precision format has a gap of 16 bits
+       between the exponent and the mantissa.  */
+    words_end++;
+#endif
 
   if (generic_floating_point_number.low > generic_floating_point_number.leader)
     {
@@ -266,7 +276,8 @@ gen_to_words (words, precision, exponent_bits)
 	words[0] = 0x0000;
       else
 	words[0] = 0x8000;
-      memset (&words[1], '\0', sizeof (LITTLENUM_TYPE) * (precision - 1));
+      memset (&words[1], '\0',
+	      (words_end - words - 1) * sizeof (LITTLENUM_TYPE));
       return (return_value);
     }
 
@@ -277,6 +288,27 @@ gen_to_words (words, precision, exponent_bits)
 	{
 	  words[0] = 0x7fff;
 	  words[1] = 0xffff;
+	}
+      else if (precision == X_PRECISION)
+	{
+#ifdef TC_M68K
+	  words[0] = 0x7fff;
+	  words[1] = 0;
+	  words[2] = 0xffff;
+	  words[3] = 0xffff;
+	  words[4] = 0xffff;
+	  words[5] = 0xffff;
+#else /* ! TC_M68K */
+#ifdef TC_I386
+	  words[0] = 0xffff;
+	  words[1] = 0xc000;
+	  words[2] = 0;
+	  words[3] = 0;
+	  words[4] = 0;
+#else /* ! TC_I386 */
+	  abort ();
+#endif /* ! TC_I386 */
+#endif /* ! TC_M68K */
 	}
       else
 	{
@@ -295,6 +327,27 @@ gen_to_words (words, precision, exponent_bits)
 	  words[0] = 0x7f80;
 	  words[1] = 0;
 	}
+      else if (precision == X_PRECISION)
+	{
+#ifdef TC_M68K
+	  words[0] = 0x7fff;
+	  words[1] = 0;
+	  words[2] = 0;
+	  words[3] = 0;
+	  words[4] = 0;
+	  words[5] = 0;
+#else /* ! TC_M68K */
+#ifdef TC_I386
+	  words[0] = 0x7fff;
+	  words[1] = 0x8000;
+	  words[2] = 0;
+	  words[3] = 0;
+	  words[4] = 0;
+#else /* ! TC_I386 */
+	  abort ();
+#endif /* ! TC_I386 */
+#endif /* ! TC_M68K */
+	}
       else
 	{
 	  words[0] = 0x7ff0;
@@ -311,6 +364,27 @@ gen_to_words (words, precision, exponent_bits)
 	{
 	  words[0] = 0xff80;
 	  words[1] = 0x0;
+	}
+      else if (precision == X_PRECISION)
+	{
+#ifdef TC_M68K
+	  words[0] = 0xffff;
+	  words[1] = 0;
+	  words[2] = 0;
+	  words[3] = 0;
+	  words[4] = 0;
+	  words[5] = 0;
+#else /* ! TC_M68K */
+#ifdef TC_I386
+	  words[0] = 0xffff;
+	  words[1] = 0x8000;
+	  words[2] = 0;
+	  words[3] = 0;
+	  words[4] = 0;
+#else /* ! TC_I386 */
+	  abort ();
+#endif /* ! TC_I386 */
+#endif /* ! TC_M68K */
 	}
       else
 	{
@@ -359,7 +433,7 @@ gen_to_words (words, precision, exponent_bits)
 	   : (1 << (LITTLENUM_NUMBER_OF_BITS - 1)));
 
   /* Assume 2's complement integers. */
-  if (exponent_4 < 1 && exponent_4 >= -62)
+  if (exponent_4 <= 0)
     {
       int prec_bits;
       int num_bits;
@@ -367,8 +441,16 @@ gen_to_words (words, precision, exponent_bits)
       unget_bits (1);
       num_bits = -exponent_4;
       prec_bits = LITTLENUM_NUMBER_OF_BITS * precision - (exponent_bits + 1 + num_bits);
+#ifdef TC_I386
       if (precision == X_PRECISION && exponent_bits == 15)
-	prec_bits -= LITTLENUM_NUMBER_OF_BITS + 1;
+	{
+	  /* On the i386 a denormalized extended precision float is
+	     shifted down by one, effectively decreasing the exponent
+	     bias by one.  */
+	  prec_bits -= 1;
+	  num_bits += 1;
+	}
+#endif
 
       if (num_bits >= LITTLENUM_NUMBER_OF_BITS - exponent_bits)
 	{
@@ -381,12 +463,10 @@ gen_to_words (words, precision, exponent_bits)
 	      make_invalid_floating_point_number (words);
 	      return (return_value);
 	    }
+#ifdef TC_M68K
 	  if (precision == X_PRECISION && exponent_bits == 15)
-	    {
-	      *lp++ = 0;
-	      *lp++ = 0;
-	      num_bits -= LITTLENUM_NUMBER_OF_BITS - 1;
-	    }
+	    *lp++ = 0;
+#endif
 	  while (num_bits >= LITTLENUM_NUMBER_OF_BITS)
 	    {
 	      num_bits -= LITTLENUM_NUMBER_OF_BITS;
@@ -400,17 +480,10 @@ gen_to_words (words, precision, exponent_bits)
 	  if (precision == X_PRECISION && exponent_bits == 15)
 	    {
 	      *lp++ = word1;
+#ifdef TC_M68K
 	      *lp++ = 0;
-	      if (num_bits == LITTLENUM_NUMBER_OF_BITS)
-		{
-		  *lp++ = 0;
-		  *lp++ = next_bits (LITTLENUM_NUMBER_OF_BITS - 1);
-		}
-	      else if (num_bits == LITTLENUM_NUMBER_OF_BITS - 1)
-		*lp++ = 0;
-	      else
-		*lp++ = next_bits (LITTLENUM_NUMBER_OF_BITS - 1 - num_bits);
-	      num_bits = 0;
+#endif
+	      *lp++ = next_bits (LITTLENUM_NUMBER_OF_BITS - num_bits);
 	    }
 	  else
 	    {
@@ -418,7 +491,7 @@ gen_to_words (words, precision, exponent_bits)
 	      *lp++ = word1;
 	    }
 	}
-      while (lp < words + precision)
+      while (lp < words_end)
 	*lp++ = next_bits (LITTLENUM_NUMBER_OF_BITS);
 
       /* Round the mantissa up, but don't change the number */
@@ -452,12 +525,12 @@ gen_to_words (words, precision, exponent_bits)
 		}
 	    }
 	  else if ((*lp & mask[prec_bits]) != mask[prec_bits])
-	    lp++;
+	    *lp += 1;
 	}
 
       return return_value;
     }
-  else if (exponent_4 & ~mask[exponent_bits])
+  else if (exponent_4 >= mask[exponent_bits])
     {
       /*
        * Exponent overflow. Lose immediately.
@@ -479,16 +552,19 @@ gen_to_words (words, precision, exponent_bits)
 
   *lp++ = word1;
 
-  /* X_PRECISION is special: it has 16 bits of zero in the middle,
-     followed by a 1 bit. */
+  /* X_PRECISION is special: on the 68k, it has 16 bits of zero in the
+     middle.  Either way, it is then followed by a 1 bit. */
   if (exponent_bits == 15 && precision == X_PRECISION)
     {
+#ifdef TC_M68K
       *lp++ = 0;
-      *lp++ = 1 << (LITTLENUM_NUMBER_OF_BITS) | next_bits (LITTLENUM_NUMBER_OF_BITS - 1);
+#endif
+      *lp++ = (1 << (LITTLENUM_NUMBER_OF_BITS - 1)
+	       | next_bits (LITTLENUM_NUMBER_OF_BITS - 1));
     }
 
   /* The rest of the words are just mantissa bits. */
-  while (lp < words + precision)
+  while (lp < words_end)
     *lp++ = next_bits (LITTLENUM_NUMBER_OF_BITS);
 
   if (next_bits (1))
@@ -516,6 +592,23 @@ gen_to_words (words, precision, exponent_bits)
 	  *lp = carry;
 	  carry >>= LITTLENUM_NUMBER_OF_BITS;
 	}
+      if (precision == X_PRECISION && exponent_bits == 15)
+	{
+	  /* Extended precision numbers have an explicit integer bit
+	     that we may have to restore.  */
+	  if (lp == words)
+	    {
+#ifdef TC_M68K
+	      /* On the m68k there is a gap of 16 bits.  We must
+		 explicitly propagate the carry into the exponent. */
+	      words[0] += words[1];
+	      words[1] = 0;
+	      lp++;
+#endif
+	      /* Put back the integer bit.  */ 
+	      lp[1] |= 1 << (LITTLENUM_NUMBER_OF_BITS - 1);
+	    }
+ 	}
       if ((word1 ^ *words) & (1 << (LITTLENUM_NUMBER_OF_BITS - 1)))
 	{
 	  /* We leave return_value alone: admit we read the

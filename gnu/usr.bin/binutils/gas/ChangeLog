@@ -1,10 +1,1343 @@
+Wed Jun  5 17:09:26 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* read.c (next_char_of_string): Warn if a newline is seen in the
+	middle of a string.  Call bump_line_counters when appropriate.
+
+Wed Jun  5 17:08:36 1996  Richard Henderson  <rth@tamu.edu>
+
+	* symbols.c (colon): Use LOCAL_LABEL.
+
+Tue Jun  4 10:55:16 1996  Tom Tromey  <tromey@csk3.cygnus.com>
+
+	* Makefile.in (install): Don't check to see if tooldir exists.
+	Make $(tooldir) and $(tooldir)/bin.
+
+Tue Jun  4 10:14:53 1996  Michael Meissner  <meissner@tiktok.cygnus.com>
+
+	* config/ppc-sol.mt (TDEFINES): Don't turn on -mregnames by
+	default.
+
+Mon Jun  3 11:34:41 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* config/tc-mips.c (mips_ip): Don't call as_warn if we are setting
+	insn_error.  Don't put the string "ERROR" in insn_error.  Set
+	insn_error rather than calling as_warn for an unsupported opcode.
+
+Sat Jun  1 21:51:55 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* config/tc-mips.c (md_parse_option): Check for a 64 bit format
+	before permitting -64.
+	* output-file.c (output_file_create): Remove duplicate
+	bfd_perror.
+
+Fri May 31 01:08:06 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* config/tc-mips.c (md_begin): If -64, create a .MIPS.options
+	section rather than a .reginfo section.
+	(mips_elf_final_processing): If -64, write out 64 bit RegInfo
+	information.
+
+	* config/tc-mips.c (load_register): If mips_isa < 3, permit a 32
+	bit value with the high bit set.
+
+Thu May 30 19:00:19 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* read.c (s_lcomm): Set section flags for .sbss section.
+
+	* config/tc-mips.c (mips_64): New static variable.
+	(mips_target_format): If mips_64, return elf64 targets rather than
+	elf32 ones.
+	(md_longopts): Add "32" and "64".
+	(md_parse_option): Handle -32 and -64.
+	(md_show_usage): Mention -32 and -64.
+	(cons_fix_new_mips): If mips_64, don't convert an 8 byte reloc to
+	a 4 byte one.
+
+Thu May 30 10:36:19 1996  Michael Meissner  <meissner@tiktok.cygnus.com>
+
+	* config/tc-ppc.c (comment_chars): Make '!' a comment character
+	for Solaris compatibility.
+
+	* stabs.c (s_stab_generic): Under PowerPC Solaris, convert a
+	.stabd with 4 arguments into a .stabn.
+
+Wed May 29 16:43:16 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* config/tc-mips.c (macro): When passing X_add_number to
+	macro_build, cast it to int first.
+
+Tue May 28 13:29:39 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* config/tc-z8k.c (md_apply_fix): Handle fx_r_type of 0, as
+	created by emit_expr.
+
+	* symbols.c (symbol_create): If bfd_make_empty_symbol fails, call
+	as_perror rather than assert.
+
+Fri May 24 18:24:11 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* config/tc-mips.c (mips_ip): Mark sections created to hold
+	floating point information as read only.
+
+Fri May 24 12:07:54 1996  David Edelsohn  <edelsohn@mhpcc.edu>
+
+	* config/tc-ppc.c (ppc_set_cpu): Change defaults to match AIX.
+
+Thu May 23 17:34:24 1996  Michael Meissner  <meissner@tiktok.cygnus.com>
+
+	* read.c (potable): Add .skip as a synonym for .space.
+
+	* stabs.c (s_stab_generic): For PowerPC ELF, allow .stabd to take
+	4 arguments, providing the 4th argument is 0, to allow
+	compatibility with the Solaris assembler.
+
+Thu May 16 15:51:48 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* config/tc-sh.h (struct sh_segment_info_type): Define.
+	(TC_SEGMENT_INFO_TYPE): Define.
+	(sh_frob_label): Declare.
+	(tc_frob_label): Define.
+	(sh_flush_pending_output): Declare.
+	(md_flush_pending_output): Define.
+	* config/tc-sh.c (md_assemble): If relaxing, emit a R_SH_CODE
+ 	reloc before the instruction if necessary.
+	(sh_frob_label): New function.
+	(sh_flush_pending_output): New function.
+	(sh_coff_frob_file): Ignore ALIGN, CODE, DATA, and LABEL relocs
+	when looking for the reloc for the target of .uses.
+	(md_convert_frag): Fix printf format (%0xlx to 0x%lx).
+	(sh_force_relocation): Force CODE, DATA, and LABEL relocs to be
+	emitted.
+	(md_apply_fix): Ignore CODE, DATA, and LABEL relocs.
+	(sh_coff_reloc_mangle): Force CODE, DATA, and LABEL relocs to use
+	the absolute symbol.
+
+	* subsegs.h (segment_info_type): Add tc_segment_info_data field if
+	TC_SEGMENT_INFO_TYPE is defined.
+
+Wed May 15 12:23:53 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* config/tc-i386.c (md_assemble): Make sure the opcode suffix
+	matches the register size.
+
+Wed May 15 08:33:37 1996  Jeffrey A Law  (law@cygnus.com)
+
+	* config/obj-coff.c (count_entries_in_chain): Ignore Fixups with
+	fx_done set. 
+	(do_relocs_for): Likewise.
+	(fixup_segment): Don't just quit if linkrelax is set.  Try to
+	apply non pc-relative sym1-sym2 fixups, even if linkrelax is
+	nonzero.
+
+Fri May 10 14:16:59 1996  Michael Meissner  <meissner@tiktok.cygnus.com>
+
+	* config/tc-ppc.c (ppc_elf_validate_fix): Allow GOT and section
+	relative relocations with -mrelocatable.  Also allow unfixed
+	relocs in .ex_shared.
+
+Tue May  7 11:24:10 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* config/obj-coff.c (yank_symbols): Check that FNAME_OFFSET is
+	non-zero before assuming this is a long file name.
+	(w_strings): Likewise.
+	(c_dot_file_symbol): Set FNAME_OFFSET to 1 for a long file name.
+
+	* config/obj-coff.c (w_strings): Move declaration of i inside
+	#ifdef block which uses it.
+
+Tue May  7 00:49:58 1996  Jeffrey A Law  (law@cygnus.com)
+
+	* config/tc-h8300.c (do_a_fix_imm): Rename last argument to
+	"relaxmode".  Output relocs which identify various relaxing
+	possibilities for mov.[bwl] instructions.
+	(build_bytes): Pass in a relaxing mode to do_a_fix_imm.
+
+Mon May  6 15:26:28 1996  Doug Evans  <dje@canuck.cygnus.com>
+
+	* config/tc-arm.h (TC_HANDLES_FX_DONE): Define.
+	(MD_APPLY_FIX3): Define.
+	* config/tc-arm.c (my_get_expression): Only watch for bad segments
+	if OBJ_AOUT.
+	(md_apply_fix3): Renamed from md_apply_fix.
+	If pcrel reloc and symbol is in different section, undo effects
+	of md_pcrel_from.
+
+Sat May  4 12:49:35 1996  Jeffrey A Law  (law@cygnus.com)
+
+	* config/tc-hppa.c (hppa_fix_adjustable): Don't adjust
+	any reloc with an LR% or RR% field selector for SOM.
+
+Sat May  4 11:26:19 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* Makefile.in: Add subsegs.h to appropriate TARG_CPU_DEP_*
+ 	variables.
+
+Fri May  3 17:58:31 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* config/obj-coff.c (coff_frob_symbol): Don't merge a symbol with
+	SF_GET_STATICS set.
+	(yank_symbols): Likewise.
+
+Wed May  1 13:38:17 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* subsegs.h (segment_info_type): If MANY_SEGMENTS and not
+	BFD_ASSEMBLER, add name field.
+	* config/obj-coff.c: Include "libiberty.h".
+	(coff_header_append): Handle long section names.
+	(crawl_symbols): Just use the name field for the symbol name,
+	without worrying about null byte termination.
+	(w_strings): Handle long section names.
+	(write_object_file): Likewise.  Also, use the name field, rather
+	than scnhdr.s_name.
+	(obj_coff_add_segment): Permit long section names.
+	(obj_coff_init_stab_section): Use the name field, rather than
+	scnhdr.s_name.
+	(adjust_stab_section): Likewise.
+	* config/te-pe.h (COFF_LONG_SECTION_NAMES): Define.
+
+	* config/tc-i960.c (brtab_emit): Don't set fx_im_disp field.
+	(mem_fmt): Likewise.
+	(md_apply_fix): Don't check fx_im_disp field.
+
+Thu Apr 25 11:39:51 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* configure.in: Add * after sparc*-*-vxworks.
+	* configure: Rebuild.
+
+	* app.c (do_scrub_begin): If tc_comment_chars is not defined,
+	define it to comment_chars.  Use tc_comment_chars rather than
+	comment_chars.
+	(do_scrub_chars): Use tc_comment_chars rather than comment_chars.
+	* config/tc-m68k.h (tc_comment_chars): Define.
+	(m68k_comment_chars): Declare.
+	* config/tc-m68k.c (m68k_comment_chars): Rename from
+	comment_chars.  Change into a pointer rather than an array.
+	(md_longopts): Add "bitwise-or".
+	(md_parse_option): Handle OPTION_BITWISE_OR.
+	(md_show_usage): Mention --bitwise-or.
+	* doc/c-m68k.texi: Document --bitwise-or.
+
+Wed Apr 24 11:28:38 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* config/tc-m68k.c (m68k_ip): Prevent attempts to use long offsets
+ 	in 68000 mode.
+
+	* config/obj-coff.c (obj_coff_section): BFD_ASSEMBLER version:
+	call demand_empty_rest_of_line.  Non BFD_ASSEMBLER version:
+	correct handling of input line pointer, and call
+	demand_empty_rest_of_line.
+
+Mon Apr 22 18:02:37 1996  Doug Evans  <dje@blues.cygnus.com>
+
+	* config/tc-sparc.c (in_bitfield_range): New static function.
+	(sparc_ip): New cases X,Y.  Use SPARC_OPCODE_ARCH_V9_P.
+	(md_apply_fix, cases BFD_RELOC_32_PCREL_S2,
+	BFD_RELOC_SPARC_{WDISP16,WDISP19}): Fix undefined code.
+	(md_apply_fix): New cases BFD_RELOC_SPARC_[56].
+	(tc_gen_reloc): New cases BFD_RELOC_SPARC_[56].
+
+Thu Apr 18 18:58:33 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* config/obj-coff.c: BFD_ASSEMBLER:
+ 	(coff_last_bf): New static variable.
+	(coff_frob_symbol): Set endndx of a .bf symbol.
+	Non BFD_ASSEMBLER:
+	(obj_coff_endef): Call SF_SET_PROCESS on a .bf symbol.
+	(last_bfP): New static variable.
+	(yank_symbols): Set endndx of a .bf symbol.
+
+Thu Apr 18 11:53:58 1996  Michael Meissner  <meissner@tiktok.cygnus.com>
+
+	* config/tc-ppc.c (md_parse_option): Add support for Solaris's -le
+	and -s options.  Add -be for good measure.
+
+Wed Apr 17 12:31:01 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* read.c (s_space): Support non-constant fill value.  Handle fill
+	value correctly for a size other than 1.
+
+Tue Apr 16 15:17:40 1996  Doug Evans  <dje@canuck.cygnus.com>
+
+	* config/tc-arm.c (my_get_float_expression): Update call to
+	gen_to_words, X_PRECISION changed from 6 to 5.
+
+Tue Apr 16 10:25:42 1996  Michael Meissner  <meissner@tiktok.cygnus.com>
+
+	* config/tc-ppc.c (register_name,reg_name_search): Move register
+	name lookup from PE specific code to all targets.  Add support for
+	-mregnames/-mno-regnames to control whether register names are
+	expanded or not.
+	(md_assemble): Call register_name for all platforms.
+	(md_parse_option): Add support for -mregnames/-mno-regnames.
+
+	* configure.in (powerpcle*-*-solaris): Add support.
+	(powerpc*-*-linux): Ditto.
+	* configure: Regenerate.
+
+	* config/ppc-sol.mt: New config file for PowerPC Solaris.
+
+Mon Apr 15 12:26:33 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* config/tc-mips.c (mips_frob_file): Permit multiple %hi relocs to
+	be associated with a single %lo reloc.
+
+	* config/tc-mips.c (load_address): Cast X_add_number to valueT
+	before comparing against MAX_GPREL_OFFSET, so that negative
+	numbers are handled correctly.
+	(macro): Likewise.
+
+Thu Apr 11 12:39:02 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* config/tc-sparc.c (last_insn): New static variable.
+	(md_assemble): Warn about putting floating point branches in a
+	delay slot.  If architecture is less than v9, insert NOP
+	instructions between floating point instructions and floating
+	point branches.  (The SunOS assembler does both these operations.)
+	Save the last instruction opcode.
+	(sparc_ip): Add pinsn parameter.  Change caller.
+
+	* config/tc-m68k.c (md_estimate_size_before_relax): Correct check
+	for byte jump to next instruction to skip empty frags.
+
+Wed Apr 10 16:48:12 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* config/tc-alpha.c (alpha_ip): If we are going to call emit_add64
+	for addq with a 16 bit signed value, just emit a lda instruction
+	instead.
+
+Wed Apr 10 14:34:49 1996  Jeffrey A Law  (law@cygnus.com)
+
+	* config/tc-h8300.c (do_a_fix_imm): Don't cut off high bits
+	of a 32bit operand.
+
+Mon Apr  8 14:42:53 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* configure.in: Permit --enable-shared to specify a list of
+	directories.
+	* configure: Rebuild.
+
+Fri Apr  5 17:01:35 1996  Jeffrey A Law  (law@cygnus.com)
+
+	* config/tc-h8300.c (get_specific): Remove some #if 0 code.
+	(build_bytes): Remove all ABSMOV related code; it's unnecessary.
+
+Fri Apr  5 15:13:10 1996  Andreas Schwab  <schwab@issan.informatik.uni-dortmund.de>
+
+	* config/atof-ieee.c: Fix handling of denormalized extended
+	precision numbers and overflow/underflow detection.
+	(MAX_PRECISION, X_PRECISION, P_PRECISION): Changed from 6 to 5, to
+	not include the 16 bit gap in the m68k extended precision format.
+
+Fri Apr  5 14:29:23 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* configure.in: Add i386-*-freebsdelf* target; from John Polstra
+	<jdp@polstra.com>.
+	* configure: Rebuild.
+
+Fri Apr  5 18:39:28 1996  James G. Smith  <jsmith@cygnus.co.uk>
+
+	* config/tc-mips.c: Allow non-zero offsets from .sdata symbols to
+ 	be accessed using the $gp register.
+	* config/tc-mips.h (MAX_GPREL_OFFSET): Added.
+
+Wed Apr  3 10:56:14 1996  Doug Evans  <dje@canuck.cygnus.com>
+
+	* config/tc-sparc.c (sparc_md_end): Set bfd machine number to
+	bfd_mach_sparc_sparclet if current_architecture is sparclet.
+
+Mon Apr  1 16:55:44 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* read.c (get_line_sb): Bump line counters based on
+	input_line_pointer[-1], not *input_line_pointer.  Don't bother to
+	call LISTING_NEWLINE.
+	(s_macro): Don't call demand_empty_rest_of_line.
+	* app.c (do_scrub_chars): When handling C style comments, unget
+	ch2 rather than ch.
+
+Fri Mar 29 16:15:06 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* read.h (enum linkonce_type): Define.
+	(s_linkonce): Declare.
+	* read.c (potable): Add "linkonce".
+	(s_linkonce): New function.
+	* subsegs.h (segment_info_type): Add linkonce field to
+	MANY_SEGMENTS && ! BFD_ASSEMBLER section.
+	* config/obj-coff.h (obj_handle_link_once): Define if TE_PE.
+	(obj_coff_pe_handle_link_once): Declare if TE_PE.
+	* config/obj-coff.c: If TE_PE and not BFD_ASSEMBLER, #include
+	"coff/pe.h".
+	(obj_coff_pe_handle_link_once): New function, defined if TE_PE.
+	(c_section_symbol): If TE_PE, set the x_comdat field in the aux
+	entry based on the linkonce field in segment_info.
+	* doc/as.texinfo: Document .linkonce.
+
+Fri Mar 29 11:31:27 1996  J.T. Conklin  (jtc@lisa.cygnus.com)
+
+	* doc/as.1: Changed to be recognized by catman -w on Solaris.
+
+Thu Mar 28 15:27:47 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* stabs.c (s_stab_generic): Call the listing functions before
+	doing the rest of the processing, which may involve freeing the
+	string.  Pass string, not string + stroff, to OBJ_PROCESS_STAB in
+	SEPARATE_STAB_SECTIONS case.
+
+	* config/tc-hppa.c: Remove nested comment.
+	(tc_gen_reloc): Move label done inside the ifdef in which it is
+	used.
+	(md_apply_fix): Pass pointers to correct types to libhppa.h
+	functions.  Always return a value.
+
+	* config/tc-mips.h (tc_frob_file): Define.
+	(mips_frob_file): Declare.
+	* config/tc-mips.c (struct mips_hi_fixup): Define.
+	(mips_hi_fixup_list): New static variable.
+	(imm_unmatched_hi): New static variable.
+	(md_assemble): Clear imm_reloc, imm_unmatched_hi, and
+	offset_reloc.  Pass imm_unmatched_hi to append_insn.
+	(append_insn): Add unmatched_hi parameter.  If it is set, add the
+	new fixup to mips_hi_fixup_list.  Change all callers.
+	(mips_ip): Set imm_unmatched_hi when appropriate.
+	(mips_frob_file): New function.
+
+Thu Mar 28 11:47:59 1996  Doug Evans  <dje@canuck.cygnus.com>
+
+	* configure.in (sparc-*-solaris2*): Renamed from sparc*-*-solaris2*.
+	* configure: Regenerated.
+
+Tue Mar 26 18:19:12 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* as.c (main): Call bfd_set_error_program_name.
+
+Fri Mar 22 11:13:00 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* as.h (strdup): Don't declare.
+	* stabs.c: Include libiberty.h
+	(get_stab_string_offset): Use xstrdup rather than strdup.
+	(s_stab_generic): Likewise.
+	* as.c (parse_args): Likewise.
+	* read.c (s_mri_sect): Likewise.
+
+	* gasp.c (change_base): Recognize \(...) construct documented to
+	pass through enclosed characters literally through to the output.
+	(process_assigns): Likewise.  Also, be more careful to avoid
+	looking past the end of the buffer.
+
+Thu Mar 21 13:18:43 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* config/tc-i386.c (md_parse_option): If OBJ_ELF, ignore -k for
+	FreeBSD compatibility.  From John Polstra <jdp@polstra.com>.
+
+Wed Mar 20 18:13:32 1996  Andreas Schwab  <schwab@issan.informatik.uni-dortmund.de>
+
+	* doc/as.texinfo, doc/c-i960.texi: Fix typos.
+
+Wed Mar 20 17:05:16 1996  David Mosberger-Tang  <davidm@azstarnet.com>
+
+	* config/alpha-opcode.h: Added cvtst instruction.
+
+Mon Mar 18 13:12:46 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* ecoff.c (ecoff_stab): Don't try to make a symbol out of the stab
+	string.  Extract the addend from the result of expression.
+
+Fri Mar 15 17:10:43 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* app.c (do_scrub_chars): If whitespace is seen in state 11, and
+	LABELS_WITHOUT_COLONS is not defined, and we are not in m68k MRI
+	mode, change the state to 3 rather than 1.
+
+Thu Mar 14 18:18:25 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* config/obj-coff.h (C_REGISTER_SECTION): Change from 20 to 50, to
+	correspond to 11 March change.
+
+Thu Mar 14 15:27:10 1996  Jeffrey A Law  (law@cygnus.com)
+
+	* config/tc-h8300.c (build_bytes, MEMIND case): Generate
+	an R_MEM_INDIRECT reloc rather than R_RELBYTE.
+
+Tue Mar 12 12:21:10 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* configure: Rebuild with autoconf 2.8.
+
+Mon Mar 11 18:57:12 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* config/atof-ieee.c (gen_to_words): Improve handling of
+	X_PRECISION numbers.  Based on patches from Andreas Schwab
+	<schwab@issan.informatik.uni-dortmund.de>.
+
+Mon Mar 11 09:59:53 1996  Steve Chamberlain  <sac@slash.cygnus.com>
+
+	* as.h (SEG_NORMAL, SEG_LIST): Bump segment limit from 10 to 40.
+	(SEG_LAST): New.
+	* subsegs.c (MANY_SEGMENTS): Increase segment limit.
+	* obj-coff.c (seg_N_TYPE, seg_info_off_by_4): Likewise.
+	(do_relocs_for, w_symbols, obj_coff_add_segment, do_linenos_for,
+	crawl_symbols, coff_header_append): Loop to SEG_LAST rather than
+	SEG_E9.
+	
+Thu Mar  7 15:17:39 1996  Doug Evans  <dje@charmed.cygnus.com>
+
+	* config/tc-sparc.c (sparc_ip): Handle operand char 'O' (neg reg).
+
+Thu Mar  7 09:19:15 1996  Jeffrey A Law  (law@cygnus.com)
+
+	* config/tc-hppa.c (SUBSEG_MILLI): Define.
+	(pa_def_subspaces): Add $MILLICODE$.
+	(pa_spaces_begin): Set section flags for $MILLICODE$.
+
+Wed Mar  6 14:11:30 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* config/obj-elf.c (obj_elf_section): Only SEC_LOAD if the type is
+	not SHT_NOBITS.  Don't tamper with flags based on type if a
+	special section was found (revert Feb 29 change).
+
+	* config/tc-sh.c (sh_do_align): Only align using the nop pattern
+	if aligning to a longword boundary or greater.
+
+Tue Mar  5 15:10:43 1996  Jim Wilson  <wilson@chestnut.cygnus.com>
+
+	* config/tc-sh.c (sh_do_align): Pass 1 not 2 to frag_align.
+
+Mon Mar  4 20:50:57 1996  Steve Chamberlain  <sac@slash.cygnus.com>
+
+	* configure.in (i386-*-cygwin32): Don't use bfd_gas.
+	* configure: Regenerated.
+
+Mon Mar  4 10:13:06 1996  Jeffrey A Law  (law@cygnus.com)
+
+	* config/tc-hppa.c: Add default definitions for R_N0SEL and
+	R_N1SEL since they're not defined for old versions of hpux.
+
+	* config/tc-hppa.c (tc_gen_reloc): Fix typo in R_COMP2 code.
+	Set "sym_ptr_ptr" and "addend" fields to dummy values for
+	R_N0SEL and R_N1SEL.
+
+Fri Mar  1 10:20:52 1996  Andreas Schwab  <schwab@issan.informatik.uni-dortmund.de>
+
+	* flonum-konst.c: Add two more constants for 1e+-2048 and
+	1e+-4096, and correct the other constants.
+
+	* symbols.c (resolve_symbol_value): Handle O_logical_not.
+
+Thu Feb 29 13:58:35 1996  Michael Meissner  <meissner@tiktok.cygnus.com>
+
+	* config/obj-elf.c (obj_elf_section): Allow predefined section
+	types to set the nobits type.  Avoid a shadowed declaration.
+
+Wed Feb 28 15:38:56 1996  Jeffrey A Law  (law@cygnus.com)
+
+	* config/tc-hppa.c (hppa_fix_adjustable): For SOM, don't
+	reduce relocs using e_nlrsel field selectors.
+
+	* write.c (fix_new_exp): Don't use #elif.  Some compilers
+	don't handle it.
+
+	* config/tc-hppa.c (selector_table): Add "n", "nl", and "nlr" to
+	the selector table.
+	(pa_chk_field_selector): Handle new field selectors for SOM.
+
+Tue Feb 27 14:42:27 1996  Andreas Schwab  <schwab@issan.informatik.uni-dortmund.de>
+
+	* configure.in (m68k-*-linux*aout*, m68k-*-linux*): New targets.
+	* configure: Rebuild.
+	* config/te-linux.h (LOCAL_LABELS_FB): Define.
+	* config/tc-m68k.h (TARGET_FORMAT) [TE_LINUX]: Define to
+	"a.out-m68k-linux".
+	* config/tc-m68k.c (comment_chars): Don't include '#' if TE_LINUX
+	is defined.
+
+Mon Feb 26 18:58:58 1996  Stan Shebs  <shebs@andros.cygnus.com>
+
+	* mpw-make.sed: Update to handle shared library support.
+
+Mon Feb 26 10:34:10 1996  Doug Evans  <dje@charmed.cygnus.com>
+
+	* config/tc-sparc.c (sparc_ip): Print all architectures that support
+	the insn on mismatch.
+
+Fri Feb 23 21:44:39 1996  Rob Savoye  <rob@chinadoll.cygnus.com>
+
+	* configure.in: Add support for a29-coff.
+	* configure: Rebuild.
+
+Thu Feb 22 16:39:43 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* config/tc-sh.c (sh_coff_frob_file): Don't consider the address
+	of the section when looking for the R_SH_USES fixup, because the
+	frag addresses have not yet been adjusted.
+
+	* gdbinit.in: Set a breakpoint on as_warn_where.
+
+	* config/tc-mips.c (macro): Add missing arguments to macro_build
+	omitted in last change.  From Jim Wilson <wilson@cygnus.com>.
+
+Wed Feb 21 17:00:32 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* config/tc-h8300.c (tc_reloc_mangle): Change reloc based on size
+	if it is TC_CONS_RELOC.  Set a size of 4 to R_RELLONG.
+
+Wed Feb 21 09:25:39 1996  Doug Evans  <dje@charmed.cygnus.com>
+
+	* config/tc-sparc.c (sparc_ip): Recognize %asr0 for v8.
+
+Tue Feb 20 21:48:03 1996  Doug Evans  <dje@charmed.cygnus.com>
+
+	* config/tc-sparc.c (parse_keyword_arg): Accept leading '%'.
+	(sparc_ip): Accept %asr[1..31] for v8 and %asr[%16..31] for v9.
+	Recognize [uU] format args as sparclet cpregs.
+
+Tue Feb 20 22:25:55 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* config/tc-sh.c (sh_handle_align): Don't emit R_SH_ALIGN relocs
+	in bss_section.
+
+Mon Feb 19 14:16:24 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* config/tc-sparc.h (TC_RELOC_RTSYM_LOC_FIXUP): Check S_IS_WEAK as
+	well as S_IS_EXTERNAL.
+	(tc_fix_adjustable): Likewise.
+	* config/tc-sparc.c (md_apply_fix): In OBJ_ELF case, check for
+	S_IS_WEAK as well as S_IS_EXTERNAL when deciding whether to return
+	early.
+	(tc_gen_reloc): Check S_IS_WEAK as wel as S_IS_EXTERNAL when
+	deciding whether to convert BFD_RELOC_32_PCREL_S2 if PIC.
+
+Mon Feb 19 02:15:57 1996  Doug Evans  <dje@charmed.cygnus.com>
+
+	* config/tc-sparc.c (max_architecture): Change to sparclite for
+	32 bit arch.
+	(default_compatible): Delete.
+	(sparc_ffs): New function.
+	(md_begin): Only call SPARC_OPCODE_CONFLICT_P once.
+	(sparc_ip): Rewrite architecture match and bump logic.
+
+Sun Feb 18 15:03:50 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* configure.in: Check for 'do not mix' from native linker before
+ 	trying to use -rpath.
+	* configure: Rebuild.
+
+Fri Feb 16 16:53:31 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* config/obj-coff.h (SF_ADJ_LNNOPTR): Define (non BFD_ASSEMBLER).
+	(SF_GET_ADJ_LNNOPTR): Define (non BFD_ASSEMBLER).
+	(SF_SET_ADJ_LNNOPTR): Define (non BFD_ASSEMBLER).
+	* config/obj-coff.c (obj_coff_endef): Set ADJ_LNNOPTR when LNNOPTR
+	is set.
+	(w_symbols): If ADJ_LNNOPTR is set, add the section lnnoptr field
+	to the symbol lnnoptr field, to get the correct file offset.
+
+Thu Feb 15 14:48:38 1996  Michael Meissner  <meissner@tiktok.cygnus.com>
+
+	* config/obj-elf.c (elf_frob_symbol): On the PowerPC, force all
+	symbols that are not function, file, or section symbols to be
+	object types.
+
+Thu Feb 15 11:20:18 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* configure: Set and substitute RPATH_ENVVAR.
+	* configure: Rebuild.
+	* Makefile.in (RPATH_ENVVAR): New variable.
+	(check): Use $(RPATH_ENVVAR) rather than LD_LIBRARY_PATH.
+
+	* configure.in: Accept i686.  From H.J. Lu <hjl@zoom.com>: i386
+	doesn't need opcodes.  If configuring shared, opcodes needs bfd.
+	* configure: Rebuild.
+
+Wed Feb 14 16:33:12 1996  Martin Anantharaman  <martin@mail.imech.uni-duisburg.de>
+
+	* read.c (s_mri_sect): Don't return '\0' in type.  Set all
+	appropriate flags in BFD section.
+
+	* configure.in (m68k-*-psos*): New target.
+	* configure: Rebuild.
+	* config/te-psos.h: New file.
+	* config/tc-m68k.c (comment_chars): Don't include '#' if TE_PSOS
+	is defined.
+
+Wed Feb 14 13:43:24 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	From Alan Modra <alan@spri.levels.unisa.edu.au>:
+	* configure.in: Remove duplicate setting of cpu_type.  Check
+	whether opcodes library is required for on all targets, not just
+	primary one.
+	* configure: Rebuild.
+
+	* config/tc-mips.c (mips_big_got): New static variable.
+	(s_extern): Don't declare.
+	(reg_needs_delay): New static function.
+	(macro_build): Permit GOT/CALL_HI/LO relocs.
+	(macro_build_lui): If place is not NULL, use the number in the
+	expression.
+	(load_address): Handle mips_big_got case.
+	(macro): Handle mips_big_got for M_LA_AB, M_JAL_A, and load and
+	store macros.
+	(OPTION_XGOT): Define.
+	(md_longopts): Add "xgot" if OBJ_ELF.
+	(md_parse_option): Handle -xgot.
+	(md_show_usage): Mention -xgot.
+	(md_apply_fix): Permit GOT/CALL_HI/LO relocs.
+	(tc_gen_reloc): Handle GOT/CALL_HI/LO relocs.
+
+Wed Feb 14 11:22:27 1996  Andreas Schwab  <schwab@issan.informatik.uni-dortmund.de>
+
+	* config/tc-m68k.c (m68k_ip) [operand kind '#']: When fixing
+	the byte relocation, point it to the low byte of the word.
+
+Tue Feb 13 15:31:18 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* configure.in: Set HDLFLAGS for *-*-hpux with --enable-shared.
+	* configure: Rebuild.
+
+Mon Feb 12 15:53:46 1996  Doug Evans  <dje@charmed.cygnus.com>
+
+	* configure.in: Recognize any sparc* cpu.
+	* configure: Regenerated.
+
+Mon Feb 12 15:41:21 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* read.c (potable): Add "mri" and ".mri".
+	(s_mri): New function.
+	* read.h (s_mri): Declare.
+	* app.c (scrub_m68k_mri): New static variable.
+	(mri_pseudo): New static variable.
+	(do_scrub_begin): Add m68k_mri parameter.  Use it rather than
+	flag_m68k_mri.  Initialize scrub_m68k_mri.
+	(mri_state, mri_last_ch): New static variables.
+	(struct app_save): Add scrub_m68k_mri, mri_state, and mri_last_ch
+	fields.
+	(app_push): Save new fields.
+	(app_pop): Restore new fields.
+	(do_scrub_chars): Check scrub_m68k_mri rather than flag_mri_mri.
+	If TC_M68K, use a trivial state machine to look for occurrences of
+	the .mri pseudo-op, and change the mode appropriately.
+	* as.h (do_scrub_begin): Update prototype.
+	* input-scrub.c (input_scrub_begin): Pass flag_m68k_mri to
+	do_scrub_begin.
+	* config/tc-m68k.c (reg_prefix_optional_seen): New static
+	variable.
+	(m68k_mri_mode_change): New function.
+	(md_parse_option): Set reg_prefix_optional_seen.
+	* config/tc-m68k.h (m68k_mri_mode_change): Declare.
+	(MRI_MODE_CHANGE): Define.
+	* doc/as.texinfo: Document .mri pseudo-op.
+
+	* app.c (do_scrub_chars): In MRI mode, don't treat '#' as a
+	comment character.
+
+Mon Feb 12 15:16:29 1996  Andreas Schwab  <schwab@issan.informatik.uni-dortmund.de>
+
+	Support for OBJ_ELF on m68k, mostly inside #ifdef OBJ_ELF:
+	* config/m68k-parse.h (enum pic_relocation): Define.
+	(struct m68k_exp): Add pic_reloc field.
+	* config/tc-m68k.h (TC_RELOC_RTSYM_LOC_FIXUP): Define.
+	(tc_fix_adjustable): Define to call tc_m68k_fix_adjustable.
+	(NO_RELOC): Define to BFD_RELOC_NONE if BFD_ASSEMBLER, to zero
+	otherwise.
+	* config/tc-m68k.c: Delete definition of NO_RELOC.
+ 	(struct m68k_it): Add pic_reloc field.
+	(add_fix): Copy over pic_reloc field.
+	(md_pseudo_table): Interpret .align parameter as byte count.
+	(mote_pseudo_table): Likewise.
+	(tc_m68k_fix_adjustable): New function.
+	(get_reloc_code): New function.
+	(md_assemble): Use it as last argument to fix_new_exp.
+	(md_apply_fix_2): For a relocation against a symbol don't put the
+	addend into the data.
+	(tc_gen_reloc): Different addend computation for OBJ_ELF.
+	(m68k_ip): Don't relax an operand that requires pic relocation.
+	(md_begin): Align .text, .data and .bss on 4 byte boundary by
+	default.
+	* write.c (fixup_segment): Don't add symbol value to addend if
+ 	TC_M68K and OBJ_ELF.
+	* config/m68k-parse.y (yylex): Handle @PLTPC, etc.
+	(motorola_operand): Add rule for `(zapc, EXPR)'.
+
+Mon Feb 12 10:07:33 1996  David Mosberger-Tang  <davidm@azstarnet.com>
+
+	* ecoff.c (ecoff_directive_weakext): Fixed so that whitespace
+	*really* is permissible before the comma.
+
+Mon Feb 12 00:12:13 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* config/tc-sh.c (sh_do_align): Align to a 2 byte boundary before
+	inserting nop instructions.
+
+Fri Feb  9 10:54:19 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* config/te-aux.h: Change include of aux.h to aux-coff.h.
+
+Thu Feb  8 20:02:58 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* config/tc-i960.c (tc_coff_symbol_emit_hook): Correct storage
+	class setting for a CALLNAME symbol in COFF.
+
+	* read.c (potable): Pass negative numbers for new .balign[wl] and
+	.p2align[wl] pseudo-ops.
+	(s_align_bytes): Treat a negative argument as specifying the fill
+	length.
+	(s_align_ptwo): Likewise.
+
+Wed Feb  7 14:12:03 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* read.c (potable): Add balignw, balignl, p2alignw, and p2alignl.
+	(do_align): Take new len parameter.  Change all callers.  Pass it
+	to md_do_align.
+	(s_align_bytes): Arg now indicates the length of the fill pattern.
+	(s_align_ptwo): Likewise.
+	* config/obj-coff.c (write_object_file): Pass length to
+	md_do_align.
+	* config/tc-i386.h (md_do_align): Take new len parameter.
+	* config/tc-m88k.h (md_do_align): Likewise.
+	* config/tc-m88k.c (m88k_do_align): Likewise.
+	* config/tc-sh.h (md_do_align): Likewise.
+	* config/tc-sh.c (sh_do_align): Likewise.
+	* doc/as.texinfo: Document new pseudo-ops.
+
+	* config/obj-coff.c (fixup_mdeps): Divide offset by fr_var, as is
+	done in cvt_frag_to_fill.
+
+	* config/tc-sh.h (sh_do_align): Declare.
+	(md_do_align): Define.
+	* config/tc-sh.c (sh_do_align): New function.
+
+	* ecoff.c (ecoff_build_lineno): Don't try to store the address
+	difference if the next address is before the current one.
+
+	* config/tc-m68k.c (struct m68k_cpu): Add alias field.
+	(archs): Initialize new field.
+	(m68k_ip): Don't list alias names when listing CPUs which support
+	an instruction.
+
+	* as.c (main): Call parse_args before read_begin.
+	* app.c (do_scrub_chars): If flag_m68k_mri, don't put a dot in
+	front of generated pseudo-ops.
+	* read.c (potable): Ignore "name".
+	(s_app_file): Permit a single quote after the string, since one
+	may appear in m68k MRI mode.
+
+	* configure.in: Check for --enable-shared.  If linking against
+	shared BFD and opcodes, fix library name on SunOS, and try to set
+	-rpath reasonably.
+	* configure: Rebuild.
+
+Tue Feb  6 15:16:17 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* as.h (flag_m68k_mri): Declare.
+	* as.c (parse_args): If TC_M68K, set flag_m68k_mri for -M.
+	* Many files: For MRI syntax that is specific to the m68k MRI
+	assembler, check flag_m68k_mri rather than flag_mri or
+	MRI_MODE_NEEDS_PSEUDO_DOT.
+
+Mon Feb  5 16:29:11 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* config/tc-i960.c (ARCH_HX): Define.
+	(arch_tab): Add HX.
+	(targ_has_sfr): Handle ARCH_HX.
+	(targ_has_iclass): Handle ARCH_HX.
+	(tc_coff_fix2rtype): Add return 0 to avoid warning.
+	(tc_headers_hook): If the architecture was specified explicitly,
+	use it when setting the flags.  Set the extern variable coff_flags
+	rather than headers->filehdr.f_flags, since the latter is set
+	unconditionally in obj-coff.c.
+	(i960_handle_align): Remove unused variable fixp.
+
+	Support for building bfd and opcodes as shared libraries, based on
+	patches from Alan Modra <alan@spri.levels.unisa.edu.au>:
+	* configure.in: Set OPCODES and BFD to search directories.
+	Substitute OPCODES_DEP and BFDDEP.  On SunOS, set HLDFLAGS.
+	* configure: Rebuild.
+	* Makefile.in (LDFLAGS, HLDFLAGS): New variables.
+	(LIBDEPS): New variable.
+	(as.new0: Depend upon $(LIBDEPS) rather than $(LIBS).  Use
+	$(HLDFLAGS) in link.
+	(check): Set LD_LIBRARY_PATH in the environment.
+
+Fri Feb  2 17:41:53 1996  Michael Meissner  <meissner@wogglebug.tiac.net>
+
+	* config/tc-ppc.h (ELF_TC_SPECIAL_SECTIONS): Make .sdata2, .sbss2,
+	.PPC.EMB.sdata0, and .PPC.EMB.sbss0 sections all default to
+	read-only, not read/write.
+
+Fri Feb  2 14:09:25 1996  Alan Modra  <alan@spri.levels.unisa.edu.au>
+
+	* Makefile.in (INSTALL_XFORM): Remove -e.
+
+Fri Feb  2 12:32:15 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* write.c (write_relocs): Use S_IS_DEFINED and S_IS_COMMON rather
+	than comparing S_GET_SEGMENT to undefined_section.
+	(write_object_file): Skip symbols which were equated to an
+	undefined or common symbol.
+	* symbols.c (resolve_symbol_value): Use S_IS_DEFINED and
+	S_IS_COMMON rather than comparing S_GET_SEGMENT to
+	undefined_section.
+	(S_GET_VALUE): Likewise.  Avoid recursion problems if S_IS_DEFINED
+	or S_IS_COMMON call S_GET_VALUE.
+	* config/obj-aout.h (S_IS_COMMON): Define if not BFD_ASSEMBLER.
+	* config/obj-aout.c (obj_emit_relocations): If a reloc is equated
+	to an undefined or common symbol, convert the reloc to be against
+	the target symbol.
+	(obj_crawl_symbol_chain): Skip symbols which were equated to an
+	undefined or common symbol.
+	* config/obj-bout.h (S_IS_COMMON): Define if not BFD_ASSEMBLER.
+	* config/obj-bout.c (obj_emit_relocations): If a reloc is equated
+	to an undefined or common symbol, convert the reloc to be against
+	the target symbol.
+	(obj_crawl_symbol_chain): Skip symbols which were equated to an
+	undefined or common symbol.
+	* config/obj-coff.c (do_relocs_for): Use S_IS_DEFINED and
+	S_IS_COMMON rather than comparing S_GET_SEGMENT to
+	undefined_section.
+	(yank_symbols): Skip symbols which were equated to an undefined or
+	common symbol.
+
+Thu Feb  1 15:34:32 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* config/obj-aout.h (S_IS_LOCAL): Check for \002 as well as \001.
+	* config/obj-bout.h (S_IS_LOCAL): Likewise.
+
+	* configure.in: Make sure we only add m68k-parse.o to
+	${extra_objects} once, no matter how many m68k targets have been
+	enabled.
+	* configure: Rebuild.
+
+Wed Jan 31 18:31:46 1996  Steve Chamberlain  <sac@slash.cygnus.com>
+
+	* configure.in (i386-*-cygwin32, ppc-*-cygwin32): New.
+	* configure: Rebuild.
+
+Wed Jan 31 14:03:17 1996  Richard Henderson  <rth@tamu.edu>
+
+	* config/tc-m68k.c (md_pseudo_table): Add "extend" and "ldouble".
+	* doc/c-m68k.texi: Document .extend and .ldouble.
+
+	* configure.in (m68*-apple-aux*): New target.
+	* config/te-aux.h: New file.
+	* config/obj-coff.c (compare_external_relocs): New static function
+	if TE_AUX.
+	(do_relocs_for): Sort relocs if TE_AUX.
+	(fixup_segment): If TE_AUX, store common symbol value in segment.
+	* config/tc-m68k.h (TARGET_FORMAT): Define if TE_AUX.
+
+Wed Jan 31 12:24:58 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* config/obj-coff.h (S_IS_LOCAL): Check for \002 as well as \001.
+
+	* config/tc-mips.c (s_mips_globl): Set BSF_OBJECT if it is not
+	BSF_FUNCTION.
+	(s_cpload): Set BSF_OBJECT for _gp_disp symbol.
+	* read.c (s_lcomm): If S_SET_SIZE is defined, set the size of the
+	symbol.
+	* ecoff.c (add_procedure): Set the BSF_FUNCTION flag.
+	(ecoff_build_symbols): If S_SET_SIZE is defined, set the size of
+	an undefined symbol and the size of a function symbol.
+	* config/obj-elf.c (elf_frob_symbol): If TC_MIPS, set BSF_OBJECT
+	for all common symbols.
+
+Tue Jan 30 12:35:24 1996  Ken Raeburn  <raeburn@cygnus.com>
+
+	* config/tc-i960.c (parse_memop): In MRI mode, don't use implicit
+	scaling of index.
+
+	* expr.c (operand): Accept 0x hex constants in MRI mode if not on
+	m68k.
+
+Mon Jan 29 12:21:30 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* config/obj-elf.c (obj_elf_type): Set BSF_OBJECT flag for a type
+	of object.  From Ronald F. Guilmette <rfg@monkeys.com>.
+
+	* ecoff.c (localsym_t): Add addend field.
+	(add_ecoff_symbol): Add addend argument.  Change all callers.
+	(coff_sym_value): Make static.
+	(coff_sym_addend): New static variable.
+	(ecoff_directive_def): Initialize coff_sym_addend.
+	(ecoff_directive_val): Accept symbol + constant.
+	(ecoff_directive_endef): Pass coff_sym_addend to add_ecoff_symbol.
+	(ecoff_build_symbols): Include the addend in the symbol value.
+
+Fri Jan 26 19:28:52 1996  Kim Knuttila  <krk@cygnus.com>
+
+	* config/tc-ppc.c (md_assemble): Ignore overflow on 
+	BFD_RELOC_16_GOTOFF and BFD_RELOC_PPC_TOC16.
+
+Fri Jan 26 16:14:17 1996  Michael Meissner  <meissner@tiktok.cygnus.com>
+
+	* config/tc-ppc.c (md_apply_fix3): SDA21 relocations are now 4
+	bytes in size, so offset appropriately in big endian mode when
+	writing the bottom 2 bytes.
+
+Thu Jan 25 20:26:23 1996  Doug Evans  <dje@charmed.cygnus.com>
+
+	* config/tc-sparc.c (default_compatible): New static local.
+	(md_begin): Initialize it.  Rewrite warn_on_bump handling.
+	(sparc_ip): If no architecture or -bump specified, don't mark as
+	mismatched those in default_compatible.
+
+Thu Jan 25 12:21:53 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	SCO ELF support from Robert Lipe <robertl@arnet.com>:
+	* configure.in (i386-*-sco*elf*): Use fmt elf, targ sco5.
+	* configure: Rebuild.
+	* config/sco5.mt: New file; set TDEFINES to -DSCO_ELF.
+	* config/tc-i386.c (sco_id): New function, if SCO_ELF.
+	* config/tc-i386.h (tc_init_after_args): Define if SCO_ELF.
+	(sco_id): Declare if SCO_ELF.
+
+Thu Jan 25 03:10:53 1996  Doug Evans  <dje@charmed.cygnus.com>
+
+	* config/tc-sparc.c (initial_architecture,can_bump_v9_p): Deleted.
+	({max,warn_after}_architecture): New static locals.
+	(md_begin): Replace NUMOPCODES with sparc_num_opcodes.
+	If both architecture and -bump requested, set max_architecture to max.
+	(sparc_md_end): Simplify.
+	(sparc_ip): Replace references to can_bump_v9_p with max_architecture.
+	Rewrite code to bump architecture and check for conflicts.
+	(md_longopts): Recognize -xarch={v8plus,v8plusa} for compatibility
+	with Solaris assembler.
+	(md_parse_option): Likewise.  Call sparc_opcode_lookup_arch.
+	(md_show_usage): Update.
+
+Wed Jan 24 22:11:03 1996  Doug Evans  <dje@charmed.cygnus.com>
+
+	* Makefile.in (RUNTEST): Fix reference to $${srcdir}.
+
+Mon Jan 22 09:21:36 1996  Doug Evans  <dje@charmed.cygnus.com>
+
+	* config/tc-sparc.h (TARGET_FORMAT): Use #ifdef SPARC_ARCH64 instead of
+	#ifdef sparcv9 when choosing value.
+	(ENV64): Delete.
+	(md_end): Define.
+	(sparc_md_end): Declare.
+	* config/tc-sparc.c (SPARC_V9): Renamed from sparcv9.
+	(initial_architecture): New static local.
+	(can_bump_v9_p): Likewise.
+	(NO_V9): Delete all occurrences.
+	(sparc_md_end): New function.
+	(sparc_ip): New local v9_arg_p.  Rework fp reg number test.
+	Don't bump architecture to v9 unless can_bump_v9_p set.
+	(md_parse_option): -A<arch> passed, set can_bump_v9_p accordingly.
+	* configure.in (sparc64 target cpu): Don't set obj_format here.
+	(SPARC_V9): Renamed from sparcv9.
+	(sparc64-*-elf*): Define SPARC_ARCH64.
+	* configure: Regenerated.
+	* acconfig.h (SPARC_V9): Renamed from sparcv9.
+	(SPARC_ARCH64): Add.
+	* conf.in: Regenerated.
+	* config/vmsconf.h: Update.
+
+Mon Jan 22 17:24:47 1996  James G. Smith  <jsmith@cygnus.co.uk>
+
+	* config/tc-mips.c (load_register): Optimise "dli" loads.
+	(md_show_usage): add "-mcpu=vr4100" to help text.
+
+Mon Jan 22 11:53:00 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* symbols.c (resolve_symbol_value): If a symbol is equated to an
+	undefined symbol, preserve the X_op of O_symbol.
+	(S_GET_VALUE): Fix check to permit this case.
+	* write.c (write_relocs): If a reloc is against an undefined
+	symbol equated to another symbol, change the reloc to be against
+	the latter symbol.
+	* config/obj-coff.c (do_relocs_for): Likewise.
+
+	* config/tc-ppc.c (ppc_csect): An unnamed csect is storage class
+	XMC_PR.
+
+Mon Jan 22 10:59:48 1996  Michael Meissner  <meissner@tiktok.cygnus.com>
+
+	* config/obj-elf.c (elf/ppc.h): Include elf/ppc.h if target
+	computer is PowerPC.
+
+	* config/tc-ppc.c (md_apply_fix3): Add more embedded relocations.
+
+	* config/tc-ppc.h (ELF_TC_SPECIAL_SECTIONS): Add sections
+	mentioned in the eabi.
+
+Thu Jan 18 17:58:19 1996  Kim Knuttila  <krk@cygnus.com>
+
+	* config/tc-ppc.c (ppc_reldata): Changed alignement on reldata_section
+	* config/tc-ppc.c (ppc_pdata): Changed the alignment on pdata_section
+
+Mon Jan 15 17:43:42 1996  Michael Meissner  <meissner@tiktok.cygnus.com>
+
+	* config/tc-ppc.c (mapping): Add more relocation suffixes.
+
+Sun Jan 14 21:29:36 1996  Michael Meissner  <meissner@tiktok.cygnus.com>
+
+	* config/tc-ppc.c (ppc_elf_validate_fix): Allow .gcc_except_table
+	as a section it is ok to have unadorned -mrelocatable pointers in.
+
+Sat Jan 13 11:09:08 1996  Michael Meissner  <meissner@tiktok.cygnus.com>
+
+	* config/tc-ppc.c (ppc_section*): Wrap these functions inside
+	#ifdef OBJ_ELF.
+
+Fri Jan 12 15:32:07 1996  Michael Meissner  <meissner@tiktok.cygnus.com>
+
+	* config/obj-elf.c (obj_elf_section): Add hooks so machine
+	dependent section attributes can be handled.
+
+	* config/tc-ppc.h: (md_elf_section_{letter,type,word,flags}): New
+	macros to add support for exclude section flag and ordered section
+	type.
+
+	* config/tc-ppc.c (ppc_elf_section_{letter,type,word,flags}): New
+	functions to add support for exclude section flag and ordered
+	section type.
+
+Fri Jan 12 12:04:00 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* subsegs.c (section_symbol): Don't try to look up the section
+	symbol in the hash table.  It should be possible to have a symbol
+	with the same name as a section, but no connection to it.
+
+	* read.c (cons_worker): Only call mri_comment_end from flag_mri.
+	From James Carlson <carlson@xylogics.com>.
+
+	* expr.c (operand): Skip whitespace after a close parenthesis.
+	From James Carlson <carlson@xylogics.com>.
+
+Tue Jan  2 12:43:23 1996  Jim Wilson  <wilson@chestnut.cygnus.com>
+
+	* config/tc-sh.c (md_apply_fix): Call as_bad_where instead of
+	as_warn_where for relocation overflow.
+	(parse_reg): Accept register name only if next character is
+	not alphanumeric.
+
+Sat Dec 30 23:42:51 1995  Jeffrey A Law  (law@cygnus.com)
+
+	* ecoff.c (ecoff_stab): Simplify.  Correctly handle sym + offset
+	addresses for static variables.
+
+Thu Dec 21 12:54:32 1995  Michael Meissner  <meissner@tiktok.cygnus.com>
+
+	* config/tc-ppc.c (mapping): Make @got give a real GOT relocation,
+	and xgot give the old toc16 relocation.
+	(md_apply_fix3): Support all GOT relocations.
+
+Wed Dec 20 14:57:17 1995  Ian Lance Taylor  <ian@cygnus.com>
+
+	* config/tc-mips.c (load_address): Correctly handle a constant in
+	SVR4_PIC case.  From Richard Kenner <kenner@vlsi1.ultra.nyu.edu>.
+
+Fri Dec 15 14:25:07 1995  J.T. Conklin  <jtc@rtl.cygnus.com>
+
+	* config/tc-sh.c (parse_reg): Recognize SH3 registers.
+	(get_specific): Handle A_SSR, A_SPC and A_REG_B.
+	(build_Mbytes): Handle REG_B.
+
+Fri Dec 15 16:07:25 1995  Ian Lance Taylor  <ian@cygnus.com>
+
+	* ecoff.c (ecoff_build_aux): Use new bfd_big_endian macro.
+
+Fri Dec 15 12:11:48 1995  Raymond Jou  <rjou@mexican.cygnus.com>
+
+	* mpw-make.sed: If linking, edit ALL_CFLAGS to CFLAGS.
+
+Thu Dec 14 15:09:52 1995  Ian Lance Taylor  <ian@cygnus.com>
+
+	* config/obj-coff.c (write_object_file): Set the s_align field to
+	the number of bytes, rather than to the power of 2.
+
+Tue Dec 12 12:19:37 1995  Ian Lance Taylor  <ian@cygnus.com>
+
+	* Makefile.in (DISTCLEAN_HERE): New variable.
+	(distclean): Use it.
+	(maintainer-clean): Depend upon clean-here rather than clean,
+	distclean, and clean-info.  Run make maintainer-clean in doc.
+	Remove files listed in DISTCLEAN_HERE.
+	* doc/Makefile.in (maintainer-clean realclean): Split out from
+	distclean.  Depend upon clean-info and distclean.
+
+Mon Dec 11 16:23:51 1995  Stan Shebs  <shebs@andros.cygnus.com>
+
+	* mac-as.r: Fix copyright and version strings.
+	(cfrg): Use PROG_NAME instead of literal name.
+
+
+Mon Dec 11 14:14:08 1995  Ian Lance Taylor  <ian@cygnus.com>
+
+	* read.c (read_a_source_file): If tc_unrecognized_line is defined,
+	call it.
+	* config/tc-a29k.h (tc_unrecognized_line): Define.
+	* config/tc-a29k.c (a29k_unrecognized_line): New function.
+	(md_operand): Handle a29k style local dollar labels.
+
+Wed Dec  6 17:52:52 1995  Ian Lance Taylor  <ian@cygnus.com>
+
+	* config/obj-multi.h: If OBJ_MAYBE_ELF, define OBJ_SYMFIELD_TYPE.
+
+Tue Dec  5 13:26:34 1995  Ken Raeburn  <raeburn@cygnus.com>
+
+	* read.c (s_fill): If md_flush_pending_output is defined, call
+	it.
+
+Mon Dec  4 15:10:53 1995  Ken Raeburn  <raeburn@cygnus.com>
+
+	* config/obj-coff.c (size_section, fill_section, fixup_mdeps):
+	Treat rs_align_code like rs_align.
+
+Sun Dec  3 16:46:54 1995  Richard Earnshaw (rearnsha@armltd.co.uk)
+
+	* config/tc-arm.c (cp_address_required_here): Set pre_inc when
+	converting an absolute address into a PC-relative one.
+
+Fri Dec  1 11:57:56 1995  Stan Shebs  <shebs@andros.cygnus.com>
+
+	* mpw-config.in: Don't always use te-generic.h for emulation.
+	(powerpc-apple-macos): Use emulation te-macos.h.
+	* mpw-make.sed (install, install-only): Edit in Mac-specific
+	install procedure.
+
+Fri Dec  1 10:59:25 1995  Ian Lance Taylor  <ian@cygnus.com>
+
+	* configure.in: Improve message about unsupported ELF targets.
+	* configure: Rebuild.
+
+	* config/tc-m88k.c (m88k_do_align): Correct check for whether fill
+	pattern is zero.  From Manfred Hollstein.
+
+Thu Nov 30 13:25:49 1995  Kim Knuttila  <krk@cygnus.com>
+
+	* config/tc-ppc.c (ppc_pe_section): To get the alignment right for
+	the various idata sections, we check the name on the .section pseudo.
+
+Thu Nov 30 11:23:42 1995  Manfred Hollstein KS/EF4A 60/1F/110 #40283  <manfred@lts.sel.alcatel.de>
+
+	* config/obj-coff.c (fixup_segment): If TC_M88K is defined, do not
+	add section's paddr to add_number; compatibility to native as and
+	ld forbids.
+
+Wed Nov 29 23:14:27 1995  Ken Raeburn  <raeburn@cygnus.com>
+
+	* configure.in: Treat m68k-sysv4 like m68k-elf, not m68k-sysv3.
+
+	* hash.c (struct hash_entry): Moved here...
+	* hash.h (struct hash_entry): ...from here.
+
+	* config/obj-elf.c (elf_frob_symbol): Don't free and clear sy_obj
+	if it's already known to be null.
+
+Wed Nov 29 13:00:20 1995  Michael Meissner  <meissner@tiktok.cygnus.com>
+
+	* config/tc-ppc.c (md_apply_fix3): Don't adjust the value for 32
+	bit relocs converted to PC relative relocs.  This turned out to
+	add the offset from the beginning of .text twice.
+
+Tue Nov 28 10:42:36 1995  Ken Raeburn  <raeburn@cygnus.com>
+
+	* stabs.c (s_stab_generic): In 's' case, free string from
+	obstack.
+
+	* config/obj-elf.h (ELF_TARGET_SYMBOL_FIELDS): Remove unused field
+	sy_name_offset.
+	* config/obj-multi.h (ELF_TARGET_SYMBOL_FIELDS) [OBJ_MAYBE_ELF]:
+	Ditto.
+
+	* subsegs.h (segment_info_type): Make bitfields unsigned.
+
+	* expr.h (struct expressionS): Make X_op and X_unsigned bitfields,
+	and move them together.  On most systems this will reduce the
+	structure size by one word.
+	(operatorT): Define O_max.
+	* expr.c (expr_begin): Verify that X_op is wide enough to hold
+	O_max.
+
+	* read.c (pop_insert): Print error returned by hash table
+	insertion code.
+
+	* as.c (dump_statistics): Split out from main; dump some hash
+	table stats and target-specific stats.
+	(start_time): No longer automatic to main.
+	(main): Set file-level start_time and call dump_statistics at
+	exit.  Exit by calling xexit.
+	(show_usage): Make --statistics description less specific.
+	* subsegs.c (subsegs_print_statistics): New function.
+	* write.c (write_print_statistics): New function.
+	(n_fixups): New static variable.
+	(fix_new_internal): Increment it.
+	* read.c (read_print_statistics): New function.
+	* read.h (read_print_statistics): Declare.
+	* symbol.c (symbol_print_statistics): New function.
+	* symbol.h (symbol_print_statistics): Declare.
+	* hash.c (hash_print_statistics): New function.
+	* hash.h (hash_print_statistics): Declare.
+	* config/tc-i386.c (i386_print_statistics): New function.
+	* config/tc-i386.h (i386_print_statistics): Declare.
+	(tc_print_statistics): New macro.
+	* messages.c (as_fatal, as_assert, as_abort): Use xexit, not
+	exit.
+
+	* hash.c (DELETED): Rewrite to use a valid but unique address.
+	(START_POWER): Reduce to 10.
+	(enum stat_enum): New enumerator, replacing STAT_* index macros.
+	Add new values for counting strcmp calls.
+	(GROW_FACTOR): New macro.
+	(hash_grow): Use GROW_FACTOR.  Rewrite for quick returns instead
+	of nesting blocks.
+	(FULL_VALUE): New macro.  Use 1/4 of table size instead of 1/2.
+	(hash_new): Use FULL_VALUE.
+	(struct hash_control): Definition moved here.
+	(hash_code): Don't mask to low bits.
+	(hash_ask): Mask returned hash code here.  Check hash value before
+	calling strcmp; count strcmp calls.
+	* hash.h (struct hash_control): Declare, don't define, here.
+	(HASH_STATLENGTH): Deleted.
+	(struct hash_entry): Add field for hash code.
+	(hash_say, hash_apply): Don't declare.
+
+	* hash.c (destroy): Return void.
+	(applicatee): Ditto.
+	(main): Fix declarations.
+	(hash_apply): Return void.  Argument `function' returns void.  Put
+	inside "#ifdef TEST".
+	(hash_say): Define only if TEST is defined.
+	* hash.h (hash_apply, hash_say): Declarations deleted.
+
+Mon Nov 27 13:18:25 1995  Ian Lance Taylor  <ian@cygnus.com>
+
+	* configure: Rebuild with autoconf 2.7.
+
+Tue Nov 21 18:39:01 1995  Ian Lance Taylor  <ian@cygnus.com>
+
+	* aclocal.m4 (AC_PROG_CC): Remove local definition.
+	* configure: Rebuild with autoconf 2.6.
+
+Mon Nov 20 17:26:00 1995  Ian Lance Taylor  <ian@cygnus.com>
+
+	* config/tc-ppc.c (ppc_debug_name_section_size): Remove.
+	(ppc_stabx): Don't increment ppc_debug_name_section_size.
+	(ppc_bc): Likewise.
+	(ppc_frob_file): Remove.
+	* config/tc-ppc.h (tc_frob_file): Don't define.
+	(ppc_frob_file): Don't declare.
+
+Mon Nov 20 13:37:05 1995  Ken Raeburn  <raeburn@cygnus.com>
+
+	* Makefile.in (TARG_CPU_DEP_alpha): Mention alpha-opcode.h.
+	* config/alpha-opcode.h: Include one-operand variants of jmp and
+	jsr.
+
+	* config/te-delt88.h: Renamed from te-delta88.h, to avoid conflict
+	with te-delta.h in 8.3 file systems.
+	* configure.in: Adjusted.
+
+Thu Nov 16 12:49:38 1995  Ian Lance Taylor  <ian@cygnus.com>
+
+	* config/tc-mips.c (s_err): Remove; just use the one in read.c.
+
+	* config/m68k-parse.y (yylex): In MRI mode, '@' can start an octal
+	number.
+	* expr.c (operand): Handle MRI suffixes after unadorned 0.
+
 Thu Nov 16 00:21:44 1995  Ken Raeburn  <raeburn@cygnus.com>
 
 	Version 2.6 released.
 	* Makefile.in (VERSION): Updated to 2.6.
-
-	* config/tc-mips.c (s_mipserr): Renamed from s_err, to avoid
-	conflict with read.h.
 
 	* config/obj-coff.c (write_object_file): Change use of md_do_align
 	to pass a pointer rather than a fill value, to match other uses.

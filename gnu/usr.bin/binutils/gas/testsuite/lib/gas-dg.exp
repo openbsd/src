@@ -7,7 +7,7 @@ load_lib dg.exp
 # but we currently don't support that.  Assembler testcases aren't usually
 # that elaborate anyway.  :-)
 
-proc gas-dg-test { prog do_what tool_flags default_tool_flags libs } {
+proc gas-dg-test { prog do_what tool_flags } {
     # FIXME: the gas testsuite doesn't define tmpdir.  Use outdir?
     set output_file "./a.out"
 

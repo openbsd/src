@@ -421,7 +421,7 @@ as_bad_where (file, line, format, va_alist)
  * Send to stderr a string as a fatal message, and print location of error in
  * input file(s).
  * Please only use this for when we DON'T have some recovery action.
- * It exit()s with a warning status.
+ * It xexit()s with a warning status.
  */
 
 #ifdef USE_STDARG
@@ -436,7 +436,7 @@ as_fatal (const char *format,...)
   vfprintf (stderr, format, args);
   (void) putc ('\n', stderr);
   va_end (args);
-  exit (EXIT_FAILURE);
+  xexit (EXIT_FAILURE);
 }				/* as_fatal() */
 #else
 /*VARARGS1*/
@@ -453,7 +453,7 @@ as_fatal (format, va_alist)
   vfprintf (stderr, format, args);
   (void) putc ('\n', stderr);
   va_end (args);
-  exit (EXIT_FAILURE);
+  xexit (EXIT_FAILURE);
 }				/* as_fatal() */
 #endif /* not NO_STDARG */
 
@@ -474,7 +474,7 @@ as_assert (file, line, fn)
     fprintf (stderr, " in %s", fn);
   fprintf (stderr, " at %s line %d.\n", file, line);
   fprintf (stderr, "Please report this bug.\n");
-  exit (EXIT_FAILURE);
+  xexit (EXIT_FAILURE);
 }
 
 /* as_abort: Print a friendly message saying how totally hosed we are,
@@ -489,7 +489,7 @@ as_abort (file, line, fn)
   if (fn)
     fprintf (stderr, " in %s", fn);
   fprintf (stderr, "\nPlease report this bug.\n");
-  exit (EXIT_FAILURE);
+  xexit (EXIT_FAILURE);
 }
 
 /* Support routines.  */

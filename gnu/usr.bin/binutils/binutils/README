@@ -130,5 +130,5 @@ for fixes, you should probably *not* be using this release.
 We have little time to spend tracking down whatever random bugs you
 may run into (except for configurations that Cygnus supports for
 its customers).  The general place to send bug reports or patches
-is to bug-gnu-utils@ai.mit.edu; you can also send them directly to
-raeburn@cygnus.com or ian@cygnus.com.
+is to bug-gnu-utils@prep.ai.mit.edu; you can also send them directly
+to raeburn@cygnus.com or ian@cygnus.com.

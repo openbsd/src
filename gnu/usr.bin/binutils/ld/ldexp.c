@@ -1,5 +1,5 @@
 /* This module handles expression trees.
-Copyright (C) 1991, 1993, 1994, 1995 Free Software Foundation, Inc.
+Copyright (C) 1991, 1993, 1994, 1995, 1996 Free Software Foundation, Inc.
 Written by Steve Chamberlain of Cygnus Support (sac@cygnus.com).
 
 This file is part of GLD, the Gnu Linker.
@@ -238,8 +238,9 @@ fold_binary (tree, current_section, allocation_done, dot, dotp)
 	     value from a relative value is meaningful, and is an
 	     exception.  */
 	  if (current_section != abs_output_section
-	      && (result.section == abs_output_section
-		  || other.section == abs_output_section)
+	      && (other.section == abs_output_section
+		  || (result.section == abs_output_section
+		      && tree->type.node_code == '+'))
 	      && (tree->type.node_code == '+'
 		  || tree->type.node_code == '-'))
 	    {
@@ -247,7 +248,7 @@ fold_binary (tree, current_section, allocation_done, dot, dotp)
 
 	      /* If there is only one absolute term, make sure it is the
 		 second one.  */
-	      if (result.section == abs_output_section)
+	      if (other.section != abs_output_section)
 		{
 		  hold = result;
 		  result = other;
@@ -345,8 +346,9 @@ fold_name (tree, current_section, allocation_done, dot)
 	  {
 	    struct bfd_link_hash_entry *h;
 
-	    h = bfd_link_hash_lookup (link_info.hash, tree->name.name,
-				      false, false, true);
+	    h = bfd_wrapped_link_hash_lookup (output_bfd, &link_info,
+					      tree->name.name,
+					      false, false, true);
 	    result.value = (h != (struct bfd_link_hash_entry *) NULL
 			    && (h->type == bfd_link_hash_defined
 				|| h->type == bfd_link_hash_defweak
@@ -368,15 +370,17 @@ fold_name (tree, current_section, allocation_done, dot)
 	  {
 	    struct bfd_link_hash_entry *h;
 
-	    h = bfd_link_hash_lookup (link_info.hash, tree->name.name,
-				      false, false, true);
+	    h = bfd_wrapped_link_hash_lookup (output_bfd, &link_info,
+					      tree->name.name,
+					      false, false, true);
 	    if (h != NULL
 		&& (h->type == bfd_link_hash_defined
 		    || h->type == bfd_link_hash_defweak))
 	      {
 		if (bfd_is_abs_section (h->u.def.section))
 		  result = new_abs (h->u.def.value);
-		else if (allocation_done == lang_final_phase_enum)
+		else if (allocation_done == lang_final_phase_enum
+			 || allocation_done == lang_allocating_phase_enum)
 		  {
 		    lang_output_section_statement_type *os;
 		
@@ -475,28 +479,15 @@ exp_fold_tree (tree, current_section, allocation_done, dot, dotp)
 	  }
 	  break;
 	 case ABSOLUTE:
-	  if (allocation_done != lang_first_phase_enum) 
-	  {
-	    if (current_section 
-		== (lang_output_section_statement_type*)NULL) 
+	  if (allocation_done != lang_first_phase_enum && result.valid)
 	    {
-	      /* Outside a section, so it's all ok */
-
-	    }
-	    else {
-	      /* Inside a section, subtract the base of the section,
-		 so when it's added again (in an assignment), everything comes out fine
-		 */
+	      result.value += result.section->bfd_section->vma;
 	      result.section = abs_output_section;
-	      result.value -= current_section->bfd_section->vma;
-	      result.valid = true;
 	    }
-	  }
 	  else 
-	  {
-	    result.valid = false;
-	  }
-
+	    {
+	      result.valid = false;
+	    }
 	  break;
 	 case '~':
 	  make_abs(&result);
@@ -549,7 +540,9 @@ exp_fold_tree (tree, current_section, allocation_done, dot, dotp)
 	/* Assignment to dot can only be done during allocation */
 	if (tree->type.node_class == etree_provide)
 	  einfo ("%F%S can not PROVIDE assignment to location counter\n");
-	if (allocation_done == lang_allocating_phase_enum) {
+	if (allocation_done == lang_allocating_phase_enum
+	    || (allocation_done == lang_final_phase_enum
+		&& current_section == abs_output_section)) {
 	  result = exp_fold_tree(tree->assign.src,
 				 current_section,
 				 lang_allocating_phase_enum, dot, dotp);
@@ -781,14 +774,12 @@ exp_print_tree (tree)
 {
   switch (tree->type.node_class) {
   case etree_value:
-    print_address(tree->value.value);
+    minfo ("0x%v", tree->value.value);
     return;
   case etree_rel:
     if (tree->rel.section->owner != NULL)
-      fprintf (config.map_file, "%s:",
-	       bfd_get_filename (tree->rel.section->owner));
-    fprintf (config.map_file, "%s+", tree->rel.section->name);
-    print_address (tree->rel.value);
+      minfo ("%B:", tree->rel.section->owner);
+    minfo ("%s+0x%v", tree->rel.section->name, tree->rel.value);
     return;
   case etree_assign:
 #if 0
@@ -800,7 +791,7 @@ exp_print_tree (tree)
       fprintf(config.map_file,"%s (UNDEFINED)",tree->assign.dst->name);
     }
 #endif
-    fprintf(config.map_file,"%s ",tree->assign.dst);
+    fprintf(config.map_file,"%s",tree->assign.dst);
     exp_print_token(tree->type.node_code);
     exp_print_tree(tree->assign.src);
     break;

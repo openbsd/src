@@ -18,6 +18,7 @@ License along with GAS; see the file COPYING.  If not, write
 to the Free Software Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
 
 #include "as.h"
+#include "libiberty.h"
 #include "obstack.h"
 #include "subsegs.h"
 
@@ -95,12 +96,7 @@ get_stab_string_offset (string, stabstr_secname)
 #ifdef BFD_ASSEMBLER
 	  bfd_set_section_flags (stdoutput, seg, SEC_READONLY | SEC_DEBUGGING);
 	  if (seg->name == stabstr_secname)
-	    {
-	      char *newsecname = strdup (stabstr_secname);
-	      if (newsecname == 0)
-		as_fatal ("out of memory");
-	      seg->name = newsecname;
-	    }
+	    seg->name = xstrdup (stabstr_secname);
 #endif
 	}
 
@@ -228,6 +224,42 @@ s_stab_generic (what, stab_secname, stabstr_secname)
       SKIP_WHITESPACE ();
     }
 
+#ifdef TC_PPC
+#ifdef OBJ_ELF
+  /* Solaris on PowerPC has decided that .stabd can take 4 arguments, so if we were
+     given 4 arguments, make it a .stabn */
+  else if (what == 'd')
+    {
+      char *save_location = input_line_pointer;
+
+      SKIP_WHITESPACE ();
+      if (*input_line_pointer == ',')
+	{
+	  input_line_pointer++;
+	  what = 'n';
+	}
+      else
+	input_line_pointer = save_location;
+    }
+#endif /* OBJ_ELF */
+#endif /* TC_PPC */
+
+#ifndef NO_LISTING
+  if (listing)
+    {
+      switch (type)
+	{
+	case N_SLINE:
+	  listing_source_line ((unsigned int) desc);
+	  break;
+	case N_SO:
+	case N_SOL:
+	  listing_source_file (string);
+	  break;
+	}
+    }
+#endif /* ! NO_LISTING */
+
   /* We have now gathered the type, other, and desc information.  For
      .stabs or .stabn, input_line_pointer is now pointing at the
      value.  */
@@ -259,9 +291,8 @@ s_stab_generic (what, stab_secname, stabstr_secname)
 	  seg = subseg_new (stab_secname, 0);
 	  if (cached_secname)
 	    free (cached_secname);
-	  cached_secname = strdup (stab_secname);
-	  if (cached_secname)
-	    cached_sec = seg;
+	  cached_secname = xstrdup (stab_secname);
+	  cached_sec = seg;
 	}
 
       if (! seg_info (seg)->hadone)
@@ -277,6 +308,11 @@ s_stab_generic (what, stab_secname, stabstr_secname)
 	}
 
       stroff = get_stab_string_offset (string, stabstr_secname);
+      if (what == 's')
+	{
+	  /* release the string */
+	  obstack_free (&notes, string);
+	}
 
       /* At least for now, stabs in a special stab section are always
 	 output as 12 byte blocks of information.  */
@@ -310,7 +346,7 @@ s_stab_generic (what, stab_secname, stabstr_secname)
 	}
 
 #ifdef OBJ_PROCESS_STAB
-      OBJ_PROCESS_STAB (seg, what, string + stroff, type, other, desc);
+      OBJ_PROCESS_STAB (seg, what, string, type, other, desc);
 #endif
 
       subseg_set (saved_seg, saved_subseg);
@@ -323,22 +359,6 @@ s_stab_generic (what, stab_secname, stabstr_secname)
       abort ();
 #endif
     }
-
-#ifndef NO_LISTING
-  if (listing)
-    {
-      switch (type)
-	{
-	case N_SLINE:
-	  listing_source_line ((unsigned int) desc);
-	  break;
-	case N_SO:
-	case N_SOL:
-	  listing_source_file (string);
-	  break;
-	}
-    }
-#endif /* ! NO_LISTING */
 
   demand_empty_rest_of_line ();
 }

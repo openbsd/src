@@ -7,7 +7,7 @@
 .*: +file format .*mips.*
 
 Disassembly of section .text:
-0+0000 <[^>]*> lui \$gp,0
+0+0000 <[^>]*> lui \$gp,0x0
 [ 	]*RELOC: 0+0000 R_MIPS_HI16 _gp_disp
 0+0004 <[^>]*> addiu \$gp,\$gp,0
 [ 	]*RELOC: 0+0004 R_MIPS_LO16 _gp_disp

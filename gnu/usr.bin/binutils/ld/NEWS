@@ -1,5 +1,20 @@
 -*- text -*-
 
+Changes since version 2.6:
+
+* New option --cref to print out a cross reference table.
+
+* New option --wrap SYMBOL.
+
+* New option --no-whole-archive, to turn off the effect of --whole-archive.
+
+* Input sections assigned to the output section /DISCARD/ in the linker script
+  are not included in the output file.
+
+* The SunOS and ELF linkers now merge stabs debugging information which uses
+  the N_BINCL and N_EINCL stab types.  This reduces the amount of debugging
+  information generated.
+
 Changes since version 2.5:
 
 * When an ELF section name is representable as a C identifier (this is not true

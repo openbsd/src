@@ -1,5 +1,5 @@
 # Expect script for ld-shared tests
-#   Copyright (C) 1994,1995 Free Software Foundation
+#   Copyright (C) 1994, 1995, 1996 Free Software Foundation
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -36,11 +36,26 @@ if { ![istarget i386-*-sysv4*] \
      && ![istarget i386-*-elf*] \
      && ![istarget i486-*-elf*] \
      && ![istarget i586-*-elf*] \
+     && ![istarget i386-*-linux*] \
+     && ![istarget i486-*-linux*] \
+     && ![istarget i586-*-linux*] \
+     && ![istarget m68k-*-linux*] \
+     && ![istarget mips*-*-irix5*] \
      && ![istarget sparc*-*-elf] \
      && ![istarget sparc*-*-solaris2*] \
      && ![istarget sparc*-*-sunos4*] \
      && ![istarget rs6000*-*-aix*] \
      && ![istarget powerpc*-*-aix*] } {
+    return
+}
+
+if { [istarget i386-*-linuxaout*] \
+     || [istarget i486-*-linuxaout*] \
+     || [istarget i586-*-linuxaout*] \
+     || [istarget i386-*-linuxoldld*] \
+     || [istarget i486-*-linuxoldld*] \
+     || [istarget i586-*-linuxoldld*] \
+     || [istarget m68k-*-linuxaout*] } {
     return
 }
 
@@ -136,23 +151,26 @@ proc shared_test { progname testname main sh1 sh2 dat } {
     pass "$testname"
 }
 
-# Unfortunately, the gcc argument is -fpic and the cc argument is
-# -KPIC.  We have to try both.
-
-set picflag "-fpic"
-send_log "$CC $picflag\n"
-verbose "$CC $picflag"
-catch "exec $CC $picflag" exec_output
-send_log "$exec_output\n"
-verbose "--" "$exec_output"
-if { [string match "*illegal option*" $exec_output] \
-     || [string match "*option ignored*" $exec_output] \
-     || [string match "*unrecognized option*" $exec_output] \
-     || [string match "*passed to ld*" $exec_output] } {
-    if [istarget *-*-sunos4*] {
-	set picflag "-pic"
-    } else {
-	set picflag "-KPIC"
+if [istarget mips*-*-*] {
+    set picflag ""
+} else {
+    # Unfortunately, the gcc argument is -fpic and the cc argument is
+    # -KPIC.  We have to try both.
+    set picflag "-fpic"
+    send_log "$CC $picflag\n"
+    verbose "$CC $picflag"
+    catch "exec $CC $picflag" exec_output
+    send_log "$exec_output\n"
+    verbose "--" "$exec_output"
+    if { [string match "*illegal option*" $exec_output] \
+	 || [string match "*option ignored*" $exec_output] \
+	 || [string match "*unrecognized option*" $exec_output] \
+	 || [string match "*passed to ld*" $exec_output] } {
+	if [istarget *-*-sunos4*] {
+	    set picflag "-pic"
+	} else {
+	    set picflag "-KPIC"
+	}
     }
 }
 verbose "Using $picflag to compile PIC code"

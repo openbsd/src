@@ -14,12 +14,10 @@ SECTIONS
     ${RELOCATING+etext = .;}
     ${RELOCATING+_etext = .;}
     ${RELOCATING+__etext = .;}
-    ${PAD_TEXT+${RELOCATING+. = ${DATA_ALIGNMENT};}}
   }
-  ${RELOCATING+. = ${DATA_ALIGNMENT};}
-  .rodata  ${RELOCATING-0} : { *(.rodata)  }
   .data :
   {
+    *(.rodata)
     *(.data)
     ${CONSTRUCTING+CONSTRUCTORS}
     ${RELOCATING+edata  =  .;}

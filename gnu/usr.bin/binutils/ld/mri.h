@@ -1,5 +1,5 @@
 /* mri.h -- header file for MRI scripting functions
-   Copyright 1993 Free Software Foundation, Inc.
+   Copyright 1993, 95, 1996 Free Software Foundation, Inc.
 
 This file is part of GLD, the Gnu Linker.
 
@@ -34,5 +34,6 @@ extern void mri_public PARAMS ((const char *name, etree_type *exp));
 extern void mri_align PARAMS ((const char *name, etree_type *exp));
 extern void mri_alignmod PARAMS ((const char *name, etree_type *exp));
 extern void mri_truncate PARAMS ((unsigned int exp));
+extern void mri_draw_tree PARAMS ((void));
 
 #endif

@@ -1,7 +1,8 @@
 /* m88k.c -- Assembler for the Motorola 88000
    Contributed by Devon Bowen of Buffalo University
    and Torbjorn Granlund of the Swedish Institute of Computer Science.
-   Copyright (C) 1989, 1990, 1991, 1993 Free Software Foundation, Inc.
+   Copyright (C) 1989, 90, 91, 92, 93, 94, 95, 1996
+   Free Software Foundation, Inc.
 
 This file is part of GAS, the GNU Assembler.
 
@@ -1432,11 +1433,12 @@ md_pcrel_from (fixp)
 /* When we align the .init section, insert the correct NOP pattern.  */
 
 int
-m88k_do_align (n, fill)
+m88k_do_align (n, fill, len)
      int n;
      const char *fill;
+     int len;
 {
-  if (!fill
+  if ((fill == NULL || (*fill == 0 && len == 1))
       && strcmp (obj_segment_name (now_seg), ".init") == 0)
     {
       static const unsigned char nop_pattern[] = { 0xf4, 0x00, 0x58, 0x00 };

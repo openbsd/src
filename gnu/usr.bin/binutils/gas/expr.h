@@ -100,26 +100,27 @@ typedef enum
   /* (X_add_symbol && X_op_symbol) + X_add_number.  */
   O_logical_and,
   /* (X_add_symbol || X_op_symbol) + X_add_number.  */
-  O_logical_or
+  O_logical_or,
+  /* this must be the largest value */
+  O_max
 } operatorT;
 
 typedef struct expressionS
 {
-  /* The type of the expression.  */
-  operatorT X_op;
   /* The main symbol.  */
   struct symbol *X_add_symbol;
   /* The second symbol, if needed.  */
   struct symbol *X_op_symbol;
   /* A number to add.  */
   offsetT X_add_number;
+  /* The type of the expression.  */
+  unsigned X_op : 5;
   /* Non-zero if X_add_number should be regarded as unsigned.  This is
      only valid for O_constant expressions.  It is only used when an
      O_constant must be extended into a bignum (i.e., it is not used
      when performing arithmetic on these values).
-     FIXME: This field is not set very reliably.
-     If we ever need more flags here, we can make them bitfields.  */
-  int X_unsigned;
+     FIXME: This field is not set very reliably.  */
+  unsigned int X_unsigned : 1;
 } expressionS;
 
 /* "result" should be type (expressionS *). */

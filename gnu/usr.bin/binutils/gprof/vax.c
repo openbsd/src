@@ -21,7 +21,6 @@
 #include "core.h"
 #include "hist.h"
 #include "symtab.h"
-#include "vax.h"
 
 /*
  * A symbol to be the child of indirect calls:

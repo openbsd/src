@@ -45,6 +45,9 @@ char const *const seg_name[] =
   "absolute",
 #ifdef MANY_SEGMENTS
   "e0", "e1", "e2", "e3", "e4", "e5", "e6", "e7", "e8", "e9",
+  "e10", "e11", "e12", "e13", "e14", "e15", "e16", "e17", "e18", "e19",
+  "e20", "e21", "e22", "e23", "e24", "e25", "e26", "e27", "e28", "e29",
+  "e30", "e31", "e32", "e33", "e34", "e35", "e36", "e37", "e38", "e39",
 #else
   "text",
   "data",
@@ -513,32 +516,81 @@ section_symbol (sec)
     abort ();
   if (seginfo->sym)
     return seginfo->sym;
-  s = symbol_find (sec->name);
-  if (!s)
-    {
+
 #ifndef EMIT_SECTION_SYMBOLS
 #define EMIT_SECTION_SYMBOLS 1
 #endif
 
-      if (! EMIT_SECTION_SYMBOLS
+  if (! EMIT_SECTION_SYMBOLS
 #ifdef BFD_ASSEMBLER
-	  && symbol_table_frozen
+      && symbol_table_frozen
 #endif
-	  )
-	/* Here we know it won't be going into the symbol table.  */
-	s = symbol_create (sec->name, sec, 0, &zero_address_frag);
-      else
-	s = symbol_new (sec->name, sec, 0, &zero_address_frag);
-      S_CLEAR_EXTERNAL (s);
+      )
+    /* Here we know it won't be going into the symbol table.  */
+    s = symbol_create (sec->name, sec, 0, &zero_address_frag);
+  else
+    s = symbol_new (sec->name, sec, 0, &zero_address_frag);
+  S_CLEAR_EXTERNAL (s);
 
-      /* Use the BFD section symbol, if possible.  */
-      if (obj_sec_sym_ok_for_reloc (sec))
-	s->bsym = sec->symbol;
-    }
+  /* Use the BFD section symbol, if possible.  */
+  if (obj_sec_sym_ok_for_reloc (sec))
+    s->bsym = sec->symbol;
+
   seginfo->sym = s;
   return s;
 }
 
 #endif /* BFD_ASSEMBLER */
+
+void
+subsegs_print_statistics (file)
+     FILE *file;
+{
+  frchainS *frchp;
+  fprintf (file, "frag chains:\n");
+  for (frchp = frchain_root; frchp; frchp = frchp->frch_next)
+    {
+      int count = 0;
+      fragS *fragp;
+
+      /* If frch_subseg is non-zero, it's probably been chained onto
+	 the end of a previous subsection.  Don't count it again.  */
+      if (frchp->frch_subseg != 0)
+	continue;
+
+      /* Skip gas-internal sections.  */
+      if (segment_name (frchp->frch_seg)[0] == '*')
+	continue;
+
+      for (fragp = frchp->frch_root; fragp; fragp = fragp->fr_next)
+	{
+#if 0
+	  switch (fragp->fr_type)
+	    {
+	    case rs_fill:
+	      fprintf (file, "f"); break;
+	    case rs_align:
+	      fprintf (file, "a"); break;
+	    case rs_align_code:
+	      fprintf (file, "c"); break;
+	    case rs_org:
+	      fprintf (file, "o"); break;
+	    case rs_machine_dependent:
+	      fprintf (file, "m"); break;
+	    case rs_space:
+	      fprintf (file, "s"); break;
+	    case 0:
+	      fprintf (file, "0"); break;
+	    default:
+	      fprintf (file, "?"); break;
+	    }
+#endif
+	  count++;
+	}
+      fprintf (file, "\n");
+      fprintf (file, "\t%p %-10s\t%10d frags\n", frchp,
+	       segment_name (frchp->frch_seg), count);
+    }
+}
 
 /* end of subsegs.c */

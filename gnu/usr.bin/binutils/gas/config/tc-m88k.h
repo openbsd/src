@@ -1,8 +1,8 @@
-
 /* m88k.h -- Assembler for the Motorola 88000
    Contributed by Devon Bowen of Buffalo University
    and Torbjorn Granlund of the Swedish Institute of Computer Science.
-   Copyright (C) 1989, 1990, 1991, 1992, 1993 Free Software Foundation, Inc.
+   Copyright (C) 1989, 90, 91, 92, 93, 94, 95, 1996
+   Free Software Foundation, Inc.
 
 This file is part of GAS, the GNU Assembler.
 
@@ -98,7 +98,7 @@ struct reloc_info_m88k
 
 /* We use a special alignment function to insert the correct nop
    pattern in .init.  */
-extern int m88k_do_align PARAMS ((int, const char *));
-#define md_do_align(n,fill,l)	if (m88k_do_align(n,fill)) goto l
+extern int m88k_do_align PARAMS ((int, const char *, int));
+#define md_do_align(n,fill,len,l) if (m88k_do_align(n,fill,len)) goto l
 
 #endif /* M88KCOFF */

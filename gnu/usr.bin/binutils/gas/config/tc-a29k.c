@@ -1081,6 +1081,48 @@ md_show_usage (stream)
 {
 }
 
+/* This is called when a line is unrecognized.  This is used to handle
+   definitions of a29k style local labels.  */
+
+int
+a29k_unrecognized_line (c)
+     int c;
+{
+  int lab;
+  char *s;
+
+  if (c != '$'
+      || ! isdigit ((unsigned char) input_line_pointer[0]))
+    return 0;
+
+  s = input_line_pointer;
+
+  lab = 0;
+  while (isdigit ((unsigned char) *s))
+    {
+      lab = lab * 10 + *s - '0';
+      ++s;
+    }
+
+  if (*s != ':')
+    {
+      /* Not a label definition.  */
+      return 0;
+    }
+
+  if (dollar_label_defined (lab))
+    {
+      as_bad ("label \"$%d\" redefined", lab);
+      return 0;
+    }
+
+  define_dollar_label (lab);
+  colon (dollar_label_name (lab, 0));
+  input_line_pointer = s + 1;
+
+  return 1;
+}
+
 /* Default the values of symbols known that should be "predefined".  We
    don't bother to predefine them unless you actually use one, since there
    are a lot of them.  */
@@ -1158,6 +1200,31 @@ md_operand (expressionP)
       else
 	expressionP->X_op = O_constant;
     }
+  else if (input_line_pointer[0] == '$'
+	   && isdigit ((unsigned char) input_line_pointer[1]))
+    {
+      long lab;
+      char *name;
+      symbolS *sym;
+
+      /* This is a local label.  */
+      ++input_line_pointer;
+      lab = (long) get_absolute_expression ();
+      if (dollar_label_defined (lab))
+	{
+	  name = dollar_label_name (lab, 0);
+	  sym = symbol_find (name);
+	}
+      else
+	{
+	  name = dollar_label_name (lab, 1);
+	  sym = symbol_find_or_make (name);
+	}
+
+      expressionP->X_op = O_symbol;
+      expressionP->X_add_symbol = sym;
+      expressionP->X_add_number = 0;
+    }
   else if (input_line_pointer[0] == '$')
     {
       char *s;
@@ -1193,7 +1260,6 @@ md_operand (expressionP)
 	}
       else 
 	{
-	  /* FIXME: We should handle a29k local labels here.  */
 	  return;
 	}
 

@@ -200,6 +200,16 @@ motorola_operand:
 		  else
 		    op->mode = DISP;
 		}
+	| '(' zapc ',' EXPR ')'
+		{
+		  op->reg = $2;
+		  op->disp = $4;
+		  if (($2 >= ZADDR0 && $2 <= ZADDR7)
+		      || $2 == ZPC)
+		    op->mode = BASE;
+		  else
+		    op->mode = DISP;
+		}
 	| EXPR '(' zapc ')'
 		{
 		  op->reg = $3;
@@ -708,6 +718,7 @@ yylex ()
   char *s;
   int parens;
   int c = 0;
+  int tail = 0;
   char *hold;
 
   if (*str == ' ')
@@ -719,12 +730,21 @@ yylex ()
   /* Various special characters are just returned directly.  */
   switch (*str)
     {
+    case '@':
+      /* In MRI mode, this can be the start of an octal number.  */
+      if (flag_mri)
+	{
+	  if (isdigit (str[1])
+	      || ((str[1] == '+' || str[1] == '-')
+		  && isdigit (str[2])))
+	    break;
+	}
+      /* Fall through.  */
     case '#':
     case '&':
     case ',':
     case ')':
     case '/':
-    case '@':
     case '[':
     case ']':
       return *str++;
@@ -906,7 +926,7 @@ yylex ()
   yylval.exp.size = SIZE_UNSPEC;
   if (s <= str + 2
       || (s[-2] != '.' && s[-2] != ':'))
-    s = NULL;
+    tail = 0;
   else
     {
       switch (s[-1])
@@ -926,14 +946,52 @@ yylex ()
 	  yylval.exp.size = SIZE_LONG;
 	  break;
 	default:
-	  s = NULL;
 	  break;
 	}
       if (yylval.exp.size != SIZE_UNSPEC)
-	{
-	  c = s[-2];
-	  s[-2] = '\0';
-	}
+	tail = 2;
+    }
+
+#ifdef OBJ_ELF
+  {
+    /* Look for @PLTPC, etc.  */
+    char *cp;
+
+    yylval.exp.pic_reloc = pic_none;
+    cp = s - tail;
+    if (cp - 6 > str && cp[-6] == '@')
+      {
+	if (strncmp (cp - 6, "@PLTPC", 6) == 0)
+	  {
+	    yylval.exp.pic_reloc = pic_plt_pcrel;
+	    tail += 6;
+	  }
+	else if (strncmp (cp - 6, "@GOTPC", 6) == 0)
+	  {
+	    yylval.exp.pic_reloc = pic_got_pcrel;
+	    tail += 6;
+	  }
+      }
+    else if (cp - 4 > str && cp[-4] == '@')
+      {
+	if (strncmp (cp - 4, "@PLT", 4) == 0)
+	  {
+	    yylval.exp.pic_reloc = pic_plt_off;
+	    tail += 4;
+	  }
+	else if (strncmp (cp - 4, "@GOT", 4) == 0)
+	  {
+	    yylval.exp.pic_reloc = pic_got_off;
+	    tail += 4;
+	  }
+      }
+  }
+#endif
+
+  if (tail != 0)
+    {
+      c = s[-tail];
+      s[-tail] = 0;
     }
 
   hold = input_line_pointer;
@@ -942,9 +1000,9 @@ yylex ()
   str = input_line_pointer;
   input_line_pointer = hold;
 
-  if (s != NULL)
+  if (tail != 0)
     {
-      s[-2] = c;
+      s[-tail] = c;
       str = s;
     }
 

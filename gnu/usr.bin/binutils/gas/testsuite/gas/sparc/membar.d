@@ -1,3 +1,4 @@
+#as: -Av9
 #objdump: -dr
 #name: sparc64 membar
 

@@ -1,21 +1,23 @@
 #!/bin/sh
 # genscripts.sh - generate the ld-emulation-target specific files
 #
-# Usage: genscripts.sh srcdir libdir host_alias target_alias \
-# default_emulation this_emulation
+# Usage: genscripts.sh srcdir libdir host target target_alias \
+# default_emulation native_lib_dirs this_emulation tool_dir
 #
 # Sample usage:
 # genscripts.sh /djm/ld-devo/devo/ld /usr/local/lib sparc-sun-sunos4.1.3 \
-# sparc-sun-sunos4.1.3 sun4 sun3
+# sparc-sun-sunos4.1.3 sparc-sun-sunos4.1.3 sun4 "" sun3 sparc-sun-sunos4.1.3
 # produces sun3.x sun3.xbn sun3.xn sun3.xr sun3.xu em_sun3.c
 
 srcdir=$1
 libdir=$2
-host_alias=$3
-target_alias=$4
-DEFAULT_EMULATION=$5
-NATIVE_LIB_DIRS=$6
-EMULATION_NAME=$7
+host=$3
+target=$4
+target_alias=$5
+DEFAULT_EMULATION=$6
+NATIVE_LIB_DIRS=$7
+EMULATION_NAME=$8
+tool_lib=`echo ${libdir} | sed -e 's|/lib$||'`/${9-$target_alias}/lib
 
 # Include the emulation-specific parameters:
 . ${srcdir}/emulparams/${EMULATION_NAME}.sh
@@ -34,7 +36,7 @@ fi
 # To force a logically empty LIB_PATH, do LIBPATH=":".
 
 if [ "x${LIB_PATH}" = "x" ] ; then
-  if [ "x${host_alias}" = "x${target_alias}" ] ; then
+  if [ "x${host}" = "x${target}" ] ; then
     if [ "x${DEFAULT_EMULATION}" = "x${EMULATION_NAME}" ] ; then
       # Native.
       LIB_PATH=/lib:/usr/lib
@@ -58,7 +60,7 @@ if [ "x${LIB_PATH}" = "x" ] ; then
 fi
 
 # Always search $(tooldir)/lib, aka /usr/local/TARGET/lib.
-LIB_PATH=${LIB_PATH}:`echo ${libdir} | sed -e s'|/lib$||'`/${target_alias}/lib
+LIB_PATH=${LIB_PATH}:${tool_lib}
 
 LIB_SEARCH_DIRS=`echo ${LIB_PATH} | tr ':' ' ' | sed -e 's/\([^ ][^ ]*\)/SEARCH_DIR(\1);/g'`
 

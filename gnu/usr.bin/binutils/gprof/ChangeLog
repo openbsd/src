@@ -1,4 +1,133 @@
-Thu Nov 16 17:34:01 1995  Ken Raeburn  <raeburn@cygnus.com>
+Mon Apr  8 14:44:33 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* configure.in: Permit --enable-shared to specify a list of
+	directories.
+	* configure: Rebuild.
+
+Thu Mar 21 17:18:25 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* core.c (core_create_function_syms): Move filename and func_name
+	inside ifdef where they are used.
+
+	* core.c (core_sym_class): Parenthesize && within ||.
+	* symtab.c (symtab_finalize): Correct parenthesization.
+
+	* cg_print.h (cg_print_file_ordering): Declare.
+	(cg_print_function_ordering): Declare.
+
+	* __bb_exit_func.c (__bb_exit_func): Replace bcopy with memcpy.
+	* cg_arcs.c (arc_add): Likewise.
+	* cg_print.c (cg_print_function_ordering): Likewise.
+
+Thu Mar 21 17:02:02 1996  David Mosberger-Tang  <davidm@azstarnet.com>
+
+	* gprof.c (default_excluded_list): Add "__mcount".
+
+	* gprof.c (main): Change ifdef __osf__ to __alpha__.
+
+	* gmon_io.c (gmon_out_read): If BSD44_FORMAT is defined, get the
+	profiling rate from the header.
+
+	* gmon.h (struct raw_phdr): Only include pad if both __alpha__ and
+	__osf__ are defined.  Add new fields if BSD44_FORMAT is defined.
+
+	* alpha.h (MIN_INSN_SIZE): Define.
+	* core.c (MIN_INSN_SIZE): If not defined, define as 1.
+	(core_sym_class): Ignore debugging symbols.
+	(core_create_line_syms): Use MIN_INSN_SIZE when gathering line
+	information.
+
+Wed Mar 20 18:15:47 1996  Andreas Schwab  <schwab@issan.informatik.uni-dortmund.de>
+
+	* cg_print.c (cg_print_function_ordering): Fix __GNUC__ misspelled
+	as __GNU_C__.
+	(order_and_dump_functions_by_arcs): Likewise.
+
+Tue Mar 12 12:19:50 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* configure: Rebuild with autoconf 2.8.
+
+Sun Feb 18 15:06:18 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* configure.in: Check for 'do not mix' from native linker before
+ 	trying to use -rpath.
+	* configure: Rebuild.
+
+Tue Feb 13 15:32:53 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* configure.in: Set HDLFLAGS for *-*-hpux with --enable-shared.
+	* configure: Rebuild.
+
+Wed Feb  7 14:03:17 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* configure.in: Don't set CC.  Look for --enable-shared.  Set
+	BFDLIB and HLDFLAGS and substitute them.
+	* configure: Rebuild.
+	* Makefile.in (LIBS): Use @BFDLIB@.
+	(HLDFLAGS): New variable.
+	(gprof): Use $(HLDFLAGS).
+
+Mon Feb  5 16:34:44 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	Support for building bfd and opcodes as shared libraries, based on
+	patches from Alan Modra <alan@spri.levels.unisa.edu.au>:
+	* Makefile.in (LIBDEPS): New variable.
+	(LIBS): Use -L../bfd -lbfd.
+	(gprof): Depend upon $(LIBDEPS) rather than $(LIBS).
+
+Sat Dec 30 10:11:03 1995  Jeffrey A Law  (law@cygnus.com)
+
+	* gprof.c (long_options): Add "--function-ordering" and
+	"--file-ordering" options.
+	(usage): Add new options to usage message.
+	(main): Handle new options.
+	* gprof.h (STYLE_FUNCTION_ORDER): Define.
+	(STYLE_FILE_ORDER): Define.
+	(function_mapping_file): Declare.
+	* cg_arcs.c (arcs, numarcs): New globals.
+	(arc_add): Put new arcs into the arc array so the function/file
+	ordering code can examine them.
+	* cg_arcs.h (struct arc): New field "has_been_placed".
+	(arcs, numarcs): Declare new globals.
+	* core.c (symbol_map, symbol_map_count): New globals.
+	(read_function_mappings): New function to read in a function
+	to object map file.
+	(core_init): Call read_function_mappings if a function mapping
+	file exists.
+	(core_create_function_syms): Handle function to object file
+	mappings.
+	* symtab.h (struct sym): New fields "mapped", "has_been_placed",
+	"nuses", "prev".
+	* cg_print.c (cmp_arc_count): New function for sorting arcs.
+	(cmp_fun_nuses): Likewise for functions.
+	(cg_print_function_ordering): New function to print a suggested
+	function ordering.
+	(cg_print_file_ordering): Likewise for ordering .o files.
+	(order_and_dump_functions_by_arcs): Helper function for function
+	and object file ordering code.
+
+Sun Dec 24 21:32:27 1995  Jeffrey A Law  (law@cygnus.com)
+
+	* core.c (core_sym_class): Ignore symbols without BSF_FUNCTION
+	set if ignore_non_function is set.
+	* gprof.h (ignore_non_functions): Declare.
+	* gprof.c (ignore_non_functions): Define.
+	(long_options): Add "ignore-non-functions".
+	(usage): Add new options.
+	(main): Recognize "-D" and "--ignore-non-functions" option.
+
+Tue Nov 21 13:24:39 1995  Ken Raeburn  <raeburn@cygnus.com>
+
+	* Makefile.in (.m.c): Strip out directory name from function
+	name.
+
+	* hist.c (scale_and_align_entries): Don't use DEFUN_VOID.  Do
+	UNITS_TO_CODE adjustment unconditionally; compiler can optimize
+	away zero-offset case.  Refer to scaled_addr, not aligned_addr.
+
+	* vax.c: Don't include vax.h here.
+
+Thu Nov 16 03:41:37 1995  Ken Raeburn  <raeburn@cygnus.com>
 
 	Version 2.6 released.
 

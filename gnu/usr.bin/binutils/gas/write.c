@@ -1,5 +1,5 @@
 /* write.c - emit .o file
-   Copyright (C) 1986, 87, 90, 91, 92, 93, 94, 1995
+   Copyright (C) 1986, 87, 90, 91, 92, 93, 94, 95, 1996
    Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
@@ -94,6 +94,8 @@ int magic_number_for_object_file = DEFAULT_MAGIC_NUMBER_FOR_OBJECT_FILE;
 
 #endif /* BFD_ASSEMBLER */
 
+static int n_fixups;
+
 #ifdef BFD_ASSEMBLER
 static fixS *fix_new_internal PARAMS ((fragS *, int where, int size,
 				       symbolS *add, symbolS *sub,
@@ -132,6 +134,8 @@ fix_new_internal (frag, where, size, add_symbol, sub_symbol, offset, pcrel,
 #endif
 {
   fixS *fixP;
+
+  n_fixups++;
 
   fixP = (fixS *) obstack_alloc (&notes, sizeof (fixS));
 
@@ -268,10 +272,12 @@ fix_new_exp (frag, where, size, exp, pcrel, r_type)
 
 #if defined(BFD_ASSEMBLER)
       r_type = BFD_RELOC_RVA;
-#elif defined(TC_RVA_RELOC)
+#else
+#if defined(TC_RVA_RELOC)
       r_type = TC_RVA_RELOC;
 #else
       as_fatal("rva not supported");
+#endif
 #endif
       break;
 
@@ -799,12 +805,23 @@ write_relocs (abfd, sec, xxx)
     {
       arelent *reloc;
       bfd_reloc_status_type s;
+      symbolS *sym;
 
       if (fixp->fx_done)
 	{
 	  n--;
 	  continue;
 	}
+
+      /* If this is an undefined symbol which was equated to another
+         symbol, then use generate the reloc against the latter symbol
+         rather than the former.  */
+      sym = fixp->fx_addsy;
+      while (sym->sy_value.X_op == O_symbol
+	     && (! S_IS_DEFINED (sym) || S_IS_COMMON (sym)))
+	sym = sym->sy_value.X_add_symbol;
+      fixp->fx_addsy = sym;
+
       reloc = tc_gen_reloc (sec, fixp);
       if (!reloc)
 	{
@@ -844,6 +861,7 @@ write_relocs (abfd, sec, xxx)
       arelent **reloc;
       char *data;
       bfd_reloc_status_type s;
+      symbolS *sym;
       int j;
 
       if (fixp->fx_done)
@@ -851,6 +869,16 @@ write_relocs (abfd, sec, xxx)
 	  n--;
 	  continue;
 	}
+
+      /* If this is an undefined symbol which was equated to another
+         symbol, then use generate the reloc against the latter symbol
+         rather than the former.  */
+      sym = fixp->fx_addsy;
+      while (sym->sy_value.X_op == O_symbol
+	     && (! S_IS_DEFINED (sym) || S_IS_COMMON (sym)))
+	sym = sym->sy_value.X_add_symbol;
+      fixp->fx_addsy = sym;
+
       reloc = tc_gen_reloc (sec, fixp);
 
       for (j = 0; reloc[j]; j++)
@@ -1642,6 +1670,15 @@ write_object_file ()
 		resolve_symbol_value (symp);
 	    }
 
+	  /* Skip symbols which were equated to undefined or common
+             symbols.  */
+	  if (symp->sy_value.X_op == O_symbol
+	      && (! S_IS_DEFINED (symp) || S_IS_COMMON (symp)))
+	    {
+	      symbol_remove (symp, &symbol_rootP, &symbol_lastP);
+	      continue;
+	    }
+
 	  /* So far, common symbols have been treated like undefined symbols.
 	     Put them in the common section now.  */
 	  if (S_IS_DEFINED (symp) == 0
@@ -2405,8 +2442,10 @@ fixup_segment (fixP, this_segment_type)
 	      else
 		{
 		  seg_reloc_count++;
+#if !(defined (TC_M68K) && defined (OBJ_ELF))
 #if !defined (TC_I386) || !(defined (OBJ_ELF) || defined (OBJ_COFF))
 		  add_number += S_GET_VALUE (add_symbolP);
+#endif
 #endif
 		}
 	    }
@@ -2532,6 +2571,13 @@ number_to_chars_littleendian (buf, val, n)
       *buf++ = val & 0xff;
       val >>= 8;
     }
+}
+
+void
+write_print_statistics (file)
+     FILE *file;
+{
+  fprintf (stderr, "fixups: %d\n", n_fixups);
 }
 
 /* for debugging */

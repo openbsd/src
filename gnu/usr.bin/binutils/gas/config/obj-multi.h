@@ -23,7 +23,8 @@
 #endif
 
 #ifdef OBJ_MAYBE_ELF
-#define ELF_TARGET_SYMBOL_FIELDS int local:1; unsigned long sy_name_offset;
+#define OBJ_SYMFIELD_TYPE expressionS *
+#define ELF_TARGET_SYMBOL_FIELDS int local:1;
 #else
 #define ELF_TARGET_SYMBOL_FIELDS
 #endif

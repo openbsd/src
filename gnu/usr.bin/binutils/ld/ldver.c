@@ -1,4 +1,5 @@
-/* Copyright (C) 1991 Free Software Foundation, Inc.
+/* ldver.c -- Print linker version.
+   Copyright (C) 1991, 92, 93, 94, 95, 1996 Free Software Foundation, Inc.
 
 This file is part of GLD, the Gnu Linker.
 
@@ -29,60 +30,17 @@ void
 ldversion (noisy)
      int noisy;
 {
-  fprintf(stdout,"ld version 2.6 (with BFD %s)\n", BFD_VERSION);
+  fprintf (stdout,"ld version cygnus-2.6 (with BFD %s)\n", BFD_VERSION);
 
   if (noisy) 
-  {
-    ld_emulation_xfer_type **ptr = ld_emulations;
-    
-    printf("  Supported emulations:\n");
-    while (*ptr) 
     {
-      printf("   %s \n", (*ptr)->emulation_name);
-      ptr++;
+      ld_emulation_xfer_type **ptr = ld_emulations;
+    
+      printf ("  Supported emulations:\n");
+      while (*ptr) 
+	{
+	  printf ("   %s\n", (*ptr)->emulation_name);
+	  ptr++;
+	}
     }
-  }
-}
-
-void
-help ()
-{
-  extern bfd_target *bfd_target_vector[];
-  int t;
-
-  printf ("\
-Usage: %s [-o output] objfile...\n\
-Options:\n\
-       [-A architecture] [-b input-format]\n\
-       [-Bstatic] [-Bdynamic] [-Bsymbolic] [-base-file file]\n\
-       [-c MRI-commandfile] [-d | -dc | -dp]\n\
-       [-defsym symbol=expression] [-dynamic-linker filename]\n",
-	  program_name);
-  puts ("\
-       [-EB | -EL] [-e entry] [-embeddded-relocs] [-export-dynamic]\n\
-       [-F] [-Fformat] [-format input-format] [-g] [-G size]\n\
-       [-heap reserve[,commit]] [-help] [-i]\n\
-       [-l archive] [-L searchdir] [-M] [-Map mapfile]\n\
-       [-m emulation] [-N | -n] [-no-keep-memory] [-noinhibit-exec]\n\
-       [-oformat output-format] [-R filename] [-relax]");
-  puts ("\
-       [-retain-symbols-file file] [-rpath path] [-shared] [-soname name]\n\
-       [-r | -Ur] [-S] [-s] [-sort-common] [-stack reserve[,commit]]\n\
-       [-split-by-reloc count] [-split-by-file]\n\
-       [-stats] [-subsystem type] [-T commandfile]\n\
-       [-Ttext textorg] [-Tdata dataorg] [-Tbss bssorg] [-t]");
-  puts ("\
-       [-traditional-format] [-u symbol] [-V] [-v] [-verbose]\n\
-       [-version] [-warn-common] [-warn-constructors] [-warn-once]\n\
-       [-whole-archive] [-X] [-x] [-y symbol]\n\
-       [-( archives -)] [--start-group archives --end-group]");
-
-  printf ("%s: supported targets:", program_name);
-  for (t = 0; bfd_target_vector[t] != NULL; t++)
-    printf (" %s", bfd_target_vector[t]->name);
-  printf ("\n");
-
-  printf ("%s: supported emulations: ", program_name);
-  ldemul_list_emulations (stdout);
-  printf ("\n");
 }

@@ -3,12 +3,111 @@
 #include "core.h"
 #include "symtab.h"
 
+#ifndef MIN_INSN_SIZE
+/* If not defined in MACHINE_H, assume smallest instruction is 1 byte
+   long.  THis is safe but may be needlessly slow on machines where
+   all instructions are longer.  */
+#define MIN_INSN_SIZE 1
+#endif
+
 bfd *core_bfd;
 int core_num_syms;
 asymbol **core_syms;
 asection *core_text_sect;
 PTR core_text_space;
 
+/* For mapping symbols to specific .o files during file ordering.  */
+struct function_map {
+  char *function_name;
+  char *file_name;
+};
+
+struct function_map *symbol_map;
+int symbol_map_count;
+
+static void
+DEFUN (read_function_mappings, (filename), const char *filename)
+{
+  FILE *file = fopen (filename, "r");
+  char dummy[1024];
+  int count = 0;
+
+  if (!file)
+    {
+      fprintf (stderr, "%s: could not open %s.\n", whoami, filename);
+      done (1);
+    }
+
+  /* First parse the mapping file so we know how big we need to
+     make our tables.  We also do some sanity checks at this
+     time.  */
+  while (!feof (file))
+    {
+      int matches;
+
+      matches = fscanf (file, "%[^\n:]", dummy);
+      if (!matches)
+	{
+	  fprintf (stderr, "%s: unable to parse mapping file %s.\n",
+		   whoami, filename);
+	  done (1);
+	}
+
+      /* Just skip messages about files with no symbols.  */
+      if (!strncmp (dummy, "No symbols in ", 14))
+	{
+	  fscanf (file, "\n");
+	  continue;
+	}
+
+      /* Don't care what else is on this line at this point.  */
+      fscanf (file, "%[^\n]\n", dummy);
+      count++;
+    }
+
+  /* Now we know how big we need to make our table.  */
+  symbol_map = xmalloc (count * sizeof (struct function_map));
+
+  /* Rewind the input file so we can read it again.  */
+  rewind (file);
+
+  /* Read each entry and put it into the table.  */
+  count = 0;
+  while (!feof (file))
+    {
+      int matches;
+      char *tmp;
+
+      matches = fscanf (file, "%[^\n:]", dummy);
+      if (!matches)
+	{
+	  fprintf (stderr, "%s: unable to parse mapping file %s.\n",
+		   whoami, filename);
+	  done (1);
+	}
+
+      /* Just skip messages about files with no symbols.  */
+      if (!strncmp (dummy, "No symbols in ", 14))
+	{
+	  fscanf (file, "\n");
+	  continue;
+	}
+
+      /* dummy has the filename, go ahead and copy it.  */
+      symbol_map[count].file_name = xmalloc (strlen (dummy) + 1);
+      strcpy (symbol_map[count].file_name, dummy);
+
+      /* Now we need the function name.  */
+      fscanf (file, "%[^\n]\n", dummy);
+      tmp = strrchr (dummy, ' ') + 1;
+      symbol_map[count].function_name = xmalloc (strlen (tmp) + 1);
+      strcpy (symbol_map[count].function_name, tmp);
+      count++;
+    }
+
+  /* Record the size of the map table for future reference.  */
+  symbol_map_count = count;
+}
 
 void
 DEFUN (core_init, (a_out_name), const char *a_out_name)
@@ -59,6 +158,9 @@ DEFUN (core_init, (a_out_name), const char *a_out_name)
 	       bfd_errmsg (bfd_get_error ()));
       done (1);
     }
+
+  if (function_mapping_file)
+    read_function_mappings (function_mapping_file);
 }
 
 
@@ -104,15 +206,15 @@ DEFUN (core_sym_class, (sym), asymbol * sym)
   char sym_prefix;
   int i;
 
-  /*
-   * Must be a text symbol, and static text symbols don't qualify if
-   * ignore_static_funcs set.
-   */
-  if (!sym->section)
+  if (sym->section == NULL || (sym->flags & BSF_DEBUGGING) != 0)
     {
       return 0;
     }
 
+  /*
+   * Must be a text symbol, and static text symbols don't qualify if
+   * ignore_static_funcs set.
+   */
   if (ignore_static_funcs && (sym->flags & BSF_LOCAL))
     {
       DBG (AOUTDEBUG, printf ("[core_sym_class] %s: not a function\n",
@@ -168,7 +270,7 @@ DEFUN (core_sym_class, (sym), asymbol * sym)
    * other systems.  Perhaps it should be made configurable.
    */
   sym_prefix = bfd_get_symbol_leading_char (core_bfd);
-  if (sym_prefix && sym_prefix != sym->name[0]
+  if ((sym_prefix && sym_prefix != sym->name[0])
   /*
    * GCC may add special symbols to help gdb figure out the file
    * language.  We want to ignore these, since sometimes they mask
@@ -179,6 +281,12 @@ DEFUN (core_sym_class, (sym), asymbol * sym)
     {
       return 0;
     }
+
+  /* If the object file supports marking of function symbols, then we can
+     zap anything that doesn't have BSF_FUNCTION set.  */
+  if (ignore_non_functions && (sym->flags & BSF_FUNCTION) == 0)
+    return 0;
+
   return 't';			/* it's a static text symbol */
 }
 
@@ -224,9 +332,8 @@ void
 DEFUN (core_create_function_syms, (core_bfd), bfd * core_bfd)
 {
   bfd_vma min_vma = ~0, max_vma = 0;
-  const char *filename, *func_name;
   int class;
-  long i;
+  long i, j, found, skip;
 
   /* pass 1 - determine upper bound on number of function names: */
   symtab.len = 0;
@@ -236,7 +343,24 @@ DEFUN (core_create_function_syms, (core_bfd), bfd * core_bfd)
 	{
 	  continue;
 	}
-      ++symtab.len;
+
+      /* This should be replaced with a binary search or hashed
+	 search.  Gross. 
+
+	 Don't create a symtab entry for a function that has
+	 a mapping to a file, unless it's the first function
+	 in the file.  */
+      skip = 0;
+      for (j = 0; j < symbol_map_count; j++)
+	if (!strcmp (core_syms[i]->name, symbol_map[j].function_name))
+	  {
+	    if (j > 0 && ! strcmp (symbol_map [j].file_name,
+			 	   symbol_map [j - 1].file_name))
+	      skip = 1;
+	    break;
+	  }
+      if (!skip)
+        ++symtab.len;
     }
 
   if (symtab.len == 0)
@@ -261,13 +385,41 @@ DEFUN (core_create_function_syms, (core_bfd), bfd * core_bfd)
 		       core_syms[i]->value, core_syms[i]->name));
 	  continue;
 	}
+      /* This should be replaced with a binary search or hashed
+	 search.  Gross.   */
+
+      skip = 0;
+      found = 0;
+      for (j = 0; j < symbol_map_count; j++)
+	if (!strcmp (core_syms[i]->name, symbol_map[j].function_name))
+	  {
+	    if (j > 0 && ! strcmp (symbol_map [j].file_name,
+			 	   symbol_map [j - 1].file_name))
+	      skip = 1;
+	    else
+	      found = j;
+	    break;
+	  }
+
+      if (skip)
+	continue;
 
       sym_init (symtab.limit);
 
       /* symbol offsets are always section-relative: */
 
       symtab.limit->addr = core_syms[i]->value + core_syms[i]->section->vma;
-      symtab.limit->name = core_syms[i]->name;
+      if (symbol_map_count
+	  && !strcmp (core_syms[i]->name, symbol_map[found].function_name))
+	{
+	  symtab.limit->name = symbol_map[found].file_name;
+	  symtab.limit->mapped = 1;
+	}
+      else
+	{
+	  symtab.limit->name = core_syms[i]->name;
+	  symtab.limit->mapped = 0;
+	}
 
 #ifdef __osf__
       /*
@@ -278,24 +430,28 @@ DEFUN (core_create_function_syms, (core_bfd), bfd * core_bfd)
        * labels do not appear in the symbol table info, so this isn't
        * necessary.
        */
-      if (get_src_info (symtab.limit->addr, &filename, &func_name,
-			&symtab.limit->line_num))
-	{
-	  symtab.limit->file = source_file_lookup_path (filename);
+      {
+	const char *filename, *func_name;
+	
+	if (get_src_info (symtab.limit->addr, &filename, &func_name,
+			  &symtab.limit->line_num))
+	  {
+	    symtab.limit->file = source_file_lookup_path (filename);
 
-	  if (strcmp (symtab.limit->name, func_name) != 0)
-	    {
-	      /*
-	       * The symbol's address maps to a different name, so
-	       * it can't be a function-entry point.  This happens
-	       * for labels, for example.
-	       */
-	      DBG (AOUTDEBUG,
-		printf ("[core_create_function_syms: rej %s (maps to %s)\n",
-			symtab.limit->name, func_name));
-	      continue;
-	    }
-	}
+	    if (strcmp (symtab.limit->name, func_name) != 0)
+	      {
+		/*
+		 * The symbol's address maps to a different name, so
+		 * it can't be a function-entry point.  This happens
+		 * for labels, for example.
+		 */
+		DBG (AOUTDEBUG,
+		     printf ("[core_create_function_syms: rej %s (maps to %s)\n",
+			     symtab.limit->name, func_name));
+		continue;
+	      }
+	  }
+      }
 #endif
 
       symtab.limit->is_func = TRUE;
@@ -384,7 +540,7 @@ DEFUN (core_create_line_syms, (core_bfd), bfd * core_bfd)
   prev_offset = -min_dist;
   prev_filename[0] = '\0';
   prev_line_num = 0;
-  for (offset = 0; offset < core_text_sect->_raw_size; ++offset)
+  for (offset = 0; offset < core_text_sect->_raw_size; offset += MIN_INSN_SIZE)
     {
       vma = core_text_sect->vma + offset;
       if (!get_src_info (vma, &filename, &dummy.name, &dummy.line_num)

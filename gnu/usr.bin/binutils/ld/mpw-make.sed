@@ -54,14 +54,41 @@
 /ldemul-list.h/s/"{s}"ldemul-list\.h/"{o}"ldemul-list.h/g
 /ldemul-list.h/s/^ldemul-list\.h/"{o}"ldemul-list.h/
 
+# Edit pathnames to emulation files.
 /"{s}"e.*\.c/s/"{s}"e\([-_a-z0-9]*\)\.c/"{o}"e\1.c/g
 /^e.*\.c/s/^e\([-_a-z0-9]*\)\.c/"{o}"e\1.c/
+
+# We can't run genscripts, so don't try.
+/{GENSCRIPTS}/s/{GENSCRIPTS}/null-command/
+
+# Comment out the TDIRS bits.
+/^TDIRS@/s/^/#/
+
+# Point at the BFD library directly.
+/@BFDLIB@/s/@BFDLIB@/::bfd:libbfd.o/
+
+# Don't need this.
+/@HLDFLAGS@/s/@HLDFLAGS@//
 
 #/sed.*free/,/> "{o}"ldlex.c.new/c\
 #	\	Catenate "{o}"lex.yy.c >"{o}"ldlex.c.new
 
 # The resource file is called mac-ld.r.
 /{LD_PROG}.r/s/{LD_PROG}\.r/mac-ld.r/
+
+/^install \\Option-f /,/^$/c\
+install \\Option-f  all install-only\
+\
+install-only \\Option-f\
+	If "`Exists "{prefix}"`" == ""\
+		Echo "{prefix}" does not exist, cannot install anything\
+		Exit 1\
+	End If\
+	If "`Exists "{bindir}"`" == ""\
+		NewFolder "{bindir}"\
+	End If\
+	Duplicate -y :ld.new "{bindir}"ld\
+
 
 # Remove dependency rebuilding crud.
 /^.dep /,/# .PHONY /d

@@ -206,7 +206,7 @@ input_scrub_begin ()
   logical_input_file = (char *) NULL;
   physical_input_file = NULL;	/* No file read yet. */
   next_saved_file = NULL;	/* At EOF, don't pop to any other file */
-  do_scrub_begin ();
+  do_scrub_begin (flag_m68k_mri);
 }
 
 void

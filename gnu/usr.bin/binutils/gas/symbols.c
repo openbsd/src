@@ -1,5 +1,5 @@
 /* symbols.c -symbol table-
-   Copyright (C) 1987, 1990, 1991, 1992, 1993, 1994
+   Copyright (C) 1987, 1990, 1991, 1992, 1993, 1994, 1995, 1996
    Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
@@ -129,7 +129,8 @@ symbol_create (name, segment, valu, frag)
 
 #ifdef BFD_ASSEMBLER
   symbolP->bsym = bfd_make_empty_symbol (stdoutput);
-  assert (symbolP->bsym != 0);
+  if (symbolP->bsym == NULL)
+    as_perror ("%s", "bfd_make_empty_symbol");
   symbolP->bsym->udata.p = (PTR) symbolP;
 #endif
   S_SET_NAME (symbolP, preserved_copy_of_name);
@@ -172,7 +173,7 @@ colon (sym_name)		/* just seen "x:" - rattle symbols & frags */
 
   /* Sun local labels go out of scope whenever a non-local symbol is
      defined.  */
-  if (LOCAL_LABELS_DOLLAR && *sym_name != 'L')
+  if (LOCAL_LABELS_DOLLAR && ! LOCAL_LABEL (sym_name))
     dollar_label_clear ();
 
 #ifndef WORKING_DOT_WORD
@@ -664,33 +665,37 @@ resolve_symbol_value (symp)
 	      break;
 	    }
 
-#if 0 /* I thought this was needed for some of the i386-svr4 PIC
-	 support, but it appears I was wrong, and it breaks rs6000
-	 support.  */
-	  if (S_GET_SEGMENT (symp->sy_value.X_add_symbol) != undefined_section
-	      && S_GET_SEGMENT (symp->sy_value.X_add_symbol) != expr_section)
-#endif
-	    {
-	      if (symp->sy_value.X_add_number == 0)
-		copy_symbol_attributes (symp, symp->sy_value.X_add_symbol);
+	  if (symp->sy_value.X_add_number == 0)
+	    copy_symbol_attributes (symp, symp->sy_value.X_add_symbol);
 
-	      S_SET_VALUE (symp,
-			   (symp->sy_value.X_add_number
-			    + symp->sy_frag->fr_address
-			    + S_GET_VALUE (symp->sy_value.X_add_symbol)));
-	      if (S_GET_SEGMENT (symp) == expr_section
-		  || S_GET_SEGMENT (symp) == undefined_section)
-		S_SET_SEGMENT (symp,
-			       S_GET_SEGMENT (symp->sy_value.X_add_symbol));
-	    }
+	  S_SET_VALUE (symp,
+		       (symp->sy_value.X_add_number
+			+ symp->sy_frag->fr_address
+			+ S_GET_VALUE (symp->sy_value.X_add_symbol)));
+	  if (S_GET_SEGMENT (symp) == expr_section
+	      || S_GET_SEGMENT (symp) == undefined_section)
+	    S_SET_SEGMENT (symp,
+			   S_GET_SEGMENT (symp->sy_value.X_add_symbol));
+
+	  /* If we have equated this symbol to an undefined symbol, we
+             keep X_op set to O_symbol.  This permits the routine
+             which writes out relocation to detect this case, and
+             convert the relocation to be against the symbol to which
+             this symbol is equated.  */
+	  if (! S_IS_DEFINED (symp) || S_IS_COMMON (symp))
+	    symp->sy_value.X_op = O_symbol;
+
 	  resolved = symp->sy_value.X_add_symbol->sy_resolved;
 	  break;
 
 	case O_uminus:
 	case O_bit_not:
+	case O_logical_not:
 	  resolve_symbol_value (symp->sy_value.X_add_symbol);
 	  if (symp->sy_value.X_op == O_uminus)
 	    val = - S_GET_VALUE (symp->sy_value.X_add_symbol);
+	  else if (symp->sy_value.X_op == O_logical_not)
+	    val = ! S_GET_VALUE (symp->sy_value.X_add_symbol);
 	  else
 	    val = ~ S_GET_VALUE (symp->sy_value.X_add_symbol);
 	  S_SET_VALUE (symp,
@@ -1194,7 +1199,22 @@ S_GET_VALUE (s)
   if (!s->sy_resolved && !s->sy_resolving && s->sy_value.X_op != O_constant)
     resolve_symbol_value (s);
   if (s->sy_value.X_op != O_constant)
-    as_bad ("Attempt to get value of unresolved symbol %s", S_GET_NAME (s));
+    {
+      static symbolS *recur;
+
+      /* FIXME: In non BFD assemblers, S_IS_DEFINED and S_IS_COMMON
+         may call S_GET_VALUE.  We use a static symbol to avoid the
+         immediate recursion.  */
+      if (recur == s)
+	return (valueT) s->sy_value.X_add_number;
+      recur = s;
+      if (! s->sy_resolved
+	  || s->sy_value.X_op != O_symbol
+	  || (S_IS_DEFINED (s) && ! S_IS_COMMON (s)))
+	as_bad ("Attempt to get value of unresolved symbol %s",
+		S_GET_NAME (s));
+      recur = NULL;
+    }
   return (valueT) s->sy_value.X_add_number;
 }
 
@@ -1589,6 +1609,13 @@ print_expr (exp)
 {
   print_expr_1 (stderr, exp);
   fprintf (stderr, "\n");
+}
+
+void
+symbol_print_statistics (file)
+     FILE *file;
+{
+  hash_print_statistics (file, "symbol table", sy_hash);
 }
 
 /* end of symbols.c */

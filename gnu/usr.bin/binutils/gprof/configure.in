@@ -2,7 +2,15 @@ dnl Process this file with autoconf to produce a configure script.
 AC_PREREQ(2.3)dnl
 AC_INIT(gprof.c)
 
-CC=${CC-cc}
+AC_ARG_ENABLE(shared,
+[  --enable-shared         build shared BFD library],
+[case "${enableval}" in
+  yes) shared=true ;;
+  no)  shared=false ;;
+  *bfd*) shared=true ;;
+  *) shared=false ;;
+esac])dnl
+
 AC_PROG_CC
 
 AC_CANONICAL_SYSTEM
@@ -21,4 +29,63 @@ ns32k-*-*)	MY_TARGET=ns532;;
 esac
 
 AC_SUBST(MY_TARGET)
+
+BFDLIB='-L../bfd -lbfd'
+
+# We need to handle some special cases if BFD was built shared.
+if test "${shared}" = "true"; then
+  case "${host}" in
+  *-*-sunos*)
+  # On SunOS, we must link against the name we are going to install,
+  # not -lbfd, since SunOS does not support SONAME.
+  BFDLIB='-L../bfd -l`echo bfd | sed '"'"'$(program_transform_name)'"'"'`'
+  ;;
+  esac
+fi
+AC_SUBST(BFDLIB)
+
+HLDFLAGS=
+# If we have shared libraries, try to set rpath reasonably.
+if test "${shared}" = "true"; then
+  case "${host}" in
+  *-*-hpux*)
+    HLDFLAGS='-Wl,+s,+b,$(libdir)'
+    ;;
+  *-*-irix5*)
+    HLDFLAGS='-Wl,-rpath,$(libdir)'
+    ;;
+  *-*-linux*aout*)
+    ;;
+  *-*-linux*)
+    HLDFLAGS='-Wl,-rpath,$(libdir)'
+    ;;
+  *-*-sysv4* | *-*-solaris*)
+    HLDFLAGS='-R $(libdir)'
+    ;;
+  esac
+fi
+
+# On SunOS, if the linker supports the -rpath option, use it to
+# prevent ../bfd and ../opcodes from being included in the run time
+# search path.
+case "${host}" in
+  *-*-sunos*)
+    echo 'main () { }' > conftest.c
+    ${CC} -o conftest -Wl,-rpath= conftest.c >/dev/null 2>conftest.t
+    if grep 'unrecognized' conftest.t >/dev/null 2>&1; then
+      :
+    elif grep 'No such file' conftest.t >/dev/null 2>&1; then
+      :
+    elif grep 'do not mix' conftest.t >/dev/null 2>&1; then
+      :
+    elif test "${shared}" = "true"; then
+      HLDFLAGS='-Wl,-rpath=$(libdir)'
+    else
+      HLDFLAGS='-Wl,-rpath='
+    fi
+    rm -f conftest.t conftest.c conftest
+    ;;
+esac
+AC_SUBST(HLDFLAGS)
+
 AC_OUTPUT(Makefile)

@@ -1,5 +1,6 @@
 /* output-file.c -  Deal with the output file
-   Copyright (C) 1987, 1990, 1991, 1992 Free Software Foundation, Inc.
+   Copyright (C) 1987, 90, 91, 93, 92, 94, 95, 1996
+   Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -48,7 +49,6 @@ output_file_create (name)
     }
   else if (!(stdoutput = bfd_openw (name, TARGET_FORMAT)))
     {
-      bfd_perror (name);
       as_perror ("FATAL: Can't create %s", name);
       exit (EXIT_FAILURE);
     }

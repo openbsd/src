@@ -1,10 +1,18 @@
 -*- text -*-
 
+Changes since 2.6:
+
+The PowerPC assembler now allows the use of symbolic register names (r0, etc.)
+if -mregnames is used.  Symbolic names preceded by a '%' (%r0, etc.) can be
+used any time.  PowerPC 860 move to/from SPR instructions have been added.
+
 Changes since 2.5:
 
 Gas now directly supports macros, without requiring GASP.
 
-Gas now has an MRI assembler compatibility mode.
+Gas now has an MRI assembler compatibility mode.  Use -M or --mri to select MRI
+mode.  The pseudo-op ``.mri 1'' will switch into the MRI mode until the ``.mri
+0'' is seen; this can be convenient for inline assembler code.
 
 Added --defsym SYM=VALUE option.
 

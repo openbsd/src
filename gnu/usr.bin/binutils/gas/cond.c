@@ -1,5 +1,5 @@
 /* cond.c - conditional assembly pseudo-ops, and .include
-   Copyright (C) 1990, 1991, 1992, 1993 Free Software Foundation, Inc.
+   Copyright (C) 1990, 91, 92, 93, 95, 1996 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -310,11 +310,7 @@ ignore_input ()
 
   s = input_line_pointer;
 
-#ifndef MRI_MODE_NEEDS_PSEUDO_DOT
-#define MRI_MODE_NEEDS_PSEUDO_DOT 0
-#endif
-
-  if ((flag_mri && ! MRI_MODE_NEEDS_PSEUDO_DOT)
+  if (flag_m68k_mri
 #ifdef NO_PSEUDO_DOT
       || 1
 #endif

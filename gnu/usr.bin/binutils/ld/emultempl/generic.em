@@ -42,7 +42,7 @@ static void
 gld${EMULATION_NAME}_before_parse()
 {
 #ifndef TARGET_			/* I.e., if not generic.  */
-  ldfile_output_architecture = bfd_arch_${ARCH};
+  ldfile_set_output_arch ("`echo ${ARCH}`");
 #endif /* not TARGET_ */
 }
 

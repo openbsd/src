@@ -145,6 +145,17 @@ ldemul_parse_args (argc, argv)
   return 0;
 }
 
+/* Let the emulation code handle an unrecognized file.  */
+
+boolean
+ldemul_unrecognized_file (entry)
+     lang_input_statement_type *entry;
+{
+  if (ld_emulation->unrecognized_file)
+    return (*ld_emulation->unrecognized_file) (entry);
+  return false;
+}
+
 char *
 ldemul_choose_target()
 {

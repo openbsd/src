@@ -32,6 +32,7 @@ extern const char *output_filename;
 extern struct bfd_link_info link_info;
 
 extern void add_ysym PARAMS ((const char *));
+extern void add_wrap PARAMS ((const char *));
 extern void add_keepsyms_file PARAMS ((const char *filename));
 
 #endif

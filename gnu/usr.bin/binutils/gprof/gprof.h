@@ -79,6 +79,8 @@
 #define STYLE_EXEC_COUNTS	(1<<3)
 #define STYLE_ANNOTATED_SOURCE	(1<<4)
 #define STYLE_GMON_INFO		(1<<5)
+#define STYLE_FUNCTION_ORDER	(1<<6)
+#define STYLE_FILE_ORDER	(1<<7)
 
 #define	ANYDEBUG	(1<<0)	/*    1 */
 #define	DFNDEBUG	(1<<1)	/*    2 */
@@ -111,6 +113,7 @@ typedef int bool;
 typedef unsigned char UNIT[2];	/* unit of profiling */
 
 extern const char *whoami;	/* command-name, for error messages */
+extern const char *function_mapping_file; /* file mapping functions to files */
 extern const char *a_out_name;	/* core filename */
 extern long hz;			/* ticks per second */
 
@@ -128,6 +131,8 @@ extern bool ignore_zeros;	/* ignore unused symbols/files */
 extern bool line_granularity;	/* function or line granularity? */
 extern bool print_descriptions;	/* output profile description */
 extern bool print_path;		/* print path or just filename? */
+extern bool ignore_non_functions;/* Ignore non-function symbols.  */
+
 extern File_Format file_format;	/* requested file format */
 
 extern bool first_output;	/* no output so far? */

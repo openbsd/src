@@ -23,6 +23,8 @@ gas_test "float.s" ""   "" "simple FP constants"
 # This test is meaningless for the PA; the difference of two undefined
 # symbols is something that is (and must be) supported on the PA.
 if ![istarget hppa*-*-*] then {
+    # the h8300 fails because we skip all the logic in fixup_segment
+    setup_xfail "h8300*-*-*"
     gas_test_error "diff1.s" "" "difference of two undefined symbols"
 }
 
@@ -80,6 +82,8 @@ proc do_930509a {} {
 # This test is meaningless for the PA; the difference of two symbols
 # must not be resolved by the assembler.
 if ![istarget hppa*-*-*] then {
+    # the h8300 fails because we skip all the logic in fixup_segment
+    setup_xfail "h8300*-*-*"
     do_930509a
 }
 

@@ -32,7 +32,7 @@ proc do_subspace_align_test {} {
 	if [istarget hppa*-*-*elf*] then {
 	    while 1 {
 		expect {
-		    -re "data\[^\n\]*align 2..6\[^\n\]*\n"	{ set x 1 }
+		    -re "data\[^\n\]* 2..6\[^\n\]*\n"	{ set x 1 }
 		    -re "\[^\n\]*\n"				{ }
 		    timeout			{ perror "timeout\n"; break }
 		    eof				{ break }
@@ -41,7 +41,7 @@ proc do_subspace_align_test {} {
 	} else {
 	    while 1 {
 		expect  {
-		    -re "DATA\[^\n\]*align 2..6\[^\n\]*\n"	{ set x 1 }
+		    -re "DATA\[^\n\]* 2..6\[^\n\]*\n"	{ set x 1 }
 		    -re "\[^\n\]*\n"				{ }
 		    timeout			{ perror "timeout\n"; break }
 		    eof				{ break }
@@ -251,7 +251,7 @@ if [istarget hppa*-*-*] then {
     # Test for a buglet in the handling of common symbols
     do_common_test
 
-    * Test for an off-by-2 bug in range check for conditional branches
+    # Test for an off-by-2 bug in range check for conditional branches
     gas_test_error "brlenbug.s" "" "Check for error(s) in branch length"
 
 }

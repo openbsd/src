@@ -691,13 +691,6 @@ get_specific (opcode, operands)
 		  && ((op & SIZE) != (x & SIZE)))
 		found = 0;
 	    }
-#if 0
-	  else if ((op & ABSMOV) && (x & ABS))
-	    {
-	      /* An absmov is only */
-	      /* Ok */
-	    }
-#endif
 	  else if ((op & MODE) != (x & MODE))
 	    {
 	      found = 0;
@@ -745,11 +738,21 @@ check_operand (operand, width, string)
 
 }
 
+/* RELAXMODE has one of 3 values:
+
+   0 Output a "normal" reloc, no relaxing possible for this insn/reloc
+
+   1 Output a relaxable 24bit absolute mov.w address relocation
+     (may relax into a 16bit absolute address).
+
+   2 Output a relaxable 16/24 absolute mov.b address relocation
+     (may relax into an 8bit absolute address).  */
+
 static void
-do_a_fix_imm (offset, operand, relaxing)
+do_a_fix_imm (offset, operand, relaxmode)
      int offset;
      struct h8_op *operand;
-     int relaxing;
+     int relaxmode;
 {
   int idx;
   int size;
@@ -805,7 +808,12 @@ do_a_fix_imm (offset, operand, relaxing)
 	case L_24:
 	  size = 4;
 	  where = -1;
-	  idx = relaxing ? R_MOVLB1 : R_RELLONG;
+	  if (relaxmode == 2)
+	    idx = R_MOV24B1;
+	  else if (relaxmode == 1)
+	    idx = R_MOVL1;
+	  else
+	    idx = R_RELLONG;
 	  break;
 	default:
 	  as_bad("Can't work out size of operand.\n");
@@ -817,16 +825,19 @@ do_a_fix_imm (offset, operand, relaxing)
 	case L_16:
 	  size = 2;
 	  where = 0;
-	  idx = relaxing ? R_MOVB1 : R_RELWORD;
+	  if (relaxmode == 2)
+	    idx = R_MOV16B1;
+	  else
+	    idx = R_RELWORD;
+	  operand->exp.X_add_number = (short)operand->exp.X_add_number;
 	  break;
 	case L_8:
 	  size = 1;
 	  where = 0;
 	  idx = R_RELBYTE;
+	  operand->exp.X_add_number = (char)operand->exp.X_add_number;
 	}
 
-      /* Sign extend any expression */
-      operand->exp.X_add_number = (short)operand->exp.X_add_number;
       fix_new_exp (frag_now,
 		   offset + where,
 		   size,
@@ -853,6 +864,7 @@ build_bytes (this_try, operand)
   int absat;
   int immat;
   int nib;
+  int movb = 0;
   char asnibbles[30];
   char *p = asnibbles;
 
@@ -883,14 +895,6 @@ build_bytes (this_try, operand)
 	  else if ((c & DISPREG) == (DISPREG))
 	    {
 	      nib = dispreg;
-	    }
-
-	  else if (c & ABSMOV)
-	    {
-	      operand[d].mode &= ~ABS;
-	      operand[d].mode |= ABSMOV;
-	      immat = nibble_count / 2;
-	      nib = 0;
 	    }
 	  else if (c &  ABS )
 	    {
@@ -946,6 +950,11 @@ build_bytes (this_try, operand)
 	      operand[0].mode = 0;
 	    }
 
+	  if (c & MEMRELAX)
+	    {
+	      operand[d].mode |= MEMRELAX;
+	    }
+
 	  if (c & B31)
 	    {
 	      nib |= 0x8;
@@ -961,6 +970,11 @@ build_bytes (this_try, operand)
       output[i] = (asnibbles[i * 2] << 4) | asnibbles[i * 2 + 1];
     }
 
+  /* Note if this is a movb instruction -- there's a special relaxation
+     which only applies to them.  */
+  if (strcmp (this_try->name, "mov.b") == 0)
+    movb = 1;
+
   /* output any fixes */
   for (i = 0; i < 2; i++)
     {
@@ -968,11 +982,13 @@ build_bytes (this_try, operand)
 
       if (x & (IMM | DISP))
 	{
-	  do_a_fix_imm (output - frag_now->fr_literal + immat, operand + i, 0);
+	  do_a_fix_imm (output - frag_now->fr_literal + immat,
+			operand + i, x & MEMRELAX != 0);
 	}
       else if (x & ABS)
 	{
-	  do_a_fix_imm (output - frag_now->fr_literal + absat, operand + i, 0);
+	  do_a_fix_imm (output - frag_now->fr_literal + absat,
+			operand + i, x & MEMRELAX ? movb + 1 : 0);
 	}
       else if (x & PCREL)
 	{
@@ -1007,15 +1023,8 @@ build_bytes (this_try, operand)
 		       1,
 		       &operand[i].exp,
 		       0,
-		       R_RELBYTE);
+		       R_MEM_INDIRECT);
 	}
-
-      else if (x & ABSMOV)
-	{
-	  /* This mov is either absolute long or thru a memory loc */
-	  do_a_fix_imm (output - frag_now->fr_literal + immat, operand + i, 1);
-	}
-
       else if (x & ABSJMP)
 	{
 	  /* This jmp may be a jump or a branch */
@@ -1420,13 +1429,15 @@ tc_reloc_mangle (fix_ptr, intr, base)
 
   /* If this relocation is attached to a symbol then it's ok
      to output it */
-  if (fix_ptr->fx_r_type == RELOC_32)
+  if (fix_ptr->fx_r_type == TC_CONS_RELOC)
     {
       /* cons likes to create reloc32's whatever the size of the reloc..
        */
       switch (fix_ptr->fx_size)
 	{
-
+	case 4:
+	  intr->r_type = R_RELLONG;
+	  break;
 	case 2:
 	  intr->r_type = R_RELWORD;
 	  break;

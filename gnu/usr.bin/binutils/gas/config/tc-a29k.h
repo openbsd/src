@@ -23,6 +23,9 @@ the Free Software Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307
 
 #define LEX_DOLLAR 1
 
+#define tc_unrecognized_line(c) a29k_unrecognized_line (c)
+extern int a29k_unrecognized_line PARAMS ((int));
+
 #define tc_headers_hook(a)		;	/* not used */
 #define tc_headers_hook(a)		;	/* not used */
 #define tc_crawl_symbol_chain(a)	;	/* not used */

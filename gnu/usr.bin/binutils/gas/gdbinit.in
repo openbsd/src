@@ -2,6 +2,7 @@ dir @srcdir@
 dir .
 
 break as_warn
+break as_warn_where
 break as_bad
 break as_bad_where
 break as_fatal

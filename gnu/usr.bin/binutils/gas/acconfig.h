@@ -28,8 +28,9 @@
 
 #undef MANY_SEGMENTS
 
-/* Needed only for sparc configuration */
-#undef sparcv9
+/* Needed only for sparc configuration.  */
+#undef SPARC_V9
+#undef SPARC_ARCH64
 
 /* Needed only for some configurations that can produce multiple output
    formats.  */

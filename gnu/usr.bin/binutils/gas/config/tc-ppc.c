@@ -1,5 +1,5 @@
 /* tc-ppc.c -- Assemble for the PowerPC or POWER (RS/6000)
-   Copyright (C) 1994 Free Software Foundation, Inc.
+   Copyright (C) 1994, 1995, 1996 Free Software Foundation, Inc.
    Written by Ian Lance Taylor, Cygnus Support.
 
    This file is part of GAS, the GNU Assembler.
@@ -41,6 +41,17 @@ extern int target_big_endian;
 /* Whether or not, we've set target_big_endian.  */
 static int set_target_endian = 0;
 
+/* Whether to use user friendly register names.  */
+#ifndef TARGET_REG_NAMES_P
+#ifdef TE_PE
+#define TARGET_REG_NAMES_P true
+#else
+#define TARGET_REG_NAMES_P false
+#endif
+#endif
+
+static boolean reg_names_p = TARGET_REG_NAMES_P;
+
 static void ppc_set_cpu PARAMS ((void));
 static unsigned long ppc_insert_operand
   PARAMS ((unsigned long insn, const struct powerpc_operand *operand,
@@ -75,6 +86,7 @@ static void ppc_toc PARAMS ((int));
 #ifdef OBJ_ELF
 static bfd_reloc_code_real_type ppc_elf_suffix PARAMS ((char **));
 static void ppc_elf_cons PARAMS ((int));
+static void ppc_elf_rdata PARAMS ((int));
 static void ppc_elf_validate_fix PARAMS ((fixS *, segT));
 #endif
 
@@ -97,7 +109,11 @@ static void ppc_pe_tocd PARAMS ((int));
    targets.  */
 
 /* Characters which always start a comment.  */
+#ifdef TARGET_SOLARIS_COMMENT
+const char comment_chars[] = "#!";
+#else
 const char comment_chars[] = "#";
+#endif
 
 /* Characters which start a comment at the beginning of a line.  */
 const char line_comment_chars[] = "#";
@@ -153,6 +169,8 @@ const pseudo_typeS md_pseudo_table[] =
   { "long",	ppc_elf_cons,	4 },
   { "word",	ppc_elf_cons,	2 },
   { "short",	ppc_elf_cons,	2 },
+  { "rdata",	ppc_elf_rdata,	0 },
+  { "rodata",	ppc_elf_rdata,	0 },
 #endif
 
 #ifdef TE_PE
@@ -178,9 +196,7 @@ const pseudo_typeS md_pseudo_table[] =
 };
 
 
-#ifdef TE_PE
-/* The Windows NT PowerPC assembler uses predefined names.            */
-
+/* Predefined register names if -mregnames (or default for Windows NT).  */
 /* In general, there are lots of them, in an attempt to be compatible */
 /* with a number of other Windows NT assemblers.                      */
 
@@ -437,7 +453,58 @@ reg_name_search (name)
   return -1;
 }
 
-#endif
+/*
+ * Summary of register_name().
+ *
+ * in:	Input_line_pointer points to 1st char of operand.
+ *
+ * out:	A expressionS.
+ *      The operand may have been a register: in this case, X_op == O_register,
+ *      X_add_number is set to the register number, and truth is returned.
+ *	Input_line_pointer->(next non-blank) char after operand, or is in its
+ *      original state.
+ */
+
+static boolean
+register_name (expressionP)
+     expressionS *expressionP;
+{
+  int reg_number;
+  char *name;
+  char *start;
+  char c;
+
+  /* Find the spelling of the operand */
+  start = name = input_line_pointer;
+  if (name[0] == '%' && isalpha (name[1]))
+    name = ++input_line_pointer;
+
+  else if (!reg_names_p || !isalpha (name[0]))
+    return false;
+
+  c = get_symbol_end ();
+  reg_number = reg_name_search (name);
+
+  /* look to see if it's in the register table */
+  if (reg_number >= 0) 
+    {
+      expressionP->X_op = O_register;
+      expressionP->X_add_number = reg_number;
+      
+      /* make the rest nice */
+      expressionP->X_add_symbol = NULL;
+      expressionP->X_op_symbol = NULL;
+      *input_line_pointer = c;   /* put back the delimiting char */
+      return true;
+    }
+  else
+    {
+      /* reset the line as if we had not done anything */
+      *input_line_pointer = c;   /* put back the delimiting char */
+      input_line_pointer = start; /* reset input_line pointer */
+      return false;
+    }
+}
 
 
 /* Local variables.  */
@@ -510,9 +577,6 @@ static symbolS *ppc_current_block;
    cause BFD to set the section number of a symbol to N_DEBUG.  */
 static asection *ppc_coff_debug_section;
 
-/* The size of the .debug section.  */
-static bfd_size_type ppc_debug_name_section_size;
-
 #endif /* OBJ_XCOFF */
 
 #ifdef TE_PE
@@ -540,7 +604,7 @@ const int md_long_jump_size = 4;
 #endif
 
 #ifdef OBJ_ELF
-CONST char *md_shortopts = "um:VQ:";
+CONST char *md_shortopts = "b:l:usm:VQ:";
 #else
 CONST char *md_shortopts = "um:";
 #endif
@@ -560,6 +624,32 @@ md_parse_option (c, arg)
       /* -u means that any undefined symbols should be treated as
 	 external, which is the default for gas anyhow.  */
       break;
+
+#ifdef OBJ_ELF
+    case 'l':
+      /* Solaris as takes -le (presumably for little endian).  For completeness
+         sake, recognize -be also.  */
+      if (strcmp (arg, "e") == 0)
+	{
+	  target_big_endian = 0;
+	  set_target_endian = 1;
+	}
+      else
+	return 0;
+
+      break;
+
+    case 'b':
+      if (strcmp (arg, "e") == 0)
+	{
+	  target_big_endian = 1;
+	  set_target_endian = 1;
+	}
+      else
+	return 0;
+
+      break;
+#endif
 
     case 'm':
       /* -mpwrx and -mpwr2 mean to assemble for the IBM POWER/2
@@ -596,6 +686,12 @@ md_parse_option (c, arg)
       /* -many means to assemble for any architecture (PWR/PWRX/PPC).  */
       else if (strcmp (arg, "any") == 0)
 	ppc_cpu = PPC_OPCODE_ANY;
+
+      else if (strcmp (arg, "regnames") == 0)
+	reg_names_p = true;
+
+      else if (strcmp (arg, "no-regnames") == 0)
+	reg_names_p = false;
 
 #ifdef OBJ_ELF
       /* -mrelocatable/-mrelocatable-lib -- warn about initializations that require relocation */
@@ -645,6 +741,15 @@ md_parse_option (c, arg)
 	 should be emitted or not.  FIXME: Not implemented.  */
     case 'Q':
       break;
+
+      /* Solaris takes -s to specify that .stabs go in a .stabs section,
+	 rather than .stabs.excl, which is ignored by the linker.
+	 FIXME: Not implemented.  */
+    case 's':
+      if (arg)
+	return 0;
+
+      break;
 #endif
 
     default:
@@ -668,7 +773,9 @@ PowerPC options:\n\
 			generate code for Motorola PowerPC 603/604\n\
 -mppc64, -m620		generate code for Motorola PowerPC 620\n\
 -mcom			generate code Power/PowerPC common instructions\n\
--many			generate code for any architecture (PWR/PWRX/PPC)\n");
+-many			generate code for any architecture (PWR/PWRX/PPC)\n\
+-mregnames		Allow symbolic names for registers\n\
+-mno-regnames		Do not allow symbolic names for registers\n");
 #ifdef OBJ_ELF
   fprintf(stream, "\
 -mrelocatable		support for GCC's -mrelocatble option\n\
@@ -687,17 +794,23 @@ PowerPC options:\n\
 static void
 ppc_set_cpu ()
 {
+  const char *default_os  = TARGET_OS;
   const char *default_cpu = TARGET_CPU;
 
   if (ppc_cpu == 0)
     {
-      if (strcmp (default_cpu, "rs6000") == 0)
+      if (strncmp (default_os, "aix", 3) == 0
+	  && default_os[3] >= '4' && default_os[3] <= '9')
+	ppc_cpu = PPC_OPCODE_COMMON;
+      else if (strncmp (default_os, "aix3", 4) == 0)
+	ppc_cpu = PPC_OPCODE_POWER;
+      else if (strcmp (default_cpu, "rs6000") == 0)
 	ppc_cpu = PPC_OPCODE_POWER;
       else if (strcmp (default_cpu, "powerpc") == 0
 	       || strcmp (default_cpu, "powerpcle") == 0)
 	ppc_cpu = PPC_OPCODE_PPC;
       else
-	as_fatal ("Unknown default cpu = %s", default_cpu);
+	as_fatal ("Unknown default cpu = %s, os = %s", default_cpu, default_os);
     }
 }
 
@@ -911,12 +1024,12 @@ ppc_elf_suffix (str_p)
 #define MAP(str,reloc) { str, sizeof(str)-1, reloc }
 
   static struct map_bfd mapping[] = {
-    MAP ("got",		BFD_RELOC_PPC_TOC16),
     MAP ("l",		BFD_RELOC_LO16),
     MAP ("h",		BFD_RELOC_HI16),
     MAP ("ha",		BFD_RELOC_HI16_S),
     MAP ("brtaken",	BFD_RELOC_PPC_B16_BRTAKEN),
     MAP ("brntaken",	BFD_RELOC_PPC_B16_BRNTAKEN),
+    MAP ("got",		BFD_RELOC_16_GOTOFF),
     MAP ("got@l",	BFD_RELOC_LO16_GOTOFF),
     MAP ("got@h",	BFD_RELOC_HI16_GOTOFF),
     MAP ("got@ha",	BFD_RELOC_HI16_S_GOTOFF),
@@ -935,6 +1048,23 @@ ppc_elf_suffix (str_p)
     MAP ("sectoff@l",	BFD_RELOC_LO16_BASEREL),
     MAP ("sectoff@h",	BFD_RELOC_HI16_BASEREL),
     MAP ("sectoff@ha",	BFD_RELOC_HI16_S_BASEREL),
+    MAP ("naddr",	BFD_RELOC_PPC_EMB_NADDR32),
+    MAP ("naddr16",	BFD_RELOC_PPC_EMB_NADDR16),
+    MAP ("naddr@l",	BFD_RELOC_PPC_EMB_NADDR16_LO),
+    MAP ("naddr@h",	BFD_RELOC_PPC_EMB_NADDR16_HI),
+    MAP ("naddr@ha",	BFD_RELOC_PPC_EMB_NADDR16_HA),
+    MAP ("sdai16",	BFD_RELOC_PPC_EMB_SDAI16),
+    MAP ("sda2rel",	BFD_RELOC_PPC_EMB_SDA2REL),
+    MAP ("sda2i16",	BFD_RELOC_PPC_EMB_SDA2I16),
+    MAP ("sda21",	BFD_RELOC_PPC_EMB_SDA21),
+    MAP ("mrkref",	BFD_RELOC_PPC_EMB_MRKREF),
+    MAP ("relsect",	BFD_RELOC_PPC_EMB_RELSEC16),
+    MAP ("relsect@l",	BFD_RELOC_PPC_EMB_RELST_LO),
+    MAP ("relsect@h",	BFD_RELOC_PPC_EMB_RELST_HI),
+    MAP ("relsect@ha",	BFD_RELOC_PPC_EMB_RELST_HA),
+    MAP ("bitfld",	BFD_RELOC_PPC_EMB_BIT_FLD),
+    MAP ("relsda",	BFD_RELOC_PPC_EMB_RELSDA),
+    MAP ("xgot",	BFD_RELOC_PPC_TOC16),
 
     { (char *)0,	0,	BFD_RELOC_UNUSED }
   };
@@ -1009,6 +1139,21 @@ ppc_elf_cons (nbytes)
   demand_empty_rest_of_line ();
 }
 
+/* Solaris pseduo op to change to the .rodata section.  */
+static void
+ppc_elf_rdata (xxx)
+     int xxx;
+{
+  char *save_line = input_line_pointer;
+  static char section[] = ".rodata\n";
+
+  /* Just pretend this is .section .rodata */
+  input_line_pointer = section;
+  obj_elf_section (xxx);
+
+  input_line_pointer = save_line;
+}
+
 /* Validate any relocations emitted for -mrelocatable, possibly adding
    fixups for word relocations in writable segments, so we can adjust
    them at runtime.  */
@@ -1021,11 +1166,21 @@ ppc_elf_validate_fix (fixp, seg)
       && !fixp->fx_done
       && !fixp->fx_pcrel
       && fixp->fx_r_type <= BFD_RELOC_UNUSED
+      && fixp->fx_r_type != BFD_RELOC_16_GOTOFF
+      && fixp->fx_r_type != BFD_RELOC_HI16_GOTOFF
+      && fixp->fx_r_type != BFD_RELOC_LO16_GOTOFF
+      && fixp->fx_r_type != BFD_RELOC_HI16_S_GOTOFF
+      && fixp->fx_r_type != BFD_RELOC_32_BASEREL
+      && fixp->fx_r_type != BFD_RELOC_LO16_BASEREL
+      && fixp->fx_r_type != BFD_RELOC_HI16_BASEREL
+      && fixp->fx_r_type != BFD_RELOC_HI16_S_BASEREL
       && strcmp (segment_name (seg), ".got2") != 0
       && strcmp (segment_name (seg), ".dtors") != 0
       && strcmp (segment_name (seg), ".ctors") != 0
       && strcmp (segment_name (seg), ".fixup") != 0
-      && strcmp (segment_name (seg), ".stab") != 0)
+      && strcmp (segment_name (seg), ".stab") != 0
+      && strcmp (segment_name (seg), ".gcc_except_table") != 0
+      && strcmp (segment_name (seg), ".ex_shared") != 0)
     {
       if ((seg->flags & (SEC_READONLY | SEC_CODE)) != 0
 	  || fixp->fx_r_type != BFD_RELOC_CTOR)
@@ -1039,51 +1194,6 @@ ppc_elf_validate_fix (fixp, seg)
 #endif /* OBJ_ELF */
 
 #ifdef TE_PE
-/*
- * Summary of register_name().
- *
- * in:	Input_line_pointer points to 1st char of operand.
- *
- * out:	A expressionS.
- *      The operand may have been a register: in this case, X_op == O_register,
- *      X_add_number is set to the register number, and truth is returned.
- *	Input_line_pointer->(next non-blank) char after operand, or is in its
- *      original state.
- */
-
-static int
-register_name (expressionP)
-     expressionS *expressionP;
-{
-  int reg_number;
-  char *name;
-  char c;
-
-  /* Find the spelling of the operand */
-  name = input_line_pointer;
-  c = get_symbol_end ();
-  reg_number = reg_name_search (name);
-
-  /* look to see if it's in the register table */
-  if (reg_number >= 0) 
-    {
-      expressionP->X_op = O_register;
-      expressionP->X_add_number = reg_number;
-      
-      /* make the rest nice */
-      expressionP->X_add_symbol = NULL;
-      expressionP->X_op_symbol = NULL;
-      *input_line_pointer = c;   /* put back the delimiting char */
-      return 1;
-    }
-  else
-    {
-      /* reset the line as if we had not done anything */
-      *input_line_pointer = c;   /* put back the delimiting char */
-      input_line_pointer = name; /* reset input_line pointer */
-      return 0;
-    }
-}
 
 /*
  * Summary of parse_toc_entry().
@@ -1448,26 +1558,24 @@ md_assemble (str)
 	  ex.X_add_symbol = NULL;
 	  ex.X_op_symbol = NULL;
 	}
+
       else
-	{
-	  if (!register_name(&ex))
-	    {
-	      expression (&ex);
-	    }
-	}
+#endif		/* TE_PE */
+	if (!register_name(&ex))
+	  expression (&ex);
 
       str = input_line_pointer;
       input_line_pointer = hold;
-#else
-      expression (&ex);
-      str = input_line_pointer;
-      input_line_pointer = hold;
-#endif
 
       if (ex.X_op == O_illegal)
 	as_bad ("illegal operand");
       else if (ex.X_op == O_absent)
 	as_bad ("missing operand");
+      else if (ex.X_op == O_register)
+	{
+	  insn = ppc_insert_operand (insn, operand, ex.X_add_number,
+				     (char *) NULL, 0);
+	}
       else if (ex.X_op == O_constant)
 	{
 #ifdef OBJ_ELF
@@ -1498,13 +1606,6 @@ md_assemble (str)
 	  insn = ppc_insert_operand (insn, operand, ex.X_add_number,
 				     (char *) NULL, 0);
 	}
-#ifdef TE_PE
-      else if (ex.X_op == O_register)
-	{
-	  insn = ppc_insert_operand (insn, operand, ex.X_add_number,
-				     (char *) NULL, 0);
-	}
-#endif
 #ifdef OBJ_ELF
       else if ((reloc = ppc_elf_suffix (&str)) != BFD_RELOC_UNUSED)
 	{
@@ -1611,6 +1712,8 @@ md_assemble (str)
 	     foo+100000@ha.  */
 	  switch (fixups[i].reloc)
 	    {
+	    case BFD_RELOC_16_GOTOFF:
+	    case BFD_RELOC_PPC_TOC16:
 	    case BFD_RELOC_LO16:
 	    case BFD_RELOC_HI16:
 	    case BFD_RELOC_HI16_S:
@@ -1731,6 +1834,64 @@ ppc_macro (str, macro)
   /* Assemble the constructed instruction.  */
   md_assemble (complete);
 }  
+
+#ifdef OBJ_ELF
+/* For ELF, add support for SHF_EXCLUDE and SHT_ORDERED */
+
+int
+ppc_section_letter (letter, ptr_msg)
+     int letter;
+     char **ptr_msg;
+{
+  if (letter == 'e')
+    return SHF_EXCLUDE;
+
+  *ptr_msg = "Bad .section directive: want a,w,x,e in string";
+  return 0;
+}
+
+int
+ppc_section_word (ptr_str)
+     char **ptr_str;
+{
+  if (strncmp (*ptr_str, "exclude", sizeof ("exclude")-1) == 0)
+    {
+      *ptr_str += sizeof ("exclude")-1;
+      return SHF_EXCLUDE;
+    }
+
+  return 0;
+}
+
+int
+ppc_section_type (ptr_str)
+     char **ptr_str;
+{
+  if (strncmp (*ptr_str, "ordered", sizeof ("ordered")-1) == 0)
+    {
+      *ptr_str += sizeof ("ordered")-1;
+      return SHT_ORDERED;
+    }
+
+  return 0;
+}
+
+int
+ppc_section_flags (flags, attr, type)
+     int flags;
+     int attr;
+     int type;
+{
+  if (type == SHT_ORDERED)
+    flags |= SEC_ALLOC | SEC_LOAD | SEC_SORT_ENTRIES;
+
+  if (attr & SHF_EXCLUDE)
+    flags |= SEC_EXCLUDE;
+
+  return flags;
+}
+#endif /* OBJ_ELF */
+
 
 /* Pseudo-op handling.  */
 
@@ -1954,6 +2115,12 @@ ppc_csect (ignore)
   sym = symbol_find_or_make (name);
 
   *input_line_pointer = endc;
+
+  if (S_GET_NAME (sym)[0] == '\0')
+    {
+      /* An unnamed csect is assumed to be [PR].  */
+      sym->sy_tc.class = XMC_PR;
+    }
 
   ppc_change_csect (sym);
 
@@ -2241,13 +2408,6 @@ ppc_stabx (ignore)
       symbol_append (sym, exp.X_add_symbol, &symbol_rootP, &symbol_lastP);
       if (ppc_current_csect->sy_tc.within == exp.X_add_symbol)
 	ppc_current_csect->sy_tc.within = sym;
-    }
-
-  if (strlen (name) > SYMNMLEN)
-    {
-      /* For some reason, each name is preceded by a two byte length
-	 and followed by a null byte.  */
-      ppc_debug_name_section_size += strlen (name) + 3;
     }
 
   demand_empty_rest_of_line ();
@@ -2577,9 +2737,6 @@ ppc_bc (ignore)
 
   ppc_frob_label (sym);
 
-  if (strlen (name) > SYMNMLEN)
-    ppc_debug_name_section_size += strlen (name) + 3;
-
   demand_empty_rest_of_line ();
 }
 
@@ -2808,7 +2965,7 @@ ppc_pdata(ignore)
 			     (SEC_ALLOC | SEC_LOAD | SEC_RELOC
 			      | SEC_READONLY | SEC_DATA ));
       
-      bfd_set_section_alignment (stdoutput, pdata_section, 3);
+      bfd_set_section_alignment (stdoutput, pdata_section, 2);
     }
   else
     {
@@ -2880,7 +3037,7 @@ ppc_reldata(ignore)
 			     ( SEC_ALLOC | SEC_LOAD | SEC_RELOC 
 			      | SEC_DATA ));
 
-      bfd_set_section_alignment (stdoutput, reldata_section, 3);
+      bfd_set_section_alignment (stdoutput, reldata_section, 2);
     }
   else
     {
@@ -3138,8 +3295,6 @@ ppc_pe_section (ignore)
   segT sec;
   int align;
 
-  align = 4; /* default alignment to 16 byte boundary */
-
   section_name = input_line_pointer;
   c = get_symbol_end ();
 
@@ -3152,6 +3307,29 @@ ppc_pe_section (ignore)
 
   exp = 0;
   flags = SEC_NO_FLAGS;
+
+  if (strcmp (name, ".idata$2") == 0)
+    {
+      align = 0;
+    }
+  else if (strcmp (name, ".idata$3") == 0)
+    {
+      align = 0;
+    }
+  else if (strcmp (name, ".idata$4") == 0)
+    {
+      align = 2;
+    }
+  else if (strcmp (name, ".idata$5") == 0)
+    {
+      align = 2;
+    }
+  else if (strcmp (name, ".idata$6") == 0)
+    {
+      align = 1;
+    }
+  else
+    align = 4; /* default alignment to 16 byte boundary */
 
   if (*input_line_pointer == ',')
     {
@@ -3794,25 +3972,6 @@ ppc_frob_section (sec)
   vma += bfd_section_size (stdoutput, sec);
 }
 
-/* Adjust the file by adding a .debug section if needed.  */
-
-void
-ppc_frob_file ()
-{
-  if (ppc_debug_name_section_size > 0)
-    {
-      asection *sec;
-
-      sec = bfd_make_section (stdoutput, ".debug");
-      if (sec == (asection *) NULL
-	  || ! bfd_set_section_size (stdoutput, sec,
-				     ppc_debug_name_section_size)
-	  || ! bfd_set_section_flags (stdoutput, sec,
-				      SEC_HAS_CONTENTS | SEC_LOAD))
-	as_fatal ("can't make .debug section");
-    }
-}
-
 #endif /* OBJ_XCOFF */
 
 /* Turn a string in input_line_pointer into a floating point constant
@@ -4216,13 +4375,13 @@ md_apply_fix3 (fixp, valuep, seg)
 	case BFD_RELOC_32:
 	case BFD_RELOC_CTOR:
 	  if (fixp->fx_pcrel)
-	    {
-	      fixp->fx_r_type = BFD_RELOC_32_PCREL;
-	      value += fixp->fx_frag->fr_address + fixp->fx_where;
-	    }			/* fall through */
+	    fixp->fx_r_type = BFD_RELOC_32_PCREL;
+					/* fall through */
 
 	case BFD_RELOC_RVA:
 	case BFD_RELOC_32_PCREL:
+	case BFD_RELOC_32_BASEREL:
+	case BFD_RELOC_PPC_EMB_NADDR32:
 	  md_number_to_chars (fixp->fx_frag->fr_literal + fixp->fx_where,
 			      value, 4);
 	  break;
@@ -4230,14 +4389,44 @@ md_apply_fix3 (fixp, valuep, seg)
 	case BFD_RELOC_LO16:
 	case BFD_RELOC_HI16:
 	case BFD_RELOC_HI16_S:
-	case BFD_RELOC_PPC_TOC16:
 	case BFD_RELOC_16:
 	case BFD_RELOC_GPREL16:
 	case BFD_RELOC_16_GOT_PCREL:
+	case BFD_RELOC_16_GOTOFF:
+	case BFD_RELOC_LO16_GOTOFF:
+	case BFD_RELOC_HI16_GOTOFF:
+	case BFD_RELOC_HI16_S_GOTOFF:
+	case BFD_RELOC_LO16_BASEREL:
+	case BFD_RELOC_HI16_BASEREL:
+	case BFD_RELOC_HI16_S_BASEREL:
+	case BFD_RELOC_PPC_EMB_NADDR16:
+	case BFD_RELOC_PPC_EMB_NADDR16_LO:
+	case BFD_RELOC_PPC_EMB_NADDR16_HI:
+	case BFD_RELOC_PPC_EMB_NADDR16_HA:
+	case BFD_RELOC_PPC_EMB_SDAI16:
+	case BFD_RELOC_PPC_EMB_SDA2REL:
+	case BFD_RELOC_PPC_EMB_SDA2I16:
+	case BFD_RELOC_PPC_EMB_RELSEC16:
+	case BFD_RELOC_PPC_EMB_RELST_LO:
+	case BFD_RELOC_PPC_EMB_RELST_HI:
+	case BFD_RELOC_PPC_EMB_RELST_HA:
+	case BFD_RELOC_PPC_EMB_RELSDA:
+	case BFD_RELOC_PPC_TOC16:
 	  if (fixp->fx_pcrel)
 	    abort ();
 
 	  md_number_to_chars (fixp->fx_frag->fr_literal + fixp->fx_where,
+			      value, 2);
+	  break;
+
+	  /* Because SDA21 modifies the register field, the size is set to 4
+	     bytes, rather than 2, so offset it here appropriately */
+	case BFD_RELOC_PPC_EMB_SDA21:
+	  if (fixp->fx_pcrel)
+	    abort ();
+
+	  md_number_to_chars (fixp->fx_frag->fr_literal + fixp->fx_where
+			      + ((target_big_endian) ? 2 : 0),
 			      value, 2);
 	  break;
 

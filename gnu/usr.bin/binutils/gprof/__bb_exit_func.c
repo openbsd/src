@@ -54,8 +54,8 @@ __bb_exit_func (void)
 	perror(OUT_NAME);
 	return;
     } /* if */
-    bcopy(GMON_MAGIC, &ghdr.cookie[0], 4);
-    bcopy(&version, &ghdr.version, sizeof(version));
+    memcpy(&ghdr.cookie[0], GMON_MAGIC, 4);
+    memcpy(&ghdr.version, &version, sizeof(version));
     fwrite(&ghdr, sizeof(ghdr), 1, fp);
 
     for (ptr = __bb_head; ptr != 0; ptr = ptr->next) {

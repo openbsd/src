@@ -20,7 +20,7 @@ Disassembly of section .text:
 ...
 0+0030 mult \$a1,\$at
 0+0034 mflo \$a0
-0+0038 li \$at,32768
+0+0038 li \$at,0x8000
 ...
 0+0040 mult \$a1,\$at
 0+0044 mflo \$a0
@@ -28,12 +28,12 @@ Disassembly of section .text:
 ...
 0+0050 mult \$a1,\$at
 0+0054 mflo \$a0
-0+0058 lui \$at,1
+0+0058 lui \$at,0x1
 ...
 0+0060 mult \$a1,\$at
 0+0064 mflo \$a0
-0+0068 lui \$at,1
-0+006c ori \$at,\$at,42405
+0+0068 lui \$at,0x1
+0+006c ori \$at,\$at,0xa5a5
 0+0070 mult \$a1,\$at
 0+0074 mflo \$a0
 ...

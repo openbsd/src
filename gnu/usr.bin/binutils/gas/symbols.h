@@ -45,6 +45,7 @@ symbolS *symbol_create PARAMS ((CONST char *name, segT segment, valueT value,
 symbolS *colon PARAMS ((const char *sym_name));
 void local_colon PARAMS ((int n));
 void symbol_begin PARAMS ((void));
+void symbol_print_statistics PARAMS ((FILE *));
 void symbol_table_insert PARAMS ((symbolS * symbolP));
 void resolve_symbol_value PARAMS ((symbolS *));
 

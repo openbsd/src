@@ -97,6 +97,10 @@
 
 #define md_operand(x)
 
+#define TC_HANDLES_FX_DONE
+
+#define MD_APPLY_FIX3
+
 #define LOCAL_LABELS_FB  1
 
 /* Use defaults for OBJ_AOUT.  */

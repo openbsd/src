@@ -1,5 +1,5 @@
 /* read.c - read a source file -
-   Copyright (C) 1986, 1987, 1990, 1991, 1993, 1994
+   Copyright (C) 1986, 87, 90, 91, 92, 93, 94, 95, 1996
    Free Software Foundation, Inc.
 
 This file is part of GAS, the GNU Assembler.
@@ -202,7 +202,7 @@ symbolS *mri_common_symbol;
 static int mri_pending_align;
 
 static int scrub_from_string PARAMS ((char **));
-static void do_align PARAMS ((int, char *));
+static void do_align PARAMS ((int, char *, int));
 static int hex_float PARAMS ((int, char *));
 static void do_org PARAMS ((segT, expressionS *, int));
 char *demand_copy_string PARAMS ((int *lenP));
@@ -246,6 +246,8 @@ static const pseudo_typeS potable[] =
   {"ascii", stringer, 0},
   {"asciz", stringer, 1},
   {"balign", s_align_bytes, 0},
+  {"balignw", s_align_bytes, -2},
+  {"balignl", s_align_bytes, -4},
 /* block */
   {"byte", cons, 1},
   {"comm", s_comm, 0},
@@ -325,12 +327,16 @@ static const pseudo_typeS potable[] =
   {"irepc", s_irp, 1},
   {"lcomm", s_lcomm, 0},
   {"lflags", listing_flags, 0},	/* Listing flags */
+  {"linkonce", s_linkonce, 0},
   {"list", listing_list, 1},	/* Turn listing on */
   {"llen", listing_psize, 1},
   {"long", cons, 4},
   {"lsym", s_lsym, 0},
   {"macro", s_macro, 0},
   {"mexit", s_mexit, 0},
+  {"mri", s_mri, 0},
+  {".mri", s_mri, 0},	/* Special case so .mri works in MRI mode.  */
+  {"name", s_ignore, 0},
   {"noformat", s_ignore, 0},
   {"nolist", listing_list, 0},	/* Turn listing off */
   {"nopage", listing_nopage, 0},
@@ -338,6 +344,8 @@ static const pseudo_typeS potable[] =
   {"offset", s_struct, 0},
   {"org", s_org, 0},
   {"p2align", s_align_ptwo, 0},
+  {"p2alignw", s_align_ptwo, -2},
+  {"p2alignl", s_align_ptwo, -4},
   {"page", listing_eject, 0},
   {"plen", listing_psize, 0},
   {"print", s_print, 0},
@@ -355,6 +363,7 @@ static const pseudo_typeS potable[] =
   {"single", float_cons, 'f'},
 /* size */
   {"space", s_space, 0},
+  {"skip", s_space, 0},
   {"spc", s_ignore, 0},
   {"stabd", s_stab, 'd'},
   {"stabn", s_stab, 'n'},
@@ -401,7 +410,8 @@ pop_insert (table)
     {
       errtxt = hash_insert (po_hash, pop->poc_name, (char *) pop);
       if (errtxt && (!pop_override_ok || strcmp (errtxt, "exists")))
-	as_fatal ("error constructing %s pseudo-op table", pop_table_name);
+	as_fatal ("error constructing %s pseudo-op table: %s", pop_table_name,
+		  errtxt);
     }
 }
 
@@ -505,7 +515,7 @@ read_a_source_file (name)
 
 	      line_label = NULL;
 
-	      if (flag_mri
+	      if (flag_m68k_mri
 #ifdef LABELS_WITHOUT_COLONS
 		  || 1
 #endif
@@ -524,7 +534,7 @@ read_a_source_file (name)
 
 		      /* In MRI mode, the EQU pseudoop must be
 			 handled specially.  */
-		      if (flag_mri)
+		      if (flag_m68k_mri)
 			{
 			  char *rest = input_line_pointer + 1;
 
@@ -594,7 +604,7 @@ read_a_source_file (name)
 	       */
 	      if (TC_START_LABEL(c, input_line_pointer))
 		{
-		  if (flag_mri)
+		  if (flag_m68k_mri)
 		    {
 		      char *rest = input_line_pointer + 1;
 
@@ -648,11 +658,7 @@ read_a_source_file (name)
 		  }
 #endif
 
-#ifndef MRI_MODE_NEEDS_PSEUDO_DOT
-#define MRI_MODE_NEEDS_PSEUDO_DOT 0
-#endif
-
-		  if ((flag_mri && ! MRI_MODE_NEEDS_PSEUDO_DOT)
+		  if (flag_m68k_mri
 #ifdef NO_PSEUDO_DOT
 		      || 1
 #endif
@@ -666,8 +672,7 @@ read_a_source_file (name)
 		    }
 
 		  if (pop != NULL
-		      || ((! flag_mri || MRI_MODE_NEEDS_PSEUDO_DOT)
-			  && *s == '.'))
+		      || (! flag_m68k_mri && *s == '.'))
 		    {
 		      /*
 		       * PSEUDO - OP.
@@ -690,7 +695,7 @@ read_a_source_file (name)
 				    || (pop->poc_handler == s_space
 					&& pop->poc_val == 1))))
 			{
-			  do_align (1, (char *) NULL);
+			  do_align (1, (char *) NULL, 0);
 			  mri_pending_align = 0;
 			}
 
@@ -727,7 +732,7 @@ read_a_source_file (name)
 
 		      if (mri_pending_align)
 			{
-			  do_align (1, (char *) NULL);
+			  do_align (1, (char *) NULL, 0);
 			  mri_pending_align = 0;
 			}
 
@@ -741,7 +746,7 @@ read_a_source_file (name)
 #endif
 			     )
 			{
-			  if (flag_mri && *input_line_pointer == '\'')
+			  if (flag_m68k_mri && *input_line_pointer == '\'')
 			    inquote = ! inquote;
 			  input_line_pointer++;
 			}
@@ -940,6 +945,11 @@ read_a_source_file (name)
 
 	  HANDLE_CONDITIONAL_ASSEMBLY ();
 
+#ifdef tc_unrecognized_line
+	  if (tc_unrecognized_line (c))
+	    continue;
+#endif
+
 	  /* as_warn("Junk character %d.",c);  Now done by ignore_rest */
 	  input_line_pointer--;	/* Report unknown char as ignored. */
 	  ignore_rest_of_line ();
@@ -985,7 +995,7 @@ mri_comment_field (stopcp)
   char *s;
   int inquote = 0;
 
-  know (flag_mri);
+  know (flag_m68k_mri);
 
   for (s = input_line_pointer;
        ((! is_end_of_line[(unsigned char) *s] && *s != ' ' && *s != '\t')
@@ -1037,12 +1047,13 @@ s_abort (ignore)
 
 /* Guts of .align directive.  */
 static void 
-do_align (n, fill)
+do_align (n, fill, len)
      int n;
      char *fill;
+     int len;
 {
 #ifdef md_do_align
-  md_do_align (n, fill, just_record_alignment);
+  md_do_align (n, fill, len, just_record_alignment);
 #endif
   if (!fill)
     {
@@ -1058,10 +1069,17 @@ do_align (n, fill)
 	{
 	  fill = &zero;
 	}
+      len = 1;
     }
+
   /* Only make a frag if we HAVE to. . . */
   if (n && !need_pass_2)
-    frag_align (n, *fill);
+    {
+      if (len <= 1)
+	frag_align (n, *fill);
+      else
+	frag_align_pattern (n, fill, len);
+    }
 
 #ifdef md_do_align
  just_record_alignment:
@@ -1086,7 +1104,12 @@ s_align_bytes (arg)
     stop = mri_comment_field (&stopc);
 
   if (is_end_of_line[(unsigned char) *input_line_pointer])
-    temp = arg;			/* Default value from pseudo-op table */
+    {
+      if (arg < 0)
+	temp = 0;
+      else
+	temp = arg;	/* Default value from pseudo-op table */
+    }
   else
     temp = get_absolute_expression ();
 
@@ -1108,12 +1131,36 @@ s_align_bytes (arg)
   temp = i;
   if (*input_line_pointer == ',')
     {
+      offsetT fillval;
+      int len;
+
       input_line_pointer++;
-      temp_fill = get_absolute_expression ();
-      do_align (temp, &temp_fill);
+      fillval = get_absolute_expression ();
+      if (arg >= 0)
+	len = 1;
+      else
+	len = - arg;
+      if (len <= 1)
+	{
+	  temp_fill = fillval;
+	  do_align (temp, &temp_fill, len);
+	}
+      else
+	{
+	  char ab[16];
+
+	  if (len > sizeof ab)
+	    abort ();
+	  md_number_to_chars (ab, fillval, len);
+	  do_align (temp, ab, len);
+	}
     }
   else
-    do_align (temp, (char *) 0);
+    {
+      if (arg < 0)
+	as_warn ("expected fill pattern missing");
+      do_align (temp, (char *) NULL, 0);
+    }
 
   if (flag_mri)
     mri_comment_end (stop, stopc);
@@ -1123,8 +1170,8 @@ s_align_bytes (arg)
 
 /* For machines where ".align 4" means align to 2**4 boundary. */
 void 
-s_align_ptwo (ignore)
-     int ignore;
+s_align_ptwo (arg)
+     int arg;
 {
   register int temp;
   char temp_fill;
@@ -1145,12 +1192,36 @@ s_align_ptwo (ignore)
     }
   if (*input_line_pointer == ',')
     {
+      offsetT fillval;
+      int len;
+
       input_line_pointer++;
-      temp_fill = get_absolute_expression ();
-      do_align (temp, &temp_fill);
+      fillval = get_absolute_expression ();
+      if (arg >= 0)
+	len = 1;
+      else
+	len = - arg;
+      if (len <= 1)
+	{
+	  temp_fill = fillval;
+	  do_align (temp, &temp_fill, len);
+	}
+      else
+	{
+	  char ab[16];
+
+	  if (len > sizeof ab)
+	    abort ();
+	  md_number_to_chars (ab, fillval, len);
+	  do_align (temp, ab, len);
+	}
     }
   else
-    do_align (temp, (char *) 0);
+    {
+      if (arg < 0)
+	as_warn ("expected fill pattern missing");
+      do_align (temp, (char *) NULL, 0);
+    }
 
   if (flag_mri)
     mri_comment_end (stop, stopc);
@@ -1387,6 +1458,14 @@ s_app_file (appfile)
 	 the buffer.  Passing -2 to new_logical_line tells it to
 	 account for it.  */
       new_logical_line (s, appfile ? -2 : -1);
+
+      /* In MRI mode, the preprocessor may have inserted an extraneous
+         backquote.  */
+      if (flag_m68k_mri
+	  && *input_line_pointer == '\''
+	  && is_end_of_line[(unsigned char) input_line_pointer[1]])
+	++input_line_pointer;
+
       demand_empty_rest_of_line ();
 #ifdef LISTING
       if (listing)
@@ -1489,6 +1568,9 @@ s_fill (ignore)
   register long temp_fill = 0;
   char *p;
 
+#ifdef md_flush_pending_output
+  md_flush_pending_output ();
+#endif
 
   temp_repeat = get_absolute_expression ();
   if (*input_line_pointer == ',')
@@ -1609,6 +1691,83 @@ s_irp (irpc)
   buffer_limit = input_scrub_next_buffer (&input_line_pointer);
 }
 
+/* Handle the .linkonce pseudo-op.  This tells the assembler to mark
+   the section to only be linked once.  However, this is not supported
+   by most object file formats.  This takes an optional argument,
+   which is what to do about duplicates.  */
+
+void
+s_linkonce (ignore)
+     int ignore;
+{
+  enum linkonce_type type;
+
+  SKIP_WHITESPACE ();
+
+  type = LINKONCE_DISCARD;
+
+  if (! is_end_of_line[(unsigned char) *input_line_pointer])
+    {
+      char *s;
+      char c;
+
+      s = input_line_pointer;
+      c = get_symbol_end ();
+      if (strcasecmp (s, "discard") == 0)
+	type = LINKONCE_DISCARD;
+      else if (strcasecmp (s, "one_only") == 0)
+	type = LINKONCE_ONE_ONLY;
+      else if (strcasecmp (s, "same_size") == 0)
+	type = LINKONCE_SAME_SIZE;
+      else if (strcasecmp (s, "same_contents") == 0)
+	type = LINKONCE_SAME_CONTENTS;
+      else
+	as_warn ("unrecognized .linkonce type `%s'", s);
+
+      *input_line_pointer = c;
+    }
+
+#ifdef obj_handle_link_once
+  obj_handle_link_once (type);
+#else /* ! defined (obj_handle_link_once) */
+#ifdef BFD_ASSEMBLER
+  {
+    flagword flags;
+
+    if ((bfd_applicable_section_flags (stdoutput) & SEC_LINK_ONCE) == 0)
+      as_warn (".linkonce is not supported for this object file format");
+
+    flags = bfd_get_section_flags (stdoutput, now_seg);
+    flags |= SEC_LINK_ONCE;
+    switch (type)
+      {
+      default:
+	abort ();
+      case LINKONCE_DISCARD:
+	flags |= SEC_LINK_DUPLICATES_DISCARD;
+	break;
+      case LINKONCE_ONE_ONLY:
+	flags |= SEC_LINK_DUPLICATES_ONE_ONLY;
+	break;
+      case LINKONCE_SAME_SIZE:
+	flags |= SEC_LINK_DUPLICATES_SAME_SIZE;
+	break;
+      case LINKONCE_SAME_CONTENTS:
+	flags |= SEC_LINK_DUPLICATES_SAME_CONTENTS;
+	break;
+      }
+    if (! bfd_set_section_flags (stdoutput, now_seg, flags))
+      as_bad ("bfd_set_section_flags: %s",
+	      bfd_errmsg (bfd_get_error ()));
+  }
+#else /* ! defined (BFD_ASSEMBLER) */
+  as_warn (".linkonce is not supported for this object file format");
+#endif /* ! defined (BFD_ASSEMBLER) */
+#endif /* ! defined (obj_handle_link_once) */
+
+  demand_empty_rest_of_line ();
+}
+
 void 
 s_lcomm (needs_align)
      /* 1 if this was a ".bss" directive, which may require a 3rd argument
@@ -1662,6 +1821,11 @@ s_lcomm (needs_align)
 	{
 	  bss_seg = subseg_new (".sbss", 1);
 	  seg_info (bss_seg)->bss = 1;
+#ifdef BFD_ASSEMBLER
+	  if (! bfd_set_section_flags (stdoutput, bss_seg, SEC_ALLOC))
+	    as_warn ("error setting flags for \".sbss\": %s",
+		     bfd_errmsg (bfd_get_error ()));
+#endif
 	}
     }
 #endif
@@ -1761,6 +1925,10 @@ s_lcomm (needs_align)
 	  S_SET_STORAGE_CLASS (symbolP, C_STAT);
 	}
 #endif /* OBJ_COFF */
+
+#ifdef S_SET_SIZE
+      S_SET_SIZE (symbolP, temp);
+#endif
     }
   else
     as_bad ("Ignoring attempt to re-define symbol `%s'.",
@@ -1839,6 +2007,9 @@ static int
 get_line_sb (line)
      sb *line;
 {
+  if (input_line_pointer[-1] == '\n')
+    bump_line_counters ();
+
   if (input_line_pointer >= buffer_limit)
     {
       buffer_limit = input_scrub_next_buffer (&input_line_pointer);
@@ -1851,11 +2022,8 @@ get_line_sb (line)
   while (input_line_pointer < buffer_limit
 	 && is_end_of_line[(unsigned char) *input_line_pointer])
     {
-      if (*input_line_pointer == '\n')
-	{
-	  bump_line_counters ();
-	  LISTING_NEWLINE ();
-	}
+      if (input_line_pointer[-1] == '\n')
+	bump_line_counters ();
       ++input_line_pointer;
     }
   return 1;
@@ -1884,8 +2052,6 @@ s_macro (ignore)
   if (line_label != NULL)
     sb_add_string (&label, S_GET_NAME (line_label));
 
-  demand_empty_rest_of_line ();
-
   err = define_macro (0, &s, &label, get_line_sb);
   if (err != NULL)
     as_bad_where (file, line, "%s", err);
@@ -1910,6 +2076,37 @@ s_mexit (ignore)
      int ignore;
 {
   buffer_limit = input_scrub_next_buffer (&input_line_pointer);
+}
+
+/* Switch in and out of MRI mode.  */
+
+void
+s_mri (ignore)
+     int ignore;
+{
+  int on, old_flag;
+
+  on = get_absolute_expression ();
+  old_flag = flag_mri;
+  if (on != 0)
+    {
+      flag_mri = 1;
+#ifdef TC_M68K
+      flag_m68k_mri = 1;
+#endif
+    }
+  else
+    {
+      flag_mri = 0;
+      flag_m68k_mri = 0;
+    }
+
+#ifdef MRI_MODE_CHANGE
+  if (on != old_flag)
+    MRI_MODE_CHANGE (on);
+#endif
+
+  demand_empty_rest_of_line ();
 }
 
 /* Handle changing the location counter.  */
@@ -1953,17 +2150,15 @@ s_org (ignore)
   expressionS exp;
   register long temp_fill;
 
-#ifdef TC_M68K
   /* The m68k MRI assembler has a different meaning for .org.  It
      means to create an absolute section at a given address.  We can't
      support that--use a linker script instead.  */
-  if (flag_mri)
+  if (flag_m68k_mri)
     {
       as_bad ("MRI style ORG pseudo-op not supported");
       ignore_rest_of_line ();
       return;
     }
-#endif
 
   /* Don't believe the documentation of BSD 4.2 AS.  There is no such
      thing as a sub-segment-relative origin.  Any absolute origin is
@@ -1995,9 +2190,9 @@ s_org (ignore)
 /* Handle parsing for the MRI SECT/SECTION pseudo-op.  This should be
    called by the obj-format routine which handles section changing
    when in MRI mode.  It will create a new section, and return it.  It
-   will set *TYPE to the section type: one of '\0' (unspecified), 'C'
-   (code), 'D' (data), 'M' (mixed), or 'R' (romable).  If
-   BFD_ASSEMBLER is defined, the flags will be set in the section.  */
+   will set *TYPE to the section type: one of 'C' (code), 'D' (data),
+   'M' (mixed), or 'R' (romable).  If BFD_ASSEMBLER is defined, the
+   flags will be set in the section.  */
 
 void
 s_mri_sect (type)
@@ -2025,9 +2220,7 @@ s_mri_sect (type)
       *input_line_pointer = '\0';
     }
 
-  name = strdup (name);
-  if (name == NULL)
-    as_fatal ("virtual memory exhausted");
+  name = xstrdup (name);
 
   *input_line_pointer = c;
 
@@ -2042,7 +2235,7 @@ s_mri_sect (type)
       record_alignment (seg, align);
     }
 
-  *type = '\0';
+  *type = 'C';
   if (*input_line_pointer == ',')
     {
       c = *++input_line_pointer;
@@ -2059,11 +2252,11 @@ s_mri_sect (type)
 
 	flags = SEC_NO_FLAGS;
 	if (*type == 'C')
-	  flags = SEC_CODE;
-	else if (*type == 'D')
-	  flags = SEC_DATA;
+	  flags = SEC_ALLOC | SEC_LOAD | SEC_READONLY | SEC_CODE;
+	else if (*type == 'D' || *type == 'M')
+	  flags = SEC_ALLOC | SEC_LOAD | SEC_DATA;
 	else if (*type == 'R')
-	  flags = SEC_ROM;
+	  flags = SEC_ALLOC | SEC_LOAD | SEC_DATA | SEC_READONLY | SEC_ROM;
 	if (flags != SEC_NO_FLAGS)
 	  {
 	    if (! bfd_set_section_flags (stdoutput, seg, flags))
@@ -2093,9 +2286,7 @@ s_mri_sect (type)
   name = input_line_pointer;
   c = get_symbol_end ();
 
-  name = strdup (name);
-  if (name == NULL)
-    as_fatal ("virtual memory exhausted");
+  name = xstrdup (name);
 
   *input_line_pointer = c;
 
@@ -2308,7 +2499,7 @@ s_space (mult)
      int mult;
 {
   expressionS exp;
-  long temp_fill;
+  expressionS val;
   char *p = 0;
   char *stop = NULL;
   char stopc;
@@ -2320,72 +2511,94 @@ s_space (mult)
   if (flag_mri)
     stop = mri_comment_field (&stopc);
 
-  /* Just like .fill, but temp_size = 1 */
   expression (&exp);
-  if (exp.X_op == O_constant)
-    {
-      long repeat;
 
-      repeat = exp.X_add_number;
-      if (mult)
-	repeat *= mult;
-      if (repeat <= 0)
-	{
-	  if (! flag_mri || repeat < 0)
-	    as_warn (".space repeat count is %s, ignored",
-		     repeat ? "negative" : "zero");
-	  goto getout;
-	}
-
-      /* If we are in the absolute section, just bump the offset.  */
-      if (now_seg == absolute_section)
-	{
-	  abs_section_offset += repeat;
-	  goto getout;
-	}
-
-      /* If we are secretly in an MRI common section, then creating
-         space just increases the size of the common symbol.  */
-      if (mri_common_symbol != NULL)
-	{
-	  S_SET_VALUE (mri_common_symbol,
-		       S_GET_VALUE (mri_common_symbol) + repeat);
-	  goto getout;
-	}
-
-      if (!need_pass_2)
-	p = frag_var (rs_fill, 1, 1, (relax_substateT) 0, (symbolS *) 0,
-		      repeat, (char *) 0);
-    }
-  else
-    {
-      if (now_seg == absolute_section)
-	{
-	  as_bad ("space allocation too complex in absolute section");
-	  subseg_set (text_section, 0);
-	}
-      if (mri_common_symbol != NULL)
-	{
-	  as_bad ("space allocation too complex in common section");
-	  mri_common_symbol = NULL;
-	}
-      if (!need_pass_2)
-	p = frag_var (rs_space, 1, 1, (relax_substateT) 0,
-		      make_expr_symbol (&exp), 0L, (char *) 0);
-    }
   SKIP_WHITESPACE ();
   if (*input_line_pointer == ',')
     {
-      input_line_pointer++;
-      temp_fill = get_absolute_expression ();
+      ++input_line_pointer;
+      expression (&val);
     }
   else
     {
-      temp_fill = 0;
+      val.X_op = O_constant;
+      val.X_add_number = 0;
     }
-  if (p)
+
+  if (val.X_op != O_constant
+      || val.X_add_number < - 0x80
+      || val.X_add_number > 0xff
+      || (mult != 0 && mult != 1 && val.X_add_number != 0))
     {
-      *p = temp_fill;
+      if (exp.X_op != O_constant)
+	as_bad ("Unsupported variable size or fill value");
+      else
+	{
+	  offsetT i;
+
+	  if (mult == 0)
+	    mult = 1;
+	  for (i = 0; i < exp.X_add_number; i++)
+	    emit_expr (&val, mult);
+	}
+    }
+  else
+    {
+      if (exp.X_op == O_constant)
+	{
+	  long repeat;
+
+	  repeat = exp.X_add_number;
+	  if (mult)
+	    repeat *= mult;
+	  if (repeat <= 0)
+	    {
+	      if (! flag_mri || repeat < 0)
+		as_warn (".space repeat count is %s, ignored",
+			 repeat ? "negative" : "zero");
+	      goto getout;
+	    }
+
+	  /* If we are in the absolute section, just bump the offset.  */
+	  if (now_seg == absolute_section)
+	    {
+	      abs_section_offset += repeat;
+	      goto getout;
+	    }
+
+	  /* If we are secretly in an MRI common section, then
+	     creating space just increases the size of the common
+	     symbol.  */
+	  if (mri_common_symbol != NULL)
+	    {
+	      S_SET_VALUE (mri_common_symbol,
+			   S_GET_VALUE (mri_common_symbol) + repeat);
+	      goto getout;
+	    }
+
+	  if (!need_pass_2)
+	    p = frag_var (rs_fill, 1, 1, (relax_substateT) 0, (symbolS *) 0,
+			  repeat, (char *) 0);
+	}
+      else
+	{
+	  if (now_seg == absolute_section)
+	    {
+	      as_bad ("space allocation too complex in absolute section");
+	      subseg_set (text_section, 0);
+	    }
+	  if (mri_common_symbol != NULL)
+	    {
+	      as_bad ("space allocation too complex in common section");
+	      mri_common_symbol = NULL;
+	    }
+	  if (!need_pass_2)
+	    p = frag_var (rs_space, 1, 1, (relax_substateT) 0,
+			  make_expr_symbol (&exp), 0L, (char *) 0);
+	}
+
+      if (p)
+	*p = val.X_add_number;
     }
 
  getout:
@@ -2713,7 +2926,8 @@ cons_worker (nbytes, rva)
 
   if (is_it_end_of_statement ())
     {
-      mri_comment_end (stop, stopc);
+      if (flag_mri)
+	mri_comment_end (stop, stopc);
       demand_empty_rest_of_line ();
       return;
     }
@@ -2721,7 +2935,7 @@ cons_worker (nbytes, rva)
   c = 0;
   do
     {
-      if (flag_mri)
+      if (flag_m68k_mri)
 	parse_mri_cons (&exp, (unsigned int) nbytes);
       else
 	TC_PARSE_CONS_EXPRESSION (&exp, (unsigned int) nbytes);
@@ -3541,6 +3755,11 @@ next_char_of_string ()
       c = NOT_A_CHAR;
       break;
 
+    case '\n':
+      as_warn ("Unterminated string: Newline inserted.");
+      bump_line_counters ();
+      break;
+
 #ifndef NO_STRING_ESCAPES
     case '\\':
       switch (c = *input_line_pointer++)
@@ -3622,6 +3841,7 @@ next_char_of_string ()
 	  /* To be compatible with BSD 4.2 as: give the luser a linefeed!! */
 	  as_warn ("Unterminated string: Newline inserted.");
 	  c = '\n';
+	  bump_line_counters ();
 	  break;
 
 	default:
@@ -3725,9 +3945,7 @@ demand_copy_C_string (len_pointer)
     {
       register int len;
 
-      for (len = *len_pointer;
-	   len > 0;
-	   len--)
+      for (len = *len_pointer; len > 0; len--)
 	{
 	  if (*s == 0)
 	    {
@@ -3738,7 +3956,7 @@ demand_copy_C_string (len_pointer)
 	    }
 	}
     }
-  return (s);
+  return s;
 }
 
 /*
@@ -3848,7 +4066,7 @@ s_include (arg)
   FILE *try;
   char *path;
 
-  if (! flag_mri)
+  if (! flag_m68k_mri)
     filename = demand_copy_string (&i);
   else
     {
@@ -3925,5 +4143,12 @@ s_ignore (arg)
   ++input_line_pointer;
 }
 
+
+void
+read_print_statistics (file)
+     FILE *file;
+{
+  hash_print_statistics (file, "pseudo-op table", po_hash);
+}
 
 /* end of read.c */

@@ -20,6 +20,7 @@ typedef struct arc
     double child_time;		/* child-time inherited along arc */
     struct arc *next_parent;	/* next parent of CHILD */
     struct arc *next_child;	/* next child of PARENT */
+    int has_been_placed;	/* have this arc's functions been placed? */
   }
 Arc;
 
@@ -29,5 +30,7 @@ extern Sym *cycle_header;	/* cycle headers */
 extern void arc_add PARAMS ((Sym * parent, Sym * child, int count));
 extern Arc *arc_lookup PARAMS ((Sym * parent, Sym * child));
 extern Sym **cg_assemble PARAMS ((void));
+extern Arc **arcs;
+extern int numarcs;
 
 #endif /* cg_arcs_h */

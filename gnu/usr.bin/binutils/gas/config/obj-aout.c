@@ -1,5 +1,6 @@
 /* a.out object file format
-   Copyright (C) 1989, 1990, 1991, 1992, 1993, 1994, 1995 Free Software Foundation, Inc.
+   Copyright (C) 1989, 90, 91, 92, 93, 94, 95, 1996
+   Free Software Foundation, Inc.
 
 This file is part of GAS, the GNU Assembler.
 
@@ -230,6 +231,14 @@ obj_emit_relocations (where, fixP, segment_address_in_file)
   for (; fixP; fixP = fixP->fx_next)
     if (fixP->fx_done == 0)
       {
+	symbolS *sym;
+
+	sym = fixP->fx_addsy;
+	while (sym->sy_value.X_op == O_symbol
+	       && (! S_IS_DEFINED (sym) || S_IS_COMMON (sym)))
+	  sym = sym->sy_value.X_add_symbol;
+	fixP->fx_addsy = sym;
+
 	tc_aout_fix_to_chars (*where, fixP, segment_address_in_file);
 	*where += md_reloc_size;
       }
@@ -400,6 +409,15 @@ obj_crawl_symbol_chain (headers)
 	}			/* if pusing data into text */
 
       resolve_symbol_value (symbolP);
+
+      /* Skip symbols which were equated to undefined or common
+	 symbols.  */
+      if (symbolP->sy_value.X_op == O_symbol
+	  && (! S_IS_DEFINED (symbolP) || S_IS_COMMON (symbolP)))
+	{
+	  *symbolPP = symbol_next (symbolP);
+	  continue;
+	}
 
       /* OK, here is how we decide which symbols go out into the brave
 	 new symtab.  Symbols that do are:

@@ -210,28 +210,25 @@ DEFUN (hist_write_hist, (ofp, filename), FILE * ofp AND const char *filename)
  * next bin.
  */
 static void
-DEFUN_VOID (scale_and_align_entries)
+scale_and_align_entries ()
 {
   Sym *sym;
-#if OFFSET_TO_CODE > 0
   bfd_vma bin_of_entry;
   bfd_vma bin_of_code;
-#endif
 
   for (sym = symtab.base; sym < symtab.limit; sym++)
     {
       sym->hist.scaled_addr = sym->addr / sizeof (UNIT);
-#if OFFSET_TO_CODE > 0
       bin_of_entry = (sym->hist.scaled_addr - lowpc) / hist_scale;
       bin_of_code = (sym->hist.scaled_addr + UNITS_TO_CODE - lowpc) / hist_scale;
       if (bin_of_entry < bin_of_code)
 	{
 	  DBG (SAMPLEDEBUG,
 	       printf ("[scale_and_align_entries] pushing 0x%lx to 0x%lx\n",
-		 sym->hist.scaled_addr, sym->aligned_addr + UNITS_TO_CODE));
-	  sym->aligned_addr += UNITS_TO_CODE;
+		       sym->hist.scaled_addr,
+		       sym->hist.scaled_addr + UNITS_TO_CODE));
+	  sym->hist.scaled_addr += UNITS_TO_CODE;
 	}
-#endif /* OFFSET_TO_CODE > 0 */
     }
 }
 

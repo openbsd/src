@@ -1,6 +1,6 @@
 /* This file is tc-sh.h
 
-   Copyright (C) 1993, 1994, 1995 Free Software Foundation, Inc.
+   Copyright (C) 1993, 94, 95, 1996 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -71,5 +71,28 @@ extern const struct relax_type md_relax_table[];
 
 #define tc_frob_file sh_coff_frob_file
 extern void sh_coff_frob_file PARAMS (());
+
+/* We use a special alignment function to insert the correct nop
+   pattern.  */
+extern int sh_do_align PARAMS ((int, const char *, int));
+#define md_do_align(n,fill,len,l) if (sh_do_align (n,fill,len)) goto l
+
+/* We record, for each section, whether we have most recently output a
+   CODE reloc or a DATA reloc.  */
+struct sh_segment_info_type
+{
+  int in_code : 1;
+};
+#define TC_SEGMENT_INFO_TYPE struct sh_segment_info_type
+
+/* We call a routine to emit a reloc for a label, so that the linker
+   can align loads and stores without crossing a label.  */
+extern void sh_frob_label PARAMS ((void));
+#define tc_frob_label(sym) sh_frob_label ()
+
+/* We call a routine to flush pending output in order to output a DATA
+   reloc when required.  */
+extern void sh_flush_pending_output PARAMS ((void));
+#define md_flush_pending_output() sh_flush_pending_output ()
 
 /* end of tc-sh.h */

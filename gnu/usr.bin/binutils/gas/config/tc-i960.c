@@ -445,6 +445,8 @@ static struct hash_control *areg_hash;	/* Abase register hash table */
 #define ARCH_KB		2
 #define ARCH_MC		3
 #define ARCH_CA		4
+#define ARCH_JX		5
+#define ARCH_HX		6
 int architecture = ARCH_ANY;	/* Architecture requested on invocation line */
 int iclasses_seen;		/* OR of instruction classes (I_* constants)
 				 *    for which we've actually assembled
@@ -936,6 +938,8 @@ static const struct tabentry arch_tab[] =
   {"KC", ARCH_MC},		/* Synonym for MC */
   {"MC", ARCH_MC},
   {"CA", ARCH_CA},
+  {"JX", ARCH_JX},
+  {"HX", ARCH_HX},
   {NULL, 0}
 };
 
@@ -1217,7 +1221,6 @@ brtab_emit ()
 		      0,
 		      0,
 		      NO_RELOC);
-      fixP->fx_im_disp = 2;	/* 32-bit displacement fix */
     }
 }
 
@@ -1756,7 +1759,6 @@ mem_fmt (args, oP, callx)
 			  &expr,
 			  0,
 			  NO_RELOC);
-      fixP->fx_im_disp = 2;	/* 32-bit displacement fix */
       /* Steve's linker relaxing hack.  Mark this 32-bit relocation as
          being in the instruction stream, specifically as part of a callx
          instruction.  */
@@ -2024,10 +2026,13 @@ parse_memop (memP, argP, optype)
       p = strchr (indexP, '*');
       if (p == NULL)
 	{
-	  /* No explicit scale -- use default for this
-	     *instruction type.
-	   */
-	  scale = def_scale[optype - MEM1];
+	  /* No explicit scale -- use default for this instruction
+	     type and assembler mode.  */
+	  if (flag_mri)
+	    scale = 1;
+	  else
+	    /* GNU960 compatibility */
+	    scale = def_scale[optype - MEM1];
 	}
       else
 	{
@@ -2743,7 +2748,10 @@ targ_has_sfr (n)
     case ARCH_KA:
     case ARCH_KB:
     case ARCH_MC:
+    case ARCH_JX:
       return 0;
+    case ARCH_HX:
+      return ((0 <= n) && (n <= 4));
     case ARCH_CA:
     default:
       return ((0 <= n) && (n <= 2));
@@ -2759,7 +2767,7 @@ static
 int
 targ_has_iclass (ic)
      /* Instruction class;  one of:
-        I_BASE, I_CX, I_DEC, I_KX, I_FP, I_MIL, I_CASIM
+        I_BASE, I_CX, I_DEC, I_KX, I_FP, I_MIL, I_CASIM, I_CX2, I_HX, I_HX2
       */
      int ic;
 {
@@ -2774,6 +2782,10 @@ targ_has_iclass (ic)
       return ic & (I_BASE | I_KX | I_FP | I_DEC | I_MIL);
     case ARCH_CA:
       return ic & (I_BASE | I_CX | I_CX2 | I_CASIM);
+    case ARCH_JX:
+      return ic & (I_BASE | I_CX2 | I_JX);
+    case ARCH_HX:
+      return ic & (I_BASE | I_CX2 | I_JX | I_HX);
     default:
       if ((iclasses_seen & (I_KX | I_FP | I_DEC | I_MIL))
 	  && (iclasses_seen & (I_CX | I_CX2)))
@@ -2836,31 +2848,15 @@ md_apply_fix (fixP, val)
   char *place = fixP->fx_where + fixP->fx_frag->fr_literal;
 
   if (!fixP->fx_bit_fixP)
-    switch (fixP->fx_im_disp)
-      {
-      case 0:
-	/* For callx, we always want to write out zero, and emit a
-	   symbolic relocation.  */
-	if (fixP->fx_bsr)
-	  val = 0;
+    {
+      /* For callx, we always want to write out zero, and emit a
+	 symbolic relocation.  */
+      if (fixP->fx_bsr)
+	val = 0;
 
-	fixP->fx_addnumber = val;
-	md_number_to_imm (place, val, fixP->fx_size, fixP);
-	break;
-      case 1:
-	md_number_to_disp (place,
-			   (fixP->fx_pcrel
-			    ? val + fixP->fx_pcrel_adjust
-			    : val),
-			   fixP->fx_size);
-	break;
-      case 2:			/* fix requested for .long .word etc */
-	md_number_to_chars (place, val, fixP->fx_size);
-	break;
-      default:
-	as_fatal ("Internal error in md_apply_fix() in file \"%s\"",
-		  __FILE__);
-      }
+      fixP->fx_addnumber = val;
+      md_number_to_imm (place, val, fixP->fx_size, fixP);
+    }
   else
     md_number_to_field (place, val, fixP->fx_bit_fixP);
 }
@@ -2942,6 +2938,7 @@ tc_coff_fix2rtype (fixP)
     return R_IPRMED;
 
   abort ();
+  return 0;
 }
 
 int
@@ -2964,35 +2961,58 @@ md_section_align (seg, addr)
   return ((addr + (1 << section_alignment[(int) seg]) - 1) & (-1 << section_alignment[(int) seg]));
 }				/* md_section_align() */
 
+extern int coff_flags;
+
 #ifdef OBJ_COFF
 void
 tc_headers_hook (headers)
      object_headers *headers;
 {
-  if (iclasses_seen == I_BASE)
+  switch (architecture)
     {
-      headers->filehdr.f_flags |= F_I960CORE;
+    case ARCH_KA:
+      coff_flags |= F_I960KA;
+      break;
+
+    case ARCH_KB:
+      coff_flags |= F_I960KB;
+      break;
+
+    case ARCH_MC:
+      coff_flags |= F_I960MC;
+      break;
+
+    case ARCH_CA:
+      coff_flags |= F_I960CA;
+      break;
+
+    case ARCH_JX:
+      coff_flags |= F_I960JX;
+      break;
+
+    case ARCH_HX:
+      coff_flags |= F_I960HX;
+      break;
+
+    default:
+      if (iclasses_seen == I_BASE)
+	coff_flags |= F_I960CORE;
+      else if (iclasses_seen & I_CX)
+	coff_flags |= F_I960CA;
+      else if (iclasses_seen & I_HX)
+	coff_flags |= F_I960HX;
+      else if (iclasses_seen & I_JX)
+	coff_flags |= F_I960JX;
+      else if (iclasses_seen & I_CX2)
+	coff_flags |= F_I960CA;
+      else if (iclasses_seen & I_MIL)
+	coff_flags |= F_I960MC;
+      else if (iclasses_seen & (I_DEC | I_FP))
+	coff_flags |= F_I960KB;
+      else
+	coff_flags |= F_I960KA;
+      break;
     }
-  else if (iclasses_seen & I_CX)
-    {
-      headers->filehdr.f_flags |= F_I960CA;
-    }
-  else if (iclasses_seen & I_CX2)
-    {
-      headers->filehdr.f_flags |= F_I960CA;
-    }
-  else if (iclasses_seen & I_MIL)
-    {
-      headers->filehdr.f_flags |= F_I960MC;
-    }
-  else if (iclasses_seen & (I_DEC | I_FP))
-    {
-      headers->filehdr.f_flags |= F_I960KB;
-    }
-  else
-    {
-      headers->filehdr.f_flags |= F_I960KA;
-    }				/* set arch flag */
 
   if (flag_readonly_data_in_text)
     {
@@ -3147,7 +3167,10 @@ tc_coff_symbol_emit_hook (symbolP)
       S_SET_NUMBER_AUXILIARY (symbolP, 2);
 #endif
       symbolP->sy_symbol.ost_auxent[1].x_bal.x_balntry = S_GET_VALUE (balP);
-      S_SET_STORAGE_CLASS (symbolP, (!SF_GET_LOCAL (symbolP) ? C_LEAFEXT : C_LEAFSTAT));
+      if (S_GET_STORAGE_CLASS (symbolP) == C_EXT)
+	S_SET_STORAGE_CLASS (symbolP, C_LEAFEXT);
+      else
+	S_SET_STORAGE_CLASS (symbolP, C_LEAFSTAT);
       S_SET_DATA_TYPE (symbolP, S_GET_DATA_TYPE (symbolP) | (DT_FCN << N_BTSHFT));
       /* fix up the bal symbol */
       S_SET_STORAGE_CLASS (balP, C_LABEL);
@@ -3159,8 +3182,6 @@ void
 i960_handle_align (fragp)
      fragS *fragp;
 {
-  fixS *fixp;
-
   if (!linkrelax)
     return;
 
@@ -3179,8 +3200,8 @@ i960_handle_align (fragp)
     return;
 
   /* alignment directive */
-  fixp = fix_new (fragp, fragp->fr_fix, fragp->fr_offset, 0, 0, 0,
-		  (int) fragp->fr_type);
+  fix_new (fragp, fragp->fr_fix, fragp->fr_offset, 0, 0, 0,
+	   (int) fragp->fr_type);
 #endif /* OBJ_BOUT */
 }
 

@@ -1,5 +1,5 @@
 # Expect script for LD Bootstrap Tests
-#   Copyright (C) 1993,1994,1995 Free Software Foundation
+#   Copyright (C) 1993, 1994, 1995, 1996 Free Software Foundation
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -38,13 +38,6 @@ foreach flags {"" "--static" "--traditional-format" "--no-keep-memory"} {
 	set testname "bootstrap"
     }
 
-    # On AIX, you need to specify an import list when using --static.
-    if [istarget "*-*-aix*"] {
-	if {"$flags" == "--static"} {
-	    set flags "--static -bI:/lib/syscalls.exp"
-	}
-    }
-
     # This test can only be run if we have the ld build directory,
     # since we need the object files.
     if {$ld != "$objdir/ld.new"} {
@@ -55,6 +48,21 @@ foreach flags {"" "--static" "--traditional-format" "--no-keep-memory"} {
     if ![ld_relocate $ld tmpdir/ld-partial.o "$flags $OFILES"] {
 	fail $testname
 	continue
+    }
+
+    # On AIX, you need to specify an import list when using --static.
+    # You only want the import list when creating the final
+    # executable.
+    if [istarget "*-*-aix*"] {
+	if {"$flags" == "--static"} {
+	    set flags "--static -bI:/lib/syscalls.exp"
+	}
+    }
+
+    # On Irix 5, linking with --static only works if all the files are
+    # compiled using -non_shared.
+    if {"$flags" == "--static"} {
+	setup_xfail "mips*-*-irix5*"
     }
 
     if ![ld_link $ld tmpdir/ld1 "$flags tmpdir/ld-partial.o $BFDLIB $LIBIBERTY"] {

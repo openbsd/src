@@ -38,7 +38,7 @@
 #define OBJ_SYMFIELD_TYPE expressionS *
 
 /* Symbol fields used by the ELF back end.  */
-#define ELF_TARGET_SYMBOL_FIELDS int local:1; unsigned long sy_name_offset;
+#define ELF_TARGET_SYMBOL_FIELDS int local:1;
 
 /* Don't change this; change ELF_TARGET_SYMBOL_FIELDS instead.  */
 #define TARGET_SYMBOL_FIELDS ELF_TARGET_SYMBOL_FIELDS

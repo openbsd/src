@@ -34,6 +34,10 @@
 #define MAX_RELOC_EXPANSION 3
 #define LOCAL_LABELS_FB 1
 
+/* Maximum symbol offset that can be encoded in a BFD_RELOC_MIPS_GPREL
+   relocation: */
+#define MAX_GPREL_OFFSET (0x7FF4)
+
 #define LOCAL_LABEL(name) mips_local_label (name)
 extern int mips_local_label PARAMS ((const char *));
 
@@ -77,6 +81,9 @@ extern int mips_parse_long_option PARAMS ((const char *));
 
 #define tc_frob_label(sym) mips_define_label (sym)
 extern void mips_define_label PARAMS ((struct symbol *));
+
+#define tc_frob_file() mips_frob_file ()
+extern void mips_frob_file PARAMS ((void));
 
 #define TC_CONS_FIX_NEW cons_fix_new_mips
 extern void cons_fix_new_mips ();

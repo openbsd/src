@@ -560,6 +560,15 @@ md_begin ()
   record_alignment (bss_section, 2);
 #endif
 }
+
+void
+i386_print_statistics (file)
+     FILE *file;
+{
+  hash_print_statistics (file, "i386 opcode", op_hash);
+  hash_print_statistics (file, "i386 register", reg_hash);
+  hash_print_statistics (file, "i386 prefix", prefix_hash);
+}
 
 
 #ifdef DEBUG386
@@ -1149,6 +1158,39 @@ md_assemble (line)
 			  (i.types[op] == Reg16) ? WORD_OPCODE_SUFFIX :
 			  DWORD_OPCODE_SUFFIX);
 	    }
+      }
+    else if (i.suffix != 0
+	     && i.reg_operands != 0
+	     && (i.types[i.operands - 1] & Reg) != 0)
+      {
+	int bad;
+
+	/* If the last operand is a register, make sure it is
+           compatible with the suffix.  */
+
+	bad = 0;
+	switch (i.suffix)
+	  {
+	  default:
+	    abort ();
+	  case BYTE_OPCODE_SUFFIX:
+	    /* If this is an eight bit register, it's OK.  If it's the
+               16 or 32 bit version of an eight bit register, we will
+               just use the low portion, and that's OK too.  */
+	    if ((i.types[i.operands - 1] & Reg8) == 0
+		&& i.regs[i.operands - 1]->reg_num >= 4)
+	      bad = 1;
+	    break;
+	  case WORD_OPCODE_SUFFIX:
+	  case DWORD_OPCODE_SUFFIX:
+	    /* We don't insist on the presence or absence of the e
+               prefix on the register, but we reject eight bit
+               registers.  */
+	    if ((i.types[i.operands - 1] & Reg8) != 0)
+	      bad = 1;
+	  }
+	if (bad)
+	  as_bad ("register does not match opcode suffix");
       }
 
     /* Make still unresolved immediate matches conform to size of immediate
@@ -2779,7 +2821,7 @@ parse_register (reg_string)
 }
 
 #ifdef OBJ_ELF
-CONST char *md_shortopts = "mVQ:";
+CONST char *md_shortopts = "kmVQ:";
 #else
 CONST char *md_shortopts = "m";
 #endif
@@ -2800,6 +2842,10 @@ md_parse_option (c, arg)
       break;
 
 #ifdef OBJ_ELF
+      /* -k: Ignore for FreeBSD compatibility.  */
+    case 'k':
+      break;
+
       /* -V: SVR4 argument to print version ID.  */
     case 'V':
       print_version_id ();
@@ -2929,7 +2975,7 @@ tc_gen_reloc (section, fixp)
 	  MAP (4, 1, BFD_RELOC_32_PCREL);
 	default:
 	  as_bad ("Can not do %d byte %srelocation", fixp->fx_size,
-		  fixp->fx_pcrel ? "pc-relative" : "");
+		  fixp->fx_pcrel ? "pc-relative " : "");
 	}
     }
 #undef MAP
@@ -3033,5 +3079,100 @@ tc_coff_sizemachdep (frag)
 #endif /* I386COFF */
 
 #endif /* BFD_ASSEMBLER? */
+
+#ifdef SCO_ELF
+
+/* Heavily plagarized from obj_elf_version.  The idea is to emit the
+   SCO specific identifier in the .notes section to satisfy the SCO
+   linker.
+
+   This looks more complicated than it really is.  As opposed to the
+   "obvious" solution, this should handle the cross dev cases
+   correctly.  (i.e, hosting on a 64 bit big endian processor, but
+   generating SCO Elf code) Efficiency isn't a concern, as there
+   should be exactly one of these sections per object module.
+
+   SCO OpenServer 5 identifies it's ELF modules with a standard ELF
+   .note section.
+
+   int_32 namesz  = 4 ;  Name size 
+   int_32 descsz  = 12 ; Descriptive information 
+   int_32 type    = 1 ;  
+   char   name[4] = "SCO" ; Originator name ALWAYS SCO + NULL 
+   int_32 version = (major ver # << 16)  | version of tools ;
+   int_32 source  = (tool_id << 16 ) | 1 ;
+   int_32 info    = 0 ;    These are set by the SCO tools, but we
+                           don't know enough about the source 
+			   environment to set them.  SCO ld currently
+			   ignores them, and recommends we set them
+			   to zero.  */
+
+#define SCO_MAJOR_VERSION 0x1
+#define SCO_MINOR_VERSION 0x1
+
+void
+sco_id ()
+{
+  char *name;
+  unsigned int c;
+  char ch;
+  char *p;
+  asection *seg = now_seg;
+  subsegT subseg = now_subseg;
+  Elf_Internal_Note i_note;
+  Elf_External_Note e_note;
+  asection *note_secp = (asection *) NULL;
+  int i, len;
+
+  /* create the .note section */
+
+  note_secp = subseg_new (".note", 0);
+  bfd_set_section_flags (stdoutput,
+			 note_secp,
+			 SEC_HAS_CONTENTS | SEC_READONLY);
+
+  /* process the version string */
+
+  i_note.namesz = 4; 
+  i_note.descsz = 12;		/* 12 descriptive bytes */
+  i_note.type = NT_VERSION;	/* Contains a version string */
+
+  p = frag_more (sizeof (i_note.namesz));
+  md_number_to_chars (p, (valueT) i_note.namesz, 4);
+
+  p = frag_more (sizeof (i_note.descsz));
+  md_number_to_chars (p, (valueT) i_note.descsz, 4);
+
+  p = frag_more (sizeof (i_note.type));
+  md_number_to_chars (p, (valueT) i_note.type, 4);
+
+  p = frag_more (4);
+  strcpy (p, "SCO"); 
+
+  /* Note: this is the version number of the ELF we're representing */
+  p = frag_more (4);
+  md_number_to_chars (p, (SCO_MAJOR_VERSION << 16) | (SCO_MINOR_VERSION), 4);
+
+  /* Here, we pick a magic number for ourselves (yes, I "registered"
+     it with SCO.  The bottom bit shows that we are compat with the
+     SCO ABI.  */
+  p = frag_more (4);
+  md_number_to_chars (p, 0x4c520000 | 0x0001, 4);
+
+  /* If we knew (or cared) what the source language options were, we'd
+     fill them in here.  SCO has given us permission to ignore these
+     and just set them to zero.  */
+  p = frag_more (4);
+  md_number_to_chars (p, 0x0000, 4);
+ 
+  frag_align (2, 0); 
+
+  /* We probably can't restore the current segment, for there likely
+     isn't one yet...  */
+  if (seg && subseg)
+    subseg_set (seg, subseg);
+}
+
+#endif /* SCO_ELF */
 
 /* end of tc-i386.c */

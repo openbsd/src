@@ -99,6 +99,7 @@ if ![ld_simple_link $ld tmpdir/relax "--relax -T $srcdir$subdir/relax.t tmpdir/r
 	    # This is a straight function call.  All function calls in
 	    # this example are to either foo or bar.
 	    if "0x$dest != $nm_output(foo) && 0x$dest != $nm_output(bar)" {
+		send_log "fail 1\n"
 		send_log "$line\n"
 		fail $testname
 		return
@@ -109,6 +110,7 @@ if ![ld_simple_link $ld tmpdir/relax "--relax -T $srcdir$subdir/relax.t tmpdir/r
 	    # Otherwise, it should be lui, and the next instruction
 	    # should be an addiu, followed by an addu to $31.
 	    if { [gets $file l] == -1 } {
+		send_log "fail 2\n"
 		send_log "$line\n"
 		fail $testname
 		return
@@ -118,7 +120,8 @@ if ![ld_simple_link $ld tmpdir/relax "--relax -T $srcdir$subdir/relax.t tmpdir/r
 	    if [string match "*sll*" $l] {
 		continue
 	    }
-	    if ![regexp "lui (\[\$a-z0-9\]+),(\[0-9\]+)" $l whole reg upper] {
+	    if ![regexp "lui (\[\$a-z0-9\]+),(\[0-9a-fA-Fx\]+)" $l whole reg upper] {
+		send_log "fail 3\n"
 		send_log "$line\n"
 		send_log "$l\n"
 		fail $testname
@@ -126,12 +129,14 @@ if ![ld_simple_link $ld tmpdir/relax "--relax -T $srcdir$subdir/relax.t tmpdir/r
 	    }
 
 	    if { [gets $file l] == -1 } {
+		send_log "fail 4\n"
 		send_log "$line\n"
 		fail $testname
 		return
 	    }
 	    verbose "$l"
 	    if ![regexp "addiu \\$reg,\\$reg,(\[-0-9\]+)" $l whole lower] {
+		send_log "fail 5\n"
 		send_log "$line\n"
 		send_log "$l\n"
 		send_log "addiu \\$reg,\\$reg,(\[-0-9\]+)\n"
@@ -140,12 +145,14 @@ if ![ld_simple_link $ld tmpdir/relax "--relax -T $srcdir$subdir/relax.t tmpdir/r
 	    }
 
 	    if { [gets $file l] == -1 } {
+		send_log "fail 6\n"
 		send_log "$line\n"
 		fail $testname
 		return
 	    }
 	    verbose "$l"
 	    if ![regexp "addu \\$reg,\\$reg,\\\$ra" $l] {
+		send_log "fail 7\n"
 		send_log "$line\n"
 		send_log "$l\n"
 		fail $testname
@@ -157,26 +164,34 @@ if ![ld_simple_link $ld tmpdir/relax "--relax -T $srcdir$subdir/relax.t tmpdir/r
 	    # function, and the next line can be anything.
 
 	    if { [gets $file l] == -1 } {
+		send_log "fail 8\n"
 		send_log "$line\n"
 		fail $testname
 		return
 	    }
-
+	    verbose "$l"	
 	    if [string match "*jalr*" $l] {
 		set dest [expr 0x$addr + 8 + ($upper << 16) + $lower]
 		if { $dest != $nm_output(foo) && $dest != $nm_output(bar) } {
+		    send_log "fail 9\n"
 		    send_log "$line\n"
 		    fail $testname
 		    return
 		}
 	    } else {
 		set dest [expr ($upper << 16) + $lower]
-		if ![regexp "<\[a-z\]+\\+(\[0-9a-fA-F\]+)>" $label whole offset] {
+		if ![regexp "<(\[.a-z\]+)\\+(\[0-9a-fA-F\]+)>" $label whole base offset] {
+		    send_log "fail 10\n"
 		    send_log "$line\n"
 		    fail $testname
 		    return
 		}
-		if "0x$offset + 8 != - $dest" {
+		set offset 0x$offset
+		if { $base == ".foo" } {
+		    set offset [expr $offset - ($nm_output(foo) - 0x30)]
+		}
+		if { $offset + 8 != - $dest } {
+		    send_log "fail 11\n"
 		    send_log "$line\n"
 		    fail $testname
 		    return
@@ -188,6 +203,7 @@ if ![ld_simple_link $ld tmpdir/relax "--relax -T $srcdir$subdir/relax.t tmpdir/r
     close $file
 
     if {$balcnt < 10} {
+	send_log "fail 12\n"
 	fail $testname
     } else {
 	verbose "$balcnt bal instructions"

@@ -1,5 +1,5 @@
 /* tc-sparc.c -- Assemble for the SPARC
-   Copyright (C) 1989, 90, 91, 92, 93, 94, 1995 Free Software Foundation, Inc.
+   Copyright (C) 1989, 90-95, 1996 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -13,9 +13,10 @@
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
    GNU General Public License for more details.
 
-   You should have received a copy of the GNU General Public License
-   along with GAS; see the file COPYING.  If not, write to
-   the Free Software Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
+   You should have received a copy of the GNU General Public
+   License along with GAS; see the file COPYING.  If not, write
+   to the Free Software Foundation, 59 Temple Place - Suite 330,
+   Boston, MA 02111-1307, USA. */
 
 #include <stdio.h>
 #include <ctype.h>
@@ -26,15 +27,31 @@
 /* careful, this file includes data *declarations* */
 #include "opcode/sparc.h"
 
-static void sparc_ip PARAMS ((char *));
+static void sparc_ip PARAMS ((char *, const struct sparc_opcode **));
 
-#ifdef sparcv9
-static enum sparc_architecture current_architecture = v9;
+/* Current architecture.  We don't bump up unless necessary.  */
+static enum sparc_opcode_arch_val current_architecture = SPARC_OPCODE_ARCH_V6;
+
+/* The maximum architecture level we can bump up to.
+   In a 32 bit environment, don't allow bumping up to v9 by default.
+   The native assembler works this way. The user is required to pass
+   an explicit argument before we'll create v9 object files.  However, if
+   we don't see any v9 insns, a v9 object file is not created.  */
+#ifdef SPARC_ARCH64
+static enum sparc_opcode_arch_val max_architecture = SPARC_OPCODE_ARCH_V9;
 #else
-static enum sparc_architecture current_architecture = v6;
+/* ??? This should be V8, but sparclite support was added by making it the
+   default.  GCC now passes -Asparclite, so maybe sometime in the future
+   we can set this to V8.  */
+static enum sparc_opcode_arch_val max_architecture = SPARC_OPCODE_ARCH_SPARCLITE;
 #endif
+
 static int architecture_requested;
 static int warn_on_bump;
+
+/* If warn_on_bump and the needed architecture is higher than this
+   architecture, issue a warning.  */
+static enum sparc_opcode_arch_val warn_after_architecture;
 
 /* Non-zero if we are generating PIC code.  */
 int sparc_pic_code;
@@ -62,11 +79,9 @@ const pseudo_typeS md_pseudo_table[] =
   {"seg", s_seg, 0},
   {"skip", s_space, 0},
   {"word", cons, 4},
-#ifndef NO_V9
   {"xword", cons, 8},
 #ifdef OBJ_ELF
   {"uaxword", cons, 8},
-#endif
 #endif
 #ifdef OBJ_ELF
   /* these are specific to sparc/svr4 */
@@ -124,6 +139,8 @@ struct sparc_it
 
 struct sparc_it the_insn, set_insn;
 
+/* Return non-zero if VAL is in the range -(MAX+1) to MAX.  */
+
 static INLINE int
 in_signed_range (val, max)
      bfd_signed_vma val, max;
@@ -135,6 +152,36 @@ in_signed_range (val, max)
   if (val < ~max)
     return 0;
   return 1;
+}
+
+/* Return non-zero if VAL is in the range -(MAX/2+1) to MAX.
+   (e.g. -15 to +31).  */
+
+static INLINE int
+in_bitfield_range (val, max)
+     bfd_signed_vma val, max;
+{
+  if (max <= 0)
+    abort ();
+  if (val > max)
+    return 0;
+  if (val < ~(max >> 1))
+    return 0;
+  return 1;
+}
+
+static int
+sparc_ffs (mask)
+     unsigned int mask;
+{
+  int i;
+
+  if (mask == 0)
+    return -1;
+
+  for (i = 0; (mask & 1) == 0; ++i)
+    mask >>= 1;
+  return i;
 }
 
 #if 0
@@ -151,6 +198,9 @@ static int special_case;
  */
 #define	SPECIAL_CASE_SET	1
 #define	SPECIAL_CASE_FDIV	2
+
+/* The last instruction to be assembled.  */
+static const struct sparc_opcode *last_insn;
 
 /*
  * sort of like s_lcomm
@@ -502,7 +552,7 @@ s_proc (ignore)
   ++input_line_pointer;
 }
 
-#ifndef NO_V9
+/* sparc64 priviledged registers */
 
 struct priv_reg_entry
   {
@@ -539,10 +589,9 @@ cmp_reg_entry (p, q)
   return strcmp (q->name, p->name);
 }
 
-#endif
-
 /* This function is called once, at assembler startup time.  It should
    set up all the tables, etc. that the MD part of the assembler will need. */
+
 void
 md_begin ()
 {
@@ -552,7 +601,7 @@ md_begin ()
 
   op_hash = hash_new ();
 
-  while (i < NUMOPCODES)
+  while (i < sparc_num_opcodes)
     {
       const char *name = sparc_opcodes[i].name;
       retval = hash_insert (op_hash, name, &sparc_opcodes[i]);
@@ -572,7 +621,7 @@ md_begin ()
 	    }
 	  ++i;
 	}
-      while (i < NUMOPCODES
+      while (i < sparc_num_opcodes
 	     && !strcmp (sparc_opcodes[i].name, name));
     }
 
@@ -588,23 +637,95 @@ md_begin ()
   for (i = 'A'; i <= 'F'; ++i)
     toHex[i] = i + 10 - 'A';
 
-#ifndef NO_V9
   qsort (priv_reg_table, sizeof (priv_reg_table) / sizeof (priv_reg_table[0]),
 	 sizeof (priv_reg_table[0]), cmp_reg_entry);
-#endif
 
   target_big_endian = 1;
+
+  /* If -bump, record the architecture level at which we start issuing
+     warnings.  The behaviour is different depending upon whether an
+     architecture was explicitly specified.  If it wasn't, we issue warnings
+     for all upwards bumps.  If it was, we don't start issuing warnings until
+     we need to bump beyond the requested architecture or when we bump between
+     conflicting architectures.  */
+
+  if (warn_on_bump
+      && architecture_requested)
+    {
+      /* `max_architecture' records the requested architecture.
+	 Issue warnings if we go above it.  */
+      warn_after_architecture = max_architecture;
+
+      /* Find the highest architecture level that doesn't conflict with
+	 the requested one.  */
+      for (max_architecture = SPARC_OPCODE_ARCH_MAX;
+	   max_architecture > warn_after_architecture;
+	   --max_architecture)
+	if (! SPARC_OPCODE_CONFLICT_P (max_architecture,
+				       warn_after_architecture))
+	  break;
+    }
+}
+
+/* Called after all assembly has been done.  */
+
+void
+sparc_md_end ()
+{
+#ifdef SPARC_ARCH64
+  if (current_architecture == SPARC_OPCODE_ARCH_V9A)
+    bfd_set_arch_mach (stdoutput, bfd_arch_sparc, bfd_mach_sparc_v9a);
+  else
+    bfd_set_arch_mach (stdoutput, bfd_arch_sparc, bfd_mach_sparc_v9);
+#else
+  if (current_architecture == SPARC_OPCODE_ARCH_V9)
+    bfd_set_arch_mach (stdoutput, bfd_arch_sparc, bfd_mach_sparc_v8plus);
+  else if (current_architecture == SPARC_OPCODE_ARCH_V9A)
+    bfd_set_arch_mach (stdoutput, bfd_arch_sparc, bfd_mach_sparc_v8plusa);
+  else if (current_architecture == SPARC_OPCODE_ARCH_SPARCLET)
+    bfd_set_arch_mach (stdoutput, bfd_arch_sparc, bfd_mach_sparc_sparclet);
+  else
+    {
+      /* The sparclite is treated like a normal sparc.  Perhaps it shouldn't
+	 be but for now it is (since that's the way it's always been
+	 treated).  */
+      bfd_set_arch_mach (stdoutput, bfd_arch_sparc, bfd_mach_sparc);
+    }
+#endif
 }
 
 void
 md_assemble (str)
      char *str;
 {
+  const struct sparc_opcode *insn;
   char *toP;
   int rsd;
 
   know (str);
-  sparc_ip (str);
+  sparc_ip (str, &insn);
+
+  /* We warn about attempts to put a floating point branch in a delay
+     slot.  */
+  if (insn != NULL
+      && last_insn != NULL
+      && (insn->flags & F_FBR) != 0
+      && (last_insn->flags & F_DELAYED) != 0)
+    as_warn ("FP branch in delay slot");
+
+  /* SPARC before v9 requires a nop instruction between a floating
+     point instruction and a floating point branch.  We insert one
+     automatically, with a warning.  */
+  if (max_architecture < SPARC_OPCODE_ARCH_V9
+      && insn != NULL
+      && last_insn != NULL
+      && (insn->flags & F_FBR) != 0
+      && (last_insn->flags & F_FLOAT) != 0)
+    {
+      as_warn ("FP branch preceded by FP instruction; NOP inserted");
+      toP = frag_more (4);
+      md_number_to_chars (toP, (valueT) 0x01000000, 4);
+    }
 
   /* See if "set" operand is absolute and small; skip sethi if so. */
   if (special_case == SPECIAL_CASE_SET
@@ -635,6 +756,8 @@ md_assemble (str)
 		   the_insn.pcrel,
 		   the_insn.reloc);
     }
+
+  last_insn = insn;
 
   switch (special_case)
     {
@@ -691,7 +814,7 @@ BSR (val, amount)
 }
 
 /* Parse an argument that can be expressed as a keyword.
-   (eg: #StoreStore).
+   (eg: #StoreStore or %ccfr).
    The result is a boolean indicating success.
    If successful, INPUT_POINTER is updated.  */
 
@@ -705,7 +828,7 @@ parse_keyword_arg (lookup_fn, input_pointerP, valueP)
   char c, *p, *q;
 
   p = *input_pointerP;
-  for (q = p + (*p == '#'); isalpha (*q) || *q == '_'; ++q)
+  for (q = p + (*p == '#' || *p == '%'); isalpha (*q) || *q == '_'; ++q)
     continue;
   c = *q;
   *q = 0;
@@ -752,8 +875,9 @@ parse_const_expr_arg (input_pointerP, valueP)
 }
 
 static void
-sparc_ip (str)
+sparc_ip (str, pinsn)
      char *str;
+     const struct sparc_opcode **pinsn;
 {
   char *error_message = "";
   char *s;
@@ -766,6 +890,7 @@ sparc_ip (str)
   int match = 0;
   int comma = 0;
   long immediate_max = 0;
+  int v9_arg_p;
 
   for (s = str; islower (*s) || (*s >= '0' && *s <= '3'); ++s)
     ;
@@ -788,6 +913,7 @@ sparc_ip (str)
       as_fatal ("Unknown opcode: `%s'", str);
     }
   insn = (struct sparc_opcode *) hash_find (op_hash, str);
+  *pinsn = insn;
   if (insn == NULL)
     {
       as_bad ("Unknown opcode: `%s'", str);
@@ -804,6 +930,7 @@ sparc_ip (str)
       opcode = insn->match;
       memset (&the_insn, '\0', sizeof (the_insn));
       the_insn.reloc = BFD_RELOC_NONE;
+      v9_arg_p = 0;
 
       /*
        * Build the opcode, checking as we go to make
@@ -813,7 +940,6 @@ sparc_ip (str)
 	{
 	  switch (*args)
 	    {
-#ifndef NO_V9
 	    case 'K':
 	      {
 		int kmask = 0;
@@ -888,7 +1014,7 @@ sparc_ip (str)
 
 	    case '!':
 	    case '?':
-	      /* Parse a privileged register.  */
+	      /* Parse a sparc64 privileged register.  */
 	      if (*s == '%')
 		{
 		  struct priv_reg_entry *p = priv_reg_table;
@@ -921,7 +1047,6 @@ sparc_ip (str)
 		  error_message = ": unrecognizable privileged register";
 		  goto error;
 		}
-#endif
 
 	    case 'M':
 	    case 'm':
@@ -939,11 +1064,22 @@ sparc_ip (str)
 			  ++s;
 			}
 
-		      if (num < 16 || 31 < num)
+		      if (current_architecture >= SPARC_OPCODE_ARCH_V9)
 			{
-			  error_message = ": asr number must be between 15 and 31";
-			  goto error;
-			}	/* out of range */
+			  if (num < 16 || 31 < num)
+			    {
+			      error_message = ": asr number must be between 16 and 31";
+			      goto error;
+			    }
+			}
+		      else
+			{
+			  if (num < 0 || 31 < num)
+			    {
+			      error_message = ": asr number must be between 0 and 31";
+			      goto error;
+			    }
+			}
 
 		      opcode |= (*args == 'M' ? RS1 (num) : RD (num));
 		      continue;
@@ -952,12 +1088,10 @@ sparc_ip (str)
 		    {
 		      error_message = ": expecting %asrN";
 		      goto error;
-		    }		/* if %asr followed by a number. */
-
-		}		/* if %asr */
+		    }
+		} /* if %asr */
 	      break;
 
-#ifndef NO_V9
 	    case 'I':
 	      the_insn.reloc = BFD_RELOC_SPARC_11;
 	      immediate_max = 0x03FF;
@@ -966,6 +1100,28 @@ sparc_ip (str)
 	    case 'j':
 	      the_insn.reloc = BFD_RELOC_SPARC_10;
 	      immediate_max = 0x01FF;
+	      goto immediate;
+
+	    case 'X':
+	      /* V8 systems don't understand BFD_RELOC_SPARC_5.  */
+	      if (SPARC_OPCODE_ARCH_V9_P (max_architecture))
+		the_insn.reloc = BFD_RELOC_SPARC_5;
+	      else
+		the_insn.reloc = BFD_RELOC_SPARC13;
+	      /* These fields are unsigned, but for upward compatibility,
+		 allow negative values as well.  */
+	      immediate_max = 0x1f;
+	      goto immediate;
+
+	    case 'Y':
+	      /* V8 systems don't understand BFD_RELOC_SPARC_6.  */
+	      if (SPARC_OPCODE_ARCH_V9_P (max_architecture))
+		the_insn.reloc = BFD_RELOC_SPARC_6;
+	      else
+		the_insn.reloc = BFD_RELOC_SPARC13;
+	      /* These fields are unsigned, but for upward compatibility,
+		 allow negative values as well.  */
+	      immediate_max = 0x3f;
 	      goto immediate;
 
 	    case 'k':
@@ -1081,7 +1237,6 @@ sparc_ip (str)
 		  continue;
 		}
 	      break;
-#endif /* NO_V9 */
 
 	    case '\0':		/* end of args */
 	      if (*s == '\0')
@@ -1166,6 +1321,7 @@ sparc_ip (str)
 	      break;
 
 	    case 'r':		/* next operand must be a register */
+	    case 'O':
 	    case '1':
 	    case '2':
 	    case 'd':
@@ -1260,7 +1416,6 @@ sparc_ip (str)
 		     it goes in the opcode.  */
 		  switch (*args)
 		    {
-
 		    case '1':
 		      opcode |= mask << 14;
 		      continue;
@@ -1275,6 +1430,10 @@ sparc_ip (str)
 
 		    case 'r':
 		      opcode |= (mask << 25) | (mask << 14);
+		      continue;
+
+		    case 'O':
+		      opcode |= (mask << 25) | (mask << 0);
 		      continue;
 		    }
 		}
@@ -1319,23 +1478,27 @@ sparc_ip (str)
 			break;
 		      }		/* register must be multiple of 4 */
 
-#ifndef NO_V9
 		    if (mask >= 64)
 		      {
-			error_message = ": There are only 64 f registers; [0-63]";
+			if (SPARC_OPCODE_ARCH_V9_P (max_architecture))
+			  error_message = ": There are only 64 f registers; [0-63]";
+			else
+			  error_message = ": There are only 32 f registers; [0-31]";
 			goto error;
 		      }	/* on error */
-		    if (mask >= 32)
+		    else if (mask >= 32)
 		      {
-			mask -= 31;
-		      }	/* wrap high bit */
-#else
-		    if (mask >= 32)
-		      {
-			error_message = ": There are only 32 f registers; [0-31]";
-			goto error;
-		      }	/* on error */
-#endif
+			if (SPARC_OPCODE_ARCH_V9_P (max_architecture))
+			  {
+			    v9_arg_p = 1;
+			    mask -= 31;	/* wrap high bit */
+			  }
+			else
+			  {
+			    error_message = ": There are only 32 f registers; [0-31]";
+			    goto error;
+			  }
+		      }
 		  }
 		else
 		  {
@@ -1344,7 +1507,6 @@ sparc_ip (str)
 
 		switch (*args)
 		  {
-
 		  case 'v':
 		  case 'V':
 		  case 'e':
@@ -1416,13 +1578,13 @@ sparc_ip (str)
 		      the_insn.reloc = BFD_RELOC_LO10;
 		      s += 3;
 		    }
-#ifndef NO_V9
 		  else if (c == 'u'
 			   && s[2] == 'h'
 			   && s[3] == 'i')
 		    {
 		      the_insn.reloc = BFD_RELOC_SPARC_HH22;
 		      s += 4;
+		      v9_arg_p = 1;
 		    }
 		  else if (c == 'u'
 			   && s[2] == 'l'
@@ -1430,8 +1592,8 @@ sparc_ip (str)
 		    {
 		      the_insn.reloc = BFD_RELOC_SPARC_HM10;
 		      s += 4;
+		      v9_arg_p = 1;
 		    }
-#endif /* NO_V9 */
 		  else
 		    break;
 		}
@@ -1478,7 +1640,6 @@ sparc_ip (str)
 		  && the_insn.exp.X_add_symbol == 0
 		  && the_insn.exp.X_op_symbol == 0)
 		{
-#ifndef NO_V9
 		  /* Handle %uhi/%ulo by moving the upper word to the lower
 		     one and pretending it's %hi/%lo.  We also need to watch
 		     for %hi/%lo: the top word needs to be zeroed otherwise
@@ -1493,14 +1654,14 @@ sparc_ip (str)
 		      the_insn.reloc = BFD_RELOC_LO10;
 		      the_insn.exp.X_add_number = BSR (the_insn.exp.X_add_number, 32);
 		      break;
-		    default:
-		      break;
 		    case BFD_RELOC_HI22:
 		    case BFD_RELOC_LO10:
 		      the_insn.exp.X_add_number &= 0xffffffff;
 		      break;
+		    default:
+		      break;
 		    }
-#endif
+
 		  /* For pc-relative call instructions, we reject
 		     constants to get better code.  */
 		  if (the_insn.pcrel
@@ -1617,7 +1778,6 @@ sparc_ip (str)
 		}
 	      break;
 
-#ifndef NO_V9
 	    case 'o':
 	      if (strncmp (s, "%asi", 4) != 0)
 		break;
@@ -1635,7 +1795,6 @@ sparc_ip (str)
 		break;
 	      s += 4;
 	      continue;
-#endif /* NO_V9 */
 
 	    case 't':
 	      if (strncmp (s, "%tbr", 4) != 0)
@@ -1649,7 +1808,6 @@ sparc_ip (str)
 	      s += 4;
 	      continue;
 
-#ifndef NO_V9
 	    case 'x':
 	      {
 		char *push = input_line_pointer;
@@ -1671,13 +1829,26 @@ sparc_ip (str)
 		input_line_pointer = push;
 		continue;
 	      }
-#endif
 
 	    case 'y':
 	      if (strncmp (s, "%y", 2) != 0)
 		break;
 	      s += 2;
 	      continue;
+
+	    case 'u':
+	    case 'U':
+	      {
+		/* Parse a sparclet cpreg.  */
+		int cpreg;
+		if (! parse_keyword_arg (sparc_encode_sparclet_cpreg, &s, &cpreg))
+		  {
+		    error_message = ": invalid cpreg name";
+		    goto error;
+		  }
+		opcode |= (*args == 'U' ? RS1 (cpreg) : RD (cpreg));
+		continue;
+	      }
 
 	    default:
 	      as_fatal ("failed sanity check.");
@@ -1691,7 +1862,7 @@ sparc_ip (str)
       if (match == 0)
 	{
 	  /* Args don't match. */
-	  if (((unsigned) (&insn[1] - sparc_opcodes)) < NUMOPCODES
+	  if (((unsigned) (&insn[1] - sparc_opcodes)) < sparc_num_opcodes
 	      && (insn->name == insn[1].name
 		  || !strcmp (insn->name, insn[1].name)))
 	    {
@@ -1707,39 +1878,75 @@ sparc_ip (str)
 	}
       else
 	{
-	  if (insn->architecture > current_architecture
-	      || (insn->architecture != current_architecture
-		  && current_architecture > v8))
-	    {
-	      if ((!architecture_requested || warn_on_bump)
-		  && !ARCHITECTURES_CONFLICT_P (current_architecture,
-						insn->architecture)
-		  && !ARCHITECTURES_CONFLICT_P (insn->architecture,
-						current_architecture))
-		{
-		  if (warn_on_bump)
-		    {
-		      as_warn ("architecture bumped from \"%s\" to \"%s\" on \"%s\"",
-			       architecture_pname[current_architecture],
-			       architecture_pname[insn->architecture],
-			       str);
-		    }		/* if warning */
+	  /* We have a match.  Now see if the architecture is ok.  */
+	  int needed_arch_mask = insn->architecture;
 
-		  current_architecture = insn->architecture;
-		}
-	      else
+	  if (v9_arg_p)
+	    {
+	      needed_arch_mask &= ~ ((1 << SPARC_OPCODE_ARCH_V9)
+				     | (1 << SPARC_OPCODE_ARCH_V9A));
+	      needed_arch_mask |= (1 << SPARC_OPCODE_ARCH_V9);
+	    }
+
+	  if (needed_arch_mask & SPARC_OPCODE_SUPPORTED (current_architecture))
+	    ; /* ok */
+	  /* Can we bump up the architecture?  */
+	  else if (needed_arch_mask & SPARC_OPCODE_SUPPORTED (max_architecture))
+	    {
+	      enum sparc_opcode_arch_val needed_architecture =
+		sparc_ffs (SPARC_OPCODE_SUPPORTED (max_architecture)
+			   & needed_arch_mask);
+
+	      assert (needed_architecture <= SPARC_OPCODE_ARCH_MAX);
+	      if (warn_on_bump
+		  && needed_architecture > warn_after_architecture)
 		{
-		  as_bad ("Architecture mismatch on \"%s\".", str);
-		  as_tsktsk (" (Requires %s; current architecture is %s.)",
-			     architecture_pname[insn->architecture],
-			     architecture_pname[current_architecture]);
-		  return;
-		}		/* if bump ok else error */
-	    }			/* if architecture higher */
-	}			/* if no match */
+		  as_warn ("architecture bumped from \"%s\" to \"%s\" on \"%s\"",
+			   sparc_opcode_archs[current_architecture].name,
+			   sparc_opcode_archs[needed_architecture].name,
+			   str);
+		  warn_after_architecture = needed_architecture;
+		}
+	      current_architecture = needed_architecture;
+	    }
+	  /* Conflict.  */
+	  /* ??? This seems to be a bit fragile.  What if the next entry in
+	     the opcode table is the one we want and it is supported?
+	     It is possible to arrange the table today so that this can't
+	     happen but what about tomorrow?  */
+	  else
+	    {
+	      int arch,printed_one_p = 0;
+	      char *p;
+	      char required_archs[SPARC_OPCODE_ARCH_MAX * 16];
+
+	      /* Create a list of the architectures that support the insn.  */
+	      needed_arch_mask &= ~ SPARC_OPCODE_SUPPORTED (max_architecture);
+	      p = required_archs;
+	      arch = sparc_ffs (needed_arch_mask);
+	      while ((1 << arch) <= needed_arch_mask)
+		{
+		  if ((1 << arch) & needed_arch_mask)
+		    {
+		      if (printed_one_p)
+			*p++ = '|';
+		      strcpy (p, sparc_opcode_archs[arch].name);
+		      p += strlen (p);
+		      printed_one_p = 1;
+		    }
+		  ++arch;
+		}
+
+	      as_bad ("Architecture mismatch on \"%s\".", str);
+	      as_tsktsk (" (Requires %s; requested architecture is %s.)",
+			 required_archs,
+			 sparc_opcode_archs[max_architecture].name);
+	      return;
+	    }
+	} /* if no match */
 
       break;
-    }				/* forever looking for a match */
+    } /* forever looking for a match */
 
   the_insn.opcode = opcode;
 }
@@ -1875,7 +2082,8 @@ md_apply_fix (fixP, value)
      don't want to include the value of an externally visible symbol.  */
   if (fixP->fx_addsy != NULL)
     {
-      if ((S_IS_EXTERN (fixP->fx_addsy)
+      if ((S_IS_EXTERNAL (fixP->fx_addsy)
+	   || S_IS_WEAK (fixP->fx_addsy)
 	   || (sparc_pic_code && ! fixP->fx_pcrel))
 	  && S_GET_SEGMENT (fixP->fx_addsy) != absolute_section
 	  && S_GET_SEGMENT (fixP->fx_addsy) != undefined_section
@@ -1930,18 +2138,19 @@ md_apply_fix (fixP, value)
       break;
 
     case BFD_RELOC_32_PCREL_S2:
-      val = (val >>= 2);
+      val = val >> 2;
+      /* FIXME: This increment-by-one deserves a comment of why it's
+	 being done!  */
       if (! sparc_pic_code
 	  || fixP->fx_addsy == NULL
 	  || (fixP->fx_addsy->bsym->flags & BSF_SECTION_SYM) != 0)
 	++val;
       buf[0] |= (val >> 24) & 0x3f;
-      buf[1] = (val >> 16);
+      buf[1] = val >> 16;
       buf[2] = val >> 8;
       buf[3] = val;
       break;
 
-#ifndef NO_V9
     case BFD_RELOC_64:
       {
 	bfd_vma valh = BSR (val, 32);
@@ -1957,61 +2166,70 @@ md_apply_fix (fixP, value)
       break;
 
     case BFD_RELOC_SPARC_11:
-      if (((val > 0) && (val & ~0x7ff))
-	  || ((val < 0) && (~(val - 1) & ~0x7ff)))
-	{
-	  as_bad ("relocation overflow.");
-	}			/* on overflow */
+      if (! in_signed_range (val, 0x7ff))
+	as_bad ("relocation overflow.");
 
       buf[2] |= (val >> 8) & 0x7;
-      buf[3] = val & 0xff;
+      buf[3] = val;
       break;
 
     case BFD_RELOC_SPARC_10:
-      if (((val > 0) && (val & ~0x3ff))
-	  || ((val < 0) && (~(val - 1) & ~0x3ff)))
-	{
-	  as_bad ("relocation overflow.");
-	}			/* on overflow */
+      if (! in_signed_range (val, 0x3ff))
+	as_bad ("relocation overflow.");
 
       buf[2] |= (val >> 8) & 0x3;
-      buf[3] = val & 0xff;
+      buf[3] = val;
+      break;
+
+    case BFD_RELOC_SPARC_6:
+      if (! in_bitfield_range (val, 0x3f))
+	as_bad ("relocation overflow.");
+
+      buf[3] |= val & 0x3f;
+      break;
+
+    case BFD_RELOC_SPARC_5:
+      if (! in_bitfield_range (val, 0x1f))
+	as_bad ("relocation overflow.");
+
+      buf[3] |= val & 0x1f;
       break;
 
     case BFD_RELOC_SPARC_WDISP16:
+      /* FIXME: simplify */
       if (((val > 0) && (val & ~0x3fffc))
 	  || ((val < 0) && (~(val - 1) & ~0x3fffc)))
 	{
 	  as_bad ("relocation overflow.");
-	}			/* on overflow */
+	}
 
-      val = (val >>= 2) + 1;
+      /* FIXME: The +1 deserves a comment.  */
+      val = (val >> 2) + 1;
       buf[1] |= ((val >> 14) & 0x3) << 4;
       buf[2] |= (val >> 8) & 0x3f;
-      buf[3] = val & 0xff;
+      buf[3] = val;
       break;
 
     case BFD_RELOC_SPARC_WDISP19:
+      /* FIXME: simplify */
       if (((val > 0) && (val & ~0x1ffffc))
 	  || ((val < 0) && (~(val - 1) & ~0x1ffffc)))
 	{
 	  as_bad ("relocation overflow.");
-	}			/* on overflow */
+	}
 
-      val = (val >>= 2) + 1;
+      /* FIXME: The +1 deserves a comment.  */
+      val = (val >> 2) + 1;
       buf[1] |= (val >> 16) & 0x7;
       buf[2] = (val >> 8) & 0xff;
-      buf[3] = val & 0xff;
+      buf[3] = val;
       break;
 
     case BFD_RELOC_SPARC_HH22:
       val = BSR (val, 32);
       /* intentional fallthrough */
-#endif /* NO_V9 */
 
-#ifndef NO_V9
     case BFD_RELOC_SPARC_LM22:
-#endif
     case BFD_RELOC_HI22:
       if (!fixP->fx_addsy)
 	{
@@ -2033,14 +2251,12 @@ md_apply_fix (fixP, value)
 	}			/* on overflow */
       buf[1] |= (val >> 16) & 0x3f;
       buf[2] = val >> 8;
-      buf[3] = val & 0xff;
+      buf[3] = val;
       break;
 
-#ifndef NO_V9
     case BFD_RELOC_SPARC_HM10:
       val = BSR (val, 32);
       /* intentional fallthrough */
-#endif /* NO_V9 */
 
     case BFD_RELOC_LO10:
       if (!fixP->fx_addsy)
@@ -2111,6 +2327,8 @@ tc_gen_reloc (section, fixp)
     case BFD_RELOC_SPARC_WDISP19:
     case BFD_RELOC_SPARC_WDISP22:
     case BFD_RELOC_64:
+    case BFD_RELOC_SPARC_5:
+    case BFD_RELOC_SPARC_6:
     case BFD_RELOC_SPARC_10:
     case BFD_RELOC_SPARC_11:
     case BFD_RELOC_SPARC_HH22:
@@ -2141,7 +2359,8 @@ tc_gen_reloc (section, fixp)
 	{
 	case BFD_RELOC_32_PCREL_S2:
 	  if (! S_IS_DEFINED (fixp->fx_addsy)
-	      || S_IS_EXTERNAL (fixp->fx_addsy))
+	      || S_IS_EXTERNAL (fixp->fx_addsy)
+	      || S_IS_WEAK (fixp->fx_addsy))
 	    code = BFD_RELOC_SPARC_WPLT30;
 	  break;
 	case BFD_RELOC_HI22:
@@ -2269,23 +2488,32 @@ print_insn (insn)
  *	-bump
  *		Warn on architecture bumps.  See also -A.
  *
- *	-Av6, -Av7, -Av8, -Av9, -Asparclite
+ *	-Av6, -Av7, -Av8, -Av9, -Av9a, -Asparclite
+ *	-xarch=v8plus, -xarch=v8plusa
  *		Select the architecture.  Instructions or features not
  *		supported by the selected architecture cause fatal errors.
  *
  *		The default is to start at v6, and bump the architecture up
- *		whenever an instruction is seen at a higher level.
+ *		whenever an instruction is seen at a higher level.  If 32 bit
+ *		environments, v9 is not bumped up to, the user must pass -Av9.
+ *
+ *		-xarch=v8plus{,a} is for compatibility with the Sun assembler.
  *
  *		If -bump is specified, a warning is printing when bumping to
  *		higher levels.
  *
  *		If an architecture is specified, all instructions must match
  *		that architecture.  Any higher level instructions are flagged
- *		as errors.
+ *		as errors.  Note that in the 32 bit environment specifying
+ *		-Av9 does not automatically create a v9 object file, a v9
+ *		insn must be seen.
  *
- *		if both an architecture and -bump are specified, the
+ *		If both an architecture and -bump are specified, the
  *		architecture starts at the specified level, but bumps are
- *		warnings.
+ *		warnings.  Note that we can't set `current_architecture' to
+ *		the requested level in this case: in the 32 bit environment,
+ *		we still must avoid creating v9 object files unless v9 insns
+ *		are seen.
  *
  * Note:
  *		Bumping between incompatible architectures is always an
@@ -2306,6 +2534,8 @@ struct option md_longopts[] = {
   {"bump", no_argument, NULL, OPTION_BUMP},
 #define OPTION_SPARC (OPTION_MD_BASE + 1)
   {"sparc", no_argument, NULL, OPTION_SPARC},
+#define OPTION_XARCH (OPTION_MD_BASE + 2)
+  {"xarch", required_argument, NULL, OPTION_XARCH},
   {NULL, no_argument, NULL, 0}
 };
 size_t md_longopts_size = sizeof(md_longopts);
@@ -2319,35 +2549,38 @@ md_parse_option (c, arg)
     {
     case OPTION_BUMP:
       warn_on_bump = 1;
+      warn_after_architecture = SPARC_OPCODE_ARCH_V6;
       break;
+
+    case OPTION_XARCH:
+      /* ??? We could add v8plus and v8plusa to sparc_opcode_archs.
+	 But we might want v8plus to mean something different than v9
+	 someday, and we'd recognize more -xarch options than Sun's
+	 assembler does (which may lead to a conflict someday).  */
+      if (strcmp (arg, "v8plus") == 0)
+	arg = "v9";
+      else if (strcmp (arg, "v8plusa") == 0)
+	arg = "v9a";
+      else
+	{
+	  as_bad ("invalid architecture -xarch=%s", arg);
+	  return 0;
+	}
+
+      /* fall through */
 
     case 'A':
       {
-	char *p = arg;
-	const char **arch;
+	enum sparc_opcode_arch_val new_arch = sparc_opcode_lookup_arch (arg);
 
-	for (arch = architecture_pname; *arch != NULL; ++arch)
+	if (new_arch == SPARC_OPCODE_ARCH_BAD)
 	  {
-	    if (strcmp (p, *arch) == 0)
-	      break;
-	  }
-
-	if (*arch == NULL)
-	  {
-	    as_bad ("invalid architecture -A%s", p);
+	    as_bad ("invalid architecture -A%s", arg);
 	    return 0;
 	  }
 	else
 	  {
-	    enum sparc_architecture new_arch = arch - architecture_pname;
-#ifdef NO_V9
-	    if (new_arch == v9)
-	      {
-		as_error ("v9 support not compiled in");
-		return 0;
-	      }
-#endif
-	    current_architecture = new_arch;
+	    max_architecture = new_arch;
 	    architecture_requested = 1;
 	  }
       }
@@ -2393,22 +2626,24 @@ md_parse_option (c, arg)
       return 0;
     }
 
- return 1;
+  return 1;
 }
 
 void
 md_show_usage (stream)
      FILE *stream;
 {
-  const char **arch;
+  const struct sparc_opcode_arch *arch;
+
   fprintf(stream, "SPARC options:\n");
-  for (arch = architecture_pname; *arch; arch++)
+  for (arch = &sparc_opcode_archs[0]; arch->name; arch++)
     {
-      if (arch != architecture_pname)
+      if (arch != &sparc_opcode_archs[0])
 	fprintf (stream, " | ");
-      fprintf (stream, "-A%s", *arch);
+      fprintf (stream, "-A%s", arch->name);
     }
-  fprintf (stream, "\n\
+  fprintf (stream, "\n-xarch=v8plus | -xarch=v8plusa\n");
+  fprintf (stream, "\
 			specify variant of SPARC architecture\n\
 -bump			warn when assembler switches architectures\n\
 -sparc			ignored\n");

@@ -1233,6 +1233,7 @@ cp_address_required_here (str)
       inst.reloc.exp.X_add_number -= 8;  /* PC rel adjust */
       inst.reloc.pc_rel = 1;
       inst.instruction |= (REG_PC << 16);
+      pre_inc = PRE_INDEX;
     }
 
   inst.instruction |= write_back | pre_inc;
@@ -1572,7 +1573,9 @@ my_get_float_expression (str)
       && exp.X_op == O_big
       && exp.X_add_number < 0)
     {
-      if (gen_to_words (words, 6, (long)15) == 0)
+      /* FIXME: 5 = X_PRECISION, should be #define'd where we can use it.
+	 Ditto for 15.  */
+      if (gen_to_words (words, 5, (long)15) == 0)
 	{
 	  for (i = 0; i < NUM_FLOAT_VALS; i++)
 	    {
@@ -1626,6 +1629,8 @@ my_get_expression (ep, str)
   save_in = input_line_pointer;
   input_line_pointer = *str;
   seg = expression (ep);
+
+#ifdef OBJ_AOUT
   if (seg != absolute_section
       && seg != text_section
       && seg != data_section
@@ -1637,10 +1642,11 @@ my_get_expression (ep, str)
       input_line_pointer = save_in;
       return 1;
     }
+#endif
 
   /* Get rid of any bignums now, so that we don't generate an error for which
      we can't establish a line number later on.  Big numbers are never valid
-     in instructions, which is where is routine is always called.  */
+     in instructions, which is where this routine is always called.  */
   if (ep->X_op == O_big
       || (ep->X_add_symbol
 	  && (walk_no_bignums (ep->X_add_symbol)
@@ -3465,9 +3471,10 @@ arm_psr_parse (ccp)
 }
 
 int
-md_apply_fix (fixP, val)
+md_apply_fix3 (fixP, val, seg)
      fixS *fixP;
      valueT *val;
+     segT seg;
 {
   offsetT value = *val;
   offsetT newval, temp;
@@ -3476,11 +3483,21 @@ md_apply_fix (fixP, val)
 
   assert (fixP->fx_r_type < BFD_RELOC_UNUSED);
 
-  fixP->fx_addnumber = value;	/* Remember value for emit_reloc */
-
   /* Note whether this will delete the relocation.  */
   if (fixP->fx_addsy == 0 && !fixP->fx_pcrel)
     fixP->fx_done = 1;
+
+  /* If this symbol is in a different section then we need to leave it for
+     the linker to deal with.  Unfortunately, md_pcrel_from can't tell,
+     so we have to undo it's effects here.  */
+  if (fixP->fx_pcrel)
+    {
+      if (S_IS_DEFINED (fixP->fx_addsy)
+	  && S_GET_SEGMENT (fixP->fx_addsy) != seg)
+	value += md_pcrel_from (fixP);
+    }
+
+  fixP->fx_addnumber = value;	/* Remember value for emit_reloc */
 
   switch (fixP->fx_r_type)
     {

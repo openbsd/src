@@ -1,5 +1,5 @@
 /* tc-m68k.c -- Assemble for the m68k family
-   Copyright (C) 1987, 91, 92, 93, 94, 1995 Free Software Foundation, Inc.
+   Copyright (C) 1987, 91, 92, 93, 94, 95, 1996 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -19,7 +19,6 @@
    02111-1307, USA.  */
 
 #include <ctype.h>
-#define  NO_RELOC 0
 #include "as.h"
 #include "obstack.h"
 #include "subsegs.h"
@@ -27,12 +26,14 @@
 #include "opcode/m68k.h"
 #include "m68k-parse.h"
 
-/* This array holds the chars that always start a comment.  If the
-   pre-processor is disabled, these aren't very useful */
-#if defined (OBJ_ELF) || defined (TE_DELTA)
-const char comment_chars[] = "|#";
+/* This string holds the chars that always start a comment.  If the
+   pre-processor is disabled, these aren't very useful.  The macro
+   tc_comment_chars points to this.  We use this, rather than the
+   usual comment_chars, so that the --bitwise-or option will work.  */
+#if (defined (OBJ_ELF) && ! defined (TE_PSOS) && ! defined (TE_LINUX)) || defined (TE_DELTA)
+const char *m68k_comment_chars = "|#";
 #else
-const char comment_chars[] = "|";
+const char *m68k_comment_chars = "|";
 #endif
 
 /* This array holds the chars that only start a comment at the beginning of
@@ -62,7 +63,8 @@ const int md_reloc_size = 8;	/* Size of relocation record */
 
 /* Are we trying to generate PIC code?  If so, absolute references
    ought to be made into linkage table references or pc-relative
-   references.  */
+   references.  Not implemented.  For ELF there are other means 
+   to denote pic relocations.  */
 int flag_want_pic;
 
 static int flag_short_refs;	/* -l option */
@@ -73,6 +75,9 @@ int flag_reg_prefix_optional = REGISTER_PREFIX_OPTIONAL;
 #else
 int flag_reg_prefix_optional;
 #endif
+
+/* Whether --register-prefix-optional was used on the command line.  */
+static int reg_prefix_optional_seen;
 
 /* The floating point coprocessor to use by default.  */
 static enum m68k_register m68k_float_copnum = COP1;
@@ -199,6 +204,11 @@ struct m68k_it
 	 significance of some values (in the branch instruction, for
 	 example).  */
       int pcrel_fix;
+#ifdef OBJ_ELF
+      /* Whether this expression needs special pic relocation, and if
+	 so, which.  */
+      enum pic_relocation pic_reloc;
+#endif
     }
   reloc[5];			/* Five is enough??? */
 };
@@ -252,6 +262,9 @@ add_fix (width, exp, pc_rel, pc_fix)
   the_ins.reloc[the_ins.nrel].exp = exp->exp;
   the_ins.reloc[the_ins.nrel].wid = width;
   the_ins.reloc[the_ins.nrel].pcrel_fix = pc_fix;
+#ifdef OBJ_ELF
+  the_ins.reloc[the_ins.nrel].pic_reloc = exp->pic_reloc;
+#endif
   the_ins.reloc[the_ins.nrel++].pcrel = pc_rel;
 }
 
@@ -315,36 +328,37 @@ static int current_architecture;
 struct m68k_cpu {
   unsigned long arch;
   const char *name;
+  int alias;
 };
 
 static const struct m68k_cpu archs[] = {
-  { m68000, "68000" },
-  { m68010, "68010" },
-  { m68020, "68020" },
-  { m68030, "68030" },
-  { m68040, "68040" },
-  { m68060, "68060" },
-  { cpu32,  "cpu32" },
-  { m68881, "68881" },
-  { m68851, "68851" },
+  { m68000, "68000", 0 },
+  { m68010, "68010", 0 },
+  { m68020, "68020", 0 },
+  { m68030, "68030", 0 },
+  { m68040, "68040", 0 },
+  { m68060, "68060", 0 },
+  { cpu32,  "cpu32", 0 },
+  { m68881, "68881", 0 },
+  { m68851, "68851", 0 },
   /* Aliases (effectively, so far as gas is concerned) for the above
      cpus.  */
-  { m68020, "68k" },
-  { m68000, "68302" },
-  { m68000, "68008" },
-  { m68000, "68ec000" },
-  { m68000, "68hc000" },
-  { m68000, "68hc001" },
-  { m68020, "68ec020" },
-  { m68030, "68ec030" },
-  { m68040, "68ec040" },
-  { cpu32,  "68330" },
-  { cpu32,  "68331" },
-  { cpu32,  "68332" },
-  { cpu32,  "68333" },
-  { cpu32,  "68340" },
-  { cpu32,  "68360" },
-  { m68881, "68882" },
+  { m68020, "68k", 1 },
+  { m68000, "68302", 1 },
+  { m68000, "68008", 1 },
+  { m68000, "68ec000", 1 },
+  { m68000, "68hc000", 1 },
+  { m68000, "68hc001", 1 },
+  { m68020, "68ec020", 1 },
+  { m68030, "68ec030", 1 },
+  { m68040, "68ec040", 1 },
+  { cpu32,  "68330", 1 },
+  { cpu32,  "68331", 1 },
+  { cpu32,  "68332", 1 },
+  { cpu32,  "68333", 1 },
+  { cpu32,  "68340", 1 },
+  { cpu32,  "68360", 1 },
+  { m68881, "68882", 1 },
 };
 
 static const int n_archs = sizeof (archs) / sizeof (archs[0]);
@@ -427,12 +441,14 @@ const pseudo_typeS md_pseudo_table[] =
   {"even", s_even, 0},
   {"skip", s_space, 0},
   {"proc", s_proc, 0},
-#ifdef TE_SUN3
+#if defined (TE_SUN3) || defined (OBJ_ELF)
   {"align", s_align_bytes, 0},
 #endif
 #ifdef OBJ_ELF
   {"swbeg", s_ignore, 0},
 #endif
+  {"extend", float_cons, 'x'},
+  {"ldouble", float_cons, 'x'},
 
   /* The following pseudo-ops are supported for MRI compatibility.  */
   {"chip", s_chip, 0},
@@ -497,7 +513,11 @@ CONST pseudo_typeS mote_pseudo_table[] =
   {"dsb", s_space, 1},
 
   {"xdef", s_globl, 0},
+#ifdef OBJ_ELF
+  {"align", s_align_bytes, 0},
+#else
   {"align", s_align_ptwo, 0},
+#endif
 #ifdef M68KCOFF
   {"sect", obj_coff_section, 0},
   {"section", obj_coff_section, 0},
@@ -582,6 +602,145 @@ tc_coff_fix2rtype (fixP)
 
 #endif
 
+#ifdef OBJ_ELF
+
+/* Compute the relocation code for a fixup of SIZE bytes, using pc
+   relative relocation if PCREL is non-zero.  PIC says whether a special
+   pic relocation was requested.  */
+
+static bfd_reloc_code_real_type get_reloc_code
+  PARAMS ((int, int, enum pic_relocation));
+
+static bfd_reloc_code_real_type
+get_reloc_code (size, pcrel, pic)
+     int size;
+     int pcrel;
+     enum pic_relocation pic;
+{
+  switch (pic)
+    {
+    case pic_got_pcrel:
+      switch (size)
+	{
+	case 1:
+	  return BFD_RELOC_8_GOT_PCREL;
+	case 2:
+	  return BFD_RELOC_16_GOT_PCREL;
+	case 4:
+	  return BFD_RELOC_32_GOT_PCREL;
+	}
+      break;
+
+    case pic_got_off:
+      switch (size)
+	{
+	case 1:
+	  return BFD_RELOC_8_GOTOFF;
+	case 2:
+	  return BFD_RELOC_16_GOTOFF;
+	case 4:
+	  return BFD_RELOC_32_GOTOFF;
+	}
+      break;
+
+    case pic_plt_pcrel:
+      switch (size)
+	{
+	case 1:
+	  return BFD_RELOC_8_PLT_PCREL;
+	case 2:
+	  return BFD_RELOC_16_PLT_PCREL;
+	case 4:
+	  return BFD_RELOC_32_PLT_PCREL;
+	}
+      break;
+
+    case pic_plt_off:
+      switch (size)
+	{
+	case 1:
+	  return BFD_RELOC_8_PLTOFF;
+	case 2:
+	  return BFD_RELOC_16_PLTOFF;
+	case 4:
+	  return BFD_RELOC_32_PLTOFF;
+	}
+      break;
+
+    case pic_none:
+      if (pcrel)
+	{
+	  switch (size)
+	    {
+	    case 1:
+	      return BFD_RELOC_8_PCREL;
+	    case 2:
+	      return BFD_RELOC_16_PCREL;
+	    case 4:
+	      return BFD_RELOC_32_PCREL;
+	    }
+	}
+      else
+	{
+	  switch (size)
+	    {
+	    case 1:
+	      return BFD_RELOC_8;
+	    case 2:
+	      return BFD_RELOC_16;
+	    case 4:
+	      return BFD_RELOC_32;
+	    }
+	}
+    }
+
+  as_bad ("Can not do %d byte %s%srelocation", size,
+	  pcrel ? "pc-relative " : "",
+	  pic == pic_none ? "" : "pic ");
+  return BFD_RELOC_NONE;
+}
+
+/* Here we decide which fixups can be adjusted to make them relative
+   to the beginning of the section instead of the symbol.  Basically
+   we need to make sure that the dynamic relocations are done
+   correctly, so in some cases we force the original symbol to be
+   used.  */
+int
+tc_m68k_fix_adjustable (fixP)
+     fixS *fixP;
+{
+  /* Prevent all adjustments to global symbols. */
+  if (S_IS_EXTERNAL (fixP->fx_addsy))
+    return 0;
+
+  /* adjust_reloc_syms doesn't know about the GOT */
+  switch (fixP->fx_r_type)
+    {
+    case BFD_RELOC_8_GOT_PCREL:
+    case BFD_RELOC_16_GOT_PCREL:
+    case BFD_RELOC_32_GOT_PCREL:
+    case BFD_RELOC_8_GOTOFF:
+    case BFD_RELOC_16_GOTOFF:
+    case BFD_RELOC_32_GOTOFF:
+    case BFD_RELOC_8_PLT_PCREL:
+    case BFD_RELOC_16_PLT_PCREL:
+    case BFD_RELOC_32_PLT_PCREL:
+    case BFD_RELOC_8_PLTOFF:
+    case BFD_RELOC_16_PLTOFF:
+    case BFD_RELOC_32_PLTOFF:
+      return 0;
+
+    default:
+      return 1;
+    }
+}
+
+#else /* !OBJ_ELF */
+
+#define get_reloc_code(SIZE,PCREL,OTHER) NO_RELOC
+
+#endif /* OBJ_ELF */
+
 #ifdef BFD_ASSEMBLER
 
 arelent *
@@ -595,28 +754,50 @@ tc_gen_reloc (section, fixp)
   if (fixp->fx_tcbit)
     abort ();
 
-#define F(SZ,PCREL)		(((SZ) << 1) + (PCREL))
-  switch (F (fixp->fx_size, fixp->fx_pcrel))
+  if (fixp->fx_r_type != BFD_RELOC_NONE)
+    code = fixp->fx_r_type;
+  else
     {
+#define F(SZ,PCREL)		(((SZ) << 1) + (PCREL))
+      switch (F (fixp->fx_size, fixp->fx_pcrel))
+	{
 #define MAP(SZ,PCREL,TYPE)	case F(SZ,PCREL): code = (TYPE); break
-      MAP (1, 0, BFD_RELOC_8);
-      MAP (2, 0, BFD_RELOC_16);
-      MAP (4, 0, BFD_RELOC_32);
-      MAP (1, 1, BFD_RELOC_8_PCREL);
-      MAP (2, 1, BFD_RELOC_16_PCREL);
-      MAP (4, 1, BFD_RELOC_32_PCREL);
-    default:
-      abort ();
+	  MAP (1, 0, BFD_RELOC_8);
+	  MAP (2, 0, BFD_RELOC_16);
+	  MAP (4, 0, BFD_RELOC_32);
+	  MAP (1, 1, BFD_RELOC_8_PCREL);
+	  MAP (2, 1, BFD_RELOC_16_PCREL);
+	  MAP (4, 1, BFD_RELOC_32_PCREL);
+	default:
+	  abort ();
+	}
     }
+#undef F
+#undef MAP
 
   reloc = (arelent *) bfd_alloc_by_size_t (stdoutput, sizeof (arelent));
   assert (reloc != 0);
   reloc->sym_ptr_ptr = &fixp->fx_addsy->bsym;
   reloc->address = fixp->fx_frag->fr_address + fixp->fx_where;
+#ifndef OBJ_ELF
   if (fixp->fx_pcrel)
     reloc->addend = fixp->fx_addnumber;
   else
     reloc->addend = 0;
+#else
+  if (!fixp->fx_pcrel)
+    reloc->addend = fixp->fx_addnumber;
+  else if ((fixp->fx_addsy->bsym->flags & BSF_SECTION_SYM) != 0)
+    reloc->addend = (section->vma
+		     + (fixp->fx_pcrel_adjust == 64
+			? -1 : fixp->fx_pcrel_adjust)
+		     + fixp->fx_addnumber
+		     + md_pcrel_from (fixp));
+  else
+    reloc->addend = (fixp->fx_offset
+		     + (fixp->fx_pcrel_adjust == 64
+			? -1 : fixp->fx_pcrel_adjust));
+#endif
 
   reloc->howto = bfd_reloc_type_lookup (stdoutput, code);
   assert (reloc->howto != 0);
@@ -1360,7 +1541,8 @@ m68k_ip (instring)
 		    for (idx = 0; idx < sizeof (archs) / sizeof (archs[0]);
 			 idx++)
 		      {
-			if (archs[idx].arch & ok_arch)
+			if ((archs[idx].arch & ok_arch)
+			    && ! archs[idx].alias)
 			  {
 			    if (got_one)
 			      {
@@ -1563,6 +1745,9 @@ m68k_ip (instring)
 			   && cpu_of_arch (current_architecture) >= m68020)
 			  || opP->disp.size == SIZE_LONG)))
 		{
+		  if (cpu_of_arch (current_architecture) < m68020)
+		    opP->error =
+		      "displacement too large for this architecture; needs 68020 or higher";
 		  if (opP->reg == PC)
 		    tmpreg = 0x3B;	/* 7.3 */
 		  else
@@ -1571,16 +1756,24 @@ m68k_ip (instring)
 		    {
 		      if (opP->reg == PC)
 			{
-#if 0
-			  addword (0x0170);
-			  add_fix ('l', &opP->disp, 1, 2);
-			  addword (0), addword (0);
-#else
-			  add_frag (adds (&opP->disp),
-				    offs (&opP->disp),
-				    TAB (PCLEA, SZ_UNDEF));
+			  if (opP->disp.size == SIZE_LONG
+#ifdef OBJ_ELF
+			      /* If the displacement needs pic
+				 relocation it cannot be relaxed.  */
+			      || opP->disp.pic_reloc != pic_none
 #endif
-			  break;
+			      )
+			    {
+			      addword (0x0170);
+			      add_fix ('l', &opP->disp, 1, 2);
+			    }
+			  else
+			    {
+			      add_frag (adds (&opP->disp),
+					offs (&opP->disp),
+					TAB (PCLEA, SZ_UNDEF));
+			      break;
+			    }
 			}
 		      else
 			{
@@ -1726,7 +1919,13 @@ m68k_ip (instring)
 		      else if (siz1 == SIZE_UNSPEC
 			       && opP->reg == PC
 			       && isvar (&opP->disp)
-			       && subs (&opP->disp) == NULL)
+			       && subs (&opP->disp) == NULL
+#ifdef OBJ_ELF
+			       /* If the displacement needs pic
+				  relocation it cannot be relaxed.  */
+			       && opP->disp.pic_reloc == pic_none
+#endif
+			       )
 			{
  			  nextword += baseo & 0xff;
  			  addword (nextword);
@@ -1862,6 +2061,11 @@ m68k_ip (instring)
 		  if (isvar (&opP->disp)
 		      && !subs (&opP->disp)
 		      && adds (&opP->disp)
+#ifdef OBJ_ELF
+		      /* If the displacement needs pic relocation it
+			 cannot be relaxed.  */
+		      && opP->disp.pic_reloc == pic_none
+#endif
 		      && S_GET_SEGMENT (adds (&opP->disp)) == now_seg
 		      && cpu_of_arch (current_architecture) >= m68020
 		      && !flag_long_jumps
@@ -1931,7 +2135,8 @@ m68k_ip (instring)
 		opP->error = "out of range";
 	      insop (tmpreg, opcode);
 	      if (isvar (&opP->disp))
-		the_ins.reloc[the_ins.nrel - 1].n = (opcode->m_codenum) * 2;
+		the_ins.reloc[the_ins.nrel - 1].n =
+		  (opcode->m_codenum) * 2 + 1;
 	      break;
 	    case 'w':
 	      if (!isword (tmpreg))
@@ -2000,6 +2205,13 @@ m68k_ip (instring)
 	    case 'g':
 	      if (subs (&opP->disp))	/* We can't relax it */
 		goto long_branch;
+
+#ifdef OBJ_ELF
+	      /* If the displacement needs pic relocation it cannot be
+		 relaxed.  */
+	      if (opP->disp.pic_reloc != pic_none)
+		goto long_branch;
+#endif
 
 	      /* This could either be a symbol, or an absolute
 		 address.  No matter, the frag hacking will finger it
@@ -2934,7 +3146,8 @@ md_assemble (str)
 			      n,
 			      &the_ins.reloc[m].exp,
 			      the_ins.reloc[m].pcrel,
-			      NO_RELOC);
+			      get_reloc_code (n, the_ins.reloc[m].pcrel,
+					      the_ins.reloc[m].pic_reloc));
 	  fixP->fx_pcrel_adjust = the_ins.reloc[m].pcrel_fix;
 	}
       return;
@@ -2978,7 +3191,8 @@ md_assemble (str)
 			      wid,
 			      &the_ins.reloc[m].exp,
 			      the_ins.reloc[m].pcrel,
-			      NO_RELOC);
+			      get_reloc_code (wid, the_ins.reloc[m].pcrel,
+					      the_ins.reloc[m].pic_reloc));
 	  fixP->fx_pcrel_adjust = the_ins.reloc[m].pcrel_fix;
 	}
       (void) frag_var (rs_machine_dependent, 10, 0,
@@ -3014,7 +3228,8 @@ md_assemble (str)
 			  wid,
 			  &the_ins.reloc[m].exp,
 			  the_ins.reloc[m].pcrel,
-			  NO_RELOC);
+			  get_reloc_code (wid, the_ins.reloc[m].pcrel,
+					  the_ins.reloc[m].pic_reloc));
       fixP->fx_pcrel_adjust = the_ins.reloc[m].pcrel_fix;
     }
 }
@@ -3181,6 +3396,12 @@ md_begin ()
 #endif
 
   init_regtable ();
+
+#ifdef OBJ_ELF
+  record_alignment (text_section, 2);
+  record_alignment (data_section, 2);
+  record_alignment (bss_section, 2);
+#endif
 }
 
 void
@@ -3276,6 +3497,43 @@ m68k_init_after_args ()
     md_relax_table[TAB (PCINDEX, BYTE)].rlx_more = 0;
 }
 
+/* This is called if we go in or out of MRI mode because of the .mri
+   pseudo-op.  */
+
+void
+m68k_mri_mode_change (on)
+     int on;
+{
+  if (on)
+    {
+      if (! flag_reg_prefix_optional)
+	{
+	  flag_reg_prefix_optional = 1;
+#ifdef REGISTER_PREFIX
+	  init_regtable ();
+#endif
+	}
+      m68k_abspcadd = 1;
+      m68k_rel32 = 0;
+    }
+  else
+    {
+      if (! reg_prefix_optional_seen)
+	{
+#ifdef REGISTER_PREFIX_OPTIONAL
+	  flag_reg_prefix_optional = REGISTER_PREFIX_OPTIONAL;
+#else
+	  flag_reg_prefix_optional = 0;
+#endif
+#ifdef REGISTER_PREFIX
+	  init_regtable ();
+#endif
+	}
+      m68k_abspcadd = 0;
+      m68k_rel32 = 1;
+    }
+}
+
 /* Equal to MAX_PRECISION in atof-ieee.c */
 #define MAX_LITTLENUMS 6
 
@@ -3366,6 +3624,15 @@ md_apply_fix_2 (fixP, val)
     val |= ~(addressT)0x7fffffff;
   else
     val &= 0x7fffffff;
+
+#ifdef OBJ_ELF
+  if (fixP->fx_addsy)
+    {
+      memset (buf, 0, fixP->fx_size);
+      fixP->fx_addnumber = val;	/* Remember value for emit_reloc */
+      return;
+    }
+#endif
 
   switch (fixP->fx_size)
     {
@@ -3897,13 +4164,27 @@ md_estimate_size_before_relax (fragP, segment)
     {
     case TAB (BCC68000, BYTE):
     case TAB (ABRANCH, BYTE):
-      /* We can't do a short jump to the next instruction,
-	   so we force word mode.  */
-      if (fragP->fr_symbol && S_GET_VALUE (fragP->fr_symbol) == 0 &&
-	  fragP->fr_symbol->sy_frag == fragP->fr_next)
+      /* We can't do a short jump to the next instruction, so in that
+	 case we force word mode.  At this point S_GET_VALUE should
+	 return the offset of the symbol within its frag.  If the
+	 symbol is at the start of a frag, and it is the next frag
+	 with any data in it (usually this is just the next frag, but
+	 assembler listings may introduce empty frags), we must use
+	 word mode.  */
+      if (fragP->fr_symbol && S_GET_VALUE (fragP->fr_symbol) == 0)
 	{
-	  fragP->fr_subtype = TAB (TABTYPE (fragP->fr_subtype), SHORT);
-	  fragP->fr_var += 2;
+	  fragS *l;
+
+	  for (l = fragP->fr_next;
+	       l != fragP->fr_symbol->sy_frag;
+	       l = l->fr_next)
+	    if (l->fr_fix + l->fr_var != 0)
+	      break;
+	  if (l == fragP->fr_symbol->sy_frag)
+	    {
+	      fragP->fr_subtype = TAB (TABTYPE (fragP->fr_subtype), SHORT);
+	      fragP->fr_var += 2;
+	    }
 	}
       break;
     default:
@@ -5850,6 +6131,9 @@ s_mri_endw (ignore)
  *	-pic	Indicates PIC.
  *	-k	Indicates PIC.  (Sun 3 only.)
  *
+ *	--bitwise-or
+ *		Permit `|' to be used in expressions.
+ *
  */
 
 #ifdef OBJ_ELF
@@ -5864,6 +6148,8 @@ struct option md_longopts[] = {
 #define OPTION_REGISTER_PREFIX_OPTIONAL (OPTION_MD_BASE + 1)
   {"register-prefix-optional", no_argument, NULL,
      OPTION_REGISTER_PREFIX_OPTIONAL},
+#define OPTION_BITWISE_OR (OPTION_MD_BASE + 2)
+  {"bitwise-or", no_argument, NULL, OPTION_BITWISE_OR},
   {NULL, no_argument, NULL, 0}
 };
 size_t md_longopts_size = sizeof(md_longopts);
@@ -5968,10 +6254,31 @@ md_parse_option (c, arg)
 
     case OPTION_REGISTER_PREFIX_OPTIONAL:
       flag_reg_prefix_optional = 1;
+      reg_prefix_optional_seen = 1;
       break;
 
-    case 'Q':
+      /* -V: SVR4 argument to print version ID.  */
     case 'V':
+      print_version_id ();
+      break;
+
+      /* -Qy, -Qn: SVR4 arguments controlling whether a .comment section
+	 should be emitted or not.  FIXME: Not implemented.  */
+    case 'Q':
+      break;
+
+    case OPTION_BITWISE_OR:
+      {
+	char *n, *t, *s;
+
+	n = (char *) xmalloc (strlen (m68k_comment_chars) + 1);
+	t = n;
+	for (s = m68k_comment_chars; *s != '\0'; s++)
+	  if (*s != '|')
+	    *t++ = *s;
+	*t = '\0';
+	m68k_comment_chars = n;
+      }
       break;
 
     default:
@@ -6002,7 +6309,8 @@ md_show_usage (stream)
 -pic, -k		generate position independent code\n\
 -S			turn jbsr into jsr\n\
 --register-prefix-optional\n\
-			recognize register names without prefix character\n");
+			recognize register names without prefix character\n\
+--bitwise-or		do not treat `|' as a comment character\n");
 }
 
 #ifdef TEST2

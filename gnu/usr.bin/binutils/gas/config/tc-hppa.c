@@ -1,5 +1,5 @@
 /* tc-hppa.c -- Assemble for the PA
-   Copyright (C) 1989 Free Software Foundation, Inc.
+   Copyright (C) 1989, 1996 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -88,6 +88,14 @@ typedef som_symbol_type obj_symbol_type;
 #ifndef R_DLT_REL
 #define R_DLT_REL 0x78
 #endif
+#endif
+
+#ifndef R_N0SEL
+#define R_N0SEL 0xd8
+#endif
+
+#ifndef R_N1SEL
+#define R_N1SEL 0xd9
 #endif
 
 /* Various structures and types used internally in tc-hppa.c.  */
@@ -641,7 +649,7 @@ const pseudo_typeS md_pseudo_table[] =
    first line of the input file.  This is because the compiler outputs
    #NO_APP at the beginning of its output.
 
-   Also note that '/*' will always start a comment.  */
+   Also note that C style comments will always work. */
 const char line_comment_chars[] = "#";
 
 /* This array holds the characters which act as line separators.  */
@@ -961,6 +969,9 @@ static const struct selector_entry selector_table[] =
   {"lr", e_lrsel},
   {"ls", e_lssel},
   {"lt", e_ltsel},
+  {"n", e_nsel},
+  {"nl", e_nlsel},
+  {"nlr", e_nlrsel},
   {"p", e_psel},
   {"r", e_rsel},
   {"rd", e_rdsel},
@@ -978,8 +989,9 @@ static const struct selector_entry selector_table[] =
 
 /* pre-defined subsegments (subspaces) for the HPPA.  */
 #define SUBSEG_CODE   0
-#define SUBSEG_DATA   0
 #define SUBSEG_LIT    1
+#define SUBSEG_MILLI  2
+#define SUBSEG_DATA   0
 #define SUBSEG_BSS    2
 #define SUBSEG_UNWIND 3
 #define SUBSEG_GDB_STRINGS 0
@@ -990,6 +1002,7 @@ static struct default_subspace_dict pa_def_subspaces[] =
   {"$CODE$", 1, 1, 1, 0, 0, 0, 24, 0x2c, 0, 8, 0, 0, ".text", SUBSEG_CODE},
   {"$DATA$", 1, 1, 0, 0, 0, 0, 24, 0x1f, 1, 8, 1, 1, ".data", SUBSEG_DATA},
   {"$LIT$", 1, 1, 0, 0, 0, 0, 16, 0x2c, 0, 8, 0, 0, ".text", SUBSEG_LIT},
+  {"$MILLICODE$", 1, 1, 0, 0, 0, 0, 8, 0x2c, 0, 8, 0, 0, ".text", SUBSEG_MILLI},
   {"$BSS$", 1, 1, 0, 0, 0, 1, 80, 0x1f, 1, 8, 1, 1, ".bss", SUBSEG_BSS},
 #ifdef OBJ_ELF
   {"$UNWIND$", 1, 1, 0, 0, 0, 0, 64, 0x2c, 0, 4, 0, 0, ".PARISC.unwind", SUBSEG_UNWIND},
@@ -2701,7 +2714,7 @@ tc_gen_reloc (section, fixp)
 	  relocs[0]->howto = bfd_reloc_type_lookup (stdoutput, *codes[0]);
 	  relocs[0]->address = fixp->fx_frag->fr_address + fixp->fx_where;
 	  relocs[0]->addend = 0;
-	  relocs[0]->sym_ptr_ptr = &fixp->fx_addsy->bsym;
+	  relocs[1]->sym_ptr_ptr = &fixp->fx_addsy->bsym;
 	  relocs[1]->howto = bfd_reloc_type_lookup (stdoutput, *codes[1]);
 	  relocs[1]->address = fixp->fx_frag->fr_address + fixp->fx_where;
 	  relocs[1]->addend = 0;
@@ -2747,6 +2760,8 @@ tc_gen_reloc (section, fixp)
 	case R_RSEL:
 	case R_BEGIN_BRTAB:
 	case R_END_BRTAB:
+	case R_N0SEL:
+	case R_N1SEL:
 	  /* There is no symbol or addend associated with these fixups.  */
 	  relocs[i]->sym_ptr_ptr = &dummy_symbol->bsym;
 	  relocs[i]->addend = 0;
@@ -2763,9 +2778,10 @@ tc_gen_reloc (section, fixp)
 	  relocs[i]->addend = fixp->fx_offset;
 	}
     }
+
+ done:
 #endif
 
-done:
   return relocs;
 }
 
@@ -2894,7 +2910,7 @@ md_apply_fix (fixP, valp)
   char *buf = fixP->fx_where + fixP->fx_frag->fr_literal;
   struct hppa_fix_struct *hppa_fixP;
   long new_val, result;
-  unsigned int w1, w2, w;
+  unsigned int w1, w2, w, resulti;
 
   hppa_fixP = (struct hppa_fix_struct *) fixP->tc_fix_data;
   /* SOM uses R_HPPA_ENTRY and R_HPPA_EXIT relocations which can
@@ -2905,7 +2921,7 @@ md_apply_fix (fixP, valp)
       || fixP->fx_r_type == R_HPPA_EXIT
       || fixP->fx_r_type == R_HPPA_BEGIN_BRTAB
       || fixP->fx_r_type == R_HPPA_END_BRTAB)
-    return;
+    return 1;
 #endif
 
   /* There should have been an HPPA specific fixup associated
@@ -2971,7 +2987,8 @@ md_apply_fix (fixP, valp)
 	  bfd_put_32 (stdoutput,
 		      bfd_get_32 (stdoutput, buf) & 0xffffc000,
 		      buf);
-	  low_sign_unext (new_val, 14, &result);
+	  low_sign_unext (new_val, 14, &resulti);
+	  result = resulti;
 	  break;
 
 	/* Handle all opcodes with the 'k' operand type.  */
@@ -2982,7 +2999,8 @@ md_apply_fix (fixP, valp)
 	  bfd_put_32 (stdoutput,
 		      bfd_get_32 (stdoutput, buf) & 0xffe00000,
 		      buf);
-	  dis_assemble_21 (new_val, &result);
+	  dis_assemble_21 (new_val, &resulti);
+	  result = resulti;
 	  break;
 
 	/* Handle all the opcodes with the 'i' operand type.  */
@@ -2993,20 +3011,21 @@ md_apply_fix (fixP, valp)
 	  bfd_put_32 (stdoutput,
 		      bfd_get_32 (stdoutput, buf) & 0xffff800,
 		      buf);
-	  low_sign_unext (new_val, 11, &result);
+	  low_sign_unext (new_val, 11, &resulti);
+	  result = resulti;
 	  break;
 
 	/* Handle all the opcodes with the 'w' operand type.  */
 	case 12:
-	  CHECK_FIELD (new_val, 8199, -8184, 0)
+	  CHECK_FIELD (new_val, 8199, -8184, 0);
 
 	  /* Mask off 11 bits to be changed.  */
-	    sign_unext ((new_val - 8) >> 2, 12, &result);
+	  sign_unext ((new_val - 8) >> 2, 12, &resulti);
 	  bfd_put_32 (stdoutput,
 		      bfd_get_32 (stdoutput, buf) & 0xffffe002,
 		      buf);
 
-	  dis_assemble_12 (result, &w1, &w);
+	  dis_assemble_12 (resulti, &w1, &w);
 	  result = ((w1 << 2) | w);
 	  break;
 
@@ -3018,8 +3037,8 @@ md_apply_fix (fixP, valp)
 	  bfd_put_32 (stdoutput,
 		      bfd_get_32 (stdoutput, buf) & 0xffe0e002,
 		      buf);
-	  sign_unext ((new_val - 8) >> 2, 17, &result);
-	  dis_assemble_17 (result, &w1, &w2, &w);
+	  sign_unext ((new_val - 8) >> 2, 17, &resulti);
+	  dis_assemble_17 (resulti, &w1, &w2, &w);
 	  result = ((w2 << 2) | (w1 << 16) | w);
 	  break;
 
@@ -3030,18 +3049,18 @@ md_apply_fix (fixP, valp)
 
 	default:
 	  as_bad ("Unknown relocation encountered in md_apply_fix.");
-	  return;
+	  return 0;
 	}
 
       /* Insert the relocation.  */
       bfd_put_32 (stdoutput, bfd_get_32 (stdoutput, buf) | result, buf);
-      return;
+      return 1;
     }
   else
     {
       printf ("no hppa_fixup entry for this fixup (fixP = 0x%x, type = 0x%x)\n",
 	      (unsigned int) fixP, fixP->fx_r_type);
-      return;
+      return 0;
     }
 }
 
@@ -3423,7 +3442,7 @@ pa_chk_field_selector (str)
 {
   int middle, low, high;
   int cmp;
-  char name[3];
+  char name[4];
 
   /* Read past any whitespace.  */
   /* FIXME: should we read past newlines and formfeeds??? */
@@ -3437,6 +3456,13 @@ pa_chk_field_selector (str)
     name[0] = tolower ((*str)[0]),
     name[1] = tolower ((*str)[1]),
     name[2] = 0;
+#ifdef OBJ_SOM
+  else if ((*str)[3] == '\'' || (*str)[3] == '%')
+    name[0] = tolower ((*str)[0]),
+    name[1] = tolower ((*str)[1]),
+    name[2] = tolower ((*str)[2]),
+    name[3] = 0;
+#endif
   else
     return e_fsel;
 
@@ -3454,6 +3480,10 @@ pa_chk_field_selector (str)
       else
 	{
 	  *str += strlen (name) + 1;
+#ifndef OBJ_SOM
+	  if (selector_table[middle].field_selector == e_nsel)
+	    return e_fsel;
+#endif
 	  return selector_table[middle].field_selector;
 	}
     }
@@ -3892,7 +3922,7 @@ pa_parse_nonneg_add_cmpltr (s, isbranch)
 
    ISBRANCH specifies whether or not this is parsing a condition
    completer for a branch (vs a nullification completer for a
-   computational instruction.  */
+   computational instruction).  */
 
 static int
 pa_parse_neg_add_cmpltr (s, isbranch)
@@ -5633,6 +5663,16 @@ pa_spaces_begin ()
 					       | SEC_READONLY
 					       | SEC_HAS_CONTENTS));
 	}
+      else if (!strcmp (pa_def_subspaces[i].name, "$MILLICODE$")
+	       && !USE_ALIASES)
+	{
+	  applicable = bfd_applicable_section_flags (stdoutput);
+	  bfd_set_section_flags (stdoutput, segment,
+				 applicable & (SEC_ALLOC | SEC_LOAD
+					       | SEC_RELOC
+					       | SEC_READONLY
+					       | SEC_HAS_CONTENTS));
+	}
       else if (!strcmp (pa_def_subspaces[i].name, "$UNWIND$") && !USE_ALIASES)
 	{
 	  applicable = bfd_applicable_section_flags (stdoutput);
@@ -6283,11 +6323,11 @@ hppa_fix_adjustable (fixp)
       return 0;
     }
 
-  /* We can't adjust DP relative relocs that use LR% and RR% field
-     selectors.  That confuses the optimization pass in HP linker.  */
-  if (fixp->fx_r_type == R_DP_RELATIVE
-      && (hppa_fix->fx_r_field == e_lrsel
-	  || hppa_fix->fx_r_field == e_rrsel))
+  /* We can't adjust any relocs that use LR% and RR% field selectors.
+     That confuses the HP linker.  */
+  if (hppa_fix->fx_r_field == e_lrsel
+      || hppa_fix->fx_r_field == e_rrsel
+      || hppa_fix->fx_r_field == e_nlrsel)
     return 0;
 #endif
 

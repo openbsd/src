@@ -748,7 +748,6 @@ NAME(aout,machine_type) (arch, machine, unknown)
     *unknown = false;
     break;
 
-
   default:
     arch_flags = M_UNKNOWN;
   }

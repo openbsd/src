@@ -3,7 +3,12 @@
 # These variables may be overridden by the emulation file.  The
 # defaults are appropriate for a DECstation running Ultrix.
 test -z "$ENTRY" && ENTRY=__start
-test -z "$TEXT_START_ADDR" && TEXT_START_ADDR="0x400000 + SIZEOF_HEADERS"
+
+if [ -z "$EMBEDDED" ]; then
+  test -z "$TEXT_START_ADDR" && TEXT_START_ADDR="0x400000 + SIZEOF_HEADERS"
+else
+  test -z "$TEXT_START_ADDR" && TEXT_START_ADDR="0x400000"
+fi
 if test "x$LD_FLAG" = "xn" -o "x$LD_FLAG" = "xN"; then
   DATA_ADDR=.
 else

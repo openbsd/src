@@ -23,13 +23,14 @@
 test -z "$ENTRY" && ENTRY=_start
 test -z "${BIG_OUTPUT_FORMAT}" && BIG_OUTPUT_FORMAT=${OUTPUT_FORMAT}
 test -z "${LITTLE_OUTPUT_FORMAT}" && LITTLE_OUTPUT_FORMAT=${OUTPUT_FORMAT}
+if [ -z "$MACHINE" ]; then OUTPUT_ARCH=${ARCH}; else OUTPUT_ARCH=${ARCH}:${MACHINE}; fi
 test "$LD_FLAG" = "N" && DATA_ADDR=.
 INTERP=".interp   ${RELOCATING-0} : { *(.interp) 	}"
 PLT=".plt    ${RELOCATING-0} : { *(.plt)	}"
 cat <<EOF
 OUTPUT_FORMAT("${OUTPUT_FORMAT}", "${BIG_OUTPUT_FORMAT}",
 	      "${LITTLE_OUTPUT_FORMAT}")
-OUTPUT_ARCH(${ARCH})
+OUTPUT_ARCH(${OUTPUT_ARCH})
 ENTRY(${ENTRY})
 
 ${RELOCATING+${LIB_SEARCH_DIRS}}
@@ -86,22 +87,8 @@ SECTIONS
   ${RELOCATING+${OTHER_READONLY_SECTIONS}}
 
   /* Adjust the address for the data segment.  We want to adjust up to
-     the same address within the page on the next page up.  It would
-     be more correct to do this:
-       ${RELOCATING+. = ${DATA_ADDR-ALIGN(${MAXPAGESIZE})
-		+ ((ALIGN(8) + ${MAXPAGESIZE} - ALIGN(${MAXPAGESIZE}))
-		   & (${MAXPAGESIZE} - 1)};}
-     The current expression does not correctly handle the case of a
-     text segment ending precisely at the end of a page; it causes the
-     data segment to skip a page.  The above expression does not have
-     this problem, but it will currently (2/95) cause BFD to allocate
-     a single segment, combining both text and data, for this case.
-     This will prevent the text segment from being shared among
-     multiple executions of the program; I think that is more
-     important than losing a page of the virtual address space (note
-     that no actual memory is lost; the page which is skipped can not
-     be referenced).  */
-  ${RELOCATING+. = ${DATA_ADDR- ALIGN(8) + ${MAXPAGESIZE}};}
+     the same address within the page on the next page up.  */
+  ${RELOCATING+. = ${DATA_ADDR-ALIGN(${MAXPAGESIZE}) + (ALIGN(8) & (${MAXPAGESIZE} - 1))};}
 
   .data  ${RELOCATING-0} :
   {

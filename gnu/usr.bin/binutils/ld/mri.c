@@ -1,4 +1,4 @@
-/* Copyright (C) 1991, 92, 93, 94 Free Software Foundation, Inc.
+/* Copyright (C) 1991, 92, 93, 94, 95, 1996 Free Software Foundation, Inc.
    
 This file is part of GLD, the Gnu Linker.
 
@@ -62,7 +62,6 @@ static void mri_add_to_list PARAMS ((struct section_name_struct **list,
 				     const char *name, etree_type *vma,
 				     const char *zalias, etree_type *align,
 				     etree_type *subalign));
-static void mri_draw_tree PARAMS ((void));
 
 static struct section_name_struct **
 lookup (name, list)
@@ -135,11 +134,13 @@ mri_base (exp)
 
 static int done_tree = 0;
 
-static void
+void
 mri_draw_tree ()
 {
   if (done_tree) return;
 
+  /* We don't bother with memory regions.  */
+#if 0
   /* Create the regions */
  {
    lang_memory_region_type *r;
@@ -149,7 +150,7 @@ mri_draw_tree ()
    r->length = (bfd_size_type) exp_get_vma(0, (bfd_vma) ~((bfd_size_type)0),
 					   "length", lang_first_phase_enum);
  }
-
+#endif
   
   /* Now build the statements for the ldlang machine */
 
@@ -264,7 +265,7 @@ mri_draw_tree ()
 	}
       }
 	
-      lang_leave_output_section_statement(0, "long");
+      lang_leave_output_section_statement(0, "*default*");
       p = p->next;
     }
   }
@@ -277,8 +278,6 @@ void
 mri_load (name)
      CONST char *name;
 {
-  mri_draw_tree();
-
   base = 0;
   lang_add_input_file(name,
 		      lang_input_file_is_file_enum, (char *)NULL);

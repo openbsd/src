@@ -294,6 +294,12 @@ function that was loaded directly before it in the executable file.
 @c This is compatible with Unix @code{gprof}, but a bad idea.  
 This option affects both the flat profile and the call graph.
 
+@item -D
+The @samp{-D} option causes @code{gprof} to ignore symbols which
+are not known to be functions.  This option will give more accurate
+profile data on systems where it is supported (Solaris and HPUX for
+example).
+
 @item -e @var{function_name}
 The @samp{-e @var{function}} option tells @code{gprof} to not print
 information about the function @var{function_name} (and its
@@ -388,6 +394,46 @@ cumulative data in the file @file{gmon.sum}.
 @item -T
 The @samp{-T} option causes @code{gprof} to print its output in
 ``traditional'' BSD style.
+
+@item --function-ordering
+The @samp{--function-ordering} option causes @code{gprof} to print a
+suggested function ordering for the program based on profiling data.
+This option suggests an ordering which may improve paging, tlb and
+cache behavior for the program on systems which support arbitrary
+ordering of functions in an executable.
+
+The exact details of how to force the linker to place functions
+in a particular order is system dependent and out of the scope of this
+manual.
+
+@item --file-ordering @var{map_file}
+The @samp{--file-ordering} option causes @code{gprof} to print a
+suggested .o link line ordering for the program based on profiling data.
+This option suggests an ordering which may improve paging, tlb and
+cache behavior for the program on systems which do not support arbitrary
+ordering of functions in an executable.
+
+Use of the @samp{-a} argument is highly recommended with this option.
+
+The @var{map_file} argument is a pathname to a file which provides
+function name to object file mappings.  The format of the file is similar to
+the output of the program @code{nm}.
+
+@smallexample
+@group
+c-parse.o:00000000 T yyparse
+c-parse.o:00000004 C yyerrflag
+c-lang.o:00000000 T maybe_objc_method_name
+c-lang.o:00000000 T print_lang_statistics
+c-lang.o:00000000 T recognize_objc_keyword
+c-decl.o:00000000 T print_lang_identifier
+c-decl.o:00000000 T print_lang_type
+@dots{}
+
+@end group
+@end smallexample
+
+GNU @code{nm} @samp{--extern-only} @samp{--defined-only} @samp{-v} @samp{--print-file-name} can be used to create @var{map_file}.
 @end table
 
 @node Flat Profile

@@ -1,5 +1,5 @@
 /* ldlang.h - linker command language support
-   Copyright 1991, 1992, 1993, 1994, 1995 Free Software Foundation, Inc.
+   Copyright 1991, 92, 93, 94, 95, 1996 Free Software Foundation, Inc.
    
    This file is part of GLD, the Gnu Linker.
    
@@ -97,6 +97,16 @@ typedef struct lang_output_statement_struct
 } lang_output_statement_type;
 
 
+/* This structure holds a list of program headers describing segments
+   in which this section should be placed.  */
+
+struct lang_output_section_phdr_list
+{
+  struct lang_output_section_phdr_list *next;
+  const char *name;
+  boolean used;
+};
+
 typedef struct lang_output_section_statement_struct 
 {
   lang_statement_header_type header;
@@ -118,7 +128,9 @@ typedef struct lang_output_section_statement_struct
   int subsection_alignment;  /* alignment of components */
   int section_alignment;  /* alignment of start of section */
 
-  union etree_union *load_base;  
+  union etree_union *load_base;
+
+  struct lang_output_section_phdr_list *phdrs;
 } lang_output_section_statement_type;
 
 
@@ -223,6 +235,9 @@ typedef struct lang_input_statement_struct
   /* Whether to search for this entry as a dynamic archive.  */
   boolean dynamic;
 
+  /* Whether to include the entire contents of an archive.  */
+  boolean whole_archive;
+
   boolean loaded;
     
   /*    unsigned int globals_in_this_file;*/
@@ -305,6 +320,20 @@ typedef union lang_statement_union
   lang_padding_statement_type padding_statement;
   lang_group_statement_type group_statement;
 } lang_statement_union_type;
+
+/* This structure holds information about a program header, from the
+   PHDRS command in the linker script.  */
+
+struct lang_phdr
+{
+  struct lang_phdr *next;
+  const char *name;
+  unsigned long type;
+  boolean filehdr;
+  boolean phdrs;
+  etree_type *at;
+  etree_type *flags;
+};
 
 extern lang_output_section_statement_type *abs_output_section;
 extern boolean lang_has_input_file;
@@ -398,5 +427,9 @@ extern void wild_doit
   PARAMS ((lang_statement_list_type *ptr, asection *section,
 	   lang_output_section_statement_type *output,
 	   lang_input_statement_type *file));
+extern void lang_new_phdr
+  PARAMS ((const char *, etree_type *, boolean, boolean, etree_type *,
+	   etree_type *));
+extern void lang_section_in_phdr PARAMS ((const char *));
 
 #endif

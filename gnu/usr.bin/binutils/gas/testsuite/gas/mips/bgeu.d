@@ -16,19 +16,19 @@ Disassembly of section .text:
 0+001c <[^>]*> sltiu \$at,\$a0,2
 0+0020 <[^>]*> beqz \$at,0+0000 <text_label>
 ...
-0+0028 <[^>]*> li \$at,32768
+0+0028 <[^>]*> li \$at,0x8000
 0+002c <[^>]*> sltu \$at,\$a0,\$at
 0+0030 <[^>]*> beqz \$at,0+0000 <text_label>
 ...
 0+0038 <[^>]*> sltiu \$at,\$a0,-32768
 0+003c <[^>]*> beqz \$at,0+0000 <text_label>
 ...
-0+0044 <[^>]*> lui \$at,1
+0+0044 <[^>]*> lui \$at,0x1
 0+0048 <[^>]*> sltu \$at,\$a0,\$at
 0+004c <[^>]*> beqz \$at,0+0000 <text_label>
 ...
-0+0054 <[^>]*> lui \$at,1
-0+0058 <[^>]*> ori \$at,\$at,42405
+0+0054 <[^>]*> lui \$at,0x1
+0+0058 <[^>]*> ori \$at,\$at,0xa5a5
 0+005c <[^>]*> sltu \$at,\$a0,\$at
 0+0060 <[^>]*> beqz \$at,0+0000 <text_label>
 ...

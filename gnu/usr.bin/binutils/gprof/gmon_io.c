@@ -180,9 +180,27 @@ DEFUN (gmon_out_read, (filename), const char *filename)
 		   filename);
 	  done (1);
 	}
-      tmp.low_pc = get_vma (core_bfd, (bfd_byte *) & raw.low_pc[0]);
-      tmp.high_pc = get_vma (core_bfd, (bfd_byte *) & raw.high_pc[0]);
-      tmp.ncnt = bfd_get_32 (core_bfd, (bfd_byte *) & raw.ncnt[0]);
+      tmp.low_pc = get_vma (core_bfd, (bfd_byte *) &raw.low_pc[0]);
+      tmp.high_pc = get_vma (core_bfd, (bfd_byte *) &raw.high_pc[0]);
+      tmp.ncnt = bfd_get_32 (core_bfd, (bfd_byte *) &raw.ncnt[0]);
+
+#ifdef BSD44_FORMAT
+      {
+	int profrate;
+
+	profrate = bfd_get_32 (core_bfd, (bfd_byte *) &raw.version[0]);
+	if (!s_highpc)
+	  hz = profrate;
+	else if (hz != profrate)
+	  {
+	    fprintf (stderr,
+		     "%s: profiling rate incompatible with first gmon file\n",
+		     filename);
+	    done (1);
+	  }
+      }
+#endif
+
       if (s_highpc && (tmp.low_pc != h.low_pc ||
 		       tmp.high_pc != h.high_pc || tmp.ncnt != h.ncnt))
 	{

@@ -67,14 +67,14 @@ extern frchainS *frchain_now;
 typedef struct
 {
   frchainS *frchainP;
-  int hadone : 1;
+  unsigned int hadone : 1;
 
   /* This field is set if this is a .bss section which does not really
      have any contents.  Once upon a time a .bss section did not have
      any frags, but that is no longer true.  This field prevent the
      SEC_HAS_CONTENTS flag from being set for the section even if
      there are frags.  */
-  int bss : 1;
+  unsigned int bss : 1;
 
   int user_stuff;
 
@@ -85,7 +85,10 @@ typedef struct
 
 #if defined (MANY_SEGMENTS) && !defined (BFD_ASSEMBLER)
   struct internal_scnhdr scnhdr;
+  enum linkonce_type linkonce;
+  const char *name;
 #endif
+
   symbolS *dot;
 
   struct lineno_list *lineno_list_head;
@@ -111,6 +114,10 @@ typedef struct
 
 #ifdef NEED_LITERAL_POOL
   unsigned long literal_pool_size;
+#endif
+
+#ifdef TC_SEGMENT_INFO_TYPE
+  TC_SEGMENT_INFO_TYPE tc_segment_info_data;
 #endif
 } segment_info_type;
 

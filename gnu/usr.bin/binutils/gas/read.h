@@ -69,6 +69,16 @@ extern symbolS *line_label;
 /* This is used to support MRI common sections.  */
 extern symbolS *mri_common_symbol;
 
+/* Possible arguments to .linkonce.  */
+enum linkonce_type
+{
+  LINKONCE_UNSET = 0,
+  LINKONCE_DISCARD,
+  LINKONCE_ONE_ONLY,
+  LINKONCE_SAME_SIZE,
+  LINKONCE_SAME_CONTENTS
+};
+
 unsigned int get_stab_string_offset PARAMS ((const char *string,
 					     const char *stabstr_secname));
 
@@ -113,9 +123,11 @@ void s_ignore PARAMS ((int arg));
 void s_include PARAMS ((int arg));
 void s_irp PARAMS ((int arg));
 void s_lcomm PARAMS ((int needs_align));
+void s_linkonce PARAMS ((int));
 void s_lsym PARAMS ((int));
 void s_macro PARAMS ((int));
 void s_mexit PARAMS ((int));
+void s_mri PARAMS ((int));
 void s_mri_common PARAMS ((int));
 void s_org PARAMS ((int));
 void s_print PARAMS ((int));
@@ -129,5 +141,7 @@ void s_text PARAMS ((int));
 void stringer PARAMS ((int append_zero));
 void s_xstab PARAMS ((int what));
 void s_rva PARAMS ((int));
+
+void read_print_statistics PARAMS ((FILE *));
 
 /* end of read.h */

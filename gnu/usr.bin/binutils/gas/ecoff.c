@@ -1,5 +1,5 @@
 /* ECOFF debugging support.
-   Copyright (C) 1993 Free Software Foundation, Inc.
+   Copyright (C) 1993, 1994, 1995, 1996 Free Software Foundation, Inc.
    Contributed by Cygnus Support.
    This file was put together by Ian Lance Taylor <ian@cygnus.com>.  A
    good deal of it comes directly from mips-tfile.c, by Michael
@@ -18,8 +18,9 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with GAS; see the file COPYING.  If not, write to
-   the Free Software Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+   along with GAS; see the file COPYING.  If not, write to the Free
+   Software Foundation, 59 Temple Place - Suite 330, Boston, MA
+   02111-1307, USA.  */
 
 #include "as.h"
 
@@ -832,6 +833,7 @@ typedef struct scope {
 typedef struct localsym {
   const char *name;		/* symbol name */
   symbolS *as_sym;		/* symbol as seen by gas */
+  bfd_vma addend;		/* addend to as_sym value */
   struct efdr *file_ptr;	/* file pointer */
   struct ecoff_proc *proc_ptr;	/* proc pointer */
   struct localsym *begin_ptr;	/* symbol at start of block */
@@ -1425,7 +1427,7 @@ static symint_t add_string PARAMS ((varray_t *vp,
 				    shash_t **ret_hash));
 static localsym_t *add_ecoff_symbol PARAMS ((const char *str, st_t type,
 					     sc_t storage, symbolS *sym,
-					     symint_t value,
+					     bfd_vma addend, symint_t value,
 					     symint_t indx));
 static symint_t add_aux_sym_symint PARAMS ((symint_t aux_word));
 static symint_t add_aux_sym_rndx PARAMS ((int file_index,
@@ -1600,11 +1602,12 @@ add_string (vp, hash_tbl, str, ret_hash)
 /* Add debugging information for a symbol.  */
 
 static localsym_t *
-add_ecoff_symbol (str, type, storage, sym_value, value, indx)
+add_ecoff_symbol (str, type, storage, sym_value, addend, value, indx)
      const char *str;			/* symbol name */
      st_t type;				/* symbol type */
      sc_t storage;			/* storage class */
      symbolS *sym_value;		/* associated symbol.  */
+     bfd_vma addend;			/* addend to sym_value.  */
      symint_t value;			/* value of symbol */
      symint_t indx;			/* index to local/aux. syms */
 {
@@ -1634,6 +1637,7 @@ add_ecoff_symbol (str, type, storage, sym_value, value, indx)
   psym->as_sym = sym_value;
   if (sym_value != (symbolS *) NULL)
     sym_value->ecoff_symbol = psym;
+  psym->addend = addend;
   psym->file_ptr = cur_file_ptr;
   psym->proc_ptr = cur_proc_ptr;
   psym->begin_ptr = (localsym_t *) NULL;
@@ -2104,6 +2108,7 @@ add_unknown_tag (ptag)
 			  st_Block,
 			  sc_Info,
 			  (symbolS *) NULL,
+			  (bfd_vma) 0,
 			  (symint_t) 0,
 			  (symint_t) 0);
 
@@ -2111,6 +2116,7 @@ add_unknown_tag (ptag)
 			   st_End,
 			   sc_Info,
 			   (symbolS *) NULL,
+			   (bfd_vma) 0,
 			   (symint_t) 0,
 			   (symint_t) 0);
 
@@ -2128,6 +2134,7 @@ add_procedure (func)
 {
   register varray_t *vp;
   register proc_t *new_proc_ptr;
+  symbolS *sym;
 
 #ifdef ECOFF_DEBUG
   if (debug)
@@ -2154,10 +2161,14 @@ add_procedure (func)
   new_proc_ptr->pdr.lnLow = -1;
   new_proc_ptr->pdr.lnHigh = -1;
 
+  /* Set the BSF_FUNCTION flag for the symbol.  */
+  sym = symbol_find_or_make (func);
+  sym->bsym->flags |= BSF_FUNCTION;
+
   /* Push the start of the function.  */
   new_proc_ptr->sym = add_ecoff_symbol ((const char *) NULL, st_Proc, sc_Text,
-					symbol_find_or_make (func),
-					(symint_t) 0, (symint_t) 0);
+					sym, (bfd_vma) 0, (symint_t) 0,
+					(symint_t) 0);
 
   ++proc_cnt;
 
@@ -2225,7 +2236,7 @@ add_file (file_name, indx, fake)
 			       symbol_new ("L0\001", now_seg,
 					   (valueT) frag_now_fix (),
 					   frag_now),
-			       0, ECOFF_MARK_STAB (N_SOL));
+			       (bfd_vma) 0, 0, ECOFF_MARK_STAB (N_SOL));
       return;
     }
 
@@ -2292,7 +2303,7 @@ add_file (file_name, indx, fake)
       /* Push the start of the filename. We assume that the filename
          will be stored at string offset 1.  */
       (void) add_ecoff_symbol (file_name, st_File, sc_Text,
-			       (symbolS *) NULL,
+			       (symbolS *) NULL, (bfd_vma) 0,
 			       (symint_t) 0, (symint_t) 0);
       fil_ptr->fdr.rss = 1;
       fil_ptr->name = &fil_ptr->strings.last->datum->byte[1];
@@ -2321,9 +2332,9 @@ add_file (file_name, indx, fake)
 				   symbol_new ("L0\001", now_seg,
 					       (valueT) frag_now_fix (),
 					       frag_now),
-				   0, ECOFF_MARK_STAB (N_SO));
+				   (bfd_vma) 0, 0, ECOFF_MARK_STAB (N_SO));
           (void) add_ecoff_symbol ("void:t1=1", st_Nil, sc_Nil,
-				   (symbolS *) NULL, 0,
+				   (symbolS *) NULL, (bfd_vma) 0, 0,
 				   ECOFF_MARK_STAB (N_LSYM));
 	}
 #endif
@@ -2438,7 +2449,7 @@ ecoff_directive_begin (ignore)
 
   (void) add_ecoff_symbol ((const char *) NULL, st_Block, sc_Text,
 			   symbol_find_or_make (name),
-			   (symint_t) 0, (symint_t) 0);
+			   (bfd_vma) 0, (symint_t) 0, (symint_t) 0);
 
   *input_line_pointer = name_end;
 
@@ -2483,7 +2494,7 @@ ecoff_directive_bend (ignore)
     as_warn (".bend directive names unknown symbol");
   else
     (void) add_ecoff_symbol ((const char *) NULL, st_End, sc_Text, endsym,
-			     (symint_t) 0, (symint_t) 0);
+			     (bfd_vma) 0, (symint_t) 0, (symint_t) 0);
 
   *input_line_pointer = name_end;
 
@@ -2503,7 +2514,8 @@ static st_t coff_symbol_typ;
 static int coff_is_function;
 static char *coff_tag;
 static valueT coff_value;
-symbolS *coff_sym_value;
+static symbolS *coff_sym_value;
+static bfd_vma coff_sym_addend;
 static int coff_inside_enumeration;
 
 /* Handle a .def directive: start defining a symbol.  */
@@ -2541,6 +2553,7 @@ ecoff_directive_def (ignore)
       coff_tag = (char *) NULL;
       coff_value = 0;
       coff_sym_value = (symbolS *) NULL;
+      coff_sym_addend = 0;
     }
 
   *input_line_pointer = name_end;
@@ -2779,6 +2792,8 @@ void
 ecoff_directive_val (ignore)
      int ignore;
 {
+  expressionS exp;
+
   if (coff_sym_name == (char *) NULL)
     {
       as_warn (".val pseudo-op used outside of .def/.endef; ignored");
@@ -2786,26 +2801,20 @@ ecoff_directive_val (ignore)
       return;
     }
 
-  if (! is_name_beginner ((unsigned char) *input_line_pointer))
-    coff_value = get_absolute_expression ();
+  expression (&exp);
+  if (exp.X_op != O_constant && exp.X_op != O_symbol)
+    {
+      as_bad (".val expression is too copmlex");
+      demand_empty_rest_of_line ();
+      return;
+    }
+
+  if (exp.X_op == O_constant)
+    coff_value = exp.X_add_number;
   else
     {
-      char *name;
-      char name_end;
-
-      name = input_line_pointer;
-      name_end = get_symbol_end ();
-
-      if (strcmp (name, ".") == 0)
-	as_warn ("`.val .' not supported");
-      else
-	coff_sym_value = symbol_find_or_make (name);
-
-      *input_line_pointer = name_end;
-
-      /* FIXME: gcc can generate address expressions here in unusual
-	 cases (search for "obscure" in sdbout.c), although this is
-	 very unlikely for a MIPS chip.  */
+      coff_sym_value = exp.X_add_symbol;
+      coff_sym_addend = exp.X_add_number;
     }
 
   demand_empty_rest_of_line ();
@@ -2967,6 +2976,7 @@ ecoff_directive_endef (ignore)
 			  coff_symbol_typ,
 			  coff_storage_class,
 			  coff_sym_value,
+			  coff_sym_addend,
 			  (symint_t) coff_value,
 			  indx);
 
@@ -3036,10 +3046,10 @@ ecoff_directive_end (ignore)
   else
     {
       (void) add_ecoff_symbol ((const char *) NULL, st_End, sc_Text,
-			     symbol_new ("L0\001", now_seg,
-					 (valueT) frag_now_fix (),
-					 frag_now),
-			     (symint_t) 0, (symint_t) 0);
+			       symbol_new ("L0\001", now_seg,
+					   (valueT) frag_now_fix (),
+					   frag_now),
+			       (bfd_vma) 0, (symint_t) 0, (symint_t) 0);
 
       if (stabs_seen && generate_asm_lineno)
 	{
@@ -3049,7 +3059,8 @@ ecoff_directive_end (ignore)
 	  strcpy (n, name);
 	  strcat (n, ":F1");
 	  (void) add_ecoff_symbol ((const char *) n, stGlobal, scText, 
-				ent, 0, ECOFF_MARK_STAB (N_FUN));
+				   ent, (bfd_vma) 0, 0,
+				   ECOFF_MARK_STAB (N_FUN));
 	}
     }
 
@@ -3304,7 +3315,7 @@ ecoff_directive_loc (ignore)
 			       symbol_new ("L0\001", now_seg,
 					   (valueT) frag_now_fix (),
 					   frag_now),
-			       0, lineno);
+			       (bfd_vma) 0, 0, lineno);
       return;
     }
 
@@ -3348,7 +3359,8 @@ mark_stabs (ignore)
       stabs_seen = 1;
       (void) add_ecoff_symbol (stabs_symbol, stNil, scInfo,
 			       (symbolS *) NULL,
-			       (symint_t) -1, ECOFF_MARK_STAB (0));
+			       (bfd_vma) 0, (symint_t) -1,
+			       ECOFF_MARK_STAB (0));
     }
 }
 
@@ -3370,7 +3382,7 @@ ecoff_directive_weakext (ignore)
 
   SKIP_WHITESPACE ();
 
-  if (c == ',')
+  if (*input_line_pointer == ',')
     {
       if (S_IS_DEFINED (symbolP))
 	{
@@ -3444,6 +3456,7 @@ ecoff_stab (sec, what, string, type, other, desc)
   efdr_t *save_file_ptr = cur_file_ptr;
   symbolS *sym;
   symint_t value;
+  bfd_vma addend;
   st_t st;
   sc_t sc;
   symint_t indx;
@@ -3510,6 +3523,7 @@ ecoff_stab (sec, what, string, type, other, desc)
       *input_line_pointer = name_end;
 
       value = 0;
+      addend = 0;
       st = st_Label;
       sc = sc_Text;
       indx = desc;
@@ -3529,6 +3543,7 @@ ecoff_stab (sec, what, string, type, other, desc)
 	  sc = sc_Nil;
 	  sym = (symbolS *) NULL;
 	  value = get_absolute_expression ();
+	  addend = 0;
 	}
       else if (! is_name_beginner ((unsigned char) *input_line_pointer))
 	{
@@ -3539,23 +3554,30 @@ ecoff_stab (sec, what, string, type, other, desc)
 	{
 	  char *name;
 	  char name_end;
-
-	  name = input_line_pointer;
-	  name_end = get_symbol_end ();
-
-	  sym = symbol_find_or_make (name);
+	  expressionS exp;
 
 	  sc = sc_Nil;
 	  st = st_Nil;
-	  value = 0;
 
-	  *input_line_pointer = name_end;
-	  if (name_end == '+' || name_end == '-')
+	  expression (&exp);
+	  if (exp.X_op == O_constant)
 	    {
-	      ++input_line_pointer;
-	      value = get_absolute_expression ();
-	      if (name_end == '-')
-		value = - value;
+	      sym = NULL;
+	      value = exp.X_add_number;
+	      addend = 0;
+	    }
+	  else if (exp.X_op == O_symbol)
+	    {
+	      sym = exp.X_add_symbol;
+	      value = 0;
+	      addend = exp.X_add_number;
+	    }
+	  else
+	    {
+	      as_bad (".stabs expression too complex");
+	      sym = NULL;
+	      value = 0;
+	      addend = 0;
 	    }
 	}
 
@@ -3568,7 +3590,7 @@ ecoff_stab (sec, what, string, type, other, desc)
   if (sym != (symbolS *) NULL)
     hold = sym->ecoff_symbol;
 
-  (void) add_ecoff_symbol (string, st, sc, sym, value, indx);
+  (void) add_ecoff_symbol (string, st, sc, sym, addend, value, indx);
 
   if (sym != (symbolS *) NULL)
     sym->ecoff_symbol = hold;
@@ -3738,16 +3760,17 @@ ecoff_build_lineno (backend, buf, bufend, offset, linecntptr)
 	     before it is used.  */
 	  count = 1;
 	}
-      else
+      else if (l->next->frag->fr_address + l->next->paddr
+	       > l->frag->fr_address + l->paddr)
 	{
 	  count = ((l->next->frag->fr_address + l->next->paddr
 		    - (l->frag->fr_address + l->paddr))
 		   >> 2);
-	  if (count <= 0)
-	    {
-	      /* Don't change last, so we still get the right delta.  */
-	      continue;
-	    }
+	}
+      else
+	{
+	  /* Don't change last, so we still get the right delta.  */
+	  continue;
 	}
 
       if (l->file != file || l->proc != proc)
@@ -3992,7 +4015,8 @@ ecoff_build_symbols (backend, buf, bufend, offset)
 			sym_ptr->ecoff_sym.asym.value =
 			  (S_GET_VALUE (as_sym)
 			   + bfd_get_section_vma (stdoutput,
-						  S_GET_SEGMENT (as_sym)));
+						  S_GET_SEGMENT (as_sym))
+			   + sym_ptr->addend);
 
 		      sym_ptr->ecoff_sym.weakext = S_IS_WEAK (as_sym);
 
@@ -4049,6 +4073,9 @@ ecoff_build_symbols (backend, buf, bufend, offset)
 				  sym_ptr->ecoff_sym.asym.value =
 				    as_sym->ecoff_extern_size;
 				}
+#ifdef S_SET_SIZE
+			      S_SET_SIZE (as_sym, as_sym->ecoff_extern_size);
+#endif
 			    }
 			  else if (S_IS_COMMON (as_sym))
 			    {
@@ -4166,6 +4193,10 @@ ecoff_build_symbols (backend, buf, bufend, offset)
 			  sym_ptr->ecoff_sym.asym.value =
 			    (S_GET_VALUE (as_sym)
 			     - S_GET_VALUE (begin_ptr->as_sym));
+#ifdef S_SET_SIZE
+			  S_SET_SIZE (begin_ptr->as_sym,
+				      sym_ptr->ecoff_sym.asym.value);
+#endif
 			}
 		      else if (begin_type == st_Block
 			       && sym_ptr->ecoff_sym.asym.sc != (int) sc_Info)
@@ -4337,7 +4368,7 @@ ecoff_build_aux (backend, buf, bufend, offset)
   long iaux;
   vlinks_t *file_link;
 
-  bigendian = stdoutput->xvec->header_byteorder_big_p;
+  bigendian = bfd_big_endian (stdoutput);
 
   aux_out = (union aux_ext *) (*buf + offset);
 
@@ -4650,7 +4681,7 @@ ecoff_build_debug (hdr, bufp, backend)
 
       cur_file_ptr = sym->ecoff_file;
       add_ecoff_symbol ((const char *) NULL, st_Nil, sc_Nil, sym,
-			S_GET_VALUE (sym), indexNil);
+			(bfd_vma) 0, S_GET_VALUE (sym), indexNil);
     }
   cur_proc_ptr = hold_proc_ptr;
   cur_file_ptr = hold_file_ptr;
@@ -4678,6 +4709,7 @@ ecoff_build_debug (hdr, bufp, backend)
 	(void) add_ecoff_symbol ((const char *) NULL,
 				 st_End, sc_Text,
 				 (symbolS *) NULL,
+				 (bfd_vma) 0,
 				 (symint_t) 0,
 				 (symint_t) 0);
     }
@@ -5255,7 +5287,7 @@ generate_ecoff_stab (what, string, type, other, desc)
   if (sym != (symbolS *) NULL)
     hold = sym->ecoff_symbol;
 
-  (void) add_ecoff_symbol (string, st, sc, sym, value, indx);
+  (void) add_ecoff_symbol (string, st, sc, sym, (bfd_vma) 0, value, indx);
 
   if (sym != (symbolS *) NULL)
     sym->ecoff_symbol = hold;

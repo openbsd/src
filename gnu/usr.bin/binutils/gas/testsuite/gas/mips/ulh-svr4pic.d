@@ -64,54 +64,61 @@ Disassembly of section .text:
 0+00ac <[^>]*> lw \$at,0\(\$gp\)
 [ 	]*RELOC: 0+00ac R_MIPS_GOT16 .data
 ...
-0+00b4 <[^>]*> addiu \$at,\$at,1
+0+00b4 <[^>]*> addiu \$at,\$at,0
 [ 	]*RELOC: 0+00b4 R_MIPS_LO16 .data
-0+00b8 <[^>]*> lwl \$a0,0\(\$at\)
-0+00bc <[^>]*> lwr \$a0,3\(\$at\)
-0+00c0 <[^>]*> lw \$at,0\(\$gp\)
-[ 	]*RELOC: 0+00c0 R_MIPS_GOT16 big_external_data_label
+0+00b8 <[^>]*> addiu \$at,\$at,1
+0+00bc <[^>]*> lwl \$a0,0\(\$at\)
+0+00c0 <[^>]*> lwr \$a0,3\(\$at\)
+0+00c4 <[^>]*> lw \$at,0\(\$gp\)
+[ 	]*RELOC: 0+00c4 R_MIPS_GOT16 big_external_data_label
 ...
-0+00c8 <[^>]*> sb \$a0,1\(\$at\)
-0+00cc <[^>]*> srl \$a0,\$a0,0x8
-0+00d0 <[^>]*> sb \$a0,0\(\$at\)
-0+00d4 <[^>]*> lbu \$at,1\(\$at\)
-0+00d8 <[^>]*> sll \$a0,\$a0,0x8
-0+00dc <[^>]*> or \$a0,\$a0,\$at
-0+00e0 <[^>]*> lw \$at,0\(\$gp\)
-[ 	]*RELOC: 0+00e0 R_MIPS_GOT16 small_external_data_label
+0+00cc <[^>]*> addiu \$at,\$at,1
+0+00d0 <[^>]*> sb \$a0,1\(\$at\)
+0+00d4 <[^>]*> srl \$a0,\$a0,0x8
+0+00d8 <[^>]*> sb \$a0,0\(\$at\)
+0+00dc <[^>]*> lbu \$at,1\(\$at\)
+0+00e0 <[^>]*> sll \$a0,\$a0,0x8
+0+00e4 <[^>]*> or \$a0,\$a0,\$at
+0+00e8 <[^>]*> lw \$at,0\(\$gp\)
+[ 	]*RELOC: 0+00e8 R_MIPS_GOT16 small_external_data_label
 ...
-0+00e8 <[^>]*> swl \$a0,0\(\$at\)
-0+00ec <[^>]*> swr \$a0,3\(\$at\)
-0+00f0 <[^>]*> lw \$at,0\(\$gp\)
-[ 	]*RELOC: 0+00f0 R_MIPS_GOT16 big_external_common
+0+00f0 <[^>]*> addiu \$at,\$at,1
+0+00f4 <[^>]*> swl \$a0,0\(\$at\)
+0+00f8 <[^>]*> swr \$a0,3\(\$at\)
+0+00fc <[^>]*> lw \$at,0\(\$gp\)
+[ 	]*RELOC: 0+00fc R_MIPS_GOT16 big_external_common
 ...
-0+00f8 <[^>]*> lb \$a0,0\(\$at\)
-0+00fc <[^>]*> lbu \$at,1\(\$at\)
-0+0100 <[^>]*> sll \$a0,\$a0,0x8
-0+0104 <[^>]*> or \$a0,\$a0,\$at
-0+0108 <[^>]*> lw \$at,0\(\$gp\)
-[ 	]*RELOC: 0+0108 R_MIPS_GOT16 small_external_common
+0+0104 <[^>]*> addiu \$at,\$at,1
+0+0108 <[^>]*> lb \$a0,0\(\$at\)
+0+010c <[^>]*> lbu \$at,1\(\$at\)
+0+0110 <[^>]*> sll \$a0,\$a0,0x8
+0+0114 <[^>]*> or \$a0,\$a0,\$at
+0+0118 <[^>]*> lw \$at,0\(\$gp\)
+[ 	]*RELOC: 0+0118 R_MIPS_GOT16 small_external_common
 ...
-0+0110 <[^>]*> lbu \$a0,0\(\$at\)
-0+0114 <[^>]*> lbu \$at,1\(\$at\)
-0+0118 <[^>]*> sll \$a0,\$a0,0x8
-0+011c <[^>]*> or \$a0,\$a0,\$at
-0+0120 <[^>]*> lw \$at,0\(\$gp\)
-[ 	]*RELOC: 0+0120 R_MIPS_GOT16 .bss
-...
-0+0128 <[^>]*> addiu \$at,\$at,1
-[ 	]*RELOC: 0+0128 R_MIPS_LO16 .bss
-0+012c <[^>]*> lwl \$a0,0\(\$at\)
-0+0130 <[^>]*> lwr \$a0,3\(\$at\)
+0+0120 <[^>]*> addiu \$at,\$at,1
+0+0124 <[^>]*> lbu \$a0,0\(\$at\)
+0+0128 <[^>]*> lbu \$at,1\(\$at\)
+0+012c <[^>]*> sll \$a0,\$a0,0x8
+0+0130 <[^>]*> or \$a0,\$a0,\$at
 0+0134 <[^>]*> lw \$at,0\(\$gp\)
 [ 	]*RELOC: 0+0134 R_MIPS_GOT16 .bss
 ...
-0+013c <[^>]*> addiu \$at,\$at,1001
+0+013c <[^>]*> addiu \$at,\$at,0
 [ 	]*RELOC: 0+013c R_MIPS_LO16 .bss
-0+0140 <[^>]*> sb \$a0,1\(\$at\)
-0+0144 <[^>]*> srl \$a0,\$a0,0x8
-0+0148 <[^>]*> sb \$a0,0\(\$at\)
-0+014c <[^>]*> lbu \$at,1\(\$at\)
-0+0150 <[^>]*> sll \$a0,\$a0,0x8
-0+0154 <[^>]*> or \$a0,\$a0,\$at
+0+0140 <[^>]*> addiu \$at,\$at,1
+0+0144 <[^>]*> lwl \$a0,0\(\$at\)
+0+0148 <[^>]*> lwr \$a0,3\(\$at\)
+0+014c <[^>]*> lw \$at,0\(\$gp\)
+[ 	]*RELOC: 0+014c R_MIPS_GOT16 .bss
+...
+0+0154 <[^>]*> addiu \$at,\$at,1000
+[ 	]*RELOC: 0+0154 R_MIPS_LO16 .bss
+0+0158 <[^>]*> addiu \$at,\$at,1
+0+015c <[^>]*> sb \$a0,1\(\$at\)
+0+0160 <[^>]*> srl \$a0,\$a0,0x8
+0+0164 <[^>]*> sb \$a0,0\(\$at\)
+0+0168 <[^>]*> lbu \$at,1\(\$at\)
+0+016c <[^>]*> sll \$a0,\$a0,0x8
+0+0170 <[^>]*> or \$a0,\$a0,\$at
 ...

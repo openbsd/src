@@ -1,5 +1,5 @@
 \input texinfo @c                               -*-Texinfo-*-
-@c  Copyright (c) 1991, 1992, 1993, 1994, 1995 Free Software Foundation, Inc.
+@c  Copyright (c) 1991, 92, 93, 94, 95, 1996 Free Software Foundation, Inc.
 @c UPDATE!!  On future updates--
 @c   (1)   check for new machine-dep cmdline options in
 @c         md_parse_option definitions in config/tc-*.c
@@ -82,7 +82,7 @@ END-INFO-DIR-ENTRY
 @ifinfo
 This file documents the GNU Assembler "@value{AS}".
 
-Copyright (C) 1991, 1992, 1993, 1994, 1995 Free Software Foundation, Inc.
+Copyright (C) 1991, 92, 93, 94, 95, 1996 Free Software Foundation, Inc.
 
 Permission is granted to make and distribute verbatim copies of
 this manual provided the copyright notice and this permission notice
@@ -137,7 +137,7 @@ done.
 @end tex
 
 @vskip 0pt plus 1filll
-Copyright @copyright{} 1991, 1992, 1993, 1994, 1995 Free Software Foundation, Inc.
+Copyright @copyright{} 1991, 92, 93, 94, 95, 1996 Free Software Foundation, Inc.
 
 Permission is granted to make and distribute verbatim copies of
 this manual provided the copyright notice and this permission notice
@@ -208,7 +208,9 @@ Here is a brief summary of how to invoke @code{@value{AS}}.  For details,
 @c HPPA has no machine-dependent assembler options (yet).
 @end ifset
 @ifset SPARC
- [ -Av6 | -Av7 | -Av8 | -Av9 | -Asparclite | -bump ]
+@c The order here is important.  See c-sparc.texi.
+ [ -Av6 | -Av7 | -Av8 | -Asparclite | -Av9 | -Av9a ]
+ [ -xarch=v8plus | -xarch=v8plusa ] [ -bump ]
 @end ifset
 @ifset Z8000
 @c Z8000 has no machine-dependent assembler options
@@ -396,8 +398,12 @@ The following options are available when @code{@value{AS}} is configured
 for the SPARC architecture:
 
 @table @code
-@item -Av6 | -Av7 | -Av8 | -Av9 | -Asparclite
+@item -Av6 | -Av7 | -Av8 | -Asparclite | -Av9 | -Av9a
 Explicitly select a variant of the SPARC architecture.
+
+@item -xarch=v8plus | -xarch=v8plusa
+For compatibility with the Solaris v9 assembler.  These options are
+equivalent to -Av9 and -Av9a, respectively.
 
 @item -bump
 Warn when the assembler switches to another architecture.
@@ -2885,6 +2891,7 @@ Some machine configurations provide additional directives.
 @end ifclear
 
 * Ln::                          @code{.ln @var{line-number}}
+* Linkonce::			@code{.linkonce [@var{type}]}
 * List::                        @code{.list}
 * Long::                        @code{.long @var{expressions}}
 @ignore
@@ -2892,6 +2899,7 @@ Some machine configurations provide additional directives.
 @end ignore
 
 * Macro::			@code{.macro @var{name} @var{args}}@dots{}
+* MRI::				@code{.mri @var{val}}
 
 * Nolist::                      @code{.nolist}
 * Octa::                        @code{.octa @var{bignums}}
@@ -2915,6 +2923,7 @@ Some machine configurations provide additional directives.
 * Size::                        @code{.size}
 @end ifset
 
+* Skip::                        @code{.skip @var{size} , @var{fill}}
 * Space::                       @code{.space @var{size} , @var{fill}}
 @ifset have-stabs
 * Stab::                        @code{.stabd, .stabn, .stabs}
@@ -2974,7 +2983,7 @@ the padding bytes.  It (and the comma) may be omitted.  If it is
 omitted, the padding bytes are zero.
 
 The way the required alignment is specified varies from system to system.
-For the a29k, hppa, m86k, m88k, w65, sparc, and Hitachi SH, and i386 using ELF
+For the a29k, hppa, m68k, m88k, w65, sparc, and Hitachi SH, and i386 using ELF
 format,
 the first expression is the
 alignment request in bytes.  For example @samp{.align 8} advances
@@ -3030,7 +3039,7 @@ trailing zero byte) into consecutive addresses.
 a zero byte.  The ``z'' in @samp{.asciz} stands for ``zero''.
 
 @node Balign
-@section @code{.balign @var{abs-expr} , @var{abs-expr}}
+@section @code{.balign[wl] @var{abs-expr} , @var{abs-expr}}
 
 @cindex padding the location counter given number of bytes
 @cindex @code{balign} directive
@@ -3043,6 +3052,17 @@ is already a multiple of 8, no change is needed.
 The second expression (also absolute) gives the value to be stored in
 the padding bytes.  It (and the comma) may be omitted.  If it is
 omitted, the padding bytes are zero.
+
+@cindex @code{balignw} directive
+@cindex @code{balignl} directive
+The @code{.balignw} and @code{.balignl} directives are variants of the
+@code{.balign} directive.  The @code{.balignw} directive treats the fill
+pattern as a two byte word value.  The @code{.balignl} directives treats the
+fill pattern as a four byte longword value.  For example, @code{.balignw
+4,0x368d} will align to a multiple of 4.  If it skips two bytes, they will be
+filled in with the value 0x368d (the exact placement of the bytes depends upon
+the endianness of the processor).  If it skips 1 or 3 bytes, the fill value is
+undefined.
 
 @node Byte
 @section @code{.byte @var{expressions}}
@@ -3347,7 +3367,7 @@ considered part of the source program being assembled if the argument
 (which must be an @var{absolute expression}) is non-zero.  The end of
 the conditional section of code must be marked by @code{.endif}
 (@pxref{Endif,,@code{.endif}}); optionally, you may include code for the
-alternative condition, flagged by @code{.else} (@pxref{Else,,@code{.else}}.
+alternative condition, flagged by @code{.else} (@pxref{Else,,@code{.else}}).
 
 The following variants of @code{.if} are also supported:
 @table @code
@@ -3365,7 +3385,7 @@ Not yet implemented.
 @cindex @code{ifndef} directive
 @cindex @code{ifnotdef} directive
 @item .ifndef @var{symbol}
-@itemx ifnotdef @var{symbol}
+@itemx .ifnotdef @var{symbol}
 Assembles the following section of code if the specified @var{symbol}
 has not been defined.  Both spelling variants are equivalent.
 
@@ -3529,6 +3549,43 @@ used by compilers to generate auxiliary symbol information for
 debugging.
 @end ifclear
 
+@node Linkonce
+@section @code{.linkonce [@var{type}]}
+@cindex COMDAT
+@cindex @code{linkonce} directive
+@cindex common sections
+Mark the current section so that the linker only includes a single copy of it.
+This may be used to include the same section in several different object files,
+but ensure that the linker will only include it once in the final output file.
+The @code{.linkonce} pseudo-op must be used for each instance of the section.
+Duplicate sections are detected based on the section name, so it should be
+unique.
+
+This directive is only supported by a few object file formats; as of this
+writing, the only object file format which supports it is the Portable
+Executable format used on Windows NT.
+
+The @var{type} argument is optional.  If specified, it must be one of the
+following strings.  For example:
+@smallexample
+.linkonce same_size
+@end smallexample
+Not all types may be supported on all object file formats.
+
+@table @code
+@item discard
+Silently discard duplicate sections.  This is the default.
+
+@item one_only
+Warn if there are duplicate sections, but still keep only one copy.
+
+@item same_size
+Warn if any of the duplicates have different sizes.
+
+@item same_contents
+Warn if any of the duplicates do not have exactly the same contents.
+@end table
+
 @node Ln
 @section @code{.ln @var{line-number}}
 
@@ -3549,6 +3606,16 @@ configured for @code{b.out}; its effect is only associated with COFF
 output format.
 @end ifset
 @end ifset
+
+@node MRI
+@section @code{.mri @var{val}}
+
+@cindex @code{mri} directive
+@cindex MRI mode, temporarily
+If @var{val} is non-zero, this tells @code{@value{AS}} to enter MRI mode.  If
+@var{val} is zero, this tells @code{@value{AS}} to exit MRI mode.  This change
+affects code assembled until the next @code{.mri} directive, or until the end
+of the file.  @xref{M, MRI mode, MRI mode}.
 
 @node List
 @section @code{.list}
@@ -3746,7 +3813,7 @@ absolute expression.  If the comma and @var{fill} are omitted,
 @var{fill} defaults to zero.
 
 @node P2align
-@section @code{.p2align @var{abs-expr} , @var{abs-expr}}
+@section @code{.p2align[wl] @var{abs-expr} , @var{abs-expr}}
 
 @cindex padding the location counter given a power of two
 @cindex @code{p2align} directive
@@ -3760,6 +3827,17 @@ multiple of 8, no change is needed.
 The second expression (also absolute) gives the value to be stored in
 the padding bytes.  It (and the comma) may be omitted.  If it is
 omitted, the padding bytes are zero.
+
+@cindex @code{p2alignw} directive
+@cindex @code{p2alignl} directive
+The @code{.p2alignw} and @code{.p2alignl} directives are variants of the
+@code{.p2align} directive.  The @code{.p2alignw} directive treats the fill
+pattern as a two byte word value.  The @code{.p2alignl} directives treats the
+fill pattern as a four byte longword value.  For example, @code{.p2alignw
+2,0x368d} will align to a multiple of 4.  If it skips two bytes, they will be
+filled in with the value 0x368d (the exact placement of the bytes depends upon
+the endianness of the processor).  If it skips 1 or 3 bytes, the fill value is
+undefined.
 
 @node Psize
 @section @code{.psize @var{lines} , @var{columns}}
@@ -3952,6 +4030,16 @@ ignores it.
 @end ifset
 
 @ifclear no-space-dir
+@node Skip
+@section @code{.skip @var{size} , @var{fill}}
+
+@cindex @code{skip} directive
+@cindex filling memory
+This directive emits @var{size} bytes, each of value @var{fill}.  Both
+@var{size} and @var{fill} are absolute expressions.  If the comma and
+@var{fill} are omitted, @var{fill} is assumed to be zero.  This is the same as
+@samp{.space}.
+
 @node Space
 @section @code{.space @var{size} , @var{fill}}
 
@@ -3959,7 +4047,8 @@ ignores it.
 @cindex filling memory
 This directive emits @var{size} bytes, each of value @var{fill}.  Both
 @var{size} and @var{fill} are absolute expressions.  If the comma
-and @var{fill} are omitted, @var{fill} is assumed to be zero.
+and @var{fill} are omitted, @var{fill} is assumed to be zero.  This is the same
+as @samp{.skip}.
 
 @ifset HPPA
 @quotation

@@ -189,10 +189,6 @@ extern void ppc_adjust_symtab PARAMS ((void));
 /* Niclas Andersson <nican@ida.liu.se> says this is needed.  */
 #define SUB_SEGMENT_ALIGN(SEG) 2
 
-/* Finish up the file.  */
-#define tc_frob_file() ppc_frob_file ()
-extern void ppc_frob_file PARAMS ((void));
-
 #endif /* OBJ_XCOFF */
 
 #ifdef OBJ_ELF
@@ -211,6 +207,29 @@ extern void ppc_frob_file PARAMS ((void));
  || ((FIXP)->fx_addsy && !(FIXP)->fx_subsy && (FIXP)->fx_addsy->bsym	\
      && (FIXP)->fx_addsy->bsym->section != SEC))
 
+/* Support for SHF_EXCLUDE and SHT_ORDERED */
+extern int ppc_section_letter PARAMS ((int, char **));
+extern int ppc_section_type PARAMS ((char **));
+extern int ppc_section_word PARAMS ((char **));
+extern int ppc_section_flags PARAMS ((int, int, int));
+
+#define md_elf_section_letter(LETTER, PTR_MSG)	ppc_section_letter (LETTER, PTR_MSG)
+#define md_elf_section_type(PTR_STR)		ppc_section_type (PTR_STR)
+#define md_elf_section_word(PTR_STR)		ppc_section_word (PTR_STR)
+#define md_elf_section_flags(FLAGS, ATTR, TYPE)	ppc_section_flags (FLAGS, ATTR, TYPE)
+
+/* Add extra PPC sections -- Note, for now, make .sbss2 and .PPC.EMB.sbss0 a
+   normal section, and not a bss section so that the linker doesn't crater
+   when trying to make more than 2 sections.  */
+#define ELF_TC_SPECIAL_SECTIONS \
+  { ".tags",		SHT_ORDERED,	SHF_ALLOC }, \
+  { ".sdata",		SHT_PROGBITS,	SHF_ALLOC + SHF_WRITE }, \
+  { ".sbss",		SHT_NOBITS,	SHF_ALLOC + SHF_WRITE }, \
+  { ".sdata2",		SHT_PROGBITS,	SHF_ALLOC }, \
+  { ".sbss2",		SHT_PROGBITS,	SHF_ALLOC }, \
+  { ".PPC.EMB.sdata0",	SHT_PROGBITS,	SHF_ALLOC }, \
+  { ".PPC.EMB.sbss0",	SHT_PROGBITS,	SHF_ALLOC },
+
 #endif /* OBJ_ELF */
 
 /* call md_apply_fix3 with segment instead of md_apply_fix */
@@ -220,3 +239,4 @@ extern void ppc_frob_file PARAMS ((void));
 #define MD_PCREL_FROM_SECTION(FIXP, SEC) md_pcrel_from_section(FIXP, SEC)
 
 #define md_operand(x)
+

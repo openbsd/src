@@ -22,7 +22,7 @@ Disassembly of section .text:
 [ 	]*RELOC: 0+0018 R_MIPS_LO16 .rodata
 0+001c <[^>]*> lwc1 \$f4,12\(\$at\)
 [ 	]*RELOC: 0+001c R_MIPS_LO16 .rodata
-0+0020 <[^>]*> lui \$a0,16256
-0+0024 <[^>]*> lui \$at,16256
+0+0020 <[^>]*> lui \$a0,0x3f80
+0+0024 <[^>]*> lui \$at,0x3f80
 0+0028 <[^>]*> mtc1 \$at,\$f4
 ...

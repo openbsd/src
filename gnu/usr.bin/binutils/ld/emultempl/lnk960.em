@@ -200,6 +200,8 @@ machine_table[] =
   { bfd_mach_i960_ca	,"CA" },
   { bfd_mach_i960_ka_sa	,"KA" },
   { bfd_mach_i960_ka_sa	,"SA" },
+  { bfd_mach_i960_jx	,"JX" },
+  { bfd_mach_i960_hx	,"HX" },
 
   { bfd_mach_i960_core	,"core" },
   { bfd_mach_i960_kb_sb	,"kb" },
@@ -209,6 +211,8 @@ machine_table[] =
   { bfd_mach_i960_ca	,"ca" },
   { bfd_mach_i960_ka_sa	,"ka" },
   { bfd_mach_i960_ka_sa	,"sa" },
+  { bfd_mach_i960_jx	,"jx" },
+  { bfd_mach_i960_hx	,"hx" },
 
   { 0, (char *) NULL }
 };

@@ -272,15 +272,10 @@ frag_wane (fragP)
   fragP->fr_var = 0;
 }
 
-/*
- *			frag_align()
- *
- * Make a frag for ".align foo,bar". Call is "frag_align (foo,bar);".
- * Foo & bar are absolute integers.
- *
- * Call to close off the current frag with a ".align", then start a new
- * (so far empty) frag, in the same subsegment as the last frag.
- */
+/* Make an alignment frag.  The size of this frag will be adjusted to
+   force the next frag to have the appropriate alignment.  ALIGNMENT
+   is the power of two to which to align.  FILL_CHARACTER is the
+   character to use to fill in any bytes which are skipped.  */
 
 void 
 frag_align (alignment, fill_character)
@@ -299,6 +294,12 @@ frag_align (alignment, fill_character)
       *p = fill_character;
     }
 }
+
+/* Make an alignment frag like frag_align, but fill with a repeating
+   pattern rather than a single byte.  ALIGNMENT is the power of two
+   to which to align.  FILL_PATTERN is the fill pattern to repeat in
+   the bytes which are skipped.  N_FILL is the number of bytes in
+   FILL_PATTERN.  */
 
 void 
 frag_align_pattern (alignment, fill_pattern, n_fill)

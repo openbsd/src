@@ -1,7 +1,938 @@
+Fri Jun  7 11:27:42 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* emultempl/sunos.em: Include libiberty.h.
+	(gld${EMULATION_NAME}_set_symbols): New static function to add
+	LD_LIBRARY_PATH to the list of search directories.
+	(ld_${EMULATION_NAME}_emulation): Add new set_symbols routine.
+
+Thu Jun  6 11:50:31 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* emulparams/elf32bmip.sh (OTHER_GOT_SYMBOLS): Use ALIGN(16)
+	rather than . when computing _gp value.  From Per Fogelstrom.
+	* emulparams/elf32lmip.sh (OTHER_GOT_SYMBOLS): Likewise.
+
+	* ldmain.c (main): Don't close and unlink the file on error, since
+	remove_output will do it anyhow.
+	* ldlang.c (open_output): Set boolean variable to true, not 1.
+
+Wed Jun  5 18:34:14 1996  James G. Smith  <jsmith@cygnus.co.uk>
+
+	* emulparams/{elf32b4300.sh,elf32l4300.sh} (SCRIPT_NAME): Use
+	elfmips instead of elf.
+
+Tue Jun  4 18:43:07 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* ldcref.c: New file.
+	* ld.h (add_cref, output_cref): Declare.
+	* ldmain.c (main): Initialize notice_all field.  If it is set at
+	end of link, call output_cref.
+	(notice): Rename from notice_ysym.  Check notice_all.
+	* ldmisc.c (finfo): Make globally visible.
+	* ldmisc.h (finfo): Declare.
+	* lexsup.c (OPTION_CREF): Define.
+	(ld_options): Add "cref".
+	(parse_args): Handle OPTION_CREF.
+	* Makefile.in: Rebuild dependencies.
+	(CFILES): Add ldcref.c.
+	(OFILES): Add ldcref.o.
+	* ld.texinfo, ld.1: Document --cref.
+
+Tue Jun  4 12:12:25 1996  Tom Tromey  <tromey@csk3.cygnus.com>
+
+	* Makefile.in (install): Make $(tooldir) and $(tooldir)/bin.
+
+Fri May 31 12:40:55 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* emultempl/pe.em (sort_sections): Don't assume that a
+	wild_statement has a section name.
+
+Wed May 29 13:13:35 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* scripttempl/elfmips.sc: Quote test -z argument.
+
+	* ld.texinfo: Clarify the CONSTRUCTORS command.
+
+Thu May 23 16:07:44 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* emultempl/aix.em (gld${EMULATION_NAME}_read_file): Initialize
+	file, not impfile.
+
+Wed May 22 11:31:30 1996  Doug Evans  <dje@seba.cygnus.com>
+
+	* ldlang.c (wild_doit): Don't copy over SEC_LINK_{ONCE,DUPLICATES}
+	if final link.
+	* emultempl/pe.em (sfunc): Renamed to sort_by_file_name.
+	(sort_by_section_name, sort_sections_1): New functions.
+	(sort_sections): Only sort by file name sections in .idata.
+	Add "Grouped Sections" support.
+	(gld${EMULATION_NAME}_place_orphan): Rewrite to support Grouped
+	Sections.
+	(gld${EMULATION_NAME}_place_section): Delete.
+	* scripttempl/pe.sc (.text,.data,.rdata): Add *(.foo\$).
+	(.CRT,.rsrc): Rewrite to use Grouped Section support.
+
+Tue May 21 14:31:48 1996  Stan Shebs  <shebs@andros.cygnus.com>
+
+	* mpw-eppcmac.c: Update to reflect changes to aix.em.
+
+Sun May 19 16:59:44 1996  Doug Evans  <dje@seba.cygnus.com>
+
+	* ldlang.c (dprint_statement): Stop printing at end of list.
+
+Sat May 18 13:12:05 1996  Steve Chamberlain  <sac@slash.cygnus.com>
+
+	Support for --force-exe-suffix
+	* ld.h (args_type): Add force_exe_suffix.
+	* ld.texinfo: Add documentation.
+	* ldmain.c (main):  Add support for option.
+	* lexsup.c (OPTION_FORCE_EXE_SUFFIX): New.
+	(ld_options, parse_args):  Add support for option.
+
+Wed May 15 12:50:25 1996  Jim Wilson  <wilson@chestnut.cygnus.com>
+
+	* emultempl/pe.em (set_pe_value): Pass 0 not 16 to strtoul call.
+
+Fri May 10 16:28:44 1996  Michael Meissner  <meissner@tiktok.cygnus.com>
+
+	* scripttempl/elfppc.sc (__stack): Make __stack 0 if it was
+	referenced but not defined.
+
+Thu May  9 08:52:23 1996  Rob Savoye  <rob@chinadoll.cygnus.com>
+
+	* emulparams/{elf32bmip.sh,elf32lmip.sh,mipsidt.sh,mipsidtl.sh}:
+	Set a new variable to signify if the final target is an embedded
+	system. 
+	* scripttempl/{mips.sc,elfmips.sc}: Don't add SIZEOF_HEADERS to
+	.text for an embedded system.
+
+Tue May  7 10:56:11 1996  Doug Evans  <dje@canuck.cygnus.com>
+
+	* scripttempl/pe.em (gld${EMULATION_NAME}_place_orphan): New function.
+	(gld${EMULATION_NAME}_place_section): New function.
+	(hold_{section,use,text,rdata,data}): New static locals.
+	(ld_${EMULATION_NAME}_emulation): Update orphan field.
+	* scripttempl/pe.sc: Whitespace cleanup.  Semicolon usage cleanup.
+	(INIT,FINI): Delete, unused.
+	(.text): Document orphan .text.foo sections.
+	(.rdata): Document orphan .rdata.foo sections.
+	(.data): Document orphan .data.foo sections.
+
+Tue May  7 11:35:46 1996  Jeffrey A Law  (law@cygnus.com)
+
+	* scripttempl/h8300.sc: Place ".tiny" sections right
+	after ".data" sections.
+	* scripttempl/h8300h.sc: Place ".tiny" sections into
+	the "tiny" memory region, 0xff8000 through 0xffff00.
+
+	* scripttempl/h8300.sc: Set the entry point to the value of
+	"_start" rather than the start of the text segment.
+	* scripttempl/h8300h.sc: Likewise.
+
+	* scripttempl/h8300.sc: Place .rodata sections before .text
+	sections in main ram.
+	* scripttempl/h8300h.sc: Likewise.
+
+Mon May  6 23:32:30 1996  Jeffrey A Law  (law@cygnus.com)
+
+	* scripttempl/h8300h.sc: Use "eight", not "eightbit" for the
+	8-bit region and 8-bit sections.
+
+Wed May  1 17:50:06 1996  Doug Evans  <dje@canuck.cygnus.com>
+
+	* ldlang.c (section_already_linked): Fix typos.
+
+Mon Apr 29 20:31:06 1996  Doug Evans  <dje@canuck.cygnus.com>
+
+	* scripttempl/pe.sc (.endjunk): Define __end__.
+
+Mon Apr 29 17:05:13 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* ldlang.c (longest_section_name): Remove.
+	(SECTION_NAME_MAP_LENGTH): Define.
+	(print_size, print_alignment, print_fill, print_section): Remove.
+	(print_flags): Remove.
+	(lang_map): Rewrite.
+	(print_output_section_statement): Rewrite.
+	(print_assignment): Rewrite.
+	(print_one_symbol): Rewrite.
+	(print_input_section): Rewrite.
+	(print_fill_statement): Rewrite.
+	(print_data_statement): Rewrite.
+	(print_address_statement): New static function.
+	(print_reloc_statement): Rewrite.
+	(print_padding_statement): Rewrite.
+	(print_wild_statement): Rewrite.
+	(print_statement_list): Clean up.
+	(print_statement): Clean up.  Some minor output changes.
+	(print_statements): Clean up.
+	(load_symbols): Put another - before -whole-archive.
+	* ldexp.c (exp_print_tree): Change etree_value and etree_rel to
+	print 0x and to omit leading zeroes.  For etree_rel, use %B to
+	print the BFD.  For etree_assign, remove the space after the
+	destination name.
+	* ldwrite.c: Include "libiberty.h".
+	(clone_section): Call xstrdup, not strdup.
+	(ldwrite): Don't print any map information.
+	(print_symbol_table, print_file_stuff, print_symbol): Remove.
+	* ldmain.c (main): Call lang_map when appropriate.
+	* ldmisc.c (vfinfo): Add support for %W.
+	(print_address): Remove.
+	* ldmisc.h (print_address): Don't declare.
+	* Makefile.in: Rebuild dependencies.
+
+Mon Apr 29 10:29:07 1996  Andreas Schwab  <schwab@issan.informatik.uni-dortmund.de>
+
+	* configure.host (m68*-*-linux*): Add -dynamic-linker to
+ 	HOSTING_CRT0.  Search -lgcc both before and after -lc in
+ 	HOSTING_LIBS.  Look for crt{begin,end}.o in the compiler directory
+ 	at first.
+	(i[345]86-*-linux*): Look for crt{begin,end}.o in the compiler
+	directory at first.
+
+Fri Apr 26 14:42:27 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* ldmisc.h (demangle): Declare.
+	* ldmisc.c: Include "libiberty.h".  Include demangle.h with "",
+ 	not <>.
+	(demangle): Make non-static.  Remove remove_underscore paramter.
+	Always return an allocated string.
+	(vfinfo): Free result of demangle.  Add case 'G'.  Use %T to print
+	functionname, rather than calling demangle.  Print a colon between
+	the BFD(section+offset) and the line number.
+	* ldmain.c (add_archive_element): Improve format of archive
+	information in map file.
+	(constructor_callback): Don't print anything to the map file.
+	* ldlang.c (lang_one_common): Improve format of common symbol
+	information in map file.
+	* ldctor.c (ldctor_build_sets): If producing a map file, print set
+	information.
+	* ldwrite.c (print_symbol_table): Print a newline before the
+	header in the map file.
+	* Makefile.in: Rebuild dependencies.
+
+	* ldmisc.c (vfinfo): Reindent.
+
+Mon Apr 22 12:07:32 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* ldlang.c (lang_size_sections): If _cooked_size is not 0, then
+	don't clobber it when not relaxing.
+
+	* ld.h (ld_config_type): Remove traditional_format field.
+	* ldmain.c (main): Use link_info.traditional_format rather than
+	config.traditional_format.
+	* ldlang.c (ldlang_open_output): Likewise.
+	* lexsup.c (parse_args): Likewise.
+	* emultempl/aix.em (gld${EMULATION_NAME}_parse_args): Likewise.
+	* mpw-eppcmac.c (gldppcmacos_parse_args): Likewise.
+
+	* ldlang.c (wild_doit): Discard debugging sections if we are
+	stripping debugging information.
+
+	* emulparams/z8002.sh (ARCH): Set to z8002, not z8k.
+
+Tue Apr 16 16:38:32 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* ldexp.c (fold_binary): Correct handling of subtraction with
+	absolute values.
+	(fold_name): Permit symbols in lang_allocating_phase_enum.
+
+	* scripttempl/aout.sc: Only PROVIDE __stack when RELOCATING.  Undo
+	accidental changes in last patch.
+
+Tue Apr 16 10:25:42 1996  Michael Meissner  <meissner@tiktok.cygnus.com>
+
+	* configure.tgt (powerpc*-*-{sysv,linux}): Add aliases.
+	(powerpcle*-*-{sysv,solaris}): Ditto.
+
+Mon Apr 15 14:50:56 1996  Rob Savoye  <rob@chinadoll.cygnus.com>
+
+	* scripttempl/aout.sc: Add PROVIDE (__stack = 0) so I can use it
+	in m68k/crt0.S without things blowing up.
+
+Fri Apr 12 16:40:56 1996  Rob Savoye  <rob@chinadoll.cygnus.com>
+
+	* scripttempl/m68kcoff.sc: Remove default address for .data so
+	.text, .data, and .bss are all sequential.
+
+Thu Apr 11 12:05:35 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* scripttempl/m68kcoff.sc: Remove regions and simplify.
+
+Wed Apr 10 14:41:53 1996  Jeffrey A Law  (law@cygnus.com)
+
+	* scripttempl/h8300.sc: Add the "8-bit area" in the upper 256
+	bytes of the address space.  Put data from the ".eight" sections
+	into the 8-bit area.
+	* scripttempl/h8300h.sc: Likewise.
+
+Tue Apr  9 14:10:42 1996  Doug Evans  <dje@canuck.cygnus.com>
+
+	* emultempl/generic.em (gld${EMULATION_NAME}_before_parse):
+	Pass $ARCH to ldfile_set_output_arch instead of setting
+	ldfile_output_architecture directly.
+
+Tue Apr  9 14:22:15 1996  Michael Meissner  <meissner@tiktok.cygnus.com>
+
+	* scripttempl/elfppc.sc (.init,.fini): Put .init, .fini section
+	next to .text.  Put _etext after .text, .init, .fini, and
+	.rodata{,2} sections.
+
+Tue Apr  9 12:18:57 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* ld.texinfo: Rearrange option documentation.
+
+	* lexsup.c (ld_options): New static array.
+	(parse_args): Build shortopts and longopts from ld_options array.
+	(help): New static function.
+	* ldver.h (help): Don't declare.
+	* ldver.c (ldversion): Reindent.
+	(help): Remove.
+
+	* ld.texinfo, ld.1: Mention -E as a synonym for -export-dynamic.
+
+Mon Apr  8 11:56:23 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* emultempl/elf32.em: When checking for a native emulation, check
+	that the current emulation is the default emulation.
+	* emultempl/sunos.em: Likewise.
+
+	* configure.in: Permit --enable-shared to specify a list of
+	directories.
+	* configure: Rebuild.
+
+	* lexsup.c (parse_args): Add -E as a synonym for -export-dynamic,
+	for HP/UX compatibility.
+
+Fri Apr  5 14:30:14 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* emultempl/elf32.em (gld${EMULATION_NAME}_check_ld_so_conf): New
+	static function, if ${host} = ${target}.
+	(gld${EMULATION_NAME}_after_open): Call check_ld_so_conf to find a
+	needed shared library if ${host} = $[target}.
+
+	* configure.host (i[345]86-*-linux*): Add -dynamic-linker to
+	HOSTING_CRT0.  Search -lgcc both before and after -lc in
+	HOSTING_LIBS.
+
+	* configure.tgt: Add i[345]86-*-freebsdelf* target; from John
+	Polstra <jdp@polstra.com>.
+
+Fri Apr  5 18:11:25 1996  James G. Smith  <jsmith@cygnus.co.uk>
+
+	* emulparams/elf32{b,l}4300.sh (MACHINE): Add explicit
+ 	architecture number.
+	* scripttempl/elf.sc: Use $MACHINE definition if present.
+	* configure.tgt (targ_extra_emuls): Force 4100 build to use same
+ 	template as 4300.
+
+Mon Apr  1 17:35:40 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* ldlang.c (lang_size_sections): Change region check to handle
+	regions which end at the highest possible address correctly.
+	From Roland Weber <roweber@ira.uka.de>.
+
+	* ldlang.c (section_already_linked): New static function.
+	(wild_doit): Discard sections with SEC_EXCLUDE set if not doing a
+	relocateable link.  Don't worry about section being NULL, since it
+	never should be.  Don't call init_os unless the section is going
+	to be added.
+	(ldlang_add_file): Call section_already_linked for each section.
+	* ldmain.c (multiple_definition): Don't warn about multiple
+	definitions in sections which are being discarded.
+
+Sun Mar 31 00:30:47 1996  steve chamberlain  <sac@slash.cygnus.com>
+
+	* scripttempl/{ppcpe.sc, pe.sc} (.junk): Remove and use /DISCARD/.
+	* emultempl/pe.em (init): Remove special case PPC code.
+
+Fri Mar 29 00:01:29 1996  Jeffrey A Law  (law@cygnus.com)
+
+	* scripttempl/h8300.sc: Make vectors section 0xc4 bytes long
+	so as not to overwrite the magic syscall entry at 0xc4.
+	* scripttempl/h8300h.sc: Likewise.
+
+Thu Mar 28 11:05:47 1996  Doug Evans  <dje@canuck.cygnus.com>
+
+	* configure.tgt (sparc64-*-solaris2*): Delete.
+	Stick with sparc-*-solaris2*.
+
+Wed Mar 27 12:33:24 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* ld.h (DISCARD_SECTION_NAME): Define to "/DISCARD/".
+	* ldlang.c (init_os): Fail on an attempt to initialize any section
+	named DISCARD_SECTION_NAME.
+	(wild_doit): Discard input sections assigned to an output section
+	named DISCARD_SECTION_NAME.
+	* ld.texinfo: Document use of /DISCARD/.
+
+	* ldlang.c: Fix some indentation and comments.
+
+Tue Mar 26 18:14:49 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* ldmain.c (main): Call bfd_set_error_program_name.
+
+Thu Mar 21 13:17:34 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* ld.texinfo: Fix a couple of indexing entries.  Mention that
+	--verbose displays builtin linker scripts.
+
+	* ldmisc.c (vfinfo): case 'I': If the file is not in an archive,
+	and the local symbol name does not match the filename, print the
+	filename as well.
+
+	Patches from John Polstra <jdp@polstra.com> for FreeBSD ELF:
+	* lexsup.c (parse_args): -Bshareable is a synonym for -shared.
+	* emulparams/elf_i386.sh (NONPAGED_TEXT_START_ADDR): Make the same
+	as TEXT_START_ADDR.
+
+Wed Mar 20 18:18:25 1996  Andreas Schwab  <schwab@issan.informatik.uni-dortmund.de>
+
+	* ld.texinfo: Fix typos.  Use @pxref only inside parentheses.
+
+Wed Mar 20 16:56:15 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* ldmain.c (add_wrap): New function.
+	* ldmain.h (add_wrap): Declare.
+	* lexsup.c (parse_args): Call add_wrap.
+
+Tue Mar 19 16:44:20 1996  Doug Evans  <dje@canuck.cygnus.com>
+
+	* configure.host (sparc*-*-solaris2* host): Accept any sparc variant.
+
+Wed Mar 13 17:47:31 1996  Jeffrey A Law  (law@cygnus.com)
+
+	* scripttempl/h8300.sc: Change name of page zero memory
+	from "null" to "vectors".  Create an output section for
+	vectors.  Add comments on how to explicitly place items
+	in the vector table.
+	* scripttempl/h8300h.sc: Likewise.
+
+Wed Mar 13 12:40:18 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* emultempl/lnk960.em (machine_table): Add jx and hx.
+
+	* genscripts.sh: Don't use ${9:-xx}, since Ultrix /bin/sh doesn't
+	support it.
+
+Tue Mar 12 12:43:59 1996  David Mosberger-Tang  <davidm@koala.azstarnet.com>
+
+	* ld.h (ld_config_type): Add warn_multiple_gp field.
+	* lexsup.c (parse_args): Handle --warn-multiple-gp.
+	* ldmain.c (warning_callback): Suppress multiple gp values warning
+	if --warn_multiple_gp was not used.
+	* ld.texinfo, ld.1: Document --warn-multiple-gp.
+
+Tue Mar 12 12:02:21 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* lexsup.c (parse_args): Handle --wrap.
+	* ldmain.c (main): Initialize link_info.wrap_hash.
+	* ldexp.c (fold_name): Use bfd_wrapped_link_hash_lookup in DEFINED
+	and NAME cases.
+	* ld.texinfo, ld.1: Document --wrap.
+
+	* configure: Rebuild with autoconf 2.8.
+
+	Don't do SunOS style dynamic linking for sparc-aout:
+	* configure.tgt (sparc64-*-aout*): Use sparcaout, not sun4.
+	(sparclite*-fujitsu-*, sparc*-*-aout): Likewise.
+	(sparc*-wrs-vxworks*): Likewise.
+	* emulparams/sparcaout.sh: New file.
+	* Makefile.in (ALL_EMULATIONS): Add esparcaout.o.
+	(esparcaout.c): New target.
+
+Wed Mar  6 16:06:52 1996  J.T. Conklin  <jtc@rtl.cygnus.com>
+
+	* scripttempl/elfppc.sc (.sdata2, .sbss2): Implement Feb 2 change
+ 	in a different manner to work around differences in shell variable
+ 	expansion.
+
+Wed Mar  6 18:08:18 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* ldemul.h (ldemul_unrecognized_file): Declare.
+	(ldemulation_xfer_type): Add unrecognized_file field.
+	* ldemul.c (ldemul_unrecognized_file): New function.
+	* ldlang.c (load_symbols): If a file can not be recognized, call
+	ldemul_unrecognized_file before trying it as a linker script.
+	* aix.em (gld${EMULATION_NAME}_unrecognized_file): New static
+	function.
+	(gld${EMULATION_NAME}_read_file): Use FOPEN_RT, not "r".
+	(ld_${EMULATION_NAME}_emulation): Initialize unrecognized_file.
+
+Mon Mar  4 14:11:17 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* ldlang.c (wild): Handle foo.a(.text) by mapping each included
+	member of foo.a separately.  From Jouke Numan <jnuman@bazis.nl>.
+
+Fri Mar  1 10:24:59 1996  Andreas Schwab  <schwab@issan.informatik.uni-dortmund.de>
+
+	* emultempl/elf32.em (gld${EMULATION_NAME}_find_exp_assignment):
+	Search trinary.cond rather than searching trinary.lhs twice.
+
+Tue Feb 27 15:08:43 1996  Stan Shebs  <shebs@andros.cygnus.com>
+
+	* mpw-make.sed: Edit out shared library support.
+	(@TDIRS@): Edit out, can't use genscripts.
+
+Tue Feb 27 15:09:21 1996  Andreas Schwab  <schwab@issan.informatik.uni-dortmund.de>
+
+	* configure.tgt (m68k-*-linuxaout*, m68k-*-linux*): New targets.
+	* emulparams/m68klinux.sh: New file.
+	* emultempl/linux.em (gld${EMULATION_NAME}_before_allocation):
+	Call bfd_${EMULATION_NAME}_size_dynamic_sections instead of
+	bfd_linux_size_dynamic_sections.
+	* Makefile.in (ALL_EMULATIONS): Add em68klinux.o.
+	(em68klinux.c): New target.
+	* configure.host (m68*-*-linuxaout*, m68*-*-linux*): New hosts.
+
+Tue Feb 27 12:55:46 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* Makefile.in (ALL_EMULATIONS): Sort into alphabetical order.
+	Fill in missing entries.
+
+	* lexsup.c (parse_args): Recognize --no-whole-archive.
+	* ldlang.h (lang_input_statement_type): Add whole_archive field.
+	* ldlang.c (new_afile): Set whole_archive field.
+	(load_symbols): Check input file specific whole_archive field
+	rather than global variable.
+	* ld.texinfo, ld.1: Document --no-whole-archive.
+
+Tue Feb 20 16:07:00 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* configure.tgt: Correct gldi960 to gld960.
+
+Mon Feb 19 11:16:44 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* emultempl/elf32.em (gld${EMULATION_NAME}_check_needed): Check
+	the SONAME if it is available.
+	(gld${EMULATION_NAME}_stat_needed): Use the SONAME, not the
+	filename, when checking for conflicting library versions.  Don't
+	assume that the suffix is only numbers and dots.
+
+	* ld.texinfo: Mention that -R can be used for -rpath.
+
+Sun Feb 18 15:05:17 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* configure.host: Check for 'do not mix' from native linker before
+	trying to use -rpath.
+
+Thu Feb 15 13:58:06 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* configure.in: Remove explicit substitution of CFLAGS; autoconf
+	does it anyhow.
+	* configure: Rebuild.
+	* Makefile.in (LDFLAGS): Set to @LDFLAGS@.
+
+	* configure.in: Call AC_PROG_CC before configure.host.
+	* configure: Rebuild.
+	* configure.host: Remove go32 host, since it should no longer be
+	necessary.  Don't set CC for romp host.
+
+	* scripttempl/elf.sc: Don't skip a page in virtual memory space if
+	the text segment ends exactly on a page boundary.
+
+	* configure.in: Substitute RPATH_ENVVAR.
+	* configure: Rebuild.
+	* configure.host: Set RPATH_ENVVAR.
+	* Makefile.in (RPATH_ENVVAR): New variable.
+	(check): Use $(RPATH_ENVVAR) rather than LD_LIBRARY_PATH.
+
+Wed Feb 14 18:49:01 1996  Alan Modra  <alan@spri.levels.unisa.edu.au>
+
+	* configure.in: Redo emulation handling so that each emulation
+	searches the correct tool directory, based on the target alias.
+	For example, "configure --enable-targets=m68k-coff i386-linux"
+	will search /usr/local/i386-linux/lib for linux and
+	/usr/local/m68k-coff/lib for m68k-coff.
+	* configure: Rebuild.
+	* configure.tgt: Add special tdir settings for Linux.
+	* Makefile.in: Add @TDIRS@.  Pass "$(tdir_EMUL)" to ${GENSCRIPTS}
+	for each eEMUL.c target.
+	* genscripts.sh: Accept specific alias as 9th argument, and use it
+	in LIB_PATH.
+
+Wed Feb 14 16:38:36 1996  Martin Anantharaman  <martin@mail.imech.uni-duisburg.de>
+
+	* ldlang.c (lang_set_startof): Don't do anything for a
+	relocateable link.
+
+	* ldgram.y (mri_script_file): Call mri_draw_tree.
+	* mri.c (mri_draw_tree): Make globally visible.  Don't bother to
+	create memory regions.
+	(mri_load): Don't call mri_draw_tree.
+	* mri.h (mri_draw_tree): Declare.
+
+	* configure.tgt (m68*-*-psos): New target.
+	* emulparams/m68kpsos.sh: New file.
+	* scripttempl/psos.sc: New file.
+	* Makefile.in (ALL_EMULATIONS): Add em68kpsos.o.
+	(em68kpsos.c): New target.
+
+Wed Feb 14 11:09:25 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* configure.tgt (*-*-ieee*): New target; use vanilla.
+
+	* emultempl/elf32.em (gld${EMULATION_NAME}_before_parse): Strip
+	`:foo' from ${ARCH}.
+
+Tue Feb 13 15:58:58 1996  Bryan Ford  <baford@snake.cs.utah.edu>
+
+	* scripttempl/i386msdos.sc: Don't pad the .text section.  Put
+	.rodata in .data.
+
+Tue Feb 13 14:04:19 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* configure.host: Set HDLFLAGS for *-*-hpux with --enable-shared.
+
+	* emultempl/elf32.em (gld${EMULATION_NAME}_stat_needed): Warn if
+	it looks like we might be linking in two different versions of the
+	same shared library.  Based on a patch from H J Lu <hjl@zoom.com>.
+
+Thu Feb  8 19:25:54 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* ldlang.c (lang_size_sections): Increment the section size when a
+	padding statement is encountered.
+
+Wed Feb  7 14:01:33 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* configure.in: Look for --enable-shared.  Change the value of
+	BFDLIB when linking against a shared library on SunOS.
+	* configure: Rebuild.
+	* configure.host: If using a shared BFD library, try to pass a
+	reasonable -rpath option when linking.
+	* Makefile.in (BFDLIB): Set to @BFDLIB@.
+
+Tue Feb  6 12:29:14 1996  Doug Evans  <dje@charmed.cygnus.com>
+
+	* emulparams/elf64_sparc.sh (ARCH): Change to `sparc:v9'.
+	* emultempl/generic.em: Strip `:foo' from ${ARCH}.
+
+Mon Feb  5 16:25:30 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	Support for building bfd and opcodes as shared libraries, based on
+	patches from Alan Modra <alan@spri.levels.unisa.edu.au>:
+	* configure.in (HLDFLAGS): New substitution.
+	* configure: Rebuild.
+	* configure.host: Set HLDFLAGS on SunOS.
+	* Makefile.in (HLDFLAGS): New variable.
+	(BFDDEP): New variable.
+	(BFDLIB): Change to -L../bfd -lbfd.
+	($(LD_PROG)): Depend upon $(BFDDEP) rathern than $(BFDLIB).  Use
+	$(HLDFLAGS) in link.
+	(check): Set LD_LIBRARY_PATH in the environment.
+
+Fri Feb  2 19:26:25 1996  Michael Meissner  <meissner@wogglebug.tiac.net>
+
+	* scripttempl/elfppc.sc (.sdata2, .sbss2): Put .sdata2 and .sbss
+	in the read-only section, not read/write unless we are making a
+	shared library.
+	(.debug*): Add dwarf debug sections.
+	(.rela.{sdata*,sbss*}): Add sections.
+
+Fri Feb  2 16:50:21 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* configure: Regenerate.
+
+Thu Feb  1 10:50:46 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* emulparams/elf_i386.sh (TEXT_START_ADDR): Change to 0x8048000,
+	for SVR4 compatibility.
+
+	* ldexp.c (exp_fold_tree): Correct handling of ABSOLUTE.
+
+Wed Jan 31 17:30:19 1996  Steve Chamberlain  <sac@slash.cygnus.com>
+
+	* configure.tgt (i[345]86-*-cygwin32, powerpcle-*-cygwin32): New.
+	* emultempl/pe.em (definfo init): Make the default stack reserve
+	of a PPC larger.
+	
+Wed Jan 31 14:34:23 1996  Richard Henderson  <rth@tamu.edu>
+
+	* configure.tgt (m68*-apple-aux*): New target.
+	* emulparams/m68kaux.sh: New file.
+	* scripttempl/m68kaux.sc: New file.
+	* Makefile.in (ALL_EMULATIONS): Add em68kaux.o.
+	(em68kaux.c): New target.
+
+Tue Jan 30 13:18:56 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* emultempl/aix.em (gld${EMULATION_NAME}_parse_args): Ignore
+	-bnoentry, since the right thing tends to happen anyhow.
+
+Mon Jan 29 12:29:26 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* ld.texinfo, ld.1: Document -export-dynamic.
+
+Fri Jan 26 11:11:55 1996  Andreas Schwab  <schwab@issan.informatik.uni-dortmund.de>
+
+	* emultempl/sunos.em: Check for native compile by comparing
+	${target} and ${host}.
+
+Thu Jan 25 16:46:58 1996  James G. Smith  <jsmith@cygnus.co.uk>
+
+	* emulparams/{elf32b4300.sh, elf32l4300.sh}: Changed
+ 	TEXT_START_ADDR to allow use on IDT and PMON systems.
+
+Wed Jan 24 20:59:40 1996  Steve Chamberlain  <sac@slash.cygnus.com>
+
+	* emultempl/pe.em (gld_${EMULATION_NAME}_parse_args):
+	correct spelling.
+
+Wed Jan 24 16:59:19 1996  Doug Evans  <dje@charmed.cygnus.com>
+
+	* configure.tgt (sparc64-*-solaris2*): New configuration.
+	(sparc64-*-aout*): Renamed from sparc64*.
+
+Mon Jan 22 13:01:35 1996  Andreas Schwab  <schwab@issan.informatik.uni-dortmund.de>
+
+	* Makefile.in (GENSCRIPTS): Pass @host@ @target@ @target_alias@.
+	* genscripts.sh: Set host, target and target_alias variables.
+	Check for native compile by comparing ${target} and ${host}.
+	* emultempl/elf32.em: Likewise.
+	* scripttempl/elfmips.sc: Test ${target}, not ${target_alias}.
+
+Mon Jan 22 11:03:23 1996  Michael Meissner  <meissner@tiktok.cygnus.com>
+
+	* scripttempl/elfppc.sc: Refine eabi support to better support
+	.sdata, .sdata2, .sbss, etc. sections.
+
+Tue Jan 16 15:16:58 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* ldgram.y (%union): Add phdr field.
+	(phdr): Use phdr_qualifiers rather than opt_hdrs and opt_at.
+	(phdr_qualifiers): New nonterminal.  Add support for FLAGS.
+	(opt_hdrs, hdr): Remove.
+	(phdr_val): New nonterminal.
+	* ldlang.c (lang_new_phdr): Replace hdrs parameter with filehdr
+	and phdrs parameters.  Add flags parameter.
+	(lang_record_phdrs): Update for changes to lang_phdr.  Pass flags
+	to bfd_record_phdr.
+	* ldlang.h (struct lang_phdr): Replace hdrs field with filehdr and
+	phdrs fields.  Add flags field.
+	(LANG_PHDR_FILEHDR, LANG_PHDR_PHDRS): Remove.
+	(lang_new_phdr): Update declaration.
+	* ld.texinfo: Document FLAGS.
+
+Mon Jan 15 15:07:19 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* emultempl/sunos.em (gld${EMULATION_NAME}_before_allocation):
+	Don't make a shared library because of an undefined reference to
+	__GLOBAL_OFFSET_TABLE_.
+
+	Add some Irix 5 support, mostly from Kazumoto Kojima
+        <kkojima@info.kanagawa-u.ac.jp>:
+	* emulparams/elf32bmip.sh (SCRIPT_NAME): Change to elfmips.
+	(SHLIB_TEXT_START_ADDR): Define.
+	(OTHER_GOT_SYMBOLS): Define.
+	(OTHER_READWRITE_SECTIONS): Remove initialization of _gp.
+	(EXECUTABLE_SYMBOLS): Don't define.
+	(DYNAMIC_LINK): Don't define.
+	* emulparams/elf32lmip.sh: Same changes as elf32bmip.sh.
+	* scripttempl/elfmips.sc: New file.
+	* configure.host (mips*-dec-bsd*): Change mips to mips*.
+	(mips*-sgi-irix4*): Likewise.
+	(mips*-sgi-irix5*): New entry.
+	* Makefile.in (eelf32bmip.c): Depend upon elfmips.sc rather than
+	elf.sc.
+	(eelf32lmip.c): Likewise.
+
+Sat Jan 13 09:41:43 1996  Michael Meissner  <meissner@tiktok.cygnus.com>
+
+	* scripttempl/elfppc.sc: Remove support for .rel.* sections.  Add
+	.rela.got.neg section.
+
+Fri Jan 12 14:56:19 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* scripttempl/sh.sc: Only build constructors when CONSTRUCTING.
+
+	* ldmisc.c: Include <stdarg.h> rather than <varargs.h> if
+	ANSI_PROTOTYPES is defined.  Remove special handling of
+	WINDOWS_NT.  Various indendation fixes.
+	(vfinfo): Change fmt parameter to const char *.
+	(info_msg): Write <stdarg.h> version.
+	(einfo, minfo, finfo): Likewise.
+	(info_assert): Change file parameter to const char *.
+	* ldmisc.h (einfo, minfo, info_msg): If ANSI_PROTOTYPES is
+	defined, use a real prototype.
+	(info_assert): Change first parameter to be const char *.
+
+Fri Jan 12 13:29:55 1996  Michael Meissner  <meissner@tiktok.cygnus.com>
+
+	* scripttempl/elfppc.sc: Add support for .sdata2/.sbss2, etc.  Add
+	in old support that 2.7.2 needs, but the current compiler does
+	not.
+
+	* Makefile.in (eelf32{,l}ppc.c): Fix up dependencies to use the
+	correct Linker script template.
+
+	* emulparams/elf32{,l}ppc.sh (TEXT_START_ADDR): Set to 0x40000,
+	not 0x400000.
+	(DATA_ADDR,NONPAGED_TEXT_START_ADDR): Delete.
+
+Tue Jan  9 15:53:02 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* scripttempl/alpha.sc: Put .rconst right after .rdata.
+
+Fri Jan  5 14:07:45 1996  Steve Chamberlain  <sac@slash.cygnus.com>
+
+	* emultempl/pe.em (gld_${EMULATION_NAME}_before_allocation):
+	sort using right pointer.
+
+Fri Jan  5 12:25:47 1996  Michael Meissner  <meissner@tiktok.cygnus.com>
+
+	* scripttempl/elfppc.sc: Remove support for creating special
+	labels for eabi section begin/end here.  The compiler now uses
+	crt{i,n}.o to create these symbols.
+
+Thu Jan  4 17:08:58 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* configure.host: Change existing Linux HOSTING_CRT0 to be used
+	for a.out only, and put in appropriate HOSTING_CRT0 and
+	HOSTING_LIBS values for Linux ELF.
+
+Thu Jan  4 12:02:05 1996  Doug Evans  <dje@canuck.cygnus.com>
+
+	* scripttempl/h8300.sc: Use all 64K for ram.
+	* scripttempl/h8300h.sc: Define 256K ram size.
+
+Thu Dec 21 15:57:18 1995  Ian Lance Taylor  <ian@cygnus.com>
+
+	* emultempl/aix.em (gld${EMULATION_NAME}_before_allocation): Pass
+	export_defines as true to bfd_xcoff_size_dynamic_sections if -unix
+	was used, regardless of whether -bE was used.
+
+Tue Dec 19 17:35:38 1995  Ian Lance Taylor  <ian@cygnus.com>
+
+	* emultempl/aix.em (gld${EMULATION_NAME}_after_open): Only set
+	relocateable before calling ldctor_build_sets if the output file
+	is in an XCOFF format.
+
+Fri Dec 15 16:34:36 1995  Ian Lance Taylor  <ian@cygnus.com>
+
+	* ldwrite.c (build_link_order): When handling a data statement, if
+	the endianness of the output file is unknown, use the endianness
+	of the input file.
+
+Tue Dec 12 13:55:41 1995  Stan Shebs  <shebs@andros.cygnus.com>
+
+	* mpw-config.in: Recognize mips-*-* as equivalent to
+	mips-idt-ecoff.
+	* mpw-eppcmacos.c: Rename to shorter mpw-eppcmac.c.
+	* mpw-ld.r: Add version resources.
+	(cfrg): Use symbolic instead of literal name for executable.
+
+Mon Dec 11 15:13:41 1995  Kim Knuttila  <krk@cygnus.com>
+
+	* scripttempl/ppcpe.sc (FINI): Moved the .reloc section.
+
+Wed Dec  6 14:33:50 1995  Doug Evans  <dje@canuck.cygnus.com>
+
+	* ldlang.c (print_statement{,s}): Delete duplicate prototype.
+	(print_statement_list): Renamed from print_statement.  All callers
+	updated.
+	(print_statement): New function to print just one statement.
+	(print_{data,reloc,padding}_statement): Don't crash if
+	output_section == NULL.
+	(dprint_statement): New function.
+
+	* emultempl/pe.em (gld_${EMULATION_NAME}_before_allocation): Fix
+	call to sort_sections.
+
+Wed Dec  6 14:59:06 1995  Ian Lance Taylor  <ian@cygnus.com>
+
+	* emultempl/aix.em (unix_ld): New static variable.
+	(gld${EMULATION_NAME}_parse_args): Handle -unix.
+	(gld${EMULATION_NAME}_before_allocation): If unix_ld, pass
+	gc as false and export_defineds as true to size_dynamic_sections.
+
+	* ldexp.c (exp_fold_tree): Permit assignments to dot in the final
+	phase if the current section is abs_output_section.
+
+
+Tue Dec  5 09:49:39 1995  Doug Evans  <dje@canuck.cygnus.com>
+
+	* emultempl/pe.em (gld_${EMULATION_NAME}_before_allocation): Fix call
+	to sort_sections.
+
+Fri Dec  1 16:48:36 1995  Ian Lance Taylor  <ian@cygnus.com>
+
+	* ldgram.y (PHDRS): New token.
+	(ifile_p1): Accept phdrs.
+	(section): Accept phdr_opt at the end of the section definition.
+	(phdr_op): New nonterminal.
+	(phdrs, phdr_list, phdr, phdr_type, opt_hdrs, hdr): Likewise.
+	* ldlex.l: Accept PHDRS.
+	* ldlang.h (struct lang_output_section_phdr_list): Define.
+	(lang_output_section_statement_type): Add phdrs field.
+	(struct lang_phdr): Define.
+	(LANG_PHDR_FILEHDR, LANG_PHDR_PHDRS): Define.
+	(lang_new_phdr): Declare.
+	* ldlang.c (lang_phdr_list): New static variable.
+	(lang_output_section_statement_lookup): Initialize phdrs field.
+	(lang_process): Call lang_record_phdrs.
+	(lang_new_phdr): New function.
+	(lang_section_in_phdr): New function.
+	(lang_record_phdrs): New static function.
+	* ld.texinfo: Document PHDRS.
+
+Thu Nov 30 13:14:30 1995  Kim Knuttila  <krk@cygnus.com>
+
+	* scripttempl/ppcpe.sc: Moved .edata into its own section to
+	expose it.
+
+Thu Nov 30 11:32:34 1995  Manfred Hollstein KS/EF4A 60/1F/110 #40283  <manfred@lts.sel.alcatel.de>
+
+	* configure.host (m68*-motorola-sysv): Define HOSTING_CRT0 and
+	HOSTING_LIBS for testing.
+	(m88*-motorola-sysv3): Define HOSTING_CRT0 and HOSTING_LIBS for
+	testing.
+
+Tue Nov 28 12:14:53 1995  Ian Lance Taylor  <ian@cygnus.com>
+
+	* lexsup.c (parse_args): Set config.dynamic_link to false for -N
+	and -n.
+
+Mon Nov 27 13:12:09 1995  Ian Lance Taylor  <ian@cygnus.com>
+
+	* configure: Rebuild with autoconf 2.7.
+
+Fri Nov 24 18:35:35 1995  Doug Evans  <dje@canuck.cygnus.com>
+
+	* scripttempl/pe.sc: Two .junk's is too much junk.
+
+Tue Nov 21 16:14:32 1995  Ian Lance Taylor  <ian@cygnus.com>
+
+	* configure.in: Use BFD_NEED_DECLARATION.
+	* acconfig.h: Put NEED_DECLARATION_FREE in @TOP@ section.
+	* configure, config.in: Rebuild with autoconf 2.6.
+
+	* ldmain.c (constructor_callback): Don't warn about BFD_RELOC_CTOR
+	being unsupported if this is not a relocateable link and the input
+	BFD supports it, since ldctor_build_sets can cope with that case.
+
+Fri Nov 17 16:23:15 1995  Stan Shebs  <shebs@andros.cygnus.com>
+
+	* configure.tgt (powerpc-*-macos*): New target.
+	* emulparams/ppcmacos.sh: New file, PowerMac emulation.
+	* Makefile.in (ALL_EMULATIONS): Add eppcmacos.o.
+	(eppcmacos.c): New target.
+	* mpw-eppcmacos.c: Update.
+	* mpw-make.sed: Edit out attempts to use {GENSCRIPTS}.
+
+Fri Nov 17 10:37:27 1995  Ian Lance Taylor  <ian@cygnus.com>
+
+	* Makefile.in (CC_FOR_TARGET): Use @host@ and @target@, not
+	$(host_canonical) and $(target_canonical).
+	(CXX_FOR_TARGET): Likewise.
+
+Thu Nov 16 11:23:42 1995  Doug Evans  <dje@canuck.cygnus.com>
+
+	* scripttempl/pe.sc (.endjunk): Move definition of `end' to here
+	so the malloc heap begins at a sane place.
+
 Thu Nov 16 03:09:32 1995  Ken Raeburn  <raeburn@cygnus.com>
 
 	Version 2.6 released.
-	* ldver.c (ldversion): Updated to 2.6.
+	* ldver.c (ldversion): Update to 2.6.
 
 	* Makefile.in (mostlyclean): Delete ldemul-list.h here, but not
 	$(GENERATED_*FILES), since they need to be retained by distclean.
@@ -139,7 +1070,7 @@ Fri Oct 27 18:03:17 1995  Niklas Hallqvist  <niklas@appli.se>
 	hp300bsd,hp3hpux,hppaelf.sh,i386aout,i386bsd,i386coff,i386go32,
 	i386linux,i386lynx,i386nbsd,lnk960,m68kaout,m68kcoff,m68klynx,
 	m88kbcs,mipsbig,mipsbsd,mipsidt,mipsidtl,mipslit,news,ns32knbsd,
-	pc532machaout,rce,riscix,sa29200,sh,shl,sparclynx,sparcnbsd,
+	pc532machaout,riscix,sa29200,sh,shl,sparclynx,sparcnbsd,
 	st2000,sun3,sun4,vanilla,vax,vsta,w65,z8001,z8002}.sh: Changed
 	PAGE_SIZE to TARGET_PAGE_SIZE. 
 

@@ -1,5 +1,6 @@
 /* as.c - GAS main program.
-   Copyright (C) 1987, 1990, 1991, 1992, 1994 Free Software Foundation, Inc.
+   Copyright (C) 1987, 90, 91, 92, 93, 94, 95, 1996
+   Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -112,7 +113,7 @@ Options:\n\
 -nocpp			ignored\n\
 -o OBJFILE		name the object-file output OBJFILE (default a.out)\n\
 -R			fold data section into text section\n\
---statistics		print maximum bytes and total seconds used\n\
+--statistics		print various measured statistics from execution\n\
 --version		print assembler version number and exit\n\
 -W			suppress warnings\n\
 -w			ignored\n\
@@ -408,6 +409,9 @@ parse_args (pargc, pargv)
 
 	case 'M':
 	  flag_mri = 1;
+#ifdef TC_M68K
+	  flag_m68k_mri = 1;
+#endif
 	  break;
 
 	case 'R':
@@ -445,9 +449,7 @@ parse_args (pargc, pargv)
 		      listing |= LISTING_SYMBOLS;
 		      break;
 		    case '=':
-		      listing_filename = strdup (optarg + 1);
-		      if (listing_filename == NULL)
-			as_fatal ("virtual memory exhausted");
+		      listing_filename = xstrdup (optarg + 1);
 		      optarg += strlen (listing_filename);
 		      break;
 		    default:
@@ -473,17 +475,13 @@ parse_args (pargc, pargv)
 
 	case 'I':
 	  {			/* Include file directory */
-	    char *temp = strdup (optarg);
-	    if (!temp)
-	      as_fatal ("virtual memory exhausted");
+	    char *temp = xstrdup (optarg);
 	    add_include_dir (temp);
 	    break;
 	  }
 
 	case 'o':
-	  out_file_name = strdup (optarg);
-	  if (!out_file_name)
-	    as_fatal ("virtual memory exhausted");
+	  out_file_name = xstrdup (optarg);
 	  break;
 
 	case 'w':
@@ -502,6 +500,9 @@ parse_args (pargc, pargv)
   *pargv = new_argv;
 }
 
+static void dump_statistics ();
+static long start_time;
+
 int 
 main (argc, argv)
      int argc;
@@ -510,7 +511,8 @@ main (argc, argv)
   int macro_alternate;
   int macro_strip_at;
   int keep_it;
-  long start_time = get_run_time ();
+
+  start_time = get_run_time ();
 
   if (debug_memory)
     {
@@ -539,6 +541,7 @@ main (argc, argv)
   hex_init ();
 #ifdef BFD_ASSEMBLER
   bfd_init ();
+  bfd_set_error_program_name (myname);
 #endif
 
 #ifdef USE_EMULATIONS
@@ -549,10 +552,13 @@ main (argc, argv)
   symbol_begin ();
   frag_init ();
   subsegs_begin ();
-  read_begin ();
   parse_args (&argc, &argv);
+  read_begin ();
   input_scrub_begin ();
   expr_begin ();
+
+  if (flag_print_statistics)
+    xatexit (dump_statistics);
 
   macro_alternate = 0;
   macro_strip_at = 0;
@@ -615,28 +621,41 @@ main (argc, argv)
 
   END_PROGRESS (myname);
 
-  if (flag_print_statistics)
-    {
-      extern char **environ;
-#ifdef HAVE_SBRK
-      char *lim = (char *) sbrk (0);
-#endif
-      long run_time = get_run_time () - start_time;
-
-      fprintf (stderr, "%s: total time in assembly: %ld.%06ld\n",
-	       myname, run_time / 1000000, run_time % 1000000);
-#ifdef HAVE_SBRK
-      fprintf (stderr, "%s: data size %ld\n",
-	       myname, (long) (lim - (char *) &environ));
-#endif
-    }
-
-  /* Use exit instead of return, because under VMS environments they
+  /* Use xexit instead of return, because under VMS environments they
      may not place the same interpretation on the value given.  */
   if ((had_warnings () && flag_always_generate_output)
       || had_errors () > 0)
-    exit (EXIT_FAILURE);
-  exit (EXIT_SUCCESS);
+    xexit (EXIT_FAILURE);
+  xexit (EXIT_SUCCESS);
+}
+
+static void
+dump_statistics ()
+{
+  extern char **environ;
+#ifdef HAVE_SBRK
+  char *lim = (char *) sbrk (0);
+#endif
+  long run_time = get_run_time () - start_time;
+
+  fprintf (stderr, "%s: total time in assembly: %ld.%06ld\n",
+	   myname, run_time / 1000000, run_time % 1000000);
+#ifdef HAVE_SBRK
+  fprintf (stderr, "%s: data size %ld\n",
+	   myname, (long) (lim - (char *) &environ));
+#endif
+
+  subsegs_print_statistics (stderr);
+  write_print_statistics (stderr);
+  symbol_print_statistics (stderr);
+  read_print_statistics (stderr);
+
+#ifdef tc_print_statistics
+  tc_print_statistics (stderr);
+#endif
+#ifdef obj_print_statistics
+  obj_print_statistics (stderr);
+#endif
 }
 
 

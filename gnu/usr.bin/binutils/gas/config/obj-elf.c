@@ -1,5 +1,5 @@
 /* ELF object file format
-   Copyright (C) 1992, 1993 Free Software Foundation, Inc.
+   Copyright (C) 1992, 1993, 1994, 1995, 1996 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -13,9 +13,10 @@
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See
    the GNU General Public License for more details.
 
-   You should have received a copy of the GNU General Public
-   License along with GAS; see the file COPYING.  If not, write
-   to the Free Software Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
+   You should have received a copy of the GNU General Public License
+   along with GAS; see the file COPYING.  If not, write to the Free
+   Software Foundation, 59 Temple Place - Suite 330, Boston, MA
+   02111-1307, USA. */
 
 #define OBJ_HEADER "obj-elf.h"
 #include "as.h"
@@ -34,6 +35,10 @@
 
 #ifdef TC_MIPS
 #include "elf/mips.h"
+#endif
+
+#ifdef TC_PPC
+#include "elf/ppc.h"
 #endif
 
 #ifdef NEED_ECOFF_DEBUG
@@ -501,12 +506,12 @@ obj_elf_section (xxx)
 
   if (flag_mri)
     {
-      char type;
+      char mri_type;
 
       previous_section = now_seg;
       previous_subsection = now_subseg;
 
-      s_mri_sect (&type);
+      s_mri_sect (&mri_type);
 
 #ifdef md_elf_section_change_hook
       md_elf_section_change_hook ();
@@ -597,9 +602,20 @@ obj_elf_section (xxx)
 		  attr |= SHF_EXECINSTR;
 		  break;
 		default:
-		  as_warn ("Bad .section directive: want a,w,x in string");
-		  ignore_rest_of_line ();
-		  return;
+		  {
+		    char *bad_msg = "Bad .section directive: want a,w,x in string";
+#ifdef md_elf_section_letter
+		    int md_attr = md_elf_section_letter (*input_line_pointer, &bad_msg);
+		    if (md_attr)
+		      attr |= md_attr;
+		    else
+#endif
+		      {
+			as_warn (bad_msg);
+			ignore_rest_of_line ();
+			return;
+		      }
+		  }
 		}
 	      ++input_line_pointer;
 	    }
@@ -629,8 +645,16 @@ obj_elf_section (xxx)
 		    }
 		  else
 		    {
-		      as_warn ("Unrecognized section type");
-		      ignore_rest_of_line ();
+#ifdef md_elf_section_type
+		    int md_type = md_elf_section_type (&input_line_pointer);
+		    if (md_type)
+		      type = md_type;
+		    else
+#endif
+		      {
+			as_warn ("Unrecognized section type");
+			ignore_rest_of_line ();
+		      }
 		    }
 		}
 	    }
@@ -667,9 +691,17 @@ obj_elf_section (xxx)
 		}
 	      else
 		{
-		  as_warn ("Unrecognized section attribute");
-		  ignore_rest_of_line ();
-		  return;
+#ifdef md_elf_section_word
+		  int md_attr = md_elf_section_word (&input_line_pointer);
+		  if (md_attr)
+		    attr |= md_attr;
+		  else
+#endif
+		    {
+		      as_warn ("Unrecognized section attribute");
+		      ignore_rest_of_line ();
+		      return;
+		    }
 		}
 	      SKIP_WHITESPACE ();
 	    }
@@ -699,7 +731,8 @@ obj_elf_section (xxx)
 
   flags = (SEC_RELOC
 	   | ((attr & SHF_WRITE) ? 0 : SEC_READONLY)
-	   | ((attr & SHF_ALLOC) ? SEC_ALLOC | SEC_LOAD : 0)
+	   | ((attr & SHF_ALLOC) ? SEC_ALLOC : 0)
+	   | (((attr & SHF_ALLOC) && type != SHT_NOBITS) ? SEC_LOAD : 0)
 	   | ((attr & SHF_EXECINSTR) ? SEC_CODE : 0));
   if (special_sections[i].name == NULL)
     {
@@ -710,6 +743,10 @@ obj_elf_section (xxx)
 	  flags |= SEC_ALLOC;
 	  flags &=~ SEC_LOAD;
 	}
+
+#ifdef md_elf_section_flags
+      flags = md_elf_section_flags (flags, attr, type);
+#endif
     }
 
   bfd_set_section_flags (stdoutput, sec, flags);
@@ -903,10 +940,7 @@ obj_elf_size (ignore)
        .type SYM,@function
    The third (reportedly to be used on Irix 6.0) is
        .type SYM STT_FUNC
-
-   FIXME: We do not fully support this pseudo-op.  In fact, the only
-   case we do support is setting the type to STT_FUNC, which we do by
-   setting the BSF_FUNCTION flag.  */
+   */
 
 static void
 obj_elf_type (ignore)
@@ -940,7 +974,7 @@ obj_elf_type (ignore)
     type = BSF_FUNCTION;
   else if (strcmp (typename, "object") == 0
 	   || strcmp (typename, "STT_OBJECT") == 0)
-    ;
+    type = BSF_OBJECT;
   else
     as_bad ("ignoring unrecognized symbol type \"%s\"", typename);
 
@@ -1115,9 +1149,9 @@ elf_frob_symbol (symp, puntp)
 	  as_bad (".size expression too complicated to fix up");
 	  break;
 	}
+      free (symp->sy_obj);
+      symp->sy_obj = 0;
     }
-  free (symp->sy_obj);
-  symp->sy_obj = 0;
 
   /* Double check weak symbols.  */
   if (symp->bsym->flags & BSF_WEAK)
@@ -1126,6 +1160,22 @@ elf_frob_symbol (symp, puntp)
 	as_bad ("Symbol `%s' can not be both weak and common",
 		S_GET_NAME (symp));
     }
+
+#ifdef TC_MIPS
+  /* The Irix 5 assembler appears to set the type of any common symbol
+     to STT_OBJECT.  We try to be compatible, since the Irix 5 linker
+     apparently sometimes cares.  FIXME: What about Irix 6?  */
+  if (S_IS_COMMON (symp))
+    symp->bsym->flags |= BSF_OBJECT;
+#endif
+
+#ifdef TC_PPC
+  /* Frob the PowerPC, so that the symbol always has object type
+     if it is not some other type.  VxWorks needs this.  */
+  if ((symp->bsym->flags & (BSF_FUNCTION | BSF_FILE | BSF_SECTION_SYM)) == 0
+      && S_IS_DEFINED (symp))
+    symp->bsym->flags |= BSF_OBJECT;
+#endif
 }
 
 void 

@@ -103,7 +103,7 @@ if { [which $CC] == 0 } {
 }
 
 if {![ld_assemble $as "-relax $srcdir$subdir/start.s" tmpdir/start.o] \
-     || ![ld_compile $CC "-mrelax $srcdir$subdir/sh2.c" tmpdir/sh2.o]} {
+     || ![ld_compile $CC "-O -mrelax $srcdir$subdir/sh2.c" tmpdir/sh2.o]} {
     unresolved $testlink
     unresolved $testjsr
     unresolved $testrun
