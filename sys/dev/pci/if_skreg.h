@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_skreg.h,v 1.11 2004/05/19 11:37:00 brad Exp $	*/
+/*	$OpenBSD: if_skreg.h,v 1.12 2004/08/04 19:37:26 mcbride Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -1325,11 +1325,6 @@ struct sk_tx_desc {
 #define SK_RESID	(SK_JPAGESZ - (SK_JLEN * SK_JSLOTS) % SK_JPAGESZ)
 #define SK_JMEM		((SK_JLEN * SK_JSLOTS) + SK_RESID)
 
-struct sk_jslot {
-	caddr_t			sk_buf;
-	int			sk_inuse;
-};
-
 struct sk_jpool_entry {
 	int                             slot;
 	LIST_ENTRY(sk_jpool_entry)	jpool_entries;
@@ -1360,6 +1355,7 @@ struct sk_chain_data {
 	struct sk_chain		sk_rx_chain[SK_RX_RING_CNT];
 	struct sk_txmap_entry	*sk_tx_map[SK_TX_RING_CNT];
 	bus_dmamap_t		sk_rx_map[SK_RX_RING_CNT];
+	bus_dmamap_t		sk_rx_jumbo_map;
 	int			sk_tx_prod;
 	int			sk_tx_cons;
 	int			sk_tx_cnt;
@@ -1367,7 +1363,7 @@ struct sk_chain_data {
 	int			sk_rx_cons;
 	int			sk_rx_cnt;
 	/* Stick the jumbo mem management stuff here too. */
-	struct sk_jslot		sk_jslots[SK_JSLOTS];
+	caddr_t			sk_jslots[SK_JSLOTS];
 	void			*sk_jumbo_buf;
 
 };
