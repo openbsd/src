@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamd.8,v 1.23 2003/03/08 21:36:12 jmc Exp $
+.\"	$OpenBSD: spamd.8,v 1.24 2003/03/08 22:03:53 beck Exp $
 .\"
 .\" Copyright (c) 2002 Theo de Raadt.  All rights reserved.
 .\"
@@ -64,9 +64,9 @@ This defaults to 450.
 .It Fl c
 The maximum number of concurrent connections to allow.
 .It Fl p
-Specify the port number that
+Specify a different port number from the default of 8025 that
 .Nm
-should operate on.
+should listen for redirected SMTP connections on. 
 .It Fl n
 The SMTP version banner that is reported upon initial connection.
 .El
@@ -143,11 +143,13 @@ may be removed from the relevant blacklists.
 .Pp
 .Sh CONFIGURATION CONNECTIONS
 .Nm
-receives configuration information through a localhost connection.
-Configuration information consists of blacklists, each with a name,
-a message to reject mail with, and addresses in CIDR format.
-When multiple lists are configured, each configuration line specifies
-a blacklist, and must have the format:
+listens for configuration connections one port above the one on which
+it listens for redirected SMTP connections, The default is port
+8026. The configuration socket listens only on on the INADDR_LOOPBACK
+address. Configuration of spamd is done by connecting to the
+configuration socket, and sending blacklist information, one blacklist
+per line. Each blacklist consists of a name, a message to reject mail
+with, and addresses in CIDR format, all separated by semicolons (;):
 .Bd -literal
       tag;"rejection message";aaa.bbb.ccc.ddd/mm;aaa.bbb.ccc.ddd/mm
 .Ed
@@ -163,6 +165,8 @@ will reject mail by displaying all the messages from all blacklists in which
 a connecting address is matched.
 .Xr spamd-setup 8
 is normally used to configure this information.
+.Sh FILES
+/etc/spamd.conf 
 .Pp
 .Sh SEE ALSO
 .Xr pf.conf 5 ,
