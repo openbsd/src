@@ -23,4 +23,4 @@ define(`confTIME_ZONE', `USE_TZ')dnl
 define(`confBIND_OPTS', `WorkAroundBrokenAAAA')dnl
 define(`confDONT_INIT_GROUPS', `True')dnl
 FEATURE(`accept_unresolvable_domains')dnl
-FEATURE(`msp')dnl
+FEATURE(`msp', `[127.0.0.1]')dnl
