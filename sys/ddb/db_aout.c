@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_aout.c,v 1.22 1998/08/21 23:29:03 millert Exp $	*/
+/*	$OpenBSD: db_aout.c,v 1.23 1998/12/20 23:49:56 millert Exp $	*/
 /*	$NetBSD: db_aout.c,v 1.14 1996/02/27 20:54:43 gwr Exp $	*/
 
 /* 
@@ -425,13 +425,12 @@ ddb_init()
 {
 #ifndef SYMTAB_SPACE
 	extern char	*esym;
-	extern int	end;
+	extern long	end;
 
 	db_sym_init();
 
-	if (esym > (char *)&end) {
-	    X_db_sym_init((long *)&end, esym, "bsd");
-	}
+	if (esym > (char *)&end)
+	    X_db_sym_init(&end, esym, "bsd");
 #else
 	db_sym_init();
 
