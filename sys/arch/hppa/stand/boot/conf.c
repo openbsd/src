@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.11 1999/08/14 04:47:47 todd Exp $	*/
+/*	$OpenBSD: conf.c,v 1.12 2000/05/30 22:02:28 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -37,11 +37,11 @@
 #include <lib/libsa/exec.h>
 #include <dev/cons.h>
 
-const char version[] = "0.5";
+const char version[] = "0.6";
 int	debug = 0;
 
 const struct x_sw execsw[] = {
-	{ "elf", elf_probe,	elf_load/*,	elf_ldsym */ },
+	{ "elf", elf_probe,	elf_load,	elf_ldsym },
 /*	{ "som", som_probe,	som_load,	som_ldsym }, */
 	{ ""   , NULL,		NULL },
 };
