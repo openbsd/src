@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.6 2004/07/14 19:40:10 vincent Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.7 2004/07/14 20:07:28 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -107,19 +107,19 @@ static int  rcs_parse_admin     (RCSFILE *);
 static int  rcs_parse_delta     (RCSFILE *);
 static int  rcs_parse_deltatext (RCSFILE *);
 
-static int      rcs_parse_access      (RCSFILE *);
-static int      rcs_parse_symbols     (RCSFILE *);
-static int      rcs_parse_locks       (RCSFILE *);
-static int      rcs_parse_branches    (RCSFILE *, struct rcs_delta *);
-static void     rcs_freedelta         (struct rcs_delta *);
-static void     rcs_freepdata         (struct rcs_pdata *);
-static int      rcs_gettok            (RCSFILE *);
-static int      rcs_pushtok           (RCSFILE *, const char *, int);
-int rcs_patch_lines(struct rcs_foo *, struct rcs_foo *);
+static int      rcs_parse_access    (RCSFILE *);
+static int      rcs_parse_symbols   (RCSFILE *);
+static int      rcs_parse_locks     (RCSFILE *);
+static int      rcs_parse_branches  (RCSFILE *, struct rcs_delta *);
+static void     rcs_freedelta       (struct rcs_delta *);
+static void     rcs_freepdata       (struct rcs_pdata *);
+static int      rcs_gettok          (RCSFILE *);
+static int      rcs_pushtok         (RCSFILE *, const char *, int);
+static int      rcs_patch_lines     (struct rcs_foo *, struct rcs_foo *);
 
-static struct rcs_delta*  rcs_findrev (RCSFILE *, RCSNUM *);
-static struct rcs_foo* rcs_splitlines (const char *);
-static void rcs_freefoo(struct rcs_foo *);
+static struct rcs_delta*  rcs_findrev    (RCSFILE *, RCSNUM *);
+static struct rcs_foo*    rcs_splitlines (const char *);
+static void               rcs_freefoo    (struct rcs_foo *);
 
 #define RCS_TOKSTR(rfp)   ((struct rcs_pdata *)rfp->rf_pdata)->rp_buf
 #define RCS_TOKLEN(rfp)   ((struct rcs_pdata *)rfp->rf_pdata)->rp_blen
@@ -263,7 +263,8 @@ int
 rcs_write(RCSFILE *rfp)
 {
 	FILE *fp;
-	char buf[128], numbuf[64];
+	char buf[1024], numbuf[64], *cp;
+	size_t rlen, len;
 	struct rcs_sym *symp;
 	struct rcs_lock *lkp;
 	struct rcs_delta *rdp;
@@ -326,8 +327,16 @@ rcs_write(RCSFILE *rfp)
 	TAILQ_FOREACH(rdp, &(rfp->rf_delta), rd_list) {
 		fprintf(fp, "\n%s\n", rcsnum_tostr(rdp->rd_num, numbuf,
 		    sizeof(numbuf)));
-		fprintf(fp, "log\n@%s@\n", rdp->rd_log);
-		fprintf(fp, "text\n@%s@\n\n", rdp->rd_text);
+		fprintf(fp, "log\n@%s@\ntext\n@", rdp->rd_log);
+
+		cp = rdp->rd_text;
+		do {
+			len = sizeof(buf);
+			rlen = rcs_stresc(1, cp, buf, &len);
+			fprintf(fp, "%s", buf);
+			cp += rlen;
+		} while (len != 0);
+		fprintf(fp, "@\n\n");
 	}
 	fclose(fp);
 
@@ -426,7 +435,7 @@ rcs_patch(const char *data, const char *patch)
 	return (res);
 }
 
-int
+static int
 rcs_patch_lines(struct rcs_foo *dlines, struct rcs_foo *plines)
 {
 	char op, *ep;
@@ -1487,9 +1496,6 @@ rcs_stresc(int esc, const char *str, char *buf, size_t *blen)
 	size_t rlen;
 	const char *sp;
 	char *bp, *bep;
-
-	if (!esc)
-		printf("unescaping `%s'\n", str);
 
 	rlen = 0;
 	bp = buf;
