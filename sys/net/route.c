@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.16 1999/12/08 06:50:18 itojun Exp $	*/
+/*	$OpenBSD: route.c,v 1.17 2000/03/22 16:50:24 itojun Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -527,11 +527,6 @@ rtrequest(req, dst, gateway, netmask, flags, ret_nrt)
 	case RTM_ADD:
 		if ((ifa = ifa_ifwithroute(flags, dst, gateway)) == NULL)
 			senderr(ENETUNREACH);
-
-		/* The interface found in the previous statement may
-		 * be overridden later by rt_setif.  See the code
-		 * for case RTM_ADD in rtsock.c:route_output.
-		 */
 	makeroute:
 		R_Malloc(rt, struct rtentry *, sizeof(*rt));
 		if (rt == NULL)
