@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.54 2004/02/21 00:47:42 krw Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.55 2004/03/14 22:46:47 krw Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -324,6 +324,19 @@ scsi_inquire(sc_link, inqbuf, flags)
 	 * as we can handle or as much as it has, whichever is less.
 	 */
 	if (!error && inqbuf->additional_length > SID_SCSI2_ALEN) {
+		switch (inqbuf->device & SID_QUAL) {
+		case SID_QUAL_RSVD:
+		case SID_QUAL_BAD_LU:
+		case SID_QUAL_LU_OFFLINE:
+			return (0);
+		case SID_QUAL_LU_OK:
+			if ((inqbuf->device & SID_TYPE) == T_NODEVICE)
+				return (0);
+			break;
+		default:
+			break;
+		}
+
 		scsi_cmd.length = min(sizeof(struct scsi_inquiry_data),
 		    SID_INQUIRY_HDR + inqbuf->additional_length);
 		error = scsi_scsi_cmd(sc_link, (struct scsi_generic *)&scsi_cmd,
