@@ -4110,9 +4110,11 @@
 ;; the call.
 (define_insn "call_profiler"
   [(unspec_volatile [(const_int 0)] 0)
-   (use (match_operand:SI 0 "const_int_operand" ""))]
-  ""
-  "bl _mcount,%%r2\;ldo %0(%%r2),%%r25"
+   (use (match_operand:SI 0 "const_int_operand" ""))
+   (clobber (reg:SI 31))
+   (clobber (reg:SI 24))]
+   ""
+   "ldil L%%_mcount,%%r24\;blr %%r0,%%r25\;ldo 8(%%r25),%%r25\;ble R%%_mcount(%%sr4,%%r24)\;copy %%r31,%%r2"
   [(set_attr "type" "multi")
    (set_attr "length" "8")])
 
