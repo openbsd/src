@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sail.6,v 1.9 2003/09/02 18:14:18 jmc Exp $
+.\"	$OpenBSD: sail.6,v 1.10 2003/09/05 16:23:20 jmc Exp $
 .\"	$NetBSD: sail.6,v 1.4 1995/04/22 10:37:24 cgd Exp $
 .\"
 .\" Copyright (c) 1988, 1993
@@ -120,6 +120,7 @@ Processes do a busy wait in the loop
 for (n = 0; link(sync_file, sync_lock) < 0 && n < 30; n++)
 	sleep(2);
 .Ed
+.Pp
 until they are able to create a link to a file named
 .Pa /tmp/#saillock.?? .
 The
@@ -198,8 +199,8 @@ The guns bear approximately like so:
            \\
             \\
              \\
-
 .Ed
+.Pp
 An interesting phenomenon occurred when a broadside was fired
 down the length of an enemy ship.
 The shot tended to bounce along the deck and did several times more damage.
@@ -209,12 +210,11 @@ target than the stern, a stern rake
 .Pq firing from the stern to the bow
 causes more damage than a bow rake.
 .Bd -literal -offset indent
-
                         b
                        00   ----  Stern rake!
                          a
-
 .Ed
+.Pp
 Most ships were equipped with carronades, which were very large,
 close-range cannons.
 American ships from the revolution until the War of 1812
@@ -356,12 +356,12 @@ Movement is the most confusing part of
 .Nm
 to many.
 Ships can head in 8 directions:
-.Bd -literal -offset indent
+.Bd -literal
                                  0      0      0
         b       b       b0      b       b       b       0b      b
         0        0                                             0
-
 .Ed
+.Pp
 The stern of a ship moves when it turns.
 The bow remains stationary.
 Ships can always turn, regardless of the wind (unless they are becalmed).
@@ -384,7 +384,9 @@ When
 .Nm
 prompts you for a move, it prints three characters of import.
 E.g.,
+.Pp
 .Dl move (7, 4):
+.Pp
 The first number is the maximum number of moves you can make,
 including turns.
 The second number is the maximum number of turns you can make.
@@ -413,6 +415,7 @@ move (7, 4): l1l4
 Movement Error;
 Helm: l1l
 .Ed
+.Pp
 Moreover, whenever you make a turn, your movement allowance drops to
 the lesser of what's left or what you would have at the new attitude.
 In short,
@@ -431,15 +434,14 @@ possible movements for your ship at all positions to the wind.
 Battle sail speeds are given first,
 and full sail speeds are given in parentheses.
 .Bd -literal
-
 				 0 1(2)
 				\\|/
 				-^-3(6)
 				/|\\
 				 | 4(7)
 				3(6)
-
 .Ed
+.Pp
 Pretend the bow of your ship
 .Pq the Sq ^
 is pointing upward and the wind is
@@ -565,6 +567,7 @@ Guns  4  4
 Carr  2  2
 Rigg  5 5 5 5
 .Ed
+.Pp
 "Load" shows what your port (left) and starboard (right) broadsides are
 loaded with.
 A
