@@ -1,4 +1,4 @@
-/*	$OpenBSD: twereg.h,v 1.1 2000/09/15 16:56:13 mickey Exp $	*/
+/*	$OpenBSD: twereg.h,v 1.2 2000/09/15 21:51:50 mickey Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -42,7 +42,6 @@
 #define	TWE_MAXOFFSETS		62
 #define	TWE_MAXCMDS		255
 #define	TWE_SECTOR_SIZE		512
-	/* XXX freebsd aligns at 64, but it does not work */
 #define	TWE_ALIGN		512
 #define	TWE_MAXFER		(TWE_MAXOFFSETS * PAGE_SIZE)
 
@@ -108,6 +107,7 @@
 #define	TWE_AEN_CERROR	0x0003	/* controller error */
 #define	TWE_AEN_RBFAIL	0x0004	/* rebuild failed */
 #define	TWE_AEN_RBDONE	0x0005
+/*	TWE_AEN_	0x0009	 * dunno what this is (yet) */
 #define	TWE_AEN_QFULL	0x00ff
 #define	TWE_AEN_TUN	0x0015	/* table undefined */
 
