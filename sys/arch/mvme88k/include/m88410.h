@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88410.h,v 1.8 2004/04/12 13:14:56 miod Exp $ */
+/*	$OpenBSD: m88410.h,v 1.9 2004/04/14 20:16:51 miod Exp $ */
 /*
  * Copyright (c) 2001 Steve Murphree, Jr.
  * All rights reserved.
@@ -65,7 +65,7 @@ mc88410_flush_page(paddr_t physaddr)
 	/* mask misaligned exceptions */
 	set_psr(psr | PSR_MXM);
 	/* clear WEN0 and WEN1 in ROMCR (disables writes to FLASH) */
-	bs->bs_romcr &= ~(BS_ROMCR_WEN0 | BS_ROMCR_WEN0) ;
+	bs->bs_romcr &= ~(BS_ROMCR_WEN0 | BS_ROMCR_WEN1) ;
 	/* set XCC bit in GCSR (0xFF8xxxxx now decodes to mc88410) */
 	bs->bs_gcsr |= BS_GCSR_XCC;
 
@@ -102,7 +102,7 @@ mc88410_flush(void)
 	/* mask misaligned exceptions */
 	set_psr(psr | PSR_MXM);
 	/* clear WEN0 and WEN1 in ROMCR (disables writes to FLASH) */
-	bs->bs_romcr &= ~(BS_ROMCR_WEN0 | BS_ROMCR_WEN0) ;
+	bs->bs_romcr &= ~(BS_ROMCR_WEN0 | BS_ROMCR_WEN1) ;
 	/* set XCC bit in GCSR (0xFF8xxxxx now decodes to mc88410) */
 	bs->bs_gcsr |= BS_GCSR_XCC;
 
@@ -139,7 +139,7 @@ mc88410_inval(void)
 	/* mask misaligned exceptions */
 	set_psr(psr | PSR_MXM);
 	/* clear WEN0 and WEN1 in ROMCR (disables writes to FLASH) */
-	bs->bs_romcr &= ~(BS_ROMCR_WEN0 | BS_ROMCR_WEN0) ;
+	bs->bs_romcr &= ~(BS_ROMCR_WEN0 | BS_ROMCR_WEN1) ;
 	/* set XCC bit in GCSR (0xFF8xxxxx now decodes to mc88410) */
 	bs->bs_gcsr |= BS_GCSR_XCC;
 
