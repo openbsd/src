@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.103 2002/06/17 23:13:02 matthieu Exp $
+.\"	$OpenBSD: options.4,v 1.104 2002/06/30 21:45:25 deraadt Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -233,11 +233,11 @@ to be built in addition to
 .Pa bsd.gdb
 is useful for debugging kernels and their crashdumps with gdb.
 Note that
-.Xr gdb Ns 's
+.Xr gdb 1 Ns 's
 .Fl k
 flag is obsolete and should not be used.
 Instead, a crashdump can be debugged by starting
-.Xr gdb
+.Xr gdb 1
 with the kernel name as an argument (no core file) and then use the
 .Xr gdb 1
 command
@@ -1047,7 +1047,7 @@ and/or
 .\" .Sh FILES
 .\" .Sh EXAMPLES
 .Sh SEE ALSO
-.Xr X 1 ,
+.Xr X 7 ,
 .Xr gdb 1 ,
 .Xr ktrace 1 ,
 .Xr quota 1 ,

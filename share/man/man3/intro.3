@@ -1,4 +1,4 @@
-.\"	$OpenBSD: intro.3,v 1.12 2001/08/22 12:15:46 heko Exp $
+.\"	$OpenBSD: intro.3,v 1.13 2002/06/30 21:46:23 deraadt Exp $
 .\"	$NetBSD: intro.3,v 1.5 1995/05/10 22:46:24 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -62,8 +62,7 @@ it is not necessary to supply the loader flag
 for these functions.
 There are several
 .Dq libraries
-or groups of functions included inside of
-.Xr libc : the standard
+or groups of functions included inside of libc: the standard
 .Tn I/O
 routines,
 database routines,
@@ -79,8 +78,7 @@ and more.
 Reentrant C library.
 Contains POSIX 1003.1c
 .Xr pthreads 3
-API and thread scheduler, as well as all of the functions found in
-.Xr libc .
+API and thread scheduler, as well as all of the functions found in libc.
 .It libcurses Pq Fl l Ns Ar curses
 Terminal independent screen management routines for two-dimensional
 non-bitmap display terminals.
@@ -174,7 +172,7 @@ library provided in 4.3.
 4.3-compatible termcap library.
 For use with
 .Xo
-.Xr libocurses
+.Xr ocurses 3
 .Pf ( i.e., Fl l Ns Ar ocurses
 .Fl l Ns Ar otermcap )
 .Xc
@@ -182,7 +180,7 @@ For use with
 .Xr panel 3
 library for use with
 .Xo
-.Xr libcurses
+.Xr curses 3
 .Pf ( i.e., Fl l Ns Ar panel
 .Fl l Ns Ar curses )
 .Xc
