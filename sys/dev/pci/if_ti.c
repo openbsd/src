@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ti.c,v 1.56 2004/09/23 17:45:16 brad Exp $	*/
+/*	$OpenBSD: if_ti.c,v 1.57 2004/11/22 04:14:17 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -121,8 +121,7 @@
 #include <dev/pci/pcidevs.h>
 
 #include <dev/pci/if_tireg.h>
-#include <dev/microcode/tigon/ti_fw.h>
-#include <dev/microcode/tigon/ti_fw2.h>
+#include <dev/pci/if_tivar.h>
 
 #ifdef M_HWCKSUM
 /*#define TI_CSUM_OFFLOAD*/
@@ -425,56 +424,50 @@ void ti_mem_set(sc, addr, len)
 void ti_loadfw(sc)
 	struct ti_softc		*sc;
 {
+	struct tigon_firmware *tf;
+	u_char *buf = NULL;
+	size_t buflen;
+	char *name;
+	int error;
+
 	switch(sc->ti_hwrev) {
 	case TI_HWREV_TIGON:
-		if (tigonFwReleaseMajor != TI_FIRMWARE_MAJOR ||
-		    tigonFwReleaseMinor != TI_FIRMWARE_MINOR ||
-		    tigonFwReleaseFix != TI_FIRMWARE_FIX) {
-			printf("%s: firmware revision mismatch; want "
-			    "%d.%d.%d, got %d.%d.%d\n", sc->sc_dv.dv_xname,
-			    TI_FIRMWARE_MAJOR, TI_FIRMWARE_MINOR,
-			    TI_FIRMWARE_FIX, tigonFwReleaseMajor,
-			    tigonFwReleaseMinor, tigonFwReleaseFix);
-			return;
-		}
-		ti_mem_write(sc, tigonFwTextAddr, tigonFwTextLen,
-		    (caddr_t)tigonFwText);
-		ti_mem_write(sc, tigonFwDataAddr, tigonFwDataLen,
-		    (caddr_t)tigonFwData);
-		ti_mem_write(sc, tigonFwRodataAddr, tigonFwRodataLen,
-		    (caddr_t)tigonFwRodata);
-		ti_mem_set(sc, tigonFwBssAddr, tigonFwBssLen);
-		ti_mem_set(sc, tigonFwSbssAddr, tigonFwSbssLen);
-		CSR_WRITE_4(sc, TI_CPU_PROGRAM_COUNTER, tigonFwStartAddr);
+		name = "tigon1";
 		break;
 	case TI_HWREV_TIGON_II:
-		if (tigon2FwReleaseMajor != TI_FIRMWARE_MAJOR ||
-		    tigon2FwReleaseMinor != TI_FIRMWARE_MINOR ||
-		    tigon2FwReleaseFix != TI_FIRMWARE_FIX) {
-			printf("%s: firmware revision mismatch; want "
-			    "%d.%d.%d, got %d.%d.%d\n", sc->sc_dv.dv_xname,
-			    TI_FIRMWARE_MAJOR, TI_FIRMWARE_MINOR,
-			    TI_FIRMWARE_FIX, tigon2FwReleaseMajor,
-			    tigon2FwReleaseMinor, tigon2FwReleaseFix);
-			return;
-		}
-		ti_mem_write(sc, tigon2FwTextAddr, tigon2FwTextLen,
-		    (caddr_t)tigon2FwText);
-		ti_mem_write(sc, tigon2FwDataAddr, tigon2FwDataLen,
-		    (caddr_t)tigon2FwData);
-		ti_mem_write(sc, tigon2FwRodataAddr, tigon2FwRodataLen,
-		    (caddr_t)tigon2FwRodata);
-		ti_mem_set(sc, tigon2FwBssAddr, tigon2FwBssLen);
-		ti_mem_set(sc, tigon2FwSbssAddr, tigon2FwSbssLen);
-		CSR_WRITE_4(sc, TI_CPU_PROGRAM_COUNTER, tigon2FwStartAddr);
+		name = "tigon2";
 		break;
 	default:
 		printf("%s: can't load firmware: unknown hardware rev\n",
 		    sc->sc_dv.dv_xname);
-		break;
+		return;
 	}
-
-	return;
+	
+	error = loadfirmware(name, &buf, &buflen);
+	if (error)
+		return;
+	tf = (struct tigon_firmware *)buf;
+	if (tf->FwReleaseMajor != TI_FIRMWARE_MAJOR ||
+	    tf->FwReleaseMinor != TI_FIRMWARE_MINOR ||
+	    tf->FwReleaseFix != TI_FIRMWARE_FIX) {
+		printf("%s: firmware revision mismatch; want "
+		    "%d.%d.%d, got %d.%d.%d\n", sc->sc_dv.dv_xname,
+		    TI_FIRMWARE_MAJOR, TI_FIRMWARE_MINOR,
+		    TI_FIRMWARE_FIX, tf->FwReleaseMajor,
+		    tf->FwReleaseMinor, tf->FwReleaseFix);
+		free(buf, M_DEVBUF);
+		return;
+	}
+	ti_mem_write(sc, tf->FwTextAddr, tf->FwTextLen,
+	    (caddr_t)&tf->data[tf->FwTextOffset]);
+	ti_mem_write(sc, tf->FwRodataAddr, tf->FwRodataLen,
+	    (caddr_t)&tf->data[tf->FwRodataOffset]);
+	ti_mem_write(sc, tf->FwDataAddr, tf->FwDataLen,
+	    (caddr_t)&tf->data[tf->FwDataOffset]);
+	ti_mem_set(sc, tf->FwBssAddr, tf->FwBssLen);
+	ti_mem_set(sc, tf->FwSbssAddr, tf->FwSbssLen);
+	CSR_WRITE_4(sc, TI_CPU_PROGRAM_COUNTER, tf->FwStartAddr);
+	free(buf, M_DEVBUF);
 }
 
 /*
