@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_sigwait.c,v 1.7 1999/11/25 07:01:45 d Exp $	*/
+/*	$OpenBSD: uthread_sigwait.c,v 1.8 2000/01/06 07:21:14 d Exp $	*/
 /*
  * Copyright (c) 1997 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -72,7 +72,7 @@ sigwait(const sigset_t * set, int *sig)
 	sigdelset(&waitset, SIGINFO);
 
 	/* Check to see if a pending signal is in the wait mask. */
-	if (tempset = (_thread_run->sigpend & waitset)) {
+	if ((tempset = (_thread_run->sigpend & waitset)) != 0) {
 		/* Enter a loop to find a pending signal: */
 		for (i = 1; i < NSIG; i++) {
 			if (sigismember (&tempset, i))
