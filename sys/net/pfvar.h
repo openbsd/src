@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.48 2001/09/04 12:32:53 dhartmei Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.49 2001/09/05 12:42:31 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -136,20 +136,6 @@ struct pf_state {
 		   r->dst.mask, h->ip_dst.s_addr)) \
 		)
 
-struct pf_natlook {
-	u_int32_t	saddr;
-	u_int32_t	daddr;
-	u_int32_t	rsaddr;
-	u_int32_t	rdaddr;
-	u_int16_t	sport;
-	u_int16_t	dport;
-	u_int16_t	rsport;
-	u_int16_t	rdport;
-	u_int8_t	proto;
-	u_int8_t	direction;
-};
-	
-
 struct pf_nat {
 	char		 ifname[IFNAMSIZ];
 	struct ifnet	*ifp;
@@ -280,6 +266,19 @@ struct pfioc_changenat {
 	struct pf_nat	 newnat;
 };
 
+struct pfioc_natlook {
+	u_int32_t	 saddr;
+	u_int32_t	 daddr;
+	u_int32_t	 rsaddr;
+	u_int32_t	 rdaddr;
+	u_int16_t	 sport;
+	u_int16_t	 dport;
+	u_int16_t	 rsport;
+	u_int16_t	 rdport;
+	u_int8_t	 proto;
+	u_int8_t	 direction;
+};
+
 struct pfioc_rdr {
 	u_int32_t	 ticket;
 	u_int32_t	 nr;
@@ -342,7 +341,7 @@ struct pfioc_tm {
 #define DIOCSETSTATUSIF _IOWR('D', 20, struct pfioc_if)
 #define DIOCGETSTATUS	_IOWR('D', 21, struct pf_status)
 #define DIOCCLRSTATUS	_IO  ('D', 22)
-#define DIOCNATLOOK	_IOWR('D', 23, struct pf_natlook)
+#define DIOCNATLOOK	_IOWR('D', 23, struct pfioc_natlook)
 #define DIOCSETDEBUG	_IOWR('D', 24, u_int32_t)
 #define DIOCGETSTATES	_IOWR('D', 25, struct pfioc_states)
 #define DIOCCHANGERULE	_IOWR('D', 26, struct pfioc_changerule)

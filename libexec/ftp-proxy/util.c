@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.3 2001/08/28 19:35:04 deraadt Exp $ */
+/*	$OpenBSD: util.c,v 1.4 2001/09/05 12:42:31 dhartmei Exp $ */
 
 /*
  * Copyright (c) 1996-2001
@@ -75,7 +75,7 @@ int
 get_proxy_env(int connected_fd, struct sockaddr_in *real_server_sa_ptr,
     struct sockaddr_in *client_sa_ptr)
 {
-	struct pf_natlook natlook;
+	struct pfioc_natlook natlook;
 	char *client;
 	int slen, fd;
 
