@@ -1,4 +1,4 @@
-/*	$OpenBSD: adutil.c,v 1.13 2002/03/14 01:26:25 millert Exp $	*/
+/*	$OpenBSD: adutil.c,v 1.14 2003/12/21 15:28:59 miod Exp $	*/
 /*	$NetBSD: adutil.c,v 1.15 1996/10/13 02:52:07 christos Exp $	*/
 
 /*
@@ -126,7 +126,7 @@ adosfs_getblktype(amp, bp)
 {
 	if (adoscksum(bp, amp->nwords)) {
 #ifdef DIAGNOSTIC
-		printf("adosfs: aget: cksum of blk %ld failed\n",
+		printf("adosfs: aget: cksum of blk %d failed\n",
 		    bp->b_blkno / amp->secsperblk);
 #endif
 		return (-1);
@@ -137,7 +137,7 @@ adosfs_getblktype(amp, bp)
 	 */
 	if (adoswordn(bp, 0) != BPT_SHORT) {
 #ifdef DIAGNOSTIC
-		printf("adosfs: aget: bad primary type blk %ld\n",
+		printf("adosfs: aget: bad primary type blk %d\n",
 		    bp->b_blkno / amp->secsperblk);
 #endif
 		return (-1);
