@@ -4317,6 +4317,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "CXD3222 FireWire",
 	},
 	{
+	    PCI_VENDOR_SONY, PCI_PRODUCT_SONY_MEMSTICK_SLOT,
+	    0,
+	    "Sony",
+	    "Memory Stick Media Slot",
+	},
+	{
 	    PCI_VENDOR_STB2, PCI_PRODUCT_STB2_RIVA128,
 	    0,
 	    "NVidia/SGS-Thomson",

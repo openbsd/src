@@ -1530,6 +1530,7 @@
 /* Sony products */
 #define	PCI_PRODUCT_SONY_CXD1947A	0x8009		/* CXD1947A FireWire */
 #define	PCI_PRODUCT_SONY_CXD3222	0x8039		/* CXD3222 FireWire */
+#define	PCI_PRODUCT_SONY_MEMSTICK_SLOT	0x808a		/* Memory Stick Media Slot */
 
 /* STB products */
 #define	PCI_PRODUCT_STB2_RIVA128	0x0018		/* Velocity128 */
