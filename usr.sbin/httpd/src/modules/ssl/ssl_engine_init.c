@@ -123,6 +123,9 @@ void ssl_init_Module(server_rec *s, pool *p)
     SSLSrvConfigRec *sc;
     server_rec *s2;
     char *cp;
+#ifdef __OpenBSD__    
+    int SSLenabled = 0;
+#endif
 
     mc->nInitCount++;
 
@@ -243,11 +246,28 @@ void ssl_init_Module(server_rec *s, pool *p)
 #endif
     if (mc->nInitCount == 1) {
         ssl_pphrase_Handle(s, p);
+#ifndef __OpenBSD__
         ssl_init_TmpKeysHandle(SSL_TKP_GEN, s, p);
+#endif
 #ifndef WIN32
         return;
 #endif
     }
+
+#ifdef __OpenBSD__
+    for (s2 = s; s2 != NULL; s2 = s2->next) {
+        sc = mySrvConfig(s2);
+        /*
+         * Either now skip this server when SSL is disabled for
+         * it or give out some information about what we're
+         * configuring.
+         */
+        if (sc->bEnabled)
+            SSLenabled = 1;
+    }
+    if (SSLenabled) /* skip expensive bits if we're not doing ssl */
+      ssl_init_TmpKeysHandle(SSL_TKP_GEN, s, p);
+#endif
 
     /*
      * Warn the user that he should use the session cache.
@@ -273,11 +293,15 @@ void ssl_init_Module(server_rec *s, pool *p)
     /*
      *  allocate the temporary RSA keys and DH params
      */
+#ifdef __OpenBSD__    
+    if (SSLenabled)  /* skip expensive bits if we're not doing ssl */
+#endif
     ssl_init_TmpKeysHandle(SSL_TKP_ALLOC, s, p);
 
     /*
      *  initialize servers
      */
+
     ssl_log(s, SSL_LOG_INFO, "Init: Initializing (virtual) servers for SSL");
     for (s2 = s; s2 != NULL; s2 = s2->next) {
         sc = mySrvConfig(s2);
