@@ -1,4 +1,4 @@
-/*	$OpenBSD: inflate.c,v 1.5 2003/12/17 00:24:47 henning Exp $	*/
+/*	$OpenBSD: inflate.c,v 1.6 2003/12/17 00:28:19 millert Exp $	*/
 /* inflate.c -- zlib decompression
  * Copyright (C) 1995-2003 Mark Adler
  * For conditions of distribution and use, see copyright notice in zlib.h
@@ -587,18 +587,30 @@ int flush;
             if (
 #endif
                 ((BITS(8) << 8) + (hold >> 8)) % 31) {
+#ifdef SMALL  
+		strm->msg = "error";
+#else
                 strm->msg = (char *)"incorrect header check";
+#endif
                 state->mode = BAD;
                 break;
             }
             if (BITS(4) != Z_DEFLATED) {
+#ifdef SMALL  
+		strm->msg = "error";
+#else
                 strm->msg = (char *)"unknown compression method";
+#endif
                 state->mode = BAD;
                 break;
             }
             DROPBITS(4);
             if (BITS(4) + 8 > state->wbits) {
+#ifdef SMALL  
+		strm->msg = "error";
+#else
                 strm->msg = (char *)"invalid window size";
+#endif
                 state->mode = BAD;
                 break;
             }
@@ -612,12 +624,20 @@ int flush;
             NEEDBITS(16);
             state->flags = (int)(hold);
             if ((state->flags & 0xff) != Z_DEFLATED) {
+#ifdef SMALL  
+		strm->msg = "error";
+#else
                 strm->msg = (char *)"unknown compression method";
+#endif
                 state->mode = BAD;
                 break;
             }
             if (state->flags & 0xe000) {
+#ifdef SMALL  
+		strm->msg = "error";
+#else
                 strm->msg = (char *)"unknown header flags set";
+#endif
                 state->mode = BAD;
                 break;
             }
@@ -688,7 +708,11 @@ int flush;
             if (state->flags & 0x0200) {
                 NEEDBITS(16);
                 if (hold != (state->check & 0xffff)) {
+#ifdef SMALL  
+		    strm->msg = "error";
+#else
                     strm->msg = (char *)"header crc mismatch";
+#endif
                     state->mode = BAD;
                     break;
                 }
@@ -739,7 +763,11 @@ int flush;
                 state->mode = TABLE;
                 break;
             case 3:
+#ifdef SMALL  
+		strm->msg = "error";
+#else
                 strm->msg = (char *)"invalid block type";
+#endif
                 state->mode = BAD;
             }
             DROPBITS(2);
@@ -748,7 +776,11 @@ int flush;
             BYTEBITS();                         /* go to byte boundary */
             NEEDBITS(32);
             if ((hold & 0xffff) != ((hold >> 16) ^ 0xffff)) {
+#ifdef SMALL  
+		strm->msg = "error";
+#else
                 strm->msg = (char *)"invalid stored block lengths";
+#endif
                 state->mode = BAD;
                 break;
             }
@@ -784,7 +816,11 @@ int flush;
             DROPBITS(4);
 #ifndef PKZIP_BUG_WORKAROUND
             if (state->nlen > 286 || state->ndist > 30) {
+#ifdef SMALL  
+		strm->msg = "error";
+#else
                 strm->msg = (char *)"too many length or distance symbols";
+#endif
                 state->mode = BAD;
                 break;
             }
@@ -806,7 +842,11 @@ int flush;
             ret = inflate_table(CODES, state->lens, 19, &(state->next),
                                 &(state->lenbits), state->work);
             if (ret) {
+#ifdef SMALL  
+		strm->msg = "error";
+#else
                 strm->msg = (char *)"invalid code lengths set";
+#endif
                 state->mode = BAD;
                 break;
             }
@@ -830,7 +870,11 @@ int flush;
                         NEEDBITS(this.bits + 2);
                         DROPBITS(this.bits);
                         if (state->have == 0) {
+#ifdef SMALL  
+			    strm->msg = "error";
+#else
                             strm->msg = (char *)"invalid bit length repeat";
+#endif
                             state->mode = BAD;
                             break;
                         }
@@ -853,7 +897,11 @@ int flush;
                         DROPBITS(7);
                     }
                     if (state->have + copy > state->nlen + state->ndist) {
+#ifdef SMALL  
+			strm->msg = "error";
+#else
                         strm->msg = (char *)"invalid bit length repeat";
+#endif
                         state->mode = BAD;
                         break;
                     }
@@ -869,7 +917,11 @@ int flush;
             ret = inflate_table(LENS, state->lens, state->nlen, &(state->next),
                                 &(state->lenbits), state->work);
             if (ret) {
+#ifdef SMALL  
+		strm->msg = "error";
+#else
                 strm->msg = (char *)"invalid literal/lengths set";
+#endif
                 state->mode = BAD;
                 break;
             }
@@ -878,7 +930,11 @@ int flush;
             ret = inflate_table(DISTS, state->lens + state->nlen, state->ndist,
                             &(state->next), &(state->distbits), state->work);
             if (ret) {
+#ifdef SMALL  
+		strm->msg = "error";
+#else
                 strm->msg = (char *)"invalid distances set";
+#endif
                 state->mode = BAD;
                 break;
             }
@@ -923,7 +979,11 @@ int flush;
                 break;
             }
             if (this.op & 64) {
+#ifdef SMALL  
+		strm->msg = "error";
+#else
                 strm->msg = (char *)"invalid literal/length code";
+#endif
                 state->mode = BAD;
                 break;
             }
@@ -955,7 +1015,11 @@ int flush;
             }
             DROPBITS(this.bits);
             if (this.op & 64) {
+#ifdef SMALL  
+		strm->msg = "error";
+#else
                 strm->msg = (char *)"invalid distance code";
+#endif
                 state->mode = BAD;
                 break;
             }
@@ -969,7 +1033,11 @@ int flush;
                 DROPBITS(state->extra);
             }
             if (state->offset > state->whave + out - left) {
+#ifdef SMALL  
+		strm->msg = "error";
+#else
                 strm->msg = (char *)"invalid distance too far back";
+#endif
                 state->mode = BAD;
                 break;
             }
@@ -1021,7 +1089,11 @@ int flush;
                      state->flags ? hold :
 #endif
                      REVERSE(hold)) != state->check) {
+#ifdef SMALL  
+		    strm->msg = "error";
+#else
                     strm->msg = (char *)"incorrect data check";
+#endif
                     state->mode = BAD;
                     break;
                 }
@@ -1034,7 +1106,11 @@ int flush;
             if (state->wrap && state->flags) {
                 NEEDBITS(32);
                 if (hold != (state->total & 0xffffffffUL)) {
+#ifdef SMALL  
+		    strm->msg = "error";
+#else
                     strm->msg = (char *)"incorrect length check";
+#endif
                     state->mode = BAD;
                     break;
                 }
