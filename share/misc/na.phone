@@ -1,4 +1,4 @@
-	$OpenBSD: na.phone,v 1.26 2002/04/29 15:00:43 mickey Exp $
+	$OpenBSD: na.phone,v 1.27 2003/01/15 22:05:20 deraadt Exp $
 #	@(#)na.phone	8.1 (Berkeley) 6/8/93
 #
 # Area Code : City : State/Province : State/Province Abbrev.
@@ -555,9 +555,9 @@
 615:Hendersonville:Tennessee:TN
 615:Murfreesboro:Tennessee:TN
 615:Nashville:Tennessee:TN
-616:Battle Creek:Michigan:MI
+269:Battle Creek:Michigan:MI
 616:Grand Rapids:Michigan:MI
-616:Kalamazoo:Michigan:MI
+269:Kalamazoo:Michigan:MI
 617:Boston:Massachusetts:MA
 617:Cambridge:Massachusetts:MA
 617:Dorchester:Massachusetts:MA
