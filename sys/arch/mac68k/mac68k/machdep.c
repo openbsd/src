@@ -1,5 +1,5 @@
-/*	$OpenBSD: machdep.c,v 1.19 1996/09/21 04:03:58 briggs Exp $	*/
-/*	$NetBSD: machdep.c,v 1.114 1996/08/06 04:03:33 scottr Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.20 1996/10/14 01:24:58 briggs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.121 1996/10/13 03:21:39 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -195,11 +195,6 @@ int     physmem = MAXMEM;	/* max supported memory, changes to actual */
  * during autoconfiguration or after a panic.
  */
 int     safepri = PSL_LOWIPL;
-
-/*
- * For the fpu emulation and fpu driver.
- */
-int     fpu_type;
 
 static void	identifycpu __P((void));
 static u_long	get_physical __P((u_int, u_long *));
@@ -480,7 +475,7 @@ setregs(p, pack, sp, retval)
 	/* restore a null state frame */
 	p->p_addr->u_pcb.pcb_fpregs.fpf_null = 0;
 
-	if (fpu_type) {
+	if (fputype) {
 		m68881_restore(&p->p_addr->u_pcb.pcb_fpregs);
 	}
 
@@ -630,7 +625,7 @@ sendsig(catcher, sig, mask, code)
 			    p->p_pid, exframesize[ft], ft);
 #endif
 	}
-	if (fpu_type) {
+	if (fputype) {
 		kfp->sf_state.ss_flags |= SS_FPSTATE;
 		m68881_save(&kfp->sf_state.ss_fpstate);
 	}
@@ -1627,7 +1622,7 @@ static romvec_t romvecs[] =
 	},
 	/*
 	 * Vectors verified for Mac Classic II and LC II
-	 * (LC III?  Other LC's?  680x0 Performas?)
+	 * (Other LC's?  680x0 Performas?)
 	 */
 	{			/* 3 */
 		"Mac Classic II ROMs",
@@ -1789,12 +1784,12 @@ static romvec_t romvecs[] =
 		(caddr_t) 0x4000c5cc,	/* InitUtil */
 		(caddr_t) 0x4000b186,	/* ReadXPRam */
 		(caddr_t) 0x4000b190,	/* WriteXPRam */
-		(caddr_t) 0x0,		/* jClkNoMem */
+		(caddr_t) 0x400b3c08,	/* jClkNoMem */
 		(caddr_t) 0x4000a818,	/* ADBAlternateInit */
-		(caddr_t) 0x40814800,	/* Egret */
+		(caddr_t) 0x40009ae6,	/* Egret */ /* From PB520 */
 		(caddr_t) 0x400147c4,	/* InitEgret */
-		(caddr_t) 0x0,		/* ADBReInit_JTBL */
-		(caddr_t) 0x0,		/* ROMResourceMap List Head */
+		(caddr_t) 0x400a7a5c,	/* ADBReInit_JTBL */
+		(caddr_t) 0x4007eb90,	/* ROMResourceMap List Head */
 		(caddr_t) 0x4001c406,	/* FixDiv, wild guess */
 		(caddr_t) 0x4001c312,	/* FixMul, wild guess */
 	},
@@ -1943,6 +1938,36 @@ static romvec_t romvecs[] =
 		(caddr_t) 0x4081c406,	/* FixDiv */
 		(caddr_t) 0x4081c312,	/* FixMul */
 	},
+	/*
+	 * Vectors verified for LC III
+	 * (Universal ROM version 0x067c)
+	 */
+	{			/* 14 */
+		"LC III ROMs",
+		(caddr_t) 0x40814912,	/* ADB interrupt */
+		(caddr_t) 0x0,		/* PM ADB interrupt */
+		(caddr_t) 0x408b2f94,	/* ADBBase + 130 interupt */
+		(caddr_t) 0x4080a360,	/* CountADBs */
+		(caddr_t) 0x4080a37a,	/* GetIndADB */
+		(caddr_t) 0x4080a3a6,	/* GetADBInfo */
+		(caddr_t) 0x4080a3ac,	/* SetADBInfo */
+		(caddr_t) 0x4080a752,	/* ADBReInit */
+		(caddr_t) 0x4080a3dc,	/* ADBOp */
+		(caddr_t) 0x0,		/* PMgrOp */
+		(caddr_t) 0x4080c05c,	/* WriteParam */
+		(caddr_t) 0x4080c086,	/* SetDateTime */
+		(caddr_t) 0x4080c5cc,	/* InitUtil */
+		(caddr_t) 0x4080b186,	/* ReadXPRam */
+		(caddr_t) 0x4080b190,	/* WriteXPRam */
+		(caddr_t) 0x408b39b6,	/* jClkNoMem */
+		(caddr_t) 0x4080a818,	/* ADBAlternateInit */
+		(caddr_t) 0x40814800,	/* Egret */
+		(caddr_t) 0x408147c4,	/* InitEgret */
+		(caddr_t) 0x408d2918,	/* ADBReInit_JTBL */
+		(caddr_t) 0x4087eb90,	/* ROMResourceMap List Head */
+		(caddr_t) 0x4081c406,	/* FixDiv */
+		(caddr_t) 0x4081c312,	/* FixMul */
+	},
 	/* Please fill these in! -BG */
 };
 
@@ -2006,7 +2031,7 @@ struct cpu_model_info cpu_models[] = {
 
 /* The LCs... */
 	{MACH_MACLCII,  "LC", " II ",  MACH_CLASSLC, &romvecs[3]},
-	{MACH_MACLCIII, "LC", " III ", MACH_CLASSLC, &romvecs[3]},
+	{MACH_MACLCIII, "LC", " III ", MACH_CLASSLC, &romvecs[14]},
 	{MACH_MACLC475, "LC", " 475 ", MACH_CLASSQ,  &romvecs[9]},
 	{MACH_MACLC520, "LC", " 520 ", MACH_CLASSLC, &romvecs[3]},
 	{MACH_MACLC575, "LC", " 575 ", MACH_CLASSLC, &romvecs[3]},
@@ -2218,11 +2243,11 @@ setmachdep()
 
 	/*
 	 * Get the console buffer physical address.  If we can't, we
-	 * punt and set it to 0.  Note that get_physical doesn't yet
-	 * work on the '040.
+	 * assume that videoaddr is already a physical address.
+ 	 * Note that get_physical doesn't yet work on the '040.
 	 */
 	if ((mmutype == MMU_68040) || !get_physical(videoaddr, &conspa))
-		conspa = 0;
+		conspa = videoaddr;
 
 	/*
 	 * Set up any machine specific stuff that we have to before
@@ -2433,6 +2458,9 @@ get_physical(u_int addr, u_long * phys)
 	if (mmutype == MMU_68040)
 		return 0;
 
+	if (mmutype == MMU_68040)
+		return 0;
+
 	i = get_pte(addr, pte, &psr);
 
 	switch (i) {
@@ -2456,9 +2484,8 @@ get_physical(u_int addr, u_long * phys)
 
 	numbits = 0;
 	psr &= 0x0007;		/* Number of levels we went */
-	for (i = 0; i < psr; i++) {
+	for (i = 0; i < psr; i++)
 		numbits += (macos_tc >> (12 - i * 4)) & 0x0f;
-	}
 
 	/*
 	 * We have to take the most significant "numbits" from
