@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd.c,v 1.23 2002/03/14 03:16:03 millert Exp $ */
+/*	$OpenBSD: wd.c,v 1.24 2002/05/03 09:18:46 gluk Exp $ */
 /*	$NetBSD: wd.c,v 1.193 1999/02/28 17:15:27 explorer Exp $ */
 
 /*
@@ -149,11 +149,12 @@ struct wd_softc {
  * XXX Nothing resets this yet, but disk change sensing will when ATA-4 is
  * more fully implemented.
  */
-#define WDF_LOADED	  0x10 /* parameters loaded */
+#define WDF_LOADED	0x10 /* parameters loaded */
 #define WDF_WAIT	0x20 /* waiting for resources */
-#define WDF_LBA	 0x40 /* using LBA mode */
+#define WDF_LBA		0x40 /* using LBA mode */
+#define WDF_LBA48	0x80 /* using 48-bit LBA mode */
 
-	int sc_capacity;
+	u_int64_t sc_capacity;
 	int cyl; /* actual drive parameters */
 	int heads;
 	int sectors;
@@ -318,6 +319,11 @@ wdattach(parent, self, aux)
 
 	printf("%s: %d-sector PIO,", wd->sc_dev.dv_xname, wd->sc_multi);
 
+	/* use 48-bit LBA if enabled */
+	/* XXX: shall we use it if drive capacity < 137Gb? */
+	if ((wd->sc_params.atap_cmd2_en & ATAPI_CMD2_48AD) != 0)
+		wd->sc_flags |= WDF_LBA48;
+
 	/* Prior to ATA-4, LBA was optional. */
 	if ((wd->sc_params.atap_capabilities1 & WDC_CAP_LBA) != 0)
 		wd->sc_flags |= WDF_LBA;
@@ -328,11 +334,24 @@ wdattach(parent, self, aux)
 		wd->sc_flags |= WDF_LBA;
 #endif
 
-	if ((wd->sc_flags & WDF_LBA) != 0) {
+	if ((wd->sc_flags & WDF_LBA48) != 0) {
+		wd->sc_capacity =
+		    (((u_int64_t)wd->sc_params.atap_max_lba[3] << 48) |
+		     ((u_int64_t)wd->sc_params.atap_max_lba[2] << 32) |
+		     ((u_int64_t)wd->sc_params.atap_max_lba[1] << 16) |
+		      (u_int64_t)wd->sc_params.atap_max_lba[0]);
+		printf(" LBA48, %lluMB, %d cyl, %d head,"
+		    " %d sec, %llu sectors\n",
+		    wd->sc_capacity / (1048576 / DEV_BSIZE),
+		    wd->sc_params.atap_cylinders,
+		    wd->sc_params.atap_heads,
+		    wd->sc_params.atap_sectors,
+		    wd->sc_capacity);
+	} else if ((wd->sc_flags & WDF_LBA) != 0) {
 		wd->sc_capacity =
 		    (wd->sc_params.atap_capacity[1] << 16) |
 		    wd->sc_params.atap_capacity[0];
-		printf(" LBA, %dMB, %d cyl, %d head, %d sec, %d sectors\n",
+		printf(" LBA, %lluMB, %d cyl, %d head, %d sec, %llu sectors\n",
 		    wd->sc_capacity / (1048576 / DEV_BSIZE),
 		    wd->sc_params.atap_cylinders,
 		    wd->sc_params.atap_heads,
@@ -343,7 +362,7 @@ wdattach(parent, self, aux)
 		    wd->sc_params.atap_cylinders *
 		    wd->sc_params.atap_heads *
 		    wd->sc_params.atap_sectors;
-		printf(" CHS, %dMB, %d cyl, %d head, %d sec, %d sectors\n",
+		printf(" CHS, %lluMB, %d cyl, %d head, %d sec, %llu sectors\n",
 		    wd->sc_capacity / (1048576 / DEV_BSIZE),
 		    wd->sc_params.atap_cylinders,
 		    wd->sc_params.atap_heads,
@@ -561,6 +580,8 @@ __wdstart(wd, bp)
 		wd->sc_wdc_bio.flags = ATA_SINGLE;
 	else
 		wd->sc_wdc_bio.flags = 0;
+	if (wd->sc_flags & WDF_LBA48)
+		wd->sc_wdc_bio.flags |= ATA_LBA48;
 	if (wd->sc_flags & WDF_LBA)
 		wd->sc_wdc_bio.flags |= ATA_LBA;
 	if (bp->b_flags & B_READ)
@@ -1165,6 +1186,8 @@ again:
 		wd->sc_wdc_bio.flags = ATA_POLL;
 		if (wddumpmulti == 1)
 			wd->sc_wdc_bio.flags |= ATA_SINGLE;
+		if (wd->sc_flags & WDF_LBA48)
+			wd->sc_wdc_bio.flags |= ATA_LBA48;
 		if (wd->sc_flags & WDF_LBA)
 			wd->sc_wdc_bio.flags |= ATA_LBA;
 		wd->sc_wdc_bio.bcount =

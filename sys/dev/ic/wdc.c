@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdc.c,v 1.48 2002/03/16 17:12:09 csapuntz Exp $     */
+/*      $OpenBSD: wdc.c,v 1.49 2002/05/03 09:18:46 gluk Exp $     */
 /*	$NetBSD: wdc.c,v 1.68 1999/06/23 19:00:17 bouyer Exp $ */
 
 
@@ -1789,6 +1789,43 @@ wdccommand(chp, drive, command, cylin, head, sector, count, precomp)
 	CHP_WRITE_REG(chp, wdr_cyl_lo, cylin);
 	CHP_WRITE_REG(chp, wdr_cyl_hi, cylin >> 8);
 	CHP_WRITE_REG(chp, wdr_sector, sector);
+	CHP_WRITE_REG(chp, wdr_seccnt, count);
+
+	/* Send command. */
+	CHP_WRITE_REG(chp, wdr_command, command);
+	return;
+}
+
+/*
+ * Send a 48-bit addressing command. The drive should be ready.
+ * Assumes interrupts are blocked.
+ */
+void
+wdccommandext(chp, drive, command, blkno, count)
+	struct channel_softc *chp;
+	u_int8_t drive;
+	u_int8_t command;
+	u_int64_t blkno;
+	u_int16_t count;
+{
+	WDCDEBUG_PRINT(("wdccommandext %s:%d:%d: command=0x%x blkno=%llu "
+	    "count=%d\n", chp->wdc->sc_dev.dv_xname,
+	    chp->channel, drive, command, blkno, count),
+	    DEBUG_FUNCS);
+	WDC_LOG_ATA_CMDEXT(chp, blkno >> 40, blkno >> 16, blkno >> 32,
+	    blkno >> 8, blkno >> 24, blkno, count >> 8, count, command);
+
+	/* Select drive and LBA mode. */
+	CHP_WRITE_REG(chp, wdr_sdh, (drive << 4) | WDSD_LBA);
+
+	/* Load parameters. All registers are two byte deep FIFOs. */
+	CHP_WRITE_REG(chp, wdr_lba_hi, blkno >> 40);
+	CHP_WRITE_REG(chp, wdr_lba_hi, blkno >> 16);
+	CHP_WRITE_REG(chp, wdr_lba_mi, blkno >> 32);
+	CHP_WRITE_REG(chp, wdr_lba_mi, blkno >> 8);
+	CHP_WRITE_REG(chp, wdr_lba_lo, blkno >> 24);
+	CHP_WRITE_REG(chp, wdr_lba_lo, blkno);
+	CHP_WRITE_REG(chp, wdr_seccnt, count >> 8);
 	CHP_WRITE_REG(chp, wdr_seccnt, count);
 
 	/* Send command. */

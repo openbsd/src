@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdvar.h,v 1.5 2002/03/14 03:16:04 millert Exp $	*/
+/*	$OpenBSD: wdvar.h,v 1.6 2002/05/03 09:18:46 gluk Exp $	*/
 /*	$NetBSD: wdvar.h,v 1.3 1998/11/11 19:38:27 bouyer Exp $	*/
 
 /*
@@ -44,6 +44,7 @@ struct ata_bio {
 #define ATA_LBA     0x0010 /* tranfert uses LBA adressing */
 #define ATA_READ    0x0020 /* tranfert is a read (otherwise a write) */
 #define ATA_CORR    0x0040 /* transfer had a corrected error */
+#define ATA_LBA48   0x0080 /* transfer uses 48-bit LBA adressing */
     int multi; /* number of blocks to transfer in multi-mode */
     struct disklabel *lp; /* pointer to drive's label info */
     daddr_t blkno; /* block addr */

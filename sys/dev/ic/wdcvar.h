@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdcvar.h,v 1.24 2002/03/16 17:12:09 csapuntz Exp $     */
+/*      $OpenBSD: wdcvar.h,v 1.25 2002/05/03 09:18:46 gluk Exp $     */
 /*	$NetBSD: wdcvar.h,v 1.17 1999/04/11 20:50:29 bouyer Exp $	*/
 
 /*-
@@ -98,8 +98,11 @@ enum wdc_regs {
 	wdr_seccnt = 2,
 	wdr_ireason = 2,
 	wdr_sector = 3,
+	wdr_lba_lo = 3,
 	wdr_cyl_lo = 4,
+	wdr_lba_mi = 4,
 	wdr_cyl_hi = 5,
+	wdr_lba_hi = 5,
 	wdr_sdh = 6,
 	wdr_status = _WDC_RDONLY | 7,
 	wdr_command = _WDC_WRONLY | 7,
@@ -261,6 +264,8 @@ void  wdcbit_bucket(struct channel_softc *, int);
 
 void  wdccommand(struct channel_softc *, u_int8_t, u_int8_t, u_int16_t,
 	                  u_int8_t, u_int8_t, u_int8_t, u_int8_t);
+void  wdccommandext(struct channel_softc *, u_int8_t, u_int8_t, u_int64_t,
+		    u_int16_t);
 void   wdccommandshort(struct channel_softc *, int, int);
 void  wdctimeout(void *arg);
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: wdcevent.h,v 1.1 2002/03/16 17:12:09 csapuntz Exp $ */
+/* $OpenBSD: wdcevent.h,v 1.2 2002/05/03 09:18:46 gluk Exp $ */
 
 /*
  * Copyright (c) 2001 Constantine Sapuntzakis
@@ -90,6 +90,16 @@ static __inline void WDC_LOG_REG(struct channel_softc *chp,
 	record[2] = val & 0xff;
 
 	wdc_log(chp, 9, 3, record);
+}
+
+static __inline void WDC_LOG_ATA_CMDEXT(struct channel_softc *chp,
+    u_int8_t lba_hi1, u_int8_t lba_hi2, u_int8_t lba_mi1, u_int8_t lba_mi2,
+    u_int8_t lba_lo1, u_int8_t lba_lo2, u_int8_t count1, u_int8_t count2,
+    u_int8_t command) {
+	char record[9] = { lba_hi1, lba_hi2, lba_mi1, lba_mi2,
+			   lba_lo1, lba_lo2, count1, count2, command };
+
+	wdc_log(chp, 10, 9, record);
 }
 
 #endif

@@ -1,4 +1,4 @@
-/*      $OpenBSD: ata_wdc.c,v 1.14 2002/03/16 23:23:42 csapuntz Exp $	*/
+/*      $OpenBSD: ata_wdc.c,v 1.15 2002/05/03 09:18:46 gluk Exp $	*/
 /*	$NetBSD: ata_wdc.c,v 1.21 1999/08/09 09:43:11 bouyer Exp $	*/
 
 /*
@@ -281,8 +281,12 @@ again:
 		if (xfer->c_flags & C_DMA) {
 			ata_bio->nblks = nblks;
 			ata_bio->nbytes = xfer->c_bcount;
-			cmd = (ata_bio->flags & ATA_READ) ?
-			    WDCC_READDMA : WDCC_WRITEDMA;
+			if (ata_bio->flags & ATA_LBA48)
+				cmd = (ata_bio->flags & ATA_READ) ?
+				    WDCC_READDMA_EXT : WDCC_WRITEDMA_EXT;
+			else
+				cmd = (ata_bio->flags & ATA_READ) ?
+				    WDCC_READDMA : WDCC_WRITEDMA;
 	    		/* Init the DMA channel. */
 			if ((*chp->wdc->dma_init)(chp->wdc->dma_arg,
 			    chp->channel, xfer->drive,
@@ -297,8 +301,13 @@ again:
 			wdc_set_drive(chp, xfer->drive);
 			if (wait_for_ready(chp, ata_delay) < 0)
 				goto timeout;
-			wdccommand(chp, xfer->drive, cmd, cyl,
-			    head, sect, nblks, 0);
+			if (ata_bio->flags & ATA_LBA48) {
+				wdccommandext(chp, xfer->drive, cmd,
+				    (u_int64_t)ata_bio->blkno, nblks);
+			} else {
+				wdccommand(chp, xfer->drive, cmd, cyl,
+				    head, sect, nblks, 0);
+			}
 			/* start the DMA channel */
 			(*chp->wdc->dma_start)(chp->wdc->dma_arg,
 			    chp->channel, xfer->drive);
@@ -308,20 +317,33 @@ again:
 		ata_bio->nblks = min(nblks, ata_bio->multi);
 		ata_bio->nbytes = ata_bio->nblks * ata_bio->lp->d_secsize;
 		if (ata_bio->nblks > 1 && (ata_bio->flags & ATA_SINGLE) == 0) {
-			cmd = (ata_bio->flags & ATA_READ) ?
-			    WDCC_READMULTI : WDCC_WRITEMULTI;
+			if (ata_bio->flags & ATA_LBA48)
+				cmd = (ata_bio->flags & ATA_READ) ?
+				    WDCC_READMULTI_EXT : WDCC_WRITEMULTI_EXT;
+			else
+				cmd = (ata_bio->flags & ATA_READ) ?
+				    WDCC_READMULTI : WDCC_WRITEMULTI;
 		} else {
-			cmd = (ata_bio->flags & ATA_READ) ?
-			    WDCC_READ : WDCC_WRITE;
+			if (ata_bio->flags & ATA_LBA48)
+				cmd = (ata_bio->flags & ATA_READ) ?
+				    WDCC_READ_EXT : WDCC_WRITE_EXT;
+			else
+				cmd = (ata_bio->flags & ATA_READ) ?
+				    WDCC_READ : WDCC_WRITE;
 		}
 		/* Initiate command! */
 		wdc_set_drive(chp, xfer->drive);
 		if (wait_for_ready(chp, ata_delay) < 0)
 			goto timeout;
-		wdccommand(chp, xfer->drive, cmd, cyl,
-		    head, sect, nblks, 
-		    (ata_bio->lp->d_type == DTYPE_ST506) ?
-		    ata_bio->lp->d_precompcyl / 4 : 0);
+		if (ata_bio->flags & ATA_LBA48) {
+			wdccommandext(chp, xfer->drive, cmd,
+			    (u_int64_t)ata_bio->blkno, nblks);
+		} else {
+			wdccommand(chp, xfer->drive, cmd, cyl,
+			    head, sect, nblks, 
+			    (ata_bio->lp->d_type == DTYPE_ST506) ?
+			    ata_bio->lp->d_precompcyl / 4 : 0);
+		}
 	} else if (ata_bio->nblks > 1) {
 		/* The number of blocks in the last stretch may be smaller. */
 		nblks = xfer->c_bcount / ata_bio->lp->d_secsize;
