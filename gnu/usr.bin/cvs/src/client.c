@@ -3913,11 +3913,11 @@ connect_to_pserver (tofdp, fromfdp, verify_only, do_gssapi)
     }
     if (sock < 0)
     {
-	getnameinfo(res->ai_addr, res->ai_addrlen, hbuf, sizeof(hbuf),
+	getnameinfo(res0->ai_addr, res0->ai_addrlen, hbuf, sizeof(hbuf),
 	    sbuf, sizeof(sbuf), NI_NUMERICHOST | NI_NUMERICSERV);
 	error (1, 0, "connect to %s(%s):%s failed: %s",
 	       current_parsed_root->hostname, hbuf, sbuf,
-	       port_number, SOCK_STRERROR (SOCK_ERRNO));
+	       SOCK_STRERROR (SOCK_ERRNO));
     }
 
     /* Run the authorization mini-protocol before anything else. */
