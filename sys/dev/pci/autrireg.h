@@ -1,4 +1,4 @@
-/*	$OpenBSD: autrireg.h,v 1.1 2001/11/26 16:38:38 mickey Exp $	*/
+/*	$OpenBSD: autrireg.h,v 1.2 2002/11/29 04:59:59 fgsch Exp $	*/
 
 /*
  * Copyright (c) 2001 SOMEYA Yoshihiko and KUROSAWA Takahiro.
@@ -146,8 +146,11 @@
  * Indexed Channel Registers
  */
 #define AUTRI_ARAM_CR			0xe0
+# define AUTRI_ATTR_PCMREC_SIS		0x88000000
+# define AUTRI_ATTR_ENASRC_SIS		0x00800000
 # define AUTRI_CTRL_WAVEVOL		0x80000000
 # define AUTRI_CTRL_MUTE		0x3fff0000
+# define AUTRI_CTRL_MUTE_SIS		0x3f000fff
 # define AUTRI_CTRL_16BIT		0x00008000
 # define AUTRI_CTRL_STEREO		0x00004000
 # define AUTRI_CTRL_SIGNED		0x00002000

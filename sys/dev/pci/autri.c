@@ -1,4 +1,4 @@
-/*	$OpenBSD: autri.c,v 1.10 2002/11/19 18:40:17 jason Exp $	*/
+/*	$OpenBSD: autri.c,v 1.11 2002/11/29 04:59:59 fgsch Exp $	*/
 
 /*
  * Copyright (c) 2001 SOMEYA Yoshihiko and KUROSAWA Takahiro.
@@ -425,11 +425,11 @@ autri_reset_codec(sc_)
 		break;
 	case AUTRI_DEVICE_ID_SIS_7018:
 		/* warm reset AC97 codec */
-		autri_reg_set_4(sc, AUTRI_SIS_SCTRL, 1);
-		delay(100);
+		autri_reg_set_4(sc, AUTRI_SIS_SCTRL, 2);
+		delay(1000);
 		/* release reset (warm & cold) */
 		autri_reg_clear_4(sc, AUTRI_SIS_SCTRL, 3);
-		delay(100);
+		delay(2000);
 
 		addr = AUTRI_SIS_SCTRL;
 		ready = AUTRI_SIS_SCTRL_CODEC_READY;
@@ -1291,12 +1291,13 @@ autri_setup_channel(sc, mode, param)
 	if (delta > 48000)
 		delta = 48000;
 
+	attribute = 0;
+
 	dch[1] = ((delta << 12) / 48000) & 0x0000ffff;
 	if (mode == AUMODE_PLAY) {
 		chst = &sc->sc_play;
 		dch[0] = ((delta << 12) / 48000) & 0x0000ffff;
-		if (sc->sc_devid != AUTRI_DEVICE_ID_SIS_7018)
-			ctrl |= AUTRI_CTRL_WAVEVOL;
+		ctrl |= AUTRI_CTRL_WAVEVOL;
 /*
 		if (sc->sc_devid == AUTRI_DEVICE_ID_ALI_M5451)
 			ctrl |= 0x80000000;
@@ -1304,6 +1305,12 @@ autri_setup_channel(sc, mode, param)
 	} else {
 		chst = &sc->sc_rec;
 		dch[0] = ((48000 << 12) / delta) & 0x0000ffff;
+		if (sc->sc_devid == AUTRI_DEVICE_ID_SIS_7018) {
+			ctrl |= AUTRI_CTRL_MUTE_SIS;
+			attribute = AUTRI_ATTR_PCMREC_SIS;
+			if (delta != 48000)
+				attribute |= AUTRI_ATTR_ENASRC_SIS;
+		}
 		ctrl |= AUTRI_CTRL_MUTE;
 	}
 
@@ -1311,7 +1318,6 @@ autri_setup_channel(sc, mode, param)
 	cso = alpha_fms = 0;
 	rvol = cvol = 0x7f;
 	fm_vol = 0x0 | ((rvol & 0x7f) << 7) | (cvol & 0x7f);
-	attribute = 0;
 
 	for (ch=0; ch<2; ch++) {
 
@@ -1320,7 +1326,11 @@ autri_setup_channel(sc, mode, param)
 		else {
 			/* channel for interrupt */
 			dmalen = (chst->blksize >> factor);
-			ctrl |= AUTRI_CTRL_MUTE;
+			if (sc->sc_devid == AUTRI_DEVICE_ID_SIS_7018)
+				ctrl |= AUTRI_CTRL_MUTE_SIS;
+			else
+				ctrl |= AUTRI_CTRL_MUTE;
+			attribute = 0;
 		}
 
 		eso = dmalen - 1;
@@ -1344,7 +1354,7 @@ autri_setup_channel(sc, mode, param)
 			cr[0] = (cso << 16) | (alpha_fms & 0x0000ffff);
 			cr[1] = dmaaddr;
 			cr[2] = (eso << 16) | (dch[ch] & 0x0000ffff);
-			cr[3] = (attribute << 16) | (fm_vol & 0x0000ffff);
+			cr[3] = attribute;
 			cr[4] = ctrl;
 			break;
 		case AUTRI_DEVICE_ID_ALI_M5451:
