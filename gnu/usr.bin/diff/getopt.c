@@ -53,7 +53,7 @@
 
 /* This needs to come after some library #include
    to get __GNU_LIBRARY__ defined.  */
-#if defined(__GNU_LIBRARY__) || defined(__NetBSD__)
+#if defined(__GNU_LIBRARY__) || defined(__NetBSD__) || defined(__OpenBSD__)
 /* Don't include stdlib.h for non-GNU C libraries because some of them
    contain conflicting prototypes for getopt.  */
 #include <stdlib.h>
@@ -155,7 +155,7 @@ static enum
 /* Value of POSIXLY_CORRECT environment variable.  */
 static char *posixly_correct;
 
-#if defined(__GNU_LIBRARY__) || defined(__NetBSD__)
+#if defined(__GNU_LIBRARY__) || defined(__NetBSD__) || defined(__OpenBSD__)
 /* We want to avoid inclusion of string.h with non-GNU libraries
    because there are many ways it can cause trouble.
    On some systems, it contains special magic macros that don't work
