@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.35 1998/08/01 08:35:11 provos Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.36 1998/08/02 22:20:30 provos Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -240,7 +240,8 @@ ip_output(m0, va_alist)
 			if (re->re_rt)
 				RTFREE(re->re_rt);
 			error = EHOSTUNREACH;
-			goto bad;
+			m_freem(m);
+			goto done;
 		}
 
 		/* 
@@ -298,7 +299,8 @@ ip_output(m0, va_alist)
 			if (re->re_rt)
                         	RTFREE(re->re_rt);
 			error = EHOSTUNREACH;
-			goto bad;
+			m_freem(m);
+			goto done;
 		}
 
 		/* Fix the ip_src field if necessary */
@@ -336,7 +338,8 @@ ip_output(m0, va_alist)
 			if (ro->ro_rt == 0) {
 			    ipstat.ips_noroute++;
 			    error = EHOSTUNREACH;
-			    goto bad;
+			    m_freem(m);
+			    goto done;
 			}
 			
 			ia = ifatoia(ro->ro_rt->rt_ifa);
@@ -522,8 +525,11 @@ no_encap:
 		if (re->re_rt)
 			RTFREE(re->re_rt);
 		/* No IPSec processing though it was required, drop packet */
-		if (sa_require)
+		if (sa_require) {
+			error = EHOSTUNREACH;
+			m_freem(m);
 			goto done;
+		}
 	}
 #endif /* IPSEC */
 
