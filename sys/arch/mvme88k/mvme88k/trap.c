@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.70 2004/01/20 14:34:40 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.71 2004/01/29 00:41:23 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -728,11 +728,12 @@ m88110_trap(unsigned type, struct trapframe *frame)
 		db_enable_interrupt();
 		ddb_entry_trap(T_KDB_ENTRY, (db_regs_t*)frame);
 		db_disable_interrupt();
-		if (frame->tf_enip) {
+		/* skip one instruction */
+		if (frame->tf_exip & 1)
 			frame->tf_exip = frame->tf_enip;
-		} else {
+		else
 			frame->tf_exip += 4;
-		}
+		frame->tf_enip = 0;
 		splx(s);
 		return;
 #if 0
@@ -819,6 +820,7 @@ m88110_trap(unsigned type, struct trapframe *frame)
 			    (frame->tf_exip & XIP_ADDR) <=
 			      (unsigned)&guarded_access_end) {
 				frame->tf_exip = (unsigned)&guarded_access_bad;
+				frame->tf_enip = 0;
 				return;
 			}
 		}
@@ -1006,6 +1008,7 @@ m88110_user_fault:
 		 */
 		if (result != 0 && p->p_addr->u_pcb.pcb_onfault != NULL) {
 			frame->tf_exip = p->p_addr->u_pcb.pcb_onfault;
+			frame->tf_enip = 0;
 			frame->tf_dsr = frame->tf_isr = 0;
 			/*
 			 * Continue as if the fault had been resolved.
@@ -1469,8 +1472,12 @@ m88110_syscall(register_t code, struct trapframe *tf)
 		tf->tf_r[2] = rval[0];
 		tf->tf_r[3] = rval[1];
 		tf->tf_epsr &= ~PSR_C;
-		tf->tf_exip += 4 + 4;
-		tf->tf_exip &= XIP_ADDR;
+		/* skip two instructions */
+		if (tf->tf_exip & 1)
+			tf->tf_exip = tf->tf_enip + 4;
+		else
+			tf->tf_exip += 4 + 4;
+		tf->tf_enip = 0;
 		break;
 	case ERESTART:
 		/*
@@ -1482,16 +1489,24 @@ m88110_syscall(register_t code, struct trapframe *tf)
 		break;
 	case EJUSTRETURN:
 		tf->tf_epsr &= ~PSR_C;
-		tf->tf_exip += 4;
-		tf->tf_exip &= XIP_ADDR;
+		/* skip one instruction */
+		if (tf->tf_exip & 1)
+			tf->tf_exip = tf->tf_enip;
+		else
+			tf->tf_exip += 4;
+		tf->tf_enip = 0;
 		break;
 	default:
 		if (p->p_emul->e_errno)
 			error = p->p_emul->e_errno[error];
 		tf->tf_r[2] = error;
 		tf->tf_epsr |= PSR_C;   /* fail */
-		tf->tf_exip += 4;
-		tf->tf_exip &= XIP_ADDR;
+		/* skip one instruction */
+		if (tf->tf_exip & 1)
+			tf->tf_exip = tf->tf_enip;
+		else
+			tf->tf_exip += 4;
+		tf->tf_enip = 0;
 		break;
 	}
 
@@ -1525,8 +1540,12 @@ child_return(arg)
 		tf->tf_snip = tf->tf_sfip & XIP_ADDR;
 		tf->tf_sfip = tf->tf_snip + 4;
 	} else {
-		tf->tf_exip += 4 + 4;
-		tf->tf_exip &= XIP_ADDR;
+		/* skip two instructions */
+		if (tf->tf_exip & 1)
+			tf->tf_exip = tf->tf_enip + 4;
+		else
+			tf->tf_exip += 4 + 4;
+		tf->tf_enip = 0;
 	}
 
 	userret(p, tf, p->p_sticks);

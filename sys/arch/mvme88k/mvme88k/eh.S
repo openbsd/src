@@ -1,4 +1,4 @@
-/*   $OpenBSD: eh.S,v 1.48 2004/01/19 17:21:25 miod Exp $   */
+/*   $OpenBSD: eh.S,v 1.49 2004/01/29 00:41:23 miod Exp $   */
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -2471,16 +2471,12 @@ ASLOCAL(m88110_have_pcb)
 	ldcr	TMP,  EPSR
 	st	TMP,  r31,  REG_OFF(EF_EPSR)
 	ldcr	TMP2, EXIP
-	st	TMP2, r31,  REG_OFF(EF_EXIP)
+	/* if the instruction was NOT in the delay slot, ignore ENIP */
 	bb0.n	0,    TMP2, 1f
-	/* The instruction was NOT in the delay slot, zero ENIP. */
-	 st	r0,   r31,  REG_OFF(EF_ENIP)
-	/* The instruction was in the delay slot, save ENIP. */
+	 st	TMP2, r31,  REG_OFF(EF_EXIP)
 	ldcr	TMP3, ENIP
 	st	TMP3, r31,  REG_OFF(EF_ENIP)
 1:
-	/* NO SFIP on mc88110, zero it */
-	st	r0,   r31,  REG_OFF(EF_SFIP)
 
 	/* get and store the cpu number */
 	extu	TMP,  FLAGS,  FLAG_CPU_FIELD_WIDTH<0>	/* TMP = cpu# */
