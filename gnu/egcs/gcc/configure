@@ -5332,6 +5332,7 @@ for machine in $build $host $target; do
 	sparc-*-openbsd*)
 		# we need collect2 until our bug is fixed...
 		use_collect2=yes
+		tmake_file="t-libc-ok t-openbsd sparc/t-openbsd"
 		;;
 	sparc-*-bsd*)
 		tm_file=sparc/bsd.h
