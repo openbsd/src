@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.78 2003/09/27 13:05:30 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.79 2003/09/29 13:05:56 miod Exp $	*/
 /*
  * Copyright (c) 2001, 2002, 2003 Miodrag Vallat
  * Copyright (c) 1998-2001 Steve Murphree, Jr.
@@ -179,10 +179,10 @@ kpdt_entry_t	kpdt_free;
 #define MAX_KERNEL_PDT_SIZE	(KERNEL_PDT_SIZE + OBIO_PDT_SIZE)
 
 /*
- * Two pages of scratch space.
+ * Two pages of scratch space per cpu.
  * Used in pmap_copy_page() and pmap_zero_page().
  */
-vaddr_t phys_map_vaddr1, phys_map_vaddr2;
+vaddr_t phys_map_vaddr1, phys_map_vaddr2, phys_map_vaddr_end;
 
 #define PV_ENTRY_NULL	((pv_entry_t) 0)
 
@@ -932,7 +932,8 @@ pmap_bootstrap(vaddr_t load_start, paddr_t *phys_start, paddr_t *phys_end,
 	 */
 
 	phys_map_vaddr1 = round_page(*virt_start);
-	phys_map_vaddr2 = phys_map_vaddr1 + PAGE_SIZE * max_cpus;
+	phys_map_vaddr2 = phys_map_vaddr1 + (max_cpus << PAGE_SHIFT);
+	phys_map_vaddr_end = phys_map_vaddr2 + 2 * (max_cpus << PAGE_SHIFT);
 
 	/*
 	 * To make 1:1 mapping of virt:phys, throw away a few phys pages.
@@ -1038,9 +1039,11 @@ pmap_bootstrap(vaddr_t load_start, paddr_t *phys_start, paddr_t *phys_end,
 			 * pmap_enter() on these won't barf in
 			 * pmap_remove_range().
 			 */
-			pte = pmap_pte(kernel_pmap, phys_map_vaddr1);
+			pte = pmap_pte(kernel_pmap,
+			    phys_map_vaddr1 + (i << PAGE_SHIFT));
 			*pte = PG_NV;
-			pte = pmap_pte(kernel_pmap, phys_map_vaddr2);
+			pte = pmap_pte(kernel_pmap,
+			    phys_map_vaddr2 + (i << PAGE_SHIFT));
 			*pte = PG_NV;
 			/* Load supervisor pointer to segment table. */
 			cmmu_remote_set_sapr(i, apr_data);
@@ -1126,7 +1129,7 @@ pmap_zero_page(struct vm_page *pg)
 	pt_entry_t *srcpte;
 
 	cpu = cpu_number();
-	srcva = (vaddr_t)(phys_map_vaddr1 + (cpu * PAGE_SIZE));
+	srcva = (vaddr_t)(phys_map_vaddr1 + (cpu << PAGE_SHIFT));
 	srcpte = pmap_pte(kernel_pmap, srcva);
 
 	SPLVM(spl);
@@ -2065,7 +2068,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 		 * Remove old mapping from the PV list if necessary.
 		 */
 
-		if (va == phys_map_vaddr1 || va == phys_map_vaddr2) {
+		if (va >= phys_map_vaddr1 && va < phys_map_vaddr_end) {
 			flush_atc_entry(users, va, TRUE);
 		} else {
 			pmap_remove_range(pmap, va, va + PAGE_SIZE);
@@ -2074,7 +2077,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 		pg = PHYS_TO_VM_PAGE(pa);
 #ifdef DEBUG
 		if ((pmap_con_dbg & (CD_ENT | CD_NORM)) == (CD_ENT | CD_NORM)) {
-			if (va == phys_map_vaddr1 || va == phys_map_vaddr2) {
+			if (va >= phys_map_vaddr1 && va < phys_map_vaddr_end) {
 				printf("vaddr1 0x%x vaddr2 0x%x va 0x%x pa 0x%x managed %x\n",
 				       phys_map_vaddr1, phys_map_vaddr2, va, old_pa,
 				       pg != NULL ? 1 : 0);
@@ -2087,7 +2090,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 		if (pg != NULL) {
 #ifdef DEBUG
 			if ((pmap_con_dbg & (CD_ENT | CD_NORM)) == (CD_ENT | CD_NORM)) {
-				if (va == phys_map_vaddr1 || va == phys_map_vaddr2) {
+				if (va >= phys_map_vaddr1 && va < phys_map_vaddr_end) {
 					printf("va 0x%x and managed pa 0x%x\n", va, pa);
 				}
 			}
@@ -2646,9 +2649,11 @@ changebit_Retry:
 		if (pte == PT_ENTRY_NULL)
 			panic("pmap_changebit: bad pv list entry.");
 		if (!PDT_VALID(pte))
-			panic("pmap_changebit: invalid pte");
+			printf("pmap_changebit: invalid pte %x pg %x %x\n",
+			    *pte, pg, VM_PAGE_TO_PHYS(pg));
 		if (ptoa(PG_PFNUM(*pte)) != VM_PAGE_TO_PHYS(pg))
-			panic("pmap_changebit: pte doesn't point to page");
+			panic("pmap_changebit: pte %x doesn't point to page %x %x\n",
+			    *pte, pg, VM_PAGE_TO_PHYS(pg));
 #endif
 
 		/*
