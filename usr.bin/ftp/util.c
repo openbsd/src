@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.9 1997/05/11 17:12:57 millert Exp $	*/
+/*	$OpenBSD: util.c,v 1.10 1997/06/10 19:39:54 millert Exp $	*/
 /*	$NetBSD: util.c,v 1.7 1997/04/14 09:09:24 lukem Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: util.c,v 1.9 1997/05/11 17:12:57 millert Exp $";
+static char rcsid[] = "$OpenBSD: util.c,v 1.10 1997/06/10 19:39:54 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -532,11 +532,28 @@ remotemodtime(file, noisy)
 	return (rtime);
 }
 
+/*
+ * Returns true if this is the controlling/foreground process, else false.
+ */
+int
+foregroundproc()
+{
+	static pid_t pgrp = -1;
+	int ctty_pgrp;
+
+	if (pgrp == -1)
+		pgrp = getpgrp();
+
+	return((ioctl(STDOUT_FILENO, TIOCGPGRP, &ctty_pgrp) != -1 &&
+	    ctty_pgrp == pgrp));
+}
+
 void
 updateprogressmeter()
 {
 
-	progressmeter(0);
+	if (foregroundproc())
+		progressmeter(0);
 }
 
 /*
