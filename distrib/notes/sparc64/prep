@@ -1,4 +1,4 @@
-dnl	$OpenBSD: prep,v 1.10 2002/04/07 23:31:04 miod Exp $
+dnl	$OpenBSD: prep,v 1.11 2002/04/13 18:30:58 ian Exp $
 If your UltraSPARC machine is somewhat old, it might need a firmware update
 before it can be used under OpenBSD. You are advised to try to install
 OpenBSD first; if it can't boot or fails mysteriously, you might need to
@@ -48,7 +48,7 @@ understand the extended disklabels with 16 partitions.  You can use Solaris
 bootblocks, but remember that OpenBSD bootblocks must be installed with
 OpenBSD installboot and Solaris bootblocks with Solaris installboot.
 
-Most of new Ultras shipped by Sun with a preinstalled Solaris have an
+Most of the new Ultras shipped by Sun with a preinstalled Solaris have an
 initial specific factory setup of the boot ROM, in order to start up
 Solaris WebStart at the first boot; the boot-device variable is set to
 disk:f.  Make sure you reset the boot device to its default value:
@@ -66,7 +66,7 @@ If OpenBSD does not boot or install properly on your machine, it might need
 a firmware update.
 
 Updating your firmware is a dangerous operation which may damage your
-hardware. Be sure to follow carefully these instructions, and in doubt,
+hardware. Be sure to follow carefully these instructions, and if in doubt,
 please don't do this.
 
 You will need to have a working operating system installed on your machine,
