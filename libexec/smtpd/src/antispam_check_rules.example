@@ -42,6 +42,18 @@ noto:ALL:ALL:*@*@*:551 Sorry %H (%I), I don't allow unauthorized relaying. You c
 allow:ALL:ALL:ALL@hormel.mydomain.com spamboy@otherdomain.com
 
 
+# Block any connections from host in the MAPS rbl at rbl.maps.vix.com
+# Beware that this can throw the baby out with the bathwater.
+noto:RBL.rbl.maps.vix.com:ALL:ALL:550 Mail refused from host %I in MAPS RBL, see http%C//maps.vix.com/rbl/
+
+# Block any connections from a host or connecting address who uses a
+# nameserver for which the address is in the MAPS rbl at rbl.maps.vix.com.
+# Note that this can *really* throw the baby out with the bathwater, 
+# be sure you understand the implications before using the two below.
+noto:NS=RBL.rbl.maps.vix.com:ALL:ALL:550 Mail refused due to nameserver for %H(%I) in MAPS RBL, see http%C//maps.vix.com/rbl/
+noto:ALL:NS=RBL.rbl.maps.vix.com:ALL:550 Mail refused due to nameserver for %F in MAPS RBL, see http%C//maps.vix.com/rbl/
+
+
 # block anyone who uses a major SPAM provider as a nameserver or MX. either
 # on a connection from one of their hosts, a connection from a host they act
 # as a nameserver for, or a connection with a FROM: address that uses 
