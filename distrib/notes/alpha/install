@@ -113,7 +113,7 @@ OpenBSDBootMsgs
 	After all your file systems have been created, the install program
 	will give you an opportunity to configure the network.  The network
 	configuration you enter (if any) can then be used to do the install
-	from another system using NFS, HTTP or FTP, and will also be the
+	from another system using HTTP or FTP, and will also be the
 	configuration used by the system after the installation is complete.
 
 	If you select to configure the network, the install program will
@@ -145,7 +145,7 @@ OpenBSDBootMsgs
 
 	After these preparatory steps have been completed, you will be
 	able to extract the distribution sets onto your system.  There
-	are several install methods supported; FTP, HTTP, tape, CD-ROM, NFS
+	are several install methods supported; FTP, HTTP, tape, CD-ROM,
 	or a local disk partition.  Note that installation from floppies
 	is not currently supported.
 
@@ -157,8 +157,6 @@ OpenBSDTAPEInstall
 
 OpenBSDCDROMInstall
 
-OpenBSDNFSInstall
-		
 OpenBSDDISKInstall({:-"wdN" or -:},{:-only -:})
 
 OpenBSDCommonFS
