@@ -4,7 +4,7 @@
 # generated from:
 #
 #	OpenBSD: etc.mvme88k/MAKEDEV.md,v 1.14 2004/04/11 18:05:23 millert Exp 
-#	OpenBSD: MAKEDEV.common,v 1.6 2004/04/11 18:05:22 millert Exp 
+#	OpenBSD: MAKEDEV.common,v 1.7 2004/04/11 18:14:59 millert Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.72 2004/02/16 18:58:53 miod Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.12 2004/02/20 19:13:01 miod Exp 
 #
@@ -44,8 +44,8 @@
 #	ttyv*	MVME332XT serial ports
 # Pseudo terminals:
 #	ptm	pty master device
-#	pty*	Set of 62 pseudo terminals
-tty_dev
+#	pty*	Set of 62 master pseudo terminals
+#	tty*	Set of 62 slave pseudo terminals
 # Special purpose devices:
 #	bpf*	Berkeley Packet Filter
 #	fd	fd/* nodes for fdescfs
