@@ -1,4 +1,4 @@
-/*	$OpenBSD: db.c,v 1.1 1997/07/22 10:52:59 maja Exp $ */
+/*	$OpenBSD: db.c,v 1.2 2001/10/24 14:40:00 deraadt Exp $ */
 
 /*
  * Copyright (c) 1997 Mats O Jansson <moj@stacken.kth.se>
@@ -32,7 +32,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: db.c,v 1.1 1997/07/22 10:52:59 maja Exp $";
+static char rcsid[] = "$OpenBSD: db.c,v 1.2 2001/10/24 14:40:00 deraadt Exp $";
 #endif
 
 #include <sys/types.h>
@@ -63,8 +63,8 @@ char *database;
 		status = db->seq(db, &key, &val, R_FIRST);
 		while (status == 0) {
 			printf("%*.*s %*.*s\n",
-			       key.size-1, key.size-1, key.data,
-			       val.size-1, val.size-1, val.data);
+			    key.size-1, key.size-1, key.data,
+			    val.size-1, val.size-1, val.data);
 			status = db->seq(db, &key, &val, R_NEXT);
 		}
 		db->close(db);
