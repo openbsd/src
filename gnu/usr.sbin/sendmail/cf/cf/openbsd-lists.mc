@@ -6,7 +6,7 @@ divert(-1)
 #
 
 divert(0)dnl
-VERSIONID(`$OpenBSD: openbsd-lists.mc,v 1.12 2002/04/18 00:49:26 millert Exp $')
+VERSIONID(`$OpenBSD: openbsd-lists.mc,v 1.13 2002/06/25 22:38:34 millert Exp $')
 OSTYPE(openbsd)dnl
 dnl
 dnl Advertise ourselves as ``openbsd.org''
@@ -29,8 +29,11 @@ dnl on T_AAAA (IPv6) lookups.
 define(`confBIND_OPTS', `WorkAroundBrokenAAAA')dnl
 dnl
 dnl Keep host status on disk between sendmail runs in the .hoststat dir
-define(`confHOST_STATUS_DIRECTORY', `.hoststat')dnl
+define(`confHOST_STATUS_DIRECTORY', `/var/spool/mqueue/.hoststat')dnl
 define(`confTO_HOSTSTATUS', `30m')dnl
+dnl
+dnl Wait at least 27 minutes before trying to redeliver a message.
+define(`confMIN_QUEUE_AGE', `27m')dnl
 dnl
 dnl Don't prioritize a message based on the number of recepients.
 dnl This prevents retries from having higher priority than new batches.
@@ -48,8 +51,8 @@ dnl
 dnl Wait a day before sending mail about deferred messages
 define(`confTO_QUEUEWARN', `1d')dnl
 dnl
-dnl Wait 4 days before giving up and bouncing the message
-define(`confTO_QUEUERETURN', `4d')dnl
+dnl Wait 3 days before giving up and bouncing the message
+define(`confTO_QUEUERETURN', `3d')dnl
 dnl
 dnl Shared memory key used to stash disk usage stats so they
 dnl don't have to be checked by each sendmail process.
@@ -68,10 +71,6 @@ define(`confSERVER_KEY', `CERT_DIR/mykey.pem')dnl
 define(`confCLIENT_CERT', `CERT_DIR/mycert.pem')dnl
 define(`confCLIENT_KEY', `CERT_DIR/mykey.pem')dnl
 dnl
-dnl Queue options for /var/spool/mqueue:
-dnl   Up to 5 simultaneous queue runners, max 30 recipients per envelope
-QUEUE_GROUP(`mqueue', `P=/var/spool/mqueue, R=5, r=30, F=f')
-dnl
 dnl Make mail appear to be from openbsd.org
 MASQUERADE_AS(openbsd.org)
 FEATURE(masquerade_envelope)
@@ -82,10 +81,6 @@ FEATURE(virtusertable)dnl
 dnl
 dnl Spam blocking features
 FEATURE(access_db)dnl
-FEATURE(blacklist_recipients)dnl
-dnl FEATURE(dnsbl, `rbl.maps.vix.com', `Rejected - see http://www.mail-abuse.org/rbl/')dnl
-dnl FEATURE(dnsbl, `dul.maps.vix.com', `Dialup - see http://www.mail-abuse.org/dul/')dnl
-dnl FEATURE(dnsbl, `relays.mail-abuse.org', `Open spam relay - see http://www.mail-abuse.org/rss/')dnl
 dnl
 dnl List the mailers we support
 FEATURE(`no_default_msa')dnl
@@ -169,31 +164,8 @@ LOCAL_RULESETS
 #
 HTo: $>CheckTo
 HMessage-Id: $>CheckMessageId
-HSubject: $>Check_Subject
-HX-Spanska: $>Spanska
 HContent-Type: $>CheckContentType
 HContent-Disposition:	$>CheckContentDisposition
-
-#
-# Melissa worm detection (done in Check_Subject)
-# See http://www.cert.org/advisories/CA-99-04-Melissa-Macro-Virus.html
-#
-D{MPat}Important Message From
-D{MMsg}This message may contain the Melissa virus; see http://www.cert.org/advisories/CA-99-04-Melissa-Macro-Virus.html
-
-#
-# ILOVEYOU worm detection (done in Check_Subject)
-# See http://www.datafellows.com/v-descs/love.htm
-#
-D{ILPat}ILOVEYOU
-D{ILMsg}This message may contain the ILOVEYOU virus; see http://www.datafellows.com/v-descs/love.htm
-
-#
-# Life stages worm detection (done in Check_Subject)
-# See http://www.f-secure.com/v-descs/stages.htm
-#
-D{LSPat}Fw: Life stages
-D{LSMsg}This message may contain the Life stages virus; see http://www.f-secure.com/v-descs/stages.htm
 
 #
 # W32/Badtrans worm detection (done in CheckContentType)
@@ -224,23 +196,6 @@ R$*@$={RejectToDomains}		$#error $: "553 Header error"
 SCheckMessageId
 R< $+ @ $+ >			$@ OK
 R$*				$#error $: 553 Header Error
-
-#
-# Happy99 worm detection
-#
-SSpanska
-R$*				$#error $: "553 Your system is probably infected by the Happy99 worm; see http://www.symantec.com/avcenter/venc/data/happy99.worm.html"
-
-#
-# Check Subject line for worm/virus telltales
-#
-SCheck_Subject
-R${MPat} $*			$#error $: 553 ${MMsg}
-RRe: ${MPat} $*			$#error $: 553 ${MMsg}
-R${ILPat}			$#error $: 553 ${ILMsg}
-RRe: ${ILPat}			$#error $: 553 ${ILMsg}
-R${LSPat}			$#error $: 553 ${LSMsg}
-RRe: ${LSPat}			$#error $: 553 ${LSMsg}
 
 #
 # Check Content-Type header for worm/virus telltales
