@@ -1,4 +1,4 @@
-/*	$OpenBSD: isp_target.h,v 1.9 2001/12/14 00:20:55 mjacob Exp $	*/
+/*	$OpenBSD: isp_target.h,v 1.10 2002/05/17 01:33:50 mjacob Exp $	*/
 
 /* @(#)isp_target.h 1.3 */
 /*
@@ -282,8 +282,9 @@ typedef struct {
 	u_int8_t	at_execodes;
 	u_int8_t	at_cdb[ATIO2_CDBLEN];	/* received CDB */
 	u_int32_t	at_datalen;		/* allocated data len */
-	u_int16_t	at_scclun;	/* SCC Lun or reserved */
-	u_int16_t	at_reserved2[10];
+	u_int16_t	at_scclun;		/* SCC Lun or reserved */
+	u_int16_t	at_wwpn[4];		/* WWPN of initiator */
+	u_int16_t	at_reserved2[6];
 	u_int16_t	at_oxid;
 } at2_entry_t;
 
@@ -410,9 +411,9 @@ typedef struct {
 	isphdr_t	ct_header;
 	u_int16_t	ct_reserved;
 	u_int16_t	ct_fwhandle;	/* just to match CTIO */
-	u_int8_t	ct_lun;	/* lun */
-	u_int8_t	ct_iid;	/* initiator id */
-	u_int16_t	ct_rxid; /* response ID */
+	u_int8_t	ct_lun;		/* lun */
+	u_int8_t	ct_iid;		/* initiator id */
+	u_int16_t	ct_rxid;	/* response ID */
 	u_int16_t	ct_flags;
 	u_int16_t 	ct_status;	/* isp status */
 	u_int16_t	ct_timeout;
@@ -550,8 +551,10 @@ int isp_endcmd(struct ispsoftc *, void *, u_int32_t, u_int16_t);
 
 /*
  * Handle an asynchronous event
+ *
+ * Return nonzero if the interrupt that generated this event has been dismissed.
  */
 
-void isp_target_async(struct ispsoftc *, int, int);
+int isp_target_async(struct ispsoftc *, int, int);
 #endif
 #endif	/* _ISP_TARGET_H */
