@@ -1,4 +1,4 @@
-/*	$OpenBSD: icu.s,v 1.12 1999/12/08 06:50:15 itojun Exp $	*/
+/*	$OpenBSD: icu.s,v 1.13 2000/11/08 11:34:23 art Exp $	*/
 /*	$NetBSD: icu.s,v 1.45 1996/01/07 03:59:34 mycroft Exp $	*/
 
 /*-
@@ -138,11 +138,11 @@ IDTVEC(softtty)
 #endif
 	jmp	%esi
 
-#define DONET(s, c) \
-	.globl  c		;\
+#define DONETISR(s, c) \
+	.globl  _C_LABEL(c)	;\
 	testl	$(1 << s),%edi	;\
 	jz	1f		;\
-	call	c		;\
+	call	_C_LABEL(c)	;\
 1:
 
 IDTVEC(softnet)
@@ -150,47 +150,10 @@ IDTVEC(softnet)
 	movl	%eax,_cpl
 	xorl	%edi,%edi
 	xchgl	_netisr,%edi
-#ifdef INET
-#include "ether.h"
-#if NETHER > 0
-	DONET(NETISR_ARP, _arpintr)
-#endif
-	DONET(NETISR_IP, _ipintr)
-#endif
-#ifdef INET6
-	DONET(NETISR_IPV6, _ip6intr)
-#endif /* INET6 */
-#ifdef NETATALK
-	DONET(NETISR_ATALK, _atintr)
-#endif
-#ifdef IMP
-	DONET(NETISR_IMP, _impintr)
-#endif
-#ifdef IPX
-	DONET(NETISR_IPX, _ipxintr)
-#endif
-#ifdef NS
-	DONET(NETISR_NS, _nsintr)
-#endif
-#ifdef ISO
-	DONET(NETISR_ISO, _clnlintr)
-#endif
-#ifdef CCITT
-	DONET(NETISR_CCITT, _ccittintr)
-#endif
-#ifdef NATM
-	DONET(NETISR_NATM, _natmintr)
-#endif
-#include "ppp.h"
-#if NPPP > 0
-	DONET(NETISR_PPP, _pppintr)
-#endif
-#include "bridge.h"
-#if NBRIDGE > 0
-	DONET(NETISR_BRIDGE, _bridgeintr)
-#endif
+#include <net/netisr_dispatch.h>
 	movl	%ebx,_cpl
 	jmp	%esi
+#undef DONETISR
 
 IDTVEC(softclock)
 	leal	SIR_CLOCKMASK(%ebx),%eax
