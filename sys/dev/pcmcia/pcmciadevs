@@ -1,4 +1,4 @@
-	$OpenBSD: pcmciadevs,v 1.46 2001/01/26 20:06:51 mickey Exp $
+	$OpenBSD: pcmciadevs,v 1.47 2001/01/26 20:16:58 mickey Exp $
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
 /*
@@ -264,25 +264,25 @@ product XIRCOM XIR_CEM_10	0x110a Xircom CEM-10
 product XIRCOM XIR_CEM_28	0x110b Xircom CEM-28
 
 /* Cards we know only by their cis */
-vendor PREMAX			-1	Premax
-vendor PLANET			-1	Planet
-vendor PLANEX			-1	Planex
-vendor DLINK			-1	D-Link
-vendor RPTI			-1	RPTI
 vendor ACCTON			-1	ACCTON
-vendor YEDATA			-1	Y-E DATA
-vendor DIGITAL			-1	Digital
-vendor TEAC			-1	TEAC
-vendor SVEC			-1	SVEC/Hawking
 vendor AMBICOM			-1	AmbiCom
+vendor AMD			-1	AMD
+vendor BILLIONTON		-1	Billionton Systems Inc.
+vendor CNET			-1	CNet
+vendor DIGITAL			-1	Digital
+vendor DLINK			-1	D-Link
+vendor EDIMAX			-1	Edimax
 vendor EPSON			-1	Seiko Epson Corporation
 vendor EXP			-1	EXP Computer Inc
 vendor ICOM			-1	ICOM Inc
-vendor BILLIONTON		-1	Billionton Systems Inc.
-vendor AMD			-1	AMD
-vendor EDIMAX			-1	Edimax
-vendor CNET			-1	CNet
+vendor PLANET			-1	Planet
+vendor PLANEX			-1	Planex
+vendor PREMAX			-1	Premax
+vendor RPTI			-1	RPTI
+vendor SVEC			-1	SVEC/Hawking
 vendor SHUTTLE			-1	Shuttle
+vendor TEAC			-1	TEAC
+vendor YEDATA			-1	Y-E DATA
 vendor ZOOM			-1	Zoom
 
 product MEGAHERTZ XJ2288	{ "MEGAHERTZ", "MODEM&spXJ2288", NULL, NULL }
