@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.4,v 1.26 2003/01/09 10:40:44 cedric Exp $
+.\"	$OpenBSD: pf.4,v 1.27 2003/01/20 17:50:41 cedric Exp $
 .\"
 .\" Copyright (C) 2001, Kjell Wooding.  All rights reserved.
 .\"
@@ -390,6 +390,12 @@ struct pfioc_table {
 Creates one or more tables.
 On entry, pfrio_buffer[pfrio_size] contains a table of pfr_table structures.
 On exit, pfrio_nadd contains the number of tables effectively created.
+.Bd -literal
+struct pfr_table {
+        char                     pfrt_name[PF_TABLE_NAME_SIZE];
+        u_int32_t                pfrt_flags;
+};
+.Ed
 .It Dv DIOCRDELTABLES Fa "struct pfioc_table"
 Deletes one or more tables. 
 On entry, pfrio_buffer[pfrio_size] contains a table of pfr_table structures.
@@ -404,6 +410,22 @@ return the required buffer size, without error.
 .It Dv DIOCRGETTSTATS Fa "struct pfioc_table"
 Like 
 .Dv DIOCRGETTABLES, but returns an array of pfr_tstats structures.
+.Bd -literal
+struct pfr_tstats {
+        struct pfr_table pfrts_t;
+        u_int64_t        pfrts_packets
+                             [PFR_DIR_MAX][PFR_OP_TABLE_MAX];
+        u_int64_t        pfrts_bytes
+                             [PFR_DIR_MAX][PFR_OP_TABLE_MAX];
+        u_int64_t        pfrts_match;
+        u_int64_t        pfrts_nomatch;
+        long             pfrts_tzero;
+        int              pfrts_cnt;
+        int              pfrts_refcnt;
+};
+#define pfrts_name      pfrts_t.pfrt_name
+#define pfrts_flags     pfrts_t.pfrt_flags
+.Ed
 .It Dv DIOCRCLRTSTATS Fa "struct pfioc_table"
 Clears the statistics of one or more tables. 
 On entry, pfrio_buffer[pfrio_size] contains a table of pfr_table structures.
@@ -417,6 +439,20 @@ Add one or more addresses to a table.
 On entry, pfrio_table contain the table id and pfrio_buffer[pfrio_size]
 contains the list of pfr_addr structures to add.
 On exit, pfrio_nadd contains the number of addresses effectively added.
+.Bd -literal
+struct pfr_addr {
+        union {
+                struct in_addr   _pfra_ip4addr;
+                struct in6_addr  _pfra_ip6addr;
+        }                pfra_u;
+        u_int8_t         pfra_af;
+        u_int8_t         pfra_net;
+        u_int8_t         pfra_not;
+        u_int8_t         pfra_fback;
+};
+#define pfra_ip4addr    pfra_u._pfra_ip4addr
+#define pfra_ip6addr    pfra_u._pfra_ip6addr
+.Ed
 .It Dv DIOCRDELADDRS Fa "struct pfioc_table"
 Delete one or more addresses from a table.
 On entry, pfrio_table contain the table id and pfrio_buffer[pfrio_size]
@@ -444,6 +480,16 @@ return the required buffer size, without returning an error.
 .It Dv DIOCRGETASTATS Fa "struct pfioc_table"
 Like 
 .Dv DIOCRGETADDRS, but returns an array of pfr_astats structures.
+.Bd -literal
+struct pfr_astats {
+        struct pfr_addr  pfras_a;
+        u_int64_t        pfras_packets
+                             [PFR_DIR_MAX][PFR_OP_ADDR_MAX];
+        u_int64_t        pfras_bytes
+                             [PFR_DIR_MAX][PFR_OP_ADDR_MAX];
+        long             pfras_tzero;
+};
+.Ed
 .It Dv DIOCRCLRASTATS Fa "struct pfioc_table"
 Clears the statistics of one or more addresses. 
 On entry, pfrio_table contain the table id and pfrio_buffer[pfrio_size]
