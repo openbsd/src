@@ -1,3 +1,4 @@
+/*	$OpenBSD: fpu.c,v 1.6 1997/01/16 04:04:20 kstailey Exp $	*/
 /*	$NetBSD: fpu.c,v 1.9 1996/11/20 18:57:29 gwr Exp $	*/
 
 /*-
@@ -47,18 +48,14 @@
 #include <sys/kernel.h>
 #include <sys/device.h>
 
-#include <machine/psl.h>
+#include <machine/control.h>
 #include <machine/cpu.h>
 #include <machine/frame.h>
+#include <machine/machdep.h>
 #include <machine/mon.h>
-#include <machine/control.h>
+#include <machine/psl.h>
 
 #include "interreg.h"
-
-extern int fpu_type;
-extern long *nofault;
-
-int fpu_probe();
 
 static char *fpu_descr[] = {
 #ifdef	FPU_EMULATE
@@ -70,7 +67,10 @@ static char *fpu_descr[] = {
 	"mc68882",			/* 2 */
 	"?" };
 
-void initfpu()
+static int fpu_probe __P((void));
+
+void
+initfpu()
 {
 	char *descr;
 	int enab_reg;
@@ -96,19 +96,19 @@ void initfpu()
 	}
 }
 
-int fpu_probe()
+static int
+fpu_probe()
 {
 	label_t	faultbuf;
-	int null_fpframe[2];
+	struct fpframe null_fpframe;
 
-	nofault = (long *) &faultbuf;
+	nofault = &faultbuf;
 	if (setjmp(&faultbuf)) {
 		nofault = NULL;
 		return(0);
 	}
-	null_fpframe[0] = 0;
-	null_fpframe[1] = 0;
-	m68881_restore(null_fpframe);
+	bzero(&null_fpframe, sizeof(null_fpframe));
+	m68881_restore(&null_fpframe);
 	nofault = NULL;
 	return(1);
 }

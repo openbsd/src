@@ -1,3 +1,4 @@
+/*	$OpenBSD: vector.c,v 1.6 1997/01/16 04:04:35 kstailey Exp $	*/
 /*	$NetBSD: vector.c,v 1.15 1996/11/20 18:57:40 gwr Exp $	*/
 
 /*-
@@ -50,11 +51,27 @@
                   badtrap, badtrap, badtrap, badtrap, \
                   badtrap, badtrap, badtrap, badtrap
 
-void addrerr(), badtrap(), buserr(), chkinst(), coperr(), fmterr(),
-    fpfline(),  fpunsupp(), illinst(), privinst(), trace(), trap0(),
-    trap1(), trap12(), trap15(), trap2(), trapvinst(), zerodiv(), fpfault();
+void addrerr __P((void));
+void badtrap __P((void));
+void buserr __P((void));
+void chkinst __P((void));
+void coperr __P((void));
+void fmterr __P((void));
+void fpfline __P((void));
+void fpunsupp __P((void));
+void illinst __P((void));
+void privinst __P((void));
+void trace __P((void));
+void trap0 __P((void));
+void trap1 __P((void));
+void trap12 __P((void));
+void trap15 __P((void));
+void trap2 __P((void));
+void trapvinst __P((void));
+void zerodiv __P((void));
+void fpfault __P((void));
 
-void _isr_autovec();
+void _isr_autovec __P((void));
 
 #define fpbsun fpfault
 #define fpdz fpfault
@@ -64,7 +81,7 @@ void _isr_autovec();
 #define fpsnan fpfault
 #define fpunfl fpfault
 
-void (*vector_table[NVECTORS])() = {
+void (*vector_table[NVECTORS]) __P((void)) = {
 	(void*)0xfffe000,		/* 0: NOT USED (reset SP) */
 	(void*)0xfef0000,		/* 1: NOT USED (reset PC) */
 	buserr,				/* 2: bus error */

@@ -1,3 +1,4 @@
+/*	$OpenBSD: zs_kgdb.c,v 1.5 1997/01/16 04:04:01 kstailey Exp $	*/
 /*	$NetBSD: zs_kgdb.c,v 1.9 1996/11/20 18:57:04 gwr Exp $	*/
 
 /*-
@@ -179,7 +180,6 @@ zs_check_kgdb(cs, dev)
 	struct zs_chanstate *cs;
 	int dev;
 {
-	int tconst;
 
 	if (dev != kgdb_dev)
 		return (0);
@@ -203,6 +203,7 @@ zs_check_kgdb(cs, dev)
  * KGDB framing character received: enter kernel debugger.  This probably
  * should time out after a few seconds to avoid hanging on spurious input.
  */
+void
 zskgdb()
 {
 	int unit = minor(kgdb_dev);

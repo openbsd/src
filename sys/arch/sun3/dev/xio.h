@@ -1,3 +1,4 @@
+/*	$OpenBSD: xio.h,v 1.2 1997/01/16 04:03:57 kstailey Exp $	*/
 /* $NetBSD: xio.h,v 1.1 1995/10/30 20:58:20 gwr Exp $ */
 
 /*
@@ -32,9 +33,9 @@
  */
 
 /*
- * x i o . h 
+ * x i o . h
  *
- * this file defines the software structure we use to ioctl the 
+ * this file defines the software structure we use to ioctl the
  * 753/7053.   this interface isn't set in stone and may (or may not)
  * need adjustment.
  *
@@ -46,14 +47,14 @@
  */
 
 struct xd_iocmd {
-  u_char cmd;       /* in: command number */
-  u_char subfn;     /* in: subfunction number */
-  u_char errno;     /* out: error number */
-  u_char tries;     /* out: number of tries */
-  u_short sectcnt;  /* in,out: sector count (hw_spt on read drive param) */
-  u_short dlen;     /* in: length of data buffer (good sanity check) */
-  u_long block;     /* in: block number */
-  caddr_t dptr;     /* in: data buffer to do I/O from */
+	u_char cmd;      /* in: command number */
+	u_char subfn;    /* in: subfunction number */
+	u_char errno;    /* out: error number */
+	u_char tries;    /* out: number of tries */
+	u_short sectcnt; /* in,out: sector count (hw_spt on read drive param) */
+	u_short dlen;    /* in: length of data buffer (good sanity check) */
+	u_long block;    /* in: block number */
+	caddr_t dptr;    /* in: data buffer to do I/O from */
 };
 
 #ifndef DIOSXDCMD

@@ -1,3 +1,4 @@
+/*	$OpenBSD: autoconf.h,v 1.7 1997/01/16 04:04:04 kstailey Exp $	*/
 /*	$NetBSD: autoconf.h,v 1.12 1996/11/20 18:57:05 gwr Exp $	*/
 
 /*-
@@ -66,3 +67,14 @@ int bus_print __P((void *, const char *));
 int bus_peek __P((int, int, int));
 char * bus_mapin __P((int, int, int));
 
+typedef int (*isr_func_t) __P((void *));
+void isr_add_custom __P((int, void *));
+void isr_add_autovect __P((isr_func_t, void *arg, int level));
+void isr_add_vectored __P((isr_func_t, void *arg, int pri, int vec));
+
+void isr_soft_request __P((int level));
+void isr_soft_clear __P((int level));
+
+/* Bus-error tolerant access to mapped address. */
+int     peek_byte __P((caddr_t));
+int     peek_word __P((caddr_t));

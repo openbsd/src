@@ -1,9 +1,10 @@
-/*	$OpenBSD: leds.c,v 1.3 1997/01/13 21:28:24 kstailey Exp $	*/
+/*	$OpenBSD: leds.c,v 1.4 1997/01/16 04:04:26 kstailey Exp $	*/
 
 #include <sys/types.h>
-#include <sys/uio.h>
 #include <sys/systm.h>
 #include <sys/errno.h>
+#include <sys/uio.h>
+
 #include <machine/psl.h>
 
 #include "ledsvar.h"
@@ -24,7 +25,7 @@ volatile unsigned int led_px = 0;
 
 int
 ledrw(uio)
-     struct uio *uio;
+	struct uio *uio;
 {
 	unsigned int v[2];
 	int s;
@@ -40,7 +41,8 @@ ledrw(uio)
 	o = uio->uio_offset;
 	if (o < sizeof(v)) {
 		err = uiomove(((caddr_t)&v[0])+o, sizeof(v)-o, uio);
-		if (err) return(err);
+		if (err)
+			return(err);
 		o = sizeof(v);
 		if (uio->uio_rw == UIO_WRITE) {
 			if ((v[0] > MAXCDOWN) ||
@@ -59,7 +61,8 @@ ledrw(uio)
 		return(0);
 	if (uio->uio_resid > 0) {
 		err = uiomove((caddr_t)&pattern[o], v[1]-o, uio);
-		if (err) return(err);
+		if (err)
+			return(err);
 	}
 	return(0);
 }

@@ -1,3 +1,4 @@
+/*	$OpenBSD: mem.c,v 1.5 1997/01/16 04:04:30 kstailey Exp $	*/
 /*	$NetBSD: mem.c,v 1.19 1995/08/08 21:09:01 gwr Exp $	*/
 
 /*
@@ -47,34 +48,34 @@
  */
 
 #include <sys/param.h>
-#include <sys/conf.h>
-#include <sys/buf.h>
 #include <sys/systm.h>
-#include <sys/uio.h>
+#include <sys/buf.h>
+#include <sys/conf.h>
 #include <sys/malloc.h>
+#include <sys/proc.h>
+#include <sys/uio.h>
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 #include <vm/vm_map.h>
 
+#include <machine/conf.h>
 #include <machine/cpu.h>
+#include <machine/eeprom.h>
+#include <machine/machdep.h>
 #include <machine/pte.h>
 #include <machine/pmap.h>
 
-extern int eeprom_uio();
-extern vm_offset_t avail_start, avail_end;
+extern int ledrw __P((struct uio *));
 
-vm_offset_t vmmap;	/* XXX - poor name...
-                     * It is a virtual page, not a map.
-                     */
 caddr_t zeropage;
-
 
 /*ARGSUSED*/
 int
-mmopen(dev, flag, mode)
+mmopen(dev, flag, mode, p)
 	dev_t dev;
 	int flag, mode;
+	struct proc *p;
 {
 
 	return (0);
@@ -82,9 +83,10 @@ mmopen(dev, flag, mode)
 
 /*ARGSUSED*/
 int
-mmclose(dev, flag, mode)
+mmclose(dev, flag, mode, p)
 	dev_t dev;
 	int flag, mode;
+	struct proc *p;
 {
 
 	return (0);

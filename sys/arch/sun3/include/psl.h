@@ -1,3 +1,4 @@
+/*	$OpenBSD: psl.h,v 1.6 1997/01/16 04:04:10 kstailey Exp $	*/
 /*	$NetBSD: psl.h,v 1.10 1996/11/20 18:57:17 gwr Exp $	*/
 
 /*-
@@ -107,6 +108,9 @@ extern __inline__ int _spl(int new)
 /* Block out all interrupts (except NMI of course). */
 #define splhigh()       spl7()
 #define splsched()      spl7()
+
+/* Get current sr value (debug, etc.) */
+extern int getsr __P((void));
 
 #endif	/* KERNEL && !_LOCORE */
 #endif	/* PSL_C */

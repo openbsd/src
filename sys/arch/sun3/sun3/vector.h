@@ -1,3 +1,4 @@
+/*	$OpenBSD: vector.h,v 1.5 1997/01/16 04:04:36 kstailey Exp $	*/
 /*	$NetBSD: vector.h,v 1.10 1996/11/20 18:57:40 gwr Exp $	*/
 
 /*-
@@ -40,4 +41,6 @@
 
 #define AUTOVEC_BASE 0x18
 
-extern void (*vector_table[])();
+extern void (*vector_table[]) __P((void));
+
+void badtrap __P((void));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.4 1997/01/07 23:36:15 kstailey Exp $	*/
+/*	$OpenBSD: conf.h,v 1.5 1997/01/16 04:04:05 kstailey Exp $	*/
 
 /*-
  * Copyright (c) 1996 Kenneth Stailey.  All rights reserved.
@@ -54,6 +54,8 @@ cdev_decl(xy);
 cdev_decl(fd);
 
 dev_decl(filedesc,open);
+
+cdev_decl(idprom);
 
 #define	mmread	mmrw
 #define	mmwrite	mmrw

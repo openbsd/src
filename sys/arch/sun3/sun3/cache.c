@@ -1,3 +1,4 @@
+/*	$OpenBSD: cache.c,v 1.5 1997/01/16 04:04:13 kstailey Exp $	*/
 /*	$NetBSD: cache.c,v 1.5 1996/11/20 18:57:24 gwr Exp $	*/
 
 /*-
@@ -55,13 +56,14 @@
 #include <machine/cpu.h>
 #include <machine/pte.h>
 #include <machine/control.h>
+#include <machine/machdep.h>
 #include <machine/vmparam.h>
-
-#include "cache.h"
 
 #define	CACHE_LINE	16	/* bytes */
 #define	VAC_FLUSH_INCR	512	/* bytes */
 #define VADDR_MASK	0xfFFffFF	/* 28 bits */
+
+static void cache_clear_tags __P((void));
 
 void
 cache_flush_page(pgva)

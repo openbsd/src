@@ -1,3 +1,4 @@
+/*	$OpenBSD: zs.c,v 1.7 1997/01/16 04:04:00 kstailey Exp $	*/
 /*	$NetBSD: zs.c,v 1.42 1996/11/20 18:57:03 gwr Exp $	*/
 
 /*-
@@ -71,7 +72,9 @@
 #define	NZS	2		/* XXX */
 
 
-/* The Sun3 provides a 4.9152 MHz clock to the ZS chips. */
+/*
+ * The Sun3 provides a 4.9152 MHz clock to the ZS chips.
+ */
 #define PCLK	(9600 * 512)	/* PCLK pin input clock rate */
 
 /*
@@ -82,13 +85,16 @@
 
 #define ZS_DELAY()			delay(2)
 
-/* The layout of this is hardware-dependent (padding, order). */
+/*
+ * The layout of this is hardware-dependent (padding, order).
+ */
 struct zschan {
 	volatile u_char	zc_csr;		/* ctrl,status, and indirect access */
 	u_char		zc_xxx0;
 	volatile u_char	zc_data;	/* data */
 	u_char		zc_xxx1;
 };
+
 struct zsdevice {
 	/* Yes, they are backwards. */
 	struct	zschan zs_chan_b;
@@ -98,10 +104,13 @@ struct zsdevice {
 
 /* Default OBIO addresses. */
 static int zs_physaddr[NZS] = { OBIO_KEYBD_MS, OBIO_ZS };
+
 /* Saved PROM mappings */
 static struct zsdevice *zsaddr[NZS];	/* See zs_init() */
+
 /* Flags from cninit() */
 static int zs_hwflags[NZS][2];
+
 /* Default speed for each channel */
 static int zs_defspeed[NZS][2] = {
 	{ 1200, 	/* keyboard */
@@ -110,6 +119,15 @@ static int zs_defspeed[NZS][2] = {
 	  9600 },	/* ttyb */
 };
 
+
+static struct zschan *zs_get_chan_addr __P((int, int));
+int zs_getc __P((volatile void *));
+static void zs_putc __P((volatile void *, int));
+
+int  zscngetc __P((dev_t));
+void zscnputc __P((dev_t, int));
+void nullcnprobe __P((struct consdev *));
+void zscninit __P((struct consdev *));
 
 /* Find PROM mappings (for console support). */
 void zs_init()
@@ -120,10 +138,10 @@ void zs_init()
 		zsaddr[i] = (struct zsdevice *)
 			obio_find_mapping(zs_physaddr[i], OBIO_ZS_SIZE);
 	}
-}	
+}
 
 
-struct zschan *
+static struct zschan *
 zs_get_chan_addr(zsc_unit, channel)
 	int zsc_unit, channel;
 {
@@ -243,7 +261,6 @@ zsc_attach(parent, self, aux)
 {
 	struct zsc_softc *zsc = (void *) self;
 	struct cfdata *cf = self->dv_cfdata;
-	struct confargs *ca = aux;
 	struct zsc_attach_args zsc_args;
 	volatile struct zschan *zc;
 	struct zs_chanstate *cs;
@@ -352,7 +369,7 @@ zshard(arg)
 {
 	struct zsc_softc *zsc;
 	int unit, rval;
-	
+
 	/* Do ttya/ttyb first, because they go faster. */
 	rval = 0;
 	unit = zsc_cd.cd_ndevs;
@@ -370,7 +387,7 @@ int zssoftpending;
 void
 zsc_req_softint(zsc)
 	struct zsc_softc *zsc;
-{	
+{
 	if (zssoftpending == 0) {
 		/* We are at splzs here, so no need to lock. */
 		zssoftpending = ZSSOFT_PRI;
@@ -439,7 +456,8 @@ zs_write_reg(cs, reg, val)
 	ZS_DELAY();
 }
 
-u_char zs_read_csr(cs)
+u_char
+zs_read_csr(cs)
 	struct zs_chanstate *cs;
 {
 	register u_char v;
@@ -449,7 +467,8 @@ u_char zs_read_csr(cs)
 	return v;
 }
 
-u_char zs_read_data(cs)
+u_char
+zs_read_data(cs)
 	struct zs_chanstate *cs;
 {
 	register u_char v;
@@ -467,7 +486,8 @@ void  zs_write_csr(cs, val)
 	ZS_DELAY();
 }
 
-void  zs_write_data(cs, val)
+void
+zs_write_data(cs, val)
 	struct zs_chanstate *cs;
 	u_char val;
 {
@@ -484,7 +504,7 @@ void  zs_write_data(cs, val)
  */
 int
 zs_getc(arg)
-	void *arg;
+	volatile void *arg;
 {
 	register volatile struct zschan *zc = arg;
 	register int s, c, rr0;
@@ -510,9 +530,9 @@ zs_getc(arg)
 /*
  * Polled output char.
  */
-void
+static void
 zs_putc(arg, c)
-	void *arg;
+	volatile void *arg;
 	int c;
 {
 	register volatile struct zschan *zc = arg;
@@ -533,7 +553,6 @@ zs_putc(arg, c)
 extern struct consdev consdev_kd;	/* keyboard/display */
 extern struct consdev consdev_tty;
 extern struct consdev *cn_tab;	/* physical console device info */
-extern void nullcnpollc();
 
 void *zs_conschan;
 

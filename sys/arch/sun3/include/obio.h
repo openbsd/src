@@ -1,3 +1,4 @@
+/*	$OpenBSD: obio.h,v 1.6 1997/01/16 04:04:09 kstailey Exp $	*/
 /*	$NetBSD: obio.h,v 1.16 1996/11/20 18:57:14 gwr Exp $	*/
 
 /*-
@@ -81,5 +82,12 @@
 caddr_t obio_alloc __P((int, int));
 caddr_t obio_vm_alloc __P((int));
 caddr_t obio_find_mapping __P((int pa, int size));
+
+/* routines called during earily startup */
+void obio_init __P((void));
+void zs_init __P((void));
+void eeprom_init __P((void));
+void intreg_init __P((void));
+void clock_init __P((void));
 
 #endif	/* _KERNEL */

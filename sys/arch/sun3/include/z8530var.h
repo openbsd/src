@@ -71,7 +71,7 @@ void  zs_write_data __P((struct zs_chanstate *cs, u_char val));
 void zsc_req_softint __P((struct zsc_softc *zsc));
 
 /* Handle user request to enter kernel debugger. */
-void zs_abort();
+void zs_abort __P((void));
 
 /*
  * Some warts needed by z8530tty.c -

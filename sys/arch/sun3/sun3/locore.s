@@ -1,3 +1,4 @@
+/*	$OpenBSD: locore.s,v 1.8 1997/01/16 04:04:27 kstailey Exp $	*/
 /*	$NetBSD: locore.s,v 1.40 1996/11/06 20:19:54 cgd Exp $	*/
 
 /*
@@ -246,12 +247,12 @@ Lbe10:
 
 /*
  * the sun3 specific code
- *	
+ *
  * our mission: figure out whether what we are looking at is
  *              bus error in the UNIX sense, or
  *	        a memory error i.e a page fault
  *
- * [this code replaces similarly mmu specific code in the hp300 code]	
+ * [this code replaces similarly mmu specific code in the hp300 code]
  */
 sun3_mmu_specific:
 	clrl d0				| make sure top bits are cleard too
@@ -571,7 +572,7 @@ Lbrkpt2:
 	jne	Lbrkpt3			| yes, done
 #endif
 #ifdef	DDB
-	| Let DDB handle it.	
+	| Let DDB handle it.
 	movl	a2,sp@-			| push frame ptr
 	movl	d2,sp@-			| push trap type
 	jbsr	_kdb_trap		| handle the trap
@@ -972,7 +973,7 @@ Lbadsw:
 
 /*
  * cpu_switch()
- * Hacked for sun3	
+ * Hacked for sun3
  * XXX - Arg 1 is a proc pointer (curproc) but this doesn't use it.
  * XXX - Sould we use p->p_addr instead of curpcb? -gwr
  */

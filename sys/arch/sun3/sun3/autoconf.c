@@ -1,3 +1,4 @@
+/*	$OpenBSD: autoconf.c,v 1.6 1997/01/16 04:04:11 kstailey Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.37 1996/11/20 18:57:22 gwr Exp $	*/
 
 /*-
@@ -59,19 +60,16 @@
 #include <vm/vm_map.h>
 
 #include <machine/autoconf.h>
+#include <machine/control.h>
 #include <machine/cpu.h>
-#include <machine/isr.h>
+#include <machine/machdep.h>
 #include <machine/pte.h>
 #include <machine/pmap.h>
 
-extern int soft1intr();
-
-void swapgeneric();
-void swapconf(), dumpconf();
-
 int cold;
 
-void configure()
+void
+configure()
 {
 	struct device *mainbus;
 
@@ -96,13 +94,13 @@ swapconf()
 	struct swdevt *swp;
 	u_int maj;
 	int nblks;
-	
+
 	for (swp = swdevt; swp->sw_dev != NODEV; swp++) {
 
 		maj = major(swp->sw_dev);
 		if (maj > nblkdev) /* paranoid? */
 			break;
-		
+
 		if (bdevsw[maj].d_psize) {
 			nblks = (*bdevsw[maj].d_psize)(swp->sw_dev);
 			if (nblks > 0 &&
@@ -130,7 +128,8 @@ swapconf()
  * bus_print:
  * Just prints out the final (non-default) locators.
  */
-int bus_scan(parent, child, aux)
+int
+bus_scan(parent, child, aux)
 	struct device *parent;
 	void *child, *aux;
 {
@@ -151,8 +150,7 @@ int bus_scan(parent, child, aux)
 	ca->ca_intvec = -1;
 
 	if ((ca->ca_bustype == BUS_VME16) ||
-		(ca->ca_bustype == BUS_VME32))
-	{
+	    (ca->ca_bustype == BUS_VME32)) {
 		ca->ca_intvec = cf->cf_loc[2];
 	}
 
@@ -263,7 +261,7 @@ char *
 bus_mapin(bustype, paddr, sz)
 	int bustype, paddr, sz;
 {
-	int off, pa, pgs, pmt;
+	int off, pa, pmt;
 	vm_offset_t va, retval;
 
 	if (bustype & ~3)
@@ -296,4 +294,40 @@ bus_mapin(bustype, paddr, sz)
 #endif
 
 	return ((char*)retval);
-}	
+}
+
+/* from hp300: badaddr() */
+int
+peek_word(addr)
+	register caddr_t addr;
+{
+	label_t		faultbuf;
+	register int	x;
+
+	nofault = &faultbuf;
+	if (setjmp(&faultbuf)) {
+		nofault = NULL;
+		return(-1);
+	}
+	x = *(volatile u_short *)addr;
+	nofault = NULL;
+	return(x);
+}
+
+/* from hp300: badbaddr() */
+int
+peek_byte(addr)
+	register caddr_t addr;
+{
+	label_t		faultbuf;
+	register int	x;
+
+	nofault = &faultbuf;
+	if (setjmp(&faultbuf)) {
+		nofault = NULL;
+		return(-1);
+	}
+	x = *(volatile u_char *)addr;
+	nofault = NULL;
+	return(x);
+}

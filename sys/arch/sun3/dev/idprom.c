@@ -1,3 +1,4 @@
+/*	$OpenBSD: idprom.c,v 1.6 1997/01/16 04:03:46 kstailey Exp $	*/
 /*	$NetBSD: idprom.c,v 1.13 1996/11/20 18:56:50 gwr Exp $	*/
 
 /*-
@@ -42,9 +43,11 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/conf.h>
 #include <sys/device.h>
 
 #include <machine/autoconf.h>
+#include <machine/conf.h>
 #include <machine/control.h>
 #include <machine/idprom.h>
 #include <machine/mon.h>
@@ -57,7 +60,8 @@ extern long hostid;	/* in kern_sysctl.c */
  */
 struct idprom identity_prom;
 
-int idpromopen(dev, oflags, devtype, p)
+int
+idpromopen(dev, oflags, devtype, p)
 	dev_t dev;
 	int oflags;
 	int devtype;
@@ -66,7 +70,8 @@ int idpromopen(dev, oflags, devtype, p)
 	return 0;
 }
 
-int idpromclose(dev, fflag, devtype, p)
+int
+idpromclose(dev, fflag, devtype, p)
 	dev_t dev;
 	int fflag;
 	int devtype;
@@ -75,12 +80,13 @@ int idpromclose(dev, fflag, devtype, p)
 	return 0;
 }
 
+int
 idpromread(dev, uio, ioflag)
 	dev_t dev;
 	struct uio *uio;
 	int ioflag;
 {
-	int error, unit, length;
+	int error, length;
 
 	error = 0;
 	while (uio->uio_resid > 0 && error == 0) {
@@ -97,7 +103,8 @@ idpromread(dev, uio, ioflag)
  * This is called very early during startup to
  * get a copy of the idprom from control space.
  */
-int idprom_init()
+int
+idprom_init()
 {
 	struct idprom *idp;
 	char *src, *dst;
@@ -141,7 +148,8 @@ int idprom_init()
 	return 0;
 }
 
-void idprom_etheraddr(eaddrp)
+void
+idprom_etheraddr(eaddrp)
 	u_char *eaddrp;
 {
 	u_char *src, *dst;

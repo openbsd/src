@@ -1,3 +1,4 @@
+/*	$OpenBSD: db_memrw.c,v 1.6 1997/01/16 04:04:17 kstailey Exp $	*/
 /*	$NetBSD: db_memrw.c,v 1.13 1996/11/20 18:57:28 gwr Exp $	*/
 
 /*-
@@ -53,16 +54,20 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/proc.h>
 
 #include <vm/vm.h>
 
+#include <machine/control.h>
 #include <machine/pte.h>
 #include <machine/db_machdep.h>
+#include <machine/machdep.h>
 
 #include <ddb/db_access.h>
 
-#include "cache.h"
+
+static void db_write_text __P((vm_offset_t, size_t size, char *));
 
 /*
  * Read bytes from kernel address space for debugger.
@@ -103,9 +108,9 @@ db_write_text(addr, size, data)
 	register size_t	size;
 	register char	*data;
 {
-	register char *dst;
-	int		ch, oldpte, tmppte;
-	vm_offset_t pgva, prevpg;
+	register char	*dst;
+	int		oldpte, tmppte;
+	vm_offset_t	pgva, prevpg;
 
 	/* Prevent restoring a garbage PTE. */
 	if (size <= 0)
@@ -141,7 +146,7 @@ db_write_text(addr, size, data)
 #endif
 			oldpte = get_pte(pgva);
 			if ((oldpte & PG_VALID) == 0) {
-				printf(" address 0x%x not a valid page\n", dst);
+				printf(" address %p not a valid page\n", dst);
 				return;
 			}
 			tmppte = oldpte | PG_WRITE | PG_NC;
@@ -165,7 +170,9 @@ db_write_text(addr, size, data)
 /*
  * Write bytes to kernel address space for debugger.
  */
+
 extern char	kernel_text[], etext[];
+
 void
 db_write_bytes(addr, size, data)
 	vm_offset_t	addr;
@@ -176,7 +183,7 @@ db_write_bytes(addr, size, data)
 
 	/* If any part is in kernel text, use db_write_text() */
 	if ((dst < etext) && ((dst + size) > kernel_text)) {
-		db_write_text(dst, size, data);
+		db_write_text((vm_offset_t)dst, size, data);
 		return;
 	}
 

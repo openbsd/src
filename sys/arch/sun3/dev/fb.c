@@ -1,3 +1,4 @@
+/*	$OpenBSD: fb.c,v 1.4 1997/01/16 04:03:45 kstailey Exp $	*/
 /*	$NetBSD: fb.c,v 1.3 1995/04/10 05:45:56 mycroft Exp $ */
 
 /*
@@ -54,7 +55,9 @@
 #include <sys/ioctl.h>
 #include <sys/proc.h>
 
+#include <machine/conf.h>
 #include <machine/fbio.h>
+#include <machine/machdep.h>
 
 #include "fbvar.h"
 

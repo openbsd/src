@@ -1,3 +1,4 @@
+/*	$OpenBSD: mon.h,v 1.5 1997/01/16 04:04:08 kstailey Exp $	*/
 /*	$NetBSD: mon.h,v 1.19 1996/11/20 18:57:12 gwr Exp $	*/
 
 /*-
@@ -103,41 +104,41 @@ typedef struct bootparam {
  *       translate these structs into Sprite format.
  */
 typedef struct {
-	char		*initSp;		/* Initial system stack ptr  
-						 * for hardware */
-	int		(*startMon)();		/* Initial PC for hardware */
+	char	*initSp;		/* Initial system stack ptr
+					 * for hardware */
+	int	(*startMon)__P((void));	/* Initial PC for hardware */
 
-	int		*diagberr;		/* Bus err handler for diags */
+	int	*diagberr;		/* Bus err handler for diags */
 
-	/* 
+	/*
 	 * Monitor and hardware revision and identification
 	 */
 
-	struct bootparam **bootParam;		/* Info for bootstrapped pgm */
- 	unsigned	*memorySize;		/* Usable memory in bytes */
+	struct bootparam **bootParam;	/* Info for bootstrapped pgm */
+ 	u_int	*memorySize;		/* Usable memory in bytes */
 
-	/* 
-	 * Single-character input and output 
+	/*
+	 * Single-character input and output
 	 */
 
-	unsigned char	(*getChar)();		/* Get char from input source */
-	int		(*putChar)();		/* Put char to output sink */
-	int		(*mayGet)();		/* Maybe get char, or -1 */
-	int		(*mayPut)();		/* Maybe put char, or -1 */
-	unsigned char	*echo;			/* Should getchar echo? */
-	unsigned char	*inSource;		/* Input source selector */
-	unsigned char	*outSink;		/* Output sink selector */
+	u_char	(*getChar)__P((void));	/* Get char from input source */
+	int	(*putChar)__P((int));	/* Put char to output sink */
+	int	(*mayGet)__P((void));	/* Maybe get char, or -1 */
+	int	(*mayPut)__P((int));	/* Maybe put char, or -1 */
+	u_char	*echo;			/* Should getchar echo? */
+	u_char	*inSource;		/* Input source selector */
+	u_char	*outSink;		/* Output sink selector */
 
-	/* 
-	 * Keyboard input (scanned by monitor nmi routine) 
+	/*
+	 * Keyboard input (scanned by monitor nmi routine)
 	 */
 
-	int		(*getKey)();		/* Get next key if one exists */
-	int		(*initGetKey)();	/* Initialize get key */
-	unsigned int	*translation;		/* Kbd translation selector 
-						   (see keyboard.h in sun 
+	int	(*getKey)__P((void));		/* Get next key if one exists */
+	int	(*initGetKey)__P((void*));	/* Initialize get key */
+	u_int	*translation;			/* Kbd translation selector
+						   (see keyboard.h in sun
 						    monitor code) */
-	unsigned char	*keyBid;		/* Keyboard ID byte */
+	u_char		*keyBid;		/* Keyboard ID byte */
 	int		*screen_x;		/* V2: Screen x pos (R/O) */
 	int		*screen_y;		/* V2: Screen y pos (R/O) */
 	struct keybuf	*keyBuf;		/* Up/down keycode buffer */
@@ -146,86 +147,88 @@ typedef struct {
 	 * Monitor revision level.
 	 */
 
-	char		*monId;
-
-	/* 
-	 * Frame buffer output and terminal emulation 
-	 */
-
-	int		(*fbWriteChar)();	/* Write a character to FB */
-	int		*fbAddr;		/* Address of frame buffer */
-	char		**font;			/* Font table for FB */
-	int		(*fbWriteStr)();	/* Quickly write string to FB */
-
-	/* 
-	 * Reboot interface routine -- resets and reboots system.  No return. 
-	 */
-
-	int		(*reBoot)();		/* e.g. reBoot("xy()vmunix") */
-
-	/* 
-	 * Line input and parsing 
-	 */
-
-	unsigned char	*lineBuf;		/* The line input buffer */
-	unsigned char	**linePtr;		/* Cur pointer into linebuf */
-	int		*lineSize;		/* length of line in linebuf */
-	int		(*getLine)();		/* Get line from user */
-	unsigned char	(*getNextChar)();	/* Get next char from linebuf */
-	unsigned char	(*peekNextChar)();	/* Peek at next char */
-	int		*fbThere;		/* =1 if frame buffer there */
-	int		(*getNum)();		/* Grab hex num from line */
-
-	/* 
-	 * Print formatted output to current output sink 
-	 */
-
-	int		(*printf)();		/* Similar to "Kernel printf" */
-	int		(*printHex)();		/* Format N digits in hex */
+	char	*monId;
 
 	/*
-	 * Led stuff 
+	 * Frame buffer output and terminal emulation
 	 */
 
-	unsigned char	*leds;			/* RAM copy of LED register */
-	int		(*setLeds)();		/* Sets LED's and RAM copy */
+	int	(*fbWriteChar)__P((int)); /* Write a character to FB */
+	int	*fbAddr;		/* Address of frame buffer */
+	char	**font;			/* Font table for FB */
+	/* Quickly write string to FB */
+	int	(*fbWriteStr)__P((char *buf, int len));
 
-	/* 
+	/*
+	 * Reboot interface routine -- resets and reboots system.  No return.
+	 * XXX should this be declared volatile?
+	 */
+
+	int	(*reBoot)__P((char *));	/* e.g. reBoot("sd()bsd") */
+
+	/*
+	 * Line input and parsing
+	 */
+
+	u_char	*lineBuf;			/* The line input buffer */
+	u_char	**linePtr;			/* Cur pointer into linebuf */
+	int	*lineSize;			/* length of line in linebuf */
+	int	(*getLine)__P((int));		/* Get line from user */
+	u_char	(*getNextChar)__P((void));	/* Get next char from linebuf */
+	u_char	(*peekNextChar)__P((void));	/* Peek at next char */
+	int	*fbThere;			/* =1 if frame buffer there */
+	int	(*getNum)__P((void));		/* Grab hex num from line */
+
+	/*
+	 * Print formatted output to current output sink
+	 */
+
+	int	(*printf)__P((char *, ...));	/* Similar to "Kernel printf" */
+	int	(*printHex)__P((int,int));	/* Format N digits in hex */
+
+	/*
+	 * Led stuff
+	 */
+
+	u_char	*leds;				/* RAM copy of LED register */
+	int	(*setLeds)__P((int));		/* Sets LED's and RAM copy */
+
+	/*
 	 * Non-maskable interrupt  (nmi) information
-	 */ 
+	 */
 
-	int		(*nmiAddr)();		/* Addr for level 7 vector */
-	int		(*abortEntry)();	/* Entry for keyboard abort */
-	int		*nmiClock;		/* Counts up in msec */
+	int	(*nmiAddr)__P((void*));		/* Addr for level 7 vector */
+	int	(*abortEntry)__P((void*));	/* Entry for keyboard abort */
+	int	*nmiClock;			/* Counts up in msec */
 
 	/*
-	 * Frame buffer type: see <sun/fbio.h>
+	 * Frame buffer type: see <machine/fbio.h>
 	 */
 
-	int		*fbType;
+	int	*fbType;
 
-	/* 
-	 * Assorted other things 
+	/*
+	 * Assorted other things
 	 */
 
-	unsigned	romvecVersion;		/* Version # of Romvec */ 
+	u_int		romvecVersion;		/* Version # of Romvec */
 	struct globram  *globRam;		/* monitor global variables */
 	caddr_t		kbdZscc;		/* Addr of keyboard in use */
 
-	int		*keyrInit;		/* ms before kbd repeat */
-	unsigned char	*keyrTick; 		/* ms between repetitions */
-	unsigned	*memoryAvail;		/* V1: Main mem usable size */
-	long		*resetAddr;		/* where to jump on a reset */
-	long		*resetMap;		/* pgmap entry for resetaddr */
+	int	*keyrInit;			/* ms before kbd repeat */
+	u_char	*keyrTick; 			/* ms between repetitions */
+	u_int	*memoryAvail;			/* V1: Main mem usable size */
+	long	*resetAddr;			/* where to jump on a reset */
+	long	*resetMap;			/* pgmap entry for resetaddr */
 						/* Really struct pgmapent *  */
-	int		(*exitToMon)();		/* Exit from user program */
-	unsigned char	**memorybitmap;		/* V1: &{0 or &bits} */
-	void		(*setcxsegmap)();	/* Set seg in any context */
-	void		(**vector_cmd)();	/* V2: Handler for 'v' cmd */
-	int		dummy1z;
-	int		dummy2z;
-	int		dummy3z;
-	int		dummy4z;
+	int	(*exitToMon)__P((void));	/* Exit from user program */
+	u_char	**memorybitmap;			/* V1: &{0 or &bits} */
+	void	(*setcxsegmap)__P((int,int,int)); /* Set seg in any context */
+	void	(**vector_cmd)__P((int, char*)); /* V2: Handler for 'v' cmd */
+	int	dummy1z;
+	int	dummy2z;
+	int	dummy3z;
+	int	dummy4z;
 } MachMonRomVector;
 
 /*
@@ -239,13 +242,13 @@ typedef struct {
  * putChar -- Write the given character to the output source.
  *
  *     void putChar(ch)
- *	   char ch;	
+ *	   char ch;
  *
- * mayGet -- Maybe get a character from the current input source.  Return -1 
+ * mayGet -- Maybe get a character from the current input source.  Return -1
  *           if don't return a character.
  *
  * 	int mayGet()
- *	
+ *
  * mayPut -- Maybe put a character to the current output source.   Return -1
  *           if no character output.
  *
@@ -257,7 +260,7 @@ typedef struct {
  * 	     NOKEY (if no key has been hit).
  *
  *	int getKey()
- *	
+ *
  * initGetKey --  Initialize things for get key.
  *
  *	void initGetKey()
@@ -327,9 +330,9 @@ typedef struct {
 
 /*
  * MONSTART and MONEND denote the range of the damn monitor.
- * 
+ *
  * supposedly you can steal pmegs within this range that do not contain
- * valid pages. 
+ * valid pages.
  */
 #define MONSTART     0x0FE00000
 #define MONEND       0x0FF00000
@@ -346,8 +349,8 @@ typedef struct {
  *
  */
 
-#define MONSHORTPAGE 0x0FFFE000	
-#define MONSHORTSEG  0x0FFE0000     
+#define MONSHORTPAGE 0x0FFFE000
+#define MONSHORTSEG  0x0FFE0000
 
 #endif /* _MACHMON */
-#endif /* MACHINE_MON_H */     
+#endif /* MACHINE_MON_H */

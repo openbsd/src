@@ -1,3 +1,4 @@
+/*	$OpenBSD: bw2.c,v 1.8 1997/01/16 04:03:42 kstailey Exp $	*/
 /*	$NetBSD: bw2.c,v 1.8 1996/10/13 03:47:25 christos Exp $	*/
 
 /*
@@ -51,14 +52,17 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/ioctl.h>
 #include <sys/malloc.h>
 #include <sys/mman.h>
 #include <sys/tty.h>
+#include <sys/conf.h>
 
 #include <vm/vm.h>
 
+#include <machine/conf.h>
 #include <machine/cpu.h>
 #include <machine/fbio.h>
 #include <machine/autoconf.h>
@@ -91,24 +95,24 @@ struct cfdriver bwtwo_cd = {
 
 /* XXX we do not handle frame buffer interrupts */
 
-/* frame buffer generic driver */
-int bw2open(), bw2close(), bw2ioctl(), bw2mmap();
-
-static int  bw2gvideo __P((struct fbdevice *, int *));
+static int	bw2gvideo __P((struct fbdevice *, int *));
 static int	bw2svideo __P((struct fbdevice *, int *));
 
 static struct fbdriver bw2fbdriver = {
 	bw2open, bw2close, bw2mmap,
-	enoioctl, /* gattr */
+	(void *)enoioctl, /* gattr */
 	bw2gvideo, bw2svideo,
-	enoioctl, enoioctl };
+	(void *)enoioctl, (void *)enoioctl /* getcmap, putcmap */
+};
 
 static int
 bw2match(parent, vcf, args)
 	struct device *parent;
 	void *vcf, *args;
 {
+#if 0
 	struct cfdata *cf = vcf;
+#endif
 	struct confargs *ca = args;
 	int x;
 
@@ -145,7 +149,6 @@ bw2attach(parent, self, args)
 	struct fbdevice *fb = &sc->sc_fb;
 	struct confargs *ca = args;
 	struct fbtype *fbt;
-	int ramsize;
 
 	sc->sc_phys = ca->ca_paddr;
 

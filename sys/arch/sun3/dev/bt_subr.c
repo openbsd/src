@@ -1,3 +1,4 @@
+/*	$OpenBSD: bt_subr.c,v 1.2 1997/01/16 04:03:42 kstailey Exp $	*/
 /*	$NetBSD: bt_subr.c,v 1.2 1995/04/10 22:12:48 gwr Exp $ */
 
 /*

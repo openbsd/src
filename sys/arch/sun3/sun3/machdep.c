@@ -1,3 +1,4 @@
+/*	$OpenBSD: machdep.c,v 1.11 1997/01/16 04:04:28 kstailey Exp $	*/
 /*	$NetBSD: machdep.c,v 1.77 1996/10/13 03:47:51 christos Exp $	*/
 
 /*
@@ -78,34 +79,33 @@
 #include <sys/shm.h>
 #endif
 
-#include <machine/cpu.h>
-#include <machine/reg.h>
-#include <machine/psl.h>
-#include <machine/pte.h>
-#include <machine/mon.h> 
-#include <machine/isr.h>
-#include <machine/kcore.h>
-
-#include <dev/cons.h>
-
 #include <vm/vm.h>
 #include <vm/vm_map.h>
 #include <vm/vm_kern.h>
 #include <vm/vm_page.h>
 
-#include <net/netisr.h>
+#include <dev/cons.h>
 
-#include "cache.h"
+#include <machine/cpu.h>
+#include <machine/db_machdep.h>
+#include <machine/dvma.h>
+#include <machine/kcore.h>
+#include <machine/machdep.h>
+#include <machine/mon.h> 
+#include <machine/psl.h>
+#include <machine/pte.h>
+#include <machine/reg.h>
 
 extern char *cpu_string;
 extern char version[];
 extern short exframesize[];
 extern vm_offset_t vmmap;	/* XXX - poor name.  See mem.c */
-extern int cold;
 
 int physmem;
 int fpu_type;
 int msgbufmapped;
+label_t *nofault;
+vm_offset_t vmmap;
 
 /*
  * safepri is a safe priority for sleep to set for a spin-wait
@@ -127,19 +127,27 @@ int	bufpages = BUFPAGES;
 #else
 int	bufpages = 0;
 #endif
-long *nofault;
 
-void identifycpu();
+static caddr_t allocsys __P((caddr_t));
+static void identifycpu __P((void));
+static void initcpu __P((void));
+static void dumpmem __P((int *, int, int));
+static char *hexstr __P((int, int));
+static void reboot_sync __P((void));
+int  reboot2 __P((int, char *)); /* share with sunos_misc.c */
+
+void straytrap __P((struct trapframe));	/* called from locore.s */
 
 /*
  * Console initialization: called early on from main,
  * before vm init or startup.  Do enough configuration
  * to choose and initialize a console.
  */
-void consinit()
+void
+consinit()
 {
-    extern void cninit();
-    cninit();
+
+	cninit();
 
 #ifdef KGDB
 	/* XXX - Ask on console for kgdb_dev? */
@@ -168,8 +176,10 @@ void consinit()
  * allocate that much and fill it with zeroes, and then call
  * allocsys() again with the correct base virtual address.
  */
+
 #define	valloc(name, type, num) \
 	v = (caddr_t)(((name) = (type *)v) + (num))
+
 static caddr_t
 allocsys(v)
 	register caddr_t v;
@@ -330,7 +340,7 @@ cpu_startup()
 		callout[i-1].c_next = &callout[i];
 	callout[i-1].c_next = NULL;
 
-	printf("avail mem = %d\n", ptoa(cnt.v_free_count));
+	printf("avail mem = %ld\n", ptoa(cnt.v_free_count));
 	printf("using %d buffers containing %d bytes of memory\n",
 		   nbuf, bufpages * CLBYTES);
 
@@ -402,7 +412,7 @@ char	machine[] = "sun3";		/* cpu "architecture" */
 char	cpu_model[120];
 extern	long hostid;
 
-void
+static void
 identifycpu()
 {
     /*
@@ -415,12 +425,13 @@ identifycpu()
     /* should eventually include whether it has a VAC, mc6888x version, etc */
 	strcat(cpu_model, cpu_string);
 
-	printf("Model: %s (hostid %x)\n", cpu_model, hostid);
+	printf("Model: %s (hostid %lx)\n", cpu_model, hostid);
 }
 
 /*
  * machine dependent system variables.
  */
+int
 cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	int *name;
 	u_int namelen;
@@ -770,11 +781,10 @@ sys_sigreturn(p, v, retval)
  * XXX - Put waittime checks in there too?
  */
 int waittime = -1;	/* XXX - Who else looks at this? -gwr */
-static void reboot_sync()
+static void
+reboot_sync()
 {
 	extern struct proc proc0;
-	struct buf *bp;
-	int iter, nbusy;
 
 	/* Check waittime here to localize its use to this function. */
 	if (waittime >= 0)
@@ -789,7 +799,8 @@ static void reboot_sync()
 /*
  * Common part of the BSD and SunOS reboot system calls.
  */
-int reboot2(howto, user_boot_string)
+int
+reboot2(howto, user_boot_string)
 	int howto;
 	char *user_boot_string;
 {
@@ -868,7 +879,8 @@ int reboot2(howto, user_boot_string)
  * that specifies a machine-dependent boot string that
  * is passed to the boot program if RB_STRING is set.
  */
-void boot(howto)
+void
+boot(howto)
 	int howto;
 {
 	(void) reboot2(howto, NULL);
@@ -901,7 +913,7 @@ dumpconf()
 {
 	int nblks;	/* size of dump area */
 	int maj;
-	int (*getsize)();
+	int (*getsize) __P((dev_t));
 
 	if (dumpdev == NODEV)
 		return;
@@ -940,6 +952,7 @@ extern vm_offset_t avail_start;
  *   pagemap (2*NBPG)
  *   physical memory...
  */
+void
 dumpsys()
 {
 	struct bdevsw *dsw;
@@ -974,14 +987,14 @@ dumpsys()
 		return;
 	}
 
-	printf("\ndumping to dev %x, offset %d\n", dumpdev, dumplo);
+	printf("\ndumping to dev %x, offset %ld\n", dumpdev, dumplo);
 
 	/*
 	 * Write the dump header, including MMU state.
 	 */
 	blkno = dumplo;
 	todo = dumpsize - DUMP_EXTRA;	/* pages */
-	vaddr = (char*)dumppage_va;
+	vaddr = (char *)dumppage_va;
 	bzero(vaddr, NBPG);
 
 	/* kcore header */
@@ -998,14 +1011,14 @@ dumpsys()
 	blkno += btodb(NBPG);
 
 	/* translation RAM (page zero) */
-	pmap_get_pagemap(vaddr, 0);
+	pmap_get_pagemap((int *)vaddr, 0);
 	error = (*dsw->d_dump)(dumpdev, blkno, vaddr, NBPG);
 	if (error)
 		goto fail;
 	blkno += btodb(NBPG);
 
 	/* translation RAM (page one) */
-	pmap_get_pagemap(vaddr, NBPG);
+	pmap_get_pagemap((int *)vaddr, NBPG);
 	error = (*dsw->d_dump)(dumpdev, blkno, vaddr, NBPG);
 	if (error)
 		goto fail;
@@ -1060,6 +1073,7 @@ fail:
 	printf(" dump error=%d\n", error);
 }
 
+void
 initcpu()
 {
 	/* XXX: Enable RAM parity/ECC checking? */
@@ -1072,50 +1086,16 @@ initcpu()
 #endif
 }
 
+void
 straytrap(frame)
-	struct frame frame;
+	struct trapframe frame;
 {
 	printf("unexpected trap; vector offset 0x%x from 0x%x\n",
-		frame.f_vector, frame.f_pc);
+		frame.tf_vector, frame.tf_pc);
 #ifdef	DDB
-	kdb_trap(-1, &frame);
+	/* XXX - Yuck!  Make DDB use "struct trapframe" instead! */
+	kdb_trap(-1, (struct mc68020_saved_state *) &frame);
 #endif
-}
-
-/* from hp300: badaddr() */
-int
-peek_word(addr)
-	register caddr_t addr;
-{
-	label_t		faultbuf;
-	register int x;
-
-	nofault = (long*)&faultbuf;
-	if (setjmp(&faultbuf)) {
-		nofault = NULL;
-		return(-1);
-	}
-	x = *(volatile u_short *)addr;
-	nofault = NULL;
-	return(x);
-}
-
-/* from hp300: badbaddr() */
-int
-peek_byte(addr)
-	register caddr_t addr;
-{
-	label_t 	faultbuf;
-	register int x;
-
-	nofault = (long*)&faultbuf;
-	if (setjmp(&faultbuf)) {
-		nofault = NULL;
-		return(-1);
-	}
-	x = *(volatile u_char *)addr;
-	nofault = NULL;
-	return(x);
 }
 
 /* XXX: parityenable() ? */
@@ -1123,6 +1103,7 @@ peek_byte(addr)
 /*
  * Print a register and stack dump.
  */
+void
 regdump(fp, sbytes)
 	struct frame *fp; /* must not be register */
 	int sbytes;
@@ -1130,7 +1111,6 @@ regdump(fp, sbytes)
 	static int doingdump = 0;
 	register int i;
 	int s;
-	extern char *hexstr();
 
 	if (doingdump)
 		return;
@@ -1166,12 +1146,12 @@ regdump(fp, sbytes)
 
 #define KSADDR	((int *)((u_int)curproc->p_addr + USPACE - NBPG))
 
+static void
 dumpmem(ptr, sz, ustack)
 	register int *ptr;
 	int sz, ustack;
 {
 	register int i, val;
-	extern char *hexstr();
 
 	for (i = 0; i < sz; i++) {
 		if ((i & 7) == 0)
@@ -1219,6 +1199,7 @@ hexstr(val, len)
  * Determine if the given exec package refers to something which we
  * understand and, if so, set up the vmcmds for it.
  */
+int
 cpu_exec_aout_makecmds(p, epp)
 	struct proc *p;
 	struct exec_package *epp;

@@ -1,3 +1,4 @@
+/*	$OpenBSD: if_le.c,v 1.9 1997/01/16 04:03:49 kstailey Exp $	*/
 /*	$NetBSD: if_le.c,v 1.33 1996/11/20 18:56:52 gwr Exp $	*/
 
 /*-
@@ -55,7 +56,6 @@
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
 #include <machine/dvma.h>
-#include <machine/isr.h>
 #include <machine/obio.h>
 #include <machine/idprom.h>
 
@@ -89,7 +89,7 @@ struct cfattach le_ca = {
 };
 
 hide void lewrcsr __P((struct am7990_softc *, u_int16_t, u_int16_t));
-hide u_int16_t lerdcsr __P((struct am7990_softc *, u_int16_t));  
+hide u_int16_t lerdcsr __P((struct am7990_softc *, u_int16_t));
 
 hide void
 lewrcsr(sc, port, val)
@@ -113,14 +113,13 @@ lerdcsr(sc, port)
 	ler1->ler1_rap = port;
 	val = ler1->ler1_rdp;
 	return (val);
-} 
+}
 
 int
 le_match(parent, vcf, aux)
 	struct device *parent;
 	void *vcf, *aux;
 {
-	struct cfdata *cf = vcf;
 	struct confargs *ca = aux;
 
 	/* Make sure there is something there... */
@@ -141,7 +140,6 @@ le_attach(parent, self, aux)
 {
 	struct le_softc *lesc = (struct le_softc *)self;
 	struct am7990_softc *sc = &lesc->sc_am7990;
-	struct cfdata *cf = self->dv_cfdata;
 	struct confargs *ca = aux;
 
 	lesc->sc_r1 = (struct lereg1 *)

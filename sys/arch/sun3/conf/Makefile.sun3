@@ -37,8 +37,8 @@ INCLUDES=	-I. -I$S/arch -I$S -nostdinc
 XDEFS=		-undef -D__OpenBSD__ -Dm68k -Dmc68000
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL \
 		-Dmc68020 -Dsun3 ${XDEFS}
-CWARNFLAGS= 	-Werror # -Wall -Wstrict-prototypes -Wmissing-prototypes
-CFLAGS= 	${DEBUG} ${CWARNFLAGS} -O2 -msoft-float
+CWARNFLAGS= 	-Werror -# Wall -Wstrict-prototypes -Wmissing-prototypes
+CFLAGS= 	${DEBUG} ${CWARNFLAGS} -O2 -msoft-float -pipe
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
 LINKFLAGS=	-N -Ttext 0E004000 -e start
 STRIPFLAGS=	-d
@@ -105,11 +105,14 @@ LINKFLAGS+=	-S
 assym.h: genassym
 	./genassym >assym.h
 
-genassym: genassym.o
-	${CC} -o $@ genassym.o
-
-genassym.o: ${SUN3}/sun3/genassym.c
-	${HOSTED_C}
+# Doing a cross-build of this is very tricky, and very dependent
+# on compatibility of things like structure member alignment in
+# the compiler used as HOSTED_CC (must match the native compiler).
+# Often this is not possible at all, and you just have to build
+# the assym.h file by hand on some other machine. -gwr
+genassym: ${SUN3}/sun3/genassym.c
+	${CC} ${CPPFLAGS} -E $< > $@.i
+	${HOSTED_CC} -o $@ $@.i
 
 param.c: $S/conf/param.c
 	rm -f param.c

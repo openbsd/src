@@ -1,3 +1,4 @@
+/*	$OpenBSD: memerr.c,v 1.8 1997/01/16 04:03:50 kstailey Exp $	*/
 /*	$NetBSD: memerr.c,v 1.6 1996/11/13 07:05:14 thorpej Exp $ */
 
 /*
@@ -49,6 +50,7 @@
 #include <sys/device.h>
 
 #include <machine/autoconf.h>
+#include <machine/control.h>
 #include <machine/cpu.h>
 #include <machine/obio.h>
 #include <machine/pte.h>
@@ -170,7 +172,7 @@ memerr_interrupt(arg)
 {
 	struct memerr_softc *sc = arg;
 	volatile struct memerr *me = sc->sc_reg;
-	u_char csr, ctx, err;
+	u_char csr, ctx;
 	u_int pa, va;
 	int pte;
 

@@ -1,3 +1,4 @@
+/*	$OpenBSD: control.c,v 1.5 1997/01/16 04:04:15 kstailey Exp $	*/
 /*	$NetBSD: control.c,v 1.14 1996/11/20 18:57:25 gwr Exp $	*/
 
 /*-
@@ -45,7 +46,8 @@
 #define CONTROL_ALIGN(x) (x & CONTROL_ADDR_MASK)
 #define CONTROL_ADDR_BUILD(space, va) (CONTROL_ALIGN(va)|space)
 
-int get_context()
+int
+get_context()
 {
 	int c;
 
@@ -53,35 +55,45 @@ int get_context()
 	return (c & CONTEXT_MASK);
 }
 
-void set_context(int c)
+void
+set_context(int c)
 {
+
 	set_control_byte((char *) CONTEXT_REG, c & CONTEXT_MASK);
 }
 
-vm_offset_t get_pte(va)
+vm_offset_t
+get_pte(va)
 	vm_offset_t va;
 {
+
 	return (vm_offset_t)
 		get_control_word((char *) CONTROL_ADDR_BUILD(PGMAP_BASE, va));
 }
 
-void set_pte(va, pte)
+void
+set_pte(va, pte)
 	vm_offset_t va, pte;
 {
+
 	set_control_word((char *) CONTROL_ADDR_BUILD(PGMAP_BASE, va),
 			 (unsigned int) pte);
 }
 
-unsigned char get_segmap(va)
+unsigned
+char get_segmap(va)
 	vm_offset_t va;
 {
+
 	return get_control_byte((char *) CONTROL_ADDR_BUILD(SEGMAP_BASE, va));
 }
 
-void set_segmap(va, sme)
+void
+set_segmap(va, sme)
 	vm_offset_t va;
 	unsigned char sme;
 {
+
 	set_control_byte((char *) CONTROL_ADDR_BUILD(SEGMAP_BASE, va), sme);
 }
 
@@ -91,7 +103,8 @@ void set_segmap(va, sme)
  * XXX - Should optimize:  "(get|set)_control_(word|byte)"
  * calls so this does save/restore of sfc/dfc only once!
  */
-void set_segmap_allctx(va, sme)
+void
+set_segmap_allctx(va, sme)
 	vm_offset_t va;
 	unsigned char sme;	/* segmap entry */
 {
@@ -105,7 +118,8 @@ void set_segmap_allctx(va, sme)
 		/* Inlined set_context() */
 		set_control_byte((char *) CONTEXT_REG, ctx);
 		/* Inlined set_segmap() */
-		set_control_byte((char *) CONTROL_ADDR_BUILD(SEGMAP_BASE, va), sme);
+		set_control_byte((char *) CONTROL_ADDR_BUILD(SEGMAP_BASE, va),
+			sme);
 	}
 
 	/* Inlined set_context(ctx); */

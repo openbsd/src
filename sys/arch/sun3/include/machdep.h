@@ -1,4 +1,4 @@
-
+/*	$OpenBSD: machdep.h,v 1.1 1997/01/16 04:04:08 kstailey Exp $	*/
 /*
  * Copyright (c) 1994 Gordon W. Ross
  * Copyright (c) 1993 Adam Glass
@@ -113,6 +113,8 @@ void	cninit __P((void));
 void	dumpconf __P((void));
 void	dumpsys __P((void));
 
+void	fb_unblank __P((void));
+
 int 	fpu_emulate __P((struct frame *, struct fpframe *));
 
 int 	getdfc __P((void));
@@ -124,6 +126,8 @@ vm_offset_t high_segment_alloc __P((int npages));
 
 void	initfpu __P((void));
 
+void	intreg_init __P((void));
+
 void	isr_init __P((void));
 void	isr_config __P((void));
 
@@ -131,12 +135,16 @@ void	m68881_save __P((struct fpframe *));
 void	m68881_restore __P((struct fpframe *));
 
 void	netintr __P((void));
+
+void	proc_do_uret __P((void));
 void	proc_trampoline __P((void));
 
 void	pmap_bootstrap __P((void));
 int 	pmap_fault_reload __P((struct pmap *, vm_offset_t, int));
 void	pmap_get_ksegmap __P((u_char *));
 void	pmap_get_pagemap __P((int *pt, int off));
+
+int	reboot2 __P((int, char *));
 
 void	regdump __P((struct frame *, int));
 

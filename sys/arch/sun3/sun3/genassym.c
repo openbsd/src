@@ -1,3 +1,4 @@
+/*	$OpenBSD: genassym.c,v 1.6 1997/01/16 04:04:21 kstailey Exp $	*/
 /*	$NetBSD: genassym.c,v 1.32 1996/10/23 16:39:27 gwr Exp $	*/
 
 /*
@@ -47,14 +48,15 @@
 
 #include <vm/vm.h>
 
+#include <machine/control.h>
 #include <machine/cpu.h>
+#include <machine/dvma.h>
 #include <machine/pcb.h>
 #include <machine/psl.h>
 #include <machine/pte.h>
-#include <machine/control.h>
+#include <machine/machdep.h>
 #include <machine/mon.h>
 #include <machine/vmparam.h>
-#include <machine/dvma.h>
 
 #include "intersil7170.h"
 #include "interreg.h"
@@ -84,6 +86,9 @@ struct mytrapframe {
 #define	def1(name) def("name", name)
 #endif
 
+extern void printf __P((char *fmt, ...));
+extern void exit __P((int));
+
 void
 def(what, val)
 	char *what;
@@ -94,6 +99,7 @@ def(what, val)
 	printf(((val > 999) ? "0x%x\n" : "%d\n"), val);
 }
 
+int
 main()
 {
 	struct pcb *pcb = (struct pcb *) 0;
@@ -150,7 +156,7 @@ main()
 	def1(ENAMETOOLONG);
 
 	/* trap types: locore.s includes trap.h */
-	
+
 	/*
 	 * unix structure-isms
 	 */

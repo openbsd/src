@@ -1,3 +1,4 @@
+/*	$OpenBSD: xd.c,v 1.10 1997/01/16 04:03:55 kstailey Exp $	*/
 /*	$NetBSD: xd.c,v 1.10 1996/10/13 03:47:39 christos Exp $	*/
 
 /*
@@ -214,11 +215,11 @@ inline void xdc_rqinit __P((struct xd_iorq *, struct xdc_softc *,
 			    struct xd_softc *, int, u_long, int,
 			    caddr_t, struct buf *));
 void	xdc_rqtopb __P((struct xd_iorq *, struct xd_iopb *, int, int));
-int	xdc_start __P((struct xdc_softc *, int));
+void	xdc_start __P((struct xdc_softc *, int));
 int	xdc_startbuf __P((struct xdc_softc *, struct xd_softc *, struct buf *));
 int	xdc_submit_iorq __P((struct xdc_softc *, int, int));
 void	xdc_tick __P((void *));
-int	xdc_xdreset __P((struct xdc_softc *, struct xd_softc *));
+void	xdc_xdreset __P((struct xdc_softc *, struct xd_softc *));
 
 /* machine interrupt hook */
 int	xdcintr __P((void *));
@@ -354,7 +355,6 @@ int xdcmatch(parent, match, aux)
 	struct device *parent;
 	void   *match, *aux;
 {
-	struct cfdata *cf = match;
 	struct confargs *ca = aux;
 	int x;
 
@@ -384,7 +384,7 @@ xdcattach(parent, self, aux)
 	struct xdc_softc *xdc = (void *) self;
 	struct confargs *ca = aux;
 	struct xdc_attach_args xa;
-	int     lcv, rqno, err, pri;
+	int     lcv, rqno, err;
 	struct xd_iopb_ctrl *ctl;
 
 	/* get addressing and intr level stuff from autoconfig and load it
@@ -503,7 +503,6 @@ xdmatch(parent, match, aux)
 	void   *match, *aux;
 
 {
-	struct xdc_softc *xdc = (void *) parent;
 	struct cfdata *cf = match;
 	struct xdc_attach_args *xa = aux;
 
@@ -529,10 +528,9 @@ xdattach(parent, self, aux)
 	struct xd_softc *xd = (void *) self;
 	struct xdc_softc *xdc = (void *) parent;
 	struct xdc_attach_args *xa = aux;
-	int     rqno, err, spt, mb, blk, lcv, fmode, s, newstate;
+	int     rqno, err, spt = 0, mb, blk, lcv, fmode, s = -1, newstate;
 	struct xd_iopb_drive *driopb;
 	struct dkbad *dkb;
-	struct bootpath *bp;
 
 	/*
 	 * Always re-initialize the disk structure.  We want statistics
@@ -964,7 +962,7 @@ xdsize(dev)
 
 {
 	struct xd_softc *xdsc;
-	int     unit, part, size;
+	int part, size;
 
 	/* valid unit?  try an open */
 
@@ -1103,8 +1101,6 @@ xdcintr(v)
 
 {
 	struct xdc_softc *xdcsc = v;
-	struct xd_softc *xd;
-	struct buf *bp;
 
 	/* kick the event counter */
 
@@ -1286,7 +1282,6 @@ xdc_cmd(xdcsc, cmd, subfn, unit, block, scnt, dptr, fullmode)
 
 {
 	int     rqno, submode = XD_STATE(fullmode), retry;
-	u_long  dp;
 	struct xd_iorq *iorq;
 	struct xd_iopb *iopb;
 
@@ -1355,7 +1350,7 @@ xdc_startbuf(xdcsc, xdsc, bp)
 	struct xd_iorq *iorq;
 	struct xd_iopb *iopb;
 	struct buf *wq;
-	u_long  block, dp;
+	u_long  block;
 	caddr_t dbuf;
 
 	if (!xdcsc->nfree)
@@ -1631,7 +1626,7 @@ xdc_piodriver(xdcsc, iorqno, freeone)
  * xdc_reset: reset one drive.   NOTE: assumes xdc was just reset.
  * we steal iopb[0] for this, but we put it back when we are done.
  */
-int 
+void
 xdc_xdreset(xdcsc, xdsc)
 	struct xdc_softc *xdcsc;
 	struct xd_softc *xdsc;
@@ -1640,6 +1635,7 @@ xdc_xdreset(xdcsc, xdsc)
 	struct xd_iopb tmpiopb;
 	u_long  addr;
 	int     del;
+
 	bcopy(xdcsc->iopbase, &tmpiopb, sizeof(tmpiopb));
 	bzero(xdcsc->iopbase, sizeof(tmpiopb));
 	xdcsc->iopbase->comm = XDCMD_RST;
@@ -1672,7 +1668,7 @@ xdc_reset(xdcsc, quiet, blastmode, error, xdsc)
 	struct xd_softc *xdsc;
 
 {
-	int     del = 0, lcv, poll = -1, retval = XD_ERR_AOK;
+	int     del = 0, lcv, retval = XD_ERR_AOK;
 	int     oldfree = xdcsc->nfree;
 	struct xd_iorq *iorq;
 
@@ -1761,13 +1757,14 @@ xdc_reset(xdcsc, quiet, blastmode, error, xdsc)
  * xdc_start: start all waiting buffers
  */
 
-int 
+void
 xdc_start(xdcsc, maxio)
 	struct xdc_softc *xdcsc;
 	int     maxio;
 
 {
 	int     rqno;
+
 	while (maxio && xdcsc->nwait &&
 		(xdcsc->xdc->xdc_csr & XDC_ADDING) == 0) {
 		XDC_GET_WAITER(xdcsc, rqno);	/* note: rqno is an "out"
@@ -1777,6 +1774,7 @@ xdc_start(xdcsc, maxio)
 		maxio--;
 	}
 }
+
 /*
  * xdc_remove_iorq: remove "done" IOPB's.
  */
@@ -1788,7 +1786,6 @@ xdc_remove_iorq(xdcsc)
 {
 	int     errno, rqno, comm, errs;
 	struct xdc *xdc = xdcsc->xdc;
-	u_long  addr;
 	struct xd_iopb *iopb;
 	struct xd_iorq *iorq;
 	struct buf *bp;
@@ -2063,7 +2060,7 @@ xdc_tick(arg)
 	struct xdc_softc *xdcsc = arg;
 	int     lcv, s, reset = 0;
 #ifdef XDC_DIAG
-	int     wait, run, free, done, whd;
+	int     wait, run, free, done, whd = 0;
 	u_char  fqc[XDC_MAXIOPB], wqc[XDC_MAXIOPB], mark[XDC_MAXIOPB];
 	s = splbio();
 	wait = xdcsc->nwait;
@@ -2093,7 +2090,7 @@ xdc_tick(arg)
 		printf("\n");
 		for (lcv = 0; lcv < XDC_MAXIOPB; lcv++) {
 			if (mark[lcv] == 0)
-				printf("MARK: running %d: mode %d done %d errs %d errno 0x%x ttl %d buf %x\n",
+				printf("MARK: running %d: mode %d done %d errs %d errno 0x%x ttl %d buf %p\n",
 				lcv, xdcsc->reqs[lcv].mode,
 				xdcsc->iopbase[lcv].done,
 				xdcsc->iopbase[lcv].errs,
@@ -2241,7 +2238,7 @@ xdc_ioctlcmd(xd, dev, xio)
 	if (xio->dlen) {
 		dvmabuf = dvma_malloc(xio->dlen);
 		if (xio->cmd == XDCMD_WR || xio->cmd == XDCMD_XWR) {
-			if (err = copyin(xio->dptr, dvmabuf, xio->dlen)) {
+			if ((err = copyin(xio->dptr, dvmabuf, xio->dlen))) {
 				dvma_free(dvmabuf, xio->dlen);
 				return (err);
 			}

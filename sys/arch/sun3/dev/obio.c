@@ -1,3 +1,4 @@
+/*	$OpenBSD: obio.c,v 1.6 1997/01/16 04:03:51 kstailey Exp $	*/
 /*	$NetBSD: obio.c,v 1.23 1996/11/20 18:56:56 gwr Exp $	*/
 
 /*-
@@ -41,15 +42,18 @@
 #include <sys/device.h>
 
 #include <machine/autoconf.h>
+#include <machine/control.h>
 #include <machine/pte.h>
 #include <machine/mon.h>
-#include <machine/isr.h>
 #include <machine/obio.h>
 
 static int  obio_match __P((struct device *, void *, void *));
 static void obio_attach __P((struct device *, struct device *, void *));
 static int  obio_print __P((void *, const char *parentname));
-static int	obio_submatch __P((struct device *, void *, void *));
+static int  obio_submatch __P((struct device *, void *, void *));
+
+static void save_prom_mappings __P((void));
+static void make_required_mappings __P((void));
 
 struct cfattach obio_ca = {
 	sizeof(struct device), obio_match, obio_attach
@@ -190,14 +194,14 @@ caddr_t obio_find_mapping(int pa, int size)
  */
 #define PGBITS (PG_VALID|PG_WRITE|PG_SYSTEM)
 
-static void save_prom_mappings()
+static void
+save_prom_mappings()
 {
-	vm_offset_t pa;
-	caddr_t segva, pgva;
+	vm_offset_t pa, segva, pgva;
 	int pte, sme, i;
-	
-	segva = (caddr_t)MONSTART;
-	while (segva < (caddr_t)MONEND) {
+
+	segva = (vm_offset_t)MONSTART;
+	while (segva < (vm_offset_t)MONEND) {
 		sme = get_segmap(segva);
 		if (sme == SEGINV) {
 			segva += NBSG;
@@ -222,7 +226,7 @@ static void save_prom_mappings()
 				{
 					i = pa >> SAVE_SHIFT;
 					if (prom_mappings[i] == NULL) {
-						prom_mappings[i] = pgva;
+						prom_mappings[i] = (caddr_t)pgva;
 #ifdef	DEBUG
 						mon_printf("obio: found pa=0x%x\n", pa);
 #endif
@@ -257,11 +261,11 @@ static vm_offset_t required_mappings[] = {
 	(vm_offset_t)-1,	/* end marker */
 };
 
-static void make_required_mappings()
+static void
+make_required_mappings()
 {
-	vm_offset_t pa, *rmp;
-	int idx;
-	
+	vm_offset_t *rmp;
+
 	rmp = required_mappings;
 	while (*rmp != (vm_offset_t)-1) {
 		if (!obio_find_mapping(*rmp, NBPG)) {
@@ -284,13 +288,15 @@ static void make_required_mappings()
  * accessible before the mainline OBIO autoconfiguration as part of
  * configure().
  */
-void obio_init()
+void
+obio_init()
 {
 	save_prom_mappings();
 	make_required_mappings();
 }
 
-caddr_t obio_alloc(obio_addr, obio_size)
+caddr_t
+obio_alloc(obio_addr, obio_size)
 	int obio_addr, obio_size;
 {
 	caddr_t cp;

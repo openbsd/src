@@ -1,3 +1,4 @@
+/*	$OpenBSD: pmap.h,v 1.6 1997/01/16 04:04:09 kstailey Exp $	*/
 /*	$NetBSD: pmap.h,v 1.15 1996/11/20 18:57:16 gwr Exp $	*/
 
 /*-
@@ -56,6 +57,9 @@ typedef struct pmap *pmap_t;
 
 #ifdef _KERNEL
 struct pmap	kernel_pmap_store;
+struct pcb;
+void pmap_activate   __P((pmap_t pmap, struct pcb *pcbp));
+void pmap_deactivate __P((pmap_t pmap, struct pcb *pcbp));
 
 #define	pmap_kernel()			(&kernel_pmap_store)
 

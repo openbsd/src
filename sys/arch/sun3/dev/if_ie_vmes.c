@@ -1,3 +1,4 @@
+/*	$OpenBSD: if_ie_vmes.c,v 1.5 1997/01/16 04:03:48 kstailey Exp $	*/
 /*	$NetBSD: if_ie_vmes.c,v 1.5 1996/11/20 18:56:51 gwr Exp $	*/
 
 /*-
@@ -58,7 +59,6 @@
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
 #include <machine/dvma.h>
-#include <machine/isr.h>
 #include <machine/idprom.h>
 #include <machine/vmparam.h>
 
@@ -74,7 +74,8 @@ static void ie_vmerun __P((struct ie_softc *));
  * zero/copy functions: OBIO can use the normal functions, but VME
  *    must do only byte or half-word (16 bit) accesses...
  */
-static void wcopy(), wzero();
+static void wcopy __P((const void *, void *, u_int));
+static void wzero __P((void *, u_int));
 
 /*
  * New-style autoconfig attachment
@@ -94,7 +95,7 @@ ie_vmes_match(parent, vcf, args)
 	void *vcf, *args;
 {
 	struct confargs *ca = args;
-	int x, sz;
+	int x;
 
 #ifdef	DIAGNOSTIC
 	if (ca->ca_bustype != BUS_VME16) {
@@ -205,7 +206,7 @@ ie_vmes_attach(parent, self, args)
 /*
  * MULTIBUS/VME support
  */
-void 
+void
 ie_vmereset(sc)
 	struct ie_softc *sc;
 {
@@ -215,7 +216,7 @@ ie_vmereset(sc)
 	iev->status = 0;
 }
 
-void 
+void
 ie_vmeattend(sc)
 	struct ie_softc *sc;
 {
@@ -225,7 +226,7 @@ ie_vmeattend(sc)
 	iev->status &= ~IEVME_ATTEN;	/* down. */
 }
 
-void 
+void
 ie_vmerun(sc)
 	struct ie_softc *sc;
 {

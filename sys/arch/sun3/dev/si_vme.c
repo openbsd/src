@@ -1,3 +1,4 @@
+/*	$OpenBSD: si_vme.c,v 1.6 1997/01/16 04:03:54 kstailey Exp $	*/
 /*	$NetBSD: si_vme.c,v 1.7 1996/11/20 18:57:01 gwr Exp $	*/
 
 /*-
@@ -95,7 +96,6 @@
 #include <scsi/scsiconf.h>
 
 #include <machine/autoconf.h>
-#include <machine/isr.h>
 #include <machine/obio.h>
 #include <machine/dvma.h>
 
@@ -135,7 +135,6 @@ si_vmes_match(parent, vcf, args)
 	struct device	*parent;
 	void		*vcf, *args;
 {
-	struct cfdata	*cf = vcf;
 	struct confargs *ca = args;
 	int probe_addr;
 
@@ -247,7 +246,7 @@ si_vme_intr_on(ncr_sc)
 	/* Clear the count so nothing happens. */
 	si->dma_counth = 0;
 	si->dma_countl = 0;
-	
+
 	/* Clear the start address too. (paranoid?) */
 	si->dma_addrh = 0;
 	si->dma_addrl = 0;
@@ -306,7 +305,7 @@ si_vme_dma_setup(ncr_sc)
 
 #ifdef	DEBUG
 	if (si_debug & 2) {
-		printf("si_dma_setup: dh=0x%x, pa=0x%x, xlen=%d\n",
+		printf("si_dma_setup: dh=%p, pa=0x%lx, xlen=%d\n",
 			   dh, data_pa, xlen);
 	}
 #endif
@@ -341,7 +340,7 @@ si_vme_dma_setup(ncr_sc)
 #if 0
 	/* Clear FIFO counter. (also hits dma_count) */
 	si->fifo_cnt_hi = 0;
-	si->fifo_count = 0;		
+	si->fifo_count = 0;
 #endif
 }
 
@@ -354,7 +353,6 @@ si_vme_dma_start(ncr_sc)
 	struct sci_req *sr = ncr_sc->sc_current;
 	struct si_dma_handle *dh = sr->sr_dma_hand;
 	volatile struct si_regs *si = sc->sc_regs;
-	long data_pa;
 	int s, xlen;
 
 	xlen = sc->sc_reqlen;

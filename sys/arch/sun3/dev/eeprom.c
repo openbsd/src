@@ -1,3 +1,4 @@
+/*	$OpenBSD: eeprom.c,v 1.6 1997/01/16 04:03:44 kstailey Exp $	*/
 /*	$NetBSD: eeprom.c,v 1.8 1996/03/26 15:16:06 gwr Exp $	*/
 
 /*
@@ -36,27 +37,28 @@
  */
 
 #include <sys/param.h>
+#include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/conf.h>
 #include <sys/buf.h>
 #include <sys/malloc.h>
+#include <sys/proc.h>
 
 #include <machine/autoconf.h>
 #include <machine/obio.h>
 #include <machine/eeprom.h>
 
-#define HZ 100	/* XXX */
-
 int ee_console;		/* for convenience of drivers */
-
-static int ee_update(caddr_t buf, int off, int cnt);
 
 static char *eeprom_va;
 static int ee_busy, ee_want;
 
 static int  eeprom_match __P((struct device *, void *vcf, void *args));
 static void eeprom_attach __P((struct device *, struct device *, void *));
+static int  ee_update __P((caddr_t, int, int));
+static int  ee_take __P((void));
+static void ee_give __P((void));
 
 struct cfattach eeprom_ca = {
 	sizeof(struct device), eeprom_match, eeprom_attach
@@ -75,10 +77,10 @@ void eeprom_init()
 
 static int
 eeprom_match(parent, vcf, args)
-    struct device *parent;
-    void *vcf, *args;
+	struct device *parent;
+	void *vcf, *args;
 {
-    struct cfdata *cf = vcf;
+	struct cfdata *cf = vcf;
 	struct confargs *ca = args;
 	int pa;
 
@@ -109,15 +111,16 @@ eeprom_attach(parent, self, args)
 	struct device *self;
 	void *args;
 {
-	struct confargs *ca = args;
 
 	printf("\n");
 }
 
 
-static int ee_take()	/* Take the lock. */
+static int
+ee_take()	/* Take the lock. */
 {
 	int error = 0;
+
 	while (ee_busy) {
 		ee_want = 1;
 		error = tsleep(&ee_busy, PZERO | PCATCH, "eeprom", 0);
@@ -130,8 +133,10 @@ static int ee_take()	/* Take the lock. */
 	return error;
 }
 
-static void ee_give()	/* Give the lock. */
+static void
+ee_give()	/* Give the lock. */
 {
+
 	ee_busy = 0;
 	if (ee_want) {
 		ee_want = 0;
@@ -139,7 +144,8 @@ static void ee_give()	/* Give the lock. */
 	}
 }
 
-int eeprom_uio(struct uio *uio)
+int
+eeprom_uio(struct uio *uio)
 {
 	int error;
 	int off;	/* NOT off_t */
@@ -190,7 +196,8 @@ int eeprom_uio(struct uio *uio)
 /*
  * Update the EEPROM from the passed buf.
  */
-static int ee_update(char *buf, int off, int cnt)
+static int
+ee_update(char *buf, int off, int cnt)
 {
 	volatile char *ep;
 	char *bp;
@@ -215,7 +222,7 @@ static int ee_update(char *buf, int off, int cnt)
 			 * holding the lock to prevent all access to
 			 * the EEPROM while it recovers.
 			 */
-			(void)tsleep(eeprom_va, PZERO-1, "eeprom", HZ/50);
+			(void)tsleep(eeprom_va, PZERO-1, "eeprom", hz/50);
 		}
 		/* Make sure the write worked. */
 		if (*ep != *bp)
@@ -232,7 +239,8 @@ static int ee_update(char *buf, int off, int cnt)
  * things like the zs driver very early to find out
  * which device should be used as the console.
  */
-int ee_get_byte(int off, int canwait)
+int
+ee_get_byte(int off, int canwait)
 {
 	int c = -1;
 	if ((off < 0) || (off >= OBIO_EEPROM_SIZE))

@@ -1,3 +1,4 @@
+/*	$OpenBSD: if_ie.c,v 1.9 1997/01/16 04:03:46 kstailey Exp $	*/
 /*	$NetBSD: if_ie.c,v 1.15 1996/10/30 00:24:33 gwr Exp $ */
 
 /*-
@@ -174,13 +175,28 @@ void iestart __P((struct ifnet *));
 void iereset __P((struct ie_softc *));
 static void ie_readframe __P((struct ie_softc *, int));
 static void ie_drop_packet_buffer __P((struct ie_softc *));
-static int command_and_wait __P((struct ie_softc *, int,
-    void volatile *, int));
+static int command_and_wait __P((struct ie_softc *, int, void volatile *, int));
+static __inline__ void ie_setup_config __P((volatile struct ie_config_cmd *,
+					    int, int));
 static void ierint __P((struct ie_softc *));
 static void ietint __P((struct ie_softc *));
 static void setup_bufs __P((struct ie_softc *));
 static int mc_setup __P((struct ie_softc *, void *));
 static void mc_reset __P((struct ie_softc *));
+static int ie_setupram __P((struct ie_softc *));
+static __inline__ caddr_t Align __P((caddr_t));
+static __inline__ void ie_ack __P((struct ie_softc *, u_int));
+static __inline__ u_short ether_cmp __P((u_char *, u_char *));
+static __inline__ int check_eh __P((struct ie_softc *, struct ether_header *,
+				    int *));
+static __inline__ int ie_buflen __P((struct ie_softc *, int));
+static __inline__ int ie_packet_len __P((struct ie_softc *));
+static __inline__ void iexmit __P((struct ie_softc *));
+static __inline__ int ieget __P((struct ie_softc *, struct mbuf **,
+				 struct ether_header *, int *));
+static void chan_attn_timeout __P((void *));
+static void run_tdr __P((struct ie_softc *, struct ie_tdr_cmd *));
+static void iestop __P((struct ie_softc *));
 
 #ifdef IEDEBUG
 void print_rbd __P((volatile struct ie_recv_buf_desc *));
@@ -213,7 +229,7 @@ struct cfdriver ie_cd = {
  * but since we have the inline facility, it makes sense to use that
  * instead.
  */
-static inline void
+static __inline__ void
 ie_setup_config(cmd, promiscuous, manchester)
 	volatile struct ie_config_cmd *cmd;
 	int promiscuous, manchester;
@@ -236,7 +252,7 @@ ie_setup_config(cmd, promiscuous, manchester)
 	cmd->ie_junk = 0xff;
 }
 
-static inline caddr_t
+static __inline__ caddr_t
 Align(ptr)
 	caddr_t ptr;
 {
@@ -246,7 +262,7 @@ Align(ptr)
 	return (caddr_t)l;
 }
 
-static inline void
+static __inline__ void
 ie_ack(sc, mask)
 	struct ie_softc *sc;
 	u_int   mask;
@@ -349,8 +365,8 @@ ie_intr(v)
 		volatile struct ievme *iev = (volatile struct ievme *)sc->sc_reg;
 		if (iev->status & IEVME_PERR) {
 			printf("%s: parity error (ctrl %x @ %02x%04x)\n",
-			    iev->pectrl, iev->pectrl & IEVME_HADDR,
-			    iev->peaddr);
+			       sc->sc_dev.dv_xname,
+			       iev->pectrl, iev->pectrl & IEVME_HADDR, iev->peaddr);
 			iev->pectrl = iev->pectrl | IEVME_PARACK;
 		}
 	}
@@ -455,7 +471,6 @@ ietint(sc)
 	struct ie_softc *sc;
 {
 	int     status;
-	int     i;
 
 	sc->sc_arpcom.ac_if.if_timer = 0;
 	sc->sc_arpcom.ac_if.if_flags &= ~IFF_OACTIVE;
@@ -467,7 +482,7 @@ ietint(sc)
 
 	if (status & IE_STAT_OK) {
 		sc->sc_arpcom.ac_if.if_opackets++;
-		sc->sc_arpcom.ac_if.if_collisions += 
+		sc->sc_arpcom.ac_if.if_collisions +=
 		  SWAP(status & IE_XS_MAXCOLL);
 	} else if (status & IE_STAT_ABORT) {
 		printf("%s: send aborted\n", sc->sc_dev.dv_xname);
@@ -513,7 +528,7 @@ ietint(sc)
  * This expands to 10 short m68k instructions! -gwr
  * Note: use this like bcmp()
  */
-static inline u_short
+static __inline__ u_short
 ether_cmp(one, two)
 	u_char *one, *two;
 {
@@ -541,7 +556,7 @@ ether_cmp(one, two)
  * only client which will fiddle with IFF_PROMISC is BPF.  This is
  * probably a good assumption, but we do not make it here.  (Yet.)
  */
-static inline int
+static __inline__ int
 check_eh(sc, eh, to_bpf)
 	struct ie_softc *sc;
 	struct ether_header *eh;
@@ -648,7 +663,7 @@ check_eh(sc, eh, to_bpf)
  * IE_RBUF_SIZE is an even power of two.  If somehow the act_len exceeds
  * the size of the buffer, then we are screwed anyway.
  */
-static inline int
+static __inline__ int
 ie_buflen(sc, head)
 	struct ie_softc *sc;
 	int     head;
@@ -658,7 +673,7 @@ ie_buflen(sc, head)
 	    & (IE_RBUF_SIZE | (IE_RBUF_SIZE - 1)));
 }
 
-static inline int
+static __inline__ int
 ie_packet_len(sc)
 	struct ie_softc *sc;
 {
@@ -691,7 +706,7 @@ ie_packet_len(sc)
  * command to the chip to be executed.  On the way, if we have a BPF listener
  * also give him a copy.
  */
-inline static void
+static __inline__ void
 iexmit(sc)
 	struct ie_softc *sc;
 {
@@ -720,7 +735,7 @@ iexmit(sc)
 	sc->xmit_cmds[sc->xctail]->ie_xmit_desc =
 	    MK_16(sc->sc_maddr, sc->xmit_buffs[sc->xctail]);
 
-	sc->scb->ie_command_list = 
+	sc->scb->ie_command_list =
 	  MK_16(sc->sc_maddr, sc->xmit_cmds[sc->xctail]);
 	command_and_wait(sc, IE_CU_START, 0, 0);
 
@@ -738,7 +753,7 @@ iexmit(sc)
  * chain of partially-full mbufs.  This should help to speed up the
  * operation considerably.  (Provided that it works, of course.)
  */
-static inline int
+static __inline__ int
 ieget(sc, mp, ehp, to_bpf)
 	struct ie_softc *sc;
 	struct mbuf **mp;
@@ -1091,7 +1106,7 @@ iestart(ifp)
 /*
  * set up IE's ram space
  */
-int 
+static int
 ie_setupram(sc)
 	struct ie_softc *sc;
 {
@@ -1125,7 +1140,7 @@ ie_setupram(sc)
 
 	if (iscp->ie_busy) {
 		splx(s);
-		return 0;
+		return (0);
 	}
 	/*
 	 * Acknowledge any interrupts we may have caused...
@@ -1133,7 +1148,7 @@ ie_setupram(sc)
 	ie_ack(sc, IE_ST_WHENCE);
 	splx(s);
 
-	return 1;
+	return (1);
 }
 
 void
@@ -1172,10 +1187,10 @@ iereset(sc)
  * This is called if we time out.
  */
 static void
-chan_attn_timeout(rock)
-	caddr_t rock;
+chan_attn_timeout(arg)
+	void *arg;
 {
-	*(int *) rock = 1;
+	*((int *) arg) = 1;
 }
 
 /*
@@ -1302,13 +1317,11 @@ run_tdr(sc, cmd)
  * note: this function was written to be easy to understand, rather than
  *       highly efficient (it isn't in the critical path).
  */
-static void 
+static void
 setup_bufs(sc)
 	struct ie_softc *sc;
 {
 	caddr_t ptr = sc->buf_area;	/* memory pool */
-	volatile struct ie_recv_frame_desc *rfd = (void *) ptr;
-	volatile struct ie_recv_buf_desc *rbd;
 	int     n, r;
 
 	/*
@@ -1318,14 +1331,15 @@ setup_bufs(sc)
 	(sc->sc_bzero)(ptr, sc->buf_area_sz);
 	ptr = Align(ptr);	/* set alignment and stick with it */
 
-	n = (int)Align(sizeof(struct ie_xmit_cmd)) +
-	    (int)Align(sizeof(struct ie_xmit_buf)) + IE_TBUF_SIZE;
+	n = (int)Align((caddr_t)sizeof(struct ie_xmit_cmd)) +
+	    (int)Align((caddr_t)sizeof(struct ie_xmit_buf)) + IE_TBUF_SIZE;
 	n *= NTXBUF;		/* n = total size of xmit area */
 
 	n = sc->buf_area_sz - n;/* n = free space for recv stuff */
 
-	r = (int)Align(sizeof(struct ie_recv_frame_desc)) +
-	    (((int)Align(sizeof(struct ie_recv_buf_desc)) + IE_RBUF_SIZE) * B_PER_F);
+	r = (int)Align((caddr_t)sizeof(struct ie_recv_frame_desc)) +
+	    (((int)Align((caddr_t)sizeof(struct ie_recv_buf_desc)) +
+	    IE_RBUF_SIZE) * B_PER_F);
 
 	/* r = size of one R frame */
 
@@ -1471,7 +1485,6 @@ ieinit(sc)
 {
 	volatile struct ie_sys_ctl_block *scb = sc->scb;
 	void *ptr;
-	int     n;
 
 	ptr = sc->buf_area;
 

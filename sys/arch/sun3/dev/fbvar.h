@@ -1,3 +1,4 @@
+/*	$OpenBSD: fbvar.h,v 1.5 1997/01/16 04:03:45 kstailey Exp $	*/
 /*	$NetBSD: fbvar.h,v 1.3 1996/10/29 19:27:37 gwr Exp $	*/
 
 /*
@@ -80,4 +81,3 @@ struct fbdriver {
 
 void	fb_attach __P((struct fbdevice *, int));
 int 	fbioctlfb __P((struct fbdevice *, u_long, caddr_t));
-extern int enoioctl();

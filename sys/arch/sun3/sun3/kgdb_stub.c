@@ -1,3 +1,4 @@
+/*	$OpenBSD: kgdb_stub.c,v 1.5 1997/01/16 04:04:25 kstailey Exp $	*/
 /*	$NetBSD: kgdb_stub.c,v 1.6 1996/10/23 16:30:48 gwr Exp $	*/
 
 /*
@@ -57,17 +58,16 @@
 #include <machine/control.h>
 #include <machine/cpu.h>
 #include <machine/frame.h>
+#include <machine/machdep.h>
 #include <machine/psl.h>
 #include <machine/pte.h>
 #include <machine/reg.h>
 #include <machine/trap.h>
 
 #include <sun3/sun3/kgdb_proto.h>
+#include <machine/db_machdep.h>
 #include <machine/remote-sl.h>
 
-/* These are in db_memrw.c */
-extern void db_read_bytes  __P((vm_offset_t addr, size_t size, char *data));
-extern void db_write_bytes __P((vm_offset_t addr, size_t size, char *data));
 
 #ifndef KGDBDEV
 #define KGDBDEV -1
@@ -338,6 +338,7 @@ kgdb_copy(vsrc, vdst, len)
 		*dst++ = *src++;
 }
 
+#if 0
 /* ditto for bzero */
 static void
 kgdb_zero(vptr, len)
@@ -349,6 +350,7 @@ kgdb_zero(vptr, len)
 	while (--len >= 0)
 		*ptr++ = (char) 0;
 }
+#endif
 
 /*
  * Translate the values stored in the kernel regs struct to the format
@@ -599,6 +601,7 @@ out:
  * XXX: Should we just use the PTE bits?  Why not?
  * XXX: Better yet, setup a fault handler?
  */
+int
 kgdb_acc(addr, len)
 	caddr_t addr;
 	int len;

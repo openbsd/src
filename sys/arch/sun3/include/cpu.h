@@ -111,6 +111,7 @@ extern int want_resched; /* resched() was called */
  * isr_soft_request() so this scheme just multiplexes four
  * software interrupt `sources' on the level one handler.
  */
+extern void isr_soft_request __P((int level));
 union sun3sir {
 	int 	sir_any;
 	char	sir_which[4];

@@ -1,3 +1,4 @@
+/*	$OpenBSD: sireg.h,v 1.2 1997/01/16 04:03:54 kstailey Exp $	*/
 /*	$NetBSD: sireg.h,v 1.1 1996/03/26 15:01:14 gwr Exp $	*/
 
 /*
@@ -12,12 +13,12 @@
 
 /*
  * Some of these registers apply to only one interface and some
- * apply to both. The registers which apply to the Sun3/50 onboard 
+ * apply to both. The registers which apply to the Sun3/50 onboard
  * version only are udc_rdata and udc_raddr. The registers which
  * apply to the Sun3 vme version only are dma_addr, dma_count, bpr,
- * iv_am, and bcrh. Thus, the sbc registers, fifo_data, bcr, and csr 
+ * iv_am, and bcrh. Thus, the sbc registers, fifo_data, bcr, and csr
  * apply to both interfaces.
- * One other feature of the vme interface: a write to the dma count 
+ * One other feature of the vme interface: a write to the dma count
  * register also causes a write to the fifo byte count register and
  * vis versa.
  */
@@ -53,13 +54,13 @@ struct si_regs {
 	u_short			fifo_data;	/* fifo data register */
 						/* holds extra byte on odd */
 						/* byte dma read */
-	u_short			fifo_count;		/* fifo byte count */
+	u_short			fifo_count;	/* fifo byte count */
 	u_short			si_csr;		/* control/status register */
 
 	/* The rest of these are on the VME interface only: */
-	u_short			si_bprh;		/* byte pack, high (VME only) */
-	u_short			si_bprl;		/* byte pack, low  (VME only) */
-	u_short			si_iv_am;		/* bits 0-7: intr vector */
+	u_short			si_bprh;	/* byte pack, high (VME only) */
+	u_short			si_bprl;	/* byte pack, low  (VME only) */
+	u_short			si_iv_am;	/* bits 0-7: intr vector */
 						/* bits 8-13: addr modifier (VME only) */
 						/* bits 14-15: unused */
 	u_short			fifo_cnt_hi;	/* high part of fifo_count (VME only) */

@@ -1,3 +1,4 @@
+/*	$OpenBSD: stub.c,v 1.5 1997/01/16 04:04:32 kstailey Exp $	*/
 /*	$NetBSD: stub.c,v 1.13 1996/11/20 18:57:37 gwr Exp $	*/
 
 /*-
@@ -40,6 +41,10 @@
  * Stubs to supply things needed when some options are OFF.
  */
 
+
+#include <sys/param.h>
+
+#include <machine/machdep.h>
 
 /* Called by autoconf.c */
 #ifndef	GENERIC

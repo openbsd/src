@@ -1,3 +1,4 @@
+/*	$OpenBSD: obmem.c,v 1.6 1997/01/16 04:03:51 kstailey Exp $	*/
 /*	$NetBSD: obmem.c,v 1.11 1996/11/20 18:56:57 gwr Exp $	*/
 
 /*-

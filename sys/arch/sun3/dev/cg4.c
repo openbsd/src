@@ -1,3 +1,4 @@
+/*	$OpenBSD: cg4.c,v 1.8 1997/01/16 04:03:43 kstailey Exp $	*/
 /*	$NetBSD: cg4.c,v 1.11 1996/10/29 19:54:19 gwr Exp $	*/
 
 /*
@@ -65,9 +66,11 @@
 #include <sys/malloc.h>
 #include <sys/mman.h>
 #include <sys/tty.h>
+#include <sys/conf.h>
 
 #include <vm/vm.h>
 
+#include <machine/conf.h>
 #include <machine/cpu.h>
 #include <machine/fbio.h>
 #include <machine/autoconf.h>
@@ -117,7 +120,6 @@ struct cfdriver cgfour_cd = {
 };
 
 /* frame buffer generic driver */
-int cg4open(), cg4close(), cg4mmap();
 
 static int	cg4gattr   __P((struct fbdevice *, struct fbgattr *));
 static int	cg4gvideo  __P((struct fbdevice *, int *));
@@ -136,7 +138,8 @@ static void	cg4b_ldcmap __P((struct cg4_softc *));
 static struct fbdriver cg4_fbdriver = {
 	cg4open, cg4close, cg4mmap, cg4gattr,
 	cg4gvideo, cg4svideo,
-	cg4getcmap, cg4putcmap };
+	cg4getcmap, cg4putcmap
+};
 
 /*
  * Match a cg4.
@@ -230,7 +233,7 @@ cg4attach(parent, self, args)
 		sc->sc_btcm = NULL;
 		cg4a_init(sc);
 		break;
-		
+
 	case CG4_TYPE_B:	/* Sun3/60 */
 	default:
 		sc->sc_va_cmap = (struct bt_regs *)
@@ -292,7 +295,7 @@ cg4ioctl(dev, cmd, data, flags, p)
  * 	128k overlay data memory
  * 	128k overlay enable bitmap
  * 	1024k color memory
- * 
+ *
  * The hardware really looks like this (starting at ca_paddr)
  *  4 bytes Brooktree DAC registers
  *  2MB-4 gap
@@ -343,7 +346,8 @@ cg4mmap(dev, off, prot)
  */
 
 /* FBIOGATTR: */
-static int  cg4gattr(fb, fba)
+static int
+cg4gattr(fb, fba)
 	struct fbdevice *fb;
 	struct fbgattr *fba;
 {
@@ -360,7 +364,8 @@ static int  cg4gattr(fb, fba)
 }
 
 /* FBIOGVIDEO: */
-static int  cg4gvideo(fb, on)
+static int
+cg4gvideo(fb, on)
 	struct fbdevice *fb;
 	int *on;
 {
@@ -371,7 +376,8 @@ static int  cg4gvideo(fb, on)
 }
 
 /* FBIOSVIDEO: */
-static int cg4svideo(fb, on)
+static int
+cg4svideo(fb, on)
 	struct fbdevice *fb;
 	int *on;
 {
@@ -390,7 +396,8 @@ static int cg4svideo(fb, on)
  * FBIOGETCMAP:
  * Copy current colormap out to user space.
  */
-static int cg4getcmap(fb, fbcm)
+static int
+cg4getcmap(fb, fbcm)
 	struct fbdevice *fb;
 	struct fbcmap *fbcm;
 {
@@ -420,7 +427,8 @@ static int cg4getcmap(fb, fbcm)
  * FBIOPUTCMAP:
  * Copy new colormap from user space and load.
  */
-static int cg4putcmap(fb, fbcm)
+static int 
+cg4putcmap(fb, fbcm)
 	struct fbdevice *fb;
 	struct fbcmap *fbcm;
 {

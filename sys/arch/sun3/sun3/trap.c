@@ -1,3 +1,4 @@
+/*	$OpenBSD: trap.c,v 1.8 1997/01/16 04:04:34 kstailey Exp $	*/
 /*	$NetBSD: trap.c,v 1.62 1996/12/17 21:35:31 gwr Exp $	*/
 
 /*
@@ -63,11 +64,10 @@
 #include <machine/cpu.h>
 #include <machine/db_machdep.h>
 #include <machine/endian.h>
+#include <machine/machdep.h>
 #include <machine/psl.h>
-#include <machine/trap.h>
 #include <machine/reg.h>
-
-#include "machdep.h"
+#include <machine/trap.h>
 
 #ifdef COMPAT_SUNOS
 #include <compat/sunos/sunos_syscall.h>
@@ -531,7 +531,7 @@ trap(type, code, v, frame)
 #endif
 				goto copyfault;
 			}
-			printf("vm_fault(%p, %x, %x, 0) -> %x\n",
+			printf("vm_fault(%p, %lx, %x, 0) -> %x\n",
 			       map, va, ftype, rv);
 			goto dopanic;
 		}

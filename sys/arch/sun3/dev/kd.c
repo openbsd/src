@@ -1,3 +1,4 @@
+/*	$OpenBSD: kd.c,v 1.7 1997/01/16 04:03:49 kstailey Exp $	*/
 /*	$NetBSD: kd.c,v 1.21 1996/11/20 18:56:55 gwr Exp $	*/
 
 /*-
@@ -55,11 +56,15 @@
 #include <sys/device.h>
 
 #include <machine/autoconf.h>
+#include <machine/conf.h>
+#include <machine/machdep.h>
 #include <machine/mon.h>
 #include <machine/psl.h>
 
 #include <dev/cons.h>
 #include <dev/sun/kbd_xlate.h>
+
+#include "zs_cons.h"
 
 #define	KDMAJOR 1
 #define PUT_WSIZE	64
@@ -81,7 +86,7 @@ static void kdstart(struct tty *);
 int kd_is_console;
 
 /*
- * This is called by kbd_attach() 
+ * This is called by kbd_attach()
  * XXX - Make this a proper child of kbd?
  */
 void
@@ -125,7 +130,7 @@ kdopen(dev, flag, mode, p)
 	struct kd_softc *kd;
 	int error, s, unit;
 	struct tty *tp;
-	
+
 	unit = minor(dev);
 	if (unit != 0)
 		return ENXIO;
@@ -259,16 +264,16 @@ kdparam(tp, t)
 	tp->t_ispeed = t->c_ispeed;
 	tp->t_ospeed = t->c_ospeed;
 	tp->t_cflag = t->c_cflag;
-	return 0;
+	return (0);
 }
 
 
-void
+int
 kdstop(tp, flag)
 	struct tty *tp;
 	int flag;
 {
-
+	return (0);
 }
 
 static void kd_later(void*);
@@ -389,12 +394,11 @@ kd_input(c)
  ****************************************************************/
 
 extern void *zs_conschan;
-extern int zs_getc();
-extern void nullcnprobe();
-cons_decl(kd);
 
 /* The debugger gets its own key translation state. */
 static struct kbd_state kdcn_state;
+
+cons_decl(kd);
 
 void
 kdcninit(cn)
@@ -462,7 +466,6 @@ kdcnputc(dev, c)
 	(romVectorPtr->fbWriteChar)(c & 0x7f);
 }
 
-extern void fb_unblank();
 void kdcnpollc(dev, on)
 	dev_t dev;
 	int on;

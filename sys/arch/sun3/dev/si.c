@@ -1,3 +1,4 @@
+/*	$OpenBSD: si.c,v 1.7 1997/01/16 04:03:52 kstailey Exp $	*/
 /*	$NetBSD: si.c,v 1.31 1996/11/20 18:56:59 gwr Exp $	*/
 
 /*-
@@ -91,7 +92,6 @@
 #include <scsi/scsiconf.h>
 
 #include <machine/autoconf.h>
-#include <machine/isr.h>
 #include <machine/obio.h>
 #include <machine/dvma.h>
 
@@ -135,6 +135,9 @@ static struct scsi_device si_dev = {
 	NULL,		/* Use default "done" routine.	    */
 };
 
+
+static int	siprint __P((void *, const char *));
+
 /*
  * New-style autoconfig attachment. The cfattach
  * structures are in si_obio.c and si_vme.c
@@ -172,7 +175,9 @@ si_attach(sc)
 	/*
 	 * Fill in the prototype scsi_link.
 	 */
+#ifndef __OpenBSD__
 	ncr_sc->sc_link.channel = SCSI_CHANNEL_ONLY_ONE;
+#endif
 	ncr_sc->sc_link.adapter_softc = sc;
 	ncr_sc->sc_link.adapter_target = 7;
 	ncr_sc->sc_link.adapter = &si_ops;
@@ -180,7 +185,7 @@ si_attach(sc)
 
 #ifdef	DEBUG
 	if (si_debug)
-		printf("si: Set TheSoftC=%x TheRegs=%x\n", sc, regs);
+		printf("si: Set TheSoftC=%p TheRegs=%p\n", sc, regs);
 	ncr_sc->sc_link.flags |= si_link_flags;
 #endif
 
@@ -213,7 +218,7 @@ si_attach(sc)
 	si_reset_adapter(ncr_sc);
 	ncr5380_init(ncr_sc);
 	ncr5380_reset_scsibus(ncr_sc);
-	config_found(&(ncr_sc->sc_dev), &(ncr_sc->sc_link), scsiprint);
+	config_found(&(ncr_sc->sc_dev), &(ncr_sc->sc_link), siprint);
 }
 
 static void
@@ -222,7 +227,7 @@ si_minphys(struct buf *bp)
 	if (bp->b_bcount > MAX_DMA_LEN) {
 #ifdef	DEBUG
 		if (si_debug) {
-			printf("si_minphys len = 0x%x.\n", bp->b_bcount);
+			printf("si_minphys len = 0x%lx.\n", bp->b_bcount);
 			Debugger();
 		}
 #endif
@@ -402,7 +407,7 @@ found:
 	dh->dh_dvma = (u_long) dvma_mapin((char *)addr, xlen);
 	if (!dh->dh_dvma) {
 		/* Can't remap segment */
-		printf("si_dma_alloc: can't remap %x/%x\n",
+		printf("si_dma_alloc: can't remap %p/%x\n",
 			dh->dh_addr, dh->dh_maplen);
 		dh->dh_flags = 0;
 		return;
@@ -457,7 +462,6 @@ si_dma_poll(ncr_sc)
 {
 	struct si_softc *sc = (struct si_softc *)ncr_sc;
 	struct sci_req *sr = ncr_sc->sc_current;
-	struct si_dma_handle *dh = sr->sr_dma_hand;
 	volatile struct si_regs *si = sc->sc_regs;
 	int tmo;
 
@@ -494,3 +498,13 @@ si_dma_poll(ncr_sc)
 #endif
 }
 
+static int
+siprint(aux, name)
+	void *aux;
+	const char *name;
+{
+
+	if (name != NULL)
+		printf("%s: scsibus ", name);
+	return UNCONF;
+}

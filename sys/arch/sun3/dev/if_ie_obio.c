@@ -1,3 +1,4 @@
+/*	$OpenBSD: if_ie_obio.c,v 1.5 1997/01/16 04:03:47 kstailey Exp $	*/
 /*	$NetBSD: if_ie_obio.c,v 1.6 1996/11/20 18:56:51 gwr Exp $	*/
 
 /*-
@@ -58,7 +59,6 @@
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
 #include <machine/dvma.h>
-#include <machine/isr.h>
 #include <machine/obio.h>
 #include <machine/idprom.h>
 #include <machine/vmparam.h>
@@ -88,7 +88,6 @@ ie_obio_match(parent, vcf, args)
 	struct device *parent;
 	void *vcf, *args;
 {
-	struct cfdata *cf = vcf;
 	struct confargs *ca = args;
 
 	/* Make sure there is something there... */
@@ -109,7 +108,6 @@ ie_obio_attach(parent, self, args)
 	void *args;
 {
 	struct ie_softc *sc = (void *) self;
-	struct cfdata *cf = self->dv_cfdata;
 	struct confargs *ca = args;
 
 	sc->hard_type = IE_OBIO;

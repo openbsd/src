@@ -1,3 +1,4 @@
+/*	$OpenBSD: intersil7170.h,v 1.5 1997/01/16 04:04:23 kstailey Exp $	*/
 /*	$NetBSD: intersil7170.h,v 1.9 1996/11/20 18:57:31 gwr Exp $	*/
 
 /*-
