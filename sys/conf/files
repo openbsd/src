@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.111 1999/02/26 17:01:29 jason Exp $
+#	$OpenBSD: files,v 1.112 1999/03/17 05:33:11 mjacob Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -73,6 +73,7 @@ file	dev/ic/bha.c		bha
 # Qlogic ISP 10x0 SCSI Controllers
 device	isp: scsi
 file	dev/ic/isp.c			isp
+file	dev/ic/isp_openbsd.c		isp
 
 # UltraStor SCSI controllers
 device	uha: scsi
