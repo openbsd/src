@@ -1,4 +1,4 @@
-/*	$OpenBSD: ecoff.h,v 1.2 1996/07/30 22:23:27 pefo Exp $	*/
+/*	$OpenBSD: ecoff.h,v 1.3 1996/10/02 21:47:53 pefo Exp $	*/
 /*	$NetBSD: ecoff.h,v 1.4 1995/06/16 02:07:33 mellon Exp $	*/
 
 /*
@@ -44,7 +44,7 @@
 #define ECOFF_MAGIC_MIPSEL 0x0162
 #define ECOFF_BADMAG(ex) ((ex)->f.f_magic != ECOFF_MAGIC_MIPSEL)
 
-#define ECOFF_SEGMENT_ALIGNMENT(eap) ((eap)->ea_vstamp < 23 ? 8 : 16)
+#define ECOFF_SEGMENT_ALIGNMENT(ep) ((ep)->a.vstamp < 23 ? 8 : 16)
 
 struct ecoff_symhdr {
         int16_t         sh_magic;
