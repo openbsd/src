@@ -1,7 +1,7 @@
 #
 #	GANDALF -- Dual Tyan P5/133 PCI/EISA bus
 #
-#	$OpenBSD: GANDALF,v 1.8 1996/07/31 18:35:15 deraadt Exp $
+#	$OpenBSD: GANDALF,v 1.9 1996/08/08 06:30:23 tholo Exp $
 #
 
 machine		i386		# architecture, used by config; REQUIRED
@@ -79,6 +79,7 @@ option		INET		# IP + ICMP + TCP + UDP
 #option		EON		# OSI tunneling over IP
 #option		CCITT,LLC,HDLC	# X.25
 option		"NMBCLUSTERS=1024"
+option		"TCP_DO_RFC1323=0"
 
 config		bsd	root on sd0a swap on sd0b and sd1b dumps on sd0b
 
@@ -113,6 +114,7 @@ st*	at scsibus? target ? lun ?	# SCSI tape drives
 cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
 ch*	at scsibus? target ? lun ?	# SCSI autochangers
 #ss*	at scsibus? target ? lun ?	# SCSI scanners
+uk*	at scsibus? target ? lun ?	# SCSI unknown devices
 
 wdc0	at isa? port 0x1f0 irq 14	# ST506, ESDI, and IDE controllers
 wdc1	at isa? port 0x170 irq 15	# ST506, ESDI, and IDE controllers
@@ -132,3 +134,4 @@ pseudo-device	ppp		1	# PPP
 pseudo-device	pty		64	# pseudo-terminals
 #pseudo-device	tb		1	# tablet line discipline
 pseudo-device	vnd		4	# paging to files
+pseudo-device	rnd		1	# random
