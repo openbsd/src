@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660.c,v 1.6 1997/11/09 19:37:20 millert Exp $	*/
+/*	$OpenBSD: cd9660.c,v 1.7 1998/05/30 02:29:56 mickey Exp $	*/
 /*	$NetBSD: cd9660.c,v 1.1 1996/09/30 16:01:19 ws Exp $	*/
 
 /*
@@ -305,7 +305,7 @@ cd9660_read(f, start, size, resid)
 	while (size) {
 		if (fp->off < 0 || fp->off >= fp->size)
 			break;
-		bno = fp->off / ISO_DEFAULT_BLOCK_SIZE + fp->bno;
+		bno = (fp->off >> ISO_DEFAULT_BLOCK_SHIFT) + fp->bno;
 		if (fp->off & (ISO_DEFAULT_BLOCK_SIZE - 1)
 		    || size < ISO_DEFAULT_BLOCK_SIZE)
 			dp = buf;
