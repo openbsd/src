@@ -36,7 +36,7 @@
  * x d . c   x y l o g i c s   7 5 3 / 7 0 5 3   v m e / s m d   d r i v e r
  *
  * author: Chuck Cranor <chuck@ccrc.wustl.edu>
- * id: $Id: xd.c,v 1.6 1996/02/08 04:43:45 chuck Exp $
+ * id: $Id: xd.c,v 1.7 1996/03/04 20:35:23 chuck Exp $
  * started: 27-Feb-95
  * references: [1] Xylogics Model 753 User's Manual
  *                 part number: 166-753-001, Revision B, May 21, 1988.
@@ -143,7 +143,7 @@
 	(ADDR) = ((ADDR) >> 8); \
 	(XDC)->xdc_iopbaddr3 = (ADDR); \
 	(XDC)->xdc_iopbamod = XDC_ADDRMOD; \
-	(XDC)->xdc_csr |= XDC_ADDIOPB; /* go! */ \
+	(XDC)->xdc_csr = XDC_ADDIOPB; /* go! */ \
 }
 
 /*
@@ -415,9 +415,9 @@ xdcattach(parent, self, aux)
 
 	xdc->reqs = (struct xd_iorq *)
 	    malloc(XDC_MAXIOPB * sizeof(struct xd_iorq), M_DEVBUF, M_NOWAIT);
-	bzero(xdc->reqs, XDC_MAXIOPB * sizeof(struct xd_iorq));
 	if (xdc->reqs == NULL)
 		panic("xdc malloc");
+	bzero(xdc->reqs, XDC_MAXIOPB * sizeof(struct xd_iorq));
 
 	/* init free list, iorq to iopb pointers, and non-zero fields in the
 	 * iopb which never change. */
@@ -1662,7 +1662,7 @@ xdc_xdreset(xdcsc, xdsc)
 		if (del <= 0)
 			panic("xdc_reset");
 	} else {
-		xdcsc->xdc->xdc_csr |= XDC_CLRRIO;	/* clear RIO */
+		xdcsc->xdc->xdc_csr = XDC_CLRRIO;	/* clear RIO */
 	}
 	bcopy(&tmpiopb, xdcsc->iopbase, sizeof(tmpiopb));
 }
@@ -1833,7 +1833,7 @@ xdc_remove_iorq(xdcsc)
 	 * done bit.
 	 */
 	if (xdc->xdc_csr & XDC_REMIOPB) {
-		xdc->xdc_csr |= XDC_CLRRIO;
+		xdc->xdc_csr = XDC_CLRRIO;
 	}
 
 	for (rqno = 0; rqno < XDC_MAXIOPB; rqno++) {

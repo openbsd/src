@@ -36,7 +36,7 @@
  * x y . c   x y l o g i c s   4 5 0 / 4 5 1   s m d   d r i v e r
  *
  * author: Chuck Cranor <chuck@ccrc.wustl.edu>
- * id: $Id: xy.c,v 1.6 1996/02/21 03:43:18 chuck Exp $
+ * id: $Id: xy.c,v 1.7 1996/03/04 20:35:25 chuck Exp $
  * started: 14-Sep-95
  * references: [1] Xylogics Model 753 User's Manual
  *                 part number: 166-753-001, Revision B, May 21, 1988.
@@ -99,7 +99,7 @@
 	(XYC)->xyc_reloc_lo = ((ADDR) & 0xff); \
 	(ADDR) = ((ADDR) >> 8); \
 	(XYC)->xyc_reloc_hi = (ADDR); \
-	(XYC)->xyc_csr |= XYC_GBSY; /* go! */ \
+	(XYC)->xyc_csr = XYC_GBSY; /* go! */ \
 }
 
 /*
@@ -370,9 +370,9 @@ xycattach(parent, self, aux)
 	xyc->dvmaiopb = (struct xy_iopb *) ((u_long)dtmp - DVMA_BASE);
 	xyc->reqs = (struct xy_iorq *)
 	    malloc(XYC_MAXIOPB * sizeof(struct xy_iorq), M_DEVBUF, M_NOWAIT);
-	bzero(xyc->reqs, XYC_MAXIOPB * sizeof(struct xy_iorq));
 	if (xyc->reqs == NULL)
 		panic("xyc malloc");
+	bzero(xyc->reqs, XYC_MAXIOPB * sizeof(struct xy_iorq));
 
 	/* 
 	 * init iorq to iopb pointers, and non-zero fields in the
@@ -1575,7 +1575,7 @@ xyc_xyreset(xycsc, xysc)
 		if (xyc_unbusy(xycsc->xyc, XYC_RESETUSEC) == XY_ERR_FAIL)
 			panic("xyc_reset");
 	} else {
-		xycsc->xyc->xyc_csr |= XYC_IPND;	/* clear IPND */
+		xycsc->xyc->xyc_csr = XYC_IPND;	/* clear IPND */
 	}
 	bcopy(&tmpiopb, xycsc->ciopb, sizeof(tmpiopb));
 }
@@ -1723,10 +1723,10 @@ xyc_remove_iorq(xycsc)
 	 */
 
 	if (xyc->xyc_csr & XYC_ERR) {
-		xyc->xyc_csr |= XYC_ERR; /* clear error condition */
+		xyc->xyc_csr = XYC_ERR; /* clear error condition */
 	}
 	if (xyc->xyc_csr & XYC_IPND) {
-		xyc->xyc_csr |= XYC_IPND; /* clear interrupt */
+		xyc->xyc_csr = XYC_IPND; /* clear interrupt */
 	}
 
 	for (rq = 0; rq < XYC_MAXIOPB; rq++) {
