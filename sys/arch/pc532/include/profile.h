@@ -41,7 +41,7 @@
 #define	_MCOUNT_DECL static __inline void _mcount
 
 #define	MCOUNT \
-extern void mcount() __asm("mcount");					\
+extern void mcount __P((void)) __asm("mcount");				\
 void									\
 mcount()								\
 {									\

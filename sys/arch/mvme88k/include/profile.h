@@ -31,13 +31,13 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)profile.h	8.1 (Berkeley) 6/11/93
- *	$Id: profile.h,v 1.2 1996/03/24 16:52:34 tholo Exp $
+ *	$Id: profile.h,v 1.3 1997/01/27 20:34:17 deraadt Exp $
  */
 
 #define	_MCOUNT_DECL static inline void _mcount
 
 #define	MCOUNT \
-extern void mcount() __asm("mcount");					\
+extern void mcount __P((void)) __asm("mcount");				\
 void									\
 mcount()								\
 {									\

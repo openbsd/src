@@ -36,11 +36,11 @@
  * at the beginning of any C function.
  */
 #define	MCOUNT \
-extern void mcount() asm("mcount");					\
+extern void mcount __P((void)) asm("mcount");				\
 void									\
 mcount()								\
 {									\
-	register int selfpc, frompcindex;					\
+	register int selfpc, frompcindex;				\
 	/*								\
 	 * find the return address for mcount,				\
 	 * and the return address for mcount's caller.			\
