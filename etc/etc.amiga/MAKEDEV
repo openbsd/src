@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: MAKEDEV,v 1.50 2001/06/28 02:58:53 kjc Exp $
+#	$OpenBSD: MAKEDEV,v 1.51 2002/02/09 17:01:40 deraadt Exp $
 #	$NetBSD: MAKEDEV,v 1.21 1996/05/19 21:03:49 veego Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -42,7 +42,7 @@
 #	all	makes all known devices, including local devices.
 #		Tries to make the ``standard'' number of each type.
 #	fd	makes fd/* for the fdescfs.
-#	floppy	devices needed for install floppies
+#	ramdisk	devices needed for install floppies
 #	std	standard devices
 #	local	configuration specific devices
 #
@@ -173,7 +173,7 @@ all)
 	sh $this pf tun0 tun1 par0 lkm ss0 random audio0 xfs0 altq local
 	;;
 
-floppy|ramdisk)
+ramdisk)
 	sh $this std kbd pty0 tty00 ttyA0 ttyA1 ttyB0 ttyB1
 	sh $this ttye0 ttye1 ttye2 ttye3 ttye4 ttye5 ttye6
 	sh $this cd0 cd1 sd0 sd1 sd2 sd3 st0 st1
