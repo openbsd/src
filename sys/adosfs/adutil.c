@@ -1,4 +1,4 @@
-/*	$OpenBSD: adutil.c,v 1.9 1997/11/06 17:23:09 csapuntz Exp $	*/
+/*	$OpenBSD: adutil.c,v 1.10 1997/11/10 23:57:05 niklas Exp $	*/
 /*	$NetBSD: adutil.c,v 1.15 1996/10/13 02:52:07 christos Exp $	*/
 
 /*
@@ -37,9 +37,13 @@
 #include <sys/proc.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
+#include <sys/lock.h>
 #include <sys/time.h>
 #include <sys/queue.h>
 #include <sys/buf.h>
+
+#include <machine/endian.h>
+
 #include <adosfs/adosfs.h>
 
 /*
@@ -56,24 +60,24 @@ adosfs_ahashget(mp, an)
 {
 	struct anodechain *hp;
 	struct anode *ap;
-	struct proc  *p = curproc;
+	struct proc *p = curproc; /* XXX */
+	struct vnode *vp;
 
 	hp = &VFSTOADOSFS(mp)->anodetab[AHASH(an)];
 
-start_over:
-	for (ap = hp->lh_first; ap != NULL; ap = ap->link.le_next) {
-		if (ABLKTOINO(ap->block) != an)
-			continue;
-		if (ap->flags & ALOCKED) {
-			ap->flags |= AWANT;
-			tsleep(ap, PINOD, "ahashget", 0);
-			goto start_over;
+	for (;;)
+		for (ap = hp->lh_first; ; ap = ap->link.le_next) {
+			if (ap == NULL)
+				return (NULL);
+			if (ABLKTOINO(ap->block) == an) {
+				vp = ATOV(ap);
+				simple_lock(&vp->v_interlock);
+				if (!vget(vp, LK_EXCLUSIVE, p))
+					return (vp);
+				break;
+			}
 		}
-		if (vget(ATOV(ap), LK_EXCLUSIVE, p))
-			goto start_over;
-		return (ATOV(ap));
-	}
-	return (NULL);
+	/* NOTREACHED */
 }
 
 /*
@@ -84,9 +88,13 @@ adosfs_ainshash(amp, ap)
 	struct adosfsmount *amp;
 	struct anode *ap;
 {
+	struct proc *p = curproc;		/* XXX */
+
+	/* lock the inode, then put it on the appropriate hash list */
+	lockmgr(&ap->a_lock, LK_EXCLUSIVE, (struct simplelock *)0, p);
+ 
 	LIST_INSERT_HEAD(&amp->anodetab[AHASH(ABLKTOINO(ap->block))], ap,
 	    link);
-	ap->flags |= ALOCKED;
 }
 
 void
@@ -175,7 +183,7 @@ adoscksum(bp, n)
 	sum = 0;
 
 	while (n--)
-		sum += ntohl(*lp++);
+		sum += betoh32(*lp++);
 	return(sum);
 }
 

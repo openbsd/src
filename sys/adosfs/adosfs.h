@@ -1,4 +1,4 @@
-/*	$OpenBSD: adosfs.h,v 1.6 1997/01/20 15:49:52 niklas Exp $	*/
+/*	$OpenBSD: adosfs.h,v 1.7 1997/11/10 23:57:04 niklas Exp $	*/
 /*	$NetBSD: adosfs.h,v 1.12 1996/10/08 22:18:02 thorpej Exp $	*/
 
 /*
@@ -43,7 +43,6 @@ struct datestamp {
 };
 
 enum anode_type { AROOT, ADIR, AFILE, ALDIR, ALFILE, ASLINK };
-enum anode_flags { AWANT = 0x1, ALOCKED = 0x2 };
 
 /* 
  * similar to inode's, we use to represent:
@@ -60,6 +59,8 @@ struct anode {
 	struct datestamp mtime;		/* (r/d/f) last modified */
 	struct adosfsmount *amp;	/* owner file system */
 	struct vnode *vp;		/* owner vnode */
+	struct lockf *a_lockf;		/* byte level lock list */
+	struct lock a_lock;		/* anode lock */
 	u_int32_t fsize;		/* (f) size of file in bytes */
 	daddr_t block;			/* block num */
 	daddr_t pblock;			/* (d/f/e) parent block */
@@ -76,7 +77,6 @@ struct anode {
 	int adprot;			/* (d/f) amigados protection bits */
 	uid_t uid;			/* (d/f) uid of directory/file */
 	gid_t gid;			/* (d/f) gid of directory/file */
-	int flags;			/* misc flags */ 
 	char *slinkto;			/* name of file or dir */
 };
 #define VTOA(vp)		((struct anode *)(vp)->v_data)
@@ -135,7 +135,7 @@ struct adosfsmount {
 /*
  * utility protos
  */
-#define adoswordn(bp,wn) ntohl(*((u_int32_t *)(bp)->b_data + (wn)))
+#define adoswordn(bp,wn) betoh32(*((u_int32_t *)(bp)->b_data + (wn)))
 
 u_int32_t	 adoscksum __P((struct buf *, int));
 int		 adoscaseequ __P((const char *, const char *, int, int));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: advfsops.c,v 1.11 1997/11/06 17:23:09 csapuntz Exp $	*/
+/*	$OpenBSD: advfsops.c,v 1.12 1997/11/10 23:57:05 niklas Exp $	*/
 /*	$NetBSD: advfsops.c,v 1.24 1996/12/22 10:10:12 cgd Exp $	*/
 
 /*
@@ -44,6 +44,8 @@
 #include <sys/ioctl.h>
 #include <sys/queue.h>
 #include <sys/buf.h>
+
+#include <machine/endian.h>
 
 #include <miscfs/specfs/specdev.h> /* XXX */
 #include <adosfs/adosfs.h>
@@ -142,9 +144,9 @@ adosfs_mount(mp, path, data, ndp, p)
 	amp->uid = args.uid;
 	amp->gid = args.gid;
 	amp->mask = args.mask;
-	(void) copyinstr(path, mp->mnt_stat.f_mntonname, MNAMELEN - 1, &size);
+	(void)copyinstr(path, mp->mnt_stat.f_mntonname, MNAMELEN - 1, &size);
 	bzero(mp->mnt_stat.f_mntonname + size, MNAMELEN - size);
-	(void) copyinstr(args.fspec, mp->mnt_stat.f_mntfromname, MNAMELEN - 1,
+	(void)copyinstr(args.fspec, mp->mnt_stat.f_mntfromname, MNAMELEN - 1,
 	    &size);
 	bzero(mp->mnt_stat.f_mntfromname + size, MNAMELEN - size);
 	return (0);
@@ -376,6 +378,7 @@ adosfs_vget(mp, an, vpp)
 	 */
 	vp->v_data = ap = malloc(sizeof(struct anode), M_ANODE, M_WAITOK);
 	bzero(ap, sizeof(struct anode));
+	lockinit(&ap->a_lock, PINOD, "anode", 0, 0);
 	ap->vp = vp;
 	ap->amp = amp;
 	ap->block = AINOTOBLK(an);

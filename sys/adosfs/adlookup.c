@@ -1,4 +1,4 @@
-/*	$OpenBSD: adlookup.c,v 1.9 1997/11/06 17:23:08 csapuntz Exp $	*/
+/*	$OpenBSD: adlookup.c,v 1.10 1997/11/10 23:57:04 niklas Exp $	*/
 /*	$NetBSD: adlookup.c,v 1.17 1996/10/25 23:13:58 cgd Exp $	*/
 
 /*
@@ -123,7 +123,8 @@ adosfs_lookup(v)
 			VOP_UNLOCK(vdp, 0, p);	/* race */
 			error = vget(*vpp, LK_EXCLUSIVE, p);
 			if (error == 0 && lockp && last)
-				error = vn_lock(vdp, LK_EXCLUSIVE | LK_RETRY, p);
+				error =
+				    vn_lock(vdp, LK_EXCLUSIVE | LK_RETRY, p);
 		} else {
 			error = vget(*vpp, LK_EXCLUSIVE, p);
 			/* if (lockp == 0 || error || last) */
@@ -230,7 +231,8 @@ adosfs_lookup(v)
 	 * not found
 	 */
 	if ((nameiop == CREATE || nameiop == RENAME) && last) {
-		if ((error = VOP_ACCESS(vdp, VWRITE, ucp, cnp->cn_proc)) != 0) {
+		if ((error = VOP_ACCESS(vdp, VWRITE, ucp, cnp->cn_proc)) != 0)
+		    {
 #ifdef ADOSFS_DIAGNOSTIC
 			printf("[VOP_ACCESS] %d)", error);
 #endif
@@ -253,7 +255,8 @@ adosfs_lookup(v)
 
 found:
 	if (nameiop == DELETE && last)  {
-		if ((error = VOP_ACCESS(vdp, VWRITE, ucp, cnp->cn_proc)) != 0) {
+		if ((error = VOP_ACCESS(vdp, VWRITE, ucp, cnp->cn_proc)) != 0)
+		    {
 			if (vdp != *vpp)
 				vput(*vpp);
 			*vpp = NULL;
@@ -264,7 +267,8 @@ found:
 	if (nameiop == RENAME && wantp && last) {
 		if (vdp == *vpp)
 			return(EISDIR);
-		if ((error = VOP_ACCESS(vdp, VWRITE, ucp, cnp->cn_proc)) != 0) {
+		if ((error = VOP_ACCESS(vdp, VWRITE, ucp, cnp->cn_proc)) != 0)
+		    {
 			vput(*vpp);
 			*vpp = NULL;
 			return (error);

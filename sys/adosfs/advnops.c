@@ -1,4 +1,4 @@
-/*	$OpenBSD: advnops.c,v 1.10 1997/11/06 17:23:09 csapuntz Exp $	*/
+/*	$OpenBSD: advnops.c,v 1.11 1997/11/10 23:57:06 niklas Exp $	*/
 /*	$NetBSD: advnops.c,v 1.32 1996/10/13 02:52:09 christos Exp $	*/
 
 /*
@@ -34,6 +34,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/vnode.h>
+#include <sys/lockf.h>
 #include <sys/mount.h>
 #include <sys/time.h>
 #include <sys/queue.h>
@@ -45,11 +46,14 @@
 #include <sys/unistd.h>
 #include <sys/proc.h>
 
+#include <machine/endian.h>
+
 #include <miscfs/specfs/specdev.h>
 #include <adosfs/adosfs.h>
 
 extern struct vnodeops adosfs_vnodeops;
 
+int	adosfs_advlock	__P((void *));
 int	adosfs_open	__P((void *));
 int	adosfs_getattr	__P((void *));
 int	adosfs_read	__P((void *));
@@ -85,7 +89,6 @@ int	lease_check __P((void *));
 #define adosfs_seek 		adnullop
 #define adosfs_vfree 		adnullop
 
-#define adosfs_advlock 		adenotsup
 #define adosfs_blkatoff 	adenotsup
 #define adosfs_bwrite 		adenotsup
 #define adosfs_create 		adenotsup
@@ -519,32 +522,23 @@ adosfs_lock(v)
 {
 	struct vop_lock_args /* {
 		struct vnode *a_vp;
-	} */ *sp = v;
-	struct vnode *vp;
-	struct anode *ap;
+		int a_flags;
+		struct proc *a_p;
+	} */ *ap = v;
+	struct vnode *vp = ap->a_vp;
+	int rv;
 
 #ifdef ADOSFS_DIAGNOSTIC
-	advopprint(sp);
+	advopprint(ap);
 #endif
-	vp = sp->a_vp;
-start:
-	while (vp->v_flag & VXLOCK) {
-		vp->v_flag |= VXWANT;
-		tsleep(vp, PINOD, "adosfs_lock vp", 0);
-	}
-	if (vp->v_tag == VT_NON)
-		return (ENOENT);
-	ap = VTOA(vp);
-	if (ap->flags & ALOCKED) {
-		ap->flags |= AWANT;
-		tsleep(ap, PINOD, "adosfs_lock ap", 0);
-		goto start;
-	}
-	ap->flags |= ALOCKED;
+
+	rv = lockmgr(&VTOA(vp)->a_lock, ap->a_flags, &vp->v_interlock,
+	    ap->a_p);
+
 #ifdef ADOSFS_DIAGNOSTIC
-	printf(" 0)");
+	printf(" %d)", rv);
 #endif
-	return(0);
+	return (rv);
 }
 
 /*
@@ -556,25 +550,22 @@ adosfs_unlock(v)
 {
 	struct vop_unlock_args /* {
 		struct vnode *a_vp;
-	} */ *sp = v;
-	struct anode *ap;
+	} */ *ap = v;
+	struct vnode *vp = ap->a_vp;
+	int rv;
 
 #ifdef ADOSFS_DIAGNOSTIC
-	advopprint(sp);
+	advopprint(ap);
 #endif
-	ap = VTOA(sp->a_vp);	
-	ap->flags &= ~ALOCKED;
-	if (ap->flags & AWANT) {
-		ap->flags &= ~AWANT;
-		wakeup(ap);
-	}
+
+	rv = lockmgr(&VTOA(vp)->a_lock, ap->a_flags | LK_RELEASE,
+	    &vp->v_interlock, ap->a_p);
 
 #ifdef ADOSFS_DIAGNOSTIC
-	printf(" 0)");
+	printf(" %d)", rv);
 #endif
-	return(0);
+	return (rv);
 }
-
 
 /*
  * Wait until the vnode has finished changing state.
@@ -709,12 +700,34 @@ int
 adosfs_print(v)
 	void *v;
 {
-#if 0
 	struct vop_print_args /* {
 		struct vnode *a_vp;
-	} */ *sp = v;
+	} */ *ap = v;
+	struct anode *anp = VTOA(ap->a_vp);
+
+	/* XXX Fill in more info here.  */
+	printf("tag VT_ADOSFS\n");
+#ifdef DIAGNOSTIC
+	lockmgr_printinfo(&anp->a_lock);
 #endif
 	return(0);
+}
+
+int
+adosfs_advlock(v)
+	void *v;
+{
+	struct vop_advlock_args /* {
+		struct vnode *a_vp;
+		caddr_t a_id;
+		int a_op;
+		struct flock *a_fl;
+		int a_flags;
+	} */ *ap = v;
+	register struct anode *anp = VTOA(ap->a_vp);
+
+	return (lf_advlock(&anp->a_lockf, anp->fsize, ap->a_id, ap->a_op,
+	    ap->a_fl, ap->a_flags));
 }
 
 /* This is laid out like a standard dirent, except that it is shorter.  */
@@ -984,14 +997,14 @@ adosfs_islocked(v)
 {
 	struct vop_islocked_args /* {
 		struct vnode *a_vp;
-	} */ *sp = v;
+	} */ *ap = v;
 	int locked;
 
 #ifdef ADOSFS_DIAGNOSTIC
-	advopprint(sp);
+	advopprint(ap);
 #endif
 
-	locked = (VTOA(sp->a_vp)->flags & ALOCKED) == ALOCKED;
+	locked = lockstatus(&VTOA(ap->a_vp)->a_lock);
 
 #ifdef ADOSFS_DIAGNOSTIC
 	printf(" %d)", locked);
@@ -1043,26 +1056,35 @@ adosfs_pathconf(v)
 		struct vnode *a_vp;
 		int a_name;
 		register_t *a_retval;
-	} */ *sp = v;
+	} */ *ap = v;
 
-	switch (sp->a_name) {
+	switch (ap->a_name) {
+	case _PC_CHOWN_RESTRICTED:
+		*ap->a_retval = 1;
+		return (0);
 	case _PC_LINK_MAX:
-		*sp->a_retval = LINK_MAX;
+		*ap->a_retval = LINK_MAX;
 		return (0);
 	case _PC_MAX_CANON:
-		*sp->a_retval = MAX_CANON;
+		*ap->a_retval = MAX_CANON;
 		return (0);
 	case _PC_MAX_INPUT:
-		*sp->a_retval = MAX_INPUT;
+		*ap->a_retval = MAX_INPUT;
+		return (0);
+	case _PC_NAME_MAX:
+		*ap->a_retval = 30;
+		return (0);
+	case _PC_NO_TRUNC:
+		*ap->a_retval = 0;
+		return (0);
+	case _PC_PATH_MAX:
+		*ap->a_retval = PATH_MAX;
 		return (0);
 	case _PC_PIPE_BUF:
-		*sp->a_retval = PIPE_BUF;
-		return (0);
-	case _PC_CHOWN_RESTRICTED:
-		*sp->a_retval = 1;
+		*ap->a_retval = PIPE_BUF;
 		return (0);
 	case _PC_VDISABLE:
-		*sp->a_retval = _POSIX_VDISABLE;
+		*ap->a_retval = _POSIX_VDISABLE;
 		return (0);
 	default:
 		return (EINVAL);
