@@ -15,7 +15,6 @@
 #		.data section.
 #	OTHER_BSS_SYMBOLS - symbols that appear at the start of the
 #		.bss section besides __bss_start.
-#	DATA_PLT - .plt should be in data segment, not text segment.
 #
 # When adding sections, do note that the names of some sections are used
 # when specifying the start address of the next.
@@ -28,6 +27,42 @@ SBSS2=".sbss2 ${RELOCATING-0} : { *(.sbss2) }"
 SDATA2=".sdata2 ${RELOCATING-0} : { *(.sdata2) }"
 INTERP=".interp ${RELOCATING-0} : { *(.interp) }"
 PLT=".plt ${RELOCATING-0} : { *(.plt) }"
+CTOR=".ctors ${CONSTRUCTING-0} : 
+  {
+    ${CONSTRUCTING+${CTOR_START}}
+    /* gcc uses crtbegin.o to find the start of
+       the constructors, so we make sure it is
+       first.  Because this is a wildcard, it
+       doesn't matter if the user does not
+       actually link against crtbegin.o; the
+       linker won't look for a file to match a
+       wildcard.  The wildcard also means that it
+       doesn't matter which directory crtbegin.o
+       is in.  */
+
+    KEEP (*crtbegin.o(.ctors))
+
+    /* We don't want to include the .ctor section from
+       from the crtend.o file until after the sorted ctors.
+       The .ctor section from the crtend file contains the
+       end of ctors marker and it must be last */
+
+    KEEP (*(EXCLUDE_FILE (*crtend.o) .ctors))
+    KEEP (*(SORT(.ctors.*)))
+    KEEP (*(.ctors))
+    ${CONSTRUCTING+${CTOR_END}}
+  }"
+
+DTOR=" .dtors       ${CONSTRUCTING-0} :
+  {
+    ${CONSTRUCTING+${DTOR_START}}
+    KEEP (*crtbegin.o(.dtors))
+    KEEP (*(EXCLUDE_FILE (*crtend.o) .dtors))
+    KEEP (*(SORT(.dtors.*)))
+    KEEP (*(.dtors))
+    ${CONSTRUCTING+${DTOR_END}}
+  }"
+
 cat <<EOF
 OUTPUT_FORMAT("${OUTPUT_FORMAT}", "${BIG_OUTPUT_FORMAT}",
 	      "${LITTLE_OUTPUT_FORMAT}")
@@ -44,6 +79,7 @@ ${RELOCATING- /* For some reason, the Solaris linker makes bad executables
   bug.  But for now assigning the zero vmas works.  */}
 
 ${RELOCATING+PROVIDE (__stack = 0);}
+${RELOCATING+PROVIDE (___stack = 0);}
 SECTIONS
 {
   /* Read-only sections, merged into text segment: */
@@ -53,9 +89,27 @@ SECTIONS
   .hash		${RELOCATING-0} : { *(.hash)		}
   .dynsym	${RELOCATING-0} : { *(.dynsym)		}
   .dynstr	${RELOCATING-0} : { *(.dynstr)		}
-  .rela.text	${RELOCATING-0} : { *(.rela.text) 	}
-  .rela.data	${RELOCATING-0} : { *(.rela.data) 	}
-  .rela.rodata	${RELOCATING-0} : { *(.rela.rodata) 	}
+  .gnu.version ${RELOCATING-0} : { *(.gnu.version)      }
+  .gnu.version_d ${RELOCATING-0} : { *(.gnu.version_d)  }
+  .gnu.version_r ${RELOCATING-0} : { *(.gnu.version_r)  }
+  .rela.text   ${RELOCATING-0} :
+    {
+      *(.rela.text)
+      ${RELOCATING+*(.rela.text.*)}
+      ${RELOCATING+*(.rela.gnu.linkonce.t*)}
+    }
+  .rela.data   ${RELOCATING-0} :
+    {
+      *(.rela.data)
+      ${RELOCATING+*(.rela.data.*)}
+      ${RELOCATING+*(.rela.gnu.linkonce.d*)}
+    }
+  .rela.rodata ${RELOCATING-0} :
+    {
+      *(.rela.rodata)
+      ${RELOCATING+*(.rela.rodata.*)}
+      ${RELOCATING+*(.rela.gnu.linkonce.r*)}
+    }
   .rela.got	${RELOCATING-0} : { *(.rela.got)	}
   .rela.got1	${RELOCATING-0} : { *(.rela.got1)	}
   .rela.got2	${RELOCATING-0} : { *(.rela.got2)	}
@@ -65,24 +119,31 @@ SECTIONS
   .rela.fini	${RELOCATING-0} : { *(.rela.fini)	}
   .rela.bss	${RELOCATING-0} : { *(.rela.bss)	}
   .rela.plt	${RELOCATING-0} : { *(.rela.plt)	}
-  .rela.sdata	${RELOCATING-0} : { *(.rela.sdata2)	}
-  .rela.sbss	${RELOCATING-0} : { *(.rela.sbss2)	}
+  .rela.sdata	${RELOCATING-0} : { *(.rela.sdata)	}
+  .rela.sbss	${RELOCATING-0} : { *(.rela.sbss)	}
   .rela.sdata2	${RELOCATING-0} : { *(.rela.sdata2)	}
   .rela.sbss2	${RELOCATING-0} : { *(.rela.sbss2)	}
-  ${DATA_PLT-${PLT}}
   .text    ${RELOCATING-0} :
   {
     ${RELOCATING+${TEXT_START_SYMBOLS}}
     *(.text)
+    ${RELOCATING+*(.text.*)}
     /* .gnu.warning sections are handled specially by elf32.em.  */
     *(.gnu.warning)
+    ${RELOCATING+*(.gnu.linkonce.t*)}
   } =${NOP-0}
-  .init		${RELOCATING-0} : { *(.init)		} =${NOP-0}
-  .fini		${RELOCATING-0} : { *(.fini)		} =${NOP-0}
-  .rodata	${RELOCATING-0} : { *(.rodata)  }
+  .init		${RELOCATING-0} : { KEEP (*(.init))	} =${NOP-0}
+  .fini		${RELOCATING-0} : { KEEP (*(.fini))	} =${NOP-0}
+  .rodata  ${RELOCATING-0} :
+  {
+    *(.rodata)
+    ${RELOCATING+*(.rodata.*)}
+    ${RELOCATING+*(.gnu.linkonce.r*)}
+  }
   .rodata1	${RELOCATING-0} : { *(.rodata1) }
   ${RELOCATING+_etext = .;}
   ${RELOCATING+PROVIDE (etext = .);}
+  ${RELOCATING+PROVIDE (__etext = .);}
   ${CREATE_SHLIB-${SDATA2}}
   ${CREATE_SHLIB-${SBSS2}}
   ${RELOCATING+${OTHER_READONLY_SECTIONS}}
@@ -107,6 +168,8 @@ SECTIONS
   {
     ${RELOCATING+${DATA_START_SYMBOLS}}
     *(.data)
+    ${RELOCATING+*(.data.*)}
+    ${RELOCATING+*(.gnu.linkonce.d*)}
     ${CONSTRUCTING+CONSTRUCTORS}
   }
   .data1 ${RELOCATING-0} : { *(.data1) }
@@ -120,52 +183,68 @@ SECTIONS
      The current compiler no longer needs this, but keep it around for 2.7.2  */
 
 		${RELOCATING+PROVIDE (_GOT2_START_ = .);}
+		${RELOCATING+PROVIDE (__GOT2_START_ = .);}
   .got2		${RELOCATING-0} :  { *(.got2) }
 
 		${RELOCATING+PROVIDE (__CTOR_LIST__ = .);}
-  .ctors	${RELOCATING-0} : { *(.ctors) }
+		${RELOCATING+PROVIDE (___CTOR_LIST__ = .);}
+                ${RELOCATING+${CTOR}}
 		${RELOCATING+PROVIDE (__CTOR_END__ = .);}
+		${RELOCATING+PROVIDE (___CTOR_END__ = .);}
 
 		${RELOCATING+PROVIDE (__DTOR_LIST__ = .);}
-  .dtors	${RELOCATING-0} : { *(.dtors) }
+		${RELOCATING+PROVIDE (___DTOR_LIST__ = .);}
+                ${RELOCATING+${DTOR}}
 		${RELOCATING+PROVIDE (__DTOR_END__ = .);}
+		${RELOCATING+PROVIDE (___DTOR_END__ = .);}
 
 		${RELOCATING+PROVIDE (_FIXUP_START_ = .);}
+		${RELOCATING+PROVIDE (__FIXUP_START_ = .);}
   .fixup	${RELOCATING-0} : { *(.fixup) }
 		${RELOCATING+PROVIDE (_FIXUP_END_ = .);}
+		${RELOCATING+PROVIDE (__FIXUP_END_ = .);}
 		${RELOCATING+PROVIDE (_GOT2_END_ = .);}
+		${RELOCATING+PROVIDE (__GOT2_END_ = .);}
 
 		${RELOCATING+PROVIDE (_GOT_START_ = .);}
+		${RELOCATING+PROVIDE (__GOT_START_ = .);}
   .got		${RELOCATING-0} : { *(.got) }
   .got.plt	${RELOCATING-0} : { *(.got.plt) }
   ${CREATE_SHLIB+${SDATA2}}
   ${CREATE_SHLIB+${SBSS2}}
 		${RELOCATING+PROVIDE (_GOT_END_ = .);}
+		${RELOCATING+PROVIDE (__GOT_END_ = .);}
 
-  ${DATA_PLT+${PLT}}
   /* We want the small data sections together, so single-instruction offsets
      can access them all, and initialized data all before uninitialized, so
      we can shorten the on-disk segment size.  */
   .sdata	${RELOCATING-0} : { *(.sdata) }
   ${RELOCATING+_edata  =  .;}
   ${RELOCATING+PROVIDE (edata = .);}
+  ${RELOCATING+PROVIDE (__edata = .);}
   .sbss    ${RELOCATING-0} :
   {
     ${RELOCATING+PROVIDE (__sbss_start = .);}
+    ${RELOCATING+PROVIDE (___sbss_start = .);}
     *(.sbss)
     *(.scommon)
+    *(.dynsbss)
     ${RELOCATING+PROVIDE (__sbss_end = .);}
+    ${RELOCATING+PROVIDE (___sbss_end = .);}
   }
+  ${PLT}
   .bss     ${RELOCATING-0} :
   {
    ${RELOCATING+${OTHER_BSS_SYMBOLS}}
    ${RELOCATING+PROVIDE (__bss_start = .);}
+   ${RELOCATING+PROVIDE (___bss_start = .);}
    *(.dynbss)
    *(.bss)
    *(COMMON)
   }
   ${RELOCATING+_end = . ;}
   ${RELOCATING+PROVIDE (end = .);}
+  ${RELOCATING+PROVIDE (__end = .);}
 
   /* These are needed for ELF backends which have not yet been
      converted to the new style linker.  */
@@ -173,19 +252,35 @@ SECTIONS
   .stabstr 0 : { *(.stabstr) }
 
   /* DWARF debug sections.
-     Symbols in the .debug DWARF section are relative to the beginning of the
-     section so we begin .debug at 0.  It's not clear yet what needs to happen
-     for the others.   */
+     Symbols in the DWARF debugging sections are relative to the beginning
+     of the section so we begin them at 0.  */
+
+  /* DWARF 1 */
   .debug          0 : { *(.debug) }
+  .line           0 : { *(.line) }
+
+  /* GNU DWARF 1 extensions */
+  .debug_srcinfo  0 : { *(.debug_srcinfo) }
+  .debug_sfnames  0 : { *(.debug_sfnames) }
+
+  /* DWARF 1.1 and DWARF 2 */
+  .debug_aranges  0 : { *(.debug_aranges) }
+  .debug_pubnames 0 : { *(.debug_pubnames) }
+
+  /* DWARF 2 */
   .debug_info     0 : { *(.debug_info) }
   .debug_abbrev   0 : { *(.debug_abbrev) }
   .debug_line     0 : { *(.debug_line) }
   .debug_frame    0 : { *(.debug_frame) }
-  .debug_srcinfo  0 : { *(.debug_srcinfo) }
-  .debug_aranges  0 : { *(.debug_aranges) }
-  .debug_pubnames 0 : { *(.debug_pubnames) }
-  .debug_sfnames  0 : { *(.debug_sfnames) }
-  .line           0 : { *(.line) }
+  .debug_str      0 : { *(.debug_str) }
+  .debug_loc      0 : { *(.debug_loc) }
+  .debug_macinfo  0 : { *(.debug_macinfo) }
+
+  /* SGI/MIPS DWARF 2 extensions */
+  .debug_weaknames 0 : { *(.debug_weaknames) }
+  .debug_funcnames 0 : { *(.debug_funcnames) }
+  .debug_typenames 0 : { *(.debug_typenames) }
+  .debug_varnames  0 : { *(.debug_varnames) }
 
   /* These must appear regardless of ${RELOCATING}.  */
   ${OTHER_SECTIONS}

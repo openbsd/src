@@ -7,7 +7,7 @@ if test -z "${DATA_ADDR}"; then
   fi
 fi
 cat <<EOF
-OUTPUT_FORMAT("${OUTPUT_FORMAT}")
+OUTPUT_FORMAT("${OUTPUT_FORMAT}", "${BIG_OUTPUT_FORMAT}", "${LITTLE_OUTPUT_FORMAT}")
 ${LIB_SEARCH_DIRS}
 
 ENTRY(${ENTRY})
@@ -21,18 +21,22 @@ SECTIONS
   .text ${RELOCATING+ 0x8000} : {
     *(.init)
     *(.text)
+    *(.glue_7t)
+    *(.glue_7)
+    *(.rdata)
     ${CONSTRUCTING+ ___CTOR_LIST__ = .; __CTOR_LIST__ = . ; 
 			LONG (-1); *(.ctors); *(.ctor); LONG (0); }
     ${CONSTRUCTING+ ___DTOR_LIST__ = .; __DTOR_LIST__ = . ; 
 			LONG (-1); *(.dtors); *(.dtor);  LONG (0); }
     *(.fini)
-    ${RELOCATING+ etext  =  .};
+    ${RELOCATING+ etext  =  .;}
   }
   .data ${RELOCATING+${DATA_ADDR-0x40000 + (. & 0xffc00fff)}} : {
     ${RELOCATING+  __data_start__ = . ;}
     *(.data)
     ${RELOCATING+ __data_end__ = . ;}
-    ${RELOCATING+ edata  =  .};
+    ${RELOCATING+ edata  =  .;}
+    ${RELOCATING+ _edata  =  .;}
   }
   .bss ${RELOCATING+ SIZEOF(.data) + ADDR(.data)} :
   { 					
@@ -42,6 +46,8 @@ SECTIONS
     ${RELOCATING+ __bss_end__ = . ;}
   }
 
+  ${RELOCATING+ end = .;}
+  ${RELOCATING+ _end = .;}
   ${RELOCATING+ __end__ = .;}
 
   .stab  0 ${RELOCATING+(NOLOAD)} : 

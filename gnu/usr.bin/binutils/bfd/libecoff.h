@@ -1,5 +1,5 @@
 /* BFD ECOFF object file private structure.
-   Copyright (C) 1993, 1994, 1995, 1996 Free Software Foundation, Inc.
+   Copyright (C) 1993, 94, 95, 96, 97, 1999 Free Software Foundation, Inc.
    Written by Ian Lance Taylor, Cygnus Support.
 
 This file is part of BFD, the Binary File Descriptor library.
@@ -303,8 +303,8 @@ extern void _bfd_ecoff_print_symbol
   PARAMS ((bfd *, PTR filep, asymbol *, bfd_print_symbol_type));
 extern void _bfd_ecoff_get_symbol_info
   PARAMS ((bfd *, asymbol *, symbol_info *));
-extern boolean _bfd_ecoff_bfd_is_local_label
-  PARAMS ((bfd *, asymbol *));
+extern boolean _bfd_ecoff_bfd_is_local_label_name
+  PARAMS ((bfd *, const char *));
 #define _bfd_ecoff_get_lineno _bfd_nosymbols_get_lineno
 extern boolean _bfd_ecoff_find_nearest_line
   PARAMS ((bfd *, asection *, asymbol **, bfd_vma offset,
@@ -341,7 +341,7 @@ extern PTR _bfd_ecoff_mkobject_hook PARAMS ((bfd *, PTR filehdr, PTR aouthdr));
   ((void (*) PARAMS ((bfd *, asection *, PTR))) bfd_void)
 extern boolean _bfd_ecoff_set_arch_mach_hook PARAMS ((bfd *abfd, PTR filehdr));
 extern flagword _bfd_ecoff_styp_to_sec_flags
-  PARAMS ((bfd *abfd, PTR hdr, const char *name));
+  PARAMS ((bfd *abfd, PTR hdr, const char *name, asection *section));
 extern boolean _bfd_ecoff_slurp_symbol_table PARAMS ((bfd *abfd));
 
 /* ECOFF auxiliary information swapping routines.  These are the same

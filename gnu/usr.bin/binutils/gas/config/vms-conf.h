@@ -28,11 +28,21 @@
 /* If using the C implementation of alloca, define if you know the
    direction of stack growth for your system; otherwise it will be
    automatically deduced at run-time.
-	STACK_DIRECTION > 0 => grows toward higher addresses
-	STACK_DIRECTION < 0 => grows toward lower addresses
-	STACK_DIRECTION = 0 => direction of growth unknown
+ STACK_DIRECTION > 0 => grows toward higher addresses
+ STACK_DIRECTION < 0 => grows toward lower addresses
+ STACK_DIRECTION = 0 => direction of growth unknown
  */
 #define STACK_DIRECTION (-1)
+
+/* Define if lex declares yytext as a char * by default, not a char[].  */
+#undef YYTEXT_POINTER
+
+/* Name of package.  */
+#undef PACKAGE
+
+/* Version of package.  */
+/* Define in by config-gas.com */
+/* #undef VERSION */
 
 /* Should gas use high-level BFD interfaces?  */
 #undef BFD_ASSEMBLER
@@ -57,20 +67,26 @@
 #define TARGET_OS	"vms"
 #define TARGET_VENDOR	"dec"
 
+/* Sometimes the system header files don't declare strstr.  */
+#undef NEED_DECLARATION_STRSTR
+
 /* Sometimes the system header files don't declare malloc and realloc.  */
 #undef NEED_DECLARATION_MALLOC
 
 /* Sometimes the system header files don't declare free.  */
 #undef NEED_DECLARATION_FREE
 
+/* Sometimes the system header files don't declare sbrk.  */
+#undef NEED_DECLARATION_SBRK
+
 /* Sometimes errno.h doesn't declare errno itself.  */
 #undef NEED_DECLARATION_ERRNO
 
 #undef MANY_SEGMENTS
 
-/* Needed only for sparc configuration.  */
-#undef SPARC_V9
-#undef SPARC_ARCH64
+/* The configure script defines this for some targets based on the
+   target name used.  It is not always defined.  */
+#undef TARGET_BYTES_BIG_ENDIAN
 
 /* Needed only for some configurations that can produce multiple output
    formats.  */
@@ -94,9 +110,22 @@
 #undef M68KCOFF
 #undef M88KCOFF
 
+/* Using cgen code?  */
+#undef USING_CGEN
+
+/* Needed only for sparc configuration.  */
+#undef DEFAULT_ARCH
+
+/* Needed only for PowerPC Solaris.  */
+#undef TARGET_SOLARIS_COMMENT
+
+/* Needed only for SCO 5.  */
+#undef SCO_ELF
+
 /* Define if you have the remove function.  */
 #define HAVE_REMOVE
 
+/* Define if you have the sbrk function.  */
 /* sbrk() is available, but we don't want gas to use it.  */
 #undef HAVE_SBRK
 

@@ -1,4 +1,4 @@
-.\" Copyright (c) 1991 Free Software Foundation
+.\" Copyright (c) 1991, 92, 93, 94, 95, 96, 97, 1998 Free Software Foundation
 .\" See section COPYING for conditions for redistribution
 .TH strip 1 "5 November 1991" "cygnus support" "GNU Development Tools"
 .de BP
@@ -27,6 +27,7 @@ strip \- Discard symbols from object files.
 .RB "[\|" \-K\ \fIsymbolname\fR\ |\ \fB\-\-keep\-symbol=\fIsymbolname\fR "\|]" 
 .RB "[\|" \-N\ \fIsymbolname\fR\ |\ \fB\-\-strip\-symbol=\fIsymbolname\fR "\|]"
 .RB "[\|" \-o\ \fIfile\f\R "\|]"
+.RB "[\|" \-p\fR\ |\ \fB\-\-preserve\-dates "\|]"
 .RB "[\|" \-v\fR\ |\ \fB\-\-verbose "\|]"
 .RB "[\|" \-V\fR\ |\ \fB\-\-version "\|]"
 .RB "[\|" \-V\fR\ |\ \fB\-\-help "\|]"
@@ -114,6 +115,12 @@ existing file.  When this argument is used, only one \fIobjfile\fR
 argument may be specified.
 
 .TP
+.B \-p
+.TP
+.B \-\-preserve-dates
+Preserve the access and modification dates of the file.
+
+.TP
 .B \-x
 .TP
 .B \-\-discard\-all
@@ -143,7 +150,7 @@ other than \fB\-K\fR.
 .B \-\-verbose
 Verbose output: list all object files modified.  In the case of
 archives,
-.B "strip \-V"
+.B "strip \-v"
 lists all members of the archive.
 
 .TP

@@ -1,6 +1,7 @@
 %{
 
-/* Copyright (C) 1991, 92, 93, 94, 95, 1996 Free Software Foundation, Inc.
+/* Copyright (C) 1991, 92, 93, 94, 95, 96, 97, 98, 1999
+   Free Software Foundation, Inc.
 
 This file is part of GLD, the Gnu Linker.
 
@@ -15,8 +16,9 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with GLD; see the file COPYING.  If not, write to
-the Free Software Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+along with GLD; see the file COPYING.  If not, write to the Free
+Software Foundation, 59 Temple Place - Suite 330, Boston, MA
+02111-1307, USA.  */
 
 /*
 This was written by steve chamberlain
@@ -48,9 +50,6 @@ This was written by steve chamberlain
    yylex and yyparse (indirectly) both check this.  */
 input_type parser_input;
 
-/* Radix to use for bfd_scan_vma -- 0 (default to base 10) or 16.  */
-int hex_mode;
-
 /* Line number in the current input file.
    (FIXME Actually, it doesn't appear to get reset for each file?)  */
 unsigned int lineno = 1;
@@ -75,6 +74,7 @@ static YY_BUFFER_STATE include_stack[MAX_INCLUDE_DEPTH];
 static const char *file_name_stack[MAX_INCLUDE_DEPTH];
 static unsigned int lineno_stack[MAX_INCLUDE_DEPTH];
 static unsigned int include_stack_ptr = 0;
+static int vers_node_nesting = 0;
 
 static YY_BUFFER_STATE yy_create_string_buffer PARAMS ((const char *string,
 							size_t size));
@@ -89,6 +89,9 @@ static void lex_warn_invalid PARAMS ((char *where, char *what));
 	BOTH		either EXPRESSION or SCRIPT
 	DEFSYMEXP	in an argument to -defsym
         MRI             in an MRI script
+	VERS_START	starting a Sun style mapfile
+	VERS_SCRIPT	a Sun style mapfile
+	VERS_NODE	a node within a Sun style mapfile
 */
 #define RTOKEN(x)  {  yylval.token = x; return x; }
 
@@ -111,12 +114,17 @@ WHITE		[ \t\n\r]+
 
 NOCFILENAMECHAR	[_a-zA-Z0-9\/\.\-\_\+\$\:\[\]\\\~]
 
+V_TAG [.$_a-zA-Z][._a-zA-Z0-9]*
+V_IDENTIFIER [*?.$_a-zA-Z][*?.$_a-zA-Z0-9]*
 
 %s SCRIPT
 %s EXPRESSION
 %s BOTH
 %s DEFSYMEXP
 %s MRI
+%s VERS_START
+%s VERS_SCRIPT
+%s VERS_NODE
 %%
 
   if (parser_input != input_selected)
@@ -128,6 +136,7 @@ NOCFILENAMECHAR	[_a-zA-Z0-9\/\.\-\_\+\$\:\[\]\\\~]
 	{
 	case input_script: return INPUT_SCRIPT; break;
 	case input_mri_script: return INPUT_MRI_SCRIPT; break;
+	case input_version_script: return INPUT_VERSION_SCRIPT; break;
 	case input_defsym: return INPUT_DEFSYM; break;
 	default: abort ();
 	}
@@ -170,17 +179,18 @@ NOCFILENAMECHAR	[_a-zA-Z0-9\/\.\-\_\+\$\:\[\]\\\~]
 								  ibase);
 				   return INT;
 				 }
-<SCRIPT,DEFSYMEXP,MRI,BOTH,EXPRESSION>"$"?"0x"?([0-9A-Fa-f])+(M|K|m|k)? {
-				  yylval.integer = bfd_scan_vma (yytext, 0,
-								 hex_mode);
-				  if (yytext[yyleng-1]=='M'
-					|| yytext[yyleng-1] == 'm') {
-				      yylval.integer *= 1024*1024;
-				    }	
-				  if (yytext[yyleng-1]=='K' 
-				|| yytext[yyleng-1]=='k') {
-				      yylval.integer *= 1024;
-				    }		
+<SCRIPT,DEFSYMEXP,MRI,BOTH,EXPRESSION>((("$"|"0x")([0-9A-Fa-f])+)|(([0-9])+))(M|K|m|k)? {
+				  char *s = yytext;
+
+				  if (*s == '$')
+				    ++s;
+				  yylval.integer = bfd_scan_vma (s, 0, 0);
+				  if (yytext[yyleng-1] == 'M'
+				      || yytext[yyleng-1] == 'm')
+				    yylval.integer *= 1024 * 1024;
+				  if (yytext[yyleng-1] == 'K' 
+				      || yytext[yyleng-1]=='k')
+				    yylval.integer *= 1024;
 				  return INT;
 				}
 <BOTH,SCRIPT,EXPRESSION,MRI>"]"		{ RTOKEN(']');}
@@ -223,15 +233,18 @@ NOCFILENAMECHAR	[_a-zA-Z0-9\/\.\-\_\+\$\:\[\]\\\~]
 <BOTH,SCRIPT,EXPRESSION,MRI>";"		{ RTOKEN(';');}
 <BOTH,SCRIPT>"MEMORY"		{ RTOKEN(MEMORY);}
 <BOTH,SCRIPT>"ORIGIN"		{ RTOKEN(ORIGIN);}
+<BOTH,SCRIPT>"VERSION"		{ RTOKEN(VERSIONK);}
 <EXPRESSION,BOTH,SCRIPT>"BLOCK"		{ RTOKEN(BLOCK);}
 <EXPRESSION,BOTH,SCRIPT>"BIND"		{ RTOKEN(BIND);}
 <BOTH,SCRIPT>"LENGTH"		{ RTOKEN(LENGTH);}
 <EXPRESSION,BOTH,SCRIPT>"ALIGN"			{ RTOKEN(ALIGN_K);}
 <EXPRESSION,BOTH,SCRIPT>"ADDR"			{ RTOKEN(ADDR);}
 <EXPRESSION,BOTH,SCRIPT>"LOADADDR"		{ RTOKEN(LOADADDR);}
-<EXPRESSION,BOTH>"MAX"			{ RTOKEN(MAX); }
-<EXPRESSION,BOTH>"MIN"			{ RTOKEN(MIN); }
+<EXPRESSION,BOTH>"MAX"			{ RTOKEN(MAX_K); }
+<EXPRESSION,BOTH>"MIN"			{ RTOKEN(MIN_K); }
+<EXPRESSION,BOTH>"ASSERT"		{ RTOKEN(ASSERT_K); }
 <BOTH,SCRIPT>"ENTRY"			{ RTOKEN(ENTRY);}
+<BOTH,SCRIPT,MRI>"EXTERN"		{ RTOKEN(EXTERN);}
 <EXPRESSION,BOTH,SCRIPT>"NEXT"			{ RTOKEN(NEXT);}
 <EXPRESSION,BOTH,SCRIPT>"sizeof_headers"	{ RTOKEN(SIZEOF_HEADERS);}
 <EXPRESSION,BOTH,SCRIPT>"SIZEOF_HEADERS"	{ RTOKEN(SIZEOF_HEADERS);}
@@ -255,12 +268,14 @@ NOCFILENAMECHAR	[_a-zA-Z0-9\/\.\-\_\+\$\:\[\]\\\~]
 <BOTH,SCRIPT>"SYSLIB"		{ RTOKEN(SYSLIB);}
 <BOTH,SCRIPT>"FLOAT"			{ RTOKEN(FLOAT);}
 <BOTH,SCRIPT>"QUAD"			{ RTOKEN( QUAD);}
+<BOTH,SCRIPT>"SQUAD"			{ RTOKEN( SQUAD);}
 <BOTH,SCRIPT>"LONG"			{ RTOKEN( LONG);}
 <BOTH,SCRIPT>"SHORT"			{ RTOKEN( SHORT);}
 <BOTH,SCRIPT>"BYTE"			{ RTOKEN( BYTE);}
 <BOTH,SCRIPT>"NOFLOAT"		{ RTOKEN(NOFLOAT);}
 <EXPRESSION,BOTH,SCRIPT>"NOCROSSREFS"	{ RTOKEN(NOCROSSREFS);}
 <BOTH,SCRIPT>"OVERLAY"			{ RTOKEN(OVERLAY); }
+<BOTH,SCRIPT>"SORT"			{ RTOKEN(SORT); }
 <EXPRESSION,BOTH,SCRIPT>"NOLOAD"	{ RTOKEN(NOLOAD);}
 <EXPRESSION,BOTH,SCRIPT>"DSECT"		{ RTOKEN(DSECT);}
 <EXPRESSION,BOTH,SCRIPT>"COPY"		{ RTOKEN(COPY);}
@@ -274,9 +289,10 @@ NOCFILENAMECHAR	[_a-zA-Z0-9\/\.\-\_\+\$\:\[\]\\\~]
 <BOTH,SCRIPT>"PHDRS"			{ RTOKEN (PHDRS); }
 <EXPRESSION,BOTH,SCRIPT>"AT"			{ RTOKEN(AT);}
 <EXPRESSION,BOTH,SCRIPT>"PROVIDE"		{ RTOKEN(PROVIDE); }
-<MRI>"#".*\n?\r?		{ ++ lineno; }
+<EXPRESSION,BOTH,SCRIPT>"KEEP"		{ RTOKEN(KEEP); }
+<EXPRESSION,BOTH,SCRIPT>"EXCLUDE_FILE"        { RTOKEN(EXCLUDE_FILE); }
+<MRI>"#".*\n?			{ ++ lineno; }
 <MRI>"\n"	                { ++ lineno;  RTOKEN(NEWLINE); }
-<MRI>"\r"	                { ++ lineno;  RTOKEN(NEWLINE); }
 <MRI>"*".*			{ /* Mri comment line */ }
 <MRI>";".*			{ /* Mri comment line */ }
 <MRI>"END"                      { RTOKEN(ENDWORD); }
@@ -292,7 +308,6 @@ NOCFILENAMECHAR	[_a-zA-Z0-9\/\.\-\_\+\$\:\[\]\\\~]
 <MRI>"NAME"                     { RTOKEN(NAMEWORD); }
 <MRI>"FORMAT"                   { RTOKEN(FORMAT); }
 <MRI>"CASE"                     { RTOKEN(CASE); }
-<MRI>"EXTERN"                   { RTOKEN(EXTERN); }
 <MRI>"START"                    { RTOKEN(START); }
 <MRI>"LIST".*                   { RTOKEN(LIST); /* LIST and ignore to end of line */ }
 <MRI>"SECT"			{ RTOKEN(SECT); }
@@ -331,9 +346,24 @@ NOCFILENAMECHAR	[_a-zA-Z0-9\/\.\-\_\+\$\:\[\]\\\~]
 				  yylval.name = buystring (yytext + 2);
 				  return LNAME;
 				}
-<SCRIPT>{WILDCHAR}* { yylval.name = buystring(yytext); return NAME; }
+<SCRIPT>{WILDCHAR}* {
+		/* Annoyingly, this pattern can match comments, and we have
+		   longest match issues to consider.  So if the first two
+		   characters are a comment opening, put the input back and
+		   try again.  */
+		if (yytext[0] == '/' && yytext[1] == '*')
+		  {
+		    yyless(2);
+		    comment ();
+		  }
+		else
+		  {
+		    yylval.name = buystring(yytext);
+		    return NAME;
+		  }
+	}
 
-<EXPRESSION,BOTH,SCRIPT>"\""[^\"]*"\"" {
+<EXPRESSION,BOTH,SCRIPT,VERS_NODE>"\""[^\"]*"\"" {
 					/* No matter the state, quotes
 					   give what's inside */
 					yylval.name = buystring(yytext+1);
@@ -341,8 +371,40 @@ NOCFILENAMECHAR	[_a-zA-Z0-9\/\.\-\_\+\$\:\[\]\\\~]
 					return NAME;
 				}
 <BOTH,SCRIPT,EXPRESSION>"\n"		{ lineno++;}
-<BOTH,SCRIPT,EXPRESSION>"\r"		{ lineno++;}
-<MRI,BOTH,SCRIPT,EXPRESSION>[ \t]
+<MRI,BOTH,SCRIPT,EXPRESSION>[ \t\r]+	{ }
+
+<VERS_NODE,VERS_SCRIPT>[:,;]	{ return *yytext; }
+
+<VERS_NODE>global		{ RTOKEN(GLOBAL); }
+
+<VERS_NODE>local		{ RTOKEN(LOCAL); }
+
+<VERS_NODE>extern		{ RTOKEN(EXTERN); }
+
+<VERS_NODE>{V_IDENTIFIER}	{ yylval.name = buystring (yytext);
+				  return VERS_IDENTIFIER; }
+
+<VERS_SCRIPT>{V_TAG}		{ yylval.name = buystring (yytext);
+				  return VERS_TAG; }
+
+<VERS_START>"{"			{ BEGIN(VERS_SCRIPT); return *yytext; }
+
+<VERS_SCRIPT>"{"		{ BEGIN(VERS_NODE); 
+				  vers_node_nesting = 0;
+				  return *yytext;
+				}
+<VERS_SCRIPT>"}"		{ return *yytext; }
+<VERS_NODE>"{"			{ vers_node_nesting++; return *yytext; }
+<VERS_NODE>"}"			{ if (--vers_node_nesting < 0)
+				    BEGIN(VERS_SCRIPT);
+				  return *yytext;
+				}
+
+<VERS_START,VERS_NODE,VERS_SCRIPT>[\n]		{ lineno++; }
+
+<VERS_START,VERS_NODE,VERS_SCRIPT>#.*		{ /* Eat up comments */ }
+
+<VERS_START,VERS_NODE,VERS_SCRIPT>[ \t\r]+   	{ /* Eat up whitespace */ }
 
 <<EOF>> {
   include_stack_ptr--;
@@ -363,7 +425,7 @@ NOCFILENAMECHAR	[_a-zA-Z0-9\/\.\-\_\+\$\:\[\]\\\~]
   return END;
 }
 
-<SCRIPT,MRI>.		lex_warn_invalid(" in script", yytext);
+<SCRIPT,MRI,VERS_START,VERS_SCRIPT,VERS_NODE>.	lex_warn_invalid(" in script", yytext);
 <EXPRESSION,DEFSYMEXP,BOTH>.	lex_warn_invalid(" in expression", yytext);
     
 %%
@@ -472,6 +534,20 @@ ldlex_mri_script ()
 }
 
 void
+ldlex_version_script ()
+{
+  *(state_stack_p)++ = yy_start;
+  BEGIN (VERS_START);
+}
+
+void
+ldlex_version_file ()
+{
+  *(state_stack_p)++ = yy_start;
+  BEGIN (VERS_SCRIPT);
+}
+
+void
 ldlex_defsym ()
 {
   *(state_stack_p)++ = yy_start;
@@ -515,7 +591,7 @@ yy_input (buf, result, max_size)
 	{
 	  *result = read (fileno (yyin), (char *) buf, max_size);
 	  if (*result < 0) 
-	    einfo ("%F%P: read in flex scanner failed");
+	    einfo ("%F%P: read in flex scanner failed\n");
 	}
     }
 }
@@ -532,7 +608,7 @@ comment ()
     c = input();
     while (c != '*' && c != EOF) 
     {
-      if (c == '\n' || c == '\r')
+      if (c == '\n')
 	lineno++;
       c = input();
     }
@@ -546,7 +622,7 @@ comment ()
        break;			/* found the end */
     }
 
-    if (c == '\n' || c == '\r')
+    if (c == '\n')
       lineno++;
 
     if (c == EOF)

@@ -1,6 +1,6 @@
 /* Opcode table for the ARM.
 
-   Copyright 1994, 1995 Free Software Foundation, Inc.
+   Copyright 1994, 1995, 1996, 1997, 2000 Free Software Foundation, Inc.
    
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -22,11 +22,18 @@ struct arm_opcode {
     char *assembler;		/* how to disassemble this instruction */
 };
 
+struct thumb_opcode
+{
+    unsigned short value, mask;	/* recognise instruction if (op&mask)==value */
+    char * assembler;		/* how to disassemble this instruction */
+};
+
 /* format of the assembler string :
    
    %%			%
    %<bitfield>d		print the bitfield in decimal
    %<bitfield>x		print the bitfield in hex
+   %<bitfield>X		print the bitfield as 1 hex digit without leading "0x"
    %<bitfield>r		print as an ARM register
    %<bitfield>f		print a floating point constant if >7 else a
 			floating point register
@@ -48,13 +55,28 @@ struct arm_opcode {
    %m			print register mask for ldm/stm instruction
    %C			print the PSR sub type.
    %F			print the COUNT field of a LFM/SFM instruction.
+Thumb specific format options:
+   %D                   print Thumb register (bits 0..2 as high number if bit 7 set)
+   %S                   print Thumb register (bits 3..5 as high number if bit 6 set)
+   %<bitfield>I         print bitfield as a signed decimal
+   				(top bit of range being the sign bit)
+   %M                   print Thumb register mask
+   %N                   print Thumb register mask (with LR)
+   %O                   print Thumb register mask (with PC)
+   %T                   print Thumb condition code (always bits 8-11)
+   %<bitfield>B         print Thumb branch destination (signed displacement)
+   %<bitfield>W         print (bitfield * 4) as a decimal
+   %<bitfield>H         print (bitfield * 2) as a decimal
+   %<bitfield>a         print (bitfield * 4) as a pc-rel offset + decoded symbol
 */
 
 /* Note: There is a partial ordering in this table - it must be searched from
    the top to obtain a correct match. */
 
-static struct arm_opcode arm_opcodes[] = {
+static struct arm_opcode arm_opcodes[] =
+{
     /* ARM instructions */
+    {0xe1a00000, 0xffffffff, "nop\t\t\t(mov r0,r0)"},
     {0x012FFF10, 0x0ffffff0, "bx%c\t%0-3r"},
     {0x00000090, 0x0fe000f0, "mul%c%20's\t%16-19r, %0-3r, %8-11r"},
     {0x00200090, 0x0fe000f0, "mla%c%20's\t%16-19r, %0-3r, %8-11r, %12-15r"},
@@ -71,8 +93,8 @@ static struct arm_opcode arm_opcodes[] = {
     {0x00a00000, 0x0de00000, "adc%c%20's\t%12-15r, %16-19r, %o"},
     {0x00c00000, 0x0de00000, "sbc%c%20's\t%12-15r, %16-19r, %o"},
     {0x00e00000, 0x0de00000, "rsc%c%20's\t%12-15r, %16-19r, %o"},
-    {0x0120f000, 0x0db6f000, "msr%c\t%22?scpsr%C, %o"},
-    {0x010f0000, 0x0fbf0fff, "mrs%c\t%12-15r, %22?scpsr"},
+    {0x0120f000, 0x0db0f000, "msr%c\t%22?SCPSR%C, %o"},
+    {0x010f0000, 0x0fbf0fff, "mrs%c\t%12-15r, %22?SCPSR"},
     {0x01000000, 0x0de00000, "tst%c%p\t%16-19r, %o"},
     {0x01200000, 0x0de00000, "teq%c%p\t%16-19r, %o"},
     {0x01400000, 0x0de00000, "cmp%c%p\t%16-19r, %o"},
@@ -81,7 +103,10 @@ static struct arm_opcode arm_opcodes[] = {
     {0x01a00000, 0x0de00000, "mov%c%20's\t%12-15r, %o"},
     {0x01c00000, 0x0de00000, "bic%c%20's\t%12-15r, %16-19r, %o"},
     {0x01e00000, 0x0de00000, "mvn%c%20's\t%12-15r, %o"},
-    {0x04000000, 0x0c100000, "str%c%22'b%t\t%12-15r, %a"},
+    {0x04000000, 0x0e100000, "str%c%22'b%t\t%12-15r, %a"},
+    {0x06000000, 0x0e100ff0, "str%c%22'b%t\t%12-15r, %a"},
+    {0x04000000, 0x0c100010, "str%c%22'b%t\t%12-15r, %a"},
+    {0x06000010, 0x0e000010, "undefined"},
     {0x04100000, 0x0c100000, "ldr%c%22'b%t\t%12-15r, %a"},
     {0x08000000, 0x0e100000, "stm%c%23?id%24?ba\t%16-19r%21'!, %m%22'^"},
     {0x08100000, 0x0e100000, "ldm%c%23?id%24?ba\t%16-19r%21'!, %m%22'^"},
@@ -139,9 +164,121 @@ static struct arm_opcode arm_opcodes[] = {
     {0x0e000010, 0x0f100010, "mcr%c\t%8-11d, %21-23d, %12-15r, cr%16-19d, cr%0-3d, {%5-7d}"},
     {0x0c000000, 0x0e100000, "stc%c%22'l\t%8-11d, cr%12-15d, %A"},
     {0x0c100000, 0x0e100000, "ldc%c%22'l\t%8-11d, cr%12-15d, %A"},
-    /* the rest */
+
+    /* The rest.  */
     {0x00000000, 0x00000000, "undefined instruction %0-31x"},
     {0x00000000, 0x00000000, 0}
 };
 
-#define BDISP(x) ((((x) & 0xffffff) ^ 0x800000) - 0x800000)
+#define BDISP(x) ((((x) & 0xffffff) ^ 0x800000) - 0x800000) /* 26 bit */
+
+static struct thumb_opcode thumb_opcodes[] =
+{
+  /* Thumb instructions */
+  {0x46C0, 0xFFFF, "nop\t\t\t(mov r8,r8)"}, /* format 5 instructions do not update the PSR */
+  {0x1C00, 0xFFC0, "mov\t%0-2r, %3-5r\t\t(add %0-2r, %3-5r, #%6-8d)"},
+  /* format 4 */
+  {0x4000, 0xFFC0, "and\t%0-2r, %3-5r"},
+  {0x4040, 0xFFC0, "eor\t%0-2r, %3-5r"},
+  {0x4080, 0xFFC0, "lsl\t%0-2r, %3-5r"},
+  {0x40C0, 0xFFC0, "lsr\t%0-2r, %3-5r"},
+  {0x4100, 0xFFC0, "asr\t%0-2r, %3-5r"},
+  {0x4140, 0xFFC0, "adc\t%0-2r, %3-5r"},
+  {0x4180, 0xFFC0, "sbc\t%0-2r, %3-5r"},
+  {0x41C0, 0xFFC0, "ror\t%0-2r, %3-5r"},
+  {0x4200, 0xFFC0, "tst\t%0-2r, %3-5r"},
+  {0x4240, 0xFFC0, "neg\t%0-2r, %3-5r"},
+  {0x4280, 0xFFC0, "cmp\t%0-2r, %3-5r"},
+  {0x42C0, 0xFFC0, "cmn\t%0-2r, %3-5r"},
+  {0x4300, 0xFFC0, "orr\t%0-2r, %3-5r"},
+  {0x4340, 0xFFC0, "mul\t%0-2r, %3-5r"},
+  {0x4380, 0xFFC0, "bic\t%0-2r, %3-5r"},
+  {0x43C0, 0xFFC0, "mvn\t%0-2r, %3-5r"},
+  /* format 13 */
+  {0xB000, 0xFF80, "add\tsp, #%0-6W"},
+  {0xB080, 0xFF80, "sub\tsp, #%0-6W"},
+  /* format 5 */
+  {0x4700, 0xFF80, "bx\t%S"},
+  {0x4400, 0xFF00, "add\t%D, %S"},
+  {0x4500, 0xFF00, "cmp\t%D, %S"},
+  {0x4600, 0xFF00, "mov\t%D, %S"},
+  /* format 14 */
+  {0xB400, 0xFE00, "push\t%N"},
+  {0xBC00, 0xFE00, "pop\t%O"},
+  /* format 2 */
+  {0x1800, 0xFE00, "add\t%0-2r, %3-5r, %6-8r"},
+  {0x1A00, 0xFE00, "sub\t%0-2r, %3-5r, %6-8r"},
+  {0x1C00, 0xFE00, "add\t%0-2r, %3-5r, #%6-8d"},
+  {0x1E00, 0xFE00, "sub\t%0-2r, %3-5r, #%6-8d"},
+  /* format 8 */
+  {0x5200, 0xFE00, "strh\t%0-2r, [%3-5r, %6-8r]"},
+  {0x5A00, 0xFE00, "ldrh\t%0-2r, [%3-5r, %6-8r]"},
+  {0x5600, 0xF600, "ldrs%11?hb\t%0-2r, [%3-5r, %6-8r]"},
+  /* format 7 */
+  {0x5000, 0xFA00, "str%10'b\t%0-2r, [%3-5r, %6-8r]"},
+  {0x5800, 0xFA00, "ldr%10'b\t%0-2r, [%3-5r, %6-8r]"},
+  /* format 1 */
+  {0x0000, 0xF800, "lsl\t%0-2r, %3-5r, #%6-10d"},
+  {0x0800, 0xF800, "lsr\t%0-2r, %3-5r, #%6-10d"},
+  {0x1000, 0xF800, "asr\t%0-2r, %3-5r, #%6-10d"},
+  /* format 3 */
+  {0x2000, 0xF800, "mov\t%8-10r, #%0-7d"},
+  {0x2800, 0xF800, "cmp\t%8-10r, #%0-7d"},
+  {0x3000, 0xF800, "add\t%8-10r, #%0-7d"},
+  {0x3800, 0xF800, "sub\t%8-10r, #%0-7d"},
+  /* format 6 */
+  {0x4800, 0xF800, "ldr\t%8-10r, [pc, #%0-7W]\t(%0-7a)"},  /* TODO: Disassemble PC relative "LDR rD,=<symbolic>" */
+  /* format 9 */
+  {0x6000, 0xF800, "str\t%0-2r, [%3-5r, #%6-10W]"},
+  {0x6800, 0xF800, "ldr\t%0-2r, [%3-5r, #%6-10W]"},
+  {0x7000, 0xF800, "strb\t%0-2r, [%3-5r, #%6-10d]"},
+  {0x7800, 0xF800, "ldrb\t%0-2r, [%3-5r, #%6-10d]"},
+  /* format 10 */
+  {0x8000, 0xF800, "strh\t%0-2r, [%3-5r, #%6-10H]"},
+  {0x8800, 0xF800, "ldrh\t%0-2r, [%3-5r, #%6-10H]"},
+  /* format 11 */
+  {0x9000, 0xF800, "str\t%8-10r, [sp, #%0-7W]"},
+  {0x9800, 0xF800, "ldr\t%8-10r, [sp, #%0-7W]"},
+  /* format 12 */
+  {0xA000, 0xF800, "add\t%8-10r, pc, #%0-7W\t(adr %8-10r,%0-7a)"},
+  {0xA800, 0xF800, "add\t%8-10r, sp, #%0-7W"},
+  /* format 15 */
+  {0xC000, 0xF800, "stmia\t%8-10r!,%M"},
+  {0xC800, 0xF800, "ldmia\t%8-10r!,%M"},
+  /* format 18 */
+  {0xE000, 0xF800, "b\t%0-10B"},
+  {0xE800, 0xF800, "undefined"},
+  /* format 19 */
+  {0xF000, 0xF800, ""}, /* special processing required in disassembler */
+  {0xF800, 0xF800, "second half of BL instruction %0-15x"},
+  /* format 16 */
+  {0xD000, 0xFF00, "beq\t%0-7B"},
+  {0xD100, 0xFF00, "bne\t%0-7B"},
+  {0xD200, 0xFF00, "bcs\t%0-7B"},
+  {0xD300, 0xFF00, "bcc\t%0-7B"},
+  {0xD400, 0xFF00, "bmi\t%0-7B"},
+  {0xD500, 0xFF00, "bpl\t%0-7B"},
+  {0xD600, 0xFF00, "bvs\t%0-7B"},
+  {0xD700, 0xFF00, "bvc\t%0-7B"},
+  {0xD800, 0xFF00, "bhi\t%0-7B"},
+  {0xD900, 0xFF00, "bls\t%0-7B"},
+  {0xDA00, 0xFF00, "bge\t%0-7B"},
+  {0xDB00, 0xFF00, "blt\t%0-7B"},
+  {0xDC00, 0xFF00, "bgt\t%0-7B"},
+  {0xDD00, 0xFF00, "ble\t%0-7B"},
+  /* format 17 */
+  {0xDE00, 0xFF00, "bal\t%0-7B"},
+  {0xDF00, 0xFF00, "swi\t%0-7d"},
+  /* format 9 */
+  {0x6000, 0xF800, "str\t%0-2r, [%3-5r, #%6-10W]"},
+  {0x6800, 0xF800, "ldr\t%0-2r, [%3-5r, #%6-10W]"},
+  {0x7000, 0xF800, "strb\t%0-2r, [%3-5r, #%6-10d]"},
+  {0x7800, 0xF800, "ldrb\t%0-2r, [%3-5r, #%6-10d]"},
+  /* the rest */
+  {0x0000, 0x0000, "undefined instruction %0-15x"},
+  {0x0000, 0x0000, 0}
+};
+
+#define BDISP23(x) ((((((x) & 0x07ff) << 11) | (((x) & 0x07ff0000) >> 16)) \
+                     ^ 0x200000) - 0x200000) /* 23bit */
+

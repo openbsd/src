@@ -1,4 +1,4 @@
-#objdump: -d --prefix-addresses
+#objdump: -d
 #name: MRI structured while
 #as: -M
 

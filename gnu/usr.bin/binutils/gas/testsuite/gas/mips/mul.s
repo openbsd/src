@@ -23,3 +23,5 @@ foo:
 	dmul	$4,$5,1
 	dmulo	$4,$5,$6
 	dmulou	$4,$5,$6
+
+        .space	8

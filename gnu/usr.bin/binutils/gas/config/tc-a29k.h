@@ -1,5 +1,5 @@
 /* tc-a29k.h -- Assemble for the AMD 29000.
-   Copyright (C) 1989, 1990, 1991 Free Software Foundation, Inc.
+   Copyright (C) 1989, 90, 91, 92, 93, 95, 1998 Free Software Foundation, Inc.
 
 This file is part of GAS, the GNU Assembler.
 
@@ -14,12 +14,15 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with GAS; see the file COPYING.  If not, write to
-the Free Software Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+along with GAS; see the file COPYING.  If not, write to the Free
+Software Foundation, 59 Temple Place - Suite 330, Boston, MA
+02111-1307, USA.  */
 
 #define TC_A29K
 
 #define TARGET_BYTES_BIG_ENDIAN	1
+
+#define WORKING_DOT_WORD
 
 #define LEX_DOLLAR 1
 

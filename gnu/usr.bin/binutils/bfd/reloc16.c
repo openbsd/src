@@ -1,5 +1,6 @@
 /* 8 and 16 bit COFF relocation functions, for BFD.
-   Copyright 1990, 91, 92, 93, 94, 95, 1996 Free Software Foundation, Inc.
+   Copyright 1990, 91, 92, 93, 94, 95, 96, 97, 1998
+   Free Software Foundation, Inc.
    Written by Cygnus Support.
 
 This file is part of BFD, the Binary File Descriptor library.
@@ -36,7 +37,6 @@ Most of this hacked by  Steve Chamberlain,
 
 #include "bfd.h"
 #include "sysdep.h"
-#include "obstack.h"
 #include "libbfd.h"
 #include "bfdlink.h"
 #include "genlink.h"
@@ -81,7 +81,8 @@ bfd_coff_reloc16_get_value (reloc, link_info, input_section)
 	{
 	  if (! ((*link_info->callbacks->undefined_symbol)
 		 (link_info, bfd_asymbol_name (symbol),
-		  input_section->owner, input_section, reloc->address)))
+		  input_section->owner, input_section, reloc->address,
+		  true)))
 	    abort ();
 	  value = 0;
 	}
@@ -148,7 +149,7 @@ bfd_coff_reloc16_relax_section (abfd, i, link_info, again)
   /* Get enough memory to hold the stuff */
   bfd *input_bfd = i->owner;
   asection *input_section = i;
-  unsigned *shrinks;
+  int *shrinks;
   int shrink = 0;
   long reloc_size = bfd_get_reloc_upper_bound (input_bfd, input_section);
   arelent **reloc_vector = NULL;
@@ -194,14 +195,16 @@ bfd_coff_reloc16_relax_section (abfd, i, link_info, again)
     {
       int another_pass = 0;
 
-      /* Allocate and initialize the shrinks array for this section.  */
-      shrinks = (unsigned *)bfd_malloc (reloc_count * sizeof (unsigned));
-      memset (shrinks, 0, reloc_count * sizeof (unsigned));
+      /* Allocate and initialize the shrinks array for this section.
+         The last element is used as an accumlator of shrinks.  */
+      shrinks = (int *) bfd_malloc ((reloc_count + 1) * sizeof (int));
+      memset (shrinks, 0, (reloc_count + 1) * sizeof (int));
 
       /* Loop until nothing changes in this section.  */
       do {
 	arelent **parent;
-	unsigned int i, j;
+	unsigned int i;
+	long j;
 
 	another_pass = 0;
 
@@ -217,13 +220,14 @@ bfd_coff_reloc16_relax_section (abfd, i, link_info, again)
 	    if (shrink != shrinks[i])
 	      {
 	        another_pass = 1;
-		for (j = i + 1; j < reloc_count; j++)
+		for (j = i + 1; j <= reloc_count; j++)
 		  shrinks[j] += shrink - shrinks[i];
 	      }
 	  }
   
       } while (another_pass);
 
+      shrink = shrinks[reloc_count];
       free((char *)shrinks);
     }
 

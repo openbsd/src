@@ -74,9 +74,16 @@ Motorola manuals.
 
 @table @samp
 @item -m68000
+@itemx -m68ec000
+@itemx -m68hc000
+@itemx -m68hc001
 @itemx -m68008
 @itemx -m68302
-Assemble for the 68000.  @samp{-m68008} and @samp{-m68302} are synonyms
+@itemx -m68306
+@itemx -m68307
+@itemx -m68322
+@itemx -m68356
+Assemble for the 68000. @samp{-m68008}, @samp{-m68302}, and so on are synonyms
 for @samp{-m68000}, since the chips are the same from the point of view
 of the assembler.
 
@@ -84,22 +91,31 @@ of the assembler.
 Assemble for the 68010.
 
 @item -m68020
+@itemx -m68ec020
 Assemble for the 68020.  This is normally the default.
 
 @item -m68030
+@itemx -m68ec030
 Assemble for the 68030.
 
 @item -m68040
+@itemx -m68ec040
 Assemble for the 68040.
 
 @item -m68060
+@itemx -m68ec060
 Assemble for the 68060.
 
 @item -mcpu32
+@itemx -m68330
 @itemx -m68331
 @itemx -m68332
 @itemx -m68333
+@itemx -m68334
+@itemx -m68336
 @itemx -m68340
+@itemx -m68341
+@itemx -m68349
 @itemx -m68360
 Assemble for the CPU32 family of chips.
 

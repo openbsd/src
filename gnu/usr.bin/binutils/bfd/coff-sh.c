@@ -1,5 +1,5 @@
 /* BFD back-end for Hitachi Super-H COFF binaries.
-   Copyright 1993, 1994, 1995, 1996 Free Software Foundation, Inc.
+   Copyright 1993, 94, 95, 96, 97, 98, 1999, 2000 Free Software Foundation, Inc.
    Contributed by Cygnus Support.
    Written by Steve Chamberlain, <sac@cygnus.com>.
    Relaxing code written by Ian Lance Taylor, <ian@cygnus.com>.
@@ -22,11 +22,24 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 #include "bfd.h"
 #include "sysdep.h"
-#include "obstack.h"
 #include "libbfd.h"
 #include "bfdlink.h"
 #include "coff/sh.h"
 #include "coff/internal.h"
+
+#ifdef COFF_WITH_PE
+#include "coff/pe.h"
+
+#ifndef COFF_IMAGE_WITH_PE
+static boolean sh_align_load_span 
+  PARAMS ((bfd *, asection *, bfd_byte *,
+	   boolean (*) (bfd *, asection *, PTR, bfd_byte *, bfd_vma),
+	   PTR, bfd_vma **, bfd_vma *, bfd_vma, bfd_vma, boolean *));
+
+#define _bfd_sh_align_load_span sh_align_load_span
+#endif
+#endif
+
 #include "libcoff.h"
 
 /* Internal functions.  */
@@ -37,7 +50,9 @@ static boolean sh_relax_section
   PARAMS ((bfd *, asection *, struct bfd_link_info *, boolean *));
 static boolean sh_relax_delete_bytes
   PARAMS ((bfd *, asection *, bfd_vma, int));
+#ifndef COFF_IMAGE_WITH_PE
 static const struct sh_opcode *sh_insn_info PARAMS ((unsigned int));
+#endif
 static boolean sh_align_loads
   PARAMS ((bfd *, asection *, struct internal_reloc *, bfd_byte *, boolean *));
 static boolean sh_swap_insns
@@ -49,26 +64,64 @@ static bfd_byte *sh_coff_get_relocated_section_contents
   PARAMS ((bfd *, struct bfd_link_info *, struct bfd_link_order *,
 	   bfd_byte *, boolean, asymbol **));
 
+#ifdef COFF_WITH_PE
+/* Can't build import tables with 2**4 alignment.  */
+#define COFF_DEFAULT_SECTION_ALIGNMENT_POWER	2
+#else
 /* Default section alignment to 2**4.  */
-#define COFF_DEFAULT_SECTION_ALIGNMENT_POWER (4)
+#define COFF_DEFAULT_SECTION_ALIGNMENT_POWER	4
+#endif
+
+#ifdef COFF_IMAGE_WITH_PE
+/* Align PE executables.  */
+#define COFF_PAGE_SIZE 0x1000
+#endif
 
 /* Generate long file names.  */
 #define COFF_LONG_FILENAMES
+
+#ifdef COFF_WITH_PE
+/* Return true if this relocation should
+   appear in the output .reloc section.  */
+static boolean in_reloc_p (abfd, howto)
+     bfd * abfd ATTRIBUTE_UNUSED;
+     reloc_howto_type * howto;
+{
+  return ! howto->pc_relative && howto->type != R_SH_IMAGEBASE;
+}     
+#endif
 
 /* The supported relocations.  There are a lot of relocations defined
    in coff/internal.h which we do not expect to ever see.  */
 static reloc_howto_type sh_coff_howtos[] =
 {
-  { 0 },
-  { 1 },
-  { 2 },
-  { 3 }, /* R_SH_PCREL8 */
-  { 4 }, /* R_SH_PCREL16 */
-  { 5 }, /* R_SH_HIGH8 */
-  { 6 }, /* R_SH_IMM24 */
-  { 7 }, /* R_SH_LOW16 */
-  { 8 },
-  { 9 }, /* R_SH_PCDISP8BY4 */
+  EMPTY_HOWTO (0),
+  EMPTY_HOWTO (1),
+#ifdef COFF_WITH_PE
+  /* Windows CE */
+  HOWTO (R_SH_IMM32CE,		/* type */
+	 0,			/* rightshift */
+	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 32,			/* bitsize */
+	 false,			/* pc_relative */
+	 0,			/* bitpos */
+	 complain_overflow_bitfield, /* complain_on_overflow */
+	 sh_reloc,		/* special_function */
+	 "r_imm32ce",		/* name */
+	 true,			/* partial_inplace */
+	 0xffffffff,		/* src_mask */
+	 0xffffffff,		/* dst_mask */
+	 false),		/* pcrel_offset */
+#else
+  EMPTY_HOWTO (2),
+#endif
+  EMPTY_HOWTO (3), /* R_SH_PCREL8 */
+  EMPTY_HOWTO (4), /* R_SH_PCREL16 */
+  EMPTY_HOWTO (5), /* R_SH_HIGH8 */
+  EMPTY_HOWTO (6), /* R_SH_IMM24 */
+  EMPTY_HOWTO (7), /* R_SH_LOW16 */
+  EMPTY_HOWTO (8),
+  EMPTY_HOWTO (9), /* R_SH_PCDISP8BY4 */
 
   HOWTO (R_SH_PCDISP8BY2,	/* type */
 	 1,			/* rightshift */
@@ -84,7 +137,7 @@ static reloc_howto_type sh_coff_howtos[] =
 	 0xff,			/* dst_mask */
 	 true),			/* pcrel_offset */
 
-  { 11 }, /* R_SH_PCDISP8 */
+  EMPTY_HOWTO (11), /* R_SH_PCDISP8 */
 
   HOWTO (R_SH_PCDISP,		/* type */
 	 1,			/* rightshift */
@@ -100,7 +153,7 @@ static reloc_howto_type sh_coff_howtos[] =
 	 0xfff,			/* dst_mask */
 	 true),			/* pcrel_offset */
 
-  { 13 },
+  EMPTY_HOWTO (13),
 
   HOWTO (R_SH_IMM32,		/* type */
 	 0,			/* rightshift */
@@ -116,13 +169,29 @@ static reloc_howto_type sh_coff_howtos[] =
 	 0xffffffff,		/* dst_mask */
 	 false),		/* pcrel_offset */
 
-  { 15 },
-  { 16 }, /* R_SH_IMM8 */
-  { 17 }, /* R_SH_IMM8BY2 */
-  { 18 }, /* R_SH_IMM8BY4 */
-  { 19 }, /* R_SH_IMM4 */
-  { 20 }, /* R_SH_IMM4BY2 */
-  { 21 }, /* R_SH_IMM4BY4 */
+  EMPTY_HOWTO (15),
+#ifdef COFF_WITH_PE
+  HOWTO (R_SH_IMAGEBASE,        /* type */                                 
+	 0,	                /* rightshift */                           
+	 2,	                /* size (0 = byte, 1 = short, 2 = long) */ 
+	 32,	                /* bitsize */                   
+	 false,	                /* pc_relative */                          
+	 0,	                /* bitpos */                               
+	 complain_overflow_bitfield, /* complain_on_overflow */
+	 sh_reloc,       	/* special_function */                     
+	 "rva32",	        /* name */                                 
+	 true,	                /* partial_inplace */                      
+	 0xffffffff,            /* src_mask */                             
+	 0xffffffff,            /* dst_mask */                             
+	 false),                /* pcrel_offset */
+#else
+  EMPTY_HOWTO (16), /* R_SH_IMM8 */
+#endif
+  EMPTY_HOWTO (17), /* R_SH_IMM8BY2 */
+  EMPTY_HOWTO (18), /* R_SH_IMM8BY4 */
+  EMPTY_HOWTO (19), /* R_SH_IMM4 */
+  EMPTY_HOWTO (20), /* R_SH_IMM4BY2 */
+  EMPTY_HOWTO (21), /* R_SH_IMM4BY4 */
 
   HOWTO (R_SH_PCRELIMM8BY2,	/* type */
 	 1,			/* rightshift */
@@ -276,6 +345,20 @@ static reloc_howto_type sh_coff_howtos[] =
 	 true,			/* partial_inplace */
 	 0xffffffff,		/* src_mask */
 	 0xffffffff,		/* dst_mask */
+	 false),		/* pcrel_offset */
+
+  HOWTO (R_SH_SWITCH8,		/* type */
+	 0,			/* rightshift */
+	 0,			/* size (0 = byte, 1 = short, 2 = long) */
+	 8,			/* bitsize */
+	 false,			/* pc_relative */
+	 0,			/* bitpos */
+	 complain_overflow_bitfield, /* complain_on_overflow */
+	 sh_reloc,		/* special_function */
+	 "r_switch8",		/* name */
+	 true,			/* partial_inplace */
+	 0xff,			/* src_mask */
+	 0xff,			/* dst_mask */
 	 false)			/* pcrel_offset */
 };
 
@@ -290,6 +373,7 @@ static reloc_howto_type sh_coff_howtos[] =
 /* FIXME: This should not be set here.  */
 #define __A_MAGIC_SET__
 
+#ifndef COFF_WITH_PE
 /* Swap the r_offset field in and out.  */
 #define SWAP_IN_RELOC_OFFSET  bfd_h_get_32
 #define SWAP_OUT_RELOC_OFFSET bfd_h_put_32
@@ -302,6 +386,7 @@ static reloc_howto_type sh_coff_howtos[] =
       dst->r_stuff[1] = 'C';			\
     }						\
   while (0)
+#endif
 
 /* Get the value of a symbol, when performing a relocation.  */
 
@@ -320,6 +405,96 @@ get_symbol_value (symbol)
 
   return relocation;
 }
+
+#ifdef COFF_WITH_PE
+/* Convert an rtype to howto for the COFF backend linker.
+   Copied from coff-i386.  */
+#define coff_rtype_to_howto coff_sh_rtype_to_howto
+
+static reloc_howto_type *
+coff_sh_rtype_to_howto (abfd, sec, rel, h, sym, addendp)
+     bfd * abfd ATTRIBUTE_UNUSED;
+     asection * sec;
+     struct internal_reloc * rel;
+     struct coff_link_hash_entry * h;
+     struct internal_syment * sym;
+     bfd_vma * addendp;
+{
+  reloc_howto_type * howto;
+
+  howto = sh_coff_howtos + rel->r_type;
+
+  *addendp = 0;
+
+  if (howto->pc_relative)
+    *addendp += sec->vma;
+
+  if (sym != NULL && sym->n_scnum == 0 && sym->n_value != 0)
+    {
+      /* This is a common symbol.  The section contents include the
+	 size (sym->n_value) as an addend.  The relocate_section
+	 function will be adding in the final value of the symbol.  We
+	 need to subtract out the current size in order to get the
+	 correct result.  */
+      BFD_ASSERT (h != NULL);
+    }
+
+  if (howto->pc_relative)
+    {
+      *addendp -= 4;
+
+      /* If the symbol is defined, then the generic code is going to
+         add back the symbol value in order to cancel out an
+         adjustment it made to the addend.  However, we set the addend
+         to 0 at the start of this function.  We need to adjust here,
+         to avoid the adjustment the generic code will make.  FIXME:
+         This is getting a bit hackish.  */
+      if (sym != NULL && sym->n_scnum != 0)
+	*addendp -= sym->n_value;
+    }
+
+  if (rel->r_type == R_SH_IMAGEBASE)
+    *addendp -= pe_data (sec->output_section->owner)->pe_opthdr.ImageBase;
+
+  return howto;
+}
+
+/* This structure is used to map BFD reloc codes to SH PE relocs.  */
+struct shcoff_reloc_map
+{
+  unsigned char bfd_reloc_val;
+  unsigned char shcoff_reloc_val;
+};
+
+/* An array mapping BFD reloc codes to SH PE relocs.  */
+static const struct shcoff_reloc_map sh_reloc_map[] =
+{
+  { BFD_RELOC_32, R_SH_IMM32CE },
+  { BFD_RELOC_RVA, R_SH_IMAGEBASE },
+  { BFD_RELOC_CTOR, R_SH_IMM32CE },
+};
+
+/* Given a BFD reloc code, return the howto structure for the
+   corresponding SH PE reloc.  */
+#define coff_bfd_reloc_type_lookup	sh_coff_reloc_type_lookup
+
+static reloc_howto_type *
+sh_coff_reloc_type_lookup (abfd, code)
+     bfd * abfd ATTRIBUTE_UNUSED;
+     bfd_reloc_code_real_type code;
+{
+  unsigned int i;
+
+  for (i = 0; i < sizeof (sh_reloc_map) / sizeof (struct shcoff_reloc_map); i++)
+    {
+      if (sh_reloc_map[i].bfd_reloc_val == code)
+	return &sh_coff_howtos[(int) sh_reloc_map[i].shcoff_reloc_val];
+    }
+
+  fprintf (stderr, "SH Error: unknown reloc type %d\n", code);
+  return NULL;
+}
+#endif /* COFF_WITH_PE */
 
 /* This macro is used in coffcode.h to get the howto corresponding to
    an internal reloc.  */
@@ -348,7 +523,8 @@ get_symbol_value (symbol)
       cache_ptr->addend = - (ptr->section->vma + ptr->value);   \
     else                                                        \
       cache_ptr->addend = 0;                                    \
-    if ((reloc).r_type == R_SH_SWITCH16				\
+    if ((reloc).r_type == R_SH_SWITCH8				\
+	|| (reloc).r_type == R_SH_SWITCH16			\
 	|| (reloc).r_type == R_SH_SWITCH32			\
 	|| (reloc).r_type == R_SH_USES				\
 	|| (reloc).r_type == R_SH_COUNT				\
@@ -367,7 +543,7 @@ sh_reloc (abfd, reloc_entry, symbol_in, data, input_section, output_bfd,
      PTR data;
      asection *input_section;
      bfd *output_bfd;
-     char **error_message;
+     char **error_message ATTRIBUTE_UNUSED;
 {
   unsigned long insn;
   bfd_vma sym_value;
@@ -387,6 +563,10 @@ sh_reloc (abfd, reloc_entry, symbol_in, data, input_section, output_bfd,
   /* Almost all relocs have to do with relaxing.  If any work must be
      done for them, it has been done in sh_relax_section.  */
   if (r_type != R_SH_IMM32
+#ifdef COFF_WITH_PE
+      && r_type != R_SH_IMM32CE
+      && r_type != R_SH_IMAGEBASE
+#endif
       && (r_type != R_SH_PCDISP
 	  || (symbol_in->flags & BSF_LOCAL) != 0))
     return bfd_reloc_ok;
@@ -400,10 +580,21 @@ sh_reloc (abfd, reloc_entry, symbol_in, data, input_section, output_bfd,
   switch (r_type)
     {
     case R_SH_IMM32:
+#ifdef COFF_WITH_PE
+    case R_SH_IMM32CE:
+#endif
       insn = bfd_get_32 (abfd, hit_data);
       insn += sym_value + reloc_entry->addend;
       bfd_put_32 (abfd, insn, hit_data);
       break;
+#ifdef COFF_WITH_PE
+    case R_SH_IMAGEBASE:
+      insn = bfd_get_32 (abfd, hit_data);
+      insn += (sym_value + reloc_entry->addend
+	       - pe_data (input_section->output_section->owner)->pe_opthdr.ImageBase);
+      bfd_put_32 (abfd, insn, hit_data);
+      break;
+#endif
     case R_SH_PCDISP:
       insn = bfd_get_16 (abfd, hit_data);
       sym_value += reloc_entry->addend;
@@ -426,6 +617,8 @@ sh_reloc (abfd, reloc_entry, symbol_in, data, input_section, output_bfd,
 
   return bfd_reloc_ok;
 }
+
+#define coff_bfd_merge_private_bfd_data _bfd_generic_verify_endian_match
 
 /* We can do relaxing.  */
 #define coff_bfd_relax_section sh_relax_section
@@ -558,7 +751,9 @@ sh_relax_section (abfd, sec, link_info, again)
          the register load.  The 4 is because the r_offset field is
          computed as though it were a jump offset, which are based
          from 4 bytes after the jump instruction.  */
-      laddr = irel->r_vaddr - sec->vma + 4 + irel->r_offset;
+      laddr = irel->r_vaddr - sec->vma + 4;
+      /* Careful to sign extend the 32-bit offset.  */
+      laddr += ((irel->r_offset & 0xffffffff) ^ 0x80000000) - 0x80000000;
       if (laddr >= sec->_raw_size)
 	{
 	  (*_bfd_error_handler) ("%s: 0x%lx: warning: bad R_SH_USES offset",
@@ -568,8 +763,7 @@ sh_relax_section (abfd, sec, link_info, again)
 	}
       insn = bfd_get_16 (abfd, contents + laddr);
 
-      /* If the instruction is not mov.l NN,rN, we don't know what to
-         do.  */
+      /* If the instruction is not mov.l NN,rN, we don't know what to do.  */
       if ((insn & 0xf000) != 0xd000)
 	{
 	  ((*_bfd_error_handler)
@@ -601,7 +795,14 @@ sh_relax_section (abfd, sec, link_info, again)
       paddr += sec->vma;
       for (irelfn = internal_relocs; irelfn < irelend; irelfn++)
 	if (irelfn->r_vaddr == paddr
+#ifdef COFF_WITH_PE
+	    && (irelfn->r_type == R_SH_IMM32
+		|| irelfn->r_type == R_SH_IMM32CE
+		|| irelfn->r_type == R_SH_IMAGEBASE))
+
+#else
 	    && irelfn->r_type == R_SH_IMM32)
+#endif
 	  break;
       if (irelfn >= irelend)
 	{
@@ -929,11 +1130,12 @@ sh_relax_delete_bytes (abfd, sec, addr, count)
   /* Adjust all the relocs.  */
   for (irel = coff_section_data (abfd, sec)->relocs; irel < irelend; irel++)
     {
-      bfd_vma nraddr, start, stop;
+      bfd_vma nraddr, stop;
+      bfd_vma start = 0;
       int insn = 0;
       struct internal_syment sym;
       int off, adjust, oinsn;
-      bfd_signed_vma voff;
+      bfd_signed_vma voff = 0;
       boolean overflow;
 
       /* Get the new reloc address.  */
@@ -951,7 +1153,8 @@ sh_relax_delete_bytes (abfd, sec, addr, count)
 	  && irel->r_vaddr - sec->vma < addr + count
 	  && irel->r_type != R_SH_ALIGN
 	  && irel->r_type != R_SH_CODE
-	  && irel->r_type != R_SH_DATA)
+	  && irel->r_type != R_SH_DATA
+	  && irel->r_type != R_SH_LABEL)
 	irel->r_type = R_SH_UNUSED;
 
       /* If this is a PC relative reloc, see if the range it covers
@@ -977,6 +1180,10 @@ sh_relax_delete_bytes (abfd, sec, addr, count)
 	  break;
 
 	case R_SH_IMM32:
+#ifdef COFF_WITH_PE
+	case R_SH_IMM32CE:
+	case R_SH_IMAGEBASE:
+#endif
 	  /* If this reloc is against a symbol defined in this
              section, and the symbol will not be adjusted below, we
              must check the addend to see it will put the value in
@@ -995,7 +1202,7 @@ sh_relax_delete_bytes (abfd, sec, addr, count)
 
 	      val = bfd_get_32 (abfd, contents + nraddr);
 	      val += sym.n_value;
-	      if (val >= addr && val < toaddr)
+	      if (val > addr && val < toaddr)
 		bfd_put_32 (abfd, val - count, contents + nraddr);
 	    }
 	  start = stop = addr;
@@ -1035,6 +1242,7 @@ sh_relax_delete_bytes (abfd, sec, addr, count)
 	  stop = (start &~ (bfd_vma) 3) + 4 + off * 4;
 	  break;
 
+	case R_SH_SWITCH8:
 	case R_SH_SWITCH16:
 	case R_SH_SWITCH32:
 	  /* These relocs types represent
@@ -1060,6 +1268,8 @@ sh_relax_delete_bytes (abfd, sec, addr, count)
 
 	  if (irel->r_type == R_SH_SWITCH16)
 	    voff = bfd_get_signed_16 (abfd, contents + nraddr);
+	  else if (irel->r_type == R_SH_SWITCH8)
+	    voff = bfd_get_8 (abfd, contents + nraddr);
 	  else
 	    voff = bfd_get_signed_32 (abfd, contents + nraddr);
 	  stop = (bfd_vma) ((bfd_signed_vma) start + voff);
@@ -1124,6 +1334,13 @@ sh_relax_delete_bytes (abfd, sec, addr, count)
 	      bfd_put_16 (abfd, insn, contents + nraddr);
 	      break;
 
+	    case R_SH_SWITCH8:
+	      voff += adjust;
+	      if (voff < 0 || voff >= 0xff)
+		overflow = true;
+	      bfd_put_8 (abfd, voff, contents + nraddr);
+	      break;
+
 	    case R_SH_SWITCH16:
 	      voff += adjust;
 	      if (voff < - 0x8000 || voff >= 0x8000)
@@ -1183,7 +1400,13 @@ sh_relax_delete_bytes (abfd, sec, addr, count)
 	{
 	  struct internal_syment sym;
 
+#ifdef COFF_WITH_PE
+	  if (irelscan->r_type != R_SH_IMM32
+	      && irelscan->r_type != R_SH_IMAGEBASE
+	      && irelscan->r_type != R_SH_IMM32CE)
+#else
 	  if (irelscan->r_type != R_SH_IMM32)
+#endif
 	    continue;
 
 	  bfd_coff_swap_sym_in (abfd,
@@ -1221,7 +1444,7 @@ sh_relax_delete_bytes (abfd, sec, addr, count)
 
 	      val = bfd_get_32 (abfd, ocontents + irelscan->r_vaddr - o->vma);
 	      val += sym.n_value;
-	      if (val >= addr && val < toaddr)
+	      if (val > addr && val < toaddr)
 		bfd_put_32 (abfd, val - count,
 			    ocontents + irelscan->r_vaddr - o->vma);
 
@@ -1335,7 +1558,7 @@ struct sh_opcode
      mask value in the sh_major_opcode structure.  */
   unsigned short opcode;
   /* Flags for this instruction.  */
-  unsigned short flags;
+  unsigned long flags;
 };
 
 /* Flag which appear in the sh_opcode structure.  */
@@ -1355,10 +1578,12 @@ struct sh_opcode
 /* This instruction uses the value in the register in the field at
    mask 0x0f00 of the instruction.  */
 #define USES1 (0x10)
+#define USES1_REG(x) ((x & 0x0f00) >> 8)
 
 /* This instruction uses the value in the register in the field at
    mask 0x00f0 of the instruction.  */
 #define USES2 (0x20)
+#define USES2_REG(x) ((x & 0x00f0) >> 4)
 
 /* This instruction uses the value in register 0.  */
 #define USESR0 (0x40)
@@ -1366,10 +1591,12 @@ struct sh_opcode
 /* This instruction sets the value in the register in the field at
    mask 0x0f00 of the instruction.  */
 #define SETS1 (0x80)
+#define SETS1_REG(x) ((x & 0x0f00) >> 8)
 
 /* This instruction sets the value in the register in the field at
    mask 0x00f0 of the instruction.  */
 #define SETS2 (0x100)
+#define SETS2_REG(x) ((x & 0x00f0) >> 4)
 
 /* This instruction sets register 0.  */
 #define SETSR0 (0x200)
@@ -1383,10 +1610,12 @@ struct sh_opcode
 /* This instruction uses the floating point register in the field at
    mask 0x0f00 of the instruction.  */
 #define USESF1 (0x1000)
+#define USESF1_REG(x) ((x & 0x0f00) >> 8)
 
 /* This instruction uses the floating point register in the field at
    mask 0x00f0 of the instruction.  */
 #define USESF2 (0x2000)
+#define USESF2_REG(x) ((x & 0x00f0) >> 4)
 
 /* This instruction uses floating point register 0.  */
 #define USESF0 (0x4000)
@@ -1394,10 +1623,26 @@ struct sh_opcode
 /* This instruction sets the floating point register in the field at
    mask 0x0f00 of the instruction.  */
 #define SETSF1 (0x8000)
+#define SETSF1_REG(x) ((x & 0x0f00) >> 8)
 
+#define USESAS (0x10000)
+#define USESAS_REG(x) (((((x) >> 8) - 2) & 3) + 2)
+#define USESR8 (0x20000)
+#define SETSAS (0x40000)
+#define SETSAS_REG(x) USESAS_REG (x)
+
+#ifndef COFF_IMAGE_WITH_PE
 static boolean sh_insn_uses_reg
   PARAMS ((unsigned int, const struct sh_opcode *, unsigned int));
+static boolean sh_insn_sets_reg
+  PARAMS ((unsigned int, const struct sh_opcode *, unsigned int));
+static boolean sh_insn_uses_or_sets_reg
+  PARAMS ((unsigned int, const struct sh_opcode *, unsigned int));
 static boolean sh_insn_uses_freg
+  PARAMS ((unsigned int, const struct sh_opcode *, unsigned int));
+static boolean sh_insn_sets_freg
+  PARAMS ((unsigned int, const struct sh_opcode *, unsigned int));
+static boolean sh_insn_uses_or_sets_freg
   PARAMS ((unsigned int, const struct sh_opcode *, unsigned int));
 static boolean sh_insns_conflict
   PARAMS ((unsigned int, const struct sh_opcode *, unsigned int,
@@ -1405,7 +1650,7 @@ static boolean sh_insns_conflict
 static boolean sh_load_use
   PARAMS ((unsigned int, const struct sh_opcode *, unsigned int,
 	   const struct sh_opcode *));
-
+#endif
 /* The opcode maps.  */
 
 #define MAP(a) a, sizeof a / sizeof a[0]
@@ -1427,21 +1672,33 @@ static const struct sh_opcode sh_opcode00[] =
 
 static const struct sh_opcode sh_opcode01[] =
 {
-  { 0x0002, SETS1 | USESSP },			/* stc sr,rn */
   { 0x0003, BRANCH | DELAY | USES1 | SETSSP },	/* bsrf rn */
   { 0x000a, SETS1 | USESSP },			/* sts mach,rn */
-  { 0x0012, SETS1 | USESSP },			/* stc gbr,rn */
   { 0x001a, SETS1 | USESSP },			/* sts macl,rn */
-  { 0x0022, SETS1 | USESSP },			/* stc vbr,rn */
   { 0x0023, BRANCH | DELAY | USES1 },		/* braf rn */
   { 0x0029, SETS1 | USESSP },			/* movt rn */
   { 0x002a, SETS1 | USESSP },			/* sts pr,rn */
+  { 0x005a, SETS1 | USESSP },			/* sts fpul,rn */
+  { 0x006a, SETS1 | USESSP },			/* sts fpscr,rn / sts dsr,rn */
+  { 0x0083, LOAD | USES1 },			/* pref @rn */
+  { 0x007a, SETS1 | USESSP },			/* sts a0,rn */
+  { 0x008a, SETS1 | USESSP },			/* sts x0,rn */
+  { 0x009a, SETS1 | USESSP },			/* sts x1,rn */
+  { 0x00aa, SETS1 | USESSP },			/* sts y0,rn */
+  { 0x00ba, SETS1 | USESSP }			/* sts y1,rn */
+};
+
+/* These sixteen instructions can be handled with one table entry below.  */
+#if 0
+  { 0x0002, SETS1 | USESSP },			/* stc sr,rn */
+  { 0x0012, SETS1 | USESSP },			/* stc gbr,rn */
+  { 0x0022, SETS1 | USESSP },			/* stc vbr,rn */
   { 0x0032, SETS1 | USESSP },			/* stc ssr,rn */
   { 0x0042, SETS1 | USESSP },			/* stc spc,rn */
-  { 0x005a, SETS1 | USESSP },			/* sts fpul,rn */
-  { 0x006a, SETS1 | USESSP },			/* sts fpscr,rn */
+  { 0x0052, SETS1 | USESSP },			/* stc mod,rn */
+  { 0x0062, SETS1 | USESSP },			/* stc rs,rn */
+  { 0x0072, SETS1 | USESSP },			/* stc re,rn */
   { 0x0082, SETS1 | USESSP },			/* stc r0_bank,rn */
-  { 0x0083, LOAD | USES1 },			/* pref @rn */
   { 0x0092, SETS1 | USESSP },			/* stc r1_bank,rn */
   { 0x00a2, SETS1 | USESSP },			/* stc r2_bank,rn */
   { 0x00b2, SETS1 | USESSP },			/* stc r3_bank,rn */
@@ -1449,10 +1706,11 @@ static const struct sh_opcode sh_opcode01[] =
   { 0x00d2, SETS1 | USESSP },			/* stc r5_bank,rn */
   { 0x00e2, SETS1 | USESSP },			/* stc r6_bank,rn */
   { 0x00f2, SETS1 | USESSP }			/* stc r7_bank,rn */
-};
+#endif
 
 static const struct sh_opcode sh_opcode02[] =
 {
+  { 0x0002, SETS1 | USESSP },			/* stc <special_reg>,rn */
   { 0x0004, STORE | USES1 | USES2 | USESR0 },	/* mov.b rm,@(r0,rn) */
   { 0x0005, STORE | USES1 | USES2 | USESR0 },	/* mov.w rm,@(r0,rn) */
   { 0x0006, STORE | USES1 | USES2 | USESR0 },	/* mov.l rm,@(r0,rn) */
@@ -1532,74 +1790,108 @@ static const struct sh_opcode sh_opcode40[] =
   { 0x4000, SETS1 | SETSSP | USES1 },		/* shll rn */
   { 0x4001, SETS1 | SETSSP | USES1 },		/* shlr rn */
   { 0x4002, STORE | SETS1 | USES1 | USESSP },	/* sts.l mach,@-rn */
-  { 0x4003, STORE | SETS1 | USES1 | USESSP },	/* stc.l sr,@-rn */
   { 0x4004, SETS1 | SETSSP | USES1 },		/* rotl rn */
   { 0x4005, SETS1 | SETSSP | USES1 },		/* rotr rn */
   { 0x4006, LOAD | SETS1 | SETSSP | USES1 },	/* lds.l @rm+,mach */
-  { 0x4007, LOAD | SETS1 | SETSSP | USES1 },	/* ldc.l @rm+,sr */
   { 0x4008, SETS1 | USES1 },			/* shll2 rn */
   { 0x4009, SETS1 | USES1 },			/* shlr2 rn */
   { 0x400a, SETSSP | USES1 },			/* lds rm,mach */
   { 0x400b, BRANCH | DELAY | USES1 },		/* jsr @rn */
-  { 0x400e, SETSSP | USES1 },			/* ldc rm,sr */
   { 0x4010, SETS1 | SETSSP | USES1 },		/* dt rn */
   { 0x4011, SETSSP | USES1 },			/* cmp/pz rn */
   { 0x4012, STORE | SETS1 | USES1 | USESSP },	/* sts.l macl,@-rn */
-  { 0x4013, STORE | SETS1 | USES1 | USESSP },	/* stc.l gbr,@-rn */
+  { 0x4014, SETSSP | USES1 },			/* setrc rm */
   { 0x4015, SETSSP | USES1 },			/* cmp/pl rn */
   { 0x4016, LOAD | SETS1 | SETSSP | USES1 },	/* lds.l @rm+,macl */
-  { 0x4017, LOAD | SETS1 | SETSSP | USES1 },	/* ldc.l @rm+,gbr */
   { 0x4018, SETS1 | USES1 },			/* shll8 rn */
   { 0x4019, SETS1 | USES1 },			/* shlr8 rn */
   { 0x401a, SETSSP | USES1 },			/* lds rm,macl */
   { 0x401b, LOAD | SETSSP | USES1 },		/* tas.b @rn */
-  { 0x401e, SETSSP | USES1 },			/* ldc rm,gbr */
   { 0x4020, SETS1 | SETSSP | USES1 },		/* shal rn */
   { 0x4021, SETS1 | SETSSP | USES1 },		/* shar rn */
   { 0x4022, STORE | SETS1 | USES1 | USESSP },	/* sts.l pr,@-rn */
-  { 0x4023, STORE | SETS1 | USES1 | USESSP },	/* stc.l vbr,@-rn */
   { 0x4024, SETS1 | SETSSP | USES1 | USESSP },	/* rotcl rn */
   { 0x4025, SETS1 | SETSSP | USES1 | USESSP },	/* rotcr rn */
   { 0x4026, LOAD | SETS1 | SETSSP | USES1 },	/* lds.l @rm+,pr */
-  { 0x4027, LOAD | SETS1 | SETSSP | USES1 },	/* ldc.l @rm+,vbr */
   { 0x4028, SETS1 | USES1 },			/* shll16 rn */
   { 0x4029, SETS1 | USES1 },			/* shlr16 rn */
   { 0x402a, SETSSP | USES1 },			/* lds rm,pr */
   { 0x402b, BRANCH | DELAY | USES1 },		/* jmp @rn */
-  { 0x402e, SETSSP | USES1 },			/* ldc rm,vbr */
-  { 0x4033, STORE | SETS1 | USES1 | USESSP },	/* stc.l ssr,@-rn */
-  { 0x4037, LOAD | SETS1 | SETSSP | USES1 },	/* ldc.l @rm+,ssr */
-  { 0x403e, SETSSP | USES1 },			/* ldc rm,ssr */
-  { 0x4043, STORE | SETS1 | USES1 | USESSP },	/* stc.l spc,@-rn */
-  { 0x4047, LOAD | SETS1 | SETSSP | USES1 },	/* ldc.l @rm+,spc */
-  { 0x404e, SETSSP | USES1 },			/* ldc rm,spc */
   { 0x4052, STORE | SETS1 | USES1 | USESSP },	/* sts.l fpul,@-rn */
   { 0x4056, LOAD | SETS1 | SETSSP | USES1 },	/* lds.l @rm+,fpul */
   { 0x405a, SETSSP | USES1 },			/* lds.l rm,fpul */
-  { 0x4062, STORE | SETS1 | USES1 | USESSP },	/* sts.l fpscr,@-rn */
-  { 0x4066, LOAD | SETS1 | SETSSP | USES1 },	/* lds.l @rm+,fpscr */
-  { 0x406a, SETSSP | USES1 }			/* lds rm,fpscr */
+  { 0x4062, STORE | SETS1 | USES1 | USESSP },	/* sts.l fpscr / dsr,@-rn */
+  { 0x4066, LOAD | SETS1 | SETSSP | USES1 },	/* lds.l @rm+,fpscr / dsr */
+  { 0x406a, SETSSP | USES1 },			/* lds rm,fpscr / lds rm,dsr */
+  { 0x4072, STORE | SETS1 | USES1 | USESSP },	/* sts.l a0,@-rn */
+  { 0x4076, LOAD | SETS1 | SETSSP | USES1 },	/* lds.l @rm+,a0 */
+  { 0x407a, SETSSP | USES1 },			/* lds.l rm,a0 */
+  { 0x4082, STORE | SETS1 | USES1 | USESSP },	/* sts.l x0,@-rn */
+  { 0x4086, LOAD | SETS1 | SETSSP | USES1 },	/* lds.l @rm+,x0 */
+  { 0x408a, SETSSP | USES1 },			/* lds.l rm,x0 */
+  { 0x4092, STORE | SETS1 | USES1 | USESSP },	/* sts.l x1,@-rn */
+  { 0x4096, LOAD | SETS1 | SETSSP | USES1 },	/* lds.l @rm+,x1 */
+  { 0x409a, SETSSP | USES1 },			/* lds.l rm,x1 */
+  { 0x40a2, STORE | SETS1 | USES1 | USESSP },	/* sts.l y0,@-rn */
+  { 0x40a6, LOAD | SETS1 | SETSSP | USES1 },	/* lds.l @rm+,y0 */
+  { 0x40aa, SETSSP | USES1 },			/* lds.l rm,y0 */
+  { 0x40b2, STORE | SETS1 | USES1 | USESSP },	/* sts.l y1,@-rn */
+  { 0x40b6, LOAD | SETS1 | SETSSP | USES1 },	/* lds.l @rm+,y1 */
+  { 0x40ba, SETSSP | USES1 }			/* lds.l rm,y1 */
+#if 0 /* These groups sixteen insns can be
+         handled with one table entry each below.  */
+  { 0x4003, STORE | SETS1 | USES1 | USESSP },	/* stc.l sr,@-rn */
+  { 0x4013, STORE | SETS1 | USES1 | USESSP },	/* stc.l gbr,@-rn */
+  { 0x4023, STORE | SETS1 | USES1 | USESSP },	/* stc.l vbr,@-rn */
+  { 0x4033, STORE | SETS1 | USES1 | USESSP },	/* stc.l ssr,@-rn */
+  { 0x4043, STORE | SETS1 | USES1 | USESSP },	/* stc.l spc,@-rn */
+  { 0x4053, STORE | SETS1 | USES1 | USESSP },	/* stc.l mod,@-rn */
+  { 0x4063, STORE | SETS1 | USES1 | USESSP },	/* stc.l rs,@-rn */
+  { 0x4073, STORE | SETS1 | USES1 | USESSP },	/* stc.l re,@-rn */
+  { 0x4083, STORE | SETS1 | USES1 | USESSP },	/* stc.l r0_bank,@-rn */
+  ..
+  { 0x40f3, STORE | SETS1 | USES1 | USESSP },	/* stc.l r7_bank,@-rn */
+
+  { 0x4007, LOAD | SETS1 | SETSSP | USES1 },	/* ldc.l @rm+,sr */
+  { 0x4017, LOAD | SETS1 | SETSSP | USES1 },	/* ldc.l @rm+,gbr */
+  { 0x4027, LOAD | SETS1 | SETSSP | USES1 },	/* ldc.l @rm+,vbr */
+  { 0x4037, LOAD | SETS1 | SETSSP | USES1 },	/* ldc.l @rm+,ssr */
+  { 0x4047, LOAD | SETS1 | SETSSP | USES1 },	/* ldc.l @rm+,spc */
+  { 0x4057, LOAD | SETS1 | SETSSP | USES1 },	/* ldc.l @rm+,mod */
+  { 0x4067, LOAD | SETS1 | SETSSP | USES1 },	/* ldc.l @rm+,rs */
+  { 0x4077, LOAD | SETS1 | SETSSP | USES1 },	/* ldc.l @rm+,re */
+  { 0x4087, LOAD | SETS1 | SETSSP | USES1 },	/* ldc.l @rm+,r0_bank */
+  ..
+  { 0x40f7, LOAD | SETS1 | SETSSP | USES1 },	/* ldc.l @rm+,r7_bank */
+
+  { 0x400e, SETSSP | USES1 },			/* ldc rm,sr */
+  { 0x401e, SETSSP | USES1 },			/* ldc rm,gbr */
+  { 0x402e, SETSSP | USES1 },			/* ldc rm,vbr */
+  { 0x403e, SETSSP | USES1 },			/* ldc rm,ssr */
+  { 0x404e, SETSSP | USES1 },			/* ldc rm,spc */
+  { 0x405e, SETSSP | USES1 },			/* ldc rm,mod */
+  { 0x406e, SETSSP | USES1 },			/* ldc rm,rs */
+  { 0x407e, SETSSP | USES1 }			/* ldc rm,re */
+  { 0x408e, SETSSP | USES1 }			/* ldc rm,r0_bank */
+  ..
+  { 0x40fe, SETSSP | USES1 }			/* ldc rm,r7_bank */
+#endif
 };
 
 static const struct sh_opcode sh_opcode41[] =
 {
-  { 0x4083, STORE | SETS1 | USES1 | USESSP },	/* stc.l rx_bank,@-rn */
-  { 0x4087, LOAD | SETS1 | SETSSP | USES1 },	/* ldc.l @rm+,rx_bank */
-  { 0x408e, SETSSP | USES1 }			/* ldc rm,rx_bank */
-};
-
-static const struct sh_opcode sh_opcode42[] =
-{
-  { 0x400c, SETS1 | USES1 | USES2 },			/* shad rm,rn */
-  { 0x400d, SETS1 | USES1 | USES2 },			/* shld rm,rn */
+  { 0x4003, STORE | SETS1 | USES1 | USESSP },	/* stc.l <special_reg>,@-rn */
+  { 0x4007, LOAD | SETS1 | SETSSP | USES1 },	/* ldc.l @rm+,<special_reg> */
+  { 0x400c, SETS1 | USES1 | USES2 },		/* shad rm,rn */
+  { 0x400d, SETS1 | USES1 | USES2 },		/* shld rm,rn */
+  { 0x400e, SETSSP | USES1 },			/* ldc rm,<special_reg> */
   { 0x400f, LOAD|SETS1|SETS2|SETSSP|USES1|USES2|USESSP }, /* mac.w @rm+,@rn+ */
 };
 
 static const struct sh_minor_opcode sh_opcode4[] =
 {
   { MAP (sh_opcode40), 0xf0ff },
-  { MAP (sh_opcode41), 0xf08f },
-  { MAP (sh_opcode42), 0xf00f }
+  { MAP (sh_opcode41), 0xf00f }
 };
 
 static const struct sh_opcode sh_opcode50[] =
@@ -1651,12 +1943,15 @@ static const struct sh_opcode sh_opcode80[] =
 {
   { 0x8000, STORE | USES2 | USESR0 },	/* mov.b r0,@(disp,rn) */
   { 0x8100, STORE | USES2 | USESR0 },	/* mov.w r0,@(disp,rn) */
+  { 0x8200, SETSSP },			/* setrc #imm */
   { 0x8400, LOAD | SETSR0 | USES2 },	/* mov.b @(disp,rm),r0 */
   { 0x8500, LOAD | SETSR0 | USES2 },	/* mov.w @(disp,rn),r0 */
   { 0x8800, SETSSP | USESR0 },		/* cmp/eq #imm,r0 */
   { 0x8900, BRANCH | USESSP },		/* bt label */
   { 0x8b00, BRANCH | USESSP },		/* bf label */
+  { 0x8c00, SETSSP },			/* ldrs @(disp,pc) */
   { 0x8d00, BRANCH | DELAY | USESSP },	/* bt/s label */
+  { 0x8e00, SETSSP },			/* ldre @(disp,pc) */
   { 0x8f00, BRANCH | DELAY | USESSP }	/* bf/s label */
 };
 
@@ -1778,7 +2073,7 @@ static const struct sh_minor_opcode sh_opcodef[] =
   { MAP (sh_opcodef1), 0xf0ff }
 };
 
-static const struct sh_major_opcode sh_opcodes[] =
+static struct sh_major_opcode sh_opcodes[] =
 {
   { MAP (sh_opcode0) },
   { MAP (sh_opcode1) },
@@ -1798,6 +2093,27 @@ static const struct sh_major_opcode sh_opcodes[] =
   { MAP (sh_opcodef) }
 };
 
+/* The double data transfer / parallel processing insns are not
+   described here.  This will cause sh_align_load_span to leave them alone.  */
+
+static const struct sh_opcode sh_dsp_opcodef0[] =
+{
+  { 0xf400, USESAS | SETSAS | LOAD | SETSSP },	/* movs.x @-as,ds */
+  { 0xf401, USESAS | SETSAS | STORE | USESSP },	/* movs.x ds,@-as */
+  { 0xf404, USESAS | LOAD | SETSSP },		/* movs.x @as,ds */
+  { 0xf405, USESAS | STORE | USESSP },		/* movs.x ds,@as */
+  { 0xf408, USESAS | SETSAS | LOAD | SETSSP },	/* movs.x @as+,ds */
+  { 0xf409, USESAS | SETSAS | STORE | USESSP },	/* movs.x ds,@as+ */
+  { 0xf40c, USESAS | SETSAS | LOAD | SETSSP | USESR8 },	/* movs.x @as+r8,ds */
+  { 0xf40d, USESAS | SETSAS | STORE | USESSP | USESR8 }	/* movs.x ds,@as+r8 */
+};
+
+static const struct sh_minor_opcode sh_dsp_opcodef[] =
+{
+  { MAP (sh_dsp_opcodef0), 0xfc0d }
+};
+
+#ifndef COFF_IMAGE_WITH_PE
 /* Given an instruction, return a pointer to the corresponding
    sh_opcode structure.  Return NULL if the instruction is not
    recognized.  */
@@ -1831,6 +2147,20 @@ sh_insn_info (insn)
   return NULL;  
 }
 
+/* See whether an instruction uses or sets a general purpose register */
+
+static boolean
+sh_insn_uses_or_sets_reg (insn, op, reg)
+     unsigned int insn;
+     const struct sh_opcode *op;
+     unsigned int reg;
+{
+  if (sh_insn_uses_reg (insn, op, reg))
+    return true;
+
+  return sh_insn_sets_reg (insn, op, reg);
+}
+
 /* See whether an instruction uses a general purpose register.  */
 
 static boolean
@@ -1844,16 +2174,61 @@ sh_insn_uses_reg (insn, op, reg)
   f = op->flags;
 
   if ((f & USES1) != 0
-      && ((insn & 0x0f00) >> 8) == reg)
+      && USES1_REG (insn) == reg)
     return true;
   if ((f & USES2) != 0
-      && ((insn & 0x00f0) >> 4) == reg)
+      && USES2_REG (insn) == reg)
     return true;
   if ((f & USESR0) != 0
       && reg == 0)
     return true;
+  if ((f & USESAS) && reg == USESAS_REG (insn))
+    return true;
+  if ((f & USESR8) && reg == 8)
+    return true;
 
   return false;
+}
+
+/* See whether an instruction sets a general purpose register.  */
+
+static boolean
+sh_insn_sets_reg (insn, op, reg)
+     unsigned int insn;
+     const struct sh_opcode *op;
+     unsigned int reg;
+{
+  unsigned int f;
+
+  f = op->flags;
+
+  if ((f & SETS1) != 0
+      && SETS1_REG (insn) == reg)
+    return true;
+  if ((f & SETS2) != 0
+      && SETS2_REG (insn) == reg)
+    return true;
+  if ((f & SETSR0) != 0
+      && reg == 0)
+    return true;
+  if ((f & SETSAS) && reg == SETSAS_REG (insn))
+    return true;
+
+  return false;
+}
+
+/* See whether an instruction uses or sets a floating point register */
+
+static boolean
+sh_insn_uses_or_sets_freg (insn, op, reg)
+     unsigned int insn;
+     const struct sh_opcode *op;
+     unsigned int reg;
+{
+  if (sh_insn_uses_freg (insn, op, reg))
+    return true;
+
+  return sh_insn_sets_freg (insn, op, reg);
 }
 
 /* See whether an instruction uses a floating point register.  */
@@ -1868,14 +2243,51 @@ sh_insn_uses_freg (insn, op, freg)
 
   f = op->flags;
 
+  /* We can't tell if this is a double-precision insn, so just play safe
+     and assume that it might be.  So not only have we test FREG against
+     itself, but also even FREG against FREG+1 - if the using insn uses
+     just the low part of a double precision value - but also an odd
+     FREG against FREG-1 -  if the setting insn sets just the low part
+     of a double precision value.
+     So what this all boils down to is that we have to ignore the lowest
+     bit of the register number.  */
+     
   if ((f & USESF1) != 0
-      && ((insn & 0x0f00) >> 8) == freg)
+      && (USESF1_REG (insn) & 0xe) == (freg & 0xe))
     return true;
   if ((f & USESF2) != 0
-      && ((insn & 0x00f0) >> 4) == freg)
+      && (USESF2_REG (insn) & 0xe) == (freg & 0xe))
     return true;
   if ((f & USESF0) != 0
       && freg == 0)
+    return true;
+
+  return false;
+}
+
+/* See whether an instruction sets a floating point register.  */
+
+static boolean
+sh_insn_sets_freg (insn, op, freg)
+     unsigned int insn;
+     const struct sh_opcode *op;
+     unsigned int freg;
+{
+  unsigned int f;
+
+  f = op->flags;
+
+  /* We can't tell if this is a double-precision insn, so just play safe
+     and assume that it might be.  So not only have we test FREG against
+     itself, but also even FREG against FREG+1 - if the using insn uses
+     just the low part of a double precision value - but also an odd
+     FREG against FREG-1 -  if the setting insn sets just the low part
+     of a double precision value.
+     So what this all boils down to is that we have to ignore the lowest
+     bit of the register number.  */
+     
+  if ((f & SETSF1) != 0
+      && (SETSF1_REG (insn) & 0xe) == (freg & 0xe))
     return true;
 
   return false;
@@ -1898,39 +2310,51 @@ sh_insns_conflict (i1, op1, i2, op2)
   f1 = op1->flags;
   f2 = op2->flags;
 
+  /* Load of fpscr conflicts with floating point operations.
+     FIXME: shouldn't test raw opcodes here.  */
+  if (((i1 & 0xf0ff) == 0x4066 && (i2 & 0xf000) == 0xf000)
+      || ((i2 & 0xf0ff) == 0x4066 && (i1 & 0xf000) == 0xf000))
+    return true;
+
   if ((f1 & (BRANCH | DELAY)) != 0
       || (f2 & (BRANCH | DELAY)) != 0)
     return true;
 
-  if ((f1 & SETSSP) != 0 && (f2 & USESSP) != 0)
-    return true;
-  if ((f2 & SETSSP) != 0 && (f1 & USESSP) != 0)
+  if (((f1 | f2) & SETSSP)
+      && (f1 & (SETSSP | USESSP))
+      && (f2 & (SETSSP | USESSP)))
     return true;
 
   if ((f1 & SETS1) != 0
-      && sh_insn_uses_reg (i2, op2, (i1 & 0x0f00) >> 8))
+      && sh_insn_uses_or_sets_reg (i2, op2, SETS1_REG (i1)))
     return true;
   if ((f1 & SETS2) != 0
-      && sh_insn_uses_reg (i2, op2, (i1 & 0x00f0) >> 4))
+      && sh_insn_uses_or_sets_reg (i2, op2, SETS2_REG (i1)))
     return true;
   if ((f1 & SETSR0) != 0
-      && sh_insn_uses_reg (i2, op2, 0))
+      && sh_insn_uses_or_sets_reg (i2, op2, 0))
+    return true;
+  if ((f1 & SETSAS)
+      && sh_insn_uses_or_sets_reg (i2, op2, SETSAS_REG (i1)))
     return true;
   if ((f1 & SETSF1) != 0
-      && sh_insn_uses_freg (i2, op2, (i1 & 0x0f00) >> 8))
+      && sh_insn_uses_or_sets_freg (i2, op2, SETSF1_REG (i1)))
     return true;
 
   if ((f2 & SETS1) != 0
-      && sh_insn_uses_reg (i1, op1, (i2 & 0x0f00) >> 8))
+      && sh_insn_uses_or_sets_reg (i1, op1, SETS1_REG (i2)))
     return true;
   if ((f2 & SETS2) != 0
-      && sh_insn_uses_reg (i1, op1, (i2 & 0x00f0) >> 4))
+      && sh_insn_uses_or_sets_reg (i1, op1, SETS2_REG (i2)))
     return true;
   if ((f2 & SETSR0) != 0
-      && sh_insn_uses_reg (i1, op1, 0))
+      && sh_insn_uses_or_sets_reg (i1, op1, 0))
+    return true;
+  if ((f2 & SETSAS)
+      && sh_insn_uses_or_sets_reg (i1, op1, SETSAS_REG (i2)))
     return true;
   if ((f2 & SETSF1) != 0
-      && sh_insn_uses_freg (i1, op1, (i2 & 0x0f00) >> 8))
+      && sh_insn_uses_or_sets_freg (i1, op1, SETSF1_REG (i2)))
     return true;
 
   /* The instructions do not conflict.  */
@@ -1983,6 +2407,9 @@ sh_load_use (i1, op1, i2, op2)
    STOP are the range of memory to examine.  If a swap is made,
    *PSWAPPED is set to true.  */
 
+#ifdef COFF_WITH_PE
+static
+#endif
 boolean
 _bfd_sh_align_load_span (abfd, sec, contents, swap, relocs,
 			 plabel, label_end, start, stop, pswapped)
@@ -1997,7 +2424,23 @@ _bfd_sh_align_load_span (abfd, sec, contents, swap, relocs,
      bfd_vma stop;
      boolean *pswapped;
 {
+  int dsp = (abfd->arch_info->mach == bfd_mach_sh_dsp
+	     || abfd->arch_info->mach == bfd_mach_sh3_dsp);
   bfd_vma i;
+
+  /* The SH4 has a Harvard architecture, hence aligning loads is not
+     desirable.  In fact, it is counter-productive, since it interferes
+     with the schedules generated by the compiler.  */
+  if (abfd->arch_info->mach == bfd_mach_sh4)
+    return true;
+
+  /* If we are linking sh[3]-dsp code, swap the FPU instructions for DSP
+     instructions.  */
+  if (dsp)
+    {
+      sh_opcodes[0xf].minor_opcodes = sh_dsp_opcodef;
+      sh_opcodes[0xf].count = sizeof sh_dsp_opcodef / sizeof sh_dsp_opcodef;
+    }
 
   /* Instructions should be aligned on 2 byte boundaries.  */
   if ((start & 1) == 1)
@@ -2028,7 +2471,28 @@ _bfd_sh_align_load_span (abfd, sec, contents, swap, relocs,
       if (i > start)
 	{
 	  prev_insn = bfd_get_16 (abfd, contents + i - 2);
-	  prev_op = sh_insn_info (prev_insn);
+	  /* If INSN is the field b of a parallel processing insn, it is not
+	     a load / store after all.  Note that the test here might mistake
+	     the field_b of a pcopy insn for the starting code of a parallel
+	     processing insn; this might miss a swapping opportunity, but at
+	     least we're on the safe side.  */
+	  if (dsp && (prev_insn & 0xfc00) == 0xf800)
+	    continue;
+
+	  /* Check if prev_insn is actually the field b of a parallel
+	     processing insn.  Again, this can give a spurious match
+	     after a pcopy.  */
+	  if (dsp && i - 2 > start)
+	    {
+	      unsigned pprev_insn = bfd_get_16 (abfd, contents + i - 4);
+	
+	      if ((pprev_insn & 0xfc00) == 0xf800)
+		prev_op = NULL;
+	      else
+		prev_op = sh_insn_info (prev_insn);
+	    }
+	  else
+	    prev_op = sh_insn_info (prev_insn);
 
 	  /* If the load/store instruction is in a delay slot, we
 	     can't swap.  */
@@ -2155,6 +2619,7 @@ _bfd_sh_align_load_span (abfd, sec, contents, swap, relocs,
 
   return true;
 }
+#endif /* not COFF_IMAGE_WITH_PE */
 
 /* Look for loads and stores which we can align to four byte
    boundaries.  See the longer comment above sh_relax_section for why
@@ -2368,7 +2833,7 @@ sh_swap_insns (abfd, sec, relocs, contents, addr)
 static boolean
 sh_relocate_section (output_bfd, info, input_bfd, input_section, contents,
 		     relocs, syms, sections)
-     bfd *output_bfd;
+     bfd *output_bfd ATTRIBUTE_UNUSED;
      struct bfd_link_info *info;
      bfd *input_bfd;
      asection *input_section;
@@ -2395,6 +2860,10 @@ sh_relocate_section (output_bfd, info, input_bfd, input_section, contents,
       /* Almost all relocs have to do with relaxing.  If any work must
          be done for them, it has been done in sh_relax_section.  */
       if (rel->r_type != R_SH_IMM32
+#ifdef COFF_WITH_PE
+	  && rel->r_type != R_SH_IMM32CE
+	  && rel->r_type != R_SH_IMAGEBASE
+#endif
 	  && rel->r_type != R_SH_PCDISP)
 	continue;
 
@@ -2407,7 +2876,8 @@ sh_relocate_section (output_bfd, info, input_bfd, input_section, contents,
 	}
       else
 	{    
-	  if (symndx < 0 || symndx >= obj_raw_syment_count (input_bfd))
+	  if (symndx < 0
+	      || (unsigned long) symndx >= obj_raw_syment_count (input_bfd))
 	    {
 	      (*_bfd_error_handler)
 		("%s: illegal symbol index %ld in relocs",
@@ -2438,6 +2908,11 @@ sh_relocate_section (output_bfd, info, input_bfd, input_section, contents,
 	  return false;
 	}
 
+#ifdef COFF_WITH_PE
+      if (rel->r_type == R_SH_IMAGEBASE)
+	addend -= pe_data (input_section->output_section->owner)->pe_opthdr.ImageBase;
+#endif
+      
       val = 0;
 
       if (h == NULL)
@@ -2478,7 +2953,7 @@ sh_relocate_section (output_bfd, info, input_bfd, input_section, contents,
 	    {
 	      if (! ((*info->callbacks->undefined_symbol)
 		     (info, h->root.root.string, input_bfd, input_section,
-		      rel->r_vaddr - input_section->vma)))
+		      rel->r_vaddr - input_section->vma, true)))
 		return false;
 	    }
 	}
@@ -2634,9 +3109,120 @@ sh_coff_get_relocated_section_contents (output_bfd, link_info, link_order,
 
 /* The target vectors.  */
 
-const bfd_target shcoff_vec =
+#ifndef TARGET_SHL_SYM
+CREATE_BIG_COFF_TARGET_VEC (shcoff_vec, "coff-sh", BFD_IS_RELAXABLE, 0, '_', NULL)
+#endif
+
+#ifdef TARGET_SHL_SYM
+#define TARGET_SYM TARGET_SHL_SYM
+#else
+#define TARGET_SYM shlcoff_vec
+#endif
+     
+#ifndef TARGET_SHL_NAME
+#define TARGET_SHL_NAME "coff-shl"
+#endif
+
+#ifdef COFF_WITH_PE
+CREATE_LITTLE_COFF_TARGET_VEC (TARGET_SYM, TARGET_SHL_NAME, BFD_IS_RELAXABLE,
+			       SEC_CODE | SEC_DATA, '_', NULL);
+#else
+CREATE_LITTLE_COFF_TARGET_VEC (TARGET_SYM, TARGET_SHL_NAME, BFD_IS_RELAXABLE,
+			       0, '_', NULL)
+#endif
+
+#ifndef TARGET_SHL_SYM
+/* Some people want versions of the SH COFF target which do not align
+   to 16 byte boundaries.  We implement that by adding a couple of new
+   target vectors.  These are just like the ones above, but they
+   change the default section alignment.  To generate them in the
+   assembler, use -small.  To use them in the linker, use -b
+   coff-sh{l}-small and -oformat coff-sh{l}-small.
+
+   Yes, this is a horrible hack.  A general solution for setting
+   section alignment in COFF is rather complex.  ELF handles this
+   correctly.  */
+
+/* Only recognize the small versions if the target was not defaulted.
+   Otherwise we won't recognize the non default endianness.  */
+
+static const bfd_target *
+coff_small_object_p (abfd)
+     bfd *abfd;
 {
-  "coff-sh",			/* name */
+  if (abfd->target_defaulted)
+    {
+      bfd_set_error (bfd_error_wrong_format);
+      return NULL;
+    }
+  return coff_object_p (abfd);
+}
+
+/* Set the section alignment for the small versions.  */
+
+static boolean
+coff_small_new_section_hook (abfd, section)
+     bfd *abfd;
+     asection *section;
+{
+  if (! coff_new_section_hook (abfd, section))
+    return false;
+
+  /* We must align to at least a four byte boundary, because longword
+     accesses must be on a four byte boundary.  */
+  if (section->alignment_power == COFF_DEFAULT_SECTION_ALIGNMENT_POWER)
+    section->alignment_power = 2;
+
+  return true;
+}
+
+/* This is copied from bfd_coff_std_swap_table so that we can change
+   the default section alignment power.  */
+
+static const bfd_coff_backend_data bfd_coff_small_swap_table =
+{
+  coff_swap_aux_in, coff_swap_sym_in, coff_swap_lineno_in,
+  coff_swap_aux_out, coff_swap_sym_out,
+  coff_swap_lineno_out, coff_swap_reloc_out,
+  coff_swap_filehdr_out, coff_swap_aouthdr_out,
+  coff_swap_scnhdr_out,
+  FILHSZ, AOUTSZ, SCNHSZ, SYMESZ, AUXESZ, RELSZ, LINESZ, FILNMLEN,
+#ifdef COFF_LONG_FILENAMES
+  true,
+#else
+  false,
+#endif
+#ifdef COFF_LONG_SECTION_NAMES
+  true,
+#else
+  false,
+#endif
+  2,
+  coff_swap_filehdr_in, coff_swap_aouthdr_in, coff_swap_scnhdr_in,
+  coff_swap_reloc_in, coff_bad_format_hook, coff_set_arch_mach_hook,
+  coff_mkobject_hook, styp_to_sec_flags, coff_set_alignment_hook,
+  coff_slurp_symbol_table, symname_in_debug_hook, coff_pointerize_aux_hook,
+  coff_print_aux, coff_reloc16_extra_cases, coff_reloc16_estimate,
+  coff_classify_symbol, coff_compute_section_file_positions,
+  coff_start_final_link, coff_relocate_section, coff_rtype_to_howto,
+  coff_adjust_symndx, coff_link_add_one_symbol,
+  coff_link_output_has_begun, coff_final_link_postscript
+};
+
+#define coff_small_close_and_cleanup \
+  coff_close_and_cleanup
+#define coff_small_bfd_free_cached_info \
+  coff_bfd_free_cached_info
+#define coff_small_get_section_contents \
+  coff_get_section_contents
+#define coff_small_get_section_contents_in_window \
+  coff_get_section_contents_in_window
+
+extern const bfd_target shlcoff_small_vec;
+
+const bfd_target shcoff_small_vec =
+{
+  "coff-sh-small",		/* name */
   bfd_target_coff_flavour,
   BFD_ENDIAN_BIG,		/* data byte order is big */
   BFD_ENDIAN_BIG,		/* header byte order is big */
@@ -2656,14 +3242,14 @@ const bfd_target shcoff_vec =
   bfd_getb32, bfd_getb_signed_32, bfd_putb32,
   bfd_getb16, bfd_getb_signed_16, bfd_putb16, /* hdrs */
 
-  {_bfd_dummy_target, coff_object_p, /* bfd_check_format */
+  {_bfd_dummy_target, coff_small_object_p, /* bfd_check_format */
      bfd_generic_archive_p, _bfd_dummy_target},
   {bfd_false, coff_mkobject, _bfd_generic_mkarchive, /* bfd_set_format */
      bfd_false},
   {bfd_false, coff_write_object_contents, /* bfd_write_contents */
      _bfd_write_archive_contents, bfd_false},
 
-  BFD_JUMP_TABLE_GENERIC (coff),
+  BFD_JUMP_TABLE_GENERIC (coff_small),
   BFD_JUMP_TABLE_COPY (coff),
   BFD_JUMP_TABLE_CORE (_bfd_nocore),
   BFD_JUMP_TABLE_ARCHIVE (_bfd_archive_coff),
@@ -2673,12 +3259,14 @@ const bfd_target shcoff_vec =
   BFD_JUMP_TABLE_LINK (coff),
   BFD_JUMP_TABLE_DYNAMIC (_bfd_nodynamic),
 
-  COFF_SWAP_TABLE,
+  & shlcoff_small_vec,
+  
+  (PTR) &bfd_coff_small_swap_table
 };
 
-const bfd_target shlcoff_vec =
+const bfd_target shlcoff_small_vec =
 {
-  "coff-shl",			/* name */
+  "coff-shl-small",		/* name */
   bfd_target_coff_flavour,
   BFD_ENDIAN_LITTLE,		/* data byte order is little */
   BFD_ENDIAN_LITTLE,		/* header byte order is little endian too*/
@@ -2698,14 +3286,14 @@ const bfd_target shlcoff_vec =
   bfd_getl32, bfd_getl_signed_32, bfd_putl32,
   bfd_getl16, bfd_getl_signed_16, bfd_putl16, /* hdrs */
 
-  {_bfd_dummy_target, coff_object_p, /* bfd_check_format */
+  {_bfd_dummy_target, coff_small_object_p, /* bfd_check_format */
      bfd_generic_archive_p, _bfd_dummy_target},   
   {bfd_false, coff_mkobject, _bfd_generic_mkarchive, /* bfd_set_format */
      bfd_false},
   {bfd_false, coff_write_object_contents, /* bfd_write_contents */
      _bfd_write_archive_contents, bfd_false},
 
-  BFD_JUMP_TABLE_GENERIC (coff),
+  BFD_JUMP_TABLE_GENERIC (coff_small),
   BFD_JUMP_TABLE_COPY (coff),
   BFD_JUMP_TABLE_CORE (_bfd_nocore),
   BFD_JUMP_TABLE_ARCHIVE (_bfd_archive_coff),
@@ -2715,5 +3303,8 @@ const bfd_target shlcoff_vec =
   BFD_JUMP_TABLE_LINK (coff),
   BFD_JUMP_TABLE_DYNAMIC (_bfd_nodynamic),
 
-  COFF_SWAP_TABLE,
+  & shcoff_small_vec,
+  
+  (PTR) &bfd_coff_small_swap_table
 };
+#endif

@@ -1,5 +1,6 @@
 /* A.out "format 1" file handling code for BFD.
-   Copyright 1990, 1991, 1992, 1993, 1996 Free Software Foundation, Inc.
+   Copyright 1990, 91, 92, 93, 94, 95, 96, 97, 1998
+   Free Software Foundation, Inc.
    Written by Cygnus Support.
 
 This file is part of BFD, the Binary File Descriptor library.
@@ -65,6 +66,24 @@ The name put into the target vector.
 /*SUPPRESS558*/
 /*SUPPRESS529*/
 
+#if ARCH_SIZE == 64
+#define sunos_set_arch_mach sunos_64_set_arch_mach
+#define sunos_write_object_contents aout_64_sunos4_write_object_contents
+#else
+#define sunos_set_arch_mach sunos_32_set_arch_mach
+#define sunos_write_object_contents aout_32_sunos4_write_object_contents
+#endif
+
+static boolean sunos_merge_private_bfd_data PARAMS ((bfd *, bfd *));
+static void sunos_set_arch_mach PARAMS ((bfd *, int));
+static void choose_reloc_size PARAMS ((bfd *));
+static boolean sunos_write_object_contents PARAMS ((bfd *));
+static const bfd_target *sunos4_core_file_p PARAMS ((bfd *));
+static char *sunos4_core_file_failing_command PARAMS ((bfd *));
+static int sunos4_core_file_failing_signal PARAMS ((bfd *));
+static boolean sunos4_core_file_matches_executable_p PARAMS ((bfd *, bfd *));
+static boolean sunos4_set_sizes PARAMS ((bfd *));
+
 /* Merge backend data into the output file.
    This is necessary on sparclet-aout where we want the resultant machine
    number to be M_SPARCLET if any input file is M_SPARCLET.  */
@@ -88,13 +107,11 @@ sunos_merge_private_bfd_data (ibfd, obfd)
   return true;
 }
 
+/* This is either sunos_32_set_arch_mach or sunos_64_set_arch_mach,
+   depending upon ARCH_SIZE.  */
+
 static void
-#if ARCH_SIZE == 64
-sunos_64_set_arch_mach
-#else
-sunos_32_set_arch_mach
-#endif
-  (abfd, machtype)
+sunos_set_arch_mach (abfd, machtype)
      bfd *abfd;
      int machtype;
 {
@@ -108,19 +125,19 @@ sunos_32_set_arch_mach
       /* Some Sun3s make magic numbers without cpu types in them, so
 	 we'll default to the 68000. */
       arch = bfd_arch_m68k;
-      machine = 68000;
+      machine = bfd_mach_m68000;
       break;
 
     case M_68010:
     case M_HP200:
       arch = bfd_arch_m68k;
-      machine = 68010;
+      machine = bfd_mach_m68010;
       break;
 
     case M_68020:
     case M_HP300:
       arch = bfd_arch_m68k;
-      machine = 68020;
+      machine = bfd_mach_m68020;
       break;
 
     case M_SPARC:
@@ -131,6 +148,11 @@ sunos_32_set_arch_mach
     case M_SPARCLET:
       arch = bfd_arch_sparc;
       machine = bfd_mach_sparc_sparclet;
+      break;
+
+    case M_SPARCLITE_LE:
+      arch = bfd_arch_sparc;
+      machine = bfd_mach_sparc_sparclite_le;
       break;
 
     case M_386:
@@ -178,17 +200,14 @@ choose_reloc_size (abfd)
     }
 }
 
-/* Write an object file in SunOS format.
-  Section contents have already been written.  We write the
-  file header, symbols, and relocation.  */
+/* Write an object file in SunOS format.  Section contents have
+   already been written.  We write the file header, symbols, and
+   relocation.  The real name of this function is either
+   aout_64_sunos4_write_object_contents or
+   aout_32_sunos4_write_object_contents, depending upon ARCH_SIZE.  */
 
 static boolean
-#if ARCH_SIZE == 64
-aout_64_sunos4_write_object_contents
-#else
-aout_32_sunos4_write_object_contents
-#endif
-  (abfd)
+sunos_write_object_contents (abfd)
      bfd *abfd;
 {
   struct external_exec exec_bytes;
@@ -200,14 +219,14 @@ aout_32_sunos4_write_object_contents
     case bfd_arch_m68k:
       switch (bfd_get_mach (abfd))
 	{
-	case 68000:
+	case bfd_mach_m68000:
 	  N_SET_MACHTYPE (*execp, M_UNKNOWN);
 	  break;
-	case 68010:
+	case bfd_mach_m68010:
 	  N_SET_MACHTYPE (*execp, M_68010);
 	  break;
 	default:
-	case 68020:
+	case bfd_mach_m68020:
 	  N_SET_MACHTYPE (*execp, M_68020);
 	  break;
 	}
@@ -217,6 +236,9 @@ aout_32_sunos4_write_object_contents
 	{
 	case bfd_mach_sparc_sparclet:
 	  N_SET_MACHTYPE (*execp, M_SPARCLET);
+	  break;
+	case bfd_mach_sparc_sparclite_le:
+	  N_SET_MACHTYPE (*execp, M_SPARCLITE_LE);
 	  break;
 	default:
 	  N_SET_MACHTYPE (*execp, M_SPARC);
@@ -383,6 +405,13 @@ struct internal_sunos_core
     int fp_stuff_size;		/* Size of it */
     int c_ucode;		/* Exception no. from u_code */
   };
+
+static void swapcore_sun3
+  PARAMS ((bfd *, char *, struct internal_sunos_core *));
+static void swapcore_sparc
+  PARAMS ((bfd *, char *, struct internal_sunos_core *));
+static void swapcore_solaris_bcp
+  PARAMS ((bfd *, char *, struct internal_sunos_core *));
 
 /* byte-swap in the Sun-3 core structure */
 static void
@@ -772,6 +801,9 @@ sunos4_set_sizes (abfd)
 #define MY_exec_hdr_flags 1
 #endif
 
+#ifndef MY_entry_is_text_address
+#define MY_entry_is_text_address 0
+#endif
 #ifndef MY_add_dynamic_symbols
 #define MY_add_dynamic_symbols 0
 #endif
@@ -795,6 +827,7 @@ static CONST struct aout_backend_data sunos4_aout_backend =
 {
   0,				/* zmagic files are not contiguous */
   1,				/* text includes header */
+  MY_entry_is_text_address,
   MY_exec_hdr_flags,
   0,				/* default text vma */
   sunos4_set_sizes,

@@ -16,6 +16,8 @@
 
 #include "source.h"
 
+#define NBBS 10
+
 /*
  * Symbol-entry.  For each external in the specified file we gather
  * its address, the number of calls and compute its share of cpu time.
@@ -39,9 +41,11 @@ typedef struct sym
       is_bb_head:1,		/* is this the head of a basic-blk? */
       mapped:1,			/* this symbol was mapped to another name */
       has_been_placed:1;	/* have we placed this symbol?  */
-    int ncalls;			/* how many times executed */
+    unsigned long ncalls;	/* how many times executed */
     int nuses;			/* how many times this symbol appears in
 				   a particular context */
+    bfd_vma bb_addr[NBBS];	/* address of basic-block start */
+    unsigned long bb_calls[NBBS]; /* how many times basic-block was called */
     struct sym *next;		/* for building chains of syms */
     struct sym *prev;		/* for building chains of syms */
 
@@ -58,7 +62,7 @@ typedef struct sym
     /* call-graph specific info: */
     struct
       {
-	int self_calls;		/* how many calls to self */
+	unsigned long self_calls; /* how many calls to self */
 	double child_time;	/* cumulative ticks in children */
 	int index;		/* index in the graph list */
 	int top_order;		/* graph call chain top-sort order */
@@ -90,7 +94,7 @@ Sym;
  */
 typedef struct
   {
-    int len;			/* # of symbols in this table */
+    unsigned int len;		/* # of symbols in this table */
     Sym *base;			/* first element in symbol table */
     Sym *limit;			/* limit = base + len */
   }

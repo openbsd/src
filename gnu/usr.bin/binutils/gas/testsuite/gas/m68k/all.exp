@@ -3,6 +3,9 @@
 #
 if [istarget m68*-*-*] then {
     gas_test "t2.s" "" "" "cross-section branch"
+    if [istarget m68*-motorola-sysv] then {
+	run_dump_test t2
+    }
 
     gas_test "pic1.s" "" "" "PIC generation"
 

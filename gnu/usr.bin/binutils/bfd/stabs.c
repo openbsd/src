@@ -1,5 +1,5 @@
 /* Stabs in sections linking support.
-   Copyright 1996 Free Software Foundation, Inc.
+   Copyright 1996, 1997, 1998, 1999 Free Software Foundation, Inc.
    Written by Ian Lance Taylor, Cygnus Support.
 
 This file is part of BFD, the Binary File Descriptor library.
@@ -101,6 +101,16 @@ struct stab_section_info
   /* This is a linked list of N_BINCL symbols which should be
      converted into N_EXCL symbols.  */
   struct stab_excl_list *excls;
+
+  /* This is used to map input stab offsets within their sections
+     to output stab offsets, to take into account stabs that have
+     been deleted.  If it is NULL, the output offsets are the same
+     as the input offsets, because no stabs have been deleted from
+     this section.  Otherwise the i'th entry is the number of
+     bytes of stabs that have been deleted prior to the i'th
+     stab. */
+  bfd_size_type *cumulative_skips;
+
   /* This is an array of string indices.  For each stab symbol, we
      store the string index here.  If a stab symbol should not be
      included in the final output, the string index is -1.  */
@@ -166,6 +176,7 @@ _bfd_link_section_stabs (abfd, psinfo, stabsec, stabstrsec, psecinfo)
      asection *stabstrsec;
      PTR *psecinfo;
 {
+  boolean first;
   struct stab_info *sinfo;
   bfd_size_type count;
   struct stab_section_info *secinfo;
@@ -206,14 +217,21 @@ _bfd_link_section_stabs (abfd, psinfo, stabsec, stabstrsec, psecinfo)
       return true;
     }
 
+  first = false;
+
   if (*psinfo == NULL)
     {
       /* Initialize the stabs information we need to keep track of.  */
+      first = true;
       *psinfo = (PTR) bfd_alloc (abfd, sizeof (struct stab_info));
+      if (*psinfo == NULL)
+	goto error_return;
       sinfo = (struct stab_info *) *psinfo;
       sinfo->strings = _bfd_stringtab_init ();
       if (sinfo->strings == NULL)
 	goto error_return;
+      /* Make sure the first byte is zero.  */
+      (void) _bfd_stringtab_add (sinfo->strings, "", true, true);
       if (! bfd_hash_table_init_n (&sinfo->includes.root,
 				   stab_link_includes_newfunc,
 				   251))
@@ -237,6 +255,7 @@ _bfd_link_section_stabs (abfd, psinfo, stabsec, stabstrsec, psecinfo)
 
   secinfo = (struct stab_section_info *) *psecinfo;
   secinfo->excls = NULL;
+  secinfo->cumulative_skips = NULL;
   memset (secinfo->stridxs, 0, count * sizeof (bfd_size_type));
 
   /* Read the stabs information from abfd.  */
@@ -278,12 +297,16 @@ _bfd_link_section_stabs (abfd, psinfo, stabsec, stabstrsec, psecinfo)
       if (type == 0)
 	{
 	  /* Special type 0 stabs indicate the offset to the next
-             string table.  We don't copy these into the output file.  */
+             string table.  We only copy the very first one.  */
 	  stroff = next_stroff;
 	  next_stroff += bfd_get_32 (abfd, sym + 8);
-	  *pstridx = (bfd_size_type) -1;
-	  ++skip;
-	  continue;
+	  if (! first)
+	    {
+	      *pstridx = (bfd_size_type) -1;
+	      ++skip;
+	      continue;
+	    }
+	  first = false;
 	}
 
       /* Store the string in the hash table, and record the index.  */
@@ -361,6 +384,8 @@ _bfd_link_section_stabs (abfd, psinfo, stabsec, stabstrsec, psecinfo)
 	  /* Record this symbol, so that we can set the value
              correctly.  */
 	  ne = (struct stab_excl_list *) bfd_alloc (abfd, sizeof *ne);
+	  if (ne == NULL)
+	    goto error_return;
 	  ne->offset = sym - stabbuf;
 	  ne->val = val;
 	  ne->type = N_BINCL;
@@ -421,7 +446,9 @@ _bfd_link_section_stabs (abfd, psinfo, stabsec, stabstrsec, psecinfo)
     }
 
   free (stabbuf);
+  stabbuf = NULL;
   free (stabstrbuf);
+  stabstrbuf = NULL;
 
   /* We need to set the section sizes such that the linker will
      compute the output section sizes correctly.  We set the .stab
@@ -435,6 +462,33 @@ _bfd_link_section_stabs (abfd, psinfo, stabsec, stabstrsec, psecinfo)
     stabsec->flags |= SEC_EXCLUDE;
   stabstrsec->flags |= SEC_EXCLUDE;
   sinfo->stabstr->_cooked_size = _bfd_stringtab_size (sinfo->strings);
+
+  /* Calculate the `cumulative_skips' array now that stabs have been
+     deleted for this section. */
+
+  if (skip != 0)
+    {
+      bfd_size_type i, offset;
+      bfd_size_type *pskips;
+
+      secinfo->cumulative_skips =
+	(bfd_size_type *) bfd_alloc (abfd, count * sizeof (bfd_size_type));
+      if (secinfo->cumulative_skips == NULL)
+	goto error_return;
+
+      pskips = secinfo->cumulative_skips;
+      pstridx = secinfo->stridxs;
+      offset = 0;
+
+      for (i = 0; i < count; i++, pskips++, pstridx++)
+	{
+	  *pskips = offset;
+	  if (*pstridx == (bfd_size_type) -1)
+	    offset += STABSIZE;
+	}
+
+      BFD_ASSERT (offset != 0);
+    }
 
   return true;
 
@@ -450,17 +504,20 @@ _bfd_link_section_stabs (abfd, psinfo, stabsec, stabstrsec, psecinfo)
    contents.  */
 
 boolean
-_bfd_write_section_stabs (output_bfd, stabsec, psecinfo, contents)
+_bfd_write_section_stabs (output_bfd, psinfo, stabsec, psecinfo, contents)
      bfd *output_bfd;
+     PTR *psinfo;
      asection *stabsec;
      PTR *psecinfo;
      bfd_byte *contents;
 {
+  struct stab_info *sinfo;
   struct stab_section_info *secinfo;
   struct stab_excl_list *e;
   bfd_byte *sym, *tosym, *symend;
   bfd_size_type *pstridx;
 
+  sinfo = (struct stab_info *) *psinfo;
   secinfo = (struct stab_section_info *) *psecinfo;
 
   if (secinfo == NULL)
@@ -492,11 +549,26 @@ _bfd_write_section_stabs (output_bfd, stabsec, psecinfo, contents)
 	  if (tosym != sym)
 	    memcpy (tosym, sym, STABSIZE);
 	  bfd_put_32 (output_bfd, *pstridx, tosym + STRDXOFF);
+
+	  if (sym[TYPEOFF] == 0)
+	    {
+	      /* This is the header symbol for the stabs section.  We
+                 don't really need one, since we have merged all the
+                 input stabs sections into one, but we generate one
+                 for the benefit of readers which expect to see one.  */
+	      BFD_ASSERT (sym == contents);
+	      bfd_put_32 (output_bfd, _bfd_stringtab_size (sinfo->strings),
+			  tosym + VALOFF);
+	      bfd_put_16 (output_bfd,
+			  stabsec->output_section->_raw_size / STABSIZE - 1,
+			  tosym + DESCOFF);
+	    }
+
 	  tosym += STABSIZE;
 	}
     }
 
-  BFD_ASSERT (tosym - contents == stabsec->_cooked_size);
+  BFD_ASSERT ((bfd_size_type) (tosym - contents) == stabsec->_cooked_size);
 
   return bfd_set_section_contents (output_bfd, stabsec->output_section,
 				   contents, stabsec->output_offset,
@@ -517,6 +589,12 @@ _bfd_write_stab_strings (output_bfd, psinfo)
   if (sinfo == NULL)
     return true;
 
+  if (bfd_is_abs_section (sinfo->stabstr->output_section))
+    {
+      /* The section was discarded from the link.  */
+      return true;
+    }
+
   BFD_ASSERT ((sinfo->stabstr->output_offset
 	       + _bfd_stringtab_size (sinfo->strings))
 	      <= sinfo->stabstr->output_section->_raw_size);
@@ -535,4 +613,41 @@ _bfd_write_stab_strings (output_bfd, psinfo)
   bfd_hash_table_free (&sinfo->includes.root);
 
   return true;
+}
+
+/* Adjust an address in the .stab section.  Given OFFSET within
+   STABSEC, this returns the new offset in the adjusted stab section,
+   or -1 if the address refers to a stab which has been removed.  */
+
+bfd_vma
+_bfd_stab_section_offset (output_bfd, psinfo, stabsec, psecinfo, offset)
+     bfd *output_bfd ATTRIBUTE_UNUSED;
+     PTR *psinfo ATTRIBUTE_UNUSED;
+     asection *stabsec;
+     PTR *psecinfo;
+     bfd_vma offset;
+{
+  struct stab_section_info *secinfo;
+
+  secinfo = (struct stab_section_info *) *psecinfo;
+
+  if (secinfo == NULL)
+    return offset;
+
+  if (offset >= stabsec->_raw_size)
+    return offset - (stabsec->_cooked_size - stabsec->_raw_size);
+
+  if (secinfo->cumulative_skips)
+    {
+      bfd_vma i;
+
+      i = offset / STABSIZE;
+
+      if (secinfo->stridxs [i] == (bfd_size_type) -1)
+	return (bfd_vma) -1;
+
+      return offset - secinfo->cumulative_skips [i];
+    }
+
+  return offset;
 }

@@ -1,4 +1,5 @@
-# Copyright (C) 1993, 1994 Free Software Foundation, Inc.
+# Copyright (C) 1993, 1994, 1997, 1998, 1999, 2000 Free Software
+# Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -12,7 +13,7 @@
 # 
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  
 
 # Please email any bugs, comments, and/or additions to this file to:
 # DejaGnu@cygnus.com
@@ -40,9 +41,11 @@ proc gas_run { prog as_opts redir } {
     global subdir
     global host_triplet
 
-    verbose "Executing $AS $ASFLAGS $as_opts $prog $redir"
+    verbose "Executing $srcdir/lib/run $AS $ASFLAGS $as_opts $srcdir/$subdir/$prog $redir"
     catch "exec $srcdir/lib/run $AS $ASFLAGS $as_opts $srcdir/$subdir/$prog $redir" comp_output
-    set comp_output [prune_system_crud $host_triplet $comp_output]
+    set comp_output [prune_warnings $comp_output]
+    verbose "output was $comp_output"
+    return [list $comp_output ""];
 }
 
 proc all_ones { args } {
@@ -155,7 +158,7 @@ proc gas_test_error { file as_opts testname } {
 
 proc gas_exit {} {}
 
-proc gas_init {} {
+proc gas_init { args } {
     global target_cpu
     global target_cpu_family
     global target_family
@@ -171,14 +174,71 @@ proc gas_init {} {
 
     set target_family "$target_cpu_family-$target_vendor-$target_os"
     set stdoptlist "-a>"
+
+    if ![istarget "*-*-*"] {
+	perror "Target name [istarget] is not a triple."
+    }
     # Need to return an empty string.
     return
 }
 
-# This proc requires two input files -- the .s file containing the
-# assembly source, and a .d file containing the expected output from
-# objdump or nm or whatever, and leading comments indicating any options
-# to be passed to the assembler or dump program.
+
+# run_dump_test FILE 
+#
+# Assemble a .s file, then run some utility on it and check the output.
+# 
+# There should be an assembly language file named FILE.s in the test
+# suite directory, and a pattern file called FILE.d.  `run_dump_test'
+# will assemble FILE.s, run some tool like `objdump', `objcopy', or
+# `nm' on the .o file to produce textual output, and then analyze that
+# with regexps.  The FILE.d file specifies what program to run, and
+# what to expect in its output.
+#
+# The FILE.d file begins with zero or more option lines, which specify
+# flags to pass to the assembler, the program to run to dump the
+# assembler's output, and the options it wants.  The option lines have
+# the syntax:
+# 
+#         # OPTION: VALUE
+# 
+# OPTION is the name of some option, like "name" or "objdump", and
+# VALUE is OPTION's value.  The valid options are described below.
+# Whitespace is ignored everywhere, except within VALUE.  The option
+# list ends with the first line that doesn't match the above syntax
+# (hmm, not great for error detection).
+#
+# The interesting options are:
+# 
+#   name: TEST-NAME
+#	The name of this test, passed to DejaGNU's `pass' and `fail'
+#       commands.  If omitted, this defaults to FILE, the root of the
+#       .s and .d files' names.
+# 
+#   as: FLAGS
+#	When assembling FILE.s, pass FLAGS to the assembler.
+# 
+#   PROG: PROGRAM-NAME
+#       The name of the program to run to analyze the .o file produced
+#       by the assembler.  This can be omitted; run_dump_test will guess
+#       which program to run by seeing which of the flags options below
+#	is present.
+# 
+#   objdump: FLAGS
+#   nm: FLAGS
+#   objcopy: FLAGS
+#	Use the specified program to analyze the .o file, and pass it
+#	FLAGS, in addition to the .o file name.
+#
+#   source: SOURCE
+#	Assemble the file SOURCE.s.  If omitted, this defaults to FILE.s.
+#       This is useful if several .d files want to share a .s file.
+#
+# Each option may occur at most once.
+#
+# After the option lines come regexp lines.  `run_dump_test' calls
+# `regexp_diff' to compare the output of the dumping tool against the
+# regexps in FILE.d.  `regexp_diff' is defined later in this file; see
+# further comments there.
 
 proc run_dump_test { name } {
     global subdir srcdir
@@ -194,6 +254,7 @@ proc run_dump_test { name } {
     }
     set opt_array [slurp_options "${file}.d"]
     if { $opt_array == -1 } {
+	perror "error reading options from $file.d"
 	unresolved $subdir/$name
 	return
     }
@@ -234,17 +295,27 @@ proc run_dump_test { name } {
 		  unresolved $subdir/$name
 		  return }
 	}
-    } elseif {$opts(objdump) == "" && $opts(nm) != ""} {
-	set program nm
-    } elseif {$opts(objdump) != "" && $opts(nm) == ""} {
-	set program objdump
-    } elseif {$opts(objcopy) != ""} {
-	set program objcopy
     } else {
-	perror "dump program unspecified in $file.d"
-	unresolved $subdir/$name
-	return
+	# Guess which program to run, by seeing which option was specified.
+	set program ""
+	foreach p {objdump objcopy nm} {
+	    if {$opts($p) != ""} {
+		if {$program != ""} {
+		    perror "ambiguous dump program in $file.d"
+		    unresolved $subdir/$name
+		    return
+		} else {
+		    set program $p
+		}
+	    }
+	}
+	if {$program == ""} {
+	    perror "dump program unspecified in $file.d"
+	    unresolved $subdir/$name
+	    return
+	}
     }
+
     set progopts1 $opts($program)
     eval set progopts \$[string toupper $program]FLAGS
     eval set binary \$[string toupper $program]
@@ -262,7 +333,7 @@ proc run_dump_test { name } {
 
     send_log "$AS $ASFLAGS $opts(as) -o dump.o $sourcefile\n"
     catch "exec $srcdir/lib/run $AS $ASFLAGS $opts(as) -o dump.o $sourcefile" comp_output
-    set comp_output [prune_system_crud $host_triplet $comp_output]
+    set comp_output [prune_warnings $comp_output]
 
     if ![string match "" $comp_output] then {
 	send_log "$comp_output\n"
@@ -278,10 +349,13 @@ proc run_dump_test { name } {
 
     if { $progopts1 == "" } { set $progopts1 "-r" }
     verbose "running $binary $progopts $progopts1" 3
+
+    # Objcopy, unlike the other two, won't send its output to stdout,
+    # so we have to run it specially.
     if { $program == "objcopy" } {
 	send_log "$binary $progopts $progopts1 dump.o dump.out\n"
 	catch "exec $binary $progopts $progopts1 dump.o dump.out" comp_output
-	set comp_output [prune_system_crud $host_triplet $comp_output]
+	set comp_output [prune_warnings $comp_output]
 	if ![string match "" $comp_output] then {
 	    send_log "$comp_output\n"
 	    fail $testname
@@ -290,7 +364,7 @@ proc run_dump_test { name } {
     } else {
 	send_log "$binary $progopts $progopts1 dump.o > dump.out\n"
 	catch "exec $binary $progopts $progopts1 dump.o > dump.out" comp_output
-	set comp_output [prune_system_crud $host_triplet $comp_output]
+	set comp_output [prune_warnings $comp_output]
 	if ![string match "" $comp_output] then {
 	    send_log "$comp_output\n"
 	    fail $testname
@@ -301,6 +375,7 @@ proc run_dump_test { name } {
     verbose_eval {[file_contents "dump.out"]} 3
     if { [regexp_diff "dump.out" "${file}.d"] } then {
 	fail $testname
+	verbose "output is [file_contents "dump.out"]" 2
 	return
     }
 
@@ -340,7 +415,7 @@ proc objdump { opts } {
     global host_triplet
 
     catch "exec $OBJDUMP $opts" comp_output
-    set comp_output [prune_system_crud $host_triplet $comp_output]
+    set comp_output [prune_warnings $comp_output]
     verbose "objdump output=$comp_output\n" 3
 }
 
@@ -385,7 +460,8 @@ expect_after -i {
 proc regexp_diff { file_1 file_2 } {
 
     set eof -1
-    set end 0
+    set end_1 0
+    set end_2 0
     set differences 0
     set diff_pass 0
 
@@ -406,38 +482,68 @@ proc regexp_diff { file_1 file_2 } {
 
     verbose " Regexp-diff'ing: $file_1 $file_2" 2
 
-    while { $differences == 0 && $end == 0 } {
+    while { 1 } {
 	set line_a ""
 	set line_b ""
 	while { [string length $line_a] == 0 } {
 	    if { [gets $file_a line_a] == $eof } {
-		set end 1
+		set end_1 1
 		break
 	    }
 	}
 	while { [string length $line_b] == 0 || [string match "#*" $line_b] } {
 	    if [ string match "#pass" $line_b ] {
-		set end 1
+		set end_2 1
 		set diff_pass 1
+		break
+	    } elseif [ string match "#..." $line_b ] {
+		if { [gets $file_b line_b] == $eof } {
+		    set end_2 1
+		    break
+		}
+		verbose "looking for \"^$line_b$\"" 3
+		while { ![regexp "^$line_b$" "$line_a"] } {
+		    verbose "skipping    \"$line_a\"" 3
+		    if { [gets $file_a line_a] == $eof } {
+			set end_1 1
+			break
+		    }
+		}
 		break
 	    }
 	    if { [gets $file_b line_b] == $eof } {
-		set end 1
+		set end_2 1
 		break
 	    }
 	}
-	if { $end } { break }
-	verbose "regexp \"^$line_b$\"\nline   \"$line_a\"" 3
-	if ![regexp "^$line_b$" "$line_a"] {
+
+        if { $diff_pass } { 
+            break 
+        } elseif { $end_1 && $end_2 } { 
+            break
+        } elseif { $end_1 } {
+            send_log "extra regexps in $file_2 starting with \"^$line_b$\"\nEOF from $file_1\n"
+            verbose "extra regexps in $file_2 starting with \"^$line_b$\"\nEOF from $file_1" 3
+            set differences 1
+            break
+        } elseif { $end_2 } {
+            send_log "extra lines in $file_1 starting with \"^$line_a$\"\nEOF from $file_2\n"
+            verbose "extra lines in $file_1 starting with \"^$line_a$\"\nEOF from $file_2\n" 3
+            set differences 1
+            break
+        } else {
+            verbose "regexp \"^$line_b$\"\nline   \"$line_a\"" 3
+            if ![regexp "^$line_b$" "$line_a"] {
 		send_log "regexp_diff match failure\n"
 		send_log "regexp \"^$line_b$\"\nline   \"$line_a\"\n"
 		set differences 1
-	}
+            }
+        }
     }
 
     if { $differences == 0 && !$diff_pass && [eof $file_a] != [eof $file_b] } {
-	send_log "different lengths\n"
-	verbose "different lengths" 3
+	send_log "$file_1 and $file_2 are different lengths\n"
+	verbose "$file_1 and $file_2 are different lengths" 3
 	set differences 1
     }
 
@@ -462,19 +568,16 @@ proc verbose_eval { expr { level 1 } } {
 # This definition is taken from an unreleased version of DejaGnu.  Once
 # that version gets released, and has been out in the world for a few
 # months at least, it may be safe to delete this copy.
-if ![string length [info proc prune_system_crud]] {
+if ![string length [info proc prune_warnings]] {
     #
-    # prune_system_crud -- delete various system verbosities from TEXT on SYSTEM
+    # prune_warnings -- delete various system verbosities from TEXT.
     #
     # An example is:
     # ld.so: warning: /usr/lib/libc.so.1.8.1 has older revision than expected 9
     #
-    # SYSTEM is typical $target_triplet or $host_triplet.
-    #
-    # This is useful when trying to do pattern matches on program output.
     # Sites with particular verbose os's may wish to override this in site.exp.
     #
-    proc prune_system_crud { system text } {
+    proc prune_warnings { text } {
 	# This is from sun4's.  Do it for all machines for now.
 	# The "\\1" is to try to preserve a "\n" but only if necessary.
 	regsub -all "(^|\n)(ld.so: warning:\[^\n\]*\n?)+" $text "\\1" text

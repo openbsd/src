@@ -1,6 +1,6 @@
-#objdump: -dr --prefix-addresses
+#objdump: -dr --prefix-addresses -mmips:5000
 #name: MIPS mips4
-#as: -mips4
+#as: -mips4 -mcpu=r5000
 
 # Test the mips4 macros.
 

@@ -1,5 +1,5 @@
 # Expect script for LD Bootstrap Tests
-#   Copyright (C) 1993, 1994, 1995, 1996 Free Software Foundation
+#   Copyright (C) 1993, 1994, 1995, 1996, 1997, 1998 Free Software Foundation
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -40,7 +40,14 @@ foreach flags {"" "--static" "--traditional-format" "--no-keep-memory"} {
 
     # This test can only be run if we have the ld build directory,
     # since we need the object files.
-    if {$ld != "$objdir/ld.new"} {
+    if {$ld != "$objdir/ld-new"} {
+	untested $testname
+	continue
+    }
+
+    # If we only have a shared libbfd, we probably can't run the
+    # --static test.
+    if { $flags == "--static" && ! [string match "*libbfd.a*" $BFDLIB] } then {
 	untested $testname
 	continue
     }
@@ -83,7 +90,7 @@ foreach flags {"" "--static" "--traditional-format" "--no-keep-memory"} {
     send_log "cmp tmpdir/ld2 tmpdir/ld3\n"
     verbose "cmp tmpdir/ld2 tmpdir/ld3"
     catch "exec cmp tmpdir/ld2 tmpdir/ld3" exec_output
-    set exec_output [prune_system_crud $host_triplet $exec_output]
+    set exec_output [prune_warnings $exec_output]
 
     if [string match "" $exec_output] then {
 	pass $testname

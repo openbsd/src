@@ -24,3 +24,5 @@ run_dump_test for
 run_dump_test if
 run_dump_test repeat
 run_dump_test while
+run_dump_test semi
+run_dump_test moveml

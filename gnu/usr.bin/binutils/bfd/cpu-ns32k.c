@@ -1,5 +1,5 @@
 /* BFD support for the ns32k architecture.
-   Copyright (C) 1990, 91, 94, 95, 1996 Free Software Foundation, Inc.
+   Copyright (C) 1990, 91, 94, 95, 96, 98, 1999 Free Software Foundation, Inc.
    Almost totally rewritten by Ian Dall from initial work
    by Andrew Cagney.
 
@@ -69,6 +69,9 @@ _bfd_ns32k_get_displacement(buffer, offset, size)
       value = (value << 8) | (0xff & *buffer++);
       value = (value << 8) | (0xff & *buffer);
       break;
+    default:
+      abort ();
+      return 0;
     }
   return value;
 }
@@ -170,7 +173,7 @@ do_ns32k_reloc (abfd, reloc_entry, symbol, data, input_section, output_bfd,
      PTR data;
      asection *input_section;
      bfd *output_bfd;
-     char **error_message;
+     char **error_message ATTRIBUTE_UNUSED;
      long (*get_data)();
      int (*put_data)();
 {
@@ -593,7 +596,7 @@ bfd_reloc_status_type
 _bfd_do_ns32k_reloc_contents ( howto, input_bfd, relocation, location,
 			      get_data, put_data)
      reloc_howto_type *howto;
-     bfd *input_bfd;
+     bfd *input_bfd ATTRIBUTE_UNUSED;
      bfd_vma relocation;
      bfd_byte *location;
      long (*get_data)();

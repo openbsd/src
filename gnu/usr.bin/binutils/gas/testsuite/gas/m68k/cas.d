@@ -1,4 +1,4 @@
-#objdump: -d --prefix-addresses
+#objdump: -d
 #name: cas
 
 # Test parsing of the operands of the cas instruction

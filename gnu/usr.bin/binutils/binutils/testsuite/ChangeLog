@@ -1,3 +1,232 @@
+2000-03-13  Nick Clifton  <nickc@cygnus.com>
+
+	* binutils-all/readelf.s: Adjust to match noew format of readelf
+	output. 
+	* binutils-all/readelf.ss: Adjust to match noew format of readelf 
+	output. 
+
+1999-11-01  Nick Clifton  <nickc@cygnus.com>
+
+	* binutils-all/objcopy.exp: Expect simple objcopy test for fail
+	for COFF based ARM and Thumb ports.
+
+Tue Sep 14 00:28:17 1999  Jeffrey A Law  (law@cygnus.com)
+
+	* binutils-all/hppa/objdump.exp: Do not run for PA64.
+
+1999-09-04  Steve Chamberlain  <sac@pobox.com>
+
+	* binutils-all/objdump.exp: Add pj to cpus_expected.
+
+Sat Aug 28 00:24:27 1999  Jerry Quinn <jquinn@nortelnetworks.com>
+
+	* binutils-all/hppa/freg.s:  New file.
+	* binutils-all/hppa/objdump.exp:  Add freg.s test.
+
+1999-08-09  Ian Lance Taylor  <ian@zembu.com>
+
+	* binutils-all/objcopy.exp: Add setup_xfail for simple copy test
+	for i*86-*-msdos*.
+
+1999-07-21  H.J. Lu  <hjl@gnu.org>
+
+	* binutils-all/testprog.c: Include <stdio.h>.
+
+1999-06-29  Nick Clifton  <nickc@cygnus.com>
+
+	* binutils-all/objdump.exp: Add fr30 and MCore to expected cpus
+	list. 
+
+	* binutils-all/readelf.r: Do not assume a fixed number of spaces
+	in the output.
+
+1999-06-10  Nick Clifton  <nickc@cygnus.com>
+
+	* binutils-all/readelf.wi: Update to match latest output.
+	* binutils-all/readelf.h: Update to match latest output.
+
+Wed Jun  9 11:59:22 1999  Andreas Schwab  <schwab@issan.cs.uni-dortmund.de>
+
+	* binutils-all/objdump.exp: Tighten regexp to match `objdump -i'
+	output to avoid massive exponential behaviour.
+
+1999-05-28  Ian Lance Taylor  <ian@zembu.com>
+
+	* binutils-all/readelf.h: Update for changes of 1999-04-08.
+
+1999-03-12  Nick Clifton  <nickc@cygnus.com>
+
+	* binutils-all/readelf.wi: Remove FR30 specific componnts.
+	* binutils-all/readelf.s: Remove RELA specific components.
+
+1999-02-16  Nick Clifton  <nickc@cygnus.com>
+
+	* binutils-all/readelf.s: Do not assume section alignment is 4.
+	* binutils-all/readelf.r: Do not assume rela's are being used. 
+	* binutils-all/readelf.exp: disable tests for non ELF based
+	targets.
+
+1999-02-02  Nick Clifton  <nickc@cygnus.com>
+
+	* binutils-all/readelf.wi: Amend to match new readelf output.
+	* binutils-all/readelf.r: Do not assume that RELAs will be used.
+
+1999-01-29  Nick Clifton  <nickc@cygnus.com>
+
+	* config/default.exp: Add definitions of READELF and READELFFLAGS.
+
+	* binutils-all/readelf.exp: New file: Readelf tests
+	* binutils-all/readelf.h: New file: Expected results for 'readelf -h'
+	* binutils-all/readelf.s: New file: Expected results for 'readelf -S'
+	* binutils-all/readelf.ss: New file: Expected results for 'readelf -s'
+	* binutils-all/readelf.r: New file: Expected results for 'readelf -r'
+	* binutils-all/readelf.wi: New file: Expected results for 'readelf -wi'
+
+Wed Dec  9 19:11:39 1998  Jeffrey A Law  (law@cygnus.com)
+
+	* binutils-all/objcopy.exp (copy_executable): Expect comparison
+	failure for mips*-*-elf.
+
+Fri Oct 16 22:57:12 1998  Felix Lee  <flee@cygnus.com>
+
+	* binutils-all/objcopy.exp: fix "no symbols" message.
+
+Tue Jul 28 15:14:04 1998  Jeffrey A Law  (law@cygnus.com)
+
+	* binutils-all/objcopy.exp: Keep "main" and "_main" for strip with
+	saving symbol tests.  Look for either "main" or "_main" in the output
+	file.  Fix test for "no symbols" in the output file.
+
+1998-07-22  Vladimir N. Makarov  <vmakarov@cygnus.com>
+
+	* binutils-all/objcopy.exp: Polish output about fail for objcopy
+	(simple copy), strip with/without saving a symbol for object file
+	and executable.
+
+Wed Jul  1 16:27:40 1998  Nick Clifton  <nickc@cygnus.com>
+
+	* binutils-all/objcopy.exp: ARM simple objcopy now passes.
+
+Wed Jun 24 09:20:21 1998  Nick Clifton  <nickc@cygnus.com>
+
+	* binutils-all/objdump.exp: Look for '.data' rather than 'data'
+	when parsing output of objdump -h.
+	* binutils-all/size.exp: Look for '.data' rather than 'data' when
+	parsing output of size -A.
+
+1998-07-20  Vladimir N. Makarov  <vmakarov@cygnus.com>
+
+	* objcopy.exp: Two new tests - strip object file with saving a
+	symbol and strip executable file with saving a symbol.
+
+Fri May 29 14:50:24 1998  Ian Lance Taylor  <ian@cygnus.com>
+
+	* binutils-all/objcopy.exp: Don't xfail the simple objcopy test
+	when cross compiling.
+
+Thu Nov  6 14:32:37 1997  Bob Manson  <manson@charmed.cygnus.com>
+
+	* lib/utils-lib.exp: Temporary definition of target_assemble and
+ 	default_target_assemble so that testing can work with older
+ 	dejagnu versions.
+
+Wed Sep 24 12:09:15 1997  Bob Manson  <manson@charmed.cygnus.com>
+
+	* binutils-all/objcopy.exp(strip_executable): Make a new copy of
+ 	the executable being tested.
+
+Mon Sep 15 21:25:20 1997  Bob Manson  <manson@charmed.cygnus.com>
+
+	* binutils-all/objcopy.exp: Compile the executables to be tested
+ 	on the target with a status wrapper (as necessary).
+
+	* binutils-all/ar.exp: If testing on a remote host, don't bother
+ 	looking on the local host for the program being tested. Use the
+ 	correct filenames on the remote host.
+
+	* binutils-all/nm.exp: Ditto.
+
+	* binutils-all/size.exp: Ditto.
+
+	* binutils-all/objdump.exp: Ditto.
+ 	(cpus_expected): Add the target CPU to the regexp of CPUs to be
+ 	expected, if it's not already there.
+
+Thu Aug 28 09:57:27 1997  Doug Evans  <dje@canuck.cygnus.com>
+
+	* binutils-all/objdump.exp (cpus_expected): Add arc.
+
+Tue Aug  5 00:03:20 1997  Ian Lance Taylor  <ian@cygnus.com>
+
+	* config/default.exp: Look for nm-new and strip-new.
+
+Tue Jun  3 17:12:54 1997  Bob Manson  <manson@charmed.cygnus.com>
+
+	* config/default.exp: Remove expect_before statement.
+
+	* binutils-all/objcopy.exp: Don't use global exec_output variable;
+ 	the output is returned from remote_load instead.
+
+Mon May 12 22:14:20 1997  Bob Manson  <manson@charmed.cygnus.com>
+
+	* binutils-all/objcopy.exp(strip_test): Tests that
+	fail to compile are untested, not unresolved.
+	(copy_setup): Ditto.
+
+	* lib/utils-lib.exp(default_binutils_assemble): Call
+	target_assemble instead of target_compile.
+
+Wed Apr 30 20:37:51 1997  Bob Manson  <manson@charmed.cygnus.com>
+
+	Changes to support multilib and remote hosted testing, along with
+ 	general cleanups and simplifications.
+
+	* lib/utils-lib.exp(binutil_version): Use remote_exec.
+	(default_binutils_run): Ditto.
+	(default_binutils_assemble): Remove first argument; call
+ 	target_compile to actually do the assembly.
+	(default_binutils_compile,default_binutils_remove,prune_warnings):
+ 	Delete.
+
+	* config/default.exp: Remove AS and ASFLAGS.
+	(binutils_compile,binutils_remove): Delete.
+	(binutils_assemble): Remove first argument.
+
+	* binutils-all/ar.exp: See if we're running the tests on
+	a remote host, and download/upload files as appropriate.
+	Replace calls to binutils_remove with remote_file. Replace
+	calls to binutils_compile with target_compile. Remove initial
+	argument to binutils_assemble. Use remote_load to execute
+	programs on the target.
+	* binutils-all/nm.exp: Ditto.
+	* binutils-all/objcopy.exp:  Ditto.
+	* binutils-all/objdump.exp:  Ditto.
+	* binutils-all/size.exp: Ditto.
+
+Mon Apr 14 12:36:41 1997  Ian Lance Taylor  <ian@cygnus.com>
+
+	* binutils-all/ar.exp (long_filenames): Check for a file system
+	with a 14 character file name length limit.
+
+Tue Apr  1 09:52:15 1997  Jeffrey A Law  (law@cygnus.com)
+
+	* binutils-all/objdump.exp: Handle d10v.
+
+Fri Feb  7 16:45:34 1997  Bob Manson  <manson@charmed.cygnus.com>
+
+	* binutils-all/ar.exp: Use prune_warnings instead of
+	prune_system_crud.
+	* binutils-all/objcopy.exp: Ditto.
+
+Wed Jan 29 00:16:43 1997  Bob Manson  <manson@charmed.cygnus.com>
+
+	* binutils-all/nm.exp: Use / between $srcdir and $subdir.
+	* binutils-all/objcopy.exp: Ditto.
+	* binutils-all/objdump.exp: Ditto.
+	* binutils-all/size.exp: Ditto.
+	* binutils-all/hppa/objdump.exp: Ditto.
+	
+
 Wed Oct 16 22:57:59 1996  Jeffrey A Law  (law@cygnus.com)
 
 	* binutils-all/objdump.exp: Add mn10200 and mn10300 to expected

@@ -1,5 +1,5 @@
 /* BFD back-end for os9000 i386 binaries.
-   Copyright 1990, 1991, 1992, 1993, 1994 Free Software Foundation, Inc.
+   Copyright 1990, 91, 92, 93, 94, 95, 98, 1999 Free Software Foundation, Inc.
    Written by Cygnus Support.
 
 This file is part of BFD, the Binary File Descriptor library.
@@ -305,8 +305,8 @@ os9k_set_section_contents (abfd, section, location, offset, count)
 
 static int
 os9k_sizeof_headers (ignore_abfd, ignore)
-     bfd *ignore_abfd;
-     boolean ignore;
+     bfd *ignore_abfd ATTRIBUTE_UNUSED;
+     boolean ignore ATTRIBUTE_UNUSED;
 {
   return sizeof (struct internal_exec);
 }
@@ -326,6 +326,7 @@ os9k_sizeof_headers (ignore_abfd, ignore)
 #define os9k_bfd_get_relocated_section_contents \
   bfd_generic_get_relocated_section_contents
 #define os9k_bfd_relax_section bfd_generic_relax_section
+#define os9k_bfd_gc_sections bfd_generic_gc_sections
 #define os9k_bfd_link_hash_table_create _bfd_generic_link_hash_table_create
 #define os9k_bfd_link_add_symbols _bfd_generic_link_add_symbols
 #define os9k_bfd_final_link _bfd_generic_final_link
@@ -366,5 +367,7 @@ const bfd_target i386os9k_vec =
      BFD_JUMP_TABLE_LINK (os9k),
      BFD_JUMP_TABLE_DYNAMIC (_bfd_nodynamic),
 
+  NULL,
+  
   (PTR) 0,
 };

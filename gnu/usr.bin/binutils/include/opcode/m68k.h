@@ -1,5 +1,5 @@
 /* Opcode table header for m680[01234]0/m6888[12]/m68851.
-   Copyright 1989, 1991, 1992, 1993, 1994, 1995 Free Software Foundation.
+   Copyright 1989, 91, 92, 93, 94, 95, 96, 97, 1999 Free Software Foundation.
 
 This file is part of GDB, GAS, and the GNU binutils.
 
@@ -36,6 +36,8 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #define	m68851  0x080
 #define cpu32	0x100	/* e.g., 68332 */
 #define mcf5200 0x200
+#define mcf5206e 0x400
+#define mcf5307 0x800
 
  /* handy aliases */
 #define	m68040up  (m68040 | m68060)
@@ -43,6 +45,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #define	m68020up  (m68020 | m68030up)
 #define	m68010up  (m68010 | cpu32 | m68020up)
 #define	m68000up  (m68000 | m68010up)
+#define mcf       (mcf5200 | mcf5206e | mcf5307)
 
 #define	mfloat  (m68881 | m68882 | m68040 | m68060)
 #define	mmmu    (m68851 | m68030 | m68040 | m68060)
@@ -87,7 +90,7 @@ struct m68k_opcode_alias
    operand; the second, the place it is stored.  */
 
 /* Kinds of operands:
-   Characters used: AaBCcDdFfIJkLlMOQRrSsTtUVWXYZ0123|*~%;@!&$?/#^+-
+   Characters used: AaBCcDdEFfGHIJkLlMmnOopQqRrSsTtU VvWXYZ0123|*~%;@!&$?/<>#^+-
 
    D  data register only.  Stored as 3 bits.
    A  address register only.  Stored as 3 bits.
@@ -121,6 +124,9 @@ struct m68k_opcode_alias
    C  the CCR.  No need to store it; this is just for filtering validity.
    S  the SR.  No need to store, just as with CCR.
    U  the USP.  No need to store, just as with CCR.
+   E  the ACC.  No need to store, just as with CCR.
+   G  the MACSR.  No need to store, just as with CCR.
+   H  the MASK.  No need to store, just as with CCR.
 
    I  Coprocessor ID.   Not printed if 1.   The Coprocessor ID is always
       extracted from the 'd' field of word one, which means that an extended
@@ -170,30 +176,46 @@ struct m68k_opcode_alias
        for both caches.  Used in cinv and cpush.  Always
        stored in position "d".
 
+    u  Any register, with ``upper'' or ``lower'' specification.  Used
+       in the mac instructions with size word.
+
  The remainder are all stored as 6 bits using an address mode and a
  register number; they differ in which addressing modes they match.
 
-   *  all					(modes 0-6,7.*)
+   *  all					(modes 0-6,7.0-4)
    ~  alterable memory				(modes 2-6,7.0,7.1)
-   						(not 0,1,7.~)
-   %  alterable					(modes 0-6,7.0,7.1)(not 7.~)
-   ;  data					(modes 0,2-6,7.*)(not 1)
-   @  data, but not immediate			(modes 0,2-6,7.? ? ?)
-						(not 1,7.?)
-						This may really be ;,
-						the 68020 book says it is
-   !  control					(modes 2,5,6,7.*-)
+   						(not 0,1,7.2-4)
+   %  alterable					(modes 0-6,7.0,7.1)
+						(not 7.2-4)
+   ;  data					(modes 0,2-6,7.0-4)
+						(not 1)
+   @  data, but not immediate			(modes 0,2-6,7.0-3)
+						(not 1,7.4)
+   !  control					(modes 2,5,6,7.0-3)
 						(not 0,1,3,4,7.4)
    &  alterable control				(modes 2,5,6,7.0,7.1)
-						(not 0,1,7.? ? ?)
+						(not 0,1,7.2-4)
    $  alterable data				(modes 0,2-6,7.0,7.1)
-						(not 1,7.~)
+						(not 1,7.2-4)
    ?  alterable control, or data register	(modes 0,2,5,6,7.0,7.1)
-						(not 1,3,4,7.~)
-   /  control, or data register			(modes 0,2,5,6,7.0,7.1,7.2,7.3)
+						(not 1,3,4,7.2-4)
+   /  control, or data register			(modes 0,2,5,6,7.0-3)
 						(not 1,3,4,7.4)
-   `  control, plus pre-dec, not simple indir.	(modes 4,5,6,7.*-)
-						(not 0,1,2,3,7.4) */
+   >  *save operands				(modes 2,4,5,6,7.0,7.1)
+						(not 0,1,3,7.2-4)
+   <  *restore operands				(modes 2,3,5,6,7.0-3)
+						(not 0,1,4,7.4)
+
+   coldfire move operands:
+   m  						(modes 0-4)
+   n						(modes 5,7.2)
+   o						(modes 6,7.0,7.1,7.3,7.4)
+   p						(modes 0-5)
+
+   coldfire bset/bclr/btst/mulsl/mulul operands:
+   q						(modes 0,2-5)
+   v						(modes 0,2-5,7.0,7.1)
+*/
 
 /* For the 68851: */
 /*
@@ -247,6 +269,8 @@ struct m68k_opcode_alias
 */
 
 /* Places to put an operand, for non-general operands:
+   Characters used: BbCcDdghijkLlMmNnostWw123456789
+
    s  source, low bits of first word.
    d  dest, shifted 9 in first word
    1  second word, shifted 12
@@ -280,6 +304,24 @@ struct m68k_opcode_alias
    C  floating point coprocessor constant - 7 bits.  Also used for static
       K-factors...
    j  Movec register #, stored in 12 low bits of second word.
+   m  For M[S]ACx; 4 bits split with MSB shifted 6 bits in first word
+      and remaining 3 bits of register shifted 9 bits in first word.
+      Indicate upper/lower in 1 bit shifted 7 bits in second word.
+      Use with `R' or `u' format.
+   n  `m' withouth upper/lower indication. (For M[S]ACx; 4 bits split
+      with MSB shifted 6 bits in first word and remaining 3 bits of
+      register shifted 9 bits in first word.  No upper/lower
+      indication is done.)  Use with `R' or `u' format.
+   o  For M[S]ACw; 4 bits shifted 12 in second word (like `1').
+      Indicate upper/lower in 1 bit shifted 7 bits in second word.
+      Use with `R' or `u' format.
+   M  For M[S]ACw; 4 bits in low bits of first word.  Indicate
+      upper/lower in 1 bit shifted 6 bits in second word.  Use with
+      `R' or `u' format.
+   N  For M[S]ACw; 4 bits in low bits of second word.  Indicate
+      upper/lower in 1 bit shifted 6 bits in second word.  Use with
+      `R' or `u' format.
+   h  shift indicator (scale factor), 1 bit shifted 10 in second word
 
  Places to put operand, for general operands:
    d  destination, shifted 6 bits in first word

@@ -1,5 +1,6 @@
 /* BFD back-end for PowerPC Microsoft Portable Executable files.
-   Copyright 1990, 91, 92, 93, 94, 95, 1996 Free Software Foundation, Inc.
+   Copyright 1990, 91, 92, 93, 94, 95, 96, 97, 98, 1999
+   Free Software Foundation, Inc.
 
    Original version pieced together by Kim Knuttila (krk@cygnus.com)
 
@@ -21,7 +22,8 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
-Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
+Foundation, 59 Temple Place - Suite 330,
+Boston, MA 02111-1307, USA.  */
 
 /* Current State:
    - objdump works
@@ -36,7 +38,6 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 #include "sysdep.h"
 
 #include "libbfd.h"
-#include "obstack.h"
 
 #include "coff/powerpc.h"
 #include "coff/internal.h"
@@ -50,6 +51,12 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 #define BADMAG(x) PPCBADMAG(x)
 
 #include "libcoff.h"
+
+/* This file is compiled more than once, but we only compile the
+   final_link routine once.  */
+extern boolean ppc_bfd_coff_final_link
+  PARAMS ((bfd *, struct bfd_link_info *));
+extern void dump_toc PARAMS ((PTR));
 
 /* The toc is a set of bfd_vma fields. We use the fact that valid         */
 /* addresses are even (i.e. the bit representing "1" is off) to allow     */
@@ -81,7 +88,7 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
  if (strcmp(addr->eye_catcher, EYE) != 0) \
   { \
     fprintf(stderr,\
-    "File %s, line %d, Hash check failure, bad eye %8s\n", \
+    _("File %s, line %d, Hash check failure, bad eye %8s\n"), \
     __FILE__, __LINE__, addr->eye_catcher); \
     abort(); \
  }
@@ -124,6 +131,20 @@ struct ppc_coff_link_hash_table
 static struct bfd_hash_entry *ppc_coff_link_hash_newfunc
   PARAMS ((struct bfd_hash_entry *, struct bfd_hash_table *,
 	   const char *));
+static boolean ppc_coff_link_hash_table_init
+  PARAMS ((struct ppc_coff_link_hash_table *, bfd *,
+	   struct bfd_hash_entry *(*) (struct bfd_hash_entry *,
+				       struct bfd_hash_table *,
+				       const char *)));
+static struct bfd_link_hash_table *ppc_coff_link_hash_table_create
+  PARAMS ((bfd *));
+static boolean coff_ppc_relocate_section
+  PARAMS ((bfd *, struct bfd_link_info *, bfd *, asection *, bfd_byte *,
+	   struct internal_reloc *, struct internal_syment *, asection **));
+static reloc_howto_type *coff_ppc_rtype_to_howto
+  PARAMS ((bfd *, asection *, struct internal_reloc *,
+	   struct coff_link_hash_entry *, struct internal_syment *,
+	   bfd_vma *));
 
 /* Routine to create an entry in the link hash table.  */
 
@@ -767,7 +788,7 @@ static reloc_howto_type ppc_coff_howto_table[] =
    if (i == 0)                                               \
      {                                                       \
        i = 1;                                                \
-       fprintf(stderr,"Unimplemented Relocation -- %s\n",x); \
+       fprintf(stderr,_("Unimplemented Relocation -- %s\n"),x); \
      }                                                       \
 }
 
@@ -804,6 +825,10 @@ static reloc_howto_type ppc_coff_howto_table[] =
 
 
 /* toc construction and management routines */
+
+/* This file is compiled twice, and these variables are defined in one
+   of the compilations.  FIXME: This is confusing and weird.  Also,
+   BFD should not use global variables.  */
 extern bfd* bfd_of_toc_owner;
 extern long int global_toc_size;
 
@@ -837,8 +862,11 @@ struct list_ele
 extern struct list_ele *head;
 extern struct list_ele *tail;
 
+static void record_toc
+  PARAMS ((asection *, int, enum ref_category, const char *));
+
 static void
-record_toc(toc_section, our_toc_offset, cat, name)
+record_toc (toc_section, our_toc_offset, cat, name)
      asection *toc_section;
      int our_toc_offset;
      enum ref_category cat;
@@ -869,14 +897,19 @@ record_toc(toc_section, our_toc_offset, cat, name)
 
 #ifdef COFF_IMAGE_WITH_PE
 
+static boolean ppc_record_toc_entry
+  PARAMS ((bfd *, struct bfd_link_info *, asection *, int, enum toc_type));
+static void ppc_mark_symbol_as_glue
+  PARAMS ((bfd *, int, struct internal_reloc *));
+
 /* record a toc offset against a symbol */
 static boolean
 ppc_record_toc_entry(abfd, info, sec, sym, toc_kind)
      bfd *abfd;
-     struct bfd_link_info *info;
-     asection *sec;
+     struct bfd_link_info *info ATTRIBUTE_UNUSED;
+     asection *sec ATTRIBUTE_UNUSED;
      int sym;
-     enum toc_type toc_kind;
+     enum toc_type toc_kind ATTRIBUTE_UNUSED;
 {
   struct ppc_coff_link_hash_entry *h;
   const char *name;
@@ -896,7 +929,7 @@ ppc_record_toc_entry(abfd, info, sec, sym, toc_kind)
       local_syms = obj_coff_local_toc_table(abfd);
       if (local_syms == 0)
 	{
-	  int i;
+	  unsigned int i;
 	  /* allocate a table */
 	  local_syms = 
 	    (int *) bfd_zalloc (abfd, 
@@ -918,7 +951,7 @@ ppc_record_toc_entry(abfd, info, sec, sym, toc_kind)
 	  /* The size must fit in a 16bit displacment */
 	  if (global_toc_size > 65535)
 	    {
-	      (*_bfd_error_handler) ("TOC overflow");
+	      (*_bfd_error_handler) (_("TOC overflow"));
 	      bfd_set_error (bfd_error_file_too_big);
 	      return false;
 	    }
@@ -938,7 +971,7 @@ ppc_record_toc_entry(abfd, info, sec, sym, toc_kind)
 	  /* The size must fit in a 16bit displacment */
 	  if (global_toc_size >= 65535)
 	    {
-	      (*_bfd_error_handler) ("TOC overflow");
+	      (*_bfd_error_handler) (_("TOC overflow"));
 	      bfd_set_error (bfd_error_file_too_big);
 	      return false;
 	    }
@@ -974,7 +1007,7 @@ ppc_mark_symbol_as_glue(abfd, sym, rel)
    appear in the output .reloc section. */
 
 static boolean in_reloc_p(abfd, howto)
-     bfd * abfd;
+     bfd * abfd ATTRIBUTE_UNUSED;
      reloc_howto_type *howto;
 {
   return 
@@ -1042,7 +1075,7 @@ pe_ppc_reloc (abfd, reloc_entry, symbol_in, data, input_section, output_bfd,
   if ((part1_consth_active) && (r_type != IMAGE_REL_PPC_PAIR)) 
     {
       part1_consth_active = false;
-      *error_message = (char *) "Missing PAIR";
+      *error_message = (char *) _("Missing PAIR");
       return(bfd_reloc_dangerous);
     }
 
@@ -1143,8 +1176,9 @@ coff_ppc_relocate_section (output_bfd, info, input_bfd, input_section,
 	      sec = sections[symndx];
 	      val = (sec->output_section->vma
 		     + sec->output_offset
-		     + sym->n_value
-		     - sec->vma);
+		     + sym->n_value);
+	      if (! obj_pe (output_bfd))
+		val -= sec->vma;
 	    }
 	}
       else
@@ -1163,7 +1197,7 @@ coff_ppc_relocate_section (output_bfd, info, input_bfd, input_section,
 	    {
 	      if (! ((*info->callbacks->undefined_symbol)
 		     (info, h->root.root.root.string, input_bfd, input_section,
-		      rel->r_vaddr - input_section->vma)))
+		      rel->r_vaddr - input_section->vma, true)))
 		return false;
 	    }
 	}
@@ -1175,7 +1209,7 @@ coff_ppc_relocate_section (output_bfd, info, input_bfd, input_section,
 	{
 	default:
 	  (*_bfd_error_handler)
-	    ("%s: unsupported relocation type 0x%02x",
+	    (_("%s: unsupported relocation type 0x%02x"),
 	     bfd_get_filename (input_bfd), r_type);
 	  bfd_set_error (bfd_error_bad_value);
 	  return false;
@@ -1272,7 +1306,7 @@ coff_ppc_relocate_section (output_bfd, info, input_bfd, input_section,
 		    if (our_toc_offset >= 65535)
 		      {
 			(*_bfd_error_handler)
-			  ("%s: Relocation for %s of %x exceeds Toc size limit", 
+			  (_("%s: Relocation for %s of %x exceeds Toc size limit"), 
 			   bfd_get_filename (input_bfd), name, our_toc_offset);
 			bfd_set_error (bfd_error_bad_value);
 			return false;
@@ -1328,7 +1362,7 @@ coff_ppc_relocate_section (output_bfd, info, input_bfd, input_section,
 		our_toc_offset > toc_section->_raw_size)
 	      {
 		(*_bfd_error_handler)
-		  ("%s: Relocation exceeds allocated TOC (%x)", 
+		  (_("%s: Relocation exceeds allocated TOC (%x)"), 
 		   bfd_get_filename (input_bfd),
 		   toc_section->_raw_size);
 		bfd_set_error (bfd_error_bad_value);
@@ -1387,7 +1421,7 @@ coff_ppc_relocate_section (output_bfd, info, input_bfd, input_section,
 	      }
 
 	    fprintf(stderr, 
-		    "Warning: unsupported reloc %s <file %s, section %s>\n", 
+		    _("Warning: unsupported reloc %s <file %s, section %s>\n"), 
 		    howto->name,
 		    bfd_get_filename(input_bfd),
 		    input_section->name);
@@ -1407,7 +1441,7 @@ coff_ppc_relocate_section (output_bfd, info, input_bfd, input_section,
 	    my_name = h->root.root.root.string;
 
 	    (*_bfd_error_handler)
-	      ("%s: Out of order IMGLUE reloc for %s", 
+	      (_("%s: Out of order IMGLUE reloc for %s"), 
 	       bfd_get_filename (input_bfd), my_name);
 	    bfd_set_error (bfd_error_bad_value);
 	    return false;
@@ -1594,8 +1628,11 @@ coff_ppc_relocate_section (output_bfd, info, input_bfd, input_section,
   return true;
 }
 
-
 #ifdef COFF_IMAGE_WITH_PE
+
+/* FIXME: BFD should not use global variables.  This file is compiled
+   twice, and these variables are shared.  This is confusing and
+   weird.  */
 
 long int global_toc_size = 4;
 
@@ -1609,44 +1646,44 @@ struct list_ele *head;
 struct list_ele *tail;
 
 static char *
-h1 = "\n\t\t\tTOC MAPPING\n\n";
+h1 = N_("\n\t\t\tTOC MAPPING\n\n");
 static char *
-h2 = " TOC    disassembly  Comments       Name\n";
+h2 = N_(" TOC    disassembly  Comments       Name\n");
 static char *
-h3 = " Offset  spelling                   (if present)\n";
+h3 = N_(" Offset  spelling                   (if present)\n");
 
 void
-dump_toc(vfile)
-     void *vfile;
+dump_toc (vfile)
+     PTR vfile;
 {
-  FILE *file = vfile;
+  FILE *file = (FILE *) vfile;
   struct list_ele *t;
 
-  fprintf(file, h1);
-  fprintf(file, h2);
-  fprintf(file, h3);
+  fprintf(file, _(h1));
+  fprintf(file, _(h2));
+  fprintf(file, _(h3));
 
   for(t = head; t != 0; t=t->next)
     {
-      char *cat;
+      const char *cat = "";
 
       if (t->cat == priv)
-	cat = "private       ";
+	cat = _("private       ");
       else if (t->cat == pub)
-	cat = "public        ";
+	cat = _("public        ");
       else if (t->cat == data)
-	cat = "data-in-toc   ";
+	cat = _("data-in-toc   ");
 
       if (t->offset > global_toc_size)
 	{
 	  if (t->offset <= global_toc_size + thunk_size)
-	    cat = "IAT reference ";
+	    cat = _("IAT reference ");
 	  else
 	    {
 	      fprintf(file,
-		      "**** global_toc_size %ld(%lx), thunk_size %ld(%lx)\n",
+		      _("**** global_toc_size %ld(%lx), thunk_size %ld(%lx)\n"),
 		      global_toc_size, global_toc_size, thunk_size, thunk_size);
-	      cat = "Out of bounds!";
+	      cat = _("Out of bounds!");
 	    }
 	}
 
@@ -1663,7 +1700,7 @@ dump_toc(vfile)
 
 boolean
 ppc_allocate_toc_section (info) 
-     struct bfd_link_info *info;
+     struct bfd_link_info *info ATTRIBUTE_UNUSED;
 {
   asection *s;
   bfd_byte *foo;
@@ -1769,13 +1806,13 @@ ppc_refhi_reloc (abfd,
 		 input_section,
 		 output_bfd,
 		 error_message)
-     bfd *abfd;
-     arelent *reloc_entry;
-     asymbol *symbol;
-     PTR data;
-     asection *input_section;
+     bfd *abfd ATTRIBUTE_UNUSED;
+     arelent *reloc_entry ATTRIBUTE_UNUSED;
+     asymbol *symbol ATTRIBUTE_UNUSED;
+     PTR data ATTRIBUTE_UNUSED;
+     asection *input_section ATTRIBUTE_UNUSED;
      bfd *output_bfd;
-     char **error_message;
+     char **error_message ATTRIBUTE_UNUSED;
 {
   UN_IMPL("REFHI");
   DUMP_RELOC("REFHI",reloc_entry);
@@ -1823,13 +1860,13 @@ ppc_pair_reloc (abfd,
 		input_section,
 		output_bfd,
 		error_message)
-     bfd *abfd;
-     arelent *reloc_entry;
-     asymbol *symbol;
-     PTR data;
-     asection *input_section;
+     bfd *abfd ATTRIBUTE_UNUSED;
+     arelent *reloc_entry ATTRIBUTE_UNUSED;
+     asymbol *symbol ATTRIBUTE_UNUSED;
+     PTR data ATTRIBUTE_UNUSED;
+     asection *input_section ATTRIBUTE_UNUSED;
      bfd *output_bfd;
-     char **error_message;
+     char **error_message ATTRIBUTE_UNUSED;
 {
   UN_IMPL("PAIR");
   DUMP_RELOC("PAIR",reloc_entry);
@@ -1849,13 +1886,13 @@ ppc_toc16_reloc (abfd,
 		 input_section,
 		 output_bfd,
 		 error_message)
-     bfd *abfd;
-     arelent *reloc_entry;
-     asymbol *symbol;
-     PTR data;
-     asection *input_section;
+     bfd *abfd ATTRIBUTE_UNUSED;
+     arelent *reloc_entry ATTRIBUTE_UNUSED;
+     asymbol *symbol ATTRIBUTE_UNUSED;
+     PTR data ATTRIBUTE_UNUSED;
+     asection *input_section ATTRIBUTE_UNUSED;
      bfd *output_bfd;
-     char **error_message;
+     char **error_message ATTRIBUTE_UNUSED;
 {
   UN_IMPL("TOCREL16");
   DUMP_RELOC("TOCREL16",reloc_entry);
@@ -1908,13 +1945,13 @@ ppc_secrel_reloc (abfd,
 		  input_section,
 		  output_bfd,
 		  error_message)
-     bfd *abfd;
-     arelent *reloc_entry;
-     asymbol *symbol;
-     PTR data;
-     asection *input_section;
+     bfd *abfd ATTRIBUTE_UNUSED;
+     arelent *reloc_entry ATTRIBUTE_UNUSED;
+     asymbol *symbol ATTRIBUTE_UNUSED;
+     PTR data ATTRIBUTE_UNUSED;
+     asection *input_section ATTRIBUTE_UNUSED;
      bfd *output_bfd;
-     char **error_message;
+     char **error_message ATTRIBUTE_UNUSED;
 {
   UN_IMPL("SECREL");
   DUMP_RELOC("SECREL",reloc_entry);
@@ -1933,13 +1970,13 @@ ppc_section_reloc (abfd,
 		   input_section,
 		   output_bfd,
 		   error_message)
-     bfd *abfd;
-     arelent *reloc_entry;
-     asymbol *symbol;
-     PTR data;
-     asection *input_section;
+     bfd *abfd ATTRIBUTE_UNUSED;
+     arelent *reloc_entry ATTRIBUTE_UNUSED;
+     asymbol *symbol ATTRIBUTE_UNUSED;
+     PTR data ATTRIBUTE_UNUSED;
+     asection *input_section ATTRIBUTE_UNUSED;
      bfd *output_bfd;
-     char **error_message;
+     char **error_message ATTRIBUTE_UNUSED;
 {
   UN_IMPL("SECTION");
   DUMP_RELOC("SECTION",reloc_entry);
@@ -1958,13 +1995,13 @@ ppc_imglue_reloc (abfd,
 		  input_section,
 		  output_bfd,
 		  error_message)
-     bfd *abfd;
-     arelent *reloc_entry;
-     asymbol *symbol;
-     PTR data;
-     asection *input_section;
+     bfd *abfd ATTRIBUTE_UNUSED;
+     arelent *reloc_entry ATTRIBUTE_UNUSED;
+     asymbol *symbol ATTRIBUTE_UNUSED;
+     PTR data ATTRIBUTE_UNUSED;
+     asection *input_section ATTRIBUTE_UNUSED;
      bfd *output_bfd;
-     char **error_message;
+     char **error_message ATTRIBUTE_UNUSED;
 {
   UN_IMPL("IMGLUE");
   DUMP_RELOC("IMGLUE",reloc_entry);
@@ -2043,7 +2080,7 @@ ppc_coff_rtype2howto (relent, internal)
       break;
     default:
       fprintf(stderr, 
-	      "Warning: Unsupported reloc %s [%d] used -- it may not work.\n",
+	      _("Warning: Unsupported reloc %s [%d] used -- it may not work.\n"),
 	      ppc_coff_howto_table[r_type].name,
 	      r_type);
       howto = ppc_coff_howto_table + r_type;      
@@ -2056,11 +2093,11 @@ ppc_coff_rtype2howto (relent, internal)
 
 static reloc_howto_type *
 coff_ppc_rtype_to_howto (abfd, sec, rel, h, sym, addendp)
-     bfd *abfd;
+     bfd *abfd ATTRIBUTE_UNUSED;
      asection *sec;
      struct internal_reloc *rel;
-     struct coff_link_hash_entry *h;
-     struct internal_syment *sym;
+     struct coff_link_hash_entry *h ATTRIBUTE_UNUSED;
+     struct internal_syment *sym ATTRIBUTE_UNUSED;
      bfd_vma *addendp;
 {
   reloc_howto_type *howto;
@@ -2118,7 +2155,7 @@ coff_ppc_rtype_to_howto (abfd, sec, rel, h, sym, addendp)
       break;
     default:
       fprintf(stderr, 
-	      "Warning: Unsupported reloc %s [%d] used -- it may not work.\n",
+	      _("Warning: Unsupported reloc %s [%d] used -- it may not work.\n"),
 	      ppc_coff_howto_table[r_type].name,
 	      r_type);
       howto = ppc_coff_howto_table + r_type;
@@ -2138,7 +2175,7 @@ PARAMS ((bfd *, bfd_reloc_code_real_type));
 
 static reloc_howto_type *
 ppc_coff_reloc_type_lookup (abfd, code)
-     bfd *abfd;
+     bfd *abfd ATTRIBUTE_UNUSED;
      bfd_reloc_code_real_type code;
 {
   switch (code)
@@ -2166,8 +2203,7 @@ ppc_coff_reloc_type_lookup (abfd, code)
 #define RTYPE2HOWTO(cache_ptr, dst)  ppc_coff_rtype2howto (cache_ptr, dst)
 
 #ifndef COFF_IMAGE_WITH_PE
-static void
-ppc_coff_swap_sym_in_hook ();
+static void ppc_coff_swap_sym_in_hook PARAMS ((bfd *, PTR, PTR));
 #endif
 
 /* We use the special COFF backend linker, with our own special touch.  */
@@ -2178,6 +2214,7 @@ ppc_coff_swap_sym_in_hook ();
 #define coff_bfd_final_link          ppc_bfd_coff_final_link 
 
 #ifndef COFF_IMAGE_WITH_PE
+/* FIXME: This no longer works.  */
 #define coff_swap_sym_in_hook        ppc_coff_swap_sym_in_hook
 #endif
 
@@ -2185,7 +2222,24 @@ ppc_coff_swap_sym_in_hook ();
 
 #define COFF_PAGE_SIZE                       0x1000
 
+/* FIXME: This controls some code that used to be in peicode.h and is
+   now in peigen.c.  It will not control the code in peigen.c.  If
+   anybody wants to get this working, you will need to fix that.  */
 #define POWERPC_LE_PE
+
+#define COFF_SECTION_ALIGNMENT_ENTRIES \
+{ COFF_SECTION_NAME_EXACT_MATCH (".idata$2"), \
+  COFF_ALIGNMENT_FIELD_EMPTY, COFF_ALIGNMENT_FIELD_EMPTY, 0 }, \
+{ COFF_SECTION_NAME_EXACT_MATCH (".idata$3"), \
+  COFF_ALIGNMENT_FIELD_EMPTY, COFF_ALIGNMENT_FIELD_EMPTY, 0 }, \
+{ COFF_SECTION_NAME_EXACT_MATCH (".idata$4"), \
+  COFF_ALIGNMENT_FIELD_EMPTY, COFF_ALIGNMENT_FIELD_EMPTY, 2 }, \
+{ COFF_SECTION_NAME_EXACT_MATCH (".idata$5"), \
+  COFF_ALIGNMENT_FIELD_EMPTY, COFF_ALIGNMENT_FIELD_EMPTY, 2 }, \
+{ COFF_SECTION_NAME_EXACT_MATCH (".idata$6"), \
+  COFF_ALIGNMENT_FIELD_EMPTY, COFF_ALIGNMENT_FIELD_EMPTY, 1 }, \
+{ COFF_SECTION_NAME_EXACT_MATCH (".reloc"), \
+  COFF_ALIGNMENT_FIELD_EMPTY, COFF_ALIGNMENT_FIELD_EMPTY, 1 }
 
 #include "coffcode.h"
 
@@ -2209,7 +2263,7 @@ ppc_coff_swap_sym_in_hook ();
 static void
 ppc_coff_swap_sym_in_hook (abfd, ext1, in1)
      bfd            *abfd;
-     PTR ext1;
+     PTR ext1 ATTRIBUTE_UNUSED;
      PTR in1;
 {
   struct internal_syment      *in = (struct internal_syment *)in1;
@@ -2248,13 +2302,13 @@ ppc_coff_swap_sym_in_hook (abfd, ext1, in1)
 }
 #endif
 
-boolean
-ppc_bfd_coff_final_link ();
-
 #ifndef COFF_IMAGE_WITH_PE
 
+static boolean ppc_do_last PARAMS ((bfd *));
+static bfd *ppc_get_last PARAMS ((void));
+
 static boolean
-ppc_do_last(abfd)
+ppc_do_last (abfd)
      bfd *abfd;
 {
   if (abfd == bfd_of_toc_owner)
@@ -2280,7 +2334,6 @@ ppc_get_last()
    where the POWERPC_LE_PE macro modifies the code. It is left in as a 
    precise form of comment. krk@cygnus.com
 */
-#define POWERPC_LE_PE
 
 
 /* Do the final link step.  */
@@ -2338,7 +2391,10 @@ ppc_bfd_coff_final_link (abfd, info)
 
   /* Compute the file positions for all the sections.  */
   if (! abfd->output_has_begun)
-    bfd_coff_compute_section_file_positions (abfd);
+    {
+      if (! bfd_coff_compute_section_file_positions (abfd))
+	return false;
+    }
 
   /* Count the line numbers and relocation entries required for the
      output file.  Set the file positions for the relocs.  */
@@ -2563,7 +2619,6 @@ ppc_bfd_coff_final_link (abfd, info)
 
 #ifdef POWERPC_LE_PE
   {
-    extern bfd* ppc_get_last();
     bfd* last_one = ppc_get_last();
     if (last_one)
       {
@@ -2786,11 +2841,15 @@ ppc_bfd_coff_final_link (abfd, info)
 #endif
 
 
+/* Forward declaration for use by alternative_target field.  */
+#ifdef TARGET_BIG_SYM
+extern const bfd_target TARGET_BIG_SYM;
+#endif
+
 /* The transfer vectors that lead the outside world to all of the above. */
 
 #ifdef TARGET_LITTLE_SYM
-const bfd_target
-TARGET_LITTLE_SYM =
+const bfd_target TARGET_LITTLE_SYM =
 {
   TARGET_LITTLE_NAME,		/* name or coff-arm-little */
   bfd_target_coff_flavour,
@@ -2836,14 +2895,20 @@ TARGET_LITTLE_SYM =
   BFD_JUMP_TABLE_WRITE (coff),
   BFD_JUMP_TABLE_LINK (coff),
   BFD_JUMP_TABLE_DYNAMIC (_bfd_nodynamic),
+
+  /* Alternative_target.  */
+#ifdef TARGET_BIG_SYM
+  & TARGET_BIG_SYM,
+#else
+  NULL,
+#endif
   
-  COFF_SWAP_TABLE,
+  COFF_SWAP_TABLE
 };
 #endif
 
 #ifdef TARGET_BIG_SYM
-const bfd_target
-TARGET_BIG_SYM =
+const bfd_target TARGET_BIG_SYM =
 {
   TARGET_BIG_NAME,
   bfd_target_coff_flavour,	
@@ -2890,7 +2955,15 @@ TARGET_BIG_SYM =
   BFD_JUMP_TABLE_LINK (coff),
   BFD_JUMP_TABLE_DYNAMIC (_bfd_nodynamic),
 
-  COFF_SWAP_TABLE,
+
+  /* Alternative_target.  */
+#ifdef TARGET_LITTLE_SYM
+  & TARGET_LITTLE_SYM,
+#else
+  NULL,
+#endif
+  
+  COFF_SWAP_TABLE
 };
 
 #endif

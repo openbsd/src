@@ -1,5 +1,5 @@
 /* BFD back-end for ARM PECOFF files.
-   Copyright 1995 Free Software Foundation, Inc.
+   Copyright 1995, 1999 Free Software Foundation, Inc.
 
 This file is part of BFD, the Binary File Descriptor library.
 
@@ -20,13 +20,28 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #include "bfd.h"
 #include "sysdep.h"
 
-#define TARGET_LITTLE_SYM armpe_little_vec
-#define TARGET_LITTLE_NAME "pe-arm-little"
-#define TARGET_BIG_SYM armpe_big_vec
-#define TARGET_BIG_NAME "pe-arm-big"
+#ifndef TARGET_LITTLE_SYM
+#define TARGET_LITTLE_SYM    armpe_little_vec
+#define TARGET_LITTLE_NAME   "pe-arm-little"
+#define TARGET_BIG_SYM       armpe_big_vec
+#define TARGET_BIG_NAME      "pe-arm-big"
+#endif
 
 #define COFF_WITH_PE
-#define PCRELOFFSET true
+#define PCRELOFFSET          true
 #define COFF_LONG_SECTION_NAMES
+
+#ifndef bfd_arm_allocate_interworking_sections 
+#define bfd_arm_allocate_interworking_sections \
+	bfd_arm_pe_allocate_interworking_sections
+#define bfd_arm_get_bfd_for_interworking \
+	bfd_arm_pe_get_bfd_for_interworking
+#define bfd_arm_process_before_allocation \
+	bfd_arm_pe_process_before_allocation
+#endif
+	
+#ifdef ARM_WINCE
+#define TARGET_UNDERSCORE 0
+#endif
 
 #include "coff-arm.c"

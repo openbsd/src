@@ -1,4 +1,4 @@
-#objdump: -d --prefix-addresses
+#objdump: -d
 #name: operands
 
 # Test handling of MIT and Motorola syntax operands

@@ -1,5 +1,6 @@
 /* bucomm.c -- Bin Utils COMmon code.
-   Copyright (C) 1991, 92, 93, 94 Free Software Foundation, Inc.
+   Copyright (C) 1991, 92, 93, 94, 95, 97, 98, 2000
+   Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
 
@@ -15,7 +16,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+   02111-1307, USA.  */
 
 /* We might put this in a library someday so it could be dynamically
    loaded, but for now it's not necessary.  */
@@ -23,6 +25,7 @@
 #include "bfd.h"
 #include "libiberty.h"
 #include "bucomm.h"
+#include "filenames.h"
 
 #include <sys/stat.h>
 #include <time.h>		/* ctime, maybe time_t */
@@ -32,14 +35,6 @@
 typedef long time_t;
 #endif
 #endif
-
-#ifdef ANSI_PROTOTYPES
-#include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
-
-char *target = NULL;		/* default as late as possible */
 
 /* Error reporting */
 
@@ -65,18 +60,36 @@ bfd_fatal (string)
   xexit (1);
 }
 
+void
+report (format, args)
+     const char * format;
+     va_list args;
+{
+  fprintf (stderr, "%s: ", program_name);
+  vfprintf (stderr, format, args);
+  putc ('\n', stderr);
+}
+
 #ifdef ANSI_PROTOTYPES
 void
 fatal (const char *format, ...)
 {
   va_list args;
 
-  fprintf (stderr, "%s: ", program_name);
   va_start (args, format);
-  vfprintf (stderr, format, args);
+  report (format, args);
   va_end (args);
-  putc ('\n', stderr);
   xexit (1);
+}
+
+void
+non_fatal (const char *format, ...)
+{
+  va_list args;
+
+  va_start (args, format);
+  report (format, args);
+  va_end (args);
 }
 #else
 void 
@@ -86,28 +99,55 @@ fatal (va_alist)
   char *Format;
   va_list args;
 
-  fprintf (stderr, "%s: ", program_name);
   va_start (args);
   Format = va_arg (args, char *);
-  vfprintf (stderr, Format, args);
+  report (Format, args);
   va_end (args);
-  putc ('\n', stderr);
   xexit (1);
+}
+
+void 
+non_fatal (va_alist)
+     va_dcl
+{
+  char *Format;
+  va_list args;
+
+  va_start (args);
+  Format = va_arg (args, char *);
+  report (Format, args);
+  va_end (args);
 }
 #endif
 
+/* Set the default BFD target based on the configured target.  Doing
+   this permits the binutils to be configured for a particular target,
+   and linked against a shared BFD library which was configured for a
+   different target.  */
+
+void
+set_default_bfd_target ()
+{
+  /* The macro TARGET is defined by Makefile.  */
+  const char *target = TARGET;
+
+  if (! bfd_set_default_target (target))
+    fatal (_("can't set BFD default target to `%s': %s"),
+	   target, bfd_errmsg (bfd_get_error ()));
+}
+
 /* After a false return from bfd_check_format_matches with
-   bfd_get_error () == bfd_error_file_ambiguously_recognized, print the possible
-   matching targets.  */
+   bfd_get_error () == bfd_error_file_ambiguously_recognized, print
+   the possible matching targets.  */
 
 void
 list_matching_formats (p)
      char **p;
 {
-  fprintf(stderr, "%s: Matching formats:", program_name);
+  fprintf (stderr, _("%s: Matching formats:"), program_name);
   while (*p)
-    fprintf(stderr, " %s", *p++);
-  fprintf(stderr, "\n");
+    fprintf (stderr, " %s", *p++);
+  fputc ('\n', stderr);
 }
 
 /* List the supported targets.  */
@@ -121,9 +161,9 @@ list_supported_targets (name, f)
   int t;
 
   if (name == NULL)
-    fprintf (f, "Supported targets:");
+    fprintf (f, _("Supported targets:"));
   else
-    fprintf (f, "%s: supported targets:", name);
+    fprintf (f, _("%s: supported targets:"), name);
   for (t = 0; bfd_target_vector[t] != NULL; t++)
     fprintf (f, " %s", bfd_target_vector[t]->name);
   fprintf (f, "\n");
@@ -165,67 +205,52 @@ print_arelt_descr (file, abfd, verbose)
   fprintf (file, "%s\n", bfd_get_filename (abfd));
 }
 
-/* Return the name of a created temporary file in the same directory as 
- FILENAME.  */
+/* Return the name of a temporary file in the same directory as FILENAME.  */
 
 char *
 make_tempname (filename)
      char *filename;
 {
-  static char template[] = "stXXXXXXXXXX";
-  int fd;
+  static char template[] = "stXXXXXX";
   char *tmpname;
   char *slash = strrchr (filename, '/');
 
+#ifdef HAVE_DOS_BASED_FILE_SYSTEM
+  {
+    /* We could have foo/bar\\baz, or foo\\bar, or d:bar.  */
+    char *bslash = strrchr (filename, '\\');
+    if (bslash > slash)
+      slash = bslash;
+    if (slash == NULL && filename[0] != '\0' && filename[1] == ':')
+      slash = filename + 1;
+  }
+#endif
+
   if (slash != (char *) NULL)
     {
+      char c;
+
+      c = *slash;
       *slash = 0;
-      tmpname = xmalloc (strlen (filename) + sizeof (template) + 1);
+      tmpname = xmalloc (strlen (filename) + sizeof (template) + 2);
       strcpy (tmpname, filename);
+#ifdef HAVE_DOS_BASED_FILE_SYSTEM
+      /* If tmpname is "X:", appending a slash will make it a root
+	 directory on drive X, which is NOT the same as the current
+	 directory on drive X.  */
+      if (tmpname[1] == ':' && tmpname[2] == '\0')
+	strcat (tmpname, ".");
+#endif
       strcat (tmpname, "/");
       strcat (tmpname, template);
-      fd = mkstemp (tmpname);
-      *slash = '/';
+      mktemp (tmpname);
+      *slash = c;
     }
   else
     {
       tmpname = xmalloc (sizeof (template));
       strcpy (tmpname, template);
-      fd = mkstemp (tmpname);
-    }
-  if (fd == -1) 
-    return NULL;
-  else
-    close(fd);
-  return tmpname;
-}
-
-/* Return the name of a created temporary dir in the same directory as 
- FILENAME.  */
-
-char *
-make_tempdir (filename)
-     char *filename;
-{
-  static char template[] = "stXXXXXXXXXX";
-  char *tmpname;
-  char *slash = strrchr (filename, '/');
-
-  if (slash != (char *) NULL)
-    {
-      *slash = 0;
-      tmpname = xmalloc (strlen (filename) + sizeof (template) + 1);
-      strcpy (tmpname, filename);
-      strcat (tmpname, "/");
-      strcat (tmpname, template);
-      mkdtemp (tmpname);
-      *slash = '/';
-    }
-  else
-    {
-      tmpname = xmalloc (sizeof (template));
-      strcpy (tmpname, template);
-      mkdtemp (tmpname);
+      mktemp (tmpname);
     }
   return tmpname;
 }
@@ -242,10 +267,9 @@ parse_vma (s, arg)
   const char *end;
 
   ret = bfd_scan_vma (s, &end, 0);
+  
   if (*end != '\0')
-    {
-      fprintf (stderr, "%s: %s: bad number: %s\n", program_name, arg, s);
-      exit (1);
-    }
+    fatal (_("%s: bad number: %s"), arg, s);
+
   return ret;
 }

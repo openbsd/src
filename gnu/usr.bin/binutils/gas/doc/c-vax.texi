@@ -1,6 +1,7 @@
-@c Copyright (C) 1991, 1992, 1993, 1994, 1995 Free Software Foundation, Inc.
+@c Copyright (C) 1991, 92, 93, 94, 95, 96, 1998 Free Software Foundation, Inc.
 @c This is part of the GAS manual.
 @c For copying conditions, see the file as.texinfo.
+@c VAX/VMS description exhanced and corrected by Klaus K"aempf, kkaempf@progis.de
 @ifset GENERIC
 @node Vax-Dependent
 @chapter VAX Dependent Features
@@ -80,21 +81,54 @@ filename.
 @cindex VMS (VAX) options
 @cindex options for VAX/VMS
 @cindex VAX/VMS options
-@cindex @code{-h} option, VAX/VMS
-@cindex @code{-+} option, VAX/VMS
 @cindex Vax-11 C compatibility
-@cindex symbols with lowercase, VAX/VMS
-@c FIXME!  look into "I think" below, correct if needed, delete.
-The Vax version of the assembler accepts two options when
-compiled for VMS.  They are @samp{-h}, and @samp{-+}.  The
-@samp{-h} option prevents @code{@value{AS}} from modifying the
-symbol-table entries for symbols that contain lowercase
-characters (I think).  The @samp{-+} option causes @code{@value{AS}} to
-print warning messages if the FILENAME part of the object file,
-or any symbol name is larger than 31 characters.  The @samp{-+}
-option also inserts some code following the @samp{_main}
-symbol so that the object file is compatible with Vax-11
-"C".
+@cindex symbols with uppercase, VAX/VMS
+The Vax version of the assembler accepts additional options when
+compiled for VMS:
+
+@table @samp
+@cindex @samp{-h} option, VAX/VMS
+@item -h @var{n}
+External symbol or section (used for global variables) names are not
+case sensitive on VAX/VMS and always mapped to upper case.  This is
+contrary to the C language definition which explicitly distinguishes
+upper and lower case.  To implement a standard conforming C compiler,
+names must be changed (mapped) to preserve the case information.  The
+default mapping is to convert all lower case characters to uppercase and
+adding an underscore followed by a 6 digit hex value, representing a 24
+digit binary value.  The one digits in the binary value represent which
+characters are uppercase in the original symbol name.
+
+The @samp{-h @var{n}} option determines how we map names.  This takes
+several values.  No @samp{-h} switch at all allows case hacking as
+described above.  A value of zero (@samp{-h0}) implies names should be
+upper case, and inhibits the case hack.  A value of 2 (@samp{-h2})
+implies names should be all lower case, with no case hack.  A value of 3
+(@samp{-h3}) implies that case should be preserved.  The value 1 is
+unused.  The @code{-H} option directs @code{@value{AS}} to display
+every mapped symbol during assembly.
+
+Symbols whose names include a dollar sign @samp{$} are exceptions to the
+general name mapping.  These symbols are normally only used to reference
+VMS library names.  Such symbols are always mapped to upper case.
+
+@cindex @samp{-+} option, VAX/VMS
+@item -+
+The @samp{-+} option causes @code{@value{AS}} to truncate any symbol
+name larger than 31 characters.  The @samp{-+} option also prevents some
+code following the @samp{_main} symbol normally added to make the object
+file compatible with Vax-11 "C".
+
+@cindex @samp{-1} option, VAX/VMS
+@item -1
+This option is ignored for backward compatibility with @code{@value{AS}}
+version 1.x.
+
+@cindex @samp{-H} option, VAX/VMS
+@item -H
+The @samp{-H} option causes @code{@value{AS}} to print every symbol
+which was changed by case mapping.
+@end table
 
 @node VAX-float
 @section VAX Floating Point

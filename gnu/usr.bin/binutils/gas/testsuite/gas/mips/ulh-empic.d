@@ -1,4 +1,4 @@
-#objdump: -dr --prefix-addresses
+#objdump: -dr --prefix-addresses -mmips:3000
 #name: MIPS ulh-empic
 #as: -mips1 -membedded-pic
 #source: ulh-pic.s

@@ -1,6 +1,5 @@
 /* tc-mn10300.c -- Assembler code for the Matsushita 10300
-
-   Copyright (C) 1996, 1997 Free Software Foundation.
+   Copyright (C) 1996, 1997, 1998, 1999, 2000 Free Software Foundation.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -91,7 +90,9 @@ static int reg_name_search PARAMS ((const struct reg_name *, int, const char *))
 static boolean data_register_name PARAMS ((expressionS *expressionP));
 static boolean address_register_name PARAMS ((expressionS *expressionP));
 static boolean other_register_name PARAMS ((expressionS *expressionP));
+static void set_arch_mach PARAMS ((int));
 
+static int current_machine;
 
 /* fixups */
 #define MAX_INSN_FIXUPS (5)
@@ -103,6 +104,10 @@ struct mn10300_fixup
 };
 struct mn10300_fixup fixups[MAX_INSN_FIXUPS];
 static int fc;
+
+/* We must store the value of each register operand so that we can
+   verify that certain registers do not match.  */
+int mn10300_reg_operands[MN10300_MAX_OPERANDS];
 
 const char *md_shortopts = "";
 struct option md_longopts[] = {
@@ -113,8 +118,14 @@ size_t md_longopts_size = sizeof(md_longopts);
 /* The target specific pseudo-ops which we support.  */
 const pseudo_typeS md_pseudo_table[] =
 {
-  { NULL,       NULL,           0 }
+  { "am30",	set_arch_mach,		AM30 },
+  { "am33",	set_arch_mach,		AM33 },
+  { "mn10300",	set_arch_mach,		MN103 },
+  {NULL, 0, 0}
 };
+
+#define HAVE_AM33 (current_machine == AM33)
+#define HAVE_AM30 (current_machine == AM30)
 
 /* Opcode hash table.  */
 static struct hash_control *mn10300_hash;
@@ -137,6 +148,78 @@ static const struct reg_name address_registers[] =
   { "a3", 3 },
 };
 #define ADDRESS_REG_NAME_CNT	(sizeof(address_registers) / sizeof(struct reg_name))
+
+static const struct reg_name r_registers[] =
+{
+  { "a0", 8 },
+  { "a1", 9 },
+  { "a2", 10 },
+  { "a3", 11 },
+  { "d0", 12 },
+  { "d1", 13 },
+  { "d2", 14 },
+  { "d3", 15 },
+  { "e0", 0 },
+  { "e1", 1 },
+  { "e10", 10 },
+  { "e11", 11 },
+  { "e12", 12 },
+  { "e13", 13 },
+  { "e14", 14 },
+  { "e15", 15 },
+  { "e2", 2 },
+  { "e3", 3 },
+  { "e4", 4 },
+  { "e5", 5 },
+  { "e6", 6 },
+  { "e7", 7 },
+  { "e8", 8 },
+  { "e9", 9 },
+  { "r0", 0 },
+  { "r1", 1 },
+  { "r10", 10 },
+  { "r11", 11 },
+  { "r12", 12 },
+  { "r13", 13 },
+  { "r14", 14 },
+  { "r15", 15 },
+  { "r2", 2 },
+  { "r3", 3 },
+  { "r4", 4 },
+  { "r5", 5 },
+  { "r6", 6 },
+  { "r7", 7 },
+  { "r8", 8 },
+  { "r9", 9 },
+};
+#define R_REG_NAME_CNT	(sizeof(r_registers) / sizeof(struct reg_name))
+
+static const struct reg_name xr_registers[] =
+{
+  { "mcrh", 2 },
+  { "mcrl", 3 },
+  { "mcvf", 4 },
+  { "mdrq", 1 },
+  { "sp", 0 },
+  { "xr0", 0 },
+  { "xr1", 1 },
+  { "xr10", 10 },
+  { "xr11", 11 },
+  { "xr12", 12 },
+  { "xr13", 13 },
+  { "xr14", 14 },
+  { "xr15", 15 },
+  { "xr2", 2 },
+  { "xr3", 3 },
+  { "xr4", 4 },
+  { "xr5", 5 },
+  { "xr6", 6 },
+  { "xr7", 7 },
+  { "xr8", 8 },
+  { "xr9", 9 },
+};
+#define XR_REG_NAME_CNT	(sizeof(xr_registers) / sizeof(struct reg_name))
+
 
 static const struct reg_name other_registers[] =
 {
@@ -177,6 +260,98 @@ reg_name_search (regs, regcount, name)
   return -1;
 }
 
+
+/* Summary of register_name().
+ *
+ * in: Input_line_pointer points to 1st char of operand.
+ *
+ * out: A expressionS.
+ *	The operand may have been a register: in this case, X_op == O_register,
+ *	X_add_number is set to the register number, and truth is returned.
+ *	Input_line_pointer->(next non-blank) char after operand, or is in
+ *	its original state.
+ */
+static boolean
+r_register_name (expressionP)
+     expressionS *expressionP;
+{
+  int reg_number;
+  char *name;
+  char *start;
+  char c;
+
+  /* Find the spelling of the operand */
+  start = name = input_line_pointer;
+
+  c = get_symbol_end ();
+  reg_number = reg_name_search (r_registers, R_REG_NAME_CNT, name);
+
+  /* look to see if it's in the register table */
+  if (reg_number >= 0) 
+    {
+      expressionP->X_op = O_register;
+      expressionP->X_add_number = reg_number;
+
+      /* make the rest nice */
+      expressionP->X_add_symbol = NULL;
+      expressionP->X_op_symbol = NULL;
+      *input_line_pointer = c;	/* put back the delimiting char */
+      return true;
+    }
+  else
+    {
+      /* reset the line as if we had not done anything */
+      *input_line_pointer = c;   /* put back the delimiting char */
+      input_line_pointer = start; /* reset input_line pointer */
+      return false;
+    }
+}
+
+/* Summary of register_name().
+ *
+ * in: Input_line_pointer points to 1st char of operand.
+ *
+ * out: A expressionS.
+ *	The operand may have been a register: in this case, X_op == O_register,
+ *	X_add_number is set to the register number, and truth is returned.
+ *	Input_line_pointer->(next non-blank) char after operand, or is in
+ *	its original state.
+ */
+static boolean
+xr_register_name (expressionP)
+     expressionS *expressionP;
+{
+  int reg_number;
+  char *name;
+  char *start;
+  char c;
+
+  /* Find the spelling of the operand */
+  start = name = input_line_pointer;
+
+  c = get_symbol_end ();
+  reg_number = reg_name_search (xr_registers, XR_REG_NAME_CNT, name);
+
+  /* look to see if it's in the register table */
+  if (reg_number >= 0) 
+    {
+      expressionP->X_op = O_register;
+      expressionP->X_add_number = reg_number;
+
+      /* make the rest nice */
+      expressionP->X_add_symbol = NULL;
+      expressionP->X_op_symbol = NULL;
+      *input_line_pointer = c;	/* put back the delimiting char */
+      return true;
+    }
+  else
+    {
+      /* reset the line as if we had not done anything */
+      *input_line_pointer = c;   /* put back the delimiting char */
+      input_line_pointer = start; /* reset input_line pointer */
+      return false;
+    }
+}
 
 /* Summary of register_name().
  *
@@ -320,8 +495,8 @@ void
 md_show_usage (stream)
   FILE *stream;
 {
-  fprintf(stream, "MN10300 options:\n\
-none yet\n");
+  fprintf(stream, _("MN10300 options:\n\
+none yet\n"));
 } 
 
 int
@@ -442,7 +617,7 @@ md_convert_frag (abfd, sec, fragP)
       fragP->fr_literal[offset] = opcode;
 
       /* Create a fixup for the reversed conditional branch.  */
-      sprintf (buf, "%s_%d", FAKE_LABEL_NAME, label_count++);
+      sprintf (buf, ".%s_%d", FAKE_LABEL_NAME, label_count++);
       fix_new (fragP, fragP->fr_fix + 1, 1,
 	       symbol_new (buf, sec, 0, fragP->fr_next),
 	       fragP->fr_offset + 1, 1, BFD_RELOC_8_PCREL);
@@ -499,7 +674,7 @@ md_convert_frag (abfd, sec, fragP)
       fragP->fr_literal[offset] = opcode;
 
       /* Create a fixup for the reversed conditional branch.  */
-      sprintf (buf, "%s_%d", FAKE_LABEL_NAME, label_count++);
+      sprintf (buf, ".%s_%d", FAKE_LABEL_NAME, label_count++);
       fix_new (fragP, fragP->fr_fix + 1, 1,
 	       symbol_new (buf, sec, 0, fragP->fr_next),
 	       fragP->fr_offset + 1, 1, BFD_RELOC_8_PCREL);
@@ -545,7 +720,7 @@ md_convert_frag (abfd, sec, fragP)
       fragP->fr_literal[offset + 1] = opcode;
 
       /* Create a fixup for the reversed conditional branch.  */
-      sprintf (buf, "%s_%d", FAKE_LABEL_NAME, label_count++);
+      sprintf (buf, ".%s_%d", FAKE_LABEL_NAME, label_count++);
       fix_new (fragP, fragP->fr_fix + 2, 1,
 	       symbol_new (buf, sec, 0, fragP->fr_next),
 	       fragP->fr_offset + 2, 1, BFD_RELOC_8_PCREL);
@@ -581,7 +756,7 @@ md_convert_frag (abfd, sec, fragP)
       fragP->fr_literal[offset + 1] = opcode;
 
       /* Create a fixup for the reversed conditional branch.  */
-      sprintf (buf, "%s_%d", FAKE_LABEL_NAME, label_count++);
+      sprintf (buf, ".%s_%d", FAKE_LABEL_NAME, label_count++);
       fix_new (fragP, fragP->fr_fix + 2, 1,
 	       symbol_new (buf, sec, 0, fragP->fr_next),
 	       fragP->fr_offset + 2, 1, BFD_RELOC_8_PCREL);
@@ -610,8 +785,8 @@ md_convert_frag (abfd, sec, fragP)
       fragP->fr_literal[offset + 5] = fragP->fr_literal[offset + 3];
       fragP->fr_literal[offset + 6] = fragP->fr_literal[offset + 4];
 
-      fix_new (fragP, fragP->fr_fix + 2, 4, fragP->fr_symbol,
-	       fragP->fr_offset + 2, 1, BFD_RELOC_32_PCREL);
+      fix_new (fragP, fragP->fr_fix + 1, 4, fragP->fr_symbol,
+	       fragP->fr_offset + 1, 1, BFD_RELOC_32_PCREL);
       fragP->fr_var = 0;
       fragP->fr_fix += 7;
     }
@@ -703,8 +878,14 @@ md_begin ()
 
   /* This is both a simplification (we don't have to write md_apply_fix)
      and support for future optimizations (branch shortening and similar
-     stuff in the linker.  */
+     stuff in the linker).  */
   linkrelax = 1;
+
+  /* Set the default machine type.  */
+  if (!bfd_set_arch_mach (stdoutput, bfd_arch_mn10300, MN103))
+    as_warn (_("could not set architecture and machine"));
+
+  current_machine = MN103;
 }
 
 void
@@ -731,7 +912,7 @@ md_assemble (str)
   opcode = (struct mn10300_opcode *)hash_find (mn10300_hash, str);
   if (opcode == NULL)
     {
-      as_bad ("Unrecognized opcode: `%s'", str);
+      as_bad (_("Unrecognized opcode: `%s'"), str);
       return;
     }
 
@@ -743,10 +924,16 @@ md_assemble (str)
 
   for(;;)
     {
-      const char *errmsg = NULL;
+      const char *errmsg;
       int op_idx;
       char *hold;
       int extra_shift = 0;
+
+
+      errmsg = _("Invalid opcode/operands");
+
+      /* Reset the array of register operands.  */
+      memset (mn10300_reg_operands, -1, sizeof (mn10300_reg_operands));
 
       relaxable = 0;
       fc = 0;
@@ -754,6 +941,14 @@ md_assemble (str)
       next_opindex = 0;
       insn = opcode->opcode;
       extension = 0;
+
+      /* If the instruction is not available on the current machine
+	 then it can not possibly match.  */
+      if (opcode->machine
+	  && !(opcode->machine == AM33 && HAVE_AM33)
+	  && !(opcode->machine == AM30 && HAVE_AM30))
+	goto error;
+
       for (op_idx = 1, opindex_ptr = opcode->operands;
 	   *opindex_ptr != 0;
 	   opindex_ptr++, op_idx++)
@@ -770,8 +965,6 @@ md_assemble (str)
 	      operand = &mn10300_operands[next_opindex];
 	      next_opindex = 0;
 	    }
-
-	  errmsg = NULL;
 
 	  while (*str == ' ' || *str == ',')
 	    ++str;
@@ -818,7 +1011,7 @@ md_assemble (str)
 	      char *start = input_line_pointer;
 	      char c = get_symbol_end ();
 
-	      if (strcmp (start, "sp") != 0)
+	      if (strcasecmp (start, "sp") != 0)
 		{
 		  *input_line_pointer = c;
 		  input_line_pointer = hold;
@@ -828,12 +1021,116 @@ md_assemble (str)
 	      *input_line_pointer = c;
 	      goto keep_going;
 	    }
+	  else if (operand->flags & MN10300_OPERAND_RREG)
+	    {
+	      if (!r_register_name (&ex))
+		{
+		  input_line_pointer = hold;
+		  str = hold;
+		  goto error;
+		}
+	    }
+	  else if (operand->flags & MN10300_OPERAND_XRREG)
+	    {
+	      if (!xr_register_name (&ex))
+		{
+		  input_line_pointer = hold;
+		  str = hold;
+		  goto error;
+		}
+	    }
+	  else if (operand->flags & MN10300_OPERAND_USP)
+	    {
+	      char *start = input_line_pointer;
+	      char c = get_symbol_end ();
+
+	      if (strcasecmp (start, "usp") != 0)
+		{
+		  *input_line_pointer = c;
+		  input_line_pointer = hold;
+		  str = hold;
+		  goto error;
+		}
+	      *input_line_pointer = c;
+	      goto keep_going;
+	    }
+	  else if (operand->flags & MN10300_OPERAND_SSP)
+	    {
+	      char *start = input_line_pointer;
+	      char c = get_symbol_end ();
+
+	      if (strcasecmp (start, "ssp") != 0)
+		{
+		  *input_line_pointer = c;
+		  input_line_pointer = hold;
+		  str = hold;
+		  goto error;
+		}
+	      *input_line_pointer = c;
+	      goto keep_going;
+	    }
+	  else if (operand->flags & MN10300_OPERAND_MSP)
+	    {
+	      char *start = input_line_pointer;
+	      char c = get_symbol_end ();
+
+	      if (strcasecmp (start, "msp") != 0)
+		{
+		  *input_line_pointer = c;
+		  input_line_pointer = hold;
+		  str = hold;
+		  goto error;
+		}
+	      *input_line_pointer = c;
+	      goto keep_going;
+	    }
+	  else if (operand->flags & MN10300_OPERAND_PC)
+	    {
+	      char *start = input_line_pointer;
+	      char c = get_symbol_end ();
+
+	      if (strcasecmp (start, "pc") != 0)
+		{
+		  *input_line_pointer = c;
+		  input_line_pointer = hold;
+		  str = hold;
+		  goto error;
+		}
+	      *input_line_pointer = c;
+	      goto keep_going;
+	    }
+	  else if (operand->flags & MN10300_OPERAND_EPSW)
+	    {
+	      char *start = input_line_pointer;
+	      char c = get_symbol_end ();
+
+	      if (strcasecmp (start, "epsw") != 0)
+		{
+		  *input_line_pointer = c;
+		  input_line_pointer = hold;
+		  str = hold;
+		  goto error;
+		}
+	      *input_line_pointer = c;
+	      goto keep_going;
+	    }
+	  else if (operand->flags & MN10300_OPERAND_PLUS)
+	    {
+	      if (*input_line_pointer != '+')
+		{
+		  input_line_pointer = hold;
+		  str = hold;
+		  goto error;
+		}
+	      input_line_pointer++;
+	      goto keep_going;
+	    }
 	  else if (operand->flags & MN10300_OPERAND_PSW)
 	    {
 	      char *start = input_line_pointer;
 	      char c = get_symbol_end ();
 
-	      if (strcmp (start, "psw") != 0)
+	      if (strcasecmp (start, "psw") != 0)
 		{
 		  *input_line_pointer = c;
 		  input_line_pointer = hold;
@@ -848,7 +1145,7 @@ md_assemble (str)
 	      char *start = input_line_pointer;
 	      char c = get_symbol_end ();
 
-	      if (strcmp (start, "mdr") != 0)
+	      if (strcasecmp (start, "mdr") != 0)
 		{
 		  *input_line_pointer = c;
 		  input_line_pointer = hold;
@@ -871,14 +1168,13 @@ md_assemble (str)
 	      /* Eat the '['.  */
 	      input_line_pointer++;
 	     
-	      /* A null register list can not be specified.  */
-	      if (*input_line_pointer == ']')
-		{
-		  input_line_pointer = hold;
-		  str = hold;
-		  goto error;
-		}
+	      /* We used to reject a null register list here; however,
+		 we accept it now so the compiler can emit "call" instructions
+		 for all calls to named functions.
 
+		 The linker can then fill in the appropriate bits for the
+		 register list and stack size or change the instruction
+		 into a "calls" if using "call" is not profitable.  */
 	      while (*input_line_pointer != ']')
 		{
 		  char *start;
@@ -890,29 +1186,53 @@ md_assemble (str)
 		  start = input_line_pointer;
 		  c = get_symbol_end ();
 
-		  if (strcmp (start, "d2") == 0)
+		  if (strcasecmp (start, "d2") == 0)
 		    {
 		      value |= 0x80;
 		      *input_line_pointer = c;
 		    }
-		  else if (strcmp (start, "d3") == 0)
+		  else if (strcasecmp (start, "d3") == 0)
 		    {
 		      value |= 0x40;
 		      *input_line_pointer = c;
 		    }
-		  else if (strcmp (start, "a2") == 0)
+		  else if (strcasecmp (start, "a2") == 0)
 		    {
 		      value |= 0x20;
 		      *input_line_pointer = c;
 		    }
-		  else if (strcmp (start, "a3") == 0)
+		  else if (strcasecmp (start, "a3") == 0)
 		    {
 		      value |= 0x10;
 		      *input_line_pointer = c;
 		    }
-		  else if (strcmp (start, "other") == 0)
+		  else if (strcasecmp (start, "other") == 0)
 		    {
 		      value |= 0x08;
+		      *input_line_pointer = c;
+		    }
+		  else if (HAVE_AM33
+			   && strcasecmp (start, "exreg0") == 0)
+		    {
+		      value |= 0x04;
+		      *input_line_pointer = c;
+		    }
+		  else if (HAVE_AM33
+			   && strcasecmp (start, "exreg1") == 0)
+		    {
+		      value |= 0x02;
+		      *input_line_pointer = c;
+		    }
+		  else if (HAVE_AM33
+			   && strcasecmp (start, "exother") == 0)
+		    {
+		      value |= 0x01;
+		      *input_line_pointer = c;
+		    }
+		  else if (HAVE_AM33
+			   && strcasecmp (start, "all") == 0)
+		    {
+		      value |= 0xff;
 		      *input_line_pointer = c;
 		    }
 		  else
@@ -946,6 +1266,18 @@ md_assemble (str)
 	      str = hold;
 	      goto error;
 	    }
+	  else if (HAVE_AM33 && r_register_name (&ex))
+	    {
+	      input_line_pointer = hold;
+	      str = hold;
+	      goto error;
+	    }
+	  else if (HAVE_AM33 && xr_register_name (&ex))
+	    {
+	      input_line_pointer = hold;
+	      str = hold;
+	      goto error;
+	    }
 	  else if (*str == ')' || *str == '(')
 	    {
 	      input_line_pointer = hold;
@@ -960,34 +1292,50 @@ md_assemble (str)
 	  switch (ex.X_op) 
 	    {
 	    case O_illegal:
-	      errmsg = "illegal operand";
+	      errmsg = _("illegal operand");
 	      goto error;
 	    case O_absent:
-	      errmsg = "missing operand";
+	      errmsg = _("missing operand");
 	      goto error;
 	    case O_register:
-	      if ((operand->flags
-                   & (MN10300_OPERAND_DREG | MN10300_OPERAND_AREG)) == 0)
-		{
-		  input_line_pointer = hold;
-		  str = hold;
-		  goto error;
-		}
-		
-	      if (opcode->format == FMT_D1 || opcode->format == FMT_S1)
-		extra_shift = 8;
-	      else if (opcode->format == FMT_D2 || opcode->format == FMT_D4
-		       || opcode->format == FMT_S2 || opcode->format == FMT_S4
-		       || opcode->format == FMT_S6 || opcode->format == FMT_D5)
-		extra_shift = 16;
-	      else
-		extra_shift = 0;
-	      
-	      mn10300_insert_operand (&insn, &extension, operand,
-				      ex.X_add_number, (char *) NULL,
-				      0, extra_shift);
+	      {
+		int mask;
 
-	      break;
+		mask = MN10300_OPERAND_DREG | MN10300_OPERAND_AREG;
+		if (HAVE_AM33)
+		  mask |= MN10300_OPERAND_RREG | MN10300_OPERAND_XRREG;
+		if ((operand->flags & mask) == 0)
+		  {
+		    input_line_pointer = hold;
+		    str = hold;
+		    goto error;
+		  }
+		
+		if (opcode->format == FMT_D1 || opcode->format == FMT_S1)
+		  extra_shift = 8;
+		else if (opcode->format == FMT_D2
+			 || opcode->format == FMT_D4
+			 || opcode->format == FMT_S2
+			 || opcode->format == FMT_S4
+			 || opcode->format == FMT_S6
+			 || opcode->format == FMT_D5)
+		  extra_shift = 16;
+		else if (opcode->format == FMT_D7)
+		  extra_shift = 8;
+		else if (opcode->format == FMT_D8 || opcode->format == FMT_D9)
+		  extra_shift = 8;
+		else
+		  extra_shift = 0;
+	      
+		mn10300_insert_operand (&insn, &extension, operand,
+					ex.X_add_number, (char *) NULL,
+					0, extra_shift);
+
+
+		/* And note the register number in the register array.  */
+		mn10300_reg_operands[op_idx - 1] = ex.X_add_number;
+		break;
+	      }
 
 	    case O_constant:
 	      /* If this operand can be promoted, and it doesn't
@@ -1019,7 +1367,7 @@ md_assemble (str)
 
 	      /* We need to generate a fixup for this expression.  */
 	      if (fc >= MAX_INSN_FIXUPS)
-		as_fatal ("too many fixups");
+		as_fatal (_("too many fixups"));
 	      fixups[fc].exp = ex;
 	      fixups[fc].opindex = *opindex_ptr;
 	      fixups[fc].reloc = BFD_RELOC_UNUSED;
@@ -1039,6 +1387,35 @@ keep_going:
       /* Make sure we used all the operands!  */
       if (*str != ',')
 	match = 1;
+
+      /* If this instruction has registers that must not match, verify
+	 that they do indeed not match.  */
+      if (opcode->no_match_operands)
+	{
+	  int i;
+
+	  /* Look at each operand to see if it's marked.  */
+	  for (i = 0; i < MN10300_MAX_OPERANDS; i++)
+	    {
+	      if ((1 << i) & opcode->no_match_operands)
+		{
+		  int j;
+
+		  /* operand I is marked.  Check that it does not match any
+		     operands > I which are marked.  */
+		  for (j = i + 1; j < MN10300_MAX_OPERANDS; j++)
+		    {
+		      if (((1 << j) & opcode->no_match_operands)
+			  && mn10300_reg_operands[i] == mn10300_reg_operands[j])
+			{
+			  errmsg = _("Invalid register specification.");
+			  match = 0;
+			  goto error;
+			}
+		    }
+		}
+	    }
+	}
 
     error:
       if (match == 0)
@@ -1060,7 +1437,7 @@ keep_going:
     ++str;
 
   if (*str != '\0')
-    as_bad ("junk at end of line: `%s'", str);
+    as_bad (_("junk at end of line: `%s'"), str);
 
   input_line_pointer = str;
 
@@ -1073,6 +1450,18 @@ keep_going:
 
   if (opcode->format == FMT_S2 || opcode->format == FMT_D1)
     size = 3;
+
+  if (opcode->format == FMT_D6)
+    size = 3;
+
+  if (opcode->format == FMT_D7 || opcode->format == FMT_D10)
+    size = 4;
+
+  if (opcode->format == FMT_D8)
+    size = 6;
+
+  if (opcode->format == FMT_D9)
+    size = 7;
 
   if (opcode->format == FMT_S4)
     size = 5;
@@ -1092,7 +1481,19 @@ keep_going:
 
       /* bCC */
       if (size == 2)
-	type = 0;
+	{
+	  /* Handle bra specially.  Basically treat it like jmp so
+	     that we automatically handle 8, 16 and 32 bit offsets
+	     correctly as well as jumps to an undefined address.
+
+	     It is also important to not treat it like other bCC
+	     instructions since the long forms of bra is different
+	     from other bCC instructions.  */
+	  if (opcode->opcode == 0xca00)
+	    type = 10;
+	  else
+	    type = 0;
+	}
       /* call */
       else if (size == 5)
         type = 6;
@@ -1145,6 +1546,9 @@ keep_going:
       if (opcode->format == FMT_S0
 	  || opcode->format == FMT_S1
 	  || opcode->format == FMT_D0
+	  || opcode->format == FMT_D6
+	  || opcode->format == FMT_D7
+	  || opcode->format == FMT_D10
 	  || opcode->format == FMT_D1)
 	{
 	  number_to_chars_bigendian (f, insn, size);
@@ -1219,6 +1623,19 @@ keep_going:
 	  number_to_chars_littleendian (f + 2, temp, 4);
 	  number_to_chars_bigendian (f + 6, extension & 0xff, 1);
 	}
+      else if (opcode->format == FMT_D8)
+	{
+          unsigned long temp = ((insn & 0xff) << 16) | (extension & 0xffff);
+          number_to_chars_bigendian (f, (insn >> 8) & 0xffffff, 3);
+          number_to_chars_bigendian (f + 3, (temp & 0xff), 1);
+          number_to_chars_littleendian (f + 4, temp >> 8, 2);
+	}
+      else if (opcode->format == FMT_D9)
+	{
+          unsigned long temp = ((insn & 0xff) << 24) | (extension & 0xffffff);
+          number_to_chars_bigendian (f, (insn >> 8) & 0xffffff, 3);
+          number_to_chars_littleendian (f + 3, temp, 4);
+	}
 
       /* Create any fixups.  */
       for (i = 0; i < fc; i++)
@@ -1259,6 +1676,8 @@ keep_going:
 		 implicitly 32bits.  */
 	      if ((operand->flags & MN10300_OPERAND_SPLIT) != 0)
 		reloc_size = 32;
+	      else if ((operand->flags & MN10300_OPERAND_24BIT) != 0)
+		reloc_size = 24;
 	      else
 		reloc_size = operand->bits;
 
@@ -1344,7 +1763,7 @@ tc_gen_reloc (seg, fixp)
   if (reloc->howto == (reloc_howto_type *) NULL)
     {
       as_bad_where (fixp->fx_file, fixp->fx_line,
-                    "reloc %d not supported by object file format",
+                    _("reloc %d not supported by object file format"),
 		    (int)fixp->fx_r_type);
       return NULL;
     }
@@ -1352,13 +1771,23 @@ tc_gen_reloc (seg, fixp)
 
   if (fixp->fx_addsy && fixp->fx_subsy)
     {
+    
+      if ((S_GET_SEGMENT (fixp->fx_addsy) != S_GET_SEGMENT (fixp->fx_subsy))
+	  || S_GET_SEGMENT (fixp->fx_addsy) == undefined_section)
+	{
+	  as_bad_where (fixp->fx_file, fixp->fx_line,
+			"Difference of symbols in different sections is not supported");
+	  return NULL;
+	}
+
       reloc->sym_ptr_ptr = &bfd_abs_symbol;
       reloc->addend = (S_GET_VALUE (fixp->fx_addsy)
 		       - S_GET_VALUE (fixp->fx_subsy) + fixp->fx_offset);
     }
   else 
     {
-      reloc->sym_ptr_ptr = &fixp->fx_addsy->bsym;
+      reloc->sym_ptr_ptr = (asymbol **) xmalloc (sizeof( asymbol *));
+      *reloc->sym_ptr_ptr = symbol_get_bfdsym (fixp->fx_addsy);
       reloc->addend = fixp->fx_offset;
     }
   return reloc;
@@ -1454,15 +1883,20 @@ mn10300_insert_operand (insnp, extensionp, operand, val, file, line, shift)
     {
       long min, max;
       offsetT test;
+      int bits;
+
+      bits = operand->bits;
+      if (operand->flags & MN10300_OPERAND_24BIT)
+	bits = 24;
 
       if ((operand->flags & MN10300_OPERAND_SIGNED) != 0)
 	{
-	  max = (1 << (operand->bits - 1)) - 1;
-	  min = - (1 << (operand->bits - 1));
+	  max = (1 << (bits - 1)) - 1;
+	  min = - (1 << (bits - 1));
 	}
       else
         {
-          max = (1 << operand->bits) - 1;
+          max = (1 << bits) - 1;
           min = 0;
         }
 
@@ -1472,7 +1906,7 @@ mn10300_insert_operand (insnp, extensionp, operand, val, file, line, shift)
       if (test < (offsetT) min || test > (offsetT) max)
         {
           const char *err =
-            "operand out of range (%s not between %ld and %ld)";
+            _("operand out of range (%s not between %ld and %ld)");
           char buf[100];
 
           sprint_value (buf, test);
@@ -1489,6 +1923,12 @@ mn10300_insert_operand (insnp, extensionp, operand, val, file, line, shift)
       *extensionp |= ((val & ((1 << (32 - operand->bits)) - 1))
 		      << operand->shift);
     }
+  else if ((operand->flags & MN10300_OPERAND_24BIT) != 0)
+    {
+      *insnp |= (val >> (24 - operand->bits)) & ((1 << operand->bits) - 1);
+      *extensionp |= ((val & ((1 << (24 - operand->bits)) - 1))
+		      << operand->shift);
+    }
   else if ((operand->flags & MN10300_OPERAND_EXTENDED) == 0)
     {
       *insnp |= (((long) val & ((1 << operand->bits) - 1))
@@ -1496,7 +1936,7 @@ mn10300_insert_operand (insnp, extensionp, operand, val, file, line, shift)
 
       if ((operand->flags & MN10300_OPERAND_REPEATED) != 0)
 	*insnp |= (((long) val & ((1 << operand->bits) - 1))
-		   << (operand->shift + shift + 2));
+		   << (operand->shift + shift + operand->bits));
     }
   else
     {
@@ -1505,7 +1945,7 @@ mn10300_insert_operand (insnp, extensionp, operand, val, file, line, shift)
 
       if ((operand->flags & MN10300_OPERAND_REPEATED) != 0)
 	*extensionp |= (((long) val & ((1 << operand->bits) - 1))
-			<< (operand->shift + shift + 2));
+			<< (operand->shift + shift + operand->bits));
     }
 }
 
@@ -1522,15 +1962,20 @@ check_operand (insn, operand, val)
     {
       long min, max;
       offsetT test;
+      int bits;
+
+      bits = operand->bits;
+      if (operand->flags & MN10300_OPERAND_24BIT)
+	bits = 24;
 
       if ((operand->flags & MN10300_OPERAND_SIGNED) != 0)
 	{
-	  max = (1 << (operand->bits - 1)) - 1;
-	  min = - (1 << (operand->bits - 1));
+	  max = (1 << (bits - 1)) - 1;
+	  min = - (1 << (bits - 1));
 	}
       else
         {
-          max = (1 << operand->bits) - 1;
+          max = (1 << bits) - 1;
           min = 0;
         }
 
@@ -1543,4 +1988,14 @@ check_operand (insn, operand, val)
 	return 1;
     }
   return 1;
+}
+
+static void
+set_arch_mach (mach)
+     int mach;
+{
+  if (!bfd_set_arch_mach (stdoutput, bfd_arch_mn10300, mach))
+    as_warn (_("could not set architecture and machine"));
+
+  current_machine = mach;
 }

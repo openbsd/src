@@ -14,9 +14,10 @@
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See
    the GNU General Public License for more details.
 
-   You should have received a copy of the GNU General Public
-   License along with GAS; see the file COPYING.  If not, write
-   to the Free Software Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
+   You should have received a copy of the GNU General Public License
+   along with GAS; see the file COPYING.  If not, write to the Free
+   Software Foundation, 59 Temple Place - Suite 330, Boston, MA
+   02111-1307, USA. */
 
 #include "as.h"
 #include "obstack.h"
@@ -253,7 +254,7 @@ obj_crawl_symbol_chain (headers)
 	  S_SET_SEGMENT (symbolP, SEG_TEXT);
 	}			/* if pusing data into text */
 
-      resolve_symbol_value (symbolP);
+      resolve_symbol_value (symbolP, 1);
 
       /* Skip symbols which were equated to undefined or common
 	 symbols.  */
@@ -309,7 +310,7 @@ obj_crawl_symbol_chain (headers)
 	{
 	  if (S_IS_EXTERNAL (symbolP) || !S_IS_DEFINED (symbolP))
 	    {
-	      as_bad ("Local symbol %s never defined", S_GET_NAME (symbolP));
+	      as_bad (_("Local symbol %s never defined"), S_GET_NAME (symbolP));
 	    }			/* oops. */
 
 	  /* Unhook it from the chain */

@@ -1,5 +1,5 @@
 /* ldver.c -- Print linker version.
-   Copyright (C) 1991, 92, 93, 94, 95, 1996 Free Software Foundation, Inc.
+   Copyright (C) 1991, 92, 93, 94, 95, 1996, 1998 Free Software Foundation, Inc.
 
 This file is part of GLD, the Gnu Linker.
 
@@ -26,20 +26,20 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #include "ldemul.h"
 #include "ldmain.h"
 
-const char *ld_program_version = "cygnus-2.7.1";
+const char *ld_program_version = VERSION;
 
 void
 ldversion (noisy)
      int noisy;
 {
-  fprintf (stdout, "GNU ld version %s (with BFD %s)\n",
+  fprintf (stdout, _("GNU ld version %s (with BFD %s)\n"),
 	   ld_program_version, BFD_VERSION);
 
   if (noisy) 
     {
       ld_emulation_xfer_type **ptr = ld_emulations;
     
-      printf ("  Supported emulations:\n");
+      printf (_("  Supported emulations:\n"));
       while (*ptr) 
 	{
 	  printf ("   %s\n", (*ptr)->emulation_name);

@@ -1,6 +1,5 @@
 /* tc-mn10200.c -- Assembler code for the Matsushita 10200
-
-   Copyright (C) 1996, 1997 Free Software Foundation.
+   Copyright (C) 1996, 1997, 1998, 1999 Free Software Foundation.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -55,20 +54,20 @@ const char FLT_CHARS[] = "dD";
 
 const relax_typeS md_relax_table[] = {
   /* bCC relaxing */
-  {0x7f, -0x80, 2, 1},
-  {0x7fff, -0x8000, 5, 2},
-  {0x7fffff, -0x800000, 7, 0},
+  {0x81, -0x7e, 2, 1},
+  {0x8004, -0x7ffb, 5, 2},
+  {0x800006, -0x7ffff9, 7, 0},
   /* bCCx relaxing */
-  {0x7f, -0x80, 3, 4},
-  {0x7fff, -0x8000, 6, 5},
-  {0x7fffff, -0x800000, 8, 0},
+  {0x81, -0x7e, 3, 4},
+  {0x8004, -0x7ffb, 6, 5},
+  {0x800006, -0x7ffff9, 8, 0},
   /* jsr relaxing */
-  {0x7fff, -0x8000, 3, 7},
-  {0x7fffff, -0x8000000, 5, 0},
+  {0x8004, -0x7ffb, 3, 7},
+  {0x800006, -0x7ffff9, 5, 0},
   /* jmp relaxing */
-  {0x7f, -0x80, 2, 9},
-  {0x7fff, -0x8000, 3, 10},
-  {0x7fffff, -0x8000000, 5, 0},
+  {0x81, -0x7e, 2, 9},
+  {0x8004, -0x7ffb, 3, 10},
+  {0x800006, -0x7ffff9, 5, 0},
 
 };
 /* local functions */
@@ -311,8 +310,8 @@ void
 md_show_usage (stream)
   FILE *stream;
 {
-  fprintf(stream, "MN10200 options:\n\
-none yet\n");
+  fprintf(stream, _("MN10200 options:\n\
+none yet\n"));
 } 
 
 int
@@ -353,7 +352,7 @@ md_atof (type, litp, sizep)
 
     default:
       *sizep = 0;
-      return "bad call to md_atof";
+      return _("bad call to md_atof");
     }
   
   t = atof_ieee (input_line_pointer, type, words);
@@ -385,7 +384,7 @@ md_convert_frag (abfd, sec, fragP)
   if (fragP->fr_subtype == 0)
     {
       fix_new (fragP, fragP->fr_fix + 1, 1, fragP->fr_symbol,
-	       fragP->fr_offset + 1, 1, BFD_RELOC_8_PCREL);
+	       fragP->fr_offset, 1, BFD_RELOC_8_PCREL);
       fragP->fr_var = 0;
       fragP->fr_fix += 2;
     }
@@ -433,16 +432,16 @@ md_convert_frag (abfd, sec, fragP)
       fragP->fr_literal[offset] = opcode;
 
       /* Create a fixup for the reversed conditional branch.  */
-      sprintf (buf, "%s_%d", FAKE_LABEL_NAME, label_count++);
+      sprintf (buf, ".%s_%d", FAKE_LABEL_NAME, label_count++);
       fix_new (fragP, fragP->fr_fix + 1, 1,
 	       symbol_new (buf, sec, 0, fragP->fr_next),
-	       fragP->fr_offset + 1, 1, BFD_RELOC_8_PCREL);
+	       fragP->fr_offset, 1, BFD_RELOC_8_PCREL);
 
       /* Now create the unconditional branch + fixup to the
 	 final target.  */
       fragP->fr_literal[offset + 2] = 0xfc;
       fix_new (fragP, fragP->fr_fix + 3, 2, fragP->fr_symbol,
-	       fragP->fr_offset + 1, 1, BFD_RELOC_16_PCREL);
+	       fragP->fr_offset, 1, BFD_RELOC_16_PCREL);
       fragP->fr_var = 0;
       fragP->fr_fix += 5;
     }
@@ -490,24 +489,24 @@ md_convert_frag (abfd, sec, fragP)
       fragP->fr_literal[offset] = opcode;
 
       /* Create a fixup for the reversed conditional branch.  */
-      sprintf (buf, "%s_%d", FAKE_LABEL_NAME, label_count++);
+      sprintf (buf, ".%s_%d", FAKE_LABEL_NAME, label_count++);
       fix_new (fragP, fragP->fr_fix + 1, 1,
 	       symbol_new (buf, sec, 0, fragP->fr_next),
-	       fragP->fr_offset + 1, 1, BFD_RELOC_8_PCREL);
+	       fragP->fr_offset, 1, BFD_RELOC_8_PCREL);
 
       /* Now create the unconditional branch + fixup to the
 	 final target.  */
       fragP->fr_literal[offset + 2] = 0xf4;
       fragP->fr_literal[offset + 3] = 0xe0;
       fix_new (fragP, fragP->fr_fix + 4, 4, fragP->fr_symbol,
-	       fragP->fr_offset + 2, 1, BFD_RELOC_24_PCREL);
+	       fragP->fr_offset, 1, BFD_RELOC_24_PCREL);
       fragP->fr_var = 0;
       fragP->fr_fix += 7;
     }
   else if (fragP->fr_subtype == 3)
     {
       fix_new (fragP, fragP->fr_fix + 2, 1, fragP->fr_symbol,
-	       fragP->fr_offset + 2, 1, BFD_RELOC_8_PCREL);
+	       fragP->fr_offset, 1, BFD_RELOC_8_PCREL);
       fragP->fr_var = 0;
       fragP->fr_fix += 3;
     }
@@ -578,16 +577,16 @@ md_convert_frag (abfd, sec, fragP)
       fragP->fr_literal[offset + 1] = opcode;
 
       /* Create a fixup for the reversed conditional branch.  */
-      sprintf (buf, "%s_%d", FAKE_LABEL_NAME, label_count++);
+      sprintf (buf, ".%s_%d", FAKE_LABEL_NAME, label_count++);
       fix_new (fragP, fragP->fr_fix + 2, 1,
 	       symbol_new (buf, sec, 0, fragP->fr_next),
-	       fragP->fr_offset + 2, 1, BFD_RELOC_8_PCREL);
+	       fragP->fr_offset, 1, BFD_RELOC_8_PCREL);
 
       /* Now create the unconditional branch + fixup to the
 	 final target.  */
       fragP->fr_literal[offset + 3] = 0xfc;
       fix_new (fragP, fragP->fr_fix + 4, 2, fragP->fr_symbol,
-	       fragP->fr_offset + 1, 1, BFD_RELOC_16_PCREL);
+	       fragP->fr_offset, 1, BFD_RELOC_16_PCREL);
       fragP->fr_var = 0;
       fragP->fr_fix += 6;
     }
@@ -658,24 +657,24 @@ md_convert_frag (abfd, sec, fragP)
       fragP->fr_literal[offset + 1] = opcode;
 
       /* Create a fixup for the reversed conditional branch.  */
-      sprintf (buf, "%s_%d", FAKE_LABEL_NAME, label_count++);
+      sprintf (buf, ".%s_%d", FAKE_LABEL_NAME, label_count++);
       fix_new (fragP, fragP->fr_fix + 2, 1,
 	       symbol_new (buf, sec, 0, fragP->fr_next),
-	       fragP->fr_offset + 2, 1, BFD_RELOC_8_PCREL);
+	       fragP->fr_offset, 1, BFD_RELOC_8_PCREL);
 
       /* Now create the unconditional branch + fixup to the
 	 final target.  */
       fragP->fr_literal[offset + 3] = 0xf4;
       fragP->fr_literal[offset + 4] = 0xe0;
       fix_new (fragP, fragP->fr_fix + 5, 4, fragP->fr_symbol,
-	       fragP->fr_offset + 2, 1, BFD_RELOC_24_PCREL);
+	       fragP->fr_offset, 1, BFD_RELOC_24_PCREL);
       fragP->fr_var = 0;
       fragP->fr_fix += 8;
     }
   else if (fragP->fr_subtype == 6)
     {
       fix_new (fragP, fragP->fr_fix + 1, 2, fragP->fr_symbol,
-	       fragP->fr_offset + 1, 1, BFD_RELOC_16_PCREL);
+	       fragP->fr_offset, 1, BFD_RELOC_16_PCREL);
       fragP->fr_var = 0;
       fragP->fr_fix += 3;
     }
@@ -686,7 +685,7 @@ md_convert_frag (abfd, sec, fragP)
       fragP->fr_literal[offset + 1] = 0xe1;
 
       fix_new (fragP, fragP->fr_fix + 2, 4, fragP->fr_symbol,
-	       fragP->fr_offset + 2, 1, BFD_RELOC_24_PCREL);
+	       fragP->fr_offset, 1, BFD_RELOC_24_PCREL);
       fragP->fr_var = 0;
       fragP->fr_fix += 5;
     }
@@ -694,7 +693,7 @@ md_convert_frag (abfd, sec, fragP)
     {
       fragP->fr_literal[fragP->fr_fix] = 0xea;
       fix_new (fragP, fragP->fr_fix + 1, 1, fragP->fr_symbol,
-	       fragP->fr_offset + 1, 1, BFD_RELOC_8_PCREL);
+	       fragP->fr_offset, 1, BFD_RELOC_8_PCREL);
       fragP->fr_var = 0;
       fragP->fr_fix += 2;
     }
@@ -704,7 +703,7 @@ md_convert_frag (abfd, sec, fragP)
       fragP->fr_literal[offset] = 0xfc;
 
       fix_new (fragP, fragP->fr_fix + 1, 4, fragP->fr_symbol,
-	       fragP->fr_offset + 1, 1, BFD_RELOC_16_PCREL);
+	       fragP->fr_offset, 1, BFD_RELOC_16_PCREL);
       fragP->fr_var = 0;
       fragP->fr_fix += 3;
     }
@@ -715,7 +714,7 @@ md_convert_frag (abfd, sec, fragP)
       fragP->fr_literal[offset + 1] = 0xe0;
 
       fix_new (fragP, fragP->fr_fix + 2, 4, fragP->fr_symbol,
-	       fragP->fr_offset + 2, 1, BFD_RELOC_24_PCREL);
+	       fragP->fr_offset, 1, BFD_RELOC_24_PCREL);
       fragP->fr_var = 0;
       fragP->fr_fix += 5;
     }
@@ -786,7 +785,7 @@ md_assemble (str)
   opcode = (struct mn10200_opcode *)hash_find (mn10200_hash, str);
   if (opcode == NULL)
     {
-      as_bad ("Unrecognized opcode: `%s'", str);
+      as_bad (_("Unrecognized opcode: `%s'"), str);
       return;
     }
 
@@ -930,10 +929,10 @@ md_assemble (str)
 	  switch (ex.X_op) 
 	    {
 	    case O_illegal:
-	      errmsg = "illegal operand";
+	      errmsg = _("illegal operand");
 	      goto error;
 	    case O_absent:
-	      errmsg = "missing operand";
+	      errmsg = _("missing operand");
 	      goto error;
 	    case O_register:
 	      if ((operand->flags
@@ -988,7 +987,7 @@ md_assemble (str)
 
 	      /* We need to generate a fixup for this expression.  */
 	      if (fc >= MAX_INSN_FIXUPS)
-		as_fatal ("too many fixups");
+		as_fatal (_("too many fixups"));
 	      fixups[fc].exp = ex;
 	      fixups[fc].opindex = *opindex_ptr;
 	      fixups[fc].reloc = BFD_RELOC_UNUSED;
@@ -1029,7 +1028,7 @@ keep_going:
     ++str;
 
   if (*str != '\0')
-    as_bad ("junk at end of line: `%s'", str);
+    as_bad (_("junk at end of line: `%s'"), str);
 
   input_line_pointer = str;
 
@@ -1054,7 +1053,19 @@ keep_going:
 
       /* bCC */
       if (size == 2 && opcode->opcode != 0xfc0000)
-	type = 0;
+	{
+	  /* Handle bra specially.  Basically treat it like jmp so
+	     that we automatically handle 8, 16 and 32 bit offsets
+	     correctly as well as jumps to an undefined address.
+
+	     It is also important to not treat it like other bCC
+	     instructions since the long forms of bra is different
+	     from other bCC instructions.  */
+          if (opcode->opcode == 0xea00)
+            type = 8;
+	  else
+	    type = 0;
+	}
       /* jsr */
       else if (size == 3 && opcode->opcode == 0xfd0000)
 	type = 6;
@@ -1135,6 +1146,11 @@ keep_going:
 				  &fixups[i].exp, 
 				  reloc_howto->pc_relative,
 				  fixups[i].reloc);
+
+	      /* PC-relative offsets are from the first byte of the next
+		 instruction, not from the start of the current instruction.  */
+	      if (reloc_howto->pc_relative)
+		fixP->fx_offset += size;
 	    }
 	  else
 	    {
@@ -1188,8 +1204,11 @@ keep_going:
 	      fixP = fix_new_exp (frag_now, f - frag_now->fr_literal + offset,
 				  reloc_size, &fixups[i].exp, pcrel,
 				  ((bfd_reloc_code_real_type) reloc));
+
+	      /* PC-relative offsets are from the first byte of the next
+		 instruction, not from the start of the current instruction.  */
 	      if (pcrel)
-		fixP->fx_offset += offset;
+		fixP->fx_offset += size;
 	    }
 	}
     }
@@ -1211,7 +1230,7 @@ tc_gen_reloc (seg, fixp)
   if (reloc->howto == (reloc_howto_type *) NULL)
     {
       as_bad_where (fixp->fx_file, fixp->fx_line,
-                    "reloc %d not supported by object file format",
+                    _("reloc %d not supported by object file format"),
 		    (int)fixp->fx_r_type);
       return NULL;
     }
@@ -1219,13 +1238,21 @@ tc_gen_reloc (seg, fixp)
 
   if (fixp->fx_addsy && fixp->fx_subsy)
     {
+      if ((S_GET_SEGMENT (fixp->fx_addsy) != S_GET_SEGMENT (fixp->fx_subsy))
+	  || S_GET_SEGMENT (fixp->fx_addsy) == undefined_section)
+	{
+	  as_bad_where (fixp->fx_file, fixp->fx_line,
+			"Difference of symbols in different sections is not supported");
+	  return NULL;
+	}
       reloc->sym_ptr_ptr = &bfd_abs_symbol;
       reloc->addend = (S_GET_VALUE (fixp->fx_addsy)
 		       - S_GET_VALUE (fixp->fx_subsy) + fixp->fx_offset);
     }
   else 
     {
-      reloc->sym_ptr_ptr = &fixp->fx_addsy->bsym;
+      reloc->sym_ptr_ptr = (asymbol **) xmalloc (sizeof (asymbol *));
+      *reloc->sym_ptr_ptr = symbol_get_bfdsym (fixp->fx_addsy);
       reloc->addend = fixp->fx_offset;
     }
   return reloc;
@@ -1324,7 +1351,7 @@ mn10200_insert_operand (insnp, extensionp, operand, val, file, line, shift)
       if (test < (offsetT) min || test > (offsetT) max)
         {
           const char *err =
-            "operand out of range (%s not between %ld and %ld)";
+            _("operand out of range (%s not between %ld and %ld)");
           char buf[100];
 
           sprint_value (buf, test);

@@ -1,6 +1,6 @@
-#objdump: -dr --prefix-addresses
+#objdump: -dr --prefix-addresses -mmips:4000
 #name: MIPS uld
-#as: -mips3
+#as: -mips3 -mcpu=r4000
 
 # Test the uld macro.
 

@@ -2,22 +2,30 @@
 # Some generic MIPS tests
 #
 if [istarget mips*-*-*] then {
-    set svr4pic [expr [istarget *-*-elf*] || [istarget *-*-irix5*] ]
+    set no_mips16 0
+    set svr4pic [expr [istarget *-*-elf*] || [istarget *-*-irix5*] || [istarget *-*-irix6* ] ]
     set empic [expr [istarget *-*-ecoff*] || [istarget *-*-ultrix*] || [istarget *-*-irix\[1-4\]*] ]
-    set aout [expr [istarget *-*-bsd*] || [istarget *-*-netbsd*] || [istarget *-*-openbsd*] ]
-    set ilocks [expr [istarget *4300*-*-elf*] || [istarget *4100*-*-elf*]]
-    set 64bit [istarget mips64*-*-*]
+    set aout [expr [istarget *-*-bsd*] || [istarget *-*-netbsd*] || [istarget *-*-openbsd*]]
+    set ilocks [istarget mipstx39*-*-*]
+    set gpr_ilocks [expr [istarget mipstx39*-*-*]]
+    set addr32 [expr [istarget mipstx39*-*-*]]
+
+
+
+
 
     run_dump_test "abs"
     run_dump_test "add"
     run_dump_test "and"
+    run_dump_test "break20"
+    run_dump_test "trap20"
     run_dump_test "beq"
     run_dump_test "bge"
     run_dump_test "bgeu"
     run_dump_test "blt"
     run_dump_test "bltu"
     if !$ilocks { run_dump_test "div" } else { run_dump_test "div-ilocks" }
-    if $64bit { run_dump_test "dli" }
+    run_dump_test "dli"
     run_dump_test "jal"
     if $svr4pic { run_dump_test "jal-svr4pic" }
     if $svr4pic { run_dump_test "jal-xgot" }
@@ -28,9 +36,24 @@ if [istarget mips*-*-*] then {
     if $empic { run_dump_test "la-empic" }
     if !$aout { run_dump_test "lb" }
     if $svr4pic { run_dump_test "lb-svr4pic" }
-    if $svr4pic { run_dump_test "lb-xgot" }
+    if $svr4pic {
+	# Both versions specify the cpu, so we can run both regardless of
+	# the interlocking in the configured default cpu.
+	run_dump_test "lb-xgot"
+	run_dump_test "lb-xgot-ilocks"
+    }
     if $empic { run_dump_test "lb-empic" }
-    if !$aout { run_dump_test "ld" }
+    if !$aout { 
+        if !$gpr_ilocks { 
+            run_dump_test "ld" 
+        } else { 
+            if !$addr32 {
+                run_dump_test "ld-ilocks"
+            } else {
+                run_dump_test "ld-ilocks-addr32"
+            }
+        }
+    }
     if $svr4pic { run_dump_test "ld-svr4pic" }
     if $svr4pic { run_dump_test "ld-xgot" }
     if $empic { run_dump_test "ld-empic" }
@@ -54,5 +77,41 @@ if [istarget mips*-*-*] then {
 	run_dump_test "ush"
 	run_dump_test "usw"
 	run_dump_test "usd"
+    }
+    # The mips16 test can only be run on ELF, because only ELF
+    # supports the necessary mips16 reloc.
+    if { $svr4pic && !$no_mips16 } { run_dump_test "mips16" }
+    run_dump_test "delay"
+    run_dump_test "nodelay"
+    run_dump_test "mips4010"
+    run_dump_test "mips4650"
+    run_dump_test "mips4100"
+    run_dump_test "lineno"
+    run_dump_test "sync"
+
+    # Make sure that -mcpu=FOO and -mFOO are equivalent.  Assemble a file
+    # containing 4650-specific instructions with -m4650 and -mcpu=4650,
+    # and verify that they're the same.  Specifically, we're checking
+    # that the EF_MIPS_MACH field is set, and that the 4650 'mul'
+    # instruction does get used.  In previous versions of GAS, 
+    # only -mcpu=4650 would set the EF_MIPS_MACH field; -m4650 wouldn't.
+    run_dump_test "elf_e_flags1"
+    run_dump_test "elf_e_flags2"
+    run_dump_test "elf_e_flags3"
+    run_dump_test "elf_e_flags4"
+    
+    if $svr4pic {
+	run_dump_test "elf-rel"
+	if [istarget mips64*-*-*] { 
+	    run_dump_test "elf-rel2" 
+	} {
+	    run_dump_test "e32-rel2" 
+	} 
+	run_dump_test "empic"
+	if { !$no_mips16 } { 
+	    run_dump_test "mips16-e" 
+	    setup_xfail "mips*-*-*"
+	    run_dump_test "mips16-f" 
+	}
     }
 }

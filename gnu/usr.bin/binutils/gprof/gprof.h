@@ -21,8 +21,17 @@
 #ifndef gprof_h
 #define gprof_h
 
-#include <ansidecl.h>
+#include "ansidecl.h"
+
+/* Include the BFD sysdep.h file.  */
 #include "sysdep.h"
+
+/* Undefine the BFD PACKAGE and VERSION macros before including the
+   gprof config.h file.  */
+#undef PACKAGE
+#undef VERSION
+
+#include "gconfig.h"
 
 #ifndef MIN
 #define MIN(a,b)	((a) < (b) ? (a) : (b))
@@ -34,34 +43,25 @@
 /* AIX defines hz as a macro.  */
 #undef hz
 
-#ifdef MACHINE_H
-#include MACHINE_H
-#else
-#if vax
-#include "vax.h"
-#endif
-#if sun
-#include "sun.h"
-#endif
-#if tahoe
-#include "tahoe.h"
-#endif
-#endif
-
-#ifndef FOPEN_RB
-#define FOPEN_RB "r"
-#endif
-#ifndef FOPEN_WB
-#define FOPEN_WB "w"
-#endif
-
 #ifndef PATH_MAX
 #define PATH_MAX	1024
 #endif
 
-#define	A_OUTNAME	"a.out"	/* default core filename */
+#define	A_OUTNAME	"a.out"		/* default core filename */
 #define	GMONNAME	"gmon.out"	/* default profile filename */
 #define	GMONSUM		"gmon.sum"	/* profile summary filename */
+
+#ifdef HAVE_LOCALE_H
+# include <locale.h>
+#endif
+
+#ifdef ENABLE_NLS
+/* Undefine BFD's `_' macro - it uses dgetext() and we want to use gettext().  */
+#undef  _
+#define _(String) gettext (String)
+#endif
+
+#include "bin-bugs.h"
 
 /*
  * These may already be defined on some systems.  We could probably
@@ -105,7 +105,7 @@
 
 typedef enum
   {
-    FF_AUTO = 0, FF_MAGIC, FF_BSD, FF_PROF
+    FF_AUTO = 0, FF_MAGIC, FF_BSD, FF_BSD44, FF_PROF
   }
 File_Format;
 
@@ -124,6 +124,7 @@ extern int debug_level;		/* debug level */
 extern int output_style;
 extern int output_width;	/* controls column width in index */
 extern bool bsd_style_output;	/* as opposed to FSF style output */
+extern bool demangle;		/* demangle symbol names? */
 extern bool discard_underscores;	/* discard leading underscores? */
 extern bool ignore_direct_calls;	/* don't count direct calls */
 extern bool ignore_static_funcs;	/* suppress static functions */

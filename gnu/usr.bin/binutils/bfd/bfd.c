@@ -1,5 +1,6 @@
 /* Generic BFD library interface and support routines.
-   Copyright (C) 1990, 91, 92, 93, 94, 95, 1996 Free Software Foundation, Inc.
+   Copyright (C) 1990, 91, 92, 93, 94, 95, 96, 97, 98, 1999
+   Free Software Foundation, Inc.
    Written by Cygnus Support.
 
 This file is part of BFD, the Binary File Descriptor library.
@@ -166,6 +167,7 @@ CODE_FRAGMENT
 .      struct nlm_obj_tdata *nlm_obj_data;
 .      struct bout_data_struct *bout_data;
 .      struct sun_core_struct *sun_core_data;
+.      struct sco5_core_struct *sco5_core_data;
 .      struct trad_core_struct *trad_core_data;
 .      struct som_data_struct *som_data;
 .      struct hpux_core_struct *hpux_core_data;
@@ -182,8 +184,10 @@ CODE_FRAGMENT
 .    {* Used by the application to hold private data*}
 .    PTR usrdata;
 .
-.    {* Where all the allocated stuff under this BFD goes *}
-.    struct obstack memory;
+.  {* Where all the allocated stuff under this BFD goes.  This is a
+.     struct objalloc *, but we use PTR to avoid requiring the inclusion of
+.     objalloc.h.  *}
+.    PTR memory;
 .};
 .
 */
@@ -197,6 +201,7 @@ CODE_FRAGMENT
 #include <varargs.h>
 #endif
 
+#include "libiberty.h"
 #include "bfdlink.h"
 #include "libbfd.h"
 #include "coff/internal.h"
@@ -263,31 +268,28 @@ CODE_FRAGMENT
 .
 */
 
-#undef strerror
-extern char *strerror();
-
 static bfd_error_type bfd_error = bfd_error_no_error;
 
 CONST char *CONST bfd_errmsgs[] = {
-                        "No error",
-                        "System call error",
-                        "Invalid bfd target",
-                        "File in wrong format",
-                        "Invalid operation",
-                        "Memory exhausted",
-                        "No symbols",
-			"Archive has no index; run ranlib to add one",
-                        "No more archived files",
-                        "Malformed archive",
-                        "File format not recognized",
-                        "File format is ambiguous",
-                        "Section has no contents",
-                        "Nonrepresentable section on output",
-			"Symbol needs debug section which does not exist",
-			"Bad value",
-			"File truncated",
-			"File too big",
-                        "#<Invalid error code>"
+                        N_("No error"),
+                        N_("System call error"),
+                        N_("Invalid bfd target"),
+                        N_("File in wrong format"),
+                        N_("Invalid operation"),
+                        N_("Memory exhausted"),
+                        N_("No symbols"),
+			N_("Archive has no index; run ranlib to add one"),
+                        N_("No more archived files"),
+                        N_("Malformed archive"),
+                        N_("File format not recognized"),
+                        N_("File format is ambiguous"),
+                        N_("Section has no contents"),
+                        N_("Nonrepresentable section on output"),
+			N_("Symbol needs debug section which does not exist"),
+			N_("Bad value"),
+			N_("File truncated"),
+			N_("File too big"),
+                        N_("#<Invalid error code>")
                        };
 
 /*
@@ -345,25 +347,13 @@ bfd_errmsg (error_tag)
   extern int errno;
 #endif
   if (error_tag == bfd_error_system_call)
-    {
-      const char *errmsg;
-
-      errmsg = strerror (errno);
-      if (errmsg == NULL)
-	{
-	  static char buf[32];
-
-	  sprintf (buf, "Error %d", errno);
-	  errmsg = buf;
-	}
-      return errmsg;
-    }
+    return xstrerror (errno);
 
   if ((((int)error_tag <(int) bfd_error_no_error) ||
        ((int)error_tag > (int)bfd_error_invalid_error_code)))
     error_tag = bfd_error_invalid_error_code;/* sanity check */
 
-  return bfd_errmsgs [(int)error_tag];
+  return _(bfd_errmsgs [(int)error_tag]);
 }
 
 /*
@@ -519,6 +509,24 @@ bfd_set_error_program_name (name)
 {
   _bfd_error_program_name = name;
 }
+
+
+/*
+FUNCTION
+	bfd_get_error_handler
+
+SYNOPSIS
+	bfd_error_handler_type bfd_get_error_handler (void);
+
+DESCRIPTION
+	Return the BFD error handler function.
+*/
+
+bfd_error_handler_type
+bfd_get_error_handler ()
+{
+  return _bfd_error_handler;
+}
 
 /*
 SECTION
@@ -610,12 +618,12 @@ DESCRIPTION
 /*ARGSUSED*/
 void
 bfd_set_reloc (ignore_abfd, asect, location, count)
-     bfd *ignore_abfd;
+     bfd *ignore_abfd ATTRIBUTE_UNUSED;
      sec_ptr asect;
      arelent **location;
      unsigned int count;
 {
-  asect->orelocation  = location;
+  asect->orelocation = location;
   asect->reloc_count = count;
 }
 
@@ -668,9 +676,33 @@ bfd_assert (file, line)
      const char *file;
      int line;
 {
-  (*_bfd_error_handler) ("bfd assertion fail %s:%d", file, line);
+  (*_bfd_error_handler) (_("bfd assertion fail %s:%d"), file, line);
 }
 
+/* A more or less friendly abort message.  In libbfd.h abort is
+   defined to call this function.  */
+
+#ifndef EXIT_FAILURE
+#define EXIT_FAILURE 1
+#endif
+
+void
+_bfd_abort (file, line, fn)
+     const char *file;
+     int line;
+     const char *fn;
+{
+  if (fn != NULL)
+    (*_bfd_error_handler)
+      (_("BFD internal error, aborting at %s line %d in %s\n"),
+       file, line, fn);
+  else
+    (*_bfd_error_handler)
+      (_("BFD internal error, aborting at %s line %d\n"),
+       file, line);
+  (*_bfd_error_handler) (_("Please report this bug.\n"));
+  xexit (EXIT_FAILURE);
+}
 
 /*
 FUNCTION
@@ -921,11 +953,11 @@ bfd_scan_vma (string, end, base)
     
 /* Speed could be improved with a table like hex_value[] in gas.  */
 #define HEX_VALUE(c) \
-  (isxdigit(c) ?				\
-    (isdigit(c) ?				\
-      (c - '0') :				\
-      (10 + c - (islower(c) ? 'a' : 'A'))) :	\
-    42)
+  (isxdigit ((unsigned char) c)					\
+   ? (isdigit ((unsigned char) c)				\
+      ? (c - '0')						\
+      : (10 + c - (islower ((unsigned char) c) ? 'a' : 'A')))	\
+   : 42)
 
   for (value = 0; (digit = HEX_VALUE(*string)) < base; string++)
     {
@@ -1037,6 +1069,9 @@ DESCRIPTION
 .#define bfd_relax_section(abfd, section, link_info, again) \
 .       BFD_SEND (abfd, _bfd_relax_section, (abfd, section, link_info, again))
 .
+.#define bfd_gc_sections(abfd, link_info) \
+.	BFD_SEND (abfd, _bfd_gc_sections, (abfd, link_info))
+.
 .#define bfd_link_hash_table_create(abfd) \
 .	BFD_SEND (abfd, _bfd_link_hash_table_create, (abfd))
 .
@@ -1124,7 +1159,7 @@ bfd_record_phdr (abfd, type, flags_valid, flags, at_valid, at,
   m = ((struct elf_segment_map *)
        bfd_alloc (abfd,
 		  (sizeof (struct elf_segment_map)
-		   + (count - 1) * sizeof (asection *))));
+		   + ((size_t) count - 1) * sizeof (asection *))));
   if (m == NULL)
     return false;
 

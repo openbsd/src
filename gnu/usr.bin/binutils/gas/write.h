@@ -17,6 +17,9 @@
    along with GAS; see the file COPYING.  If not, write to
    the Free Software Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
+#ifndef __write_h__
+#define __write_h__
+
 #ifndef TC_I960
 #ifdef hpux
 #define EXEC_MACHINE_TYPE HP9000S200_ID
@@ -44,7 +47,7 @@ struct fix
   /* These small fields are grouped together for compactness of
      this structure, and efficiency of access on some architectures.  */
 
-  /* pc-relative offset adjust */
+  /* pc-relative offset adjust (only used by m68k) */
   char fx_pcrel_adjust;
 
   /* How many bytes are involved? */
@@ -132,6 +135,15 @@ struct fix
   char *fx_file;
   unsigned fx_line;
 
+#ifdef USING_CGEN
+  struct {
+    /* CGEN_INSN entry for this instruction.  */
+    const struct cgen_insn *insn;
+    /* Target specific data, usually reloc number.  */
+    int opinfo;
+  } fx_cgen;
+#endif
+
 #ifdef TC_FIX_TYPE
   /* Location where a backend can attach additional data
      needed to perform fixups.  */
@@ -162,6 +174,7 @@ extern bit_fixS *bit_fix_new
 	   long max, long add));
 extern void append PARAMS ((char **charPP, char *fromP, unsigned long length));
 extern void record_alignment PARAMS ((segT seg, int align));
+extern void subsegs_finish PARAMS ((void));
 extern void write_object_file PARAMS ((void));
 extern void relax_segment
   PARAMS ((struct frag * seg_frag_root, segT seg_type));
@@ -187,4 +200,5 @@ extern fixS *fix_new_exp
 
 extern void write_print_statistics PARAMS ((FILE *));
 
+#endif /* __write_h__ */
 /* end of write.h */

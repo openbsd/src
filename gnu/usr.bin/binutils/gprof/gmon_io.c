@@ -4,7 +4,7 @@
 #include "cg_arcs.h"
 #include "basic_blocks.h"
 #include "bfd.h"
-#include "core.h"
+#include "corefile.h"
 #include "call_graph.h"
 #include "gmon_io.h"
 #include "gmon_out.h"
@@ -30,7 +30,7 @@ DEFUN (get_vma, (abfd, addr), bfd * abfd AND bfd_byte * addr)
     case 8:
       return bfd_get_64 (abfd, addr);
     default:
-      fprintf (stderr, "%s: bfd_vma has unexpected size of %ld bytes\n",
+      fprintf (stderr, _("%s: bfd_vma has unexpected size of %ld bytes\n"),
 	       whoami, (long) sizeof (char*));
       done (1);
     }
@@ -52,7 +52,7 @@ DEFUN (put_vma, (abfd, val, addr), bfd * abfd AND bfd_vma val AND bfd_byte * add
       bfd_put_64 (abfd, val, addr);
       break;
     default:
-      fprintf (stderr, "%s: bfd_vma has unexpected size of %ld bytes\n",
+      fprintf (stderr, _("%s: bfd_vma has unexpected size of %ld bytes\n"),
 	       whoami, (long) sizeof (char*));
       done (1);
     }
@@ -72,6 +72,9 @@ DEFUN (gmon_out_read, (filename), const char *filename)
   if (strcmp (filename, "-") == 0)
     {
       ifp = stdin;
+#ifdef SET_BINARY
+      SET_BINARY (fileno (stdin));
+#endif
     }
   else
     {
@@ -84,7 +87,7 @@ DEFUN (gmon_out_read, (filename), const char *filename)
     }
   if (fread (&ghdr, sizeof (struct gmon_hdr), 1, ifp) != 1)
     {
-      fprintf (stderr, "%s: file too short to be a gmon file\n",
+      fprintf (stderr, _("%s: file too short to be a gmon file\n"),
 	       filename);
       done (1);
     }
@@ -94,7 +97,7 @@ DEFUN (gmon_out_read, (filename), const char *filename)
     {
       if (file_format == FF_MAGIC && strncmp (&ghdr.cookie[0], GMON_MAGIC, 4))
 	{
-	  fprintf (stderr, "%s: file `%s' has bad magic cookie\n",
+	  fprintf (stderr, _("%s: file `%s' has bad magic cookie\n"),
 		   whoami, filename);
 	  done (1);
 	}
@@ -105,7 +108,7 @@ DEFUN (gmon_out_read, (filename), const char *filename)
       if (gmon_file_version != GMON_VERSION && gmon_file_version != 0)
 	{
 	  fprintf (stderr,
-		   "%s: file `%s' has unsupported version %d\n",
+		   _("%s: file `%s' has unsupported version %d\n"),
 		   whoami, filename, gmon_file_version);
 	  done (1);
 	}
@@ -135,13 +138,15 @@ DEFUN (gmon_out_read, (filename), const char *filename)
 
 	    default:
 	      fprintf (stderr,
-		       "%s: %s: found bad tag %d (file corrupted?)\n",
+		       _("%s: %s: found bad tag %d (file corrupted?)\n"),
 		       whoami, filename, tag);
 	      done (1);
 	    }
 	}
     }
-  else if (file_format == FF_AUTO || file_format == FF_BSD)
+  else if (file_format == FF_AUTO
+	   || file_format == FF_BSD
+	   || file_format == FF_BSD44)
     {
       struct hdr
       {
@@ -149,7 +154,8 @@ DEFUN (gmon_out_read, (filename), const char *filename)
 	bfd_vma high_pc;
 	int ncnt;
       };
-      int i, samp_bytes, count;
+      int i, samp_bytes, header_size;
+      unsigned long count;
       bfd_vma from_pc, self_pc;
       struct raw_arc raw_arc;
       struct raw_phdr raw;
@@ -176,7 +182,7 @@ DEFUN (gmon_out_read, (filename), const char *filename)
       if (fread (&raw, 1, sizeof (struct raw_phdr), ifp)
 	  != sizeof (struct raw_phdr))
 	{
-	  fprintf (stderr, "%s: file too short to be a gmon file\n",
+	  fprintf (stderr, _("%s: file too short to be a gmon file\n"),
 		   filename);
 	  done (1);
 	}
@@ -184,27 +190,49 @@ DEFUN (gmon_out_read, (filename), const char *filename)
       tmp.high_pc = get_vma (core_bfd, (bfd_byte *) &raw.high_pc[0]);
       tmp.ncnt = bfd_get_32 (core_bfd, (bfd_byte *) &raw.ncnt[0]);
 
-#ifdef BSD44_FORMAT
-      {
-	int profrate;
+      if (bfd_get_32 (core_bfd, (bfd_byte *) &raw.version[0])
+	  == GMONVERSION)
+	{
+	  int profrate;
 
-	profrate = bfd_get_32 (core_bfd, (bfd_byte *) &raw.version[0]);
-	if (!s_highpc)
-	  hz = profrate;
-	else if (hz != profrate)
-	  {
-	    fprintf (stderr,
-		     "%s: profiling rate incompatible with first gmon file\n",
-		     filename);
-	    done (1);
-	  }
-      }
-#endif
+	  /* 4.4BSD format header.  */
+
+	  profrate = bfd_get_32 (core_bfd, (bfd_byte *) &raw.profrate[0]);
+	  if (!s_highpc)
+	    hz = profrate;
+	  else if (hz != profrate)
+	    {
+	      fprintf (stderr,
+		       _("%s: profiling rate incompatible with first gmon file\n"),
+		       filename);
+	      done (1);
+	    }
+
+	  header_size = sizeof (struct raw_phdr);
+	}
+      else
+	{
+	  /* old style BSD format.  */
+	  if (file_format == FF_BSD44)
+	    {
+	      fprintf (stderr, _("%s: file `%s' has bad magic cookie\n"),
+		       whoami, filename);
+	      done (1);
+	    }
+
+	  if (fseek (ifp, sizeof (struct old_raw_phdr), SEEK_SET) < 0)
+	    {
+	      perror (filename);
+	      done (1);
+	    }
+
+	  header_size = sizeof (struct old_raw_phdr);
+	}
 
       if (s_highpc && (tmp.low_pc != h.low_pc ||
 		       tmp.high_pc != h.high_pc || tmp.ncnt != h.ncnt))
 	{
-	  fprintf (stderr, "%s: incompatible with first gmon file\n",
+	  fprintf (stderr, _("%s: incompatible with first gmon file\n"),
 		   filename);
 	  done (1);
 	}
@@ -213,17 +241,27 @@ DEFUN (gmon_out_read, (filename), const char *filename)
       s_highpc = (bfd_vma) h.high_pc;
       lowpc = (bfd_vma) h.low_pc / sizeof (UNIT);
       highpc = (bfd_vma) h.high_pc / sizeof (UNIT);
-      samp_bytes = h.ncnt - sizeof (struct raw_phdr);
+      samp_bytes = h.ncnt - header_size;
       hist_num_bins = samp_bytes / sizeof (UNIT);
       DBG (SAMPLEDEBUG,
 	   printf ("[gmon_out_read] lowpc 0x%lx highpc 0x%lx ncnt %d\n",
-		   h.low_pc, h.high_pc, h.ncnt);
+		   (unsigned long) h.low_pc, (unsigned long) h.high_pc,
+		   h.ncnt);
 	   printf ("[gmon_out_read]   s_lowpc 0x%lx   s_highpc 0x%lx\n",
-		   s_lowpc, s_highpc);
+		   (unsigned long) s_lowpc, (unsigned long) s_highpc);
 	   printf ("[gmon_out_read]     lowpc 0x%lx     highpc 0x%lx\n",
-		   lowpc, highpc);
+		   (unsigned long) lowpc, (unsigned long) highpc);
 	   printf ("[gmon_out_read] samp_bytes %d hist_num_bins %d\n",
 		   samp_bytes, hist_num_bins));
+
+      /* Make sure that we have sensible values.  */
+      if (samp_bytes < 0 || lowpc > highpc)
+        {
+          fprintf (stderr, 
+	    _("%s: file '%s' does not appear to be in gmon.out format\n"),
+	    whoami, filename);
+          done (1);
+        }
 
       if (hist_num_bins)
 	{
@@ -242,7 +280,7 @@ DEFUN (gmon_out_read, (filename), const char *filename)
 	  if (fread (raw_bin_count, sizeof (raw_bin_count), 1, ifp) != 1)
 	    {
 	      fprintf (stderr,
-		       "%s: unexpected EOF after reading %d/%d bins\n",
+		       _("%s: unexpected EOF after reading %d/%d bins\n"),
 		       whoami, --i, hist_num_bins);
 	      done (1);
 	    }
@@ -260,8 +298,8 @@ DEFUN (gmon_out_read, (filename), const char *filename)
 	  self_pc = get_vma (core_bfd, (bfd_byte *) raw_arc.self_pc);
 	  count = bfd_get_32 (core_bfd, (bfd_byte *) raw_arc.count);
 	  DBG (SAMPLEDEBUG,
-	     printf ("[gmon_out_read] frompc 0x%lx selfpc 0x%lx count %d\n",
-		     from_pc, self_pc, count));
+	     printf ("[gmon_out_read] frompc 0x%lx selfpc 0x%lx count %lu\n",
+		     (unsigned long) from_pc, (unsigned long) self_pc, count));
 	  /* add this arc: */
 	  cg_tally (from_pc, self_pc, count);
 	}
@@ -277,26 +315,26 @@ DEFUN (gmon_out_read, (filename), const char *filename)
 	  if (hz == HZ_WRONG)
 	    {
 	      hz = 1;
-	      fprintf (stderr, "time is in ticks, not seconds\n");
+	      fprintf (stderr, _("time is in ticks, not seconds\n"));
 	    }
 	}
     }
   else
     {
-      fprintf (stderr, "%s: don't know how to deal with file format %d\n",
+      fprintf (stderr, _("%s: don't know how to deal with file format %d\n"),
 	       whoami, file_format);
       done (1);
     }
 
   if (output_style & STYLE_GMON_INFO)
     {
-      printf ("File `%s' (version %d) contains:\n",
+      printf (_("File `%s' (version %d) contains:\n"),
 	      filename, gmon_file_version);
-      printf ("\t%d histogram record%s\n",
+      printf (_("\t%d histogram record%s\n"),
 	      nhist, nhist == 1 ? "" : "s");
-      printf ("\t%d call-graph record%s\n",
+      printf (_("\t%d call-graph record%s\n"),
 	      narcs, narcs == 1 ? "" : "s");
-      printf ("\t%d basic-block count record%s\n",
+      printf (_("\t%d basic-block count record%s\n"),
 	      nbbs, nbbs == 1 ? "" : "s");
       first_output = FALSE;
     }
@@ -346,28 +384,43 @@ DEFUN (gmon_out_write, (filename), const char *filename)
 	  bb_write_blocks (ofp, filename);
 	}
     }
-  else if (file_format == FF_BSD)
+  else if (file_format == FF_BSD || file_format == FF_BSD44)
     {
       struct raw_arc raw_arc;
       UNIT raw_bin_count;
-      bfd_vma lpc, hpc;
-      int i, ncnt;
+      struct raw_phdr h;
+      int i;
       Arc *arc;
       Sym *sym;
 
-      put_vma (core_bfd, s_lowpc, (bfd_byte *) & lpc);
-      put_vma (core_bfd, s_highpc, (bfd_byte *) & hpc);
+      memset (&h, 0, sizeof h);
+      put_vma (core_bfd, s_lowpc, (bfd_byte *) &h.low_pc);
+      put_vma (core_bfd, s_highpc, (bfd_byte *) &h.high_pc);
       bfd_put_32 (core_bfd,
 		  hist_num_bins * sizeof (UNIT) + sizeof (struct raw_phdr),
-		    (bfd_byte *) & ncnt);
+		  (bfd_byte *) &h.ncnt);
 
-      /* write header: */
-      if (fwrite (&lpc, sizeof (lpc), 1, ofp) != 1
-	  || fwrite (&hpc, sizeof (hpc), 1, ofp) != 1
-	  || fwrite (&ncnt, sizeof (ncnt), 1, ofp) != 1)
+      /* Write header.  Use new style BSD format is explicitly
+         specified, or if the profiling rate is non-standard;
+         otherwise, use the old BSD format.  */
+      if (file_format == FF_BSD44
+	  || hz != hertz ())
 	{
-	  perror (filename);
-	  done (1);
+	  bfd_put_32 (core_bfd, GMONVERSION, (bfd_byte *) &h.version);
+	  bfd_put_32 (core_bfd, hz, (bfd_byte *) &h.profrate);
+	  if (fwrite (&h, sizeof (struct raw_phdr), 1, ofp) != 1)
+	    {
+	      perror (filename);
+	      done (1);
+	    }
+	}
+      else
+	{
+	  if (fwrite (&h, sizeof (struct old_raw_phdr), 1, ofp) != 1)
+	    {
+	      perror (filename);
+	      done (1);
+	    }
 	}
 
       /* dump the samples: */
@@ -399,15 +452,16 @@ DEFUN (gmon_out_write, (filename), const char *filename)
 		  done (1);
 		}
 	      DBG (SAMPLEDEBUG,
-		   printf ("[dumpsum] frompc 0x%lx selfpc 0x%lx count %d\n",
-			   arc->parent->addr, arc->child->addr, arc->count));
+		   printf ("[dumpsum] frompc 0x%lx selfpc 0x%lx count %lu\n",
+			   (unsigned long) arc->parent->addr,
+			   (unsigned long) arc->child->addr, arc->count));
 	    }
 	}
       fclose (ofp);
     }
   else
     {
-      fprintf (stderr, "%s: don't know how to deal with file format %d\n",
+      fprintf (stderr, _("%s: don't know how to deal with file format %d\n"),
 	       whoami, file_format);
       done (1);
     }

@@ -1,6 +1,6 @@
-#objdump: -dr --prefix-addresses
+#objdump: -dr --prefix-addresses -mmips:3000
 #name: MIPS lb-xgot
-#as: -mips1 -KPIC -xgot
+#as: -mips1 -KPIC -xgot -mcpu=r3000
 #source: lb-pic.s
 
 # Test the lb macro with -KPIC -xgot.

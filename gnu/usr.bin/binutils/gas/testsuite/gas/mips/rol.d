@@ -1,5 +1,6 @@
-#objdump: -dr --prefix-addresses
-#name: MIPS rol
+#objdump: -dr --prefix-addresses -mmips:3000
+#as: -mcpu=r3000
+#name: MIPS R3000 rol
 
 # Test the rol and ror macros.
 

@@ -36,23 +36,23 @@ DEFUN_VOID (print_header)
     {
       if (print_descriptions)
 	{
-	  printf ("\t\t     Call graph (explanation follows)\n\n");
+	  printf (_("\t\t     Call graph (explanation follows)\n\n"));
 	}
       else
 	{
-	  printf ("\t\t\tCall graph\n\n");
+	  printf (_("\t\t\tCall graph\n\n"));
 	}
     }
-  printf ("\ngranularity: each sample hit covers %ld byte(s)",
+  printf (_("\ngranularity: each sample hit covers %ld byte(s)"),
 	  (long) hist_scale * sizeof (UNIT));
   if (print_time > 0.0)
     {
-      printf (" for %.2f%% of %.2f seconds\n\n",
+      printf (_(" for %.2f%% of %.2f seconds\n\n"),
 	      100.0 / print_time, print_time / hz);
     }
   else
     {
-      printf (" no time propagated\n\n");
+      printf (_(" no time propagated\n\n"));
       /*
        * This doesn't hurt, since all the numerators will be 0.0:
        */
@@ -61,17 +61,17 @@ DEFUN_VOID (print_header)
   if (bsd_style_output)
     {
       printf ("%6.6s %5.5s %7.7s %11.11s %7.7s/%-7.7s     %-8.8s\n",
-	      "", "", "", "", "called", "total", "parents");
+	      "", "", "", "", _("called"), _("total"), _("parents"));
       printf ("%-6.6s %5.5s %7.7s %11.11s %7.7s+%-7.7s %-8.8s\t%5.5s\n",
-	      "index", "%time", "self", "descendents",
-	      "called", "self", "name", "index");
+	      _("index"), _("%time"), _("self"), _("descendents"),
+	      _("called"), _("self"), _("name"), _("index"));
       printf ("%6.6s %5.5s %7.7s %11.11s %7.7s/%-7.7s     %-8.8s\n",
-	      "", "", "", "", "called", "total", "children");
+	      "", "", "", "", _("called"), _("total"), _("children"));
       printf ("\n");
     }
   else
     {
-      printf ("index %% time    self  children    called     name\n");
+      printf (_("index %% time    self  children    called     name\n"));
     }
 }
 
@@ -86,19 +86,19 @@ DEFUN (print_cycle, (cyc), Sym * cyc)
 
   sprintf (buf, "[%d]", cyc->cg.index);
   printf (bsd_style_output
-	  ? "%-6.6s %5.1f %7.2f %11.2f %7d"
-	  : "%-6.6s %5.1f %7.2f %7.2f %7d", buf,
+	  ? "%-6.6s %5.1f %7.2f %11.2f %7lu"
+	  : "%-6.6s %5.1f %7.2f %7.2f %7lu", buf,
 	  100 * (cyc->cg.prop.self + cyc->cg.prop.child) / print_time,
 	  cyc->cg.prop.self / hz, cyc->cg.prop.child / hz, cyc->ncalls);
   if (cyc->cg.self_calls != 0)
     {
-      printf ("+%-7d", cyc->cg.self_calls);
+      printf ("+%-7lu", cyc->cg.self_calls);
     }
   else
     {
       printf (" %7.7s", "");
     }
-  printf (" <cycle %d as a whole> [%d]\n", cyc->cg.cyc.num, cyc->cg.index);
+  printf (_(" <cycle %d as a whole> [%d]\n"), cyc->cg.cyc.num, cyc->cg.index);
 }
 
 
@@ -111,8 +111,8 @@ DEFUN (cmp_member, (left, right), Sym * left AND Sym * right)
 {
   double left_time = left->cg.prop.self + left->cg.prop.child;
   double right_time = right->cg.prop.self + right->cg.prop.child;
-  long left_calls = left->ncalls + left->cg.self_calls;
-  long right_calls = right->ncalls + right->cg.self_calls;
+  unsigned long left_calls = left->ncalls + left->cg.self_calls;
+  unsigned long right_calls = right->ncalls + right->cg.self_calls;
 
   if (left_time > right_time)
     {
@@ -176,13 +176,13 @@ DEFUN (print_members, (cyc), Sym * cyc)
   for (member = cyc->cg.cyc.next; member; member = member->cg.cyc.next)
     {
       printf (bsd_style_output
-	      ? "%6.6s %5.5s %7.2f %11.2f %7d"
-	      : "%6.6s %5.5s %7.2f %7.2f %7d",
+	      ? "%6.6s %5.5s %7.2f %11.2f %7lu"
+	      : "%6.6s %5.5s %7.2f %7.2f %7lu",
 	      "", "", member->cg.prop.self / hz, member->cg.prop.child / hz,
 	      member->ncalls);
       if (member->cg.self_calls != 0)
 	{
-	  printf ("+%-7d", member->cg.self_calls);
+	  printf ("+%-7lu", member->cg.self_calls);
 	}
       else
 	{
@@ -218,13 +218,13 @@ DEFUN (cmp_arc, (left, right), Arc * left AND Arc * right)
        print_name (left_parent);
        printf (" calls ");
        print_name (left_child);
-       printf (" %f + %f %d/%d\n", left->time, left->child_time,
+       printf (" %f + %f %lu/%lu\n", left->time, left->child_time,
 	       left->count, left_child->ncalls);
        printf ("[cmp_arc] ");
        print_name (right_parent);
        printf (" calls ");
        print_name (right_child);
-       printf (" %f + %f %d/%d\n", right->time, right->child_time,
+       printf (" %f + %f %lu/%lu\n", right->time, right->child_time,
 	       right->count, right_child->ncalls);
        printf ("\n");
     );
@@ -350,8 +350,8 @@ DEFUN (print_parents, (child), Sym * child)
   if (!child->cg.parents)
     {
       printf (bsd_style_output
-	      ? "%6.6s %5.5s %7.7s %11.11s %7.7s %7.7s     <spontaneous>\n"
-	      : "%6.6s %5.5s %7.7s %7.7s %7.7s %7.7s     <spontaneous>\n",
+	      ? _("%6.6s %5.5s %7.7s %11.11s %7.7s %7.7s     <spontaneous>\n")
+	      : _("%6.6s %5.5s %7.7s %7.7s %7.7s %7.7s     <spontaneous>\n"),
 	      "", "", "", "", "", "");
       return;
     }
@@ -364,8 +364,8 @@ DEFUN (print_parents, (child), Sym * child)
 	{
 	  /* selfcall or call among siblings: */
 	  printf (bsd_style_output
-		  ? "%6.6s %5.5s %7.7s %11.11s %7d %7.7s     "
-		  : "%6.6s %5.5s %7.7s %7.7s %7d %7.7s     ",
+		  ? "%6.6s %5.5s %7.7s %11.11s %7lu %7.7s     "
+		  : "%6.6s %5.5s %7.7s %7.7s %7lu %7.7s     ",
 		  "", "", "", "",
 		  arc->count, "");
 	  print_name (parent);
@@ -375,8 +375,8 @@ DEFUN (print_parents, (child), Sym * child)
 	{
 	  /* regular parent of child: */
 	  printf (bsd_style_output
-		  ? "%6.6s %5.5s %7.2f %11.2f %7d/%-7d     "
-		  : "%6.6s %5.5s %7.2f %7.2f %7d/%-7d     ",
+		  ? "%6.6s %5.5s %7.2f %11.2f %7lu/%-7lu     "
+		  : "%6.6s %5.5s %7.2f %7.2f %7lu/%-7lu     ",
 		  "", "",
 		  arc->time / hz, arc->child_time / hz,
 		  arc->count, cycle_head->ncalls);
@@ -437,8 +437,8 @@ DEFUN (print_children, (parent), Sym * parent)
 	{
 	  /* self call or call to sibling: */
 	  printf (bsd_style_output
-		  ? "%6.6s %5.5s %7.7s %11.11s %7d %7.7s     "
-		  : "%6.6s %5.5s %7.7s %7.7s %7d %7.7s     ",
+		  ? "%6.6s %5.5s %7.7s %11.11s %7lu %7.7s     "
+		  : "%6.6s %5.5s %7.7s %7.7s %7lu %7.7s     ",
 		  "", "", "", "", arc->count, "");
 	  print_name (child);
 	  printf ("\n");
@@ -447,8 +447,8 @@ DEFUN (print_children, (parent), Sym * parent)
 	{
 	  /* regular child of parent: */
 	  printf (bsd_style_output
-		  ? "%6.6s %5.5s %7.2f %11.2f %7d/%-7d     "
-		  : "%6.6s %5.5s %7.2f %7.2f %7d/%-7d     ",
+		  ? "%6.6s %5.5s %7.2f %11.2f %7lu/%-7lu     "
+		  : "%6.6s %5.5s %7.2f %7.2f %7lu/%-7lu     ",
 		  "", "",
 		  arc->time / hz, arc->child_time / hz,
 		  arc->count, child->cg.cyc.head->ncalls);
@@ -472,10 +472,10 @@ DEFUN (print_line, (np), Sym * np)
 	  np->cg.prop.self / hz, np->cg.prop.child / hz);
   if ((np->ncalls + np->cg.self_calls) != 0)
     {
-      printf (" %7d", np->ncalls);
+      printf (" %7lu", np->ncalls);
       if (np->cg.self_calls != 0)
 	{
-	  printf ("+%-7d ", np->cg.self_calls);
+	  printf ("+%-7lu ", np->cg.self_calls);
 	}
       else
 	{
@@ -497,7 +497,7 @@ DEFUN (print_line, (np), Sym * np)
 void
 DEFUN (cg_print, (timesortsym), Sym ** timesortsym)
 {
-  int index;
+  unsigned int index;
   Sym *parent;
 
   if (print_descriptions && bsd_style_output)
@@ -513,7 +513,8 @@ DEFUN (cg_print, (timesortsym), Sym ** timesortsym)
       if ((ignore_zeros && parent->ncalls == 0
 	   && parent->cg.self_calls == 0 && parent->cg.prop.self == 0
 	   && parent->cg.prop.child == 0)
-	  || !parent->cg.print_flag)
+	  || !parent->cg.print_flag
+	  || (line_granularity && ! parent->is_func))
 	{
 	  continue;
 	}
@@ -556,7 +557,9 @@ DEFUN (cmp_name, (left, right), const PTR left AND const PTR right)
 void
 DEFUN_VOID (cg_print_index)
 {
-  int index, nnames, todo, i, j, col, starting_col;
+  unsigned int index;
+  unsigned int nnames, todo, i, j;
+  int col, starting_col;
   Sym **name_sorted_syms, *sym;
   const char *filename;
   char buf[20];
@@ -580,7 +583,8 @@ DEFUN_VOID (cg_print_index)
     {
       name_sorted_syms[todo++] = &cycle_header[index];
     }
-  printf ("\f\nIndex by function name\n\n");
+  printf ("\f\n");
+  printf (_("Index by function name\n\n"));
   index = (todo + 2) / 3;
   for (i = 0; i < index; i++)
     {
@@ -637,7 +641,7 @@ DEFUN_VOID (cg_print_index)
 	      if (bsd_style_output)
 		{
 		  printf ("%6.6s ", buf);
-		  sprintf (buf, "<cycle %d>", sym->cg.cyc.num);
+		  sprintf (buf, _("<cycle %d>"), sym->cg.cyc.num);
 		  printf ("%-19.19s", buf);
 		}
 	      else
@@ -646,7 +650,7 @@ DEFUN_VOID (cg_print_index)
 		  for (; col < starting_col + 5; ++col)
 		    putchar (' ');
 		  printf (" %s ", buf);
-		  sprintf (buf, "<cycle %d>", sym->cg.cyc.num);
+		  sprintf (buf, _("<cycle %d>"), sym->cg.cyc.num);
 		  printf ("%s", buf);
 		  col += strlen (buf);
 		}
@@ -1219,7 +1223,7 @@ DEFUN_VOID (cg_print_file_ordering)
   unsigned long scratch_arc_count, index;
   Arc **scratch_arcs;
   extern struct function_map *symbol_map;
-  extern int symbol_map_count;
+  extern unsigned int symbol_map_count;
   char *last;
 
   scratch_arc_count = 0;
@@ -1247,7 +1251,7 @@ DEFUN_VOID (cg_print_file_ordering)
   last = NULL;
   for (index = 0; index < symbol_map_count; index++)
     {
-      int index2;
+      unsigned int index2;
 
       /* Don't bother searching if this symbol is the
 	 same as the previous one.  */

@@ -37,22 +37,45 @@
 
 struct raw_phdr
   {
-    char low_pc[sizeof (bfd_vma)];	/* base pc address of sample buffer */
-    char high_pc[sizeof (bfd_vma)];	/* max pc address of sampled buffer */
+    /* FIXME: Checking a host compiler define means that we can't use
+       a cross gprof to the alpha.  */
+#ifdef __alpha__
+    char low_pc[8];		/* base pc address of sample buffer */
+    char high_pc[8];		/* max pc address of sampled buffer */
+#else
+    char low_pc[4];		/* base pc address of sample buffer */
+    char high_pc[4];		/* max pc address of sampled buffer */
+#endif
     char ncnt[4];		/* size of sample buffer (plus this header) */
 
+    char version[4];		/* version number */
+    char profrate[4];		/* profiling clock rate */
+    char spare[3*4];		/* reserved */
+  };
+
+#define GMONVERSION     0x00051879
+
+struct old_raw_phdr
+  {
+    /* FIXME: Checking a host compiler define means that we can't use
+       a cross gprof to the alpha.  */
+#ifdef __alpha__
+    char low_pc[8];		/* base pc address of sample buffer */
+    char high_pc[8];		/* max pc address of sampled buffer */
+#else
+    char low_pc[4];		/* base pc address of sample buffer */
+    char high_pc[4];		/* max pc address of sampled buffer */
+#endif
+    char ncnt[4];		/* size of sample buffer (plus this header) */
+
+    /* FIXME: Checking host compiler defines here means that we can't
+       use a cross gprof alpha OSF.  */
 #if defined (__alpha__) && defined (__osf__)
     /*
      * DEC's OSF v3.0 uses 4 bytes of padding to bring the header to
      * a size that is a multiple of 8.
      */
     char pad[4];
-#else
-#ifdef BSD44_FORMAT
-    char version[4];			/* version number */
-    char profrate[4];			/* profiling clock rate */
-    char spare[3*4];			/* reserved */
-#endif
 #endif
   };
 
@@ -111,9 +134,17 @@ struct tostruct
  */
 struct raw_arc
   {
-    char from_pc[sizeof (bfd_vma)];
-    char self_pc[sizeof (bfd_vma)];
-    char count[sizeof (long)];
+    /* FIXME: Checking a host compiler define means that we can't use
+       a cross gprof to the alpha.  */
+#ifdef __alpha__
+    char from_pc[8];
+    char self_pc[8];
+    char count[8];
+#else
+    char from_pc[4];
+    char self_pc[4];
+    char count[4];
+#endif
   };
 
 /*

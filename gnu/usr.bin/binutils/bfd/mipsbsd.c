@@ -1,5 +1,5 @@
 /* BFD backend for MIPS BSD (a.out) binaries.
-   Copyright (C) 1993, 1994, 1995 Free Software Foundation, Inc.
+   Copyright (C) 1993, 94, 95, 97, 98, 1999 Free Software Foundation, Inc.
    Written by Ralph Campbell.
 
 This file is part of BFD, the Binary File Descriptor library.
@@ -45,7 +45,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #define SET_ARCH_MACH(ABFD, EXEC) \
   MY(set_arch_mach)(ABFD, N_MACHTYPE (EXEC)); \
   MY(choose_reloc_size)(ABFD);
-void MY(set_arch_mach) PARAMS ((bfd *abfd, int machtype));
+static void MY(set_arch_mach) PARAMS ((bfd *abfd, int machtype));
 static void MY(choose_reloc_size) PARAMS ((bfd *abfd));
 
 #define MY_write_object_contents MY(write_object_contents)
@@ -66,7 +66,7 @@ static boolean MY(write_object_contents) PARAMS ((bfd *abfd));
 
 #include "aout-target.h"
 
-void
+static void
 MY(set_arch_mach) (abfd, machtype)
      bfd *abfd;
      int machtype;
@@ -127,11 +127,11 @@ MY(write_object_contents) (abfd)
   switch (bfd_get_arch(abfd)) {
   case bfd_arch_m68k:
     switch (bfd_get_mach(abfd)) {
-    case 68010:
+    case bfd_mach_m68010:
       N_SET_MACHTYPE(*execp, M_68010);
       break;
     default:
-    case 68020:
+    case bfd_mach_m68020:
       N_SET_MACHTYPE(*execp, M_68020);
       break;
     }
@@ -187,10 +187,10 @@ MY(write_object_contents) (abfd)
  */
 static bfd_reloc_status_type
 mips_fix_jmp_addr (abfd,reloc_entry,symbol,data,input_section,output_bfd)
-     bfd *abfd;
+     bfd *abfd ATTRIBUTE_UNUSED;
      arelent *reloc_entry;
      struct symbol_cache_entry *symbol;
-     PTR data;
+     PTR data ATTRIBUTE_UNUSED;
      asection *input_section;
      bfd *output_bfd;
 {
@@ -240,13 +240,13 @@ mips_fix_hi16_s PARAMS ((bfd *, arelent *, asymbol *, PTR,
 static bfd_reloc_status_type
 mips_fix_hi16_s (abfd, reloc_entry, symbol, data, input_section,
 		 output_bfd, error_message)
-     bfd *abfd;
+     bfd *abfd ATTRIBUTE_UNUSED;
      arelent *reloc_entry;
      asymbol *symbol;
-     PTR data;
-     asection *input_section;
+     PTR data ATTRIBUTE_UNUSED;
+     asection *input_section ATTRIBUTE_UNUSED;
      bfd *output_bfd;
-     char **error_message;
+     char **error_message ATTRIBUTE_UNUSED;
 {
   bfd_vma relocation;
  
@@ -376,6 +376,7 @@ MY(canonicalize_reloc)(abfd, section, relptr, symbols)
 static CONST struct aout_backend_data MY(backend_data) = {
   0,				/* zmagic contiguous */
   1,				/* text incl header */
+  0,				/* entry is text address */
   0,				/* exec_hdr_flags */
   TARGET_PAGE_SIZE,			/* text vma */
   MY_set_sizes,
@@ -388,6 +389,8 @@ static CONST struct aout_backend_data MY(backend_data) = {
   0				/* finish_dynamic_link */
 };
 
+extern const bfd_target aout_mips_big_vec;
+
 const bfd_target aout_mips_little_vec =
 {
   "a.out-mips-little",		/* name */
@@ -397,7 +400,7 @@ const bfd_target aout_mips_little_vec =
   (HAS_RELOC | EXEC_P |		/* object flags */
    HAS_LINENO | HAS_DEBUG |
    HAS_SYMS | HAS_LOCALS | WP_TEXT | D_PAGED),
-  (SEC_HAS_CONTENTS | SEC_ALLOC | SEC_LOAD | SEC_RELOC), /* section flags */
+  (SEC_HAS_CONTENTS | SEC_ALLOC | SEC_LOAD | SEC_RELOC | SEC_CODE | SEC_DATA),
   MY_symbol_leading_char,
   ' ',				/* ar_pad_char */
   15,				/* ar_max_namelen */
@@ -424,7 +427,9 @@ const bfd_target aout_mips_little_vec =
      BFD_JUMP_TABLE_LINK (MY),
      BFD_JUMP_TABLE_DYNAMIC (_bfd_nodynamic),
 
-  (PTR) MY_backend_data,
+  & aout_mips_big_vec,
+  
+  (PTR) MY_backend_data
 };
 
 const bfd_target aout_mips_big_vec =
@@ -436,7 +441,7 @@ const bfd_target aout_mips_big_vec =
   (HAS_RELOC | EXEC_P |		/* object flags */
    HAS_LINENO | HAS_DEBUG |
    HAS_SYMS | HAS_LOCALS | WP_TEXT | D_PAGED),
-  (SEC_HAS_CONTENTS | SEC_ALLOC | SEC_LOAD | SEC_RELOC), /* section flags */
+  (SEC_HAS_CONTENTS | SEC_ALLOC | SEC_LOAD | SEC_RELOC | SEC_CODE | SEC_DATA),
   MY_symbol_leading_char,
   ' ',				/* ar_pad_char */
   15,				/* ar_max_namelen */
@@ -463,5 +468,7 @@ const bfd_target aout_mips_big_vec =
      BFD_JUMP_TABLE_LINK (MY),
      BFD_JUMP_TABLE_DYNAMIC (_bfd_nodynamic),
 
-  (PTR) MY_backend_data,
+  & aout_mips_little_vec,
+  
+  (PTR) MY_backend_data
 };

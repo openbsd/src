@@ -19,10 +19,6 @@
 #include "hertz.h"
 
 
-#ifdef __MSDOS__
-#define HERTZ 18
-#endif
-
 int
 hertz ()
 {
@@ -38,17 +34,19 @@ hertz ()
   tim.it_value.tv_usec = 0;
   setitimer (ITIMER_REAL, &tim, 0);
   setitimer (ITIMER_REAL, 0, &tim);
-  if (tim.it_interval.tv_usec < 2)
+  if (tim.it_interval.tv_usec >= 2)
     {
-      return HZ_WRONG;
+      return 1000000 / tim.it_interval.tv_usec;
     }
-  return 1000000 / tim.it_interval.tv_usec;
-#else /* ! defined (HAVE_SETITIMER) */
+#endif /* ! defined (HAVE_SETITIMER) */
 #if defined (HAVE_SYSCONF) && defined (_SC_CLK_TCK)
   return sysconf (_SC_CLK_TCK);
 #else /* ! defined (HAVE_SYSCONF) || ! defined (_SC_CLK_TCK) */
+#ifdef __MSDOS__
+  return 18;
+#else  /* ! defined (__MSDOS__) */
   return HZ_WRONG;
+#endif /* ! defined (__MSDOS__) */
 #endif /* ! defined (HAVE_SYSCONF) || ! defined (_SC_CLK_TCK) */
-#endif /* ! defined (HAVE_SETITIMER) */
 #endif /* ! defined (HERTZ) */
 }

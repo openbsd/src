@@ -8,7 +8,7 @@
 This chapter describes the internals of the assembler.  It is incomplete, but
 it may help a bit.
 
-This chapter was last modified on $Date: 1996/11/23 03:34:58 $.  It is not updated regularly, and it
+This chapter was last modified on $Date: 2000/09/12 19:11:56 $.  It is not updated regularly, and it
 may be out of date.
 
 @menu
@@ -115,9 +115,14 @@ This section describes some fundamental GAS data types.
 @cindex symbols, internal
 @cindex symbolS structure
 
-The definition for @code{struct symbol}, also known as @code{symbolS}, is
-located in @file{struc-symbol.h}.  Symbol structures contain the following
-fields:
+The definition for the symbol structure, @code{symbolS}, is located in
+@file{struc-symbol.h}.
+
+In general, the fields of this structure may not be referred to directly.
+Instead, you must use one of the accessor functions defined in @file{symbol.h}.
+These accessor functions should work for any GAS version.
+
+Symbol structures contain the following fields:
 
 @table @code
 @item sy_value
@@ -188,16 +193,10 @@ that name is defined in @file{obj-format.h}, this field is not defined.
 This processor-specific data is of type @code{TC_SYMFIELD_TYPE}.  If no macro
 by that name is defined in @file{targ-cpu.h}, this field is not defined.
 
-@item TARGET_SYMBOL_FIELDS
-If this macro is defined, it defines additional fields in the symbol structure.
-This macro is obsolete, and should be replaced when possible by uses of
-@code{OBJ_SYMFIELD_TYPE} and @code{TC_SYMFIELD_TYPE}.
 @end table
 
-There are a number of access routines used to extract the fields of a
-@code{symbolS} structure.  When possible, these routines should be used rather
-than referring to the fields directly.  These routines will work for any GAS
-version.
+Here is a description of the accessor functions.  These should be used rather
+than referring to the fields of @code{symbolS} directly.
 
 @table @code
 @item S_SET_VALUE
@@ -302,7 +301,135 @@ which it makes sense (primarily ELF).
 @cindex S_SET_SIZE
 Set the size of a symbol.  This is only defined for object file formats for
 which it makes sense (primarily ELF).
+
+@item symbol_get_value_expression
+@cindex symbol_get_value_expression
+Get a pointer to an @code{expressionS} structure which represents the value of
+the symbol as an expression.
+
+@item symbol_set_value_expression
+@cindex symbol_set_value_expression
+Set the value of a symbol to an expression.
+
+@item symbol_set_frag
+@cindex symbol_set_frag
+Set the frag where a symbol is defined.
+
+@item symbol_get_frag
+@cindex symbol_get_frag
+Get the frag where a symbol is defined.
+
+@item symbol_mark_used
+@cindex symbol_mark_used
+Mark a symbol as having been used in an expression.
+
+@item symbol_clear_used
+@cindex symbol_clear_used
+Clear the mark indicating that a symbol was used in an expression.
+
+@item symbol_used_p
+@cindex symbol_used_p
+Return whether a symbol was used in an expression.
+
+@item symbol_mark_used_in_reloc
+@cindex symbol_mark_used_in_reloc
+Mark a symbol as having been used by a relocation.
+
+@item symbol_clear_used_in_reloc
+@cindex symbol_clear_used_in_reloc
+Clear the mark indicating that a symbol was used in a relocation.
+
+@item symbol_used_in_reloc_p
+@cindex symbol_used_in_reloc_p
+Return whether a symbol was used in a relocation.
+
+@item symbol_mark_mri_common
+@cindex symbol_mark_mri_common
+Mark a symbol as an MRI common symbol.
+
+@item symbol_clear_mri_common
+@cindex symbol_clear_mri_common
+Clear the mark indicating that a symbol is an MRI common symbol.
+
+@item symbol_mri_common_p
+@cindex symbol_mri_common_p
+Return whether a symbol is an MRI common symbol.
+
+@item symbol_mark_written
+@cindex symbol_mark_written
+Mark a symbol as having been written.
+
+@item symbol_clear_written
+@cindex symbol_clear_written
+Clear the mark indicating that a symbol was written.
+
+@item symbol_written_p
+@cindex symbol_written_p
+Return whether a symbol was written.
+
+@item symbol_mark_resolved
+@cindex symbol_mark_resolved
+Mark a symbol as having been resolved.
+
+@item symbol_resolved_p
+@cindex symbol_resolved_p
+Return whether a symbol has been resolved.
+
+@item symbol_section_p
+@cindex symbol_section_p
+Return whether a symbol is a section symbol.
+
+@item symbol_equated_p
+@cindex symbol_equated_p
+Return whether a symbol is equated to another symbol.
+
+@item symbol_constant_p
+@cindex symbol_constant_p
+Return whether a symbol has a constant value, including being an offset within
+some frag.
+
+@item symbol_get_bfdsym
+@cindex symbol_get_bfdsym
+Return the BFD symbol associated with a symbol.
+
+@item symbol_set_bfdsym
+@cindex symbol_set_bfdsym
+Set the BFD symbol associated with a symbol.
+
+@item symbol_get_obj
+@cindex symbol_get_obj
+Return a pointer to the @code{OBJ_SYMFIELD_TYPE} field of a symbol.
+
+@item symbol_set_obj
+@cindex symbol_set_obj
+Set the @code{OBJ_SYMFIELD_TYPE} field of a symbol.
+
+@item symbol_get_tc
+@cindex symbol_get_tc
+Return a pointer to the @code{TC_SYMFIELD_TYPE} field of a symbol.
+
+@item symbol_set_tc
+@cindex symbol_set_tc
+Set the @code{TC_SYMFIELD_TYPE} field of a symbol.
+
 @end table
+
+When @code{BFD_ASSEMBLER} is defined, GAS attempts to store local
+symbols--symbols which will not be written to the output file--using a
+different structure, @code{struct local_symbol}.  This structure can only
+represent symbols whose value is an offset within a frag.
+
+Code outside of the symbol handler will always deal with @code{symbolS}
+structures and use the accessor functions.  The accessor functions correctly
+deal with local symbols.  @code{struct local_symbol} is much smaller than
+@code{symbolS} (which also automatically creates a bfd @code{asymbol}
+structure), so this saves space when assembling large files.
+
+The first field of @code{symbolS} is @code{bsym}, the pointer to the BFD
+symbol.  The first field of @code{struct local_symbol} is a pointer which is
+always set to NULL.  This is how the symbol accessor functions can distinguish
+local symbols from ordinary symbols.  The symbol accessor functions
+automatically convert a local symbol into an ordinary symbol when necessary.
 
 @node Expressions
 @subsection Expressions
@@ -463,17 +590,15 @@ relaxation code to process (@pxref{Relaxation}).  If @code{md_relax_frag} is
 defined, this field is available for any use by the CPU-specific code.
 
 @item fr_symbol
-This noormally indicates the symbol to use when relaxing the frag according to
+This normally indicates the symbol to use when relaxing the frag according to
 @code{fr_type}.
 
 @item fr_opcode
 Points to the lowest-addressed byte of the opcode, for use in relaxation.
 
-@item fr_pcrel_adjust
-@itemx fr_bsr
-These fields are only used in the NS32k configuration.  But since @code{struct
-frag} is defined before the CPU-specific header files are included, they must
-unconditionally be defined.
+@item tc_frag_data
+Target specific fragment data of type TC_FRAG_TYPE.
+Only present if @code{TC_FRAG_TYPE} is defined.
 
 @item fr_file
 @itemx fr_line
@@ -495,18 +620,36 @@ The start of the following frag should be aligned on some boundary.  In this
 frag, @code{fr_offset} is the logarithm (base 2) of the alignment in bytes.
 (For example, if alignment on an 8-byte boundary were desired, @code{fr_offset}
 would have a value of 3.)  The variable characters indicate the fill pattern to
-be used.  Target backends can use @code{rs_align_code} to handle certain types
-of alignment differently.
+be used.  The @code{fr_subtype} field holds the maximum number of bytes to skip
+when doing this alignment.  If more bytes are needed, the alignment is not
+done.  An @code{fr_subtype} value of 0 means no maximum, which is the normal
+case.  Target backends can use @code{rs_align_code} to handle certain types of
+alignment differently.
 
 @item rs_broken_word
 This indicates that ``broken word'' processing should be done (@pxref{Broken
 words}).  If broken word processing is not necessary on the target machine,
 this enumerator value will not be defined.
 
+@item rs_cfa
+This state is used to implement exception frame optimizations.  The
+@code{fr_symbol} is an expression symbol for the subtraction which may be
+relaxed.  The @code{fr_opcode} field holds the frag for the preceding command
+byte.  The @code{fr_offset} field holds the offset within that frag.  The
+@code{fr_subtype} field is used during relaxation to hold the current size of
+the frag.
+
 @item rs_fill
 The variable characters are to be repeated @code{fr_offset} times.  If
 @code{fr_offset} is 0, this frag has a length of @code{fr_fix}.  Most frags
 have this type.
+
+@item rs_leb128
+This state is used to implement the DWARF ``little endian base 128'' 
+variable length number format.  The @code{fr_symbol} is always an expression
+symbol, as constant expressions are emitted directly.  The @code{fr_offset}
+field is used during relaxation to hold the previous size of the number so
+that we can determine if the fragment changed size.
 
 @item rs_machine_dependent
 Displacement relaxation is to be done on this frag.  The target is indicated by
@@ -588,7 +731,7 @@ routine.  Otherwise, the target dependent @code{md_assemble} routine is called
 to parse the instruction.
 
 @item
-When pseudo-ops or instructions output data, the add it to a frag, calling
+When pseudo-ops or instructions output data, they add it to a frag, calling
 @code{frag_more} to get space to store it in.
 
 @item
@@ -618,18 +761,18 @@ second switches on the entire target to set the shell variable @code{fmt}.
 
 The configure script uses the value of @code{cpu_type} to select two files in
 the @file{config} directory: @file{tc-@var{CPU}.c} and @file{tc-@var{CPU}.h}.
-The configuration process will create symlinks to these files from
-@file{targ-cpu.c} and @file{targ-cpu.h} in the build directory.
+The configuration process will create a file named @file{targ-cpu.h} in the
+build directory which includes @file{tc-@var{CPU}.h}.
 
 The configure script also uses the value of @code{fmt} to select two files:
 @file{obj-@var{fmt}.c} and @file{obj-@var{fmt}.h}.  The configuration process
-will create symlinks to these files from @file{obj-format.h} and
-@file{obj-format.c}.
+will create a file named @file{obj-format.h} in the build directory which
+includes @file{obj-@var{fmt}.h}.
 
 You can also set the emulation in the configure script by setting the @code{em}
 variable.  Normally the default value of @samp{generic} is fine.  The
-configuration process will create a symlink from @file{targ-env.h} to
-@file{te-@var{em}.h}.
+configuration process will create a file named @file{targ-env.h} in the build
+directory which includes @file{te-@var{em}.h}.
 
 Porting GAS to a new CPU requires writing the @file{tc-@var{CPU}} files.
 Porting GAS to a new object file format requires writing the
@@ -736,6 +879,13 @@ This is a const array of type @code{pseudo_typeS}.  It is a mapping from
 pseudo-op names to functions.  You should use this table to implement
 pseudo-ops which are specific to the CPU.
 
+@item tc_conditional_pseudoop
+@cindex tc_conditional_pseudoop
+If this macro is defined, GAS will call it with a @code{pseudo_typeS} argument.
+It should return non-zero if the pseudo-op is a conditional which controls
+whether code is assembled, such as @samp{.if}.  GAS knows about the normal
+conditional pseudo-ops,and you should normally not have to define this macro.
+
 @item comment_chars
 @cindex comment_chars
 This is a null terminated @code{const char} array of characters which start a
@@ -745,6 +895,16 @@ comment.
 @cindex tc_comment_chars
 If this macro is defined, GAS will use it instead of @code{comment_chars}.
 
+@item tc_symbol_chars
+@cindex tc_symbol_chars
+If this macro is defined, it is a pointer to a null terminated list of
+characters which may appear in an operand.  GAS already assumes that all
+alphanumberic characters, and @samp{$}, @samp{.}, and @samp{_} may appear in an
+operand (see @samp{symbol_chars} in @file{app.c}).  This macro may be defined
+to treat additional characters as appearing in an operand.  This affects the
+way in which GAS removes whitespace before passing the string to
+@samp{md_assemble}.
+
 @item line_comment_chars
 @cindex line_comment_chars
 This is a null terminated @code{const char} array of characters which start a
@@ -753,8 +913,10 @@ comment when they appear at the start of a line.
 @item line_separator_chars
 @cindex line_separator_chars
 This is a null terminated @code{const char} array of characters which separate
-lines (the semicolon is such a character by default, and need not be listed in
-this array).
+lines (semicolon and newline are such characters by default, and need not be
+listed in this array).  Note that line_separator_chars do not separate lines
+if found in a comment, such as after a character in line_comment_chars or
+comment_chars.
 
 @item EXP_CHARS
 @cindex EXP_CHARS
@@ -772,13 +934,13 @@ Usually this includes @samp{r} and @samp{f}.
 
 @item LEX_AT
 @cindex LEX_AT
-You may define this macro to the lexical type of the @kbd{@}} character.  The
+You may define this macro to the lexical type of the @kbd{@@} character.  The
 default is zero.
 
 Lexical types are a combination of @code{LEX_NAME} and @code{LEX_BEGIN_NAME},
 both defined in @file{read.h}.  @code{LEX_NAME} indicates that the character
 may appear in a name.  @code{LEX_BEGIN_NAME} indicates that the character may
-appear at the beginning of a nem.
+appear at the beginning of a name.
 
 @item LEX_BR
 @cindex LEX_BR
@@ -800,6 +962,12 @@ default value it zero.
 You may define this macro to the lexical type of the @kbd{$} character.  The
 default value is @code{LEX_NAME | LEX_BEGIN_NAME}.
 
+@item NUMBERS_WITH_SUFFIX
+@cindex NUMBERS_WITH_SUFFIX
+When this macro is defined to be non-zero, the parser allows the radix of a
+constant to be indicated with a suffix.  Valid suffixes are binary (B), 
+octal (Q), and hexadecimal (H).  Case is not significant.
+
 @item SINGLE_QUOTE_STRINGS
 @cindex SINGLE_QUOTE_STRINGS
 If you define this macro, GAS will treat single quotes as string delimiters.
@@ -820,13 +988,18 @@ If you define this macro, GAS will call it at the start of each line.
 
 @item LABELS_WITHOUT_COLONS
 @cindex LABELS_WITHOUT_COLONS
-If you define this macro, GAS will assume that any test at the start of a line
+If you define this macro, GAS will assume that any text at the start of a line
 is a label, even if it does not have a colon.
 
 @item TC_START_LABEL
 @cindex TC_START_LABEL
 You may define this macro to control what GAS considers to be a label.  The
 default definition is to accept any name followed by a colon character.
+
+@item TC_START_LABEL_WITHOUT_COLON
+@cindex TC_START_LABEL_WITHOUT_COLON
+Same as TC_START_LABEL, but should be used instead of TC_START_LABEL when
+LABELS_WITHOUT_COLONS is defined. 
 
 @item NO_PSEUDO_DOT
 @cindex NO_PSEUDO_DOT
@@ -836,7 +1009,9 @@ If you define this macro, GAS will not require pseudo-ops to start with a
 @item TC_EQUAL_IN_INSN
 @cindex TC_EQUAL_IN_INSN
 If you define this macro, it should return nonzero if the instruction is
-permitted to contain an @kbd{=} character.  GAS will use this to decide if a
+permitted to contain an @kbd{=} character.  GAS will call it with two
+arguments, the character before the @kbd{=} character, and the value of
+@code{input_line_pointer} at that point.  GAS uses this macro to decide if a
 @kbd{=} is an assignment or an instruction.
 
 @item TC_EOL_IN_INSN
@@ -851,11 +1026,21 @@ expression.  You can define this to handle special symbols in a special way.
 If a symbol always has a certain value, you should normally enter it in the
 symbol table, perhaps using @code{reg_section}.
 
+@item md_undefined_symbol
+@cindex md_undefined_symbol
+GAS will call this function when a symbol table lookup fails, before it
+creates a new symbol.  Typically this would be used to supply symbols whose
+name or value changes dynamically, possibly in a context sensitive way.
+Predefined symbols with fixed values, such as register names or condition
+codes, are typically entered directly into the symbol table when @code{md_begin}
+is called.  One argument is passed, a @code{char *} for the symbol.
+
 @item md_operand
 @cindex md_operand
-GAS will call this function for any expression that can not be recognized.
-When the function is called, @code{input_line_pointer} will point to the start
-of the expression.
+GAS will call this function with one argument, an @code{expressionS}
+pointer, for any expression that can not be recognized.  When the function
+is called, @code{input_line_pointer} will point to the start of the
+expression.
 
 @item tc_unrecognized_line
 @cindex tc_unrecognized_line
@@ -874,9 +1059,19 @@ upon the number of bytes that the alignment will skip.
 You may define this macro to do special handling for an alignment directive.
 GAS will call it at the end of the assembly.
 
+@item TC_IMPLICIT_LCOMM_ALIGNMENT (@var{size}, @var{p2var})
+@cindex TC_IMPLICIT_LCOMM_ALIGNMENT
+An @code{.lcomm} directive with no explicit alignment parameter will use this
+macro to set @var{p2var} to the alignment that a request for @var{size} bytes
+will have.  The alignment is expressed as a power of two.  If no alignment
+should take place, the macro definition should do nothing.  Some targets define
+a @code{.bss} directive that is also affected by this macro.  The default
+definition will set @var{p2var} to the truncated power of two of sizes up to
+eight bytes.
+
 @item md_flush_pending_output
 @cindex md_flush_pending_output
-If you define this macro, GAS will it each time it skips any space because of a
+If you define this macro, GAS will call it each time it skips any space because of a
 space filling or alignment or data allocation pseudo-op.
 
 @item TC_PARSE_CONS_EXPRESSION
@@ -904,6 +1099,21 @@ pseudo-op.
 @cindex TC_CONS_FIX_NEW
 You may define this macro to generate a fixup for a data allocation pseudo-op.
 
+@item TC_INIT_FIX_DATA (@var{fixp})
+@cindex TC_INIT_FIX_DATA
+A C statement to initialize the target specific fields of fixup @var{fixp}.
+These fields are defined with the @code{TC_FIX_TYPE} macro.
+
+@item TC_FIX_DATA_PRINT (@var{stream}, @var{fixp})
+@cindex TC_FIX_DATA_PRINT
+A C statement to output target specific debugging information for
+fixup @var{fixp} to @var{stream}.  This macro is called by @code{print_fixup}.
+
+@item TC_FRAG_INIT (@var{fragp})
+@cindex TC_FRAG_INIT
+A C statement to initialize the target specific fields of frag @var{fragp}.
+These fields are defined with the @code{TC_FRAG_TYPE} macro.
+
 @item md_number_to_chars
 @cindex md_number_to_chars
 This should just call either @code{number_to_chars_bigendian} or
@@ -930,16 +1140,17 @@ relocation entry.
 @cindex md_create_long_jump
 If @code{WORKING_DOT_WORD} is defined, GAS will not do broken word processing
 (@pxref{Broken words}).  Otherwise, you should set @code{md_short_jump_size} to
-the size of a short jump (a jump that is just long enough to jump around a long
-jmp) and @code{md_long_jump_size} to the size of a long jump (a jump that can
-go anywhere in the function), You should define @code{md_create_short_jump} to
-create a short jump around a long jump, and define @code{md_create_long_jump}
-to create a long jump.
+the size of a short jump (a jump that is just long enough to jump around a
+number of long jumps) and @code{md_long_jump_size} to the size of a long jump
+(a jump that can go anywhere in the function).  You should define
+@code{md_create_short_jump} to create a short jump around a number of long
+jumps, and define @code{md_create_long_jump} to create a long jump.
 
 @item md_estimate_size_before_relax
 @cindex md_estimate_size_before_relax
 This function returns an estimate of the size of a @code{rs_machine_dependent}
-frag before any relaxing is done.
+frag before any relaxing is done.  It may also create any necessary
+relocations.
 
 @item md_relax_frag
 @cindex md_relax_frag
@@ -954,6 +1165,11 @@ If you do not define @code{md_relax_frag}, you may define
 machine independent code knows how to use such a table to relax PC relative
 references.  See @file{tc-m68k.c} for an example.  @xref{Relaxation}.
 
+@item md_prepare_relax_scan
+@cindex md_prepare_relax_scan
+If defined, it is a C statement that is invoked prior to scanning
+the relax table.
+
 @item LINKER_RELAXING_SHRINKS_ONLY
 @cindex LINKER_RELAXING_SHRINKS_ONLY
 If you define this macro, and the global variable @samp{linkrelax} is set
@@ -961,10 +1177,20 @@ If you define this macro, and the global variable @samp{linkrelax} is set
 @samp{.align} directive will cause extra space to be allocated.  The linker can
 then discard this space when relaxing the section.
 
+@item md_convert_frag
+@cindex md_convert_frag
+GAS will call this for each rs_machine_dependent fragment.
+The instruction is completed using the data from the relaxation pass.
+It may also create any necessary relocations.
+@xref{Relaxation}.
+
 @item md_apply_fix
 @cindex md_apply_fix
 GAS will call this for each fixup.  It should store the correct value in the
-object file.
+object file.  @code{fixup_segment} performs a generic overflow check on the
+@code{valueT *val} argument after @code{md_apply_fix} returns.  If the overflow
+check is relevant for the target machine, then @code{md_apply_fix} should
+modify @code{valueT *val}, typically to the value stored in the object file.
 
 @item TC_HANDLES_FX_DONE
 @cindex TC_HANDLES_FX_DONE
@@ -1015,8 +1241,44 @@ If you define this macro, GAS will call it each time a label is defined.
 
 @item md_section_align
 @cindex md_section_align
-GAS will call this function for each section at the end of the assemebly, to
-permit the CPU backend to adjust the alignment of a section.
+GAS will call this function for each section at the end of the assembly, to
+permit the CPU backend to adjust the alignment of a section.  The function
+must take two arguments, a @code{segT} for the section and a @code{valueT}
+for the size of the section, and return a @code{valueT} for the rounded
+size.
+
+@item md_macro_start
+@cindex md_macro_start
+If defined, GAS will call this macro when it starts to include a macro
+expansion.  @code{macro_nest} indicates the current macro nesting level, which
+includes the one being expanded. 
+
+@item md_macro_info
+@cindex md_macro_info
+If defined, GAS will call this macro after the macro expansion has been
+included in the input and after parsing the macro arguments.  The single
+argument is a pointer to the macro processing's internal representation of the
+macro (macro_entry *), which includes expansion of the formal arguments.
+
+@item md_macro_end
+@cindex md_macro_end
+Complement to md_macro_start.  If defined, it is called when finished
+processing an inserted macro expansion, just before decrementing macro_nest. 
+
+@item DOUBLEBAR_PARALLEL
+@cindex DOUBLEBAR_PARALLEL
+Affects the preprocessor so that lines containing '||' don't have their
+whitespace stripped following the double bar.  This is useful for targets that
+implement parallel instructions.
+
+@item KEEP_WHITE_AROUND_COLON
+@cindex KEEP_WHITE_AROUND_COLON
+Normally, whitespace is compressed and removed when, in the presence of the
+colon, the adjoining tokens can be distinguished.  This option affects the
+preprocessor so that whitespace around colons is preserved.  This is useful
+when colons might be removed from the input after preprocessing but before
+assembling, so that adjoining tokens can still be distinguished if there is
+whitespace, or concatentated if there is not.
 
 @item tc_frob_section
 @cindex tc_frob_section
@@ -1043,6 +1305,33 @@ completed, but before the relocations have been generated.
 @item tc_frob_file_after_relocs
 If you define this macro, GAS will call it after the relocs have been
 generated.
+
+@item LISTING_HEADER
+A string to use on the header line of a listing.  The default value is simply
+@code{"GAS LISTING"}.
+
+@item LISTING_WORD_SIZE
+The number of bytes to put into a word in a listing.  This affects the way the
+bytes are clumped together in the listing.  For example, a value of 2 might
+print @samp{1234 5678} where a value of 1 would print @samp{12 34 56 78}.  The
+default value is 4.
+
+@item LISTING_LHS_WIDTH
+The number of words of data to print on the first line of a listing for a
+particular source line, where each word is @code{LISTING_WORD_SIZE} bytes.  The
+default value is 1.
+
+@item LISTING_LHS_WIDTH_SECOND
+Like @code{LISTING_LHS_WIDTH}, but applying to the second and subsequent line
+of the data printed for a particular source line.  The default value is 1.
+
+@item LISTING_LHS_CONT_LINES
+The maximum number of continuation lines to print in a listing for a particular
+source line.  The default value is 4.
+
+@item LISTING_RHS_WIDTH
+The maximum number of characters to print from one line of the input file.  The
+default value is 100.
 @end table
 
 @node Object format backend
@@ -1147,6 +1436,13 @@ completed, but before the relocations have been generated.
 @item obj_frob_file_after_relocs
 If you define this macro, GAS will call it after the relocs have been
 generated.
+
+@item SET_SECTION_RELOCS (@var{sec}, @var{relocs}, @var{n})
+@cindex SET_SECTION_RELOCS
+If you define this, it will be called after the relocations have been set for
+the section @var{sec}.  The list of relocations is in @var{relocs}, and the
+number of relocations is in @var{n}.  This is only used with
+@code{BFD_ASSEMBLER}.
 @end table
 
 @node Emulations
@@ -1196,7 +1492,7 @@ the value to be stored is outside the range accessible by the current
 addressing mode.  The @code{fr_symbol} field of the frag indicates what symbol
 is to be accessed; the @code{fr_offset} field is added in.
 
-If the @code{fr_pcrel_adjust} field is set, which currently should only happen
+If the @code{TC_PCREL_ADJUST} macro is defined, which currently should only happen
 for the NS32k family, the @code{TC_PCREL_ADJUST} macro is called on the frag to
 compute an adjustment to be made to the displacement.
 

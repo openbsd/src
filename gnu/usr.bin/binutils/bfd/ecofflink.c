@@ -1,5 +1,5 @@
 /* Routines to link ECOFF debugging information.
-   Copyright 1993, 94, 95, 1996 Free Software Foundation, Inc.
+   Copyright 1993, 94, 95, 96, 97, 1999 Free Software Foundation, Inc.
    Written by Ian Lance Taylor, Cygnus Support, <ian@cygnus.com>.
 
 This file is part of BFD, the Binary File Descriptor library.
@@ -22,12 +22,14 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #include "sysdep.h"
 #include "bfdlink.h"
 #include "libbfd.h"
-#include "obstack.h"
+#include "objalloc.h"
 #include "aout/stab_gnu.h"
 #include "coff/internal.h"
 #include "coff/sym.h"
 #include "coff/symconst.h"
 #include "coff/ecoff.h"
+#include "libcoff.h"
+#include "libecoff.h"
 
 static boolean ecoff_add_bytes PARAMS ((char **buf, char **bufend,
 					size_t need));
@@ -49,10 +51,6 @@ static long fdrtab_lookup PARAMS ((struct ecoff_find_line *, bfd_vma));
 static boolean lookup_line
   PARAMS ((bfd *, struct ecoff_debug_info * const,
 	   const struct ecoff_debug_swap * const, struct ecoff_find_line *));
-
-/* Obstack allocation and deallocation routines.  */
-#define obstack_chunk_alloc malloc
-#define obstack_chunk_free free
 
 /* Routines to swap auxiliary information in and out.  I am assuming
    that the auxiliary information format is always going to be target
@@ -395,8 +393,8 @@ struct accumulate
   struct shuffle *rfd_end;
   /* The size of the largest file shuffle.  */
   unsigned long largest_file_shuffle;
-  /* An obstack for debugging information.  */
-  struct obstack memory;
+  /* An objalloc for debugging information.  */
+  struct objalloc *memory;
 };
 
 /* Add a file entry to a shuffle list.  */
@@ -429,8 +427,8 @@ add_file_shuffle (ainfo, head, tail, input_bfd, offset, size)
       return true;
     }
 
-  n = (struct shuffle *) obstack_alloc (&ainfo->memory,
-					sizeof (struct shuffle));
+  n = (struct shuffle *) objalloc_alloc (ainfo->memory,
+					 sizeof (struct shuffle));
   if (!n)
     {
       bfd_set_error (bfd_error_no_memory);
@@ -468,8 +466,8 @@ add_memory_shuffle (ainfo, head, tail, data, size)
 {
   struct shuffle *n;
      
-  n = (struct shuffle *) obstack_alloc (&ainfo->memory,
-					sizeof (struct shuffle));
+  n = (struct shuffle *) objalloc_alloc (ainfo->memory,
+					 sizeof (struct shuffle));
   if (!n)
     {
       bfd_set_error (bfd_error_no_memory);
@@ -493,9 +491,9 @@ add_memory_shuffle (ainfo, head, tail, data, size)
 /*ARGSUSED*/
 PTR
 bfd_ecoff_debug_init (output_bfd, output_debug, output_swap, info)
-     bfd *output_bfd;
+     bfd *output_bfd ATTRIBUTE_UNUSED;
      struct ecoff_debug_info *output_debug;
-     const struct ecoff_debug_swap *output_swap;
+     const struct ecoff_debug_swap *output_swap ATTRIBUTE_UNUSED;
      struct bfd_link_info *info;
 {
   struct accumulate *ainfo;
@@ -537,7 +535,8 @@ bfd_ecoff_debug_init (output_bfd, output_debug, output_swap, info)
       output_debug->symbolic_header.issMax = 1;
     }
 
-  if (!obstack_begin (&ainfo->memory, 4050))
+  ainfo->memory = objalloc_create ();
+  if (ainfo->memory == NULL)
     {
       bfd_set_error (bfd_error_no_memory);
       return NULL;
@@ -552,9 +551,9 @@ bfd_ecoff_debug_init (output_bfd, output_debug, output_swap, info)
 void
 bfd_ecoff_debug_free (handle, output_bfd, output_debug, output_swap, info)
      PTR handle;
-     bfd *output_bfd;
-     struct ecoff_debug_info *output_debug;
-     const struct ecoff_debug_swap *output_swap;
+     bfd *output_bfd ATTRIBUTE_UNUSED;
+     struct ecoff_debug_info *output_debug ATTRIBUTE_UNUSED;
+     const struct ecoff_debug_swap *output_swap ATTRIBUTE_UNUSED;
      struct bfd_link_info *info;
 {
   struct accumulate *ainfo = (struct accumulate *) handle;
@@ -564,7 +563,7 @@ bfd_ecoff_debug_free (handle, output_bfd, output_debug, output_swap, info)
   if (! info->relocateable)
     bfd_hash_table_free (&ainfo->str_hash.table);
 
-  obstack_free (&ainfo->memory, (PTR) NULL);
+  objalloc_free (ainfo->memory);
 
   free (ainfo);
 }
@@ -669,7 +668,7 @@ bfd_ecoff_debug_accumulate (handle, output_bfd, output_debug, output_swap,
 					     * sizeof (RFDT)));
 
   sz = (input_symhdr->crfd + input_symhdr->ifdMax) * external_rfd_size;
-  rfd_out = (bfd_byte *) obstack_alloc (&ainfo->memory, sz);
+  rfd_out = (bfd_byte *) objalloc_alloc (ainfo->memory, sz);
   if (!input_debug->ifdmap || !rfd_out)
     {
       bfd_set_error (bfd_error_no_memory);
@@ -707,17 +706,18 @@ bfd_ecoff_debug_accumulate (handle, output_bfd, output_debug, output_swap,
 	  struct string_hash_entry *fh;
 
 	  /* We look up a string formed from the file name and the
-	     number of symbols.  Sometimes an include file will
-	     conditionally define a typedef or something based on the
-	     order of include files.  Using the number of symbols as a
-	     hash reduces the chance that we will merge symbol
-	     information that should not be merged.  */
+	     number of symbols and aux entries.  Sometimes an include
+	     file will conditionally define a typedef or something
+	     based on the order of include files.  Using the number of
+	     symbols and aux entries as a hash reduces the chance that
+	     we will merge symbol information that should not be
+	     merged.  */
 	  name = input_debug->ss + fdr.issBase + fdr.rss;
 
 	  lookup = (char *) bfd_malloc (strlen (name) + 20);
 	  if (lookup == NULL)
 	    return false;
-	  sprintf (lookup, "%s %lx", name, fdr.csym);
+	  sprintf (lookup, "%s %lx %lx", name, fdr.csym, fdr.caux);
 
 	  fh = string_hash_lookup (&ainfo->fdr_hash, lookup, true, true);
 	  free (lookup);
@@ -769,7 +769,7 @@ bfd_ecoff_debug_accumulate (handle, output_bfd, output_debug, output_swap,
   /* Look through the FDR's and copy over all associated debugging
      information.  */
   sz = copied * external_fdr_size;
-  fdr_out = (bfd_byte *) obstack_alloc (&ainfo->memory, sz);
+  fdr_out = (bfd_byte *) objalloc_alloc (ainfo->memory, sz);
   if (!fdr_out)
     {
       bfd_set_error (bfd_error_no_memory);
@@ -824,7 +824,7 @@ bfd_ecoff_debug_accumulate (handle, output_bfd, output_debug, output_swap,
 	 out again.  */
       fgotfilename = false;
       sz = fdr.csym * external_sym_size;
-      sym_out = (bfd_byte *) obstack_alloc (&ainfo->memory, sz);
+      sym_out = (bfd_byte *) objalloc_alloc (ainfo->memory, sz);
       if (!sym_out)
 	{
 	  bfd_set_error (bfd_error_no_memory);
@@ -1025,7 +1025,7 @@ bfd_ecoff_debug_accumulate (handle, output_bfd, output_debug, output_swap,
 		+ fdr.ipdFirst * insz);
 	  end = in + fdr.cpd * insz;
 	  sz = fdr.cpd * outsz;
-	  out = (bfd_byte *) obstack_alloc (&ainfo->memory, sz);
+	  out = (bfd_byte *) objalloc_alloc (ainfo->memory, sz);
 	  if (!out)
 	    {
 	      bfd_set_error (bfd_error_no_memory);
@@ -1066,7 +1066,7 @@ bfd_ecoff_debug_accumulate (handle, output_bfd, output_debug, output_swap,
 		+ fdr.ioptBase * insz);
 	  end = in + fdr.copt * insz;
 	  sz = fdr.copt * outsz;
-	  out = (bfd_byte *) obstack_alloc (&ainfo->memory, sz);
+	  out = (bfd_byte *) objalloc_alloc (ainfo->memory, sz);
 	  if (!out)
 	    {
 	      bfd_set_error (bfd_error_no_memory);
@@ -1247,8 +1247,8 @@ bfd_ecoff_debug_accumulate_other (handle, output_bfd, output_debug,
       internal_sym.sc = scUndefined;
       internal_sym.index = indexNil;
 
-      external_sym = (PTR) obstack_alloc (&ainfo->memory,
-					  output_swap->external_sym_size);
+      external_sym = (PTR) objalloc_alloc (ainfo->memory,
+					   output_swap->external_sym_size);
       if (!external_sym)
 	{
 	  bfd_set_error (bfd_error_no_memory);
@@ -1267,8 +1267,8 @@ bfd_ecoff_debug_accumulate_other (handle, output_bfd, output_debug,
      the lang field to be langC.  The fBigendian field will
      indicate little endian format, but it doesn't matter because
      it only applies to aux fields and there are none.  */
-  external_fdr = (PTR) obstack_alloc (&ainfo->memory,
-				      output_swap->external_fdr_size);
+  external_fdr = (PTR) objalloc_alloc (ainfo->memory,
+				       output_swap->external_fdr_size);
   if (!external_fdr)
     {
       bfd_set_error (bfd_error_no_memory);
@@ -1412,7 +1412,7 @@ bfd_ecoff_debug_one_external (abfd, debug, swap, name, esym)
 /*ARGSUSED*/
 static void
 ecoff_align_debug (abfd, debug, swap)
-     bfd *abfd;
+     bfd *abfd ATTRIBUTE_UNUSED;
      struct ecoff_debug_info *debug;
      const struct ecoff_debug_swap *swap;
 {

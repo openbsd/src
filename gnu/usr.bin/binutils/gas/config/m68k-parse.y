@@ -1,5 +1,5 @@
 /* m68k.y -- bison grammar for m68k operand parsing
-   Copyright (C) 1995 Free Software Foundation, Inc.
+   Copyright (C) 1995, 96, 1997, 1998 Free Software Foundation, Inc.
    Written by Ken Raeburn and Ian Lance Taylor, Cygnus Support
 
    This file is part of GAS, the GNU Assembler.
@@ -82,7 +82,7 @@
 /* Internal functions.  */
 
 static enum m68k_register m68k_reg_parse PARAMS ((char **));
-static int yylex PARAMS (());
+static int yylex PARAMS ((void));
 static void yyerror PARAMS ((const char *));
 
 /* The parser sets fields pointed to by this global variable.  */
@@ -245,7 +245,7 @@ motorola_operand:
 	| '(' EXPR ',' zapc ',' zpc ')'
 		{
 		  if ($4 == PC || $4 == ZPC)
-		    yyerror ("syntax error");
+		    yyerror (_("syntax error"));
 		  op->mode = BASE;
 		  op->reg = $6;
 		  op->disp = $2;
@@ -259,6 +259,12 @@ motorola_operand:
 		  op->reg = $5;
 		  op->disp = $2;
 		  op->index = $4;
+		}
+	| '(' zdireg ',' EXPR ')'
+		{
+		  op->mode = BASE;
+		  op->disp = $4;
+		  op->index = $2;
 		}
 	| EXPR '(' zapc ',' zireg ')'
 		{
@@ -276,7 +282,7 @@ motorola_operand:
 	| EXPR '(' zapc ',' zpc ')'
 		{
 		  if ($3 == PC || $3 == ZPC)
-		    yyerror ("syntax error");
+		    yyerror (_("syntax error"));
 		  op->mode = BASE;
 		  op->reg = $5;
 		  op->disp = $1;
@@ -287,7 +293,7 @@ motorola_operand:
 	| '(' zapc ',' zpc ')'
 		{
 		  if ($2 == PC || $2 == ZPC)
-		    yyerror ("syntax error");
+		    yyerror (_("syntax error"));
 		  op->mode = BASE;
 		  op->reg = $4;
 		  op->index.reg = $2;
@@ -353,7 +359,7 @@ motorola_operand:
 	| '(' '[' EXPR ',' zapc ',' zpc ']' optcexpr ')'
 		{
 		  if ($5 == PC || $5 == ZPC)
-		    yyerror ("syntax error");
+		    yyerror (_("syntax error"));
 		  op->mode = PRE;
 		  op->reg = $7;
 		  op->disp = $3;
@@ -365,7 +371,7 @@ motorola_operand:
 	| '(' '[' zapc ',' zpc ']' optcexpr ')'
 		{
 		  if ($3 == PC || $3 == ZPC)
-		    yyerror ("syntax error");
+		    yyerror (_("syntax error"));
 		  op->mode = PRE;
 		  op->reg = $5;
 		  op->index.reg = $3;
@@ -390,7 +396,7 @@ mit_operand:
 		{
 		  /* We use optzapc to avoid a shift/reduce conflict.  */
 		  if ($1 < ADDR0 || $1 > ADDR7)
-		    yyerror ("syntax error");
+		    yyerror (_("syntax error"));
 		  op->mode = AINDR;
 		  op->reg = $1;
 		}
@@ -398,7 +404,7 @@ mit_operand:
 		{
 		  /* We use optzapc to avoid a shift/reduce conflict.  */
 		  if ($1 < ADDR0 || $1 > ADDR7)
-		    yyerror ("syntax error");
+		    yyerror (_("syntax error"));
 		  op->mode = AINC;
 		  op->reg = $1;
 		}
@@ -406,7 +412,7 @@ mit_operand:
 		{
 		  /* We use optzapc to avoid a shift/reduce conflict.  */
 		  if ($1 < ADDR0 || $1 > ADDR7)
-		    yyerror ("syntax error");
+		    yyerror (_("syntax error"));
 		  op->mode = ADEC;
 		  op->reg = $1;
 		}
@@ -607,7 +613,10 @@ ireglist:
 reglistpair:
 	  reglistreg '-' reglistreg
 		{
-		  $$ = (1 << ($3 + 1)) - 1 - ((1 << $1) - 1);
+		  if ($1 <= $3)
+		    $$ = (1 << ($3 + 1)) - 1 - ((1 << $1) - 1);
+		  else
+		    $$ = (1 << ($1 + 1)) - 1 - ((1 << $3) - 1);
 		}
 	;
 
@@ -862,30 +871,42 @@ yylex ()
 	      ++s;
 	      break;
 	    default:
-	      yyerror ("illegal size specification");
+	      yyerror (_("illegal size specification"));
 	      yylval.indexreg.size = SIZE_UNSPEC;
 	      break;
 	    }
 	}
 
-      if (*s != '*' && *s != ':')
-	yylval.indexreg.scale = 1;
-      else
+      yylval.indexreg.scale = 1;
+
+      if (*s == '*' || *s == ':')
 	{
+	  expressionS scale;
+
 	  ++s;
-	  switch (*s)
+
+	  hold = input_line_pointer;
+	  input_line_pointer = s;
+	  expression (&scale);
+	  s = input_line_pointer;
+	  input_line_pointer = hold;
+
+	  if (scale.X_op != O_constant)
+	    yyerror (_("scale specification must resolve to a number"));
+	  else
 	    {
-	    case '1':
-	    case '2':
-	    case '4':
-	    case '8':
-	      yylval.indexreg.scale = *s - '0';
-	      ++s;
-	      break;
-	    default:
-	      yyerror ("illegal scale specification");
-	      yylval.indexreg.scale = 1;
-	      break;
+	      switch (scale.X_add_number)
+		{
+		case 1:
+		case 2:
+		case 4:
+		case 8:
+		  yylval.indexreg.scale = scale.X_add_number;
+		  break;
+		default:
+		  yyerror (_("invalid scale value"));
+		  break;
+		}
 	    }
 	}
 

@@ -8,6 +8,9 @@ The documentation on using BFD is scanty and may be occasionally
 incorrect.  Pointers to documentation problems, or an entirely
 rewritten manual, would be appreciated.
 
+There is some BFD internals documentation in doc/bfdint.texi which may
+help programmers who want to modify BFD.
+
 BFD is normally built as part of another package.  See the build
 instructions for that package, probably in a README file in the
 appropriate directory.
@@ -27,13 +30,11 @@ BFD supports the following configure options:
 	bit integer type, such as gcc.
   --enable-shared
 	Build BFD as a shared library.
-  --enable-commonbfdlib
-	Build BFD, opcodes, and libiberty as a single shared library.
   --with-mmap
 	Use mmap when accessing files.  This is faster on some hosts,
 	but slower on others.  It may not work on all hosts.
 
-Report bugs with BFD to bug-gnu-utils@prep.ai.mit.edu.
+Report bugs with BFD to bug-gnu-utils@gnu.org.
 
 Patches are encouraged.  When sending patches, always send the output
 of diff -u or diff -c from the original file to the new file.  Do not

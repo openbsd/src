@@ -1,6 +1,6 @@
 /* messages.c - error reporter -
-   Copyright (C) 1987, 91, 92, 93, 94, 95, 1996 Free Software Foundation, Inc.
-
+   Copyright (C) 1987, 91, 92, 93, 94, 95, 96, 97, 1998
+   Free Software Foundation, Inc.
    This file is part of GAS, the GNU Assembler.
 
    GAS is free software; you can redistribute it and/or modify
@@ -42,6 +42,7 @@ typedef int * va_list;
 #define va_end(ARGS)
 #endif
 
+static void identify PARAMS ((char *));
 static void as_show_where PARAMS ((void));
 static void as_warn_internal PARAMS ((char *, unsigned int, char *));
 static void as_bad_internal PARAMS ((char *, unsigned int, char *));
@@ -101,7 +102,7 @@ identify (file)
 
   if (file)
     fprintf (stderr, "%s: ", file);
-  fprintf (stderr, "Assembler messages:\n");
+  fprintf (stderr, _("Assembler messages:\n"));
 }
 
 static int warning_count;	/* Count of number of warnings issued */
@@ -218,7 +219,7 @@ as_warn_internal (file, line, buffer)
   identify (file);
   if (file)
     fprintf (stderr, "%s:%u: ", file, line);
-  fprintf (stderr, "Warning: ");
+  fprintf (stderr, _("Warning: "));
   fputs (buffer, stderr);
   (void) putc ('\n', stderr);
 #ifndef NO_LISTING
@@ -240,7 +241,7 @@ void
 as_warn (const char *format,...)
 {
   va_list args;
-  char buffer[200];
+  char buffer[2000];
 
   if (!flag_no_warnings)
     {
@@ -258,7 +259,7 @@ as_warn (format, va_alist)
      va_dcl
 {
   va_list args;
-  char buffer[200];
+  char buffer[2000];
 
   if (!flag_no_warnings)
     {
@@ -279,7 +280,7 @@ void
 as_warn_where (char *file, unsigned int line, const char *format,...)
 {
   va_list args;
-  char buffer[200];
+  char buffer[2000];
 
   if (!flag_no_warnings)
     {
@@ -299,7 +300,7 @@ as_warn_where (file, line, format, va_alist)
      va_dcl
 {
   va_list args;
-  char buffer[200];
+  char buffer[2000];
 
   if (!flag_no_warnings)
     {
@@ -327,7 +328,7 @@ as_bad_internal (file, line, buffer)
   identify (file);
   if (file)
     fprintf (stderr, "%s:%u: ", file, line);
-  fprintf (stderr, "Error: ");
+  fprintf (stderr, _("Error: "));
   fputs (buffer, stderr);
   (void) putc ('\n', stderr);
 #ifndef NO_LISTING
@@ -349,7 +350,7 @@ void
 as_bad (const char *format,...)
 {
   va_list args;
-  char buffer[200];
+  char buffer[2000];
 
   va_start (args, format);
   vsprintf (buffer, format, args);
@@ -366,7 +367,7 @@ as_bad (format, va_alist)
      va_dcl
 {
   va_list args;
-  char buffer[200];
+  char buffer[2000];
 
   va_start (args);
   vsprintf (buffer, format, args);
@@ -385,7 +386,7 @@ void
 as_bad_where (char *file, unsigned int line, const char *format,...)
 {
   va_list args;
-  char buffer[200];
+  char buffer[2000];
 
   va_start (args, format);
   vsprintf (buffer, format, args);
@@ -404,7 +405,7 @@ as_bad_where (file, line, format, va_alist)
      va_dcl
 {
   va_list args;
-  char buffer[200];
+  char buffer[2000];
 
   va_start (args);
   vsprintf (buffer, format, args);
@@ -431,7 +432,7 @@ as_fatal (const char *format,...)
 
   as_show_where ();
   va_start (args, format);
-  fprintf (stderr, "Fatal error: ");
+  fprintf (stderr, _("Fatal error: "));
   vfprintf (stderr, format, args);
   (void) putc ('\n', stderr);
   va_end (args);
@@ -448,7 +449,7 @@ as_fatal (format, va_alist)
 
   as_show_where ();
   va_start (args);
-  fprintf (stderr, "Fatal error: ");
+  fprintf (stderr, _("Fatal error: "));
   vfprintf (stderr, format, args);
   (void) putc ('\n', stderr);
   va_end (args);
@@ -467,12 +468,13 @@ as_assert (file, line, fn)
      int line;
 {
   as_show_where ();
-  fprintf (stderr, "Internal error!\n");
-  fprintf (stderr, "Assertion failure");
+  fprintf (stderr, _("Internal error!\n"));
   if (fn)
-    fprintf (stderr, " in %s", fn);
-  fprintf (stderr, " at %s line %d.\n", file, line);
-  fprintf (stderr, "Please report this bug.\n");
+    fprintf (stderr, _("Assertion failure in %s at %s line %d.\n"),
+	     fn, file, line);
+  else
+    fprintf (stderr, _("Assertion failure at %s line %d.\n"), file, line);
+  fprintf (stderr, _("Please report this bug.\n"));
   xexit (EXIT_FAILURE);
 }
 
@@ -484,10 +486,13 @@ as_abort (file, line, fn)
      int line;
 {
   as_show_where ();
-  fprintf (stderr, "Internal error, aborting at %s line %d", file, line);
   if (fn)
-    fprintf (stderr, " in %s", fn);
-  fprintf (stderr, "\nPlease report this bug.\n");
+    fprintf (stderr, _("Internal error, aborting at %s line %d in %s\n"),
+	     file, line, fn);
+  else
+    fprintf (stderr, _("Internal error, aborting at %s line %d\n"),
+	     file, line);
+  fprintf (stderr, _("Please report this bug.\n"));
   xexit (EXIT_FAILURE);
 }
 

@@ -1,5 +1,5 @@
 # Expect script for ld-shared tests
-#   Copyright (C) 1994, 1995, 1996 Free Software Foundation
+#   Copyright (C) 1994, 1995, 1996, 1997, 1998 Free Software Foundation
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -41,21 +41,20 @@ if { ![istarget i386-*-sysv4*] \
      && ![istarget i586-*-linux*] \
      && ![istarget m68k-*-linux*] \
      && ![istarget mips*-*-irix5*] \
+     && ![istarget powerpc-*-elf*] \
+     && ![istarget powerpc-*-linux*] \
+     && ![istarget powerpc-*-sysv4*] \
      && ![istarget sparc*-*-elf] \
      && ![istarget sparc*-*-solaris2*] \
      && ![istarget sparc*-*-sunos4*] \
+     && ![istarget sparc*-*-linux*] \
      && ![istarget rs6000*-*-aix*] \
      && ![istarget powerpc*-*-aix*] } {
     return
 }
 
-if { [istarget i386-*-linuxaout*] \
-     || [istarget i486-*-linuxaout*] \
-     || [istarget i586-*-linuxaout*] \
-     || [istarget i386-*-linuxoldld*] \
-     || [istarget i486-*-linuxoldld*] \
-     || [istarget i586-*-linuxoldld*] \
-     || [istarget m68k-*-linuxaout*] } {
+if { [istarget *-*-linux*aout*] \
+     || [istarget *-*-linux*oldld*] } {
     return
 }
 
@@ -93,7 +92,7 @@ if { [istarget rs6000*-*-aix*] || [istarget powerpc*-*-aix*] } {
 }
 
 # The test procedure.
-proc shared_test { progname testname main sh1 sh2 dat } {
+proc shared_test { progname testname main sh1 sh2 dat args } {
     global ld
     global srcdir
     global subdir
@@ -101,13 +100,15 @@ proc shared_test { progname testname main sh1 sh2 dat } {
     global host_triplet
     global tmpdir
 
+    if [llength $args] { set shldflags [lindex $args 0] } else { set shldflags "" }
+
     # Build the shared library.
     # On AIX, we need to use an export file.
     set shared -shared
     if { [istarget rs6000*-*-aix*] || [istarget powerpc*-*-aix*] } {
 	set shared "-bM:SRE -bE:$tmpdir/xcoff.exp"
     }
-    if {![ld_simple_link $ld $tmpdir/$progname.so "$shared $tmpdir/$sh1 $tmpdir/$sh2"]} {
+    if {![ld_simple_link $ld $tmpdir/$progname.so "$shared $shldflags $tmpdir/$sh1 $tmpdir/$sh2"]} {
         fail "$testname"
     	return
     }
@@ -139,7 +140,7 @@ proc shared_test { progname testname main sh1 sh2 dat } {
     send_log "diff $tmpdir/$progname.out $srcdir/$subdir/$dat.dat\n"
     verbose "diff $tmpdir/$progname.out $srcdir/$subdir/$dat.dat"
     catch "exec diff $tmpdir/$progname.out $srcdir/$subdir/$dat.dat" exec_output
-    set exec_output [prune_system_crud $host_triplet $exec_output]
+    set exec_output [prune_warnings $exec_output]
 
     if {![string match "" $exec_output]} then {
 	send_log "$exec_output\n"
@@ -192,9 +193,20 @@ if ![ld_compile "$CC $CFLAGS $SHCFLAG" $srcdir/$subdir/main.c $tmpdir/mainnp.o] 
     } else { if { [istarget rs6000*-*-aix*] || [istarget powerpc*-*-aix*] } {
 	shared_test shnp "shared (nonPIC)" mainnp.o sh1np.o sh2np.o xcoff
     } else {
-	# SunOS can not handle non PIC code in a shared library
+	# SunOS non PIC shared libraries don't permit some cases of
+	# overriding.
 	setup_xfail "*-*-sunos4*"
 	shared_test shnp "shared (non PIC)" mainnp.o sh1np.o sh2np.o shared
+
+	# Test ELF shared library relocations with a non-zero load
+	# address for the library.  Near as I can tell, the R_*_RELATIVE
+	# relocations for various targets are broken in the case where
+	# the load address is not zero (which is the default).
+	setup_xfail "*-*-sunos4*"
+	setup_xfail "*-*-linux*libc1"
+	shared_test shnp "shared (non PIC, load offset)" \
+		mainnp.o sh1np.o sh2np.o shared \
+		"-T $srcdir/$subdir/elf-offset.ld"
     } }
 
     # Now compile the code using -fpic.
@@ -223,7 +235,8 @@ if ![ld_compile "$CC $CFLAGS $SHCFLAG $picflag" $srcdir/$subdir/main.c $tmpdir/m
         if { [istarget rs6000*-*-aix*] || [istarget powerpc*-*-aix*] } {
 	    shared_test shmpnp "shared (PIC main, non PIC so)" mainp.o sh1np.o sh2np.o xcoff
 	} else {
-	    # SunOS can not handle non PIC code in a shared library
+	    # SunOS non PIC shared libraries don't permit some cases of
+	    # overriding.
 	    setup_xfail "*-*-sunos4*"
 	    shared_test shmpnp "shared (PIC main, non PIC so)" mainp.o sh1np.o sh2np.o shared
 	}

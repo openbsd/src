@@ -179,6 +179,8 @@ Kinds of operands:
 	*	Prefetch function constant. (v9)
 	x	OPF field (v9 impdep).
 	0	32/64 bit immediate for set or setx (v9) insns
+	_	Ancillary state register in rd (v9a)
+	/	Ancillary state register in rs1 (v9a)
 
 The following chars are unused: (note: ,[] are used as punctuation)
 [345]
@@ -212,7 +214,7 @@ The following chars are unused: (note: ,[] are used as punctuation)
 #define	RS1_G0	RS1(~0)
 #define	RS2_G0	RS2(~0)
 
-extern struct sparc_opcode sparc_opcodes[];
+extern const struct sparc_opcode sparc_opcodes[];
 extern const int sparc_num_opcodes;
 
 int sparc_encode_asi ();

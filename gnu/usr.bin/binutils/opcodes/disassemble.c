@@ -1,5 +1,6 @@
 /* Select disassembly routine for specified architecture.
-   Copyright (C) 1994, 1995 Free Software Foundation, Inc.
+   Copyright (C) 1994, 95, 96, 97, 98, 99, 2000
+   Free Software Foundation, Inc.
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -15,31 +16,45 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
-#include "ansidecl.h"
+#include "sysdep.h"
 #include "dis-asm.h"
 
 #ifdef ARCH_all
 #define ARCH_a29k
 #define ARCH_alpha
+#define ARCH_arc
 #define ARCH_arm
+#define ARCH_avr
+#define ARCH_d10v
+#define ARCH_d30v
 #define ARCH_h8300
 #define ARCH_h8500
 #define ARCH_hppa
+#define ARCH_i370
 #define ARCH_i386
 #define ARCH_i960
+#define ARCH_fr30
+#define ARCH_m32r
 #define ARCH_m68k
 #define ARCH_m88k
+#define ARCH_mcore
 #define ARCH_mips
 #define ARCH_mn10200
 #define ARCH_mn10300
 #define ARCH_ns32k
+#define ARCH_pj
 #define ARCH_powerpc
 #define ARCH_rs6000
 #define ARCH_sh
 #define ARCH_sparc
+#define ARCH_tic30
+#define ARCH_tic80
+#define ARCH_v850
+#define ARCH_vax
 #define ARCH_w65
 #define ARCH_z8k
 #endif
+
 
 disassembler_ftype
 disassembler (abfd)
@@ -63,12 +78,35 @@ disassembler (abfd)
       disassemble = print_insn_alpha;
       break;
 #endif
+#ifdef ARCH_arc
+    case bfd_arch_arc:
+      {
+	disassemble = arc_get_disassembler (bfd_get_mach (abfd),
+					    bfd_big_endian (abfd));
+	break;
+      }
+#endif
 #ifdef ARCH_arm
     case bfd_arch_arm:
       if (bfd_big_endian (abfd))
 	disassemble = print_insn_big_arm;
       else
 	disassemble = print_insn_little_arm;
+      break;
+#endif
+#ifdef ARCH_avr
+    case bfd_arch_avr:
+      disassemble = print_insn_avr;
+      break;
+#endif
+#ifdef ARCH_d10v
+    case bfd_arch_d10v:
+      disassemble = print_insn_d10v;
+      break;
+#endif
+#ifdef ARCH_d30v
+    case bfd_arch_d30v:
+      disassemble = print_insn_d30v;
       break;
 #endif
 #ifdef ARCH_h8300
@@ -91,14 +129,32 @@ disassembler (abfd)
       disassemble = print_insn_hppa;
       break;
 #endif
+#ifdef ARCH_i370
+    case bfd_arch_i370:
+      disassemble = print_insn_i370;
+      break;
+#endif
 #ifdef ARCH_i386
     case bfd_arch_i386:
-      disassemble = print_insn_i386;
+      if (bfd_get_mach (abfd) == bfd_mach_i386_i386_intel_syntax)
+        disassemble = print_insn_i386_intel;
+      else
+        disassemble = print_insn_i386_att;
       break;
 #endif
 #ifdef ARCH_i960
     case bfd_arch_i960:
       disassemble = print_insn_i960;
+      break;
+#endif
+#ifdef ARCH_fr30
+    case bfd_arch_fr30:
+      disassemble = print_insn_fr30;
+      break;
+#endif
+#ifdef ARCH_m32r
+    case bfd_arch_m32r:
+      disassemble = print_insn_m32r;
       break;
 #endif
 #ifdef ARCH_m68k
@@ -114,6 +170,11 @@ disassembler (abfd)
 #ifdef ARCH_ns32k
     case bfd_arch_ns32k:
       disassemble = print_insn_ns32k;
+      break;
+#endif
+#ifdef ARCH_mcore
+    case bfd_arch_mcore:
+      disassemble = print_insn_mcore;
       break;
 #endif
 #ifdef ARCH_mips
@@ -132,6 +193,11 @@ disassembler (abfd)
 #ifdef ARCH_mn10300
     case bfd_arch_mn10300:
       disassemble = print_insn_mn10300;
+      break;
+#endif
+#ifdef ARCH_pj
+    case bfd_arch_pj:
+      disassemble = print_insn_pj;
       break;
 #endif
 #ifdef ARCH_powerpc
@@ -160,6 +226,21 @@ disassembler (abfd)
       disassemble = print_insn_sparc;
       break;
 #endif
+#ifdef ARCH_tic30
+    case bfd_arch_tic30:
+      disassemble = print_insn_tic30;
+      break;
+#endif
+#ifdef ARCH_tic80
+    case bfd_arch_tic80:
+      disassemble = print_insn_tic80;
+      break;
+#endif
+#ifdef ARCH_v850
+    case bfd_arch_v850:
+      disassemble = print_insn_v850;
+      break;
+#endif
 #ifdef ARCH_w65
     case bfd_arch_w65:
       disassemble = print_insn_w65;
@@ -173,8 +254,24 @@ disassembler (abfd)
 	disassemble = print_insn_z8002;
       break;
 #endif
+#ifdef ARCH_vax
+    case bfd_arch_vax:
+      disassemble = print_insn_vax;
+      break;
+#endif
     default:
       return 0;
     }
   return disassemble;
+}
+
+void
+disassembler_usage (stream)
+     FILE *stream ATTRIBUTE_UNUSED;
+{
+#ifdef ARCH_arm
+  print_arm_disassembler_options (stream);
+#endif
+  
+  return;
 }

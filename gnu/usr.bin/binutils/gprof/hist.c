@@ -4,13 +4,17 @@
 #include <stdio.h>
 #include "libiberty.h"
 #include "gprof.h"
-#include "core.h"
+#include "corefile.h"
 #include "gmon_io.h"
 #include "gmon_out.h"
 #include "hist.h"
 #include "symtab.h"
 #include "sym_ids.h"
 #include "utils.h"
+
+#define UNITS_TO_CODE (offset_to_code / sizeof(UNIT))
+
+static void scale_and_align_entries PARAMS ((void));
 
 /* declarations of automatically generated functions to output blurbs: */
 extern void flat_blurb PARAMS ((FILE * fp));
@@ -98,7 +102,7 @@ DEFUN (hist_read_rec, (ifp, filename), FILE * ifp AND const char *filename)
 
   if (fread (&hdr, sizeof (hdr), 1, ifp) != 1)
     {
-      fprintf (stderr, "%s: %s: unexpected end of file\n",
+      fprintf (stderr, _("%s: %s: unexpected end of file\n"),
 	       whoami, filename);
       done (1);
     }
@@ -126,16 +130,17 @@ DEFUN (hist_read_rec, (ifp, filename), FILE * ifp AND const char *filename)
 
   DBG (SAMPLEDEBUG,
        printf ("[hist_read_rec] n_lowpc 0x%lx n_highpc 0x%lx ncnt %d\n",
-	       n_lowpc, n_highpc, ncnt);
+	       (unsigned long) n_lowpc, (unsigned long) n_highpc, ncnt);
        printf ("[hist_read_rec] s_lowpc 0x%lx s_highpc 0x%lx nsamples %d\n",
-	       s_lowpc, s_highpc, hist_num_bins);
+	       (unsigned long) s_lowpc, (unsigned long) s_highpc,
+	       hist_num_bins);
        printf ("[hist_read_rec]   lowpc 0x%lx   highpc 0x%lx\n",
-	       lowpc, highpc));
+	       (unsigned long) lowpc, (unsigned long) highpc));
 
   if (n_lowpc != s_lowpc || n_highpc != s_highpc
       || ncnt != hist_num_bins || hz != profrate)
     {
-      fprintf (stderr, "%s: `%s' is incompatible with first gmon file\n",
+      fprintf (stderr, _("%s: `%s' is incompatible with first gmon file\n"),
 	       whoami, filename);
       done (1);
     }
@@ -151,7 +156,7 @@ DEFUN (hist_read_rec, (ifp, filename), FILE * ifp AND const char *filename)
       if (fread (&count[0], sizeof (count), 1, ifp) != 1)
 	{
 	  fprintf (stderr,
-		   "%s: %s: unexpected EOF after reading %d of %d samples\n",
+		   _("%s: %s: unexpected EOF after reading %d of %d samples\n"),
 		   whoami, filename, i, hist_num_bins);
 	  done (1);
 	}
@@ -225,8 +230,9 @@ scale_and_align_entries ()
 	{
 	  DBG (SAMPLEDEBUG,
 	       printf ("[scale_and_align_entries] pushing 0x%lx to 0x%lx\n",
-		       sym->hist.scaled_addr,
-		       sym->hist.scaled_addr + UNITS_TO_CODE));
+		       (unsigned long) sym->hist.scaled_addr,
+		       (unsigned long) (sym->hist.scaled_addr
+					+ UNITS_TO_CODE)));
 	  sym->hist.scaled_addr += UNITS_TO_CODE;
 	}
     }
@@ -277,7 +283,8 @@ DEFUN_VOID (hist_assign_samples)
   bfd_vma bin_low_pc, bin_high_pc;
   bfd_vma sym_low_pc, sym_high_pc;
   bfd_vma overlap, addr;
-  int bin_count, i, j;
+  int bin_count, i;
+  unsigned int j;
   double time, credit;
 
   /* read samples and assign to symbols: */
@@ -300,7 +307,8 @@ DEFUN_VOID (hist_assign_samples)
       DBG (SAMPLEDEBUG,
 	   printf (
       "[assign_samples] bin_low_pc=0x%lx, bin_high_pc=0x%lx, bin_count=%d\n",
-		    sizeof (UNIT) * bin_low_pc, sizeof (UNIT) * bin_high_pc,
+		    (unsigned long) (sizeof (UNIT) * bin_low_pc),
+		    (unsigned long) (sizeof (UNIT) * bin_high_pc),
 		    bin_count));
       total_time += time;
 
@@ -333,9 +341,10 @@ DEFUN_VOID (hist_assign_samples)
 	      DBG (SAMPLEDEBUG,
 		   printf (
 			    "[assign_samples] [0x%lx,0x%lx) %s gets %f ticks %ld overlap\n",
-			    symtab.base[j].addr, sizeof (UNIT) * sym_high_pc,
+			    (unsigned long) symtab.base[j].addr,
+			    (unsigned long) (sizeof (UNIT) * sym_high_pc),
 			    symtab.base[j].name, overlap * time / hist_scale,
-			    overlap));
+			    (long) overlap));
 	      addr = symtab.base[j].addr;
 	      credit = overlap * time / hist_scale;
 	      /*
@@ -369,35 +378,35 @@ DEFUN (print_header, (prefix), const char prefix)
 {
   char unit[64];
 
-  sprintf (unit, "%c%c/call", prefix, hist_dimension_abbrev);
+  sprintf (unit, _("%c%c/call"), prefix, hist_dimension_abbrev);
 
   if (bsd_style_output)
     {
-      printf ("\ngranularity: each sample hit covers %ld byte(s)",
+      printf (_("\ngranularity: each sample hit covers %ld byte(s)"),
 	      (long) hist_scale * sizeof (UNIT));
       if (total_time > 0.0)
 	{
-	  printf (" for %.2f%% of %.2f %s\n\n",
+	  printf (_(" for %.2f%% of %.2f %s\n\n"),
 		  100.0 / total_time, total_time / hz, hist_dimension);
 	}
     }
   else
     {
-      printf ("\nEach sample counts as %g %s.\n", 1.0 / hz, hist_dimension);
+      printf (_("\nEach sample counts as %g %s.\n"), 1.0 / hz, hist_dimension);
     }
 
   if (total_time <= 0.0)
     {
-      printf (" no time accumulated\n\n");
+      printf (_(" no time accumulated\n\n"));
       /* this doesn't hurt since all the numerators will be zero: */
       total_time = 1.0;
     }
 
   printf ("%5.5s %10.10s %8.8s %8.8s %8.8s %8.8s  %-8.8s\n",
-	  "%  ", "cumulative", "self  ", "", "self  ", "total ", "");
+	  "%  ", _("cumulative"), _("self  "), "", _("self  "), _("total "), "");
   printf ("%5.5s %9.9s  %8.8s %8.8s %8.8s %8.8s  %-8.8s\n",
-	  "time", hist_dimension, hist_dimension, "calls", unit, unit,
-	  "name");
+	  _("time"), hist_dimension, hist_dimension, _("calls"), unit, unit,
+	  _("name"));
 }
 
 
@@ -422,9 +431,9 @@ DEFUN (print_line, (sym, scale), Sym * sym AND double scale)
 	      total_time > 0.0 ? 100 * sym->hist.time / total_time : 0.0,
 	      accum_time / hz, sym->hist.time / hz);
     }
-  if (sym->ncalls)
+  if (sym->ncalls != 0)
     {
-      printf (" %8d %8.2f %8.2f  ",
+      printf (" %8lu %8.2f %8.2f  ",
 	      sym->ncalls, scale * sym->hist.time / hz / sym->ncalls,
 	  scale * (sym->hist.time + sym->cg.child_time) / hz / sym->ncalls);
     }
@@ -455,7 +464,6 @@ DEFUN (cmp_time, (lp, rp), const PTR lp AND const PTR rp)
   const Sym *left = *(const Sym **) lp;
   const Sym *right = *(const Sym **) rp;
   double time_diff;
-  long call_diff;
 
   time_diff = right->hist.time - left->hist.time;
   if (time_diff > 0.0)
@@ -467,12 +475,11 @@ DEFUN (cmp_time, (lp, rp), const PTR lp AND const PTR rp)
       return -1;
     }
 
-  call_diff = right->ncalls - left->ncalls;
-  if (call_diff > 0)
+  if (right->ncalls > left->ncalls)
     {
       return 1;
     }
-  if (call_diff < 0)
+  if (right->ncalls < left->ncalls)
     {
       return -1;
     }
@@ -488,7 +495,8 @@ void
 DEFUN_VOID (hist_print)
 {
   Sym **time_sorted_syms, *top_dog, *sym;
-  int index, log_scale;
+  unsigned int index;
+  int log_scale;
   double top_time, time;
   bfd_vma addr;
 
@@ -506,13 +514,13 @@ DEFUN_VOID (hist_print)
     {
       if (print_descriptions)
 	{
-	  printf ("\n\n\nflat profile:\n");
+	  printf (_("\n\n\nflat profile:\n"));
 	  flat_blurb (stdout);
 	}
     }
   else
     {
-      printf ("Flat profile:\n");
+      printf (_("Flat profile:\n"));
     }
   /*
    * Sort the symbol table by time (call-count and name as secondary
@@ -541,7 +549,7 @@ DEFUN_VOID (hist_print)
       for (index = 0; index < symtab.len; ++index)
 	{
 	  sym = time_sorted_syms[index];
-	  if (sym->ncalls)
+	  if (sym->ncalls != 0)
 	    {
 	      time = (sym->hist.time + sym->cg.child_time) / sym->ncalls;
 	      if (time > top_time)
@@ -551,11 +559,12 @@ DEFUN_VOID (hist_print)
 		}
 	    }
 	}
-      if (top_dog && top_dog->ncalls && top_time > 0.0)
+      if (top_dog && top_dog->ncalls != 0 && top_time > 0.0)
 	{
 	  top_time /= hz;
 	  while (SItab[log_scale].scale * top_time < 1000.0
-		 && log_scale < sizeof (SItab) / sizeof (SItab[0]) - 1)
+		 && ((size_t) log_scale
+		     < sizeof (SItab) / sizeof (SItab[0]) - 1))
 	    {
 	      ++log_scale;
 	    }

@@ -1,5 +1,5 @@
 /* Opcode table for the H8-300
-   Copyright (C) 1991,1992 Free Software Foundation.
+   Copyright (C) 1991, 92, 93, 95, 96, 97, 1998 Free Software Foundation.
    Written by Steve Chamberlain, sac@cygnus.com.
    
    This file is part of GDB, the GNU Debugger and GAS, the GNU Assembler.
@@ -16,7 +16,8 @@
    
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+   02111-1307, USA.  */
 
 /* Instructions are stored as a sequence of nibbles.
    If the nibble has value 15 or less then the representation is complete.
@@ -158,11 +159,11 @@ struct h8_opcode
 #ifdef DEFINE_TABLE
 
 #define BITOP(code, imm, name, op00, op01,op10,op11, op20,op21,op30)\
-{ code, 1, 2, name,	{imm,RD8,E},	{op00, op01, imm, RD8, E, 0, 0, 0, 0}, 0, 0, 0, 0},\
-{ code, 1, 6, name,	{imm,RDIND,E},	{op10, op11, B30|RDIND, 0, op00,op01, imm, 0, E}, 0, 0, 0, 0},\
-{ code, 1, 6, name,	{imm,ABS8DST,E},{op20, op21, ABS8DST, IGNORE, op00,op01, imm, 0,E}, 0, 0, 0, 0}\
-,{ code, 1, 6, name,	{imm,ABS16DST,E},{0x6,0xa,0x1,op30,ABS16DST,IGNORE,IGNORE,IGNORE, op00,op01, imm, 0,E}, 0, 0, 0, 0},\
-{ code, 1, 6, name,	{imm,ABS32DST,E},{0x6,0xa,0x3,op30,ABS32DST,IGNORE,IGNORE,IGNORE,IGNORE,IGNORE,IGNORE,IGNORE, op00,op01, imm, 0,E}, 0, 0, 0, 0}
+{ code, 1, 2, name,	{{imm,RD8,E}},	{{op00, op01, imm, RD8, E, 0, 0, 0, 0}}, 0, 0, 0, 0},\
+{ code, 1, 6, name,	{{imm,RDIND,E}},{{op10, op11, B30|RDIND, 0, op00,op01, imm, 0, E}}, 0, 0, 0, 0},\
+{ code, 1, 6, name,	{{imm,ABS8DST,E}},{{op20, op21, ABS8DST, IGNORE, op00,op01, imm, 0,E}}, 0, 0, 0, 0}\
+,{ code, 0, 6, name,	{{imm,ABS16DST,E}},{{0x6,0xa,0x1,op30,ABS16DST,IGNORE,IGNORE,IGNORE, op00,op01, imm, 0,E}}, 0, 0, 0, 0},\
+{ code, 0, 6, name,	{{imm,ABS32DST,E}},{{0x6,0xa,0x3,op30,ABS32DST,IGNORE,IGNORE,IGNORE,IGNORE,IGNORE,IGNORE,IGNORE, op00,op01, imm, 0,E}}, 0, 0, 0, 0}
 
 
 #define EBITOP(code, imm, name, op00, op01,op10,op11, op20,op21,op30)\
@@ -170,11 +171,11 @@ struct h8_opcode
    BITOP(code,RS8,  name, op00, op01, op10,op11, op20,op21,op30)
 
 #define WTWOP(code,name, op1, op2) \
-{ code, 1, 2, name, {RS16, RD16, E}, { op1, op2, RS16, RD16, E, 0, 0, 0, 0}, 0, 0, 0, 0}
+{ code, 1, 2, name, {{RS16, RD16, E}}, {{ op1, op2, RS16, RD16, E, 0, 0, 0, 0}}, 0, 0, 0, 0}
 
 #define BRANCH(code, name, op) \
-{ code, 1, 4,name,{DISP8,E,0}, { 0x4, op, DISP8, IGNORE, E, 0, 0, 0, 0}, 0, 0, 0, 0}, \
-{ code, 0, 6,name,{DISP16,E,0}, { 0x5, 0x8, op, 0x0, DISP16, IGNORE, IGNORE, IGNORE, E,0}, 0, 0, 0, 0} 
+{ code, 1, 4,name,{{DISP8,E,0}}, {{ 0x4, op, DISP8, IGNORE, E, 0, 0, 0, 0}}, 0, 0, 0, 0}, \
+{ code, 0, 6,name,{{DISP16,E,0}}, {{ 0x5, 0x8, op, 0x0, DISP16, IGNORE, IGNORE, IGNORE, E,0}}, 0, 0, 0, 0} 
 
 #define SOP(code, x,name) \
 {code, 1, x,  name 
@@ -184,19 +185,19 @@ struct h8_opcode
 #define EOP  ,0,0,0 }
 
 #define TWOOP(code, name, op1, op2,op3) \
-{ code,1, 2,name, {IMM8, RD8, E},	{ op1, RD8, IMM8, IGNORE, E, 0, 0, 0, 0}, 0, 0, 0, 0},\
-{ code, 1, 2,name, {RS8, RD8, E},	{ op2, op3, RS8, RD8, E, 0, 0, 0, 0}, 0, 0, 0, 0} 
+{ code,1, 2,name, {{IMM8, RD8, E}},	{{ op1, RD8, IMM8, IGNORE, E, 0, 0, 0, 0}}, 0, 0, 0, 0},\
+{ code, 1, 2,name, {{RS8, RD8, E}},	{{ op2, op3, RS8, RD8, E, 0, 0, 0, 0}}, 0, 0, 0, 0} 
 
 #define UNOP(code,name, op1, op2) \
-{ code, 1, 2, name, {OR8, E, 0}, { op1, op2, 0, OR8, E, 0, 0, 0, 0}, 0, 0, 0, 0}
+{ code, 1, 2, name, {{OR8, E, 0}}, {{ op1, op2, 0, OR8, E, 0, 0, 0, 0}}, 0, 0, 0, 0}
 
 #define UNOP3(code, name, op1, op2, op3) \
-{ O(code,SB), 1, 2, name, {OR8,  E, 0}, {op1, op2, op3+0, OR8,  E, 0, 0, 0, 0}, 0, 0, 0, 0}, \
-{ O(code,SW), 0, 2, name, {OR16, E, 0}, {op1, op2, op3+1, OR16, E, 0, 0, 0, 0}, 0, 0, 0, 0}, \
-{ O(code,SL), 0, 2, name, {OR32, E, 0}, {op1, op2, op3+3, OR32|B30, E, 0, 0, 0, 0}, 0, 0, 0, 0} \
-,{ O(code,SB), 1, 2, name, {IMM, OR8 | SRC_IN_DST,  E}, {op1, op2, op3+4, OR8 | SRC_IN_DST,  E, 0, 0, 0, 0}, 0, 0, 0, 0}, \
-{ O(code,SW), 0, 2, name, {IMM, OR16 | SRC_IN_DST, E}, {op1, op2, op3+5, OR16 | SRC_IN_DST, E, 0, 0, 0, 0}, 0, 0, 0, 0}, \
-{ O(code,SL), 0, 2, name, {IMM, OR32 | SRC_IN_DST, E}, {op1, op2, op3+7, OR32 | SRC_IN_DST|B30 , E, 0, 0, 0, 0}, 0, 0, 0, 0}
+{ O(code,SB), 1, 2, name, {{OR8,  E, 0}}, {{op1, op2, op3+0, OR8,  E, 0, 0, 0, 0}}, 0, 0, 0, 0}, \
+{ O(code,SW), 0, 2, name, {{OR16, E, 0}}, {{op1, op2, op3+1, OR16, E, 0, 0, 0, 0}}, 0, 0, 0, 0}, \
+{ O(code,SL), 0, 2, name, {{OR32, E, 0}}, {{op1, op2, op3+3, OR32|B30, E, 0, 0, 0, 0}}, 0, 0, 0, 0} \
+,{ O(code,SB), 1, 2, name, {{IMM, OR8 | SRC_IN_DST,  E}}, {{op1, op2, op3+4, OR8 | SRC_IN_DST,  E, 0, 0, 0, 0}}, 0, 0, 0, 0}, \
+{ O(code,SW), 0, 2, name, {{IMM, OR16 | SRC_IN_DST, E}}, {{op1, op2, op3+5, OR16 | SRC_IN_DST, E, 0, 0, 0, 0}}, 0, 0, 0, 0}, \
+{ O(code,SL), 0, 2, name, {{IMM, OR32 | SRC_IN_DST, E}}, {{op1, op2, op3+7, OR32 | SRC_IN_DST|B30 , E, 0, 0, 0, 0}}, 0, 0, 0, 0}
 
 
 #define IMM32LIST IMM32,IGNORE,IGNORE,IGNORE,IGNORE,IGNORE,IGNORE,IGNORE
@@ -316,23 +317,23 @@ struct h8_opcode h8_opcodes[] =
 {
   TWOOP(O(O_ADD,SB),"add.b", 0x8, 0x0,0x8),
   
-  NEW_SOP(O(O_ADD,SW),1,2,"add.w"),{RS16,RD16,E },{0x0,0x9,RS16,RD16,E} EOP,
-  NEW_SOP(O(O_ADD,SW),0,4,"add.w"),{IMM16,RD16,E },{0x7,0x9,0x1,RD16,IMM16,IGNORE,IGNORE,IGNORE,E} EOP,
-  NEW_SOP(O(O_ADD,SL),0,2,"add.l"),{RS32,RD32,E }, {0x0,0xA,B31|RS32,B30|RD32,E} EOP,
-  NEW_SOP(O(O_ADD,SL),0,6,"add.l"),{IMM32,RD32,E },{0x7,0xA,0x1,B30|RD32,IMM32LIST,E} EOP,
-  NEW_SOP(O(O_ADDS,SL),1,2,"adds"), {KBIT,RDP,E},   {0x0,0xB,KBIT,RDP,E,0,0,0,0} EOP,
+  NEW_SOP(O(O_ADD,SW),1,2,"add.w"),{{RS16,RD16,E}},{{0x0,0x9,RS16,RD16,E}} EOP,
+  NEW_SOP(O(O_ADD,SW),0,4,"add.w"),{{IMM16,RD16,E}},{{0x7,0x9,0x1,RD16,IMM16,IGNORE,IGNORE,IGNORE,E}} EOP,
+  NEW_SOP(O(O_ADD,SL),0,2,"add.l"),{{RS32,RD32,E }}, {{0x0,0xA,B31|RS32,B30|RD32,E}} EOP,
+  NEW_SOP(O(O_ADD,SL),0,6,"add.l"),{{IMM32,RD32,E }},{{0x7,0xA,0x1,B30|RD32,IMM32LIST,E}} EOP,
+  NEW_SOP(O(O_ADDS,SL),1,2,"adds"), {{KBIT,RDP,E}},   {{0x0,0xB,KBIT,RDP,E,0,0,0,0}} EOP,
 
   TWOOP(O(O_ADDX,SB),"addx",0x9,0x0,0xE),
   TWOOP(O(O_AND,SB), "and.b",0xE,0x1,0x6),
 
-  NEW_SOP(O(O_AND,SW),0,2,"and.w"),{RS16,RD16,E },{0x6,0x6,RS16,RD16,E} EOP,
-  NEW_SOP(O(O_AND,SW),0,4,"and.w"),{IMM16,RD16,E },{0x7,0x9,0x6,RD16,IMM16,IGNORE,IGNORE,IGNORE,E} EOP,
+  NEW_SOP(O(O_AND,SW),0,2,"and.w"),{{RS16,RD16,E }},{{0x6,0x6,RS16,RD16,E}} EOP,
+  NEW_SOP(O(O_AND,SW),0,4,"and.w"),{{IMM16,RD16,E }},{{0x7,0x9,0x6,RD16,IMM16,IGNORE,IGNORE,IGNORE,E}} EOP,
   
-  NEW_SOP(O(O_AND,SL),0,6,"and.l"),{IMM32,RD32,E },{0x7,0xA,0x6,B30|RD32,IMM32LIST,E} EOP,
-  NEW_SOP(O(O_AND,SL),0,2,"and.l") ,{RS32,RD32,E },{0x0,0x1,0xF,0x0,0x6,0x6,B30|RS32,B30|RD32,E} EOP,
+  NEW_SOP(O(O_AND,SL),0,6,"and.l"),{{IMM32,RD32,E }},{{0x7,0xA,0x6,B30|RD32,IMM32LIST,E}} EOP,
+  NEW_SOP(O(O_AND,SL),0,2,"and.l") ,{{RS32,RD32,E }},{{0x0,0x1,0xF,0x0,0x6,0x6,B30|RS32,B30|RD32,E}} EOP,
 
-  NEW_SOP(O(O_ANDC,SB),1,2,"andc"), {IMM8,CCR,E},{ 0x0,0x6,IMM8,IGNORE,E,0,0,0,0} EOP,
-  NEW_SOP(O(O_ANDC,SB),1,2,"andc"), {IMM8,EXR,E},{ 0x0,0x1,0x4,0x1,0x0,0x6,IMM8,IGNORE,E,0,0,0,0} EOP,
+  NEW_SOP(O(O_ANDC,SB),1,2,"andc"), {{IMM8,CCR,E}},{{ 0x0,0x6,IMM8,IGNORE,E,0,0,0,0}} EOP,
+  NEW_SOP(O(O_ANDC,SB),1,2,"andc"), {{IMM8,EXR,E}},{{ 0x0,0x1,0x4,0x1,0x0,0x6,IMM8,IGNORE,E,0,0,0,0}} EOP,
 
   BITOP(O(O_BAND,SB), IMM3|B30,"band",0x7,0x6,0x7,0xC,0x7,0xE,0x0),
   BRANCH(O(O_BRA,SB),"bra",0x0),
@@ -367,8 +368,8 @@ struct h8_opcode h8_opcodes[] =
   BITOP(O(O_BOR,SB),  IMM3|B30,"bor",  0x7,0x4,0x7,0xC,0x7,0xE,0x0),
   EBITOP(O(O_BSET,SB),IMM3|B30,"bset", 0x6,0x0,0x7,0xD,0x7,0xF,0x8),
 
-  SOP(O(O_BSR,SB),6,"bsr"),{DISP8,E,0},{ 0x5,0x5,DISP8,IGNORE,E,0,0,0,0} EOP,
-  SOP(O(O_BSR,SB),6,"bsr"),{DISP16,E,0},{ 0x5,0xC,0x0,0x0,DISP16,IGNORE,IGNORE,IGNORE,E,0,0,0,0} EOP,
+  SOP(O(O_BSR,SB),6,"bsr"),{{DISP8,E,0}},{{ 0x5,0x5,DISP8,IGNORE,E,0,0,0,0}} EOP,
+  SOP(O(O_BSR,SB),6,"bsr"),{{DISP16,E,0}},{{ 0x5,0xC,0x0,0x0,DISP16,IGNORE,IGNORE,IGNORE,E,0,0,0,0}} EOP,
   BITOP(O(O_BST,SB), IMM3|B30,"bst",0x6,0x7,0x7,0xD,0x7,0xF,0x8),
   EBITOP(O(O_BTST,SB), IMM3|B30,"btst",0x6,0x3,0x7,0xC,0x7,0xE,0x0),
   BITOP(O(O_BXOR,SB), IMM3|B30,"bxor",0x7,0x5,0x7,0xC,0x7,0xE,0x0),
@@ -376,223 +377,223 @@ struct h8_opcode h8_opcodes[] =
   TWOOP(O(O_CMP,SB), "cmp.b",0xA,0x1,0xC),
   WTWOP(O(O_CMP,SW), "cmp.w",0x1,0xD),
 
-  NEW_SOP(O(O_CMP,SW),1,2,"cmp.w"),{RS16,RD16,E },{0x1,0xD,RS16,RD16,E} EOP,
-  NEW_SOP(O(O_CMP,SW),0,4,"cmp.w"),{IMM16,RD16,E },{0x7,0x9,0x2,RD16,IMM16,IGNORE,IGNORE,IGNORE,E} EOP,
+  NEW_SOP(O(O_CMP,SW),1,2,"cmp.w"),{{RS16,RD16,E }},{{0x1,0xD,RS16,RD16,E}} EOP,
+  NEW_SOP(O(O_CMP,SW),0,4,"cmp.w"),{{IMM16,RD16,E }},{{0x7,0x9,0x2,RD16,IMM16,IGNORE,IGNORE,IGNORE,E}} EOP,
 
-  NEW_SOP(O(O_CMP,SL),0,6,"cmp.l"),{IMM32,RD32,E },{0x7,0xA,0x2,B30|RD32,IMM32LIST,E} EOP,
-  NEW_SOP(O(O_CMP,SL),0,2,"cmp.l") ,{RS32,RD32,E },{0x1,0xF,B31|RS32,B30|RD32,E} EOP,
+  NEW_SOP(O(O_CMP,SL),0,6,"cmp.l"),{{IMM32,RD32,E }},{{0x7,0xA,0x2,B30|RD32,IMM32LIST,E}} EOP,
+  NEW_SOP(O(O_CMP,SL),0,2,"cmp.l") ,{{RS32,RD32,E }},{{0x1,0xF,B31|RS32,B30|RD32,E}} EOP,
 
   UNOP(O(O_DAA,SB), "daa",0x0,0xF),
   UNOP(O(O_DAS,SB), "das",0x1,0xF),
   UNOP(O(O_DEC,SB), "dec.b",0x1,0xA),
 
-  NEW_SOP(O(O_DEC, SW),0,2,"dec.w") ,{DBIT,RD16,E },{0x1,0xB,0x5|DBIT,RD16,E} EOP,
-  NEW_SOP(O(O_DEC, SL),0,2,"dec.l") ,{DBIT,RD32,E },{0x1,0xB,0x7|DBIT,RD32|B30,E} EOP,
+  NEW_SOP(O(O_DEC, SW),0,2,"dec.w") ,{{DBIT,RD16,E }},{{0x1,0xB,0x5|DBIT,RD16,E}} EOP,
+  NEW_SOP(O(O_DEC, SL),0,2,"dec.l") ,{{DBIT,RD32,E }},{{0x1,0xB,0x7|DBIT,RD32|B30,E}} EOP,
 
-  NEW_SOP(O(O_DIVU,SB),1,6,"divxu.b"), {RS8,RD16,E}, {0x5,0x1,RS8,RD16,E,0,0,0,0}EOP,
-  NEW_SOP(O(O_DIVU,SW),0,20,"divxu.w"),{RS16,RD32,E},{0x5,0x3,RS16,B30|RD32,E}EOP,
+  NEW_SOP(O(O_DIVU,SB),1,6,"divxu.b"), {{RS8,RD16,E}}, {{0x5,0x1,RS8,RD16,E,0,0,0,0}}EOP,
+  NEW_SOP(O(O_DIVU,SW),0,20,"divxu.w"),{{RS16,RD32,E}},{{0x5,0x3,RS16,B30|RD32,E}}EOP,
     
-  NEW_SOP(O(O_DIVS,SB),0,20,"divxs.b") ,{RS8,RD16,E },{0x0,0x1,0xD,0x0,0x5,0x1,RS8,RD16,E} EOP,
-  NEW_SOP(O(O_DIVS,SW),0,02,"divxs.w") ,{RS16,RD32,E },{0x0,0x1,0xD,0x0,0x5,0x3,RS16,B30|RD32,E} EOP,
+  NEW_SOP(O(O_DIVS,SB),0,20,"divxs.b") ,{{RS8,RD16,E }},{{0x0,0x1,0xD,0x0,0x5,0x1,RS8,RD16,E}} EOP,
+  NEW_SOP(O(O_DIVS,SW),0,02,"divxs.w") ,{{RS16,RD32,E }},{{0x0,0x1,0xD,0x0,0x5,0x3,RS16,B30|RD32,E}} EOP,
 
-  NEW_SOP(O(O_EEPMOV,SB),1,50,"eepmov.b"),{E,0,0},{0x7,0xB,0x5,0xC,0x5,0x9,0x8,0xF,E}EOP,
-  NEW_SOP(O(O_EEPMOV,SW),0,50,"eepmov.w"),{E,0,0},{0x7,0xB,0xD,0x4,0x5,0x9,0x8,0xF,E} EOP,
+  NEW_SOP(O(O_EEPMOV,SB),1,50,"eepmov.b"),{{E,0,0}},{{0x7,0xB,0x5,0xC,0x5,0x9,0x8,0xF,E}}EOP,
+  NEW_SOP(O(O_EEPMOV,SW),0,50,"eepmov.w"),{{E,0,0}},{{0x7,0xB,0xD,0x4,0x5,0x9,0x8,0xF,E}} EOP,
     
-  NEW_SOP(O(O_EXTS,SW),0,2,"exts.w"),{OR16,E,0},{0x1,0x7,0xD,OR16,E   }EOP,
-  NEW_SOP(O(O_EXTS,SL),0,2,"exts.l"),{OR32,E,0},{0x1,0x7,0xF,OR32|B30,E   }EOP,
+  NEW_SOP(O(O_EXTS,SW),0,2,"exts.w"),{{OR16,E,0}},{{0x1,0x7,0xD,OR16,E   }}EOP,
+  NEW_SOP(O(O_EXTS,SL),0,2,"exts.l"),{{OR32,E,0}},{{0x1,0x7,0xF,OR32|B30,E   }}EOP,
 
-  NEW_SOP(O(O_EXTU,SW),0,2,"extu.w"),{OR16,E,0},{0x1,0x7,0x5,OR16,E   }EOP,
-  NEW_SOP(O(O_EXTU,SL),0,2,"extu.l"),{OR32,E,0},{0x1,0x7,0x7,OR32|B30,E   }EOP,
+  NEW_SOP(O(O_EXTU,SW),0,2,"extu.w"),{{OR16,E,0}},{{0x1,0x7,0x5,OR16,E   }}EOP,
+  NEW_SOP(O(O_EXTU,SL),0,2,"extu.l"),{{OR32,E,0}},{{0x1,0x7,0x7,OR32|B30,E   }}EOP,
     
   UNOP(O(O_INC,SB), "inc",0x0,0xA),
 
-  NEW_SOP(O(O_INC,SW),0,2,"inc.w") ,{DBIT,RD16,E },{0x0,0xB,0x5|DBIT,RD16,E} EOP,
-  NEW_SOP(O(O_INC,SL),0,2,"inc.l") ,{DBIT,RD32,E },{0x0,0xB,0x7|DBIT,RD32|B30,E} EOP,
+  NEW_SOP(O(O_INC,SW),0,2,"inc.w") ,{{DBIT,RD16,E }},{{0x0,0xB,0x5|DBIT,RD16,E}} EOP,
+  NEW_SOP(O(O_INC,SL),0,2,"inc.l") ,{{DBIT,RD32,E }},{{0x0,0xB,0x7|DBIT,RD32|B30,E}} EOP,
 
-  SOP(O(O_JMP,SB),4,"jmp"),{RSIND,E,0},{0x5,0x9,B30|RSIND,0x0,E,0,0,0,0}EOP,
-  SOP(O(O_JMP,SB),6,"jmp"),{SRC|ABSJMP,E,0},{0x5,0xA,SRC|ABSJMP,IGNORE,IGNORE,IGNORE,IGNORE,IGNORE,E}EOP,
-  SOP(O(O_JMP,SB),8,"jmp"),{SRC|MEMIND,E,0},{0x5,0xB,SRC|MEMIND,IGNORE,E,0,0,0,0}EOP,
+  SOP(O(O_JMP,SB),4,"jmp"),{{RSIND,E,0}},{{0x5,0x9,B30|RSIND,0x0,E,0,0,0,0}}EOP,
+  SOP(O(O_JMP,SB),6,"jmp"),{{SRC|ABSJMP,E,0}},{{0x5,0xA,SRC|ABSJMP,IGNORE,IGNORE,IGNORE,IGNORE,IGNORE,E}}EOP,
+  SOP(O(O_JMP,SB),8,"jmp"),{{SRC|MEMIND,E,0}},{{0x5,0xB,SRC|MEMIND,IGNORE,E,0,0,0,0}}EOP,
 
-  SOP(O(O_JSR,SB),6,"jsr"),{SRC|RSIND,E,0}, {0x5,0xD,B30|RSIND,0x0,E,0,0,0,0}EOP,
-  SOP(O(O_JSR,SB),8,"jsr"),{SRC|ABSJMP,E,0},{0x5,0xE,SRC|ABSJMP,IGNORE,IGNORE,IGNORE,IGNORE,IGNORE,E}EOP,
-  SOP(O(O_JSR,SB),8,"jsr"),{SRC|MEMIND,E,0},{0x5,0xF,SRC|MEMIND,IGNORE,E,0,0,0,0}EOP,
+  SOP(O(O_JSR,SB),6,"jsr"),{{SRC|RSIND,E,0}}, {{0x5,0xD,B30|RSIND,0x0,E,0,0,0,0}}EOP,
+  SOP(O(O_JSR,SB),8,"jsr"),{{SRC|ABSJMP,E,0}},{{0x5,0xE,SRC|ABSJMP,IGNORE,IGNORE,IGNORE,IGNORE,IGNORE,E}}EOP,
+  SOP(O(O_JSR,SB),8,"jsr"),{{SRC|MEMIND,E,0}},{{0x5,0xF,SRC|MEMIND,IGNORE,E,0,0,0,0}}EOP,
 
-  NEW_SOP(O(O_LDC,SB),1,2,"ldc"),{IMM8,CCR,E},         { 0x0,0x7,IMM8,IGNORE,E,0,0,0,0}EOP,
-  NEW_SOP(O(O_LDC,SB),1,2,"ldc"),{OR8,CCR,E},          { 0x0,0x3,0x0,OR8,E,0,0,0,0}EOP,
-  NEW_SOP(O(O_LDC,SB),0,2,"ldc"),{ABS16SRC,CCR,E},     {PREFIXLDC,0x6,0xB,0x0,0x0,ABS16SRC,IGNORE,IGNORE,IGNORE,E}EOP,
-  NEW_SOP(O(O_LDC,SB),0,2,"ldc"),{ABS32SRC,CCR,E},     {PREFIXLDC,0x6,0xB,0x2,0x0,SRC|ABS32LIST,E}EOP,
-  NEW_SOP(O(O_LDC,SB),0,2,"ldc"),{DISP|SRC|L_16,CCR,E},{PREFIXLDC,0x6,0xF,B30|DISPREG,0,DISP|L_16,IGNORE,IGNORE,IGNORE,E}EOP,
-  NEW_SOP(O(O_LDC,SB),0,2,"ldc"),{DISP|SRC|L_32,CCR,E},{PREFIXLDC,0x7,0x8,B30|DISPREG,0,0x6,0xB,0x2,0x0,SRC|DISP32LIST,E}EOP,
-  NEW_SOP(O(O_LDC,SB),0,2,"ldc"),{RSINC,CCR,E},        {PREFIXLDC,0x6,0xD,B30|RSINC,0x0,E}EOP,
-  NEW_SOP(O(O_LDC,SB),0,2,"ldc"),{RSIND,CCR,E},        {PREFIXLDC,0x6,0x9,B30|RDIND,0x0,E} EOP,
+  NEW_SOP(O(O_LDC,SB),1,2,"ldc"),{{IMM8,CCR,E}},         {{ 0x0,0x7,IMM8,IGNORE,E,0,0,0,0}}EOP,
+  NEW_SOP(O(O_LDC,SB),1,2,"ldc"),{{OR8,CCR,E}},          {{ 0x0,0x3,0x0,OR8,E,0,0,0,0}}EOP,
+  NEW_SOP(O(O_LDC,SB),0,2,"ldc"),{{ABS16SRC,CCR,E}},     {{PREFIXLDC,0x6,0xB,0x0,0x0,ABS16SRC,IGNORE,IGNORE,IGNORE,E}}EOP,
+  NEW_SOP(O(O_LDC,SB),0,2,"ldc"),{{ABS32SRC,CCR,E}},     {{PREFIXLDC,0x6,0xB,0x2,0x0,SRC|ABS32LIST,E}}EOP,
+  NEW_SOP(O(O_LDC,SB),0,2,"ldc"),{{DISP|SRC|L_16,CCR,E}},{{PREFIXLDC,0x6,0xF,B30|DISPREG,0,DISP|L_16,IGNORE,IGNORE,IGNORE,E}}EOP,
+  NEW_SOP(O(O_LDC,SB),0,2,"ldc"),{{DISP|SRC|L_32,CCR,E}},{{PREFIXLDC,0x7,0x8,B30|DISPREG,0,0x6,0xB,0x2,0x0,SRC|DISP32LIST,E}}EOP,
+  NEW_SOP(O(O_LDC,SB),0,2,"ldc"),{{RSINC,CCR,E}},        {{PREFIXLDC,0x6,0xD,B30|RSINC,0x0,E}}EOP,
+  NEW_SOP(O(O_LDC,SB),0,2,"ldc"),{{RSIND,CCR,E}},        {{PREFIXLDC,0x6,0x9,B30|RDIND,0x0,E}} EOP,
 
-  NEW_SOP(O(O_LDC,SB),1,2,"ldc"),{IMM8,EXR,E},         { 0x0,0x1,0x4,0x1,0x0,0x7,IMM8,IGNORE,E,0,0,0,0}EOP,
-  NEW_SOP(O(O_LDC,SB),1,2,"ldc"),{OR8,EXR,E},          { 0x0,0x3,0x1,OR8,E,0,0,0,0}EOP,
-  NEW_SOP(O(O_LDC,SB),0,2,"ldc"),{ABS16SRC,EXR,E},     { 0x0,0x1,0x4,0x1,0x6,0xb,0x0,0x0,ABS16SRC,IGNORE,IGNORE,IGNORE,E}EOP,
-  NEW_SOP(O(O_LDC,SB),0,2,"ldc"),{ABS32SRC,EXR,E},     { 0x0,0x1,0x4,0x1,0x6,0xb,0x2,0x0,SRC|ABS32LIST,E}EOP,
-  NEW_SOP(O(O_LDC,SB),0,2,"ldc"),{DISP|SRC|L_16,EXR,E},{ 0x0,0x1,0x4,0x1,0x6,0xf,B30|DISPREG,0,DISP|L_16,IGNORE,IGNORE,IGNORE,E}EOP,
-  NEW_SOP(O(O_LDC,SB),0,2,"ldc"),{DISP|SRC|L_32,EXR,E},{ 0x0,0x1,0x4,0x1,0x7,0x8,B30|DISPREG,0,0x6,0xB,0x2,0x0,SRC|DISP32LIST,E}EOP,
-  NEW_SOP(O(O_LDC,SB),0,2,"ldc"),{RSINC,EXR,E},        { 0x0,0x1,0x4,0x1,0x6,0xd,B30|RSINC,0x0,E}EOP,
-  NEW_SOP(O(O_LDC,SB),0,2,"ldc"),{RSIND,EXR,E},        { 0x0,0x1,0x4,0x1,0x6,0x9,B30|RDIND,0x0,E} EOP,
+  NEW_SOP(O(O_LDC,SB),1,2,"ldc"),{{IMM8,EXR,E}},         {{ 0x0,0x1,0x4,0x1,0x0,0x7,IMM8,IGNORE,E,0,0,0,0}}EOP,
+  NEW_SOP(O(O_LDC,SB),1,2,"ldc"),{{OR8,EXR,E}},          {{ 0x0,0x3,0x1,OR8,E,0,0,0,0}}EOP,
+  NEW_SOP(O(O_LDC,SB),0,2,"ldc"),{{ABS16SRC,EXR,E}},     {{ 0x0,0x1,0x4,0x1,0x6,0xb,0x0,0x0,ABS16SRC,IGNORE,IGNORE,IGNORE,E}}EOP,
+  NEW_SOP(O(O_LDC,SB),0,2,"ldc"),{{ABS32SRC,EXR,E}},     {{ 0x0,0x1,0x4,0x1,0x6,0xb,0x2,0x0,SRC|ABS32LIST,E}}EOP,
+  NEW_SOP(O(O_LDC,SB),0,2,"ldc"),{{DISP|SRC|L_16,EXR,E}},{{ 0x0,0x1,0x4,0x1,0x6,0xf,B30|DISPREG,0,DISP|L_16,IGNORE,IGNORE,IGNORE,E}}EOP,
+  NEW_SOP(O(O_LDC,SB),0,2,"ldc"),{{DISP|SRC|L_32,EXR,E}},{{ 0x0,0x1,0x4,0x1,0x7,0x8,B30|DISPREG,0,0x6,0xB,0x2,0x0,SRC|DISP32LIST,E}}EOP,
+  NEW_SOP(O(O_LDC,SB),0,2,"ldc"),{{RSINC,EXR,E}},        {{ 0x0,0x1,0x4,0x1,0x6,0xd,B30|RSINC,0x0,E}}EOP,
+  NEW_SOP(O(O_LDC,SB),0,2,"ldc"),{{RSIND,EXR,E}},        {{ 0x0,0x1,0x4,0x1,0x6,0x9,B30|RDIND,0x0,E}} EOP,
 
-  SOP(O(O_MOV_TO_REG,SB),4,"mov.b"),{ABS|SRC|L_16|MEMRELAX,RD8,E},  { 0x6,0xA,0x0,RD8,SRC|ABS|MEMRELAX|A16LIST,E}EOP,
-  SOP(O(O_MOV_TO_REG,SB),6,"mov.b"),{ABS|SRC|L_32|MEMRELAX,RD8,E }, { 0x6,0xA,0x2,RD8,SRC|ABS|MEMRELAX|A32LIST,E }EOP,
-  SOP(O(O_MOV_TO_MEM,SB),4,"mov.b"),{RS8,ABS|L_16|MEMRELAX|DST,E},     { 0x6,0xA,0x8,RS8,DST|ABS|MEMRELAX|A16LIST,E}EOP,
-  SOP(O(O_MOV_TO_MEM,SB),6,"mov.b"),{RS8,ABS|DST|L_32|MEMRELAX,E },    { 0x6,0xA,0xA,RS8,DST|ABS|MEMRELAX|A32LIST,E }EOP,
+  SOP(O(O_MOV_TO_REG,SB),4,"mov.b"),{{ABS|SRC|L_16|MEMRELAX,RD8,E}},  {{ 0x6,0xA,0x0,RD8,SRC|ABS|MEMRELAX|A16LIST,E}}EOP,
+  SOP(O(O_MOV_TO_REG,SB),6,"mov.b"),{{ABS|SRC|L_32|MEMRELAX,RD8,E }}, {{ 0x6,0xA,0x2,RD8,SRC|ABS|MEMRELAX|A32LIST,E }}EOP,
+  SOP(O(O_MOV_TO_MEM,SB),4,"mov.b"),{{RS8,ABS|L_16|MEMRELAX|DST,E}},     {{ 0x6,0xA,0x8,RS8,DST|ABS|MEMRELAX|A16LIST,E}}EOP,
+  SOP(O(O_MOV_TO_MEM,SB),6,"mov.b"),{{RS8,ABS|DST|L_32|MEMRELAX,E }},    {{ 0x6,0xA,0xA,RS8,DST|ABS|MEMRELAX|A32LIST,E }}EOP,
     
-  SOP(O(O_MOV_TO_REG,SB),6,"mov.b"),{DISP|L_32|SRC,RD8,E},  { 0x7,0x8,B30|DISPREG,0x0,0x6,0xA,0x2,RD8,SRC|DISP32LIST,E}EOP,
-  SOP(O(O_MOV_TO_MEM,SB),6,"mov.b"),{RS8,DISP|L_32|DST,E},  { 0x7,0x8,B30|DISPREG,0x0,0x6,0xA,0xA,RS8,DST|DISP32LIST,E}EOP,
+  SOP(O(O_MOV_TO_REG,SB),6,"mov.b"),{{DISP|L_32|SRC,RD8,E}},  {{ 0x7,0x8,B30|DISPREG,0x0,0x6,0xA,0x2,RD8,SRC|DISP32LIST,E}}EOP,
+  SOP(O(O_MOV_TO_MEM,SB),6,"mov.b"),{{RS8,DISP|L_32|DST,E}},  {{ 0x7,0x8,B30|DISPREG,0x0,0x6,0xA,0xA,RS8,DST|DISP32LIST,E}}EOP,
 
 
 
-  SOP(O(O_MOV_TO_REG,SB),2,"mov.b"),{RS8,RD8,E},	    { 0x0,0xC,RS8,RD8,E,0,0,0,0}EOP,
-  SOP(O(O_MOV_TO_REG,SB),2,"mov.b"),{IMM8,RD8,E},           { 0xF,RD8,IMM8,IGNORE,E,0,0,0,0}EOP,
-  SOP(O(O_MOV_TO_REG,SB),4,"mov.b"),{RSIND,RD8,E},          { 0x6,0x8,B30|RSIND,RD8,E,0,0,0,0}EOP,
-  SOP(O(O_MOV_TO_REG,SB),6,"mov.b"),{DISP16SRC,RD8,E},      { 0x6,0xE,B30|DISPREG,RD8,DISP16SRC,IGNORE,IGNORE,IGNORE,E}EOP,
-  SOP(O(O_MOV_TO_REG,SB),6,"mov.b"),{RSINC,RD8,E},          { 0x6,0xC,B30|RSINC,RD8,E,0,0,0,0}EOP,
+  SOP(O(O_MOV_TO_REG,SB),2,"mov.b"),{{RS8,RD8,E}},	    {{ 0x0,0xC,RS8,RD8,E,0,0,0,0}}EOP,
+  SOP(O(O_MOV_TO_REG,SB),2,"mov.b"),{{IMM8,RD8,E}},           {{ 0xF,RD8,IMM8,IGNORE,E,0,0,0,0}}EOP,
+  SOP(O(O_MOV_TO_REG,SB),4,"mov.b"),{{RSIND,RD8,E}},          {{ 0x6,0x8,B30|RSIND,RD8,E,0,0,0,0}}EOP,
+  SOP(O(O_MOV_TO_REG,SB),6,"mov.b"),{{DISP16SRC,RD8,E}},      {{ 0x6,0xE,B30|DISPREG,RD8,DISP16SRC,IGNORE,IGNORE,IGNORE,E}}EOP,
+  SOP(O(O_MOV_TO_REG,SB),6,"mov.b"),{{RSINC,RD8,E}},          {{ 0x6,0xC,B30|RSINC,RD8,E,0,0,0,0}}EOP,
 
-  SOP(O(O_MOV_TO_REG,SB),4,"mov.b"),{ABS8SRC,RD8,E},        { 0x2,RD8,ABS8SRC,IGNORE,E,0,0,0,0}EOP,
-  SOP(O(O_MOV_TO_MEM,SB),4,"mov.b"),{RS8,RDIND,E},          { 0x6,0x8,RDIND|B31,RS8,E,0,0,0,0}EOP,
-  SOP(O(O_MOV_TO_MEM,SB),6,"mov.b"),{RS8,DISP16DST,E},      { 0x6,0xE,DISPREG|B31,RS8,DISP16DST,IGNORE,IGNORE,IGNORE,E}EOP,
-  SOP(O(O_MOV_TO_MEM,SB),6,"mov.b"),{RS8,RDDEC|B31,E},      { 0x6,0xC,RDDEC|B31,RS8,E,0,0,0,0}EOP,
+  SOP(O(O_MOV_TO_REG,SB),4,"mov.b"),{{ABS8SRC,RD8,E}},        {{ 0x2,RD8,ABS8SRC,IGNORE,E,0,0,0,0}}EOP,
+  SOP(O(O_MOV_TO_MEM,SB),4,"mov.b"),{{RS8,RDIND,E}},          {{ 0x6,0x8,RDIND|B31,RS8,E,0,0,0,0}}EOP,
+  SOP(O(O_MOV_TO_MEM,SB),6,"mov.b"),{{RS8,DISP16DST,E}},      {{ 0x6,0xE,DISPREG|B31,RS8,DISP16DST,IGNORE,IGNORE,IGNORE,E}}EOP,
+  SOP(O(O_MOV_TO_MEM,SB),6,"mov.b"),{{RS8,RDDEC|B31,E}},      {{ 0x6,0xC,RDDEC|B31,RS8,E,0,0,0,0}}EOP,
 
-  SOP(O(O_MOV_TO_MEM,SB),4,"mov.b"),{RS8,ABS8DST,E},        { 0x3,RS8,ABS8DST,IGNORE,E,0,0,0,0}EOP,
+  SOP(O(O_MOV_TO_MEM,SB),4,"mov.b"),{{RS8,ABS8DST,E}},        {{ 0x3,RS8,ABS8DST,IGNORE,E,0,0,0,0}}EOP,
 
-  SOP(O(O_MOV_TO_MEM,SW),6,"mov.w"),{RS16,RDIND,E},        { 0x6,0x9,RDIND|B31,RS16,E,0,0,0,0}EOP,
-  SOP(O(O_MOV_TO_REG,SW),6,"mov.w"),{DISP|L_32|SRC,RD16,E},{ 0x7,0x8,B30|DISPREG,0x0,0x6,0xB,0x2,RD16,SRC|DISP32LIST,E}EOP,
-  SOP(O(O_MOV_TO_MEM,SW),6,"mov.w"),{RS16,DISP|L_32|DST,E},{ 0x7,0x8,B30|DISPREG,0x0,0x6,0xB,0xA,RS16,DST|DISP32LIST,E}EOP,
-  SOP(O(O_MOV_TO_REG,SW),6,"mov.w"),{ABS|L_32|MEMRELAX|SRC,RD16,E },{ 0x6,0xB,0x2,RD16,SRC|MEMRELAX|ABS32LIST,E }EOP,
-  SOP(O(O_MOV_TO_MEM,SW),6,"mov.w"),{RS16,ABS|L_32|MEMRELAX|DST,E },{ 0x6,0xB,0xA,RS16,DST|MEMRELAX|ABS32LIST,E }EOP,
-  SOP(O(O_MOV_TO_REG,SW),2,"mov.w"),{RS16,RD16,E},         { 0x0,0xD,RS16, RD16,E,0,0,0,0}EOP,
-  SOP(O(O_MOV_TO_REG,SW),4,"mov.w"),{IMM16,RD16,E},        { 0x7,0x9,0x0,RD16,IMM16,IGNORE,IGNORE,IGNORE,E}EOP,
-  SOP(O(O_MOV_TO_REG,SW),4,"mov.w"),{RSIND,RD16,E},        { 0x6,0x9,B30|RSIND,RD16,E,0,0,0,0}EOP,
-  SOP(O(O_MOV_TO_REG,SW),6,"mov.w"),{DISP16SRC,RD16,E},    { 0x6,0xF,B30|DISPREG,RD16,DISP16SRC,IGNORE,IGNORE,IGNORE,E}EOP,
-  SOP(O(O_MOV_TO_REG,SW),6,"mov.w"),{RSINC,RD16,E},        { 0x6,0xD,B30|RSINC,RD16,E,0,0,0,0}EOP,
-  SOP(O(O_MOV_TO_REG,SW),6,"mov.w"),{ABS16SRC,RD16,E},     { 0x6,0xB,0x0,RD16,ABS16SRC,IGNORE,IGNORE,IGNORE,E}EOP,
+  SOP(O(O_MOV_TO_MEM,SW),6,"mov.w"),{{RS16,RDIND,E}},        {{ 0x6,0x9,RDIND|B31,RS16,E,0,0,0,0}}EOP,
+  SOP(O(O_MOV_TO_REG,SW),6,"mov.w"),{{DISP|L_32|SRC,RD16,E}},{{ 0x7,0x8,B30|DISPREG,0x0,0x6,0xB,0x2,RD16,SRC|DISP32LIST,E}}EOP,
+  SOP(O(O_MOV_TO_MEM,SW),6,"mov.w"),{{RS16,DISP|L_32|DST,E}},{{ 0x7,0x8,B30|DISPREG,0x0,0x6,0xB,0xA,RS16,DST|DISP32LIST,E}}EOP,
+  SOP(O(O_MOV_TO_REG,SW),6,"mov.w"),{{ABS|L_32|MEMRELAX|SRC,RD16,E }},{{ 0x6,0xB,0x2,RD16,SRC|MEMRELAX|ABS32LIST,E }}EOP,
+  SOP(O(O_MOV_TO_MEM,SW),6,"mov.w"),{{RS16,ABS|L_32|MEMRELAX|DST,E }},{{ 0x6,0xB,0xA,RS16,DST|MEMRELAX|ABS32LIST,E }}EOP,
+  SOP(O(O_MOV_TO_REG,SW),2,"mov.w"),{{RS16,RD16,E}},         {{ 0x0,0xD,RS16, RD16,E,0,0,0,0}}EOP,
+  SOP(O(O_MOV_TO_REG,SW),4,"mov.w"),{{IMM16,RD16,E}},        {{ 0x7,0x9,0x0,RD16,IMM16,IGNORE,IGNORE,IGNORE,E}}EOP,
+  SOP(O(O_MOV_TO_REG,SW),4,"mov.w"),{{RSIND,RD16,E}},        {{ 0x6,0x9,B30|RSIND,RD16,E,0,0,0,0}}EOP,
+  SOP(O(O_MOV_TO_REG,SW),6,"mov.w"),{{DISP16SRC,RD16,E}},    {{ 0x6,0xF,B30|DISPREG,RD16,DISP16SRC,IGNORE,IGNORE,IGNORE,E}}EOP,
+  SOP(O(O_MOV_TO_REG,SW),6,"mov.w"),{{RSINC,RD16,E}},        {{ 0x6,0xD,B30|RSINC,RD16,E,0,0,0,0}}EOP,
+  SOP(O(O_MOV_TO_REG,SW),6,"mov.w"),{{ABS16SRC,RD16,E}},     {{ 0x6,0xB,0x0,RD16,ABS16SRC,IGNORE,IGNORE,IGNORE,E}}EOP,
 
-  SOP(O(O_MOV_TO_MEM,SW),6,"mov.w"),{RS16,DISP16DST,E},    { 0x6,0xF,DISPREG|B31,RS16,DISP16DST,IGNORE,IGNORE,IGNORE,E}EOP,
-  SOP(O(O_MOV_TO_MEM,SW),6,"mov.w"),{RS16,RDDEC,E},        { 0x6,0xD,RDDEC|B31,RS16,E,0,0,0,0}EOP,
-  SOP(O(O_MOV_TO_MEM,SW),6,"mov.w"),{RS16,ABS16DST,E},     { 0x6,0xB,0x8,RS16,ABS16DST,IGNORE,IGNORE,IGNORE,E}EOP,
+  SOP(O(O_MOV_TO_MEM,SW),6,"mov.w"),{{RS16,DISP16DST,E}},    {{ 0x6,0xF,DISPREG|B31,RS16,DISP16DST,IGNORE,IGNORE,IGNORE,E}}EOP,
+  SOP(O(O_MOV_TO_MEM,SW),6,"mov.w"),{{RS16,RDDEC,E}},        {{ 0x6,0xD,RDDEC|B31,RS16,E,0,0,0,0}}EOP,
+  SOP(O(O_MOV_TO_MEM,SW),6,"mov.w"),{{RS16,ABS16DST,E}},     {{ 0x6,0xB,0x8,RS16,ABS16DST,IGNORE,IGNORE,IGNORE,E}}EOP,
 
-  SOP(O(O_MOV_TO_REG,SL),4,"mov.l"),{IMM32,RD32,E},        { 0x7,0xA,0x0,B30|RD32,IMM32LIST,E}EOP,
-  SOP(O(O_MOV_TO_REG,SL),2,"mov.l"),{RS32,RD32,E},         { 0x0,0xF,B31|RS32,B30|RD32,E,0,0,0,0}EOP,
+  SOP(O(O_MOV_TO_REG,SL),4,"mov.l"),{{IMM32,RD32,E}},        {{ 0x7,0xA,0x0,B30|RD32,IMM32LIST,E}}EOP,
+  SOP(O(O_MOV_TO_REG,SL),2,"mov.l"),{{RS32,RD32,E}},         {{ 0x0,0xF,B31|RS32,B30|RD32,E,0,0,0,0}}EOP,
 
-  SOP(O(O_MOV_TO_REG,SL),4,"mov.l"),{RSIND,RD32,E},        { PREFIX32,0x6,0x9,RSIND|B30,B30|RD32,E,0,0,0,0 }EOP,
-  SOP(O(O_MOV_TO_REG,SL),6,"mov.l"),{DISP16SRC,RD32,E},    { PREFIX32,0x6,0xF,DISPREG|B30,B30|RD32,DISP16SRC,IGNORE,IGNORE,IGNORE,E }EOP,
-  SOP(O(O_MOV_TO_REG,SL),6,"mov.l"),{DISP|L_32|SRC,RD32,E},{ PREFIX32,0x7,0x8,B30|DISPREG,0x0,0x6,0xB,0x2,B30|RD32,SRC|DISP32LIST,E }EOP,
-  SOP(O(O_MOV_TO_REG,SL),6,"mov.l"),{RSINC,RD32,E},        { PREFIX32,0x6,0xD,B30|RSINC,B30|RD32,E,0,0,0,0 }EOP,
-  SOP(O(O_MOV_TO_REG,SL),6,"mov.l"),{ABS16SRC,RD32,E},     { PREFIX32,0x6,0xB,0x0,B30|RD32,ABS16SRC,IGNORE,IGNORE,IGNORE,E }EOP,
-  SOP(O(O_MOV_TO_REG,SL),6,"mov.l"),{ABS32SRC|MEMRELAX,RD32,E },    { PREFIX32,0x6,0xB,0x2,B30|RD32,SRC|MEMRELAX|ABS32LIST,E }EOP,
-  SOP(O(O_MOV_TO_MEM,SL),6,"mov.l"),{RS32,RDIND,E},        { PREFIX32,0x6,0x9,RDIND|B31,B30|RS32,E,0,0,0,0 }EOP,
-  SOP(O(O_MOV_TO_MEM,SL),6,"mov.l"),{RS32,DISP16DST,E},    { PREFIX32,0x6,0xF,DISPREG|B31,B30|RS32,DISP16DST,IGNORE,IGNORE,IGNORE,E }EOP,
-  SOP(O(O_MOV_TO_MEM,SL),6,"mov.l"),{RS32,DISP|L_32|DST,E},{ PREFIX32,0x7,0x8,B31|DISPREG,0x0,0x6,0xB,0xA,B30|RS32,DST|DISP32LIST,E }EOP,
-  SOP(O(O_MOV_TO_MEM,SL),6,"mov.l"),{RS32,RDDEC,E},        { PREFIX32,0x6,0xD,RDDEC|B31,B30|RS32,E,0,0,0,0 }EOP,
-  SOP(O(O_MOV_TO_MEM,SL),6,"mov.l"),{RS32,ABS16DST,E},     { PREFIX32,0x6,0xB,0x8,B30|RS32,ABS16DST,IGNORE,IGNORE,IGNORE,E }EOP,
-  SOP(O(O_MOV_TO_MEM,SL),6,"mov.l"),{RS32,ABS32DST|MEMRELAX,E },    { PREFIX32,0x6,0xB,0xA,B30|RS32,DST|MEMRELAX|ABS32LIST,E }EOP,
+  SOP(O(O_MOV_TO_REG,SL),4,"mov.l"),{{RSIND,RD32,E}},        {{ PREFIX32,0x6,0x9,RSIND|B30,B30|RD32,E,0,0,0,0 }}EOP,
+  SOP(O(O_MOV_TO_REG,SL),6,"mov.l"),{{DISP16SRC,RD32,E}},    {{ PREFIX32,0x6,0xF,DISPREG|B30,B30|RD32,DISP16SRC,IGNORE,IGNORE,IGNORE,E }}EOP,
+  SOP(O(O_MOV_TO_REG,SL),6,"mov.l"),{{DISP|L_32|SRC,RD32,E}},{{ PREFIX32,0x7,0x8,B30|DISPREG,0x0,0x6,0xB,0x2,B30|RD32,SRC|DISP32LIST,E }}EOP,
+  SOP(O(O_MOV_TO_REG,SL),6,"mov.l"),{{RSINC,RD32,E}},        {{ PREFIX32,0x6,0xD,B30|RSINC,B30|RD32,E,0,0,0,0 }}EOP,
+  SOP(O(O_MOV_TO_REG,SL),6,"mov.l"),{{ABS16SRC,RD32,E}},     {{ PREFIX32,0x6,0xB,0x0,B30|RD32,ABS16SRC,IGNORE,IGNORE,IGNORE,E }}EOP,
+  SOP(O(O_MOV_TO_REG,SL),6,"mov.l"),{{ABS32SRC|MEMRELAX,RD32,E }},    {{ PREFIX32,0x6,0xB,0x2,B30|RD32,SRC|MEMRELAX|ABS32LIST,E }}EOP,
+  SOP(O(O_MOV_TO_MEM,SL),6,"mov.l"),{{RS32,RDIND,E}},        {{ PREFIX32,0x6,0x9,RDIND|B31,B30|RS32,E,0,0,0,0 }}EOP,
+  SOP(O(O_MOV_TO_MEM,SL),6,"mov.l"),{{RS32,DISP16DST,E}},    {{ PREFIX32,0x6,0xF,DISPREG|B31,B30|RS32,DISP16DST,IGNORE,IGNORE,IGNORE,E }}EOP,
+  SOP(O(O_MOV_TO_MEM,SL),6,"mov.l"),{{RS32,DISP|L_32|DST,E}},{{ PREFIX32,0x7,0x8,B31|DISPREG,0x0,0x6,0xB,0xA,B30|RS32,DST|DISP32LIST,E }}EOP,
+  SOP(O(O_MOV_TO_MEM,SL),6,"mov.l"),{{RS32,RDDEC,E}},        {{ PREFIX32,0x6,0xD,RDDEC|B31,B30|RS32,E,0,0,0,0 }}EOP,
+  SOP(O(O_MOV_TO_MEM,SL),6,"mov.l"),{{RS32,ABS16DST,E}},     {{ PREFIX32,0x6,0xB,0x8,B30|RS32,ABS16DST,IGNORE,IGNORE,IGNORE,E }}EOP,
+  SOP(O(O_MOV_TO_MEM,SL),6,"mov.l"),{{RS32,ABS32DST|MEMRELAX,E }},    {{ PREFIX32,0x6,0xB,0xA,B30|RS32,DST|MEMRELAX|ABS32LIST,E }}EOP,
 
-  SOP(O(O_MOV_TO_REG,SB),10,"movfpe"),{ABS16SRC,RD8,E},{ 0x6,0xA,0x4,RD8,ABS16SRC,IGNORE,IGNORE,IGNORE,E}EOP,
-  SOP(O(O_MOV_TO_MEM,SB),10,"movtpe"),{RS8,ABS16DST,E},{ 0x6,0xA,0xC,RS8,ABS16DST,IGNORE,IGNORE,IGNORE,E}EOP,
+  SOP(O(O_MOV_TO_REG,SB),10,"movfpe"),{{ABS16SRC,RD8,E}},{{ 0x6,0xA,0x4,RD8,ABS16SRC,IGNORE,IGNORE,IGNORE,E}}EOP,
+  SOP(O(O_MOV_TO_MEM,SB),10,"movtpe"),{{RS8,ABS16DST,E}},{{ 0x6,0xA,0xC,RS8,ABS16DST,IGNORE,IGNORE,IGNORE,E}}EOP,
 
-  NEW_SOP(O(O_MULU,SB),1,14,"mulxu.b"),{RS8,RD16,E}, { 0x5,0x0,RS8,RD16,E,0,0,0,0}EOP,
-  NEW_SOP(O(O_MULU,SW),0,14,"mulxu.w"),{RS16,RD32,E},{ 0x5,0x2,RS16,B30|RD32,E,0,0,0,0}EOP,
+  NEW_SOP(O(O_MULU,SB),1,14,"mulxu.b"),{{RS8,RD16,E}}, {{ 0x5,0x0,RS8,RD16,E,0,0,0,0}}EOP,
+  NEW_SOP(O(O_MULU,SW),0,14,"mulxu.w"),{{RS16,RD32,E}},{{ 0x5,0x2,RS16,B30|RD32,E,0,0,0,0}}EOP,
 
-  NEW_SOP(O(O_MULS,SB),0,20,"mulxs.b"),{RS8,RD16,E}, { 0x0,0x1,0xc,0x0,0x5,0x0,RS8,RD16,E}EOP,
-  NEW_SOP(O(O_MULS,SW),0,20,"mulxs.w"),{RS16,RD32,E},{ 0x0,0x1,0xc,0x0,0x5,0x2,RS16,B30|RD32,E}EOP,
+  NEW_SOP(O(O_MULS,SB),0,20,"mulxs.b"),{{RS8,RD16,E}}, {{ 0x0,0x1,0xc,0x0,0x5,0x0,RS8,RD16,E}}EOP,
+  NEW_SOP(O(O_MULS,SW),0,20,"mulxs.w"),{{RS16,RD32,E}},{{ 0x0,0x1,0xc,0x0,0x5,0x2,RS16,B30|RD32,E}}EOP,
   
   /* ??? This can use UNOP3.  */
-  NEW_SOP(O(O_NEG,SB),1,2,"neg.b"),{ OR8,E, 0},{ 0x1,0x7,0x8,OR8,E,0,0,0,0}EOP,
-  NEW_SOP(O(O_NEG,SW),0,2,"neg.w"),{ OR16,E,0},{ 0x1,0x7,0x9,OR16,E}EOP,
-  NEW_SOP(O(O_NEG,SL),0,2,"neg.l"),{ OR32,E,0},{ 0x1,0x7,0xB,B30|OR32,E}EOP,
+  NEW_SOP(O(O_NEG,SB),1,2,"neg.b"),{{ OR8,E, 0}},{{ 0x1,0x7,0x8,OR8,E,0,0,0,0}}EOP,
+  NEW_SOP(O(O_NEG,SW),0,2,"neg.w"),{{ OR16,E,0}},{{ 0x1,0x7,0x9,OR16,E}}EOP,
+  NEW_SOP(O(O_NEG,SL),0,2,"neg.l"),{{ OR32,E,0}},{{ 0x1,0x7,0xB,B30|OR32,E}}EOP,
     
-  NEW_SOP(O(O_NOP,SN),1,2,"nop"),{E,0,0},{ 0x0,0x0,0x0,0x0,E,0,0,0,0}EOP,
+  NEW_SOP(O(O_NOP,SN),1,2,"nop"),{{E,0,0}},{{ 0x0,0x0,0x0,0x0,E,0,0,0,0}}EOP,
 
   /* ??? This can use UNOP3.  */
-  NEW_SOP(O(O_NOT,SB),1,2,"not.b"),{ OR8,E, 0},{ 0x1,0x7,0x0,OR8,E,0,0,0,0}EOP,
-  NEW_SOP(O(O_NOT,SW),0,2,"not.w"),{ OR16,E,0},{ 0x1,0x7,0x1,OR16,E}EOP,
-  NEW_SOP(O(O_NOT,SL),0,2,"not.l"),{ OR32,E,0},{ 0x1,0x7,0x3,B30|OR32,E}EOP,
+  NEW_SOP(O(O_NOT,SB),1,2,"not.b"),{{ OR8,E, 0}},{{ 0x1,0x7,0x0,OR8,E,0,0,0,0}}EOP,
+  NEW_SOP(O(O_NOT,SW),0,2,"not.w"),{{ OR16,E,0}},{{ 0x1,0x7,0x1,OR16,E}}EOP,
+  NEW_SOP(O(O_NOT,SL),0,2,"not.l"),{{ OR32,E,0}},{{ 0x1,0x7,0x3,B30|OR32,E}}EOP,
 
   TWOOP(O(O_OR, SB),"or.b",0xC,0x1,0x4),
-  NEW_SOP(O(O_OR,SW),0,4,"or.w"),{IMM16,RD16,E },{0x7,0x9,0x4,RD16,IMM16,IGNORE,IGNORE,IGNORE,E} EOP,
-  NEW_SOP(O(O_OR,SW),0,2,"or.w"),{RS16,RD16,E },{0x6,0x4,RS16,RD16,E} EOP,
+  NEW_SOP(O(O_OR,SW),0,4,"or.w"),{{IMM16,RD16,E }},{{0x7,0x9,0x4,RD16,IMM16,IGNORE,IGNORE,IGNORE,E}} EOP,
+  NEW_SOP(O(O_OR,SW),0,2,"or.w"),{{RS16,RD16,E }},{{0x6,0x4,RS16,RD16,E}} EOP,
 
-  NEW_SOP(O(O_OR,SL),0,6,"or.l"),{IMM32,RD32,E },{0x7,0xA,0x4,B30|RD32,IMM32LIST,E} EOP,
-  NEW_SOP(O(O_OR,SL),0,2,"or.l"),{RS32,RD32,E },{0x0,0x1,0xF,0x0,0x6,0x4,B30|RS32,B30|RD32,E} EOP,
+  NEW_SOP(O(O_OR,SL),0,6,"or.l"),{{IMM32,RD32,E }},{{0x7,0xA,0x4,B30|RD32,IMM32LIST,E}} EOP,
+  NEW_SOP(O(O_OR,SL),0,2,"or.l"),{{RS32,RD32,E }},{{0x0,0x1,0xF,0x0,0x6,0x4,B30|RS32,B30|RD32,E}} EOP,
 
-  NEW_SOP(O(O_ORC,SB),1,2,"orc"),{IMM8,CCR,E},{ 0x0,0x4,IMM8,IGNORE,E,0,0,0,0}EOP,
-  NEW_SOP(O(O_ORC,SB),1,2,"orc"),{IMM8,EXR,E},{ 0x0,0x1,0x4,0x1,0x0,0x4,IMM8,IGNORE,E,0,0,0,0}EOP,
+  NEW_SOP(O(O_ORC,SB),1,2,"orc"),{{IMM8,CCR,E}},{{ 0x0,0x4,IMM8,IGNORE,E,0,0,0,0}}EOP,
+  NEW_SOP(O(O_ORC,SB),1,2,"orc"),{{IMM8,EXR,E}},{{ 0x0,0x1,0x4,0x1,0x0,0x4,IMM8,IGNORE,E,0,0,0,0}}EOP,
 
-  NEW_SOP(O(O_MOV_TO_REG,SW),1,6,"pop.w"),{OR16,E,0},{ 0x6,0xD,0x7,OR16,E,0,0,0,0}EOP,
-  NEW_SOP(O(O_MOV_TO_REG,SL),0,6,"pop.l"),{OR32,E,0},{ PREFIX32,0x6,0xD,0x7,OR32|B30,E,0,0,0,0}EOP,
-  NEW_SOP(O(O_MOV_TO_MEM,SW),1,6,"push.w"),{OR16,E,0},{ 0x6,0xD,0xF,OR16,E,0,0,0,0}EOP,
-  NEW_SOP(O(O_MOV_TO_MEM,SL),0,6,"push.l"),{OR32,E,0},{ PREFIX32,0x6,0xD,0xF,OR32|B30,E,0,0,0,0}EOP,
+  NEW_SOP(O(O_MOV_TO_REG,SW),1,6,"pop.w"),{{OR16,E,0}},{{ 0x6,0xD,0x7,OR16,E,0,0,0,0}}EOP,
+  NEW_SOP(O(O_MOV_TO_REG,SL),0,6,"pop.l"),{{OR32,E,0}},{{ PREFIX32,0x6,0xD,0x7,OR32|B30,E,0,0,0,0}}EOP,
+  NEW_SOP(O(O_MOV_TO_MEM,SW),1,6,"push.w"),{{OR16,E,0}},{{ 0x6,0xD,0xF,OR16,E,0,0,0,0}}EOP,
+  NEW_SOP(O(O_MOV_TO_MEM,SL),0,6,"push.l"),{{OR32,E,0}},{{ PREFIX32,0x6,0xD,0xF,OR32|B30,E,0,0,0,0}}EOP,
 
   UNOP3(O_ROTL,  "rotl", 0x1,0x2,0x8),
   UNOP3(O_ROTR,  "rotr", 0x1,0x3,0x8),
   UNOP3(O_ROTXL, "rotxl",0x1,0x2,0x0),
   UNOP3(O_ROTXR, "rotxr",0x1,0x3,0x0),
 
-  SOP(O(O_BPT,SN),  10,"bpt"),{E,0,0},{ 0x7,0xA,0xF,0xF,E,0,0,0,0}EOP,
-  SOP(O(O_RTE,SN),  10,"rte"),{E,0,0},{ 0x5,0x6,0x7,0x0,E,0,0,0,0}EOP,
-  SOP(O(O_RTS,SN),   8,"rts"),{E,0,0},{ 0x5,0x4,0x7,0x0,E,0,0,0,0}EOP,
+  SOP(O(O_BPT,SN),  10,"bpt"),{{E,0,0}},{{ 0x7,0xA,0xF,0xF,E,0,0,0,0}}EOP,
+  SOP(O(O_RTE,SN),  10,"rte"),{{E,0,0}},{{ 0x5,0x6,0x7,0x0,E,0,0,0,0}}EOP,
+  SOP(O(O_RTS,SN),   8,"rts"),{{E,0,0}},{{ 0x5,0x4,0x7,0x0,E,0,0,0,0}}EOP,
 
   UNOP3(O_SHAL,  "shal",0x1,0x0,0x8),
   UNOP3(O_SHAR,  "shar",0x1,0x1,0x8),
   UNOP3(O_SHLL,  "shll",0x1,0x0,0x0),
   UNOP3(O_SHLR,  "shlr",0x1,0x1,0x0),
 
-  SOP(O(O_SLEEP,SN),2,"sleep"),{E,0,0},{ 0x0,0x1,0x8,0x0,E,0,0,0,0} EOP,
+  SOP(O(O_SLEEP,SN),2,"sleep"),{{E,0,0}},{{ 0x0,0x1,0x8,0x0,E,0,0,0,0}} EOP,
 
-  NEW_SOP(O(O_STC,SB), 1,2,"stc"),{CCR,RD8,E},{ 0x0,0x2,0x0,RD8,E,0,0,0,0} EOP,
+  NEW_SOP(O(O_STC,SB), 1,2,"stc"),{{CCR,RD8,E}},{{ 0x0,0x2,0x0,RD8,E,0,0,0,0}} EOP,
 
-  NEW_SOP(O(O_STC,SB),0,2,"stc"),{CCR,RSIND,E},        {PREFIXLDC,0x6,0x9,B31|RDIND,0x0,E} EOP,
-  NEW_SOP(O(O_STC,SB),0,2,"stc"),{CCR,DISP|DST|L_16,E},{PREFIXLDC,0x6,0xF,B31|DISPREG,0,DST|DISP|L_16,IGNORE,IGNORE,IGNORE,E}EOP,
-  NEW_SOP(O(O_STC,SB),0,2,"stc"),{CCR,DISP|DST|L_32,E},{PREFIXLDC,0x7,0x8,B30|DISPREG,0,0x6,0xB,0xA,0x0,DST|DISP32LIST,E}EOP,
-  NEW_SOP(O(O_STC,SB),0,2,"stc"),{CCR,RDDEC,E},        {PREFIXLDC,0x6,0xD,B31|RDDEC,0x0,E}EOP,
+  NEW_SOP(O(O_STC,SB),0,2,"stc"),{{CCR,RSIND,E}},        {{PREFIXLDC,0x6,0x9,B31|RDIND,0x0,E}} EOP,
+  NEW_SOP(O(O_STC,SB),0,2,"stc"),{{CCR,DISP|DST|L_16,E}},{{PREFIXLDC,0x6,0xF,B31|DISPREG,0,DST|DISP|L_16,IGNORE,IGNORE,IGNORE,E}}EOP,
+  NEW_SOP(O(O_STC,SB),0,2,"stc"),{{CCR,DISP|DST|L_32,E}},{{PREFIXLDC,0x7,0x8,B30|DISPREG,0,0x6,0xB,0xA,0x0,DST|DISP32LIST,E}}EOP,
+  NEW_SOP(O(O_STC,SB),0,2,"stc"),{{CCR,RDDEC,E}},        {{PREFIXLDC,0x6,0xD,B31|RDDEC,0x0,E}}EOP,
 
-  NEW_SOP(O(O_STC,SB),0,2,"stc"),{CCR,ABS16SRC,E},     {PREFIXLDC,0x6,0xB,0x8,0x0,ABS16DST,IGNORE,IGNORE,IGNORE,E}EOP,
-  NEW_SOP(O(O_STC,SB),0,2,"stc"),{CCR,ABS32SRC,E},     {PREFIXLDC,0x6,0xB,0xA,0x0,DST|ABS32LIST,E}EOP,
+  NEW_SOP(O(O_STC,SB),0,2,"stc"),{{CCR,ABS16SRC,E}},     {{PREFIXLDC,0x6,0xB,0x8,0x0,ABS16DST,IGNORE,IGNORE,IGNORE,E}}EOP,
+  NEW_SOP(O(O_STC,SB),0,2,"stc"),{{CCR,ABS32SRC,E}},     {{PREFIXLDC,0x6,0xB,0xA,0x0,DST|ABS32LIST,E}}EOP,
 
-  NEW_SOP(O(O_STC,SB), 1,2,"stc"),{EXR,RD8,E},{ 0x0,0x2,0x1,RD8,E,0,0,0,0} EOP,
+  NEW_SOP(O(O_STC,SB), 1,2,"stc"),{{EXR,RD8,E}},{{ 0x0,0x2,0x1,RD8,E,0,0,0,0}} EOP,
 
-  NEW_SOP(O(O_STC,SB),0,2,"stc"),{EXR,RSIND,E},        {0x0,0x1,0x4,0x1,0x6,0x9,B31|RDIND,0x0,E} EOP,
-  NEW_SOP(O(O_STC,SB),0,2,"stc"),{EXR,DISP|DST|L_16,E},{0x0,0x1,0x4,0x1,0x6,0xF,B31|DISPREG,0,DST|DISP|L_16,IGNORE,IGNORE,IGNORE,E}EOP,
-  NEW_SOP(O(O_STC,SB),0,2,"stc"),{EXR,DISP|DST|L_32,E},{0x0,0x1,0x4,0x1,0x7,0x8,B30|DISPREG,0,0x6,0xB,0xA,0x0,DST|DISP32LIST,E}EOP,
-  NEW_SOP(O(O_STC,SB),0,2,"stc"),{EXR,RDDEC,E},        {0x0,0x1,0x4,0x1,0x6,0xD,B31|RDDEC,0x0,E}EOP,
+  NEW_SOP(O(O_STC,SB),0,2,"stc"),{{EXR,RSIND,E}},        {{0x0,0x1,0x4,0x1,0x6,0x9,B31|RDIND,0x0,E}} EOP,
+  NEW_SOP(O(O_STC,SB),0,2,"stc"),{{EXR,DISP|DST|L_16,E}},{{0x0,0x1,0x4,0x1,0x6,0xF,B31|DISPREG,0,DST|DISP|L_16,IGNORE,IGNORE,IGNORE,E}}EOP,
+  NEW_SOP(O(O_STC,SB),0,2,"stc"),{{EXR,DISP|DST|L_32,E}},{{0x0,0x1,0x4,0x1,0x7,0x8,B30|DISPREG,0,0x6,0xB,0xA,0x0,DST|DISP32LIST,E}}EOP,
+  NEW_SOP(O(O_STC,SB),0,2,"stc"),{{EXR,RDDEC,E}},        {{0x0,0x1,0x4,0x1,0x6,0xD,B31|RDDEC,0x0,E}}EOP,
 
-  NEW_SOP(O(O_STC,SB),0,2,"stc"),{EXR,ABS16SRC,E},     {0x0,0x1,0x4,0x1,0x6,0xB,0x8,0x0,ABS16DST,IGNORE,IGNORE,IGNORE,E}EOP,
-  NEW_SOP(O(O_STC,SB),0,2,"stc"),{EXR,ABS32SRC,E},     {0x0,0x1,0x4,0x1,0x6,0xB,0xA,0x0,DST|ABS32LIST,E}EOP,
+  NEW_SOP(O(O_STC,SB),0,2,"stc"),{{EXR,ABS16SRC,E}},     {{0x0,0x1,0x4,0x1,0x6,0xB,0x8,0x0,ABS16DST,IGNORE,IGNORE,IGNORE,E}}EOP,
+  NEW_SOP(O(O_STC,SB),0,2,"stc"),{{EXR,ABS32SRC,E}},     {{0x0,0x1,0x4,0x1,0x6,0xB,0xA,0x0,DST|ABS32LIST,E}}EOP,
 
-  SOP(O(O_SUB,SB),2,"sub.b"),{RS8,RD8,E},{ 0x1,0x8,RS8,RD8,E,0,0,0,0}EOP,
+  SOP(O(O_SUB,SB),2,"sub.b"),{{RS8,RD8,E}},{{ 0x1,0x8,RS8,RD8,E,0,0,0,0}}EOP,
 
-  NEW_SOP(O(O_SUB,SW),1,2,"sub.w"),{RS16,RD16,E },  {0x1,0x9,RS16,RD16,E} EOP,
-  NEW_SOP(O(O_SUB,SW),0,4,"sub.w"),{IMM16,RD16,E }, {0x7,0x9,0x3,RD16,IMM16,IGNORE,IGNORE,IGNORE,E} EOP,
-  NEW_SOP(O(O_SUB,SL),0,2,"sub.l") ,{RS32,RD32,E }, {0x1,0xA,B31|RS32,B30|RD32,E} EOP,
-  NEW_SOP(O(O_SUB,SL),0,6,"sub.l"), {IMM32,RD32,E },{0x7,0xA,0x3,B30|RD32,IMM32LIST,E} EOP,
+  NEW_SOP(O(O_SUB,SW),1,2,"sub.w"),{{RS16,RD16,E }},  {{0x1,0x9,RS16,RD16,E}} EOP,
+  NEW_SOP(O(O_SUB,SW),0,4,"sub.w"),{{IMM16,RD16,E }}, {{0x7,0x9,0x3,RD16,IMM16,IGNORE,IGNORE,IGNORE,E}} EOP,
+  NEW_SOP(O(O_SUB,SL),0,2,"sub.l") ,{{RS32,RD32,E }}, {{0x1,0xA,B31|RS32,B30|RD32,E}} EOP,
+  NEW_SOP(O(O_SUB,SL),0,6,"sub.l"), {{IMM32,RD32,E }},{{0x7,0xA,0x3,B30|RD32,IMM32LIST,E}} EOP,
 
-  SOP(O(O_SUBS,SL),2,"subs"),{KBIT,RDP,E},{ 0x1,0xB,KBIT,RDP,E,0,0,0,0}EOP,
+  SOP(O(O_SUBS,SL),2,"subs"),{{KBIT,RDP,E}},{{ 0x1,0xB,KBIT,RDP,E,0,0,0,0}}EOP,
   TWOOP(O(O_SUBX,SB),"subx",0xB,0x1,0xE),
 
-  NEW_SOP(O(O_TRAPA,SB),0,2,"trapa"),{ IMM2,E},  {0x5,0x7,IMM2,IGNORE,E  }EOP,
-  NEW_SOP(O(O_TAS,SB),0,2,"tas"),{RSIND,E},  {0x0,0x1,0xe,0x0,0x7,0xb,B30|RSIND,0xc,E  }EOP,
+  NEW_SOP(O(O_TRAPA,SB),0,2,"trapa"),{{ IMM2,E}},  {{0x5,0x7,IMM2,IGNORE,E  }}EOP,
+  NEW_SOP(O(O_TAS,SB),0,2,"tas"),{{RSIND,E}},  {{0x0,0x1,0xe,0x0,0x7,0xb,B30|RSIND,0xc,E  }}EOP,
 
   TWOOP(O(O_XOR, SB),"xor",0xD,0x1,0x5),
 
-  NEW_SOP(O(O_XOR,SW),0,4,"xor.w"),{IMM16,RD16,E },{0x7,0x9,0x5,RD16,IMM16,IGNORE,IGNORE,IGNORE,E} EOP,
-  NEW_SOP(O(O_XOR,SW),0,2,"xor.w"),{RS16,RD16,E },{0x6,0x5,RS16,RD16,E} EOP,
+  NEW_SOP(O(O_XOR,SW),0,4,"xor.w"),{{IMM16,RD16,E }},{{0x7,0x9,0x5,RD16,IMM16,IGNORE,IGNORE,IGNORE,E}} EOP,
+  NEW_SOP(O(O_XOR,SW),0,2,"xor.w"),{{RS16,RD16,E }},{{0x6,0x5,RS16,RD16,E}} EOP,
 
-  NEW_SOP(O(O_XOR,SL),0,6,"xor.l"),{IMM32,RD32,E },{0x7,0xA,0x5,B30|RD32,IMM32LIST,E} EOP,
-  NEW_SOP(O(O_XOR,SL),0,2,"xor.l") ,{RS32,RD32,E },{0x0,0x1,0xF,0x0,0x6,0x5,B30|RS32,B30|RD32,E} EOP,
+  NEW_SOP(O(O_XOR,SL),0,6,"xor.l"),{{IMM32,RD32,E }},{{0x7,0xA,0x5,B30|RD32,IMM32LIST,E}} EOP,
+  NEW_SOP(O(O_XOR,SL),0,2,"xor.l") ,{{RS32,RD32,E }},{{0x0,0x1,0xF,0x0,0x6,0x5,B30|RS32,B30|RD32,E}} EOP,
 
-  SOP(O(O_XORC,SB),2,"xorc"),{IMM8,CCR,E},{ 0x0,0x5,IMM8,IGNORE,E,0,0,0,0}EOP,
-  SOP(O(O_XORC,SB),2,"xorc"),{IMM8,EXR,E},{ 0x0,0x1,0x4,0x1,0x0,0x5,IMM8,IGNORE,E,0,0,0,0}EOP,
+  SOP(O(O_XORC,SB),2,"xorc"),{{IMM8,CCR,E}},{{ 0x0,0x5,IMM8,IGNORE,E,0,0,0,0}}EOP,
+  SOP(O(O_XORC,SB),2,"xorc"),{{IMM8,EXR,E}},{{ 0x0,0x1,0x4,0x1,0x0,0x5,IMM8,IGNORE,E,0,0,0,0}}EOP,
 
-  NEW_SOP(O(O_CLRMAC,SN),1,2,"clrmac"),{E, 0, 0},{0x0,0x1,0xa,0x0,E} EOP,
-  NEW_SOP(O(O_MAC,SL),1,2,"mac"),{RSINC,RDINC,E},{0x0,0x1,0x6,0x0,0x6,0xd,B30|RSINC,B30|RDINC,E} EOP,
-  NEW_SOP(O(O_LDMAC,SL),1,2,"ldmac"),{RS32,MACREG,E},{0x0,0x3,MACREG,RS32,E} EOP,
-  NEW_SOP(O(O_STMAC,SL),1,2,"stmac"),{MACREG,RD32,E},{0x0,0x2,MACREG,RD32,E} EOP,
-  NEW_SOP(O(O_LDM,SL),0,6,"ldm.l"),{RSINC, RS32, E},{ 0x0,0x1,IGNORE,0x0,0x6,0xD,0x7,IGNORE,E}EOP,
-  NEW_SOP(O(O_STM,SL),0,6,"stm.l"),{RS32, RDDEC, E},{0x0,0x1,IGNORE,0x0,0x6,0xD,0xF,IGNORE,E}EOP,
-  0
+  NEW_SOP(O(O_CLRMAC,SN),1,2,"clrmac"),{{E, 0, 0}},{{0x0,0x1,0xa,0x0,E}} EOP,
+  NEW_SOP(O(O_MAC,SL),1,2,"mac"),{{RSINC,RDINC,E}},{{0x0,0x1,0x6,0x0,0x6,0xd,B30|RSINC,B30|RDINC,E}} EOP,
+  NEW_SOP(O(O_LDMAC,SL),1,2,"ldmac"),{{RS32,MACREG,E}},{{0x0,0x3,MACREG,RS32,E}} EOP,
+  NEW_SOP(O(O_STMAC,SL),1,2,"stmac"),{{MACREG,RD32,E}},{{0x0,0x2,MACREG,RD32,E}} EOP,
+  NEW_SOP(O(O_LDM,SL),0,6,"ldm.l"),{{RSINC, RS32, E}},{{ 0x0,0x1,IGNORE,0x0,0x6,0xD,0x7,IGNORE,E}}EOP,
+  NEW_SOP(O(O_STM,SL),0,6,"stm.l"),{{RS32, RDDEC, E}},{{0x0,0x1,IGNORE,0x0,0x6,0xD,0xF,IGNORE,E}}EOP,
+  { 0 }
 };
 #else
 extern struct h8_opcode h8_opcodes[] ;

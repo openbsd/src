@@ -1,5 +1,5 @@
 /* BFD back-end for raw ARM a.out binaries.
-   Copyright (C) 1994, 1995 Free Software Foundation, Inc.
+   Copyright (C) 1994, 95, 96, 97, 98, 1999 Free Software Foundation, Inc.
    Contributed by Richard Earnshaw (rwe@pegasus.esprit.ec.org)
    
 This file is part of BFD, the Binary File Descriptor library.
@@ -87,7 +87,7 @@ reloc_howto_type MY(howto_table)[] =
   HOWTO (7, 2, 2, 26, false, 0, complain_overflow_signed,
 	 MY(fix_pcrel_26_done), "ARM26D", true, 0x0, 0x0,
 	 false),
-  {-1},
+  EMPTY_HOWTO (-1),
   HOWTO (9, 0, -1, 16, false, 0, complain_overflow_bitfield, 0, "NEG16", true,
 	 0x0000ffff, 0x0000ffff, false),
   HOWTO (10, 0, -2, 32, false, 0, complain_overflow_bitfield, 0, "NEG32", true,
@@ -230,13 +230,13 @@ MY(relocatable_reloc)(howto, abfd, reloc, amount, r_addr)
 static bfd_reloc_status_type
 MY(fix_pcrel_26_done) (abfd, reloc_entry, symbol, data, input_section,
 		       output_bfd, error_message)
-     bfd *abfd;
-     arelent *reloc_entry;
-     asymbol *symbol;
-     PTR data;
-     asection *input_section;
-     bfd *output_bfd;
-     char **error_message;
+     bfd *abfd ATTRIBUTE_UNUSED;
+     arelent *reloc_entry ATTRIBUTE_UNUSED;
+     asymbol *symbol ATTRIBUTE_UNUSED;
+     PTR data ATTRIBUTE_UNUSED;
+     asection *input_section ATTRIBUTE_UNUSED;
+     bfd *output_bfd ATTRIBUTE_UNUSED;
+     char **error_message ATTRIBUTE_UNUSED;
 {
   /* This is dead simple at present.  */
   return bfd_reloc_ok;
@@ -251,7 +251,7 @@ MY(fix_pcrel_26) (abfd, reloc_entry, symbol, data, input_section,
      PTR data;
      asection *input_section;
      bfd *output_bfd;
-     char **error_message;
+     char **error_message ATTRIBUTE_UNUSED;
 {
   bfd_vma relocation;
   bfd_size_type addr = reloc_entry->address;
@@ -284,7 +284,7 @@ MY(fix_pcrel_26) (abfd, reloc_entry, symbol, data, input_section,
   /* Check for overflow */
   if (relocation & 0x02000000)
     {
-      if ((relocation & ~0x03ffffff) != ~0x03ffffff)
+      if ((relocation & ~ (bfd_vma) 0x03ffffff) != ~ (bfd_vma) 0x03ffffff)
 	flag = bfd_reloc_overflow;
     }
   else if (relocation & ~0x03ffffff)
@@ -343,11 +343,10 @@ MY_swap_std_reloc_in (abfd, bytes, cache_ptr, symbols, symcount)
      struct reloc_std_external *bytes;
      arelent *cache_ptr;
      asymbol **symbols;
-     bfd_size_type symcount;
+     bfd_size_type symcount ATTRIBUTE_UNUSED;
 {
   int r_index;
   int r_extern;
-  unsigned int r_length;
   int r_pcrel;
   struct aoutdata *su = &(abfd->tdata.aout_data->a);
 
@@ -468,6 +467,8 @@ MY_swap_std_reloc_out (abfd, g, natptr)
 
 #include "aout-target.h"
 
+extern const bfd_target aout_arm_big_vec;
+
 const bfd_target aout_arm_little_vec =
 {
   "a.out-arm-little",           /* name */
@@ -477,7 +478,7 @@ const bfd_target aout_arm_little_vec =
   (HAS_RELOC | EXEC_P |         /* object flags */
    HAS_LINENO | HAS_DEBUG |
    HAS_SYMS | HAS_LOCALS | DYNAMIC | WP_TEXT | D_PAGED),
-  (SEC_HAS_CONTENTS | SEC_ALLOC | SEC_LOAD | SEC_RELOC), /* section flags */
+  (SEC_HAS_CONTENTS | SEC_ALLOC | SEC_LOAD | SEC_RELOC | SEC_CODE | SEC_DATA),
   MY_symbol_leading_char,
   AR_PAD_CHAR,                  /* ar_pad_char */
   15,                           /* ar_max_namelen */
@@ -504,6 +505,8 @@ const bfd_target aout_arm_little_vec =
      BFD_JUMP_TABLE_LINK (MY),
      BFD_JUMP_TABLE_DYNAMIC (MY),
 
+  & aout_arm_big_vec,
+  
   (PTR) MY_backend_data,
 };
 
@@ -516,7 +519,7 @@ const bfd_target aout_arm_big_vec =
   (HAS_RELOC | EXEC_P |         /* object flags */
    HAS_LINENO | HAS_DEBUG |
    HAS_SYMS | HAS_LOCALS | DYNAMIC | WP_TEXT | D_PAGED),
-  (SEC_HAS_CONTENTS | SEC_ALLOC | SEC_LOAD | SEC_RELOC), /* section flags */
+  (SEC_HAS_CONTENTS | SEC_ALLOC | SEC_LOAD | SEC_RELOC | SEC_CODE | SEC_DATA),
   MY_symbol_leading_char,
   AR_PAD_CHAR,                  /* ar_pad_char */
   15,                           /* ar_max_namelen */
@@ -543,5 +546,7 @@ const bfd_target aout_arm_big_vec =
      BFD_JUMP_TABLE_LINK (MY),
      BFD_JUMP_TABLE_DYNAMIC (MY),
 
+  & aout_arm_little_vec,
+  
   (PTR) MY_backend_data,
 };

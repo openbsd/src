@@ -1,7 +1,8 @@
 /* BFD back-end for AIX on PS/2 core files.
    This was based on trad-core.c, which was written by John Gilmore of
         Cygnus Support.
-   Copyright 1988, 1989, 1991, 1992, 1993, 1994 Free Software Foundation, Inc.
+   Copyright 1988, 89, 91, 92, 93, 94, 95, 96, 97, 1998
+   Free Software Foundation, Inc.
    Written by Minh Tran-Le <TRANLE@INTELLICORP.COM>.
    Converted to back end form by Ian Lance Taylor <ian@cygnus.com>.
 
@@ -24,16 +25,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #include "bfd.h"
 #include "sysdep.h"
 #include "libbfd.h"
-#include "obstack.h"
 #include "coff/i386.h"
 #include "coff/internal.h"
 #include "libcoff.h"
 
-#include <stdio.h>
-#include <stddef.h>
 #include <signal.h>
-
-#include <errno.h>
 
 #if defined (_AIX) && defined (_I386)
 #define NOCHECKS		/* this is for coredump.h */
@@ -283,5 +279,7 @@ const bfd_target aix386_core_vec =
      BFD_JUMP_TABLE_LINK (_bfd_nolink),
      BFD_JUMP_TABLE_DYNAMIC (_bfd_nodynamic),
 
+    NULL,
+    
     (PTR) 0
 };

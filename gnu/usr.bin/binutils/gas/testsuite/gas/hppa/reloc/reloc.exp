@@ -32,7 +32,7 @@ proc do_ble_relocation_test {} {
 	    # a PC-relative relocation for a BLE instruction.
 	    while 1 {
 		expect {
-		    -re "^00000004\[^\n\]*ABS_CALL\[^\n\]*\n"	{ set x 1 }
+		    -re "^0+4\[^\n\]*ABS_CALL\[^\n\]*\n"	{ set x 1 }
 		    -re "\[^\n\]*\n"				{ }
 		    timeout			{ perror "timeout\n"; break }
 		    eof				{ break }
@@ -43,8 +43,8 @@ proc do_ble_relocation_test {} {
 	    # a PC-relative relocation for a BLE instruction.
 	    while 1 {
 		expect {
-		    -re "^00000000\[^\n\]*DIR21L\[^\n\]*\n"	{ set x 1 }
-		    -re "^00000004\[^\n\]*DIR17R\[^\n\]*\n"	{ set x 1 }
+		    -re "^0+\[^\n\]*DIR21L\[^\n\]*\n"	{ set x 1 }
+		    -re "^0+4\[^\n\]*DIR17R\[^\n\]*\n"	{ set x 1 }
 		    -re "\[^\n\]*\n"				{ }
 		    timeout			{ perror "timeout\n"; break }
 		    eof				{ break }
@@ -65,6 +65,10 @@ proc do_relocation_reduction_tests {} {
     set testname "reduce.s: Test relocation reductions (part 2)"
     set x 0
 
+    if [istarget hppa*w-*-*] then {
+      return;
+    }
+
     if [gas_test_old "reduce.s" "" "Relocation reductions (part1)"] then {
 	objdump_start_no_subdir "a.out" "-r"
 
@@ -73,9 +77,9 @@ proc do_relocation_reduction_tests {} {
 	# Doing so makes generating parameter relocation stubs impossible.
 	while 1 {
 	    expect {
-		-re "^00000004\[^\n\]*PLABEL\[^\n\]*foo\[^\n\]*\n"
+		-re "^0+4\[^\n\]*PLABEL\[^\n\]*foo\[^\n\]*\n"
 		    { set x [expr $x+1] }
-		-re "^00000014\[^\n\]*PCREL\[^\n\]*foo\[^\n\]*\n"
+		-re "^0+14\[^\n\]*PCREL\[^\n\]*foo\[^\n\]*\n"
 		    { set x [expr $x+1] }
 		-re "\[^\n\]*\n"		{ }
 		timeout				{ perror "timeout\n"; break }
@@ -94,20 +98,20 @@ proc do_relocation_reduction_tests {} {
     set testname "reduce2.s: More relocation reduction tests (part 2)"
     set x 0
 
-    if [gas_test_old "reduce2.s" "" "More relocatoin  reductions (part1)"] then {
+    if [gas_test_old "reduce2.s" "" "More relocation  reductions (part1)"] then {
 	objdump_start_no_subdir "a.out" "-r"
 
 	# Check to make sure DLT relative relocs are not reduced to sym+addend
 	# Doing so doesn't work as one might expect
 	while 1 {
 	    expect {
-		-re "^00000004\[^\n\]*DLT\[^\n\]*L.C0000\[^\n\]*\n"
+		-re "^0+4\[^\n\]*DLT\[^\n\]*L.C0000\[^\n\]*\n"
 		    { set x [expr $x+1] }
-		-re "^0000001c\[^\n\]*DLT\[^\n\]*L.C0000\[^\n\]*\n"
+		-re "^0+1c\[^\n\]*DLT\[^\n\]*L.C0000\[^\n\]*\n"
 		    { set x [expr $x+1] }
-		-re "^00000030\[^\n\]*DLT\[^\n\]*L.C0001\[^\n\]*\n"
+		-re "^0+30\[^\n\]*DLT\[^\n\]*L.C0001\[^\n\]*\n"
 		    { set x [expr $x+1] }
-		-re "^00000048\[^\n\]*DLT\[^\n\]*L.C0001\[^\n\]*\n"
+		-re "^0+48\[^\n\]*DLT\[^\n\]*L.C0001\[^\n\]*\n"
 		    { set x [expr $x+1] }
 		-re "\[^\n\]*\n"		{ }
 		timeout				{ perror "timeout\n"; break }
@@ -134,13 +138,13 @@ proc do_relocation_reduction_tests {} {
 	# Doing so makes generating parameter relocation stubs impossible.
 	while 1 {
 	    expect {
-		-re "^0000000c\[^\n\]*yabba\[^\n\+\]*\n"
+		-re "^0+c\[^\n\]*yabba\[^\n\+\]*\n"
 		    { set x [expr $x+1] }
-		-re "^0000000c\[^\n\]*yabba\+\[^\n\]*\n"
+		-re "^0+c\[^\n\]*yabba\+\[^\n\]*\n"
 		    { set x 0; break }
-		-re "^00000010\[^\n\]*yabba\[^\n\+\]*\n"
+		-re "^0+10\[^\n\]*yabba\[^\n\+\]*\n"
 		    { set x [expr $x+1] }
-		-re "^00000010\[^\n\]*yabba\+\[^\n\]*\n"
+		-re "^0+10\[^\n\]*yabba\+\[^\n\]*\n"
 		    { set x 0; break }
 		-re "\[^\n\]*\n"		{ }
 		timeout				{ perror "timeout\n"; break }
@@ -215,9 +219,9 @@ proc do_plabel_relocation_test {} {
 	# Check that we make PLABEL relocation entries when they're needed.
 	while 1 {
 	    expect {
-		-re "^00000000\[^\n\]*PLABEL\[^\n\]*\n"
+		-re "^0+\[^\n\]*PLABEL\[^\n\]*\n"
 		    { set x [expr $x+1] }
-		-re "^00000004\[^\n\]*PLABEL\[^\n\]*\n"
+		-re "^0+4\[^\n\]*PLABEL\[^\n\]*\n"
 		    { set x [expr $x+1] }
 		-re "\[^\n\]*\n"			{ }
 		timeout				{ perror "timeout\n"; break }
@@ -238,6 +242,10 @@ proc do_selector_scope_test {} {
     set testname "selectorbug.s: Test scope of field selector" 
     set x 0
 
+    if [istarget hppa*w-*-*] then {
+      return;
+    }
+
     if [gas_test_old "selectorbug.s" "" "Test scope of field selector (part 1)"] {
 	objdump_start_no_subdir "a.out" "-r"
 
@@ -247,9 +255,9 @@ proc do_selector_scope_test {} {
         if [istarget hppa*-*-*elf*] then {
 	    while 1 {
 		expect {
-	            -re "^00000014\[^\n\]*DIR32\[^\n\]*\n"
+	            -re "^0+14\[^\n\]*DIR32\[^\n\]*\n"
 			{ set x 1 }
-		    -re "^00000014\[^\n\]*PLABEL\[^\n\]*foo\[^\n\]*\n"
+		    -re "^0+14\[^\n\]*PLABEL\[^\n\]*foo\[^\n\]*\n"
 			{ set x 0 }
 	            -re "\[^\n\]*\n"		{ }
 	            timeout			{ perror "timeout\n"; break }
@@ -259,9 +267,9 @@ proc do_selector_scope_test {} {
 	} else {
 	    while 1 {
 		expect {
-	            -re "^00000014\[^\n\]*DATA_ONE\[^\n\]*\n"
+	            -re "^0+14\[^\n\]*DATA_ONE\[^\n\]*\n"
 			{ set x 1 }
-		    -re "^00000014\[^\n\]*PLABEL\[^\n\]*foo\[^\n\]*\n"
+		    -re "^0+14\[^\n\]*PLABEL\[^\n\]*foo\[^\n\]*\n"
 			{ set x 0 }
 	            -re "\[^\n\]*\n"		{ }
 	            timeout			{ perror "timeout\n"; break }
@@ -290,9 +298,9 @@ proc do_local_label_as_operand_test {} {
 	# to a non-branching instruction correctly.
 	while 1 {
 	    expect {
-	        -re "^0000002c\[^\n\]*0x00000024\[^\n\]*\n" 
+	        -re "^0+2c\[^\n\]*0x0+24\[^\n\]*\n" 
 		    { set x [expr $x+1] }
-	        -re "^00000030\[^\n\]*0x00000024\[^\n\]*\n" 
+	        -re "^0+30\[^\n\]*0x0+24\[^\n\]*\n" 
 		    { set x [expr $x+1] }
 	        -re "\[^\n\]*\n"		{ }
 	        timeout				{ perror "timeout\n"; break }
@@ -327,7 +335,7 @@ proc do_exit_relocation_test {} {
 	# Note that a match here is really a FAILURE!
 	while 1 {
 	    expect {
-	        -re "^00000000\[^\n\]*R_EXIT\[^\n\]*\n" 
+	        -re "^0+\[^\n\]*R_EXIT\[^\n\]*\n" 
 		    { set x [expr $x+1] }
 	        -re "\[^\n\]*\n"		{ }
 	        timeout				{ perror "timeout\n"; break }
@@ -348,6 +356,10 @@ proc do_cross_space_fixup_test_1 {} {
     set testname "fixupbug.s: Test cross space jump/call fixup bug (part 2)"
     set x 0
 
+    if [istarget hppa*w-*-*] then {
+      return;
+    }
+
     # ELF (osf) doesn't really handle extra sections too well...
     if [istarget hppa*-*-*elf*] then {
 	return;
@@ -360,7 +372,7 @@ proc do_cross_space_fixup_test_1 {} {
 	# branch/call
 	while 1 {
 	    expect {
-	        -re "^00000000\[^\n\]*PCREL_CALL\[^\n\]*\n" 
+	        -re "^0+\[^\n\]*PCREL_CALL\[^\n\]*\n" 
 		    { set x [expr $x+1] }
 	        -re "\[^\n\]*\n"		{ }
 	        timeout				{ perror "timeout\n"; break }
@@ -380,6 +392,10 @@ proc do_cross_space_fixup_test_1 {} {
 proc do_cross_space_fixup_test_2 {} {
     set testname "fixupbug.s: Test cross space jump/call fixup bug (part 3)"
     set x 0
+
+    if [istarget hppa*w-*-*] then {
+      return;
+    }
 
     # ELF (osf) doesn't really handle extra sections too well...
     if [istarget hppa*-*-*elf*] then {
@@ -415,24 +431,24 @@ proc do_round_mode_test {} {
 	# Make sure GAS generated correct relocations to switch rounding modes.
 	# Also make sure (for SOM) that redundant rounding mode relocations
 	# were eliminated.
-	if [istarget hppa*-*-*elf*] then {
+	if { [istarget hppa*-*-*elf*] || [istarget hppa*w-*-*] } then {
 	    while 1 {
 		expect {
-	            -re "^00000000\[^\n\]*DIR21L\[^\n\]*\n"
+	            -re "^0+\[^\n\]*DIR21L\[^\n\]*\n"
 			{ set x [expr $x+1] }
-	            -re "^00000004\[^\n\]*DIR14R\[^\n\]*\n" 
+	            -re "^0+4\[^\n\]*DIR14R\[^\n\]*\n" 
 			{ set x [expr $x+1] }
-	            -re "^00000008\[^\n\]*DIR21L\[^\n\]*\n"
+	            -re "^0+8\[^\n\]*DIR21L\[^\n\]*\n"
 			{ set x [expr $x+1] }
-	            -re "^0000000c\[^\n\]*DIR14R\[^\n\]*\n" 
+	            -re "^0+c\[^\n\]*DIR14R\[^\n\]*\n" 
 			{ set x [expr $x+1] }
-	            -re "^00000010\[^\n\]*DIR21L\[^\n\]*\n"
+	            -re "^0+10\[^\n\]*DIR21L\[^\n\]*\n"
 			{ set x [expr $x+1] }
-	            -re "^00000014\[^\n\]*DIR14R\[^\n\]*\n" 
+	            -re "^0+14\[^\n\]*DIR14R\[^\n\]*\n" 
 			{ set x [expr $x+1] }
-	            -re "^00000018\[^\n\]*DIR21L\[^\n\]*\n"
+	            -re "^0+18\[^\n\]*DIR21L\[^\n\]*\n"
 			{ set x [expr $x+1] }
-	            -re "^0000001c\[^\n\]*DIR14R\[^\n\]*\n" 
+	            -re "^0+1c\[^\n\]*DIR14R\[^\n\]*\n" 
 			{ set x [expr $x+1] }
 	            -re "\[^\n\]*\n"		{ }
 	        timeout				{ perror "timeout\n"; break }
@@ -442,19 +458,19 @@ proc do_round_mode_test {} {
 	} else {
 	    while 1 {
 		expect {
-	            -re "^00000000\[^\n\]*R_R_MODE\[^\n\]*\n"
+	            -re "^0+\[^\n\]*R_R_MODE\[^\n\]*\n"
 			{ set x [expr $x+1] }
-	            -re "^00000004\[^\n\]*R_R_MODE\[^\n\]*\n" 
+	            -re "^0+4\[^\n\]*R_R_MODE\[^\n\]*\n" 
 			{ fail $testname }
-	            -re "^00000008\[^\n\]*R_N_MODE\[^\n\]*\n"
+	            -re "^0+8\[^\n\]*R_N_MODE\[^\n\]*\n"
 			{ set x [expr $x+1] }
-	            -re "^0000000c\[^\n\]*R_N_MODE\[^\n\]*\n" 
+	            -re "^0+c\[^\n\]*R_N_MODE\[^\n\]*\n" 
 			{ fail $testname }
-	            -re "^00000010\[^\n\]*R_R_MODE\[^\n\]*\n"
+	            -re "^0+10\[^\n\]*R_R_MODE\[^\n\]*\n"
 			{ set x [expr $x+1] }
-	            -re "^00000014\[^\n\]*R_R_MODE\[^\n\]*\n" 
+	            -re "^0+14\[^\n\]*R_R_MODE\[^\n\]*\n" 
 			{ fail $testname }
-	            -re "^0000001c\[^\n\]*R_R_MODE\[^\n\]*\n" 
+	            -re "^0+1c\[^\n\]*R_R_MODE\[^\n\]*\n" 
 			{ fail $testname }
 	            -re "\[^\n\]*\n"		{ }
 	        timeout				{ perror "timeout\n"; break }
@@ -468,7 +484,7 @@ proc do_round_mode_test {} {
 	objdump_finish
 
 	# Did we find what we were looking for?  If not, flunk it.
-	if [istarget hppa*-*-*elf*] then {
+	if {[istarget hppa*-*-*elf*] || [istarget hppa*w-*-*] } then {
 	    if [expr $x==8] then { pass $testname } else { fail $testname }
 	} else {
 	    if [expr $x==3] then { pass $testname } else { fail $testname }
@@ -487,9 +503,9 @@ proc do_function_reloc_bug {} {
 	# branch/call
 	while 1 {
 	    expect {
-	        -re "^000000cc\[^\n\]*f2___4\[^\n+\]*\n" 
+	        -re "^0+cc\[^\n\]*f2___4\[^\n+\]*\n" 
 		    { set x [expr $x+1] }
-	        -re "^000000d0\[^\n\]*f2___4\[^\n+\]*\n"  
+	        -re "^0+d0\[^\n\]*f2___4\[^\n+\]*\n"  
 		    { set x [expr $x+1] }
 	        -re "\[^\n\]*\n"		{ }
 	        timeout				{ perror "timeout\n"; break }
@@ -511,9 +527,9 @@ proc do_function_reloc_bug {} {
 	# Make sure we didn't put anything in the instruction itself!
 	while 1 {
 	    expect {
-	        -re "^000000cc\[^\n\]*ldil 0,r20\[^\n\]*\n" 
+	        -re "^0+cc\[^\n\]*ldil 0,r20\[^\n\]*\n" 
 		    { set x [expr $x+1] }
-	        -re "^000000d0\[^\n\]*ldo 0\[\(\]+r20\[\)\]+,r19\[^\n\]*\n" 
+	        -re "^0+d0\[^\n\]*ldo 0\[\(\]+r20\[\)\]+,r19\[^\n\]*\n" 
 		    { set x [expr $x+1] }
 	        -re "\[^\n\]*\n"		{ }
 	        timeout				{ perror "timeout\n"; break }
@@ -541,7 +557,7 @@ proc do_r_no_reloc {} {
 	# Make sure GAS generated a correct relocation for the reference.
 	while 1 {
 	    expect {
-	        -re "^000c0004\[^\n\]*PLABEL\[^\n]*g\[^\n\]*\n" 
+	        -re "^0+c0004\[^\n\]*PLABEL\[^\n]*g\[^\n\]*\n" 
 		    { set x [expr $x+1] }
 	        -re "\[^\n\]*\n"		{ }
 	        timeout				{ perror "timeout\n"; break }
@@ -562,6 +578,10 @@ proc do_r_no_reloc {} {
 proc do_pic_relocation_test {} {
     set testname "picreloc.s: Test for proper PIC relocation (part 2)"
     set x 0
+
+    if [istarget hppa*w-*-*] then {
+      return;
+    }
 
     # ELF (osf) doesn't really handle extra sections too well...
     if [istarget hppa*-*-*elf*] then {

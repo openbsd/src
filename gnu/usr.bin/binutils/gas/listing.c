@@ -1,5 +1,6 @@
 /* listing.c - mainting assembly listings
-   Copyright (C) 1991, 1992 Free Software Foundation, Inc.
+   Copyright (C) 1991, 92, 93, 94, 95, 96, 97, 98, 1999
+   Free Software Foundation, Inc.
 
 This file is part of GAS, the GNU Assembler.
 
@@ -14,8 +15,9 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with GAS; see the file COPYING.  If not, write to
-the Free Software Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
+along with GAS; see the file COPYING.  If not, write to the Free
+Software Foundation, 59 Temple Place - Suite 330, Boston, MA
+02111-1307, USA. */
 
 /*
  Contributed by Steve Chamberlain
@@ -99,6 +101,7 @@ the Free Software Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307
 #include "subsegs.h"
 
 #ifndef NO_LISTING
+
 #ifndef LISTING_HEADER
 #define LISTING_HEADER "GAS LISTING"
 #endif
@@ -106,10 +109,10 @@ the Free Software Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307
 #define LISTING_WORD_SIZE 4
 #endif
 #ifndef LISTING_LHS_WIDTH
-#define LISTING_LHS_WIDTH 1
+#define LISTING_LHS_WIDTH ((LISTING_WORD_SIZE) > 4 ? 1 : 4 / (LISTING_WORD_SIZE))
 #endif
 #ifndef LISTING_LHS_WIDTH_SECOND
-#define LISTING_LHS_WIDTH_SECOND 1
+#define LISTING_LHS_WIDTH_SECOND LISTING_LHS_WIDTH
 #endif
 #ifndef LISTING_RHS_WIDTH
 #define LISTING_RHS_WIDTH 100
@@ -118,48 +121,44 @@ the Free Software Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307
 #define LISTING_LHS_CONT_LINES 4
 #endif
 
-
-
-
 /* This structure remembers which .s were used */
 typedef struct file_info_struct
 {
-  char *filename;
-  int linenum;
-  FILE *file;
-  struct file_info_struct *next;
-  int at_end;
+  struct file_info_struct * next;
+  char *                    filename;
+  long                      pos;
+  unsigned int              linenum;
+  int                       at_end;
 }
-
 file_info_type;
 
-
-/* this structure rememebrs which line from which file goes into which
+/* This structure rememebrs which line from which file goes into which
    frag */
-typedef struct list_info_struct
+struct list_info_struct
 {
   /* Frag which this line of source is nearest to */
-  fragS *frag;
+  fragS * frag;
+
   /* The actual line in the source file */
   unsigned int line;
   /* Pointer to the file info struct for the file which this line
      belongs to */
-  file_info_type *file;
+  file_info_type * file;
+
+  /* The expanded text of any macro that may have been executing.  */
+  char * line_contents;
 
   /* Next in list */
-  struct list_info_struct *next;
-
+  struct list_info_struct * next;
 
   /* Pointer to the file info struct for the high level language
      source line that belongs here */
-  file_info_type *hll_file;
-
+  file_info_type * hll_file;
   /* High level language source line */
-  int hll_line;
-
+  unsigned int hll_line;
 
   /* Pointer to any error message associated with this line */
-  char *message;
+  char * message;
 
   enum
     {
@@ -168,52 +167,66 @@ typedef struct list_info_struct
       EDICT_TITLE,
       EDICT_NOLIST,
       EDICT_LIST,
+      EDICT_NOLIST_NEXT,
       EDICT_EJECT
     } edict;
-  char *edict_arg;
+  char * edict_arg;
 
-}
+  /* Nonzero if this line is to be omitted because it contains
+     debugging information.  This can become a flags field if we come
+     up with more information to store here.  */
+  int debugging;
+};
 
-list_info_type;
+typedef struct list_info_struct list_info_type;
 
 
-static struct list_info_struct *head;
-struct list_info_struct *listing_tail;
-extern int listing;
+int listing_lhs_width        = LISTING_LHS_WIDTH;
+int listing_lhs_width_second = LISTING_LHS_WIDTH_SECOND;
+int listing_lhs_cont_lines   = LISTING_LHS_CONT_LINES;
+int listing_rhs_width        = LISTING_RHS_WIDTH;
 
-static int paper_width = 200;
-static int paper_height = 60;
+struct list_info_struct *        listing_tail;
+
+static file_info_type *          file_info_head;
+static file_info_type *          last_open_file_info;
+static FILE *                    last_open_file;
+static struct list_info_struct * head;
+static int                       paper_width = 200;
+static int                       paper_height = 60;
+
+extern int                       listing;
 
 /* File to output listings to.  */
-static FILE *list_file;
+static FILE * list_file;
 
-/* this static array is used to keep the text of data to be printed
-   before the start of the line.
-    It is stored so we can give a bit more info on the next line.  To much, and large
-   initialized arrays will use up lots of paper.
- */
+/* This static array is used to keep the text of data to be printed
+   before the start of the line.  */
 
-static char data_buffer[100];
-static unsigned int data_buffer_size;
+#define MAX_BYTES							\
+  (((LISTING_WORD_SIZE * 2) + 1) * listing_lhs_width			\
+   + ((((LISTING_WORD_SIZE * 2) + 1) * listing_lhs_width_second)	\
+      * listing_lhs_cont_lines)						\
+   + 20)
 
+static char * data_buffer;
 
 /* Prototypes.  */
 static void listing_message PARAMS ((const char *name, const char *message));
-static file_info_type *file_info PARAMS ((const char *file_name));
+static file_info_type * file_info PARAMS ((const char *file_name));
 static void new_frag PARAMS ((void));
-static char *buffer_line PARAMS ((file_info_type *file,
+static char * buffer_line PARAMS ((file_info_type *file,
 				  char *line, unsigned int size));
 static void listing_page PARAMS ((list_info_type *list));
 static unsigned int calc_hex PARAMS ((list_info_type *list));
-static void print_lines PARAMS ((list_info_type *list,
-				 char *string,
-				 unsigned int address));
+static void print_lines PARAMS ((list_info_type *, unsigned int,
+				 char *, unsigned int));
 static void list_symbol_table PARAMS ((void));
 static void print_source PARAMS ((file_info_type *current_file,
 				  list_info_type *list,
 				  char *buffer,
 				  unsigned int width));
-static int debugging_pseudo PARAMS ((char *line));
+static int debugging_pseudo PARAMS ((list_info_type *, const char *));
 static void listing_listing PARAMS ((char *name));
 
 
@@ -236,20 +249,15 @@ void
 listing_warning (message)
      const char *message;
 {
-  listing_message ("Warning:", message);
+  listing_message (_("Warning:"), message);
 }
 
 void
 listing_error (message)
      const char *message;
 {
-  listing_message ("Error:", message);
+  listing_message (_("Error:"), message);
 }
-
-
-
-
-static file_info_type *file_info_head;
 
 static file_info_type *
 file_info (file_name)
@@ -272,12 +280,9 @@ file_info (file_name)
   file_info_head = p;
   p->filename = xmalloc ((unsigned long) strlen (file_name) + 1);
   strcpy (p->filename, file_name);
+  p->pos = 0;
   p->linenum = 0;
   p->at_end = 0;
-
-  p->file = fopen (p->filename, "r");
-  if (p->file)
-    fgetc (p->file);
 
   return p;
 }
@@ -300,7 +305,7 @@ listing_newline (ps)
   unsigned int line;
   static unsigned int last_line = 0xffff;
   static char *last_file = NULL;
-  list_info_type *new;
+  list_info_type *new = NULL;
 
   if (listing == 0)
     return;
@@ -308,34 +313,126 @@ listing_newline (ps)
   if (now_seg == absolute_section)
     return;
 
-  as_where (&file, &line);
-  if (line != last_line || (last_file && file && strcmp(file, last_file)))
+#ifdef OBJ_ELF
+  /* In ELF, anything in a section beginning with .debug or .line is
+     considered to be debugging information.  This includes the
+     statement which switches us into the debugging section, which we
+     can only set after we are already in the debugging section.  */
+  if ((listing & LISTING_NODEBUG) != 0
+      && listing_tail != NULL
+      && ! listing_tail->debugging)
     {
-      last_line = line;
-      last_file = file;
-      new_frag ();
+      const char *segname;
+
+      segname = segment_name (now_seg);
+      if (strncmp (segname, ".debug", sizeof ".debug" - 1) == 0
+	  || strncmp (segname, ".line", sizeof ".line" - 1) == 0)
+	listing_tail->debugging = 1;
+    }
+#endif
+
+  as_where (&file, &line);
+  if (ps == NULL)
+    {
+      if (line == last_line && !(last_file && file && strcmp (file, last_file)))
+	return;
 
       new = (list_info_type *) xmalloc (sizeof (list_info_type));
-      new->frag = frag_now;
-      new->line = line;
-      new->file = file_info (file);
 
-      if (listing_tail)
+      /* Detect if we are reading from stdin by examining the file
+	 name returned by as_where().
+
+	 [FIXME: We rely upon the name in the strcmp below being the
+	 same as the one used by input_scrub_new_file(), if that is
+	 not true, then this code will fail].
+
+	 If we are reading from stdin, then we need to save each input line
+	 here (assuming of course that we actually have a line of input to read),
+	 so that it can be displayed in the listing that is produced at the end
+	 of the assembly.  */
+      if (strcmp (file, _("{standard input}")) == 0
+	  && input_line_pointer != NULL)
 	{
-	  listing_tail->next = new;
+	  char * copy;
+	  int len;
+	  int seen_quote = 0;
+
+	  for (copy = input_line_pointer - 1;
+	       * copy && (seen_quote
+			  || (! is_end_of_line [(unsigned char) * copy]));
+	       copy ++)
+	    if (* copy == '"' && copy[-1] != '\\')
+	      seen_quote = ! seen_quote;
+
+	  len = (copy - input_line_pointer) + 2;
+
+	  copy = xmalloc (len);
+
+	  if (copy != NULL)
+	    {
+	      char * src = input_line_pointer - 1;
+	      char * dest = copy;
+	      
+	      while (--len)
+		{
+		  unsigned char c = * src ++;
+
+		  /* Omit control characters in the listing.  */
+		  if (isascii (c) && ! iscntrl (c))
+		    * dest ++ = c;
+		}
+	      
+	      *dest = 0;
+	    }
+	  
+	  new->line_contents = copy;
 	}
       else
-	{
-	  head = new;
-	}
-      listing_tail = new;
-      new->next = (list_info_type *) NULL;
-      new->message = (char *) NULL;
-      new->edict = EDICT_NONE;
-      new->hll_file = (file_info_type *) NULL;
-      new->hll_line = 0;
-      new_frag ();
+	new->line_contents = NULL;
     }
+  else
+    {
+      new = (list_info_type *) xmalloc (sizeof (list_info_type));
+      new->line_contents = ps;
+    }
+
+  last_line = line;
+  last_file = file;
+  
+  new_frag ();
+
+  if (listing_tail)
+    listing_tail->next = new;
+  else
+    head = new;
+  
+  listing_tail = new;
+
+  new->frag = frag_now;
+  new->line = line;
+  new->file = file_info (file);
+  new->next = (list_info_type *) NULL;
+  new->message = (char *) NULL;
+  new->edict = EDICT_NONE;
+  new->hll_file = (file_info_type *) NULL;
+  new->hll_line = 0;
+  new->debugging = 0;
+  
+  new_frag ();
+
+#ifdef OBJ_ELF
+  /* In ELF, anything in a section beginning with .debug or .line is
+     considered to be debugging information.  */
+  if ((listing & LISTING_NODEBUG) != 0)
+    {
+      const char *segname;
+
+      segname = segment_name (now_seg);
+      if (strncmp (segname, ".debug", sizeof ".debug" - 1) == 0
+	  || strncmp (segname, ".line", sizeof ".line" - 1) == 0)
+	new->debugging = 1;
+    }
+#endif
 }
 
 /* Attach all current frags to the previous line instead of the
@@ -385,15 +482,32 @@ buffer_line (file, line, size)
   char *p = line;
 
   /* If we couldn't open the file, return an empty line */
-  if (file->file == (FILE *) NULL || file->at_end)
+  if (file->at_end)
+    return "";
+
+  /* Check the cache and see if we last used this file.  */
+  if (!last_open_file_info || file != last_open_file_info)
     {
-      return "";
+      if (last_open_file)
+	{
+	  last_open_file_info->pos = ftell (last_open_file);
+	  fclose (last_open_file);
+	}
+
+      last_open_file_info = file;
+      last_open_file = fopen (file->filename, "r");
+      if (last_open_file == NULL)
+	{
+	  file->at_end = 1;
+	  return "";
+	}
+      
+      /* Seek to where we were last time this file was open.  */
+      if (file->pos)
+	fseek(last_open_file, file->pos, SEEK_SET);
     }
 
-  if (file->linenum == 0)
-    rewind (file->file);
-
-  c = fgetc (file->file);
+  c = fgetc (last_open_file);
 
   size -= 1;			/* leave room for null */
 
@@ -403,7 +517,7 @@ buffer_line (file, line, size)
 	*p++ = c;
       count++;
 
-      c = fgetc (file->file);
+      c = fgetc (last_open_file);
 
     }
   if (c == EOF)
@@ -434,7 +548,7 @@ listing_page (list)
 {
   /* Grope around, see if we can see a title or subtitle edict coming up
      soon  (we look down 10 lines of the page and see if it's there)*/
-  if ((eject || (on_page >= paper_height)) && paper_height != 0)
+  if ((eject || (on_page >= (unsigned int) paper_height)) && paper_height != 0)
     {
       unsigned int c = 10;
       int had_title = 0;
@@ -477,14 +591,12 @@ static unsigned int
 calc_hex (list)
      list_info_type * list;
 {
+  int data_buffer_size;
   list_info_type *first = list;
-  unsigned int address = (unsigned int) ~0;
-
+  unsigned int address = ~ (unsigned int) 0;
   fragS *frag;
   fragS *frag_ptr;
-
-  unsigned int byte_in_frag;
-
+  unsigned int octet_in_frag;
 
   /* Find first frag which says it belongs to this line */
   frag = list->frag;
@@ -499,32 +611,33 @@ calc_hex (list)
   while (frag_ptr != (fragS *) NULL && frag_ptr->line == first)
     {
       /* Print as many bytes from the fixed part as is sensible */
-      byte_in_frag = 0;
-      while (byte_in_frag < frag_ptr->fr_fix && data_buffer_size < sizeof (data_buffer) - 10)
+      octet_in_frag = 0;
+      while ((offsetT) octet_in_frag < frag_ptr->fr_fix
+	     && data_buffer_size < MAX_BYTES - 3)
 	{
-	  if (address == ~0)
+	  if (address == ~ (unsigned int) 0)
 	    {
-	      address = frag_ptr->fr_address;
+	      address = frag_ptr->fr_address / OCTETS_PER_BYTE;
 	    }
 
 	  sprintf (data_buffer + data_buffer_size,
 		   "%02X",
-		   (frag_ptr->fr_literal[byte_in_frag]) & 0xff);
+		   (frag_ptr->fr_literal[octet_in_frag]) & 0xff);
 	  data_buffer_size += 2;
-	  byte_in_frag++;
+	  octet_in_frag++;
 	}
       {
-	unsigned int var_rep_max = byte_in_frag;
-	unsigned int var_rep_idx = byte_in_frag;
+	unsigned int var_rep_max = octet_in_frag;
+	unsigned int var_rep_idx = octet_in_frag;
 
 	/* Print as many bytes from the variable part as is sensible */
-	while ((byte_in_frag
-		< frag_ptr->fr_fix + frag_ptr->fr_var * frag_ptr->fr_offset)
-	       && data_buffer_size < sizeof (data_buffer) - 10)
+	while (((offsetT) octet_in_frag
+		< (frag_ptr->fr_fix + frag_ptr->fr_var * frag_ptr->fr_offset))
+	       && data_buffer_size < MAX_BYTES - 3)
 	  {
-	    if (address == ~0)
+	    if (address == ~ (unsigned int) 0)
 	      {
-		address = frag_ptr->fr_address;
+		address = frag_ptr->fr_address / OCTETS_PER_BYTE;
 	      }
 	    sprintf (data_buffer + data_buffer_size,
 		     "%02X",
@@ -536,16 +649,16 @@ calc_hex (list)
 	    data_buffer_size += 2;
 
 	    var_rep_idx++;
-	    byte_in_frag++;
+	    octet_in_frag++;
 
-	    if (var_rep_idx >= frag_ptr->fr_fix + frag_ptr->fr_var)
+	    if ((offsetT) var_rep_idx >= frag_ptr->fr_fix + frag_ptr->fr_var)
 	      var_rep_idx = var_rep_max;
 	  }
       }
 
       frag_ptr = frag_ptr->fr_next;
     }
-  data_buffer[data_buffer_size++] = 0;
+  data_buffer[data_buffer_size] = '\0';
   return address;
 }
 
@@ -555,104 +668,111 @@ calc_hex (list)
 
 
 static void
-print_lines (list, string, address)
+print_lines (list, lineno, string, address)
      list_info_type *list;
+     unsigned int lineno;
      char *string;
      unsigned int address;
 {
   unsigned int idx;
   unsigned int nchars;
   unsigned int lines;
-  unsigned int byte_in_word = 0;
+  unsigned int octet_in_word = 0;
   char *src = data_buffer;
+  int cur;
 
   /* Print the stuff on the first line */
   listing_page (list);
-  nchars = (LISTING_WORD_SIZE * 2 + 1) * LISTING_LHS_WIDTH;
+  nchars = (LISTING_WORD_SIZE * 2 + 1) * listing_lhs_width;
+  
   /* Print the hex for the first line */
-  if (address == ~0)
+  if (address == ~ (unsigned int) 0)
     {
-      fprintf (list_file, "% 4d     ", list->line);
+      fprintf (list_file, "% 4d     ", lineno);
       for (idx = 0; idx < nchars; idx++)
 	fprintf (list_file, " ");
 
       fprintf (list_file, "\t%s\n", string ? string : "");
-      on_page++;
+      
+      on_page ++;
+      
       listing_page (0);
 
+      return;
     }
+
+  if (had_errors ())
+    fprintf (list_file, "% 4d ???? ", lineno);
   else
+    fprintf (list_file, "% 4d %04x ", lineno, address);
+
+  /* And the data to go along with it */
+  idx = 0;
+  cur = 0;
+  while (src[cur] && idx < nchars)
     {
-      if (had_errors ())
+      int offset;
+      offset = cur;
+      fprintf (list_file, "%c%c", src[offset], src[offset+1]);
+      cur += 2;
+      octet_in_word++;
+      
+      if (octet_in_word == LISTING_WORD_SIZE)
 	{
-	  fprintf (list_file, "% 4d ???? ", list->line);
+	  fprintf (list_file, " ");
+	  idx++;
+	  octet_in_word = 0;
 	}
-      else
-	{
-	  fprintf (list_file, "% 4d %04x ", list->line, address);
-	}
-
-      /* And the data to go along with it */
+      
+      idx += 2;
+    }
+  
+  for (; idx < nchars; idx++)
+    fprintf (list_file, " ");
+  
+  fprintf (list_file, "\t%s\n", string ? string : "");
+  on_page++;
+  listing_page (list);
+  
+  if (list->message)
+    {
+      fprintf (list_file, "****  %s\n", list->message);
+      listing_page (list);
+      on_page++;
+    }
+  
+  for (lines = 0;
+       lines < (unsigned int) listing_lhs_cont_lines
+	 && src[cur];
+       lines ++)
+    {
+      nchars = ((LISTING_WORD_SIZE * 2) + 1)
+	* listing_lhs_width_second - 1;
       idx = 0;
-
-      while (*src && idx < nchars)
+      
+      /* Print any more lines of data, but more compactly */
+      fprintf (list_file, "% 4d      ", lineno);
+      
+      while (src[cur] && idx < nchars)
 	{
-	  fprintf (list_file, "%c%c", src[0], src[1]);
-	  src += 2;
-	  byte_in_word++;
-	  if (byte_in_word == LISTING_WORD_SIZE)
+          int offset;
+          offset = cur;
+          fprintf (list_file, "%c%c", src[offset], src[offset+1]);
+	  cur += 2;
+	  idx += 2;
+	  octet_in_word++;
+	  
+	  if (octet_in_word == LISTING_WORD_SIZE)
 	    {
 	      fprintf (list_file, " ");
 	      idx++;
-	      byte_in_word = 0;
+	      octet_in_word = 0;
 	    }
-	  idx += 2;
 	}
-
-      for (; idx < nchars; idx++)
-	fprintf (list_file, " ");
-
-      fprintf (list_file, "\t%s\n", string ? string : "");
-      on_page++;
+      
+      fprintf (list_file, "\n");
+      on_page ++;
       listing_page (list);
-      if (list->message)
-	{
-	  fprintf (list_file, "****  %s\n", list->message);
-	  listing_page (list);
-	  on_page++;
-	}
-
-      for (lines = 0;
-	   lines < LISTING_LHS_CONT_LINES
-	   && *src;
-	   lines++)
-	{
-	  nchars = ((LISTING_WORD_SIZE * 2) + 1) * LISTING_LHS_WIDTH_SECOND - 1;
-	  idx = 0;
-	  /* Print any more lines of data, but more compactly */
-	  fprintf (list_file, "% 4d      ", list->line);
-
-	  while (*src && idx < nchars)
-	    {
-	      fprintf (list_file, "%c%c", src[0], src[1]);
-	      src += 2;
-	      idx += 2;
-	      byte_in_word++;
-	      if (byte_in_word == LISTING_WORD_SIZE)
-		{
-		  fprintf (list_file, " ");
-		  idx++;
-		  byte_in_word = 0;
-		}
-	    }
-
-	  fprintf (list_file, "\n");
-	  on_page++;
-	  listing_page (list);
-
-	}
-
-
     }
 }
 
@@ -669,8 +789,14 @@ list_symbol_table ()
 
   for (ptr = symbol_rootP; ptr != (symbolS *) NULL; ptr = symbol_next (ptr))
     {
-      if (ptr->sy_frag->line)
+      if (SEG_NORMAL (S_GET_SEGMENT (ptr))
+	  || S_GET_SEGMENT (ptr) == absolute_section)
 	{
+#ifdef BFD_ASSEMBLER
+	  /* Don't report section symbols.  They are not interesting.  */
+	  if (symbol_section_p (ptr))
+	    continue;
+#endif
 	  if (S_GET_NAME (ptr))
 	    {
 	      char buf[30], fmt[8];
@@ -700,13 +826,22 @@ list_symbol_table ()
 		  got_some = 1;
 		}
 
-	      fprintf (list_file, "%20s:%-5d  %s:%s %s\n",
-		       ptr->sy_frag->line->file->filename,
-		       ptr->sy_frag->line->line,
-		       segment_name (S_GET_SEGMENT (ptr)),
-		       buf, S_GET_NAME (ptr));
+	      if (symbol_get_frag (ptr) && symbol_get_frag (ptr)->line)
+		{
+		  fprintf (list_file, "%20s:%-5d  %s:%s %s\n",
+			   symbol_get_frag (ptr)->line->file->filename,
+			   symbol_get_frag (ptr)->line->line,
+			   segment_name (S_GET_SEGMENT (ptr)),
+			   buf, S_GET_NAME (ptr));
+		}
+	      else
+		{
+		  fprintf (list_file, "%33s:%s %s\n",
+			   segment_name (S_GET_SEGMENT (ptr)),
+			   buf, S_GET_NAME (ptr));
+		}
 
-	      on_page++;
+	      on_page ++;
 	      listing_page (0);
 	    }
 	}
@@ -727,11 +862,7 @@ list_symbol_table ()
     {
       if (S_GET_NAME (ptr) && strlen (S_GET_NAME (ptr)) != 0)
 	{
-	  if (ptr->sy_frag->line == 0
-#ifdef S_IS_REGISTER
-	      && !S_IS_REGISTER (ptr)
-#endif
-	      && S_GET_SEGMENT (ptr) != reg_section)
+	  if (S_GET_SEGMENT (ptr) == undefined_section)
 	    {
 	      if (!got_some)
 		{
@@ -761,13 +892,13 @@ print_source (current_file, list, buffer, width)
      char *buffer;
      unsigned int width;
 {
-  if (current_file->file)
+  if (!current_file->at_end)
     {
       while (current_file->linenum < list->hll_line
 	     && !current_file->at_end)
 	{
 	  char *p = buffer_line (current_file, buffer, width);
-	  fprintf (list_file, "%4d:%-13s **** %s\n", current_file->linenum,
+	  fprintf (list_file, "%4u:%-13s **** %s\n", current_file->linenum,
 		   current_file->filename, p);
 	  on_page++;
 	  listing_page (list);
@@ -776,17 +907,48 @@ print_source (current_file, list, buffer, width)
 }
 
 /* Sometimes the user doesn't want to be bothered by the debugging
-   records inserted by the compiler, see if the line is suspicious */
+   records inserted by the compiler, see if the line is suspicious.  */
 
 static int
-debugging_pseudo (line)
-     char *line;
+debugging_pseudo (list, line)
+     list_info_type *list;
+     const char *line;
 {
-  while (isspace (*line))
+  static int in_debug;
+  int was_debug;
+
+  if (list->debugging)
+    {
+      in_debug = 1;
+      return 1;
+    }
+
+  was_debug = in_debug;
+  in_debug = 0;
+
+  while (isspace ((unsigned char) *line))
     line++;
 
   if (*line != '.')
-    return 0;
+    {
+#ifdef OBJ_ELF
+      /* The ELF compiler sometimes emits blank lines after switching
+         out of a debugging section.  If the next line drops us back
+         into debugging information, then don't print the blank line.
+         This is a hack for a particular compiler behaviour, not a
+         general case.  */
+      if (was_debug
+	  && *line == '\0'
+	  && list->next != NULL
+	  && list->next->debugging)
+	{
+	  in_debug = 1;
+	  return 1;
+	}
+#endif
+
+      return 0;
+    }
 
   line++;
 
@@ -817,12 +979,11 @@ debugging_pseudo (line)
     return 1;
 
   return 0;
-
 }
 
 static void
 listing_listing (name)
-     char *name;
+     char *name ATTRIBUTE_UNUSED;
 {
   list_info_type *list = head;
   file_info_type *current_hll_file = (file_info_type *) NULL;
@@ -832,7 +993,8 @@ listing_listing (name)
   int show_listing = 1;
   unsigned int width;
 
-  buffer = xmalloc (LISTING_RHS_WIDTH);
+  buffer = xmalloc (listing_rhs_width);
+  data_buffer = xmalloc (MAX_BYTES);
   eject = 1;
   list = head;
 
@@ -849,16 +1011,22 @@ listing_listing (name)
 
   while (list)
     {
-      width = LISTING_RHS_WIDTH > paper_width ? paper_width :
-	LISTING_RHS_WIDTH;
+      unsigned int list_line;
 
+      width = listing_rhs_width > paper_width ? paper_width :
+	listing_rhs_width;
+
+      list_line = list->line;
       switch (list->edict)
 	{
 	case EDICT_LIST:
-	  show_listing++;
+	  /* Skip all lines up to the current.  */
+	  list_line--;
 	  break;
 	case EDICT_NOLIST:
 	  show_listing--;
+	  break;
+	case EDICT_NOLIST_NEXT:
 	  break;
 	case EDICT_EJECT:
 	  break;
@@ -874,6 +1042,20 @@ listing_listing (name)
 	  abort ();
 	}
 
+      if (show_listing <= 0)
+	{
+	  while (list->file->linenum < list_line
+		 && !list->file->at_end)
+	    p = buffer_line (list->file, buffer, width);
+	}
+
+      if (list->edict == EDICT_LIST)
+	{
+	  /* Enable listing for the single line that caused the enable.  */
+	  list_line++;
+	  show_listing++;
+	}
+
       if (show_listing > 0)
 	{
 	  /* Scan down the list and print all the stuff which can be done
@@ -885,20 +1067,40 @@ listing_listing (name)
 	      current_hll_file = list->hll_file;
 	    }
 
-	  if (current_hll_file && list->hll_line && listing & LISTING_HLL)
+	  if (current_hll_file && list->hll_line && (listing & LISTING_HLL))
 	    {
 	      print_source (current_hll_file, list, buffer, width);
 	    }
 
-	  while (list->file->file
-		 && list->file->linenum < list->line
-		 && !list->file->at_end)
+	  if (list->line_contents)
 	    {
-	      p = buffer_line (list->file, buffer, width);
-
-	      if (!((listing & LISTING_NODEBUG) && debugging_pseudo (p)))
+	      if (!((listing & LISTING_NODEBUG)
+		    && debugging_pseudo (list, list->line_contents)))
 		{
-		  print_lines (list, p, calc_hex (list));
+ 		  print_lines (list,
+			       list->file->linenum == 0 ? list->line : list->file->linenum,
+			       list->line_contents, calc_hex (list));
+		}
+	      free (list->line_contents);
+	      list->line_contents = NULL;
+	    }
+	  else
+	    {
+	      while (list->file->linenum < list_line
+		     && !list->file->at_end)
+		{
+		  unsigned int address;
+
+		  p = buffer_line (list->file, buffer, width);
+
+		  if (list->file->linenum < list_line)
+		    address = ~ (unsigned int) 0;
+		  else
+		    address = calc_hex (list);
+
+		  if (!((listing & LISTING_NODEBUG)
+			&& debugging_pseudo (list, p)))
+		    print_lines (list, list->file->linenum, p, address);
 		}
 	    }
 
@@ -907,17 +1109,16 @@ listing_listing (name)
 	      eject = 1;
 	    }
 	}
-      else
-	{
-	  while (list->file->file
-		 && list->file->linenum < list->line
-		 && !list->file->at_end)
-	    p = buffer_line (list->file, buffer, width);
-	}
+
+      if (list->edict == EDICT_NOLIST_NEXT)
+	--show_listing;
 
       list = list->next;
     }
+
   free (buffer);
+  free (data_buffer);
+  data_buffer = NULL;
 }
 
 void
@@ -925,8 +1126,7 @@ listing_print (name)
      char *name;
 {
   int using_stdout;
-  file_info_type *fi;
-
+  
   title = "";
   subtitle = "";
 
@@ -942,7 +1142,7 @@ listing_print (name)
 	using_stdout = 0;
       else
 	{
-	  as_perror ("can't open list file: %s", name);
+	  as_perror (_("can't open list file: %s"), name);
 	  list_file = stdout;
 	  using_stdout = 1;
 	}
@@ -966,16 +1166,12 @@ listing_print (name)
   if (! using_stdout)
     {
       if (fclose (list_file) == EOF)
-	as_perror ("error closing list file: %s", name);
+	as_perror (_("error closing list file: %s"), name);
     }
 
-  for (fi = file_info_head; fi != NULL; fi = fi->next)
+  if (last_open_file)
     {
-      if (fi->file != NULL)
-	{
-	  fclose (fi->file);
-	  fi->file = NULL;
-	}
+      fclose (last_open_file);
     }
 }
 
@@ -989,7 +1185,7 @@ listing_file (name)
 
 void
 listing_eject (ignore)
-     int ignore;
+     int ignore ATTRIBUTE_UNUSED;
 {
   if (listing)
     listing_tail->edict = EDICT_EJECT;
@@ -997,19 +1193,46 @@ listing_eject (ignore)
 
 void
 listing_flags (ignore)
-     int ignore;
+     int ignore ATTRIBUTE_UNUSED;
 {
   while ((*input_line_pointer++) && (*input_line_pointer != '\n'))
     input_line_pointer++;
 
 }
 
+/* Turn listing on or off.  An argument of 0 means to turn off
+   listing.  An argument of 1 means to turn on listing.  An argument
+   of 2 means to turn off listing, but as of the next line; that is,
+   the current line should be listed, but the next line should not.  */
+
 void
 listing_list (on)
      int on;
 {
   if (listing)
-    listing_tail->edict = on ? EDICT_LIST : EDICT_NOLIST;
+    {
+      switch (on)
+	{
+	case 0:
+	  if (listing_tail->edict == EDICT_LIST)
+	    listing_tail->edict = EDICT_NONE;
+	  else
+	    listing_tail->edict = EDICT_NOLIST;
+	  break;
+	case 1:
+	  if (listing_tail->edict == EDICT_NOLIST
+	      || listing_tail->edict == EDICT_NOLIST_NEXT)
+	    listing_tail->edict = EDICT_NONE;
+	  else
+	    listing_tail->edict = EDICT_LIST;
+	  break;
+	case 2:
+	  listing_tail->edict = EDICT_NOLIST_NEXT;
+	  break;
+	default:
+	  abort ();
+	}
+    }
 }
 
 
@@ -1024,7 +1247,7 @@ listing_psize (width_only)
       if (paper_height < 0 || paper_height > 1000)
 	{
 	  paper_height = 0;
-	  as_warn ("strange paper height, set to no form");
+	  as_warn (_("strange paper height, set to no form"));
 	}
 
       if (*input_line_pointer != ',')
@@ -1043,7 +1266,7 @@ listing_psize (width_only)
 
 void
 listing_nopage (ignore)
-     int ignore;
+     int ignore ATTRIBUTE_UNUSED;
 {
   paper_height = 0;
 }
@@ -1090,7 +1313,7 @@ listing_title (depth)
 	}
       else if (*input_line_pointer == '\n')
 	{
-	  as_bad ("New line in title");
+	  as_bad (_("New line in title"));
 	  demand_empty_rest_of_line ();
 	  return;
 	}

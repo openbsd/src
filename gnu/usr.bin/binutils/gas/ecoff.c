@@ -1,5 +1,5 @@
 /* ECOFF debugging support.
-   Copyright (C) 1993, 1994, 1995, 1996 Free Software Foundation, Inc.
+   Copyright (C) 1993, 94, 95, 96, 97, 98, 1999 Free Software Foundation, Inc.
    Contributed by Cygnus Support.
    This file was put together by Ian Lance Taylor <ian@cygnus.com>.  A
    good deal of it comes directly from mips-tfile.c, by Michael
@@ -28,11 +28,12 @@
    ECOFF debugging information (e.g., MIPS ECOFF, MIPS ELF, Alpha
    ECOFF).  */
 
+#include "ecoff.h"
+
 #ifdef ECOFF_DEBUGGING
 
 #include "coff/internal.h"
 #include "coff/symconst.h"
-#include "ecoff.h"
 #include "aout/stab_gnu.h"
 
 #include <ctype.h>
@@ -768,12 +769,23 @@ enum aux_type {
    If PAGE_SIZE is > 4096, the string length in the shash_t structure
    can't be represented (assuming there are strings > 4096 bytes).  */
 
+/* FIXME: Yes, there can be such strings while emitting C++ class debug
+   info.  Templates are the offender here, the test case in question 
+   having a mangled class name of
+
+     t7rb_tree4Z4xkeyZt4pair2ZC4xkeyZt7xsocket1Z4UserZt9select1st2Zt4pair\
+     2ZC4xkeyZt7xsocket1Z4UserZ4xkeyZt4less1Z4xkey
+
+   Repeat that a couple dozen times while listing the class members and
+   you've got strings over 4k.  Hack around this for now by increasing
+   the page size.  A proper solution would abandon this structure scheme
+   certainly for very large strings, and possibly entirely.  */
+
 #ifndef PAGE_SIZE
-#define PAGE_SIZE 4096		/* size of varray pages */
+#define PAGE_SIZE (8*1024)	/* size of varray pages */
 #endif
 
 #define PAGE_USIZE ((unsigned long) PAGE_SIZE)
-
 
 #ifndef MAX_CLUSTER_PAGES	/* # pages to get from system */
 #define MAX_CLUSTER_PAGES 63
@@ -1050,13 +1062,13 @@ typedef union page {
   forward_t	forward	[ PAGE_SIZE / sizeof (forward_t)     ];
   thead_t	thead	[ PAGE_SIZE / sizeof (thead_t)	     ];
   lineno_list_t	lineno	[ PAGE_SIZE / sizeof (lineno_list_t) ];
-} page_t;
+} page_type;
 
 
 /* Structure holding allocation information for small sized structures.  */
 typedef struct alloc_info {
   char		*alloc_name;	/* name of this allocation type (must be first) */
-  page_t	*cur_page;	/* current page being allocated from */
+  page_type	*cur_page;	/* current page being allocated from */
   small_free_t	 free_list;	/* current free list if any */
   int		 unallocated;	/* number of elements unallocated on page */
   int		 total_alloc;	/* total number of allocations */
@@ -1473,8 +1485,8 @@ static unsigned long ecoff_build_fdr
   PARAMS ((const struct ecoff_debug_swap *backend, char **buf, char **bufend,
 	   unsigned long offset));
 static void ecoff_setup_ext PARAMS ((void));
-static page_t *allocate_cluster PARAMS ((unsigned long npages));
-static page_t *allocate_page PARAMS ((void));
+static page_type *allocate_cluster PARAMS ((unsigned long npages));
+static page_type *allocate_page PARAMS ((void));
 static scope_t *allocate_scope PARAMS ((void));
 static void free_scope PARAMS ((scope_t *ptr));
 static vlinks_t *allocate_vlinks PARAMS ((void));
@@ -1486,7 +1498,6 @@ static forward_t *allocate_forward PARAMS ((void));
 static thead_t *allocate_thead PARAMS ((void));
 static void free_thead PARAMS ((thead_t *ptr));
 static lineno_list_t *allocate_lineno_list PARAMS ((void));
-static void generate_ecoff_stab PARAMS ((int, const char *, int, int, int));
 
 /* This function should be called when the assembler starts up.  */
 
@@ -1507,6 +1518,8 @@ void
 ecoff_symbol_new_hook (symbolP)
      symbolS *symbolP;
 {
+  OBJ_SYMFIELD_TYPE *obj;
+
   /* Make sure that we have a file pointer, but only if we have seen a
      file.  If we haven't seen a file, then this is a probably special
      symbol created by md_begin which may required special handling at
@@ -1515,9 +1528,10 @@ ecoff_symbol_new_hook (symbolP)
   if (cur_file_ptr == (efdr_t *) NULL
       && seen_at_least_1_file ())
     add_file ((const char *) NULL, 0, 1);
-  symbolP->ecoff_file = cur_file_ptr;
-  symbolP->ecoff_symbol = NULL;
-  symbolP->ecoff_extern_size = 0;
+  obj = symbol_get_obj (symbolP);
+  obj->ecoff_file = cur_file_ptr;
+  obj->ecoff_symbol = NULL;
+  obj->ecoff_extern_size = 0;
 }
 
 /* Add a page to a varray object.  */
@@ -1530,7 +1544,7 @@ add_varray_page (vp)
 
 #ifdef MALLOC_CHECK
   if (vp->object_size > 1)
-    new_links->datum = (page_t *) xcalloc (1, vp->object_size);
+    new_links->datum = (page_type *) xcalloc (1, vp->object_size);
   else
 #endif
     new_links->datum = allocate_page ();
@@ -1564,7 +1578,7 @@ add_string (vp, hash_tbl, str, ret_hash)
   register shash_t *hash_ptr;
 
   if (len >= PAGE_USIZE)
-    as_fatal ("String too big (%lu bytes)", len);
+    as_fatal (_("String too big (%lu bytes)"), len);
 
   hash_ptr = (shash_t *) hash_find (hash_tbl, str);
   if (hash_ptr == (shash_t *) NULL)
@@ -1590,7 +1604,7 @@ add_string (vp, hash_tbl, str, ret_hash)
 
       err = hash_insert (hash_tbl, str, (char *) hash_ptr);
       if (err)
-	as_fatal ("Inserting \"%s\" into string hash table: %s",
+	as_fatal (_("Inserting \"%s\" into string hash table: %s"),
 		  str, err);
     }
 
@@ -1622,7 +1636,7 @@ add_ecoff_symbol (str, type, storage, sym_value, addend, value, indx)
   shash_t *hash_ptr = (shash_t *) NULL;
 
   if (cur_file_ptr == (efdr_t *) NULL)
-    as_fatal ("no current file pointer");
+    as_fatal (_("no current file pointer"));
 
   vp = &cur_file_ptr->symbols;
 
@@ -1637,7 +1651,7 @@ add_ecoff_symbol (str, type, storage, sym_value, addend, value, indx)
     psym->name = str;
   psym->as_sym = sym_value;
   if (sym_value != (symbolS *) NULL)
-    sym_value->ecoff_symbol = psym;
+    symbol_get_obj (sym_value)->ecoff_symbol = psym;
   psym->addend = addend;
   psym->file_ptr = cur_file_ptr;
   psym->proc_ptr = cur_proc_ptr;
@@ -1709,7 +1723,7 @@ add_ecoff_symbol (str, type, storage, sym_value, addend, value, indx)
     case st_End:
       pscope = cur_file_ptr->cur_scope;
       if (pscope == (scope_t *) NULL)
-	as_fatal ("too many st_End's");
+	as_fatal (_("too many st_End's"));
       else
 	{
 	  st_t begin_type = (st_t) pscope->lsym->ecoff_sym.asym.st;
@@ -1815,7 +1829,7 @@ add_aux_sym_symint (aux_word)
   register aux_t *aux_ptr;
 
   if (cur_file_ptr == (efdr_t *) NULL)
-    as_fatal ("no current file pointer");
+    as_fatal (_("no current file pointer"));
 
   vp = &cur_file_ptr->aux_syms;
 
@@ -1841,7 +1855,7 @@ add_aux_sym_rndx (file_index, sym_index)
   register aux_t *aux_ptr;
 
   if (cur_file_ptr == (efdr_t *) NULL)
-    as_fatal ("no current file pointer");
+    as_fatal (_("no current file pointer"));
 
   vp = &cur_file_ptr->aux_syms;
 
@@ -1873,7 +1887,7 @@ add_aux_sym_tir (t, state, hash_tbl)
   AUXU aux;
 
   if (cur_file_ptr == (efdr_t *) NULL)
-    as_fatal ("no current file pointer");
+    as_fatal (_("no current file pointer"));
 
   vp = &cur_file_ptr->aux_syms;
 
@@ -2029,7 +2043,7 @@ get_tag (tag, sym, basic_type)
   tag_t *tag_ptr;
 
   if (cur_file_ptr == (efdr_t *) NULL)
-    as_fatal ("no current file pointer");
+    as_fatal (_("no current file pointer"));
 
   hash_ptr = (shash_t *) hash_find (tag_hash, tag);
 
@@ -2055,7 +2069,7 @@ get_tag (tag, sym, basic_type)
       hash_ptr = allocate_shash ();
       err = hash_insert (tag_hash, perm, (char *) hash_ptr);
       if (err)
-	as_fatal ("Inserting \"%s\" into tag hash table: %s",
+	as_fatal (_("Inserting \"%s\" into tag hash table: %s"),
 		  tag, err);
       hash_ptr->string = perm;
     }
@@ -2143,7 +2157,7 @@ add_procedure (func)
 #endif
 
   if (cur_file_ptr == (efdr_t *) NULL)
-    as_fatal ("no current file pointer");
+    as_fatal (_("no current file pointer"));
 
   vp = &cur_file_ptr->procs;
 
@@ -2164,7 +2178,7 @@ add_procedure (func)
 
   /* Set the BSF_FUNCTION flag for the symbol.  */
   sym = symbol_find_or_make (func);
-  sym->bsym->flags |= BSF_FUNCTION;
+  symbol_get_bfdsym (sym)->flags |= BSF_FUNCTION;
 
   /* Push the start of the function.  */
   new_proc_ptr->sym = add_ecoff_symbol ((const char *) NULL, st_Proc, sc_Text,
@@ -2188,6 +2202,12 @@ add_procedure (func)
 	}
       noproc_lineno = (lineno_list_t *) NULL;
     }
+}
+
+symbolS *
+ecoff_get_cur_proc_sym ()
+{
+  return (cur_proc_ptr ? cur_proc_ptr->sym->as_sym : NULL);
 }
 
 /* Add a new filename, and set up all of the file relative
@@ -2215,15 +2235,18 @@ add_file (file_name, indx, fake)
       char *file;
 
       if (first_file != (efdr_t *) NULL)
-	as_fatal ("fake .file after real one");
+	as_fatal (_("fake .file after real one"));
       as_where (&file, (unsigned int *) NULL);
       file_name = (const char *) file;
 
-      if (! symbol_table_frozen)
-	generate_asm_lineno = 1;
+      /* Automatically generate ECOFF debugging information, since I
+         think that's what other ECOFF assemblers do.  We don't do
+         this if we see a .file directive with a string, since that
+         implies that some sort of debugging information is being
+         provided.  */
+      if (! symbol_table_frozen && debug_type == DEBUG_NONE)
+	debug_type = DEBUG_ECOFF;
     }
-  else
-      generate_asm_lineno = 0;
 
 #ifndef NO_LISTING
   if (listing)
@@ -2300,7 +2323,7 @@ add_file (file_name, indx, fake)
 		  (shash_t **)0);
 
       if (strlen (file_name) > PAGE_USIZE - 2)
-	as_fatal ("Filename goes over one page boundary.");
+	as_fatal (_("Filename goes over one page boundary."));
 
       /* Push the start of the filename. We assume that the filename
          will be stored at string offset 1.  */
@@ -2323,23 +2346,6 @@ add_file (file_name, indx, fake)
       fil_ptr->int_type = add_aux_sym_tir (&int_type_info,
 					   hash_yes,
 					   &cur_file_ptr->thash_head[0]);
-      /* gas used to have a bug that if the file does not have any
-	 symbol, it either will abort or will not build the file,
-	 the following is to get around that problem. ---kung*/
-#if 0
-      if (generate_asm_lineno)
-	{
-	  mark_stabs (0);
-          (void) add_ecoff_symbol (file_name, st_Nil, sc_Nil,
-				   symbol_new ("L0\001", now_seg,
-					       (valueT) frag_now_fix (),
-					       frag_now),
-				   (bfd_vma) 0, 0, ECOFF_MARK_STAB (N_SO));
-          (void) add_ecoff_symbol ("void:t1=1", st_Nil, sc_Nil,
-				   (symbolS *) NULL, (bfd_vma) 0, 0,
-				   ECOFF_MARK_STAB (N_LSYM));
-	}
-#endif
     }
 }
 
@@ -2354,7 +2360,11 @@ ecoff_new_file (name)
   if (cur_file_ptr != NULL && strcmp (cur_file_ptr->name, name) == 0)
     return;
   add_file (name, 0, 0);
-  generate_asm_lineno = 1;
+
+  /* This is a hand coded assembler file, so automatically turn on
+     debugging information.  */
+  if (debug_type == DEBUG_NONE)
+    debug_type = DEBUG_ECOFF;
 }
 
 #ifdef ECOFF_DEBUG
@@ -2448,14 +2458,14 @@ ecoff_directive_begin (ignore)
 
   if (cur_file_ptr == (efdr_t *) NULL)
     {
-      as_warn (".begin directive without a preceding .file directive");
+      as_warn (_(".begin directive without a preceding .file directive"));
       demand_empty_rest_of_line ();
       return;
     }
 
   if (cur_proc_ptr == (proc_t *) NULL)
     {
-      as_warn (".begin directive without a preceding .ent directive");
+      as_warn (_(".begin directive without a preceding .ent directive"));
       demand_empty_rest_of_line ();
       return;
     }
@@ -2487,14 +2497,14 @@ ecoff_directive_bend (ignore)
 
   if (cur_file_ptr == (efdr_t *) NULL)
     {
-      as_warn (".bend directive without a preceding .file directive");
+      as_warn (_(".bend directive without a preceding .file directive"));
       demand_empty_rest_of_line ();
       return;
     }
 
   if (cur_proc_ptr == (proc_t *) NULL)
     {
-      as_warn (".bend directive without a preceding .ent directive");
+      as_warn (_(".bend directive without a preceding .ent directive"));
       demand_empty_rest_of_line ();
       return;
     }
@@ -2507,7 +2517,7 @@ ecoff_directive_bend (ignore)
      the symbol.  */
   endsym = symbol_find (name);
   if (endsym == (symbolS *) NULL)
-    as_warn (".bend directive names unknown symbol");
+    as_warn (_(".bend directive names unknown symbol"));
   else
     (void) add_ecoff_symbol ((const char *) NULL, st_End, sc_Text, endsym,
 			     (bfd_vma) 0, (symint_t) 0, (symint_t) 0);
@@ -2551,9 +2561,9 @@ ecoff_directive_def (ignore)
   name_end = get_symbol_end ();
 
   if (coff_sym_name != (char *) NULL)
-    as_warn (".def pseudo-op used inside of .def/.endef; ignored");
+    as_warn (_(".def pseudo-op used inside of .def/.endef; ignored"));
   else if (*name == '\0')
-    as_warn ("Empty symbol name in .def; ignored");
+    as_warn (_("Empty symbol name in .def; ignored"));
   else
     {
       if (coff_sym_name != (char *) NULL)
@@ -2591,7 +2601,7 @@ ecoff_directive_dim (ignore)
 
   if (coff_sym_name == (char *) NULL)
     {
-      as_warn (".dim pseudo-op used outside of .def/.endef; ignored");
+      as_warn (_(".dim pseudo-op used outside of .def/.endef; ignored"));
       demand_empty_rest_of_line ();
       return;
     }
@@ -2606,7 +2616,7 @@ ecoff_directive_dim (ignore)
 	{
 	  if (*input_line_pointer != '\n'
 	      && *input_line_pointer != ';')
-	    as_warn ("Badly formed .dim directive");
+	    as_warn (_("Badly formed .dim directive"));
 	  break;
 	}
     }
@@ -2619,7 +2629,7 @@ ecoff_directive_dim (ignore)
     {
       if (coff_type.num_dims >= N_TQ)
 	{
-	  as_warn ("Too many .dim entries");
+	  as_warn (_("Too many .dim entries"));
 	  break;
 	}
       coff_type.dimensions[coff_type.num_dims] = dimens[i];
@@ -2640,7 +2650,7 @@ ecoff_directive_scl (ignore)
 
   if (coff_sym_name == (char *) NULL)
     {
-      as_warn (".scl pseudo-op used outside of .def/.endef; ignored");
+      as_warn (_(".scl pseudo-op used outside of .def/.endef; ignored"));
       demand_empty_rest_of_line ();
       return;
     }
@@ -2666,7 +2676,7 @@ ecoff_directive_size (ignore)
 
   if (coff_sym_name == (char *) NULL)
     {
-      as_warn (".size pseudo-op used outside of .def/.endef; ignored");
+      as_warn (_(".size pseudo-op used outside of .def/.endef; ignored"));
       demand_empty_rest_of_line ();
       return;
     }
@@ -2681,7 +2691,7 @@ ecoff_directive_size (ignore)
 	{
 	  if (*input_line_pointer != '\n'
 	      && *input_line_pointer != ';')
-	    as_warn ("Badly formed .size directive");
+	    as_warn (_("Badly formed .size directive"));
 	  break;
 	}
     }
@@ -2694,7 +2704,7 @@ ecoff_directive_size (ignore)
     {
       if (coff_type.num_sizes >= N_TQ)
 	{
-	  as_warn ("Too many .size entries");
+	  as_warn (_("Too many .size entries"));
 	  break;
 	}
       coff_type.sizes[coff_type.num_sizes] = sizes[i];
@@ -2717,7 +2727,7 @@ ecoff_directive_type (ignore)
 
   if (coff_sym_name == (char *) NULL)
     {
-      as_warn (".type pseudo-op used outside of .def/.endef; ignored");
+      as_warn (_(".type pseudo-op used outside of .def/.endef; ignored"));
       demand_empty_rest_of_line ();
       return;
     }
@@ -2735,7 +2745,7 @@ ecoff_directive_type (ignore)
 	  /* FIXME: We could handle this by setting the continued bit.
              There would still be a limit: the .type argument can not
              be infinite.  */
-	  as_warn ("The type of %s is too complex; it will be simplified",
+	  as_warn (_("The type of %s is too complex; it will be simplified"),
 		   coff_sym_name);
 	  break;
 	}
@@ -2746,7 +2756,7 @@ ecoff_directive_type (ignore)
       else if (ISARY (val))
 	*--tq_ptr = tq_Array;
       else
-	as_fatal ("Unrecognized .type argument");
+	as_fatal (_("Unrecognized .type argument"));
 
       val = DECREF (val);
     }
@@ -2785,7 +2795,7 @@ ecoff_directive_tag (ignore)
 
   if (coff_sym_name == (char *) NULL)
     {
-      as_warn (".tag pseudo-op used outside of .def/.endef; ignored");
+      as_warn (_(".tag pseudo-op used outside of .def/.endef; ignored"));
       demand_empty_rest_of_line ();
       return;
     }
@@ -2812,7 +2822,7 @@ ecoff_directive_val (ignore)
 
   if (coff_sym_name == (char *) NULL)
     {
-      as_warn (".val pseudo-op used outside of .def/.endef; ignored");
+      as_warn (_(".val pseudo-op used outside of .def/.endef; ignored"));
       demand_empty_rest_of_line ();
       return;
     }
@@ -2820,7 +2830,7 @@ ecoff_directive_val (ignore)
   expression (&exp);
   if (exp.X_op != O_constant && exp.X_op != O_symbol)
     {
-      as_bad (".val expression is too copmlex");
+      as_bad (_(".val expression is too copmlex"));
       demand_empty_rest_of_line ();
       return;
     }
@@ -2851,7 +2861,7 @@ ecoff_directive_endef (ignore)
 
   if (coff_sym_name == (char *) NULL)
     {
-      as_warn (".endef pseudo-op used before .def; ignored");
+      as_warn (_(".endef pseudo-op used before .def; ignored"));
       return;
     }
 
@@ -2877,7 +2887,7 @@ ecoff_directive_endef (ignore)
 
       if (coff_type.num_sizes != 1 || diff < 0)
 	{
-	  as_warn ("Bad COFF debugging info");
+	  as_warn (_("Bad COFF debugging info"));
 	  return;
 	}
 
@@ -2926,7 +2936,7 @@ ecoff_directive_endef (ignore)
 	{
 	  if (coff_tag == (char *) NULL)
 	    {
-	      as_warn ("No tag specified for %s", name);
+	      as_warn (_("No tag specified for %s"), name);
 	      return;
 	    }
 
@@ -2958,7 +2968,7 @@ ecoff_directive_endef (ignore)
       if (coff_type.num_sizes - coff_type.num_dims - coff_type.extra_sizes
 	  != 1)
 	{
-	  as_warn ("Bad COFF debugging information");
+	  as_warn (_("Bad COFF debugging information"));
 	  return;
 	}
       else
@@ -3030,14 +3040,14 @@ ecoff_directive_end (ignore)
 
   if (cur_file_ptr == (efdr_t *) NULL)
     {
-      as_warn (".end directive without a preceding .file directive");
+      as_warn (_(".end directive without a preceding .file directive"));
       demand_empty_rest_of_line ();
       return;
     }
 
   if (cur_proc_ptr == (proc_t *) NULL)
     {
-      as_warn (".end directive without a preceding .ent directive");
+      as_warn (_(".end directive without a preceding .ent directive"));
       demand_empty_rest_of_line ();
       return;
     }
@@ -3048,7 +3058,7 @@ ecoff_directive_end (ignore)
   ch = *name;
   if (! is_name_beginner (ch))
     {
-      as_warn (".end directive has no name");
+      as_warn (_(".end directive has no name"));
       *input_line_pointer = name_end;
       demand_empty_rest_of_line ();
       return;
@@ -3060,27 +3070,13 @@ ecoff_directive_end (ignore)
      symbol.  */
   ent = symbol_find (name);
   if (ent == (symbolS *) NULL)
-    as_warn (".end directive names unknown symbol");
+    as_warn (_(".end directive names unknown symbol"));
   else
-    {
-      (void) add_ecoff_symbol ((const char *) NULL, st_End, sc_Text,
-			       symbol_new ("L0\001", now_seg,
-					   (valueT) frag_now_fix (),
-					   frag_now),
-			       (bfd_vma) 0, (symint_t) 0, (symint_t) 0);
-
-      if (stabs_seen && generate_asm_lineno)
-	{
-	char *n;
-
-	  n = xmalloc (strlen (name) + 4);
-	  strcpy (n, name);
-	  strcat (n, ":F1");
-	  (void) add_ecoff_symbol ((const char *) n, stGlobal, scText, 
-				   ent, (bfd_vma) 0, 0,
-				   ECOFF_MARK_STAB (N_FUN));
-	}
-    }
+    (void) add_ecoff_symbol ((const char *) NULL, st_End, sc_Text,
+			     symbol_new ("L0\001", now_seg,
+					 (valueT) frag_now_fix (),
+					 frag_now),
+			     (bfd_vma) 0, (symint_t) 0, (symint_t) 0);
 
   cur_proc_ptr = (proc_t *) NULL;
 
@@ -3103,7 +3099,7 @@ ecoff_directive_ent (ignore)
 
   if (cur_proc_ptr != (proc_t *) NULL)
     {
-      as_warn ("second .ent directive found before .end directive");
+      as_warn (_("second .ent directive found before .end directive"));
       demand_empty_rest_of_line ();
       return;
     }
@@ -3114,7 +3110,7 @@ ecoff_directive_ent (ignore)
   ch = *name;
   if (! is_name_beginner (ch))
     {
-      as_warn (".ent directive has no name");
+      as_warn (_(".ent directive has no name"));
       *input_line_pointer = name_end;
       demand_empty_rest_of_line ();
       return;
@@ -3134,7 +3130,8 @@ ecoff_directive_ent (ignore)
       ++input_line_pointer;
       SKIP_WHITESPACE ();
     }
-  if (isdigit (*input_line_pointer) || *input_line_pointer == '-')
+  if (isdigit ((unsigned char) *input_line_pointer)
+      || *input_line_pointer == '-')
     (void) get_absolute_expression ();
 
   demand_empty_rest_of_line ();
@@ -3162,7 +3159,7 @@ ecoff_directive_extern (ignore)
     ++input_line_pointer;
   size = get_absolute_expression ();
 
-  symbolp->ecoff_extern_size = size;
+  symbol_get_obj (symbolp)->ecoff_extern_size = size;
 }
 
 /* Parse .file directives.  */
@@ -3177,7 +3174,7 @@ ecoff_directive_file (ignore)
 
   if (cur_proc_ptr != (proc_t *) NULL)
     {
-      as_warn ("No way to handle .file within .ent/.end section");
+      as_warn (_("No way to handle .file within .ent/.end section"));
       demand_empty_rest_of_line ();
       return;
     }
@@ -3202,14 +3199,14 @@ ecoff_directive_fmask (ignore)
 
   if (cur_proc_ptr == (proc_t *) NULL)
     {
-      as_warn (".fmask outside of .ent");
+      as_warn (_(".fmask outside of .ent"));
       demand_empty_rest_of_line ();
       return;
     }
 
   if (get_absolute_expression_and_terminator (&val) != ',')
     {
-      as_warn ("Bad .fmask directive");
+      as_warn (_("Bad .fmask directive"));
       --input_line_pointer;
       demand_empty_rest_of_line ();
       return;
@@ -3231,7 +3228,7 @@ ecoff_directive_frame (ignore)
 
   if (cur_proc_ptr == (proc_t *) NULL)
     {
-      as_warn (".frame outside of .ent");
+      as_warn (_(".frame outside of .ent"));
       demand_empty_rest_of_line ();
       return;
     }
@@ -3242,7 +3239,7 @@ ecoff_directive_frame (ignore)
   if (*input_line_pointer++ != ','
       || get_absolute_expression_and_terminator (&val) != ',')
     {
-      as_warn ("Bad .frame directive");
+      as_warn (_("Bad .frame directive"));
       --input_line_pointer;
       demand_empty_rest_of_line ();
       return;
@@ -3271,14 +3268,14 @@ ecoff_directive_mask (ignore)
 
   if (cur_proc_ptr == (proc_t *) NULL)
     {
-      as_warn (".mask outside of .ent");
+      as_warn (_(".mask outside of .ent"));
       demand_empty_rest_of_line ();
       return;
     }
 
   if (get_absolute_expression_and_terminator (&val) != ',')
     {
-      as_warn ("Bad .mask directive");
+      as_warn (_("Bad .mask directive"));
       --input_line_pointer;
       demand_empty_rest_of_line ();
       return;
@@ -3301,14 +3298,14 @@ ecoff_directive_loc (ignore)
 
   if (cur_file_ptr == (efdr_t *) NULL)
     {
-      as_warn (".loc before .file");
+      as_warn (_(".loc before .file"));
       demand_empty_rest_of_line ();
       return;
     }
 
   if (now_seg != text_section)
     {
-      as_warn (".loc outside of .text");
+      as_warn (_(".loc outside of .text"));
       demand_empty_rest_of_line ();
       return;
     }
@@ -3405,7 +3402,8 @@ mark_stabs (ignore)
 }
 
 /* Parse .weakext directives.  */
-
+#ifndef TC_MIPS
+/* For TC_MIPS use the version in tc-mips.c. */
 void
 ecoff_directive_weakext (ignore)
      int ignore;
@@ -3426,7 +3424,7 @@ ecoff_directive_weakext (ignore)
     {
       if (S_IS_DEFINED (symbolP))
 	{
-	  as_bad ("Ignoring attempt to redefine symbol `%s'.",
+	  as_bad (_("Ignoring attempt to redefine symbol `%s'."),
 		  S_GET_NAME (symbolP));
 	  ignore_rest_of_line ();
 	  return;
@@ -3439,11 +3437,11 @@ ecoff_directive_weakext (ignore)
 	  expression (&exp);
 	  if (exp.X_op != O_symbol)
 	    {
-	      as_bad ("bad .weakext directive");
+	      as_bad (_("bad .weakext directive"));
 	      ignore_rest_of_line();
 	      return;
 	    }
-	  symbolP->sy_value = exp;
+	  symbol_set_value_expression (symbolP, &exp);
 	}
     }
 
@@ -3451,6 +3449,7 @@ ecoff_directive_weakext (ignore)
 
   demand_empty_rest_of_line ();
 }
+#endif /* not TC_MIPS */
 
 /* Handle .stabs directives.  The actual parsing routine is done by a
    generic routine.  This routine is called via OBJ_PROCESS_STAB.
@@ -3507,7 +3506,7 @@ ecoff_stab (sec, what, string, type, other, desc)
   /* We don't handle .stabd.  */
   if (what != 's' && what != 'n')
     {
-      as_bad (".stab%c is not supported", what);
+      as_bad (_(".stab%c is not supported"), what);
       return;
     }
 
@@ -3517,7 +3516,7 @@ ecoff_stab (sec, what, string, type, other, desc)
 
   /* We ignore the other field.  */
   if (other != 0)
-    as_warn (".stab%c: ignoring non-zero other field", what);
+    as_warn (_(".stab%c: ignoring non-zero other field"), what);
 
   /* Make sure we have a current file.  */
   if (cur_file_ptr == (efdr_t *) NULL)
@@ -3551,7 +3550,7 @@ ecoff_stab (sec, what, string, type, other, desc)
       dummy_symr.index = desc;
       if (dummy_symr.index != desc)
 	{
-	  as_warn ("Line number (%d) for .stab%c directive cannot fit in index field (20 bits)",
+	  as_warn (_("Line number (%d) for .stab%c directive cannot fit in index field (20 bits)"),
 		   desc, what);
 	  return;
 	}
@@ -3575,7 +3574,7 @@ ecoff_stab (sec, what, string, type, other, desc)
 	listing_source_file (string);
 #endif
 
-      if (isdigit (*input_line_pointer)
+      if (isdigit ((unsigned char) *input_line_pointer)
 	  || *input_line_pointer == '-'
 	  || *input_line_pointer == '+')
 	{
@@ -3587,7 +3586,7 @@ ecoff_stab (sec, what, string, type, other, desc)
 	}
       else if (! is_name_beginner ((unsigned char) *input_line_pointer))
 	{
-	  as_warn ("Illegal .stab%c directive, bad character", what);
+	  as_warn (_("Illegal .stab%c directive, bad character"), what);
 	  return;
 	}
       else
@@ -3625,12 +3624,12 @@ ecoff_stab (sec, what, string, type, other, desc)
      ECOFF symbol.  We want to compute the type of the ECOFF symbol
      independently.  */
   if (sym != (symbolS *) NULL)
-    hold = sym->ecoff_symbol;
+    hold = symbol_get_obj (sym)->ecoff_symbol;
 
   (void) add_ecoff_symbol (string, st, sc, sym, addend, value, indx);
 
   if (sym != (symbolS *) NULL)
-    sym->ecoff_symbol = hold;
+    symbol_get_obj (sym)->ecoff_symbol = hold;
 
   /* Restore normal file type.  */
   cur_file_ptr = save_file_ptr;
@@ -3667,10 +3666,10 @@ ecoff_frob_symbol (sym)
     }
 
   /* Double check weak symbols.  */
-  if (sym->bsym->flags & BSF_WEAK)
+  if (S_IS_WEAK (sym))
     {
       if (S_IS_COMMON (sym))
-	as_bad ("Symbol `%s' can not be both weak and common",
+	as_bad (_("Symbol `%s' can not be both weak and common"),
 		S_GET_NAME (sym));
     }
 }
@@ -3746,6 +3745,7 @@ ecoff_build_lineno (backend, buf, bufend, offset, linecntptr)
   long iline;
   long totcount;
   lineno_list_t first;
+  lineno_list_t *local_first_lineno = first_lineno;
 
   if (linecntptr != (long *) NULL)
     *linecntptr = 0;
@@ -3765,25 +3765,29 @@ ecoff_build_lineno (backend, buf, bufend, offset, linecntptr)
      embedded PIC code, it will put strings in the .text section
      before the first procedure.  We cope by inserting a dummy line if
      the address of the first procedure is not 0.  Hopefully this
-     won't screw things up too badly.  */
-  if (first_proc_ptr != (proc_t *) NULL
-      && first_lineno != (lineno_list_t *) NULL
+     won't screw things up too badly.  
+
+     Don't do this for ECOFF assembly source line numbers.  They work
+     without this extra attention.  */
+  if (debug_type != DEBUG_ECOFF
+      && first_proc_ptr != (proc_t *) NULL
+      && local_first_lineno != (lineno_list_t *) NULL
       && ((S_GET_VALUE (first_proc_ptr->sym->as_sym)
 	   + bfd_get_section_vma (stdoutput,
 				  S_GET_SEGMENT (first_proc_ptr->sym->as_sym)))
 	  != 0))
     {
-      first.file = first_lineno->file;
-      first.proc = first_lineno->proc;
+      first.file = local_first_lineno->file;
+      first.proc = local_first_lineno->proc;
       first.frag = &zero_address_frag;
       first.paddr = 0;
       first.lineno = 0;
 
-      first.next = first_lineno;
-      first_lineno = &first;
+      first.next = local_first_lineno;
+      local_first_lineno = &first;
     }
 
-  for (l = first_lineno; l != (lineno_list_t *) NULL; l = l->next)
+  for (l = local_first_lineno; l != (lineno_list_t *) NULL; l = l->next)
     {
       long count;
       long delta;
@@ -4044,7 +4048,7 @@ ecoff_build_symbols (backend, buf, bufend, offset)
 			  begin_sym = sym_ptr->proc_ptr->sym->as_sym;
 			  if (S_GET_SEGMENT (as_sym)
 			      != S_GET_SEGMENT (begin_sym))
-			    as_warn (".begin/.bend in different segments");
+			    as_warn (_(".begin/.bend in different segments"));
 			  sym_ptr->ecoff_sym.asym.value =
 			    S_GET_VALUE (as_sym) - S_GET_VALUE (begin_sym);
 			}
@@ -4088,7 +4092,8 @@ ecoff_build_symbols (backend, buf, bufend, offset)
 				  || S_IS_WEAK (as_sym)
 				  || ! S_IS_DEFINED (as_sym)))
 			    {
-			      if ((as_sym->bsym->flags & BSF_FUNCTION) != 0)
+			      if ((symbol_get_bfdsym (as_sym)->flags
+				   & BSF_FUNCTION) != 0)
 				st = st_Proc;
 			      else
 				st = st_Global;
@@ -4100,18 +4105,19 @@ ecoff_build_symbols (backend, buf, bufend, offset)
 
 			  if (! S_IS_DEFINED (as_sym))
 			    {
-			      if (as_sym->ecoff_extern_size == 0
-				  || (as_sym->ecoff_extern_size
-				      > bfd_get_gp_size (stdoutput)))
+			      valueT s;
+
+			      s = symbol_get_obj (as_sym)->ecoff_extern_size;
+			      if (s == 0
+				  || s > bfd_get_gp_size (stdoutput))
 				sc = sc_Undefined;
 			      else
 				{
 				  sc = sc_SUndefined;
-				  sym_ptr->ecoff_sym.asym.value =
-				    as_sym->ecoff_extern_size;
+				  sym_ptr->ecoff_sym.asym.value = s;
 				}
 #ifdef S_SET_SIZE
-			      S_SET_SIZE (as_sym, as_sym->ecoff_extern_size);
+			      S_SET_SIZE (as_sym, s);
 #endif
 			    }
 			  else if (S_IS_COMMON (as_sym))
@@ -4226,7 +4232,7 @@ ecoff_build_symbols (backend, buf, bufend, offset)
 			  know (begin_ptr->as_sym != (symbolS *) NULL);
 			  if (S_GET_SEGMENT (as_sym)
 			      != S_GET_SEGMENT (begin_ptr->as_sym))
-			    as_warn (".begin/.bend in different segments");
+			    as_warn (_(".begin/.bend in different segments"));
 			  sym_ptr->ecoff_sym.asym.value =
 			    (S_GET_VALUE (as_sym)
 			     - S_GET_VALUE (begin_ptr->as_sym));
@@ -4245,7 +4251,7 @@ ecoff_build_symbols (backend, buf, bufend, offset)
 			  begin_sym = sym_ptr->proc_ptr->sym->as_sym;
 			  if (S_GET_SEGMENT (as_sym)
 			      != S_GET_SEGMENT (begin_sym))
-			    as_warn (".begin/.bend in different segments");
+			    as_warn (_(".begin/.bend in different segments"));
 			  sym_ptr->ecoff_sym.asym.value =
 			    S_GET_VALUE (as_sym) - S_GET_VALUE (begin_sym);
 			}
@@ -4283,13 +4289,18 @@ ecoff_build_symbols (backend, buf, bufend, offset)
 		     case this is an external symbol.  Note that this
 		     destroys the asym.index field.  */
 		  if (as_sym != (symbolS *) NULL
-		      && as_sym->ecoff_symbol == sym_ptr)
+		      && symbol_get_obj (as_sym)->ecoff_symbol == sym_ptr)
 		    {
 		      if ((sym_ptr->ecoff_sym.asym.st == st_Proc
 			   || sym_ptr->ecoff_sym.asym.st == st_StaticProc)
 			  && local)
 			sym_ptr->ecoff_sym.asym.index = isym - ifilesym - 1;
 		      sym_ptr->ecoff_sym.ifd = fil_ptr->file_index;
+
+		      /* Don't try to merge an FDR which has an
+                         external symbol attached to it.  */
+		      if (S_IS_EXTERNAL (as_sym) || S_IS_WEAK (as_sym))
+			fil_ptr->fdr.fMerge = 0;
 		    }
 		}
 	    }
@@ -4647,7 +4658,7 @@ ecoff_setup_ext ()
 
   for (sym = symbol_rootP; sym != (symbolS *) NULL; sym = symbol_next (sym))
     {
-      if (sym->ecoff_symbol == NULL)
+      if (symbol_get_obj (sym)->ecoff_symbol == NULL)
 	continue;
 
       /* If this is a local symbol, then force the fields to zero.  */
@@ -4655,13 +4666,16 @@ ecoff_setup_ext ()
 	  && ! S_IS_WEAK (sym)
 	  && S_IS_DEFINED (sym))
 	{
-	  sym->ecoff_symbol->ecoff_sym.asym.value = 0;
-	  sym->ecoff_symbol->ecoff_sym.asym.st = (int) st_Nil;
-	  sym->ecoff_symbol->ecoff_sym.asym.sc = (int) sc_Nil;
-	  sym->ecoff_symbol->ecoff_sym.asym.index = indexNil;
+	  struct localsym *lsym;
+
+	  lsym = symbol_get_obj (sym)->ecoff_symbol;
+	  lsym->ecoff_sym.asym.value = 0;
+	  lsym->ecoff_sym.asym.st = (int) st_Nil;
+	  lsym->ecoff_sym.asym.sc = (int) sc_Nil;
+	  lsym->ecoff_sym.asym.index = indexNil;
 	}
 
-      obj_ecoff_set_ext (sym, &sym->ecoff_symbol->ecoff_sym);
+      obj_ecoff_set_ext (sym, &symbol_get_obj (sym)->ecoff_symbol->ecoff_sym);
     }
 }
 
@@ -4711,12 +4725,12 @@ ecoff_build_debug (hdr, bufp, backend)
   cur_proc_ptr = (proc_t *) NULL;
   for (sym = symbol_rootP; sym != (symbolS *) NULL; sym = symbol_next (sym))
     {
-      if (sym->ecoff_symbol != NULL
-	  || sym->ecoff_file == (efdr_t *) NULL
-	  || (sym->bsym->flags & BSF_SECTION_SYM) != 0)
+      if (symbol_get_obj (sym)->ecoff_symbol != NULL
+	  || symbol_get_obj (sym)->ecoff_file == (efdr_t *) NULL
+	  || (symbol_get_bfdsym (sym)->flags & BSF_SECTION_SYM) != 0)
 	continue;
 
-      cur_file_ptr = sym->ecoff_file;
+      cur_file_ptr = symbol_get_obj (sym)->ecoff_file;
       add_ecoff_symbol ((const char *) NULL, st_Nil, sc_Nil, sym,
 			(bfd_vma) 0, S_GET_VALUE (sym), indexNil);
     }
@@ -4738,7 +4752,7 @@ ecoff_build_debug (hdr, bufp, backend)
 	  cur_file_ptr->cur_scope = cur_file_ptr->cur_scope->prev;
 	  if (! end_warning && ! cur_file_ptr->fake)
 	    {
-	      as_warn ("Missing .end or .bend at end of file");
+	      as_warn (_("Missing .end or .bend at end of file"));
 	      end_warning = 1;
 	    }
 	}
@@ -4834,11 +4848,11 @@ ecoff_build_debug (hdr, bufp, backend)
 
 #ifndef MALLOC_CHECK
 
-static page_t *
+static page_type *
 allocate_cluster (npages)
      unsigned long npages;
 {
-  register page_t *value = (page_t *) xmalloc (npages * PAGE_USIZE);
+  register page_type *value = (page_type *) xmalloc (npages * PAGE_USIZE);
 
 #ifdef ECOFF_DEBUG
   if (debug > 3)
@@ -4851,14 +4865,14 @@ allocate_cluster (npages)
 }
 
 
-static page_t *cluster_ptr = NULL;
+static page_type *cluster_ptr = NULL;
 static unsigned long pages_left = 0;
 
 #endif /* MALLOC_CHECK */
 
 /* Allocate one page (which is initialized to 0).  */
 
-static page_t *
+static page_type *
 allocate_page ()
 {
 #ifndef MALLOC_CHECK
@@ -4874,7 +4888,7 @@ allocate_page ()
 
 #else	/* MALLOC_CHECK */
 
-  page_t *ptr;
+  page_type *ptr;
 
   ptr = xmalloc (PAGE_USIZE);
   memset (ptr, 0, PAGE_USIZE);
@@ -4899,7 +4913,7 @@ allocate_scope ()
   else
     {
       register int unallocated	= alloc_counts[(int)alloc_type_scope].unallocated;
-      register page_t *cur_page	= alloc_counts[(int)alloc_type_scope].cur_page;
+      register page_type *cur_page	= alloc_counts[(int)alloc_type_scope].cur_page;
 
       if (unallocated == 0)
 	{
@@ -4950,7 +4964,7 @@ allocate_vlinks ()
 #ifndef MALLOC_CHECK
 
   register int unallocated = alloc_counts[(int)alloc_type_vlinks].unallocated;
-  register page_t *cur_page = alloc_counts[(int)alloc_type_vlinks].cur_page;
+  register page_type *cur_page = alloc_counts[(int)alloc_type_vlinks].cur_page;
 
   if (unallocated == 0)
     {
@@ -4984,7 +4998,7 @@ allocate_shash ()
 #ifndef MALLOC_CHECK
 
   register int unallocated = alloc_counts[(int)alloc_type_shash].unallocated;
-  register page_t *cur_page = alloc_counts[(int)alloc_type_shash].cur_page;
+  register page_type *cur_page = alloc_counts[(int)alloc_type_shash].cur_page;
 
   if (unallocated == 0)
     {
@@ -5018,7 +5032,7 @@ allocate_thash ()
 #ifndef MALLOC_CHECK
 
   register int unallocated = alloc_counts[(int)alloc_type_thash].unallocated;
-  register page_t *cur_page = alloc_counts[(int)alloc_type_thash].cur_page;
+  register page_type *cur_page = alloc_counts[(int)alloc_type_thash].cur_page;
 
   if (unallocated == 0)
     {
@@ -5057,7 +5071,7 @@ allocate_tag ()
   else
     {
       register int unallocated = alloc_counts[(int)alloc_type_tag].unallocated;
-      register page_t *cur_page = alloc_counts[(int)alloc_type_tag].cur_page;
+      register page_type *cur_page = alloc_counts[(int)alloc_type_tag].cur_page;
 
       if (unallocated == 0)
 	{
@@ -5108,7 +5122,7 @@ allocate_forward ()
 #ifndef MALLOC_CHECK
 
   register int unallocated = alloc_counts[(int)alloc_type_forward].unallocated;
-  register page_t *cur_page = alloc_counts[(int)alloc_type_forward].cur_page;
+  register page_type *cur_page = alloc_counts[(int)alloc_type_forward].cur_page;
 
   if (unallocated == 0)
     {
@@ -5147,7 +5161,7 @@ allocate_thead ()
   else
     {
       register int unallocated = alloc_counts[(int)alloc_type_thead].unallocated;
-      register page_t *cur_page = alloc_counts[(int)alloc_type_thead].cur_page;
+      register page_type *cur_page = alloc_counts[(int)alloc_type_thead].cur_page;
 
       if (unallocated == 0)
 	{
@@ -5196,7 +5210,7 @@ allocate_lineno_list ()
 #ifndef MALLOC_CHECK
 
   register int unallocated = alloc_counts[(int)alloc_type_lineno].unallocated;
-  register page_t *cur_page = alloc_counts[(int)alloc_type_lineno].cur_page;
+  register page_type *cur_page = alloc_counts[(int)alloc_type_lineno].cur_page;
 
   if (unallocated == 0)
     {
@@ -5229,108 +5243,11 @@ ecoff_set_gp_prolog_size (sz)
   cur_proc_ptr->pdr.gp_prologue = sz;
   if (cur_proc_ptr->pdr.gp_prologue != sz)
     {
-      as_warn ("GP prologue size exceeds field size, using 0 instead");
+      as_warn (_("GP prologue size exceeds field size, using 0 instead"));
       cur_proc_ptr->pdr.gp_prologue = 0;
     }
 
   cur_proc_ptr->pdr.gp_used = 1;
-}
-
-static void
-generate_ecoff_stab (what, string, type, other, desc)
-     int what;
-     const char *string;
-     int type;
-     int other;
-     int desc;
-{
-  efdr_t *save_file_ptr = cur_file_ptr;
-  symbolS *sym;
-  symint_t value;
-  st_t st;
-  sc_t sc;
-  symint_t indx;
-  localsym_t *hold = NULL;
-
-  /* We don't handle .stabd.  */
-  if (what != 's' && what != 'n')
-    {
-      as_bad (".stab%c is not supported", what);
-      return;
-    }
-
-  /* We ignore the other field.  */
-  if (other != 0)
-    as_warn (".stab%c: ignoring non-zero other field", what);
-
-  /* Make sure we have a current file.  */
-  if (cur_file_ptr == (efdr_t *) NULL)
-    {
-      add_file ((const char *) NULL, 0, 1);
-      save_file_ptr = cur_file_ptr;
-    }
-
-  /* For stabs in ECOFF, the first symbol must be @stabs.  This is a
-     signal to gdb.  */
-  if (stabs_seen == 0)
-    mark_stabs (0);
-
-  /* Line number stabs are handled differently, since they have two
-     values, the line number and the address of the label.  We use the
-     index field (aka desc) to hold the line number, and the value
-     field to hold the address.  The symbol type is st_Label, which
-     should be different from the other stabs, so that gdb can
-     recognize it.  */
-  if (type == N_SLINE)
-    {
-      SYMR dummy_symr;
-
-#ifndef NO_LISTING
-      if (listing)
-	listing_source_line ((unsigned int) desc);
-#endif
-
-      dummy_symr.index = desc;
-      if (dummy_symr.index != desc)
-	{
-	  as_warn ("Line number (%d) for .stab%c directive cannot fit in index field (20 bits)",
-		   desc, what);
-	  return;
-	}
-
-      sym = symbol_find_or_make ((char *)string);
-      value = 0;
-      st = st_Label;
-      sc = sc_Text;
-      indx = desc;
-    }
-  else
-    {
-#ifndef NO_LISTING
-      if (listing && (type == N_SO || type == N_SOL))
-	listing_source_file (string);
-#endif
-
-      sym = symbol_find_or_make ((char *)string);
-      sc = sc_Nil;
-      st = st_Nil;
-      value = 0;
-      indx = ECOFF_MARK_STAB (type);
-    }
-
-  /* Don't store the stabs symbol we are creating as the type of the
-     ECOFF symbol.  We want to compute the type of the ECOFF symbol
-     independently.  */
-  if (sym != (symbolS *) NULL)
-    hold = sym->ecoff_symbol;
-
-  (void) add_ecoff_symbol (string, st, sc, sym, (bfd_vma) 0, value, indx);
-
-  if (sym != (symbolS *) NULL)
-    sym->ecoff_symbol = hold;
-
-  /* Restore normal file type.  */
-  cur_file_ptr = save_file_ptr;
 }
 
 int 
@@ -5340,24 +5257,17 @@ ecoff_no_current_file ()
 }
 
 void
-ecoff_generate_asm_lineno (filename, lineno)
-     const char *filename;
-     int lineno;
+ecoff_generate_asm_lineno ()
 {
+  unsigned int lineno;
+  char *filename;
   lineno_list_t *list;
 
-  /* this potential can cause problem, when we start to see stab half the 
-     way thru the file */
-/*
-  if (stabs_seen)
-    ecoff_generate_asm_line_stab(filename, lineno);
-*/
+  as_where (&filename, &lineno);
 
-  if (current_stabs_filename == (char *)NULL || strcmp (current_stabs_filename, filename))
-    {
-      add_file (filename, 0, 1);
-      generate_asm_lineno = 1;
-    }
+  if (current_stabs_filename == (char *)NULL
+      || strcmp (current_stabs_filename, filename))
+    add_file (filename, 0, 1);
 
   list = allocate_lineno_list ();
 
@@ -5391,29 +5301,11 @@ ecoff_generate_asm_lineno (filename, lineno)
     }
 }
 
-static int line_label_cnt = 0;
+#else
+
 void
-ecoff_generate_asm_line_stab (filename, lineno)
-    char *filename;
-    int lineno;
+ecoff_generate_asm_lineno ()
 {
-  char *ll;
-
-  if (strcmp (current_stabs_filename, filename)) 
-    {
-      add_file (filename, 0, 1);
-      generate_asm_lineno = 1;
-    }
-
-  line_label_cnt++;
-  /* generate local label $LMnn */
-  ll = xmalloc(10);
-  sprintf(ll, "$LM%d", line_label_cnt);
-  colon (ll);
-
-  /* generate stab for the line */
-  generate_ecoff_stab ('n', ll, N_SLINE, 0, lineno); 
-
 }
 
 #endif /* ECOFF_DEBUGGING */

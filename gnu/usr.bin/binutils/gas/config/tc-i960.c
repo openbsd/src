@@ -1,5 +1,5 @@
 /* tc-i960.c - All the i80960-specific stuff
-   Copyright (C) 1989, 90, 91, 92, 93, 94, 95, 1996
+   Copyright (C) 1989, 90, 91, 92, 93, 94, 95, 96, 97, 98, 1999
    Free Software Foundation, Inc.
 
    This file is part of GAS.
@@ -101,7 +101,22 @@
 #define TC_S_FORCE_TO_SYSPROC(s)	(S_SET_STORAGE_CLASS((s), C_SCALL))
 
 #else /* ! OBJ_COFF */
-you lose;
+#ifdef OBJ_ELF
+#define TC_S_IS_SYSPROC(s)	0
+
+#define TC_S_IS_BALNAME(s)	0
+#define TC_S_IS_CALLNAME(s)	0
+#define TC_S_IS_BADPROC(s)	0
+
+#define TC_S_SET_SYSPROC(s, p)
+#define TC_S_GET_SYSPROC(s) 0
+
+#define TC_S_FORCE_TO_BALNAME(s)
+#define TC_S_FORCE_TO_CALLNAME(s)
+#define TC_S_FORCE_TO_SYSPROC(s)
+#else
+ #error COFF, a.out, b.out, and ELF are the only supported formats.
+#endif /* ! OBJ_ELF */
 #endif /* ! OBJ_COFF */
 #endif /* ! OBJ_A/BOUT */
 
@@ -541,7 +556,7 @@ md_begin ()
 			  (char *) &aregs[i].areg_num);
 
   if (retval)
-    as_fatal ("Hashing returned \"%s\".", retval);
+    as_fatal (_("Hashing returned \"%s\"."), retval);
 }
 
 /*****************************************************************************
@@ -575,7 +590,7 @@ md_assemble (textP)
 
   int n;			/* Offset of last character in opcode mnemonic */
 
-  static const char bp_error_msg[] = "branch prediction invalid on this opcode";
+  const char *bp_error_msg = _("branch prediction invalid on this opcode");
 
 
   /* Parse instruction into opcode and operands */
@@ -618,12 +633,12 @@ md_assemble (textP)
   oP = (struct i960_opcode *) hash_find (op_hash, args[0]);
   if (!oP || !targ_has_iclass (oP->iclass))
     {
-      as_bad ("invalid opcode, \"%s\".", args[0]);
+      as_bad (_("invalid opcode, \"%s\"."), args[0]);
 
     }
   else if (n_ops != oP->num_ops)
     {
-      as_bad ("improper number of operands.  expecting %d, got %d",
+      as_bad (_("improper number of operands.  expecting %d, got %d"),
 	      oP->num_ops, n_ops);
     }
   else
@@ -768,7 +783,7 @@ md_atof (type, litP, sizeP)
 
     default:
       *sizeP = 0;
-      return "Bad call to md_atof()";
+      return _("Bad call to md_atof()");
     }
 
   t = atof_ieee (input_line_pointer, type, words);
@@ -858,7 +873,7 @@ md_number_to_field (instrP, val, bfixP)
   if (((val < 0) && (sign != -1))
       || ((val > 0) && (sign != 0)))
     {
-      as_bad ("Fixup of %ld too large for field width of %d",
+      as_bad (_("Fixup of %ld too large for field width of %d"),
 	      val, numbits);
     }
   else
@@ -976,7 +991,7 @@ md_parse_option (c, arg)
 
 	if (tp->flag == NULL)
 	  {
-	    as_bad ("invalid architecture %s", p);
+	    as_bad (_("invalid architecture %s"), p);
 	    return 0;
 	  }
 	else
@@ -996,20 +1011,19 @@ md_show_usage (stream)
      FILE *stream;
 {
   int i;
-  fprintf (stream, "I960 options:\n");
+  fprintf (stream, _("I960 options:\n"));
   for (i = 0; arch_tab[i].flag; i++)
     fprintf (stream, "%s-A%s", i ? " | " : "", arch_tab[i].flag);
-  fprintf (stream, "\n\
+  fprintf (stream, _("\n\
 			specify variant of 960 architecture\n\
 -b			add code to collect statistics about branches taken\n\
 -link-relax		preserve individual alignment directives so linker\n\
 			can do relaxing (b.out format only)\n\
 -no-relax		don't alter compare-and-branch instructions for\n\
-			long displacements\n");
+			long displacements\n"));
 }
 
 
-#ifndef BFD_ASSEMBLER
 /*****************************************************************************
    md_convert_frag:
   	Called by base assembler after address relaxation is finished:  modify
@@ -1023,11 +1037,19 @@ md_show_usage (stream)
   	Replace the cobr with a two instructions (a compare and a branch).
 
   *************************************************************************** */
+#ifndef BFD_ASSEMBLER
 void
 md_convert_frag (headers, seg, fragP)
      object_headers *headers;
      segT seg;
      fragS *fragP;
+#else
+void
+md_convert_frag (abfd, sec, fragP)
+     bfd *abfd;
+     segT sec;
+     fragS *fragP;
+#endif
 {
   fixS *fixP;			/* Structure describing needed address fix */
 
@@ -1082,6 +1104,7 @@ md_estimate_size_before_relax (fragP, segment_type)
   return 0;
 }				/* md_estimate_size_before_relax() */
 
+#if defined(OBJ_AOUT) | defined(OBJ_BOUT)
 
 /*****************************************************************************
    md_ri_to_chars:
@@ -1096,7 +1119,8 @@ md_estimate_size_before_relax (fragP, segment_type)
   	does do the reordering (Ian Taylor 28 Aug 92).
 
   *************************************************************************** */
-void
+
+static void
 md_ri_to_chars (where, ri)
      char *where;
      struct relocation_info *ri;
@@ -1114,34 +1138,8 @@ md_ri_to_chars (where, ri)
 	      | (ri->r_callj << 6));
 }
 
-#ifndef WORKING_DOT_WORD
+#endif /* defined(OBJ_AOUT) | defined(OBJ_BOUT) */
 
-int md_short_jump_size = 0;
-int md_long_jump_size = 0;
-
-void
-md_create_short_jump (ptr, from_addr, to_addr, frag, to_symbol)
-     char *ptr;
-     addressT from_addr;
-     addressT to_addr;
-     fragS *frag;
-     symbolS *to_symbol;
-{
-  as_fatal ("failed sanity check.");
-}
-
-void
-md_create_long_jump (ptr, from_addr, to_addr, frag, to_symbol)
-     char *ptr;
-     addressT from_addr, to_addr;
-     fragS *frag;
-     symbolS *to_symbol;
-{
-  as_fatal ("failed sanity check.");
-}
-
-#endif
-#endif /* BFD_ASSEMBLER */
 
 /* FOLLOWING ARE THE LOCAL ROUTINES, IN ALPHABETICAL ORDER  */
 
@@ -1206,7 +1204,7 @@ brtab_emit ()
     }
 
   subseg_set (data_section, 0);	/*      .data */
-  frag_align (2, 0);		/*      .align 2 */
+  frag_align (2, 0, 0);		/*      .align 2 */
   record_alignment (now_seg, 2);
   colon (BR_TAB_NAME);		/* BR_TAB_NAME: */
   emit (0);			/*      .word 0 #link to next table */
@@ -1412,7 +1410,8 @@ get_args (p, args)
     {
 
       if (*p == ' '
-	  && (! isalnum (p[1]) || ! isalnum (p[-1])))
+	  && (! isalnum ((unsigned char) p[1])
+	      || ! isalnum ((unsigned char) p[-1])))
 	{
 	  p++;
 
@@ -1423,7 +1422,7 @@ get_args (p, args)
 	  /* Start of operand */
 	  if (n == 3)
 	    {
-	      as_bad ("too many operands");
+	      as_bad (_("too many operands"));
 	      return -1;
 	    }
 	  *to++ = '\0';		/* Terminate argument */
@@ -1483,7 +1482,7 @@ get_cdisp (dispP, ifmtP, instr, numbits, var_frag, callj)
   switch (e.X_op)
     {
     case O_illegal:
-      as_bad ("expression syntax error");
+      as_bad (_("expression syntax error"));
 
     case O_symbol:
       if (S_GET_SEGMENT (e.X_add_symbol) == now_seg
@@ -1521,11 +1520,11 @@ get_cdisp (dispP, ifmtP, instr, numbits, var_frag, callj)
 	    }
 	}
       else
-	as_bad ("attempt to branch into different segment");
+	as_bad (_("attempt to branch into different segment"));
       break;
 
     default:
-      as_bad ("target of %s instruction must be a label", ifmtP);
+      as_bad (_("target of %s instruction must be a label"), ifmtP);
       break;
     }
 }
@@ -1565,7 +1564,7 @@ get_ispec (textP)
 
       if (end == NULL)
 	{
-	  as_bad ("unmatched '['");
+	  as_bad (_("unmatched '['"));
 
 	}
       else
@@ -1576,7 +1575,7 @@ get_ispec (textP)
 	  *end = '\0';
 	  if (*(end + 1) != '\0')
 	    {
-	      as_bad ("garbage after index spec ignored");
+	      as_bad (_("garbage after index spec ignored"));
 	    }
 	}
     }
@@ -1643,7 +1642,7 @@ i_scan (iP, args)
 	  if (args[0] == iP)
 	    {
 	      /* We never moved: there was no opcode either! */
-	      as_bad ("missing opcode");
+	      as_bad (_("missing opcode"));
 	      return -1;
 	    }
 	  return 0;
@@ -1713,7 +1712,7 @@ mem_fmt (args, oP, callx)
   switch (expr.X_op)
     {
     case O_illegal:
-      as_bad ("expression syntax error");
+      as_bad (_("expression syntax error"));
       break;
 
     case O_constant:
@@ -1842,7 +1841,7 @@ parse_expr (textP, expP)
       input_line_pointer = textP;	/* Make parser work for us */
 
       (void) expression (expP);
-      if (input_line_pointer - textP != strlen (textP))
+      if ((size_t) (input_line_pointer - textP) != strlen (textP))
 	{
 	  /* Did not consume all of the input */
 	  expP->X_op = O_illegal;
@@ -1951,7 +1950,7 @@ parse_ldconst (arg)
       break;
 
     case O_illegal:
-      as_bad ("invalid constant");
+      as_bad (_("invalid constant"));
       return -1;
       break;
     }
@@ -2064,7 +2063,7 @@ parse_memop (memP, argP, optype)
       regnum = get_regnum (indexP);	/* Get index reg. # */
       if (!IS_RG_REG (regnum))
 	{
-	  as_bad ("invalid index register");
+	  as_bad (_("invalid index register"));
 	  return;
 	}
 
@@ -2087,7 +2086,7 @@ parse_memop (memP, argP, optype)
 	  scale = 4 << 7;
 	  break;
 	default:
-	  as_bad ("invalid scale factor");
+	  as_bad (_("invalid scale factor"));
 	  return;
 	};
 
@@ -2270,7 +2269,7 @@ parse_regop (regopP, optext, opdesc)
 	  /* global or local register */
 	  if (!REG_ALIGN (opdesc, n))
 	    {
-	      as_bad ("unaligned register");
+	      as_bad (_("unaligned register"));
 	    }
 	  regopP->n = n;
 	  regopP->mode = 0;
@@ -2293,7 +2292,7 @@ parse_regop (regopP, optext, opdesc)
 	  regopP->special = 1;
 	  if (!targ_has_sfr (regopP->n))
 	    {
-	      as_bad ("no such sfr in this architecture");
+	      as_bad (_("no such sfr in this architecture"));
 	    }
 	  return;
 	}
@@ -2331,7 +2330,7 @@ parse_regop (regopP, optext, opdesc)
 	  if (e.X_op != O_constant
 	      || (offs (e) < 0) || (offs (e) > 31))
 	    {
-	      as_bad ("illegal literal");
+	      as_bad (_("illegal literal"));
 	      offs (e) = 0;
 	    }
 	  regopP->n = offs (e);
@@ -2564,7 +2563,7 @@ reloc_callj (fixP)
   else if (TC_S_IS_CALLNAME (fixP->fx_addsy))
     {
       /* Should not happen: see block comment above */
-      as_fatal ("Trying to 'bal' to %s", S_GET_NAME (fixP->fx_addsy));
+      as_fatal (_("Trying to 'bal' to %s"), S_GET_NAME (fixP->fx_addsy));
     }
   else if (TC_S_IS_BALNAME (fixP->fx_addsy))
     {
@@ -2575,7 +2574,7 @@ reloc_callj (fixP)
     }
   else if (TC_S_IS_BADPROC (fixP->fx_addsy))
     {
-      as_bad ("Looks like a proc, but can't tell what kind.\n");
+      as_bad (_("Looks like a proc, but can't tell what kind.\n"));
     }				/* switch on proc type */
 
   /* else Symbol is neither a sysproc nor a leafproc */
@@ -2607,7 +2606,7 @@ s_leafproc (n_ops, args)
 
   if ((n_ops != 1) && (n_ops != 2))
     {
-      as_bad ("should have 1 or 2 operands");
+      as_bad (_("should have 1 or 2 operands"));
       return;
     }				/* Check number of arguments */
 
@@ -2616,7 +2615,7 @@ s_leafproc (n_ops, args)
 
   if (TC_S_IS_CALLNAME (callP))
     {
-      as_warn ("Redefining leafproc %s", S_GET_NAME (callP));
+      as_warn (_("Redefining leafproc %s"), S_GET_NAME (callP));
     }				/* is leafproc */
 
   /* If that was the only argument, use it as the 'bal' entry point.
@@ -2635,11 +2634,13 @@ s_leafproc (n_ops, args)
       balP = symbol_find_or_make (args[2]);
       if (TC_S_IS_CALLNAME (balP))
 	{
-	  as_warn ("Redefining leafproc %s", S_GET_NAME (balP));
+	  as_warn (_("Redefining leafproc %s"), S_GET_NAME (balP));
 	}
       TC_S_FORCE_TO_BALNAME (balP);
 
+#ifndef OBJ_ELF
       tc_set_bal_of_call (callP, balP);
+#endif
     }				/* if only one arg, or the args are the same */
 }
 
@@ -2665,7 +2666,7 @@ s_sysproc (n_ops, args)
 
   if (n_ops != 2)
     {
-      as_bad ("should have two operands");
+      as_bad (_("should have two operands"));
       return;
     }				/* bad arg count */
 
@@ -2675,7 +2676,7 @@ s_sysproc (n_ops, args)
       || (offs (exp) < 0)
       || (offs (exp) > 31))
     {
-      as_bad ("'entry_num' must be absolute number in [0,31]");
+      as_bad (_("'entry_num' must be absolute number in [0,31]"));
       return;
     }
 
@@ -2684,7 +2685,7 @@ s_sysproc (n_ops, args)
 
   if (TC_S_IS_SYSPROC (symP))
     {
-      as_warn ("Redefining entrynum for sysproc %s", S_GET_NAME (symP));
+      as_warn (_("Redefining entrynum for sysproc %s"), S_GET_NAME (symP));
     }				/* redefining */
 
   TC_S_SET_SYSPROC (symP, offs (exp));	/* encode entry number */
@@ -2734,7 +2735,7 @@ shift_ok (n)
 static void
 syntax ()
 {
-  as_bad ("syntax error");
+  as_bad (_("syntax error"));
 }				/* syntax() */
 
 
@@ -2795,7 +2796,7 @@ targ_has_iclass (ic)
       if ((iclasses_seen & (I_KX | I_FP | I_DEC | I_MIL))
 	  && (iclasses_seen & (I_CX | I_CX2)))
 	{
-	  as_warn ("architecture of opcode conflicts with that of earlier instruction(s)");
+	  as_warn (_("architecture of opcode conflicts with that of earlier instruction(s)"));
 	  iclasses_seen &= ~ic;
 	}
       return 1;
@@ -2816,9 +2817,9 @@ s_endian (ignore)
   if (strcasecmp (name, "little") == 0)
     ;
   else if (strcasecmp (name, "big") == 0)
-    as_bad ("big endian mode is not supported");
+    as_bad (_("big endian mode is not supported"));
   else
-    as_warn ("ignoring unrecognized .endian type `%s'", name);
+    as_warn (_("ignoring unrecognized .endian type `%s'"), name);
 
   *input_line_pointer = c;
 
@@ -2845,25 +2846,42 @@ md_pcrel_from (fixP)
   return fixP->fx_where + fixP->fx_frag->fr_address;
 }
 
+#ifdef BFD_ASSEMBLER
+int
+md_apply_fix (fixP, valp)
+     fixS *fixP;
+     valueT *valp;
+#else
 void
 md_apply_fix (fixP, val)
      fixS *fixP;
      long val;
+#endif
 {
+#ifdef BFD_ASSEMBLER
+  long val = *valp;
+#endif
   char *place = fixP->fx_where + fixP->fx_frag->fr_literal;
 
   if (!fixP->fx_bit_fixP)
     {
+#ifndef BFD_ASSEMBLER
       /* For callx, we always want to write out zero, and emit a
 	 symbolic relocation.  */
       if (fixP->fx_bsr)
 	val = 0;
 
       fixP->fx_addnumber = val;
+#endif
+
       md_number_to_imm (place, val, fixP->fx_size, fixP);
     }
   else
     md_number_to_field (place, val, fixP->fx_bit_fixP);
+
+#ifdef BFD_ASSEMBLER
+  return 0;
+#endif
 }
 
 #if defined(OBJ_AOUT) | defined(OBJ_BOUT)
@@ -2963,8 +2981,14 @@ md_section_align (seg, addr)
      segT seg;
      valueT addr;		/* Address to be rounded up */
 {
-  return ((addr + (1 << section_alignment[(int) seg]) - 1) & (-1 << section_alignment[(int) seg]));
-}				/* md_section_align() */
+  int align;
+#ifdef BFD_ASSEMBLER
+  align = bfd_get_section_alignment (stdoutput, seg);
+#else
+  align = section_alignment[(int) seg];
+#endif
+  return (addr + (1 << align) - 1) & (-1 << align);
+}
 
 extern int coff_flags;
 
@@ -3033,6 +3057,8 @@ tc_headers_hook (headers)
 
 #endif /* OBJ_COFF */
 
+#ifndef BFD_ASSEMBLER
+
 /* Things going on here:
 
    For bout, We need to assure a couple of simplifying
@@ -3075,7 +3101,7 @@ tc_crawl_symbol_chain (headers)
 
       if (!S_IS_DEFINED (symbolP))
 	{
-	  as_bad ("leafproc symbol '%s' undefined", S_GET_NAME (symbolP));
+	  as_bad (_("leafproc symbol '%s' undefined"), S_GET_NAME (symbolP));
 	}			/* undefined leaf */
 
       if (TC_S_IS_CALLNAME (symbolP))
@@ -3085,12 +3111,14 @@ tc_crawl_symbol_chain (headers)
 	    {
 	      S_SET_EXTERNAL (symbolP);
 	      S_SET_EXTERNAL (balP);
-	      as_warn ("Warning: making leafproc entries %s and %s both global\n",
+	      as_warn (_("Warning: making leafproc entries %s and %s both global\n"),
 		       S_GET_NAME (symbolP), S_GET_NAME (balP));
 	    }			/* externality mismatch */
 	}			/* if callname */
     }				/* walk the symbol chain */
 }
+
+#endif /* ! BFD_ASSEMBLER */
 
 /* For aout or bout, the bal immediately follows the call.
 
@@ -3115,7 +3143,7 @@ tc_set_bal_of_call (callP, balP)
 
 #ifdef OBJ_COFF
 
-  callP->sy_symbol.ost_auxent[1].x_bal.x_balntry = (int) balP;
+  callP->sy_tc = balP;
   S_SET_NUMBER_AUXILIARY (callP, 2);
 
 #else /* ! OBJ_COFF */
@@ -3131,13 +3159,13 @@ tc_set_bal_of_call (callP, balP)
     }				/* if not in order */
 
 #else /* ! OBJ_ABOUT */
-  (as yet unwritten.);
+  as_fatal ("Only supported for a.out, b.out, or COFF");
 #endif /* ! OBJ_ABOUT */
 #endif /* ! OBJ_COFF */
 }
 
-char *
-_tc_get_bal_of_call (callP)
+symbolS *
+tc_get_bal_of_call (callP)
      symbolS *callP;
 {
   symbolS *retval;
@@ -3145,17 +3173,17 @@ _tc_get_bal_of_call (callP)
   know (TC_S_IS_CALLNAME (callP));
 
 #ifdef OBJ_COFF
-  retval = (symbolS *) (callP->sy_symbol.ost_auxent[1].x_bal.x_balntry);
+  retval = callP->sy_tc;
 #else
 #ifdef OBJ_ABOUT
   retval = symbol_next (callP);
 #else
-  (as yet unwritten.);
+  as_fatal ("Only supported for a.out, b.out, or COFF");
 #endif /* ! OBJ_ABOUT */
 #endif /* ! OBJ_COFF */
 
   know (TC_S_IS_BALNAME (retval));
-  return ((char *) retval);
+  return retval;
 }				/* _tc_get_bal_of_call() */
 
 void
@@ -3192,7 +3220,7 @@ i960_handle_align (fragp)
 
 #ifndef OBJ_BOUT
 
-  as_bad ("option --link-relax is only supported in b.out format");
+  as_bad (_("option --link-relax is only supported in b.out format"));
   linkrelax = 0;
   return;
 
@@ -3224,7 +3252,7 @@ i960_validate_fix (fixP, this_segment_type, add_symbolPP)
 
       if (!TC_S_IS_BALNAME (tc_get_bal_of_call (add_symbolP)))
 	{
-	  as_bad ("No 'bal' entry point for leafproc %s",
+	  as_bad (_("No 'bal' entry point for leafproc %s"),
 		  S_GET_NAME (add_symbolP));
 	  return 1;
 	}
@@ -3235,7 +3263,7 @@ i960_validate_fix (fixP, this_segment_type, add_symbolPP)
   {
     if (fixP->fx_tcbit)
       {
-	as_bad ("callj to difference of two symbols");
+	as_bad (_("callj to difference of two symbols"));
 	return 1;
       }
     reloc_callj (fixP);
@@ -3244,7 +3272,7 @@ i960_validate_fix (fixP, this_segment_type, add_symbolPP)
 	/* This is a COBR instruction.  They have only a 13-bit
 	   displacement and are only to be used for local branches:
 	   flag as error, don't generate relocation.  */
-	as_bad ("can't use COBR format with external label");
+	as_bad (_("can't use COBR format with external label"));
 	fixP->fx_addsy = NULL;	/* No relocations please. */
 	return 1;
       }
@@ -3253,5 +3281,69 @@ i960_validate_fix (fixP, this_segment_type, add_symbolPP)
 #undef add_symbolP
   return 0;
 }
+
+#ifdef BFD_ASSEMBLER
+
+/* From cgen.c:  */
+
+static short
+tc_bfd_fix2rtype (fixP)
+     fixS *fixP;
+{
+#if 0
+  if (fixP->fx_bsr)
+    abort ();
+#endif
+
+  if (fixP->fx_pcrel == 0 && fixP->fx_size == 4)
+    return BFD_RELOC_32;
+
+  if (fixP->fx_pcrel != 0 && fixP->fx_size == 4)
+    return BFD_RELOC_24_PCREL;
+
+  abort ();
+  return 0;
+}
+
+/* Translate internal representation of relocation info to BFD target
+   format.
+
+   FIXME: To what extent can we get all relevant targets to use this?  */
+
+arelent *
+tc_gen_reloc (section, fixP)
+     asection *section;
+     fixS *fixP;
+{
+  arelent * reloc;
+
+  reloc = (arelent *) xmalloc (sizeof (arelent));
+
+  /* HACK: Is this right? */
+  fixP->fx_r_type = tc_bfd_fix2rtype (fixP);
+
+  reloc->howto = bfd_reloc_type_lookup (stdoutput, fixP->fx_r_type);
+  if (reloc->howto == (reloc_howto_type *) NULL)
+    {
+      as_bad_where (fixP->fx_file, fixP->fx_line,
+		    "internal error: can't export reloc type %d (`%s')",
+		    fixP->fx_r_type,
+		    bfd_get_reloc_code_name (fixP->fx_r_type));
+      return NULL;
+    }
+
+  assert (!fixP->fx_pcrel == !reloc->howto->pc_relative);
+
+  reloc->sym_ptr_ptr = (asymbol **) xmalloc (sizeof (asymbol *));
+  *reloc->sym_ptr_ptr = symbol_get_bfdsym (fixP->fx_addsy);
+  reloc->address = fixP->fx_frag->fr_address + fixP->fx_where;
+  reloc->addend = fixP->fx_addnumber;
+
+  return reloc;
+}
+
+/* end from cgen.c */
+
+#endif /* BFD_ASSEMBLER */
 
 /* end of tc-i960.c */

@@ -1,5 +1,5 @@
 /* ppc-opc.c -- PowerPC opcode list
-   Copyright 1994, 1995, 1996 Free Software Foundation, Inc.
+   Copyright (c) 1994, 95, 96, 97, 98, 99, 2000 Free Software Foundation, Inc.
    Written by Ian Lance Taylor, Cygnus Support
 
 This file is part of GDB, GAS, and the GNU binutils.
@@ -16,11 +16,13 @@ the GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with this file; see the file COPYING.  If not, write to the Free
-Software Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+Software Foundation, 59 Temple Place - Suite 330, Boston, MA
+02111-1307, USA.  */
 
 #include <stdio.h>
-#include "ansidecl.h"
+#include "sysdep.h"
 #include "opcode/ppc.h"
+#include "opintl.h"
 
 /* This file holds the PowerPC opcode table.  The opcode table
    includes almost all of the extended instruction mnemonics.  This
@@ -45,6 +47,7 @@ static unsigned long insert_bdm PARAMS ((unsigned long, long, const char **));
 static long extract_bdm PARAMS ((unsigned long, int *));
 static unsigned long insert_bdp PARAMS ((unsigned long, long, const char **));
 static long extract_bdp PARAMS ((unsigned long, int *));
+static int valid_bo PARAMS ((long));
 static unsigned long insert_bo PARAMS ((unsigned long, long, const char **));
 static long extract_bo PARAMS ((unsigned long, int *));
 static unsigned long insert_boe PARAMS ((unsigned long, long, const char **));
@@ -75,183 +78,194 @@ static long extract_tbr PARAMS ((unsigned long, int *));
 
 /* The operands table.
 
-   The fields are bits, shift, signed, insert, extract, flags.  */
+   The fields are bits, shift, insert, extract, flags.
+
+   We used to put parens around the various additions, like the one
+   for BA just below.  However, that caused trouble with feeble
+   compilers with a limit on depth of a parenthesized expression, like
+   (reportedly) the compiler in Microsoft Developer Studio 5.  So we
+   omit the parens, since the macros are never used in a context where
+   the addition will be ambiguous.  */
 
 const struct powerpc_operand powerpc_operands[] =
 {
   /* The zero index is used to indicate the end of the list of
      operands.  */
-#define UNUSED (0)
+#define UNUSED 0
   { 0, 0, 0, 0, 0 },
 
   /* The BA field in an XL form instruction.  */
-#define BA (UNUSED + 1)
+#define BA UNUSED + 1
 #define BA_MASK (0x1f << 16)
   { 5, 16, 0, 0, PPC_OPERAND_CR },
 
   /* The BA field in an XL form instruction when it must be the same
      as the BT field in the same instruction.  */
-#define BAT (BA + 1)
+#define BAT BA + 1
   { 5, 16, insert_bat, extract_bat, PPC_OPERAND_FAKE },
 
   /* The BB field in an XL form instruction.  */
-#define BB (BAT + 1)
+#define BB BAT + 1
 #define BB_MASK (0x1f << 11)
   { 5, 11, 0, 0, PPC_OPERAND_CR },
 
   /* The BB field in an XL form instruction when it must be the same
      as the BA field in the same instruction.  */
-#define BBA (BB + 1)
+#define BBA BB + 1
   { 5, 11, insert_bba, extract_bba, PPC_OPERAND_FAKE },
 
   /* The BD field in a B form instruction.  The lower two bits are
      forced to zero.  */
-#define BD (BBA + 1)
+#define BD BBA + 1
   { 16, 0, insert_bd, extract_bd, PPC_OPERAND_RELATIVE | PPC_OPERAND_SIGNED },
 
   /* The BD field in a B form instruction when absolute addressing is
      used.  */
-#define BDA (BD + 1)
+#define BDA BD + 1
   { 16, 0, insert_bd, extract_bd, PPC_OPERAND_ABSOLUTE | PPC_OPERAND_SIGNED },
 
   /* The BD field in a B form instruction when the - modifier is used.
      This sets the y bit of the BO field appropriately.  */
-#define BDM (BDA + 1)
+#define BDM BDA + 1
   { 16, 0, insert_bdm, extract_bdm,
       PPC_OPERAND_RELATIVE | PPC_OPERAND_SIGNED },
 
   /* The BD field in a B form instruction when the - modifier is used
      and absolute address is used.  */
-#define BDMA (BDM + 1)
+#define BDMA BDM + 1
   { 16, 0, insert_bdm, extract_bdm,
       PPC_OPERAND_ABSOLUTE | PPC_OPERAND_SIGNED },
 
   /* The BD field in a B form instruction when the + modifier is used.
      This sets the y bit of the BO field appropriately.  */
-#define BDP (BDMA + 1)
+#define BDP BDMA + 1
   { 16, 0, insert_bdp, extract_bdp,
       PPC_OPERAND_RELATIVE | PPC_OPERAND_SIGNED },
 
   /* The BD field in a B form instruction when the + modifier is used
      and absolute addressing is used.  */
-#define BDPA (BDP + 1)
+#define BDPA BDP + 1
   { 16, 0, insert_bdp, extract_bdp,
       PPC_OPERAND_ABSOLUTE | PPC_OPERAND_SIGNED },
 
   /* The BF field in an X or XL form instruction.  */
-#define BF (BDPA + 1)
+#define BF BDPA + 1
   { 3, 23, 0, 0, PPC_OPERAND_CR },
 
   /* An optional BF field.  This is used for comparison instructions,
      in which an omitted BF field is taken as zero.  */
-#define OBF (BF + 1)
+#define OBF BF + 1
   { 3, 23, 0, 0, PPC_OPERAND_CR | PPC_OPERAND_OPTIONAL },
 
   /* The BFA field in an X or XL form instruction.  */
-#define BFA (OBF + 1)
+#define BFA OBF + 1
   { 3, 18, 0, 0, PPC_OPERAND_CR },
 
   /* The BI field in a B form or XL form instruction.  */
-#define BI (BFA + 1)
+#define BI BFA + 1
 #define BI_MASK (0x1f << 16)
   { 5, 16, 0, 0, PPC_OPERAND_CR },
 
   /* The BO field in a B form instruction.  Certain values are
      illegal.  */
-#define BO (BI + 1)
+#define BO BI + 1
 #define BO_MASK (0x1f << 21)
   { 5, 21, insert_bo, extract_bo, 0 },
 
   /* The BO field in a B form instruction when the + or - modifier is
      used.  This is like the BO field, but it must be even.  */
-#define BOE (BO + 1)
+#define BOE BO + 1
   { 5, 21, insert_boe, extract_boe, 0 },
 
   /* The BT field in an X or XL form instruction.  */
-#define BT (BOE + 1)
+#define BT BOE + 1
   { 5, 21, 0, 0, PPC_OPERAND_CR },
 
   /* The condition register number portion of the BI field in a B form
      or XL form instruction.  This is used for the extended
      conditional branch mnemonics, which set the lower two bits of the
      BI field.  This field is optional.  */
-#define CR (BT + 1)
+#define CR BT + 1
   { 3, 18, 0, 0, PPC_OPERAND_CR | PPC_OPERAND_OPTIONAL },
 
   /* The D field in a D form instruction.  This is a displacement off
      a register, and implies that the next operand is a register in
      parentheses.  */
-#define D (CR + 1)
+#define D CR + 1
   { 16, 0, 0, 0, PPC_OPERAND_PARENS | PPC_OPERAND_SIGNED },
 
   /* The DS field in a DS form instruction.  This is like D, but the
      lower two bits are forced to zero.  */
-#define DS (D + 1)
+#define DS D + 1
   { 16, 0, insert_ds, extract_ds, PPC_OPERAND_PARENS | PPC_OPERAND_SIGNED },
 
+  /* The E field in a wrteei instruction.  */
+#define E DS + 1
+  { 1, 15, 0, 0, 0 },
+
   /* The FL1 field in a POWER SC form instruction.  */
-#define FL1 (DS + 1)
+#define FL1 E + 1
   { 4, 12, 0, 0, 0 },
 
   /* The FL2 field in a POWER SC form instruction.  */
-#define FL2 (FL1 + 1)
+#define FL2 FL1 + 1
   { 3, 2, 0, 0, 0 },
 
   /* The FLM field in an XFL form instruction.  */
-#define FLM (FL2 + 1)
+#define FLM FL2 + 1
   { 8, 17, 0, 0, 0 },
 
   /* The FRA field in an X or A form instruction.  */
-#define FRA (FLM + 1)
+#define FRA FLM + 1
 #define FRA_MASK (0x1f << 16)
   { 5, 16, 0, 0, PPC_OPERAND_FPR },
 
   /* The FRB field in an X or A form instruction.  */
-#define FRB (FRA + 1)
+#define FRB FRA + 1
 #define FRB_MASK (0x1f << 11)
   { 5, 11, 0, 0, PPC_OPERAND_FPR },
 
   /* The FRC field in an A form instruction.  */
-#define FRC (FRB + 1)
+#define FRC FRB + 1
 #define FRC_MASK (0x1f << 6)
   { 5, 6, 0, 0, PPC_OPERAND_FPR },
 
   /* The FRS field in an X form instruction or the FRT field in a D, X
      or A form instruction.  */
-#define FRS (FRC + 1)
-#define FRT (FRS)
+#define FRS FRC + 1
+#define FRT FRS
   { 5, 21, 0, 0, PPC_OPERAND_FPR },
 
   /* The FXM field in an XFX instruction.  */
-#define FXM (FRS + 1)
+#define FXM FRS + 1
 #define FXM_MASK (0xff << 12)
   { 8, 12, 0, 0, 0 },
 
   /* The L field in a D or X form instruction.  */
-#define L (FXM + 1)
+#define L FXM + 1
   { 1, 21, 0, 0, PPC_OPERAND_OPTIONAL },
 
   /* The LEV field in a POWER SC form instruction.  */
-#define LEV (L + 1)
+#define LEV L + 1
   { 7, 5, 0, 0, 0 },
 
   /* The LI field in an I form instruction.  The lower two bits are
      forced to zero.  */
-#define LI (LEV + 1)
+#define LI LEV + 1
   { 26, 0, insert_li, extract_li, PPC_OPERAND_RELATIVE | PPC_OPERAND_SIGNED },
 
   /* The LI field in an I form instruction when used as an absolute
      address.  */
-#define LIA (LI + 1)
+#define LIA LI + 1
   { 26, 0, insert_li, extract_li, PPC_OPERAND_ABSOLUTE | PPC_OPERAND_SIGNED },
 
   /* The MB field in an M form instruction.  */
-#define MB (LIA + 1)
+#define MB LIA + 1
 #define MB_MASK (0x1f << 6)
   { 5, 6, 0, 0, 0 },
 
   /* The ME field in an M form instruction.  */
-#define ME (MB + 1)
+#define ME MB + 1
 #define ME_MASK (0x1f << 1)
   { 5, 1, 0, 0, 0 },
 
@@ -259,128 +273,128 @@ const struct powerpc_operand powerpc_operands[] =
      operand which is a bitmask indicating which bits to select.  This
      is a two operand form using PPC_OPERAND_NEXT.  See the
      description in opcode/ppc.h for what this means.  */
-#define MBE (ME + 1)
+#define MBE ME + 1
   { 5, 6, 0, 0, PPC_OPERAND_OPTIONAL | PPC_OPERAND_NEXT },
   { 32, 0, insert_mbe, extract_mbe, 0 },
 
   /* The MB or ME field in an MD or MDS form instruction.  The high
      bit is wrapped to the low end.  */
-#define MB6 (MBE + 2)
-#define ME6 (MB6)
+#define MB6 MBE + 2
+#define ME6 MB6
 #define MB6_MASK (0x3f << 5)
   { 6, 5, insert_mb6, extract_mb6, 0 },
 
   /* The NB field in an X form instruction.  The value 32 is stored as
      0.  */
-#define NB (MB6 + 1)
+#define NB MB6 + 1
   { 6, 11, insert_nb, extract_nb, 0 },
 
   /* The NSI field in a D form instruction.  This is the same as the
      SI field, only negated.  */
-#define NSI (NB + 1)
+#define NSI NB + 1
   { 16, 0, insert_nsi, extract_nsi,
       PPC_OPERAND_NEGATIVE | PPC_OPERAND_SIGNED },
 
   /* The RA field in an D, DS, X, XO, M, or MDS form instruction.  */
-#define RA (NSI + 1)
+#define RA NSI + 1
 #define RA_MASK (0x1f << 16)
   { 5, 16, 0, 0, PPC_OPERAND_GPR },
 
   /* The RA field in a D or X form instruction which is an updating
      load, which means that the RA field may not be zero and may not
      equal the RT field.  */
-#define RAL (RA + 1)
+#define RAL RA + 1
   { 5, 16, insert_ral, 0, PPC_OPERAND_GPR },
 
   /* The RA field in an lmw instruction, which has special value
      restrictions.  */
-#define RAM (RAL + 1)
+#define RAM RAL + 1
   { 5, 16, insert_ram, 0, PPC_OPERAND_GPR },
 
   /* The RA field in a D or X form instruction which is an updating
      store or an updating floating point load, which means that the RA
      field may not be zero.  */
-#define RAS (RAM + 1)
+#define RAS RAM + 1
   { 5, 16, insert_ras, 0, PPC_OPERAND_GPR },
 
   /* The RB field in an X, XO, M, or MDS form instruction.  */
-#define RB (RAS + 1)
+#define RB RAS + 1
 #define RB_MASK (0x1f << 11)
   { 5, 11, 0, 0, PPC_OPERAND_GPR },
 
   /* The RB field in an X form instruction when it must be the same as
      the RS field in the instruction.  This is used for extended
      mnemonics like mr.  */
-#define RBS (RB + 1)
+#define RBS RB + 1
   { 5, 1, insert_rbs, extract_rbs, PPC_OPERAND_FAKE },
 
   /* The RS field in a D, DS, X, XFX, XS, M, MD or MDS form
      instruction or the RT field in a D, DS, X, XFX or XO form
      instruction.  */
-#define RS (RBS + 1)
-#define RT (RS)
+#define RS RBS + 1
+#define RT RS
 #define RT_MASK (0x1f << 21)
   { 5, 21, 0, 0, PPC_OPERAND_GPR },
 
   /* The SH field in an X or M form instruction.  */
-#define SH (RS + 1)
+#define SH RS + 1
 #define SH_MASK (0x1f << 11)
   { 5, 11, 0, 0, 0 },
 
   /* The SH field in an MD form instruction.  This is split.  */
-#define SH6 (SH + 1)
+#define SH6 SH + 1
 #define SH6_MASK ((0x1f << 11) | (1 << 1))
   { 6, 1, insert_sh6, extract_sh6, 0 },
 
   /* The SI field in a D form instruction.  */
-#define SI (SH6 + 1)
+#define SI SH6 + 1
   { 16, 0, 0, 0, PPC_OPERAND_SIGNED },
 
   /* The SI field in a D form instruction when we accept a wide range
      of positive values.  */
-#define SISIGNOPT (SI + 1)
+#define SISIGNOPT SI + 1
   { 16, 0, 0, 0, PPC_OPERAND_SIGNED | PPC_OPERAND_SIGNOPT },
 
   /* The SPR field in an XFX form instruction.  This is flipped--the
      lower 5 bits are stored in the upper 5 and vice- versa.  */
-#define SPR (SISIGNOPT + 1)
+#define SPR SISIGNOPT + 1
 #define SPR_MASK (0x3ff << 11)
   { 10, 11, insert_spr, extract_spr, 0 },
 
   /* The BAT index number in an XFX form m[ft]ibat[lu] instruction.  */
-#define SPRBAT (SPR + 1)
+#define SPRBAT SPR + 1
 #define SPRBAT_MASK (0x3 << 17)
   { 2, 17, 0, 0, 0 },
 
   /* The SPRG register number in an XFX form m[ft]sprg instruction.  */
-#define SPRG (SPRBAT + 1)
+#define SPRG SPRBAT + 1
 #define SPRG_MASK (0x3 << 16)
   { 2, 16, 0, 0, 0 },
 
   /* The SR field in an X form instruction.  */
-#define SR (SPRG + 1)
+#define SR SPRG + 1
   { 4, 16, 0, 0, 0 },
 
   /* The SV field in a POWER SC form instruction.  */
-#define SV (SR + 1)
+#define SV SR + 1
   { 14, 2, 0, 0, 0 },
 
   /* The TBR field in an XFX form instruction.  This is like the SPR
      field, but it is optional.  */
-#define TBR (SV + 1)
+#define TBR SV + 1
   { 10, 11, insert_tbr, extract_tbr, PPC_OPERAND_OPTIONAL },
 
   /* The TO field in a D or X form instruction.  */
-#define TO (TBR + 1)
+#define TO TBR + 1
 #define TO_MASK (0x1f << 21)
   { 5, 21, 0, 0, 0 },
 
   /* The U field in an X form instruction.  */
-#define U (TO + 1)
+#define U TO + 1
   { 4, 12, 0, 0, 0 },
 
   /* The UI field in a D form instruction.  */
-#define UI (U + 1)
+#define UI U + 1
   { 16, 0, 0, 0, 0 },
 };
 
@@ -396,8 +410,8 @@ const struct powerpc_operand powerpc_operands[] =
 static unsigned long
 insert_bat (insn, value, errmsg)
      unsigned long insn;
-     long value;
-     const char **errmsg;
+     long value ATTRIBUTE_UNUSED;
+     const char **errmsg ATTRIBUTE_UNUSED;
 {
   return insn | (((insn >> 21) & 0x1f) << 16);
 }
@@ -423,8 +437,8 @@ extract_bat (insn, invalid)
 static unsigned long
 insert_bba (insn, value, errmsg)
      unsigned long insn;
-     long value;
-     const char **errmsg;
+     long value ATTRIBUTE_UNUSED;
+     const char **errmsg ATTRIBUTE_UNUSED;
 {
   return insn | (((insn >> 16) & 0x1f) << 11);
 }
@@ -448,7 +462,7 @@ static unsigned long
 insert_bd (insn, value, errmsg)
      unsigned long insn;
      long value;
-     const char **errmsg;
+     const char **errmsg ATTRIBUTE_UNUSED;
 {
   return insn | (value & 0xfffc);
 }
@@ -457,7 +471,7 @@ insert_bd (insn, value, errmsg)
 static long
 extract_bd (insn, invalid)
      unsigned long insn;
-     int *invalid;
+     int *invalid ATTRIBUTE_UNUSED;
 {
   if ((insn & 0x8000) != 0)
     return (insn & 0xfffc) - 0x10000;
@@ -477,7 +491,7 @@ static unsigned long
 insert_bdm (insn, value, errmsg)
      unsigned long insn;
      long value;
-     const char **errmsg;
+     const char **errmsg ATTRIBUTE_UNUSED;
 {
   if ((value & 0x8000) != 0)
     insn |= 1 << 21;
@@ -508,7 +522,7 @@ static unsigned long
 insert_bdp (insn, value, errmsg)
      unsigned long insn;
      long value;
-     const char **errmsg;
+     const char **errmsg ATTRIBUTE_UNUSED;
 {
   if ((value & 0x8000) == 0)
     insn |= 1 << 21;
@@ -569,7 +583,7 @@ insert_bo (insn, value, errmsg)
 {
   if (errmsg != (const char **) NULL
       && ! valid_bo (value))
-    *errmsg = "invalid conditional option";
+    *errmsg = _("invalid conditional option");
   return insn | ((value & 0x1f) << 21);
 }
 
@@ -600,9 +614,9 @@ insert_boe (insn, value, errmsg)
   if (errmsg != (const char **) NULL)
     {
       if (! valid_bo (value))
-	*errmsg = "invalid conditional option";
+	*errmsg = _("invalid conditional option");
       else if ((value & 1) != 0)
-	*errmsg = "attempt to set y bit when using + or - modifier";
+	*errmsg = _("attempt to set y bit when using + or - modifier");
     }
   return insn | ((value & 0x1f) << 21);
 }
@@ -629,7 +643,7 @@ static unsigned long
 insert_ds (insn, value, errmsg)
      unsigned long insn;
      long value;
-     const char **errmsg;
+     const char **errmsg ATTRIBUTE_UNUSED;
 {
   return insn | (value & 0xfffc);
 }
@@ -638,7 +652,7 @@ insert_ds (insn, value, errmsg)
 static long
 extract_ds (insn, invalid)
      unsigned long insn;
-     int *invalid;
+     int *invalid ATTRIBUTE_UNUSED;
 {
   if ((insn & 0x8000) != 0)
     return (insn & 0xfffc) - 0x10000;
@@ -656,6 +670,8 @@ insert_li (insn, value, errmsg)
      long value;
      const char **errmsg;
 {
+  if ((value & 3) != 0 && errmsg != (const char **) NULL)
+    *errmsg = _("ignoring least significant bits in branch offset");
   return insn | (value & 0x3fffffc);
 }
 
@@ -663,7 +679,7 @@ insert_li (insn, value, errmsg)
 static long
 extract_li (insn, invalid)
      unsigned long insn;
-     int *invalid;
+     int *invalid ATTRIBUTE_UNUSED;
 {
   if ((insn & 0x2000000) != 0)
     return (insn & 0x3fffffc) - 0x4000000;
@@ -682,40 +698,55 @@ insert_mbe (insn, value, errmsg)
      long value;
      const char **errmsg;
 {
-  unsigned long uval;
-  int mb, me;
+  unsigned long uval, mask;
+  int mb, me, mx, count, last;
 
   uval = value;
 
   if (uval == 0)
     {
       if (errmsg != (const char **) NULL)
-	*errmsg = "illegal bitmask";
+	*errmsg = _("illegal bitmask");
       return insn;
     }
 
-  me = 31;
-  while ((uval & 1) == 0)
-    {
-      uval >>= 1;
-      --me;
-    }
+  mb = 0;
+  me = 32;
+  if ((uval & 1) != 0)
+    last = 1;
+  else
+    last = 0;
+  count = 0;
 
-  mb = me;
-  uval >>= 1;
-  while ((uval & 1) != 0)
-    {
-      uval >>= 1;
-      --mb;
-    }
+  /* mb: location of last 0->1 transition */
+  /* me: location of last 1->0 transition */
+  /* count: # transitions */
 
-  if (uval != 0)
+  for (mx = 0, mask = 1 << 31; mx < 32; ++mx, mask >>= 1)
+    {
+      if ((uval & mask) && !last)
+	{
+	  ++count;
+	  mb = mx;
+	  last = 1;
+	}
+      else if (!(uval & mask) && last)
+	{
+	  ++count;
+	  me = mx;
+	  last = 0;
+	}
+    }
+  if (me == 0)
+    me = 32;
+
+  if (count != 2 && (count != 0 || ! last))
     {
       if (errmsg != (const char **) NULL)
-	*errmsg = "illegal bitmask";
+	*errmsg = _("illegal bitmask");
     }
 
-  return insn | (mb << 6) | (me << 1);
+  return insn | (mb << 6) | ((me - 1) << 1);
 }
 
 static long
@@ -730,11 +761,22 @@ extract_mbe (insn, invalid)
   if (invalid != (int *) NULL)
     *invalid = 1;
 
-  ret = 0;
   mb = (insn >> 6) & 0x1f;
   me = (insn >> 1) & 0x1f;
-  for (i = mb; i < me; i++)
-    ret |= 1 << (31 - i);
+  if (mb < me + 1)
+    {
+      ret = 0;
+      for (i = mb; i <= me; i++)
+	ret |= (long) 1 << (31 - i);
+    }
+  else if (mb == me + 1)
+    ret = ~0;
+  else /* (mb > me + 1) */
+    {
+      ret = ~ (long) 0;
+      for (i = me + 1; i < mb; i++)
+	ret &= ~ ((long) 1 << (31 - i));
+    }
   return ret;
 }
 
@@ -746,7 +788,7 @@ static unsigned long
 insert_mb6 (insn, value, errmsg)
      unsigned long insn;
      long value;
-     const char **errmsg;
+     const char **errmsg ATTRIBUTE_UNUSED;
 {
   return insn | ((value & 0x1f) << 6) | (value & 0x20);
 }
@@ -755,7 +797,7 @@ insert_mb6 (insn, value, errmsg)
 static long
 extract_mb6 (insn, invalid)
      unsigned long insn;
-     int *invalid;
+     int *invalid ATTRIBUTE_UNUSED;
 {
   return ((insn >> 6) & 0x1f) | (insn & 0x20);
 }
@@ -770,7 +812,7 @@ insert_nb (insn, value, errmsg)
      const char **errmsg;
 {
   if (value < 0 || value > 32)
-    *errmsg = "value out of range";
+    *errmsg = _("value out of range");
   if (value == 32)
     value = 0;
   return insn | ((value & 0x1f) << 11);
@@ -780,7 +822,7 @@ insert_nb (insn, value, errmsg)
 static long
 extract_nb (insn, invalid)
      unsigned long insn;
-     int *invalid;
+     int *invalid ATTRIBUTE_UNUSED;
 {
   long ret;
 
@@ -800,7 +842,7 @@ static unsigned long
 insert_nsi (insn, value, errmsg)
      unsigned long insn;
      long value;
-     const char **errmsg;
+     const char **errmsg ATTRIBUTE_UNUSED;
 {
   return insn | ((- value) & 0xffff);
 }
@@ -813,9 +855,9 @@ extract_nsi (insn, invalid)
   if (invalid != (int *) NULL)
     *invalid = 1;
   if ((insn & 0x8000) != 0)
-    return - ((insn & 0xffff) - 0x10000);
+    return - ((long)(insn & 0xffff) - 0x10000);
   else
-    return - (insn & 0xffff);
+    return - (long)(insn & 0xffff);
 }
 
 /* The RA field in a D or X form instruction which is an updating
@@ -829,7 +871,7 @@ insert_ral (insn, value, errmsg)
      const char **errmsg;
 {
   if (value == 0
-      || value == ((insn >> 21) & 0x1f))
+      || (unsigned long) value == ((insn >> 21) & 0x1f))
     *errmsg = "invalid register operand when updating";
   return insn | ((value & 0x1f) << 16);
 }
@@ -843,8 +885,8 @@ insert_ram (insn, value, errmsg)
      long value;
      const char **errmsg;
 {
-  if (value >= ((insn >> 21) & 0x1f))
-    *errmsg = "index register in load range";
+  if ((unsigned long) value >= ((insn >> 21) & 0x1f))
+    *errmsg = _("index register in load range");
   return insn | ((value & 0x1f) << 16);
 }
 
@@ -859,7 +901,7 @@ insert_ras (insn, value, errmsg)
      const char **errmsg;
 {
   if (value == 0)
-    *errmsg = "invalid register operand when updating";
+    *errmsg = _("invalid register operand when updating");
   return insn | ((value & 0x1f) << 16);
 }
 
@@ -873,8 +915,8 @@ insert_ras (insn, value, errmsg)
 static unsigned long
 insert_rbs (insn, value, errmsg)
      unsigned long insn;
-     long value;
-     const char **errmsg;
+     long value ATTRIBUTE_UNUSED;
+     const char **errmsg ATTRIBUTE_UNUSED;
 {
   return insn | (((insn >> 21) & 0x1f) << 11);
 }
@@ -897,7 +939,7 @@ static unsigned long
 insert_sh6 (insn, value, errmsg)
      unsigned long insn;
      long value;
-     const char **errmsg;
+     const char **errmsg ATTRIBUTE_UNUSED;
 {
   return insn | ((value & 0x1f) << 11) | ((value & 0x20) >> 4);
 }
@@ -906,7 +948,7 @@ insert_sh6 (insn, value, errmsg)
 static long
 extract_sh6 (insn, invalid)
      unsigned long insn;
-     int *invalid;
+     int *invalid ATTRIBUTE_UNUSED;
 {
   return ((insn >> 11) & 0x1f) | ((insn << 4) & 0x20);
 }
@@ -918,7 +960,7 @@ static unsigned long
 insert_spr (insn, value, errmsg)
      unsigned long insn;
      long value;
-     const char **errmsg;
+     const char **errmsg ATTRIBUTE_UNUSED;
 {
   return insn | ((value & 0x1f) << 16) | ((value & 0x3e0) << 6);
 }
@@ -926,7 +968,7 @@ insert_spr (insn, value, errmsg)
 static long
 extract_spr (insn, invalid)
      unsigned long insn;
-     int *invalid;
+     int *invalid ATTRIBUTE_UNUSED;
 {
   return ((insn >> 16) & 0x1f) | ((insn >> 6) & 0x3e0);
 }
@@ -945,7 +987,7 @@ static unsigned long
 insert_tbr (insn, value, errmsg)
      unsigned long insn;
      long value;
-     const char **errmsg;
+     const char **errmsg ATTRIBUTE_UNUSED;
 {
   if (value == 0)
     value = TB;
@@ -955,7 +997,7 @@ insert_tbr (insn, value, errmsg)
 static long
 extract_tbr (insn, invalid)
      unsigned long insn;
-     int *invalid;
+     int *invalid ATTRIBUTE_UNUSED;
 {
   long ret;
 
@@ -1173,6 +1215,9 @@ extract_tbr (insn, invalid)
    SPRG field.  */
 #define XSPRG_MASK (XSPR_MASK &~ SPRG_MASK)
 
+/* An X form instruction with everything filled in except the E field.  */
+#define XE_MASK (0xffff7fff)
+
 /* The BO encodings used in extended conditional branch mnemonics.  */
 #define BODNZF	(0x0)
 #define BODNZFP	(0x1)
@@ -1224,6 +1269,8 @@ extract_tbr (insn, invalid)
 #define PPC32   PPC_OPCODE_PPC | PPC_OPCODE_32 | PPC_OPCODE_ANY
 #define PPC64   PPC_OPCODE_PPC | PPC_OPCODE_64 | PPC_OPCODE_ANY
 #define PPCONLY	PPC_OPCODE_PPC
+#define PPC403	PPC
+#define PPC750	PPC
 #define PPC860	PPC
 #define	POWER   PPC_OPCODE_POWER | PPC_OPCODE_ANY
 #define	POWER2	PPC_OPCODE_POWER | PPC_OPCODE_POWER2 | PPC_OPCODE_ANY
@@ -2136,6 +2183,8 @@ const struct powerpc_opcode powerpc_opcodes[] = {
 { "not.",    XRC(31,124,1), X_MASK,	COM,		{ RA, RS, RBS } },
 { "nor.",    XRC(31,124,1), X_MASK,	COM,		{ RA, RS, RB } },
 
+{ "wrtee",   X(31,131),	XRARB_MASK,	PPC403,		{ RS } },
+
 { "subfe",   XO(31,136,0,0), XO_MASK,	PPCCOM,		{ RT, RA, RB } },
 { "sfe",     XO(31,136,0,0), XO_MASK,	PWRCOM,		{ RT, RA, RB } },
 { "subfe.",  XO(31,136,0,1), XO_MASK,	PPCCOM,		{ RT, RA, RB } },
@@ -2171,6 +2220,8 @@ const struct powerpc_opcode powerpc_opcodes[] = {
 
 { "sle",     XRC(31,153,0), X_MASK,	M601,		{ RA, RS, RB } },
 { "sle.",    XRC(31,153,1), X_MASK,	M601,		{ RA, RS, RB } },
+
+{ "wrteei",  X(31,163),	XE_MASK,	PPC403,		{ E } },
 
 { "stdux",   X(31,181),	X_MASK,		PPC64,		{ RS, RAS, RB } },
 
@@ -2288,6 +2339,40 @@ const struct powerpc_opcode powerpc_opcodes[] = {
 { "xor",     XRC(31,316,0), X_MASK,	COM,		{ RA, RS, RB } },
 { "xor.",    XRC(31,316,1), X_MASK,	COM,		{ RA, RS, RB } },
 
+{ "mfexisr", XSPR(31,323,64), XSPR_MASK, PPC403,	{ RT } },
+{ "mfexier", XSPR(31,323,66), XSPR_MASK, PPC403,	{ RT } },
+{ "mfbr0",   XSPR(31,323,128), XSPR_MASK, PPC403,	{ RT } },
+{ "mfbr1",   XSPR(31,323,129), XSPR_MASK, PPC403,	{ RT } },
+{ "mfbr2",   XSPR(31,323,130), XSPR_MASK, PPC403,	{ RT } },
+{ "mfbr3",   XSPR(31,323,131), XSPR_MASK, PPC403,	{ RT } },
+{ "mfbr4",   XSPR(31,323,132), XSPR_MASK, PPC403,	{ RT } },
+{ "mfbr5",   XSPR(31,323,133), XSPR_MASK, PPC403,	{ RT } },
+{ "mfbr6",   XSPR(31,323,134), XSPR_MASK, PPC403,	{ RT } },
+{ "mfbr7",   XSPR(31,323,135), XSPR_MASK, PPC403,	{ RT } },
+{ "mfbear",  XSPR(31,323,144), XSPR_MASK, PPC403,	{ RT } },
+{ "mfbesr",  XSPR(31,323,145), XSPR_MASK, PPC403,	{ RT } },
+{ "mfiocr",  XSPR(31,323,160), XSPR_MASK, PPC403,	{ RT } },
+{ "mfdmacr0", XSPR(31,323,192), XSPR_MASK, PPC403,	{ RT } },
+{ "mfdmact0", XSPR(31,323,193), XSPR_MASK, PPC403,	{ RT } },
+{ "mfdmada0", XSPR(31,323,194), XSPR_MASK, PPC403,	{ RT } },
+{ "mfdmasa0", XSPR(31,323,195), XSPR_MASK, PPC403,	{ RT } },
+{ "mfdmacc0", XSPR(31,323,196), XSPR_MASK, PPC403,	{ RT } },
+{ "mfdmacr1", XSPR(31,323,200), XSPR_MASK, PPC403,	{ RT } },
+{ "mfdmact1", XSPR(31,323,201), XSPR_MASK, PPC403,	{ RT } },
+{ "mfdmada1", XSPR(31,323,202), XSPR_MASK, PPC403,	{ RT } },
+{ "mfdmasa1", XSPR(31,323,203), XSPR_MASK, PPC403,	{ RT } },
+{ "mfdmacc1", XSPR(31,323,204), XSPR_MASK, PPC403,	{ RT } },
+{ "mfdmacr2", XSPR(31,323,208), XSPR_MASK, PPC403,	{ RT } },
+{ "mfdmact2", XSPR(31,323,209), XSPR_MASK, PPC403,	{ RT } },
+{ "mfdmada2", XSPR(31,323,210), XSPR_MASK, PPC403,	{ RT } },
+{ "mfdmasa2", XSPR(31,323,211), XSPR_MASK, PPC403,	{ RT } },
+{ "mfdmacc2", XSPR(31,323,212), XSPR_MASK, PPC403,	{ RT } },
+{ "mfdmacr3", XSPR(31,323,216), XSPR_MASK, PPC403,	{ RT } },
+{ "mfdmact3", XSPR(31,323,217), XSPR_MASK, PPC403,	{ RT } },
+{ "mfdmada3", XSPR(31,323,218), XSPR_MASK, PPC403,	{ RT } },
+{ "mfdmasa3", XSPR(31,323,219), XSPR_MASK, PPC403,	{ RT } },
+{ "mfdmacc3", XSPR(31,323,220), XSPR_MASK, PPC403,	{ RT } },
+{ "mfdmasr", XSPR(31,323,224), XSPR_MASK, PPC403,	{ RT } },
 { "mfdcr",   X(31,323),	X_MASK,		PPC,		{ RT, SPR } },
 
 { "div",     XO(31,331,0,0), XO_MASK,	M601,		{ RT, RA, RB } },
@@ -2327,6 +2412,10 @@ const struct powerpc_opcode powerpc_opcodes[] = {
 { "mfictrl",  XSPR(31,339,158), XSPR_MASK, PPC860,	{ RT } },
 { "mfbar",    XSPR(31,339,159), XSPR_MASK, PPC860,	{ RT } },
 { "mfsprg",   XSPR(31,339,272), XSPRG_MASK, PPC,	{ RT, SPRG } },
+{ "mfsprg0",  XSPR(31,339,272), XSPR_MASK, PPC,		{ RT } },
+{ "mfsprg1",  XSPR(31,339,273), XSPR_MASK, PPC,		{ RT } },
+{ "mfsprg2",  XSPR(31,339,274), XSPR_MASK, PPC,		{ RT } },
+{ "mfsprg3",  XSPR(31,339,275), XSPR_MASK, PPC,		{ RT } },
 { "mfasr",    XSPR(31,339,280), XSPR_MASK, PPC64,	{ RT } },
 { "mfear",    XSPR(31,339,282), XSPR_MASK, PPC,		{ RT } },
 { "mfpvr",    XSPR(31,339,287), XSPR_MASK, PPC,		{ RT } },
@@ -2362,6 +2451,50 @@ const struct powerpc_opcode powerpc_opcodes[] = {
 { "mfmd_dbcam", XSPR(31,339,824), XSPR_MASK, PPC860,	{ RT } },
 { "mfmd_dbram0",XSPR(31,339,825), XSPR_MASK, PPC860,	{ RT } },
 { "mfmd_dbram1",XSPR(31,339,826), XSPR_MASK, PPC860,	{ RT } },
+{ "mfzpr",   XSPR(31,339,944), XSPR_MASK, PPC403,	{ RT } },
+{ "mfpid",   XSPR(31,339,945), XSPR_MASK, PPC403,	{ RT } },
+{ "mficdbdr",XSPR(31,339,979), XSPR_MASK, PPC403,	{ RT } },
+{ "mfummcr0",	XSPR(31,339,936),  XSPR_MASK, PPC750,	{ RT } },
+{ "mfupmc1",	XSPR(31,339,937),  XSPR_MASK, PPC750,	{ RT } },
+{ "mfupmc2",	XSPR(31,339,938),  XSPR_MASK, PPC750,	{ RT } },
+{ "mfusia",	XSPR(31,339,939),  XSPR_MASK, PPC750,	{ RT } },
+{ "mfummcr1",	XSPR(31,339,940),  XSPR_MASK, PPC750,	{ RT } },
+{ "mfupmc3",	XSPR(31,339,941),  XSPR_MASK, PPC750,	{ RT } },
+{ "mfupmc4",	XSPR(31,339,942),  XSPR_MASK, PPC750,	{ RT } },
+{ "mfmmcr0",	XSPR(31,339,952),  XSPR_MASK, PPC750,	{ RT } },
+{ "mfpmc1",	XSPR(31,339,953),  XSPR_MASK, PPC750,	{ RT } },
+{ "mfpmc2",	XSPR(31,339,954),  XSPR_MASK, PPC750,	{ RT } },
+{ "mfsia",	XSPR(31,339,955),  XSPR_MASK, PPC750,	{ RT } },
+{ "mfmmcr1",	XSPR(31,339,956),  XSPR_MASK, PPC750,	{ RT } },
+{ "mfpmc3",	XSPR(31,339,957),  XSPR_MASK, PPC750,	{ RT } },
+{ "mfpmc4",	XSPR(31,339,958),  XSPR_MASK, PPC750,	{ RT } },
+{ "mfesr",   XSPR(31,339,980), XSPR_MASK, PPC403,	{ RT } },
+{ "mfdear",  XSPR(31,339,981), XSPR_MASK, PPC403,	{ RT } },
+{ "mfevpr",  XSPR(31,339,982), XSPR_MASK, PPC403,	{ RT } },
+{ "mfcdbcr", XSPR(31,339,983), XSPR_MASK, PPC403,	{ RT } },
+{ "mftsr",   XSPR(31,339,984), XSPR_MASK, PPC403,	{ RT } },
+{ "mftcr",   XSPR(31,339,986), XSPR_MASK, PPC403,	{ RT } },
+{ "mfpit",   XSPR(31,339,987), XSPR_MASK, PPC403,	{ RT } },
+{ "mftbhi",  XSPR(31,339,988), XSPR_MASK, PPC403,	{ RT } },
+{ "mftblo",  XSPR(31,339,989), XSPR_MASK, PPC403,	{ RT } },
+{ "mfsrr2",  XSPR(31,339,990), XSPR_MASK, PPC403,	{ RT } },
+{ "mfsrr3",  XSPR(31,339,991), XSPR_MASK, PPC403,	{ RT } },
+{ "mfdbsr",  XSPR(31,339,1008), XSPR_MASK, PPC403,	{ RT } },
+{ "mfiac1",  XSPR(31,339,1012), XSPR_MASK, PPC403,	{ RT } },
+{ "mfiac2",  XSPR(31,339,1013), XSPR_MASK, PPC403,	{ RT } },
+{ "mfdac1",  XSPR(31,339,1014), XSPR_MASK, PPC403,	{ RT } },
+{ "mfdac2",  XSPR(31,339,1015), XSPR_MASK, PPC403,	{ RT } },
+{ "mfdccr",  XSPR(31,339,1018), XSPR_MASK, PPC403,	{ RT } },
+{ "mficcr",  XSPR(31,339,1019), XSPR_MASK, PPC403,	{ RT } },
+{ "mfpbl1",  XSPR(31,339,1020), XSPR_MASK, PPC403,	{ RT } },
+{ "mfpbu1",  XSPR(31,339,1021), XSPR_MASK, PPC403,	{ RT } },
+{ "mfpbl2",  XSPR(31,339,1022), XSPR_MASK, PPC403,	{ RT } },
+{ "mfpbu2",  XSPR(31,339,1023), XSPR_MASK, PPC403,	{ RT } },
+{ "mfl2cr",	XSPR(31,339,1017), XSPR_MASK, PPC750,	{ RT } },
+{ "mfictc",	XSPR(31,339,1019), XSPR_MASK, PPC750,	{ RT } },
+{ "mfthrm1",	XSPR(31,339,1020), XSPR_MASK, PPC750,	{ RT } },
+{ "mfthrm2",	XSPR(31,339,1021), XSPR_MASK, PPC750,	{ RT } },
+{ "mfthrm3",	XSPR(31,339,1022), XSPR_MASK, PPC750,	{ RT } },
 { "mfspr",   X(31,339),	X_MASK,		COM,		{ RT, SPR } },
 
 { "lwax",    X(31,341),	X_MASK,		PPC64,		{ RT, RA, RB } },
@@ -2416,6 +2549,59 @@ const struct powerpc_opcode powerpc_opcodes[] = {
 { "mr.",     XRC(31,444,1), X_MASK,	COM,		{ RA, RS, RBS } },
 { "or.",     XRC(31,444,1), X_MASK,	COM,		{ RA, RS, RB } },
 
+{ "mtexisr", XSPR(31,451,64), XSPR_MASK, PPC403,	{ RT } },
+{ "mtexier", XSPR(31,451,66), XSPR_MASK, PPC403,	{ RT } },
+{ "mtbr0",   XSPR(31,451,128), XSPR_MASK, PPC403,	{ RT } },
+{ "mtbr1",   XSPR(31,451,129), XSPR_MASK, PPC403,	{ RT } },
+{ "mtbr2",   XSPR(31,451,130), XSPR_MASK, PPC403,	{ RT } },
+{ "mtbr3",   XSPR(31,451,131), XSPR_MASK, PPC403,	{ RT } },
+{ "mtbr4",   XSPR(31,451,132), XSPR_MASK, PPC403,	{ RT } },
+{ "mtbr5",   XSPR(31,451,133), XSPR_MASK, PPC403,	{ RT } },
+{ "mtbr6",   XSPR(31,451,134), XSPR_MASK, PPC403,	{ RT } },
+{ "mtbr7",   XSPR(31,451,135), XSPR_MASK, PPC403,	{ RT } },
+{ "mtbear",  XSPR(31,451,144), XSPR_MASK, PPC403,	{ RT } },
+{ "mtbesr",  XSPR(31,451,145), XSPR_MASK, PPC403,	{ RT } },
+{ "mtiocr",  XSPR(31,451,160), XSPR_MASK, PPC403,	{ RT } },
+{ "mtdmacr0", XSPR(31,451,192), XSPR_MASK, PPC403,	{ RT } },
+{ "mtdmact0", XSPR(31,451,193), XSPR_MASK, PPC403,	{ RT } },
+{ "mtdmada0", XSPR(31,451,194), XSPR_MASK, PPC403,	{ RT } },
+{ "mtdmasa0", XSPR(31,451,195), XSPR_MASK, PPC403,	{ RT } },
+{ "mtdmacc0", XSPR(31,451,196), XSPR_MASK, PPC403,	{ RT } },
+{ "mtdmacr1", XSPR(31,451,200), XSPR_MASK, PPC403,	{ RT } },
+{ "mtdmact1", XSPR(31,451,201), XSPR_MASK, PPC403,	{ RT } },
+{ "mtdmada1", XSPR(31,451,202), XSPR_MASK, PPC403,	{ RT } },
+{ "mtdmasa1", XSPR(31,451,203), XSPR_MASK, PPC403,	{ RT } },
+{ "mtdmacc1", XSPR(31,451,204), XSPR_MASK, PPC403,	{ RT } },
+{ "mtdmacr2", XSPR(31,451,208), XSPR_MASK, PPC403,	{ RT } },
+{ "mtdmact2", XSPR(31,451,209), XSPR_MASK, PPC403,	{ RT } },
+{ "mtdmada2", XSPR(31,451,210), XSPR_MASK, PPC403,	{ RT } },
+{ "mtdmasa2", XSPR(31,451,211), XSPR_MASK, PPC403,	{ RT } },
+{ "mtdmacc2", XSPR(31,451,212), XSPR_MASK, PPC403,	{ RT } },
+{ "mtdmacr3", XSPR(31,451,216), XSPR_MASK, PPC403,	{ RT } },
+{ "mtdmact3", XSPR(31,451,217), XSPR_MASK, PPC403,	{ RT } },
+{ "mtdmada3", XSPR(31,451,218), XSPR_MASK, PPC403,	{ RT } },
+{ "mtdmasa3", XSPR(31,451,219), XSPR_MASK, PPC403,	{ RT } },
+{ "mtdmacc3", XSPR(31,451,220), XSPR_MASK, PPC403,	{ RT } },
+{ "mtdmasr", XSPR(31,451,224), XSPR_MASK, PPC403,	{ RT } },
+{ "mtummcr0",	XSPR(31,451,936),  XSPR_MASK, PPC750,	{ RT } },
+{ "mtupmc1",	XSPR(31,451,937),  XSPR_MASK, PPC750,	{ RT } },
+{ "mtupmc2",	XSPR(31,451,938),  XSPR_MASK, PPC750,	{ RT } },
+{ "mtusia",	XSPR(31,451,939),  XSPR_MASK, PPC750,	{ RT } },
+{ "mtummcr1",	XSPR(31,451,940),  XSPR_MASK, PPC750,	{ RT } },
+{ "mtupmc3",	XSPR(31,451,941),  XSPR_MASK, PPC750,	{ RT } },
+{ "mtupmc4",	XSPR(31,451,942),  XSPR_MASK, PPC750,	{ RT } },
+{ "mtmmcr0",	XSPR(31,451,952),  XSPR_MASK, PPC750,	{ RT } },
+{ "mtpmc1",	XSPR(31,451,953),  XSPR_MASK, PPC750,	{ RT } },
+{ "mtpmc2",	XSPR(31,451,954),  XSPR_MASK, PPC750,	{ RT } },
+{ "mtsia",	XSPR(31,451,955),  XSPR_MASK, PPC750,	{ RT } },
+{ "mtmmcr1",	XSPR(31,451,956),  XSPR_MASK, PPC750,	{ RT } },
+{ "mtpmc3",	XSPR(31,451,957),  XSPR_MASK, PPC750,	{ RT } },
+{ "mtpmc4",	XSPR(31,451,958),  XSPR_MASK, PPC750,	{ RT } },
+{ "mtl2cr",	XSPR(31,451,1017), XSPR_MASK, PPC750,	{ RT } },
+{ "mtictc",	XSPR(31,451,1019), XSPR_MASK, PPC750,	{ RT } },
+{ "mtthrm1",	XSPR(31,451,1020), XSPR_MASK, PPC750,	{ RT } },
+{ "mtthrm2",	XSPR(31,451,1021), XSPR_MASK, PPC750,	{ RT } },
+{ "mtthrm3",	XSPR(31,451,1022), XSPR_MASK, PPC750,	{ RT } },
 { "mtdcr",   X(31,451),	X_MASK,		PPC,		{ SPR, RS } },
 
 { "divdu",   XO(31,457,0,0), XO_MASK,	PPC64,		{ RT, RA, RB } },
@@ -2459,6 +2645,10 @@ const struct powerpc_opcode powerpc_opcodes[] = {
 { "mtictrl",  XSPR(31,467,158), XSPR_MASK, PPC860,	{ RT } },
 { "mtbar",    XSPR(31,467,159), XSPR_MASK, PPC860,	{ RT } },
 { "mtsprg",  XSPR(31,467,272), XSPRG_MASK,   PPC,	{ SPRG, RS } },
+{ "mtsprg0", XSPR(31,467,272), XSPR_MASK,    PPC,	{ RT } },
+{ "mtsprg1", XSPR(31,467,273), XSPR_MASK,    PPC,	{ RT } },
+{ "mtsprg2", XSPR(31,467,274), XSPR_MASK,    PPC,	{ RT } },
+{ "mtsprg3", XSPR(31,467,275), XSPR_MASK,    PPC,	{ RT } },
 { "mtasr",   XSPR(31,467,280), XSPR_MASK,    PPC64,	{ RS } },
 { "mtear",   XSPR(31,467,282), XSPR_MASK,    PPC,	{ RS } },
 { "mttbl",   XSPR(31,467,284), XSPR_MASK,    PPC,	{ RS } },
@@ -2467,12 +2657,38 @@ const struct powerpc_opcode powerpc_opcodes[] = {
 { "mtibatl", XSPR(31,467,529), XSPRBAT_MASK, PPC,	{ SPRBAT, RS } },
 { "mtdbatu", XSPR(31,467,536), XSPRBAT_MASK, PPC,	{ SPRBAT, RS } },
 { "mtdbatl", XSPR(31,467,537), XSPRBAT_MASK, PPC,	{ SPRBAT, RS } },
+{ "mtzpr",   XSPR(31,467,944), XSPR_MASK, PPC403,	{ RT } },
+{ "mtpid",   XSPR(31,467,945), XSPR_MASK, PPC403,	{ RT } },
+{ "mticdbdr",XSPR(31,467,979), XSPR_MASK, PPC403,	{ RT } },
+{ "mtesr",   XSPR(31,467,980), XSPR_MASK, PPC403,	{ RT } },
+{ "mtevpr",  XSPR(31,467,982), XSPR_MASK, PPC403,	{ RT } },
+{ "mtcdbcr", XSPR(31,467,983), XSPR_MASK, PPC403,	{ RT } },
+{ "mttsr",   XSPR(31,467,984), XSPR_MASK, PPC403,	{ RT } },
+{ "mttcr",   XSPR(31,467,986), XSPR_MASK, PPC403,	{ RT } },
+{ "mtpit",   XSPR(31,467,987), XSPR_MASK, PPC403,	{ RT } },
+{ "mttbhi",  XSPR(31,467,988), XSPR_MASK, PPC403,	{ RT } },
+{ "mttblo",  XSPR(31,467,989), XSPR_MASK, PPC403,	{ RT } },
+{ "mtsrr2",  XSPR(31,467,990), XSPR_MASK, PPC403,	{ RT } },
+{ "mtsrr3",  XSPR(31,467,991), XSPR_MASK, PPC403,	{ RT } },
+{ "mtdbsr",  XSPR(31,467,1008), XSPR_MASK, PPC403,	{ RT } },
+{ "mtiac1",  XSPR(31,467,1012), XSPR_MASK, PPC403,	{ RT } },
+{ "mtiac2",  XSPR(31,467,1013), XSPR_MASK, PPC403,	{ RT } },
+{ "mtdac1",  XSPR(31,467,1014), XSPR_MASK, PPC403,	{ RT } },
+{ "mtdac2",  XSPR(31,467,1015), XSPR_MASK, PPC403,	{ RT } },
+{ "mtdccr",  XSPR(31,467,1018), XSPR_MASK, PPC403,	{ RT } },
+{ "mticcr",  XSPR(31,467,1019), XSPR_MASK, PPC403,	{ RT } },
+{ "mtpbl1",  XSPR(31,467,1020), XSPR_MASK, PPC403,	{ RT } },
+{ "mtpbu1",  XSPR(31,467,1021), XSPR_MASK, PPC403,	{ RT } },
+{ "mtpbl2",  XSPR(31,467,1022), XSPR_MASK, PPC403,	{ RT } },
+{ "mtpbu2",  XSPR(31,467,1023), XSPR_MASK, PPC403,	{ RT } },
 { "mtspr",   X(31,467),	       X_MASK,	     COM,	{ SPR, RS } },
 
 { "dcbi",    X(31,470),	XRT_MASK,	PPC,		{ RA, RB } },
 
 { "nand",    XRC(31,476,0), X_MASK,	COM,		{ RA, RS, RB } },
 { "nand.",   XRC(31,476,1), X_MASK,	COM,		{ RA, RS, RB } },
+
+{ "dcread",  X(31,486),	X_MASK,		PPC403,		{ RT, RA, RB }},
 
 { "nabs",    XO(31,488,0,0), XORB_MASK, M601,		{ RT, RA } },
 { "nabs.",   XO(31,488,0,1), XORB_MASK, M601,		{ RT, RA } },
@@ -2595,6 +2811,9 @@ const struct powerpc_opcode powerpc_opcodes[] = {
 
 { "eieio",   X(31,854),	0xffffffff,	PPC,		{ 0 } },
 
+{ "tlbsx",   XRC(31,914,0), X_MASK, PPC403,	{ RT, RA, RB } },
+{ "tlbsx.",  XRC(31,914,1), X_MASK, PPC403,	{ RT, RA, RB } },
+
 { "sthbrx",  X(31,918),	X_MASK,		COM,		{ RS, RA, RB } },
 
 { "sraq",    XRC(31,920,0), X_MASK,	M601,		{ RA, RS, RB } },
@@ -2608,6 +2827,8 @@ const struct powerpc_opcode powerpc_opcodes[] = {
 { "extsh.",  XRC(31,922,1), XRB_MASK,	PPCCOM,		{ RA, RS } },
 { "exts.",   XRC(31,922,1), XRB_MASK,	PWRCOM,		{ RA, RS } },
 
+{ "tlbre",   X(31,946),	X_MASK,		PPC403,		{ RT, RA, SH } },
+
 { "sraiq",   XRC(31,952,0), X_MASK,	M601,		{ RA, RS, SH } },
 { "sraiq.",  XRC(31,952,1), X_MASK,	M601,		{ RA, RS, SH } },
 
@@ -2617,6 +2838,7 @@ const struct powerpc_opcode powerpc_opcodes[] = {
 { "iccci",   X(31,966),	XRT_MASK,	PPC,		{ RA, RB } },
 
 { "tlbld",   X(31,978),	XRTRA_MASK,	PPC,		{ RB } },
+{ "tlbwe",   X(31,978),	X_MASK,		PPC403,		{ RS, RA, SH } },
 
 { "icbi",    X(31,982),	XRT_MASK,	PPC,		{ RA, RB } },
 
@@ -2624,6 +2846,8 @@ const struct powerpc_opcode powerpc_opcodes[] = {
 
 { "extsw",   XRC(31,986,0), XRB_MASK,	PPC,		{ RA, RS } },
 { "extsw.",  XRC(31,986,1), XRB_MASK,	PPC,		{ RA, RS } },
+
+{ "icread",  X(31,998),	XRT_MASK,	PPC403,		{ RA, RB } },
 
 { "tlbli",   X(31,1010), XRTRA_MASK,	PPC,		{ RB } },
 
@@ -2843,6 +3067,16 @@ const int powerpc_num_opcodes =
 
 /* The macro table.  This is only used by the assembler.  */
 
+/* The expressions of the form (-x ! 31) & (x | 31) have the value 0
+   when x=0; 32-x when x is between 1 and 31; are negative if x is
+   negative; and are 32 or more otherwise.  This is what you want
+   when, for instance, you are emulating a right shift by a
+   rotate-left-and-mask, because the underlying instructions support
+   shifts of size 0 but not shifts of size 32.  By comparison, when
+   extracting x bits from some word you want to use just 32-x, because
+   the underlying instructions don't support extracting 0 bits but do
+   support extracting the whole word (32 bits in this case).  */
+
 const struct powerpc_macro powerpc_macros[] = {
 { "extldi",  4,   PPC64,	"rldicr %0,%1,%3,(%2)-1" },
 { "extldi.", 4,   PPC64,	"rldicr. %0,%1,%3,(%2)-1" },
@@ -2850,12 +3084,12 @@ const struct powerpc_macro powerpc_macros[] = {
 { "extrdi.", 4,   PPC64,	"rldicl. %0,%1,(%2)+(%3),64-(%2)" },
 { "insrdi",  4,   PPC64,	"rldimi %0,%1,64-((%2)+(%3)),%3" },
 { "insrdi.", 4,   PPC64,	"rldimi. %0,%1,64-((%2)+(%3)),%3" },
-{ "rotrdi",  3,   PPC64,	"rldicl %0,%1,64-(%2),0" },
-{ "rotrdi.", 3,   PPC64,	"rldicl. %0,%1,64-(%2),0" },
+{ "rotrdi",  3,   PPC64,	"rldicl %0,%1,(-(%2)!63)&((%2)|63),0" },
+{ "rotrdi.", 3,   PPC64,	"rldicl. %0,%1,(-(%2)!63)&((%2)|63),0" },
 { "sldi",    3,   PPC64,	"rldicr %0,%1,%2,63-(%2)" },
 { "sldi.",   3,   PPC64,	"rldicr. %0,%1,%2,63-(%2)" },
-{ "srdi",    3,   PPC64,	"rldicl %0,%1,64-(%2),%2" },
-{ "srdi.",   3,   PPC64,	"rldicl. %0,%1,64-(%2),%2" },
+{ "srdi",    3,   PPC64,	"rldicl %0,%1,(-(%2)!63)&((%2)|63),%2" },
+{ "srdi.",   3,   PPC64,	"rldicl. %0,%1,(-(%2)!63)&((%2)|63),%2" },
 { "clrrdi",  3,   PPC64,	"rldicr %0,%1,0,63-(%2)" },
 { "clrrdi.", 3,   PPC64,	"rldicr. %0,%1,0,63-(%2)" },
 { "clrlsldi",4,   PPC64,	"rldic %0,%1,%3,(%2)-(%3)" },
@@ -2865,20 +3099,20 @@ const struct powerpc_macro powerpc_macros[] = {
 { "extlwi.", 4,   PPCCOM,	"rlwinm. %0,%1,%3,0,(%2)-1" },
 { "extrwi",  4,   PPCCOM,	"rlwinm %0,%1,(%2)+(%3),32-(%2),31" },
 { "extrwi.", 4,   PPCCOM,	"rlwinm. %0,%1,(%2)+(%3),32-(%2),31" },
-{ "inslwi",  4,   PPCCOM,	"rlwimi %0,%1,32-(%3),%3,(%2)+(%3)-1" },
-{ "inslwi.", 4,   PPCCOM,	"rlwimi. %0,%1,32-(%3),%3,(%2)+(%3)-1" },
+{ "inslwi",  4,   PPCCOM,	"rlwimi %0,%1,(-(%3)!31)&((%3)|31),%3,(%2)+(%3)-1" },
+{ "inslwi.", 4,   PPCCOM,	"rlwimi. %0,%1,(-(%3)!31)&((%3)|31),%3,(%2)+(%3)-1"},
 { "insrwi",  4,   PPCCOM,	"rlwimi %0,%1,32-((%2)+(%3)),%3,(%2)+(%3)-1" },
 { "insrwi.", 4,   PPCCOM,	"rlwimi. %0,%1,32-((%2)+(%3)),%3,(%2)+(%3)-1"},
-{ "rotrwi",  3,   PPCCOM,	"rlwinm %0,%1,32-(%2),0,31" },
-{ "rotrwi.", 3,   PPCCOM,	"rlwinm. %0,%1,32-(%2),0,31" },
+{ "rotrwi",  3,   PPCCOM,	"rlwinm %0,%1,(-(%2)!31)&((%2)|31),0,31" },
+{ "rotrwi.", 3,   PPCCOM,	"rlwinm. %0,%1,(-(%2)!31)&((%2)|31),0,31" },
 { "slwi",    3,   PPCCOM,	"rlwinm %0,%1,%2,0,31-(%2)" },
 { "sli",     3,   PWRCOM,	"rlinm %0,%1,%2,0,31-(%2)" },
 { "slwi.",   3,   PPCCOM,	"rlwinm. %0,%1,%2,0,31-(%2)" },
 { "sli.",    3,   PWRCOM,	"rlinm. %0,%1,%2,0,31-(%2)" },
-{ "srwi",    3,   PPCCOM,	"rlwinm %0,%1,32-(%2),%2,31" },
-{ "sri",     3,   PWRCOM,	"rlinm %0,%1,32-(%2),%2,31" },
-{ "srwi.",   3,   PPCCOM,	"rlwinm. %0,%1,32-(%2),%2,31" },
-{ "sri.",    3,   PWRCOM,	"rlinm. %0,%1,32-(%2),%2,31" },
+{ "srwi",    3,   PPCCOM,	"rlwinm %0,%1,(-(%2)!31)&((%2)|31),%2,31" },
+{ "sri",     3,   PWRCOM,	"rlinm %0,%1,(-(%2)!31)&((%2)|31),%2,31" },
+{ "srwi.",   3,   PPCCOM,	"rlwinm. %0,%1,(-(%2)!31)&((%2)|31),%2,31" },
+{ "sri.",    3,   PWRCOM,	"rlinm. %0,%1,(-(%2)!31)&((%2)|31),%2,31" },
 { "clrrwi",  3,   PPCCOM,	"rlwinm %0,%1,0,0,31-(%2)" },
 { "clrrwi.", 3,   PPCCOM,	"rlwinm. %0,%1,0,0,31-(%2)" },
 { "clrlslwi",4,   PPCCOM,	"rlwinm %0,%1,%3,(%2)-(%3),31-(%3)" },

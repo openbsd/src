@@ -1,5 +1,6 @@
 /* tc-ppc.c -- Assemble for the PowerPC or POWER (RS/6000)
-   Copyright (C) 1994, 1995, 1996 Free Software Foundation, Inc.
+   Copyright (C) 1994, 1995, 1996, 1997, 1998, 1999, 2000 
+   Free Software Foundation, Inc.
    Written by Ian Lance Taylor, Cygnus Support.
 
    This file is part of GAS, the GNU Assembler.
@@ -53,6 +54,7 @@ static int set_target_endian = 0;
 
 static boolean reg_names_p = TARGET_REG_NAMES_P;
 
+static boolean register_name PARAMS ((expressionS *));
 static void ppc_set_cpu PARAMS ((void));
 static unsigned long ppc_insert_operand
   PARAMS ((unsigned long insn, const struct powerpc_operand *operand,
@@ -79,13 +81,16 @@ static void ppc_function PARAMS ((int));
 static void ppc_extern PARAMS ((int));
 static void ppc_lglobl PARAMS ((int));
 static void ppc_section PARAMS ((int));
+static void ppc_named_section PARAMS ((int));
 static void ppc_stabx PARAMS ((int));
 static void ppc_rename PARAMS ((int));
 static void ppc_toc PARAMS ((int));
+static void ppc_xcoff_cons PARAMS ((int));
+static void ppc_vbyte PARAMS ((int));
 #endif
 
 #ifdef OBJ_ELF
-static bfd_reloc_code_real_type ppc_elf_suffix PARAMS ((char **));
+static bfd_reloc_code_real_type ppc_elf_suffix PARAMS ((char **, expressionS *));
 static void ppc_elf_cons PARAMS ((int));
 static void ppc_elf_rdata PARAMS ((int));
 static void ppc_elf_lcomm PARAMS ((int));
@@ -110,9 +115,19 @@ static void ppc_pe_tocd PARAMS ((int));
 /* Generic assembler global variables which must be defined by all
    targets.  */
 
-/* Characters which always start a comment.  */
+#ifdef OBJ_ELF
+/* This string holds the chars that always start a comment.  If the
+   pre-processor is disabled, these aren't very useful.  The macro
+   tc_comment_chars points to this.  We use this, rather than the
+   usual comment_chars, so that we can switch for Solaris conventions.  */
+static const char ppc_solaris_comment_chars[] = "#!";
+static const char ppc_eabi_comment_chars[] = "#";
+
 #ifdef TARGET_SOLARIS_COMMENT
-const char comment_chars[] = "#!";
+const char *ppc_comment_chars = ppc_solaris_comment_chars;
+#else
+const char *ppc_comment_chars = ppc_eabi_comment_chars;
+#endif
 #else
 const char comment_chars[] = "#";
 #endif
@@ -162,9 +177,14 @@ const pseudo_typeS md_pseudo_table[] =
   { "function",	ppc_function,	0 },
   { "lglobl",	ppc_lglobl,	0 },
   { "rename",	ppc_rename,	0 },
+  { "section",	ppc_named_section, 0 },
   { "stabx",	ppc_stabx,	0 },
   { "text",	ppc_section,	't' },
   { "toc",	ppc_toc,	0 },
+  { "long",	ppc_xcoff_cons,	2 },
+  { "word",	ppc_xcoff_cons,	1 },
+  { "short",	ppc_xcoff_cons,	1 },
+  { "vbyte",    ppc_vbyte,	0 },
 #endif
 
 #ifdef OBJ_ELF
@@ -569,7 +589,7 @@ static int ppc_cpu = 0;
 
 /* The size of the processor we are assembling for.  This is either
    PPC_OPCODE_32 or PPC_OPCODE_64.  */
-static int ppc_size = PPC_OPCODE_32;
+static unsigned long ppc_size = PPC_OPCODE_32;
 
 /* Opcode hash table.  */
 static struct hash_control *ppc_hash;
@@ -578,12 +598,20 @@ static struct hash_control *ppc_hash;
 static struct hash_control *ppc_macro_hash;
 
 #ifdef OBJ_ELF
-/* Whether to warn about non PC relative relocations that aren't
-   in the .got2 section. */
-static boolean mrelocatable = false;
+/* What type of shared library support to use */
+static enum { SHLIB_NONE, SHLIB_PIC, SHILB_MRELOCATABLE } shlib = SHLIB_NONE;
 
 /* Flags to set in the elf header */
 static flagword ppc_flags = 0;
+
+/* Whether this is Solaris or not.  */
+#ifdef TARGET_SOLARIS_COMMENT
+#define SOLARIS_P true
+#else
+#define SOLARIS_P false
+#endif
+
+static boolean msolaris = SOLARIS_P;
 #endif
 
 #ifdef OBJ_XCOFF
@@ -651,11 +679,6 @@ static segT ppc_current_section;
 #ifdef OBJ_ELF
 symbolS *GOT_symbol;		/* Pre-defined "_GLOBAL_OFFSET_TABLE" */
 #endif /* OBJ_ELF */
-
-#ifndef WORKING_DOT_WORD
-const int md_short_jump_size = 4;
-const int md_long_jump_size = 4;
-#endif
 
 #ifdef OBJ_ELF
 CONST char *md_shortopts = "b:l:usm:K:VQ:";
@@ -706,9 +729,9 @@ md_parse_option (c, arg)
 
     case 'K':
       /* Recognize -K PIC */
-      if (strcmp (arg, "PIC") == 0)
+      if (strcmp (arg, "PIC") == 0 || strcmp (arg, "pic") == 0)
 	{
-	  mrelocatable = true;
+	  shlib = SHLIB_PIC;
 	  ppc_flags |= EF_PPC_RELOCATABLE_LIB;
 	}
       else
@@ -744,6 +767,11 @@ md_parse_option (c, arg)
 	  ppc_cpu = PPC_OPCODE_PPC;
 	  ppc_size = PPC_OPCODE_64;
 	}
+      else if (strcmp (arg, "ppc64bridge") == 0)
+	{
+	  ppc_cpu = PPC_OPCODE_PPC | PPC_OPCODE_64_BRIDGE;
+	  ppc_size = PPC_OPCODE_64;
+	}
       /* -mcom means assemble for the common intersection between Power
 	 and PowerPC.  At present, we just allow the union, rather
 	 than the intersection.  */
@@ -763,13 +791,13 @@ md_parse_option (c, arg)
       /* -mrelocatable/-mrelocatable-lib -- warn about initializations that require relocation */
       else if (strcmp (arg, "relocatable") == 0)
 	{
-	  mrelocatable = true;
+	  shlib = SHILB_MRELOCATABLE;
 	  ppc_flags |= EF_PPC_RELOCATABLE;
 	}
 
       else if (strcmp (arg, "relocatable-lib") == 0)
 	{
-	  mrelocatable = true;
+	  shlib = SHILB_MRELOCATABLE;
 	  ppc_flags |= EF_PPC_RELOCATABLE_LIB;
 	}
 
@@ -789,10 +817,22 @@ md_parse_option (c, arg)
 	  target_big_endian = 1;
 	  set_target_endian = 1;
 	}
+
+      else if (strcmp (arg, "solaris") == 0)
+	{
+	  msolaris = true;
+	  ppc_comment_chars = ppc_solaris_comment_chars;
+	}
+
+      else if (strcmp (arg, "no-solaris") == 0)
+	{
+	  msolaris = false;
+	  ppc_comment_chars = ppc_eabi_comment_chars;
+	}
 #endif
       else
 	{
-	  as_bad ("invalid switch -m%s", arg);
+	  as_bad (_("invalid switch -m%s"), arg);
 	  return 0;
 	}
       break;
@@ -829,7 +869,7 @@ void
 md_show_usage (stream)
      FILE *stream;
 {
-  fprintf(stream, "\
+  fprintf(stream, _("\
 PowerPC options:\n\
 -u			ignored\n\
 -mpwrx, -mpwr2		generate code for IBM POWER/2 (RIOS2)\n\
@@ -838,20 +878,23 @@ PowerPC options:\n\
 -mppc, -mppc32, -m403, -m603, -m604\n\
 			generate code for Motorola PowerPC 603/604\n\
 -mppc64, -m620		generate code for Motorola PowerPC 620\n\
+-mppc64bridge		generate code for PowerPC 64, including bridge insns\n\
 -mcom			generate code Power/PowerPC common instructions\n\
 -many			generate code for any architecture (PWR/PWRX/PPC)\n\
 -mregnames		Allow symbolic names for registers\n\
--mno-regnames		Do not allow symbolic names for registers\n");
+-mno-regnames		Do not allow symbolic names for registers\n"));
 #ifdef OBJ_ELF
-  fprintf(stream, "\
+  fprintf(stream, _("\
 -mrelocatable		support for GCC's -mrelocatble option\n\
 -mrelocatable-lib	support for GCC's -mrelocatble-lib option\n\
 -memb			set PPC_EMB bit in ELF flags\n\
 -mlittle, -mlittle-endian\n\
 			generate code for a little endian machine\n\
 -mbig, -mbig-endian	generate code for a big endian machine\n\
+-msolaris		generate code for Solaris\n\
+-mno-solaris		do not generate code for Solaris\n\
 -V			print assembler version number\n\
--Qy, -Qn		ignored\n");
+-Qy, -Qn		ignored\n"));
 #endif
 }
 
@@ -876,7 +919,7 @@ ppc_set_cpu ()
 	       || strcmp (default_cpu, "powerpcle") == 0)
 	ppc_cpu = PPC_OPCODE_PPC;
       else
-	as_fatal ("Unknown default cpu = %s, os = %s", default_cpu, default_os);
+	as_fatal (_("Unknown default cpu = %s, os = %s"), default_cpu, default_os);
     }
 }
 
@@ -901,7 +944,7 @@ ppc_arch ()
 	return bfd_arch_powerpc;
     }
 
-  as_fatal ("Neither Power nor PowerPC opcodes were selected.");
+  as_fatal (_("Neither Power nor PowerPC opcodes were selected."));
   return bfd_arch_unknown;
 }
 
@@ -922,7 +965,7 @@ md_begin ()
 
 #ifdef OBJ_ELF
   /* Set the ELF flags if desired. */
-  if (ppc_flags)
+  if (ppc_flags && !msolaris)
     bfd_set_private_flags (stdoutput, ppc_flags);
 #endif
 
@@ -936,7 +979,8 @@ md_begin ()
 
       if ((op->flags & ppc_cpu) != 0
 	  && ((op->flags & (PPC_OPCODE_32 | PPC_OPCODE_64)) == 0
-	      || (op->flags & (PPC_OPCODE_32 | PPC_OPCODE_64)) == ppc_size))
+	      || (op->flags & (PPC_OPCODE_32 | PPC_OPCODE_64)) == ppc_size
+	      || (ppc_cpu & PPC_OPCODE_64_BRIDGE) != 0))
 	{
 	  const char *retval;
 
@@ -948,7 +992,7 @@ md_begin ()
 		  && (op->flags & PPC_OPCODE_POWER) != 0)
 		continue;
 
-	      as_bad ("Internal assembler error for instruction %s", op->name);
+	      as_bad (_("Internal assembler error for instruction %s"), op->name);
 	      dup_insn = true;
 	    }
 	}
@@ -967,7 +1011,7 @@ md_begin ()
 	  retval = hash_insert (ppc_macro_hash, macro->name, (PTR) macro);
 	  if (retval != (const char *) NULL)
 	    {
-	      as_bad ("Internal assembler error for macro %s", macro->name);
+	      as_bad (_("Internal assembler error for macro %s"), macro->name);
 	      dup_insn = true;
 	    }
 	}
@@ -990,9 +1034,9 @@ md_begin ()
      text csects to precede the data csects.  These symbols will not
      be output.  */
   ppc_text_csects = symbol_make ("dummy\001");
-  ppc_text_csects->sy_tc.within = ppc_text_csects;
+  symbol_get_tc (ppc_text_csects)->within = ppc_text_csects;
   ppc_data_csects = symbol_make ("dummy\001");
-  ppc_data_csects->sy_tc.within = ppc_data_csects;
+  symbol_get_tc (ppc_data_csects)->within = ppc_data_csects;
 #endif
 
 #ifdef TE_PE
@@ -1020,12 +1064,26 @@ ppc_insert_operand (insn, operand, val, file, line)
 
       if ((operand->flags & PPC_OPERAND_SIGNED) != 0)
 	{
-	  if ((operand->flags & PPC_OPERAND_SIGNOPT) != 0
-	      && ppc_size == PPC_OPCODE_32)
+	  if ((operand->flags & PPC_OPERAND_SIGNOPT) != 0)
 	    max = (1 << operand->bits) - 1;
 	  else
 	    max = (1 << (operand->bits - 1)) - 1;
 	  min = - (1 << (operand->bits - 1));
+
+	  if (ppc_size == PPC_OPCODE_32)
+	    {
+	      /* Some people write 32 bit hex constants with the sign
+		 extension done by hand.  This shouldn't really be
+		 valid, but, to permit this code to assemble on a 64
+		 bit host, we sign extend the 32 bit value.  */
+	      if (val > 0
+		  && (val & (offsetT) 0x80000000) != 0
+		  && (val & (offsetT) 0xffffffff) == val)
+		{
+		  val -= 0x80000000;
+		  val -= 0x80000000;
+		}
+	    }
 	}
       else
 	{
@@ -1041,7 +1099,7 @@ ppc_insert_operand (insn, operand, val, file, line)
       if (test < (offsetT) min || test > (offsetT) max)
 	{
 	  const char *err =
-	    "operand out of range (%s not between %ld and %ld)";
+	    _("operand out of range (%s not between %ld and %ld)");
 	  char buf[100];
 
 	  sprint_value (buf, test);
@@ -1072,8 +1130,9 @@ ppc_insert_operand (insn, operand, val, file, line)
 #ifdef OBJ_ELF
 /* Parse @got, etc. and return the desired relocation.  */
 static bfd_reloc_code_real_type
-ppc_elf_suffix (str_p)
+ppc_elf_suffix (str_p, exp_p)
      char **str_p;
+     expressionS *exp_p;
 {
   struct map_bfd {
     char *string;
@@ -1101,11 +1160,12 @@ ppc_elf_suffix (str_p)
     MAP ("got@h",	BFD_RELOC_HI16_GOTOFF),
     MAP ("got@ha",	BFD_RELOC_HI16_S_GOTOFF),
     MAP ("fixup",	BFD_RELOC_CTOR),		/* warnings with -mrelocatable */
+    MAP ("plt",		BFD_RELOC_24_PLT_PCREL),
     MAP ("pltrel24",	BFD_RELOC_24_PLT_PCREL),
     MAP ("copy",	BFD_RELOC_PPC_COPY),
     MAP ("globdat",	BFD_RELOC_PPC_GLOB_DAT),
     MAP ("local24pc",	BFD_RELOC_PPC_LOCAL24PC),
-    MAP ("plt",		BFD_RELOC_32_PLTOFF),
+    MAP ("local",	BFD_RELOC_PPC_LOCAL24PC),
     MAP ("pltrel",	BFD_RELOC_32_PLT_PCREL),
     MAP ("plt@l",	BFD_RELOC_LO16_PLTOFF),
     MAP ("plt@h",	BFD_RELOC_HI16_PLTOFF),
@@ -1152,8 +1212,35 @@ ppc_elf_suffix (str_p)
 
   ch = ident[0];
   for (ptr = &mapping[0]; ptr->length > 0; ptr++)
-    if (ch == ptr->string[0] && len == ptr->length && memcmp (ident, ptr->string, ptr->length) == 0)
+    if (ch == ptr->string[0]
+	&& len == ptr->length
+	&& memcmp (ident, ptr->string, ptr->length) == 0)
       {
+	if (exp_p->X_add_number != 0
+	    && (ptr->reloc == BFD_RELOC_16_GOTOFF
+		|| ptr->reloc == BFD_RELOC_LO16_GOTOFF
+		|| ptr->reloc == BFD_RELOC_HI16_GOTOFF
+		|| ptr->reloc == BFD_RELOC_HI16_S_GOTOFF))
+	  as_warn (_("identifier+constant@got means identifier@got+constant"));
+
+	/* Now check for identifier@suffix+constant */
+	if (*str == '-' || *str == '+')
+	  {
+	    char *orig_line = input_line_pointer;
+	    expressionS new_exp;
+
+	    input_line_pointer = str;
+	    expression (&new_exp);
+	    if (new_exp.X_op == O_constant)
+	      {
+		exp_p->X_add_number += new_exp.X_add_number;
+		str = input_line_pointer;
+	      }
+
+	    if (&input_line_pointer != str_p)
+	      input_line_pointer = orig_line;
+	  }
+
 	*str_p = str;
 	return ptr->reloc;
       }
@@ -1182,13 +1269,13 @@ ppc_elf_cons (nbytes)
       expression (&exp);
       if (exp.X_op == O_symbol
 	  && *input_line_pointer == '@'
-	  && (reloc = ppc_elf_suffix (&input_line_pointer)) != BFD_RELOC_UNUSED)
+	  && (reloc = ppc_elf_suffix (&input_line_pointer, &exp)) != BFD_RELOC_UNUSED)
 	{
 	  reloc_howto_type *reloc_howto = bfd_reloc_type_lookup (stdoutput, reloc);
 	  int size = bfd_get_reloc_size (reloc_howto);
 
 	  if (size > nbytes)
-	    as_bad ("%s relocations do not fit in %d bytes\n", reloc_howto->name, nbytes);
+	    as_bad (_("%s relocations do not fit in %d bytes\n"), reloc_howto->name, nbytes);
 
 	  else
 	    {
@@ -1225,7 +1312,7 @@ ppc_elf_rdata (xxx)
 /* Pseudo op to make file scope bss items */
 static void
 ppc_elf_lcomm(xxx)
-     int xxx;
+     int xxx ATTRIBUTE_UNUSED;
 {
   register char *name;
   register char c;
@@ -1247,7 +1334,7 @@ ppc_elf_lcomm(xxx)
   SKIP_WHITESPACE ();
   if (*input_line_pointer != ',')
     {
-      as_bad ("Expected comma after symbol-name: rest of line ignored.");
+      as_bad (_("Expected comma after symbol-name: rest of line ignored."));
       ignore_rest_of_line ();
       return;
     }
@@ -1255,22 +1342,22 @@ ppc_elf_lcomm(xxx)
   input_line_pointer++;		/* skip ',' */
   if ((size = get_absolute_expression ()) < 0)
     {
-      as_warn (".COMMon length (%ld.) <0! Ignored.", (long) size);
+      as_warn (_(".COMMon length (%ld.) <0! Ignored."), (long) size);
       ignore_rest_of_line ();
       return;
     }
 
   /* The third argument to .lcomm is the alignment.  */
   if (*input_line_pointer != ',')
-    align = 3;
+    align = 8;
   else
     {
       ++input_line_pointer;
       align = get_absolute_expression ();
       if (align <= 0)
 	{
-	  as_warn ("ignoring bad alignment");
-	  align = 3;
+	  as_warn (_("ignoring bad alignment"));
+	  align = 8;
 	}
     }
 
@@ -1278,9 +1365,9 @@ ppc_elf_lcomm(xxx)
   symbolP = symbol_find_or_make (name);
   *p = c;
 
-  if (S_IS_DEFINED (symbolP))
+  if (S_IS_DEFINED (symbolP) && ! S_IS_COMMON (symbolP))
     {
-      as_bad ("Ignoring attempt to re-define symbol `%s'.",
+      as_bad (_("Ignoring attempt to re-define symbol `%s'."),
 	      S_GET_NAME (symbolP));
       ignore_rest_of_line ();
       return;
@@ -1288,7 +1375,7 @@ ppc_elf_lcomm(xxx)
 
   if (S_GET_VALUE (symbolP) && S_GET_VALUE (symbolP) != (valueT) size)
     {
-      as_bad ("Length of .lcomm \"%s\" is already %ld. Not changed to %ld.",
+      as_bad (_("Length of .lcomm \"%s\" is already %ld. Not changed to %ld."),
 	      S_GET_NAME (symbolP),
 	      (long) S_GET_VALUE (symbolP),
 	      (long) size);
@@ -1306,7 +1393,7 @@ ppc_elf_lcomm(xxx)
       for (align2 = 0; (align & 1) == 0; align >>= 1, ++align2);
       if (align != 1)
 	{
-	  as_bad ("Common alignment not a power of 2");
+	  as_bad (_("Common alignment not a power of 2"));
 	  ignore_rest_of_line ();
 	  return;
 	}
@@ -1317,10 +1404,10 @@ ppc_elf_lcomm(xxx)
   record_alignment (bss_section, align2);
   subseg_set (bss_section, 0);
   if (align2)
-    frag_align (align2, 0);
+    frag_align (align2, 0, 0);
   if (S_GET_SEGMENT (symbolP) == bss_section)
-    symbolP->sy_frag->fr_symbol = 0;
-  symbolP->sy_frag = frag_now;
+    symbol_get_frag (symbolP)->fr_symbol = 0;
+  symbol_set_frag (symbolP, frag_now);
   pfrag = frag_var (rs_org, 1, 1, (relax_substateT) 0, symbolP, size,
 		    (char *) 0);
   *pfrag = 0;
@@ -1338,32 +1425,42 @@ ppc_elf_validate_fix (fixp, seg)
      fixS *fixp;
      segT seg;
 {
-  if (mrelocatable
-      && !fixp->fx_done
-      && !fixp->fx_pcrel
-      && fixp->fx_r_type <= BFD_RELOC_UNUSED
-      && fixp->fx_r_type != BFD_RELOC_16_GOTOFF
-      && fixp->fx_r_type != BFD_RELOC_HI16_GOTOFF
-      && fixp->fx_r_type != BFD_RELOC_LO16_GOTOFF
-      && fixp->fx_r_type != BFD_RELOC_HI16_S_GOTOFF
-      && fixp->fx_r_type != BFD_RELOC_32_BASEREL
-      && fixp->fx_r_type != BFD_RELOC_LO16_BASEREL
-      && fixp->fx_r_type != BFD_RELOC_HI16_BASEREL
-      && fixp->fx_r_type != BFD_RELOC_HI16_S_BASEREL
-      && strcmp (segment_name (seg), ".got2") != 0
-      && strcmp (segment_name (seg), ".dtors") != 0
-      && strcmp (segment_name (seg), ".ctors") != 0
-      && strcmp (segment_name (seg), ".fixup") != 0
-      && strcmp (segment_name (seg), ".stab") != 0
-      && strcmp (segment_name (seg), ".gcc_except_table") != 0
-      && strcmp (segment_name (seg), ".ex_shared") != 0)
+  if (fixp->fx_done || fixp->fx_pcrel)
+    return;
+
+  switch (shlib)
     {
-      if ((seg->flags & (SEC_READONLY | SEC_CODE)) != 0
-	  || fixp->fx_r_type != BFD_RELOC_CTOR)
+    case SHLIB_NONE:
+    case SHLIB_PIC:
+      return;
+
+    case SHILB_MRELOCATABLE:
+      if (fixp->fx_r_type <= BFD_RELOC_UNUSED
+	  && fixp->fx_r_type != BFD_RELOC_16_GOTOFF
+	  && fixp->fx_r_type != BFD_RELOC_HI16_GOTOFF
+	  && fixp->fx_r_type != BFD_RELOC_LO16_GOTOFF
+	  && fixp->fx_r_type != BFD_RELOC_HI16_S_GOTOFF
+	  && fixp->fx_r_type != BFD_RELOC_32_BASEREL
+	  && fixp->fx_r_type != BFD_RELOC_LO16_BASEREL
+	  && fixp->fx_r_type != BFD_RELOC_HI16_BASEREL
+	  && fixp->fx_r_type != BFD_RELOC_HI16_S_BASEREL
+	  && strcmp (segment_name (seg), ".got2") != 0
+	  && strcmp (segment_name (seg), ".dtors") != 0
+	  && strcmp (segment_name (seg), ".ctors") != 0
+	  && strcmp (segment_name (seg), ".fixup") != 0
+	  && strcmp (segment_name (seg), ".stab") != 0
+	  && strcmp (segment_name (seg), ".gcc_except_table") != 0
+	  && strcmp (segment_name (seg), ".eh_frame") != 0
+	  && strcmp (segment_name (seg), ".ex_shared") != 0)
 	{
-	  as_bad_where (fixp->fx_file, fixp->fx_line,
-			"Relocation cannot be done when using -mrelocatable");
+	  if ((seg->flags & (SEC_READONLY | SEC_CODE)) != 0
+	      || fixp->fx_r_type != BFD_RELOC_CTOR)
+	    {
+	      as_bad_where (fixp->fx_file, fixp->fx_line,
+			    _("Relocation cannot be done when using -mrelocatable"));
+	    }
 	}
+      return;
     }
 }
 #endif /* OBJ_ELF */
@@ -1441,7 +1538,7 @@ parse_toc_entry(toc_kind)
     }
   else
     {
-      as_bad ("syntax error: invalid toc specifier `%s'", toc_spec);
+      as_bad (_("syntax error: invalid toc specifier `%s'"), toc_spec);
       *input_line_pointer = c;   /* put back the delimiting char */
       input_line_pointer = start; /* reset input_line pointer */
       return 0;
@@ -1455,7 +1552,7 @@ parse_toc_entry(toc_kind)
 
   if (c != ']')
     {
-      as_bad ("syntax error: expected `]', found  `%c'", c);
+      as_bad (_("syntax error: expected `]', found  `%c'"), c);
       input_line_pointer = start; /* reset input_line pointer */
       return 0;
     }
@@ -1514,7 +1611,7 @@ md_assemble (str)
 
       macro = (const struct powerpc_macro *) hash_find (ppc_macro_hash, str);
       if (macro == (const struct powerpc_macro *) NULL)
-	as_bad ("Unrecognized opcode: `%s'", str);
+	as_bad (_("Unrecognized opcode: `%s'"), str);
       else
 	ppc_macro (s, macro);
 
@@ -1687,9 +1784,10 @@ md_assemble (str)
 	      if (ex.X_op == O_symbol) 
 		{		  
 		  assert (ex.X_add_symbol != NULL);
-		  if (ex.X_add_symbol->bsym->section != tocdata_section)
+		  if (symbol_get_bfdsym (ex.X_add_symbol)->section
+		      != tocdata_section)
 		    {
-		      as_bad("[tocv] symbol is not a toc symbol");
+		      as_bad(_("[tocv] symbol is not a toc symbol"));
 		    }
 		}
 
@@ -1700,16 +1798,16 @@ md_assemble (str)
 	      /*        entries. We don't support them today. Is this the   */
 	      /*        right way to say that?                              */
 	      toc_reloc = BFD_RELOC_UNUSED;
-	      as_bad ("Unimplemented toc32 expression modifier");
+	      as_bad (_("Unimplemented toc32 expression modifier"));
 	      break;
 	    case must_be_64:
 	      /* FIXME: see above */
 	      toc_reloc = BFD_RELOC_UNUSED;
-	      as_bad ("Unimplemented toc64 expression modifier");
+	      as_bad (_("Unimplemented toc64 expression modifier"));
 	      break;
 	    default:
 	      fprintf(stderr, 
-		      "Unexpected return value [%d] from parse_toc_entry!\n",
+		      _("Unexpected return value [%d] from parse_toc_entry!\n"),
 		      toc_kind);
 	      abort();
 	      break;
@@ -1717,7 +1815,7 @@ md_assemble (str)
 
 	  /* We need to generate a fixup for this expression.  */
 	  if (fc >= MAX_INSN_FIXUPS)
-	    as_fatal ("too many fixups");
+	    as_fatal (_("too many fixups"));
 
 	  fixups[fc].reloc = toc_reloc;
 	  fixups[fc].exp = ex;
@@ -1749,9 +1847,9 @@ md_assemble (str)
       input_line_pointer = hold;
 
       if (ex.X_op == O_illegal)
-	as_bad ("illegal operand");
+	as_bad (_("illegal operand"));
       else if (ex.X_op == O_absent)
-	as_bad ("missing operand");
+	as_bad (_("missing operand"));
       else if (ex.X_op == O_register)
 	{
 	  insn = ppc_insert_operand (insn, operand, ex.X_add_number,
@@ -1763,7 +1861,7 @@ md_assemble (str)
 	  /* Allow @HA, @L, @H on constants. */
 	  char *orig_str = str;
 
-	  if ((reloc = ppc_elf_suffix (&str)) != BFD_RELOC_UNUSED)
+	  if ((reloc = ppc_elf_suffix (&str, &ex)) != BFD_RELOC_UNUSED)
 	    switch (reloc)
 	      {
 	      default:
@@ -1771,13 +1869,16 @@ md_assemble (str)
 		break;
 
 	      case BFD_RELOC_LO16:
-		if (operand->flags & PPC_OPERAND_SIGNED) {
+		/* X_unsigned is the default, so if the user has done
+                   something which cleared it, we always produce a
+                   signed value.  */
+		if (ex.X_unsigned
+		    && (operand->flags & PPC_OPERAND_SIGNED) == 0)
+		  ex.X_add_number &= 0xffff;
+		else
 		  ex.X_add_number = (((ex.X_add_number & 0xffff)
 				      ^ 0x8000)
 				     - 0x8000);
-		} else {
-		  ex.X_add_number &= 0xffff;
-		}
 		break;
 
 	      case BFD_RELOC_HI16:
@@ -1785,8 +1886,9 @@ md_assemble (str)
 		break;
 
 	      case BFD_RELOC_HI16_S:
-		ex.X_add_number = (((ex.X_add_number >> 16) & 0xffff)
-				   + ((ex.X_add_number >> 15) & 1));
+		ex.X_add_number = ((((ex.X_add_number >> 16) & 0xffff)
+				    + ((ex.X_add_number >> 15) & 1))
+				   & 0xffff);
 		break;
 	      }
 #endif
@@ -1794,7 +1896,7 @@ md_assemble (str)
 				     (char *) NULL, 0);
 	}
 #ifdef OBJ_ELF
-      else if ((reloc = ppc_elf_suffix (&str)) != BFD_RELOC_UNUSED)
+      else if ((reloc = ppc_elf_suffix (&str, &ex)) != BFD_RELOC_UNUSED)
 	{
 	  /* For the absoulte forms of branchs, convert the PC relative form back into
 	     the absolute.  */
@@ -1821,7 +1923,7 @@ md_assemble (str)
 
 	  /* We need to generate a fixup for this expression.  */
 	  if (fc >= MAX_INSN_FIXUPS)
-	    as_fatal ("too many fixups");
+	    as_fatal (_("too many fixups"));
 	  fixups[fc].exp = ex;
 	  fixups[fc].opindex = 0;
 	  fixups[fc].reloc = reloc;
@@ -1833,7 +1935,7 @@ md_assemble (str)
 	{
 	  /* We need to generate a fixup for this expression.  */
 	  if (fc >= MAX_INSN_FIXUPS)
-	    as_fatal ("too many fixups");
+	    as_fatal (_("too many fixups"));
 	  fixups[fc].exp = ex;
 	  fixups[fc].opindex = *opindex_ptr;
 	  fixups[fc].reloc = BFD_RELOC_UNUSED;
@@ -1858,7 +1960,7 @@ md_assemble (str)
       if (*str != endc
 	  && (endc != ',' || *str != '\0'))
 	{
-	  as_bad ("syntax error; found `%c' but expected `%c'", *str, endc);
+	  as_bad (_("syntax error; found `%c' but expected `%c'"), *str, endc);
 	  break;
 	}
 
@@ -1870,7 +1972,7 @@ md_assemble (str)
     ++str;
 
   if (*str != '\0')
-    as_bad ("junk at end of line: `%s'", str);
+    as_bad (_("junk at end of line: `%s'"), str);
 
   /* Write out the instruction.  */
   f = frag_more (4);
@@ -1931,29 +2033,6 @@ md_assemble (str)
     }
 }
 
-#ifndef WORKING_DOT_WORD
-/* Handle long and short jumps */
-void
-md_create_short_jump (ptr, from_addr, to_addr, frag, to_symbol)
-     char *ptr;
-     addressT from_addr, to_addr;
-     fragS *frag;
-     symbolS *to_symbol;
-{
-  abort ();
-}
-
-void
-md_create_long_jump (ptr, from_addr, to_addr, frag, to_symbol)
-     char *ptr;
-     addressT from_addr, to_addr;
-     fragS *frag;
-     symbolS *to_symbol;
-{
-  abort ();
-}
-#endif
-
 /* Handle a macro.  Gather all the operands, transform them as
    described by the macro, and call md_assemble recursively.  All the
    operands are separated by commas; we don't accept parentheses
@@ -1989,7 +2068,7 @@ ppc_macro (str, macro)
 
   if (count != macro->operands)
     {
-      as_bad ("wrong number of operands");
+      as_bad (_("wrong number of operands"));
       return;
     }
 
@@ -2045,34 +2124,30 @@ ppc_section_letter (letter, ptr_msg)
   if (letter == 'e')
     return SHF_EXCLUDE;
 
-  *ptr_msg = "Bad .section directive: want a,w,x,e in string";
+  *ptr_msg = _("Bad .section directive: want a,w,x,e in string");
   return 0;
 }
 
 int
-ppc_section_word (ptr_str)
-     char **ptr_str;
+ppc_section_word (str, len)
+     char *str;
+     size_t len;
 {
-  if (strncmp (*ptr_str, "exclude", sizeof ("exclude")-1) == 0)
-    {
-      *ptr_str += sizeof ("exclude")-1;
-      return SHF_EXCLUDE;
-    }
+  if (len == 7 && strncmp (str, "exclude", 7) == 0)
+    return SHF_EXCLUDE;
 
-  return 0;
+  return -1;
 }
 
 int
-ppc_section_type (ptr_str)
-     char **ptr_str;
+ppc_section_type (str, len)
+     char *str;
+     size_t len;
 {
-  if (strncmp (*ptr_str, "ordered", sizeof ("ordered")-1) == 0)
-    {
-      *ptr_str += sizeof ("ordered")-1;
-      return SHT_ORDERED;
-    }
+  if (len == 7 && strncmp (str, "ordered", 7) == 0)
+    return SHT_ORDERED;
 
-  return 0;
+  return -1;
 }
 
 int
@@ -2099,7 +2174,7 @@ ppc_section_flags (flags, attr, type)
 
 static void
 ppc_byte (ignore)
-     int ignore;
+     int ignore ATTRIBUTE_UNUSED;
 {
   if (*input_line_pointer != '\"')
     {
@@ -2163,7 +2238,7 @@ ppc_comm (lcomm)
 
   if (*input_line_pointer != ',')
     {
-      as_bad ("missing size");
+      as_bad (_("missing size"));
       ignore_rest_of_line ();
       return;
     }
@@ -2172,7 +2247,7 @@ ppc_comm (lcomm)
   size = get_absolute_expression ();
   if (size < 0)
     {
-      as_bad ("negative size");
+      as_bad (_("negative size"));
       ignore_rest_of_line ();
       return;
     }
@@ -2188,7 +2263,7 @@ ppc_comm (lcomm)
 	  align = get_absolute_expression ();
 	  if (align <= 0)
 	    {
-	      as_warn ("ignoring bad alignment");
+	      as_warn (_("ignoring bad alignment"));
 	      align = 3;
 	    }
 	}
@@ -2213,7 +2288,7 @@ ppc_comm (lcomm)
 	 argument.  */
       if (*input_line_pointer != ',')
 	{
-	  as_bad ("missing real symbol name");
+	  as_bad (_("missing real symbol name"));
 	  ignore_rest_of_line ();
 	  return;
 	}
@@ -2234,7 +2309,7 @@ ppc_comm (lcomm)
   if (S_IS_DEFINED (sym)
       || S_GET_VALUE (sym) != 0)
     {
-      as_bad ("attempt to redefine symbol");
+      as_bad (_("attempt to redefine symbol"));
       ignore_rest_of_line ();
       return;
     }
@@ -2255,38 +2330,38 @@ ppc_comm (lcomm)
 	}
       else
 	{
-	  lcomm_sym->sy_tc.output = 1;
+	  symbol_get_tc (lcomm_sym)->output = 1;
 	  def_sym = lcomm_sym;
 	  def_size = 0;
 	}
 
       subseg_set (bss_section, 1);
-      frag_align (align, 0);
+      frag_align (align, 0, 0);
   
-      def_sym->sy_frag = frag_now;
+      symbol_set_frag (def_sym, frag_now);
       pfrag = frag_var (rs_org, 1, 1, (relax_substateT) 0, def_sym,
 			def_size, (char *) NULL);
       *pfrag = 0;
       S_SET_SEGMENT (def_sym, bss_section);
-      def_sym->sy_tc.align = align;
+      symbol_get_tc (def_sym)->align = align;
     }
   else if (lcomm)
     {
       /* Align the size of lcomm_sym.  */
-      lcomm_sym->sy_frag->fr_offset =
-	((lcomm_sym->sy_frag->fr_offset + (1 << align) - 1)
+      symbol_get_frag (lcomm_sym)->fr_offset =
+	((symbol_get_frag (lcomm_sym)->fr_offset + (1 << align) - 1)
 	 &~ ((1 << align) - 1));
-      if (align > lcomm_sym->sy_tc.align)
-	lcomm_sym->sy_tc.align = align;
+      if (align > symbol_get_tc (lcomm_sym)->align)
+	symbol_get_tc (lcomm_sym)->align = align;
     }
 
   if (lcomm)
     {
       /* Make sym an offset from lcomm_sym.  */
       S_SET_SEGMENT (sym, bss_section);
-      sym->sy_frag = lcomm_sym->sy_frag;
-      S_SET_VALUE (sym, lcomm_sym->sy_frag->fr_offset);
-      lcomm_sym->sy_frag->fr_offset += size;
+      symbol_set_frag (sym, symbol_get_frag (lcomm_sym));
+      S_SET_VALUE (sym, symbol_get_frag (lcomm_sym)->fr_offset);
+      symbol_get_frag (lcomm_sym)->fr_offset += size;
     }
 
   subseg_set (current_seg, current_subseg);
@@ -2318,7 +2393,7 @@ ppc_csect (ignore)
   if (S_GET_NAME (sym)[0] == '\0')
     {
       /* An unnamed csect is assumed to be [PR].  */
-      sym->sy_tc.class = XMC_PR;
+      symbol_get_tc (sym)->class = XMC_PR;
     }
 
   ppc_change_csect (sym);
@@ -2326,7 +2401,7 @@ ppc_csect (ignore)
   if (*input_line_pointer == ',')
     {
       ++input_line_pointer;
-      sym->sy_tc.align = get_absolute_expression ();
+      symbol_get_tc (sym)->align = get_absolute_expression ();
     }
 
   demand_empty_rest_of_line ();
@@ -2339,18 +2414,19 @@ ppc_change_csect (sym)
      symbolS *sym;
 {
   if (S_IS_DEFINED (sym))
-    subseg_set (S_GET_SEGMENT (sym), sym->sy_tc.subseg);
+    subseg_set (S_GET_SEGMENT (sym), symbol_get_tc (sym)->subseg);
   else
     {
       symbolS **list_ptr;
       int after_toc;
+      int hold_chunksize;
       symbolS *list;
 
       /* This is a new csect.  We need to look at the symbol class to
 	 figure out whether it should go in the text section or the
 	 data section.  */
       after_toc = 0;
-      switch (sym->sy_tc.class)
+      switch (symbol_get_tc (sym)->class)
 	{
 	case XMC_PR:
 	case XMC_RO:
@@ -2361,7 +2437,7 @@ ppc_change_csect (sym)
 	case XMC_TI:
 	case XMC_TB:
 	  S_SET_SEGMENT (sym, text_section);
-	  sym->sy_tc.subseg = ppc_text_subsegment;
+	  symbol_get_tc (sym)->subseg = ppc_text_subsegment;
 	  ++ppc_text_subsegment;
 	  list_ptr = &ppc_text_csects;
 	  break;
@@ -2373,10 +2449,11 @@ ppc_change_csect (sym)
 	case XMC_BS:
 	case XMC_UC:
 	  if (ppc_toc_csect != NULL
-	      && ppc_toc_csect->sy_tc.subseg + 1 == ppc_data_subsegment)
+	      && (symbol_get_tc (ppc_toc_csect)->subseg + 1
+		  == ppc_data_subsegment))
 	    after_toc = 1;
 	  S_SET_SEGMENT (sym, data_section);
-	  sym->sy_tc.subseg = ppc_data_subsegment;
+	  symbol_get_tc (sym)->subseg = ppc_data_subsegment;
 	  ++ppc_data_subsegment;
 	  list_ptr = &ppc_data_csects;
 	  break;
@@ -2384,25 +2461,36 @@ ppc_change_csect (sym)
 	  abort ();
 	}
 
-      subseg_new (segment_name (S_GET_SEGMENT (sym)), sym->sy_tc.subseg);
+      /* We set the obstack chunk size to a small value before
+         changing subsegments, so that we don't use a lot of memory
+         space for what may be a small section.  */
+      hold_chunksize = chunksize;
+      chunksize = 64;
+
+      subseg_new (segment_name (S_GET_SEGMENT (sym)),
+		  symbol_get_tc (sym)->subseg);
+
+      chunksize = hold_chunksize;
+
       if (after_toc)
 	ppc_after_toc_frag = frag_now;
 
-      sym->sy_frag = frag_now;
+      symbol_set_frag (sym, frag_now);
       S_SET_VALUE (sym, (valueT) frag_now_fix ());
 
-      sym->sy_tc.align = 2;
-      sym->sy_tc.output = 1;
-      sym->sy_tc.within = sym;
+      symbol_get_tc (sym)->align = 2;
+      symbol_get_tc (sym)->output = 1;
+      symbol_get_tc (sym)->within = sym;
 	  
       for (list = *list_ptr;
-	   list->sy_tc.next != (symbolS *) NULL;
-	   list = list->sy_tc.next)
+	   symbol_get_tc (list)->next != (symbolS *) NULL;
+	   list = symbol_get_tc (list)->next)
 	;
-      list->sy_tc.next = sym;
+      symbol_get_tc (list)->next = sym;
 	  
       symbol_remove (sym, &symbol_rootP, &symbol_lastP);
-      symbol_append (sym, list->sy_tc.within, &symbol_rootP, &symbol_lastP);
+      symbol_append (sym, symbol_get_tc (list)->within, &symbol_rootP,
+		     &symbol_lastP);
     }
 
   ppc_current_csect = sym;
@@ -2427,6 +2515,43 @@ ppc_section (type)
     abort ();
 
   sym = symbol_find_or_make (name);
+
+  ppc_change_csect (sym);
+
+  demand_empty_rest_of_line ();
+}
+
+/* This function handles the .section pseudo-op.  This is mostly to
+   give an error, since XCOFF only supports .text, .data and .bss, but
+   we do permit the user to name the text or data section.  */
+
+static void
+ppc_named_section (ignore)
+     int ignore;
+{
+  char *user_name;
+  const char *real_name;
+  char c;
+  symbolS *sym;
+
+  user_name = input_line_pointer;
+  c = get_symbol_end ();
+
+  if (strcmp (user_name, ".text") == 0)
+    real_name = ".text[PR]";
+  else if (strcmp (user_name, ".data") == 0)
+    real_name = ".data[RW]";
+  else
+    {
+      as_bad (_("The XCOFF file format does not support arbitrary sections"));
+      *input_line_pointer = c;
+      ignore_rest_of_line ();
+      return;
+    }
+
+  *input_line_pointer = c;
+
+  sym = symbol_find_or_make (real_name);
 
   ppc_change_csect (sym);
 
@@ -2469,7 +2594,7 @@ ppc_lglobl (ignore)
 
   *input_line_pointer = endc;
 
-  sym->sy_tc.output = 1;
+  symbol_get_tc (sym)->output = 1;
 
   demand_empty_rest_of_line ();
 }
@@ -2495,13 +2620,13 @@ ppc_rename (ignore)
 
   if (*input_line_pointer != ',')
     {
-      as_bad ("missing rename string");
+      as_bad (_("missing rename string"));
       ignore_rest_of_line ();
       return;
     }
   ++input_line_pointer;
 
-  sym->sy_tc.real_name = demand_copy_C_string (&len);
+  symbol_get_tc (sym)->real_name = demand_copy_C_string (&len);
 
   demand_empty_rest_of_line ();
 }
@@ -2526,7 +2651,7 @@ ppc_stabx (ignore)
 
   if (*input_line_pointer != ',')
     {
-      as_bad ("missing value");
+      as_bad (_("missing value"));
       return;
     }
   ++input_line_pointer;
@@ -2535,7 +2660,7 @@ ppc_stabx (ignore)
   sym = symbol_make (name);
   ppc_stab_symbol = false;
 
-  sym->sy_tc.real_name = name;
+  symbol_get_tc (sym)->real_name = name;
 
   (void) expression (&exp);
 
@@ -2544,22 +2669,22 @@ ppc_stabx (ignore)
     case O_illegal:
     case O_absent:
     case O_big:
-      as_bad ("illegal .stabx expression; zero assumed");
+      as_bad (_("illegal .stabx expression; zero assumed"));
       exp.X_add_number = 0;
       /* Fall through.  */
     case O_constant:
       S_SET_VALUE (sym, (valueT) exp.X_add_number);
-      sym->sy_frag = &zero_address_frag;
+      symbol_set_frag (sym, &zero_address_frag);
       break;
 
     case O_symbol:
       if (S_GET_SEGMENT (exp.X_add_symbol) == undefined_section)
-	sym->sy_value = exp;
+	symbol_set_value_expression (sym, &exp);
       else
 	{
 	  S_SET_VALUE (sym,
 		       exp.X_add_number + S_GET_VALUE (exp.X_add_symbol));
-	  sym->sy_frag = exp.X_add_symbol->sy_frag;
+	  symbol_set_frag (sym, symbol_get_frag (exp.X_add_symbol));
 	}
       break;
 
@@ -2567,16 +2692,16 @@ ppc_stabx (ignore)
       /* The value is some complex expression.  This will probably
          fail at some later point, but this is probably the right
          thing to do here.  */
-      sym->sy_value = exp;
+      symbol_set_value_expression (sym, &exp);
       break;
     }
 
   S_SET_SEGMENT (sym, ppc_coff_debug_section);
-  sym->bsym->flags |= BSF_DEBUGGING;
+  symbol_get_bfdsym (sym)->flags |= BSF_DEBUGGING;
 
   if (*input_line_pointer != ',')
     {
-      as_bad ("missing class");
+      as_bad (_("missing class"));
       return;
     }
   ++input_line_pointer;
@@ -2585,17 +2710,17 @@ ppc_stabx (ignore)
 
   if (*input_line_pointer != ',')
     {
-      as_bad ("missing type");
+      as_bad (_("missing type"));
       return;
     }
   ++input_line_pointer;
 
   S_SET_DATA_TYPE (sym, get_absolute_expression ());
 
-  sym->sy_tc.output = 1;
+  symbol_get_tc (sym)->output = 1;
 
   if (S_GET_STORAGE_CLASS (sym) == C_STSYM)
-    sym->sy_tc.within = ppc_current_block;
+    symbol_get_tc (sym)->within = ppc_current_block;
 
   if (exp.X_op != O_symbol
       || ! S_IS_EXTERNAL (exp.X_add_symbol)
@@ -2605,8 +2730,8 @@ ppc_stabx (ignore)
     {
       symbol_remove (sym, &symbol_rootP, &symbol_lastP);
       symbol_append (sym, exp.X_add_symbol, &symbol_rootP, &symbol_lastP);
-      if (ppc_current_csect->sy_tc.within == exp.X_add_symbol)
-	ppc_current_csect->sy_tc.within = sym;
+      if (symbol_get_tc (ppc_current_csect)->within == exp.X_add_symbol)
+	symbol_get_tc (ppc_current_csect)->within = sym;
     }
 
   demand_empty_rest_of_line ();
@@ -2646,7 +2771,7 @@ ppc_function (ignore)
 
   if (*input_line_pointer != ',')
     {
-      as_bad ("missing symbol name");
+      as_bad (_("missing symbol name"));
       ignore_rest_of_line ();
       return;
     }
@@ -2661,15 +2786,19 @@ ppc_function (ignore)
 
   if (ext_sym != lab_sym)
     {
-      ext_sym->sy_value.X_op = O_symbol;
-      ext_sym->sy_value.X_add_symbol = lab_sym;
-      ext_sym->sy_value.X_op_symbol = NULL;
-      ext_sym->sy_value.X_add_number = 0;
+      expressionS exp;
+
+      exp.X_op = O_symbol;
+      exp.X_add_symbol = lab_sym;
+      exp.X_op_symbol = NULL;
+      exp.X_add_number = 0;
+      exp.X_unsigned = 0;
+      symbol_set_value_expression (ext_sym, &exp);
     }
 
-  if (ext_sym->sy_tc.class == -1)
-    ext_sym->sy_tc.class = XMC_PR;
-  ext_sym->sy_tc.output = 1;
+  if (symbol_get_tc (ext_sym)->class == -1)
+    symbol_get_tc (ext_sym)->class = XMC_PR;
+  symbol_get_tc (ext_sym)->output = 1;
 
   if (*input_line_pointer == ',')
     {
@@ -2687,11 +2816,11 @@ ppc_function (ignore)
 	    {
 	      /* The fifth argument is the function size.  */
 	      ++input_line_pointer;
-	      ext_sym->sy_tc.size = symbol_new ("L0\001",
-						absolute_section,
-						(valueT) 0,
-						&zero_address_frag);
-	      pseudo_set (ext_sym->sy_tc.size);
+	      symbol_get_tc (ext_sym)->size = symbol_new ("L0\001",
+							  absolute_section,
+							  (valueT) 0,
+							  &zero_address_frag);
+	      pseudo_set (symbol_get_tc (ext_sym)->size);
 	    }
 	}
     }
@@ -2715,7 +2844,7 @@ ppc_bf (ignore)
 
   sym = symbol_make (".bf");
   S_SET_SEGMENT (sym, text_section);
-  sym->sy_frag = frag_now;
+  symbol_set_frag (sym, frag_now);
   S_SET_VALUE (sym, frag_now_fix ());
   S_SET_STORAGE_CLASS (sym, C_FCN);
 
@@ -2724,7 +2853,7 @@ ppc_bf (ignore)
   S_SET_NUMBER_AUXILIARY (sym, 1);
   SA_SET_SYM_LNNO (sym, coff_line_base);
 
-  sym->sy_tc.output = 1;
+  symbol_get_tc (sym)->output = 1;
 
   ppc_frob_label (sym);
 
@@ -2743,12 +2872,12 @@ ppc_ef (ignore)
 
   sym = symbol_make (".ef");
   S_SET_SEGMENT (sym, text_section);
-  sym->sy_frag = frag_now;
+  symbol_set_frag (sym, frag_now);
   S_SET_VALUE (sym, frag_now_fix ());
   S_SET_STORAGE_CLASS (sym, C_FCN);
   S_SET_NUMBER_AUXILIARY (sym, 1);
   SA_SET_SYM_LNNO (sym, get_absolute_expression ());
-  sym->sy_tc.output = 1;
+  symbol_get_tc (sym)->output = 1;
 
   ppc_frob_label (sym);
 
@@ -2763,6 +2892,8 @@ static void
 ppc_biei (ei)
      int ei;
 {
+  static symbolS *last_biei;
+
   char *name;
   int len;
   symbolS *sym;
@@ -2780,12 +2911,12 @@ ppc_biei (ei)
      .text section.  */
   S_SET_SEGMENT (sym, text_section);
   S_SET_VALUE (sym, coff_n_line_nos);
-  sym->bsym->flags |= BSF_DEBUGGING;
+  symbol_get_bfdsym (sym)->flags |= BSF_DEBUGGING;
 
   S_SET_STORAGE_CLASS (sym, ei ? C_EINCL : C_BINCL);
-  sym->sy_tc.output = 1;
+  symbol_get_tc (sym)->output = 1;
   
-  for (look = symbol_rootP;
+  for (look = last_biei ? last_biei : symbol_rootP;
        (look != (symbolS *) NULL
 	&& (S_GET_STORAGE_CLASS (look) == C_FILE
 	    || S_GET_STORAGE_CLASS (look) == C_BINCL
@@ -2796,6 +2927,7 @@ ppc_biei (ei)
     {
       symbol_remove (sym, &symbol_rootP, &symbol_lastP);
       symbol_insert (sym, look, &symbol_rootP, &symbol_lastP);
+      last_biei = sym;
     }
 
   demand_empty_rest_of_line ();
@@ -2815,7 +2947,7 @@ ppc_bs (ignore)
   symbolS *sym;
 
   if (ppc_current_block != NULL)
-    as_bad ("nested .bs blocks");
+    as_bad (_("nested .bs blocks"));
 
   name = input_line_pointer;
   endc = get_symbol_end ();
@@ -2827,10 +2959,10 @@ ppc_bs (ignore)
   sym = symbol_make (".bs");
   S_SET_SEGMENT (sym, now_seg);
   S_SET_STORAGE_CLASS (sym, C_BSTAT);
-  sym->bsym->flags |= BSF_DEBUGGING;
-  sym->sy_tc.output = 1;
+  symbol_get_bfdsym (sym)->flags |= BSF_DEBUGGING;
+  symbol_get_tc (sym)->output = 1;
 
-  sym->sy_tc.within = csect;
+  symbol_get_tc (sym)->within = csect;
 
   ppc_frob_label (sym);
 
@@ -2848,13 +2980,13 @@ ppc_es (ignore)
   symbolS *sym;
 
   if (ppc_current_block == NULL)
-    as_bad (".es without preceding .bs");
+    as_bad (_(".es without preceding .bs"));
 
   sym = symbol_make (".es");
   S_SET_SEGMENT (sym, now_seg);
   S_SET_STORAGE_CLASS (sym, C_ESTAT);
-  sym->bsym->flags |= BSF_DEBUGGING;
-  sym->sy_tc.output = 1;
+  symbol_get_bfdsym (sym)->flags |= BSF_DEBUGGING;
+  symbol_get_tc (sym)->output = 1;
 
   ppc_frob_label (sym);
 
@@ -2874,14 +3006,14 @@ ppc_bb (ignore)
 
   sym = symbol_make (".bb");
   S_SET_SEGMENT (sym, text_section);
-  sym->sy_frag = frag_now;
+  symbol_set_frag (sym, frag_now);
   S_SET_VALUE (sym, frag_now_fix ());
   S_SET_STORAGE_CLASS (sym, C_BLOCK);
 
   S_SET_NUMBER_AUXILIARY (sym, 1);
   SA_SET_SYM_LNNO (sym, get_absolute_expression ());
 
-  sym->sy_tc.output = 1;
+  symbol_get_tc (sym)->output = 1;
 
   SF_SET_PROCESS (sym);
 
@@ -2901,12 +3033,12 @@ ppc_eb (ignore)
 
   sym = symbol_make (".eb");
   S_SET_SEGMENT (sym, text_section);
-  sym->sy_frag = frag_now;
+  symbol_set_frag (sym, frag_now);
   S_SET_VALUE (sym, frag_now_fix ());
   S_SET_STORAGE_CLASS (sym, C_BLOCK);
   S_SET_NUMBER_AUXILIARY (sym, 1);
   SA_SET_SYM_LNNO (sym, get_absolute_expression ());
-  sym->sy_tc.output = 1;
+  symbol_get_tc (sym)->output = 1;
 
   SF_SET_PROCESS (sym);
 
@@ -2929,10 +3061,10 @@ ppc_bc (ignore)
   name = demand_copy_C_string (&len);
   sym = symbol_make (name);
   S_SET_SEGMENT (sym, ppc_coff_debug_section);
-  sym->bsym->flags |= BSF_DEBUGGING;
+  symbol_get_bfdsym (sym)->flags |= BSF_DEBUGGING;
   S_SET_STORAGE_CLASS (sym, C_BCOMM);
   S_SET_VALUE (sym, 0);
-  sym->sy_tc.output = 1;
+  symbol_get_tc (sym)->output = 1;
 
   ppc_frob_label (sym);
 
@@ -2949,10 +3081,10 @@ ppc_ec (ignore)
 
   sym = symbol_make (".ec");
   S_SET_SEGMENT (sym, ppc_coff_debug_section);
-  sym->bsym->flags |= BSF_DEBUGGING;
+  symbol_get_bfdsym (sym)->flags |= BSF_DEBUGGING;
   S_SET_STORAGE_CLASS (sym, C_ECOMM);
   S_SET_VALUE (sym, 0);
-  sym->sy_tc.output = 1;
+  symbol_get_tc (sym)->output = 1;
 
   ppc_frob_label (sym);
 
@@ -2966,7 +3098,7 @@ ppc_toc (ignore)
      int ignore;
 {
   if (ppc_toc_csect != (symbolS *) NULL)
-    subseg_set (data_section, ppc_toc_csect->sy_tc.subseg);
+    subseg_set (data_section, symbol_get_tc (ppc_toc_csect)->subseg);
   else
     {
       subsegT subseg;
@@ -2980,28 +3112,68 @@ ppc_toc (ignore)
       ppc_toc_frag = frag_now;
 
       sym = symbol_find_or_make ("TOC[TC0]");
-      sym->sy_frag = frag_now;
+      symbol_set_frag (sym, frag_now);
       S_SET_SEGMENT (sym, data_section);
       S_SET_VALUE (sym, (valueT) frag_now_fix ());
-      sym->sy_tc.subseg = subseg;
-      sym->sy_tc.output = 1;
-      sym->sy_tc.within = sym;
+      symbol_get_tc (sym)->subseg = subseg;
+      symbol_get_tc (sym)->output = 1;
+      symbol_get_tc (sym)->within = sym;
 
       ppc_toc_csect = sym;
 	  
       for (list = ppc_data_csects;
-	   list->sy_tc.next != (symbolS *) NULL;
-	   list = list->sy_tc.next)
+	   symbol_get_tc (list)->next != (symbolS *) NULL;
+	   list = symbol_get_tc (list)->next)
 	;
-      list->sy_tc.next = sym;
+      symbol_get_tc (list)->next = sym;
 
       symbol_remove (sym, &symbol_rootP, &symbol_lastP);
-      symbol_append (sym, list->sy_tc.within, &symbol_rootP, &symbol_lastP);
+      symbol_append (sym, symbol_get_tc (list)->within, &symbol_rootP,
+		     &symbol_lastP);
     }
 
   ppc_current_csect = ppc_toc_csect;
 
   demand_empty_rest_of_line ();
+}
+
+/* The AIX assembler automatically aligns the operands of a .long or
+   .short pseudo-op, and we want to be compatible.  */
+
+static void
+ppc_xcoff_cons (log_size)
+     int log_size;
+{
+  frag_align (log_size, 0, 0);
+  record_alignment (now_seg, log_size);
+  cons (1 << log_size);
+}
+
+static void
+ppc_vbyte (dummy)
+     int dummy;
+{
+  expressionS exp;
+  int byte_count;
+
+  (void) expression (&exp);
+
+  if (exp.X_op != O_constant)
+    {
+      as_bad (_("non-constant byte count"));
+      return;
+    }
+
+  byte_count = exp.X_add_number;
+
+  if (*input_line_pointer != ',')
+    {
+      as_bad (_("missing value"));
+      return;
+    }
+
+  ++input_line_pointer;
+  cons (byte_count);
 }
 
 #endif /* OBJ_XCOFF */
@@ -3020,7 +3192,7 @@ ppc_toc (ignore)
 
 static void
 ppc_tc (ignore)
-     int ignore;
+     int ignore ATTRIBUTE_UNUSED;
 {
 #ifdef OBJ_XCOFF
 
@@ -3033,7 +3205,7 @@ ppc_tc (ignore)
     if (ppc_toc_csect == (symbolS *) NULL
 	|| ppc_toc_csect != ppc_current_csect)
       {
-	as_bad (".tc not in .toc section");
+	as_bad (_(".tc not in .toc section"));
 	ignore_rest_of_line ();
 	return;
       }
@@ -3049,16 +3221,16 @@ ppc_tc (ignore)
       {
 	symbolS *label;
 
-	label = ppc_current_csect->sy_tc.within;
-	if (label->sy_tc.class != XMC_TC0)
+	label = symbol_get_tc (ppc_current_csect)->within;
+	if (symbol_get_tc (label)->class != XMC_TC0)
 	  {
-	    as_bad (".tc with no label");
+	    as_bad (_(".tc with no label"));
 	    ignore_rest_of_line ();
 	    return;
 	  }
 
 	S_SET_SEGMENT (label, S_GET_SEGMENT (sym));
-	label->sy_frag = sym->sy_frag;
+	symbol_set_frag (label, symbol_get_frag (sym));
 	S_SET_VALUE (label, S_GET_VALUE (sym));
 
 	while (! is_end_of_line[(unsigned char) *input_line_pointer])
@@ -3068,10 +3240,10 @@ ppc_tc (ignore)
       }
 
     S_SET_SEGMENT (sym, now_seg);
-    sym->sy_frag = frag_now;
+    symbol_set_frag (sym, frag_now);
     S_SET_VALUE (sym, (valueT) frag_now_fix ());
-    sym->sy_tc.class = XMC_TC;
-    sym->sy_tc.output = 1;
+    symbol_get_tc (sym)->class = XMC_TC;
+    symbol_get_tc (sym)->output = 1;
 
     ppc_frob_label (sym);
   }
@@ -3087,7 +3259,7 @@ ppc_tc (ignore)
     ++input_line_pointer;
 
   /* Align to a four byte boundary.  */
-  frag_align (2, 0);
+  frag_align (2, 0, 0);
   record_alignment (now_seg, 2);
 
 #endif /* ! defined (OBJ_XCOFF) */
@@ -3127,7 +3299,7 @@ ppc_previous(ignore)
 
   if (ppc_previous_section == NULL) 
     {
-      as_warn("No previous section to return to. Directive ignored.");
+      as_warn(_("No previous section to return to. Directive ignored."));
       return;
     }
 
@@ -3372,7 +3544,7 @@ ppc_pe_comm(lcomm)
   SKIP_WHITESPACE ();
   if (*input_line_pointer != ',')
     {
-      as_bad ("Expected comma after symbol-name: rest of line ignored.");
+      as_bad (_("Expected comma after symbol-name: rest of line ignored."));
       ignore_rest_of_line ();
       return;
     }
@@ -3380,7 +3552,7 @@ ppc_pe_comm(lcomm)
   input_line_pointer++;		/* skip ',' */
   if ((temp = get_absolute_expression ()) < 0)
     {
-      as_warn (".COMMon length (%ld.) <0! Ignored.", (long) temp);
+      as_warn (_(".COMMon length (%ld.) <0! Ignored."), (long) temp);
       ignore_rest_of_line ();
       return;
     }
@@ -3396,7 +3568,7 @@ ppc_pe_comm(lcomm)
 	  align = get_absolute_expression ();
 	  if (align <= 0)
 	    {
-	      as_warn ("ignoring bad alignment");
+	      as_warn (_("ignoring bad alignment"));
 	      align = 3;
 	    }
 	}
@@ -3406,9 +3578,9 @@ ppc_pe_comm(lcomm)
   symbolP = symbol_find_or_make (name);
 
   *p = c;
-  if (S_IS_DEFINED (symbolP))
+  if (S_IS_DEFINED (symbolP) && ! S_IS_COMMON (symbolP))
     {
-      as_bad ("Ignoring attempt to re-define symbol `%s'.",
+      as_bad (_("Ignoring attempt to re-define symbol `%s'."),
 	      S_GET_NAME (symbolP));
       ignore_rest_of_line ();
       return;
@@ -3417,7 +3589,7 @@ ppc_pe_comm(lcomm)
   if (S_GET_VALUE (symbolP))
     {
       if (S_GET_VALUE (symbolP) != (valueT) temp)
-	as_bad ("Length of .comm \"%s\" is already %ld. Not changed to %ld.",
+	as_bad (_("Length of .comm \"%s\" is already %ld. Not changed to %ld."),
 		S_GET_NAME (symbolP),
 		(long) S_GET_VALUE (symbolP),
 		(long) temp);
@@ -3546,7 +3718,7 @@ ppc_pe_section (ignore)
 		{
 		  /* Section Contents */
 		case 'a': /* unknown */
-		  as_bad ("Unsupported section attribute -- 'a'");
+		  as_bad (_("Unsupported section attribute -- 'a'"));
 		  break;
 		case 'c': /* code section */
 		  flags |= SEC_CODE; 
@@ -3616,7 +3788,7 @@ ppc_pe_section (ignore)
 		  break;
 
 		default:
-		  as_bad("unknown section attribute '%c'",
+		  as_bad(_("unknown section attribute '%c'"),
 			 *input_line_pointer);
 		  break;
 		}
@@ -3634,7 +3806,7 @@ ppc_pe_section (ignore)
   if (flags != SEC_NO_FLAGS)
     {
       if (! bfd_set_section_flags (stdoutput, sec, flags))
-	as_bad ("error setting flags for \"%s\": %s",
+	as_bad (_("error setting flags for \"%s\": %s"),
 		bfd_section_name (stdoutput, sec),
 		bfd_errmsg (bfd_get_error ()));
     }
@@ -3736,7 +3908,7 @@ ppc_canonicalize_symbol_name (name)
 	  *s = toupper (*s);
 
       if (*s == '\0' || s[1] != '\0')
-	as_bad ("bad symbol suffix");
+	as_bad (_("bad symbol suffix"));
 
       *s = ']';
     }
@@ -3751,16 +3923,18 @@ void
 ppc_symbol_new_hook (sym)
      symbolS *sym;
 {
+  struct ppc_tc_sy *tc;
   const char *s;
 
-  sym->sy_tc.next = NULL;
-  sym->sy_tc.output = 0;
-  sym->sy_tc.class = -1;
-  sym->sy_tc.real_name = NULL;
-  sym->sy_tc.subseg = 0;
-  sym->sy_tc.align = 0;
-  sym->sy_tc.size = NULL;
-  sym->sy_tc.within = NULL;
+  tc = symbol_get_tc (sym);
+  tc->next = NULL;
+  tc->output = 0;
+  tc->class = -1;
+  tc->real_name = NULL;
+  tc->subseg = 0;
+  tc->align = 0;
+  tc->size = NULL;
+  tc->within = NULL;
 
   if (ppc_stab_symbol)
     return;
@@ -3778,56 +3952,56 @@ ppc_symbol_new_hook (sym)
     {
     case 'B':
       if (strcmp (s, "BS]") == 0)
-	sym->sy_tc.class = XMC_BS;
+	tc->class = XMC_BS;
       break;
     case 'D':
       if (strcmp (s, "DB]") == 0)
-	sym->sy_tc.class = XMC_DB;
+	tc->class = XMC_DB;
       else if (strcmp (s, "DS]") == 0)
-	sym->sy_tc.class = XMC_DS;
+	tc->class = XMC_DS;
       break;
     case 'G':
       if (strcmp (s, "GL]") == 0)
-	sym->sy_tc.class = XMC_GL;
+	tc->class = XMC_GL;
       break;
     case 'P':
       if (strcmp (s, "PR]") == 0)
-	sym->sy_tc.class = XMC_PR;
+	tc->class = XMC_PR;
       break;
     case 'R':
       if (strcmp (s, "RO]") == 0)
-	sym->sy_tc.class = XMC_RO;
+	tc->class = XMC_RO;
       else if (strcmp (s, "RW]") == 0)
-	sym->sy_tc.class = XMC_RW;
+	tc->class = XMC_RW;
       break;
     case 'S':
       if (strcmp (s, "SV]") == 0)
-	sym->sy_tc.class = XMC_SV;
+	tc->class = XMC_SV;
       break;
     case 'T':
       if (strcmp (s, "TC]") == 0)
-	sym->sy_tc.class = XMC_TC;
+	tc->class = XMC_TC;
       else if (strcmp (s, "TI]") == 0)
-	sym->sy_tc.class = XMC_TI;
+	tc->class = XMC_TI;
       else if (strcmp (s, "TB]") == 0)
-	sym->sy_tc.class = XMC_TB;
+	tc->class = XMC_TB;
       else if (strcmp (s, "TC0]") == 0 || strcmp (s, "T0]") == 0)
-	sym->sy_tc.class = XMC_TC0;
+	tc->class = XMC_TC0;
       break;
     case 'U':
       if (strcmp (s, "UA]") == 0)
-	sym->sy_tc.class = XMC_UA;
+	tc->class = XMC_UA;
       else if (strcmp (s, "UC]") == 0)
-	sym->sy_tc.class = XMC_UC;
+	tc->class = XMC_UC;
       break;
     case 'X':
       if (strcmp (s, "XO]") == 0)
-	sym->sy_tc.class = XMC_XO;
+	tc->class = XMC_XO;
       break;
     }
 
-  if (sym->sy_tc.class == -1)
-    as_bad ("Unrecognized symbol suffix");
+  if (tc->class == -1)
+    as_bad (_("Unrecognized symbol suffix"));
 }
 
 /* Set the class of a label based on where it is defined.  This
@@ -3840,13 +4014,13 @@ ppc_frob_label (sym)
 {
   if (ppc_current_csect != (symbolS *) NULL)
     {
-      if (sym->sy_tc.class == -1)
-	sym->sy_tc.class = ppc_current_csect->sy_tc.class;
+      if (symbol_get_tc (sym)->class == -1)
+	symbol_get_tc (sym)->class = symbol_get_tc (ppc_current_csect)->class;
 
       symbol_remove (sym, &symbol_rootP, &symbol_lastP);
-      symbol_append (sym, ppc_current_csect->sy_tc.within, &symbol_rootP,
-		     &symbol_lastP);
-      ppc_current_csect->sy_tc.within = sym;
+      symbol_append (sym, symbol_get_tc (ppc_current_csect)->within,
+		     &symbol_rootP, &symbol_lastP);
+      symbol_get_tc (ppc_current_csect)->within = sym;
     }
 }
 
@@ -3870,15 +4044,15 @@ ppc_frob_symbol (sym)
 
   /* Discard symbols that should not be included in the output symbol
      table.  */
-  if (! sym->sy_used_in_reloc
-      && ((sym->bsym->flags & BSF_SECTION_SYM) != 0
+  if (! symbol_used_in_reloc_p (sym)
+      && ((symbol_get_bfdsym (sym)->flags & BSF_SECTION_SYM) != 0
 	  || (! S_IS_EXTERNAL (sym)
-	      && ! sym->sy_tc.output
+	      && ! symbol_get_tc (sym)->output
 	      && S_GET_STORAGE_CLASS (sym) != C_FILE)))
     return 1;
 
-  if (sym->sy_tc.real_name != (char *) NULL)
-    S_SET_NAME (sym, sym->sy_tc.real_name);
+  if (symbol_get_tc (sym)->real_name != (char *) NULL)
+    S_SET_NAME (sym, symbol_get_tc (sym)->real_name);
   else
     {
       const char *name;
@@ -3909,19 +4083,20 @@ ppc_frob_symbol (sym)
   if (SF_GET_FUNCTION (sym))
     {
       if (ppc_last_function != (symbolS *) NULL)
-	as_bad ("two .function pseudo-ops with no intervening .ef");
+	as_bad (_("two .function pseudo-ops with no intervening .ef"));
       ppc_last_function = sym;
-      if (sym->sy_tc.size != (symbolS *) NULL)
+      if (symbol_get_tc (sym)->size != (symbolS *) NULL)
 	{
-	  resolve_symbol_value (sym->sy_tc.size);
-	  SA_SET_SYM_FSIZE (sym, (long) S_GET_VALUE (sym->sy_tc.size));
+	  resolve_symbol_value (symbol_get_tc (sym)->size, 1);
+	  SA_SET_SYM_FSIZE (sym,
+			    (long) S_GET_VALUE (symbol_get_tc (sym)->size));
 	}
     }
   else if (S_GET_STORAGE_CLASS (sym) == C_FCN
 	   && strcmp (S_GET_NAME (sym), ".ef") == 0)
     {
       if (ppc_last_function == (symbolS *) NULL)
-	as_bad (".ef with no preceding .function");
+	as_bad (_(".ef with no preceding .function"));
       else
 	{
 	  set_end = ppc_last_function;
@@ -3934,7 +4109,7 @@ ppc_frob_symbol (sym)
     }
 
   if (! S_IS_EXTERNAL (sym)
-      && (sym->bsym->flags & BSF_SECTION_SYM) == 0
+      && (symbol_get_bfdsym (sym)->flags & BSF_SECTION_SYM) == 0
       && S_GET_STORAGE_CLASS (sym) != C_FILE
       && S_GET_STORAGE_CLASS (sym) != C_FCN
       && S_GET_STORAGE_CLASS (sym) != C_BLOCK
@@ -3954,39 +4129,39 @@ ppc_frob_symbol (sym)
       /* Create a csect aux.  */
       i = S_GET_NUMBER_AUXILIARY (sym);
       S_SET_NUMBER_AUXILIARY (sym, i + 1);
-      a = &coffsymbol (sym->bsym)->native[i + 1].u.auxent;
-      if (sym->sy_tc.class == XMC_TC0)
+      a = &coffsymbol (symbol_get_bfdsym (sym))->native[i + 1].u.auxent;
+      if (symbol_get_tc (sym)->class == XMC_TC0)
 	{
 	  /* This is the TOC table.  */
 	  know (strcmp (S_GET_NAME (sym), "TOC") == 0);
 	  a->x_csect.x_scnlen.l = 0;
 	  a->x_csect.x_smtyp = (2 << 3) | XTY_SD;
 	}
-      else if (sym->sy_tc.subseg != 0)
+      else if (symbol_get_tc (sym)->subseg != 0)
 	{
 	  /* This is a csect symbol.  x_scnlen is the size of the
 	     csect.  */
-	  if (sym->sy_tc.next == (symbolS *) NULL)
+	  if (symbol_get_tc (sym)->next == (symbolS *) NULL)
 	    a->x_csect.x_scnlen.l = (bfd_section_size (stdoutput,
 						       S_GET_SEGMENT (sym))
 				     - S_GET_VALUE (sym));
 	  else
 	    {
-	      resolve_symbol_value (sym->sy_tc.next);
-	      a->x_csect.x_scnlen.l = (S_GET_VALUE (sym->sy_tc.next)
+	      resolve_symbol_value (symbol_get_tc (sym)->next, 1);
+	      a->x_csect.x_scnlen.l = (S_GET_VALUE (symbol_get_tc (sym)->next)
 				       - S_GET_VALUE (sym));
 	    }
-	  a->x_csect.x_smtyp = (sym->sy_tc.align << 3) | XTY_SD;
+	  a->x_csect.x_smtyp = (symbol_get_tc (sym)->align << 3) | XTY_SD;
 	}
       else if (S_GET_SEGMENT (sym) == bss_section)
 	{
 	  /* This is a common symbol.  */
-	  a->x_csect.x_scnlen.l = sym->sy_frag->fr_offset;
-	  a->x_csect.x_smtyp = (sym->sy_tc.align << 3) | XTY_CM;
+	  a->x_csect.x_scnlen.l = symbol_get_frag (sym)->fr_offset;
+	  a->x_csect.x_smtyp = (symbol_get_tc (sym)->align << 3) | XTY_CM;
 	  if (S_IS_EXTERNAL (sym))
-	    sym->sy_tc.class = XMC_RW;
+	    symbol_get_tc (sym)->class = XMC_RW;
 	  else
-	    sym->sy_tc.class = XMC_BS;
+	    symbol_get_tc (sym)->class = XMC_BS;
 	}
       else if (S_GET_SEGMENT (sym) == absolute_section)
 	{
@@ -3994,8 +4169,8 @@ ppc_frob_symbol (sym)
              ppc_adjust_symtab.  */
 	  ppc_saw_abs = true;
 	  a->x_csect.x_smtyp = XTY_LD;
-	  if (sym->sy_tc.class == -1)
-	    sym->sy_tc.class = XMC_XO;
+	  if (symbol_get_tc (sym)->class == -1)
+	    symbol_get_tc (sym)->class = XMC_XO;
 	}
       else if (! S_IS_DEFINED (sym))
 	{
@@ -4003,17 +4178,17 @@ ppc_frob_symbol (sym)
 	  a->x_csect.x_scnlen.l = 0;
 	  a->x_csect.x_smtyp = XTY_ER;
 	}
-      else if (sym->sy_tc.class == XMC_TC)
+      else if (symbol_get_tc (sym)->class == XMC_TC)
 	{
 	  symbolS *next;
 
 	  /* This is a TOC definition.  x_scnlen is the size of the
 	     TOC entry.  */
 	  next = symbol_next (sym);
-	  while (next->sy_tc.class == XMC_TC0)
+	  while (symbol_get_tc (next)->class == XMC_TC0)
 	    next = symbol_next (next);
 	  if (next == (symbolS *) NULL
-	      || next->sy_tc.class != XMC_TC)
+	      || symbol_get_tc (next)->class != XMC_TC)
 	    {
 	      if (ppc_after_toc_frag == (fragS *) NULL)
 		a->x_csect.x_scnlen.l = (bfd_section_size (stdoutput,
@@ -4025,7 +4200,7 @@ ppc_frob_symbol (sym)
 	    }
 	  else
 	    {
-	      resolve_symbol_value (next);
+	      resolve_symbol_value (next, 1);
 	      a->x_csect.x_scnlen.l = (S_GET_VALUE (next)
 				       - S_GET_VALUE (sym));
 	    }
@@ -4045,40 +4220,43 @@ ppc_frob_symbol (sym)
 	    abort ();
 
 	  /* Skip the initial dummy symbol.  */
-	  csect = csect->sy_tc.next;
+	  csect = symbol_get_tc (csect)->next;
 
 	  if (csect == (symbolS *) NULL)
 	    {
-	      as_warn ("warning: symbol %s has no csect", S_GET_NAME (sym));
+	      as_warn (_("warning: symbol %s has no csect"), S_GET_NAME (sym));
 	      a->x_csect.x_scnlen.l = 0;
 	    }
 	  else
 	    {
-	      while (csect->sy_tc.next != (symbolS *) NULL)
+	      while (symbol_get_tc (csect)->next != (symbolS *) NULL)
 		{
-		  resolve_symbol_value (csect->sy_tc.next);
-		  if (S_GET_VALUE (csect->sy_tc.next) > S_GET_VALUE (sym))
+		  resolve_symbol_value (symbol_get_tc (csect)->next, 1);
+		  if (S_GET_VALUE (symbol_get_tc (csect)->next)
+		      > S_GET_VALUE (sym))
 		    break;
-		  csect = csect->sy_tc.next;
+		  csect = symbol_get_tc (csect)->next;
 		}
 
-	      a->x_csect.x_scnlen.p = coffsymbol (csect->bsym)->native;
-	      coffsymbol (sym->bsym)->native[i + 1].fix_scnlen = 1;
+	      a->x_csect.x_scnlen.p =
+		coffsymbol (symbol_get_bfdsym (csect))->native;
+	      coffsymbol (symbol_get_bfdsym (sym))->native[i + 1].fix_scnlen =
+		1;
 	    }
 	  a->x_csect.x_smtyp = XTY_LD;
 	}
 	
       a->x_csect.x_parmhash = 0;
       a->x_csect.x_snhash = 0;
-      if (sym->sy_tc.class == -1)
+      if (symbol_get_tc (sym)->class == -1)
 	a->x_csect.x_smclas = XMC_PR;
       else
-	a->x_csect.x_smclas = sym->sy_tc.class;
+	a->x_csect.x_smclas = symbol_get_tc (sym)->class;
       a->x_csect.x_stab = 0;
       a->x_csect.x_snstab = 0;
 
       /* Don't let the COFF backend resort these symbols.  */
-      sym->bsym->flags |= BSF_NOT_AT_END;
+      symbol_get_bfdsym (sym)->flags |= BSF_NOT_AT_END;
     }
   else if (S_GET_STORAGE_CLASS (sym) == C_BSTAT)
     {
@@ -4086,8 +4264,10 @@ ppc_frob_symbol (sym)
 	 csect symbol.  BFD will do that for us if we set the right
 	 flags.  */
       S_SET_VALUE (sym,
-		   (valueT) coffsymbol (sym->sy_tc.within->bsym)->native);
-      coffsymbol (sym->bsym)->native->fix_value = 1;
+		   ((valueT)
+		    coffsymbol (symbol_get_bfdsym
+				(symbol_get_tc (sym)->within))->native));
+      coffsymbol (symbol_get_bfdsym (sym))->native->fix_value = 1;
     }
   else if (S_GET_STORAGE_CLASS (sym) == C_STSYM)
     {
@@ -4095,9 +4275,9 @@ ppc_frob_symbol (sym)
       symbolS *csect;
 
       /* The value is the offset from the enclosing csect.  */
-      block = sym->sy_tc.within;
-      csect = block->sy_tc.within;
-      resolve_symbol_value (csect);
+      block = symbol_get_tc (sym)->within;
+      csect = symbol_get_tc (block)->within;
+      resolve_symbol_value (csect, 1);
       S_SET_VALUE (sym, S_GET_VALUE (sym) - S_GET_VALUE (csect));
     }
   else if (S_GET_STORAGE_CLASS (sym) == C_BINCL
@@ -4106,7 +4286,7 @@ ppc_frob_symbol (sym)
       /* We want the value to be a file offset into the line numbers.
          BFD will do that for us if we set the right flags.  We have
          already set the value correctly.  */
-      coffsymbol (sym->bsym)->native->fix_line = 1;
+      coffsymbol (symbol_get_bfdsym (sym))->native->fix_line = 1;
     }
 
   return 0;
@@ -4134,11 +4314,11 @@ ppc_adjust_symtab ()
 
       csect = symbol_create (".abs[XO]", absolute_section,
 			     S_GET_VALUE (sym), &zero_address_frag);
-      csect->bsym->value = S_GET_VALUE (sym);
+      symbol_get_bfdsym (csect)->value = S_GET_VALUE (sym);
       S_SET_STORAGE_CLASS (csect, C_HIDEXT);
       i = S_GET_NUMBER_AUXILIARY (csect);
       S_SET_NUMBER_AUXILIARY (csect, i + 1);
-      a = &coffsymbol (csect->bsym)->native[i + 1].u.auxent;
+      a = &coffsymbol (symbol_get_bfdsym (csect))->native[i + 1].u.auxent;
       a->x_csect.x_scnlen.l = 0;
       a->x_csect.x_smtyp = XTY_SD;
       a->x_csect.x_parmhash = 0;
@@ -4150,9 +4330,9 @@ ppc_adjust_symtab ()
       symbol_insert (csect, sym, &symbol_rootP, &symbol_lastP);
 
       i = S_GET_NUMBER_AUXILIARY (sym);
-      a = &coffsymbol (sym->bsym)->native[i].u.auxent;
-      a->x_csect.x_scnlen.p = coffsymbol (csect->bsym)->native;
-      coffsymbol (sym->bsym)->native[i].fix_scnlen = 1;
+      a = &coffsymbol (symbol_get_bfdsym (sym))->native[i].u.auxent;
+      a->x_csect.x_scnlen.p = coffsymbol (symbol_get_bfdsym (csect))->native;
+      coffsymbol (symbol_get_bfdsym (sym))->native[i].fix_scnlen = 1;
     }
 
   ppc_saw_abs = false;
@@ -4201,7 +4381,7 @@ md_atof (type, litp, sizep)
 
     default:
       *sizep = 0;
-      return "bad call to md_atof";
+      return _("bad call to md_atof");
     }
 
   t = atof_ieee (input_line_pointer, type, words);
@@ -4261,8 +4441,8 @@ md_section_align (seg, addr)
 
 int
 md_estimate_size_before_relax (fragp, seg)
-     fragS *fragp;
-     asection *seg;
+     fragS *fragp ATTRIBUTE_UNUSED;
+     asection *seg ATTRIBUTE_UNUSED;
 {
   abort ();
   return 0;
@@ -4272,9 +4452,9 @@ md_estimate_size_before_relax (fragp, seg)
 
 void
 md_convert_frag (abfd, sec, fragp)
-     bfd *abfd;
-     asection *sec;
-     fragS *fragp;
+     bfd *abfd ATTRIBUTE_UNUSED;
+     asection *sec ATTRIBUTE_UNUSED;
+     fragS *fragp ATTRIBUTE_UNUSED;
 {
   abort ();
 }
@@ -4284,7 +4464,7 @@ md_convert_frag (abfd, sec, fragp)
 /*ARGSUSED*/
 symbolS *
 md_undefined_symbol (name)
-     char *name;
+     char *name ATTRIBUTE_UNUSED;
 {
   return 0;
 }
@@ -4297,15 +4477,8 @@ md_undefined_symbol (name)
 long
 md_pcrel_from_section (fixp, sec)
      fixS *fixp;
-     segT sec;
+     segT sec ATTRIBUTE_UNUSED;
 {
-#ifdef OBJ_ELF
-  if (fixp->fx_addsy != (symbolS *) NULL
-      && (! S_IS_DEFINED (fixp->fx_addsy)
-	  || TC_FORCE_RELOCATION_SECTION (fixp, sec)))
-    return 0;
-#endif
-
   return fixp->fx_frag->fr_address + fixp->fx_where;
 }
 
@@ -4322,7 +4495,7 @@ ppc_fix_adjustable (fix)
 {
   valueT val;
 
-  resolve_symbol_value (fix->fx_addsy);
+  resolve_symbol_value (fix->fx_addsy, 1);
   val = S_GET_VALUE (fix->fx_addsy);
   if (ppc_toc_csect != (symbolS *) NULL
       && fix->fx_addsy != (symbolS *) NULL
@@ -4338,11 +4511,11 @@ ppc_fix_adjustable (fix)
 	   sy != (symbolS *) NULL;
 	   sy = symbol_next (sy))
 	{
-	  if (sy->sy_tc.class == XMC_TC0)
+	  if (symbol_get_tc (sy)->class == XMC_TC0)
 	    continue;
-	  if (sy->sy_tc.class != XMC_TC)
+	  if (symbol_get_tc (sy)->class != XMC_TC)
 	    break;
-	  resolve_symbol_value (sy);
+	  resolve_symbol_value (sy, 1);
 	  if (val == S_GET_VALUE (sy))
 	    {
 	      fix->fx_addsy = sy;
@@ -4352,15 +4525,21 @@ ppc_fix_adjustable (fix)
 	}
 
       as_bad_where (fix->fx_file, fix->fx_line,
-		    "symbol in .toc does not match any .tc");
+		    _("symbol in .toc does not match any .tc"));
     }
 
   /* Possibly adjust the reloc to be against the csect.  */
   if (fix->fx_addsy != (symbolS *) NULL
-      && fix->fx_addsy->sy_tc.subseg == 0
-      && fix->fx_addsy->sy_tc.class != XMC_TC0
-      && fix->fx_addsy->sy_tc.class != XMC_TC
-      && S_GET_SEGMENT (fix->fx_addsy) != bss_section)
+      && symbol_get_tc (fix->fx_addsy)->subseg == 0
+      && symbol_get_tc (fix->fx_addsy)->class != XMC_TC0
+      && symbol_get_tc (fix->fx_addsy)->class != XMC_TC
+      && S_GET_SEGMENT (fix->fx_addsy) != bss_section
+      /* Don't adjust if this is a reloc in the toc section.  */
+      && (S_GET_SEGMENT (fix->fx_addsy) != data_section
+	  || ppc_toc_csect == NULL
+	  || val < ppc_toc_frag->fr_address
+	  || (ppc_after_toc_frag != NULL
+	      && val >= ppc_after_toc_frag->fr_address)))
     {
       symbolS *csect;
 
@@ -4372,17 +4551,44 @@ ppc_fix_adjustable (fix)
 	abort ();
 
       /* Skip the initial dummy symbol.  */
-      csect = csect->sy_tc.next;
+      csect = symbol_get_tc (csect)->next;
 
       if (csect != (symbolS *) NULL)
 	{
-	  while (csect->sy_tc.next != (symbolS *) NULL
-		 && (csect->sy_tc.next->sy_frag->fr_address
-		     <= fix->fx_addsy->sy_frag->fr_address))
-	    csect = csect->sy_tc.next;
+	  while (symbol_get_tc (csect)->next != (symbolS *) NULL
+		 && (symbol_get_frag (symbol_get_tc (csect)->next)->fr_address
+		     <= val))
+	    {
+	      /* If the csect address equals the symbol value, then we
+                 have to look through the full symbol table to see
+                 whether this is the csect we want.  Note that we will
+                 only get here if the csect has zero length.  */
+	      if ((symbol_get_frag (csect)->fr_address == val)
+		  && S_GET_VALUE (csect) == S_GET_VALUE (fix->fx_addsy))
+		{
+		  symbolS *scan;
+
+		  for (scan = symbol_next (csect);
+		       scan != NULL;
+		       scan = symbol_next (scan))
+		    {
+		      if (symbol_get_tc (scan)->subseg != 0)
+			break;
+		      if (scan == fix->fx_addsy)
+			break;
+		    }
+
+		  /* If we found the symbol before the next csect
+                     symbol, then this is the csect we want.  */
+		  if (scan == fix->fx_addsy)
+		    break;
+		}
+
+	      csect = symbol_get_tc (csect)->next;
+	    }
 
 	  fix->fx_offset += (S_GET_VALUE (fix->fx_addsy)
-			     - csect->sy_frag->fr_address);
+			     - symbol_get_frag (csect)->fr_address);
 	  fix->fx_addsy = csect;
 	}
     }
@@ -4393,10 +4599,11 @@ ppc_fix_adjustable (fix)
       && S_GET_SEGMENT (fix->fx_addsy) == bss_section
       && ! S_IS_EXTERNAL (fix->fx_addsy))
     {
-      resolve_symbol_value (fix->fx_addsy->sy_frag->fr_symbol);
-      fix->fx_offset += (S_GET_VALUE (fix->fx_addsy)
-			 - S_GET_VALUE (fix->fx_addsy->sy_frag->fr_symbol));
-      fix->fx_addsy = fix->fx_addsy->sy_frag->fr_symbol;
+      resolve_symbol_value (symbol_get_frag (fix->fx_addsy)->fr_symbol, 1);
+      fix->fx_offset +=
+	(S_GET_VALUE (fix->fx_addsy)
+	 - S_GET_VALUE (symbol_get_frag (fix->fx_addsy)->fr_symbol));
+      fix->fx_addsy = symbol_get_frag (fix->fx_addsy)->fr_symbol;
     }
 
   return 0;
@@ -4416,10 +4623,11 @@ ppc_force_relocation (fix)
      we need to force the relocation.  */
   if (fix->fx_pcrel
       && fix->fx_addsy != NULL
-      && fix->fx_addsy->sy_tc.subseg != 0
-      && (fix->fx_addsy->sy_frag->fr_address > fix->fx_frag->fr_address
-	  || (fix->fx_addsy->sy_tc.next != NULL
-	      && (fix->fx_addsy->sy_tc.next->sy_frag->fr_address
+      && symbol_get_tc (fix->fx_addsy)->subseg != 0
+      && ((symbol_get_frag (fix->fx_addsy)->fr_address
+	   > fix->fx_frag->fr_address)
+	  || (symbol_get_tc (fix->fx_addsy)->next != NULL
+	      && (symbol_get_frag (symbol_get_tc (fix->fx_addsy)->next)->fr_address
 		  <= fix->fx_frag->fr_address))))
     return 1;
 
@@ -4435,7 +4643,7 @@ ppc_is_toc_sym (sym)
      symbolS *sym;
 {
 #ifdef OBJ_XCOFF
-  return sym->sy_tc.class == XMC_TC;
+  return symbol_get_tc (sym)->class == XMC_TC;
 #else
   return strcmp (segment_name (S_GET_SEGMENT (sym)), ".got") == 0;
 #endif
@@ -4458,17 +4666,39 @@ md_apply_fix3 (fixp, valuep, seg)
 {
   valueT value;
 
+#ifdef OBJ_ELF
+  value = *valuep;
+  if (fixp->fx_addsy != NULL)
+    {
+      /* `*valuep' may contain the value of the symbol on which the reloc
+	 will be based; we have to remove it.  */
+      if (symbol_used_in_reloc_p (fixp->fx_addsy)
+	  && S_GET_SEGMENT (fixp->fx_addsy) != absolute_section
+	  && S_GET_SEGMENT (fixp->fx_addsy) != undefined_section
+	  && ! bfd_is_com_section (S_GET_SEGMENT (fixp->fx_addsy)))
+	value -= S_GET_VALUE (fixp->fx_addsy);
+
+      /* FIXME: Why '+'?  Better yet, what exactly is '*valuep'
+	 supposed to be?  I think this is related to various similar
+	 FIXMEs in tc-i386.c and tc-sparc.c.  */
+      if (fixp->fx_pcrel)
+	value += fixp->fx_frag->fr_address + fixp->fx_where;
+    }
+  else
+    {
+      fixp->fx_done = 1;
+    }
+#else
   /* FIXME FIXME FIXME: The value we are passed in *valuep includes
      the symbol values.  Since we are using BFD_ASSEMBLER, if we are
      doing this relocation the code in write.c is going to call
-     bfd_perform_relocation, which is also going to use the symbol
+     bfd_install_relocation, which is also going to use the symbol
      value.  That means that if the reloc is fully resolved we want to
-     use *valuep since bfd_perform_relocation is not being used.
+     use *valuep since bfd_install_relocation is not being used.
      However, if the reloc is not fully resolved we do not want to use
      *valuep, and must use fx_offset instead.  However, if the reloc
      is PC relative, we do want to use *valuep since it includes the
      result of md_pcrel_from.  This is confusing.  */
-
   if (fixp->fx_addsy == (symbolS *) NULL)
     {
       value = *valuep;
@@ -4487,10 +4717,11 @@ md_apply_fix3 (fixp, valuep, seg)
 	    {
 	      /* We can't actually support subtracting a symbol.  */
 	      as_bad_where (fixp->fx_file, fixp->fx_line,
-			    "expression too complex");
+			    _("expression too complex"));
 	    }
 	}
     }
+#endif
 
   if ((int) fixp->fx_r_type >= (int) BFD_RELOC_UNUSED)
     {
@@ -4516,9 +4747,9 @@ md_apply_fix3 (fixp, valuep, seg)
 	  && operand->shift == 0
 	  && operand->insert == NULL
 	  && fixp->fx_addsy != NULL
-	  && fixp->fx_addsy->sy_tc.subseg != 0
-	  && fixp->fx_addsy->sy_tc.class != XMC_TC
-	  && fixp->fx_addsy->sy_tc.class != XMC_TC0
+	  && symbol_get_tc (fixp->fx_addsy)->subseg != 0
+	  && symbol_get_tc (fixp->fx_addsy)->class != XMC_TC
+	  && symbol_get_tc (fixp->fx_addsy)->class != XMC_TC0
 	  && S_GET_SEGMENT (fixp->fx_addsy) != bss_section)
 	{
 	  value = fixp->fx_offset;
@@ -4589,10 +4820,10 @@ md_apply_fix3 (fixp, valuep, seg)
              symbol.  */
 	  if (expr_symbol_where (fixp->fx_addsy, &sfile, &sline))
 	    as_bad_where (fixp->fx_file, fixp->fx_line,
-			  "unresolved expression that must be resolved");
+			  _("unresolved expression that must be resolved"));
 	  else
 	    as_bad_where (fixp->fx_file, fixp->fx_line,
-			  "unsupported relocation type");
+			  _("unsupported relocation type"));
 	  fixp->fx_done = 1;
 	  return 1;
 	}
@@ -4619,8 +4850,6 @@ md_apply_fix3 (fixp, valuep, seg)
 	  break;
 
 	case BFD_RELOC_LO16:
-	case BFD_RELOC_HI16:
-	case BFD_RELOC_HI16_S:
 	case BFD_RELOC_16:
 	case BFD_RELOC_GPREL16:
 	case BFD_RELOC_16_GOT_PCREL:
@@ -4645,16 +4874,36 @@ md_apply_fix3 (fixp, valuep, seg)
 	case BFD_RELOC_PPC_EMB_RELSDA:
 	case BFD_RELOC_PPC_TOC16:
 	  if (fixp->fx_pcrel)
-	    as_bad_where (fixp->fx_file, fixp->fx_line,
-			  "cannot emit PC relative %s relocation%s%s",
-			  bfd_get_reloc_code_name (fixp->fx_r_type),
-			  fixp->fx_addsy != NULL ? " against " : "",
-			  (fixp->fx_addsy != NULL
-			   ? S_GET_NAME (fixp->fx_addsy)
-			   : ""));
+	    {
+	      if (fixp->fx_addsy != NULL)
+		as_bad_where (fixp->fx_file, fixp->fx_line,
+			      _("cannot emit PC relative %s relocation against %s"),
+			      bfd_get_reloc_code_name (fixp->fx_r_type),
+			      S_GET_NAME (fixp->fx_addsy));
+	      else
+		as_bad_where (fixp->fx_file, fixp->fx_line,
+			      _("cannot emit PC relative %s relocation"),
+			      bfd_get_reloc_code_name (fixp->fx_r_type));
+	    }
 
 	  md_number_to_chars (fixp->fx_frag->fr_literal + fixp->fx_where,
 			      value, 2);
+	  break;
+
+	  /* This case happens when you write, for example,
+	     lis %r3,(L1-L2)@ha
+	     where L1 and L2 are defined later.  */
+	case BFD_RELOC_HI16:
+	  if (fixp->fx_pcrel)
+	    abort ();
+	  md_number_to_chars (fixp->fx_frag->fr_literal + fixp->fx_where,
+			      value >> 16, 2);
+	  break;
+	case BFD_RELOC_HI16_S:
+	  if (fixp->fx_pcrel)
+	    abort ();
+	  md_number_to_chars (fixp->fx_frag->fr_literal + fixp->fx_where,
+			      (value + 0x8000) >> 16, 2);
 	  break;
 
 	  /* Because SDA21 modifies the register field, the size is set to 4
@@ -4676,9 +4925,54 @@ md_apply_fix3 (fixp, valuep, seg)
 			      value, 1);
 	  break;
 
+	case BFD_RELOC_24_PLT_PCREL:
+	case BFD_RELOC_PPC_LOCAL24PC:
+	  if (!fixp->fx_pcrel && !fixp->fx_done)
+	    abort ();
+
+	  if (fixp->fx_done)
+	  {
+	    char *where;
+	    unsigned long insn;
+	    
+	    /* Fetch the instruction, insert the fully resolved operand
+	       value, and stuff the instruction back again.  */
+	    where = fixp->fx_frag->fr_literal + fixp->fx_where;
+	    if (target_big_endian)
+	      insn = bfd_getb32 ((unsigned char *) where);
+	    else
+	      insn = bfd_getl32 ((unsigned char *) where);
+	    if ((value & 3) != 0)
+	      as_bad_where (fixp->fx_file, fixp->fx_line,
+			    _("must branch to an address a multiple of 4"));
+	    if ((offsetT) value < -0x40000000
+		|| (offsetT) value >= 0x40000000)
+	      as_bad_where (fixp->fx_file, fixp->fx_line,
+			    _("@local or @plt branch destination is too far away, %ld bytes"),
+			    value);
+	    insn = insn | (value & 0x03fffffc);
+	    if (target_big_endian)
+	      bfd_putb32 ((bfd_vma) insn, (unsigned char *) where);
+	    else
+	      bfd_putl32 ((bfd_vma) insn, (unsigned char *) where);
+	  }
+	  break;
+
+	case BFD_RELOC_VTABLE_INHERIT:
+	  fixp->fx_done = 0;
+	  if (fixp->fx_addsy
+	      && !S_IS_DEFINED (fixp->fx_addsy)
+	      && !S_IS_WEAK (fixp->fx_addsy))
+	    S_SET_WEAK (fixp->fx_addsy);
+	  break;
+
+	case BFD_RELOC_VTABLE_ENTRY:
+	  fixp->fx_done = 0;
+	  break;
+
 	default:
 	  fprintf(stderr,
-		  "Gas failure, reloc value %d\n", fixp->fx_r_type);
+		  _("Gas failure, reloc value %d\n"), fixp->fx_r_type);
 	  fflush(stderr);
 	  abort ();
 	}
@@ -4709,20 +5003,21 @@ md_apply_fix3 (fixp, valuep, seg)
 
 arelent *
 tc_gen_reloc (seg, fixp)
-     asection *seg;
+     asection *seg ATTRIBUTE_UNUSED;
      fixS *fixp;
 {
   arelent *reloc;
 
-  reloc = (arelent *) bfd_alloc_by_size_t (stdoutput, sizeof (arelent));
+  reloc = (arelent *) xmalloc (sizeof (arelent));
 
-  reloc->sym_ptr_ptr = &fixp->fx_addsy->bsym;
+  reloc->sym_ptr_ptr = (asymbol **) xmalloc (sizeof (asymbol *));
+  *reloc->sym_ptr_ptr = symbol_get_bfdsym (fixp->fx_addsy);
   reloc->address = fixp->fx_frag->fr_address + fixp->fx_where;
   reloc->howto = bfd_reloc_type_lookup (stdoutput, fixp->fx_r_type);
   if (reloc->howto == (reloc_howto_type *) NULL)
     {
       as_bad_where (fixp->fx_file, fixp->fx_line,
-		    "reloc %d not supported by object file format", (int)fixp->fx_r_type);
+		    _("reloc %d not supported by object file format"), (int)fixp->fx_r_type);
       return NULL;
     }
   reloc->addend = fixp->fx_addnumber;

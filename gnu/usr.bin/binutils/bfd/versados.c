@@ -1,9 +1,8 @@
 /* BFD back-end for VERSAdos-E objects.
+   Copyright 1995, 96, 97, 98, 99, 2000 Free Software Foundation, Inc.
+   Written by Steve Chamberlain of Cygnus Support <sac@cygnus.com>.
 
    Versados is a Motorola trademark.
-
-   Copyright 1995 Free Software Foundation, Inc.
-   Written by Steve Chamberlain of Cygnus Support <sac@cygnus.com>.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -484,10 +483,12 @@ versados_scan (abfd)
   int j;
   int nsecs = 0;
 
+  VDATA (abfd)->stringlen = 0;
   VDATA (abfd)->nrefs = 0;
   VDATA (abfd)->ndefs = 0;
   VDATA (abfd)->ref_idx = 0;
   VDATA (abfd)->def_idx = 0;
+  VDATA (abfd)->pass_2_done = 0;
 
   while (loop)
     {
@@ -691,11 +692,11 @@ versados_get_section_contents (abfd, section, location, offset, count)
 
 static boolean
 versados_set_section_contents (abfd, section, location, offset, bytes_to_do)
-     bfd *abfd;
-     sec_ptr section;
-     PTR location;
-     file_ptr offset;
-     bfd_size_type bytes_to_do;
+     bfd *abfd ATTRIBUTE_UNUSED;
+     sec_ptr section ATTRIBUTE_UNUSED;
+     PTR location ATTRIBUTE_UNUSED;
+     file_ptr offset ATTRIBUTE_UNUSED;
+     bfd_size_type bytes_to_do ATTRIBUTE_UNUSED;
 {
   return false;
 }
@@ -704,8 +705,8 @@ versados_set_section_contents (abfd, section, location, offset, bytes_to_do)
 /*ARGSUSED */
 static int
 versados_sizeof_headers (abfd, exec)
-     bfd *abfd;
-     boolean exec;
+     bfd *abfd ATTRIBUTE_UNUSED;
+     boolean exec ATTRIBUTE_UNUSED;
 {
   return 0;
 }
@@ -757,7 +758,7 @@ versados_get_symtab (abfd, alocation)
 /*ARGSUSED */
 void
 versados_get_symbol_info (ignore_abfd, symbol, ret)
-     bfd *ignore_abfd;
+     bfd *ignore_abfd ATTRIBUTE_UNUSED;
      asymbol *symbol;
      symbol_info *ret;
 {
@@ -767,7 +768,7 @@ versados_get_symbol_info (ignore_abfd, symbol, ret)
 /*ARGSUSED */
 void
 versados_print_symbol (ignore_abfd, afile, symbol, how)
-     bfd *ignore_abfd;
+     bfd *ignore_abfd ATTRIBUTE_UNUSED;
      PTR afile;
      asymbol *symbol;
      bfd_print_symbol_type how;
@@ -789,7 +790,7 @@ versados_print_symbol (ignore_abfd, afile, symbol, how)
 
 long
 versados_get_reloc_upper_bound (abfd, asect)
-     bfd *abfd;
+     bfd *abfd ATTRIBUTE_UNUSED;
      sec_ptr asect;
 {
   return (asect->reloc_count + 1) * sizeof (arelent *);
@@ -850,7 +851,7 @@ versados_canonicalize_reloc (abfd, section, relptr, symbols)
 #define versados_bfd_free_cached_info _bfd_generic_bfd_free_cached_info
 #define versados_new_section_hook _bfd_generic_new_section_hook
 
-#define versados_bfd_is_local_label bfd_generic_is_local_label
+#define versados_bfd_is_local_label_name bfd_generic_is_local_label_name
 #define versados_get_lineno _bfd_nosymbols_get_lineno
 #define versados_find_nearest_line _bfd_nosymbols_find_nearest_line
 #define versados_bfd_make_debug_symbol _bfd_nosymbols_bfd_make_debug_symbol
@@ -864,6 +865,7 @@ versados_canonicalize_reloc (abfd, section, relptr, symbols)
 #define versados_bfd_get_relocated_section_contents \
   bfd_generic_get_relocated_section_contents
 #define versados_bfd_relax_section bfd_generic_relax_section
+#define versados_bfd_gc_sections bfd_generic_gc_sections
 #define versados_bfd_link_hash_table_create _bfd_generic_link_hash_table_create
 #define versados_bfd_link_add_symbols _bfd_generic_link_add_symbols
 #define versados_bfd_final_link _bfd_generic_final_link
@@ -919,5 +921,7 @@ const bfd_target versados_vec =
   BFD_JUMP_TABLE_LINK (versados),
   BFD_JUMP_TABLE_DYNAMIC (_bfd_nodynamic),
 
+  NULL,
+  
   (PTR) 0
 };

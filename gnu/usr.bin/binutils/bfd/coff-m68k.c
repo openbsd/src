@@ -1,5 +1,6 @@
 /* BFD back-end for Motorola 68000 COFF binaries.
-   Copyright 1990, 91, 92, 93, 94, 95, 1996 Free Software Foundation, Inc.
+   Copyright 1990, 91, 92, 93, 94, 95, 96, 97, 1999
+   Free Software Foundation, Inc.
    Written by Cygnus Support.
 
 This file is part of BFD, the Binary File Descriptor library.
@@ -21,14 +22,30 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #include "bfd.h"
 #include "sysdep.h"
 #include "libbfd.h"
-#include "obstack.h"
 #include "coff/m68k.h"
 #include "coff/internal.h"
 #include "libcoff.h"
 
-#ifndef LYNX_SPECIAL_FN
-#define LYNX_SPECIAL_FN 0
-#endif
+/* This source file is compiled multiple times for various m68k COFF
+   variants.  The following macros control its behaviour:
+
+   TARGET_SYM
+     The C name of the BFD target vector.  The default is m68kcoff_vec.
+   TARGET_NAME
+     The user visible target name.  The default is "coff-m68k".
+   NAMES_HAVE_UNDERSCORE
+     Whether symbol names have an underscore.
+   ONLY_DECLARE_RELOCS
+     Only declare the relocation howto array.  Don't actually compile
+     it.  The actual array will be picked up in another version of the
+     file.
+   STATIC_RELOCS
+     Make the relocation howto array, and associated functions, static.
+   COFF_COMMON_ADDEND
+     If this is defined, then, for a relocation against a common
+     symbol, the object file holds the value (the size) of the common
+     symbol.  If this is not defined, then, for a relocation against a
+     common symbol, the object file holds zero.  */
 
 #define COFF_DEFAULT_SECTION_ALIGNMENT_POWER (2)
 
@@ -37,24 +54,58 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #define COFF_PAGE_SIZE 0x2000
 #endif
 
+#ifndef COFF_COMMON_ADDEND
+#define RELOC_SPECIAL_FN 0
+#else
+static bfd_reloc_status_type m68kcoff_common_addend_special_fn
+  PARAMS ((bfd *, arelent *, asymbol *, PTR, asection *, bfd *, char **));
+static reloc_howto_type *m68kcoff_common_addend_rtype_to_howto
+  PARAMS ((bfd *, asection *, struct internal_reloc *,
+	   struct coff_link_hash_entry *, struct internal_syment *,
+	   bfd_vma *));
+#define RELOC_SPECIAL_FN m68kcoff_common_addend_special_fn
+#endif
+
+static boolean m68k_coff_is_local_label_name PARAMS ((bfd *, const char *));
+
+/* On the delta, a symbol starting with L% is local.  We won't see
+   such a symbol on other platforms, so it should be safe to always
+   consider it local here.  */
+
+static boolean
+m68k_coff_is_local_label_name (abfd, name)
+     bfd *abfd;
+     const char *name;
+{
+  if (name[0] == 'L' && name[1] == '%')
+    return true;
+
+  return _bfd_coff_is_local_label_name (abfd, name);
+}
+
+#ifndef STATIC_RELOCS
 /* Clean up namespace.  */
 #define m68kcoff_howto_table	_bfd_m68kcoff_howto_table
 #define m68k_rtype2howto	_bfd_m68kcoff_rtype2howto
 #define m68k_howto2rtype	_bfd_m68kcoff_howto2rtype
 #define m68k_reloc_type_lookup	_bfd_m68kcoff_reloc_type_lookup
+#endif
 
 #ifdef ONLY_DECLARE_RELOCS
 extern reloc_howto_type m68kcoff_howto_table[];
 #else
+#ifdef STATIC_RELOCS
+static
+#endif
 reloc_howto_type m68kcoff_howto_table[] = 
 {
-  HOWTO(R_RELBYTE,	       0,  0,  	8,  false, 0, complain_overflow_bitfield, LYNX_SPECIAL_FN, "8",	true, 0x000000ff,0x000000ff, false),
-  HOWTO(R_RELWORD,	       0,  1, 	16, false, 0, complain_overflow_bitfield, LYNX_SPECIAL_FN, "16",	true, 0x0000ffff,0x0000ffff, false),
-  HOWTO(R_RELLONG,	       0,  2, 	32, false, 0, complain_overflow_bitfield, LYNX_SPECIAL_FN, "32",	true, 0xffffffff,0xffffffff, false),
-  HOWTO(R_PCRBYTE,	       0,  0, 	8,  true,  0, complain_overflow_signed, LYNX_SPECIAL_FN, "DISP8",    true, 0x000000ff,0x000000ff, false),
-  HOWTO(R_PCRWORD,	       0,  1, 	16, true,  0, complain_overflow_signed, LYNX_SPECIAL_FN, "DISP16",   true, 0x0000ffff,0x0000ffff, false),
-  HOWTO(R_PCRLONG,	       0,  2, 	32, true,  0, complain_overflow_signed, LYNX_SPECIAL_FN, "DISP32",   true, 0xffffffff,0xffffffff, false),
-  HOWTO(R_RELLONG_NEG,	       0,  -2, 	32, false, 0, complain_overflow_bitfield, LYNX_SPECIAL_FN, "-32",	true, 0xffffffff,0xffffffff, false),
+  HOWTO(R_RELBYTE,	       0,  0,  	8,  false, 0, complain_overflow_bitfield, RELOC_SPECIAL_FN, "8",	true, 0x000000ff,0x000000ff, false),
+  HOWTO(R_RELWORD,	       0,  1, 	16, false, 0, complain_overflow_bitfield, RELOC_SPECIAL_FN, "16",	true, 0x0000ffff,0x0000ffff, false),
+  HOWTO(R_RELLONG,	       0,  2, 	32, false, 0, complain_overflow_bitfield, RELOC_SPECIAL_FN, "32",	true, 0xffffffff,0xffffffff, false),
+  HOWTO(R_PCRBYTE,	       0,  0, 	8,  true,  0, complain_overflow_signed, RELOC_SPECIAL_FN, "DISP8",    true, 0x000000ff,0x000000ff, false),
+  HOWTO(R_PCRWORD,	       0,  1, 	16, true,  0, complain_overflow_signed, RELOC_SPECIAL_FN, "DISP16",   true, 0x0000ffff,0x0000ffff, false),
+  HOWTO(R_PCRLONG,	       0,  2, 	32, true,  0, complain_overflow_signed, RELOC_SPECIAL_FN, "DISP32",   true, 0xffffffff,0xffffffff, false),
+  HOWTO(R_RELLONG_NEG,	       0,  -2, 	32, false, 0, complain_overflow_bitfield, RELOC_SPECIAL_FN, "-32",	true, 0xffffffff,0xffffffff, false),
 };
 #endif /* not ONLY_DECLARE_RELOCS */
 
@@ -71,6 +122,9 @@ extern int m68k_howto2rtype PARAMS ((reloc_howto_type *));
 extern reloc_howto_type *m68k_reloc_type_lookup
   PARAMS ((bfd *, bfd_reloc_code_real_type));
 #else
+#ifdef STATIC_RELOCS
+static
+#endif
 void
 m68k_rtype2howto(internal, relocentry)
      arelent *internal;
@@ -88,6 +142,9 @@ m68k_rtype2howto(internal, relocentry)
   }
 }
 
+#ifdef STATIC_RELOCS
+static
+#endif
 int 
 m68k_howto2rtype (internal)
      reloc_howto_type *internal;
@@ -113,9 +170,12 @@ m68k_howto2rtype (internal)
   return R_RELLONG;    
 }
 
+#ifdef STATIC_RELOCS
+static
+#endif
 reloc_howto_type *
 m68k_reloc_type_lookup (abfd, code)
-     bfd *abfd;
+     bfd *abfd ATTRIBUTE_UNUSED;
      bfd_reloc_code_real_type code;
 {
   switch (code)
@@ -139,10 +199,11 @@ m68k_reloc_type_lookup (abfd, code)
   m68k_rtype2howto(internal, (relocentry)->r_type)
 
 #define SELECT_RELOC(external, internal) \
-  external.r_type = m68k_howto2rtype(internal);
+  external.r_type = m68k_howto2rtype (internal)
 
 #define coff_bfd_reloc_type_lookup m68k_reloc_type_lookup
 
+#ifndef COFF_COMMON_ADDEND
 #ifndef coff_rtype_to_howto
 
 #define coff_rtype_to_howto m68kcoff_rtype_to_howto
@@ -155,11 +216,11 @@ static reloc_howto_type *m68kcoff_rtype_to_howto
 /*ARGSUSED*/
 static reloc_howto_type *
 m68kcoff_rtype_to_howto (abfd, sec, rel, h, sym, addendp)
-     bfd *abfd;
+     bfd *abfd ATTRIBUTE_UNUSED;
      asection *sec;
      struct internal_reloc *rel;
-     struct coff_link_hash_entry *h;
-     struct internal_syment *sym;
+     struct coff_link_hash_entry *h ATTRIBUTE_UNUSED;
+     struct internal_syment *sym ATTRIBUTE_UNUSED;
      bfd_vma *addendp;
 {
   arelent relent;
@@ -176,62 +237,205 @@ m68kcoff_rtype_to_howto (abfd, sec, rel, h, sym, addendp)
 }
 
 #endif /* ! defined (coff_rtype_to_howto) */
+#endif /* ! defined (COFF_COMMON_ADDEND) */
+
+#ifdef COFF_COMMON_ADDEND
+
+/* If COFF_COMMON_ADDEND is defined, then when using m68k COFF the
+   value stored in the .text section for a reference to a common
+   symbol is the value itself plus any desired offset.  (taken from
+   work done by Ian Taylor, Cygnus Support, for I386 COFF).  */
+
+/* If we are producing relocateable output, we need to do some
+   adjustments to the object file that are not done by the
+   bfd_perform_relocation function.  This function is called by every
+   reloc type to make any required adjustments.  */
+
+static bfd_reloc_status_type
+m68kcoff_common_addend_special_fn (abfd, reloc_entry, symbol, data,
+				   input_section, output_bfd, error_message)
+     bfd *abfd;
+     arelent *reloc_entry;
+     asymbol *symbol;
+     PTR data;
+     asection *input_section ATTRIBUTE_UNUSED;
+     bfd *output_bfd;
+     char **error_message ATTRIBUTE_UNUSED;
+{
+  symvalue diff;
+
+  if (output_bfd == (bfd *) NULL)
+    return bfd_reloc_continue;
+
+  if (bfd_is_com_section (symbol->section))
+    {
+      /* We are relocating a common symbol.  The current value in the
+	 object file is ORIG + OFFSET, where ORIG is the value of the
+	 common symbol as seen by the object file when it was compiled
+	 (this may be zero if the symbol was undefined) and OFFSET is
+	 the offset into the common symbol (normally zero, but may be
+	 non-zero when referring to a field in a common structure).
+	 ORIG is the negative of reloc_entry->addend, which is set by
+	 the CALC_ADDEND macro below.  We want to replace the value in
+	 the object file with NEW + OFFSET, where NEW is the value of
+	 the common symbol which we are going to put in the final
+	 object file.  NEW is symbol->value.  */
+      diff = symbol->value + reloc_entry->addend;
+    }
+  else
+    {
+      /* For some reason bfd_perform_relocation always effectively
+	 ignores the addend for a COFF target when producing
+	 relocateable output.  This seems to be always wrong for 386
+	 COFF, so we handle the addend here instead.  */
+      diff = reloc_entry->addend;
+    }
+
+#define DOIT(x) \
+  x = ((x & ~howto->dst_mask) | (((x & howto->src_mask) + diff) & howto->dst_mask))
+
+  if (diff != 0)
+    {
+      reloc_howto_type *howto = reloc_entry->howto;
+      unsigned char *addr = (unsigned char *) data + reloc_entry->address;
+
+      switch (howto->size)
+	{
+	case 0:
+	  {
+	    char x = bfd_get_8 (abfd, addr);
+	    DOIT (x);
+	    bfd_put_8 (abfd, x, addr);
+	  }
+	  break;
+
+	case 1:
+	  {
+	    short x = bfd_get_16 (abfd, addr);
+	    DOIT (x);
+	    bfd_put_16 (abfd, x, addr);
+	  }
+	  break;
+
+	case 2:
+	  {
+	    long x = bfd_get_32 (abfd, addr);
+	    DOIT (x);
+	    bfd_put_32 (abfd, x, addr);
+	  }
+	  break;
+
+	default:
+	  abort ();
+	}
+    }
+
+  /* Now let bfd_perform_relocation finish everything up.  */
+  return bfd_reloc_continue;
+}
+
+/* Compute the addend of a reloc.  If the reloc is to a common symbol,
+   the object file contains the value of the common symbol.  By the
+   time this is called, the linker may be using a different symbol
+   from a different object file with a different value.  Therefore, we
+   hack wildly to locate the original symbol from this file so that we
+   can make the correct adjustment.  This macro sets coffsym to the
+   symbol from the original file, and uses it to set the addend value
+   correctly.  If this is not a common symbol, the usual addend
+   calculation is done, except that an additional tweak is needed for
+   PC relative relocs.
+   FIXME: This macro refers to symbols and asect; these are from the
+   calling function, not the macro arguments.  */
+
+#define CALC_ADDEND(abfd, ptr, reloc, cache_ptr)		\
+  {								\
+    coff_symbol_type *coffsym = (coff_symbol_type *) NULL;	\
+    if (ptr && bfd_asymbol_bfd (ptr) != abfd)			\
+      coffsym = (obj_symbols (abfd)				\
+	         + (cache_ptr->sym_ptr_ptr - symbols));		\
+    else if (ptr)						\
+      coffsym = coff_symbol_from (abfd, ptr);			\
+    if (coffsym != (coff_symbol_type *) NULL			\
+	&& coffsym->native->u.syment.n_scnum == 0)		\
+      cache_ptr->addend = - coffsym->native->u.syment.n_value;	\
+    else if (ptr && bfd_asymbol_bfd (ptr) == abfd		\
+	     && ptr->section != (asection *) NULL)		\
+      cache_ptr->addend = - (ptr->section->vma + ptr->value);	\
+    else							\
+      cache_ptr->addend = 0;					\
+    if (ptr && (reloc.r_type == R_PCRBYTE			\
+		|| reloc.r_type == R_PCRWORD			\
+		|| reloc.r_type == R_PCRLONG))			\
+      cache_ptr->addend += asect->vma;				\
+  }
+
+#ifndef coff_rtype_to_howto
+
+/* coff-m68k.c uses the special COFF backend linker.  We need to
+   adjust common symbols.  */
+
+/*ARGSUSED*/
+static reloc_howto_type *
+m68kcoff_common_addend_rtype_to_howto (abfd, sec, rel, h, sym, addendp)
+     bfd *abfd ATTRIBUTE_UNUSED;
+     asection *sec;
+     struct internal_reloc *rel;
+     struct coff_link_hash_entry *h;
+     struct internal_syment *sym;
+     bfd_vma *addendp;
+{
+  arelent relent;
+  reloc_howto_type *howto;
+
+  RTYPE2HOWTO (&relent, rel);
+
+  howto = relent.howto;
+
+  if (howto->pc_relative)
+    *addendp += sec->vma;
+
+  if (sym != NULL && sym->n_scnum == 0 && sym->n_value != 0)
+    {
+      /* This is a common symbol.  The section contents include the
+	 size (sym->n_value) as an addend.  The relocate_section
+	 function will be adding in the final value of the symbol.  We
+	 need to subtract out the current size in order to get the
+	 correct result.  */
+      BFD_ASSERT (h != NULL);
+      *addendp -= sym->n_value;
+    }
+
+  /* If the output symbol is common (in which case this must be a
+     relocateable link), we need to add in the final size of the
+     common symbol.  */
+  if (h != NULL && h->root.type == bfd_link_hash_common)
+    *addendp += h->root.u.c.size;
+
+  return howto;
+}
+
+#define coff_rtype_to_howto m68kcoff_common_addend_rtype_to_howto
+
+#endif /* ! defined (coff_rtype_to_howto) */
+
+#endif /* COFF_COMMON_ADDEND */
+
+#define coff_bfd_is_local_label_name m68k_coff_is_local_label_name
 
 #define coff_relocate_section _bfd_coff_generic_relocate_section
 
 #include "coffcode.h"
 
-const bfd_target 
-#ifdef TARGET_SYM
-  TARGET_SYM =
-#else
-  m68kcoff_vec =
+#ifndef TARGET_SYM
+#define TARGET_SYM m68kcoff_vec
 #endif
-{
-#ifdef TARGET_NAME
-  TARGET_NAME,
-#else
-  "coff-m68k",			/* name */
+
+#ifndef TARGET_NAME
+#define TARGET_NAME "coff-m68k"
 #endif
-  bfd_target_coff_flavour,
-  BFD_ENDIAN_BIG,		/* data byte order is big */
-  BFD_ENDIAN_BIG,		/* header byte order is big */
 
-  (HAS_RELOC | EXEC_P |		/* object flags */
-   HAS_LINENO | HAS_DEBUG |
-   HAS_SYMS | HAS_LOCALS | WP_TEXT | D_PAGED),
-
-  (SEC_HAS_CONTENTS | SEC_ALLOC | SEC_LOAD | SEC_RELOC), /* section flags */
 #ifdef NAMES_HAVE_UNDERSCORE
-  '_',
+CREATE_BIG_COFF_TARGET_VEC (TARGET_SYM, TARGET_NAME, D_PAGED, 0, '_', NULL)
 #else
-  0,				/* leading underscore */
+CREATE_BIG_COFF_TARGET_VEC (TARGET_SYM, TARGET_NAME, D_PAGED, 0, 0, NULL)
 #endif
-  '/',				/* ar_pad_char */
-  15,				/* ar_max_namelen */
-  bfd_getb64, bfd_getb_signed_64, bfd_putb64,
-     bfd_getb32, bfd_getb_signed_32, bfd_putb32,
-     bfd_getb16, bfd_getb_signed_16, bfd_putb16, /* data */
-  bfd_getb64, bfd_getb_signed_64, bfd_putb64,
-     bfd_getb32, bfd_getb_signed_32, bfd_putb32,
-     bfd_getb16, bfd_getb_signed_16, bfd_putb16, /* hdrs */
-
- {_bfd_dummy_target, coff_object_p, /* bfd_check_format */
-   bfd_generic_archive_p, _bfd_dummy_target},
- {bfd_false, coff_mkobject, _bfd_generic_mkarchive, /* bfd_set_format */
-   bfd_false},
- {bfd_false, coff_write_object_contents, /* bfd_write_contents */
-   _bfd_write_archive_contents, bfd_false},
-
-     BFD_JUMP_TABLE_GENERIC (coff),
-     BFD_JUMP_TABLE_COPY (coff),
-     BFD_JUMP_TABLE_CORE (_bfd_nocore),
-     BFD_JUMP_TABLE_ARCHIVE (_bfd_archive_coff),
-     BFD_JUMP_TABLE_SYMBOLS (coff),
-     BFD_JUMP_TABLE_RELOCS (coff),
-     BFD_JUMP_TABLE_WRITE (coff),
-     BFD_JUMP_TABLE_LINK (coff),
-     BFD_JUMP_TABLE_DYNAMIC (_bfd_nodynamic),
-
-  COFF_SWAP_TABLE
- };

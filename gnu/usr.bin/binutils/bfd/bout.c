@@ -1,5 +1,6 @@
 /* BFD back-end for Intel 960 b.out binaries.
-   Copyright 1990, 91, 92, 93, 94, 95, 1996 Free Software Foundation, Inc.
+   Copyright 1990, 91, 92, 93, 94, 95, 96, 97, 98, 1999
+   Free Software Foundation, Inc.
    Written by Cygnus Support.
 
 This file is part of BFD, the Binary File Descriptor library.
@@ -222,6 +223,34 @@ b_out_mkobject (abfd)
   return true;
 }
 
+static int
+b_out_symbol_cmp (a, b)
+     struct aout_symbol **a, **b;
+{
+  asection *sec;
+  bfd_vma av, bv;
+
+  /* Primary key is address */
+  sec = bfd_get_section (&(*a)->symbol);
+  av = sec->output_section->vma + sec->output_offset + (*a)->symbol.value;
+  sec = bfd_get_section (&(*b)->symbol);
+  bv = sec->output_section->vma + sec->output_offset + (*b)->symbol.value;
+
+  if (av < bv)
+    return -1;
+  if (av > bv)
+    return 1;
+
+  /* Secondary key puts CALLNAME syms last and BALNAME syms first, so
+     that they have the best chance of being contiguous.  */
+  if (IS_BALNAME ((*a)->other) || IS_CALLNAME ((*b)->other))
+    return -1;
+  if (IS_CALLNAME ((*a)->other) || IS_BALNAME ((*b)->other))
+    return 1;
+
+  return 0;
+}
+
 static boolean
 b_out_write_object_contents (abfd)
      bfd *abfd;
@@ -260,6 +289,31 @@ b_out_write_object_contents (abfd)
   /* Now write out reloc info, followed by syms and strings */
   if (bfd_get_symcount (abfd) != 0)
     {
+      /* Make sure {CALL,BAL}NAME symbols remain adjacent on output
+	 by sorting.  This is complicated by the fact that stabs are
+	 also ordered.  Solve this by shifting all stabs to the end
+	 in order, then sorting the rest.  */
+
+      asymbol **outsyms, **p, **q;
+
+      outsyms = bfd_get_outsymbols (abfd);
+      p = outsyms + bfd_get_symcount (abfd);
+
+      for (q = p--; p >= outsyms; p--)
+	{
+	  if ((*p)->flags & BSF_DEBUGGING)
+	    {
+	      asymbol *t = *--q;
+	      *q = *p;
+	      *p = t;
+	    }
+	}
+
+      if (q > outsyms)
+	qsort (outsyms, q - outsyms, sizeof(asymbol*), b_out_symbol_cmp);
+
+      /* Back to your regularly scheduled program.  */
+
       if (bfd_seek (abfd, (file_ptr)(N_SYMOFF(*exec_hdr(abfd))), SEEK_SET)
 	  != 0)
 	return false;
@@ -282,11 +336,12 @@ b_out_write_object_contents (abfd)
 
 /** Some reloc hackery */
 
-#define CALLS	 0x66003800	/* Template for 'calls' instruction	*/
-#define BAL	 0x0b000000	/* Template for 'bal' instruction */
-#define BALX	 0x85000000	/* Template for 'balx' instruction	*/
-#define BAL_MASK 0x00ffffff
-#define CALL     0x09000000
+#define CALLS	  0x66003800	/* Template for 'calls' instruction	*/
+#define BAL	  0x0b000000	/* Template for 'bal' instruction */
+#define BAL_MASK  0x00ffffff
+#define BALX	  0x85f00000	/* Template for 'balx' instruction	*/
+#define BALX_MASK 0x0007ffff
+#define CALL      0x09000000
 #define PCREL13_MASK 0x1fff
 
 
@@ -315,7 +370,7 @@ calljx_callback (abfd, link_info, reloc_entry, src, dst, input_section)
       int inst = bfd_get_32 (abfd, (bfd_byte *) src-4);
       /* The next symbol should be an N_BALNAME */
       BFD_ASSERT (IS_BALNAME (balsym->other));
-      inst &= BAL_MASK;
+      inst &= BALX_MASK;
       inst |= BALX;
       bfd_put_32 (abfd, inst, (bfd_byte *) dst-4);
       symbol = balsym;
@@ -440,7 +495,7 @@ static reloc_howto_type howto_done_align_table[] = {
 
 static reloc_howto_type *
 b_out_bfd_reloc_type_lookup (abfd, code)
-     bfd *abfd;
+     bfd *abfd ATTRIBUTE_UNUSED;
      bfd_reloc_code_real_type code;
 {
   switch (code)
@@ -947,8 +1002,8 @@ b_out_set_arch_mach (abfd, arch, machine)
 
 static int
 b_out_sizeof_headers (ignore_abfd, ignore)
-     bfd *ignore_abfd;
-     boolean ignore;
+     bfd *ignore_abfd ATTRIBUTE_UNUSED;
+     boolean ignore ATTRIBUTE_UNUSED;
 {
   return sizeof(struct internal_exec);
 }
@@ -992,7 +1047,8 @@ get_value (reloc, link_info, input_section)
 	{
 	  if (! ((*link_info->callbacks->undefined_symbol)
 		 (link_info, bfd_asymbol_name (symbol),
-		  input_section->owner, input_section, reloc->address)))
+		  input_section->owner, input_section, reloc->address,
+		  true)))
 	    abort ();
 	  value = 0;
 	}
@@ -1393,9 +1449,12 @@ b_out_bfd_get_relocated_section_contents (output_bfd, link_info, link_order,
 #define b_out_bfd_link_add_symbols _bfd_generic_link_add_symbols
 #define b_out_bfd_final_link _bfd_generic_final_link
 #define b_out_bfd_link_split_section  _bfd_generic_link_split_section
+#define b_out_bfd_gc_sections  bfd_generic_gc_sections
 
 #define aout_32_get_section_contents_in_window \
   _bfd_generic_get_section_contents_in_window
+
+extern const bfd_target b_out_vec_little_host;
 
 const bfd_target b_out_vec_big_host =
 {
@@ -1406,7 +1465,7 @@ const bfd_target b_out_vec_big_host =
   (HAS_RELOC | EXEC_P |		/* object flags */
    HAS_LINENO | HAS_DEBUG |
    HAS_SYMS | HAS_LOCALS | WP_TEXT | BFD_IS_RELAXABLE ),
-  (SEC_HAS_CONTENTS | SEC_ALLOC | SEC_LOAD | SEC_RELOC), /* section flags */
+  (SEC_HAS_CONTENTS | SEC_ALLOC | SEC_LOAD | SEC_RELOC | SEC_CODE | SEC_DATA),
   '_',				/* symbol leading char */
   ' ',				/* ar_pad_char */
   16,				/* ar_max_namelen */
@@ -1434,6 +1493,8 @@ const bfd_target b_out_vec_big_host =
      BFD_JUMP_TABLE_LINK (b_out),
      BFD_JUMP_TABLE_DYNAMIC (_bfd_nodynamic),
 
+  & b_out_vec_little_host,
+  
   (PTR) 0,
 };
 
@@ -1447,7 +1508,7 @@ const bfd_target b_out_vec_little_host =
   (HAS_RELOC | EXEC_P |		/* object flags */
    HAS_LINENO | HAS_DEBUG |
    HAS_SYMS | HAS_LOCALS | WP_TEXT | BFD_IS_RELAXABLE ),
-  (SEC_HAS_CONTENTS | SEC_ALLOC | SEC_LOAD | SEC_RELOC), /* section flags */
+  (SEC_HAS_CONTENTS | SEC_ALLOC | SEC_LOAD | SEC_RELOC | SEC_CODE | SEC_DATA),
   '_',				/* symbol leading char */
   ' ',				/* ar_pad_char */
   16,				/* ar_max_namelen */
@@ -1475,5 +1536,7 @@ const bfd_target b_out_vec_little_host =
      BFD_JUMP_TABLE_LINK (b_out),
      BFD_JUMP_TABLE_DYNAMIC (_bfd_nodynamic),
 
+  & b_out_vec_big_host,
+  
   (PTR) 0
 };

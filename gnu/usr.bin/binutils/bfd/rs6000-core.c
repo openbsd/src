@@ -1,5 +1,6 @@
 /* IBM RS/6000 "XCOFF" back-end for BFD.
-   Copyright (C) 1990, 91, 92, 93, 94, 95, 1996 Free Software Foundation, Inc.
+   Copyright 1990, 91, 92, 93, 94, 95, 96, 97, 98, 2000
+   Free Software Foundation, Inc.
    FIXME: Can someone provide a transliteration of this name into ASCII?
    Using the following chars caused a compiler warning on HIUX (so I replaced
    them with octal escapes), and isn't useful without an understanding of what
@@ -38,6 +39,13 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 /* Internalcoff.h and coffcode.h modify themselves based on this flag.  */
 #define RS6000COFF_C 1
 
+/* The AIX 4.1 kernel is obviously compiled with -D_LONG_LONG, so
+   we have to define _LONG_LONG for older versions of gcc to get the
+   proper alignments in the user structure.  */
+#if defined(_AIX41) && !defined(_LONG_LONG)
+#define _LONG_LONG
+#endif
+
 #include "bfd.h"
 #include "sysdep.h"
 #include "libbfd.h"
@@ -71,43 +79,77 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #define	NUM_OF_SPEC_REGS  7
 
 #define	core_hdr(bfd)		(((Rs6kCorData*)(bfd->tdata.any))->hdr)
-#define	core_datasec(bfd)	(((Rs6kCorData*)(bfd->tdata.any))->data_section)
-#define	core_stacksec(bfd)	(((Rs6kCorData*)(bfd->tdata.any))->stack_section)
-#define	core_regsec(bfd)	(((Rs6kCorData*)(bfd->tdata.any))->reg_section)
-#define	core_reg2sec(bfd)	(((Rs6kCorData*)(bfd->tdata.any))->reg2_section)
 
 /* AIX 4.1 Changed the names and locations of a few items in the core file,
-   this seems to be the quickest easiet way to deal with it. 
+   this seems to be the quickest/easiest way to deal with it. 
 
    Note however that encoding magic addresses (STACK_END_ADDR) is going
    to be _very_ fragile.  But I don't see any easy way to get that info
-   right now.  */
+   right now.
+   
+   AIX 4.3 defines an entirely new structure (core_dumpx).  Yet the
+   basic logic stays the same and we can still use our macro
+   redefinition mechanism to effect the necessary changes.  */
+
+#ifdef AIX_CORE_DUMPX_CORE
+#define CORE_DATA_SIZE_FIELD c_dataorg
+#define CORE_COMM_FIELD c_u.U_proc.pi_comm
+#define SAVE_FIELD c_flt.hctx.r32
+#define STACK_END_ADDR coredata.c_stackorg + coredata.c_size
+#define LOADER_OFFSET_FIELD c_loader
+#define LOADER_REGION_SIZE coredata.c_lsize
+#define CORE_DUMP core_dumpx
+#else
 #ifdef CORE_VERSION_1
 #define CORE_DATA_SIZE_FIELD c_u.U_dsize
 #define CORE_COMM_FIELD c_u.U_comm
 #define SAVE_FIELD c_mst
 #define	STACK_END_ADDR 0x2ff23000
+#define LOADER_OFFSET_FIELD c_tab
+#define LOADER_REGION_SIZE 0x7ffffff
+#define CORE_DUMP core_dump
 #else
 #define CORE_DATA_SIZE_FIELD c_u.u_dsize
 #define CORE_COMM_FIELD c_u.u_comm
 #define SAVE_FIELD c_u.u_save
 #define	STACK_END_ADDR 0x2ff80000
+#define LOADER_OFFSET_FIELD c_tab
+#define LOADER_REGION_SIZE 0x7ffffff
+#define CORE_DUMP core_dump
+#endif
 #endif
 
 /* These are stored in the bfd's tdata */
 typedef struct {
-  struct core_dump hdr;		/* core file header */
-  asection *data_section,
-  	   *stack_section,
-	   *reg_section,	/* section for GPRs and special registers. */
-	   *reg2_section;	/* section for FPRs. */
-
-  /* This tells us where everything is mapped (shared libraries and so on).
-     GDB needs it.  */
-  asection *ldinfo_section;
-#define core_ldinfosec(bfd) (((Rs6kCorData *)(bfd->tdata.any))->ldinfo_section)
+  struct CORE_DUMP hdr;		/* core file header */
 } Rs6kCorData;
 
+static asection *make_bfd_asection PARAMS ((bfd *, CONST char *, flagword,
+					    bfd_size_type, bfd_vma, file_ptr));
+
+static asection *
+make_bfd_asection (abfd, name, flags, _raw_size, vma, filepos)
+     bfd *abfd;
+     CONST char *name;
+     flagword flags;
+     bfd_size_type _raw_size;
+     bfd_vma vma;
+     file_ptr filepos;
+{
+  asection *asect;
+
+  asect = bfd_make_section_anyway (abfd, name);
+  if (!asect)
+    return NULL;
+
+  asect->flags = flags;
+  asect->_raw_size = _raw_size;
+  asect->vma = vma;
+  asect->filepos = filepos;
+  asect->alignment_power = 8;
+
+  return asect;
+}
 
 /* Decide if a given bfd represents a `core' file or not. There really is no
    magic number or anything like, in rs6000coff. */
@@ -116,34 +158,23 @@ const bfd_target *
 rs6000coff_core_p (abfd)
      bfd *abfd;
 {
-  int fd;
-  struct core_dump coredata;
+  struct CORE_DUMP coredata;
   struct stat statbuf;
+  bfd_size_type nread;
   char *tmpptr;
 
-  /* Use bfd_xxx routines, rather than O/S primitives to read coredata. FIXMEmgo */
-  fd = open (abfd->filename, O_RDONLY);
-  if (fd < 0)
+  if (bfd_seek (abfd, 0, SEEK_SET) != 0)
+    return NULL;
+
+  nread = bfd_read (&coredata, 1, sizeof (struct CORE_DUMP), abfd);
+  if (nread != sizeof (struct CORE_DUMP))
     {
-      bfd_set_error (bfd_error_system_call);
+      if (bfd_get_error () != bfd_error_system_call)
+	bfd_set_error (bfd_error_wrong_format);
       return NULL;
     }
 
-  if (fstat (fd, &statbuf) < 0)
-    {
-      bfd_set_error (bfd_error_system_call);
-      close (fd);
-      return NULL;
-    }
-  if (read (fd, &coredata, sizeof (struct core_dump))
-      != sizeof (struct core_dump))
-    {
-      bfd_set_error (bfd_error_wrong_format);
-      close (fd);
-      return NULL;
-    }
-
-  if (close (fd) < 0)
+  if (bfd_stat (abfd, &statbuf) < 0)
     {
       bfd_set_error (bfd_error_system_call);
       return NULL;
@@ -155,8 +186,7 @@ rs6000coff_core_p (abfd)
      are always set) (this is based on experimentation on AIX 3.2).
      Now, the thing is that GDB users will be surprised
      if segments just silently don't appear (well, maybe they would
-     think to check "info files", I don't know), but we have no way of
-     returning warnings (as opposed to errors).
+     think to check "info files", I don't know).
 
      For the data segment, we have no choice but to keep going if it's
      not there, since the default behavior is not to dump it (regardless
@@ -172,8 +202,7 @@ rs6000coff_core_p (abfd)
       return NULL;
     }
 
-  if ((coredata.c_flag & CORE_TRUNC)
-      || !(coredata.c_flag & USTACK_VALID))
+  if (!(coredata.c_flag & USTACK_VALID))
     {
       bfd_set_error (bfd_error_file_truncated);
       return NULL;
@@ -181,7 +210,7 @@ rs6000coff_core_p (abfd)
 
   /* Don't check the core file size for a full core, AIX 4.1 includes
      additional shared library sections in a full core.  */
-  if (!(coredata.c_flag & FULL_CORE)
+  if (!(coredata.c_flag & (FULL_CORE | CORE_TRUNC))
       && ((bfd_vma)coredata.c_stack + coredata.c_size) != statbuf.st_size)
     {
       /* If the size is wrong, it means we're misinterpreting something.  */
@@ -189,6 +218,15 @@ rs6000coff_core_p (abfd)
       return NULL;
     }
 
+#ifdef AIX_CORE_DUMPX_CORE
+  /* For the core_dumpx format, make sure c_entries == 0  If it does
+     not, the core file uses the old format */
+  if (coredata.c_entries != 0)
+    {
+      bfd_set_error (bfd_error_wrong_format);
+      return NULL;
+    }
+#else
   /* Sanity check on the c_tab field.  */
   if ((u_long) coredata.c_tab < sizeof coredata ||
       (u_long) coredata.c_tab >= statbuf.st_size ||
@@ -197,9 +235,15 @@ rs6000coff_core_p (abfd)
       bfd_set_error (bfd_error_wrong_format);
       return NULL;
     }
+#endif
 
-  /* maybe you should alloc space for the whole core chunk over here!! FIXMEmgo */
-  tmpptr = (char*)bfd_zalloc (abfd, sizeof (Rs6kCorData));
+  /* Issue warning if the core file was truncated during writing.  */
+  if (coredata.c_flag & CORE_TRUNC)
+    (*_bfd_error_handler) (_("%s: warning core file truncated"),
+			   bfd_get_filename (abfd));
+
+  /* Allocate core file header.  */
+  tmpptr = (char*) bfd_zalloc (abfd, sizeof (Rs6kCorData));
   if (!tmpptr)
     return NULL;
       
@@ -209,73 +253,132 @@ rs6000coff_core_p (abfd)
   core_hdr (abfd) = coredata;
 
   /* .stack section. */
-  if ((core_stacksec (abfd) = (asection*) bfd_zalloc (abfd, sizeof (asection)))
-       == NULL)
+  if (!make_bfd_asection (abfd, ".stack",
+  			  SEC_ALLOC | SEC_LOAD | SEC_HAS_CONTENTS,
+			  (bfd_size_type) coredata.c_size,
+			  (bfd_vma) (STACK_END_ADDR - coredata.c_size),
+			  (file_ptr) coredata.c_stack))
     return NULL;
-  core_stacksec (abfd)->name = ".stack";
-  core_stacksec (abfd)->flags = SEC_ALLOC + SEC_LOAD + SEC_HAS_CONTENTS;
-  core_stacksec (abfd)->_raw_size = coredata.c_size;
-  core_stacksec (abfd)->vma = STACK_END_ADDR - coredata.c_size;
-  core_stacksec (abfd)->filepos = (int)coredata.c_stack;	/*???? */
 
   /* .reg section for GPRs and special registers. */
-  if ((core_regsec (abfd) = (asection*) bfd_zalloc (abfd, sizeof (asection)))
-       == NULL)
+  if (!make_bfd_asection (abfd, ".reg",
+  			  SEC_HAS_CONTENTS,
+			  (bfd_size_type) ((32 + NUM_OF_SPEC_REGS) * 4),
+			  (bfd_vma) 0,
+			  (file_ptr) ((char *) &coredata.SAVE_FIELD
+				      - (char *) &coredata)))
     return NULL;
-  core_regsec (abfd)->name = ".reg";
-  core_regsec (abfd)->flags = SEC_HAS_CONTENTS;
-  core_regsec (abfd)->_raw_size = (32 + NUM_OF_SPEC_REGS) * 4;
-  core_regsec (abfd)->vma = 0;			/* not used?? */
-  core_regsec (abfd)->filepos = 
-  	(char*)&coredata.SAVE_FIELD - (char*)&coredata;
 
   /* .reg2 section for FPRs (floating point registers). */
-  if ((core_reg2sec (abfd) = (asection*) bfd_zalloc (abfd, sizeof (asection)))
-       == NULL)
+  if (!make_bfd_asection (abfd, ".reg2",
+  			  SEC_HAS_CONTENTS,
+			  (bfd_size_type) 8 * 32,	/* 32 FPRs. */
+			  (bfd_vma) 0,
+			  (file_ptr) ((char *) &coredata.SAVE_FIELD.fpr[0]
+				      - (char *) &coredata)))
     return NULL;
-  core_reg2sec (abfd)->name = ".reg2";
-  core_reg2sec (abfd)->flags = SEC_HAS_CONTENTS;
-  core_reg2sec (abfd)->_raw_size = 8 * 32;			/* 32 FPRs. */
-  core_reg2sec (abfd)->vma = 0;			/* not used?? */
-  core_reg2sec (abfd)->filepos = 
-  	(char*)&coredata.SAVE_FIELD.fpr[0] - (char*)&coredata;
 
-  if ((core_ldinfosec (abfd) = (asection*) bfd_zalloc (abfd, sizeof (asection)))
-       == NULL)
-    return NULL;
-  core_ldinfosec (abfd)->name = ".ldinfo";
-  core_ldinfosec (abfd)->flags = SEC_HAS_CONTENTS;
-  /* To actually find out how long this section is in this particular
+  /* .ldinfo section.
+     To actually find out how long this section is in this particular
      core dump would require going down the whole list of struct ld_info's.
      See if we can just fake it.  */
-  core_ldinfosec (abfd)->_raw_size = 0x7fffffff;
-  /* Not relevant for ldinfo section.  */
-  core_ldinfosec (abfd)->vma = 0;
-  core_ldinfosec (abfd)->filepos = (file_ptr) coredata.c_tab;
+  if (!make_bfd_asection (abfd, ".ldinfo",
+  			  SEC_HAS_CONTENTS,
+			  (bfd_size_type) LOADER_REGION_SIZE,
+			  (bfd_vma) 0,
+			  (file_ptr) coredata.LOADER_OFFSET_FIELD))
+    return NULL;
 
-  /* set up section chain here. */
-  abfd->section_count = 4;
-  abfd->sections = core_stacksec (abfd);
-  core_stacksec (abfd)->next = core_regsec(abfd);
-  core_regsec (abfd)->next = core_reg2sec (abfd);
-  core_reg2sec (abfd)->next = core_ldinfosec (abfd);
-  core_ldinfosec (abfd)->next = NULL;
-
+#ifndef CORE_VERSION_1
+  /* .data section if present.
+     AIX 3 dumps the complete data section and sets FULL_CORE if the
+     ulimit is large enough, otherwise the data section is omitted.
+     AIX 4 sets FULL_CORE even if the core file is truncated, we have
+     to examine coredata.c_datasize below to find out the actual size of
+     the .data section.  */
   if (coredata.c_flag & FULL_CORE)
     {
-      asection *sec = (asection *) bfd_zalloc (abfd, sizeof (asection));
-      if (sec == NULL)
+      if (!make_bfd_asection (abfd, ".data",
+			      SEC_ALLOC | SEC_LOAD | SEC_HAS_CONTENTS,
+			      (bfd_size_type) coredata.CORE_DATA_SIZE_FIELD,
+			      (bfd_vma)
+				CDATA_ADDR (coredata.CORE_DATA_SIZE_FIELD),
+			      (file_ptr) coredata.c_stack + coredata.c_size))
 	return NULL;
-      sec->name = ".data";
-      sec->flags = SEC_ALLOC | SEC_LOAD | SEC_HAS_CONTENTS;
-      sec->_raw_size = coredata.CORE_DATA_SIZE_FIELD;
-      sec->vma = CDATA_ADDR (coredata.CORE_DATA_SIZE_FIELD);
-      sec->filepos = (int)coredata.c_stack + coredata.c_size;
-
-      sec->next = abfd->sections;
-      abfd->sections = sec;
-      ++abfd->section_count;
     }
+#endif
+
+#ifdef CORE_VERSION_1
+  /* AIX 4 adds data sections from loaded objects to the core file,
+     which can be found by examining ldinfo, and anonymously mmapped
+     regions.  */
+  {
+    struct ld_info ldinfo;
+    bfd_size_type ldinfo_size;
+    file_ptr ldinfo_offset = (file_ptr) coredata.LOADER_OFFSET_FIELD;
+
+    /* .data section from executable.  */
+    if (coredata.c_datasize)
+      {
+	if (!make_bfd_asection (abfd, ".data",
+				SEC_ALLOC | SEC_LOAD | SEC_HAS_CONTENTS,
+				(bfd_size_type) coredata.c_datasize,
+				(bfd_vma)
+				  CDATA_ADDR (coredata.CORE_DATA_SIZE_FIELD),
+				(file_ptr) coredata.c_data))
+	  return NULL;
+      }
+
+    /* .data sections from loaded objects.  */
+    ldinfo_size = (char *) &ldinfo.ldinfo_filename[0]
+		  - (char *) &ldinfo.ldinfo_next;
+    while (1)
+      {
+	if (bfd_seek (abfd, ldinfo_offset, SEEK_SET) != 0)
+	  return NULL;
+	if (bfd_read (&ldinfo, ldinfo_size, 1, abfd) != ldinfo_size)
+	  return NULL;
+	if (ldinfo.ldinfo_core)
+	  {
+	    if (!make_bfd_asection (abfd, ".data",
+				    SEC_ALLOC | SEC_LOAD | SEC_HAS_CONTENTS,
+				    (bfd_size_type) ldinfo.ldinfo_datasize,
+				    (bfd_vma) ldinfo.ldinfo_dataorg,
+				    (file_ptr) ldinfo.ldinfo_core))
+	      return NULL;
+	  }
+	if (ldinfo.ldinfo_next == 0)
+	  break;
+	ldinfo_offset += ldinfo.ldinfo_next;
+      }
+
+    /* .vmdata sections from anonymously mmapped regions.  */
+    if (coredata.c_vmregions)
+      {
+	int i;
+
+	if (bfd_seek (abfd, (file_ptr) coredata.c_vmm, SEEK_SET) != 0)
+	  return NULL;
+
+	for (i = 0; i < coredata.c_vmregions; i++)
+	  {
+	    struct vm_info vminfo;
+
+	    if (bfd_read (&vminfo, sizeof (vminfo), 1, abfd) != sizeof (vminfo))
+	      return NULL;
+	    if (vminfo.vminfo_offset)
+	      {
+		if (!make_bfd_asection (abfd, ".vmdata",
+					SEC_ALLOC | SEC_LOAD | SEC_HAS_CONTENTS,
+					(bfd_size_type) vminfo.vminfo_size,
+					(bfd_vma) vminfo.vminfo_addr,
+					(file_ptr) vminfo.vminfo_offset))
+		  return NULL;
+	      }
+	  }
+      }
+  }
+#endif
 
   return abfd->xvec;				/* this is garbage for now. */
 }
@@ -288,9 +391,9 @@ rs6000coff_core_file_matches_executable_p (core_bfd, exec_bfd)
      bfd *core_bfd;
      bfd *exec_bfd;
 {
-  struct core_dump coredata;
+  struct CORE_DUMP coredata;
   struct ld_info ldinfo;
-  int size;
+  bfd_size_type size;
   char *path, *s;
   size_t alloc;
   const char *str1, *str2;
@@ -300,7 +403,7 @@ rs6000coff_core_file_matches_executable_p (core_bfd, exec_bfd)
       || bfd_read (&coredata, sizeof coredata, 1, core_bfd) != sizeof coredata)
     return false;
 
-  if (bfd_seek (core_bfd, (long) coredata.c_tab, SEEK_SET) != 0)
+  if (bfd_seek (core_bfd, (long) coredata.LOADER_OFFSET_FIELD, SEEK_SET) != 0)
     return false;
 
   size = (char *) &ldinfo.ldinfo_filename[0] - (char *) &ldinfo.ldinfo_next;
@@ -381,7 +484,7 @@ rs6000coff_get_section_contents (abfd, section, location, offset, count)
      sec_ptr section;
      PTR location;
      file_ptr offset;
-     int count;
+     bfd_size_type count;
 {
     if (count == 0)
 	return true;
@@ -399,7 +502,7 @@ rs6000coff_get_section_contents (abfd, section, location, offset, count)
          whole section. */
       if (offset || count != (sizeof(mstatus.gpr) + (4 * NUM_OF_SPEC_REGS)))
         (*_bfd_error_handler)
-	  ("ERROR! in rs6000coff_get_section_contents()\n");
+	  (_("ERROR! in rs6000coff_get_section_contents()\n"));
 
       /* for `.reg' section, `filepos' is a pointer to the `mstsave' structure
          in the core file. */

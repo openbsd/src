@@ -1,5 +1,6 @@
 /* VMS object file format
-   Copyright (C) 1989,90,91,94,95,1996 Free Software Foundation, Inc.
+   Copyright (C) 1989, 90, 91, 92, 93, 94, 95, 96, 97, 1999
+   Free Software Foundation, Inc.
 
 This file is part of GAS, the GNU Assembler.
 
@@ -13,9 +14,10 @@ WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See
 the GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public
-License along with GAS; see the file COPYING.  If not, write
-to the Free Software Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
+You should have received a copy of the GNU General Public License
+along with GAS; see the file COPYING.  If not, write to the Free
+Software Foundation, 59 Temple Place - Suite 330, Boston, MA
+02111-1307, USA. */
 
 /* Tag to validate a.out object file format processing */
 #define OBJ_VMS 1
@@ -212,19 +214,18 @@ typedef struct nlist obj_symbol_type;	/* Symbol table entry */
 /* Force structure tags into scope so that their use in prototypes
    will never be their first occurance.  */
 struct fix;
-struct symbol;
 struct frag;
 
 /* obj-vms routines visible to the rest of gas.  */
 
 extern void tc_aout_fix_to_chars PARAMS ((char *,struct fix *,relax_addressT));
 
-extern int vms_resolve_symbol_redef PARAMS ((struct symbol *));
+extern int vms_resolve_symbol_redef PARAMS ((symbolS *));
 #define RESOLVE_SYMBOL_REDEFINITION(X)	vms_resolve_symbol_redef(X)
 
 /* Compiler-generated label "__vax_g_doubles" is used to augment .stabs. */
-extern void vms_check_for_special_label PARAMS ((struct symbol *));
-#define tc_frob_label(X) vms_check_for_special_label(X)
+extern void vms_check_for_special_label PARAMS ((symbolS *));
+#define obj_frob_label(X) vms_check_for_special_label(X)
 
 extern void vms_check_for_main PARAMS ((void));
 

@@ -1,5 +1,5 @@
 /* tc-h8300.c -- Assemble code for the Hitachi H8/300
-   Copyright (C) 1991, 1992 Free Software Foundation.
+   Copyright (C) 1991, 92, 93, 94, 95, 96, 97, 1998 Free Software Foundation.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -14,8 +14,9 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with GAS; see the file COPYING.  If not, write to
-   the Free Software Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+   along with GAS; see the file COPYING.  If not, write to the Free
+   Software Foundation, 59 Temple Place - Suite 330, Boston, MA
+   02111-1307, USA.  */
 
 
 /*
@@ -25,6 +26,7 @@
 
 #include <stdio.h>
 #include "as.h"
+#include "subsegs.h"
 #include "bfd.h"
 #define DEFINE_TABLE
 #define h8_opcodes ops
@@ -196,8 +198,8 @@ struct h8_op
   @WREG+
   @-WREG
   #const
-
-  */
+  ccr
+*/
 
 /* try and parse a reg name, returns number of chars consumed */
 int
@@ -208,72 +210,84 @@ parse_reg (src, mode, reg, direction)
      int direction;
 
 {
-  if (src[0] == 's' && src[1] == 'p')
+  char *end;
+  int len;
+
+  /* Cribbed from get_symbol_end().  */
+  if (!is_name_beginner (*src) || *src == '\001')
+    return 0;
+  end = src+1;
+  while (is_part_of_name (*end) || *end == '\001')
+    end++;
+  len = end - src;
+
+  if (len == 2 && src[0] == 's' && src[1] == 'p')
     {
       *mode = PSIZE | REG | direction;
       *reg = 7;
-      return 2;
+      return len;
     }
-  if (src[0] == 'c' && src[1] == 'c' && src[2] == 'r')
+  if (len == 3 && src[0] == 'c' && src[1] == 'c' && src[2] == 'r')
     {
       *mode = CCR;
       *reg = 0;
-      return 3;
+      return len;
     }
-  if (src[0] == 'e' && src[1] == 'x' && src[2] == 'r')
+  if (len == 3 && src[0] == 'e' && src[1] == 'x' && src[2] == 'r')
     {
       *mode = EXR;
       *reg = 0;
-      return 3;
+      return len;
     }
-  if (src[0] == 'f' && src[1] == 'p')
+  if (len == 2 && src[0] == 'f' && src[1] == 'p')
     {
       *mode = PSIZE | REG | direction;
       *reg = 6;
-      return 2;
+      return len;
     }
-  if (src[0] == 'e'
-      && src[1] == 'r'
+  if (len == 3 && src[0] == 'e' && src[1] == 'r'
       && src[2] >= '0' && src[2] <= '7')
     {
       *mode = L_32 | REG | direction;
       *reg = src[2] - '0';
       if (!Hmode)
-	as_warn ("Reg not valid for H8/300");
-
-      return 3;
+	as_warn (_("Reg not valid for H8/300"));
+      return len;
     }
-  if (src[0] == 'e'
-      && src[1] >= '0' && src[1] <= '7')
+  if (len == 2 && src[0] == 'e' && src[1] >= '0' && src[1] <= '7')
     {
       *mode = L_16 | REG | direction;
       *reg = src[1] - '0' + 8;
       if (!Hmode)
-	as_warn ("Reg not valid for H8/300");
-      return 2;
+	as_warn (_("Reg not valid for H8/300"));
+      return len;
     }
 
   if (src[0] == 'r')
     {
       if (src[1] >= '0' && src[1] <= '7')
 	{
-	  if (src[2] == 'l')
+	  if (len == 3 && src[2] == 'l')
 	    {
 	      *mode = L_8 | REG | direction;
 	      *reg = (src[1] - '0') + 8;
-	      return 3;
+	      return len;
 	    }
-	  if (src[2] == 'h')
+	  if (len == 3 && src[2] == 'h')
 	    {
 	      *mode = L_8 | REG | direction;
 	      *reg = (src[1] - '0');
-	      return 3;
+	      return len;
 	    }
-	  *mode = L_16 | REG | direction;
-	  *reg = (src[1] - '0');
-	  return 2;
+	  if (len == 2)
+	    {
+	      *mode = L_16 | REG | direction;
+	      *reg = (src[1] - '0');
+	      return len;
+	    }
 	}
     }
+
   return 0;
 }
 
@@ -288,7 +302,7 @@ parse_exp (s, op)
   input_line_pointer = s;
   expression (op);
   if (op->X_op == O_absent)
-    as_bad ("missing operand");
+    as_bad (_("missing operand"));
   new = input_line_pointer;
   input_line_pointer = save;
   return new;
@@ -297,7 +311,7 @@ parse_exp (s, op)
 static char *
 skip_colonthing (ptr, exp, mode)
      char *ptr;
-     expressionS *exp;
+     expressionS *exp ATTRIBUTE_UNUSED;
      int *mode;
 {
   if (*ptr == ':')
@@ -385,7 +399,7 @@ static void
 get_operand (ptr, op, dst, direction)
      char **ptr;
      struct h8_op *op;
-     unsigned int dst;
+     unsigned int dst ATTRIBUTE_UNUSED;
      int direction;
 {
   char *src = *ptr;
@@ -406,17 +420,17 @@ get_operand (ptr, op, dst, direction)
       high = src[6] - '0';
 
       if (high < low)
-	as_bad ("Invalid register list for ldm/stm\n");
+	as_bad (_("Invalid register list for ldm/stm\n"));
 
       if (low % 2)
-	as_bad ("Invalid register list for ldm/stm\n");
+	as_bad (_("Invalid register list for ldm/stm\n"));
 
-      if (high - low > 4)
-	as_bad ("Invalid register list for ldm/stm\n");
+      if (high - low > 3)
+	as_bad (_("Invalid register list for ldm/stm\n"));
 
-      if (high - low != 2
+      if (high - low != 1
 	  && low % 4)
-	as_bad ("Invalid register list for ldm/stm\n");
+	as_bad (_("Invalid register list for ldm/stm\n"));
 
       /* Even sicker.  We encode two registers into op->reg.  One
 	 for the low register to save, the other for the high
@@ -473,7 +487,7 @@ get_operand (ptr, op, dst, direction)
 
 
 	  if ((mode & SIZE) != PSIZE)
-	    as_bad ("Wrong size pointer register for architecture.");
+	    as_bad (_("Wrong size pointer register for architecture."));
 	  op->mode = RDDEC;
 	  op->reg = num;
 	  *ptr = src + len;
@@ -501,7 +515,7 @@ get_operand (ptr, op, dst, direction)
 
 	  if (*src != ',')
 	    {
-	      as_bad ("expected @(exp, reg16)");
+	      as_bad (_("expected @(exp, reg16)"));
 	      return;
 
 	    }
@@ -510,7 +524,7 @@ get_operand (ptr, op, dst, direction)
 	  len = parse_reg (src, &mode, &op->reg, direction);
 	  if (len == 0 || !(mode & REG))
 	    {
-	      as_bad ("expected @(exp, reg16)");
+	      as_bad (_("expected @(exp, reg16)"));
 	      return;
 	    }
 	  op->mode |= DISP | direction;
@@ -520,7 +534,7 @@ get_operand (ptr, op, dst, direction)
 
 	  if (*src != ')' && '(')
 	    {
-	      as_bad ("expected @(exp, reg16)");
+	      as_bad (_("expected @(exp, reg16)"));
 	      return;
 	    }
 	  *ptr = src + 1;
@@ -536,14 +550,14 @@ get_operand (ptr, op, dst, direction)
 	    {
 	      src++;
 	      if ((mode & SIZE) != PSIZE)
-		as_bad ("Wrong size pointer register for architecture.");
+		as_bad (_("Wrong size pointer register for architecture."));
 	      op->mode = RSINC;
 	      op->reg = num;
 	      *ptr = src;
 	      return;
 	    }
 	  if ((mode & SIZE) != PSIZE)
-	    as_bad ("Wrong size pointer register for architecture.");
+	    as_bad (_("Wrong size pointer register for architecture."));
 
 	  op->mode = direction | IND | PSIZE;
 	  op->reg = num;
@@ -600,7 +614,7 @@ get_operand (ptr, op, dst, direction)
 	    }
 	  else
 	    {
-	      as_bad ("expect :8 or :16 here");
+	      as_bad (_("expect :8 or :16 here"));
 	    }
 	}
       else
@@ -806,7 +820,7 @@ check_operand (operand, width, string)
 	    }
 	  else 
 	    {
-	      as_warn ("operand %s0x%lx out of range.", string,
+	      as_warn (_("operand %s0x%lx out of range."), string,
 		       (unsigned long) operand->exp.X_add_number);
 	    }
 	}
@@ -893,7 +907,7 @@ do_a_fix_imm (offset, operand, relaxmode)
 	    idx = R_RELLONG;
 	  break;
 	default:
-	  as_bad("Can't work out size of operand.\n");
+	  as_bad(_("Can't work out size of operand.\n"));
 	case L_16:
 	  size = 2;
 	  where = 0;
@@ -907,7 +921,13 @@ do_a_fix_imm (offset, operand, relaxmode)
 	  size = 1;
 	  where = 0;
 	  idx = R_RELBYTE;
-	  operand->exp.X_add_number = (char)operand->exp.X_add_number;
+	  /* This used to use a cast to char, but that fails if char is an
+	     unsigned type.  We can't use `signed char', as that isn't valid
+	     K&R C.  */
+	  if (operand->exp.X_add_number & 0x80)
+	    operand->exp.X_add_number |= ((offsetT) -1 << 8);
+	  else
+	    operand->exp.X_add_number &= 0xff;
 	}
 
       fix_new_exp (frag_now,
@@ -941,7 +961,8 @@ build_bytes (this_try, operand)
   char *p = asnibbles;
 
   if (!(this_try->inbase || Hmode))
-    as_warn ("Opcode `%s' not available in H8/300 mode", this_try->name);
+    as_warn (_("Opcode `%s' with these operand types not available in H8/300 mode"),
+	     this_try->name);
 
   while (*nibble_ptr != E)
     {
@@ -992,7 +1013,7 @@ build_bytes (this_try, operand)
 		  nib = 0x8 | c;
 		  break;
 		default:
-		  as_bad ("Need #1 or #2 here");
+		  as_bad (_("Need #1 or #2 here"));
 		}
 	    }
 	  else if (c & KBIT)
@@ -1007,12 +1028,12 @@ build_bytes (this_try, operand)
 		  break;
 		case 4:
 		  if (!Hmode)
-		    as_warn ("#4 not valid on H8/300.");
+		    as_warn (_("#4 not valid on H8/300."));
 		  nib = 9;
 		  break;
 
 		default:
-		  as_bad ("Need #1 or #2 here");
+		  as_bad (_("Need #1 or #2 here"));
 		  break;
 		}
 	      /* stop it making a fix */
@@ -1088,12 +1109,19 @@ build_bytes (this_try, operand)
 
 	  if (operand[i].exp.X_add_number & 1)
 	    {
-	      as_warn ("branch operand has odd offset (%lx)\n",
+	      as_warn (_("branch operand has odd offset (%lx)\n"),
 		       (unsigned long) operand->exp.X_add_number);
 	    }
 
-	  operand[i].exp.X_add_number =
-	    (char) (operand[i].exp.X_add_number - 1);
+	  operand[i].exp.X_add_number -= 1;
+	  /* This used to use a cast to char, but that fails if char is an
+	     unsigned type.  We can't use `signed char', as that isn't valid
+	     K&R C.  */
+	  if (operand[i].exp.X_add_number & 0x80)
+	    operand[i].exp.X_add_number |= ((offsetT) -1 << 8);
+	  else
+	    operand[i].exp.X_add_number &= 0xff;
+
 	  fix_new_exp (frag_now,
 		       output - frag_now->fr_literal + where,
 		       size,
@@ -1119,7 +1147,7 @@ build_bytes (this_try, operand)
 	  check_operand (operand + i, Hmode ? 0xffffff : 0xffff, "@");
 	  if (operand[i].exp.X_add_number & 1)
 	    {
-	      as_warn ("branch operand has odd offset (%lx)\n",
+	      as_warn (_("branch operand has odd offset (%lx)\n"),
 		       (unsigned long) operand->exp.X_add_number);
 	    }
 	  if (!Hmode)
@@ -1160,7 +1188,7 @@ clever_message (opcode, operand)
 	    case RD16:
 	      if (operand[argn].mode != RD16)
 		{
-		  as_bad ("destination operand must be 16 bit register");
+		  as_bad (_("destination operand must be 16 bit register"));
 		  return;
 
 		}
@@ -1170,7 +1198,7 @@ clever_message (opcode, operand)
 
 	      if (operand[argn].mode != RS8)
 		{
-		  as_bad ("source operand must be 8 bit register");
+		  as_bad (_("source operand must be 8 bit register"));
 		  return;
 		}
 	      break;
@@ -1178,14 +1206,14 @@ clever_message (opcode, operand)
 	    case ABS16DST:
 	      if (operand[argn].mode != ABS16DST)
 		{
-		  as_bad ("destination operand must be 16bit absolute address");
+		  as_bad (_("destination operand must be 16bit absolute address"));
 		  return;
 		}
 	      break;
 	    case RD8:
 	      if (operand[argn].mode != RD8)
 		{
-		  as_bad ("destination operand must be 8 bit register");
+		  as_bad (_("destination operand must be 8 bit register"));
 		  return;
 		}
 	      break;
@@ -1194,7 +1222,7 @@ clever_message (opcode, operand)
 	    case ABS16SRC:
 	      if (operand[argn].mode != ABS16SRC)
 		{
-		  as_bad ("source operand must be 16bit absolute address");
+		  as_bad (_("source operand must be 16bit absolute address"));
 		  return;
 		}
 	      break;
@@ -1202,7 +1230,7 @@ clever_message (opcode, operand)
 	    }
 	}
     }
-  as_bad ("invalid operands");
+  as_bad (_("invalid operands"));
 }
 
 /* This is the guts of the machine-dependent assembler.  STR points to a
@@ -1248,7 +1276,7 @@ md_assemble (str)
 
   if (op_end == op_start)
     {
-      as_bad ("can't find opcode ");
+      as_bad (_("can't find opcode "));
     }
   c = *op_end;
 
@@ -1259,7 +1287,7 @@ md_assemble (str)
 
   if (opcode == NULL)
     {
-      as_bad ("unknown opcode");
+      as_bad (_("unknown opcode"));
       return;
     }
 
@@ -1305,7 +1333,7 @@ md_assemble (str)
     {
       if (opcode->size != *dot)
 	{
-	  as_warn ("mismatch between opcode size and operand size");
+	  as_warn (_("mismatch between opcode size and operand size"));
 	}
     }
 
@@ -1315,23 +1343,23 @@ md_assemble (str)
 
 void
 tc_crawl_symbol_chain (headers)
-     object_headers * headers;
+     object_headers * headers ATTRIBUTE_UNUSED;
 {
-  printf ("call to tc_crawl_symbol_chain \n");
+  printf (_("call to tc_crawl_symbol_chain \n"));
 }
 
 symbolS *
 md_undefined_symbol (name)
-     char *name;
+     char *name ATTRIBUTE_UNUSED;
 {
   return 0;
 }
 
 void
 tc_headers_hook (headers)
-     object_headers * headers;
+     object_headers * headers ATTRIBUTE_UNUSED;
 {
-  printf ("call to tc_headers_hook \n");
+  printf (_("call to tc_headers_hook \n"));
 }
 
 /* Various routines to kill one day */
@@ -1382,7 +1410,7 @@ md_atof (type, litP, sizeP)
 
     default:
       *sizeP = 0;
-      return "Bad call to MD_ATOF()";
+      return _("Bad call to MD_ATOF()");
     }
   t = atof_ieee (input_line_pointer, type, words);
   if (t)
@@ -1405,55 +1433,32 @@ size_t md_longopts_size = sizeof(md_longopts);
 
 int
 md_parse_option (c, arg)
-     int c;
-     char *arg;
+     int c ATTRIBUTE_UNUSED;
+     char *arg ATTRIBUTE_UNUSED;
 {
   return 0;
 }
 
 void
 md_show_usage (stream)
-     FILE *stream;
+     FILE *stream ATTRIBUTE_UNUSED;
 {
 }
 
-int md_short_jump_size;
-
 void
 tc_aout_fix_to_chars ()
 {
-  printf ("call to tc_aout_fix_to_chars \n");
+  printf (_("call to tc_aout_fix_to_chars \n"));
   abort ();
 }
 
 void
-md_create_short_jump (ptr, from_addr, to_addr, frag, to_symbol)
-     char *ptr;
-     addressT from_addr;
-     addressT to_addr;
-     fragS *frag;
-     symbolS *to_symbol;
-{
-  as_fatal ("failed sanity check.");
-}
-
-void
-md_create_long_jump (ptr, from_addr, to_addr, frag, to_symbol)
-     char *ptr;
-     addressT from_addr, to_addr;
-     fragS *frag;
-     symbolS *to_symbol;
-{
-  as_fatal ("failed sanity check.");
-}
-
-void
 md_convert_frag (headers, seg, fragP)
-     object_headers *headers;
-     segT seg;
-     fragS *fragP;
+     object_headers *headers ATTRIBUTE_UNUSED;
+     segT seg ATTRIBUTE_UNUSED;
+     fragS *fragP ATTRIBUTE_UNUSED;
 {
-  printf ("call to md_convert_frag \n");
+  printf (_("call to md_convert_frag \n"));
   abort ();
 }
 
@@ -1493,14 +1498,12 @@ md_apply_fix (fixP, val)
     }
 }
 
-int md_long_jump_size;
-
 int
 md_estimate_size_before_relax (fragP, segment_type)
-     register fragS *fragP;
-     register segT segment_type;
+     register fragS *fragP ATTRIBUTE_UNUSED;
+     register segT segment_type ATTRIBUTE_UNUSED;
 {
-  printf ("call tomd_estimate_size_before_relax \n");
+  printf (_("call tomd_estimate_size_before_relax \n"));
   abort ();
 }
 
@@ -1516,7 +1519,7 @@ md_number_to_chars (ptr, use, nbytes)
 }
 long
 md_pcrel_from (fixP)
-     fixS *fixP;
+     fixS *fixP ATTRIBUTE_UNUSED;
 {
   abort ();
 }
@@ -1565,7 +1568,24 @@ tc_reloc_mangle (fix_ptr, intr, base)
   intr->r_offset = fix_ptr->fx_offset;
 
   if (symbol_ptr)
-    intr->r_symndx = symbol_ptr->sy_number;
+    {
+      if (symbol_ptr->sy_number != -1)
+	intr->r_symndx = symbol_ptr->sy_number;
+      else
+	{
+	  symbolS *segsym;
+
+	  /* This case arises when a reference is made to `.'.  */
+	  segsym = seg_info (S_GET_SEGMENT (symbol_ptr))->dot;
+	  if (segsym == NULL)
+	    intr->r_symndx = -1;
+	  else
+	    {
+	      intr->r_symndx = segsym->sy_number;
+	      intr->r_offset += S_GET_VALUE (symbol_ptr);
+	    }
+	}
+    }
   else
     intr->r_symndx = -1;
 

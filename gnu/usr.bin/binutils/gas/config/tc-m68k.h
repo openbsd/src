@@ -1,6 +1,5 @@
 /* This file is tc-m68k.h
-
-   Copyright (C) 1987, 89, 90, 91, 92, 93, 94, 95, 1996
+   Copyright (C) 1987, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 2000
    Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
@@ -16,10 +15,15 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with GAS; see the file COPYING.  If not, write to
-   the Free Software Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+   along with GAS; see the file COPYING.  If not, write to the Free
+   Software Foundation, 59 Temple Place - Suite 330, Boston, MA
+   02111-1307, USA.  */
 
 #define TC_M68K 1
+
+#ifdef ANSI_PROTOTYPES
+struct fix;
+#endif
 
 #define TARGET_BYTES_BIG_ENDIAN 1
 
@@ -27,7 +31,7 @@
 #ifdef TE_SUN3
 #define TARGET_FORMAT "a.out-sunos-big"
 #endif
-#if defined(TE_NetBSD) || defined(TE_OpenBSD)
+#ifdef TE_NetBSD
 #define TARGET_FORMAT "a.out-m68k-netbsd"
 #endif
 #ifdef TE_LINUX
@@ -53,6 +57,9 @@
 #endif
 #ifdef TE_AUX
 #define TARGET_FORMAT		"coff-m68k-aux"
+#endif
+#ifdef TE_DELTA
+#define TARGET_FORMAT		"coff-m68k-sysv"
 #endif
 
 #ifndef COFF_MAGIC
@@ -92,43 +99,62 @@ extern const char *m68k_comment_chars;
 #define LISTING_LHS_CONT_LINES 4/* And 4 lines max */
 #define LISTING_HEADER "68K GAS "
 
-/* Copied from write.c */
-#define M68K_AIM_KLUDGE(aim, this_state,this_type) \
-    if (aim==0 && this_state== 4) { /* hard encoded from tc-m68k.c */ \
-					aim=this_type->rlx_forward+1; /* Force relaxation into word mode */ \
-				    }
-
 #ifndef REGISTER_PREFIX
 #define REGISTER_PREFIX '%'
 #endif
 
 #if !defined (REGISTER_PREFIX_OPTIONAL)
 #if defined (M68KCOFF) || defined (OBJ_ELF)
+#ifndef BFD_ASSEMBLER
 #define LOCAL_LABEL(name) (name[0] == '.' \
 			   && (name[1] == 'L' || name[1] == '.'))
-#define FAKE_LABEL_NAME ".L0\001"
+#endif /* ! BFD_ASSEMBLER */
 #define REGISTER_PREFIX_OPTIONAL 0
-#else
+#else /* ! (COFF || ELF) */
 #define REGISTER_PREFIX_OPTIONAL 1
-#endif
+#endif /* ! (COFF || ELF) */
 #endif /* not def REGISTER_PREFIX and not def OPTIONAL_REGISTER_PREFIX */
 
 #ifdef TE_DELTA
-/* On the Delta, `%' can occur within a label name.  I'm assuming it
-   can't be used as the initial character.  If that's not true, more
-   work will be needed to fix this up.  */
-#define LEX_PCT 1
+/* On the Delta, `%' can occur within a label name, but not as the
+   initial character.  */
+#define LEX_PCT LEX_NAME
+/* On the Delta, `~' can start a label name, but is converted to '.'. */
+#define LEX_TILDE LEX_BEGIN_NAME
+#define tc_canonicalize_symbol_name(s) ((*(s) == '~' ? *(s) = '.' : '.'), s)
 /* On the Delta, dots are not required before pseudo-ops.  */
-#define NO_PSEUDO_DOT
+#define NO_PSEUDO_DOT 1
+#ifndef BFD_ASSEMBLER
+#undef LOCAL_LABEL
+#define LOCAL_LABEL(name) \
+  (name[0] == '.' || (name[0] == 'L' && name[1] == '%'))
+#endif
 #endif
 
 extern void m68k_mri_mode_change PARAMS ((int));
 #define MRI_MODE_CHANGE(i) m68k_mri_mode_change (i)
 
+extern int m68k_conditional_pseudoop PARAMS ((pseudo_typeS *));
+#define tc_conditional_pseudoop(pop) m68k_conditional_pseudoop (pop)
+
+extern void m68k_frob_label PARAMS ((symbolS *));
+#define tc_frob_label(sym) m68k_frob_label (sym)
+
+extern void m68k_flush_pending_output PARAMS ((void));
+#define md_flush_pending_output() m68k_flush_pending_output ()
+
+extern void m68k_frob_symbol PARAMS ((symbolS *));
+
 #ifdef BFD_ASSEMBLER
 
-#define tc_frob_symbol(sym,punt) \
-    if (S_GET_SEGMENT (sym) == reg_section) punt = 1
+#define tc_frob_symbol(sym,punt)				\
+do								\
+  {								\
+    if (S_GET_SEGMENT (sym) == reg_section)			\
+      punt = 1;							\
+    m68k_frob_symbol (sym);					\
+  }								\
+while (0)
 
 #define NO_RELOC BFD_RELOC_NONE
 
@@ -136,22 +162,34 @@ extern void m68k_mri_mode_change PARAMS ((int));
 
 /* This expression evaluates to false if the relocation is for a local object
    for which we still want to do the relocation at runtime.  True if we
-   are willing to perform this relocation while building the .o file.  */
+   are willing to perform this relocation while building the .o file.  If
+   the reloc is against an externally visible symbol, then the assembler
+   should never do the relocation.  */
 
 #define TC_RELOC_RTSYM_LOC_FIXUP(FIX)			\
-	((FIX)->fx_r_type != BFD_RELOC_8_PLT_PCREL	\
-	 && (FIX)->fx_r_type != BFD_RELOC_16_PLT_PCREL	\
-	 && (FIX)->fx_r_type != BFD_RELOC_32_PLT_PCREL	\
-	 && (FIX)->fx_r_type != BFD_RELOC_8_GOT_PCREL	\
-	 && (FIX)->fx_r_type != BFD_RELOC_16_GOT_PCREL	\
-	 && (FIX)->fx_r_type != BFD_RELOC_32_GOT_PCREL)
+	((FIX)->fx_addsy == NULL			\
+	 || (! S_IS_EXTERNAL ((FIX)->fx_addsy)		\
+	     && ! S_IS_WEAK ((FIX)->fx_addsy)		\
+	     && S_IS_DEFINED ((FIX)->fx_addsy)		\
+	     && ! S_IS_COMMON ((FIX)->fx_addsy)))
 
 #define tc_fix_adjustable(X) tc_m68k_fix_adjustable(X)
+extern int tc_m68k_fix_adjustable PARAMS ((struct fix *));
+#define elf_tc_final_processing m68k_elf_final_processing
+extern void m68k_elf_final_processing PARAMS ((void));
 #endif
 
-#else
+#define TC_FORCE_RELOCATION(FIX)			\
+	((FIX)->fx_r_type == BFD_RELOC_VTABLE_INHERIT	\
+	 || (FIX)->fx_r_type == BFD_RELOC_VTABLE_ENTRY)
+
+#else /* ! BFD_ASSEMBLER */
+
+#define tc_frob_coff_symbol(sym) m68k_frob_symbol (sym)
+
 #define NO_RELOC 0
-#endif
+
+#endif /* ! BFD_ASSEMBLER */
 
 #define DIFF_EXPR_OK
 
@@ -168,5 +206,12 @@ extern int m68k_parse_long_option PARAMS ((char *));
 
 extern struct relax_type md_relax_table[];
 #define TC_GENERIC_RELAX_TABLE md_relax_table
+
+/* Copied from write.c */
+/* This was formerly called M68K_AIM_KLUDGE.  */
+#define md_prepare_relax_scan(fragP, address, aim, this_state, this_type) \
+  if (aim==0 && this_state== 4) { /* hard encoded from tc-m68k.c */ \
+    aim=this_type->rlx_forward+1; /* Force relaxation into word mode */ \
+  }
 
 /* end of tc-m68k.h */

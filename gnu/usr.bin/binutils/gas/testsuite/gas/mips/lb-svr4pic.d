@@ -1,4 +1,4 @@
-#objdump: -dr --prefix-addresses
+#objdump: -dr --prefix-addresses -mmips:3000
 #name: MIPS lb-svr4pic
 #as: -mips1 -KPIC
 #source: lb-pic.s

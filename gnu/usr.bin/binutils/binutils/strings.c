@@ -1,5 +1,6 @@
 /* strings -- print the strings of printable characters in files
-   Copyright (C) 1993, 94, 95, 1996 Free Software Foundation, Inc.
+   Copyright (C) 1993, 94, 95, 96, 97, 98, 99, 2000
+   Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -13,7 +14,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+   02111-1307, USA.  */
 
 /* Usage: strings [options] file...
 
@@ -56,6 +58,23 @@
 #include <errno.h>
 #include "bucomm.h"
 #include "libiberty.h"
+
+/* Some platforms need to put stdin into binary mode, to read
+    binary files.  */
+#ifdef HAVE_SETMODE
+#ifndef O_BINARY
+#ifdef _O_BINARY
+#define O_BINARY _O_BINARY
+#define setmode _setmode
+#else
+#define O_BINARY 0
+#endif
+#endif
+#if O_BINARY
+#include <io.h>
+#define SET_BINARY(f) do { if (!isatty(f)) setmode(f,O_BINARY); } while (0)
+#endif
+#endif
 
 #ifdef isascii
 #define isgraphic(c) (isascii (c) && isprint (c))
@@ -103,9 +122,11 @@ static struct option long_options[] =
   {NULL, 0, NULL, 0}
 };
 
+static void strings_a_section PARAMS ((bfd *, asection *, PTR));
+static boolean strings_object_file PARAMS ((const char *));
 static boolean strings_file PARAMS ((char *file));
 static int integer_arg PARAMS ((char *s));
-static void print_strings PARAMS ((char *filename, FILE *stream,
+static void print_strings PARAMS ((const char *filename, FILE *stream,
 				  file_ptr address, int stop_point,
 				  int magiccount, char *magic));
 static void usage PARAMS ((FILE *stream, int status));
@@ -118,6 +139,12 @@ main (argc, argv)
   int optc;
   int exit_status = 0;
   boolean files_given = false;
+
+#if defined (HAVE_SETLOCALE) && defined (HAVE_LC_MESSAGES)
+  setlocale (LC_MESSAGES, "");
+#endif
+  bindtextdomain (PACKAGE, LOCALEDIR);
+  textdomain (PACKAGE);
 
   program_name = argv[0];
   xmalloc_set_program_name (program_name);
@@ -147,9 +174,7 @@ main (argc, argv)
 	  string_min = integer_arg (optarg);
 	  if (string_min < 1)
 	    {
-	      fprintf (stderr, "%s: invalid number %s\n",
-		       program_name, optarg);
-	      exit (1);
+	      fatal (_("invalid number %s"), optarg);
 	    }
 	  break;
 
@@ -194,7 +219,7 @@ main (argc, argv)
 
 	default:
 	  if (string_min < 0)
-	    string_min = optc;
+	    string_min = optc - '0';
 	  else
 	    string_min = string_min * 10 + optc - '0';
 	  break;
@@ -205,10 +230,14 @@ main (argc, argv)
     string_min = 4;
 
   bfd_init ();
+  set_default_bfd_target ();
 
   if (optind >= argc)
     {
       datasection_only = false;
+#ifdef SET_BINARY
+      SET_BINARY (fileno (stdin));
+#endif
       print_strings ("{standard input}", stdin, 0, 0, 0, (char *) NULL);
       files_given = true;
     }
@@ -237,11 +266,13 @@ main (argc, argv)
    set `got_a_section' and print the strings in it.  */
 
 static void
-strings_a_section (abfd, sect, file)
+strings_a_section (abfd, sect, filearg)
      bfd *abfd;
      asection *sect;
-     PTR file;
+     PTR filearg;
 {
+  const char *file = (const char *) filearg;
+
   if ((sect->flags & DATA_FLAGS) == DATA_FLAGS)
     {
       bfd_size_type sz = bfd_get_section_size_before_reloc (sect);
@@ -263,7 +294,7 @@ strings_a_section (abfd, sect, file)
 
 static boolean
 strings_object_file (file)
-     char *file;
+     const char *file;
 {
   bfd *abfd = bfd_openr (file, target);
 
@@ -283,7 +314,7 @@ strings_object_file (file)
     }
 
   got_a_section = false;
-  bfd_map_over_sections (abfd, strings_a_section, file);
+  bfd_map_over_sections (abfd, strings_a_section, (PTR) file);
 
   if (!bfd_close (abfd))
     {
@@ -346,7 +377,7 @@ strings_file (file)
 
 static void
 print_strings (filename, stream, address, stop_point, magiccount, magic)
-     char *filename;
+     const char *filename;
      FILE *stream;
      file_ptr address;
      int stop_point;
@@ -479,8 +510,7 @@ integer_arg (s)
 
   if (*p)
     {
-      fprintf (stderr, "%s: invalid integer argument %s\n", program_name, s);
-      exit (1);
+      fatal (_("invalid integer argument %s"), s);
     }
   return value;
 }
@@ -490,13 +520,13 @@ usage (stream, status)
      FILE *stream;
      int status;
 {
-  fprintf (stream, "\
+  fprintf (stream, _("\
 Usage: %s [-afov] [-n min-len] [-min-len] [-t {o,x,d}] [-]\n\
        [--all] [--print-file-name] [--bytes=min-len] [--radix={o,x,d}]\n\
-       [--target=bfdname] [--help] [--version] file...\n",
+       [--target=bfdname] [--help] [--version] file...\n"),
 	   program_name);
   list_supported_targets (program_name, stream);
   if (status == 0)
-    fprintf (stream, "Report bugs to bug-gnu-utils@prep.ai.mit.edu\n");
+    fprintf (stream, _("Report bugs to %s\n"), REPORT_BUGS_TO);
   exit (status);
 }

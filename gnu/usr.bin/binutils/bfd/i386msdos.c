@@ -1,5 +1,6 @@
 /* BFD back-end for MS-DOS executables.
-   Copyright 1990, 1991, 1992, 1993, 1994 Free Software Foundation, Inc.
+   Copyright 1990, 91, 92, 93, 94, 95, 96, 97, 98, 1999
+   Free Software Foundation, Inc.
    Written by Bryan Ford of the University of Utah.
 
    Contributed by the Center for Software Science at the
@@ -58,8 +59,8 @@ struct exe_header
 
 static int
 msdos_sizeof_headers (abfd, exec)
-     bfd *abfd;
-     boolean exec;
+     bfd *abfd ATTRIBUTE_UNUSED;
+     boolean exec ATTRIBUTE_UNUSED;
 {
   return 0;
 }
@@ -168,6 +169,7 @@ msdos_set_section_contents (abfd, section, location, offset, count)
 #define msdos_bfd_get_relocated_section_contents \
   bfd_generic_get_relocated_section_contents
 #define msdos_bfd_relax_section bfd_generic_relax_section
+#define msdos_bfd_gc_sections bfd_generic_gc_sections
 #define msdos_bfd_link_hash_table_create _bfd_generic_link_hash_table_create
 #define msdos_bfd_link_add_symbols _bfd_generic_link_add_symbols
 #define msdos_bfd_final_link _bfd_generic_final_link
@@ -180,7 +182,7 @@ msdos_set_section_contents (abfd, section, location, offset, count)
 #define msdos_get_symbol_info _bfd_nosymbols_get_symbol_info
 #define msdos_find_nearest_line _bfd_nosymbols_find_nearest_line
 #define msdos_get_lineno _bfd_nosymbols_get_lineno
-#define msdos_bfd_is_local_label _bfd_nosymbols_bfd_is_local_label
+#define msdos_bfd_is_local_label_name _bfd_nosymbols_bfd_is_local_label_name
 #define msdos_bfd_make_debug_symbol _bfd_nosymbols_bfd_make_debug_symbol
 #define msdos_read_minisymbols _bfd_nosymbols_read_minisymbols
 #define msdos_minisymbol_to_symbol _bfd_nosymbols_minisymbol_to_symbol
@@ -237,6 +239,8 @@ const bfd_target i386msdos_vec =
   BFD_JUMP_TABLE_LINK (msdos),
   BFD_JUMP_TABLE_DYNAMIC (_bfd_nodynamic),
 
+  NULL,
+  
   (PTR) 0
 };
 

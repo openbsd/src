@@ -1,4 +1,5 @@
-#objdump: -dr --prefix-addresses
+#objdump: -dr --prefix-addresses -mmips:4000
+#as: -mcpu=r4000
 #name: MIPS ld
 
 # Test the ld macro.

@@ -1,5 +1,6 @@
 /* linker.c -- BFD linker routines
-   Copyright (C) 1993, 1994, 1995 Free Software Foundation, Inc.
+   Copyright (C) 1993, 94, 95, 96, 97, 98, 1999
+   Free Software Foundation, Inc.
    Written by Steve Chamberlain and Ian Lance Taylor, Cygnus Support
 
 This file is part of BFD, the Binary File Descriptor library.
@@ -74,7 +75,7 @@ SUBSECTION
 @cindex target vector (_bfd_link_hash_table_create)
 	The linker routines must create a hash table, which must be
 	derived from <<struct bfd_link_hash_table>> described in
-	<<bfdlink.c>>.  @xref{Hash Tables} for information on how to
+	<<bfdlink.c>>.  @xref{Hash Tables}, for information on how to
 	create a derived hash table.  This entry point is called using
 	the target vector of the linker output file.
 
@@ -395,8 +396,7 @@ SUBSUBSECTION
 	is used to further controls which local symbols are included
 	in the output file.  If the value is <<discard_l>>, then all
 	local symbols which begin with a certain prefix are discarded;
-	this prefix is described by the <<lprefix>> and
-	<<lprefix_len>> fields of the <<bfd_link_info>> structure.
+	this is controlled by the <<bfd_is_local_label_name>> entry point.
 
 	The a.out backend handles symbols by calling
 	<<aout_link_write_symbols>> on each input BFD and then
@@ -694,7 +694,7 @@ static boolean
 generic_link_read_symbols (abfd)
      bfd *abfd;
 {
-  if (abfd->outsymbols == (asymbol **) NULL)
+  if (bfd_get_outsymbols (abfd) == (asymbol **) NULL)
     {
       long symsize;
       long symcount;
@@ -702,13 +702,13 @@ generic_link_read_symbols (abfd)
       symsize = bfd_get_symtab_upper_bound (abfd);
       if (symsize < 0)
 	return false;
-      abfd->outsymbols = (asymbol **) bfd_alloc (abfd, symsize);
-      if (abfd->outsymbols == NULL && symsize != 0)
+      bfd_get_outsymbols (abfd) = (asymbol **) bfd_alloc (abfd, symsize);
+      if (bfd_get_outsymbols (abfd) == NULL && symsize != 0)
 	return false;
-      symcount = bfd_canonicalize_symtab (abfd, abfd->outsymbols);
+      symcount = bfd_canonicalize_symtab (abfd, bfd_get_outsymbols (abfd));
       if (symcount < 0)
 	return false;
-      abfd->symcount = symcount;
+      bfd_get_symcount (abfd) = symcount;
     }
 
   return true;
@@ -1320,14 +1320,14 @@ generic_link_add_symbol_list (abfd, info, symbol_count, symbols, collect)
 		  if (bfd_is_com_section (bfd_get_section (p)))
 		    p->flags |= BSF_OLD_COMMON;
 		}
-
-	      /* Store a back pointer from the symbol to the hash
-		 table entry for the benefit of relaxation code until
-		 it gets rewritten to not use asymbol structures.
-		 Setting this is also used to check whether these
-		 symbols were set up by the generic linker.  */
-	      p->udata.p = (PTR) h;
 	    }
+
+	  /* Store a back pointer from the symbol to the hash
+	     table entry for the benefit of relaxation code until
+	     it gets rewritten to not use asymbol structures.
+	     Setting this is also used to check whether these
+	     symbols were set up by the generic linker.  */
+	  p->udata.p = (PTR) h;
 	}
     }
 
@@ -1395,7 +1395,7 @@ static const enum link_action link_action[8][8] =
   /* UNDEFW_ROW	*/  {WEAK,  NOACT, NOACT, REF,   REF,   NOACT, REFC,  WARNC },
   /* DEF_ROW 	*/  {DEF,   DEF,   DEF,   MDEF,  DEF,   CDEF,  MDEF,  CYCLE },
   /* DEFW_ROW 	*/  {DEFW,  DEFW,  DEFW,  NOACT, NOACT, NOACT, NOACT, CYCLE },
-  /* COMMON_ROW	*/  {COM,   COM,   COM,   CREF,  CREF,  BIG,   CREF,  WARNC },
+  /* COMMON_ROW	*/  {COM,   COM,   COM,   CREF,  CREF,  BIG,   REFC,  WARNC },
   /* INDR_ROW	*/  {IND,   IND,   IND,   MDEF,  IND,   CIND,  MIND,  CYCLE },
   /* WARN_ROW   */  {MWARN, WARN,  WARN,  CWARN, CWARN, WARN,  CWARN, MWARN },
   /* SET_ROW	*/  {SET,   SET,   SET,   SET,   SET,   SET,   CYCLE, CYCLE }
@@ -1749,8 +1749,8 @@ _bfd_generic_link_add_one_symbol (info, abfd, name, flags, section, value,
 	case MDEF:
 	  /* Handle a multiple definition.  */
 	  {
-	    asection *msec;
-	    bfd_vma mval;
+	    asection *msec = NULL;
+	    bfd_vma mval = 0;
 
 	    switch (h->type)
 	      {
@@ -1936,8 +1936,8 @@ _bfd_generic_final_link (abfd, info)
   size_t outsymalloc;
   struct generic_write_global_symbol_info wginfo;
 
-  abfd->outsymbols = (asymbol **) NULL;
-  abfd->symcount = 0;
+  bfd_get_outsymbols (abfd) = (asymbol **) NULL;
+  bfd_get_symcount (abfd) = 0;
   outsymalloc = 0;
 
   /* Mark all sections which will be included in the output file.  */
@@ -1958,6 +1958,12 @@ _bfd_generic_final_link (abfd, info)
   _bfd_generic_link_hash_traverse (_bfd_generic_hash_table (info),
 				   _bfd_generic_link_write_global_symbol,
 				   (PTR) &wginfo);
+
+  /* Make sure we have a trailing NULL pointer on OUTSYMBOLS.  We
+     shouldn't really need one, since we have SYMCOUNT, but some old
+     code still expects one.  */
+  if (! generic_add_output_symbol (abfd, &outsymalloc, NULL))
+    return false;
 
   if (info->relocateable)
     {
@@ -2048,7 +2054,7 @@ _bfd_generic_final_link (abfd, info)
 	    }
 	}
     }
-
+  
   return true;
 }
 
@@ -2060,7 +2066,7 @@ generic_add_output_symbol (output_bfd, psymalloc, sym)
      size_t *psymalloc;
      asymbol *sym;
 {
-  if (output_bfd->symcount >= *psymalloc)
+  if (bfd_get_symcount (output_bfd) >= *psymalloc)
     {
       asymbol **newsyms;
 
@@ -2068,15 +2074,16 @@ generic_add_output_symbol (output_bfd, psymalloc, sym)
 	*psymalloc = 124;
       else
 	*psymalloc *= 2;
-      newsyms = (asymbol **) bfd_realloc (output_bfd->outsymbols,
+      newsyms = (asymbol **) bfd_realloc (bfd_get_outsymbols (output_bfd),
 					  *psymalloc * sizeof (asymbol *));
       if (newsyms == (asymbol **) NULL)
 	return false;
-      output_bfd->outsymbols = newsyms;
+      bfd_get_outsymbols (output_bfd) = newsyms;
     }
 
-  output_bfd->outsymbols[output_bfd->symcount] = sym;
-  ++output_bfd->symcount;
+  bfd_get_outsymbols (output_bfd) [bfd_get_symcount (output_bfd)] = sym;
+  if (sym != NULL)
+    ++ bfd_get_symcount (output_bfd);
 
   return true;
 }
@@ -2273,10 +2280,7 @@ _bfd_generic_link_output_symbols (output_bfd, input_bfd, info, psymalloc)
 		  output = false;
 		  break;
 		case discard_l:
-		  if (bfd_asymbol_name (sym)[0] == info->lprefix[0]
-		      && (info->lprefix_len == 1
-			  || strncmp (bfd_asymbol_name (sym), info->lprefix,
-				      info->lprefix_len) == 0))
+		  if (bfd_is_local_label (input_bfd, sym))
 		    output = false;
 		  else
 		    output = true;
@@ -2520,7 +2524,9 @@ _bfd_generic_reloc_link_order (abfd, info, sec, link_order)
 	  break;
 	}
       ok = bfd_set_section_contents (abfd, sec, (PTR) buf,
-				     (file_ptr) link_order->offset, size);
+				     (file_ptr) 
+                                     (link_order->offset *
+                                      bfd_octets_per_byte (abfd)), size);
       free (buf);
       if (! ok)
 	return false;
@@ -2544,7 +2550,7 @@ bfd_new_link_order (abfd, section)
   struct bfd_link_order *new;
 
   new = ((struct bfd_link_order *)
-	 bfd_alloc_by_size_t (abfd, sizeof (struct bfd_link_order)));
+	 bfd_alloc (abfd, sizeof (struct bfd_link_order)));
   if (!new)
     return NULL;
 
@@ -2588,7 +2594,9 @@ _bfd_default_link_order (abfd, info, sec, link_order)
     case bfd_data_link_order:
       return bfd_set_section_contents (abfd, sec,
 				       (PTR) link_order->u.data.contents,
-				       (file_ptr) link_order->offset,
+				       (file_ptr) 
+                                       (link_order->offset *
+                                        bfd_octets_per_byte (abfd)),
 				       link_order->size);
     }
 }
@@ -2599,7 +2607,7 @@ _bfd_default_link_order (abfd, info, sec, link_order)
 static boolean
 default_fill_link_order (abfd, info, sec, link_order)
      bfd *abfd;
-     struct bfd_link_info *info;
+     struct bfd_link_info *info ATTRIBUTE_UNUSED;
      asection *sec;
      struct bfd_link_order *link_order;
 {
@@ -2622,7 +2630,9 @@ default_fill_link_order (abfd, info, sec, link_order)
   for (i = 1; i < size; i += 2)
     space[i] = fill;
   result = bfd_set_section_contents (abfd, sec, space,
-				     (file_ptr) link_order->offset,
+				     (file_ptr) 
+                                     (link_order->offset * 
+                                      bfd_octets_per_byte (abfd)),
 				     link_order->size);
   free (space);
   return result;
@@ -2666,7 +2676,7 @@ default_indirect_link_order (output_bfd, info, output_section, link_order,
 	 types of object files.  Handling this case correctly is
 	 difficult, and sometimes impossible.  */
       (*_bfd_error_handler)
-	("Attempt to do relocateable link with %s input and %s output",
+	(_("Attempt to do relocateable link with %s input and %s output"),
 	 bfd_get_target (input_bfd), bfd_get_target (output_bfd));
       bfd_set_error (bfd_error_wrong_format);
       return false;
@@ -2739,7 +2749,10 @@ default_indirect_link_order (output_bfd, info, output_section, link_order,
   /* Output the section contents.  */
   if (! bfd_set_section_contents (output_bfd, output_section,
 				  (PTR) new_contents,
-				  link_order->offset, link_order->size))
+				  (file_ptr)
+                                  (link_order->offset * 
+                                   bfd_octets_per_byte (output_bfd)), 
+                                  link_order->size))
     goto error_return;
 
   if (contents != NULL)
@@ -2794,8 +2807,8 @@ DESCRIPTION
 
 boolean
 _bfd_generic_link_split_section (abfd, sec)
-     bfd *abfd;
-     asection *sec;
+     bfd *abfd ATTRIBUTE_UNUSED;
+     asection *sec ATTRIBUTE_UNUSED;
 {
   return false;
 }

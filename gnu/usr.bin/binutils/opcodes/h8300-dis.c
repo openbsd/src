@@ -1,5 +1,5 @@
 /* Disassemble h8300 instructions.
-   Copyright (C) 1993 Free Software Foundation, Inc.
+   Copyright (C) 1993, 1998 Free Software Foundation, Inc.
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -17,9 +17,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 #define DEFINE_TABLE
 
+#include "sysdep.h"
 #define h8_opcodes h8ops
 #include "opcode/h8300.h"
 #include "dis-asm.h"
+#include "opintl.h"
 
 
 /* Run through the opcodes and sort them into order to make them easy
@@ -209,8 +211,7 @@ bfd_h8_disassemble (addr, info, mode)
 	      else if (looking_for & L_24)
 		{
 		  int i = len >> 1;
-		  abs = (data[i] << 16) | (data[i + 1] << 8)|  (data[i+
-								     2]);
+		  abs = (data[i] << 16) | (data[i + 1] << 8)|  (data[i+2]);
 		  plen =24;
 		}
 	      else if (looking_for & IGNORE)
@@ -399,9 +400,9 @@ bfd_h8_disassemble (addr, info, mode)
 			  {
 			    fprintf (stream, "exr");
 			  }
-
 			else
-			  fprintf (stream, "Hmmmm %x", x);
+			  /* xgettext:c-format */
+			  fprintf (stream, _("Hmmmm %x"), x);
 			hadone = 1;
 			args++;
 		      }
@@ -412,7 +413,8 @@ bfd_h8_disassemble (addr, info, mode)
       
 	      else
 		{
-		  fprintf (stream, "Dont understand %x \n", looking_for);
+		  /* xgettext:c-format */
+		  fprintf (stream, _("Don't understand %x \n"), looking_for);
 		}
 	    }
 	  

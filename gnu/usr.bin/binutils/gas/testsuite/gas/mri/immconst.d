@@ -1,4 +1,4 @@
-#objdump: -d --prefix-addresses
+#objdump: -d
 #name: MRI immediate constants
 #as: -M
 #source: constants.s

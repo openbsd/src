@@ -1,5 +1,6 @@
 /* tc-m68k.c -- Assemble for the m68k family
-   Copyright (C) 1987, 91, 92, 93, 94, 95, 1996 Free Software Foundation, Inc.
+   Copyright (C) 1987, 91, 92, 93, 94, 95, 96, 97, 98, 99, 2000
+   Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -26,11 +27,15 @@
 #include "opcode/m68k.h"
 #include "m68k-parse.h"
 
+#if defined (OBJ_ELF)
+#include "elf/m68k.h"
+#endif
+
 /* This string holds the chars that always start a comment.  If the
    pre-processor is disabled, these aren't very useful.  The macro
    tc_comment_chars points to this.  We use this, rather than the
    usual comment_chars, so that the --bitwise-or option will work.  */
-#if (defined (OBJ_ELF) && ! defined (TE_PSOS) && ! defined (TE_LINUX)) || defined (TE_DELTA)
+#if defined (TE_SVR4) || defined (TE_DELTA)
 const char *m68k_comment_chars = "|#";
 #else
 const char *m68k_comment_chars = "|";
@@ -43,7 +48,7 @@ const char *m68k_comment_chars = "|";
    first line of the input file.  This is because the compiler outputs
    #NO_APP at the beginning of its output. */
 /* Also note that comments like this one will always work. */
-const char line_comment_chars[] = "#";
+const char line_comment_chars[] = "#*";
 
 const char line_separator_chars[] = "";
 
@@ -94,6 +99,34 @@ static int m68k_quick = 1;
    or outer displacement, the assembler assumes that the size should
    be 32 bits.  */
 static int m68k_rel32 = 1;
+
+/* This is non-zero if m68k_rel32 was set from the command line.  */
+static int m68k_rel32_from_cmdline;
+
+/* The default width to use for an index register when using a base
+   displacement.  */
+static enum m68k_size m68k_index_width_default = SIZE_LONG;
+
+/* We want to warn if any text labels are misaligned.  In order to get
+   the right line number, we need to record the line number for each
+   label.  */
+
+struct label_line
+{
+  struct label_line *next;
+  symbolS *label;
+  char *file;
+  unsigned int line;
+  int text;
+};
+
+/* The list of labels.  */
+
+static struct label_line *labels;
+
+/* The current label.  */
+
+static struct label_line *current_label;
 
 /* Its an arbitrary name:  This means I don't approve of it */
 /* See flames below */
@@ -160,7 +193,7 @@ static const enum m68k_register m68060_control_regs[] = {
   USP, VBR, URP, SRP, PCR,
   0
 };
-static const enum m68k_register mcf5200_control_regs[] = {
+static const enum m68k_register mcf_control_regs[] = {
   CACR, TC, ITT0, ITT1, DTT0, DTT1, VBR, ROMBAR, 
   RAMBAR0, RAMBAR1, MBAR,
   0
@@ -189,7 +222,7 @@ struct m68k_it
     {
       int fragoff;		/* Where in the current opcode the frag ends */
       symbolS *fadd;
-      long foff;
+      offsetT foff;
       int fragty;
     }
   fragb[4];
@@ -218,9 +251,13 @@ struct m68k_it
   reloc[5];			/* Five is enough??? */
 };
 
-#define cpu_of_arch(x)		((x) & (m68000up|mcf5200))
+#define cpu_of_arch(x)		((x) & (m68000up|mcf))
 #define float_of_arch(x)	((x) & mfloat)
 #define mmu_of_arch(x)		((x) & mmmu)
+#define arch_coldfire_p(x)	(((x) & mcf) != 0)
+
+/* Macros for determining if cpu supports a specific addressing mode */
+#define HAVE_LONG_BRANCH(x)	((x) & (m68020|m68030|m68040|m68060|cpu32))
 
 static struct m68k_it the_ins;	/* the instruction being assembled */
 
@@ -233,11 +270,17 @@ static struct m68k_it the_ins;	/* the instruction being assembled */
 
 #define addword(w)	the_ins.opcode[the_ins.numo++]=(w)
 
+/* Static functions.  */
+
+static void insop PARAMS ((int, const struct m68k_incant *));
+static void add_fix PARAMS ((int, struct m68k_exp *, int, int));
+static void add_frag PARAMS ((symbolS *, offsetT, int));
+
 /* Like addword, but goes BEFORE general operands */
 static void
 insop (w, opcode)
      int w;
-     struct m68k_incant *opcode;
+     const struct m68k_incant *opcode;
 {
   int z;
   for(z=the_ins.numo;z>opcode->m_codenum;--z)
@@ -254,7 +297,7 @@ insop (w, opcode)
    Blecch.  */
 static void
 add_fix (width, exp, pc_rel, pc_fix)
-     char width;
+     int width;
      struct m68k_exp *exp;
      int pc_rel;
      int pc_fix;
@@ -284,9 +327,9 @@ add_fix (width, exp, pc_rel, pc_fix)
 
    ADD becomes the FR_SYMBOL field of the frag, and OFF the FR_OFFSET.  */
 static void
-add_frag(add,off,type)
+add_frag (add, off, type)
      symbolS *add;
-     long off;
+     offsetT off;
      int type;
 {
   the_ins.fragb[the_ins.nfrag].fragoff=the_ins.numo;
@@ -300,6 +343,10 @@ add_frag(add,off,type)
 
 static char *crack_operand PARAMS ((char *str, struct m68k_op *opP));
 static int get_num PARAMS ((struct m68k_exp *exp, int ok));
+static void m68k_ip PARAMS ((char *));
+static void insert_reg PARAMS ((const char *, int));
+static void select_control_regs PARAMS ((void));
+static void init_regtable PARAMS ((void));
 static int reverse_16_bits PARAMS ((int in));
 static int reverse_8_bits PARAMS ((int in));
 static void install_gen_operand PARAMS ((int mode, int val));
@@ -327,6 +374,8 @@ static void s_mri_repeat PARAMS ((int));
 static void s_mri_until PARAMS ((int));
 static void s_mri_while PARAMS ((int));
 static void s_mri_endw PARAMS ((int));
+static void md_apply_fix_2 PARAMS ((fixS *, offsetT));
+static void md_convert_frag_1 PARAMS ((fragS *));
 
 static int current_architecture;
 
@@ -347,11 +396,17 @@ static const struct m68k_cpu archs[] = {
   { m68881, "68881", 0 },
   { m68851, "68851", 0 },
   { mcf5200, "5200", 0 },
+  { mcf5206e, "5206e", 0 },
+  { mcf5307, "5307", 0},
   /* Aliases (effectively, so far as gas is concerned) for the above
      cpus.  */
   { m68020, "68k", 1 },
-  { m68000, "68302", 1 },
   { m68000, "68008", 1 },
+  { m68000, "68302", 1 },
+  { m68000, "68306", 1 },
+  { m68000, "68307", 1 },
+  { m68000, "68322", 1 },
+  { m68000, "68356", 1 },
   { m68000, "68ec000", 1 },
   { m68000, "68hc000", 1 },
   { m68000, "68hc001", 1 },
@@ -363,9 +418,16 @@ static const struct m68k_cpu archs[] = {
   { cpu32,  "68331", 1 },
   { cpu32,  "68332", 1 },
   { cpu32,  "68333", 1 },
+  { cpu32,  "68334", 1 },
+  { cpu32,  "68336", 1 },
   { cpu32,  "68340", 1 },
+  { cpu32,  "68341", 1 },
+  { cpu32,  "68349", 1 },
   { cpu32,  "68360", 1 },
   { m68881, "68882", 1 },
+  { mcf5200, "5202", 1 },
+  { mcf5200, "5204", 1 },
+  { mcf5200, "5206", 1 },
 };
 
 static const int n_archs = sizeof (archs) / sizeof (archs[0]);
@@ -504,7 +566,10 @@ const pseudo_typeS md_pseudo_table[] =
 /* The mote pseudo ops are put into the opcode table, since they
    don't start with a . they look like opcodes to gas.
    */
-extern void obj_coff_section ();
+
+#ifdef M68KCOFF
+extern void obj_coff_section PARAMS ((int));
+#endif
 
 CONST pseudo_typeS mote_pseudo_table[] =
 {
@@ -578,7 +643,7 @@ make_pcrel_absolute(fixP, add_number)
       opcode[1] = 0xb9;
     }
   else
-    as_fatal ("Unknown PC relative instruction");
+    as_fatal (_("Unknown PC relative instruction"));
   *add_number -= 4;
   return 0;
 }
@@ -701,9 +766,21 @@ get_reloc_code (size, pcrel, pic)
 	}
     }
 
-  as_bad ("Can not do %d byte %s%srelocation", size,
-	  pcrel ? "pc-relative " : "",
-	  pic == pic_none ? "" : "pic ");
+  if (pcrel)
+    {
+      if (pic == pic_none)
+	as_bad (_("Can not do %d byte pc-relative relocation"), size);
+      else
+	as_bad (_("Can not do %d byte pc-relative pic relocation"), size);
+    }
+  else
+    {
+      if (pic == pic_none)
+	as_bad (_("Can not do %d byte relocation"), size);
+      else
+	as_bad (_("Can not do %d byte pic relocation"), size);
+    }
+
   return BFD_RELOC_NONE;
 }
 
@@ -717,7 +794,8 @@ tc_m68k_fix_adjustable (fixP)
      fixS *fixP;
 {
   /* Prevent all adjustments to global symbols. */
-  if (S_IS_EXTERNAL (fixP->fx_addsy))
+  if (S_IS_EXTERNAL (fixP->fx_addsy)
+      || S_IS_WEAK (fixP->fx_addsy))
     return 0;
 
   /* adjust_reloc_syms doesn't know about the GOT */
@@ -735,6 +813,10 @@ tc_m68k_fix_adjustable (fixP)
     case BFD_RELOC_8_PLTOFF:
     case BFD_RELOC_16_PLTOFF:
     case BFD_RELOC_32_PLTOFF:
+      return 0;
+
+    case BFD_RELOC_VTABLE_INHERIT:
+    case BFD_RELOC_VTABLE_ENTRY:
       return 0;
 
     default:
@@ -800,7 +882,7 @@ tc_gen_reloc (section, fixp)
 	      break;
 	    default:
 	      as_bad_where (fixp->fx_file, fixp->fx_line,
-			    "Cannot make %s relocation PC relative",
+			    _("Cannot make %s relocation PC relative"),
 			    bfd_get_reloc_code_name (code));
 	    }
 	}
@@ -824,9 +906,9 @@ tc_gen_reloc (section, fixp)
 #undef F
 #undef MAP
 
-  reloc = (arelent *) bfd_alloc_by_size_t (stdoutput, sizeof (arelent));
-  assert (reloc != 0);
-  reloc->sym_ptr_ptr = &fixp->fx_addsy->bsym;
+  reloc = (arelent *) xmalloc (sizeof (arelent));
+  reloc->sym_ptr_ptr = (asymbol **) xmalloc (sizeof (asymbol *));
+  *reloc->sym_ptr_ptr = symbol_get_bfdsym (fixp->fx_addsy);
   reloc->address = fixp->fx_frag->fr_address + fixp->fx_where;
 #ifndef OBJ_ELF
   if (fixp->fx_pcrel)
@@ -852,19 +934,40 @@ tc_gen_reloc (section, fixp)
 
 #endif /* BFD_ASSEMBLER */
 
+/* Return zero if the reference to SYMBOL from within the same segment may
+   be relaxed.  */
+#ifdef OBJ_ELF
+
+/* On an ELF system, we can't relax an externally visible symbol,
+   because it may be overridden by a shared library.  However, if
+   TARGET_OS is "elf", then we presume that we are assembling for an
+   embedded system, in which case we don't have to worry about shared
+   libraries, and we can relax anything.  */
+
+#define relaxable_symbol(symbol)		\
+  (strcmp (TARGET_OS, "elf") == 0		\
+   || (! S_IS_EXTERNAL (symbol)			\
+       && ! S_IS_WEAK (symbol)))
+
+#else
+
+#define relaxable_symbol(symbol) 1
+
+#endif
+ 
 /* Handle of the OPCODE hash table.  NULL means any use before
    m68k_ip_begin() will crash.  */
 static struct hash_control *op_hash;
 
 /* Assemble an m68k instruction.  */
 
-void
+static void
 m68k_ip (instring)
      char *instring;
 {
   register char *p;
   register struct m68k_op *opP;
-  register struct m68k_incant *opcode;
+  register const struct m68k_incant *opcode;
   register const char *s;
   register int tmpreg = 0, baseo = 0, outro = 0, nextword;
   char *pdot, *pdotmove;
@@ -872,7 +975,6 @@ m68k_ip (instring)
   char c;
   int losing;
   int opsfound;
-  char *crack_operand ();
   LITTLENUM_TYPE words[6];
   LITTLENUM_TYPE *wordp;
   unsigned long ok_arch = 0;
@@ -893,7 +995,7 @@ m68k_ip (instring)
 
   if (p == instring)
     {
-      the_ins.error = "No operator";
+      the_ins.error = _("No operator");
       return;
     }
 
@@ -910,7 +1012,7 @@ m68k_ip (instring)
 
   c = *p;
   *p = '\0';
-  opcode = (struct m68k_incant *) hash_find (op_hash, instring);
+  opcode = (const struct m68k_incant *) hash_find (op_hash, instring);
   *p = c;
 
   if (pdot != NULL)
@@ -923,7 +1025,7 @@ m68k_ip (instring)
 
   if (opcode == NULL)
     {
-      the_ins.error = "Unknown operator";
+      the_ins.error = _("Unknown operator");
       return;
     }
 
@@ -1028,20 +1130,132 @@ m68k_ip (instring)
 		    }
 		  break;
 
-		case '`':
+		case '<':
 		  switch (opP->mode)
 		    {
-		    case IMMED:
 		    case DREG:
 		    case AREG:
 		    case FPREG:
 		    case CONTROL:
-		    case AINC:
+		    case IMMED:
+		    case ADEC:
 		    case REGLST:
-		    case AINDR:
 		      losing++;
 		      break;
 		    default:
+		      break;
+		    }
+		  break;
+
+		case '>':
+		  switch (opP->mode)
+		    {
+		    case DREG:
+		    case AREG:
+		    case FPREG:
+		    case CONTROL:
+		    case IMMED:
+		    case AINC:
+		    case REGLST:
+		      losing++;
+		      break;
+		    case ABSL:
+		      break;
+		    default:
+		      if (opP->reg == PC
+			  || opP->reg == ZPC)
+			losing++;
+		      break;
+		    }
+		  break;
+
+		case 'm':
+		  switch (opP->mode)
+		    {
+		    case DREG:
+		    case AREG:
+		    case AINDR:
+		    case AINC:
+		    case ADEC:
+		      break;
+		    default:
+		      losing++;
+		    }
+                  break;
+
+		case 'n':
+		  switch (opP->mode)
+		    {
+		    case DISP:
+		      break;
+		    default:
+		      losing++;
+		    }
+                  break;
+
+		case 'o':
+		  switch (opP->mode)
+		    {
+		    case BASE:
+		    case ABSL:
+		    case IMMED:
+		      break;
+		    default:
+		      losing++;
+		    }
+                  break;
+
+		case 'p':
+		  switch (opP->mode)
+		    {
+		    case DREG:
+		    case AREG:
+		    case AINDR:
+		    case AINC:
+		    case ADEC:
+		      break;
+		    case DISP:
+		      if (opP->reg == PC || opP->reg == ZPC)
+                        losing++;
+		      break;
+		    default:
+		      losing++;
+		    }
+                  break;
+
+		case 'q':
+		  switch (opP->mode)
+		    {
+		    case DREG:
+		    case AINDR:
+		    case AINC:
+		    case ADEC:
+		      break;
+		    case DISP:
+		      if (opP->reg == PC || opP->reg == ZPC)
+                        losing++;
+		      break;
+		    default:
+		      losing++;
+		      break;
+		    }
+                  break;
+
+		case 'v':
+		  switch (opP->mode)
+		    {
+		    case DREG:
+		    case AINDR:
+		    case AINC:
+		    case ADEC:
+		    case ABSL:
+		      break;
+		    case DISP:
+		      if (opP->reg == PC || opP->reg == ZPC)
+                        losing++;
+		      break;
+		    default:
+		      losing++;
 		      break;
 		    }
 		  break;
@@ -1053,6 +1267,11 @@ m68k_ip (instring)
 			   && ! isvar (&opP->disp)
 			   && (opP->disp.exp.X_op != O_constant
 			       || ! isbyte (opP->disp.exp.X_add_number)))
+		    losing++;
+		  else if (s[1] == 'B'
+			   && ! isvar (&opP->disp)
+			   && (opP->disp.exp.X_op != O_constant
+			       || ! issbyte (opP->disp.exp.X_add_number)))
 		    losing++;
 		  else if (s[1] == 'w'
 			   && ! isvar (&opP->disp)
@@ -1263,8 +1482,23 @@ m68k_ip (instring)
 		    losing++;
 		  break;
 
+		case 'E':
+		  if (opP->reg != ACC)
+		    losing++;
+		  break;
+
 		case 'F':
 		  if (opP->mode != FPREG)
+		    losing++;
+		  break;
+
+		case 'G':
+		  if (opP->reg != MACSR)
+		    losing++;
+		  break;
+
+		case 'H':
+		  if (opP->reg != MASK)
 		    losing++;
 		  break;
 
@@ -1346,14 +1580,6 @@ m68k_ip (instring)
 			    }
 			  opP->mode = REGLST;
 			}
-		    }
-		  else if (opP->mode == ABSL
-			   && opP->disp.size == SIZE_UNSPEC
-			   && opP->disp.exp.X_op == O_constant)
-		    {
-		      /* This is what the MRI REG pseudo-op generates.  */
-		      opP->mode = REGLST;
-		      opP->mask = opP->disp.exp.X_add_number;
 		    }
 		  else if (opP->mode != REGLST)
 		    losing++;
@@ -1537,6 +1763,19 @@ m68k_ip (instring)
 		    ++losing;
 		  break;
 
+		case 'u':
+		  if (opP->reg < DATA0L || opP->reg > ADDR7U)
+		    losing++;
+		  /* FIXME: kludge instead of fixing parser:
+                     upper/lower registers are *not* CONTROL
+                     registers, but ordinary ones. */
+		  if ((opP->reg >= DATA0L && opP->reg <= DATA7L)
+		      || (opP->reg >= DATA0U && opP->reg <= DATA7U))
+		    opP->mode = DREG;
+		  else
+		    opP->mode = AREG;
+		  break;
+
 		default:
 		  abort ();
 		}		/* switch on type of operand */
@@ -1561,29 +1800,30 @@ m68k_ip (instring)
 	      char buf[200], *cp;
 
 	      strcpy (buf,
-		      "invalid instruction for this architecture; needs ");
+		      _("invalid instruction for this architecture; needs "));
 	      cp = buf + strlen (buf);
 	      switch (ok_arch)
 		{
 		case mfloat:
-		  strcpy (cp, "fpu (68040, 68060 or 68881/68882)");
+		  strcpy (cp, _("fpu (68040, 68060 or 68881/68882)"));
 		  break;
 		case mmmu:
-		  strcpy (cp, "mmu (68030 or 68851)");
+		  strcpy (cp, _("mmu (68030 or 68851)"));
 		  break;
 		case m68020up:
-		  strcpy (cp, "68020 or higher");
+		  strcpy (cp, _("68020 or higher"));
 		  break;
 		case m68000up:
-		  strcpy (cp, "68000 or higher");
+		  strcpy (cp, _("68000 or higher"));
 		  break;
 		case m68010up:
-		  strcpy (cp, "68010 or higher");
+		  strcpy (cp, _("68010 or higher"));
 		  break;
 		default:
 		  {
 		    int got_one = 0, idx;
-		    for (idx = 0; idx < sizeof (archs) / sizeof (archs[0]);
+		    for (idx = 0;
+			 idx < (int) (sizeof (archs) / sizeof (archs[0]));
 			 idx++)
 		      {
 			if ((archs[idx].arch & ok_arch)
@@ -1606,7 +1846,7 @@ m68k_ip (instring)
 	      the_ins.error = cp;
 	    }
 	  else
-	    the_ins.error = "operands mismatch";
+	    the_ins.error = _("operands mismatch");
 	  return;
 	}			/* Fell off the end */
 
@@ -1638,7 +1878,14 @@ m68k_ip (instring)
 	case '$':
 	case '?':
 	case '/':
-	case '`':
+	case '<':
+	case '>':
+	case 'm':
+	case 'n':
+	case 'o':
+	case 'p':
+	case 'q':
+	case 'v':
 #ifndef NO_68851
 	case '|':
 #endif
@@ -1656,19 +1903,19 @@ m68k_ip (instring)
 		{
 		case 'b':
 		  if (!isbyte (nextword))
-		    opP->error = "operand out of range";
+		    opP->error = _("operand out of range");
 		  addword (nextword);
 		  baseo = 0;
 		  break;
 		case 'w':
 		  if (!isword (nextword))
-		    opP->error = "operand out of range";
+		    opP->error = _("operand out of range");
 		  addword (nextword);
 		  baseo = 0;
 		  break;
 		case 'W':
 		  if (!issword (nextword))
-		    opP->error = "operand out of range";
+		    opP->error = _("operand out of range");
 		  addword (nextword);
 		  baseo = 0;
 		  break;
@@ -1725,7 +1972,7 @@ m68k_ip (instring)
 		{
 		  if (offs (&opP->disp) > baseo)
 		    {
-		      as_warn ("Bignum too big for %c format; truncated",
+		      as_warn (_("Bignum too big for %c format; truncated"),
 			       s[1]);
 		      offs (&opP->disp) = baseo;
 		    }
@@ -1786,12 +2033,14 @@ m68k_ip (instring)
 		  || (isvar (&opP->disp)
 		      && ((opP->disp.size == SIZE_UNSPEC
 			   && flag_short_refs == 0
-			   && cpu_of_arch (current_architecture) >= m68020)
+			   && cpu_of_arch (current_architecture) >= m68020
+			   && ! arch_coldfire_p (current_architecture))
 			  || opP->disp.size == SIZE_LONG)))
 		{
-		  if (cpu_of_arch (current_architecture) < m68020)
+		  if (cpu_of_arch (current_architecture) < m68020
+		      || arch_coldfire_p (current_architecture))
 		    opP->error =
-		      "displacement too large for this architecture; needs 68020 or higher";
+		      _("displacement too large for this architecture; needs 68020 or higher");
 		  if (opP->reg == PC)
 		    tmpreg = 0x3B;	/* 7.3 */
 		  else
@@ -1890,18 +2139,23 @@ m68k_ip (instring)
 		{
 		  nextword |= (opP->index.reg - DATA) << 12;
 
-		  if (opP->index.size == SIZE_UNSPEC
-		      || opP->index.size == SIZE_LONG)
+		  if (opP->index.size == SIZE_LONG
+		      || (opP->index.size == SIZE_UNSPEC
+			  && m68k_index_width_default == SIZE_LONG))
 		    nextword |= 0x800;
 
 		  if ((opP->index.scale != 1 
 		       && cpu_of_arch (current_architecture) < m68020)
 		      || (opP->index.scale == 8 
-			  && current_architecture == mcf5200))
+			  && arch_coldfire_p (current_architecture)))
 		    {
 		      opP->error =
-			"scale factor invalid on this architecture; needs cpu32 or 68020 or higher";
+			_("scale factor invalid on this architecture; needs cpu32 or 68020 or higher");
 		    }
+
+		  if (arch_coldfire_p (current_architecture)
+		      && opP->index.size == SIZE_WORD)
+		    opP->error = _("invalid index size for coldfire");
 
 		  switch (opP->index.scale)
 		    {
@@ -1934,6 +2188,7 @@ m68k_ip (instring)
 		    {
 		      if (siz1 == SIZE_BYTE
 			  || cpu_of_arch (current_architecture) < m68020
+			  || arch_coldfire_p (current_architecture)
 			  || (siz1 == SIZE_UNSPEC
 			      && ! isvar (&opP->disp)
 			      && issbyte (baseo)))
@@ -1953,9 +2208,9 @@ m68k_ip (instring)
 			  else if (siz1 != SIZE_BYTE)
 			    {
 			      if (siz1 != SIZE_UNSPEC)
-				as_warn ("Forcing byte displacement");
+				as_warn (_("Forcing byte displacement"));
 			      if (! issbyte (baseo))
-				opP->error = "byte displacement out of range";
+				opP->error = _("byte displacement out of range");
 			    }
 
 			  break;
@@ -1971,6 +2226,12 @@ m68k_ip (instring)
 #endif
 			       )
 			{
+			  /* The code in md_convert_frag_1 needs to be
+                             able to adjust nextword.  Call frag_grow
+                             to ensure that we have enough space in
+                             the frag obstack to make all the bytes
+                             contiguous.  */
+			  frag_grow (14);
  			  nextword += baseo & 0xff;
  			  addword (nextword);
  			  add_frag (adds (&opP->disp), offs (&opP->disp),
@@ -1993,9 +2254,10 @@ m68k_ip (instring)
 
 	      /* It isn't simple.  */
 
-	      if (cpu_of_arch (current_architecture) < m68020)
+	      if (cpu_of_arch (current_architecture) < m68020
+		  || arch_coldfire_p (current_architecture))
 		opP->error =
-		  "invalid operand mode for this architecture; needs 68020 or higher";
+		  _("invalid operand mode for this architecture; needs 68020 or higher");
 
 	      nextword |= 0x100;
 	      /* If the guy specified a width, we assume that it is
@@ -2019,7 +2281,7 @@ m68k_ip (instring)
 		    }
 		  break;
 		case SIZE_BYTE:
-		  as_warn (":b not permitted; defaulting to :w");
+		  as_warn (_(":b not permitted; defaulting to :w"));
 		  /* Fall through.  */
 		case SIZE_WORD:
 		  nextword |= 0x20;
@@ -2033,7 +2295,7 @@ m68k_ip (instring)
 	      if (opP->mode == POST || opP->mode == PRE)
 		{
 		  if (cpu_of_arch (current_architecture) & cpu32)
-		    opP->error = "invalid operand mode for this architecture; needs 68020 or higher";
+		    opP->error = _("invalid operand mode for this architecture; needs 68020 or higher");
 		  switch (siz2)
 		    {
 		    case SIZE_UNSPEC:
@@ -2053,7 +2315,7 @@ m68k_ip (instring)
 			}
 		      break;
 		    case 1:
-		      as_warn (":b not permitted; defaulting to :w");
+		      as_warn (_(":b not permitted; defaulting to :w"));
 		      /* Fall through.  */
 		    case 2:
 		      nextword |= 0x2;
@@ -2102,8 +2364,6 @@ m68k_ip (instring)
 		      addword (nextword);
 		      break;
 		    }
-		  /* Don't generate pc relative code on 68010 and
-		     68000.  */
 		  if (isvar (&opP->disp)
 		      && !subs (&opP->disp)
 		      && adds (&opP->disp)
@@ -2113,7 +2373,7 @@ m68k_ip (instring)
 		      && opP->disp.pic_reloc == pic_none
 #endif
 		      && S_GET_SEGMENT (adds (&opP->disp)) == now_seg
-		      && cpu_of_arch (current_architecture) >= m68020
+		      && relaxable_symbol (adds (&opP->disp))
 		      && !flag_long_jumps
 		      && !strchr ("~%&$?", s[0]))
 		    {
@@ -2133,6 +2393,9 @@ m68k_ip (instring)
 		  addword (nextword);
 		  break;
 
+		case SIZE_BYTE:
+		  as_bad (_("unsupported byte value; use a different suffix"));
+		  /* Fall through.  */
 		case SIZE_WORD:	/* Word */
 		  if (isvar (&opP->disp))
 		    add_fix ('w', &opP->disp, 0, 0);
@@ -2145,7 +2408,7 @@ m68k_ip (instring)
 	    case CONTROL:
 	    case FPREG:
 	    default:
-	      as_bad ("unknown/incorrect operand");
+	      as_bad (_("unknown/incorrect operand"));
 	      /* abort(); */
 	    }
 	  install_gen_operand (s[1], tmpreg);
@@ -2178,22 +2441,29 @@ m68k_ip (instring)
 				   certain types of overflow.
 				   user beware! */
 	      if (!isbyte (tmpreg))
-		opP->error = "out of range";
+		opP->error = _("out of range");
 	      insop (tmpreg, opcode);
 	      if (isvar (&opP->disp))
 		the_ins.reloc[the_ins.nrel - 1].n =
 		  (opcode->m_codenum) * 2 + 1;
 	      break;
+	    case 'B':
+	      if (!issbyte (tmpreg))
+		opP->error = _("out of range");
+	      the_ins.opcode[the_ins.numo - 1] |= tmpreg & 0xff;
+	      if (isvar (&opP->disp))
+		the_ins.reloc[the_ins.nrel - 1].n = opcode->m_codenum * 2 - 1;
+	      break;
 	    case 'w':
 	      if (!isword (tmpreg))
-		opP->error = "out of range";
+		opP->error = _("out of range");
 	      insop (tmpreg, opcode);
 	      if (isvar (&opP->disp))
 		the_ins.reloc[the_ins.nrel - 1].n = (opcode->m_codenum) * 2;
 	      break;
 	    case 'W':
 	      if (!issword (tmpreg))
-		opP->error = "out of range";
+		opP->error = _("out of range");
 	      insop (tmpreg, opcode);
 	      if (isvar (&opP->disp))
 		the_ins.reloc[the_ins.nrel - 1].n = (opcode->m_codenum) * 2;
@@ -2210,6 +2480,7 @@ m68k_ip (instring)
 	      tmpreg &= 0xFF;
 	    case '8':
 	    case 'C':
+	    case 'j':
 	      install_operand (s[1], tmpreg);
 	      break;
 	    default:
@@ -2241,8 +2512,8 @@ m68k_ip (instring)
 	      break;
 	    case 'L':
 	    long_branch:
-	      if (cpu_of_arch (current_architecture) < m68020)
-		as_warn ("Can't use long branches on 68000/68010");
+	      if (!HAVE_LONG_BRANCH(current_architecture))
+		as_warn (_("Can't use long branches on 68000/68010/5200"));
 	      the_ins.opcode[the_ins.numo - 1] |= 0xff;
 	      add_fix ('l', &opP->disp, 1, 0);
 	      addword (0);
@@ -2265,7 +2536,7 @@ m68k_ip (instring)
 		 BCC68000 for the case where opnd is absolute (it
 		 needs to use the 68000 hack since no conditional abs
 		 jumps).  */
-	      if (((cpu_of_arch (current_architecture) < m68020)
+	      if (( !HAVE_LONG_BRANCH(current_architecture)
 		   || (0 == adds (&opP->disp)))
 		  && (the_ins.opcode[0] >= 0x6200)
 		  && (the_ins.opcode[0] <= 0x6f00))
@@ -2302,15 +2573,15 @@ m68k_ip (instring)
 	      if (subs (&opP->disp))
 		{
 		  add_fix ('l', &opP->disp, 1, 0);
-		  add_frag ((symbolS *) 0, (long) 0, TAB (FBRANCH, LONG));
+		  add_frag ((symbolS *) 0, (offsetT) 0, TAB (FBRANCH, LONG));
 		}
 	      else if (adds (&opP->disp))
 		add_frag (adds (&opP->disp), offs (&opP->disp),
 			  TAB (FBRANCH, SZ_UNDEF));
 	      else
 		{
-		  /* add_frag((symbolS *) 0, offs(&opP->disp),
-		     TAB(FBRANCH,SHORT)); */
+		  /* add_frag ((symbolS *) 0, offs (&opP->disp),
+		     	       TAB(FBRANCH,SHORT)); */
 		  the_ins.opcode[the_ins.numo - 1] |= 0x40;
 		  add_fix ('l', &opP->disp, 1, 0);
 		  addword (0);
@@ -2330,7 +2601,7 @@ m68k_ip (instring)
 	  tmpreg = get_num (&opP->disp, 80);
 	  if (!issword (tmpreg))
 	    {
-	      as_warn ("Expression out of range, using 0");
+	      as_warn (_("Expression out of range, using 0"));
 	      tmpreg = 0;
 	    }
 	  addword (tmpreg);
@@ -2340,8 +2611,15 @@ m68k_ip (instring)
 	  install_operand (s[1], opP->reg - DATA);
 	  break;
 
+	case 'E':		/* Ignore it */
+	  break;
+
 	case 'F':
 	  install_operand (s[1], opP->reg - FP0);
+	  break;
+
+	case 'G':		/* Ignore it */
+	case 'H':
 	  break;
 
 	case 'I':
@@ -2435,13 +2713,13 @@ m68k_ip (instring)
 	  if (s[1] == 'w')
 	    {
 	      if (tmpreg & 0x7FF0000)
-		as_bad ("Floating point register in register list");
+		as_bad (_("Floating point register in register list"));
 	      insop (reverse_16_bits (tmpreg), opcode);
 	    }
 	  else
 	    {
 	      if (tmpreg & 0x700FFFF)
-		as_bad ("Wrong register in floating-point reglist");
+		as_bad (_("Wrong register in floating-point reglist"));
 	      install_operand (s[1], reverse_8_bits (tmpreg >> 16));
 	    }
 	  break;
@@ -2451,19 +2729,19 @@ m68k_ip (instring)
 	  if (s[1] == 'w')
 	    {
 	      if (tmpreg & 0x7FF0000)
-		as_bad ("Floating point register in register list");
+		as_bad (_("Floating point register in register list"));
 	      insop (tmpreg, opcode);
 	    }
 	  else if (s[1] == '8')
 	    {
 	      if (tmpreg & 0x0FFFFFF)
-		as_bad ("incorrect register in reglist");
+		as_bad (_("incorrect register in reglist"));
 	      install_operand (s[1], tmpreg >> 24);
 	    }
 	  else
 	    {
 	      if (tmpreg & 0x700FFFF)
-		as_bad ("wrong register in floating-point reglist");
+		as_bad (_("wrong register in floating-point reglist"));
 	      else
 		install_operand (s[1], tmpreg >> 16);
 	    }
@@ -2475,7 +2753,7 @@ m68k_ip (instring)
 
 	case 'O':
 	  tmpreg = ((opP->mode == DREG)
-		    ? 0x20 + opP->reg - DATA
+		    ? 0x20 + (int) (opP->reg - DATA)
 		    : (get_num (&opP->disp, 40) & 0x1F));
 	  install_operand (s[1], tmpreg);
 	  break;
@@ -2539,7 +2817,7 @@ m68k_ip (instring)
 	      tmpreg = 3;
 	      break;
 	    default:
-	      as_fatal ("failed sanity check");
+	      as_fatal (_("failed sanity check"));
 	    }			/* switch on cache token */
 	  install_operand (s[1], tmpreg);
 	  break;
@@ -2665,9 +2943,16 @@ m68k_ip (instring)
 	  install_operand (s[1], tmpreg);
 	  break;
 	case '_':	/* used only for move16 absolute 32-bit address */
+	  if (isvar (&opP->disp))
+	    add_fix ('l', &opP->disp, 0, 0);
 	  tmpreg = get_num (&opP->disp, 80);
 	  addword (tmpreg >> 16);
 	  addword (tmpreg & 0xFFFF);
+	  break;
+	case 'u':
+	  install_operand (s[1], opP->reg - DATA0L);
+	  opP->reg -= (DATA0L);
+	  opP->reg &= 0x0F;	/* remove upper/lower bit */
 	  break;
 	default:
 	  abort ();
@@ -2808,9 +3093,33 @@ install_operand (mode, val)
       the_ins.opcode[1] = (val >> 16);
       the_ins.opcode[2] = val & 0xffff;
       break;
+    case 'm':
+      the_ins.opcode[0] |= ((val & 0x8) << (6 - 3));
+      the_ins.opcode[0] |= ((val & 0x7) << 9);
+      the_ins.opcode[1] |= ((val & 0x10) << (7 - 4));
+      break;
+    case 'n':
+      the_ins.opcode[0] |= ((val & 0x8) << (6 - 3));
+      the_ins.opcode[0] |= ((val & 0x7) << 9);
+      break;
+    case 'o':
+      the_ins.opcode[1] |= val << 12;
+      the_ins.opcode[1] |= ((val & 0x10) << (7 - 4));
+      break;
+    case 'M':
+      the_ins.opcode[0] |= (val & 0xF);
+      the_ins.opcode[1] |= ((val & 0x10) << (6 - 4));
+      break;
+    case 'N':
+      the_ins.opcode[1] |= (val & 0xF);
+      the_ins.opcode[1] |= ((val & 0x10) << (6 - 4));
+      break;
+    case 'h':
+      the_ins.opcode[1] |= ((val != 1) << 10);
+      break;
     case 'c':
     default:
-      as_fatal ("failed sanity check.");
+      as_fatal (_("failed sanity check."));
     }
 }				/* install_operand() */
 
@@ -2839,7 +3148,7 @@ install_gen_operand (mode, val)
       break;
       /* more stuff goes here */
     default:
-      as_fatal ("failed sanity check.");
+      as_fatal (_("failed sanity check."));
     }
 }				/* install_gen_operand() */
 
@@ -2873,7 +3182,7 @@ crack_operand (str, opP)
 	    {
 	      if (!parens)
 		{			/* ERROR */
-		  opP->error = "Extra )";
+		  opP->error = _("Extra )");
 		  return str;
 		}
 	      --parens;
@@ -2884,7 +3193,7 @@ crack_operand (str, opP)
     }
   if (!*str && parens)
     {				/* ERROR */
-      opP->error = "Missing )";
+      opP->error = _("Missing )");
       return str;
     }
   c = *str;
@@ -2901,8 +3210,17 @@ crack_operand (str, opP)
     {
       c = *++str;
       if (!c)
-	as_bad ("Missing operand");
+	as_bad (_("Missing operand"));
     }
+
+  /* Detect MRI REG symbols and convert them to REGLSTs.  */
+  if (opP->mode == CONTROL && (int)opP->reg < 0)
+    {
+      opP->mode = REGLST;
+      opP->mask = ~(int)opP->reg;
+      opP->reg = 0;
+    }
+
   return str;
 }
 
@@ -2911,9 +3229,9 @@ crack_operand (str, opP)
    the frags/bytes it assembles to.
    */
 
-void
+static void
 insert_reg (regname, regnum)
-     char *regname;
+     const char *regname;
      int regnum;
 {
   char buf[100];
@@ -2999,6 +3317,10 @@ static const struct init_entry init_table[] =
 
   { "ccr", CCR },
   { "cc", CCR },
+
+  { "acc", ACC },
+  { "macsr", MACSR },
+  { "mask", MASK },
 
   /* control registers */
   { "sfc", SFC },		/* Source Function Code */
@@ -3104,10 +3426,47 @@ static const struct init_entry init_table[] =
   { "za6", ZADDR6 },
   { "za7", ZADDR7 },
 
+  /* Upper and lower data and address registers, used by macw and msacw. */
+  { "d0l", DATA0L },
+  { "d1l", DATA1L },
+  { "d2l", DATA2L },
+  { "d3l", DATA3L },
+  { "d4l", DATA4L },
+  { "d5l", DATA5L },
+  { "d6l", DATA6L },
+  { "d7l", DATA7L },
+
+  { "a0l", ADDR0L },
+  { "a1l", ADDR1L },
+  { "a2l", ADDR2L },
+  { "a3l", ADDR3L },
+  { "a4l", ADDR4L },
+  { "a5l", ADDR5L },
+  { "a6l", ADDR6L },
+  { "a7l", ADDR7L },
+
+  { "d0u", DATA0U },
+  { "d1u", DATA1U },
+  { "d2u", DATA2U },
+  { "d3u", DATA3U },
+  { "d4u", DATA4U },
+  { "d5u", DATA5U },
+  { "d6u", DATA6U },
+  { "d7u", DATA7U },
+
+  { "a0u", ADDR0U },
+  { "a1u", ADDR1U },
+  { "a2u", ADDR2U },
+  { "a3u", ADDR3U },
+  { "a4u", ADDR4U },
+  { "a5u", ADDR5U },
+  { "a6u", ADDR6U },
+  { "a7u", ADDR7U },
+
   { 0, 0 }
 };
 
-void
+static void
 init_regtable ()
 {
   int i;
@@ -3183,8 +3542,15 @@ md_assemble (str)
     }
   if (er)
     {
-      as_bad ("%s -- statement `%s' ignored", er, str);
+      as_bad (_("%s -- statement `%s' ignored"), er, str);
       return;
+    }
+
+  /* If there is a current label, record that it marks an instruction.  */
+  if (current_label != NULL)
+    {
+      current_label->text = 1;
+      current_label = NULL;
     }
 
   if (the_ins.nfrag == 0)
@@ -3213,13 +3579,14 @@ md_assemble (str)
 	      n = 1;
 	      break;
 	    case 'w':
+	    case 'W':
 	      n = 2;
 	      break;
 	    case 'l':
 	      n = 4;
 	      break;
 	    default:
-	      as_fatal ("Don't know how to figure width of %c in md_assemble()",
+	      as_fatal (_("Don't know how to figure width of %c in md_assemble()"),
 			the_ins.reloc[m].wid);
 	    }
 
@@ -3232,6 +3599,8 @@ md_assemble (str)
 			      get_reloc_code (n, the_ins.reloc[m].pcrel,
 					      the_ins.reloc[m].pic_reloc));
 	  fixP->fx_pcrel_adjust = the_ins.reloc[m].pcrel_fix;
+	  if (the_ins.reloc[m].wid == 'B')
+	    fixP->fx_signed = 1;
 	}
       return;
     }
@@ -3334,14 +3703,15 @@ md_begin ()
   register const struct m68k_opcode *ins;
   register struct m68k_incant *hack, *slak;
   register const char *retval = 0;	/* empty string, or error msg text */
-  register unsigned int i;
+  register int i;
   register char c;
 
   if (flag_mri)
     {
       flag_reg_prefix_optional = 1;
       m68k_abspcadd = 1;
-      m68k_rel32 = 0;
+      if (! m68k_rel32_from_cmdline)
+	m68k_rel32 = 0;
     }
 
   op_hash = hash_new ();
@@ -3375,7 +3745,7 @@ md_begin ()
 
       retval = hash_insert (op_hash, ins->name, (char *) hack);
       if (retval)
-	as_fatal ("Internal Error:  Can't hash %s: %s", ins->name, retval);
+	as_fatal (_("Internal Error:  Can't hash %s: %s"), ins->name, retval);
     }
 
   for (i = 0; i < m68k_numaliases; i++)
@@ -3384,10 +3754,10 @@ md_begin ()
       const char *alias = m68k_opcode_aliases[i].alias;
       PTR val = hash_find (op_hash, name);
       if (!val)
-	as_fatal ("Internal Error: Can't find %s in hash table", name);
+	as_fatal (_("Internal Error: Can't find %s in hash table"), name);
       retval = hash_insert (op_hash, alias, val);
       if (retval)
-	as_fatal ("Internal Error: Can't hash %s: %s", alias, retval);
+	as_fatal (_("Internal Error: Can't hash %s: %s"), alias, retval);
     }
 
   /* In MRI mode, all unsized branches are variable sized.  Normally,
@@ -3414,23 +3784,25 @@ md_begin ()
 	  { "bsr",	"jbsr", },
 	};
 
-      for (i = 0; i < sizeof mri_aliases / sizeof mri_aliases[0]; i++)
+      for (i = 0;
+	   i < (int) (sizeof mri_aliases / sizeof mri_aliases[0]);
+	   i++)
 	{
 	  const char *name = mri_aliases[i].primary;
 	  const char *alias = mri_aliases[i].alias;
 	  PTR val = hash_find (op_hash, name);
 	  if (!val)
-	    as_fatal ("Internal Error: Can't find %s in hash table", name);
+	    as_fatal (_("Internal Error: Can't find %s in hash table"), name);
 	  retval = hash_jam (op_hash, alias, val);
 	  if (retval)
-	    as_fatal ("Internal Error: Can't hash %s: %s", alias, retval);
+	    as_fatal (_("Internal Error: Can't hash %s: %s"), alias, retval);
 	}
     }
 
-  for (i = 0; i < sizeof (mklower_table); i++)
+  for (i = 0; i < (int) sizeof (mklower_table); i++)
     mklower_table[i] = (isupper (c = (char) i)) ? tolower (c) : c;
 
-  for (i = 0; i < sizeof (notend_table); i++)
+  for (i = 0; i < (int) sizeof (notend_table); i++)
     {
       notend_table[i] = 0;
       alt_notend_table[i] = 0;
@@ -3527,7 +3899,9 @@ select_control_regs ()
       control_regs = cpu32_control_regs;
       break;
     case mcf5200:
-      control_regs = mcf5200_control_regs;
+    case mcf5206e:
+    case mcf5307:
+      control_regs = mcf_control_regs;
       break;
     default:
       abort ();
@@ -3549,7 +3923,7 @@ m68k_init_after_args ()
 	  break;
       if (i == n_archs)
 	{
-	  as_bad ("unrecognized default cpu `%s' ???", TARGET_CPU);
+	  as_bad (_("unrecognized default cpu `%s' ???"), TARGET_CPU);
 	  current_architecture |= m68020;
 	}
       else
@@ -3561,7 +3935,7 @@ m68k_init_after_args ()
     {
       if (current_architecture & m68040)
 	{
-	  as_warn ("68040 and 68851 specified; mmu instructions may assemble incorrectly");
+	  as_warn (_("68040 and 68851 specified; mmu instructions may assemble incorrectly"));
 	}
     }
   /* What other incompatibilities could we check for?  */
@@ -3581,9 +3955,9 @@ m68k_init_after_args ()
       current_architecture |= m68851;
     }
   if (no_68881 && (current_architecture & m68881))
-    as_bad ("options for 68881 and no-68881 both given");
+    as_bad (_("options for 68881 and no-68881 both given"));
   if (no_68851 && (current_architecture & m68851))
-    as_bad ("options for 68851 and no-68851 both given");
+    as_bad (_("options for 68851 and no-68851 both given"));
 
 #ifdef OBJ_AOUT
   /* Work out the magic number.  This isn't very general.  */
@@ -3600,10 +3974,68 @@ m68k_init_after_args ()
   /* Note which set of "movec" control registers is available.  */
   select_control_regs ();
 
-  if (cpu_of_arch (current_architecture) < m68020)
+  if (cpu_of_arch (current_architecture) < m68020
+      || arch_coldfire_p (current_architecture))
     md_relax_table[TAB (PCINDEX, BYTE)].rlx_more = 0;
 }
+
+/* This is called when a label is defined.  */
 
+void
+m68k_frob_label (sym)
+     symbolS *sym;
+{
+  struct label_line *n;
+
+  n = (struct label_line *) xmalloc (sizeof *n);
+  n->next = labels;
+  n->label = sym;
+  as_where (&n->file, &n->line);
+  n->text = 0;
+  labels = n;
+  current_label = n;
+}
+
+/* This is called when a value that is not an instruction is emitted.  */
+
+void
+m68k_flush_pending_output ()
+{
+  current_label = NULL;
+}
+
+/* This is called at the end of the assembly, when the final value of
+   the label is known.  We warn if this is a text symbol aligned at an
+   odd location.  */
+
+void
+m68k_frob_symbol (sym)
+     symbolS *sym;
+{
+  if (S_GET_SEGMENT (sym) == reg_section
+      && (int) S_GET_VALUE (sym) < 0)
+    {
+      S_SET_SEGMENT (sym, absolute_section);
+      S_SET_VALUE (sym, ~(int)S_GET_VALUE (sym));
+    }
+  else if ((S_GET_VALUE (sym) & 1) != 0)
+    {
+      struct label_line *l;
+
+      for (l = labels; l != NULL; l = l->next)
+	{
+	  if (l->label == sym)
+	    {
+	      if (l->text)
+		as_warn_where (l->file, l->line,
+			       _("text label `%s' aligned to odd boundary"),
+			       S_GET_NAME (sym));
+	      break;
+	    }
+	}
+    }
+}
+
 /* This is called if we go in or out of MRI mode because of the .mri
    pseudo-op.  */
 
@@ -3621,7 +4053,8 @@ m68k_mri_mode_change (on)
 #endif
 	}
       m68k_abspcadd = 1;
-      m68k_rel32 = 0;
+      if (! m68k_rel32_from_cmdline)
+	m68k_rel32 = 0;
     }
   else
     {
@@ -3637,7 +4070,8 @@ m68k_mri_mode_change (on)
 #endif
 	}
       m68k_abspcadd = 0;
-      m68k_rel32 = 1;
+      if (! m68k_rel32_from_cmdline)
+	m68k_rel32 = 1;
     }
 }
 
@@ -3659,7 +4093,6 @@ md_atof (type, litP, sizeP)
   LITTLENUM_TYPE words[MAX_LITTLENUMS];
   LITTLENUM_TYPE *wordP;
   char *t;
-  char *atof_ieee ();
 
   switch (type)
     {
@@ -3689,7 +4122,7 @@ md_atof (type, litP, sizeP)
 
     default:
       *sizeP = 0;
-      return "Bad call to MD_ATOF()";
+      return _("Bad call to MD_ATOF()");
     }
   t = atof_ieee (input_line_pointer, type, words);
   if (t)
@@ -3737,8 +4170,19 @@ md_apply_fix_2 (fixP, val)
     {
       memset (buf, 0, fixP->fx_size);
       fixP->fx_addnumber = val;	/* Remember value for emit_reloc */
+
+      if (fixP->fx_r_type == BFD_RELOC_VTABLE_INHERIT
+	  && !S_IS_DEFINED (fixP->fx_addsy)
+	  && !S_IS_WEAK (fixP->fx_addsy))
+	S_SET_WEAK (fixP->fx_addsy);
       return;
     }
+#endif
+
+#ifdef BFD_ASSEMBLER
+  if (fixP->fx_r_type == BFD_RELOC_VTABLE_INHERIT
+      || fixP->fx_r_type == BFD_RELOC_VTABLE_ENTRY)
+    return;
 #endif
 
   switch (fixP->fx_size)
@@ -3780,22 +4224,28 @@ md_apply_fix_2 (fixP, val)
      like "0xff" for a byte field.  So extend the upper part of the range
      to accept such numbers.  We arbitrarily disallow "-0xff" or "0xff+0xff",
      so that we can do any range checking at all.  */
-  if (!fixP->fx_pcrel)
+  if (! fixP->fx_pcrel && ! fixP->fx_signed)
     upper_limit = upper_limit * 2 + 1;
 
   if ((addressT) val > upper_limit
       && (val > 0 || val < lower_limit))
-    as_bad_where (fixP->fx_file, fixP->fx_line, "value out of range");
+    as_bad_where (fixP->fx_file, fixP->fx_line, _("value out of range"));
 
   /* A one byte PC-relative reloc means a short branch.  We can't use
      a short branch with a value of 0 or -1, because those indicate
-     different opcodes (branches with longer offsets).  */
-  if (fixP->fx_pcrel
+     different opcodes (branches with longer offsets).  fixup_segment
+     in write.c may have clobbered fx_pcrel, so we need to examine the
+     reloc type.  */
+  if ((fixP->fx_pcrel
+#ifdef BFD_ASSEMBLER
+       || fixP->fx_r_type == BFD_RELOC_8_PCREL
+#endif
+       )
       && fixP->fx_size == 1
       && (fixP->fx_addsy == NULL
 	  || S_IS_DEFINED (fixP->fx_addsy))
       && (val == 0 || val == -1))
-    as_bad_where (fixP->fx_file, fixP->fx_line, "invalid byte branch offset");
+    as_bad_where (fixP->fx_file, fixP->fx_line, _("invalid byte branch offset"));
 }
 
 #ifdef BFD_ASSEMBLER
@@ -3820,7 +4270,7 @@ void md_apply_fix (fixP, val)
    the bytes inside it modified to conform to the new size  There is UGLY
    MAGIC here. ..
    */
-void
+static void
 md_convert_frag_1 (fragP)
      register fragS *fragP;
 {
@@ -3843,7 +4293,7 @@ md_convert_frag_1 (fragP)
   disp = (disp + fragP->fr_offset) - object_address;
 
 #ifdef BFD_ASSEMBLER
-  disp += fragP->fr_symbol->sy_frag->fr_address;
+  disp += symbol_get_frag (fragP->fr_symbol)->fr_address;
 #endif
 
   switch (fragP->fr_subtype)
@@ -3852,7 +4302,7 @@ md_convert_frag_1 (fragP)
     case TAB (ABRANCH, BYTE):
       know (issbyte (disp));
       if (disp == 0)
-	as_bad ("short branch with zero offset: use :w");
+	as_bad (_("short branch with zero offset: use :w"));
       fragP->fr_opcode[1] = disp;
       ext = 0;
       break;
@@ -3867,7 +4317,7 @@ md_convert_frag_1 (fragP)
       ext = 2;
       break;
     case TAB (ABRANCH, LONG):
-      if (cpu_of_arch (current_architecture) < m68020)
+      if (!HAVE_LONG_BRANCH(current_architecture))
 	{
 	  if (fragP->fr_opcode[0] == 0x61)
 	    /* BSR */
@@ -3898,7 +4348,10 @@ md_convert_frag_1 (fragP)
 	    }
 	  else
 	    {
-	      as_bad ("Long branch offset not supported.");
+	      /* This should never happen, because if it's a conditional
+	         branch and we are on a 68000, BCC68000 should have been
+	         picked instead of ABRANCH. */
+	      abort ();
 	    }
 	}
       else
@@ -3959,7 +4412,7 @@ md_convert_frag_1 (fragP)
       fix_new (fragP, fragP->fr_fix, 4, fragP->fr_symbol, fragP->fr_offset,
 	       0, NO_RELOC);
       if ((fragP->fr_opcode[1] & 0x3F) != 0x3A)
-	as_bad ("Internal error (long PC-relative operand) for insn 0x%04x at 0x%lx",
+	as_bad (_("Internal error (long PC-relative operand) for insn 0x%04x at 0x%lx"),
 		(unsigned) fragP->fr_opcode[0],
 		(unsigned long) fragP->fr_address);
       fragP->fr_opcode[1] &= ~0x3F;
@@ -3990,7 +4443,7 @@ md_convert_frag_1 (fragP)
       disp += 2;
       if (!issbyte (disp))
 	{
-	  as_bad ("displacement doesn't fit in one byte");
+	  as_bad (_("displacement doesn't fit in one byte"));
 	  disp = 0;
 	}
       assert (fragP->fr_fix >= 2);
@@ -4034,8 +4487,8 @@ md_convert_frag_1 (fragP)
 
 void
 md_convert_frag (headers, sec, fragP)
-     object_headers *headers;
-     segT sec;
+     object_headers *headers ATTRIBUTE_UNUSED;
+     segT sec ATTRIBUTE_UNUSED;
      fragS *fragP;
 {
   md_convert_frag_1 (fragP);
@@ -4045,8 +4498,8 @@ md_convert_frag (headers, sec, fragP)
 
 void
 md_convert_frag (abfd, sec, fragP)
-     bfd *abfd;
-     segT sec;
+     bfd *abfd ATTRIBUTE_UNUSED;
+     segT sec ATTRIBUTE_UNUSED;
      fragS *fragP;
 {
   md_convert_frag_1 (fragP);
@@ -4073,12 +4526,21 @@ md_estimate_size_before_relax (fragP, segment)
     case TAB (ABRANCH, SZ_UNDEF):
       {
 	if ((fragP->fr_symbol != NULL)	/* Not absolute */
-	    && S_GET_SEGMENT (fragP->fr_symbol) == segment)
+	    && S_GET_SEGMENT (fragP->fr_symbol) == segment
+	    && relaxable_symbol (fragP->fr_symbol))
 	  {
 	    fragP->fr_subtype = TAB (TABTYPE (fragP->fr_subtype), BYTE);
 	    break;
 	  }
-	else if ((fragP->fr_symbol == 0) || (cpu_of_arch (current_architecture) < m68020))
+	else if ((fragP->fr_symbol != NULL) && flag_short_refs)
+	  {			/* Symbol is undefined and we want short ref */
+	    fix_new (fragP, (int) (fragP->fr_fix), 2, fragP->fr_symbol,
+		     fragP->fr_offset, 1, NO_RELOC);
+	    fragP->fr_fix += 2;
+	    frag_wane (fragP);
+	    break;
+	  }
+	else if ((fragP->fr_symbol == 0) || !HAVE_LONG_BRANCH(current_architecture))
 	  {
 	    /* On 68000, or for absolute value, switch to abs long */
 	    /* FIXME, we should check abs val, pick short or long */
@@ -4102,7 +4564,10 @@ md_estimate_size_before_relax (fragP, segment)
 	      }
 	    else
 	      {
-		as_warn ("Long branch offset to extern symbol not supported.");
+		/* This should never happen, because if it's a conditional
+		   branch and we are on a 68000, BCC68000 should have been
+		   picked instead of ABRANCH. */
+		abort ();
 	      }
 	  }
 	else
@@ -4120,7 +4585,9 @@ md_estimate_size_before_relax (fragP, segment)
 
     case TAB (FBRANCH, SZ_UNDEF):
       {
-	if (S_GET_SEGMENT (fragP->fr_symbol) == segment || flag_short_refs)
+	if ((S_GET_SEGMENT (fragP->fr_symbol) == segment
+	     && relaxable_symbol (fragP->fr_symbol))
+	    || flag_short_refs)
 	  {
 	    fragP->fr_subtype = TAB (FBRANCH, SHORT);
 	    fragP->fr_var += 2;
@@ -4138,9 +4605,9 @@ md_estimate_size_before_relax (fragP, segment)
 
     case TAB (PCREL, SZ_UNDEF):
       {
-	if (S_GET_SEGMENT (fragP->fr_symbol) == segment
-	    || flag_short_refs
-	    || cpu_of_arch (current_architecture) < m68020)
+	if ((S_GET_SEGMENT (fragP->fr_symbol) == segment
+	     && relaxable_symbol (fragP->fr_symbol))
+	    || flag_short_refs)
 	  {
 	    fragP->fr_subtype = TAB (PCREL, SHORT);
 	    fragP->fr_var += 2;
@@ -4156,27 +4623,24 @@ md_estimate_size_before_relax (fragP, segment)
     case TAB (BCC68000, SZ_UNDEF):
       {
 	if ((fragP->fr_symbol != NULL)
-	    && S_GET_SEGMENT (fragP->fr_symbol) == segment)
+	    && S_GET_SEGMENT (fragP->fr_symbol) == segment
+	    && relaxable_symbol (fragP->fr_symbol))
 	  {
 	    fragP->fr_subtype = TAB (BCC68000, BYTE);
 	    break;
 	  }
 	/* only Bcc 68000 instructions can come here */
-	/* change bcc into b!cc/jmp absl long */
-	fragP->fr_opcode[0] ^= 0x01;	/* invert bcc */
-	if (flag_short_refs)
+	if ((fragP->fr_symbol != NULL) && flag_short_refs)
 	  {
-	    fragP->fr_opcode[1] = 0x04;	/* branch offset = 6 */
-	    /* JF: these were fr_opcode[2,3] */
-	    buffer_address[0] = 0x4e;	/* put in jmp long (0x4ef9) */
-	    buffer_address[1] = (char) 0xf8;
-	    fragP->fr_fix += 2;	/* account for jmp instruction */
+	    /* the user wants short refs, so emit one */
 	    fix_new (fragP, fragP->fr_fix, 2, fragP->fr_symbol,
-		     fragP->fr_offset, 0, NO_RELOC);
+		     fragP->fr_offset, 1, NO_RELOC);
 	    fragP->fr_fix += 2;
 	  }
 	else
 	  {
+	    /* change bcc into b!cc/jmp absl long */
+	    fragP->fr_opcode[0] ^= 0x01;	/* invert bcc */
 	    fragP->fr_opcode[1] = 0x06;	/* branch offset = 6 */
 	    /* JF: these were fr_opcode[2,3] */
 	    buffer_address[0] = 0x4e;	/* put in jmp long (0x4ef9) */
@@ -4192,32 +4656,30 @@ md_estimate_size_before_relax (fragP, segment)
 
     case TAB (DBCC, SZ_UNDEF):
       {
-	if (fragP->fr_symbol != NULL && S_GET_SEGMENT (fragP->fr_symbol) == segment)
+	if (fragP->fr_symbol != NULL
+	    && S_GET_SEGMENT (fragP->fr_symbol) == segment
+	    && relaxable_symbol (fragP->fr_symbol))
 	  {
 	    fragP->fr_subtype = TAB (DBCC, SHORT);
 	    fragP->fr_var += 2;
 	    break;
 	  }
 	/* only DBcc 68000 instructions can come here */
-	/* change dbcc into dbcc/jmp absl long */
-	/* JF: these used to be fr_opcode[2-4], which is wrong. */
-	buffer_address[0] = 0x00;	/* branch offset = 4 */
-	buffer_address[1] = 0x04;
-	buffer_address[2] = 0x60;	/* put in bra pc + ... */
 
-	if (flag_short_refs)
+	if (fragP->fr_symbol != NULL && flag_short_refs)
 	  {
-	    /* JF: these were fr_opcode[5-7] */
-	    buffer_address[3] = 0x04;	/* plus 4 */
-	    buffer_address[4] = 0x4e;	/* Put in Jump Word */
-	    buffer_address[5] = (char) 0xf8;
-	    fragP->fr_fix += 6;	/* account for bra/jmp instruction */
+	    /* the user wants short refs, so emit one */
 	    fix_new (fragP, fragP->fr_fix, 2, fragP->fr_symbol,
-		     fragP->fr_offset, 0, NO_RELOC);
+		     fragP->fr_offset, 1, NO_RELOC);
 	    fragP->fr_fix += 2;
 	  }
 	else
 	  {
+	    /* change dbcc into dbcc/jmp absl long */
+	    /* JF: these used to be fr_opcode[2-4], which is wrong. */
+	    buffer_address[0] = 0x00;	/* branch offset = 4 */
+	    buffer_address[1] = 0x04;
+	    buffer_address[2] = 0x60;	/* put in bra pc + ... */
 	    /* JF: these were fr_opcode[5-7] */
 	    buffer_address[3] = 0x06;	/* Plus 6 */
 	    buffer_address[4] = 0x4e;	/* put in jmp long (0x4ef9) */
@@ -4234,9 +4696,11 @@ md_estimate_size_before_relax (fragP, segment)
 
     case TAB (PCLEA, SZ_UNDEF):
       {
-	if ((S_GET_SEGMENT (fragP->fr_symbol)) == segment
+	if (((S_GET_SEGMENT (fragP->fr_symbol)) == segment
+	     && relaxable_symbol (fragP->fr_symbol))
 	    || flag_short_refs
-	    || cpu_of_arch (current_architecture) < m68020)
+	    || cpu_of_arch (current_architecture) < m68020
+	    || cpu_of_arch (current_architecture) == mcf5200)
 	  {
 	    fragP->fr_subtype = TAB (PCLEA, SHORT);
 	    fragP->fr_var += 2;
@@ -4250,8 +4714,10 @@ md_estimate_size_before_relax (fragP, segment)
       }				/* TAB(PCLEA,SZ_UNDEF) */
 
     case TAB (PCINDEX, SZ_UNDEF):
-      if (S_GET_SEGMENT (fragP->fr_symbol) == segment
-	  || cpu_of_arch (current_architecture) < m68020)
+      if ((S_GET_SEGMENT (fragP->fr_symbol) == segment
+	   && relaxable_symbol (fragP->fr_symbol))
+	  || cpu_of_arch (current_architecture) < m68020
+	  || cpu_of_arch (current_architecture) == mcf5200)
 	{
 	  fragP->fr_subtype = TAB (PCINDEX, BYTE);
 	}
@@ -4280,14 +4746,14 @@ md_estimate_size_before_relax (fragP, segment)
 	 word mode.  */
       if (fragP->fr_symbol && S_GET_VALUE (fragP->fr_symbol) == 0)
 	{
+	  fragS *stop;
 	  fragS *l;
 
-	  for (l = fragP->fr_next;
-	       l != fragP->fr_symbol->sy_frag;
-	       l = l->fr_next)
+	  stop = symbol_get_frag (fragP->fr_symbol);
+	  for (l = fragP->fr_next; l != stop; l = l->fr_next)
 	    if (l->fr_fix + l->fr_var != 0)
 	      break;
-	  if (l == fragP->fr_symbol->sy_frag)
+	  if (l == stop)
 	    {
 	      fragP->fr_subtype = TAB (TABTYPE (fragP->fr_subtype), SHORT);
 	      fragP->fr_var += 2;
@@ -4372,8 +4838,8 @@ void
 md_create_short_jump (ptr, from_addr, to_addr, frag, to_symbol)
      char *ptr;
      addressT from_addr, to_addr;
-     fragS *frag;
-     symbolS *to_symbol;
+     fragS *frag ATTRIBUTE_UNUSED;
+     symbolS *to_symbol ATTRIBUTE_UNUSED;
 {
   valueT offset;
 
@@ -4392,7 +4858,7 @@ md_create_long_jump (ptr, from_addr, to_addr, frag, to_symbol)
 {
   valueT offset;
 
-  if (cpu_of_arch (current_architecture) < m68020)
+  if (!HAVE_LONG_BRANCH(current_architecture))
     {
       offset = to_addr - S_GET_VALUE (to_symbol);
       md_number_to_chars (ptr, (valueT) 0x4EF9, 2);
@@ -4440,7 +4906,7 @@ get_num (exp, ok)
       offs (exp) = 0;
       if (ok == 10)
 	{
-	  as_warn ("expression out of range: defaulting to 1");
+	  as_warn (_("expression out of range: defaulting to 1"));
 	  offs (exp) = 1;
 	}
     }
@@ -4451,7 +4917,7 @@ get_num (exp, ok)
 	case 10:
 	  if (offs (exp) < 1 || offs (exp) > 8)
 	    {
-	      as_warn ("expression out of range: defaulting to 1");
+	      as_warn (_("expression out of range: defaulting to 1"));
 	      offs (exp) = 1;
 	    }
 	  break;
@@ -4483,7 +4949,7 @@ get_num (exp, ok)
 	  if (offs (exp) < 0 || offs (exp) > 4095)
 	    {
 	    outrange:
-	      as_warn ("expression out of range: defaulting to 0");
+	      as_warn (_("expression out of range: defaulting to 0"));
 	      offs (exp) = 0;
 	    }
 	  break;
@@ -4516,7 +4982,7 @@ get_num (exp, ok)
 	  adds (exp) = 0;
 	  subs (exp) = 0;
 	  offs (exp) = (ok == 10) ? 1 : 0;
-	  as_warn ("Can't deal with expression; defaulting to %ld",
+	  as_warn (_("Can't deal with expression; defaulting to %ld"),
 		   offs (exp));
 	}
     }
@@ -4528,7 +4994,7 @@ get_num (exp, ok)
 	  adds (exp) = 0;
 	  subs (exp) = 0;
 	  offs (exp) = (ok == 10) ? 1 : 0;
-	  as_warn ("Can't deal with expression; defaulting to %ld",
+	  as_warn (_("Can't deal with expression; defaulting to %ld"),
 		   offs (exp));
 	}
     }
@@ -4542,11 +5008,11 @@ get_num (exp, ok)
 	  break;
 	case SIZE_BYTE:
 	  if (!isbyte (offs (exp)))
-	    as_warn ("expression doesn't fit in BYTE");
+	    as_warn (_("expression doesn't fit in BYTE"));
 	  break;
 	case SIZE_WORD:
 	  if (!isword (offs (exp)))
-	    as_warn ("expression doesn't fit in WORD");
+	    as_warn (_("expression doesn't fit in WORD"));
 	  break;
 	}
     }
@@ -4555,11 +5021,10 @@ get_num (exp, ok)
 }
 
 /* These are the back-ends for the various machine dependent pseudo-ops.  */
-void demand_empty_rest_of_line ();	/* Hate those extra verbose names */
 
 static void
 s_data1 (ignore)
-     int ignore;
+     int ignore ATTRIBUTE_UNUSED;
 {
   subseg_set (data_section, 1);
   demand_empty_rest_of_line ();
@@ -4567,7 +5032,7 @@ s_data1 (ignore)
 
 static void
 s_data2 (ignore)
-     int ignore;
+     int ignore ATTRIBUTE_UNUSED;
 {
   subseg_set (data_section, 2);
   demand_empty_rest_of_line ();
@@ -4575,7 +5040,7 @@ s_data2 (ignore)
 
 static void
 s_bss (ignore)
-     int ignore;
+     int ignore ATTRIBUTE_UNUSED;
 {
   /* We don't support putting frags in the BSS segment, we fake it
      by marking in_bss, then looking at s_skip for clues.  */
@@ -4586,7 +5051,7 @@ s_bss (ignore)
 
 static void
 s_even (ignore)
-     int ignore;
+     int ignore ATTRIBUTE_UNUSED;
 {
   register int temp;
   register long temp_fill;
@@ -4594,18 +5059,31 @@ s_even (ignore)
   temp = 1;			/* JF should be 2? */
   temp_fill = get_absolute_expression ();
   if (!need_pass_2)		/* Never make frag if expect extra pass. */
-    frag_align (temp, (int) temp_fill);
+    frag_align (temp, (int) temp_fill, 0);
   demand_empty_rest_of_line ();
+  record_alignment (now_seg, temp);
 }
 
 static void
 s_proc (ignore)
-     int ignore;
+     int ignore ATTRIBUTE_UNUSED;
 {
   demand_empty_rest_of_line ();
 }
 
 /* Pseudo-ops handled for MRI compatibility.  */
+
+/* This function returns non-zero if the argument is a conditional
+   pseudo-op.  This is called when checking whether a pending
+   alignment is needed.  */
+
+int
+m68k_conditional_pseudoop (pop)
+     pseudo_typeS *pop;
+{
+  return (pop->poc_handler == s_mri_if
+	  || pop->poc_handler == s_mri_else);
+}
 
 /* Handle an MRI style chip specification.  */
 
@@ -4617,13 +5095,17 @@ mri_chip ()
   int i;
 
   s = input_line_pointer;
-  c = get_symbol_end ();
+  /* We can't use get_symbol_end since the processor names are not proper
+     symbols.  */
+  while (is_part_of_name (c = *input_line_pointer++))
+    ;
+  *--input_line_pointer = 0;
   for (i = 0; i < n_archs; i++)
     if (strcasecmp (s, archs[i].name) == 0)
       break;
   if (i >= n_archs)
     {
-      as_bad ("%s: unrecognized processor name", s);
+      as_bad (_("%s: unrecognized processor name"), s);
       *input_line_pointer = c;
       ignore_rest_of_line ();
       return;
@@ -4640,7 +5122,11 @@ mri_chip ()
     {
       ++input_line_pointer;
       s = input_line_pointer;
-      c = get_symbol_end ();
+      /* We can't use get_symbol_end since the processor names are not
+	 proper symbols.  */
+      while (is_part_of_name (c = *input_line_pointer++))
+	;
+      *--input_line_pointer = 0;
       if (strcmp (s, "68881") == 0)
 	current_architecture |= m68881;
       else if (strcmp (s, "68851") == 0)
@@ -4656,7 +5142,7 @@ mri_chip ()
 
 static void
 s_chip (ignore)
-     int ignore;
+     int ignore ATTRIBUTE_UNUSED;
 {
   char *stop = NULL;
   char stopc;
@@ -4673,7 +5159,7 @@ s_chip (ignore)
 
 static void
 s_fopt (ignore)
-     int ignore;
+     int ignore ATTRIBUTE_UNUSED;
 {
   SKIP_WHITESPACE ();
 
@@ -4684,13 +5170,13 @@ s_fopt (ignore)
       input_line_pointer += 3;
       temp = get_absolute_expression ();
       if (temp < 0 || temp > 7)
-	as_bad ("bad coprocessor id");
+	as_bad (_("bad coprocessor id"));
       else
 	m68k_float_copnum = COP0 + temp;
     }
   else
     {
-      as_bad ("unrecognized fopt option");
+      as_bad (_("unrecognized fopt option"));
       ignore_rest_of_line ();
       return;
     }
@@ -4777,13 +5263,13 @@ static const struct opt_action opt_table[] =
   { "x", 0, 0, 0, 0 }
 };
 
-#define OPTCOUNT (sizeof opt_table / sizeof opt_table[0])
+#define OPTCOUNT ((int) (sizeof opt_table / sizeof opt_table[0]))
 
 /* The MRI OPT pseudo-op.  */
 
 static void
 s_opt (ignore)
-     int ignore;
+     int ignore ATTRIBUTE_UNUSED;
 {
   do
     {
@@ -4824,7 +5310,7 @@ s_opt (ignore)
 	      else if (o->pvar != NULL)
 		{
 		  if (! t && o->arg == o->notarg)
-		    as_bad ("option `%s' may not be negated", s);
+		    as_bad (_("option `%s' may not be negated"), s);
 		  *input_line_pointer = c;
 		  *o->pvar = t ? o->arg : o->notarg;
 		}
@@ -4835,7 +5321,7 @@ s_opt (ignore)
 	}
       if (i >= OPTCOUNT)
 	{
-	  as_bad ("option `%s' not recognized", s);
+	  as_bad (_("option `%s' not recognized"), s);
 	  *input_line_pointer = c;
 	}
     }
@@ -4851,8 +5337,8 @@ s_opt (ignore)
 
 static void
 skip_to_comma (arg, on)
-     int arg;
-     int on;
+     int arg ATTRIBUTE_UNUSED;
+     int on ATTRIBUTE_UNUSED;
 {
   while (*input_line_pointer != ','
 	 && ! is_end_of_line[(unsigned char) *input_line_pointer])
@@ -4863,12 +5349,12 @@ skip_to_comma (arg, on)
 
 static void
 opt_nest (arg, on)
-     int arg;
-     int on;
+     int arg ATTRIBUTE_UNUSED;
+     int on ATTRIBUTE_UNUSED;
 {
   if (*input_line_pointer != '=')
     {
-      as_bad ("bad format of OPT NEST=depth");
+      as_bad (_("bad format of OPT NEST=depth"));
       return;
     }
 
@@ -4880,8 +5366,8 @@ opt_nest (arg, on)
 
 static void
 opt_chip (arg, on)
-     int arg;
-     int on;
+     int arg ATTRIBUTE_UNUSED;
+     int on ATTRIBUTE_UNUSED;
 {
   if (*input_line_pointer != '=')
     {
@@ -4897,7 +5383,7 @@ opt_chip (arg, on)
 
 static void
 opt_list (arg, on)
-     int arg;
+     int arg ATTRIBUTE_UNUSED;
      int on;
 {
   listing_list (on);
@@ -4907,7 +5393,7 @@ opt_list (arg, on)
 
 static void
 opt_list_symbols (arg, on)
-     int arg;
+     int arg ATTRIBUTE_UNUSED;
      int on;
 {
   if (on)
@@ -4920,18 +5406,18 @@ opt_list_symbols (arg, on)
 
 static void
 s_reg (ignore)
-     int ignore;
+     int ignore ATTRIBUTE_UNUSED;
 {
   char *s;
   int c;
   struct m68k_op rop;
-  unsigned long mask;
+  int mask;
   char *stop = NULL;
   char stopc;
 
   if (line_label == NULL)
     {
-      as_bad ("missing label");
+      as_bad (_("missing label"));
       ignore_rest_of_line ();
       return;
     }
@@ -4955,9 +5441,9 @@ s_reg (ignore)
   if (m68k_ip_op (s, &rop) != 0)
     {
       if (rop.error == NULL)
-	as_bad ("bad register list");
+	as_bad (_("bad register list"));
       else
-	as_bad ("bad register list: %s", rop.error);
+	as_bad (_("bad register list: %s"), rop.error);
       *input_line_pointer = c;
       ignore_rest_of_line ();
       return;
@@ -4984,14 +5470,14 @@ s_reg (ignore)
     mask = 1 << 26;
   else
     {
-      as_bad ("bad register list");
+      as_bad (_("bad register list"));
       ignore_rest_of_line ();
       return;
     }
 
-  S_SET_SEGMENT (line_label, absolute_section);
-  S_SET_VALUE (line_label, mask);
-  line_label->sy_frag = &zero_address_frag;
+  S_SET_SEGMENT (line_label, reg_section);
+  S_SET_VALUE (line_label, ~mask);
+  symbol_set_frag (line_label, &zero_address_frag);
 
   if (flag_mri)
     mri_comment_end (stop, stopc);
@@ -5024,7 +5510,7 @@ static struct save_opts *save_stack;
 
 static void
 s_save (ignore)
-     int ignore;
+     int ignore ATTRIBUTE_UNUSED;
 {
   struct save_opts *s;
 
@@ -5049,13 +5535,13 @@ s_save (ignore)
 
 static void
 s_restore (ignore)
-     int ignore;
+     int ignore ATTRIBUTE_UNUSED;
 {
   struct save_opts *s;
 
   if (save_stack == NULL)
     {
-      as_bad ("restore without save");
+      as_bad (_("restore without save"));
       ignore_rest_of_line ();
       return;
     }
@@ -5128,6 +5614,7 @@ static int mri_control_index;
 
 /* Some function prototypes.  */
 
+static void mri_assemble PARAMS ((char *));
 static char *mri_control_label PARAMS ((void));
 static struct mri_control_info *push_mri_control
   PARAMS ((enum mri_control_type));
@@ -5142,6 +5629,24 @@ static void build_mri_control_operand
 	   const char *, int));
 static void parse_mri_control_expression
   PARAMS ((char *, int, const char *, const char *, int));
+
+/* Assemble an instruction for an MRI structured control directive.  */
+
+static void
+mri_assemble (str)
+     char *str;
+{
+  char *s;
+
+  /* md_assemble expects the opcode to be in lower case.  */
+  for (s = str; *s != ' ' && *s != '\0'; s++)
+    {
+      if (isupper ((unsigned char) *s))
+	*s = tolower ((unsigned char) *s);
+    }
+
+  md_assemble (str);
+}
 
 /* Generate a new MRI label structured control directive label name.  */
 
@@ -5213,7 +5718,7 @@ parse_mri_condition (pcc)
 
   if (*input_line_pointer != '>')
     {
-      as_bad ("syntax error in structured control directive");
+      as_bad (_("syntax error in structured control directive"));
       return 0;
     }
 
@@ -5264,7 +5769,7 @@ parse_mri_control_operand (pcc, leftstart, leftstop, rightstart, rightstop)
     }
   if (*s == '\0')
     {
-      as_bad ("missing condition code in structured control directive");
+      as_bad (_("missing condition code in structured control directive"));
       return 0;
     }
 
@@ -5435,7 +5940,7 @@ build_mri_control_operand (qual, cc, leftstart, leftstop, rightstart,
       memcpy (s, rightstart, rightstop - rightstart);
       s += rightstop - rightstart;
       *s = '\0';
-      md_assemble (buf);
+      mri_assemble (buf);
       free (buf);
     }
       
@@ -5448,7 +5953,7 @@ build_mri_control_operand (qual, cc, leftstart, leftstop, rightstart,
     *s++ = extent;
   *s++ = ' ';
   strcpy (s, truelab);
-  md_assemble (buf);
+  mri_assemble (buf);
   free (buf);
 }
 
@@ -5562,7 +6067,7 @@ parse_mri_control_expression (stop, qual, truelab, falselab, extent)
 
   *stop = c;
   if (input_line_pointer != stop)
-    as_bad ("syntax error in structured control directive");
+    as_bad (_("syntax error in structured control directive"));
 }
 
 /* Handle the MRI IF pseudo-op.  This may be a structured control
@@ -5596,7 +6101,7 @@ s_mri_if (qual)
     {
       if (qual != '\0')
 	{
-	  as_bad ("missing then");
+	  as_bad (_("missing then"));
 	  ignore_rest_of_line ();
 	  return;
 	}
@@ -5678,7 +6183,7 @@ s_mri_else (qual)
       || mri_control_stack->type != mri_if
       || mri_control_stack->else_seen)
     {
-      as_bad ("else without matching if");
+      as_bad (_("else without matching if"));
       ignore_rest_of_line ();
       return;
     }
@@ -5689,7 +6194,7 @@ s_mri_else (qual)
   q[0] = qual;
   q[1] = '\0';
   sprintf (buf, "bra%s %s", q, mri_control_stack->bottom);
-  md_assemble (buf);
+  mri_assemble (buf);
   free (buf);
 
   colon (mri_control_stack->next);
@@ -5707,12 +6212,12 @@ s_mri_else (qual)
 
 static void
 s_mri_endi (ignore)
-     int ignore;
+     int ignore ATTRIBUTE_UNUSED;
 {
   if (mri_control_stack == NULL
       || mri_control_stack->type != mri_if)
     {
-      as_bad ("endi without matching if");
+      as_bad (_("endi without matching if"));
       ignore_rest_of_line ();
       return;
     }
@@ -5753,7 +6258,7 @@ s_mri_break (extent)
     n = n->outer;
   if (n == NULL)
     {
-      as_bad ("break outside of structured loop");
+      as_bad (_("break outside of structured loop"));
       ignore_rest_of_line ();
       return;
     }
@@ -5762,7 +6267,7 @@ s_mri_break (extent)
   ex[0] = extent;
   ex[1] = '\0';
   sprintf (buf, "bra%s %s", ex, n->bottom);
-  md_assemble (buf);
+  mri_assemble (buf);
   free (buf);
 
   if (flag_mri)
@@ -5792,7 +6297,7 @@ s_mri_next (extent)
     n = n->outer;
   if (n == NULL)
     {
-      as_bad ("next outside of structured loop");
+      as_bad (_("next outside of structured loop"));
       ignore_rest_of_line ();
       return;
     }
@@ -5801,7 +6306,7 @@ s_mri_next (extent)
   ex[0] = extent;
   ex[1] = '\0';
   sprintf (buf, "bra%s %s", ex, n->next);
-  md_assemble (buf);
+  mri_assemble (buf);
   free (buf);
 
   if (flag_mri)
@@ -5844,7 +6349,7 @@ s_mri_for (qual)
     ++input_line_pointer;
   if (*input_line_pointer != '=')
     {
-      as_bad ("missing =");
+      as_bad (_("missing ="));
       ignore_rest_of_line ();
       return;
     }
@@ -5882,7 +6387,7 @@ s_mri_for (qual)
     }
   if (initstop == NULL)
     {
-      as_bad ("missing to or downto");
+      as_bad (_("missing to or downto"));
       ignore_rest_of_line ();
       return;
     }
@@ -5918,7 +6423,7 @@ s_mri_for (qual)
     }
   if (endstop == NULL)
     {
-      as_bad ("missing do");
+      as_bad (_("missing do"));
       ignore_rest_of_line ();
       return;
     }
@@ -5952,7 +6457,7 @@ s_mri_for (qual)
 	}
       if (bystop == NULL)
 	{
-	  as_bad ("missing do");
+	  as_bad (_("missing do"));
 	  ignore_rest_of_line ();
 	  return;
 	}
@@ -5990,7 +6495,7 @@ s_mri_for (qual)
   memcpy (s, varstart, varstop - varstart);
   s += varstop - varstart;
   *s = '\0';
-  md_assemble (buf);
+  mri_assemble (buf);
 
   colon (n->top);
 
@@ -6008,7 +6513,7 @@ s_mri_for (qual)
   memcpy (s, varstart, varstop - varstart);
   s += varstop - varstart;
   *s = '\0';
-  md_assemble (buf);
+  mri_assemble (buf);
 
   /* bcc bottom */
   ex[0] = extent;
@@ -6017,7 +6522,7 @@ s_mri_for (qual)
     sprintf (buf, "blt%s %s", ex, n->bottom);
   else
     sprintf (buf, "bgt%s %s", ex, n->bottom);
-  md_assemble (buf);
+  mri_assemble (buf);
 
   /* Put together the add or sub instruction used by ENDF.  */
   s = buf;
@@ -6050,22 +6555,22 @@ s_mri_for (qual)
 
 static void
 s_mri_endf (ignore)
-     int ignore;
+     int ignore ATTRIBUTE_UNUSED;
 {
   if (mri_control_stack == NULL
       || mri_control_stack->type != mri_for)
     {
-      as_bad ("endf without for");
+      as_bad (_("endf without for"));
       ignore_rest_of_line ();
       return;
     }
 
   colon (mri_control_stack->next);
 
-  md_assemble (mri_control_stack->incr);
+  mri_assemble (mri_control_stack->incr);
 
   sprintf (mri_control_stack->incr, "bra %s", mri_control_stack->top);
-  md_assemble (mri_control_stack->incr);
+  mri_assemble (mri_control_stack->incr);
 
   free (mri_control_stack->incr);
 
@@ -6086,7 +6591,7 @@ s_mri_endf (ignore)
 
 static void
 s_mri_repeat (ignore)
-     int ignore;
+     int ignore ATTRIBUTE_UNUSED;
 {
   struct mri_control_info *n;
 
@@ -6111,7 +6616,7 @@ s_mri_until (qual)
   if (mri_control_stack == NULL
       || mri_control_stack->type != mri_repeat)
     {
-      as_bad ("until without repeat");
+      as_bad (_("until without repeat"));
       ignore_rest_of_line ();
       return;
     }
@@ -6162,7 +6667,7 @@ s_mri_while (qual)
   if (s - input_line_pointer < 2
       || strncasecmp (s - 1, "DO", 2) != 0)
     {
-      as_bad ("missing do");
+      as_bad (_("missing do"));
       ignore_rest_of_line ();
       return;
     }
@@ -6191,21 +6696,21 @@ s_mri_while (qual)
 
 static void
 s_mri_endw (ignore)
-     int ignore;
+     int ignore ATTRIBUTE_UNUSED;
 {
   char *buf;
 
   if (mri_control_stack == NULL
       || mri_control_stack->type != mri_while)
     {
-      as_bad ("endw without while");
+      as_bad (_("endw without while"));
       ignore_rest_of_line ();
       return;
     }
 
   buf = (char *) xmalloc (20 + strlen (mri_control_stack->next));
   sprintf (buf, "bra %s", mri_control_stack->next);
-  md_assemble (buf);
+  mri_assemble (buf);
   free (buf);
 
   colon (mri_control_stack->bottom);
@@ -6260,6 +6765,14 @@ struct option md_longopts[] = {
      OPTION_REGISTER_PREFIX_OPTIONAL},
 #define OPTION_BITWISE_OR (OPTION_MD_BASE + 2)
   {"bitwise-or", no_argument, NULL, OPTION_BITWISE_OR},
+#define OPTION_BASE_SIZE_DEFAULT_16 (OPTION_MD_BASE + 3)
+  {"base-size-default-16", no_argument, NULL, OPTION_BASE_SIZE_DEFAULT_16},
+#define OPTION_BASE_SIZE_DEFAULT_32 (OPTION_MD_BASE + 4)
+  {"base-size-default-32", no_argument, NULL, OPTION_BASE_SIZE_DEFAULT_32},
+#define OPTION_DISP_SIZE_DEFAULT_16 (OPTION_MD_BASE + 5)
+  {"disp-size-default-16", no_argument, NULL, OPTION_DISP_SIZE_DEFAULT_16},
+#define OPTION_DISP_SIZE_DEFAULT_32 (OPTION_MD_BASE + 6)
+  {"disp-size-default-32", no_argument, NULL, OPTION_DISP_SIZE_DEFAULT_32},
   {NULL, no_argument, NULL, 0}
 };
 size_t md_longopts_size = sizeof(md_longopts);
@@ -6306,7 +6819,7 @@ md_parse_option (c, arg)
 	  if (i == n_archs)
 	    {
 	    unknown:
-	      as_bad ("unrecognized option `%s'", oarg);
+	      as_bad (_("unrecognized option `%s'"), oarg);
 	      return 0;
 	    }
 	  arch = archs[i].arch;
@@ -6351,7 +6864,7 @@ md_parse_option (c, arg)
 	      }
 	  if (i == n_archs)
 	    {
-	      as_bad ("unrecognized architecture specification `%s'", arg);
+	      as_bad (_("unrecognized architecture specification `%s'"), arg);
 	      return 0;
 	    }
 	}
@@ -6392,6 +6905,24 @@ md_parse_option (c, arg)
       }
       break;
 
+    case OPTION_BASE_SIZE_DEFAULT_16:
+      m68k_index_width_default = SIZE_WORD;
+      break;
+
+    case OPTION_BASE_SIZE_DEFAULT_32:
+      m68k_index_width_default = SIZE_LONG;
+      break;
+
+    case OPTION_DISP_SIZE_DEFAULT_16:
+      m68k_rel32 = 0;
+      m68k_rel32_from_cmdline = 1;
+      break;
+
+    case OPTION_DISP_SIZE_DEFAULT_32:
+      m68k_rel32 = 1;
+      m68k_rel32_from_cmdline = 1;
+      break;
+
     default:
       return 0;
     }
@@ -6403,7 +6934,7 @@ void
 md_show_usage (stream)
      FILE *stream;
 {
-  fprintf(stream, "\
+  fprintf(stream, _("\
 680X0 options:\n\
 -l			use 1 word for refs to undefined symbols [default 2]\n\
 -m68000 | -m68008 | -m68010 | -m68020 | -m68030 | -m68040 | -m68060\n\
@@ -6412,8 +6943,8 @@ md_show_usage (stream)
 			specify variant of 680X0 architecture [default 68020]\n\
 -m68881 | -m68882 | -mno-68881 | -mno-68882\n\
 			target has/lacks floating-point coprocessor\n\
-			[default yes for 68020, 68030, and cpu32]\n");
-  fprintf(stream, "\
+			[default yes for 68020, 68030, and cpu32]\n"));
+  fprintf(stream, _("\
 -m68851 | -mno-68851\n\
 			target has/lacks memory-management unit coprocessor\n\
 			[default yes for 68020 and up]\n\
@@ -6421,7 +6952,12 @@ md_show_usage (stream)
 -S			turn jbsr into jsr\n\
 --register-prefix-optional\n\
 			recognize register names without prefix character\n\
---bitwise-or		do not treat `|' as a comment character\n");
+--bitwise-or		do not treat `|' as a comment character\n"));
+  fprintf (stream, _("\
+--base-size-default-16	base reg without size is 16 bits\n\
+--base-size-default-32	base reg without size is 32 bits (default)\n\
+--disp-size-default-16	displacement with unknown size is 16 bits\n\
+--disp-size-default-32	displacement with unknown size is 32 bits (default)\n"));
 }
 
 #ifdef TEST2
@@ -6452,11 +6988,11 @@ main ()
       m68k_ip (&the_ins, buf);
       if (the_ins.error)
 	{
-	  printf ("Error %s in %s\n", the_ins.error, buf);
+	  printf (_("Error %s in %s\n"), the_ins.error, buf);
 	}
       else
 	{
-	  printf ("Opcode(%d.%s): ", the_ins.numo, the_ins.args);
+	  printf (_("Opcode(%d.%s): "), the_ins.numo, the_ins.args);
 	  for (n = 0; n < the_ins.numo; n++)
 	    printf (" 0x%x", the_ins.opcode[n] & 0xffff);
 	  printf ("    ");
@@ -6519,7 +7055,7 @@ is_label (str)
 /* ARGSUSED */
 symbolS *
 md_undefined_symbol (name)
-     char *name;
+     char *name ATTRIBUTE_UNUSED;
 {
   return 0;
 }
@@ -6527,10 +7063,24 @@ md_undefined_symbol (name)
 /* Round up a section size to the appropriate boundary.  */
 valueT
 md_section_align (segment, size)
-     segT segment;
+     segT segment ATTRIBUTE_UNUSED;
      valueT size;
 {
-  return size;			/* Byte alignment is fine */
+#ifdef OBJ_AOUT
+#ifdef BFD_ASSEMBLER
+  /* For a.out, force the section size to be aligned.  If we don't do
+     this, BFD will align it for us, but it will not write out the
+     final bytes of the section.  This may be a bug in BFD, but it is
+     easier to fix it here since that is how the other a.out targets
+     work.  */
+  int align;
+
+  align = bfd_get_section_alignment (stdoutput, segment);
+  size = ((size + (1 << align) - 1) & ((valueT) -1 << align));
+#endif
+#endif
+
+  return size;
 }
 
 /* Exactly what point is a PC-relative offset relative TO?
@@ -6552,10 +7102,12 @@ md_pcrel_from (fixP)
 }
 
 #ifndef BFD_ASSEMBLER
+#ifdef OBJ_COFF
+
 /*ARGSUSED*/
 void
 tc_coff_symbol_emit_hook (ignore)
-     symbolS *ignore;
+     symbolS *ignore ATTRIBUTE_UNUSED;
 {
 }
 
@@ -6576,6 +7128,15 @@ tc_coff_sizemachdep (frag)
       return 0;
     }
 }
-#endif
 
+#endif
+#endif
+#ifdef OBJ_ELF
+void m68k_elf_final_processing()
+{
+   /* Set file-specific flags if this is a cpu32 processor */
+   if (cpu_of_arch (current_architecture) & cpu32)
+     elf_elfheader (stdoutput)->e_flags |= EF_CPU32;
+}
+#endif
 /* end of tc-m68k.c */

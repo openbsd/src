@@ -1,5 +1,6 @@
 /* BFD back-end for Sparc COFF files.
-   Copyright 1990, 1991, 1992, 1993, 1994 Free Software Foundation, Inc.
+   Copyright 1990, 91, 92, 93, 94, 95, 96, 97, 98, 1999
+   Free Software Foundation, Inc.
    Written by Cygnus Support.
 
 This file is part of BFD, the Binary File Descriptor library.
@@ -21,7 +22,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #include "bfd.h"
 #include "sysdep.h"
 #include "libbfd.h"
-#include "obstack.h"
 #include "coff/sparc.h"
 #include "coff/internal.h"
 #include "libcoff.h"
@@ -78,13 +78,13 @@ bfd_coff_generic_reloc PARAMS ((bfd *, arelent *, asymbol *, PTR,
 static bfd_reloc_status_type
 bfd_coff_generic_reloc (abfd, reloc_entry, symbol, data, input_section,
 			output_bfd, error_message)
-     bfd *abfd;
+     bfd *abfd ATTRIBUTE_UNUSED;
      arelent *reloc_entry;
      asymbol *symbol;
-     PTR data;
+     PTR data ATTRIBUTE_UNUSED;
      asection *input_section;
      bfd *output_bfd;
-     char **error_message;
+     char **error_message ATTRIBUTE_UNUSED;
 {
   if (output_bfd != (bfd *) NULL
       && (symbol->flags & BSF_SECTION_SYM) == 0)
@@ -125,7 +125,7 @@ static reloc_howto_type coff_sparc_howto_table[] =
 };
 
 struct coff_reloc_map {
-  unsigned char bfd_reloc_val;
+  bfd_reloc_code_real_type bfd_reloc_val;
   unsigned char coff_reloc_val;
 };
 
@@ -159,7 +159,7 @@ static CONST struct coff_reloc_map sparc_reloc_map[] =
 
 static reloc_howto_type *
 coff_sparc_reloc_type_lookup (abfd, code)
-     bfd *abfd;
+     bfd *abfd ATTRIBUTE_UNUSED;
      bfd_reloc_code_real_type code;
 {
   unsigned int i;
@@ -203,55 +203,12 @@ rtype2howto (cache_ptr, dst)
 
 #include "coffcode.h"
 
-const bfd_target
-#ifdef TARGET_SYM
-  TARGET_SYM =
-#else
-  sparccoff_vec =
+#ifndef TARGET_SYM
+#define TARGET_SYM sparccoff_vec
 #endif
-{
-#ifdef TARGET_NAME
-  TARGET_NAME,
-#else
-  "coff-sparc",			/* name */
+
+#ifndef TARGET_NAME
+#define TARGET_NAME "coff-sparc"
 #endif
-  bfd_target_coff_flavour,
-  BFD_ENDIAN_BIG,	/* data byte order is big */
-  BFD_ENDIAN_BIG,	/* header byte order is big */
 
-  (HAS_RELOC | EXEC_P |		/* object flags */
-   HAS_LINENO | HAS_DEBUG |
-   HAS_SYMS | HAS_LOCALS | WP_TEXT | D_PAGED),
-
-  (SEC_HAS_CONTENTS | SEC_ALLOC | SEC_LOAD | SEC_RELOC), /* section flags */
-  '_',				/* leading underscore */
-  '/',				/* ar_pad_char */
-  15,				/* ar_max_namelen */
-
-  bfd_getb64, bfd_getb_signed_64, bfd_putb64,
-     bfd_getb32, bfd_getb_signed_32, bfd_putb32,
-     bfd_getb16, bfd_getb_signed_16, bfd_putb16, /* data */
-  bfd_getb64, bfd_getb_signed_64, bfd_putb64,
-     bfd_getb32, bfd_getb_signed_32, bfd_putb32,
-     bfd_getb16, bfd_getb_signed_16, bfd_putb16, /* hdrs */
-
-/* Note that we allow an object file to be treated as a core file as well. */
-    {_bfd_dummy_target, coff_object_p, /* bfd_check_format */
-       bfd_generic_archive_p, coff_object_p},
-    {bfd_false, coff_mkobject, _bfd_generic_mkarchive, /* bfd_set_format */
-       bfd_false},
-    {bfd_false, coff_write_object_contents, /* bfd_write_contents */
-       _bfd_write_archive_contents, bfd_false},
-
-     BFD_JUMP_TABLE_GENERIC (coff),
-     BFD_JUMP_TABLE_COPY (coff),
-     BFD_JUMP_TABLE_CORE (_bfd_nocore),
-     BFD_JUMP_TABLE_ARCHIVE (_bfd_archive_coff),
-     BFD_JUMP_TABLE_SYMBOLS (coff),
-     BFD_JUMP_TABLE_RELOCS (coff),
-     BFD_JUMP_TABLE_WRITE (coff),
-     BFD_JUMP_TABLE_LINK (coff),
-     BFD_JUMP_TABLE_DYNAMIC (_bfd_nodynamic),
-
-  COFF_SWAP_TABLE,
-};
+CREATE_BIG_COFF_TARGET_VEC (TARGET_SYM, TARGET_NAME, D_PAGED, 0, '_', NULL)

@@ -1,6 +1,6 @@
-#objdump: -dr --prefix-addresses
+#objdump: -dr --prefix-addresses -mmips:3000
 #name: MIPS lifloat-xgot
-#as: -mips1 -KPIC -xgot
+#as: -mips1 -mcpu=r3000 -KPIC -xgot -EB --defsym XGOT=1
 #source: lifloat.s
 
 # Test the li.d and li.s macros with -KPIC -xgot.
@@ -22,7 +22,9 @@ Disassembly of section .text:
 [ 	]*18: R_MIPS_LO16	.rodata
 0+001c <[^>]*> lwc1	\$f4,12\(\$at\)
 [ 	]*1c: R_MIPS_LO16	.rodata
-0+0020 <[^>]*> lui	\$a0,0x3f80
-0+0024 <[^>]*> lui	\$at,0x3f80
-0+0028 <[^>]*> mtc1	\$at,\$f4
-0+002c <[^>]*> nop
+0+0020 <[^>]*> lui	\$a0,0x3f8f
+0+0024 <[^>]*> ori	\$a0,\$a0,0xcd36
+0+0028 <[^>]*> lui	\$at,0x3f8f
+0+002c <[^>]*> ori	\$at,\$at,0xcd36
+0+0030 <[^>]*> mtc1	\$at,\$f4
+	...

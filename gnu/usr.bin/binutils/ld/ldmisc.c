@@ -1,5 +1,6 @@
 /* ldmisc.c
-   Copyright (C) 1991, 92, 93, 94, 95, 1996 Free Software Foundation, Inc.
+   Copyright (C) 1991, 92, 93, 94, 95, 96, 97, 98, 99, 2000
+   Free Software Foundation, Inc.
    Written by Steve Chamberlain of Cygnus Support.
 
 This file is part of GLD, the Gnu Linker.
@@ -15,8 +16,9 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with GLD; see the file COPYING.  If not, write to
-the Free Software Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+along with GLD; see the file COPYING.  If not, write to the Free
+Software Foundation, 59 Temple Place - Suite 330, Boston, MA
+02111-1307, USA.  */
 
 #include "bfd.h"
 #include "sysdep.h"
@@ -39,6 +41,8 @@ the Free Software Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307
 #include "ldlex.h"
 #include "ldmain.h"
 #include "ldfile.h"
+
+static void vfinfo PARAMS ((FILE *, const char *, va_list));
 
 /*
  %% literal %
@@ -170,8 +174,10 @@ vfinfo (fp, fmt, arg)
 	      {
 		const char *name = va_arg (arg, const char *);
 
-		if (name == (const char *) NULL)
-		  fprintf (fp, "no symbol");
+		if (name == (const char *) NULL || *name == 0)
+		  fprintf (fp, _("no symbol"));
+		else if (! demangling)
+		  fprintf (fp, "%s", name);
 		else
 		  {
 		    char *demangled;
@@ -207,7 +213,7 @@ vfinfo (fp, fmt, arg)
 
 	    case 'E':
 	      /* current bfd error or errno */
-	      fprintf (fp, bfd_errmsg (bfd_get_error ()));
+	      fprintf (fp, "%s", bfd_errmsg (bfd_get_error ()));
 	      break;
 
 	    case 'I':
@@ -233,7 +239,7 @@ vfinfo (fp, fmt, arg)
 	      else if (ldfile_input_filename != NULL)
 		fprintf (fp, "%s:%u", ldfile_input_filename, lineno);
 	      else
-		fprintf (fp, "built in linker script:%u", lineno);
+		fprintf (fp, _("built in linker script:%u"), lineno);
 	      break;
 
 	    case 'R':
@@ -241,10 +247,10 @@ vfinfo (fp, fmt, arg)
 	      {
 		arelent *relent = va_arg (arg, arelent *);
 	
-		finfo (fp, "%s+0x%v (type %s)",
-		       (*(relent->sym_ptr_ptr))->name,
-		       relent->addend,
-		       relent->howto->name);
+		lfinfo (fp, "%s+0x%v (type %s)",
+			(*(relent->sym_ptr_ptr))->name,
+			relent->addend,
+			relent->howto->name);
 	      }
 	      break;
 	
@@ -283,11 +289,11 @@ vfinfo (fp, fmt, arg)
 
 		    symsize = bfd_get_symtab_upper_bound (abfd);
 		    if (symsize < 0)
-		      einfo ("%B%F: could not read symbols\n", abfd);
+		      einfo (_("%B%F: could not read symbols\n"), abfd);
 		    asymbols = (asymbol **) xmalloc (symsize);
 		    symbol_count = bfd_canonicalize_symtab (abfd, asymbols);
 		    if (symbol_count < 0)
-		      einfo ("%B%F: could not read symbols\n", abfd);
+		      einfo (_("%B%F: could not read symbols\n"), abfd);
 		    if (entry != (lang_input_statement_type *) NULL)
 		      {
 			entry->asymbols = asymbols;
@@ -302,11 +308,11 @@ vfinfo (fp, fmt, arg)
 		  {
 		    if (functionname != NULL && fmt[-1] == 'G')
 		      {
-			finfo (fp, "%B:", abfd);
+			lfinfo (fp, "%B:", abfd);
 			if (filename != NULL
 			    && strcmp (filename, bfd_get_filename (abfd)) != 0)
 			  fprintf (fp, "%s:", filename);
-			finfo (fp, "%T", functionname);
+			lfinfo (fp, "%T", functionname);
 		      }
 		    else if (functionname != NULL && fmt[-1] == 'C')
 		      {
@@ -323,8 +329,8 @@ vfinfo (fp, fmt, arg)
 			    /* We use abfd->filename in this initial line,
 			       in case filename is a .h file or something
 			       similarly unhelpful.  */
-			    finfo (fp, "%B: In function `%T':\n",
-				   abfd, functionname);
+			    lfinfo (fp, _("%B: In function `%T':\n"),
+				    abfd, functionname);
 
 			    last_bfd = abfd;
 			    if (last_file != NULL)
@@ -338,24 +344,25 @@ vfinfo (fp, fmt, arg)
 			if (linenumber != 0)
 			  fprintf (fp, "%s:%u", filename, linenumber);
 			else
-			  finfo (fp, "%s(%s+0x%v)", filename, section->name,
-				 offset);
+			  lfinfo (fp, "%s(%s+0x%v)", filename, section->name,
+				  offset);
 		      }
 		    else if (filename == NULL
 			     || strcmp (filename, abfd->filename) == 0)
 		      {
-			finfo (fp, "%B(%s+0x%v)", abfd, section->name, offset);
+			lfinfo (fp, "%B(%s+0x%v)", abfd, section->name,
+				offset);
 			if (linenumber != 0)
-			  finfo (fp, ":%u", linenumber);
+			  lfinfo (fp, ":%u", linenumber);
 		      }
 		    else if (linenumber != 0) 
-		      finfo (fp, "%B:%s:%u", abfd, filename, linenumber);
+		      lfinfo (fp, "%B:%s:%u", abfd, filename, linenumber);
 		    else
-		      finfo (fp, "%B(%s+0x%v):%s", abfd, section->name, offset,
-			     filename);
+		      lfinfo (fp, "%B(%s+0x%v):%s", abfd, section->name,
+			      offset, filename);
 		  }
 		else
-		  finfo (fp, "%B(%s+0x%v)", abfd, section->name, offset);
+		  lfinfo (fp, "%B(%s+0x%v)", abfd, section->name, offset);
 
 		if (discard_last)
 		  {
@@ -454,7 +461,7 @@ info_assert (file, line)
      const char *file;
      unsigned int line;
 {
-  einfo ("%F%P: internal error %s %d\n", file, line);
+  einfo (_("%F%P: internal error %s %d\n"), file, line);
 }
 
 char *
@@ -493,9 +500,9 @@ minfo (va_alist)
 
 void
 #if USE_STDARG
-finfo (FILE *file, const char *fmt, ...)
+lfinfo (FILE *file, const char *fmt, ...)
 #else
-finfo (va_alist)
+lfinfo (va_alist)
      va_dcl
 #endif
 {
@@ -528,4 +535,23 @@ void
 print_nl ()
 {
   fprintf (config.map_file, "\n");
+}
+
+/* A more or less friendly abort message.  In ld.h abort is defined to
+   call this function.  */
+
+void
+ld_abort (file, line, fn)
+     const char *file;
+     int line;
+     const char *fn;
+{
+  if (fn != NULL)
+    einfo (_("%P: internal error: aborting at %s line %d in %s\n"),
+	   file, line, fn);
+  else
+    einfo (_("%P: internal error: aborting at %s line %d\n"),
+	   file, line);
+  einfo (_("%P%F: please report this bug\n"));
+  xexit (1);
 }

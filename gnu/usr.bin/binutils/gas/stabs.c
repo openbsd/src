@@ -1,5 +1,6 @@
 /* Generic stabs parsing for gas.
-   Copyright (C) 1989, 90, 91, 93, 94, 95, 1996 Free Software Foundation, Inc.
+   Copyright (C) 1989, 90, 91, 93, 94, 95, 96, 97, 98, 1999
+   Free Software Foundation, Inc.
 
 This file is part of GAS, the GNU Assembler.
 
@@ -28,6 +29,9 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 
 #include "aout/stab_gnu.h"
 
+static void s_stab_generic PARAMS ((int, char *, char *));
+static void generate_asm_file PARAMS ((int, char *));
+
 /* Allow backends to override the names used for the stab sections.  */
 #ifndef STAB_SECTION_NAME
 #define STAB_SECTION_NAME ".stab"
@@ -36,6 +40,15 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #ifndef STAB_STRING_SECTION_NAME
 #define STAB_STRING_SECTION_NAME ".stabstr"
 #endif
+
+/* Non-zero if we're in the middle of a .func function, in which case
+   stabs_generate_asm_lineno emits function relative line number stabs.
+   Otherwise it emits line number stabs with absolute addresses.  Note that
+   both cases only apply to assembler code assembled with -gstabs.  */
+static int in_dot_func_p;
+
+/* Label at start of current function if in_dot_func_p != 0.  */
+static const char *current_function_label;
 
 /*
  * Handle .stabX directives, which used to be open-coded.
@@ -68,46 +81,47 @@ get_stab_string_offset (string, stabstr_secname)
 {
   unsigned int length;
   unsigned int retval;
+  segT save_seg;
+  subsegT save_subseg;
+  segT seg;
+  char *p;
 
   if (! SEPARATE_STAB_SECTIONS)
     abort ();
 
-  retval = 0;
   length = strlen (string);
+
+  save_seg = now_seg;
+  save_subseg = now_subseg;
+
+  /* Create the stab string section.  */
+  seg = subseg_new (stabstr_secname, 0);
+
+  retval = seg_info (seg)->stabu.stab_string_size;
+  if (retval <= 0)
+    {
+      /* Make sure the first string is empty.  */
+      p = frag_more (1);
+      *p = 0;
+      retval = seg_info (seg)->stabu.stab_string_size = 1;
+#ifdef BFD_ASSEMBLER
+      bfd_set_section_flags (stdoutput, seg, SEC_READONLY | SEC_DEBUGGING);
+      if (seg->name == stabstr_secname)
+	seg->name = xstrdup (stabstr_secname);
+#endif
+    }
+
   if (length > 0)
     {				/* Ordinary case. */
-      segT save_seg;
-      subsegT save_subseg;
-      segT seg;
-      char *p;
-
-      save_seg = now_seg;
-      save_subseg = now_subseg;
-
-      /* Create the stab string section.  */
-      seg = subseg_new (stabstr_secname, 0);
-
-      retval = seg_info (seg)->stabu.stab_string_size;
-      if (retval <= 0)
-	{
-	  /* Make sure the first string is empty.  */
-	  p = frag_more (1);
-	  *p = 0;
-	  retval = seg_info (seg)->stabu.stab_string_size = 1;
-#ifdef BFD_ASSEMBLER
-	  bfd_set_section_flags (stdoutput, seg, SEC_READONLY | SEC_DEBUGGING);
-	  if (seg->name == stabstr_secname)
-	    seg->name = xstrdup (stabstr_secname);
-#endif
-	}
-
       p = frag_more (length + 1);
       strcpy (p, string);
 
       seg_info (seg)->stabu.stab_string_size += length + 1;
-
-      subseg_set (save_seg, save_subseg);
     }
+  else
+    retval = 0;
+
+  subseg_set (save_seg, save_subseg);
 
   return retval;
 }
@@ -116,6 +130,8 @@ get_stab_string_offset (string, stabstr_secname)
 #ifndef OBJ_PROCESS_STAB
 #define OBJ_PROCESS_STAB(SEG,W,S,T,O,D)	aout_process_stab(W,S,T,O,D)
 #endif
+
+static void aout_process_stab PARAMS ((int, const char *, int, int, int));
 
 static void
 aout_process_stab (what, string, type, other, desc)
@@ -136,14 +152,14 @@ aout_process_stab (what, string, type, other, desc)
   if (what == 's' || what == 'n')
     {
       /* Pick up the value from the input line.  */
-      symbol->sy_frag = &zero_address_frag;
+      symbol_set_frag (symbol, &zero_address_frag);
       pseudo_set (symbol);
     }
   else
     {
       /* .stabd sets the name to NULL.  Why?  */
       S_SET_NAME (symbol, NULL);
-      symbol->sy_frag = frag_now;
+      symbol_set_frag (symbol, frag_now);
       S_SET_VALUE (symbol, (valueT) frag_now_fix ());
     }
 
@@ -190,7 +206,7 @@ s_stab_generic (what, stab_secname, stabstr_secname)
 	input_line_pointer++;
       else
 	{
-	  as_warn (".stabs: Missing comma");
+	  as_warn (_(".stabs: Missing comma"));
 	  ignore_rest_of_line ();
 	  return;
 	}
@@ -198,7 +214,7 @@ s_stab_generic (what, stab_secname, stabstr_secname)
 
   if (get_absolute_expression_and_terminator (&longint) != ',')
     {
-      as_warn (".stab%c: Missing comma", what);
+      as_warn (_(".stab%c: Missing comma"), what);
       ignore_rest_of_line ();
       return;
     }
@@ -206,7 +222,7 @@ s_stab_generic (what, stab_secname, stabstr_secname)
 
   if (get_absolute_expression_and_terminator (&longint) != ',')
     {
-      as_warn (".stab%c: Missing comma", what);
+      as_warn (_(".stab%c: Missing comma"), what);
       ignore_rest_of_line ();
       return;
     }
@@ -217,7 +233,7 @@ s_stab_generic (what, stab_secname, stabstr_secname)
     {
       if (*input_line_pointer != ',')
 	{
-	  as_warn (".stab%c: Missing comma", what);
+	  as_warn (_(".stab%c: Missing comma"), what);
 	  ignore_rest_of_line ();
 	  return;
 	}
@@ -281,6 +297,10 @@ s_stab_generic (what, stab_secname, stabstr_secname)
       static char *cached_secname;
 
       dot = frag_now_fix ();
+
+#ifdef md_flush_pending_output
+      md_flush_pending_output ();
+#endif
 
       if (cached_secname && !strcmp (cached_secname, stab_secname))
 	{
@@ -392,7 +412,7 @@ s_xstab (what)
     input_line_pointer++;
   else
     {
-      as_bad ("comma missing in .xstabs");
+      as_bad (_("comma missing in .xstabs"));
       ignore_rest_of_line ();
       return;
     }
@@ -437,7 +457,7 @@ s_desc (ignore)
   if (*input_line_pointer != ',')
     {
       *p = 0;
-      as_bad ("Expected comma after name \"%s\"", name);
+      as_bad (_("Expected comma after name \"%s\""), name);
       *p = c;
       ignore_rest_of_line ();
     }
@@ -454,3 +474,178 @@ s_desc (ignore)
 }				/* s_desc() */
 
 #endif /* defined (S_SET_DESC) */
+
+/* Generate stabs debugging information to denote the main source file.  */
+
+void
+stabs_generate_asm_file ()
+{
+  char *file;
+  unsigned int lineno;
+
+  as_where (&file, &lineno);
+  generate_asm_file (N_SO, file);
+}
+
+/* Generate stabs debugging information to denote the source file.
+   TYPE is one of N_SO, N_SOL.  */
+
+static void
+generate_asm_file (type, file)
+     int type;
+     char *file;
+{
+  static char *last_file;
+  static int label_count;
+  char *hold;
+  char *buf = xmalloc (2 * strlen (file) + 10);
+  char sym[30];
+
+  /* Rather than try to do this in some efficient fashion, we just
+     generate a string and then parse it again.  That lets us use the
+     existing stabs hook, which expect to see a string, rather than
+     inventing new ones.  */
+
+  hold = input_line_pointer;
+
+  if (last_file == NULL
+      || strcmp (last_file, file) != 0)
+    {
+      char *tmp = file;
+      char *endp = file + strlen(file);
+      char *bufp = buf;
+
+      sprintf (sym, "%sF%d", FAKE_LABEL_NAME, label_count);
+      ++label_count;
+
+      *bufp++ = '"';
+      while (tmp < endp)
+        {
+          char *bslash = strchr (tmp, '\\');
+          int len = (bslash ? (bslash - tmp + 1) : strlen (tmp));
+          /* double all backslashes, since demand_copy_C_string (used by
+             s_stab to extract the part in quotes) will try to replace them as
+             escape sequences.  backslash may appear in a filespec. */
+          strncpy (bufp, tmp, len);
+          tmp += len;
+          bufp += len;
+          if (bslash != NULL)
+            *bufp++ = '\\';
+        } 
+      sprintf (bufp, "\",%d,0,0,%s\n", type, sym);
+      input_line_pointer = buf;
+      s_stab ('s');
+      colon (sym);
+
+      if (last_file != NULL)
+	free (last_file);
+      last_file = xstrdup (file);
+    }
+
+  input_line_pointer = hold;
+  free (buf);
+}
+
+/* Generate stabs debugging information for the current line.  This is
+   used to produce debugging information for an assembler file.  */
+
+void
+stabs_generate_asm_lineno ()
+{
+  static int label_count;
+  char *hold;
+  char *file;
+  unsigned int lineno;
+  char *buf;
+  char sym[30];
+
+  /* Rather than try to do this in some efficient fashion, we just
+     generate a string and then parse it again.  That lets us use the
+     existing stabs hook, which expect to see a string, rather than
+     inventing new ones.  */
+
+  hold = input_line_pointer;
+
+  as_where (&file, &lineno);
+
+  generate_asm_file (N_SOL, file);
+
+  sprintf (sym, "%sL%d", FAKE_LABEL_NAME, label_count);
+  ++label_count;
+
+  if (in_dot_func_p)
+    {
+      buf = (char *) alloca (100 + strlen (current_function_label));
+      sprintf (buf, "%d,0,%d,%s-%s\n", N_SLINE, lineno,
+	       sym, current_function_label);
+    }
+  else
+    {
+      buf = (char *) alloca (100);
+      sprintf (buf, "%d,0,%d,%s\n", N_SLINE, lineno, sym);
+    }
+  input_line_pointer = buf;
+  s_stab ('n');
+  colon (sym);
+
+  input_line_pointer = hold;
+}
+
+/* Emit a function stab.
+   All assembler functions are assumed to have return type `void'.  */
+
+void
+stabs_generate_asm_func (funcname, startlabname)
+     const char *funcname;
+     const char *startlabname;
+{
+  static int void_emitted_p;
+  char *hold = input_line_pointer;
+  char *buf;
+  char *file;
+  unsigned int lineno;
+
+  if (! void_emitted_p)
+    {
+      input_line_pointer = "\"void:t1=1\",128,0,0,0";
+      s_stab ('s');
+      void_emitted_p = 1;
+    }
+
+  as_where (&file, &lineno);
+  asprintf (&buf, "\"%s:F1\",%d,0,%d,%s",
+	    funcname, N_FUN, lineno + 1, startlabname);
+  input_line_pointer = buf;
+  s_stab ('s');
+  free (buf);
+
+  input_line_pointer = hold;
+  current_function_label = xstrdup (startlabname);
+  in_dot_func_p = 1;
+}
+
+/* Emit a stab to record the end of a function.  */
+
+void
+stabs_generate_asm_endfunc (funcname, startlabname)
+     const char *funcname ATTRIBUTE_UNUSED;
+     const char *startlabname;
+{
+  static int label_count;
+  char *hold = input_line_pointer;
+  char *buf;
+  char sym[30];
+
+  sprintf (sym, "%sendfunc%d", FAKE_LABEL_NAME, label_count);
+  ++label_count;
+  colon (sym);
+
+  asprintf (&buf, "\"\",%d,0,0,%s-%s", N_FUN, sym, startlabname);
+  input_line_pointer = buf;
+  s_stab ('s');
+  free (buf);
+
+  input_line_pointer = hold;
+  in_dot_func_p = 0;
+  current_function_label = NULL;
+}

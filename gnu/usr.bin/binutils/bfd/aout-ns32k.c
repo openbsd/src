@@ -1,5 +1,5 @@
 /* BFD back-end for ns32k a.out-ish binaries.
-   Copyright (C) 1990, 91, 92, 94, 95, 1996 Free Software Foundation, Inc.
+   Copyright (C) 1990, 91, 92, 94, 95, 96, 1998 Free Software Foundation, Inc.
    Contributed by Ian Dall (idall@eleceng.adelaide.edu.au).
 
 This file is part of BFD, the Binary File Descriptor library.
@@ -156,7 +156,7 @@ reloc_howto_type MY(howto_table)[] =
 
 reloc_howto_type *
 MY(reloc_howto)(abfd, rel, r_index, r_extern, r_pcrel)
-     bfd *abfd;
+     bfd *abfd ATTRIBUTE_UNUSED;
      struct reloc_std_external *rel;
      int *r_index;
      int *r_extern;
@@ -266,7 +266,7 @@ MY_swap_std_reloc_in (abfd, bytes, cache_ptr, symbols, symcount)
      struct reloc_std_external *bytes;
      arelent *cache_ptr;
      asymbol **symbols;
-     bfd_size_type symcount;
+     bfd_size_type symcount ATTRIBUTE_UNUSED;
 {
   int r_index;
   int r_extern;
@@ -344,8 +344,8 @@ _bfd_ns32k_relocate_contents (howto, input_bfd, relocation, location)
      bfd_byte *location;
 {
   int r_ns32k_type = (howto - MY(howto_table)) / 6;
-  long (*get_data)();
-  int (*put_data)();
+  long (*get_data) PARAMS ((bfd_byte *, long, long));
+  int (*put_data) PARAMS ((long, bfd_byte *, long, long));
 
   switch (r_ns32k_type)
     {
@@ -362,6 +362,8 @@ _bfd_ns32k_relocate_contents (howto, input_bfd, relocation, location)
 				    location);
       /* NOT REACHED */
       break;
+    default:
+      return bfd_reloc_notsupported;
     }
   return _bfd_do_ns32k_reloc_contents (howto, input_bfd, relocation,
 				       location, get_data, put_data);

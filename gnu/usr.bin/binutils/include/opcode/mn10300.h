@@ -23,6 +23,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  *
 
 /* The opcode table is an array of struct mn10300_opcode.  */
 
+#define MN10300_MAX_OPERANDS 8
 struct mn10300_opcode
 {
   /* The opcode name.  */
@@ -38,13 +39,25 @@ struct mn10300_opcode
      match (and are presumably filled in by operands).  */
   unsigned long mask;
 
+  /* A bitmask.  For each operand, nonzero if it must not have the same
+     register specification as all other operands with a nonzero bit in
+     this flag.  ie 0x81 would indicate that operands 7 and 0 must not
+     match.  Note that we count operands from left to right as they appear
+     in the operands specification below.  */
+  unsigned int no_match_operands;
+
   /* The format of this opcode.  */
   unsigned char format;
+
+  /* Bitmask indicating what cpu variants this opcode is available on.
+     We assume mn10300 base opcodes are available everywhere, so we only
+     have to note opcodes which are available on other variants.  */
+  unsigned int machine;
 
   /* An array of operand codes.  Each code is an index into the
      operand table.  They appear in the order which the operands must
      appear in assembly code, and are terminated by a zero.  */
-  unsigned char operands[8];
+  unsigned char operands[MN10300_MAX_OPERANDS];
 };
 
 /* The table itself is sorted by major opcode number, and is otherwise
@@ -104,6 +117,24 @@ extern const struct mn10300_operand mn10300_operands[];
 
 #define MN10300_OPERAND_RELAX 0x4000
 
+#define MN10300_OPERAND_USP 0x8000
+
+#define MN10300_OPERAND_SSP 0x10000
+
+#define MN10300_OPERAND_MSP 0x20000
+
+#define MN10300_OPERAND_PC 0x40000
+
+#define MN10300_OPERAND_EPSW 0x80000
+
+#define MN10300_OPERAND_RREG 0x100000
+
+#define MN10300_OPERAND_XRREG 0x200000
+
+#define MN10300_OPERAND_PLUS 0x400000
+
+#define MN10300_OPERAND_24BIT 0x800000
+
 /* Opcode Formats.  */
 #define FMT_S0 1
 #define FMT_S1 2
@@ -115,5 +146,16 @@ extern const struct mn10300_operand mn10300_operands[];
 #define FMT_D2 8
 #define FMT_D4 9
 #define FMT_D5 10
+#define FMT_D6 11
+#define FMT_D7 12
+#define FMT_D8 13
+#define FMT_D9 14
+#define FMT_D10 15
+
+/* Variants of the mn10300 which have additional opcodes.  */
+#define MN103 300
+#define AM30  300
+
+#define AM33 330
 
 #endif /* MN10300_H */

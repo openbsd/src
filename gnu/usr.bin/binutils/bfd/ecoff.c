@@ -1,5 +1,6 @@
 /* Generic ECOFF (Extended-COFF) routines.
-   Copyright 1990, 91, 92, 93, 94, 95, 1996 Free Software Foundation, Inc.
+   Copyright 1990, 91, 92, 93, 94, 95, 96, 97, 98, 1999
+   Free Software Foundation, Inc.
    Original version by Per Bothner.
    Full support added by Ian Lance Taylor, ian@cygnus.com.
 
@@ -71,7 +72,23 @@ static unsigned int ecoff_armap_hash PARAMS ((CONST char *s,
 
 /* This stuff is somewhat copied from coffcode.h.  */
 
-static asection bfd_debug_section = { "*DEBUG*" };
+static asection bfd_debug_section =
+{
+  /* name,   index, next, flags, set_vma, reloc_done, linker_mark, gc_mark */
+  "*DEBUG*", 0,     0,    0,     0,       0,          0,           0,
+  /* vma, lma, _cooked_size, _raw_size, output_offset, output_section, */
+  0,      0,   0,            0,         0,             NULL,
+  /* alig, reloc..., orel..., reloc_count, filepos, rel_..., line_... */
+  0,       0,        0,       0,           0,       0, 	   0,
+  /* userdata, contents, lineno, lineno_count */
+  0,           0,        0,      0,
+  /* comdat_info, moving_line_filepos, target_index, used_by_bfd,  */
+  NULL,           0,                   0,            0,
+  /* cons, owner, symbol */
+  0,       0,     (struct symbol_cache_entry *) NULL,
+  /* symbol_ptr_ptr,                   link_order_head, ..._tail */
+  (struct symbol_cache_entry **) NULL, NULL,            NULL
+};
 
 /* Create an ECOFF object.  */
 
@@ -137,7 +154,7 @@ _bfd_ecoff_mkobject_hook (abfd, filehdr, aouthdr)
 
 boolean
 _bfd_ecoff_new_section_hook (abfd, section)
-     bfd *abfd;
+     bfd *abfd ATTRIBUTE_UNUSED;
      asection *section;
 {
   section->alignment_power = 4;
@@ -209,7 +226,6 @@ _bfd_ecoff_set_arch_mach_hook (abfd, filehdr)
       break;
 
     case ALPHA_MAGIC:
-    case ALPHA_MAGIC_BSD:
       arch = bfd_arch_alpha;
       mach = 0;
       break;
@@ -230,7 +246,6 @@ static int
 ecoff_get_magic (abfd)
      bfd *abfd;
 {
-  extern const bfd_target bsd_ecoffalpha_little_vec;
   int big, little;
 
   switch (bfd_get_arch (abfd))
@@ -259,8 +274,7 @@ ecoff_get_magic (abfd)
       return bfd_big_endian (abfd) ? big : little;
 
     case bfd_arch_alpha:
-      return (abfd->xvec == &bsd_ecoffalpha_little_vec
-	      ? ALPHA_MAGIC_BSD : ALPHA_MAGIC);
+      return ALPHA_MAGIC;
 
     default:
       abort ();
@@ -351,10 +365,11 @@ ecoff_sec_to_styp_flags (name, flags)
 
 /*ARGSUSED*/
 flagword
-_bfd_ecoff_styp_to_sec_flags (abfd, hdr, name)
-     bfd *abfd;
+_bfd_ecoff_styp_to_sec_flags (abfd, hdr, name, section)
+     bfd *abfd ATTRIBUTE_UNUSED;
      PTR hdr;
-     const char *name;
+     const char *name ATTRIBUTE_UNUSED;
+     asection *section ATTRIBUTE_UNUSED;
 {
   struct internal_scnhdr *internal_s = (struct internal_scnhdr *) hdr;
   long styp_flags = internal_s->s_flags;
@@ -498,7 +513,7 @@ ecoff_slurp_symbolic_header (abfd)
 boolean
 _bfd_ecoff_slurp_symbolic_info (abfd, ignore, debug)
      bfd *abfd;
-     asection *ignore;
+     asection *ignore ATTRIBUTE_UNUSED;
      struct ecoff_debug_info *debug;
 {
   const struct ecoff_backend_data * const backend = ecoff_backend (abfd);
@@ -1307,7 +1322,7 @@ ecoff_type_to_string (abfd, fdr, indx)
       break;
 
     default:
-      sprintf (p1, "Unknown basic type %d", (int) basic_type);
+      sprintf (p1, _("Unknown basic type %d"), (int) basic_type);
       break;
     }
 
@@ -1435,7 +1450,7 @@ ecoff_type_to_string (abfd, fdr, indx)
 /*ARGSUSED*/
 void
 _bfd_ecoff_get_symbol_info (abfd, symbol, ret)
-     bfd *abfd;			/* Ignored.  */
+     bfd *abfd ATTRIBUTE_UNUSED;
      asymbol *symbol;
      symbol_info *ret;
 {
@@ -1446,11 +1461,11 @@ _bfd_ecoff_get_symbol_info (abfd, symbol, ret)
 
 /*ARGSUSED*/
 boolean
-_bfd_ecoff_bfd_is_local_label (abfd, symbol)
-     bfd *abfd;
-     asymbol *symbol;
+_bfd_ecoff_bfd_is_local_label_name (abfd, name)
+     bfd *abfd ATTRIBUTE_UNUSED;
+     const char *name;
 {
-  return symbol->name[0] == '$';
+  return name[0] == '$';
 }
 
 /* Print information about an ECOFF symbol.  */
@@ -1579,17 +1594,17 @@ _bfd_ecoff_print_symbol (abfd, filep, symbol, how)
 
 	      case stFile:
 	      case stBlock:
-		fprintf (file, "\n      End+1 symbol: %ld",
+		fprintf (file, _("\n      End+1 symbol: %ld"),
 			 (long) (indx + sym_base));
 		break;
 
 	      case stEnd:
 		if (ecoff_ext.asym.sc == scText
 		    || ecoff_ext.asym.sc == scInfo)
-		  fprintf (file, "\n      First symbol: %ld",
+		  fprintf (file, _("\n      First symbol: %ld"),
 			   (long) (indx + sym_base));
 		else
-		  fprintf (file, "\n      First symbol: %ld", 
+		  fprintf (file, _("\n      First symbol: %ld"), 
 			   ((long)
 			    (AUX_GET_ISYM (bigendian,
 					   &aux_base[ecoff_ext.asym.index])
@@ -1601,14 +1616,14 @@ _bfd_ecoff_print_symbol (abfd, filep, symbol, how)
 		if (ECOFF_IS_STAB (&ecoff_ext.asym))
 		  ;
 		else if (ecoffsymbol (symbol)->local)
-		  fprintf (file, "\n      End+1 symbol: %-7ld   Type:  %s",
+		  fprintf (file, _("\n      End+1 symbol: %-7ld   Type:  %s"),
 			   ((long)
 			    (AUX_GET_ISYM (bigendian,
 					   &aux_base[ecoff_ext.asym.index])
 			     + sym_base)),
 			   ecoff_type_to_string (abfd, fdr, indx + 1));
 		else
-		  fprintf (file, "\n      Local symbol: %ld",
+		  fprintf (file, _("\n      Local symbol: %ld"),
 			   ((long) indx
 			    + (long) sym_base
 			    + (ecoff_data (abfd)
@@ -1616,23 +1631,23 @@ _bfd_ecoff_print_symbol (abfd, filep, symbol, how)
 		break;
 
 	      case stStruct:
-		fprintf (file, "\n      struct; End+1 symbol: %ld",
+		fprintf (file, _("\n      struct; End+1 symbol: %ld"),
 			 (long) (indx + sym_base));
 		break;
 
 	      case stUnion:
-		fprintf (file, "\n      union; End+1 symbol: %ld",
+		fprintf (file, _("\n      union; End+1 symbol: %ld"),
 			 (long) (indx + sym_base));
 		break;
 
 	      case stEnum:
-		fprintf (file, "\n      enum; End+1 symbol: %ld",
+		fprintf (file, _("\n      enum; End+1 symbol: %ld"),
 			 (long) (indx + sym_base));
 		break;
 
 	      default:
 		if (! ECOFF_IS_STAB (&ecoff_ext.asym))
-		  fprintf (file, "\n      Type: %s",
+		  fprintf (file, _("\n      Type: %s"),
 			   ecoff_type_to_string (abfd, fdr, indx));
 		break;
 	      }
@@ -1803,7 +1818,7 @@ _bfd_ecoff_find_nearest_line (abfd, section, ignore_symbols, offset,
 			      filename_ptr, functionname_ptr, retline_ptr)
      bfd *abfd;
      asection *section;
-     asymbol **ignore_symbols;
+     asymbol **ignore_symbols ATTRIBUTE_UNUSED;
      bfd_vma offset;
      CONST char **filename_ptr;
      CONST char **functionname_ptr;
@@ -1973,7 +1988,7 @@ _bfd_ecoff_set_arch_mach (abfd, arch, machine)
 int
 _bfd_ecoff_sizeof_headers (abfd, reloc)
      bfd *abfd;
-     boolean reloc;
+     boolean reloc ATTRIBUTE_UNUSED;
 {
   asection *current;
   int c;
@@ -3144,7 +3159,7 @@ _bfd_ecoff_write_armap (abfd, elength, map, orl_count, stridx)
 
   /* Ultrix appears to use as a hash table size the least power of two
      greater than twice the number of entries.  */
-  for (hashlog = 0; (1 << hashlog) <= 2 * orl_count; hashlog++)
+  for (hashlog = 0; ((unsigned int) 1 << hashlog) <= 2 * orl_count; hashlog++)
     ;
   hashsize = 1 << hashlog;
 
@@ -3183,7 +3198,14 @@ _bfd_ecoff_write_armap (abfd, elength, map, orl_count, stridx)
      armap.  */
   hdr.ar_uid[0] = '0';
   hdr.ar_gid[0] = '0';
+#if 0
   hdr.ar_mode[0] = '0';
+#else
+  /* Building gcc ends up extracting the armap as a file - twice. */
+  hdr.ar_mode[0] = '6';
+  hdr.ar_mode[1] = '4';
+  hdr.ar_mode[2] = '4';
+#endif
 
   sprintf (hdr.ar_size, "%-10d", (int) mapsize);
 

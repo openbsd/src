@@ -192,11 +192,14 @@ struct relocation_info
 #define S_IS_DEBUG(s)		((s)->sy_symbol.n_type & N_STAB)
 /* True if a symbol is local symbol name */
 #define S_IS_LOCAL(s) 					\
-  (S_GET_NAME (s) 					\
-   && !S_IS_DEBUG (s) 					\
-   && (strchr (S_GET_NAME (s), '\001') != NULL		\
-       || strchr (S_GET_NAME (s), '\002') != NULL	\
-       || (S_LOCAL_NAME(s) && !flag_keep_locals)))
+  ((S_GET_NAME (s) 					\
+    && !S_IS_DEBUG (s) 					\
+    && (strchr (S_GET_NAME (s), '\001') != NULL		\
+        || strchr (S_GET_NAME (s), '\002') != NULL	\
+        || (S_LOCAL_NAME(s) && !flag_keep_locals)))	\
+   || (flag_strip_local_absolute			\
+       && !S_IS_EXTERNAL(s)				\
+       && S_GET_SEGMENT(s) == absolute_section))
 /* True if a symbol is not defined in this file */
 #define S_IS_EXTERN(s)		((s)->sy_symbol.n_type & N_EXT)
 /* True if the symbol has been generated because of a .stabd directive */

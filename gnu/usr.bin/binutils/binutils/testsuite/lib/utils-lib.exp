@@ -1,4 +1,4 @@
-#   Copyright (C) 1993, 1994 Free Software Foundation, Inc.
+#   Copyright (C) 1993, 1994, 1997 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -21,18 +21,24 @@
 # and extended by Ian Lance Taylor <ian@cygnus.com>
 
 proc binutil_version { prog } {
-    if {[which $prog] == 0} then {
-	perror "$prog can't be run, file not found."
-	return ""
+    if ![is_remote host] {
+	set path [which $prog];
+	if {$path == 0} then {
+	    perror "$prog can't be run, file not found."
+	    return ""
+	}
+    } else {
+	set path $prog
     }
-    catch "exec $prog --version" tmp
+    set state [remote_exec host $prog --version];
+    set tmp "[lindex $state 1]\n";
     # Should find a way to discard constant parts, keep whatever's
     # left, so the version string could be almost anything at all...
-    regexp "\[^\n\]* (cygnus-|)(\[-0-9.a-zA-Z-\]+)\[\r\n\].*" $tmp version cyg number
+    regexp "\[^\n\]* (cygnus-|)(\[-0-9.a-zA-Z-\]+)\[\r\n\].*" "$tmp" version cyg number
     if ![info exists number] then {
-        return "[which $prog] (no version number)\n"
+        return "$path (no version number)\n"
     }
-    return "[which $prog] $number\n"
+    return "$path $number\n"
 }
 
 #
@@ -46,28 +52,23 @@ proc default_binutils_run { prog progargs } {
 
     set binutils_run_failed 0
 
-    if {[which $prog] == 0} then {
-	perror "$prog does not exist"
-	set binutils_run_failed 1
-	return ""
+    if ![is_remote host] {
+	if {[which $prog] == 0} then {
+	    perror "$prog does not exist"
+	    set binutils_run_failed 1
+	    return ""
+	}
     }
 
     send_log "$prog $progargs\n"
     verbose "$prog $progargs"
 
-    # This used to be
-    # catch "exec $prog $progargs" exec_output
-    # but that would evaluate $progargs twice, which would fail if
-    # any arguments started with `$'.  This is a dismal hack to avoid
-    # this problem.  I tried using
-    # catch { exec $prog $progargs } exec_output
-    # but that failed because $progargs was not split into words by
-    # exec.  I don't know if this operation can be done correctly.  No
-    # matter how hard I try, I can not convince myself that TCL is a
-    # language.
-    regsub -all "\\$" $progargs "\\$" progq
-    catch "exec $prog $progq" exec_output
-    set exec_output [prune_system_crud $host_triplet $exec_output]
+    # Gotta quote dollar-signs because they get mangled by the
+    # shell otherwise.
+    regsub -all "\\$" "$progargs" "\\$" progargs
+
+    set state [remote_exec host $prog $progargs]
+    set exec_output [prune_warnings [lindex $state 1]];
     if {![string match "" $exec_output]} then {
 	send_log "$exec_output\n"
 	verbose "$exec_output"
@@ -79,17 +80,9 @@ proc default_binutils_run { prog progargs } {
 # default_binutils_assemble
 #	assemble a file
 #
-proc default_binutils_assemble { as source object } {
-    global ASFLAGS
+proc default_binutils_assemble { source object } {
     global srcdir
     global host_triplet
-
-    if {[which $as] == 0} then {
-	perror "$as does not exist"
-	return 0
-    }
-
-    if ![info exists ASFLAGS] { set ASFLAGS "" }
 
     # The HPPA assembler syntax is a little different than most, to make
     # the test source file assemble we need to run it through sed.
@@ -98,18 +91,16 @@ proc default_binutils_assemble { as source object } {
     # similar transformations to assemble.  We'll generalize the hack
     # if/when other targets need similar handling.
     if [istarget "hppa*-*-*" ] then {
-	send_log "sed -f $srcdir/config/hppa.sed < $source | $as $ASFLAGS -o $object\n"
-	verbose "sed -f $srcdir/config/hppa.sed < $source | $as $ASFLAGS -o $object"
-	catch "exec sed -f $srcdir/config/hppa.sed < $source | $as $ASFLAGS -o $object" exec_output
-    } else {
-	send_log "$as $ASFLAGS -o $object $source\n"
-	verbose "$as $ASFLAGS -o $object $source"
-	catch "exec $as $ASFLAGS -o $object $source" exec_output
+	send_log "sed -f $srcdir/config/hppa.sed < $source > asm.s\n"
+	verbose "sed -f $srcdir/config/hppa.sed < $source > asm.s"
+	catch "exec sed -f $srcdir/config/hppa.sed < $source > asm.s";
+	set source asm.s
     }
 
-    set exec_output [prune_system_crud $host_triplet $exec_output]
+    set exec_output [target_assemble $source $object ""];
+    set exec_output [prune_warnings $exec_output]
 
-    if [string match "" $exec_output] then {
+    if [string match "" $exec_output] {
 	return 1
     } else {
 	send_log "$exec_output\n"
@@ -119,74 +110,52 @@ proc default_binutils_assemble { as source object } {
     }
 }
 
+if ![info exists target_assemble] {
 #
-# default_binutils_compile
-#	compile a file
+# Stolen from dejagnu/lib/target.exp--please remove after 1/1/98.
 #
-proc default_binutils_compile { cc flags source object } {
-    global CFLAGS
-    global srcdir
-    global host_triplet
-
-    if {[which $cc] == 0} then {
-	perror "$cc does not exist"
-	return 0
+uplevel #0 {
+    proc target_assemble { source destfile flags } {
+	return [default_target_assemble $source $destfile $flags];
     }
 
-    if ![info exists CFLAGS] { set CFLAGS "" }
+    proc default_target_assemble { source destfile flags } {
+	global AS_FOR_TARGET;
+	global ASFLAGS_FOR_TARGET;
 
-    send_log "$cc $flags $CFLAGS -o $object $source\n"
-    verbose "$cc $flags $CFLAGS -o $object $source"
-    catch "exec $cc $flags $CFLAGS -o $object $source" exec_output
+	if [info exists AS_FOR_TARGET] {
+	    set AS "$AS_FOR_TARGET";
+	} else {
+	    if ![board_info target exists assembler] {
+		set AS [find_gas];
+	    } else {
+		set AS [board_info target assembler];
+	    }
+	}
 
-    set exec_output [prune_system_crud $host_triplet $exec_output]
+	if [info exists ASFLAGS_FOR_TARGET] {
+	    append flags " $ASFLAGS_FOR_TARGET";
+	}
 
-    if [string match "" $exec_output] then {
-	return 1
-    } else {
-	send_log "$exec_output\n"
-	verbose "$exec_output"
-	perror "$source: compilation failed"
-	return 0
-    }
+	if [is_remote host] {
+	    set source [remote_download host $source];
+	    set dest "a.out"
+	} else {
+	    set dest $destfile
+	}
+	set status [remote_exec host "$AS $source $flags -o $dest"]
+	if [is_remote host] {
+	    remote_upload host $dest $destfile
+	}
+
+	set comp_output [prune_warnings [lindex $status 1]];
+	if { [lindex $status 0] != 0 } {
+	    verbose -log "assembler exited with status [lindex $status 0]";
+	}
+	if { [lindex $status 1] != "" } {
+	    verbose -log "assembler output is:\n[lindex $status 1]" 2;
+	}
+	return ${comp_output};
 }
-
-#
-# default_binutils_remove
-#	remove a file
-#
-proc default_binutils_remove { file } {
-    catch "exec rm -f $file" exec_output
 }
-
-# This definition is taken from an unreleased version of DejaGnu.  Once
-# that version gets released, and has been out in the world for a few
-# months at least, it may be safe to delete this copy.
-if ![string length [info proc prune_system_crud]] {
-    #
-    # prune_system_crud -- delete various system verbosities from TEXT on SYSTEM
-    #
-    # An example is:
-    # ld.so: warning: /usr/lib/libc.so.1.8.1 has older revision than expected 9
-    #
-    # SYSTEM is typical $target_triplet or $host_triplet.
-    #
-    # This is useful when trying to do pattern matches on program output.
-    # Sites with particular verbose os's may wish to override this in site.exp.
-    #
-    proc prune_system_crud { system text } {
-	# This is from sun4's.  Do it for all machines for now.
-	# The "\\1" is to try to preserve a "\n" but only if necessary.
-	regsub -all "(^|\n)(ld.so: warning:\[^\n\]*\n?)+" $text "\\1" text
-
-	# This happens when compiling on Alpha OSF/1 with cc -g -O.
-	regsub -all "(^|\n)(\n*uopt: Warning: file not optimized; use -g3 if both optimization and debug wanted\n?)+" $text "\\1" text
-
-	# This happens on SunOS with cc -g -O.
-	regsub -all "(^|\n)(cc: Warning: -O conflicts with -g. -O turned off.\n?)+" $text "\\1" text
-
-	# It might be tempting to get carried away and delete blank lines, etc.
-	# Just delete *exactly* what we're ask to, and that's it.
-	return $text
-    }
 }

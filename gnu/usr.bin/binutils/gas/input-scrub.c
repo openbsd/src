@@ -1,5 +1,6 @@
 /* input_scrub.c - Break up input buffers into whole numbers of lines.
-   Copyright (C) 1987, 1990, 1991, 1992 Free Software Foundation, Inc.
+   Copyright (C) 1987, 90, 91, 92, 93, 94, 95, 96, 1997
+   Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -14,13 +15,15 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with GAS; see the file COPYING.  If not, write to
-   the Free Software Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
+   along with GAS; see the file COPYING.  If not, write to the Free
+   Software Foundation, 59 Temple Place - Suite 330, Boston, MA
+   02111-1307, USA. */
 
 #include <errno.h>		/* Need this to make errno declaration right */
 #include "as.h"
 #include "input-file.h"
 #include "sb.h"
+#include "listing.h"
 
 /*
  * O/S independent module to supply buffers of sanitised source code
@@ -71,8 +74,11 @@ static int sb_index = -1;
 /* If we are reading from an sb structure, this is it.  */
 static sb from_sb;
 
+/* Should we do a conditional check on from_sb? */
+static int from_sb_is_expansion = 1;
+
 /* The number of nested sb structures we have included.  */
-static int macro_nest;
+int macro_nest;
 
 /* We can have more than one source file open at once, though the info for all
    but the latest one are saved off in a struct input_save.  These files remain
@@ -108,6 +114,7 @@ struct input_save
     int logical_input_line;
     int sb_index;
     sb from_sb;
+    int from_sb_is_expansion;       /* Should we do a conditional check? */
     struct input_save *next_saved_file;	/* Chain of input_saves */
     char *input_file_save;	/* Saved state of input routines */
     char *saved_position;	/* Caller's saved position in buf */
@@ -144,6 +151,7 @@ input_scrub_push (saved_position)
   saved->logical_input_line = logical_input_line;
   saved->sb_index = sb_index;
   saved->from_sb = from_sb;
+  saved->from_sb_is_expansion = from_sb_is_expansion;
   memcpy (saved->save_source, save_source, sizeof (save_source));
   saved->next_saved_file = next_saved_file;
   saved->input_file_save = input_file_push ();
@@ -178,6 +186,7 @@ input_scrub_pop (saved)
   logical_input_line = saved->logical_input_line;
   sb_index = saved->sb_index;
   from_sb = saved->from_sb;
+  from_sb_is_expansion = saved->from_sb_is_expansion;
   partial_where = saved->partial_where;
   partial_size = saved->partial_size;
   next_saved_file = saved->next_saved_file;
@@ -227,7 +236,7 @@ input_scrub_new_file (filename)
      char *filename;
 {
   input_file_open (filename, !flag_no_comments);
-  physical_input_file = filename[0] ? filename : "{standard input}";
+  physical_input_file = filename[0] ? filename : _("{standard input}");
   physical_input_line = 0;
 
   partial_size = 0;
@@ -252,19 +261,31 @@ input_scrub_include_file (filename, position)
    expanding a macro.  */
 
 void
-input_scrub_include_sb (from, position)
+input_scrub_include_sb (from, position, is_expansion)
      sb *from;
      char *position;
+     int is_expansion;
 {
   if (macro_nest > max_macro_nest)
-    as_fatal ("macros nested too deeply");
+    as_fatal (_("buffers nested too deeply"));
   ++macro_nest;
+
+#ifdef md_macro_start
+  if (is_expansion)
+    {
+      md_macro_start ();
+    }
+#endif
 
   next_saved_file = input_scrub_push (position);
 
   sb_new (&from_sb);
-  /* Add the sentinel required by read.c.  */
-  sb_add_char (&from_sb, '\n');
+  from_sb_is_expansion = is_expansion;
+  if (from->len >= 1 && from->ptr[0] != '\n')
+    {
+      /* Add the sentinel required by read.c.  */
+      sb_add_char (&from_sb, '\n');
+    }
   sb_add_sb (&from_sb, from);
   sb_index = 1;
 
@@ -291,7 +312,15 @@ input_scrub_next_buffer (bufp)
       if (sb_index >= from_sb.len)
 	{
 	  sb_kill (&from_sb);
-	  --macro_nest;
+          if (from_sb_is_expansion)
+            {
+              cond_finish_check (macro_nest);
+#ifdef md_macro_end
+              /* allow the target to clean up per-macro expansion data */
+              md_macro_end ();
+#endif
+            }
+          --macro_nest;
 	  partial_where = NULL;
 	  if (next_saved_file != NULL)
 	    *bufp = input_scrub_pop (next_saved_file);
@@ -320,12 +349,37 @@ input_scrub_next_buffer (bufp)
     {
       register char *p;		/* Find last newline. */
 
-      for (p = limit; *--p != '\n';);;
+      for (p = limit - 1; *p != '\n'; --p)
+	;
       ++p;
-      if (p <= buffer_start + BEFORE_SIZE)
+
+      while (p <= buffer_start + BEFORE_SIZE)
 	{
-	  as_fatal ("Source line too long. Please change file %s then rebuild assembler.", __FILE__);
+	  int limoff;
+
+	  limoff = limit - buffer_start;
+	  buffer_length += input_file_buffer_size ();
+	  buffer_start = xrealloc (buffer_start,
+				   (BEFORE_SIZE
+				    + 2 * buffer_length
+				    + AFTER_SIZE));
+	  *bufp = buffer_start + BEFORE_SIZE;
+	  limit = input_file_give_next_buffer (buffer_start + limoff);
+
+	  if (limit == NULL)
+	    {
+	      as_warn (_("partial line at end of file ignored"));
+	      partial_where = NULL;
+	      if (next_saved_file)
+		*bufp = input_scrub_pop (next_saved_file);
+	      return NULL;
+	    }
+
+	  for (p = limit - 1; *p != '\n'; --p)
+	    ;
+	  ++p;
 	}
+
       partial_where = p;
       partial_size = limit - p;
       memcpy (save_source, partial_where, (int) AFTER_SIZE);
@@ -336,8 +390,12 @@ input_scrub_next_buffer (bufp)
       partial_where = 0;
       if (partial_size > 0)
 	{
-	  as_warn ("Partial line at end of file ignored");
+	  as_warn (_("Partial line at end of file ignored"));
 	}
+
+      /* Tell the listing we've finished the file.  */
+      LISTING_EOF ();
+
       /* If we should pop to another file at EOF, do it. */
       if (next_saved_file)
 	{
@@ -380,21 +438,27 @@ bump_line_counters ()
  * to support the .appfile pseudo-op inserted into the stream by
  * do_scrub_chars).
  * If the fname is NULL, we don't change the current logical file name.
+ * Returns nonzero if the filename actually changes.
  */
-void 
+int
 new_logical_line (fname, line_number)
      char *fname;		/* DON'T destroy it! We point to it! */
      int line_number;
 {
-  if (fname)
-    {
-      logical_input_file = fname;
-    }				/* if we have a file name */
-
   if (line_number >= 0)
     logical_input_line = line_number;
   else if (line_number == -2 && logical_input_line > 0)
     --logical_input_line;
+
+  if (fname
+      && (logical_input_file == NULL
+	  || strcmp (logical_input_file, fname)))
+    {
+      logical_input_file = fname;
+      return 1;
+    }
+  else
+    return 0;
 }				/* new_logical_line() */
 
 /*

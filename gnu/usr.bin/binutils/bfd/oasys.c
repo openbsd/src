@@ -1,5 +1,6 @@
 /* BFD back-end for oasys objects.
-   Copyright 1990, 91, 92, 93, 94, 95, 1996 Free Software Foundation, Inc.
+   Copyright 1990, 91, 92, 93, 94, 95, 96, 97, 98, 1999
+   Free Software Foundation, Inc.
    Written by Steve Chamberlain of Cygnus Support, <sac@cygnus.com>.
 
 This file is part of BFD, the Binary File Descriptor library.
@@ -514,7 +515,7 @@ fail:
 
 static void
 oasys_get_symbol_info (ignore_abfd, symbol, ret)
-     bfd *ignore_abfd;
+     bfd *ignore_abfd ATTRIBUTE_UNUSED;
      asymbol *symbol;
      symbol_info *ret;
 {
@@ -525,7 +526,7 @@ oasys_get_symbol_info (ignore_abfd, symbol, ret)
 
 static void
 oasys_print_symbol (ignore_abfd, afile, symbol, how)
-     bfd *ignore_abfd;
+     bfd *ignore_abfd ATTRIBUTE_UNUSED;
      PTR afile;
      asymbol *symbol;
      bfd_print_symbol_type how;
@@ -843,10 +844,10 @@ oasys_get_section_contents (abfd, section, location, offset, count)
 
 long
 oasys_canonicalize_reloc (ignore_abfd, section, relptr, symbols)
-     bfd *ignore_abfd;
+     bfd *ignore_abfd ATTRIBUTE_UNUSED;
      sec_ptr section;
      arelent **relptr;
-     asymbol **symbols;
+     asymbol **symbols ATTRIBUTE_UNUSED;
 {
   unsigned int reloc_count = 0;
   oasys_reloc_type *src = (oasys_reloc_type *) (section->relocation);
@@ -1009,10 +1010,10 @@ oasys_write_sections (abfd)
 
   for (s = abfd->sections; s != (asection *) NULL; s = s->next)
     {
-      if (!isdigit (s->name[0]))
+      if (!isdigit ((unsigned char) s->name[0]))
 	{
 	  (*_bfd_error_handler)
-	    ("%s: can not represent section `%s' in oasys",
+	    (_("%s: can not represent section `%s' in oasys"),
 	     bfd_get_filename (abfd), s->name);
 	  bfd_set_error (bfd_error_nonrepresentable_section);
 	  return false;
@@ -1402,13 +1403,13 @@ oasys_find_nearest_line (abfd,
 			 filename_ptr,
 			 functionname_ptr,
 			 line_ptr)
-     bfd *abfd;
-     asection *section;
-     asymbol **symbols;
-     bfd_vma offset;
-     char **filename_ptr;
-     char **functionname_ptr;
-     unsigned int *line_ptr;
+     bfd *abfd ATTRIBUTE_UNUSED;
+     asection *section ATTRIBUTE_UNUSED;
+     asymbol **symbols ATTRIBUTE_UNUSED;
+     bfd_vma offset ATTRIBUTE_UNUSED;
+     char **filename_ptr ATTRIBUTE_UNUSED;
+     char **functionname_ptr ATTRIBUTE_UNUSED;
+     unsigned int *line_ptr ATTRIBUTE_UNUSED;
 {
   return false;
 
@@ -1435,8 +1436,8 @@ oasys_generic_stat_arch_elt (abfd, buf)
 
 static int
 oasys_sizeof_headers (abfd, exec)
-     bfd *abfd;
-     boolean exec;
+     bfd *abfd ATTRIBUTE_UNUSED;
+     boolean exec ATTRIBUTE_UNUSED;
 {
   return 0;
 }
@@ -1458,7 +1459,7 @@ oasys_sizeof_headers (abfd, exec)
 #define oasys_get_elt_at_index _bfd_generic_get_elt_at_index
 #define oasys_update_armap_timestamp bfd_true
 
-#define oasys_bfd_is_local_label bfd_generic_is_local_label
+#define oasys_bfd_is_local_label_name bfd_generic_is_local_label_name
 #define oasys_get_lineno _bfd_nosymbols_get_lineno
 #define oasys_bfd_make_debug_symbol _bfd_nosymbols_bfd_make_debug_symbol
 #define oasys_read_minisymbols _bfd_generic_read_minisymbols
@@ -1474,6 +1475,7 @@ oasys_sizeof_headers (abfd, exec)
 #define oasys_bfd_get_relocated_section_contents \
   bfd_generic_get_relocated_section_contents
 #define oasys_bfd_relax_section bfd_generic_relax_section
+#define oasys_bfd_gc_sections bfd_generic_gc_sections
 #define oasys_bfd_link_hash_table_create _bfd_generic_link_hash_table_create
 #define oasys_bfd_link_add_symbols _bfd_generic_link_add_symbols
 #define oasys_bfd_final_link _bfd_generic_final_link
@@ -1529,5 +1531,7 @@ const bfd_target oasys_vec =
   BFD_JUMP_TABLE_LINK (oasys),
   BFD_JUMP_TABLE_DYNAMIC (_bfd_nodynamic),
 
+  NULL,
+  
   (PTR) 0
 };

@@ -1,5 +1,5 @@
 /* BFD back-end for arm PE IMAGE COFF files.
-   Copyright 1995 Free Software Foundation, Inc.
+   Copyright 1995, 1999 Free Software Foundation, Inc.
 
 This file is part of BFD, the Binary File Descriptor library.
 
@@ -20,15 +20,16 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #include "bfd.h"
 #include "sysdep.h"
 
-#define TARGET_LITTLE_SYM armpei_little_vec
+#ifndef TARGET_LITTLE_SYM
+#define TARGET_LITTLE_SYM  armpei_little_vec
 #define TARGET_LITTLE_NAME "pei-arm-little"
-#define TARGET_BIG_SYM armpei_big_vec
-#define TARGET_BIG_NAME "pei-arm-big"
+#define TARGET_BIG_SYM     armpei_big_vec
+#define TARGET_BIG_NAME    "pei-arm-big"
+#endif
 
-#define IMAGE_BASE NT_IMAGE_BASE
 #define COFF_IMAGE_WITH_PE
 #define COFF_WITH_PE
-#define PCRELOFFSET true
+#define PCRELOFFSET        true
 #define COFF_LONG_SECTION_NAMES
 
 #include "coff-arm.c"

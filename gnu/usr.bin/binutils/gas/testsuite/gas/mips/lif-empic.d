@@ -1,4 +1,4 @@
-#objdump: -dr --prefix-addresses
+#objdump: -dr --prefix-addresses -mmips:3000
 #name: MIPS lifloat-empic
 #as: -mips1 -membedded-pic
 #source: lifloat.s
@@ -16,6 +16,9 @@ Disassembly of section .text:
 [ 	]*c: [A-Z0-9_]*LITERAL[A-Z0-9_]*	.lit8.*
 0+0010 <[^>]*> lwc1	\$f[45],-16364\(\$gp\)
 [ 	]*10: [A-Z0-9_]*LITERAL[A-Z0-9_]*	.lit8.*
-0+0014 <[^>]*> lui	\$a0,0x3f80
-0+0018 <[^>]*> lui	\$at,0x3f80
-0+001c <[^>]*> mtc1	\$at,\$f4
+0+0014 <[^>]*> lui	\$a0,0x3f8f
+0+0018 <[^>]*> ori	\$a0,\$a0,0xcd36
+0+001c <[^>]*> lui	\$at,0x3f8f
+0+0020 <[^>]*> ori	\$at,\$at,0xcd36
+0+0024 <[^>]*> mtc1	\$at,\$f4
+	...

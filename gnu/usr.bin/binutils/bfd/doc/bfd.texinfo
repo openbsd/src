@@ -1,6 +1,6 @@
 \input texinfo.tex
 @setfilename bfd.info
-@c $Id: bfd.texinfo,v 1.2 1996/11/23 03:33:40 niklas Exp $
+@c $Id: bfd.texinfo,v 1.3 2000/09/12 19:11:26 espie Exp $
 @tex
 % NOTE LOCAL KLUGE TO AVOID TOO MUCH WHITESPACE
 \global\long\def\example{%
@@ -67,7 +67,7 @@ into another language, under the above conditions for modified versions.
 
 @tex
 \def\$#1${{#1}}  % Kluge: collect RCS revision info without $...$
-\xdef\manvers{\$Revision: 1.2 $}  % For use in headers, footers too
+\xdef\manvers{\$Revision: 1.3 $}  % For use in headers, footers too
 {\parskip=0pt
 \hfill Cygnus Support\par
 \hfill sac\@cygnus.com\par
@@ -213,7 +213,7 @@ IEEE-695.
 
 @node BFD front end, BFD back ends, Overview, Top
 @chapter BFD front end
-@include bfd.texi
+@include bfdt.texi
 
 @menu
 * Memory Usage::

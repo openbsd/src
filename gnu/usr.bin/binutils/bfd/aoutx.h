@@ -1,5 +1,6 @@
 /* BFD semi-generic back-end for a.out binaries.
-   Copyright 1990, 91, 92, 93, 94, 95, 1996 Free Software Foundation, Inc.
+   Copyright 1990, 91, 92, 93, 94, 95, 96, 97, 98, 99, 2000
+   Free Software Foundation, Inc.
    Written by Cygnus Support.
 
 This file is part of BFD, the Binary File Descriptor library.
@@ -119,10 +120,9 @@ DESCRIPTION
 
 #define KEEPIT udata.i
 
-#include <string.h>		/* For strchr and friends */
 #include <ctype.h>
 #include "bfd.h"
-#include <sysdep.h>
+#include "sysdep.h"
 #include "bfdlink.h"
 
 #include "libaout.h"
@@ -136,6 +136,9 @@ static boolean translate_from_native_sym_flags
   PARAMS ((bfd *, aout_symbol_type *));
 static boolean translate_to_native_sym_flags
   PARAMS ((bfd *, asymbol *, struct external_nlist *));
+static void adjust_o_magic PARAMS ((bfd *, struct internal_exec *));
+static void adjust_z_magic PARAMS ((bfd *, struct internal_exec *));
+static void adjust_n_magic PARAMS ((bfd *, struct internal_exec *));
 
 /*
 SUBSECTION
@@ -195,7 +198,7 @@ reloc_howto_type howto_table_ext[] =
   HOWTO(RELOC_SFA_BASE,0, 2, 	32, false, 0, complain_overflow_bitfield,0,"SFA_BASE", false, 0,0xffffffff, false),
   HOWTO(RELOC_SFA_OFF13,0,2, 	32, false, 0, complain_overflow_bitfield,0,"SFA_OFF13",false, 0,0xffffffff, false),
   HOWTO(RELOC_BASE10, 0,  2, 	10, false, 0, complain_overflow_dont,0,"BASE10",   false, 0,0x000003ff, false),
-  HOWTO(RELOC_BASE13, 0,  2,	13, false, 0, complain_overflow_bitfield,0,"BASE13",   false, 0,0x00001fff, false),
+  HOWTO(RELOC_BASE13, 0,  2,	13, false, 0, complain_overflow_signed,0,"BASE13",   false, 0,0x00001fff, false),
   HOWTO(RELOC_BASE22, 10, 2,	22, false, 0, complain_overflow_bitfield,0,"BASE22",   false, 0,0x003fffff, false),
   HOWTO(RELOC_PC10,   0,  2,	10, true,  0, complain_overflow_dont,0,"PC10",	false, 0,0x000003ff, true),
   HOWTO(RELOC_PC22,   10,  2,	22, true,  0, complain_overflow_signed,0,"PC22", false, 0,0x003fffff, true),
@@ -204,6 +207,10 @@ reloc_howto_type howto_table_ext[] =
   HOWTO(RELOC_GLOB_DAT,0, 2,	0,  false, 0, complain_overflow_bitfield,0,"GLOB_DAT",	false, 0,0x00000000, false),
   HOWTO(RELOC_JMP_SLOT,0, 2,	0,  false, 0, complain_overflow_bitfield,0,"JMP_SLOT",	false, 0,0x00000000, false),
   HOWTO(RELOC_RELATIVE,0, 2,	0,  false, 0, complain_overflow_bitfield,0,"RELATIVE",	false, 0,0x00000000, false),
+  HOWTO(0,  0, 0,    0,  false, 0, complain_overflow_dont, 0, "R_SPARC_NONE",    false,0,0x00000000,true),
+  HOWTO(0,  0, 0,    0,  false, 0, complain_overflow_dont, 0, "R_SPARC_NONE",    false,0,0x00000000,true),
+#define RELOC_SPARC_REV32 RELOC_WDISP19
+  HOWTO(RELOC_SPARC_REV32,    0,  2, 	32, false, 0, complain_overflow_dont,0,"R_SPARC_REV32",       false, 0,0xffffffff, false),
 };
 
 /* Convert standard reloc records to "arelent" format (incl byte swap).  */
@@ -221,28 +228,35 @@ HOWTO( 7,	       0,  4, 	64, true,  0, complain_overflow_signed,  0,"DISP64",	tr
 HOWTO( 8,	       0,  2,    0, false, 0, complain_overflow_bitfield,0,"GOT_REL",	false,         0,0x00000000, false),
 HOWTO( 9,	       0,  1,   16, false, 0, complain_overflow_bitfield,0,"BASE16",	false,0xffffffff,0xffffffff, false),
 HOWTO(10,	       0,  2,   32, false, 0, complain_overflow_bitfield,0,"BASE32",	false,0xffffffff,0xffffffff, false),
-{ -1 },
-{ -1 },
-{ -1 },
-{ -1 },
-{ -1 },
+EMPTY_HOWTO (-1),
+EMPTY_HOWTO (-1),
+EMPTY_HOWTO (-1),
+EMPTY_HOWTO (-1),
+EMPTY_HOWTO (-1),
   HOWTO(16,	       0,  2,	 0, false, 0, complain_overflow_bitfield,0,"JMP_TABLE", false,         0,0x00000000, false),
-{ -1 },
-{ -1 },
-{ -1 },
-{ -1 },
-{ -1 },
-{ -1 },
-{ -1 },
-{ -1 }, { -1 }, { -1 }, { -1 }, { -1 }, { -1 }, { -1 }, { -1 },
+EMPTY_HOWTO (-1),
+EMPTY_HOWTO (-1),
+EMPTY_HOWTO (-1),
+EMPTY_HOWTO (-1),
+EMPTY_HOWTO (-1),
+EMPTY_HOWTO (-1),
+EMPTY_HOWTO (-1),
+EMPTY_HOWTO (-1),
+EMPTY_HOWTO (-1),
+EMPTY_HOWTO (-1),
+EMPTY_HOWTO (-1),
+EMPTY_HOWTO (-1),
+EMPTY_HOWTO (-1),
+EMPTY_HOWTO (-1),
+EMPTY_HOWTO (-1),
   HOWTO(32,	       0,  2,	 0, false, 0, complain_overflow_bitfield,0,"RELATIVE",  false,         0,0x00000000, false),
-{ -1 },
-{ -1 },
-{ -1 },
-{ -1 },
-{ -1 },
-{ -1 },
-{ -1 },
+EMPTY_HOWTO (-1),
+EMPTY_HOWTO (-1),
+EMPTY_HOWTO (-1),
+EMPTY_HOWTO (-1),
+EMPTY_HOWTO (-1),
+EMPTY_HOWTO (-1),
+EMPTY_HOWTO (-1),
   HOWTO(40,	       0,  2,	 0, false, 0, complain_overflow_bitfield,0,"BASEREL",   false,         0,0x00000000, false),
 };
 
@@ -282,6 +296,7 @@ NAME(aout,reloc_type_lookup) (abfd,code)
 	EXT (BFD_RELOC_SPARC_PC10, 17);
 	EXT (BFD_RELOC_SPARC_PC22, 18);
 	EXT (BFD_RELOC_SPARC_WPLT30, 19);
+	EXT (BFD_RELOC_SPARC_REV32, 26);
       default: return (reloc_howto_type *) NULL;
       }
   else
@@ -582,9 +597,20 @@ NAME(aout,some_aout_object_p) (abfd, execp, callback_to_real_object_p)
      guess at whether the file is executable.  If the entry point
      is within the text segment, assume it is.  (This makes files
      executable even if their entry point address is 0, as long as
-     their text starts at zero.).  */
-  if ((execp->a_entry >= obj_textsec(abfd)->vma) &&
-      (execp->a_entry < obj_textsec(abfd)->vma + obj_textsec(abfd)->_raw_size))
+     their text starts at zero.).
+
+     This test had to be changed to deal with systems where the text segment
+     runs at a different location than the default.  The problem is that the
+     entry address can appear to be outside the text segment, thus causing an
+     erroneous conclusion that the file isn't executable.
+
+     To fix this, we now accept any non-zero entry point as an indication of
+     executability.  This will work most of the time, since only the linker
+     sets the entry point, and that is likely to be non-zero for most systems. */
+
+  if (execp->a_entry != 0
+      || (execp->a_entry >= obj_textsec(abfd)->vma
+	  && execp->a_entry < obj_textsec(abfd)->vma + obj_textsec(abfd)->_raw_size))
     abfd->flags |= EXEC_P;
 #ifdef STAT_FOR_EXEC
   else
@@ -693,6 +719,7 @@ NAME(aout,machine_type) (arch, machine, unknown)
     if (machine == 0
 	|| machine == bfd_mach_sparc
 	|| machine == bfd_mach_sparc_sparclite
+	|| machine == bfd_mach_sparc_sparclite_le
 	|| machine == bfd_mach_sparc_v9)
       arch_flags = M_SPARC;
     else if (machine == bfd_mach_sparc_sparclet)
@@ -701,11 +728,11 @@ NAME(aout,machine_type) (arch, machine, unknown)
 
   case bfd_arch_m68k:
     switch (machine) {
-    case 0:		arch_flags = M_68010; break;
-    case 68000:		arch_flags = M_UNKNOWN;	*unknown = false; break;
-    case 68010:		arch_flags = M_68010; break;
-    case 68020:		arch_flags = M_68020; break;
-    default:		arch_flags = M_UNKNOWN; break;
+    case 0:		  arch_flags = M_68010; break;
+    case bfd_mach_m68000: arch_flags = M_UNKNOWN; *unknown = false; break;
+    case bfd_mach_m68010: arch_flags = M_68010; break;
+    case bfd_mach_m68020: arch_flags = M_68020; break;
+    default:		  arch_flags = M_UNKNOWN; break;
     }
     break;
 
@@ -724,14 +751,29 @@ NAME(aout,machine_type) (arch, machine, unknown)
   case bfd_arch_mips:
     switch (machine) {
     case 0:
-    case 2000:
-    case 3000:          arch_flags = M_MIPS1; break;
-    case 4000: /* mips3 */
-    case 4400:
-    case 8000: /* mips4 */
-      /* real mips2: */
-    case 6000:          arch_flags = M_MIPS2; break;
-    default:            arch_flags = M_UNKNOWN; break;
+    case bfd_mach_mips3000:
+    case bfd_mach_mips3900:
+      arch_flags = M_MIPS1;
+      break;
+    case bfd_mach_mips6000:
+      arch_flags = M_MIPS2;
+      break;
+    case bfd_mach_mips4000:
+    case bfd_mach_mips4010:
+    case bfd_mach_mips4100:
+    case bfd_mach_mips4300:
+    case bfd_mach_mips4400:
+    case bfd_mach_mips4600:
+    case bfd_mach_mips4650:
+    case bfd_mach_mips8000:
+    case bfd_mach_mips10000:
+    case bfd_mach_mips16:
+      /* FIXME: These should be MIPS3 or MIPS4.  */
+      arch_flags = M_MIPS2;
+      break;
+    default:
+      arch_flags = M_UNKNOWN;
+      break;
     }
     break;
 
@@ -1037,7 +1079,7 @@ boolean
 NAME(aout,adjust_sizes_and_vmas) (abfd, text_size, text_end)
      bfd *abfd;
      bfd_size_type *text_size;
-     file_ptr *text_end;
+     file_ptr *text_end ATTRIBUTE_UNUSED;
 {
   struct internal_exec *execp = exec_hdr (abfd);
 
@@ -1199,7 +1241,7 @@ NAME(aout,set_section_contents) (abfd, section, location, offset, count)
       && section != obj_datasec (abfd))
     {
       (*_bfd_error_handler)
-	("%s: can not represent section `%s' in a.out object file format",
+	(_("%s: can not represent section `%s' in a.out object file format"),
 	 bfd_get_filename (abfd), bfd_get_section_name (abfd, section));
       bfd_set_error (bfd_error_nonrepresentable_section);
       return false;
@@ -1236,7 +1278,7 @@ aout_get_external_symbols (abfd)
       syms = (struct external_nlist *) obj_aout_sym_window (abfd).data;
 #else
       /* We allocate using malloc to make the values easy to free
-	 later on.  If we put them on the obstack it might not be
+	 later on.  If we put them on the objalloc it might not be
 	 possible to free them.  */
       syms = ((struct external_nlist *)
 	      bfd_malloc ((size_t) count * EXTERNAL_NLIST_SIZE));
@@ -1583,9 +1625,9 @@ translate_to_native_sym_flags (abfd, cache_ptr, sym_pointer)
       /* This case occurs, e.g., for the *DEBUG* section of a COFF
 	 file.  */
       (*_bfd_error_handler)
-	("%s: can not represent section for symbol `%s' in a.out object file format",
+	(_("%s: can not represent section for symbol `%s' in a.out object file format"),
 	 bfd_get_filename (abfd), 
-	 cache_ptr->name != NULL ? cache_ptr->name : "*unknown*");
+	 cache_ptr->name != NULL ? cache_ptr->name : _("*unknown*"));
       bfd_set_error (bfd_error_nonrepresentable_section);
       return false;
     }
@@ -1613,7 +1655,7 @@ translate_to_native_sym_flags (abfd, cache_ptr, sym_pointer)
   else
     {
       (*_bfd_error_handler)
-	("%s: can not represent section `%s' in a.out object file format",
+	(_("%s: can not represent section `%s' in a.out object file format"),
 	 bfd_get_filename (abfd), bfd_get_section_name (abfd, sec));
       bfd_set_error (bfd_error_nonrepresentable_section);
       return false;
@@ -1941,6 +1983,9 @@ NAME(aout,get_symtab) (abfd, location)
 /* Standard reloc stuff */
 /* Output standard relocation information to a file in target byte order. */
 
+extern void  NAME(aout,swap_std_reloc_out)
+  PARAMS ((bfd *, arelent *, struct reloc_std_external *));
+
 void
 NAME(aout,swap_std_reloc_out) (abfd, g, natptr)
      bfd *abfd;
@@ -2035,6 +2080,9 @@ NAME(aout,swap_std_reloc_out) (abfd, g, natptr)
 
 /* Extended stuff */
 /* Output extended relocation information to a file in target byte order. */
+
+extern void NAME(aout,swap_ext_reloc_out)
+  PARAMS ((bfd *, arelent *, struct reloc_ext_external *));
 
 void
 NAME(aout,swap_ext_reloc_out) (abfd, g, natptr)
@@ -2490,16 +2538,16 @@ NAME(aout,get_symtab_upper_bound) (abfd)
 /*ARGSUSED*/
  alent *
 NAME(aout,get_lineno) (ignore_abfd, ignore_symbol)
-     bfd *ignore_abfd;
-     asymbol *ignore_symbol;
+     bfd *ignore_abfd ATTRIBUTE_UNUSED;
+     asymbol *ignore_symbol ATTRIBUTE_UNUSED;
 {
-return (alent *)NULL;
+  return (alent *)NULL;
 }
 
 /*ARGSUSED*/
 void
 NAME(aout,get_symbol_info) (ignore_abfd, symbol, ret)
-     bfd *ignore_abfd;
+     bfd *ignore_abfd ATTRIBUTE_UNUSED;
      asymbol *symbol;
      symbol_info *ret;
 {
@@ -2527,7 +2575,7 @@ NAME(aout,get_symbol_info) (ignore_abfd, symbol, ret)
 /*ARGSUSED*/
 void
 NAME(aout,print_symbol) (ignore_abfd, afile, symbol, how)
-     bfd *ignore_abfd;
+     bfd *ignore_abfd ATTRIBUTE_UNUSED;
      PTR afile;
      asymbol *symbol;
      bfd_print_symbol_type how;
@@ -2658,6 +2706,7 @@ NAME(aout,find_nearest_line)
   CONST char *main_file_name = NULL;
   CONST char *current_file_name = NULL;
   CONST char *line_file_name = NULL; /* Value of current_file_name at line number. */
+  CONST char *line_directory_name = NULL; /* Value of directory_name at line number. */
   bfd_vma low_line_vma = 0;
   bfd_vma low_func_vma = 0;
   asymbol *func = 0;
@@ -2746,6 +2795,7 @@ NAME(aout,find_nearest_line)
 	    *line_ptr = q->desc;
 	    low_line_vma = q->symbol.value;
 	    line_file_name = current_file_name;
+	    line_directory_name = directory_name;
 	  }
 	break;
       case N_FUN:
@@ -2766,10 +2816,13 @@ NAME(aout,find_nearest_line)
 
  done:
   if (*line_ptr != 0)
-    main_file_name = line_file_name;
+    {
+      main_file_name = line_file_name;
+      directory_name = line_directory_name;
+    }
 
   if (main_file_name == NULL
-      || main_file_name[0] == '/'
+      || IS_ABSOLUTE_PATH (main_file_name)
       || directory_name == NULL)
     filelen = 0;
   else
@@ -2793,7 +2846,7 @@ NAME(aout,find_nearest_line)
 
   if (main_file_name != NULL)
     {
-      if (main_file_name[0] == '/' || directory_name == NULL)
+      if (IS_ABSOLUTE_PATH (main_file_name) || directory_name == NULL)
 	*filename_ptr = main_file_name;
       else
 	{
@@ -2832,7 +2885,7 @@ NAME(aout,find_nearest_line)
 int
 NAME(aout,sizeof_headers) (abfd, execable)
      bfd *abfd;
-     boolean execable;
+     boolean execable ATTRIBUTE_UNUSED;
 {
   return adata(abfd).exec_bytes_size;
 }
@@ -3618,7 +3671,7 @@ NAME(aout,final_link) (abfd, info, callback)
 		 work out the number of relocs needed, and then multiply
 		 by the reloc size.  */
 	      (*_bfd_error_handler)
-		("%s: relocateable link from %s to %s not supported",
+		(_("%s: relocateable link from %s to %s not supported"),
 		 bfd_get_filename (abfd),
 		 sub->xvec->name, abfd->xvec->name);
 	      bfd_set_error (bfd_error_invalid_operation);
@@ -3860,10 +3913,29 @@ NAME(aout,final_link) (abfd, info, callback)
   obj_datasec (abfd)->reloc_count =
     exec_hdr (abfd)->a_drsize / obj_reloc_entry_size (abfd);
 
-  /* Write out the string table.  */
-  if (bfd_seek (abfd, obj_str_filepos (abfd), SEEK_SET) != 0)
-    goto error_return;
-  return emit_stringtab (abfd, aout_info.strtab);
+  /* Write out the string table, unless there are no symbols.  */
+  if (abfd->symcount > 0)
+    {
+      if (bfd_seek (abfd, obj_str_filepos (abfd), SEEK_SET) != 0
+	  || ! emit_stringtab (abfd, aout_info.strtab))
+	goto error_return;
+    }
+  else if (obj_textsec (abfd)->reloc_count == 0
+	   && obj_datasec (abfd)->reloc_count == 0)
+    {
+      bfd_byte b;
+
+      b = 0;
+      if (bfd_seek (abfd,
+		    (obj_datasec (abfd)->filepos
+		     + exec_hdr (abfd)->a_data
+		     - 1),
+		    SEEK_SET) != 0
+	  || bfd_write (&b, 1, 1, abfd) != 1)
+	goto error_return;
+    }
+
+  return true;
 
  error_return:
   if (aout_info.contents != NULL)
@@ -4262,10 +4334,8 @@ aout_link_write_symbols (finfo, input_bfd)
 		case discard_none:
 		  break;
 		case discard_l:
-		  if (*name == *finfo->info->lprefix
-		      && (finfo->info->lprefix_len == 1
-			  || strncmp (name, finfo->info->lprefix,
-				      finfo->info->lprefix_len) == 0))
+		  if ((type & N_STAB) == 0
+		      && bfd_is_local_label_name (input_bfd, name))
 		    skip = true;
 		  break;
 		case discard_all:
@@ -4656,6 +4726,8 @@ aout_reloc_index_to_section (abfd, indx)
     default:
       abort ();
     }
+  /*NOTREACHED*/
+  return NULL;
 }
 
 /* Relocate an a.out section using standard a.out relocs.  */
@@ -4899,6 +4971,7 @@ aout_link_input_section_std (finfo, input_bfd, input_section, relocs,
 	  /* We are generating an executable, and must do a full
 	     relocation.  */
 	  hundef = false;
+
 	  if (r_extern)
 	    {
 	      h = sym_hashes[r_index];
@@ -4956,7 +5029,8 @@ aout_link_input_section_std (finfo, input_bfd, input_section, relocs,
 	      else
 		name = strings + GET_WORD (input_bfd, syms[r_index].e_strx);
 	      if (! ((*finfo->info->callbacks->undefined_symbol)
-		     (finfo->info, name, input_bfd, input_section, r_addr)))
+		     (finfo->info, name, input_bfd, input_section,
+		     r_addr, true)))
 		return false;
 	    }
 
@@ -5241,6 +5315,7 @@ aout_link_input_section_ext (finfo, input_bfd, input_section, relocs,
 	  /* We are generating an executable, and must do a full
 	     relocation.  */
 	  hundef = false;
+
 	  if (r_extern)
 	    {
 	      h = sym_hashes[r_index];
@@ -5357,14 +5432,26 @@ aout_link_input_section_ext (finfo, input_bfd, input_section, relocs,
 	      else
 		name = strings + GET_WORD (input_bfd, syms[r_index].e_strx);
 	      if (! ((*finfo->info->callbacks->undefined_symbol)
-		     (finfo->info, name, input_bfd, input_section, r_addr)))
+		     (finfo->info, name, input_bfd, input_section,
+		     r_addr, true)))
 		return false;
 	    }
 
-	  r = MY_final_link_relocate (howto_table_ext + r_type,
-				      input_bfd, input_section,
-				      contents, r_addr, relocation,
-				      r_addend);
+	  if (r_type != RELOC_SPARC_REV32)
+	    r = MY_final_link_relocate (howto_table_ext + r_type,
+					input_bfd, input_section,
+					contents, r_addr, relocation,
+					r_addend);
+	  else
+	    {
+	      bfd_vma x;
+
+	      x = bfd_get_32 (input_bfd, contents + r_addr);
+	      x = x + relocation + r_addend;
+	      bfd_putl32 (/*input_bfd,*/ x, contents + r_addr);
+	      r = bfd_reloc_ok;
+	    }
+
 	  if (r != bfd_reloc_ok)
 	    {
 	      switch (r)
@@ -5417,7 +5504,7 @@ aout_link_reloc_link_order (finfo, o, p)
   int r_index;
   int r_extern;
   reloc_howto_type *howto;
-  file_ptr *reloff_ptr;
+  file_ptr *reloff_ptr = NULL;
   struct reloc_std_external srel;
   struct reloc_ext_external erel;
   PTR rel_ptr;
