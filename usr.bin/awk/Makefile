@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 1996/07/06 05:40:02 etheisen Exp $
+#	$OpenBSD: Makefile,v 1.3 1996/10/12 10:25:42 deraadt Exp $
 
 PROG=	awk
 LINKS=	${BINDIR}/awk ${BINDIR}/nawk
@@ -22,6 +22,7 @@ awklex.c: awklex.l
 proctab.c: maketab
 	./maketab >proctab.c
 
-maketab.o: prevawkgram.h
+maketab: prevawkgram.h
+	${HOSTCC} ${CFLAGS} ${.CURDIR}/maketab.c -o $@
 
 .include <bsd.prog.mk>
