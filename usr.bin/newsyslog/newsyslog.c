@@ -1,4 +1,4 @@
-/*	$OpenBSD: newsyslog.c,v 1.17 1999/01/05 00:43:44 deraadt Exp $	*/
+/*	$OpenBSD: newsyslog.c,v 1.18 1999/03/08 03:16:34 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, Jason Downs.  All rights reserved.
@@ -61,7 +61,7 @@ provided "as is" without express or implied warranty.
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: newsyslog.c,v 1.17 1999/01/05 00:43:44 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: newsyslog.c,v 1.18 1999/03/08 03:16:34 millert Exp $";
 #endif /* not lint */
 
 #ifndef CONF
@@ -361,7 +361,7 @@ struct conf_entry *parse_file()
 
                 q = parse = missing_field(sob(++parse),errline);
                 *(parse = son(parse)) = '\0';
-                if (!sscanf(q,"%d",&working->numlogs))
+                if (!sscanf(q,"%d",&working->numlogs) || working->numlogs < 0)
 			errx(1, "Error in config file; bad number: %s", q);
 
                 q = parse = missing_field(sob(++parse),errline);
