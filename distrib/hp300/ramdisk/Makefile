@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.13 1999/04/02 06:17:00 millert Exp $
+#	$OpenBSD: Makefile,v 1.14 1999/06/22 13:19:36 deraadt Exp $
 #	$NetBSD: Makefile,v 1.1 1995/07/18 04:13:06 briggs Exp $
 
 TOP=		${.CURDIR}/..
@@ -40,7 +40,7 @@ bsd.rd: ${IMAGE} bsd rdsetroot
 bsd:
 	cd ${.CURDIR}/../../../sys/arch/hp300/conf && config RAMDISK
 	cd ${.CURDIR}/../../../sys/arch/hp300/compile/RAMDISK && \
-	    make clean && make depend && make
+	    make clean && make depend && COPTS=-Os make
 	cp ${.CURDIR}/../../../sys/arch/hp300/compile/RAMDISK/bsd bsd
 
 ${IMAGE}: ${CBIN} rd_setup do_files rd_teardown
