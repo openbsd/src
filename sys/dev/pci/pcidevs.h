@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.174 1999/08/19 01:47:14 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.175 1999/08/27 05:52:02 downsj Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -1149,6 +1149,9 @@
 #define	PCI_PRODUCT_S3_TRIO3D_AGP	0x8904		/* Trio3D AGP */
 #define	PCI_PRODUCT_S3_VIRGE_DX_GX	0x8a01		/* ViRGE DX/GX */
 #define	PCI_PRODUCT_S3_VIRGE_GX2	0x8a10		/* ViRGE GX2 */
+#define	PCI_PRODUCT_S3_SAVAGE3D	0x8a20		/* Savage 3D */
+#define	PCI_PRODUCT_S3_SAVAGE3D_M	0x8a21		/* Savage 3DM */
+#define	PCI_PRODUCT_S3_SAVAGE4	0x8a22		/* Savage 4 */
 #define	PCI_PRODUCT_S3_VIRGE_MX	0x8c01		/* ViRGE MX */
 #define	PCI_PRODUCT_S3_VIRGE_MXP	0x8c03		/* ViRGE MXP */
 #define	PCI_PRODUCT_S3_SONICVIBES	0xca00		/* SonicVibes */
