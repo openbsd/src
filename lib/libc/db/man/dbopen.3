@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dbopen.3,v 1.5 1999/02/26 06:55:53 millert Exp $
+.\"	$OpenBSD: dbopen.3,v 1.6 1999/02/27 21:54:56 deraadt Exp $
 .\"	$NetBSD: dbopen.3,v 1.6 1995/02/27 13:23:25 cgd Exp $
 .\"
 .\" Copyright (c) 1997, Phillip F Knaack. All rights reserved.
@@ -182,7 +182,7 @@ with a
 or
 .Fa sync
 function may result in inconsistent or lost information.
-.Fa Close
+.Fa close
 routines return -1 on error (setting
 .Va errno )
 and 0 on success.
@@ -198,7 +198,7 @@ Delete the record referenced by the cursor.
 The cursor must have previously been initialized.
 .El
 .Pp
-.Fa Delete
+.Fa delete
 routines return -1 on error (setting
 .Va errno ) ,
 0 on success, and 1 if the specified
@@ -221,7 +221,7 @@ locking functions.
 The file descriptor is not necessarily associated with any of the
 underlying files used by the access method.
 No file descriptor is available for in memory databases.
-.Fa Fd
+.Fa fd
 routines return -1 on error (setting
 .Va errno ) ,
 and the file descriptor on success.
@@ -232,7 +232,7 @@ The address and length of the data associated with the specified
 .Fa key
 are returned in the structure referenced by
 .Fa data .
-.Fa Get
+.Fa get
 routines return -1 on error (setting
 .Va errno ) ,
 0 on success, and 1 if the
@@ -287,7 +287,7 @@ The default behavior of the
 routines is to enter the new key/data pair, replacing any previously
 existing key.
 .Pp
-.Fa Put
+.Fa put
 routines return -1 on error (setting
 .Va errno ) ,
 0 on success, and 1 if the R_NOOVERWRITE
@@ -350,7 +350,7 @@ R_LAST and R_PREV are available only for the DB_BTREE and DB_RECNO
 access methods because they each imply that the keys have an inherent
 order which does not change.
 .Pp
-.Fa Seq
+.Fa seq
 routines return -1 on error (setting
 .Va errno ) ,
 0 on success and 1 if there are no key/data pairs less than or greater
@@ -379,7 +379,7 @@ field of the
 manual page for more information.)
 .El
 .Pp
-.Fa Sync
+.Fa sync
 routines return -1 on error (setting
 .Va errno )
 and 0 on success.

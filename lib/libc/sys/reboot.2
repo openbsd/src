@@ -1,4 +1,4 @@
-.\"   $OpenBSD: reboot.2,v 1.2 1996/10/08 01:20:13 michaels Exp $
+.\"   $OpenBSD: reboot.2,v 1.3 1999/02/27 21:56:41 deraadt Exp $
 .\"	$NetBSD: reboot.2,v 1.5 1995/02/27 12:36:02 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -46,13 +46,13 @@
 .Ft int
 .Fn reboot "int howto"
 .Sh DESCRIPTION
-.Fn Reboot
+.Fn reboot
 reboots the system.
 Only the super-user may reboot a machine on demand.
 However, a reboot is invoked
 automatically in the event of unrecoverable system failures.
 .Pp
-.Fa Howto
+.Fa howto
 is a mask of options; the system call interface allows the following
 options, defined in the include file
 .Aq Pa sys/reboot.h ,

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mmap.2,v 1.9 1998/08/21 16:38:10 millert Exp $
+.\"	$OpenBSD: mmap.2,v 1.10 1999/02/27 21:56:33 deraadt Exp $
 .\"	$NetBSD: mmap.2,v 1.5 1995/06/24 10:48:59 cgd Exp $
 .\"
 .\" Copyright (c) 1991, 1993
@@ -171,7 +171,7 @@ No successful return from
 will return the value
 .Dv MAP_FAILED .
 .Sh ERRORS
-.Fn Mmap
+.Fn mmap
 will fail if:
 .Bl -tag -width Er
 .It Bq Er EACCES
@@ -195,14 +195,14 @@ parameters and
 .Fa fd
 was not open for writing.
 .It Bq Er EBADF
-.Fa Fd
+.Fa fd
 is not a valid open file descriptor.
 .It Bq Er EINVAL
 .Dv MAP_FIXED
 was specified and the
 .I addr
 parameter was not page aligned.
-.Fa Fd
+.Fa fd
 did not reference a regular or character special file.
 .It Bq Er ENOMEM
 .Dv MAP_FIXED

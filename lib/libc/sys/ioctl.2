@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ioctl.2,v 1.3 1998/07/06 18:27:43 deraadt Exp $
+.\"	$OpenBSD: ioctl.2,v 1.4 1999/02/27 21:56:25 deraadt Exp $
 .\"	$NetBSD: ioctl.2,v 1.5 1995/02/27 12:33:47 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -76,7 +76,7 @@ If an error has occurred, a value of -1 is returned and
 .Va errno
 is set to indicate the error.
 .Sh ERRORS
-.Fn Ioctl
+.Fn ioctl
 will fail if:
 .Bl -tag -width Er
 .It Bq Er EBADF
@@ -92,7 +92,7 @@ of object that the descriptor
 .Fa d
 references.
 .It Bq Er EINVAL
-.Fa Request
+.Fa request
 or
 .Fa argp
 is not valid.

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: socket.2,v 1.6 1998/08/17 17:35:16 deraadt Exp $
+.\"	$OpenBSD: socket.2,v 1.7 1999/02/27 21:56:52 deraadt Exp $
 .\"	$NetBSD: socket.2,v 1.5 1995/02/27 12:37:53 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -46,7 +46,7 @@
 .Ft int
 .Fn socket "int domain" "int type" "int protocol"
 .Sh DESCRIPTION
-.Fn Socket
+.Fn socket
 creates an endpoint for communication and returns a descriptor.
 .Pp
 The
@@ -207,7 +207,7 @@ The operation of sockets is controlled by socket level
 .Em options .
 These options are defined in the file
 .Ao Pa sys/socket.h Ac .
-.Xr Setsockopt 2
+.Xr setsockopt 2
 and
 .Xr getsockopt 2
 are used to set and get options, respectively.

@@ -29,7 +29,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: sigvec.3,v 1.9 1998/07/24 00:43:43 espie Exp $
+.\"	$OpenBSD: sigvec.3,v 1.10 1999/02/27 21:54:54 deraadt Exp $
 .\"
 .Dd April 29, 1991
 .Dt SIGVEC 3
@@ -120,7 +120,7 @@ This mask is formed by taking the union of the current signal mask,
 the signal to be delivered, and 
 the signal mask associated with the handler to be invoked.
 .Pp
-.Fn Sigvec
+.Fn sigvec
 assigns a handler for a specific signal.  If
 .Fa vec
 is non-zero, it
@@ -209,7 +209,7 @@ or
 all signals, the signal mask, the signal stack,
 and the interrupt/restart flags are inherited by the child.
 .Pp
-.Xr Execve 2
+.Xr execve 2
 reinstates the default
 action for all signals which were caught and
 resets all signals to be caught on the user stack.
@@ -282,7 +282,7 @@ indicates an error occurred and
 .Va errno
 is set to indicated the reason.
 .Sh ERRORS
-.Fn Sigvec
+.Fn sigvec
 will fail and no new signal handler will be installed if one
 of the following occurs:
 .Bl -tag -width Er
@@ -294,7 +294,7 @@ or
 points to memory that is not a valid part of the process
 address space.
 .It Bq Er EINVAL
-.Fa Sig
+.Fa sig
 is not a valid signal number.
 .It Bq Er EINVAL
 An attempt is made to ignore or supply a handler for

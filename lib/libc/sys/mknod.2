@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mknod.2,v 1.3 1998/07/06 18:27:56 deraadt Exp $
+.\"	$OpenBSD: mknod.2,v 1.4 1999/02/27 21:56:32 deraadt Exp $
 .\"	$NetBSD: mknod.2,v 1.6 1995/02/27 12:34:33 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -67,7 +67,7 @@ does not indicate a block special or character special device,
 .Fa dev
 is ignored.
 .Pp
-.Fn Mknod
+.Fn mknod
 requires super-user privileges.
 .Sh RETURN VALUES
 Upon successful completion a value of 0 is returned.
@@ -75,7 +75,7 @@ Otherwise, a value of -1 is returned and
 .Va errno
 is set to indicate the error.
 .Sh ERRORS
-.Fn Mknod
+.Fn mknod
 will fail and the file will be not created if:
 .Bl -tag -width Er
 .It Bq Er ENOTDIR
@@ -116,7 +116,7 @@ The named file resides on a read-only file system.
 .It Bq Er EEXIST
 The named file exists.
 .It Bq Er EFAULT
-.Fa Path
+.Fa path
 points outside the process's allocated address space.
 .El
 .Sh SEE ALSO

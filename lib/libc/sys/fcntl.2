@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fcntl.2,v 1.8 1998/07/24 00:43:47 espie Exp $
+.\"	$OpenBSD: fcntl.2,v 1.9 1999/02/27 21:56:14 deraadt Exp $
 .\"	$NetBSD: fcntl.2,v 1.6 1995/02/27 12:32:29 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1993
@@ -45,7 +45,7 @@
 .Ft int
 .Fn fcntl "int fd" "int cmd" "int arg"
 .Sh DESCRIPTION
-.Fn Fcntl
+.Fn fcntl
 provides for control over descriptors.
 The argument
 .Fa fd
@@ -315,7 +315,7 @@ The
 .Xr flock 2
 interface has much more rational last close semantics and
 allows locks to be inherited by child processes.
-.Xr Flock 2
+.Xr flock 2
 is recommended for applications that want to ensure the integrity
 of their locks when using library routines or wish to pass locks
 to their children.
@@ -355,7 +355,7 @@ Otherwise, a value of -1 is returned and
 .Va errno
 is set to indicate the error.
 .Sh ERRORS
-.Fn Fcntl
+.Fn fcntl
 will fail if:
 .Bl -tag -width Er
 .It Bq Er EAGAIN
@@ -375,7 +375,7 @@ or the type is an exclusive lock and some portion of the
 segment of a file to be locked is already shared-locked or
 exclusive-locked by another process.
 .It Bq Er EBADF
-.Fa Fildes
+.Fa fildes
 is not a valid open file descriptor.
 .Pp
 The argument
@@ -406,7 +406,7 @@ and
 .Fa fildes
 is not a valid file descriptor open for writing.
 .It Bq Er EMFILE
-.Fa Cmd
+.Fa cmd
 is
 .Dv F_DUPFD
 and the maximum allowed number of file descriptors are currently
@@ -424,7 +424,7 @@ is
 .Dv F_SETLKW ,
 and the function was interrupted by a signal.
 .It Bq Er EINVAL
-.Fa Cmd
+.Fa cmd
 is
 .Dv F_DUPFD
 and
@@ -465,7 +465,7 @@ or
 and satisfying the lock or unlock request would result in the
 number of locked regions in the system exceeding a system-imposed limit.
 .It Bq Er ESRCH
-.Fa Cmd
+.Fa cmd
 is
 .Dv F_SETOWN
 and

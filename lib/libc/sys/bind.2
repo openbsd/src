@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bind.2,v 1.4 1999/02/15 19:04:19 millert Exp $
+.\"	$OpenBSD: bind.2,v 1.5 1999/02/27 21:56:07 deraadt Exp $
 .\"	$NetBSD: bind.2,v 1.8 1995/10/12 15:40:46 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1993
@@ -46,14 +46,14 @@
 .Ft int
 .Fn bind "int s" "const struct sockaddr *name" "socklen_t namelen"
 .Sh DESCRIPTION
-.Fn Bind
+.Fn bind
 assigns a name to an unnamed socket.
 When a socket is created 
 with
 .Xr socket 2
 it exists in a name space (address family)
 but has no name assigned.
-.Fn Bind
+.Fn bind
 requests that
 .Fa name
 be assigned to the socket.

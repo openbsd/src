@@ -1,4 +1,4 @@
-.\"	$OpenBSD: send.2,v 1.12 1999/02/17 03:31:08 deraadt Exp $
+.\"	$OpenBSD: send.2,v 1.13 1999/02/27 21:56:47 deraadt Exp $
 .\"	$NetBSD: send.2,v 1.6 1996/01/15 01:17:18 thorpej Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -52,12 +52,12 @@
 .Ft ssize_t
 .Fn sendmsg "int s" "const struct msghdr *msg" "int flags"
 .Sh DESCRIPTION
-.Fn Send ,
+.Fn send ,
 .Fn sendto ,
 and
 .Fn sendmsg
 are used to transmit a message to another socket.
-.Fn Send
+.Fn send
 may be used only when the socket is in a 
 .Em connected
 state, while 
@@ -122,7 +122,7 @@ structure.
 The call returns the number of characters sent, or -1
 if an error occurred.
 .Sh ERRORS
-.Fn Send ,
+.Fn send ,
 .Fn sendto ,
 and
 .Fn sendmsg

@@ -29,7 +29,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: killpg.3,v 1.2 1996/08/19 08:19:25 tholo Exp $
+.\"	$OpenBSD: killpg.3,v 1.3 1999/02/27 21:54:50 deraadt Exp $
 .\"
 .Dd March 10, 1991
 .Dt KILLPG 3
@@ -42,7 +42,7 @@
 .Ft int
 .Fn killpg "pid_t pgrp" "int sig"
 .Sh DESCRIPTION
-.Fn Killpg
+.Fn killpg
 sends the signal
 .Fa sig
 to the process group
@@ -67,11 +67,11 @@ a value of -1 is returned and the global variable
 .Va errno
 is set to indicate the error.
 .Sh ERRORS
-.Fn Killpg
+.Fn killpg
 will fail and no signal will be sent if:
 .Bl -tag -width Er
 .It Bq Er EINVAL
-.Fa Sig
+.Fa sig
 is not a valid signal number.
 .It Bq Er ESRCH
 No process can be found in the process group specified by

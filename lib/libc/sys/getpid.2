@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getpid.2,v 1.3 1998/07/06 18:27:33 deraadt Exp $
+.\"	$OpenBSD: getpid.2,v 1.4 1999/02/27 21:56:21 deraadt Exp $
 .\"	$NetBSD: getpid.2,v 1.5 1995/02/27 12:33:12 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -49,14 +49,14 @@
 .Ft pid_t
 .Fn getppid void
 .Sh DESCRIPTION
-.Fn Getpid
+.Fn getpid
 returns
 the process ID of
 the calling process.
 The ID is guaranteed to be unique and is
 useful for constructing temporary file names.
 .Pp
-.Fn Getppid
+.Fn getppid
 returns the process ID of the parent
 of the calling process. 
 .Sh ERRORS
@@ -69,7 +69,7 @@ indicate an error.
 .Sh SEE ALSO
 .Xr gethostid 3
 .Sh STANDARDS
-.Fn Getpid
+.Fn getpid
 and
 .Fn getppid
 conform to 

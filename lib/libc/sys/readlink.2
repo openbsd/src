@@ -1,4 +1,4 @@
-.\"	$OpenBSD: readlink.2,v 1.5 1998/07/06 18:28:17 deraadt Exp $
+.\"	$OpenBSD: readlink.2,v 1.6 1999/02/27 21:56:40 deraadt Exp $
 .\"	$NetBSD: readlink.2,v 1.7 1995/02/27 12:35:54 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -85,7 +85,7 @@ The named file is not a symbolic link.
 .It Bq Er EIO
 An I/O error occurred while reading from the file system.
 .It Bq Er EFAULT
-.Fa Buf
+.Fa buf
 extends outside the process's allocated address space.
 .El
 .Sh SEE ALSO

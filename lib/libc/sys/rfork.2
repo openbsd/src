@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rfork.2,v 1.9 1999/01/11 01:01:23 niklas Exp $
+.\"	$OpenBSD: rfork.2,v 1.10 1999/02/27 21:56:43 deraadt Exp $
 .\"
 .\" This manual page is taken directly from Plan9, and modified to
 .\" describe the actual OpenBSD implementation.  Permission for
@@ -29,7 +29,7 @@ The resources include
 the open file descriptor table (which, when shared, permits processes
 to open and close files for other processes),
 and open files.
-.Fa Flags
+.Fa flags
 is the logical OR of some subset of
 .Bl -tag -width "RFCNAMEG" -compact -offset indent
 .It RFPROC
@@ -78,10 +78,10 @@ the return value is zero.
 Process ids range from 1 to the maximum integer
 .Ft ( int )
 value.
-.Fn Rfork
+.Fn rfork
 will sleep, if necessary, until required process resources are available.
 .Pp
-.Fn Fork
+.Fn fork
 can be implemented as a call to
 .Xr rfork 2
 using "RFFDG|RFPROC"
@@ -91,7 +91,7 @@ programs will not
 .Xr execve 2
 with extra privileges.
 .Sh ERRORS
-.Fn Rfork
+.Fn rfork
 will fail and no child process will be created if:
 .Bl -tag -width Er
 .It Bq Er EAGAIN

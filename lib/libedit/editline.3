@@ -1,4 +1,4 @@
-.\"	$OpenBSD: editline.3,v 1.3 1999/01/05 11:04:18 d Exp $
+.\"	$OpenBSD: editline.3,v 1.4 1999/02/27 21:57:22 deraadt Exp $
 .\"	$NetBSD: editline.3,v 1.4 1997/01/14 04:17:23 lukem Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -106,7 +106,7 @@ Programs should be linked with
 .Fl ledit ltermcap .
 .Sh LINE EDITING FUNCTIONS
 The line editing functions use a common data structure,
-.Fa EditLine ,
+.Fa editline ,
 which is created by
 .Fn el_init
 and freed by
@@ -391,7 +391,7 @@ Otherwise, it's the responsibility of the application to call
 on the appropriate occasions.
 .It Fn el_line
 Return the editing information for the current line in a
-.Fa LineInfo
+.Fa lineinfo
 structure, which is defined as follows:
 .Bd -literal
 typedef struct lineinfo {
@@ -414,7 +414,7 @@ characters before the cursor.
 .El
 .Sh HISTORY LIST FUNCTIONS
 The history functions use a common data structure,
-.Fa History ,
+.Fa history ,
 which is created by
 .Fn history_init
 and freed by

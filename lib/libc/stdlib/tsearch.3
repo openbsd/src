@@ -23,7 +23,7 @@
 .\" OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 .\" ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: tsearch.3,v 1.2 1998/06/21 22:13:49 millert Exp $
+.\"	$OpenBSD: tsearch.3,v 1.3 1999/02/27 21:56:03 deraadt Exp $
 .\"
 .Dd June 15, 1997
 .Dt TSEARCH 3
@@ -53,7 +53,7 @@ from Knuth (6.2.2).  The comparison function passed in by
 the user has the same style of return values as
 .Xr strcmp 3 .
 .Pp
-.Fn Tfind
+.Fn tfind
 searches for the datum matched by the argument
 .Fa key
 in the binary tree rooted at
@@ -61,7 +61,7 @@ in the binary tree rooted at
 returning a pointer to the datum if it is found and NULL
 if it is not.
 .Pp
-.Fn Tsearch
+.Fn tsearch
 is identical to
 .Fn tfind
 except that if no match is found,
@@ -70,7 +70,7 @@ is inserted into the tree and a pointer to it is returned.  If
 .Fa rootp
 points to a NULL value a new binary search tree is created.
 .Pp
-.Fn Tdelete
+.Fn tdelete
 deletes a node from the specified binary search tree and returns
 a pointer to the parent of the node to be deleted.
 It takes the same arguments as
@@ -81,13 +81,13 @@ If the node to be deleted is the root of the binary search tree,
 .Fa rootp
 will be adjusted.
 .Pp
-.Fn Twalk
+.Fn twalk
 walks the binary search tree rooted in
 .fa root
 and calls the function
 .Fa action
 on each node.
-.Fa Action
+.Fa action
 is called with three arguments: a pointer to the current node,
 a value from the enum 
 .Sy "typedef enum { preorder, postorder, endorder, leaf } VISIT;"
@@ -103,7 +103,7 @@ The
 function returns NULL if allocation of a new node fails (usually
 due to a lack of free memory).
 .Pp
-.Fn Tfind ,
+.Fn tfind ,
 .Fn tsearch ,
 and
 .Fn tdelete

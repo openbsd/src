@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mkdir.2,v 1.3 1998/07/06 18:27:53 deraadt Exp $
+.\"	$OpenBSD: mkdir.2,v 1.4 1999/02/27 21:56:30 deraadt Exp $
 .\"	$NetBSD: mkdir.2,v 1.8 1995/02/27 12:34:22 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -62,7 +62,7 @@ A 0 return value indicates success.  A -1 return value
 indicates an error, and an error code is stored in
 .Va errno .
 .Sh ERRORS
-.Fn Mkdir
+.Fn mkdir
 will fail and no directory will be created if:
 .Bl -tag -width Er
 .It Bq Er ENOTDIR
@@ -101,7 +101,7 @@ An I/O error occurred while making the directory entry or allocating the inode.
 .It Bq Er EIO
 An I/O error occurred while reading from or writing to the file system.
 .It Bq Er EFAULT
-.Fa Path
+.Fa path
 points outside the process's allocated address space.
 .El
 .Sh SEE ALSO

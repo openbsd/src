@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sigreturn.2,v 1.4 1998/07/06 18:28:39 deraadt Exp $
+.\"	$OpenBSD: sigreturn.2,v 1.5 1999/02/27 21:56:51 deraadt Exp $
 .\"	$NetBSD: sigreturn.2,v 1.6 1995/02/27 12:37:40 cgd Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
@@ -45,7 +45,7 @@
 .Ft int
 .Fn sigreturn "struct sigcontext *scp"
 .Sh DESCRIPTION
-.Fn Sigreturn
+.Fn sigreturn
 allows users to atomically unmask, switch stacks,
 and return from a signal context.
 The processes signal mask and stack status are
@@ -69,12 +69,12 @@ Otherwise, a value of -1 is returned and
 .Va errno
 is set to indicate the error.
 .Sh ERRORS
-.Fn Sigreturn
+.Fn sigreturn
 will fail and the process context will remain unchanged
 if one of the following occurs.
 .Bl -tag -width Er
 .It Bq Er EFAULT
-.Fa Scp
+.Fa scp
 points to memory that is not a valid part of the process
 address space.
 .It Bq Er EINVAL

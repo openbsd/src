@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getitimer.2,v 1.5 1998/08/17 17:35:09 deraadt Exp $
+.\"	$OpenBSD: getitimer.2,v 1.6 1999/02/27 21:56:19 deraadt Exp $
 .\"	$NetBSD: getitimer.2,v 1.6 1995/10/12 15:40:54 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -131,7 +131,7 @@ restart interrupted system calls.
 .Sh NOTES
 Three macros for manipulating time values are defined in
 .Ao Pa sys/time.h Ac .
-.Fa Timerclear
+.Fa timerclear
 sets a time value to zero,
 .Fa timerisset
 tests if a time value is non-zero, and
@@ -144,7 +144,7 @@ the value -1 is returned, and a more precise error code is placed
 in the global variable
 .Va errno .
 .Sh ERRORS
-.Fn Getitimer
+.Fn getitimer
 and
 .Fn setitimer
 will fail if:

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getsockopt.2,v 1.7 1999/02/15 19:04:21 millert Exp $
+.\"	$OpenBSD: getsockopt.2,v 1.8 1999/02/27 21:56:24 deraadt Exp $
 .\"	$NetBSD: getsockopt.2,v 1.7 1995/02/27 12:33:29 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -49,7 +49,7 @@
 .Ft int
 .Fn setsockopt "int s" "int level" "int optname" "const void *optval" "socklen_t optlen"
 .Sh DESCRIPTION
-.Fn Getsockopt
+.Fn getsockopt
 and
 .Fn setsockopt
 manipulate the
@@ -98,7 +98,7 @@ to be supplied or returned,
 .Fa optval
 may be NULL.
 .Pp
-.Fa Optname
+.Fa optname
 and any specified options are passed uninterpreted to the appropriate
 protocol module for interpretation.
 The include file

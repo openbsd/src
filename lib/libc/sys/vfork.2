@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vfork.2,v 1.6 1998/07/06 18:28:56 deraadt Exp $
+.\"	$OpenBSD: vfork.2,v 1.7 1999/02/27 21:56:59 deraadt Exp $
 .\"	$NetBSD: vfork.2,v 1.8 1997/07/10 07:54:13 mikel Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -45,7 +45,7 @@
 .Ft pid_t
 .Fn vfork void
 .Sh DESCRIPTION
-.Fn Vfork
+.Fn vfork
 was originally used to create new processes without fully copying the address
 space of the old process, which is horrendously inefficient in a paged
 environment.  It was useful when the purpose of
@@ -57,7 +57,7 @@ It is the case that
 is now efficient, even in the above case, so that the need for
 .Fn vfork
 is diminished.
-.Fn Vfork
+.Fn vfork
 differs from
 .Xr fork
 in that the parent is suspended until the child makes a call to
@@ -66,7 +66,7 @@ or an exit (either by a call to
 .Xr _exit 2
 or abnormally.)
 .Pp
-.Fn Vfork
+.Fn vfork
 returns 0 in the child's context and (later) the pid of the child in
 the parent's context.
 .Sh SEE ALSO

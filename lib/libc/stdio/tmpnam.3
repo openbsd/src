@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tmpnam.3,v 1.4 1998/03/12 20:17:42 deraadt Exp $
+.\"	$OpenBSD: tmpnam.3,v 1.5 1999/02/27 21:55:50 deraadt Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -131,7 +131,7 @@ if
 .Pf non- Dv NULL ,
 is used to specify a file name prefix, which will be the
 first part of the created file name.
-.Fn Tempnam
+.Fn tempnam
 allocates memory in which to store the file name; the returned pointer
 may be used as a subsequent argument to
 .Xr free 3 .

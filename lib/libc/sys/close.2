@@ -1,4 +1,4 @@
-.\"	$OpenBSD: close.2,v 1.3 1998/07/06 18:27:13 deraadt Exp $
+.\"	$OpenBSD: close.2,v 1.4 1999/02/27 21:56:11 deraadt Exp $
 .\"	$NetBSD: close.2,v 1.5 1995/02/27 12:32:14 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993, 1994
@@ -99,7 +99,7 @@ Otherwise, a value of -1 is returned and the global integer variable
 .Va errno
 is set to indicate the error.
 .Sh ERRORS
-.Fn Close
+.Fn close
 will fail if:
 .Bl -tag -width Er
 .It Bq Er EBADF
@@ -118,6 +118,6 @@ An interrupt was received.
 .Xr execve 2 ,
 .Xr fcntl 2
 .Sh STANDARDS
-.Fn Close
+.Fn close
 conforms to 
 .St -p1003.1-88 .

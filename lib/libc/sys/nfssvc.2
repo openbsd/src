@@ -1,4 +1,4 @@
-.\"	$OpenBSD: nfssvc.2,v 1.5 1998/07/06 18:28:06 deraadt Exp $
+.\"	$OpenBSD: nfssvc.2,v 1.6 1999/02/27 21:56:36 deraadt Exp $
 .\"	$NetBSD: nfssvc.2,v 1.6 1995/02/27 12:35:08 cgd Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
@@ -106,7 +106,7 @@ daemon will return from
 .Fn nfssvc
 with errno == ENEEDAUTH whenever the client side requires an ``rcmd''
 authentication ticket for the user.
-.Xr Mount_nfs 8
+.Xr mount_nfs 8
 will attempt to get the Kerberos ticket, and if successful will call
 .Fn nfssvc
 with the flags

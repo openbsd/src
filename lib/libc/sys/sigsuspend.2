@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sigsuspend.2,v 1.2 1998/07/06 18:28:42 deraadt Exp $
+.\"	$OpenBSD: sigsuspend.2,v 1.3 1999/02/27 21:56:51 deraadt Exp $
 .\"	$NetBSD: sigsuspend.2,v 1.4 1995/02/27 12:37:46 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -45,7 +45,7 @@
 .Ft int
 .Fn sigsuspend "const sigset_t *sigmask"
 .Sh DESCRIPTION
-.Fn Sigsuspend
+.Fn sigsuspend
 temporarily changes the blocked signal mask to the set to which
 .Fa sigmask
 points,

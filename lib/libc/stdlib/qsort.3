@@ -33,7 +33,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: qsort.3,v 1.2 1996/08/19 08:33:42 tholo Exp $
+.\"	$OpenBSD: qsort.3,v 1.3 1999/02/27 21:56:00 deraadt Exp $
 .\"
 .Dd June 4, 1993
 .Dt QSORT 3
@@ -71,7 +71,7 @@ objects, the initial member of which is pointed to by
 .Fa base .
 The size of each object is specified by
 .Fa size .
-.Fn Mergesort
+.Fn mergesort
 behaves similarly, but
 .Em requires
 that
@@ -108,7 +108,7 @@ The
 function is an implementation of C.A.R. Hoare's ``quicksort'' algorithm,
 a variant of partition-exchange sorting; in particular, see D.E. Knuth's
 Algorithm Q.
-.Fn Qsort
+.Fn qsort
 takes O N lg N average time.
 This implementation uses median selection to avoid its
 O N**2 worst-case behavior.
@@ -117,7 +117,7 @@ The
 .Fn heapsort
 function is an implementation of J.W.J. William's ``heapsort'' algorithm,
 a variant of selection sorting; in particular, see D.E. Knuth's Algorithm H.
-.Fn Heapsort
+.Fn heapsort
 takes O N lg N worst-case time.
 Its
 .Em only
@@ -133,7 +133,7 @@ requires additional memory of size
 .Fa nmemb *
 .Fa size 
 bytes; it should be used only when space is not at a premium.
-.Fn Mergesort
+.Fn mergesort
 is optimized for data with pre-existing order; its worst case
 time is O N lg N; its best case is O N.
 .Pp
@@ -175,7 +175,7 @@ argument to
 is less than
 .Dq "sizeof(void *) / 2" .
 .It Bq Er ENOMEM
-.Fn Heapsort
+.Fn heapsort
 or
 .Fn mergesort
 were unable to allocate memory.

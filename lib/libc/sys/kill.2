@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kill.2,v 1.4 1998/07/14 19:51:11 deraadt Exp $
+.\"	$OpenBSD: kill.2,v 1.5 1999/02/27 21:56:26 deraadt Exp $
 .\"	$NetBSD: kill.2,v 1.7 1995/02/27 12:33:53 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -53,7 +53,7 @@ to
 .Fa pid ,
 a
 process or a group of processes.
-.Fa Sig
+.Fa sig
 may be one of the signals specified in
 .Xr sigaction 2
 or it may be 0, in which case
@@ -72,11 +72,11 @@ A single exception is the signal SIGCONT, which may always be sent
 to any descendant of the current process.
 .Bl -tag -width Ds
 .It \&If Fa pid No \&is greater than zero :
-.Fa Sig
+.Fa sig
 is sent to the process whose ID is equal to
 .Fa pid.
 .It \&If Fa pid No \&is zero :
-.Fa Sig
+.Fa sig
 is sent to all processes whose group ID is equal
 to the process group ID of the sender, and for which the
 process has permission;
@@ -118,11 +118,11 @@ Otherwise, a value of -1 is returned and
 .Va errno
 is set to indicate the error.
 .Sh ERRORS
-.Fn Kill
+.Fn kill
 will fail and no signal will be sent if:
 .Bl -tag -width Er
 .It Bq Er EINVAL
-.Fa Sig
+.Fa sig
 is not a valid signal number.
 .It Bq Er ESRCH
 No process can be found corresponding to that specified by

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: access.2,v 1.3 1998/07/06 18:27:02 deraadt Exp $
+.\"	$OpenBSD: access.2,v 1.4 1999/02/27 21:56:05 deraadt Exp $
 .\"	$NetBSD: access.2,v 1.7 1995/02/27 12:31:44 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -116,7 +116,7 @@ checked with respect to the ``group'' mode bits, and all
 others have permissions checked with respect to the ``other''
 mode bits.
 .It Bq Er EFAULT
-.Fa Path
+.Fa path
 points outside the process's allocated address space.
 .It Bq Er EIO
 An I/O error occurred while reading from or writing to the file system.
@@ -133,6 +133,6 @@ The
 function conforms to 
 .St -p1003.1-90 .
 .Sh CAVEAT
-.Fn Access
+.Fn access
 is a potential security hole and
 should never be used.

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysarch.2,v 1.2 1998/07/06 18:28:50 deraadt Exp $
+.\"	$OpenBSD: sysarch.2,v 1.3 1999/02/27 21:56:56 deraadt Exp $
 .\"	$NetBSD: sysarch.2,v 1.4 1995/02/27 12:38:47 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1991 Regents of the University of California.
@@ -45,14 +45,14 @@
 .Ft int
 .Fn sysarch "int number" "char *args"
 .Sh DESCRIPTION
-.Fn Sysarch
+.Fn sysarch
 performs the architecture-dependent function
 specified by
 .Fa number
 with the arguments specified by the
 .Fa args
 pointer.
-.Fa Args
+.Fa args
 is a pointer to a structure defining the actual
 arguments of the function.
 Symbolic constants and argument structures

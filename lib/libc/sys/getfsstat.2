@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getfsstat.2,v 1.6 1998/07/06 18:27:26 deraadt Exp $
+.\"	$OpenBSD: getfsstat.2,v 1.7 1999/02/27 21:56:18 deraadt Exp $
 .\"	$NetBSD: getfsstat.2,v 1.6 1995/06/29 11:40:44 cgd Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
@@ -47,9 +47,9 @@
 .Ft int
 .Fn getfsstat "struct statfs *buf" "long bufsize" "int flags"
 .Sh DESCRIPTION
-.Fn Getfsstat
+.Fn getfsstat
 returns information about all mounted file systems.
-.Fa Buf
+.Fa buf
 is a pointer to an array of
 .Xr statfs 2
 structures defined as follows:
@@ -116,11 +116,11 @@ Otherwise, -1 is returned and the global variable
 .Va errno
 is set to indicate the error.
 .Sh ERRORS
-.Fn Getfsstat
+.Fn getfsstat
 fails if one or more of the following are true:
 .Bl -tag -width Er
 .It Bq Er EFAULT
-.Fa Buf
+.Fa buf
 points to an invalid address.
 .It Bq Er EIO
 An

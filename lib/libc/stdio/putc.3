@@ -1,4 +1,4 @@
-.\"	$OpenBSD: putc.3,v 1.2 1996/08/19 08:32:58 tholo Exp $
+.\"	$OpenBSD: putc.3,v 1.3 1999/02/27 21:55:47 deraadt Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -64,7 +64,7 @@ writes the character
 to the output stream pointed to by
 .Fa stream .
 .Pp
-.Fn Putc
+.Fn putc
 acts essentially identically to
 .Fn fputc ,
 but is a macro that expands in-line. It may evaluate
@@ -73,7 +73,7 @@ more than once, so arguments given to
 .Fn putc
 should not be expressions with potential side effects.
 .Pp
-.Fn Putchar
+.Fn putchar
 is identical to
 .Fn putc
 with an output stream of

@@ -24,7 +24,7 @@
 .\" OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 .\" ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $OpenBSD: a64l.3,v 1.2 1998/06/21 22:13:48 millert Exp $
+.\" $OpenBSD: a64l.3,v 1.3 1999/02/27 21:55:53 deraadt Exp $
 .\"
 .Dd August 17, 1997
 .Dt A64L 3
@@ -61,7 +61,7 @@ and returns a corresponding 32-bit value.  If the string pointed to by
 contains more than six characters,
 .Fn a64l
 will use the first six.
-.Fn A64l
+.Fn a64l
 scans the character string from left to right, decoding
 each character as a 6-bit radix-64 number.  If a long integer is
 larger than 32 bits, the return value will be sign-extended.

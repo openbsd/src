@@ -1,4 +1,4 @@
-.\"	$OpenBSD: chroot.2,v 1.5 1998/07/06 18:27:11 deraadt Exp $
+.\"	$OpenBSD: chroot.2,v 1.6 1999/02/27 21:56:10 deraadt Exp $
 .\"	$NetBSD: chroot.2,v 1.7 1995/02/27 12:32:12 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -45,9 +45,9 @@
 .Ft int
 .Fn chroot "const char *dirname"
 .Sh DESCRIPTION
-.Fa Dirname
+.Fa dirname
 is the address of the pathname of a directory, terminated by an ASCII NUL.
-.Fn Chroot
+.Fn chroot
 causes
 .Fa dirname
 to become the root directory,
@@ -75,7 +75,7 @@ a value of -1 is returned and
 .Va errno
 is set to indicate an error.
 .Sh ERRORS
-.Fn Chroot
+.Fn chroot
 will fail and the root directory will be unchanged if:
 .Bl -tag -width Er
 .It Bq Er ENOTDIR
@@ -93,7 +93,7 @@ Search permission is denied for any component of the path name.
 .It Bq Er ELOOP
 Too many symbolic links were encountered in translating the pathname.
 .It Bq Er EFAULT
-.Fa Dirname
+.Fa dirname
 points outside the process's allocated address space.
 .It Bq Er EIO
 An I/O error occurred while reading from or writing to the file system.

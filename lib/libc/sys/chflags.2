@@ -1,4 +1,4 @@
-.\"	$OpenBSD: chflags.2,v 1.8 1998/07/06 18:27:10 deraadt Exp $
+.\"	$OpenBSD: chflags.2,v 1.9 1999/02/27 21:56:09 deraadt Exp $
 .\"	$NetBSD: chflags.2,v 1.6 1995/02/27 12:32:03 cgd Exp $
 .\"
 .\" Copyright (c) 1989, 1993
@@ -98,7 +98,7 @@ Otherwise, -1 is returned and the global variable
 .Va errno
 is set to indicate the error.
 .Sh ERRORS
-.Fn Chflags
+.Fn chflags
 will fail it:
 .Bl -tag -width Er
 .It Bq Er ENOTDIR
@@ -124,7 +124,7 @@ flags.
 .It Bq Er EROFS
 The named file resides on a read-only file system.
 .It Bq Er EFAULT
-.Fa Path
+.Fa path
 points outside the process's allocated address space.
 .It Bq Er EIO
 An
@@ -132,13 +132,13 @@ An
 error occurred while reading from or writing to the file system.
 .El
 .Pp
-.Fn Fchflags
+.Fn fchflags
 will fail if:
 .Bl -tag -width Er
 .It Bq Er EBADF
 The descriptor is not valid.
 .It Bq Er EINVAL
-.Fa Fd
+.Fa fd
 refers to a socket, not to a file.
 .It Bq Er EINVAL
 The flags value is invalid.

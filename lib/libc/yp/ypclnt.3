@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ypclnt.3,v 1.6 1997/06/13 10:09:37 deraadt Exp $
+.\"	$OpenBSD: ypclnt.3,v 1.7 1999/02/27 21:57:07 deraadt Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -209,7 +209,7 @@ suite, which use UDP.  The entire transaction occurs in a single RPC
 request-response.  The third argument to this function provides a way
 to supply the name of a function to process each key-value pair in the
 map.
-.Fn Yp_all
+.Fn yp_all
 returns after the entire transaction is complete, or the
 .Pa foreach
 function decides that it does not want any more key-value pairs.  The third

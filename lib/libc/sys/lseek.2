@@ -1,4 +1,4 @@
-.\"	$OpenBSD: lseek.2,v 1.5 1998/07/06 18:27:48 deraadt Exp $
+.\"	$OpenBSD: lseek.2,v 1.6 1999/02/27 21:56:28 deraadt Exp $
 .\"	$NetBSD: lseek.2,v 1.6 1995/02/27 12:34:09 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -58,7 +58,7 @@ The argument
 .Fa fildes
 must be an open
 file descriptor.
-.Fn Lseek
+.Fn lseek
 repositions the file pointer
 .Fa fildes
 as follows:
@@ -110,7 +110,7 @@ a value of -1 is returned and
 is set to indicate
 the error.
 .Sh ERRORS
-.Fn Lseek
+.Fn lseek
 will fail and the file pointer will remain unchanged if:
 .Bl -tag -width Er
 .It Bq Er EBADF
@@ -120,7 +120,7 @@ is not an open file descriptor.
 .Em Fildes
 is associated with a pipe, socket, or FIFO.
 .It Bq Er EINVAL
-.Fa Whence
+.Fa whence
 is not a proper value or the resulting offset would be negative
 on a file system or special device that does not allow negative
 offsets to be used.

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getrusage.2,v 1.3 1997/09/17 11:54:33 deraadt Exp $
+.\"	$OpenBSD: getrusage.2,v 1.4 1999/02/27 21:56:23 deraadt Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -48,7 +48,7 @@
 .Ft int
 .Fn getrusage "int who" "struct rusage *rusage"
 .Sh DESCRIPTION
-.Fn Getrusage
+.Fn getrusage
 returns information describing the resources utilized by the current
 process, or all its terminated child processes.
 The
@@ -141,7 +141,7 @@ account only for real
 I/O; data supplied by the caching mechanism is charged only
 to the first process to read or write the data.
 .Sh ERRORS
-.Fn Getrusage
+.Fn getrusage
 returns -1 on error.
 The possible errors are:
 .Bl -tag -width Er

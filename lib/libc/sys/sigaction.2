@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sigaction.2,v 1.17 1998/07/24 00:43:50 espie Exp $
+.\"	$OpenBSD: sigaction.2,v 1.18 1999/02/27 21:56:49 deraadt Exp $
 .\"	$NetBSD: sigaction.2,v 1.7 1995/10/12 15:41:16 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
@@ -128,7 +128,7 @@ the signal to be delivered, and the signal mask
 .Em sa_mask
 associated with the handler to be invoked.
 .Pp
-.Fn Sigaction
+.Fn sigaction
 assigns an action for a signal specified by
 .Fa sig .
 If
@@ -272,7 +272,7 @@ or
 all signals, the signal mask, the signal stack,
 and the restart/interrupt flags are inherited by the child.
 .Pp
-.Xr Execve 2
+.Xr execve 2
 reinstates the default
 action for all signals which were caught and
 resets all signals to be caught on the user stack.
@@ -377,14 +377,14 @@ The function specified in
 will be called instead of the function specified by
 .Fa sa_handler
 (Note that in some implementations these are in fact the same).
-.Fa Scp
+.Fa scp
 is a pointer to the
 .Fa sigcontext
 structure (defined in
 .Aq Pa signal.h ) ,
 used to restore the context from before the signal.
 .Sh ERRORS
-.Fn Sigaction
+.Fn sigaction
 will fail and no new signal handler will be installed if one
 of the following occurs:
 .Bl -tag -width Er
@@ -396,7 +396,7 @@ or
 points to memory that is not a valid part of the process
 address space.
 .It Bq Er EINVAL
-.Fa Sig
+.Fa sig
 is not a valid signal number.
 .It Bq Er EINVAL
 An attempt is made to ignore or supply a handler for

@@ -29,7 +29,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: creat.3,v 1.2 1996/08/19 08:19:17 tholo Exp $
+.\"	$OpenBSD: creat.3,v 1.3 1999/02/27 21:54:48 deraadt Exp $
 .\"
 .Dd June 23, 1991
 .Dt CREAT 3
@@ -49,7 +49,7 @@ This interface is made obsolete by:
 .Ef
 .Xr open 2 .
 .Pp
-.Fn Creat
+.Fn creat
 is the same as:
 .Bd -literal -offset indent
 open(path, O_CREAT | O_TRUNC | O_WRONLY, mode);

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mlock.2,v 1.5 1998/07/06 18:27:57 deraadt Exp $
+.\"	$OpenBSD: mlock.2,v 1.6 1999/02/27 21:56:32 deraadt Exp $
 .\"	$NetBSD: mlock.2,v 1.3 1995/06/24 10:42:03 cgd Exp $
 .\"
 .\" Copyright (c) 1993
@@ -112,7 +112,7 @@ In this case, the global location
 .Va errno
 is set to indicate the error.
 .Sh ERRORS
-.Fn Mlock
+.Fn mlock
 will fail if:
 .Bl -tag -width Er
 .It Bq Er EINVAL
@@ -124,7 +124,7 @@ limit for locked memory.
 Some portion of the indicated address range is not allocated.
 There was an error faulting/mapping a page.
 .El
-.Fn Munlock
+.Fn munlock
 will fail if:
 .Bl -tag -width Er
 .It Bq Er EINVAL

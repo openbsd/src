@@ -1,4 +1,4 @@
-.\"	$OpenBSD: recv.2,v 1.13 1999/02/15 21:22:25 millert Exp $
+.\"	$OpenBSD: recv.2,v 1.14 1999/02/27 21:56:42 deraadt Exp $
 .\"	$NetBSD: recv.2,v 1.6 1995/02/27 12:36:08 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
@@ -52,7 +52,7 @@
 .Ft ssize_t
 .Fn recvmsg "int s" "struct msghdr *msg" "int flags"
 .Sh DESCRIPTION
-.Fn Recvfrom
+.Fn recvfrom
 and
 .Fn recvmsg
 are used to receive messages from a socket,
@@ -63,7 +63,7 @@ If
 .Fa from
 is non-nil, and the socket is not connection-oriented,
 the source address of the message is filled in.
-.Fa Fromlen
+.Fa fromlen
 is a value-result parameter, initialized to the size of
 the buffer associated with
 .Fa from ,
@@ -166,12 +166,12 @@ and
 specify the source address if the socket is unconnected;
 .Fa msg_name
 may be given as a null pointer if no names are desired or required.
-.Fa Msg_iov
+.Fa msg_iov
 and
 .Fa msg_iovlen
 describe scatter gather locations, as discussed in
 .Xr read 2 .
-.Fa Msg_control ,
+.Fa msg_control ,
 which has length
 .Fa msg_controllen ,
 points to a buffer for other protocol control related messages
@@ -232,7 +232,7 @@ Indicates that the packet was received as multicast.
 These calls return the number of bytes received, or -1
 if an error occurred.
 .Sh ERRORS
-.Fn Recv ,
+.Fn recv ,
 .Fn recvfrom ,
 and
 .Fn recvmsg

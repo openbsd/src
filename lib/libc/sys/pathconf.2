@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pathconf.2,v 1.3 1998/07/06 18:28:08 deraadt Exp $
+.\"	$OpenBSD: pathconf.2,v 1.4 1999/02/27 21:56:37 deraadt Exp $
 .\"	$NetBSD: pathconf.2,v 1.2 1995/02/27 12:35:22 cgd Exp $
 .\"
 .\" Copyright (c) 1993
@@ -129,7 +129,7 @@ argument is invalid.
 The implementation does not support an association of the variable
 name with the associated file.
 .El
-.Fn Pathconf
+.Fn pathconf
 will fail if:
 .Bl -tag -width ENAMETOOLONGAA
 .It Bq Er ENOTDIR
@@ -148,7 +148,7 @@ An I/O error occurred while reading from or writing to the file system.
 .El
 .Pp
 .Bl -tag -width [EFAULT]
-.Fn Fpathconf
+.Fn fpathconf
 will fail if:
 .It Bq Er EBADF
 .Fa fd

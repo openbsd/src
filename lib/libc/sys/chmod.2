@@ -1,4 +1,4 @@
-.\"	$OpenBSD: chmod.2,v 1.4 1997/11/18 07:10:08 millert Exp $
+.\"	$OpenBSD: chmod.2,v 1.5 1999/02/27 21:56:09 deraadt Exp $
 .\"	$NetBSD: chmod.2,v 1.7 1995/02/27 12:32:06 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -57,11 +57,11 @@ specified by the pathname
 .Fa path
 to
 .Fa mode .
-.Fn Fchmod
+.Fn fchmod
 sets the permission bits of the specified
 file descriptor
 .Fa fd .
-.Fn Chmod
+.Fn chmod
 verifies that the process owner (user) either owns
 the file specified by
 .Fa path
@@ -128,7 +128,7 @@ Otherwise, a value of -1 is returned and
 .Va errno
 is set to indicate the error.
 .Sh ERRORS
-.Fn Chmod
+.Fn chmod
 will fail and the file mode will be unchanged if:
 .Bl -tag -width Er
 .It Bq Er ENOTDIR
@@ -154,19 +154,19 @@ the effective user ID is not the super-user.
 .It Bq Er EROFS
 The named file resides on a read-only file system.
 .It Bq Er EFAULT
-.Fa Path
+.Fa path
 points outside the process's allocated address space.
 .It Bq Er EIO
 An I/O error occurred while reading from or writing to the file system.
 .El
 .Pp
-.Fn Fchmod
+.Fn fchmod
 will fail and the file mode will be unchanged if:
 .Bl -tag -width Er
 .It Bq Er EBADF
 The descriptor is not valid.
 .It Bq Er EINVAL
-.Fa Fd
+.Fa fd
 refers to a socket, not to a file.
 .It Bq Er EINVAL
 .Fa mode

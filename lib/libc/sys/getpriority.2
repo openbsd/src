@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getpriority.2,v 1.2 1998/07/06 18:27:35 deraadt Exp $
+.\"	$OpenBSD: getpriority.2,v 1.3 1999/02/27 21:56:22 deraadt Exp $
 .\"	$NetBSD: getpriority.2,v 1.4 1995/02/27 12:33:15 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -59,7 +59,7 @@ is obtained with the
 call and set with the
 .Fn setpriority
 call.
-.Fa Which
+.Fa which
 is one of
 .Dv PRIO_PROCESS ,
 .Dv PRIO_PGRP ,
@@ -79,7 +79,7 @@ and a user ID for
 A zero value of
 .Fa who
 denotes the current process, process group, or user.
-.Fa Prio
+.Fa prio
 is a value in the range -20 to 20.  The default priority is 0;
 lower priorities cause more favorable scheduling.
 .Pp
@@ -104,7 +104,7 @@ The
 call returns 0 if there is no error, or
 -1 if there is.
 .Sh ERRORS
-.Fn Getpriority
+.Fn getpriority
 and
 .Fn setpriority
 will fail if:
@@ -116,7 +116,7 @@ and
 .Fa who
 values specified.
 .It Bq Er EINVAL
-.Fa Which
+.Fa which
 was not one of
 .Dv PRIO_PROCESS ,
 .Dv PRIO_PGRP ,

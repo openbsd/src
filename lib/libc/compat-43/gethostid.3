@@ -29,7 +29,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: gethostid.3,v 1.2 1996/08/19 08:19:22 tholo Exp $
+.\"	$OpenBSD: gethostid.3,v 1.3 1999/02/27 21:54:49 deraadt Exp $
 .\"
 .Dd June 2, 1993
 .Dt GETHOSTID 3
@@ -45,14 +45,14 @@
 .Ft int
 .Fn sethostid "long hostid"
 .Sh DESCRIPTION
-.Fn Sethostid
+.Fn sethostid
 establishes a 32-bit identifier for the
 current processor that is intended to be unique among all
 UNIX systems in existence.  This is normally a DARPA Internet
 address for the local machine.  This call is allowed only to the
 super-user and is normally performed at boot time.
 .Pp
-.Fn Gethostid
+.Fn gethostid
 returns the 32-bit identifier for the current processor.
 .Pp
 This function has been deprecated.

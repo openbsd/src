@@ -54,7 +54,7 @@ it can overflow core when attempting to do so.
 On this rather rare occasion,
 .Fn initscr
 returns ERR.
-.Fn Initscr
+.Fn initscr
 must
 .bi always
 be called before any of the routines which affect windows are used.
@@ -89,7 +89,7 @@ Additional windows can be created by using the functions
 .Fn newwin
 and
 .Fn subwin .
-.Fn Delwin
+.Fn delwin
 allows you to delete an exisiting window.
 The variables
 .Vn LINES
@@ -115,14 +115,14 @@ used to change what will go on a window are
 .Fn addch
 and
 .Fn move .
-.Fn Addch
+.Fn addch
 adds a character at the current \*y,
 returning ERR if it would cause the window to illegally scroll,
 .i i.e. ,
 printing a character in the lower right-hand corner
 of a terminal which automatically scrolls
 if scrolling is not allowed.
-.Fn Move
+.Fn move
 changes the current \*y to whatever you want them to be.
 It returns ERR if you try to move off the window.
 As mentioned above, you can combine the two into

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fsync.2,v 1.2 1998/07/06 18:27:21 deraadt Exp $
+.\"	$OpenBSD: fsync.2,v 1.3 1999/02/27 21:56:16 deraadt Exp $
 .\"	$NetBSD: fsync.2,v 1.4 1995/02/27 12:32:38 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1993
@@ -45,14 +45,14 @@
 .Ft int
 .Fn fsync "int fd"
 .Sh DESCRIPTION
-.Fn Fsync
+.Fn fsync
 causes all modified data and attributes of
 .Fa fd
 to be moved to a permanent storage device.
 This normally results in all in-core modified copies
 of buffers for the associated file to be written to a disk.
 .Pp
-.Fn Fsync
+.Fn fsync
 should be used by programs that require a file to be
 in a known state, for example, in building a simple transaction
 facility.
@@ -65,10 +65,10 @@ The
 fails if:
 .Bl -tag -width Er
 .It Bq Er EBADF
-.Fa Fd
+.Fa fd
 is not a valid descriptor.
 .It Bq Er EINVAL
-.Fa Fd
+.Fa fd
 refers to a socket, not to a file.
 .It Bq Er EIO
 An I/O error occurred while reading from or writing to the file system.

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dup.2,v 1.3 1998/07/06 18:27:15 deraadt Exp $
+.\"	$OpenBSD: dup.2,v 1.4 1999/02/27 21:56:12 deraadt Exp $
 .\"	$NetBSD: dup.2,v 1.4 1995/02/27 12:32:21 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -48,7 +48,7 @@
 .Ft int
 .Fn dup2 "int oldd" "int newd"
 .Sh DESCRIPTION
-.Fn Dup
+.Fn dup
 duplicates an existing object descriptor and returns its value to
 the calling process
 .Fa ( newd
@@ -104,13 +104,13 @@ The external variable
 .Va errno
 indicates the cause of the error.
 .Sh ERRORS
-.Fn Dup
+.Fn dup
 and
 .Fn dup2
 fail if:
 .Bl -tag -width Er
 .It Bq Er EBADF
-.Fa Oldd
+.Fa oldd
 or
 .Fa newd
 is not a valid active descriptor
@@ -127,7 +127,7 @@ Too many descriptors are active.
 .Xr socketpair 2 ,
 .Xr getdtablesize 3
 .Sh STANDARDS
-.Fn Dup
+.Fn dup
 and
 .Fn dup2
 are expected to conform to 

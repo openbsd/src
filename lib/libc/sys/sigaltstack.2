@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sigaltstack.2,v 1.6 1998/12/05 17:55:52 espie Exp $
+.\"	$OpenBSD: sigaltstack.2,v 1.7 1999/02/27 21:56:50 deraadt Exp $
 .\"	$NetBSD: sigaltstack.2,v 1.3 1995/02/27 10:41:52 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1992, 1993
@@ -54,7 +54,7 @@ struct sigaltstack {
 .Ft int
 .Fn sigaltstack "const struct sigaltstack *ss" "struct sigaltstack *oss"
 .Sh DESCRIPTION
-.Fn Sigaltstack
+.Fn sigaltstack
 allows users to define an alternate stack on which signals
 are to be processed.
 If
@@ -141,7 +141,7 @@ Otherwise, a value of -1 is returned and
 .Va errno
 is set to indicate the error.
 .Sh ERRORS
-.Fn Sigaltstack
+.Fn sigaltstack
 will fail and the signal stack context will remain unchanged
 if one of the following occurs.
 .Bl -tag -width [ENOMEM]

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: poll.2,v 1.4 1998/08/17 17:35:12 deraadt Exp $
+.\"	$OpenBSD: poll.2,v 1.5 1999/02/27 21:56:38 deraadt Exp $
 .\"
 .\" Copyright (c) 1994 Jason R. Thorpe
 .\" All rights reserved.
@@ -39,7 +39,7 @@
 .Ft int
 .Fn poll "struct pollfd *fds" "int nfds" "int timeout"
 .Sh DESCRIPTION
-.Fn Poll
+.Fn poll
 provides a mechanism for reporting I/O conditions across a set of file
 descriptors.
 .Pp
@@ -158,7 +158,7 @@ returns the number of file descriptors for which
 .Pa revents
 is non-zero.
 .Sh ERRORS
-.Fn Poll
+.Fn poll
 will fail if:
 .Bl -tag -width "EINVAL   "
 .It Bq Er EINVAL

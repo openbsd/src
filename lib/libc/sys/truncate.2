@@ -1,4 +1,4 @@
-.\"	$OpenBSD: truncate.2,v 1.3 1998/07/06 18:28:52 deraadt Exp $
+.\"	$OpenBSD: truncate.2,v 1.4 1999/02/27 21:56:57 deraadt Exp $
 .\"	$NetBSD: truncate.2,v 1.7 1995/02/27 12:39:00 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -48,7 +48,7 @@
 .Ft int
 .Fn ftruncate "int fd" "off_t length"
 .Sh DESCRIPTION
-.Fn Truncate
+.Fn truncate
 causes the file named by
 .Fa path
 or referenced by
@@ -67,7 +67,7 @@ fails a -1 is returned, and the global variable
 .Va errno
 specifies the error.
 .Sh ERRORS
-.Fn Truncate
+.Fn truncate
 succeeds unless:
 .Bl -tag -width Er
 .It Bq Er ENOTDIR
@@ -95,14 +95,14 @@ The file is a pure procedure (shared text) file that is being executed.
 .It Bq Er EIO
 An I/O error occurred updating the inode.
 .It Bq Er EFAULT
-.Fa Path
+.Fa path
 points outside the process's allocated address space.
 .It Bq Er EPERM
 The effective user ID does not match the owner of the file and
 the effective user ID is not the super-user.
 .El
 .Pp
-.Fn Ftruncate
+.Fn ftruncate
 succeeds unless:
 .Bl -tag -width Er
 .It Bq Er EBADF

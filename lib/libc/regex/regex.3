@@ -1,4 +1,4 @@
-.\"	$OpenBSD: regex.3,v 1.5 1998/06/15 17:55:05 mickey Exp $
+.\"	$OpenBSD: regex.3,v 1.6 1999/02/27 21:55:37 deraadt Exp $
 .\"
 .\" Copyright (c) 1997, Phillip F Knaack. All rights reserved.
 .\"
@@ -73,7 +73,7 @@
 These routines implement POSIX 1003.2 regular expressions (``RE''s);
 see
 .Xr re_format 7 .
-.Fn Regcomp
+.Fn regcomp
 compiles an RE written as a string into an internal form,
 .Fn regexec
 matches that internal form against a string and reports results,
@@ -95,7 +95,7 @@ a type
 .Em regoff_t ,
 and a number of constants with names starting with ``REG_''.
 .Pp
-.Fn Regcomp
+.Fn regcomp
 compiles the regular expression contained in the
 .Fa pattern
 string,
@@ -105,7 +105,7 @@ and places the results in the
 .Em regex_t
 structure pointed to by
 .Fa preg .
-.Fa Cflags
+.Fa cflags
 is the bitwise OR of zero or more of the following flags:
 .Bl -tag -width XREG_EXTENDEDX
 .It REG_EXTENDED
@@ -181,7 +181,7 @@ If
 fails, it returns a non-zero error code;
 see DIAGNOSTICS.
 .Pp
-.Fn Regexec
+.Fn regexec
 matches the compiled RE pointed to by
 .Fa preg
 against the
@@ -328,7 +328,7 @@ the value of
 will not be changed by a successful
 .Fn regexec .
 .Pp
-.Fn Regerror
+.Fn regerror
 maps a non-zero
 .Va errcode
 from either
@@ -350,11 +350,11 @@ it should have been the result from the most recent
 .Fn regcomp
 using that
 .Em regex_t . (
-.Fn Regerror
+.Fn regerror
 may be able to supply a more detailed message using information
 from the
 .Em regex_t . )
-.Fn Regerror
+.Fn regerror
 places the NUL-terminated message into the buffer pointed to by
 .Fa errbuf ,
 limiting the length (including the NUL) to at most
@@ -400,7 +400,7 @@ and should be used with
 caution in software intended to be portable to other systems.
 Be warned also that they are considered experimental and changes are possible.
 .Pp
-.Fn Regfree
+.Fn regfree
 frees any dynamically-allocated storage associated with the compiled RE
 pointed to by
 .Fa preg .
@@ -528,14 +528,14 @@ and only the collating elements etc. of that locale are available.
 The back-reference code is subtle and doubts linger about its correctness
 in complex cases.
 .Pp
-.Fn Regexec
+.Fn regexec
 performance is poor.
 This will improve with later releases.
-.Fa Nmatch
+.Fa nmatch
 exceeding 0 is expensive;
 .Fa nmatch
 exceeding 1 is worse.
-.Fn Regexec
+.Fn regexec
 is largely insensitive to RE complexity 
 .Em except
 that back references are massively expensive.
@@ -543,7 +543,7 @@ RE length does matter; in particular, there is a strong speed bonus
 for keeping RE length under about 30 characters,
 with most special characters counting roughly double.
 .Pp
-.Fn Regcomp
+.Fn regcomp
 implements bounded repetitions by macro expansion,
 which is costly in time and space if counts are large
 or bounded repetitions are nested.
