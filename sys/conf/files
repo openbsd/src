@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.182 2000/12/17 21:34:57 mickey Exp $
+#	$OpenBSD: files,v 1.183 2001/01/23 04:19:42 krw Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -200,6 +200,10 @@ file	dev/ic/lpt.c		lpt & (lpt_isa | lpt_pica | lpt_algor | lpt_gsc | lpt_puc) ne
 device	sti: wsemuldisplaydev
 file	dev/ic/sti.c		sti & (sti_pci | sti_sgc)	needs-flag
 
+# Initio ULTRA WIDE/ULTRA2 WIDE SCSI Controllers
+device	iha: scsi
+file	dev/ic/iha.c		iha
+ 
 # Attributes which machine-independent bus support can be attached to.
 # These should be defined here, because some of these busses can have
 # devices which provide these attributes, and we'd like to avoid hairy
