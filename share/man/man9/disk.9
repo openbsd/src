@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disk.9,v 1.10 1999/09/22 09:54:37 espie Exp $
+.\"	$OpenBSD: disk.9,v 1.11 2000/04/26 20:11:16 mickey Exp $
 .\"	$NetBSD: disk.9,v 1.2 1996/04/08 20:41:25 jtc Exp $
 .\"
 .\" Copyright (c) 1995, 1996 Jason R. Thorpe.
@@ -46,7 +46,7 @@
 .Ft void
 .Fn disk_attach "struct disk *"
 .Ft void
-.Fn disk_detatch "struct disk *"
+.Fn disk_detach "struct disk *"
 .Ft void
 .Fn disk_busy "struct disk *"
 .Ft void
@@ -122,7 +122,7 @@ Attach a disk; allocate storage for the disklabel, set the
 .Dq attached time
 timestamp, insert the disk into the disklist, and intrement the
 system disk count.
-.It Fn disk_detatch
+.It Fn disk_detach
 Detatch a disk; free storage for the disklabel, remove the disk
 from the disklist, and decrement the system disk count.  If the count
 drops below zero, panic.
@@ -148,7 +148,7 @@ or NULL if the disk does not exist.
 .Pp
 The functions typically called by device drivers are
 .Fn disk_attach ,
-.Fn disk_detatch ,
+.Fn disk_detach ,
 .Fn disk_busy ,
 .Fn disk_unbusy ,
 and
@@ -337,12 +337,14 @@ and
 .Pp
 The
 .Ox
-.Nm ccd
+.Nm ccd ,
+.Nm raid ,
 and
 .Nm vnd
 drivers utilize the detachment capability of the framework.
 They are located in
-.Pa sys/dev/ccd.c
+.Pa sys/dev/ccd.c ,
+.Pa sys/dev/raidframe/ ,
 and
 .Pa sys/dev/vnd.c .
 .Sh AUTHOR
@@ -353,10 +355,12 @@ generic disk framework was architected and implemented within
 by Jason R. Thorpe <thorpej@NetBSD.ORG>.
 .Sh SEE ALSO
 .Xr ccd 4 ,
+.Xr raid 4 ,
 .Xr vnd 4 ,
 .Xr spl 9 .
 .Sh HISTORY
 The 
 .Ox
 generic disk framework first appeared in 
-.Nx at version 1.1A.
+.Nx
+1.1A.
