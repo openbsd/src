@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.5 2004/09/30 21:48:56 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.6 2004/10/01 18:58:09 miod Exp $	*/
 /*
  * Copyright (c) 2001-2004, Miodrag Vallat
  * Copyright (c) 1998-2001 Steve Murphree, Jr.
@@ -106,18 +106,6 @@ extern vaddr_t	last_addr;
 #define CD_ALL		0x0FFFFFC
 
 int pmap_con_dbg = 0;
-
-/*
- * Alignment checks for pages (must lie on page boundaries).
- */
-#define PAGE_ALIGNED(ad)	(((vaddr_t)(ad) & PAGE_MASK) == 0)
-#define	CHECK_PAGE_ALIGN(ad, who) \
-	if (!PAGE_ALIGNED(ad)) \
-		printf("%s: addr %x not page aligned.\n", who, ad)
-
-#else	/* DEBUG */
-
-#define	CHECK_PAGE_ALIGN(ad, who)
 
 #endif	/* DEBUG */
 
@@ -824,8 +812,6 @@ pmap_zero_page(struct vm_page *pg)
 	int cpu = cpu_number();
 	pt_entry_t *pte;
 
-	CHECK_PAGE_ALIGN(pa, "pmap_zero_page");
-
 	va = (vaddr_t)(phys_map_vaddr + 2 * (cpu << PAGE_SHIFT));
 	pte = pmap_pte(kernel_pmap, va);
 
@@ -1401,7 +1387,6 @@ next:
  *
  *	Calls:
  *		PMAP_LOCK, PMAP_UNLOCK
- *		CHECK_PAGE_ALIGN
  *		pmap_pte
  *		PDT_VALID
  *
@@ -1435,8 +1420,6 @@ pmap_protect(pmap_t pmap, vaddr_t s, vaddr_t e, vm_prot_t prot)
 
 	users = pmap->pm_cpus;
 	kflush = pmap == kernel_pmap;
-
-	CHECK_PAGE_ALIGN(s, "pmap_protect");
 
 	/*
 	 * Loop through the range in vm_page_size increments.
@@ -1520,8 +1503,6 @@ pmap_expand(pmap_t pmap, vaddr_t v)
 	if (pmap_con_dbg & CD_EXP)
 		printf ("(pmap_expand: %x) map %x v %x\n", curproc, pmap, v);
 #endif
-
-	CHECK_PAGE_ALIGN(v, "pmap_expand");
 
 	/* XXX */
 	pdt_vaddr = uvm_km_zalloc(kernel_map, PAGE_SIZE);
@@ -1646,9 +1627,6 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	boolean_t kflush;
 	boolean_t wired = (flags & PMAP_WIRED) != 0;
 	struct vm_page *pg;
-
-	CHECK_PAGE_ALIGN(va, "pmap_entry - va");
-	CHECK_PAGE_ALIGN(pa, "pmap_entry - pa");
 
 #ifdef DEBUG
 	if (pmap_con_dbg & CD_ENT) {
@@ -2087,9 +2065,6 @@ pmap_copy_page(struct vm_page *srcpg, struct vm_page *dstpg)
 	pt_entry_t *dstpte, *srcpte;
 	int cpu = cpu_number();
 
-	CHECK_PAGE_ALIGN(src, "pmap_copy_page - src");
-	CHECK_PAGE_ALIGN(dst, "pmap_copy_page - dst");
-
 	dstva = (vaddr_t)(phys_map_vaddr + 2 * (cpu << PAGE_SHIFT));
 	srcva = dstva + PAGE_SIZE;
 	dstpte = pmap_pte(kernel_pmap, dstva);
@@ -2466,9 +2441,6 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 	pt_entry_t template, *pte;
 	u_int users;
 
-	CHECK_PAGE_ALIGN(va, "pmap_kenter_pa - VA");
-	CHECK_PAGE_ALIGN(pa, "pmap_kenter_pa - PA");
-
 #ifdef DEBUG
 	if (pmap_con_dbg & CD_ENT) {
 		printf ("(pmap_kenter_pa: %x) va %x pa %x\n", curproc, va, pa);
@@ -2518,9 +2490,6 @@ pmap_kremove(vaddr_t va, vsize_t len)
 	if (pmap_con_dbg & CD_RM)
 		printf("(pmap_kremove: %x) va %x len %x\n", curproc, va, len);
 #endif
-
-	CHECK_PAGE_ALIGN(va, "pmap_kremove addr");
-	CHECK_PAGE_ALIGN(len, "pmap_kremove len");
 
 	PMAP_LOCK(kernel_pmap, spl);
 	users = kernel_pmap->pm_cpus;
