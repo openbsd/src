@@ -1,4 +1,4 @@
-/*	$OpenBSD: diffreg.c,v 1.47 2003/07/31 20:00:03 otto Exp $	*/
+/*	$OpenBSD: diffreg.c,v 1.48 2003/08/08 16:09:26 otto Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -65,7 +65,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: diffreg.c,v 1.47 2003/07/31 20:00:03 otto Exp $";
+static const char rcsid[] = "$OpenBSD: diffreg.c,v 1.48 2003/08/08 16:09:26 otto Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -202,7 +202,7 @@ static void range(int, int, char *);
 static void uni_range(int, int);
 static void dump_context_vec(FILE *, FILE *);
 static void dump_unified_vec(FILE *, FILE *);
-static void prepare(int, FILE *);
+static void prepare(int, FILE *, off_t);
 static void prune(void);
 static void equiv(struct line *, int, struct line *, int, int *);
 static void unravel(int);
@@ -402,8 +402,8 @@ diffreg(char *ofile1, char *ofile2, int flags)
 		}
 	} else if (flags & D_HEADER)
 		printf("%s %s %s\n", diffargs, file1, file2);
-	prepare(0, f1);
-	prepare(1, f2);
+	prepare(0, f1, stb1.st_size);
+	prepare(1, f2, stb2.st_size);
 	prune();
 	sort(sfile[0], slen[0]);
 	sort(sfile[1], slen[1]);
@@ -537,14 +537,18 @@ splice(char *dir, char *file)
 }
 
 static void
-prepare(int i, FILE *fd)
+prepare(int i, FILE *fd, off_t filesize)
 {
 	struct line *p;
 	int j, h;
-	int sz;
+	size_t sz;
 
 	rewind(fd);
-	sz = 100;
+
+	sz = (filesize <= SIZE_MAX ? filesize : SIZE_MAX) / 25;
+	if (sz < 100)
+		sz = 100;
+
 	p = emalloc((sz + 3) * sizeof(struct line));
 	for (j = 0; (h = readhash(fd));) {
 		if (j == sz) {
