@@ -1,5 +1,5 @@
-	$OpenBSD: syscalls.master,v 1.5 1996/08/02 21:55:17 niklas Exp $
-;	$NetBSD: syscalls.master,v 1.8 1996/01/07 06:09:43 mycroft Exp $
+	$OpenBSD: syscalls.master,v 1.6 1997/01/23 16:12:20 niklas Exp $
+;	$NetBSD: syscalls.master,v 1.10 1996/09/07 14:21:59 mycroft Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -160,8 +160,8 @@
 86	STD		{ int ibcs2_sys_putmsg(int fd, \
 			    struct ibcs2_stropts *ctl, \
 			    struct ibcs2_stropts *dat, int flags); }
-87	NOARGS		{ int sys_poll(struct pollfd *fds, \
-			    unsigned long nfds, int timeout); }
+87	NOARGS		{ int sys_poll(struct pollfd *fds, u_long nfds, \
+			    int timeout); }
 88	UNIMPL
 89	UNIMPL
 90	STD		{ int ibcs2_sys_symlink(char *path, char *link); }

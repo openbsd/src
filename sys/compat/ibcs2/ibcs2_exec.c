@@ -1,5 +1,5 @@
-/*	$OpenBSD: ibcs2_exec.c,v 1.4 1996/08/31 09:24:02 pefo Exp $	*/
-/*	$NetBSD: ibcs2_exec.c,v 1.11 1996/05/03 17:05:19 christos Exp $	*/
+/*	$OpenBSD: ibcs2_exec.c,v 1.5 1997/01/23 16:12:16 niklas Exp $	*/
+/*	$NetBSD: ibcs2_exec.c,v 1.12 1996/10/12 02:13:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Scott Bartram
@@ -38,6 +38,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
+#include <sys/exec.h>
 #include <sys/malloc.h>
 #include <sys/vnode.h>
 #include <sys/resourcevar.h>

@@ -1,5 +1,5 @@
-/*	$OpenBSD: ibcs2_util.h,v 1.2 1996/08/02 20:35:18 niklas Exp $	*/
-/*	$NetBSD: ibcs2_util.h,v 1.2 1995/06/24 20:19:06 christos Exp $	*/
+/*	$OpenBSD: ibcs2_util.h,v 1.3 1997/01/23 16:12:20 niklas Exp $	*/
+/*	$NetBSD: ibcs2_util.h,v 1.4 1996/10/13 00:46:52 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ibcs2_socksys.c,v 1.3 1996/08/02 20:35:10 niklas Exp $	*/
+/*	$OpenBSD: ibcs2_socksys.c,v 1.4 1997/01/23 16:12:19 niklas Exp $	*/
 /*	$NetBSD: ibcs2_socksys.c,v 1.4 1996/05/03 17:05:29 christos Exp $	*/
 
 /*
@@ -131,8 +131,8 @@ ibcs2_socksys(p, v, retval)
 
 	default:
 		printf("socksys unknown %08x %08x %08x %08x %08x %08x %08x\n",
-                       realargs[0], realargs[1], realargs[2], realargs[3], 
-                       realargs[4], realargs[5], realargs[6]);
+		    realargs[0], realargs[1], realargs[2], realargs[3], 
+		    realargs[4], realargs[5], realargs[6]);
 		return EINVAL;
 	}
 	/* NOTREACHED */

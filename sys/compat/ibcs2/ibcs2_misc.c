@@ -1,5 +1,5 @@
-/*	$OpenBSD: ibcs2_misc.c,v 1.7 1996/08/10 12:09:22 deraadt Exp $	*/
-/*	$NetBSD: ibcs2_misc.c,v 1.15 1996/05/03 17:05:25 christos Exp $	*/
+/*	$OpenBSD: ibcs2_misc.c,v 1.8 1997/01/23 16:12:18 niklas Exp $	*/
+/*	$NetBSD: ibcs2_misc.c,v 1.23 1997/01/15 01:37:49 perry Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Scott Bartram
@@ -418,7 +418,8 @@ again:
 		idb.d_off = (ibcs2_off_t)off;
 		idb.d_reclen = (u_short)ibcs2_reclen;
 		strcpy(idb.d_name, bdp->d_name);
-		if ((error = copyout((caddr_t)&idb, outp, ibcs2_reclen)))
+		error = copyout((caddr_t)&idb, outp, ibcs2_reclen);
+		if (error)
 			goto out;
 		/* advance past this real entry */
 		inp += reclen;
@@ -453,11 +454,11 @@ ibcs2_sys_read(p, v, retval)
 		syscallarg(u_int) nbytes;
 	} */ *uap = v;
 	register struct dirent *bdp;
-	register struct vnode *vp;
-	register caddr_t inp, buf;	/* BSD-format */
-	register int len, reclen;	/* BSD-format */
-	register caddr_t outp;		/* iBCS2-format */
-	register int resid;		/* iBCS2-format */
+	struct vnode *vp;
+	caddr_t inp, buf;	/* BSD-format */
+	int len, reclen;	/* BSD-format */
+	caddr_t outp;		/* iBCS2-format */
+	int resid, ibcs2_reclen;/* iBCS2-format */
 	struct file *fp;
 	struct uio auio;
 	struct iovec aiov;
@@ -504,12 +505,9 @@ again:
 	 */
 	error = VOP_READDIR(vp, &auio, fp->f_cred, &eofflag, cookiebuf,
 	    ncookies);
-	if (error) {
-		DPRINTF(("VOP_READDIR failed: %d\n", error));
+	if (error)
 		goto out;
-	}
-	inp = buf + off;
-	buflen -= off;
+	inp = buf;
 	outp = SCARG(uap, buf);
 	resid = SCARG(uap, nbytes);
 	if ((len = buflen - auio.uio_resid) == 0)
@@ -519,12 +517,13 @@ again:
 		reclen = bdp->d_reclen;
 		if (reclen & 3)
 			panic("ibcs2_read");
+		off = *cookie++;	/* each entry points to the next */
 		if (bdp->d_fileno == 0) {
 			inp += reclen;	/* it is a hole; squish it out */
-			off = *cookie++;
 			continue;
 		}
-		if (reclen > len || resid < sizeof(struct ibcs2_direct)) {
+		ibcs2_reclen = 16;
+		if (reclen > len || resid < ibcs2_reclen) {
 			/* entry too big for buffer, so just stop */
 			outp++;
 			break;
@@ -540,15 +539,14 @@ again:
 		idb.ino = (bdp->d_fileno > 0xfffe) ? 0xfffe : bdp->d_fileno;
 		(void)copystr(bdp->d_name, idb.name, 14, &size);
 		bzero(idb.name + size, 14 - size);
-		error = copyout(&idb, outp, sizeof(struct ibcs2_direct));
+		error = copyout(&idb, outp, ibcs2_reclen);
 		if (error)
 			goto out;
 		/* advance past this real entry */
-		off = *cookie++;	/* each entry points to the next */
 		inp += reclen;
 		/* advance output past iBCS2-shaped entry */
-		outp += sizeof(struct ibcs2_direct);
-		resid -= sizeof(struct ibcs2_direct);
+		outp += ibcs2_reclen;
+		resid -= ibcs2_reclen;
 	}
 	/* if we squished out the whole block, try again */
 	if (outp == SCARG(uap, buf))
@@ -641,8 +639,7 @@ ibcs2_sys_setgroups(p, v, retval)
 	caddr_t sg = stackgap_init(p->p_emul);
 
 	SCARG(&sa, gidsetsize) = SCARG(uap, gidsetsize);
-	SCARG(&sa, gidset) = stackgap_alloc(&sg, SCARG(&sa, gidsetsize) *
-					    sizeof(gid_t *));
+	gp = stackgap_alloc(&sg, SCARG(&sa, gidsetsize) * sizeof(gid_t *));
 	iset = stackgap_alloc(&sg, SCARG(&sa, gidsetsize) *
 			      sizeof(ibcs2_gid_t *));
 	if (SCARG(&sa, gidsetsize)) {
@@ -651,8 +648,9 @@ ibcs2_sys_setgroups(p, v, retval)
 		if (error)
 			return error;
 	}
-	for (i = 0, gp = SCARG(&sa, gidset); i < SCARG(&sa, gidsetsize); i++)
-		*gp++ = (gid_t)iset[i];
+	for (i = 0; i < SCARG(&sa, gidsetsize); i++)
+		gp[i]= (gid_t)iset[i];
+	SCARG(&sa, gidset) = gp;
 	return sys_setgroups(p, &sa, retval);
 }
 
@@ -704,7 +702,8 @@ xenix_sys_ftime(p, v, retval)
 	itb.millitm = (tv.tv_usec / 1000);
 	itb.timezone = tz.tz_minuteswest;
 	itb.dstflag = tz.tz_dsttime;
-	return copyout((caddr_t)&itb, (caddr_t)SCARG(uap, tp), xenix_timeb_len);
+	return copyout((caddr_t)&itb, (caddr_t)SCARG(uap, tp),
+	    xenix_timeb_len);
 }
 
 int
@@ -962,14 +961,16 @@ ibcs2_sys_stime(p, v, retval)
 	int error;
 	struct sys_settimeofday_args sa;
 	caddr_t sg = stackgap_init(p->p_emul);
+	struct timeval *tvp;
 
-	SCARG(&sa, tv) = stackgap_alloc(&sg, sizeof(*SCARG(&sa, tv)));
+	tvp = stackgap_alloc(&sg, sizeof(*SCARG(&sa, tv)));
 	SCARG(&sa, tzp) = NULL;
-	error = copyin((caddr_t)SCARG(uap, timep),
-	    &(SCARG(&sa, tv)->tv_sec), sizeof(long));
+	error = copyin((caddr_t)SCARG(uap, timep), (void *)&tvp->tv_sec,
+	    sizeof(long));
 	if (error)
 		return error;
-	SCARG(&sa, tv)->tv_usec = 0;
+	tvp->tv_usec = 0;
+	SCARG(&sa, tv) = tvp;
 	if ((error = sys_settimeofday(p, &sa, retval)) != 0)
 		return EPERM;
 	return 0;
@@ -999,14 +1000,12 @@ ibcs2_sys_utime(p, v, retval)
 		    sizeof(ubuf));
 		if (error)
 			return error;
-		SCARG(&sa, tptr) = stackgap_alloc(&sg,
-						  2 * sizeof(struct timeval *));
-		tp = (struct timeval *)SCARG(&sa, tptr);
-		tp->tv_sec = ubuf.actime;
-		tp->tv_usec = 0;
-		tp++;
-		tp->tv_sec = ubuf.modtime;
-		tp->tv_usec = 0;
+		tp = stackgap_alloc(&sg, 2 * sizeof(struct timeval *));
+		tp[0].tv_sec = ubuf.actime;
+		tp[0].tv_usec = 0;
+		tp[1].tv_sec = ubuf.modtime;
+		tp[1].tv_usec = 0;
+		SCARG(&sa, tptr) = tp;
 	} else
 		SCARG(&sa, tptr) = NULL;
 	return sys_utimes(p, &sa, retval);
@@ -1026,10 +1025,10 @@ ibcs2_sys_nice(p, v, retval)
 
 	SCARG(&sa, which) = PRIO_PROCESS;
 	SCARG(&sa, who) = 0;
-	SCARG(&sa, prio) = p->p_nice + SCARG(uap, incr);
+	SCARG(&sa, prio) = p->p_nice - PZERO + SCARG(uap, incr);
 	if ((error = sys_setpriority(p, &sa, retval)) != 0)
 		return EPERM;
-	*retval = p->p_nice;
+	*retval = p->p_nice - PZERO;
 	return 0;
 }
 
