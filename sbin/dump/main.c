@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.13 1997/02/04 10:06:20 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.14 1997/02/10 04:19:55 millert Exp $	*/
 /*	$NetBSD: main.c,v 1.8 1996/03/15 22:39:32 scottr Exp $	*/
 
 /*-
@@ -126,7 +126,7 @@ main(argc, argv)
 		usage();
 
 	obsolete(&argc, &argv);
-	while ((ch = getopt(argc, argv, "0123456789B:b:cd:f:h:ns:T:uWw")) != -1)
+	while ((ch = getopt(argc, argv, "0123456789aB:b:cd:f:h:ns:T:uWw")) != -1)
 		switch (ch) {
 		/* dump level */
 		case '0': case '1': case '2': case '3': case '4':
