@@ -97,8 +97,6 @@
 
 #if !defined(__OpenBSD__)
 #include "atapibus.h"
-#else
-#include "atapiscsi.h"
 #endif
 
 #include <sys/param.h>
@@ -153,8 +151,6 @@
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
 #include <machine/bus.h>
-#include <dev/ata/atavar.h>	/* XXX */
-#include <dev/ic/wdcvar.h>
 #endif
 
 #ifdef UMASS_DEBUG
@@ -173,7 +169,7 @@
 #define UDMASS_XFER	0x40000000	/* all transfers */
 #define UDMASS_CMD	0x80000000
 
-int umassdebug = 0; //UDMASS_ALL;
+int umassdebug = 0;
 #else
 #define DIF(m, x)	/* nop */
 #define DPRINTF(m, x)	/* nop */
@@ -465,10 +461,12 @@ struct umass_softc {
 #elif defined(__NetBSD__) || defined(__OpenBSD__)
 	union {
 		struct scsipi_link	sc_link;
+#if defined(__NetBSD__)
 		struct {
 			struct ata_atapi_attach	sc_aa;
 			struct ata_drive_datas	sc_aa_drive;
 		} aa;
+#endif
 	} u;
 #if defined(__NetBSD__)
 	struct atapi_adapter	sc_atapi_adapter;
@@ -1061,10 +1059,20 @@ USB_ATTACH(umass)
 	switch (sc->proto & PROTO_COMMAND) {
 	case PROTO_SCSI:
 	case PROTO_UFI:
+#if defined(__OpenBSD__)
+	case PROTO_8070:
+#endif
 #if defined(__NetBSD__)
 		sc->u.sc_link.type = BUS_SCSI;
-#else
-		sc->u.sc_link.flags &= ~SDEV_ATAPI;
+#endif
+#if defined(__OpenBSD__)
+		if ((sc->proto & PROTO_COMMAND) != PROTO_SCSI)
+			sc->u.sc_link.flags |= SDEV_ATAPI;
+		else
+			sc->u.sc_link.flags &= ~SDEV_ATAPI;
+
+		sc->u.sc_link.adapter_buswidth = 2;
+		sc->u.sc_link.adapter_target = UMASS_SCSIID_HOST; 
 #endif
 
 		sc->u.sc_link.adapter_softc = sc;
@@ -1082,6 +1090,7 @@ USB_ATTACH(umass)
 			sc->u.sc_link.quirks |= ADEV_NOTUR;
 		break;
 
+#if !defined(__OpenBSD__)
 #if NATAPIBUS > 0
 	case PROTO_8070:
 		sc->u.aa.sc_aa.aa_type = T_ATAPI;
@@ -1092,6 +1101,7 @@ USB_ATTACH(umass)
 		sc->sc_atapi_adapter.atapi_probedev = umass_atapi_probedev;
 		sc->sc_atapi_adapter.atapi_kill_pending = scsi_kill_pending;
 		break;
+#endif
 #endif
 
 	default:
@@ -1122,19 +1132,16 @@ scsipiprint(aux, pnp)
 	void *aux;
 	const char *pnp;
 {
+#if !defined(__OpenBSD__)
 	extern int atapi_print __P((void *aux, const char *pnp));
 	struct scsipi_link *l = aux;
 
-#if !defined(__OpenBSD__)
 	if (l->type == BUS_SCSI)
 		return (scsiprint(aux, pnp));
 	else
 		return (atapi_print(aux, pnp));
 #else
-	if (l->flags & SDEV_ATAPI)
-		return (atapi_print(aux, pnp));
-	else
-		return (scsiprint(aux, pnp));
+	return (scsiprint(aux, pnp));
 #endif
 }
 
@@ -1301,7 +1308,8 @@ umass_setup_ctrl_transfer(struct umass_softc *sc, usbd_device_handle dev,
 	/* Initialiase a USB control transfer and then schedule it */
 
 	usbd_setup_default_xfer(xfer, dev, (void *) sc,
-	    sc->timeout, req, buffer, buflen, flags, sc->state);
+	    sc->timeout, req, buffer, buflen, 
+	    flags | sc->sc_xfer_flags, sc->state);
 
 	err = usbd_transfer(xfer);
 	if (err && err != USBD_IN_PROGRESS) {
@@ -1822,6 +1830,9 @@ umass_cbi_adsc(struct umass_softc *sc, char *buffer, int buflen,
 {
 	usbd_device_handle dev;
 
+	DPRINTF(UDMASS_CBI,("%s: umass_cbi_adsc\n",
+		USBDEVNAME(sc->sc_dev)));
+
 	KASSERT(sc->proto & (PROTO_CBI|PROTO_CBI_I),
 		("sc->proto == 0x%02x wrong for umass_cbi_adsc\n",sc->proto));
 
@@ -1974,10 +1985,10 @@ umass_cbi_state(usbd_xfer_handle xfer, usbd_private_handle priv,
 			/* Status transport by control pipe (section 2.3.2.1).
 			 * The command contained in the command block failed.
 			 *
-			 * The control pipe has already been unstalled by the
-			 * USB stack.
-			 * Section 2.4.3.1.1 states that the bulk in endpoints
-			 * should not stalled at this point.
+                         * The control pipe has already been unstalled by the
+                         * USB stack.
+                         * Section 2.4.3.1.1 states that the bulk in endpoints
+                         * should not stalled at this point.
 			 */
 
 			sc->transfer_state = TSTATE_IDLE;
@@ -3062,17 +3073,28 @@ umass_scsipi_cmd(xs)
 	int cmdlen;
 	int dir;
 
+#if defined(__NetBSD__)
 	DIF(UDMASS_UPPER, sc_link->flags |= DEBUGLEVEL);
+#endif
+#if defined(__OpenBSD__)
+	DIF(UDMASS_UPPER, sc_link->flags |= SCSIDEBUG_LEVEL);
+#endif
 
+#if defined(__NetBSD__)
 	DPRINTF(UDMASS_CMD, ("%s: umass_scsi_cmd:  %d:%d xs=%p cmd=0x%02x "
 	    "(quirks=0x%x, poll=%d)\n", USBDEVNAME(sc->sc_dev),
-#if defined(__NetBSD__)
 	    sc_link->scsipi_scsi.target, sc_link->scsipi_scsi.lun,
-#else
-	    sc_link->scsipi_scsi.target, sc_link->lun,
-#endif
 	    xs, xs->cmd->opcode, sc_link->quirks, 
 	    xs->xs_control & XS_CTL_POLL));
+#endif
+#if defined(__OpenBSD__)
+	DPRINTF(UDMASS_CMD, ("%s: umass_scsi_cmd:  %d:%d xs=%p cmd=0x%02x "
+	    "(quirks=0x%x, poll=%d)\n", USBDEVNAME(sc->sc_dev),
+	    sc_link->target, sc_link->lun,
+	    xs, xs->cmd->opcode, sc_link->quirks, 
+	    xs->xs_control & XS_CTL_POLL));
+#endif
+
 #if defined(USB_DEBUG) && defined(SCSIDEBUG)
 	if (umassdebug & UDMASS_SCSI)
 		show_scsipi_xs(xs);
@@ -3086,11 +3108,8 @@ umass_scsipi_cmd(xs)
 	}
 
 #ifdef UMASS_DEBUG
-#if !defined(__OpenBSD__)
+#if defined(__NetBSD__)
 	if ((sc_link->type == BUS_ATAPI ? 
-#else
-	if ((sc_link->flags & SDEV_ATAPI ?
-#endif
 	     sc_link->scsipi_atapi.drive : sc_link->scsipi_scsi.target) 
 	    != UMASS_SCSIID_DEVICE) {
 		DPRINTF(UDMASS_SCSI, ("%s: wrong SCSI ID %d\n",
@@ -3100,6 +3119,18 @@ umass_scsipi_cmd(xs)
 		goto done;
 	}
 #endif
+#if defined(__OpenBSD__)
+	if (sc_link->target != UMASS_SCSIID_DEVICE) {
+		DPRINTF(UDMASS_SCSI, ("%s: wrong SCSI ID %d\n",
+		    USBDEVNAME(sc->sc_dev),
+		    sc_link->target));
+		xs->error = XS_DRIVER_STUFFUP;
+		goto done;
+	}
+#endif
+#endif
+
+
 
 	if (xs->cmd->opcode == SCSI_MODE_SENSE &&
 	    (sc_link->quirks & SDEV_NOMODESENSE)) {
@@ -3145,7 +3176,8 @@ umass_scsipi_cmd(xs)
 		sc->sc_sync_status = USBD_INVAL;
 #if defined(__NetBSD__)
 		sc->transfer(sc, sc_link->scsipi_scsi.lun, xs->cmd, cmdlen,
-#else
+#endif
+#if defined(__OpenBSD__)
 		sc->transfer(sc, sc_link->lun, xs->cmd, cmdlen,
 #endif
 			     xs->data, xs->datalen, dir, 0, xs);
@@ -3170,7 +3202,8 @@ umass_scsipi_cmd(xs)
 				      dir, cmdlen, xs->datalen));
 #if defined(__NetBSD__)
 		sc->transfer(sc, sc_link->scsipi_scsi.lun, xs->cmd, cmdlen,
-#else
+#endif
+#if defined(__OpenBSD__)
 		sc->transfer(sc, sc_link->lun, xs->cmd, cmdlen,
 #endif
 		    xs->data, xs->datalen, dir, umass_scsipi_cb, xs);
@@ -3179,7 +3212,13 @@ umass_scsipi_cmd(xs)
 
 	/* Return if command finishes early. */
  done:
+#if defined(__NetBSD__)
 	xs->xs_status |= XS_STS_DONE;
+#endif
+#if defined(__OpenBSD__)
+	xs->flags |= ITSDONE;
+#endif
+	
 	scsipi_done(xs);
 	if (xs->xs_control & XS_CTL_POLL)
 		return (COMPLETE);
@@ -3243,7 +3282,8 @@ umass_scsipi_cb(struct umass_softc *sc, void *priv, int residue, int status)
 		sc->sc_sense_cmd.opcode = REQUEST_SENSE;
 #if defined(__NetBSD__)
 		sc->sc_sense_cmd.byte2 = sc_link->scsipi_scsi.lun <<
-#else
+#endif
+#if defined(__OpenBSD__)
 		sc->sc_sense_cmd.byte2 = sc_link->lun <<
 #endif
 		    SCSI_CMD_LUN_SHIFT;
@@ -3254,7 +3294,8 @@ umass_scsipi_cb(struct umass_softc *sc, void *priv, int residue, int status)
 			cmdlen = UFI_PROTO_LEN;
 #if defined(__NetBSD__)
 		sc->transfer(sc, sc_link->scsipi_scsi.lun,
-#else
+#endif
+#if defined(__OpenBSD__)
 		sc->transfer(sc, sc_link->lun,
 #endif
 			     &sc->sc_sense_cmd, cmdlen,
@@ -3271,7 +3312,12 @@ umass_scsipi_cb(struct umass_softc *sc, void *priv, int residue, int status)
 			USBDEVNAME(sc->sc_dev), status);
 	}
 
+#if defined(__NetBSD__)
 	xs->xs_status |= XS_STS_DONE;
+#endif
+#if defined(__OpenBSD__)
+	xs->flags |= ITSDONE;
+#endif
 
 	DPRINTF(UDMASS_CMD,("umass_scsipi_cb: return xs->error=%d, "
 		"xs->xs_status=0x%x xs->resid=%d\n", xs->error, xs->xs_status,
@@ -3291,19 +3337,33 @@ umass_scsipi_sense_cb(struct umass_softc *sc, void *priv, int residue,
 {
 	struct scsipi_xfer *xs = priv;
 	int s;
+	int bytes_received;
 
 	DPRINTF(UDMASS_CMD,("umass_scsipi_sense_cb: xs=%p residue=%d "
-		"status=%d\n", xs, residue, status));
+	    "status=%d\n", xs, residue, status));
 
 	switch (status) {
 	case STATUS_CMD_OK:
 	case STATUS_CMD_UNKNOWN:
 		/* getting sense data succeeded */
-		/* XXX look at residue */
-		if (residue == 0 || residue == 14)/* XXX */
-			xs->error = XS_SENSE;
-		else
+		bytes_received = sizeof(xs->sense) - residue;
+
+		if (bytes_received < 8 || 
+		    (bytes_received < xs->sense.extra_len + 8)) 
 			xs->error = XS_SHORTSENSE;
+	        else
+			xs->error = XS_SENSE;
+
+#if defined(__OpenBSD__)
+		/* Note that this test may need to be revised
+		   with QIC-157a/SCSI tape drives that return
+		   ILI, EOM in the high bits of flags.
+	         */
+		if ((xs->sense.error_code & SSD_ERRCODE) == 0x70 &&
+		    (xs->sense.flags == 0))
+			xs->error = XS_NOERROR;
+#endif
+		
 		break;
 	default:
 		DPRINTF(UDMASS_SCSI, ("%s: Autosense failed, status %d\n",
@@ -3312,7 +3372,12 @@ umass_scsipi_sense_cb(struct umass_softc *sc, void *priv, int residue,
 		break;
 	}
 
+#if defined(__NetBSD__)
 	xs->xs_status |= XS_STS_DONE;
+#endif
+#if defined(__OpenBSD__)
+	xs->flags |= ITSDONE;
+#endif
 
 	DPRINTF(UDMASS_CMD,("umass_scsipi_sense_cb: return xs->error=%d, "
 		"xs->xs_status=0x%x xs->resid=%d\n", xs->error, xs->xs_status,
