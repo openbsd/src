@@ -86,7 +86,7 @@ extern "C" {
 /* Set default for Windows file system */
 #define HTTPD_ROOT "/apache"
 #else
-#define HTTPD_ROOT "/usr/local/apache"
+#define HTTPD_ROOT "/var/www"
 #endif
 #endif /* HTTPD_ROOT */
 
@@ -98,7 +98,7 @@ extern "C" {
 /* Set default for OS/2 file system */
 #define DOCUMENT_LOCATION  HTTPD_ROOT "/docs"
 #else
-#define DOCUMENT_LOCATION  HTTPD_ROOT "/htdocs"
+#define DOCUMENT_LOCATION  HTTPD_ROOT "/var/www/htdocs"
 #endif
 #endif /* DOCUMENT_LOCATION */
 
