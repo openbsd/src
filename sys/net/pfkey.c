@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.11 2001/06/08 03:58:48 angelos Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.12 2002/12/11 21:48:40 fgsch Exp $	*/
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -140,7 +140,7 @@ pfkey_sendup(struct socket *socket, struct mbuf *packet, int more)
   int s;
 
   if (more) {
-    if (!(packet2 = m_copym(packet, 0, M_COPYALL, M_DONTWAIT)))
+    if (!(packet2 = m_copym2(packet, 0, M_COPYALL, M_DONTWAIT)))
       return ENOMEM;
   } else
     packet2 = packet;
