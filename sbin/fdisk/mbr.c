@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbr.c,v 1.10 2000/07/01 21:49:12 mickey Exp $	*/
+/*	$OpenBSD: mbr.c,v 1.11 2000/07/07 13:37:00 rahnds Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -77,7 +77,7 @@ MBR_init(disk_t *disk, mbr_t *mbr)
 	mbr->part[3].ns += mbr->part[3].bs;
 	mbr->part[3].bs = mbr->part[0].bs + mbr->part[0].ns;
 	mbr->part[3].ns -= mbr->part[3].bs;
-	PRT_fix_CHS(disk, &mbr->part[3]);
+	PRT_fix_CHS(disk, &mbr->part[3], 3);
 	if ((mbr->part[3].shead != 1) || (mbr->part[3].ssect != 1)) {
 		/* align the partition on a cylinder boundary */
 		mbr->part[3].shead = 0;
@@ -85,7 +85,7 @@ MBR_init(disk_t *disk, mbr_t *mbr)
 		mbr->part[3].scyl += 1;
 	}
 	/* Fix up start/length fields */
-	PRT_fix_BN(disk, &mbr->part[3]);
+	PRT_fix_BN(disk, &mbr->part[3], 3);
 #endif
 }
 
