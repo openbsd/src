@@ -1,4 +1,4 @@
-/* $OpenBSD: trace.c,v 1.2 2001/09/27 11:40:33 espie Exp $ */
+/* $OpenBSD: trace.c,v 1.3 2001/09/29 15:47:18 espie Exp $ */
 /*
  * Copyright (c) 2001 Marc Espie.
  *
@@ -57,6 +57,7 @@ static struct t {
 static unsigned int letter_to_flag __P((int));
 static void print_header __P((struct input_file *));
 static struct t *find_trace_entry __P((const char *));
+static int frame_level __P((void));
 
 static unsigned int flags = TRACE_QUOTE | TRACE_EXPANSION;
 
@@ -189,6 +190,18 @@ set_trace_flags(s)
 	}
 }
 
+static int
+frame_level()
+{
+	int level;
+	int framep;
+
+	for (framep = fp, level = 0; framep != 0; 
+		level++,framep = mstack[framep-2].sfra)
+		;
+	return level;
+}
+
 static void
 print_header(inp)
 	struct input_file *inp;
@@ -198,7 +211,7 @@ print_header(inp)
 		fprintf(traceout, "%s:", inp->name);
 	if (flags & TRACE_LINENO)
 		fprintf(traceout, "%lu:", inp->lineno);
-	fprintf(traceout, " -1- ");
+	fprintf(traceout, " -%d- ", frame_level());
 	if (flags & TRACE_ID)
 		fprintf(traceout, "id %lu: ", expansion_id);
 }
@@ -216,15 +229,19 @@ trace(argv, argc, inp)
 	}
 	fprintf(traceout, "%s", argv[1]);
 	if ((flags & TRACE_ARGS) && argc > 2) {
-		char delim = LPAREN;
+		char delim[3];
 		int i;
 
+		delim[0] = LPAREN;
+		delim[1] = EOS;
 		for (i = 2; i < argc; i++) {
-			fprintf(traceout, "%c%s%s%s", delim, 
+			fprintf(traceout, "%s%s%s%s", delim, 
 			    (flags & TRACE_QUOTE) ? lquote : "", 
 			    argv[i], 
 			    (flags & TRACE_QUOTE) ? rquote : "");
-			delim = COMMA;
+			delim[0] = COMMA;
+			delim[1] = ' ';
+			delim[2] = EOS;
 		}
 		fprintf(traceout, "%c", RPAREN);
 	}
