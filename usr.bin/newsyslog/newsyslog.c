@@ -1,4 +1,4 @@
-/*	$OpenBSD: newsyslog.c,v 1.41 2001/11/24 19:53:22 marc Exp $	*/
+/*	$OpenBSD: newsyslog.c,v 1.42 2001/11/27 18:17:38 millert Exp $	*/
 
 /*
  * Copyright (c) 1999 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -88,7 +88,7 @@ provided "as is" without express or implied warranty.
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: newsyslog.c,v 1.41 2001/11/24 19:53:22 marc Exp $";
+static char rcsid[] = "$OpenBSD: newsyslog.c,v 1.42 2001/11/27 18:17:38 millert Exp $";
 #endif /* not lint */
 
 #ifndef CONF
@@ -329,8 +329,9 @@ send_signal(pidfile, signal)
 		return;
 	}
 
+	errno = 0;
+	err = NULL;
 	if (fgets(line, sizeof(line), f)) {
-		errno = 0;
 		ulval = strtoul(line, &ep, 10);
 		if (line[0] == '\0' || (*ep != '\0' && *ep != '\n'))
 			err = "invalid number in";
@@ -342,6 +343,11 @@ send_signal(pidfile, signal)
 			err = "preposterous process number in";
 		else
 			pid = ulval;
+	} else {
+		if (errno == 0)
+			err = "empty";
+		else
+			err = "error reading";
 	}
 	(void)fclose(f);
 
