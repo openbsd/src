@@ -1,4 +1,4 @@
-#	$OpenBSD: special,v 1.27 2000/12/12 17:40:48 millert Exp $
+#	$OpenBSD: special,v 1.28 2000/12/17 21:48:47 marc Exp $
 #	$NetBSD: special,v 1.4 1996/05/08 21:30:18 pk Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
@@ -97,7 +97,7 @@ lib		type=dir mode=0755 uname=root gname=wheel ignore
 ..	#usr/lib
 libdata		type=dir mode=0755 uname=root gname=wheel ignore
 ..	#usr/libdata
-libexec		type=dir mode=0755 uname=root gname=wheel ignore
+libexec		type=dir mode=0755 uname=root gname=wheel
 auth		type=dir mode=0750 uname=root gname=auth ignore
 ..	#usr/libexec/auth
 ..	#usr/libexec
