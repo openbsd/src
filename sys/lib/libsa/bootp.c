@@ -1,4 +1,4 @@
-/*	$OpenBSD: bootp.c,v 1.7 1998/02/23 20:32:21 niklas Exp $	*/
+/*	$OpenBSD: bootp.c,v 1.8 1999/12/18 16:42:19 deraadt Exp $	*/
 /*	$NetBSD: bootp.c,v 1.10 1996/10/13 02:28:59 christos Exp $	*/
 
 /*
@@ -41,6 +41,7 @@
  */
 
 #include <sys/types.h>
+#include <sys/socket.h>
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 
