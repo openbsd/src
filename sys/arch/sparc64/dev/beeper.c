@@ -1,4 +1,4 @@
-/*	$OpenBSD: beeper.c,v 1.5 2002/04/08 17:49:41 jason Exp $	*/
+/*	$OpenBSD: beeper.c,v 1.6 2002/08/19 20:19:13 jason Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -114,10 +114,8 @@ beeper_attach(parent, self, aux)
 	if (ea->ea_nvaddrs)
 		sc->sc_ioh = (bus_space_handle_t)ea->ea_vaddrs[0];
 	else if (ebus_bus_map(sc->sc_iot, 0,
-			      EBUS_PADDR_FROM_REG(&ea->ea_regs[0]),
-			      ea->ea_regs[0].size,
-			      BUS_SPACE_MAP_LINEAR,
-			      0, &sc->sc_ioh) != 0) {
+	    EBUS_PADDR_FROM_REG(&ea->ea_regs[0]), ea->ea_regs[0].size,
+	    BUS_SPACE_MAP_LINEAR, 0, &sc->sc_ioh) != 0) {
 		printf(": can't map register space\n");
                 return;
 	}
