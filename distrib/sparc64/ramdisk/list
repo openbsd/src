@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.8 2002/02/14 03:40:13 deraadt Exp $
+#	$OpenBSD: list,v 1.9 2002/04/10 06:04:49 deraadt Exp $
 
 SRCDIRS distrib/special
 SRCDIRS gnu/usr.bin usr.bin bin sbin usr.sbin
@@ -52,9 +52,10 @@ LINK	instbin			usr/bin/sed
 LINK	instbin			usr/bin/sort
 
 # copy the MAKEDEV script and make some devices
-COPY	${DESTDIR}/dev/MAKEDEV	dev/MAKEDEV
-SPECIAL	echo "cd dev; sh MAKEDEV ramdisk; rm MAKEDEV"
-SPECIAL cd dev; sh MAKEDEV ramdisk; rm MAKEDEV
+#COPY	${DESTDIR}/dev/MAKEDEV	dev/MAKEDEV
+SPECIAL	sed -e '/^[ 	]*#[ 	].*$/d' -e '/^[ 	]*#$/d' < ${DESTDIR}/dev/MAKEDEV > dev/MAKEDEV
+SPECIAL cd dev; sh MAKEDEV ramdisk
+#SPECIAL rm dev/MAKEDEV
 
 # we need the contents of /usr/mdec
 #COPY	${DESTDIR}/usr/mdec/installboot	usr/mdec/installboot
