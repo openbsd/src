@@ -84,6 +84,9 @@ pthread_mutex_t		  _gc_mutex = NULL;
 pthread_cond_t		  _gc_cond = NULL;
 struct  sigaction 	  _thread_sigact[NSIG];
 
+/* Automatic init module. */
+extern int _thread_autoinit_hook;
+
 #ifdef GCC_2_8_MADE_THREAD_AWARE
 /* see src/gnu/usr.bin/gcc/libgcc2.c */
 typedef void *** (*dynamic_handler_allocator)();
@@ -195,6 +198,10 @@ _thread_init(void)
 	} else {
 		/* Zero the global kernel thread structure: */
 		memset(&_thread_kern_thread, 0, sizeof(struct pthread));
+		_thread_kern_thread.magic = PTHREAD_MAGIC;
+		pthread_set_name_np(&_thread_kern_thread, "kern");
+
+		/* Zero the initial thread: */
 		memset(_thread_initial, 0, sizeof(struct pthread));
 
 		/* Default the priority of the initial thread: */
@@ -214,6 +221,8 @@ _thread_init(void)
 		_thread_initial->nxt = NULL;
 		_thread_initial->flags = 0;
 		_thread_initial->error = 0;
+		_thread_initial->magic = PTHREAD_MAGIC;
+		pthread_set_name_np(_thread_initial, "init");
 		_thread_link_list = _thread_initial;
 		_thread_run = _thread_initial;
 
@@ -294,6 +303,10 @@ _thread_init(void)
 	    pthread_cond_init(&_gc_cond,NULL) != 0)
 		PANIC("Failed to initialise garbage collector mutex or condvar");
 
+	/* Pull in automatic thread unit. */
+	_thread_autoinit_hook = 1;
+
 	return;
 }
+
 #endif _THREAD_SAFE
