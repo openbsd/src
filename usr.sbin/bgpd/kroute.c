@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.27 2003/12/26 00:49:52 henning Exp $ */
+/*	$OpenBSD: kroute.c,v 1.28 2003/12/26 15:27:31 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -57,7 +57,7 @@ void		kroute_nexthop_insert(in_addr_t, struct kroute_nexthop *);
 int		knexthop_compare(struct knexthop_node *,
 		    struct knexthop_node *);
 
-struct kroute_node * kroute_match(in_addr_t);
+struct kroute_node	*kroute_match(in_addr_t);
 
 RB_HEAD(kroute_tree, kroute_node)	kroute_tree, krt;
 RB_PROTOTYPE(kroute_tree, kroute_node, entry, kroute_compare);
@@ -132,14 +132,25 @@ retry:
 				r.hdr.rtm_type = RTM_ADD;
 				goto retry;
 			} else if (r.hdr.rtm_type == RTM_DELETE) {
-				logit(LOG_INFO, "route vanished before delete");
+				logit(LOG_INFO,
+				    "route %s/%u vanished before delete",
+				    log_ntoa(kroute->prefix),
+				    kroute->prefixlen);
 				return (0);
-			} else			/* nexthop invalid */
-				return (-1);
+			} else {
+				logit(LOG_CRIT,
+				    "kroute_msg: action %u, prefix %s/%u: %s",
+				    r.hdr.rtm_type, log_ntoa(kroute->prefix),
+				    kroute->prefixlen, strerror(errno));
+				return (0);
+			}
 			break;
 		default:
-			logit(LOG_INFO, "kroute_msg: %s", strerror(errno));
-			return (-1);
+			logit(LOG_CRIT,
+			    "kroute_msg: action %u, prefix %s/%u: %s",
+			    r.hdr.rtm_type, log_ntoa(kroute->prefix),
+			    kroute->prefixlen, strerror(errno));
+			return (0);
 		}
 	}
 
@@ -150,7 +161,6 @@ int
 kroute_change(int fd, struct kroute *kroute)
 {
 	struct kroute_node	*kr, s;
-	int			 n;
 	int			 action = RTM_ADD;
 
 	s.r.prefix = kroute->prefix;
@@ -159,37 +169,37 @@ kroute_change(int fd, struct kroute *kroute)
 	if ((kr = RB_FIND(kroute_tree, &krt, &s)) != NULL) {
 		if (kr->flags & F_BGPD_INSERTED)
 			action = RTM_CHANGE;
-		else
+		else	/* a non-bgp route already exists. not a problem */
 			return (0);
 	}
 
-	if ((n = kroute_msg(fd, action, kroute)) == -1)
+	if (kroute_msg(fd, action, kroute) == -1)
 		return (-1);
 
 	if (action == RTM_ADD) {
 		if ((kr = calloc(1, sizeof(struct kroute_node))) == NULL)
 			fatal(NULL, errno);
-
 		kr->r.prefix = kroute->prefix;
 		kr->r.prefixlen = kroute->prefixlen;
 		kr->r.nexthop = kroute->nexthop;
 		kr->flags = F_BGPD_INSERTED;
 
 		if (RB_INSERT(kroute_tree, &krt, kr) != NULL) {
-			logit(LOG_CRIT, "RB_INSERT failed!");
-			return (-1);
+			logit(LOG_CRIT,
+			    "kroute_tree insert failed for %s/%u",
+			    log_ntoa(kr->r.prefix), kr->r.prefixlen);
+			free(kr);
 		}
 	} else
 		kr->r.nexthop = kroute->nexthop;
 
-	return (n);
+	return (0);
 }
 
 int
 kroute_delete(int fd, struct kroute *kroute)
 {
 	struct kroute_node	*kr, s;
-	int			 n;
 
 	s.r.prefix = kroute->prefix;
 	s.r.prefixlen = kroute->prefixlen;
@@ -200,7 +210,7 @@ kroute_delete(int fd, struct kroute *kroute)
 	if (!(kr->flags & F_BGPD_INSERTED))
 		return (0);
 
-	if ((n = kroute_msg(fd, RTM_DELETE, kroute)) == -1)
+	if (kroute_msg(fd, RTM_DELETE, kroute) == -1)
 		return (-1);
 
 	RB_REMOVE(kroute_tree, &krt, kr);
@@ -254,6 +264,8 @@ get_rtaddrs(int addrs, struct sockaddr *sa, struct sockaddr **rti_info)
 u_int8_t
 prefixlen_classful(in_addr_t ina)
 {
+	/* it hurt to write this. */
+
 	if (ina >= 0xf0000000)		/* class E */
 		return (32);
 	else if (ina >= 0xe0000000)	/* class D */
@@ -335,8 +347,10 @@ kroute_fetchtable(void)
 		}
 
 		if (RB_INSERT(kroute_tree, &krt, kr) != NULL) {
-			logit(LOG_CRIT, "RB_INSERT failed!");
-			return (-1);
+			logit(LOG_CRIT,
+			    "kroute_tree insert failed for %s/%u",
+			    log_ntoa(kr->r.prefix), kr->r.prefixlen);
+			free(kr);
 		}
 	}
 	free(buf);
@@ -358,6 +372,7 @@ kroute_dispatch_msg(int fd)
 
 	if ((n = read(fd, &buf, sizeof(buf))) == -1)
 		fatal("read error on routing socket", errno);
+
 	if (n == 0)
 		fatal("routing socket closed", 0);
 
@@ -402,8 +417,12 @@ kroute_dispatch_msg(int fd)
 		switch (rtm->rtm_type) {
 		case RTM_ADD:
 		case RTM_CHANGE:
-			if (nexthop == 0)
-				fatal("nexthop is 0 in kroute_dispatch!", 0);
+			if (nexthop == 0) {
+				logit(LOG_CRIT,
+				    "kroute_dispatch_msg: no nexthop for %s/%u",
+				    log_ntoa(s.r.prefix), s.r.prefixlen);
+				continue;
+			}
 
 			if ((kr = RB_FIND(kroute_tree, &krt, &s)) != NULL) {
 				if (kr->flags & F_KERNEL) {
@@ -422,7 +441,11 @@ kroute_dispatch_msg(int fd)
 				kr->flags = flags;
 
 				if (RB_INSERT(kroute_tree, &krt, kr) != NULL) {
-					logit(LOG_CRIT, "RB_INSERT failed!");
+					logit(LOG_CRIT, "kroute_tree insert "
+					    "failed for %s/%u",
+					    log_ntoa(kr->r.prefix),
+					    kr->r.prefixlen);
+					free(kr);
 					continue;
 				}
 			}
@@ -485,6 +508,7 @@ kroute_match(in_addr_t key)
 
 	ina = ntohl(key);
 
+	/* we will never match the default route */
 	for (i = 32; i >= 0; i--) {
 		s.r.prefix = htonl(ina & (0xffffffff << (32 - i)));
 		s.r.prefixlen = i;
@@ -563,8 +587,11 @@ kroute_nexthop_insert(in_addr_t key, struct kroute_nexthop *nh)
 			nh->gateway = kr->r.nexthop;
 		}
 
-	if (RB_INSERT(knexthop_tree, &knt, h) != NULL)
-		fatal("RB_INSERT(knexthop_tree, &knt, h) failed!", 0);
+	if (RB_INSERT(knexthop_tree, &knt, h) != NULL) {
+		logit(LOG_CRIT, "knexthop_tree insert failed for %s",
+			    log_ntoa(h->nexthop));
+		free(h);
+	}
 }
 
 int
