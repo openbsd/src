@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: scandir.c,v 1.2 1996/08/19 08:25:41 tholo Exp $";
+static char rcsid[] = "$OpenBSD: scandir.c,v 1.3 1997/07/24 00:08:41 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -97,6 +97,7 @@ scandir(dirname, namelist, select, dcomp)
 		if (p == NULL)
 			return(-1);
 		p->d_ino = d->d_ino;
+		p->d_type = d->d_type;
 		p->d_reclen = d->d_reclen;
 		p->d_namlen = d->d_namlen;
 		bcopy(d->d_name, p->d_name, p->d_namlen + 1);
