@@ -18,7 +18,7 @@
  * 4. Modifications may be freely made to this file if the above conditions
  *    are met.
  *
- *      $Id: smc93cx6.c,v 1.2 1996/06/27 21:15:50 shawn Exp $
+ *      $Id: smc93cx6.c,v 1.3 1996/08/21 22:27:43 deraadt Exp $
  */
 
 /*
@@ -58,7 +58,7 @@
 #if defined(__FreeBSD__)
 #include <machine/clock.h>
 #include <i386/scsi/93cx6.h>
-#elif defined(__NetBSD__)
+#elif defined(__NetBSD__) || defined(__OpenBSD__)
 #include <machine/bus.h>
 #include <dev/ic/smc93cx6var.h>
 #endif
@@ -91,7 +91,7 @@ read_seeprom(sd, buf, start_addr, count)
 #if defined(__FreeBSD__)
 	u_int start_addr;
 	int count;
-#elif defined(__NetBSD__)
+#elif defined(__NetBSD__) || defined(__OpenBSD__)
 	bus_io_size_t start_addr;
 	bus_io_size_t count;
 #endif

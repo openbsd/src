@@ -30,7 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: aic7xxxvar.h,v 1.6 1996/06/27 21:15:49 shawn Exp $
+ *	$Id: aic7xxxvar.h,v 1.7 1996/08/21 22:27:36 deraadt Exp $
  */
 
 #ifndef _AIC7XXX_H_
@@ -40,7 +40,7 @@
 #include "ahc.h"                /* for NAHC from config */
 #endif
 
-#if defined(__NetBSD__)
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 /*
  * convert FreeBSD's <sys/queue.h> symbols to NetBSD's
  */
@@ -66,7 +66,7 @@
 	outsb((ahc)->baseport+(port), valp, size)
 #define	AHC_OUTSL(ahc, port, valp, size)	\
 	outsl((ahc)->baseport+(port), valp, size)
-#elif defined(__NetBSD__)
+#elif defined(__NetBSD__) || defined(__OpenBSD__)
 #define	AHC_INB(ahc, port)	\
 	bus_io_read_1((ahc)->sc_bc, (ahc)->sc_ioh, port)
 #define	AHC_INSB(ahc, port, valp, size)	\
@@ -203,7 +203,7 @@ struct scb {
 struct ahc_data {
 #if defined(__FreeBSD__)
 	int	unit;
-#elif defined(__NetBSD__)
+#elif defined(__NetBSD__) || defined(__OpenBSD__)
 	struct device sc_dev;
 	void	*sc_ih;
 	bus_chipset_tag_t sc_bc;
@@ -281,7 +281,7 @@ char *ahc_name __P((struct ahc_data *ahc));
 
 void ahc_reset __P((u_long iobase));
 struct ahc_data *ahc_alloc __P((int unit, u_long io_base, ahc_type type, ahc_flag flags));
-#elif defined(__NetBSD__)
+#elif defined(__NetBSD__) || defined(__OpenBSD__)
 
 #define	ahc_name(ahc)	(ahc)->sc_dev.dv_xname
 
@@ -293,7 +293,7 @@ int ahc_init __P((struct ahc_data *));
 int ahc_attach __P((struct ahc_data *));
 #if defined(__FreeBSD__)
 void ahc_intr __P((void *arg));
-#elif defined(__NetBSD__)
+#elif defined(__NetBSD__) || defined(__OpenBSD__)
 int ahc_intr __P((void *arg));
 #endif
 

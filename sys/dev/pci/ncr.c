@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr.c,v 1.10 1996/06/10 07:34:47 deraadt Exp $	*/
+/*	$OpenBSD: ncr.c,v 1.11 1996/08/21 22:27:57 deraadt Exp $	*/
 /*	$NetBSD: ncr.c,v 1.35.4.1 1996/06/03 20:32:17 cgd Exp $	*/
 
 /**************************************************************************
@@ -158,7 +158,7 @@
 **==========================================================
 */
 
-#ifdef __NetBSD__
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 #ifdef _KERNEL
 #define KERNEL
 #endif
@@ -175,7 +175,7 @@
 #include <sys/malloc.h>
 #include <sys/buf.h>
 #include <sys/kernel.h>
-#ifndef __NetBSD__
+#if !(defined(__NetBSD__) || defined(__OpenBSD__))
 #include <machine/clock.h>
 #include <machine/cpu.h> /* bootverbose */
 #else
@@ -186,7 +186,7 @@
 #endif /* KERNEL */
 
 
-#ifndef __NetBSD__
+#if !(defined(__NetBSD__) || defined(__OpenBSD__))
 #include <sys/devconf.h>
 #include <pci/pcivar.h>
 #include <pci/pcireg.h>
@@ -206,11 +206,11 @@ extern PRINT_ADDR();
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
-#ifndef __NetBSD__
+#if !(defined(__NetBSD__) || defined(__OpenBSD__))
 #include <machine/clock.h>
 #endif /* __NetBSD__ */
 
-#if defined(__NetBSD__) && defined(__alpha__)
+#if (defined(__NetBSD__) || defined(__OpenBSD__)) && defined(__alpha__)
 /* XXX XXX NEED REAL DMA MAPPING SUPPORT XXX XXX */
 #define	vtophys(va)	__alpha_bus_XXX_dmamap(np->sc_bc, (void *)(va))
 #endif
@@ -277,7 +277,7 @@ extern PRINT_ADDR();
 **==========================================================
 */
 
-#ifdef __NetBSD__
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 
 #ifdef NCR_IOMAPPED
 
@@ -994,7 +994,7 @@ struct ccb {
 */
 
 struct ncb {
-#ifdef __NetBSD__
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 	struct device sc_dev;
 	void *sc_ih;
 	bus_chipset_tag_t sc_bc;
@@ -1029,14 +1029,14 @@ struct ncb {
 	**	virtual and physical addresses
 	**	of the 53c810 chip.
 	*/
-#ifndef __NetBSD__
+#if !(defined(__NetBSD__) || defined(__OpenBSD__))
 	vm_offset_t     vaddr;
 	vm_offset_t     paddr;
 #else
 	bus_mem_addr_t	paddr;
 #endif
 
-#ifndef __NetBSD__
+#if !(defined(__NetBSD__) || defined(__OpenBSD__))
 	/*
 	**	pointer to the chip's registers.
 	*/
@@ -1158,7 +1158,7 @@ struct ncb {
 	*/
 	u_char		disc;
 
-#if defined(NCR_IOMAPPED) && !defined(__NetBSD__)
+#if defined(NCR_IOMAPPED) && !(defined(__NetBSD__) || defined(__OpenBSD__))
 	/*
 	**	address of the ncr control registers in io space
 	*/
@@ -1272,7 +1272,7 @@ static	void	ncr_free_ccb	(ncb_p np, ccb_p cp, int flags);
 static	void	ncr_getclock	(ncb_p np);
 static	ccb_p	ncr_get_ccb	(ncb_p np, u_long flags, u_long t,u_long l);
 static	void	ncr_init	(ncb_p np, char * msg, u_long code);
-#ifdef __NetBSD__
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 static	int     ncr_intr        (void *);
 #else	/* !__NetBSD__ */
 static	int	ncr_intr	(ncb_p np);
@@ -1284,7 +1284,7 @@ static  void    ncr_int_sto     (ncb_p np);
 #ifndef NEW_SCSICONF
 static	u_long	ncr_lookup	(char* id);
 #endif /* NEW_SCSICONF */
-#ifndef __NetBSD__
+#if !(defined(__NetBSD__) || defined(__OpenBSD__))
 static	void	ncr_min_phys	(struct buf *bp);
 #else
 static	void	ncr_minphys	(struct buf *bp);
@@ -1308,7 +1308,7 @@ static	void	ncr_timeout	(ncb_p np);
 static	void	ncr_usercmd	(ncb_p np);
 static  void    ncr_wakeup      (ncb_p np, u_long code);
 
-#ifdef __NetBSD__
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 static	int	ncr_probe	(struct device *, void *, void *);
 static	void	ncr_attach	(struct device *, struct device *, void *);
 #else /* !__NetBSD */
@@ -1341,7 +1341,7 @@ u_long	ncr_version = NCR_VERSION	* 11
 
 #ifdef KERNEL
 
-#ifndef __NetBSD__
+#if !(defined(__NetBSD__) || defined(__OpenBSD__))
 u_long		nncr=MAX_UNITS;
 ncb_p		ncrp [MAX_UNITS];
 #endif /* !__NetBSD__ */
@@ -1366,7 +1366,7 @@ int ncr_cache; /* to be aligned _NOT_ static */
 #define	NCR_860_ID	(0x00061000ul)
 #define	NCR_875_ID	(0x000f1000ul)
 
-#ifdef __NetBSD__
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 
 struct	cfattach ncr_ca = {
 	sizeof(struct ncb), ncr_probe, ncr_attach
@@ -1395,14 +1395,14 @@ DATA_SET (pcidevice_set, ncr_device);
 struct scsi_adapter ncr_switch =
 {
 	ncr_start,
-#ifndef __NetBSD__
+#if !(defined(__NetBSD__) || defined(__OpenBSD__))
 	ncr_min_phys,
 #else
 	ncr_minphys,
 #endif
 	0,
 	0,
-#ifndef __NetBSD__
+#if !(defined(__NetBSD__) || defined(__OpenBSD__))
 	ncr_info,
 	"ncr",
 #endif /* !__NetBSD__ */
@@ -1414,12 +1414,12 @@ struct scsi_device ncr_dev =
 	NULL,			/* have a queue, served by this */
 	NULL,			/* have no async handler */
 	NULL,			/* Use default 'done' routine */
-#ifndef __NetBSD__
+#if !(defined(__NetBSD__) || defined(__OpenBSD__))
 	"ncr",
 #endif /* !__NetBSD__ */
 };
 
-#ifdef __NetBSD__
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 
 #define	ncr_name(np)	(np->sc_dev.dv_xname)
 
@@ -3081,7 +3081,7 @@ static void ncr_script_copy_and_bind (struct script *script, ncb_p np)
 	ncrcmd	*src, *dst, *start, *end;
 	int relocs;
 
-#ifndef __NetBSD__
+#if !(defined(__NetBSD__) || defined(__OpenBSD__))
 	np->script = (struct script*) vm_page_alloc_contig
 	(round_page(sizeof (struct script)), 0x100000, 0xffffffff, PAGE_SIZE);
 #else  /* !__NetBSD___ */
@@ -3237,7 +3237,7 @@ static void ncr_script_copy_and_bind (struct script *script, ncb_p np)
 **----------------------------------------------------------
 */
 
-#ifndef __NetBSD__
+#if !(defined(__NetBSD__) || defined(__OpenBSD__))
 void ncr_min_phys (struct  buf *bp)
 {
 	if ((unsigned long)bp->b_bcount > MAX_SIZE) bp->b_bcount = MAX_SIZE;
@@ -3258,7 +3258,7 @@ void ncr_minphys (struct buf *bp)
 **----------------------------------------------------------
 */
 
-#ifndef __NetBSD__
+#if !(defined(__NetBSD__) || defined(__OpenBSD__))
 U_INT32 ncr_info (int unit)
 {
 	return (1);   /* may be changed later */
@@ -3272,7 +3272,7 @@ U_INT32 ncr_info (int unit)
 **----------------------------------------------------------
 */
 
-#ifdef __NetBSD__
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 
 int
 ncr_probe(parent, match, aux)
@@ -3340,7 +3340,7 @@ static	char* ncr_probe (pcici_t tag, pcidi_t type)
 #define	MIN_ASYNC_PD	40
 #define	MIN_SYNC_PD	20
 
-#ifdef __NetBSD__
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 
 int ncr_print __P((void *, char *));
 
@@ -3489,7 +3489,7 @@ static	void ncr_attach (pcici_t config_id, int unit)
 	**	Do chip dependent initialization.
 	*/
 
-#ifdef __NetBSD__
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 	switch (pa->pa_id) {
 #else /* !__NetBSD__ */
 	switch (pci_conf_read (config_id, PCI_ID_REG)) {
@@ -3518,7 +3518,7 @@ static	void ncr_attach (pcici_t config_id, int unit)
 	np->jump_tcb.l_cmd	= SCR_JUMP;
 	np->jump_tcb.l_paddr	= NCB_SCRIPT_PHYS (np, abort);
 
-#ifndef __NetBSD__
+#if !(defined(__NetBSD__)  || defined(__OpenBSD__))
 	/*
 	**	Make the controller's registers available.
 	**	Now the INB INW INL OUTB OUTW OUTL macros
@@ -3556,7 +3556,7 @@ static	void ncr_attach (pcici_t config_id, int unit)
 	*/
 	{
 		int reg;
-#ifdef __NetBSD__
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 		u_long config_id = pa->pa_tag;
 #endif /* __NetBSD__ */
 		for (reg=0; reg<256; reg+=4) {
@@ -3585,7 +3585,7 @@ static	void ncr_attach (pcici_t config_id, int unit)
 		return;
 	};
 
-#ifndef __NetBSD__
+#if !(defined(__NetBSD__) || defined(__OpenBSD__))
 	/*
 	**	Install the interrupt handler.
 	*/
@@ -3616,7 +3616,7 @@ static	void ncr_attach (pcici_t config_id, int unit)
 	**	look for the SCSI devices on the bus ..
 	*/
 
-#ifdef __NetBSD__
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 	np->sc_link.adapter_softc = np;
 	np->sc_link.adapter_target = np->myaddr;
 	np->sc_link.openings = 1;
@@ -3629,7 +3629,7 @@ static	void ncr_attach (pcici_t config_id, int unit)
 	np->sc_link.device       = &ncr_dev;
 	np->sc_link.flags	 = 0;
 
-#ifdef __NetBSD__
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 	config_found(self, &np->sc_link, ncr_print);
 #else /* !__NetBSD__ */
 #if (__FreeBSD__ >= 2)
@@ -3686,7 +3686,7 @@ static	void ncr_attach (pcici_t config_id, int unit)
 **==========================================================
 */
 
-#ifdef __NetBSD__
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 int
 ncr_intr(arg)
         void *arg;
@@ -3733,7 +3733,7 @@ ncr_intr(np)
 
 static INT32 ncr_start (struct scsi_xfer * xp)
 {
-#ifdef __NetBSD__
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 	ncb_p np  = xp->sc_link->adapter_softc;
 #else /*__NetBSD__*/
 	ncb_p np  = ncrp[xp->sc_link->adapter_unit];
@@ -4191,7 +4191,7 @@ static INT32 ncr_start (struct scsi_xfer * xp)
 	**	Command is successfully queued.
 	*/
 
-#ifdef __NetBSD__
+#if defined(__NetBSD__) || defined(__OpenBSD__)
         if (!(flags & SCSI_POLL)) {
 #else /* !__NetBSD__ */ 
 	if (!(flags & SCSI_NOMASK)) {
@@ -4244,7 +4244,7 @@ static INT32 ncr_start (struct scsi_xfer * xp)
 		printf ("%s: result: %x %x.\n",
 			ncr_name (np), cp->host_status, cp->scsi_status);
 	};
-#ifdef __NetBSD__
+#if defined(__NetBSD__) || defined(__OpenBSD__)
         if (!(flags & SCSI_POLL)) 
 #else /* !__NetBSD__ */ 
 	if (!(flags & SCSI_NOMASK))
@@ -4343,7 +4343,7 @@ void ncr_complete (ncb_p np, ccb_p cp)
 	/*
 	**	Check the status.
 	*/
-#ifdef __NetBSD__
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 	if (xp->error != XS_NOERROR) { 
                                 
                 /*              
@@ -4410,7 +4410,7 @@ void ncr_complete (ncb_p np, ccb_p cp)
 
 		tp->bytes     += xp->datalen;
 		tp->transfers ++;
-#ifndef __NetBSD__
+#if !(defined(__NetBSD__) || defined(__OpenBSD__))
 	} else if (xp->flags & SCSI_ERR_OK) {
 
 		/*
@@ -4606,7 +4606,7 @@ void ncr_init (ncb_p np, char * msg, u_long code)
 	**	Init chip.
 	*/
 
-#ifndef __NetBSD__
+#if !(defined(__NetBSD__) || defined(__OpenBSD__))
 	if (pci_max_burst_len < 4) {
 		static u_char tbl[4]={0,0,0x40,0x80};
 		burstlen = tbl[pci_max_burst_len];
@@ -6549,7 +6549,7 @@ static void ncr_opennings (ncb_p np, lcb_p lp, struct scsi_xfer * xp)
 
 		if (!diff) return;
 
-#ifdef __NetBSD__
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 		if (diff > xp->sc_link->openings)
 			diff = xp->sc_link->openings;
 
@@ -6573,7 +6573,7 @@ static void ncr_opennings (ncb_p np, lcb_p lp, struct scsi_xfer * xp)
 	if (lp->reqlink > lp->actlink) {
 		u_char diff = lp->reqlink - lp->actlink;
 
-#ifdef __NetBSD__
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 		xp->sc_link->openings	+= diff;
 #else /* !__NetBSD__ */
 		xp->sc_link->opennings	+= diff;

@@ -31,7 +31,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *      $Id: aic7xxx.c,v 1.8 1996/07/02 20:18:51 deraadt Exp $
+ *      $Id: aic7xxx.c,v 1.9 1996/08/21 22:27:32 deraadt Exp $
  */
 /*
  * TODO:
@@ -115,7 +115,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#if defined(__NetBSD__)
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 #include <sys/device.h>
 #include <machine/bus.h>
 #include <machine/intr.h>
@@ -126,7 +126,7 @@
 #include <sys/proc.h>
 
 #include <scsi/scsi_all.h>
-#if defined(__NetBSD__)
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 #include <scsi/scsi_debug.h>
 #endif
 #include <scsi/scsiconf.h>
@@ -145,7 +145,7 @@
 #include <dev/aic7xxx/aic7xxx_reg.h>
 #endif /* defined(__FreeBSD__) */
 
-#if defined(__NetBSD__)
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 #include <dev/ic/aic7xxxreg.h>
 #include <dev/ic/aic7xxxvar.h>
 
@@ -242,7 +242,7 @@ static struct scsi_device ahc_dev =
 									\
 	UNPAUSE_SEQUENCER(ahc);
 
-#if defined(__NetBSD__)
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 /*
  * Is device which is pointed by sc_link connected on second scsi bus ?
  */
@@ -291,7 +291,7 @@ static void	ahc_scsirate __P((struct ahc_data* ahc, u_char *scsirate,
 #if defined(__FreeBSD__)
 static timeout_t
 		ahc_timeout;
-#elif defined(__NetBSD__)
+#elif defined(__NetBSD__) || defined(__OpenBSD__)
 static void	ahc_timeout __P((void *));
 #endif
 static void	ahc_busy_target __P((struct ahc_data *ahc,
@@ -310,7 +310,7 @@ char *ahc_name(ahc)
 	return (name);
 }
 
-#elif defined(__NetBSD__)
+#elif defined(__NetBSD__) || defined(__OpenBSD__)
 struct cfdriver ahc_cd = {
 	NULL, "ahc", DV_DULL
 };
@@ -389,7 +389,7 @@ struct ahc_data *
 ahc_alloc(unit, iobase, type, flags)
 	int unit;
 	u_long iobase;
-#elif defined(__NetBSD__)
+#elif defined(__NetBSD__) || defined(__OpenBSD__)
 void
 ahc_construct(ahc, bc, ioh, type, flags)
 	struct  ahc_data *ahc;
@@ -427,7 +427,7 @@ ahc_construct(ahc, bc, ioh, type, flags)
 #endif
 #if defined(__FreeBSD__)
 	ahc->baseport = iobase;
-#elif defined(__NetBSD__)
+#elif defined(__NetBSD__) || defined(__OpenBSD__)
 	ahc->sc_bc = bc;
 	ahc->sc_ioh = ioh;
 #endif
@@ -455,7 +455,7 @@ void
 #if defined(__FreeBSD__)
 ahc_reset(iobase)
 	u_long iobase;
-#elif defined(__NetBSD__)
+#elif defined(__NetBSD__) || defined(__OpenBSD__)
 ahc_reset(devname, bc, ioh)
 	char *devname;
 	bus_chipset_tag_t bc;
@@ -470,7 +470,7 @@ ahc_reset(devname, bc, ioh)
 	hcntrl = (inb(HCNTRL + iobase) & IRQMS) | INTEN;
 
 	outb(HCNTRL + iobase, CHIPRST | PAUSE);
-#elif defined(__NetBSD__)
+#elif defined(__NetBSD__) || defined(__OpenBSD__)
 	hcntrl = (bus_io_read_1(bc, ioh, HCNTRL) & IRQMS) | INTEN;
 
 	bus_io_write_1(bc, ioh, HCNTRL, CHIPRST | PAUSE);
@@ -481,7 +481,7 @@ ahc_reset(devname, bc, ioh)
 	wait = 1000;
 #if defined(__FreeBSD__)
 	while (--wait && !(inb(HCNTRL + iobase) & CHIPRSTACK))
-#elif defined(__NetBSD__)
+#elif defined(__NetBSD__) || defined(__OpenBSD__)
 	while (--wait && !(bus_io_read_1(bc, ioh, HCNTRL) & CHIPRSTACK))
 #endif
 		DELAY(1000);
@@ -489,14 +489,14 @@ ahc_reset(devname, bc, ioh)
 #if defined(__FreeBSD__)
 		printf("ahc at 0x%lx: WARNING - Failed chip reset!  "
 		       "Trying to initialize anyway.\n", iobase);
-#elif defined(__NetBSD__)
+#elif defined(__NetBSD__) || defined(__OpenBSD__)
 		printf("%s: WARNING - Failed chip reset!  "
 		       "Trying to initialize anyway.\n", devname);
 #endif
 	}
 #if defined(__FreeBSD__)
 	outb(HCNTRL + iobase, hcntrl | PAUSE);
-#elif defined(__NetBSD__)
+#elif defined(__NetBSD__) || defined(__OpenBSD__)
 	bus_io_write_1(bc, ioh, HCNTRL, hcntrl | PAUSE);
 #endif
 }
@@ -575,7 +575,7 @@ ahc_scsirate(ahc, scsirate, period, offset, channel, target )
 	}
 }
 
-#if defined(__NetBSD__)
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 int
 ahcprint(aux, name)
 	void *aux;
@@ -608,7 +608,7 @@ ahc_attach(ahc)
 	ahc->sc_link.adapter_unit = ahc->unit;
 	ahc->sc_link.adapter_targ = ahc->our_id;
 	ahc->sc_link.fordriver = 0;
-#elif defined(__NetBSD__)
+#elif defined(__NetBSD__) || defined(__OpenBSD__)
 	ahc->sc_link.adapter_target = ahc->our_id;
 #endif
 	ahc->sc_link.adapter_softc = ahc;
@@ -624,7 +624,7 @@ ahc_attach(ahc)
 		ahc->sc_link_b.adapter_targ = ahc->our_id_b;
 		ahc->sc_link_b.adapter_bus = 1;
 		ahc->sc_link_b.fordriver = (void *)SELBUSB;
-#elif defined(__NetBSD__)
+#elif defined(__NetBSD__) || defined(__OpenBSD__)
 		ahc->sc_link_b.adapter_target = ahc->our_id_b;
 #endif
 	}
@@ -666,7 +666,7 @@ ahc_attach(ahc)
 		scsi_attachdevs(scbus);
 		scbus = NULL;	/* Upper-level SCSI code owns this now */
 	}
-#elif defined(__NetBSD__)
+#elif defined(__NetBSD__) || defined(__OpenBSD__)
 	/*
 	 * XXX - Update MI SCSI code
 	 *
@@ -912,7 +912,7 @@ void ahc_add_waiting_scb(ahc, scb)
  */
 #if defined(__FreeBSD__)
 void
-#elif defined (__NetBSD__)
+#elif defined (__NetBSD__) || defined(__OpenBSD__)
 int
 #endif
 ahc_intr(arg)
@@ -932,7 +932,7 @@ ahc_intr(arg)
 	if (!(intstat & INT_PEND))
 #if defined(__FreeBSD__)
 		return;
-#elif defined(__NetBSD__)
+#elif defined(__NetBSD__) || defined(__OpenBSD__)
 		return 0;
 #endif
 
@@ -1443,7 +1443,7 @@ pagein_done:
 #endif
 #if defined(__FreeBSD__)
 					sc->op_code = REQUEST_SENSE;
-#elif defined(__NetBSD__)
+#elif defined(__NetBSD__) || defined(__OpenBSD__)
 					sc->opcode = REQUEST_SENSE;
 #endif
 					sc->byte2 =  xs->sc_link->lun << 5;
@@ -1558,7 +1558,7 @@ pagein_done:
 
 #if defined(__FreeBSD__)
 				xs->flags |= SCSI_RESID_VALID;
-#elif defined(__NetBSD__)
+#elif defined(__NetBSD__) || defined(__OpenBSD__)
 				/* XXX - Update to do this right */
 #endif
 #ifdef AHC_DEBUG
@@ -1804,7 +1804,7 @@ clear:
 			ahc_unbusy_target(ahc, xs->sc_link->target,
 #if defined(__FreeBSD__)
 			 	((long)xs->sc_link->fordriver & SELBUSB)
-#elif defined(__NetBSD__)
+#elif defined(__NetBSD__) || defined(__OpenBSD__)
 				IS_SCSIBUS_B(ahc, xs->sc_link)
 #endif
 				 	? 'B' : 'A');
@@ -1862,7 +1862,7 @@ clear:
 
 		ahc_run_waiting_queues(ahc);
 	}
-#if defined(__NetBSD__)
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 	return 1;
 #endif
 }
@@ -1884,7 +1884,7 @@ ahc_done(ahc, scb)
 	 * Put the results of the operation
 	 * into the xfer and call whoever started it
 	 */
-#if defined(__NetBSD__)
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 	if (xs->error != XS_NOERROR) {
 		/* Don't override the error value. */
 	} else if (scb->flags & SCB_ABORTED) {
@@ -1900,7 +1900,7 @@ ahc_done(ahc, scb)
 		/* All went correctly  OR errors expected */
 		xs->error = XS_NOERROR;
 	}
-#elif defined(__NetBSD__)
+#elif defined(__NetBSD__) || defined(__OpenBSD__)
 	/*
 	 * Since NetBSD doesn't have error ignoring operation mode
 	 * (SCSI_ERR_OK in FreeBSD), we don't have to care this case.
@@ -2275,7 +2275,7 @@ ahcminphys(bp)
         if (bp->b_bcount > ((AHC_NSEG - 1) * PAGE_SIZE)) {
                 bp->b_bcount = ((AHC_NSEG - 1) * PAGE_SIZE);
         }
-#if defined(__NetBSD__)
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 	minphys(bp);
 #endif
 }
@@ -2303,7 +2303,7 @@ ahc_scsi_cmd(xs)
 	mask = (0x01 << (xs->sc_link->target
 #if defined(__FreeBSD__)
 				| ((u_long)xs->sc_link->fordriver & 0x08)));
-#elif defined(__NetBSD__)
+#elif defined(__NetBSD__) || defined(__OpenBSD__)
 			| (IS_SCSIBUS_B(ahc, xs->sc_link) ? SELBUSB : 0) ));
 #endif
 	SC_DEBUG(xs->sc_link, SDEV_DB2, ("ahc_scsi_cmd\n"));
@@ -2356,7 +2356,7 @@ ahc_scsi_cmd(xs)
 	scb->tcl = ((xs->sc_link->target << 4) & 0xF0) |
 #if defined(__FreeBSD__)
 				  ((u_long)xs->sc_link->fordriver & 0x08) |
-#elif defined(__NetBSD__)
+#elif defined(__NetBSD__) || defined(__OpenBSD__)
 				  (IS_SCSIBUS_B(ahc,xs->sc_link)? SELBUSB : 0)|
 #endif
 				  (xs->sc_link->lun & 0x07);

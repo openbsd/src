@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdq.c,v 1.4 1996/06/18 10:22:28 deraadt Exp $	*/
+/*	$OpenBSD: pdq.c,v 1.5 1996/08/21 22:27:39 deraadt Exp $	*/
 /*	$NetBSD: pdq.c,v 1.5.4.1 1996/06/08 00:17:44 cgd Exp $	*/
 
 /*-
@@ -170,13 +170,13 @@ pdq_print_fddi_chars(
     const char hexchars[] = "0123456789abcdef";
 
     printf(
-#if !defined(__bsdi__) && !defined(__NetBSD__)
+#if !defined(__bsdi__) && !(defined(__NetBSD__) || defined(__OpenBSD__))
 	   PDQ_OS_PREFIX
 #else
 	   ": "
 #endif
 	   "DEC %s FDDI %s Controller\n",
-#if !defined(__bsdi__) && !defined(__NetBSD__)
+#if !defined(__bsdi__) && !(defined(__NetBSD__) || defined(__OpenBSD__))
 	   PDQ_OS_PREFIX_ARGS,
 #endif
 	   pdq_descriptions[pdq->pdq_type],

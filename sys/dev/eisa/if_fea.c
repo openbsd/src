@@ -43,7 +43,7 @@
 #include <sys/malloc.h>
 #if defined(__FreeBSD__)
 #include <sys/devconf.h>
-#elif defined(__bsdi__) || defined(__NetBSD__)
+#elif defined(__bsdi__) || defined(__NetBSD__) || defined(__OpenBSD__)
 #include <sys/device.h>
 #endif
 
@@ -89,7 +89,7 @@
 #include <i386/eisa/eisa.h>
 #include <i386/eisa/pdqvar.h>
 #include <i386/eisa/pdqreg.h>
-#elif defined(__NetBSD__)
+#elif defined(__NetBSD__) || defined(__OpenBSD__)
 #include <machine/cpu.h>
 #include <machine/bus.h>
 
@@ -118,7 +118,7 @@ extern struct cfdriver feacd;
 #define	DEFEA_INTRENABLE		0x28	/* edge interrupt */
 static const int pdq_eisa_irqs[4] = { IRQ9, IRQ10, IRQ11, IRQ15 };
 
-#elif defined(__NetBSD__)
+#elif defined(__NetBSD__) || defined(__OpenBSD__)
 #define	DEFEA_INTRENABLE		0x8	/* level interrupt */
 #define	pdq_eisa_ifwatchdog		NULL
 static const int pdq_eisa_irqs[4] = { 9, 10, 11, 15 };
@@ -436,7 +436,7 @@ struct cfdriver feacd = {
 };
 #endif /* __bsdi__ */
 
-#if defined(__NetBSD__)
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 static int
 pdq_eisa_match(
     struct device *parent,

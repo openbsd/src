@@ -29,13 +29,13 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: ahc_eisa.c,v 1.2 1996/06/27 21:15:44 shawn Exp $
+ *	$Id: ahc_eisa.c,v 1.3 1996/08/21 22:27:24 deraadt Exp $
  */
 
 #if defined(__FreeBSD__)
 #include <eisa.h>
 #endif
-#if NEISA > 0 || defined(__NetBSD__)
+#if NEISA > 0 || defined(__NetBSD__) || defined(__OpenBSD__)
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,7 +44,7 @@
 #endif
 #include <sys/kernel.h>
 
-#if defined(__NetBSD__)
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 #include <sys/device.h>
 #include <machine/bus.h>
 #include <machine/intr.h>
@@ -66,7 +66,7 @@
 #define EISA_DEVICE_ID_ADAPTEC_284xB	0x04907756 /* BIOS enabled */
 #define EISA_DEVICE_ID_ADAPTEC_284x	0x04907757 /* BIOS disabled*/
 
-#elif defined(__NetBSD__)
+#elif defined(__NetBSD__) || defined(__OpenBSD__)
 
 #include <dev/eisa/eisareg.h>
 #include <dev/eisa/eisavar.h>
@@ -185,7 +185,7 @@ aic7770probe(void)
 	return count;
 }
 
-#elif defined(__NetBSD__)
+#elif defined(__NetBSD__) || defined(__OpenBSD__)
 
 #define bootverbose	1
 
@@ -266,7 +266,7 @@ ahc_eisa_match(parent, match, aux)
 static int
 aic7770_attach(e_dev)
 	struct eisa_device *e_dev;
-#elif defined(__NetBSD__)
+#elif defined(__NetBSD__) || defined(__OpenBSD__)
 void
 ahc_eisa_attach(parent, self, aux)
 	struct device *parent, *self;
@@ -323,7 +323,7 @@ ahc_eisa_attach(parent, self, aux)
 	}
 	eisa_reg_end(e_dev);
 
-#elif defined(__NetBSD__)
+#elif defined(__NetBSD__) || defined(__OpenBSD__)
 
 	struct ahc_data *ahc = (void *)self;
 	struct eisa_attach_args *ea = aux;
@@ -467,7 +467,7 @@ ahc_eisa_attach(parent, self, aux)
 		 */
 		eisa_release_intr(e_dev, irq, ahc_intr);
 		return -1;
-#elif defined(__NetBSD__)
+#elif defined(__NetBSD__) || defined(__OpenBSD__)
 		ahc_free(ahc);
 		return;
 #endif
@@ -489,7 +489,7 @@ ahc_eisa_attach(parent, self, aux)
 	}
 
 	e_dev->kdc->kdc_state = DC_BUSY; /* host adapters always busy */
-#elif defined(__NetBSD__)
+#elif defined(__NetBSD__) || defined(__OpenBSD__)
 	intrstr = eisa_intr_string(ec, ih);
 	/*
 	 * The IRQMS bit enables level sensitive interrupts only allow

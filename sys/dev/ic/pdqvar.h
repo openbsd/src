@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdqvar.h,v 1.5 1996/06/18 10:22:29 deraadt Exp $	*/
+/*	$OpenBSD: pdqvar.h,v 1.6 1996/08/21 22:27:42 deraadt Exp $	*/
 /*	$NetBSD: pdqvar.h,v 1.6.4.1 1996/06/08 00:17:49 cgd Exp $	*/
 
 /*-
@@ -61,7 +61,7 @@ enum _pdq_type_t {
 
 #if defined(PDQTEST)
 #include <pdq_os_test.h>
-#elif defined(__FreeBSD__) || defined(__bsdi__) || defined(__NetBSD__)
+#elif defined(__FreeBSD__) || defined(__bsdi__) || defined(__NetBSD__) || defined(__OpenBSD__)
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,7 +73,7 @@ enum _pdq_type_t {
 #include <vm/vm_kern.h>
 
 #define	PDQ_USE_MBUFS
-#if defined(__NetBSD__)
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 #define	PDQ_OS_PREFIX			"%s: "
 #define	PDQ_OS_PREFIX_ARGS		pdq->pdq_os_name
 #else
@@ -83,7 +83,7 @@ enum _pdq_type_t {
 #define	PDQ_OS_PAGESIZE			NBPG
 #define	PDQ_OS_USEC_DELAY(n)		DELAY(n)
 #define	PDQ_OS_MEMZERO(p, n)		bzero((caddr_t)(p), (n))
-#if defined(__NetBSD__) && defined(__alpha__)
+#if (defined(__NetBSD__) || defined(__OpenBSD__)) && defined(__alpha__)
 #define	PDQ_OS_VA_TO_PA(pdq, p)		(vtophys(p) | (pdq->pdq_type == PDQ_DEFTA ? 0 : 0x40000000))
 #else
 #define	PDQ_OS_VA_TO_PA(pdq, p)		vtophys(p)
@@ -125,7 +125,7 @@ typedef volatile pdq_uint32_t *pdq_bus_memaddr_t;
 typedef pdq_bus_memaddr_t pdq_bus_memoffset_t;
 
 
-#elif defined(__NetBSD__)
+#elif defined(__NetBSD__) || defined(__OpenBSD__)
 #include <machine/bus.h>
 #include <machine/intr.h>
 #define	PDQ_OS_PTR_FMT		"%p"
@@ -195,7 +195,7 @@ typedef struct {
     struct isadev sc_id;		/* ISA device */
     struct intrhand sc_ih;		/* interrupt vectoring */
     struct atshutdown sc_ats;		/* shutdown routine */
-#elif defined(__NetBSD__)
+#elif defined(__NetBSD__) || defined(__OpenBSD__)
     struct device sc_dev;		/* base device */
     void *sc_ih;			/* interrupt vectoring */
     void *sc_ats;			/* shutdown hook */

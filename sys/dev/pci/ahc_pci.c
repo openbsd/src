@@ -29,19 +29,19 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: ahc_pci.c,v 1.2 1996/06/27 21:15:55 shawn Exp $
+ *	$Id: ahc_pci.c,v 1.3 1996/08/21 22:27:49 deraadt Exp $
  */
 
 #if defined(__FreeBSD__)
 #include <pci.h>
 #endif
-#if NPCI > 0 || defined(__NetBSD__)
+#if NPCI > 0 || defined(__NetBSD__) || defined(__OpenBSD__)
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/queue.h>
-#if defined(__NetBSD__)
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 #include <sys/device.h>
 #include <machine/bus.h>
 #include <machine/intr.h>
@@ -64,7 +64,7 @@
 
 #define PCI_BASEADR0	PCI_MAP_REG_START
 
-#elif defined(__NetBSD__)
+#elif defined(__NetBSD__) || defined(__OpenBSD__)
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
@@ -238,7 +238,7 @@ aic7870_probe (pcici_t tag, pcidi_t type)
 
 }
 
-#elif defined(__NetBSD__)
+#elif defined(__NetBSD__) || defined(__OpenBSD__)
 
 int ahc_pci_probe __P((struct device *, void *, void *));
 void ahc_pci_attach __P((struct device *, struct device *, void *));
@@ -277,7 +277,7 @@ static void
 aic7870_attach(config_id, unit)
 	pcici_t config_id;
 	int	unit;
-#elif defined(__NetBSD__)
+#elif defined(__NetBSD__) || defined(__OpenBSD__)
 void    
 ahc_pci_attach(parent, self, aux)
         struct device *parent, *self;
@@ -286,7 +286,7 @@ ahc_pci_attach(parent, self, aux)
 {
 #if defined(__FreeBSD__)
 	u_long io_port;
-#elif defined(__NetBSD__)
+#elif defined(__NetBSD__) || defined(__OpenBSD__)
 	struct pci_attach_args *pa = aux;
 	struct ahc_data *ahc = (void *)self;
 	int unit = ahc->sc_dev.dv_unit;
@@ -314,7 +314,7 @@ ahc_pci_attach(parent, self, aux)
 	 * set hence we mask it off.
 	 */
 	io_port &= 0xfffffffe;
-#elif defined(__NetBSD__)
+#elif defined(__NetBSD__) || defined(__OpenBSD__)
 	if (pci_io_find(pa->pa_pc, pa->pa_tag, PCI_BASEADR0, &iobase, &iosize))
 		return;
 	if (bus_io_map(pa->pa_bc, iobase, iosize, &ioh))
@@ -323,7 +323,7 @@ ahc_pci_attach(parent, self, aux)
 
 #if defined(__FreeBSD__)
 	switch ((id = pci_conf_read(config_id, PCI_ID_REG))) {
-#elif defined(__NetBSD__)
+#elif defined(__NetBSD__) || defined(__OpenBSD__)
 	switch (id = pa->pa_id) {
 #endif
 		case PCI_DEVICE_ID_ADAPTEC_3940U:
@@ -378,7 +378,7 @@ ahc_pci_attach(parent, self, aux)
 
 #if defined(__FreeBSD__)
 	ahc_reset(io_port);
-#elif defined(__NetBSD__)
+#elif defined(__NetBSD__) || defined(__OpenBSD__)
 	printf("\n");
 	ahc_reset(ahc->sc_dev.dv_xname, pa->pa_bc, ioh);
 #endif
@@ -386,7 +386,7 @@ ahc_pci_attach(parent, self, aux)
 	if(ahc_t & AHC_AIC7870){
 #if defined(__FreeBSD__)
 		u_long devconfig = pci_conf_read(config_id, DEVCONFIG);
-#elif defined(__NetBSD__)
+#elif defined(__NetBSD__) || defined(__OpenBSD__)
 		u_long devconfig =
 			pci_conf_read(pa->pa_pc, pa->pa_tag, DEVCONFIG);
 #endif
@@ -414,7 +414,7 @@ ahc_pci_attach(parent, self, aux)
 			devconfig &= ~(RAMPSM|SCBRAMSEL);
 #if defined(__FreeBSD__)
 			pci_conf_write(config_id, DEVCONFIG, devconfig);
-#elif defined(__NetBSD__)
+#elif defined(__NetBSD__) || defined(__OpenBSD__)
 			pci_conf_write(pa->pa_pc, pa->pa_tag,
 				       DEVCONFIG, devconfig);
 #endif
@@ -429,7 +429,7 @@ ahc_pci_attach(parent, self, aux)
 		ahc_free(ahc);
 		return;
 	}
-#elif defined(__NetBSD__)
+#elif defined(__NetBSD__) || defined(__OpenBSD__)
 	ahc_construct(ahc, pa->pa_bc, ioh, ahc_t, ahc_f);
 
 	if (pci_intr_map(pa->pa_pc, pa->pa_intrtag, pa->pa_intrpin,
@@ -602,7 +602,7 @@ load_seeprom(ahc)
                  
 #if defined(__FreeBSD__)
 	sd.sd_iobase = ahc->baseport + SEECTL;
-#elif defined(__NetBSD__)
+#elif defined(__NetBSD__) || defined(__OpenBSD__)
 	sd.sd_bc = ahc->sc_bc;
 	sd.sd_ioh = ahc->sc_ioh;
 	sd.sd_offset = SEECTL;

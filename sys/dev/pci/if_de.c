@@ -1,4 +1,4 @@
-/*    $OpenBSD: if_de.c,v 1.11 1996/06/10 07:34:41 deraadt Exp $       */
+/*    $OpenBSD: if_de.c,v 1.12 1996/08/21 22:27:52 deraadt Exp $       */
 /*    $NetBSD: if_de.c,v 1.22.4.1 1996/06/03 20:32:07 cgd Exp $       */
 
 /*-
@@ -53,7 +53,7 @@
 #if defined(__FreeBSD__)
 #include <sys/devconf.h>
 #include <machine/clock.h>
-#elif defined(__bsdi__) || defined(__NetBSD__)
+#elif defined(__bsdi__) || defined(__NetBSD__) || defined(__OpenBSD__)
 #include <sys/device.h>
 #endif
 
@@ -102,7 +102,7 @@
 #endif
 #endif /* __bsdi__ */
 
-#if defined(__NetBSD__)
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 #include <machine/bus.h>
 #include <machine/intr.h>
 
@@ -139,7 +139,7 @@ typedef struct {
 #define	TULIP_EISA_CSRSIZE	16
 #define	TULIP_PCI_CSRSIZE	8
 
-#ifndef __NetBSD__
+#if !defined(__NetBSD__) && !defined(__OpenBSD__)
 typedef tulip_uint16_t tulip_csrptr_t;
 
 #define	TULIP_READ_CSR(sc, csr)			(inl((sc)->tulip_csrs.csr))
@@ -165,7 +165,7 @@ typedef bus_io_size_t tulip_csrptr_t;
 
 #define	TULIP_PCI_CSRSIZE	8
 
-#ifndef __NetBSD__
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 typedef volatile tulip_uint32_t *tulip_csrptr_t;
 
 /*
@@ -304,7 +304,7 @@ struct _tulip_softc_t {
     struct intrhand tulip_ih;		/* intrrupt vectoring */
     struct atshutdown tulip_ats;	/* shutdown hook */
 #endif
-#if defined(__NetBSD__)
+#if defined(__NetBSD__) || defined(__OpenBSD__)
     struct device tulip_dev;		/* base device */
     void *tulip_ih;			/* intrrupt vectoring */
     void *tulip_ats;			/* shutdown hook */
@@ -377,7 +377,7 @@ extern struct cfdriver decd;
 #define TULIP_IFP_TO_SOFTC(ifp)		(TULIP_UNIT_TO_SOFTC((ifp)->if_unit))
 #define	TULIP_BURSTSIZE(unit)		log2_burst_size
 #endif
-#if defined(__NetBSD__)
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 typedef void ifnet_ret_t;
 typedef u_long ioctl_cmd_t;
 extern struct cfattach de_ca;
@@ -391,7 +391,7 @@ extern struct cfdriver de_cd;
 #endif
 
 #define	tulip_if	tulip_ac.ac_if
-#ifdef __NetBSD__
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 #define	tulip_unit	tulip_dev.dv_unit
 #define	tulip_name	tulip_dev.dv_cfdata->cf_driver->cd_name
 #else
@@ -418,7 +418,7 @@ static ifnet_ret_t tulip_start(struct ifnet *ifp);
 static void tulip_rx_intr(tulip_softc_t *sc);
 static void tulip_addr_filter(tulip_softc_t *sc);
 
-#if defined(__NetBSD__) && defined(__alpha__)
+#if (defined(__NetBSD__) || defined(__OpenBSD__)) && defined(__alpha__)
 /* XXX XXX NEED REAL DMA MAPPING SUPPORT XXX XXX */
 #define	vtophys(va)	__alpha_bus_XXX_dmamap(sc->tulip_bc, (void *)(va))
 
@@ -2048,7 +2048,7 @@ tulip_attach(
 #elif defined(__bsdi__)
     printf("\n%s", sc->tulip_xname);
 #endif
-#if defined(__NetBSD__)
+#if defined(__NetBSD__) || defined(__OpenBSD__)
     printf(": %s%s pass %d.%d\n%s: Ethernet address %s\n",
 #else
     printf(": %s%s pass %d.%d Ethernet address %s\n", 
@@ -2057,7 +2057,7 @@ tulip_attach(
 	   tulip_chipdescs[sc->tulip_chipid],
 	   (sc->tulip_revinfo & 0xF0) >> 4,
 	   sc->tulip_revinfo & 0x0F,
-#if defined(__NetBSD__)
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 	   sc->tulip_dev.dv_xname,
 #endif
 	   ether_sprintf(sc->tulip_hwaddr));
@@ -2071,7 +2071,7 @@ tulip_attach(
     tulip_reset(sc);
 
     if_attach(ifp);
-#if defined(__NetBSD__)
+#if defined(__NetBSD__) || defined(__OpenBSD__)
     ether_ifattach(ifp);
 #endif
 
@@ -2357,7 +2357,7 @@ struct cfdriver decd = {
 
 #endif /* __bsdi__ */
 
-#if defined(__NetBSD__)
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 #define	TULIP_PCI_ATTACH_ARGS	struct device * const parent, struct device * const self, void * const aux
 
 static void
@@ -2414,7 +2414,7 @@ tulip_pci_attach(
     pci_devaddr_t *pa = (pci_devaddr_t *) ia->ia_aux;
     int unit = sc->tulip_dev.dv_unit;
 #endif
-#if defined(__NetBSD__)
+#if defined(__NetBSD__) || defined(__OpenBSD__)
     tulip_softc_t * const sc = (tulip_softc_t *) self;
     struct pci_attach_args * const pa = (struct pci_attach_args *) aux;
     bus_chipset_tag_t bc = pa->pa_bc;
@@ -2432,7 +2432,8 @@ tulip_pci_attach(
     const char *intrstr = NULL;
 #endif
     int retval, idx, revinfo, id;
-#if !defined(TULIP_IOMAPPED) && !defined(__bsdi__) && !defined(__NetBSD__)
+#if !defined(TULIP_IOMAPPED) && !defined(__bsdi__) && \
+	!(defined(__NetBSD__) || defined(__OpenBSD__))
     vm_offset_t pa_csrs;
 #endif
     unsigned csrsize = TULIP_PCI_CSRSIZE;
@@ -2464,7 +2465,7 @@ tulip_pci_attach(
 #endif
     }
 #endif
-#if defined(__NetBSD__)
+#if defined(__NetBSD__) || defined(__OpenBSD__)
     revinfo = pci_conf_read(pc, pa->pa_tag, PCI_CFRV) & 0xFF;
     id = pa->pa_id;
 #endif
@@ -2520,7 +2521,7 @@ tulip_pci_attach(
     }
 
     sc->tulip_chipid = chipid;
-#if defined(__NetBSD__)
+#if defined(__NetBSD__) || defined(__OpenBSD__)
     bcopy(self->dv_xname, sc->tulip_if.if_xname, IFNAMSIZ);
     sc->tulip_if.if_softc = sc;
 #else
@@ -2556,7 +2557,7 @@ tulip_pci_attach(
 #endif
 #endif /* __bsdi__ */
 
-#if defined(__NetBSD__)
+#if defined(__NetBSD__) || defined(__OpenBSD__)
     sc->tulip_bc = bc;
     sc->tulip_pc = pc;
 #if defined(TULIP_IOMAPPED)
@@ -2602,7 +2603,7 @@ tulip_pci_attach(
 	DELAY(10);	/* Wait 10 microseconds (actually 50 PCI cycles but at 
 			   33MHz that comes to two microseconds but wait a
 			   bit longer anyways) */
-#if defined(__NetBSD__)
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 	if (sc->tulip_boardsw->bd_type != TULIP_DC21040_ZX314_SLAVE) {
 	    pci_intr_handle_t intrhandle;
 
@@ -2650,7 +2651,7 @@ tulip_pci_attach(
 #endif
 	tulip_reset(sc);
 	tulip_attach(sc);
-#if defined(__NetBSD__)
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 	if (intrstr != NULL)
 	    printf("%s: interrupting at %s\n", self->dv_xname, intrstr);
 #endif

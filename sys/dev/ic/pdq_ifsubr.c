@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdq_ifsubr.c,v 1.3 1996/05/26 00:27:03 deraadt Exp $	*/
+/*	$OpenBSD: pdq_ifsubr.c,v 1.4 1996/08/21 22:27:41 deraadt Exp $	*/
 /*	$NetBSD: pdq_ifsubr.c,v 1.5 1996/05/20 00:26:21 thorpej Exp $	*/
 
 /*-
@@ -46,7 +46,7 @@
 #include <sys/malloc.h>
 #if defined(__FreeBSD__)
 #include <sys/devconf.h>
-#elif defined(__bsdi__) || defined(__NetBSD__)
+#elif defined(__bsdi__) || defined(__NetBSD__) || defined(__OpenBSD__)
 #include <sys/device.h>
 #endif
 
@@ -364,7 +364,7 @@ pdq_ifattach(
 
     ifp->if_flags = IFF_BROADCAST|IFF_SIMPLEX|IFF_NOTRAILERS|IFF_MULTICAST;
 
-#if (defined(__FreeBSD__) && BSD >= 199506) || defined(__NetBSD__)
+#if (defined(__FreeBSD__) && BSD >= 199506) || defined(__NetBSD__) || defined(__OpenBSD__)
     ifp->if_watchdog = pdq_ifwatchdog;
 #else
     ifp->if_watchdog = ifwatchdog;
