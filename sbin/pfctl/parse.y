@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.315 2003/02/12 13:03:54 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.316 2003/02/13 10:26:21 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -363,7 +363,7 @@ typedef struct {
 %token	<v.i>			PORTUNARY PORTBINARY
 %type	<v.interface>		interface if_list if_item_not if_item
 %type	<v.number>		number icmptype icmp6type uid gid
-%type	<v.number>		tos
+%type	<v.number>		tos not
 %type	<v.i>			no dir log af fragcache
 %type	<v.i>			staticport
 %type	<v.b>			action nataction flags flag blockspec
@@ -758,6 +758,9 @@ antispoof_iflst	: if_item			{ $$ = $1; }
 		}
 		;
 
+not		: '!'		{ $$ = 1; }
+		| /* empty */	{ $$ = 0; }
+
 tabledef	: TABLE PORTUNARY STRING PORTUNARY table_opts {
 			if ($2 != PF_OP_LT || $4 != PF_OP_GT)
 				YYERROR;
@@ -807,17 +810,11 @@ table_opt	: STRING
 tableaddrs	: /* empty */
 		| tableaddrs tableaddr comma
 
-tableaddr	: STRING {
-			pfctl_append_addr($1, -1, 0);
+tableaddr	: not STRING {
+			pfctl_append_addr($2, -1, $1);
 		}
-		| STRING '/' number {
-			pfctl_append_addr($1, $3, 0);
-		}
-		| '!' STRING {
-			pfctl_append_addr($2, -1, 1);
-		}
-		| '!' STRING '/' number {
-			pfctl_append_addr($2, $4, 1);
+		| not STRING '/' number {
+			pfctl_append_addr($2, $4, $1);
 		}
 		;
 
@@ -1400,8 +1397,8 @@ if_list		: if_item_not			{ $$ = $1; }
 		}
 		;
 
-if_item_not	: '!' if_item			{ $$ = $2; $$->not = 1; }
-		| if_item			{ $$ = $1; }
+if_item_not	: not if_item			{ $$ = $2; $$->not = $1; }
+		;
 
 if_item		: STRING			{
 			struct node_host	*n;
@@ -1537,14 +1534,13 @@ host_list	: xhost				{ $$ = $1; }
 		}
 		;
 
-xhost		: '!' host			{
+xhost		: not host			{
 			struct node_host	*n;
 
 			for (n = $2; n != NULL; n = n->next)
-				n->not = 1;
+				n->not = $1;
 			$$ = $2;
 		}
-		| host				{ $$ = $1; }
 		| NOROUTE			{
 			$$ = calloc(1, sizeof(struct node_host));
 			if ($$ == NULL)
