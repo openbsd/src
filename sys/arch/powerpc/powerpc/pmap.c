@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.3 1997/01/09 03:07:16 rahnds Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.4 1997/01/09 21:19:02 rahnds Exp $	*/
 /*	$NetBSD: pmap.c,v 1.1 1996/09/30 16:34:52 ws Exp $	*/
 
 /*
@@ -273,8 +273,8 @@ pte_spill(addr)
 	return 0;
 }
 
-int avail_start __asm__ ("_avail_start");
-int avail_end __asm__ ("_avail_end");
+int avail_start;
+int avail_end;
 /*
  * This is called during initppc, before the system is really initialized.
  */
