@@ -1,5 +1,5 @@
-/*	$OpenBSD: x509.c,v 1.27 2000/04/07 22:04:16 niklas Exp $	*/
-/*	$EOM: x509.c,v 1.38 2000/04/07 19:22:34 niklas Exp $	*/
+/*	$OpenBSD: x509.c,v 1.28 2000/06/08 20:51:21 niklas Exp $	*/
+/*	$EOM: x509.c,v 1.40 2000/05/21 04:24:54 angelos Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niels Provos.  All rights reserved.
@@ -240,7 +240,48 @@ x509_generate_kn (X509 *cert)
       free (buf);
       return 0;
     }
-  free (buf);
+
+  /* Store the X509-derived assertion so we can use it as a policy */
+  if (x509_policy_asserts_num == 0)
+    {
+	x509_policy_asserts = calloc (4, sizeof(char *));
+	if (x509_policy_asserts == NULL)
+	  {
+	    log_error ("x509_generate_kn: failed to allocate %d bytes",
+		       4 * sizeof(char *));
+	    free (buf);
+	    return 0;
+	  }
+
+	x509_policy_asserts_num_alloc = 4;
+	x509_policy_asserts_num = 1;
+	x509_policy_asserts[0] = buf;
+    }
+  else
+    {
+	if (x509_policy_asserts_num + 1 > x509_policy_asserts_num_alloc)
+	  {
+	    char **foo;
+
+	    x509_policy_asserts_num_alloc *= 2;
+	    foo = realloc (x509_policy_asserts,
+			   x509_policy_asserts_num_alloc * sizeof(char *));
+	    if (foo == NULL)
+	      {
+		x509_policy_asserts_num_alloc /= 2;
+		log_error ("x509_generate_kn: failed to allocate %d bytes",
+			   x509_policy_asserts_num_alloc * sizeof(char *));
+		free (buf);
+		return 0;
+	      }
+
+	    free (x509_policy_asserts);
+	    x509_policy_asserts = foo;
+	  }
+
+	/* Assign to the next available */
+	x509_policy_asserts[x509_policy_asserts_num++] = buf;
+    }
 
   /* 
    * XXX
@@ -489,6 +530,7 @@ int
 x509_cert_init (void)
 {
   char *dirname;
+  int i;
 
   x509_hash_init ();
 
@@ -535,6 +577,21 @@ x509_cert_init (void)
       log_print ("x509_cert_init: creating new X509_STORE failed");
       return 0;
     }
+
+#if defined(USE_KEYNOTE) || defined(USE_POLICY)
+  /* Cleanup */
+  if (x509_policy_asserts)
+    {
+      for (i = 0; i < x509_policy_asserts_num; i++)
+        if (x509_policy_asserts[i])
+          free (x509_policy_asserts[i]);
+
+      free (x509_policy_asserts);
+    }
+
+  x509_policy_asserts = NULL;
+  x509_policy_asserts_num = x509_policy_asserts_num_alloc = 0;
+#endif
 
   if (!x509_read_from_dir (x509_certs, dirname, 1))
     {
@@ -598,7 +655,7 @@ x509_cert_validate (void *scert)
 }
 
 int
-x509_cert_insert (void *scert)
+x509_cert_insert (int id, void *scert)
 {
   X509 *cert;
   int res;
