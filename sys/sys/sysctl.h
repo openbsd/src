@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.38 2001/06/03 03:52:12 angelos Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.39 2001/06/03 04:37:58 angelos Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -160,7 +160,8 @@ struct ctlname {
 #define KERN_TTY		44	/* node: tty information */
 #define	KERN_CCPU		45	/* int: ccpu */
 #define	KERN_FSCALE		46	/* int: fscale */
-#define	KERN_MAXID		47	/* number of valid kern ids */
+#define	KERN_NPROCS		47	/* int: number of processes */
+#define	KERN_MAXID		48	/* number of valid kern ids */
 
 #define	CTL_KERN_NAMES { \
 	{ 0, 0 }, \
@@ -210,6 +211,7 @@ struct ctlname {
 	{ "tty", CTLTYPE_NODE }, \
 	{ "ccpu", CTLTYPE_INT }, \
 	{ "fscale", CTLTYPE_INT }, \
+	{ "nprocs", CTLTYPE_INT }, \
 }
 
 /*
