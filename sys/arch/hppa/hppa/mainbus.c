@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.59 2004/09/16 00:05:03 mickey Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.60 2004/09/18 21:40:20 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -1101,9 +1101,10 @@ mbprint(aux, pnp)
 	struct confargs *ca = aux;
 
 	if (pnp)
-		printf("\"%s\" at %s (type %x, sv %x, hv %x)", ca->ca_name, pnp,
+		printf("\"%s\" at %s (type %x sv %x mod %x hv %x)",
+		    ca->ca_name, pnp,
 		    ca->ca_type.iodc_type, ca->ca_type.iodc_sv_model,
-		    ca->ca_type.iodc_revision);
+		    ca->ca_type.iodc_model, ca->ca_type.iodc_revision);
 	if (ca->ca_hpa) {
 		if (~ca->ca_hpamask)
 			printf(" offset %lx", ca->ca_hpa & ~ca->ca_hpamask);
