@@ -1,5 +1,5 @@
-/*	$OpenBSD: ike_auth.c,v 1.9 1998/12/21 01:02:24 niklas Exp $	*/
-/*	$EOM: ike_auth.c,v 1.22 1998/12/15 16:58:41 niklas Exp $	*/
+/*	$OpenBSD: ike_auth.c,v 1.10 1999/02/26 03:40:50 niklas Exp $	*/
+/*	$EOM: ike_auth.c,v 1.23 1999/02/25 11:39:02 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -39,6 +39,8 @@
 #include <arpa/inet.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include "sysdep.h"
 
 #include "asn.h"
 #include "cert.h"
