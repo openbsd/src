@@ -173,6 +173,13 @@ Print the version of
 Print the version and build parameters of
 .B httpd
 , and then exit.
+.PP
+The documents served by 
+.B httpd
+should not be owned by the user which 
+.B httpd 
+is running as (usually \fIwww\fP).
+They must, however, be readable by this user.
 .SH FILES
 .PD 0
 .B /var/www/conf/httpd.conf
