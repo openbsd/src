@@ -1,4 +1,4 @@
-/*	$OpenBSD: lkm.h,v 1.2 1996/03/03 12:11:55 niklas Exp $	*/
+/*	$OpenBSD: lkm.h,v 1.3 1996/06/21 11:33:31 mickey Exp $	*/
 /*	$NetBSD: lkm.h,v 1.12 1996/02/09 18:25:13 christos Exp $	*/
 
 /*
@@ -7,6 +7,7 @@
  *
  * 23 Jan 93	Terry Lambert		Original
  *
+ * Copyright (c) 1996 Michael Shalayeff
  * Copyright (c) 1992 Terrence R. Lambert.
  * All rights reserved.
  *
@@ -40,6 +41,8 @@
 
 #ifndef _SYS_LKM_H_
 #define _SYS_LKM_H_
+
+#include <sys/queue.h>
 
 /*
  * Supported module types
@@ -176,11 +179,11 @@ union lkm_generic {
  * Per module information structure
  */
 struct lkm_table {
+	TAILQ_ENTRY(lkm_table)	list;
 	int	type;
 	u_long	size;
 	u_long	offset;
 	u_long	area;
-	char	used;
 
 	int	ver;		/* version (INIT) */
 	int	refcnt;		/* reference count (INIT) */
@@ -342,14 +345,14 @@ struct lmc_unload {
  * Get module information for a given id (or name if id == -1).
  */
 struct lmc_stat {
-	int	id;			/* IN: module ID to unload */
-	char	name[MAXLKMNAME];	/* IN/OUT: name of module */
-	u_long	offset;			/* OUT: target table offset */
-	MODTYPE	type;			/* OUT: type of module */
-	u_long	area;			/* OUT: kernel load addr */
-	u_long	size;			/* OUT: module size (pages) */
-	u_long	private;		/* OUT: module private data */
-	int	ver;			/* OUT: lkm compile version */
+	int	id;		/* IN: module ID to unload */
+	char	*name;		/* IN/OUT: name of module */
+	u_long	offset;		/* OUT: target table offset */
+	MODTYPE	type;		/* OUT: type of module */
+	u_long	area;		/* OUT: kernel load addr */
+	u_long	size;		/* OUT: module size (pages) */
+	u_long	private;	/* OUT: module private data */
+	int	ver;		/* OUT: lkm compile version */
 };
 
 #endif	/* !_SYS_LKM_H_ */
