@@ -1,4 +1,4 @@
-/*	$OpenBSD: time.c,v 1.2 1996/06/26 05:40:39 deraadt Exp $	*/
+/*	$OpenBSD: time.c,v 1.3 1996/10/12 20:36:06 deraadt Exp $	*/
 /*	$NetBSD: time.c,v 1.7 1995/06/27 00:34:00 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)time.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: time.c,v 1.2 1996/06/26 05:40:39 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: time.c,v 1.3 1996/10/12 20:36:06 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -106,18 +106,19 @@ main(argc, argv)
 	/* parent */
 	(void)signal(SIGINT, SIG_IGN);
 	(void)signal(SIGQUIT, SIG_IGN);
-	while (wait3(&status, 0, &ru) != pid);
+	while (wait3(&status, 0, &ru) != pid)
+		;
 	gettimeofday(&after, (struct timezone *)NULL);
 	if (!WIFEXITED(status))
 		fprintf(stderr, "Command terminated abnormally.\n");
 	timersub(&after, &before, &after);
 
 	if (portableflag) {
-		fprintf (stderr, "real %9ld.%02ld\n", 
+		fprintf(stderr, "real %9ld.%02ld\n", 
 			after.tv_sec, after.tv_usec/10000);
-		fprintf (stderr, "user %9ld.%02ld\n",
+		fprintf(stderr, "user %9ld.%02ld\n",
 			ru.ru_utime.tv_sec, ru.ru_utime.tv_usec/10000);
-		fprintf (stderr, "sys  %9ld.%02ld\n",
+		fprintf(stderr, "sys  %9ld.%02ld\n",
 			ru.ru_stime.tv_sec, ru.ru_stime.tv_usec/10000);
 	} else {
 
@@ -166,5 +167,5 @@ main(argc, argv)
 			ru.ru_nivcsw, "involuntary context switches");
 	}
 
-	exit (WEXITSTATUS(status));
+	exit(WIFEXITED(status) ? WEXITSTATUS(status) : EXIT_FAILURE);
 }
