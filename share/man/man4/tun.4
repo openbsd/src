@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tun.4,v 1.16 2000/12/21 21:01:21 aaron Exp $
+.\"	$OpenBSD: tun.4,v 1.17 2001/01/09 18:01:03 krw Exp $
 .\"
 .Dd March 10, 1996
 .Dt TUN 4
@@ -144,7 +144,7 @@ byte order, much as in packets returned by
 the packet data always follows immediately.
 A
 .Fn write
-with an invalid address family (eg. not specified or in the wrong byte
+with an invalid address family (e.g. not specified or in the wrong byte
 order) will return
 .Er ENOSUPPORT .
 A large number of
