@@ -1,4 +1,4 @@
-#	$OpenBSD: BABY,v 1.17 1997/05/13 18:26:14 deraadt Exp $
+#	$OpenBSD: BABY,v 1.18 1997/06/03 20:41:19 deraadt Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -99,8 +99,8 @@ pcmcia* at pcic?
 npx0	at isa? port 0xf0 irq 13	# math coprocessor
 isadma0	at isa?
 
-pc0	at isa? port 0x60 irq 1		# generic PC console device
-#vt0	at isa? port 0x60 irq 1
+#pc0	at isa? port 0x60 irq 1		# generic PC console device
+vt0	at isa? port 0x60 irq 1
 
 com0	at isa? port 0x3f8 irq 4	# standard PC serial ports
 com1	at isa? port 0x2f8 irq 3

@@ -1,4 +1,4 @@
-#	$OpenBSD: INST,v 1.19 1996/11/05 03:49:13 tholo Exp $
+#	$OpenBSD: INST,v 1.20 1997/06/03 20:41:23 deraadt Exp $
 #	$NetBSD: INSTADP,v 1.17 1996/05/20 03:32:19 thorpej Exp $
 #
 #       Install kernels no longer support X.
@@ -71,8 +71,8 @@ pcmcia* at pcic?
 npx0	at isa? port 0xf0 irq 13	# math coprocessor
 isadma0	at isa?
 
-pc0	at isa? port 0x60 irq 1		# generic PC console device
-#vt0	at isa? port 0x60 irq 1
+#pc0	at isa? port 0x60 irq 1		# generic PC console device
+vt0	at isa? port 0x60 irq 1
 
 com0	at isa? port 0x3f8 irq 4	# standard PC serial ports
 com1	at isa? port 0x2f8 irq 3
