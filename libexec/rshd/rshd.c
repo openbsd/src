@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)rshd.c	8.2 (Berkeley) 4/6/94"; */
-static char *rcsid = "$Id: rshd.c,v 1.1.1.1 1995/10/18 08:43:22 deraadt Exp $";
+static char *rcsid = "$Id: rshd.c,v 1.2 1995/11/20 09:38:09 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -335,26 +335,25 @@ doit(fromp)
 #endif
 	}
 
-
-		if (errorstr ||
-		    pwd->pw_passwd != 0 && *pwd->pw_passwd != '\0' &&
-		    iruserok(fromp->sin_addr.s_addr, pwd->pw_uid == 0,
-		    remuser, locuser) < 0) {
-			if (__rcmd_errstr)
-				syslog(LOG_INFO|LOG_AUTH,
+	if (errorstr ||
+	    pwd->pw_passwd != 0 && *pwd->pw_passwd != '\0' &&
+	    iruserok(fromp->sin_addr.s_addr, pwd->pw_uid == 0,
+	    remuser, locuser) < 0) {
+		if (__rcmd_errstr)
+			syslog(LOG_INFO|LOG_AUTH,
 			    "%s@%s as %s: permission denied (%s). cmd='%.80s'",
-				    remuser, hostname, locuser, __rcmd_errstr,
-				    cmdbuf);
-			else
-				syslog(LOG_INFO|LOG_AUTH,
+			    remuser, hostname, locuser, __rcmd_errstr,
+			    cmdbuf);
+		else
+			syslog(LOG_INFO|LOG_AUTH,
 			    "%s@%s as %s: permission denied. cmd='%.80s'",
-				    remuser, hostname, locuser, cmdbuf);
+			    remuser, hostname, locuser, cmdbuf);
 fail:
-			if (errorstr == NULL)
-				errorstr = "Permission denied.\n";
-			error(errorstr, errorhost);
-			exit(1);
-		}
+		if (errorstr == NULL)
+			errorstr = "Permission denied.\n";
+		error(errorstr, errorhost);
+		exit(1);
+	}
 
 	if (pwd->pw_uid && !access(_PATH_NOLOGIN, F_OK)) {
 		error("Logins currently disabled.\n");
