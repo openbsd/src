@@ -1,5 +1,5 @@
-/*	$OpenBSD: atw.c,v 1.24 2004/07/25 00:16:35 millert Exp $	*/
-/*	$NetBSD: atw.c,v 1.67 2004/07/23 23:13:27 dyoung Exp $	*/
+/*	$OpenBSD: atw.c,v 1.25 2004/07/25 00:30:48 millert Exp $	*/
+/*	$NetBSD: atw.c,v 1.68 2004/07/23 06:57:50 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.67 2004/07/23 23:13:27 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.68 2004/07/23 06:57:50 dyoung Exp $");
 #endif
 
 #include "bpfilter.h"
@@ -1128,7 +1128,7 @@ atw_response_times_init(struct atw_softc *sc)
  * Tx, respectively.
  */
 void
-atw_bbp_io_init(struct atw_softc *sc) 
+atw_bbp_io_init(struct atw_softc *sc)
 {
 	switch (sc->sc_bbptype) {
 	case ATW_BBPTYPE_INTERSIL:
@@ -2107,7 +2107,7 @@ atw_write_wep(struct atw_softc *sc)
 	    sizeof(buf));
 }
 
-const struct timeval atw_beacon_mininterval = {1, 0}; /* 1s */
+const struct timeval atw_beacon_mininterval = {.tv_sec = 1, .tv_usec = 0};
 
 void
 atw_recv_mgmt(struct ieee80211com *ic, struct mbuf *m,
@@ -2130,6 +2130,19 @@ atw_recv_mgmt(struct ieee80211com *ic, struct mbuf *m,
 	return;
 }
 
+static int
+do_slow_print(struct atw_softc *sc, int *did_print)
+{
+	if ((sc->sc_if.if_flags & IFF_LINK0) == 0)
+		return 0;
+	if (!*did_print && (sc->sc_if.if_flags & IFF_DEBUG) == 0 &&
+	    !ratecheck(&sc->sc_last_beacon, &atw_beacon_mininterval))
+		return 0;
+
+	*did_print = 1;
+	return 1;
+}
+
 /* In ad hoc mode, atw_recv_beacon is responsible for the coalescence
  * of IBSSs with like SSID/channel but different BSSID. It joins the
  * oldest IBSS (i.e., with greatest TSF time), since that is the WECA
@@ -2148,68 +2161,75 @@ atw_recv_beacon(struct ieee80211com *ic, struct mbuf *m0,
 	struct ieee80211_frame *wh;
 	uint32_t tsftl, tsfth;
 	uint32_t bcn_tsftl, bcn_tsfth;
-	int do_print = 0;
+	int did_print = 0, sign;
 	union {
 		uint32_t	words[2];
 		uint8_t		tstamp[8];
 	} u;
-
-	if (ic->ic_if.if_flags & IFF_LINK0) {
-		do_print = (ic->ic_if.if_flags & IFF_DEBUG)
-		    ? 1 : ratecheck(&sc->sc_last_beacon,
-		    &atw_beacon_mininterval);
-	}
-
-	wh = mtod(m0, struct ieee80211_frame *);
 
 	(*sc->sc_recv_mgmt)(ic, m0, ni, subtype, rssi, rstamp);
 
 	if (ic->ic_state != IEEE80211_S_RUN)
 		return;
 
-	if ((ni = ieee80211_lookup_node(ic, wh->i_addr2,
-	    ic->ic_bss->ni_chan)) == NULL) {
-		if (do_print)
-			printf("%s: atw_recv_beacon: no node %s\n",
-			    sc->sc_dev.dv_xname, ether_sprintf(wh->i_addr2));
+	atw_tsft(sc, &tsfth, &tsftl);
+
+	(void)memcpy(&u, &ni->ni_tstamp[0], sizeof(u));
+	bcn_tsftl = letoh32(u.words[0]);
+	bcn_tsfth = letoh32(u.words[1]);
+
+	/* we are faster, let the other guy catch up */
+	if (bcn_tsfth < tsfth)
+		sign = -1;
+	else if (bcn_tsfth == tsfth && bcn_tsftl < tsftl)
+		sign = -1;
+	else
+		sign = 1;
+
+	if (memcmp(ni->ni_bssid, ic->ic_bss->ni_bssid,
+	    IEEE80211_ADDR_LEN) == 0) {
+		if (!do_slow_print(sc, &did_print))
+			return;
+		printf("%s: tsft offset %s%ull\n", sc->sc_dev.dv_xname,
+		    (sign < 0) ? "-" : "",
+		    (sign < 0)
+			? ((((uint64_t)tsfth << 32) | tsftl) -
+			    (((uint64_t)bcn_tsfth << 32) | bcn_tsftl))
+			    : ((((uint64_t)bcn_tsfth << 32) | bcn_tsftl) -
+				(((uint64_t)tsfth << 32) | tsftl)));
 		return;
 	}
+
+	if (sign < 0)
+		return;
 
 	if (ieee80211_match_bss(ic, ni) != 0)
 		return;
 
-	if (memcmp(ni->ni_bssid, ic->ic_bss->ni_bssid, IEEE80211_ADDR_LEN) == 0)
-		return;
-
-	if (do_print)
+	if (do_slow_print(sc, &did_print)) {
 		printf("%s: atw_recv_beacon: bssid mismatch %s\n",
 		    sc->sc_dev.dv_xname, ether_sprintf(ni->ni_bssid));
+	}
 
 	if (ic->ic_opmode != IEEE80211_M_IBSS)
 		return;
 
-	atw_tsft(sc, &tsfth, &tsftl);
-
-	(void)memcpy(&u, &ic->ic_bss->ni_tstamp[0], sizeof(u));
-	bcn_tsftl = letoh32(u.words[0]);
-	bcn_tsfth = letoh32(u.words[1]);
-
-	if (do_print)
+	if (do_slow_print(sc, &did_print)) {
 		printf("%s: my tsft %llx beacon tsft %llx\n",
 		    sc->sc_dev.dv_xname, ((uint64_t)tsfth << 32) | tsftl,
 		    ((uint64_t)bcn_tsfth << 32) | bcn_tsftl);
+	}
 
-	/* we are faster, let the other guy catch up */
-	if (bcn_tsfth < tsfth)
-		return;
-	else if (bcn_tsfth == tsfth && bcn_tsftl < tsftl)
-		return;
+	wh = mtod(m0, struct ieee80211_frame *);
 
-	if (do_print)
-		printf("%s: sync TSF with %s\n", sc->sc_dev.dv_xname,
-		    ether_sprintf(wh->i_addr2));
+	if (do_slow_print(sc, &did_print)) {
+		printf("%s: sync TSF with %s\n",
+		    sc->sc_dev.dv_xname, ether_sprintf(wh->i_addr2));
+	}
 
 	ic->ic_flags &= ~IEEE80211_F_SIBSS;
+
+	(void)memcpy(&ic->ic_bss->ni_tstamp[0], &u, sizeof(u));
 
 	atw_tsf(sc);
 
@@ -2217,14 +2237,16 @@ atw_recv_beacon(struct ieee80211com *ic, struct mbuf *m0,
 	ieee80211_fix_rate(ic, ni, IEEE80211_F_DOFRATE |
 	    IEEE80211_F_DONEGO | IEEE80211_F_DODEL);
 	if (ni->ni_rates.rs_nrates == 0) {
-		printf("%s: rates mismatch, BSSID %s\n", sc->sc_dev.dv_xname,
-			ether_sprintf(ni->ni_bssid));
+		if (do_slow_print(sc, &did_print)) {
+			printf("%s: rates mismatch, BSSID %s\n",
+			    sc->sc_dev.dv_xname, ether_sprintf(ni->ni_bssid));
+		}
 		return;
 	}
 
-	if (do_print) {
-		printf("%s: sync BSSID %s -> ", sc->sc_dev.dv_xname,
-		    ether_sprintf(ic->ic_bss->ni_bssid));
+	if (do_slow_print(sc, &did_print)) {
+		printf("%s: sync BSSID %s -> ",
+		    sc->sc_dev.dv_xname, ether_sprintf(ic->ic_bss->ni_bssid));
 		printf("%s ", ether_sprintf(ni->ni_bssid));
 		printf("(from %s)\n", ether_sprintf(wh->i_addr2));
 	}
