@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.14 2002/04/07 21:25:00 miod Exp $
+dnl	$OpenBSD: hardware,v 1.15 2002/04/17 23:30:54 miod Exp $
 OpenBSD/MACHINE OSREV runs on several of the older Macintosh computers.
 6MB of RAM should be sufficient to boot and a minimal system can probably
 be squeezed onto a 100MB partition by installing just the minimum sets.
@@ -45,7 +45,7 @@ Supported devices on all of the above systems {:-include-:}:
 	
 Some systems will boot and are usable from an external terminal
 (serial tty or SL/IP):
-	LC475, Performa 475, Quadra 605
+	LC475, Performa 475, Quadra 605, Quadra 950
 	possibly others
 
 Some systems are reportedly almost supported:
