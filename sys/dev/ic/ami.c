@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.8 2001/05/05 03:08:25 mickey Exp $	*/
+/*	$OpenBSD: ami.c,v 1.9 2001/06/25 01:11:37 mickey Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -80,8 +80,8 @@
 int ami_debug = 0
 	| AMI_D_CMD
 	| AMI_D_INTR
-/*	| AMI_D_MISC */
-/*	| AMI_D_DMA */
+	| AMI_D_MISC
+	| AMI_D_DMA
 	;
 #else
 #define	AMI_DPRINTF(m,a)	/* m, a */
@@ -237,7 +237,7 @@ ami_copyhds(sc, sizes, props, stats)
 	for (i = 0; i < sc->sc_nunits; i++) {
 		sc->sc_hdr[i].hd_present = 1;
 		sc->sc_hdr[i].hd_is_logdrv = 1;
-		sc->sc_hdr[i].hd_size = sizes[i];
+		sc->sc_hdr[i].hd_size = letoh32(sizes[i]);
 		sc->sc_hdr[i].hd_prop = props[i];
 		sc->sc_hdr[i].hd_stat = stats[i];
 		if (sc->sc_hdr[i].hd_size > 0x200000) {
@@ -317,11 +317,11 @@ ami_attach(sc)
 			ccb->ccb_sc = sc;
 			ccb->ccb_cmd = cmd;
 			ccb->ccb_state = AMI_CCB_FREE;
-			ccb->ccb_cmdpa = sc->sc_cmdseg[0].ds_addr +
-			    cmd->acc_id * sizeof(*cmd);
+			ccb->ccb_cmdpa = htole32(sc->sc_cmdseg[0].ds_addr +
+			    cmd->acc_id * sizeof(*cmd));
 			ccb->ccb_sglist = sg;
-			ccb->ccb_sglistpa = sc->sc_sgseg[0].ds_addr +
-			    cmd->acc_id * sizeof(*sg) * AMI_SGEPERCMD;
+			ccb->ccb_sglistpa = htole32(sc->sc_sgseg[0].ds_addr +
+			    cmd->acc_id * sizeof(*sg) * AMI_SGEPERCMD);
 			TAILQ_INSERT_TAIL(&sc->sc_free_ccb, ccb, ccb_link);
 		} else {
 			sc->sc_mbox = cmd;
@@ -345,7 +345,7 @@ ami_attach(sc)
 		cmd->acc_cmd = AMI_FCOP;
 		cmd->acc_io.aio_channel = AMI_FC_EINQ3;
 		cmd->acc_io.aio_param = AMI_FC_EINQ3_SOLICITED_FULL;
-		cmd->acc_io.aio_data = pa;
+		cmd->acc_io.aio_data = htole32(pa);
 		if (ami_cmd(ccb, 0, 1) == 0) {
 			struct ami_fc_einquiry *einq = idata;
 			struct ami_fc_prodinfo *pi = idata;
@@ -360,7 +360,7 @@ ami_attach(sc)
 			cmd->acc_cmd = AMI_FCOP;
 			cmd->acc_io.aio_channel = AMI_FC_PRODINF;
 			cmd->acc_io.aio_param = 0;
-			cmd->acc_io.aio_data = pa;
+			cmd->acc_io.aio_data = htole32(pa);
 			if (ami_cmd(ccb, 0, 1) == 0) {
 				sc->sc_maxunits = AMI_BIG_MAX_LDRIVES;
 
@@ -370,7 +370,7 @@ ami_attach(sc)
 				sc->sc_biosver[16] = '\0';
 				sc->sc_channels = pi->api_channels;
 				sc->sc_targets = pi->api_fcloops;
-				sc->sc_memory = pi->api_ramsize;
+				sc->sc_memory = letoh16(pi->api_ramsize);
 				sc->sc_maxcmds = pi->api_maxcmd;
 				p = "FC loop";
 			}
@@ -385,7 +385,7 @@ ami_attach(sc)
 			cmd->acc_cmd = AMI_EINQUIRY;
 			cmd->acc_io.aio_channel = 0;
 			cmd->acc_io.aio_param = 0;
-			cmd->acc_io.aio_data = pa;
+			cmd->acc_io.aio_data = htole32(pa);
 			if (ami_cmd(ccb, 0, 1) != 0) {
 				ccb = ami_get_ccb(sc);
 				cmd = ccb->ccb_cmd;
@@ -393,7 +393,7 @@ ami_attach(sc)
 				cmd->acc_cmd = AMI_INQUIRY;
 				cmd->acc_io.aio_channel = 0;
 				cmd->acc_io.aio_param = 0;
-				cmd->acc_io.aio_data = kvtop((caddr_t)&inq);
+				cmd->acc_io.aio_data = htole32(pa);
 				if (ami_cmd(ccb, 0, 1) != 0) {
 					AMI_UNLOCK_AMI(sc, lock);
 					printf(": cannot do inquiry\n");
@@ -502,15 +502,17 @@ ami_quartz_exec(sc, cmd)
 	u_int32_t qidb;
 
 	qidb = bus_space_read_4(sc->iot, sc->ioh, AMI_QIDB);
-	if (qidb & htole32((AMI_QIDB_EXEC | AMI_QIDB_ACK)))
+	if (qidb & (AMI_QIDB_EXEC | AMI_QIDB_ACK)) {
+		AMI_DPRINTF(AMI_D_CMD, ("qidb=%x ", qidb));
 		return (EBUSY);
+	}
 
 	*sc->sc_mbox = *cmd;
 
 	qidb = sc->sc_mbox_pa | AMI_QIDB_EXEC;
-	bus_space_write_4(sc->iot, sc->ioh, AMI_QIDB, htole32(qidb));
-	DELAY(10);
-	return 0;
+	AMI_DPRINTF(AMI_D_CMD, ("qidb=%x ", qidb));
+	bus_space_write_4(sc->iot, sc->ioh, AMI_QIDB, qidb);
+	return (0);
 }
 
 int
@@ -519,17 +521,21 @@ ami_quartz_done(sc, mbox)
 	struct ami_iocmd *mbox;
 {
 	u_int32_t qdb;
-
+#if 0
 	/* do not scramble the busy mailbox */
-	if (sc->sc_mbox->acc_busy)
+	if (sc->sc_mbox->acc_busy) {
+		AMI_DPRINTF(AMI_D_CMD, ("mbox_busy "));
 		return (0);
-
+	}
+#endif
 	qdb = bus_space_read_4(sc->iot, sc->ioh, AMI_QIDB);
-	if (qdb & htole32((AMI_QIDB_EXEC | AMI_QIDB_ACK)))
+	if (qdb & (AMI_QIDB_EXEC | AMI_QIDB_ACK)) {
+		AMI_DPRINTF(AMI_D_CMD, ("qidb=%x ", qdb));
 		return (0);
+	}
 
 	qdb = bus_space_read_4(sc->iot, sc->ioh, AMI_QODB);
-	if (letoh32(qdb) == AMI_QODB_READY) {
+	if (qdb == AMI_QODB_READY) {
 
 		bus_dmamap_sync(sc->dmat, sc->sc_cmdmap, BUS_DMASYNC_POSTREAD);
 		*mbox = *sc->sc_mbox;
@@ -538,10 +544,11 @@ ami_quartz_done(sc, mbox)
 		bus_space_write_4(sc->iot, sc->ioh, AMI_QODB, AMI_QODB_READY);
 
 		qdb = sc->sc_mbox_pa | AMI_QIDB_ACK;
-		bus_space_write_4(sc->iot, sc->ioh, AMI_QIDB, htole32(qdb));
-		DELAY(10);
+		bus_space_write_4(sc->iot, sc->ioh, AMI_QIDB, qdb);
 		return (1);
 	}
+
+	AMI_DPRINTF(AMI_D_CMD, ("qodb=%x ", qdb));
 
 	return (0);
 }
@@ -582,11 +589,11 @@ ami_schwartz_done(sc, mbox)
 	struct ami_iocmd *mbox;
 {
 	u_int8_t stat;
-
+#if 0
 	/* do not scramble the busy mailbox */
 	if (sc->sc_mbox->acc_busy)
 		return (0);
-
+#endif
 	if (bus_space_read_1(sc->iot, sc->ioh, AMI_SMBSTAT) & AMI_SMBST_BUSY)
 		return 0;
 
@@ -638,7 +645,7 @@ ami_cmd(ccb, flags, wait)
 			struct ami_sgent *sgl = ccb->ccb_sglist;
 
 			cmd->acc_mbox.amb_nsge = htole32(dmap->dm_nsegs);
-			cmd->acc_mbox.amb_data = htole32(ccb->ccb_sglistpa);
+			cmd->acc_mbox.amb_data = ccb->ccb_sglistpa;
 
 			for (i = 0; i < dmap->dm_nsegs; i++, sgd++) {
 				sgl[i].asg_addr = htole32(sgd->ds_addr);
@@ -797,8 +804,9 @@ ami_complete(ccb)
 	struct ami_iocmd mbox;
 	int i, j, rv, status;
 
-	for (rv = 1, status = 0, i = 100 * (xs? xs->timeout: 1000);
-	     !status && rv && i--; DELAY(10))
+	DELAY(10000000);
+	for (rv = 1, status = 0, i = 1 * (xs? xs->timeout: 1000);
+	     !status && rv && i--; DELAY(1000))
 		if ((sc->sc_done)(sc, &mbox)) {
 			AMI_DPRINTF(AMI_D_CMD, ("got#%d ", mbox.acc_nstat));
 			status = mbox.acc_status;
@@ -1185,8 +1193,8 @@ ami_scsi_cmd(xs)
 		ccb->ccb_len  = xs->datalen;
 		ccb->ccb_data = xs->data;
 		cmd = ccb->ccb_cmd;
-		cmd->acc_mbox.amb_nsect = blockcnt;
-		cmd->acc_mbox.amb_lba = blockno;
+		cmd->acc_mbox.amb_nsect = htole16(blockcnt);
+		cmd->acc_mbox.amb_lba = htole32(blockno);
 		cmd->acc_mbox.amb_ldn = target;
 		cmd->acc_mbox.amb_data = 0;
 
