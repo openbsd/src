@@ -1,7 +1,7 @@
-/*	$OpenBSD: ins_csops.h,v 1.4 1998/01/13 05:30:24 millert Exp $	*/
+/*	$OpenBSD: ins_csops.h,v 1.5 1998/03/31 06:40:58 millert Exp $	*/
 
 /*
- *  CU sudo version 1.5.4
+ *  CU sudo version 1.5.5
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
  *
  *  Please send bugs, changes, problems to sudo-bugs@courtesan.com
  *
- *  Id: ins_csops.h,v 1.11 1998/01/13 04:48:17 millert Exp $
+ *  Id: ins_csops.h,v 1.17 1998/03/31 05:05:35 millert Exp $
  */
 
 #ifndef _SUDO_INS_CSOPS_H

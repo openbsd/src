@@ -1,7 +1,7 @@
-/*	$OpenBSD: pathnames.h,v 1.4 1998/01/13 05:30:28 millert Exp $	*/
+/*	$OpenBSD: pathnames.h,v 1.5 1998/03/31 06:41:09 millert Exp $	*/
 
 /*
- *  CU sudo version 1.5.4
+ *  CU sudo version 1.5.5
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
  *
  *  Please send bugs, changes, problems to sudo-bugs@courtesan.com
  *
- *  Id: pathnames.h,v 1.24 1998/01/13 04:48:42 millert Exp $
+ *  Id: pathnames.h,v 1.30 1998/03/31 05:05:42 millert Exp $
  */
 
 /*

@@ -1,7 +1,7 @@
-/*	$OpenBSD: tgetpass.c,v 1.7 1998/02/06 19:02:55 millert Exp $	*/
+/*	$OpenBSD: tgetpass.c,v 1.8 1998/03/31 06:41:16 millert Exp $	*/
 
 /*
- *  CU sudo version 1.5.4
+ *  CU sudo version 1.5.5
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -29,7 +29,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "Id: tgetpass.c,v 1.52 1998/01/13 04:48:42 millert Exp $";
+static char rcsid[] = "Id: tgetpass.c,v 1.60 1998/03/31 05:05:48 millert Exp $";
 #endif /* lint */
 
 #include "config.h"

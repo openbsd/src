@@ -1,11 +1,11 @@
 .rn '' }`
-''' $OpenBSD: sudoers.5,v 1.4 1998/01/13 05:30:30 millert Exp $
+''' $OpenBSD: sudoers.5,v 1.5 1998/03/31 06:41:15 millert Exp $
 '''
-''' $RCSfile: sudoers.5,v $$Revision: 1.4 $$Date: 1998/01/13 05:30:30 $
+''' $RCSfile: sudoers.5,v $$Revision: 1.5 $$Date: 1998/03/31 06:41:15 $
 '''
 ''' $Log: sudoers.5,v $
-''' Revision 1.4  1998/01/13 05:30:30  millert
-''' sudo 1.5.4
+''' Revision 1.5  1998/03/31 06:41:15  millert
+''' sudo 1.5.5
 '''
 '''
 .de Sh
@@ -98,7 +98,7 @@
 .nr % 0
 .rr F
 .\}
-.TH sudoers 5 "1.5.4" "13/Nov/96" "FILE FORMATS"
+.TH sudoers 5 "1.5.5" "6/Feb/98" "FILE FORMATS"
 .UC
 .if n .hy 0
 .if n .na
@@ -348,7 +348,7 @@ with a \*(L"\e\*(R" if used in command arguments: \*(L",\*(R", \*(L":\*(R", \*(L
 \&    PARTTIME    ALL=ALL,!SHELLS,!SU
 \&    +interns    +openlabs=ALL,!SHELLS,!SU
 \&    britt       REMOTE=SHUTDOWN:ALL=LPCS
-\&    jimbo       CUNETS=/bin/su ?*,!/bin/su root
+\&    jimbo       CUNETS=/bin/su ?*,!/bin/su *root*
 \&    nieusma     SERVERS=SHUTDOWN,/etc/reboot:\e
 \&                HUB=ALL,!SHELLS
 \&    jill        houdini=/etc/shutdown -[hr] now,MISC

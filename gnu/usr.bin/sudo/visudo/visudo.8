@@ -1,11 +1,11 @@
 .rn '' }`
-''' $OpenBSD: visudo.8,v 1.4 1998/01/13 05:30:32 millert Exp $
+''' $OpenBSD: visudo.8,v 1.5 1998/03/31 06:41:19 millert Exp $
 '''
-''' $RCSfile: visudo.8,v $$Revision: 1.4 $$Date: 1998/01/13 05:30:32 $
+''' $RCSfile: visudo.8,v $$Revision: 1.5 $$Date: 1998/03/31 06:41:19 $
 '''
 ''' $Log: visudo.8,v $
-''' Revision 1.4  1998/01/13 05:30:32  millert
-''' sudo 1.5.4
+''' Revision 1.5  1998/03/31 06:41:19  millert
+''' sudo 1.5.5
 '''
 '''
 .de Sh
@@ -98,7 +98,7 @@
 .nr % 0
 .rr F
 .\}
-.TH visudo 8 "1.5.4" "13/Nov/96" "MAINTENANCE COMMANDS"
+.TH visudo 8 "1.5.5" "16/Feb/98" "MAINTENANCE COMMANDS"
 .UC
 .if n .hy 0
 .if n .na
@@ -225,8 +225,17 @@ occurred (if the editor supports this feature).
 .Ip "-V" 4
 The \f(CW-V\fR (version) option causes \fBvisudo\fR to print the version number
 and exit.
+.SH "ERRORS"
+.Ip "sudoers file busy, try again later." 4
+Either someone is currently editing the \fIsudoers\fR file
+or there is a stale sudoers lock file (/etc/stmp by default)
+that you need to delete.
+.Ip "/etc/stmp: Permission denied" 4
+You didn't run \fBvisudo\fR as root.
+.Ip "Can't find you in the passwd database" 4
+Your userid does not appear in the passwd file.
 .SH "FILES"
-.PP
+.Sp
 .Vb 2
 \& /etc/sudoers           file of authorized users.
 \& /etc/stmp              lock file for visudo.
@@ -234,7 +243,7 @@ and exit.
 .SH "ENVIRONMENT VARIABLES"
 The following are used only if \fBvisudo\fR was compiled with the
 \fIENV_EDITOR\fR option:
-.PP
+.Sp
 .Vb 2
 \& EDITOR                 Used by visudo as the editor to use.
 \& VISUAL                 Used by visudo if EDITOR is not set.
@@ -242,19 +251,19 @@ The following are used only if \fBvisudo\fR was compiled with the
 .SH "AUTHOR"
 Many people have worked on \fIsudo\fR over the years, this version of
 \fBvisudo\fR was written by:
-.PP
+.Sp
 .Vb 1
 \& Todd Miller            <Todd.Miller@courtesan.com>
 .Ve
 See the HISTORY file in the sudo distribution for more details.
-.PP
+.Sp
 Please send all bugs, comments, and changes to sudo-bugs@courtesan.com.
 .SH "DISCLAIMER"
 This program is distributed in the hope that it will be useful, but
 WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 General Public License for more details.
-.PP
+.Sp
 You should have received a copy of the GNU General Public License along
 with this program; if not, write to the Free Software Foundation, Inc.,
 675 Mass Ave, Cambridge, MA 02139, USA.
@@ -262,7 +271,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 Due to the syntax of the \fIsudoers\fR file, there is no way
 for \fBvisudo\fR to tell the difference between a mistyped
 {Host,User,Cmnd}_Alias and a user or host name.
-.PP
+.Sp
 There is no easy way to prevent a user from gaining a root shell if 
 the editor used by \fBvisudo\fR allows shell escapes.
 .SH "BUGS"
@@ -284,6 +293,14 @@ the individual \fBvisudo\fR program.
 .IX Header "OPTIONS"
 
 .IX Item "-V"
+
+.IX Header "ERRORS"
+
+.IX Item "sudoers file busy, try again later."
+
+.IX Item "/etc/stmp: Permission denied"
+
+.IX Item "Can't find you in the passwd database"
 
 .IX Header "FILES"
 

@@ -1,8 +1,9 @@
 %{
 
-/*	$OpenBSD: parse.yacc,v 1.8 1998/01/13 07:31:06 millert Exp $	*/
+/*	$OpenBSD: parse.yacc,v 1.9 1998/03/31 06:41:08 millert Exp $	*/
+
 /*
- *  CU sudo version 1.5.4
+ *  CU sudo version 1.5.5
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -28,7 +29,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "Id: parse.yacc,v 1.104 1998/01/13 07:00:02 millert Exp $";
+static char rcsid[] = "$Id: parse.yacc,v 1.9 1998/03/31 06:41:08 millert Exp $";
 #endif /* lint */
 
 #include "config.h"
@@ -49,6 +50,9 @@ static char rcsid[] = "Id: parse.yacc,v 1.104 1998/01/13 07:00:02 millert Exp $"
 #if defined(HAVE_MALLOC_H) && !defined(STDC_HEADERS)
 #include <malloc.h>
 #endif /* HAVE_MALLOC_H && !STDC_HEADERS */
+#if defined(YYBISON) && defined(HAVE_ALLOCA_H) && !defined(__GNUC__)
+#include <alloca.h>
+#endif /* YYBISON && HAVE_ALLOCA_H && !__GNUC__ */
 #ifdef HAVE_LSEARCH
 #include <search.h>
 #endif /* HAVE_LSEARCH */
@@ -88,7 +92,7 @@ int top = 0, stacksize = 0;
 
 #define push \
     { \
-	if (top > stacksize) { \
+	if (top >= stacksize) { \
 	    while ((stacksize += STACKINCREMENT) < top); \
 	    match = (struct matchstack *) realloc(match, sizeof(struct matchstack) * stacksize); \
 	    if (match == NULL) { \

@@ -1,7 +1,7 @@
-/*	$OpenBSD: sudo.c,v 1.7 1998/01/13 05:30:29 millert Exp $	*/
+/*	$OpenBSD: sudo.c,v 1.8 1998/03/31 06:41:11 millert Exp $	*/
 
 /*
- * CU sudo version 1.5.4 (based on Root Group sudo version 1.1)
+ * CU sudo version 1.5.5 (based on Root Group sudo version 1.1)
  *
  * This software comes with no waranty whatsoever, use at your own risk.
  *
@@ -53,7 +53,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "Id: sudo.c,v 1.179 1998/01/13 04:48:42 millert Exp $";
+static char rcsid[] = "Id: sudo.c,v 1.190 1998/03/31 05:05:45 millert Exp $";
 #endif /* lint */
 
 #define MAIN
@@ -151,6 +151,7 @@ char *prompt;
 char host[MAXHOSTNAMELEN + 1];
 char *shost;
 char cwd[MAXPATHLEN + 1];
+FILE *sudoers_fp = NULL;
 struct stat cmnd_st;
 static char *runas_homedir = NULL;
 extern struct interface *interfaces;
@@ -163,7 +164,7 @@ extern int printmatches;
 struct env_table badenv_table[] = {
     { "IFS=", 4 },
     { "LD_", 3 },
-    { "_RLD_", 5 },
+    { "_RLD", 4 },
 #ifdef __hpux
     { "SHLIB_PATH=", 11 },
 #endif /* __hpux */
@@ -207,6 +208,18 @@ int main(argc, argv)
     }
 
     /*
+     * Close all file descriptors to make sure we have a nice
+     * clean slate from which to work.  
+     */
+#ifdef HAVE_SYSCONF
+    for (rtn = sysconf(_SC_OPEN_MAX) - 1; rtn > 2; rtn--)
+	(void) close(rtn);
+#else
+    for (rtn = getdtablesize() - 1; rtn > 2; rtn--)
+	(void) close(rtn);
+#endif /* HAVE_SYSCONF */
+
+    /*
      * set the prompt based on $SUDO_PROMPT (can be overridden by `-p')
      */
     if ((prompt = getenv("SUDO_PROMPT")) == NULL)
@@ -241,18 +254,6 @@ int main(argc, argv)
     /* must have a command to run unless got -s */
     if (cmnd == NULL && NewArgc == 0 && !(sudo_mode & MODE_SHELL))
 	usage(1);
-
-    /*
-     * Close all file descriptors to make sure we have a nice
-     * clean slate from which to work.  
-     */
-#ifdef HAVE_SYSCONF
-    for (rtn = sysconf(_SC_OPEN_MAX) - 1; rtn > 3; rtn--)
-	(void) close(rtn);
-#else
-    for (rtn = getdtablesize() - 1; rtn > 3; rtn--)
-	(void) close(rtn);
-#endif /* HAVE_SYSCONF */
 
     clean_env(environ, badenv_table);
 
@@ -669,8 +670,8 @@ static void add_env(contiguous)
 	char *to, **from;
 
 	if (contiguous) {
-	    size += (size_t) NewArgv[NewArgc-1] + strlen(NewArgv[NewArgc-1]) -
-		    (size_t) NewArgv[1] + 1;
+	    size += (size_t) (NewArgv[NewArgc-1] - NewArgv[1]) +
+		    strlen(NewArgv[NewArgc-1]) + 1;
 	} else {
 	    for (from = &NewArgv[1]; *from; from++)
 		size += strlen(*from) + 1;
@@ -785,7 +786,7 @@ static void load_cmnd(sudo_mode)
 static int check_sudoers()
 {
     struct stat statbuf;
-    int fd = -1, rootstat;
+    int rootstat, i;
     char c;
     int rtn = ALL_SYSTEMS_GO;
 
@@ -834,12 +835,25 @@ static int check_sudoers()
 	rtn = SUDOERS_WRONG_MODE;
     else if (statbuf.st_uid != SUDOERS_UID || statbuf.st_gid != SUDOERS_GID)
 	rtn = SUDOERS_WRONG_OWNER;
-    else if ((fd = open(_PATH_SUDO_SUDOERS, O_RDONLY)) == -1 ||
-	     read(fd, &c, 1) == -1)
-	rtn = NO_SUDOERS_FILE;
-
-    if (fd != -1)
-	(void) close(fd);
+    else {
+	/* Solaris sometimes returns EAGAIN so try 10 times */
+	for (i = 0; i < 10 ; i++) {
+	    errno = 0;
+	    if ((sudoers_fp = fopen(_PATH_SUDO_SUDOERS, "r")) == NULL ||
+		fread(&c, sizeof(c), 1, sudoers_fp) != 1) {
+		sudoers_fp = NULL;
+		if (errno != EAGAIN && errno != EWOULDBLOCK)
+		    break;
+	    } else
+		break;
+	    sleep(1);
+	}
+	if (sudoers_fp == NULL) {
+	    fprintf(stderr, "%s: cannot open %s: ", Argv[0], _PATH_SUDO_SUDOERS);
+	    perror("");
+	    rtn = NO_SUDOERS_FILE;
+	}
+    }
 
     set_perms(PERM_ROOT, 0);
     set_perms(PERM_USER, 0);
@@ -920,6 +934,20 @@ void set_perms(perm, sudo_mode)
 					(void) fprintf(stderr,
 					    "%s: cannot set gid to %d: ",  
 					    Argv[0], pw_ent->pw_gid);
+					perror("");
+					exit(1);
+				    }
+
+				    /*
+				     * Initialize group vector only if
+				     * we are going to be a non-root user.
+				     */
+				    if (strcmp(runas_user, "root") != 0 &&
+					initgroups(runas_user, pw_ent->pw_gid)
+					== -1) {
+					(void) fprintf(stderr,
+					    "%s: cannot set group vector ",
+					    Argv[0]);
 					perror("");
 					exit(1);
 				    }

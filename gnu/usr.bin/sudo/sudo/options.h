@@ -1,7 +1,7 @@
-/*	$OpenBSD: options.h,v 1.8 1998/01/13 05:30:26 millert Exp $	*/
+/*	$OpenBSD: options.h,v 1.9 1998/03/31 06:41:04 millert Exp $	*/
 
 /*
- *  CU sudo version 1.5.4
+ *  CU sudo version 1.5.5
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
  *
  *  Please send bugs, changes, problems to sudo-bugs@courtesan.com
  *
- *  Id: options.h,v 1.35 1998/01/13 04:48:42 millert Exp $
+ *  Id: options.h,v 1.42 1998/03/31 05:15:42 millert Exp $
  */
 
 #ifndef _SUDO_OPTIONS_H
@@ -67,6 +67,7 @@
 /*#define USE_TTY_TICKETS	/* have a different ticket file for each tty */
 /*#define OTP_ONLY		/* validate user via OTP (skey/opie) only */
 /*#define LONG_OTP_PROMPT	/* use a two line OTP (skey/opie) prompt */
+/*#define STUB_LOAD_INTERFACES	/* don't try to read ether interfaces */
 #define FAST_MATCH		/* command check fails if basenames not same */
 #ifndef SUDOERS_MODE
 #define SUDOERS_MODE 0440	/* file mode for sudoers (octal) */

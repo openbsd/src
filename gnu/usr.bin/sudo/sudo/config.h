@@ -1,8 +1,8 @@
-/*	$OpenBSD: config.h,v 1.3 1998/01/13 05:30:21 millert Exp $	*/
+/*	$OpenBSD: config.h,v 1.4 1998/03/31 06:40:51 millert Exp $	*/
 
 /* config.h.  Generated automatically by configure.  */
 /*
- *  CU sudo version 1.5.4
+ *  CU sudo version 1.5.5
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -20,7 +20,7 @@
  *
  *  Please send bugs, changes, problems to sudo-bugs@courtesan.com
  *
- *  Id: config.h.in,v 1.80 1998/01/13 04:48:01 millert Exp $
+ *  Id: config.h.in,v 1.87 1998/03/31 05:05:30 millert Exp $
  */
 
 /*
@@ -93,6 +93,9 @@
 
 /* Define if you use SecurID.  */
 /* #undef HAVE_SECURID */
+
+/* Define if you use AIX general authentication.  */
+/* #undef HAVE_AUTHENTICATE */
 
 /* Define if you use Kerberos.  */
 /* #undef HAVE_KERB4 */
