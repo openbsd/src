@@ -1,4 +1,4 @@
-/*	$OpenBSD: resp.c,v 1.3 2004/08/06 20:16:52 jfb Exp $	*/
+/*	$OpenBSD: resp.c,v 1.4 2004/08/13 12:46:26 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -48,6 +48,16 @@
 #define CVS_MTSTK_MAXDEPTH   16
 
 
+#define STRIP_SLASH(p)						\
+	do {							\
+		size_t len;					\
+		len = strlen(p);				\
+		while ((len > 0) && (p[len - 1] == '/'))	\
+			p[--len] = '\0';			\
+	} while (0)
+
+
+
 static int  cvs_resp_validreq  (struct cvsroot *, int, char *);
 static int  cvs_resp_cksum     (struct cvsroot *, int, char *);
 static int  cvs_resp_modtime   (struct cvsroot *, int, char *);
@@ -63,12 +73,6 @@ static int  cvs_resp_mode      (struct cvsroot *, int, char *);
 static int  cvs_resp_modxpand  (struct cvsroot *, int, char *);
 static int  cvs_resp_rcsdiff   (struct cvsroot *, int, char *);
 static int  cvs_resp_template  (struct cvsroot *, int, char *);
-
-static const char *cvs_months[] = {
-	"Jan", "Feb", "Mar", "Apr", "May", "Jun",
-	"Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
-};
-
 
 
 struct cvs_resphdlr {
@@ -351,48 +355,47 @@ cvs_resp_statdir(struct cvsroot *root, int type, char *line)
 /*
  * cvs_resp_sticky()
  *
- * Handler for the `Clear-sticky' and `Set-sticky' responses.
+ * Handler for the `Clear-sticky' and `Set-sticky' responses.  If the
+ * specified directory doesn't exist, we create it and attach it to the
+ * global file structure.
  */
 
 static int
 cvs_resp_sticky(struct cvsroot *root, int type, char *line)
 {
-	size_t len;
-	char rpath[MAXPATHLEN];
-	struct stat st;
-	CVSFILE *cf;
-
-	/* remove trailing slash */
-	len = strlen(line);
-	if ((len > 0) && (line[len - 1] == '/'))
-		line[--len] = '\0';
+	char rpath[MAXPATHLEN], subdir[MAXPATHLEN], *file;
+	CVSFILE *cf, *sdir;
 
 	/* get the remote path */
-	cvs_getln(root, rpath, sizeof(rpath));
+	if (cvs_getln(root, rpath, sizeof(rpath)) < 0)
+		return (-1);
 
-	/* if the directory doesn't exist, create it */
-	if (stat(line, &st) == -1) {
+	STRIP_SLASH(line);
+
+	cvs_splitpath(line, subdir, sizeof(subdir), &file);
+	sdir = cvs_file_find(cvs_files, subdir);
+	if (sdir == NULL) {
+		cvs_log(LP_ERR, "failed to find %s", subdir);
+		return (-1);
+	}
+
+	cf = cvs_file_find(sdir, file);
+	if (cf == NULL) {
 		/* attempt to create it */
-		if (errno != ENOENT) {
-			cvs_log(LP_ERRNO, "failed to stat %s", line);
-		}
-		else {
-			cf = cvs_file_create(line, DT_DIR, 0755);
-			if (cf == NULL)
-				return (-1);
-			cf->cf_ddat->cd_repo = strdup(line);
-			cf->cf_ddat->cd_root = root;
-			root->cr_ref++;
-			cvs_mkadmin(cf, 0755);
+		cf = cvs_file_create(line, DT_DIR, 0755);
+		if (cf == NULL)
+			return (-1);
+		cf->cf_ddat->cd_repo = strdup(line);
+		cf->cf_ddat->cd_root = root;
+		root->cr_ref++;
 
-			cvs_file_free(cf);
-		}
+		cvs_file_attach(sdir, cf);
 	}
 
-	if (type == CVS_RESP_CLRSTICKY) {
-	}
-	else if (type == CVS_RESP_SETSTICKY) {
-	}
+	if (type == CVS_RESP_CLRSTICKY)
+		cf->cf_ddat->cd_flags &= ~CVS_DIRF_STICKY;
+	else if (type == CVS_RESP_SETSTICKY)
+		cf->cf_ddat->cd_flags |= CVS_DIRF_STICKY;
 
 	return (0);
 }
@@ -467,56 +470,7 @@ cvs_resp_cksum(struct cvsroot *root, int type, char *line)
 static int
 cvs_resp_modtime(struct cvsroot *root, int type, char *line)
 {
-	int i;
-	long off;
-	char sign, mon[8], gmt[8], hr[4], min[4], *ep;
-	struct tm cvs_tm;
-
-	memset(&cvs_tm, 0, sizeof(cvs_tm));
-	sscanf(line, "%d %3s %d %2d:%2d:%2d %5s", &cvs_tm.tm_mday, mon,
-	    &cvs_tm.tm_year, &cvs_tm.tm_hour, &cvs_tm.tm_min,
-	    &cvs_tm.tm_sec, gmt);
-	cvs_tm.tm_year -= 1900;
-	cvs_tm.tm_isdst = -1;
-
-	if (*gmt == '-') {
-		sscanf(gmt, "%c%2s%2s", &sign, hr, min);
-		cvs_tm.tm_gmtoff = strtol(hr, &ep, 10);
-		if ((cvs_tm.tm_gmtoff == LONG_MIN) ||
-		    (cvs_tm.tm_gmtoff == LONG_MAX) ||
-		    (*ep != '\0')) {
-			cvs_log(LP_ERR,
-			    "parse error in GMT hours specification `%s'", hr);
-			cvs_tm.tm_gmtoff = 0;
-		}
-		else {
-			/* get seconds */
-			cvs_tm.tm_gmtoff *= 3600;
-
-			/* add the minutes */
-			off = strtol(min, &ep, 10);
-			if ((cvs_tm.tm_gmtoff == LONG_MIN) ||
-			    (cvs_tm.tm_gmtoff == LONG_MAX) ||
-			    (*ep != '\0')) {
-				cvs_log(LP_ERR,
-				    "parse error in GMT minutes "
-				    "specification `%s'", min);
-			}
-			else
-				cvs_tm.tm_gmtoff += off * 60;
-		}
-	}
-	if (sign == '-')
-		cvs_tm.tm_gmtoff = -cvs_tm.tm_gmtoff;
-
-	for (i = 0; i < (int)(sizeof(cvs_months)/sizeof(cvs_months[0])); i++) {
-		if (strcmp(cvs_months[i], mon) == 0) {
-			cvs_tm.tm_mon = i;
-			break;
-		}
-	}
-
-	cvs_modtime = mktime(&cvs_tm);
+	cvs_modtime = cvs_datesec(line, CVS_DATE_RFC822, 1);
 	return (0);
 }
 
@@ -524,7 +478,8 @@ cvs_resp_modtime(struct cvsroot *root, int type, char *line)
 /*
  * cvs_resp_updated()
  *
- * Handler for the `Updated' and `Created' responses.
+ * Handler for the `Updated', `Update-existing', `Created', `Merged' and
+ * `Patched' responses, which all have a very similar format.
  */
 
 static int
@@ -532,37 +487,38 @@ cvs_resp_updated(struct cvsroot *root, int type, char *line)
 {
 	size_t len;
 	mode_t fmode;
-	char tbuf[32], path[MAXPATHLEN], cksum_buf[CVS_CKSUM_LEN];
+	char path[MAXPATHLEN], cksum_buf[CVS_CKSUM_LEN];
 	BUF *fbuf;
-	CVSENTRIES *ef;
+	CVSFILE *cf;
 	struct cvs_ent *ep;
+	struct tm tm;
 	struct timeval tv[2];
 
-	ep = NULL;
+	STRIP_SLASH(line);
+
+	/* find parent directory of file */
+	cf = cvs_file_find(cvs_files, line);
+	if (cf == NULL) {
+		cvs_log(LP_ERR, "failed to find directory %s", line);
+		return (-1);
+	}
 
 	/* read the remote path of the file */
-	cvs_getln(root, path, sizeof(path));
+	if (cvs_getln(root, path, sizeof(path)) < 0)
+		return (-1);
 
 	/* read the new entry */
-	cvs_getln(root, path, sizeof(path));
-	ep = cvs_ent_parse(path);
-	if (ep == NULL)
+	if (cvs_getln(root, path, sizeof(path)) < 0)
 		return (-1);
-	snprintf(path, sizeof(path), "%s%s", line, ep->ce_name);
+
+	if ((ep = cvs_ent_parse(path)) == NULL)
+		return (-1);
+	snprintf(path, sizeof(path), "%s/%s", line, ep->ce_name);
 
 	if (type == CVS_RESP_CREATED) {
 		/* set the timestamp as the last one received from Mod-time */
-		ep->ce_timestamp = ctime_r(&cvs_modtime, tbuf);
-		len = strlen(tbuf);
-		if ((len > 0) && (tbuf[len - 1] == '\n'))
-			tbuf[--len] = '\0';
-
-		ef = cvs_ent_open(line, O_WRONLY);
-		if (ef == NULL)
-			return (-1);
-
-		cvs_ent_add(ef, ep);
-		cvs_ent_close(ef);
+		ep->ce_mtime = cvs_modtime;
+		cvs_ent_add(cf->cf_ddat->cd_ent, ep);
 	}
 	else if (type == CVS_RESP_UPDEXIST) {
 	}
