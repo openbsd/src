@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.290 2002/02/10 23:58:02 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.291 2002/02/18 03:03:44 krw Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -237,6 +237,8 @@ pcscp*	at pci? dev ? function ?	# AMD 53c974 PCscsi-PCI SCSI
 scsibus* at pcscp?
 sea0	at isa? disable iomem 0xc8000 irq 5	# Seagate ST0[12] SCSI controllers
 scsibus* at sea?
+trm*	at pci? dev ? function ?	# Tekram DC-3x5U SCSI Controllers
+scsibus* at trm?
 uha0	at isa? port 0x330 irq ? drq ?	# UltraStor [13]4f SCSI controllers
 uha1	at isa? disable port 0x334 irq ? drq ? # UltraStor [13]4f SCSI controllers
 uha*	at eisa? slot ?			# UltraStor 24f SCSI controllers
