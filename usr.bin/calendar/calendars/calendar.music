@@ -1,7 +1,7 @@
 /*
  * Music
  *
- * $OpenBSD: calendar.music,v 1.4 1997/08/27 10:48:30 provos Exp $
+ * $OpenBSD: calendar.music,v 1.5 1997/08/27 10:56:48 provos Exp $
  */
 
 #ifndef _calendar_music_
@@ -56,10 +56,11 @@
 03/13	The Allman Brothers record their live album at the Fillmore East, 1971
 03/15	Sly Stone born, 1944
 03/17	Paul Kantner (Jefferson Airplane) is born in San Francisco, 1942
-03/21	J.S. Bach born, 1685
+03/21	Johann Sebastian Bach born in Eisenach, 1685
 03/22	Ten Years After plays their last concert, 1974
 03/25	Aretha Franklin is born in Detroit, 1943
 03/25	Bela Bartok is born in Nagyszentmiklos, 1881
+03/26	Ludwig van Beethoven dies in Wien, 1827
 03/26	Emerson, Lake, and Palmer record "Pictures at an Exhibition" live, 1971
 03/28	Sergej Rachmaninow dies in Beverley Hills, 1943
 03/29	Dr. Hook gets a group picture on the cover of "Rolling Stone", 1973
@@ -86,7 +87,6 @@
 05/18	Rick Wakeman is born in West London, England, 1949
 05/19	Pete Townshend is born in London, 1945
 05/20	The Jimi Hendrix Experience is signed by Reprise Records, 1967
-05/22	Johann Sebastian Bach born in Eisenach, Germany, 1665
 05/23	Blues great Elmore James dies, 1963
 05/24	Bob Dylan (Robert Zimmerman) is born in Duluth, 1941
 05/26	Al Jolson born, 1886
@@ -116,7 +116,7 @@
 07/25	Bob Dylan goes electric at the Newport Folk Festival, 1965
 07/25	Crosby, Stills, Nash & Young debut at the Fillmore East, 1969
 07/26	Mick Jagger is born in Kent, England, 1943
-07/28	Bach dies, 1750
+07/28	Johann Sebastian Bach dies in Leipzig, 1750
 07/28	The Watkins Glen "Summer Jam" opens, 1973
 08/01	The Concert for Bangla Desh takes place at Madison Square Garden, 1971
 08/04	John Lennon points out that "the Beatles are more popular than Jesus",
@@ -183,9 +183,8 @@
 12/09	The Who's "Tommy" premieres in London, 1973
 12/13	Ted Nugent, the motor city madman, born in Detroit, 1949
 12/15	Thomas Edison receives patent on the phonograph, 1877
-12/16	Beethoven born, 1770
 12/16	Don McLean's "American Pie" is released, 1971
-12/16	Ludwig von Beethoven christened in Bonn, Germany, 1770
+12/16	Ludwig von Beethoven born or christened in Bonn, Germany, 1770
 12/21	Frank Zappa is born in Baltimore, 1940
 12/23	First G&S collaboration, Thespis, 1871
 12/28	Edgar Winter is born in Beaumont, Texas, 1946
