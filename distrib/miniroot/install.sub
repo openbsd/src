@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.261 2002/09/29 22:45:44 krw Exp $
+#	$OpenBSD: install.sub,v 1.262 2002/09/29 22:52:21 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -428,6 +428,7 @@ makedev() {
 	if [ ! -c /dev/r${_d}c ]; then
 		if [ -r /dev/MAKEDEV ]; then
 			(cd /dev; sh MAKEDEV $_d)
+			DEVSMADE=`addel $_d $DEVSMADE`
 		else
 			echo "Device nodes for $_d are missing, and MAKEDEV"
 			echo "does not exist to create them with.  Sorry."
@@ -1920,12 +1921,19 @@ set_machdep_apertureallowed() {
 }
 
 finish_up() {
+	local _dev
+
 	set_timezone
 
-	echo -n "Making all device nodes (by running /dev/MAKEDEV all) ..."
+	echo -n "Making all device nodes..."
 	cd /mnt/dev
 	sh MAKEDEV all
-	echo "... done."
+	# Make sure any devices we added as a result of makedev() calls
+	# are recreated in installed system.
+	for _dev in $DEVSMADE; do
+		sh MAKEDEV $_dev
+	done
+	echo "done."
 	cd /
 
 	md_installboot $ROOTDISK
@@ -1973,6 +1981,9 @@ dmesg | sed -ne '/^OpenBSD /h;/^OpenBSD /!H;${g;p;}' > /var/run/dmesg.boot
 DKDEVS=`get_dkdevs`
 CDDEVS=`get_cddevs`
 IFDEVS=`get_ifdevs`
+
+# Devices created with makedev().
+DEVSMADE=
 
 # extra "site" set can be provided by person doing install or upgrade.
 THESETS="base etc misc comp man game xbase xshare xfont xserv site $MDSETS"
