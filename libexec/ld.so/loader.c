@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.79 2004/05/25 21:48:00 mickey Exp $ */
+/*	$OpenBSD: loader.c,v 1.80 2004/05/26 19:14:14 mickey Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -361,18 +361,6 @@ _dl_boot(const char **argv, char **envp, const long loff, long *dl_data)
 	_dl_fixup_user_env();
 
 	/*
-	 * The first object is the executable itself,
-	 * it is responsible for running it's own ctors/dtors
-	 * thus do NOT run the ctors for the executable, all of
-	 * the shared libraries which follow.
-	 * Do not run init code if run from ldd.
-	 */
-	if (_dl_objects->next != NULL) {
-		_dl_objects->status |= STAT_INIT_DONE;
-		_dl_call_init(_dl_objects);
-	}
-
-	/*
 	 * Finally make something to help gdb when poking around in the code.
 	 */
 #ifdef __mips__
@@ -401,6 +389,18 @@ _dl_boot(const char **argv, char **envp, const long loff, long *dl_data)
 	}
 
 	_dl_debug_state();
+
+	/*
+	 * The first object is the executable itself,
+	 * it is responsible for running it's own ctors/dtors
+	 * thus do NOT run the ctors for the executable, all of
+	 * the shared libraries which follow.
+	 * Do not run init code if run from ldd.
+	 */
+	if (_dl_objects->next != NULL) {
+		_dl_objects->status |= STAT_INIT_DONE;
+		_dl_call_init(_dl_objects);
+	}
 
 	/*
 	 * Schedule a routine to be run at shutdown, by using atexit.
