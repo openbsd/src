@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tl.c,v 1.31 2003/08/19 14:01:35 mpech Exp $	*/
+/*	$OpenBSD: if_tl.c,v 1.32 2004/09/14 22:39:03 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -1702,8 +1702,11 @@ void tl_init(xsc)
 	CMD_SET(sc, TL_CMD_RT);
 	CSR_WRITE_4(sc, TL_CH_PARM, vtophys(&sc->tl_ldata->tl_rx_list[0]));
 
-	if (!sc->tl_bitrate) 
+	if (!sc->tl_bitrate) {
 		mii_mediachg(&sc->sc_mii);
+	} else {
+		tl_ifmedia_upd(ifp);
+	}
 
 	/* Send the RX go command */
 	CMD_SET(sc, TL_CMD_GO|TL_CMD_NES|TL_CMD_RT);
