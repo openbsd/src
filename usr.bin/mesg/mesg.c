@@ -1,4 +1,4 @@
-/*	$OpenBSD: mesg.c,v 1.3 1997/01/15 23:42:53 millert Exp $	*/
+/*	$OpenBSD: mesg.c,v 1.4 1997/07/31 14:56:33 flipk Exp $	*/
 /*	$NetBSD: mesg.c,v 1.4 1994/12/23 07:16:32 jtc Exp $	*/
 
 /*
@@ -49,7 +49,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mesg.c	8.2 (Berkeley) 1/21/94";
 #endif
-static char rcsid[] = "$OpenBSD: mesg.c,v 1.3 1997/01/15 23:42:53 millert Exp $";
+static char rcsid[] = "$OpenBSD: mesg.c,v 1.4 1997/07/31 14:56:33 flipk Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -81,9 +81,9 @@ main(argc, argv)
 	argv += optind;
 
 	if ((tty = ttyname(STDERR_FILENO)) == NULL)
-		err(1, "ttyname");
+		err(2, "ttyname");
 	if (stat(tty, &sb) < 0)
-		err(1, "%s", tty);
+		err(2, "%s", tty);
 
 	if (*argv == NULL) {
 		if (sb.st_mode & S_IWGRP) {
@@ -97,11 +97,11 @@ main(argc, argv)
 	switch (*argv[0]) {
 	case 'y':
 		if (chmod(tty, sb.st_mode | S_IWGRP) < 0)
-			err(1, "%s", tty);
+			err(2, "%s", tty);
 		exit(0);
 	case 'n':
 		if (chmod(tty, sb.st_mode & ~S_IWGRP) < 0)
-			err(1, "%s", tty);
+			err(2, "%s", tty);
 		exit(1);
 	}
 
