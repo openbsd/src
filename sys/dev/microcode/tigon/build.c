@@ -1,4 +1,4 @@
-/*	$OpenBSD: build.c,v 1.1 2004/11/22 04:14:18 deraadt Exp $	*/
+/*	$OpenBSD: build.c,v 1.2 2004/11/22 20:47:48 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2004 Theo de Raadt <deraadt@openbsd.org>
@@ -18,6 +18,7 @@
 #include <sys/types.h>
 #include <dev/pci/if_tivar.h>
 #include <fcntl.h>
+#include <stdlib.h>
 
 #include "ti_fw.h"
 #include "ti_fw2.h"
