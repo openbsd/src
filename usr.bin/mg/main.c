@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.36 2005/03/12 06:16:07 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.37 2005/03/12 10:36:13 jmc Exp $	*/
 
 /*
  *	Mainline.
@@ -46,7 +46,7 @@ main(int argc, char **argv)
 			init_fcn_name = optarg;
 			break;
 		default:
-			errx(1, "usage: mg [-f <mode>] [files...]");
+			errx(1, "usage: mg [options] [file ...]");
 		}
 	argc -= optind;
 	argv += optind;
