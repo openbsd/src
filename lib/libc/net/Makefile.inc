@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.24 1999/07/03 21:43:12 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.25 1999/11/17 05:22:41 millert Exp $
 
 # net sources
 .PATH: ${LIBCSRCDIR}/arch/${MACHINE_ARCH}/net ${LIBCSRCDIR}/net
@@ -55,6 +55,7 @@ MLINKS+=inet.3 addr.3 inet.3 inet_addr.3 inet.3 inet_aton.3 \
 	inet.3 inet_lnaof.3 inet.3 inet_makeaddr.3 inet.3 inet_netof.3 \
 	inet.3 inet_network.3 inet.3 inet_ntoa.3 inet.3 network.3 \
 	inet.3 ntoa.3 inet.3 inet_ntop.3 inet.3 inet_pton.3
+MLINKS+=inet_net.3 inet_net_ntop.3 inet_net.3 inet_net_pton.3
 MLINKS+=iso_addr.3 iso_ntoa.3
 MLINKS+=link_addr.3 link_ntoa.3
 MLINKS+=ipx.3 ipx_addr.3 ipx.3 ipx_ntoa.3
