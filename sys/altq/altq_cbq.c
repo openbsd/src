@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_cbq.c,v 1.16 2003/04/02 14:51:45 henning Exp $	*/
+/*	$OpenBSD: altq_cbq.c,v 1.17 2003/08/20 12:33:57 henning Exp $	*/
 /*	$KAME: altq_cbq.c,v 1.9 2000/12/14 08:12:45 thorpej Exp $	*/
 
 /*
@@ -272,7 +272,7 @@ cbq_add_queue(struct pf_altq *a)
 
 	opts = &a->pq_u.cbq_opts;
 	/* check parameters */
-	if (a->priority >= RM_MAXPRIO)
+	if (a->priority >= CBQ_MAXPRI)
 		return (EINVAL);
 
 	/* Get pointers to parent and borrow classes.  */

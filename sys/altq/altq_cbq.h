@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_cbq.h,v 1.7 2003/04/02 14:51:45 henning Exp $	*/
+/*	$OpenBSD: altq_cbq.h,v 1.8 2003/08/20 12:33:57 henning Exp $	*/
 /*	$KAME: altq_cbq.h,v 1.5 2000/12/02 13:44:40 kjc Exp $	*/
 
 /*
@@ -68,6 +68,7 @@ extern "C" {
 #define	CBQCLF_CLASSMASK	0xf000	/* class mask */
 
 #define	CBQ_MAXQSIZE		200
+#define	CBQ_MAXPRI		RM_MAXPRIO
 
 typedef struct _cbq_class_stats_ {
 	u_int32_t	handle;
