@@ -1,4 +1,4 @@
-/*	$OpenBSD: advnops.c,v 1.19 2001/12/04 22:44:31 art Exp $	*/
+/*	$OpenBSD: advnops.c,v 1.20 2001/12/10 02:19:34 art Exp $	*/
 /*	$NetBSD: advnops.c,v 1.32 1996/10/13 02:52:09 christos Exp $	*/
 
 /*
@@ -286,7 +286,7 @@ adosfs_read(v)
 			if (bytelen == 0) {
 				break;
 			}
-			win = ubc_alloc(&sp->a_vp->v_uvm.u_obj, uio->uio_offset,
+			win = ubc_alloc(&sp->a_vp->v_uobj, uio->uio_offset,
 					&bytelen, UBC_READ);
 			error = uiomove(win, bytelen, uio);
 			ubc_release(win, 0);

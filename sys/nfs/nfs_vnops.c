@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.41 2001/12/04 22:44:32 art Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.42 2001/12/10 02:19:34 art Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -2659,7 +2659,7 @@ nfs_flush(vp, cred, waitfor, p, commit)
 	struct proc *p;
 	int commit;
 {
-	struct uvm_object *uobj = &vp->v_uvm.u_obj;
+	struct uvm_object *uobj = &vp->v_uobj;
 	struct nfsnode *np = VTONFS(vp);
 	int error;
 	int flushflags = PGO_ALLPAGES|PGO_CLEANIT|PGO_SYNCIO;

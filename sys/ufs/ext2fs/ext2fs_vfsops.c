@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vfsops.c,v 1.17 2001/11/27 05:27:12 art Exp $	*/
+/*	$OpenBSD: ext2fs_vfsops.c,v 1.18 2001/12/10 02:19:34 art Exp $	*/
 /*	$NetBSD: ext2fs_vfsops.c,v 1.40 2000/11/27 08:39:53 chs Exp $	*/
 
 /*
@@ -930,7 +930,7 @@ ext2fs_vget(mp, ino, vpp)
 			ip->i_flag |= IN_MODIFIED;
 	}
 
-	vp->v_uvm.u_size = ip->i_e2fs_size;
+	vp->v_size = ip->i_e2fs_size;
 	*vpp = vp;
 	return (0);
 }

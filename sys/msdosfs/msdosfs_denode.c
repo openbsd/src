@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_denode.c,v 1.20 2001/11/27 05:27:12 art Exp $	*/
+/*	$OpenBSD: msdosfs_denode.c,v 1.21 2001/12/10 02:19:34 art Exp $	*/
 /*	$NetBSD: msdosfs_denode.c,v 1.23 1997/10/17 11:23:58 ws Exp $	*/
 
 /*-
@@ -334,7 +334,7 @@ retry:
 		nvp->v_type = VREG;
 	VREF(ldep->de_devvp);
 	*depp = ldep;
-	nvp->v_uvm.u_size = ldep->de_FileSize;
+	nvp->v_size = ldep->de_FileSize;
 	return (0);
 }
 

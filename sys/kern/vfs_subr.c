@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.76 2001/12/05 00:24:36 art Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.77 2001/12/10 02:19:34 art Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -468,16 +468,16 @@ getnewvnode(tag, mp, vops, vpp)
 	*vpp = vp;
 	vp->v_usecount = 1;
 	vp->v_data = 0;
-	simple_lock_init(&vp->v_uvm.u_obj.vmobjlock);
+	simple_lock_init(&vp->v_uobj.vmobjlock);
 
 	/*
 	 * initialize uvm_object within vnode.
 	 */
 
-	uobj = &vp->v_uvm.u_obj;
+	uobj = &vp->v_uobj;
 	uobj->pgops = &uvm_vnodeops;
 	TAILQ_INIT(&uobj->memq);
-	vp->v_uvm.u_size = VSIZENOTSET;
+	vp->v_size = VSIZENOTSET;
 
 	return (0);
 }
@@ -805,8 +805,8 @@ vput(vp)
 	vputonfreelist(vp);
 
 	if (vp->v_flag & VTEXT) {
-		uvmexp.vtextpages -= vp->v_uvm.u_obj.uo_npages;
-		uvmexp.vnodepages += vp->v_uvm.u_obj.uo_npages;
+		uvmexp.vtextpages -= vp->v_uobj.uo_npages;
+		uvmexp.vnodepages += vp->v_uobj.uo_npages;
 	}
 	vp->v_flag &= ~VTEXT;
 	simple_unlock(&vp->v_interlock);
@@ -850,8 +850,8 @@ vrele(vp)
 	vputonfreelist(vp);
 
 	if (vp->v_flag & VTEXT) {
-		uvmexp.vtextpages -= vp->v_uvm.u_obj.uo_npages;
-		uvmexp.vnodepages += vp->v_uvm.u_obj.uo_npages;
+		uvmexp.vtextpages -= vp->v_uobj.uo_npages;
+		uvmexp.vnodepages += vp->v_uobj.uo_npages;
 	}
 	vp->v_flag &= ~VTEXT;
 	if (vn_lock(vp, LK_EXCLUSIVE|LK_INTERLOCK, p) == 0)
@@ -1063,8 +1063,8 @@ vclean(vp, flags, p)
 		panic("vclean: deadlock");
 	vp->v_flag |= VXLOCK;
 	if (vp->v_flag & VTEXT) {
-		uvmexp.vtextpages -= vp->v_uvm.u_obj.uo_npages;
-		uvmexp.vnodepages += vp->v_uvm.u_obj.uo_npages;
+		uvmexp.vtextpages -= vp->v_uobj.uo_npages;
+		uvmexp.vnodepages += vp->v_uobj.uo_npages;
 	}
 	vp->v_flag &= ~VTEXT;
 
@@ -2023,7 +2023,7 @@ vinvalbuf(vp, flags, cred, p, slpflag, slptimeo)
 	struct proc *p;
 	int slpflag, slptimeo;
 {
-	struct uvm_object *uobj = &vp->v_uvm.u_obj;
+	struct uvm_object *uobj = &vp->v_uobj;
 	struct buf *bp;
 	struct buf *nbp, *blist;
 	int s, error, rv;
@@ -2111,7 +2111,7 @@ vflushbuf(vp, sync)
 	struct vnode *vp;
 	int sync;
 {
-	struct uvm_object *uobj = &vp->v_uvm.u_obj;
+	struct uvm_object *uobj = &vp->v_uobj;
 	struct buf *bp, *nbp;
 	int s;
 
@@ -2200,7 +2200,7 @@ brelvp(struct buf *bp)
 	 */
 	if (bp->b_vnbufs.le_next != NOLIST)
 		bufremvn(bp);
-	if (TAILQ_EMPTY(&vp->v_uvm.u_obj.memq) &&
+	if (TAILQ_EMPTY(&vp->v_uobj.memq) &&
 	    (vp->v_bioflag & VBIOONSYNCLIST) &&
 	    LIST_FIRST(&vp->v_dirtyblkhd) == NULL) {
 		vp->v_bioflag &= ~VBIOONSYNCLIST;
@@ -2265,7 +2265,7 @@ reassignbuf(bp)
 	 */
 	if ((bp->b_flags & B_DELWRI) == 0) {
 		listheadp = &vp->v_cleanblkhd;
-		if (TAILQ_EMPTY(&vp->v_uvm.u_obj.memq) &&
+		if (TAILQ_EMPTY(&vp->v_uobj.memq) &&
 		    (vp->v_bioflag & VBIOONSYNCLIST) &&
 		    LIST_FIRST(&vp->v_dirtyblkhd) == NULL) {
 			vp->v_bioflag &= ~VBIOONSYNCLIST;

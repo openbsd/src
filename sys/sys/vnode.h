@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnode.h,v 1.44 2001/12/05 00:24:36 art Exp $	*/
+/*	$OpenBSD: vnode.h,v 1.45 2001/12/10 02:19:34 art Exp $	*/
 /*	$NetBSD: vnode.h,v 1.38 1996/02/29 20:59:05 cgd Exp $	*/
 
 /*
@@ -45,7 +45,6 @@
 #include <uvm/uvm_pglist.h>	/* XXX */
 #include <sys/lock.h>		/* XXX */
 #include <uvm/uvm.h>		/* XXX */
-#include <uvm/uvm_vnode.h>	/* XXX */
 
 /*
  * The vnode is the focus of all file activity in UNIX.  There is a
@@ -87,13 +86,14 @@ LIST_HEAD(buflists, buf);
  */
 
 struct vnode {
-	struct uvm_vnode v_uvm;			/* uvm data */
+	struct uvm_object v_uobj;		/* the VM object */
+#define v_usecount v_uobj.uo_refs
+#define v_interlock v_uobj.vmobjlock
+	voff_t	v_size;
+	int	v_flag;
+	int	v_numoutput;
 	int	(**v_op) __P((void *));		/* vnode operations vector */
 	enum	vtype v_type;			/* vnode type */
-#define v_flag v_uvm.u_flags
-#define v_usecount v_uvm.u_obj.uo_refs
-#define v_interlock v_uvm.u_obj.vmobjlock
-#define v_numoutput v_uvm.u_nio
 	/* reference count of writers */
 	u_int   v_writecount;			
 	/* Flags that can be read/written in interrupts */
@@ -114,7 +114,7 @@ struct vnode {
 	} v_un;
 
 	struct  lock *v_vnlock;			/* used for non-locking fs's */
-	struct	lock v_glock;			/* getpage lock */
+	struct	lock v_glock;			/* getpages lock */
 	enum	vtagtype v_tag;			/* type of underlying data */
 	void 	*v_data;			/* private data for fs */
 	struct {

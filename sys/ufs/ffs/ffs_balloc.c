@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_balloc.c,v 1.19 2001/11/27 05:27:12 art Exp $	*/
+/*	$OpenBSD: ffs_balloc.c,v 1.20 2001/12/10 02:19:34 art Exp $	*/
 /*	$NetBSD: ffs_balloc.c,v 1.3 1996/02/09 22:22:21 christos Exp $	*/
 
 /*
@@ -448,7 +448,7 @@ ffs_ballocn(v)
 
 		if (ip->i_ffs_size < off + bsize) {
 			ip->i_ffs_size = off + bsize;
-			if (vp->v_uvm.u_size < ip->i_ffs_size) {
+			if (vp->v_size < ip->i_ffs_size) {
 				uvm_vnp_setsize(vp, ip->i_ffs_size);
 			}
 		}

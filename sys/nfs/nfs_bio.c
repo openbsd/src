@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_bio.c,v 1.30 2001/11/30 18:58:18 art Exp $	*/
+/*	$OpenBSD: nfs_bio.c,v 1.31 2001/12/10 02:19:34 art Exp $	*/
 /*	$NetBSD: nfs_bio.c,v 1.25.4.2 1996/07/08 20:47:04 jtc Exp $	*/
 
 /*
@@ -161,7 +161,7 @@ nfs_bioread(vp, uio, ioflag, cred)
 
 			if (bytelen == 0)
 				break;
-			win = ubc_alloc(&vp->v_uvm.u_obj, uio->uio_offset,
+			win = ubc_alloc(&vp->v_uobj, uio->uio_offset,
 					&bytelen, UBC_READ);
 			error = uiomove(win, bytelen, uio);
 			ubc_release(win, 0);
@@ -307,28 +307,28 @@ nfs_write(v)
 			np->n_size = uio->uio_offset + bytelen;
 			uvm_vnp_setsize(vp, np->n_size);
 		}
-		win = ubc_alloc(&vp->v_uvm.u_obj, uio->uio_offset, &bytelen,
+		win = ubc_alloc(&vp->v_uobj, uio->uio_offset, &bytelen,
 				UBC_WRITE);
 		error = uiomove(win, bytelen, uio);
 		ubc_release(win, 0);
 		rv = 1;
 		if ((ioflag & IO_SYNC)) {
-			simple_lock(&vp->v_uvm.u_obj.vmobjlock);
-			rv = vp->v_uvm.u_obj.pgops->pgo_flush(
-			    &vp->v_uvm.u_obj,
+			simple_lock(&vp->v_uobj.vmobjlock);
+			rv = vp->v_uobj.pgops->pgo_flush(
+			    &vp->v_uobj,
 			    oldoff & ~(nmp->nm_wsize - 1),
 			    uio->uio_offset & ~(nmp->nm_wsize - 1),
 			    PGO_CLEANIT|PGO_SYNCIO);
-			simple_unlock(&vp->v_uvm.u_obj.vmobjlock);
+			simple_unlock(&vp->v_uobj.vmobjlock);
 		} else if ((oldoff & ~(nmp->nm_wsize - 1)) !=
 		    (uio->uio_offset & ~(nmp->nm_wsize - 1))) {
-			simple_lock(&vp->v_uvm.u_obj.vmobjlock);
-			rv = vp->v_uvm.u_obj.pgops->pgo_flush(
-			    &vp->v_uvm.u_obj,
+			simple_lock(&vp->v_uobj.vmobjlock);
+			rv = vp->v_uobj.pgops->pgo_flush(
+			    &vp->v_uobj,
 			    oldoff & ~(nmp->nm_wsize - 1),
 			    uio->uio_offset & ~(nmp->nm_wsize - 1),
 			    PGO_CLEANIT|PGO_WEAK);
-			simple_unlock(&vp->v_uvm.u_obj.vmobjlock);
+			simple_unlock(&vp->v_uobj.vmobjlock);
 		}
 		if (!rv) {
 			error = EIO;
@@ -589,7 +589,7 @@ nfs_getpages(v)
 	struct buf *bp, *mbp;
 	struct vnode *vp = ap->a_vp;
 	struct nfsnode *np = VTONFS(vp);
-	struct uvm_object *uobj = &vp->v_uvm.u_obj;
+	struct uvm_object *uobj = &vp->v_uobj;
 	struct nfsmount *nmp = VFSTONFS(vp->v_mount);
 	size_t bytes, iobytes, tailbytes, totalbytes, skipbytes;
 	int flags = ap->a_flags;
@@ -613,7 +613,7 @@ nfs_getpages(v)
 
 	error = 0;
 	origoffset = ap->a_offset;
-	eof = vp->v_uvm.u_size;
+	eof = vp->v_size;
 	if (origoffset >= eof) {
 		if ((flags & PGO_LOCKED) == 0) {
 			simple_unlock(&uobj->vmobjlock);
@@ -744,7 +744,7 @@ nfs_getpages(v)
 	 */
 
 	totalbytes = npages << PAGE_SHIFT;
-	bytes = MIN(totalbytes, vp->v_uvm.u_size - startoffset);
+	bytes = MIN(totalbytes, vp->v_size - startoffset);
 	tailbytes = totalbytes - bytes;
 	skipbytes = 0;
 
@@ -999,11 +999,11 @@ nfs_putpages(v)
 	UVMHIST_LOG(ubchist, "vp %p pgp %p count %d",
 		    vp, ap->a_m, ap->a_count,0);
 
-	simple_unlock(&vp->v_uvm.u_obj.vmobjlock);
+	simple_unlock(&vp->v_uobj.vmobjlock);
 
 	error = 0;
 	origoffset = pgs[0]->offset;
-	bytes = MIN(ap->a_count << PAGE_SHIFT, vp->v_uvm.u_size - origoffset);
+	bytes = MIN(ap->a_count << PAGE_SHIFT, vp->v_size - origoffset);
 	skipbytes = 0;
 
 	/*

@@ -119,7 +119,7 @@ ext2fs_read(v)
 			if (bytelen == 0) {
 				break;
 			}
-			win = ubc_alloc(&vp->v_uvm.u_obj, uio->uio_offset,
+			win = ubc_alloc(&vp->v_uobj, uio->uio_offset,
 					&bytelen, UBC_READ);
 			error = uiomove(win, bytelen, uio);
 			ubc_release(win, 0);
@@ -281,7 +281,7 @@ ext2fs_write(v)
 			if (error) {
 				break;
 			}
-			win = ubc_alloc(&vp->v_uvm.u_obj, uio->uio_offset,
+			win = ubc_alloc(&vp->v_uobj, uio->uio_offset,
 			    &bytelen, UBC_WRITE);
 			error = uiomove(win, bytelen, uio);
 			ubc_release(win, 0);
@@ -295,11 +295,11 @@ ext2fs_write(v)
 			 */
 
 			if (oldoff >> 16 != uio->uio_offset >> 16) {
-				simple_lock(&vp->v_uvm.u_obj.vmobjlock);
-				rv = vp->v_uvm.u_obj.pgops->pgo_flush(
-				    &vp->v_uvm.u_obj, (oldoff >> 16) << 16,
+				simple_lock(&vp->v_uobj.vmobjlock);
+				rv = vp->v_uobj.pgops->pgo_flush(
+				    &vp->v_uobj, (oldoff >> 16) << 16,
 				    (uio->uio_offset >> 16) << 16, PGO_CLEANIT);
-				simple_unlock(&vp->v_uvm.u_obj.vmobjlock);
+				simple_unlock(&vp->v_uobj.vmobjlock);
 			}
 		}
 		goto out;

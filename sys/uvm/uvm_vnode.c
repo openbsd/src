@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_vnode.c,v 1.30 2001/12/06 12:43:20 art Exp $	*/
+/*	$OpenBSD: uvm_vnode.c,v 1.31 2001/12/10 02:19:34 art Exp $	*/
 /*	$NetBSD: uvm_vnode.c,v 1.51 2001/08/17 05:53:02 chs Exp $	*/
 
 /*
@@ -66,7 +66,6 @@
 #include <miscfs/specfs/specdev.h>
 
 #include <uvm/uvm.h>
-#include <uvm/uvm_vnode.h>
 
 /*
  * functions
@@ -130,7 +129,7 @@ uvn_attach(arg, accessprot)
 	vm_prot_t accessprot;
 {
 	struct vnode *vp = arg;
-	struct uvm_vnode *uvn = &vp->v_uvm;
+	struct uvm_object *uobj = &vp->v_uobj;
 	struct vattr vattr;
 	int result;
 	struct partinfo pi;
@@ -143,13 +142,13 @@ uvn_attach(arg, accessprot)
 	/*
 	 * first get a lock on the uvn.
 	 */
-	simple_lock(&uvn->u_obj.vmobjlock);
-	while (uvn->u_flags & VXLOCK) {
-		uvn->u_flags |= VXWANT;
+	simple_lock(uobj->vmobjlock);
+	while (vp->v_flag & VXLOCK) {
+		vp->v_flag |= VXWANT;
 		UVMHIST_LOG(maphist, "  SLEEPING on blocked vn",0,0,0,0);
-		UVM_UNLOCK_AND_WAIT(uvn, &uvn->u_obj.vmobjlock, FALSE,
+		UVM_UNLOCK_AND_WAIT(vp, &uobj->vmobjlock, FALSE,
 		    "uvn_attach", 0);
-		simple_lock(&uvn->u_obj.vmobjlock);
+		simple_lock(&uobj->vmobjlock);
 		UVMHIST_LOG(maphist,"  WOKE UP",0,0,0,0);
 	}
 
@@ -157,7 +156,7 @@ uvn_attach(arg, accessprot)
 	 * if we're mapping a BLK device, make sure it is a disk.
 	 */
 	if (vp->v_type == VBLK && bdevsw[major(vp->v_rdev)].d_type != D_DISK) {
-		simple_unlock(&uvn->u_obj.vmobjlock);
+		simple_unlock(&uobj->vmobjlock);
 		UVMHIST_LOG(maphist,"<- done (VBLK not D_DISK!)", 0,0,0,0);
 		return(NULL);
 	}
@@ -167,10 +166,10 @@ uvn_attach(arg, accessprot)
 	 * set up our idea of the size
 	 * if this hasn't been done already.
 	 */
-	if (uvn->u_size == VSIZENOTSET) {
+	if (vp->v_size == VSIZENOTSET) {
 
-	uvn->u_flags |= VXLOCK;
-	simple_unlock(&uvn->u_obj.vmobjlock); /* drop lock in case we sleep */
+	vp->v_flag |= VXLOCK;
+	simple_unlock(&uobj->vmobjlock); /* drop lock in case we sleep */
 		/* XXX: curproc? */
 	if (vp->v_type == VBLK) {
 		/*
@@ -195,26 +194,26 @@ uvn_attach(arg, accessprot)
 	}
 
 	/* relock object */
-	simple_lock(&uvn->u_obj.vmobjlock);
+	simple_lock(&uobj->vmobjlock);
 
-	if (uvn->u_flags & VXWANT)
-		wakeup(uvn);
-	uvn->u_flags &= ~(VXLOCK|VXWANT);
+	if (vp->v_flag & VXWANT)
+		wakeup(vp);
+	vp->v_flag &= ~(VXLOCK|VXWANT);
 
 	if (result != 0) {
-		simple_unlock(&uvn->u_obj.vmobjlock); /* drop lock */
+		simple_unlock(&uobj->vmobjlock); /* drop lock */
 		UVMHIST_LOG(maphist,"<- done (VOP_GETATTR FAILED!)", 0,0,0,0);
 		return(NULL);
 	}
-	uvn->u_size = used_vnode_size;
+	vp->v_size = used_vnode_size;
 
 	}
 
 	/* unlock and return */
-	simple_unlock(&uvn->u_obj.vmobjlock);
+	simple_unlock(&uobj->vmobjlock);
 	UVMHIST_LOG(maphist,"<- done, refcnt=%d", uvn->u_obj.uo_refs,
 	    0, 0, 0);
-	return (&uvn->u_obj);
+	return (uobj);
 }
 
 
@@ -378,7 +377,6 @@ uvn_flush(uobj, start, stop, flags)
 	voff_t start, stop;
 	int flags;
 {
-	struct uvm_vnode *uvn = (struct uvm_vnode *)uobj;
 	struct vnode *vp = (struct vnode *)uobj;
 	struct vm_page *pp, *ppnext, *ptmp;
 	struct vm_page *pps[256], **ppsp;
@@ -405,8 +403,8 @@ uvn_flush(uobj, start, stop, flags)
 	}
 
 #ifdef DIAGNOSTIC
-	if (uvn->u_size == VSIZENOTSET) {
-		printf("uvn_flush: size not set vp %p\n", uvn);
+	if (vp->v_size == VSIZENOTSET) {
+		printf("uvn_flush: size not set vp %p\n", vp);
 		vprint("uvn_flush VSIZENOTSET", vp);
 		flags |= PGO_ALLPAGES;
 	}
@@ -770,9 +768,9 @@ uvn_flush(uobj, start, stop, flags)
 
 	                vp->v_bioflag |= VBIOWAIT;
 			UVM_UNLOCK_AND_WAIT(&vp->v_numoutput,
-					    &uvn->u_obj.vmobjlock,
+					    &uobj->vmobjlock,
 					    FALSE, "uvn_flush",0);
-			simple_lock(&uvn->u_obj.vmobjlock);
+			simple_lock(&uobj->vmobjlock);
 		}
 		splx(s);
 	}
@@ -798,10 +796,10 @@ uvn_cluster(uobj, offset, loffset, hoffset)
 	voff_t offset;
 	voff_t *loffset, *hoffset; /* OUT */
 {
-	struct uvm_vnode *uvn = (struct uvm_vnode *)uobj;
+	struct vnode *vp = (struct vnode *)uobj;
 
 	*loffset = offset;
-	*hoffset = MIN(offset + MAXBSIZE, round_page(uvn->u_size));
+	*hoffset = MIN(offset + MAXBSIZE, round_page(vp->v_size));
 }
 
 /*
@@ -995,24 +993,24 @@ uvm_vnp_setsize(vp, newsize)
 	struct vnode *vp;
 	voff_t newsize;
 {
-	struct uvm_vnode *uvn = &vp->v_uvm;
+	struct uvm_object *uobj = &vp->v_uobj;
 	voff_t pgend = round_page(newsize);
 	UVMHIST_FUNC("uvm_vnp_setsize"); UVMHIST_CALLED(ubchist);
 
-	simple_lock(&uvn->u_obj.vmobjlock);
+	simple_lock(&uobj->vmobjlock);
 
-	UVMHIST_LOG(ubchist, "old 0x%x new 0x%x", uvn->u_size, newsize, 0,0);
+	UVMHIST_LOG(ubchist, "old 0x%x new 0x%x", vp->v_size, newsize, 0,0);
 
 	/*
 	 * now check if the size has changed: if we shrink we had better
 	 * toss some pages...
 	 */
 
-	if (uvn->u_size > pgend && uvn->u_size != VSIZENOTSET) {
-		(void) uvn_flush(&uvn->u_obj, pgend, 0, PGO_FREE);
+	if (vp->v_size > pgend && vp->v_size != VSIZENOTSET) {
+		(void) uvn_flush(uobj, pgend, 0, PGO_FREE);
 	}
-	uvn->u_size = newsize;
-	simple_unlock(&uvn->u_obj.vmobjlock);
+	vp->v_size = newsize;
+	simple_unlock(&uobj->vmobjlock);
 }
 
 /*
@@ -1034,7 +1032,7 @@ uvm_vnp_zerorange(vp, off, len)
         while (len) {
                 vsize_t bytelen = len;
 
-                win = ubc_alloc(&vp->v_uvm.u_obj, off, &bytelen, UBC_WRITE);
+                win = ubc_alloc(&vp->v_uobj, off, &bytelen, UBC_WRITE);
                 memset(win, 0, bytelen);
                 ubc_release(win, 0);
 

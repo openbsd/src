@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_vnops.c,v 1.36 2001/11/27 05:27:12 art Exp $	*/
+/*	$OpenBSD: vfs_vnops.c,v 1.37 2001/12/10 02:19:34 art Exp $	*/
 /*	$NetBSD: vfs_vnops.c,v 1.20 1996/02/04 02:18:41 christos Exp $	*/
 
 /*
@@ -219,8 +219,8 @@ vn_marktext(vp)
 	struct vnode *vp;
 {
 	if ((vp->v_flag & VTEXT) == 0) {
-		uvmexp.vnodepages -= vp->v_uvm.u_obj.uo_npages;
-		uvmexp.vtextpages += vp->v_uvm.u_obj.uo_npages;
+		uvmexp.vnodepages -= vp->v_uobj.uo_npages;
+		uvmexp.vtextpages += vp->v_uobj.uo_npages;
 #if 0
 	/*
 	 * Doesn't help much because the pager is borked and ubc_flush is
@@ -231,7 +231,7 @@ vn_marktext(vp)
 		 * Get rid of any cached reads from this vnode.
 		 * exec can't respect PMAP_PREFER when mapping the text.
 		 */
-		ubc_flush(&vp->v_uvm.u_obj, 0, 0);
+		ubc_flush(&vp->v_uobj, 0, 0);
 #endif
 #endif
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_mmap.c,v 1.31 2001/12/04 23:22:42 art Exp $	*/
+/*	$OpenBSD: uvm_mmap.c,v 1.32 2001/12/10 02:19:34 art Exp $	*/
 /*	$NetBSD: uvm_mmap.c,v 1.55 2001/08/17 05:52:46 chs Exp $	*/
 
 /*
@@ -69,7 +69,6 @@
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_device.h>
-#include <uvm/uvm_vnode.h>
 
 
 /*

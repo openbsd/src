@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vfsops.c,v 1.26 2001/11/27 05:27:12 art Exp $	*/
+/*	$OpenBSD: msdosfs_vfsops.c,v 1.27 2001/12/10 02:19:34 art Exp $	*/
 /*	$NetBSD: msdosfs_vfsops.c,v 1.48 1997/10/18 02:54:57 briggs Exp $	*/
 
 /*-
@@ -718,7 +718,7 @@ msdosfs_sync_vnode(struct vnode *vp, void *arg)
 	    (((dep->de_flag &
 	    (DE_ACCESS | DE_CREATE | DE_UPDATE | DE_MODIFIED)) == 0) &&
 	    (LIST_EMPTY(&vp->v_dirtyblkhd) &&
-	     vp->v_uvm.u_obj.uo_npages == 0))) {
+	     vp->v_uobj.uo_npages == 0))) {
 		simple_unlock(&vp->v_interlock);
 		return (0);
 	}

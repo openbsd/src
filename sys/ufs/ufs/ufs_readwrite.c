@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_readwrite.c,v 1.20 2001/11/27 05:27:12 art Exp $	*/
+/*	$OpenBSD: ufs_readwrite.c,v 1.21 2001/12/10 02:19:34 art Exp $	*/
 /*	$NetBSD: ufs_readwrite.c,v 1.9 1996/05/11 18:27:57 mycroft Exp $	*/
 
 /*-
@@ -120,7 +120,7 @@ READ(v)
 			    uio->uio_resid);
 			if (bytelen == 0)
 				break;
-			win = ubc_alloc(&vp->v_uvm.u_obj, uio->uio_offset,
+			win = ubc_alloc(&vp->v_uobj, uio->uio_offset,
 			    &bytelen, UBC_READ);
 			error = uiomove(win, bytelen, uio);
 			ubc_release(win, 0);
@@ -266,6 +266,7 @@ WRITE(v)
 		goto bcache;
 
 	while (uio->uio_resid > 0) {
+		struct uvm_object *uobj = &vp->v_uobj;
 		oldoff = uio->uio_offset;
 		blkoffset = blkoff(fs, uio->uio_offset);
 		bytelen = min(fs->fs_bsize - blkoffset, uio->uio_resid);
@@ -281,8 +282,7 @@ WRITE(v)
 			return error;
 		}
 
-		win = ubc_alloc(&vp->v_uvm.u_obj, uio->uio_offset, &bytelen,
-				UBC_WRITE);
+		win = ubc_alloc(uobj, uio->uio_offset, &bytelen, UBC_WRITE);
 		error = uiomove(win, bytelen, uio);
 		ubc_release(win, 0);
 
@@ -292,7 +292,7 @@ WRITE(v)
 		 */
 
 		if (ioflag & IO_SYNC) {
-			simple_lock(&vp->v_uvm.u_obj.vmobjlock);
+			simple_lock(&uobj->vmobjlock);
 #if 1
 			/*
 			 * XXX 
@@ -303,24 +303,23 @@ WRITE(v)
 			 * is complicated so we'll work around it for now.
 			 */
                       
-			rv = vp->v_uvm.u_obj.pgops->pgo_flush(
-			    &vp->v_uvm.u_obj,
-			    oldoff & ~(fs->fs_bsize - 1),
+			rv = uobj->pgops->pgo_flush(
+			    uobj, oldoff & ~(fs->fs_bsize - 1),
 			    (oldoff + bytelen + fs->fs_bsize - 1) &
 			    ~(fs->fs_bsize - 1),
 			    PGO_CLEANIT|PGO_SYNCIO);
 #else
-			rv = vp->v_uvm.u_obj.pgops->pgo_flush(
-			    &vp->v_uvm.u_obj, oldoff, oldoff + bytelen,
+			rv = uobj->pgops->pgo_flush(
+			    uobj, oldoff, oldoff + bytelen,
 			    PGO_CLEANIT|PGO_SYNCIO);
 #endif
-			simple_unlock(&vp->v_uvm.u_obj.vmobjlock);
+			simple_unlock(uobj->vmobjlock);
 		} else if (oldoff >> 16 != uio->uio_offset >> 16) {
-			simple_lock(&vp->v_uvm.u_obj.vmobjlock);
-			rv = vp->v_uvm.u_obj.pgops->pgo_flush(
-			    &vp->v_uvm.u_obj, (oldoff >> 16) << 16,
+			simple_lock(&uobj->vmobjlock);
+			rv = uobj->pgops->pgo_flush(uobj,
+			    (oldoff >> 16) << 16,
 			    (uio->uio_offset >> 16) << 16, PGO_CLEANIT);
-			simple_unlock(&vp->v_uvm.u_obj.vmobjlock);
+			simple_unlock(&uobj->vmobjlock);
 		}
 		if (error) {
 			break;

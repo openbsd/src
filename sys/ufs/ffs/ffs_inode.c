@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_inode.c,v 1.26 2001/11/27 05:27:12 art Exp $	*/
+/*	$OpenBSD: ffs_inode.c,v 1.27 2001/12/10 02:19:34 art Exp $	*/
 /*	$NetBSD: ffs_inode.c,v 1.10 1996/05/11 18:27:19 mycroft Exp $	*/
 
 /*
@@ -228,11 +228,11 @@ ffs_truncate(struct inode *oip, off_t length, int flags, struct ucred *cred)
 		size = blksize(fs, oip, lblkno(fs, length));
 		eoz = min(lblktosize(fs, lblkno(fs, length)) + size, osize);
 		uvm_vnp_zerorange(ovp, length, eoz - length);
-		uobj = &ovp->v_uvm.u_obj;
+		uobj = &ovp->v_uobj;
 		simple_lock(&uobj->vmobjlock);
 		uobj->pgops->pgo_flush(uobj, length, eoz,
 		    PGO_CLEANIT|PGO_DEACTIVATE|PGO_SYNCIO);
-		simple_unlock(&ovp->v_uvm.u_obj.vmobjlock);
+		simple_unlock(&uobj->vmobjlock);
 	}
 
 	lockmgr(&ovp->v_glock, LK_EXCLUSIVE, NULL, p);

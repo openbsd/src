@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vnops.c,v 1.22 2001/12/04 22:44:32 art Exp $	*/
+/*	$OpenBSD: ffs_vnops.c,v 1.23 2001/12/10 02:19:34 art Exp $	*/
 /*	$NetBSD: ffs_vnops.c,v 1.7 1996/05/11 18:27:24 mycroft Exp $	*/
 
 /*
@@ -252,7 +252,7 @@ ffs_fsync(v)
 	s = splbio();
 
 	if (vp->v_type == VREG) {
-		uobj = &vp->v_uvm.u_obj;
+		uobj = &vp->v_uobj;
 		simple_lock(&uobj->vmobjlock);
 		(uobj->pgops->pgo_flush)(uobj, 0, 0, PGO_ALLPAGES|PGO_CLEANIT|
 		    ((ap->a_waitfor == MNT_WAIT) ? PGO_SYNCIO : 0));

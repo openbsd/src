@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_softdep.c,v 1.29 2001/12/05 00:36:17 niklas Exp $	*/
+/*	$OpenBSD: ffs_softdep.c,v 1.30 2001/12/10 02:19:34 art Exp $	*/
 /*
  * Copyright 1998, 2000 Marshall Kirk McKusick. All Rights Reserved.
  *
@@ -4362,7 +4362,7 @@ flush_inodedep_deps(fs, ino)
 	if (vp == NULL)
 		panic("flush_inodedep_deps: null vp");
 #endif
-	uobj = &vp->v_uvm.u_obj;
+	uobj = &vp->v_uobj;
 
 	/*
 	 * This work is done in two passes. The first pass grabs most

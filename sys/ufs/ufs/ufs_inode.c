@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_inode.c,v 1.13 2001/11/30 00:32:58 art Exp $	*/
+/*	$OpenBSD: ufs_inode.c,v 1.14 2001/12/10 02:19:34 art Exp $	*/
 /*	$NetBSD: ufs_inode.c,v 1.7 1996/05/11 18:27:52 mycroft Exp $	*/
 
 /*
@@ -177,22 +177,22 @@ ufs_balloc_range(vp, off, len, cred, flags)
 	struct vm_page *pgs1[ppb], *pgs2[ppb];
 	UVMHIST_FUNC("ufs_balloc_range"); UVMHIST_CALLED(ubchist);
 	UVMHIST_LOG(ubchist, "vp %p off 0x%x len 0x%x u_size 0x%x",
-		    vp, off, len, vp->v_uvm.u_size);
+		    vp, off, len, vp->v_size);
 
-	oldeof = vp->v_uvm.u_size;
+	oldeof = vp->v_size;
 	error = VOP_SIZE(vp, oldeof, &oldeob);
 	if (error) {
 		return error;
 	}
 
-	neweof = MAX(vp->v_uvm.u_size, off + len);
+	neweof = MAX(vp->v_size, off + len);
 	error = VOP_SIZE(vp, neweof, &neweob);
 	if (error) {
 		return error;
 	}
 
 	error = 0;
-	uobj = &vp->v_uvm.u_obj;
+	uobj = &vp->v_uobj;
 	pgs1[0] = pgs2[0] = NULL;
 
 	/*

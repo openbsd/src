@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_vnops.c,v 1.16 2001/12/04 22:44:31 art Exp $	*/
+/*	$OpenBSD: cd9660_vnops.c,v 1.17 2001/12/10 02:19:34 art Exp $	*/
 /*	$NetBSD: cd9660_vnops.c,v 1.42 1997/10/16 23:56:57 christos Exp $	*/
 
 /*-
@@ -339,7 +339,7 @@ cd9660_read(v)
 
 			if (bytelen == 0)
 				break;
-			win = ubc_alloc(&vp->v_uvm.u_obj, uio->uio_offset,
+			win = ubc_alloc(&vp->v_uobj, uio->uio_offset,
 					&bytelen, UBC_READ);
 			error = uiomove(win, bytelen, uio);
 			ubc_release(win, 0);

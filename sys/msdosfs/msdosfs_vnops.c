@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vnops.c,v 1.32 2001/12/04 22:44:32 art Exp $	*/
+/*	$OpenBSD: msdosfs_vnops.c,v 1.33 2001/12/10 02:19:34 art Exp $	*/
 /*	$NetBSD: msdosfs_vnops.c,v 1.63 1997/10/17 11:24:19 ws Exp $	*/
 
 /*-
@@ -441,7 +441,7 @@ msdosfs_read(v)
 
 			if (bytelen == 0)
 				break;
-			win = ubc_alloc(&vp->v_uvm.u_obj, uio->uio_offset,
+			win = ubc_alloc(&vp->v_uobj, uio->uio_offset,
 			    &bytelen, UBC_READ);
 			error = uiomove(win, bytelen, uio);
 			ubc_release(win, 0);
@@ -602,7 +602,7 @@ msdosfs_write(v)
 
 		if (bytelen == 0)
 			break;
-		win = ubc_alloc(&vp->v_uvm.u_obj, oldoff, &bytelen, UBC_WRITE);
+		win = ubc_alloc(&vp->v_uobj, oldoff, &bytelen, UBC_WRITE);
 		error = uiomove(win, bytelen, uio);
 		ubc_release(win, 0);
 		if (error) {
@@ -614,17 +614,17 @@ msdosfs_write(v)
 		 */
 		if (ioflag & IO_SYNC) {
 			
-			simple_lock(&vp->v_uvm.u_obj.vmobjlock);
-			rv = vp->v_uvm.u_obj.pgops->pgo_flush(
-			    &vp->v_uvm.u_obj, oldoff,
+			simple_lock(&vp->v_uobj.vmobjlock);
+			rv = vp->v_uobj.pgops->pgo_flush(
+			    &vp->v_uobj, oldoff,
 			    oldoff + bytelen, PGO_CLEANIT|PGO_SYNCIO);
-			simple_unlock(&vp->v_uvm.u_obj.vmobjlock);
+			simple_unlock(&vp->v_uobj.vmobjlock);
 		} else if (oldoff >> 16 != uio->uio_offset >> 16) {
-			simple_lock(&vp->v_uvm.u_obj.vmobjlock);
-			rv = vp->v_uvm.u_obj.pgops->pgo_flush(
-			    &vp->v_uvm.u_obj, (oldoff >> 16) << 16,
+			simple_lock(&vp->v_uobj.vmobjlock);
+			rv = vp->v_uobj.pgops->pgo_flush(
+			    &vp->v_uobj, (oldoff >> 16) << 16,
 			    (uio->uio_offset >> 16) << 16, PGO_CLEANIT);
-			simple_unlock(&vp->v_uvm.u_obj.vmobjlock);
+			simple_unlock(&vp->v_uobj.vmobjlock);
 		}
 	} while (error == 0 && uio->uio_resid > 0);
 	dep->de_flag |= DE_UPDATE;

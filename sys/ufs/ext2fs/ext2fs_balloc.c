@@ -362,7 +362,7 @@ ext2fs_ballocn(v)
 			UVMHIST_LOG(ubchist, "old 0x%x new 0x%x",
 				    ip->i_e2fs_size, off + bsize,0,0);
 			ip->i_e2fs_size = off + bsize;
-			if (vp->v_uvm.u_size < ip->i_e2fs_size) {
+			if (vp->v_size < ip->i_e2fs_size) {
 				uvm_vnp_setsize(vp, ip->i_e2fs_size);
 			}
 		}
@@ -396,11 +396,11 @@ ext2fs_balloc_range(vp, off, len, cred, flags)
 	struct vm_page *pgs[ppb];
 	UVMHIST_FUNC("ext2fs_balloc_range"); UVMHIST_CALLED(ubchist);
 	UVMHIST_LOG(ubchist, "vp %p off 0x%x len 0x%x u_size 0x%x",
-		    vp, off, len, vp->v_uvm.u_size);
+		    vp, off, len, vp->v_size);
 
 	error = 0;
-	uobj = &vp->v_uvm.u_obj;
-	oldeof = vp->v_uvm.u_size;
+	uobj = &vp->v_uobj;
+	oldeof = vp->v_size;
 	eof = max(oldeof, off + len);
 	UVMHIST_LOG(ubchist, "new eof 0x%x", eof,0,0,0);
 	pgs[0] = NULL;

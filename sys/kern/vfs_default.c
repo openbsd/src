@@ -1,4 +1,4 @@
-/*       $OpenBSD: vfs_default.c,v 1.13 2001/12/04 22:44:31 art Exp $  */
+/*       $OpenBSD: vfs_default.c,v 1.14 2001/12/10 02:19:34 art Exp $  */
 
 /*
  *    Portions of this code are:
@@ -343,7 +343,7 @@ genfs_getpages(v)
 	vaddr_t kva;
 	struct buf *bp, *mbp;
 	struct vnode *vp = ap->a_vp;
-	struct uvm_object *uobj = &vp->v_uvm.u_obj;
+	struct uvm_object *uobj = &vp->v_uobj;
 	struct vm_page *pgs[16];			/* XXXUBC 16 */
 	struct ucred *cred = curproc->p_ucred;		/* XXXUBC curproc */
 	boolean_t async = (flags & PGO_SYNCIO) == 0;
@@ -363,13 +363,13 @@ genfs_getpages(v)
 	error = 0;
 	origoffset = ap->a_offset;
 	orignpages = *ap->a_count;
-	error = VOP_SIZE(vp, vp->v_uvm.u_size, &diskeof);
+	error = VOP_SIZE(vp, vp->v_size, &diskeof);
 	if (error) {
 		return error;
 	}
 	if (flags & PGO_PASTEOF) {
-		newsize = MAX(vp->v_uvm.u_size,
-			      origoffset + (orignpages << PAGE_SHIFT));
+		newsize = MAX(vp->v_size,
+		    origoffset + (orignpages << PAGE_SHIFT));
 		error = VOP_SIZE(vp, newsize, &memeof);
 		if (error) {
 			return error;
@@ -855,9 +855,9 @@ genfs_putpages(v)
 	UVMHIST_LOG(ubchist, "vp %p offset 0x%x count %d",
 		    vp, ap->a_m[0]->offset, ap->a_count, 0);
 
-	simple_unlock(&vp->v_uvm.u_obj.vmobjlock);
+	simple_unlock(&vp->v_uobj.vmobjlock);
 
-	error = VOP_SIZE(vp, vp->v_uvm.u_size, &eof);
+	error = VOP_SIZE(vp, vp->v_size, &eof);
 	if (error) {
 		return error;
 	}

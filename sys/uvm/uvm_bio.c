@@ -262,12 +262,12 @@ again:
 
 	UVMHIST_LOG(ubchist, "slot_offset 0x%x writeoff 0x%x writelen 0x%x "
 		    "u_size 0x%x", slot_offset, umap->writeoff, umap->writelen,
-		    vp->v_uvm.u_size);
+		    vp->v_size);
 
 	if (access_type & VM_PROT_WRITE &&
 	    slot_offset >= umap->writeoff &&
 	    (slot_offset + PAGE_SIZE <= umap->writeoff + umap->writelen ||
-	     slot_offset + PAGE_SIZE >= vp->v_uvm.u_size - umap->offset)) {
+	     slot_offset + PAGE_SIZE >= vp->v_size - umap->offset)) {
 		UVMHIST_LOG(ubchist, "setting PGO_OVERWRITE", 0,0,0,0);
 		flags |= PGO_OVERWRITE;
 	}
@@ -379,7 +379,7 @@ ubc_alloc(uobj, offset, lenp, flags)
 	UVMHIST_FUNC("ubc_alloc"); UVMHIST_CALLED(ubchist);
 
 	UVMHIST_LOG(ubchist, "uobj %p offset 0x%lx len 0x%lx filesize 0x%x",
-		    uobj, offset, *lenp, ((struct uvm_vnode *)uobj)->u_size);
+		    uobj, offset, *lenp, ((struct vnode *)vp)->v_size);
 
 	umap_offset = (offset & ~((voff_t)ubc_winsize - 1));
 	slot_offset = (vaddr_t)(offset & ((voff_t)ubc_winsize - 1));
