@@ -1,4 +1,4 @@
-/*	$OpenBSD: chroot.c,v 1.4 2002/05/13 07:44:48 mpech Exp $	*/
+/*	$OpenBSD: chroot.c,v 1.5 2002/07/14 02:59:29 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)chroot.c	5.8 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$OpenBSD: chroot.c,v 1.4 2002/05/13 07:44:48 mpech Exp $";
+static char rcsid[] = "$OpenBSD: chroot.c,v 1.5 2002/07/14 02:59:29 deraadt Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -52,9 +52,7 @@ static char rcsid[] = "$OpenBSD: chroot.c,v 1.4 2002/05/13 07:44:48 mpech Exp $"
 #include <err.h>
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char *argv[])
 {
 	char *shell;
 
