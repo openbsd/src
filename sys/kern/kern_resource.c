@@ -1,5 +1,5 @@
-/*	$OpenBSD: kern_resource.c,v 1.3 1996/03/03 17:19:53 niklas Exp $	*/
-/*	$NetBSD: kern_resource.c,v 1.34 1996/02/09 18:59:44 christos Exp $	*/
+/*	$OpenBSD: kern_resource.c,v 1.4 1996/06/20 10:54:36 deraadt Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.34.4.1 1996/06/13 23:31:14 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -365,7 +365,7 @@ calcru(p, up, sp, ip)
 		sec += tv.tv_sec - runtime.tv_sec;
 		usec += tv.tv_usec - runtime.tv_usec;
 	}
-	u = sec * 1000000 + usec;
+	u = (u_quad_t) sec * 1000000 + usec;
 	st = (u * st) / tot;
 	sp->tv_sec = st / 1000000;
 	sp->tv_usec = st % 1000000;
