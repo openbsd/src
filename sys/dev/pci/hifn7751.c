@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751.c,v 1.93 2001/08/15 16:59:00 jason Exp $	*/
+/*	$OpenBSD: hifn7751.c,v 1.94 2001/08/17 17:37:12 ben Exp $	*/
 
 /*
  * Invertex AEON / Hifn 7751 driver
@@ -287,6 +287,8 @@ hifn_attach(parent, self, aux)
 	switch (ena) {
 	case HIFN_PUSTAT_ENA_2:
 		crypto_register(sc->sc_cid, CRYPTO_3DES_CBC, 0, 0,
+		    hifn_newsession, hifn_freesession, hifn_process);
+		crypto_register(sc->sc_cid, CRYPTO_ARC4, 0, 0,
 		    hifn_newsession, hifn_freesession, hifn_process);
 		/*FALLTHROUGH*/
 	case HIFN_PUSTAT_ENA_1:
@@ -1680,6 +1682,11 @@ hifn_process(crp)
 		switch (enccrd->crd_alg) {
 		case CRYPTO_ARC4:
 			cmd->cry_masks |= HIFN_CRYPT_CMD_ALG_RC4;
+			if ((enccrd->crd_flags & CRD_F_ENCRYPT)
+			    != sc->sc_sessions[session].hs_prev_op)
+				sc->sc_sessions[session].hs_flags=1;
+			sc->sc_sessions[session].hs_prev_op=enccrd->crd_flags
+			    & CRD_F_ENCRYPT;
 			break;
 		case CRYPTO_DES_CBC:
 			cmd->cry_masks |= HIFN_CRYPT_CMD_ALG_DES |
@@ -1695,32 +1702,39 @@ hifn_process(crp)
 			err = EINVAL;
 			goto errout;
 		}
-		if (enccrd->crd_flags & CRD_F_ENCRYPT) {
-			if (enccrd->crd_flags & CRD_F_IV_EXPLICIT)
-				bcopy(enccrd->crd_iv, cmd->iv, HIFN_IV_LENGTH);
-			else
-				bcopy(sc->sc_sessions[session].hs_iv,
-				    cmd->iv, HIFN_IV_LENGTH);
+		if (enccrd->crd_alg != CRYPTO_ARC4) {
+			if (enccrd->crd_flags & CRD_F_ENCRYPT) {
+				if (enccrd->crd_flags & CRD_F_IV_EXPLICIT)
+					bcopy(enccrd->crd_iv, cmd->iv,
+					    HIFN_IV_LENGTH);
+				else
+					bcopy(sc->sc_sessions[session].hs_iv,
+					    cmd->iv, HIFN_IV_LENGTH);
 
-			if ((enccrd->crd_flags & CRD_F_IV_PRESENT) == 0) {
-				if (crp->crp_flags & CRYPTO_F_IMBUF)
-					m_copyback(cmd->srcu.src_m,
+				if ((enccrd->crd_flags & CRD_F_IV_PRESENT)
+				    == 0) {
+					if (crp->crp_flags & CRYPTO_F_IMBUF)
+						m_copyback(cmd->srcu.src_m,
+						    enccrd->crd_inject,
+						    HIFN_IV_LENGTH, cmd->iv);
+					else if (crp->crp_flags & CRYPTO_F_IOV)
+						cuio_copyback(cmd->srcu.src_io,
+						    enccrd->crd_inject,
+						    HIFN_IV_LENGTH, cmd->iv);
+				}
+			} else {
+				if (enccrd->crd_flags & CRD_F_IV_EXPLICIT)
+					bcopy(enccrd->crd_iv, cmd->iv,
+					    HIFN_IV_LENGTH);
+				else if (crp->crp_flags & CRYPTO_F_IMBUF)
+					m_copydata(cmd->srcu.src_m,
 					    enccrd->crd_inject,
 					    HIFN_IV_LENGTH, cmd->iv);
 				else if (crp->crp_flags & CRYPTO_F_IOV)
-					cuio_copyback(cmd->srcu.src_io,
+					cuio_copydata(cmd->srcu.src_io,
 					    enccrd->crd_inject,
 					    HIFN_IV_LENGTH, cmd->iv);
 			}
-		} else {
-			if (enccrd->crd_flags & CRD_F_IV_EXPLICIT)
-				bcopy(enccrd->crd_iv, cmd->iv, HIFN_IV_LENGTH);
-			else if (crp->crp_flags & CRYPTO_F_IMBUF)
-				m_copydata(cmd->srcu.src_m, enccrd->crd_inject,
-				    HIFN_IV_LENGTH, cmd->iv);
-			else if (crp->crp_flags & CRYPTO_F_IOV)
-				cuio_copydata(cmd->srcu.src_io, enccrd->crd_inject,
-				    HIFN_IV_LENGTH, cmd->iv);
 		}
 
 		cmd->ck = enccrd->crd_key;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751var.h,v 1.32 2001/08/11 06:40:35 jason Exp $	*/
+/*	$OpenBSD: hifn7751var.h,v 1.33 2001/08/17 17:37:12 ben Exp $	*/
 
 /*
  * Invertex AEON / Hifn 7751 driver
@@ -98,6 +98,7 @@ struct hifn_dma {
 
 struct hifn_session {
 	int hs_flags;
+	int hs_prev_op; /* XXX collapse into hs_flags? */
 	u_int8_t hs_iv[HIFN_IV_LENGTH];
 };
 

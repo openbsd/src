@@ -1,4 +1,4 @@
-/*	$OpenBSD: xform.c,v 1.13 2001/08/08 15:12:09 jjbg Exp $	*/
+/*	$OpenBSD: xform.c,v 1.14 2001/08/17 17:37:12 ben Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -145,6 +145,15 @@ struct enc_xform enc_xform_rijndael128 = {
 	rijndael128_decrypt,
 	rijndael128_setkey,
 	rijndael128_zerokey,
+};
+
+struct enc_xform enc_xform_arc4 = {
+	CRYPTO_ARC4, "ARC4",
+	1, 1, 32,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
 };
 
 /* Authentication instances */
