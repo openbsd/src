@@ -1,4 +1,4 @@
-/*	$OpenBSD: yp_passwd.c,v 1.27 2004/03/12 22:59:28 millert Exp $	*/
+/*	$OpenBSD: yp_passwd.c,v 1.28 2004/07/13 21:09:48 millert Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -30,7 +30,7 @@
  */
 #ifndef lint
 /*static const char sccsid[] = "from: @(#)yp_passwd.c	1.0 2/2/93";*/
-static const char rcsid[] = "$OpenBSD: yp_passwd.c,v 1.27 2004/03/12 22:59:28 millert Exp $";
+static const char rcsid[] = "$OpenBSD: yp_passwd.c,v 1.28 2004/07/13 21:09:48 millert Exp $";
 #endif /* not lint */
 
 #ifdef	YP
@@ -57,9 +57,9 @@ static const char rcsid[] = "$OpenBSD: yp_passwd.c,v 1.27 2004/03/12 22:59:28 mi
 #define _PASSWORD_LEN PASS_MAX
 #endif
 
-extern int	pwd_gensalt(char *, int, struct passwd *, login_cap_t *, char);
-extern int	pwd_check(struct passwd *, login_cap_t *, char *);
-extern int	pwd_gettries(struct passwd *, login_cap_t *);
+extern int	pwd_gensalt(char *, int, login_cap_t *, char);
+extern int	pwd_check(login_cap_t *, char *);
+extern int	pwd_gettries(login_cap_t *);
 extern void	kbintr(int);
 
 char		*ypgetnewpasswd(struct passwd *, login_cap_t *, char **);
@@ -215,7 +215,7 @@ ypgetnewpasswd(struct passwd *pw, login_cap_t *lc, char **old_pass)
 			pw_error(NULL, 1, 1);
 	}
 
-	pwd_tries = pwd_gettries(pw, lc);
+	pwd_tries = pwd_gettries(lc);
 
 	for (buf[0] = '\0', tries = 0;;) {
 		p = getpass("New password:");
@@ -227,7 +227,7 @@ ypgetnewpasswd(struct passwd *pw, login_cap_t *lc, char **old_pass)
 			continue;
 		}
 		if ((tries++ < pwd_tries || pwd_tries == 0)
-		    && pwd_check(pw, lc, p) == 0)
+		    && pwd_check(lc, p) == 0)
 			continue;
 		strlcpy(buf, p, sizeof buf);
 		p = getpass("Retype new password:");
@@ -235,7 +235,7 @@ ypgetnewpasswd(struct passwd *pw, login_cap_t *lc, char **old_pass)
 			break;
 		(void)printf("Mismatch; try again, EOF to quit.\n");
 	}
-	if (!pwd_gensalt(salt, _PASSWORD_LEN, pw, lc, 'y')) {
+	if (!pwd_gensalt(salt, _PASSWORD_LEN, lc, 'y')) {
 		(void)printf("Couldn't generate salt.\n");
 		pw_error(NULL, 0, 0);
 	}

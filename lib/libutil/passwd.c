@@ -1,4 +1,4 @@
-/*	$OpenBSD: passwd.c,v 1.43 2004/04/20 23:20:07 millert Exp $	*/
+/*	$OpenBSD: passwd.c,v 1.44 2004/07/13 21:09:48 millert Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -30,7 +30,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "$OpenBSD: passwd.c,v 1.43 2004/04/20 23:20:07 millert Exp $";
+static const char rcsid[] = "$OpenBSD: passwd.c,v 1.44 2004/07/13 21:09:48 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -54,77 +54,9 @@ static const char rcsid[] = "$OpenBSD: passwd.c,v 1.43 2004/04/20 23:20:07 mille
 
 #include "util.h"
 
-#define NUM_OPTIONS	2	/* Number of hardcoded defaults */
-
-static void	pw_cont(int sig);
-
-static const char options[NUM_OPTIONS][2][80] = {
-	{"localcipher", "blowfish,4"},
-	{"ypcipher", "old"}
-};
-
 static char pw_defdir[] = "/etc";
 static char *pw_dir = pw_defdir;
 static char *pw_lck;
-
-static void trim_whitespace(char *);
-static int read_line(FILE *, char *, int);
-static const char *pw_default(const char *);
-
-/* Removes head and/or tail spaces. */
-static void
-trim_whitespace(char *line)
-{
-	char   *p;
-
-	/* Remove leading spaces */
-	p = line;
-	while (isspace(*p))
-		p++;
-	(void) memmove(line, p, strlen(p) + 1);
-
-	/* Remove trailing spaces */
-	p = line + strlen(line) - 1;
-	while (isspace(*p))
-		p--;
-	*(p + 1) = '\0';
-}
-
-
-/* Get one line, remove spaces from front and tail */
-static int
-read_line(FILE *fp, char *line, int max)
-{
-	char   *p;
-
-	/* Read one line of config */
-	if (fgets(line, max, fp) == 0)
-		return 0;
-	if (!(p = strchr(line, '\n'))) {
-		warnx("line too long");
-		return 0;
-	}
-	*p = '\0';
-
-	/* Remove comments */
-	if ((p = strchr(line, '#')))
-		*p = '\0';
-
-	trim_whitespace(line);
-	return 1;
-}
-
-
-static const char *
-pw_default(const char *option)
-{
-	int	i;
-
-	for (i = 0; i < NUM_OPTIONS; i++)
-		if (!strcmp(options[i][0], option))
-			return options[i][1];
-	return NULL;
-}
 
 char *
 pw_file(const char *nm)
@@ -141,81 +73,6 @@ pw_file(const char *nm)
 		return NULL;
 	return new_nm;
 }
-
-
-/*
- * Retrieve password information from the /etc/passwd.conf file,
- * at the moment this is only for choosing the cipher to use.
- * It could easily be used for other authentication methods as
- * well.
- */
-void
-pw_getconf(char *data, size_t max, const char *key, const char *option)
-{
-	FILE   *fp;
-	char    line[LINE_MAX];
-	static char result[LINE_MAX];
-	char   *p;
-	int	got = 0;
-	int	found = 0;
-
-	result[0] = '\0';
-
-	p = pw_file(_PATH_PASSWDCONF);
-	if (!p || (fp = fopen(p, "r")) == NULL) {
-		if (p)
-			free(p);
-		if ((p = (char *)pw_default(option))) {
-			strncpy(data, p, max - 1);
-			data[max - 1] = '\0';
-		} else
-			data[0] = '\0';
-		return;
-	}
-	free(p);
-
-	while (!found && (got || read_line(fp, line, LINE_MAX))) {
-		got = 0;
-		if (strncmp(key, line, strlen(key)) ||
-		    line[strlen(key)] != ':')
-			continue;
-
-		/* Now we found our specified key */
-		while (read_line(fp, line, LINE_MAX)) {
-			char   *p2;
-
-			/* Leaving key field */
-			if (strchr(line, ':')) {
-				got = 1;
-				break;
-			}
-			p2 = line;
-			if (!(p = strsep(&p2, "=")) || p2 == NULL)
-				continue;
-			trim_whitespace(p);
-			if (!strncmp(p, option, strlen(option))) {
-				trim_whitespace(p2);
-				strlcpy(result, p2, sizeof result);
-				found = 1;
-				break;
-			}
-		}
-	}
-	fclose(fp);
-
-	/*
-	 * If we got no result and were looking for a default
-	 * value, try hard coded defaults.
-	 */
-
-	if (!strlen(result) && !strcmp(key,"default") &&
-	    (p = (char *)pw_default(option)))
-		strncpy(data, p, max - 1);
-	else
-		strncpy(data, result, max - 1);
-	data[max - 1] = '\0';
-}
-
 
 void
 pw_setdir(const char *dir)

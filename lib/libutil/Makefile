@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.27 2003/07/23 23:10:25 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.28 2004/07/13 21:09:48 millert Exp $
 #	$NetBSD: Makefile,v 1.8 1996/05/16 07:03:28 thorpej Exp $
 
 LIB=	util
@@ -11,9 +11,8 @@ SRCS=	check_expire.c getmaxpartitions.c getrawpartition.c login.c \
 	fmt_scaled.c
 
 MAN=	check_expire.3 getmaxpartitions.3 getrawpartition.3 login.3 opendev.3 \
-	openpty.3 pw_init.3 pw_lock.3 readlabelfs.3 pw_getconf.3 \
-	uucplock.3 fparseln.3 opendisk.3 login_fbtab.3 pidfile.3 \
-	fmt_scaled.3
+	openpty.3 pw_init.3 pw_lock.3 readlabelfs.3 uucplock.3 \
+	fparseln.3 opendisk.3 login_fbtab.3 pidfile.3 fmt_scaled.3
 
 MLINKS+=login.3 logout.3
 MLINKS+=login.3 logwtmp.3

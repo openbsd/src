@@ -1,4 +1,4 @@
-/*	$OpenBSD: local_passwd.c,v 1.32 2004/04/20 23:21:23 millert Exp $	*/
+/*	$OpenBSD: local_passwd.c,v 1.33 2004/07/13 21:09:48 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -31,7 +31,7 @@
 
 #ifndef lint
 /*static const char sccsid[] = "from: @(#)local_passwd.c	5.5 (Berkeley) 5/6/91";*/
-static const char rcsid[] = "$OpenBSD: local_passwd.c,v 1.32 2004/04/20 23:21:23 millert Exp $";
+static const char rcsid[] = "$OpenBSD: local_passwd.c,v 1.33 2004/07/13 21:09:48 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -53,9 +53,9 @@ static const char rcsid[] = "$OpenBSD: local_passwd.c,v 1.32 2004/04/20 23:21:23
 #define UNCHANGED_MSG	"Password unchanged.\n"
 
 static uid_t uid;
-extern int pwd_gensalt(char *, int, struct passwd *, login_cap_t *, char);
-extern int pwd_check(struct passwd *, login_cap_t *, char *);
-extern int pwd_gettries(struct passwd *, login_cap_t *);
+extern int pwd_gensalt(char *, int, login_cap_t *, char);
+extern int pwd_check(login_cap_t *, char *);
+extern int pwd_gettries(login_cap_t *);
 
 char *getnewpasswd(struct passwd *, login_cap_t *, int);
 void kbintr(int);
@@ -172,7 +172,7 @@ getnewpasswd(struct passwd *pw, login_cap_t *lc, int authenticated)
 		}
 	}
 
-	pwd_tries = pwd_gettries(pw, lc);
+	pwd_tries = pwd_gettries(lc);
 
 	for (buf[0] = '\0', tries = 0;;) {
 		p = getpass("New password:");
@@ -187,7 +187,7 @@ getnewpasswd(struct passwd *pw, login_cap_t *lc, int authenticated)
 		}
 
 		if ((tries++ < pwd_tries || pwd_tries == 0) 
-		    && pwd_check(pw, lc, p) == 0)
+		    && pwd_check(lc, p) == 0)
 			continue;
 		strlcpy(buf, p, sizeof(buf));
 		p = getpass("Retype new password:");
@@ -195,7 +195,7 @@ getnewpasswd(struct passwd *pw, login_cap_t *lc, int authenticated)
 			break;
 		(void)printf("Mismatch; try again, EOF to quit.\n");
 	}
-	if (!pwd_gensalt(salt, _PASSWORD_LEN, pw, lc, 'l')) {
+	if (!pwd_gensalt(salt, _PASSWORD_LEN, lc, 'l')) {
 		(void)printf("Couldn't generate salt.\n");
 		pw_error(NULL, 0, 0);
 	}

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: passwd.1,v 1.27 2003/08/04 07:29:22 hin Exp $
+.\"	$OpenBSD: passwd.1,v 1.28 2004/07/13 21:09:48 millert Exp $
 .\"
 .\" Copyright (c) 1990 The Regents of the University of California.
 .\" All rights reserved.
@@ -104,6 +104,11 @@ It can be different for local
 and YP
 .Po Do ypcipher Dc Pc
 passwords.
+If none is specified, then blowfish with 6 rounds is used for local
+.Po Do localcipher Dc Pc
+and old is used for YP
+.Po Do ypcipher Dc Pc
+by default.
 .Sh FILES
 .Bl -tag -width /etc/master.passwd -compact
 .It /etc/login.conf

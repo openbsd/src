@@ -1,4 +1,4 @@
-/*	$OpenBSD: encrypt.c,v 1.20 2003/11/23 19:00:27 otto Exp $	*/
+/*	$OpenBSD: encrypt.c,v 1.21 2004/07/13 21:09:48 millert Exp $	*/
 
 /*
  * Copyright (c) 1996, Jason Downs.  All rights reserved.
@@ -84,9 +84,8 @@ void
 print_passwd(char *string, int operation, void *extra)
 {
 	char msalt[3], *salt;
-	struct passwd pwd;
 	login_cap_t *lc;
-	int pwd_gensalt(char *, int, struct passwd *, login_cap_t *, char);
+	int pwd_gensalt(char *, int, login_cap_t *, char);
 	void to64(char *, int32_t, int n);
 
 	switch(operation) {
@@ -120,11 +119,10 @@ print_passwd(char *string, int operation, void *extra)
 		break;
 
 	default:
-		pwd.pw_name = "default";
 		if ((lc = login_getclass(extra)) == NULL)
 			errx(1, "unable to get login class `%s'",
 			    extra ? (char *)extra : "default");
-		if (!pwd_gensalt(buffer, _PASSWORD_LEN, &pwd, lc, 'l'))
+		if (!pwd_gensalt(buffer, _PASSWORD_LEN, lc, 'l'))
 			errx(1, "can't generate salt");
 		salt = buffer;
 		break;
