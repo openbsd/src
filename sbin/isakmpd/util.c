@@ -1,4 +1,4 @@
-/* $OpenBSD: util.c,v 1.51 2005/03/04 16:51:52 hshoexer Exp $	 */
+/* $OpenBSD: util.c,v 1.52 2005/03/10 21:39:21 hshoexer Exp $	 */
 /* $EOM: util.c,v 1.23 2000/11/23 12:22:08 niklas Exp $	 */
 
 /*
@@ -95,28 +95,6 @@ decode_64(u_int8_t *cp)
 	    cp[4] << 24 | cp[5] << 16 | cp[6] << 8 | cp[7];
 }
 
-#if 0
-/*
- * XXX I severly doubt that we will need this.  IPv6 does not have the legacy
- * of representation in host byte order, AFAIK.
- */
-
-void
-decode_128(u_int8_t *cp, u_int8_t *cpp)
-{
-#if BYTE_ORDER == LITTLE_ENDIAN
-	int	i;
-
-	for (i = 0; i < 16; i++)
-		cpp[i] = cp[15 - i];
-#elif BYTE_ORDER == BIG_ENDIAN
-	bcopy(cp, cpp, 16);
-#else
-#error "Byte order unknown!"
-#endif
-}
-#endif
-
 void
 encode_16(u_int8_t *cp, u_int16_t x)
 {
@@ -145,19 +123,6 @@ encode_64(u_int8_t *cp, u_int64_t x)
 	*cp++ = (x >> 8) & 0xff;
 	*cp = x & 0xff;
 }
-
-#if 0
-/*
- * XXX I severly doubt that we will need this.  IPv6 does not have the legacy
- * of representation in host byte order, AFAIK.
- */
-
-void
-encode_128(u_int8_t *cp, u_int8_t *cpp)
-{
-	decode_128(cpp, cp);
-}
-#endif
 
 /* Check a buffer for all zeroes.  */
 int

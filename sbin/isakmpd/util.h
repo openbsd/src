@@ -1,4 +1,4 @@
-/* $OpenBSD: util.h,v 1.23 2005/03/04 16:51:52 hshoexer Exp $	 */
+/* $OpenBSD: util.h,v 1.24 2005/03/10 21:39:21 hshoexer Exp $	 */
 /* $EOM: util.h,v 1.10 2000/10/24 13:33:39 niklas Exp $	 */
 
 /*
@@ -46,15 +46,9 @@ extern int      check_file_secrecy_fd(int, char *, size_t *);
 extern u_int16_t decode_16(u_int8_t *);
 extern u_int32_t decode_32(u_int8_t *);
 extern u_int64_t decode_64(u_int8_t *);
-#if 0
-extern void     decode_128(u_int8_t *, u_int8_t *);
-#endif
 extern void     encode_16(u_int8_t *, u_int16_t);
 extern void     encode_32(u_int8_t *, u_int32_t);
 extern void     encode_64(u_int8_t *, u_int64_t);
-#if 0
-extern void     encode_128(u_int8_t *, u_int8_t *);
-#endif
 extern u_int8_t *getrandom(u_int8_t *, size_t);
 extern int      hex2raw(char *, u_int8_t *, size_t);
 extern int      ones_test(const u_int8_t *, size_t);
