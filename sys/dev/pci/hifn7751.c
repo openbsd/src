@@ -1,9 +1,11 @@
-/*	$OpenBSD: hifn7751.c,v 1.18 2000/03/29 21:03:11 jason Exp $	*/
+/*	$OpenBSD: hifn7751.c,v 1.19 2000/03/29 22:39:38 jason Exp $	*/
 
 /*
  * Invertex AEON / Hi/fn 7751 driver
  * Copyright (c) 1999 Invertex Inc. All rights reserved.
  * Copyright (c) 1999 Theo de Raadt
+ * Copyright (c) 2000 Network Security Technologies, Inc.
+ *			http://www.netsec.net
  *
  * This driver is based on a previous driver by Invertex, for which they
  * requested:  Please send any comments, feedback, bug-fixes, or feature
@@ -1012,7 +1014,7 @@ hifn_crypto(sc, cmd)
 	struct	hifn_dma *dma = sc->sc_dma;
 	struct	hifn_command_buf_data cmd_buf_data;
 	int	cmdi, srci, dsti, resi, nicealign = 0;
-	int     error, s, i;
+	int     s, i;
 
 	if (cmd->src_npa == 0 && cmd->src_m)
 		cmd->src_l = hifn_mbuf(cmd->src_m, &cmd->src_npa,
@@ -1057,15 +1059,12 @@ hifn_crypto(sc, cmd)
 	 * need 1 cmd, and 1 res
 	 * need N src, and N dst
 	 */
-	while (dma->cmdu+1 > HIFN_D_CMD_RSIZE ||
+	if (dma->cmdu+1 > HIFN_D_CMD_RSIZE ||
 	    dma->srcu+cmd->src_npa > HIFN_D_SRC_RSIZE ||
 	    dma->dstu+cmd->dst_npa > HIFN_D_DST_RSIZE ||
 	    dma->resu+1 > HIFN_D_RES_RSIZE) {
-		if (cmd->flags & HIFN_DMA_FULL_NOBLOCK) {
 			splx(s);
 			return (HIFN_CRYPTO_RINGS_FULL);
-		}
-		tsleep((caddr_t) dma, PZERO, "hifnring", 1);
 	}
 
 	if (dma->cmdi == HIFN_D_CMD_RSIZE) {
@@ -1138,21 +1137,6 @@ hifn_crypto(sc, cmd)
 	dma->resr[resi].l = HIFN_MAX_RESULT | HIFN_D_VALID | HIFN_D_LAST;
 	dma->resu++;
 
-	/*
-	 * If not given a callback routine, we block until the dest data is
-	 * ready.  (Setting interrupt timeout at 3 seconds.)
-	 */
-	if (cmd->dest_ready_callback == NULL) {
-		printf("%s: no callback -- we're sleeping\n",
-		    sc->sc_dv.dv_xname);
-		error = tsleep((caddr_t) & dma->resr[resi], PZERO, "CRYPT",
-		    hz * 3);
-		if (error != 0)
-			printf("%s: timed out waiting for interrupt"
-			    " -- tsleep() exited with %d\n",
-			    sc->sc_dv.dv_xname, error);
-	}
-
 #ifdef HIFN_DEBUG
 	printf("%s: command: stat %8x ier %8x\n",
 	    sc->sc_dv.dv_xname,
@@ -1205,10 +1189,7 @@ hifn_intr(arg)
 		}
 	
 		/* position is done, notify producer with wakup or callback */
-		if (cmd->dest_ready_callback == NULL)
-			wakeup((caddr_t) &dma->resr[dma->resk]);
-		else
-			cmd->dest_ready_callback(cmd);
+		cmd->dest_ready_callback(cmd);
 	
 		if (++dma->resk == HIFN_D_RES_RSIZE)
 			dma->resk = 0;
@@ -1325,8 +1306,6 @@ hifn_process(crp)
 	if (cmd == NULL)
 		goto errout;
 	bzero(cmd, sizeof(struct hifn_command));
-
-	cmd->flags = HIFN_DMA_FULL_NOBLOCK;
 
 	if (crp->crp_flags & CRYPTO_F_IMBUF) {
 		cmd->src_m = (struct mbuf *)crp->crp_buf;

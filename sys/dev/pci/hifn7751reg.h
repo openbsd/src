@@ -1,8 +1,11 @@
-/*	$OpenBSD: hifn7751reg.h,v 1.9 2000/03/29 20:54:59 jason Exp $	*/
+/*	$OpenBSD: hifn7751reg.h,v 1.10 2000/03/29 22:39:39 jason Exp $	*/
 
 /*
  * Invertex AEON / Hi/fn 7751 driver
  * Copyright (c) 1999 Invertex Inc. All rights reserved.
+ * Copyright (c) 1999 Theo de Raadt
+ * Copyright (c) 2000 Network Security Technologies, Inc.
+ *			http://www.netsec.net
  *
  * Please send any comments, feedback, bug-fixes, or feature requests to
  * software@invertex.com.
