@@ -114,13 +114,6 @@
 ./etc/sysctl.conf
 ./etc/syslog.conf
 ./etc/ttys
-./etc/uucp/call
-./etc/uucp/config
-./etc/uucp/dial
-./etc/uucp/dialcode
-./etc/uucp/passwd
-./etc/uucp/port
-./etc/uucp/sys
 ./etc/weekly
 ./root/.cshrc
 ./root/.klogin

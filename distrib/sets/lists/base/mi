@@ -66,7 +66,6 @@
 ./etc/ssl/private
 ./etc/tcfs
 ./etc/termcap
-./etc/uucp
 ./home
 ./mnt
 ./root
@@ -460,16 +459,8 @@
 ./usr/bin/uptime
 ./usr/bin/usbhidctl
 ./usr/bin/users
-./usr/bin/uucp
 ./usr/bin/uudecode
 ./usr/bin/uuencode
-./usr/bin/uulog
-./usr/bin/uuname
-./usr/bin/uupick
-./usr/bin/uusched
-./usr/bin/uustat
-./usr/bin/uuto
-./usr/bin/uux
 ./usr/bin/vacation
 ./usr/bin/verify_krb5_conf
 ./usr/bin/vgrind
@@ -1199,11 +1190,6 @@
 ./usr/libexec/tcpd
 ./usr/libexec/telnetd
 ./usr/libexec/tftpd
-./usr/libexec/uucp
-./usr/libexec/uucp/uuchk
-./usr/libexec/uucp/uucico
-./usr/libexec/uucp/uuconv
-./usr/libexec/uucp/uuxqt
 ./usr/libexec/uucpd
 ./usr/libexec/vfontedpr
 ./usr/libexec/vi.recover

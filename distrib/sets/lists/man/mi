@@ -163,15 +163,6 @@
 ./usr/share/info/texinfo-7
 ./usr/share/info/texinfo-8
 ./usr/share/info/texinfo-9
-./usr/share/info/uucp.info
-./usr/share/info/uucp.info-1
-./usr/share/info/uucp.info-2
-./usr/share/info/uucp.info-3
-./usr/share/info/uucp.info-4
-./usr/share/info/uucp.info-5
-./usr/share/info/uucp.info-6
-./usr/share/info/uucp.info-7
-./usr/share/info/uucp.info-8
 ./usr/share/man/cat1/Mail.0
 ./usr/share/man/cat1/[.0
 ./usr/share/man/cat1/a2p.0
@@ -627,11 +618,8 @@
 ./usr/share/man/cat1/uptime.0
 ./usr/share/man/cat1/usbhidctl.0
 ./usr/share/man/cat1/users.0
-./usr/share/man/cat1/uucp.0
 ./usr/share/man/cat1/uudecode.0
 ./usr/share/man/cat1/uuencode.0
-./usr/share/man/cat1/uustat.0
-./usr/share/man/cat1/uux.0
 ./usr/share/man/cat1/vacation.0
 ./usr/share/man/cat1/vax
 ./usr/share/man/cat1/vgrind.0
@@ -1889,9 +1877,7 @@
 ./usr/share/man/cat8/update.0
 ./usr/share/man/cat8/updatedb.0
 ./usr/share/man/cat8/usbdevs.0
-./usr/share/man/cat8/uucico.0
 ./usr/share/man/cat8/uucpd.0
-./usr/share/man/cat8/uuxqt.0
 ./usr/share/man/cat8/vax
 ./usr/share/man/cat8/vax/MAKEDEV.0
 ./usr/share/man/cat8/vax/boot_vax.0
