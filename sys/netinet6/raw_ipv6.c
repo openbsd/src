@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ipv6.c,v 1.23 2000/06/18 19:56:55 itojun Exp $	*/
+/*	$OpenBSD: raw_ipv6.c,v 1.24 2000/06/21 18:42:19 itojun Exp $	*/
 
 /*
 %%% copyright-nrl-95
@@ -44,7 +44,7 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
  * SUCH DAMAGE.
  *
  *	@(#)raw_ip.c	8.7 (Berkeley) 5/15/95
- *	$Id: raw_ipv6.c,v 1.23 2000/06/18 19:56:55 itojun Exp $
+ *	$Id: raw_ipv6.c,v 1.24 2000/06/21 18:42:19 itojun Exp $
  */
 
 #include <sys/param.h>
@@ -394,7 +394,7 @@ rip6_output(struct mbuf *m, ...)
 #if 0
 	struct ifnet *forceif = NULL;
 #endif
-	struct ip6_pktopts opt, *optp = NULL;
+	struct ip6_pktopts opt, *optp = NULL, *origoptp;
 	struct ifnet *oifp = NULL;
 	va_list ap;
 	struct socket *so;
@@ -447,10 +447,13 @@ rip6_output(struct mbuf *m, ...)
 	/* ip6_src will be filled in later */
 
 	/* KAME hack: embed scopeid */
+	origoptp = inp->inp_outputopts6;
+	inp->inp_outputopts6 = optp;
 	if (in6_embedscope(&ip6->ip6_dst, dst, inp, &oifp) != 0) {
 		error = EINVAL;
 		goto bad;
 	}
+	inp->inp_outputopts6 = origoptp;
 
 	/* source address selection */
 	in6a = in6_selectsrc(dst, optp, inp->inp_moptions6, &inp->inp_route6,
