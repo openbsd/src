@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.89 2005/02/18 16:15:32 pedro Exp $
+#	$OpenBSD: Makefile,v 1.90 2005/03/01 19:22:10 damien Exp $
 #	$NetBSD: Makefile,v 1.4 1996/01/09 03:23:01 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
@@ -15,7 +15,7 @@ MAN=	altq.9 audio.9 autoconf.9 boot.9 buffercache.9 bus_dma.9 bus_space.9 \
 	mountroothook_establish.9 mutex.9 namei.9 \
 	panic.9 pfind.9 physio.9 pmap.9 \
 	pool.9 powerhook_establish.9 ppsratecheck.9 printf.9 psignal.9 \
-	radio.9 random.9 rasops.9 ratecheck.9 resettodr.9 \
+	radio.9 random.9 rasops.9 ratecheck.9 resettodr.9 rssadapt.9 \
 	shutdownhook_establish.9 sleep.9 spl.9 startuphook_establish.9 \
 	style.9 syscall.9 systrace.9 \
 	tc_init.9 time.9 timeout.9 tvtohz.9 uiomove.9 uvm.9 vfs.9 \
@@ -158,6 +158,11 @@ MLINKS+=random.9 add_true_randomness.9 \
 	random.9 add_audio_randomness.9 \
 	random.9 get_random_bytes.9 \
 	random.9 arc4random.9
+MLINKS+=rssadapt.9 ieee80211_rssadapt_choose.9 \
+	rssadapt.9 ieee80211_rssadapt_input.9 \
+	rssadapt.9 ieee80211_rssadapt_lower_rate.9 \
+	rssadapt.9 ieee80211_rssadapt_raise_rate.9 \
+	rssadapt.9 ieee80211_rssadapt_updatestats.9
 MLINKS+=pfind.9 pgfind.9
 MLINKS+=pmap.9 pmap_init.9 pmap.9 pmap_enter.9 pmap.9 pmap_remove.9 \
 	pmap.9 pmap_unwire.9 pmap.9 pmap_protect.9 pmap.9 pmap_page_protect.9 \
