@@ -45,26 +45,26 @@
 #include <machine/bus.h>
 #include <machine/autoconf.h>
 
-static void obio_attach __P((struct device *, struct device *, void *));
-static int obio_match __P((struct device *, void *, void *));
-static int obio_print __P((void *, const char *));
+static void macobio_attach __P((struct device *, struct device *, void *));
+static int macobio_match __P((struct device *, void *, void *));
+static int macobio_print __P((void *, const char *));
 
-struct obio_softc {
+struct macobio_softc {
 	struct device sc_dev;
 	int sc_node;
 	struct ppc_bus_space sc_membus_space;
 };
-struct cfdriver obio_cd = {
+struct cfdriver macobio_cd = {
 	NULL, "macobio", DV_DULL,
 };
 
 
-struct cfattach obio_ca = {
-	sizeof(struct obio_softc), obio_match, obio_attach
+struct cfattach macobio_ca = {
+	sizeof(struct macobio_softc), macobio_match, macobio_attach
 };
 
 int
-obio_match(parent, cf, aux)
+macobio_match(parent, cf, aux)
 	struct device *parent;
 	void *cf;
 	void *aux;
@@ -92,11 +92,11 @@ u_int32_t *heathrow_FCR = NULL;
  * Attach all the sub-devices we can find
  */
 void
-obio_attach(parent, self, aux)
+macobio_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct obio_softc *sc = (struct obio_softc *)self;
+	struct macobio_softc *sc = (struct macobio_softc *)self;
 	struct pci_attach_args *pa = aux;
 	struct confargs ca;
 	int node, child, namelen;
@@ -138,7 +138,7 @@ obio_attach(parent, self, aux)
 
 		break;
 	default:
-		printf(": unknown obio controller\n");
+		printf(": unknown macobio controller\n");
 		return;
 	}
 	sc->sc_node = node;
@@ -171,7 +171,7 @@ obio_attach(parent, self, aux)
 		ca.ca_reg = 0;
 		ca.ca_intr = 0;
 
-		config_found(self, &ca, obio_print);
+		config_found(self, &ca, macobio_print);
 	}
 
 	for (child = OF_child(node); child; child = OF_peer(child)) {
@@ -195,21 +195,21 @@ obio_attach(parent, self, aux)
 		ca.ca_reg = reg;
 		ca.ca_intr = intr;
 
-		config_found(self, &ca, obio_print);
+		config_found(self, &ca, macobio_print);
 	}
 }
 
 int
-obio_print(aux, obio)
+macobio_print(aux, macobio)
 	void *aux;
-	const char *obio;
+	const char *macobio;
 {
 	struct confargs *ca = aux;
 
 #if 0
 /* no reason to clutter the screen with unneccessary printfs */
-	if (obio)
-		printf("%s at %s", ca->ca_name, obio);
+	if (macobio)
+		printf("%s at %s", ca->ca_name, macobio);
 
 	if (ca->ca_nreg > 0)
 		printf(" offset 0x%x", ca->ca_reg[0]);

@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.22 2001/06/23 19:46:58 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.23 2001/06/25 19:15:43 deraadt Exp $
 #
 # PPC GENERIC config file
 #
@@ -62,45 +62,43 @@ vgafb0		at pci? dev ? function ?	# PCI VGA graphics
 #bha*		at pci? dev ? function ?	# BusLogic 9xx SCSI
 #pcscp*		at pci? dev ? function ?	# AMD Am53c974 PCscsi-PCI SCSI
 #pciide*	at pci? dev ? function ?
-obio0		at pci? dev ? function ?
+macobio0	at pci? dev ? function ?
 gm*		at pci? dev ? function ?	# GMAC ethernet
 
 # how many of these are needed?
-exphy*	at mii? phy ?			# 3Com internal PHYs
-inphy*	at mii? phy ?			# Intel 82555 PHYs
-iophy*	at mii? phy ?			# Intel 82553 PHYs
-icsphy* at mii? phy ?			# Integrated Circuit Systems ICS1890
-#lxtphy* at mii? phy ?			# Level One LXT-970 PHYs
-nsphy*	at mii? phy ?			# NS83840 PHYs
-#nsphyter* at mii? phy ?		# NS83843 PHYs
-#qsphy*	at mii? phy ?			# Quality Semiconductor QS6612 PHYs
-sqphy*	at mii? phy ?			# Seeq 80220/80221/80223 PHYs
-#tlphy*	at mii? phy ?			# ThunderLAN PHYs
-#tqphy*	at mii? phy ?			# TDK Semiconductor PHYs
-brgphy* at mii? phy ?			# Broadcom 10/100/1000 PHYs 
-bmtphy* at mii? phy ?			# Broadcom 10/100 PHYs 
-ukphy*	at mii? phy ?			# generic unknown PHYs
+exphy*		at mii? phy ?		# 3Com internal PHYs
+inphy*		at mii? phy ?		# Intel 82555 PHYs
+iophy*		at mii? phy ?		# Intel 82553 PHYs
+icsphy*		at mii? phy ?		# Integrated Circuit Systems ICS1890
+#lxtphy*	at mii? phy ?		# Level One LXT-970 PHYs
+nsphy*		at mii? phy ?		# NS83840 PHYs
+#nsphyter*	at mii? phy ?		# NS83843 PHYs
+#qsphy*		at mii? phy ?		# Quality Semiconductor QS6612 PHYs
+sqphy*		at mii? phy ?		# Seeq 80220/80221/80223 PHYs
+#tlphy*		at mii? phy ?		# ThunderLAN PHYs
+#tqphy*		at mii? phy ?		# TDK Semiconductor PHYs
+brgphy*		at mii? phy ?		# Broadcom 10/100/1000 PHYs 
+bmtphy*		at mii? phy ?		# Broadcom 10/100 PHYs 
+ukphy*		at mii? phy ?		# generic unknown PHYs
 
-macintr0 at obio?			# old interrupt controller
-openpic0 at obio?			# openpic interrupt controller
-bm*	at obio?			# bmac ethernet
-#mc*	at obio?			# MACE ethernet
-#esp*	at obio? flags 0x00ff		# 53c9x SCSI
-#mesh*	at obio? flags 0xffff		# MESH SCSI
-#nvram*	at obio?			# nvram
-adb*	at obio?			# Apple Desktop Bus
-gpio*	at obio?			# GPIO, PMU interrupt router.
-gpio*	at gpio?			# GPIO, PMU interrupt router.
-aed*	at adb?				# ADB Event Device
-akbd*	at adb?				# ADB keyboard
+macintr0	at macobio?		# old interrupt controller
+openpic0	at macobio?		# openpic interrupt controller
+bm*		at macobio?		# bmac ethernet
+#mc*		at macobio?		# MACE ethernet
+#esp*		at macobio? flags 0x00ff# 53c9x SCSI
+#mesh*		at macobio? flags 0xffff# MESH SCSI
+#nvram*		at macobio?		# nvram
+adb*		at macobio?		# Apple Desktop Bus
+gpio*		at macobio?		# GPIO, PMU interrupt router.
+gpio*		at gpio?		# GPIO, PMU interrupt router.
+aed*		at adb?			# ADB Event Device
+akbd*		at adb?			# ADB keyboard
 wskbd*		at akbd? console ?
-#ams*	at adb?				# ADB mouse
-#wsmouse* at ams?			
-abtn*	at adb?				# ADB button?
-#zsc*	at obio?
-#zstty*	at zsc? channel ?
-
-#### SCSI attachment points
+#ams*		at adb?			# ADB mouse
+#wsmouse*	at ams?			
+abtn*		at adb?			# ADB button?
+#zsc*		at macobio?
+#zstty*		at zsc? channel ?
 
 scsibus*	at siop?
 #scsibus*	at ncr?
@@ -111,45 +109,37 @@ scsibus*	at siop?
 #scsibus*	at mesh?
 #scsibus*	at pcscp?
 
-wdc*	at obio? flags 0x0
-#wd*	at pciide? channel ? drive ?
-#wd*	at wdc? channel ? drive ? flags 0x0000
-wd*	at wdc? drive ? flags 0x0000
-
-atapiscsi* at wdc? channel ? flags 0x0000
-
-# ATAPI<->SCSI
-scsibus* at atapiscsi?
-
+wdc*		at macobio? flags 0x0
+#wd*		at pciide? channel ? drive ?
+#wd*		at wdc? channel ? drive ? flags 0x0000
+wd*		at wdc? drive ? flags 0x0000
+atapiscsi*	at wdc? channel ? flags 0x0000
+scsibus*	at atapiscsi?
 
 # PCI USB Controllers
-ohci*	at pci?				# Open Host Controller
+ohci*		at pci?			# Open Host Controller
 
 # USB bus support
-usb*	at ohci?	flags 0x1
-uhub*	at usb?
-uhub*  at uhub? port ? configuration ? interface ?
+usb*		at ohci?	flags 0x1
+uhub*		at usb?
+uhub*		at uhub? port ? configuration ? interface ?
 
-uhid*	at uhub? port ? configuration ?	# USB Generic HID devices
-ukbd*	at uhub? port ? configuration ?	# USB HID Keyboard devices
-#ums*	at uhub? port ? configuration ?	# USB Mice
-#wsmouse* at ums? mux 0
-#ulpt*	at uhub? port ? configuration ?	# USB Printer
-#uscanner*  at uhub? port ?		# USB Scanner driver
-#usscanner* at uhub? port ?		# USB SCSI scanners, e.g., HP5300
-#scsibus* at usscanner?
-#uyap*	at uhub? port ?			# Y@P firmware loader
-#ugen*	at uhub? port ? configuration ? # USB Generic driver
-umass*	at uhub? port ? configuration ? # USB Mass Storage devices
-scsibus* at umass?
-
-#### Workstation Console attachments
+uhid*		at uhub? port ? configuration ?	# USB Generic HID devices
+ukbd*		at uhub? port ? configuration ?	# USB HID Keyboard devices
+#ums*		at uhub? port ? configuration ?	# USB Mice
+#wsmouse*	at ums? mux 0
+#ulpt*		at uhub? port ? configuration ?	# USB Printer
+#uscanner*	at uhub? port ?			# USB Scanner driver
+#usscanner*	at uhub? port ?			# USB SCSI scanners
+#scsibus*	at usscanner?
+#uyap*		at uhub? port ?			# Y@P firmware loader
+#ugen*		at uhub? port ? configuration ? # USB Generic driver
+umass*		at uhub? port ? configuration ? # USB Mass Storage devices
+scsibus*	at umass?
 
 wsdisplay*	at vgafb?
 wskbd*		at ukbd? console ?
 
-#### SCSI Bus devices
- 
 sd*		at scsibus? target ? lun ?
 st*		at scsibus? target ? lun ?            
 cd*		at scsibus? target ? lun ?
@@ -162,10 +152,8 @@ pseudo-device	pty	64	# pseudo-terminals
 #pseudo-device	ccd	4	# concatenated disk devices
 #pseudo-device	ksyms	1	# kernel symbols device
 pseudo-device   bpfilter 1	# packet filter
-pseudo-device	rd	 1	# ram disk
+pseudo-device	rd	1	# ram disk
 
 # RAMDISK stuff
 option		MINIROOTSIZE=8192
 option		RAMDISK_HOOKS
-
-

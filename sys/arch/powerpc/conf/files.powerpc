@@ -13,12 +13,12 @@ file	arch/powerpc/powerpc/conf.c
 file	arch/powerpc/powerpc/copyinstr.c
 file	arch/powerpc/powerpc/copyoutstr.c
 file	arch/powerpc/powerpc/copystr.c
-file	arch/powerpc/powerpc/disksubr.c		disk
+file	arch/powerpc/powerpc/disksubr.c			disk
 file	arch/powerpc/powerpc/fpu.c
 file	arch/powerpc/powerpc/fubyte.c
 file	arch/powerpc/powerpc/fuswintr.c
 file	arch/powerpc/powerpc/in_cksum.c
-file	arch/powerpc/powerpc/ipkdb_glue.c	ipkdb
+file	arch/powerpc/powerpc/ipkdb_glue.c		ipkdb
 file	arch/powerpc/powerpc/machdep.c
 file	arch/powerpc/powerpc/wscons_machdep.c
 file	arch/powerpc/powerpc/mem.c
@@ -35,13 +35,12 @@ file	arch/powerpc/powerpc/trap.c
 file	arch/powerpc/powerpc/vm_machdep.c
 file	dev/cons.c
 file	dev/cninit.c
-file    arch/powerpc/powerpc/setjmp.S                   ddb
-file    arch/powerpc/powerpc/db_memrw.c                 ddb
-file    arch/powerpc/powerpc/db_disasm.c                ddb
-file    arch/powerpc/powerpc/db_interface.c             ddb
-file    arch/powerpc/powerpc/db_trace.c                 ddb
-
-file    arch/powerpc/powerpc/ofwreal.S
+file	arch/powerpc/powerpc/setjmp.S			ddb
+file	arch/powerpc/powerpc/db_memrw.c			ddb
+file	arch/powerpc/powerpc/db_disasm.c		ddb
+file	arch/powerpc/powerpc/db_interface.c		ddb
+file	arch/powerpc/powerpc/db_trace.c			ddb
+file	arch/powerpc/powerpc/ofwreal.S
 
 #
 # Media Indepedent Interface (mii)
@@ -60,14 +59,14 @@ file	arch/powerpc/mac/dbdma.c
 define	mainbus {}
 device	mainbus
 attach	mainbus at root
-file	arch/powerpc/powerpc/mainbus.c	mainbus
+file	arch/powerpc/powerpc/mainbus.c			mainbus
 
 device	cpu
 attach	cpu at mainbus
 file	arch/powerpc/powerpc/cpu.c
 
 include "../../../dev/ofw/files.ofw"
-file	arch/powerpc/powerpc/opendev.c 
+file	arch/powerpc/powerpc/opendev.c
 major	{ ofdisk = 4 }
 
 
@@ -75,15 +74,15 @@ include "dev/pci/files.pci"
 
 device	mpcpcibr {} : pcibus
 attach	mpcpcibr at mainbus
-file	arch/powerpc/pci/mpcpcibus.c		mpcpcibr
-#file	arch/powerpc/pci/pci_addr_fixup.c	mpcpcibr
+file	arch/powerpc/pci/mpcpcibus.c			mpcpcibr
+#file	arch/powerpc/pci/pci_addr_fixup.c		mpcpcibr
 
 device	memc {}
 attach	memc at mainbus
-file	arch/powerpc/mac/uni_n.c	memc
+file	arch/powerpc/mac/uni_n.c			memc
 
-major   {rd = 17}
-major	{sd = 2}		# hey this was 0 but at slot 2 in bdevsw XXX
+major	{rd = 17}
+major	{sd = 2}
 major	{cd = 3}
 
 include "../../../scsi/files.scsi"
@@ -95,24 +94,22 @@ include "../../../scsi/files.scsi"
 include "dev/wscons/files.wscons"
 
 
-#device ofb: wsemuldisplaydev, wsrasteremulops
-device ofb
-attach ofb at pci
-file arch/powerpc/mac/ofb.c				ofb needs-flag
+#device	ofb: wsemuldisplaydev, wsrasteremulops
+device	ofb
+attach	ofb at pci
+file	arch/powerpc/mac/ofb.c				ofb needs-flag
 
 
 #
 # mac peripheral pieces.
 #
 
-#file arch/powerpc/pci/bandit.c			pci
-
-# PCI bus support
+#file	arch/powerpc/pci/bandit.c			pci
 
 #PCI-Host bridge chipsets
-device pchb
-attach pchb at pci
-file arch/powerpc/pci/pchb.c			pchb
+device	pchb
+attach	pchb at pci
+file	arch/powerpc/pci/pchb.c				pchb
 
 
 #
@@ -122,126 +119,126 @@ file arch/powerpc/pci/pchb.c			pchb
 include "../../../dev/atapiscsi/files.atapiscsi"
 include "../../../dev/ata/files.ata"
 
-# MAC periph 
+# MAC periph
 
-device obio {}
-attach obio at pci
-file arch/powerpc/pci/macobio.c			obio
+device	macobio {}
+attach	macobio at pci
+file	arch/powerpc/pci/macobio.c			macobio
 
-#device esp: scsi, ncr53c9x
-#attach esp at obio
-#file arch/powerpc/mac/esp.c			esp
+#device	esp: scsi, ncr53c9x
+#attach	esp at macobio
+#file	arch/powerpc/mac/esp.c				esp
 
-device mesh: scsi
-attach mesh at obio
-file arch/powerpc/mac/mesh.c			mesh
+device	mesh: scsi
+attach	mesh at macobio
+file	arch/powerpc/mac/mesh.c				mesh
 
-device mc: ifnet, ether
-attach mc at obio
-file arch/powerpc/mac/if_mc.c			mc
-file arch/powerpc/mac/am79c950.c		mc
+device	mc: ifnet, ether
+attach	mc at macobio
+file	arch/powerpc/mac/if_mc.c			mc
+file	arch/powerpc/mac/am79c950.c			mc
 
-device bm: ether, ifnet, ifmedia
-attach bm at obio
-file arch/powerpc/mac/if_bm.c			bm
+device	bm: ether, ifnet, ifmedia
+attach	bm at macobio
+file	arch/powerpc/mac/if_bm.c			bm
 
-device gm: ether, ifnet, ifmedia, mii
-attach gm at pci
-file arch/powerpc/mac/if_gm.c			gm needs-flag
+device	gm: ether, ifnet, ifmedia, mii
+attach	gm at pci
+file	arch/powerpc/mac/if_gm.c			gm needs-flag
 
-device macintr {}
-attach macintr at obio
-file	arch/powerpc/mac/macintr.c		macintr
+device	macintr {}
+attach	macintr at macobio
+file	arch/powerpc/mac/macintr.c			macintr
 
-device openpic {}
-attach openpic at obio
-file	arch/powerpc/mac/openpic.c		openpic
+device	openpic {}
+attach	openpic at macobio
+file	arch/powerpc/mac/openpic.c			openpic
 
-device zsc {channel = -1}
-attach zsc at obio
-file arch/powerpc/mac/zs.c			zsc needs-flag
-file dev/ic/z8530sc.c				zsc
+device	zsc {channel = -1}
+attach	zsc at macobio
+file	arch/powerpc/mac/zs.c				zsc needs-flag
+file	dev/ic/z8530sc.c				zsc
 
-device zstty: tty
-attach zstty at zsc
-file dev/ic/z8530tty.c                 zstty needs-flag
+device	zstty: tty
+attach	zstty at zsc
+file	dev/ic/z8530tty.c				zstty needs-flag
 
-device adb {}
-attach adb at obio
-file arch/powerpc/mac/adb.c                      adb needs-flag
-file arch/powerpc/mac/adb_direct.c               adb
-file arch/powerpc/mac/pm_direct.c                adb
+device	adb {}
+attach	adb at macobio
+file	arch/powerpc/mac/adb.c				adb needs-flag
+file	arch/powerpc/mac/adb_direct.c			adb
+file	arch/powerpc/mac/pm_direct.c			adb
 
-device aed
-attach aed at adb
-file arch/powerpc/mac/aed.c                      aed needs-flag
+device	aed
+attach	aed at adb
+file	arch/powerpc/mac/aed.c				aed needs-flag
 
 #??
-#define wskbddev	{[console = -1]}
+#define wskbddev {[console = -1]}
 #define wsmousedev {}
 #??
 
-device akbd: wskbddev
-attach akbd at adb
-file arch/powerpc/mac/akbd.c                     akbd needs-flag
+device	akbd: wskbddev
+attach	akbd at adb
+file	arch/powerpc/mac/akbd.c				akbd needs-flag
 
-device ams: wsmousedev
-attach ams at adb
-file arch/powerpc/mac/ams.c                      ams
+device	ams: wsmousedev
+attach	ams at adb
+file	arch/powerpc/mac/ams.c				ams
 
-device abtn
-attach abtn at adb
-file arch/powerpc/mac/abtn.c			abtn
+device	abtn
+attach	abtn at adb
+file	arch/powerpc/mac/abtn.c				abtn
 
-device awacs: audio, auconv, mulaw
-attach awacs at obio
-file arch/powerpc/mac/awacs.c			awacs
+device	awacs: audio, auconv, mulaw
+attach	awacs at macobio
+file	arch/powerpc/mac/awacs.c			awacs
 
-device nvram
-attach nvram at obio
-file arch/powerpc/mac/nvram.c			nvram needs-flag
+device	nvram
+attach	nvram at macobio
+file	arch/powerpc/mac/nvram.c			nvram needs-flag
 
-device gpio {}
-attach gpio at obio with gpio_obio
-attach gpio at gpio with gpio_gpio
-file arch/powerpc/mac/gpio.c			gpio
+device	gpio {}
+attach	gpio at macobio with gpio_obio
+attach	gpio at gpio with gpio_gpio
+file	arch/powerpc/mac/gpio.c				gpio
 
-attach wdc at obio with wdc_obio
-file arch/powerpc/mac/wdc_obio.c		wdc_obio
+attach	wdc at macobio with wdc_obio
+file	arch/powerpc/mac/wdc_obio.c			wdc_obio
 
-attach wi at obio with wi_obio
-file	arch/powerpc/mac/if_wi_obio.c		wi_obio
+attach	wi at macobio with wi_obio
+file	arch/powerpc/mac/if_wi_obio.c			wi_obio
 
-define grfdev {}
+define	grfdev {}
 
-device grfati: grfdev
-attach grfati at pci
-file arch/powerpc/mac/grf_ati.c                  grfati needs-flag
+device	grfati: grfdev
+attach	grfati at pci
+file	arch/powerpc/mac/grf_ati.c			grfati needs-flag
 
-device grf {}
-attach grf at grfdev
-file arch/powerpc/mac/grf.c                      grf needs-flag
-file arch/powerpc/mac/grf_subr.c                 grf
+device	grf {}
+attach	grf at grfdev
+file	arch/powerpc/mac/grf.c				grf needs-flag
+file	arch/powerpc/mac/grf_subr.c			grf
 
-device ite: tty
-attach ite at grf
-file arch/powerpc/mac/ite.c                      ite needs-flag
+device	ite: tty
+attach	ite at grf
+file	arch/powerpc/mac/ite.c				ite needs-flag
 
 
 # VGA framebuffer
-device        vgafb: wsemuldisplaydev, wsrasteremulops
-file  arch/powerpc/pci/vgafb.c          	vgafb & vgafb_pci
+device	vgafb: wsemuldisplaydev, wsrasteremulops
+file	arch/powerpc/pci/vgafb.c			vgafb & vgafb_pci
 
 # Generic VGA Framebuffer version
-attach  vgafb at pci with vgafb_pci
-file    arch/powerpc/pci/vgafb_pci.c             vgafb_pci       needs-flag
+attach	vgafb at pci with vgafb_pci
+file	arch/powerpc/pci/vgafb_pci.c			vgafb_pci needs-flag
 
 
 #
 # CARDBUS
 #
 include	"dev/cardbus/files.cardbus"
-#file	arch/powerpc/powerpc/rbus_machdep.c	cardbus
+#file	arch/powerpc/powerpc/rbus_machdep.c		cardbus
 
 #
 # Machine-independent PCMCIA drivers
