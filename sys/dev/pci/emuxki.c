@@ -1,4 +1,4 @@
-/*	$OpenBSD: emuxki.c,v 1.4 2001/10/31 11:00:24 art Exp $	*/
+/*	$OpenBSD: emuxki.c,v 1.5 2001/11/20 12:22:59 mickey Exp $	*/
 /*	$NetBSD: emuxki.c,v 1.1 2001/10/17 18:39:41 jdolecek Exp $	*/
 
 /*-
@@ -922,7 +922,7 @@ void
 emuxki_chanparms_set_defaults(struct emuxki_channel *chan)
 {
 	chan->fxsend.a.level = chan->fxsend.b.level =
-	chan->fxsend.c.level = chan->fxsend.d.level = 0xff;	/* max */
+	chan->fxsend.c.level = chan->fxsend.d.level = 0xc0;	/* not max */
 	chan->fxsend.a.dest = 0x0;
 	chan->fxsend.b.dest = 0x1;
 	chan->fxsend.c.dest = 0x2;
@@ -1342,12 +1342,12 @@ emuxki_voice_set_stereo(struct emuxki_voice *voice, u_int8_t stereo)
 		fxsend.c.dest = 0x2;
 		fxsend.d.dest = 0x3;
 		if (voice->stereo) {
-			fxsend.a.level = fxsend.c.level = 0xff;
+			fxsend.a.level = fxsend.c.level = 0xc0;
 			fxsend.b.level = fxsend.d.level = 0x00;
 			emuxki_channel_set_fxsend(voice->dataloc.chan[0],
 						   &fxsend);
 			fxsend.a.level = fxsend.c.level = 0x00;
-			fxsend.b.level = fxsend.d.level = 0xff;
+			fxsend.b.level = fxsend.d.level = 0xc0;
 			emuxki_channel_set_fxsend(voice->dataloc.chan[1],
 						   &fxsend);
 		} /* No else : default is good for mono */	
