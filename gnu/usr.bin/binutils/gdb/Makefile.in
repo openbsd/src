@@ -973,11 +973,7 @@ install-only: $(CONFIG_INSTALL)
 		fi ; \
 		$(SHELL) $(srcdir)/../mkinstalldirs $(DESTDIR)$(bindir) ; \
 		$(INSTALL_PROGRAM) gdb$(EXEEXT) \
-			$(DESTDIR)$(bindir)/$$transformed_name$(EXEEXT) ; \
-		$(SHELL) $(srcdir)/../mkinstalldirs \
-			$(DESTDIR)$(man1dir) ; \
-		$(INSTALL_DATA) $(srcdir)/gdb.1 \
-			$(DESTDIR)$(man1dir)/$$transformed_name.1
+			$(DESTDIR)$(bindir)/$$transformed_name$(EXEEXT)
 	@$(MAKE) DO=install "DODIRS=$(SUBDIRS)" $(FLAGS_TO_PASS) subdir_do
 .PHONY: install-tui
 install-tui:
@@ -990,11 +986,7 @@ install-tui:
 		fi ; \
 		$(SHELL) $(srcdir)/../mkinstalldirs $(DESTDIR)$(bindir) ; \
 		$(INSTALL_PROGRAM) $(TUI)$(EXEEXT) \
-			$(DESTDIR)$(bindir)/$$transformed_name$(EXEEXT) ; \
-		$(SHELL) $(srcdir)/../mkinstalldirs \
-			$(DESTDIR)$(man1dir) ; \
-		$(INSTALL_DATA) $(srcdir)/gdb.1 \
-			$(DESTDIR)$(man1dir)/$$transformed_name.1
+			$(DESTDIR)$(bindir)/$$transformed_name$(EXEEXT)
 
 
 uninstall: force $(CONFIG_UNINSTALL)
