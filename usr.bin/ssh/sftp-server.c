@@ -22,7 +22,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "includes.h"
-RCSID("$OpenBSD: sftp-server.c,v 1.15 2001/02/04 11:11:54 djm Exp $");
+RCSID("$OpenBSD: sftp-server.c,v 1.16 2001/02/04 15:23:08 deraadt Exp $");
 
 #include "buffer.h"
 #include "bufaux.h"
@@ -395,7 +395,8 @@ process_read(void)
 	off = get_int64();
 	len = get_int();
 
-	TRACE("read id %d handle %d off %qd len %d", id, handle, off, len);
+	TRACE("read id %d handle %d off %qd len %d", id, handle,
+	    (unsigned long long)off, len);
 	if (len > sizeof buf) {
 		len = sizeof buf;
 		log("read change len %d", len);
@@ -435,7 +436,8 @@ process_write(void)
 	off = get_int64();
 	data = get_string(&len);
 
-	TRACE("write id %d handle %d off %qd len %d", id, handle, off, len);
+	TRACE("write id %d handle %d off %qd len %d", id, handle,
+	    (unsigned long long)off, len);
 	fd = handle_to_fd(handle);
 	if (fd >= 0) {
 		if (lseek(fd, off, SEEK_SET) < 0) {
