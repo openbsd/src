@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.40 1999/10/05 19:41:27 aaron Exp $
+.\"	$OpenBSD: options.4,v 1.41 1999/12/21 17:57:09 provos Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -610,27 +610,21 @@ the range 2^31 rather than the full unsigned range of 2^32.  Also, under
 .Bx 4.2 ,
 keepalive packets must contain at least one byte or else
 the remote end will not respond.
-.It Cd option TCP_NEWRENO
-Turns on NewReno fast recovery phase, which allows one lost segment
-to be recovered per round trip time. When more than
-one segment has been dropped per window, the transmission can continue
-without waiting for a retranmission timeout. This option cannot be used
-together with
-.Em TCP_SACK .
 .It Cd option TCP_SACK
 Turns on selective acknowledgements. Additional information about
 segments already received can be transmitted back to the sender,
 thus indicating segments that have been lost and allowing for
 a swifter recovery. Both communication endpoints need to support
 .Em SACK .
-The fallback behaviour is NewReno. This option cannot be used
-together with
-.Em TCP_NEWRENO .
+The fallback behaviour is NewReno fast recovery phase, which allows
+one lost segment to be recovered per round trip time. When more than
+one segment has been dropped per window, the transmission can continue
+without waiting for a retranmission timeout. 
 .It Cd option TCP_FACK
 Turns on forward acknowledgements allowing a more precise estimate of
 outstanding data during the fast recovery phase by using
 .Em SACK
-information. This option can be used together with
+information. This option can only be used together with
 .Em TCP_SACK .
 .It Cd option TCP_SIGNATURE
 Turns on support for the TCP MD5 Signature option (RFC 2385). This is used by
