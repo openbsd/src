@@ -1,4 +1,4 @@
-.\"	$OpenBSD: md5.1,v 1.18 2004/05/02 17:53:29 millert Exp $
+.\"	$OpenBSD: md5.1,v 1.19 2004/05/04 18:32:51 jmc Exp $
 .\"
 .\" Copyright (c) 2003, 2004 Todd C. Miller <Todd.Miller@courtesan.com>
 .\"
@@ -27,9 +27,9 @@
 .Sh SYNOPSIS
 .Nm md5
 .Oo
-.Fl p | Fl t | Fl x |
+.Fl p | t | x |
+.Fl c Oo Ar checklist ... Oc |
 .Fl s Ar string |
-.Fl c Ar [ checklist ... ] |
 .Ar file ...
 .Oc
 .Sh DESCRIPTION
@@ -50,22 +50,25 @@ such as
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-.It Fl s Ar string
-Prints a checksum of the given
-.Ar string .
-.It Fl c Ar [ checklist ... ]
+.It Xo
+.Fl c
+.Op Ar checklist ...
+.Xc
 Compares all checksums contained in the file
 .Ar checklist
 with newly computed checksums for the corresponding files.
 Output consists of the digest used, the file name,
 and an OK or FAILED for the result of the comparison.
 This will validate any of the supported checksums (see
-.Xr cksum 1 ).
+.Xr cksum 1 ) .
 If no file is given, stdin is used.
 .It Fl p
 Echoes stdin to stdout and appends the
 .Em MD5
 sum to stdout.
+.It Fl s Ar string
+Prints a checksum of the given
+.Ar string .
 .It Fl t
 Runs a built-in time trial.
 .It Fl x
