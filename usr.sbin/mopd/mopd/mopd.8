@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mopd.8,v 1.3 1996/09/27 18:49:35 maja Exp $
+.\"	$OpenBSD: mopd.8,v 1.4 1999/05/15 00:56:08 aaron Exp $
 .\"
 .\" Copyright (c) 1993-96 Mats O Jansson.  All rights reserved.
 .\"
@@ -27,23 +27,23 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" @(#) $OpenBSD: mopd.8,v 1.3 1996/09/27 18:49:35 maja Exp $
+.\" @(#) $OpenBSD: mopd.8,v 1.4 1999/05/15 00:56:08 aaron Exp $
 .\"
 .Dd September 24, 1995
 .Dt MOPD 8
 .Sh NAME
 .Nm mopd
-.Nd MOP Loader Daemon
+.Nd MOP loader daemon
 .Sh SYNOPSIS
 .Nm mopd
 .Op Fl adf
 .Op Ar interface
 .Sh DESCRIPTION
-.Nm Mopd
+.Nm mopd
 services MOP Load requests on the Ethernet connected to
 .Ar interface
 or all interfaces if
-.Sq Fl a
+.Fl a
 is given.
 In a load request received by
 .Nm mopd
@@ -55,31 +55,31 @@ must know what image to load.
 Upon receiving a request, 
 .Nm mopd
 checks if the requested file exists in
-.Pa /tftpboot/mop , 
-the filename is normaly uppercase and with an extension of
+.Pa /tftpboot/mop .
+The filename is normally all uppercase and with an extension of
 .Pa .SYS .
-If the filename isn't given, the ethernet address of the target is used as
-filename, e.g.
-.Pa 08002b09f4de.SYS
+If the filename isn't given, the Ethernet address of the target is used as
+filename (e.g.,
+.Pa 08002b09f4de.SYS ) ,
 and it might be a soft link to another file.
 .Pp
-.Nm Mopd
-supports two kinds of files. The first type that is checked is if the file is
-in
+.Nm mopd
+supports two kinds of files. The file is first checked to see if it is in
 .Xr a.out 5
-format. If not, a couple of Digital's formats are checked.
+format. If not, a few of Digital's formats are checked.
 .Pp
 In normal operation, 
 .Nm mopd
 forks a copy of itself and runs in
 the background.  Anomalies and errors are reported via 
 .Xr syslog 3 .
-.Sh OPTIONS
+.Pp
+The options are as follows:
 .Bl -tag -width indent
 .It Fl a
 Listen on all the Ethernets attached to the system.
 If 
-.Sq Fl a 
+.Fl a 
 is omitted, an interface must be specified.
 .It Fl d
 Run in debug mode, with all the output to stdout. The process will run in
@@ -89,17 +89,17 @@ Run in the foreground.
 .El
 .Sh BUGS
 .Xr a.out 5
-isn't supported yet non bsd implementations (otherOS).
+isn't supported yet on non-BSD implementations (otherOS).
 .Sh FILES
 .Bl -tag -width Pa -compact
 .It Pa /tftpboot/mop
 .El
 .Sh SEE ALSO
-.Xr bpf 4 ,
 .Xr mopa.out 1 ,
 .Xr mopchk 1 ,
 .Xr mopprobe 1 ,
-.Xr moptrace 1 
+.Xr moptrace 1 ,
+.Xr bpf 4
 .Rs 
 DECnet Digital Network Architecture Phase IV, 
 .%R Maintenance Operations Functional Specification V3.0.0
