@@ -1,4 +1,4 @@
-/*	$OpenBSD: iteioctl.h,v 1.3 1997/04/06 02:59:55 briggs Exp $	*/
+/*	$OpenBSD: iteioctl.h,v 1.4 1997/11/11 22:46:26 gene Exp $	*/
 /*	$NetBSD: iteioctl.h,v 1.1 1994/12/03 23:34:31 briggs Exp $	*/
 
 /*-
@@ -33,12 +33,16 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: iteioctl.h,v 1.3 1997/04/06 02:59:55 briggs Exp $
+ * $Id: iteioctl.h,v 1.4 1997/11/11 22:46:26 gene Exp $
  *
  */
 
+#ifndef _MACHINE_ITEIOCTL_H_
+#define _MACHINE_ITEIOCTL_H_
 
-struct bellparams{
+#include <sys/ioctl.h>
+
+struct bellparams {
 	int freq;	/* hertz frequency */
 	int len;	/* length in clock ticks */ 
 	int vol;	/* percentage volume */
@@ -48,3 +52,5 @@ struct bellparams{
 #define ITEIOC_GETBELL            _IOR('I', 128, struct bellparams)
 #define ITEIOC_SETBELL            _IOW('I', 129, struct bellparams)
 #define ITEIOC_RINGBELL            _IO('I', 130)
+
+#endif	/* _MACHINE_ITEIOCTL_H_ */
