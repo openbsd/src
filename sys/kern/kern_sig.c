@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.56 2002/03/14 01:27:04 millert Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.57 2002/04/18 08:25:04 miod Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -1154,6 +1154,13 @@ postsig(signum)
 	mask = sigmask(signum);
 	p->p_siglist &= ~mask;
 	action = ps->ps_sigact[signum];
+
+	if (ps->ps_sig != signum) {
+		code = 0;
+	} else {
+		code = ps->ps_code;
+	}
+
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_PSIG)) {
 		siginfo_t si;
@@ -1203,10 +1210,7 @@ postsig(signum)
 		}
 		splx(s);
 		p->p_stats->p_ru.ru_nsignals++;
-		if (ps->ps_sig != signum) {
-			code = 0;
-		} else {
-			code = ps->ps_code;
+		if (ps->ps_sig == signum) {
 			ps->ps_code = 0;
 		}
 		null_sigval.sival_ptr = 0;
