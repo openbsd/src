@@ -1,4 +1,4 @@
-/*	$OpenBSD: aeon.c,v 1.6 2000/01/10 02:22:50 jason Exp $	*/
+/*	$OpenBSD: aeon.c,v 1.7 2000/03/10 08:44:59 mickey Exp $	*/
 
 /*
  * Invertex AEON driver
@@ -53,7 +53,7 @@
 #include <dev/pci/aeonvar.h>
 #include <dev/pci/aeonreg.h>
 
-#define AEON_DEBUG
+#undef AEON_DEBUG
 
 /*
  * Prototypes and count for the pci_device structure
@@ -70,7 +70,7 @@ struct cfdriver aeon_cd = {
 };
 
 void	aeon_reset_board	__P((struct aeon_softc *));
-int	aeon_enable_crypto	__P((struct aeon_softc *));
+int	aeon_enable_crypto	__P((struct aeon_softc *, pcireg_t));
 void	aeon_init_dma	__P((struct aeon_softc *));
 void	aeon_init_pci_registers __P((struct aeon_softc *));
 int	aeon_checkram __P((struct aeon_softc *));
@@ -81,6 +81,7 @@ int	aeon_build_command __P((const struct aeon_command * cmd,
 	    struct aeon_command_buf_data *));
 int	aeon_mbuf __P((struct mbuf *, int *np, long *pp, int *lp, int maxp,
 	    int *nicealign));
+u_int32_t aeon_next_signature __P((u_int a, u_int cnt));
 
 /*
  * Used for round robin crypto requests
@@ -155,7 +156,9 @@ aeon_attach(parent, self, aux)
 		return;
 	}
 	sc->sc_st1 = pa->pa_memt;
+#ifdef AEON_DEBUG
 	printf(" mem %x %x", sc->sc_sh0, sc->sc_sh1);
+#endif
 
 	sc->sc_dmat = pa->pa_dmat;
         if (bus_dmamem_alloc(sc->sc_dmat, sizeof(*sc->sc_dma), PAGE_SIZE, 0,
@@ -190,9 +193,8 @@ aeon_attach(parent, self, aux)
 
 	aeon_reset_board(sc);
 
-	if (aeon_enable_crypto(sc) != 0) {
-		printf("%s: crypto enabling failed\n",
-		    sc->sc_dv.dv_xname);
+	if (aeon_enable_crypto(sc, pa->pa_id) != 0) {
+		printf("%s: crypto enabling failed\n", sc->sc_dv.dv_xname);
 		return;
 	}
 
@@ -230,7 +232,7 @@ aeon_attach(parent, self, aux)
 	aeon_devices[aeon_num_devices] = sc;
 	aeon_num_devices++;
 
-	printf(": %s\n", intrstr);
+	printf(", %s\n", intrstr);
 }
 
 /*
@@ -272,16 +274,73 @@ aeon_reset_board(sc)
 	    AEON_DMA_CFG_NODMARESET | AEON_DMA_CFG_NEED);
 }
 
+u_int32_t
+aeon_next_signature(a, cnt)
+	u_int a, cnt;
+{
+	int i, v;
+
+	for (i = 0; i < cnt; i++) {
+
+		/* get the parity */
+		v = a & 0x80080125;
+		v ^= v >> 16;
+		v ^= v >> 8;
+		v ^= v >> 4;
+		v ^= v >> 2;
+		v ^= v >> 1;
+
+		a = (v & 1) ^ (a << 1);
+	}
+
+	return a;
+}
+
+struct pci2id {
+	u_short		pci_vendor;
+	u_short		pci_prod;
+	char		card_id[13];
+} pci2id[] = {
+	{
+		PCI_VENDOR_INVERTEX,
+		PCI_PRODUCT_INVERTEX_AEON,
+		{ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+		  0x00, 0x00, 0x00, 0x00, 0x00 }
+	}, {
+		PCI_VENDOR_HIFN,
+		PCI_PRODUCT_HIFN_7751,
+		{ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+		  0x00, 0x00, 0x00, 0x00, 0x00 }	/* XXX incorrect */
+	},
+};
+
 /*
  * Checks to see if crypto is already enabled.  If crypto isn't enable,
  * "aeon_enable_crypto" is called to enable it.  The check is important,
  * as enabling crypto twice will lock the board.
  */
 int 
-aeon_enable_crypto(sc)
+aeon_enable_crypto(sc, pciid)
 	struct aeon_softc *sc;
+	pcireg_t pciid;
 {
-	u_int32_t encryption_level;
+	u_int32_t dmacfg, ramcfg, encl, addr, i;
+	char *offtbl = NULL;
+
+	for (i = 0; i < sizeof(pci2id)/sizeof(pci2id[0]); i++) {
+		if (pci2id[i].pci_vendor == PCI_VENDOR(pciid) &&
+		    pci2id[i].pci_prod == PCI_PRODUCT(pciid)) {
+			offtbl = pci2id[i].card_id;
+			break;
+		}
+	}
+
+	if (offtbl == NULL) {
+#ifdef AEON_DEBUG
+		printf("%s: Unknown card!\n", sc->sc_dv.dv_xname);
+#endif
+		return (1);
+	}
 
 	/*
 	 * The RAM config register's encrypt level bit needs to be set before
@@ -290,39 +349,75 @@ aeon_enable_crypto(sc)
 	WRITE_REG_0(sc, AEON_RAM_CONFIG,
 	    READ_REG_0(sc, AEON_RAM_CONFIG) | (0x1 << 5));
 
-	encryption_level = READ_REG_0(sc, AEON_CRYPTLEVEL);
+	encl = READ_REG_0(sc, AEON_CRYPTLEVEL);
 
 	/*
 	 * Make sure we don't re-unlock.  Two unlocks kills chip until the
 	 * next reboot.
 	 */
-	if (encryption_level == 0x1020 || encryption_level == 0x1120) {
+	if (encl == 0x1020 || encl == 0x1120) {
 #ifdef AEON_DEBUG
 		printf("%s: Strong Crypto already enabled!\n",
 		    sc->sc_dv.dv_xname);
 #endif
+#if 0
+		/* XXX impossible, this writes garbage to these registers */
+		WRITE_REG_0(sc, AEON_RAM_CONFIG, ramcfg);
+		WRITE_REG_1(sc, AEON_DMA_CFG, dmacfg);
+#endif
 		return 0;	/* success */
 	}
 
-	/**
-	 **
-	 **   Rest of unlock procedure removed.
-	 **
-	 **
-	 **/
+	ramcfg = READ_REG_0(sc, AEON_RAM_CONFIG);
+	dmacfg = READ_REG_1(sc, AEON_DMA_CFG);
 
-	switch(encryption_level) {
+	WRITE_REG_0(sc, AEON_RAM_CONFIG, ramcfg | 0x20);
+
+	encl = READ_REG_0(sc, AEON_CRYPTLEVEL);
+
+	if (encl != 0 && encl != 0x3020) {
+#ifdef AEON_DEBUG
+		printf("%: Unknown encryption level\n",  sc->sc_dv.dv_xname);
+#endif
+		return 1;
+	}
+
+	WRITE_REG_1(sc, AEON_DMA_CFG, 0x807);
+	addr = READ_REG_1(sc, AEON_UNLOCK_SECRET1);
+	WRITE_REG_1(sc, AEON_UNLOCK_SECRET2, 0);
+
+	for (i = 0; i <= 12; i++) {
+		addr = aeon_next_signature(addr, offtbl[i] + 0x101);
+		WRITE_REG_1(sc, AEON_UNLOCK_SECRET2, addr);
+
+		DELAY(1000);
+	}
+
+	WRITE_REG_0(sc, AEON_RAM_CONFIG, ramcfg | 0x20);
+	encl = READ_REG_0(sc, AEON_CRYPTLEVEL);
+
+#ifdef AEON_DEBUG
+	if (encl != 0x1020 && encl != 0x1120)
+		printf("Encryption engine is permanently locked until next system reset.");
+	else
+		printf("Encryption engine enabled successfully!");
+#endif
+
+	WRITE_REG_0(sc, AEON_RAM_CONFIG, ramcfg);
+	WRITE_REG_1(sc, AEON_DMA_CFG, dmacfg);
+
+	switch(encl) {
 	case 0x3020:
-		printf(" no encr/auth");
+		printf(": no encr/auth");
 		break;
 	case 0x1020:
-		printf(" DES");
+		printf(": DES enabled");
 		break;
 	case 0x1120:
-		printf(" FULL");
+		printf(": fully enabled");
 		break;
 	default:
-		printf(" disabled");
+		printf(": disabled");
 		break;
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: aeonreg.h,v 1.4 1999/12/15 00:30:45 jason Exp $	*/
+/*	$OpenBSD: aeonreg.h,v 1.5 2000/03/10 08:45:00 mickey Exp $	*/
 
 /*
  * Invertex AEON driver
@@ -160,6 +160,9 @@ struct aeon_softc {
 #define AEON_DMA_CFG_NODMARESET		0x00000002
 #define AEON_DMA_CFG_NEED		0x00000004
 #define AEON_DMA_CFG_HOSTLAST		0x00000010
+
+#define	AEON_UNLOCK_SECRET1	0xf4
+#define	AEON_UNLOCK_SECRET2	0xfc
 
 #define WRITE_REG_1(sc,reg,val)	\
     bus_space_write_4((sc)->sc_st1, (sc)->sc_sh1, reg, val)
