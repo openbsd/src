@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.270 2004/02/01 19:20:30 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.271 2004/02/01 19:22:30 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -1450,21 +1450,25 @@ viac3_crypto(void *cw, void *src, void *dst, void *key, int rep,
 		    : "memory", "cc");
 		break;
 	case VIAC3_CRYPTOP_ECB:
+		__asm __volatile("pushfl; popfl");
 		__asm __volatile("rep xcrypt-ecb" :
 		    : "a" (iv), "b" (key), "c" (rep), "d" (cw), "S" (src), "D" (dst)
 		    : "memory", "cc");
 		break;
 	case VIAC3_CRYPTOP_CBC:
+		__asm __volatile("pushfl; popfl");
 		__asm __volatile("rep xcrypt-cbc" :
 		    : "a" (iv), "b" (key), "c" (rep), "d" (cw), "S" (src), "D" (dst)
 		    : "memory", "cc");
 		break;
 	case VIAC3_CRYPTOP_CFB:
+		__asm __volatile("pushfl; popfl");
 		__asm __volatile("rep xcrypt-cfb" :
 		    : "a" (iv), "b" (key), "c" (rep), "d" (cw), "S" (src), "D" (dst)
 		    : "memory", "cc");
 		break;
 	case VIAC3_CRYPTOP_OFB:
+		__asm __volatile("pushfl; popfl");
 		__asm __volatile("rep xcrypt-ofb" :
 		    : "a" (iv), "b" (key), "c" (rep), "d" (cw), "S" (src), "D" (dst)
 		    : "memory", "cc");
