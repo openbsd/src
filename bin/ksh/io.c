@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.8 1999/06/15 01:18:34 millert Exp $	*/
+/*	$OpenBSD: io.c,v 1.9 2000/08/20 22:14:32 millert Exp $	*/
 
 /*
  * shell buffered IO and formatted output
@@ -519,6 +519,12 @@ maketemp(ap, type, tlist)
 	tp->name = path = (char *) &tp[1];
 	tp->shf = (struct shf *) 0;
 	tp->type = type;
+#ifdef __OpenBSD__
+	shf_snprintf(path, len, "%s/shXXXXXXXX", dir);
+	fd = mkstemp(path);
+	if (fd >= 0)
+		tp->shf = shf_fdopen(fd, SHF_WR, (struct shf *) 0);
+#else
 	while (1) {
 		/* Note that temp files need to fit 8.3 DOS limits */
 		shf_snprintf(path, len, "%s/sh%05u.%03x",
@@ -544,7 +550,7 @@ maketemp(ap, type, tlist)
 			 */
 			break;
 	}
-	tp->next = NULL;
+#endif /* __OpenBSD__ */
 	tp->pid = procpid;
 
 	tp->next = *tlist;
