@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.40 2004/10/05 18:47:15 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.41 2004/10/05 19:35:49 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -921,6 +921,8 @@ __PACKAGE__->setKeyword('dirrm');
 sub keyword() { "dirrm" }
 
 package OpenBSD::PackingElement::DirBase;
+our @ISA=qw(OpenBSD::PackingElement::FileObject);
+
 sub stringize($)
 {
 	my $self = $_[0];
@@ -928,7 +930,7 @@ sub stringize($)
 }
 
 package OpenBSD::PackingElement::Dir;
-our @ISA=qw(OpenBSD::PackingElement::DirBase OpenBSD::PackingElement::FileObject);
+our @ISA=qw(OpenBSD::PackingElement::DirBase);
 
 __PACKAGE__->setKeyword('dir');
 sub keyword() { "dir" }
