@@ -25,7 +25,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: getopt.3,v 1.30 2004/12/22 16:24:53 jmc Exp $
+.\"	$OpenBSD: getopt.3,v 1.31 2005/03/26 22:02:15 millert Exp $
 .\"
 .Dd December 17, 2002
 .Dt GETOPT 3
@@ -311,6 +311,19 @@ the
 .Ox
 .Fn getopt
 supports optional arguments separated by whitespace.
+.Pp
+Historic
+.Bx
+versions of
+.Fn getopt
+set
+.Fa optopt
+to the last option character processed.
+However, this conflicts with
+.St -p1003.1
+which stipulates that
+.Fa optopt
+be set to the last character that caused an error.
 .Sh HISTORY
 The
 .Fn getopt
