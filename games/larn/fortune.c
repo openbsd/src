@@ -1,3 +1,6 @@
+/*	$OpenBSD: fortune.c,v 1.2 1998/09/15 05:12:31 pjanzen Exp $	*/
+/*	$NetBSD: fortune.c,v 1.4 1997/10/18 20:03:18 christos Exp $	*/
+
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
  * All rights reserved.
@@ -33,19 +36,23 @@
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)fortune.c	5.5 (Berkeley) 6/10/91";
+static char     sccsid[] = "@(#)fortune.c	5.5 (Berkeley) 6/10/91";
 #else
-static char rcsid[] = "$NetBSD: fortune.c,v 1.3 1995/03/23 08:33:23 cgd Exp $";
+static char rcsid[] = "$OpenBSD: fortune.c,v 1.2 1998/09/15 05:12:31 pjanzen Exp $";
 #endif
-#endif /* not lint */
+#endif				/* not lint */
 
+#include <stdlib.h>
+
+#include "header.h"
+#include "extern.h"
 /* fortune.c		 Larn is copyrighted 1986 by Noah Morgan. */
 
 /*
  * function to return a random fortune from the fortune file
  */
 
-char *flines[] = {
+char		*flines[] = {
 	"gem value = gem * 2 ^ perfection",
 	"sitting down can have unexpected results",
 	"don't pry into the affairs of others",
@@ -61,7 +68,7 @@ char *flines[] = {
 	"be sure to pay your taxes",
 	"are Vampires afraid of something?",
 	"some dragons can fly",
-	"dos thou strive for perfection?",
+	"dost thou strive for perfection?",
 	"patience is a virtue, unless your daughter dies",
 	"what does the Eye of Larn see in its guardian?",
 	"a level 25 player casts like crazy!",

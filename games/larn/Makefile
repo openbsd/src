@@ -1,9 +1,11 @@
-#	$OpenBSD: Makefile,v 1.6 1998/07/24 00:10:33 millert Exp $
+#	$OpenBSD: Makefile,v 1.7 1998/09/15 05:12:30 pjanzen Exp $
 
 # EXTRA
 #	Incorporates code to gather additional performance statistics
-# SYSV
-#	Use system III/V (instead of V7) type ioctl calls
+# TERMIO
+#	Use sysv termio
+# TERMIOS
+#	Use posix termios
 # BSD
 #	Use BSD specific features (mostly timer and signal stuff)
 # BSD4.1
@@ -53,12 +55,12 @@
 
 PROG=	larn
 MAN=	larn.6
-CFLAGS+=-DBSD -DVER=12 -DSUBVER=0 -DNONAP -DUIDSCORE
+CFLAGS=-DBSD -DVER=12 -DSUBVER=0 -DNONAP -DUIDSCORE -DTERMIOS
 SRCS=	main.c object.c create.c tok.c display.c global.c data.c io.c \
 	monster.c store.c diag.c help.c config.c nap.c bill.c scores.c \
 	signal.c moreobj.c movem.c regen.c fortune.c savelev.c
-DPADD=	${LIBCURSES} ${LIBCOMPAT}
-LDADD=	-lcurses -lcompat
+DPADD=	${LIBCURSES}
+LDADD=	-lcurses
 HIDEGAME=hidegame
 
 beforeinstall:
