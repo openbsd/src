@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.42 2001/12/08 04:39:09 jason Exp $	*/
+/*	$OpenBSD: dc.c,v 1.43 2001/12/08 04:44:37 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1180,19 +1180,19 @@ void dc_setfilt_xircom(sc)
 	ETHER_FIRST_MULTI(step, ac, enm);
 	while (enm != NULL) {
 		h = dc_crc_le(sc, enm->enm_addrlo);
-		sp[h >> 4] |= 1 << (h & 0xF);
+		sp[h >> 4] |= htole32(1 << (h & 0xF));
 		ETHER_NEXT_MULTI(step, enm);
 	}
 
 	if (ifp->if_flags & IFF_BROADCAST) {
 		h = dc_crc_le(sc, (caddr_t)&etherbroadcastaddr);
-		sp[h >> 4] |= 1 << (h & 0xF);
+		sp[h >> 4] |= htole32(1 << (h & 0xF));
 	}
 
 	/* Set our MAC address */
-	sp[0] = ((u_int16_t *)sc->arpcom.ac_enaddr)[0];
-	sp[1] = ((u_int16_t *)sc->arpcom.ac_enaddr)[1];
-	sp[2] = ((u_int16_t *)sc->arpcom.ac_enaddr)[2];
+	sp[0] = DC_SP_FIELD(sc->arpcom.ac_enaddr, 0);
+	sp[1] = DC_SP_FIELD(sc->arpcom.ac_enaddr, 1);
+	sp[2] = DC_SP_FIELD(sc->arpcom.ac_enaddr, 2);
 
 	DC_SETBIT(sc, DC_NETCFG, DC_NETCFG_TX_ON);
 	DC_SETBIT(sc, DC_NETCFG, DC_NETCFG_RX_ON);
