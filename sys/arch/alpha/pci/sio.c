@@ -1,4 +1,4 @@
-/*	$OpenBSD: sio.c,v 1.19 2001/02/05 17:18:33 art Exp $	*/
+/*	$OpenBSD: sio.c,v 1.20 2001/02/05 17:25:42 art Exp $	*/
 /*	$NetBSD: sio.c,v 1.15 1996/12/05 01:39:36 cgd Exp $	*/
 
 /*
@@ -153,7 +153,7 @@ sioattach(parent, self, aux)
 
 	sc->sc_iot = pa->pa_iot;
 	sc->sc_memt = pa->pa_memt;
-	sc->sc_haseisa = (PCI_VENDOR(pa->pa_id) == PC_VENDOR_INTEL &&
+	sc->sc_haseisa = (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_INTEL &&
 		PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_PCEB);
 
 #ifdef EVCNT_COUNTERS
