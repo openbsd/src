@@ -1,4 +1,4 @@
-#	$OpenBSD: PCMCIA,v 1.5 1996/06/29 19:17:29 deraadt Exp $
+#	$OpenBSD: PCMCIA,v 1.6 1996/07/31 18:35:21 deraadt Exp $
 #
 
 machine		i386		# architecture, used by config; REQUIRED
@@ -10,7 +10,7 @@ option		INSECURE
 option		MATH_EMULATE
 
 option		DUMMY_NOPS	# speed hack; recommanded
-option		XSERVER,UCONSOLE
+option		XSERVER
 
 maxusers	32		# estimated number of users
 option		TIMEZONE=300	# time zone to adjust RTC time by

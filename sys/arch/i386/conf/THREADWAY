@@ -1,13 +1,13 @@
 #
 #	THREADWAY: threadway.teeny.org
 #
-#	$OpenBSD: THREADWAY,v 1.8 1996/07/28 05:07:03 downsj Exp $
+#	$OpenBSD: THREADWAY,v 1.9 1996/07/31 18:35:22 deraadt Exp $
 #
 
 machine		i386
 option		I586_CPU
 
-option		XSERVER,UCONSOLE
+option		XSERVER
 option		EXTMEM_SIZE=39936
 option		PCVT_USL_VT_COMPAT=1,PCVT_SCREENSAVER=1,PCVT_PRETTYSCRNS=0
 

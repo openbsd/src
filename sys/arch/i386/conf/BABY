@@ -1,4 +1,4 @@
-#	$OpenBSD: BABY,v 1.5 1996/07/24 15:43:11 deraadt Exp $
+#	$OpenBSD: BABY,v 1.6 1996/07/31 18:35:13 deraadt Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -14,7 +14,7 @@ option		MATH_EMULATE	# floating point emulation
 #option		EXTMEM_SIZE=... # size of extended memory
 
 #option		DUMMY_NOPS	# speed hack; recommended
-option		XSERVER,UCONSOLE
+option		XSERVER
 option		INSECURE	# insecure; allow /dev/mem writing for X
 
 maxusers	32		# estimated number of users

@@ -11,7 +11,7 @@ option		I586_CPU
 option		MATH_EMULATE	# floating point emulation
 
 #option		DUMMY_NOPS	# speed hack; recommended
-option		XSERVER,UCONSOLE
+option		XSERVER
 option		INSECURE	# insecure; allow /dev/mem writing for X
 
 maxusers	32		# estimated number of users

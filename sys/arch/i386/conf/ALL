@@ -1,4 +1,4 @@
-#	$OpenBSD: ALL,v 1.5 1996/06/29 19:17:15 deraadt Exp $
+#	$OpenBSD: ALL,v 1.6 1996/07/31 18:35:12 deraadt Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	ALL -- everything that's currently supported
@@ -18,7 +18,7 @@ option		VM86		# Virtual 8086 emulation
 #option		EXTMEM_SIZE=...	# size of extended memory
 
 #option		DUMMY_NOPS	# speed hack; recommended
-option		XSERVER,UCONSOLE
+option		XSERVER
 option		INSECURE	# insecure; allow /dev/mem writing for X
 
 maxusers	32		# estimated number of users
