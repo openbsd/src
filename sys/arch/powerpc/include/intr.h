@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.1 1997/10/13 10:53:45 pefo Exp $ */
+/*	$OpenBSD: intr.h,v 1.2 1998/08/25 06:53:19 pefo Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom, Opsycon AB and RTMX Inc, USA.
@@ -130,7 +130,7 @@ set_sint(pending)
 #define splbio()	splraise(imask[IPL_BIO])
 #define splnet()	splraise(imask[IPL_NET])
 #define spltty()	splraise(imask[IPL_TTY])
-#define splclock()	splraise(SPL_CLOCK|SINT_CLOCK|SINT_NET)
+#define splclock()	splraise(SPL_CLOCK|SINT_MASK)
 #define splimp()	splraise(imask[IPL_IMP])
 #define splstatclock()	splhigh()
 #define	splsoftclock()	spllower(SINT_CLOCK)
@@ -138,8 +138,8 @@ set_sint(pending)
 #define	splsofttty()	splraise(SINT_TTY)
 
 #define	setsoftclock()	set_sint(SINT_CLOCK);
-#define	setsoftnet()	set_sint(SINT_NET);
-#define	setsofttty()	set_sint(SINT_TTY);
+#define	setsoftnet()	set_sint(SINT_NET|SINT_CLOCK);
+#define	setsofttty()	set_sint(SINT_TTY|SINT_CLOCK);
 
 #define	splhigh()	splraise(0xffffffff)
 #define	spl0()		spllower(0)
