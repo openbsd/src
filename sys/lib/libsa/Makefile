@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.10 1997/02/06 02:56:44 downsj Exp $
+#	$OpenBSD: Makefile,v 1.11 1997/02/06 06:46:57 mickey Exp $
 #	$NetBSD: Makefile,v 1.13 1996/10/02 16:19:51 ws Exp $
 
 LIB=	sa
@@ -27,25 +27,45 @@ CPPFLAGS+= -D__INTERNAL_LIBSA_CREAD
 
 # stand routines
 SRCS+=	alloc.c memcpy.c exit.c exec.c getfile.c gets.c globals.c \
-	printf.c strerror.c strcmp.c memset.c memcmp.c strncpy.c
+	printf.c strerror.c strcmp.c memset.c memcmp.c strncpy.c strncmp.c
+
+# math from libkern
+SRCS+=	divdi3.c qdivrem.c
+.PATH:	${DIR}/../../lib/libkern
 
 # io routines
 SRCS+=	close.c closeall.c dev.c disklabel.c dkcksum.c ioctl.c \
 	lseek.c open.c nullfs.c read.c stat.c fstat.c write.c
+
+# boot filesystems
+SRCS+=	ufs.c cd9660.c fat.c
+
 .if defined(SA_ZLIB)
 SRCS+=	cread.c
+SRCS+=	zlib.c
+.PATH:	${DIR}/../../net
+CFLAGS+=-DNO_DEFALTE
 .endif
 
 .if !defined(NO_NET)
+SRCS+=	nfs.c
+
 # network routines
 SRCS+=	arp.c ether.c in_cksum.c net.c netif.c rpc.c
-.endif
 
 # network info services:
 SRCS+=	bootp.c rarp.c bootparam.c
 
-# boot filesystems
-SRCS+=	ufs.c nfs.c cd9660.c
+.else
+# C flags
+CFLAGS+=-DNO_NET
+.endif
+
+.if ${MACHINE_ARCH}=="i386"
+CFLAGS+=-I${DIR}/../../arch/${MACHINE_ARCH}/stand/libsa
+.PATH: ${DIR}/../../arch/${MACHINE_ARCH}/stand/libsa
+.include "${DIR}/../../arch/${MACHINE_ARCH}/stand/libsa/Makefile.inc"
+.endif
 
 NOPROFILE=
 NOPIC=
