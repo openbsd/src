@@ -111,6 +111,23 @@ struct	vmtotal total;
 #endif
 
 /*
+ * Fork/vfork/rfork accounting.
+ */
+struct  forkstat
+{
+	int	cntfork;	/* number of fork() calls */
+	int	cntvfork;	/* number of vfork() calls */
+	int	cntrfork;	/* number of rfork() calls */
+	int	sizfork;	/* VM pages affected by fork() */
+	int	sizvfork;	/* VM pages affected by vfork() */
+	int	sizrfork;	/* VM pages affected by rfork() */
+};
+
+#ifdef _KERNEL
+struct forkstat forkstat;
+#endif
+
+/*
  * Optional instrumentation.
  */
 #ifdef PGINPROF
