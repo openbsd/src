@@ -1,4 +1,4 @@
-dnl	$OpenBSD: prep,v 1.15 2002/06/09 05:53:54 todd Exp $
+dnl	$OpenBSD: prep,v 1.16 2002/06/25 20:19:34 miod Exp $
 OpenBSD/MACHINE requires the SRM console.  Some alphas come with
 the AlphaBIOS (also known as the ARC firmware on older machines) instead;
 this is what Windows NT uses. It is fairly simple to replace the AlphaBIOS
@@ -68,10 +68,32 @@ Using the SRM console:
     will boot the "bsd" kernel with the "ac" flags on dka0.
 
 
-On systems with no framebuffer supported, including all
-TURBOchannel-based machines, OpenBSD/MACHINE must be used with a
-serial console.  Setting an Alpha system to use a serial console
-is system-specific.  The procedure for most common hardware is:
+SRM console boot device restrictions:
+    The SRM firmware on your system may or may not be able to boot from
+    any disk controller you may install in your MACHINE.
+    The built-in disk controllers on your MACHINE will always be supported,
+    however on IDE-based machines, such as the EB164, 164SX and 164LX, as
+    well as the low-end Personal Workstation (non-u models), you can plug
+    an SCSI controller, and boot from it if it is recognized.
+
+    Recent SRM releases for these machines will be able to boot from the
+    following controllers:
+	QLogic PCI SCSI controllers
+	Symbios Logic (NCR) 53C8xx (but not on PC164)
+	Adaptec AHA-[23]9[34]x[U][W] cards
+    The following controllers are known not to be supported as boot devices
+    by the SRM:
+	Adaptec AHA-[23]9[34]xU2 cards
+
+    A more detailed, and perhaps more up-to-date, list is available at the
+    following URL: http://www.pofo.de/alpha-boot
+
+
+OpenBSD/MACHINE console device restrictions:
+    On systems with no framebuffer supported, including all
+    TURBOchannel-based machines, OpenBSD/MACHINE must be used with a
+    serial console.  Setting an Alpha system to use a serial console
+    is system-specific.  The procedure for most common hardware is:
 
 	DEC 3000/[4-9]00's:
 		Flip the appropriate switch on the back of the machine.
@@ -87,16 +109,17 @@ is system-specific.  The procedure for most common hardware is:
 			init
 		or cycle power.
 
-See your owner's manual for more details on how to set your machine
-to use a serial console.
+    See your owner's manual for more details on how to set your machine
+    to use a serial console.
 
-Note that some MACHINE computers currently *require* a serial console
-and can't be used from a regular keyboard/display console, even though
-the motherboard has appropriate connectors.
-Currently, only the TURBOchannel MACHINE computers (DEC 3000) require use
-of a serial console.
+    Note that some MACHINE computers currently *require* a serial console
+    and can't be used from a regular keyboard/display console, even though
+    the motherboard has appropriate connectors.
+    Currently, only the TURBOchannel MACHINE computers (DEC 3000) require
+    use of a serial console.
 
-If booting using the regular console aborts with ``not configured to use
-display && keyboard console'', then you need to use a serial console.
-If your machine was not listed in the list above, please report this on
-<alpha@openbsd.org>.
+    If booting using the regular console aborts with ``not configured to
+    use display && keyboard console'', then you need to use a serial
+    console.
+    If your machine was not listed in the list above, please report this
+    on <alpha@openbsd.org>.
