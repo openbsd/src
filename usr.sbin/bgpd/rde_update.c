@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.12 2004/03/04 11:26:36 henning Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.13 2004/03/09 13:51:16 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -213,6 +213,10 @@ up_generate_updates(struct rde_peer *peer,
 
 	if (new == NULL || new->aspath->nexthop == NULL ||
 	    new->aspath->nexthop->state != NEXTHOP_REACH) {
+		if (old == NULL)
+			/* new prefix got filtered and no old prefex avail */
+			return;
+
 		if (peer == old->aspath->peer)
 			/* Do not send routes back to sender */
 			return;
@@ -269,28 +273,35 @@ up_generate_updates(struct rde_peer *peer,
 		if (up_add(peer, p, NULL) == -1)
 			log_warnx("queuing update failed.");
 	} else {
-		if (peer == new->aspath->peer)
+		if (peer == new->aspath->peer) {
 			/* Do not send routes back to sender */
+			up_generate_updates(peer, NULL, old);
 			return;
+		}
 
 		if (peer->conf.ebgp &&
 		    !aspath_loopfree(new->aspath->flags.aspath,
-		    peer->conf.remote_as))
+		    peer->conf.remote_as)) {
 			/*
 			 * Do not send routes back to sender which would
 			 * cause a aspath loop.
 			 */
+			up_generate_updates(peer, NULL, old);
 			return;
+		}
 
 		if (peer->conf.ebgp == 0 && new->aspath->peer->conf.ebgp == 0 &&
-		    (new->aspath->nexthop->flags & NEXTHOP_ANNOUNCE) == 0)
+		    (new->aspath->nexthop->flags & NEXTHOP_ANNOUNCE) == 0) {
 			/* Do not redistribute updates to ibgp peers */
+			up_generate_updates(peer, NULL, old);
 			return;
+		}
 
 		/* announce type handling */
 		switch (peer->conf.announce_type) {
 		case ANNOUNCE_UNDEF:
 		case ANNOUNCE_NONE:
+			up_generate_updates(peer, NULL, old);
 			return;
 		case ANNOUNCE_ALL:
 			break;
@@ -299,8 +310,10 @@ up_generate_updates(struct rde_peer *peer,
 			 * pass only prefix that have a aspath count
 			 * of zero this is equal to the ^$ regex.
 			 */
-			if (new->aspath->flags.aspath->hdr.as_cnt != 0)
+			if (new->aspath->flags.aspath->hdr.as_cnt != 0) {
+				up_generate_updates(peer, NULL, old);
 				return;
+			}
 			break;
 		}
 
@@ -310,6 +323,7 @@ up_generate_updates(struct rde_peer *peer,
 		if (rde_filter(peer, &attrs, &new->prefix->prefix,
 		    new->prefix->prefixlen, DIR_OUT) == ACTION_DENY) {
 			attr_free(&attrs);
+			up_generate_updates(peer, NULL, old);
 			return;
 		}
 
