@@ -1,4 +1,4 @@
-/*	$OpenBSD: rarpd.c,v 1.15 1997/09/18 08:05:47 deraadt Exp $ */
+/*	$OpenBSD: rarpd.c,v 1.16 1997/12/17 08:55:22 deraadt Exp $ */
 /*	$NetBSD: rarpd.c,v 1.12 1996/03/21 18:28:23 jtc Exp $	*/
 
 /*
@@ -28,7 +28,7 @@ char    copyright[] =
 #endif				/* not lint */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: rarpd.c,v 1.15 1997/09/18 08:05:47 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: rarpd.c,v 1.16 1997/12/17 08:55:22 deraadt Exp $";
 #endif
 
 
@@ -419,7 +419,8 @@ rarp_loop()
 {
 	u_char *buf, *bp, *ep;
 	int     cc, fd;
-	fd_set  fds, listeners;
+	fd_set  *fdsp, *lfdsp;
+	int	fdsn;
 	int     bufsize, maxfd = 0;
 	struct if_info *ii;
 
@@ -440,22 +441,30 @@ rarp_loop()
          * Find the highest numbered file descriptor for select().
          * Initialize the set of descriptors to listen to.
          */
-	FD_ZERO(&fds);
-	for (ii = iflist; ii; ii = ii->ii_next) {
-		FD_SET(ii->ii_fd, &fds);
+	for (ii = iflist; ii; ii = ii->ii_next)
 		if (ii->ii_fd > maxfd)
 			maxfd = ii->ii_fd;
-	}
+
+	fdsn = howmany(maxfd+1, NFDBITS) * sizeof(fd_mask);
+	if ((fdsp = (fd_set *)malloc(fdsn)) == NULL)
+		err(1, "malloc");
+	if ((lfdsp = (fd_set *)malloc(fdsn)) == NULL)
+		err(1, "malloc");
+
+	memset(fdsp, 0, fdsn);
+	for (ii = iflist; ii; ii = ii->ii_next)
+		FD_SET(ii->ii_fd, fdsp);
+
 	while (1) {
-		listeners = fds;
-		if (select(maxfd + 1, &listeners, (struct fd_set *) 0,
+		memcpy(lfdsp, fdsp, fdsn);
+		if (select(maxfd + 1, lfdsp, (struct fd_set *) 0,
 			(struct fd_set *) 0, (struct timeval *) 0) < 0) {
 			err(FATAL, "select: %s", strerror(errno));
 			/* NOTREACHED */
 		}
 		for (ii = iflist; ii; ii = ii->ii_next) {
 			fd = ii->ii_fd;
-			if (!FD_ISSET(fd, &listeners))
+			if (!FD_ISSET(fd, lfdsp))
 				continue;
 	again:
 			cc = read(fd, (char *) buf, bufsize);
@@ -489,6 +498,8 @@ rarp_loop()
 			}
 		}
 	}
+	free(fdsp);
+	free(lfdsp);
 }
 
 #ifdef REQUIRE_TFTPBOOT
