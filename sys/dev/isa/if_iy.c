@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iy.c,v 1.7 2001/03/22 01:38:28 angelos Exp $	*/
+/*	$OpenBSD: if_iy.c,v 1.8 2001/03/22 08:43:25 mickey Exp $	*/
 /*	$NetBSD: if_iy.c,v 1.4 1996/05/12 23:52:53 mycroft Exp $	*/
 /* #define IYDEBUG */
 /* #define IYMEMDEBUG */
@@ -796,7 +796,7 @@ int iobase, rxlen;
 		sc->next_mb = (sc->next_mb + 1) % MAX_MBS;
 		m->m_data = m->m_pktdat;
 		m->m_flags = M_PKTHDR;
-		m->m_pkthdr.tbdi = 0; /* paranoid */
+		m->m_pkthdr.tdbi = NULL; /* paranoid */
 	}
 	m->m_pkthdr.rcvif = ifp;
 	m->m_pkthdr.len = rxlen;
