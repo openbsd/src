@@ -1,4 +1,4 @@
-/*	$OpenBSD: debug_aout.c,v 1.1 1997/04/01 04:52:46 mickey Exp $	*/
+/*	$OpenBSD: debug_aout.c,v 1.2 1997/07/17 23:28:32 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -32,9 +32,9 @@
  *
  */
 
-#include <stand.h>
-#include <debug.h>
+#include <lib/libsa/stand.h>
 #include <sys/exec.h>
+#include "debug.h"
 
 int
 aout_init()
