@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.620 2003/05/12 08:57:21 tdeval Exp 
+ *		OpenBSD: pcidevs,v 1.621 2003/05/14 01:15:42 pb Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1653,6 +1653,26 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_CSA532,
 	    "Smart Array 532",
+	},
+	{
+	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_CSA5312,
+	    "Smart Array 5312",
+	},
+	{
+	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_CSA641,
+	    "Smart Array 641",
+	},
+	{
+	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_CSA642,
+	    "Smart Array 642",
+	},
+	{
+	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_CSA6400,
+	    "Smart Array 6400",
+	},
+	{
+	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_CSA6400EM,
+	    "Smart Array 6400 EM",
 	},
 	{
 	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_USB,
