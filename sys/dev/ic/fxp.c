@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxp.c,v 1.4 2000/04/27 00:00:25 chris Exp $	*/
+/*	$OpenBSD: fxp.c,v 1.5 2000/04/27 00:29:51 chris Exp $	*/
 /*	$NetBSD: if_fxp.c,v 1.2 1997/06/05 02:01:55 thorpej Exp $	*/
 
 /*
@@ -1423,7 +1423,6 @@ fxp_ioctl(ifp, command, data)
 			error = EINVAL;
 		} else if (ifp->if_mtu != ifr->ifr_mtu) {
 			ifp->if_mtu = ifr->ifr_mtu;
-			error = fxp_init(sc);
 		}
 		break;
 
