@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc4random.c,v 1.8 2003/06/11 21:03:10 deraadt Exp $	*/
+/*	$OpenBSD: arc4random.c,v 1.9 2003/08/16 19:07:40 tedu Exp $	*/
 
 /*
  * Arc4 random number generator for OpenBSD.
@@ -79,35 +79,22 @@ arc4_addrandom(struct arc4_stream *as, u_char *dat, int datlen)
 static void
 arc4_stir(struct arc4_stream *as)
 {
-	int     fd;
+	int     i, mib[2];
+	size_t	len;
 	struct {
 		struct timeval tv;
 		u_int rnd[(128 - sizeof(struct timeval)) / sizeof(u_int)];
 	}       rdat;
 
 	gettimeofday(&rdat.tv, NULL);
-	fd = open("/dev/arandom", O_RDONLY);
-	if (fd != -1) {
-		read(fd, rdat.rnd, sizeof(rdat.rnd));
-		close(fd);
-	} else {
-		int i, mib[2];
-		size_t len;
+	mib[0] = CTL_KERN;
+	mib[1] = KERN_ARND;
 
-		/* Device could not be opened, we might be chrooted, take
-		 * randomness from sysctl. */
-
-		mib[0] = CTL_KERN;
-		mib[1] = KERN_ARND;
-
-		for (i = 0; i < sizeof(rdat.rnd) / sizeof(u_int); i ++) {
-			len = sizeof(u_int);
-			if (sysctl(mib, 2, &rdat.rnd[i], &len, NULL, 0) == -1)
-				break;
-		}
+	for (i = 0; i < sizeof(rdat.rnd) / sizeof(u_int); i ++) {
+		len = sizeof(u_int);
+		if (sysctl(mib, 2, &rdat.rnd[i], &len, NULL, 0) == -1)
+			break;
 	}
-	/* fd < 0 or failed sysctl ?  Ah, what the heck. We'll just take
-	 * whatever was on the stack... */
 
 	arc4_stir_pid = getpid();
 	arc4_addrandom(as, (void *) &rdat, sizeof(rdat));
