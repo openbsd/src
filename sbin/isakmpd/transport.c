@@ -1,5 +1,5 @@
-/*	$OpenBSD: transport.c,v 1.6 1999/04/27 21:12:31 niklas Exp $	*/
-/*	$EOM: transport.c,v 1.35 1999/04/25 22:15:00 niklas Exp $	*/
+/*	$OpenBSD: transport.c,v 1.7 1999/04/30 11:46:48 niklas Exp $	*/
+/*	$EOM: transport.c,v 1.38 1999/04/30 11:05:41 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -198,29 +198,37 @@ transport_handle_messages (fd_set *fds)
 }
 
 /*
- * Send the first queued message on the first transport found whose file
- * descriptor is in FDS and has messages queued.  For fairness always try
- * the transport right after the last one which got a message sent on it.
- * XXX Would this perhaps be nicer done with CIRCLEQ chaining?
+ * Send the first queued message on the transports found whose file
+ * descriptor is in FDS and has messages queued.  Remove the fd bit from
+ * FDS as soon as one message has been sent on it so other transports
+ * sharing the socket won't get service without an intervening select
+ * call.  Perhaps a fairness strategy should be implemented between
+ * such transports.  Now early transports in the list will potentially
+ * be favoured to later ones sharing the file descriptor.
  */
 void
 transport_send_messages (fd_set *fds)
 {
-  struct transport *t = 0, *next;
+  struct transport *t, *next;
   struct message *msg;
+  struct exchange *exchange;
   struct timeval expiration;
-  struct sa *sa, *next_sa;
-  int expiry;
+  struct sa *sa;
+  int expiry, ok_to_drop_message;
 
-  for (t = LIST_FIRST (&transport_list); t; t = next)
+  /* Reference all transports first so noone will disappear while in use.  */
+  for (t = LIST_FIRST (&transport_list); t; t = LIST_NEXT (t, link))
+    transport_reference (t);
+
+  for (t = LIST_FIRST (&transport_list); t; t = LIST_NEXT (t, link))
     {
-      next = LIST_NEXT (t, link);
-      transport_reference (t);
       if (TAILQ_FIRST (&t->sendq) && t->vtbl->fd_isset (t, fds))
 	{
 	  t->vtbl->fd_set (t, fds, 0);
 	  msg = TAILQ_FIRST (&t->sendq);
 	  msg->flags &= ~MSG_IN_TRANSIT;
+	  exchange = msg->exchange;
+	  exchange->in_transit = 0;
 	  TAILQ_REMOVE (&t->sendq, msg, link);
 
 	  /*
@@ -229,66 +237,83 @@ transport_send_messages (fd_set *fds)
 	   * XXX Consider a retry/fatal error discriminator.
 	   */
 	  t->vtbl->send_message (msg);
-
-	  /*
-	   * If this is not a retransmit call post-send functions that allows
-	   * parallel work to be done while the network and peer does their
-	   * share of the job.
-	   */
-	  if (msg->xmits == 0)
-	    message_post_send (msg);
-
 	  msg->xmits++;
 
+	  /*
+	   * This piece of code has been proven to be quite delicate.
+	   * Think twice for before altering.  Here's an outline:
+	   *
+	   * If this message is not the one which finishes an exchange,
+	   * check if we have reached the number of retransmit before
+	   * queuing it up for another.
+	   *
+	   * If it is a finishing message we still may have to keep it
+	   * around for an on-demand retransmit when seeing a duplicate
+	   * of our peer's previous message.
+	   *
+	   * If we have no previous message from our peer, we need not
+	   * to keep the message around.
+	   */
 	  if ((msg->flags & MSG_LAST) == 0)
 	    {
 	      if (msg->xmits > conf_get_num ("General", "retransmits",
-					     RETRANSMIT_DEFAULT))
+					       RETRANSMIT_DEFAULT))
 		{
 		  log_print ("transport_send_messages: "
 			     "giving up on message %p",
 			     msg);
-		  msg->exchange->last_sent = 0;
+		  exchange->last_sent = 0;
+		}
+	      else
+		{
+		  gettimeofday (&expiration, 0);
 
 		  /*
-		   * As this exchange never went to a normal end, remove the
-		   * SA's being negotiated too.
+		   * XXX Calculate from round trip timings and a backoff func.
 		   */
-		  for (sa = TAILQ_FIRST (&msg->exchange->sa_list); sa;
-		       sa = next_sa)
-		    {
-		      next_sa = TAILQ_NEXT (sa, next);
-		      sa_free (sa);
-		    }
-
-		  exchange_free (msg->exchange);
-		  message_free (msg);
-		  goto next;
-	      };
-
-	      gettimeofday (&expiration, 0);
-	      /* XXX Calculate from round trip timings and a backoff func.  */
-	      expiry = msg->xmits * 2 + 5;
-	      expiration.tv_sec += expiry;
-	      log_debug (LOG_TRANSPORT, 30,
-			 "transport_send_messages: message %p "
-			 "scheduled for retransmission %d in %d secs",
-			 msg, msg->xmits, expiry);
-	      msg->retrans = timer_add_event ("message_send",
-					      (void (*) (void *))message_send,
-					      msg, &expiration);
-	      if (!msg->retrans)
-		{
-		  /* If we can make no retransmission, we can't.... */
-		  message_free (msg);
-		  goto next;
+		  expiry = msg->xmits * 2 + 5;
+		  expiration.tv_sec += expiry;
+		  log_debug (LOG_TRANSPORT, 30,
+			     "transport_send_messages: message %p "
+			     "scheduled for retransmission %d in %d secs",
+			     msg, msg->xmits, expiry);
+		  msg->retrans
+		    = timer_add_event ("message_send",
+				       (void (*) (void *))message_send,
+				       msg, &expiration);
+		  /* If we cannot retransmit, we cannot...  */
+		  exchange->last_sent = msg->retrans ? msg : 0;
 		}
-
-	      msg->exchange->last_sent = msg;
 	    }
-	}
+	  else
+	    exchange->last_sent = exchange->last_received ? msg : 0;
 
-    next:
+	  /*
+	   * If this message is not referred to for later retransmission
+	   * it will be ok for us to drop it after the post-send function.
+	   * But as the post-send function may remove the exchange, we need
+	   * to remember this fact here.
+	   */
+	  ok_to_drop_message = exchange->last_sent == 0;
+
+	  /*
+	   * If this is not a retransmit call post-send functions that allows
+	   * parallel work to be done while the network and peer does their
+	   * share of the job.  Note that a post-send function may take
+	   * away the exchange we belong to, but only if no retransmits
+	   * are possible.
+	   */
+	  if (msg->xmits == 1)
+	    message_post_send (msg);
+
+	  if (ok_to_drop_message)
+	    message_free (msg);
+	}
+    }
+
+  for (t = LIST_FIRST (&transport_list); t; t = next)
+    {
+      next = LIST_NEXT (t, link);
       transport_release (t);
     }
 }
