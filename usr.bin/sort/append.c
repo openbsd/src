@@ -1,4 +1,4 @@
-/*	$OpenBSD: append.c,v 1.6 2001/02/04 21:27:00 ericj Exp $	*/
+/*	$OpenBSD: append.c,v 1.7 2001/03/20 19:36:27 millert Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)append.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: append.c,v 1.6 2001/02/04 21:27:00 ericj Exp $";
+static char rcsid[] = "$OpenBSD: append.c,v 1.7 2001/03/20 19:36:27 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -81,7 +81,7 @@ append(keylist, nelem, depth, fp, put, ftbl)
 	u_char *cend, *pend, *start;
 	RECHEADER *crec, *prec;
 
-	if (*keylist == '\0' && UNIQUE)
+	if (*keylist == NULL)
 		return;
 	wts1 = wts = ftbl[0].weights;
 	if ((!UNIQUE) && SINGL_FLD) {
