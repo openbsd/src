@@ -1,8 +1,8 @@
-/*	$NetBSD: routed.h,v 1.4 1995/06/20 22:22:04 christos Exp $	*/
+/*	$OpenBSD: routed.h,v 1.2 1996/09/05 11:13:18 mickey Exp $	*/
 
 /*-
- * Copyright (c) 1983, 1989 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1983, 1989, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,7 +32,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)routed.h	5.3 (Berkeley) 4/3/91
+ *	@(#)routed.h	8.1 (Berkeley) 6/2/93
+ *
  */
 
 #ifndef _ROUTED_H_
@@ -45,51 +46,94 @@
  * by changing 32-bit net numbers to sockaddr's and
  * padding stuff to 32-bit boundaries.
  */
-#define	RIP_VERSION_0	0
-#define	RIP_VERSION_1	1
-#define	RIP_VERSION_2	2
 
+#define	RIPv1		1
+#define	RIPv2		2
+#ifndef RIPVERSION
+#define	RIPVERSION	RIPv1
+#endif
+
+#define RIP_PORT	520
+
+#if RIPVERSION == 1
+/* Note that this so called sockaddr has a 2-byte sa_family and no sa_len.
+ * It is not a UNIX sockaddr, but the shape of an address as defined
+ * in RIPv1.  It is still defined to allow old versions of programs
+ * such as `gated` to use this file to define RIPv1.
+ */
 struct netinfo {
-	u_int16_t	rip_family;
-	u_int16_t	rip_tag;
-	u_int32_t	rip_dst;		/* destination net/host */
-	/* Version 2 specific info */
-	u_int32_t	rip_netmask;
-	u_int32_t	rip_router;
-	u_int32_t	rip_metric;		/* cost of route */
+	struct	sockaddr rip_dst;	/* destination net/host */
+	u_int32_t   rip_metric;		/* cost of route */
+};
+#else
+struct netinfo {
+	u_int16_t   n_family;
+#define	    RIP_AF_INET	    htons(AF_INET)
+#define	    RIP_AF_UNSPEC   0
+#define	    RIP_AF_AUTH	    0xffff
+	u_int16_t   n_tag;		/* optional in RIPv2 */
+	u_int32_t   n_dst;		/* destination net or host */
+#define	    RIP_DEFAULT	    0
+	u_int32_t   n_mask;		/* netmask in RIPv2 */
+	u_int32_t   n_nhop;		/* optional next hop in RIPv2 */
+	u_int32_t   n_metric;		/* cost of route */
+};
+#endif
+
+/* RIPv2 authentication */
+struct netauth {
+	u_int16_t   a_type;
+#define	    RIP_AUTH_PW	    htons(2)	/* password type */
+	union {
+#define	    RIP_AUTH_PW_LEN 16
+	    int8_t    au_pw[RIP_AUTH_PW_LEN];
+	} au;
 };
 
 struct rip {
-	u_char	rip_cmd;		/* request/response */
-	u_char	rip_vers;		/* protocol version # */
-	u_char	rip_res1[2];		/* pad to 32-bit boundary */
-	union {
-		struct	netinfo ru_nets[1];	/* variable length... */
-		char	ru_tracefile[1];	/* ditto ... */
+	u_int8_t    rip_cmd;		/* request/response */
+	u_int8_t    rip_vers;		/* protocol version # */
+	u_int16_t   rip_res1;		/* pad to 32-bit boundary */
+	union {				/* variable length... */
+	    struct netinfo ru_nets[1];
+	    int8_t    ru_tracefile[1];
+	    struct netauth ru_auth[1];
 	} ripun;
 #define	rip_nets	ripun.ru_nets
 #define	rip_tracefile	ripun.ru_tracefile
 };
- 
-/*
- * Packet types.
+
+/* Packet types.
  */
 #define	RIPCMD_REQUEST		1	/* want info */
 #define	RIPCMD_RESPONSE		2	/* responding to request */
 #define	RIPCMD_TRACEON		3	/* turn tracing on */
 #define	RIPCMD_TRACEOFF		4	/* turn it off */
 
-#define	RIPCMD_MAX		5
+/* Gated extended RIP to include a "poll" command instead of using
+ * RIPCMD_REQUEST with (RIP_AF_UNSPEC, RIP_DEFAULT).  RFC 1058 says
+ * command 5 is used by Sun Microsystems for its own purposes.
+ */
+#define RIPCMD_POLL		5
+
+#define	RIPCMD_MAX		6
+
 #ifdef RIPCMDS
-char *ripcmds[RIPCMD_MAX] =
-  { "#0", "REQUEST", "RESPONSE", "TRACEON", "TRACEOFF" };
+char *ripcmds[RIPCMD_MAX] = {
+	"#0", "REQUEST", "RESPONSE", "TRACEON", "TRACEOFF"
+};
 #endif
 
-#define	HOPCNT_INFINITY		16	/* per Xerox NS */
+#define	HOPCNT_INFINITY		16
 #define	MAXPACKETSIZE		512	/* max broadcast size */
+#define NETS_LEN ((MAXPACKETSIZE-sizeof(struct rip))	\
+		      / sizeof(struct netinfo) +1)
 
-/*
- * Timer values used in managing the routing table.
+#define INADDR_RIP_GROUP __IPADDR(0xe0000009)	/* 224.0.0.9 */
+
+
+/* Timer values used in managing the routing table.
+ *
  * Complete tables are broadcast every SUPPLY_INTERVAL seconds.
  * If changes occur between updates, dynamic updates containing only changes
  * may be sent.  When these are sent, a timer is set for a random value
@@ -98,15 +142,14 @@ char *ripcmds[RIPCMD_MAX] =
  *
  * Every update of a routing entry forces an entry's timer to be reset.
  * After EXPIRE_TIME without updates, the entry is marked invalid,
- * but held onto until GARBAGE_TIME so that others may
- * see it "be deleted".
+ * but held onto until GARBAGE_TIME so that others may see it, to
+ * "poison" the bad route.
  */
-#define	TIMER_RATE		30	/* alarm clocks every 30 seconds */
-
 #define	SUPPLY_INTERVAL		30	/* time to supply tables */
-#define	MIN_WAITTIME		2	/* min. interval to broadcast changes */
-#define	MAX_WAITTIME		5	/* max. time to delay changes */
+#define	MIN_WAITTIME		2	/* min sec until next flash updates */
+#define	MAX_WAITTIME		5	/* max sec until flash update */
 
+#define STALE_TIME		90	/* switch to a new gateway */
 #define	EXPIRE_TIME		180	/* time to mark entry invalid */
 #define	GARBAGE_TIME		240	/* time to garbage collect */
 
