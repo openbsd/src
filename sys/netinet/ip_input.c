@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.49 2000/03/03 13:09:28 itojun Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.50 2000/03/27 07:26:45 angelos Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -78,7 +78,7 @@
 #endif
 
 int encdebug = 0;
-int ipsec_acl = 0;
+int ipsec_acl = 1;
 int ipsec_keep_invalid = IPSEC_DEFAULT_EMBRYONIC_SA_TIMEOUT;
 int ipsec_require_pfs = IPSEC_DEFAULT_PFS;
 int ipsec_soft_allocations = IPSEC_DEFAULT_SOFT_ALLOCATIONS;
