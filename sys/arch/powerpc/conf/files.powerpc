@@ -144,9 +144,9 @@ device obio {}
 attach obio at pci
 file arch/powerpc/pci/macobio.c			obio
 
-device esp: scsi, ncr53c9x
-attach esp at obio
-file arch/powerpc/mac/esp.c			esp
+#device esp: scsi, ncr53c9x
+#attach esp at obio
+#file arch/powerpc/mac/esp.c			esp
 
 device mesh: scsi
 attach mesh at obio
