@@ -17,7 +17,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $OpenBSD: mbuf.c,v 1.11 2000/03/03 21:52:57 brian Exp $
+ * $OpenBSD: mbuf.c,v 1.12 2000/05/07 10:12:14 brian Exp $
  *
  */
 #include <sys/types.h>
@@ -401,8 +401,10 @@ m_settype(struct mbuf *bp, int type)
 }
 
 struct mbuf *
-m_append(struct mbuf *m, const void *v, size_t sz)
+m_append(struct mbuf *bp, const void *v, size_t sz)
 {
+  struct mbuf *m = bp;
+
   if (m) {
     while (m->m_next)
       m = m->m_next;
@@ -411,7 +413,7 @@ m_append(struct mbuf *m, const void *v, size_t sz)
     else
       m->m_next = m_prepend(NULL, v, sz, 0);
   } else
-    m = m_prepend(NULL, v, sz, 0);
+    bp = m_prepend(NULL, v, sz, 0);
 
-  return m;
+  return bp;
 }
