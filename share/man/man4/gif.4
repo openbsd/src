@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gif.4,v 1.13 2003/12/08 10:03:43 markus Exp $
+.\"	$OpenBSD: gif.4,v 1.14 2004/02/23 10:19:18 jmc Exp $
 .\"	$KAME: gif.4,v 1.15 2000/04/19 09:39:42 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -77,6 +77,16 @@ Also, the routing table may be used to route the packets toward the
 .Nm
 interface.
 .Pp
+If plain Ethernet-over-IP is being used,
+the
+.Xr sysctl 3
+variable
+.Dv net.inet.etherip.allow
+must be set to 1.
+This is not necessary in cases where Ethernet-over-IP is being
+protected using
+.Xr ipsec 4 .
+.Pp
 Finally, the
 .Nm
 interface may be used as a
@@ -95,24 +105,26 @@ addresses of the packet (the source address of the packet must match
 the destination "physical" address, and vice versa).
 .\"
 .Sh SEE ALSO
+.Xr sysctl 3 ,
 .Xr inet 4 ,
 .Xr inet6 4 ,
+.Xr ipsec 4 ,
 .Xr ifconfig 8
 .Rs
-.%A	R. Gilligan
-.%A	E. Nordmark
-.%B	RFC 1933
-.%T	Transition Mechanisms for IPv6 Hosts and Routers
-.%D	April 1996
-.%O	ftp://ftp.isi.edu/in-notes/rfc1933.txt
+.%A R. Gilligan
+.%A E. Nordmark
+.%B RFC 1933
+.%T Transition Mechanisms for IPv6 Hosts and Routers
+.%D April 1996
+.%O ftp://ftp.isi.edu/in-notes/rfc1933.txt
 .Re
 .Rs
-.%A	Sally Floyd
-.%A	David L. Black
-.%A	K. K. Ramakrishnan
-.%T	"IPsec Interactions with ECN"
-.%D	December 1999
-.%O	draft-ietf-ipsec-ecn-02.txt
+.%A Sally Floyd
+.%A David L. Black
+.%A K. K. Ramakrishnan
+.%T IPsec Interactions with ECN
+.%D December 1999
+.%O draft-ietf-ipsec-ecn-02.txt
 .Re
 .\"
 .Sh HISTORY
