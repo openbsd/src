@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipf.5,v 1.15 1999/07/09 21:48:16 kjell Exp $
+.\"	$OpenBSD: ipf.5,v 1.16 1999/09/09 19:20:21 aaron Exp $
 .Dd July 9, 1999
 .Dt IPF 5
 .Os
@@ -495,7 +495,7 @@ rule such as:
 .Dl pass in quick from any to any port < 1024
 .Pp
 would be needed before the first block.  To create a new group for
-processing all inbould packets on le0/le1/lo0, with the default being to block
+processing all inbound packets on le0/le1/lo0, with the default being to block
 all inbound packets, we would do something like:
 .Bd -literal
        block in all
