@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypbind.c,v 1.44 2002/05/30 19:09:06 deraadt Exp $ */
+/*	$OpenBSD: ypbind.c,v 1.45 2002/06/29 07:32:15 deraadt Exp $ */
 
 /*
  * Copyright (c) 1997,1998 Theo de Raadt <deraadt@OpenBSD.org>
@@ -35,7 +35,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: ypbind.c,v 1.44 2002/05/30 19:09:06 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ypbind.c,v 1.45 2002/06/29 07:32:15 deraadt Exp $";
 #endif
 
 #include <sys/param.h>
@@ -129,17 +129,14 @@ u_int32_t unique_xid(struct _dom_binding *ypdb);
  * of ypbindproc_XXX_2() because we need to pass an additional
  * parameter. ypbindproc_setdom_2x() does a security check, and
  * hence needs the CLIENT *
- * 
+ *
  * We are faced with either making ypbindprog_2() do the security
  * check before calling ypbindproc_setdom_2().. or we can simply
  * declare sun's interface insufficient and roll our own.
  */
 
 void *
-ypbindproc_null_2x(transp, argp, clnt)
-	SVCXPRT *transp;
-	void *argp;
-	CLIENT *clnt;
+ypbindproc_null_2x(SVCXPRT *transp, void *argp, CLIENT *clnt)
 {
 	static char res;
 
@@ -148,10 +145,7 @@ ypbindproc_null_2x(transp, argp, clnt)
 }
 
 struct ypbind_resp *
-ypbindproc_domain_2x(transp, argp, clnt)
-	SVCXPRT *transp;
-	domainname *argp;
-	CLIENT *clnt;
+ypbindproc_domain_2x(SVCXPRT *transp, domainname *argp, CLIENT *clnt)
 {
 	static struct ypbind_resp res;
 	struct _dom_binding *ypdb;
@@ -233,10 +227,7 @@ ypbindproc_domain_2x(transp, argp, clnt)
 }
 
 bool_t *
-ypbindproc_setdom_2x(transp, argp, clnt)
-	SVCXPRT *transp;
-	struct ypbind_setdom *argp;
-	CLIENT *clnt;
+ypbindproc_setdom_2x(SVCXPRT *transp, struct ypbind_setdom *argp, CLIENT *clnt)
 {
 	struct sockaddr_in *fromsin, bindsin;
 	static bool_t res;
@@ -280,9 +271,7 @@ ypbindproc_setdom_2x(transp, argp, clnt)
 }
 
 static void
-ypbindprog_2(rqstp, transp)
-	struct svc_req *rqstp;
-	SVCXPRT *transp;
+ypbindprog_2(struct svc_req *rqstp, SVCXPRT *transp)
 {
 	union {
 		domainname ypbindproc_domain_2_arg;
@@ -342,16 +331,14 @@ ypbindprog_2(rqstp, transp)
 }
 
 void
-usage()
+usage(void)
 {
 	fprintf(stderr, "usage: ypbind [-ypset] [-ypsetme] [-insecure]\n");
 	exit(0);
 }
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	char path[MAXPATHLEN];
 	struct sockaddr_in sin;
@@ -574,7 +561,7 @@ main(argc, argv)
 }
 
 /*
- * State transition is done like this: 
+ * State transition is done like this:
  *
  * STATE	EVENT		ACTION			NEWSTATE	TIMEOUT
  * no binding	timeout		broadcast		no binding	5 sec
@@ -584,7 +571,7 @@ main(argc, argv)
  * checking	answer		--			binding		60 sec
  */
 void
-checkwork()
+checkwork(void)
 {
 	struct _dom_binding *ypdb;
 	time_t t;
@@ -604,8 +591,7 @@ checkwork()
 }
 
 int
-ping(ypdb)
-	struct _dom_binding *ypdb;
+ping(struct _dom_binding *ypdb)
 {
 	domainname dom = ypdb->dom_domain;
 	struct rpc_msg msg;
@@ -653,7 +639,7 @@ ping(ypdb)
 	AUTH_DESTROY(rpcua);
 
 	ypdb->dom_alive = 2;
-	if (sendto(pingsock, buf, outlen, 0, 
+	if (sendto(pingsock, buf, outlen, 0,
 	    (struct sockaddr *)&ypdb->dom_server_addr,
 	    sizeof ypdb->dom_server_addr) < 0)
 		perror("sendto");
@@ -662,8 +648,7 @@ ping(ypdb)
 }
 
 int
-pings(ypdb)
-	struct _dom_binding *ypdb;
+pings(struct _dom_binding *ypdb)
 {
 	domainname dom = ypdb->dom_domain;
 	struct rpc_msg msg;
@@ -744,10 +729,7 @@ pings(ypdb)
 }
 
 int
-broadcast(ypdb, buf, outlen)
-	struct _dom_binding *ypdb;
-	char *buf;
-	int outlen;
+broadcast(struct _dom_binding *ypdb, char *buf, int outlen)
 {
 	struct ifaddrs *ifap, *ifa;
 	struct sockaddr_in bindsin;
@@ -793,10 +775,7 @@ broadcast(ypdb, buf, outlen)
 }
 
 int
-direct(ypdb, buf, outlen)
-	struct _dom_binding *ypdb;
-	char *buf;
-	int outlen;
+direct(struct _dom_binding *ypdb, char *buf, int outlen)
 {
 	char line[1024], *p;
 	struct hostent *hp;
@@ -854,7 +833,7 @@ direct(ypdb, buf, outlen)
 }
 
 enum clnt_stat
-handle_replies()
+handle_replies(void)
 {
 	char buf[1400];
 	int fromlen, inlen;
@@ -904,7 +883,7 @@ try_again:
 }
 
 enum clnt_stat
-handle_ping()
+handle_ping(void)
 {
 	char buf[1400];
 	int fromlen, inlen;
@@ -957,10 +936,7 @@ try_again:
  * We prefer loopback connections.
  */
 void
-rpc_received(dom, raddrp, force)
-char *dom;
-struct sockaddr_in *raddrp;
-int force;
+rpc_received(char *dom, struct sockaddr_in *raddrp, int force)
 {
 	struct _dom_binding *ypdb;
 	struct iovec iov[2];
@@ -1077,8 +1053,7 @@ int force;
 }
 
 struct _dom_binding *
-xid2ypdb(xid)
-	u_int32_t xid;
+xid2ypdb(u_int32_t xid)
 {
 	struct _dom_binding *ypdb;
 
@@ -1089,8 +1064,7 @@ xid2ypdb(xid)
 }
 
 u_int32_t
-unique_xid(ypdb)
-	struct _dom_binding *ypdb;
+unique_xid(struct _dom_binding *ypdb)
 {
 	u_int32_t xid;
 
