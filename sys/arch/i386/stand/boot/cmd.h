@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.h,v 1.2 1997/03/31 23:06:21 mickey Exp $	*/
+/*	$OpenBSD: cmd.h,v 1.3 1997/04/01 04:50:33 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -42,6 +42,7 @@ struct cmd_state {
 
 	enum { CMD_ADDR, CMD_BOOT, CMD_CD, CMD_DEVICE, CMD_DEBUG, CMD_HELP,
 	       CMD_IMAGE, CMD_LS, CMD_NOPE, CMD_REBOOT, CMD_SET,
+	       CMD_REGS,
 	       CMD_ERROR /* last !!! */
 	}	cmd;
 	int argc;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.2 1997/03/31 23:06:21 mickey Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.3 1997/04/01 04:50:33 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -35,12 +35,15 @@
 #include <sys/param.h>
 #include <string.h>
 #include <libsa.h>
+#include <debug.h>
 #include "cmd.h"
 #ifndef _TEST
 #include <biosdev.h>
 #endif
 
 extern int debug;
+
+#define CTRL(c)	((c)&0x1f)
 
 const struct cmd_table {
 	char *cmd_name;
@@ -58,6 +61,7 @@ const struct cmd_table {
 	{"ls",     CMD_LS},
 	{"nope",   CMD_NOPE},
 	{"reboot", CMD_REBOOT},
+	{"regs",   CMD_REGS},
 	{"set",    CMD_SET},
 	{NULL, 0},
 };
@@ -119,11 +123,11 @@ getcmd(cmd)
 }
 
 static int
-readline(p, to)
-	register char *p;
+readline(buf, to)
+	register char *buf;
 	int	to;
 {
-	char *buf = p, ch;
+	char *p = buf, *pe = buf, ch;
 	int i;
 
 	for (i = to; i-- && !ischar(); )
@@ -137,8 +141,17 @@ readline(p, to)
 
 	while (1) {
 		switch (ch = getchar()) {
+		case CTRL('u'):
+			while (pe > buf) {
+				pe--;
+				putchar('\b');
+				putchar(' ');
+				putchar('\b');
+			}
+			p = pe = buf;
+			continue;
 		case '\n':
-			p[1] = *p = '\0';
+			pe[1] = *pe = '\0';
 			break;
 		case '\b':
 			if (p > buf) {
@@ -146,15 +159,18 @@ readline(p, to)
 				putchar(' ');
 				putchar('\b');
 				p--;
+				pe--;
 			}
 			continue;
 		default:
+			pe++;
 			*p++ = ch;
 			continue;
 		}
 		break;
 	}
-	return p - buf;
+
+	return pe - buf;
 }
 
 char *
@@ -330,6 +346,10 @@ execmd(cmd)
 
 	case CMD_REBOOT:
 		cmd->rc = -1;
+		break;
+
+	case CMD_REGS:
+		DUMP_REGS;
 		break;
 
 	case CMD_BOOT:
