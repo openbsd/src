@@ -1,4 +1,4 @@
-/* 	$OpenBSD: isp_openbsd.c,v 1.20 2001/09/01 07:16:40 mjacob Exp $ */
+/* 	$OpenBSD: isp_openbsd.c,v 1.21 2001/12/13 00:15:40 nordin Exp $ */
 /*
  * Platform (OpenBSD) dependent common attachment code for Qlogic adapters.
  *
@@ -288,9 +288,9 @@ ispcmd(XS_T *xs)
 	/*
 	 * Make sure that there's *some* kind of sane setting.
 	 */
-	timeout_set(&xs->stimeout, isp_wdog, isp);
-
 	isp = XS_ISP(xs);
+
+	timeout_set(&xs->stimeout, isp_wdog, isp);
 
 	if (XS_LUN(xs) >= isp->isp_maxluns) {
 		xs->error = XS_SELTIMEOUT;;
