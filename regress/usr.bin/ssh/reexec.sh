@@ -1,19 +1,20 @@
-#	$OpenBSD: reexec.sh,v 1.2 2004/06/25 01:25:11 djm Exp $
+#	$OpenBSD: reexec.sh,v 1.3 2004/06/25 01:32:44 djm Exp $
 #	Placed in the Public Domain.
 
 tid="reexec tests"
 
 DATA=/bin/ls
 COPY=${OBJ}/copy
+SSHD_ORIG=$SSHD
+SSHD_COPY=$OBJ/sshd.copy
 
 # Start a sshd and then delete it
 start_sshd_copy_zap ()
 {
-	cp ${SSHD} $OBJ/sshd.copy
-	SSHD_ORIG=$SSHD
-	SSHD=`which $OBJ/sshd.copy`
+	cp $SSHD_ORIG $SSHD_COPY
+	SSHD=$SSHD_COPY
 	start_sshd
-	rm -f $SSHD
+	rm -f $SSHD_COPY
 	SSHD=$SSHD_ORIG
 }
 
