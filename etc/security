@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: security,v 1.5 1996/07/12 00:06:50 deraadt Exp $
+#	$OpenBSD: security,v 1.6 1996/07/19 16:55:51 millert Exp $
 #
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 
@@ -224,11 +224,11 @@ fi
 # Files that should not have + signs.
 list="/etc/hosts.equiv /etc/shosts.equiv /etc/hosts.lpd"
 for f in $list ; do
-	if [ -f $f ] ; then
+	if [ -s $f ] ; then
 		awk '{
-			if ($0 ~ /^+@.*$/ )
+			if ($0 ~ /^\+@.*$/ )
 				next;
-			if ($0 ~ /^+.*$/ )
+			if ($0 ~ /^\+.*$/ )
 				printf("\nPlus sign in %s file.\n", FILENAME);
 		}' $f
 	fi
