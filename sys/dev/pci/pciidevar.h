@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciidevar.h,v 1.14 2004/10/17 18:32:12 grange Exp $	*/
+/*	$OpenBSD: pciidevar.h,v 1.15 2004/10/17 18:47:08 grange Exp $	*/
 /*	$NetBSD: pciidevar.h,v 1.6 2001/01/12 16:04:00 bouyer Exp $	*/
 
 /*
@@ -95,7 +95,25 @@ struct pciide_softc {
 
 	/* Chip-specific private data */
 	void *sc_cookie;
+
+	/* DMA registers access functions */
+	u_int8_t (*sc_dmacmd_read)(struct pciide_softc *, int);
+	void (*sc_dmacmd_write)(struct pciide_softc *, int, u_int8_t);
+	u_int8_t (*sc_dmactl_read)(struct pciide_softc *, int);
+	void (*sc_dmactl_write)(struct pciide_softc *, int, u_int8_t);
+	void (*sc_dmatbl_write)(struct pciide_softc *, int, u_int32_t);
 };
+
+#define PCIIDE_DMACMD_READ(sc, chan) \
+	(sc)->sc_dmacmd_read((sc), (chan))
+#define PCIIDE_DMACMD_WRITE(sc, chan, val) \
+	(sc)->sc_dmacmd_write((sc), (chan), (val))
+#define PCIIDE_DMACTL_READ(sc, chan) \
+	(sc)->sc_dmactl_read((sc), (chan))
+#define PCIIDE_DMACTL_WRITE(sc, chan, val) \
+	(sc)->sc_dmactl_write((sc), (chan), (val))
+#define PCIIDE_DMATBL_WRITE(sc, chan, val) \
+	(sc)->sc_dmatbl_write((sc), (chan), (val))
 
 /*
  * Functions defined by machine-dependent code.

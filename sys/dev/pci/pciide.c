@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.174 2004/10/17 18:16:12 grange Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.175 2004/10/17 18:47:08 grange Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -244,6 +244,12 @@ void artisea_chip_map(struct pciide_softc *, struct pci_attach_args *);
 
 void ite_chip_map(struct pciide_softc *, struct pci_attach_args *);
 void ite_setup_channel(struct channel_softc *);
+
+u_int8_t pciide_dmacmd_read(struct pciide_softc *, int);
+void pciide_dmacmd_write(struct pciide_softc *, int, u_int8_t);
+u_int8_t pciide_dmactl_read(struct pciide_softc *, int);
+void pciide_dmactl_write(struct pciide_softc *, int, u_int8_t);
+void pciide_dmatbl_write(struct pciide_softc *, int, u_int32_t);
 
 void pciide_channel_dma_setup(struct pciide_channel *);
 int  pciide_dma_table_setup(struct pciide_softc *, int, int);
@@ -778,6 +784,12 @@ pciide_attach(parent, self, aux)
 	sc->sc_dma_maxsegsz = IDEDMA_BYTE_COUNT_MAX;
 	sc->sc_dma_boundary = IDEDMA_BYTE_COUNT_ALIGN;
 
+	sc->sc_dmacmd_read = pciide_dmacmd_read;
+	sc->sc_dmacmd_write = pciide_dmacmd_write;
+	sc->sc_dmactl_read = pciide_dmactl_read;
+	sc->sc_dmactl_write = pciide_dmactl_write;
+	sc->sc_dmatbl_write = pciide_dmatbl_write;
+
 	WDCDEBUG_PRINT((" sc_pc=%p, sc_tag=%p, pa_class=0x%x\n", sc->sc_pc,
 	    sc->sc_tag, pa->pa_class), DEBUG_PROBE);
 
@@ -1005,6 +1017,7 @@ int
 pciide_intr_flag(struct pciide_channel *cp)
 {
 	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.wdc;
+	int chan = cp->wdc_channel.channel;
 
 	if (cp->dma_in_progress) {
 		int retry = 10;
@@ -1012,9 +1025,7 @@ pciide_intr_flag(struct pciide_channel *cp)
 
 		/* Check the status register */
 		for (retry = 10; retry > 0; retry--) {
-			status = bus_space_read_1(sc->sc_dma_iot,
-			    sc->sc_dma_ioh,
-			    IDEDMA_CTL(cp->wdc_channel.channel));
+			status = PCIIDE_DMACTL_READ(sc, chan);
 			if (status & IDEDMA_CTL_INTR) {
 				break;
 			}
@@ -1081,6 +1092,41 @@ pciide_pci_intr(arg)
 			rv = crv;	/* if we've done no better, take it */
 	}
 	return (rv);
+}
+
+u_int8_t
+pciide_dmacmd_read(struct pciide_softc *sc, int chan)
+{
+	return (bus_space_read_1(sc->sc_dma_iot, sc->sc_dma_ioh,
+	    IDEDMA_CMD(chan)));
+}
+
+void
+pciide_dmacmd_write(struct pciide_softc *sc, int chan, u_int8_t val)
+{
+	bus_space_write_1(sc->sc_dma_iot, sc->sc_dma_ioh,
+	    IDEDMA_CMD(chan), val);
+}
+
+u_int8_t
+pciide_dmactl_read(struct pciide_softc *sc, int chan)
+{
+	return (bus_space_read_1(sc->sc_dma_iot, sc->sc_dma_ioh,
+	    IDEDMA_CTL(chan)));
+}
+
+void
+pciide_dmactl_write(struct pciide_softc *sc, int chan, u_int8_t val)
+{
+	bus_space_write_1(sc->sc_dma_iot, sc->sc_dma_ioh,
+	    IDEDMA_CTL(chan), val);
+}
+
+void
+pciide_dmatbl_write(struct pciide_softc *sc, int chan, u_int32_t val)
+{
+	bus_space_write_4(sc->sc_dma_iot, sc->sc_dma_ioh,
+	    IDEDMA_TBL(chan), val);
 }
 
 void
@@ -1258,18 +1304,13 @@ pciide_dma_init(v, channel, drive, databuf, datalen, flags)
 #endif
 
 	/* Clear status bits */
-	bus_space_write_1(sc->sc_dma_iot, sc->sc_dma_ioh,
-	    IDEDMA_CTL(channel),
-	    bus_space_read_1(sc->sc_dma_iot, sc->sc_dma_ioh,
-		IDEDMA_CTL(channel)));
+	PCIIDE_DMACTL_WRITE(sc, channel, PCIIDE_DMACTL_READ(sc, channel));
 	/* Write table addr */
-	bus_space_write_4(sc->sc_dma_iot, sc->sc_dma_ioh,
-	    IDEDMA_TBL(channel),
+	PCIIDE_DMATBL_WRITE(sc, channel,
 	    dma_maps->dmamap_table->dm_segs[0].ds_addr);
 	/* set read/write */
-	bus_space_write_1(sc->sc_dma_iot, sc->sc_dma_ioh,
-	    IDEDMA_CMD(channel),
-	    (flags & WDC_DMA_READ) ? IDEDMA_CMD_WRITE: 0);
+	PCIIDE_DMACMD_WRITE(sc, channel,
+	    (flags & WDC_DMA_READ) ? IDEDMA_CMD_WRITE : 0);
 	/* remember flags */
 	dma_maps->dma_flags = flags;
 	return 0;
@@ -1283,10 +1324,8 @@ pciide_dma_start(v, channel, drive)
 	struct pciide_softc *sc = v;
 
 	WDCDEBUG_PRINT(("pciide_dma_start\n"),DEBUG_XFERS);
-	bus_space_write_1(sc->sc_dma_iot, sc->sc_dma_ioh,
-	    IDEDMA_CMD(channel),
-	    bus_space_read_1(sc->sc_dma_iot, sc->sc_dma_ioh,
-		IDEDMA_CMD(channel)) | IDEDMA_CMD_START);
+	PCIIDE_DMACMD_WRITE(sc, channel, PCIIDE_DMACMD_READ(sc, channel) |
+	    IDEDMA_CMD_START);
 
 	sc->pciide_channels[channel].dma_in_progress = 1;
 }
@@ -1305,8 +1344,7 @@ pciide_dma_finish(v, channel, drive, force)
 
 	sc->pciide_channels[channel].dma_in_progress = 0;
 
-	status = bus_space_read_1(sc->sc_dma_iot, sc->sc_dma_ioh,
-	    IDEDMA_CTL(channel));
+	status = PCIIDE_DMACTL_READ(sc, channel);
 	WDCDEBUG_PRINT(("pciide_dma_finish: status 0x%x\n", status),
 	    DEBUG_XFERS);
 
@@ -1314,8 +1352,7 @@ pciide_dma_finish(v, channel, drive, force)
 		return WDC_DMAST_NOIRQ;
 
 	/* stop DMA channel */
-	bus_space_write_1(sc->sc_dma_iot, sc->sc_dma_ioh,
-	    IDEDMA_CMD(channel),
+	PCIIDE_DMACMD_WRITE(sc, channel,
 	    (dma_maps->dma_flags & WDC_DMA_READ) ?
 	    0x00 : IDEDMA_CMD_WRITE);
 
@@ -1327,9 +1364,7 @@ pciide_dma_finish(v, channel, drive, force)
 	bus_dmamap_unload(sc->sc_dmat, dma_maps->dmamap_xfer);
 
 	/* Clear status bits */
-	bus_space_write_1(sc->sc_dma_iot, sc->sc_dma_ioh,
-	    IDEDMA_CTL(channel),
-	    status);
+	PCIIDE_DMACTL_WRITE(sc, channel, status);
 
 	if ((status & IDEDMA_CTL_ERR) != 0) {
 		printf("%s:%d:%d: bus-master DMA error: status=0x%x\n",
@@ -1357,12 +1392,10 @@ pciide_irqack(chp)
 {
 	struct pciide_channel *cp = (struct pciide_channel *)chp;
 	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.wdc;
+	int chan = chp->channel;
 
 	/* clear status bits in IDE DMA registers */
-	bus_space_write_1(sc->sc_dma_iot, sc->sc_dma_ioh,
-	    IDEDMA_CTL(chp->channel),
-	    bus_space_read_1(sc->sc_dma_iot, sc->sc_dma_ioh,
-		IDEDMA_CTL(chp->channel)));
+	PCIIDE_DMACTL_WRITE(sc, chan, PCIIDE_DMACTL_READ(sc, chan));
 }
 
 /* some common code used by several chip_map */
@@ -1640,9 +1673,7 @@ next:
 		}
 		if (idedma_ctl != 0) {
 			/* Add software bits in status register */
-			bus_space_write_1(sc->sc_dma_iot, sc->sc_dma_ioh,
-			    IDEDMA_CTL(channel),
-			    idedma_ctl);
+			PCIIDE_DMACTL_WRITE(sc, channel, idedma_ctl);
 		}
 	}
 }
@@ -1682,8 +1713,7 @@ sata_setup_channel(struct channel_softc *chp)
 	 */
 	if (idedma_ctl != 0) {
 		/* Add software bits in status register */
-		bus_space_write_1(sc->sc_dma_iot, sc->sc_dma_ioh,
-		    IDEDMA_CTL(chp->channel), idedma_ctl);
+		PCIIDE_DMACTL_WRITE(sc, chp->channel, idedma_ctl);
 	}
 	pciide_print_modes(cp);
 }
