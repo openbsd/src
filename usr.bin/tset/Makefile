@@ -1,10 +1,10 @@
-#	$OpenBSD: Makefile,v 1.4 1998/07/24 00:11:06 millert Exp $
+#	$OpenBSD: Makefile,v 1.5 1998/07/25 19:27:37 millert Exp $
 
 PROG=	tset
 SRCS=	map.c misc.c set.c term.c tset.c wrterm.c
 
-DPADD=	${LIBCURSES}
-LDADD=	-lcurses
+DPADD=	${LIBOLDCURSES}
+LDADD=	-locurses
 LINKS=	${BINDIR}/tset ${BINDIR}/reset
 MLINKS=	tset.1 reset.1
 
