@@ -65,19 +65,16 @@ static SCORE	Top[MAXSCORES];
  *	Post the player's score, if reasonable, and then print out the
  *	top list.
  */
-score()
+score(score_wfd)
+     int score_wfd;
 {
-	register int	inf;
+	register int	inf = score_wfd;
 	register SCORE	*scp;
 	register int	uid;
 	register bool	done_show = FALSE;
 	static int	numscores, max_uid;
 
 	Newscore = FALSE;
-	if ((inf = open(Scorefile, 2)) < 0) {
-		perror(Scorefile);
-		return;
-	}
 
 	if (read(inf, &max_uid, sizeof max_uid) == sizeof max_uid)
 		read(inf, Top, sizeof Top);
@@ -113,7 +110,7 @@ score()
 
 	if (!Newscore) {
 		Full_clear = FALSE;
-		close(inf);
+		fsync(inf);
 		return;
 	}
 	else
@@ -139,7 +136,7 @@ score()
 		write(inf, &max_uid, sizeof max_uid);
 		write(inf, Top, sizeof Top);
 	}
-	close(inf);
+	fsync(inf);
 }
 
 set_name(scp)
