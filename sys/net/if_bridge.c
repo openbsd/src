@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.128 2003/12/16 21:35:28 henning Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.129 2003/12/17 13:08:41 markus Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -878,6 +878,7 @@ bridge_init(struct bridge_softc *sc)
 		sc->sc_hashkey = arc4random();
 	}
 	ifp->if_flags |= IFF_RUNNING;
+	bstp_initialization(sc);
 
 	if (sc->sc_brttimeout != 0)
 		timeout_add(&sc->sc_brtimeout, sc->sc_brttimeout * hz);
