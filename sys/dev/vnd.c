@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnd.c,v 1.25 2000/06/22 23:02:19 fgsch Exp $	*/
+/*	$OpenBSD: vnd.c,v 1.26 2000/06/26 19:00:25 provos Exp $	*/
 /*	$NetBSD: vnd.c,v 1.26 1996/03/30 23:06:11 christos Exp $	*/
 
 /*
@@ -642,6 +642,7 @@ vndiodone(bp)
 	register struct vndbuf *vbp = (struct vndbuf *) bp;
 	register struct buf *pbp = vbp->vb_obp;
 	register struct vnd_softc *vnd = &vnd_softc[vndunit(pbp->b_dev)];
+	long count;
 	int s;
 
 	s = splbio();
@@ -663,7 +664,7 @@ vndiodone(bp)
 	}
 	pbp->b_resid -= vbp->vb_buf.b_bcount;
 	putvndbuf(vbp);
-	disk_unbusy(&vnd->sc_dk, (pbp->b_bcount - pbp->b_resid));
+	count = pbp->b_bcount - pbp->b_resid;
 	if (pbp->b_resid == 0) {
 #ifdef DEBUG
 		if (vnddebug & VDB_IO)
@@ -671,10 +672,13 @@ vndiodone(bp)
 #endif
 		biodone(pbp);
 	}
-	if (vnd->sc_tab.b_actf)
-		vndstart(vnd);
-	else
-		vnd->sc_tab.b_active--;
+	if (vnd->sc_tab.b_active) {
+		disk_unbusy(&vnd->sc_dk, count);
+		if (vnd->sc_tab.b_actf)
+			vndstart(vnd);
+		else
+			vnd->sc_tab.b_active--;
+	}
 	splx(s);
 }
 
