@@ -1,4 +1,4 @@
-/*	$OpenBSD: procfs_subr.c,v 1.15 2001/11/15 07:04:21 art Exp $	*/
+/*	$OpenBSD: procfs_subr.c,v 1.16 2002/01/30 20:29:44 nordin Exp $	*/
 /*	$NetBSD: procfs_subr.c,v 1.15 1996/02/12 15:01:42 christos Exp $	*/
 
 /*
@@ -211,7 +211,7 @@ procfs_rw(v)
 	struct pfsnode *pfs = VTOPFS(vp);
 	struct proc *p;
 
-	p = PFIND(pfs->pfs_pid);
+	p = pfind(pfs->pfs_pid);
 	if (p == 0)
 		return (EINVAL);
 	/* Do not permit games to be played with init(8) */

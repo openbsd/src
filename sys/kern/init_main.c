@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.91 2002/01/16 20:50:17 miod Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.92 2002/01/30 20:29:44 nordin Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -243,6 +243,7 @@ main(framep)
 	 */
 	LIST_INSERT_HEAD(&allproc, p, p_list);
 	p->p_pgrp = &pgrp0;
+	LIST_INSERT_HEAD(PIDHASH(0), p, p_hash);
 	LIST_INSERT_HEAD(PGRPHASH(0), &pgrp0, pg_hash);
 	LIST_INIT(&pgrp0.pg_members);
 	LIST_INSERT_HEAD(&pgrp0.pg_members, p, p_pglist);
