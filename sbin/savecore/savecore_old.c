@@ -1,4 +1,4 @@
-/*	$OpenBSD: savecore_old.c,v 1.15 1999/07/01 15:41:59 deraadt Exp $	*/
+/*	$OpenBSD: savecore_old.c,v 1.16 2000/05/31 17:09:17 millert Exp $	*/
 /*	$NetBSD: savecore_old.c,v 1.1.1.1 1996/03/16 10:25:11 leo Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)savecore.c	8.3 (Berkeley) 1/2/94";
 #else
-static char rcsid[] = "$OpenBSD: savecore_old.c,v 1.15 1999/07/01 15:41:59 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: savecore_old.c,v 1.16 2000/05/31 17:09:17 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -325,19 +325,22 @@ check_kmem()
 	(void)fread(&panicstr, sizeof(panicstr), 1, fp);
 	if (panicstr) {
 		char	c, visout[5];
+		size_t	vislen;
 
-		cp       = panic_mesg;
-		(void)fseek(fp, dumplo + ok(panicstr), SEEK_SET);
 		cp = panic_mesg;
-		do {
+		(void)fseek(fp, dumplo + ok(panicstr), SEEK_SET);
+		for (;;) {
 			c = getc(fp);
+			if (c == EOF || c == '\0')
+				break;
+
 			vis(visout, c, VIS_SAFE|VIS_NOSLASH, 0);
-			if (c && cp + strlen(visout) <
-			    &panic_mesg[sizeof(panic_mesg)]) {
-				strcat(cp, visout);
-				cp += strlen(visout);
-			}
-		} while (c && cp < &panic_mesg[sizeof(panic_mesg)]);
+			vislen = strlen(visout);
+			if (cp - panic_mesg + vislen >= sizeof(panic_mesg))
+				break;
+			strcat(cp, visout);
+			cp += vislen;
+		}
 	}
 	/* Don't fclose(fp), we use dumpfd later. */
 }

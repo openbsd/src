@@ -1,4 +1,4 @@
-/*	$OpenBSD: savecore.c,v 1.19 1999/08/16 18:38:50 art Exp $	*/
+/*	$OpenBSD: savecore.c,v 1.20 2000/05/31 17:09:17 millert Exp $	*/
 /*	$NetBSD: savecore.c,v 1.26 1996/03/18 21:16:05 leo Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)savecore.c	8.3 (Berkeley) 1/2/94";
 #else
-static char rcsid[] = "$OpenBSD: savecore.c,v 1.19 1999/08/16 18:38:50 art Exp $";
+static char rcsid[] = "$OpenBSD: savecore.c,v 1.20 2000/05/31 17:09:17 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -333,20 +333,22 @@ check_kmem()
 	KREAD(kd_dump, dump_nl[X_PANICSTR].n_value, &panicstr);
 	if (panicstr) {
 		char	c, visout[5];
+		size_t	vislen;
 
 		cp       = panic_mesg;
 		panicloc = panicstr;
-		do {
-			KREAD(kd_dump, panicloc, &c);
+		for (;;) {
+			if (KREAD(kd_dump, panicloc, &c) != 0 || c == '\0')
+				break;
 			panicloc++;
 
 			vis(visout, c, VIS_SAFE|VIS_NOSLASH, 0);
-			if (c && cp + strlen(visout) <
-			    &panic_mesg[sizeof(panic_mesg)]) {
-				strcat(cp, visout);
-				cp += strlen(visout);
-			}
-		} while (c && cp < &panic_mesg[sizeof(panic_mesg)]);
+			vislen = strlen(visout);
+			if (cp - panic_mesg + vislen >= sizeof(panic_mesg))
+				break;
+			strcat(cp, visout);
+			cp += vislen;
+		}
 	}
 }
 
