@@ -1,7 +1,7 @@
-#	$OpenBSD: files.mvmeppc,v 1.6 2002/06/08 16:02:13 miod Exp $
+#	$OpenBSD: files.mvmeppc,v 1.7 2004/01/23 10:41:06 miod Exp $
 
 #
-# powerpc-specific configuration info
+# mvmeppc-specific configuration info
 #
 maxpartitions 16
 
@@ -23,11 +23,6 @@ file	arch/mvmeppc/mvmeppc/bus_space.c
 file	arch/mvmeppc/mvmeppc/bus_dma.c
 file	arch/mvmeppc/mvmeppc/ppc1_machdep.c
 
-#
-# Media Independent Interface (mii)
-#
-include "../../../dev/mii/files.mii"
-
 define	mainbus {}
 device	mainbus
 attach	mainbus at root
@@ -45,20 +40,28 @@ device	openpic
 attach	openpic at raven
 file	arch/mvmeppc/dev/openpic.c
 
-major   {rd = 17}
+# Various things that need to be included early...
+
+# Media Independent Interface (mii)
+include "../../../dev/mii/files.mii"
 
 # I2O
 include "../../../dev/i2o/files.i2o"
 
-# PCI bus support
-# XXX Dummy bus needed for some multi-homed devices specified in files.isa
-define	pcmcia {}
-include "dev/pci/files.pci"	# XXX some ISA devs are 'at pci' too.
+#
+# ISA Bus support
+#
 
-# Ethernet driver for DC21140A-based SBCs
-device	vde: ether, ifnet, ifmedia
-attach	vde at pci
-file	arch/mvmeppc/pci/if_vde.c		vde
+include "dev/isa/files.isa"
+include "dev/isa/files.isapnp"
+
+file	arch/mvmeppc/isa/isa_machdep.c		isa
+
+#
+# PCI bus support
+#
+
+include "dev/pci/files.pci"
 
 device	mpcpcibr {} : pcibus
 attach	mpcpcibr at raven
@@ -69,47 +72,31 @@ device	pchb:	pcibus
 attach	pchb at pci
 file	arch/mvmeppc/pci/pchb.c			pchb
 
-#
-# ISA Bus devices
-#
-include "dev/isa/files.isa"
-include "dev/isa/files.isapnp"
-file	arch/mvmeppc/isa/isa_machdep.c		isa
-
 # PCI-ISA bridge chipsets
 device	pcib:	isabus
 attach	pcib at pci
 file	arch/mvmeppc/pci/pcib.c			pcib
 
-include "dev/pckbc/files.pckbc"
-
-major	{sd = 2}		# hey this was 0 but at slot 2 in bdevsw XXX
-major	{cd = 3}
-include "../../../scsi/files.scsi"
-
 #
-# "workstation console" routines
+# Input Devices (not yet)
 #
 
+#include "dev/pckbc/files.pckbc"
 #include "dev/wscons/files.wscons"
 
-# Machine-independent ATAPI drivers
+#
+# Block Devices
+#
 
-include "../../../dev/atapiscsi/files.atapiscsi"
-include "../../../dev/ata/files.ata"
-
-# MAC periph ??? XXX smurph
-
-#device zsc {channel = -1}
-#attach zsc at obio
-#file arch/powerpc/mac/zs.c			zsc needs-flag
-#file dev/ic/z8530sc.c				zsc
-
-#device zstty: tty
-#attach zstty at zsc
-#file dev/ic/z8530tty.c				zstty needs-flag
+include "../../../scsi/files.scsi"
+#include "../../../dev/atapiscsi/files.atapiscsi"
+#include "../../../dev/ata/files.ata"
 
 device bugtty: tty
 attach bugtty at mainbus
 file arch/mvmeppc/dev/bugtty.c			bugtty needs-flag
 
+#major	{wd = 0}
+major	{sd = 2}
+major	{cd = 3}
+major   {rd = 17}

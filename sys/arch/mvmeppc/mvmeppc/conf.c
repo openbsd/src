@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.15 2003/05/14 00:20:37 tedu Exp $ */
+/*	$OpenBSD: conf.c,v 1.16 2004/01/23 10:41:07 miod Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -41,7 +41,11 @@
 
 #include <machine/conf.h>
 
+#if 0
 #include "wd.h"
+#else
+#define	NWD 0
+#endif
 bdev_decl(wd);
 #include "sd.h"
 #include "cd.h"
@@ -85,16 +89,10 @@ int nblkdev = sizeof bdevsw / sizeof bdevsw[0];
 #include "bugtty.h"
 cdev_decl(bugtty);
 
-cdev_decl(kbd);
-cdev_decl(ms);
+#include "st.h"
+#include "uk.h"
+#include "ss.h"
 
-#include <sd.h>
-#include <st.h>
-#include <cd.h>
-#include <uk.h>
-#include <ss.h>
-
-#include <wd.h>
 cdev_decl(wd);
 
 #include "bpfilter.h"
@@ -140,8 +138,8 @@ struct cdevsw cdevsw[] = {
 	cdev_tty_init(NBUGTTY,bugtty),  /* 14: BUGtty (ttyB) */
         cdev_notdef(),                  /* 15 */
         cdev_notdef(),                  /* 16 */
-	cdev_disk_init(NRD,rd),		/* 17 ram disk driver*/
-	cdev_disk_init(NCCD,ccd),	/* 18 concatenated disk driver */
+	cdev_disk_init(NRD,rd),		/* 17: ram disk driver*/
+	cdev_disk_init(NCCD,ccd),	/* 18: concatenated disk driver */
         cdev_disk_init(NVND,vnd),       /* 19: vnode disk */
         cdev_tape_init(NST,st),         /* 20: SCSI tape */
         cdev_fd_init(1,filedesc),       /* 21: file descriptor pseudo-dev */
@@ -173,7 +171,7 @@ struct cdevsw cdevsw[] = {
         cdev_notdef(),                  /* 47 */
         cdev_notdef(),                  /* 48 */
         cdev_notdef(),                  /* 49 */ 
-        cdev_systrace_init(NSYSTRACE,systrace),	/* 50 system call tracing */ 
+        cdev_systrace_init(NSYSTRACE,systrace),	/* 50: system call tracing */ 
 #ifdef XFS
 	cdev_xfs_init(NXFS,xfs_dev),	/* 51: xfs communication device */
 #else
@@ -182,25 +180,6 @@ struct cdevsw cdevsw[] = {
         cdev_notdef(),                  /* 52 */ 
         cdev_notdef(),                  /* 53 */ 
 	cdev_disk_init(NRAID,raid),	/* 54: RAIDframe disk driver */
-        cdev_notdef(),                  /* 55 */ 
-	/* The following slots are reserved for isdn4bsd. */
-	cdev_notdef(),			/* 56: i4b main device */
-	cdev_notdef(),			/* 57: i4b control device */
-	cdev_notdef(),			/* 58: i4b raw b-channel access */
-	cdev_notdef(),			/* 59: i4b trace device */
-	cdev_notdef(),			/* 60: i4b phone device */
-	/* End of reserved slots for isdn4bsd. */
-	cdev_notdef(),			/* 60: i4b phone device */
-	cdev_notdef(),			/* 61: i4b phone device */
-	cdev_notdef(),			/* 62: i4b phone device */
-	cdev_notdef(),			/* 63: i4b phone device */
-	cdev_notdef(),			/* 64: i4b phone device */
-	cdev_notdef(),			/* 65: i4b phone device */
-	cdev_notdef(),			/* 66: i4b phone device */
-	cdev_notdef(),			/* 67: i4b phone device */
-	cdev_notdef(),			/* 68: i4b phone device */
-	cdev_notdef(),			/* 69: i4b phone device */
-	cdev_notdef(),			/* 70: i4b phone device */
 };
 int nchrdev = sizeof cdevsw / sizeof cdevsw[0];
 
