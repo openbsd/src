@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.38 2003/09/23 16:51:13 millert Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.39 2003/10/04 01:03:49 deraadt Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -59,7 +59,7 @@
 #include <netinet/if_arc.h>
 #include <netinet/if_ether.h>
 
-#define BPF_BUFSIZE 8192	/* 4096 too small for FDDI frames */
+#define BPF_BUFSIZE 9216	/* 8192 too small for ATM frames */
 
 #define PRINET  26			/* interruptible */
 
@@ -148,6 +148,16 @@ bpf_movein(uio, linktype, mp, sockp)
 	case DLT_NULL:
 		sockp->sa_family = AF_UNSPEC;
 		hlen = 0;
+		break;
+
+	case DLT_ATM_RFC1483:
+		/*
+		 * en atm driver requires 4-byte atm pseudo header.
+		 * though it isn't standard, vpi:vci needs to be
+		 * specified anyway.
+		 */
+		sockp->sa_family = AF_UNSPEC;
+		hlen = 12; 	/* XXX 4(ATM_PH) + 3(LLC) + 5(SNAP) */
 		break;
 
 	default:

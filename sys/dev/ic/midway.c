@@ -1,4 +1,4 @@
-/*	$OpenBSD: midway.c,v 1.30 2002/03/14 01:26:54 millert Exp $	*/
+/*	$OpenBSD: midway.c,v 1.31 2003/10/04 01:03:48 deraadt Exp $	*/
 /*	(sync'd to midway.c 1.68)	*/
 
 /*
@@ -108,6 +108,8 @@
 #define INLINE inline
 #endif /* EN_DEBUG */
 
+#include "bpfilter.h"
+
 #ifdef __FreeBSD__
 #include "en.h"
 #endif
@@ -174,6 +176,12 @@
 #endif
 
 #endif	/* __FreeBSD__ */
+
+#define BPF_MTAP(ifp, m) bpf_mtap((ifp)->if_bpf, (m))
+
+#if NBPFILTER > 0
+#include <net/bpf.h>
+#endif
 
 /*
  * params
@@ -833,6 +841,11 @@ done_probe:
 
   if_attach(ifp);
   atm_ifattach(ifp); 
+
+
+#if NBPFILTER > 0
+  bpfattach(&ifp->if_bpf, ifp, DLT_ATM_RFC1483, sizeof(struct atmllc));
+#endif
 
 }
 
@@ -1912,6 +1925,29 @@ again:
     launch.pdu1 = MID_PDU_MK1(0, 0, datalen);  /* host byte order */
   }
 
+#if NBPFILTER > 0
+	if (sc->enif.if_bpf != NULL) {
+		/*
+		 * adjust the top of the mbuf to skip the TBD if present
+		 * before passing the packet to bpf.
+		 * Also remove padding and the PDU trailer. Assume both of
+		 * them to be in the same mbuf. pktlen, m_len and m_data
+		 * are not needed anymore so we can change them.
+		 */
+		int size = sizeof(struct atm_pseudohdr);
+		if (launch.atm_flags & EN_OBHDR)
+			size += MID_TBD_SIZE;
+	
+		launch.t->m_data += size;
+		launch.t->m_len -= size;
+
+		BPF_MTAP(&sc->enif, launch.t);
+
+		launch.t->m_data -= size;
+		launch.t->m_len += size;
+	}
+#endif
+
   en_txlaunch(sc, chan, &launch);
   
   /*
@@ -2475,6 +2511,11 @@ void *arg;
 		EN_DQ_LEN(drq), sc->rxslot[slot].rxhand);
 #endif
 	  sc->enif.if_ipackets++;
+
+#if NBPFILTER > 0
+	  if (sc->enif.if_bpf)
+		BPF_MTAP(&sc->enif, m);
+#endif
 
 	  atm_input(&sc->enif, &ah, m, sc->rxslot[slot].rxhand);
 	}
