@@ -1,4 +1,4 @@
-/*	$OpenBSD: atavar.h,v 1.15 2003/10/16 20:03:40 grange Exp $	*/
+/*	$OpenBSD: atavar.h,v 1.16 2003/10/16 20:21:07 grange Exp $	*/
 /*	$NetBSD: atavar.h,v 1.13 1999/03/10 13:11:43 bouyer Exp $	*/
 
 /*
@@ -53,6 +53,7 @@ struct ata_drive_datas {
 #define DRIVE_DSCBA	0x0200 /* DSC in buffer availability mode */
 #define DRIVE_DSCWAIT	0x0400 /* In wait for DSC to be asserted */
 #define DRIVE_DEVICE_RESET 0x0800 /* Drive supports DEVICE RESET command */
+#define DRIVE_SATA	0x1000 /* SATA drive */
 	/*
 	 * Current setting of drive's PIO, DMA and UDMA modes.
 	 * Is initialised by the disks drivers at attach time, and may be
