@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd.c,v 1.37 2004/01/21 21:00:14 tedu Exp $ */
+/*	$OpenBSD: wd.c,v 1.38 2004/02/02 21:29:38 tedu Exp $ */
 /*	$NetBSD: wd.c,v 1.193 1999/02/28 17:15:27 explorer Exp $ */
 
 /*
@@ -265,6 +265,10 @@ wdattach(struct device *parent, struct device *self, void *aux)
 	WDCDEBUG_PRINT(("wdattach\n"), DEBUG_FUNCS | DEBUG_PROBE);
 
 	wd->sc_q = BUFQ_ALLOC(0);
+#ifdef DIAGNOSTIC
+	if (wd->sc_q == NULL)
+		return;
+#endif
 
 	wd->openings = aa_link->aa_openings;
 	wd->drvp = aa_link->aa_drv_data;
