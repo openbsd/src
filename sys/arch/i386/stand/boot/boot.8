@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot.8,v 1.7 1997/10/07 09:20:31 mickey Exp $
+.\"	$OpenBSD: boot.8,v 1.8 1998/03/16 12:36:15 mickey Exp $
 .\"
 .\" Copyright (c) 1997 Michael Shalayeff
 .\" All rights reserved.
@@ -142,9 +142,15 @@ commands, if any.
 .It machine Op Ar subcommand
 Issues machine-dependant commands. These are defined for i386 architecture:
 .Bl -tag -width diskinfo_
+.It Nm cnvmem
+Prints/sets the amount of conventional memory.
 .It Nm diskinfo
 Prints list of hard disks installed on your system including:
 BIOS device number, and the BIOS geometry.
+.It Nm extmem
+Prints/sets the amount of extended memory.
+.It Nm memory
+Prints physical memory map.
 .It Nm regs
 Prints contents of processor registers if compiled with
 .Em DEBUG .
