@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd-setup.c,v 1.14 2003/08/22 21:50:34 david Exp $ */
+/*	$OpenBSD: spamd-setup.c,v 1.15 2004/01/21 02:49:34 deraadt Exp $ */
 /*
  * Copyright (c) 2003 Bob Beck.  All rights reserved.
  *
@@ -118,6 +118,7 @@ maxdiff(u_int32_t a, u_int32_t b)
 	b++;
 	while (bits < 32) {
 		u_int32_t m = imask(bits);
+
 		if ((a & m) != (b & m))
 			return (bits);
 		bits++;
@@ -198,6 +199,7 @@ parse_netblock(char *buf, struct bl *start, struct bl *end, int white)
 	if (sscanf(buf, "%15[^/]/%u", astring, &maskbits) == 2) {
 		/* looks like a cidr */
 		struct cidr c;
+
 		memset(&c.addr, 0, sizeof(c.addr));
 		if (inet_net_pton(AF_INET, astring, &c.addr, sizeof(c.addr))
 		    == -1)
@@ -256,7 +258,7 @@ open_child(char *file, char **argv)
 
 	if (pipe(pdes) != 0)
 		return(-1);
-	switch(pid = fork()) {
+	switch (pid = fork()) {
 	case -1:
 		return(-1);
 	case 0:
@@ -392,11 +394,12 @@ do_message(FILE *sdc, char *msg)
 		bu = len - 2;
 		goto sendit;
 	} else {
-		/* message isn't quoted - try to open a local
-		 * file and read the message from it.
-		 */
 		int fd;
 
+		/*
+		 * message isn't quoted - try to open a local
+		 * file and read the message from it.
+		 */
 		fd = open(msg, O_RDONLY);
 		if (fd == -1)
 			err(1, "Can't open message from %s", msg);
@@ -426,7 +429,7 @@ do_message(FILE *sdc, char *msg)
 	last = '\0';
 	for (i = 0; i < bu; i++) {
 		/* handle escaping the things spamd wants */
-		switch(buf[i]) {
+		switch (buf[i]) {
 		case 'n':
 			if (last == '\\')
 				fprintf(sdc, "\\\\n");
@@ -537,8 +540,8 @@ struct cidr **
 collapse_blacklist(struct bl *bl, int blc)
 {
 	int bs = 0, ws = 0, state=0, cli, i;
-	struct cidr ** cl;
 	u_int32_t bstart = 0;
+	struct cidr **cl;
 
 	if (blc == 0)
 		return(NULL);
@@ -556,7 +559,7 @@ collapse_blacklist(struct bl *bl, int blc)
 		do {
 			bs += bl[i].b;
 			ws += bl[i].w;
-			i++ ;
+			i++;
 		} while (bl[i].addr == addr);
 		if (state == 1 && bs == 0)
 			state = 0;
@@ -582,10 +585,9 @@ int
 configure_spamd(u_short dport, char *name, char *message,
     struct cidr **blacklists)
 {
-	int lport = IPPORT_RESERVED - 1;
+	int lport = IPPORT_RESERVED - 1, s;
 	struct sockaddr_in sin;
 	FILE* sdc;
-	int s;
 
 	s = rresvport(&lport);
 	if (s == -1)
@@ -629,7 +631,7 @@ configure_pf(struct cidr **blacklists)
 	if (pf == NULL) {
 		if (pipe(pdes) != 0)
 			return(-1);
-		switch(pid = fork()) {
+		switch (pid = fork()) {
 		case -1:
 			return(-1);
 		case 0:
@@ -650,6 +652,7 @@ configure_pf(struct cidr **blacklists)
 	}
 	while (*blacklists != NULL) {
 		struct cidr *b = *blacklists;
+
 		while (b->addr != 0) {
 			fprintf(pf, "%s/%u\n", atop(b->addr), (b->bits));
 			b++;
@@ -742,11 +745,10 @@ int
 main(int argc, char *argv[])
 {
 	size_t dbs, dbc, blc, bls, black, white;
+	char **db_array, *buf, *name;
 	struct blacklist *blists;
-	char **db_array, *buf;
-	char *name;
-	int i;
 	struct servent *ent;
+	int i;
 
 	if ((ent = getservbyname("spamd-cfg", "tcp")) == NULL)
 		errx(1, "Can't find service \"spamd-cfg\" in /etc/services");
@@ -774,6 +776,7 @@ main(int argc, char *argv[])
 			/* extract config in order specified in "all" tag */
 			if (blc == bls) {
 				struct blacklist *tmp;
+
 				bls += 1024;
 				tmp = realloc(blists,
 				    bls * sizeof(struct blacklist));
@@ -794,13 +797,14 @@ main(int argc, char *argv[])
 	}
 	for (i = 0; i < blc; i++) {
 		struct cidr **cidrs, **tmp;
+
 		if (blists[i].blc > 0) {
 			cidrs = collapse_blacklist(blists[i].bl,
 			   blists[i].blc);
 			if (cidrs == NULL)
 				errx(1, "malloc failed");
 			if (configure_spamd(ent->s_port, blists[i].name,
-					    blists[i].message, cidrs) == -1)
+			    blists[i].message, cidrs) == -1)
 				err(1, "Can't connect to spamd on port %d",
 				    ent->s_port);
 			if (configure_pf(cidrs) == -1)
