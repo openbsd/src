@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.39 2001/08/10 15:05:48 drahn Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.40 2001/08/18 06:18:49 drahn Exp $	*/
 /*	$NetBSD: pmap.c,v 1.1 1996/09/30 16:34:52 ws Exp $	*/
 
 /*
@@ -246,8 +246,6 @@ struct pv_entry {
 	vm_offset_t pv_va;		/* virtual address of mapping */
 	struct pmap *pv_pmap;		/* pmap associated with this map */
 };
-
-struct pv_entry *pv_table;
 
 struct pool pmap_pv_pool;
 struct pv_entry *pmap_alloc_pv __P((void));
@@ -713,7 +711,7 @@ pmap_init()
 	sz = round_page(sz);
 	addr = uvm_km_zalloc(kernel_map, sz);
 	s = splimp();
-	pv = pv_table = (struct pv_entry *)addr;
+	pv = (struct pv_entry *)addr;
 	for (i = npgs; --i >= 0;)
 		pv++->pv_idx = -1;
 	pool_init(&pmap_vp_pool, NBPG, 0, 0, 0, "ppvl",
@@ -724,7 +722,7 @@ pmap_init()
             0, NULL, NULL, M_VMPMAP);
 	pmap_attrib = (char *)pv;
 	bzero(pv, npgs);
-	pv = pv_table;
+	pv = (struct pv_entry *)addr;
 	attr = pmap_attrib;
 	for (bank = 0; bank < vm_nphysseg; bank++) {
 		sz = vm_physmem[bank].end - vm_physmem[bank].start;
