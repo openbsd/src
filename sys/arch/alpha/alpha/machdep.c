@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.22 1997/07/23 06:23:58 denny Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.23 1997/07/28 19:32:41 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.61 1996/12/07 01:54:49 cgd Exp $	*/
 
 /*
@@ -106,6 +106,9 @@
 #include <netccitt/x25.h>
 #include <netccitt/pk.h>
 #include <netccitt/pk_extern.h>
+#endif
+#ifdef NETATALK
+#include <netatalk/at_extern.h>
 #endif
 #ifdef NATM
 #include <netnatm/natm.h>
