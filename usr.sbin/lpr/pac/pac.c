@@ -1,4 +1,4 @@
-/*	$OpenBSD: pac.c,v 1.6 1996/05/15 13:41:59 pefo Exp $ */
+/*	$OpenBSD: pac.c,v 1.7 1996/11/03 23:24:13 millert Exp $ */
 /*	$NetBSD: pac.c,v 1.7 1996/03/21 18:21:20 jtc Exp $	*/
 
 /*
@@ -229,8 +229,8 @@ account(acct)
 			;
 		ic = atoi(cp2);
 		*cp2 = '\0';
-		if (mflag && index(cp, ':'))
-		    cp = index(cp, ':') + 1;
+		if (mflag && strchr(cp, ':'))
+		    cp = strchr(cp, ':') + 1;
 		hp = lookup(cp);
 		if (hp == NULL) {
 			if (!allflag)

@@ -181,9 +181,12 @@ abortpr(dis)
 		goto out;
 	}
 	(void) fclose(fp);
-	if (kill(pid = atoi(line), SIGTERM) < 0)
-		printf("\tWarning: daemon (pid %d) not killed\n", pid);
-	else
+	if (kill(pid = atoi(line), SIGTERM) < 0) {
+		if (errno == ESRCH)
+			printf("\tno daemon to abort\n");
+		else
+			printf("\tWarning: daemon (pid %d) not killed\n", pid);
+	} else
 		printf("\tdaemon (pid %d) killed\n", pid);
 out:
 	seteuid(uid);
@@ -1051,7 +1054,7 @@ doarg(job)
 	 * Look for a job item consisting of system name, colon, number 
 	 * (example: ucbarpa:114)  
 	 */
-	if ((cp = index(job, ':')) != NULL) {
+	if ((cp = strchr(job, ':')) != NULL) {
 		machine = job;
 		*cp++ = '\0';
 		job = cp;

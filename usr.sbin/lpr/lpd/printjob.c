@@ -1,4 +1,4 @@
-/*	$OpenBSD: printjob.c,v 1.9 1996/10/25 19:38:23 deraadt Exp $ */
+/*	$OpenBSD: printjob.c,v 1.10 1996/11/03 23:24:10 millert Exp $ */
 /*	$NetBSD: printjob.c,v 1.9.4.3 1996/07/12 22:31:39 jtc Exp $	*/
 
 /*
@@ -266,7 +266,7 @@ again:
 			syslog(LOG_WARNING, "%s: job could not be %s (%s)", printer,
 				remote ? "sent to remote host" : "printed", q->q_name);
 			if (i == REPRINT) {
-				/* insure we don't attempt this job again */
+				/* ensure we don't attempt this job again */
 				(void) unlink(q->q_name);
 				q->q_name[0] = 'd';
 				(void) unlink(q->q_name);
@@ -574,7 +574,7 @@ print(format, file)
 			dup2(fi, 0);		/* file is stdin */
 			dup2(p[1], 1);		/* pipe is stdout */
 			closelog();
-			for (n = 3, nofile = getdtablesize(); n < nofile; n++)
+			for (n = 3, nofile = sysconf(_SC_OPEN_MAX); n < nofile; n++)
 				(void) close(n);
 			execl(_PATH_PR, "pr", width, length,
 			    "-h", *title ? title : " ", 0);
@@ -663,7 +663,7 @@ print(format, file)
 		   printer, format);
 		return(ERROR);
 	}
-	if ((av[0] = rindex(prog, '/')) != NULL)
+	if ((av[0] = strrchr(prog, '/')) != NULL)
 		av[0]++;
 	else
 		av[0] = prog;
@@ -676,14 +676,14 @@ print(format, file)
 	fo = pfd;
 	if (ofilter > 0) {		/* stop output filter */
 		write(ofd, "\031\1", 2);
-		while ((pid =
-		    wait3((int *)&status, WUNTRACED, 0)) > 0 && pid != ofilter)
+		while ((pid = waitpid((pid_t)-1, (int *)&status, WUNTRACED)) > 0
+		    && pid != ofilter)
 			;
 		if (status.w_stopval != WSTOPPED) {
 			(void) close(fi);
 			syslog(LOG_WARNING,
-				"%s: output filter died (retcode=%d termsig=%d)",
-				printer, status.w_retcode, status.w_termsig);
+			    "%s: output filter died (retcode=%d termsig=%d)",
+			    printer, status.w_retcode, status.w_termsig);
 			return(REPRINT);
 		}
 		stopped++;
@@ -696,7 +696,7 @@ start:
 		if (n >= 0)
 			dup2(n, 2);
 		closelog();
-		for (n = 3, nofile = getdtablesize(); n < nofile; n++)
+		for (n = 3, nofile = sysconf(_SC_OPEN_MAX); n < nofile; n++)
 			(void) close(n);
 		execv(prog, av);
 		syslog(LOG_ERR, "cannot execv %s", prog);
@@ -889,9 +889,6 @@ sendfile(type, file)
 		}
 	}
 
-
-
-
 	(void) close(f);
 	if (sizerr) {
 		syslog(LOG_INFO, "%s: %s: changed size", printer, file);
@@ -1057,9 +1054,9 @@ sendmail(user, bombed)
 	if ((s = dofork(DORETURN)) == 0) {		/* child */
 		dup2(p[0], 0);
 		closelog();
-		for (i = 3, nofile = getdtablesize(); i < nofile; i++)
+		for (i = 3, nofile = sysconf(_SC_OPEN_MAX); i < nofile; i++)
 			(void) close(i);
-		if ((cp = rindex(_PATH_SENDMAIL, '/')) != NULL)
+		if ((cp = strrchr(_PATH_SENDMAIL, '/')) != NULL)
 			cp++;
 	else
 			cp = _PATH_SENDMAIL;
@@ -1266,7 +1263,7 @@ openpr()
 	char *cp;
 
 	if (!remote && *LP) {
-		if (cp = index(LP, '@'))
+		if (cp = strchr(LP, '@'))
 			opennet(cp);
 		else
 			opentty();
@@ -1290,9 +1287,9 @@ openpr()
 			dup2(p[0], 0);		/* pipe is std in */
 			dup2(pfd, 1);		/* printer is std out */
 			closelog();
-			for (i = 3, nofile = getdtablesize(); i < nofile; i++)
+			for (i = 3, nofile = sysconf(_SC_OPEN_MAX); i < nofile; i++)
 				(void) close(i);
-			if ((cp = rindex(OF, '/')) == NULL)
+			if ((cp = strrchr(OF, '/')) == NULL)
 				cp = OF;
 			else
 				cp++;
@@ -1494,7 +1491,10 @@ setty()
 		p = strdup(MS);
 		ap = argv;
 		while ((val = strsep(&p, " \t,")) != NULL) {
-			*ap++ = strdup(val);
+			if ((*ap++ = strdup(val)) == NULL) {
+				syslog(LOG_ERR, "%s: strdup: %m", printer);
+				exit(1);
+			}
 		}
 
 		for (; *argv; ++argv) {

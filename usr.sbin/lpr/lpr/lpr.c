@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpr.c,v 1.9 1996/08/13 18:13:29 millert Exp $ */
+/*	$OpenBSD: lpr.c,v 1.10 1996/11/03 23:24:12 millert Exp $ */
 /*	$NetBSD: lpr.c,v 1.10 1996/03/21 18:12:25 jtc Exp $	*/
 
 /*
@@ -320,7 +320,7 @@ main(argc, argv)
 			if (argc == 1)
 				jobname = "stdin";
 			else
-				jobname = (arg = rindex(argv[1], '/')) ? arg+1 : argv[1];
+				jobname = (arg = strrchr(argv[1], '/')) ? arg+1 : argv[1];
 		}
 		card('J', jobname);
 		card('C', class);
@@ -474,7 +474,7 @@ linked(file)
 				continue;
 			case '.':
 				if (file[2] == '/') {
-					if ((cp = rindex(buf, '/')) != NULL)
+					if ((cp = strrchr(buf, '/')) != NULL)
 						*cp = '\0';
 					file += 3;
 					continue;
@@ -621,7 +621,7 @@ test(file)
 	}
 	(void) close(fd);
 	if (rflag) {
-		if ((cp = rindex(file, '/')) == NULL) {
+		if ((cp = strrchr(file, '/')) == NULL) {
 			if (access(".", 2) == 0)
 				return(1);
 		} else {
