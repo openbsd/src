@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.6 2002/03/14 03:16:01 millert Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.7 2002/03/14 04:16:55 jason Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.61 2001/07/31 06:55:47 eeh Exp $ */
 
 /*
@@ -954,6 +954,7 @@ db_watch(addr, have_addr, count, modif)
 
 #include <uvm/uvm.h>
 
+#ifdef UVMHIST
 void db_uvmhistdump(db_expr_t, int, db_expr_t, char *);
 extern void uvmhist_dump(struct uvm_history *);
 extern struct uvm_history_head uvm_histories;
@@ -968,6 +969,7 @@ db_uvmhistdump(addr, have_addr, count, modif)
 
 	uvmhist_dump(uvm_histories.lh_first);
 }
+#endif
 
 #if NESP_SBUS
 extern void db_esp(db_expr_t, int, db_expr_t, char *);
@@ -995,7 +997,9 @@ struct db_command db_machine_command_table[] = {
 	{ "tf",		db_dump_trap,	0,	0 },
 	{ "ts",		db_dump_ts,	0,	0 },
 	{ "traptrace",	db_traptrace,	0,	0 },
+#ifdef UVMHIST
 	{ "uvmdump",	db_uvmhistdump,	0,	0 },
+#endif
 	{ "watch",	db_watch,	0,	0 },
 	{ "window",	db_dump_window,	0,	0 },
 	{ (char *)0, }
