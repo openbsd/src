@@ -1,6 +1,6 @@
 divert(-1)
 #
-# Copyright (c) 1998, 1999 Sendmail, Inc. and its suppliers.
+# Copyright (c) 1998, 1999, 2001 Sendmail, Inc. and its suppliers.
 #	All rights reserved.
 # Copyright (c) 1983 Eric P. Allman.  All rights reserved.
 # Copyright (c) 1988, 1993
@@ -13,14 +13,16 @@ divert(-1)
 #
 
 #
-#  This is a generic configuration file for SunOS 5.x (a.k.a. Solaris 2.x)
+#  This is a generic configuration file for SunOS 5.x (a.k.a. Solaris 2.x
+#  and Solaris 7 through the present version).
+#
 #  It has support for local and SMTP mail only.  If you want to
 #  customize it, copy it to a name appropriate for your environment
 #  and do the modifications there.
 #
 
 divert(0)dnl
-VERSIONID(`$Sendmail: generic-solaris2.mc,v 8.11 1999/02/07 07:26:03 gshapiro Exp $')
+VERSIONID(`$Sendmail: generic-solaris.mc,v 8.13 2001/06/27 21:46:30 gshapiro Exp $')
 OSTYPE(solaris2)dnl
 DOMAIN(generic)dnl
 MAILER(local)dnl
