@@ -1,4 +1,4 @@
-/*	$OpenBSD: pathnames.h,v 1.3 1996/03/27 19:32:42 niklas Exp $	*/
+/*	$OpenBSD: pathnames.h,v 1.4 1996/08/24 18:11:59 imp Exp $	*/
 /*	$NetBSD: pathnames.h,v 1.4 1996/03/06 00:15:26 christos Exp $	*/
 
 /*
@@ -36,7 +36,15 @@
  *	from: @(#)pathnames.h	5.2 (Berkeley) 6/1/90
  */
 
+#ifndef _PATH_OBJDIR
 #define	_PATH_OBJDIR		"obj"
+#endif /* !_PATH_OBJDIR */
+#ifndef _PATH_DEFSHELLDIR
 #define	_PATH_DEFSHELLDIR	"/bin"
+#endif /* !_PATH_DEFSHELLDIR */
+#ifndef _PATH_DEFSYSMK
 #define	_PATH_DEFSYSMK		"sys.mk"
+#endif /* ! _PATH_DEFSYSMK */
+#ifndef _PATH_DEFSYSPATH
 #define	_PATH_DEFSYSPATH	"/usr/share/mk"
+#endif /* ! _PATH_DEFSYSPATH */
