@@ -1,4 +1,4 @@
-/*	$OpenBSD: auth_subr.c,v 1.12 2002/08/04 22:44:12 millert Exp $	*/
+/*	$OpenBSD: auth_subr.c,v 1.13 2002/10/13 21:12:59 millert Exp $	*/
 
 /*-
  * Copyright (c) 1995,1996,1997 Berkeley Software Design, Inc.
@@ -285,10 +285,10 @@ auth_challenge(auth_session_t *as)
 {
 	char path[MAXPATHLEN];
 
-	as->state = 0;
-
 	if (as == NULL || as->style == NULL || as->name == NULL)
 		return (NULL);
+
+	as->state = 0;
 
 	if (as->challenge) {
 		free(as->challenge);
@@ -748,10 +748,9 @@ auth_check_change(auth_session_t *as)
  * is AUTH_OKAY for approval like scripts.
  *
  * Internally additional trailing arguments can be read from as->ap
- * Options will be placed be placed just after the first argument
- * (not including path).
+ * Options will be placed just after the first argument (not including path).
  *
- * Any data will sent (and freed) to the script
+ * Any data will be sent to (and freed by) the script
  */
 int
 auth_call(auth_session_t *as, char *path, ...)
@@ -764,7 +763,7 @@ auth_call(auth_session_t *as, char *path, ...)
 	int okay;
 	int pfd[2];
 	int argc;
-	char *argv[64];		/* 64 args should more than enough */
+	char *argv[64];		/* 64 args should be more than enough */
 #define	Nargc	(sizeof(argv)/sizeof(argv[0]))
 
 	va_start(as->ap0, path);
