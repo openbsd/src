@@ -1,4 +1,4 @@
-/*	$OpenBSD: msgs.c,v 1.27 2003/06/10 22:20:48 deraadt Exp $	*/
+/*	$OpenBSD: msgs.c,v 1.28 2003/10/04 21:55:12 jmc Exp $	*/
 /*	$NetBSD: msgs.c,v 1.7 1995/09/28 06:57:40 tls Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)msgs.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: msgs.c,v 1.27 2003/06/10 22:20:48 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: msgs.c,v 1.28 2003/10/04 21:55:12 jmc Exp $";
 #endif
 #endif /* not lint */
 
@@ -237,7 +237,9 @@ main(int argc, char *argv[])
 
 			default:
 				fprintf(stderr,
-					"usage: msgs [fhlopqr] [[-]number]\n");
+					"usage: msgs [fhlopqr] [[-]number]\n"
+					"       msgs [-s]\n"
+					"       msgs [-c [-days]]\n");
 				exit(1);
 			}
 		}

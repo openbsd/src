@@ -1,4 +1,4 @@
-.\"	$OpenBSD: msgs.1,v 1.14 2003/06/03 02:56:13 millert Exp $
+.\"	$OpenBSD: msgs.1,v 1.15 2003/10/04 21:55:12 jmc Exp $
 .\"	$NetBSD: msgs.1,v 1.5 1995/09/28 06:57:39 tls Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
@@ -38,13 +38,12 @@
 .Nd system messages and junk mail program
 .Sh SYNOPSIS
 .Nm msgs
-.Op Fl fhlpqr
-.Op Ar number
-.Op Ar \-number
+.Op Fl fhlopqr
+.Op Oo Fl Oc Ar number
 .Nm msgs
 .Op Fl s
 .Nm msgs
-.Op Fl c Op Ar days
+.Op Fl c Op Fl Ns Ar days
 .Sh DESCRIPTION
 .Nm msgs
 is used to read system messages.
@@ -56,48 +55,39 @@ pieces of information which are suitable to be read once by most users
 of the system.
 .Pp
 The options are as follows:
-.Bl -tag -width Ds
+.Bl -tag -width "-number"
+.It Fl c Fl Ns Ar days
+The
+.Fl c
+option is used for performing cleanup on
+.Pa /var/msgs .
+An entry with the
+.Fl c
+option should be placed in the system
+.Xr crontab 5
+to run every night.
+This will remove all messages over 21 days old.
+The optional
+.Fl Ns Ar days
+argument may be specified on the command line to override the default.
 .It Fl f
 Do not say
 .Dq \&No new messages.
 This is useful in a
 .Pa .login
 file since this is often the case here.
-.It Fl q
-Queries whether there are messages, printing
-.Dq There are new messages.
-if there are.
-The command
-.Ic msgs \-q
-is often used in login scripts.
 .It Fl h
 Print the first part of messages only.
-.It Fl r
-Disables the ability to save messages or enter the mailer.
-It is assumed that the
-.Ev PAGER
-environment is set to something secure.
 .It Fl l
 Causes only locally originated messages to be reported.
-.It Ar number
-A message number can be given
-on the command line, causing
-.Nm msgs
-to start at the specified message rather than at the next message
-indicated by your
-.Pa \&.msgsrc
-file.
-Thus
-.Pp
-.Dl msgs \-h 1
-.Pp
-prints the first part of all messages.
-.It Ar \-number
-Start
-.Ar number
-messages back from the one indicated in the
-.Pa \&.msgsrc
-file, useful for reviews of recent messages.
+.It Fl o
+By default,
+.Nm
+exits when there are no more messages to read.
+If the
+.Fl o
+flag is specified,
+the user will be given the chance to save or read messages again.
 .It Fl p
 Pipe long messages through the program specified by the
 .Ev PAGER
@@ -107,6 +97,50 @@ If
 is null or not defined,
 .Xr more 1
 is used.
+.It Fl q
+Queries whether there are messages, printing
+.Dq There are new messages.
+if there are.
+The command
+.Ic msgs -q
+is often used in login scripts.
+.It Fl r
+Disables the ability to save messages or enter the mailer.
+It is assumed that the
+.Ev PAGER
+environment is set to something secure.
+.It Fl s
+The
+.Fl s
+option is used for setting up the posting of messages.
+The line
+.Pp
+.Dl msgs: \&"| /usr/bin/msgs -s\&"
+.Pp
+should be included in
+.Pa /etc/mail/aliases
+(see
+.Xr newaliases 8 )
+to enable posting of messages.
+.It Ar number
+A message number can be given
+on the command line, causing
+.Nm msgs
+to start at the specified message rather than at the next message
+indicated by your
+.Pa .msgsrc
+file.
+Thus
+.Pp
+.Dl msgs -h 1
+.Pp
+prints the first part of all messages.
+.It Fl Ns Ar number
+Start
+.Ar number
+messages back from the one indicated in the
+.Pa .msgsrc
+file; useful for reviews of recent messages.
 .El
 .Pp
 .Nm msgs
@@ -131,7 +165,7 @@ Synonym for
 .It Ic n
 Skip this message
 and go on to the next message.
-.It Ic \&-
+.It Ic -
 Redisplay the last message.
 .It Ic q
 Drop out of
@@ -143,12 +177,12 @@ will pick up where it last left off.
 Append the current message to the file
 .Pa Messages
 in the current directory;
-.Sq s\-
+.Sq s-
 will save the previously displayed message.
 An
 .Sq s
 or
-.Sq s\-
+.Sq s-
 may be followed by a space and a file name to receive the message replacing
 the default
 .Dq Messages .
@@ -174,11 +208,11 @@ The commands
 and
 .Ic s
 all accept a numeric argument in place of the
-.Sq \&- .
+.Sq - .
 .Pp
 .Nm msgs
 keeps track of the next message you will see by a number in the file
-.Pa \&.msgsrc
+.Pa .msgsrc
 in your home directory.
 In the directory
 .Pa /var/msgs
@@ -190,39 +224,13 @@ shows the low and high number of the messages in the directory
 so that
 .Nm msgs
 can quickly determine if there are no messages for you.
-If the contents of
-.Pa bounds
-is incorrect it can be fixed by removing it;
-.Nm msgs
-will make a new
-.Pa bounds
-file the next time it is run.
-.Pp
-The
-.Fl s
-option is used for setting up the posting of messages.
-The line
-.Pp
-.Dl msgs: \&"\&| /usr/bin/msgs \-s\&"
-.Pp
-should be included in
-.Pa /etc/mail/aliases
-(see
-.Xr newaliases 8 )
-to enable posting of messages.
-.Pp
-The
-.Fl c
-option is used for performing cleanup on
-.Pa /var/msgs .
-An entry with the
-.Fl c
-option should be placed in
-.Pa /etc/crontab
-to run every night.
-This will remove all messages over 21 days old.
-A different expiration may be specified on the command line to override
-the default.
+.\" If the contents of
+.\" .Pa bounds
+.\" is incorrect it can be fixed by removing it;
+.\" .Nm msgs
+.\" will make a new
+.\" .Pa bounds
+.\" file the next time it is run.
 .Pp
 Within
 .Nm msgs
@@ -251,7 +259,7 @@ number of next message to be presented
 .Xr mail 1 ,
 .Xr more 1 ,
 .Xr aliases 5 ,
-.\".Xr crontab 5 ,
+.Xr crontab 5 ,
 .Xr newaliases 8
 .Sh HISTORY
 The
