@@ -1,4 +1,4 @@
-/*	$OpenBSD: rwho.c,v 1.7 1997/04/13 02:21:16 deraadt Exp $	*/
+/*	$OpenBSD: rwho.c,v 1.8 1997/04/13 02:30:34 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rwho.c	5.5 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$OpenBSD: rwho.c,v 1.7 1997/04/13 02:21:16 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: rwho.c,v 1.8 1997/04/13 02:30:34 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -52,6 +52,7 @@ static char rcsid[] = "$OpenBSD: rwho.c,v 1.7 1997/04/13 02:21:16 deraadt Exp $"
 #include <string.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <vis.h>
 
 DIR	*dirp;
 
@@ -158,11 +159,12 @@ main(argc, argv)
 	}
 	mp = myutmp;
 	for (i = 0; i < nusers; i++) {
-		char buf[BUFSIZ];
+		char buf[BUFSIZ], vis_user[4*8];
 		(void)snprintf(buf, sizeof buf, "%s:%s", mp->myhost,
 		    mp->myutmp.out_line);
+		strvis(vis_user, mp->myutmp.out_name, VIS_CSTYLE);
 		printf("%-8.8s %-*s %.12s",
-		   mp->myutmp.out_name,
+		   vis_user,
 		   width,
 		   buf,
 		   ctime((time_t *)&mp->myutmp.out_time)+4);
