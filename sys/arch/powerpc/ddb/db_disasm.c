@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_disasm.c,v 1.9 2003/05/08 16:25:25 drahn Exp $	*/
+/*	$OpenBSD: db_disasm.c,v 1.10 2003/05/08 19:26:37 drahn Exp $	*/
 /*
  * Copyright (c) 1996, 2001, 2003 Dale Rahn. All rights reserved.
  *
@@ -181,8 +181,8 @@ const struct opcode opcodes[] = {
 	{ "addi",	0xfc000000, 0x38000000, " %{D},%{A0}%{SIMM}" },
 	{ "addis",	0xfc000000, 0x3c000000, " %{D},%{A0}%{SIMM}" },
 	{ "sc",		0xffffffff, 0x44000002, "" },
-	{ "b",		0xfc000000, 0x40000000, "%{BO}%{AA}%{LK} %{BI}%{BD}" },
-	{ "b",		0xfc000000, 0x48000000, "%{AA}%{LK} %{LI}" },
+	{ "b",		0xfc000000, 0x40000000, "%{BO}%{LK}%{AA} %{BI}%{BD}" },
+	{ "b",		0xfc000000, 0x48000000, "%{LK}%{AA} %{LI}" },
 
 	{ "rlwimi",	0xfc000000, 0x50000000, "%{RC} %{A},%{S},%{SH},%{MB},%{ME}" },
 	{ "rlwinm",	0xfc000000, 0x54000000, "%{RC} %{A},%{S},%{SH},%{MB},%{ME}" },
