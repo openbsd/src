@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr53c9xreg.h,v 1.2 1997/08/08 08:13:06 downsj Exp $	*/
+/*	$OpenBSD: ncr53c9xreg.h,v 1.3 2000/06/12 06:39:36 fgsch Exp $	*/
 /*	$NetBSD: ncr53c9xreg.h,v 1.4 1997/05/17 20:56:55 pk Exp $	*/
 
 /*
@@ -167,6 +167,17 @@
 #define	 NCRESPCFG3_ADMA	0x02	/*	Alternate DMA Mode	*/
 #define	 NCRESPCFG3_T8M		0x01	/*	Threshold 8 Mode	*/
 
+/* Config #3 also different on NCR53CF9x/FAS216 */
+#define	NCR_F9XCFG3		0x0c	/* RW - Configuration #3	*/
+#define  NCRF9XCFG3_IDM		0x80	/*	ID Message Res Check	*/
+#define  NCRF9XCFG3_QTE		0x40	/*	Queue Tag Enable	*/
+#define  NCRF9XCFG3_CDB		0x20	/*	CDB 10-bytes OK		*/
+#define  NCRF9XCFG3_FSCSI	0x10	/*	Fast SCSI		*/
+#define  NCRF9XCFG3_FCLK	0x08	/*	Fast Clock (>25Mhz)	*/
+#define  NCRF9XCFG3_SRESB	0x04	/*	Save Residual Byte	*/
+#define  NCRF9XCFG3_ADMA	0x02	/*	Alternate DMA Mode	*/
+#define  NCRF9XCFG3_T8M		0x01	/*	Threshold 8 Mode	*/
+
 /* Config #4 only on ESP406/FAS408 */
 #define	NCR_CFG4	0x0d		/* RW - Configuration #4	*/
 #define	 NCRCFG4_CRS1	0x80		/*	Select register set #1	*/
@@ -225,3 +236,24 @@
 #define  NCRCFG5_AINT	0x01		/*	ATA Interupt Enable	*/
 
 #define	NCR_SIGNTR	0x0e		/* RO - Signature		*/
+
+/* Am53c974 Config #3 */
+#define	NCR_AMDCFG3		0x0c	/* RW - Configuration #3	*/
+#define	 NCRAMDCFG3_IDM		0x80	/*	ID Message Res Check	*/
+#define	 NCRAMDCFG3_QTE		0x40	/*	Queue Tag Enable	*/
+#define	 NCRAMDCFG3_CDB		0x20	/*	CDB 10-bytes OK		*/
+#define	 NCRAMDCFG3_FSCSI	0x10	/*	Fast SCSI		*/
+#define	 NCRAMDCFG3_FCLK	0x08	/*	Fast Clock (40MHz)	*/
+#define	 NCRAMDCFG3_RSVD	0x07	/*	Reserved		*/
+
+/* Am53c974 Config #4 */
+#define	NCR_AMDCFG4		0x0d	/* RW - Configuration #4	*/
+#define	 NCRAMDCFG4_GE		0xc0	/*	Glitch Eater		*/
+#define	 NCRAMDCFG4_GE12NS	0x00	/*	Signal window 12ns	*/
+#define	 NCRAMDCFG4_GE25NS	0x80	/*	Signal window 25ns	*/
+#define	 NCRAMDCFG4_GE35NS	0x40	/*	Signal window 35ns	*/
+#define	 NCRAMDCFG4_GE0NS	0xc0	/*	Signal window 0ns	*/
+#define	 NCRAMDCFG4_PWD		0x20	/*	Reduced power feature	*/
+#define	 NCRAMDCFG4_RSVD	0x13	/*	Reserved		*/
+#define	 NCRAMDCFG4_RAE		0x08	/*	Active neg. REQ/ACK	*/
+#define	 NCRAMDCFG4_RADE	0x04	/*	Active neg. REQ/ACK/DAT	*/
