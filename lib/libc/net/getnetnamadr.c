@@ -1,4 +1,4 @@
-/*	$OpenBSD: getnetnamadr.c,v 1.15 2002/02/16 21:27:23 millert Exp $	*/
+/*	$OpenBSD: getnetnamadr.c,v 1.16 2002/06/26 06:00:54 itojun Exp $	*/
 
 /*
  * Copyright (c) 1997, Jason Downs.  All rights reserved.
@@ -77,7 +77,7 @@ static char sccsid[] = "@(#)getnetbyaddr.c	8.1 (Berkeley) 6/4/93";
 static char sccsid_[] = "from getnetnamadr.c	1.4 (Coimbra) 93/06/03";
 static char rcsid[] = "$From: getnetnamadr.c,v 8.7 1996/08/05 08:31:35 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: getnetnamadr.c,v 1.15 2002/02/16 21:27:23 millert Exp $";
+static char rcsid[] = "$OpenBSD: getnetnamadr.c,v 1.16 2002/06/26 06:00:54 itojun Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -133,9 +133,9 @@ getnetanswer(answer, anslen, net_i)
 	register u_char *cp;
 	register int n;
 	u_char *eom;
-	int type, class, buflen, ancount, qdcount, haveanswer, i, nchar;
+	int type, class, ancount, qdcount, haveanswer, i, nchar;
 	char aux1[MAXHOSTNAMELEN], aux2[MAXHOSTNAMELEN], ans[MAXHOSTNAMELEN];
-	char *in, *st, *pauxt, *bp, **ap;
+	char *in, *st, *pauxt, *bp, **ap, *ep;
 	char *paux1 = &aux1[0], *paux2 = &aux2[0], flag = 0;
 	static	struct netent net_entry;
 	static	char *net_aliases[MAXALIASES], netbuf[BUFSIZ+1];
@@ -159,7 +159,7 @@ getnetanswer(answer, anslen, net_i)
 	ancount = ntohs(hp->ancount); /* #/records in the answer section */
 	qdcount = ntohs(hp->qdcount); /* #/entries in the question section */
 	bp = netbuf;
-	buflen = sizeof(netbuf);
+	ep = netbuf + sizeof(netbuf);
 	cp = answer->buf + HFIXEDSZ;
 	if (!qdcount) {
 		if (hp->aa)
@@ -175,7 +175,7 @@ getnetanswer(answer, anslen, net_i)
 	net_entry.n_aliases = net_aliases;
 	haveanswer = 0;
 	while (--ancount >= 0 && cp < eom) {
-		n = dn_expand(answer->buf, eom, cp, bp, buflen);
+		n = dn_expand(answer->buf, eom, cp, bp, ep - bp);
 #ifdef USE_RESOLV_NAME_OK
 		if ((n < 0) || !res_dnok(bp))
 #else
@@ -190,12 +190,13 @@ getnetanswer(answer, anslen, net_i)
 		cp += INT32SZ;		/* TTL */
 		GETSHORT(n, cp);
 		if (class == C_IN && type == T_PTR) {
-			n = dn_expand(answer->buf, eom, cp, bp, buflen);
+			n = dn_expand(answer->buf, eom, cp, bp, ep - bp);
 #ifdef USE_RESOLV_NAME_OK
-			if ((n < 0) || !res_hnok(bp)) {
+			if ((n < 0) || !res_hnok(bp))
 #else
-			if ((n < 0) || !_hokchar(bp)) {
+			if ((n < 0) || !_hokchar(bp))
 #endif
+			{
 				cp += n;
 				return (NULL);
 			}
