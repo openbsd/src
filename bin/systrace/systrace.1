@@ -1,4 +1,4 @@
-.\"	$OpenBSD: systrace.1,v 1.10 2002/06/05 18:58:07 provos Exp $
+.\"	$OpenBSD: systrace.1,v 1.11 2002/06/05 20:52:47 provos Exp $
 .\"
 .\" Copyright 2002 Niels Provos <provos@citi.umich.edu>
 .\" All rights reserved.
@@ -79,7 +79,7 @@ knows about.
 .Pp
 .Sh POLICY
 The policy is specified via the following grammar:
-.Bd -literal
+.Bd -literal -offset AAA
 filter = expression "then" action errorcode
 expression = symbol | "not" expression | "(" expression ")" |
 	expression "and" expression | expression "or" expression
@@ -95,7 +95,32 @@ errorcode = /* empty */ | "[" string "]"
 The
 .Va cmd-string
 is an arbitrary string enclosed with quotation marks.
-
+.Pp
+Policy entries can be prefixed with a predicate.
+Predicates have the following format:
+.Bd -literal -offset AAA
+"if" {"user", "group"} {"=", "!="} string ","
+.Ed
+.Pp
+A rule is added to the configured policy only if its predicate
+evaluates to true.
+.Sh EXAMPLES
+An excerpt from a sample 
+.Xr ls 1
+policy might look as follows:
+.Bd -literal -offset AAA
+Policy: /bin/ls, Emulation: native
+[...]
+	native-open: filename eq "$HOME" and oflags sub "ro" then permit
+	native-fchdir: permit
+[...]
+	native-open: filename eq "/tmp" and oflags sub "ro" then permit
+	native-stat: permit
+	native-open: filename match "$HOME/*" and oflags sub "ro" then permit
+	native-open: filename eq "/etc/pwd.db" and oflags sub "ro" then permit
+[...]
+	if group != wheel, native-open: filename eq "/etc" then deny[eperm]
+.Ed
 .Sh FILES
 .Bl -tag -width xHOME/xsystrace -compact
 .It Pa /dev/systrace

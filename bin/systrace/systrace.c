@@ -1,4 +1,4 @@
-/*	$OpenBSD: systrace.c,v 1.12 2002/06/05 20:01:22 provos Exp $	*/
+/*	$OpenBSD: systrace.c,v 1.13 2002/06/05 20:52:47 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -398,7 +398,6 @@ main(int argc, char **argv)
 		switch (c) {
 		case 'a':
 			automatic = 1;
-			username = uid_to_name(getuid());
 			break;
 		case 'A':
 			allow = 1;
@@ -428,6 +427,9 @@ main(int argc, char **argv)
 
 	if (argc == 0)
 		usage();
+
+	/* Username for automatic mode, and policy predicates */
+	username = uid_to_name(getuid());
 
 	/* Determine current working directory for filtering */
 	if (getcwd(cwd, sizeof(cwd)) == NULL)

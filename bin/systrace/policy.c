@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.5 2002/06/04 23:05:26 provos Exp $	*/
+/*	$OpenBSD: policy.c,v 1.6 2002/06/05 20:52:47 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -37,6 +37,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <grp.h>
 #include <stdio.h>
 #include <fcntl.h>
 #include <ctype.h>
@@ -87,7 +88,9 @@ SPLAY_GENERATE(polnrtree, policy, nrnode, polnrcompare);
 
 extern int userpolicy;
 
-char policydir[MAXPATHLEN];
+static char policydir[MAXPATHLEN];
+static char *groupnames[NGROUPS_MAX];
+static int ngroups;
 
 void
 systrace_setupdir(void)
@@ -116,8 +119,24 @@ systrace_setupdir(void)
 int
 systrace_initpolicy(char *file)
 {
+	gid_t groups[NGROUPS_MAX];
+	int i;
+
 	SPLAY_INIT(&policyroot);
 	SPLAY_INIT(&polnrroot);
+
+	/* Find out group names for current user */
+	if ((ngroups = getgroups(NGROUPS_MAX, groups)) == -1)
+		err(1, "getgroups");
+
+	for (i = 0; i < ngroups; i++) {
+		struct group *gr;
+
+		if ((gr = getgrgid(groups[i])) == NULL)
+			err(1, "getgrgid(%d)", groups[i]);
+		if ((groupnames[i] = strdup(gr->gr_name)) == NULL)
+			err(1, "strdup(%s)", gr->gr_name);
+	}
 
 	if (userpolicy)
 		systrace_setupdir();
@@ -283,6 +302,59 @@ systrace_addpolicy(char *name)
 }
 
 int
+systrace_predicatematch(char *p)
+{
+	extern char *username;
+	int i, res, neg;
+
+	res = 0;
+	neg = 0;
+
+	if (!strncasecmp(p, "user", 4)) {
+		/* Match against user name */
+		p += 4;
+		p += strspn(p, " \t");
+		if (!strncmp(p, "=", 1)) {
+			p += 1;
+			neg = 0;
+		} else if (!strncmp(p, "!=", 2)) {
+			p += 2;
+			neg = 1;
+		} else
+			return (-1);
+		p += strspn(p, " \t");
+
+		res = (!strcmp(p, username));
+	} else if (!strncasecmp(p, "group", 5)) {
+		/* Match against group list */
+		p += 5;
+		p += strspn(p, " \t");
+		if (!strncmp(p, "=", 1)) {
+			p += 1;
+			neg = 0;
+		} else if (!strncmp(p, "!=", 2)) {
+			p += 2;
+			neg = 1;
+		} else
+			return (-1);
+		p += strspn(p, " \t");
+
+		for (i = 0; i < ngroups; i++) {
+			if (!strcmp(p, groupnames[i])) {
+				res = 1;
+				break;
+			}
+		}
+	} else
+		return (-1);
+
+	if (neg)
+		res = !res;
+
+	return (res);
+}
+
+int
 systrace_readpolicy(char *filename)
 {
 	FILE *fp;
@@ -338,6 +410,25 @@ systrace_readpolicy(char *filename)
 			policy->flags |= POLICY_DETACHED;
 			policy = NULL;
 			continue;
+		} else if (!strncasecmp(p, "if", 2)) {
+			int match;
+			char *predicate;
+
+			/* Process predicates */
+			p += 2;
+			p += strspn(p, " \t");
+			predicate = strsep(&p, ",");
+			if (p == NULL)
+				goto error;
+
+			match = systrace_predicatematch(predicate);
+			if (match == -1)
+				goto error;
+			/* If the predicate does not match skip rule */
+			if (!match)
+				continue;
+
+			p += strspn(p, " \t");
 		}
 
 		emulation = strsep(&p, "-");
