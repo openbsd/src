@@ -1,4 +1,4 @@
-.\"	$OpenBSD: malloc.9,v 1.20 2002/08/28 08:28:20 tdeval Exp $
+.\"	$OpenBSD: malloc.9,v 1.21 2002/12/20 06:05:31 art Exp $
 .\"	$NetBSD: malloc.9,v 1.2 1996/10/30 05:29:54 lukem Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -427,9 +427,12 @@ and
 .Va debug_malloc_size_hi
 Can be used to specify a range of sizes if the exact size to debug is not
 known.
-When those are used, you need to set
+When those are used,
 .Va debug_malloc_size
-to the wildcard.
+needs to be set to the wildcard.
+.Dv M_DEBUG
+can also be specified as an allocation type to force allocation with
+debugging.
 .Pp
 Every call to
 .Fn malloc
@@ -449,7 +452,7 @@ freed memory.
 There are no special diagnostics if any errors are caught by the debugging
 malloc.
 The errors will look like normal access to unmapped memory.
-When you get a memory access error, you can invoke the
+When you get a memory access error, invoke the
 .Ic show malloc
 command in
 .Xr ddb 4
