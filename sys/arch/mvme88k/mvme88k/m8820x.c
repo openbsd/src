@@ -1,4 +1,4 @@
-/*	$OpenBSD: m8820x.c,v 1.29 2004/01/14 20:46:02 miod Exp $	*/
+/*	$OpenBSD: m8820x.c,v 1.30 2004/01/19 16:57:06 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  *
@@ -876,7 +876,7 @@ m8820x_cmmu_init()
 	/*
 	 * Enable snooping on MVME188 only.
 	 * Snooping is enabled for instruction cmmus as well so that
-	 * we can have breakpoints, modify code, etc.
+	 * we can share breakpoints.
 	 */
 #ifdef MVME188
 	if (brdtyp == BRD_188) {
@@ -884,13 +884,13 @@ m8820x_cmmu_init()
 			if (cpu_sets[cpu] == 0)
 				continue;
 
-			m8820x_cmmu_set(CMMU_SCTR, CMMU_SCTR_SE, 0, cpu,
+			m8820x_cmmu_set(CMMU_SCTR, CMMU_SCTR_SE, MODE_VAL, cpu,
 			    DATA_CMMU, 0, 0);
-			m8820x_cmmu_set(CMMU_SCTR, CMMU_SCTR_SE, 0, cpu,
+			m8820x_cmmu_set(CMMU_SCTR, CMMU_SCTR_SE, MODE_VAL, cpu,
 			    INST_CMMU, 0, 0);
 
 			m8820x_cmmu_set(CMMU_SCR, CMMU_FLUSH_SUPER_ALL,
-			    ACCESS_VAL, cpu, DATA_CMMU, CMMU_ACS_SUPER, 0);
+			    ACCESS_VAL, cpu, 0, CMMU_ACS_SUPER, 0);
 			m8820x_cmmu_wait(cpu);
 			/* Icache gets flushed just below */
 		}
@@ -1073,14 +1073,15 @@ m8820x_cmmu_flush_tlb(unsigned cpu, unsigned kernel, vaddr_t vaddr,
 
 	CMMU_LOCK;
 
-#if !defined(BROKEN_MMU_MASK)
-	if (size > PAGE_SIZE) {
-		m8820x_cmmu_set(CMMU_SCR,
-		    kernel ? CMMU_FLUSH_SUPER_ALL : CMMU_FLUSH_USER_ALL,
-		    ACCESS_VAL, cpu, 0,
-		    kernel ? CMMU_ACS_SUPER : CMMU_ACS_USER, 0);
-	} else {
-		/* a page or smaller */
+	/*
+	 * Since segment operations are horribly expensive, don't
+	 * do any here. Invalidations of up to three pages are performed
+	 * as page invalidations, otherwise the entire tlb is flushed.
+	 *
+	 * Note that this code relies upon size being a multiple of
+	 * a page and vaddr being page-aligned.
+	 */
+	if (size == PAGE_SIZE) {	/* most frequent situation */
 		m8820x_cmmu_set(CMMU_SAR, vaddr,
 		    ADDR_VAL | ACCESS_VAL, cpu, 0,
 		    kernel ? CMMU_ACS_SUPER : CMMU_ACS_USER, vaddr);
@@ -1088,13 +1089,24 @@ m8820x_cmmu_flush_tlb(unsigned cpu, unsigned kernel, vaddr_t vaddr,
 		    kernel ? CMMU_FLUSH_SUPER_PAGE : CMMU_FLUSH_USER_PAGE,
 		    ADDR_VAL | ACCESS_VAL, cpu, 0,
 		    kernel ? CMMU_ACS_SUPER : CMMU_ACS_USER, vaddr);
+	} else if (size > 3 * PAGE_SIZE) {
+		m8820x_cmmu_set(CMMU_SCR,
+		    kernel ? CMMU_FLUSH_SUPER_ALL : CMMU_FLUSH_USER_ALL,
+		    ACCESS_VAL, cpu, 0,
+		    kernel ? CMMU_ACS_SUPER : CMMU_ACS_USER, 0);
+	} else
+	while (size != 0) {
+		m8820x_cmmu_set(CMMU_SAR, vaddr,
+		    ADDR_VAL | ACCESS_VAL, cpu, 0,
+		    kernel ? CMMU_ACS_SUPER : CMMU_ACS_USER, vaddr);
+		m8820x_cmmu_set(CMMU_SCR,
+		    kernel ? CMMU_FLUSH_SUPER_PAGE : CMMU_FLUSH_USER_PAGE,
+		    ADDR_VAL | ACCESS_VAL, cpu, 0,
+		    kernel ? CMMU_ACS_SUPER : CMMU_ACS_USER, vaddr);
+
+		size -= PAGE_SIZE;
+		vaddr += PAGE_SIZE;
 	}
-#else
-	m8820x_cmmu_set(CMMU_SCR,
-	    kernel ? CMMU_FLUSH_SUPER_ALL : CMMU_FLUSH_USER_ALL,
-	    ACCESS_VAL, cpu, 0,
-	    kernel ? CMMU_ACS_SUPER : CMMU_ACS_USER, 0);
-#endif
 
 	CMMU_UNLOCK;
 	splx(s);
@@ -1133,7 +1145,7 @@ m8820x_cmmu_pmap_activate(cpu, uapr, i_batc, d_batc)
 	/*
 	 * Flush the user TLB.
 	 * IF THE KERNEL WILL EVER CARE ABOUT THE BATC ENTRIES,
-	 * THE SUPERVISOR TLBs SHOULB EE FLUSHED AS WELL.
+	 * THE SUPERVISOR TLBs SHOULD BE FLUSHED AS WELL.
 	 */
 	m8820x_cmmu_set(CMMU_SCR, CMMU_FLUSH_USER_ALL, ACCESS_VAL,
 	    cpu, 0, CMMU_ACS_USER, 0);
@@ -1153,8 +1165,6 @@ m8820x_cmmu_pmap_activate(cpu, uapr, i_batc, d_batc)
  * We don't push Instruction Caches prior to invalidate because they are not
  * snooped and never modified (I guess it doesn't matter then which form
  * of the command we use then).
- *
- * XXX miod WHAT? Above comment seems 200% bogus wrt snooping!
  */
 
 /*
