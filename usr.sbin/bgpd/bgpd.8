@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.8,v 1.1 2003/12/22 00:10:33 henning Exp $
+.\" $OpenBSD: bgpd.8,v 1.2 2003/12/22 15:07:05 henning Exp $
 .\"
 .\" Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
 .\"
@@ -23,7 +23,7 @@
 .Sh SYNOPSIS
 .Nm bgpd
 .Bk -words
-.Op Fl dv
+.Op Fl dnv
 .Op Fl D Ar macro=value
 .Op Fl f Ar file
 .Ek
@@ -49,6 +49,9 @@ in the configuration file.
 Specify an alternate location,
 .Ar file ,
 for the configuration file.
+.It Fl n
+Configtest mode.
+Only check the config file for validity.
 .It Fl v
 Produce more verbose output.
 .El

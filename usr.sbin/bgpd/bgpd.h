@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.11 2003/12/21 23:28:39 henning Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.12 2003/12/22 15:07:05 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -37,6 +37,7 @@
 
 #define BGPD_OPT_VERBOSE		0x0001
 #define BGPD_OPT_VERBOSE2		0x0002
+#define BGPD_OPT_NOACTION		0x0004
 
 enum {
 	PROC_MAIN,
