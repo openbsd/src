@@ -1,4 +1,4 @@
-/*	$OpenBSD: z8530tty.c,v 1.14 2003/10/03 16:44:49 miod Exp $	*/
+/*	$OpenBSD: z8530tty.c,v 1.15 2003/11/03 06:43:02 david Exp $	*/
 /*	$NetBSD: z8530tty.c,v 1.10 1996/12/18 05:17:44 scottr Exp $	*/
 
 /*
@@ -707,7 +707,7 @@ zsgetbaud(cs, rate, tc, rr4, rr11, rr14, source, sourceflag)
 	 */
 	for (i=0; i< cs->cs_clock_count; i++) {
 		if (cs->cs_clocks[i].clk <= 0)
-			continue;	/* skip non-existant or bad clocks */
+			continue;	/* skip non-existent or bad clocks */
 		if (cs->cs_clocks[i].flags & ZSC_BRG) {
 			/* check out BRG at /16 */
 			tc1 = BPS_TO_TCONST(cs->cs_clocks[i].clk >> 4, rate[0]);

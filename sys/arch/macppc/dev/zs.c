@@ -1,4 +1,4 @@
-/*	$OpenBSD: zs.c,v 1.10 2003/10/16 03:31:25 drahn Exp $	*/
+/*	$OpenBSD: zs.c,v 1.11 2003/11/03 06:43:02 david Exp $	*/
 /*	$NetBSD: zs.c,v 1.17 2001/06/19 13:42:15 wiz Exp $	*/
 
 /*
@@ -48,7 +48,7 @@
  * help from Allen Briggs and Gordon Ross <gwr@netbsd.org>. Noud de
  * Brouwer field-tested the driver at a local ISP.
  *
- * Bill Studenmund and Gordon Ross then ported the machine-independant
+ * Bill Studenmund and Gordon Ross then ported the machine-independent
  * z8530 driver to work with port-mac68k. NetBSD 1.2 contained an
  * intermediate version (mac68k using a local, patched version of
  * the m.i. drivers), with NetBSD 1.3 containing a full version.
