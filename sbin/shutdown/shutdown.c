@@ -1,4 +1,4 @@
-/*	$OpenBSD: shutdown.c,v 1.18 2000/01/15 07:00:43 ericj Exp $	*/
+/*	$OpenBSD: shutdown.c,v 1.19 2001/01/15 20:04:07 deraadt Exp $	*/
 /*	$NetBSD: shutdown.c,v 1.9 1995/03/18 15:01:09 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)shutdown.c	8.2 (Berkeley) 2/16/94";
 #else
-static char rcsid[] = "$OpenBSD: shutdown.c,v 1.18 2000/01/15 07:00:43 ericj Exp $";
+static char rcsid[] = "$OpenBSD: shutdown.c,v 1.19 2001/01/15 20:04:07 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -561,7 +561,10 @@ finish(signo)
 {
 	if (!killflg)
 		(void)unlink(_PATH_NOLOGIN);
-	exit(0);
+	if (signo == 0)
+		exit(0);
+	else
+		_exit(0);
 }
 
 void
