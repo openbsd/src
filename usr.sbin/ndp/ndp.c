@@ -1,4 +1,4 @@
-/*	$OpenBSD: ndp.c,v 1.21 2002/06/03 03:33:53 itojun Exp $	*/
+/*	$OpenBSD: ndp.c,v 1.22 2002/06/03 04:32:14 itojun Exp $	*/
 /*	$KAME: ndp.c,v 1.97 2002/06/03 03:31:25 itojun Exp $	*/
 
 /*
@@ -844,7 +844,7 @@ usage()
 	printf("usage: ndp hostname\n");
 	printf("       ndp [-nt] -a\n");
 	printf("       ndp [-nt] -A wait\n");
-	printf("       ndp [-nt]- c\n");
+	printf("       ndp [-nt] -c\n");
 	printf("       ndp [-nt] -d hostname\n");
 	printf("       ndp [-nt] -f filename\n");
 	printf("       ndp -i interface [flags...]\n");
