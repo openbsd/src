@@ -36,6 +36,10 @@ Supported hardware:
 			DEC ZLXp-E1 (DC21030-based, "TGA") video boards.
 			PCI and ISA NE2000-compatible ethernet cards.
 			SMC/WD 8003, 8013, and the SMC "Elite16" ISA boards.
+			Integrated AXPpci33 and other ISA IDE controllers,
+			    and associated disks.
+				[Note: With single ATAPI device IDE busses, the
+				ATAPI device should be set to SLAVE.]
 			Keyboard.
 			PS/2-style mice.
 
@@ -44,6 +48,7 @@ Supported hardware:
 			ISA ns16x50-family serial port boards.
 			ISA ns16x50 multi-port serial boards.
 			Other NCR 53c8xx SCSI boards.
+			ST506/MFM/ESDI ISA controllers.
 
 		Things that are *not* supported at this time:
 			ISA VGA boards.
