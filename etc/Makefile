@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.47 1997/04/25 18:50:01 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.48 1997/05/02 15:34:25 deraadt Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	US/Pacific
@@ -211,6 +211,7 @@ snap_tar:
 	    | ${GZIP} ${GZIPFLAGS} > snapshot/usr.share.tar${GZIPEXT}
 	cd ${DESTDIR} && tar cf - var \
 	    | ${GZIP} ${GZIPFLAGS} > snapshot/var.tar${GZIPEXT}
+	cd ../distrib/notes; ${MAKE}; ${MAKE} install
 
 snap_md:
 # nothing here -- look in the machine-dependent Makefile.inc
