@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wi.4tbl,v 1.7 2002/04/06 01:01:39 mickey Exp $
+.\"	$OpenBSD: wi.4tbl,v 1.8 2002/04/08 04:21:49 millert Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -218,18 +218,18 @@ Join an ad-hoc network with network name
 .Dq my_net .
 .Bd -literal -compact -offset indent
 # ifconfig wi0 inet 192.168.0.20 netmask 0xffffff00 nwid my_net \e
-	media adhoc
+	mediaopt adhoc
 .Ed
 .Pp
 Create a host-based access point (Prism only):
 .Bd -literal -compact -offset indent
 # ifconfig wi0 inet 192.168.0.10 netmask 0xffffff00 nwid my_ap \e
-	media hostap
+	mediaopt hostap
 .Ed
 .Pp
 Create a host-based wireless bridge to fxp0 (Prism only):
 .Bd -literal -compact -offset indent
-# ifconfig wi0 inet up nwid my_ap media hostap
+# ifconfig wi0 inet up nwid my_ap mediaopt hostap
 # brconfig bridge0 add fxp0 add wi0 up
 .Ed
 .Sh DIAGNOSTICS
