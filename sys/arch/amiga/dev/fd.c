@@ -1,8 +1,9 @@
-/*	$OpenBSD: fd.c,v 1.8 1996/05/04 13:31:20 niklas Exp $	*/
-/*	$NetBSD: fd.c,v 1.31 1996/04/30 06:09:51 mhitch Exp $	*/
+/*	$OpenBSD: fd.c,v 1.9 1996/05/07 10:08:23 niklas Exp $	*/
+/*	$NetBSD: fd.c,v 1.32 1996/05/04 04:54:00 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
+ * Copyright (c) 1996 Ezra Story
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -16,6 +17,7 @@
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
  *      This product includes software developed by Christian E. Hopps.
+ *      This product includes software developed by Ezra Story.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission
  *
@@ -43,10 +45,12 @@
 #include <sys/dkbad.h>
 #include <sys/proc.h>
 #include <machine/cpu.h>
+#include <machine/intr.h>
 #include <amiga/amiga/device.h>
 #include <amiga/amiga/custom.h>
 #include <amiga/amiga/cia.h>
 #include <amiga/amiga/cc.h>
+#include <amiga/amiga/isr.h>
 
 #include <sys/conf.h>
 #include <machine/conf.h>
@@ -58,9 +62,7 @@ enum fdc_bits { FDB_CHANGED = 2, FDB_PROTECT, FDB_CYLZERO, FDB_READY };
  */
 enum fd_parttypes {
 	FDAMIGAPART = 0,
-#ifdef not_yet
 	FDMSDOSPART,
-#endif
 	FDMAXPARTS
 };
 
@@ -72,6 +74,8 @@ enum fd_parttypes {
 #define FDPART(dev)	DISKPART(dev)
 #define FDMAKEDEV(m, u, p)	MAKEDISKDEV((m), (u), (p))
 
+/* that's nice, but we don't want to always use this as an amiga drive
+bunghole :-) */
 #define FDNHEADS	(2)	/* amiga drives always have 2 heads */
 #define FDSECSIZE	(512)	/* amiga drives always have 512 byte sectors */
 #define FDSECLWORDS	(128)
@@ -95,6 +99,28 @@ enum fd_parttypes {
 #define DMABUFSZ ((DISKLEN_WRITE - 1) * 2)	/* largest dma possible */
 
 #define FDMFMSYNC	(0x4489)
+#define FDMFMID		(0x5554)
+#define FDMFMDATA	(0x5545)
+#define FDMFMGAP1	(0x9254)
+#define FDMFMGAP2	(0xAAAA)
+#define FDMFMGAP3	(0x9254)
+#define CRC16POLY	(0x1021) /* (x^16) + x^12 + x^5 + x^0 */
+
+/*
+ * Msdos-type MFM encode/decode
+ */
+static u_char msdecode[128];
+static u_char msencode[16] =
+{
+    0x2a, 0x29, 0x24, 0x25, 0x12, 0x11, 0x14, 0x15,
+    0x4a, 0x49, 0x44, 0x45, 0x52, 0x51, 0x54, 0x55
+};
+static u_short mscrctab[256];
+
+/*
+  5554    aaaa    aaaa    aaa5    2aa4    4452    aa51  
+          00      00      03      02      ac      0d
+*/
 
 /*
  * floppy device type
@@ -132,6 +158,7 @@ struct fd_softc {
 	int openpart;		/* which partition [ab] == [12] is open */
 	short retries;		/* number of times to retry failed io */
 	short retried;		/* number of times current io retried */
+	int bytespersec;	/* number of bytes per sector */
 };
 
 /* fd_softc->flags */
@@ -164,6 +191,7 @@ void	fdattach __P((struct device *, struct device *, void *));
 
 void	fdintr __P((int));
 void	fdidxintr __P((void));
+int	fdpulseintr __P((void *));
 void	fdstrategy __P((struct buf *));
 int	fdloaddisk __P((struct fd_softc *));
 int	fdgetdisklabel __P((struct fd_softc *, dev_t));
@@ -182,10 +210,16 @@ void	fddone __P((struct fd_softc *));
 void	fdfindwork __P((int));
 void	fdminphys __P((struct buf *));
 void	fdcachetoraw __P((struct fd_softc *));
+void	amcachetoraw __P((struct fd_softc *));
+int	amrawtocache __P((struct fd_softc *));
 u_long	*fdfindsync __P((u_long *, u_long *));
 int	fdrawtocache __P((struct fd_softc *));
+void	mscachetoraw __P((struct fd_softc *));
+int	msrawtocache __P((struct fd_softc *));
 u_long	*mfmblkencode __P((u_long *, u_long *, u_long *, int));
 u_long	*mfmblkdecode __P((u_long *, u_long *, u_long *, int));
+u_short	*msblkdecode __P((u_short *, u_char *, int));
+u_short	*msblkencode __P((u_short *, u_char *, int, u_short *));
 
 struct dkdriver fddkdriver = { fdstrategy };
 
@@ -299,8 +333,12 @@ fdcattach(pdp, dp, auxp)
 	void *auxp;
 {
 	struct fdcargs args;
+#if defined(IPL_REMAP_1) || defined(IPL_REMAP_2)
+	static struct isr isr;
+#endif
 
-	printf(": dmabuf pa 0x%x\n", kvtop(fdc_dmap));
+	printf(": dmabuf pa 0x%x", kvtop(fdc_dmap));
+	printf(": dmabuf ka %p\n", fdc_dmap);
 	args.unit = 0;
 	args.type = fdcgetfdtype(args.unit);
 
@@ -311,6 +349,12 @@ fdcattach(pdp, dp, auxp)
 			continue;
 		config_found(dp, &args, fdcprint);
 	}
+#if defined(IPL_REMAP_1) || defined(IPL_REMAP_2)
+	isr.isr_intr = fdpulseintr;
+	isr.isr_ipl = 6;
+	isr.isr_mapped_ipl = IPL_BIO;
+	add_isr(&isr);
+#endif
 }
 
 int
@@ -352,6 +396,7 @@ fdattach(pdp, dp, auxp)
 {
 	struct fdcargs *ap;
 	struct fd_softc *sc;
+	int i;
 
 	ap = auxp;
 	sc = (struct fd_softc *)dp;
@@ -363,6 +408,7 @@ fdattach(pdp, dp, auxp)
 	sc->unitmask = 1 << (3 + ap->unit);
 	sc->retries = FDRETRIES;
 	sc->stepdelay = FDSTEPDELAY;
+	sc->bytespersec = 512;
 	printf(" unit %d: %s %d cyl, %d head, %d sec [%d sec], 512 bytes/sec\n",
 	    sc->hwunit, sc->type->desc, sc->type->ncylinders, FDNHEADS,
 	    sc->type->amiga_nsectors, sc->type->msdos_nsectors);
@@ -383,12 +429,38 @@ fdattach(pdp, dp, auxp)
 	fdmotoroff(sc);
 
 	/*
+	 * precalc msdos MFM and CRC
+	 */
+	for (i = 0; i < 128; i++)
+		msdecode[i] = 0xff;
+	for (i = 0; i < 16; i++)
+		msdecode[msencode[i]] = i;
+	for (i = 0; i < 256; i++) {
+		mscrctab[i] = (0x1021 * (i & 0xf0)) ^ (0x1021 * (i & 0x0f)) ^
+		    (0x1021 * (i >> 4));
+	}
+
+	/*
 	 * enable disk related interrupts
 	 */
 	custom.dmacon = DMAF_SETCLR | DMAF_MASTER | DMAF_DISK;
 	custom.intena = INTF_SETCLR | INTF_DSKBLK;
 	ciab.icr = CIA_ICR_FLG;
 }
+
+#if defined(IPL_REMAP_1) || defined(IPL_REMAP_2)
+int
+fdpulseintr(arg)
+	void *arg;
+{
+	/* Is it our interrupt? */
+	if (ciab.icr & (1 << 4)) {
+		fdidxintr();
+		return 1;
+	}
+	return 0;
+}
+#endif
 
 /*ARGSUSED*/
 int
@@ -464,7 +536,7 @@ done:
 	 * if we were not open and we marked us so reverse that.
 	 */
 	if (error && wasopen == 0)
-		sc->openpart = 0;
+		sc->openpart = -1;
 	return(error);
 }
 
@@ -678,18 +750,18 @@ fdloaddisk(sc)
 		fdsetpos(sc, 0, 0);
 		if (FDTESTC(FDB_CHANGED)) {
 			fdmotoroff(sc);
+			FDDESELECT(sc->unitmask);
 			return(ENXIO);
 		}
 	}
+	FDDESELECT(sc->unitmask);
 	fdmotoroff(sc);
 	sc->type = fdcgetfdtype(sc->hwunit);
 	if (sc->type == NULL)
 		return(ENXIO);
-#ifdef not_yet
 	if (sc->openpart == FDMSDOSPART)
 		sc->nsectors = sc->type->msdos_nsectors;
 	else
-#endif
 		sc->nsectors = sc->type->amiga_nsectors;
 	return(0);
 }
@@ -708,7 +780,8 @@ fdgetdisklabel(sc, dev)
 	struct buf *bp;
 	int error, part;
 
-	if (sc->flags & FDF_HAVELABEL)
+	if (sc->flags & FDF_HAVELABEL &&
+	    sc->dkdev.dk_label->d_npartitions == (FDPART(dev) + 1))
 		return(0);
 #ifdef FDDEBUG
 	printf("fdgetdisklabel()\n");
@@ -1124,6 +1197,7 @@ fdselunit(sc)
  * process next buf on device queue.
  * normall sequence of events:
  * fdstart() -> fddmastart();
+ * fdidxintr();
  * fdintr() -> fddmadone() -> fddone();
  * if the track is in the cache then fdstart() will short-circuit
  * to fddone() else if the track cache is dirty it will flush.  If
@@ -1135,6 +1209,7 @@ fdstart(sc)
 {
 	int trk, error, write;
 	struct buf *bp, *dp;
+	int changed;
 
 #ifdef FDDEBUG
 	printf("fdstart: unit %d\n", sc->hwunit);
@@ -1167,12 +1242,15 @@ fdstart(sc)
 	 * make sure same disk is loaded
 	 */
 	fdselunit(sc);
-	if (FDTESTC(FDB_CHANGED)) {
+	changed = FDTESTC(FDB_CHANGED);
+	FDDESELECT(sc->unitmask);
+	if (changed) {
 		/*
 		 * disk missing, invalidate all future io on
 		 * this unit until re-open()'ed also invalidate
 		 * all current io
 		 */
+printf("fdstart: disk changed\n");
 #ifdef FDDEBUG
 		printf("  disk was removed invalidating all io\n");
 #endif
@@ -1352,7 +1430,20 @@ fddmastart(sc, trk)
 		custom.adkcon = adkmask;
 	}
 	custom.dskpt = (u_char *)kvtop(fdc_dmap);
-	FDDMASTART(ndmaw, write);
+
+	/*
+	 * If writing an MSDOS track, activate disk index pulse
+	 * interrupt, dma will be started in the intr routine fdidxintr()
+	 * Otherwise, start the DMA here.
+	 */
+	if (write && sc->openpart == FDMSDOSPART) {
+		fdc_dmalen = ndmaw;
+		fdc_dmawrite = write;
+		ciab.icr = CIA_ICR_IR_SC | CIA_ICR_FLG;
+	} else {
+		FDDMASTART(ndmaw, write);
+		fdc_dmalen = 0;
+	}
 
 #ifdef FDDEBUG
 	printf("  dma started\n");
@@ -1644,8 +1735,33 @@ fdminphys(bp)
  * when we go to multiple disk formats, this will call type dependent
  * functions
  */
+void fdcachetoraw(sc)
+	struct fd_softc *sc;
+{
+	if (sc->openpart == FDMSDOSPART)
+		mscachetoraw(sc);
+	else
+		amcachetoraw(sc);
+}
+
+/*
+ * decode raw MFM from dma into units track cache.
+ * when we go to multiple disk formats, this will call type dependent
+ * functions
+ */
+int
+fdrawtocache(sc)
+	struct fd_softc *sc;
+{
+	
+	if (sc->openpart == FDMSDOSPART)
+		return(msrawtocache(sc));
+	else
+		return(amrawtocache(sc));
+}
+
 void
-fdcachetoraw(sc)
+amcachetoraw(sc)
 	struct fd_softc *sc;
 {
 	static u_long mfmnull[4];
@@ -1699,7 +1815,7 @@ fdcachetoraw(sc)
 			*crp &= 0x7fffffff;	/* clock bit correction */
 		else if ((*crp & 0x40000000) == 0)
 			*crp |= 0x80000000;
-        }
+	}
 	*rp = 0xaaa80000;
 	if (*(rp - 1) & 0x1)
 		*rp &= 0x7fffffff;
@@ -1721,13 +1837,8 @@ fdfindsync(rp, ep)
 	return(NULL);
 }
 
-/*
- * decode raw MFM from dma into units track cache.
- * when we go to multiple disk formats, this will call type dependent
- * functions
- */
 int
-fdrawtocache(sc)
+amrawtocache(sc)
 	struct fd_softc *sc;
 {
 	u_long mfmnull[4];
@@ -1794,6 +1905,155 @@ again:
 		else
 			doagain = 0;
 		srp = rp = fdfindsync(crp, erp);
+	}
+	return(0);
+}
+
+void
+mscachetoraw(sc)
+	struct fd_softc *sc;
+{
+	u_short *rp, *erp, crc;
+	u_char *cp, tb[5];
+	int sec, i;
+
+	rp = (u_short *)fdc_dmap;
+	erp = rp + sc->type->nwritew;
+	cp = sc->cachep;
+
+	/*
+	 * initial track filler  (828 * GAP1)
+	 */
+	for (i = 0; i < sc->type->gap; i++) {
+		*rp++ = FDMFMGAP1;
+		*rp++ = FDMFMGAP1;
+	}
+
+	for (sec = 0; sec < sc->nsectors; sec++) {
+
+		/*
+		 * leading sector gap
+		 * (12 * GAP2) + (3 * SYNC)
+		 */
+		for (i = 0; i < 12; i++)
+			*rp++ = FDMFMGAP2;
+		*rp++ = FDMFMSYNC; 
+		*rp++ = FDMFMSYNC; 
+		*rp++ = FDMFMSYNC; 
+
+		/*
+		 * sector information
+		 * (ID) + track + side + sector + sector size + CRC16
+		 */
+		*rp++ = FDMFMID;
+		tb[0] = sc->cachetrk / FDNHEADS;
+		tb[1] = sc->cachetrk % FDNHEADS;
+		tb[2] = sec + 1;
+		i = sc->bytespersec;
+		tb[3] = i < 256 ? 0 : (i < 512 ? 1 : (i < 1024 ? 2 : 3));
+		rp = msblkencode(rp, tb, 4, &crc);
+		tb[0] = crc >> 8;
+		tb[1] = crc & 0xff;
+		tb[2] = 0x4e; /* GAP1 decoded */
+		rp = msblkencode(rp, tb, 3, 0);
+
+		/*
+		 * sector info/data gap
+		 * (22 * GAP1) + (12 * GAP2) + (3 * SYNC)
+		 */
+		for (i = 0; i < 21; i++)
+			*rp++ = FDMFMGAP1;
+		for (i = 0; i < 12; i++)
+			*rp++ = FDMFMGAP2;
+		*rp++ = FDMFMSYNC;
+		*rp++ = FDMFMSYNC;
+		*rp++ = FDMFMSYNC;
+
+		/*
+		 * sector data
+		 * (DATA) + ...data... + CRC16
+		 */
+		*rp++ = FDMFMDATA;
+		rp = msblkencode(rp, cp, sc->bytespersec, &crc);
+		cp += sc->bytespersec;
+		tb[0] = crc >> 8;
+		tb[1] = crc & 0xff;
+		tb[2] = 0x4e; /* GAP3 decoded */
+		rp = msblkencode(rp, tb, 3, 0);
+
+		/*
+		 * trailing sector gap
+		 * (80 * GAP3)
+		 */
+		for (i = 0; i < 79; i++)
+			*rp++ = FDMFMGAP3;
+	}
+
+	/* 
+	 * fill rest of track with GAP3
+	 */
+	while (rp != erp)
+		*rp++ = FDMFMGAP3;
+	
+}
+
+int
+msrawtocache(sc)
+	struct fd_softc *sc;
+{
+	u_short *rp, *srp, *erp;
+	u_char tb[5], *cp;
+	int ct, sec, retry;
+
+	srp = rp = (u_short *)fdc_dmap;
+	erp = rp + sc->type->nreadw;
+	cp = sc->cachep;
+
+	for (ct = 0; ct < sc->nsectors; ct++) {
+		retry = 1;
+		do {
+			/*
+			 * skip leading gap to sync 
+			 */
+			if ((rp = (u_short *)fdfindsync((u_long *)rp, (u_long *)erp)) == NULL) {
+#ifdef DIAGNOSTIC
+				printf("%s: corrupted track (%d) data.\n",
+				sc->sc_dv.dv_xname, sc->cachetrk);
+#endif
+				return(-1);
+			}
+			
+			/*
+			 * Grab sector info
+			 */
+			if (*rp++ != FDMFMID)
+				continue;
+			rp = msblkdecode(rp, tb, 4);
+#ifdef FDDEBUG
+			printf("sector id: sector %d, track %d, side %d,"
+			    "bps %d\n", tb[2], tb[0], tb[1], 128 << tb[3]);
+#endif
+			if ((tb[0] * FDNHEADS + tb[1]) != sc->cachetrk ||
+			    tb[2] > sc->nsectors)
+				continue;
+
+			sec = tb[2];
+			sc->bytespersec = 128 << tb[3];
+			rp += 2; /* skip CRC-16 */
+
+			/*
+			 * skip gap and read in data
+			 */
+			if ((rp = (u_short *)fdfindsync((u_long *)rp, (u_long *)erp)) == NULL)
+				return(-1);
+			if (*rp++ != FDMFMDATA)
+				continue;
+			rp = msblkdecode(rp, cp + ((sec-1) * sc->bytespersec),
+			    sc->bytespersec);
+			rp += 2; /* skip CRC-16 */
+
+			retry = 0;
+		} while (retry);
 	}
 	return(0);
 }
@@ -1900,6 +2160,74 @@ mfmblkdecode(rp, dp, cp, len)
 	if (cp)
 		*cp &= 0x55555555;
 	return(rp + len);
+}
+
+/*
+ * decode len words in standard MFM format to len bytes
+ * of data.
+ */
+u_short *
+msblkdecode(rp, cp, len)
+	u_short *rp;
+	u_char *cp;
+	int len;
+{
+	while (len--) {
+		*cp++ = msdecode[*rp & 0x7f] | 
+		    (msdecode[(*rp >> 8) & 0x7f] << 4);
+		rp++;
+	}
+
+	return(rp);
+}
+
+/*
+ * encode len bytes of data into len words in standard MFM format.
+ * If a pointer is supplied for crc, calculate the CRC-16 of the data
+ * as well.
+ */
+u_short *
+msblkencode(rp, cp, len, crc)
+	u_short *rp;
+	u_char *cp;
+	int len;
+	u_short *crc;
+{
+	u_short td;
+	u_short mycrc;
+
+	/* preload crc for header (4 bytes)
+	 * or data (anything else)
+	 */
+	mycrc = (len == 4) ? 0xb230 : 0xe295;
+
+	while (len--) {
+		td = (msencode[*cp >> 4] << 8) | msencode[*cp & 0x0f];
+
+		/* Check for zeros in top bit of encode and bottom
+		 * bit of previous encode.  if so, slap a one in betweem
+		 * them.
+		 */
+		if ((td & 0x140) == 0)
+			td |= 0x80;
+		if ((td & 0x4000) == 0 && (rp[-1] & 1) == 0)
+			td |= 0x8000;
+
+		*rp++ = td;
+
+		/* 
+		 * calc crc if requested
+		 */
+		if (crc)
+			mycrc = (mycrc << 8) ^ mscrctab[*cp ^ (mycrc >> 8)];
+
+		cp++;
+	}
+       
+	if (crc)
+		*crc = mycrc;
+
+	return(rp);
 }
 
 int
