@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.120 2004/10/31 14:02:46 jsg Exp $
+$OpenBSD: usbdevs,v 1.121 2004/11/10 13:51:52 dlg Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -657,6 +657,9 @@ product COMPAQ A1500		0x0012	A1500
 product COMPAQ W100		0x0033	W100
 product COMPAQ W200		0x0076	WLAN MultiPort W200
 product COMPAQ PJB100		0x504a	Personal Jukebox PJB100
+
+/* Conceptronic products */
+product BILLIONTON SNAPPORT	0x90ff	SnapPort Ethernet
 
 /* Concord Camera products */
 product CONCORDCAMERA EYE_Q_3X	0x0100	Eye Q 3x
