@@ -1,4 +1,4 @@
-/*	$OpenBSD: dkcsum.c,v 1.4 1997/10/28 02:01:47 deraadt Exp $	*/
+/*	$OpenBSD: dkcsum.c,v 1.5 1997/10/29 22:46:42 niklas Exp $	*/
 
 /*-
  * Copyright (c) 1997 Niklas Hallqvist.  All rights reserved.
@@ -69,8 +69,8 @@ dkcsumattach()
 	u_int32_t csum;
 	bios_diskinfo_t *bdi, *hit;
 
-	/* do nothing if no diskinfo passed from /boot */
-	if (bios_diskinfo == NULL)
+	/* do nothing if no diskinfo passed from /boot, or a bad length */
+	if (bios_diskinfo == NULL || bios_cksumlen * DEV_BSIZE > MAXBSIZE)
 		return;
 
 	/*
