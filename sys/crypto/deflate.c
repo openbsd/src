@@ -1,4 +1,4 @@
-/* $OpenBSD: deflate.c,v 1.1 2001/07/05 12:04:31 jjbg Exp $ */
+/* $OpenBSD: deflate.c,v 1.2 2001/07/05 17:52:59 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Jacques Bernard-Gundol (jj@wabbitt.org)
@@ -63,9 +63,8 @@ deflate_global(data, size, comp, out)
 	struct deflate_buf buf[ZBUF];
 
 	bzero(&zbuf, sizeof(z_stream));
-	for (j = 0; j < ZBUF; j++) {
+	for (j = 0; j < ZBUF; j++)
 		buf[j].flag = 0;
-	}
 
 	zbuf.next_in = data;	/* data that is going to be processed */
 	zbuf.zalloc = z_alloc;
@@ -76,9 +75,8 @@ deflate_global(data, size, comp, out)
 	if (comp == 0) {
 		MALLOC(buf[i].out, u_int8_t *, (u_long) size, M_CRYPTO_DATA, 
 		    M_NOWAIT);
-		if (buf[i].out == NULL) {
+		if (buf[i].out == NULL)
 			goto bad;
-		}
 		buf[i].size = size;
 		buf[i].flag = 1;
 		i++;
@@ -92,9 +90,8 @@ deflate_global(data, size, comp, out)
 
 		MALLOC(buf[i].out, u_int8_t *, (u_long) (size * 4), 
 		    M_CRYPTO_DATA, M_NOWAIT);
-		if (buf[i].out == NULL) {
+		if (buf[i].out == NULL)
 			goto bad;
-		}
 		buf[i].size = size * 4;
 		buf[i].flag = 1;
 		i++;
@@ -103,46 +100,44 @@ deflate_global(data, size, comp, out)
 	zbuf.next_out = buf[0].out;
 	zbuf.avail_out = buf[0].size;
 
-	error = comp ? inflateInit2(&zbuf, window_inflate)
-		: deflateInit2(&zbuf, Z_DEFAULT_COMPRESSION, Z_METHOD,
-			       window_deflate, Z_MEMLEVEL,
-			       Z_DEFAULT_STRATEGY, MINCOMP);
+	error = comp ? inflateInit2(&zbuf, window_inflate) :
+	    deflateInit2(&zbuf, Z_DEFAULT_COMPRESSION, Z_METHOD,
+	    window_deflate, Z_MEMLEVEL, Z_DEFAULT_STRATEGY, MINCOMP);
 
-	if (error != Z_OK) {
+	if (error != Z_OK)
 		goto bad;
-	}
 	for (;;) {
-		error = comp ? inflate(&zbuf, Z_PARTIAL_FLUSH)
-			: deflate(&zbuf, Z_PARTIAL_FLUSH);
-		if (error != Z_OK && error != Z_STREAM_END) {
+		error = comp ? inflate(&zbuf, Z_PARTIAL_FLUSH) :
+		    deflate(&zbuf, Z_PARTIAL_FLUSH);
+		if (error != Z_OK && error != Z_STREAM_END)
 			goto bad;
-		} else if (zbuf.avail_in == 0 && zbuf.avail_out != 0) {
+		else if (zbuf.avail_in == 0 && zbuf.avail_out != 0)
 			goto end;
-		} else if (zbuf.avail_out == 0 && i < (ZBUF - 1)) {
+		else if (zbuf.avail_out == 0 && i < (ZBUF - 1)) {
 			/* we need more output space, allocate size */
 			MALLOC(buf[i].out, u_int8_t *, (u_long) size,
 			    M_CRYPTO_DATA, M_NOWAIT);
-			if (buf[i].out == NULL) {
+			if (buf[i].out == NULL)
 				goto bad;
-			}
 			zbuf.next_out = buf[i].out;
 			buf[i].size = size;
 			buf[i].flag = 1;
 			zbuf.avail_out = buf[i].size;
 			i++;
-		} else {
+		} else
 			goto bad;
-		}
 	}
 
 end:
 	result = count = zbuf.total_out;
 
 	MALLOC(*out, u_int8_t *, (u_long) result, M_CRYPTO_DATA, M_NOWAIT);
-	if (*out == NULL) {
+	if (*out == NULL)
 		goto bad;
-	}
-	comp ? inflateEnd(&zbuf) : deflateEnd(&zbuf);
+	if (comp)
+		inflateEnd(&zbuf);
+	else
+		deflateEnd(&zbuf);
 	output = *out;
 	for (j = 0; buf[j].flag != 0; j++) {
 		if (count > buf[j].size) {
@@ -163,10 +158,12 @@ end:
 
 bad:
 	*out = NULL;
-	for (j = 0; buf[j].flag != 0; j++) {
+	for (j = 0; buf[j].flag != 0; j++)
 		FREE(buf[j].out, M_CRYPTO_DATA);
-	}
-	comp ? inflateEnd(&zbuf) : deflateEnd(&zbuf);
+	if (comp)
+		inflateEnd(&zbuf);
+	else
+		deflateEnd(&zbuf);
 	return 0;
 }
 
@@ -175,7 +172,8 @@ z_alloc(nil, type, size)
 	void *nil;
 	u_int type, size;
 {
-	void           *ptr;
+	void *ptr;
+
 	ptr = malloc(type *size, M_CRYPTO_DATA, M_NOWAIT);
 	return ptr;
 }
