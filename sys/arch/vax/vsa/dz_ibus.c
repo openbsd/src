@@ -1,4 +1,4 @@
-/*	$OpenBSD: dz_ibus.c,v 1.7 2001/08/25 13:33:37 hugh Exp $	*/
+/*	$OpenBSD: dz_ibus.c,v 1.8 2001/08/26 18:25:06 hugh Exp $	*/
 /*	$NetBSD: dz_ibus.c,v 1.15 1999/08/27 17:50:42 ragge Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
@@ -90,6 +90,7 @@ cdev_decl(dz);
 
 extern int getmajor __P((void *));	/* conf.c */
 
+#if 0
 #if NDZKBD > 0 || NDZMS > 0
 static int
 dz_print(void *aux, const char *name)
@@ -112,6 +113,7 @@ dz_print(void *aux, const char *name)
 	return (UNCONF);
 }
 #endif
+#endif /* 0 */
 
 static int
 dz_vsbus_match(parent, cf, aux)
@@ -150,9 +152,11 @@ dz_vsbus_attach(parent, self, aux)
 {
 	struct dz_softc *sc = (void *)self;
 	struct vsbus_attach_args *va = aux;
+#if 0
 #if NDZKBD > 0 || NDZMS > 0
 	struct dzkm_attach_args daa;
 #endif
+#endif /* 0 */
 
 	/* 
 	 * XXX - This is evil and ugly, but...
@@ -185,6 +189,7 @@ dz_vsbus_attach(parent, self, aux)
 
 	dzattach(sc);
 
+#if 0
 #if NDZKBD > 0
 	/* Don't change speed if this is the console */
 	if (cn_tab->cn_dev != makedev(getmajor(dzopen), 0))
@@ -201,6 +206,7 @@ dz_vsbus_attach(parent, self, aux)
 	daa.daa_flags = 0;
 	config_found(self, &daa, dz_print);
 #endif
+#endif /* 0 */
 #if 0
 	s = spltty();
 	dzrint(sc);
