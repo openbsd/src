@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: ELBERETH,v 1.15 1998/08/24 19:40:42 kstailey Exp $
+#	$OpenBSD: ELBERETH,v 1.16 1998/08/24 20:52:45 kstailey Exp $
 #
 #
 #	ELBERETH -- 166MHz Pentium PCI
@@ -12,6 +12,7 @@ makeoptions     CC="cc -Werror"
 option		I586_CPU	# CPU classes; at least one is REQUIRED
 
 option		XSERVER		# diddle with console driver
+option		APERTURE	# in-kernel XFree86 aperture driver
 option		INTELLIMOUSE	# pms support for MS IntelliMouse
 
 maxusers	16		# estimated number of users
@@ -51,11 +52,7 @@ option		LKM		# loadable kernel modules
 option		FFS		# UFS
 #option		QUOTA		# UFS quotas
 option		MFS		# memory file system
-option		EXT2FS		# Linux 2nd Extent-based filesystem
-
-option		NFSCLIENT	# Network File System client
-option		NFSSERVER	# Network File System server
-
+#option		EXT2FS		# Linux 2nd Extent-based filesystem
 option		CD9660		# ISO 9660 + Rock Ridge file system
 #option		FDESC		# /dev/fd
 option		FIFO		# FIFOs; multiuser fails without this
@@ -77,14 +74,18 @@ option		IPFILTER_LOG	# use /dev/ipl
 #option		CCITT,LLC,HDLC	# X.25
 #option		"NMBCLUSTERS=1024"
 
+option		NFSCLIENT	# Network File System client
+option		NFSSERVER	# Network File System server
+
 config		bsd	root on wd0 swap on wd0 and sd0 and sd1 dumps on sd0
 
 mainbus0 at root
 
 bios0	at mainbus0
-isa0	at mainbus0			# ISA and VL bus systems
 pci*	at mainbus0 bus ?
+isa0	at mainbus0			# ISA and VL bus systems
 isadma0	at isa?
+isapnp0 at isa?
 
 npx0	at isa? port 0xf0 irq 13	# math coprocessor
 
@@ -96,18 +97,6 @@ com1	at isa? port 0x2f8 irq 3
 
 lpt0	at isa? port 0x378 irq 7	# standard PC parallel ports
 
-pms0	at pckbd? irq 12		# PS/2 auxiliary port mouse
-
-ncr*	at pci? dev ? function ?	# NCR 538XX SCSI controllers
-scsibus* at ncr?
-
-sd*	at scsibus? target ? lun ?	# SCSI disk drives
-#st*	at scsibus? target ? lun ?	# SCSI tape drives
-#ss*	at scsibus? target ? lun ?	# SCSI scanners
-#uk*	at scsibus? target ? lun ?	# unknown SCSI
-#cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
-#ch*	at scsibus? target ? lun ?	# SCSI autochangers
-
 fdc0	at isa? port 0x3f0 irq 6 drq 2	# standard PC floppy controllers
 fd*	at fdc? drive ?
 
@@ -118,11 +107,23 @@ wd*	at wdc? drive ?
 atapibus* at wdc?
 acd*	at atapibus? drive?
 
+sb*     at isapnp?
+audio*  at sb?
+
+pms0	at pckbd? irq 12		# PS/2 auxiliary port mouse
+spkr0	at pckbd? port 0x61		# built-in speaker
+
 de*	at pci? dev ? function ?	# DC21X4X-based ethernet cards
 
-spkr0	at pckbd? port 0x61		# built-in speaker
-sb0	at isa? port 0x220 irq 5 drq 1	# SoundBlaster
-audio*  at sb?
+ncr*	at pci? dev ? function ?	# NCR 538XX SCSI controllers
+scsibus* at ncr?
+
+sd*	at scsibus? target ? lun ?	# SCSI disk drives
+#st*	at scsibus? target ? lun ?	# SCSI tape drives
+#ss*	at scsibus? target ? lun ?	# SCSI scanners
+#uk*	at scsibus? target ? lun ?	# unknown SCSI
+#cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
+#ch*	at scsibus? target ? lun ?	# SCSI autochangers
 
 pseudo-device	loop	1		# network loopback
 pseudo-device	bpfilter 4		# packet filter (used by rarpd)
