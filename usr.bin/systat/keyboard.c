@@ -1,4 +1,4 @@
-/*	$OpenBSD: keyboard.c,v 1.5 2000/06/04 23:06:17 aaron Exp $	*/
+/*	$OpenBSD: keyboard.c,v 1.6 2000/07/10 03:10:17 millert Exp $	*/
 /*	$NetBSD: keyboard.c,v 1.2 1995/01/20 08:51:59 jtc Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)keyboard.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: keyboard.c,v 1.5 2000/06/04 23:06:17 aaron Exp $";
+static char rcsid[] = "$OpenBSD: keyboard.c,v 1.6 2000/07/10 03:10:17 millert Exp $";
 #endif /* not lint */
 
 #include <ctype.h>
@@ -59,7 +59,9 @@ keyboard()
                 move(CMDLINE, 0);
                 do {
                         refresh();
-                        ch = getch() & 0177;
+                        if ((ch = getch()) == ERR)
+				exit(1);
+                        ch &= 0177;
                         if (ch == 0177 && ferror(stdin)) {
                                 clearerr(stdin);
                                 continue;
