@@ -1,3 +1,4 @@
+/*	$OpenBSD: ext2fs_extern.h,v 1.2 1997/05/30 08:33:52 downsj Exp $	*/
 /*	$NetBSD: ffs_extern.h,v 1.5 1996/09/01 23:49:18 mycroft Exp $	*/
 
 /* Modified for EXT2FS on NetBSD by Manuel Bouyer, April 1997 */
@@ -99,7 +100,7 @@ void	ext2fs_checkoverlap __P((struct buf *, struct inode *));
 
 /* ext2fs_vfsops.c */
 int ext2fs_mountroot __P((void));
-int ext2fs_mount __P((struct mount *, const char *, void *, struct nameidata *,
+int ext2fs_mount __P((struct mount *, char *, caddr_t, struct nameidata *,
 		   struct proc *));
 int ext2fs_reload __P((struct mount *, struct ucred *, struct proc *));
 int ext2fs_mountfs __P((struct vnode *, struct mount *, struct proc *));
@@ -137,9 +138,8 @@ int ext2fs_vinit __P(( struct mount *, int (**specops) __P((void *)),
                        int (**fifoops) __P((void *)), struct vnode **));
 int ext2fs_makeinode __P((int, struct vnode *, struct vnode **,
                           struct componentname *cnp));
+int ext2fs_fsync __P((void *));
 int ext2fs_reclaim __P((void *));
-
-#define ext2fs_fsync genfs_fsync
 __END_DECLS
 
 #define IS_EXT2_VNODE(vp)   (vp->v_tag == VT_EXT2FS)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lfs_syscalls.c,v 1.4 1996/07/01 11:07:35 downsj Exp $	*/
+/*	$OpenBSD: lfs_syscalls.c,v 1.5 1997/05/30 08:34:45 downsj Exp $	*/
 /*	$NetBSD: lfs_syscalls.c,v 1.10 1996/02/09 22:28:56 christos Exp $	*/
 
 /*-
@@ -522,7 +522,7 @@ lfs_fastvget(mp, ino, daddr, vpp, dinp)
 
 	/* Read in the disk contents for the inode, copy into the inode. */
 	if (dinp) {
-		error = copyin(dinp, &ip->i_din, sizeof(struct dinode));
+		error = copyin(dinp, &ip->i_din.ffs_din, sizeof(struct dinode));
 		if (error)
 			return (error);
 	}
@@ -543,7 +543,7 @@ lfs_fastvget(mp, ino, daddr, vpp, dinp)
 			*vpp = NULL;
 			return (error);
 		}
-		ip->i_din =
+		ip->i_din.ffs_din =
 		    *lfs_ifind(ump->um_lfs, ino, (struct dinode *)bp->b_data);
 		brelse(bp);
 	}

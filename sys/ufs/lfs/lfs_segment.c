@@ -1,4 +1,4 @@
-/*	$OpenBSD: lfs_segment.c,v 1.5 1996/10/18 14:46:24 mickey Exp $	*/
+/*	$OpenBSD: lfs_segment.c,v 1.6 1997/05/30 08:34:42 downsj Exp $	*/
 /*	$NetBSD: lfs_segment.c,v 1.4 1996/02/09 22:28:54 christos Exp $	*/
 
 /*
@@ -432,10 +432,10 @@ lfs_writeinode(fs, sp, ip)
 	/* Update the inode times and copy the inode onto the inode page. */
 	if (ip->i_flag & IN_MODIFIED)
 		--fs->lfs_uinodes;
-	ITIMES(ip, &time, &time);
+	FFS_ITIMES(ip, &time, &time);
 	ip->i_flag &= ~(IN_ACCESS | IN_CHANGE | IN_MODIFIED | IN_UPDATE);
 	bp = sp->ibp;
-	((struct dinode *)bp->b_data)[sp->ninodes % INOPB(fs)] = ip->i_din;
+	((struct dinode *)bp->b_data)[sp->ninodes % INOPB(fs)] = ip->i_din.ffs_din;
 	/* Increment inode count in segment summary block. */
 	++((SEGSUM *)(sp->segsum))->ss_ninos;
 
@@ -626,10 +626,10 @@ lfs_updatemeta(sp)
 		ip = VTOI(vp);
 		switch (num) {
 		case 0:
-			ip->i_db[lbn] = off;
+			ip->i_ffs_db[lbn] = off;
 			break;
 		case 1:
-			ip->i_ib[a[0].in_off] = off;
+			ip->i_ffs_ib[a[0].in_off] = off;
 			break;
 		default:
 			ap = &a[num - 1];
@@ -641,7 +641,7 @@ lfs_updatemeta(sp)
 			 * to get counted for the inode.
 			 */
 			if (bp->b_blkno == -1 && !(bp->b_flags & B_CACHE)) {
-				ip->i_blocks += fsbtodb(fs, 1);
+				ip->i_ffs_blocks += fsbtodb(fs, 1);
 				fs->lfs_bfree -= fragstodb(fs, fs->lfs_frag);
 			}
 			((ufs_daddr_t *)bp->b_data)[ap->in_off] = off;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lfs_alloc.c,v 1.5 1996/07/01 07:41:47 downsj Exp $	*/
+/*	$OpenBSD: lfs_alloc.c,v 1.6 1997/05/30 08:34:33 downsj Exp $	*/
 /*	$NetBSD: lfs_alloc.c,v 1.4 1996/03/25 12:53:37 pk Exp $	*/
 
 /*
@@ -101,10 +101,10 @@ lfs_valloc(v)
 	if (fs->lfs_free == LFS_UNUSED_INUM) {
 		vp = fs->lfs_ivnode;
 		ip = VTOI(vp);
-		blkno = lblkno(fs, ip->i_size);
+		blkno = lblkno(fs, ip->i_ffs_size);
 		lfs_balloc(vp, 0, fs->lfs_bsize, blkno, &bp);
-		ip->i_size += fs->lfs_bsize;
-		vnode_pager_setsize(vp, (u_long)ip->i_size);
+		ip->i_ffs_size += fs->lfs_bsize;
+		vnode_pager_setsize(vp, (u_long)ip->i_ffs_size);
 		vnode_pager_uncache(vp);
 
 		i = (blkno - fs->lfs_segtabsz - fs->lfs_cleansz) *
@@ -129,13 +129,13 @@ lfs_valloc(v)
 
 	ip = VTOI(vp);
 	/* Zero out the direct and indirect block addresses. */
-	bzero(&ip->i_din, sizeof(struct dinode));
-	ip->i_din.di_inumber = new_ino;
+	bzero(&ip->i_din.ffs_din, sizeof(struct dinode));
+	ip->i_din.ffs_din.di_inumber = new_ino;
 
 	/* Set a new generation number for this inode. */
 	if (++nextgennumber < (u_long)time.tv_sec)
 		nextgennumber = time.tv_sec;
-	ip->i_gen = nextgennumber;
+	ip->i_ffs_gen = nextgennumber;
 
 	/* Insert into the inode hash table. */
 	ufs_ihashins(ip);
@@ -188,7 +188,7 @@ lfs_vcreate(mp, ino, vpp)
 	ip->i_devvp = ump->um_devvp;
 	ip->i_flag = IN_MODIFIED;
 	ip->i_dev = ump->um_dev;
-	ip->i_number = ip->i_din.di_inumber = ino;
+	ip->i_number = ip->i_din.ffs_din.di_inumber = ino;
 	ip->i_lfs = ump->um_lfs;
 #ifdef QUOTA
 	for (i = 0; i < MAXQUOTAS; i++)
@@ -196,9 +196,9 @@ lfs_vcreate(mp, ino, vpp)
 #endif
 	ip->i_lockf = 0;
 	ip->i_diroff = 0;
-	ip->i_mode = 0;
-	ip->i_size = 0;
-	ip->i_blocks = 0;
+	ip->i_ffs_mode = 0;
+	ip->i_ffs_size = 0;
+	ip->i_ffs_blocks = 0;
 	++ump->um_lfs->lfs_uinodes;
 	return (0);
 }

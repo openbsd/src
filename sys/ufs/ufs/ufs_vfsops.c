@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_vfsops.c,v 1.2 1996/02/27 07:21:32 niklas Exp $	*/
+/*	$OpenBSD: ufs_vfsops.c,v 1.3 1997/05/30 08:35:15 downsj Exp $	*/
 /*	$NetBSD: ufs_vfsops.c,v 1.4 1996/02/09 22:36:12 christos Exp $	*/
 
 /*
@@ -194,7 +194,7 @@ ufs_check_export(mp, ufhp, nam, vpp, exflagsp, credanonp)
 		return (error);
 	}
 	ip = VTOI(nvp);
-	if (ip->i_mode == 0 || ip->i_gen != ufhp->ufid_gen) {
+	if (ip->i_ffs_mode == 0 || ip->i_ffs_gen != ufhp->ufid_gen) {
 		vput(nvp);
 		*vpp = NULLVP;
 		return (ESTALE);

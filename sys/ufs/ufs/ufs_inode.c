@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_inode.c,v 1.3 1996/05/22 11:47:21 deraadt Exp $	*/
+/*	$OpenBSD: ufs_inode.c,v 1.4 1997/05/30 08:35:04 downsj Exp $	*/
 /*	$NetBSD: ufs_inode.c,v 1.7 1996/05/11 18:27:52 mycroft Exp $	*/
 
 /*
@@ -92,7 +92,7 @@ ufs_inactive(v)
 		vprint("ffs_inactive: pushing active", vp);
 
 	/* Get rid of inodes related to stale file handles. */
-	if (ip->i_mode == 0) {
+	if (ip->i_ffs_mode == 0) {
 		if ((vp->v_flag & VXLOCK) == 0)
 			vgone(vp);
 		return (0);
@@ -108,15 +108,15 @@ ufs_inactive(v)
 		ip->i_lockholder = -1;
 #endif
 	ip->i_flag |= IN_LOCKED;
-	if (ip->i_nlink <= 0 && (vp->v_mount->mnt_flag & MNT_RDONLY) == 0) {
+	if (ip->i_ffs_nlink <= 0 && (vp->v_mount->mnt_flag & MNT_RDONLY) == 0) {
 #ifdef QUOTA
 		if (!getinoquota(ip))
 			(void)chkiq(ip, -1, NOCRED, 0);
 #endif
 		error = VOP_TRUNCATE(vp, (off_t)0, 0, NOCRED, NULL);
-		ip->i_rdev = 0;
-		mode = ip->i_mode;
-		ip->i_mode = 0;
+		ip->i_ffs_rdev = 0;
+		mode = ip->i_ffs_mode;
+		ip->i_ffs_mode = 0;
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
 		VOP_VFREE(vp, ip->i_number, mode);
 	}
@@ -129,7 +129,7 @@ ufs_inactive(v)
 	 * If we are done with the inode, reclaim it
 	 * so that it can be reused immediately.
 	 */
-	if (vp->v_usecount == 0 && ip->i_mode == 0)
+	if (vp->v_usecount == 0 && ip->i_ffs_mode == 0)
 		vgone(vp);
 	return (error);
 }

@@ -1,3 +1,4 @@
+/*	$OpenBSD: ext2fs_dinode.h,v 1.2 1997/05/30 08:33:46 downsj Exp $	*/
 /*	$NetBSD: dinode.h,v 1.7 1995/06/15 23:22:48 cgd Exp $	*/
 
 /* Modified for EXT2FS on NetBSD by Manuel Bouyer, April 1997 */

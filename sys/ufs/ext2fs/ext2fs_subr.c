@@ -1,3 +1,4 @@
+/*	$OpenBSD: ext2fs_subr.c,v 1.2 1997/05/30 08:34:02 downsj Exp $	*/
 /*	$NetBSD: ffs_subr.c,v 1.9 1996/10/12 21:58:45 christos Exp $	*/
 
 /* Modified for EXT2FS on NetBSD by Manuel Bouyer, April 1997 */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lfs_inode.c,v 1.5 1997/03/02 09:38:18 millert Exp $	*/
+/*	$OpenBSD: lfs_inode.c,v 1.6 1997/05/30 08:34:39 downsj Exp $	*/
 /*	$NetBSD: lfs_inode.c,v 1.5 1996/05/11 18:27:35 mycroft Exp $	*/
 
 /*
@@ -182,8 +182,8 @@ lfs_truncate(v)
 		if (length != 0)
 			panic("lfs_truncate: partial truncate of symlink");
 #endif
-		bzero((char *)&ip->i_shortlink, (u_int)ip->i_size);
-		ip->i_size = 0;
+		bzero((char *)&ip->i_ffs_shortlink, (u_int)ip->i_ffs_size);
+		ip->i_ffs_size = 0;
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
 		return (VOP_UPDATE(vp, &ts, &ts, 0));
 	}
@@ -192,7 +192,7 @@ lfs_truncate(v)
 	fs = ip->i_lfs;
 
 	/* If length is larger than the file, just update the times. */
-	if (ip->i_size <= length) {
+	if (ip->i_ffs_size <= length) {
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
 		return (VOP_UPDATE(vp, &ts, &ts, 0));
 	}
@@ -203,7 +203,7 @@ lfs_truncate(v)
 	 * file is truncated to 0.
 	 */
 	lastblock = lblkno(fs, length + fs->lfs_bsize - 1);
-	olastblock = lblkno(fs, ip->i_size + fs->lfs_bsize - 1) - 1;
+	olastblock = lblkno(fs, ip->i_ffs_size + fs->lfs_bsize - 1) - 1;
 
 	/*
 	 * Update the size of the file. If the file is not being truncated to
@@ -219,7 +219,7 @@ lfs_truncate(v)
 	/* Now set oldsize to the current size of the current last block */
 	oldsize_lastblock = blksize(fs, ip, olastblock);
 	if (offset == 0)
-		ip->i_size = length;
+		ip->i_ffs_size = length;
 	else {
 #ifdef QUOTA
 		if ((e1 = getinoquota(ip)) != 0)
@@ -227,7 +227,7 @@ lfs_truncate(v)
 #endif	
 		if ((e1 = bread(vp, lbn, fs->lfs_bsize, NOCRED, &bp)) != 0)
 			return (e1);
-		ip->i_size = length;
+		ip->i_ffs_size = length;
 		(void)vnode_pager_uncache(vp);
 		newsize = blksize(fs, ip, lbn);
 		bzero((char *)bp->b_data + offset, (u_int)(newsize - offset));
@@ -237,7 +237,7 @@ lfs_truncate(v)
 	}
 	/*
 	 * Modify sup->su_nbyte counters for each deleted block; keep track
-	 * of number of blocks removed for ip->i_blocks.
+	 * of number of blocks removed for ip->i_ffs_blocks.
 	 */
 	fragsreleased = 0;
 	num = 0;
@@ -255,9 +255,9 @@ lfs_truncate(v)
 
 		switch (depth) {
 		case 0:				/* Direct block. */
-			daddr = ip->i_db[lbn];
+			daddr = ip->i_ffs_db[lbn];
 			SEGDEC(freesize);
-			ip->i_db[lbn] = 0;
+			ip->i_ffs_db[lbn] = 0;
 			--lbn;
 			break;
 #ifdef DIAGNOSTIC
@@ -298,9 +298,9 @@ lfs_truncate(v)
 			}
 			if (depth == 0 && a[1].in_off == 0) {
 				off = a[0].in_off;
-				daddr = ip->i_ib[off];
+				daddr = ip->i_ffs_ib[off];
 				SEGDEC(freesize);
-				ip->i_ib[off] = 0;
+				ip->i_ffs_ib[off] = 0;
 			}
 			if (lbn == lastblock || lbn <= NDADDR)
 				--lbn;
@@ -321,13 +321,13 @@ lfs_truncate(v)
 	}
 
 #ifdef DIAGNOSTIC
-	if (ip->i_blocks < fragstodb(fs, fragsreleased)) {
+	if (ip->i_ffs_blocks < fragstodb(fs, fragsreleased)) {
 		printf("lfs_truncate: frag count < 0\n");
-		fragsreleased = dbtofrags(fs, ip->i_blocks);
+		fragsreleased = dbtofrags(fs, ip->i_ffs_blocks);
 		panic("lfs_truncate: frag count < 0\n");
 	}
 #endif
-	ip->i_blocks -= fragstodb(fs, fragsreleased);
+	ip->i_ffs_blocks -= fragstodb(fs, fragsreleased);
 	fs->lfs_bfree +=  fragstodb(fs, fragsreleased);
 	ip->i_flag |= IN_CHANGE | IN_UPDATE;
 	/*
@@ -356,19 +356,19 @@ lfs_truncate(v)
 		}
 	fragsreleased = i_released;
 #ifdef DIAGNOSTIC
-	if (fragsreleased > dbtofrags(fs, ip->i_blocks)) {
+	if (fragsreleased > dbtofrags(fs, ip->i_ffs_blocks)) {
 		printf("lfs_inode: Warning! %s\n",
 		    "more frags released from inode than are in inode");
-		fragsreleased = dbtofrags(fs, ip->i_blocks);
+		fragsreleased = dbtofrags(fs, ip->i_ffs_blocks);
 		panic("lfs_inode: Warning.  More frags released\n");
 	}
 #endif
 	fs->lfs_bfree += fragstodb(fs, fragsreleased);
-	ip->i_blocks -= fragstodb(fs, fragsreleased);
+	ip->i_ffs_blocks -= fragstodb(fs, fragsreleased);
 #ifdef DIAGNOSTIC
-	if (length == 0 && ip->i_blocks != 0) {
+	if (length == 0 && ip->i_ffs_blocks != 0) {
 		printf("lfs_inode: Warning! %s%d%s\n",
-		    "Truncation to zero, but ", ip->i_blocks,
+		    "Truncation to zero, but ", ip->i_ffs_blocks,
 		    " blocks left on inode");
 		    panic("lfs_inode");
 	}

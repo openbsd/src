@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.7 1997/02/11 06:59:28 millert Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.8 1997/05/30 08:34:25 downsj Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -80,14 +80,6 @@ struct vfsops ffs_vfsops = {
 	ffs_fhtovp,
 	ffs_vptofh,
 	ffs_init,
-};
-
-static struct ufs_dirops ffs_dirops = {
-	ufs_dirremove,
-	ufs_direnter, 
-	ufs_dirempty,
-	ufs_dirrewrite,
-	ufs_checkpath,
 };
 
 extern u_long nextgennumber;
@@ -409,7 +401,7 @@ loop:
 			vput(vp);
 			return (error);
 		}
-		ip->i_din = *((struct dinode *)bp->b_data +
+		ip->i_din.ffs_din = *((struct dinode *)bp->b_data +
 		    ino_to_fsbo(fs, ip->i_number));
 		brelse(bp);
 		vput(vp);
@@ -537,7 +529,6 @@ ffs_mountfs(devvp, mp, p)
 	ump->um_nindir = fs->fs_nindir;
 	ump->um_bptrtodb = fs->fs_fsbtodb;
 	ump->um_seqinc = fs->fs_frag;
-	ump->um_dirops = &ffs_dirops;
 	for (i = 0; i < MAXQUOTAS; i++)
 		ump->um_quotas[i] = NULLVP;
 	devvp->v_specflags |= SI_MOUNTEDON;
@@ -841,7 +832,7 @@ ffs_vget(mp, ino, vpp)
 		*vpp = NULL;
 		return (error);
 	}
-	ip->i_din = *((struct dinode *)bp->b_data + ino_to_fsbo(fs, ino));
+	ip->i_din.ffs_din = *((struct dinode *)bp->b_data + ino_to_fsbo(fs, ino));
 	brelse(bp);
 
 	/*
@@ -863,10 +854,10 @@ ffs_vget(mp, ino, vpp)
 	 * Set up a generation number for this inode if it does not
 	 * already have one. This should only happen on old filesystems.
 	 */
-	if (ip->i_gen == 0) {
-		ip->i_gen = arc4random();
-		if (ip->i_gen == 0 || ip->i_gen == -1)
-			ip->i_gen = 1;			/* shouldn't happen */
+	if (ip->i_ffs_gen == 0) {
+		ip->i_ffs_gen = arc4random();
+		if (ip->i_ffs_gen == 0 || ip->i_ffs_gen == -1)
+			ip->i_ffs_gen = 1;		/* shouldn't happen */
 		if ((vp->v_mount->mnt_flag & MNT_RDONLY) == 0)
 			ip->i_flag |= IN_MODIFIED;
 	}
@@ -875,8 +866,8 @@ ffs_vget(mp, ino, vpp)
 	 * fix until fsck has been changed to do the update.
 	 */
 	if (fs->fs_inodefmt < FS_44INODEFMT) {		/* XXX */
-		ip->i_uid = ip->i_din.di_ouid;		/* XXX */
-		ip->i_gid = ip->i_din.di_ogid;		/* XXX */
+		ip->i_ffs_uid = ip->i_din.ffs_din.di_ouid;		/* XXX */
+		ip->i_ffs_gid = ip->i_din.ffs_din.di_ogid;		/* XXX */
 	}						/* XXX */
 
 	*vpp = vp;
@@ -929,7 +920,7 @@ ffs_vptofh(vp, fhp)
 	ufhp = (struct ufid *)fhp;
 	ufhp->ufid_len = sizeof(struct ufid);
 	ufhp->ufid_ino = ip->i_number;
-	ufhp->ufid_gen = ip->i_gen;
+	ufhp->ufid_gen = ip->i_ffs_gen;
 	return (0);
 }
 

@@ -1,3 +1,4 @@
+/*	$OpenBSD: ext2fs_vfsops.c,v 1.2 1997/05/30 08:34:06 downsj Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.21 1996/10/12 21:58:47 christos Exp $	*/
 
 /* Modified for EXT2FS on NetBSD by Manuel Bouyer, April 1997 */
@@ -82,7 +83,6 @@ struct vfsops ext2fs_vfsops = {
 	ext2fs_fhtovp,
 	ext2fs_vptofh,
 	ext2fs_init,
-	ext2fs_mountroot,
 };
 
 extern u_long ext2gennumber;
@@ -152,9 +152,6 @@ ext2fs_mountroot()
 	size_t size;
 	int error;
 
-	if (root_device->dv_class != DV_DISK)
-		return (ENODEV);
-	
 	/*
 	 * Get vnodes for swapdev and rootdev.
 	 */
@@ -198,8 +195,8 @@ ext2fs_mountroot()
 int
 ext2fs_mount(mp, path, data, ndp, p)
 	register struct mount *mp;
-	const char *path;
-	void * data;
+	char *path;
+	caddr_t data;
 	struct nameidata *ndp;
 	struct proc *p;
 {

@@ -1,3 +1,4 @@
+/*	$OpenBSD: ext2fs_vnops.c,v 1.2 1997/05/30 08:34:10 downsj Exp $	*/
 /*	$NetBSD: ufs_vnops.c,v 1.22 1997/01/30 09:52:27 tls Exp $	*/
 
 /* Modified for EXT2FS on NetBSD by Manuel Bouyer, April 1997 */
@@ -61,7 +62,6 @@
 #include <vm/vm.h>
 
 #include <miscfs/fifofs/fifo.h>
-#include <miscfs/genfs/genfs.h>
 #include <miscfs/specfs/specdev.h>
 
 #include <ufs/ufs/quota.h>
@@ -227,10 +227,8 @@ ext2fs_getattr(v)
 	register struct vnode *vp = ap->a_vp;
 	register struct inode *ip = VTOI(vp);
 	register struct vattr *vap = ap->a_vap;
-	struct timespec ts;
 
-	TIMEVAL_TO_TIMESPEC(&time, &ts);
-	EXT2FS_ITIMES(ip, &ts, &ts, &ts);
+	EXT2FS_ITIMES(ip, &time, &time);
 	/*
 	 * Copy from inode table
 	 */
@@ -1356,6 +1354,28 @@ bad:
 }
 
 /*
+ * Synch an open file.
+ */
+/* ARGSUSED */
+int
+ext2fs_fsync(v)
+	void *v;
+{
+	struct vop_fsync_args /* {
+		struct vnode *a_vp;
+		struct ucred *a_cred;
+		int a_waitfor;
+		struct proc *a_p;
+	} */ *ap = v;
+	register struct vnode *vp = ap->a_vp;
+	struct timespec ts;
+
+	vflushbuf(vp, ap->a_waitfor == MNT_WAIT);
+	TIMEVAL_TO_TIMESPEC(&time, &ts);
+	return (VOP_UPDATE(ap->a_vp, &ts, &ts, ap->a_waitfor == MNT_WAIT));
+}
+
+/*
  * Reclaim an inode so that it can be used for other purposes.
  */
 int
@@ -1406,7 +1426,7 @@ struct vnodeopv_entry_desc ext2fs_vnodeop_entries[] = {
 	{ &vop_write_desc, ext2fs_write },		/* write */
 	{ &vop_lease_desc, ufs_lease_check },	/* lease */
 	{ &vop_ioctl_desc, ufs_ioctl },			/* ioctl */
-	{ &vop_poll_desc, ufs_poll },			/* poll */
+	{ &vop_select_desc, ufs_select },		/* select */
 	{ &vop_mmap_desc, ufs_mmap },			/* mmap */
 	{ &vop_fsync_desc, ext2fs_fsync },		/* fsync */
 	{ &vop_seek_desc, ufs_seek },			/* seek */
@@ -1455,7 +1475,7 @@ struct vnodeopv_entry_desc ext2fs_specop_entries[] = {
 	{ &vop_write_desc, ufsspec_write },		/* write */
 	{ &vop_lease_desc, spec_lease_check },	/* lease */
 	{ &vop_ioctl_desc, spec_ioctl },		/* ioctl */
-	{ &vop_poll_desc, spec_poll },			/* poll */
+	{ &vop_select_desc, spec_select },		/* poll */
 	{ &vop_mmap_desc, spec_mmap },			/* mmap */
 	{ &vop_fsync_desc, ext2fs_fsync },		/* fsync */
 	{ &vop_seek_desc, spec_seek },			/* seek */
@@ -1505,7 +1525,7 @@ struct vnodeopv_entry_desc ext2fs_fifoop_entries[] = {
 	{ &vop_write_desc, ufsfifo_write },		/* write */
 	{ &vop_lease_desc, fifo_lease_check },	/* lease */
 	{ &vop_ioctl_desc, fifo_ioctl },		/* ioctl */
-	{ &vop_poll_desc, fifo_poll },			/* poll */
+	{ &vop_select_desc, fifo_select },		/* select */
 	{ &vop_mmap_desc, fifo_mmap },			/* mmap */
 	{ &vop_fsync_desc, ext2fs_fsync },		/* fsync */
 	{ &vop_seek_desc, fifo_seek },			/* seek */

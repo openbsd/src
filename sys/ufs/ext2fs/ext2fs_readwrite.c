@@ -1,3 +1,4 @@
+/*	$OpenBSD: ext2fs_readwrite.c,v 1.2 1997/05/30 08:33:59 downsj Exp $	*/
 /*	$NetBSD: ufs_readwrite.c,v 1.10 1997/01/30 09:52:26 tls Exp $	*/
 
 /* Modified for EXT2FS on NetBSD by Manuel Bouyer, April 1997 */

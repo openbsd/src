@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_bmap.c,v 1.3 1996/10/18 14:51:15 mickey Exp $	*/
+/*	$OpenBSD: ufs_bmap.c,v 1.4 1997/05/30 08:35:02 downsj Exp $	*/
 /*	$NetBSD: ufs_bmap.c,v 1.3 1996/02/09 22:36:00 christos Exp $	*/
 
 /*
@@ -149,19 +149,19 @@ ufs_bmaparray(vp, bn, bnp, ap, nump, runp)
 
 	num = *nump;
 	if (num == 0) {
-		*bnp = blkptrtodb(ump, ip->i_db[bn]);
+		*bnp = blkptrtodb(ump, ip->i_ffs_db[bn]);
 		if (*bnp == 0)
 			*bnp = -1;
 		else if (runp)
 			for (++bn; bn < NDADDR && *runp < maxrun &&
-			    is_sequential(ump, ip->i_db[bn - 1], ip->i_db[bn]);
+			    is_sequential(ump, ip->i_ffs_db[bn - 1], ip->i_ffs_db[bn]);
 			    ++bn, ++*runp);
 		return (0);
 	}
 
 
 	/* Get disk address out of indirect block array */
-	daddr = ip->i_ib[xap->in_off];
+	daddr = ip->i_ffs_ib[xap->in_off];
 
 	devvp = VFSTOUFS(vp->v_mount)->um_devvp;
 	for (bp = NULL, ++xap; --num; ++xap) {
@@ -224,7 +224,7 @@ ufs_bmaparray(vp, bn, bnp, ap, nump, runp)
  * contains the logical block number of the appropriate single, double or
  * triple indirect block and the offset into the inode indirect block array.
  * Note, the logical block number of the inode single/double/triple indirect
- * block appears twice in the array, once with the offset into the i_ib and
+ * block appears twice in the array, once with the offset into the i_ffs_ib and
  * once with the offset into the page itself.
  */
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lfs_balloc.c,v 1.4 1996/10/18 14:46:23 mickey Exp $	*/
+/*	$OpenBSD: lfs_balloc.c,v 1.5 1997/05/30 08:34:36 downsj Exp $	*/
 /*	$NetBSD: lfs_balloc.c,v 1.3 1996/02/09 22:28:48 christos Exp $	*/
 
 /*
@@ -129,7 +129,7 @@ lfs_balloc(vp, offset, iosize, lbn, bpp)
 					brelse(ibp);
 					return(ENOSPC);
 				} else {
-					ip->i_blocks += bb;
+					ip->i_ffs_blocks += bb;
 					ip->i_lfs->lfs_bfree -= bb;
 					clrbuf(ibp);
 					if((error = VOP_BWRITE(ibp)) != 0)
@@ -182,7 +182,7 @@ lfs_balloc(vp, offset, iosize, lbn, bpp)
 				brelse(bp);
 				return(ENOSPC);
 			} else {
-				ip->i_blocks += bb;
+				ip->i_ffs_blocks += bb;
 				ip->i_lfs->lfs_bfree -= bb;
 				if (iosize != fs->lfs_bsize)
 					clrbuf(bp);
@@ -236,7 +236,7 @@ lfs_fragextend(vp, osize, nsize, lbn, bpp)
 		return (error);
 	}
 #endif
-	ip->i_blocks += bb;
+	ip->i_ffs_blocks += bb;
 	ip->i_flag |= IN_CHANGE | IN_UPDATE;
 	fs->lfs_bfree -= fragstodb(fs, numfrags(fs, (nsize - osize)));
 	allocbuf(*bpp, nsize);

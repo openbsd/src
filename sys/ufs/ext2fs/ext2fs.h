@@ -1,3 +1,4 @@
+/*	$OpenBSD: ext2fs.h,v 1.2 1997/05/30 08:33:32 downsj Exp $	*/
 /*	$NetBSD: fs.h,v 1.6 1995/04/12 21:21:02 mycroft Exp $	*/
 
 /* Modified for EXT2FS on NetBSD by Manuel Bouyer, April 1997 */

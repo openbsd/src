@@ -1,3 +1,4 @@
+/*	$OpenBSD: ext2fs_inode.c,v 1.2 1997/05/30 08:33:55 downsj Exp $	*/
 /*	$NetBSD: ffs_inode.c,v 1.12 1996/11/06 03:02:59 thorpej Exp $	*/
 
 /* Modified for EXT2FS on NetBSD by Manuel Bouyer, April 1997 */
@@ -154,13 +155,11 @@ ext2fs_update(v)
 	struct buf *bp;
 	struct inode *ip;
 	int error;
-	struct timespec ts;
 
 	if (ap->a_vp->v_mount->mnt_flag & MNT_RDONLY)
 		return (0);
 	ip = VTOI(ap->a_vp);
-	TIMEVAL_TO_TIMESPEC(&time, &ts);
-	EXT2FS_ITIMES(ip, ap->a_access, ap->a_modify, &ts);
+	EXT2FS_ITIMES(ip, &time, &time);
 	if ((ip->i_flag & IN_MODIFIED) == 0)
 		return (0);
 	ip->i_flag &= ~IN_MODIFIED;
