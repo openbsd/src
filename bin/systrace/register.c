@@ -1,4 +1,4 @@
-/*	$OpenBSD: register.c,v 1.13 2002/11/16 14:27:17 itojun Exp $	*/
+/*	$OpenBSD: register.c,v 1.14 2003/05/17 03:09:59 sturm Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -117,7 +117,8 @@ systrace_initcb(void)
 	systrace_alias_add_trans(alias, tl);
 
 	X(intercept_register_sccb("native", "mkdir", trans_cb, NULL));
-	tl = intercept_register_transfn("native", "mkdir", 0);
+	tl = intercept_register_translation("native", "mkdir", 0,
+	    &ic_translate_unlinkname);
 	alias = systrace_new_alias("native", "mkdir", "native", "fswrite");
 	systrace_alias_add_trans(alias, tl);
 	X(intercept_register_sccb("native", "rmdir", trans_cb, NULL));
@@ -126,7 +127,8 @@ systrace_initcb(void)
 	systrace_alias_add_trans(alias, tl);
 
 	X(intercept_register_sccb("native", "rename", trans_cb, NULL));
-	intercept_register_transfn("native", "rename", 0);
+	intercept_register_translation("native", "rename", 0,
+	    &ic_translate_unlinkname);
 	intercept_register_transfn("native", "rename", 1);
 	X(intercept_register_sccb("native", "symlink", trans_cb, NULL));
 	intercept_register_transstring("native", "symlink", 0);

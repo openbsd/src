@@ -1,4 +1,4 @@
-/*	$OpenBSD: intercept.c,v 1.38 2003/02/20 22:03:31 art Exp $	*/
+/*	$OpenBSD: intercept.c,v 1.39 2003/05/17 03:09:59 sturm Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -661,11 +661,11 @@ intercept_filename(int fd, pid_t pid, void *addr, int userp)
 			 * At this point, filename has to exist and has to
 			 * be a directory.
 			 */
-			if (lstat(rcwd, &st) == -1)
-				failed = 1;
-			else if (userp != ICLINK_NOLAST &&
-			    !(st.st_mode & S_IFDIR))
+			if (userp != ICLINK_NOLAST) {
+				if (lstat(rcwd, &st) == -1 ||
+				    !(st.st_mode & S_IFDIR))
 					failed = 1;
+			}
 		}
 	out:
 		if (failed)
