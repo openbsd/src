@@ -1,4 +1,4 @@
-/*	$OpenBSD: auich.c,v 1.45 2005/01/17 20:37:04 mickey Exp $	*/
+/*	$OpenBSD: auich.c,v 1.46 2005/03/22 20:03:07 marc Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Michael Shalayeff
@@ -560,7 +560,7 @@ auich_reset_codec(v)
 	control = bus_space_read_4(sc->iot, sc->aud_ioh, AUICH_GCTRL);
 	control &= ~(AUICH_ACLSO | AUICH_PCM246_MASK);
 	control |= (control & AUICH_CRESET) ? AUICH_WRESET : AUICH_CRESET;
-	bus_space_write_4(sc->iot, sc->aud_ioh, AUICH_GCTRL, AUICH_CRESET);
+	bus_space_write_4(sc->iot, sc->aud_ioh, AUICH_GCTRL, control);
 
 	for (i = AUICH_RESETIMO; i-- &&
 	    !(bus_space_read_4(sc->iot, sc->aud_ioh, AUICH_GSTS) & AUICH_PCR);
@@ -1103,11 +1103,12 @@ auich_intr(v)
 		DPRINTF(AUICH_DEBUG_DMA,
 		    ("auich_intr: osts=%b\n", sts, AUICH_ISTS_BITS));
 
+#ifdef AUICH_DEBUG
 		if (sts & AUICH_FIFOE) {
 			printf("%s: fifo underrun # %u\n",
 			    sc->sc_dev.dv_xname, ++sc->pcmo_fifoe);
 		}
-
+#endif
 		i = bus_space_read_1(sc->iot, sc->aud_ioh, AUICH_PCMO + AUICH_CIV);
 		if (sts & (AUICH_LVBCI | AUICH_CELV)) {
 			struct auich_dmalist *q, *qe;
@@ -1157,11 +1158,12 @@ auich_intr(v)
 		DPRINTF(AUICH_DEBUG_DMA,
 		    ("auich_intr: ists=%b\n", sts, AUICH_ISTS_BITS));
 
+#ifdef AUICH_DEBUG
 		if (sts & AUICH_FIFOE) {
 			printf("%s: in fifo overrun # %u\n",
 			    sc->sc_dev.dv_xname, ++sc->pcmi_fifoe);
 		}
-
+#endif
 		i = bus_space_read_1(sc->iot, sc->aud_ioh, AUICH_PCMI + AUICH_CIV);
 		if (sts & (AUICH_LVBCI | AUICH_CELV)) {
 			struct auich_dmalist *q, *qe;
@@ -1210,8 +1212,10 @@ auich_intr(v)
 		    AUICH_MICI + sc->sc_sts_reg);
 		DPRINTF(AUICH_DEBUG_DMA,
 		    ("auich_intr: ists=%b\n", sts, AUICH_ISTS_BITS));
+#ifdef AUICH_DEBUG
 		if (sts & AUICH_FIFOE)
 			printf("%s: mic fifo overrun\n", sc->sc_dev.dv_xname);
+#endif
 
 		/* TODO mic input dma */
 
