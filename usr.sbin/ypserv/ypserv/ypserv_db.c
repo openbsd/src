@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypserv_db.c,v 1.4 1996/05/30 09:53:29 deraadt Exp $ */
+/*	$OpenBSD: ypserv_db.c,v 1.5 1996/06/26 21:26:39 maja Exp $ */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -13,9 +13,12 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote
- *    products derived from this software without specific prior written
- *    permission.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by Mats O Jansson
+ *	and Charles D. Cranor.
+ * 4. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -31,7 +34,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: ypserv_db.c,v 1.4 1996/05/30 09:53:29 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ypserv_db.c,v 1.5 1996/06/26 21:26:39 maja Exp $";
 #endif
 
 /*
@@ -58,6 +61,7 @@ static char rcsid[] = "$OpenBSD: ypserv_db.c,v 1.4 1996/05/30 09:53:29 deraadt E
 #include <sys/queue.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <syslog.h>
 #include "yplog.h"
 #include "ypdb.h"
 #include "ypdef.h"
@@ -376,6 +380,7 @@ lookup_host(nametable, host_lookup, db, keystr, result)
 	struct  in_addr *addr_name;
 	struct	in_addr addr_addr;
 	static  char val[BUFSIZ+1]; /* match libc */
+	static	hostname[MAXHOSTNAMELEN];
 	char *v;
 	int l;
 	char	*ptr;
@@ -413,6 +418,25 @@ lookup_host(nametable, host_lookup, db, keystr, result)
 	inet_aton(keystr, &addr_addr);
 	host = gethostbyaddr((char *) &addr_addr, sizeof(addr_addr), AF_INET);
 	if (host == NULL) return(YP_NOKEY);
+
+	strncpy((char *)hostname, host->h_name, sizeof(hostname) - 1);
+	hostname[sizeof(hostname) - 1] = '\0';
+	host = gethostbyname((char *)hostname);
+	if (host == NULL) return(YP_NOKEY);
+
+	l = 0;
+	for(; host->h_addr_list[0] != NULL; host->h_addr_list++)
+		if (!bcmp(host->h_addr_list[0], &addr_addr, sizeof(addr_addr)))
+			l++;
+	if (l == 0) {
+		yplog("lookup_host: address %s not listed for host %s\n",
+		       inet_ntoa(addr_addr), hostname);
+		syslog(LOG_NOTICE,
+		       "ypserv: address %s not listed for host %s\n",
+		       inet_ntoa(addr_addr), hostname);
+		return(YP_NOKEY);
+	}
+
 	snprintf(val,sizeof(val),"%s %s",keystr,host->h_name);
 	l = strlen(val);
 	v = val + l;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: makedbm.c,v 1.3 1996/05/30 09:53:06 deraadt Exp $ */
+/*	$OpenBSD: makedbm.c,v 1.4 1996/06/26 21:26:35 maja Exp $ */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -12,9 +12,11 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote
- *    products derived from this software without specific prior written
- *    permission.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by Mats O Jansson
+ * 4. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -30,7 +32,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: makedbm.c,v 1.3 1996/05/30 09:53:06 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: makedbm.c,v 1.4 1996/06/26 21:26:35 maja Exp $";
 #endif
 
 #include <stdio.h>
