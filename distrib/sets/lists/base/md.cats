@@ -36,7 +36,7 @@
 ./usr/lib/gcc-lib/arm-unknown-openbsd3.6/3.3.2/f771
 ./usr/lib/gcc-lib/arm-unknown-openbsd3.6/3.3.2/specs
 ./usr/lib/libasn1.so.14.0
-./usr/lib/libc.so.34.0
+./usr/lib/libc.so.34.1
 ./usr/lib/libcom_err.so.14.0
 ./usr/lib/libcrypto.so.11.0
 ./usr/lib/libcurses++.so.3.0
