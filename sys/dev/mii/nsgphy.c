@@ -1,4 +1,4 @@
-/*	$OpenBSD: nsgphy.c,v 1.2 2001/07/02 05:08:28 nate Exp $	*/
+/*	$OpenBSD: nsgphy.c,v 1.3 2001/07/02 06:29:49 nate Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 2001
@@ -134,7 +134,6 @@ nsgphyattach(parent, self, aux)
 		PHY_READ(sc, MII_BMSR) & ma->mii_capmask;
         if (sc->mii_capabilities & BMSR_EXTSTAT)
 		sc->mii_extcapabilities = PHY_READ(sc, MII_EXTSR);
-        printf("%s: ", sc->mii_dev.dv_xname);
         if ((sc->mii_capabilities & BMSR_MEDIAMASK) ||
             (sc->mii_extcapabilities & EXTSR_MEDIAMASK))
                 mii_phy_add_media(sc);
