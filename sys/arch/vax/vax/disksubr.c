@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.6 1995/05/08 19:10:53 ragge Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.7 1996/01/28 12:14:48 ragge Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -50,23 +50,22 @@
 
 #define	b_cylin	b_resid
 
-#define		RAW_PART	3
-
 /*
  * Determine the size of the transfer, and make sure it is
  * within the boundaries of the partition. Adjust transfer
  * if needed, and signal errors or early completion.
  */
 int
-bounds_check_with_label(struct buf *bp, struct disklabel *lp, int wlabel)
+bounds_check_with_label(bp, lp, wlabel)
+	struct	buf *bp;
+	struct	disklabel *lp;
+	int	wlabel;
 {
 	struct partition *p = lp->d_partitions + dkpart(bp->b_dev);
-	int labelsect = lp->d_partitions[0].p_offset;
+	int labelsect = lp->d_partitions[2].p_offset;
 	int maxsz = p->p_size,
 		sz = (bp->b_bcount + DEV_BSIZE - 1) >> DEV_BSHIFT;
-
 	/* overwriting disk label ? */
-	/* XXX should also protect bootstrap in first 8K */
         if (bp->b_blkno + p->p_offset <= LABELSECTOR + labelsect &&
 #if LABELSECTOR != 0
             bp->b_blkno + p->p_offset + sz > LABELSECTOR + labelsect &&
@@ -75,15 +74,6 @@ bounds_check_with_label(struct buf *bp, struct disklabel *lp, int wlabel)
                 bp->b_error = EROFS;
                 goto bad;
         }
-
-#if	defined(DOSBBSECTOR) && defined(notyet)
-	/* overwriting master boot record? */
-        if (bp->b_blkno + p->p_offset <= DOSBBSECTOR &&
-            (bp->b_flags & B_READ) == 0 && wlabel == 0) {
-                bp->b_error = EROFS;
-                goto bad;
-        }
-#endif
 
 	/* beyond partition? */
         if (bp->b_blkno < 0 || bp->b_blkno + sz > maxsz) {
@@ -109,13 +99,6 @@ bad:
 	bp->b_flags |= B_ERROR;
 	return(-1);
 }
-
-/* NYFIL */
-
-/* encoding of disk minor numbers, should be elsewhere... */
-#define dkunit(dev)		(minor(dev) >> 3)
-#define dkpart(dev)		(minor(dev) & 7)
-#define dkminor(unit, part)	(((unit) << 3) | (part))
 
 /*
  * Check new disk label for sensibility
