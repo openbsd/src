@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ahc.4,v 1.23 2003/03/14 10:07:35 jmc Exp $
+.\"	$OpenBSD: ahc.4,v 1.24 2003/05/05 09:36:03 jmc Exp $
 .\"	$NetBSD: ahc.4,v 1.1.2.1 1996/08/25 17:22:14 thorpej Exp $
 .\"
 .\" Copyright (c) 1995, 1996
@@ -34,31 +34,28 @@
 .Nm ahc
 .Nd Adaptec VL/EISA/PCI SCSI host adapter driver
 .Sh SYNOPSIS
-.ie 0 \{
-For one or more VL/EISA cards:
-.Cd controller eisa0
-.Cd controller ahc0
-\}
-\{For VL cards:
-.Cd ahc0	at isa? port ? irq ?
+For VL cards:
+.Cd "ahc0	at isa? port ? irq ?"
 .Pp
 For EISA cards:
-.Cd ahc*	at eisa? slot ?\}
+.Cd "ahc*	at eisa? slot ?"
 .Pp
-.ie 0 \{
+For one or more VL/EISA cards:
+.Cd "controller eisa0"
+.Cd "controller ahc0"
+.Pp
+For PCI cards:
+.Cd "ahc*	at pci? dev ? function ?"
+.Pp
 For one or more PCI cards:
-.Cd controller pci0
-.Cd controller ahc0
-\}
-\{For PCI cards:
-.Cd ahc*	at pci? dev ? function ?\}
+.Cd "controller pci0"
+.Cd "controller ahc0"
 .Pp
-.ie 0 \{
-For one or more SCSI busses:
-.Cd controller scbus0 at ahc0
-\}
-\{For SCSI busses:
-.Cd scsibus* at ahc?\}
+For SCSI buses:
+.Cd "scsibus* at ahc?"
+.Pp
+For one or more SCSI buses:
+.Cd "controller scsibus0 at ahc0"
 .Sh DESCRIPTION
 This driver provides access to the
 .Tn SCSI
@@ -109,7 +106,7 @@ Adaptec SCSI controller cards:
 and
 .Tn 3985,
 .Pp
-Driver features include support for twin and wide busses,
+Driver features include support for twin and wide buses,
 fast, ultra, ultra2 and ultra160 synchronous transfers depending on
 controller type, tagged queuing, and SCB paging.
 .Pp
@@ -167,7 +164,7 @@ aic7870     10    PCI/32     10MHz     16Bit    16
 aic7880     10    PCI/32     20MHz     16Bit    16
 aic7890     20    PCI/32     40MHz     16Bit    16       3 4 5 6 7
 aic7891     20    PCI/64     40MHz     16Bit    16       3 4 5 6 7
-aic7892     20    PCI/64     40MHz     16Bit    32       3 4 5 6 7 8 
+aic7892     20    PCI/64     40MHz     16Bit    32       3 4 5 6 7 8
 aic7895     15    PCI/32     20MHz     16Bit    16     2 3 4 5
 aic7896     20    PCI/32     40MHz     16Bit    16     2 3 4 5 6 7
 aic7897     20    PCI/64     40MHz     16Bit    16     2 3 4 5 6 7
@@ -176,7 +173,7 @@ aic7899     20    PCI/64     40MHz     16Bit    32       3 4 5 6 7 8
 .Pp
 .Bl -enum -compact
 .It
-Multiplexed Twin Channel Device - One controller servicing two busses.
+Multiplexed Twin Channel Device - One controller servicing two buses.
 .It
 Multi-function Twin Channel Device - Two controllers on one chip.
 .It
@@ -251,7 +248,7 @@ driver, the
 .Tn AIC7xxx
 sequencer-code assembler, and the firmware running on the aic7xxx chips
 were written by
-.An Justin T. Gibbs .  
+.An Justin T. Gibbs .
 .Pp
 The
 .Ox
