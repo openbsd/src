@@ -1,4 +1,4 @@
-/*	$OpenBSD: loadfile_machdep.h,v 1.1 2002/10/24 19:27:15 mickey Exp $	*/
+/*	$OpenBSD: loadfile_machdep.h,v 1.2 2004/06/14 00:32:31 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -74,9 +74,9 @@
 #define	ALLOC(a)		malloc(a)
 #define	FREE(a, b)		free(a)
 
-ssize_t vread __P((int, u_long, u_long *, size_t));
-void vcopy __P((u_long, u_long, u_long *, size_t));
-void vzero __P((u_long, u_long *, size_t));
+ssize_t vread(int, u_long, u_long *, size_t);
+void vcopy(u_long, u_long, u_long *, size_t);
+void vzero(u_long, u_long *, size_t);
 
 #endif
 #endif /* ! _HPPA_LOADFILE_MACHDEP_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pchb.c,v 1.1 2004/01/28 01:39:39 mickey Exp $	*/
+/*	$OpenBSD: pchb.c,v 1.2 2004/06/14 00:32:30 deraadt Exp $	*/
 /*	$NetBSD: pchb.c,v 1.1 2003/04/26 18:39:50 fvdl Exp $	*/
 
 /*-
@@ -71,10 +71,10 @@
 #define I82424_BCTL_PCIMEM_BURSTEN	0x01
 #define I82424_BCTL_PCI_BURSTEN		0x02
 
-int	pchbmatch __P((struct device *, void *, void *));
-void	pchbattach __P((struct device *, struct device *, void *));
+int	pchbmatch(struct device *, void *, void *);
+void	pchbattach(struct device *, struct device *, void *);
 
-int	pchb_print __P((void *, const char *));
+int	pchb_print(void *, const char *);
 
 struct cfattach pchb_ca = {
 	sizeof(struct pchb_softc), pchbmatch, pchbattach,

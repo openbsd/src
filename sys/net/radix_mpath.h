@@ -1,4 +1,4 @@
-/*	$OpenBSD: radix_mpath.h,v 1.1 2004/04/25 02:48:03 itojun Exp $	*/
+/*	$OpenBSD: radix_mpath.h,v 1.2 2004/06/14 00:32:30 deraadt Exp $	*/
 /*	$KAME: radix_mpath.h,v 1.9 2004/03/30 11:21:49 keiichi Exp $	*/
 
 /*
@@ -44,14 +44,14 @@
 struct route;
 struct rtentry;
 struct sockaddr;
-int	rn_mpath_capable __P((struct radix_node_head *));
-struct radix_node *rn_mpath_next __P((struct radix_node *));
-int	rn_mpath_count __P((struct radix_node *));
-struct rtentry *rt_mpath_matchgate __P((struct rtentry *, struct sockaddr *));
-int	rt_mpath_conflict __P((struct radix_node_head *, struct rtentry *,
-	struct sockaddr *));
-void	rtalloc_mpath __P((struct route *, int));
-int	rn_mpath_inithead __P((void **, int));
+int	rn_mpath_capable(struct radix_node_head *);
+struct radix_node *rn_mpath_next(struct radix_node *);
+int	rn_mpath_count(struct radix_node *);
+struct rtentry *rt_mpath_matchgate(struct rtentry *, struct sockaddr *);
+int	rt_mpath_conflict(struct radix_node_head *, struct rtentry *,
+	struct sockaddr *);
+void	rtalloc_mpath(struct route *, int);
+int	rn_mpath_inithead(void **, int);
 #endif
 
 #endif /* _NET_RADIX_MPATH_H_ */

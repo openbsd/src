@@ -1,4 +1,4 @@
-/*	$OpenBSD: mediabay.c,v 1.1 2004/05/10 21:29:53 drahn Exp $	*/
+/*	$OpenBSD: mediabay.c,v 1.2 2004/06/14 00:32:31 deraadt Exp $	*/
 /*	$NetBSD: mediabay.c,v 1.9 2003/07/15 02:43:29 lukem Exp $	*/
 
 /*-
@@ -54,13 +54,13 @@ struct mediabay_softc {
 	struct proc *sc_kthread;
 };
 
-void mediabay_attach __P((struct device *, struct device *, void *));
-int mediabay_match __P((struct device *, void *, void *));
-int mediabay_print __P((void *, const char *));
-void mediabay_attach_content __P((struct mediabay_softc *));
-int mediabay_intr __P((void *));
-void mediabay_create_kthread __P((void *));
-void mediabay_kthread __P((void *));
+void mediabay_attach(struct device *, struct device *, void *);
+int mediabay_match(struct device *, void *, void *);
+int mediabay_print(void *, const char *);
+void mediabay_attach_content(struct mediabay_softc *);
+int mediabay_intr(void *);
+void mediabay_create_kthread(void *);
+void mediabay_kthread(void *);
 
 struct cfattach mediabay_ca = {
 	sizeof(struct mediabay_softc), mediabay_match, mediabay_attach

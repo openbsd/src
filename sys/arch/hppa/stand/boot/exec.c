@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.c,v 1.3 2004/04/07 18:24:20 mickey Exp $	*/
+/*	$OpenBSD: exec.c,v 1.4 2004/06/14 00:32:31 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002-2004 Michael Shalayeff
@@ -33,7 +33,7 @@
 #include <stand/boot/bootarg.h>
 #include "dev_hppa.h"
 
-typedef void (*startfuncp) __P((int, int, int, int, int, int, caddr_t))
+typedef void (*startfuncp)(int, int, int, int, int, int, caddr_t)
     __attribute__ ((noreturn));
 
 void

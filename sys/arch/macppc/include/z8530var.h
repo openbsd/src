@@ -112,26 +112,26 @@ struct zsc_softc {
  * XXX - no one seems to want to try and check this -wrs
  */
 
-u_char zs_read_reg __P((struct zs_chanstate *cs, u_char reg));
-u_char zs_read_csr __P((struct zs_chanstate *cs));
-u_char zs_read_data __P((struct zs_chanstate *cs));
+u_char zs_read_reg(struct zs_chanstate *cs, u_char reg);
+u_char zs_read_csr(struct zs_chanstate *cs);
+u_char zs_read_data(struct zs_chanstate *cs);
 
-void  zs_write_reg __P((struct zs_chanstate *cs, u_char reg, u_char val));
-void  zs_write_csr __P((struct zs_chanstate *cs, u_char val));
-void  zs_write_data __P((struct zs_chanstate *cs, u_char val));
+void  zs_write_reg(struct zs_chanstate *cs, u_char reg, u_char val);
+void  zs_write_csr(struct zs_chanstate *cs, u_char val);
+void  zs_write_data(struct zs_chanstate *cs, u_char val);
 
 /* XXX - Could define splzs() here instead of in psl.h */
 #define splzs spltty
 
 /* Hook for MD ioctl support */
-int	zsmdioctl __P((struct zs_chanstate *cs, u_long cmd, caddr_t data));
+int	zsmdioctl(struct zs_chanstate *cs, u_long cmd, caddr_t data);
 /* XXX - This is a bit gross... */
 /*
 #define ZS_MD_IOCTL(cs, cmd, data) zsmdioctl(cs, cmd, data)
 */
 
 /* Callback for "external" clock sources */
-void zsmd_setclock  __P((struct zs_chanstate *cs));
+void zsmd_setclock(struct zs_chanstate *cs);
 #define ZS_MD_SETCLK(cs) zsmd_setclock(cs)
 
 #define PCLK	(9600 * 384)	/* PCLK pin input clock rate */
