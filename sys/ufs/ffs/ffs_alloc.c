@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_alloc.c,v 1.22 2001/03/20 17:05:38 art Exp $	*/
+/*	$OpenBSD: ffs_alloc.c,v 1.23 2001/03/20 17:08:45 art Exp $	*/
 /*	$NetBSD: ffs_alloc.c,v 1.11 1996/05/11 18:27:09 mycroft Exp $	*/
 
 /*
@@ -920,7 +920,7 @@ ffs_alloccg(ip, cg, bpref, size)
 		 */
 		if (cgp->cg_cs.cs_nbfree == 0) {
 			brelse(bp);
-			return (NULL);
+			return (0);
 		}
 		bno = ffs_alloccgblk(ip, bp, bpref);
 		bpref = dtogd(fs, bno);
@@ -936,17 +936,11 @@ ffs_alloccg(ip, cg, bpref, size)
 		return (bno);
 	}
 	bno = ffs_mapsearch(fs, cgp, bpref, allocsiz);
-#if 0
-	/*
-	 * XXX ffs_mapsearch will panic instead of return -1, and we can't
-	 * XXX return NULL as a daddr_t anyway.
-	 */
 	if (bno < 0) {
 		brelse(bp);
-		/* XXX - NULL as a daddr_t ??? */
 		return (0);
 	}
-#endif
+
 	for (i = 0; i < frags; i++)
 		clrbit(cg_blksfree(cgp), bno + i);
 	cgp->cg_cs.cs_nffree -= frags;
@@ -1066,14 +1060,8 @@ norot:
 	 * available one in this cylinder group.
 	 */
 	bno = ffs_mapsearch(fs, cgp, bpref, (int)fs->fs_frag);
-#if 0
-	/*
-	 * XXX ffs_mapsearch will panic instead of return -1, and we can't
-	 * XXX return NULL as a daddr_t anyway.
-	 */
 	if (bno < 0)
 		return (0);
-#endif
 	cgp->cg_rotor = bno;
 gotit:
 	blkno = fragstoblks(fs, bno);
