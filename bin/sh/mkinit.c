@@ -1,4 +1,4 @@
-/*	$NetBSD: mkinit.c,v 1.13 1995/05/11 21:29:34 christos Exp $	*/
+/*	$NetBSD: mkinit.c,v 1.14 1996/02/18 12:29:21 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mkinit.c	8.2 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$NetBSD: mkinit.c,v 1.13 1995/05/11 21:29:34 christos Exp $";
+static char rcsid[] = "$NetBSD: mkinit.c,v 1.14 1996/02/18 12:29:21 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -55,10 +55,9 @@ static char rcsid[] = "$NetBSD: mkinit.c,v 1.13 1995/05/11 21:29:34 christos Exp
  * special events and combines this code into one file.  This (allegedly)
  * improves the structure of the program since there is no need for
  * anyone outside of a module to know that that module performs special
- * operations on particular events.  The command is executed iff init.c
- * is actually changed.
+ * operations on particular events.
  *
- * Usage:  mkinit command sourcefile...
+ * Usage:  mkinit sourcefile...
  */
 
 
@@ -73,13 +72,11 @@ static char rcsid[] = "$NetBSD: mkinit.c,v 1.13 1995/05/11 21:29:34 christos Exp
 
 /*
  * OUTFILE is the name of the output file.  Output is initially written
- * to the file OUTTEMP, which is then moved to OUTFILE if OUTTEMP and
- * OUTFILE are different.
+ * to the file OUTTEMP, which is then moved to OUTFILE.
  */
 
 #define OUTFILE "init.c"
 #define OUTTEMP "init.c.new"
-#define OUTOBJ "init.o"
 
 
 /*
@@ -113,7 +110,7 @@ struct event {
 	char *name;		/* name of event (e.g. INIT) */
 	char *routine;		/* name of routine called on event */
 	char *comment;		/* comment describing routine */
-	struct text code;		/* code for handling event */
+	struct text code;	/* code for handling event */
 };
 
 
@@ -163,8 +160,6 @@ void doevent __P((struct event *, FILE *, char *));
 void doinclude __P((char *));
 void dodecl __P((char *, FILE *));
 void output __P((void));
-int file_changed __P((void));
-int touch __P((char *));
 void addstr __P((char *, struct text *));
 void addchar __P((int, struct text *));
 void writetext __P((struct text *, FILE *));
@@ -182,27 +177,13 @@ main(argc, argv)
 {
 	char **ap;
 
-	if (argc < 2)
-		error("Usage:  mkinit command file...");
 	header_files[0] = "\"shell.h\"";
 	header_files[1] = "\"mystring.h\"";
-	for (ap = argv + 2 ; *ap ; ap++)
+	for (ap = argv + 1 ; *ap ; ap++)
 		readfile(*ap);
 	output();
-	if (file_changed()) {
-		unlink(OUTFILE);
-		link(OUTTEMP, OUTFILE);
-		unlink(OUTTEMP);
-	} else {
-		unlink(OUTTEMP);
-		if (touch(OUTOBJ))
-			exit(0);		/* no compilation necessary */
-	}
-	printf("%s\n", argv[1]);
-	execl("/bin/sh", "sh", "-c", argv[1], (char *)0);
-	error("Can't exec shell");
-
-	exit(1);
+	rename(OUTTEMP, OUTFILE);
+	exit(0);
 }
 
 
@@ -417,52 +398,6 @@ output() {
 	}
 	fclose(fp);
 }
-
-
-/*
- * Return true if the new output file is different from the old one.
- */
-
-int
-file_changed() 
-{
-	register FILE *f1, *f2;
-	register int c;
-
-	if ((f1 = fopen(OUTFILE, "r")) == NULL
-	 || (f2 = fopen(OUTTEMP, "r")) == NULL)
-		return 1;
-	while ((c = getc(f1)) == getc(f2)) {
-		if (c == EOF)
-			return 0;
-	}
-	return 1;
-}
-
-
-/*
- * Touch a file.  Returns 0 on failure, 1 on success.
- */
-
-int
-touch(file)
-	char *file;
-{
-	int fd;
-	char c;
-
-	if ((fd = open(file, O_RDWR)) < 0)
-		return 0;
-	if (read(fd, &c, 1) != 1) {
-		close(fd);
-		return 0;
-	}
-	lseek(fd, (off_t)0, 0);
-	write(fd, &c, 1);
-	close(fd);
-	return 1;
-}
-
 
 
 /*
