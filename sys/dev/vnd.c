@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnd.c,v 1.40 2003/10/11 03:31:07 tedu Exp $	*/
+/*	$OpenBSD: vnd.c,v 1.41 2003/10/17 23:05:39 tedu Exp $	*/
 /*	$NetBSD: vnd.c,v 1.26 1996/03/30 23:06:11 christos Exp $	*/
 
 /*
@@ -94,7 +94,11 @@ int vnddebug = 0x00;
 
 #define b_cylin	b_resid
 
-#define	vndunit(x)	DISKUNIT(minor(x) & 0x7ff)
+/*
+ * vndunit is a bit weird.  have to reconstitute the dev_t for
+ * DISKUNIT(), but with the minor masked off.
+ */
+#define	vndunit(x)	DISKUNIT(makedev(major(x), minor(x) & 0x7ff))
 #define vndsimple(x)	(minor(x) & 0x800)
 #define	MAKEVNDDEV(maj, unit, part)	MAKEDISKDEV(maj, unit, part)
 
