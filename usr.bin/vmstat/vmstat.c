@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.53 2001/05/11 14:35:29 deraadt Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.54 2001/06/23 21:59:44 art Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -1033,56 +1033,35 @@ domem()
 	     (totuse + 1023) / 1024, (totfree + 1023) / 1024, totreq);
 }
 
-void
-dopool(void)
+static void
+print_pool(struct pool *pp, char *name)
 {
-	int first, ovflw;
-	long addr;
-	long total = 0, inuse = 0;
-	TAILQ_HEAD(,pool) pool_head;
-	struct pool pool, *pp = &pool;
+	static int first = 1;
+	int ovflw;
+	char maxp[32];
 
-	kread(X_POOLHEAD, &pool_head, sizeof(pool_head));
-	addr = (long)TAILQ_FIRST(&pool_head);
-
-	for (first = 1; addr != 0; ) {
-		char name[32], maxp[32];
-		if (kvm_read(kd, addr, (void *)pp, sizeof *pp) != sizeof *pp) {
-			(void)fprintf(stderr,
-			    "vmstat: pool chain trashed: %s\n",
-			    kvm_geterr(kd));
-			exit(1);
-		}
-		if (kvm_read(kd, (long)pp->pr_wchan, name, sizeof name) < 0) {
-			(void)fprintf(stderr,
-			    "vmstat: pool name trashed: %s\n",
-			    kvm_geterr(kd));
-			exit(1);
-		}
-		name[31] = '\0';
-
-		if (first) {
-			(void)printf("Memory resource pool statistics\n");
-			(void)printf(
-			    "%-11s%5s%9s%5s%9s%6s%6s%6s%6s%6s%6s%5s\n",
-			    "Name",
-			    "Size",
-			    "Requests",
-			    "Fail",
-			    "Releases",
-			    "Pgreq",
-			    "Pgrel",
-			    "Npage",
-			    "Hiwat",
-			    "Minpg",
-			    "Maxpg",
-			    "Idle");
-			first = 0;
-		}
-		if (pp->pr_maxpages == UINT_MAX)
-			sprintf(maxp, "inf");
-		else
-			sprintf(maxp, "%u", pp->pr_maxpages);
+	if (first) {
+		(void)printf("Memory resource pool statistics\n");
+		(void)printf(
+		    "%-11s%5s%9s%5s%9s%6s%6s%6s%6s%6s%6s%5s\n",
+		    "Name",
+		    "Size",
+		    "Requests",
+		    "Fail",
+		    "Releases",
+		    "Pgreq",
+		    "Pgrel",
+		    "Npage",
+		    "Hiwat",
+		    "Minpg",
+		    "Maxpg",
+		    "Idle");
+		first = 0;
+	}
+	if (pp->pr_maxpages == UINT_MAX)
+		sprintf(maxp, "inf");
+	else
+		sprintf(maxp, "%u", pp->pr_maxpages);
 /*
  * Print single word.  `ovflow' is number of characters didn't fit
  * on the last word.  `fmt' is a format string to print this word.
@@ -1098,19 +1077,56 @@ dopool(void)
 	if ((ovflw) < 0)				\
 		(ovflw) = 0;				\
 } while (/* CONSTCOND */0)
-		ovflw = 0;
-		PRWORD(ovflw, "%-*s", 11, 0, name);
-		PRWORD(ovflw, " %*u", 5, 1, pp->pr_size);
-		PRWORD(ovflw, " %*lu", 9, 1, pp->pr_nget);
-		PRWORD(ovflw, " %*lu", 5, 1, pp->pr_nfail);
-		PRWORD(ovflw, " %*lu", 9, 1, pp->pr_nput);
-		PRWORD(ovflw, " %*lu", 6, 1, pp->pr_npagealloc);
-		PRWORD(ovflw, " %*lu", 6, 1, pp->pr_npagefree);
-		PRWORD(ovflw, " %*d", 6, 1, pp->pr_npages);
-		PRWORD(ovflw, " %*d", 6, 1, pp->pr_hiwat);
-		PRWORD(ovflw, " %*d", 6, 1, pp->pr_minpages);
-		PRWORD(ovflw, " %*s", 6, 1, maxp);
-		PRWORD(ovflw, " %*lu\n", 5, 1, pp->pr_nidle);
+
+	ovflw = 0;
+	PRWORD(ovflw, "%-*s", 11, 0, name);
+	PRWORD(ovflw, " %*u", 5, 1, pp->pr_size);
+	PRWORD(ovflw, " %*lu", 9, 1, pp->pr_nget);
+	PRWORD(ovflw, " %*lu", 5, 1, pp->pr_nfail);
+	PRWORD(ovflw, " %*lu", 9, 1, pp->pr_nput);
+	PRWORD(ovflw, " %*lu", 6, 1, pp->pr_npagealloc);
+	PRWORD(ovflw, " %*lu", 6, 1, pp->pr_npagefree);
+	PRWORD(ovflw, " %*d", 6, 1, pp->pr_npages);
+	PRWORD(ovflw, " %*d", 6, 1, pp->pr_hiwat);
+	PRWORD(ovflw, " %*d", 6, 1, pp->pr_minpages);
+	PRWORD(ovflw, " %*s", 6, 1, maxp);
+	PRWORD(ovflw, " %*lu\n", 5, 1, pp->pr_nidle);	
+}
+
+void
+dopool(void)
+{
+	int first;
+	long addr;
+	long total = 0, inuse = 0;
+	TAILQ_HEAD(,pool) pool_head;
+	struct pool pool, *pp = &pool;
+	int dosysctl, numpools;
+	int mib[4];
+	size_t size;
+
+	dosysctl = (nlist != NULL || memf != NULL);
+
+	kread(X_POOLHEAD, &pool_head, sizeof(pool_head));
+	addr = (long)TAILQ_FIRST(&pool_head);
+
+	for (first = 1; addr != 0; ) {
+		char name[32];
+		if (kvm_read(kd, addr, (void *)pp, sizeof *pp) != sizeof *pp) {
+			(void)fprintf(stderr,
+			    "vmstat: pool chain trashed: %s\n",
+			    kvm_geterr(kd));
+			exit(1);
+		}
+		if (kvm_read(kd, (long)pp->pr_wchan, name, sizeof name) < 0) {
+			(void)fprintf(stderr,
+			    "vmstat: pool name trashed: %s\n",
+			    kvm_geterr(kd));
+			exit(1);
+		}
+		name[31] = '\0';
+
+		print_pool(pp, name);
 
 		inuse += (pp->pr_nget - pp->pr_nput) * pp->pr_size;
 		total += pp->pr_npages * pp->pr_pagesz;
