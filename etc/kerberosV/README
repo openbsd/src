@@ -1,0 +1,22 @@
+#	$OpenBSD: README,v 1.1 2001/06/25 03:30:22 hin Exp $
+
+Notes about the KerberosV support in OpenBSD:
+
+- This is currently experimental code.
+
+- OpenBSD contains the Heimdal implementation of KerberosV from KTH in Sweden.
+
+- Please check the heimdal info page (type "info heimdal") to get more
+  information. A number of manpages exist, mainly describing the krb5 API.
+
+- There are some very informational RFCs in the source directory.
+
+- Before you use KerberosV you should setup an /etc/kerberosV/krb5.conf
+  according to the instructions in the heimdal infopage.
+
+- The directory /var/heimdal contains logs, the database and acl files,
+  and must be created before the kdc, kadmind or kpasswdd can be used.
+  Disclosing the database would be a _really_ bad thing.
+
+- The file /etc/kerberosV/krb5.keytab contains the encryption keys and
+  its important that you keep this file secret.
