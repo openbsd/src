@@ -1,4 +1,4 @@
-/*	$OpenBSD: savecore_old.c,v 1.16 2000/05/31 17:09:17 millert Exp $	*/
+/*	$OpenBSD: savecore_old.c,v 1.17 2001/01/18 00:18:38 deraadt Exp $	*/
 /*	$NetBSD: savecore_old.c,v 1.1.1.1 1996/03/16 10:25:11 leo Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)savecore.c	8.3 (Berkeley) 1/2/94";
 #else
-static char rcsid[] = "$OpenBSD: savecore_old.c,v 1.16 2000/05/31 17:09:17 millert Exp $";
+static char rcsid[] = "$OpenBSD: savecore_old.c,v 1.17 2001/01/18 00:18:38 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -445,7 +445,7 @@ err1:			syslog(LOG_WARNING, "%s: %m", path);
 	syslog(LOG_NOTICE, "writing %score to %s",
 	    compress ? "compressed " : "", path);
 	for (; dumpsize > 0; dumpsize -= nr) {
-		(void)printf("%6dK\r", dumpsize / 1024);
+		(void)printf("%8dK\r", dumpsize / 1024);
 		(void)fflush(stdout);
 		nr = read(ifd, buf, MIN(dumpsize, sizeof(buf)));
 		if (nr <= 0) {
