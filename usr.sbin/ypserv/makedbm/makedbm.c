@@ -1,4 +1,4 @@
-/*	$OpenBSD: makedbm.c,v 1.16 2002/02/13 23:05:48 deraadt Exp $ */
+/*	$OpenBSD: makedbm.c,v 1.17 2002/03/20 14:19:30 maja Exp $ */
 
 /*
  * Copyright (c) 1994-97 Mats O Jansson <moj@stacken.kth.se>
@@ -32,7 +32,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: makedbm.c,v 1.16 2002/02/13 23:05:48 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: makedbm.c,v 1.17 2002/03/20 14:19:30 maja Exp $";
 #endif
 
 #include <stdio.h>
@@ -152,7 +152,8 @@ list_database(database,Uflag)
 		if (Uflag != 0)
 			if (db_hash_list_database(database)) return;
 
-		fprintf(stderr, "%s: can't open database %s\n", __progname, database);
+		fprintf(stderr, "%s: can't open database %s: %s\n", __progname,
+		    database, strerror(errno));
 		exit(1);
 	}
 	
