@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.57 2002/03/23 13:28:34 espie Exp $ */
+/* $OpenBSD: machdep.c,v 1.58 2002/04/05 18:14:53 deraadt Exp $ */
 /* $NetBSD: machdep.c,v 1.108 2000/09/13 15:00:23 thorpej Exp $	 */
 
 /*
@@ -418,6 +418,9 @@ struct trampframe {
 				 * argument */
 };
 
+/*
+ * XXX no siginfo implementation!!!!
+ */
 void
 sendsig(catcher, sig, mask, code, type, val)
 	sig_t		catcher;
