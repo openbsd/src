@@ -1,0 +1,104 @@
+@0 scrub all fragment reassemble 
+[ Skip steps: a=6 i=18 d=2 f=end p=8 sa=end sp=end da=end dp=25 ]
+[ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
+
+@1 scrub all fragment reassemble 
+[ Skip steps: a=6 i=18 f=end p=8 sa=end sp=end da=end dp=25 ]
+[ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
+
+@2 scrub in all fragment reassemble 
+[ Skip steps: a=6 i=18 f=end p=8 sa=end sp=end da=end dp=25 ]
+[ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
+
+@3 scrub out all fragment reassemble 
+[ Skip steps: a=6 i=18 f=end p=8 sa=end sp=end da=end dp=25 ]
+[ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
+
+@4 scrub in all fragment reassemble 
+[ Skip steps: a=6 i=18 f=end p=8 sa=end sp=end da=end dp=25 ]
+[ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
+
+@5 scrub all fragment reassemble 
+[ Skip steps: i=18 d=10 f=end p=8 sa=end sp=end da=end dp=25 ]
+[ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
+
+@6 block drop all 
+[ Skip steps: a=end i=18 d=10 f=end p=8 sa=end sp=end da=end dp=25 ]
+[ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
+
+@7 block return all 
+[ Skip steps: a=end i=18 d=10 f=end sa=end sp=end da=end dp=25 ]
+[ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
+
+@8 block return-rst proto tcp all 
+[ Skip steps: a=end i=18 d=10 f=end sa=end sp=end da=end dp=25 ]
+[ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
+
+@9 pass all 
+[ Skip steps: a=end i=18 f=end p=21 sa=end sp=end da=end dp=25 ]
+[ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
+
+@10 pass in all 
+[ Skip steps: a=end i=18 f=end p=21 sa=end sp=end da=end dp=25 ]
+[ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
+
+@11 pass out all 
+[ Skip steps: a=end i=18 f=end p=21 sa=end sp=end da=end dp=25 ]
+[ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
+
+@12 pass all 
+[ Skip steps: a=end i=18 f=end p=21 sa=end sp=end da=end dp=25 ]
+[ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
+
+@13 block drop in all 
+[ Skip steps: a=end i=18 f=end p=21 sa=end sp=end da=end dp=25 ]
+[ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
+
+@14 block drop out all 
+[ Skip steps: a=end i=18 f=end p=21 sa=end sp=end da=end dp=25 ]
+[ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
+
+@15 block drop all 
+[ Skip steps: a=end i=18 f=end p=21 sa=end sp=end da=end dp=25 ]
+[ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
+
+@16 pass in all 
+[ Skip steps: a=end i=18 f=end p=21 sa=end sp=end da=end dp=25 ]
+[ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
+
+@17 pass out all 
+[ Skip steps: a=end f=end p=21 sa=end sp=end da=end dp=25 ]
+[ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
+
+@18 block drop on lo0 all 
+[ Skip steps: a=end i=21 d=23 f=end p=21 sa=end sp=end da=end dp=25 ]
+[ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
+
+@19 pass on lo0 all 
+[ Skip steps: a=end i=21 d=23 f=end p=21 sa=end sp=end da=end dp=25 ]
+[ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
+
+@20 block drop on lo0 all 
+[ Skip steps: a=end d=23 f=end sa=end sp=end da=end dp=25 ]
+[ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
+
+@21 pass proto tcp all flags S/SA 
+[ Skip steps: a=end i=25 d=23 f=end sa=end sp=end da=end dp=25 ]
+[ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
+
+@22 pass proto udp all keep state 
+[ Skip steps: a=end i=25 f=end p=25 sa=end sp=end da=end dp=25 ]
+[ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
+
+@23 pass in proto udp all keep state 
+[ Skip steps: a=end i=25 f=end p=25 sa=end sp=end da=end dp=25 ]
+[ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
+
+@24 pass out proto udp all keep state 
+[ Skip steps: a=end d=end f=end sa=end sp=end da=end ]
+[ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
+
+@25 pass out on lo0 proto tcp from any to any port = smtp keep state 
+[ Skip steps: a=end i=end d=end f=end p=end sa=end sp=end da=end dp=end ]
+[ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
+

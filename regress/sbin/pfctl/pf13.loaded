@@ -1,0 +1,48 @@
+@0 pass in quick on enc0 fastroute all 
+[ Skip steps: a=end i=3 d=3 p=6 sa=8 sp=end da=4 dp=6 ]
+[ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
+
+@1 pass in quick on enc0 fastroute inet all 
+[ Skip steps: a=end i=3 d=3 p=6 sa=8 sp=end da=4 dp=6 ]
+[ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
+
+@2 pass in quick on enc0 fastroute inet6 all 
+[ Skip steps: a=end p=6 sa=8 sp=end da=4 dp=6 ]
+[ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
+
+@3 pass out quick on tun0 route-to tun1 inet all 
+[ Skip steps: a=end i=end d=6 f=5 p=6 sa=8 sp=end dp=6 ]
+[ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
+
+@4 pass out quick on tun0 route-to tun1 inet from any to 192.168.1.1 
+[ Skip steps: a=end i=end d=6 p=6 sa=8 sp=end dp=6 ]
+[ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
+
+@5 pass out quick on tun0 route-to tun1 inet6 from any to fec0::1 
+[ Skip steps: a=end i=end sa=8 sp=end ]
+[ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
+
+@6 block drop in on tun0 dup-to (tun1 192.168.1.1) inet proto tcp from any to any port = ftp 
+[ Skip steps: a=end i=end d=end p=8 sa=8 sp=end da=8 dp=8 ]
+[ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
+
+@7 block drop in on tun0 dup-to (tun1 fec0::1) inet6 proto tcp from any to any port = ftp 
+[ Skip steps: a=end i=end d=end sp=end ]
+[ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
+
+@8 pass in quick on tun0 route-to tun1 inet from 192.168.1.1 to 10.1.1.1 
+[ Skip steps: a=end i=end d=end p=end sp=end dp=end ]
+[ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
+
+@9 pass in quick on tun0 route-to tun1 inet6 from fec0::/64 to fec1::2 
+[ Skip steps: a=end i=end d=end p=end sp=end dp=end ]
+[ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
+
+@10 pass in quick on tun0 dup-to (tun1 192.168.1.100) inet from 192.168.1.1 to 10.1.1.1 
+[ Skip steps: a=end i=end d=end p=end sp=end dp=end ]
+[ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
+
+@11 pass in quick on tun0 dup-to (tun1 fec1::2) inet6 from fec0::/64 to fec1::2 
+[ Skip steps: a=end i=end d=end f=end p=end sa=end sp=end da=end dp=end ]
+[ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
+

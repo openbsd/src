@@ -1,0 +1,24 @@
+@0 block return in on lo0 inet all queue rsets 
+[ Skip steps: a=end i=end d=2 f=end sa=end sp=end da=end ]
+[ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
+
+@1 pass in on lo0 inet proto tcp from any to any port = www keep state queue http 
+[ Skip steps: a=end i=end f=end p=5 sa=end sp=end da=end ]
+[ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
+
+@2 pass out on lo0 inet proto tcp from any to any port = ssh keep state queue ssh 
+[ Skip steps: a=end i=end f=end p=5 sa=end sp=end da=end dp=4 ]
+[ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
+
+@3 pass in on lo0 inet proto tcp from any to any port = ssh keep state queue ssh 
+[ Skip steps: a=end i=end f=end p=5 sa=end sp=end da=end ]
+[ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
+
+@4 pass out on lo0 inet proto tcp from any to any port = smtp keep state queue mail 
+[ Skip steps: a=end i=end d=end f=end sa=end sp=end da=end ]
+[ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
+
+@5 pass out on lo0 inet all keep state 
+[ Skip steps: a=end i=end d=end f=end p=end sa=end sp=end da=end dp=end ]
+[ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
+
