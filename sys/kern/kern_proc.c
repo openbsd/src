@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_proc.c,v 1.20 2004/07/22 15:42:11 art Exp $	*/
+/*	$OpenBSD: kern_proc.c,v 1.21 2004/07/25 20:50:51 tedu Exp $	*/
 /*	$NetBSD: kern_proc.c,v 1.14 1996/02/09 18:59:41 christos Exp $	*/
 
 /*
@@ -370,6 +370,7 @@ orphanpg(pg)
 	}
 }
 
+#ifdef DDB
 void 
 proc_printit(struct proc *p, const char *modif, int (*pr)(const char *, ...))
 {
@@ -398,6 +399,94 @@ proc_printit(struct proc *p, const char *modif, int (*pr)(const char *, ...))
 	(*pr)("    user=%llu, sys=%llu, intr=%llu\n",
 	    p->p_uticks, p->p_sticks, p->p_iticks);
 }
+#include <machine/db_machdep.h>
+
+#include <ddb/db_interface.h>
+#include <ddb/db_output.h>
+
+void
+db_show_all_procs(addr, haddr, count, modif)
+	db_expr_t addr;
+	int haddr;
+	db_expr_t count;
+	char *modif;
+{
+	char *mode;
+	int doingzomb = 0;
+	struct proc *p, *pp;
+    
+	if (modif[0] == 0)
+		modif[0] = 'n';			/* default == normal mode */
+
+	mode = "mawn";
+	while (*mode && *mode != modif[0])
+		mode++;
+	if (*mode == 0 || *mode == 'm') {
+		db_printf("usage: show all procs [/a] [/n] [/w]\n");
+		db_printf("\t/a == show process address info\n");
+		db_printf("\t/n == show normal process info [default]\n");
+		db_printf("\t/w == show process wait/emul info\n");
+		return;
+	}
+	
+	p = LIST_FIRST(&allproc);
+
+	switch (*mode) {
+
+	case 'a':
+		db_printf("   PID  %-10s  %18s  %18s  %18s\n",
+		    "COMMAND", "STRUCT PROC *", "UAREA *", "VMSPACE/VM_MAP");
+		break;
+	case 'n':
+		db_printf("   PID  %5s  %5s  %5s  S  %10s  %-9s  %-16s\n",
+		    "PPID", "PGRP", "UID", "FLAGS", "WAIT", "COMMAND");
+		break;
+	case 'w':
+		db_printf("   PID  %-16s  %-8s  %18s  %s\n",
+		    "COMMAND", "EMUL", "WAIT-CHANNEL", "WAIT-MSG");
+		break;
+	}
+
+	while (p != 0) {
+		pp = p->p_pptr;
+		if (p->p_stat) {
+
+			db_printf("%c%5d  ", p == curproc ? '*' : ' ',
+				p->p_pid);
+
+			switch (*mode) {
+
+			case 'a':
+				db_printf("%-10.10s  %18p  %18p  %18p\n",
+				    p->p_comm, p, p->p_addr, p->p_vmspace);
+				break;
+
+			case 'n':
+				db_printf("%5d  %5d  %5d  %d  %#10x  "
+				    "%-9.9s  %-16s\n",
+				    pp ? pp->p_pid : -1, p->p_pgrp->pg_id,
+				    p->p_cred->p_ruid, p->p_stat, p->p_flag,
+				    (p->p_wchan && p->p_wmesg) ?
+					p->p_wmesg : "", p->p_comm);
+				break;
+
+			case 'w':
+				db_printf("%-16s  %-8s  %18p  %s\n", p->p_comm,
+				    p->p_emul->e_name, p->p_wchan,
+				    (p->p_wchan && p->p_wmesg) ? 
+					p->p_wmesg : "");
+				break;
+
+			}
+		}
+		p = LIST_NEXT(p, p_list);
+		if (p == 0 && doingzomb == 0) {
+			doingzomb = 1;
+			p = LIST_FIRST(&zombproc);
+		}
+	}
+}
+#endif
 
 #ifdef DEBUG
 void
