@@ -1,4 +1,4 @@
-/*	$OpenBSD: bootp.c,v 1.2 1996/09/23 14:18:47 mickey Exp $	*/
+/*	$OpenBSD: bootp.c,v 1.3 1996/09/27 07:44:41 mickey Exp $	*/
 /*	$NetBSD: bootp.c,v 1.7 1995/09/18 21:19:20 pk Exp $	*/
 
 /*
@@ -100,7 +100,7 @@ bootp(sock)
 	bzero(bp, sizeof(*bp));
 
 	bp->bp_op = BOOTREQUEST;
-	bp->bp_htype = 1;		/* 10Mb Ethernet (48 bits) */
+	bp->bp_htype = HTYPE_ETHERNET;	/* 10Mb Ethernet (48 bits) */
 	bp->bp_hlen = 6;
 	bp->bp_xid = htonl(d->xid);
 	MACPY(d->myea, bp->bp_chaddr);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bootp.h,v 1.2 1996/09/23 14:18:48 mickey Exp $	*/
+/*	$OpenBSD: bootp.h,v 1.3 1996/09/27 07:44:42 mickey Exp $	*/
 /*	$NetBSD: bootp.h,v 1.2 1994/10/26 05:44:39 cgd Exp $	*/
 
 /*
@@ -21,23 +21,29 @@
  * without express or implied warranty.
  */
 
+#define BP_CHADDR_LEN	16
+#define BP_SNAME_LEN	64
+#define BP_FILE_LEN	128
+#define BP_VEND_LEN	64
+#define BP_MINPKTSZ	300     /* to check sizeof(struct bootp) */
+
 
 struct bootp {
-	unsigned char	bp_op;		/* packet opcode type */
-	unsigned char	bp_htype;	/* hardware addr type */
-	unsigned char	bp_hlen;	/* hardware addr length */
-	unsigned char	bp_hops;	/* gateway hops */
-	unsigned long	bp_xid;		/* transaction ID */
-	unsigned short	bp_secs;	/* seconds since boot began */
-	unsigned short	bp_unused;
-	struct in_addr	bp_ciaddr;	/* client IP address */
-	struct in_addr	bp_yiaddr;	/* 'your' IP address */
-	struct in_addr	bp_siaddr;	/* server IP address */
-	struct in_addr	bp_giaddr;	/* gateway IP address */
-	unsigned char	bp_chaddr[16];	/* client hardware address */
-	unsigned char	bp_sname[64];	/* server host name */
-	unsigned char	bp_file[128];	/* boot file name */
-	unsigned char	bp_vend[64];	/* vendor-specific area */
+	u_char		bp_op;			/* packet opcode type */
+	u_char		bp_htype;		/* hardware addr type */
+	u_char		bp_hlen;		/* hardware addr length */
+	u_char		bp_hops;		/* gateway hops */
+	u_long		bp_xid;			/* transaction ID */
+	u_short		bp_secs;		/* seconds since boot began */
+	u_short		bp_flags;		/* RFC1532 broadcast, etc. */
+	struct in_addr	bp_ciaddr;		/* client IP address */
+	struct in_addr	bp_yiaddr;		/* 'your' IP address */
+	struct in_addr	bp_siaddr;		/* server IP address */
+	struct in_addr	bp_giaddr;		/* gateway IP address */
+	u_char		bp_chaddr[BP_CHADDR_LEN];/* client hardware address */
+	u_char		bp_sname[BP_SNAME_LEN];	/* server host name */
+	u_char		bp_file[BP_FILE_LEN];	/* boot file name */
+	u_char		bp_vend[BP_VEND_LEN];	/* vendor-specific area */
 };
 
 /*
@@ -49,6 +55,16 @@ struct bootp {
 #define BOOTREPLY		2
 #define BOOTREQUEST		1
 
+/*
+ * Hardware types from Assigned Numbers RFC.
+ */
+#define HTYPE_ETHERNET		1
+#define HTYPE_EXP_ETHERNET	2
+#define HTYPE_AX25		3
+#define HTYPE_PRONET		4
+#define HTYPE_CHAOS		5
+#define HTYPE_IEEE802		6
+#define HTYPE_ARCNET		7
 
 /*
  * Vendor magic cookie (v_magic) for CMU
@@ -85,6 +101,11 @@ struct bootp {
 #define TAG_DOMAINNAME		((unsigned char)  15)
 #define TAG_SWAPSERVER		((unsigned char)  16)
 #define TAG_ROOTPATH		((unsigned char)  17)
+#define TAG_EXTEN_FILE		((unsigned char)  18)
+#define TAG_NIS_DOMAIN		((unsigned char)  40)
+#define TAG_NIS_SERVER		((unsigned char)  41)
+#define TAG_NTP_SERVER		((unsigned char)  42)
+#define TAG_MAX_MSGSZ		((unsigned char)  57)
 #define TAG_END			((unsigned char) 255)
 
 
