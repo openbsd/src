@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_ohci.c,v 1.16 2005/03/30 14:40:47 dlg Exp $ */
+/*	$OpenBSD: pxa2x0_ohci.c,v 1.17 2005/04/03 23:47:36 uwe Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -106,7 +106,10 @@ pxaohci_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	sc->sc.sc_powerhook = powerhook_establish(pxaohci_power, &sc->sc);
+	sc->sc.sc_powerhook = powerhook_establish(pxaohci_power, sc);
+	if (sc->sc.sc_powerhook == NULL)
+		printf("%s: can't establish power hook\n",
+		    sc->sc.sc_bus.bdev.dv_xname);
 
 	sc->sc_ih = pxa2x0_intr_establish(PXA2X0_INT_USBH1, IPL_USB,
 	    ohci_intr, sc, sc->sc.sc_bus.bdev.dv_xname);
@@ -125,7 +128,11 @@ pxaohci_detach(struct device *self, int flags)
 	rv = ohci_detach(&sc->sc, flags);
 	if (rv)
 		return (rv);
-	powerhook_disestablish(sc->sc.sc_powerhook);
+
+	if (sc->sc.sc_powerhook != NULL) {
+		powerhook_disestablish(sc->sc.sc_powerhook);
+		sc->sc.sc_powerhook = NULL;
+	}
 
 	if (sc->sc_ih != NULL) {
 		pxa2x0_intr_disestablish(sc->sc_ih);
@@ -166,14 +173,14 @@ pxaohci_power(int why, void *arg)
 	switch (why) {
 	case PWR_STANDBY:
 	case PWR_SUSPEND:
-		ohci_power(why, arg);
+		ohci_power(why, &sc->sc);
 		pxa2x0_clkman_config(CKEN_USBHC, 0);
 		break;
 
 	case PWR_RESUME:
 		pxa2x0_clkman_config(CKEN_USBHC, 1);
 		pxaohci_enable(sc);
-		ohci_power(why, arg);
+		ohci_power(why, &sc->sc);
 		break;
 	}
 	sc->sc.sc_bus.use_polling--;
@@ -213,4 +220,3 @@ pxaohci_enable(struct pxaohci_softc *sc)
 	bus_space_write_4(sc->sc.iot, sc->sc.ioh, USBHC_HR,
 	    (hr & USBHC_HR_MASK) & ~(USBHC_HR_SSEP2));
 }
-
