@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.45 2005/03/15 09:24:05 jmc Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.46 2005/03/15 23:41:52 henning Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -357,6 +357,26 @@ which limits the sent
 messages to announcements of the local AS.
 The default for IBGP peers is
 .Ic all .
+.Pp
+.It Ic depend on Ar interface
+The neighbor session will be kept in state
+.Em IDLE
+as long as
+.Ar interface
+reports no link.
+For
+.Xr carp 4
+interfaces, no link means that the interface is currently
+.Em backup .
+This is primarily intended to be used with
+.Xr carp 4
+to reduce failover times.
+.Pp
+The state of the network interfaces on the system can be viewed
+using the
+.Cm show interfaces
+command to
+.Xr bgpctl 8 .
 .Pp
 .It Ic descr Ar description
 Add a description.
