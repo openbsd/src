@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.16 1998/09/15 21:54:44 deraadt Exp $
+#	$OpenBSD: list,v 1.17 1998/09/17 15:31:16 deraadt Exp $
 
 # copy the crunched binary, link to it, and kill it
 COPY	${OBJDIR}/instbin	instbin
@@ -81,7 +81,7 @@ SYMLINK	/tmp/hosts			etc/hosts
 
 # dhcp things
 COPY	${DESTDIR}/etc/dhclient.conf	etc/dhclient.conf
-COPY	${DESTDIR}/etc/dhclient-script etc/dhclient-script
+COPY	${DESTDIR}/sbin/dhclient-script sbin/dhclient-script
 
 # and the common installation tools
 COPY	${CURDIR}/termcap.pcvt	usr/share/misc/termcap

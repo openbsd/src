@@ -42,7 +42,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: clparse.c,v 1.2 1998/09/17 13:21:41 deraadt Exp $ Copyright (c) 1997 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: clparse.c,v 1.3 1998/09/17 15:31:15 deraadt Exp $ Copyright (c) 1997 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -84,7 +84,7 @@ int read_client_conf ()
 	top_level_config.backoff_cutoff = 120;
 	top_level_config.initial_interval = 10;
 	top_level_config.bootp_policy = ACCEPT;
-	top_level_config.script_name = "/usr/bin/dhclient-script";
+	top_level_config.script_name = "/sbin/dhclient-script";
 	top_level_config.requested_options
 		[top_level_config.requested_option_count++] =
 			DHO_SUBNET_MASK;

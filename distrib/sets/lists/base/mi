@@ -59,6 +59,7 @@
 ./sbin/ccdconfig
 ./sbin/clri
 ./sbin/dhclient
+./sbin/dhclient-script
 ./sbin/disklabel
 ./sbin/dmesg
 ./sbin/dump
@@ -178,7 +179,6 @@
 ./usr/bin/cvs
 ./usr/bin/cvsbug
 ./usr/bin/dc
-./usr/bin/dhclient-script
 ./usr/bin/diff
 ./usr/bin/diff3
 ./usr/bin/dirname
