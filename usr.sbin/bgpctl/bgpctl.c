@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.4 2004/01/03 16:13:49 henning Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.5 2004/01/03 16:46:08 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -27,8 +27,8 @@
 #include "bgpd.h"
 
 int	main(int, char *[]);
-void	print_summary_head(void);
-void	print_summary(struct peer *);
+void	summary_head(void);
+int	summary_msg(struct imsg *);
 
 struct imsgbuf	ibuf;
 
@@ -42,13 +42,17 @@ static const char *statenames[] = {
 	"Established"
 };
 
+enum views {
+	VIEW_SUMMARY
+};
+
 int
 main(int argc, char *argv[])
 {
 	struct sockaddr_un	 sun;
 	int			 fd, n, done;
 	struct imsg		 imsg;
-	struct peer		*p;
+	enum views		 view = VIEW_SUMMARY;
 
 	if ((fd = socket(AF_UNIX, SOCK_STREAM, 0)) == -1) {
 		err(1, "control_init: socket");
@@ -64,51 +68,61 @@ main(int argc, char *argv[])
 	}
 
 	imsg_init(&ibuf, fd);
-	imsg_compose(&ibuf, IMSG_CTL_SHOW_NEIGHBOR, 0, NULL, 0);
-	print_summary_head();
 	done = 0;
 
-	while (!done) {
-		if((n = imsg_read(&ibuf)) == -1)
-			break;
+	switch (view) {
+	case VIEW_SUMMARY:
+		imsg_compose(&ibuf, IMSG_CTL_SHOW_NEIGHBOR, 0, NULL, 0);
+		summary_head();
+	}
 
+	while (!done) {
+		if ((n = imsg_read(&ibuf)) == -1)
+			break;
 		if (n == 0)
 			errx(1, "pipe closed");
 
 		while (!done) {
 			if ((n = imsg_get(&ibuf, &imsg)) == -1)
 				errx(1, "imsg_get error");
-
 			if (n == 0) {
 				done = 1;
 				break;
 			}
-
-			switch (imsg.hdr.type) {
-			case IMSG_CTL_SHOW_NEIGHBOR:
-				p = imsg.data;
-				print_summary(p);
-				break;
-			case IMSG_CTL_END:
-				done = 1;
-				break;
-			default:
-				break;
+			switch (view) {
+			case VIEW_SUMMARY:
+				done = summary_msg(&imsg);
 			}
+			imsg_free(&imsg);
 		}
 	}
 	close(fd);
 }
 
 void
-print_summary_head(void)
+summary_head(void)
 {
-	printf("%-15s %-5s %s\n", "Neighbor", "AS", "Status");
+	printf("%-15s %-5s %s\n", "Neighbor", "AS", "State");
 }
 
-void
-print_summary(struct peer *p)
+int
+summary_msg(struct imsg *imsg)
 {
-	printf("%-15s %5u %s\n", inet_ntoa(p->conf.remote_addr.sin_addr),
-	    p->conf.remote_as, statenames[p->state]);
+	struct peer		*p;
+
+	switch (imsg->hdr.type) {
+	case IMSG_CTL_SHOW_NEIGHBOR:
+		p = imsg->data;
+		printf("%-15s %5u %s\n",
+		    inet_ntoa(p->conf.remote_addr.sin_addr),
+		    p->conf.remote_as, statenames[p->state]);
+		break;
+	case IMSG_CTL_END:
+		return (1);
+		break;
+	default:
+		break;
+	}
+
+	return (0);
 }
