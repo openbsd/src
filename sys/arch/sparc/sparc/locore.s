@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.52 2002/07/25 18:50:37 deraadt Exp $	*/
+/*	$OpenBSD: locore.s,v 1.53 2002/08/11 23:07:34 art Exp $	*/
 /*	$NetBSD: locore.s,v 1.73 1997/09/13 20:36:48 pk Exp $	*/
 
 /*
@@ -54,6 +54,7 @@
 #include "assym.h"
 #include "ksyms.h"
 #include <machine/param.h>
+#include <machine/asm.h>
 #include <sparc/sparc/intreg.h>
 #include <sparc/sparc/timerreg.h>
 #include <sparc/sparc/vaddrs.h>
@@ -98,7 +99,7 @@
  * something like:
  *	foointr:
  *		TRAP_SETUP(...)		! makes %o registers safe
- *		INCR(_cnt+V_FOO)	! count a foo
+ *		INCR(_C_LABEL(cnt)+V_FOO)	! count a foo
  */
 #define INCR(what) \
 	sethi	%hi(what), %o0; \
@@ -138,11 +139,11 @@
  * stack).  One sethi+cmp is all we need since this is so carefully
  * arranged.
  */
-	.globl	_intstack
-	.globl	_eintstack
-_intstack:
+	.globl	_C_LABEL(intstack)
+	.globl	_C_LABEL(eintstack)
+_C_LABEL(intstack):
 	.skip	128 * 128		! 16k = 128 128-byte stack frames
-_eintstack:
+_C_LABEL(eintstack):
 
 /*
  * When a process exits and its u. area goes away, we set cpcb to point
@@ -152,8 +153,8 @@ _eintstack:
  * process 0's kernel stack can quietly overrun into it during bootup, if
  * we feel like doing that).
  */
-	.globl	_idle_u
-_idle_u:
+	.globl	_C_LABEL(idle_u)
+_C_LABEL(idle_u):
 	.skip	USPACE
 
 /*
@@ -161,8 +162,8 @@ _idle_u:
  *
  * This must be aligned on an 8 byte boundary.
  */
-	.globl	_u0
-_u0:	.skip	USPACE
+	.globl	_C_LABEL(u0)
+_C_LABEL(u0):	.skip	USPACE
 estack0:
 
 #ifdef KGDB
@@ -170,68 +171,68 @@ estack0:
  * Another item that must be aligned, easiest to put it here.
  */
 KGDB_STACK_SIZE = 2048
-	.globl	_kgdb_stack
-_kgdb_stack:
+	.globl	_C_LABEL(kgdb_stack)
+_C_LABEL(kgdb_stack):
 	.skip	KGDB_STACK_SIZE		! hope this is enough
 #endif
 
 /*
- * _cpcb points to the current pcb (and hence u. area).
+ * _C_LABEL(cpcb) points to the current pcb (and hence u. area).
  * Initially this is the special one.
  */
-	.globl	_cpcb
-_cpcb:	.word	_u0
+	.globl	_C_LABEL(cpcb)
+_C_LABEL(cpcb):	.word	_C_LABEL(u0)
 
 /*
- * _cputyp is the current cpu type, used to distinguish between
+ * _C_LABEL(cputyp) is the current cpu type, used to distinguish between
  * the many variations of different sun4* machines. It contains
  * the value CPU_SUN4, CPU_SUN4C, or CPU_SUN4M.
  */
-	.globl	_cputyp
-_cputyp:
+	.globl	_C_LABEL(cputyp)
+_C_LABEL(cputyp):
 	.word	1
 /*
- * _cpumod is the current cpu model, used to distinguish between variants
+ * _C_LABEL(cpumod) is the current cpu model, used to distinguish between variants
  * in the Sun4 and Sun4M families. See /sys/arch/sparc/include/param.h for
  * possible values.
  */
-	.globl	_cpumod
-_cpumod:
+	.globl	_C_LABEL(cpumod)
+_C_LABEL(cpumod):
 	.word	1
 /*
- * _mmumod is the current mmu model, used to distinguish between the
+ * _C_LABEL(mmumod) is the current mmu model, used to distinguish between the
  * various implementations of the SRMMU in the sun4m family of machines.
  * See /sys/arch/sparc/include/param.h for possible values.
  */
-	.globl	_mmumod
-_mmumod:
+	.globl	_C_LABEL(mmumod)
+_C_LABEL(mmumod):
 	.word	0
 
 #if defined(SUN4C) || defined(SUN4M)
-_cputypval:
+_C_LABEL(cputypval):
 	.asciz	"sun4c"
 	.ascii	"     "
-_cputypvar:
+_C_LABEL(cputypvar):
 	.asciz	"compatible"
-_cputypvallen = _cputypvar - _cputypval
+_C_LABEL(cputypvallen) = _C_LABEL(cputypvar) - _C_LABEL(cputypval)
 	_ALIGN
 #endif
 
 /*
  * nbpg is used by pmap_bootstrap(), pgofset is used internally.
  */
-	.globl	_nbpg
-_nbpg:
+	.globl	_C_LABEL(nbpg)
+_C_LABEL(nbpg):
 	.word	0
-_pgofset:
+_C_LABEL(pgofset):
 	.word	0
 
-	.globl	_trapbase
-_trapbase:
+	.globl	_C_LABEL(trapbase)
+_C_LABEL(trapbase):
 	.word	0
 
 #if defined(SUN4M)
-_mapme:
+_C_LABEL(mapme):
 	.asciz "0 0 f8000000 15c6a0 map-pages"
 #endif
 
@@ -304,11 +305,11 @@ sun4_notsup:
 
 	/* hardware interrupts (can be linked or made `fast') */
 #define	HARDINT44C(lev) \
-	mov (lev), %l3; b _sparc_interrupt44c; mov %psr, %l0; nop
+	mov (lev), %l3; b _C_LABEL(sparc_interrupt44c); mov %psr, %l0; nop
 
 	/* hardware interrupts (can be linked or made `fast') */
 #define	HARDINT4M(lev) \
-	mov (lev), %l3; b _sparc_interrupt4m; mov %psr, %l0; nop
+	mov (lev), %l3; b _C_LABEL(sparc_interrupt4m); mov %psr, %l0; nop
 
 	/* software interrupts (may not be made direct, sorry---but you
 	   should not be using them trivially anyway) */
@@ -336,7 +337,7 @@ sun4_notsup:
 #endif
 
 /* special high-speed 1-instruction-shaved-off traps (get nothing in %l3) */
-#define	SYSCALL		b syscall; mov %psr, %l0; nop; nop
+#define	SYSCALL		b _C_LABEL(_syscall); mov %psr, %l0; nop; nop
 #define	WINDOW_OF	b window_of; mov %psr, %l0; nop; nop
 #define	WINDOW_UF	b window_uf; mov %psr, %l0; nop; nop
 #ifdef notyet
@@ -346,8 +347,8 @@ sun4_notsup:
 #define	ZS_INTERRUPT4M	HARDINT4M(12)
 #endif
 
-	.globl	start, _kernel_text
-_kernel_text:
+	.globl	start, _C_LABEL(kernel_text)
+_C_LABEL(kernel_text):
 start:
 /*
  * Put sun4 traptable first, since it needs the most stringent aligment (8192)
@@ -1154,9 +1155,9 @@ trapbase_sun4m:
 #define	REDSIZE	(8*96)		/* some room for bouncing */
 #define	REDSTACK 2048		/* size of `panic: stack overflow' region */
 	.data
-_redzone:
-	.word	_idle_u + REDSIZE
-_redstack:
+_C_LABEL(redzone):
+	.word	_C_LABEL(idle_u) + REDSIZE
+_C_LABEL(redstack):
 	.skip	REDSTACK
 	.text
 Lpanic_red:
@@ -1166,28 +1167,28 @@ Lpanic_red:
 	/* set stack pointer redzone to base+minstack; alters base */
 #define	SET_SP_REDZONE(base, tmp) \
 	add	base, REDSIZE, base; \
-	sethi	%hi(_redzone), tmp; \
-	st	base, [tmp + %lo(_redzone)]
+	sethi	%hi(_C_LABEL(redzone)), tmp; \
+	st	base, [tmp + %lo(_C_LABEL(redzone))]
 
 	/* variant with a constant */
 #define	SET_SP_REDZONE_CONST(const, tmp1, tmp2) \
 	set	(const) + REDSIZE, tmp1; \
-	sethi	%hi(_redzone), tmp2; \
-	st	tmp1, [tmp2 + %lo(_redzone)]
+	sethi	%hi(_C_LABEL(redzone)), tmp2; \
+	st	tmp1, [tmp2 + %lo(_C_LABEL(redzone))]
 
 	/* check stack pointer against redzone (uses two temps) */
 #define	CHECK_SP_REDZONE(t1, t2) \
-	sethi	%hi(_redzone), t1; \
-	ld	[t1 + %lo(_redzone)], t2; \
+	sethi	%hi(_C_LABEL(redzone)), t1; \
+	ld	[t1 + %lo(_C_LABEL(redzone))], t2; \
 	cmp	%sp, t2;	/* if sp >= t2, not in red zone */ \
 	bgeu	7f; nop;	/* and can continue normally */ \
 	/* move to panic stack */ \
-	st	%g0, [t1 + %lo(_redzone)]; \
-	set	_redstack + REDSTACK - 96, %sp; \
+	st	%g0, [t1 + %lo(_C_LABEL(redzone))]; \
+	set	_C_LABEL(redstack) + REDSTACK - 96, %sp; \
 	/* prevent panic() from lowering ipl */ \
-	sethi	%hi(_panicstr), t2; \
+	sethi	%hi(_C_LABEL(panicstr)), t2; \
 	set	Lpanic_red, t2; \
-	st	t2, [t1 + %lo(_panicstr)]; \
+	st	t2, [t1 + %lo(_C_LABEL(panicstr))]; \
 	rd	%psr, t1;		/* t1 = splhigh() */ \
 	or	t1, PSR_PIL, t2; \
 	wr	t2, 0, %psr; \
@@ -1195,7 +1196,7 @@ Lpanic_red:
 	nop; nop; nop; \
 	save	%sp, -CCFSZ, %sp;	/* preserve current window */ \
 	sethi	%hi(Lpanic_red), %o0; \
-	call	_panic; or %o0, %lo(Lpanic_red), %o0; \
+	call	_C_LABEL(panic); or %o0, %lo(Lpanic_red), %o0; \
 7:
 
 #else
@@ -1454,8 +1455,8 @@ wmask:	.skip	32			! u_char wmask[0..31];
 	 add	%fp, stackspace, %sp; \
 1: \
 	/* came from user mode: compute pcb_nw */ \
-	sethi	%hi(_cpcb), %l6; \
-	ld	[%l6 + %lo(_cpcb)], %l6; \
+	sethi	%hi(_C_LABEL(cpcb)), %l6; \
+	ld	[%l6 + %lo(_C_LABEL(cpcb))], %l6; \
 	ld	[%l6 + PCB_WIM], %l5; \
 	and	%l0, 31, %l4; \
 	sub	%l4, %l5, %l5; \
@@ -1467,8 +1468,8 @@ wmask:	.skip	32			! u_char wmask[0..31];
 	 sethi	%hi(USPACE+(stackspace)), %l5; \
 	/* yes, in trap window; must clean it */ \
 	CALL_CLEAN_TRAP_WINDOW; \
-	sethi	%hi(_cpcb), %l6; \
-	ld	[%l6 + %lo(_cpcb)], %l6; \
+	sethi	%hi(_C_LABEL(cpcb)), %l6; \
+	ld	[%l6 + %lo(_C_LABEL(cpcb))], %l6; \
 	sethi	%hi(USPACE+(stackspace)), %l5; \
 2: \
 	/* trap window is (now) clean: set %sp */ \
@@ -1492,9 +1493,9 @@ wmask:	.skip	32			! u_char wmask[0..31];
 	 btst	%l5, %l4; \
 	/* came from kernel mode; cond codes still indicate trap window */ \
 	bz,a	0f; \
-	 sethi	%hi(_eintstack), %l7; \
+	 sethi	%hi(_C_LABEL(eintstack)), %l7; \
 	CALL_CLEAN_TRAP_WINDOW; \
-	sethi	%hi(_eintstack), %l7; \
+	sethi	%hi(_C_LABEL(eintstack)), %l7; \
 0:	/* now if %fp >= eintstack, we were on the kernel stack */ \
 	cmp	%fp, %l7; \
 	bge,a	3f; \
@@ -1503,8 +1504,8 @@ wmask:	.skip	32			! u_char wmask[0..31];
 	 add	%fp, stackspace, %sp;	/* else stay on intstack */ \
 1: \
 	/* came from user mode: compute pcb_nw */ \
-	sethi	%hi(_cpcb), %l6; \
-	ld	[%l6 + %lo(_cpcb)], %l6; \
+	sethi	%hi(_C_LABEL(cpcb)), %l6; \
+	ld	[%l6 + %lo(_C_LABEL(cpcb))], %l6; \
 	ld	[%l6 + PCB_WIM], %l5; \
 	and	%l0, 31, %l4; \
 	sub	%l4, %l5, %l5; \
@@ -1513,14 +1514,14 @@ wmask:	.skip	32			! u_char wmask[0..31];
 	st	%l5, [%l6 + PCB_UW]; \
 	/* cond codes still indicate whether in trap window */ \
 	bz,a	2f; \
-	 sethi	%hi(_eintstack), %l7; \
+	 sethi	%hi(_C_LABEL(eintstack)), %l7; \
 	/* yes, in trap window; must save regs */ \
 	CALL_CLEAN_TRAP_WINDOW; \
-	sethi	%hi(_eintstack), %l7; \
+	sethi	%hi(_C_LABEL(eintstack)), %l7; \
 2: \
 	add	%l7, stackspace, %sp; \
 3: \
-	SET_SP_REDZONE_CONST(_intstack, %l6, %l5); \
+	SET_SP_REDZONE_CONST(_C_LABEL(intstack), %l6, %l5); \
 4: \
 	CHECK_SP_REDZONE(%l6, %l5)
 
@@ -1546,8 +1547,8 @@ clean_trap_window:
 	mov	%g5, %l5		! save %g5
 	mov	%g6, %l6		! ... and %g6
 /*	mov	%g7, %l7		! ... and %g7 (already done for us) */
-	sethi	%hi(_cpcb), %g6		! get current pcb
-	ld	[%g6 + %lo(_cpcb)], %g6
+	sethi	%hi(_C_LABEL(cpcb)), %g6		! get current pcb
+	ld	[%g6 + %lo(_C_LABEL(cpcb))], %g6
 
 	/* Figure out whether it is a user window (cpcb->pcb_uw > 0). */
 	ld	[%g6 + PCB_UW], %g7
@@ -1575,8 +1576,8 @@ ctw_merge:
 	sll	%g5, %g7, %g5
 	wr	%g5, 0, %wim		! setwim(g5);
 	and	%g7, 31, %g7		! cpcb->pcb_wim = g7 & 31;
-	sethi	%hi(_cpcb), %g6		! re-get current pcb
-	ld	[%g6 + %lo(_cpcb)], %g6
+	sethi	%hi(_C_LABEL(cpcb)), %g6	! re-get current pcb
+	ld	[%g6 + %lo(_C_LABEL(cpcb))], %g6
 	st	%g7, [%g6 + PCB_WIM]
 	nop
 	restore				! back to trap window
@@ -1590,8 +1591,8 @@ ctw_merge:
 
 ctw_stackghost:
 	!! StackGhost Encrypt
-	sethi	%hi(_cpcb), %g6			! get current *pcb
-	ld	[%g6 + %lo(_cpcb)], %g6		! dereference *pcb
+	sethi	%hi(_C_LABEL(cpcb)), %g6		! get current *pcb
+	ld	[%g6 + %lo(_C_LABEL(cpcb))], %g6	! dereference *pcb
 	ld	[%g6 + PCB_WCOOKIE], %l0	! get window cookie
 	xor	%l0, %i7, %i7			! mix in cookie
 	b	ctw_merge
@@ -1608,8 +1609,8 @@ ctw_user:
 	bne	ctw_invalid		! choke on it
 	 EMPTY
 
-	sethi	%hi(_pgofset), %g6	! trash %g6=curpcb
-	ld	[%g6 + %lo(_pgofset)], %g6
+	sethi	%hi(_C_LABEL(pgofset)), %g6	! trash %g6=curpcb
+	ld	[%g6 + %lo(_C_LABEL(pgofset))], %g6
 	PTE_OF_ADDR(%sp, %g7, ctw_invalid, %g6, NOP_ON_4M_1)
 	CMP_PTE_USER_WRITE(%g7, %g5, NOP_ON_4M_2) ! likewise if not writable
 	bne	ctw_invalid
@@ -1638,8 +1639,8 @@ ctw_invalid:
 	 * Reread cpcb->pcb_uw.  We decremented this earlier,
 	 * so it is off by one.
 	 */
-	sethi	%hi(_cpcb), %g6		! re-get current pcb
-	ld	[%g6 + %lo(_cpcb)], %g6
+	sethi	%hi(_C_LABEL(cpcb)), %g6		! re-get current pcb
+	ld	[%g6 + %lo(_C_LABEL(cpcb))], %g6
 
 	ld	[%g6 + PCB_UW], %g7	! (number of user windows) - 1
 	add	%g6, PCB_RW, %g5
@@ -1723,7 +1724,7 @@ ctw_invalid:
 #if defined(SUN4)
 memfault_sun4:
 	TRAP_SETUP(-CCFSZ-80)
-	INCR(_uvmexp+V_FAULTS)
+	INCR(_C_LABEL(uvmexp)+V_FAULTS)
 
 	st	%g1, [%sp + CCFSZ + 20]	! save g1
 	rd	%y, %l4			! save y
@@ -1735,7 +1736,7 @@ memfault_sun4:
 	 * buserr	= basically just like sun4c sync error reg but
 	 *		  no SER_WRITE bit (have to figure out from code).
 	 */
-	set	_par_err_reg, %o0	! memerr ctrl addr -- XXX mapped?
+	set	_C_LABEL(par_err_reg), %o0	! memerr ctrl addr -- XXX mapped?
 	ld	[%o0], %o0		! get it
 	std	%g2, [%sp + CCFSZ + 24]	! save g2, g3
 	ld	[%o0], %o1		! memerr ctrl register
@@ -1754,9 +1755,9 @@ memfault_sun4:
 	/* memory error = death for now XXX */
 	clr	%o3
 	clr	%o4
-	call	_memerr4_4c
+	call	_C_LABEL(memerr4_4c)
 	 clr	%o0
-	call	_callrom
+	call	_C_LABEL(callrom)
 	 nop
 
 0:
@@ -1788,7 +1789,7 @@ memfault_sun4:
 memfault_sun4c:
 #if defined(SUN4C)
 	TRAP_SETUP(-CCFSZ-80)
-	INCR(_uvmexp+V_FAULTS)		! cnt.v_faults++ (clobbers %o0,%o1)
+	INCR(_C_LABEL(uvmexp)+V_FAULTS)		! cnt.v_faults++ (clobbers %o0,%o1)
 	
 	st	%g1, [%sp + CCFSZ + 20]	! save g1
 	rd	%y, %l4			! save y
@@ -1850,7 +1851,7 @@ memfault_sun4c:
 	 * If memerr() returns, return from the trap.
 	 */
 	wr	%l0, PSR_ET, %psr
-	call	_memerr4_4c
+	call	_C_LABEL(memerr4_4c)
 	 clr	%o0
 
 	ld	[%sp + CCFSZ + 20], %g1	! restore g1 through g7
@@ -1870,7 +1871,7 @@ memfault_sun4c:
 	 * %o1 through %o4 still hold the error reg contents.
 	 */
 1:
-	call	_memerr4_4c
+	call	_C_LABEL(memerr4_4c)
 	 mov	1, %o0
 
 	ld	[%sp + CCFSZ + 20], %g1	! restore g1 through g7
@@ -1894,7 +1895,7 @@ BARF
 	jmpl	%l5, %l7
 	 or	%l4, %lo(CPUINFO_SYNCFLTDUMP), %l4
 	TRAP_SETUP(-CCFSZ-80)
-	INCR(_uvmexp+V_FAULTS)		! cnt.v_faults++ (clobbers %o0,%o1)
+	INCR(_C_LABEL(uvmexp)+V_FAULTS)		! cnt.v_faults++ (clobbers %o0,%o1)
 
 	st	%g1, [%sp + CCFSZ + 20]	! save g1
 	rd	%y, %l4			! save y
@@ -1919,7 +1920,7 @@ BARF
 	std	%i2, [%sp + CCFSZ + 56]
 	std	%i4, [%sp + CCFSZ + 64]
 	std	%i6, [%sp + CCFSZ + 72]
-	call	_mem_access_fault4m	! mem_access_fault(type,sfsr,sfva,&tf);
+	call	_C_LABEL(mem_access_fault4m)	! mem_access_fault(type,sfsr,sfva,&tf);
 	 add	%sp, CCFSZ, %o3		! (argument: &tf)
 
 	ldd	[%sp + CCFSZ + 0], %l0	! load new values
@@ -1955,7 +1956,7 @@ normal_mem_fault:
 	mov	%l0, %o4		! (argument: psr)
 	std	%i4, [%sp + CCFSZ + 64]
 	std	%i6, [%sp + CCFSZ + 72]
-	call	_mem_access_fault	! mem_access_fault(type, ser, sva,
+	call	_C_LABEL(mem_access_fault)	! mem_access_fault(type, ser, sva,
 					!		pc, psr, &tf);
 	 add	%sp, CCFSZ, %o5		! (argument: &tf)
 
@@ -2026,7 +2027,7 @@ Lslowtrap_reenter:
 	mov	%l1, %o2		! (pc)
 	std	%i4, [%sp + CCFSZ + 64]
 	add	%sp, CCFSZ, %o3		! (&tf)
-	call	_trap			! trap(type, psr, pc, &tf)
+	call	_C_LABEL(trap)			! trap(type, psr, pc, &tf)
 	 std	%i6, [%sp + CCFSZ + 72]
 
 	ldd	[%sp + CCFSZ], %l0	! load new values
@@ -2055,12 +2056,12 @@ Lslowtrap_reenter:
  * Lslowtrap_reenter above, but maybe after switching stacks....
  */
 softtrap:
-	sethi	%hi(_eintstack), %l7
+	sethi	%hi(_C_LABEL(eintstack)), %l7
 	cmp	%sp, %l7
 	bge	Lslowtrap_reenter
 	 EMPTY
-	sethi	%hi(_cpcb), %l6
-	ld	[%l6 + %lo(_cpcb)], %l6
+	sethi	%hi(_C_LABEL(cpcb)), %l6
+	ld	[%l6 + %lo(_C_LABEL(cpcb))], %l6
 	set	USPACE-CCFSZ-80, %l5
 	add	%l6, %l5, %l7
 	SET_SP_REDZONE(%l6, %l5)
@@ -2106,7 +2107,7 @@ bpt:
 	 * Now call kgdb_trap_glue(); if it returns, call trap().
 	 */
 	mov	%o0, %l3		! gotta save trap type
-	call	_kgdb_trap_glue		! kgdb_trap_glue(type, &trapframe)
+	call	_C_LABEL(kgdb_trap_glue) ! kgdb_trap_glue(type, &trapframe)
 	 add	%sp, CCFSZ, %o1		! (&trapframe)
 
 	/*
@@ -2131,15 +2132,15 @@ bpt:
  *	int type;
  *	struct trapframe *tf0;
  */
-	.globl	_kgdb_trap_glue
-_kgdb_trap_glue:
+	.globl	_C_LABEL(kgdb_trap_glue)
+_C_LABEL(kgdb_trap_glue):
 	save	%sp, -CCFSZ, %sp
 
-	call	_write_all_windows
+	call	_C_LABEL(write_all_windows)
 	 mov	%sp, %l4		! %l4 = current %sp
 
 	/* copy trapframe to top of kgdb stack */
-	set	_kgdb_stack + KGDB_STACK_SIZE - 80, %l0
+	set	_C_LABEL(kgdb_stack) + KGDB_STACK_SIZE - 80, %l0
 					! %l0 = tfcopy -> end_of_kgdb_stack
 	mov	80, %l1
 1:	ldd	[%i1], %l2
@@ -2151,16 +2152,16 @@ _kgdb_trap_glue:
 
 #ifdef DEBUG
 	/* save old red zone and then turn it off */
-	sethi	%hi(_redzone), %l7
-	ld	[%l7 + %lo(_redzone)], %l6
-	st	%g0, [%l7 + %lo(_redzone)]
+	sethi	%hi(_C_LABEL(redzone)), %l7
+	ld	[%l7 + %lo(_C_LABEL(redzone))], %l6
+	st	%g0, [%l7 + %lo(_C_LABEL(redzone))]
 #endif
 	/* switch to kgdb stack */
 	add	%l0, -CCFSZ-80, %sp
 
 	/* if (kgdb_trap(type, tfcopy)) kgdb_rett(tfcopy); */
 	mov	%i0, %o0
-	call	_kgdb_trap
+	call	_C_LABEL(kgdb_trap)
 	add	%l0, -80, %o1
 	tst	%o0
 	bnz,a	kgdb_rett
@@ -2173,7 +2174,7 @@ _kgdb_trap_glue:
 	 */
 	mov	%l4, %sp
 #ifdef DEBUG
-	st	%l6, [%l7 + %lo(_redzone)]	! restore red zone
+	st	%l6, [%l7 + %lo(_C_LABEL(redzone))]	! restore red zone
 #endif
 	ret
 	restore
@@ -2202,7 +2203,7 @@ kgdb_rett:
 	ld	[%g1 + 12], %g3		! set %y
 	wr	%g3, 0, %y
 #ifdef DEBUG
-	st	%l6, [%l7 + %lo(_redzone)] ! and restore red zone
+	st	%l6, [%l7 + %lo(_C_LABEL(redzone))] ! and restore red zone
 #endif
 	wr	%g0, 0, %wim		! enable window changes
 	nop; nop; nop
@@ -2231,8 +2232,8 @@ kgdb_rett:
 	rd	%psr, %l0
 	sll	%l1, %l0, %l1
 	wr	%l1, 0, %wim		! %wim = 1 << (%psr & 31)
-	sethi	%hi(_cpcb), %l1
-	ld	[%l1 + %lo(_cpcb)], %l1
+	sethi	%hi(_C_LABEL(cpcb)), %l1
+	ld	[%l1 + %lo(_C_LABEL(cpcb))], %l1
 	and	%l0, 31, %l0		! CWP = %psr & 31;
 	st	%l0, [%l1 + PCB_WIM]	! cpcb->pcb_wim = CWP;
 	save	%g0, %g0, %g0		! back to window to reload
@@ -2248,7 +2249,7 @@ kgdb_rett:
  * XXX	should not have to save&reload ALL the registers just for
  *	ptrace...
  */
-syscall:
+_C_LABEL(_syscall):
 	TRAP_SETUP(-CCFSZ-80)
 	wr	%l0, PSR_ET, %psr
 	std	%l0, [%sp + CCFSZ + 0]	! tf_psr, tf_pc
@@ -2264,7 +2265,7 @@ syscall:
 	std	%i2, [%sp + CCFSZ + 56]
 	mov	%l1, %o2		! (pc)
 	std	%i4, [%sp + CCFSZ + 64]
-	call	_syscall		! syscall(code, &tf, pc, suncompat)
+	call	_C_LABEL(syscall)		! syscall(code, &tf, pc, suncompat)
 	 std	%i6, [%sp + CCFSZ + 72]
 	! now load em all up again, sigh
 	ldd	[%sp + CCFSZ + 0], %l0	! new %psr, new pc
@@ -2341,7 +2342,7 @@ softintr_sun44c:
 softintr_common:
 	INTR_SETUP(-CCFSZ-80)
 	std	%g2, [%sp + CCFSZ + 24]	! save registers
-	INCR(_uvmexp+V_INTR)		! cnt.v_intr++; (clobbers %o0,%o1)
+	INCR(_C_LABEL(uvmexp)+V_INTR)	! cnt.v_intr++; (clobbers %o0,%o1)
 	mov	%g1, %l7
 	rd	%y, %l6
 	std	%g4, [%sp + CCFSZ + 32]
@@ -2353,12 +2354,12 @@ softintr_common:
 	wr	%l4, PSR_ET, %psr	! song and dance is necessary
 	std	%l0, [%sp + CCFSZ + 0]	! set up intrframe/clockframe
 	sll	%l3, 2, %l5
-	set	_intrcnt, %l4		! intrcnt[intlev]++;
+	set	_C_LABEL(intrcnt), %l4	! intrcnt[intlev]++;
 	ld	[%l4 + %l5], %o0
 	std	%l2, [%sp + CCFSZ + 8]
 	inc	%o0
 	st	%o0, [%l4 + %l5]
-	set	_intrhand, %l4		! %l4 = intrhand[intlev];
+	set	_C_LABEL(intrhand), %l4	! %l4 = intrhand[intlev];
 	ld	[%l4 + %l5], %l4
 	b	3f
 	 st	%fp, [%sp + CCFSZ + 16]
@@ -2390,14 +2391,14 @@ softintr_common:
 	 * (see intr.c).
 	 */
 #if defined(SUN4M)
-	.globl	_sparc_interrupt4m
-_sparc_interrupt4m:
+	.globl	_C_LABEL(sparc_interrupt4m)
+_C_LABEL(sparc_interrupt4m):
 	mov	1, %l4
 	sethi	%hi(ICR_PI_PEND), %l5
 	ld	[%l5 + %lo(ICR_PI_PEND)], %l5
 	sll	%l4, %l3, %l4
 	andcc	%l5, %l4, %g0
-	bne	_sparc_interrupt_common
+	bne	_C_LABEL(sparc_interrupt_common)
 	 nop
 
 	! a soft interrupt; clear bit in interrupt-pending register
@@ -2408,12 +2409,12 @@ _sparc_interrupt4m:
 	b,a	softintr_common
 #endif
 
-	.globl	_sparc_interrupt44c
-_sparc_interrupt44c:
-_sparc_interrupt_common:
+	.globl	_C_LABEL(sparc_interrupt44c)
+_C_LABEL(sparc_interrupt44c):
+_C_LABEL(sparc_interrupt_common):
 	INTR_SETUP(-CCFSZ-80)
 	std	%g2, [%sp + CCFSZ + 24]	! save registers
-	INCR(_uvmexp+V_INTR)		! cnt.v_intr++; (clobbers %o0,%o1)
+	INCR(_C_LABEL(uvmexp)+V_INTR)	! cnt.v_intr++; (clobbers %o0,%o1)
 	mov	%g1, %l7
 	rd	%y, %l6
 	std	%g4, [%sp + CCFSZ + 32]
@@ -2425,12 +2426,12 @@ _sparc_interrupt_common:
 	wr	%l4, PSR_ET, %psr	! song and dance is necessary
 	std	%l0, [%sp + CCFSZ + 0]	! set up intrframe/clockframe
 	sll	%l3, 2, %l5
-	set	_intrcnt, %l4		! intrcnt[intlev]++;
+	set	_C_LABEL(intrcnt), %l4		! intrcnt[intlev]++;
 	ld	[%l4 + %l5], %o0
 	std	%l2, [%sp + CCFSZ + 8]	! set up intrframe/clockframe
 	inc	%o0
 	st	%o0, [%l4 + %l5]
-	set	_intrhand, %l4		! %l4 = intrhand[intlev];
+	set	_C_LABEL(intrhand), %l4	! %l4 = intrhand[intlev];
 	ld	[%l4 + %l5], %l4
 	clr	%l5			! %l5 = 0
 	b	3f
@@ -2456,7 +2457,7 @@ _sparc_interrupt_common:
 	tst	%l5			! if (handled) break
 	bnz	4f
 	 nop
-	call	_strayintr		!	strayintr(&intrframe)
+	call	_C_LABEL(strayintr)	!	strayintr(&intrframe)
 	 add	%sp, CCFSZ, %o0
 	/* all done: restore registers and go return */
 4:	mov	%l7, %g1
@@ -2509,7 +2510,7 @@ zshard:
 #if defined(SUN4)
 nmi_sun4:
 	INTR_SETUP(-CCFSZ-80)
-	INCR(_uvmexp+V_INTR)		! cnt.v_intr++; (clobbers %o0,%o1)
+	INCR(_C_LABEL(uvmexp)+V_INTR)	! cnt.v_intr++; (clobbers %o0,%o1)
 	/*
 	 * Level 15 interrupts are nonmaskable, so with traps off,
 	 * disable all interrupts to prevent recursion.
@@ -2535,7 +2536,7 @@ nmi_sun4:
 #if defined(SUN4C)
 nmi_sun4c:
 	INTR_SETUP(-CCFSZ-80)
-	INCR(_uvmexp+V_INTR)		! cnt.v_intr++; (clobbers %o0,%o1)
+	INCR(_C_LABEL(uvmexp)+V_INTR)		! cnt.v_intr++; (clobbers %o0,%o1)
 	/*
 	 * Level 15 interrupts are nonmaskable, so with traps off,
 	 * disable all interrupts to prevent recursion.
@@ -2569,7 +2570,7 @@ nmi_sun4c:
 
 nmi_common:
 	! and call C code
-	call	_memerr4_4c
+	call	_C_LABEL(memerr4_4c)
 	 clr	%o0
 
 	mov	%l5, %g1		! restore g1 through g7
@@ -2590,7 +2591,7 @@ nmi_common:
 #if defined(SUN4M)
 nmi_sun4m:
 	INTR_SETUP(-CCFSZ-80)
-	INCR(_uvmexp+V_INTR)		! cnt.v_intr++; (clobbers %o0,%o1)
+	INCR(_C_LABEL(uvmexp)+V_INTR)		! cnt.v_intr++; (clobbers %o0,%o1)
 	/*
 	 * XXX - we don't handle soft nmi, yet.
 	 */
@@ -2619,7 +2620,7 @@ nmi_sun4m:
 	mov	%g6, %l6
 	mov	%g7, %l7
 
-	call	_nmi_hard
+	call	_C_LABEL(nmi_hard)
 	 clr	%o5
 
 	mov	%l5, %g1		! restore g1 through g7
@@ -2643,7 +2644,7 @@ nmi_sun4m:
 	.globl	window_uf, winuf_user, winuf_ok, winuf_invalid
 	.globl	return_from_trap, rft_kernel, rft_user, rft_invalid
 	.globl	softtrap, slowtrap
-	.globl	clean_trap_window, syscall
+	.globl	clean_trap_window, _C_LABEL(_syscall)
 #endif
 
 /*
@@ -2706,8 +2707,8 @@ winof_user:
 	 * SHOULD EXPAND IN LINE TO AVOID BUILDING TRAP FRAME ON
 	 * `EASY' SAVES
 	 */
-	sethi	%hi(_cpcb), %l6
-	ld	[%l6 + %lo(_cpcb)], %l6
+	sethi	%hi(_C_LABEL(cpcb)), %l6
+	ld	[%l6 + %lo(_C_LABEL(cpcb))], %l6
 	ld	[%l6 + PCB_WIM], %l5
 	and	%l0, 31, %l3
 	sub	%l3, %l5, %l5 		/* l5 = CWP - pcb_wim */
@@ -2716,8 +2717,8 @@ winof_user:
 	st	%l5, [%l6 + PCB_UW]
 	jmpl	%l7 + %lo(clean_trap_window), %l4
 	 mov	%g7, %l7		! for clean_trap_window
-	sethi	%hi(_cpcb), %l6
-	ld	[%l6 + %lo(_cpcb)], %l6
+	sethi	%hi(_C_LABEL(cpcb)), %l6
+	ld	[%l6 + %lo(_C_LABEL(cpcb))], %l6
 	set	USPACE-CCFSZ-80, %l5
 	add	%l6, %l5, %sp		/* over to kernel stack */
 	CHECK_SP_REDZONE(%l6, %l5)
@@ -2790,8 +2791,8 @@ window_uf:
 	and	%l0, 31, %l0
 	sll	%l1, %l0, %l1		! wim = 1 << cwp;
 	wr	%l1, 0, %wim		! setwim(wim);
-	sethi	%hi(_cpcb), %l1
-	ld	[%l1 + %lo(_cpcb)], %l1
+	sethi	%hi(_C_LABEL(cpcb)), %l1
+	ld	[%l1 + %lo(_C_LABEL(cpcb))], %l1
 	st	%l0, [%l1 + PCB_WIM]	! cpcb->pcb_wim = cwp;
 	save	%g0, %g0, %g0		! back to window I
 	LOADWIN(%sp)
@@ -2816,8 +2817,8 @@ winuf_user:
 	bne	winuf_invalid
 	 EMPTY
 
-	sethi	%hi(_pgofset), %l4
-	ld	[%l4 + %lo(_pgofset)], %l4
+	sethi	%hi(_C_LABEL(pgofset)), %l4
+	ld	[%l4 + %lo(_C_LABEL(pgofset))], %l4
 	PTE_OF_ADDR(%sp, %l7, winuf_invalid, %l4, NOP_ON_4M_5)
 	CMP_PTE_USER_READ(%l7, %l5, NOP_ON_4M_6) ! if first page not readable,
 	bne	winuf_invalid		! it is invalid
@@ -2851,8 +2852,8 @@ winuf_invalid:
 	 */
 	save	%g0, %g0, %g0		! back to R
 	save	%g0, 1, %l4		! back to T, then %l4 = 1
-	sethi	%hi(_cpcb), %l6
-	ld	[%l6 + %lo(_cpcb)], %l6
+	sethi	%hi(_C_LABEL(cpcb)), %l6
+	ld	[%l6 + %lo(_C_LABEL(cpcb))], %l6
 	st	%l4, [%l6 + PCB_UW]	! pcb_uw = 1
 	ld	[%l6 + PCB_WIM], %l5	! get log2(%wim)
 	sll	%l4, %l5, %l4		! %l4 = old %wim
@@ -2881,7 +2882,7 @@ winuf_invalid:
 	std	%i0, [%sp + CCFSZ + 48]	! tf.tf_out[0], etc
 	std	%i2, [%sp + CCFSZ + 56]
 	std	%i4, [%sp + CCFSZ + 64]
-	call	_trap			! trap(T_WINUF, pc, psr, &tf)
+	call	_C_LABEL(trap)			! trap(T_WINUF, pc, psr, &tf)
 	 std	%i6, [%sp + CCFSZ + 72]	! tf.tf_out[6]
 
 	ldd	[%sp + CCFSZ + 0], %l0	! new psr, pc
@@ -2896,8 +2897,8 @@ winuf_invalid:
 	ldd	[%sp + CCFSZ + 64], %i4
 	wr	%l0, 0, %psr		! disable traps: test must be atomic
 	ldd	[%sp + CCFSZ + 72], %i6
-	sethi	%hi(_cpcb), %l6
-	ld	[%l6 + %lo(_cpcb)], %l6
+	sethi	%hi(_C_LABEL(cpcb)), %l6
+	ld	[%l6 + %lo(_C_LABEL(cpcb))], %l6
 	ld	[%l6 + PCB_NSAVED], %l7	! if nsaved is -1, we have our regs
 	tst	%l7
 	bl,a	1f			! got them
@@ -2971,15 +2972,15 @@ winuf_ok:
 	rd	%psr, %l0
 	sll	%l1, %l0, %l1
 	wr	%l1, 0, %wim		! make this one invalid
-	sethi	%hi(_cpcb), %l2
-	ld	[%l2 + %lo(_cpcb)], %l2
+	sethi	%hi(_C_LABEL(cpcb)), %l2
+	ld	[%l2 + %lo(_C_LABEL(cpcb))], %l2
 	and	%l0, 31, %l0
 	st	%l0, [%l2 + PCB_WIM]	! cpcb->pcb_wim = cwp;
 	save	%g0, %g0, %g0		! back to I
 
 	!! StackGhost Decrypt
-	sethi	%hi(_cpcb), %l0			! get current *pcb
-	ld	[%l0 + %lo(_cpcb)], %l1		! dereference *pcb
+	sethi	%hi(_C_LABEL(cpcb)), %l0			! get current *pcb
+	ld	[%l0 + %lo(_C_LABEL(cpcb))], %l1		! dereference *pcb
 	ld	[%l1 + PCB_WCOOKIE], %l0	! get window cookie
 	ldd	[%sp + 56], %i6			! get saved return pointer
 	xor	%l0, %i7, %i7			! remove cookie
@@ -3043,8 +3044,8 @@ rft_kernel:
 	and	%l0, 31, %l0
 	sll	%l1, %l0, %l1		! wim = 1 << CWP;
 	wr	%l1, 0, %wim		! setwim(wim);
-	sethi	%hi(_cpcb), %l1
-	ld	[%l1 + %lo(_cpcb)], %l1
+	sethi	%hi(_C_LABEL(cpcb)), %l1
+	ld	[%l1 + %lo(_C_LABEL(cpcb))], %l1
 	st	%l0, [%l1 + PCB_WIM]	! cpcb->pcb_wim = l0 & 31;
 	save	%g0, %g0, %g0		! back to window I
 	LOADWIN(%sp)
@@ -3068,8 +3069,8 @@ rft_kernel:
  * If returning to a valid window, just set psr and return.
  */
 rft_user:
-!	sethi	%hi(_want_ast), %l7	! (done below)
-	ld	[%l7 + %lo(_want_ast)], %l7
+!	sethi	%hi(_C_LABEL(want_ast)), %l7	! (done below)
+	ld	[%l7 + %lo(_C_LABEL(want_ast))], %l7
 	tst	%l7			! want AST trap?
 	bne,a	softtrap		! yes, re-enter trap with type T_AST
 	 mov	T_AST, %o0
@@ -3091,8 +3092,8 @@ rft_user:
 	bne	rft_invalid
 	 EMPTY
 
-	sethi	%hi(_pgofset), %l3
-	ld	[%l3 + %lo(_pgofset)], %l3
+	sethi	%hi(_C_LABEL(pgofset)), %l3
+	ld	[%l3 + %lo(_C_LABEL(pgofset))], %l3
 	PTE_OF_ADDR(%fp, %l7, rft_invalid, %l3, NOP_ON_4M_9)
 	CMP_PTE_USER_READ(%l7, %l5, NOP_ON_4M_10)	! try first page
 	bne	rft_invalid		! no good
@@ -3129,15 +3130,15 @@ rft_user_ok:
 	rd	%psr, %l0		! l0 = (junk << 5) + CWP;
 	sll	%l1, %l0, %l1		! %wim = 1 << CWP;
 	wr	%l1, 0, %wim
-	sethi	%hi(_cpcb), %l1
-	ld	[%l1 + %lo(_cpcb)], %l1
+	sethi	%hi(_C_LABEL(cpcb)), %l1
+	ld	[%l1 + %lo(_C_LABEL(cpcb))], %l1
 	and	%l0, 31, %l0
 	st	%l0, [%l1 + PCB_WIM]	! cpcb->pcb_wim = l0 & 31;
 	save	%g0, %g0, %g0		! back to window I
 
 	!! StackGhost Decrypt
-	sethi	%hi(_cpcb), %l0			! get current *pcb
-	ld	[%l0 + %lo(_cpcb)], %l1		! dereference *pcb
+	sethi	%hi(_C_LABEL(cpcb)), %l0			! get current *pcb
+	ld	[%l0 + %lo(_C_LABEL(cpcb))], %l1		! dereference *pcb
 	ld	[%l1 + PCB_WCOOKIE], %l0	! get window cookie
 	ldd	[%sp + 56], %i6			! get saved return pointer
 	xor	%l0, %i7, %i7			! remove cookie
@@ -3191,12 +3192,12 @@ rft_user_or_recover_pcb_windows:
 	 * if -1, cpcb->pcb_rw[0] holds user registers for rett window
 	 * from an earlier T_RWRET pseudo-trap.
 	 */
-	sethi	%hi(_cpcb), %l6
-	ld	[%l6 + %lo(_cpcb)], %l6
+	sethi	%hi(_C_LABEL(cpcb)), %l6
+	ld	[%l6 + %lo(_C_LABEL(cpcb))], %l6
 	ld	[%l6 + PCB_NSAVED], %l7
 	tst	%l7
 	bz,a	rft_user
-	 sethi	%hi(_want_ast), %l7	! first instr of rft_user
+	 sethi	%hi(_C_LABEL(want_ast)), %l7	! first instr of rft_user
 
 	bg,a	softtrap		! if (pcb_nsaved > 0)
 	 mov	T_WINOF, %o0		!	trap(T_WINOF);
@@ -3250,8 +3251,8 @@ rft_user_or_recover_pcb_windows:
 	RETT
 
 ! exported end marker for kernel gdb
-	.globl	_endtrapcode
-_endtrapcode:
+	.globl	_C_LABEL(endtrapcode)
+_C_LABEL(endtrapcode):
 
 /*
  * init_tables(nwin) int nwin;
@@ -3324,8 +3325,8 @@ init_tables:
 /*
  * getidprom(struct idprom *, sizeof(struct idprom))
  */
-	.global _getidprom
-_getidprom:
+	.global _C_LABEL(getidprom)
+_C_LABEL(getidprom):
 	set	AC_IDPROM, %o2
 1:	lduba	[%o2] ASI_CONTROL, %o3
 	stb	%o3, [%o0]
@@ -3383,8 +3384,8 @@ dostart:
 	tst	%o4			! do we have the symbols?
 	bz	2f
 	 sub	%o4, %l4, %o4		! apply compat correction
-	sethi	%hi(_esym - KERNBASE), %l3	! store _esym
-	st	%o4, [%l3 + %lo(_esym - KERNBASE)]
+	sethi	%hi(_C_LABEL(esym) - KERNBASE), %l3	! store _esym
+	st	%o4, [%l3 + %lo(_C_LABEL(esym) - KERNBASE)]
 2:
 #endif
 	/*
@@ -3408,13 +3409,13 @@ dostart:
 	 mov	0, %o0			! node
 
 	mov	%o0, %l0
-	set	_cputypvar-KERNBASE, %o1	! name = "compatible"
-	set	_cputypval-KERNBASE, %o2	! buffer ptr (assume buffer long enough)
+	set	_C_LABEL(cputypvar)-KERNBASE, %o1 ! name = "compatible"
+	set	_C_LABEL(cputypval)-KERNBASE, %o2 ! buffer ptr (assume buffer long enough)
 	ld	[%g7 + PV_NODEOPS], %o4	! (void)pv->pv_nodeops->no_getprop(...)
 	ld	[%o4 + NO_GETPROP], %o4
 	call	 %o4
 	 nop
-	set	_cputypval-KERNBASE, %o2	! buffer ptr
+	set	_C_LABEL(cputypval)-KERNBASE, %o2	! buffer ptr
 	ldub	[%o2 + 4], %o0		! which is it... "sun4c", "sun4m", "sun4d"?
 	cmp	%o0, 'c'
 	be	is_sun4c
@@ -3517,10 +3518,10 @@ start_havetype:
 	 */
 	clr	%l0			! lowva
 	set	KERNBASE, %l1		! highva
-	set	_end + (2 << 18), %l2	! last va that must be remapped
+	set	_C_LABEL(end) + (2 << 18), %l2	! last va that must be remapped
 #if defined(DDB) || NKSYMS > 0
-	sethi	%hi(_esym - KERNBASE), %o1
-	ld	[%o1+%lo(_esym - KERNBASE)], %o1
+	sethi	%hi(_C_LABEL(esym) - KERNBASE), %o1
+	ld	[%o1+%lo(_C_LABEL(esym) - KERNBASE)], %o1
 	tst	%o1
 	bz	1f
 	 nop
@@ -3695,17 +3696,17 @@ startmap_done:
 	jmp	%g1
 	 nop
 1:
-	sethi	%hi(_cputyp), %o0	! what type of cpu we are on
-	st	%g4, [%o0 + %lo(_cputyp)]
+	sethi	%hi(_C_LABEL(cputyp)), %o0	! what type of cpu we are on
+	st	%g4, [%o0 + %lo(_C_LABEL(cputyp))]
 
 	mov	1, %o0			! nbpg = 1 << pgshift (g5)
 	sll	%o0, %g5, %g5
-	sethi	%hi(_nbpg), %o0		! nbpg = bytes in a page
-	st	%g5, [%o0 + %lo(_nbpg)]
+	sethi	%hi(_C_LABEL(nbpg)), %o0		! nbpg = bytes in a page
+	st	%g5, [%o0 + %lo(_C_LABEL(nbpg))]
 
 	sub	%g5, 1, %g5
-	sethi	%hi(_pgofset), %o0	! page offset = bytes in a page - 1
-	st	%g5, [%o0 + %lo(_pgofset)]
+	sethi	%hi(_C_LABEL(pgofset)), %o0	! page offset = bytes in a page - 1
+	st	%g5, [%o0 + %lo(_C_LABEL(pgofset))]
 
 	rd	%psr, %g3		! paranoia: make sure ...
 	andn	%g3, PSR_ET, %g3	! we have traps off
@@ -3719,8 +3720,8 @@ startmap_done:
 
 	wr	%g0, 2, %wim		! set initial %wim (w1 invalid)
 	mov	1, %g1			! set pcb_wim (log2(%wim) = 1)
-	sethi	%hi(_u0 + PCB_WIM), %g2
-	st	%g1, [%g2 + %lo(_u0 + PCB_WIM)]
+	sethi	%hi(_C_LABEL(u0) + PCB_WIM), %g2
+	st	%g1, [%g2 + %lo(_C_LABEL(u0) + PCB_WIM)]
 
 	set	USRSTACK - CCFSZ, %fp	! as if called from user code
 	set	estack0 - CCFSZ - 80, %sp ! via syscall(boot_me_up) or somesuch
@@ -3729,16 +3730,16 @@ startmap_done:
 	nop; nop; nop
 
 	/* Export actual trapbase */
-	sethi	%hi(_trapbase), %o0
-	st	%g6, [%o0+%lo(_trapbase)]
+	sethi	%hi(_C_LABEL(trapbase)), %o0
+	st	%g6, [%o0+%lo(_C_LABEL(trapbase))]
 
 	/*
 	 * Step 2: clear BSS.  This may just be paranoia; the boot
 	 * loader might already do it for us; but what the hell.
 	 */
-	set	_edata, %o0		! bzero(edata, end - edata)
-	set	_end, %o1
-	call	_bzero
+	set	_C_LABEL(edata), %o0		! bzero(edata, end - edata)
+	set	_C_LABEL(end), %o1
+	call	_C_LABEL(bzero)
 	 sub	%o1, %o0, %o1
 
 	/*
@@ -3746,8 +3747,8 @@ startmap_done:
 	 * (which we just zeroed).
 	 * This depends on the fact that bzero does not use %g7.
 	 */
-	sethi	%hi(_promvec), %l0
-	st	%g7, [%l0 + %lo(_promvec)]
+	sethi	%hi(_C_LABEL(promvec)), %l0
+	st	%g7, [%l0 + %lo(_C_LABEL(promvec))]
 
 	/*
 	 * Step 3: compute number of windows and set up tables.
@@ -3758,9 +3759,9 @@ startmap_done:
 	restore
 	and	%g1, 31, %g1		! want just the CWP bits
 	add	%g1, 1, %o0		! compute nwindows
-	sethi	%hi(_nwindows), %o1	! may as well tell everyone
+	sethi	%hi(_C_LABEL(nwindows)), %o1	! may as well tell everyone
 	call	init_tables
-	 st	%o0, [%o1 + %lo(_nwindows)]
+	 st	%o0, [%o1 + %lo(_C_LABEL(nwindows))]
 
 #if defined(SUN4)
 	/*
@@ -3837,14 +3838,14 @@ Lgandul:	nop
 	/*
 	 * Ready to run C code; finish bootstrap.
 	 */
-	call	_bootstrap
+	call	_C_LABEL(bootstrap)
 	 nop
 
 	/*
 	 * Call main.  This returns to us after loading /sbin/init into
 	 * user space.  (If the exec fails, main() does not return.)
 	 */
-	call	_main
+	call	_C_LABEL(main)
 	 clr	%o0			! our frame arg is ignored
 	/*NOTREACHED*/
 
@@ -3873,9 +3874,9 @@ Lgandul:	nop
  * will eventually be removed, with a hole left in its place, if things
  * work out.
  */
-	.globl	_sigcode
-	.globl	_esigcode
-_sigcode:
+	.globl	_C_LABEL(sigcode)
+	.globl	_C_LABEL(esigcode)
+_C_LABEL(sigcode):
 	/*
 	 * XXX  the `save' and `restore' below are unnecessary: should
 	 *	replace with simple arithmetic on %sp
@@ -3925,7 +3926,7 @@ _sigcode:
 	ld	[%fp + 76], %o3		! arg3
 #ifdef SIG_DEBUG
 	subcc	%o0, 32, %g0		! signals are 1-32
-	bgu	_suicide
+	bgu	_C_LABEL(suicide)
 	 nop
 #endif
 	call	%g1			! (*sa->sa_handler)(sig,sip,scp,arg3)
@@ -3973,12 +3974,12 @@ _sigcode:
 	t	ST_SYSCALL
 
 #ifdef SIG_DEBUG
-	.globl _suicide
-_suicide:
+	.globl _C_LABEL(suicide)
+_C_LABEL(suicide):
 	mov	139, %g1		! obsolete syscall, puke...
 	t	ST_SYSCALL
 #endif
-_esigcode:
+_C_LABEL(esigcode):
 
 #ifdef COMPAT_SVR4
 /*
@@ -4005,9 +4006,9 @@ _esigcode:
  * will eventually be removed, with a hole left in its place, if things
  * work out.
  */
-	.globl	_svr4_sigcode
-	.globl	_svr4_esigcode
-_svr4_sigcode:
+	.globl	_C_LABEL(svr4_sigcode)
+	.globl	_C_LABEL(svr4_esigcode)
+_C_LABEL(svr4_sigcode):
 	/*
 	 * XXX  the `save' and `restore' below are unnecessary: should
 	 *	replace with simple arithmetic on %sp
@@ -4099,25 +4100,26 @@ _svr4_sigcode:
 	! setcontext does not return unless it fails
 	mov	SYS_exit, %g1		! exit(errno)
 	t	ST_SYSCALL
-_svr4_esigcode:
+_C_LABEL(svr4_esigcode):
 #endif
 
 /*
  * Primitives
  */
-
+#if 0
 #ifdef GPROF
 	.globl	mcount
 #define	ENTRY(x) \
-	.globl _/**/x; _/**/x: ; \
+	.globl _C_LABEL(x); _C_LABEL(x): ; \
 	save	%sp, -CCFSZ, %sp; \
 	call	mcount; \
 	nop; \
 	restore
 #else
-#define	ENTRY(x)	.globl _/**/x; _/**/x:
+#define	ENTRY(x)	.globl _C_LABEL(x); _C_LABEL(x):
 #endif
-#define	ALTENTRY(x)	.globl _/**/x; _/**/x:
+#endif
+#define	ALTENTRY(x)	.globl _C_LABEL(x); _C_LABEL(x):
 
 /*
  * General-purpose NULL routine.
@@ -4144,12 +4146,12 @@ ENTRY(copyinstr)
 	mov	%o1, %o5		! save = toaddr;
 	tst	%o2			! maxlen == 0?
 	beq,a	Lcstoolong0		! yes, return ENAMETOOLONG
-	 sethi	%hi(_cpcb), %o4
+	 sethi	%hi(_C_LABEL(cpcb)), %o4
 
 	set	KERNBASE, %o4
 	cmp	%o0, %o4		! fromaddr < KERNBASE?
 	blu	Lcsdocopyi		! yes, go do it
-	 sethi	%hi(_cpcb), %o4		! (first instr of copy)
+	 sethi	%hi(_C_LABEL(cpcb)), %o4		! (first instr of copy)
 
 	b	Lcsdone			! no, return EFAULT
 	 mov	EFAULT, %o0
@@ -4165,26 +4167,26 @@ ENTRY(copyoutstr)
 	mov	%o1, %o5		! save = toaddr;
 	tst	%o2			! maxlen == 0?
 	beq,a	Lcstoolong0		! yes, return ENAMETOOLONG
-	 sethi	%hi(_cpcb), %o4
+	 sethi	%hi(_C_LABEL(cpcb)), %o4
 
 	set	KERNBASE, %o4
 	cmp	%o1, %o4		! toaddr < KERNBASE?
 	blu	Lcsdocopyo		! yes, go do it
-	 sethi	%hi(_cpcb), %o4		! (first instr of copy)
+	 sethi	%hi(_C_LABEL(cpcb)), %o4		! (first instr of copy)
 
 	b	Lcsdone			! no, return EFAULT
 	 mov	EFAULT, %o0
 
 Lcsdocopyi:
-!	sethi	%hi(_cpcb), %o4		! (done earlier)
-	ld	[%o4 + %lo(_cpcb)], %o4	! catch faults
+!	sethi	%hi(_C_LABEL(cpcb)), %o4		! (done earlier)
+	ld	[%o4 + %lo(_C_LABEL(cpcb))], %o4	! catch faults
 	set	Lcsfaulti, %g1
 	b	0f
 	 st	%g1, [%o4 + PCB_ONFAULT]
 
 Lcsdocopyo:
-!	sethi	%hi(_cpcb), %o4		! (done earlier)
-	ld	[%o4 + %lo(_cpcb)], %o4	! catch faults
+!	sethi	%hi(_C_LABEL(cpcb)), %o4		! (done earlier)
+	ld	[%o4 + %lo(_C_LABEL(cpcb))], %o4	! catch faults
 	set	Lcsfaulto, %g1
 	st	%g1, [%o4 + PCB_ONFAULT]
 
@@ -4278,7 +4280,7 @@ ENTRY(copyin)
 	set	KERNBASE, %o3
 	cmp	%o0, %o3		! src < KERNBASE?
 	blu,a	Ldocopy			! yes, can try it
-	 sethi	%hi(_cpcb), %o3
+	 sethi	%hi(_C_LABEL(cpcb)), %o3
 
 	/* source address points into kernel space: return EFAULT */
 	retl
@@ -4295,7 +4297,7 @@ ENTRY(copyout)
 	set	KERNBASE, %o3
 	cmp	%o1, %o3		! dst < KERNBASE?
 	blu,a	Ldocopy
-	 sethi	%hi(_cpcb), %o3
+	 sethi	%hi(_C_LABEL(cpcb)), %o3
 
 	/* destination address points into kernel space: return EFAULT */
 	retl
@@ -4305,15 +4307,15 @@ ENTRY(copyout)
 	 * ******NOTE****** this depends on bcopy() not using %g7
 	 */
 Ldocopy:
-!	sethi	%hi(_cpcb), %o3
-	ld	[%o3 + %lo(_cpcb)], %o3
+!	sethi	%hi(_C_LABEL(cpcb)), %o3
+	ld	[%o3 + %lo(_C_LABEL(cpcb))], %o3
 	set	Lcopyfault, %o4
 	mov	%o7, %g7		! save return address
-	call	_bcopy			! bcopy(src, dst, len)
+	call	_C_LABEL(bcopy)			! bcopy(src, dst, len)
 	 st	%o4, [%o3 + PCB_ONFAULT]
 
-	sethi	%hi(_cpcb), %o3
-	ld	[%o3 + %lo(_cpcb)], %o3
+	sethi	%hi(_C_LABEL(cpcb)), %o3
+	ld	[%o3 + %lo(_C_LABEL(cpcb))], %o3
 	st	%g0, [%o3 + PCB_ONFAULT]
 	jmp	%g7 + 8
 	 clr	%o0			! return 0
@@ -4323,8 +4325,8 @@ Ldocopy:
 ! the only special thing is that we have to return to [g7 + 8] rather than
 ! [o7 + 8].
 Lcopyfault:
-	sethi	%hi(_cpcb), %o3
-	ld	[%o3 + %lo(_cpcb)], %o3
+	sethi	%hi(_C_LABEL(cpcb)), %o3
+	ld	[%o3 + %lo(_C_LABEL(cpcb))], %o3
 	st	%g0, [%o3 + PCB_ONFAULT]
 	jmp	%g7 + 8
 	 mov	EFAULT, %o0
@@ -4342,8 +4344,8 @@ Lcopyfault:
  *		restore();
  */
 ENTRY(write_user_windows)
-	sethi	%hi(_cpcb), %g6
-	ld	[%g6 + %lo(_cpcb)], %g6
+	sethi	%hi(_C_LABEL(cpcb)), %g6
+	ld	[%g6 + %lo(_C_LABEL(cpcb))], %g6
 	b	2f
 	 clr	%g5
 1:
@@ -4361,13 +4363,13 @@ ENTRY(write_user_windows)
 	 nop
 
 
-	.comm	_want_resched,4
+	.comm	_C_LABEL(want_resched),4
 /*
  * Masterpaddr is the p->p_addr of the last process on the processor.
  * XXX masterpaddr is almost the same as cpcb
  * XXX should delete this entirely
  */
-	.comm	_masterpaddr, 4
+	.comm	_C_LABEL(masterpaddr), 4
 
 /*
  * Switch statistics (for later tweaking):
@@ -4375,8 +4377,8 @@ ENTRY(write_user_windows)
  *	nswitchexit = number of calls to switchexit()
  *	_cnt.v_swtch = total calls to swtch+swtchexit
  */
-	.comm	_nswitchdiff, 4
-	.comm	_nswitchexit, 4
+	.comm	_C_LABEL(nswitchdiff), 4
+	.comm	_C_LABEL(nswitchexit), 4
 
 /*
  * REGISTER USAGE IN cpu_switch AND switchexit:
@@ -4388,12 +4390,12 @@ ENTRY(write_user_windows)
  * usually changes the CWP field (hence heavy usage of %g's).
  *
  *	%g1 = oldpsr (excluding ipl bits)
- *	%g2 = %hi(_whichqs); newpsr
+ *	%g2 = %hi(_C_LABEL(whichqs)); newpsr
  *	%g3 = p
  *	%g4 = lastproc
  *	%g5 = <free>; newpcb
- *	%g6 = %hi(_cpcb)
- *	%g7 = %hi(_curproc)
+ *	%g6 = %hi(_C_LABEL(cpcb))
+ *	%g7 = %hi(_C_LABEL(curproc))
  *	%o0 = tmp 1
  *	%o1 = tmp 2
  *	%o2 = tmp 3
@@ -4419,46 +4421,46 @@ ENTRY(switchexit)
 	 * destroy it.  Call it any sooner and the register windows
 	 * go bye-bye.
 	 */
-	set	_idle_u, %g5
-	sethi	%hi(_cpcb), %g6
+	set	_C_LABEL(idle_u), %g5
+	sethi	%hi(_C_LABEL(cpcb)), %g6
 	mov	1, %g7
 	wr	%g0, PSR_S, %psr	! change to window 0, traps off
 	wr	%g0, 2, %wim		! and make window 1 the trap window
-	st	%g5, [%g6 + %lo(_cpcb)]	! cpcb = &idle_u
+	st	%g5, [%g6 + %lo(_C_LABEL(cpcb))]	! cpcb = &idle_u
 	st	%g7, [%g5 + PCB_WIM]	! idle_u.pcb_wim = log2(2) = 1
-	set	_idle_u + USPACE-CCFSZ, %sp	! set new %sp
+	set	_C_LABEL(idle_u) + USPACE-CCFSZ, %sp	! set new %sp
 #ifdef DEBUG
-	set	_idle_u, %l6
+	set	_C_LABEL(idle_u), %l6
 	SET_SP_REDZONE(%l6, %l5)
 #endif
 	wr	%g0, PSR_S|PSR_ET, %psr	! and then enable traps
-	call    _exit2			! exit2(p)
+	call    _C_LABEL(exit2)			! exit2(p)
 	 mov    %g2, %o0
 
 	/*
 	 * Now fall through to `the last switch'.  %g6 was set to
-	 * %hi(_cpcb), but may have been clobbered in kmem_free,
+	 * %hi(_C_LABEL(cpcb)), but may have been clobbered in kmem_free,
 	 * so all the registers described below will be set here.
 	 *
 	 * REGISTER USAGE AT THIS POINT:
 	 *	%g1 = oldpsr (excluding ipl bits)
-	 *	%g2 = %hi(_whichqs)
+	 *	%g2 = %hi(_C_LABEL(whichqs))
 	 *	%g4 = lastproc
-	 *	%g6 = %hi(_cpcb)
-	 *	%g7 = %hi(_curproc)
+	 *	%g6 = %hi(_C_LABEL(cpcb))
+	 *	%g7 = %hi(_C_LABEL(curproc))
 	 *	%o0 = tmp 1
 	 *	%o1 = tmp 2
 	 *	%o3 = whichqs
 	 */
 
-	INCR(_nswitchexit)		! nswitchexit++;
-	INCR(_uvmexp+V_SWTCH)		! cnt.v_switch++;
+	INCR(_C_LABEL(nswitchexit))		! nswitchexit++;
+	INCR(_C_LABEL(uvmexp)+V_SWTCH)		! cnt.v_switch++;
 
 	mov	PSR_S|PSR_ET, %g1	! oldpsr = PSR_S | PSR_ET;
-	sethi	%hi(_whichqs), %g2
+	sethi	%hi(_C_LABEL(whichqs)), %g2
 	clr	%g4			! lastproc = NULL;
-	sethi	%hi(_cpcb), %g6
-	sethi	%hi(_curproc), %g7
+	sethi	%hi(_C_LABEL(cpcb)), %g6
+	sethi	%hi(_C_LABEL(curproc)), %g7
 	/* FALLTHROUGH */
 
 /*
@@ -4468,10 +4470,10 @@ ENTRY(switchexit)
  */
 	.globl	idle
 idle:
-	st	%g0, [%g7 + %lo(_curproc)] ! curproc = NULL;
+	st	%g0, [%g7 + %lo(_C_LABEL(curproc))] ! curproc = NULL;
 	wr	%g1, 0, %psr		! (void) spl0();
 1:					! spin reading _whichqs until nonzero
-	ld	[%g2 + %lo(_whichqs)], %o3
+	ld	[%g2 + %lo(_C_LABEL(whichqs))], %o3
 	tst	%o3
 	bnz,a	Lsw_scan
 	 wr	%g1, IPL_CLOCK << 8, %psr	! (void) splclock();
@@ -4479,15 +4481,15 @@ idle:
 
 Lsw_panic_rq:
 	sethi	%hi(1f), %o0
-	call	_panic
+	call	_C_LABEL(panic)
 	 or	%lo(1f), %o0, %o0
 Lsw_panic_wchan:
 	sethi	%hi(2f), %o0
-	call	_panic
+	call	_C_LABEL(panic)
 	 or	%lo(2f), %o0, %o0
 Lsw_panic_srun:
 	sethi	%hi(3f), %o0
-	call	_panic
+	call	_C_LABEL(panic)
 	 or	%lo(3f), %o0, %o0
 1:	.asciz	"switch rq"
 2:	.asciz	"switch wchan"
@@ -4507,18 +4509,18 @@ Lsw_panic_srun:
  * IT MIGHT BE WORTH SAVING BEFORE ENTERING idle TO AVOID HAVING TO
  * SAVE LATER WHEN SOMEONE ELSE IS READY ... MUST MEASURE!
  */
-	.globl	_runtime
-	.globl	_time
+	.globl	_C_LABEL(runtime)
+	.globl	_C_LABEL(time)
 ENTRY(cpu_switch)
 	/*
 	 * REGISTER USAGE AT THIS POINT:
 	 *	%g1 = oldpsr (excluding ipl bits)
-	 *	%g2 = %hi(_whichqs)
+	 *	%g2 = %hi(_C_LABEL(whichqs))
 	 *	%g3 = p
 	 *	%g4 = lastproc
 	 *	%g5 = tmp 0
-	 *	%g6 = %hi(_cpcb)
-	 *	%g7 = %hi(_curproc)
+	 *	%g6 = %hi(_C_LABEL(cpcb))
+	 *	%g7 = %hi(_C_LABEL(curproc))
 	 *	%o0 = tmp 1
 	 *	%o1 = tmp 2
 	 *	%o2 = tmp 3
@@ -4526,13 +4528,13 @@ ENTRY(cpu_switch)
 	 *	%o4 = tmp 5, then at Lsw_scan, which
 	 *	%o5 = tmp 6, then at Lsw_scan, q
 	 */
-	sethi	%hi(_whichqs), %g2	! set up addr regs
-	sethi	%hi(_cpcb), %g6
-	ld	[%g6 + %lo(_cpcb)], %o0
+	sethi	%hi(_C_LABEL(whichqs)), %g2	! set up addr regs
+	sethi	%hi(_C_LABEL(cpcb)), %g6
+	ld	[%g6 + %lo(_C_LABEL(cpcb))], %o0
 	std	%o6, [%o0 + PCB_SP]	! cpcb->pcb_<sp,pc> = <sp,pc>;
 	rd	%psr, %g1		! oldpsr = %psr;
-	sethi	%hi(_curproc), %g7
-	ld	[%g7 + %lo(_curproc)], %g4	! lastproc = curproc;
+	sethi	%hi(_C_LABEL(curproc)), %g7
+	ld	[%g7 + %lo(_C_LABEL(curproc))], %g4	! lastproc = curproc;
 	st	%g1, [%o0 + PCB_PSR]	! cpcb->pcb_psr = oldpsr;
 	andn	%g1, PSR_PIL, %g1	! oldpsr &= ~PSR_PIL;
 
@@ -4543,7 +4545,7 @@ ENTRY(cpu_switch)
 	 * curproc set---we have to fix this or we can get in trouble with
 	 * the run queues below.
 	 */
-	st	%g0, [%g7 + %lo(_curproc)]	! curproc = NULL;
+	st	%g0, [%g7 + %lo(_C_LABEL(curproc))]	! curproc = NULL;
 	wr	%g1, 0, %psr			! (void) spl0();
 	nop; nop; nop				! paranoia
 	wr	%g1, IPL_CLOCK << 8 , %psr	! (void) splclock();
@@ -4554,12 +4556,12 @@ Lsw_scan:
 	 * We're about to run a (possibly) new process.  Set runtime
 	 * to indicate its start time.
 	 */
-	sethi	%hi(_time), %o0
-	ldd	[%o0 + %lo(_time)], %o2
-	sethi	%hi(_runtime), %o0
-	std	%o2, [%o0 + %lo(_runtime)]
+	sethi	%hi(_C_LABEL(time)), %o0
+	ldd	[%o0 + %lo(_C_LABEL(time))], %o2
+	sethi	%hi(_C_LABEL(runtime)), %o0
+	std	%o2, [%o0 + %lo(_C_LABEL(runtime))]
 
-	ld	[%g2 + %lo(_whichqs)], %o3
+	ld	[%g2 + %lo(_C_LABEL(whichqs))], %o3
 
 	/*
 	 * Optimized inline expansion of `which = ffs(whichqs) - 1';
@@ -4593,7 +4595,7 @@ Lsw_scan:
 	/*
 	 * We found a nonempty run queue.  Take its first process.
 	 */
-	set	_qs, %o5		! q = &qs[which];
+	set	_C_LABEL(qs), %o5		! q = &qs[which];
 	sll	%o4, 3, %o0
 	add	%o0, %o5, %o5
 	ld	[%o5], %g3		! p = q->ph_link;
@@ -4609,7 +4611,7 @@ Lsw_scan:
 	mov	1, %o1			!	whichqs &= ~(1 << which);
 	sll	%o1, %o4, %o1
 	andn	%o3, %o1, %o3
-	st	%o3, [%g2 + %lo(_whichqs)]
+	st	%o3, [%g2 + %lo(_C_LABEL(whichqs))]
 1:
 	/*
 	 * PHASE TWO: NEW REGISTER USAGE:
@@ -4618,8 +4620,8 @@ Lsw_scan:
 	 *	%g3 = p
 	 *	%g4 = lastproc
 	 *	%g5 = newpcb
-	 *	%g6 = %hi(_cpcb)
-	 *	%g7 = %hi(_curproc)
+	 *	%g6 = %hi(_C_LABEL(cpcb))
+	 *	%g7 = %hi(_C_LABEL(curproc))
 	 *	%o0 = tmp 1
 	 *	%o1 = tmp 2
 	 *	%o2 = tmp 3
@@ -4642,12 +4644,12 @@ Lsw_scan:
 	 * Committed to running process p.
 	 * It may be the same as the one we were running before.
 	 */
-	sethi	%hi(_want_resched), %o0
-	st	%g0, [%o0 + %lo(_want_resched)]	! want_resched = 0;
+	sethi	%hi(_C_LABEL(want_resched)), %o0
+	st	%g0, [%o0 + %lo(_C_LABEL(want_resched))]	! want_resched = 0;
 	ld	[%g3 + P_ADDR], %g5		! newpcb = p->p_addr;
 	st	%g0, [%g3 + 4]			! p->p_back = NULL;
 	ld	[%g5 + PCB_PSR], %g2		! newpsr = newpcb->pcb_psr;
-	st	%g3, [%g7 + %lo(_curproc)]	! curproc = p;
+	st	%g3, [%g7 + %lo(_C_LABEL(curproc))]	! curproc = p;
 
 	cmp	%g3, %g4		! p == lastproc?
 	be,a	Lsw_sameproc		! yes, go return 0
@@ -4661,7 +4663,7 @@ Lsw_scan:
 	be,a	Lsw_load		! if no old process, go load
 	 wr	%g1, (IPL_CLOCK << 8) | PSR_ET, %psr
 
-	INCR(_nswitchdiff)		! clobbers %o0,%o1
+	INCR(_C_LABEL(nswitchdiff))		! clobbers %o0,%o1
 	/*
 	 * save: write back all windows (including the current one).
 	 * XXX	crude; knows nwindows <= 8
@@ -4694,10 +4696,10 @@ Lsw_load:
 	/* set new psr, but with traps disabled */
 	wr	%g2, PSR_ET, %psr	! %psr = newpsr ^ PSR_ET;
 	/* set new cpcb */
-	st	%g5, [%g6 + %lo(_cpcb)]	! cpcb = newpcb;
+	st	%g5, [%g6 + %lo(_C_LABEL(cpcb))]	! cpcb = newpcb;
 	/* XXX update masterpaddr too */
-	sethi	%hi(_masterpaddr), %g7
-	st	%g5, [%g7 + %lo(_masterpaddr)]
+	sethi	%hi(_C_LABEL(masterpaddr)), %g7
+	st	%g5, [%g7 + %lo(_C_LABEL(masterpaddr))]
 	ldd	[%g5 + PCB_SP], %o6	! <sp,pc> = newpcb->pcb_<sp,pc>
 	/* load window */
 	ldd	[%sp + (0*8)], %l0
@@ -4730,7 +4732,7 @@ Lsw_load:
 
 	/* p does not have a context: call ctx_alloc to get one */
 	save	%sp, -CCFSZ, %sp
-	call	_ctx_alloc		! ctx_alloc(pm);
+	call	_C_LABEL(ctx_alloc)		! ctx_alloc(pm);
 	 mov	%i3, %o0
 
 	ret
@@ -4740,8 +4742,8 @@ Lsw_load:
 Lsw_havectx:
 	! context is in %o0
 #if (defined(SUN4) || defined(SUN4C)) && defined(SUN4M)
-	sethi	%hi(_cputyp), %o1	! what cpu are we running on?
-	ld	[%o1 + %lo(_cputyp)], %o1
+	sethi	%hi(_C_LABEL(cputyp)), %o1	! what cpu are we running on?
+	ld	[%o1 + %lo(_C_LABEL(cputyp))], %o1
 	cmp	%o1, CPU_SUN4M
 	be	1f
 	 nop
@@ -4841,8 +4843,8 @@ ENTRY(fuword)
 	btst	3, %o0			! or has low bits set...
 	bnz	Lfsbadaddr		!	go return -1
 	EMPTY
-	sethi	%hi(_cpcb), %o2		! cpcb->pcb_onfault = Lfserr;
-	ld	[%o2 + %lo(_cpcb)], %o2
+	sethi	%hi(_C_LABEL(cpcb)), %o2		! cpcb->pcb_onfault = Lfserr;
+	ld	[%o2 + %lo(_C_LABEL(cpcb))], %o2
 	set	Lfserr, %o3
 	st	%o3, [%o2 + PCB_ONFAULT]
 	ld	[%o0], %o0		! fetch the word
@@ -4860,8 +4862,8 @@ Lfsbadaddr:
 	 * mem_access_fault() to check to see that we don't want to try to
 	 * page in the fault.  It's used by fuswintr() etc.
 	 */
-	.globl	_Lfsbail
-_Lfsbail:
+	.globl	_C_LABEL(Lfsbail)
+_C_LABEL(Lfsbail):
 	st	%g0, [%o2 + PCB_ONFAULT]! error in r/w, clear pcb_onfault
 	retl				! and return error indicator
 	 mov	-1, %o0
@@ -4875,9 +4877,9 @@ ENTRY(fuswintr)
 	cmp	%o0, %o2		! if addr >= KERNBASE
 	bgeu	Lfsbadaddr		!	return error
 	EMPTY
-	sethi	%hi(_cpcb), %o2		! cpcb->pcb_onfault = _Lfsbail;
-	ld	[%o2 + %lo(_cpcb)], %o2
-	set	_Lfsbail, %o3
+	sethi	%hi(_C_LABEL(cpcb)), %o2		! cpcb->pcb_onfault = _Lfsbail;
+	ld	[%o2 + %lo(_C_LABEL(cpcb))], %o2
+	set	_C_LABEL(Lfsbail), %o3
 	st	%o3, [%o2 + PCB_ONFAULT]
 	lduh	[%o0], %o0		! fetch the halfword
 	retl				! made it
@@ -4888,8 +4890,8 @@ ENTRY(fusword)
 	cmp	%o0, %o2		! if addr >= KERNBASE
 	bgeu	Lfsbadaddr		!	return error
 	EMPTY
-	sethi	%hi(_cpcb), %o2		! cpcb->pcb_onfault = Lfserr;
-	ld	[%o2 + %lo(_cpcb)], %o2
+	sethi	%hi(_C_LABEL(cpcb)), %o2		! cpcb->pcb_onfault = Lfserr;
+	ld	[%o2 + %lo(_C_LABEL(cpcb))], %o2
 	set	Lfserr, %o3
 	st	%o3, [%o2 + PCB_ONFAULT]
 	lduh	[%o0], %o0		! fetch the halfword
@@ -4902,8 +4904,8 @@ ENTRY(fubyte)
 	cmp	%o0, %o2		! if addr >= KERNBASE
 	bgeu	Lfsbadaddr		!	return error
 	EMPTY
-	sethi	%hi(_cpcb), %o2		! cpcb->pcb_onfault = Lfserr;
-	ld	[%o2 + %lo(_cpcb)], %o2
+	sethi	%hi(_C_LABEL(cpcb)), %o2		! cpcb->pcb_onfault = Lfserr;
+	ld	[%o2 + %lo(_C_LABEL(cpcb))], %o2
 	set	Lfserr, %o3
 	st	%o3, [%o2 + PCB_ONFAULT]
 	ldub	[%o0], %o0		! fetch the byte
@@ -4919,8 +4921,8 @@ ENTRY(suword)
 	btst	3, %o0			! or has low bits set ...
 	bnz	Lfsbadaddr		!	go return error
 	EMPTY
-	sethi	%hi(_cpcb), %o2		! cpcb->pcb_onfault = Lfserr;
-	ld	[%o2 + %lo(_cpcb)], %o2
+	sethi	%hi(_C_LABEL(cpcb)), %o2		! cpcb->pcb_onfault = Lfserr;
+	ld	[%o2 + %lo(_C_LABEL(cpcb))], %o2
 	set	Lfserr, %o3
 	st	%o3, [%o2 + PCB_ONFAULT]
 	st	%o1, [%o0]		! store the word
@@ -4933,9 +4935,9 @@ ENTRY(suswintr)
 	cmp	%o0, %o2		! if addr >= KERNBASE
 	bgeu	Lfsbadaddr		!	go return error
 	EMPTY
-	sethi	%hi(_cpcb), %o2		! cpcb->pcb_onfault = _Lfsbail;
-	ld	[%o2 + %lo(_cpcb)], %o2
-	set	_Lfsbail, %o3
+	sethi	%hi(_C_LABEL(cpcb)), %o2		! cpcb->pcb_onfault = _Lfsbail;
+	ld	[%o2 + %lo(_C_LABEL(cpcb))], %o2
+	set	_C_LABEL(Lfsbail), %o3
 	st	%o3, [%o2 + PCB_ONFAULT]
 	sth	%o1, [%o0]		! store the halfword
 	st	%g0, [%o2 + PCB_ONFAULT]! made it, clear onfault
@@ -4947,8 +4949,8 @@ ENTRY(susword)
 	cmp	%o0, %o2		! if addr >= KERNBASE
 	bgeu	Lfsbadaddr		!	go return error
 	EMPTY
-	sethi	%hi(_cpcb), %o2		! cpcb->pcb_onfault = Lfserr;
-	ld	[%o2 + %lo(_cpcb)], %o2
+	sethi	%hi(_C_LABEL(cpcb)), %o2		! cpcb->pcb_onfault = Lfserr;
+	ld	[%o2 + %lo(_C_LABEL(cpcb))], %o2
 	set	Lfserr, %o3
 	st	%o3, [%o2 + PCB_ONFAULT]
 	sth	%o1, [%o0]		! store the halfword
@@ -4962,8 +4964,8 @@ ENTRY(subyte)
 	cmp	%o0, %o2		! if addr >= KERNBASE
 	bgeu	Lfsbadaddr		!	go return error
 	EMPTY
-	sethi	%hi(_cpcb), %o2		! cpcb->pcb_onfault = Lfserr;
-	ld	[%o2 + %lo(_cpcb)], %o2
+	sethi	%hi(_C_LABEL(cpcb)), %o2		! cpcb->pcb_onfault = Lfserr;
+	ld	[%o2 + %lo(_C_LABEL(cpcb))], %o2
 	set	Lfserr, %o3
 	st	%o3, [%o2 + PCB_ONFAULT]
 	stb	%o1, [%o0]		! store the byte
@@ -4984,8 +4986,8 @@ ENTRY(subyte)
  */
 ENTRY(probeget)
 	! %o0 = addr, %o1 = (1,2,4)
-	sethi	%hi(_cpcb), %o2
-	ld	[%o2 + %lo(_cpcb)], %o2	! cpcb->pcb_onfault = Lfserr;
+	sethi	%hi(_C_LABEL(cpcb)), %o2
+	ld	[%o2 + %lo(_C_LABEL(cpcb))], %o2	! cpcb->pcb_onfault = Lfserr;
 	set	Lfserr, %o5
 	st	%o5, [%o2 + PCB_ONFAULT]
 	btst	1, %o1
@@ -5007,8 +5009,8 @@ ENTRY(probeget)
  */
 ENTRY(probeset)
 	! %o0 = addr, %o1 = (1,2,4), %o2 = val
-	sethi	%hi(_cpcb), %o3
-	ld	[%o3 + %lo(_cpcb)], %o3	! cpcb->pcb_onfault = Lfserr;
+	sethi	%hi(_C_LABEL(cpcb)), %o3
+	ld	[%o3 + %lo(_C_LABEL(cpcb))], %o3	! cpcb->pcb_onfault = Lfserr;
 	set	Lfserr, %o5
 	st	%o5, [%o3 + PCB_ONFAULT]
 	btst	1, %o1
@@ -5031,10 +5033,10 @@ ENTRY(probeset)
  * read a byte from the specified address in ASI_CONTROL space.
  */
 ENTRY(xldcontrolb)
-	!sethi	%hi(_cpcb), %o2
-	!ld	[%o2 + %lo(_cpcb)], %o2	! cpcb->pcb_onfault = Lfsbail;
+	!sethi	%hi(_C_LABEL(cpcb)), %o2
+	!ld	[%o2 + %lo(_C_LABEL(cpcb))], %o2	! cpcb->pcb_onfault = Lfsbail;
 	or	%o1, %g0, %o2		! %o2 = %o1
-	set	_Lfsbail, %o5
+	set	_C_LABEL(Lfsbail), %o5
 	st	%o5, [%o2 + PCB_ONFAULT]
 	lduba	[%o0] ASI_CONTROL, %o0	! read
 0:	retl
@@ -5467,8 +5469,8 @@ Lback_mopb:
  * caller.
  */
 ENTRY(kcopy)
-	sethi	%hi(_cpcb), %o5		! cpcb->pcb_onfault = Lkcerr;
-	ld	[%o5 + %lo(_cpcb)], %o5
+	sethi	%hi(_C_LABEL(cpcb)), %o5		! cpcb->pcb_onfault = Lkcerr;
+	ld	[%o5 + %lo(_C_LABEL(cpcb))], %o5
 	set	Lkcerr, %o3
 	ld	[%o5 + PCB_ONFAULT], %g1! save current onfault handler
 	st	%o3, [%o5 + PCB_ONFAULT]
@@ -5769,13 +5771,13 @@ ENTRY(loadfpstate)
 #if defined(SUN4M) && (defined(SUN4) || defined(SUN4C))
 ENTRY(ienab_bis)
 NOP_ON_4M_13:
-	b,a	_ienab_bis_4_4c
-	b,a	_ienab_bis_4m
+	b,a	_C_LABEL(ienab_bis_4_4c)
+	b,a	_C_LABEL(ienab_bis_4m)
 
 ENTRY(ienab_bic)
 NOP_ON_4M_14:
-	b,a	_ienab_bic_4_4c
-	b,a	_ienab_bic_4m
+	b,a	_C_LABEL(ienab_bic_4_4c)
+	b,a	_C_LABEL(ienab_bic_4m)
 #endif
 
 #if defined(SUN4) || defined(SUN4C)
@@ -6010,22 +6012,22 @@ ENTRY(ffs)
  * We try to mimic them 100%.  Full 64 bit sources or outputs, and
  * these routines are required to update the condition codes.
  */
-.globl __mulreplace, __mulreplace_end
-__mulreplace:
+.globl _C_LABEL(_mulreplace), _C_LABEL(_mulreplace_end)
+_C_LABEL(_mulreplace):
 	smulcc	%o0, %o1, %o0
 	retl
 	 rd	%y, %o1
-__mulreplace_end:
+_C_LABEL(_mulreplace_end):
 
-.globl __umulreplace, __umulreplace_end
-__umulreplace:
+.globl _C_LABEL(_umulreplace), _C_LABEL(_umulreplace_end)
+_C_LABEL(_umulreplace):
 	umulcc	%o0, %o1, %o0
 	retl
 	 rd	%y, %o1
-__umulreplace_end:
+_C_LABEL(_umulreplace_end):
 
-.globl __divreplace, __divreplace_end
-__divreplace:
+.globl _C_LABEL(_divreplace), _C_LABEL(_divreplace_end)
+_C_LABEL(_divreplace):
 	sra	%o0, 31, %g1
 	wr	%g1, 0, %y
 	nop
@@ -6033,20 +6035,20 @@ __divreplace:
 	nop
 	retl
 	 sdivcc	%o0, %o1, %o0
-__divreplace_end:
+_C_LABEL(_divreplace_end):
 
-.globl __udivreplace, __udivreplace_end
-__udivreplace:
+.globl _C_LABEL(_udivreplace), _C_LABEL(_udivreplace_end)
+_C_LABEL(_udivreplace):
 	wr	%g0, 0, %y
 	nop
 	nop
 	nop
 	retl
 	 udivcc	%o0, %o1, %o0
-__udivreplace_end:
+_C_LABEL(_udivreplace_end):
 
-.globl __remreplace, __remreplace_end
-__remreplace:
+.globl _C_LABEL(_remreplace), _C_LABEL(_remreplace_end)
+_C_LABEL(_remreplace):
 	sra	%o0, 31, %g1
 	wr	%g1, 0, %y
 	nop
@@ -6056,10 +6058,10 @@ __remreplace:
 	smul	%o1, %o2, %o2
 	retl
 	 subcc	%o0, %o2, %o0
-__remreplace_end:
+_C_LABEL(_remreplace_end):
 
-.globl __uremreplace, __uremreplace_end
-__uremreplace:
+.globl _C_LABEL(_uremreplace), _C_LABEL(_uremreplace_end)
+_C_LABEL(_uremreplace):
 	wr	%g0, 0, %y
 	nop
 	nop
@@ -6068,7 +6070,7 @@ __uremreplace:
 	umul	%o1, %o2, %o2
 	retl
 	 subcc	%o0, %o2, %o0
-__uremreplace_end:
+_C_LABEL(_uremreplace_end):
 
 /*
  * Signed multiply, from Appendix E of the Sparc Version 8
@@ -6079,9 +6081,9 @@ __uremreplace_end:
  *
  * This code optimizes short (less than 13-bit) multiplies.
  */
-.globl .mul, __mul
+.globl .mul, _C_LABEL(_mul)
 .mul:
-__mul:
+_C_LABEL(_mul):
 	mov	%o0, %y		! multiplier -> Y
 	andncc	%o0, 0xfff, %g0	! test bits 12..31
 	be	Lmul_shortway	! if zero, can do it the short way
@@ -6197,9 +6199,9 @@ Lmul_shortway:
  *	nop
  *	bnz	overflow	(or tnz)
  */
-.globl	.umul, __umul
+.globl	.umul, _C_LABEL(_umul)
 .umul:
-__umul:
+_C_LABEL(_umul):
 	or	%o0, %o1, %o4
 	mov	%o0, %y		! multiplier -> Y
 	andncc	%o4, 0xfff, %g0	! test bits 12..31 of *both* args
@@ -6334,15 +6336,15 @@ Lumul_shortway:
  * Vol 33 No 1.
  */
 	.data
-	.globl	__randseed
-__randseed:
+	.globl	_C_LABEL(_randseed)
+_C_LABEL(_randseed):
 	.word	1
 	.text
 ENTRY(random)
 	sethi	%hi(16807), %o1
 	wr	%o1, %lo(16807), %y
-	 sethi	%hi(__randseed), %g1
-	 ld	[%g1 + %lo(__randseed)], %o0
+	 sethi	%hi(_C_LABEL(_randseed)), %g1
+	 ld	[%g1 + %lo(_C_LABEL(_randseed))], %o0
 	 andcc	%g0, 0, %o2
 	mulscc  %o2, %o0, %o2
 	mulscc  %o2, %o0, %o2
@@ -6371,13 +6373,13 @@ ENTRY(random)
 	bneg	1f
 	 sethi	%hi(0x7fffffff), %o1
 	retl
-	 st	%o0, [%g1 + %lo(__randseed)]
+	 st	%o0, [%g1 + %lo(_C_LABEL(_randseed))]
 1:
 	or	%o1, %lo(0x7fffffff), %o1
 	add	%o0, 1, %o0
 	and	%o1, %o0, %o0
 	retl
-	 st	%o0, [%g1 + %lo(__randseed)]
+	 st	%o0, [%g1 + %lo(_C_LABEL(_randseed))]
 
 /*
  * void lo_microtime(struct timeval *tv)
@@ -6399,7 +6401,7 @@ ENTRY(lo_microtime)
 #else
 ENTRY(microtime)
 #endif
-	sethi	%hi(_time), %g2
+	sethi	%hi(_C_LABEL(time)), %g2
 
 #if defined(SUN4M) && !(defined(SUN4C) || defined(SUN4))
 	sethi	%hi(TIMERREG_VA+4), %g3
@@ -6415,9 +6417,9 @@ NOP_ON_4_4C_1:
 #endif
 
 2:
-	ldd	[%g2+%lo(_time)], %o2		! time.tv_sec & time.tv_usec
+	ldd	[%g2+%lo(_C_LABEL(time))], %o2		! time.tv_sec & time.tv_usec
 	ld	[%g3], %o4			! usec counter
-	ldd	[%g2+%lo(_time)], %g4		! see if time values changed
+	ldd	[%g2+%lo(_C_LABEL(time))], %g4		! see if time values changed
 	cmp	%g4, %o2
 	bne	2b				! if time.tv_sec changed
 	 cmp	%g5, %o3
@@ -6426,8 +6428,8 @@ NOP_ON_4_4C_1:
 
 	bpos	3f				! reached limit?
 	 srl	%o4, TMR_SHIFT, %o4		! convert counter to usec
-	sethi	%hi(_tick), %g4			! bump usec by 1 tick
-	ld	[%g4+%lo(_tick)], %o1
+	sethi	%hi(_C_LABEL(tick)), %g4			! bump usec by 1 tick
+	ld	[%g4+%lo(_C_LABEL(tick))], %o1
 	set	TMR_MASK, %g5
 	add	%o1, %o3, %o3
 	and	%o4, %g5, %o4
@@ -6459,8 +6461,8 @@ ENTRY(delay)			! %o0 = n
 	subcc	%o0, %g0, %g0
 	be	2f
 
-	sethi	%hi(_timerblurb), %o1
-	ld	[%o1 + %lo(_timerblurb)], %o1	! %o1 = timerblurb
+	sethi	%hi(_C_LABEL(timerblurb)), %o1
+	ld	[%o1 + %lo(_C_LABEL(timerblurb))], %o1	! %o1 = timerblurb
 
 	 addcc	%o1, %g0, %o2		! %o2 = cntr (start @ %o1), clear CCs
 					! first time through only
@@ -6489,8 +6491,8 @@ ENTRY(write_all_windows)
 	 * while (--g1 > 0) save();
 	 * while (--g2 > 0) restore();
 	 */
-	sethi	%hi(_nwindows), %g1
-	ld	[%g1 + %lo(_nwindows)], %g1
+	sethi	%hi(_C_LABEL(nwindows)), %g1
+	ld	[%g1 + %lo(_C_LABEL(nwindows))], %g1
 	dec	%g1
 	mov	%g1, %g2
 
@@ -6534,7 +6536,7 @@ Llongjmpbotch:
 				! otherwise, went too far; bomb out
 	save	%sp, -CCFSZ, %sp	/* preserve current window */
 	sethi	%hi(Lpanic_ljmp), %o0
-	call	_panic
+	call	_C_LABEL(panic)
 	or %o0, %lo(Lpanic_ljmp), %o0;
 	unimp	0
 
@@ -6549,25 +6551,25 @@ Llongjmpbotch:
 
 	.data
 #if defined(DDB) || NKSYMS > 0
-	.globl	_esym
-_esym:
+	.globl	_C_LABEL(esym)
+_C_LABEL(esym):
 	.word	0
 #endif
-	.globl	_cold
-_cold:
+	.globl	_C_LABEL(cold)
+_C_LABEL(cold):
 	.word	1		! cold start flag
 
-	.globl	_proc0paddr
-_proc0paddr:
-	.word	_u0		! KVA of proc0 uarea
+	.globl	_C_LABEL(proc0paddr)
+_C_LABEL(proc0paddr):
+	.word	_C_LABEL(u0)		! KVA of proc0 uarea
 
 ! StackGhost:  added 2 symbols to ease debugging
 	.globl slowtrap
 	.globl winuf_invalid
 
 /* interrupt counters	XXX THESE BELONG ELSEWHERE (if anywhere) */
-	.globl	_intrcnt, _eintrcnt, _intrnames, _eintrnames
-_intrnames:
+	.globl	_C_LABEL(intrcnt), _C_LABEL(eintrcnt), _C_LABEL(intrnames), _C_LABEL(eintrnames)
+_C_LABEL(intrnames):
 	.asciz	"spur"
 	.asciz	"lev1"
 	.asciz	"lev2"
@@ -6583,14 +6585,14 @@ _intrnames:
 	.asciz	"lev12"
 	.asciz	"lev13"
 	.asciz	"prof"
-_eintrnames:
+_C_LABEL(eintrnames):
 	_ALIGN
-_intrcnt:
+_C_LABEL(intrcnt):
 	.skip	4*15
-_eintrcnt:
+_C_LABEL(eintrcnt):
 
-	.comm	_nwindows, 4
-	.comm	_promvec, 4
-	.comm	_curproc, 4
-	.comm	_qs, 32 * 8
-	.comm	_whichqs, 4
+	.comm	_C_LABEL(nwindows), 4
+	.comm	_C_LABEL(promvec), 4
+	.comm	_C_LABEL(curproc), 4
+	.comm	_C_LABEL(qs), 32 * 8
+	.comm	_C_LABEL(whichqs), 4
