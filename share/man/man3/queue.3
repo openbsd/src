@@ -1,4 +1,4 @@
-.\"	$OpenBSD: queue.3,v 1.28 2003/04/16 07:51:22 mickey Exp $
+.\"	$OpenBSD: queue.3,v 1.29 2003/05/17 18:40:12 krw Exp $
 .\"	$NetBSD: queue.3,v 1.4 1995/07/03 00:25:36 mycroft Exp $
 .\"
 .\" Copyright (c) 1993 The Regents of the University of California.
@@ -799,25 +799,27 @@ macro removes the element
 .Fa elm
 from the tail queue.
 .Pp
+.Fn TAILQ_FOREACH
+and
+.Fn TAILQ_FOREACH_REVERSE
+are used for traversing a tail queue.
+.Fn TAILQ_FOREACH
+starts at the first element and proceeds towards the last.
+.Fn TAILQ_FOREACH_REVERSE
+starts at the last element and proceeds towards the first.
+.Bd -literal -offset indent
+TAILQ_FOREACH(np, &head, NAME)
+TAILQ_FOREACH_REVERSE(np, &head, NAME, HEADNAME)
+.Ed
+.Pp
 The
 .Fn TAILQ_FIRST ,
 .Fn TAILQ_NEXT ,
 .Fn TAILQ_LAST
 and
 .Fn TAILQ_PREV
-macros can be used to traverse a tail queue.
-The
-.Fn TAILQ_FOREACH
-is used for tail queue traversal
-.Bd -literal -offset indent
-TAILQ_FOREACH(np, head, NAME)
-.Ed
-.Pp
-The
-.Fn TAILQ_FOREACH_REVERSE
-acts like
-.Fn TAILQ_FOREACH
-but traverses the tail queue in reverse.
+macros can be used to manually traverse a tail queue or an arbitrary part of
+one.
 .Pp
 The
 .Fn TAILQ_EMPTY
@@ -846,7 +848,10 @@ TAILQ_INSERT_AFTER(&head, n1, n2, entries);
 n2 = malloc(sizeof(struct entry));	/* Insert before. */
 TAILQ_INSERT_BEFORE(n1, n2, entries);
 					/* Forward traversal. */
-for (np = TAILQ_FIRST(&head); np != NULL; np = TAILQ_NEXT(np, entries))
+TAILQ_FOREACH(np, &head, entries)
+	np-> ...
+					/* Manual forward traversal */
+for (np = n2; np != NULL; np = TAILQ_NEXT(np, entries))
 	np-> ...
 					/* Delete. */
 while (np = TAILQ_FIRST(&head))
