@@ -1,4 +1,4 @@
-/*	$OpenBSD: local_passwd.c,v 1.25 2002/02/16 21:27:50 millert Exp $	*/
+/*	$OpenBSD: local_passwd.c,v 1.26 2002/06/28 22:28:17 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /*static const char sccsid[] = "from: @(#)local_passwd.c	5.5 (Berkeley) 5/6/91";*/
-static const char rcsid[] = "$OpenBSD: local_passwd.c,v 1.25 2002/02/16 21:27:50 millert Exp $";
+static const char rcsid[] = "$OpenBSD: local_passwd.c,v 1.26 2002/06/28 22:28:17 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -62,9 +62,7 @@ char *getnewpasswd(struct passwd *, login_cap_t *, int);
 void kbintr(int);
 
 int
-local_passwd(uname, authenticated)
-	char *uname;
-	int authenticated;
+local_passwd(char *uname, int authenticated)
 {
 	struct passwd *pw;
 	login_cap_t *lc;
@@ -143,10 +141,7 @@ local_passwd(uname, authenticated)
 }
 
 char *
-getnewpasswd(pw, lc, authenticated)
-	struct passwd *pw;
-	login_cap_t *lc;
-	int authenticated;
+getnewpasswd(struct passwd *pw, login_cap_t *lc, int authenticated)
 {
 	char *p;
 	int tries, pwd_tries;
@@ -165,7 +160,7 @@ getnewpasswd(pw, lc, authenticated)
 			pw_error(NULL, 1, 1);
 		}
 	}
-	
+
 	pwd_tries = pwd_gettries(pw, lc);
 
 	for (buf[0] = '\0', tries = 0;;) {
@@ -178,7 +173,7 @@ getnewpasswd(pw, lc, authenticated)
 			printf("That password collides with a system feature. Choose another.\n");
 			continue;
 		}
-		
+
 		if ((tries++ < pwd_tries || pwd_tries == 0) 
 		    && pwd_check(pw, lc, p) == 0)
 			continue;
@@ -198,8 +193,7 @@ getnewpasswd(pw, lc, authenticated)
 }
 
 void
-kbintr(signo)
-	int signo;
+kbintr(int signo)
 {
 	char msg[] = "\nPassword unchanged.\n";
 	struct iovec iv[5];

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pwd_check.c,v 1.5 2002/05/27 21:12:54 itojun Exp $	*/
+/*	$OpenBSD: pwd_check.c,v 1.6 2002/06/28 22:28:17 deraadt Exp $	*/
 /*
  * Copyright 2000 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -54,7 +54,7 @@ struct pattern {
 
 struct pattern patterns[] = {
 	{
-		"^[0-9]*$", 
+		"^[0-9]*$",
 		REG_EXTENDED|REG_NOSUB,
 		"Please don't use all-digit passwords."
 	},
@@ -87,7 +87,7 @@ pwd_check(struct passwd *pwd, login_cap_t *lc, char *password)
 	int i, res, min_len;
 	char *cp, option[LINE_MAX];
 	int pipefds[2];
-	
+
 	min_len = (int) login_getcapnum(lc, "minpasswordlen", 6, 6);
 	if (min_len > 0 && strlen(password) < min_len) {
 		printf("Please enter a longer password.\n");
@@ -123,17 +123,15 @@ pwd_check(struct passwd *pwd, login_cap_t *lc, char *password)
 
 			grp = getgrgid(pwd->pw_gid);
 			if (grp != NULL) {
-				snprintf(grpkey, LINE_MAX-1, ":%s",
+				snprintf(grpkey, LINE_MAX, ":%s",
 				    grp->gr_name);
-				grpkey[LINE_MAX-1] = 0;
 				pw_getconf(option, LINE_MAX, grpkey,
 				    "pwdcheck");
 			}
 			if (grp != NULL && *option == 0 &&
 			    strchr(pwd->pw_name, '.') == NULL) {
-				snprintf(grpkey, LINE_MAX-1, ".%s",
+				snprintf(grpkey, LINE_MAX, ".%s",
 				    grp->gr_name);
-				grpkey[LINE_MAX-1] = 0;
 				pw_getconf(option, LINE_MAX, grpkey,
 				    "pwdcheck");
 			}
@@ -142,7 +140,7 @@ pwd_check(struct passwd *pwd, login_cap_t *lc, char *password)
 				    "pwdcheck");
 		}
 	}
-	
+
 	/* If no checker is specified, we accept the password */
 	if (*option == 0)
 		return (1);
@@ -155,7 +153,7 @@ pwd_check(struct passwd *pwd, login_cap_t *lc, char *password)
 	res = fork();
 	if (res == 0) {
 		char *argp[] = { "sh", "-c", NULL, NULL};
-		
+
 		/* Drop privileges */
 		seteuid(getuid());
 		setuid(getuid());
@@ -186,15 +184,18 @@ pwd_check(struct passwd *pwd, login_cap_t *lc, char *password)
 		return (1);
 
  out:
-	printf("Please use a different password.\nUnusual capitalization, control characters or digits are suggested.\n");
+	printf("Please use a different password. Unusual capitalization,\n");
+	printf("control characters, or digits are suggested.\n");
 	return (0);
 }
 
-int pwd_gettries( struct passwd *pwd, login_cap_t *lc )
+int
+pwd_gettries( struct passwd *pwd, login_cap_t *lc )
 {
 	char option[LINE_MAX];
-	char *ep = option; 
+	char *ep = option;
 	quad_t ntries;
+	long lval;
 
 	/*
 	 * Check login.conf, falling back onto the deprecated passwd.conf
@@ -202,7 +203,7 @@ int pwd_gettries( struct passwd *pwd, login_cap_t *lc )
 	if ((ntries = login_getcapnum(lc, "passwordtries", -1, -1)) != -1) {
 		if (ntries > INT_MAX || ntries < 0) {
 			fprintf(stderr,
-			    "Warning: pwdtries out of range in /etc/login.conf");   
+			    "Warning: pwdtries out of range in /etc/login.conf");
 			goto out;
 		}
 		return((int)ntries);
@@ -217,42 +218,37 @@ int pwd_gettries( struct passwd *pwd, login_cap_t *lc )
 
 		grp = getgrgid(pwd->pw_gid);
 		if (grp != NULL) {
-			snprintf(grpkey, LINE_MAX-1, ":%s", grp->gr_name);
-			grpkey[LINE_MAX-1] = 0;
+			snprintf(grpkey, LINE_MAX, ":%s", grp->gr_name);
 			pw_getconf(option, LINE_MAX, grpkey, "pwdtries");
 		}
 		if (grp != NULL && *option == 0 &&
 		    strchr(pwd->pw_name, '.') == NULL) {
-			snprintf(grpkey, LINE_MAX-1, ".%s", grp->gr_name);
-			grpkey[LINE_MAX-1] = 0;
+			snprintf(grpkey, LINE_MAX, ".%s", grp->gr_name);
 			pw_getconf(option, LINE_MAX, grpkey, "pwdtries");
 		}
 		if (*option == 0)
 			pw_getconf(option, LINE_MAX, "default", "pwdtries");
 	}
-	
+
 	if (*option == 0)
 		goto out;
-	else {
-		long lval;
-		errno = 0;
-		lval = strtol(option, &ep, 10);
-		if (option[0] == '\0' || *ep != '\0') {
-			fprintf(stderr, 
-				"Warning: Bad pwdtries line in /etc/passwd.conf");   
-			goto out;
-		}
-		if ((errno == ERANGE && (lval == LONG_MAX
-					 || lval == LONG_MIN)) ||
-		    (lval > INT_MAX || lval < 0)) {
-			fprintf(stderr, 
-				"Warning: pwdtries out of range in /etc/passwd.conf");   
-			goto out;
-		}
-		return((int) lval);
-	}
 
-	/* If no amount of tries is specified, return a default of 
+	errno = 0;
+	lval = strtol(option, &ep, 10);
+	if (option[0] == '\0' || *ep != '\0') {
+		fprintf(stderr,
+		    "Warning: Bad pwdtries line in /etc/passwd.conf");
+		goto out;
+	}
+	if ((errno == ERANGE && (lval == LONG_MAX || lval == LONG_MIN)) ||
+	    (lval > INT_MAX || lval < 0)) {
+		fprintf(stderr,
+		    "Warning: pwdtries out of range in /etc/passwd.conf");
+		goto out;
+	}
+	return((int) lval);
+
+	/* If no amount of tries is specified, return a default of
 	 * 3, meaning that after 3 attempts where the user is foiled
 	 * by the password checks, it will no longer be checked and
 	 * they can set it to whatever they like.
@@ -260,5 +256,3 @@ int pwd_gettries( struct passwd *pwd, login_cap_t *lc )
 	out:
 		return (3);
 }
-  
-

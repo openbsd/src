@@ -1,4 +1,4 @@
-/*	$OpenBSD: passwd.c,v 1.14 2002/05/10 06:52:03 hugh Exp $	*/
+/*	$OpenBSD: passwd.c,v 1.15 2002/06/28 22:28:17 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static const char sccsid[] = "from: @(#)passwd.c	5.5 (Berkeley) 7/6/91";*/
-static const char rcsid[] = "$OpenBSD: passwd.c,v 1.14 2002/05/10 06:52:03 hugh Exp $";
+static const char rcsid[] = "$OpenBSD: passwd.c,v 1.15 2002/06/28 22:28:17 deraadt Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -66,26 +66,23 @@ int use_yp;
 int force_yp;
 #endif
 
-
 extern int local_passwd(char *, int);
 extern int yp_passwd(char *);
 extern int krb_passwd(int, char **);
 extern int krb5_passwd(int, char **);
 extern int _yp_check(char **);
-void usage(int value);
-
+void usage(int retval);
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char **argv)
 {
 	extern int optind;
-	int ch;
 	char *username;
+	int ch;
 #ifdef	YP
 	int status = 0;
 #endif
+
 #if defined(KERBEROS) || defined(KERBEROS5)
 	extern char realm[];
 
@@ -116,10 +113,10 @@ main(argc, argv)
 		case 'K':
 #ifdef KRB5
 			/* Skip programname and '-K' option */
-			argc-=2;
-			argv+=2;
+			argc -= 2;
+			argv += 2;
 			exit(krb5_passwd(argc, argv));
-#else			
+#else
 			errx(1, "KerberosV support not enabled");
 			break;
 #endif
@@ -149,19 +146,19 @@ main(argc, argv)
 		fprintf(stderr, "passwd: who are you ??\n");
 		exit(1);
 	}
-	
-	switch(argc) {
+
+	switch (argc) {
 	case 0:
 		break;
 	case 1:
 #if defined(KERBEROS) || defined(KERBEROS5)
-	    if (use_kerberos && strcmp(argv[0], username)) {
-		(void)fprintf(stderr, "passwd: %s\n\t%s\n%s\n",
-			      "to change another user's Kerberos password, do",
-			      "\"passwd -k -u <user>\";",
-			      "to change a user's local passwd, use \"passwd -l <user>\"");
-		exit(1);
-	    }
+		if (use_kerberos && strcmp(argv[0], username)) {
+			(void)fprintf(stderr, "passwd: %s\n\t%s\n%s\n",
+			    "to change another user's Kerberos password, do",
+			    "\"passwd -k -u <user>\";",
+			    "to change a user's local passwd, use \"passwd -l <user>\"");
+			exit(1);
+		}
 #endif
 		username = argv[0];
 		break;
@@ -170,8 +167,8 @@ main(argc, argv)
 	}
 
 #if defined(KERBEROS) || defined(KERBEROS5)
-        if (use_kerberos)
-                exit(krb_passwd(argc, argv));
+	if (use_kerberos)
+		exit(krb_passwd(argc, argv));
 #endif
 
 #ifdef	YP
@@ -183,9 +180,9 @@ main(argc, argv)
 }
 
 void
-usage(retval)
-	int retval;
+usage(int retval)
 {
-	fprintf(stderr, "usage: passwd [-l] [-y] [-k [-n name] [-i instance] [-r realm] [-u username[.instance][@realm]] [user]\n");
+	fprintf(stderr, "usage: passwd [-l] [-y] [-k [-n name] [-i instance] "
+	    "[-r realm] [-u username[.instance][@realm]] [user]\n");
 	exit(retval);
 }

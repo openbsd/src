@@ -1,4 +1,4 @@
-/* $OpenBSD: pwd_gensalt.c,v 1.13 2002/05/27 21:12:54 itojun Exp $ */
+/* $OpenBSD: pwd_gensalt.c,v 1.14 2002/06/28 22:28:17 deraadt Exp $ */
 /*
  * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
  * All rights reserved.
@@ -41,29 +41,23 @@
 #include <time.h>
 #include <login_cap.h>
 
-void to64(char *, int32_t, int n);
+void	to64(char *, int32_t, int n);
+char	*bcrypt_gensalt(u_int8_t);
 
 int
-pwd_gensalt(salt, max, pwd, lc, type)
-	char   *salt;
-	int     max;
-	struct passwd *pwd;
-	login_cap_t *lc;
-	char    type;
+pwd_gensalt(char *salt, int saltlen, struct passwd *pwd, login_cap_t *lc, char type)
 {
-	char   *bcrypt_gensalt(u_int8_t);
-	char    option[LINE_MAX];
-	char   *next, *now;
-	char   *cipher;
+	char	option[LINE_MAX], *next, *now, *cipher;
+
 	*salt = '\0';
 
 	switch (type) {
 	case 'y':
-	        cipher = "ypcipher";
+		cipher = "ypcipher";
 		break;
 	case 'l':
 	default:
-	        cipher = "localcipher";
+		cipher = "localcipher";
 		break;
 	}
 
@@ -84,16 +78,14 @@ pwd_gensalt(salt, max, pwd, lc, type)
 
 			grp = getgrgid(pwd->pw_gid);
 			if (grp != NULL) {
-				snprintf(grpkey, LINE_MAX-1, ":%s",
+				snprintf(grpkey, LINE_MAX, ":%s",
 				    grp->gr_name);
-				grpkey[LINE_MAX-1] = 0;
 				pw_getconf(option, LINE_MAX, grpkey, cipher);
 			}
 			if (grp != NULL && *option == 0 &&
 			    strchr(pwd->pw_name, '.') == NULL) {
-				snprintf(grpkey, LINE_MAX-1, ".%s",
+				snprintf(grpkey, LINE_MAX, ".%s",
 				    grp->gr_name);
-				grpkey[LINE_MAX-1] = 0;
 				pw_getconf(option, LINE_MAX, grpkey, cipher);
 			}
 			if (*option == 0)
@@ -104,38 +96,40 @@ pwd_gensalt(salt, max, pwd, lc, type)
 	next = option;
 	now = strsep(&next, ",");
 	if (!strcmp(now, "old")) {
-		if (max < 3)
+		if (saltlen < 3)
 			return 0;
 		to64(&salt[0], arc4random(), 2);
 		salt[2] = '\0';
 	} else if (!strcmp(now, "newsalt")) {
 		u_int32_t rounds = atol(next);
-		if (max < 10)
+
+		if (saltlen < 10)
 			return 0;
 		/* Check rounds, 24 bit is max */
 		if (rounds < 7250)
 			rounds = 7250;
 		else if (rounds > 0xffffff)
-		        rounds = 0xffffff;
+			rounds = 0xffffff;
 		salt[0] = _PASSWORD_EFMT1;
 		to64(&salt[1], (u_int32_t) rounds, 4);
 		to64(&salt[5], arc4random(), 4);
 		salt[9] = '\0';
 	} else if (!strcmp(now, "md5")) {
-		if (max < 13)  /* $1$8salt$\0 */
+		if (saltlen < 13)	/* $1$8salt$\0 */
 			return 0;
-		strcpy(salt, "$1$");
+
+		strlcpy(salt, "$1$", saltlen);
 		to64(&salt[3], arc4random(), 4);
 		to64(&salt[7], arc4random(), 4);
 		strcpy(&salt[11], "$");
 	} else if (!strcmp(now, "blowfish")) {
-		int     rounds = atoi(next);
+		int rounds = atoi(next);
+
 		if (rounds < 4)
 			rounds = 4;
-		strncpy(salt, bcrypt_gensalt(rounds), max - 1);
-		salt[max - 1] = 0;
+		strlcpy(salt, bcrypt_gensalt(rounds), saltlen);
 	} else {
-		strcpy(salt, ":");
+		strlcpy(salt, ":", saltlen);
 		warnx("Unkown option %s.", now);
 	}
 	return 1;
@@ -145,10 +139,7 @@ static unsigned char itoa64[] =	 /* 0 ... 63 => ascii - 64 */
 	"./0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 
 void
-to64(s, v, n)
-	char *s;
-	int32_t v;
-	int n;
+to64(char *s, int32_t v, int n)
 {
 	while (--n >= 0) {
 		*s++ = itoa64[v&0x3f];

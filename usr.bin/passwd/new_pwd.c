@@ -1,31 +1,31 @@
-/* $OpenBSD: new_pwd.c,v 1.4 2001/01/29 01:58:14 niklas Exp $ */
+/* $OpenBSD: new_pwd.c,v 1.5 2002/06/28 22:28:17 deraadt Exp $ */
 /* $KTH: new_pwd.c,v 1.11 1997/05/02 14:28:54 assar Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
- * 
+ *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 
+ *
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
  *      This product includes software developed by the Kungliga Tekniska
  *      Högskolan and its contributors.
- * 
+ *
  * 4. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE INSTITUTE AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -65,10 +65,10 @@ check_pw (char *pword)
 
 	if (strlen(pword) == 0)
 		return "Null passwords are not allowed - Please enter a longer password.";
-    
+
 	if (strlen(pword) < MIN_KPW_LEN)
 		return "Password is to short - Please enter a longer password.";
-    
+
 	if (strcmp(pword, "s/key") == 0)
 		return "That password collides with a system feature. Choose another.\n";
 
@@ -92,13 +92,13 @@ get_pw_new_pwd(char *pword, int pwlen, krb_principal *pr, int print_realm)
 	int status;
 	char *expl;
 	char *q;
-    
+
 	/*
 	 * We don't care about failure; this is to determine whether or
-	 * not to print the realm in the prompt for a new password. 
+	 * not to print the realm in the prompt for a new password.
 	 */
 	krb_get_lrealm(local_realm, 1);
-    
+
 	if (strcmp(local_realm, pr->realm))
 		print_realm++;
 	krb_unparse_name_r(pr, p);
@@ -111,7 +111,7 @@ get_pw_new_pwd(char *pword, int pwlen, krb_principal *pr, int print_realm)
 		return -1;
 	}
 
-	status = krb_get_pw_in_tkt(pr->name, pr->instance, pr->realm, 
+	status = krb_get_pw_in_tkt(pr->name, pr->instance, pr->realm,
 	    PWSERV_NAME, KADM_SINST, 1, pword);
 	if (status != KSUCCESS) {
 		if (status == INTK_BADPW) {
@@ -123,6 +123,7 @@ get_pw_new_pwd(char *pword, int pwlen, krb_principal *pr, int print_realm)
 			return -1;
 		}
 	}
+
 	memset(pword, 0, pwlen);
 
 	do {

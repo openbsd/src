@@ -1,4 +1,4 @@
-/*	$OpenBSD: yp_passwd.c,v 1.22 2002/06/04 00:09:08 deraadt Exp $	*/
+/*	$OpenBSD: yp_passwd.c,v 1.23 2002/06/28 22:28:17 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -34,7 +34,7 @@
  */
 #ifndef lint
 /*static const char sccsid[] = "from: @(#)yp_passwd.c	1.0 2/2/93";*/
-static const char rcsid[] = "$OpenBSD: yp_passwd.c,v 1.22 2002/06/04 00:09:08 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: yp_passwd.c,v 1.23 2002/06/28 22:28:17 deraadt Exp $";
 #endif /* not lint */
 
 #ifdef	YP
@@ -66,15 +66,13 @@ extern int	pwd_check(struct passwd *, login_cap_t *, char *);
 extern int	pwd_gettries(struct passwd *, login_cap_t *);
 extern void	kbintr(int);
 
-char	       *ypgetnewpasswd(struct passwd *, login_cap_t *, char **);
-struct passwd  *ypgetpwnam(char *);
+char		*ypgetnewpasswd(struct passwd *, login_cap_t *, char **);
+struct passwd	*ypgetpwnam(char *);
 
 char *domain;
 
 static int
-pw_error(name, err, eval)
-	char *name;
-	int err, eval;
+pw_error(char *name, int err, int eval)
 {
 	if (err) {
 		if (name)
@@ -88,17 +86,16 @@ pw_error(name, err, eval)
 }
 
 int
-yp_passwd(username)
-	char *username;
+yp_passwd(char *username)
 {
-	char *master;
-	int r, rpcport, status;
-	uid_t uid;
 	struct yppasswd yppasswd;
+	int r, rpcport, status;
 	struct passwd *pw;
 	struct timeval tv;
-	CLIENT *client;
 	login_cap_t *lc;
+	CLIENT *client;
+	char *master;
+	uid_t uid;
 
 	/*
 	 * Get local domain
@@ -159,7 +156,7 @@ yp_passwd(username)
 
 	/* tell rpc.yppasswdd */
 	yppasswd.newpw.pw_name	= pw->pw_name;
-	yppasswd.newpw.pw_uid 	= pw->pw_uid;
+	yppasswd.newpw.pw_uid	= pw->pw_uid;
 	yppasswd.newpw.pw_gid	= pw->pw_gid;
 	yppasswd.newpw.pw_gecos = pw->pw_gecos;
 	yppasswd.newpw.pw_dir	= pw->pw_dir;
@@ -191,16 +188,13 @@ yp_passwd(username)
 }
 
 char *
-ypgetnewpasswd(pw, lc, old_pass)
-	struct passwd *pw;
-	login_cap_t *lc;
-	char **old_pass;
+ypgetnewpasswd(struct passwd *pw, login_cap_t *lc, char **old_pass)
 {
 	static char buf[_PASSWORD_LEN+1];
-	char *p;
-	int tries, pwd_tries;
 	char salt[_PASSWORD_LEN];
 	sig_t saveint, savequit;
+	int tries, pwd_tries;
+	char *p;
 
 	saveint = signal(SIGINT, kbintr);
 	savequit = signal(SIGQUIT, kbintr);
@@ -238,13 +232,12 @@ ypgetnewpasswd(pw, lc, old_pass)
 		if ((tries++ < pwd_tries || pwd_tries == 0)
 		    && pwd_check(pw, lc, p) == 0)
 			continue;
-		strncpy(buf, p, sizeof buf-1);
-		buf[sizeof buf-1] = '\0';
+		strlcpy(buf, p, sizeof buf);
 		if (!strcmp(buf, getpass("Retype new password:")))
 			break;
 		(void)printf("Mismatch; try again, EOF to quit.\n");
 	}
-	if(!pwd_gensalt(salt, _PASSWORD_LEN, pw, lc, 'y')) {
+	if (!pwd_gensalt(salt, _PASSWORD_LEN, pw, lc, 'y')) {
 		(void)printf("Couldn't generate salt.\n");
 		pw_error(NULL, 0, 0);
 	}
@@ -283,7 +276,7 @@ interpret(struct passwd *pwent, char *line)
 	pwent->pw_class = "";
 
 	/* line without colon separators is no good, so ignore it */
-	if(!strchr(p, ':'))
+	if (!strchr(p, ':'))
 		return (NULL);
 
 	pwent->pw_name = p;
@@ -308,16 +301,15 @@ interpret(struct passwd *pwent, char *line)
 static char *__yplin;
 
 struct passwd *
-ypgetpwnam(nam)
-	char *nam;
+ypgetpwnam(char *nam)
 {
 	static struct passwd pwent;
-	char *val;
 	int reason, vallen;
+	char *val;
 
 	reason = yp_match(domain, "passwd.byname", nam, strlen(nam),
 	    &val, &vallen);
-	switch(reason) {
+	switch (reason) {
 	case 0:
 		break;
 	default:
@@ -330,8 +322,7 @@ ypgetpwnam(nam)
 	__yplin = (char *)malloc(vallen + 1);
 	if (__yplin == NULL)
 		pw_error(NULL, 1, 1);
-	strncpy(__yplin, val, vallen);
-	__yplin[vallen] = '\0';
+	strlcpy(__yplin, val, vallen + 1);
 	free(val);
 
 	return (interpret(&pwent, __yplin));
