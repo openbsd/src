@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmds.c,v 1.26 1998/02/10 02:13:10 weingart Exp $	*/
+/*	$OpenBSD: cmds.c,v 1.27 1998/06/08 16:55:56 millert Exp $	*/
 /*	$NetBSD: cmds.c,v 1.27 1997/08/18 10:20:15 lukem Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-static char rcsid[] = "$OpenBSD: cmds.c,v 1.26 1998/02/10 02:13:10 weingart Exp $";
+static char rcsid[] = "$OpenBSD: cmds.c,v 1.27 1998/06/08 16:55:56 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -684,7 +684,7 @@ status(argc, argv)
 	fprintf(ttyout, "Command line editing: %s.\n", onoff(editing));
 #endif /* !SMALL */
 	if (macnum > 0) {
-		fputs("Macros:", ttyout);
+		fputs("Macros:\n", ttyout);
 		for (i=0; i<macnum; i++) {
 			fprintf(ttyout, "\t%s\n", macros[i].mac_name);
 		}
@@ -779,8 +779,8 @@ sethash(argc, argv)
 	else if (strcasecmp(argv[1], "off") == 0)
 		hash = 0;
 	else {
-		int nmark = atol(argv[1]);
-		if (nmark < 1) {
+		long nmark = strtol(argv[1], NULL, 10);
+		if (nmark < 1 && nmark > INT_MAX) {
 			fprintf(ttyout, "%s: bad bytecount value.\n", argv[1]);
 			code = -1;
 			return;
@@ -1464,7 +1464,7 @@ quote1(initial, argc, argv)
 			if (len >= sizeof(buf) - 1)
 				break;
 
-			/* Copy next argument, NULL terminate always */
+			/* Copy next argument, NUL terminate always */
 			strncpy(&buf[len], argv[i], sizeof(buf) - len - 1);
 			buf[sizeof(buf) - 1] = '\0';
 
@@ -1473,7 +1473,7 @@ quote1(initial, argc, argv)
 		}
 	}
 
-	/* Make double (tripple?) sure the sucker is NULL terminated */
+	/* Make double (tripple?) sure the sucker is NUL terminated */
 	buf[sizeof(buf) - 1] = '\0';
 
 	if (command(buf) == PRELIM) {
@@ -2011,13 +2011,21 @@ restart(argc, argv)
 	int argc;
 	char *argv[];
 {
+	quad_t nrestart_point;
+	char *ep;
 
 	if (argc != 2)
 		fputs("restart: offset not specified.\n", ttyout);
 	else {
-		restart_point = atol(argv[1]);
-		fprintf(ttyout, "Restarting at %qd. Execute get, put or append"
-			" to initiate transfer\n", (quad_t)restart_point);
+		restart_point = strtoq(argv[1], &ep, 10);
+		if (nrestart_point == QUAD_MAX || *ep != '\0')
+			fputs("restart: invalid offset.\n", ttyout);
+		else {
+			fprintf(ttyout, "Restarting at %qd. Execute get, put or"
+				"append  to initiate transfer\n",
+				nrestart_point);
+			restart_point = nrestart_point;
+		}
 	}
 }
 
