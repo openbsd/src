@@ -1,4 +1,4 @@
-/*	$OpenBSD: displayq.c,v 1.8 1997/07/23 22:12:10 deraadt Exp $	*/
+/*	$OpenBSD: displayq.c,v 1.9 1998/02/27 11:33:41 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)displayq.c	8.4 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: displayq.c,v 1.8 1997/07/23 22:12:10 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: displayq.c,v 1.9 1998/02/27 11:33:41 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -94,7 +94,7 @@ displayq(format)
 	int format;
 {
 	register struct queue *q;
-	register int i, nitems, fd, ret;
+	register int i, nitems, fd, ret, len;
 	register char	*cp;
 	struct queue **queue;
 	struct stat statb;
@@ -232,17 +232,27 @@ displayq(format)
 		putchar('\n');
 	(void) snprintf(line, sizeof line, "%c%s", format + '\3', RP);
 	cp = line;
-	for (i = 0; i < requests && cp-line+10 < sizeof(line) - 1; i++) {
+	cp += strlen(cp);
+	for (i = 0; i < requests && cp-line < sizeof(line) - 1; i++) {
+		len = line + sizeof line - cp;
+		if (snprintf(cp, len, " %d", requ[i]) > len) {
+			cp += strlen(cp);
+			break;
+		}
 		cp += strlen(cp);
-		(void) sprintf(cp, " %d", requ[i]);
 	}
-	for (i = 0; i < users && cp-line+1+strlen(user[i]) <
-	    sizeof(line) - 1; i++) {
-		cp += strlen(cp);
-		*cp++ = ' ';
-		(void) strcpy(cp, user[i]);
+	for (i = 0; i < users && cp-line < sizeof(line) - 1; i++) {
+		len = line + sizeof line - cp;
+		if (snprintf(cp, len, " %s", user[i]) > len) {
+			cp += strlen(cp);
+			break;
+		}
 	}
-	strcat(line, "\n");
+	if (cp-line < sizeof(line) - 1) {
+		strcat(line, "\n");
+	} else {
+		line[sizeof line-2] = '\n';
+	}
 	fd = getport(RM, 0);
 	if (fd < 0) {
 		if (from != host)
