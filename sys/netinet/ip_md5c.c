@@ -39,8 +39,9 @@ documentation and/or software.
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
+
 #include <netinet/ip_md5.h>
-#include <string.h>
 
 #define HAVEBCOPY
 
@@ -63,6 +64,8 @@ documentation and/or software.
 #define S42 10
 #define S43 15
 #define S44 21
+
+#define MD5Transform _MD5Transform
 
 static void MD5Transform PROTO_LIST ((UINT4 [4], unsigned char [64]));
 

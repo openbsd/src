@@ -35,11 +35,15 @@
 #include <sys/errno.h>
 #include <sys/time.h>
 #include <sys/kernel.h>
+#include <sys/socketvar.h>
+
 #include <machine/cpu.h>
+#include <machine/endian.h>
 
 #include <net/if.h>
 #include <net/route.h>
 #include <net/netisr.h>
+#include <net/raw_cb.h>
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
@@ -49,8 +53,6 @@
 #include <netinet/ip_var.h>
 #include <netinet/ip_icmp.h>
 
-#include <sys/socketvar.h>
-#include <net/raw_cb.h>
 #include <net/encap.h>
 
 #include <netinet/ip_ipsp.h>

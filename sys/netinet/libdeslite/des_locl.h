@@ -47,11 +47,11 @@
 
 #ifndef HEADER_DES_LOCL_H
 #define HEADER_DES_LOCL_H
-#include <stdio.h>
-#include <stdlib.h>
-#ifndef MSDOS
-#include <unistd.h>
-#endif
+
+#include <sys/cdefs.h>
+#include <sys/types.h>
+#include <sys/systm.h>
+
 #include "des.h"
 
 /* the following is tweaked from a config script, that is why it is a
@@ -60,29 +60,8 @@
 #undef DES_USE_PTR
 #endif
 
-#ifdef MSDOS		/* Visual C++ 2.1 (Windows NT/95) */
-#include <stdlib.h>
-#include <time.h>
-#include <io.h>
-#define RAND
-#undef PROTO
-#define PROTO
-#endif
-
-#if defined(__STDC__) || defined(VMS) || defined(M_XENIX) || defined(MSDOS)
-#include <string.h>
-#endif
-
 #ifndef RAND
 #define RAND
-#endif
-
-#ifdef MSDOS
-#define getpid() 2
-extern int errno;
-#define RAND
-#undef PROTO
-#define PROTO
 #endif
 
 #if defined(NOCONST)

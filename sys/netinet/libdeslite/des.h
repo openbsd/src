@@ -48,7 +48,9 @@
 #ifndef HEADER_DES_H
 #define HEADER_DES_H
 
+#ifndef _KERNEL
 #include <stdio.h>
+#endif
 
 typedef unsigned char des_cblock[8];
 typedef struct des_ks_struct
@@ -183,11 +185,12 @@ void des_cfb64_encrypt(unsigned char *in, unsigned char *out, long length,
 void des_ofb64_encrypt(unsigned char *in, unsigned char *out, long length,
 	des_key_schedule schedule, des_cblock *ivec, int *num);
 
-/* Extra functions from Mark Murray <mark@grondar.za> */
-void des_cblock_print_file(des_cblock *cb, FILE *fp);
-/* The following functions are not in the normal unix build or the
+/*
+ * Extra functions from Mark Murray <mark@grondar.za>
+ * The following functions are not in the normal unix build or the
  * SSLeay build.  When using the SSLeay build, use RAND_seed()
- * and RAND_bytes() instead. */
+ * and RAND_bytes() instead.
+ */
 int des_new_random_key(des_cblock *key);
 void des_init_random_number_generator(des_cblock *key);
 void des_set_random_generator_seed(des_cblock *key);
@@ -232,11 +235,12 @@ void des_string_to_2keys();
 void des_cfb64_encrypt();
 void des_ofb64_encrypt();
 
-/* Extra functions from Mark Murray <mark@grondar.za> */
-void des_cblock_print_file();
-/* The following functions are not in the normal unix build or the
+/*
+ * Extra functions from Mark Murray <mark@grondar.za>
+ * The following functions are not in the normal unix build or the
  * SSLeay build.  When using the SSLeay build, use RAND_seed()
- * and RAND_bytes() instead. */
+ * and RAND_bytes() instead.
+ */
 int des_new_random_key();
 void des_init_random_number_generator();
 void des_set_random_generator_seed();

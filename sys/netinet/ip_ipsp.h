@@ -66,9 +66,8 @@ struct xformsw
 
 #define IPSEC_ZEROES_SIZE	64
 
-#ifdef IPSEC_IPSP_C
 #if BYTE_ORDER == LITTLE_ENDIAN
-inline u_int64_t
+static __inline u_int64_t
 htonq(u_int64_t q)
 {
         register u_int32_t u, l;
@@ -88,11 +87,8 @@ htonq(u_int64_t q)
 #else
 #error  "Please fix <machine/endian.h>"
 #endif                                          
-#else
-u_int64_t htonq(u_int64_t);
-#define ntohq(_x) htonq(_x)
-extern unsigned char ipseczeroes[IPSEC_ZEROES_SIZE];
-#endif
+
+extern unsigned char ipseczeroes[];
 
 #ifdef _KERNEL
 #undef ENCDEBUG	

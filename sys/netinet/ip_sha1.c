@@ -18,8 +18,9 @@ A million repetitions of "a"
 #define SHA1HANDSOFF
 
 #include <sys/param.h>
+#include <sys/systm.h>
+
 #include <netinet/ip_sha1.h>
-#include <string.h>
 
 #define rol(value, bits) (((value) << (bits)) | ((value) >> (32 - (bits))))
 

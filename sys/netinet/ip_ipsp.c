@@ -51,9 +51,7 @@
 #include <net/raw_cb.h>
 #include <net/encap.h>
 
-#define IPSEC_IPSP_C
 #include <netinet/ip_ipsp.h>
-#undef IPSEC_IPSP_C
 #include <netinet/ip_ah.h>
 #include <netinet/ip_esp.h>
 
