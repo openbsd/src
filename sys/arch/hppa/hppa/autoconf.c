@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.27 2003/02/15 00:52:26 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.28 2003/02/18 01:45:53 miod Exp $	*/
 
 /*
  * Copyright (c) 1998-2001 Michael Shalayeff
@@ -686,12 +686,10 @@ device_register(struct device *dev, void *aux)
 {
 	struct confargs *ca = aux;
 	char *basename;
-	enum devclass target;
 	static struct device *elder = NULL;
 
 	if (bootdv != NULL)
 		return;	/* We already have a winner */
-
 
 	if (ca->ca_hpa == (hppa_hpa_t)PAGE0->mem_boot.pz_hpa) {
 		/*
@@ -706,8 +704,15 @@ device_register(struct device *dev, void *aux)
 		return;	/* not the device we booted from */
 	}
 
-	/* What are we looking for? */
-	if (PAGE0->mem_boot.pz_class & PCL_NET_MASK) {
+	/*
+	 * Unfortunately, we can not match on pz_class vs dv_class on
+	 * older snakes netbooting using the rbootd protocol.
+	 * In this case, we'll end up with pz_class == PCL_RANDOM...
+	 * Instead, trust the device class from what the kernel attached
+	 * now...
+	 */
+	switch (dev->dv_class) {
+	case DV_IFNET:
 		/*
 		 * Netboot is the top elder
 		 */
@@ -715,13 +720,13 @@ device_register(struct device *dev, void *aux)
 			bootdv = dev;
 		}
 		return;
-	} else
-	switch (PAGE0->mem_boot.pz_class & PCL_CLASS_MASK) {
-	case PCL_RANDOM:
-		target = DV_DISK;
+	case DV_DISK:
+		if ((PAGE0->mem_boot.pz_class & PCL_CLASS_MASK) != PCL_RANDOM)
+			return;
 		break;
-	case PCL_SEQU:
-		target = DV_TAPE;
+	case DV_TAPE:
+		if ((PAGE0->mem_boot.pz_class & PCL_CLASS_MASK) != PCL_SEQU)
+			return;
 		break;
 	default:
 		/* No idea what we were booted from, but better ask the user */
@@ -729,14 +734,9 @@ device_register(struct device *dev, void *aux)
 	}
 
 	/*
-	 * If control goes here, we are booted from a block device.
-	 * Since multiple devices will attach with the same hpa value
-	 * in their confargs, get rid of at least the controller by
-	 * hunting for an appropriate device class.
+	 * If control goes here, we are booted from a block device and we
+	 * matched a block device.
 	 */
-	if (dev->dv_class != target)
-		return;
-
 	basename = dev->dv_cfdata->cf_driver->cd_name;
 
 	/*
