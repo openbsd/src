@@ -300,6 +300,12 @@ bounds_check_with_label(bp, lp, osdep, wlabel)
 	    LABELSECTOR;
 	int sz = howmany(bp->b_bcount, DEV_BSIZE);
 
+	/* avoid division by zero */
+	if (lp->d_secpercyl == 0) {
+		bp->b_error = EINVAL;
+		goto bad;
+	}
+
 	/* overwriting disk label ? */
 	/* XXX should also protect bootstrap in first 8K */
 	if (bp->b_blkno + blockpersec(p->p_offset, lp) <= labelsect &&

@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.10 1998/10/03 21:18:56 millert Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.11 1999/01/08 04:29:10 millert Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.13 1997/07/06 22:38:26 ragge Exp $	*/
 
 /*
@@ -72,6 +72,12 @@ bounds_check_with_label(bp, lp, osdep, wlabel)
 	int labelsect = blockpersec(lp->d_partitions[2].p_offset, lp) +
 	    LABELSECTOR;
 	int sz = howmany(bp->b_bcount, DEV_BSIZE);
+
+	/* avoid division by zero */
+	if (lp->d_secpercyl == 0) {
+		bp->b_error = EINVAL;
+		goto bad;
+	}
 
 	/* overwriting disk label ? */
 	if (bp->b_blkno + p->p_offset <= labelsect &&

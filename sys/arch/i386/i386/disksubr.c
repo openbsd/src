@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.35 1998/11/21 20:43:43 deraadt Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.36 1999/01/08 04:29:06 millert Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1996/05/03 19:42:03 christos Exp $	*/
 
 /*
@@ -500,6 +500,13 @@ bounds_check_with_label(bp, lp, osdep, wlabel)
 	    LABELSECTOR;
 	int sz = howmany(bp->b_bcount, DEV_BSIZE);
 
+	/* avoid division by zero */
+	if (lp->d_secpercyl == 0) {
+		bp->b_error = EINVAL;
+		goto bad;
+	}
+
+	/* beyond partition? */
 	if (bp->b_blkno + sz > blockpersec(p->p_size, lp)) {
 		sz = blockpersec(p->p_size, lp) - bp->b_blkno;
 		if (sz == 0) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.13 1998/10/03 21:18:56 millert Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.14 1999/01/08 04:29:10 millert Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.14 1996/09/26 18:10:21 gwr Exp $	*/
 
 /*
@@ -253,6 +253,12 @@ bounds_check_with_label(bp, lp, osdep, wlabel)
 #define blockpersec(count, lp) ((count) * (((lp)->d_secsize) / DEV_BSIZE))
 	struct partition *p = lp->d_partitions + dkpart(bp->b_dev);
 	int sz = howmany(bp->b_bcount, DEV_BSIZE);
+
+	/* avoid division by zero */
+	if (lp->d_secpercyl == 0) {
+		bp->b_error = EINVAL;
+		goto bad;
+	}
 
 	/* overwriting disk label ? */
 	/* XXX should also protect bootstrap in first 8K */

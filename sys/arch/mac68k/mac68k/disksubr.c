@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.9 1998/10/03 21:18:55 millert Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.10 1999/01/08 04:29:07 millert Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.22 1997/11/26 04:18:20 briggs Exp $	*/
 
 /*
@@ -649,6 +649,12 @@ bounds_check_with_label(bp, lp, osdep, wlabel)
 #endif
 	int maxsz = p->p_size;
 	int sz = (bp->b_bcount + DEV_BSIZE - 1) >> DEV_BSHIFT;
+
+	/* avoid division by zero */
+	if (lp->d_secpercyl == 0) {
+		bp->b_error = EINVAL;
+		goto bad;
+	}
 
 	/* overwriting disk label ? */
 	/* XXX should also protect bootstrap in first 8K */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.17 1998/10/04 23:27:27 millert Exp $ */
+/*	$OpenBSD: disksubr.c,v 1.18 1999/01/08 04:29:07 millert Exp $ */
 
 /*
  * Copyright (c) 1995 Dale Rahn.
@@ -315,6 +315,12 @@ bounds_check_with_label(bp, lp, osdep, wlabel)
 	int labelsect = blockpersec(lp->d_partitions[0].p_offset, lp) +
 	    LABELSECTOR;
 	int sz = howmany(bp->b_bcount, DEV_BSIZE);
+
+	/* avoid division by zero */
+	if (lp->d_secpercyl == 0) {
+		bp->b_error = EINVAL;
+		goto bad;
+	}
 
 	/* overwriting disk label ? */
 	/* XXX should also protect bootstrap in first 8K */

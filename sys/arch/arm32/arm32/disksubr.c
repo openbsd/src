@@ -526,6 +526,12 @@ bounds_check_with_label(bp, lp, osdep, wlabel)
 	int labelsector = lp->d_partitions[0].p_offset + LABELSECTOR;
 	int sz;
 
+	/* avoid division by zero */
+	if (lp->d_secpercyl == 0) {
+		bp->b_error = EINVAL;
+		goto bad;
+	}
+
 	sz = howmany(bp->b_bcount, lp->d_secsize);
 
 	if (bp->b_blkno + sz > p->p_size) {
