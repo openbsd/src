@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.251 2003/11/15 19:33:26 henning Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.252 2003/12/11 01:09:47 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -1927,11 +1927,11 @@ identifycpu()
 			ghz = (pentium_mhz + 9) / 1000;
 			fr = ((pentium_mhz + 9) / 10 ) % 100;
 			if (fr)
-				printf(" @%d.%02d GHz", ghz, fr);
+				printf(" %d.%02d GHz", ghz, fr);
 			else
-				printf(" @%d GHz", ghz);
+				printf(" %d GHz", ghz);
 		} else
-			printf(" @%d MHz", pentium_mhz);
+			printf(" %d MHz", pentium_mhz);
 	}
 #endif
 	printf("\n");
