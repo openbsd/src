@@ -770,6 +770,7 @@ sngetaddr(sc)
 	unsigned i, x, y;
 	char   *cp, *ea;
 
+#if 0
 	sc->sc_csr->s_cr = CR_RST;
 	sc->sc_csr->s_cep = 0;
 	i = sc->sc_csr->s_cap2;
@@ -783,6 +784,14 @@ sngetaddr(sc)
 	sc->sc_enaddr[0] = i;
 
 	sc->sc_csr->s_cr = 0;
+#endif
+	sc->sc_enaddr[0] = 0x08;
+	sc->sc_enaddr[1] = 0x00;
+	sc->sc_enaddr[2] = 0x20;
+	sc->sc_enaddr[3] = 0xa0;
+	sc->sc_enaddr[4] = 0x66;
+	sc->sc_enaddr[5] = 0x54;
+	
 	return (0);
 }
 
