@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.252 2002/08/15 22:56:03 krw Exp $
+#	$OpenBSD: install.sub,v 1.253 2002/08/27 02:27:07 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -216,7 +216,7 @@ ask_fordev () {
 		if isin $resp $_devs ; then
 			makedev $resp || resp=
 		elif [ "$resp" != "done" ]; then
-			echo "\n'$resp' does not exist."
+			echo "\n'$resp' is not a valid choice."
 			resp=
 		fi
 	done
@@ -2068,3 +2068,6 @@ __EOT
 	exit
 	;;
 esac
+
+# Get ROOTDISK and default ROOTDEV 
+get_rootdisk
