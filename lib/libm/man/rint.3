@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rint.3,v 1.5 2000/03/02 00:29:50 todd Exp $
+.\"	$OpenBSD: rint.3,v 1.6 2003/02/27 04:22:12 jason Exp $
 .\" Copyright (c) 1985, 1991 Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -52,6 +52,10 @@ function returns the integral value (represented as a double precision number)
 nearest to
 .Fa x
 according to the prevailing rounding mode.
+The
+.Fn rintf
+function is a single precision version of
+.Fn rint .
 .Sh SEE ALSO
 .Xr abs 3 ,
 .Xr ceil 3 ,

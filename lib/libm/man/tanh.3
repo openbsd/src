@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tanh.3,v 1.5 2000/03/02 00:29:50 todd Exp $
+.\"	$OpenBSD: tanh.3,v 1.6 2003/02/27 04:22:12 jason Exp $
 .\" Copyright (c) 1991 The Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -48,16 +48,20 @@
 .Sh DESCRIPTION
 The
 .Fn tanh
-and
-.Fn tanhf
-functions compute the hyperbolic tangent of
+function computes the hyperbolic tangent of
 .Fa x .
+The
+.Fn tanhf
+function is a single precision version of
+.Fn tanh .
 For a discussion of error due to roundoff, see
 .Xr math 3 .
 .Sh RETURN VALUES
 The
 .Fn tanh
-function returns the hyperbolic tangent value.
+and
+.Fn tanhf
+functions return the hyperbolic tangent value.
 .Sh SEE ALSO
 .Xr acos 3 ,
 .Xr asin 3 ,
