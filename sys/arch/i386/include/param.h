@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.6 1998/05/28 13:30:14 mickey Exp $	*/
+/*	$OpenBSD: param.h,v 1.7 1999/09/17 16:52:05 deraadt Exp $	*/
 /*	$NetBSD: param.h,v 1.29 1996/03/04 05:04:26 cgd Exp $	*/
 
 /*-
@@ -70,11 +70,8 @@
 #define	PGOFSET		(NBPG-1)	/* byte offset into page */
 #define	NPTEPG		(NBPG/(sizeof (pt_entry_t)))
 
-#define	KERNBASE	0xf0000000	/* start of kernel virtual space */
-#if 0
-#define	KERNSIZE	0x01800000	/* size of kernel virtual space */
-#endif
-#define	KERNTEXTOFF	0xf0100000	/* start of kernel text */
+#define	KERNBASE	0xe0000000		/* start of kernel virtual space */
+#define	KERNTEXTOFF	(KERNBASE+0x100000)	/* start of kernel text */
 #define	BTOPKERNBASE	((u_long)KERNBASE >> PGSHIFT)
 
 #define	DEV_BSHIFT	9		/* log2(DEV_BSIZE) */

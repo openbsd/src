@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.11 1999/02/26 04:17:20 art Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.12 1999/09/17 16:52:06 deraadt Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.15 1994/10/27 04:16:34 cgd Exp $	*/
 
 /*-
@@ -132,14 +132,10 @@
 
 /* user/kernel map constants */
 #define VM_MIN_ADDRESS		((vm_offset_t)0)
-/* PTDPTDI<<PDSHIFT - USPACE */
-#define VM_MAXUSER_ADDRESS	((vm_offset_t)0xefbfe000)
-/* PTDPTDI<<PDSHIFT + PTDPTDI<<PGSHIFT */
-#define VM_MAX_ADDRESS		((vm_offset_t)0xeffdf000)
-/* KPTDI<<PDSHIFT */
-#define VM_MIN_KERNEL_ADDRESS	((vm_offset_t)0xf0000000)
-/* APTDPTDI<<PDSHIFT */
-#define VM_MAX_KERNEL_ADDRESS	((vm_offset_t)0xffc00000)
+#define VM_MAXUSER_ADDRESS	((vm_offset_t)((PTDPTDI<<PDSHIFT) - USPACE))
+#define VM_MAX_ADDRESS		((vm_offset_t)((PTDPTDI<<PDSHIFT) + (PTDPTDI<<PGSHIFT)))
+#define VM_MIN_KERNEL_ADDRESS	((vm_offset_t)KERNBASE)
+#define VM_MAX_KERNEL_ADDRESS	((vm_offset_t)(APTDPTDI<<PDSHIFT))
 
 /* virtual sizes (bytes) for various kernel submaps */
 #define VM_MBUF_SIZE		(NMBCLUSTERS*MCLBYTES)
