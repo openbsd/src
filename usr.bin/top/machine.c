@@ -1,4 +1,4 @@
-/*	$OpenBSD: machine.c,v 1.15 1999/05/22 21:42:26 weingart Exp $	*/
+/*	$OpenBSD: machine.c,v 1.16 1999/06/21 20:48:01 art Exp $	*/
 
 /*
  * top - a top users display for Unix
@@ -534,7 +534,7 @@ int size;
 char *refstr;
 
 {
-    if (kvm_read(kd, offset, (char *) ptr, size) != size)
+    if (kvm_read(kd, offset, ptr, size) != size)
     {
 	if (*refstr == '!')
 	{

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ps.c,v 1.11 1999/04/28 20:55:14 alex Exp $	*/
+/*	$OpenBSD: ps.c,v 1.12 1999/06/21 20:47:59 art Exp $	*/
 /*	$NetBSD: ps.c,v 1.15 1995/05/18 20:33:25 mycroft Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ps.c	8.4 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: ps.c,v 1.11 1999/04/28 20:55:14 alex Exp $";
+static char rcsid[] = "$OpenBSD: ps.c,v 1.12 1999/06/21 20:47:59 art Exp $";
 #endif
 #endif /* not lint */
 
@@ -390,7 +390,7 @@ saveuser(ki)
 
 	usp = &ki->ki_u;
 	if (kvm_read(kd, (u_long)&KI_PROC(ki)->p_addr->u_stats,
-	    (char *)&pstats, sizeof(pstats)) == sizeof(pstats)) {
+	    &pstats, sizeof(pstats)) == sizeof(pstats)) {
 		/*
 		 * The u-area might be swapped out, and we can't get
 		 * at it because we have a crashdump and no swap.
