@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.744 2004/06/20 19:52:11 couderc Exp 
+ *	OpenBSD: pcidevs,v 1.745 2004/07/04 01:21:58 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -2603,8 +2603,16 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Visualize FXe",
 	},
 	{
+	    PCI_VENDOR_HP, PCI_PRODUCT_HP_TOPTOOLS,
+	    "TopTools Communications Port",
+	},
+	{
 	    PCI_VENDOR_HP, PCI_PRODUCT_HP_NETRAID_4M,
 	    "NetRaid-4M",
+	},
+	{
+	    PCI_VENDOR_HP, PCI_PRODUCT_HP_SMARTIRQ,
+	    "NetServer SmartIRQ",
 	},
 	{
 	    PCI_VENDOR_HP, PCI_PRODUCT_HP_82557B,
