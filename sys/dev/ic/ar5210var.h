@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5210var.h,v 1.2 2004/11/02 14:05:49 reyk Exp $	*/
+/*	$OpenBSD: ar5210var.h,v 1.3 2004/11/03 16:40:46 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004 Reyk Floeter <reyk@vantronix.net>.
@@ -43,15 +43,14 @@
 #define AR5K_AR5210_TX_NUM_QUEUES	2
 
 #if BYTE_ORDER == BIG_ENDIAN
-#define AR5K_AR5210_INIT_CFG 	(					\
-	AR5K_AR5210_CFG_SWTD | AR5K_AR5210_CFG_SWTB | 			\
-        AR5K_AR5210_CFG_SWRD | AR5K_AR5210_CFG_SWRB | 			\
+#define AR5K_AR5210_INIT_CFG	(					\
+	AR5K_AR5210_CFG_SWTD | AR5K_AR5210_CFG_SWTB |			\
+        AR5K_AR5210_CFG_SWRD | AR5K_AR5210_CFG_SWRB |			\
         AR5K_AR5210_CFG_SWRG						\
 )
 #else
 #define AR5K_AR5210_INIT_CFG	0x00000000
 #endif
-
 
 /*
  * Internal RX/TX descriptor structures
@@ -89,87 +88,87 @@ struct ar5k_ar5210_rx_status {
 	 * Second word
 	 */
 	u_int32_t	done:1;
-	u_int32_t 	frame_receive_ok:1;
-	u_int32_t 	crc_error:1;
-	u_int32_t 	fifo_overrun:1;
-	u_int32_t 	decrypt_crc_error:1;
-	u_int32_t 	phy_error:3;
-	u_int32_t 	key_index_valid:1;
-	u_int32_t 	key_index:6;
-	u_int32_t 	receive_timestamp:13;
-	u_int32_t 	key_cache_miss:1;
-	u_int32_t 	r3:3;
+	u_int32_t	frame_receive_ok:1;
+	u_int32_t	crc_error:1;
+	u_int32_t	fifo_overrun:1;
+	u_int32_t	decrypt_crc_error:1;
+	u_int32_t	phy_error:3;
+	u_int32_t	key_index_valid:1;
+	u_int32_t	key_index:6;
+	u_int32_t	receive_timestamp:13;
+	u_int32_t	key_cache_miss:1;
+	u_int32_t	r3:3;
 } __attribute__ ((__packed__));
 
 #define AR5K_AR5210_DESC_RX_PHY_ERROR_NONE		0x00
 #define AR5K_AR5210_DESC_RX_PHY_ERROR_TIMING		0x20
-#define AR5K_AR5210_DESC_RX_PHY_ERROR_PARITY 		0x40
-#define AR5K_AR5210_DESC_RX_PHY_ERROR_RATE 		0x60
-#define AR5K_AR5210_DESC_RX_PHY_ERROR_LENGTH 		0x80
-#define AR5K_AR5210_DESC_RX_PHY_ERROR_64QAM 		0xa0
-#define AR5K_AR5210_DESC_RX_PHY_ERROR_SERVICE 		0xc0
-#define AR5K_AR5210_DESC_RX_PHY_ERROR_TRANSMITOVR 	0xe0
+#define AR5K_AR5210_DESC_RX_PHY_ERROR_PARITY		0x40
+#define AR5K_AR5210_DESC_RX_PHY_ERROR_RATE		0x60
+#define AR5K_AR5210_DESC_RX_PHY_ERROR_LENGTH		0x80
+#define AR5K_AR5210_DESC_RX_PHY_ERROR_64QAM		0xa0
+#define AR5K_AR5210_DESC_RX_PHY_ERROR_SERVICE		0xc0
+#define AR5K_AR5210_DESC_RX_PHY_ERROR_TRANSMITOVR	0xe0
 
 struct ar5k_ar5210_tx_desc {
 	/*
 	 * First word
 	 */
-	u_int32_t 	frame_len:12;
-	u_int32_t 	header_len:6;
-	u_int32_t 	xmit_rate:4;
-	u_int32_t 	rts_cts_enable:1;
-	u_int32_t 	long_packet:1;
-	u_int32_t 	clear_dest_mask:1;
-	u_int32_t 	ant_mode_xmit:1;
-	u_int32_t 	frame_type:3;
-	u_int32_t 	inter_req:1;
-	u_int32_t 	encrypt_key_valid:1;
-	u_int32_t 	r1:1;
+	u_int32_t	frame_len:12;
+	u_int32_t	header_len:6;
+	u_int32_t	xmit_rate:4;
+	u_int32_t	rts_cts_enable:1;
+	u_int32_t	long_packet:1;
+	u_int32_t	clear_dest_mask:1;
+	u_int32_t	ant_mode_xmit:1;
+	u_int32_t	frame_type:3;
+	u_int32_t	inter_req:1;
+	u_int32_t	encrypt_key_valid:1;
+	u_int32_t	r1:1;
 
 	/*
 	 * Second word
 	 */
-	u_int32_t 	buf_len:12;
-	u_int32_t 	more:1;
-	u_int32_t 	encrypt_key_index:6;
-	u_int32_t 	rts_duration:13;
+	u_int32_t	buf_len:12;
+	u_int32_t	more:1;
+	u_int32_t	encrypt_key_index:6;
+	u_int32_t	rts_duration:13;
 } __attribute__ ((__packed__));
 
-#define AR5K_AR5210_DESC_TX_XMIT_RATE_6 	0xb
-#define AR5K_AR5210_DESC_TX_XMIT_RATE_9 	0xf
+#define AR5K_AR5210_DESC_TX_XMIT_RATE_6		0xb
+#define AR5K_AR5210_DESC_TX_XMIT_RATE_9		0xf
 #define AR5K_AR5210_DESC_TX_XMIT_RATE_12	0xa
-#define AR5K_AR5210_DESC_TX_XMIT_RATE_18 	0xe
-#define AR5K_AR5210_DESC_TX_XMIT_RATE_24 	0x9
-#define AR5K_AR5210_DESC_TX_XMIT_RATE_36 	0xd
-#define AR5K_AR5210_DESC_TX_XMIT_RATE_48 	0x8
-#define AR5K_AR5210_DESC_TX_XMIT_RATE_54 	0xc
+#define AR5K_AR5210_DESC_TX_XMIT_RATE_18	0xe
+#define AR5K_AR5210_DESC_TX_XMIT_RATE_24	0x9
+#define AR5K_AR5210_DESC_TX_XMIT_RATE_36	0xd
+#define AR5K_AR5210_DESC_TX_XMIT_RATE_48	0x8
+#define AR5K_AR5210_DESC_TX_XMIT_RATE_54	0xc
 
-#define AR5K_AR5210_DESC_TX_FRAME_TYPE_NORMAL 	0x00
-#define AR5K_AR5210_DESC_TX_FRAME_TYPE_ATIM 	0x04
-#define AR5K_AR5210_DESC_TX_FRAME_TYPE_PSPOLL 	0x08
+#define AR5K_AR5210_DESC_TX_FRAME_TYPE_NORMAL	0x00
+#define AR5K_AR5210_DESC_TX_FRAME_TYPE_ATIM	0x04
+#define AR5K_AR5210_DESC_TX_FRAME_TYPE_PSPOLL	0x08
 #define AR5K_AR5210_DESC_TX_FRAME_TYPE_NO_DELAY 0x0c
-#define AR5K_AR5210_DESC_TX_FRAME_TYPE_PIFS 	0x10
+#define AR5K_AR5210_DESC_TX_FRAME_TYPE_PIFS	0x10
 
 struct ar5k_ar5210_tx_status {
 	/*
 	 * First word
 	 */
-	u_int32_t 	frame_xmit_ok:1;
-	u_int32_t 	excessive_retries:1;
-	u_int32_t 	fifo_underrun:1;
-	u_int32_t 	filtered:1;
-	u_int32_t 	short_retry_count:4;
-	u_int32_t 	long_retry_count:4;
-	u_int32_t 	r1:4;
-	u_int32_t 	send_timestamp:16;
+	u_int32_t	frame_xmit_ok:1;
+	u_int32_t	excessive_retries:1;
+	u_int32_t	fifo_underrun:1;
+	u_int32_t	filtered:1;
+	u_int32_t	short_retry_count:4;
+	u_int32_t	long_retry_count:4;
+	u_int32_t	r1:4;
+	u_int32_t	send_timestamp:16;
 
 	/*
 	 * Second word
 	 */
-	u_int32_t 	done:1;
-	u_int32_t 	seq_num:12;
-	u_int32_t 	ack_sig_strength:8;
-	u_int32_t 	r2:11;
+	u_int32_t	done:1;
+	u_int32_t	seq_num:12;
+	u_int32_t	ack_sig_strength:8;
+	u_int32_t	r2:11;
 } __attribute__ ((__packed__));
 
 /*
@@ -181,44 +180,44 @@ extern ar5k_attach_t ar5k_ar5210_attach;
  * Initial mode settings ("Base Mode" or "Turbo Mode")
  */
 
-#define AR5K_AR5210_INI_MODE(_aifs) { 					\
-        { AR5K_AR5210_SLOT_TIME, 					\
-          AR5K_INIT_SLOT_TIME, 						\
-          AR5K_INIT_SLOT_TIME_TURBO }, 					\
-        { AR5K_AR5210_SLOT_TIME, 					\
-          AR5K_INIT_ACK_CTS_TIMEOUT, 					\
-          AR5K_INIT_ACK_CTS_TIMEOUT_TURBO }, 				\
-        { AR5K_AR5210_USEC, 						\
-          AR5K_INIT_TRANSMIT_LATENCY, 					\
-          AR5K_INIT_TRANSMIT_LATENCY_TURBO}, 				\
-        { AR5K_AR5210_IFS0, 						\
-          ((AR5K_INIT_SIFS + (_aifs) * AR5K_INIT_SLOT_TIME) 		\
-              << AR5K_AR5210_IFS0_DIFS_S) | AR5K_INIT_SIFS, 		\
+#define AR5K_AR5210_INI_MODE(_aifs) {					\
+        { AR5K_AR5210_SLOT_TIME,					\
+          AR5K_INIT_SLOT_TIME,						\
+          AR5K_INIT_SLOT_TIME_TURBO },					\
+        { AR5K_AR5210_SLOT_TIME,					\
+          AR5K_INIT_ACK_CTS_TIMEOUT,					\
+          AR5K_INIT_ACK_CTS_TIMEOUT_TURBO },				\
+        { AR5K_AR5210_USEC,						\
+          AR5K_INIT_TRANSMIT_LATENCY,					\
+          AR5K_INIT_TRANSMIT_LATENCY_TURBO},				\
+        { AR5K_AR5210_IFS0,						\
+          ((AR5K_INIT_SIFS + (_aifs) * AR5K_INIT_SLOT_TIME)		\
+              << AR5K_AR5210_IFS0_DIFS_S) | AR5K_INIT_SIFS,		\
           ((AR5K_INIT_SIFS_TURBO + (_aifs) * AR5K_INIT_SLOT_TIME_TURBO) \
-              << AR5K_AR5210_IFS0_DIFS_S) | AR5K_INIT_SIFS_TURBO }, 	\
-        { AR5K_AR5210_IFS1, 						\
-          AR5K_INIT_PROTO_TIME_CNTRL, 					\
-          AR5K_INIT_PROTO_TIME_CNTRL_TURBO }, 				\
-        { AR5K_AR5210_PHY(17), 						\
-          (AR5K_REG_READ(AR5K_AR5210_PHY(17)) & ~0x7F) | 0x1C, 		\
-          (AR5K_REG_READ(AR5K_AR5210_PHY(17)) & ~0x7F) | 0x38 }, 	\
-        { AR5K_AR5210_PHY_FC, 						\
+              << AR5K_AR5210_IFS0_DIFS_S) | AR5K_INIT_SIFS_TURBO },	\
+        { AR5K_AR5210_IFS1,						\
+          AR5K_INIT_PROTO_TIME_CNTRL,					\
+          AR5K_INIT_PROTO_TIME_CNTRL_TURBO },				\
+        { AR5K_AR5210_PHY(17),						\
+          (AR5K_REG_READ(AR5K_AR5210_PHY(17)) & ~0x7F) | 0x1C,		\
+          (AR5K_REG_READ(AR5K_AR5210_PHY(17)) & ~0x7F) | 0x38 },	\
+        { AR5K_AR5210_PHY_FC,						\
                                                                         \
-          AR5K_AR5210_PHY_FC_SERVICE_ERR | 				\
-          AR5K_AR5210_PHY_FC_TXURN_ERR | 				\
-          AR5K_AR5210_PHY_FC_ILLLEN_ERR | 				\
-          AR5K_AR5210_PHY_FC_ILLRATE_ERR | 				\
-          AR5K_AR5210_PHY_FC_PARITY_ERR | 				\
-          AR5K_AR5210_PHY_FC_TIMING_ERR | 0x1020, 			\
+          AR5K_AR5210_PHY_FC_SERVICE_ERR |				\
+          AR5K_AR5210_PHY_FC_TXURN_ERR |				\
+          AR5K_AR5210_PHY_FC_ILLLEN_ERR |				\
+          AR5K_AR5210_PHY_FC_ILLRATE_ERR |				\
+          AR5K_AR5210_PHY_FC_PARITY_ERR |				\
+          AR5K_AR5210_PHY_FC_TIMING_ERR | 0x1020,			\
 	                                                                \
-          AR5K_AR5210_PHY_FC_SERVICE_ERR | 				\
-          AR5K_AR5210_PHY_FC_TXURN_ERR | 				\
-          AR5K_AR5210_PHY_FC_ILLLEN_ERR | 				\
-          AR5K_AR5210_PHY_FC_ILLRATE_ERR | 				\
-          AR5K_AR5210_PHY_FC_PARITY_ERR | 				\
-          AR5K_AR5210_PHY_FC_TURBO_MODE | 				\
+          AR5K_AR5210_PHY_FC_SERVICE_ERR |				\
+          AR5K_AR5210_PHY_FC_TXURN_ERR |				\
+          AR5K_AR5210_PHY_FC_ILLLEN_ERR |				\
+          AR5K_AR5210_PHY_FC_ILLRATE_ERR |				\
+          AR5K_AR5210_PHY_FC_PARITY_ERR |				\
+          AR5K_AR5210_PHY_FC_TURBO_MODE |				\
           AR5K_AR5210_PHY_FC_TURBO_SHORT |				\
-          AR5K_AR5210_PHY_FC_TIMING_ERR | 0x2020 }, 			\
+          AR5K_AR5210_PHY_FC_TIMING_ERR | 0x2020 },			\
 }
 
 /*
@@ -226,7 +225,7 @@ extern ar5k_attach_t ar5k_ar5210_attach;
  * card at boot time and after each reset.
  */
 
-#define AR5K_AR5210_INI { 						\
+#define AR5K_AR5210_INI {						\
         /* PCU and MAC registers */					\
 	{ AR5K_AR5210_TXDP0, 0 },					\
 	{ AR5K_AR5210_TXDP1, 0 },					\
@@ -298,7 +297,7 @@ extern ar5k_attach_t ar5k_ar5210_attach;
 	{ AR5K_AR5210_PHY(67), 0x00800000 },				\
 	{ AR5K_AR5210_PHY(68), 0x00000003 },				\
         /* BB gain table (64bytes) */					\
-	{ AR5K_AR5210_BB_GAIN(0), 0x00000000 },			     	\
+        { AR5K_AR5210_BB_GAIN(0), 0x00000000 },				\
 	{ AR5K_AR5210_BB_GAIN(0x01), 0x00000020 },			\
 	{ AR5K_AR5210_BB_GAIN(0x02), 0x00000010 },			\
 	{ AR5K_AR5210_BB_GAIN(0x03), 0x00000030 },			\
