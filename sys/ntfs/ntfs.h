@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs.h,v 1.2 2003/05/20 03:23:11 mickey Exp $	*/
+/*	$OpenBSD: ntfs.h,v 1.3 2003/05/20 03:36:42 tedu Exp $	*/
 /*	$NetBSD: ntfs.h,v 1.5 2003/04/24 07:50:19 christos Exp $	*/
 
 /*-
@@ -243,9 +243,9 @@ struct bootfile {
 
 #pragma pack()
 
-typedef wchar (ntfs_wget_func_t) __P((const char **));
-typedef int (ntfs_wput_func_t) __P((char *, size_t, wchar));
-typedef int (ntfs_wcmp_func_t) __P((wchar, wchar));
+typedef wchar (ntfs_wget_func_t)(const char **);
+typedef int (ntfs_wput_func_t)(char *, size_t, wchar);
+typedef int (ntfs_wcmp_func_t)(wchar, wchar);
 
 #define	NTFS_SYSNODESNUM	0x0B
 struct ntfsmount {
@@ -304,7 +304,7 @@ MALLOC_DECLARE(M_NTFSRUN);
 #endif
 
 #ifdef __NetBSD__
-typedef int (vop_t) __P((void *));
+typedef int (vop_t)(void *);
 #define HASHINIT(a, b, c, d)	hashinit((a), HASH_LIST, (b), (c), (d))
 #define bqrelse(bp)		brelse(bp)
 #define VOP__UNLOCK(a, b, c)	VOP_UNLOCK((a), (b))
@@ -312,7 +312,7 @@ typedef int (vop_t) __P((void *));
 #define VN_LOCK(a, b, c)	vn_lock((a), (b))
 
 #elif defined(__OpenBSD__)
-typedef int (vop_t) (void *);
+typedef int (vop_t)(void *);
 #define HASHINIT(a, b, c, d)	hashinit((a), (b), (c), (d))
 #define bqrelse(bp)		brelse(bp)
 #define VOP__UNLOCK(a, b, c)	VOP_UNLOCK((a), (b), (c))

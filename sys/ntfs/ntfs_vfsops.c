@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_vfsops.c,v 1.2 2003/05/20 03:23:12 mickey Exp $	*/
+/*	$OpenBSD: ntfs_vfsops.c,v 1.3 2003/05/20 03:36:42 tedu Exp $	*/
 /*	$NetBSD: ntfs_vfsops.c,v 1.7 2003/04/24 07:50:19 christos Exp $	*/
 
 /*-
@@ -81,56 +81,56 @@ MALLOC_DEFINE(M_NTFSDIR,"NTFS dir",  "NTFS dir buffer");
 #endif
 
 #if defined(__FreeBSD__)
-static int	ntfs_mount __P((struct mount *, char *, caddr_t,
-				struct nameidata *, struct proc *));
+static int	ntfs_mount(struct mount *, char *, caddr_t,
+				struct nameidata *, struct proc *);
 #else
-static int	ntfs_mount __P((struct mount *, const char *, void *,
-				struct nameidata *, struct proc *));
+static int	ntfs_mount(struct mount *, const char *, void *,
+				struct nameidata *, struct proc *);
 #endif
-static int	ntfs_quotactl __P((struct mount *, int, uid_t, caddr_t,
-				   struct proc *));
-static int	ntfs_root __P((struct mount *, struct vnode **));
-static int	ntfs_start __P((struct mount *, int, struct proc *));
-static int	ntfs_statfs __P((struct mount *, struct statfs *,
-				 struct proc *));
-static int	ntfs_sync __P((struct mount *, int, struct ucred *,
-			       struct proc *));
-static int	ntfs_unmount __P((struct mount *, int, struct proc *));
-static int	ntfs_vget __P((struct mount *mp, ino_t ino,
-			       struct vnode **vpp));
-static int	ntfs_mountfs __P((struct vnode *, struct mount *, 
-				  struct ntfs_args *, struct proc *));
-static int	ntfs_vptofh __P((struct vnode *, struct fid *));
+static int	ntfs_quotactl(struct mount *, int, uid_t, caddr_t,
+				   struct proc *);
+static int	ntfs_root(struct mount *, struct vnode **);
+static int	ntfs_start(struct mount *, int, struct proc *);
+static int	ntfs_statfs(struct mount *, struct statfs *,
+				 struct proc *);
+static int	ntfs_sync(struct mount *, int, struct ucred *,
+			       struct proc *);
+static int	ntfs_unmount(struct mount *, int, struct proc *);
+static int	ntfs_vget(struct mount *mp, ino_t ino,
+			       struct vnode **vpp);
+static int	ntfs_mountfs(struct vnode *, struct mount *, 
+				  struct ntfs_args *, struct proc *);
+static int	ntfs_vptofh(struct vnode *, struct fid *);
 
 #if defined(__FreeBSD__)
-static int	ntfs_init __P((struct vfsconf *));
-static int	ntfs_fhtovp __P((struct mount *, struct fid *,
+static int	ntfs_init(struct vfsconf *);
+static int	ntfs_fhtovp(struct mount *, struct fid *,
 				 struct sockaddr *, struct vnode **,
-				 int *, struct ucred **));
+				 int *, struct ucred **);
 #elif defined(__NetBSD__)
-static void	ntfs_init __P((void));
-static void	ntfs_reinit __P((void));
-static void	ntfs_done __P((void));
-static int	ntfs_fhtovp __P((struct mount *, struct fid *,
-				 struct vnode **));
-static int	ntfs_checkexp __P((struct mount *, struct mbuf *,
-				   int *, struct ucred **));
-static int	ntfs_mountroot __P((void));
-static int	ntfs_sysctl __P((int *, u_int, void *, size_t *, void *,
-				 size_t, struct proc *));
+static void	ntfs_init(void);
+static void	ntfs_reinit(void);
+static void	ntfs_done(void);
+static int	ntfs_fhtovp(struct mount *, struct fid *,
+				 struct vnode **);
+static int	ntfs_checkexp(struct mount *, struct mbuf *,
+				   int *, struct ucred **);
+static int	ntfs_mountroot(void);
+static int	ntfs_sysctl(int *, u_int, void *, size_t *, void *,
+				 size_t, struct proc *);
 #elif defined(__OpenBSD__)
-static int	ntfs_init (struct vfsconf *);
-static int	ntfs_fhtovp (struct mount *, struct fid *,
+static int	ntfs_init(struct vfsconf *);
+static int	ntfs_fhtovp(struct mount *, struct fid *,
    			     struct vnode **);
-static int	ntfs_checkexp (struct mount *, struct mbuf *,
+static int	ntfs_checkexp(struct mount *, struct mbuf *,
 			       int *, struct ucred **);
-static int	ntfs_sysctl (int *, u_int, void *, size_t *, void *,
+static int	ntfs_sysctl(int *, u_int, void *, size_t *, void *,
  			     size_t, struct proc *);
 #else
-static int	ntfs_init __P((void));
-static int	ntfs_fhtovp __P((struct mount *, struct fid *,
+static int	ntfs_init(void);
+static int	ntfs_fhtovp(struct mount *, struct fid *,
 				 struct mbuf *, struct vnode **,
-				 int *, struct ucred **));
+				 int *, struct ucred **);
 #endif
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_ihash.h,v 1.2 2003/05/20 03:23:11 mickey Exp $	*/
+/*	$OpenBSD: ntfs_ihash.h,v 1.3 2003/05/20 03:36:42 tedu Exp $	*/
 /*	$NetBSD: ntfs_ihash.h,v 1.1 2002/12/23 17:38:32 jdolecek Exp $	*/
 
 /*-
@@ -30,10 +30,10 @@
  */
 
 extern struct lock ntfs_hashlock;
-void ntfs_nthashinit __P((void));
-void ntfs_nthashreinit __P((void));
-void ntfs_nthashdone __P((void));
-struct ntnode   *ntfs_nthashlookup __P((dev_t, ino_t));
-struct ntnode   *ntfs_nthashget __P((dev_t, ino_t));
-void ntfs_nthashins __P((struct ntnode *));
-void ntfs_nthashrem __P((struct ntnode *));
+void ntfs_nthashinit(void);
+void ntfs_nthashreinit(void);
+void ntfs_nthashdone(void);
+struct ntnode   *ntfs_nthashlookup(dev_t, ino_t);
+struct ntnode   *ntfs_nthashget(dev_t, ino_t);
+void ntfs_nthashins(struct ntnode *);
+void ntfs_nthashrem(struct ntnode *);

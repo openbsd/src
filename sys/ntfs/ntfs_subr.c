@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_subr.c,v 1.2 2003/05/20 03:23:12 mickey Exp $	*/
+/*	$OpenBSD: ntfs_subr.c,v 1.3 2003/05/20 03:36:42 tedu Exp $	*/
 /*	$NetBSD: ntfs_subr.c,v 1.4 2003/04/10 21:37:32 jdolecek Exp $	*/
 
 /*-
@@ -89,10 +89,10 @@ struct ntfs_lookup_ctx {
 	struct ntfs_lookup_ctx *prev;
 };
 
-static int ntfs_ntlookupattr __P((struct ntfsmount *, const char *, int, int *, char **));
-static int ntfs_findvattr __P((struct ntfsmount *, struct ntnode *, struct ntvattr **, struct ntvattr **, u_int32_t, const char *, size_t, cn_t));
-static int ntfs_uastricmp __P((struct ntfsmount *, const wchar *, size_t, const char *, size_t));
-static int ntfs_uastrcmp __P((struct ntfsmount *, const wchar *, size_t, const char *, size_t));
+static int ntfs_ntlookupattr(struct ntfsmount *, const char *, int, int *, char **);
+static int ntfs_findvattr(struct ntfsmount *, struct ntnode *, struct ntvattr **, struct ntvattr **, u_int32_t, const char *, size_t, cn_t);
+static int ntfs_uastricmp(struct ntfsmount *, const wchar *, size_t, const char *, size_t);
+static int ntfs_uastrcmp(struct ntfsmount *, const wchar *, size_t, const char *, size_t);
 
 /* table for mapping Unicode chars into uppercase; it's filled upon first
  * ntfs mount, freed upon last ntfs umount */

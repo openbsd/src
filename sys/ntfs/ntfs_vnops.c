@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_vnops.c,v 1.2 2003/05/20 03:23:12 mickey Exp $	*/
+/*	$OpenBSD: ntfs_vnops.c,v 1.3 2003/05/20 03:36:42 tedu Exp $	*/
 /*	$NetBSD: ntfs_vnops.c,v 1.6 2003/04/10 21:57:26 jdolecek Exp $	*/
 
 /*
@@ -84,28 +84,28 @@ __KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.6 2003/04/10 21:57:26 jdolecek Exp 
 
 #include <sys/unistd.h> /* for pathconf(2) constants */
 
-static int	ntfs_bypass (struct vop_generic_args *ap);
-static int	ntfs_read (struct vop_read_args *);
-static int	ntfs_write (struct vop_write_args *ap);
-static int	ntfs_getattr (struct vop_getattr_args *ap);
-static int	ntfs_inactive (struct vop_inactive_args *ap);
-static int	ntfs_print (struct vop_print_args *ap);
-static int	ntfs_reclaim (struct vop_reclaim_args *ap);
-static int	ntfs_strategy (struct vop_strategy_args *ap);
-static int	ntfs_access (struct vop_access_args *ap);
-static int	ntfs_open (struct vop_open_args *ap);
-static int	ntfs_close (struct vop_close_args *ap);
-static int	ntfs_readdir (struct vop_readdir_args *ap);
-static int	ntfs_lookup (struct vop_lookup_args *ap);
-static int	ntfs_bmap (struct vop_bmap_args *ap);
+static int	ntfs_bypass(struct vop_generic_args *ap);
+static int	ntfs_read(struct vop_read_args *);
+static int	ntfs_write(struct vop_write_args *ap);
+static int	ntfs_getattr(struct vop_getattr_args *ap);
+static int	ntfs_inactive(struct vop_inactive_args *ap);
+static int	ntfs_print(struct vop_print_args *ap);
+static int	ntfs_reclaim(struct vop_reclaim_args *ap);
+static int	ntfs_strategy(struct vop_strategy_args *ap);
+static int	ntfs_access(struct vop_access_args *ap);
+static int	ntfs_open(struct vop_open_args *ap);
+static int	ntfs_close(struct vop_close_args *ap);
+static int	ntfs_readdir(struct vop_readdir_args *ap);
+static int	ntfs_lookup(struct vop_lookup_args *ap);
+static int	ntfs_bmap(struct vop_bmap_args *ap);
 #if defined(__FreeBSD__)
-static int	ntfs_getpages (struct vop_getpages_args *ap);
-static int	ntfs_putpages (struct vop_putpages_args *);
+static int	ntfs_getpages(struct vop_getpages_args *ap);
+static int	ntfs_putpages(struct vop_putpages_args *);
 #endif
 #if defined(__FreeBSD__) || defined(__OpenBSD__)
-static int	ntfs_fsync (struct vop_fsync_args *ap);
+static int	ntfs_fsync(struct vop_fsync_args *ap);
 #endif
-static int	ntfs_pathconf (void *);
+static int	ntfs_pathconf(void *);
 
 int	ntfs_prtactive = 1;	/* 1 => print out reclaim of active vnodes */
 
