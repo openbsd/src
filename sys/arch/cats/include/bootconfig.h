@@ -1,4 +1,4 @@
-/*	$OpenBSD: bootconfig.h,v 1.1 2004/02/01 05:12:54 drahn Exp $	*/
+/*	$OpenBSD: bootconfig.h,v 1.2 2004/05/19 04:11:31 drahn Exp $	*/
 /*	$NetBSD: bootconfig.h,v 1.2 2001/06/21 22:08:28 chris Exp $	*/
 
 /*
@@ -67,7 +67,7 @@ extern BootConfig bootconfig;
 #define BOOTOPT_TYPE_HEXINT		4
 #define BOOTOPT_TYPE_MASK		7
 
-int get_bootconf_option __P((char *string, char *option, int type, void *result));
+int get_bootconf_option (char *string, char *option, int type, void *result);
 
 extern char *boot_args;
 extern char *boot_file;
