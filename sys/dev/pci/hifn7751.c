@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751.c,v 1.35 2000/04/25 04:15:34 jason Exp $	*/
+/*	$OpenBSD: hifn7751.c,v 1.36 2000/04/25 05:32:21 jason Exp $	*/
 
 /*
  * Invertex AEON / Hi/fn 7751 driver
@@ -94,7 +94,6 @@ int	hifn_freesession __P((u_int64_t));
 int	hifn_process __P((struct cryptop *));
 void	hifn_callback __P((struct hifn_softc *, struct hifn_command *, u_int8_t *));
 int	hifn_crypto __P((struct hifn_softc *, hifn_command_t *));
-void	hifn_show_packed __P((char *s, long *pp, int *pl, int npa, int l));
 
 struct hifn_stats {
 	u_int64_t hst_ibytes;
@@ -1301,8 +1300,15 @@ hifn_callback(sc, cmd, macbuf)
 	}
 
 	if ((m = cmd->dst_m) != NULL) {
+		int totlen = cmd->src_l, len;
+
 		while (m) {
-			m->m_len = dma->dstr[dma->dstk].l & HIFN_D_LENGTH;
+			len = dma->dstr[dma->dstk].l & HIFN_D_LENGTH;
+			if (len > totlen)
+				len = totlen;
+			else
+				totlen -= len;
+			m->m_len = len;
 			hifnstats.hst_obytes += m->m_len;
 			m = m->m_next;
 			if (++dma->dstk == HIFN_D_DST_RSIZE)
