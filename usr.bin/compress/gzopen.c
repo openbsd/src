@@ -1,4 +1,4 @@
-/*	$OpenBSD: gzopen.c,v 1.13 2003/07/17 20:06:01 millert Exp $	*/
+/*	$OpenBSD: gzopen.c,v 1.14 2003/07/17 20:17:02 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -59,7 +59,7 @@
 */
 
 const char gz_rcsid[] =
-    "$OpenBSD: gzopen.c,v 1.13 2003/07/17 20:06:01 millert Exp $";
+    "$OpenBSD: gzopen.c,v 1.14 2003/07/17 20:17:02 mickey Exp $";
 
 #include <sys/param.h>
 #include <sys/stat.h>
@@ -359,8 +359,8 @@ get_header(gz_stream *s, char *name, int gotmagic)
 	}
 
 	if ((flags & HEAD_CRC) != 0) {  /* skip the header crc */
-		for (len = 0; len < 2; len++)
-			(void)get_byte(s);
+		(void)get_byte(s);
+		(void)get_byte(s);
 		s->z_hlen += 2;
 	}
 
