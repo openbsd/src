@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_close.c,v 1.7 2000/01/06 07:14:28 d Exp $	*/
+/*	$OpenBSD: uthread_close.c,v 1.8 2000/10/04 05:52:34 d Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -63,8 +63,7 @@ close(int fd)
 	 * Lock the file descriptor while the file is closed and get
 	 * the file descriptor status:
 	 */
-	else if (((ret = _FD_LOCK(fd, FD_RDWR, NULL)) == 0) &&
-	    ((ret = _thread_sys_fstat(fd, &sb)) == 0)) {
+	else if ((ret = _FD_LOCK(fd, FD_RDWR, NULL)) == 0) {
 		/*
 		 * Check if the file should be left as blocking.
 		 *
@@ -84,8 +83,15 @@ close(int fd)
 		 * descriptor of the end of the pipe that they are not
 		 * using, which would then cause any reads to block
 		 * indefinitely.
+		 *
+		 * Files that we cannot fstat are probably not regular
+		 * so we don't bother with them.
 		 */
-		if ((S_ISREG(sb.st_mode) || S_ISCHR(sb.st_mode)) && (_thread_fd_table[fd]->flags & O_NONBLOCK) == 0) {
+
+		if ((_thread_sys_fstat(fd, &sb) == 0) && 
+		    ((S_ISREG(sb.st_mode) || S_ISCHR(sb.st_mode)) &&
+		    (_thread_fd_table[fd]->flags & O_NONBLOCK) == 0))
+		{
 			/* Get the current flags: */
 			flags = _thread_sys_fcntl(fd, F_GETFL, NULL);
 			/* Clear the nonblocking file descriptor flag: */
