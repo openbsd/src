@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgthree.c,v 1.6 1997/08/08 08:24:53 downsj Exp $	*/
+/*	$OpenBSD: cgthree.c,v 1.7 1997/09/01 03:56:45 todd Exp $	*/
 /*	$NetBSD: cgthree.c,v 1.33 1997/05/24 20:16:11 pk Exp $ */
 
 /*
@@ -85,6 +85,7 @@ struct cgthree_softc {
 	struct rom_reg	sc_phys;	/* phys address description */
 	volatile struct fbcontrol *sc_fbc;	/* Brooktree registers */
 	int	sc_bustype;		/* type of bus we live on */
+	int	sc_isrdi;		/* is an RDI */
 	union	bt_cmap sc_cmap;	/* Brooktree color map */
 };
 
@@ -147,7 +148,8 @@ cgthreematch(parent, vcf, aux)
 	 */
 	cf->cf_flags &= FB_USERMASK;
 
-	if (strcmp(cf->cf_driver->cd_name, ra->ra_name))
+	if (strcmp(cf->cf_driver->cd_name, ra->ra_name) && 
+	    strcmp("cgRDI",ra->ra_name))
 		return (0);
 	if (ca->ca_bustype == BUS_SBUS)
 		return(1);
@@ -201,7 +203,11 @@ cgthreeattach(parent, self, args)
 
 	sc->sc_fb.fb_type.fb_depth = 8;
 	fb_setsize(&sc->sc_fb, sc->sc_fb.fb_type.fb_depth,
-	    1152, 900, node, ca->ca_bustype);
+    		1152, 900, node, ca->ca_bustype);
+	if(!strcmp(ca->ca_ra.ra_name, "cgRDI")) {
+		sc->sc_isrdi = 1;
+		nam = "cgRDI";
+	}
 
 	ramsize = roundup(sc->sc_fb.fb_type.fb_height * sc->sc_fb.fb_linebytes,
 		NBPG);
@@ -227,7 +233,7 @@ cgthreeattach(parent, self, args)
 		     sizeof(struct fbcontrol));
 
 	/* Transfer video magic to board, if it's not running */
-	if ((sc->sc_fbc->fbc_ctrl & FBC_TIMING) == 0)
+	if (!sc->sc_isrdi && (sc->sc_fbc->fbc_ctrl & FBC_TIMING) == 0)
 		for (i = 0; i < sizeof(cg3_videoctrl)/sizeof(cg3_videoctrl[0]);
 		     i++) {
 			volatile struct fbcontrol *fbc = sc->sc_fbc;
