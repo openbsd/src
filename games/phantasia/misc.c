@@ -1429,7 +1429,7 @@ readmessage()
 /
 / MODULES CALLED: wclear(), cleanup()
 /
-/ GLOBAL INPUTS: errno, *stdscr, printw(), printf(), Windows
+/ GLOBAL INPUTS: errno, *stdscr, printf(), Windows
 /
 / GLOBAL OUTPUTS: none
 /
@@ -1441,19 +1441,16 @@ readmessage()
 error(whichfile)
 	char	*whichfile;
 {
-	int	(*funcp) __P((const char *, ...));
+    int er;
 
+    er = errno;
     if (Windows)
-	{
-	funcp = printw;
 	clear();
-	}
-    else
-	funcp = printf;
+    cleanup(FALSE);
 
-    (*funcp)("An unrecoverable error has occurred reading %s.  (errno = %d)\n", whichfile, errno);
-    (*funcp)("Please run 'setup' to determine the problem.\n");
-    cleanup(TRUE);
+    printf("An unrecoverable error has occurred reading %s.\n(errno = %d)\n", whichfile, er);
+    printf("Please run 'setup' to determine the problem.\n");
+    exit(1);
     /*NOTREACHED*/
 }
 /**/
