@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.30 1997/02/19 03:59:14 tholo Exp $
+#	$OpenBSD: rc,v 1.31 1997/02/28 07:53:33 millert Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -25,7 +25,7 @@ if [ -e /fastboot ]; then
 	echo "Fast boot: skipping disk checks."
 elif [ $1x = autobootx ]; then
 	echo "Automatic boot in progress: starting file system checks."
-	( ulimit -d 32768; fsck -p )
+	fsck -p
 	case $? in
 	0)
 		;;
