@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.217 2002/12/17 23:11:32 millert Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.218 2003/01/15 01:43:44 mickey Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -2187,6 +2187,14 @@ init386(first_avail)
 #ifdef DEBUG
 			printf(" %u-%u", a, e);
 #endif
+
+			/* skip zero sized regions */
+			if (im->size == 0) {
+#ifdef DEBUG
+				printf("-Z");
+#endif
+				continue;
+			}
 
 			/* skip shorter than page regions */
 			if ((e - a) < NBPG) {
