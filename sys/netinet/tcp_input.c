@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.174 2004/06/20 18:16:50 itojun Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.175 2004/07/16 09:26:07 markus Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -1203,6 +1203,15 @@ after_listen:
 			 */
 			if (tp->t_rtttime)
 				tcp_xmit_timer(tp, tcp_now - tp->t_rtttime);
+			/*
+			 * Since new data was acked (the SYN), open the
+			 * congestion window by one MSS.  We do this
+			 * here, because we won't go through the normal
+			 * ACK processing below.  And since this is the
+			 * start of the connection, we know we are in
+			 * the exponential phase of slow-start.
+			 */
+			tp->snd_cwnd += tp->t_maxseg;
 		} else
 			tp->t_state = TCPS_SYN_RECEIVED;
 
