@@ -1,4 +1,4 @@
-/*	$OpenBSD: message.c,v 1.63 2003/11/06 16:12:07 ho Exp $	*/
+/*	$OpenBSD: message.c,v 1.64 2003/12/04 22:44:31 hshoexer Exp $	*/
 /*	$EOM: message.c,v 1.156 2000/10/10 12:36:39 provos Exp $	*/
 
 /*
@@ -442,6 +442,12 @@ message_validate_delete (struct message *msg, struct payload *p)
 {
   u_int8_t proto = GET_ISAKMP_DELETE_PROTO (p->p);
   struct doi *doi;
+  struct sa *sa, *isakmp_sa;
+  struct sockaddr *dst, *dst_isa;
+  u_int32_t nspis = GET_ISAKMP_DELETE_NSPIS (p->p);
+  u_int8_t *spis = (u_int8_t *)p->p + ISAKMP_DELETE_SPI_OFF;
+  int i;
+  char *addr;
 
   doi = doi_lookup (GET_ISAKMP_DELETE_DOI (p->p));
   if (!doi)
@@ -475,6 +481,52 @@ message_validate_delete (struct message *msg, struct payload *p)
     }
 
   /* Validate the SPIs.  */
+  for (i = 0; i < nspis; i++)
+    {
+      /* Get ISAKMP SA protecting this message. */
+      isakmp_sa = msg->isakmp_sa;
+      if (!isakmp_sa)
+        {
+          /* XXX should not happen? */
+          log_print ("message_validate_delete: invalid spi "
+                     "(no valid ISAKMP SA found)");
+          message_free (msg);
+          return -1;
+        }
+      isakmp_sa->transport->vtbl->get_dst (isakmp_sa->transport, &dst_isa);
+
+      /* Get SA to be deleted. */
+      msg->transport->vtbl->get_dst (msg->transport, &dst);
+      if (proto == ISAKMP_PROTO_ISAKMP)
+        {
+          sa = sa_lookup_isakmp_sa (dst, spis + i * ISAKMP_HDR_COOKIES_LEN);
+        }
+      else
+        {
+          sa = ipsec_sa_lookup (dst, ((u_int32_t *)spis)[i], proto);
+        }
+      if (!sa)
+        {
+          log_print ("message_validate_delete: invalid spi (no valid SA found)");
+          message_free (msg);
+          return -1;
+        }
+      sa->transport->vtbl->get_dst (sa->transport, &dst);
+
+      /* Destination addresses must match. */
+      if (dst->sa_family != dst_isa->sa_family ||
+          memcmp (sockaddr_addrdata (dst_isa), sockaddr_addrdata (dst),
+                  sockaddr_addrlen (dst)))
+        {
+          sockaddr2text (dst_isa, &addr, 0);
+
+          log_print ("message_validate_delete: invalid spi "
+                     "(illegal delete request from %s)", addr);
+          free (addr);
+          message_free (msg);
+          return -1;
+        }
+    }
 
   return 0;
 }
