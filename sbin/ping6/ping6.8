@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ping6.8,v 1.26 2003/06/03 13:16:08 jmc Exp $
+.\"	$OpenBSD: ping6.8,v 1.27 2003/08/08 09:34:10 jmc Exp $
 .\"	$KAME: ping6.8,v 1.57 2002/05/26 13:18:25 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@ from a host or gateway.
 datagrams (``pings'') have an IPv6 header,
 and
 .Tn ICMPv6
-header formatted as documented in RFC2463.
+header formatted as documented in RFC 2463.
 The options are as follows:
 .Bl -tag -width Ds
 .\" old ipsec
@@ -432,7 +432,7 @@ $ ping6 -a agl dst.foo.com
 .%A A. Conta
 .%A S. Deering
 .%T "Internet Control Message Protocol (ICMPv6) for the Internet Protocol Version 6 (IPv6) Specification"
-.%N RFC2463
+.%N RFC 2463
 .%D December 1998
 .Re
 .Rs
