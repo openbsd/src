@@ -1,5 +1,5 @@
-/*	$OpenBSD: eval.c,v 1.4 1996/10/20 00:54:47 millert Exp $	*/
-/*	$NetBSD: eval.c,v 1.29.4.1 1996/06/10 19:36:36 jtc Exp $	*/
+/*	$OpenBSD: eval.c,v 1.5 1996/11/24 17:43:02 millert Exp $	*/
+/*	$NetBSD: eval.c,v 1.33 1996/11/09 01:04:07 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-static char sccsid[] = "$NetBSD: eval.c,v 1.29.4.1 1996/06/10 19:36:36 jtc Exp $";
+static char sccsid[] = "$OpenBSD: eval.c,v 1.5 1996/11/24 17:43:02 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -745,6 +745,7 @@ evalcommand(cmd, flags, backcmd)
 		redirect(cmd->ncmd.redirect, REDIR_PUSH);
 		saveparam = shellparam;
 		shellparam.malloc = 0;
+		shellparam.reset = 1;
 		shellparam.nparam = argc - 1;
 		shellparam.p = argv + 1;
 		shellparam.optnext = NULL;
@@ -824,7 +825,6 @@ cmddone:
 		}
 		handler = savehandler;
 		if (e != -1) {
-			outfmt(out2, "exception %d\n", e);
 			if ((e != EXERROR && e != EXEXEC)
 					       || cmdentry.u.index == BLTINCMD
 					       || cmdentry.u.index == DOTCMD

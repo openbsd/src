@@ -1,5 +1,5 @@
-/*	$OpenBSD: options.h,v 1.3 1996/10/20 00:54:59 millert Exp $	*/
-/*	$NetBSD: options.h,v 1.8 1995/05/11 21:29:48 christos Exp $	*/
+/*	$OpenBSD: options.h,v 1.4 1996/11/24 17:43:03 millert Exp $	*/
+/*	$NetBSD: options.h,v 1.11 1996/11/06 01:17:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,8 +40,9 @@
  */
 
 struct shparam {
-	int nparam;	/* number of positional parameters (without $0) */
-	char malloc;	/* true if parameter list dynamicly allocated */
+	int nparam;		/* # of positional parameters (without $0) */
+	unsigned char malloc;	/* if parameter list dynamically allocated */
+	unsigned char reset;	/* if getopts has been reset */
 	char **p;		/* parameter list */
 	char **optnext;	/* next parameter to be processed by getopts */
 	char *optptr;	/* used by getopts */
