@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_domain.c,v 1.5 1997/07/23 04:33:53 denny Exp $	*/
+/*	$OpenBSD: uipc_domain.c,v 1.6 1999/01/07 22:30:34 deraadt Exp $	*/
 /*	$NetBSD: uipc_domain.c,v 1.14 1996/02/09 19:00:44 christos Exp $	*/
 
 /*
@@ -50,6 +50,9 @@
 
 void	pffasttimo __P((void *));
 void	pfslowtimo __P((void *));
+#ifdef KEY
+int pfkey_init __P((void));
+#endif /* KEY */
 
 #define	ADDDOMAIN(x)	{ \
 	extern struct domain __CONCAT(x,domain); \
@@ -73,6 +76,12 @@ domaininit()
 	ADDDOMAIN(encap);
 #endif
 #endif
+#ifdef INET6
+	ADDDOMAIN(inet6);
+#endif /* INET6 */
+#ifdef KEY
+	pfkey_init();
+#endif /* KEY */
 #ifdef IPX
 	ADDDOMAIN(ipx);
 #endif
