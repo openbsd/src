@@ -1,4 +1,4 @@
-/*	$OpenBSD: ym_isapnp.c,v 1.3 1998/08/04 12:01:39 csapuntz Exp $ */
+/*	$OpenBSD: ym_isapnp.c,v 1.4 1999/03/08 11:16:49 deraadt Exp $ */
 
 
 /*
@@ -88,31 +88,31 @@ ym_isapnp_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-  struct ym_softc *sc = (struct ym_softc *)self;
-  struct isa_attach_args *ia = aux;
+	struct ym_softc *sc = (struct ym_softc *)self;
+	struct isa_attach_args *ia = aux;
 
-  if (ia->ipa_nio < 5) {
-    printf ("Insufficient I/O ports... not really attached\n");
-    return;
-  }
+	if (ia->ipa_nio < 5) {
+		printf ("Insufficient I/O ports... not really attached\n");
+		return;
+	}
 
-  sc->sc_iot = ia->ia_iot;
-  sc->sc_ioh = ia->ipa_io[1].h;
-  sc->sc_ic = ia->ia_ic;
+	sc->sc_iot = ia->ia_iot;
+	sc->sc_ioh = ia->ipa_io[1].h;
+	sc->sc_ic = ia->ia_ic;
 
-  sc->ym_irq = ia->ipa_irq[0].num;
-  sc->ym_drq = ia->ipa_drq[0].num;
-  sc->ym_recdrq = ia->ipa_drq[1].num;
+	sc->ym_irq = ia->ipa_irq[0].num;
+	sc->ym_drq = ia->ipa_drq[0].num;
+	sc->ym_recdrq = ia->ipa_drq[1].num;
 
-  sc->sc_controlioh = ia->ipa_io[4].h; 
+	sc->sc_controlioh = ia->ipa_io[4].h; 
 
-  sc->sc_ad1848.sc_ioh = sc->sc_ioh;
-  sc->sc_ad1848.sc_isa = parent->dv_parent;
-  sc->sc_ad1848.sc_iot = sc->sc_iot;
-  sc->sc_ad1848.sc_iooffs = WSS_CODEC;
-  sc->sc_ad1848.mode = 2;
-  sc->sc_ad1848.MCE_bit = MODE_CHANGE_ENABLE;
+	sc->sc_ad1848.sc_ioh = sc->sc_ioh;
+	sc->sc_ad1848.sc_isa = parent->dv_parent;
+	sc->sc_ad1848.sc_iot = sc->sc_iot;
+	sc->sc_ad1848.sc_iooffs = WSS_CODEC;
+	sc->sc_ad1848.mode = 2;
+	sc->sc_ad1848.MCE_bit = MODE_CHANGE_ENABLE;
 
-  ym_attach(sc);
+	ym_attach(sc);
 }
 
