@@ -1,4 +1,4 @@
-/*	$OpenBSD: mroute6.c,v 1.4 2002/05/27 01:50:36 deraadt Exp $	*/
+/*	$OpenBSD: mroute6.c,v 1.5 2002/06/02 01:30:24 deraadt Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -115,17 +115,17 @@ mroute6pr(mrpaddr, mfcaddr, mifaddr)
 	kread(mrpaddr, (char *)&mrtproto, sizeof(mrtproto));
 	switch (mrtproto) {
 
-	 case 0:
-		 printf("no IPv6 multicast routing compiled into this system\n");
-		 return;
+	case 0:
+		printf("no IPv6 multicast routing compiled into this system\n");
+		return;
 
-	 case IPPROTO_PIM:
-		 break;
+	case IPPROTO_PIM:
+		break;
 
-	 default:
-		 printf("IPv6 multicast routing protocol %u, unknown\n",
+	default:
+		printf("IPv6 multicast routing protocol %u, unknown\n",
 			mrtproto);
-		 return;
+		return;
 	}
 
 	if (mfcaddr == 0) {
@@ -153,15 +153,15 @@ mroute6pr(mrpaddr, mfcaddr, mifaddr)
 		maxmif = mifi;
 		if (!banner_printed) {
 			printf("\nIPv6 Multicast Interface Table\n"
-			       " Mif   Rate   PhyIF   "
-			       "Pkts-In   Pkts-Out\n");
+			    " Mif   Rate   PhyIF   "
+			    "Pkts-In   Pkts-Out\n");
 			banner_printed = 1;
 		}
 
 		printf("  %2u   %4d",
-		       mifi, mifp->m6_rate_limit);
+		    mifi, mifp->m6_rate_limit);
 		printf("   %5s", (mifp->m6_flags & MIFF_REGISTER) ?
-		       "reg0" : if_indextoname(ifnet.if_index, ifname));
+		    "reg0" : if_indextoname(ifnet.if_index, ifname));
 
 		printf(" %9qu  %9qu\n", mifp->m6_pkt_in, mifp->m6_pkt_out);
 	}
@@ -177,16 +177,16 @@ mroute6pr(mrpaddr, mfcaddr, mifaddr)
 			if (!banner_printed) {
 				printf ("\nIPv6 Multicast Forwarding Cache\n");
 				printf(" %-*.*s %-*.*s %s",
-				       WID_ORG, WID_ORG, "Origin",
-				       WID_GRP, WID_GRP, "Group",
-				       "  Packets Waits In-Mif  Out-Mifs\n");
+				    WID_ORG, WID_ORG, "Origin",
+				    WID_GRP, WID_GRP, "Group",
+				    "  Packets Waits In-Mif  Out-Mifs\n");
 				banner_printed = 1;
 			}
 
 			printf(" %-*.*s", WID_ORG, WID_ORG,
-			       routename6(&mfc.mf6c_origin));
+			    routename6(&mfc.mf6c_origin));
 			printf(" %-*.*s", WID_GRP, WID_GRP,
-			       routename6(&mfc.mf6c_mcastgrp));
+			    routename6(&mfc.mf6c_mcastgrp));
 			printf(" %9qu", mfc.mf6c_pkt_cnt);
 
 			for (waitings = 0, rtep = mfc.mf6c_stall; rtep; ) {
@@ -238,9 +238,9 @@ mrt6_stats(mrpaddr, mstaddr)
 		 break;
 
 	default:
-		 printf("IPv6 multicast routing protocol %u, unknown\n",
-			mrtproto);
-		 return;
+		printf("IPv6 multicast routing protocol %u, unknown\n",
+		    mrtproto);
+		return;
 	}
 
 	if (mstaddr == 0) {
@@ -251,30 +251,30 @@ mrt6_stats(mrpaddr, mstaddr)
 	kread(mstaddr, (char *)&mrtstat, sizeof(mrtstat));
 	printf("multicast forwarding:\n");
 	printf(" %10qu multicast forwarding cache lookup%s\n",
-	       mrtstat.mrt6s_mfc_lookups, plural(mrtstat.mrt6s_mfc_lookups));
+	    mrtstat.mrt6s_mfc_lookups, plural(mrtstat.mrt6s_mfc_lookups));
 	printf(" %10qu multicast forwarding cache miss%s\n",
-	       mrtstat.mrt6s_mfc_misses, plurales(mrtstat.mrt6s_mfc_misses));
+	    mrtstat.mrt6s_mfc_misses, plurales(mrtstat.mrt6s_mfc_misses));
 	printf(" %10qu upcall%s to mrouted\n",
-	       mrtstat.mrt6s_upcalls, plural(mrtstat.mrt6s_upcalls));
+	    mrtstat.mrt6s_upcalls, plural(mrtstat.mrt6s_upcalls));
 	printf(" %10qu upcall queue overflow%s\n",
-	  mrtstat.mrt6s_upq_ovflw, plural(mrtstat.mrt6s_upq_ovflw));
+	    mrtstat.mrt6s_upq_ovflw, plural(mrtstat.mrt6s_upq_ovflw));
 	printf(" %10qu upcall%s dropped due to full socket buffer\n",
-	  mrtstat.mrt6s_upq_sockfull, plural(mrtstat.mrt6s_upq_sockfull));
+	      mrtstat.mrt6s_upq_sockfull, plural(mrtstat.mrt6s_upq_sockfull));
 	printf(" %10qu cache cleanup%s\n",
-	  mrtstat.mrt6s_cache_cleanups, plural(mrtstat.mrt6s_cache_cleanups));
+	    mrtstat.mrt6s_cache_cleanups, plural(mrtstat.mrt6s_cache_cleanups));
 	printf(" %10qu datagram%s with no route for origin\n",
-	  mrtstat.mrt6s_no_route, plural(mrtstat.mrt6s_no_route));
+	    mrtstat.mrt6s_no_route, plural(mrtstat.mrt6s_no_route));
 	printf(" %10qu datagram%s arrived with bad tunneling\n",
-	  mrtstat.mrt6s_bad_tunnel, plural(mrtstat.mrt6s_bad_tunnel));
+	    mrtstat.mrt6s_bad_tunnel, plural(mrtstat.mrt6s_bad_tunnel));
 	printf(" %10qu datagram%s could not be tunneled\n",
-	  mrtstat.mrt6s_cant_tunnel, plural(mrtstat.mrt6s_cant_tunnel));
+	    mrtstat.mrt6s_cant_tunnel, plural(mrtstat.mrt6s_cant_tunnel));
 	printf(" %10qu datagram%s arrived on wrong interface\n",
-	  mrtstat.mrt6s_wrong_if, plural(mrtstat.mrt6s_wrong_if));
+	    mrtstat.mrt6s_wrong_if, plural(mrtstat.mrt6s_wrong_if));
 	printf(" %10qu datagram%s selectively dropped\n",
-	  mrtstat.mrt6s_drop_sel, plural(mrtstat.mrt6s_drop_sel));
+	    mrtstat.mrt6s_drop_sel, plural(mrtstat.mrt6s_drop_sel));
 	printf(" %10qu datagram%s dropped due to queue overflow\n",
-	  mrtstat.mrt6s_q_overflow, plural(mrtstat.mrt6s_q_overflow));
+	    mrtstat.mrt6s_q_overflow, plural(mrtstat.mrt6s_q_overflow));
 	printf(" %10qu datagram%s dropped for being too large\n",
-	  mrtstat.mrt6s_pkt2large, plural(mrtstat.mrt6s_pkt2large));
+	    mrtstat.mrt6s_pkt2large, plural(mrtstat.mrt6s_pkt2large));
 }
 #endif /*INET6*/
