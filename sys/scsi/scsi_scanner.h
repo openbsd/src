@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_scanner.h,v 1.7 1997/03/10 02:29:39 kstailey Exp $	*/
+/*	$OpenBSD: scsi_scanner.h,v 1.8 1999/05/11 23:25:43 kstailey Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -78,6 +78,7 @@ struct scsi_rw_scanner {
 };
 
 struct scsi_start_stop {
+#define START_STOP	0x1b
 	u_int8_t opcode;
 	u_int8_t byte2;
 	u_int8_t unused[2];

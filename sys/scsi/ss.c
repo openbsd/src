@@ -1,4 +1,4 @@
-/*	$OpenBSD: ss.c,v 1.36 1998/09/16 15:53:24 kstailey Exp $	*/
+/*	$OpenBSD: ss.c,v 1.37 1999/05/11 23:25:43 kstailey Exp $	*/
 /*	$NetBSD: ss.c,v 1.10 1996/05/05 19:52:55 christos Exp $	*/
 
 /*
@@ -525,7 +525,13 @@ ssread(dev, uio, flag)
 			if (error)
 				return (error);
 		} else {
-			/* XXX addd code for generic trigger */
+			struct scsi_start_stop trigger_cmd;
+			bzero(&trigger_cmd, sizeof(trigger_cmd));
+			trigger_cmd.opcode = START_STOP;
+			trigger_cmd.how = SSS_START;
+			scsi_scsi_cmd(ss->sc_link,
+				(struct scsi_generic *)&trigger_cmd,
+				sizeof(trigger_cmd), 0, 0, 4, 5000, NULL, 0);
 		}
 		ss->flags |= SSF_TRIGGERED;
 	}
@@ -735,7 +741,7 @@ ss_set_window(ss, sio)
 	} wd;
 #define window_data   wd.window_data
 #define vendor_unique wd.vendor_unique
-	struct scsi_link	*sc_link = ss->sc_link;;
+	struct scsi_link	*sc_link = ss->sc_link;
 
 	/*
 	 * The CDB for SET WINDOW goes in here.
