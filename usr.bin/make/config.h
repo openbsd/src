@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.h,v 1.7 1996/11/30 21:08:53 millert Exp $	*/
+/*	$OpenBSD: config.h,v 1.8 1996/12/22 20:15:35 rahnds Exp $	*/
 /*	$NetBSD: config.h,v 1.7 1996/11/06 17:59:03 christos Exp $	*/
 
 /*
@@ -113,7 +113,7 @@
 #define SUNSHCMD
 
 #if !defined(__svr4__) && !defined(__SVR4) && !defined(__alpha__) && \
-    !defined(__mips__)
+    !defined(__mips__) && !defined(__powerpc__)
 # ifndef RANLIBMAG
 #  define RANLIBMAG "__.SYMDEF"
 # endif
