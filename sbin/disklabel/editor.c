@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.86 2003/06/17 21:56:24 millert Exp $	*/
+/*	$OpenBSD: editor.c,v 1.87 2003/07/16 18:03:44 tedu Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.86 2003/06/17 21:56:24 millert Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.87 2003/07/16 18:03:44 tedu Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -514,7 +514,7 @@ editor_add(struct disklabel *lp, char **mp, u_int32_t *freep, char *p)
 	pp->p_size = *freep;
 	pp->p_offset = next_offset(lp, &pp->p_size);
 	pp->p_fstype = partno == 1 ? FS_SWAP : FS_BSDFFS;
-	pp->p_fsize = 1024;
+	pp->p_fsize = 2048;
 	pp->p_frag = 8;
 	pp->p_cpg = 16;
 	old_offset = pp->p_offset;
@@ -2076,7 +2076,7 @@ get_fsize(struct disklabel *lp, int partno)
 
 	for (;;) {
 		ui = getuint(lp, partno, "fragment size",
-		    "Size of fs block fragments.  Usually 1024 or 512.",
+		    "Size of fs block fragments.  Usually 2048 or 512.",
 		    pp->p_fsize, pp->p_fsize, 0, 0);
 		if (ui == UINT_MAX - 1) {
 			fputs("Command aborted\n", stderr);
@@ -2106,7 +2106,7 @@ get_bsize(struct disklabel *lp, int partno)
 
 	for (;;) {
 		ui = getuint(lp, partno, "block size",
-		    "Size of filesystem blocks.  Usually 8192 or 4096.",
+		    "Size of filesystem blocks.  Usually 16384 or 4096.",
 		    pp->p_fsize * pp->p_frag, pp->p_fsize * pp->p_frag,
 		    0, 0);
 

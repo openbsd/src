@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.83 2003/07/02 21:22:10 deraadt Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.84 2003/07/16 18:03:44 tedu Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -39,7 +39,7 @@ static const char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.83 2003/07/02 21:22:10 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.84 2003/07/16 18:03:44 tedu Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -1145,7 +1145,7 @@ edit(struct disklabel *lp, int f)
 "# your root filesystem, 'b' is your swap, and 'c' should cover your whole\n"
 "# disk. Any other partition is free for any use.  'size' and 'offset' are\n"
 "# in 512-byte blocks. fstype should be '4.2BSD', 'swap', or 'none' or some\n"
-"# other values.  fsize/bsize/cpg should typically be '1024 8192 16' for a\n"
+"# other values.  fsize/bsize/cpg should typically be '2048 16384 16' for a\n"
 "# 4.2BSD filesystem (or '512 4096 16' except on alpha, sun4, ...)\n");
 	fclose(fp);
 	for (;;) {
