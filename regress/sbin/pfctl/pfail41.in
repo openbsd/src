@@ -1,0 +1,3 @@
+# we have to bail out on host() errors
+nat on lo0 from any to 10/8 -> 10.0.0.0.1
+
