@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.144 2002/05/28 15:44:28 jasoni Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.145 2002/05/28 17:01:43 jasoni Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -99,10 +99,10 @@ static void ip_mloopback(struct ifnet *, struct mbuf *, struct sockaddr_in *);
 int
 ip_output(struct mbuf *m0, ...)
 {
-	register struct ip *ip;
-	register struct ifnet *ifp;
+	struct ip *ip;
+	struct ifnet *ifp;
 	struct mbuf *m = m0;
-	register int hlen = sizeof (struct ip);
+	int hlen = sizeof (struct ip);
 	int len, error = 0;
 	struct route iproute;
 	struct sockaddr_in *dst;
@@ -427,7 +427,7 @@ ip_output(struct mbuf *m0, ...)
 		 * of outgoing interface.
 		 */
 		if (ip->ip_src.s_addr == INADDR_ANY) {
-			register struct in_ifaddr *ia;
+			struct in_ifaddr *ia;
 
 			for (ia = in_ifaddr.tqh_first;
 			     ia;
@@ -842,13 +842,13 @@ ip_fragment(struct mbuf *m, struct ifnet *ifp)
  */
 static struct mbuf *
 ip_insertoptions(m, opt, phlen)
-	register struct mbuf *m;
+	struct mbuf *m;
 	struct mbuf *opt;
 	int *phlen;
 {
-	register struct ipoption *p = mtod(opt, struct ipoption *);
+	struct ipoption *p = mtod(opt, struct ipoption *);
 	struct mbuf *n;
-	register struct ip *ip = mtod(m, struct ip *);
+	struct ip *ip = mtod(m, struct ip *);
 	unsigned optlen;
 
 	optlen = opt->m_len - sizeof(p->ipopt_dst);
@@ -890,7 +890,7 @@ int
 ip_optcopy(ip, jp)
 	struct ip *ip, *jp;
 {
-	register u_char *cp, *dp;
+	u_char *cp, *dp;
 	int opt, optlen, cnt;
 
 	cp = (u_char *)(ip + 1);
@@ -938,9 +938,9 @@ ip_ctloutput(op, so, level, optname, mp)
 	int level, optname;
 	struct mbuf **mp;
 {
-	register struct inpcb *inp = sotoinpcb(so);
-	register struct mbuf *m = *mp;
-	register int optval = 0;
+	struct inpcb *inp = sotoinpcb(so);
+	struct mbuf *m = *mp;
+	int optval = 0;
 #ifdef IPSEC
 	struct proc *p = curproc; /* XXX */
 	struct ipsec_ref *ipr;
@@ -1426,10 +1426,10 @@ ip_pcbopts(optname, pcbopt, m)
 ip_pcbopts(pcbopt, m)
 #endif
 	struct mbuf **pcbopt;
-	register struct mbuf *m;
+	struct mbuf *m;
 {
-	register int cnt, optlen;
-	register u_char *cp;
+	int cnt, optlen;
+	u_char *cp;
 	u_char opt;
 
 	/* turn off any old options */
@@ -1531,15 +1531,15 @@ ip_setmoptions(optname, imop, m)
 	struct ip_moptions **imop;
 	struct mbuf *m;
 {
-	register int error = 0;
+	int error = 0;
 	u_char loop;
-	register int i;
+	int i;
 	struct in_addr addr;
-	register struct ip_mreq *mreq;
-	register struct ifnet *ifp;
-	register struct ip_moptions *imo = *imop;
+	struct ip_mreq *mreq;
+	struct ifnet *ifp;
+	struct ip_moptions *imo = *imop;
 	struct route ro;
-	register struct sockaddr_in *dst;
+	struct sockaddr_in *dst;
 
 	if (imo == NULL) {
 		/*
@@ -1764,8 +1764,8 @@ ip_setmoptions(optname, imop, m)
 int
 ip_getmoptions(optname, imo, mp)
 	int optname;
-	register struct ip_moptions *imo;
-	register struct mbuf **mp;
+	struct ip_moptions *imo;
+	struct mbuf **mp;
 {
 	u_char *ttl;
 	u_char *loop;
@@ -1812,9 +1812,9 @@ ip_getmoptions(optname, imo, mp)
  */
 void
 ip_freemoptions(imo)
-	register struct ip_moptions *imo;
+	struct ip_moptions *imo;
 {
-	register int i;
+	int i;
 
 	if (imo != NULL) {
 		for (i = 0; i < imo->imo_num_memberships; ++i)
@@ -1832,10 +1832,10 @@ ip_freemoptions(imo)
 static void
 ip_mloopback(ifp, m, dst)
 	struct ifnet *ifp;
-	register struct mbuf *m;
-	register struct sockaddr_in *dst;
+	struct mbuf *m;
+	struct sockaddr_in *dst;
 {
-	register struct ip *ip;
+	struct ip *ip;
 	struct mbuf *copym;
 
 	copym = m_copym2(m, 0, M_COPYALL, M_DONTWAIT);
