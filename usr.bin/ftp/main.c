@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.10 1996/12/18 01:59:15 michaels Exp $	*/
+/*	$OpenBSD: main.c,v 1.11 1997/01/07 21:34:57 niklas Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.10 1996/12/18 01:59:15 michaels Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.11 1997/01/07 21:34:57 niklas Exp $";
 #endif
 #endif /* not lint */
 
@@ -248,9 +248,11 @@ main(argc, argv)
 				xargv[2] = NULL;
 				xargc = 2;
 				get(xargc, xargv);
+				if (code != 226)
+					ret = 1;
 				--argc;
 				argv++;
-		} while (argc > 0 && strchr(argv[0], ':') == NULL);
+			} while (argc > 0 && strchr(argv[0], ':') == NULL);
 
 			/* get ready for the next file */
 bail:
