@@ -1,4 +1,4 @@
-/*	$OpenBSD: ad1848.c,v 1.17 1999/05/03 18:50:01 deraadt Exp $	*/
+/*	$OpenBSD: ad1848.c,v 1.18 1999/07/19 19:47:05 deraadt Exp $	*/
 /*	$NetBSD: ad1848.c,v 1.45 1998/01/30 02:02:38 augustss Exp $	*/
 
 /*
@@ -404,8 +404,10 @@ ad1848_probe(sc)
 
     for (i = 0; i < 16; i++)
 	if ((tmp1 = ad_read(sc, i)) != (tmp2 = ad_read(sc, i + 16))) {
-	    DPRINTF(("ad_detect_F(%d/%x/%x)\n", i, tmp1, tmp2));
-	    goto bad;
+	    if (i != SP_TEST_AND_INIT) {
+	        DPRINTF(("ad_detect_F(%d/%x/%x)\n", i, tmp1, tmp2));
+	        goto bad;
+	    }
 	}
 
     /*
