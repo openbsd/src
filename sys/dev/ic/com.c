@@ -1,4 +1,4 @@
-/*	$OpenBSD: com.c,v 1.19 1996/06/24 20:48:31 pefo Exp $	*/
+/*	$OpenBSD: com.c,v 1.20 1996/07/02 09:47:46 downsj Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*-
@@ -830,11 +830,33 @@ comopen(dev, flag, mode, p)
 			     HAYESP_LOBYTE(HAYESP_RXLOWMARK));
 		} else
 #endif
-		if (ISSET(sc->sc_hwflags, COM_HW_FIFO))
-			/* Set the FIFO threshold based on the receive speed. */
-			bus_io_write_1(bc, ioh, com_fifo,
-			    FIFO_ENABLE | FIFO_RCV_RST | FIFO_XMT_RST |
-			    (tp->t_ispeed <= 1200 ? FIFO_TRIGGER_1 : FIFO_TRIGGER_8));
+		if (ISSET(sc->sc_hwflags, COM_HW_FIFO)) {
+			/*
+			 * (Re)enable and drain FIFOs.
+			 *
+			 * Certain SMC chips cause problems if the FIFOs are
+			 * enabled while input is ready. Turn off the FIFO
+			 * if necessary to clear the input. Test the input
+			 * ready bit after enabling the FIFOs to handle races
+			 * between enabling and fresh input.
+			 *
+			 * Set the FIFO threshold based on the receive speed.
+			 */
+			for (;;) {
+			 	bus_io_write_1(bc, ioh, com_fifo, 0);
+				delay(100);
+				(void) bus_io_read_1(bc, ioh, com_data);
+				bus_io_write_1(bc, ioh, com_fifo,
+				    FIFO_ENABLE | FIFO_RCV_RST | FIFO_XMT_RST |
+				    (tp->t_ispeed <= 1200 ?
+				    FIFO_TRIGGER_1 : FIFO_TRIGGER_8));
+				delay(100);
+				if(!ISSET(bus_io_read_1(bc, ioh,
+				    com_lsr), LSR_RXRDY))
+				    	break;
+			}
+		}
+
 		/* flush any pending I/O */
 		while (ISSET(bus_io_read_1(bc, ioh, com_lsr), LSR_RXRDY))
 			(void) bus_io_read_1(bc, ioh, com_data);
