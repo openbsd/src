@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.24 2000/01/11 14:06:11 espie Exp $	*/
+/*	$OpenBSD: main.c,v 1.25 2000/01/11 14:10:01 espie Exp $	*/
 /*	$NetBSD: main.c,v 1.12 1997/02/08 23:54:49 cgd Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.24 2000/01/11 14:06:11 espie Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.25 2000/01/11 14:10:01 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -141,7 +141,7 @@ extern char *optarg;
 
 static void macro __P((void));
 static void initkwds __P((void));
-static ndptr inspect __P((char *));
+static ndptr inspect __P((char, char *));
 static int do_look_ahead __P((int, const char *));
 
 int main __P((int, char *[]));
@@ -276,9 +276,8 @@ macro()
 	cycle {
 		t = gpbc();
 		if (t == '_' || isalpha(t)) {
-			putback(t);
 			s = token;
-			p = inspect(s);
+			p = inspect(t, s);
 			if (p != nil)
 				putback(l = gpbc());
 			if (p == nil || (l != LPAREN && 
@@ -451,14 +450,16 @@ outputstr(s)
  * combo with lookup to speed things up.
  */
 static ndptr
-inspect(tp) 
+inspect(c, tp) 
+	char c;
 	char *tp;
 {
-	char c;
 	char *name = tp;
 	char *etp = tp+MAXTOK;
 	ndptr p;
-	unsigned int h = 0;
+	unsigned int h;
+	
+	h = *tp++ = c;
 
 	while ((isalnum(c = gpbc()) || c == '_') && tp < etp)
 		h = (h << 5) + h + (*tp++ = c);
