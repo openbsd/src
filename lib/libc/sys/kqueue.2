@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kqueue.2,v 1.11 2003/04/02 19:00:26 jmc Exp $
+.\"	$OpenBSD: kqueue.2,v 1.12 2003/12/17 02:43:58 tedu Exp $
 .\"
 .\" Copyright (c) 2000 Jonathan Lemon
 .\" All rights reserved.
@@ -250,7 +250,17 @@ while there is still data pending in the socket buffer.
 Returns when the file pointer is not at the end of file.
 .Va data
 contains the offset from current position to end of file,
-and may be negative.
+and may be negative.  If
+.Dv NOTE_EOF
+is set in 
+.Va fflags ,
+.Fn kevent
+will also return when the file pointer is at the end of file.  The end
+of file condition is indicated by the presence of 
+.Dv NOTE_EOF
+in 
+.Va fflags 
+on return.
 .It "Fifos, Pipes"
 Returns when there is data to read;
 .Va data
@@ -321,6 +331,8 @@ was called on the file referenced by the descriptor.
 A write occurred on the file referenced by the descriptor.
 .It Dv NOTE_EXTEND
 The file referenced by the descriptor was extended.
+.It Dv NOTE_TRUNCATE
+The file referenced by the descriptor was truncated.
 .It Dv NOTE_ATTRIB
 The file referenced by the descriptor had its attributes changed.
 .It Dv NOTE_LINK
