@@ -1,4 +1,4 @@
-/*	$OpenBSD: rup.c,v 1.18 2003/08/04 17:06:45 deraadt Exp $	*/
+/*	$OpenBSD: rup.c,v 1.19 2003/10/07 17:18:44 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1993, John Brezak
@@ -34,7 +34,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: rup.c,v 1.18 2003/08/04 17:06:45 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: rup.c,v 1.19 2003/10/07 17:18:44 tedu Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -136,16 +136,21 @@ static void
 remember_rup_data(char *host, struct statstime *st)
 {
 	if (rup_data_idx >= rup_data_max) {
-		rup_data_max += 16;
-		rup_data = realloc(rup_data,
-		    rup_data_max * sizeof(struct rup_data));
-		if (rup_data == NULL) {
+		int newsize;
+		struct rup_data *newrup;
+
+		newsize = rup_data_max + 16;
+		newrup = realloc(rup_data, newsize * sizeof(struct rup_data));
+		if (newrup == NULL) {
 			err(1, NULL);
 			/* NOTREACHED */
 		}
+		rup_data = newrup;
+		rup_data_max = newsize;
 	}
 	
-	rup_data[rup_data_idx].host = strdup(host);
+	if ((rup_data[rup_data_idx].host = strdup(host)) == NULL)
+		err(1, NULL);
 	rup_data[rup_data_idx].statstime = *st;
 	rup_data_idx++;
 }
