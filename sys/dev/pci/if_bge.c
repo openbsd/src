@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.55 2005/03/27 16:14:43 krw Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.56 2005/04/01 02:49:03 brad Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -937,11 +937,11 @@ bge_init_tx_ring(sc)
 	sc->bge_tx_saved_considx = 0;
 
 	CSR_WRITE_4(sc, BGE_MBX_TX_HOST_PROD0_LO, 0);
-	if (sc->bge_quirks & BGE_QUIRK_PRODUCER_BUG)	/* 5700 b2 errata */
+	if (sc->bge_quirks & BGE_QUIRK_PRODUCER_BUG)
 		CSR_WRITE_4(sc, BGE_MBX_TX_HOST_PROD0_LO, 0);
 
 	CSR_WRITE_4(sc, BGE_MBX_TX_NIC_PROD0_LO, 0);
-	if (sc->bge_quirks & BGE_QUIRK_PRODUCER_BUG)	/* 5700 b2 errata */
+	if (sc->bge_quirks & BGE_QUIRK_PRODUCER_BUG)
 		CSR_WRITE_4(sc, BGE_MBX_TX_NIC_PROD0_LO, 0);
 
 	for (i = 0; i < BGE_TX_RING_CNT; i++) {
@@ -2752,8 +2752,8 @@ bge_start(ifp)
 
 	/* Transmit */
 	CSR_WRITE_4(sc, BGE_MBX_TX_HOST_PROD0_LO, prodidx);
-	if (sc->bge_quirks & BGE_QUIRK_PRODUCER_BUG)	/* 5700 b2 errata */
-		CSR_WRITE_4(sc, BGE_MBX_TX_HOST_PROD0_LO, 0);
+	if (sc->bge_quirks & BGE_QUIRK_PRODUCER_BUG)
+		CSR_WRITE_4(sc, BGE_MBX_TX_HOST_PROD0_LO, prodidx);
 
 	/*
 	 * Set a timeout in case the chip goes out to lunch.
