@@ -1,4 +1,4 @@
-#	$OpenBSD: sys.mk,v 1.12 1997/11/05 09:51:06 deraadt Exp $
+#	$OpenBSD: sys.mk,v 1.13 1998/04/30 06:43:23 deraadt Exp $
 #	$NetBSD: sys.mk,v 1.27 1996/04/10 05:47:19 mycroft Exp $
 #	@(#)sys.mk	5.11 (Berkeley) 3/13/91
 
@@ -33,7 +33,7 @@ LINK.c?=	${CC} ${CFLAGS} ${CPPFLAGS} ${LDFLAGS}
 
 HOSTCC?=	cc
 
-CXX?=		g++
+CXX?=		c++
 CXXFLAGS?=	${CFLAGS}
 COMPILE.cc?=	${CXX} ${CXXFLAGS} ${CPPFLAGS} -c
 LINK.cc?=	${CXX} ${CXXFLAGS} ${CPPFLAGS} ${LDFLAGS}
