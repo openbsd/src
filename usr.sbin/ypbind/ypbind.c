@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypbind.c,v 1.12 1996/08/28 23:10:06 deraadt Exp $ */
+/*	$OpenBSD: ypbind.c,v 1.13 1996/12/21 05:52:31 deraadt Exp $ */
 
 /*
  * Copyright (c) 1996 Theo de Raadt <deraadt@theos.com>
@@ -34,7 +34,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: ypbind.c,v 1.12 1996/08/28 23:10:06 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ypbind.c,v 1.13 1996/12/21 05:52:31 deraadt Exp $";
 #endif
 
 #include <sys/param.h>
@@ -234,7 +234,7 @@ ypbindproc_setdom_2x(transp, argp, clnt)
 		break;
 	case YPSET_NO:
 	default:
-		return (bool_t *)NULL;
+		return &res;
 	}
 
 	if (ntohs(fromsin->sin_port) >= IPPORT_RESERVED)
