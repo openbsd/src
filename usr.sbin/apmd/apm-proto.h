@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm-proto.h,v 1.3 2002/02/16 21:28:00 millert Exp $	*/
+/*	$OpenBSD: apm-proto.h,v 1.4 2002/07/04 07:31:16 deraadt Exp $	*/
 
 /*
  *  Copyright (c) 1996 John T. Kohl
@@ -30,27 +30,27 @@
  */
 
 enum apm_action {
-    NONE,
-    SUSPEND,
-    STANDBY,
-    GETSTATUS
+	NONE,
+	SUSPEND,
+	STANDBY,
+	GETSTATUS
 };
 
 enum apm_state {
-    NORMAL,
-    SUSPENDING,
-    STANDING_BY
+	NORMAL,
+	SUSPENDING,
+	STANDING_BY
 };
 
 struct apm_command {
-    int vno;
-    enum apm_action action;
+	int vno;
+	enum apm_action action;
 };
 
 struct apm_reply {
-    int vno;
-    enum apm_state newstate;
-    struct apm_power_info batterystate;
+	int vno;
+	enum apm_state newstate;
+	struct apm_power_info batterystate;
 };
 
 #define APMD_VNO	1

@@ -1,4 +1,4 @@
-/*	$OpenBSD: apmd.c,v 1.25 2002/06/14 04:21:41 deraadt Exp $	*/
+/*	$OpenBSD: apmd.c,v 1.26 2002/07/04 07:31:16 deraadt Exp $	*/
 
 /*
  *  Copyright (c) 1995, 1996 John T. Kohl
@@ -61,9 +61,9 @@ int debug = 0;
 
 extern char *__progname;
 
-void usage (void);
-int power_status (int fd, int force, struct apm_power_info *pinfo);
-int bind_socket (const char *sn);
+void usage(void);
+int power_status(int fd, int force, struct apm_power_info *pinfo);
+int bind_socket(const char *sn);
 enum apm_state handle_client(int sock_fd, int ctl_fd);
 void suspend(int ctl_fd);
 void stand_by(int ctl_fd);
@@ -128,7 +128,7 @@ power_status(int fd, int force, struct apm_power_info *pinfo)
 		    bstate.ac_state != last.ac_state ||
 		    bstate.battery_state != last.battery_state ||
 		    (bstate.minutes_left && bstate.minutes_left < 15) ||
-		     abs(bstate.battery_life - last.battery_life) > 20) {
+		    abs(bstate.battery_life - last.battery_life) > 20) {
 #ifdef __powerpc__
 			/*
 			 * When the battery is charging, the estimated life
@@ -191,7 +191,7 @@ bind_socket(const char *sockname)
 
 	/* remove it if present, we're moving in */
 	(void) remove(sockname);
-	umask (077);
+	umask(077);
 
 	if (bind(sock, (struct sockaddr *)&s_un, s_un.sun_len) == -1)
 		error("cannot connect to APM socket", NULL);
@@ -235,9 +235,15 @@ handle_client(int sock_fd, int ctl_fd)
 
 	power_status(ctl_fd, 0, &reply.batterystate);
 	switch (cmd.action) {
-	case SUSPEND:	reply.newstate = SUSPENDING;	break;
-	case STANDBY:	reply.newstate = STANDING_BY;	break;
-	default:	reply.newstate = NORMAL;	break;
+	case SUSPEND:
+		reply.newstate = SUSPENDING;
+		break;
+	case STANDBY:
+		reply.newstate = STANDING_BY;
+		break;
+	default:
+		reply.newstate = NORMAL;
+		break;
 	}
 
 	reply.vno = APMD_VNO;
@@ -486,6 +492,7 @@ main(int argc, char *argv[])
 				}
 				break;
 			default:
+				;
 			}
 
 			if ((standbys || suspends) && noacsleep &&
