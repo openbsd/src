@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.49 2004/12/26 21:22:13 miod Exp $	*/
+/*	$OpenBSD: fd.c,v 1.50 2005/03/16 19:58:40 miod Exp $	*/
 /*	$NetBSD: fd.c,v 1.90 1996/05/12 23:12:03 mycroft Exp $	*/
 
 /*-
@@ -1064,7 +1064,7 @@ fdformat(dev, finfo, p)
         struct fd_formb *finfo;
         struct proc *p;
 {
-        int rv = 0, s;
+        int rv = 0;
 	struct fd_softc *fd = fd_cd.cd_devs[FDUNIT(dev)];
 	struct fd_type *type = fd->sc_type;
         struct buf *bp;
@@ -1072,8 +1072,10 @@ fdformat(dev, finfo, p)
 
         /* set up a buffer header for fdstrategy() */
         bp = (struct buf *)malloc(sizeof(struct buf), M_TEMP, M_NOWAIT);
-        if(bp == 0)
+        if (bp == NULL)
                 return ENOBUFS;
+
+	PHOLD(p);
         bzero((void *)bp, sizeof(struct buf));
         bp->b_flags = B_BUSY | B_PHYS | B_FORMAT;
         bp->b_proc = p;
@@ -1097,24 +1099,8 @@ fdformat(dev, finfo, p)
         fdstrategy(bp);
 
         /* ...and wait for it to complete */
-        s = splbio();
-        while(!(bp->b_flags & B_DONE))
-        {
-                rv = tsleep((caddr_t)bp, PRIBIO, "fdform", 0);
-                if(rv == EWOULDBLOCK)
-		    /*break*/;
-        }
-        splx(s);
-        
-        if(rv == EWOULDBLOCK) {
-                /* timed out */
-                rv = EIO;
-		/* XXX what to do to the buf? it will eventually fall
-		   out as finished, but ... ?*/
-		/*biodone(bp);*/
-	}
-        if(bp->b_flags & B_ERROR)
-                rv = bp->b_error;
+	rv = biowait(bp);
+	PRELE(p);
         free(bp, M_TEMP);
-        return rv;
+        return (rv);
 }
