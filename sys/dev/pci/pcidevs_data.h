@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.660 2003/08/02 18:26:51 fgsch Exp 
+ *		OpenBSD: pcidevs,v 1.661 2003/08/04 08:17:53 markus Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -3959,28 +3959,28 @@ static const struct pci_known_product pci_known_products[] = {
 	    "DP83820 1/10/100/1000",
 	},
 	{
-	    PCI_VENDOR_NS, PCI_PRODUCT_NS_SC1200_ISA,
-	    "SC1200 ISA",
+	    PCI_VENDOR_NS, PCI_PRODUCT_NS_SCx200_ISA,
+	    "SCx200 ISA",
 	},
 	{
-	    PCI_VENDOR_NS, PCI_PRODUCT_NS_SC1200_SMI,
-	    "SC1200 SMI",
+	    PCI_VENDOR_NS, PCI_PRODUCT_NS_SCx200_SMI,
+	    "SCx200 SMI",
 	},
 	{
-	    PCI_VENDOR_NS, PCI_PRODUCT_NS_SC1200_IDE,
-	    "SC1200 IDE",
+	    PCI_VENDOR_NS, PCI_PRODUCT_NS_SCx200_IDE,
+	    "SCx200 IDE",
 	},
 	{
-	    PCI_VENDOR_NS, PCI_PRODUCT_NS_SC1200_AUDIO,
-	    "SC1200 AUDIO",
+	    PCI_VENDOR_NS, PCI_PRODUCT_NS_SCx200_AUDIO,
+	    "SCx200 AUDIO",
 	},
 	{
-	    PCI_VENDOR_NS, PCI_PRODUCT_NS_SC1200_VIDEO,
-	    "SC1200 VIDEO",
+	    PCI_VENDOR_NS, PCI_PRODUCT_NS_SCx200_VIDEO,
+	    "SCx200 VIDEO",
 	},
 	{
-	    PCI_VENDOR_NS, PCI_PRODUCT_NS_SC1200_XBUS,
-	    "SC1200 XBUS",
+	    PCI_VENDOR_NS, PCI_PRODUCT_NS_SCx200_XBUS,
+	    "SCx200 X-BUS",
 	},
 	{
 	    PCI_VENDOR_NS, PCI_PRODUCT_NS_SC1100_ISA,
