@@ -1,4 +1,4 @@
-/* $OpenBSD: locore_asm_routines.S,v 1.24 2003/08/13 08:52:44 miod Exp $	*/
+/* $OpenBSD: locore_asm_routines.S,v 1.25 2003/10/27 10:43:44 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1992 Carnegie Mellon University
@@ -41,7 +41,7 @@
  * DO_LOAD_ADDRESS
  *
  * 	unsigned int do_load_word(address, supervisor_mode)
- *	vm_offset_t address;		\\ in r2
+ *	vaddr_t address;		\\ in r2
  *	boolean_t supervisor_mode;	\\ in r3
  *
  * Return the word at ADDRESS (from user space if SUPERVISOR_MODE is zero,
@@ -1549,11 +1549,11 @@ ENTRY(longjmp)
  *       that pte.  It also returns the pte found in the table.
  */
 ENTRY(invalidate_pte)
-	or	r3,r0,r0
-	xmem	r3,r2,r0
-	tb1	0,r0,0
+	or	r3,r0,r0	| r3 = PG_NV
+	xmem	r3,r2,r0	| exchange with *pte
+	FLUSH_PIPELINE
 	jmp.n	r1
-	 or	r2,r3,r0
+	 or	r2,r3,r0	| return previous value
 
 #ifdef DDB
 ENTRY(db_flush_pipeline)
@@ -1565,17 +1565,8 @@ ENTRY(read_processor_identification_register)
 	jmp.n	r1
 	 ldcr	r2, PID
 
-ENTRY(safe_byte_access)
-	ld.b	 r9,r0,r2
-	tb1	 0,r0,0
-	br	 @L1
-	or	r0,r0,r0
-@L1:
-	st.b	 r9,r0,r3
-	jmp	r1
-
-ENTRY(guarded_access)
 GLOBAL(guarded_access_start)
+ENTRY(guarded_access)
 	cmp	 r9,r3,4
 	bb1	 eq,r9,@L145
 	cmp	 r9,r3,2
@@ -1602,11 +1593,12 @@ GLOBAL(guarded_access_start)
 GLOBAL(guarded_access_bad)
 	jmp.n	 r1
 	 or	 r2,r0,EFAULT
-@L142:
 
-GLOBAL(guarded_access_end)
+@L142:
 	jmp.n	 r1
 	 or	 r2,r0,0
+
+GLOBAL(guarded_access_end)
 
 /*
  * void set_cpu_number(unsigned number);
