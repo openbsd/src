@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_san_common.h,v 1.2 2004/06/26 20:17:23 mcbride Exp $	*/
+/*	$OpenBSD: if_san_common.h,v 1.3 2004/06/26 22:19:38 mcbride Exp $	*/
 
 /*-
  * Copyright (c) 2001-2004 Sangoma Technologies (SAN)
@@ -42,7 +42,7 @@
 #define WAN_OPENBSD_PLATFORM	0x06
 #define WAN_PLATFORM_ID	WAN_OPENBSD_PLATFORM
 #define	WANPIPE_MAGIC	0x414C4453L	/* signature: 'SDLA' reversed */
-	
+
 #define	ROUTER_NAME	"wanrouter"	/* in case we ever change it */
 #define	ROUTER_IOCTL	'W'		/* for IOCTL calls */
 
@@ -52,10 +52,19 @@
 /* IOCTL codes for /proc/router/<device> entries (up to 255) */
 # define WANPIPE_DUMP	_IOW(ROUTER_IOCTL, 16, wan_conf_t)
 # define WANPIPE_EXEC	_IOWR(ROUTER_IOCTL, 17, wan_conf_t)
-# define SIOC_WANPIPE_PIPEMON	_IOWR('i', 150, struct ifreq) /* get monitor statistics */
-# define SIOC_WANPIPE_DEVICE	_IOWR('i', 151, struct ifreq) /* set generic device */
-# define SIOC_WANPIPE_HWPROBE	_IOWR('i', 152, struct ifreq) /* get hwprobe string */
-# define SIOC_WANPIPE_DUMP	_IOWR('i', 153, struct ifreq) /* get memdump string (GENERIC) */
+
+/* get monitor statistics */
+# define SIOC_WANPIPE_PIPEMON	_IOWR('i', 150, struct ifreq)
+
+/* set generic device */
+# define SIOC_WANPIPE_DEVICE	_IOWR('i', 151, struct ifreq)
+
+/* get hwprobe string */
+# define SIOC_WANPIPE_HWPROBE	_IOWR('i', 152, struct ifreq)
+
+/* get memdump string (GENERIC) */
+# define SIOC_WANPIPE_DUMP	_IOWR('i', 153, struct ifreq)
+
 
 /* clocking options */
 #define	WANOPT_EXTERNAL	0
@@ -65,9 +74,9 @@
 #define	WANOPT_RS232	0
 #define	WANOPT_V35	1
 
-#define WAN_UDP_FAILED_CMD  	0xCF
-#define WAN_UDP_INVALID_CMD 	0xCE 
-#define WAN_UDP_TIMEOUT_CMD 	0xAA 
+#define WAN_UDP_FAILED_CMD	0xCF
+#define WAN_UDP_INVALID_CMD	0xCE
+#define WAN_UDP_TIMEOUT_CMD	0xAA
 #define WAN_UDP_INVALID_NET_CMD     0xCD
 
 #define	WANOPT_NO	0
@@ -110,8 +119,7 @@ enum wan_states
 #define	WAN_MODEM_DTR	0x0010	/* DTR line active */
 #define	WAN_MODEM_RTS	0x0020	/* RTS line active */
 
-typedef struct wan_conf
-{
+typedef struct wan_conf {
 	char	devname[IFNAMSIZ+1];
 	void*	arg;
 } wan_conf_t;
@@ -128,7 +136,7 @@ typedef struct wan_conf
 #define UDPMGMT_REPLY	0x02
 #define UDP_OFFSET	12
 
-#define MAX_FT1_RETRY 	100
+#define MAX_FT1_RETRY	100
 
 /* General Critical Flags */
 enum {
@@ -142,16 +150,14 @@ enum {
  * Data structures for IOCTL calls.
  */
 
-typedef struct sdla_dump	/* WANPIPE_DUMP */
-{
+typedef struct sdla_dump {	/* WANPIPE_DUMP */
 	unsigned long	magic;	/* for verification */
 	unsigned long	offset;	/* absolute adapter memory address */
 	unsigned long	length;	/* block length */
 	void*		ptr;	/* -> buffer */
 } sdla_dump_t;
 
-typedef struct sdla_exec	/* WANPIPE_EXEC */
-{
+typedef struct sdla_exec {	/* WANPIPE_EXEC */
 	unsigned long	magic;	/* for verification */
 	void*		cmd;	/* -> command structure */
 	void*		data;	/* -> data buffer */
@@ -159,23 +165,21 @@ typedef struct sdla_exec	/* WANPIPE_EXEC */
 
 #define TRC_INCOMING_FRM	0x00
 #define TRC_OUTGOING_FRM	0x01
-typedef struct
-{
+typedef struct {
 	unsigned char	status;
-	unsigned char 	data_avail;
+	unsigned char	data_avail;
 	unsigned short	real_length;
-	unsigned short 	time_stamp;
-	unsigned long 	sec;
-	unsigned long	usec; 
+	unsigned short	time_stamp;
+	unsigned long	sec;
+	unsigned long	usec;
 	unsigned char	data[0];
 } wan_trace_pkt_t;
 
-typedef struct wan_trace
-{
+typedef struct wan_trace {
 	unsigned long	tracing_enabled;
 	struct ifqueue	ifq;
 	unsigned int	trace_timeout;
-	unsigned int	max_trace_queue;	
+	unsigned int	max_trace_queue;
 } wan_trace_t;
 
 
@@ -184,12 +188,12 @@ typedef struct wan_trace
  *******************************************************/
 #define GLOBAL_UDP_SIGNATURE		"WANPIPE"
 #define GLOBAL_UDP_SIGNATURE_LEN	7
-#define UDPMGMT_UDP_PROTOCOL 		0x11
+#define UDPMGMT_UDP_PROTOCOL		0x11
 #define WAN_UDP_CMD_START	0x60
 #define WAN_GET_PROTOCOL	(WAN_UDP_CMD_START+0)
 #define WAN_GET_PLATFORM	(WAN_UDP_CMD_START+1)
 #define WAN_GET_MEDIA_TYPE	(WAN_UDP_CMD_START+2)
-#define WAN_UDP_CMD_END		0x6F	
+#define WAN_UDP_CMD_END		0x6F
 
 #define WAN_FE_CMD_START	0x90
 #define WAN_FE_CMD_END		0x9F
@@ -198,7 +202,7 @@ typedef struct wan_trace
 #define WAN_INTERFACE_CMD_END	0xAF
 
 #define WAN_FE_UDP_CMD_START	0xB0
-#define WAN_FE_UDP_CMD_END	0xBF	
+#define WAN_FE_UDP_CMD_END	0xBF
 
 typedef struct {
 	unsigned char	signature[8];
@@ -237,7 +241,7 @@ typedef struct wan_udp_hdr{
 
 #define wan_udphdr_aft_num_frames	wan_udphdr_u.aft.trace_info.num_frames
 #define wan_udphdr_aft_ismoredata	wan_udphdr_u.aft.trace_info.ismoredata
-#define wan_udphdr_aft_data		wan_udphdr_u.aft.data	
+#define wan_udphdr_aft_data		wan_udphdr_u.aft.data
 #define wan_udphdr_data			wan_udphdr_u.data
 } wan_udp_hdr_t;
 
@@ -268,11 +272,13 @@ typedef struct wan_udp_hdr{
 #endif
 
 #define	is_digit(ch) (((ch)>=(unsigned)'0'&&(ch)<=(unsigned)'9')?1:0)
-#define	is_alpha(ch) ((((ch)>=(unsigned)'a'&&(ch)<=(unsigned)'z')||\
-	 	  ((ch)>=(unsigned)'A'&&(ch)<=(unsigned)'Z'))?1:0)
-#define	is_hex_digit(ch) ((((ch)>=(unsigned)'0'&&(ch)<=(unsigned)'9')||\
-	 	  ((ch)>=(unsigned)'a'&&(ch)<=(unsigned)'f')||\
-	 	  ((ch)>=(unsigned)'A'&&(ch)<=(unsigned)'F'))?1:0)
+
+#define	is_alpha(ch) ((((ch)>=(unsigned)'a'&&(ch)<=(unsigned)'z')||	\
+		((ch)>=(unsigned)'A'&&(ch)<=(unsigned)'Z'))?1:0)
+
+#define	is_hex_digit(ch) ((((ch)>=(unsigned)'0'&&(ch)<=(unsigned)'9')||	\
+		((ch)>=(unsigned)'a'&&(ch)<=(unsigned)'f')||\
+		((ch)>=(unsigned)'A'&&(ch)<=(unsigned)'F'))?1:0)
 #if !defined(offsetof)
 # define offsetof(type, member)	((size_t)(&((type*)0)->member))
 #endif
@@ -295,23 +301,22 @@ typedef struct wan_udp_pkt {
 #define wan_udp_command			wan_udp_hdr.wan_udphdr_command
 #define wan_udp_data_len		wan_udp_hdr.wan_udphdr_data_len
 #define wan_udp_return_code		wan_udp_hdr.wan_udphdr_return_code
-#define wan_udp_hdlc_PF_bit 		wan_udp_hdr.wan_udphdr_hdlc_PF_bit
-#define wan_udp_fr_dlci 		wan_udp_hdr.wan_udphdr_fr_dlci
-#define wan_udp_fr_attr 		wan_udp_hdr.wan_udphdr_fr_attr
-#define wan_udp_fr_rxlost1 		wan_udp_hdr.wan_udphdr_fr_rxlost1
-#define wan_udp_fr_rxlost2 		wan_udp_hdr.wan_udphdr_fr_rxlost2
+#define wan_udp_hdlc_PF_bit		wan_udp_hdr.wan_udphdr_hdlc_PF_bit
+#define wan_udp_fr_dlci			wan_udp_hdr.wan_udphdr_fr_dlci
+#define wan_udp_fr_attr			wan_udp_hdr.wan_udphdr_fr_attr
+#define wan_udp_fr_rxlost1		wan_udp_hdr.wan_udphdr_fr_rxlost1
+#define wan_udp_fr_rxlost2		wan_udp_hdr.wan_udphdr_fr_rxlost2
 #define wan_udp_chdlc_num_frames	wan_udp_hdr.wan_udphdr_chdlc_num_frames
 #define wan_udp_chdlc_ismoredata	wan_udp_hdr.wan_udphdr_chdlc_ismoredata
 #define wan_udp_chdlc_data		wan_udp_hdr.wan_udphdr_chdlc_data
 
 #define wan_udp_aft_num_frames		wan_udp_hdr.wan_udphdr_aft_num_frames
-#define wan_udp_aft_ismoredata		wan_udp_hdr.wan_udphdr_aft_ismoredata	
+#define wan_udp_aft_ismoredata		wan_udp_hdr.wan_udphdr_aft_ismoredata
 #define wan_udp_data			wan_udp_hdr.wan_udphdr_data
 } wan_udp_pkt_t;
 
 #define WAN_IFP_TO_COMMON(ifp)	(wanpipe_common_t*)((ifp)->if_softc)
-typedef struct wanpipe_common
-{
+typedef struct wanpipe_common {
 	struct sppp	ifp;
 	void		*card;
 	struct timeout	dev_timer;
@@ -321,17 +326,16 @@ typedef struct wanpipe_common
 	LIST_ENTRY(wanpipe_common)	next;
 } wanpipe_common_t;
 
-typedef struct 
-{
-	unsigned long 	time_slot_map;
-	unsigned long 	logic_ch_map;
-	unsigned char 	num_of_time_slots;
-	unsigned char 	top_logic_ch;
-	unsigned long 	bar;
-	void 		*trace_info;
-	void 		*dev_to_ch_map[MAX_E1_CHANNELS];
-	void 		*rx_dma_ptr;
-	void 		*tx_dma_ptr;
+typedef struct {
+	unsigned long	time_slot_map;
+	unsigned long	logic_ch_map;
+	unsigned char	num_of_time_slots;
+	unsigned char	top_logic_ch;
+	unsigned long	bar;
+	void		*trace_info;
+	void		*dev_to_ch_map[MAX_E1_CHANNELS];
+	void		*rx_dma_ptr;
+	void		*tx_dma_ptr;
 	unsigned short	num_of_ch;/* Number of logical channels */
 	unsigned short	dma_per_ch;/* DMA buffers per logic channel */
 	unsigned short	mru_trans;/* MRU of transparent channels */
@@ -347,8 +351,7 @@ typedef struct
  * This structure is needed because we handle multiple cards, otherwise
  * static data would do it.
  */
-typedef struct sdla
-{
+typedef struct sdla {
 	unsigned	magic;
 	char		devname[IFNAMSIZ+1];	/* card name */
 	void		*hw;			/* hw configuration */
@@ -368,12 +371,11 @@ typedef struct sdla
 	unsigned long	configured;	/* configurations status */
 	int (*del_if) (struct sdla*, struct ifnet*);
 	void (*isr)(struct sdla*);	/* interrupt service routine */
-	void (*poll)(struct sdla*); /* polling routine */
+	void (*poll)(struct sdla*);	/* polling routine */
 	int (*exec)(struct sdla*, void*, void*);
 	int (*ioctl) (struct ifnet*, int, struct ifreq*);
 
-	union
-	{
+	union {
 		sdla_xilinx_t	xilinx;
 	} u;
 
@@ -383,9 +385,9 @@ typedef struct sdla
 		sdla_te_softc_t	te_sc;
 	} u_fe;
 
-	unsigned char 		front_end_status;
-	WRITE_FRONT_END_REG_T* 	write_front_end_reg;
-	READ_FRONT_END_REG_T* 	read_front_end_reg;
+	unsigned char		front_end_status;
+	WRITE_FRONT_END_REG_T*	write_front_end_reg;
+	READ_FRONT_END_REG_T*	read_front_end_reg;
 	void (*te_enable_timer) (void*);
 	void (*te_link_state)  (void*);
 

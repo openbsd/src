@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_san_common.c,v 1.2 2004/06/26 20:17:23 mcbride Exp $	*/
+/*	$OpenBSD: if_san_common.c,v 1.3 2004/06/26 22:19:38 mcbride Exp $	*/
 
 /*-
  * Copyright (c) 2001-2004 Sangoma Technologies (SAN)
@@ -69,15 +69,11 @@
 # include <dev/pci/if_san_common.h>
 # include <dev/pci/if_san_obsd.h>
 
-/****** Defines & Macros ****************************************************/
-
 #ifdef	_DEBUG_
 #define	STATIC
 #else
 #define	STATIC		static
 #endif
-
-/****** Function Prototypes *************************************************/
 
 /* WAN link driver entry points */
 #if 0
@@ -85,15 +81,16 @@ static int	shutdown(sdla_t *card);
 #endif
 
 /* Miscellaneous functions */
-static int wan_ioctl(struct ifnet* ifp, int cmd, struct ifreq* ifr);
-static int sdla_isr (void* dev_id);
+static int wan_ioctl(struct ifnet*, int, struct ifreq *);
+static int sdla_isr(void *);
 
-static void release_hw  (sdla_t *card);
+static void release_hw(sdla_t *card);
 
-static int wan_ioctl_dump(sdla_t* card, void* u_dump);
-static int wan_ioctl_hwprobe(struct ifnet* ifp, void* u_def);
+static int wan_ioctl_dump(sdla_t *, void *);
+static int wan_ioctl_hwprobe(struct ifnet *, void *);
 
-/****** Global Data **********************************************************
+/*
+ * Global Data
  * Note: All data must be explicitly initialized!!!
  */
 
@@ -140,17 +137,18 @@ static san_detach(void)
 #endif
 
 
-int san_dev_attach (void *hw, u_int8_t *devname)
+int
+san_dev_attach(void *hw, u_int8_t *devname)
 {
 	sdla_t			*card;
 	wanpipe_common_t	*common = NULL;
 	int			err = 0;
 
 	card=malloc(sizeof(sdla_t), M_DEVBUF, M_NOWAIT);
-	if (!card){
+	if (!card) {
 		log(LOG_INFO, "%s: Failed allocate new card!\n",
 				san_drvname);
-		return -EINVAL;
+		return (-EINVAL);
 	}
 	memset(card, 0, sizeof(sdla_t));
 	card->magic = WANPIPE_MAGIC;
@@ -160,25 +158,25 @@ int san_dev_attach (void *hw, u_int8_t *devname)
 	LIST_INIT(&card->dev_head);
 
 	sdla_getcfg(card->hw, SDLA_CARDTYPE, &card->type);
-	if (sdla_is_te1(card->hw)){
+	if (sdla_is_te1(card->hw)) {
 		sdla_te_defcfg(&card->fe_te.te_cfg);
 	}
 
 	err = sdla_setup(card->hw);
-	if (err){
+	if (err) {
 		log(LOG_INFO, "%s: Hardware setup Failed %d\n",
 			card->devname,err);
-		return -EINVAL;
+		return (-EINVAL);
 	}
 	err = sdla_intr_establish(card->hw, sdla_isr, (void*)card);
-	if (err){
+	if (err) {
 		log(LOG_INFO, "%s: Failed set interrupt handler!\n",
 					card->devname);
 		sdla_down(card->hw);
-		return -EINVAL;
+		return (-EINVAL);
 	}
 
-	switch (card->type){
+	switch (card->type) {
 	case SDLA_AFT:
 #if defined(DEBUG_INIT)
 		log(LOG_INFO, "%s: Starting AFT Hardware Init.\n",
@@ -187,10 +185,10 @@ int san_dev_attach (void *hw, u_int8_t *devname)
 		common = wan_xilinx_init(card);
 		break;
 	}
-	if (common == NULL){
+	if (common == NULL) {
 		release_hw(card);
 		card->configured = 0;
-		return -EINVAL;
+		return (-EINVAL);
 	}
 	LIST_INSERT_HEAD(&card->dev_head, common, next);
 
@@ -198,12 +196,12 @@ int san_dev_attach (void *hw, u_int8_t *devname)
 	card->critical	= 0;
 	card->state	= WAN_DISCONNECTED;
 	card->ioctl	= wan_ioctl;
-	return 0;
+	return (0);
 }
 
 
-/*============================================================================
- * Shut down WAN link driver. 
+/*
+ * Shut down WAN link driver.
  * o shut down adapter hardware
  * o release system resources.
  *
@@ -213,14 +211,14 @@ static int shutdown (sdla_t *card)
 {
 	int err=0;
 
-	if (card->state == WAN_UNCONFIGURED){
+	if (card->state == WAN_UNCONFIGURED) {
 		return 0;
 	}
 	card->state = WAN_UNCONFIGURED;
 
 	bit_set((u_int8_t*)&card->critical, PERI_CRIT);
 
-	/* In case of piggibacking, make sure that 
+	/* In case of piggibacking, make sure that
          * we never try to shutdown both devices at the same
          * time, because they depend on one another */
 
@@ -230,9 +228,9 @@ static int shutdown (sdla_t *card)
 	release_hw(card);
 
         /* only free the allocated I/O range if not an S514 adapter */
-	if (!card->configured){
+	if (!card->configured) {
 		card->hw = NULL;
-		if (card->same_cpu){
+		if (card->same_cpu) {
 			card->same_cpu->hw = NULL;
 			card->same_cpu->same_cpu = NULL;
 			card->same_cpu=NULL;
@@ -245,7 +243,8 @@ static int shutdown (sdla_t *card)
 }
 #endif
 
-static void release_hw (sdla_t *card)
+static void
+release_hw(sdla_t *card)
 {
 	log(LOG_INFO, "%s: Master shutting down\n",card->devname);
 	sdla_down(card->hw);
@@ -255,27 +254,29 @@ static void release_hw (sdla_t *card)
 }
 
 
-/****** Driver IOCTL Handlers ***********************************************/
+/*
+ * Driver IOCTL Handlers
+ */
 
 static int
-wan_ioctl(struct ifnet* ifp, int cmd, struct ifreq* ifr)
+wan_ioctl(struct ifnet *ifp, int cmd, struct ifreq *ifr)
 {
 	sdla_t			*card;
 	wanpipe_common_t	*common = WAN_IFP_TO_COMMON(ifp);
 	int			err = 0;
 
-	if (common == NULL){
+	if (common == NULL) {
 		log(LOG_INFO, "%s: Invalid softc pointer (%s:%d)!\n",
-				ifp->if_xname, __FUNCTION__, __LINE__);
-		return -EINVAL;
+		    ifp->if_xname, __FUNCTION__, __LINE__);
+		return (-EINVAL);
 	}
 	card = common->card;
-	if (card == NULL){
+	if (card == NULL) {
 		log(LOG_INFO, "%s: Card private structure corrupted (%s:%d)!\n",
-				ifp->if_xname, __FUNCTION__, __LINE__);
-		return -EINVAL;
+		    ifp->if_xname, __FUNCTION__, __LINE__);
+		return (-EINVAL);
 	}
-	switch (cmd){
+	switch (cmd) {
 	case SIOC_WANPIPE_HWPROBE:
 		err = wan_ioctl_hwprobe(ifp, ifr->ifr_data);
 		break;
@@ -291,25 +292,25 @@ wan_ioctl(struct ifnet* ifp, int cmd, struct ifreq* ifr)
 	return err;
 }
 
-
-static int wan_ioctl_hwprobe(struct ifnet* ifp, void* u_def)
+static int
+wan_ioctl_hwprobe(struct ifnet *ifp, void *u_def)
 {
-	sdla_t*		card = NULL;
-	wanlite_def_t	def;
-	unsigned char*	str;
-	int		err;
+	sdla_t		*card = NULL;
+	wanlite_def_t	 def;
+	unsigned char	*str;
+	int		 err;
 
 	card = ((wanpipe_common_t*)ifp->if_softc)->card;
 	memset(&def, 0, sizeof(wanlite_def_t));
 	sdla_get_hwprobe(card->hw, (void**)&str);
-	if (err){
+	if (err) {
 		return -EINVAL;
 	}
 	str[strlen(str)] = '\0';
 	memcpy(def.hwprobe, str, strlen(str));
 	/* Get interface configuration */
-	if (IS_TE1(&card->fe_te.te_cfg)){
-		if (IS_T1(&card->fe_te.te_cfg)){
+	if (IS_TE1(&card->fe_te.te_cfg)) {
+		if (IS_T1(&card->fe_te.te_cfg)) {
 			def.iface = IF_IFACE_T1;
 		}else{
 			def.iface = IF_IFACE_E1;
@@ -318,15 +319,16 @@ static int wan_ioctl_hwprobe(struct ifnet* ifp, void* u_def)
 	}
 
 	err = copyout(&def, u_def, sizeof(def));
-	if (err){
+	if (err) {
 		log(LOG_INFO, "%s: Failed to copy to user space (%d)\n",
-				card->devname, __LINE__);
+		    card->devname, __LINE__);
 		return -ENOMEM;
 	}
 	return 0;
 }
 
-static int wan_ioctl_dump(sdla_t* card, void* u_dump)
+static int
+wan_ioctl_dump(sdla_t *card, void *u_dump)
 {
 	sdla_dump_t	dump;
 	void*		data;
@@ -334,27 +336,27 @@ static int wan_ioctl_dump(sdla_t* card, void* u_dump)
 	int		err = 0;
 
 	err = copyin(u_dump, &dump, sizeof(sdla_dump_t));
-	if (err){
+	if (err) {
 		return -EFAULT;
 	}
 
 	sdla_getcfg(card->hw, SDLA_MEMORY, &memory);
-	if (dump.magic != WANPIPE_MAGIC){
+	if (dump.magic != WANPIPE_MAGIC) {
 		return -EINVAL;
 	}
 
-	if ((dump.offset + dump.length) > memory){
+	if ((dump.offset + dump.length) > memory) {
 		return -EINVAL;
 	}
 
 	data = malloc(dump.length, M_DEVBUF, M_NOWAIT);
-	if (data == NULL){
+	if (data == NULL) {
 		return -ENOMEM;
 	}
 
 	sdla_peek(card->hw, dump.offset, data, dump.length);
 	err = copyout(data, dump.ptr, dump.length);
-	if (err){
+	if (err) {
 		log(LOG_INFO, "%s: Failed to copy to user space (%d)\n",
 				card->devname, __LINE__);
 		err = -EFAULT;
@@ -363,41 +365,40 @@ static int wan_ioctl_dump(sdla_t* card, void* u_dump)
 	return err;
 }
 
-/******* Miscellaneous ******************************************************/
 
-/*============================================================================
+/*
  * SDLA Interrupt Service Routine.
  * o call protocol-specific interrupt service routine, if any.
  */
-int sdla_isr (void* pcard)
+int
+sdla_isr(void *pcard)
 {
-	sdla_t	*card = (sdla_t*)pcard;
+	sdla_t *card = (sdla_t*)pcard;
 
 	if (card == NULL || card->magic != WANPIPE_MAGIC) return 0;
 
-	switch (card->type){
+	switch (card->type) {
 	case SDLA_AFT:
-		if (card->isr){
+		if (card->isr) {
 			card->isr(card);
 		}
 		break;
 	}
-	return 1;
+	return (1);
 }
 
-struct mbuf* wan_mbuf_alloc(void)
+struct mbuf *
+wan_mbuf_alloc(void)
 {
 	struct mbuf	*m;
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
-	if (m != NULL){
+	if (m != NULL) {
 		MCLGET(m, M_DONTWAIT);
-		if ((m->m_flags & M_EXT) == 0){
+		if ((m->m_flags & M_EXT) == 0) {
 			m_freem(m);
 			m = NULL;
 		}
 	}
-	return m;
+	return (m);
 }
-
-/****** End *********************************************************/
