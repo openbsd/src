@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_subr.c,v 1.13 2003/06/02 23:28:23 millert Exp $	*/
+/*	$OpenBSD: ffs_subr.c,v 1.14 2003/06/26 07:58:47 tedu Exp $	*/
 /*	$NetBSD: ffs_subr.c,v 1.6 1996/03/17 02:16:23 christos Exp $	*/
 
 /*
@@ -73,6 +73,14 @@ ffs_bufatoff(struct inode *ip, off_t offset, char **res, struct buf **bpp)
 	*bpp = bp;
 	return (0);
 }
+#else
+/* Prototypes for userland */
+void	ffs_fragacct(struct fs *, int, int32_t[], int);
+int	ffs_isfreeblock(struct fs *, unsigned char *, daddr_t);
+int	ffs_isblock(struct fs *, unsigned char *, daddr_t);
+void	ffs_clrblock(struct fs *, u_char *, daddr_t);
+void	ffs_setblock(struct fs *, unsigned char *, daddr_t);
+__dead void panic(const char *, ...);
 #endif
 
 /*
@@ -143,10 +151,6 @@ ffs_checkoverlap(bp, ip)
 	}
 }
 #endif /* DIAGNOSTIC */
-
-#ifndef _KERNEL
-void panic(const char *, ...);
-#endif
 
 /*
  * block operations
