@@ -1,4 +1,4 @@
-/*	$OpenBSD: types.h,v 1.1 1998/06/23 19:45:28 mickey Exp $	*/
+/*	$OpenBSD: types.h,v 1.2 1998/11/23 03:28:23 mickey Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -35,8 +35,8 @@
  *	@(#)types.h	8.3 (Berkeley) 1/5/94
  */
 
-#ifndef	_HPPA_TYPES_H_
-#define	_HPPA_TYPES_H_
+#ifndef	_MACHINE_TYPES_H_
+#define	_MACHINE_TYPES_H_
 
 #if !defined(_ANSI_SOURCE) && !defined(_POSIX_SOURCE)
 typedef struct _physadr {
@@ -53,6 +53,8 @@ typedef struct label_t {
 
 #endif
 
+typedef	unsigned long		hppa_hpa_t;
+typedef	unsigned long		hppa_spa_t;
 typedef	unsigned int		pa_space_t;
 typedef unsigned long		vm_size_t;
 typedef	unsigned long		vm_offset_t;
@@ -82,4 +84,4 @@ typedef	unsigned long	u_int64_t;
 
 typedef int32_t			register_t;
 
-#endif	/* _HPPA_TYPES_H_ */
+#endif	/* _MACHINE_TYPES_H_ */

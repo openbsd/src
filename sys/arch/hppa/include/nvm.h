@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvm.h,v 1.1 1998/06/23 19:45:24 mickey Exp $	*/
+/*	$OpenBSD: nvm.h,v 1.2 1998/11/23 03:28:22 mickey Exp $	*/
 
 /* 
  * Copyright (c) 1990, 1994 The University of Utah and
@@ -24,8 +24,8 @@
  *	Author: Jeff Forys, University of Utah CSL
  */
 
-#ifndef _NVM_
-#define	_NVM_
+#ifndef _MACHINE_NVM_H_
+#define	_MACHINE_NVM_H_
 
 /*
  * The PDC provides access to Non-Volatile Memory (NVM).  If this
@@ -71,4 +71,4 @@ struct bootdata {
 	unsigned int device;		/* boot device */
 };
 
-#endif	/* _NVM_ */
+#endif	/* _MACHINE_NVM_H_ */

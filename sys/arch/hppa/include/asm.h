@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.3 1998/08/29 01:11:05 mickey Exp $	*/
+/*	$OpenBSD: asm.h,v 1.4 1998/11/23 03:28:22 mickey Exp $	*/
 
 /* 
  * Copyright (c) 1990,1991,1994 The University of Utah and
@@ -22,18 +22,12 @@
  * 	Utah $Hdr: asm.h 1.8 94/12/14$
  */
 
-#ifndef _HPPA_ASM_H_
-#define _HPPA_ASM_H_
+#ifndef _MACHINE_ASM_H_
+#define _MACHINE_ASM_H_
 
 /*
  *	hppa assembler definitions
  */
-
-/* 
- * Roundup() - rounds up x to next multiple of y
- */
-
-#define roundup(x, y) ((((x) + ((y) - 1)) / (y)) * (y))
 
 /*
  * Hardware General Registers
@@ -344,4 +338,4 @@ tf4	.reg	%fr8
 	.exit                   !\
 	.procend
 
-#endif /* _HPPA_ASM_H_ */
+#endif /* _MACHINE_ASM_H_ */

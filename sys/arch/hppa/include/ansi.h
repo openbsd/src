@@ -1,4 +1,4 @@
-/*	$OpenBSD: ansi.h,v 1.2 1998/07/13 18:51:47 mickey Exp $	*/
+/*	$OpenBSD: ansi.h,v 1.3 1998/11/23 03:28:22 mickey Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -35,8 +35,8 @@
  *	@(#)ansi.h	8.2 (Berkeley) 1/4/94
  */
 
-#ifndef	_ANSI_H_
-#define	_ANSI_H_
+#ifndef	_MACHINE_ANSI_H_
+#define	_MACHINE_ANSI_H_
 
 /*
  * Types which are fundamental to the implementation and may appear in
@@ -73,4 +73,4 @@
 #define	_BSD_WCHAR_T_	int			/* wchar_t */
 #define	_BSD_RUNE_T_	int			/* rune_t */
 
-#endif	/* _ANSI_H_ */
+#endif	/* _MACHINE_ANSI_H_ */

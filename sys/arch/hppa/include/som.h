@@ -1,4 +1,4 @@
-/*	$OpenBSD: som.h,v 1.1 1998/07/14 17:14:19 mickey Exp $	*/
+/*	$OpenBSD: som.h,v 1.2 1998/11/23 03:28:23 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -30,8 +30,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef	_HPPA_SOM_H_
-#define	_HPPA_SOM_H_
+#ifndef	_MACHINE_SOM_H_
+#define	_MACHINE_SOM_H_
 
 /*
  * system_id values
@@ -49,4 +49,4 @@
 	 (fh)->a_magic != SOM_SHARE_MAGIC && \
 	 (fh)->a_magic != SOM_DEMAND_MAGIC)
 
-#endif /* _HPPA_SOM_H_ */
+#endif /* _MACHINE_SOM_H_ */

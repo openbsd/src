@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdc.h,v 1.5 1998/08/29 01:33:31 mickey Exp $	*/
+/*	$OpenBSD: pdc.h,v 1.6 1998/11/23 03:28:22 mickey Exp $	*/
 
 /*
  * Copyright (c) 1990 mt Xinu, Inc.  All rights reserved.
@@ -26,8 +26,8 @@
  *	Utah $Hdr: pdc.h 1.12 94/12/14$
  */
 
-#ifndef	_HPPA_PDC_H_
-#define _HPPA_PDC_H_
+#ifndef	_MACHINE_PDC_H_
+#define _MACHINE_PDC_H_
 
 /*
  * Definitions for interaction with "Processor Dependent Code",
@@ -251,7 +251,7 @@ typedef int (*iodcio_t) __P((struct iomod *, int, ...));
 struct pdc_pim {	/* PDC_PIM */
 	u_int	count;		/* actual (HPMC, LPMC) or total (SIZE) count */
 	u_int	archsize;	/* size of architected regions (see "pim.h") */
-	double	filler[15];
+	u_int	filler[30];
 };
 
 struct pdc_model {	/* PDC_MODEL */
@@ -260,12 +260,12 @@ struct pdc_model {	/* PDC_MODEL */
 	u_int	hw_id;		/* unique processor hardware identifier */
 	u_int	boot_id;	/* same as hw_id */
 	u_int	sw_id;		/* software security and licensing */
-	u_int	sw_cap;		/* O/S capabilities of processor */
+	u_int	sw_cap;		/* OS capabilities of processor */
 	u_int	arch_rev;	/* architecture revision */
 	u_int	pot_key;	/* potential key */
 	u_int	curr_key;	/* current key */
 	int	filler1;
-	double	filler2[11];
+	u_int	filler2[22];
 };
 
 struct cache_cf {	/* PDC_CACHE (for "struct pdc_cache") */
@@ -325,37 +325,37 @@ struct pdc_cache {	/* PDC_CACHE */
 	u_int	dt_off_stride;	/* offset incr per off_count iteration (flush)*/
 	u_int	dt_off_count;	/* number of dt_loop iterations/space (flush) */
 	u_int	dt_loop;	/* number of PDTLBE's per off_stride (flush) */
-	double	filler;
+	u_int	filler[2];
 };
 
 struct pdc_hpa {	/* PDC_HPA */
 	struct iomod *hpa;	/* HPA of processor */
 	int	filler1;
-	double	filler2[15];
+	u_int	filler2[30];
 };
 
 struct pdc_coproc {	/* PDC_COPROC */
 	u_int	ccr_enable;	/* same format as CCR (CR 10) */
-	int	ccr_present;	/* which co-proc's are present (bitset) */
-	double	filler2[15];
+	u_int	ccr_present;	/* which co-proc's are present (bitset) */
+	u_int	filler2[30];
 };
 
 struct pdc_tod {	/* PDC_TOD, PDC_TOD_READ */
 	u_int	sec;		/* elapsed time since 00:00:00 GMT, 1/1/70 */
 	u_int	usec;		/* accurate to microseconds */
-	double	filler2[15];
+	u_int	filler2[30];
 };
 
 struct pdc_instr {	/* PDC_INSTR */
 	u_int	instr;		/* instruction that invokes PDC mchk entry pt */
 	int	filler1;
-	double	filler2[15];
+	u_int	filler2[30];
 };
 
 struct pdc_iodc_read {	/* PDC_IODC, PDC_IODC_READ */
 	int	size;		/* number of bytes in selected entry point */
 	int	filler1;
-	double	filler2[15];
+	u_int	filler2[30];
 };
 
 struct pdc_iodc_minit {	/* PDC_IODC, PDC_IODC_NINIT or PDC_IODC_DINIT */
@@ -363,7 +363,7 @@ struct pdc_iodc_minit {	/* PDC_IODC, PDC_IODC_NINIT or PDC_IODC_DINIT */
 	u_int	max_spa;	/* size of SPA (in bytes) > max_mem+map_mem */
 	u_int	max_mem;	/* size of "implemented" memory (in bytes) */
 	u_int	map_mem;	/* size of "mapable-only" memory (in bytes) */
-	double	filler[14];
+	u_int	filler[28];
 };
 
 struct btlb_info {		/* for "struct pdc_btlb" (PDC_BTLB) */
@@ -390,7 +390,7 @@ struct pdc_hwtlb {	/* PDC_TLB */
 struct pdc_memmap {	/* PDC_MEMMAP */
 	u_int	hpa;		/* HPA for module */
 	u_int	morepages;	/* additional IO pages */
-	double	filler[15];
+	u_int	filler[30];
 };
 
 /*
@@ -519,7 +519,7 @@ struct iodc_data {
 		iodc_spa_enb:1,		/* 1:has an spa */
 		iodc_spa_shift:5,	/* power of two # bytes in SPA space */
 		iodc_more: 1,		/* iodc_data is: 0:8-byte, 1:16-byte */
-		iodc_word: 1,		/* io_dc_data is: 0:byte, 1:word */
+		iodc_word: 1,		/* iodc_data is: 0:byte, 1:word */
 		iodc_pf: 1,		/* 1:supports powerfail */
 		iodc_type: 5;		/* see below */
 	u_int	iodc_sv_rev: 4,		/* software version revision number */
@@ -560,4 +560,4 @@ void pdccnpollc __P((dev_t, int));
 
 #endif	/* !(_LOCORE) */
 
-#endif	/* _HPPA_PDC_H_ */
+#endif	/* _MACHINE_PDC_H_ */

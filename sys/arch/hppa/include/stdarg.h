@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdarg.h,v 1.1 1998/06/23 19:45:27 mickey Exp $	*/
+/*	$OpenBSD: stdarg.h,v 1.2 1998/11/23 03:28:23 mickey Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -35,8 +35,8 @@
  *	@(#)stdarg.h	8.1 (Berkeley) 6/10/93
  */
 
-#ifndef _HPPA_STDARG_H_
-#define	_HPPA_STDARG_H_
+#ifndef _MACHINE_STDARG_H_
+#define	_MACHINE_STDARG_H_
 
 typedef double *va_list;
 
@@ -56,4 +56,4 @@ typedef double *va_list;
 
 #define	va_end(ap)
 
-#endif /* !_HPPA_STDARG_H */
+#endif /* !_MACHINE_STDARG_H */

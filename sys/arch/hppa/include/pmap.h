@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.h,v 1.3 1998/09/12 03:14:49 mickey Exp $ */
+/* $OpenBSD: pmap.h,v 1.4 1998/11/23 03:28:22 mickey Exp $ */
 
 /*
  * Copyright 1996 1995 by Open Software Foundation, Inc.   
@@ -48,8 +48,8 @@
  *	Pmap header for hppa.
  */
 
-#ifndef	_HPPA_PMAP_H_
-#define	_HPPA_PMAP_H_
+#ifndef	_MACHINE_PMAP_H_
+#define	_MACHINE_PMAP_H_
 
 #include <machine/pte.h>
 
@@ -167,12 +167,7 @@ pmap_prot(struct pmap *pmap, int prot)
 	return (pmap == kernel_pmap? kern_prot: user_prot)[prot];
 }
 
-/* 
- * prototypes.
- */
-vm_offset_t kvtophys __P((vm_offset_t addr));
-vm_offset_t pmap_map __P((vm_offset_t, vm_offset_t, vm_offset_t, vm_prot_t));
-void pmap_bootstrap __P((vm_offset_t *,	vm_offset_t *));
+void pmap_bootstrap __P((vm_offset_t *, vm_offset_t *));
 #endif /* _KERNEL */
 
-#endif /* _HPPA_PMAP_H_ */
+#endif /* _MACHINE_PMAP_H_ */
