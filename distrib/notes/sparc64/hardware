@@ -1,14 +1,18 @@
 OpenBSD/MACHINE OSREV runs on the following classes of machines:
 	- SBUS based workstations:
 		Ultra 1
-		Ultra 1/Creator (should work, but has not been tested)
-		Ultra 2 (should work, but could not be tested)
+		Ultra 1E (Creator) (should work, but has not been tested)
+		Ultra 2
 	- PCI based workstations:
 		Blade 100 (onboard ethernet has issues)
 		Enterprise 250
 		Ultra 5
 		Ultra 10
 		Ultra 30
+dnl XXX uncomment machine entries as they become supported
+dnl		Ultra 60 / Enterprise 220R
+dnl		Ultra 80 / Enterprise 420R
+dnl		Ultra 450 / Enterprise 450
 		SPARCengineUltra AX
 		SPARCengineUltra AXi
 	- faithful clones of the above Sun systems.

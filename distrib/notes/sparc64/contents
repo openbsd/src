@@ -9,8 +9,8 @@ OpenBSDminiroot
 OpenBSDfloppy
 				This floppy image will boot on SBus-based
 				MACHINE models, such as:
-				- Ultra 1
-				- Ultra 2 (not tested)
+				- Ultra 1/1E
+				- Ultra 2
 
 		floppyB{:--:}OSrev.fs	Another MACHINE boot and installation floppy;
 				see below.
@@ -24,7 +24,8 @@ dnl XXX remove the following lines once floppyB is working
 				correctly; your mileage may vary.
 				However, it will work correctly when used
 				as a miniroot and booted from the disk's
-				swap area.
+				swap area, although the regular miniroot
+				is preferred for this usage.
 
 OpenBSDdistsets
 

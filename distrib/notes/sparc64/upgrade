@@ -3,4 +3,4 @@ are not expected.
 If you have been using an old OpenBSD/MACHINE snapshot, you can follow the
 following instructions.
 
-OpenBSDUpgrade({:-the miniroot, or the installation floppy-:})
+OpenBSDUpgrade({:-CDROM, the miniroot, or the installation floppy-:})

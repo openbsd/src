@@ -36,6 +36,10 @@ Booting from Floppy Disk installation media:
        ok boot floppy bsd
 
 This will cause the kernel contained in the floppy to be booted.
+Please note that PCI systems might not be able to boot from floppy; also,
+Ultra 1, 1E and 2 systems might need a firmware update to be able to boot
+from floppy; refer to the ``Updating your firmware'' section earlier in
+this document for details.
 
 
 Booting From CD-ROM installation media:

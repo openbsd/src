@@ -1,9 +1,9 @@
 Installation is supported from several media types, including:
 
-	CD-ROM
+	CD-ROM (NOT supported if booting from floppy)
 	FFS partitions
 	Tape
-	Remote NFS partition
+	Remote NFS partition (NOT supported if booting from floppy)
 	FTP
 	HTTP
 

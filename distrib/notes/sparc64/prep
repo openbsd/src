@@ -1,3 +1,9 @@
+If your UltraSPARC machine is somewhat old, it might need a firmware update
+before it can be used under OpenBSD. You are advised to try to install
+OpenBSD first; if it can't boot or fails mysteriously, you might need to
+update your firmware. To do so, check the ``Updating your firmware''
+section later in this document.
+
 Your OpenBOOT ROM may need some setup.  You cannot use the security modes
 of the OpenBOOT ROM.  Make sure that the ROM security modes are disabled:
 
@@ -50,3 +56,51 @@ disk:f.  Make sure you reset the boot device to its default value:
 
 will work for most systems. This can be adapted if you've multiple
 systems installed and know what you're doing.
+
+
+Updating your firmware:
+-----------------------
+
+If OpenBSD does not boot or install properly on your machine, it might need
+a firmware update.
+
+Updating your firmware is a dangerous operation which may damage your
+hardware. Be sure to follow carefully these instructions, and in doubt,
+please don't do this.
+
+You will need to have a working operating system installed on your machine,
+in order to perform the update.  If this is not the case, you might be able
+to boot the flash updater software via network, but this has not been tested
+and is not supported by Sun.
+
+The firmware update is delivered as a specific patch, depending on your
+machine:
+
+	Machine		Patch number
+dnl XXX uncomment machine entries as they become supported
+	Blade 100	111179
+dnl	Enterprise 220R	106455
+dnl	Enterprise 420R	109082
+	Enterprise 250	106503
+dnl	Enterprise 450	106122
+	Ultra 1		104881
+	Ultra 1E	104288
+	Ultra 2		104169
+	Ultra 5		106121
+	Ultra 10	106121
+	Ultra 30	105930
+dnl	Ultra 60	106455
+dnl	Ultra 80	109082
+dnl	Ultra 450	106122
+
+Get the patch installation notes from SunSolve, as
+    ftp://sunsolve.sun.com/pub/patches/104169.readme
+(replace 104169 with the correct patch number).
+Check the Patch-ID# line in this readme file to get the patch filename, for
+example 104169-08. The patch filename will then be either
+    ftp://sunsolve.sun.com/pub/patches/104169-08.tar.Z
+or
+    ftp://sunsolve.sun.com/pub/patches/104169-08.zip
+
+Follow the patch installation notes very carefully. You will need to open
+your machine in order to apply this patch.
