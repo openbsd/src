@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.53 2001/07/25 03:28:19 jason Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.54 2001/07/30 21:48:58 jason Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -1054,8 +1054,7 @@ ether_ifattach(ifp)
 	ifp->if_hdrlen = 14;
 	ifp->if_mtu = ETHERMTU;
 	ifp->if_output = ether_output;
-	for (ifa = ifp->if_addrlist.tqh_first; ifa != 0;
-	    ifa = ifa->ifa_list.tqe_next)
+	TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
 		if ((sdl = (struct sockaddr_dl *)ifa->ifa_addr) &&
 		    sdl->sdl_family == AF_LINK) {
 			sdl->sdl_type = IFT_ETHER;
@@ -1064,6 +1063,7 @@ ether_ifattach(ifp)
 			    LLADDR(sdl), ifp->if_addrlen);
 			break;
 		}
+	}
 	LIST_INIT(&((struct arpcom *)ifp)->ac_multiaddrs);
 #if NBPFILTER > 0
 	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
@@ -1077,7 +1077,8 @@ ether_ifdetach(ifp)
 	struct arpcom *ac = (struct arpcom *)ifp;
 	struct ether_multi *enm;
 
-	for (enm = LIST_FIRST(&ac->ac_multiaddrs); enm;
+	for (enm = LIST_FIRST(&ac->ac_multiaddrs);
+	    enm != LIST_END(&ac->ac_multiaddrs);
 	    enm = LIST_FIRST(&ac->ac_multiaddrs)) {
 		LIST_REMOVE(enm, enm_list);
 		free(enm, M_IFMADDR);
