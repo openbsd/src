@@ -1,4 +1,4 @@
-/*	$OpenBSD: ascvar.h,v 1.6 2001/05/11 07:28:26 miod Exp $	*/
+/*	$OpenBSD: ascvar.h,v 1.7 2001/06/25 15:27:59 aaron Exp $	*/
 /*	$NetBSD: ascvar.h,v 1.4 1997/11/28 18:23:40 mhitch Exp $	*/
 
 
@@ -67,6 +67,7 @@ struct asc_softc {
 	int		ccf;		/* CCF, whatever that really is? */
 	int		timeout_250;	/* 250ms timeout */
 	int		tb_ticks;	/* 4ns. ticks/tb channel ticks */
+	struct timeout	asc_timo;
 #ifdef USE_NEW_SCSI
 	struct scsi_link sc_link;		/* scsipi link struct */
 #endif
