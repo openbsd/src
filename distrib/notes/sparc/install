@@ -490,7 +490,7 @@ You can now extract the provided "*.tar.gz files onto your disk.
 
     sunos# ls -FC
     base{:--:}OSrev.tar.gz      etc{:--:}OSrev.tar.gz       man{:--:}OSrev.tar.gz       secr23.tar.gz
-    comp{:--:}OSrev.tar.gz      game{:--:}OSrev.tar.gz      misc{:--:}OSrev.tar.gz      text{:--:}OSrev.tar.gz
+    comp{:--:}OSrev.tar.gz      game{:--:}OSrev.tar.gz      misc{:--:}OSrev.tar.gz
     xbase{:--:}OSrev.tar.gz     xfont{:--:}OSrev.tar.gz     xserv{:--:}OSrev.tar.gz     bsd
     bsd.scsi3
     sunos{:-#-:} gunzip < base{:--:}OSrev.tar.gz | (cd /mnt; gtar xvpf -)

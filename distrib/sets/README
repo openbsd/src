@@ -75,16 +75,12 @@ the sets are as follows:
 	games:	the games and their man pages.
 
 	man:	all of the man pages for the system, except those
-		listed elsewhere (e.g. in comp, games, misc, text).
+		listed elsewhere (e.g. in comp, games, misc).
 		Includes machine-dependent man pages for this CPU.
 
 	misc:	share/dict, share/doc, and the machine-dependent
 		man pages for other cpu's which happen to always
 		be installed.
-
-	text:	text processing tools.  groff and all of its friends.
-		includes man pages for all bins contained within.
-
 
 as noted, in addition to the "standard" files in each dir, there's
 a file called 'md_share' in lists/man.  it's the list of man pages

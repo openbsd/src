@@ -38,7 +38,7 @@ The install tape is created as follows:
 	cd .../2.0/sun3/install
 	set T = /dev/nrst0
 	mt -f $T rewind
-	foreach f (base etc comp games man misc text)
+	foreach f (base etc comp games man misc)
 	  gzip -d < $f.gz | dd of=$T bs=8k
 	end
 	mt -f $T rewind

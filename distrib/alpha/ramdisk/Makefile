@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.15 1998/07/01 01:58:05 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.16 1998/12/19 18:31:51 deraadt Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -33,11 +33,11 @@ all: ${CBIN} ${FLOPPY}
 	@echo "all done"
 
 DISKTYPE=       rdroot
-NBLKS=          8192
+NBLKS=          6144
 
 # old format, minfree, opt, b/i  trks, sects, cpg
 NEWFSARGS=	-t ffs -m 0 -o space
-NEWFSARGS_RD=	-i 16384 -c 16
+NEWFSARGS_RD=	-i 524288 -c 80
 NEWFSARGS_FD=	-i 524288 -c 80
 
 ${FLOPPY}:	bsd.gz
@@ -75,7 +75,7 @@ bsd.rd: bsd ${IMAGE} ecoffrdsetroot
 bsd:
 	cd ${.CURDIR}/../../../sys/arch/alpha/conf && config RAMDISK
 	cd ${.CURDIR}/../../../sys/arch/alpha/compile/RAMDISK && \
-	    make clean && make COPTS=-O
+	    make clean && make
 	cp ${.CURDIR}/../../../sys/arch/alpha/compile/RAMDISK/bsd bsd
 
 ${IMAGE}:	do_prep do_mount do_files do_umount

@@ -217,7 +217,7 @@ To install or upgrade OpenBSD using a tape, you need to do the following:
 	#! /bin/sh
 	tape=/dev/nrst0
 	mt -f ${tape} rewind
-	for file in base23 etc23 comp23 game23 man23 misc23 text23 x*23
+	for file in base23 etc23 comp23 game23 man23 misc23 x*23
 	do
 		dd if=${file}.tar.gz of=${tape}
 	done

@@ -5,9 +5,8 @@ set listsdir=`pwd`/lists
 
 set TMPFILE=/tmp/_LIST.$$
 
-set lists=(base comp etc game text)
+set lists=(base comp etc game)
 # SPECIAL: man misc
-# EXTRA SPECIAL (not done here): secr
 
 foreach setname ($lists)
 	cat $listsdir/$setname/mi $listsdir/$setname/md.${arch} >>! $TMPFILE

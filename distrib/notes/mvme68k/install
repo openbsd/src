@@ -342,7 +342,7 @@ provided script, "install_from_sunos.sh" will help you:
 
     sunos# ls -FC
     base.tar.gz      etc.tar.gz       man.tar.gz       secr.tar.gz
-    comp.tar.gz      games.tar.gz     misc.tar.gz      text.tar.gz
+    comp.tar.gz      games.tar.gz     misc.tar.gz      
     install.sh       bsd.id3_scsi
     sunos# ./install_from_sunos.sh
     [...]

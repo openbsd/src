@@ -24,9 +24,8 @@ set fsdir=$DESTDIR
 
 cd $fsdir
 
-set lists=(base comp etc game text)
+set lists=(base comp etc game)
 # SPECIAL: man misc
-# EXTRA SPECIAL (not done here): secr
 
 foreach setname ($lists)
 	echo -n "${setname}: "

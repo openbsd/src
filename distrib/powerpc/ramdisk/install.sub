@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.4 1998/11/03 04:35:17 aaron Exp $
+#	$OpenBSD: install.sub,v 1.5 1998/12/19 18:32:29 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997,1998 Todd Miller, Theo de Raadt
@@ -74,9 +74,9 @@ VERSION_MAJOR=$(( $VERSION / 10 ))
 VERSION_MINOR=$(( $VERSION % 10 ))
 export VERSION VERSION_MAJOR VERSION_MINOR
 
-ALLSETS="base etc misc comp text man game xbase xshare xfont xserv"	# install
-UPGRSETS="base misc comp text man game xbase xshare xfont xserv"	# upgrade
-SNAPSETS="bin dev etc games man misc sbin text \
+ALLSETS="base etc misc comp man game xbase xshare xfont xserv"	# install
+UPGRSETS="base misc comp man game xbase xshare xfont xserv"	# upgrade
+SNAPSETS="bin dev etc games man misc sbin \
 	  usr.bin usr.binutils usr.games usr.include \
 	  usr.lib usr.libexec usr.misc usr.sbin usr.share var"
 THESETS=					# one of the above

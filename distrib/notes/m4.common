@@ -1,5 +1,5 @@
 dnl
-dnl	$OpenBSD: m4.common,v 1.3 1998/11/20 04:09:23 todd Exp $
+dnl	$OpenBSD: m4.common,v 1.4 1998/12/19 18:32:00 deraadt Exp $
 dnl
 dnl simulate an include path with a macro 'includeit'.
 define(`includeit',`sinclude('INCLUDE/`$1)sinclude('INCLUDE/../`$1)')dnl
@@ -116,14 +116,6 @@ define({:-OpenBSDmisc-:},
 		rather large), the typesettable document set, and
 		man pages for other architectures which happen to be
 		installed from the source tree by default.showsize($1,$2)-:})dnl
-dnl
-dnl
-dnl OpenBSDtext( compressed size, uncompressed size )
-dnl
-define({:-OpenBSDtext-:},
-{:-	text{:--:}OSrev	This set includes OpenBSD's text processing tools,
-		including groff, all related programs, and their
-		manual pages.showsize($1,$2)-:})dnl
 dnl
 dnl
 dnl OpenBSDxbase( compressed size, uncompressed size )
