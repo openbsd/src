@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 #
-# $OpenBSD: recover,v 1.8 2001/11/05 22:43:49 millert Exp $
+# $OpenBSD: recover,v 1.9 2001/11/06 23:31:08 millert Exp $
 #
 # Script to (safely) recover nvi edit sessions.
 #
@@ -116,7 +116,7 @@ foreach $file (readdir(RECDIR)) {
 	# If backup file is zero length or not a regular file, remove it.
 	# Else send mail to the user.
 	#
-	if ($backup =~ m#/# || !stat($backup)) {
+	if ($backup =~ m#/# || !lstat($backup)) {
 		unlink($file);
 	} elsif ($owner != 0 && (stat(_))[4] != $owner) {
 		unlink($file);
