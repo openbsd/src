@@ -27,7 +27,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: tar.1,v 1.18 1998/11/06 00:34:09 aaron Exp $
+.\"	$OpenBSD: tar.1,v 1.19 1998/12/02 00:02:51 aaron Exp $
 .\"
 .Dd June 11, 1996
 .Dt TAR 1
@@ -37,7 +37,9 @@
 .Nd tape archiver
 .Sh SYNOPSIS
 .Nm
-.No [-]{crtux}[befhmopvwzHLPXZ014578]
+.Sm off
+.Oo \&- Oc {crtux} Op Fl befhmopvwzHLOPXZ014578
+.Sm on
 .Op Ar archive
 .Op Ar blocksize
 .\" XXX how to do this right?
