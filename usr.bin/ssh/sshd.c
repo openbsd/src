@@ -11,7 +11,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshd.c,v 1.86 2000/02/06 10:18:58 markus Exp $");
+RCSID("$OpenBSD: sshd.c,v 1.87 2000/02/15 09:25:45 markus Exp $");
 
 #include "xmalloc.h"
 #include "rsa.h"
@@ -142,6 +142,27 @@ void do_exec_no_pty(const char *command, struct passwd * pw,
 void do_child(const char *command, struct passwd * pw, const char *term,
 	      const char *display, const char *auth_proto,
 	      const char *auth_data, const char *ttyname);
+
+/*
+ * Remove local Xauthority file.
+ */
+void
+xauthfile_cleanup_proc(void *ignore)
+{
+	debug("xauthfile_cleanup_proc called");
+
+	if (xauthfile != NULL) {
+		char *p;
+		unlink(xauthfile);
+		p = strrchr(xauthfile, '/');
+		if (p != NULL) {
+			*p = '\0';
+			rmdir(xauthfile);
+		}
+		xfree(xauthfile);
+		xauthfile = NULL;
+	}
+}
 
 /*
  * Close all listening sockets
@@ -874,7 +895,7 @@ main(int ac, char **av)
 
 	/* Cleanup user's local Xauthority file. */
 	if (xauthfile)
-		unlink(xauthfile);
+		xauthfile_cleanup_proc(NULL);
 
 	/* The connection has been terminated. */
 	verbose("Closing connection to %.100s", remote_ip);
@@ -1561,22 +1582,6 @@ do_fake_authloop(char *user)
 	abort();
 }
 
-
-/*
- * Remove local Xauthority file.
- */
-static void
-xauthfile_cleanup_proc(void *ignore)
-{
-	debug("xauthfile_cleanup_proc called");
-
-	if (xauthfile != NULL) {
-		unlink(xauthfile);
-		xfree(xauthfile);
-		xauthfile = NULL;
-	}
-}
-
 /*
  * Prepares for an interactive session.  This is called after the user has
  * been successfully authenticated.  During this message exchange, pseudo
@@ -1588,7 +1593,7 @@ do_authenticated(struct passwd * pw)
 {
 	int type;
 	int compression_level = 0, enable_compression_after_reply = 0;
-	int have_pty = 0, ptyfd = -1, ttyfd = -1, xauthfd = -1;
+	int have_pty = 0, ptyfd = -1, ttyfd = -1;
 	int row, col, xpixel, ypixel, screen;
 	char ttyname[64];
 	char *command, *term = NULL, *display = NULL, *proto = NULL,
@@ -1726,16 +1731,19 @@ do_authenticated(struct passwd * pw)
 
 			/* Setup to always have a local .Xauthority. */
 			xauthfile = xmalloc(MAXPATHLEN);
-			snprintf(xauthfile, MAXPATHLEN, "/tmp/XauthXXXXXX");
-
-			if ((xauthfd = mkstemp(xauthfile)) != -1) {
-				fchown(xauthfd, pw->pw_uid, pw->pw_gid);
-				close(xauthfd);
-				fatal_add_cleanup(xauthfile_cleanup_proc, NULL);
-			} else {
+			strlcpy(xauthfile, "/tmp/ssh-XXXXXXXX", MAXPATHLEN);
+			temporarily_use_uid(pw->pw_uid);
+			if (mkdtemp(xauthfile) == NULL) {
+				restore_uid();
+				error("private X11 dir: mkdtemp %s failed: %s",
+				    xauthfile, strerror(errno));
 				xfree(xauthfile);
 				xauthfile = NULL;
+				goto fail;
 			}
+			restore_uid();
+			strlcat(xauthfile, "/cookies", MAXPATHLEN);
+			fatal_add_cleanup(xauthfile_cleanup_proc, NULL);
 			break;
 #else /* XAUTH_PATH */
 			packet_send_debug("No xauth program; cannot forward with spoofing.");
