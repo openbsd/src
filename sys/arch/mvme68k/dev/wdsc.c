@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdsc.c,v 1.4 1996/11/23 21:46:02 kstailey Exp $ */
+/*	$OpenBSD: wdsc.c,v 1.5 1997/01/28 10:54:10 deraadt Exp $ */
 
 /*
  * Copyright (c) 1996 Steve Woodford
@@ -48,7 +48,6 @@
 #include <machine/autoconf.h>
 #include <mvme68k/dev/pccreg.h>
 
-int     wdscprint       __P((void *auxp, const char *));
 void    wdscattach      __P((struct device *, struct device *, void *));
 int     wdscmatch       __P((struct device *, struct cfdata *, void *));
 
@@ -180,23 +179,9 @@ wdscattach(pdp, dp, auxp)
     tmp = bootpart;
     if (ca->ca_paddr != bootaddr) 
 	bootpart = -1;		/* invalid flag to dk_establish */
-    config_found(dp, &sc->sc_link, wdscprint);
+    config_found(dp, &sc->sc_link, scsiprint);
     bootpart = tmp;		/* restore old value */
 }
-
-/*
- * print diag if pnp is NULL else just extra
- */
-int
-wdscprint(auxp, pnp)
-    void *auxp;
-    const char *pnp;
-{
-    if (pnp == NULL)
-        return(UNCONF);
-    return(QUIET);
-}
-
 
 /*
  * Enable DMA interrupts

@@ -1,4 +1,4 @@
-/*	$OpenBSD: siopdma.c,v 1.5 1996/11/23 21:46:01 kstailey Exp $ */
+/*	$OpenBSD: siopdma.c,v 1.6 1997/01/28 10:53:41 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -60,7 +60,6 @@
 int	afscmatch	__P((struct device *, void *, void *));
 void	afscattach	__P((struct device *, struct device *, void *));
 
-int	afscprint	__P((void *auxp, const char *));
 int	siopintr	__P((struct siop_softc *));
 int	afsc_dmaintr	__P((struct siop_softc *));
 
@@ -177,22 +176,9 @@ afscattach(parent, self, auxp)
 	tmp = bootpart;
 	if (ca->ca_paddr != bootaddr) 
 		bootpart = -1;          /* invalid flag to dk_establish */
-	config_found(self, &sc->sc_link, afscprint);
+	config_found(self, &sc->sc_link, scsiprint);
 	bootpart = tmp;             /* restore old value */
 
-}
-
-/*
- * print diag if pnp is NULL else just extra
- */
-int
-afscprint(auxp, pnp)
-	void *auxp;
-	const char *pnp;
-{
-	if (pnp == NULL)
-		return (UNCONF);
-	return (QUIET);
 }
 
 int
