@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_radix.c,v 1.8 2003/01/09 10:40:44 cedric Exp $ */
+/*	$OpenBSD: pfctl_radix.c,v 1.9 2003/01/20 20:47:10 cedric Exp $ */
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -151,7 +151,7 @@ pfr_clr_addrs(struct pfr_table *tbl, int *ndel, int flags)
 	bzero(&io, sizeof io);
 	io.pfrio_flags = flags;
 	io.pfrio_table = *tbl;
-	if (ioctl(dev, DIOCRSETADDRS, &io))
+	if (ioctl(dev, DIOCRCLRADDRS, &io))
 		return (-1);
 	if (ndel != NULL)
 		*ndel = io.pfrio_ndel;
@@ -288,7 +288,7 @@ pfr_clr_astats(struct pfr_table *tbl, struct pfr_addr *addr, int size,
 	io.pfrio_table = *tbl;
 	io.pfrio_buffer = addr;
 	io.pfrio_size = size;
-	if (ioctl(dev, DIOCRCLRTSTATS, &io))
+	if (ioctl(dev, DIOCRCLRASTATS, &io))
 		return (-1);
 	if (nzero != NULL)
 		*nzero = io.pfrio_nzero;
@@ -331,7 +331,7 @@ pfr_set_tflags(struct pfr_table *tbl, int size, int setflag, int clrflag,
 	io.pfrio_size = size;
 	io.pfrio_setflag = setflag;
 	io.pfrio_clrflag = clrflag;
-	if (ioctl(dev, DIOCRCLRTSTATS, &io))
+	if (ioctl(dev, DIOCRSETTFLAGS, &io))
 		return (-1);
 	if (nchange)
 		*nchange = io.pfrio_nchange;
