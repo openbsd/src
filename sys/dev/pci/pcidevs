@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.121 1999/02/20 19:00:09 deraadt Exp $
+$OpenBSD: pcidevs,v 1.122 1999/02/23 22:40:55 deraadt Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -502,10 +502,12 @@ vendor RISCOM		0x12aa	RISCom
 vendor PICTUREEL	0x12c5	Picture Elements
 vendor STB2		0x12d2	NVidia/SGS-Thomson
 vendor INVERTEX		0x14e1	Invertex
+vendor DELTA		0x1500	Delta
 vendor SYMPHONY2	0x1c1c	Symphony Labs (2nd ID)
 vendor TEKRAM2		0x1de1	Tekram Technology (2nd ID)
 vendor 3DLABS		0x3d3d	3D Labs
 vendor AVANCE2		0x4005	Avance Logic (2nd ID)
+vendor ADDTRON		0x4033	Addtron
 vendor NETVIN		0x4a14	NetVin
 vendor BUSLOGIC2	0x4b10	Buslogic (2nd ID)
 vendor S3		0x5333	S3
@@ -567,6 +569,10 @@ product	ACC 2051_ISA		0x5842	2051 PCI Host-ISA
 
 /* Accton products */
 product ACCTON 5030		0x1211	MPX 5030/5038
+
+/* Addtron products */
+product ADDTRON 8139		0x1360	8139
+product ADDTRON RHINEII		0x1320	RhineII
 
 /* Acer products */
 product ACER M1435		0x1435	M1435 VL-PCI
@@ -808,6 +814,10 @@ product DEC 21150		0x0022	DECchip 21150 PCI-PCI
 product DEC 21152		0x0024	DECchip 21152 PCI-PCI
 product DEC 21153		0x0025	DECchip 21153 PCI-PCI
 product DEC 21154		0x0026	DECchip 21154 PCI-PCI
+
+/* Delta Electronics products */
+product DELTA 8139		0x1360	8139
+product DELTA RHINEII		0x1320	RhineII
 
 /* Diamond products */
 product DIAMOND VIPER		0x9001	Viper/PCI
