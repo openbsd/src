@@ -1,4 +1,4 @@
-/*	$OpenBSD: ka650.h,v 1.9 2001/08/12 12:03:03 heko Exp $	*/
+/*	$OpenBSD: ka650.h,v 1.10 2003/06/02 23:27:57 millert Exp $	*/
 /*	$NetBSD: ka650.h,v 1.6 1997/07/26 10:12:43 ragge Exp $	*/
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -15,11 +15,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *

@@ -15,11 +15,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -36,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)amq.c	8.1 (Berkeley) 6/7/93
- *	$Id: amq.c,v 1.10 2002/09/10 05:39:26 deraadt Exp $
+ *	$Id: amq.c,v 1.11 2003/06/02 23:36:51 millert Exp $
  */
 
 /*
@@ -52,7 +48,7 @@ char copyright[] = "\
 #endif /* not lint */
 
 #ifndef lint
-static char rcsid[] = "$Id: amq.c,v 1.10 2002/09/10 05:39:26 deraadt Exp $";
+static char rcsid[] = "$Id: amq.c,v 1.11 2003/06/02 23:36:51 millert Exp $";
 static char sccsid[] = "@(#)amq.c	8.1 (Berkeley) 6/7/93";
 #endif /* not lint */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: memset.S,v 1.1 2000/06/16 19:56:55 millert Exp $	*/
+/*	$OpenBSD: memset.S,v 1.2 2003/06/02 23:28:08 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -16,11 +16,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -41,7 +37,7 @@
 
 #if defined(LIBC_SCCS)
 	.text
-	.asciz "$OpenBSD: memset.S,v 1.1 2000/06/16 19:56:55 millert Exp $"
+	.asciz "$OpenBSD: memset.S,v 1.2 2003/06/02 23:28:08 millert Exp $"
 #endif /* LIBC_SCCS */
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: int_types.h,v 1.3 2002/04/19 11:04:24 espie Exp $	*/
+/*	$OpenBSD: int_types.h,v 1.4 2003/06/02 23:27:56 millert Exp $	*/
 /*	$NetBSD: int_types.h,v 1.7 2001/04/28 15:41:33 kleink Exp $	*/
 
 /*
@@ -22,11 +22,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *

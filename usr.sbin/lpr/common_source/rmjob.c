@@ -1,4 +1,4 @@
-/*	$OpenBSD: rmjob.c,v 1.15 2003/02/13 17:22:01 millert Exp $	*/
+/*	$OpenBSD: rmjob.c,v 1.16 2003/06/02 23:36:53 millert Exp $	*/
 /*	$NetBSD: rmjob.c,v 1.16 2000/04/16 14:43:58 mrg Exp $	*/
 
 /*
@@ -13,11 +13,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -38,7 +34,7 @@
 #if 0
 static const char sccsid[] = "@(#)rmjob.c	8.2 (Berkeley) 4/28/95";
 #else
-static const char rcsid[] = "$OpenBSD: rmjob.c,v 1.15 2003/02/13 17:22:01 millert Exp $";
+static const char rcsid[] = "$OpenBSD: rmjob.c,v 1.16 2003/06/02 23:36:53 millert Exp $";
 #endif
 #endif /* not lint */
 

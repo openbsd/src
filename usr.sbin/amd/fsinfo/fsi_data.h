@@ -15,11 +15,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -36,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fsi_data.h	8.1 (Berkeley) 6/6/93
- *	$Id: fsi_data.h,v 1.2 1997/01/31 14:42:10 graichen Exp $
+ *	$Id: fsi_data.h,v 1.3 2003/06/02 23:36:52 millert Exp $
  */
 
 typedef struct auto_tree auto_tree;

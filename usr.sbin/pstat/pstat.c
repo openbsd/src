@@ -1,4 +1,4 @@
-/*	$OpenBSD: pstat.c,v 1.43 2003/01/06 18:33:15 deraadt Exp $	*/
+/*	$OpenBSD: pstat.c,v 1.44 2003/06/02 23:36:54 millert Exp $	*/
 /*	$NetBSD: pstat.c,v 1.27 1996/10/23 22:50:06 cgd Exp $	*/
 
 /*-
@@ -13,11 +13,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -44,7 +40,7 @@ static char copyright[] =
 #if 0
 from: static char sccsid[] = "@(#)pstat.c	8.9 (Berkeley) 2/16/94";
 #else
-static char *rcsid = "$OpenBSD: pstat.c,v 1.43 2003/01/06 18:33:15 deraadt Exp $";
+static char *rcsid = "$OpenBSD: pstat.c,v 1.44 2003/06/02 23:36:54 millert Exp $";
 #endif
 #endif /* not lint */
 

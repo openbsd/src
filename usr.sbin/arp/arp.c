@@ -1,4 +1,4 @@
-/*	$OpenBSD: arp.c,v 1.26 2003/03/17 23:26:21 henric Exp $ */
+/*	$OpenBSD: arp.c,v 1.27 2003/06/02 23:36:52 millert Exp $ */
 /*	$NetBSD: arp.c,v 1.12 1995/04/24 13:25:18 cgd Exp $ */
 
 /*
@@ -16,11 +16,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -45,7 +41,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)arp.c	8.2 (Berkeley) 1/2/94";*/
-static char *rcsid = "$OpenBSD: arp.c,v 1.26 2003/03/17 23:26:21 henric Exp $";
+static char *rcsid = "$OpenBSD: arp.c,v 1.27 2003/06/02 23:36:52 millert Exp $";
 #endif /* not lint */
 
 /*

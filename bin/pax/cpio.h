@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpio.h,v 1.3 2001/05/16 03:04:56 mickey Exp $	*/
+/*	$OpenBSD: cpio.h,v 1.4 2003/06/02 23:32:08 millert Exp $	*/
 /*	$NetBSD: cpio.h,v 1.3 1995/03/21 09:07:15 cgd Exp $	*/
 
 /*-
@@ -17,11 +17,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *

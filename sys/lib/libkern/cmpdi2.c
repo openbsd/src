@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmpdi2.c,v 1.2 1997/11/07 15:56:39 niklas Exp $	*/
+/*	$OpenBSD: cmpdi2.c,v 1.3 2003/06/02 23:28:08 millert Exp $	*/
 /*	$NetBSD: cmpdi2.c,v 1.5 1995/10/07 09:26:22 mycroft Exp $	*/
 
 /*-
@@ -17,11 +17,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -42,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmpdi2.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$OpenBSD: cmpdi2.c,v 1.2 1997/11/07 15:56:39 niklas Exp $";
+static char rcsid[] = "$OpenBSD: cmpdi2.c,v 1.3 2003/06/02 23:28:08 millert Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 

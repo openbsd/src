@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cons.c,v 1.4 2002/03/14 01:27:12 millert Exp $	*/
+/*	$OpenBSD: if_cons.c,v 1.5 2003/06/02 23:28:17 millert Exp $	*/
 /*	$NetBSD: if_cons.c,v 1.7 1996/02/13 22:09:44 christos Exp $	*/
 
 /*-
@@ -13,11 +13,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *

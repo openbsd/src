@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkboot.c,v 1.2 1999/08/16 09:43:10 downsj Exp $	*/
+/*	$OpenBSD: mkboot.c,v 1.3 2003/06/02 23:27:46 millert Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -46,7 +42,7 @@ static char copyright[] =
 static char sccsid[] = "@(#)mkboot.c	7.2 (Berkeley) 12/16/90";
 static char rcsid[] = "$NetBSD: mkboot.c,v 1.5 1994/10/26 07:27:45 cgd Exp $";
 #endif
-static char rcsid[] = "$OpenBSD: mkboot.c,v 1.2 1999/08/16 09:43:10 downsj Exp $";
+static char rcsid[] = "$OpenBSD: mkboot.c,v 1.3 2003/06/02 23:27:46 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>

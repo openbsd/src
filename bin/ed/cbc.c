@@ -1,4 +1,4 @@
-/*	$OpenBSD: cbc.c,v 1.9 2003/02/18 13:14:43 jmc Exp $	*/
+/*	$OpenBSD: cbc.c,v 1.10 2003/06/02 23:32:08 millert Exp $	*/
 /*	$NetBSD: cbc.c,v 1.9 1995/03/21 09:04:36 cgd Exp $	*/
 
 /* cbc.c: This file contains the encryption routines for the ed line editor */
@@ -17,11 +17,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -44,7 +40,7 @@
 #if 0
 static char *rcsid = "@(#)cbc.c,v 1.2 1994/02/01 00:34:36 alm Exp";
 #else
-static char rcsid[] = "$OpenBSD: cbc.c,v 1.9 2003/02/18 13:14:43 jmc Exp $";
+static char rcsid[] = "$OpenBSD: cbc.c,v 1.10 2003/06/02 23:32:08 millert Exp $";
 #endif
 #endif /* not lint */
 

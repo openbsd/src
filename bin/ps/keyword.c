@@ -1,4 +1,4 @@
-/*	$OpenBSD: keyword.c,v 1.16 2002/12/19 21:29:46 mickey Exp $	*/
+/*	$OpenBSD: keyword.c,v 1.17 2003/06/02 23:32:09 millert Exp $	*/
 /*	$NetBSD: keyword.c,v 1.12.6.1 1996/05/30 21:25:13 cgd Exp $	*/
 
 /*-
@@ -13,11 +13,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -38,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)keyword.c	8.5 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: keyword.c,v 1.16 2002/12/19 21:29:46 mickey Exp $";
+static char rcsid[] = "$OpenBSD: keyword.c,v 1.17 2003/06/02 23:32:09 millert Exp $";
 #endif
 #endif /* not lint */
 

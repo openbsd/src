@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpr.c,v 1.33 2003/05/19 00:33:23 pjanzen Exp $ */
+/*	$OpenBSD: lpr.c,v 1.34 2003/06/02 23:36:53 millert Exp $ */
 /*	$NetBSD: lpr.c,v 1.19 2000/10/11 20:23:52 is Exp $	*/
 
 /*
@@ -19,11 +19,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -50,7 +46,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)lpr.c	8.4 (Berkeley) 4/28/95";
 #else
-static const char rcsid[] = "$OpenBSD: lpr.c,v 1.33 2003/05/19 00:33:23 pjanzen Exp $";
+static const char rcsid[] = "$OpenBSD: lpr.c,v 1.34 2003/06/02 23:36:53 millert Exp $";
 #endif
 #endif /* not lint */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: types.h,v 1.11 2002/06/11 09:36:24 hugh Exp $	*/
+/*	$OpenBSD: types.h,v 1.12 2003/06/02 23:27:57 millert Exp $	*/
 /*	$NetBSD: types.h,v 1.14 1998/08/13 02:10:49 eeh Exp $	*/
 
 /*-
@@ -13,11 +13,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
