@@ -1,0 +1,14 @@
+# $OpenBSD: mk18,v 1.1 2002/04/16 16:15:18 espie Exp $
+# Bug in the cond parsing code
+
+TEST=Yes
+.for i in 0 1 2 3 4 5 6 7
+.  for j in 0 1 2 3 4 5 6
+.      if TEST
+.  endfor
+.endfor
+.for i in 0 1 2 3 4
+.  for j in 0 1 2 3 4 5
+.      endif
+.  endfor
+.endfor
