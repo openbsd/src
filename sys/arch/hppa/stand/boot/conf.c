@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.17 2003/01/14 18:57:20 mickey Exp $	*/
+/*	$OpenBSD: conf.c,v 1.18 2003/04/15 18:07:32 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -50,8 +50,8 @@ struct fs_ops file_system[] = {
 int nfsys = NENTS(file_system);
 
 struct devsw devsw[] = {
-	{ "ct",	iodcstrategy, ctopen, ctclose, noioctl },
 	{ "dk",	iodcstrategy, dkopen, dkclose, noioctl },
+	{ "ct",	iodcstrategy, ctopen, ctclose, noioctl },
 	{ "lf", iodcstrategy, lfopen, lfclose, noioctl }
 };
 int	ndevs = NENTS(devsw);

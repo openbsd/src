@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev_hppa.c,v 1.6 2003/01/14 11:38:56 mickey Exp $	*/
+/*	$OpenBSD: dev_hppa.c,v 1.7 2003/04/15 18:07:32 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -54,8 +54,8 @@ const struct pdc_devs {
 	char	name[3];
 	int	dev_type;
 } pdc_devs[] = {
-	{ "ct",  0 },
-	{ "dk",  1 },
+	{ "dk",  0 },
+	{ "ct",  1 },
 	{ "lf",  2 },
 	{ "",   -1 },
 	{ "rd", -1 },
@@ -133,11 +133,11 @@ devboot(dev, p)
 
 		switch (PAGE0->mem_boot.pz_class) {
 		case PCL_RANDOM:
-			type = 1;
+			type = 0;
 			unit = PAGE0->mem_boot.pz_layers[0];
 			break;
 		case PCL_SEQU:
-			type = 0;
+			type = 1;
 			unit = PAGE0->mem_boot.pz_layers[0];
 			break;
 		case PCL_NET_MASK|PCL_SEQU:

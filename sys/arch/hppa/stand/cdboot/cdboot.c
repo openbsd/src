@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdboot.c,v 1.1 2003/03/28 22:42:26 mickey Exp $	*/
+/*	$OpenBSD: cdboot.c,v 1.2 2003/04/15 18:07:32 mickey Exp $	*/
 
 /*
  * Copyright (c) 2003 Michael Shalayeff
@@ -36,19 +36,40 @@
 #include <sys/reboot.h>
 #include <sys/stat.h>
 #include <libsa.h>
+#include <lib/libsa/cd9660.h>
+#include <dev/cons.h>
 
-char kernel[] = "/bsd";
+char path[128];
+dev_t bootdev;
+int debug = 1;
 
-extern	const char version[];
+struct fs_ops file_system[] = {
+	{ cd9660_open, cd9660_close, cd9660_read, cd9660_write, cd9660_seek,
+	  cd9660_stat, cd9660_readdir },
+};
+int nfsys = NENTS(file_system);
+
+struct devsw devsw[] = {
+	{ "dk",	iodcstrategy, dkopen, dkclose, noioctl },
+};
+int	ndevs = NENTS(devsw);
+
+struct consdev	constab[] = {
+	{ ite_probe, ite_init, ite_getc, ite_putc },
+	{ NULL }
+};
+struct consdev *cn_tab;
 
 void
-boot(bootdev)
-	dev_t	bootdev;
+boot(dev)
+	dev_t	dev;
 {
-	machdep();
+	pdc_init();
+	cninit();
+	devboot(dev, path);
+	strncpy(path + strlen(path), ":/bsd.rd", 9);
+	printf(">> OpenBSD/" MACHINE " CDBOOT 0.1\n"
+	    "booting %s: ", path);
 
-	printf(">> OpenBSD/" MACHINE " BOOT %s\n"
-	    "booting %s: ", version, kernel);
-
-	exec(kernel, (void *)DEFAULT_KERNEL_ADDRESS, 0);
+	exec(path, (void *)DEFAULT_KERNEL_ADDRESS, 0);
 }

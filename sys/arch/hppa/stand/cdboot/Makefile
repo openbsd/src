@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 2003/03/28 22:42:26 mickey Exp $
+#	$OpenBSD: Makefile,v 1.2 2003/04/15 18:07:32 mickey Exp $
 
 NOMAN=	no man
 S	=${.CURDIR}/../../../..
@@ -7,8 +7,7 @@ CLEANFILES+=	cdboot.gdb cdboot.map
 .if ${MACHINE} == "hppa"
 
 PROG=	cdboot
-SRCS=	srt0.S exec.c cdboot.c conf.c \
-	machdep.c pdc.c itecons.c dev_hppa.c dk.c
+SRCS=	srt0.S exec.c cdboot.c pdc.c itecons.c dev_hppa.c dk.c
 LD?=	ld
 LDFLAGS+=-Bstatic -nostartfiles -nostdlib -N -Ttext $(LINKADDR)
 LDFLAGS+=-T ${.CURDIR}/ld.script -Map cdboot.map
