@@ -16,7 +16,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$Id: crontab.c,v 1.4 1996/09/16 17:19:54 millert Exp $";
+static char rcsid[] = "$Id: crontab.c,v 1.5 1996/10/31 03:10:55 millert Exp $";
 #endif
 
 /* crontab - install and manage per-user crontab files
@@ -143,7 +143,8 @@ parse_args(argc, argv)
 		fprintf(stderr, "bailing out.\n");
 		exit(ERROR_EXIT);
 	}
-	strncpy(User, pw->pw_name, sizeof User);
+	(void) strncpy(User, pw->pw_name, (sizeof User)-1);
+	User[(sizeof User)-1] = '\0';
 	strcpy(RealUser, User);
 	Filename[0] = '\0';
 	Option = opt_unknown;
@@ -166,7 +167,8 @@ parse_args(argc, argv)
 					ProgramName, optarg);
 				exit(ERROR_EXIT);
 			}
-			(void) strncpy(User, optarg, sizeof User);
+			(void) strncpy(User, pw->pw_name, (sizeof User)-1);
+			User[(sizeof User)-1] = '\0';
 			break;
 		case 'l':
 			if (Option != opt_unknown)
@@ -197,7 +199,9 @@ parse_args(argc, argv)
 	} else {
 		if (argv[optind] != NULL) {
 			Option = opt_replace;
-			(void) strncpy (Filename, argv[optind], sizeof Filename);
+			(void) strncpy (Filename, argv[optind], (sizeof Filename)-1);
+			Filename[(sizeof Filename)-1] = '\0';
+
 		} else {
 			usage("file name must be specified for replace");
 		}
