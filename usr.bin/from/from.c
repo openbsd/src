@@ -1,4 +1,4 @@
-/*	$OpenBSD: from.c,v 1.5 1999/08/26 14:17:20 aaron Exp $	*/
+/*	$OpenBSD: from.c,v 1.6 2000/01/18 04:57:55 millert Exp $	*/
 /*	$NetBSD: from.c,v 1.6 1995/09/01 01:39:10 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)from.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: from.c,v 1.5 1999/08/26 14:17:20 aaron Exp $";
+static char rcsid[] = "$OpenBSD: from.c,v 1.6 2000/01/18 04:57:55 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -118,7 +118,7 @@ main(argc, argv)
 		}
 	}
 	if (!freopen(file, "r", stdin))
-		errx(1, file);
+		err(1, "%s", file);
 	for (newline = 1; fgets(buf, sizeof(buf), stdin);) {
 		if (*buf == '\n') {
 			newline = 1;
