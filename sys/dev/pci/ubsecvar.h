@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsecvar.h,v 1.26 2002/04/08 17:49:42 jason Exp $	*/
+/*	$OpenBSD: ubsecvar.h,v 1.27 2002/04/26 04:24:17 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Theo de Raadt
@@ -65,6 +65,7 @@ struct ubsec_q2 {
 	SIMPLEQ_ENTRY(ubsec_q2)		q_next;
 	struct ubsec_dma_alloc		q_mcr;
 	struct ubsec_dma_alloc		q_ctx;
+	u_int				q_type;
 };
 
 struct ubsec_q2_rng {
@@ -72,6 +73,17 @@ struct ubsec_q2_rng {
 	struct ubsec_dma_alloc		rng_buf;
 	int				rng_used;
 };
+
+/* C = (M ^ E) mod N */
+struct ubsec_q2_modexp {
+	struct ubsec_q2			me_q;
+	struct cryptkop *		me_krp;
+	struct ubsec_dma_alloc		me_M;
+	struct ubsec_dma_alloc		me_E;
+	struct ubsec_dma_alloc		me_C;
+	struct ubsec_dma_alloc		me_epb;
+};
+
 #define	UBSEC_RNG_BUFSIZ	16		/* measured in 32bit words */
 
 struct ubsec_dmachunk {
@@ -135,6 +147,7 @@ struct ubsec_softc {
 	struct ubsec_q2_rng	sc_rng;
 	struct ubsec_dma	sc_dmaa[UBS_MAX_NQUEUE];
 	struct ubsec_q		*sc_queuea[UBS_MAX_NQUEUE];
+	SIMPLEQ_HEAD(,ubsec_q2)	sc_q2free;	/* free list */
 };
 
 #define	UBSEC_QFLAGS_COPYOUTIV		0x1

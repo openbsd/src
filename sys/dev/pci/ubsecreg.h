@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsecreg.h,v 1.19 2002/04/24 21:44:11 jason Exp $	*/
+/*	$OpenBSD: ubsecreg.h,v 1.20 2002/04/26 04:24:17 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Theo de Raadt
@@ -178,5 +178,5 @@ struct ubsec_ctx_modexp {
 	volatile u_int16_t	me_op;		/* modexp, 0x47 */
 	volatile u_int16_t	me_E_len;	/* E (bits) */
 	volatile u_int16_t	me_N_len;	/* N (bits) */
-	volatile u_int8_t	me_N[2048/8];	/* N */
+	u_int8_t	me_N[2048/8];	/* N */
 };
