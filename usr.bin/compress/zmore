@@ -37,32 +37,35 @@ while test $# -ne 0; do
 	esac
 done
 
+# No files means read from stdin
+# XXX - cannot distinguish between gzip or compress, assume gzip
 if [ $# -eq 0 ]; then
-	echo "usage: zmore filename ..."
-	exit 1
+	compress -cdfgq 2>&1 | ${PAGER-more} $flags
+	exit 0
 fi
 
 oterm=`stty -g 2>/dev/null`
 while test $# -ne 0; do
-	gzip -cdfq "$1" 2>&1 | ${PAGER-more} $flags
+	compress -cdfq "$1" 2>&1 | ${PAGER-more} $flags
 	prev="$1"
 	shift
-	test $# -eq 0 && break
-	#echo -n "--More--(Next file: $1)"
-	echo -n "$prev (END) - Next: $1 "
-	trap "stty $oterm 2>/dev/null" 0 1 2 3 13 15
-	stty cbreak -echo 2>/dev/null
-	REPLY=`dd bs=1 count=1 2>/dev/null`
-	stty $oterm 2>/dev/null
-	trap - 0 1 2 3 13 15
-	echo
-	case "$REPLY" in
-		s)
-			shift
-			;;
-		e|q)
-			break
-			;;
-	esac
+	if tty -s && test -n "$oterm" -a $# -gt 0; then
+		#echo -n "--More--(Next file: $1)"
+		echo -n "$prev (END) - Next: $1 "
+		trap "stty $oterm 2>/dev/null" 0 1 2 3 13 15
+		stty cbreak -echo 2>/dev/null
+		REPLY=`dd bs=1 count=1 2>/dev/null`
+		stty $oterm 2>/dev/null
+		trap - 0 1 2 3 13 15
+		echo
+		case "$REPLY" in
+			s)
+				shift
+				;;
+			e|q)
+				break
+				;;
+		esac
+	fi
 done
 exit 0
