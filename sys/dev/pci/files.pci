@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.106 2001/06/06 18:53:50 millert Exp $
+#	$OpenBSD: files.pci,v 1.107 2001/06/08 02:26:13 nate Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -369,3 +369,8 @@ file	dev/pci/iha_pci.c		iha_pci
 device	pcscp: scsi, ncr53c9x
 attach	pcscp at pci
 file	dev/pci/pcscp.c			pcscp
+
+# National Semiconductor DP83820/DP83821 based GigE
+device	nge: ether, ifnet, mii, ifmedia, mii_phy
+attach	nge at pci
+file	dev/pci/if_nge.c		nge
