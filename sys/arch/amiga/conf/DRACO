@@ -72,7 +72,7 @@ option		MSDOSFS		# MS-DOS filesystem
 #
 #option		"COMPAT_10"	# compatability with older NetBSD release
 #option		COMPAT_SUNOS	# Support to run Sun (m68k) executables
-option		"TCP_COMPAT_42"	# Use 4.2 BSD style TCP
+#option		"TCP_COMPAT_42"	# Use 4.2 BSD style TCP
 option		"COMPAT_NOMID"	# allow nonvalid machine id executables
 #option		COMPAT_HPUX	# HP300 compatability
 

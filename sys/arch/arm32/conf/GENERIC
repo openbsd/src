@@ -60,7 +60,7 @@ options		CCITT,LLC,HDLC	# X.25
 options		COMPAT_43
 options		COMPAT_10
 options		COMPAT_09
-options         TCP_COMPAT_42   # TCP bug compatibility with 4.2BSD
+#options         TCP_COMPAT_42   # TCP bug compatibility with 4.2BSD
 
 # Shared memory options
 

@@ -1,4 +1,4 @@
-#	$OpenBSD: COFFEE,v 1.4 1996/08/19 00:28:45 niklas Exp $
+#	$OpenBSD: COFFEE,v 1.5 1996/08/31 02:08:57 deraadt Exp $
 #	$NetBSD: COFFEE,v 1.12 1995/10/09 02:08:35 chopps Exp $
 
 #
@@ -70,7 +70,7 @@ option		"COMPAT_10"	# compatability with older NetBSD release
 option		"COMPAT_09"	# compatability with older NetBSD release
 option		"COMPAT_43"	# 4.3 BSD compatible system calls
 option		COMPAT_SUNOS	# Support to run Sun (m68k) executables
-option		"TCP_COMPAT_42"	# Use 4.2 BSD style TCP
+#option		"TCP_COMPAT_42"	# Use 4.2 BSD style TCP
 option		"COMPAT_NOMID"	# allow nonvalid machine id executables
 #option		COMPAT_HPUX	# HP300 compatability
 

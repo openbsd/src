@@ -57,7 +57,7 @@ options		COMPAT_43
 options		COMPAT_09
 options		COMPAT_10
 #options		COMPAT_ULTRIX
-options		TCP_COMPAT_42
+#options		TCP_COMPAT_42
 
 options		LKM
 

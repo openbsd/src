@@ -49,7 +49,7 @@ options		MFS		# Memory-based filesystem
 options		INET		# Internet protocols
 options		GATEWAY		# IP forwarding + larger mb_map
 options		MROUTING	# Multicast routing
-options		"TCP_COMPAT_42"	# compatibility with 4.2BSD TCP/IP
+#options		"TCP_COMPAT_42"	# compatibility with 4.2BSD TCP/IP
 
 # Options for HP hardware
 options		FPSP		# floating point interface for 68040

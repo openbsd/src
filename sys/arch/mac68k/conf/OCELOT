@@ -1,4 +1,4 @@
-#	$OpenBSD: OCELOT,v 1.6 1996/08/10 21:37:40 briggs Exp $
+#	$OpenBSD: OCELOT,v 1.7 1996/08/31 02:09:22 deraadt Exp $
 #	$NetBSD: OCELOT,v 1.11 1996/08/05 01:52:14 scottr Exp $
 #
 # OCELOT
@@ -31,7 +31,7 @@ options		SCSI
 
 # Networking options
 options		INET
-options		TCP_COMPAT_42	# compatibility with 4.2BSD TCP/IP
+#options		TCP_COMPAT_42	# compatibility with 4.2BSD TCP/IP
 options		GATEWAY		# IP packet forwarding
 options		COMPAT_42
 options		COMPAT_43

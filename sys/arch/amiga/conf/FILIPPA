@@ -1,4 +1,4 @@
-#	$OpenBSD: FILIPPA,v 1.7 1996/08/19 00:20:50 niklas Exp $
+#	$OpenBSD: FILIPPA,v 1.8 1996/08/31 02:08:59 deraadt Exp $
 
 #
 # Niklas' AMIGA with ISA support
@@ -68,7 +68,7 @@ option		"COMPAT_10"	# compatability with older NetBSD release
 option		"COMPAT_09"	# compatability with older NetBSD release
 option		"COMPAT_43"	# 4.3 BSD compatible system calls
 option		COMPAT_SUNOS	# Support to run Sun (m68k) executables
-option		"TCP_COMPAT_42"	# Use 4.2 BSD style TCP
+#option		"TCP_COMPAT_42"	# Use 4.2 BSD style TCP
 option		"COMPAT_NOMID"	# allow nonvalid machine id executables
 #option		COMPAT_HPUX	# HP300 compatability
 

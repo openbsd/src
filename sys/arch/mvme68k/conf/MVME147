@@ -1,4 +1,4 @@
-#	$OpenBSD: MVME147,v 1.7 1996/06/30 17:39:40 deraadt Exp $
+#	$OpenBSD: MVME147,v 1.8 1996/08/31 02:09:25 deraadt Exp $
 
 machine		mvme68k m68k
 
@@ -33,7 +33,7 @@ option		COMPAT_SUNOS
 
 # Networking options
 option		INET
-option		TCP_COMPAT_42	# compatibility with 4.2BSD TCP/IP
+#option		TCP_COMPAT_42	# compatibility with 4.2BSD TCP/IP
 option		GATEWAY		# IP packet forwarding
 #option		ISO		# OSI networking
 #option		TPIP

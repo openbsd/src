@@ -20,7 +20,7 @@ options		FIFO			# fifos; recommended
 
 # compatibility options
 options		"COMPAT_43"		# 4.3 system calls
-options		"TCP_COMPAT_42"		# 4.2 networking ABI
+#options		"TCP_COMPAT_42"		# 4.2 networking ABI
 options		"COMPAT_09"		# NetBSD-0.9
 options		"COMPAT_10"		# NetBSD-1.0
 

@@ -49,7 +49,7 @@ options		DEVPAGER	# Pager
 options		"COMPAT_09"	# fs type binary compatability (name vs number)
 options		COMPAT_SUNOS	# Support to run Sun-3 executables
 options		"COMPAT_43"	# 4.3 BSD compatible system calls
-options		"TCP_COMPAT_42"	# Use 4.2 BSD style TCP
+#options		"TCP_COMPAT_42"	# Use 4.2 BSD style TCP
 options		"COMPAT_NOMID"	# ???
 
 #

@@ -1,4 +1,4 @@
-#	$OpenBSD: INSTALL,v 1.3 1996/08/23 19:06:52 niklas Exp $
+#	$OpenBSD: INSTALL,v 1.4 1996/08/31 02:09:00 deraadt Exp $
 #	$NetBSD: INSTALL,v 1.2.2.1 1996/05/30 21:25:49 is Exp $
 
 #
@@ -79,7 +79,7 @@ option		"COMPAT_10"	# compatability with older NetBSD release
 option		"COMPAT_09"	# compatability with older NetBSD release
 option		"COMPAT_43"	# 4.3 BSD compatible system calls
 #option		COMPAT_SUNOS	# Support to run Sun (m68k) executables
-option		"TCP_COMPAT_42"	# Use 4.2 BSD style TCP
+#option		"TCP_COMPAT_42"	# Use 4.2 BSD style TCP
 option		"COMPAT_NOMID"	# allow nonvalid machine id executables
 #option		COMPAT_HPUX	# HP300 compatability
 

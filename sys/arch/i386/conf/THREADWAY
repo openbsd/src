@@ -1,7 +1,7 @@
 #
 #	THREADWAY: threadway.teeny.org
 #
-#	$OpenBSD: THREADWAY,v 1.12 1996/08/29 07:34:16 deraadt Exp $
+#	$OpenBSD: THREADWAY,v 1.13 1996/08/31 02:09:18 deraadt Exp $
 #
 
 machine		i386
@@ -37,7 +37,7 @@ option		COMPAT_09
 option		COMPAT_10
 option		COMPAT_11
 option		COMPAT_43
-option		TCP_COMPAT_42
+#option		TCP_COMPAT_42
 
 option		COMPAT_SVR4
 option		COMPAT_IBCS2

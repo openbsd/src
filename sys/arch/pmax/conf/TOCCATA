@@ -2,7 +2,7 @@
 # GENERIC DECstation (3100 or 5000/xxx)
 #
 #	from: @(#)GENERIC.pmax	8.1 (Berkeley) 6/29/93
-# 	$Id: TOCCATA,v 1.1.1.1 1995/10/18 08:51:25 deraadt Exp $
+# 	$Id: TOCCATA,v 1.2 1996/08/31 02:09:35 deraadt Exp $
 #
 machine		pmax
 
@@ -35,7 +35,7 @@ options         NFSSERVER       # Sun NFS-compatible filesystem (server)
 
 # Networking options
 options		INET		# Internet protocols
-options		"TCP_COMPAT_42"	# compatibility with 4.2BSD TCP/IP
+#options		"TCP_COMPAT_42"	# compatibility with 4.2BSD TCP/IP
 #options		GATEWAY		# IP packet forwarding
 
 # pmax specific

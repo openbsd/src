@@ -1,7 +1,7 @@
 #
 #	SPARE-PARTS: spare-parts.teeny.org
 #
-#	$OpenBSD: SPARE-PARTS,v 1.3 1996/08/29 07:34:16 deraadt Exp $
+#	$OpenBSD: SPARE-PARTS,v 1.4 1996/08/31 02:09:17 deraadt Exp $
 #
 
 machine		i386
@@ -32,7 +32,7 @@ option		COMPAT_09
 option		COMPAT_10
 option		COMPAT_11
 option		COMPAT_43
-option		TCP_COMPAT_42
+#option		TCP_COMPAT_42
 
 option		COMPAT_SVR4
 option		COMPAT_IBCS2

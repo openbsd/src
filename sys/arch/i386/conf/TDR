@@ -1,4 +1,4 @@
-#	$OpenBSD: TDR,v 1.15 1996/07/31 18:35:21 deraadt Exp $
+#	$OpenBSD: TDR,v 1.16 1996/08/31 02:09:18 deraadt Exp $
 #	$NetBSD: TDR,v 1.64 1996/03/25 05:45:49 perry Exp $
 #
 #	TDR -- Theo Deraadt's 486
@@ -41,7 +41,7 @@ option		COMPAT_09	# NetBSD 0.9,
 option		COMPAT_10	# NetBSD 1.0,
 option		COMPAT_11	# NetBSD 1.1,
 option		COMPAT_43	# and 4.3BSD
-option		TCP_COMPAT_42	# TCP bug compatibility with 4.2BSD
+#option		TCP_COMPAT_42	# TCP bug compatibility with 4.2BSD
 
 option		COMPAT_SVR4	# binary compatibility with SVR4
 #option		COMPAT_IBCS2	# binary compatibility with SCO and ISC

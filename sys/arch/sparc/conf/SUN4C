@@ -37,7 +37,7 @@ option		UNION		# union file system
 
 # Networking options
 option		INET
-option		TCP_COMPAT_42	# compatibility with 4.2BSD TCP/IP
+#option		TCP_COMPAT_42	# compatibility with 4.2BSD TCP/IP
 #option		GATEWAY		# IP packet forwarding
 #option		ISO		# OSI networking
 #option		TPIP

@@ -42,7 +42,7 @@ options 	COMPAT_SUNOS	# can run SunOS 4.1.1 executables
 options 	COMPAT_10	# NetBSD 1.0,
 options 	COMPAT_11	# NetBSD 1.1,
 options 	COMPAT_43	# and 4.3BSD
-options 	TCP_COMPAT_42	# TCP bug compatibility with 4.2BSD
+#options 	TCP_COMPAT_42	# TCP bug compatibility with 4.2BSD
 options 	UCONSOLE	# Allow non-root TIOCCONS
 
 # Sun3-specific debugging options

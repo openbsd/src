@@ -37,7 +37,7 @@ option		COMPAT_NOMID	# compatibility with 386BSD, BSDI, NetBSD 0.8,
 option		COMPAT_09	# NetBSD 0.9,
 option		COMPAT_10	# NetBSD 1.0,
 option		COMPAT_43	# and 4.3BSD
-option		TCP_COMPAT_42	# TCP bug compatibility with 4.2BSD
+#option		TCP_COMPAT_42	# TCP bug compatibility with 4.2BSD
 
 option		COMPAT_SVR4	# binary compatibility with SVR4
 option		COMPAT_IBCS2	# binary compatibility with SCO and ISC

@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.7 1996/08/10 21:37:39 briggs Exp $
+#	$OpenBSD: GENERIC,v 1.8 1996/08/31 02:09:22 deraadt Exp $
 #	$NetBSD: GENERIC,v 1.38 1996/08/05 01:52:13 scottr Exp $
 #
 # GENERIC
@@ -39,7 +39,7 @@ options		SCSI
 
 # Networking options
 options		INET
-options		TCP_COMPAT_42	# compatibility with 4.2BSD TCP/IP
+#options		TCP_COMPAT_42	# compatibility with 4.2BSD TCP/IP
 options		GATEWAY		# IP packet forwarding
 #options	ISO		# OSI networking
 #options	TPIP
