@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.23 2001/07/01 17:04:13 kjell Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.24 2001/07/01 17:16:02 kjell Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -282,9 +282,14 @@ print_rdr(struct pf_rdr *r)
 		printf("/");
 		print_addr(r->dmask);
 	}
-	printf(" port %u -> ", ntohs(r->dport));
+	printf(" port %u", ntohs(r->dport));
+	if (r->opts & PF_DPORT_RANGE)
+		printf(":%u", ntohs(r->dport2));
+	printf(" -> ");
 	print_addr(r->raddr);
 	printf(" port %u", ntohs(r->rport));
+	if (r->opts & PF_RPORT_RANGE)
+		printf(":*");
 	switch (r->proto) {
 	case IPPROTO_TCP:
 		printf(" proto tcp");
@@ -979,7 +984,7 @@ parse_nat(int n, char *l, struct pf_nat *nat)
 int
 parse_rdr(int n, char *l, struct pf_rdr *rdr)
 {
-	char *w;
+	char *w, *s;
 
 	memset(rdr, 0, sizeof(struct pf_rdr));
 	w = next_word(&l);
@@ -1017,7 +1022,17 @@ parse_rdr(int n, char *l, struct pf_rdr *rdr)
 		return (0);
 	}
 	w = next_word(&l);
-	rdr->dport = htons(next_number(&w));
+	/* check for port range */
+	if ((s = strchr(w, ':')) == NULL) {
+		rdr->dport = htons(next_number(&w));
+		rdr->dport2 = rdr->dport;
+	} else {
+		*s++ = '\0';
+		rdr->dport = htons(next_number(&w));
+		rdr->dport2 = htons(next_number(&s));
+		rdr->opts |= PF_DPORT_RANGE;
+	}
+
 	w = next_word(&l);
 
 	/* -> */
@@ -1037,6 +1052,11 @@ parse_rdr(int n, char *l, struct pf_rdr *rdr)
 		return (0);
 	}
 	w = next_word(&l);
+	/* check if redirected port is a range */
+	if ((s = strchr(w, ':')) != NULL) {
+	        rdr->opts |= PF_RPORT_RANGE;
+	} 
+		
 	rdr->rport = htons(next_number(&w));
 	w = next_word(&l);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.90 2001/07/01 11:22:45 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.91 2001/07/01 17:16:03 kjell Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -183,6 +183,7 @@ int			 pf_match_addr(u_int8_t, u_int32_t, u_int32_t,
 			    u_int32_t);
 int			 pf_match_port(u_int8_t, u_int16_t, u_int16_t,
 			    u_int16_t);
+u_int16_t		 pf_map_port_range(struct pf_rdr *, u_int16_t);
 struct pf_nat		*pf_get_nat(struct ifnet *, u_int8_t, u_int32_t);
 struct pf_rdr		*pf_get_rdr(struct ifnet *, u_int8_t, u_int32_t,
 			    u_int16_t);
@@ -1343,7 +1344,8 @@ pf_get_rdr(struct ifnet *ifp, u_int8_t proto, u_int32_t addr, u_int16_t port)
 		if (r->ifp == ifp &&
 		    (!r->proto || r->proto == proto) &&
 		    pf_match_addr(r->not, r->daddr, r->dmask, addr) &&
-		    ((r->dport == 0) || (r->dport == port)))
+		    (ntohs(port) >= ntohs(r->dport)) && 
+		    (ntohs(port) <= ntohs(r->dport2)))
 			rm = r;
 		else
 			r = TAILQ_NEXT(r, entries);
@@ -1365,6 +1367,18 @@ pf_get_rdr(struct ifnet *ifp, u_int8_t proto, u_int32_t addr, u_int16_t port)
 			pf_status.counters[x]++; \
 	} while (0)
 
+u_int16_t
+pf_map_port_range(struct pf_rdr *rdr, u_int16_t port)
+{
+	u_int32_t nport;
+	
+	nport = ntohs(rdr->rport) - ntohs(rdr->dport) + ntohs(port);
+	/* wrap around if necessary */
+	if (nport > 65535)
+		nport -= 65535;
+	return htons((u_int16_t)nport);
+}
+
 int
 pf_test_tcp(int direction, struct ifnet *ifp, struct mbuf *m,
     int ipoff, int off, struct ip *h, struct tcphdr *th)
@@ -1372,7 +1386,7 @@ pf_test_tcp(int direction, struct ifnet *ifp, struct mbuf *m,
 	struct pf_nat *nat = NULL;
 	struct pf_rdr *rdr = NULL;
 	u_int32_t baddr;
-	u_int16_t bport;
+	u_int16_t bport, nport;
 	struct pf_rule *r, *rm = NULL;
 	u_short reason;
 	int rewrite = 0;
@@ -1394,9 +1408,14 @@ pf_test_tcp(int direction, struct ifnet *ifp, struct mbuf *m,
 		    th->th_dport)) != NULL) {
 			baddr = h->ip_dst.s_addr;
 			bport = th->th_dport;
+			if (rdr->opts & PF_RPORT_RANGE)
+				nport = pf_map_port_range(rdr, th->th_dport);
+			else
+				nport = rdr->rport;
+
 			pf_change_ap(&h->ip_dst.s_addr, &th->th_dport,
-			    &h->ip_sum, &th->th_sum, rdr->raddr, 
-			    rdr->rport ? rdr->rport : th->th_dport);
+			     &h->ip_sum, &th->th_sum, rdr->raddr, nport);
+					     
 			rewrite++;
 		}
 	}
@@ -1519,7 +1538,7 @@ pf_test_udp(int direction, struct ifnet *ifp, struct mbuf *m,
 	struct pf_nat *nat = NULL;
 	struct pf_rdr *rdr = NULL;
 	u_int32_t baddr;
-	u_int16_t bport;
+	u_int16_t bport, nport;
 	struct pf_rule *r, *rm = NULL;
 	u_short reason;
 	int rewrite = 0;
@@ -1541,9 +1560,15 @@ pf_test_udp(int direction, struct ifnet *ifp, struct mbuf *m,
 		    uh->uh_dport)) != NULL) {
 			baddr = h->ip_dst.s_addr;
 			bport = uh->uh_dport;
+			if (rdr->opts & PF_RPORT_RANGE)
+				nport = pf_map_port_range(rdr, uh->uh_dport);
+			else
+				nport = rdr->rport;
+
 			pf_change_ap(&h->ip_dst.s_addr, &uh->uh_dport,
 			    &h->ip_sum, &uh->uh_sum, rdr->raddr, 
-			    rdr->rport ? rdr->rport : uh->uh_dport);
+			    nport);
+
 			rewrite++;
 		}
 	}

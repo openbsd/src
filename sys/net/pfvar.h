@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.26 2001/06/29 03:09:14 angelos Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.27 2001/07/01 17:16:03 kjell Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -119,10 +119,16 @@ struct pf_rdr {
 	u_int32_t	 dmask;
 	u_int32_t	 raddr;
 	u_int16_t	 dport;
+	u_int16_t	 dport2;
 	u_int16_t	 rport;
 	u_int8_t	 proto;
 	u_int8_t	 not;
+	u_int8_t	 opts;
 };
+
+/* flags for RDR options */
+#define PF_DPORT_RANGE	0x01		/* Dest port uses range */
+#define PF_RPORT_RANGE	0x02		/* RDR'ed port uses range */
 
 /* Reasons code for passing/dropping a packet */
 #define PFRES_MATCH	0		/* Explicit match of a rule */
