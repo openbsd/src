@@ -1,11 +1,8 @@
-#	$OpenBSD: Makefile,v 1.3 2004/09/22 22:06:16 miod Exp $
+#	$OpenBSD: Makefile,v 1.4 2004/09/23 12:55:58 pefo Exp $
 
 LIB=	kern
 
 .PATH:	${.CURDIR}/../../../../lib/libkern
-.PATH:	${.CURDIR}/../../../../lib/libkern/arch/mips64
-
-.include "${.CURDIR}/../../../../lib/libkern/arch/mips64/Makefile.inc"
 
 CFLAGS= -O2 ${SAABI} -mno-abicalls -D_NO_ABICALLS ${STANDALONE} \
 	-nostdinc -I${.CURDIR}/../include -I${.CURDIR}/../../../.. \
@@ -19,7 +16,7 @@ AFLAGS=	-x assembler-with-cpp -traditional-cpp -I${.CURDIR}/../include \
 	-I${.OBJDIR}
 
 # kern routines
-SRCS=	__main.c ashrdi3.c bzero.S divdi3.c qdivrem.c strlen.S \
+SRCS=	__main.c ashrdi3.c bzero.c divdi3.c qdivrem.c strlen.c \
 	strcmp.c strlcat.c strlcpy.c strncmp.c umoddi3.c udivdi3.c
 
 ${OBJS}:	${.CURDIR}/../Makefile.inc
