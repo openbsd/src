@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdcache.c,v 1.8 2003/05/12 17:23:45 henning Exp $ */
+/*	$OpenBSD: fdcache.c,v 1.9 2003/05/12 17:35:44 henning Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Henning Brauer
@@ -55,22 +55,12 @@ fdcache_open(char *fn, int flags, mode_t mode)
 
     if (fdcp == NULL) {
 	/* need to open */
-	tmp = calloc(1, sizeof(struct fdcache));
-	if (tmp == NULL) {
-	    fprintf(stderr, "calloc failed\n");
-	    exit(1);
-	}
-	tmp->fname = malloc(strlen(fn) + 1);
-	if (tmp->fname == NULL) {
-	    fprintf(stderr, "malloc failed\n");
-	    exit(1);
-	}
-	strlcpy(tmp->fname, fn, strlen(fn) + 1);
-	if ((tmp->fd = open(fn, flags, mode)) < 0) {
-	    fprintf(stderr, "Cannot open %s: %s\n",
-	      tmp->fname, strerror(errno));
-	    exit(1);
-	}
+	if ((tmp = calloc(1, sizeof(struct fdcache))) == NULL)
+	    err(1, "calloc");
+	if ((tmp->fname = strdup(fn)) == NULL)
+	    err(1, "strdup");
+	if ((tmp->fd = open(fn, flags, mode)) < 0)
+	    err(1, "Cannot open %s", tmp->fname);
 	tmp->next = fdc;
 	fdc = tmp;
 	return(fdc->fd);
