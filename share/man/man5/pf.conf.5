@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.249 2003/06/02 20:05:49 david Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.250 2003/06/03 12:18:02 henning Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -866,7 +866,19 @@ such a rule as long as they are not blocked by the filtering section of
 The translation engine modifies the specified address and/or port in the
 packet, recalculates IP, TCP and UDP checksums as necessary, and passes it to
 the packet filter for evaluation.
-Translation occurs before filtering.
+.Pp
+Since translation occurs before filtering the filter
+engine will see packets as they look after any
+addresses and ports have been translated. Filter rules
+will therefore have to filter based on the translated
+address and port number. In addition, packets that
+match a translation rule are not automatically passed
+through the packet filter; translated packets are
+still subject to
+.Ar block
+and
+.Ar pass
+rules.
 .Pp
 The state entry created permits
 .Xr pf 4
@@ -931,11 +943,7 @@ option prefixed to a translation rule causes packets to remain untranslated,
 much in the same way as
 .Ar drop quick
 works in the packet filter (see below).
-.Pp
-If no rule matches the packet, the packet is passed to the filter unmodified.
-Translation occurs before the filter rules are applied;
-therefore rules for redirected packets should specify the address and port
-after translation.
+If no rule matches the packet it is passed to the filter engine unmodified.
 .Pp
 Translation rules apply only to packets that pass through
 the specified interface, and if no interface is specified,
