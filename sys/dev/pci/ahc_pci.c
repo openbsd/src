@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahc_pci.c,v 1.40 2003/08/15 23:01:01 fgsch Exp $	*/
+/*	$OpenBSD: ahc_pci.c,v 1.41 2003/09/25 07:11:15 deraadt Exp $	*/
 /*	$NetBSD: ahc_pci.c,v 1.9 1996/10/21 22:56:24 thorpej Exp $	*/
 
 /*
@@ -176,6 +176,7 @@ const struct pci_matchid ahc_pci_devices[] = {
 	{ PCI_VENDOR_ADP, PCI_PRODUCT_ADP_2944U },
 	{ PCI_VENDOR_ADP, PCI_PRODUCT_ADP_2940UWPro },
 	{ PCI_VENDOR_ADP, PCI_PRODUCT_ADP_7895 },
+	{ PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_AAA131U2 },
 	{ PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_AIC7890 },
 	{ PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_2940U2 },
 	{ PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_2930U2 },
@@ -286,6 +287,7 @@ void *aux;
 		case PCI_PRODUCT_ADP2_AIC7890:
 		case PCI_PRODUCT_ADP2_2940U2:
 		case PCI_PRODUCT_ADP2_2930U2:
+		case PCI_PRODUCT_ADP2_AAA131U2:
 			ahc->chip |= AHC_AIC7890;
 			break;
 		case PCI_PRODUCT_ADP2_AIC7892:
