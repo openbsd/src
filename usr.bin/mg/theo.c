@@ -1,4 +1,4 @@
-/*	$OpenBSD: theo.c,v 1.59 2004/01/03 00:41:26 henning Exp $	*/
+/*	$OpenBSD: theo.c,v 1.60 2004/02/27 23:20:52 mickey Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  * All rights reserved.
@@ -135,6 +135,7 @@ static const char *talk[] = {
 	"noone is gonna add that thing to theo.c?  wow, i'm stunned.  no henning?",
 	"I would explain, but I am too drunk.",
 	"Take a picture of my butt, it's what everyone wants.",
+	"you slackers don't deserve pictures yet",
 	"You guys are about four days behind on theo.c",
 	"I'm just talking.",
 	"Vegetarian my ass",
