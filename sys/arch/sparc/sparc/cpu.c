@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.31 2000/02/23 16:43:41 deraadt Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.32 2000/11/22 16:01:37 art Exp $	*/
 /*	$NetBSD: cpu.c,v 1.56 1997/09/15 20:52:36 pk Exp $ */
 
 /*
@@ -765,7 +765,7 @@ ms1_mmu_enable()
 }
 
 /* TI Microsparc II */
-struct module_info module_ms2 = {		/* UNTESTED */
+struct module_info module_ms2 = {
 	CPUTYP_MS2,
 	VAC_WRITETHROUGH,
 	cpumatch_ms,
@@ -788,7 +788,7 @@ struct module_info module_ms2 = {		/* UNTESTED */
 };
 
 
-struct module_info module_swift = {		/* UNTESTED */
+struct module_info module_swift = {
 	CPUTYP_MS2,
 	VAC_WRITETHROUGH,
 	cpumatch_ms,
@@ -835,7 +835,7 @@ swift_mmu_enable()
 {
 }
 
-struct module_info module_viking = {		/* UNTESTED */
+struct module_info module_viking = {
 	CPUTYP_UNKNOWN,		/* set in cpumatch() */
 	VAC_NONE,
 	cpumatch_viking,
@@ -919,7 +919,7 @@ viking_mmu_enable()
 
 
 /* ROSS Hypersparc */
-struct module_info module_hypersparc = {		/* UNTESTED */
+struct module_info module_hypersparc = {
 	CPUTYP_UNKNOWN,
 	VAC_WRITEBACK,
 	cpumatch_hypersparc,
@@ -970,7 +970,7 @@ hypersparc_mmu_enable()
 }
 
 /* Cypress 605 */
-struct module_info module_cypress = {		/* UNTESTED */
+struct module_info module_cypress = {
 	CPUTYP_CYPRESS,
 	VAC_WRITEBACK,
 	0,
