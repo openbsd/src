@@ -1,4 +1,4 @@
-.\"	$OpenBSD: uturn.4,v 1.4 2004/09/20 16:11:18 mickey Exp $
+.\"	$OpenBSD: uturn.4,v 1.5 2004/09/26 20:11:51 mickey Exp $
 .\"
 .\" Copyright (c) 2004 Michael Shalayeff
 .\" All rights reserved.
@@ -31,16 +31,25 @@
 .Nd U2/Uturn, Runway to GSC Bus bridge & IOA
 .Sh SYNOPSIS
 .Cd "uturn* at mainbus?"
-.Cd "lasi* at uturn?"
 .Cd "dino* at uturn?"
+.\" .Cd "elroy* at uturn?"
+.Cd "lasi* at uturn?"
+.\" .Cd "sti* at uturn?"
 .Sh DESCRIPTION
 .Nm
 provides the functionality of IOA (not currently supported) as a bridge
 from the Runway bus (see
 .Xr runway 4
 for more information) to GSC.
+Modern systems, based on the PA-8000 and later 64-bit CPUs, use the
+.Nm U-Turn
+version, whilst earlier systems, based on the PA-7200 CPU, used
+a different version of the chip called
+.Nm U2 .
 .Sh SEE ALSO
+.Xr cpu 4 ,
 .Xr dino 4 ,
+.\" .Xr elroy 4 ,
 .Xr gsc 4 ,
 .Xr intro 4 ,
 .Xr pci 4 ,
