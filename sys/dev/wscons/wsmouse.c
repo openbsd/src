@@ -1,4 +1,4 @@
-/* $OpenBSD: wsmouse.c,v 1.2 2000/08/01 13:51:18 mickey Exp $ */
+/* $OpenBSD: wsmouse.c,v 1.3 2001/01/30 19:51:43 aaron Exp $ */
 /* $NetBSD: wsmouse.c,v 1.12 2000/05/01 07:36:58 takemura Exp $ */
 
 /*
@@ -658,7 +658,7 @@ wsmouse_add_mux(unit, muxsc)
 	if (sc->sc_mux || sc->sc_events.io)
 		return (EBUSY);
 
-	return (wsmux_attach_sc(muxsc, WSMUX_KBD, &sc->sc_dv, &sc->sc_events, 
+	return (wsmux_attach_sc(muxsc, WSMUX_MOUSE, &sc->sc_dv, &sc->sc_events, 
 				&sc->sc_mux, &wsmouse_muxops));
 }
 
