@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.15 2003/09/02 18:56:35 jmc Exp $
+.\" $OpenBSD: openssl.1,v 1.16 2003/10/04 22:38:58 jmc Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -125,12 +125,10 @@
 .Op Ar command_args
 .Pp
 .Nm
-.Bk -words
 .Oo Cm list-standard-commands No |\ \&
 .Cm list-message-digest-commands |
-.Cm \	\&\ \&\ \&\ \&\ \&list-cipher-commands
+.Cm list-cipher-commands
 .Oc
-.Ek
 .Pp
 .Nm
 .Cm no- Ns Ar XXX
@@ -970,7 +968,7 @@ Mandatory.
 The text database file to use.
 Mandatory.
 This file must be present, though initially it will be empty.
-.It Ar serialfile
+.It Ar serial
 A text file containing the next serial number to use in hex.
 Mandatory.
 This file must be present and contain a valid serial number.
@@ -1019,7 +1017,7 @@ are permanently set and cannot be disabled
 the certificate has not been signed at this point).
 .Pp
 For convenience, the value
-.Em default_ca
+.Em ca_default
 is accepted by both to produce a reasonable output.
 .Pp
 If neither option is present, the format used in earlier versions of
@@ -1167,8 +1165,8 @@ A sample configuration file with the relevant sections for
 \& policy         = policy_any            # default policy
 \& email_in_dn    = no                    # Don't add the email into cert DN
 
-\& nameopt        = default_ca            # Subject name display option
-\& certopt        = default_ca            # Certificate display option
+\& nameopt        = ca_default            # Subject name display option
+\& certopt        = ca_default            # Certificate display option
 \& copy_extensions = none                 #Don't copy extensions from request
 
 \& [ policy_any ]
@@ -5564,8 +5562,10 @@ section above for more information.
 Send the protocol-specific message(s) to switch to TLS for communication.
 .Ar protocol
 is a keyword for the intended protocol.
-Currently, the only supported keyword is
-.Qq smtp .
+Currently, the only supported keywords are
+.Qq smtp
+and
+.Qq pop3 .
 .It Fl engine Ar id
 Specifying an engine (by it's unique
 .Ar id
