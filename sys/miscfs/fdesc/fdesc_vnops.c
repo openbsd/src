@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdesc_vnops.c,v 1.19 2001/05/14 13:43:54 art Exp $	*/
+/*	$OpenBSD: fdesc_vnops.c,v 1.20 2001/05/15 07:26:28 art Exp $	*/
 /*	$NetBSD: fdesc_vnops.c,v 1.32 1996/04/11 11:24:29 mrg Exp $	*/
 
 /*
@@ -73,9 +73,7 @@
 
 #define cttyvp(p) ((p)->p_flag & P_CONTROLT ? (p)->p_session->s_ttyvp : NULL)
 
-#define FDL_WANT	0x01
-#define FDL_LOCKED	0x02
-static int fdcache_lock;
+static struct lock fdcache_lock;
 
 dev_t devctty;
 
@@ -88,7 +86,7 @@ FD_STDIN, FD_STDOUT, FD_STDERR must be a sequence n, n+1, n+2
 #define FD_NHASH(ix) \
 	(&fdhashtbl[(ix) & fdhash])
 LIST_HEAD(fdhashhead, fdescnode) *fdhashtbl;
-u_long fdhash;
+static u_long fdhash;
 
 int	fdesc_badop	__P((void *));
 
@@ -200,6 +198,7 @@ fdesc_init(vfsp)
 			break;
 	devctty = makedev(cttymajor, 0);
 	fdhashtbl = hashinit(NFDCACHE, M_CACHE, M_WAITOK, &fdhash);
+	lockinit(&fdcache_lock, PVFS, "fdfs", 0, 0);
 	return (0);
 }
 
@@ -215,6 +214,9 @@ fdesc_allocvp(ftype, ix, mp, vpp)
 	struct fdescnode *fd;
 	int error = 0;
 
+	if ((error = lockmgr(&fdcache_lock, LK_EXCLUSIVE, NULL, p)) != 0)
+		return error;
+
 	fc = FD_NHASH(ix);
 loop:
 	for (fd = fc->lh_first; fd != 0; fd = fd->fd_hash.le_next) {
@@ -222,20 +224,10 @@ loop:
 			if (vget(fd->fd_vnode, 0, p))
 				goto loop;
 			*vpp = fd->fd_vnode;
-			return (error);
+			goto out;
 		}
 	}
 
-	/*
-	 * otherwise lock the array while we call getnewvnode
-	 * since that can block.
-	 */ 
-	if (fdcache_lock & FDL_LOCKED) {
-		fdcache_lock |= FDL_WANT;
-		sleep((caddr_t) &fdcache_lock, PINOD);
-		goto loop;
-	}
-	fdcache_lock |= FDL_LOCKED;
 
 	error = getnewvnode(VT_FDESC, mp, fdesc_vnodeop_p, vpp);
 	if (error)
@@ -249,13 +241,8 @@ loop:
 	fd->fd_ix = ix;
 	LIST_INSERT_HEAD(fc, fd, fd_hash);
 
-out:;
-	fdcache_lock &= ~FDL_LOCKED;
-
-	if (fdcache_lock & FDL_WANT) {
-		fdcache_lock &= ~FDL_WANT;
-		wakeup((caddr_t) &fdcache_lock);
-	}
+out:
+	lockmgr(&fdcache_lock, LK_RELEASE, NULL, p);
 
 	return (error);
 }
