@@ -1,4 +1,4 @@
-.\" $OpenBSD: dbm.3,v 1.1 1999/02/15 05:11:24 millert Exp $
+.\" $OpenBSD: dbm.3,v 1.2 1999/04/18 17:08:10 millert Exp $
 .\"
 .\" Copyright (c) 1999 Todd C. Miller <Todd.Miller@courtesan.com>
 .\" All rights reserved.
@@ -72,12 +72,14 @@ typedef struct {
 .Pp
 The
 .Fn dbminit
-function is used to open a database in the file named by
-.Fa file ,
-suffixed with
-.Dv DBM_SUFFIX
-.Pq Sq Pa .db .
-The file is created if it does not already exist.
+function is used to open a database.  Before the call to
+.Fn dbminit ,
+the files
+.Fa file.pag
+and
+.Fa file.dir
+must exist.  The user is responsible for creating the zero-length
+\&.pag and .dir files.
 .Pp
 Once the database is open,
 .Fn fetch
@@ -137,9 +139,19 @@ Functions that return a
 .Ft datum
 indicate errors by setting the
 .Va dptr
-field set to
+field to
 .Dv NULL .
 .Sh SEE ALSO
 .Xr db 3 ,
-.Xr ndbm 3 ,
-.Xr hash 3
+.Xr hash 3 ,
+.Xr ndbm 3
+.Sh BUGS
+Because the
+.Nm dbm
+routines are implemented on top of the
+.Xr db 3 ,
+only a single file,
+.Ar file.pag ,
+is used to actually store the database.  The references to
+.Ar file.dir
+are purely for backwards compatibility with historic implementations.

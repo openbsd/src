@@ -1,4 +1,4 @@
-/*	$OpenBSD: hash.c,v 1.7 1999/02/15 05:11:23 millert Exp $	*/
+/*	$OpenBSD: hash.c,v 1.8 1999/04/18 17:08:07 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)hash.c	8.9 (Berkeley) 6/16/94";
 #else
-static char rcsid[] = "$OpenBSD: hash.c,v 1.7 1999/02/15 05:11:23 millert Exp $";
+static char rcsid[] = "$OpenBSD: hash.c,v 1.8 1999/04/18 17:08:07 millert Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -108,7 +108,7 @@ __hash_open(file, flags, mode, info, dflags)
 	HTAB *hashp;
 	struct stat statbuf;
 	DB *dbp;
-	int bpages, hdrsize, new_table, nsegs, save_errno;
+	int bpages, hdrsize, new_table, nsegs, save_errno, rv;
 
 	if ((flags & O_ACCMODE) == O_WRONLY) {
 		errno = EINVAL;
@@ -129,7 +129,8 @@ __hash_open(file, flags, mode, info, dflags)
 
 	new_table = 0;
 	if (!file || (flags & O_TRUNC) ||
-	    (stat(file, &statbuf) && (errno == ENOENT))) {
+	    ((rv = stat(file, &statbuf)) && errno == ENOENT) ||
+	    (rv == 0 && statbuf.st_size == 0)) {
 		if (errno == ENOENT)
 			errno = 0; /* Just in case someone looks at errno */
 		new_table = 1;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ndbm.c,v 1.10 1999/02/16 21:57:53 millert Exp $	*/
+/*	$OpenBSD: ndbm.c,v 1.11 1999/04/18 17:08:07 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)dbm.c	8.6 (Berkeley) 11/7/95";
 #else
-static char rcsid[] = "$OpenBSD: ndbm.c,v 1.10 1999/02/16 21:57:53 millert Exp $";
+static char rcsid[] = "$OpenBSD: ndbm.c,v 1.11 1999/04/18 17:08:07 millert Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -62,30 +62,49 @@ static char rcsid[] = "$OpenBSD: ndbm.c,v 1.10 1999/02/16 21:57:53 millert Exp $
  */
 static DBM *__cur_db;
 
-static void no_open_db __P((void));
+static DBM *_dbm_open __P((const char *, const char *, int, int));
 
+/*
+ * Returns:
+ * 	 0 on success
+ *	<0 on failure
+ */
 int
 dbminit(file)
 	const char *file;
 {
+
 	if (__cur_db != NULL)
 		(void)dbm_close(__cur_db);
-	if ((__cur_db = dbm_open(file, O_RDWR, 0)) != NULL)
+	if ((__cur_db = _dbm_open(file, ".pag", O_RDWR, 0)) != NULL)
 		return (0);
-	if ((__cur_db = dbm_open(file, O_RDONLY, 0)) != NULL)
+	if ((__cur_db = _dbm_open(file, ".pag", O_RDONLY, 0)) != NULL)
 		return (0);
 	return (-1);
 }
 
+/*
+ * Returns:
+ * 	 0 on success
+ *	<0 on failure
+ */
 int
 dbmclose()
 {
+	int rval;
 
-	if (__cur_db != NULL)
-		return ((__cur_db->close)(__cur_db));
-	return (-1);
+	if (__cur_db == NULL)
+		return (-1);
+	rval = (__cur_db->close)(__cur_db);
+	__cur_db = NULL;
+	return (rval);
 }
 
+/*
+ * Returns:
+ *	DATUM on success
+ *	NULL on failure
+ */
 datum
 fetch(key)
 	datum key;
@@ -93,26 +112,36 @@ fetch(key)
 	datum item;
 
 	if (__cur_db == NULL) {
-		no_open_db();
-		item.dptr = 0;
+		item.dptr = NULL;
+		item.dsize = 0;
 		return (item);
 	}
 	return (dbm_fetch(__cur_db, key));
 }
 
+/*
+ * Returns:
+ *	DATUM on success
+ *	NULL on failure
+ */
 datum
 firstkey()
 {
 	datum item;
 
 	if (__cur_db == NULL) {
-		no_open_db();
-		item.dptr = 0;
+		item.dptr = NULL;
+		item.dsize = 0;
 		return (item);
 	}
 	return (dbm_firstkey(__cur_db));
 }
 
+/*
+ * Returns:
+ *	DATUM on success
+ *	NULL on failure
+ */
 datum
 nextkey(key)
 	datum key;
@@ -120,43 +149,70 @@ nextkey(key)
 	datum item;
 
 	if (__cur_db == NULL) {
-		no_open_db();
-		item.dptr = 0;
+		item.dptr = NULL;
+		item.dsize = 0;
 		return (item);
 	}
 	return (dbm_nextkey(__cur_db));
 }
 
+/*
+ * Returns:
+ * 	 0 on success
+ *	<0 on failure
+ */
 int
 delete(key)
 	datum key;
 {
-	if (__cur_db == NULL) {
-		no_open_db();
-		return (-1);
-	}
-	if (dbm_rdonly(__cur_db))
+
+	if (__cur_db == NULL || dbm_rdonly(__cur_db))
 		return (-1);
 	return (dbm_delete(__cur_db, key));
 }
 
+/*
+ * Returns:
+ * 	 0 on success
+ *	<0 on failure
+ */
 int
 store(key, dat)
 	datum key, dat;
 {
-	if (__cur_db == NULL) {
-		no_open_db();
-		return (-1);
-	}
-	if (dbm_rdonly(__cur_db))
+
+	if (__cur_db == NULL || dbm_rdonly(__cur_db))
 		return (-1);
 	return (dbm_store(__cur_db, key, dat, DBM_REPLACE));
 }
 
-static void
-no_open_db()
+/*
+ * Returns:
+ * 	*DBM on success
+ *	 NULL on failure
+ */
+static DBM *
+_dbm_open(file, suff, flags, mode)
+	const char *file;
+	const char *suff;
+	int flags, mode;
 {
-	(void)fprintf(stderr, "dbm: no open database.\n");
+	HASHINFO info;
+	char path[MAXPATHLEN];
+
+	if (strlen(file) + strlen(suff) > sizeof(path) - 1) {
+		errno = ENAMETOOLONG;
+		return (NULL);
+	}
+	info.bsize = 4096;
+	info.ffactor = 40;
+	info.nelem = 1;
+	info.cachesize = 0;
+	info.hash = NULL;
+	info.lorder = 0;
+	(void)strcpy(path, file);
+	(void)strcat(path, suff);
+	return ((DBM *)__hash_open(path, flags, mode, &info, 0));
 }
 
 /*
@@ -169,22 +225,8 @@ dbm_open(file, flags, mode)
 	const char *file;
 	int flags, mode;
 {
-	HASHINFO info;
-	char path[MAXPATHLEN];
 
-	if (strlen(file) + strlen(DBM_SUFFIX) > sizeof(path) - 1) {
-		errno = ENAMETOOLONG;
-		return (NULL);
-	}
-	info.bsize = 4096;
-	info.ffactor = 40;
-	info.nelem = 1;
-	info.cachesize = 0;
-	info.hash = NULL;
-	info.lorder = 0;
-	(void)strcpy(path, file);
-	(void)strcat(path, DBM_SUFFIX);
-	return ((DBM *)__hash_open(path, flags, mode, &info, 0));
+	return(_dbm_open(file, DBM_SUFFIX, flags, mode));
 }
 
 /*
@@ -270,7 +312,7 @@ dbm_nextkey(db)
 /*
  * Returns:
  *	 0 on success
- *	<0 failure
+ *	<0 on failure
  */
 int
 dbm_delete(db, key)
@@ -292,7 +334,7 @@ dbm_delete(db, key)
 /*
  * Returns:
  *	 0 on success
- *	<0 failure
+ *	<0 on failure
  *	 1 if DBM_INSERT and entry exists
  */
 int
