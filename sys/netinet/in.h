@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.h,v 1.59 2003/12/15 07:11:30 mcbride Exp $	*/
+/*	$OpenBSD: in.h,v 1.60 2003/12/17 21:36:17 mcbride Exp $	*/
 /*	$NetBSD: in.h,v 1.20 1996/02/13 23:41:47 christos Exp $	*/
 
 /*
@@ -73,7 +73,7 @@
 #define IPPROTO_PIM		103		/* Protocol indep. multicast */
 #define IPPROTO_IPCOMP		108		/* IP Payload Comp. Protocol */
 #define	IPPROTO_CARP		112		/* CARP */
-#define	IPPROTO_PFSYNC		136		/* PFSYNC */
+#define	IPPROTO_PFSYNC		240		/* PFSYNC */
 #define	IPPROTO_RAW		255		/* raw IP packet */
 
 #define	IPPROTO_MAX		256
@@ -201,7 +201,7 @@ struct in_addr {
 #define	INADDR_ALLHOSTS_GROUP	__IPADDR(0xe0000001)	/* 224.0.0.1 */
 #define	INADDR_ALLROUTERS_GROUP __IPADDR(0xe0000002)	/* 224.0.0.2 */
 #define	INADDR_CARP_GROUP	__IPADDR(0xe0000012)	/* 224.0.0.18 */
-#define	INADDR_PFSYNC_GROUP	__IPADDR(0xe0000088)	/* 224.0.0.136 */
+#define	INADDR_PFSYNC_GROUP	__IPADDR(0xe00000f0)	/* 224.0.0.240 */
 #define INADDR_MAX_LOCAL_GROUP	__IPADDR(0xe00000ff)	/* 224.0.0.255 */
 
 #define	IN_LOOPBACKNET		127			/* official! */

@@ -1,7 +1,7 @@
 #
 # Internet (IP) protocols
 #
-#	$OpenBSD: protocols,v 1.19 2003/12/15 07:15:44 mcbride Exp $
+#	$OpenBSD: protocols,v 1.20 2003/12/17 21:36:17 mcbride Exp $
 #
 # Updated based on RFC 1340, Assigned Numbers (July 1992).
 # See also http://www.iana.org/assignments/protocol-numbers
@@ -141,5 +141,5 @@ pipe	131	PIPE		# Private IP Encapsulation within IP
 sctp	132	SCTP		# Stream Control Transmission Protocol
 fc	133	FC		# Fibre Channel
 rsvp-e2e-ignore	134	RSVP-E2E-IGNORE
-pfsync	136	PFSYNC		# PF Synchronization
+pfsync	240	PFSYNC		# PF Synchronization
 reserved 255	Reserved	#
