@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.473 2004/12/29 16:27:05 mcbride Exp $	*/
+/*	$OpenBSD: parse.y,v 1.474 2005/01/05 18:23:10 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -536,10 +536,14 @@ option		: SET OPTIMIZATION STRING		{
 				free($3);
 				YYERROR;
 			}
-			if (pfctl_file_fingerprints(pf->dev, pf->opts, $3)) {
-				yyerror("error loading fingerprints %s", $3);
-				free($3);
-				YYERROR;
+			if (!pf->anchor[0]) {
+				if (pfctl_file_fingerprints(pf->dev,
+				    pf->opts, $3)) {
+					yyerror("error loading "
+					    "fingerprints %s", $3);
+					free($3);
+					YYERROR;
+				}
 			}
 			free($3);
 		}

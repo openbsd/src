@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.h,v 1.78 2004/12/22 17:17:55 dhartmei Exp $ */
+/*	$OpenBSD: pfctl_parser.h,v 1.79 2005/01/05 18:23:10 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -48,6 +48,7 @@
 #define PF_OPT_SHOWALL		0x0400
 #define PF_OPT_OPTIMIZE		0x0800
 #define PF_OPT_OPTIMIZE_PROFILE	0x1000
+#define PF_OPT_MERGE		0x2000
 
 #define PF_TH_ALL		0xFF
 
@@ -80,6 +81,20 @@ struct pfctl {
 	const char *anchor;
 	const char *ruleset;
 	struct pf_opt_queue opt_queue;
+
+	/* 'set foo' options */
+	u_int32_t	 timeout[PFTM_MAX];
+	u_int32_t	 limit[PF_LIMIT_MAX];
+	u_int32_t	 debug;
+	u_int32_t	 hostid;
+	char		*ifname;
+
+	u_int8_t	 timeout_set[PFTM_MAX];
+	u_int8_t	 limit_set[PF_LIMIT_MAX];
+	u_int8_t	 debug_set;
+	u_int8_t	 hostid_set;
+	u_int8_t	 ifname_set;
+	
 };
 
 struct node_if {

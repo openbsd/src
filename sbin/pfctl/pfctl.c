@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.230 2004/12/29 15:09:30 danh Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.231 2005/01/05 18:23:10 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -66,6 +66,13 @@ int	 pfctl_clear_altq(int, int);
 int	 pfctl_clear_src_nodes(int, int);
 int	 pfctl_clear_states(int, const char *, int);
 int	 pfctl_kill_states(int, const char *, int);
+void	 pfctl_init_options(struct pfctl *);
+int	 pfctl_load_options(struct pfctl *);
+int	 pfctl_load_limit(struct pfctl *, unsigned int, unsigned int);
+int	 pfctl_load_timeout(struct pfctl *, unsigned int, unsigned int);
+int	 pfctl_load_debug(struct pfctl *, unsigned int);
+int	 pfctl_load_logif(struct pfctl *, char *);
+int	 pfctl_load_hostid(struct pfctl *, unsigned int);
 int	 pfctl_get_pool(int, struct pf_pool *, u_int32_t, u_int32_t, int,
 	    char *);
 void	 pfctl_print_rule_counters(struct pf_rule *, int);
@@ -76,7 +83,7 @@ int	 pfctl_show_states(int, const char *, int);
 int	 pfctl_show_status(int, int);
 int	 pfctl_show_timeouts(int, int);
 int	 pfctl_show_limits(int, int);
-int	 pfctl_debug(int, u_int32_t, int);
+void	 pfctl_debug(int, u_int32_t, int);
 int	 pfctl_clear_rule_counters(int, int);
 int	 pfctl_test_altqsupport(int, int);
 int	 pfctl_show_anchors(int, int, char *);
@@ -195,7 +202,7 @@ usage(void)
 {
 	extern char *__progname;
 
-	fprintf(stderr, "usage: %s [-AdeghNnOoqRrvz] ", __progname);
+	fprintf(stderr, "usage: %s [-AdeghmNnOoqRrvz] ", __progname);
 	fprintf(stderr, "[-a anchor] [-D macro=value] [-F modifier]\n");
 	fprintf(stderr, "             ");
 	fprintf(stderr, "[-f file] [-i interface] [-k host] ");
@@ -1016,6 +1023,7 @@ pfctl_rules(int dev, char *filename, int opts, char *anchorname,
 	pf.rule_nr = 0;
 	pf.anchor = anchorname;
 	TAILQ_INIT(&pf.opt_queue);
+	pfctl_init_options(&pf);
 
 	if ((opts & PF_OPT_NOACTION) == 0) {
 		if ((pf.loadopt & PFCTL_FLAG_NAT) != 0) {
@@ -1069,9 +1077,13 @@ pfctl_rules(int dev, char *filename, int opts, char *anchorname,
 		if (pfctl_load_anchors(dev, opts, t) == -1)
 			ERRX("load anchors");
 
-	if (trans == NULL && (opts & PF_OPT_NOACTION) == 0)
+	if (trans == NULL && (opts & PF_OPT_NOACTION) == 0) {
+		if (!anchorname[0])
+			if (pfctl_load_options(&pf))
+				goto _error;
 		if (pfctl_trans(dev, t, DIOCXCOMMIT, 0))
 			ERR("DIOCXCOMMIT");
+	}
 	return (0);
 
 _error:
@@ -1108,31 +1120,87 @@ pfctl_fopen(const char *name, const char *mode)
 	return (fp);
 }
 
-int
-pfctl_set_limit(struct pfctl *pf, const char *opt, unsigned int limit)
+void
+pfctl_init_options(struct pfctl *pf)
 {
-	struct pfioc_limit pl;
-	int i;
+	pf->timeout[PFTM_TCP_FIRST_PACKET] = PFTM_TCP_FIRST_PACKET_VAL;
+	pf->timeout[PFTM_TCP_OPENING] = PFTM_TCP_OPENING_VAL;
+	pf->timeout[PFTM_TCP_ESTABLISHED] = PFTM_TCP_ESTABLISHED_VAL;
+	pf->timeout[PFTM_TCP_CLOSING] = PFTM_TCP_CLOSING_VAL;
+	pf->timeout[PFTM_TCP_FIN_WAIT] = PFTM_TCP_FIN_WAIT_VAL;
+	pf->timeout[PFTM_TCP_CLOSED] = PFTM_TCP_CLOSED_VAL;
+	pf->timeout[PFTM_UDP_FIRST_PACKET] = PFTM_UDP_FIRST_PACKET_VAL;
+	pf->timeout[PFTM_UDP_SINGLE] = PFTM_UDP_SINGLE_VAL;
+	pf->timeout[PFTM_UDP_MULTIPLE] = PFTM_UDP_MULTIPLE_VAL;
+	pf->timeout[PFTM_ICMP_FIRST_PACKET] = PFTM_ICMP_FIRST_PACKET_VAL;
+	pf->timeout[PFTM_ICMP_ERROR_REPLY] = PFTM_ICMP_ERROR_REPLY_VAL;
+	pf->timeout[PFTM_OTHER_FIRST_PACKET] = PFTM_OTHER_FIRST_PACKET_VAL;
+	pf->timeout[PFTM_OTHER_SINGLE] = PFTM_OTHER_SINGLE_VAL;
+	pf->timeout[PFTM_OTHER_MULTIPLE] = PFTM_OTHER_MULTIPLE_VAL;
+	pf->timeout[PFTM_FRAG] = PFTM_FRAG_VAL;
+	pf->timeout[PFTM_INTERVAL] = PFTM_INTERVAL_VAL;
+	pf->timeout[PFTM_SRC_NODE] = PFTM_SRC_NODE_VAL;
+	pf->timeout[PFTM_TS_DIFF] = PFTM_TS_DIFF_VAL;
+
+	pf->limit[PF_LIMIT_STATES]	= PFSTATE_HIWAT;
+	pf->limit[PF_LIMIT_FRAGS]	= PFFRAG_FRENT_HIWAT;
+	pf->limit[PF_LIMIT_SRC_NODES]	= PFSNODE_HIWAT;
+
+	pf->debug = PF_DEBUG_URGENT;
+}
+
+int
+pfctl_load_options(struct pfctl *pf)
+{
+	int i, error = 0;
 
 	if ((loadopt & PFCTL_FLAG_OPTION) == 0)
 		return (0);
 
-	memset(&pl, 0, sizeof(pl));
+	/* load limits */
+	for (i = 0; i < PF_LIMIT_MAX; i++) {
+		if ((pf->opts & PF_OPT_MERGE) && !pf->limit_set[i])
+			continue;
+		if (pfctl_load_limit(pf, i, pf->limit[i]))
+			error = 1;
+	}
+
+	/* load timeouts */
+	for (i = 0; i < PFTM_MAX; i++) {
+		if ((pf->opts & PF_OPT_MERGE) && !pf->timeout_set[i])
+			continue;
+		if (pfctl_load_timeout(pf, i, pf->timeout[i]))
+			error = 1;
+	}
+
+	/* load debug */
+	if (!(pf->opts & PF_OPT_MERGE) || pf->debug_set)
+		if (pfctl_load_debug(pf, pf->debug))
+			error = 1;
+
+	/* load logif */
+	if (!(pf->opts & PF_OPT_MERGE) || pf->ifname_set)
+		if (pfctl_load_logif(pf, pf->ifname))
+			error = 1;
+
+	/* load hostid */
+	if (!(pf->opts & PF_OPT_MERGE) || pf->hostid_set)
+		if (pfctl_load_hostid(pf, pf->hostid))
+			error = 1;
+
+	return (error);
+}
+
+int
+pfctl_set_limit(struct pfctl *pf, const char *opt, unsigned int limit)
+{
+	int i;
+
+
 	for (i = 0; pf_limits[i].name; i++) {
 		if (strcasecmp(opt, pf_limits[i].name) == 0) {
-			pl.index = pf_limits[i].index;
-			pl.limit = limit;
-			if ((pf->opts & PF_OPT_NOACTION) == 0) {
-				if (ioctl(pf->dev, DIOCSETLIMIT, &pl)) {
-					if (errno == EBUSY) {
-						warnx("Current pool "
-						    "size exceeds requested "
-						    "hard limit");
-						return (1);
-					} else
-						err(1, "DIOCSETLIMIT");
-				}
-			}
+			pf->limit[pf_limits[i].index] = limit;
+			pf->limit_set[pf_limits[i].index] = 1;
 			break;
 		}
 	}
@@ -1148,18 +1216,35 @@ pfctl_set_limit(struct pfctl *pf, const char *opt, unsigned int limit)
 }
 
 int
+pfctl_load_limit(struct pfctl *pf, unsigned int index, unsigned int limit)
+{
+	struct pfioc_limit pl;
+
+	memset(&pl, 0, sizeof(pl));
+	pl.index = index;
+	pl.limit = limit;
+	if (ioctl(pf->dev, DIOCSETLIMIT, &pl)) {
+		if (errno == EBUSY)
+			warnx("Current pool size exceeds requested hard limit");
+		else
+			warnx("DIOCSETLIMIT");
+		return (1);
+	}
+	return (0);
+}
+
+int
 pfctl_set_timeout(struct pfctl *pf, const char *opt, int seconds, int quiet)
 {
-	struct pfioc_tm pt;
 	int i;
 
 	if ((loadopt & PFCTL_FLAG_OPTION) == 0)
 		return (0);
 
-	memset(&pt, 0, sizeof(pt));
 	for (i = 0; pf_timeouts[i].name; i++) {
 		if (strcasecmp(opt, pf_timeouts[i].name) == 0) {
-			pt.timeout = pf_timeouts[i].timeout;
+			pf->timeout[pf_timeouts[i].timeout] = seconds;
+			pf->timeout_set[pf_timeouts[i].timeout] = 1;
 			break;
 		}
 	}
@@ -1169,15 +1254,25 @@ pfctl_set_timeout(struct pfctl *pf, const char *opt, int seconds, int quiet)
 		return (1);
 	}
 
-	pt.seconds = seconds;
-	if ((pf->opts & PF_OPT_NOACTION) == 0) {
-		if (ioctl(pf->dev, DIOCSETTIMEOUT, &pt))
-			err(1, "DIOCSETTIMEOUT");
-	}
 
 	if (pf->opts & PF_OPT_VERBOSE && ! quiet)
 		printf("set timeout %s %d\n", opt, seconds);
 
+	return (0);
+}
+
+int
+pfctl_load_timeout(struct pfctl *pf, unsigned int timeout, unsigned int seconds)
+{
+	struct pfioc_tm pt;
+
+	memset(&pt, 0, sizeof(pt));
+	pt.timeout = timeout;
+	pt.seconds = seconds;
+	if (ioctl(pf->dev, DIOCSETTIMEOUT, &pt)) {
+		warnx("DIOCSETTIMEOUT");
+		return (1);
+	}
 	return (0);
 }
 
@@ -1214,27 +1309,41 @@ pfctl_set_optimization(struct pfctl *pf, const char *opt)
 int
 pfctl_set_logif(struct pfctl *pf, char *ifname)
 {
-	struct pfioc_if pi;
 
 	if ((loadopt & PFCTL_FLAG_OPTION) == 0)
 		return (0);
 
-	memset(&pi, 0, sizeof(pi));
-	if ((pf->opts & PF_OPT_NOACTION) == 0) {
-		if (!strcmp(ifname, "none"))
-			bzero(pi.ifname, sizeof(pi.ifname));
-		else {
-			if (strlcpy(pi.ifname, ifname,
-			    sizeof(pi.ifname)) >= sizeof(pi.ifname))
-				errx(1, "pfctl_set_logif: strlcpy");
-		}
-		if (ioctl(pf->dev, DIOCSETSTATUSIF, &pi))
-			err(1, "DIOCSETSTATUSIF");
+	if (!strcmp(ifname, "none")) {
+		free(pf->ifname);
+		pf->ifname = NULL;
+	} else {
+		pf->ifname = strdup(ifname);
+		if (!pf->ifname)
+			errx(1, "pfctl_set_logif: strdup");
 	}
+	pf->ifname_set = 1;
 
 	if (pf->opts & PF_OPT_VERBOSE)
 		printf("set loginterface %s\n", ifname);
 
+	return (0);
+}
+
+int
+pfctl_load_logif(struct pfctl *pf, char *ifname)
+{
+	struct pfioc_if pi;
+
+	memset(&pi, 0, sizeof(pi));
+	if (ifname && strlcpy(pi.ifname, ifname,
+	    sizeof(pi.ifname)) >= sizeof(pi.ifname)) {
+		warnx("pfctl_set_logif: strlcpy");
+		return (1);
+	}
+	if (ioctl(pf->dev, DIOCSETSTATUSIF, &pi)) {
+		warnx("DIOCSETSTATUSIF");
+		return (1);
+	}
 	return (0);
 }
 
@@ -1246,13 +1355,22 @@ pfctl_set_hostid(struct pfctl *pf, u_int32_t hostid)
 
 	HTONL(hostid);
 
-	if ((pf->opts & PF_OPT_NOACTION) == 0)
-		if (ioctl(dev, DIOCSETHOSTID, &hostid))
-			err(1, "DIOCSETHOSTID");
+	pf->hostid = hostid;
+	pf->hostid_set = 1;
 
 	if (pf->opts & PF_OPT_VERBOSE)
 		printf("set hostid 0x%08x\n", ntohl(hostid));
 
+	return (0);
+}
+
+int
+pfctl_load_hostid(struct pfctl *pf, u_int32_t hostid)
+{
+	if (ioctl(dev, DIOCSETHOSTID, &hostid)) {
+		warnx("DIOCSETHOSTID");
+		return (1);
+	}
 	return (0);
 }
 
@@ -1265,17 +1383,19 @@ pfctl_set_debug(struct pfctl *pf, char *d)
 		return (0);
 
 	if (!strcmp(d, "none"))
-		level = PF_DEBUG_NONE;
+		pf->debug = PF_DEBUG_NONE;
 	else if (!strcmp(d, "urgent"))
-		level = PF_DEBUG_URGENT;
+		pf->debug = PF_DEBUG_URGENT;
 	else if (!strcmp(d, "misc"))
-		level = PF_DEBUG_MISC;
+		pf->debug = PF_DEBUG_MISC;
 	else if (!strcmp(d, "loud"))
-		level = PF_DEBUG_NOISY;
+		pf->debug = PF_DEBUG_NOISY;
 	else {
 		warnx("unknown debug level \"%s\"", d);
 		return (-1);
 	}
+
+	pf->debug_set = 1;
 
 	if ((pf->opts & PF_OPT_NOACTION) == 0)
 		if (ioctl(dev, DIOCSETDEBUG, &level))
@@ -1284,6 +1404,15 @@ pfctl_set_debug(struct pfctl *pf, char *d)
 	if (pf->opts & PF_OPT_VERBOSE)
 		printf("set debug %s\n", d);
 
+	return (0);
+}
+
+int
+pfctl_load_debug(struct pfctl *pf, unsigned int level)
+{
+	if (ioctl(pf->dev, DIOCSETDEBUG, &level))
+		warnx("DIOCSETDEBUG");
+		return (1);
 	return (0);
 }
 
@@ -1320,7 +1449,7 @@ pfctl_set_interface_flags(struct pfctl *pf, char *ifname, int flags, int how)
 	return (0);
 }
 
-int
+void
 pfctl_debug(int dev, u_int32_t level, int opts)
 {
 	if (ioctl(dev, DIOCSETDEBUG, &level))
@@ -1346,7 +1475,6 @@ pfctl_debug(int dev, u_int32_t level, int opts)
 		}
 		fprintf(stderr, "'\n");
 	}
-	return (0);
 }
 
 int
@@ -1437,7 +1565,7 @@ main(int argc, char *argv[])
 		usage();
 
 	while ((ch = getopt(argc, argv,
-	    "a:AdD:eqf:F:ghi:k:nNOop:rRs:t:T:vx:z")) != -1) {
+	    "a:AdD:eqf:F:ghi:k:mnNOop:rRs:t:T:vx:z")) != -1) {
 		switch (ch) {
 		case 'a':
 			anchoropt = optarg;
@@ -1477,6 +1605,9 @@ main(int argc, char *argv[])
 			}
 			state_kill[state_killers++] = optarg;
 			mode = O_RDWR;
+			break;
+		case 'm':
+			opts |= PF_OPT_MERGE;
 			break;
 		case 'n':
 			opts |= PF_OPT_NOACTION;
@@ -1718,7 +1849,8 @@ main(int argc, char *argv[])
 		if (pfctl_clear_interface_flags(dev, opts | PF_OPT_QUIET))
 			error = 1;
 
-	if (rulesopt != NULL)
+	if (rulesopt != NULL && !(opts & (PF_OPT_MERGE|PF_OPT_NOACTION)) &&
+	    !anchorname[0] && (loadopt & PFCTL_FLAG_OPTION))
 		if (pfctl_file_fingerprints(dev, opts, PF_OSFP_FILE))
 			error = 1;
 
