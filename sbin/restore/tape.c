@@ -1,4 +1,4 @@
-/*	$OpenBSD: tape.c,v 1.5 1996/12/11 19:23:40 deraadt Exp $	*/
+/*	$OpenBSD: tape.c,v 1.6 1996/12/27 09:48:07 deraadt Exp $	*/
 /*	$NetBSD: tape.c,v 1.22 1996/11/30 18:31:29 cgd Exp $	*/
 
 /*
@@ -324,7 +324,7 @@ again:
 			    "Unless you know which volume your",
 			    " file(s) are on you should start\n",
 			    "with the last volume and work",
-			    " towards towards the first.\n");
+			    " towards the first.\n");
 		} else {
 			fprintf(stderr, "You have read volumes");
 			strcpy(buf, ": ");
