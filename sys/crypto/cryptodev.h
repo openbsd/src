@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptodev.h,v 1.2 2001/05/13 16:52:33 jason Exp $	*/
+/*	$OpenBSD: cryptodev.h,v 1.3 2001/06/01 23:51:27 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 Theo de Raadt
@@ -57,7 +57,7 @@ struct crypt_op {
 /* #define COP_SETKEY	3 */
 /* #define COP_GETKEY	4 */
 
-#define	CRIOGET		_IOR('c', 100, u_int32_t)
+#define	CRIOGET		_IOWR('c', 100, u_int32_t)
 
 #define	CIOCGSESSION	_IOWR('c', 101, struct session_op)
 #define	CIOCFSESSION	_IOW('c', 102, u_int32_t)
