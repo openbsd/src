@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.6 2004/02/23 01:19:52 tom Exp $	*/
+/*	$OpenBSD: locore.S,v 1.7 2004/02/23 08:32:36 mickey Exp $	*/
 /*	$NetBSD: locore.S,v 1.2 2003/04/26 19:34:45 fvdl Exp $	*/
 
 /*
@@ -319,6 +319,11 @@ start:	movw	$0x1234,0x472			# warm boot
 	cpuid
 	movl	%eax,RELOC(cpu_id)
 	movl	%edx,RELOC(cpu_feature)
+
+	movl	$0x80000001, %eax
+	cpuid
+	andl	$CPUID_NXE, %edx	/* other bits may clash */
+	orl     %edx, RELOC(cpu_feature)
 
 	/* Brand ID is bits 0-7 of %ebx */
 	andl	$255,%ebx

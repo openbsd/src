@@ -1,4 +1,4 @@
-/*	$OpenBSD: pte.h,v 1.3 2004/02/07 17:00:15 miod Exp $	*/
+/*	$OpenBSD: pte.h,v 1.4 2004/02/23 08:32:36 mickey Exp $	*/
 /*	$NetBSD: pte.h,v 1.1 2003/04/26 18:39:47 fvdl Exp $	*/
 
 /*
@@ -115,9 +115,9 @@ typedef u_int64_t pt_entry_t;		/* PTE */
 #define PG_AVAIL2	0x0000000000000400UL
 #define PG_AVAIL3	0x0000000000000800UL
 #define PG_NX		0x8000000000000000UL	/* non-executable */
-#define	PG_FRAME	0xfffffffffffff000UL
+#define	PG_FRAME	0x000ffffffffff000UL
 
-#define	PG_LGFRAME	0xffffffffffc00000UL	/* large (2M) page frame mask */
+#define	PG_LGFRAME	0x000fffffffc00000UL	/* large (2M) page frame mask */
 
 /*
  * short forms of protection codes

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.2 2004/02/09 22:41:14 mickey Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.3 2004/02/23 08:32:36 mickey Exp $	*/
 /*	$NetBSD: pmap.c,v 1.3 2003/05/08 18:13:13 thorpej Exp $	*/
 
 /*
@@ -779,6 +779,8 @@ pmap_kenter_pa(va, pa, prot)
 
 	npte = pa | ((prot & VM_PROT_WRITE) ? PG_RW : PG_RO) |
 	     PG_V | pmap_pg_g;
+	if ((cpu_feature & CPUID_NXE) && !(prot & VM_PROT_EXECUTE))
+		npte |= PG_NX;
 	opte = pmap_pte_set(pte, npte); /* zap! */
 #ifdef LARGEPAGES
 	/* XXX For now... */
@@ -866,6 +868,7 @@ pmap_bootstrap(kva_start)
 	pt_entry_t *pte;
 	int i;
 	unsigned long p1i;
+	pt_entry_t pg_nx = (cpu_feature & CPUID_NXE? PG_NX : 0);
 
 	/*
 	 * define the voundaries of the managed kernel virtual address
@@ -880,13 +883,14 @@ pmap_bootstrap(kva_start)
 	 * we can jam into a i386 PTE.
 	 */
 
-	protection_codes[VM_PROT_NONE] = 0;  			/* --- */
+	protection_codes[VM_PROT_NONE] = pg_nx;			/* --- */
 	protection_codes[VM_PROT_EXECUTE] = PG_RO;		/* --x */
-	protection_codes[VM_PROT_READ] = PG_RO;			/* -r- */
+	protection_codes[VM_PROT_READ] = PG_RO | pg_nx;		/* -r- */
 	protection_codes[VM_PROT_READ|VM_PROT_EXECUTE] = PG_RO;	/* -rx */
-	protection_codes[VM_PROT_WRITE] = PG_RW;		/* w-- */
+	protection_codes[VM_PROT_WRITE] = PG_RW | pg_nx;	/* w-- */
 	protection_codes[VM_PROT_WRITE|VM_PROT_EXECUTE] = PG_RW;/* w-x */
-	protection_codes[VM_PROT_WRITE|VM_PROT_READ] = PG_RW;	/* wr- */
+	protection_codes[VM_PROT_WRITE|VM_PROT_READ] = PG_RW | pg_nx;
+								/* wr- */
 	protection_codes[VM_PROT_ALL] = PG_RW;			/* wrx */
 
 	/*
@@ -2199,7 +2203,7 @@ pmap_extract(pmap, va, pap)
 #ifdef LARGEPAGES
 	if (pde & PG_PS) {
 		if (pap != NULL)
-			*pap = (pde & PG_LGFRAME) | (va & ~PG_LGFRAME);
+			*pap = (pde & PG_LGFRAME) | (va & 0x1fffff);
 		return (TRUE);
 	}
 #endif
@@ -2207,7 +2211,7 @@ pmap_extract(pmap, va, pap)
 
 	if (__predict_true((pte & PG_V) != 0)) {
 		if (pap != NULL)
-			*pap = (pte & PG_FRAME) | (va & ~PG_FRAME);
+			*pap = (pte & PG_FRAME) | (va & 0xfff);
 		return (TRUE);
 	}
 
@@ -2937,7 +2941,7 @@ pmap_write_protect(pmap, sva, eva, prot)
 	vaddr_t sva, eva;
 	vm_prot_t prot;
 {
-	pt_entry_t *ptes, *spte, *epte;
+	pt_entry_t nx, opte, *ptes, *spte, *epte;
 	pd_entry_t **pdes;
 	vaddr_t blockend;
 	int32_t cpumask = 0;
@@ -2947,6 +2951,10 @@ pmap_write_protect(pmap, sva, eva, prot)
 	/* should be ok, but just in case ... */
 	sva &= PG_FRAME;
 	eva &= PG_FRAME;
+
+	nx = 0;
+	if ((cpu_feature & CPUID_NXE) && !(prot & VM_PROT_EXECUTE))
+		nx = PG_NX;
 
 	for (/* null */ ; sva < eva ; sva = blockend) {
 
@@ -2972,8 +2980,7 @@ pmap_write_protect(pmap, sva, eva, prot)
 			continue;
 
 #ifdef DIAGNOSTIC
-		if (sva >= VM_MAXUSER_ADDRESS &&
-		    sva < VM_MAX_ADDRESS)
+		if (sva >= VM_MAXUSER_ADDRESS && sva < VM_MAX_ADDRESS)
 			panic("pmap_write_protect: PTE space");
 #endif
 
@@ -2981,11 +2988,14 @@ pmap_write_protect(pmap, sva, eva, prot)
 		epte = &ptes[pl1_i(blockend)];
 
 		for (/*null */; spte < epte ; spte++) {
-			if ((*spte & (PG_RW|PG_V)) == (PG_RW|PG_V)) {
-				pmap_pte_clearbits(spte, PG_RW);
+			if (!(*spte & PG_V))
+				continue;
+			opte = *spte;
+			pmap_pte_clearbits(spte, PG_RW);
+			pmap_pte_setbits(spte, nx);
+			if (opte != *spte)
 				pmap_tlb_shootdown(pmap, ptob(spte - ptes),
 				    *spte, &cpumask);
-			}
 		}
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.2 2004/02/20 22:35:12 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.3 2004/02/23 08:32:36 mickey Exp $	*/
 /*	$NetBSD: trap.c,v 1.2 2003/05/04 23:51:56 fvdl Exp $	*/
 
 /*-
@@ -428,6 +428,8 @@ faultcommon:
 			map = &vm->vm_map;
 		if (frame.tf_err & PGEX_W)
 			ftype = VM_PROT_WRITE;
+		else if (frame.tf_err & PGEX_I)
+			ftype = VM_PROT_EXECUTE;
 		else
 			ftype = VM_PROT_READ;
 
@@ -460,7 +462,8 @@ faultcommon:
 		/* Fault the original page in. */
 		onfault = pcb->pcb_onfault;
 		pcb->pcb_onfault = NULL;
-		error = uvm_fault(map, va, 0, ftype);
+		error = uvm_fault(map, va, frame.tf_err & PGEX_P?
+		    VM_FAULT_PROTECT : VM_FAULT_INVALID, ftype);
 		pcb->pcb_onfault = onfault;
 		if (error == 0) {
 			if (nss > (u_long)vm->vm_ssize)
