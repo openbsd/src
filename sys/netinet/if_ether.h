@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.h,v 1.14 2001/01/19 06:37:38 itojun Exp $	*/
+/*	$OpenBSD: if_ether.h,v 1.15 2001/06/09 06:14:32 angelos Exp $	*/
 /*	$NetBSD: if_ether.h,v 1.22 1996/05/11 13:00:00 mycroft Exp $	*/
 
 /*
@@ -35,6 +35,9 @@
  *
  *	@(#)if_ether.h	8.1 (Berkeley) 6/10/93
  */
+
+#ifndef _NETINET_IF_ETHER_H_
+#define _NETINET_IF_ETHER_H_
 
 /*
  * Ethernet address - 6 octets
@@ -297,4 +300,5 @@ int ether_ntohost __P((char *, struct ether_addr *));
 int ether_hostton __P((char *, struct ether_addr *));
 int ether_line __P((char *, struct ether_addr *, char *));
 
-#endif
+#endif /* _KERNEL */
+#endif /* _NETINET_IF_ETHER_H_ */
