@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.18 2000/09/07 22:02:12 matthieu Exp $
+#	$OpenBSD: GENERIC,v 1.19 2000/09/16 04:03:00 rahnds Exp $
 #
 # PPC GENERIC config file
 #
@@ -126,7 +126,7 @@ ugen*  at uhub? port ? configuration ? interface ?
 #### Workstation Console attachments
 
 wsdisplay*	at vgafb?
-wskbd0		at ukbd? console ?
+wskbd*		at ukbd? console ?
 
 #### SCSI Bus devices
  
