@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosdisk.S,v 1.7 1997/04/18 17:48:23 mickey Exp $	*/
+/*	$OpenBSD: biosdisk.S,v 1.8 1997/04/23 14:49:24 weingart Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -125,6 +125,7 @@ ENTRY(biosdreset)
 	pushl	%ecx
 
 	movb	$0x00, %ah		# reset disk system
+	movb	8(%ebp), %dl		# drive #
 	BIOSINT(0x13)
 
 	popl	%ecx

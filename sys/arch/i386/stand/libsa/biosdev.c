@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosdev.c,v 1.13 1997/04/23 06:49:06 mickey Exp $	*/
+/*	$OpenBSD: biosdev.c,v 1.14 1997/04/23 14:49:23 weingart Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -333,7 +333,7 @@ biosstrategy(void *devdata, int rw,
 					p->bd_id != error; p++);
 				printf("\nBIOS error %x (%s)\n",
 					p->bd_id, p->msg);
-				biosdreset();
+				biosdreset(bd->biosdev);
 				break;
 			}
 		}
