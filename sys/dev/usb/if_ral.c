@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ral.c,v 1.2 2005/03/16 21:21:39 damien Exp $  */
+/*	$OpenBSD: if_ral.c,v 1.3 2005/03/17 09:01:43 damien Exp $  */
 
 /*-
  * Copyright (c) 2005
@@ -19,7 +19,7 @@
 
 /*-
  * Ralink Technology RT2500USB chipset driver
- * http://www.uralinktech.com/
+ * http://www.ralinktech.com/
  */
 
 #include "bpfilter.h"
@@ -465,6 +465,9 @@ USB_ATTACH(ural)
 	sc->sc_txtap.wt_ihdr.it_present = htole32(RAL_TX_RADIOTAP_PRESENT);
 #endif
 
+	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
+	    USBDEV(sc->sc_dev));
+
 	USB_ATTACH_SUCCESS_RETURN;
 }
 
@@ -481,6 +484,9 @@ USB_DETACH(ural)
 #endif
 	ieee80211_ifdetach(ifp);
 	if_detach(ifp);
+
+	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
+	    USBDEV(sc->sc_dev));
 
 	return 0;
 }
@@ -563,6 +569,13 @@ ural_alloc_rx_list(struct ural_softc *sc)
 			goto fail;
 		}
 
+		if (usbd_alloc_buffer(data->xfer, MCLBYTES) == NULL) {
+			printf("%s: could not allocate rx buffer\n",
+			    USBDEVNAME(sc->sc_dev));
+			error = ENOMEM;
+			goto fail;
+		}
+
 		MGETHDR(data->m, M_DONTWAIT, MT_DATA);
 		if (data->m == NULL) {
 			printf("%s: could not allocate rx mbuf\n",
@@ -573,8 +586,6 @@ ural_alloc_rx_list(struct ural_softc *sc)
 
 		MCLGET(data->m, M_DONTWAIT);
 		if (!(data->m->m_flags & M_EXT)) {
-			m_freem(data->m);
-			data->m = NULL;
 			printf("%s: could not allocate rx mbuf cluster\n",
 			    USBDEVNAME(sc->sc_dev));
 			error = ENOMEM;
