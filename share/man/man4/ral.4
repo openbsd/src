@@ -1,4 +1,4 @@
-.\" $OpenBSD: ral.4,v 1.22 2005/03/17 09:11:24 damien Exp $
+.\" $OpenBSD: ral.4,v 1.23 2005/03/18 20:24:58 damien Exp $
 .\"
 .\" Copyright (c) 2005
 .\"	Damien Bergamini <damien.bergamini@free.fr>
@@ -68,6 +68,9 @@ mode.
 This is the standardized method of operating without an access point.
 Stations associate with a service set.
 However, actual connections between stations are peer-to-peer.
+.It Host AP
+In this mode the driver acts as an access point (base station)
+for other cards.
 .It monitor mode
 In this mode the driver is able to receive packets without
 associating with an access point.
@@ -391,5 +394,4 @@ specification.
 .Pp
 The
 .Nm ural
-driver does not support IBSS mode and automatic adaptation of the transmit
-speed.
+driver does not support automatic adaptation of the transmit speed.
