@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.157 2004/08/11 01:28:42 nick Exp $
+dnl	$OpenBSD: hardware,v 1.158 2004/09/01 08:09:13 jmc Exp $
 OpenBSD/MACHINE OSREV works across a broad range of standard PCs and
 clones, with a wide variety of processors and I/O bus architectures.  It
 can be expected to install and run with minimal difficulties on most
@@ -884,16 +884,16 @@ WD7000 and TMC-7000 SCSI host adapters
 		wds0	0x350	15	6
 		wds1	0x358	11	5
 
-SCSI disks	sd0	first SCSI disk (by SCSI id)
-		sd1	second SCSI disk (by SCSI id)
-		sd2	third SCSI disk (by SCSI id)
-		sd3	fourth SCSI disk (by SCSI id)
+SCSI disks	sd0	first SCSI disk (by SCSI ID)
+		sd1	second SCSI disk (by SCSI ID)
+		sd2	third SCSI disk (by SCSI ID)
+		sd3	fourth SCSI disk (by SCSI ID)
 
-SCSI tapes	st0	first SCSI tape (by SCSI id)
-		st1	second SCSI tape (by SCSI id)
+SCSI tapes	st0	first SCSI tape (by SCSI ID)
+		st1	second SCSI tape (by SCSI ID)
 
-SCSI CD-ROMs	cd0	first SCSI CD-ROM (by SCSI id)
-		cd1	second SCSI CD-ROM (by SCSI id)
+SCSI CD-ROMs	cd0	first SCSI CD-ROM (by SCSI ID)
+		cd1	second SCSI CD-ROM (by SCSI ID)
 
 SMC/WD 8003, 8013, Elite16, and Elite16 Ultra Ethernet boards
 		we0	0x280	9		iomem 0xd0000

@@ -1,4 +1,4 @@
-dnl	$OpenBSD: prep,v 1.14 2004/05/24 15:47:00 tom Exp $
+dnl	$OpenBSD: prep,v 1.15 2004/09/01 08:09:13 jmc Exp $
 To be able to boot the OpenBSD/MACHINE installation program, you will
 need to acquire some limited knowledge of Open Firmware, the low-level
 process that controls the microprocessor after hardware initialization
@@ -100,7 +100,7 @@ by setting up the following:
 setenv auto-boot? true
 setenv boot-device hd:,ofwboot
 
-[to save the results into nvram]
+[to save the results into NVRAM]
 reset-all
 
 These settings assume that the master of the first IDE bus has OpenBSD

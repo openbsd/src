@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.1 2004/05/16 21:52:22 miod Exp $
+dnl	$OpenBSD: install,v 1.2 2004/09/01 08:09:13 jmc Exp $
 OpenBSDInstallPrelude
 
 There are several ways to install OpenBSD onto a disk. The easiest way
@@ -24,16 +24,16 @@ panel DIP switch #1 must be down to access the PROM prompt.
 
 Booting from an installation tape:
 
-    The internal tape drive is usually configured as SCSI id #4. At the
+    The internal tape drive is usually configured as SCSI ID #4. At the
     prompt, enter
 
       b st(0,0,0)
 
     to boot the first file from the tape. If your tape drive uses a
-    different SCSI id, replace the middle number with the appropriate number
+    different SCSI ID, replace the middle number with the appropriate number
     from the following table:
 
-      tape drive SCSI id:     0 1 2 3 4 5 6
+      tape drive SCSI ID:     0 1 2 3 4 5 6
       middle number for st(): 4 3 2 1 0 6 5
 
     If the tape drive is connected to the external SCSI controller, add 10 to
@@ -52,7 +52,7 @@ Booting from an existing partition:
     the partition number (usually 0, for the 'a' partition), and 'n' with
     the appropriate number from the following table:
 
-      disk drive SCSI id: 0 1 2 3 4 5 6
+      disk drive SCSI ID: 0 1 2 3 4 5 6
       value of 'n':       6 5 4 3 2 1 0
 
     If the disk drive is connected to the external SCSI controller, add 10 to
