@@ -1,5 +1,5 @@
 dnl
-dnl	$OpenBSD: m4.common,v 1.22 2001/10/06 20:38:16 miod Exp $
+dnl	$OpenBSD: m4.common,v 1.23 2001/10/07 21:50:50 miod Exp $
 dnl
 dnl simulate an include path with a macro 'includeit'.
 define(`includeit',`sinclude('INCLUDE/`$1)sinclude('INCLUDE/../`$1)')dnl
@@ -50,7 +50,7 @@ dnl                  - empty 2nd arg, for files where only compressed size is
 dnl                    known
 dnl
 define({:-showsize-:},{:-ifelse(X$1,X,,X$2,X,,X,X,{:-
-		 [ $1 gzipped, $2 uncompressed ]-:})-:})dnl
+		 [ $1 MB gzipped, $2 MB uncompressed ]-:})-:})dnl
 dnl
 dnl
 dnl 
@@ -162,13 +162,6 @@ dnl Describes xservXX.tgz.
 dnl
 define({:-OpenBSDxserv-:},
 {:-	xserv{:--:}OSrev  This set includes all of the X servers.showsize($1,$2)-:})dnl
-dnl
-dnl
-dnl OpenBSDxlink( compressed size, uncompressed size )
-dnl Describes xlinkXX.tgz.
-dnl
-define({:-OpenBSDxlink-:},
-{:-	xlink{:--:}OSrev  This set includes the X server link kit.showsize($1,$2)-:})dnl
 dnl
 dnl
 dnl Floppy and bootable cdrom stuff
