@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.roken.inc,v 1.1 2003/05/14 09:05:59 hin Exp $
+# $OpenBSD: Makefile.roken.inc,v 1.2 2004/06/04 20:27:59 biorn Exp $
 
 .PATH:	${KRB5SRC}/lib/roken
 
@@ -15,6 +15,9 @@ SRCS+=	strlwr.c \
 	get_window_size.c \
 	roken_gethostby.c \
 	resolve.c \
+	get_default_username.c \
+	k_getpwnam.c \
+	k_getpwuid.c
 
 # There is a net_write.c and net_read.c both in lib/roken and lib/krb5.
 roken_net_write.c:      ${KRB5SRC}/lib/roken/net_write.c
