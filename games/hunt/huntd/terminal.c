@@ -1,4 +1,4 @@
-/*	$OpenBSD: terminal.c,v 1.4 1999/02/01 06:53:56 d Exp $	*/
+/*	$OpenBSD: terminal.c,v 1.5 2002/07/26 20:03:45 pjanzen Exp $	*/
 /*	$NetBSD: terminal.c,v 1.2 1997/10/10 16:34:05 lukem Exp $	*/
 /*
  *  Hunt
@@ -111,11 +111,14 @@ outyx(pp, y, x, fmt)
 	int len;
 
 	va_start(ap, fmt);
-	len = vsnprintf(buf, sizeof buf, fmt, ap);
+	len = vsnprintf(buf, sizeof(buf), fmt, ap);
+	va_end(ap);
+	if (len >= (int)sizeof(buf))
+		len = sizeof(buf) - 1;
 	if (y >= 0 && x >= 0)
 		cgoto(pp, y, x);
-	outstr(pp, buf, len);
-	va_end(ap);
+	if (len > 0)
+		outstr(pp, buf, len);
 }
 
 /*
