@@ -1,4 +1,4 @@
-.\"	$OpenBSD: installboot.8,v 1.5 2001/09/21 14:14:10 mickey Exp $
+.\"	$OpenBSD: installboot.8,v 1.6 2001/10/05 00:02:32 miod Exp $
 .\"	$NetBSD: installboot.8,v 1.1 1995/09/30 21:32:14 pk Exp $
 .\"
 .\" Copyright (c) 1995 Paul Kranenburg
@@ -91,7 +91,7 @@ PROMs need the header to be present, while Sun 4 systems with the
 .Dq old monitor
 interface require the header to be stripped off. This is normally taken
 care of by
-.Nm
+.Nm installboot
 automatically, but it's useful when preparing a bootable filesystem for
 another system.
 .It Fl h
@@ -133,7 +133,7 @@ as the second-level boot program:
 installboot /boot /usr/mdec/bootxx /dev/rsd0a
 .Ed
 .Sh BUGS
-.Nm
+.Nm installboot
 requires simultaneous access to the mounted file system and
 the raw device, but that is not allowed with the kernel
 .Dv securelevel
@@ -148,6 +148,6 @@ only works in single-user mode
 .Xr init 8
 .Sh HISTORY
 The
-.Nm
+.Nm installboot
 first appeared in
-.Nx 1.1
+.Nx 1.1 .
