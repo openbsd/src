@@ -1,16 +1,10 @@
-/*	$OpenBSD: crt.c,v 1.1 2001/06/26 21:58:02 smurph Exp $ */
+/*	$OpenBSD: crt.c,v 1.2 2004/01/25 14:55:39 miod Exp $ */
 
 #include <sys/types.h>
 #include <machine/prom.h>
 
 struct mvmeprom_args bugargs = { 1};	       /* not BSS */
 
-/* pseudo reset vector */
-#if 0
-asm (".text");
-asm (STACK_ASM_OP);	/* initial sp value */
-asm (".long _start");	/* initial ip value */
-#endif
 _start()
 {
 	register int dev_lun asm (MVMEPROM_REG_DEVLUN);
@@ -26,18 +20,6 @@ _start()
 	extern int edata, end;
 	struct mvmeprom_brdid *id, *mvmeprom_brdid();
 
-#ifdef notyet
-	/* 
-	 * This code enables the SFU1 and is used for single stage 
-	 * bootstraps or the first stage of a two stage bootstrap.
-	 * Do not use r10 to enable the SFU1. This wipes out
-	 * the netboot args.  Not cool at all... r25 seems free. 
-	 */
-	asm("|	enable SFU1");
-	asm("	ldcr	r25,cr1");
-	asm("	clr	r25,r25,1<3>"); /* bit 3 is SFU1D */
-	asm("	stcr	r25,cr1");
-#endif 
 	bugargs.dev_lun = dev_lun;
 	bugargs.ctrl_lun = ctrl_lun;
 	bugargs.flags = flags;
@@ -53,35 +35,6 @@ _start()
 
 	id = mvmeprom_brdid();
 	bugargs.cputyp = id->model;
-
-#ifdef notyet /* STAGE1 */
-	/* 
-	 * Initialize PSR and CMMU to a known, stable state. 
-	 * This has to be done early for MVME197.
-	 * Per EB162 mc88110 engineering bulletin.
-	 */
-	if (bugargs.cputyp == 0x197) {
-		asm("|	init MVME197");
-		asm("|	1. PSR");
-		asm("or.u   r2,r0,0xA200");
-		asm("or     r2,r2,0x03E2");
-		asm("stcr   r2,cr1");
-		asm("|	2. ICTL");
-		asm("or     r2,r0,r0");
-		asm("or     r2,r2,0x8000");
-		asm("or     r2,r2,0x0040");
-		asm("stcr   r2,cr26");
-		asm("|	3. DCTL");
-		asm("or     r2,r0,r0");
-		asm("or     r2,r2,0x2000");
-		asm("or     r2,r2,0x0040");
-		asm("stcr   r2,cr41");
-		asm("|	4. init cache");
-		asm("or     r2,r0,0x01");
-		asm("stcr   r2,cr25");
-		asm("stcr   r2,cr40");
-	}
-#endif
 
 	memset(&edata, 0, ((int)&end - (int)&edata));
 
@@ -122,4 +75,3 @@ bugexec(addr)
 
 	_rtt();
 }
-
