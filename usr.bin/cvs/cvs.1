@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cvs.1,v 1.32 2005/01/26 17:52:06 xsa Exp $
+.\"	$OpenBSD: cvs.1,v 1.33 2005/01/27 16:37:23 xsa Exp $
 .\"
 .\" Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
 .\" All rights reserved.
@@ -300,8 +300,27 @@ The
 flag may appear more than once, or not at all.
 If omitted, the action defaults to
 .Cm all .
-.It Ic editors
-See who is editing a watched file.
+.It Xo Ic editors
+.Op Fl lR
+.Ar file ...
+.Xc
+.Pp
+The
+.Ic editors
+command lists the users with edition rights on a file.
+For that, pseudo-lock mode must be enabled (see the
+.Ic watch
+command).
+The e-mail address of the user editing the file, the timestamp
+when the edition first started, the host from where the edition
+has been requested and the path to the edited file are listed.
+.Pp
+The
+.Fl l
+flag is used to limit the scope of the search to the local directory
+only and to disable recursive behaviour, which can be requested with the
+.Fl R
+flag.
 .It Ic export
 Export sources from CVS;
 similar to
