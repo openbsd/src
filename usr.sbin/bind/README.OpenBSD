@@ -1,17 +1,21 @@
-$OpenBSD: README.OpenBSD,v 1.5 2003/10/20 19:30:07 jakob Exp $
+$OpenBSD: README.OpenBSD,v 1.6 2003/11/18 19:04:30 jakob Exp $
 
-- arc4random() support (integrated in 9.3.0-snapshot)
+additional features
+
 - call tzset before chroot
 - open /dev/null before chroot
+- write pid-file before chroot
+- arc4random() support (integrated in 9.3.0-snapshot)
 - fall back to system default random device when running chroot
 - add LCG (Linear Congruential Generator) implementation to libisc
 - use LCG instead of LFSR for ID generation until LFSR is proven reliable
 - IPv{4,6} query transport selection for dig(1)
-- fixed sha1.c to work around gcc optimization bug (sparc64)
-- chroot to /var/named by default
-- setuid to user named by default
-- write pid-file before chroot
 - add nslookup(8) manpage
-- listen to IPv6 interfaces by default
 - add support for SSHFP resource records
 - strlcpy/strlcat/snprintf fixes
+
+default parameter changes
+
+- chroot to /var/named by default
+- setuid to user named by default
+- listen to IPv6 interfaces by default
