@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_lookup.c,v 1.14 1998/01/09 16:21:56 csapuntz Exp $	*/
+/*	$OpenBSD: vfs_lookup.c,v 1.15 1998/08/07 01:56:11 csapuntz Exp $	*/
 /*	$NetBSD: vfs_lookup.c,v 1.17 1996/02/09 19:00:59 christos Exp $	*/
 
 /*
@@ -497,6 +497,10 @@ unionlookup:
 	 * the last component consumed.
 	 */
 	if (cnp->cn_consume > 0) {
+		if (cnp->cn_consume >= slashes) {
+			cnp->cn_flags &= ~REQUIREDIR;
+		}
+
 		ndp->ni_pathlen -= cnp->cn_consume - slashes;
 		ndp->ni_next += cnp->cn_consume - slashes;
 		cnp->cn_consume = 0;
