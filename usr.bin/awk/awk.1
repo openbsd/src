@@ -1,4 +1,4 @@
-.\"	$OpenBSD: awk.1,v 1.15 2003/11/24 10:58:08 jmc Exp $
+.\"	$OpenBSD: awk.1,v 1.16 2003/12/12 19:50:55 jmc Exp $
 .\" EX/EE is a Bd
 .\"
 .\" Copyright (C) Lucent Technologies 1997
@@ -31,12 +31,13 @@
 .Nd pattern-directed scanning and processing language
 .Sh SYNOPSIS
 .Nm awk
-.Op Fl F Ar fs
-.Op Fl v Ar var=value
 .Op Fl safe
-.Op Fl mr Ar n
-.Op Fl mf Ar n
-.Op Ar prog | Fl f Ar progfile
+.Op Fl V
+.Op Fl d Ns Op Ar n
+.Op Fl F Ar fs
+.Oo Fl v Ar var Ns =
+.Ns Ar value Oc
+.Ar prog | Fl f Ar progfile
 .Ar
 .Nm nawk
 .Ar ...
@@ -46,11 +47,9 @@ scans each input
 .Ar file
 for lines that match any of a set of patterns specified literally in
 .Ar prog
-or in one or more files
-specified as
+or in one or more files specified as
 .Fl f Ar progfile .
-With each pattern
-there can be an associated action that will be performed
+With each pattern there can be an associated action that will be performed
 when a line of a
 .Ar file
 matches the pattern.
@@ -58,35 +57,38 @@ Each line is matched against the
 pattern portion of every pattern-action statement;
 the associated action is performed for each matched pattern.
 The file name
-.Sq Pa \-
+.Sq -
 means the standard input.
 Any
 .Ar file
 of the form
-.Ar var=value
+.Ar var Ns = Ns Ar value
 is treated as an assignment, not a filename,
 and is executed at the time it would have been opened if it were a filename.
-The option
-.Fl v
-followed by
-.Ar var=value
-is an assignment to be done before
-.Ar prog
-is executed;
-any number of
-.Fl v
-options may be present.
-The
-.Fl F Ar fs
-option defines the input field separator to be the regular expression
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl d Ns Op Ar n
+Debug mode.
+Set debug level to
+.Ar n ,
+or 1 if
+.Ar n
+is not specified.
+A value greater than 1 causes
+.Nm
+to dump core on fatal errors.
+.It Fl F Ar fs
+Define the input field separator to be the regular expression
 .Ar fs .
-The
-.Fl safe
-option disables file output
-.Po
-.Ic print Ic > ,
-.Ic print Ic >> ,
-.Pc
+.It Fl f Ar filename
+Read program code from the specified file
+.Ar filename
+instead of from the command line.
+.It Fl safe
+Disable file output
+.Pf ( Ic print > ,
+.Ic print >> ) ,
 process creation
 .Po
 .Ar cmd Ic \&| getline ,
@@ -95,10 +97,28 @@ process creation
 and access to the environment
 .Pq Va ENVIRON .
 This
-is a first (and not very reliable) approximation to a
+is a first
+.Pq and not very reliable
+approximation to a
 .Dq safe
 version of
-.Nm awk .
+.Nm .
+.It Fl V
+Print the version number of
+.Nm
+to standard output and exit.
+.It Fl v Ar var Ns = Ns Ar value
+Assign
+.Ar value
+to variable
+.Ar var
+before
+.Ar prog
+is executed;
+any number of
+.Fl v
+options may be present.
+.El
 .Pp
 An input line is normally made up of fields separated by whitespace,
 or by regular expression
@@ -111,14 +131,6 @@ refers to the entire line.
 If
 .Va FS
 is null, the input line is split into one field per character.
-.Pp
-To compensate for inadequate implementation of storage management,
-the
-.Fl mr
-option can be used to set the maximum size of the input record,
-and the
-.Fl mf
-option to set the maximum number of fields.
 .Pp
 A pattern-action statement has the form
 .Pp
@@ -194,7 +206,8 @@ and are built using the operators
 .Ic + \- * / % ^
 (exponentiation), and concatenation (indicated by whitespace).
 The operators
-.Ic \&! ++ \-\- += \-= *= /= %= ^= > >= < <= == != ?:
+.Ic \&! ++ \-\- += \-= *= /= %= ^=
+.Ic > >= < <= == != ?:
 are also available in expressions.
 Variables may be scalars, array elements
 (denoted
@@ -253,21 +266,21 @@ are built in.
 Other built-in functions:
 .Bl -tag -width Fn
 .It Fn length
-the length of its argument
+The length of its argument
 taken as a string,
 or of
 .Va $0
 if no argument.
 .It Fn rand
-random number on (0,1)
+Random number on (0,1).
 .It Fn srand
-sets seed for
+Sets seed for
 .Fn rand
 and returns the previous seed.
 .It Fn int
-truncates to an integer value.
+Truncates to an integer value.
 .It Fn substr s m n
-the
+The
 .Fa n Ns No -character
 substring of
 .Fa s
@@ -275,13 +288,13 @@ that begins at position
 .Fa m
 counted from 1.
 .It Fn index s t
-the position in
+The position in
 .Fa s
 where the string
 .Fa t
 occurs, or 0 if it does not.
 .It Fn match s r
-the position in
+The position in
 .Fa s
 where the regular expression
 .Fa r
@@ -292,7 +305,7 @@ and
 .Va RLENGTH
 are set to the position and length of the matched string.
 .It Fn split s a fs
-splits the string
+Splits the string
 .Fa s
 into array elements
 .Va a[1] , a[2] , ... , a[n]
@@ -308,7 +321,7 @@ is not given.
 An empty string as field separator splits the string
 into one array element per character.
 .It Fn sub r t s
-substitutes
+Substitutes
 .Fa t
 for the first occurrence of the regular expression
 .Fa r
@@ -320,7 +333,7 @@ is not given,
 .Va $0
 is used.
 .It Fn gsub r t s
-same as
+Same as
 .Fn sub
 except that all occurrences of the regular expression
 are replaced;
@@ -329,23 +342,23 @@ and
 .Fn gsub
 return the number of replacements.
 .It Fn sprintf fmt expr ...
-the string resulting from formatting
+The string resulting from formatting
 .Fa expr , ...
 according to the
 .Xr printf 3
 format
 .Fa fmt .
 .It Fn system cmd
-executes
+Executes
 .Fa cmd
 and returns its exit status.
 .It Fn tolower str
-returns a copy of
+Returns a copy of
 .Fa str
 with all upper-case characters translated to their
 corresponding lower-case equivalents.
 .It Fn toupper str
-returns a copy of
+Returns a copy of
 .Fa str
 with all lower-case characters translated to their
 corresponding upper-case equivalents.
@@ -445,41 +458,41 @@ do not combine with other patterns.
 .Pp
 Variable names with special meanings:
 .Pp
-.Bl -tag -width Va -compact
+.Bl -tag -width "FILENAME" -compact
+.It Va ARGC
+Argument count, assignable.
+.It Va ARGV
+Argument array, assignable;
+non-null members are taken as filenames.
 .It Va CONVFMT
-conversion format used when converting numbers
+Conversion format used when converting numbers
 (default
-.Qq Li %.6g )
+.Qq Li %.6g ) .
+.It Va ENVIRON
+Array of environment variables; subscripts are names.
+.It Va FILENAME
+The name of the current input file.
+.It Va FNR
+Ordinal number of the current record in the current file.
 .It Va FS
-regular expression used to separate fields; also settable
+Regular expression used to separate fields; also settable
 by option
 .Fl F Ar fs .
 .It Va NF
-number of fields in the current record
+Number of fields in the current record.
 .It Va NR
-ordinal number of the current record
-.It Va FNR
-ordinal number of the current record in the current file
-.It Va FILENAME
-the name of the current input file
-.It Va RS
-input record separator (default newline)
-.It Va OFS
-output field separator (default blank)
-.It Va ORS
-output record separator (default newline)
+Ordinal number of the current record.
 .It Va OFMT
-output format for numbers (default
-.Qq Li %.6g )
+Output format for numbers (default
+.Qq Li %.6g ) .
+.It Va OFS
+Output field separator (default blank).
+.It Va ORS
+Output record separator (default newline).
+.It Va RS
+Input record separator (default newline).
 .It Va SUBSEP
-separates multiple subscripts (default 034)
-.It Va ARGC
-argument count, assignable
-.It Va ARGV
-argument array, assignable;
-non-null members are taken as filenames
-.It Va ENVIRON
-array of environment variables; subscripts are names.
+Separates multiple subscripts (default 034).
 .El
 .Pp
 Functions may be defined (at the position of a pattern-action statement)
@@ -487,30 +500,37 @@ thusly:
 .Pp
 .Dl function foo(a, b, c) { ...; return x }
 .Pp
-Parameters are passed by value if scalar and by reference if array name;
+Parameters are passed by value if scalar, and by reference if array name;
 functions may be called recursively.
 Parameters are local to the function; all other variables are global.
 Thus local variables may be created by providing excess parameters in
 the function definition.
 .Sh EXAMPLES
+Print lines longer than 72 characters:
+.Pp
 .Dl length($0) > 72
-Print lines longer than 72 characters.
+.Pp
+Print first two fields in opposite order:
 .Pp
 .Dl { print $2, $1 }
-Print first two fields in opposite order.
+.Pp
+Same, with input fields separated by comma and/or blanks and tabs:
 .Bd -literal -offset indent
 BEGIN { FS = ",[ \et]*|[ \et]+" }
       { print $2, $1 }
 .Ed
-Same, with input fields separated by comma and/or blanks and tabs.
+.Pp
+Add up first column, print sum and average:
 .Bd -literal -offset indent
 { s += $1 }
 END { print "sum is", s, " average is", s/NR }
 .Ed
-Add up first column, print sum and average.
+.Pp
+Print all lines between start/stop pairs:
 .Pp
 .Dl /start/, /stop/
-Print all lines between start/stop pairs.
+.Pp
+Simulate echo(1):
 .Bd -literal -offset indent
 BEGIN { # Simulate echo(1)
         for (i = 1; i < ARGC; i++) printf "%s ", ARGV[i]
@@ -518,8 +538,10 @@ BEGIN { # Simulate echo(1)
         exit }
 .Ed
 .Sh SEE ALSO
+.Xr egrep 1 ,
 .Xr lex 1 ,
-.Xr sed 1
+.Xr sed 1 ,
+.Xr printf 3
 .Rs
 .%A A. V. Aho
 .%A B. W. Kernighan
