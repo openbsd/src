@@ -1,4 +1,4 @@
-/*	$OpenBSD: bevar.h,v 1.7 1998/09/04 05:59:20 jason Exp $	*/
+/*	$OpenBSD: bevar.h,v 1.8 1998/10/19 05:39:30 jason Exp $	*/
 
 /*
  * Copyright (c) 1998 Theo de Raadt and Jason L. Wright.
@@ -42,7 +42,6 @@ struct besoftc {
 
 	void	*sc_mem;
 	int	sc_memsize;
-	int	sc_conf3;
 	u_int	sc_rev;
 
 	int	sc_promisc;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: be.c,v 1.15 1998/10/09 02:29:03 jason Exp $	*/
+/*	$OpenBSD: be.c,v 1.16 1998/10/19 05:39:29 jason Exp $	*/
 
 /*
  * Copyright (c) 1998 Theo de Raadt and Jason L. Wright.
@@ -150,7 +150,6 @@ beattach(parent, self, aux)
 
 	sc->sc_mem = qec->sc_buffer;
 	sc->sc_memsize = qec->sc_bufsiz;
-	sc->sc_conf3 = getpropint(ca->ca_ra.ra_node, "busmaster-regval", 0);
 
 	sc->sc_burst = getpropint(ca->ca_ra.ra_node, "burst-sizes", -1);
 	if (sc->sc_burst == -1)
