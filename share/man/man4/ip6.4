@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ip6.4,v 1.1 1999/12/19 03:14:27 itojun Exp $
+.\"	$OpenBSD: ip6.4,v 1.2 1999/12/20 04:34:21 itojun Exp $
 .\"
 .\" Copyright (C) 1999 WIDE Project.
 .\" All rights reserved.
@@ -58,7 +58,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	KAME Id: ip6.4,v 1.2 1999/12/19 03:11:04 itojun Exp
+.\"	KAME Id: ip6.4,v 1.3 1999/12/20 01:53:35 jinmei Exp
 .\"
 .Dd December 17, 1999
 .Dt IP6 4
@@ -94,18 +94,18 @@ There are several
 .Tn IPv6-level
 .Xr setsockopt 2 / Ns Xr getsockopt 2
 options.
-They are be separated into basic IPv6 socket API
+They are be separated into the basic IPv6 sockets API
 .Pq defined in RFC2553 ,
-and advanced API
+and the advanced API
 .Pq defined in RFC2292 .
-Basic API looks very similar to the API presented in
+The basic API looks very similar to the API presented in
 .Xr ip 4 .
 Advanced API uses ancillary data and can handle more complex cases.
 .Pp
 To specify some of socket options, certain privilege
 (i.e. root privilege) is required.
 .\"
-.Ss Basic IPv6 socket API
+.Ss Basic IPv6 sockets API
 .Dv IPV6_UNICAST_HOPS
 may be used to set the hoplimit field in the
 .Tn IPv6
@@ -241,10 +241,10 @@ int range = IPV6_PORTRANGE_LOW;       /* see <netinet/in.h> */
 setsockopt(s, IPPROTO_IPV6, IPV6_PORTRANGE, &range, sizeof(range));
 .Ed
 .\"
-.Ss Advanced IPv6 socket API
-Advanced IPv6 socket API lets userland program to specify, or obtain,
-details about IPv6 header and IPv6 extension headers on packets.
-Advanced API uses ancillary data for passing data from/to the kernel.
+.Ss Advanced IPv6 sockets API
+The advanced IPv6 sockets API lets userland programs to specify, or obtain,
+details about the IPv6 header and the IPv6 extension headers on packets.
+The advanced API uses ancillary data for passing data from/to the kernel.
 .Pp
 There are
 .Xr setsockopt 2 / Ns Xr getsockopt 2
