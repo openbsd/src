@@ -1,4 +1,4 @@
-.\"	$OpenBSD: resolv.conf.5,v 1.9 1999/05/23 14:11:05 aaron Exp $
+.\"	$OpenBSD: resolv.conf.5,v 1.10 2000/01/03 11:51:08 itojun Exp $
 .\"	$NetBSD: resolv.conf.5,v 1.7 1996/03/06 18:22:16 scottr Exp $
 .\"
 .\" Copyright (c) 1986, 1991 The Regents of the University of California.
@@ -166,9 +166,11 @@ where option is one of the following:
 .It Sy debug
 Sets RES_DEBUG in _res.options.
 .It Sy inet6
-Enables support for IPv6 addresses, by setting RES_USE_INET6 in
+Enables support for IPv6-only applications, by setting RES_USE_INET6 in
 _res.options (see
 .Xr resolver 3 ) .
+Use of this option is discouraged, and meaningless on
+.Ox .
 .It Sy ndots:n
 Sets a threshold for the number of dots which
 must appear in a name given to res_query (see

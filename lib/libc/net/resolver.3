@@ -1,4 +1,4 @@
-.\"	$OpenBSD: resolver.3,v 1.12 1999/07/05 04:41:00 aaron Exp $
+.\"	$OpenBSD: resolver.3,v 1.13 2000/01/03 11:51:08 itojun Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -171,7 +171,11 @@ This is used by the standard host lookup routine
 .Xr gethostbyname 3 .
 This option is enabled by default.
 .It Dv RES_USE_INET6
-Enable support for IPv6 addresses.
+Enables support for IPv6-only applications.
+This causes IPv4 addresses to be returned as an IPv4 mapped address.
+For example, 10.1.1.1 will be returned as ::ffff:10.1.1.1.
+The option is not meaningful on
+.Ox .
 .El
 .Pp
 The

@@ -52,7 +52,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: gethostnamadr.c,v 1.39 1999/12/11 08:40:17 itojun Exp $";
+static char rcsid[] = "$OpenBSD: gethostnamadr.c,v 1.40 2000/01/03 11:51:07 itojun Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -825,8 +825,7 @@ _gethtent()
 	if (!(cp = strpbrk(p, " \t")))
 		goto again;
 	*cp++ = '\0';
-	if ((_res.options & RES_USE_INET6) &&
-	    inet_pton(AF_INET6, p, host_addr) > 0) {
+	if (inet_pton(AF_INET6, p, host_addr) > 0) {
 		af = AF_INET6;
 		len = IN6ADDRSZ;
 	} else if (inet_pton(AF_INET, p, host_addr) > 0) {
