@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsfont.c,v 1.3 2002/05/02 19:21:48 matthieu Exp $ */
+/*	$OpenBSD: wsfont.c,v 1.4 2002/05/09 08:59:03 maja Exp $ */
 /* 	$NetBSD: wsfont.c,v 1.17 2001/02/07 13:59:24 ad Exp $	*/
 
 /*-
@@ -87,6 +87,11 @@
 #include <dev/wsfont/omron12x20.h>
 #endif
 
+#ifdef FONT_BOLD8x16_ISO1
+#define HAVE_FONT 1
+#include <dev/wsfont/bold8x16-iso1.h>
+#endif
+
 #ifdef FONT_GALLANT12x22
 #define HAVE_FONT 1
 #endif
@@ -125,8 +130,8 @@ static struct font *list, builtin_fonts[] = {
 #ifdef FONT_BOLD8x16
 	{ NULL, NULL, &bold8x16, 0, 1, WSFONT_STATIC | WSFONT_BUILTIN  },
 #endif
-#ifdef FONT_ISO8x16
-	{ NULL, NULL, &iso8x16, 0, 2, WSFONT_STATIC | WSFONT_BUILTIN },
+#ifdef FONT_BOLD8x16_ISO1
+	{ NULL, NULL, &bold8x16_iso1, 0, 2, WSFONT_STATIC | WSFONT_BUILTIN },
 #endif
 #ifdef FONT_COURIER11x18
 	{ NULL, NULL, &courier11x18, 0, 3, WSFONT_STATIC | WSFONT_BUILTIN },
