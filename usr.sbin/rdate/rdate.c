@@ -1,4 +1,4 @@
-/*	$OpenBSD: rdate.c,v 1.6 1997/01/21 17:44:05 kstailey Exp $	*/
+/*	$OpenBSD: rdate.c,v 1.7 1997/01/21 19:29:08 kstailey Exp $	*/
 /*	$NetBSD: rdate.c,v 1.4 1996/03/16 12:37:45 pk Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
 #if 0
 from: static char rcsid[] = "$NetBSD: rdate.c,v 1.3 1996/02/22 06:59:18 thorpej Exp $";
 #else
-static char rcsid[] = "$OpenBSD: rdate.c,v 1.6 1997/01/21 17:44:05 kstailey Exp $";
+static char rcsid[] = "$OpenBSD: rdate.c,v 1.7 1997/01/21 19:29:08 kstailey Exp $";
 #endif
 #endif				/* lint */
 
@@ -138,7 +138,7 @@ main(argc, argv)
 	sa.sin_family = AF_INET;
 	sa.sin_port = sp->s_port;
 
-	memcpy(&(sa.sin_addr.s_addr), hp->h_addr, hp->h_length);
+	(void) memcpy(&(sa.sin_addr.s_addr), hp->h_addr, hp->h_length);
 
 	if (connect(s, (struct sockaddr *) & sa, sizeof(sa)) == -1)
 		err(1, "Could not connect socket");
@@ -172,7 +172,7 @@ main(argc, argv)
 		char		buf[80];
 
 		ltm = localtime(&tim);
-		strftime(buf, 80, "%a %b %d %H:%M:%S %Z %Y\n", ltm);
+		(void) strftime(buf, 80, "%a %b %d %H:%M:%S %Z %Y\n", ltm);
 		(void) fputs(buf, stdout);
 
 		if (slidetime)
