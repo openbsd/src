@@ -1,4 +1,37 @@
-/*	$OpenBSD: parsenfsfh.c,v 1.7 2000/10/03 14:31:56 ho Exp $	*/
+/*	$OpenBSD: parsenfsfh.c,v 1.8 2001/06/15 01:11:26 itojun Exp $	*/
+
+/*
+ * Copyright (c) 1993, 1994 Jeffrey C. Mogul, Digital Equipment Corporation,
+ * Western Research Laboratory. All rights reserved.
+ * Copyright (c) 2001 Compaq Computer Corporation. All rights reserved.
+ *
+ *  Permission to use, copy, and modify this software and its
+ *  documentation is hereby granted only under the following terms and
+ *  conditions.  Both the above copyright notice and this permission
+ *  notice must appear in all copies of the software, derivative works
+ *  or modified versions, and any portions thereof, and both notices
+ *  must appear in supporting documentation.
+ *
+ *  Redistribution and use in source and binary forms, with or without
+ *  modification, are permitted provided that the following conditions
+ *  are met:
+ *    1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ *    2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in
+ *    the documentation and/or other materials provided with the
+ *    distribution.
+ *
+ *  THE SOFTWARE IS PROVIDED "AS IS" AND COMPAQ COMPUTER CORPORATION
+ *  DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING
+ *  ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS.   IN NO
+ *  EVENT SHALL COMPAQ COMPUTER CORPORATION BE LIABLE FOR ANY
+ *  SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ *  WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN
+ *  AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
+ *  OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
+ *  SOFTWARE.
+ */
 
 /*
  * parsenfsfh.c - portable parser for NFS file handles
@@ -11,7 +44,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/parsenfsfh.c,v 1.7 2000/10/03 14:31:56 ho Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/parsenfsfh.c,v 1.8 2001/06/15 01:11:26 itojun Exp $ (LBL)";
 #endif
 
 #include <sys/types.h>
