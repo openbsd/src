@@ -1,4 +1,4 @@
-/* $OpenBSD: undo.c,v 1.21 2003/11/09 01:20:32 vincent Exp $ */
+/* $OpenBSD: undo.c,v 1.22 2003/11/09 01:44:39 vincent Exp $ */
 /*
  * Copyright (c) 2002 Vincent Labrecque
  * All rights reserved.
@@ -169,13 +169,12 @@ drop_oldest_undo_record(void)
 }
 
 static __inline__ int
-last_was_boundary(void)
+lastrectype(void)
 {
 	struct undo_rec *rec;
 
-	if ((rec = LIST_FIRST(&curwp->w_undo)) != NULL &&
-	    (rec->type == BOUNDARY))
-		return (1);
+	if ((rec = LIST_FIRST(&curwp->w_undo)) != NULL)
+		return (rec->type);
 	return (0);
 }
 
@@ -183,6 +182,7 @@ int
 undo_enable(int on)
 {
 	int pon = undo_disable_flag;
+
 	undo_disable_flag = (on == TRUE) ? 0 : 1;
 	return (pon ? FALSE : TRUE);
 }
@@ -223,9 +223,6 @@ undo_add_insert(LINE *lp, int offset, int size)
 	 */
 	rec = LIST_FIRST(&curwp->w_undo);
 	if (rec != NULL) {
-		/* this will be hit like, 80% of the time... */
-		if (rec->type == BOUNDARY)
-			rec = LIST_NEXT(rec, next);
 		if (rec->type == INSERT) {
 			if (rec->pos + rec->region.r_size == pos) {
 				rec->region.r_size += reg.r_size;
@@ -243,11 +240,10 @@ undo_add_insert(LINE *lp, int offset, int size)
 	memmove(&rec->region, &reg, sizeof(REGION));
 	rec->content = NULL;
 
-	if (!last_was_boundary())
+	if (lastrectype() != INSERT)
 		undo_add_boundary();
 
 	LIST_INSERT_HEAD(&curwp->w_undo, rec, next);
-	undo_add_boundary();
 
 	return (TRUE);
 }
@@ -298,8 +294,10 @@ undo_add_delete(LINE *lp, int offset, int size)
 
 	region_get_data(&reg, rec->content, reg.r_size);
 
+	if (lastrectype() != DELETE)
+		undo_add_boundary();
+
 	LIST_INSERT_HEAD(&curwp->w_undo, rec, next);
-	undo_add_boundary();
 
 	return (TRUE);
 }
@@ -416,7 +414,7 @@ undo(int f, int n)
 	struct undo_rec *ptr, *nptr;
 	int done, rval;
 	LINE *lp;
-	int offset;
+	int offset, save;
 
 	ptr = curwp->w_undoptr;
 
@@ -450,12 +448,15 @@ undo(int f, int n)
 		 * Loop while we don't get a boundary specifying we've
 		 * finished the current action...
 		 */
+
+		if (lastrectype() != BOUNDARY)
+			undo_add_boundary();
+
+		save = nobound;
+		nobound = 1;
+
 		done = 0;
 		do {
-			/* Unlink the current node from the list */
-			nptr = LIST_NEXT(ptr, next);
-			LIST_REMOVE(ptr, next);
-
 			/*
 			 * Move to where this has to apply
 			 *
@@ -491,11 +492,13 @@ undo(int f, int n)
 			default:
 				break;
 			}
-			free_undo_record(ptr);
 
 			/* And move to next record */
-			ptr = nptr;
+			ptr = LIST_NEXT(ptr, next);
 		} while (ptr != NULL && !done);
+
+		nobound = save;
+		undo_add_boundary();
 
 		ewprintf("Undo!");
 	}
