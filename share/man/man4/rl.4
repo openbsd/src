@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rl.4,v 1.13 2001/10/05 19:08:14 nate Exp $
+.\"	$OpenBSD: rl.4,v 1.14 2002/06/08 00:11:17 aaron Exp $
 .\"
 .\" Copyright (c) 1997, 1998
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -40,18 +40,41 @@
 .Nd RealTek 8129/8139 Fast Ethernet driver
 .Sh SYNOPSIS
 .Cd "rl* at pci? dev ? function ?"
+.Cd "rl* at cardbus? dev ? function ?"
 .Sh DESCRIPTION
 The
 .Nm
 driver provides support for PCI Ethernet adapters and embedded
 controllers based on the RealTek 8129 and 8139 Fast Ethernet controller
 chips.
-This includes the Allied Telesyn AT2550, Genius GF100TXR,
-NDC Communications NE100TX-E, OvisLink LEF-8129TX, OvisLink LEF-8139TX,
-Netronix Inc.
-EA-1210 NetEther 10/100, KTX-9130TX 10/100 Fast Ethernet,
-Encore ENL832-TX 10/100 M PCI, Longshine LCS-8038TX-R, the
-SMC EZ Card 10/100 PCI 1211-TX, and various other cheap adapters.
+This includes, among others, the following cards:
+.Pp
+.Bl -item -offset indent -compact
+.It
+Allied Telesyn AT2550
+.It
+Genius GF100TXR
+.It
+NDC Communications NE100TX-E
+.It
+OvisLink LEF-8129TX
+.It
+OvisLink LEF-8139TX
+.It
+Netronix Inc. EA-1210 NetEther 10/100
+.It
+KTX-9130TX 10/100 Fast Ethernet
+.It
+Encore ENL832-TX 10/100 M PCI
+.It
+Longshine LCS-8038TX-R
+.It
+SMC EZ Card 10/100 PCI 1211-TX
+.It
+Accton MPX5030 CardBus
+.It
+Corega FEther CB-TXD 10/100 Ethernet
+.El
 .Pp
 The RealTek controllers use bus master DMA but do not use a
 descriptor-based data transfer mechanism.
