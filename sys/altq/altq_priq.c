@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_priq.c,v 1.12 2003/03/13 16:42:52 kjc Exp $	*/
+/*	$OpenBSD: altq_priq.c,v 1.13 2003/03/27 11:53:13 henning Exp $	*/
 /*	$KAME: altq_priq.c,v 1.1 2000/10/18 09:15:23 kjc Exp $	*/
 /*
  * Copyright (C) 2000
@@ -569,7 +569,7 @@ get_class_stats(struct priq_classstats *sp, struct priq_class *cl)
 static struct priq_class *
 clh_to_clp(struct priq_if *pif, u_int32_t chandle)
 {
-	int idx;
+	u_int idx;
 
 	if (chandle == 0)
 		return (NULL);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_hfsc.c,v 1.13 2003/03/24 07:33:28 kjc Exp $	*/
+/*	$OpenBSD: altq_hfsc.c,v 1.14 2003/03/27 11:53:13 henning Exp $	*/
 /*	$KAME: altq_hfsc.c,v 1.17 2002/11/29 07:48:33 kjc Exp $	*/
 
 /*
@@ -1676,7 +1676,7 @@ clh_to_clp(hif, chandle)
 	struct hfsc_if *hif;
 	u_int32_t chandle;
 {
-	int idx;
+	u_int idx;
 
 	if (chandle == 0)
 		return (NULL);
