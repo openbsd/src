@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.3 1996/06/29 05:54:23 tholo Exp $
+#	$OpenBSD: install.sh,v 1.4 1996/10/18 23:37:38 deraadt Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # All rights reserved.
@@ -37,7 +37,7 @@ DT=/etc/disktab				# /etc/disktab
 FSTABDIR=/mnt/etc			# /mnt/etc
 #DONTDOIT=echo
 
-VERSION=1.1
+VERSION=2.0
 FSTAB=${FSTABDIR}/fstab
 
 getresp() {
@@ -49,8 +49,8 @@ getresp() {
 
 echo	"Welcome to the OpenBSD ${VERSION} installation program."
 echo	""
-echo	"This program is designed to help you put OpenBSD on your hard disk,"
-echo	"in a simple and rational way.  You'll be asked several questions,"
+echo	"This program is will put OpenBSD on your hard disk.  It is not"
+echo	"painless, but it could be worse.  You'll be asked several questions,"
 echo	"and it would probably be useful to have your disk's hardware"
 echo	"manual, the installation notes, and a calculator handy."
 echo	""
@@ -71,49 +71,48 @@ echo	""
 echo -n "Proceed with installation? [n] "
 getresp "n"
 case "$resp" in
-	y*|Y*)
-		echo	"Cool!  Let's get to it..."
-		;;
-	*)
-		echo	""
-		echo	"OK, then.  Enter 'halt' at the prompt to halt the"
-		echo	"machine.  Once the machine has halted, remove the"
-		echo	"floppy and press any key to reboot."
-		exit
-		;;
+y*|Y*)
+	echo	"Cool!  Let's get to it..."
+	;;
+*)
+	echo	"OK, then.  Enter 'halt' at the prompt to halt the"
+	echo	"machine.  Once the machine has halted, remove the"
+	echo	"floppy and press any key to reboot."
+	exit
+	;;
 esac
 
 echo	""
 echo	"To do the installation, you'll need to provide some information about"
 echo	"your disk."
-echo	""
+
 echo	"OpenBSD can be installed on ST506, ESDI, IDE, or SCSI disks."
 echo -n	"What kind of disk will you be installing on? [SCSI] "
 getresp "SCSI"
 case "$resp" in
-	esdi|ESDI|st506|ST506)
-		drivetype=wd
-		echo -n "Does it support _automatic_ sector remapping? [y] "
-		getresp "y"
-		case "$resp" in
-			n*|N*)
-				sect_fwd="sf:"
-				;;
-			*)
-				sect_fwd=""
-				;;
-		esac
+esdi|ESDI|st506|ST506)
+	drivetype=wd
+	echo -n "Does it support _automatic_ sector remapping? [y] "
+	getresp "y"
+	case "$resp" in
+	n*|N*)
+		sect_fwd="sf:"
 		;;
-	ide|IDE)
-		drivetype=wd
+	*)
 		sect_fwd=""
-		type=ST506
 		;;
-	scsi|SCSI)
-		drivetype=sd
-		sect_fwd=""
-		type=SCSI
-		;;
+	esac
+;;
+ide|IDE)
+	drivetype=wd
+	sect_fwd=""
+	type=ST506
+	;;
+scsi|SCSI)
+	drivetype=sd
+	sect_fwd=""
+	type=SCSI
+	;;
 esac
 
 # find out what units are possible for that disk, and query the user.
@@ -127,22 +126,18 @@ if [ "X${driveunits}" = "X" ]; then
 fi
 prefdrive=${drivetype}0
 
-echo	""
 echo	"The following ${drivetype}-type disks are supported by this"
 echo	"installation procedure:"
-echo	"	"${driveunits}
+echo	"${driveunits}"
 echo	"Note that they may not exist in _your_ machine; the list of"
 echo	"disks in your machine was printed when the system was booting."
-echo	""
 while [ "X${drivename}" = "X" ]; do
 	echo -n	"Which disk would like to install on? [${prefdrive}] "
 	getresp ${prefdrive}
 	otherdrives=`echo "${driveunits}" | sed -e s,${resp},,`
 	if [ "X${driveunits}" = "X${otherdrives}" ]; then
-		echo	""
 		echo	"\"${resp}\" is an invalid drive name.  Valid choices"
 		echo	"are: "${driveunits}
-		echo	""
 	else
 		drivename=${resp}
 	fi
@@ -150,7 +145,6 @@ done
 
 echo	""
 echo	"Using disk ${drivename}."
-echo	""
 echo -n	"What kind of disk is it? (one word please) [my${drivetype}] "
 getresp "my${drivetype}"
 labelname=$resp
@@ -161,6 +155,22 @@ echo	"geometry.  This should either be in the User's Manual for your disk,"
 echo	"or you should have written down what OpenBSD printed when booting."
 echo	"(Note that he geometry that's printed at boot time is preferred.)"
 echo	""
+echo    "You may choose to view the initial boot messages for your system"
+echo    "again right now if you like."
+echo -n "View the boot messages again? [n] "
+getresp "n"
+case "$resp" in
+y*|Y*)
+	less -rsS /kern/msgbuf
+	;;
+*)
+	echo	""
+	;;
+esac
+
+echo	"You will now enter the disk geometry information"
+echo	""
+
 echo -n	"Number of bytes per disk sector? [512] "
 getresp 512
 bytes_per_sect="$resp"
@@ -191,31 +201,31 @@ while [ "X${sizemult}" = "X" ]; do
 	echo -n	"What units would you like to use? [cylinders] "
 	getresp cylinders
 	case "$resp" in
-		c*|C*)
-			sizemult=$cylindersize
-			sizeunit="cylinders"
-			;;
-		s*|S*)
-			sizemult=1
-			sizeunit="sectors"
-			;;
-		*)
-			echo	""
-			echo	"Enter cylinders ('c') or sectors ('s')."
-			;;
+	c*|C*)
+		sizemult=$cylindersize
+		sizeunit="cylinders"
+		maxdisk=$cyls_per_disk
+		;;
+	s*|S*)
+		sizemult=1
+		sizeunit="sectors"
+		maxdisk=$disksize;
+		;;
+	*)
+		echo	"Enter cylinders ('c') or sectors ('s')."
+		;;
 	esac
 done
 
 if [ $sizeunit = "sectors" ]; then
-	echo	""
-	echo	"For best disk performance, partitions should begin and end on"
-	echo	"cylinder boundaries.  Wherever possible, pick sizes that are"
-	echo	"multiples of the cylinder size ($cylindersize sectors)."
+	echo "For best disk performance or workable CHS-translating IDE systems,"
+	echo "partitions should begin and end on cylinder boundaries.  Wherever"
+	echo "possible, use multiples of the cylinder size ($cylindersize sectors)."
 fi
 
 echo -n ""
-echo -n "Size of OpenBSD portion of disk (in $sizeunit)? "
-getresp
+echo -n "Size of OpenBSD portion of disk (in $sizeunit) ? [$maxdisk] "
+getresp "$maxdisk"
 partition=$resp
 partition_sects=`expr $resp \* $sizemult`
 part_offset=0
@@ -245,15 +255,15 @@ while [ $root -eq 0 ]; do
 	echo -n "Root partition size (in $sizeunit)? "
 	getresp
 	case $resp in
-		[1-9]*)
-			total=$resp
-			if [ $total -gt $units_left ]; then
-				echo -n	"Root size is greater than remaining "
-				echo	"free space on disk."
-			else
-				root=$resp
-			fi
-			;;
+	[1-9]*)
+		total=$resp
+		if [ $total -gt $units_left ]; then
+			echo -n	"Root size is greater than remaining "
+			echo	"free space on disk."
+		else
+			root=$resp
+		fi
+		;;
 	esac
 done
 root_offset=$part_offset
@@ -267,14 +277,14 @@ while [ $swap -eq 0 ]; do
 	echo -n	"Swap partition size (in $sizeunit)? "
 	getresp
 	case $resp in
-		[1-9]*)
-			if [ $swap -gt $units_left ]; then
-				echo -n	"Swap size is greater than remaining "
-				echo	"free space on disk."
-			else
-				swap=$resp
-			fi
-			;;
+	[1-9]*)
+		if [ $swap -gt $units_left ]; then
+			echo -n	"Swap size is greater than remaining "
+			echo	"free space on disk."
+		else
+			swap=$resp
+		fi
+		;;
 	esac
 done
 swap_offset=`expr $root_offset + $root`
@@ -298,9 +308,7 @@ echo	":ta=4.2BSD:ba#${blocksize}:fa#${fragsize}:\\" >> $DT
 _size=`expr $swap \* $sizemult`
 _offset=`expr $swap_offset \* $sizemult`
 echo	"	:pb#${_size}:ob#${_offset}:tb=swap:\\" >> $DT
-_size=`expr $partition \* $sizemult`
-_offset=`expr $part_offset \* $sizemult`
-echo	"	:pc#${_size}:oc#${_offset}:\\" >> $DT
+echo	"	:pc#${disksize}:oc#0:\\" >> $DT
 
 echo	"You will now have to enter information about any other partitions"
 echo	"to be created in the OpenBSD portion of the disk.  This process will"
@@ -314,27 +322,27 @@ while [ $part_used -lt $partition ]; do
 		echo	""
 		echo -n	"$units_left $sizeunit remaining in OpenBSD portion of "
 		echo	"the disk"
-		echo -n "Next partition size (in $sizeunit)? "
-		getresp
+		echo -n "Next partition size (in $sizeunit) [$units_left] ? "
+		getresp "$units_left"
 		case $resp in
-			[1-9]*)
-				total=`expr $part_used + $resp`
-				if [ $total -gt $partition ]; then
-					echo -n	"That would make the parition"
-					echo	"too large to fit!"
-				else
-					part_size=$resp
-					part_used=$total
-					part_name=""
-					while [ "$part_name" = "" ]; do
-						echo -n "Mount point? "
-						getresp
-						part_name=$resp
-					done
-				fi
-				;;
+		[1-9]*)
+			total=`expr $part_used + $resp`
+			if [ $total -gt $partition ]; then
+				echo "That would make the parition too large to fit!"
+			else
+				part_size=$resp
+				part_used=$total
+				part_name=""
+				while [ "$part_name" = "" ]; do
+					echo -n "Mount point? "
+					getresp
+					part_name=$resp
+				done
+			fi
+			;;
 		esac
 	done
+	# XXX we skip partition d to avoid user confusion
 	if [ "$ename" = "" ]; then
 		ename=$part_name
 		offset=`expr $part_offset + $root + $swap`
@@ -364,9 +372,65 @@ while [ $part_used -lt $partition ]; do
 		echo -n "	:ph#${_size}:oh#${_offset}" >> $DT
 		echo ":th=4.2BSD:bh#${blocksize}:fh#${fragsize}:\\" >> $DT
 		part_used=$partition
+	elif [ "$iname" = "" ]; then
+		iname=$part_name
+		_size=`expr $part_size \* $sizemult`
+		_offset=`expr $offset \* $sizemult`
+		echo -n "	:pi#${_size}:oi#${_offset}" >> $DT
+		echo ":ti=4.2BSD:bi#${blocksize}:fi#${fragsize}:\\" >> $DT
+		part_used=$partition
+	elif [ "$jname" = "" ]; then
+		jname=$part_name
+		_size=`expr $part_size \* $sizemult`
+		_offset=`expr $offset \* $sizemult`
+		echo -n "	:pj#${_size}:oj#${_offset}" >> $DT
+		echo ":tj=4.2BSD:bj#${blocksize}:fj#${fragsize}:\\" >> $DT
+		part_used=$partition
+	elif [ "$kname" = "" ]; then
+		kname=$part_name
+		_size=`expr $part_size \* $sizemult`
+		_offset=`expr $offset \* $sizemult`
+		echo -n "	:pk#${_size}:ok#${_offset}" >> $DT
+		echo ":tk=4.2BSD:bk#${blocksize}:fk#${fragsize}:\\" >> $DT
+		part_used=$partition
+	elif [ "$lname" = "" ]; then
+		lname=$part_name
+		_size=`expr $part_size \* $sizemult`
+		_offset=`expr $offset \* $sizemult`
+		echo -n "	:pl#${_size}:ol#${_offset}" >> $DT
+		echo ":tl=4.2BSD:bl#${blocksize}:fl#${fragsize}:\\" >> $DT
+		part_used=$partition
+	elif [ "$mname" = "" ]; then
+		mname=$part_name
+		_size=`expr $part_size \* $sizemult`
+		_offset=`expr $offset \* $sizemult`
+		echo -n "	:pm#${_size}:om#${_offset}" >> $DT
+		echo ":tm=4.2BSD:bm#${blocksize}:fm#${fragsize}:\\" >> $DT
+		part_used=$partition
+	elif [ "$nname" = "" ]; then
+		nname=$part_name
+		_size=`expr $part_size \* $sizemult`
+		_offset=`expr $offset \* $sizemult`
+		echo -n "	:pn#${_size}:on#${_offset}" >> $DT
+		echo ":tn=4.2BSD:bn#${blocksize}:fn#${fragsize}:\\" >> $DT
+		part_used=$partition
+	elif [ "$oname" = "" ]; then
+		oname=$part_name
+		_size=`expr $part_size \* $sizemult`
+		_offset=`expr $offset \* $sizemult`
+		echo -n "	:po#${_size}:oo#${_offset}" >> $DT
+		echo ":to=4.2BSD:bo#${blocksize}:fo#${fragsize}:\\" >> $DT
+		part_used=$partition
+	elif [ "$pname" = "" ]; then
+		pname=$part_name
+		_size=`expr $part_size \* $sizemult`
+		_offset=`expr $offset \* $sizemult`
+		echo -n "	:pp#${_size}:op#${_offset}" >> $DT
+		echo ":tp=4.2BSD:bp#${blocksize}:fp#${fragsize}:\\" >> $DT
+		part_used=$partition
 	fi
 done
-echo	"	:pd#${disksize}:od#0:" >> $DT
+echo "" >> $DT
 sync
 
 echo	""
@@ -377,22 +441,22 @@ answer=""
 while [ "$answer" = "" ]; do
 	getresp
 	case $resp in
-		yes|YES)
-			echo	""
-			echo	"Here we go..."
-			answer=yes
-			;;
-		no|NO)
-			echo	""
-			echo -n	"OK, then.  enter 'halt' to halt the machine.  "
-			echo    "Once the machine has halted,"
-			echo -n	"remove the floppy, and press any key to "
-			echo	"reboot."
-			exit
-			;;
-		*)
-			echo -n "I want a yes or no answer...  well? "
-			;;
+	yes|YES)
+		echo	""
+		echo	"Here we go..."
+		answer=yes
+		;;
+	no|NO)
+		echo	""
+		echo -n	"OK, then.  enter 'halt' to halt the machine.  "
+		echo    "Once the machine has halted,"
+		echo -n	"remove the floppy, and press any key to "
+		echo	"reboot."
+		exit
+		;;
+	*)
+		echo -n "I want a yes or no answer...  well? "
+		;;
 	esac
 done
 
@@ -438,10 +502,66 @@ if [ "$hname" != "" ]; then
 	$DONTDOIT mkdir -p /mnt/$hname
 	$DONTDOIT mount -v /dev/${drivename}h /mnt/$hname
 fi
+if [ "$iname" != "" ]; then
+	echo	""
+	echo	"Initializing $iname filesystem, and mounting..."
+	$DONTDOIT newfs /dev/r${drivename}i $name
+	$DONTDOIT mkdir -p /mnt/$iname
+	$DONTDOIT mount -v /dev/${drivename}i /mnt/$iname
+fi
+if [ "$jname" != "" ]; then
+	echo	""
+	echo	"Initializing $jname filesystem, and mounting..."
+	$DONTDOIT newfs /dev/r${drivename}j $name
+	$DONTDOIT mkdir -p /mnt/$jname
+	$DONTDOIT mount -v /dev/${drivename}j /mnt/$jname
+fi
+if [ "$kname" != "" ]; then
+	echo	""
+	echo	"Initializing $kname filesystem, and mounting..."
+	$DONTDOIT newfs /dev/r${drivename}k $name
+	$DONTDOIT mkdir -p /mnt/$kname
+	$DONTDOIT mount -v /dev/${drivename}k /mnt/$kname
+fi
+if [ "$lname" != "" ]; then
+	echo	""
+	echo	"Initializing $lname filesystem, and mounting..."
+	$DONTDOIT newfs /dev/r${drivename}l $name
+	$DONTDOIT mkdir -p /mnt/$lname
+	$DONTDOIT mount -v /dev/${drivename}l /mnt/$lname
+fi
+if [ "$mname" != "" ]; then
+	echo	""
+	echo	"Initializing $mname filesystem, and mounting..."
+	$DONTDOIT newfs /dev/r${drivename}m $name
+	$DONTDOIT mkdir -p /mnt/$mname
+	$DONTDOIT mount -v /dev/${drivename}m /mnt/$mname
+fi
+if [ "$nname" != "" ]; then
+	echo	""
+	echo	"Initializing $nname filesystem, and mounting..."
+	$DONTDOIT newfs /dev/r${drivename}n $name
+	$DONTDOIT mkdir -p /mnt/$nname
+	$DONTDOIT mount -v /dev/${drivename}n /mnt/$nname
+fi
+if [ "$oname" != "" ]; then
+	echo	""
+	echo	"Initializing $oname filesystem, and mounting..."
+	$DONTDOIT newfs /dev/r${drivename}o $name
+	$DONTDOIT mkdir -p /mnt/$oname
+	$DONTDOIT mount -v /dev/${drivename}o /mnt/$oname
+fi
+if [ "$pname" != "" ]; then
+	echo	""
+	echo	"Initializing $pname filesystem, and mounting..."
+	$DONTDOIT newfs /dev/r${drivename}p $name
+	$DONTDOIT mkdir -p /mnt/$pname
+	$DONTDOIT mount -v /dev/${drivename}p /mnt/$pname
+fi
 
 echo	""
 echo    "Populating filesystems with bootstrapping binaries and config files"
-$DONTDOIT tar -cfX - . | (cd /mnt ; tar -xpf - )
+$DONTDOIT tar -cXf - . | (cd /mnt ; tar -xpf - )
 $DONTDOIT cp /tmp/.hdprofile /mnt/.profile
 
 echo	""
@@ -459,11 +579,34 @@ fi
 if [ "$hname" != "" ]; then
 	echo /dev/${drivename}h /$hname ffs rw 1 5 | sed -e s,//,/, >> $FSTAB
 fi
+if [ "$iname" != "" ]; then
+	echo /dev/${drivename}i /$iname ffs rw 1 5 | sed -e s,//,/, >> $FSTAB
+fi
+if [ "$jname" != "" ]; then
+	echo /dev/${drivename}j /$jname ffs rw 1 5 | sed -e s,//,/, >> $FSTAB
+fi
+if [ "$kname" != "" ]; then
+	echo /dev/${drivename}k /$kname ffs rw 1 5 | sed -e s,//,/, >> $FSTAB
+fi
+if [ "$lname" != "" ]; then
+	echo /dev/${drivename}l /$lname ffs rw 1 5 | sed -e s,//,/, >> $FSTAB
+fi
+if [ "$mname" != "" ]; then
+	echo /dev/${drivename}m /$mname ffs rw 1 5 | sed -e s,//,/, >> $FSTAB
+fi
+if [ "$nname" != "" ]; then
+	echo /dev/${drivename}n /$nname ffs rw 1 5 | sed -e s,//,/, >> $FSTAB
+fi
+if [ "$oname" != "" ]; then
+	echo /dev/${drivename}o /$oname ffs rw 1 5 | sed -e s,//,/, >> $FSTAB
+fi
+if [ "$pname" != "" ]; then
+	echo /dev/${drivename}p /$pname ffs rw 1 5 | sed -e s,//,/, >> $FSTAB
+fi
+
 sync
 echo	" done."
 
-echo	""
-echo	""
 echo	"OK!  The preliminary work of setting up your disk is now complete."
 echo 	""
 echo	"The remaining tasks are:"
