@@ -1,4 +1,4 @@
-/*	$OpenBSD: apmd.c,v 1.24 2002/05/16 08:47:50 mpech Exp $	*/
+/*	$OpenBSD: apmd.c,v 1.25 2002/06/14 04:21:41 deraadt Exp $	*/
 
 /*
  *  Copyright (c) 1995, 1996 John T. Kohl
@@ -46,7 +46,6 @@
 #include <signal.h>
 #include <errno.h>
 #include <err.h>
-#include <grp.h>
 #include <machine/apmvar.h>
 #include "pathnames.h"
 #include "apm-proto.h"
@@ -180,12 +179,7 @@ int
 bind_socket(const char *sockname)
 {
 	struct sockaddr_un s_un;
-	struct group *gr;
 	int sock;
-
-	gr = getgrnam("operator");
-	if (!gr)
-		syslog(LOG_ERR, "no operator");
 
 	sock = socket(AF_UNIX, SOCK_STREAM, 0);
 	if (sock == -1)
@@ -201,9 +195,8 @@ bind_socket(const char *sockname)
 
 	if (bind(sock, (struct sockaddr *)&s_un, s_un.sun_len) == -1)
 		error("cannot connect to APM socket", NULL);
-	if (chmod(sockname, 0660) == -1 || chown(sockname, 0,
-		    gr ? gr->gr_gid : 0) == -1)
-		error("cannot set socket chmod/chown", NULL);
+	if (chmod(sockname, 0660) == -1 || chown(sockname, 0, 0) == -1)
+		error("cannot set socket mode/owner/group to 660/0/0", NULL);
 
 	listen(sock, 1);
 	socketname = strdup(sockname);

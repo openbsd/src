@@ -1,4 +1,4 @@
-.\"	$OpenBSD: apmd.8,v 1.22 2002/05/16 08:47:50 mpech Exp $
+.\"	$OpenBSD: apmd.8,v 1.23 2002/06/14 04:21:41 deraadt Exp $
 .\"
 .\" Copyright (c) 1995 John T. Kohl
 .\" All rights reserved.
@@ -199,7 +199,7 @@ is the default UNIX-domain socket used for communication with
 The
 .Fl S
 flag may be used to specify an alternate socket name.
-The socket is protected to mode 0660, UID 0, GID 5; this protects access
+The socket is protected to mode 0660, UID 0, GID 0; this protects access
 to suspend requests to authorized users only.
 .Pp
 .Pa /dev/apmctl
