@@ -3,16 +3,18 @@ this document in hand and are careful to read and remember the
 information which is presented to you by the install program, it
 shouldn't be too much trouble.
 
-Before you begin, you should know the geometry of your hard disk, i.e.
-the sector size (note that sector sizes other than 512 bytes are not
-currently supported), the number of sectors per track, the number of
-tracks per cylinder (also known as the number of heads), and the
-number of cylinders on the disk.  The OpenBSD kernel will try to
-discover these parameters on its own, and if it can it will print them
-at boot time.  If possible, you should use the parameters it prints.
-(You might not be able to because you're sharing your disk with
-another operating system, or because your disk is old enough that the
-kernel can't figure out its geometry.)
+Before you begin, you should decide if OpenBSD is to be installed
+on the whole disk or share the disk with MacOS.
+
+For standalone (No MacOS installed) or dedicated disks, the MBR
+installation method should be chosen and no additional prep is necessary
+
+If it is to shared the disk with MacOS a partition must be preallocated
+by the MacOS partition editor and MacOS installed to the proper parition.
+This expects that the HFS parition will be the first parition on
+the disk, and then the OpenBSD parition will follow.
+This may require the disk be reformatted and reinstalled under MacOS
+using the "Drive Setup" application.
 
 You should now be ready to install OpenBSD.
 
