@@ -1,4 +1,4 @@
-/*	$OpenBSD: autest.c,v 1.7 2003/06/02 19:15:38 jason Exp $	*/
+/*	$OpenBSD: autest.c,v 1.8 2003/06/04 01:31:04 jason Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -36,6 +36,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <unistd.h>
+#include <errno.h>
 
 /* XXX ADPCM is currently pretty broken... diagnosis and fix welcome */
 #undef	USE_ADPCM
@@ -243,7 +244,7 @@ enc_ulinear_8(int fd, audio_encoding_t *enc, int chans)
 	inf.play.channels = chans;
 
 	if (ioctl(fd, AUDIO_SETINFO, &inf) == -1) {
-		warn("setinfo");
+		printf("[%s]", strerror(errno));
 		goto out;
 	}
 
@@ -295,7 +296,7 @@ enc_slinear_8(int fd, audio_encoding_t *enc, int chans)
 	inf.play.channels = chans;
 
 	if (ioctl(fd, AUDIO_SETINFO, &inf) == -1) {
-		warn("setinfo");
+		printf("[%s]", strerror(errno));
 		goto out;
 	}
 
@@ -347,7 +348,7 @@ enc_slinear_16(int fd, audio_encoding_t *enc, int chans, int order)
 	inf.play.channels = chans;
 
 	if (ioctl(fd, AUDIO_SETINFO, &inf) == -1) {
-		warn("setinfo");
+		printf("[%s]", strerror(errno));
 		goto out;
 	}
 
@@ -408,7 +409,7 @@ enc_ulinear_16(int fd, audio_encoding_t *enc, int chans, int order)
 	inf.play.channels = chans;
 
 	if (ioctl(fd, AUDIO_SETINFO, &inf) == -1) {
-		warn("setinfo");
+		printf("[%s]", strerror(errno));
 		goto out;
 	}
 
@@ -471,7 +472,7 @@ enc_adpcm_8(int fd, audio_encoding_t *enc, int chans)
 	inf.play.channels = chans;
 
 	if (ioctl(fd, AUDIO_SETINFO, &inf) == -1) {
-		warn("setinfo");
+		printf("[%s]", strerror(errno));
 		goto out;
 	}
 
@@ -544,7 +545,7 @@ enc_ulaw_8(int fd, audio_encoding_t *enc, int chans)
 	inf.play.channels = chans;
 
 	if (ioctl(fd, AUDIO_SETINFO, &inf) == -1) {
-		warn("setinfo");
+		printf("[%s]", strerror(errno));
 		goto out;
 	}
 
