@@ -20,13 +20,11 @@ esac
 echo "Extracting x2p/Makefile (with variable substitutions)"
 rm -f Makefile
 cat >Makefile <<!GROK!THIS!
-# $RCSfile: Makefile.SH,v $$Revision: 1.1.1.1 $$Date: 1996/08/19 10:13:33 $
+# $RCSfile: Makefile.SH,v $$Revision: 1.1 $$Date: 1996/08/19 10:13:33 $
 #
 # $Log: Makefile.SH,v $
-# Revision 1.1.1.1  1996/08/19 10:13:33  downsj
-# Import of Perl 5.003 into the tree.  Makefile.bsd-wrapper,
-# config.sh.OpenBSD and "rm *.cat1" for target "realclean" are the only
-# local changes.
+# Revision 1.1  1996/08/19 10:13:33  downsj
+# Initial revision
 #
 
 CC = $cc
@@ -115,7 +113,7 @@ clean:
 	rm -f a2p *$(OBJ_EXT)
 
 realclean: clean
-	rm -f *.orig core $(addedbyconf) all malloc.c *.cat1
+	rm -f *.orig core $(addedbyconf) all malloc.c
 	rm -f $(FIRSTMAKEFILE) $(FIRSTMAKEFILE).old
 
 # The following lint has practically everything turned on.  Unfortunately,
