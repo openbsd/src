@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_pci.c,v 1.19 2002/04/01 05:40:21 mickey Exp $	*/
+/*	$OpenBSD: if_wi_pci.c,v 1.20 2002/04/01 05:49:57 millert Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -114,7 +114,6 @@ static const struct wi_pci_product {
 	{ PCI_VENDOR_NETGEAR, PCI_PRODUCT_NETGEAR_MA301, WI_PCI_PLX },
 	{ PCI_VENDOR_NDC, PCI_PRODUCT_NDC_NCP130, WI_PCI_PLX },
 	{ PCI_VENDOR_NDC, PCI_PRODUCT_NDC_NCP130A2, WI_PCI_TMD },
-	{ PCI_VENDOR_COREGA, PCI_PRODUCT_COREGA_CGWLPCIA11, WI_PCI_PLX },
 	{ PCI_VENDOR_INTERSIL, PCI_PRODUCT_INTERSIL_MINI_PCI_WLAN, WI_PCI_PRISM },
 	{ 0, 0 }
 };
