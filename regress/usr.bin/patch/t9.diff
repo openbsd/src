@@ -1,0 +1,8 @@
+--- t9.in	Sat Jun 19 13:03:57 2004
++++ t9.out	Sat Jun 19 13:05:43 2004
+@@ -1,2 +1,3 @@
+ A line of text
+-
++Another
++x
+\ No newline at end of file

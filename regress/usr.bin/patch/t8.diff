@@ -1,0 +1,9 @@
+--- t8.in	Sat Jun 19 13:01:41 2004
++++ t8.out	Sat Jun 19 13:01:46 2004
+@@ -1,4 +1,4 @@
+-Line 1
++Line 1 with a change
+ Line 2
+ Line 3
+ Line 4 (no eol)
+\ No newline at end of file

@@ -1,0 +1,9 @@
+--- t13.in	Sat Jun 19 19:53:25 2004
++++ t13.out	Sat Jun 19 19:53:40 2004
+@@ -1,4 +1,4 @@
+ A line of text 1
+ A line of text 2
+ A line of text 3
+-A line of text 4
+\ No newline at end of file
++A line of text 4

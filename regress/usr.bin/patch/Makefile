@@ -1,9 +1,9 @@
-# $OpenBSD: Makefile,v 1.5 2004/06/14 18:40:23 otto Exp $
+# $OpenBSD: Makefile,v 1.6 2004/06/20 19:25:23 otto Exp $
 
 PATCH=patch
 PATCHOPTIONS=-sN
 
-REGRESS_TARGETS=t1 t2 t3 t4 t5
+REGRESS_TARGETS=t1 t2 t3 t4 t5 t6 t7 t8 t9 t10 t11 t12 t13
 
 # .in: input file
 # .diff: patch
@@ -14,10 +14,12 @@ REGRESS_TARGETS=t1 t2 t3 t4 t5
 # t3: a case where it patch should detect a previously applied patch.
 #     Diff transform an empty file into a single line one.
 # t4: a case where patch has to detect a previously applied patch.
-#     Diff transform an file with a single line without eol into a single
-#     line with eol. Fails because patch does not detect the previously
-#     applied diff.
+#     Diff transform a file with a single line with an eol into a single
+#     line without eol.
 # t5: both files in diff do not exist. t5.in should be missing.
+# t6-t12: various cases of no eol at end of file handling.
+# t13: a case where patch has to detect a previously applied patch.
+#     Diff transform a file ending with no eol into a file ending with eol.
 
 all: clean ${REGRESS_TARGET}
 
@@ -48,6 +50,13 @@ t5:
 	@rm -f ${*}
 	@${PATCH} ${PATCHOPTIONS} < ${.CURDIR}/${*}.diff
 	@cmp -s ${*} ${.CURDIR}/${*}.out || (echo "XXX ${*} failed" && false)
+
+t13:
+	@echo ${*}
+	@cp ${.CURDIR}/${*}.in ${*}.copy
+	@(! ${PATCH} ${PATCHOPTIONS} ${*}.copy ${.CURDIR}/${*}.diff)
+	@cmp -s ${*}.copy ${.CURDIR}/${*}.out || \
+		(echo "XXX ${*} failed" && false)
 
 # Clean all files generated
 clean:

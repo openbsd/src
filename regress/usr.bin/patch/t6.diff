@@ -1,0 +1,6 @@
+--- t6.in	Sat Jun 19 14:22:27 2004
++++ t6.out	Sat Jun 19 12:57:07 2004
+@@ -1 +1 @@
+-A line of text
+\ No newline at end of file
++A line of text

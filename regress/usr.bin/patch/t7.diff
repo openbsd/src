@@ -1,0 +1,7 @@
+--- t7.in	Sat Jun 19 12:59:35 2004
++++ t7.out	Sat Jun 19 12:59:47 2004
+@@ -1 +1 @@
+-A line of text with no eol
+\ No newline at end of file
++A line of text with no eol and a change
+\ No newline at end of file
