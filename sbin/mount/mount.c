@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.c,v 1.6 1996/11/12 09:09:19 downsj Exp $	*/
+/*	$OpenBSD: mount.c,v 1.7 1996/12/03 01:04:44 downsj Exp $	*/
 /*	$NetBSD: mount.c,v 1.24 1995/11/18 03:34:29 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mount.c	8.19 (Berkeley) 4/19/94";
 #else
-static char rcsid[] = "$OpenBSD: mount.c,v 1.6 1996/11/12 09:09:19 downsj Exp $";
+static char rcsid[] = "$OpenBSD: mount.c,v 1.7 1996/12/03 01:04:44 downsj Exp $";
 #endif
 #endif /* not lint */
 
@@ -60,6 +60,7 @@ static char rcsid[] = "$OpenBSD: mount.c,v 1.6 1996/11/12 09:09:19 downsj Exp $"
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <util.h>
 
 #include "pathnames.h"
 
@@ -77,8 +78,6 @@ int	mountfs __P((const char *, const char *, const char *,
 			int, const char *, const char *, int));
 void	prmount __P((struct statfs *));
 void	usage __P((void));
-
-char   *readlabelfs __P((char *));
 
 /* Map from mount otions to printable formats. */
 static struct opt {
@@ -235,7 +234,7 @@ main(argc, argv)
 				vfstype = "nfs";
 			else {
 				char *labelfs = readlabelfs(argv[0]);
-				if (labelfs != NULL)
+				if (labelfs != "")
 					vfstype = labelfs;
 			}
 		}
