@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.86 2002/04/26 04:24:17 jason Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.87 2002/04/26 05:06:03 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -1789,17 +1789,17 @@ ubsec_kprocess_modexp(sc, krp)
 		goto errout;
 	}
 
-	if (ubsec_dma_malloc(sc, 2048 / 8, &me->me_M, 0)) {
+	if (ubsec_dma_malloc(sc, 1024 / 8, &me->me_M, 0)) {
 		err = ENOMEM;
 		goto errout;
 	}
 
-	if (ubsec_dma_malloc(sc, 2048 / 8, &me->me_E, 0)) {
+	if (ubsec_dma_malloc(sc, 1024 / 8, &me->me_E, 0)) {
 		err = ENOMEM;
 		goto errout;
 	}
 
-	if (ubsec_dma_malloc(sc, 2048 / 8, &me->me_C, 0)) {
+	if (ubsec_dma_malloc(sc, 1024 / 8, &me->me_C, 0)) {
 		err = ENOMEM;
 		goto errout;
 	}
@@ -1831,7 +1831,7 @@ ubsec_kprocess_modexp(sc, krp)
 	mcr->mcr_reserved = 0;
 
 	if (ubsec_kcopyin(&krp->krp_param[0], me->me_M.dma_vaddr,
-	    2048 / 8, &len)) {
+	    1024 / 8, &len)) {
 		err = EOPNOTSUPP;
 		goto errout;
 	}
@@ -1850,7 +1850,7 @@ ubsec_kprocess_modexp(sc, krp)
 	ctx = (struct ubsec_ctx_modexp *)me->me_q.q_ctx.dma_vaddr;
 	bzero(ctx, sizeof(*ctx));
 	if (ubsec_kcopyin(&krp->krp_param[2], ctx->me_N,
-	    2048 / 8, &len)) {
+	    1024 / 8, &len)) {
 		err = EOPNOTSUPP;
 		goto errout;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsecvar.h,v 1.27 2002/04/26 04:24:17 jason Exp $	*/
+/*	$OpenBSD: ubsecvar.h,v 1.28 2002/04/26 05:06:03 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Theo de Raadt
@@ -172,4 +172,3 @@ struct ubsec_stats {
 	u_int32_t hst_mcrerr;
 	u_int32_t hst_nodmafree;
 };
-
