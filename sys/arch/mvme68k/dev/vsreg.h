@@ -1,4 +1,4 @@
-/*	$OpenBSD: vsreg.h,v 1.1 2000/01/25 04:18:18 smurph Exp $ */
+/*	$OpenBSD: vsreg.h,v 1.2 2000/06/10 19:53:23 deraadt Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1990 The Regents of the University of California.
@@ -178,12 +178,12 @@ typedef struct {
    unsigned short  :3;
    unsigned short  transfer_type :2;
    /* 				0x0 is reserved */
-   #define SHORT_TREANSFER 		0x1	
+   #define SHORT_TRANSFER 			0x1	
    #define LONG_TRANSFER			0x2	
    #define SCATTER_GATTER_LIST_IN_SHORT_IO	0x3	
    unsigned short  memory_type :2;
-   #define NORMAL_TYPE			0x0	
-   #define BLOCK_MODE			0x1	
+   #define NORMAL_TYPE				0x0	
+   #define BLOCK_MODE				0x1	
    /*				0x2 is reserved */
    /*				0x3 is reserved */
    unsigned short  address_modifier :8;

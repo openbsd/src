@@ -1,4 +1,4 @@
-/*	$OpenBSD: vsdma.c,v 1.1 2000/01/25 04:18:18 smurph Exp $ */
+/*	$OpenBSD: vsdma.c,v 1.2 2000/06/10 19:53:23 deraadt Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * All rights reserved.
@@ -46,7 +46,7 @@
 #include <scsi/scsiconf.h>
 #include <machine/autoconf.h>
 
-#if defined(MVME187) || defined(MVME188) || defined(MVME197)
+#ifdef __m88k__
 #include <machine/board.h>
 #include <mvme88k/dev/vsreg.h>
 #include <mvme88k/dev/vsvar.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vs.c,v 1.1 2000/01/25 04:18:17 smurph Exp $ */
+/*	$OpenBSD: vs.c,v 1.2 2000/06/10 19:53:23 deraadt Exp $ */
 
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
@@ -54,18 +54,18 @@
 #include <machine/param.h>
 
 #define PAGESIZE 4096  /* should get this out of a header? XXX - smurph */
-#if defined(MVME187) || defined(MVME188) || defined(MVME197)
-   #include <mvme88k/dev/vsreg.h>
-   #include <mvme88k/dev/vsvar.h>
-   #include "machine/mmu.h"
-   #define ROUND_PAGE m88k_round_page
-   #define TRUNC_PAGE m88k_trunc_page
+#ifdef __m88k_
+#include <mvme88k/dev/vsreg.h>
+#include <mvme88k/dev/vsvar.h>
+#include "machine/mmu.h"
+#define ROUND_PAGE m88k_round_page
+#define TRUNC_PAGE m88k_trunc_page
 #else
-   #include <mvme68k/dev/vsreg.h>
-   #include <mvme68k/dev/vsvar.h>
-   #define ROUND_PAGE m68k_round_page
-   #define TRUNC_PAGE m68k_trunc_page
-#endif /* defined(MVME187) || defined(MVME188) || defined(MVME197) */
+#include <mvme68k/dev/vsreg.h>
+#include <mvme68k/dev/vsvar.h>
+#define ROUND_PAGE m68k_round_page
+#define TRUNC_PAGE m68k_trunc_page
+#endif
 
 int  vs_checkintr        __P((struct vs_softc *, struct scsi_xfer *, int *));
 int  vs_chksense         __P((struct scsi_xfer *));
