@@ -1,4 +1,4 @@
-/*      $OpenBSD: pciide.c,v 1.6 1999/07/30 00:17:37 deraadt Exp $     */
+/*      $OpenBSD: pciide.c,v 1.7 1999/08/04 23:27:49 niklas Exp $     */
 /*	$NetBSD: pciide.c,v 1.40 1999/07/12 13:49:38 bouyer Exp $	*/
 
 /*
@@ -796,9 +796,6 @@ pciide_dma_table_setup(sc, channel, drive)
 		return error;
 	}
 
-#ifdef __OpenBSD__
-#define BUS_DMA_COHERENT 0
-#endif
 	if ((error = bus_dmamem_map(sc->sc_dmat, &seg, rseg,
 	    dma_table_size,
 	    (caddr_t *)&dma_maps->dma_table,
@@ -808,9 +805,6 @@ pciide_dma_table_setup(sc, channel, drive)
 		    channel, drive, error);
 		return error;
 	}
-#ifdef __OpenBSD__
-#undef BUS_DMA_COHERENT
-#endif
 
 	WDCDEBUG_PRINT(("pciide_dma_table_setup: table at %p len %ld, "
 	    "phy 0x%lx\n", dma_maps->dma_table, dma_table_size,

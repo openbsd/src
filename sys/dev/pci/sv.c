@@ -1,4 +1,4 @@
-/*      $OpenBSD: sv.c,v 1.6 1999/01/02 00:02:49 niklas Exp $ */
+/*      $OpenBSD: sv.c,v 1.7 1999/08/04 23:27:49 niklas Exp $ */
 
 /*
  * Copyright (c) 1998 Constantine Paul Sapuntzakis
@@ -57,13 +57,12 @@
 
 #include <machine/bus.h>
 
-/* NetBSD 1.3 backwards compatibility */
-#ifndef BUS_DMA_COHERENT
-#define BUS_DMA_COHERENT 0	/* XXX */
+#ifdef __OpenBSD__
 struct        cfdriver sv_cd = {
       NULL, "sv", DV_DULL
 };
 #endif
+
 #ifdef AUDIO_DEBUG
 #define DPRINTF(x)	if (svdebug) printf x
 #define DPRINTFN(n,x)	if (svdebug>(n)) printf x

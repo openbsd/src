@@ -1,4 +1,4 @@
-/*	$OpenBSD: brooktree848.c,v 1.9 1999/05/21 17:55:18 deraadt Exp $	*/
+/*	$OpenBSD: brooktree848.c,v 1.10 1999/08/04 23:27:49 niklas Exp $	*/
 /* $FreeBSD: brooktree848.c,v 1.64 1999/01/28 17:47:47 roger Exp $ */
 /* BT848 Driver for Brooktree's Bt848, Bt849, Bt878 and Bt 879 based cards.
    The Brooktree  BT848 Driver driver is based upon Mark Tinguely and
@@ -4520,7 +4520,7 @@ get_bktr_mem(bktr, dmapp, size)
 		}
 	}
 	if (bus_dmamem_map(dmat, &seg, rseg, size,
-			   &kva, BUS_DMA_NOWAIT|BUS_DMAMEM_NOSYNC)) {
+			   &kva, BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) {
 		printf("bktr%d: Unable to dmamem_map of %d bytes\n",
 			bktr->bktr_dev.dv_unit, size);
 		bus_dmamem_free(dmat, &seg, rseg);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: adv.c,v 1.4 1998/11/17 06:08:15 downsj Exp $	*/
+/*	$OpenBSD: adv.c,v 1.5 1999/08/04 23:27:48 niklas Exp $	*/
 /*	$NetBSD: adv.c,v 1.6 1998/10/28 20:39:45 dante Exp $	*/
 
 /*
@@ -197,7 +197,7 @@ adv_alloc_ccbs(sc)
 	}
 	if ((error = bus_dmamem_map(sc->sc_dmat, &seg, rseg,
 		   sizeof(struct adv_control), (caddr_t *) & sc->sc_control,
-				 BUS_DMA_NOWAIT | BUS_DMAMEM_NOSYNC)) != 0) {
+				 BUS_DMA_NOWAIT | BUS_DMA_COHERENT)) != 0) {
 		printf("%s: unable to map control structures, error = %d\n",
 		       sc->sc_dev.dv_xname, error);
 		return (error);
@@ -424,7 +424,7 @@ adv_alloc_overrunbuf(dvname, dmat)
 		return (0);
 	}
 	if ((error = bus_dmamem_map(dmat, &seg, rseg, ASC_OVERRUN_BSIZE,
-	(caddr_t *) & overrunbuf, BUS_DMA_NOWAIT | BUS_DMAMEM_NOSYNC)) != 0) {
+	(caddr_t *) & overrunbuf, BUS_DMA_NOWAIT | BUS_DMA_COHERENT)) != 0) {
 		printf("%s: unable to map overrun buffer, error = %d\n",
 		       dvname, error);
 

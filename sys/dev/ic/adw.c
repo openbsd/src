@@ -1,4 +1,4 @@
-/*	$OpenBSD: adw.c,v 1.1 1998/11/17 06:14:58 downsj Exp $	*/
+/*	$OpenBSD: adw.c,v 1.2 1999/08/04 23:27:48 niklas Exp $	*/
 /* $NetBSD: adw.c,v 1.3 1998/10/10 00:28:33 thorpej Exp $	 */
 
 /*
@@ -193,7 +193,7 @@ adw_alloc_ccbs(sc)
 	}
 	if ((error = bus_dmamem_map(sc->sc_dmat, &seg, rseg,
 		   sizeof(struct adw_control), (caddr_t *) & sc->sc_control,
-				 BUS_DMA_NOWAIT | BUS_DMAMEM_NOSYNC)) != 0) {
+				 BUS_DMA_NOWAIT | BUS_DMA_COHERENT)) != 0) {
 		printf("%s: unable to map control structures, error = %d\n",
 		       sc->sc_dev.dv_xname, error);
 		return (error);
