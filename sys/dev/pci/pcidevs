@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.189 1999/10/26 23:34:37 chris Exp $
+$OpenBSD: pcidevs,v 1.190 1999/10/28 21:55:15 aaron Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -505,6 +505,7 @@ vendor ALTEON		0x12ae	Alteon
 vendor PICTUREEL	0x12c5	Picture Elements
 vendor STB2		0x12d2	NVidia/SGS-Thomson
 vendor DIAMOND2		0x12eb	Diamond Multimedia (2nd ID)
+vendor ADMTEK		0x1317	ADMtek
 vendor SIIG		0x131f	SIIG
 vendor LMC		0x1376	LAN Media Corp
 vendor NETGEAR		0x1385	Netgear
@@ -612,6 +613,10 @@ product ALI M5237		0x5237	M5237 USB
 product ALI M5243		0x5243	M5243 AGP/PCI-PCI
 product ALI M7101		0x7101	M7101 Power Management
 product ALI M3309		0x3309	M3309 MPEG Accelerator
+
+/* ADMtek products */
+product ADMTEK AL981		0x0981	AL981
+product ADMTEK AN985		0x0985	AN985
 
 /* Adaptec products */
 product ADP AIC7810		0x1078	AIC-7810
