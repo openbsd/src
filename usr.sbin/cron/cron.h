@@ -17,7 +17,7 @@
 
 /* cron.h - header for vixie's cron
  *
- * $Id: cron.h,v 1.4 2000/08/21 20:57:53 deraadt Exp $
+ * $Id: cron.h,v 1.5 2001/02/12 18:46:54 millert Exp $
  *
  * vix 14nov88 [rest of log is in RCS]
  * vix 14jan87 [0 or 7 can be sunday; thanks, mwm@berkeley]
@@ -68,7 +68,7 @@
 #define	MAX_COMMAND	1000	/* max length of internally generated cmd */
 #define	MAX_ENVSTR	1000	/* max length of envvar=value\0 strings */
 #define	MAX_TEMPSTR	100	/* obvious */
-#define	MAX_UNAME	20	/* max length of username, should be overkill */
+#define	MAX_UNAME	(_PW_NAME_LEN+1)	/* max length of username */
 #define	ROOT_UID	0	/* don't change this, it really must be root */
 #define	ROOT_USER	"root"	/* ditto */
 
