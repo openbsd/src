@@ -1,4 +1,4 @@
-#	$OpenBSD: generic.hppa,v 1.5 2002/03/01 23:27:57 mickey Exp $
+#	$OpenBSD: generic.hppa,v 1.6 2002/03/15 21:14:24 mickey Exp $
 #
 # Generic kernel config (all that is supportted)
 #
@@ -34,8 +34,8 @@ sti0	at mainbus0 irq 11	# [H]CRX-{8,24,48}[Z] graphics
 sti1	at mainbus0 irq 12
 
 # internal i/o space
-gsc*	at lasi?		# 712
-gsc*	at asp?			# 7xx (old)
+gsc*	at lasi?		# 712,715/64/80/100
+gsc*	at asp?			# 7xx/33/50/75 (old)
 #gsc*	at wax?			# {725,715}/{64,80,100}, C*, B*, J*
 
 #vme*	at vmeb?
