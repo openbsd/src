@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: ttyname.c,v 1.4 1997/07/09 00:28:25 millert Exp $";
+static char rcsid[] = "$OpenBSD: ttyname.c,v 1.5 1998/08/27 06:42:16 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -45,7 +45,7 @@ static char rcsid[] = "$OpenBSD: ttyname.c,v 1.4 1997/07/09 00:28:25 millert Exp
 #include <unistd.h>
 #include <paths.h>
 
-static char buf[sizeof(_PATH_DEV) + MAXNAMLEN] = _PATH_DEV;
+static char buf[sizeof(_PATH_DEV) + MAXNAMLEN];
 static char *oldttyname __P((int, struct stat *));
 
 char *
@@ -68,6 +68,8 @@ ttyname(fd)
 	if (fstat(fd, &sb) || !S_ISCHR(sb.st_mode))
 		return (NULL);
 
+	memcpy(buf, _PATH_DEV, sizeof(_PATH_DEV));
+
 	if ((db = dbopen(_PATH_DEVDB, O_RDONLY, 0, DB_HASH, NULL))) {
 		memset(&bkey, 0, sizeof(bkey));
 		bkey.type = S_IFCHR;
@@ -75,8 +77,8 @@ ttyname(fd)
 		key.data = &bkey;
 		key.size = sizeof(bkey);
 		if (!(db->get)(db, &key, &data, 0)) {
-			bcopy(data.data,
-			    buf + sizeof(_PATH_DEV) - 1, data.size);
+			memcpy(buf + sizeof(_PATH_DEV) - 1, data.data,
+			    data.size);
 			(void)(db->close)(db);
 			return (buf);
 		}
@@ -101,7 +103,7 @@ oldttyname(fd, sb)
 	while ((dirp = readdir(dp))) {
 		if (dirp->d_fileno != sb->st_ino)
 			continue;
-		bcopy(dirp->d_name, buf + sizeof(_PATH_DEV) - 1,
+		memcpy(buf + sizeof(_PATH_DEV) - 1, dirp->d_name,
 		    dirp->d_namlen + 1);
 		if (stat(buf, &dsb) || sb->st_dev != dsb.st_dev ||
 		    sb->st_ino != dsb.st_ino)
