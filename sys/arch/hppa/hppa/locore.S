@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.117 2003/10/15 19:54:13 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.118 2003/10/16 03:45:07 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -1523,8 +1523,8 @@ $trapnowvirt
 	 */
 
 	mfctl	ccr, t2
-	stw	t1, TF_CR0(t3)
-	stw	t2, TF_CR10(t3)
+	stw	t1, TF_CR0(sr3, t3)
+	stw	t2, TF_CR10(sr3, t3)
 
 	mfsp	sr0, t1
 	mfsp	sr1, t2
