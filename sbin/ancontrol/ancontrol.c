@@ -1,4 +1,4 @@
-/*	$OpenBSD: ancontrol.c,v 1.19 2002/02/16 21:27:32 millert Exp $	*/
+/*	$OpenBSD: ancontrol.c,v 1.20 2002/06/06 17:25:16 mickey Exp $	*/
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  *
@@ -265,6 +265,7 @@ an_dumpstatus()
 	printf("]\n");
 	printf("Error code:\t\t");
 	an_printhex((char *)&sts->an_errcode, 1);
+	printf("\nSignal strength:\t[ %d%% ]",sts->an_normalized_rssi);
 	printf("\nSignal quality:\t\t");
 	an_printhex((char *)&sts->an_cur_signal_quality, 1);
 	printf("\nCurrent SSID:\t\t");
