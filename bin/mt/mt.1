@@ -1,4 +1,4 @@
-.\"	$NetBSD: mt.1,v 1.7 1996/03/05 20:39:42 scottr Exp $
+.\"	$NetBSD: mt.1,v 1.8 1996/05/21 10:23:55 mrg Exp $
 .\"
 .\" Copyright (c) 1981, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -104,6 +104,14 @@ Retensions the tape (if this operation is supported by the tape unit).
 Erases the tape (if this operation is supported by the tape unit).
 .It Cm eom
 Forward space to the end of the media.
+.It Cm blocksize
+Set the tape blocksize to
+.Ar count
+bytes.
+.It Cm density
+Set the tape density code to
+.Ar count
+as specified in the SCSI2 specification.
 .El
 .Pp
 If a tape name is not specified, and the environment variable
@@ -134,6 +142,8 @@ is not given.
 Raw SCSI tape interface
 .It Pa /dev/rmt*
 Raw magnetic tape interface
+.It Pa /usr/src/sys/scsi/scsi_tape.h
+List of SCSI2 density codes
 .El
 .Sh SEE ALSO
 .\".Xr mtio 4 ,
