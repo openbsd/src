@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.47 2001/11/05 07:39:17 mpech Exp $	*/
+/*	$OpenBSD: ping.c,v 1.48 2002/01/28 08:08:20 hugh Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: ping.c,v 1.47 2001/11/05 07:39:17 mpech Exp $";
+static char rcsid[] = "$OpenBSD: ping.c,v 1.48 2002/01/28 08:08:20 hugh Exp $";
 #endif
 #endif /* not lint */
 
@@ -170,8 +170,7 @@ quad_t tsumsq = 0;		/* sum of all times squared, for std. dev. */
 int reset_kerninfo;
 #endif
 
-#define DEFAULT_BUFSPACE	60*1024 /* default read buffer size */
-int bufspace = DEFAULT_BUFSPACE;
+int bufspace = IP_MAXPACKET;
 
 void fill __P((char *, char *));
 void catcher(), prtsig(), finish(), summary(int);
@@ -467,9 +466,9 @@ main(argc, argv)
 		if ((bufspace -= 1024) <= 0)
 			err(1, "Cannot set the receive buffer size");
 	}
-	if (bufspace < DEFAULT_BUFSPACE)
+	if (bufspace < IP_MAXPACKET)
 		warnx("Could only allocate a receive buffer of %i bytes (default %i)",
-		    bufspace, DEFAULT_BUFSPACE);
+		    bufspace, IP_MAXPACKET);
 
 	if (to->sin_family == AF_INET)
 		(void)printf("PING %s (%s): %d data bytes\n", hostname,
