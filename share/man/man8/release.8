@@ -1,4 +1,4 @@
-.\"	$OpenBSD: release.8,v 1.26 2003/03/20 18:37:42 millert Exp $
+.\"	$OpenBSD: release.8,v 1.27 2003/03/20 19:33:11 millert Exp $
 .\"
 .\"	Copyright (c) 2000 Marco S. Hyman
 .\"
@@ -40,8 +40,12 @@ Make the third party packages.
 .Pp
 The following sections describe each of the required steps in detail.
 .Pp
-Commands to be run as a user with write permissions on the source tree,
-.Pa /usr/src ,
+Commands to be run as a user with write permissions on the source and
+ports trees
+.No ( Ns Pa /usr/src
+and
+.Pa /usr/ports
+respectively)
 are preceded by a percent sign
 .Pq Sq % .
 Commands that must be run as the superuser are preceded by a hash mark
