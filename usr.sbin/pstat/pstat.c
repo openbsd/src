@@ -1,4 +1,4 @@
-/*	$OpenBSD: pstat.c,v 1.42 2003/01/06 05:32:39 deraadt Exp $	*/
+/*	$OpenBSD: pstat.c,v 1.43 2003/01/06 18:33:15 deraadt Exp $	*/
 /*	$NetBSD: pstat.c,v 1.27 1996/10/23 22:50:06 cgd Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 from: static char sccsid[] = "@(#)pstat.c	8.9 (Berkeley) 2/16/94";
 #else
-static char *rcsid = "$OpenBSD: pstat.c,v 1.42 2003/01/06 05:32:39 deraadt Exp $";
+static char *rcsid = "$OpenBSD: pstat.c,v 1.43 2003/01/06 18:33:15 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -734,7 +734,8 @@ kinfo_vnodes(int *avnodes)
 	return ((struct e_vnode *)vbuf);
 }
 
-char hdr[]="   LINE RAW  CAN  OUT  HWT LWT    COL STATE      SESS  PGID DISC\n";
+const char hdr[] =
+"   LINE RAW  CAN  OUT  HWT LWT    COL STATE      SESS  PGID DISC\n";
 
 void
 tty2itty(struct tty *tp, struct itty *itp)
@@ -771,13 +772,14 @@ ttymode(void)
 	} else
 		KGET(TTY_NTTY, ntty);
 	(void)printf("%d terminal device%s\n", ntty, ntty == 1 ? "" : "s");
-	(void)printf(hdr);
+	(void)printf("%s", hdr);
 	if (kd == 0) {
 		mib[0] = CTL_KERN;
 		mib[1] = KERN_TTY;
 		mib[2] = KERN_TTY_INFO;
 		nlen = ntty * sizeof(struct itty);
-		itp = malloc(nlen);
+		if ((itp = malloc(nlen)) == NULL)
+			err(1, "malloc");
 		if (sysctl(mib, 3, itp, &nlen, NULL, 0) < 0)
 			err(1, "sysctl(KERN_TTY_INFO) failed");
 		for (i = 0; i < ntty; i++)
