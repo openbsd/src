@@ -1,5 +1,5 @@
-/*	$OpenBSD: exchange.c,v 1.17 1999/04/30 11:47:26 niklas Exp $	*/
-/*	$EOM: exchange.c,v 1.100 1999/04/29 22:11:50 niklas Exp $	*/
+/*	$OpenBSD: exchange.c,v 1.18 1999/04/30 22:32:51 niklas Exp $	*/
+/*	$EOM: exchange.c,v 1.101 1999/04/30 20:52:41 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -1133,7 +1133,7 @@ exchange_free_aux (void *v_exch)
     message_free (exchange->last_received);
   if (exchange->last_sent)
     message_free (exchange->last_sent);
-  if (exchange->in_transit)
+  if (exchange->in_transit && exchange->in_transit != exchange->last_sent)
     message_free (exchange->in_transit);
   if (exchange->nonce_i)
     free (exchange->nonce_i);
