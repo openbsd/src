@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwi.c,v 1.29 2005/03/12 13:37:49 damien Exp $	*/
+/*	$OpenBSD: if_iwi.c,v 1.30 2005/03/14 13:21:42 damien Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005
@@ -884,6 +884,10 @@ iwi_notification_intr(struct iwi_softc *sc, struct iwi_rx_buf *buf,
 		    assoc->status));
 
 		switch (assoc->state) {
+		case IWI_AUTHENTICATED:
+			/* re-association, do nothing */
+			break;
+
 		case IWI_ASSOCIATED:
 			ieee80211_new_state(ic, IEEE80211_S_RUN, -1);
 			break;
