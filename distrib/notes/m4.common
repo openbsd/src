@@ -1,5 +1,5 @@
 dnl
-dnl	$OpenBSD: m4.common,v 1.15 2001/09/11 06:06:15 fgsch Exp $
+dnl	$OpenBSD: m4.common,v 1.16 2001/09/24 19:31:43 miod Exp $
 dnl
 dnl simulate an include path with a macro 'includeit'.
 define(`includeit',`sinclude('INCLUDE/`$1)sinclude('INCLUDE/../`$1)')dnl
@@ -10,7 +10,7 @@ dnl Otherwise, evaluate to NULL.
 dnl
 dnl XXX fix to allow - empty 1st arg, for files uncompressed
 dnl                  - empty 2nd arg, for files where only compressed size is
-dnl                    known (aka pc532)
+dnl                    known
 dnl
 define(`showsize',`ifelse(X$1,X,,X$2,X,,X,X,{:-
 		 [ $1 gzipped, $2 uncompressed ]-:})')dnl
@@ -65,9 +65,9 @@ define({:-OpenBSDbase-:},
 {:-	base{:--:}OSrev	 The OpenBSD/MACHINE OSREV base binary distribution.  You
 		 MUST install this distribution set.  It contains the
 		 base OpenBSD utilities that are necessary for the
-		 system to run and be minimally functional.  It
-		 includes shared library support, and excludes
-		 everything described below.showsize($1,$2)-:})dnl
+		 system to run and be minimally functional.
+		 ifelse(X$1,Xshared,{:-It includes shared library support, and excludes
+		 everything described below.showsize($2,$3)-:},showsize($1,$2))-:})dnl
 dnl
 dnl
 dnl OpenBSDcomp( compressed size, uncompressed size )
@@ -77,11 +77,11 @@ define({:-OpenBSDcomp-:},
 		 relating to C, C++, and FORTRAN (yes, there are two!) are
 		 supported.  This set includes the system {:-include-:} files
 		 (/usr/{:-include-:}), the linker, the compiler tool chain,
-		 and the various system libraries (except the shared
-		 libraries, which are included as part of the base
-		 set).  This set also includes the manual pages for all
+		 and the various system libraries{:--:}ifelse(X$1,Xshared,{:- (except the shared
+		 libraries, which are included as part of the base set).-:},.)
+		 This set also includes the manual pages for all
 		 of the utilities it contains, as well as the system
-		 call and library manual pages.showsize($1,$2)-:})dnl
+		 call and library manual pages.ifelse(X$1,Xshared,showsize($2,$3),showsize($1.$2))-:})dnl
 dnl
 dnl
 dnl OpenBSDetc( compressed size, uncompressed size )
@@ -157,15 +157,6 @@ dnl
 define({:-OpenBSDfloppy-:},
 {:-		floppy{:--:}OSrev.fs	The standard MACHINE boot and installation
 				floppy; see below.-:})dnl
-define({:-OpenBSDfloppyB-:},
-{:-		floppyB{:--:}OSrev.fs	The MACHINE boot and installation floppy;
-				this one features all the drivers not available
-				in floppy{:--:}OSrev.fs, such as SCSI, RAID, gigabit
-				ethernet, and such; see below.-:})dnl
-define({:-OpenBSDfloppyC-:},
-{:-		floppyC{:--:}OSrev.fs	The MACHINE boot and installation floppy;
-				this one features most of the cardbus and
-				pcmcia drivers; see below.-:})dnl
 define({:-OpenBSDcdrom-:},
 {:-		cdrom{:--:}OSrev.fs	The MACHINE boot and installation
 				2.88mb floppy image that contains almost all
@@ -176,7 +167,7 @@ define({:-OpenBSDfloppydesc-:},
 you can copy to a floppy using rawrite.exe or `dd'; as described later
 in this document).  This is a bootable install floppy which can be 
 used both to install and to upgrade OpenBSD to the current version.   
-It is also useful for maintenance and disaster recovery.  $1
+It is also useful for maintenance and disaster recovery.
 
 Bootable installation/upgrade floppy:
 
