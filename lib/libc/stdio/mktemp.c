@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: mktemp.c,v 1.9 1997/06/20 04:10:19 millert Exp $";
+static char rcsid[] = "$OpenBSD: mktemp.c,v 1.10 1997/10/07 22:21:34 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -88,10 +88,9 @@ _gettemp(path, doopen, domkdir)
 	register int *doopen;
 	int domkdir;
 {
-	extern int errno;
 	register char *start, *trv;
 	struct stat sbuf;
-	int pid;
+	int pid, rval;
 
 	if (doopen && domkdir) {
 		errno = EINVAL;
@@ -121,19 +120,22 @@ _gettemp(path, doopen, domkdir)
 	 * check the target directory; if you have six X's and it
 	 * doesn't exist this runs for a *very* long time.
 	 */
-	for (start = trv + 1;; --trv) {
-		if (trv <= path)
-			break;
-		if (*trv == '/') {
-			*trv = '\0';
-			if (stat(path, &sbuf))
-				return(0);
-			if (!S_ISDIR(sbuf.st_mode)) {
-				errno = ENOTDIR;
-				return(0);
+	if (doopen || domkdir) {
+		for (start = trv + 1;; --trv) {
+			if (trv <= path)
+				break;
+			if (*trv == '/') {
+				*trv = '\0';
+				rval = stat(path, &sbuf);
+				*trv = '/';
+				if (rval != 0)
+					return(0);
+				if (!S_ISDIR(sbuf.st_mode)) {
+					errno = ENOTDIR;
+					return(0);
+				}
+				break;
 			}
-			*trv = '/';
-			break;
 		}
 	}
 
