@@ -1,4 +1,4 @@
-/*	$OpenBSD: socket.h,v 1.16 1997/04/24 21:34:50 angelos Exp $	*/
+/*	$OpenBSD: socket.h,v 1.17 1997/07/14 03:07:21 angelos Exp $	*/
 /*	$NetBSD: socket.h,v 1.14 1996/02/09 18:25:36 christos Exp $	*/
 
 /*
@@ -222,10 +222,12 @@ struct sockproto {
 	{ "cnt", CTLTYPE_NODE }, \
 	{ "rtip", CTLTYPE_NODE }, \
 	{ "ipx", CTLTYPE_NODE }, \
-	{ "sip", CTLTYPE_NODE }, \
+	{ "inet6", CTLTYPE_NODE }, \
 	{ "pip", CTLTYPE_NODE }, \
+	{ "isdn", CTLTYPE_NODE }, \
 	{ "natm", CTLTYPE_NODE }, \
 	{ "ipsec", CTLTYPE_NODE }, \
+	{ "sip", CTLTYPE_NODE }, \
 	{ "pfkey", CTLTYPE_NODE }, \
 }
 
