@@ -1,4 +1,4 @@
-.\"	$OpenBSD: icmp6.4,v 1.14 2003/06/26 19:54:35 jmc Exp $
+.\"	$OpenBSD: icmp6.4,v 1.15 2003/08/08 09:51:53 jmc Exp $
 .\"	$KAME: icmp6.4,v 1.3 2000/11/24 08:44:40 itojun Exp $
 .\"
 .\" Copyright (C) 1999 WIDE Project.
@@ -141,6 +141,7 @@ and an option name of
 .Pp
 Six macros operate on an icmp6_filter structure:
 .\" is "Fn" legal for macros?
+.Pp
 .Bl -item -compact -offset indent
 .It
 .Ft void
@@ -205,7 +206,7 @@ raw socket is created, it will by default pass all
 .Tn ICMPv6
 message types to the application.
 .Pp
-For further discussions see RFC2292.
+For further discussions see RFC 2292.
 .Sh DIAGNOSTICS
 A socket operation may fail with one of the following errors returned:
 .Bl -tag -width [EADDRNOTAVAIL]
@@ -233,16 +234,14 @@ socket with a network address for which no network interface exists.
 .Rs
 .%A W. Stevens
 .%A M. Thomas
-.%R RFC
-.%N 2292
+.%R RFC 2292
 .%D February 1998
 .%T "Advanced Sockets API for IPv6"
 .Re
 .Rs
 .%A A. Conta
 .%A S. Deering
-.%R RFC
-.%N 2463
+.%R RFC 2463
 .%D December 1998
 .%T "Internet Control Message Protocol (ICMPv6) for the Internet Protocol Version 6 (IPv6) Specification"
 .Re
@@ -252,4 +251,4 @@ The implementation is based on KAME stack
 which is a descendant of WIDE hydrangea IPv6 stack kit
 .Pc .
 .Pp
-Part of the document was shamelessly copied from RFC2292.
+Part of the document was shamelessly copied from RFC 2292.

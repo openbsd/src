@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ip6.4,v 1.15 2003/06/06 10:29:41 jmc Exp $
+.\"	$OpenBSD: ip6.4,v 1.16 2003/08/08 09:51:53 jmc Exp $
 .\"	$KAME: ip6.4,v 1.12 2000/06/08 21:19:39 itojun Exp $
 .\"
 .\" Copyright (C) 1999 WIDE Project.
@@ -87,9 +87,9 @@ There are several
 .Xr setsockopt 2 / Ns Xr getsockopt 2
 options.
 They are separated into the basic IPv6 sockets API
-.Pq defined in RFC2553 ,
+.Pq defined in RFC 2553 ,
 and the advanced API
-.Pq defined in RFC2292 .
+.Pq defined in RFC 2292 .
 The basic API looks very similar to the API presented in
 .Xr ip 4 .
 Advanced API uses ancillary data and can handle more complex cases.
@@ -556,7 +556,7 @@ discarding the packet if the checksum is in error.
 This option prevents applications from having to perform source
 address selection on the packets they send.
 The checksum will
-incorporate the IPv6 pseudo-header, defined in Section 8.1 of RFC2460.
+incorporate the IPv6 pseudo-header, defined in Section 8.1 of RFC 2460.
 This new socket option also specifies an integer offset into
 the user data of where the checksum is located.
 .Bd -literal -offset indent
@@ -616,16 +616,14 @@ The ancillary data items were improperly formed, or option name was unknown.
 .Rs
 .%A W. Stevens
 .%A M. Thomas
-.%R RFC
-.%N 2292
+.%R RFC 2292
 .%D February 1998
 .%T "Advanced Sockets API for IPv6"
 .Re
 .Rs
 .%A S. Deering
 .%A R. Hinden
-.%R RFC
-.%N 2460
+.%R RFC 2460
 .%D December 1998
 .%T "Internet Protocol, Version 6 (IPv6) Specification"
 .Re
@@ -634,15 +632,14 @@ The ancillary data items were improperly formed, or option name was unknown.
 .%A S. Thomson
 .%A J. Bound
 .%A W. Stevens
-.%R RFC
-.%N 2553
+.%R RFC 2553
 .%D March 1999
 .%T "Basic Socket Interface Extensions for IPv6"
 .Re
 .\"
 .Sh STANDARDS
 Most of the socket options are defined in
-RFC2292 and/or RFC2553.
+RFC 2292 and/or RFC 2553.
 .Dv IPV6_PORTRANGE
 and conflict resolution rule
 is not defined in the RFCs and should be considered implementation dependent.
@@ -653,7 +650,7 @@ The implementation is based on KAME stack
 which is a descendant of WIDE hydrangea IPv6 stack kit
 .Pc .
 .Pp
-Part of the document was shamelessly copied from RFC2553 and RFC2292.
+Part of the document was shamelessly copied from RFC 2553 and RFC 2292.
 .\"
 .Sh BUGS
 The

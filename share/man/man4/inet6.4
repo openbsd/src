@@ -1,4 +1,4 @@
-.\"	$OpenBSD: inet6.4,v 1.24 2003/01/18 23:53:49 deraadt Exp $
+.\"	$OpenBSD: inet6.4,v 1.25 2003/08/08 09:51:53 jmc Exp $
 .\"	$KAME: inet6.4,v 1.19 2000/11/24 10:13:18 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,7 +102,7 @@ like link-local or site-local address.
 A scoped address is ambiguous to the kernel,
 if it is specified without a scope identifier.
 To manipulate scoped addresses properly from userland,
-programs must use the advanced API defined in RFC2292.
+programs must use the advanced API defined in RFC 2292.
 A compact description of the advanced API is available in
 .Xr ip6 4 .
 If scoped addresses are specified without explicit scope,
@@ -274,13 +274,13 @@ message protocol is accessible from a raw socket.
 does not route IPv4 traffic to an
 .Dv AF_INET6
 socket.
-The particular behavior in RFC2553 is intentionally omitted for security
+The particular behavior in RFC 2553 is intentionally omitted for security
 reasons presented above.
 If both IPv4 and IPv6 traffic need to be accepted, listen to two sockets.
 .Pp
 The behavior of
 .Dv AF_INET6
-TCP/UDP socket is documented in RFC2553.
+TCP/UDP socket is documented in RFC 2553.
 Basically, it says the following:
 .Pp
 .Bl -bullet -compact
@@ -324,7 +324,7 @@ socket and IPv6 should be routed to
 socket.
 .El
 .Pp
-However, RFC2553 does not define the constraint between the order of
+However, RFC 2553 does not define the constraint between the order of
 .Xr bind 2 ,
 nor how IPv4 TCP/UDP port numbers and IPv6 TCP/UDP port numbers
 relate to each other
@@ -373,7 +373,7 @@ sockets.
 .Sh HISTORY
 The
 .Nm
-protocol interface is defined in RFC2553 and RFC2292.
+protocol interface is defined in RFC 2553 and RFC 2292.
 The implementation described herein appeared in WIDE/KAME project.
 .Sh BUGS
 The IPv6 support is subject to change as the Internet protocols develop.

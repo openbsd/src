@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.129 2003/06/29 13:02:56 jmc Exp $
+.\"	$OpenBSD: options.4,v 1.130 2003/08/08 09:51:53 jmc Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -823,7 +823,7 @@ information.
 This option can only be used together with
 .Em TCP_SACK .
 .It Cd option TCP_ECN
-Turns on Explicit Congestion Notification (RFC3168).
+Turns on Explicit Congestion Notification (RFC 3168).
 .Em ECN
 allows intermediate routers to use the Congestion Experienced
 codepoint in the IP header as an indication of congestion, and allows
@@ -906,7 +906,7 @@ OUT based on contracted profiles for customers.
 Inside the network, IN packets receive preferential treatment by
 the RIO dropper.
 ALTQ/RIO has 3 drop precedence levels defined for the Assured Forwarding
-PHB of DiffServ (RFC2597).
+PHB of DiffServ (RFC 2597).
 .It Cd option ALTQ_NOPCC
 Disables use of processor cycle counter (e.g., Pentium TSC on i386 and
 PCC on alpha) to measure time in ALTQ.
