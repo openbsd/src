@@ -1,4 +1,4 @@
-/*	$OpenBSD: newfs.c,v 1.30 2002/02/16 21:27:36 millert Exp $	*/
+/*	$OpenBSD: newfs.c,v 1.31 2002/02/18 21:57:56 millert Exp $	*/
 /*	$NetBSD: newfs.c,v 1.20 1996/05/16 07:13:03 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.8 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: newfs.c,v 1.30 2002/02/16 21:27:36 millert Exp $";
+static char rcsid[] = "$OpenBSD: newfs.c,v 1.31 2002/02/18 21:57:56 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -220,7 +220,7 @@ main(argc, argv)
 		fatal("insane maxpartitions value %d", maxpartitions);
 
 	opstring = mfs ?
-	    "NT:a:b:c:d:e:f:i:m:o:s:" :
+	    "T:a:b:c:d:e:f:i:m:o:s:" :
 	    "NOS:T:a:b:c:d:e:f:g:h:i:k:l:m:n:o:p:qr:s:t:u:x:z:";
 	while ((ch = getopt(argc, argv, opstring)) != -1) {
 		switch (ch) {
@@ -729,7 +729,7 @@ struct fsoptions {
 	char *str;
 	int mfs_too;
 } fsopts[] = {
-	{ "-N do not create file system, just print out parameters", 1 },
+	{ "-N do not create file system, just print out parameters", 0 },
 	{ "-O create a 4.3BSD format filesystem", 0 },
 	{ "-S sector size", 0 },
 #ifdef COMPAT
