@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.14 2001/09/05 15:01:53 todd Exp $
+#	$OpenBSD: MAKEDEV,v 1.15 2001/09/06 20:58:55 todd Exp $
 #
 # Copyright (c) 2001 Todd T. Fries <todd@OpenBSD.org>
 # All rights reserved.
@@ -160,21 +160,20 @@ M() {
 	mkl ${5-666} $1 $2 $3 $4
 	mklist="$mklist $1"
 	G=${6:-wheel}
-	[ "$G" ] && {
-		[ "$7" ] && {
-			MKlist="$MKlist;chown $7.$G $1"
-		} || cgp $G $1
+	[ "$7" ] && {
+		MKlist="$MKlist;chown $7.$G $1"
+	} || {
+		case $G in
+		wheel)g=0;;kmem)g=2;;operator)g=5;;tty)g=4;;dialer)g=117;;
+		esac
+		[ "${grplist[$g]}" ] && {
+			grplist[$g]="${grplist[$g]} $1"
+		} || {
+			groups="$groups $g"
+			grplist[$g]="chgrp $G $1"
+		}
 	}
 	return 0
-}
-cgp() {
-  G=$1
-  [ "${grplist[$G]}" ] && {
-    grplist[$G]="${grplist[$G]} $2"
-  } || {
-    groups="$groups $G"
-    grplist[$G]="chgrp $G $2"
-  }
 }
 R() {
 for i in "$@"
@@ -408,11 +407,11 @@ for mode in $modes; do
 	list="$list;${mklist[$mode]}"
 done
 for group in $groups; do
-	list="$list;${grplist[$groupl]}"
+	list="$list;${grplist[$group]}"
 done
 list="$list;$MKlist"
-if [ "$eo" = "echo" ]; then
-	echo "$list"
+if [ "$eo" = "echo" -o "$eo" = "transform" ]; then
+	$eo "$list"
 else
 	echo "$list" | sh
 fi
