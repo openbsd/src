@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_spd.c,v 1.19 2001/05/05 00:31:20 angelos Exp $ */
+/* $OpenBSD: ip_spd.c,v 1.20 2001/05/30 10:59:03 angelos Exp $ */
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -783,11 +783,13 @@ ipsec_delete_policy(struct ipsec_policy *ipo)
     TAILQ_REMOVE(&ipsec_policy_head, ipo, ipo_list);
 
     if (ipo->ipo_srcid)
-      FREE(ipo->ipo_srcid, M_CREDENTIALS);
+      ipsp_reffree(ipo->ipo_srcid);
     if (ipo->ipo_dstid)
-      FREE(ipo->ipo_dstid, M_CREDENTIALS);
+      ipsp_reffree(ipo->ipo_dstid);
     if (ipo->ipo_local_cred)
-      FREE(ipo->ipo_local_cred, M_CREDENTIALS);
+      ipsp_reffree(ipo->ipo_local_cred);
+    if (ipo->ipo_local_auth)
+      ipsp_reffree(ipo->ipo_local_cred);
 
     FREE(ipo, M_IPSEC_POLICY);
 
