@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.64 2005/03/11 12:54:20 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.65 2005/03/26 12:46:52 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -585,10 +585,10 @@ prefix_network_clean(struct rde_peer *peer, time_t reloadtime)
 
 				if (pt_empty(pte))
 					pt_remove(pte);
-				if (path_empty(asp))
-					path_destroy(asp);
 			}
 		}
+		if (path_empty(asp))
+			path_destroy(asp);
 	}
 }
 
