@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.806 2004/12/06 16:06:01 mickey Exp $
+$OpenBSD: pcidevs,v 1.807 2004/12/07 11:06:56 jsg Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -248,6 +248,7 @@ vendor	NETOCTAVE	0x170b	Netoctave
 vendor	ALTIMA		0x173b	Altima
 vendor	ANTARES		0x1754	Antares Microsystems
 vendor	CAVIUM		0x177d	Cavium
+vendor	BELKIN2		0x1799	Belkin
 vendor	LANERGY		0x1812	Lanergy
 vendor	RALINK		0x1814	Ralink
 vendor	SYMPHONY2	0x1c1c	Symphony Labs
@@ -777,6 +778,8 @@ product AVM B1			0x0700	BRI ISDN
 product AVM T1			0x1200	PRI T1 ISDN
 
 /* Belkin Components products */
+product BELKIN2 F5D6001		0x6001	F5D6001
+product BELKIN2 F5D6020V3	0x6020	F5D6020V3
 product BELKIN F5D6000		0xec00	F5D6000
 
 /* Bit3 products */
