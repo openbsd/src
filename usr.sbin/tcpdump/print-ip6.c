@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ip6.c,v 1.1 2000/04/26 21:35:41 jakob Exp $	*/
+/*	$OpenBSD: print-ip6.c,v 1.2 2001/11/07 07:40:13 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994
@@ -70,13 +70,13 @@ ip6_print(register const u_char *bp, register int length)
 #ifdef TCPDUMP_ALIGN
 	/*
 	 * The IP header is not word aligned, so copy into abuf.
-	 * This will never happen with BPF.  It does happen raw packet
-	 * dumps from -r.
+	 * This will never happen with BPF.  It does happen with
+	 * raw packet dumps from -r.
 	 */
 	if ((int)ip & (sizeof(long)-1)) {
 		static u_char *abuf;
 
-		if (abuf == 0)
+		if (abuf == NULL)
 			abuf = (u_char *)malloc(snaplen);
 		bcopy((char *)ip, (char *)abuf, min(length, snaplen));
 		snapend += abuf - (u_char *)ip;
