@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc,v 1.37 2000/06/28 20:20:14 mjacob Exp $
+#	$OpenBSD: files.sparc,v 1.38 2000/11/16 15:47:56 jason Exp $
 #	$NetBSD: files.sparc,v 1.44 1997/08/31 21:29:16 pk Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
@@ -112,7 +112,7 @@ device	be: ifnet, ether, ifmedia
 attach	be at qec
 file	arch/sparc/dev/be.c		be
 
-device	qe: ifnet, ether
+device	qe: ifnet, ether, ifmedia
 attach	qe at qec
 file	arch/sparc/dev/qe.c		qe
 

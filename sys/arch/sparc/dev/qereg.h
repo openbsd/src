@@ -1,7 +1,7 @@
-/*	$OpenBSD: qereg.h,v 1.4 1999/03/12 18:56:18 jason Exp $	*/
+/*	$OpenBSD: qereg.h,v 1.5 2000/11/16 15:47:57 jason Exp $	*/
 
 /*
- * Copyright (c) 1998 Jason L. Wright.
+ * Copyright (c) 1998, 2000 Jason L. Wright.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -255,6 +255,7 @@ struct qe_mregs {
 
 /* qe_mregs.plscc: pls config control. */
 #define	QE_MR_PLSCC_XMTSEL	0x08		/* tx mode select */
+#define	QE_MR_PLSCC_PORTMASK	0x06		/* media mask */
 #define	QE_MR_PLSCC_GPSI	0x06		/* use gpsi connector */
 #define	QE_MR_PLSCC_DAI		0x04		/* use dai connector */
 #define	QE_MR_PLSCC_TP		0x02		/* use twistedpair connector */

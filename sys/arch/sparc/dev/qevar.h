@@ -1,7 +1,7 @@
-/*	$OpenBSD: qevar.h,v 1.3 1999/02/24 06:57:45 jason Exp $	*/
+/*	$OpenBSD: qevar.h,v 1.4 2000/11/16 15:47:57 jason Exp $	*/
 
 /*
- * Copyright (c) 1998 Jason L. Wright.
+ * Copyright (c) 1998, 2000 Jason L. Wright.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -48,4 +48,5 @@ struct qesoftc {
 
 	int	sc_no_td, sc_first_td, sc_last_td;
 	int	sc_last_rd;
+	struct	ifmedia sc_ifmedia;
 };
