@@ -1,4 +1,4 @@
-# $OpenBSD: krb5.conf.example,v 1.4 2003/08/01 08:41:52 hin Exp $
+# $OpenBSD: krb5.conf.example,v 1.5 2003/08/22 13:46:10 hin Exp $
 #
 # Example Kerberos 5 configuration file. You may need to change the defaults
 # in this file to match your environment.
@@ -30,6 +30,9 @@
 	MY.REALM = {
 		# Specify KDC here
 		kdc = kerberos.my.domain
+
+		# Administration server, used for creating users etc.
+		admin_server = kerberos.my.domain
 	}
 
 	# Example of a "foreign" realm
