@@ -1,3 +1,5 @@
+/*	$OpenBSD: event-test.c,v 1.2 2002/06/25 15:50:16 mickey Exp $	*/
+
 /*
  * Compile with:
  * cc -I/usr/local/include -o event-test event-test.c -L/usr/local/lib -levent

@@ -1,3 +1,5 @@
+/*	$OpenBSD: time-test.c,v 1.2 2002/06/25 15:50:16 mickey Exp $	*/
+
 /*
  * Compile with:
  * cc -I/usr/local/include -o time-test time-test.c -L/usr/local/lib -levent

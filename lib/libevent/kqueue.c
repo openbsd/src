@@ -1,3 +1,5 @@
+/*	$OpenBSD: kqueue.c,v 1.4 2002/06/25 15:50:15 mickey Exp $	*/
+
 /*
  * Copyright 2000-2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.

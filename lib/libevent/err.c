@@ -1,3 +1,5 @@
+/*	$OpenBSD: err.c,v 1.2 2002/06/25 15:50:15 mickey Exp $	*/
+
 /*
  * err.c
  *
