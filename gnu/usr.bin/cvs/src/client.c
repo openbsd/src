@@ -83,7 +83,7 @@ static Key_schedule sched;
 /* This is needed for GSSAPI encryption.  */
 static gss_ctx_id_t gcontext;
 
-static int connect_to_gserver PROTO((int, struct hostent *));
+static int connect_to_gserver PROTO((int, const char *));
 
 #endif /* HAVE_GSSAPI */
 
@@ -3872,35 +3872,60 @@ connect_to_pserver (tofdp, fromfdp, verify_only, do_gssapi)
 #endif
     int port_number;
     char *username;			/* the username we use to connect */
-    struct sockaddr_in client_sai;
-    struct hostent *hostinfo;
+    struct addrinfo hints, *res, *res0 = NULL;
+    char hbuf[NI_MAXHOST], sbuf[NI_MAXSERV];
     char no_passwd = 0;			/* gets set if no password found */
+    int e;
 
-    sock = socket (AF_INET, SOCK_STREAM, 0);
-    if (sock == -1)
-    {
-	error (1, 0, "cannot create socket: %s", SOCK_STRERROR (SOCK_ERRNO));
-    }
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_flags = AI_CANONNAME;
     port_number = get_cvs_port_number (current_parsed_root);
-    hostinfo = init_sockaddr (&client_sai, current_parsed_root->hostname, port_number);
-    if (trace)
+    snprintf(sbuf, sizeof(sbuf), "%d", port_number);
+    e = getaddrinfo(current_parsed_root->hostname, sbuf, &hints, &res0);
+    if (e)
     {
-	fprintf (stderr, " -> Connecting to %s(%s):%d\n",
-		 current_parsed_root->hostname,
-		 inet_ntoa (client_sai.sin_addr), port_number);
+	error (1, 0, "%s", gai_strerror(e));
     }
-    if (connect (sock, (struct sockaddr *) &client_sai, sizeof (client_sai))
-	< 0)
-	error (1, 0, "connect to %s(%s):%d failed: %s",
-	       current_parsed_root->hostname,
-	       inet_ntoa (client_sai.sin_addr),
+    sock = -1;
+    for (res = res0; res; res = res->ai_next)
+    {
+	sock = socket (res->ai_family, res->ai_socktype, res->ai_protocol);
+	if (sock < 0)
+	{
+	    continue;
+	}
+
+	if (trace)
+	{
+	    getnameinfo(res->ai_addr, res->ai_addrlen, hbuf, sizeof(hbuf),
+		sbuf, sizeof(sbuf), NI_NUMERICHOST | NI_NUMERICSERV);
+	    fprintf (stderr, " -> Connecting to %s(%s):%s\n",
+		     current_parsed_root->hostname, hbuf, sbuf);
+	}
+	if (connect(sock, res->ai_addr, res->ai_addrlen) < 0)
+	{
+	    close(sock);
+	    sock = -1;
+	    continue;
+	}
+	break;
+    }
+    if (sock < 0)
+    {
+	getnameinfo(res->ai_addr, res->ai_addrlen, hbuf, sizeof(hbuf),
+	    sbuf, sizeof(sbuf), NI_NUMERICHOST | NI_NUMERICSERV);
+	error (1, 0, "connect to %s(%s):%s failed: %s",
+	       current_parsed_root->hostname, hbuf, sbuf,
 	       port_number, SOCK_STRERROR (SOCK_ERRNO));
+    }
 
     /* Run the authorization mini-protocol before anything else. */
     if (do_gssapi)
     {
 #ifdef HAVE_GSSAPI
-	if (! connect_to_gserver (sock, hostinfo))
+	if (! connect_to_gserver (sock, res0->ai_canonname ?
+	    res0->ai_canonname : current_parsed_root->hostname))
 	{
 	    error (0, 0,
 		    "authorization failed: server %s rejected access to %s",
@@ -4055,6 +4080,8 @@ connect_to_pserver (tofdp, fromfdp, verify_only, do_gssapi)
 	if (shutdown (sock, 2) < 0)
 	    error (0, 0, "shutdown() failed, server %s: %s", current_parsed_root->hostname,
 		   SOCK_STRERROR (SOCK_ERRNO));
+	if (res0)
+	    freeaddrinfo(res0);
 	return;
     }
     else
@@ -4075,6 +4102,8 @@ connect_to_pserver (tofdp, fromfdp, verify_only, do_gssapi)
 #endif /* NO_SOCKET_TO_FD */
     }
 
+    if (res0)
+	freeaddrinfo(res0);
     return;
 
   rejected:
@@ -4198,9 +4227,9 @@ recv_bytes (sock, buf, need)
 /* Connect to the server using GSSAPI authentication.  */
 
 static int
-connect_to_gserver (sock, hostinfo)
+connect_to_gserver (sock, hostname)
      int sock;
-     struct hostent *hostinfo;
+     const char *hostname;
 {
     char *str;
     char buf[1024];
@@ -4213,7 +4242,7 @@ connect_to_gserver (sock, hostinfo)
     if (send (sock, str, strlen (str), 0) < 0)
 	error (1, 0, "cannot send: %s", SOCK_STRERROR (SOCK_ERRNO));
 
-    sprintf (buf, "cvs@%s", hostinfo->h_name);
+    sprintf (buf, "cvs@%s", hostname);
     tok_in.length = strlen (buf);
     tok_in.value = buf;
     gss_import_name (&stat_min, &tok_in, GSS_C_NT_HOSTBASED_SERVICE,
