@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.5 2002/03/31 17:30:31 deraadt Exp $
+#	$OpenBSD: install.md,v 1.6 2002/04/13 02:33:10 deraadt Exp $
 #	$NetBSD: install.md,v 1.3.2.5 1996/08/26 15:45:28 gwr Exp $
 #
 #
@@ -127,7 +127,7 @@ md_installboot() {
 	if [ "$xfree86" = y ]; then
 		echo
 		echo "Enabling machdep.allowaperture. Read xf86(4) for more information."
-		echo '1,$s/^#machdep\.allowaperture=2/machdep\.allowaperture=1	/
+		echo '1,$s/^#machdep\.allowaperture=1/machdep\.allowaperture=1	/
 w
 q' | ed /mnt/etc/sysctl.conf 2> /dev/null
 		echo
