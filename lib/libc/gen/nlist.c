@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: nlist.c,v 1.31 1998/09/24 06:17:47 millert Exp $";
+static char rcsid[] = "$OpenBSD: nlist.c,v 1.32 1998/10/04 17:24:17 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -67,10 +67,10 @@ __aout_fdnlist(fd, list)
 {
 	register struct nlist *p, *s;
 	register char *strtab;
-	register off_t stroff, symoff;
+	register off_t symoff;
 	register u_long symsize;
 	register int nent, cc;
-	int strsize;
+	int strsize, usemalloc = 0;
 	struct nlist nbuf[1024];
 	struct exec exec;
 
@@ -81,23 +81,31 @@ __aout_fdnlist(fd, list)
 
 	symoff = N_SYMOFF(exec);
 	symsize = exec.a_syms;
-	stroff = symoff + symsize;
 
 	/* Read in the size of the string table. */
 	if (lseek(fd, N_STROFF(exec), SEEK_SET) == -1)
 		return (-1);
-	if (read(fd, (char *)&strsize, sizeof(strsize)) != sizeof(strsize))
+	if (read(fd, (void *)&strsize, sizeof(strsize)) != sizeof(strsize))
 		return (-1);
 
 	/*
-	 * Read in the string table.  Since OpenBSD's malloc(3) returns
-	 * memory to the system on free this does not cause bloat.
+	 * Read in the string table.  We try mmap, but that will fail
+	 * for /dev/ksyms so fall back on malloc.  Since OpenBSD's malloc(3)
+	 * returns memory to the system on free this does not cause bloat.
 	 */
 	strsize -= sizeof(strsize);
-	if ((strtab = (char *)malloc(strsize)) == NULL)
-		return (-1);
-	if (read(fd, strtab, strsize) != strsize)
-		return (-1);
+	strtab = mmap(NULL, (size_t)strsize, PROT_READ, MAP_COPY|MAP_FILE,
+	    fd, lseek(fd, 0, SEEK_CUR));
+	if (strtab == MAP_FAILED) {
+		usemalloc = 1;
+		if ((strtab = (char *)malloc(strsize)) == NULL)
+			return (-1);
+		errno = EIO;
+		if (read(fd, strtab, strsize) != strsize) {
+			nent = -1;
+			goto aout_done;
+		}
+	}
 
 	/*
 	 * clean out any left-over information for all valid entries.
@@ -117,8 +125,10 @@ __aout_fdnlist(fd, list)
 		p->n_value = 0;
 		++nent;
 	}
-	if (lseek(fd, symoff, SEEK_SET) == -1)
-		return (-1);
+	if (lseek(fd, symoff, SEEK_SET) == -1) {
+		nent = -1;
+		goto aout_done;
+	}
 
 	while (symsize > 0) {
 		cc = MIN(symsize, sizeof(nbuf));
@@ -146,7 +156,11 @@ __aout_fdnlist(fd, list)
 			}
 		}
 	}
-	free(strtab);
+aout_done:
+	if (usemalloc)
+		free(strtab);
+	else
+		munmap(strtab, strsize);
 	return (nent);
 }
 #endif /* _NLIST_DO_AOUT */
@@ -383,11 +397,11 @@ __elf_fdnlist(fd, list)
 	/* Don't process any further if object is stripped. */
 	/* ELFism - dunno if stripped by looking at header */
 	if (symoff == 0)
-		goto done;
+		goto elf_done;
 
 	if (lseek(fd, (off_t) symoff, SEEK_SET) == -1) {
 		nent = -1;
-		goto done;
+		goto elf_done;
 	}
 
 	while (symsize > 0) {
@@ -440,7 +454,7 @@ __elf_fdnlist(fd, list)
 			}
 		}
 	}
-done:
+elf_done:
 	munmap(strtab, symstrsize);
 	return (nent);
 }
