@@ -1,4 +1,4 @@
-/*	$OpenBSD: gem.c,v 1.27 2002/08/28 11:05:02 art Exp $	*/
+/*	$OpenBSD: gem.c,v 1.28 2002/09/22 15:56:17 jason Exp $	*/
 /*	$NetBSD: gem.c,v 1.1 2001/09/16 00:11:43 eeh Exp $ */
 
 /*
@@ -1649,6 +1649,7 @@ gem_tint(sc, status)
 			sd->sd_mbuf = NULL;
 		}
 		sc->sc_tx_cnt--;
+		ifp->if_opackets++;
 		if (++cons == GEM_NTXDESC)
 			cons = 0;
 	}
