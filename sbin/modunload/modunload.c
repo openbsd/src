@@ -1,4 +1,4 @@
-/*	$OpenBSD: modunload.c,v 1.3 1996/07/02 06:37:55 deraadt Exp $	*/
+/*	$OpenBSD: modunload.c,v 1.4 1996/08/05 11:05:21 mickey Exp $	*/
 /*	$NetBSD: modunload.c,v 1.9 1995/05/28 05:23:05 jtc Exp $	*/
 
 /*
@@ -73,7 +73,7 @@ main(argc, argv)
 {
 	int c;
 	int modnum = -1;
-	char modname[MAXLKMNAME] = "";
+	char *modname = NULL;
 	struct lmc_unload ulbuf;
 
 	while ((c = getopt(argc, argv, "i:n:")) != EOF) {
@@ -82,7 +82,7 @@ main(argc, argv)
 			modnum = atoi(optarg);
 			break;	/* number */
 		case 'n':
-			strcpy(modname, optarg);
+			modname = optarg;
 			break;	/* name */
 		case '?':
 			usage();
@@ -94,7 +94,7 @@ main(argc, argv)
 	argc -= optind;
 	argv += optind;
 
-	if (argc != 0 || (modnum == -1 && *modname == '\0'))
+	if (argc != 0 || (modnum == -1 && modname == NULL))
 		usage();
 
 
