@@ -235,6 +235,7 @@ rresvport(alport)
 		(void)close(s);
 		return (-1);
 	}
+	sin.sin_port = 0;
 	if (bindresvport(s, &sin) == -1) {
 		(void)close(s);
 		return (-1);
