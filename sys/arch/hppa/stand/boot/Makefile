@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.3 1998/08/29 01:49:26 mickey Exp $
+#	$OpenBSD: Makefile,v 1.4 1998/09/29 07:14:52 mickey Exp $
 
 PROG=	boot
 SRCS=	srt0.S boot.c cmd.c vars.c bootarg.c conf.c
@@ -24,7 +24,7 @@ all:	boot.lif
 
 .if exists(${.CURDIR}/../../compile/DISKLESS/bsd)
 diskless: ${.CURDIR}/../../compile/DISKLESS/bsd
-	cp ${.CURDIR}/../../compile/DISKLESS/bsd diskless
+	gzip -9c ${.CURDIR}/../../compile/DISKLESS/bsd > diskless
 ADDBOOT+=diskless
 .endif
 

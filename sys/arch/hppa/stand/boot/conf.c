@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.4 1998/07/14 17:20:29 mickey Exp $	*/
+/*	$OpenBSD: conf.c,v 1.5 1998/09/29 07:14:53 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -32,6 +32,7 @@
 
 #include <sys/types.h>
 #include <libsa.h>
+#include <machine/lifvar.h>
 #include <lib/libsa/ufs.h>
 #include <lib/libsa/cd9660.h>
 #ifdef notdef
@@ -41,16 +42,18 @@
 #include <lib/libsa/exec.h>
 #include <dev/cons.h>
 
-const char version[] = "0.02";
-int	debug;
+const char version[] = "0.03";
+int	debug = 0;
 
 const struct x_sw execsw[] = {
 	{ "elf", elf_probe,	elf_load },
-	{ "som", som_probe,	som_load },
+/*	{ "som", som_probe,	som_load }, */
 	{ ""   , NULL,		NULL },
 };
 
 struct fs_ops file_system[] = {
+	{ lif_open,    lif_close,    lif_read,    lif_write,    lif_seek,
+	  lif_stat,    lif_readdir    },
 	{ ufs_open,    ufs_close,    ufs_read,    ufs_write,    ufs_seek,
 	  ufs_stat,    ufs_readdir    },
 #ifdef notdef
@@ -70,8 +73,9 @@ int n_netif_drivers = NENTS(netif_drivers);
 #endif
 
 struct devsw devsw[] = {
-	{ "ct",	ctstrategy, ctopen, ctclose, noioctl },
-	{ "dk",	dkstrategy, dkopen, dkclose, noioctl },
+	{ "ct",	iodcstrategy, ctopen, ctclose, noioctl },
+	{ "sd",	iodcstrategy, dkopen, dkclose, noioctl },
+	{ "lf", iodcstrategy, lfopen, lfclose, noioctl }
 };
 int	ndevs = NENTS(devsw);
 
@@ -80,3 +84,4 @@ struct consdev	constab[] = {
 	{ NULL }
 };
 struct consdev *cn_tab;
+
