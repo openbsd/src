@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.104 2002/11/18 22:55:39 deraadt Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.105 2002/11/19 23:34:02 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -810,7 +810,7 @@ print_rule(struct pf_rule *r)
 			printf("fragment reassemble ");
 	}
 	if (r->label[0])
-		printf("label %s", r->label);
+		printf("label %s ", r->label);
 	if (r->qname[0])
 		printf("queue %s", r->qname);
 
