@@ -1,9 +1,9 @@
-#	$OpenBSD: Makefile,v 1.3 1997/03/25 17:05:49 niklas Exp $
+#	$OpenBSD: Makefile,v 1.4 1999/04/05 15:32:16 espie Exp $
 
 NOPROG=	installboot
 MAN=installboot.8
 
-SUBDIR=aout2bb txlt
+SUBDIR=aout2bb txlt libsa
 
 AOUT2BB!=cd $(.CURDIR)/aout2bb; \
 	printf "xxx:\n\techo \$${.OBJDIR}/aout2bb\n" | \
