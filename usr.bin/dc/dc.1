@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dc.1,v 1.6 2003/10/01 08:19:29 jmc Exp $
+.\"	$OpenBSD: dc.1,v 1.7 2003/10/11 18:31:19 otto Exp $
 .\"
 .\" Copyright (C) Caldera International Inc.  2001-2002.
 .\" All rights reserved.
@@ -81,7 +81,7 @@ It may be preceded by an underscore
 to input a negative number.
 A number may contain a single decimal point.
 A number may also contain the characters A\-F, with the values 10\-15.
-.It Cm "+ - / * % ^"
+.It Cm "+ - / * % ~ ^"
 The
 top two values on the stack are added
 (+),
@@ -90,6 +90,7 @@ subtracted
 multiplied (*),
 divided (/),
 remaindered (%),
+divided and remaindered (~),
 or exponentiated (^).
 The two entries are popped off the stack;
 the result is pushed on the stack in their place.
@@ -125,6 +126,14 @@ If the exponent is negative, the scale of the result is the scale
 defined by the
 .Ar k
 operation.
+.Pp
+In the case of the division and modulus operator (~),
+the resultant quotient is pushed first followed by the remainder.
+This is a shorthand for the sequence:
+.Bd -literal -offset indent -compact
+x y / x y %
+.Ed
+The division and modulus operator is a non-portable extension.
 .It Ic s Ns Ar x
 The
 top of the stack is popped and stored into

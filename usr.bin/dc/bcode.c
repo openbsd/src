@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcode.c,v 1.7 2003/09/30 18:27:01 otto Exp $	*/
+/*	$OpenBSD: bcode.c,v 1.8 2003/10/11 18:31:18 otto Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: bcode.c,v 1.7 2003/09/30 18:27:01 otto Exp $";
+static const char rcsid[] = "$OpenBSD: bcode.c,v 1.8 2003/10/11 18:31:18 otto Exp $";
 #endif /* not lint */
 
 #include <ssl/ssl.h>
@@ -85,6 +85,7 @@ static void		bsub(void);
 static void		bmul(void);
 static void		bdiv(void);
 static void		bmod(void);
+static void		bdivmod(void);
 static void		bexp(void);
 static bool		bsqrt_stop(const BIGNUM *, const BIGNUM *);
 static void		bsqrt(void);
@@ -145,6 +146,7 @@ static const struct jump_entry jump_table_data[] = {
 	{ '*',	bmul		},
 	{ '/',	bdiv		},
 	{ '%',	bmod		},
+	{ '~',	bdivmod		},
 	{ '^',	bexp		},
 	{ 's',	store		},
 	{ 'S',	store_stack	},
@@ -983,6 +985,48 @@ bmod(void)
 		BN_CTX_free(ctx);
 	}
 	push_number(r);
+	free_number(a);
+	free_number(b);
+}
+
+static void
+bdivmod(void)
+{
+	struct number	*a, *b;
+	struct number	*rdiv, *rmod;
+	u_int		scale;
+	BN_CTX		*ctx;
+
+	a = pop_number();
+	if (a == NULL) {
+		return;
+	}
+	b = pop_number();
+	if (b == NULL) {
+		push_number(a);
+		return;
+	}
+
+	rdiv = new_number();
+	rmod = new_number();
+	rdiv->scale = bmachine.scale;
+	rmod->scale = max(b->scale, a->scale + bmachine.scale);
+	scale = max(a->scale, b->scale);
+
+	if (BN_is_zero(a->number))
+		warnx("divide by zero");
+	else {
+		normalize(a, scale);
+		normalize(b, scale + bmachine.scale);
+
+		ctx = BN_CTX_new();
+		bn_checkp(ctx);
+		bn_check(BN_div(rdiv->number, rmod->number,
+		    b->number, a->number, ctx));
+		BN_CTX_free(ctx);
+	}
+	push_number(rdiv);
+	push_number(rmod);
 	free_number(a);
 	free_number(b);
 }
