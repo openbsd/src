@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.18 2003/06/19 16:34:53 pvalchev Exp $	*/
+/*	$OpenBSD: main.c,v 1.19 2005/04/04 13:46:06 robert Exp $	*/
 /*	$NetBSD: main.c,v 1.5 1996/03/19 03:21:38 jtc Exp $	*/
 
 /*
@@ -43,7 +43,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	5.5 (Berkeley) 5/24/93";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.18 2003/06/19 16:34:53 pvalchev Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.19 2005/04/04 13:46:06 robert Exp $";
 #endif
 #endif /* not lint */
 
@@ -172,33 +172,16 @@ usage(void)
 void
 getargs(int argc, char *argv[])
 {
-    int i;
-    char *s;
+    int ch;
 
-    for (i = 1; i < argc; ++i)
+    while ((ch = getopt(argc, argv, "b:dlo:p:rtv")) != -1)
     {
-	s = argv[i];
-	if (*s != '-') break;
-	switch (*++s)
+	switch (ch)
 	{
-	case '\0':
-	    input_file = stdin;
-	    if (i + 1 < argc) usage();
-	    return;
-
-	case '-':
-	    ++i;
-	    goto no_more_options;
-
 	case 'b':
-	    if (*++s)
-		 file_prefix = s;
-	    else if (++i < argc)
-		file_prefix = argv[i];
-	    else
-		usage();
-	    continue;
-
+	    file_prefix = optarg;
+	    break;
+	    
 	case 'd':
 	    dflag = 1;
 	    break;
@@ -208,24 +191,14 @@ getargs(int argc, char *argv[])
 	    break;
 
         case 'o':
-            if (*++s)
-	        output_file_name = s;
-            else if (++i < argc)
-                output_file_name = argv[i];
-            else
-                usage();
-            explicit_file_name = 1;
-            continue;
-
+	    output_file_name = optarg;
+	    explicit_file_name = 1;
+	    break;
+	    
 	case 'p':
-	    if (*++s)
-		symbol_prefix = s;
-	    else if (++i < argc)
-		symbol_prefix = argv[i];
-	    else
-		usage();
-	    continue;
-
+	    symbol_prefix = optarg;
+	    break;
+	    
 	case 'r':
 	    rflag = 1;
 	    break;
@@ -241,44 +214,16 @@ getargs(int argc, char *argv[])
 	default:
 	    usage();
 	}
-
-	for (;;)
-	{
-	    switch (*++s)
-	    {
-	    case '\0':
-		goto end_of_option;
-
-	    case 'd':
-		dflag = 1;
-		break;
-
-	    case 'l':
-		lflag = 1;
-		break;
-
-	    case 'r':
-		rflag = 1;
-		break;
-
-	    case 't':
-		tflag = 1;
-		break;
-
-	    case 'v':
-		vflag = 1;
-		break;
-
-	    default:
-		usage();
-	    }
-	}
-end_of_option:;
     }
+    argc -= optind;
+    argv += optind;
 
-no_more_options:;
-    if (i + 1 != argc) usage();
-    input_file_name = argv[i];
+    if (argc != 1)
+	usage();
+    if (strcmp(*argv, "-") == 0)
+	input_file = stdin;
+    else
+	input_file_name = *argv;
 }
 
 
