@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.742 2004/06/16 20:50:59 matthieu Exp $
+$OpenBSD: pcidevs,v 1.743 2004/06/18 14:49:22 henning Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -217,6 +217,7 @@ vendor	ASKEY		0x144f	Askey
 vendor	AVERMEDIA	0x1461	Avermedia
 vendor	OXFORD		0x14d2	Oxford
 vendor	AIRONET		0x14b9	Aironet
+vendor	AVLAB		0x14db	Avlab
 vendor	INVERTEX	0x14e1	Invertex
 vendor	BROADCOM	0x14e4	Broadcom
 vendor	CONEXANT	0x14f1	Conexant
@@ -707,6 +708,9 @@ product AVANCE AVG2302		0x2302	AVG2302
 product AVANCE2 ALG2301		0x2301	ALG2301
 product AVANCE2 ALG2302		0x2302	ALG2302
 product AVANCE2 ALS4000		0x4000	ALS4000
+
+/* AVlab products */
+product	AVLAB LPPCI4S		0x2150	LP-PCI 4 Serial
 
 /* AVM products */
 product AVM FRITZ_CARD		0x0a00	Fritz ISDN
