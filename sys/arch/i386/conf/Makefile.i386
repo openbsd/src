@@ -32,7 +32,7 @@ I386=	../..
 
 INCLUDES= -I. -I$S/arch -I$S -I$S/sys
 COPTS=	${INCLUDES} ${IDENT} -D_KERNEL -Di386
-CFLAGS=	-O6 -Werror ${COPTS}
+CFLAGS=	-O6 -fno-strength-reduce -Werror ${COPTS}
 LOAD_ADDRESS= F8100000
 
 ### find out what to use for libkern
