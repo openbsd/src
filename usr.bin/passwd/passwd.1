@@ -1,4 +1,4 @@
-.\"	$OpenBSD: passwd.1,v 1.25 2003/06/10 09:12:11 jmc Exp $
+.\"	$OpenBSD: passwd.1,v 1.26 2003/07/25 09:58:45 jmc Exp $
 .\"
 .\" Copyright (c) 1990 The Regents of the University of California.
 .\" All rights reserved.
@@ -51,7 +51,7 @@
 .\" This should really be: passwd [-l] [-y] [-k [-n name] [-i instance] [-r realm] [-u username[.instance][@realm]]] [user]
 .Sh DESCRIPTION
 .Nm
-changes the user's local, KerberosIV, KerberosV, or YP password.
+changes the user's local, Kerberos, or YP password.
 First, the user is prompted for their current password.
 If the current password is correctly typed, a new password is requested.
 The new password must be entered twice to avoid typing errors.
@@ -84,11 +84,11 @@ The
 .Xr rpc.yppasswdd 8
 daemon should be running on the YP master server.
 .It Fl k
-Forces the change to affect the KerberosIV database, even
+Forces the change to affect the Kerberos database, even
 if the user has a password in the local database.
 Once the password has been verified,
 .Nm
-communicates the new password information to the KerberosIV authenticating host.
+communicates the new password information to the Kerberos authenticating host.
 .El
 .Pp
 The following flags are only used when the
@@ -112,20 +112,20 @@ Specifies a
 .Ar realm
 instead of the local realm.
 .It Fl u Ar username[.instance][@realm]
-Specifies a fully qualified KerberosIV principal.
+Specifies a fully qualified Kerberos principal.
 .It Fl K Ar principal@REALM
-Changes a users KerberosV password.
+Changes a user's Kerberos password.
 .El
 .Pp
 This is the behavior if no flags are specified:
-if KerberosIV is active then
+if Kerberos is active then
 .Nm
-will talk to the KerberosIV server (even if the user has an entry
+will talk to the Kerberos server (even if the user has an entry
 in the local database).
 If the password is not in the local password database, then
 an attempt is made to use the YP database.
 .Pp
-To change another user's KerberosIV password, one must first run
+To change another user's Kerberos password, one must first run
 .Xr kinit 1
 followed by
 .Nm passwd .
@@ -182,7 +182,6 @@ file to clear the error.
 .El
 .Sh SEE ALSO
 .Xr chpass 1 ,
-.Xr kerberos 1 ,
 .Xr kinit 1 ,
 .Xr login 1 ,
 .Xr login.conf 5 ,
