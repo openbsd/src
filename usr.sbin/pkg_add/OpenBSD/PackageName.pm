@@ -1,4 +1,4 @@
-# $OpenBSD: PackageName.pm,v 1.1.1.1 2003/10/16 17:43:34 espie Exp $
+# $OpenBSD: PackageName.pm,v 1.2 2003/10/19 18:41:32 espie Exp $
 #
 # Copyright (c) 2003 Marc Espie.
 # 
@@ -56,6 +56,29 @@ sub splitname
 	} else {
 		return ($_);
 	}
+}
+
+sub is_stem
+{
+	local $_ = shift;
+	if (m/\-\d/) {
+		return 0;
+	} else {
+		return 1;
+	}
+}
+
+sub findstem
+{
+	my ($k, @list) = @_;
+	my @r = ();
+	for my $n (@list) {
+		my $stem = (splitname $n)[0];
+		if ($k eq $stem) {
+			push(@r, $n);
+		}
+	}
+	return @r;
 }
 
 # all the shit that does handle package specifications
