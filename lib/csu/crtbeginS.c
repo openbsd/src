@@ -1,4 +1,4 @@
-/*	$OpenBSD: crtbeginS.c,v 1.5 2004/01/08 14:59:15 drahn Exp $	*/
+/*	$OpenBSD: crtbeginS.c,v 1.6 2004/01/26 20:00:37 espie Exp $	*/
 /*	$NetBSD: crtbegin.c,v 1.1 1996/09/12 16:59:03 cgd Exp $	*/
 
 /*
@@ -42,10 +42,11 @@
  */
 #include <stdlib.h>
 #include "md_init.h"
+#include "extern.h"
 
-static void (*__CTOR_LIST__[1])(void)
+static init_f __CTOR_LIST__[1]
     __attribute__((section(".ctors"))) = { (void *)-1 };	/* XXX */
-static void (*__DTOR_LIST__[1])(void)
+static init_f __DTOR_LIST__[1]
     __attribute__((section(".dtors"))) = { (void *)-1 };	/* XXX */
 
 static void	__dtors(void);
@@ -55,7 +56,7 @@ void
 __dtors(void)
 {
 	unsigned long i = (unsigned long) __DTOR_LIST__[0];
-	void (**p)(void);
+	init_f *p;
 
 	if (i == -1)  {
 		for (i = 1; __DTOR_LIST__[i] != NULL; i++)
@@ -71,7 +72,7 @@ __dtors(void)
 static void
 __ctors(void)
 {
-	void (**p)(void) = __CTOR_LIST__ + 1;
+	init_f *p = __CTOR_LIST__ + 1;
 
 	while (*p) {
 		(**p++)();
