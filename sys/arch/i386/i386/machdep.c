@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.78 1998/02/17 23:49:29 matthieu Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.79 1998/02/18 01:47:42 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -1879,14 +1879,16 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 			return (ENOTDIR);		/* overloaded */
 		dev = chrtoblk((dev_t)name[1]);
 		return sysctl_rdstruct(oldp, oldlenp, newp, &dev, sizeof(dev));
-#ifdef APERTURE
 	case  CPU_ALLOWAPERTURE:
+#ifdef APERTURE
 		if (securelevel > 0) 
 			return (sysctl_rdint(oldp, oldlenp, newp, 
-					     allowaperture));
+			    allowaperture));
 		else
 			return (sysctl_int(oldp, oldlenp, newp, newlen, 
-					   &allowaperture));
+			    &allowaperture));
+#else
+		return (sysctl_rdint(oldp, oldlenp, newp, 0);
 #endif
 	default:
 		return EOPNOTSUPP;
