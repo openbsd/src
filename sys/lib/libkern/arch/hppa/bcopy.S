@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcopy.S,v 1.1.1.1 1998/06/23 18:56:53 mickey Exp $	*/
+/*	$OpenBSD: bcopy.S,v 1.2 1999/02/07 20:36:17 mickey Exp $	*/
 
 /*
  *  (c) Copyright 1988 HEWLETT-PACKARD COMPANY
@@ -53,6 +53,7 @@ ENTRY(memcpy)
  *	int		count;
  */
 ALTENTRY(bcopy)
+ALTENTRY(ovbcopy)
         comb,>=,n r0,arg2,$bcopy_exit
 
 	/*
