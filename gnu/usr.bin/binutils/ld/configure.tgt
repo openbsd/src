@@ -159,6 +159,7 @@ arm-*-aout | armel-*-aout) targ_emul=armaoutl ;;
 armeb-*-aout)		targ_emul=armaoutb ;;
 arm-*-coff)		targ_emul=armcoff ;;
 arm-*-netbsd*)		targ_emul=armnbsd ;;
+arm-*-openbsd*) 	targ_emul=armnbsd ;;
 arm-*-elf)		targ_emul=armelf ;;
 arm-*-oabi)		targ_emul=armelf_oabi ;;
 arm*-*-linux-gnu*)	targ_emul=armelf_linux; targ_extra_emuls="armelf_linux26 armelf" ;;

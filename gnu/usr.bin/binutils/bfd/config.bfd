@@ -90,7 +90,7 @@ case "${targ}" in
     targ_selvecs=bfd_elf32_bigarc_vec
     ;;
 
-  arm-*-netbsd*)
+  arm-*-netbsd* | arm-*-openbsd*)
     targ_defvec=armnetbsd_vec
     targ_underscore=yes
     ;;
