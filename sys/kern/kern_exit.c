@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.13 1999/01/10 02:20:20 niklas Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.14 1999/01/11 20:30:40 niklas Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -244,7 +244,7 @@ exit1(p, rv)
 	p->p_pctcpu = 0;
 
 	/*
-	 * Notify parent that we're gone.  If we have P_NOWAIT or parent has
+	 * Notify parent that we're gone.  If we have P_NOZOMBIE or parent has
 	 * the P_NOCLDWAIT flag set, notify process 1 instead (and hope it
 	 * will handle this situation).
 	 */
