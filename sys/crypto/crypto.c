@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto.c,v 1.14 2000/09/07 18:44:29 deraadt Exp $	*/
+/*	$OpenBSD: crypto.c,v 1.15 2000/12/13 08:34:05 provos Exp $	*/
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -106,7 +106,7 @@ crypto_newsession(u_int64_t *sid, struct cryptoini *cri)
     if (err == 0)
     {
 	(*sid) = hid;
-	(*sid) <<= 31;
+	(*sid) <<= 32;
 	(*sid) |= (lid & 0xffffffff);
         crypto_drivers[hid].cc_sessions++;
     }
@@ -128,7 +128,7 @@ crypto_freesession(u_int64_t sid)
       return EINVAL;
 
     /* Determine two IDs */
-    hid = (sid >> 31) & 0xffffffff;
+    hid = (sid >> 32) & 0xffffffff;
 
     if (hid >= crypto_drivers_num)
       return ENOENT;
@@ -317,7 +317,7 @@ crypto_invoke(struct cryptop *crp)
 	return 0;
     }
 
-    hid = (crp->crp_sid >> 31) & 0xffffffff;
+    hid = (crp->crp_sid >> 32) & 0xffffffff;
 
     if (hid >= crypto_drivers_num)
     {
