@@ -1,3 +1,4 @@
+.\"	$OpenBSD: vnd.4,v 1.5 1997/05/14 15:34:05 niklas Exp $
 .\"	$NetBSD: vnd.4,v 1.1 1995/12/30 18:10:48 thorpej Exp $
 .\"
 .\" Copyright (c) 1995 Jason R. Thorpe.
@@ -44,13 +45,25 @@ The
 .Nm
 driver provides a disk-like interface to a file.  This is useful for
 a variety of applications, including swap files and building miniroot
-or floppy disk images.
+or floppy disk images.  There are two variants, the traditional
+.Nm
+that bypasses the buffercache and thus is suitable for swap on files, but
+not for building disk-images, and the
+.Nm svnd
+("safe"
+.Nm
+) variant that goes
+through the buffercache, thereby maintaining cache-coherency after the
+block-device is closed which makes it suitable for creating disk images.  
+The latter is not good for swapping on, though.
 .Pp
 This document assumes that you're familiar with how to generate kernels,
 how to properly configure disks and pseudo-devices in a kernel
 configuration file.
 .Pp
-In order to compile in support for the vnd, you must add a line similar
+In order to compile in support for the
+.Nm
+, you must add a line similar
 to the following to your kernel configuration file:
 .Bd -unfilled -offset indent
 pseudo-device	vnd	4	# vnode disk driver
@@ -71,12 +84,15 @@ for more information.
 The
 .Nm
 driver does not work if the file does not reside in a local filesystem.
+However the
+.Nm svnd
+variant does.
 .Sh FILES
-/dev/{,r}vnd* - vnd device special files.
+/dev/{,r}{,s}vnd* - vnd device special files.
 .Pp
 .Sh HISTORY
 The vnode disk driver was originally written at the University of
-Utah.
+Utah.  The svnd variant was first seen in OpenBSD 2.1
 .Sh SEE ALSO
 .Xr MAKEDEV 8 ,
 .Xr config 8 ,
