@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptodev.c,v 1.51 2002/06/19 03:23:12 deraadt Exp $	*/
+/*	$OpenBSD: cryptodev.c,v 1.52 2002/06/19 07:22:46 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 Theo de Raadt
@@ -128,33 +128,21 @@ int	cryptodevallowsoft = 0;	/* only use hardware crypto */
 
 /* ARGSUSED */
 int
-cryptof_read(fp, poff, uio, cred)
-	struct file *fp;
-	off_t *poff;
-	struct uio *uio;
-	struct ucred *cred;
+cryptof_read(struct file *fp, off_t *poff, struct uio *uio, struct ucred *cred)
 {
 	return (EIO);
 }
 
 /* ARGSUSED */
 int
-cryptof_write(fp, poff, uio, cred)
-	struct file *fp;
-	off_t *poff;
-	struct uio *uio;
-	struct ucred *cred;
+cryptof_write(struct file *fp, off_t *poff, struct uio *uio, struct ucred *cred)
 {
 	return (EIO);
 }
 
 /* ARGSUSED */
 int
-cryptof_ioctl(fp, cmd, data, p)
-	struct file *fp;
-	u_long cmd;
-	caddr_t data;
-	struct proc *p;
+cryptof_ioctl(struct file *fp, u_long cmd, caddr_t data, struct proc *p)
 {
 	struct cryptoini cria, crie;
 	struct fcrypt *fcr = (struct fcrypt *)fp->f_data;
@@ -574,38 +562,28 @@ fail:
 
 /* ARGSUSED */
 int
-cryptof_select(fp, which, p)
-	struct file *fp;
-	int which;
-	struct proc *p;
+cryptof_select(struct file *fp, int which, struct proc *p)
 {
 	return (0);
 }
 
 /* ARGSUSED */
 int
-cryptof_kqfilter(fp, kn)
-	struct file *fp;
-	struct knote *kn;
+cryptof_kqfilter(struct file *fp, struct knote *kn)
 {
 	return (0);
 }
 
 /* ARGSUSED */
 int
-cryptof_stat(fp, sb, p)
-	struct file *fp;
-	struct stat *sb;
-	struct proc *p;
+cryptof_stat(struct file *fp, struct stat *sb, struct proc *p)
 {
 	return (EOPNOTSUPP);
 }
 
 /* ARGSUSED */
 int
-cryptof_close(fp, p)
-	struct file *fp;
-	struct proc *p;
+cryptof_close(struct file *fp, struct proc *p)
 {
 	struct fcrypt *fcr = (struct fcrypt *)fp->f_data;
 	struct csession *cse;
@@ -625,11 +603,7 @@ cryptoattach(int n)
 }
 
 int
-cryptoopen(dev, flag, mode, p)
-	dev_t	dev;
-	int	flag;
-	int	mode;
-	struct proc *p;
+cryptoopen(dev_t dev, int flag, int mode, struct proc *p)
 {
 	if (usercrypto == 0)
 		return (ENXIO);
@@ -637,40 +611,25 @@ cryptoopen(dev, flag, mode, p)
 }
 
 int
-cryptoclose(dev, flag, mode, p)
-	dev_t	dev;
-	int	flag;
-	int	mode;
-	struct proc *p;
+cryptoclose(dev_t dev, int flag, int mode, struct proc *p)
 {
 	return (0);
 }
 
 int
-cryptoread(dev, uio, ioflag)
-	dev_t	dev;
-	struct uio *uio;
-	int	ioflag;
+cryptoread(dev_t dev, struct uio *uio, int ioflag)
 {
 	return (EIO);
 }
 
 int
-cryptowrite(dev, uio, ioflag)
-	dev_t	dev;
-	struct uio *uio;
-	int	ioflag;
+cryptowrite(dev_t dev, struct uio *uio, int ioflag)
 {
 	return (EIO);
 }
 
 int
-cryptoioctl(dev, cmd, data, flag, p)
-	dev_t	dev;
-	u_long	cmd;
-	caddr_t	data;
-	int	flag;
-	struct proc *p;
+cryptoioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	struct file *f;
 	struct fcrypt *fcr;
@@ -703,10 +662,7 @@ cryptoioctl(dev, cmd, data, flag, p)
 }
 
 int
-cryptoselect(dev, rw, p)
-	dev_t	dev;
-	int	rw;
-	struct proc *p;
+cryptoselect(dev_t dev, int rw, struct proc *p)
 {
 	return (0);
 }
