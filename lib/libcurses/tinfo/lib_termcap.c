@@ -1,7 +1,7 @@
-/*	$OpenBSD: lib_termcap.c,v 1.3 1999/11/28 17:49:54 millert Exp $	*/
+/*	$OpenBSD: lib_termcap.c,v 1.4 2000/01/02 22:06:51 millert Exp $	*/
 
 /****************************************************************************
- * Copyright (c) 1998,1999 Free Software Foundation, Inc.                   *
+ * Copyright (c) 1998-2000 Free Software Foundation, Inc.                   *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -41,7 +41,7 @@
 #define __INTERNAL_CAPS_VISIBLE
 #include <term_entry.h>
 
-MODULE_ID("$From: lib_termcap.c,v 1.30 1999/10/30 23:00:16 tom Exp $")
+MODULE_ID("$From: lib_termcap.c,v 1.32 2000/01/01 16:49:54 tom Exp $")
 
 /*
    some of the code in here was contributed by:
@@ -66,29 +66,30 @@ char *BC = 0;
  *
  ***************************************************************************/
 
-int tgetent(char *bufp GCC_UNUSED, const char *name)
+int
+tgetent(char *bufp GCC_UNUSED, const char *name)
 {
-int errcode;
+    int errcode;
 
-	T((T_CALLED("tgetent()")));
+    T((T_CALLED("tgetent()")));
 
-	setupterm((NCURSES_CONST char *)name, STDOUT_FILENO, &errcode);
+    setupterm((NCURSES_CONST char *) name, STDOUT_FILENO, &errcode);
 
-	if (errcode == 1) {
+    if (errcode == 1) {
 
-		if (cursor_left)
-		    if ((backspaces_with_bs = !strcmp(cursor_left, "\b")) == 0)
-			backspace_if_not_bs = cursor_left;
+	if (cursor_left)
+	    if ((backspaces_with_bs = !strcmp(cursor_left, "\b")) == 0)
+		backspace_if_not_bs = cursor_left;
 
-		/* we're required to export these */
-		if (pad_char != NULL)
-			PC = pad_char[0];
-		if (cursor_up != NULL)
-			UP = cursor_up;
-		if (backspace_if_not_bs != NULL)
-			BC = backspace_if_not_bs;
+	/* we're required to export these */
+	if (pad_char != NULL)
+	    PC = pad_char[0];
+	if (cursor_up != NULL)
+	    UP = cursor_up;
+	if (backspace_if_not_bs != NULL)
+	    BC = backspace_if_not_bs;
 
-		(void) baudrate();	/* sets ospeed as a side-effect */
+	(void) baudrate();	/* sets ospeed as a side-effect */
 
 /* LINT_PREPRO
 #if 0*/
@@ -96,8 +97,8 @@ int errcode;
 /* LINT_PREPRO
 #endif*/
 
-	}
-	returnCode(errcode);
+    }
+    returnCode(errcode);
 }
 
 /***************************************************************************
@@ -109,22 +110,23 @@ int errcode;
  *
  ***************************************************************************/
 
-int tgetflag(NCURSES_CONST char *id)
+int
+tgetflag(NCURSES_CONST char *id)
 {
-int i;
+    int i;
 
-	T((T_CALLED("tgetflag(%s)"), id));
-	if (cur_term != 0) {
-	    TERMTYPE *tp = &(cur_term->type);
-	    for_each_boolean(i, tp) {
-		const char *capname = ExtBoolname(tp, i, boolcodes);
-		if (!strncmp(id, capname, 2)) {
-		    /* setupterm forces invalid booleans to false */
-		    returnCode(tp->Booleans[i]);
-		}
+    T((T_CALLED("tgetflag(%s)"), id));
+    if (cur_term != 0) {
+	TERMTYPE *tp = &(cur_term->type);
+	for_each_boolean(i, tp) {
+	    const char *capname = ExtBoolname(tp, i, boolcodes);
+	    if (!strncmp(id, capname, 2)) {
+		/* setupterm forces invalid booleans to false */
+		returnCode(tp->Booleans[i]);
 	    }
 	}
-	returnCode(0);	/* Solaris does this */
+    }
+    returnCode(0);		/* Solaris does this */
 }
 
 /***************************************************************************
@@ -136,23 +138,24 @@ int i;
  *
  ***************************************************************************/
 
-int tgetnum(NCURSES_CONST char *id)
+int
+tgetnum(NCURSES_CONST char *id)
 {
-int i;
+    int i;
 
-	T((T_CALLED("tgetnum(%s)"), id));
-	if (cur_term != 0) {
-	    TERMTYPE *tp = &(cur_term->type);
-	    for_each_number(i, tp) {
-		const char *capname = ExtNumname(tp, i, numcodes);
-		if (!strncmp(id, capname, 2)) {
-		    if (!VALID_NUMERIC(tp->Numbers[i]))
-			return -1;
-		    returnCode(tp->Numbers[i]);
-		}
+    T((T_CALLED("tgetnum(%s)"), id));
+    if (cur_term != 0) {
+	TERMTYPE *tp = &(cur_term->type);
+	for_each_number(i, tp) {
+	    const char *capname = ExtNumname(tp, i, numcodes);
+	    if (!strncmp(id, capname, 2)) {
+		if (!VALID_NUMERIC(tp->Numbers[i]))
+		    return ABSENT_NUMERIC;
+		returnCode(tp->Numbers[i]);
 	    }
 	}
-	returnCode(ERR);
+    }
+    returnCode(ABSENT_NUMERIC);
 }
 
 /***************************************************************************
@@ -164,30 +167,31 @@ int i;
  *
  ***************************************************************************/
 
-char *tgetstr(NCURSES_CONST char *id, char **area)
+char *
+tgetstr(NCURSES_CONST char *id, char **area)
 {
-int i;
+    int i;
 
-	T((T_CALLED("tgetstr(%s,%p)"), id, area));
-	if (cur_term != 0) {
-	    TERMTYPE *tp = &(cur_term->type);
-	    for_each_string(i, tp) {
-		const char *capname = ExtStrname(tp, i, strcodes);
-		T(("trying %s", capname));
-		if (!strncmp(id, capname, 2)) {
-		    T(("found match : %s", _nc_visbuf(tp->Strings[i])));
-		    /* setupterm forces cancelled strings to null */
-		    if (area != 0
-		     && *area != 0
-		     && VALID_STRING(tp->Strings[i])) {
-			(void) strcpy(*area, tp->Strings[i]);
-			*area += strlen(*area) + 1;
-		    }
-		    returnPtr(tp->Strings[i]);
+    T((T_CALLED("tgetstr(%s,%p)"), id, area));
+    if (cur_term != 0) {
+	TERMTYPE *tp = &(cur_term->type);
+	for_each_string(i, tp) {
+	    const char *capname = ExtStrname(tp, i, strcodes);
+	    T(("trying %s", capname));
+	    if (!strncmp(id, capname, 2)) {
+		T(("found match : %s", _nc_visbuf(tp->Strings[i])));
+		/* setupterm forces cancelled strings to null */
+		if (area != 0
+		    && *area != 0
+		    && VALID_STRING(tp->Strings[i])) {
+		    (void) strcpy(*area, tp->Strings[i]);
+		    *area += strlen(*area) + 1;
 		}
+		returnPtr(tp->Strings[i]);
 	    }
 	}
-	returnPtr(NULL);
+    }
+    returnPtr(NULL);
 }
 
 /*
@@ -199,8 +203,9 @@ int i;
  *
  */
 
-char *tgoto(const char *string, int x, int y)
+char *
+tgoto(const char *string, int x, int y)
 {
-	T((T_CALLED("tgoto(%s,%d,%d)"), string, x, y));
-	returnPtr(tparm((NCURSES_CONST char *)string, y, x));
+    T((T_CALLED("tgoto(%s,%d,%d)"), string, x, y));
+    returnPtr(tparm((NCURSES_CONST char *) string, y, x));
 }
