@@ -1,4 +1,4 @@
-/*	$OpenBSD: chpass.c,v 1.11 1998/05/29 16:37:51 millert Exp $	*/
+/*	$OpenBSD: chpass.c,v 1.12 1998/08/02 03:35:07 millert Exp $	*/
 /*	$NetBSD: chpass.c,v 1.8 1996/05/15 21:50:43 jtc Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)chpass.c	8.4 (Berkeley) 4/2/94";
 #else 
-static char rcsid[] = "$OpenBSD: chpass.c,v 1.11 1998/05/29 16:37:51 millert Exp $";
+static char rcsid[] = "$OpenBSD: chpass.c,v 1.12 1998/08/02 03:35:07 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -181,20 +181,20 @@ main(argc, argv)
 	/* Get the passwd lock file and open the passwd file for reading. */
 	pw_init();
 	tfd = pw_lock(0);
-	if (tfd < 0) {
+	if (tfd == -1 || fcntl(tfd, F_SETFD, 1) == -1) {
 		if (errno == EEXIST)
 			errx(1, "the passwd file is busy.");
 		else
 			err(1, "can't open passwd temp file");
 	}
 	pfd = open(_PATH_MASTERPASSWD, O_RDONLY, 0);
-	if (pfd < 0)
+	if (pfd == -1 || fcntl(pfd, F_SETFD, 1) == -1)
 		pw_error(_PATH_MASTERPASSWD, 1, 1);
 
 	/* Edit the user passwd information if requested. */
 	if (op == EDITENTRY) {
 		dfd = mkstemp(tempname);
-		if (dfd < 0)
+		if (dfd == -1 || fcntl(dfd, F_SETFD, 1) == -1)
 			pw_error(tempname, 1, 1);
 		display(tempname, dfd, pw);
 		edit(tempname, pw);
@@ -217,7 +217,7 @@ main(argc, argv)
 		pw_copy(pfd, tfd, pw);
 
 		/* Now finish the passwd file update. */
-		if (pw_mkdb() < 0)
+		if (pw_mkdb() == -1)
 			pw_error(NULL, 0, 1);
 	}
 
