@@ -159,8 +159,10 @@ mca_opt_toggle()
 	mca = A_OPT_TOGGLE;
 	clear_cmd();
 	cmd_putstr(dash);
+#if GNU_OPTIONS
 	if (optgetname)
 		cmd_putstr(dash);
+#endif
 	if (no_prompt)
 		cmd_putstr("(P)");
 	switch (flag)
@@ -320,6 +322,7 @@ mca_char(c)
 		if (optchar == '\0' && len_cmdbuf() == 0)
 		{
 			flag = (optflag & ~OPT_NO_PROMPT);
+#if GNU_OPTIONS
 			if (flag == OPT_NO_TOGGLE)
 			{
 				switch (c)
@@ -331,6 +334,7 @@ mca_char(c)
 					return (MCA_MORE);
 				}
 			} else
+#endif
 			{
 				switch (c)
 				{
@@ -350,14 +354,17 @@ mca_char(c)
 					optflag ^= OPT_NO_PROMPT;
 					mca_opt_toggle();
 					return (MCA_MORE);
+#if GNU_OPTIONS
 				case '-':
 					/* "--" = long option name. */
 					optgetname = TRUE;
 					mca_opt_toggle();
 					return (MCA_MORE);
+#endif
 				}
 			}
 		}
+#if GNU_OPTIONS
 		if (optgetname)
 		{
 			/*
@@ -432,6 +439,7 @@ mca_char(c)
 				return (MCA_MORE);
 			}
 		} else
+#endif
 		{
 			if (c == erase_char || c == kill_char)
 				break;

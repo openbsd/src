@@ -90,6 +90,7 @@ scan_option(s)
 		case END_OPTION_STRING:
 			continue;
 		case '-':
+#if GNU_OPTIONS
 			/*
 			 * "--" indicates an option name instead of a letter.
 			 */
@@ -98,6 +99,7 @@ scan_option(s)
 				optname = ++s;
 				break;
 			}
+#endif
 			/*
 			 * "-+" means set these options back to their defaults.
 			 * (They may have been set otherwise by previous 
@@ -144,7 +146,9 @@ scan_option(s)
 			printopt = propt(optc);
 			lc = SIMPLE_IS_LOWER(optc);
 			o = findopt(optc);
-		} else
+		}
+#if GNU_OPTIONS
+		else
 		{
 			printopt = optname;
 			lc = SIMPLE_IS_LOWER(optname[0]);
@@ -181,6 +185,7 @@ scan_option(s)
 				o = NULL;
 			}
 		}
+#endif
 		if (o == NULL)
 		{
 			parg.p_string = printopt;
