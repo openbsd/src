@@ -1,4 +1,4 @@
-.\"     $OpenBSD: kgdb.7,v 1.5 2001/10/01 12:58:23 hugh Exp $
+.\"     $OpenBSD: kgdb.7,v 1.6 2003/04/13 11:06:21 jmc Exp $
 .\"
 .\" Copyright (c) 2001 Hugh Graham
 .\"
@@ -62,7 +62,9 @@ on the target system.
 On the control system, run gdb on the kernel just copied.
 .It
 Issue the command "target remote /dev/<serial port>" within gdb.
-The target system should enter kgdb at this point.
+The target system should enter
+.Nm
+at this point.
 .It
 Debug as normal and detach when done, the target should resume normal operation.
 .El

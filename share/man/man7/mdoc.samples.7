@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mdoc.samples.7,v 1.39 2003/02/25 08:51:31 jmc Exp $
+.\"	$OpenBSD: mdoc.samples.7,v 1.40 2003/04/13 11:06:21 jmc Exp $
 .\"	$NetBSD: mdoc.samples.7,v 1.5 1996/04/03 20:17:34 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -126,7 +126,7 @@ outlined as follows:
 .It
 .Tn "TITLE MACROS"
 .It
-.Tn "INTRODUCTION OF MANUAL AND GENERAL TEXT DOMAINS"
+.Tn "INTRODUCTION TO MANUAL AND GENERAL TEXT DOMAINS"
 .Bl -tag -width flag -compact -offset indent
 .It "What's in a name..." .
 .It "General Syntax" .
@@ -139,7 +139,7 @@ outlined as follows:
 .It "Configuration Declarations (section four only)" .
 .It "Command Modifier" .
 .It "Defined Variables" .
-.It "Errno (Section two only)" .
+.It "Errno (section two only)" .
 .It "Environment Variables" .
 .It "Function Argument" .
 .It "Function Declaration" .
@@ -168,10 +168,10 @@ outlined as follows:
 .It "Enclosure/Quoting Macros"
 .Bl -tag -width flag -compact -offset indent
 .It "Angle Bracket Quote/Enclosure" .
-.It "Bracket Quotes/Enclosure" .
+.It "Bracket Quote/Enclosure" .
 .It "Double Quote macro/Enclosure" .
 .It "Parenthesis Quote/Enclosure" .
-.It "Single Quotes/Enclosure" .
+.It "Single Quote/Enclosure" .
 .It "Prefix Macro" .
 .El
 .It "Extended Arguments" .
@@ -352,11 +352,11 @@ to the following macros which need
 it the most:
 .Pp
 .Bl -tag -width 4n -offset indent -compact
-.It Li \&Cd
-Configuration declaration (section 4
-.Sx SYNOPSIS )
 .It Li \&Bl
 Begin list (for the width specifier).
+.It Li \&Cd
+Configuration declaration (section 4
+.Sx SYNOPSIS ) .
 .It Li \&Em
 Emphasized text.
 .It Li \&Fn
@@ -578,12 +578,12 @@ or for a locally produced set
 .Pp
 .Dl \&.Os CS Department
 .Pp
-The 
+The
 .Ox
 default,
 .Ql \&.Os
 without an argument, has been defined as
-.Ox 2.7
+.Ox 3.3
 in the site specific file
 .Pa /usr/share/tmac/mdoc/doc-common .
 It really should default to
@@ -593,7 +593,7 @@ Note, if the
 macro is not present, the bottom left corner of the page
 will be ugly.
 .El
-.Sh INTRODUCTION OF MANUAL AND GENERAL TEXT DOMAINS
+.Sh INTRODUCTION TO MANUAL AND GENERAL TEXT DOMAINS
 .Ss What's in a name...
 The manual domain macro names are derived from the day to day
 informal language used to describe commands, subroutines and related
@@ -768,7 +768,7 @@ The result is:
 .Pp
 .Dl Li sptr, ptr),
 .Pp
-The punctuation is not recognized and all is output in the
+The punctuation is not recognized and everything is output in the
 literal font.
 If the punctuation is separated by a leading white space:
 .Pp
@@ -873,8 +873,7 @@ produced by:
 .Ss Command Modifier
 The command modifier is identical to the
 .Ql \&.Fl
-(flag) command with the exception
-the
+(flag) command with the exception that the
 .Ql \&.Cm
 macro does not assert a dash
 in front of every argument.
@@ -1044,7 +1043,7 @@ macro without any arguments results
 in a dash representing stdin/stdout.
 Note that giving
 .Ql \&.Fl
-a single dash, will result in two dashes.
+a single dash will result in two dashes.
 The
 .Ql \&.Fl
 macro is parsed and is callable.
@@ -1243,7 +1242,7 @@ command keyword in
 the
 .Ql \&.Ic
 macro should be used.
-While the
+While
 .Ql \&.Ic
 is nearly identical
 to
@@ -2353,7 +2352,7 @@ The above was produced by:
 Begin-display.
 The
 .Ql \&.Bd
-display must be ended with the
+display must end with the
 .Ql \&.Ed
 macro.
 Displays may be nested within displays and lists, but may
@@ -2809,7 +2808,7 @@ This is sufficient for the internal register names also.
 .\" w[0-9]		width tag/label stack
 .\" .Ed
 .\" .Pp
-If a non-escaped register name is given in the argument list of a request
+If a non-escaped register name is given in the argument list of a request,
 unpredictable behavior will occur.
 In general, any time huge portions
 of text do not appear where expected in the output, or small strings

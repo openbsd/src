@@ -1,4 +1,4 @@
-.\" $OpenBSD: packages-specs.7,v 1.4 2001/11/17 10:46:09 espie Exp $
+.\" $OpenBSD: packages-specs.7,v 1.5 2003/04/13 11:06:21 jmc Exp $
 .\"
 .\" Copyright (c) 2001 Marc Espie
 .\"
@@ -38,12 +38,12 @@ stem-version[-flavors]
 .Pp
 The
 .Ar stem
-part identifies the package. 
-It may contain some dashes, but its form is mostly conventional. 
+part identifies the package.
+It may contain some dashes, but its form is mostly conventional.
 For instance, japanese packages usually
 start with a
 .Sq ja
-prefix, e.g., 
+prefix, e.g.,
 .Qq ja-kterm-6.2.0 .
 .Pp
 The
@@ -57,26 +57,26 @@ It is highly recommended that all packages have a version number.
 Normally, the version number directly matches the original software
 distribution version number, or release date.
 In case there are substantial changes in the
-.Ox 
+.Ox
 package, a patch level marker should be appended, e.g.,
 .Sq p1 ,
 .Sq p2 ...
 For example, assuming that the screen package for release 2.8 was
 named
-.Qq screen-2.9.8 
-and that an important security patch led to a newer package, 
-the new package would be called 
+.Qq screen-2.9.8
+and that an important security patch led to a newer package,
+the new package would be called
 .Qq screen-2.9.8p1 .
 Obviously, these specific markers are reserved for
 .Ox
 purposes.
 .Pp
 Flavored packages will also contain a list of flavors after the version
-identifier, in a canonical order determined by 
+identifier, in a canonical order determined by
 .Ev FLAVORS
-in the corresponding port's 
+in the corresponding port's
 .Pa Makefile .
-For instance, kterm has an xaw3d flavor: 
+For instance, kterm has an xaw3d flavor:
 .Qq ja-kterm-xaw3d .
 .Pp
 Note that, to uniquely identify the version part, no flavor shall ever
@@ -91,19 +91,19 @@ normally not possible to install two packages with the same
 .Pp
 Note that the
 .Ar stem
-ends at the 
+ends at the
 .Ar version
 part.
-So, for instance, 
+So, for instance,
 .Qq kdelibs-1.1.2
 and
 .Qq kdelibs-2.1.1
-conflict. 
+conflict.
 But
 .Qq openldap-2.0.7
 and
 .Qq openldap-client-2.0.7
-don't. 
+don't.
 Neither do
 .Qq qt-1.45
 and
@@ -119,8 +119,8 @@ is found).
 The corresponding package name is also used as a package specification,
 unless a more specific specification has been given.
 .Pp
-Package specifications are extended package names, that may use 
-.Xr sh 1 
+Package specifications are extended package names, that may use
+.Xr sh 1
 -style wildcards, like
 .Sq *
 or
@@ -145,16 +145,16 @@ For instance, in
 LIB_DEPENDS=aa.1.2::graphics/aalib
 .Ed
 .Pp
-both 
-.Qq aalib-1.2 
-and 
-.Qq aalib-1.2-no_x11 
+both
+.Qq aalib-1.2
+and
+.Qq aalib-1.2-no_x11
 will do.
-To restrict the specification to packages that match flavor 
+To restrict the specification to packages that match flavor
 .Sq f ,
 append
 .Sq -f .
-To restrict the specification to packages that do not match flavor 
+To restrict the specification to packages that do not match flavor
 .Sq f ,
 append
 .Sq -!f .
@@ -173,25 +173,25 @@ Resolution occurs at
 .Xr pkg_add 1
 time, and all dependencies are tracked only as far as needed.
 .Pp
-For instance, if package 
-.Qq foo 
-depends on either 
-.Qq bar 
-or 
-.Qq fuzz , 
-and 
-.Qq bar 
+For instance, if package
+.Qq foo
+depends on either
+.Qq bar
+or
+.Qq fuzz ,
+and
+.Qq bar
 depends
-on 
+on
 .Qq toughluck ,
 .Xr pkg_add 1
-will first check whether 
-.Qq bar 
-or 
+will first check whether
+.Qq bar
+or
 .Qq fuzz
 is installed.
-If either is there, the 
-.Qq toughluck 
+If either is there, the
+.Qq toughluck
 dependency will never be examined.
 It would only be used in the case where neither
 .Qq bar

@@ -1,4 +1,4 @@
-.\" $OpenBSD: library-specs.7,v 1.2 2001/11/26 10:29:42 mpech Exp $
+.\" $OpenBSD: library-specs.7,v 1.3 2003/04/13 11:06:21 jmc Exp $
 .\"
 .\" Copyright (c) 2001 Marc Espie
 .\"
@@ -36,13 +36,13 @@ Each
 item in the port tree conforms to
 .Sq lib_specs:[pkgspec]:directory[,-subpackage][,flavor ...][:target] ,
 where
-.Sq lib_specs ,
+.Sq lib_specs
 is a comma-separated list of
 .Sq lib_spec
 of the form:
 .Sq libname[.major[.minor]] .
 .Pp
-All libraries that a port needs must be mentioned in that list, either 
+All libraries that a port needs must be mentioned in that list, either
 directly or indirectly through recursive dependencies (except, of course,
 for system libraries).
 .Pp
@@ -56,8 +56,8 @@ augmented, and by bumping the major number each time the interface changes.
 Note that adding functions to a library is an interface augmentation.
 Removing functions is an interface change.
 .Pp
-The major.minor components of the library specification are used only as a build
-time check.
+The major.minor components of the library specification are used only as a
+build-time check.
 Any library which is more recent than the given major.minor version will
 do.
 If the minor component is left empty, any minor will do.
@@ -65,9 +65,9 @@ If both components are left empty, any version will do.
 If a specific major number is needed, use the form
 .Sq libname.=major[.minor] .
 .Pp
-The 
+The
 .Sq pkgspec
-part is always checked, both a build-time, and at
+part is always checked, both at build-time, and at
 .Xr pkg_add 1
 time.
 If
