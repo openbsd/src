@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.133 2005/02/18 06:40:08 jsg Exp $
+$OpenBSD: usbdevs,v 1.134 2005/02/23 02:24:30 deraadt Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -1343,6 +1343,7 @@ product PALM TUNGSTEN_Z		0x0031	Palm Tungsten Z
 product PALM M125		0x0040	Palm m125
 product PALM M130		0x0050	Palm m130
 product PALM TUNGSTEN_T		0x0060	Palm Tungsten T
+product PALM ZIRE_31		0x0061	Palm Zire 31
 product PALM ZIRE		0x0070	Palm Zire
 
 /* Panasonic products */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvisor.c,v 1.19 2004/11/28 18:59:27 pvalchev Exp $	*/
+/*	$OpenBSD: uvisor.c,v 1.20 2005/02/23 02:24:30 deraadt Exp $	*/
 /*	$NetBSD: uvisor.c,v 1.21 2003/08/03 21:59:26 nathanw Exp $	*/
 
 /*
@@ -182,6 +182,7 @@ static const struct uvisor_type uvisor_devs[] = {
 	{{ USB_VENDOR_PALM, USB_PRODUCT_PALM_TUNGSTEN_Z }, PALM4 },
 	{{ USB_VENDOR_PALM, USB_PRODUCT_PALM_TUNGSTEN_T }, PALM4 },
 	{{ USB_VENDOR_PALM, USB_PRODUCT_PALM_ZIRE }, PALM4 },
+	{{ USB_VENDOR_PALM, USB_PRODUCT_PALM_ZIRE_31 }, PALM4 },
 	{{ USB_VENDOR_SONY, USB_PRODUCT_SONY_CLIE_40 }, PALM4 },
 	{{ USB_VENDOR_SONY, USB_PRODUCT_SONY_CLIE_41 }, PALM4 },
 	{{ USB_VENDOR_SONY, USB_PRODUCT_SONY_CLIE_S360 }, PALM4 },
