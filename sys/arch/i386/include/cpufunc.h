@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.h,v 1.10 2003/10/24 09:03:20 grange Exp $	*/
+/*	$OpenBSD: cpufunc.h,v 1.11 2003/10/28 13:22:44 avsm Exp $	*/
 /*	$NetBSD: cpufunc.h,v 1.8 1994/10/27 04:15:59 cgd Exp $	*/
 
 /*
@@ -33,6 +33,8 @@
 
 #ifndef _I386_CPUFUNC_H_
 #define	_I386_CPUFUNC_H_
+
+#ifdef _KERNEL
 
 /*
  * Functions to provide access to i386-specific instructions.
@@ -207,4 +209,5 @@ breakpoint(void)
 	__asm __volatile("int $3");
 }
 
+#endif /* _KERNEL */
 #endif /* !_I386_CPUFUNC_H_ */
