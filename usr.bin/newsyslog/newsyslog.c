@@ -1,4 +1,4 @@
-/*	$OpenBSD: newsyslog.c,v 1.59 2002/11/27 22:56:16 millert Exp $	*/
+/*	$OpenBSD: newsyslog.c,v 1.60 2002/12/23 00:09:52 millert Exp $	*/
 
 /*
  * Copyright (c) 1999, 2002 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -86,7 +86,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: newsyslog.c,v 1.59 2002/11/27 22:56:16 millert Exp $";
+static const char rcsid[] = "$OpenBSD: newsyslog.c,v 1.60 2002/12/23 00:09:52 millert Exp $";
 #endif /* not lint */
 
 #ifndef CONF
@@ -176,7 +176,7 @@ void do_entry(struct conf_entry *);
 void parse_args(int, char **);
 void usage(void);
 struct conf_entry *parse_file(int *);
-char *missing_field(char *, char *);
+char *missing_field(char *, char *, int);
 void dotrim(struct conf_entry *);
 int log_trim(char *);
 void compress_log(struct conf_entry *);
@@ -226,10 +226,10 @@ main(int argc, char **argv)
 					break;
 				}
 			if (q == NULL)
-				warnx("%s is not listed in %s", *av, conf);
+				warnx("%s: %s not found", conf, *av);
 		}
 		if (x == NULL)
-			errx(1, "no specified log files found in %s", conf);
+			errx(1, "%s: no specified log files", conf);
 		y->next = NULL;
 		p = x;
 	}
@@ -471,6 +471,7 @@ parse_file(int *nentries)
 {
 	FILE *f;
 	char line[BUFSIZ], *parse, *q, *errline, *group, *tmp;
+	int lineno;
 	struct conf_entry *first = NULL;
 	struct conf_entry *working = NULL;
 	struct passwd *pwd;
@@ -483,7 +484,7 @@ parse_file(int *nentries)
 		err(1, "can't open %s", conf);
 
 	*nentries = 0;
-	while (fgets(line, sizeof(line), f)) {
+	for (lineno = 0; fgets(line, sizeof(line), f); lineno++) {
 		tmp = sob(line);
 		if (*tmp == '\0' || *tmp == '#')
 			continue;
@@ -503,7 +504,7 @@ parse_file(int *nentries)
 			working = working->next;
 		}
 
-		q = parse = missing_field(sob(line), errline);
+		q = parse = missing_field(sob(line), errline, lineno);
 		*(parse = son(line)) = '\0';
 		working->log = strdup(q);
 		if (working->log == NULL)
@@ -512,14 +513,15 @@ parse_file(int *nentries)
 		if ((working->logbase = strrchr(working->log, '/')) != NULL)
 			working->logbase++;
 
-		q = parse = missing_field(sob(++parse), errline);
+		q = parse = missing_field(sob(++parse), errline, lineno);
 		*(parse = son(parse)) = '\0';
 		if ((group = strchr(q, '.')) != NULL) {
 			*group++ = '\0';
 			if (*q) {
 				if (!(isnumberstr(q))) {
 					if ((pwd = getpwnam(q)) == NULL)
-						errx(1, "Error in config file; unknown user: %s", q);
+						errx(1, "%s:%d: unknown user: %s",
+						    conf, lineno, q);
 					working->uid = pwd->pw_uid;
 				} else
 					working->uid = atoi(q);
@@ -530,14 +532,16 @@ parse_file(int *nentries)
 			if (*q) {
 				if (!(isnumberstr(q))) {
 					if ((grp = getgrnam(q)) == NULL)
-						errx(1, "Error in config file; unknown group: %s", q);
+
+						errx(1, "%s:%d: unknown group: %s",
+						    conf, lineno, q);
 					working->gid = grp->gr_gid;
 				} else
 					working->gid = atoi(q);
 			} else
 				working->gid = (gid_t)-1;
 			
-			q = parse = missing_field(sob(++parse), errline);
+			q = parse = missing_field(sob(++parse), errline, lineno);
 			*(parse = son(parse)) = '\0';
 		} else {
 			working->uid = (uid_t)-1;
@@ -545,21 +549,21 @@ parse_file(int *nentries)
 		}
 
 		if (!sscanf(q, "%o", &working->permissions))
-			errx(1, "Error in config file; bad permissions: %s", q);
+			errx(1, "%s:%d: bad permissions: %s", conf, lineno, q);
 
-		q = parse = missing_field(sob(++parse), errline);
+		q = parse = missing_field(sob(++parse), errline, lineno);
 		*(parse = son(parse)) = '\0';
 		if (!sscanf(q, "%d", &working->numlogs) || working->numlogs < 0)
-			errx(1, "Error in config file; bad number: %s", q);
+			errx(1, "%s:%d: bad number: %s", conf, lineno, q);
 
-		q = parse = missing_field(sob(++parse), errline);
+		q = parse = missing_field(sob(++parse), errline, lineno);
 		*(parse = son(parse)) = '\0';
 		if (isdigit(*q))
 			working->size = atoi(q) * 1024;
 		else
 			working->size = -1;
 		
-		q = parse = missing_field(sob(++parse), errline);
+		q = parse = missing_field(sob(++parse), errline, lineno);
 		*(parse = son(parse)) = '\0';
 		if (isdigit(*q))
 			working->hours = atoi(q);
@@ -590,7 +594,8 @@ parse_file(int *nentries)
 					working->flags |= CE_FOLLOW;
 					break;
 				default:
-					errx(1, "Illegal flag in config file: %c", *q);
+					errx(1, "%s:%d: illegal flag: `%c'",
+					    conf, lineno, *q);
 					break;
 				}
 				q++;
@@ -618,7 +623,8 @@ parse_file(int *nentries)
 			if (*q == '/') {
 				*(parse = son(parse)) = '\0';
 				if (strlen(q) >= MAXPATHLEN)
-					errx(1, "%s: pathname too long", q);
+					errx(1, "%s:%d: pathname too long: %s",
+					    conf, lineno, q);
 				working->pidfile = strdup(q);
 				if (working->pidfile == NULL)
 					err(1, "strdup");
@@ -642,9 +648,11 @@ parse_file(int *nentries)
 					}
 				}
 				if (i == NSIG)
-					errx(1, "unknown signal: %s", q);
+					errx(1, "%s:%d: unknown signal: %s",
+					    conf, lineno, q);
 			} else
-				errx(1, "unrecognized field: %s", q);
+				errx(1, "%s:%d: unrecognized field: %s",
+				    conf, lineno, q);
 		}
 		free(errline);
 
@@ -676,12 +684,14 @@ parse_file(int *nentries)
 			if (snprintf(line, sizeof(line), "%s/%s.%d%s",
 			    working->backdir, working->logbase,
 			    working->numlogs, COMPRESS_POSTFIX) >= MAXPATHLEN)
-				errx(1, "%s: pathname too long", working->log);
+				errx(1, "%s:%d: pathname too long: %s",
+				    conf, lineno, q);
 		} else {
 			if (snprintf(line, sizeof(line), "%s.%d%s",
 			    working->log, working->numlogs, COMPRESS_POSTFIX)
 			    >= MAXPATHLEN)
-				errx(1, "%s: pathname too long", working->log);
+				errx(1, "%s:%d: pathname too long: %s",
+				    conf, lineno, working->log);
 		}
 	}
 	if (working)
@@ -691,10 +701,10 @@ parse_file(int *nentries)
 }
 
 char *
-missing_field(char *p, char *errline)
+missing_field(char *p, char *errline, int lineno)
 {
-	if (!p || !*p) {
-		warnx("Missing field in config file line:");
+	if (p == NULL || *p == '\0') {
+		warnx("%s:%d: missing field", conf, lineno);
 		fputs(errline, stderr);
 		exit(1);
 	}
