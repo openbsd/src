@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpt_openbsd.c,v 1.6 2004/03/17 00:47:06 krw Exp $	*/
+/*	$OpenBSD: mpt_openbsd.c,v 1.7 2004/03/19 02:47:36 krw Exp $	*/
 /*	$NetBSD: mpt_netbsd.c,v 1.7 2003/07/14 15:47:11 lukem Exp $	*/
 
 /*
@@ -589,10 +589,26 @@ mpt_intr(void *arg)
 	int nrepl = 0;
 	uint32_t reply;
 
+	/*
 	if ((mpt_read(mpt, MPT_OFFSET_INTR_STATUS) & MPT_INTR_REPLY_READY) == 0)
 		return (0);
+	*/
+
+	/*
+	 * Speed up trick to save one PCI read.
+	 * Reply FIFO replies 0xffffffff whenever 
+	 * MPT_OFFSET_INTR_STATUS & MPT_INTR_REPLY_READY == 0
+	 *
+	 */
 
 	reply = mpt_pop_reply_queue(mpt);
+
+	if (reply == 0xffffffff) {
+		/* check doorbell, this is error path not IO path */
+		/* FIXME for now ignore strays and doorbells */
+		return (0);
+	}
+
 	while (reply != MPT_REPLY_EMPTY) {
 		nrepl++;
 		if (mpt->verbose > 1) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpt.c,v 1.2 2004/03/17 00:47:06 krw Exp $	*/
+/*	$OpenBSD: mpt.c,v 1.3 2004/03/19 02:47:36 krw Exp $	*/
 /*	$NetBSD: mpt.c,v 1.4 2003/11/02 11:07:45 wiz Exp $	*/
 
 /*
@@ -98,9 +98,22 @@ void
 mpt_check_doorbell(mpt_softc_t *mpt)
 {
 	u_int32_t db = mpt_rd_db(mpt);
-	if (MPT_STATE(db) != MPT_DB_STATE_RUNNING) {
-		mpt_prt(mpt, "Device not running");
-		mpt_print_db(db);
+
+	/* prepare this function for error path */
+	/* if (MPT_STATE(db) != MPT_DB_STATE_RUNNING) { */
+	switch (MPT_STATE(db)) {
+		case MPT_DB_STATE_FAULT:
+		case MPT_DB_STATE_READY:
+			/* 1030 needs reset, issue IOC_INIT */
+			/* FIXME */
+			if (mpt_init(mpt, MPT_DB_INIT_HOST) != 0)
+				panic("%s: Can't get MPT IOC operational",
+				    mpt->mpt_dev.dv_xname);
+			break;
+
+		default:
+			/* nothing done for now */
+			break;
 	}
 }
 
@@ -201,6 +214,10 @@ mpt_hard_reset(mpt_softc_t *mpt)
 
 	/* Note that if there is no valid firmware to run, the doorbell will
 	   remain in the reset state (0x00000000) */
+	if (mpt->download_fw) {
+		/* FIXME do download boot we panic for now */
+		panic("FWDownloadBoot not implemented yet.");
+	}
 }
 
 /*
@@ -1131,6 +1148,15 @@ mpt_init(mpt_softc_t *mpt, u_int32_t who)
 		/* save the firmware upload required flag */
 		mpt->fw_download_boot = facts.Flags
 			& MPI_IOCFACTS_FLAGS_FW_DOWNLOAD_BOOT;
+
+		/* if download boot set download flag */
+		if (mpt->fw_download_boot) {
+			mpt->download_fw = 1;
+		}
+		else {
+			mpt->download_fw = 0;
+		}
+
 		mpt->fw_image_size = facts.FWImageSize;
 
 		if (mpt_get_portfacts(mpt, &pfp) != MPT_OK) {
