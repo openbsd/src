@@ -1,4 +1,4 @@
-/*	$OpenBSD: hme.c,v 1.22 2002/11/20 22:06:45 jason Exp $	*/
+/*	$OpenBSD: hme.c,v 1.23 2002/11/26 01:08:18 fgsch Exp $	*/
 /*	$NetBSD: hme.c,v 1.21 2001/07/07 15:59:37 thorpej Exp $	*/
 
 /*-
@@ -662,7 +662,7 @@ hme_start(ifp)
 
 	if (cnt != 0) {
 		sc->sc_tx_prod = bix;
-		ifp->if_timer = 0;
+		ifp->if_timer = 5;
 	}
 }
 
@@ -715,8 +715,7 @@ hme_tint(sc)
 	}
 
 	sc->sc_tx_cnt = cnt;
-	if (cnt == 0)
-		ifp->if_timer = 0;
+	ifp->if_timer = cnt > 0 ? 5 : 0;
 
 	/* Update ring */
 	sc->sc_tx_cons = ri;
