@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.8 1997/02/10 01:33:57 downsj Exp $	*/
+/*	$OpenBSD: sd.c,v 1.9 1997/02/10 06:43:34 downsj Exp $	*/
 /*	$NetBSD: sd.c,v 1.29 1997/01/30 09:14:20 thorpej Exp $	*/
 
 /*
@@ -380,15 +380,6 @@ sdgetinfo(dev)
 	register struct disklabel *lp = sc->sc_dkdev.dk_label;
 	register struct partition *pi;
 	char *msg, *readdisklabel();
-#ifdef COMPAT_NOLABEL
-	int usedefault = 1;
-
-	/*
-	 * For CD-ROM just define a single partition
-	 */
-	if (sc->sc_type == 5)
-		usedefault = 0;
-#endif
 
 	bzero((caddr_t)lp, sizeof *lp);
 	msg = NULL;
@@ -415,9 +406,6 @@ sdgetinfo(dev)
 			 */
 			sc->sc_flags |= SDF_ERROR;
 			msg = "unformatted/missing media";
-#ifdef COMPAT_NOLABEL
-			usedefault = 0;
-#endif
 			break;
 		}
 	}
@@ -447,15 +435,8 @@ sdgetinfo(dev)
 	}
 
 	pi = lp->d_partitions;
-	printf("%s: WARNING: %s, ", sc->sc_dev.dv_xname, msg);
-#ifdef COMPAT_NOLABEL
-	if (usedefault) {
-		printf("using old default partitioning\n");
-		sdmakedisklabel(unit, lp);
-		return(0);
-	}
-#endif
-	printf("defining `c' partition as entire disk\n");
+	printf("%s: WARNING: %s, defining `c' partition as entire disk\n",
+	    sc->sc_dev.dv_xname, msg);
 	pi[2].p_size = sc->sc_blks;
 	/* XXX reset other info since readdisklabel screws with it */
 	lp->d_npartitions = 3;

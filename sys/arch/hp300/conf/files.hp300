@@ -1,4 +1,4 @@
-#	$OpenBSD: files.hp300,v 1.4 1997/02/10 01:33:55 downsj Exp $
+#	$OpenBSD: files.hp300,v 1.5 1997/02/10 06:43:29 downsj Exp $
 #	$NetBSD: files.hp300,v 1.22 1997/01/30 22:11:19 scottr Exp $
 #
 # hp300-specific configuration info
@@ -122,7 +122,6 @@ major	{mt = 1}
 device	hd: disk
 attach	hd at hpibbus
 file	arch/hp300/dev/hd.c		hd needs-flag
-file	arch/hp300/dev/hd_compat.c	hd		# XXX
 major	{hd = 2}
 
 device	ppi
@@ -138,7 +137,6 @@ file	arch/hp300/dev/scsi.c		oscsi
 device	sd: disk
 attach	sd at oscsi
 file	arch/hp300/dev/sd.c		sd needs-flag
-file	arch/hp300/dev/sd_compat.c	sd		# XXX
 major	{sd = 4}
 
 device	st: tape

@@ -1,4 +1,4 @@
-#	$OpenBSD: DISKLESS,v 1.10 1997/02/05 17:41:49 downsj Exp $
+#	$OpenBSD: DISKLESS,v 1.11 1997/02/10 06:43:26 downsj Exp $
 #	$NetBSD: GENERIC,v 1.23 1997/01/31 06:12:57 thorpej Exp $
 #
 # Generic kernel - one size fits all.
@@ -25,7 +25,6 @@ maxusers	8
 # Options for HP hardware
 option	 	FPSP		# floating point interface for 68040
 option	 	USELEDS		# make the lights twinkle
-option	 	COMPAT_NOLABEL	# defaults for unlabeled disks
 #option		PANICBUTTON	# two fast <reset>s on HIL dump kernel
 #option		CONSCODE="9"	# force console at this select code
 option	 	UK_KEYBOARD	# include United Kingdom HIL keymap

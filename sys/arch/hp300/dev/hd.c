@@ -1,4 +1,4 @@
-/*	$OpenBSD: hd.c,v 1.2 1997/02/07 03:22:16 dima Exp $	*/
+/*	$OpenBSD: hd.c,v 1.3 1997/02/10 06:43:32 downsj Exp $	*/
 /*	$NetBSD: rd.c,v 1.27 1997/01/30 09:14:17 thorpej Exp $	*/
 
 /*
@@ -500,17 +500,12 @@ hdgetinfo(dev)
 		return(0);
 
 	pi = lp->d_partitions;
-	printf("%s: WARNING: %s, ", rs->sc_dev.dv_xname, msg);
-#ifdef COMPAT_NOLABEL
-	printf("using old default partitioning\n");
-	hdmakedisklabel(unit, lp);
-#else
-	printf("defining `c' partition as entire disk\n");
+	printf("%s: WARNING: %s, defining `c' partition as entire disk\n",
+	    rs->sc_dev.dv_xname, msg);
 	pi[2].p_size = hdidentinfo[rs->sc_type].ri_nblocks;
 	/* XXX reset other info since readdisklabel screws with it */
 	lp->d_npartitions = 3;
 	pi[0].p_size = 0;
-#endif
 	return(0);
 }
 
