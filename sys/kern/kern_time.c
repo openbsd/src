@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.9 1997/04/28 01:33:47 niklas Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.10 1997/10/17 04:41:10 millert Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -141,9 +141,18 @@ sys_clock_settime(p, v, retval)
 		return (error);
 
 	TIMESPEC_TO_TIMEVAL(&atv,&ats);
+
+	/*
+	 * If the system is secure, we do not allow the time to be
+	 * set to an earlier value (it may be slowed using adjtime,
+	 * but not set back). This feature prevent interlopers from
+	 * setting arbitrary time stamps on files.
+	 */
+	if (securelevel > 1 && timercmp(&atv, &time, <))
+		return (EPERM);
 	settime(&atv);
 
-	return 0;
+	return (0);
 }
 
 int
@@ -287,8 +296,17 @@ sys_settimeofday(p, v, retval)
 	if (SCARG(uap, tzp) && (error = copyin((void *)SCARG(uap, tzp),
 	    (void *)&atz, sizeof(atz))))
 		return (error);
-	if (SCARG(uap, tv))
+	if (SCARG(uap, tv)) {
+		/*
+		 * If the system is secure, we do not allow the time to be
+		 * set to an earlier value (it may be slowed using adjtime,
+		 * but not set back). This feature prevent interlopers from
+		 * setting arbitrary time stamps on files.
+		 */
+		if (securelevel > 1 && timercmp(&atv, &time, <))
+			return (EPERM);
 		settime(&atv);
+	}
 	if (SCARG(uap, tzp))
 		tz = atz;
 	return (0);
