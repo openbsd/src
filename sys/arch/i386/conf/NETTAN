@@ -1,4 +1,4 @@
-#	$OpenBSD: NETTAN,v 1.4 1996/05/14 18:38:16 mickey Exp $
+#	$OpenBSD: NETTAN,v 1.5 1996/06/16 10:33:16 deraadt Exp $
 #
 #	NETTAN -- Applitron Datasystem AB
 #
@@ -84,6 +84,7 @@ mainbus0	at root
 isa0	at mainbus0
 
 npx0	at isa? port 0xf0 irq 13	# math coprocessor
+isadma0	at isa?
 
 #pc0	at isa? port 0x60 irq 1		# generic PC console device
 vt0	at isa? port 0x60 irq 1

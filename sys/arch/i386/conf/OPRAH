@@ -76,6 +76,7 @@ mainbus0	at root
 isa0	at mainbus0
 
 npx0	at isa? port 0xf0 irq 13	# math coprocessor
+isadma0	at isa?
 
 vt0	at isa? port 0x60 irq 1
 

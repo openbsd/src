@@ -1,4 +1,4 @@
-#	$OpenBSD: DISKLESS,v 1.7 1996/05/27 08:05:07 deraadt Exp $
+#	$OpenBSD: DISKLESS,v 1.8 1996/06/16 10:33:11 deraadt Exp $
 #	$NetBSD: DISKLESS,v 1.26 1996/05/20 18:17:16 mrg Exp $
 #
 # DISKLESS -- Generic machine setup for diskless boot.
@@ -90,6 +90,7 @@ isa0	at mainbus0
 #pci*	at ppb? bus ?
 
 npx0	at isa? port 0xf0 irq 13	# math coprocessor
+isadma0	at isa?
 
 pc0	at isa? port 0x60 irq 1		# generic PC console device
 #vt0	at isa? port 0x60 irq 1

@@ -1,4 +1,4 @@
-#	$OpenBSD: HELIOS_PCMCIA,v 1.5 1996/04/30 18:49:41 hvozda Exp $
+#	$OpenBSD: HELIOS_PCMCIA,v 1.6 1996/06/16 10:33:13 deraadt Exp $
 #
 #	HELIOS_PCMCIA -- Eric Hvozda's notebook
 #
@@ -58,6 +58,7 @@ pci0	at mainbus0
 #apm0	at mainbus0
 
 npx0	at isa? port 0xf0 irq 13	# math coprocessor
+isadma0	at isa?
 
 pc0	at isa? port 0x60 irq 1		# generic PC console device
 #spkr0	at pckbd? port 0x61		# PC speaker

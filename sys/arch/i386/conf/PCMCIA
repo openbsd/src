@@ -1,4 +1,4 @@
-#	$Id: PCMCIA,v 1.1 1996/04/29 14:12:24 hvozda Exp $
+#	$Id: PCMCIA,v 1.2 1996/06/16 10:33:18 deraadt Exp $
 #	$Source: /home/cvs/src/sys/arch/i386/conf/Attic/PCMCIA,v $
 #
 #	ATHENA-AHA	-- ATHENA kernel for Adaptec & others...
@@ -89,6 +89,7 @@ isa0	at mainbus0
 pci0	at mainbus0 bus 0
 
 npx0	at isa? port 0xf0 irq 13	# math coprocessor
+isadma0	at isa?
 
 vt0	at isa? port 0x60 irq 1
 

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.i386,v 1.18 1996/06/08 09:12:38 downsj Exp $
+#	$OpenBSD: files.i386,v 1.19 1996/06/16 10:33:20 deraadt Exp $
 #	$NetBSD: files.i386,v 1.73 1996/05/07 00:58:36 thorpej Exp $
 #
 # new style config file for i386 architecture
@@ -94,6 +94,7 @@ major	{wt = 3}
 
 include "../../../dev/isa/files.isa"
 file	arch/i386/isa/isa_machdep.c	isabus
+file	dev/isa/isadma.c		isadma needs-flag
 
 # PC clock
 file	arch/i386/isa/clock.c		isabus
@@ -136,7 +137,7 @@ file	arch/i386/isa/pms.c		pms needs-flag
 # Floppy disk controller
 device	fdc {drive = -1}
 attach	fdc at isa
-device	fd: disk, isadma
+device	fd: disk, isa_dma
 attach	fd at fdc
 file	arch/i386/isa/fd.c		fdc needs-flag
 major	{fd = 2}
