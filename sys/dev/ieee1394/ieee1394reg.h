@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee1394reg.h,v 1.3 2002/12/13 22:33:52 tdeval Exp $	*/
+/*	$OpenBSD: ieee1394reg.h,v 1.4 2003/01/12 12:01:33 tdeval Exp $	*/
 /*	$NetBSD: ieee1394reg.h,v 1.12 2002/02/27 05:07:25 jmc Exp $	*/
 
 /*
@@ -118,6 +118,75 @@
 #define	IEEE1394_ACK_DATA_ERROR			13
 #define	IEEE1394_ACK_TYPE_ERROR			14
 #define	IEEE1394_ACK_RESERVED_15		15
+
+/*
+ * PHY packet types.
+ */
+#define	IEEE1394_PHY_TYPE_MASK			0xC0000000
+#define	IEEE1394_PHY_TYPE_BITPOS		30
+#define	IEEE1394_PHY_SELF_ID			0x80000000
+#define	IEEE1394_PHY_LINK_ON			0x40000000
+#define	IEEE1394_PHY_CONFIG			0x00000000
+#define	IEEE1394_PHY_ID_MASK			0x3F000000
+#define	IEEE1394_PHY_ID_BITPOS			24
+
+/*
+ * Link-On PHY Packet Fields.
+ */
+/* There is no other field than the PHY_ID. */
+
+/*
+ * Configuration PHY Packet Fields.
+ */
+#define	IEEE1394_CONFIG_FORCE_ROOT		0x00800000
+#define	IEEE1394_CONFIG_SET_GAPCNT		0x00400000
+#define	IEEE1394_CONFIG_GAPCNT_MASK		0x003F0000
+#define	IEEE1394_CONFIG_GAPCNT_BITPOS		16
+
+/*
+ * Self-ID PHY Packet Fields.
+ */
+#define	IEEE1394_SELFID_EXTENDED		0x00800000
+#define	IEEE1394_SELFID_LINK_ACTIVE		0x00400000
+#define	IEEE1394_SELFID_CONTENDER		0x00000800
+#define	IEEE1394_SELFID_INITIATED_RESET		0x00000002
+#define	IEEE1394_SELFID_MORE_PACKETS		0x00000001
+#define	IEEE1394_SELFID_GAPCNT_MASK		0x003F0000
+#define	IEEE1394_SELFID_GAPCNT_BITPOS		16
+#define	IEEE1394_SELFID_SPEED_MASK		0x0000C000
+#define	IEEE1394_SELFID_SPEED_BITPOS		14
+#define	IEEE1394_SELFID_DELAY_MASK		0x00003000
+#define	IEEE1394_SELFID_DELAY_BITPOS		12
+#define	IEEE1394_SELFID_POWER_MASK		0x00000700
+#define	IEEE1394_SELFID_POWER_BITPOS		8
+#define	IEEE1394_SELFID_EXT_SEQ_MASK		0x00700000
+#define	IEEE1394_SELFID_EXT_SEQ_BITPOS		20
+
+/*
+ * Node's port status.
+ */
+#define	IEEE1394_SELFID_PORT_STATUS(packet,port)			\
+	(((packet) >> (16 - 2 * (port))) & 0x3)
+#define	IEEE1394_PORT_NOT_PRESENT		0
+#define	IEEE1394_PORT_NOT_CONNECTED		1
+#define	IEEE1394_PORT_CONNECT_PARENT		2
+#define	IEEE1394_PORT_CONNECT_CHILD		3
+
+/*
+ * Defined IEEE 1394 power classes.
+ */
+#define	IEEE1394_POW_NONE			0	/* No power feature. */
+#define	IEEE1394_POW_SELF_15W			1	/* Provides 15W. */
+#define	IEEE1394_POW_SELF_30W			2	/* Provides 30W. */
+#define	IEEE1394_POW_SELF_45W			3	/* Provides 45W. */
+#define	IEEE1394_POW_USES_1W			4	/* Uses up to 1W. */
+#define	IEEE1394_POW_USES_2W			5	/* Uses up to 2W. */
+#define	IEEE1394_POW_USES_5W			6	/* Uses up to 5W. */
+#define	IEEE1394_POW_USES_9W			7	/* Uses up to 9W. */
+
+#define	IEEE1394_POW_STRINGS	"None", "15W_Src", "30W_Src",	\
+				"45W_Src", "1W_Sink", "2W_Sink",	\
+				"5W_Sink", "9W_Sink"
 
 /*
  * Defined IEEE 1394 speeds.
