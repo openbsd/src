@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.39 2002/04/02 00:31:59 mickey Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.40 2002/04/02 06:01:44 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -124,7 +124,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.39 2002/04/02 00:31:59 mickey Exp $";
+	"$OpenBSD: if_wi.c,v 1.40 2002/04/02 06:01:44 millert Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -1462,11 +1462,10 @@ wi_init(xsc)
 	 *	and always reset promisc mode in Host-AP regime,
 	 *	it shows us all the packets anyway.
 	 */
-	if (sc->wi_ptype != WI_PORTTYPE_AP && ifp->if_flags & IFF_PROMISC) {
+	if (sc->wi_ptype != WI_PORTTYPE_AP && ifp->if_flags & IFF_PROMISC)
 		WI_SETVAL(WI_RID_PROMISC, 1);
-	} else {
+	else
 		WI_SETVAL(WI_RID_PROMISC, 0);
-	}
 
 	/* Configure WEP. */
 	if (sc->wi_has_wep) {
@@ -1477,14 +1476,14 @@ wi_init(xsc)
 		wi_write_record(sc, (struct wi_ltv_gen *)&sc->wi_keys);
 		if (sc->sc_prism2 && sc->wi_use_wep) {
 			/*
-			 * For Prism2 Firmware version less than 0.8 variant3.
+			 * For Prism2 Firmware version less than 0.8.2.
 			 * If promiscuous mode is disabled, the Prism2 chip
 			 * does not work with WEP .
 			 * I'm currently investigating the details of this.
 			 * (ichiro@netbsd.org)
 			 */
-			 if (sc->sc_prism2_ver < 83 ) {
-				/* firm ver < 0.8 variant 3 */
+			 if (sc->sc_prism2_ver < 82 ) {
+				/* firm ver < 0.8.2 */
 				WI_SETVAL(WI_RID_PROMISC, 1);
 			 }
 			 WI_SETVAL(WI_RID_CNFAUTHMODE, sc->wi_authtype);
@@ -1991,13 +1990,13 @@ wi_get_id(sc, print_cis)
 	ver.wi_ver[2] = letoh16(ver.wi_ver[2]);
 	ver.wi_ver[3] = letoh16(ver.wi_ver[3]);
 	if (sc->sc_prism2) {
-		printf("\n%s: %s, Firmware %i.%i variant %i, ",
+		printf("\n%s: %s, Firmware %d.%d.%d, ",
 		    WI_PRT_ARG(sc), p, ver.wi_ver[2],
 		    ver.wi_ver[3], ver.wi_ver[1]);
 		sc->sc_prism2_ver = ver.wi_ver[2] * 100 +
 				    ver.wi_ver[3] *  10 + ver.wi_ver[1];
 	} else {
-		printf("\n%s: Firmware %i.%i variant %i, ", WI_PRT_ARG(sc),
+		printf("\n%s: Firmware %d.%d variant %d, ", WI_PRT_ARG(sc),
 		    ver.wi_ver[2], ver.wi_ver[3], ver.wi_ver[1]);
 	}
 

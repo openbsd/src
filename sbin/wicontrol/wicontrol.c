@@ -1,4 +1,4 @@
-/*	$OpenBSD: wicontrol.c,v 1.29 2002/04/01 20:43:08 millert Exp $	*/
+/*	$OpenBSD: wicontrol.c,v 1.30 2002/04/02 06:01:43 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -69,7 +69,7 @@
 static const char copyright[] = "@(#) Copyright (c) 1997, 1998, 1999\
 	Bill Paul. All rights reserved.";
 static const char rcsid[] =
-	"@(#) $OpenBSD: wicontrol.c,v 1.29 2002/04/01 20:43:08 millert Exp $";
+	"@(#) $OpenBSD: wicontrol.c,v 1.30 2002/04/02 06:01:43 millert Exp $";
 #endif
 
 void wi_getval(char *, struct wi_req *);
@@ -418,9 +418,14 @@ wi_printcardid(wreq, chip_id)
 		asprintf(&chip_name, "Unknown (%d)", chip_id);
 		break;
 	}
-	printf("[ %s, Firmware %i.%i variant %i ]", chip_name,
-	    letoh16(wreq->wi_val[2]), letoh16(wreq->wi_val[3]),
-	    letoh16(wreq->wi_val[1]));
+	if (chip_id <= 5)
+		printf("[ %s, Firmware %d.%d variant %d ]", chip_name,
+		    letoh16(wreq->wi_val[2]), letoh16(wreq->wi_val[3]),
+		    letoh16(wreq->wi_val[1]));
+	else
+		printf("[ %s, Firmware %d.%d.%d ]", chip_name,
+		    letoh16(wreq->wi_val[2]), letoh16(wreq->wi_val[3]),
+		    letoh16(wreq->wi_val[1]));
 }
 
 void
