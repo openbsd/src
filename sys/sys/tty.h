@@ -1,5 +1,5 @@
-/*	$OpenBSD: tty.h,v 1.3 1996/04/21 22:32:12 deraadt Exp $	*/
-/*	$NetBSD: tty.h,v 1.30 1996/04/09 20:55:44 cgd Exp $	*/
+/*	$OpenBSD: tty.h,v 1.4 1996/06/10 07:31:41 deraadt Exp $	*/
+/*	$NetBSD: tty.h,v 1.30.4.1 1996/06/02 09:08:13 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -43,6 +43,7 @@
 
 #include <sys/termios.h>
 #include <sys/select.h>		/* For struct selinfo. */
+#include <sys/queue.h>
 
 #ifndef REAL_CLISTS
 /*
@@ -82,6 +83,7 @@ struct clist {
  * (low, high, timeout).
  */
 struct tty {
+	TAILQ_ENTRY(tty) tty_link;	/* Link in global tty list. */
 	struct	clist t_rawq;		/* Device raw input queue. */
 	long	t_rawcc;		/* Raw input queue statistics. */
 	struct	clist t_canq;		/* Device canonical queue. */
@@ -192,7 +194,14 @@ struct speedtab {
 #define	isbackground(p, tp)						\
 	(isctty((p), (tp)) && (p)->p_pgrp != (tp)->t_pgrp)
 
+/*
+ * ttylist_head is defined here so that user-land has access to it.
+ */
+TAILQ_HEAD(ttylist_head, tty);		/* the ttylist is a TAILQ */
+
 #ifdef _KERNEL
+
+extern	int tty_count;			/* number of ttys in global ttylist */
 extern	struct ttychars ttydefaults;
 
 /* Symbolic sleep message strings. */
@@ -239,6 +248,9 @@ int	 ttysleep __P((struct tty *tp,
 int	 ttywait __P((struct tty *tp));
 int	 ttywflush __P((struct tty *tp));
 
+void	tty_init __P((void));
+void	tty_attach __P((struct tty *));
+void	tty_detach __P((struct tty *));
 struct tty *ttymalloc __P((void));
 void	 ttyfree __P((struct tty *));
 u_char	*firstc           __P((struct clist *clp, int *c));
