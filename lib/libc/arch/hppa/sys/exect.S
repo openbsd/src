@@ -1,6 +1,6 @@
 #include "SYS.h"
 
-ENTRY(exect)
-EXIT(exect)
+/* we do no tracing yet */
+PSEUDO(exect,execve)
 
 	.end
