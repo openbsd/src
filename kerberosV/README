@@ -11,17 +11,6 @@ This code is currently beta quality code, but seems to work quite well.
 Heimdal is used by several large University and Commercial sites.
 
 
-Building
-========
-
-The kerberosV directory is now fully a part of the buildsystem, and a
-regular "make build" process is the correct way to compile it.
-
-The krb5.conf and krb5.keytab files have recently been moved to
-/etc/kerberosV directory. If you've previously used this code you should
-move those files.
-
-
 Documentation
 =============
 
@@ -33,10 +22,20 @@ available.
 BSD Auth
 ========
 
-There's also a BSD Authentication login script in src/libexec/login_krb5,
-but they are not enabled by default. Refer to login.conf(5), login(1),
-login_krb5(8) and login_krb5-or-pwd(8) for more information on how to
-enable them.
+There's also a BSD Authentication login script in src/libexec/login_krb5.
+
+Refer to login.conf(5), login(1), login_krb5(8) and login_krb5-or-pwd(8)
+for more information on how to enable them.
+
+
+Testing
+=======
+
+(This is mainly a note to my self...)
+
+- Do a full build on at least one elf and one a.out arch.
+- Do a static build of at least the kerberosV directory on elf and a.out.
+- Test basic stuff like kauth, klist, telnet and such.
 
 
 TODO
@@ -49,10 +48,8 @@ Things todo, in no particular order:
  - Password quality checks in kpasswdd
  - krb5-config script
  - kx, kxd
- - rxtelnet, rxterm
  - pop-server and push
  - rsh, rshd
- - ssh and sshd
  - Test what happens for a user not using kerberos
  - Test all combinations of compat stuff between client, kdc and server
  - Slave propagation k5->k5 and k4->k5
@@ -62,13 +59,5 @@ Things todo, in no particular order:
  - Logging
  - Manpages are missing for many library functions, as well as a few
    programs. So we should document them and give back to the Heimdal project.
- - Fix /etc/rc and companions
- - Example configuration installed when system is installed
  - GSS-API support in our ftp client and server
  - Figure out how to deal with kstash
- - Reduce the number of libraries in kerberosV as well as kerberosIV,
-   kerberosV:
-	libasn1, libkadm5clnt, libkadm5srv, libhdb -> libkrb5
-   kerberosIV:
-	libacl, libkadm, libkdb -> libkrb
-- Unify libroken, and put libsl and libcom_err in libroken
