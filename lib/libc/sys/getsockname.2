@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getsockname.2,v 1.11 1999/07/21 05:39:55 kjell Exp $
+.\"	$OpenBSD: getsockname.2,v 1.12 1999/07/21 07:18:27 kjell Exp $
 .\"	$NetBSD: getsockname.2,v 1.6 1995/10/12 15:41:00 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -45,25 +45,11 @@
 .Fd #include <sys/socket.h>
 .Ft int
 .Fn getsockname "int s" "struct sockaddr *name" "socklen_t *namelen"
-.Sh PARAMETERS
-.Bl -tag -width namelen
-.It s
-Contains the file desriptor for the socket to be looked up.
-.It name
-Points to a sockaddr structure to hold the resulting address information.
-The format of this socket depends on the protocol family in use. See
-.Xr socket 2
-for details.
-.It namelen
-Indicates the amount of space pointed to by
-.Fa name ,
-in bytes.
-.El
 .Sh DESCRIPTION
 .Fn getsockname
 returns the locally bound address information for a specified socket.
 .Pp
-This function is useful in a number of circumstances. For instance:
+Common uses of this function are as follows:
 .Bl -bullet
 .It
 When
@@ -83,6 +69,31 @@ When a function wishes to know the address family of a socket,
 .Fn getsockname
 can be used.
 .El
+.Pp
+.Fn getsockname
+takes three parameters:
+.Pp
+.Fa s ,
+Contains the file desriptor for the socket to be looked up.
+.Pp
+.Fa name
+points to a sockaddr structure which will hold the resulting
+address information.  Normal use requires one to use a structure
+specific to the protocol family in use, such as sockaddr_in (IPv4)
+or sockaddr_in6 (IPv6), cast to a (struct sockaddr *).
+.Pp
+For greater portability (such as newer protocol families) the new
+structure sockaddr_storage exists. sockaddr_storage is
+large enough to hold any of the other sockaddr_* variants.
+On return, it should be cast to the correct sockaddr type,
+according to the current protocol family.
+.Pp
+.Fa namelen
+Indicates the amount of space pointed to by
+.Fa name ,
+in bytes. Upon return,
+.Fa namelen
+is set to the actual size of the returned address information.
 .Pp
 If the address of the destination socket for a given socket connection is
 needed, the
