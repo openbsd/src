@@ -1,4 +1,4 @@
-/* $OpenBSD: locore_asm_routines.S,v 1.27 2003/11/08 21:45:19 miod Exp $	*/
+/* $OpenBSD: locore_asm_routines.S,v 1.28 2004/01/23 17:26:06 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1992 Carnegie Mellon University
@@ -168,14 +168,6 @@ ENTRY(do_xmem_byte)	/* do_xmem_byte(address, data, supervisor) */
 	br	2f
 1:	xmem.bu	r3,r2,r0
 2:	jmp	r1
-
-#ifdef DDB
-ENTRY(db_are_interrupts_disabled)
-	ldcr	r2, PSR
-	set	r3, r0, 1<PSR_INTERRUPT_DISABLE_BIT>
-	jmp.n	r1
-	 and	r2, r2, r3
-#endif /* DDB */
 
 /*
  * Copy specified amount of data from user space into the kernel
@@ -1541,12 +1533,6 @@ ENTRY(longjmp)
 	jmp.n	r1
 	 or	r2,r0,1
 
-#ifdef DDB
-ENTRY(db_flush_pipeline)
-	FLUSH_PIPELINE
-	jmp	r1
-#endif /* DDB */
-
 ENTRY(read_processor_identification_register)
 	jmp.n	r1
 	 ldcr	r2, PID
@@ -1601,17 +1587,18 @@ GLOBAL(guarded_access_end)
  *	r5	temporary new PSR
  */
 ENTRY(set_cpu_number)
+#ifdef DEBUG
 	/* make sure the CPU number is valid */
 	clr	r3, r2, FLAG_CPU_FIELD_WIDTH<0>
 	bcnd	ne0, r3, 1f	/* bad cpu number */
+#endif
 
 	/* going to change a control register -- disable interrupts */
 	ldcr	r4, PSR
 	set	r5, r4, 1<PSR_INTERRUPT_DISABLE_BIT>
 	stcr	r5, PSR
 	FLUSH_PIPELINE
-	tcnd	ne0,r0,10 /* make sure interrupts are really disabled */
-			  /* if they are not, branch to error_handler() */
+
 	/* put in the cpu number */
 	ldcr	r3, SR1				/* get the flags */
 	clr	r3, r3, FLAG_CPU_FIELD_WIDTH<0>	/* clean the slate */
@@ -1623,10 +1610,12 @@ ENTRY(set_cpu_number)
 	FLUSH_PIPELINE
 	jmp	r1
 
+#ifdef DEBUG
 1:	/* bad cpu number*/
 	or.u	r2, r0, hi16(9f)
 	bsr.n	_C_LABEL(panic)
 	 or	r2, r2, lo16(9f)
 
 	data
-9:	string "set_cpu_number: bad CPU number\0"
+9:	string "set_cpu_number: bad CPU number %x\0"
+#endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.25 2003/10/05 20:25:08 miod Exp $	*/
+/*	$OpenBSD: asm.h,v 1.26 2004/01/23 17:26:05 miod Exp $	*/
 
 /*
  * Mach Operating System
@@ -168,13 +168,12 @@
 
 /*
  * Useful in some situations.
- * NOTE: If ARG1 or ARG2 are r2 or r3, strange things may happen.  Watch out!
  */
 #define CALL(NAME, ARG1, ARG2) \
 	subu	r31, r31, 32; \
 	or	r2, r0, ARG1; \
 	bsr.n	NAME; \
-	or	r3, r0, ARG2; \
+	 or	r3, r0, ARG2; \
 	addu	r31, r31, 32
 
 /* This define is similar to CALL, but accepts a function pointer XXX smurph */
@@ -184,7 +183,7 @@
 	ld	r4, r5, lo16(NAME); \
 	or	r2, r0, ARG1; \
 	jsr.n	r4; \
-	or	r3, r0, ARG2; \
+	 or	r3, r0, ARG2; \
 	addu	r31, r31, 32
 
 /*
@@ -198,10 +197,6 @@
  *
  * The bit FLAG_IGNORE_DATA_EXCEPTION indicates that any data exceptions
  * 	should be ignored (well, at least treated in a special way).
- * The bit FLAG_INTERRUPT_EXCEPTION indicates that the current exception
- * 	is the interrupt exception.  Such information can be gotten
- * 	in other ways, but having it in the flags makes it easy for the
- *	exception handler to check quickly.
  * The bit FLAG_ENABLING_FPU indicates that the exception handler is
  * 	in the process of enabling the FPU (so that an exception can
  * 	be serviced).  This is needed because enabling the FPU can
@@ -210,13 +205,9 @@
  * 	be taken.
  */
 #define FLAG_CPU_FIELD_WIDTH		2	/* must be <= 12 */
-#define FLAG_IGNORE_DATA_EXCEPTION	5	/* bit number 5  */
-#define FLAG_INTERRUPT_EXCEPTION	6	/* bit number 6  */
-#define FLAG_ENABLING_FPU		7	/* bit number 7  */
-#define FLAG_FROM_KERNEL		8	/* bit number 8  */
-#define FLAG_187			9	/* bit number 9  */
-#define FLAG_188			10	/* bit number 10 */
-#define FLAG_197			11	/* bit number 11 */
+#define FLAG_IGNORE_DATA_EXCEPTION	5
+#define FLAG_ENABLING_FPU		7
+#define FLAG_FROM_KERNEL		8
 
 /* REGister OFFset into the E.F. (exception frame) */
 #define REG_OFF(reg_num)  ((reg_num) * 4) /* (num * sizeof(register_t))  */
