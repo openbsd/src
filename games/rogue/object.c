@@ -1,4 +1,4 @@
-/*	$OpenBSD: object.c,v 1.6 2002/07/18 07:13:57 pjanzen Exp $	*/
+/*	$OpenBSD: object.c,v 1.7 2002/07/26 19:53:15 pjanzen Exp $	*/
 /*	$NetBSD: object.c,v 1.3 1995/04/22 10:27:50 cgd Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)object.c	8.1 (Berkeley) 5/31/93";
 #else
-static const char rcsid[] = "$OpenBSD: object.c,v 1.6 2002/07/18 07:13:57 pjanzen Exp $";
+static const char rcsid[] = "$OpenBSD: object.c,v 1.7 2002/07/26 19:53:15 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -641,8 +641,8 @@ alloc_object()
 		obj = free_list;
 		free_list = free_list->next_object;
 	} else if (!(obj = (object *) md_malloc(sizeof(object)))) {
-			messagef(0, "cannot allocate object, saving game");
-			save_into_file(error_file);
+		messagef(0, "cannot allocate object, saving game");
+		save_into_file(error_file);
 	}
 	obj->quantity = 1;
 	obj->ichar = 'L';
