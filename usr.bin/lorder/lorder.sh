@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: lorder.sh,v 1.4 1996/09/30 16:42:17 bitblt Exp $
+#	$OpenBSD: lorder.sh,v 1.5 1996/10/12 18:33:53 deraadt Exp $
 #	$NetBSD: lorder.sh,v 1.3 1995/04/24 07:38:52 cgd Exp $
 #
 # Copyright (c) 1990, 1993
@@ -63,7 +63,7 @@ fi
 umask $um
 
 # remove temporary files on HUP, INT, QUIT, PIPE, TERM
-trap "rm rf $TDIR; exit 1" 1 2 3 13 15
+trap "rm -rf $TDIR; exit 1" 1 2 3 13 15
 
 # if the line ends in a colon, assume it's the first occurrence of a new
 # object file.  Echo it twice, just to make sure it gets into the output.
