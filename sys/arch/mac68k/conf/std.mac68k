@@ -21,3 +21,4 @@ grf1	at nubus0	slot -1 id ? claimed 0
 
 options	TIMEZONE=0		# minutes west of GMT--read from booter
 options	DST=0			# daylight savings rules--obsolete
+options	HZ=60			# clock runs at 60hz on this port
