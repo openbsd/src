@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsecadm.c,v 1.42 2000/09/21 01:34:19 angelos Exp $ */
+/* $OpenBSD: ipsecadm.c,v 1.43 2000/09/21 02:38:20 angelos Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and 
@@ -323,10 +323,10 @@ main(int argc, char **argv)
     sa2.sadb_sa_replay = 0;
     sa2.sadb_sa_state = SADB_SASTATE_MATURE;
 
-    sid1.sadb_ident_len = 1;
+    sid1.sadb_ident_len = sizeof(sid1) / 8;
     sid1.sadb_ident_exttype = SADB_EXT_IDENTITY_SRC;
 
-    sid2.sadb_ident_len = 1;
+    sid2.sadb_ident_len = sizeof(sid2) / 8;
     sid2.sadb_ident_exttype = SADB_EXT_IDENTITY_DST;
     
     sprotocol2.sadb_protocol_len = 1;
@@ -1694,26 +1694,6 @@ main(int argc, char **argv)
 #endif /* INET6 */
                  }
 
-		 if (srcid)
-		 {
-		     iov[cnt].iov_base = &sid1;
-		     iov[cnt++].iov_len = sizeof(sid1);
-		     /* SRC identity */
-		     iov[cnt].iov_base = srcid;
-		     iov[cnt++].iov_len = ROUNDUP(strlen(srcid));
-		     smsg.sadb_msg_len += sid1.sadb_ident_len;
-		 }
-
-		 if (dstid)
-		 {
-		     iov[cnt].iov_base = &sid2;
-		     iov[cnt++].iov_len = sizeof(sid2);
-		     /* DST identity */
-		     iov[cnt].iov_base = dstid;
-		     iov[cnt++].iov_len = ROUNDUP(strlen(dstid));
-		     smsg.sadb_msg_len += sid2.sadb_ident_len;
-		 }
-
 		 iov[cnt].iov_base = &sad4;
 		 iov[cnt++].iov_len = sizeof(sad4);
 		 /* Flow source address */
@@ -1760,6 +1740,27 @@ main(int argc, char **argv)
 		 iov[cnt].iov_base = odmask;
 		 iov[cnt++].iov_len = ROUNDUP(odmask->sa.sa_len);
 		 smsg.sadb_msg_len += sad7.sadb_address_len;
+
+		 if (srcid)
+		 {
+		     iov[cnt].iov_base = &sid1;
+		     iov[cnt++].iov_len = sizeof(sid1);
+		     /* SRC identity */
+		     iov[cnt].iov_base = srcid;
+		     iov[cnt++].iov_len = ROUNDUP(strlen(srcid));
+		     smsg.sadb_msg_len += sid1.sadb_ident_len;
+		 }
+
+		 if (dstid)
+		 {
+		     iov[cnt].iov_base = &sid2;
+		     iov[cnt++].iov_len = sizeof(sid2);
+		     /* DST identity */
+		     iov[cnt].iov_base = dstid;
+		     iov[cnt++].iov_len = ROUNDUP(strlen(dstid));
+		     smsg.sadb_msg_len += sid2.sadb_ident_len;
+		 }
+
 		 break;
 
 	    case FLUSH:
