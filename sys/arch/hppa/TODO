@@ -38,6 +38,7 @@ kernel (sys/arch/hppa/*):				mickey@
 * isa/eisa dma
 * TMS380 token-ring driver
 * general cleanup (far-east future)
+* hpux emulation
 
 ramdisk development edition (distrib/hppa/*):		mickey@
 * basic environment done (not in the repo)
@@ -51,7 +52,7 @@ userland (*):						mickey@
 X11 (X11/*):						fries@ mickey@
 * patch is available, nothing to run at tho (;
 
-$OpenBSD: TODO,v 1.18 2002/05/19 23:48:34 mickey Exp $
+$OpenBSD: TODO,v 1.19 2002/06/25 06:36:17 mickey Exp $
 
 --
 	paranoic mickey
