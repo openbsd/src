@@ -1,4 +1,4 @@
-/*	$OpenBSD: twe.c,v 1.18 2002/09/17 13:45:38 mickey Exp $	*/
+/*	$OpenBSD: twe.c,v 1.19 2003/04/09 20:44:57 mickey Exp $	*/
 
 /*
  * Copyright (c) 2000-2002 Michael Shalayeff.  All rights reserved.
@@ -417,8 +417,9 @@ twe_thread_create(void *v)
 	if (kthread_create(twe_thread, sc, &sc->sc_thread,
 	    "%s", sc->sc_dev.dv_xname)) {
 		/* TODO disable twe */
-		printf("%s: failed to create kernel thread, disabled",
+		printf("%s: failed to create kernel thread, disabled\n",
 		    sc->sc_dev.dv_xname);
+		return;
 	}
 
 	TWE_DPRINTF(TWE_D_CMD, ("stat=%b ",
