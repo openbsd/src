@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.100 2002/03/14 01:27:11 millert Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.101 2002/04/24 01:05:12 angelos Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -489,7 +489,10 @@ ipv4_input(m)
 		m_freem(m);
 	} else {
 #ifdef IPSEC
-	        /* IPsec policy check for forwarded packets */
+	        /*
+		 * IPsec policy check for forwarded packets. Look at
+		 * inner-most IPsec SA used.
+		 */
 		mtag = m_tag_find(m, PACKET_TAG_IPSEC_IN_DONE, NULL);
                 s = splnet();
 		if (mtag != NULL) {
@@ -508,7 +511,10 @@ ipv4_input(m)
 			return;
 		}
 
-		/* Fall through, forward packet */
+		/*
+		 * Fall through, forward packet. Outbound IPsec policy
+		 * checking will occur in ip_output().
+		 */
 #endif /* IPSEC */
 
 		ip_forward(m, 0);
@@ -611,7 +617,8 @@ found:
          * That's because we really only care about the properties of
          * the protected packet, and not the intermediate versions.
          * While this is not the most paranoid setting, it allows
-         * some flexibility in handling of nested tunnels etc.
+         * some flexibility in handling nested tunnels (in setting up
+	 * the policies).
          */
         if ((ip->ip_p == IPPROTO_ESP) || (ip->ip_p == IPPROTO_AH) ||
 	    (ip->ip_p == IPPROTO_IPCOMP))
@@ -636,7 +643,17 @@ found:
 	if ((ip->ip_p == IPPROTO_TCP) || (ip->ip_p == IPPROTO_UDP))
 	  goto skipipsec;
 
-	/* IPsec policy check for local-delivery packets */
+	/*
+	 * IPsec policy check for local-delivery packets. Look at the
+	 * inner-most SA that protected the packet. This is in fact
+	 * a bit too restrictive (it could end up causing packets to
+	 * be dropped that semantically follow the policy, e.g., in
+	 * certain SA-bundle configurations); but the alternative is
+	 * very complicated (and requires keeping track of what
+	 * kinds of tunneling headers have been seen in-between the
+	 * IPsec headers), and I don't think we lose much functionality
+	 * that's needed in the real world (who uses bundles anyway ?).
+	 */
 	mtag = m_tag_find(m, PACKET_TAG_IPSEC_IN_DONE, NULL); 
         s = splnet();
 	if (mtag) {
@@ -648,7 +665,7 @@ found:
 	    tdb, NULL);
         splx(s);
 
-	/* Error or otherwise drop-packet indication */
+	/* Error or otherwise drop-packet indication. */
 	if (error) {
 	        ipstat.ips_cantforward++;
 		m_freem(m);
