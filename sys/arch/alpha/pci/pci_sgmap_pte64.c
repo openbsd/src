@@ -1,4 +1,4 @@
-/* $OpenBSD: pci_sgmap_pte64.c,v 1.4 2001/11/06 19:53:13 miod Exp $ */
+/* $OpenBSD: pci_sgmap_pte64.c,v 1.5 2004/01/13 00:11:06 deraadt Exp $ */
 /* $NetBSD: pci_sgmap_pte64.c,v 1.4 2000/06/29 08:58:49 mrg Exp $ */
 
 /*-
@@ -43,6 +43,7 @@
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
+#include <sys/mbuf.h>
 #include <sys/proc.h>
 
 #include <uvm/uvm_extern.h>
