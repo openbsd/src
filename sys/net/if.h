@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.h,v 1.3 1996/03/05 15:44:23 mickey Exp $	*/
+/*	$OpenBSD: if.h,v 1.4 1996/05/06 05:43:43 mickey Exp $	*/
 /*	$NetBSD: if.h,v 1.20 1996/02/13 22:00:12 christos Exp $	*/
 
 /*
@@ -70,6 +70,7 @@ struct proc;
 struct rtentry;
 struct socket;
 struct ether_header;
+struct arpcom;
 
 /*
  * Structure defining statistics and other data kept regarding a network
@@ -324,6 +325,7 @@ struct	ifconf {
 struct ifnet_head ifnet;
 
 void	ether_ifattach __P((struct ifnet *));
+int	ether_ioctl __P((struct ifnet *, struct arpcom *, u_long, caddr_t));
 void	ether_input __P((struct ifnet *, struct ether_header *, struct mbuf *));
 int	ether_output __P((struct ifnet *,
 	   struct mbuf *, struct sockaddr *, struct rtentry *));
