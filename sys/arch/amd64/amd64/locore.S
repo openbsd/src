@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.4 2004/02/20 20:49:57 deraadt Exp $	*/
+/*	$OpenBSD: locore.S,v 1.5 2004/02/22 19:20:09 tom Exp $	*/
 /*	$NetBSD: locore.S,v 1.2 2003/04/26 19:34:45 fvdl Exp $	*/
 
 /*
@@ -261,14 +261,14 @@ start:	movw	$0x1234,0x472			# warm boot
 
 	/*
 	 * Load parameters from stack
-	 * (howto, bootdev, bootapiver, esym, cnvmem, extmem, ac, av)
+	 * (howto, bootdev, bootapiver, esym, extmem, cnvmem, ac, av)
 	 */
 	movl	4(%esp),%eax
-	movl	%eax,RELOC(_C_LABEL(boothowto))
+	movl	%eax, RELOC(boothowto)
 	movl	8(%esp),%eax
-	movl	%eax,RELOC(_C_LABEL(bootdev))
+	movl	%eax, RELOC(bootdev)
 
-        movl    16(%esp), %eax
+	movl	16(%esp), %eax
 	testl   %eax,%eax
 	jz      1f
 	addl    $KERNBASE_LO,%eax
