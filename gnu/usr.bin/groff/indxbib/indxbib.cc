@@ -219,10 +219,10 @@ int main(int argc, char **argv)
   else {
     temp_index_file = strsave(TEMP_INDEX_TEMPLATE);
   }
+  catch_fatal_signals();
   int fd = mkstemp(temp_index_file);
   if (fd == -1 || !temp_index_file[0])
     fatal("cannot create file name for temporary file");
-  catch_fatal_signals();
   if (fchmod(fd, S_IRUSR|S_IRGRP|S_IROTH) < 0)
     fatal("cannot change permissions for temporary file");
   indxfp = fdopen(fd, "w");
