@@ -1,4 +1,4 @@
-/*	$OpenBSD: cyberflex.c,v 1.24 2003/04/04 00:51:10 deraadt Exp $ */
+/*	$OpenBSD: cyberflex.c,v 1.25 2003/04/19 23:55:05 dhartmei Exp $ */
 
 /*
  * copyright 1999, 2000
@@ -365,7 +365,7 @@ print_acl(int isdir, u_char *acl)
 }
 
 void
-sectok_fmt_aidname(char *aidname, int aidlen, u_char *aid)
+sectok_fmt_aidname(char *aidname, int aidlen, u_char *aid, size_t len)
 {
 	int	i, istext = 1;
 
@@ -375,13 +375,16 @@ sectok_fmt_aidname(char *aidname, int aidlen, u_char *aid)
 			break;
 		}
 	if (istext) {
+		if (aidlen + 1 > len)
+			aidlen = len - 1;
 		memcpy(aidname, aid, aidlen);
 		aidname[aidlen] = '\0';
 		if (aid[0] == 0xfc)
 			aidname[0] = '#';
 	} else {
 		for (i = 0; i < aidlen; i++)
-			sprintf(&aidname[i * 2], "%02x", aid[i]);
+			snprintf(&aidname[i * 2], len - ( i * 2),
+			    "%02x", aid[i]);
 	}
 }
 
@@ -440,7 +443,8 @@ ls(int argc, char *argv[])
 					if (buflen > 23 && buf[23]) {
 						aidname[0] = ' ';
 						sectok_fmt_aidname(&aidname[1],
-						    buf[23], &buf[24]);
+						    buf[23], &buf[24],
+						    sizeof aidname - 1);
 					}
 				} else
 					snprintf(ftype, sizeof ftype,
