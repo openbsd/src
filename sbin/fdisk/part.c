@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.26 2001/11/14 16:42:27 mickey Exp $	*/
+/*	$OpenBSD: part.c,v 1.27 2002/01/18 08:29:01 kjell Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -238,23 +238,16 @@ PRT_make(partn, offset, reloff, prt)
 	void *prt;
 {
 	unsigned char *p = prt;
-	prt_t tmp;
+	int ecsave, scsave;
+	int modified = 0;
 	off_t off;
 
-	tmp.shead = partn->shead;
-	tmp.ssect = partn->ssect;
-	tmp.scyl = (partn->scyl > 1023)? 1023: partn->scyl; 
-	tmp.ehead = partn->ehead;
-	tmp.esect = partn->esect;
-	tmp.ecyl = (partn->ecyl > 1023)? 1023: partn->ecyl; 
-	if (!PRT_check_chs(partn) && PRT_check_chs(&tmp)) {
-		partn->shead = tmp.shead;
-		partn->ssect = tmp.ssect;
-		partn->scyl = tmp.scyl;
-		partn->ehead = tmp.ehead;
-		partn->esect = tmp.esect;
-		partn->ecyl = tmp.ecyl;
-		printf("Cylinder values are modified to fit in CHS.\n");
+	if ((partn->scyl > 1023) || (partn->ecyl > 1023)) {
+		scsave = partn->scyl;
+		ecsave = partn->ecyl;
+		partn->scyl = (partn->scyl > 1023)? 1023: partn->scyl; 
+		partn->ecyl = (partn->ecyl > 1023)? 1023: partn->ecyl; 
+		modified = 1;
 	}
 	if ((partn->id == DOSPTYP_EXTEND) || (partn->id == DOSPTYP_EXTENDL))
 		off = reloff;
@@ -288,6 +281,10 @@ PRT_make(partn, offset, reloff, prt)
 
 	putlong(p, partn->bs - off);
 	putlong(p+4, partn->ns);
+	if (modified) {
+		partn->scyl = scsave;
+		partn->ecyl = ecsave;
+	}
 }
 
 void
@@ -378,10 +375,6 @@ PRT_fix_CHS(disk, part, pn)
 	head = (start / spt); start -= (head * spt);
 	sect = (start + 1);
 
-	if (cyl > 1023) {
-		cyl = 1023;
-		printf("Only LBA values are valid in starting cylinder for partition #%d.\n", pn);
-	}
 	part->scyl = cyl;
 	part->shead = head;
 	part->ssect = sect;
@@ -391,10 +384,6 @@ PRT_fix_CHS(disk, part, pn)
 	head = (end / spt); end -= (head * spt);
 	sect = (end + 1);
 
-	if (cyl > 1023) {
-		cyl = 1023;
-		printf("Only LBA values are valid in ending cylinder for partition #%d.\n", pn);
-	}
 	part->ecyl = cyl;
 	part->ehead = head;
 	part->esect = sect;
