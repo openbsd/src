@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.65 2003/04/11 00:25:40 mickey Exp $	*/
+/*	$OpenBSD: trap.c,v 1.66 2003/06/17 04:39:39 jfb Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -517,7 +517,7 @@ syscall(struct trapframe *frame)
 			break;
 		/*
 		 * this works, because quads get magically swapped
-		 * due to the args being layed backwards on the stack
+		 * due to the args being laid backwards on the stack
 		 * and then copied in words
 		 */
 		code = frame->tf_arg0;
