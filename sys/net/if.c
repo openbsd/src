@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.94 2004/12/03 17:31:03 henning Exp $	*/
+/*	$OpenBSD: if.c,v 1.95 2004/12/04 16:16:45 markus Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -807,7 +807,7 @@ if_clone_list(ifcr)
 void
 if_congestion(struct ifqueue *ifq)
 {
-	// Not currently needed, all callers check this
+	/* Not currently needed, all callers check this */
 	if (ifq->ifq_congestion)
 		return;
 
