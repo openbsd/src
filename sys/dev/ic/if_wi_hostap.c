@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_hostap.c,v 1.23 2003/01/21 20:09:39 millert Exp $	*/
+/*	$OpenBSD: if_wi_hostap.c,v 1.24 2003/02/15 17:49:39 millert Exp $	*/
 
 /*
  * Copyright (c) 2002
@@ -728,7 +728,7 @@ wihap_assoc_req(struct wi_softc *sc, struct wi_frame *rxfrm,
 	struct wi_80211_hdr	*resp_hdr;
 	u_int16_t		capinfo;
 	u_int16_t		lstintvl;
-	u_int8_t		rates[8];
+	u_int8_t		rates[12];
 	int			ssid_len, rates_len;
 	struct ieee80211_nwid	ssid;
 	u_int16_t		status;
@@ -752,11 +752,11 @@ wihap_assoc_req(struct wi_softc *sc, struct wi_frame *rxfrm,
 	}
 
 	if ((ssid_len = take_tlv(&pkt, &len, IEEE80211_ELEMID_SSID,
-	    ssid.i_nwid, sizeof(ssid)))<0)
+	    ssid.i_nwid, sizeof(ssid))) < 0)
 		return;
 	ssid.i_len = ssid_len;
 	if ((rates_len = take_tlv(&pkt, &len, IEEE80211_ELEMID_RATES,
-	    rates, sizeof(rates)))<0)
+	    rates, sizeof(rates))) < 0)
 		return;
 
 	if (sc->sc_arpcom.ac_if.if_flags & IFF_DEBUG)
@@ -783,7 +783,7 @@ wihap_assoc_req(struct wi_softc *sc, struct wi_frame *rxfrm,
 	}
 
 	/* Check supported rates against ours. */
-	if (wihap_check_rates(sta, rates, rates_len)<0) {
+	if (wihap_check_rates(sta, rates, rates_len) < 0) {
 		if (sc->sc_arpcom.ac_if.if_flags & IFF_DEBUG)
 			printf("wihap_assoc_req: rates mismatch.\n");
 		status = IEEE80211_STATUS_RATES;
