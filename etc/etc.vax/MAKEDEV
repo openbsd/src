@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.25 2000/12/05 07:27:36 hugh Exp $
+#	$OpenBSD: MAKEDEV,v 1.26 2001/03/31 02:51:26 hugh Exp $
 #	$NetBSD: MAKEDEV,v 1.30 2000/01/21 12:28:29 tsutsui Exp $
 #
 #	@(#)MAKEDEV	8.1 (Berkeley) 6/9/93
@@ -135,14 +135,13 @@ fd)
 	chmod 666 fd/*
 	;;
 
-ht*|tm*|mt*|ts*|ut*|st*)
+ht*|tm*|mt*|ts*|ut*)
 	case $i in
 	ht*) name=ht;	unit=${i#ht};	blk=1; chr=5 ;;
 	mt*) name=mt;	unit=${i#mt};	blk=15;	chr=38;;
 	tm*) name=tm;	unit=${i#tm};	blk=5; chr=14;;
 	ts*) name=ts;	unit=${i#ts};	blk=6; chr=16;;
 	ut*) name=ut;	unit=${i#ut};	blk=10; chr=17;;
-	st*) name=st;	unit=${i#st};	blk=21; chr=60;;
 	esac
 	case $unit in
 	[0-7])
@@ -196,6 +195,35 @@ ht*|tm*|mt*|ts*|ut*|st*)
 		;;
 	*)
 		echo bad unit for tape in: $1
+		;;
+	esac
+	umask 77
+	;;
+
+st*)
+	umask 2
+	unit=${i#st};	blk=21; chr=60;
+	case $unit in
+	0|1|2|3|4|5|6|7)
+		rm -f st${unit} nst${unit} est${unit} enst${unit} \
+		    rst${unit} nrst${unit} erst${unit} enrst${unit}
+		mknod st${unit}		b $blk $(($unit * 16 + 0))
+		mknod nst${unit}	b $blk $(($unit * 16 + 1))
+		mknod est${unit}	b $blk $(($unit * 16 + 2))
+		mknod enst${unit}	b $blk $(($unit * 16 + 3))
+		mknod rst${unit}	c $chr $(($unit * 16 + 0))
+		mknod nrst${unit}	c $chr $(($unit * 16 + 1))
+		mknod erst${unit}	c $chr $(($unit * 16 + 2))
+		mknod enrst${unit}	c $chr $(($unit * 16 + 3))
+		chown root.operator \
+		    st${unit} nst${unit} est${unit} enst${unit} \
+		    rst${unit} nrst${unit} erst${unit} enrst${unit}
+		chmod 660 \
+		    st${unit} nst${unit} est${unit} enst${unit} \
+		    rst${unit} nrst${unit} erst${unit} enrst${unit}
+		;;
+	*)
+		echo bad tape unit: $i - $unit
 		;;
 	esac
 	umask 77
