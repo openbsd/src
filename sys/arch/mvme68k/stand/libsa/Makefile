@@ -2,6 +2,8 @@
 
 LIB=sa
 
+CLEANFILES+=SRT0.o SRT1.o
+
 NOPIC=nopic
 NOPROFILE=noprofile
 
