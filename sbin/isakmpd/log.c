@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.18 2001/04/15 16:09:16 ho Exp $	*/
+/*	$OpenBSD: log.c,v 1.19 2001/07/10 07:55:05 markus Exp $	*/
 /*	$EOM: log.c,v 1.30 2000/09/29 08:19:23 niklas Exp $	*/
 
 /*
@@ -401,7 +401,7 @@ log_packet_init (char *newname)
   
   /* prep dummy header prepended to each packet */
   hdr = (struct packhdr *)pack;
-  hdr->null.null_family = AF_INET;
+  hdr->null.null_family = htonl(AF_INET);
   hdr->ip.ip_v = 0x4;
   hdr->ip.ip_hl = 0x5;
   hdr->ip.ip_p = IPPROTO_UDP;
