@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.18 2003/10/22 16:05:06 jmc Exp $
+.\" $OpenBSD: openssl.1,v 1.19 2003/10/24 09:41:52 jmc Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -1312,19 +1312,27 @@ then even if a certificate is issued with CA:TRUE it will not be valid.
 .\"
 .Sh CIPHERS
 .Nm openssl ciphers
-.Op Fl v
+.Op Fl hv
 .Op Fl ssl2 | ssl3 | tls1
 .Op Ar cipherlist
 .Pp
 The
-.Nm cipherlist
+.Nm ciphers
 command converts
 .Nm OpenSSL
 cipher lists into ordered SSL cipher preference lists.
 It can be used as a test tool to determine the appropriate cipherlist.
 .Pp
 The options are as follows:
-.Bl -tag -width "XXXX"
+.Bl -tag -width "XXXXXX"
+.It Fl h , \&?
+Print a brief usage message.
+.It Fl ssl2
+Only include SSL v2 ciphers.
+.It Fl ssl3
+Only include SSL v3 ciphers.
+.It Fl tls1
+Only include TLS v1 ciphers.
 .It Fl v
 Verbose option.
 List ciphers with a complete description of protocol version
@@ -1338,14 +1346,6 @@ Note that without the
 option, ciphers may seem to appear twice in a cipher list;
 this is when similar ciphers are available for
 SSL v2 and for SSL v3/TLS v1.
-.It Fl ssl2
-Only include SSL v2 ciphers.
-.It Fl ssl3
-Only include SSL v3 ciphers.
-.It Fl tls1
-Only include TLS v1 ciphers.
-.It Fl h , \&?
-Print a brief usage message.
 .It Ar cipherlist
 A cipher list to convert to a cipher preference list.
 If it is not included, then the default cipher list will be used.
@@ -1439,7 +1439,7 @@ which is not included by
 .Ar COMPLEMENTOFALL
 if necessary).
 .It Ar ALL
-All ciphers suites except the
+All cipher suites except the
 .Ar eNULL
 ciphers which must be explicitly enabled.
 .It Ar COMPLEMENTOFALL
@@ -1462,13 +1462,13 @@ algorithms, but excluding export cipher suites.
 Export encryption algorithms.
 Including 40- and 56-bit algorithms.
 .It Ar EXPORT40
-40-bit export encryption algorithms
+40-bit export encryption algorithms.
 .It Ar EXPORT56
 56-bit export encryption algorithms.
 .It Ar eNULL , NULL
 The
 .Qq NULL
-ciphers; that is those offering no encryption.
+ciphers; that is, those offering no encryption.
 Because these offer no encryption at all and are a security risk,
 they are disabled unless explicitly included.
 .It Ar aNULL
