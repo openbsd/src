@@ -1,4 +1,4 @@
-/* $OpenBSD: param.h,v 1.15 2000/11/19 01:11:29 art Exp $ */
+/* $OpenBSD: param.h,v 1.16 2000/11/24 03:57:49 millert Exp $ */
 /* $NetBSD: param.h,v 1.30 2000/06/09 16:03:04 thorpej Exp $ */
 
 /*
@@ -74,7 +74,7 @@
 #define	PGOFSET		(NBPG-1)			/* byte off. into pg */
 #define	PGSHIFT		ALPHA_PGSHIFT			/* LOG2(NBPG) */
 
-#define PAGE_SHIFT	12
+#define PAGE_SHIFT	13
 #define PAGE_SIZE	(1 << PAGE_SHIFT)
 #define PAGE_MASK	(PAGE_SIZE - 1)
 
