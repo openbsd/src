@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.77 2002/11/08 08:08:47 mpech Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.78 2002/11/25 10:18:24 avsm Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -323,7 +323,7 @@ specifically, in ${WRKDIR}/directory.
 .It Ev BULK
 If set to 
 .Sq Yes ,
-succesful package builds and installations will clean
+successful package builds and installations will clean
 their working directories, after invoking 
 .Ar ftp-packages ,
 .Ar cdrom-packages ,
@@ -333,7 +333,7 @@ See
 .Ev BIN_PACKAGES ,
 .Ev TRUST_PACKAGES .
 .It Ev BULK_COOKIES_DIR
-Used to store cookies for succesful bulk-package builds, defaults to
+Used to store cookies for successful bulk-package builds, defaults to
 .Pa ${PORTSDIR}/bulk/${MACHINE_ARCH} .
 .It Ev BULK_FLAGS
 Flags to pass to build each target in
