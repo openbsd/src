@@ -1,4 +1,4 @@
-/* $OpenBSD: wsemul_vt100.c,v 1.11 2004/12/23 21:47:46 miod Exp $ */
+/* $OpenBSD: wsemul_vt100.c,v 1.12 2004/12/25 20:40:33 deraadt Exp $ */
 /* $NetBSD: wsemul_vt100.c,v 1.13 2000/04/28 21:56:16 mycroft Exp $ */
 
 /*
@@ -960,7 +960,7 @@ wsemul_vt100_output(cookie, data, count, kernel)
 #endif
 
 	if (edp->flags & VTFL_CURSORON)
-	(*edp->emulops->cursor)(edp->emulcookie, 0,
+		(*edp->emulops->cursor)(edp->emulcookie, 0,
 				edp->crow, edp->ccol << edp->dw);
 	for (; count > 0; data++, count--) {
 		if ((*data & 0x7f) < 0x20) {
