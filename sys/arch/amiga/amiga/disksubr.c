@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.5 1996/05/04 13:36:14 niklas Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.6 1996/06/10 19:37:05 niklas Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.25 1996/04/30 05:00:51 mhitch Exp $	*/
 
 /*
@@ -111,7 +111,7 @@ readdisklabel(dev, strat, lp, clp)
 
 	clp->rdblock = RDBNULL;
 	/*
-	 * give some guarnteed validity to
+	 * give some guaranteed validity to
 	 * the disklabel
 	 */
 	if (lp->d_secperunit == 0)
