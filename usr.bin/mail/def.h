@@ -1,4 +1,4 @@
-/*	$OpenBSD: def.h,v 1.6 1997/07/14 00:24:26 millert Exp $	*/
+/*	$OpenBSD: def.h,v 1.7 2001/01/16 05:36:08 millert Exp $	*/
 /*	$NetBSD: def.h,v 1.9 1996/12/28 07:11:00 tls Exp $	*/
 /*
  * Copyright (c) 1980, 1993
@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)def.h	8.4 (Berkeley) 4/20/95
- *	$OpenBSD: def.h,v 1.6 1997/07/14 00:24:26 millert Exp $
+ *	$OpenBSD: def.h,v 1.7 2001/01/16 05:36:08 millert Exp $
  */
 
 /*
@@ -41,6 +41,9 @@
  *
  * Author: Kurt Shoens (UCB) March 25, 1978
  */
+
+#ifndef MAIL_DEF_H
+#define MAIL_DEF_H
 
 #include <sys/param.h>
 #include <sys/stat.h>
@@ -107,7 +110,13 @@ struct message {
  */
 struct cmd {
 	char	*c_name;		/* Name of command */
-	int	(*c_func) __P((void *));/* Implementor of the command */
+	union {
+		int	(*c_func0)();
+		int	(*c_func1) __P((void *));
+		int	(*c_func2) __P((void *, void *));
+	} cfunc;                        /* Implementor of the command */
+#define c_func  cfunc.c_func1
+#define c_func2 cfunc.c_func2
 	short	c_argtype;		/* Type of arglist (see below) */
 	short	c_msgflag;		/* Required flags of messages */
 	short	c_msgmask;		/* Relevant flags of messages */
@@ -122,19 +131,19 @@ struct cmd {
  * Argument types.
  */
 
-#define	MSGLIST	 0		/* Message list type */
-#define	STRLIST	 1		/* A pure string */
-#define	RAWLIST	 2		/* Shell string list */
-#define	NOLIST	 3		/* Just plain 0 */
-#define	NDMLIST	 4		/* Message list, no defaults */
+#define	MSGLIST	0x0001		/* Message list type */
+#define	STRLIST	0x0002		/* A pure string */
+#define	RAWLIST	0x0004		/* Shell string list */
+#define	NOLIST	0x0008		/* Just plain 0 */
+#define	NDMLIST	0x0010		/* Message list, no defaults */
 
-#define	P	040		/* Autoprint dot after command */
-#define	I	0100		/* Interactive command bit */
-#define	M	0200		/* Legal from send mode bit */
-#define	W	0400		/* Illegal when read only bit */
-#define	F	01000		/* Is a conditional command */
-#define	T	02000		/* Is a transparent command */
-#define	R	04000		/* Cannot be called from collect */
+#define	P	0x0020		/* Autoprint dot after command */
+#define	I	0x0040		/* Interactive command bit */
+#define	M	0x0080		/* Legal from send mode bit */
+#define	W	0x0100		/* Illegal when read only bit */
+#define	F	0x0200		/* Is a conditional command */
+#define	T	0x0400		/* Is a transparent command */
+#define	R	0x0800		/* Cannot be called from collect */
 
 /*
  * Oft-used mask values
@@ -277,3 +286,5 @@ struct ignoretab {
 	(void)fflush(stream); 						\
 	(void)ftruncate(fileno(stream), (off_t)ftell(stream));		\
 }
+
+#endif /* MAIL_DEF_H */

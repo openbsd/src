@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.c,v 1.21 2000/07/06 06:24:21 deraadt Exp $	*/
+/*	$OpenBSD: lex.c,v 1.22 2001/01/16 05:36:08 millert Exp $	*/
 /*	$NetBSD: lex.c,v 1.10 1997/05/17 19:55:13 pk Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)lex.c	8.2 (Berkeley) 4/20/95";
 #else
-static char rcsid[] = "$OpenBSD: lex.c,v 1.21 2000/07/06 06:24:21 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: lex.c,v 1.22 2001/01/16 05:36:08 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -54,6 +54,8 @@ static char rcsid[] = "$OpenBSD: lex.c,v 1.21 2000/07/06 06:24:21 deraadt Exp $"
  */
 
 char	*prompt = "& ";
+
+const struct cmd *com;	/* command we are running */
 
 /*
  * Set up editing on the given file name.
@@ -297,10 +299,11 @@ execute(linebuf, contxt)
 {
 	char word[LINESIZE];
 	char *arglist[MAXARGC];
-	const struct cmd *com = NULL;
 	char *cp, *cp2;
 	int c, muvec[2];
 	int e = 1;
+
+	com = NULL;
 
 	/*
 	 * Strip the white space away from the beginning
@@ -378,6 +381,53 @@ execute(linebuf, contxt)
 		goto out;
 	}
 	switch (com->c_argtype & ~(F|P|I|M|T|W|R)) {
+	case MSGLIST|STRLIST:
+		/*
+		 * A message list defaulting to nearest forward
+		 * legal message.
+		 */
+		if (msgvec == 0) {
+			puts("Illegal use of \"message list\"");
+			break;
+		}
+		/*
+		 * remove leading blanks.
+		 */
+		while (isspace(*cp))
+			cp++;
+
+		if (isdigit(*cp) || *cp == ':') {
+			if ((c = getmsglist(cp, msgvec, com->c_msgflag)) < 0)
+				break;
+			/* position to next space - past the message list */
+			while (!isspace(*cp))
+				cp++;
+			/* position to next non-space */
+			while (isspace(*cp))
+				cp++;
+		} else {
+			c = 0; /* no message list */
+		}
+
+		if (c  == 0) {
+			*msgvec = first(com->c_msgflag,
+				com->c_msgmask);
+			msgvec[1] = NULL;
+		}
+		if (*msgvec == NULL) {
+			puts("No applicable messages");
+			break;
+		}
+		/*
+		 * Just the straight string, with
+		 * leading blanks removed.
+		 */
+		while (isspace(*cp))
+			cp++;
+
+		e = (*com->c_func2)(msgvec, cp);
+		break;
+
 	case MSGLIST:
 		/*
 		 * A message list defaulting to nearest forward
@@ -614,7 +664,6 @@ announce()
 	int vec[2], mdot;
 
 	mdot = newfileinfo(0);
-	clearnew();
 	vec[0] = mdot;
 	vec[1] = 0;
 	dot = &message[mdot - 1];

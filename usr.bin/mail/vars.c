@@ -1,4 +1,4 @@
-/*	$OpenBSD: vars.c,v 1.5 1997/11/14 00:24:01 millert Exp $	*/
+/*	$OpenBSD: vars.c,v 1.6 2001/01/16 05:36:09 millert Exp $	*/
 /*	$NetBSD: vars.c,v 1.4 1996/06/08 19:48:45 christos Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)vars.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: vars.c,v 1.5 1997/11/14 00:24:01 millert Exp $";
+static char rcsid[] = "$OpenBSD: vars.c,v 1.6 2001/01/16 05:36:09 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -118,10 +118,21 @@ value(name)
 	char name[];
 {
 	struct var *vp;
+	char *env;
 
-	if ((vp = lookup(name)) == NOVAR)
-		return(getenv(name));
-	return(vp->v_value);
+	if ((vp = lookup(name)) != NOVAR)
+		return(vp->v_value);
+	else if ((env = getenv(name)))
+		return(env);
+	/* not set, see if we can provide a default */
+	else if (strcmp(name, "SHELL") == 0)
+		return(_PATH_CSHELL);
+	else if (strcmp(name, "LISTER") == 0)
+		return(_PATH_LS);
+	else if (strcmp(name, "PAGER") == 0)
+		return(_PATH_MORE);
+	else
+		return(NULL);
 }
 
 /*

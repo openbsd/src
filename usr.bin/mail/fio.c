@@ -1,4 +1,4 @@
-/*	$OpenBSD: fio.c,v 1.17 2000/08/02 04:10:48 millert Exp $	*/
+/*	$OpenBSD: fio.c,v 1.18 2001/01/16 05:36:08 millert Exp $	*/
 /*	$NetBSD: fio.c,v 1.8 1997/07/07 22:57:55 phil Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)fio.c	8.2 (Berkeley) 4/20/95";
 #else
-static char rcsid[] = "$OpenBSD: fio.c,v 1.17 2000/08/02 04:10:48 millert Exp $";
+static char rcsid[] = "$OpenBSD: fio.c,v 1.18 2001/01/16 05:36:08 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -56,6 +56,22 @@ static char rcsid[] = "$OpenBSD: fio.c,v 1.17 2000/08/02 04:10:48 millert Exp $"
  *
  * File I/O.
  */
+
+/*
+ * Wrapper for read() to catch EINTR.
+ */
+ssize_t
+myread(fd, buf, len)
+	int fd;
+	char *buf;
+	int len;
+{
+	ssize_t nread;
+
+	while ((nread = read(fd, buf, len)) == -1 && errno == EINTR)
+		;
+	return(nread);
+}
 
 /*
  * Set up the input pointers while copying the mail file into /tmp.
@@ -251,7 +267,7 @@ makemessage(f, omsgCount)
 	size -= (omsgCount + 1) * sizeof(struct message);
 	fflush(f);
 	(void)lseek(fileno(f), (off_t)sizeof(*message), 0);
-	if (read(fileno(f), (void *) &message[omsgCount], size) != size)
+	if (myread(fileno(f), (void *) &message[omsgCount], size) != size)
 		errx(1, "Message temporary file corrupted");
 	message[msgCount].m_size = 0;
 	message[msgCount].m_lines = 0;
@@ -400,8 +416,7 @@ expand(name)
 		return(name);
 	}
 	(void)snprintf(cmdbuf, sizeof(cmdbuf), "echo %s", name);
-	if ((shell = value("SHELL")) == NULL)
-		shell = _PATH_CSHELL;
+	shell = value("SHELL");
 	pid = start_command(shell, 0, -1, pivec[1], "-c", cmdbuf, NULL);
 	if (pid < 0) {
 		(void)close(pivec[0]);
@@ -409,17 +424,17 @@ expand(name)
 		return(NULL);
 	}
 	(void)close(pivec[1]);
-	l = read(pivec[0], xname, PATHSIZE);
+	l = myread(pivec[0], xname, PATHSIZE);
+	if (l < 0)
+		warn("read"); /* report error before errno changes */
 	(void)close(pivec[0]);
 	if (wait_child(pid) < 0 && WIFSIGNALED(wait_status) &&
 	    WTERMSIG(wait_status) != SIGPIPE) {
 		fprintf(stderr, "\"%s\": Expansion failed.\n", name);
 		return(NULL);
 	}
-	if (l < 0) {
-		warn("read");
+	if (l < 0)
 		return(NULL);
-	}
 	if (l == 0) {
 		fprintf(stderr, "\"%s\": No match.\n", name);
 		return(NULL);

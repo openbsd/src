@@ -1,4 +1,4 @@
-/*	$OpenBSD: send.c,v 1.12 2000/08/23 21:24:08 mickey Exp $	*/
+/*	$OpenBSD: send.c,v 1.13 2001/01/16 05:36:09 millert Exp $	*/
 /*	$NetBSD: send.c,v 1.6 1996/06/08 19:48:39 christos Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)send.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: send.c,v 1.12 2000/08/23 21:24:08 mickey Exp $";
+static char rcsid[] = "$OpenBSD: send.c,v 1.13 2001/01/16 05:36:09 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -179,12 +179,13 @@ sendmessage(mp, obuf, doign, prefix)
 			 * Strip trailing whitespace from prefix
 			 * if line is blank.
 			 */
-			if (prefix != NULL)
+			if (prefix != NULL) {
 				if (length > 1)
 					fputs(prefix, obuf);
 				else
 					(void)fwrite(prefix, sizeof(*prefix),
 							prefixlen, obuf);
+			}
 			(void)fwrite(line, sizeof(*line), length, obuf);
 			if (ferror(obuf))
 				return(-1);
@@ -195,13 +196,13 @@ sendmessage(mp, obuf, doign, prefix)
 	 */
 	if (doign == ignoreall)
 		count--;		/* skip final blank line */
-	if (prefix != NULL)
-		while (count > 0) {
-			if (fgets(line, sizeof(line), ibuf) == NULL) {
-				c = 0;
-				break;
-			}
-			count -= c = strlen(line);
+	while (count > 0) {
+		if (fgets(line, sizeof(line), ibuf) == NULL) {
+			c = 0;
+			break;
+		}
+		count -= c = strlen(line);
+		if (prefix != NULL) {
 			/*
 			 * Strip trailing whitespace from prefix
 			 * if line is blank.
@@ -211,19 +212,19 @@ sendmessage(mp, obuf, doign, prefix)
 			else
 				(void)fwrite(prefix, sizeof(*prefix),
 						prefixlen, obuf);
-			(void)fwrite(line, sizeof(*line), c, obuf);
-			if (ferror(obuf))
-				return(-1);
 		}
-	else
-		while (count > 0) {
-			c = count < LINESIZE ? count : LINESIZE;
-			if ((c = fread(line, sizeof(*line), c, ibuf)) <= 0)
-				break;
-			count -= c;
-			if (fwrite(line, sizeof(*line), c, obuf) != c)
-				return(-1);
-		}
+		/*
+		 * We can't read the record file (or inbox for recipient)
+		 * properly with 'From ' lines in the message body (from
+		 * forwarded messages or sentences starting with "From "),
+		 * so we will prepend those lines with a '>'.
+		 */
+		if (strncmp(line, "From ", 5) == 0)
+			(void)fwrite(">", 1, 1, obuf); /* '>' before 'From ' */
+		(void)fwrite(line, sizeof(*line), c, obuf);
+		if (ferror(obuf))
+			return(-1);
+	}
 	if (doign == ignoreall && c > 0 && line[c - 1] != '\n')
 		/* no final blank line */
 		if ((c = getc(ibuf)) != EOF && putc(c, obuf) == EOF)
@@ -315,11 +316,12 @@ mail1(hp, printheaders)
 	 */
 	if ((mtf = collect(hp, printheaders)) == NULL)
 		return;
-	if (fsize(mtf) == 0)
+	if (fsize(mtf) == 0) {
 		if (hp->h_subject == NULL)
 			puts("No message, no subject; hope that's ok");
 		else
 			puts("Null message body; hope that's ok");
+	}
 	/*
 	 * Now, take the user names from the combined
 	 * to and cc lists and do all the alias
@@ -546,7 +548,6 @@ savemail(name, fi)
 {
 	FILE *fo;
 	char buf[BUFSIZ];
-	int i;
 	time_t now;
 
 	if ((fo = Fopen(name, "a")) == NULL) {
@@ -555,8 +556,17 @@ savemail(name, fi)
 	}
 	(void)time(&now);
 	fprintf(fo, "From %s %s", myname, ctime(&now));
-	while ((i = fread(buf, 1, sizeof(buf), fi)) > 0)
-		(void)fwrite(buf, 1, i, fo);
+	while (fgets(buf, sizeof(buf), fi) == buf) {
+		/*
+		 * We can't read the record file (or inbox for recipient)
+		 * in the message body (from forwarded messages or sentences
+		 * starting with "From "), so we will prepend those lines with
+		 * a '>'.
+		 */
+		if (strncmp(buf, "From ", 5) == 0)
+			(void)fwrite(">", 1, 1, fo);   /* '>' before 'From ' */
+		(void)fwrite(buf, 1, strlen(buf), fo);
+	}
 	(void)putc('\n', fo);
 	(void)fflush(fo);
 	if (ferror(fo))

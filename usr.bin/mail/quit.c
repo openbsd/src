@@ -1,4 +1,4 @@
-/*	$OpenBSD: quit.c,v 1.13 2000/06/30 16:00:18 millert Exp $	*/
+/*	$OpenBSD: quit.c,v 1.14 2001/01/16 05:36:09 millert Exp $	*/
 /*	$NetBSD: quit.c,v 1.6 1996/12/28 07:11:07 tls Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)quit.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: quit.c,v 1.13 2000/06/30 16:00:18 millert Exp $";
+static char rcsid[] = "$OpenBSD: quit.c,v 1.14 2001/01/16 05:36:09 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -108,7 +108,7 @@ quit()
 	 * a message.
 	 */
 
-	fbuf = Fopen(mailname, "r");
+	fbuf = Fopen(mailname, "r+");
 	if (fbuf == NULL)
 		goto newmail;
 	if (flock(fileno(fbuf), LOCK_EX) == -1) {

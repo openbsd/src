@@ -1,4 +1,4 @@
-/*	$OpenBSD: list.c,v 1.9 1997/11/14 00:23:49 millert Exp $	*/
+/*	$OpenBSD: list.c,v 1.10 2001/01/16 05:36:08 millert Exp $	*/
 /*	$NetBSD: list.c,v 1.7 1997/07/09 05:23:36 mikel Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)list.c	8.4 (Berkeley) 5/1/95";
 #else
-static char rcsid[] = "$OpenBSD: list.c,v 1.9 1997/11/14 00:23:49 millert Exp $";
+static char rcsid[] = "$OpenBSD: list.c,v 1.10 2001/01/16 05:36:08 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -216,9 +216,11 @@ number:
 					return(-1);
 				}
 				colmod |= colresult;
+			} else {
+				if ((com->c_argtype & ~(F|P|I|M|T|W|R))
+							!= (MSGLIST|STRLIST))
+					*np++ = savestr(lexstring);
 			}
-			else
-				*np++ = savestr(lexstring);
 			break;
 
 		case TDOLLAR:

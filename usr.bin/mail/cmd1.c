@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd1.c,v 1.16 2000/06/30 16:00:18 millert Exp $	*/
+/*	$OpenBSD: cmd1.c,v 1.17 2001/01/16 05:36:08 millert Exp $	*/
 /*	$NetBSD: cmd1.c,v 1.9 1997/07/09 05:29:48 mikel Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmd1.c	8.2 (Berkeley) 4/20/95";
 #else
-static char rcsid[] = "$OpenBSD: cmd1.c,v 1.16 2000/06/30 16:00:18 millert Exp $";
+static char rcsid[] = "$OpenBSD: cmd1.c,v 1.17 2001/01/16 05:36:08 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -181,6 +181,9 @@ printhead(mesg)
 	struct headline hl;
 	int subjlen;
 	char *name;
+	char *to, *from;
+	struct name *np;
+	char **ap;
 
 	mp = &message[mesg-1];
 	(void)readline(setinput(mp), headline, LINESIZE);
@@ -202,16 +205,32 @@ printhead(mesg)
 	if (mp->m_flag & MBOX)
 		dispc = 'M';
 	parse(headline, &hl, pbuf);
-	(void)snprintf(wcount, sizeof(wcount), "%3d/%-5d", mp->m_lines,
+	(void)snprintf(wcount, sizeof(wcount), "%4d/%-5d", mp->m_lines,
 	    mp->m_size);
-	subjlen = screenwidth - 50 - strlen(wcount);
-	name = value("show-rcpt") != NULL ?
-		skin(hfield("to", mp)) : nameof(mp, 0);
-	if (subjline == NULL || subjlen < 0)		/* pretty pathetic */
-		printf("%c%c%3d %-20.20s  %16.16s %s\n",
-			curind, dispc, mesg, name, hl.l_date, wcount);
+	subjlen = screenwidth - 44 - strlen(wcount);
+	from = nameof(mp, 0);
+	to = skin(hfield("to", mp));
+	np = extract(from, GTO);
+	np = delname(np, myname);
+	if (altnames)
+		for (ap = altnames; *ap; ap++)
+			np = delname(np, *ap);
+	if (np)
+		/* not from me */
+		name = value("show-rcpt") != NULL && to ? to : from;
 	else
-		printf("%c%c%3d %-20.20s  %16.16s %s \"%.*s\"\n",
+		/* from me - show TO */
+		name = value("showto") != NULL && to ? to : from;
+	if (subjline == NULL || subjlen < 0) { /* pretty pathetic */
+		subjline="";
+		subjlen=0;
+	}
+	if (name == to)
+		printf("%c%c%3d TO %-14.14s  %16.16s %s %.*s\n",
+			curind, dispc, mesg, name, hl.l_date, wcount,
+			subjlen, subjline);
+	else
+		printf("%c%c%3d %-17.17s  %16.16s %s %.*s\n",
 			curind, dispc, mesg, name, hl.l_date, wcount,
 			subjlen, subjline);
 }
@@ -254,6 +273,19 @@ pcmdlist(v)
 }
 
 /*
+ * Pipe message to command
+ */
+int
+pipeit(ml, sl)
+	void *ml, *sl;
+{
+	int  *msgvec = ml;
+	char *cmd    = sl;
+
+	return(type1(msgvec, cmd, 0, 0));
+}
+
+/*
  * Paginate messages, honor ignored fields.
  */
 int
@@ -261,7 +293,7 @@ more(v)
 	void *v;
 {
 	int *msgvec = v;
-	return(type1(msgvec, 1, 1));
+	return(type1(msgvec, NULL, 1, 1));
 }
 
 /*
@@ -273,7 +305,7 @@ More(v)
 {
 	int *msgvec = v;
 
-	return(type1(msgvec, 0, 1));
+	return(type1(msgvec, NULL, 0, 1));
 }
 
 /*
@@ -285,7 +317,7 @@ type(v)
 {
 	int *msgvec = v;
 
-	return(type1(msgvec, 1, 0));
+	return(type1(msgvec, NULL, 1, 0));
 }
 
 /*
@@ -297,7 +329,7 @@ Type(v)
 {
 	int *msgvec = v;
 
-	return(type1(msgvec, 0, 0));
+	return(type1(msgvec, NULL, 0, 0));
 }
 
 /*
@@ -305,14 +337,16 @@ Type(v)
  */
 sigjmp_buf	pipestop;
 int
-type1(msgvec, doign, page)
+type1(msgvec, cmd, doign, page)
 	int *msgvec;
+	char *cmd;
 	int doign, page;
 {
 	int nlines, *ip;
 	struct message *mp;
 	char *cp;
 	FILE *obuf;
+
 #if __GNUC__
 	/* Avoid siglongjmp clobbering */
 	(void)&cp;
@@ -322,18 +356,27 @@ type1(msgvec, doign, page)
 	obuf = stdout;
 	if (sigsetjmp(pipestop, 1))
 		goto close_pipe;
-	if (value("interactive") != NULL &&
-	    (page || (cp = value("crt")) != NULL)) {
+
+	/*
+	 * start a pipe if needed.
+	 */
+	if (cmd) {
+		obuf = Popen(cmd, "w");
+		if (obuf == NULL) {
+			warn("%s", cp);
+			obuf = stdout;
+		} else {
+			(void)signal(SIGPIPE, brokpipe);
+		}
+	} else if (value("interactive") != NULL &&
+	         (page || (cp = value("crt")) != NULL)) {
 		nlines = 0;
 		if (!page) {
 			for (ip = msgvec; *ip && ip-msgvec < msgCount; ip++)
 				nlines += message[*ip - 1].m_lines;
 		}
 		if (page || nlines > (*cp ? atoi(cp) : realscreenheight)) {
-			cp = value("PAGER");
-			if (cp == NULL || *cp == '\0')
-				cp = _PATH_MORE;
-			obuf = Popen(cp, "w");
+			obuf = Popen(value("PAGER"), "w");
 			if (obuf == NULL) {
 				warn("%s", cp);
 				obuf = stdout;
@@ -341,14 +384,19 @@ type1(msgvec, doign, page)
 				(void)signal(SIGPIPE, brokpipe);
 		}
 	}
+
+	/*
+	 * send messages to the output.
+	 */
 	for (ip = msgvec; *ip && ip - msgvec < msgCount; ip++) {
 		mp = &message[*ip - 1];
 		touch(mp);
 		dot = mp;
-		if (value("quiet") == NULL)
+		if (cmd == NULL && value("quiet") == NULL)
 			fprintf(obuf, "Message %d:\n", *ip);
 		(void)sendmessage(mp, obuf, doign ? ignore : 0, NULL);
 	}
+
 close_pipe:
 	if (obuf != stdout) {
 		/*
@@ -460,16 +508,18 @@ int
 folders(v)
 	void *v;
 {
+	char *files = (char *)v;
 	char dirname[PATHSIZE];
-	char *cmd;
+	char cmd[BUFSIZ];
 
 	if (getfold(dirname, sizeof(dirname)) < 0) {
-		puts("No value set for \"folder\"");
-		return(1);
+		strcpy(dirname, "$HOME");
 	}
-	if ((cmd = value("LISTER")) == NULL)
-		cmd = "ls";
-	(void)run_command(cmd, 0, -1, -1, dirname, NULL, NULL);
+
+	snprintf(cmd, sizeof(cmd), "cd %s; %s %s", dirname, value("LISTER"),
+		files && *files ? files : "");
+
+	(void)run_command(value("SHELL"), 0, -1, -1, "-c", cmd, NULL);
 	return(0);
 }
 
@@ -490,7 +540,6 @@ inc(v)
 	} else if (nmsg > 0) {
 		mdot = newfileinfo(msgCount - nmsg);
 		dot = &message[mdot - 1];
-		clearnew();
 	} else {
 		puts("\"inc\" command failed...");
 	}

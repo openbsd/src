@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmdtab.c,v 1.4 1997/07/13 21:21:10 millert Exp $	*/
+/*	$OpenBSD: cmdtab.c,v 1.5 2001/01/16 05:36:08 millert Exp $	*/
 /*	$NetBSD: cmdtab.c,v 1.7 1996/12/28 07:10:59 tls Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmdtab.c	8.2 (Berkeley) 4/20/95";
 #else
-static char rcsid[] = "$OpenBSD: cmdtab.c,v 1.4 1997/07/13 21:21:10 millert Exp $";
+static char rcsid[] = "$OpenBSD: cmdtab.c,v 1.5 2001/01/16 05:36:08 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -52,6 +52,9 @@ static char rcsid[] = "$OpenBSD: cmdtab.c,v 1.4 1997/07/13 21:21:10 millert Exp 
  */
 
 const struct cmd cmdtab[] = {
+	/* 						msgmask	msgflag	 */
+	/* command	function	argtype		result	& mask	 */
+	/* -------	--------	-------		-------	-------- */
 	{ "next",	next,		NDMLIST,	0,	MMNDEL },
 	{ "alias",	group,		M|RAWLIST,	0,	1000 },
 	{ "print",	type,		MSGLIST,	0,	MMNDEL },
@@ -69,6 +72,8 @@ const struct cmd cmdtab[] = {
 	{ "unset",	unset,		M|RAWLIST,	1,	1000 },
 	{ "mail",	sendmail,	R|M|I|STRLIST,	0,	0 },
 	{ "mbox",	mboxit,		W|MSGLIST,	0,	0 },
+	{ "pipe",	pipeit,		MSGLIST|STRLIST,0,	MMNDEL },
+	{ "|",	  	pipeit,		MSGLIST|STRLIST,0,	MMNDEL },
 	{ "more",	more,		MSGLIST,	0,	MMNDEL },
 	{ "page",	more,		MSGLIST,	0,	MMNDEL },
 	{ "More",	More,		MSGLIST,	0,	MMNDEL },
@@ -88,7 +93,7 @@ const struct cmd cmdtab[] = {
 	{ "from",	from,		MSGLIST,	0,	MMNORM },
 	{ "file",	file,		T|M|RAWLIST,	0,	1 },
 	{ "folder",	file,		T|M|RAWLIST,	0,	1 },
-	{ "folders",	folders,	T|M|NOLIST,	0,	0 },
+	{ "folders",	folders,	T|M|STRLIST,	0,	0 },
 	{ "?",		help,		M|NOLIST,	0,	0 },
 	{ "z",		scroll,		M|STRLIST,	0,	0 },
 	{ "headers",	headers,	MSGLIST,	0,	MMNDEL },
@@ -121,5 +126,6 @@ const struct cmd cmdtab[] = {
 	{ "#",		null,		M|NOLIST,	0,	0 },
 	{ "clobber",	clobber,	M|RAWLIST,	0,	1 },
 	{ "inc",	inc,		T|NOLIST,	0,	0 },
+	{ "new",	marknew,	MSGLIST,	0,	MMNDEL },
 	{ 0,		0,		0,		0,	0 }
 };

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pathnames.h,v 1.4 1998/08/15 23:17:22 millert Exp $	*/
+/*	$OpenBSD: pathnames.h,v 1.5 2001/01/16 05:36:08 millert Exp $	*/
 /*	$NetBSD: pathnames.h,v 1.4 1996/06/08 19:48:34 christos Exp $	*/
 
 /*
@@ -39,9 +39,15 @@
 
 #include <paths.h>
 
-#define	_PATH_EX	"/usr/bin/ex"
-#define	_PATH_HELP	"/usr/share/misc/mail.help"
-#define	_PATH_TILDE	"/usr/share/misc/mail.tildehelp"
-#define	_PATH_MASTER_RC	"/etc/mail.rc"
-#define	_PATH_MORE	"/usr/bin/more"
-#define	_PATH_LOCKSPOOL	"/usr/libexec/lockspool"
+/* executables */
+#define _PATH_EX	"/usr/bin/ex"
+#define _PATH_MORE	"/usr/bin/more"
+#define _PATH_LS	"/usr/bin/ls"
+#define _PATH_LOCKSPOOL	"/usr/libexec/lockspool"
+
+/* directories & files */
+#define _PATH_MAILDIR	"/var/mail"
+#define _PATH_HELP	"/usr/share/misc/mail.help"
+#define _PATH_TILDE	"/usr/share/misc/mail.tildehelp"
+#define _PATH_MASTER_RC	"/etc/mail.rc"
+#define _PATH_LOCTMP	"/tmp/local.XXXXXXXXXX"

@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.15 2000/08/23 21:24:08 mickey Exp $	*/
+/*	$OpenBSD: extern.h,v 1.16 2001/01/16 05:36:08 millert Exp $	*/
 /*	$NetBSD: extern.h,v 1.7 1997/07/09 05:22:00 mikel Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)extern.h	8.2 (Berkeley) 4/20/95
- *	$OpenBSD: extern.h,v 1.15 2000/08/23 21:24:08 mickey Exp $
+ *	$OpenBSD: extern.h,v 1.16 2001/01/16 05:36:08 millert Exp $
  */
 
 struct name;
@@ -180,6 +180,7 @@ void	 mail1 __P((struct header *, int));
 void	 makemessage __P((FILE *, int));
 void	 mark __P((int));
 int	 markall __P((char [], int));
+int	 marknew __P((void *));
 int	 matchsender __P((char *, int));
 int	 matchsubj __P((char *, int));
 int	 mboxit __P((void *));
@@ -196,6 +197,7 @@ struct headline;
 void	 parse __P((char [], struct headline *, char []));
 int	 pcmdlist __P((void *));
 int	 pdot __P((void *));
+int	 pipeit __P((void *, void *));
 void	 prepare_child __P((sigset_t *, int, int));
 int	 preserve __P((void *));
 void	 prettyprint __P((struct name *));
@@ -215,7 +217,7 @@ int	 respond __P((void *));
 int	 retfield __P((void *));
 int	 rexit __P((void *));
 int	 rm __P((char *));
-int	 run_command __P((char *, sigset_t *, int, int, char *, char *, char *));
+int	 run_command __P((char *cmd, sigset_t *nset, int infd, int outfd, ...));
 int	 save __P((void *));
 int	 save1 __P((char [], int, char *, struct ignoretab *));
 void	 savedeadletter __P((FILE *));
@@ -242,7 +244,8 @@ int	 spool_lock __P((void));
 int	 spool_unlock __P((void));
 void	 spreserve __P((void));
 void	 sreset __P((void));
-int	 start_command __P((char *, sigset_t *, int, int, char *, char *, char *));
+int	 start_command __P((char *cmd, sigset_t *nset, int infd, int outfd, ...));
+int	 start_commandv __P((char *, sigset_t *, int, int, _BSD_VA_LIST_));
 void	 statusput __P((struct message *, FILE *, char *));
 void	 stop __P((int));
 int	 stouch __P((void *));
@@ -253,7 +256,7 @@ void	 touch __P((struct message *));
 void	 ttyint __P((int));
 void	 ttystop __P((int));
 int	 type __P((void *));
-int	 type1 __P((int *, int, int));
+int	 type1 __P((int *, char *, int, int));
 int	 undeletecmd __P((void *));
 void	 unmark __P((int));
 char	**unpack __P((struct name *, struct name *));
@@ -269,3 +272,4 @@ int	 writeback __P((FILE *));
 
 extern char *__progname;
 extern char *tmpdir;
+extern const struct cmd *com; /* command we are running */

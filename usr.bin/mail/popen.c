@@ -1,4 +1,4 @@
-/*	$OpenBSD: popen.c,v 1.24 2000/06/30 16:00:18 millert Exp $	*/
+/*	$OpenBSD: popen.c,v 1.25 2001/01/16 05:36:08 millert Exp $	*/
 /*	$NetBSD: popen.c,v 1.6 1997/05/13 06:48:42 mikel Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)popen.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: popen.c,v 1.24 2000/06/30 16:00:18 millert Exp $";
+static char rcsid[] = "$OpenBSD: popen.c,v 1.25 2001/01/16 05:36:08 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -46,6 +46,11 @@ static char rcsid[] = "$OpenBSD: popen.c,v 1.24 2000/06/30 16:00:18 millert Exp 
 #include <sys/wait.h>
 #include <fcntl.h>
 #include <errno.h>
+#ifdef __STDC__
+#include <stdarg.h>
+#else
+#include <varargs.h>
+#endif
 #include "extern.h"
 
 #define READ 0
@@ -124,15 +129,15 @@ Popen(cmd, mode)
 	(void)fcntl(p[WRITE], F_SETFD, 1);
 	if (*mode == 'r') {
 		myside = p[READ];
-		fd0 = -1;
-		hisside = fd1 = p[WRITE];
+		hisside = fd0 = fd1 = p[WRITE];
 	} else {
 		myside = p[WRITE];
 		hisside = fd0 = p[READ];
 		fd1 = -1;
 	}
 	sigemptyset(&nset);
-	if ((pid = start_command(cmd, &nset, fd0, fd1, NULL, NULL, NULL)) < 0) {
+	if ((pid = start_command(value("SHELL"), &nset, fd0, fd1,
+						"-c", cmd, NULL)) < 0) {
 		(void)close(p[READ]);
 		(void)close(p[WRITE]);
 		return(NULL);
@@ -224,32 +229,16 @@ file_pid(fp)
  * "nset" contains the signals to ignore in the new process.
  * SIGINT is enabled unless it's in "nset".
  */
-/*VARARGS4*/
 int
-run_command(cmd, nset, infd, outfd, a0, a1, a2)
+start_commandv(cmd, nset, infd, outfd, args)
 	char *cmd;
 	sigset_t *nset;
 	int infd, outfd;
-	char *a0, *a1, *a2;
+	va_list args;
 {
 	int pid;
 
-	if ((pid = start_command(cmd, nset, infd, outfd, a0, a1, a2)) < 0)
-		return(-1);
-	return(wait_command(pid));
-}
-
-/*VARARGS4*/
-int
-start_command(cmd, nset, infd, outfd, a0, a1, a2)
-	char *cmd;
-	sigset_t *nset;
-	int infd, outfd;
-	char *a0, *a1, *a2;
-{
-	int pid;
-
-	if ((pid = vfork()) < 0) {
+	if ((pid = fork()) < 0) {
 		warn("fork");
 		return(-1);
 	}
@@ -257,16 +246,67 @@ start_command(cmd, nset, infd, outfd, a0, a1, a2)
 		char *argv[100];
 		int i = getrawlist(cmd, argv, sizeof(argv)/ sizeof(*argv));
 
-		if ((argv[i++] = a0) != NULL &&
-		    (argv[i++] = a1) != NULL &&
-		    (argv[i++] = a2) != NULL)
-			argv[i] = NULL;
+		while ((argv[i++] = va_arg(args, char *)))
+			;
+		argv[i] = NULL;
 		prepare_child(nset, infd, outfd);
 		execvp(argv[0], argv);
 		warn("%s", argv[0]);
 		_exit(1);
 	}
 	return(pid);
+}
+
+int
+#ifdef __STDC__
+run_command(char *cmd, sigset_t *nset, int infd, int outfd, ...)
+#else
+run_command(cmd, nset, infd, outfd, va_alist)
+	char *cmd;
+	sigset_t *nset;
+	int infd;
+	int outfd;
+	va_dcl
+#endif
+{
+	int pid;
+	va_list args;
+
+#ifdef __STDC__
+	va_start(args, outfd);
+#else
+	va_start(args);
+#endif
+	pid = start_commandv(cmd, nset, infd, outfd, args);
+	va_end(args);
+	if (pid < 0)
+		return(-1);
+	return(wait_command(pid));
+}
+
+int
+#ifdef __STDC__
+start_command(char *cmd, sigset_t *nset, int infd, int outfd, ...)
+#else
+start_command(cmd, nset, infd, outfd, va_alist)
+	char *cmd;
+	sigset_t *nset;
+	int infd;
+	int outfd;
+	va_dcl
+#endif
+{
+	va_list args;
+	int r;
+
+#ifdef __STDC__
+	va_start(args, outfd);
+#else
+	va_start(args);
+#endif
+	r = start_commandv(cmd, nset, infd, outfd, args);
+	va_end(args);
+	return(r);
 }
 
 void
@@ -281,8 +321,13 @@ prepare_child(nset, infd, outfd)
 	 * All file descriptors other than 0, 1, and 2 are supposed to be
 	 * close-on-exec.
 	 */
-	if (infd >= 0)
+	if (infd >= 0) {
 		dup2(infd, 0);
+	} else {
+		/* we don't want the child stealing my stdin input */
+		close(0);
+		open(_PATH_DEVNULL, O_RDONLY, 0);
+	}
 	if (outfd >= 0)
 		dup2(outfd, 1);
 	if (nset == NULL)
@@ -451,18 +496,18 @@ handle_spool_locks(action)
 		(void)Pclose(lockfp);
 		lockfp = NULL;
 	} else if (action == 1) {
-		char *cmd = _PATH_LOCKSPOOL;
+		char cmd[128];
 
 		/* XXX - lockspool requires root for user arg, we do not */
-		if (uflag && asprintf(&cmd, "%s %s", _PATH_LOCKSPOOL,
-		    myname) == -1)
+		if (snprintf(cmd, sizeof(cmd), "%s %s", _PATH_LOCKSPOOL, uflag ? myname : "") < 0)
 			errx(1, "Out of memory");
 
 		/* Create the lock */
 		lockfp = Popen(cmd, "r");
-		if (uflag)
-			free(cmd);
-		if (lockfp == NULL || getc(lockfp) != '1') {
+		if (lockfp == NULL)
+			return(0);
+		if (getc(lockfp) != '1') {
+			Pclose(lockfp);
 			lockfp = NULL;
 			return(0);
 		}

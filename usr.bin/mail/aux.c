@@ -1,4 +1,4 @@
-/*	$OpenBSD: aux.c,v 1.15 2000/06/30 16:00:18 millert Exp $	*/
+/*	$OpenBSD: aux.c,v 1.16 2001/01/16 05:36:08 millert Exp $	*/
 /*	$NetBSD: aux.c,v 1.5 1997/05/13 06:15:52 mikel Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)aux.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: aux.c,v 1.15 2000/06/30 16:00:18 millert Exp $";
+static char rcsid[] = "$OpenBSD: aux.c,v 1.16 2001/01/16 05:36:08 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -115,7 +115,7 @@ isdir(name)
 
 	if (stat(name, &sbuf) < 0)
 		return(0);
-	return (S_ISDIR(sbuf.st_mode));
+	return(S_ISDIR(sbuf.st_mode));
 }
 
 /*
@@ -352,7 +352,11 @@ alter(name)
 		return;
 	(void) gettimeofday(&tv[0], (struct timezone *)0);
 	tv[0].tv_sec++;
+#ifdef TIMESPEC_TO_TIMEVAL
 	TIMESPEC_TO_TIMEVAL(&tv[1], &sb.st_mtimespec);
+#else
+	tv[1].tv_sec = sb.st_mtime;
+#endif
 	(void)utimes(name, tv);
 }
 

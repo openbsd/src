@@ -1,4 +1,4 @@
-/*	$OpenBSD: names.c,v 1.12 2000/08/23 21:24:08 mickey Exp $	*/
+/*	$OpenBSD: names.c,v 1.13 2001/01/16 05:36:08 millert Exp $	*/
 /*	$NetBSD: names.c,v 1.5 1996/06/08 19:48:32 christos Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)names.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: names.c,v 1.12 2000/08/23 21:24:08 mickey Exp $";
+static char rcsid[] = "$OpenBSD: names.c,v 1.13 2001/01/16 05:36:08 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -303,8 +303,7 @@ outof(names, fo, hp)
 			 * share the same lseek location and trample
 			 * on one another.
 			 */
-			if ((shell = value("SHELL")) == NULL)
-				shell = _PATH_CSHELL;
+			shell = value("SHELL");
 			sigemptyset(&nset);
 			sigaddset(&nset, SIGHUP);
 			sigaddset(&nset, SIGINT);
@@ -676,7 +675,10 @@ delname(np, name)
 	struct name *p;
 
 	for (p = np; p != NIL; p = p->n_flink)
-		if (strcasecmp(p->n_name, name) == 0) {
+		if ((strcasecmp(p->n_name, name) == 0) ||
+		    (value("allnet") &&
+		    strncasecmp(p->n_name, name, strlen(name)) == 0 &&
+		    *(p->n_name+strlen(name)) == '@')) {
 			if (p->n_blink == NIL) {
 				if (p->n_flink != NIL)
 					p->n_flink->n_blink = NIL;
