@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_disp.c,v 1.7 1998/12/20 23:54:08 millert Exp $	*/
+/*	$OpenBSD: init_disp.c,v 1.8 1999/03/03 20:43:30 millert Exp $	*/
 /*	$NetBSD: init_disp.c,v 1.6 1994/12/09 02:14:17 jtc Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)init_disp.c	8.2 (Berkeley) 2/16/94";
 #endif
-static char rcsid[] = "$OpenBSD: init_disp.c,v 1.7 1998/12/20 23:54:08 millert Exp $";
+static char rcsid[] = "$OpenBSD: init_disp.c,v 1.8 1999/03/03 20:43:30 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -121,10 +121,10 @@ set_edit_chars()
 	    ? CWERASE : tty.c_cc[VWERASE];
 	cc = write(sockt, buf, sizeof(buf));
 	if (cc != sizeof(buf) )
-		p_error("Lost the connection");
+		quit("Lost the connection", 1);
 	cc = read(sockt, buf, sizeof(buf));
 	if (cc != sizeof(buf) )
-		p_error("Lost the connection");
+		quit("Lost the connection", 1);
 	his_win.cerase = buf[0];
 	his_win.kill = buf[1];
 	his_win.werase = buf[2];
@@ -135,15 +135,16 @@ sig_sent(dummy)
 	int dummy;
 {
 
-	message("Connection closing. Exiting");
-	quit();
+	quit("Connection closing.  Exiting", 0);
 }
 
 /*
  * All done talking...hang up the phone and reset terminal thingy's
  */
 void
-quit()
+quit(warning, do_perror)
+	char *warning;
+	int do_perror;
 {
 
 	if (curses_initialized) {
@@ -154,5 +155,11 @@ quit()
 	}
 	if (invitation_waiting)
 		send_delete();
+	if (warning) {
+		if (do_perror)
+			warn(warning);
+		else
+			warnx(warning);
+	}
 	exit(0);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: look_up.c,v 1.5 1998/08/18 04:02:18 millert Exp $	*/
+/*	$OpenBSD: look_up.c,v 1.6 1999/03/03 20:43:30 millert Exp $	*/
 /*	$NetBSD: look_up.c,v 1.3 1994/12/09 02:14:21 jtc Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)look_up.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: look_up.c,v 1.5 1998/08/18 04:02:18 millert Exp $";
+static char rcsid[] = "$OpenBSD: look_up.c,v 1.6 1999/03/03 20:43:30 millert Exp $";
 #endif /* not lint */
 
 #include "talk.h"
@@ -72,7 +72,7 @@ check_local()
 	current_state = "Waiting to connect with caller";
 	do {
 		if (ntohs(response.addr.sa_family) != AF_INET)
-			p_error("Response uses invalid network address");
+			quit("Response uses invalid network address", 1);
 		errno = 0;
 		if (connect(sockt, (struct sockaddr *)&response.addr,
 			    sizeof (response.addr)) != -1)
@@ -90,7 +90,7 @@ check_local()
 		open_sockt();
 		return (0);
 	}
-	p_error("Unable to connect with initiator");
+	quit("Unable to connect with initiator", 1);
 	/*NOTREACHED*/
 }
 

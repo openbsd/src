@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctl_transact.c,v 1.5 1998/08/18 04:02:10 millert Exp $	*/
+/*	$OpenBSD: ctl_transact.c,v 1.6 1999/03/03 20:43:30 millert Exp $	*/
 /*	$NetBSD: ctl_transact.c,v 1.3 1994/12/09 02:14:12 jtc Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)ctl_transact.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: ctl_transact.c,v 1.5 1998/08/18 04:02:10 millert Exp $";
+static char rcsid[] = "$OpenBSD: ctl_transact.c,v 1.6 1999/03/03 20:43:30 millert Exp $";
 #endif /* not lint */
 
 #include "talk.h"
@@ -86,14 +86,14 @@ ctl_transact(target, msg, type, rp)
 			if (cc != sizeof (msg)) {
 				if (errno == EINTR)
 					continue;
-				p_error("Error on write to talk daemon");
+				quit("Error on write to talk daemon", 1);
 			}
 			read_mask = ctl_mask;
 			nready = select(32, &read_mask, 0, 0, &wait);
 			if (nready < 0) {
 				if (errno == EINTR)
 					continue;
-				p_error("Error waiting for daemon response");
+				quit("Error waiting for daemon response", 1);
 			}
 		} while (nready == 0);
 		/*
@@ -106,7 +106,7 @@ ctl_transact(target, msg, type, rp)
 			if (cc < 0) {
 				if (errno == EINTR)
 					continue;
-				p_error("Error on read from talk daemon");
+				quit("Error on read from talk daemon", 1);
 			}
 			read_mask = ctl_mask;
 			/* an immediate poll */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: talk.h,v 1.4 1998/08/18 04:02:26 millert Exp $	*/
+/*	$OpenBSD: talk.h,v 1.5 1999/03/03 20:43:31 millert Exp $	*/
 /*	$NetBSD: talk.h,v 1.3 1994/12/09 02:14:27 jtc Exp $	*/
 
 /*
@@ -82,8 +82,7 @@ void	message __P((char *));
 void	open_ctl __P((void));
 void	open_sockt __P((void));
 void	print_addr __P((struct sockaddr_in));
-void	p_error __P((char *));
-void	quit __P((void));
+void	quit __P((char *, int));
 int	readwin __P((WINDOW *, int, int));
 void	re_invite __P((int));
 void	send_delete __P((void));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: invite.c,v 1.6 1998/08/18 04:02:15 millert Exp $	*/
+/*	$OpenBSD: invite.c,v 1.7 1999/03/03 20:43:30 millert Exp $	*/
 /*	$NetBSD: invite.c,v 1.3 1994/12/09 02:14:18 jtc Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)invite.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: invite.c,v 1.6 1998/08/18 04:02:15 millert Exp $";
+static char rcsid[] = "$OpenBSD: invite.c,v 1.7 1999/03/03 20:43:30 millert Exp $";
 #endif /* not lint */
 
 #include "talk.h"
@@ -83,7 +83,7 @@ invite_remote()
 	itimer.it_value.tv_usec = 0;
 	itimer.it_interval = itimer.it_value;
 	if (listen(sockt, 5) != 0)
-		p_error("Error on attempt to listen for caller");
+		quit("Error on attempt to listen for caller", 1);
 #ifdef MSG_EOR
 	/* copy new style sockaddr to old, swap family (short in old) */
 	msg.addr = *(struct osockaddr *)&my_addr;  /* XXX new to old  style*/
@@ -109,7 +109,7 @@ invite_remote()
 	while ((new_sockt = accept(sockt, &rp, &rplen)) < 0) {
 		if (errno == EINTR)
 			continue;
-		p_error("Unable to connect with your party");
+		quit("Unable to connect with your party", 1);
 	}
 	close(sockt);
 	sockt = new_sockt;
@@ -182,11 +182,8 @@ announce_invite()
 	current_state = "Trying to connect to your party's talk daemon";
 	ctl_transact(his_machine_addr, msg, ANNOUNCE, &response);
 	remote_id = response.id_num;
-	if (response.answer != SUCCESS) {
-		if (response.answer < NANSWERS)
-			message(answers[response.answer]);
-		quit();
-	}
+	if (response.answer != SUCCESS)
+		quit(response.answer < NANSWERS ? answers[response.answer] : NULL, 0);
 	/* leave the actual invitation on my talk daemon */
 	ctl_transact(my_machine_addr, msg, LEAVE_INVITE, &response);
 	local_id = response.id_num;

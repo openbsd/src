@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.8 1999/03/03 15:42:46 millert Exp $	*/
+/*	$OpenBSD: io.c,v 1.9 1999/03/03 20:43:30 millert Exp $	*/
 /*	$NetBSD: io.c,v 1.4 1994/12/09 02:14:20 jtc Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: io.c,v 1.8 1999/03/03 15:42:46 millert Exp $";
+static char rcsid[] = "$OpenBSD: io.c,v 1.9 1999/03/03 20:43:30 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -95,16 +95,13 @@ talk()
 				continue;
 			}
 			/* panic, we don't know what happened */
-			p_error("Unexpected error from select");
-			quit();
+			quit("Unexpected error from select", 1);
 		}
 		if (FD_ISSET(sockt, &read_set)) {
 			/* There is data on sockt */
 			nb = read(sockt, buf, sizeof buf);
-			if (nb <= 0) {
-				message("Connection closed. Exiting");
-				quit();
-			}
+			if (nb <= 0)
+				quit("Connection closed.  Exiting", 0);
 			display(&his_win, buf, nb);
 		}
 		if (FD_ISSET(fileno(stdin), &read_set)) {
@@ -119,23 +116,6 @@ talk()
 			write(sockt, buf, nb);
 		}
 	}
-}
-
-/*
- * p_error prints the system error message on the standard location
- * on the screen and then exits. (i.e. a curses version of perror)
- */
-void
-p_error(string)
-	char *string;
-{
-	wmove(my_win.x_win, current_line%my_win.x_nlines, 0);
-	wprintw(my_win.x_win, "[%s : %s (%d)]\n",
-	    string, strerror(errno), errno);
-	wrefresh(my_win.x_win);
-	move(LINES-1, 0);
-	refresh();
-	quit();
 }
 
 /*
