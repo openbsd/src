@@ -1,4 +1,4 @@
-/*	$OpenBSD: isavar.h,v 1.15 1996/08/15 17:28:41 shawn Exp $	*/
+/*	$OpenBSD: isavar.h,v 1.16 1996/08/15 17:31:42 shawn Exp $	*/
 /*	$NetBSD: isavar.h,v 1.23 1996/05/08 23:32:31 thorpej Exp $	*/
 
 /*
@@ -100,7 +100,7 @@ struct isa_attach_args {
 	/* XXX need fixes, some are duplicated */
 	/* begin isapnp section */
 	int id;				/* logical device ID */
-	int comp_id;			/* compatiable device ID */
+	int comp_id;			/* compatible device ID */
 	int csn;			/* card selection number */
 	int ldn;			/* logical device number */
 	struct {
