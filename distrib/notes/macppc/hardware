@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.19 2003/03/25 00:21:22 drahn Exp $
+dnl	$OpenBSD: hardware,v 1.20 2003/05/02 00:53:27 jason Exp $
 OpenBSD/MACHINE OSREV runs on iMac, G4 Power Macintosh, G4 Cube as well
 as PowerBook and iBook machines.
 
@@ -19,25 +19,25 @@ is supported via an APM emulation layer.
 Supported devices {:-include-:}:
 
 	IDE hard disk controllers
-		Onboard controllers
+		Onboard controllers (pciide)
 
 	SCSI host adapters
 		Symbios Logic (NCR) 53C8xx-based PCI SCSI host adapters
-		    (53c810 and 53c825)
+		    (53c810 and 53c825) (siop)
 		Adaptec AIC-7770-based boards, including the Adaptec
-		    AHA-274x and AHA-284x families)
+		    AHA-274x and AHA-284x families) (ahc)
 		Adaptec AHA-[23]94x[W] cards and some on-board PCI designs
-		    using the AIC7870 and AIC7880 chips.
+		    using the AIC7870 and AIC7880 chips. (ahc)
 		Adaptec AHA-[23]94xU[2W] cards and some on-board PCI designs
-		    using the AIC789[01], AIC7895, AIC789[67] chips
+		    using the AIC789[01], AIC7895, AIC789[67] chips (ahc)
 		Adaptec AIC-789[29] chips and products like the
-		    AHA-29160 based upon it which do 160MB/sec SCSI.
+		    AHA-29160 based upon it which do 160MB/sec SCSI. (ahc)
 		    (However, the 7899G card is currently not supported with
 		     more than one device attached)
 
 	RAID controllers
 		Adaptec SCSI RAID (I2O) controllers (ASR-2100S, ASR-3200S,
-		    etc)
+		    etc) (iop)
 
 	AGP/SVGA/VGA Display Adapters
 		Primary Openfirmware display only
@@ -50,7 +50,7 @@ Supported devices {:-include-:}:
 		- ATI Rage Fury AGP4x
 
 	Serial ports
-		Built-in Zilog 8530-based serial ports
+		Built-in Zilog 8530-based serial ports (zs)
 		Internal modems not supported on all models
 
 	Ethernet adapters
@@ -69,13 +69,13 @@ Supported devices {:-include-:}:
 			Intel EtherExpress PRO/100+ "Management Adapter"
 			Intel EtherExpress PRO/100 Dual Port
 			Intel PRO/100 VE, PRO/100 VM, and PRO/100 S
-		Alteon Tigon I/II PCI Gigabit Ethernet boards(ti), including:
-		    3Com 3c985 and 3c985B
-		    Alteon ACEnic V (fiber and copper)
-		    Digital EtherWORKS 1000SX
-		    Farallon PN9000SX
-		    Netgear GA620 and GA620T
-		    SGI Tigon
+		Alteon Tigon I/II PCI Gigabit Ethernet boards (ti), including:
+			3Com 3c985 and 3c985B
+			Alteon ACEnic V (fiber and copper)
+			Digital EtherWORKS 1000SX
+			Farallon PN9000SX
+			Netgear GA620 and GA620T
+			SGI Tigon
 		Intel i82540, i82542, i82543, i82544, i82545, and i82546
 		based adapters (em), including:
 			Intel PRO/1000 Gigabit Server Adapter (SX Fiber)
@@ -103,13 +103,13 @@ Supported devices {:-include-:}:
 			3Com 3c555/3c556/3c556B MiniPCI adapters
 
 	Wireless Ethernet Adapters
-		Aironet 802.11DS PCMCIA and PCI
-		WaveLAN IEEE 802.11DS PCMCIA
+		Aironet 802.11DS PCMCIA and PCI (an)
+		WaveLAN IEEE 802.11DS PCMCIA (wi)
 
 	Tape drives
-		SCSI Tape drives
+		SCSI Tape drives (st)
 
-	CD-ROM drives
+	CD-ROM drives (cd)
 		SCSI CD-ROM drives
 		SCSI CD-RW drives
 		Atapi CD-ROM drives
@@ -119,25 +119,26 @@ Supported devices {:-include-:}:
 		Atapi CD-RW drives
 
 	Keyboards
-		ADB and USB keyboards
+		ADB (akbd) and USB (ukbd) keyboards
 
 	Mice
-		USB Mice.
-		ADB trackpads
+		USB Mice (ums)
+		ADB trackpads (ams)
 
 	Sound Cards
-		AWACS
+		AWACS audio (awacs)
+		Ensoniq AudioPCI (eap)
 		USB audio (uaudio)
 
 	Radio Receiver Devices
-		Brooktree 848/849/878/879-based TV tuner
+		Brooktree 848/849/878/879-based TV tuner (bktr)
 
 	Miscellaneous
 		USB Hubs
-		USB printers
-		USB Zip drives
+		USB printers (ulpt)
+		USB Zip drives (umass)
 		Brooktree 8[47][89] based frame grabber and TV tuner cards,
-		including:
+		including (bktr):
 			Hauppage Wincast TV
 			STB TV PCI Television Tuner
 			Miro PC TV

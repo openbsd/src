@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.42 2003/03/21 15:06:43 drahn Exp $g
+#	$OpenBSD: GENERIC,v 1.43 2003/05/02 00:53:27 jason Exp $g
 #
 # PPC GENERIC config file
 #
@@ -132,11 +132,12 @@ zstty*		at zsc? channel ?
 #tas*		at i2c?
 
 awacs*		at macobio?			# Apple audio device
-audio*		at awacs?
-audio*		at uaudio?
 
 bktr0		at pci? dev ? function ?	# Bt8[47][89] tv/fmradio/video
 radio*		at bktr?
+
+# PCI audio devices
+eap*		at pci? dev ? function ?	# Ensoniq AudioPCI S5016
 
 #scsibus*	at adv?
 scsibus*	at ahc?
@@ -198,6 +199,11 @@ wdc*		at pcmcia? function ?
 
 wsdisplay*	at vgafb?
 wskbd*		at ukbd? console ? mux 1
+
+# Audio support
+audio*		at awacs?
+audio*		at eap?
+audio*		at uaudio?
 
 sd*		at scsibus? target ? lun ?
 st*		at scsibus? target ? lun ?
