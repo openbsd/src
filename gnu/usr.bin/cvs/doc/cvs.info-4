@@ -22,182 +22,409 @@ and this permission notice may be included in translations approved by
 the Free Software Foundation instead of in the original English.
 
 
-File: cvs.info,  Node: Rename by copying,  Prev: Inside,  Up: Moving files
+File: cvs.info,  Node: Informing others,  Next: Concurrency,  Prev: Conflicts example,  Up: Multiple developers
 
-Copying the history file
-========================
+Informing others about commits
+==============================
 
-   This way also involves direct modifications to the repository.  It
-is safe, but not without drawbacks.
-
-     # Copy the RCS file inside the repository
-     $ cd $CVSROOT/MODULE
-     $ cp OLD,v NEW,v
-     # Remove the old file
-     $ cd ~/MODULE
-     $ rm OLD
-     $ cvs remove OLD
-     $ cvs commit OLD
-     # Remove all tags from NEW
-     $ cvs update NEW
-     $ cvs log NEW             # Remember the non-branch tag names
-     $ cvs tag -d TAG1 NEW
-     $ cvs tag -d TAG2 NEW
-     ...
-
-   By removing the tags you will be able to check out old revisions of
-the module.
-
-Advantages:
-
-   * Checking out old revisions works correctly, as long as you use
-     `-rTAG' and not `-DDATE' to retrieve the revisions.
-
-   * The log of changes is maintained intact.
-
-   * The revision numbers are not affected.
-
-Disadvantages:
-
-   * You cannot easily see the history of the file across the rename.
+   It is often useful to inform others when you commit a new revision
+of a file.  The `-i' option of the `modules' file, or the `loginfo'
+file, can be used to automate this process.  *Note modules::.  *Note
+loginfo::.  You can use these features of CVS to, for instance,
+instruct CVS to mail a message to all developers, or post a message to
+a local newsgroup.
 
 
-File: cvs.info,  Node: Moving directories,  Next: History browsing,  Prev: Moving files,  Up: Top
+File: cvs.info,  Node: Concurrency,  Next: Watches,  Prev: Informing others,  Up: Multiple developers
 
-Moving and renaming directories
-*******************************
+Several developers simultaneously attempting to run CVS
+=======================================================
 
-   The normal way to rename or move a directory is to rename or move
-each file within it as described in *Note Outside::.  Then check out
-with the `-P' option, as described in *Note Removing directories::.
+   If several developers try to run CVS at the same time, one may get
+the following message:
 
-   If you really want to hack the repository to rename or delete a
-directory in the repository, you can do it like this:
+     [11:43:23] waiting for bach's lock in /usr/local/cvsroot/foo
 
-  1. Inform everyone who has a copy of the module that the directory
-     will be renamed.  They should commit all their changes, and remove
-     their working copies of the module, before you take the steps
-     below.
+   CVS will try again every 30 seconds, and either continue with the
+operation or print the message again, if it still needs to wait.  If a
+lock seems to stick around for an undue amount of time, find the person
+holding the lock and ask them about the cvs command they are running.
+If they aren't running a cvs command, look in the repository directory
+mentioned in the message and remove files which they own whose names
+start with `#cvs.tfl', `#cvs.rfl', or `#cvs.wfl'.
 
-  2. Rename the directory inside the repository.
+   Note that these locks are to protect CVS's internal data structures
+and have no relationship to the word "lock" in the sense used by
+RCS--which refers to reserved checkouts (*note Multiple developers::.).
 
-          $ cd $CVSROOT/MODULE
-          $ mv OLD-DIR NEW-DIR
+   Any number of people can be reading from a given repository at a
+time; only when someone is writing do the locks prevent other people
+from reading or writing.
 
-  3. Fix the CVS administrative files, if necessary (for instance if
-     you renamed an entire module).
+   One might hope for the following property
 
-  4. Tell everyone that they can check out the module and continue
-     working.
+     If someone commits some changes in one cvs command,
+     then an update by someone else will either get all the
+     changes, or none of them.
 
+   but CVS does *not* have this property.  For example, given the files
 
-   If someone had a working copy of the module the CVS commands will
-cease to work for him, until he removes the directory that disappeared
-inside the repository.
+     a/one.c
+     a/two.c
+     b/three.c
+     b/four.c
 
-   It is almost always better to move the files in the directory
-instead of moving the directory.  If you move the directory you are
-unlikely to be able to retrieve old releases correctly, since they
-probably depend on the name of the directories.
+   if someone runs
+
+     cvs ci a/two.c b/three.c
+
+   and someone else runs `cvs update' at the same time, the person
+running `update' might get only the change to `b/three.c' and not the
+change to `a/two.c'.
 
 
-File: cvs.info,  Node: History browsing,  Next: Keyword substitution,  Prev: Moving directories,  Up: Top
+File: cvs.info,  Node: Watches,  Next: Choosing a model,  Prev: Concurrency,  Up: Multiple developers
 
-History browsing
-****************
+Mechanisms to track who is editing files
+========================================
 
-   Once you have used CVS to store a version control history--what
-files have changed when, how, and by whom, there are a variety of
-mechanisms for looking through the history.
+   For many groups, use of CVS in its default mode is perfectly
+satisfactory.  Users may sometimes go to check in a modification only
+to find that another modification has intervened, but they deal with it
+and proceed with their check in.  Other groups prefer to be able to
+know who is editing what files, so that if two people try to edit the
+same file they can choose to talk about who is doing what when rather
+than be surprised at check in time.  The features in this section allow
+such coordination, while retaining the ability of two developers to
+edit the same file at the same time.
+
+   For maximum benefit developers should use `cvs edit' (not `chmod')
+to make files read-write to edit them, and `cvs release' (not `rm') to
+discard a working directory which is no longer in use, but CVS is not
+able to enforce this behavior.
 
 * Menu:
 
-* log messages::                Log messages
-* history database::            The history database
-* user-defined logging::        User-defined logging
-* annotate::                    What revision modified each line of a file?
+* Setting a watch::             Telling CVS to watch certain files
+* Getting Notified::            Telling CVS to notify you
+* Editing files::               How to edit a file which is being watched
+* Watch information::           Information about who is watching and editing
+* Watches Compatibility::       Watches interact poorly with CVS 1.6 or earlier
 
 
-File: cvs.info,  Node: log messages,  Next: history database,  Up: History browsing
+File: cvs.info,  Node: Setting a watch,  Next: Getting Notified,  Up: Watches
 
-Log messages
-============
+Telling CVS to watch certain files
+----------------------------------
 
-   Whenever you commit a file you specify a log message.
+   To enable the watch features, you first specify that certain files
+are to be watched.
 
-   To look through the log messages which have been specified for every
-revision which has been committed, use the `cvs log' command (*note
-log::.).
+ - Command: cvs watch on [`-lR'] FILES ...
+     Specify that developers should run `cvs edit' before editing
+     FILES.  CVS will create working copies of FILES read-only, to
+     remind developers to run the `cvs edit' command before working on
+     them.
+
+     If FILES includes the name of a directory, CVS arranges to watch
+     all files added to the corresponding repository directory, and
+     sets a default for files added in the future; this allows the user
+     to set notification policies on a per-directory basis.  The
+     contents of the directory are processed recursively, unless the
+     `-l' option is given.  The `-R' option can be used to force
+     recursion if the `-l' option is set in `~/.cvsrc' (*note
+     ~/.cvsrc::.).
+
+     If FILES is omitted, it defaults to the current directory.
+
+
+ - Command: cvs watch off [`-lR'] FILES ...
+     Do not provide notification about work on FILES.  CVS will create
+     working copies of FILES read-write.
+
+     The FILES and options are processed as for `cvs watch on'.
+
 
 
-File: cvs.info,  Node: history database,  Next: user-defined logging,  Prev: log messages,  Up: History browsing
+File: cvs.info,  Node: Getting Notified,  Next: Editing files,  Prev: Setting a watch,  Up: Watches
 
-The history database
-====================
+Telling CVS to notify you
+-------------------------
 
-   You can use the history file (*note history file::.) to log various
-CVS actions.  To retrieve the information from the history file, use
-the `cvs history' command (*note history::.).
+   You can tell CVS that you want to receive notifications about
+various actions taken on a file.  You can do this without using `cvs
+watch on' for the file, but generally you will want to use `cvs watch
+on', so that developers use the `cvs edit' command.
+
+ - Command: cvs watch add [`-a' ACTION] [`-lR'] FILES ...
+     Add the current user to the list of people to receive notification
+     of work done on FILES.
+
+     The `-a' option specifies what kinds of events CVS should notify
+     the user about.  ACTION is one of the following:
+
+    `edit'
+          Another user has applied the `cvs edit' command (described
+          below) to a file.
+
+    `unedit'
+          Another user has applied the `cvs unedit' command (described
+          below) or the `cvs release' command to a file, or has deleted
+          the file and allowed `cvs update' to recreate it.
+
+    `commit'
+          Another user has committed changes to a file.
+
+    `all'
+          All of the above.
+
+    `none'
+          None of the above.  (This is useful with `cvs edit',
+          described below.)
+
+     The `-a' option may appear more than once, or not at all.  If
+     omitted, the action defaults to `all'.
+
+     The FILES and options are processed as for the `cvs watch'
+     commands.
+
+
+ - Command: cvs watch remove [`-a' ACTION] [`-lR'] FILES ...
+     Remove a notification request established using `cvs watch add';
+     the arguments are the same.  If the `-a' option is present, only
+     watches for the specified actions are removed.
+
+
+   When the conditions exist for notification, CVS calls the `notify'
+administrative file.  Edit `notify' as one edits the other
+administrative files (*note Intro administrative files::.).  This file
+follows the usual conventions for administrative files (*note
+syntax::.), where each line is a regular expression followed by a
+command to execute.  The command should contain a single ocurrence of
+`%s' which will be replaced by the user to notify; the rest of the
+information regarding the notification will be supplied to the command
+on standard input.  The standard thing to put in the `notify' file is
+the single line:
+
+     ALL mail %s -s \"CVS notification\"
+
+   This causes users to be notified by electronic mail.
+
+   Note that if you set this up in the straightforward way, users
+receive notifications on the server machine.  One could of course write
+a `notify' script which directed notifications elsewhere, but to make
+this easy, CVS allows you to associate a notification address for each
+user.  To do so create a file `users' in `CVSROOT' with a line for each
+user in the format USER:VALUE.  Then instead of passing the name of the
+user to be notified to `notify', CVS will pass the VALUE (normally an
+email address on some other machine).
+
+   CVS does not notify you for your own changes.  Currently this check
+is done based on whether the user name of the person taking the action
+which triggers notification matches the user name of the person getting
+notification.  In fact, in general, the watches features only track one
+edit by each user.  It probably would be more useful if watches tracked
+each working directory separately, so this behavior might be worth
+changing.
 
 
-File: cvs.info,  Node: user-defined logging,  Next: annotate,  Prev: history database,  Up: History browsing
+File: cvs.info,  Node: Editing files,  Next: Watch information,  Prev: Getting Notified,  Up: Watches
 
-User-defined logging
-====================
+How to edit a file which is being watched
+-----------------------------------------
 
-   You can customize CVS to log various kinds of actions, in whatever
-manner you choose.  These mechanisms operate by executing a script at
-various times.  The script might append a message to a file listing the
-information and the programmer who created it, or send mail to a group
-of developers, or, perhaps, post a message to a particular newsgroup.
-To log commits, use the `loginfo' file (*note loginfo::.).  To log
-commits, checkouts, exports, and tags, respectively, you can also use
-the `-i', `-o', `-e', and `-t' options in the modules file.  For a more
-flexible way of giving notifications to various users, which requires
-less in the way of keeping centralized scripts up to date, use the `cvs
-watch add' command (*note Getting Notified::.); this command is useful
-even if you are not using `cvs watch on'.
+   Since a file which is being watched is checked out read-only, you
+cannot simply edit it.  To make it read-write, and inform others that
+you are planning to edit it, use the `cvs edit' command.  Some systems
+call this a "checkout", but CVS uses that term for obtaining a copy of
+the sources (*note Getting the source::.), an operation which those
+systems call a "get" or a "fetch".
 
-   The `taginfo' file defines programs to execute when someone executes
-a `tag' or `rtag' command.  The `taginfo' file has the standard form
-for administrative files (*note Administrative files::.), where each
-line is a regular expression followed by a command to execute.  The
-arguments passed to the command are, in order, the TAGNAME, OPERATION
-(`add' for `tag', `mov' for `tag -F', and `del' for `tag -d'),
-REPOSITORY, and any remaining are pairs of FILENAME REVISION.  A
-non-zero exit of the filter program will cause the tag to be aborted.
+ - Command: cvs edit [OPTIONS] FILES ...
+     Prepare to edit the working files FILES.  CVS makes the FILES
+     read-write, and notifies users who have requested `edit'
+     notification for any of FILES.
+
+     The `cvs edit' command accepts the same OPTIONS as the `cvs watch
+     add' command, and establishes a temporary watch for the user on
+     FILES; CVS will remove the watch when FILES are `unedit'ed or
+     `commit'ted.  If the user does not wish to receive notifications,
+     she should specify `-a none'.
+
+     The FILES and options are processed as for the `cvs watch'
+     commands.
+
+
+   Normally when you are done with a set of changes, you use the `cvs
+commit' command, which checks in your changes and returns the watched
+files to their usual read-only state.  But if you instead decide to
+abandon your changes, or not to make any changes, you can use the `cvs
+unedit' command.
+
+ - Command: cvs unedit [`-lR'] FILES ...
+     Abandon work on the working files FILES, and revert them to the
+     repository versions on which they are based.  CVS makes those
+     FILES read-only for which users have requested notification using
+     `cvs watch on'.  CVS notifies users who have requested `unedit'
+     notification for any of FILES.
+
+     The FILES and options are processed as for the `cvs watch'
+     commands.
+
+     If watches are not in use, the `unedit' command probably does not
+     work, and the way to revert to the repository version is to remove
+     the file and then use `cvs update' to get a new copy.  The meaning
+     is not precisely the same; removing and updating may also bring in
+     some changes which have been made in the repository since the last
+     time you updated.
+
+   When using client/server CVS, you can use the `cvs edit' and `cvs
+unedit' commands even if CVS is unable to succesfully communicate with
+the server; the notifications will be sent upon the next successful CVS
+command.
 
 
-File: cvs.info,  Node: annotate,  Prev: user-defined logging,  Up: History browsing
+File: cvs.info,  Node: Watch information,  Next: Watches Compatibility,  Prev: Editing files,  Up: Watches
 
-Annotate command
-================
+Information about who is watching and editing
+---------------------------------------------
 
- - Command: cvs annotate [`-flR'] [`-r rev'|`-D date'] FILES ...
-     For each file in FILES, print the head revision of the trunk,
-     together with information on the last modification for each line.
-     For example:
+ - Command: cvs watchers [`-lR'] FILES ...
+     List the users currently watching changes to FILES.  The report
+     includes the files being watched, and the mail address of each
+     watcher.
 
-          $ cvs annotate ssfile
-          Annotations for ssfile
-          ***************
-          1.1          (mary     27-Mar-96): ssfile line 1
-          1.2          (joe      28-Mar-96): ssfile line 2
-
-     The file `ssfile' currently contains two lines.  The `ssfile line
-     1' line was checked in by `mary' on March 27.  Then, on March 28,
-     `joe' added a line `ssfile line 2', without modifying the `ssfile
-     line 1' line.  This report doesn't tell you anything about lines
-     which have been deleted or replaced; you need to use `cvs diff'
-     for that (*note diff::.).
+     The FILES and options are processed as for the `cvs watch'
+     commands.
 
 
-   The options to `cvs annotate' are listed in *Note Invoking CVS::,
-and can be used to select the files and revisions to annotate.  The
-options are described in more detail in *Note Common options::.
+ - Command: cvs editors [`-lR'] FILES ...
+     List the users currently working on FILES.  The report includes
+     the mail address of each user, the time when the user began
+     working with the file, and the host and path of the working
+     directory containing the file.
+
+     The FILES and options are processed as for the `cvs watch'
+     commands.
+
 
 
-File: cvs.info,  Node: Keyword substitution,  Next: Binary files,  Prev: History browsing,  Up: Top
+File: cvs.info,  Node: Watches Compatibility,  Prev: Watch information,  Up: Watches
+
+Using watches with old versions of CVS
+--------------------------------------
+
+   If you use the watch features on a repository, it creates `CVS'
+directories in the repository and stores the information about watches
+in that directory.  If you attempt to use CVS 1.6 or earlier with the
+repository, you get an error message such as the following (all on one
+line):
+
+     cvs update: cannot open CVS/Entries for reading:
+     No such file or directory
+
+   and your operation will likely be aborted.  To use the watch
+features, you must upgrade all copies of CVS which use that repository
+in local or server mode.  If you cannot upgrade, use the `watch off' and
+`watch remove' commands to remove all watches, and that will restore
+the repository to a state which CVS 1.6 can cope with.
+
+
+File: cvs.info,  Node: Choosing a model,  Prev: Watches,  Up: Multiple developers
+
+Choosing between reserved or unreserved checkouts
+=================================================
+
+   Reserved and unreserved checkouts each have pros and cons.  Let it
+be said that a lot of this is a matter of opinion or what works given
+different groups' working styles, but here is a brief description of
+some of the issues.  There are many ways to organize a team of
+developers.  CVS does not try to enforce a certain organization.  It is
+a tool that can be used in several ways.
+
+   Reserved checkouts can be very counter-productive.  If two persons
+want to edit different parts of a file, there may be no reason to
+prevent either of them from doing so.  Also, it is common for someone
+to take out a lock on a file, because they are planning to edit it, but
+then forget to release the lock.
+
+   People, especially people who are familiar with reserved checkouts,
+often wonder how often conflicts occur if unreserved checkouts are
+used, and how difficult they are to resolve.  The experience with many
+groups is that they occur rarely and usually are relatively
+straightforward to resolve.
+
+   The rarity of serious conflicts may be surprising, until one realizes
+that they occur only when two developers disagree on the proper design
+for a given section of code; such a disagreement suggests that the team
+has not been communicating properly in the first place.  In order to
+collaborate under *any* source management regimen, developers must
+agree on the general design of the system; given this agreement,
+overlapping changes are usually straightforward to merge.
+
+   In some cases unreserved checkouts are clearly inappropriate.  If no
+merge tool exists for the kind of file you are managing (for example
+word processor files or files edited by Computer Aided Design
+programs), and it is not desirable to change to a program which uses a
+mergeable data format, then resolving conflicts is going to be
+unpleasant enough that you generally will be better off to simply avoid
+the conflicts instead, by using reserved checkouts.
+
+   The watches features described above in *Note Watches:: can be
+considered to be an intermediate model between reserved checkouts and
+unreserved checkouts.  When you go to edit a file, it is possible to
+find out who else is editing it.  And rather than having the system
+simply forbid both people editing the file, it can tell you what the
+situation is and let you figure out whether it is a problem in that
+particular case or not.  Therefore, for some groups it can be
+considered the best of both the reserved checkout and unreserved
+checkout worlds.
+
+
+File: cvs.info,  Node: Revision management,  Next: Keyword substitution,  Prev: Multiple developers,  Up: Top
+
+Revision management
+*******************
+
+   If you have read this far, you probably have a pretty good grasp on
+what CVS can do for you.  This chapter talks a little about things that
+you still have to decide.
+
+   If you are doing development on your own using CVS you could
+probably skip this chapter.  The questions this chapter takes up become
+more important when more than one person is working in a repository.
+
+* Menu:
+
+* When to commit::              Some discussion on the subject
+
+
+File: cvs.info,  Node: When to commit,  Up: Revision management
+
+When to commit?
+===============
+
+   Your group should decide which policy to use regarding commits.
+Several policies are possible, and as your experience with CVS grows
+you will probably find out what works for you.
+
+   If you commit files too quickly you might commit files that do not
+even compile.  If your partner updates his working sources to include
+your buggy file, he will be unable to compile the code.  On the other
+hand, other persons will not be able to benefit from the improvements
+you make to the code if you commit very seldom, and conflicts will
+probably be more common.
+
+   It is common to only commit files after making sure that they can be
+compiled.  Some sites require that the files pass a test suite.
+Policies like this can be enforced using the commitinfo file (*note
+commitinfo::.), but you should think twice before you enforce such a
+convention.  By making the development environment too controlled it
+might become too regimented and thus counter-productive to the real
+goal, which is to get software written.
+
+
+File: cvs.info,  Node: Keyword substitution,  Next: Tracking sources,  Prev: Revision management,  Up: Top
 
 Keyword substitution
 ********************
@@ -221,14 +448,14 @@ file.
 * Avoiding substitution::       Avoiding substitution
 * Substitution modes::          Substitution modes
 * Log keyword::                 Problems with the $Log: cvs.info-4,v $
-* Log keyword::                 Problems with the Revision 1.1.1.10  1997/06/28 03:35:16  tholo
-* Log keyword::                 Problems with the Missing files from initial import
+* Log keyword::                 Problems with the Revision 1.1.1.11  1998/02/22 08:30:52  tholo
+* Log keyword::                 Problems with the Latest version from Cyclic; files missed in first run
 * Log keyword::                 Problems with the keyword.
 
 
 File: cvs.info,  Node: Keyword list,  Next: Using keywords,  Up: Keyword substitution
 
-RCS Keywords
+Keyword List
 ============
 
    This is a list of the keywords:
@@ -236,17 +463,17 @@ RCS Keywords
 `$Author: tholo $'
      The login name of the user who checked in the revision.
 
-`$Date: 1997/06/28 03:35:16 $'
+`$Date: 1998/02/22 08:30:52 $'
      The date and time (UTC) the revision was checked in.
 
-`$Header: /home/cvs/src/gnu/usr.bin/cvs/doc/cvs.info-4,v 1.1.1.10 1997/06/28 03:35:16 tholo Exp $'
+`$Header: /home/cvs/src/gnu/usr.bin/cvs/doc/cvs.info-4,v 1.1.1.11 1998/02/22 08:30:52 tholo Exp $'
      A standard header containing the full pathname of the RCS file,
      the revision number, the date (UTC), the author, the state, and
      the locker (if locked).  Files will normally never be locked when
      you use CVS.
 
-`$Id: cvs.info-4,v 1.1.1.10 1997/06/28 03:35:16 tholo Exp $'
-     Same as `$Header: /home/cvs/src/gnu/usr.bin/cvs/doc/cvs.info-4,v 1.1.1.10 1997/06/28 03:35:16 tholo Exp $', except that the RCS filename is without a path.
+`$Id: cvs.info-4,v 1.1.1.11 1998/02/22 08:30:52 tholo Exp $'
+     Same as `$Header: /home/cvs/src/gnu/usr.bin/cvs/doc/cvs.info-4,v 1.1.1.11 1998/02/22 08:30:52 tholo Exp $', except that the RCS filename is without a path.
 
 `$Name:  $'
      Tag name used to check out this file.
@@ -256,26 +483,41 @@ RCS Keywords
      locked, and thus almost always useless when you are using CVS).
 
 `$Log: cvs.info-4,v $
-`Revision 1.1.1.10  1997/06/28 03:35:16  tholo
-`Missing files from initial import
+`Revision 1.1.1.11  1998/02/22 08:30:52  tholo
+`Latest version from Cyclic; files missed in first run
 `'
      The log message supplied during commit, preceded by a header
      containing the RCS filename, the revision number, the author, and
      the date (UTC).  Existing log messages are *not* replaced.
      Instead, the new log message is inserted after `$Log: cvs.info-4,v $
-     Instead, the new log message is inserted after `Revision 1.1.1.10  1997/06/28 03:35:16  tholo
-     Instead, the new log message is inserted after `Missing files from initial import
+     Instead, the new log message is inserted after `Revision 1.1.1.11  1998/02/22 08:30:52  tholo
+     Instead, the new log message is inserted after `Latest version from Cyclic; files missed in first run
      Instead, the new log message is inserted after `'.  Each
-     new line is prefixed with a "comment leader" which RCS guesses
-     from the file name extension.  It can be changed with `cvs admin
-     -c'.  *Note admin options::.  This keyword is useful for
-     accumulating a complete change log in a source file, but for
-     several reasons it can be problematic.  *Note Log keyword::.
+     new line is prefixed with the same string which precedes the
+     `$Log' keyword.  For example, if the file contains
+
+            /* Here is what people have been up to:
+             *
+             * $Log: cvs.info-4,v $
+             * Revision 1.1.1.11  1998/02/22 08:30:52  tholo
+             * Latest version from Cyclic; files missed in first run
+             *
+             * Revision 1.1  1997/01/03 14:23:51  joe
+             * Add the superfrobnicate option
+             *
+             */
+
+     then additional lines which are added when expanding the `$Log'
+     keyword will be preceded by `   * '.  Unlike previous versions of
+     CVS and RCS, the "comment leader" from the RCS file is not used.
+     The `$Log' keyword is useful for accumulating a complete change
+     log in a source file, but for several reasons it can be
+     problematic.  *Note Log keyword::.
 
 `$RCSfile: cvs.info-4,v $'
      The name of the RCS file without a path.
 
-`$Revision: 1.1.1.10 $'
+`$Revision: 1.1.1.11 $'
      The revision number assigned to the revision.
 
 `$Source: /home/cvs/src/gnu/usr.bin/cvs/doc/cvs.info-4,v $'
@@ -283,7 +525,7 @@ RCS Keywords
 
 `$State: Exp $'
      The state assigned to the revision.  States can be assigned with
-     `cvs admin -s'--*Note admin options::.
+     `cvs admin -s'--see *Note admin options::.
 
 
 File: cvs.info,  Node: Using keywords,  Next: Avoiding substitution,  Prev: Keyword list,  Up: Keyword substitution
@@ -292,14 +534,14 @@ Using keywords
 ==============
 
    To include a keyword string you simply include the relevant text
-string, such as `$Id: cvs.info-4,v 1.1.1.10 1997/06/28 03:35:16 tholo Exp $', inside the file, and commit the file.  CVS will
+string, such as `$Id: cvs.info-4,v 1.1.1.11 1998/02/22 08:30:52 tholo Exp $', inside the file, and commit the file.  CVS will
 automatically expand the string as part of the commit operation.
 
-   It is common to embed `$Id: cvs.info-4,v 1.1.1.10 1997/06/28 03:35:16 tholo Exp $' string in the C source code.  This
+   It is common to embed `$Id: cvs.info-4,v 1.1.1.11 1998/02/22 08:30:52 tholo Exp $' string in the C source code.  This
 example shows the first few lines of a typical file, after keyword
 substitution has been performed:
 
-     static char *rcsid="$Id: cvs.info-4,v 1.1.1.10 1997/06/28 03:35:16 tholo Exp $";
+     static char *rcsid="$Id: cvs.info-4,v 1.1.1.11 1998/02/22 08:30:52 tholo Exp $";
      /* The following lines will prevent `gcc' version 2.X
         from issuing an "unused variable" warning. */
      #if __GNUC__ == 2
@@ -319,11 +561,11 @@ binary files.
 
      $ ident samp.c
      samp.c:
-          $Id: cvs.info-4,v 1.1.1.10 1997/06/28 03:35:16 tholo Exp $
+          $Id: cvs.info-4,v 1.1.1.11 1998/02/22 08:30:52 tholo Exp $
      $ gcc samp.c
      $ ident a.out
      a.out:
-          $Id: cvs.info-4,v 1.1.1.10 1997/06/28 03:35:16 tholo Exp $
+          $Id: cvs.info-4,v 1.1.1.11 1998/02/22 08:30:52 tholo Exp $
 
    SCCS is another popular revision control system.  It has a command,
 `what', which is very similar to `ident' and used for the same purpose.
@@ -332,7 +574,7 @@ character sequence `@(#)' it is easy to include keywords that are
 detected by either command.  Simply prefix the RCS keyword with the
 magic SCCS phrase, like this:
 
-     static char *id="@(#) $Id: cvs.info-4,v 1.1.1.10 1997/06/28 03:35:16 tholo Exp $";
+     static char *id="@(#) $Id: cvs.info-4,v 1.1.1.11 1998/02/22 08:30:52 tholo Exp $";
 
 
 File: cvs.info,  Node: Avoiding substitution,  Next: Substitution modes,  Prev: Using keywords,  Up: Keyword substitution
@@ -342,7 +584,7 @@ Avoiding substitution
 
    Keyword substitution has its disadvantages.  Sometimes you might
 want the literal text string `$Author: tholo $' to appear inside a file without
-RCS interpreting it as a keyword and expanding it into something like
+CVS interpreting it as a keyword and expanding it into something like
 `$Author: tholo $'.
 
    There is unfortunately no way to selectively turn off keyword
@@ -364,8 +606,9 @@ Substitution modes
    Each file has a stored default substitution mode, and each working
 directory copy of a file also has a substitution mode.  The former is
 set by the `-k' option to `cvs add' and `cvs admin'; the latter is set
-by the -k or -A options to `cvs checkout' or `cvs update'.  `cvs diff'
-also has a `-k' option.  For some examples, *Note Binary files::.
+by the `-k' or `-A' options to `cvs checkout' or `cvs update'.  `cvs
+diff' also has a `-k' option.  For some examples, see *Note Binary
+files::.
 
    The modes available are:
 
@@ -381,15 +624,15 @@ also has a `-k' option.  For some examples, *Note Binary files::.
 `-kk'
      Generate only keyword names in keyword strings; omit their values.
      For example, for the `Revision' keyword, generate the string
-     `$Revision: 1.1.1.10 $' instead of `$Revision: 1.1.1.10 $'.  This option is useful
+     `$Revision: 1.1.1.11 $' instead of `$Revision: 1.1.1.11 $'.  This option is useful
      to ignore differences due to keyword substitution when comparing
      different revisions of a file.
 
 `-ko'
      Generate the old keyword string, present in the working file just
      before it was checked in.  For example, for the `Revision'
-     keyword, generate the string `$Revision: 1.1.1.10 $' instead of
-     `$Revision: 1.1.1.10 $' if that is how the string appeared when the
+     keyword, generate the string `$Revision: 1.1.1.11 $' instead of
+     `$Revision: 1.1.1.11 $' if that is how the string appeared when the
      file was checked in.
 
 `-kb'
@@ -403,9 +646,9 @@ also has a `-k' option.  For some examples, *Note Binary files::.
 `-kv'
      Generate only keyword values for keyword strings.  For example,
      for the `Revision' keyword, generate the string `5.7' instead of
-     `$Revision: 1.1.1.10 $'.  This can help generate files in programming
+     `$Revision: 1.1.1.11 $'.  This can help generate files in programming
      languages where it is hard to strip keyword delimiters like
-     `$Revision: 1.1.1.10 $' from a string.  However, further keyword
+     `$Revision: 1.1.1.11 $' from a string.  However, further keyword
      substitution cannot be performed once the keyword names are
      removed, so this option should be used with care.
 
@@ -417,25 +660,25 @@ also has a `-k' option.  For some examples, *Note Binary files::.
 File: cvs.info,  Node: Log keyword,  Prev: Substitution modes,  Up: Keyword substitution
 
 Problems with the $Log: cvs.info-4,v $
-Problems with the Revision 1.1.1.10  1997/06/28 03:35:16  tholo
-Problems with the Missing files from initial import
+Problems with the Revision 1.1.1.11  1998/02/22 08:30:52  tholo
+Problems with the Latest version from Cyclic; files missed in first run
 Problems with the keyword.
 ================================
 
    The `$Log: cvs.info-4,v $
-   The `Revision 1.1.1.10  1997/06/28 03:35:16  tholo
-   The `Missing files from initial import
+   The `Revision 1.1.1.11  1998/02/22 08:30:52  tholo
+   The `Latest version from Cyclic; files missed in first run
    The `' keyword is somewhat controversial.  As long as you are
 working on your development system the information is easily accessible
 even if you do not use the `$Log: cvs.info-4,v $
-even if you do not use the `Revision 1.1.1.10  1997/06/28 03:35:16  tholo
-even if you do not use the `Missing files from initial import
+even if you do not use the `Revision 1.1.1.11  1998/02/22 08:30:52  tholo
+even if you do not use the `Latest version from Cyclic; files missed in first run
 even if you do not use the `' keyword--just do a `cvs log'.  Once
 you export the file the history information might be useless anyhow.
 
    A more serious concern is that CVS is not good at handling `$Log: cvs.info-4,v $
-   A more serious concern is that CVS is not good at handling `Revision 1.1.1.10  1997/06/28 03:35:16  tholo
-   A more serious concern is that CVS is not good at handling `Missing files from initial import
+   A more serious concern is that CVS is not good at handling `Revision 1.1.1.11  1998/02/22 08:30:52  tholo
+   A more serious concern is that CVS is not good at handling `Latest version from Cyclic; files missed in first run
    A more serious concern is that CVS is not good at handling `'
 entries when a branch is merged onto the main trunk.  Conflicts often
 result from the merging operation.
@@ -446,82 +689,202 @@ information from `cvs log' will not be consistent with the information
 inside the file.  This may or may not be a problem in real life.
 
    It has been suggested that the `$Log: cvs.info-4,v $
-   It has been suggested that the `Revision 1.1.1.10  1997/06/28 03:35:16  tholo
-   It has been suggested that the `Missing files from initial import
+   It has been suggested that the `Revision 1.1.1.11  1998/02/22 08:30:52  tholo
+   It has been suggested that the `Latest version from Cyclic; files missed in first run
    It has been suggested that the `' keyword should be inserted
 *last* in the file, and not in the files header, if it is to be used at
 all.  That way the long list of change messages will not interfere with
 everyday source file browsing.
 
 
-File: cvs.info,  Node: Binary files,  Next: Builds,  Prev: Keyword substitution,  Up: Top
+File: cvs.info,  Node: Tracking sources,  Next: Builds,  Prev: Keyword substitution,  Up: Top
 
-Handling binary files
-*********************
+Tracking third-party sources
+****************************
 
-   There are two issues with using CVS to store binary files.  The
-first is that CVS by default convert line endings between the canonical
-form in which they are stored in the repository (linefeed only), and
-the form appropriate to the operating system in use on the client (for
-example, carriage return followed by line feed for Windows NT).
+   If you modify a program to better fit your site, you probably want
+to include your modifications when the next release of the program
+arrives.  CVS can help you with this task.
 
-   The second is that a binary file might happen to contain data which
-looks like a keyword (*note Keyword substitution::.), so keyword
-expansion must be turned off.
+   In the terminology used in CVS, the supplier of the program is
+called a "vendor".  The unmodified distribution from the vendor is
+checked in on its own branch, the "vendor branch".  CVS reserves branch
+1.1.1 for this use.
 
-   The `-kb' option available with some CVS commands insures that
-neither line ending conversion nor keyword expansion will be done.  If
-you are using an old version of RCS without this option, and you are
-using an operating system, such as unix, which terminates lines with
-linefeeds only, you can use `-ko' instead; if you are on another
-operating system, upgrade to a version of RCS, such as 5.7 or later,
-which supports `-kb'.
+   When you modify the source and commit it, your revision will end up
+on the main trunk.  When a new release is made by the vendor, you
+commit it on the vendor branch and copy the modifications onto the main
+trunk.
 
-   Here is an example of how you can create a new file using the `-kb'
-flag:
+   Use the `import' command to create and update the vendor branch.
+After a successful `import' the vendor branch is made the `head'
+revision, so anyone that checks out a copy of the file gets that
+revision.  When a local modification is committed it is placed on the
+main trunk, and made the `head' revision.
 
-     $ echo '$Id: cvs.info-4,v 1.1.1.10 1997/06/28 03:35:16 tholo Exp $' > kotest
-     $ cvs add -kb -m"A test file" kotest
-     $ cvs ci -m"First checkin; contains a keyword" kotest
+* Menu:
 
-   If a file accidentally gets added without `-kb', one can use the
-`cvs admin' command to recover.  For example:
-
-     $ echo '$Id: cvs.info-4,v 1.1.1.10 1997/06/28 03:35:16 tholo Exp $' > kotest
-     $ cvs add -m"A test file" kotest
-     $ cvs ci -m"First checkin; contains a keyword" kotest
-     $ cvs admin -kb kotest
-     $ cvs update -A kotest
-     $ cvs commit -m "make it binary" kotest  # For non-unix systems
-
-   When you check in the file `kotest' the keywords are expanded.  (Try
-the above example, and do a `cat kotest' after every command).  The `cvs
-admin -kb' command sets the default keyword substitution method for
-this file, but it does not alter the working copy of the file that you
-have.  The easiest way to get the unexpanded version of `kotest' is
-`cvs update -A'.  If you need to cope with line endings (that is, you
-are using a CVS client on a non-unix system), then you need to check in
-a new copy of the file, as shown by the `cvs commit' command above.
-
-   However, in using `cvs admin -k' to change the keyword expansion, be
-aware that the keyword expansion mode is not version controlled.  This
-means that, for example, that if you have a text file in old releases,
-and a binary file with the same name in new releases, CVS provides no
-way to check out the file in text or binary mode depending on what
-version you are checking out.  There is no good workaround for this
-problem.
-
-   You can also set a default for whether `cvs add' and `cvs import'
-treat a file as binary based on its name; for example you could say
-that files who names end in `.exe' are binary.  *Note Wrappers::.
-There is currently no way to have CVS detect whether a file is binary
-based on its contents.  The main difficulty with designing such a
-feature is that it is not clear how to distinguish between binary and
-non-binary files, and the rules to apply would vary considerably with
-the operating system.
+* First import::                Importing a module for the first time
+* Update imports::              Updating a module with the import command
+* Reverting local changes::     Reverting a module to the latest vendor release
+* Binary files in imports::     Binary files require special handling
+* Keywords in imports::         Keyword substitution might be undesirable
+* Multiple vendor branches::    What if you get sources from several places?
 
 
-File: cvs.info,  Node: Builds,  Next: Compatibility,  Prev: Binary files,  Up: Top
+File: cvs.info,  Node: First import,  Next: Update imports,  Up: Tracking sources
+
+Importing a module for the first time
+=====================================
+
+   Use the `import' command to check in the sources for the first time.
+When you use the `import' command to track third-party sources, the
+"vendor tag" and "release tags" are useful.  The "vendor tag" is a
+symbolic name for the branch (which is always 1.1.1, unless you use the
+`-b BRANCH' flag--*Note Multiple vendor branches::.).  The "release
+tags" are symbolic names for a particular release, such as `FSF_0_04'.
+
+   Note that `import' does *not* change the directory in which you
+invoke it.  In particular, it does not set up that directory as a CVS
+working directory; if you want to work with the sources import them
+first and then check them out into a different directory (*note Getting
+the source::.).
+
+   Suppose you have the sources to a program called `wdiff' in a
+directory `wdiff-0.04', and are going to make private modifications
+that you want to be able to use even when new releases are made in the
+future.  You start by importing the source to your repository:
+
+     $ cd wdiff-0.04
+     $ cvs import -m "Import of FSF v. 0.04" fsf/wdiff FSF_DIST WDIFF_0_04
+
+   The vendor tag is named `FSF_DIST' in the above example, and the
+only release tag assigned is `WDIFF_0_04'.
+
+
+File: cvs.info,  Node: Update imports,  Next: Reverting local changes,  Prev: First import,  Up: Tracking sources
+
+Updating a module with the import command
+=========================================
+
+   When a new release of the source arrives, you import it into the
+repository with the same `import' command that you used to set up the
+repository in the first place.  The only difference is that you specify
+a different release tag this time.
+
+     $ tar xfz wdiff-0.05.tar.gz
+     $ cd wdiff-0.05
+     $ cvs import -m "Import of FSF v. 0.05" fsf/wdiff FSF_DIST WDIFF_0_05
+
+   For files that have not been modified locally, the newly created
+revision becomes the head revision.  If you have made local changes,
+`import' will warn you that you must merge the changes into the main
+trunk, and tell you to use `checkout -j' to do so.
+
+     $ cvs checkout -jFSF_DIST:yesterday -jFSF_DIST wdiff
+
+The above command will check out the latest revision of `wdiff',
+merging the changes made on the vendor branch `FSF_DIST' since
+yesterday into the working copy.  If any conflicts arise during the
+merge they should be resolved in the normal way (*note Conflicts
+example::.).  Then, the modified files may be committed.
+
+   Using a date, as suggested above, assumes that you do not import
+more than one release of a product per day. If you do, you can always
+use something like this instead:
+
+     $ cvs checkout -jWDIFF_0_04 -jWDIFF_0_05 wdiff
+
+In this case, the two above commands are equivalent.
+
+
+File: cvs.info,  Node: Reverting local changes,  Next: Binary files in imports,  Prev: Update imports,  Up: Tracking sources
+
+Reverting to the latest vendor release
+======================================
+
+   You can also revert local changes completely and return to the
+latest vendor release by changing the `head' revision back to the
+vendor branch on all files.  For example, if you have a checked-out
+copy of the sources in `~/work.d/wdiff', and you want to revert to the
+vendor's version for all the files in that directory, you would type:
+
+     $ cd ~/work.d/wdiff
+     $ cvs admin -bWDIFF .
+
+You must specify the `-bWDIFF' without any space after the `-b'.  *Note
+admin options::.
+
+
+File: cvs.info,  Node: Binary files in imports,  Next: Keywords in imports,  Prev: Reverting local changes,  Up: Tracking sources
+
+How to handle binary files with cvs import
+==========================================
+
+   Use the `-k' wrapper option to tell import which files are binary.
+*Note Wrappers::.
+
+
+File: cvs.info,  Node: Keywords in imports,  Next: Multiple vendor branches,  Prev: Binary files in imports,  Up: Tracking sources
+
+How to handle keyword substitution with cvs import
+==================================================
+
+   The sources which you are importing may contain keywords (*note
+Keyword substitution::.).  For example, the vendor may use CVS or some
+other system which uses similar keyword expansion syntax.  If you just
+import the files in the default fashion, then the keyword expansions
+supplied by the vendor will be replaced by keyword expansions supplied
+by your own copy of CVS.  It may be more convenient to maintain the
+expansions supplied by the vendor, so that this information can supply
+information about the sources that you imported from the vendor.
+
+   To maintain the keyword expansions supplied by the vendor, supply
+the `-ko' option to `cvs import' the first time you import the file.
+This will turn off keyword expansion for that file entirely, so if you
+want to be more selective you'll have to think about what you want and
+use the `-k' option to `cvs update' or `cvs admin' as appropriate.
+
+
+File: cvs.info,  Node: Multiple vendor branches,  Prev: Keywords in imports,  Up: Tracking sources
+
+Multiple vendor branches
+========================
+
+   All the examples so far assume that there is only one vendor from
+which you are getting sources.  In some situations you might get
+sources from a variety of places.  For example, suppose that you are
+dealing with a project where many different people and teams are
+modifying the software.  There are a variety of ways to handle this,
+but in some cases you have a bunch of source trees lying around and
+what you want to do more than anything else is just to all put them in
+CVS so that you at least have them in one place.
+
+   For handling situations in which there may be more than one vendor,
+you may specify the `-b' option to `cvs import'.  It takes as an
+argument the vendor branch to import to.  The default is `-b 1.1.1'.
+
+   For example, suppose that there are two teams, the red team and the
+blue team, that are sending you sources.  You want to import the red
+team's efforts to branch 1.1.1 and use the vendor tag RED.  You want to
+import the blue team's efforts to branch 1.1.3 and use the vendor tag
+BLUE.  So the commands you might use are:
+
+     $ cvs import dir RED RED_1-0
+     $ cvs import -b 1.1.3 dir BLUE BLUE_1-5
+
+   Note that if your vendor tag does not match your `-b' option, CVS
+will not detect this case!  For example,
+
+     $ cvs import -b 1.1.3 dir RED RED_1-0
+
+Be careful; this kind of mismatch is sure to sow confusion or worse.  I
+can't think of a useful purpose for the ability to specify a mismatch
+here, but if you discover such a use, don't.  CVS is likely to make this
+an error in some future release.
+
+
+File: cvs.info,  Node: Builds,  Next: CVS commands,  Prev: Tracking sources,  Up: Top
 
 How your build system interacts with CVS
 ****************************************
@@ -570,72 +933,7 @@ kind of thing is Odin (see
 `ftp://ftp.cs.colorado.edu/pub/distribs/odin').
 
 
-File: cvs.info,  Node: Compatibility,  Next: Revision management,  Prev: Builds,  Up: Top
-
-Compatibility between CVS Versions
-**********************************
-
-   The repository format is compatible going back to CVS 1.3.  But see
-*Note Watches Compatibility::, if you have copies of CVS 1.6 or older
-and you want to use the optional developer communication features.
-
-   The working directory format is compatible going back to CVS 1.5.
-It did change between CVS 1.3 and CVS 1.5.  If you run CVS 1.5 or newer
-on a working directory checked out with CVS 1.3, CVS will convert it,
-but to go back to CVS 1.3 you need to check out a new working directory
-with CVS 1.3.
-
-   The remote protocol is interoperable going back to CVS 1.5, but no
-further (1.5 was the first official release with the remote protocol,
-but some older versions might still be floating around).  In many cases
-you need to upgrade both the client and the server to take advantage of
-new features and bugfixes, however.
-
-
-File: cvs.info,  Node: Revision management,  Next: CVS commands,  Prev: Compatibility,  Up: Top
-
-Revision management
-*******************
-
-   If you have read this far, you probably have a pretty good grasp on
-what CVS can do for you.  This chapter talks a little about things that
-you still have to decide.
-
-   If you are doing development on your own using CVS you could
-probably skip this chapter.  The questions this chapter takes up become
-more important when more than one person is working in a repository.
-
-* Menu:
-
-* When to commit::              Some discussion on the subject
-
-
-File: cvs.info,  Node: When to commit,  Up: Revision management
-
-When to commit?
-===============
-
-   Your group should decide which policy to use regarding commits.
-Several policies are possible, and as your experience with CVS grows
-you will probably find out what works for you.
-
-   If you commit files too quickly you might commit files that do not
-even compile.  If your partner updates his working sources to include
-your buggy file, he will be unable to compile the code.  On the other
-hand, other persons will not be able to benefit from the improvements
-you make to the code if you commit very seldom, and conflicts will
-probably be more common.
-
-   It is common to only commit files after making sure that they can be
-compiled.  Some sites require that the files pass a test suite.
-Policies like this can be enforced using the commitinfo file (*note
-commitinfo::.), but you should think twice before you enforce such a
-convention.  By making the development environment too controlled it
-might become too regimented and thus counter-productive to the real
-goal, which is to get software written.
-
-
-File: cvs.info,  Node: CVS commands,  Next: Invoking CVS,  Prev: Revision management,  Up: Top
+File: cvs.info,  Node: CVS commands,  Next: Invoking CVS,  Prev: Builds,  Up: Top
 
 Guide to CVS commands
 *********************
@@ -651,7 +949,7 @@ a quick reference to CVS commands, *note Invoking CVS::.).
 * ~/.cvsrc::                    Default options with the ~/.csvrc file
 * Global options::              Options you give to the left of cvs_command
 * Common options::              Options you give to the right of cvs_command
-* admin::                       Administration front end for rcs
+* admin::                       Administration
 * checkout::                    Checkout sources for editing
 * commit::                      Check files into the repository
 * diff::                        Show differences between revisions
@@ -733,7 +1031,7 @@ Default options and the ~/.cvsrc file
    There are some `command_options' that are used so often that you
 might have set up an alias or some other means to make sure you always
 specify that option.  One example (the one that drove the
-implementation of the .cvsrc support, actually) is that many people
+implementation of the `.cvsrc' support, actually) is that many people
 find the default output of the `diff' command to be very hard to read,
 and that either context diffs or unidiffs are much easier to understand.
 
@@ -772,7 +1070,7 @@ options (*note Global options::.).  For example the following line in
 
      cvs -z6
 
-   causes CVS to use compression level 6
+   causes CVS to use compression level 6.
 
 
 File: cvs.info,  Node: Global options,  Next: Common options,  Prev: ~/.cvsrc,  Up: CVS commands
@@ -787,11 +1085,19 @@ Global options
      Specify legal CVSROOT directory.  See *Note Password
      authentication server::.
 
+`-a'
+     Authenticate all communication between the client and the server.
+     Only has an effect on the CVS client.  As of this writing, this is
+     only implemented when using a GSSAPI connection (*note GSSAPI
+     authenticated::.).  Authentication prevents certain sorts of
+     attacks involving hijacking the active TCP connection.  Enabling
+     authentication does not enable encryption.
+
 `-b BINDIR'
-     Use BINDIR as the directory where RCS programs are located.
-     Overrides the setting of the `$RCSBIN' environment variable and
-     any precompiled directory.  This parameter should be specified as
-     an absolute pathname.
+     In CVS 1.9.18 and older, this specified that RCS programs are in
+     the BINDIR directory.  Current versions of CVS do not run RCS
+     programs; for compatibility this option is accepted, but it does
+     nothing.
 
 `-T TEMPDIR'
      Use TEMPDIR as the directory where temporary files are located.
@@ -825,7 +1131,7 @@ Global options
      list of other help options.
 
 `-l'
-     Do not log the cvs_command in the command history (but execute it
+     Do not log the `cvs_command' in the command history (but execute it
      anyway).  *Note history::, for information on command history.
 
 `-n'
@@ -873,389 +1179,13 @@ Global options
 `-x'
      Encrypt all communication between the client and the server.  Only
      has an effect on the CVS client.  As of this writing, this is only
-     implemented when using a Kerberos connection (*note Kerberos
-     authenticated::.).  Encryption support is not available by
-     default; it must be enabled using a special configure option,
-     `--enable-encryption', when you build CVS.
+     implemented when using a GSSAPI connection (*note GSSAPI
+     authenticated::.) or a Kerberos connection (*note Kerberos
+     authenticated::.).  Enabling encryption implies that message
+     traffic is also authenticated.  Encryption support is not
+     available by default; it must be enabled using a special configure
+     option, `--enable-encryption', when you build CVS.
 
 `-z GZIP-LEVEL'
      Set the compression level.  Only has an effect on the CVS client.
-
-
-File: cvs.info,  Node: Common options,  Next: admin,  Prev: Global options,  Up: CVS commands
-
-Common command options
-======================
-
-   This section describes the `command_options' that are available
-across several CVS commands.  These options are always given to the
-right of `cvs_command'. Not all commands support all of these options;
-each option is only supported for commands where it makes sense.
-However, when a command has one of these options you can almost always
-count on the same behavior of the option as in other commands.  (Other
-command options, which are listed with the individual commands, may have
-different behavior from one CVS command to the other).
-
-   *Warning:* the `history' command is an exception; it supports many
-options that conflict even with these standard options.
-
-`-D DATE_SPEC'
-     Use the most recent revision no later than DATE_SPEC.  DATE_SPEC
-     is a single argument, a date description specifying a date in the
-     past.
-
-     The specification is "sticky" when you use it to make a private
-     copy of a source file; that is, when you get a working file using
-     `-D', CVS records the date you specified, so that further updates
-     in the same directory will use the same date (for more information
-     on sticky tags/dates, *note Sticky tags::.).
-
-     `-D' is available with the `checkout', `diff', `export', `history',
-     `rdiff', `rtag', and `update' commands.  (The `history' command
-     uses this option in a slightly different way; *note history
-     options::.).
-
-     A wide variety of date formats are supported by CVS.  The most
-     standard ones are ISO8601 (from the International Standards
-     Organization) and the Internet e-mail standard (specified in
-     RFC822 as amended by RFC1123).
-
-     ISO8601 dates have many variants but a few examples are:
-
-          1972-09-24
-          1972-09-24 20:05
-
-     For more details about ISO8601 dates, see:
-
-          http://www.ft.uni-erlangen.de/~mskuhn/iso-time.html
-
-     In addition to the dates allowed in Internet e-mail itself, CVS
-     also allows some of the fields to be omitted.  For example:
-
-          24 Sep 1972 20:05
-          24 Sep
-
-     The date is interpreted as being in the local timezone, unless a
-     specific timezone is specified.
-
-     These two date formats are preferred.  However, CVS currently
-     accepts a wide variety of other date formats.  They are
-     intentionally not documented here in any detail, and future
-     versions of CVS might not accept all of them.
-
-     One such format is `MONTH/DAY/YEAR'.  This may confuse people who
-     are accustomed to having the month and day in the other order;
-     `1/4/96' is January 4, not April 1.
-
-     Remember to quote the argument to the `-D' flag so that your shell
-     doesn't interpret spaces as argument separators.  A command using
-     the `-D' flag can look like this:
-
-          $ cvs diff -D "1 hour ago" cvs.texinfo
-
-`-f'
-     When you specify a particular date or tag to CVS commands, they
-     normally ignore files that do not contain the tag (or did not
-     exist prior to the date) that you specified.  Use the `-f' option
-     if you want files retrieved even when there is no match for the
-     tag or date.  (The most recent revision of the file will be used).
-
-     `-f' is available with these commands: `annotate', `checkout',
-     `export', `rdiff', `rtag', and `update'.
-
-     *Warning:*  The `commit' command also has a `-f' option, but it
-     has a different behavior for that command.  *Note commit options::.
-
-`-k KFLAG'
-     Alter the default RCS processing of keywords.  *Note Keyword
-     substitution::, for the meaning of KFLAG.  Your KFLAG
-     specification is "sticky" when you use it to create a private copy
-     of a source file; that is, when you use this option with the
-     `checkout' or `update' commands, CVS associates your selected
-     KFLAG with the file, and continues to use it with future update
-     commands on the same file until you specify otherwise.
-
-     The `-k' option is available with the `add', `checkout', `diff',
-     `import' and `update' commands.
-
-`-l'
-     Local; run only in current working directory, rather than
-     recursing through subdirectories.
-
-     *Warning:* this is not the same as the overall `cvs -l' option,
-     which you can specify to the left of a cvs command!
-
-     Available with the following commands: `annotate', `checkout',
-     `commit', `diff', `edit', `editors', `export', `log', `rdiff',
-     `remove', `rtag', `status', `tag', `unedit', `update', `watch',
-     and `watchers'.
-
-`-m MESSAGE'
-     Use MESSAGE as log information, instead of invoking an editor.
-
-     Available with the following commands: `add', `commit' and
-     `import'.
-
-`-n'
-     Do not run any checkout/commit/tag program.  (A program can be
-     specified to run on each of these activities, in the modules
-     database (*note modules::.); this option bypasses it).
-
-     *Warning:* this is not the same as the overall `cvs -n' option,
-     which you can specify to the left of a cvs command!
-
-     Available with the `checkout', `commit', `export', and `rtag'
-     commands.
-
-`-P'
-     Prune empty directories.  See *Note Removing directories::.
-
-`-p'
-     Pipe the files retrieved from the repository to standard output,
-     rather than writing them in the current directory.  Available with
-     the `checkout' and `update' commands.
-
-`-R'
-     Process directories recursively.  This is on by default.
-
-     Available with the following commands: `annotate', `checkout',
-     `commit', `diff', `edit', `editors', `export', `rdiff', `remove',
-     `rtag', `status', `tag', `unedit', `update', `watch', and
-     `watchers'.
-
-`-r TAG'
-     Use the revision specified by the TAG argument instead of the
-     default "head" revision.  As well as arbitrary tags defined with
-     the `tag' or `rtag' command, two special tags are always
-     available: `HEAD' refers to the most recent version available in
-     the repository, and `BASE' refers to the revision you last checked
-     out into the current working directory.
-
-     The tag specification is sticky when you use this with `checkout'
-     or `update' to make your own copy of a file: CVS remembers the tag
-     and continues to use it on future update commands, until you
-     specify otherwise (for more information on sticky tags/dates,
-     *note Sticky tags::.).  The tag can be either a symbolic or
-     numeric tag.  *Note Tags::.
-
-     Specifying the `-q' global option along with the `-r' command
-     option is often useful, to suppress the warning messages when the
-     RCS history file does not contain the specified tag.
-
-     *Warning:* this is not the same as the overall `cvs -r' option,
-     which you can specify to the left of a cvs command!
-
-     `-r' is available with the `checkout', `commit', `diff',
-     `history', `export', `rdiff', `rtag', and `update' commands.
-
-`-W'
-     Specify file names that should be filtered.  You can use this
-     option repeatedly.  The spec can be a file name pattern of the
-     same type that you can specify in the `.cvswrappers' file.
-     Avaliable with the following commands: `import', and `update'.
-
-
-File: cvs.info,  Node: admin,  Next: checkout,  Prev: Common options,  Up: CVS commands
-
-admin--Administration front end for rcs
-=======================================
-
-   * Requires: repository, working directory.
-
-   * Changes: repository.
-
-   * Synonym: rcs
-
-   This is the CVS interface to assorted administrative RCS facilities,
-documented in rcs(1).  `admin' simply passes all its options and
-arguments to the `rcs' command; it does no filtering or other
-processing.  This command *does* work recursively, however, so extreme
-care should be used.
-
-   If there is a group whose name matches a compiled in value which
-defaults to `cvsadmin', only members of that group can use `cvs admin'.
-To disallow `cvs admin' for all users, create a group with no users in
-it.
-
-* Menu:
-
-* admin options::               admin options
-* admin examples::              admin examples
-
-
-File: cvs.info,  Node: admin options,  Next: admin examples,  Up: admin
-
-admin options
--------------
-
-   Not all valid `rcs' options are useful together with CVS.  Some even
-makes it impossible to use CVS until you undo the effect!
-
-   This description of the available options is based on the `rcs(1)'
-man page, but modified to suit readers that are more interested in CVS
-than RCS.
-
-`-AOLDFILE'
-     Might not work together with CVS.  Append the access list of
-     OLDFILE to the access list of the RCS file.
-
-`-aLOGINS'
-     Might not work together with CVS.  Append the login names
-     appearing in the comma-separated list LOGINS to the access list of
-     the RCS file.
-
-`-b[REV]'
-     When used with bare RCS, this option sets the default branch to
-     REV; in CVS sticky tags (*note Sticky tags::.) are a better way to
-     decide which branch you want to work on.  There is one use with
-     CVS: to revert to the vendor's version when using vendor branches
-     (*note Reverting local changes::.).
-
-`-cSTRING'
-     Useful with CVS.  Sets the comment leader to STRING.  The comment
-     leader is printed before every log message line generated by the
-     keyword `$Log: cvs.info-4,v $
-     keyword `Revision 1.1.1.10  1997/06/28 03:35:16  tholo
-     keyword `Missing files from initial import
-     keyword `' (*note Keyword substitution::.).  This is useful
-     for programming languages without multi-line comments.  RCS
-     initially guesses the value of the comment leader from the file
-     name extension when the file is first committed.
-
-`-e[LOGINS]'
-     Might not work together with CVS.  Erase the login names appearing
-     in the comma-separated list LOGINS from the access list of the RCS
-     file.  If LOGINS is omitted, erase the entire access list.
-
-`-I'
-     Run interactively, even if the standard input is not a terminal.
-
-`-i'
-     Useless with CVS.  When using bare RCS, this is used to create and
-     initialize a new RCS file, without depositing a revision.
-
-`-kSUBST'
-     Useful with CVS.  Set the default keyword substitution to SUBST.
-     *Note Keyword substitution::.  Giving an explicit `-k' option to
-     `cvs update', `cvs export', or `cvs checkout' overrides this
-     default.
-
-`-l[REV]'
-     Lock the revision with number REV.  If a branch is given, lock the
-     latest revision on that branch.  If REV is omitted, lock the
-     latest revision on the default branch.
-
-     This can be used in conjunction with the `rcslock.pl' script in
-     the `contrib' directory of the CVS source distribution to provide
-     reserved checkouts (where only one user can be editing a given
-     file at a time).  See the comments in that file for details (and
-     see the `README' file in that directory for disclaimers about the
-     unsupported nature of contrib).  According to comments in that
-     file, locking must set to strict (which is the default).
-
-`-L'
-     Set locking to strict.  Strict locking means that the owner of an
-     RCS file is not exempt from locking for checkin.  For use with
-     CVS, strict locking must be set; see the discussion under the `-l'
-     option above.
-
-`-mREV:MSG'
-     Replace the log message of revision REV with MSG.
-
-`-NNAME[:[REV]]'
-     Act like `-n', except override any previous assignment of NAME.
-
-`-nNAME[:[REV]]'
-     Associate the symbolic name NAME with the branch or revision REV.
-     It is normally better to use `cvs tag' or `cvs rtag' instead.
-     Delete the symbolic name if both `:' and REV are omitted;
-     otherwise, print an error message if NAME is already associated
-     with another number.  If REV is symbolic, it is expanded before
-     association.  A REV consisting of a branch number followed by a
-     `.' stands for the current latest revision in the branch.  A `:'
-     with an empty REV stands for the current latest revision on the
-     default branch, normally the trunk.  For example, `rcs -nNAME:
-     RCS/*' associates NAME with the current latest revision of all the
-     named RCS files; this contrasts with `rcs -nNAME:$ RCS/*' which
-     associates NAME with the revision numbers extracted from keyword
-     strings in the corresponding working files.
-
-`-oRANGE'
-     Potentially useful, but dangerous, with CVS (see below).  Deletes
-     ("outdates") the revisions given by RANGE.  A range consisting of
-     a single revision number means that revision.  A range consisting
-     of a branch number means the latest revision on that branch.  A
-     range of the form `REV1:REV2' means revisions REV1 to REV2 on the
-     same branch, `:REV' means from the beginning of the branch
-     containing REV up to and including REV, and `REV:' means from
-     revision REV to the end of the branch containing REV.  None of the
-     outdated revisions may have branches or locks.
-
-     Due to the way CVS handles branches REV cannot be specified
-     symbolically if it is a branch.  *Note Magic branch numbers::, for
-     an explanation.
-
-     Make sure that no-one has checked out a copy of the revision you
-     outdate.  Strange things will happen if he starts to edit it and
-     tries to check it back in.  For this reason, this option is not a
-     good way to take back a bogus commit; commit a new revision
-     undoing the bogus change instead (*note Merging two revisions::.).
-
-`-q'
-     Run quietly; do not print diagnostics.
-
-`-sSTATE[:REV]'
-     Useful with CVS.  Set the state attribute of the revision REV to
-     STATE.  If REV is a branch number, assume the latest revision on
-     that branch.  If REV is omitted, assume the latest revision on the
-     default branch.  Any identifier is acceptable for STATE.  A useful
-     set of states is `Exp' (for experimental), `Stab' (for stable),
-     and `Rel' (for released).  By default, the state of a new revision
-     is set to `Exp' when it is created.  The state is visible in the
-     output from CVS LOG (*note log::.), and in the `$Log: cvs.info-4,v $
-     output from CVS LOG (*note log::.), and in the `Revision 1.1.1.10  1997/06/28 03:35:16  tholo
-     output from CVS LOG (*note log::.), and in the `Missing files from initial import
-     output from CVS LOG (*note log::.), and in the `' and
-     `$State: Exp $' keywords (*note Keyword substitution::.).  Note that CVS
-     uses the `dead' state for its own purposes; to take a file to or
-     from the `dead' state use commands like `cvs remove' and `cvs
-     add', not `cvs admin -s'.
-
-`-t[FILE]'
-     Useful with CVS.  Write descriptive text from the contents of the
-     named FILE into the RCS file, deleting the existing text.  The
-     FILE pathname may not begin with `-'.  If FILE is omitted, obtain
-     the text from standard input, terminated by end-of-file or by a
-     line containing `.' by itself.  Prompt for the text if interaction
-     is possible; see `-I'.  The descriptive text can be seen in the
-     output from `cvs log' (*note log::.).
-
-`-t-STRING'
-     Similar to `-tFILE'. Write descriptive text from the STRING into
-     the RCS file, deleting the existing text.
-
-`-U'
-     Set locking to non-strict.  Non-strict locking means that the
-     owner of a file need not lock a revision for checkin.  For use
-     with CVS, strict locking must be set; see the discussion under the
-     `-l' option above.
-
-`-u[REV]'
-     See the option `-l' above, for a discussion of using this option
-     with CVS.  Unlock the revision with number REV.  If a branch is
-     given, unlock the latest revision on that branch.  If REV is
-     omitted, remove the latest lock held by the caller.  Normally,
-     only the locker of a revision may unlock it.  Somebody else
-     unlocking a revision breaks the lock.  This causes a mail message
-     to be sent to the original locker.  The message contains a
-     commentary solicited from the breaker.  The commentary is
-     terminated by end-of-file or by a line containing `.' by itself.
-
-`-VN'
-     Emulate RCS version N. Use -VN to make an RCS file acceptable to
-     RCS version N by discarding information that would confuse version
-     N.
-
-`-xSUFFIXES'
-     Useless with CVS. Use SUFFIXES to characterize RCS files.
 

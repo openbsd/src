@@ -22,231 +22,70 @@ and this permission notice may be included in translations approved by
 the Free Software Foundation instead of in the original English.
 
 
-File: cvs.info,  Node: Top,  Next: Preface,  Up: (dir)
+File: cvs.info,  Node: Top,  Next: Overview,  Up: (dir)
 
 
 
    This info manual describes how to use and administer CVS version
-1.9.10.
+1.9.24.
 
 * Menu:
 
-* Preface::                     About this manual
-* What is CVS?::                What is CVS?
-* A sample session::            A tour of basic CVS usage
+* Overview::                    An introduction to CVS
 * Repository::                  Where all your sources are stored
 * Starting a new project::      Starting a project with CVS
-* Multiple developers::         How CVS helps a group of developers
-* Revisions and branches::      Numeric, symbolic, and branch revisions
-* Merging::                     How to move changes between branches
+* Revisions::                   Numeric and symbolic names for revisions
+* Branching and merging::       Diverging/rejoining branches of development
 * Recursive behavior::          CVS descends directories
-* Adding files::                Adding files
-* Removing files::              Removing files
-* Removing directories::        Removing directories
-* Tracking sources::            Tracking third-party sources
-* Moving files::                Moving and renaming files
-* Moving directories::          Moving and renaming directories
+* Adding and removing::         Adding/removing/renaming files/directories
 * History browsing::            Viewing the history of files in various ways
-* Keyword substitution::        CVS can include the revision inside the file
+
+CVS and the Real World.
+----------------------
 * Binary files::                CVS can handle binary files
-* Builds::                      Issues related to CVS and builds
-* Compatibility::               Upgrading CVS versions
+* Multiple developers::         How CVS helps a group of developers
 * Revision management::         Policy questions for revision management
+* Keyword substitution::        CVS can include the revision inside the file
+* Tracking sources::            Tracking third-party sources
+* Builds::                      Issues related to CVS and builds
+
+References.
+----------
 * CVS commands::                CVS commands share some things
 * Invoking CVS::                Quick reference to CVS commands
 * Administrative files::        Reference manual for the Administrative files
 * Environment variables::       All environment variables which affect CVS
+* Compatibility::               Upgrading CVS versions
 * Troubleshooting::             Some tips when nothing works
+* Credits::                     Some of the contributors to this manual
+* BUGS::                        Dealing with bugs in CVS or this manual
 * Copying::                     GNU GENERAL PUBLIC LICENSE
 * Index::                       Index
 
 
-File: cvs.info,  Node: Preface,  Next: What is CVS?,  Prev: Top,  Up: Top
+File: cvs.info,  Node: Overview,  Next: Repository,  Prev: Top,  Up: Top
 
-About this manual
-*****************
+Overview
+********
 
-   Up to this point, one of the weakest parts of CVS has been the
-documentation.  CVS is a complex program.  Previous versions of the
-manual were written in the manual page format, which is not really well
-suited for such a complex program.
+   This chapter is for people who have never used CVS, and perhaps have
+never used version control software before.
 
-   When writing this manual, I had several goals in mind:
-
-   * No knowledge of RCS should be necessary.
-
-   * No previous knowledge of revision control software should be
-     necessary.  All terms, such as "revision numbers", "revision
-     trees" and "merging" are explained as they are introduced.
-
-   * The manual should concentrate on the things CVS users want to do,
-     instead of what the CVS commands can do.  The first part of this
-     manual leads you through things you might want to do while doing
-     development, and introduces the relevant CVS commands as they are
-     needed.
-
-   * Information should be easy to find.  In the reference manual in
-     the appendices almost all information about every CVS command is
-     gathered together.  There is also an extensive index, and a lot of
-     cross references.
+   If you are already familiar with CVS and are just trying to learn a
+particular feature or remember a certain command, you can probably skip
+everything here.
 
 * Menu:
 
-* Checklist::
-* Credits::
-* BUGS::
+* What is CVS?::                What you can do with CVS
+* What is CVS not?::            Problems CVS doesn't try to solve
+* A sample session::            A tour of basic CVS usage
 
 
-File: cvs.info,  Node: Checklist,  Next: Credits,  Up: Preface
-
-Checklist for the impatient reader
-==================================
-
-   CVS is a complex system.  You will need to read the manual to be
-able to use all of its capabilities.  There are dangers that can easily
-be avoided if you know about them, and this manual tries to warn you
-about them.  This checklist is intended to help you avoid the dangers
-without reading the entire manual.  If you intend to read the entire
-manual you can skip this table.
-
-Binary files
-     CVS can handle binary files, but you must have RCS release 5.5 or
-     later and a release of GNU diff that supports the `-a' flag
-     (release 1.15 and later are OK).  You must also configure both RCS
-     and CVS to handle binary files when you install them.
-
-     Keyword substitution can be a source of trouble with binary files.
-     *Note Keyword substitution::, for solutions.
-
-The `admin' command
-     Careless use of the `admin' command can cause CVS to cease
-     working.  *Note admin::, before trying to use it.
-
-
-File: cvs.info,  Node: Credits,  Next: BUGS,  Prev: Checklist,  Up: Preface
-
-Credits
-=======
-
-   Roland Pesch, then of Cygnus Support <roland@wrs.com> wrote the
-manual pages which were distributed with CVS 1.3.  Much of their text
-was copied into this manual.  He also read an early draft of this
-manual and contributed many ideas and corrections.
-
-   The mailing-list `info-cvs' is sometimes informative. I have
-included information from postings made by the following persons: David
-G. Grubbs <dgg@think.com>.
-
-   Some text has been extracted from the man pages for RCS.
-
-   The CVS FAQ by David G. Grubbs has provided useful material.  The
-FAQ is no longer maintained, however, and this manual is about the
-closest thing there is to a successor (with respect to documenting how
-to use CVS, at least).
-
-   In addition, the following persons have helped by telling me about
-mistakes I've made:
-
-     Roxanne Brunskill <rbrunski@datap.ca>,
-     Kathy Dyer <dyer@phoenix.ocf.llnl.gov>,
-     Karl Pingle <pingle@acuson.com>,
-     Thomas A Peterson <tap@src.honeywell.com>,
-     Inge Wallin <ingwa@signum.se>,
-     Dirk Koschuetzki <koschuet@fmi.uni-passau.de>
-     and Michael Brown <brown@wi.extrel.com>.
-
-   The list of contributors here is not comprehensive; for a more
-complete list of who has contributed to this manual see the file
-`doc/ChangeLog' in the CVS source distribution.
-
-
-File: cvs.info,  Node: BUGS,  Prev: Credits,  Up: Preface
-
-BUGS
-====
-
-   Neither CVS nor this manual is perfect, and they probably never will
-be.  If you are having trouble using CVS, or think you have found a
-bug, there are a number of things you can do about it.  Note that if
-the manual is unclear, that can be considered a bug in the manual, so
-these problems are often worth doing something about as well as
-problems with CVS itself.
-
-   * If you want someone to help you and fix bugs that you report,
-     there are companies which will do that for a fee.  Two such
-     companies are:
-
-          Signum Support AB
-          Box 2044
-          S-580 02  Linkoping
-          Sweden
-          Email: info@signum.se
-          Phone: +46 (0)13 - 21 46 00
-          Fax:   +46 (0)13 - 21 47 00
-          http://www.signum.se/
-          
-          Cyclic Software
-          United States of America
-          http://www.cyclic.com/
-          info@cyclic.com
-
-   * If you got CVS through a distributor, such as an operating system
-     vendor or a vendor of freeware CD-ROMs, you may wish to see
-     whether the distributor provides support.  Often, they will provide
-     no support or minimal support, but this may vary from distributor
-     to distributor.
-
-   * If you have the skills and time to do so, you may wish to fix the
-     bug yourself.  If you wish to submit your fix for inclusion in
-     future releases of CVS, see the file HACKING in the CVS source
-     distribution.  It contains much more information on the process of
-     submitting fixes.
-
-   * There may be resources on the net which can help.  Two good places
-     to start are:
-
-          http://www.cyclic.com
-            particularly the Unsupported Resources page
-          http://www.loria.fr/~molli/cvs-index.html
-
-     If you are so inspired, increasing the information available on
-     the net is likely to be appreciated.  For example, before the
-     standard CVS distribution worked on Windows 95, there was a web
-     page with some explanation and patches for running CVS on Windows
-     95, and various people helped out by mentioning this page on
-     mailing lists or newsgroups when the subject came up.
-
-   * It is also possible to report bugs to `bug-cvs'.  Note that
-     someone may or may not want to do anything with your bug
-     report--if you need a solution consider one of the options
-     mentioned above.  People probably do want to hear about bugs which
-     are particularly severe in consequences and/or easy to fix,
-     however.  You can also increase your odds by being as clear as
-     possible about the exact nature of the bug and any other relevant
-     information.  The way to report bugs is to send email to
-     `bug-cvs@prep.ai.mit.edu'.  Note that submissions to `bug-cvs' may
-     be distributed under the terms of the GNU Public License, so if
-     you don't like this, don't submit them.  There is usually no
-     justification for sending mail directly to one of the CVS
-     maintainers rather than to `bug-cvs'; those maintainers who want
-     to hear about such bug reports read `bug-cvs'.  Also note that
-     sending a bug report to other mailing lists or newsgroups is *not*
-     a substitute for sending it to `bug-cvs'.  It is fine to discuss
-     CVS bugs on whatever forum you prefer, but there are not
-     necessarily any maintainers reading bug reports sent anywhere
-     except `bug-cvs'.
-
-   People often ask if there is a list of known bugs or whether a
-particular bug is a known one.  The file BUGS in the CVS source
-distribution is one list of known bugs, but it doesn't necessarily try
-to be comprehensive.  Perhaps there will never be a comprehensive,
-detailed list of known bugs.
-
-
-File: cvs.info,  Node: What is CVS?,  Next: A sample session,  Prev: Preface,  Up: Top
+File: cvs.info,  Node: What is CVS?,  Next: What is CVS not?,  Up: Overview
 
 What is CVS?
-************
+============
 
    CVS is a version control system.  Using it, you can record the
 history of your source files.
@@ -280,10 +119,12 @@ resolution algorithms come from them.
 later helped Brian with the design of the CVS module and vendor branch
 support.
 
-   You can get CVS via anonymous FTP from a number of sites; for
-example see
-     http://www.gnu.ai.mit.edu/order/ftp.html
-   for a list of the GNU FTP sites.
+   You can get CVS in a variety of ways, including free download from
+the internet.  For more information on downloading CVS and other CVS
+topics, see:
+
+     http://www.cyclic.com/
+     http://www.loria.fr/~molli/cvs-index.html
 
    There is a mailing list, known as `info-cvs', devoted to CVS.  To
 subscribe or unsubscribe send a message to
@@ -298,10 +139,13 @@ if there is sufficient CVS traffic on `comp.software.config-mgmt'.
 
    You can also subscribe to the bug-cvs mailing list, described in
 more detail in *Note BUGS::.  To subscribe send mail to
-bug-cvs-request@prep.ai.mit.edu.
+bug-cvs-request@gnu.org.
 
-CVS is not...
-=============
+
+File: cvs.info,  Node: What is CVS not?,  Next: A sample session,  Prev: What is CVS?,  Up: Overview
+
+What is CVS not?
+================
 
    CVS can do a lot of things for you, but it does not try to be
 everything for everyone.
@@ -414,10 +258,10 @@ CVS does not have a builtin process model
      once they have been proven.
 
 
-File: cvs.info,  Node: A sample session,  Next: Repository,  Prev: What is CVS?,  Up: Top
+File: cvs.info,  Node: A sample session,  Prev: What is CVS not?,  Up: Overview
 
 A sample session
-****************
+================
 
    As a way of introducing CVS, we'll go through a typical work-session
 using CVS.  The first thing to understand is that CVS stores all files
@@ -440,7 +284,7 @@ module called `tc'.
 File: cvs.info,  Node: Getting the source,  Next: Committing your changes,  Up: A sample session
 
 Getting the source
-==================
+------------------
 
    The first thing you must do is to get your own working copy of the
 source for `tc'.  For this, you use the `checkout' command:
@@ -467,7 +311,7 @@ explanation.
 File: cvs.info,  Node: Committing your changes,  Next: Cleaning up,  Prev: Getting the source,  Up: A sample session
 
 Committing your changes
-=======================
+-----------------------
 
    When you have checked that the compiler is still compilable you
 decide to make a new version of `backend.c'.  This will store your new
@@ -507,7 +351,7 @@ message on the command line using the `-m' flag instead, like this:
 File: cvs.info,  Node: Cleaning up,  Next: Viewing differences,  Prev: Committing your changes,  Up: A sample session
 
 Cleaning up
-===========
+-----------
 
    Before you turn to other tasks you decide to remove your working
 copy of tc.  One acceptable way to do that is of course
@@ -554,7 +398,7 @@ for confirmation.
 File: cvs.info,  Node: Viewing differences,  Prev: Cleaning up,  Up: A sample session
 
 Viewing differences
-===================
+-------------------
 
    You do not remember modifying `driver.c', so you want to see what
 has happened to that file.
@@ -579,7 +423,7 @@ optimization pass.  You check it in, and release the module.
      Are you sure you want to release (and delete) module `tc': y
 
 
-File: cvs.info,  Node: Repository,  Next: Starting a new project,  Prev: A sample session,  Up: Top
+File: cvs.info,  Node: Repository,  Next: Starting a new project,  Prev: Overview,  Up: Top
 
 The Repository
 **************
@@ -607,7 +451,7 @@ in `/usr/local/cvsroot' on the computer running CVS.  For information
 on other access methods, see *Note Remote repositories::.
 
    If the access method is omitted, then if the repository does not
-contain `:', then `:local:' is assumed.  If it does contain `:' than
+contain `:', then `:local:' is assumed.  If it does contain `:' then
 either `:ext:' or `:server:' is assumed.  For example, if you have a
 local repository in `/usr/local/cvsroot', you can use
 `/usr/local/cvsroot' instead of `:local:/usr/local/cvsroot'.  But if
@@ -639,16 +483,16 @@ File: cvs.info,  Node: Specifying a repository,  Next: Repository storage,  Up: 
 Telling CVS where your repository is
 ====================================
 
-   There are a couple of different ways to tell CVS where to find the
-repository.  You can name the repository on the command line
-explicitly, with the `-d' (for "directory") option:
+   There are several ways to tell CVS where to find the repository.
+You can name the repository on the command line explicitly, with the
+`-d' (for "directory") option:
 
      cvs -d /usr/local/cvsroot checkout yoyodyne/tc
 
    Or you can set the `$CVSROOT' environment variable to an absolute
 path to the root of the repository, `/usr/local/cvsroot' in this
-example.  To set `$CVSROOT', all `csh' and `tcsh' users should have
-this line in their `.cshrc' or `.tcshrc' files:
+example.  To set `$CVSROOT', `csh' and `tcsh' users should have this
+line in their `.cshrc' or `.tcshrc' files:
 
      setenv CVSROOT /usr/local/cvsroot
 
@@ -678,7 +522,7 @@ How data is stored in the repository
    For most purposes it isn't important *how* CVS stores information in
 the repository.  In fact, the format has changed in the past, and is
 likely to change in the future.  Since in almost all cases one accesses
-the repository via CVS commands; such changes need not be disruptive.
+the repository via CVS commands, such changes need not be disruptive.
 
    However, in some cases it may be necessary to understand how CVS
 stores data in the repository, for example you might need to track down
@@ -689,7 +533,11 @@ file permissions appropriate for the repository.
 
 * Repository files::            What files are stored in the repository
 * File permissions::            File permissions
+* Windows permissions::         Issues specific to Windows
 * Attic::                       Some files are stored in the Attic
+* CVS in repository::           Additional information in CVS directory
+* Locks::                       CVS locks control concurrent accesses
+* CVSROOT storage::             A few things about CVSROOT are different
 
 
 File: cvs.info,  Node: Repository files,  Next: File permissions,  Up: Repository storage
@@ -765,9 +613,9 @@ user-name of the person who committed the revision.  The history files
 are known as "RCS files", because the first program to store files in
 that format was a version control system known as RCS.  For a full
 description of the file format, see the `man' page `rcsfile(5)',
-distributed with RCS.  This file format has become very common--many
-systems other than CVS or RCS can at least import history files in this
-format.
+distributed with RCS, or the file `doc/RCSFILES' in the CVS source
+distribution.  This file format has become very common--many systems
+other than CVS or RCS can at least import history files in this format.
 
    The RCS files used in CVS differ in a few ways from the standard
 format.  The biggest difference is magic branches; for more information
@@ -775,7 +623,7 @@ see *Note Magic branch numbers::.  Also in CVS the valid tag names are
 a subset of what RCS accepts; for CVS's rules see *Note Tags::.
 
 
-File: cvs.info,  Node: File permissions,  Next: Attic,  Prev: Repository files,  Up: Repository storage
+File: cvs.info,  Node: File permissions,  Next: Windows permissions,  Prev: Repository files,  Up: Repository storage
 
 File permissions
 ----------------
@@ -797,7 +645,11 @@ because CVS needs to create lock files (*note Concurrency::.).
    Also note that users must have write access to the
 `CVSROOT/val-tags' file.  CVS uses it to keep track of what tags are
 valid tag names (it is sometimes updated when tags are used, as well as
-when they are created, though).
+when they are created).
+
+   Each RCS file will be owned by the user who last checked it in.
+This has little significance; what really matters is who owns the
+directories.
 
    CVS tries to set up reasonable file permissions for new directories
 that are added inside the tree, but you must fix the permissions
@@ -819,12 +671,47 @@ documentation for your operating system.  This behavior might change in
 future versions of CVS; do not rely on the setting of `CVSUMASK' on the
 client having no effect.
 
-   Since CVS was not written to be run setuid, it is unsafe to try to
-run it setuid.  You cannot use the setuid features of RCS together with
-CVS.
+   Using pserver, you will generally need stricter permissions on the
+CVSROOT directory and directories above it in the tree; see *Note
+Password authentication security::.
+
+   Some operating systems have features which allow a particular
+program to run with the ability to perform operations which the caller
+of the program could not.  For example, the set user ID (setuid) or set
+group ID (setgid) features of unix or the installed image feature of
+VMS.  CVS was not written to use such features and therefore attempting
+to install CVS in this fashion will provide protection against only
+accidental lapses; anyone who is trying to circumvent the measure will
+be able to do so, and depending on how you have set it up may gain
+access to more than just CVS.  You may wish to instead consider
+pserver.  It shares some of the same attributes, in terms of possibly
+providing a false sense of security or opening security holes wider
+than the ones you are trying to fix, so read the documentation on
+pserver security carefully if you are considering this option (*Note
+Password authentication security::).
 
 
-File: cvs.info,  Node: Attic,  Prev: File permissions,  Up: Repository storage
+File: cvs.info,  Node: Windows permissions,  Next: Attic,  Prev: File permissions,  Up: Repository storage
+
+File Permission issues specific to Windows
+------------------------------------------
+
+   Some file permission issues are specific to Windows operating
+systems (Windows 95, Windows NT, and presumably future operating
+systems in this family.  Some of the following might apply to OS/2 but
+I'm not sure).
+
+   If you are using local CVS and the repository is on a networked file
+system which is served by the Samba SMB server, some people have
+reported problems with permissions.  Enabling WRITE=YES in the samba
+configuration is said to fix/workaround it.  Disclaimer: I haven't
+investigated enough to know the implications of enabling that option,
+nor do I know whether there is something which CVS could be doing
+differently in order to avoid the problem.  If you find something out,
+please let us know as described in *Note BUGS::.
+
+
+File: cvs.info,  Node: Attic,  Next: CVS in repository,  Prev: Windows permissions,  Up: Repository storage
 
 The attic
 ---------
@@ -848,6 +735,117 @@ trunk has state `dead'.  A `dead' state means that file has been
 removed, or never added, for that revision.  For example, if you add a
 file on a branch, it will have a trunk revision in `dead' state, and a
 branch revision in a non-`dead' state.
+
+
+File: cvs.info,  Node: CVS in repository,  Next: Locks,  Prev: Attic,  Up: Repository storage
+
+The CVS directory in the repository
+-----------------------------------
+
+   The `CVS' directory in each repository directory contains
+information such as file attributes (in a file called `CVS/fileattr';
+see fileattr.h in the CVS source distribution for more documentation).
+In the future additional files may be added to this directory, so
+implementations should silently ignore additional files.
+
+   This behavior is implemented only by CVS 1.7 and later; for details
+see *Note Watches Compatibility::.
+
+
+File: cvs.info,  Node: Locks,  Next: CVSROOT storage,  Prev: CVS in repository,  Up: Repository storage
+
+CVS locks in the repository
+---------------------------
+
+   For an introduction to CVS locks focusing on user-visible behavior,
+see *Note Concurrency::.  The following section is aimed at people who
+are writing tools which want to access a CVS repository without
+interfering with other tools acessing the same repository.  If you find
+yourself confused by concepts described here, like "read lock", "write
+lock", and "deadlock", you might consult the literature on operating
+systems or databases.
+
+   Any file in the repository with a name starting with `#cvs.rfl' is a
+read lock.  Any file in the repository with a name starting with
+`#cvs.wfl' is a write lock.  Old versions of CVS (before CVS 1.5) also
+created files with names starting with `#cvs.tfl', but they are not
+discussed here.  The directory `#cvs.lock' serves as a master lock.
+That is, one must obtain this lock first before creating any of the
+other locks.
+
+   To obtain a readlock, first create the `#cvs.lock' directory.  This
+operation must be atomic (which should be true for creating a directory
+under most operating systems).  If it fails because the directory
+already existed, wait for a while and try again.  After obtaining the
+`#cvs.lock' lock, create a file whose name is `#cvs.rfl' followed by
+information of your choice (for example, hostname and process
+identification number).  Then remove the `#cvs.lock' directory to
+release the master lock.  Then proceed with reading the repository.
+When you are done, remove the `#cvs.rfl' file to release the read lock.
+
+   To obtain a writelock, first create the `#cvs.lock' directory, as
+with a readlock.  Then check that there are no files whose names start
+with `#cvs.rfl'.  If there are, remove `#cvs.lock', wait for a while,
+and try again.  If there are no readers, then create a file whose name
+is `#cvs.wfl' followed by information of your choice (for example,
+hostname and process identification number).  Hang on to the
+`#cvs.lock' lock.  Proceed with writing the repository.  When you are
+done, first remove the `#cvs.wfl' file and then the `#cvs.lock'
+directory. Note that unlike the `#cvs.rfl' file, the `#cvs.wfl' file is
+just informational; it has no effect on the locking operation beyond
+what is provided by holding on to the `#cvs.lock' lock itself.
+
+   Note that each lock (writelock or readlock) only locks a single
+directory in the repository, including `Attic' and `CVS' but not
+including subdirectories which represent other directories under
+version control.  To lock an entire tree, you need to lock each
+directory (note that if you fail to obtain any lock you need, you must
+release the whole tree before waiting and trying again, to avoid
+deadlocks).
+
+   Note also that CVS expects writelocks to control access to
+individual `foo,v' files.  RCS has a scheme where the `,foo,' file
+serves as a lock, but CVS does not implement it and so taking out a CVS
+writelock is recommended.  See the comments at rcs_internal_lockfile in
+the CVS source code for further discussion/rationale.
+
+
+File: cvs.info,  Node: CVSROOT storage,  Prev: Locks,  Up: Repository storage
+
+How files are stored in the CVSROOT directory
+---------------------------------------------
+
+   The `$CVSROOT/CVSROOT' directory contains the various administrative
+files.  In some ways this directory is just like any other directory in
+the repository; it contains RCS files whose names end in `,v', and many
+of the CVS commands operate on it the same way.  However, there are a
+few differences.
+
+   For each administrative file, in addition to the RCS file, there is
+also a checked out copy of the file.  For example, there is an RCS file
+`loginfo,v' and a file `loginfo' which contains the latest revision
+contained in `loginfo,v'.  When you check in an administrative file,
+CVS should print
+
+     cvs commit: Rebuilding administrative file database
+
+and update the checked out copy in `$CVSROOT/CVSROOT'.  If it does not,
+there is something wrong (*note BUGS::.).  To add your own files to the
+files to be updated in this fashion, you can add them to the
+`checkoutlist' administrative file.
+
+   By default, the `modules' file behaves as described above.  If the
+modules file is very large, storing it as a flat text file may make
+looking up modules slow (I'm not sure whether this is as much of a
+concern now as when CVS first evolved this feature; I haven't seen
+benchmarks).  Therefore, by making appropriate edits to the CVS source
+code one can store the modules file in a database which implements the
+`ndbm' interface, such as Berkeley db or GDBM.  If this option is in
+use, then the modules database will be stored in the files `modules.db',
+`modules.pag', and/or `modules.dir'.
+
+   For information on the meaning of the various administrative files,
+see *Note Administrative files::.
 
 
 File: cvs.info,  Node: Working directory storage,  Next: Intro administrative files,  Prev: Repository storage,  Up: Repository
@@ -877,9 +875,13 @@ expansion.
 
 `Repository'
      This file contains the directory within the repository which the
-     current directory corresponds with.  For historical reasons it is
-     an absolute pathname, although it would make more sense for it to
-     be relative to the root.  For example, after the command
+     current directory corresponds with.  It can be either an absolute
+     pathname or a relative pathname; CVS has had the ability to read
+     either format since at least version 1.3 or so.  The relative
+     pathname is relative to the root, and is the more sensible
+     approach, but the absolute pathname is quite common and
+     implementations should accept either.  For example, after the
+     command
 
           cvs -d :local:/usr/local/cvsroot checkout yoyodyne/tc
 
@@ -887,9 +889,13 @@ expansion.
 
           :local:/usr/local/cvsroot
 
-     and `Repository' will contain
+     and `Repository' will contain either
 
-          /usr/local/cvsroot/yoydyne/tc
+          /usr/local/cvsroot/yoyodyne/tc
+
+     or
+
+          yoyodyne/tc
 
 `Entries'
      This file lists the files and directories in the working
@@ -1006,6 +1012,20 @@ expansion.
      `unedit' command to operate even if it is unable to communicate
      with the server.
 
+`Baserev'
+     The file lists the revision for each of the files in the `Base'
+     directory.  The format is:
+
+          BNAME/REV/EXPANSION
+
+     where EXPANSION should be ignored, to allow for future expansion.
+
+`Baserev.tmp'
+     This file is to `Baserev' as `Entries.Backup' is to `Entries'.
+     That is, to write `Baserev', first write the new contents to
+     `Baserev.tmp' and then (atomically where possible), rename it to
+     `Baserev'.
+
 `Template'
      This file contains the template specified by the `rcsinfo' file
      (*note rcsinfo::.).  It is only used by the client; the
@@ -1085,20 +1105,18 @@ Creating a repository
 
    To set up a CVS repository, first choose the machine and disk on
 which you want to store the revision history of the source files.  CPU
-and memory requirements are modest--a server with 32M of memory or even
-less can handle a fairly large source tree with a fair amount of
-activity.  To estimate disk space requirements, if you are importing
-RCS files from another system, the size of those files is the
-approximate initial size of your repository, or if you are starting
-without any version history, a rule of thumb is to allow for the server
-approximately three times the size of the code to be under CVS for the
-repository (you will eventually outgrow this, but not for a while).  On
-the machines on which the developers will be working, you'll want disk
-space for approximately one working directory for each developer
-(either the entire tree or a portion of it, depending on what each
-developer uses).  Don't worry about CPU and memory requirements for the
-clients--any machine with enough capacity to run the operating system in
-question should have little trouble.
+and memory requirements are modest, so most machines should be
+adequate.  For details see *Note Server requirements::.
+
+   To estimate disk space requirements, if you are importing RCS files
+from another system, the size of those files is the approximate initial
+size of your repository, or if you are starting without any version
+history, a rule of thumb is to allow for the server approximately three
+times the size of the code to be under CVS for the repository (you will
+eventually outgrow this, but not for a while).  On the machines on
+which the developers will be working, you'll want disk space for
+approximately one working directory for each developer (either the
+entire tree or a portion of it, depending on what each developer uses).
 
    The repository should be accessable (directly or via a networked
 file system) from all machines which want to use CVS in server or local
@@ -1119,43 +1137,4 @@ set-up repository.
 
    `cvs init' will enable history logging; if you don't want that,
 remove the history file after running `cvs init'.  *Note history file::.
-
-
-File: cvs.info,  Node: Backing up,  Next: Moving a repository,  Prev: Creating a repository,  Up: Repository
-
-Backing up a repository
-=======================
-
-   There is nothing particularly magical about the files in the
-repository; for the most part it is possible to back them up just like
-any other files.  However, there are a few issues to consider.
-
-   The first is that to be paranoid, one should either not use CVS
-during the backup, or have the backup program lock CVS while doing the
-backup.  To not use CVS, you might forbid logins to machines which can
-access the repository, turn off your CVS server, or similar mechanisms.
-The details would depend on your operating system and how you have CVS
-set up.  To lock CVS, you would create `#cvs.rfl' locks in each
-repository directory.  See *Note Concurrency::, for more on CVS locks.
-Having said all this, if you just back up without any of these
-precautions, the results are unlikely to be particularly dire.
-Restoring from backup, the repository might be in an inconsistent
-state, but this would not be particularly hard to fix manually.
-
-   When you restore a repository from backup, assuming that changes in
-the repository were made after the time of the backup, working
-directories which were not affected by the failure may refer to
-revisions which no longer exist in the repository.  Trying to run CVS
-in such directories will typically produce an error message.  One way
-to get those changes back into the repository is as follows:
-
-   * Get a new working directory.
-
-   * Copy the files from the working directory from before the failure
-     over to the new working directory (do not copy the contents of the
-     `CVS' directories, of course).
-
-   * Working in the new working directory, use commands such as `cvs
-     update' and `cvs diff' to figure out what has changed, and then
-     when you are ready, commit the changes into the repository.
 

@@ -22,6 +22,45 @@ and this permission notice may be included in translations approved by
 the Free Software Foundation instead of in the original English.
 
 
+File: cvs.info,  Node: Backing up,  Next: Moving a repository,  Prev: Creating a repository,  Up: Repository
+
+Backing up a repository
+=======================
+
+   There is nothing particularly magical about the files in the
+repository; for the most part it is possible to back them up just like
+any other files.  However, there are a few issues to consider.
+
+   The first is that to be paranoid, one should either not use CVS
+during the backup, or have the backup program lock CVS while doing the
+backup.  To not use CVS, you might forbid logins to machines which can
+access the repository, turn off your CVS server, or similar mechanisms.
+The details would depend on your operating system and how you have CVS
+set up.  To lock CVS, you would create `#cvs.rfl' locks in each
+repository directory.  See *Note Concurrency::, for more on CVS locks.
+Having said all this, if you just back up without any of these
+precautions, the results are unlikely to be particularly dire.
+Restoring from backup, the repository might be in an inconsistent
+state, but this would not be particularly hard to fix manually.
+
+   When you restore a repository from backup, assuming that changes in
+the repository were made after the time of the backup, working
+directories which were not affected by the failure may refer to
+revisions which no longer exist in the repository.  Trying to run CVS
+in such directories will typically produce an error message.  One way
+to get those changes back into the repository is as follows:
+
+   * Get a new working directory.
+
+   * Copy the files from the working directory from before the failure
+     over to the new working directory (do not copy the contents of the
+     `CVS' directories, of course).
+
+   * Working in the new working directory, use commands such as `cvs
+     update' and `cvs diff' to figure out what has changed, and then
+     when you are ready, commit the changes into the repository.
+
+
 File: cvs.info,  Node: Moving a repository,  Next: Remote repositories,  Prev: Backing up,  Up: Repository
 
 Moving a repository
@@ -71,6 +110,7 @@ are described in *Note Connecting via rsh::.
 * Server requirements::         Memory and other resources for servers
 * Connecting via rsh::          Using the `rsh' program to connect
 * Password authenticated::      Direct connections using passwords
+* GSSAPI authenticated::        Direct connections using GSSAPI
 * Kerberos authenticated::      Direct connections with kerberos
 
 
@@ -83,13 +123,20 @@ Server requirements
 that requirements are modest--a server with 32M of memory or even less
 can handle a fairly large source tree with a fair amount of activity.
 
-   The real answer, of course, is more complicated.  The CVS server
-consists of two processes for each client that it is serving.  Memory
-consumption on the child process should remain fairly small.  Memory
-consumption on the parent process, particularly if the network
-connection to the client is slow, can be expected to grow to slightly
-more than the size of the sources in a single directory, or two
-megabytes, whichever is larger.
+   The real answer, of course, is more complicated.  Estimating the
+known areas of large memory consumption should be sufficient to
+estimate memory requirements.  There are two such areas documented
+here; other memory consumption should be small by comparison (if you
+find that is not the case, let us know, as described in *Note BUGS::,
+so we can update this documentation).
+
+   The first area of big memory consumption is large checkouts, when
+using the CVS server.  The server consists of two processes for each
+client that it is serving.  Memory consumption on the child process
+should remain fairly small.  Memory consumption on the parent process,
+particularly if the network connection to the client is slow, can be
+expected to grow to slightly more than the size of the sources in a
+single directory, or two megabytes, whichever is larger.
 
    Multiplying the size of each CVS server by the number of servers
 which you expect to have active at one time should give an idea of
@@ -97,9 +144,24 @@ memory requirements for the server.  For the most part, the memory
 consumed by the parent process probably can be swap space rather than
 physical memory.
 
-   Resource consumption for the client or the non-client/server CVS is
-even more modest--any machine with enough capacity to run the operating
-system in question should have little trouble.
+   The second area of large memory consumption is `diff', when checking
+in large files.  This is required even for binary files.  The rule of
+thumb is to allow about ten times the size of the largest file you will
+want to check in, although five times may be adequate.  For example, if
+you want to check in a file which is 10 megabytes, you should have 100
+megabytes of memory on the machine doing the checkin (the server
+machine for client/server, or the machine running CVS for
+non-client/server).  This can be swap space rather than physical
+memory.  Because the memory is only required briefly, there is no
+particular need to allow memory for more than one such checkin at a
+time.
+
+   Resource consumption for the client is even more modest--any machine
+with enough capacity to run the operating system in question should
+have little trouble.
+
+   For information on disk space requirements, see *Note Creating a
+repository::.
 
 
 File: cvs.info,  Node: Connecting via rsh,  Next: Password authenticated,  Prev: Server requirements,  Up: Remote repositories
@@ -158,7 +220,7 @@ the documentation for your rsh replacement.
 local and remote hosts.)
 
 
-File: cvs.info,  Node: Password authenticated,  Next: Kerberos authenticated,  Prev: Connecting via rsh,  Up: Remote repositories
+File: cvs.info,  Node: Password authenticated,  Next: GSSAPI authenticated,  Prev: Connecting via rsh,  Up: Remote repositories
 
 Direct connection with password authentication
 ----------------------------------------------
@@ -183,6 +245,10 @@ File: cvs.info,  Node: Password authentication server,  Next: Password authentic
 Setting up the server for password authentication
 .................................................
 
+   First of all, you probably want to tighten the permissions on the
+`$CVSROOT' and `$CVSROOT/CVSROOT' directories.  See *Note Password
+authentication security::, for more details.
+
    On the server side, the file `/etc/inetd.conf' needs to be edited so
 `inetd' knows to run the command `cvs pserver' when it receives a
 connection on the right port.  By default, the port number is 2401; it
@@ -194,11 +260,9 @@ the following (all on a single line in `inetd.conf') should be
 sufficient:
 
      2401  stream  tcp  nowait  root  /usr/local/bin/cvs
-     cvs -b /usr/local/bin --allow-root=/usr/cvsroot pserver
+     cvs --allow-root=/usr/cvsroot pserver
 
-   The `-b' option specifies the directory which contains the RCS
-binaries on the server.  You could also use the `-T' option to specify
-a temporary directory.
+   You could also use the `-T' option to specify a temporary directory.
 
    The `--allow-root' option specifies the allowable CVSROOT directory.
 Clients which attempt to use a different CVSROOT directory will not be
@@ -220,8 +284,9 @@ whatever is necessary to force it to reread its initialization files.
 separate CVS password file may be used, so people don't compromise their
 regular passwords when they access the repository.  This file is
 `$CVSROOT/CVSROOT/passwd' (*note Intro administrative files::.).  Its
-format is similar to `/etc/passwd', except that it only has two fields,
-username and password.  For example:
+format is similar to `/etc/passwd', except that it only has two or
+three fields, username, password, and optional username for the server
+to use.  For example:
 
      bach:ULtgRLXo7NRxs
      cwang:1sOp854gDF3DY
@@ -234,12 +299,14 @@ Unix `passwd' files.
 in the CVS `passwd' file.  If it finds the user, it compares against
 that password.  If it does not find the user, or if the CVS `passwd'
 file does not exist, then the server tries to match the password using
-the system's user-lookup routine.  When using the CVS `passwd' file,
-the server runs under as the username specified in the the third
-argument in the entry, or as the first argument if there is no third
-argument (in this way CVS allows imaginary usernames provided the CVS
-`passwd' file indicates corresponding valid system usernames).  In any
-case, CVS will have no privileges which the (valid) user would not have.
+the system's user-lookup routine (using the system's user-lookup
+routine can be disabled by setting `SystemAuth=no' in the config file,
+*note config::.).  When using the CVS `passwd' file, the server runs as
+the username specified in the third argument in the entry, or as the
+first argument if there is no third argument (in this way CVS allows
+imaginary usernames provided the CVS `passwd' file indicates
+corresponding valid system usernames).  In any case, CVS will have no
+privileges which the (valid) user would not have.
 
    It is possible to "map" cvs-specific usernames onto system usernames
 (i.e., onto system login names) in the `$CVSROOT/CVSROOT/passwd' file
@@ -264,7 +331,7 @@ map multiple cvs usernames onto a single system username.
 
    This feature is designed to allow people repository access without
 full system access (in particular, see *Note Read-only access::);
-however, also *Note Password authentication security::.  Any sort of
+however, also see *Note Password authentication security::.  Any sort of
 repository access very likely implies a degree of general system access
 as well.
 
@@ -337,12 +404,22 @@ even a naive attacker from gaining the password.
    The separate CVS password file (*note Password authentication
 server::.) allows people to use a different password for repository
 access than for login access.  On the other hand, once a user has
-access to the repository, she can execute programs on the server system
-through a variety of means.  Thus, repository access implies fairly
-broad system access as well.  It might be possible to modify CVS to
-prevent that, but no one has done so as of this writing.  Furthermore,
-there may be other ways in which having access to CVS allows people to
-gain more general access to the system; noone has done a careful audit.
+non-read-only access to the repository, she can execute programs on the
+server system through a variety of means.  Thus, repository access
+implies fairly broad system access as well.  It might be possible to
+modify CVS to prevent that, but no one has done so as of this writing.
+Furthermore, there may be other ways in which having access to CVS
+allows people to gain more general access to the system; no one has
+done a careful audit.
+
+   Note that because the `$CVSROOT/CVSROOT' directory contains `passwd'
+and other files which are used to check security, you must control the
+permissions on this directory as tightly as the permissions on `/etc'.
+The same applies to the `$CVSROOT' directory itself and any directory
+above it in the tree.  Anyone who has write access to such a directory
+will have the ability to become any user on the system.  Note that
+these permissions are typically tighter than you would use if you are
+not using pserver.
 
    In summary, anyone who gets the password gets repository access, and
 some measure of general system access as well.  The password is
@@ -350,15 +427,60 @@ available to anyone who can sniff network packets or read a protected
 (i.e., user read-only) file.  If you want real security, get Kerberos.
 
 
-File: cvs.info,  Node: Kerberos authenticated,  Prev: Password authenticated,  Up: Remote repositories
+File: cvs.info,  Node: GSSAPI authenticated,  Next: Kerberos authenticated,  Prev: Password authenticated,  Up: Remote repositories
+
+Direct connection with GSSAPI
+-----------------------------
+
+   GSSAPI is a generic interface to network security systems such as
+Kerberos 5.  If you have a working GSSAPI library, you can have CVS
+connect via a direct TCP connection, authenticating with GSSAPI.
+
+   To do this, CVS needs to be compiled with GSSAPI support; when
+configuring CVS it tries to detect whether GSSAPI libraries using
+kerberos version 5 are present.  You can also use the `--with-gssapi'
+flag to configure.
+
+   The connection is authenticated using GSSAPI, but the message stream
+is *not* authenticated by default.  You must use the `-a' global option
+to request stream authentication.
+
+   The data transmitted is *not* encrypted by default.  Encryption
+support must be compiled into both the client and the server; use the
+`--enable-encrypt' configure option to turn it on.  You must then use
+the `-x' global option to request encryption.
+
+   GSSAPI connections are handled on the server side by the same server
+which handles the password authentication server; see *Note Password
+authentication server::.  If you are using a GSSAPI mechanism such as
+Kerberos which provides for strong authentication, you will probably
+want to disable the ability to authenticate via cleartext passwords.
+To do so, create an empty `CVSROOT/passwd' password file, and set
+`SystemAuth=no' in the config file (*note config::.).
+
+   The GSSAPI server uses a principal name of cvs/HOSTNAME, where
+HOSTNAME is the canonical name of the server host.  You will have to
+set this up as required by your GSSAPI mechanism.
+
+   To connect using GSSAPI, use `:gserver:'.  For example,
+
+     cvs -d :gserver:chainsaw.yard.com:/usr/local/cvsroot checkout foo
+
+
+File: cvs.info,  Node: Kerberos authenticated,  Prev: GSSAPI authenticated,  Up: Remote repositories
 
 Direct connection with kerberos
 -------------------------------
 
-   The main disadvantage of using rsh is that all the data needs to
-pass through additional programs, so it may be slower.  So if you have
-kerberos installed you can connect via a direct TCP connection,
-authenticating with kerberos.
+   The easiest way to use kerberos is to use the kerberos `rsh', as
+described in *Note Connecting via rsh::.  The main disadvantage of
+using rsh is that all the data needs to pass through additional
+programs, so it may be slower.  So if you have kerberos installed you
+can connect via a direct TCP connection, authenticating with kerberos.
+
+   This section concerns the kerberos network security system, version
+4.  Kerberos version 5 is supported via the GSSAPI generic network
+security interface, as described in the previous section.
 
    To do this, CVS needs to be compiled with kerberos support; when
 configuring CVS it tries to detect whether kerberos is present or you
@@ -378,7 +500,7 @@ on the client.
 `kinit'); it must be a ticket which allows you to log into the server
 machine.  Then you are ready to go:
 
-     cvs -d :kserver:chainsaw.yard.com:/user/local/cvsroot checkout foo
+     cvs -d :kserver:chainsaw.yard.com:/usr/local/cvsroot checkout foo
 
    Previous versions of CVS would fall back to a connection via rsh;
 this version will not do so.
@@ -400,9 +522,15 @@ permissions allow her to do.)
 which do not modify the repository, except for certain "administrative"
 files (such as lock files and the history file).  It may be desirable
 to use this feature in conjunction with user-aliasing (*note Password
-authentication server::.).  However, note that read-only access does
-not repeal the existing security considerations in *Note Password
-authentication security::.
+authentication server::.).
+
+   Unlike with previous versions of CVS, read-only users should be able
+merely to read the repository, and not to execute programs on the
+server or otherwise gain unexpected levels of access.  Or to be more
+accurate, the *known* holes have been plugged.  Because this feature is
+new and has not received a comprehensive security audit, you should use
+whatever level of caution seems warranted given your attitude concerning
+security.
 
    There are two ways to specify read-only access for a user: by
 inclusion, and by exclusion.
@@ -482,7 +610,7 @@ temporary directory, for example:
 process identification number PID, it is safe to do so.
 
 
-File: cvs.info,  Node: Starting a new project,  Next: Multiple developers,  Prev: Repository,  Up: Top
+File: cvs.info,  Node: Starting a new project,  Next: Revisions,  Prev: Repository,  Up: Top
 
 Starting a project with CVS
 ***************************
@@ -598,12 +726,26 @@ From another version control system
      in the standard format.  If yours does, export the RCS files and
      then follow the above instructions.
 
+     Failing that, probably your best bet is to write a script that
+     will check out the files one revision at a time using the command
+     line interface to the other system, and then check the revisions
+     into CVS.  The `sccs2rcs' script mentioned below may be a useful
+     example to follow.
+
 From SCCS
      There is a script in the `contrib' directory of the CVS source
      distribution called `sccs2rcs' which converts SCCS files to RCS
      files.  Note: you must run it on a machine which has both SCCS and
      RCS installed, and like everything else in contrib it is
      unsupported (your mileage may vary).
+
+From PVCS
+     There is a script in the `contrib' directory of the CVS source
+     distribution called `pvcs_to_rcs' which converts PVCS archives to
+     RCS files.  You must run it on a machine which has both PVCS and
+     RCS installed, and like everything else in contrib it is
+     unsupported (your mileage may vary).  See the comments in the
+     script for details.
 
 
 File: cvs.info,  Node: From scratch,  Prev: From other version control systems,  Up: Setting up the files
@@ -663,579 +805,345 @@ together related files and directories.
           $ cvs release -d CVSROOT
 
 
-File: cvs.info,  Node: Multiple developers,  Next: Revisions and branches,  Prev: Starting a new project,  Up: Top
+File: cvs.info,  Node: Revisions,  Next: Branching and merging,  Prev: Starting a new project,  Up: Top
 
-Multiple developers
-*******************
+Revisions
+*********
 
-   When more than one person works on a software project things often
-get complicated.  Often, two people try to edit the same file
-simultaneously.  One solution, known as "file locking" or "reserved
-checkouts", is to allow only one person to edit each file at a time.
-This is the only solution with some version control systems, including
-RCS and SCCS.  Currently the usual way to get reserved checkouts with
-CVS is the `cvs admin -l' command (*note admin options::.).  This is
-not as nicely integrated into CVS as the watch features, described
-below, but it seems that most people with a need for reserved checkouts
-find it adequate.  It also may be possible to use the watches features
-described below, together with suitable procedures (not enforced by
-software), to avoid having two people edit at the same time.
+   For many uses of CVS, one doesn't need to worry too much about
+revision numbers; CVS assigns numbers such as `1.1', `1.2', and so on,
+and that is all one needs to know.  However, some people prefer to have
+more knowledge and control concerning how CVS assigns revision numbers.
 
-   The default model with CVS is known as "unreserved checkouts".  In
-this model, developers can edit their own "working copy" of a file
-simultaneously.  The first person that commits his changes has no
-automatic way of knowing that another has started to edit it.  Others
-will get an error message when they try to commit the file.  They must
-then use CVS commands to bring their working copy up to date with the
-repository revision.  This process is almost automatic.
-
-   CVS also supports mechanisms which facilitate various kinds of
-communcation, without actually enforcing rules like reserved checkouts
-do.
-
-   The rest of this chapter describes how these various models work,
-and some of the issues involved in choosing between them.
+   If one wants to keep track of a set of revisions involving more than
+one file, such as which revisions went into a particular release, one
+uses a "tag", which is a symbolic revision which can be assigned to a
+numeric revision in each file.
 
 * Menu:
 
-* File status::                 A file can be in several states
-* Updating a file::             Bringing a file up-to-date
-* Conflicts example::           An informative example
-* Informing others::            To cooperate you must inform
-* Concurrency::                 Simultaneous repository access
-* Watches::                     Mechanisms to track who is editing files
-* Choosing a model::            Reserved or unreserved checkouts?
+* Revision numbers::            The meaning of a revision number
+* Versions revisions releases::  Terminology used in this manual
+* Assigning revisions::         Assigning revisions
+* Tags::                        Tags-Symbolic revisions
+* Sticky tags::                 Certain tags are persistent
 
 
-File: cvs.info,  Node: File status,  Next: Updating a file,  Up: Multiple developers
+File: cvs.info,  Node: Revision numbers,  Next: Versions revisions releases,  Up: Revisions
 
-File status
+Revision numbers
+================
+
+   Each version of a file has a unique "revision number".  Revision
+numbers look like `1.1', `1.2', `1.3.2.2' or even `1.3.2.2.4.5'.  A
+revision number always has an even number of period-separated decimal
+integers.  By default revision 1.1 is the first revision of a file.
+Each successive revision is given a new number by increasing the
+rightmost number by one.  The following figure displays a few
+revisions, with newer revisions to the right.
+
+            +-----+    +-----+    +-----+    +-----+    +-----+
+            ! 1.1 !----! 1.2 !----! 1.3 !----! 1.4 !----! 1.5 !
+            +-----+    +-----+    +-----+    +-----+    +-----+
+
+   It is also possible to end up with numbers containing more than one
+period, for example `1.3.2.2'.  Such revisions represent revisions on
+branches (*note Branching and merging::.); such revision numbers are
+explained in detail in *Note Branches and revisions::.
+
+
+File: cvs.info,  Node: Versions revisions releases,  Next: Assigning revisions,  Prev: Revision numbers,  Up: Revisions
+
+Versions, revisions and releases
+================================
+
+   A file can have several versions, as described above.  Likewise, a
+software product can have several versions.  A software product is
+often given a version number such as `4.1.1'.
+
+   Versions in the first sense are called "revisions" in this document,
+and versions in the second sense are called "releases".  To avoid
+confusion, the word "version" is almost never used in this document.
+
+
+File: cvs.info,  Node: Assigning revisions,  Next: Tags,  Prev: Versions revisions releases,  Up: Revisions
+
+Assigning revisions
+===================
+
+   By default, CVS will assign numeric revisions by leaving the first
+number the same and incrementing the second number.  For example,
+`1.1', `1.2', `1.3', etc.
+
+   When adding a new file, the second number will always be one and the
+first number will equal the highest first number of any file in that
+directory.  For example, the current directory contains files whose
+highest numbered revisions are `1.7', `3.1', and `4.12', then an added
+file will be given the numeric revision `4.1'.
+
+   Normally there is no reason to care about the revision numbers--it
+is easier to treat them as internal numbers that CVS maintains, and tags
+provide a better way to distinguish between things like release 1
+versus release 2 of your product (*note Tags::.).  However, if you want
+to set the numeric revisions, the `-r' option to `cvs commit' can do
+that.  The `-r' option implies the `-f' option, in the sense that it
+causes the files to be committed even if they are not modified.
+
+   For example, to bring all your files up to revision 3.0 (including
+those that haven't changed), you might invoke:
+
+     $ cvs commit -r 3.0
+
+   Note that the number you specify with `-r' must be larger than any
+existing revision number.  That is, if revision 3.0 exists, you cannot
+`cvs commit -r 1.3'.  If you want to maintain several releases in
+parallel, you need to use a branch (*note Branching and merging::.).
+
+
+File: cvs.info,  Node: Tags,  Next: Sticky tags,  Prev: Assigning revisions,  Up: Revisions
+
+Tags-Symbolic revisions
+=======================
+
+   The revision numbers live a life of their own.  They need not have
+anything at all to do with the release numbers of your software
+product.  Depending on how you use CVS the revision numbers might
+change several times between two releases.  As an example, some of the
+source files that make up RCS 5.6 have the following revision numbers:
+
+     ci.c            5.21
+     co.c            5.9
+     ident.c         5.3
+     rcs.c           5.12
+     rcsbase.h       5.11
+     rcsdiff.c       5.10
+     rcsedit.c       5.11
+     rcsfcmp.c       5.9
+     rcsgen.c        5.10
+     rcslex.c        5.11
+     rcsmap.c        5.2
+     rcsutil.c       5.10
+
+   You can use the `tag' command to give a symbolic name to a certain
+revision of a file.  You can use the `-v' flag to the `status' command
+to see all tags that a file has, and which revision numbers they
+represent.  Tag names must start with an uppercase or lowercase letter
+and can contain uppercase and lowercase letters, digits, `-', and `_'.
+The two tag names `BASE' and `HEAD' are reserved for use by CVS.  It is
+expected that future names which are special to CVS will be specially
+named, for example by starting with `.', rather than being named
+analogously to `BASE' and `HEAD', to avoid conflicts with actual tag
+names.
+
+   You'll want to choose some convention for naming tags, based on
+information such as the name of the program and the version number of
+the release.  For example, one might take the name of the program,
+immediately followed by the version number with `.' changed to `-', so
+that CVS 1.9 would be tagged with the name `cvs1-9'.  If you choose a
+consistent convention, then you won't constantly be guessing whether a
+tag is `cvs-1-9' or `cvs1_9' or what.  You might even want to consider
+enforcing your convention in the taginfo file (*note user-defined
+logging::.).
+
+   The following example shows how you can add a tag to a file.  The
+commands must be issued inside your working copy of the module.  That
+is, you should issue the command in the directory where `backend.c'
+resides.
+
+     $ cvs tag release-0-4 backend.c
+     T backend.c
+     $ cvs status -v backend.c
+     ===================================================================
+     File: backend.c         Status: Up-to-date
+     
+         Version:            1.4     Tue Dec  1 14:39:01 1992
+         RCS Version:        1.4     /u/cvsroot/yoyodyne/tc/backend.c,v
+         Sticky Tag:         (none)
+         Sticky Date:        (none)
+         Sticky Options:     (none)
+     
+         Existing Tags:
+             release-0-4                     (revision: 1.4)
+
+   There is seldom reason to tag a file in isolation.  A more common
+use is to tag all the files that constitute a module with the same tag
+at strategic points in the development life-cycle, such as when a
+release is made.
+
+     $ cvs tag release-1-0 .
+     cvs tag: Tagging .
+     T Makefile
+     T backend.c
+     T driver.c
+     T frontend.c
+     T parser.c
+
+   (When you give CVS a directory as argument, it generally applies the
+operation to all the files in that directory, and (recursively), to any
+subdirectories that it may contain.  *Note Recursive behavior::.)
+
+   The `checkout' command has a flag, `-r', that lets you check out a
+certain revision of a module.  This flag makes it easy to retrieve the
+sources that make up release 1.0 of the module `tc' at any time in the
+future:
+
+     $ cvs checkout -r release-1-0 tc
+
+This is useful, for instance, if someone claims that there is a bug in
+that release, but you cannot find the bug in the current working copy.
+
+   You can also check out a module as it was at any given date.  *Note
+checkout options::.
+
+   When you tag more than one file with the same tag you can think
+about the tag as "a curve drawn through a matrix of filename vs.
+revision number."  Say we have 5 files with the following revisions:
+
+             file1   file2   file3   file4   file5
+     
+             1.1     1.1     1.1     1.1  /--1.1*      <-*-  TAG
+             1.2*-   1.2     1.2    -1.2*-
+             1.3  \- 1.3*-   1.3   / 1.3
+             1.4          \  1.4  /  1.4
+                           \-1.5*-   1.5
+                             1.6
+
+   At some time in the past, the `*' versions were tagged.  You can
+think of the tag as a handle attached to the curve drawn through the
+tagged revisions.  When you pull on the handle, you get all the tagged
+revisions.  Another way to look at it is that you "sight" through a set
+of revisions that is "flat" along the tagged revisions, like this:
+
+             file1   file2   file3   file4   file5
+     
+                             1.1
+                             1.2
+                     1.1     1.3                       _
+             1.1     1.2     1.4     1.1              /
+             1.2*----1.3*----1.5*----1.2*----1.1     (--- <--- Look here
+             1.3             1.6     1.3              \_
+             1.4                     1.4
+                                     1.5
+
+
+File: cvs.info,  Node: Sticky tags,  Prev: Tags,  Up: Revisions
+
+Sticky tags
 ===========
 
-   Based on what operations you have performed on a checked out file,
-and what operations others have performed to that file in the
-repository, one can classify a file in a number of states.  The states,
-as reported by the `status' command, are:
+   Sometimes a working copy's revision has extra data associated with
+it, for example it might be on a branch (*note Branching and
+merging::.), or restricted to versions prior to a certain date by
+`checkout -D' or `update -D'.  Because this data persists - that is, it
+applies to subsequent commands in the working copy - we refer to it as
+"sticky".
 
-Up-to-date
-     The file is identical with the latest revision in the repository
-     for the branch in use.
+   Most of the time, stickiness is an obscure aspect of CVS that you
+don't need to think about.  However, even if you don't want to use the
+feature, you may need to know *something* about sticky tags (for
+example, how to avoid them!).
 
-Locally Modified
-     You have edited the file, and not yet committed your changes.
+   You can use the `status' command to see if any sticky tags or dates
+are set:
 
-Locally Added
-     You have added the file with `add', and not yet committed your
-     changes.
-
-Locally Removed
-     You have removed the file with `remove', and not yet committed
-     your changes.
-
-Needs Checkout
-     Someone else has committed a newer revision to the repository.
-     The name is slightly misleading; you will ordinarily use `update'
-     rather than `checkout' to get that newer revision.
-
-Needs Patch
-     Like Needs Checkout, but the CVS server will send a patch rather
-     than the entire file.  Sending a patch or sending an entire file
-     accomplishes the same thing.
-
-Needs Merge
-     Someone else has committed a newer revision to the repository, and
-     you have also made modifications to the file.
-
-File had conflicts on merge
-     This is like Locally Modified, except that a previous `update'
-     command gave a conflict.  If you have not already done so, you
-     need to resolve the conflict as described in *Note Conflicts
-     example::.
-
-Unknown
-     CVS doesn't know anything about this file.  For example, you have
-     created a new file and have not run `add'.
-
-   To help clarify the file status, `status' also reports the `Working
-revision' which is the revision that the file in the working directory
-derives from, and the `Repository revision' which is the latest
-revision in the repository for the branch in use.
-
-   The options to `status' are listed in *Note Invoking CVS::.  For
-information on its `Sticky tag' and `Sticky date' output, see *Note
-Sticky tags::.  For information on its `Sticky options' output, see the
-`-k' option in *Note update options::.
-
-   You can think of the `status' and `update' commands as somewhat
-complementary.  You use `update' to bring your files up to date, and you
-can use `status' to give you some idea of what an `update' would do (of
-course, the state of the repository might change before you actually run
-`update').  In fact, if you want a command to display file status in a
-more brief format than is displayed by the `status' command, you can
-invoke
-
-     $ cvs -n -q update
-
-   The `-n' option means to not actually do the update, but merely to
-display statuses; the `-q' option avoids printing the name of each
-directory.  For more information on the `update' command, and these
-options, see *Note Invoking CVS::.
-
-
-File: cvs.info,  Node: Updating a file,  Next: Conflicts example,  Prev: File status,  Up: Multiple developers
-
-Bringing a file up to date
-==========================
-
-   When you want to update or merge a file, use the `update' command.
-For files that are not up to date this is roughly equivalent to a
-`checkout' command: the newest revision of the file is extracted from
-the repository and put in your working copy of the module.
-
-   Your modifications to a file are never lost when you use `update'.
-If no newer revision exists, running `update' has no effect.  If you
-have edited the file, and a newer revision is available, CVS will merge
-all changes into your working copy.
-
-   For instance, imagine that you checked out revision 1.4 and started
-editing it.  In the meantime someone else committed revision 1.5, and
-shortly after that revision 1.6.  If you run `update' on the file now,
-CVS will incorporate all changes between revision 1.4 and 1.6 into your
-file.
-
-   If any of the changes between 1.4 and 1.6 were made too close to any
-of the changes you have made, an "overlap" occurs.  In such cases a
-warning is printed, and the resulting file includes both versions of
-the lines that overlap, delimited by special markers.  *Note update::,
-for a complete description of the `update' command.
-
-
-File: cvs.info,  Node: Conflicts example,  Next: Informing others,  Prev: Updating a file,  Up: Multiple developers
-
-Conflicts example
-=================
-
-   Suppose revision 1.4 of `driver.c' contains this:
-
-     #include <stdio.h>
+     $ cvs status driver.c
+     ===================================================================
+     File: driver.c          Status: Up-to-date
      
-     void main()
-     {
-         parse();
-         if (nerr == 0)
-             gencode();
-         else
-             fprintf(stderr, "No code generated.\n");
-         exit(nerr == 0 ? 0 : 1);
-     }
+         Version:            1.7.2.1 Sat Dec  5 19:35:03 1992
+         RCS Version:        1.7.2.1 /u/cvsroot/yoyodyne/tc/driver.c,v
+         Sticky Tag:         release-1-0-patches (branch: 1.7.2)
+         Sticky Date:        (none)
+         Sticky Options:     (none)
 
-Revision 1.6 of `driver.c' contains this:
+   The sticky tags will remain on your working files until you delete
+them with `cvs update -A'.  The `-A' option retrieves the version of
+the file from the head of the trunk, and forgets any sticky tags,
+dates, or options.
 
-     #include <stdio.h>
-     
-     int main(int argc,
-              char **argv)
-     {
-         parse();
-         if (argc != 1)
-         {
-             fprintf(stderr, "tc: No args expected.\n");
-             exit(1);
-         }
-         if (nerr == 0)
-             gencode();
-         else
-             fprintf(stderr, "No code generated.\n");
-         exit(!!nerr);
-     }
+   The most common use of sticky tags is to identify which branch one
+is working on, as described in *Note Accessing branches::.  However,
+non-branch sticky tags have uses as well.  For example, suppose that
+you want to avoid updating your working directory, to isolate yourself
+from possibly destabilizing changes other people are making.  You can,
+of course, just refrain from running `cvs update'.  But if you want to
+avoid updating only a portion of a larger tree, then sticky tags can
+help.  If you check out a certain revision (such as 1.4) it will become
+sticky.  Subsequent `cvs update' commands will not retrieve the latest
+revision until you reset the tag with `cvs update -A'.  Likewise, use
+of the `-D' option to `update' or `checkout' sets a "sticky date",
+which, similarly, causes that date to be used for future retrievals.
 
-Your working copy of `driver.c', based on revision 1.4, contains this
-before you run `cvs update':
+   Many times you will want to retrieve an old version of a file
+without setting a sticky tag.  The way to do that is with the `-p'
+option to `checkout' or `update', which sends the contents of the file
+to standard output.  For example, suppose you have a file named `file1'
+which existed as revision 1.1, and you then removed it (thus adding a
+dead revision 1.2).  Now suppose you want to add it again, with the same
+contents it had previously.  Here is how to do it:
 
-     #include <stdlib.h>
-     #include <stdio.h>
-     
-     void main()
-     {
-         init_scanner();
-         parse();
-         if (nerr == 0)
-             gencode();
-         else
-             fprintf(stderr, "No code generated.\n");
-         exit(nerr == 0 ? EXIT_SUCCESS : EXIT_FAILURE);
-     }
-
-You run `cvs update':
-
-     $ cvs update driver.c
-     RCS file: /usr/local/cvsroot/yoyodyne/tc/driver.c,v
-     retrieving revision 1.4
-     retrieving revision 1.6
-     Merging differences between 1.4 and 1.6 into driver.c
-     rcsmerge warning: overlaps during merge
-     cvs update: conflicts found in driver.c
-     C driver.c
-
-CVS tells you that there were some conflicts.  Your original working
-file is saved unmodified in `.#driver.c.1.4'.  The new version of
-`driver.c' contains this:
-
-     #include <stdlib.h>
-     #include <stdio.h>
-     
-     int main(int argc,
-              char **argv)
-     {
-         init_scanner();
-         parse();
-         if (argc != 1)
-         {
-             fprintf(stderr, "tc: No args expected.\n");
-             exit(1);
-         }
-         if (nerr == 0)
-             gencode();
-         else
-             fprintf(stderr, "No code generated.\n");
-     <<<<<<< driver.c
-         exit(nerr == 0 ? EXIT_SUCCESS : EXIT_FAILURE);
-     =======
-         exit(!!nerr);
-     >>>>>>> 1.6
-     }
-
-Note how all non-overlapping modifications are incorporated in your
-working copy, and that the overlapping section is clearly marked with
-`<<<<<<<', `=======' and `>>>>>>>'.
-
-   You resolve the conflict by editing the file, removing the markers
-and the erroneous line.  Suppose you end up with this file:
-     #include <stdlib.h>
-     #include <stdio.h>
-     
-     int main(int argc,
-              char **argv)
-     {
-         init_scanner();
-         parse();
-         if (argc != 1)
-         {
-             fprintf(stderr, "tc: No args expected.\n");
-             exit(1);
-         }
-         if (nerr == 0)
-             gencode();
-         else
-             fprintf(stderr, "No code generated.\n");
-         exit(nerr == 0 ? EXIT_SUCCESS : EXIT_FAILURE);
-     }
-
-You can now go ahead and commit this as revision 1.7.
-
-     $ cvs commit -m "Initialize scanner. Use symbolic exit values." driver.c
-     Checking in driver.c;
-     /usr/local/cvsroot/yoyodyne/tc/driver.c,v  <--  driver.c
-     new revision: 1.7; previous revision: 1.6
+     $ cvs update -p -r 1.1 file1 >file1
+     ===================================================================
+     Checking out file1
+     RCS:  /tmp/cvs-sanity/cvsroot/first-dir/Attic/file1,v
+     VERS: 1.1
+     ***************
+     $ cvs add file1
+     cvs add: re-adding file file1 (in place of dead revision 1.2)
+     cvs add: use 'cvs commit' to add this file permanently
+     $ cvs commit -m test
+     Checking in file1;
+     /tmp/cvs-sanity/cvsroot/first-dir/file1,v  <--  file1
+     new revision: 1.3; previous revision: 1.2
      done
-
-   For your protection, CVS will refuse to check in a file if a
-conflict occurred and you have not resolved the conflict.  Currently to
-resolve a conflict, you must change the timestamp on the file, and must
-also insure that the file contains no conflict markers.  If your file
-legitimately contains conflict markers (that is, occurrences of
-`>>>>>>> ' at the start of a line that don't mark a conflict), then CVS
-has trouble handling this and you need to start hacking on the
-`CVS/Entries' file or other such workarounds.
-
-   If you use release 1.04 or later of pcl-cvs (a GNU Emacs front-end
-for CVS) you can use an Emacs package called emerge to help you resolve
-conflicts.  See the documentation for pcl-cvs.
+     $
 
 
-File: cvs.info,  Node: Informing others,  Next: Concurrency,  Prev: Conflicts example,  Up: Multiple developers
+File: cvs.info,  Node: Branching and merging,  Next: Recursive behavior,  Prev: Revisions,  Up: Top
 
-Informing others about commits
-==============================
+Branching and merging
+*********************
 
-   It is often useful to inform others when you commit a new revision
-of a file.  The `-i' option of the `modules' file, or the `loginfo'
-file, can be used to automate this process.  *Note modules::.  *Note
-loginfo::.  You can use these features of CVS to, for instance,
-instruct CVS to mail a message to all developers, or post a message to
-a local newsgroup.
+   CVS allows you to isolate changes onto a separate line of
+development, known as a "branch".  When you change files on a branch,
+those changes do not appear on the main trunk or other branches.
 
-
-File: cvs.info,  Node: Concurrency,  Next: Watches,  Prev: Informing others,  Up: Multiple developers
-
-Several developers simultaneously attempting to run CVS
-=======================================================
-
-   If several developers try to run CVS at the same time, one may get
-the following message:
-
-     [11:43:23] waiting for bach's lock in /usr/local/cvsroot/foo
-
-   CVS will try again every 30 seconds, and either continue with the
-operation or print the message again, if it still needs to wait.  If a
-lock seems to stick around for an undue amount of time, find the person
-holding the lock and ask them about the cvs command they are running.
-If they aren't running a cvs command, look in the repository directory
-mentioned in the message and remove files which they own whose names
-start with `#cvs.tfl', `#cvs.rfl', or `#cvs.wfl'.
-
-   Note that these locks are to protect CVS's internal data structures
-and have no relationship to the word "lock" in the sense used by
-RCS--which refers to reserved checkouts (*note Multiple developers::.).
-
-   Any number of people can be reading from a given repository at a
-time; only when someone is writing do the locks prevent other people
-from reading or writing.
-
-   One might hope for the following property
-
-     If someone commits some changes in one cvs command,
-     then an update by someone else will either get all the
-     changes, or none of them.
-
-   but CVS does *not* have this property.  For example, given the files
-
-     a/one.c
-     a/two.c
-     b/three.c
-     b/four.c
-
-   if someone runs
-
-     cvs ci a/two.c b/three.c
-
-   and someone else runs `cvs update' at the same time, the person
-running `update' might get only the change to `b/three.c' and not the
-change to `a/two.c'.
-
-
-File: cvs.info,  Node: Watches,  Next: Choosing a model,  Prev: Concurrency,  Up: Multiple developers
-
-Mechanisms to track who is editing files
-========================================
-
-   For many groups, use of CVS in its default mode is perfectly
-satisfactory.  Users may sometimes go to check in a modification only
-to find that another modification has intervened, but they deal with it
-and proceed with their check in.  Other groups prefer to be able to
-know who is editing what files, so that if two people try to edit the
-same file they can choose to talk about who is doing what when rather
-than be surprised at check in time.  The features in this section allow
-such coordination, while retaining the ability of two developers to
-edit the same file at the same time.
-
-   For maximum benefit developers should use `cvs edit' (not `chmod')
-to make files read-write to edit them, and `cvs release' (not `rm') to
-discard a working directory which is no longer in use, but CVS is not
-able to enforce this behavior.
+   Later you can move changes from one branch to another branch (or the
+main trunk) by "merging".  Merging involves first running `cvs update
+-j', to merge the changes into the working directory.  You can then
+commit that revision, and thus effectively copy the changes onto
+another branch.
 
 * Menu:
 
-* Setting a watch::             Telling CVS to watch certain files
-* Getting Notified::            Telling CVS to notify you
-* Editing files::               How to edit a file which is being watched
-* Watch information::           Information about who is watching and editing
-* Watches Compatibility::       Watches interact poorly with CVS 1.6 or earlier
+* Branches motivation::         What branches are good for
+* Creating a branch::           Creating a branch
+* Accessing branches::          Checking out and updating branches
+* Branches and revisions::      Branches are reflected in revision numbers
+* Magic branch numbers::        Magic branch numbers
+* Merging a branch::            Merging an entire branch
+* Merging more than once::      Merging from a branch several times
+* Merging two revisions::       Merging differences between two revisions
+* Merging adds and removals::   What if files are added or removed?
 
 
-File: cvs.info,  Node: Setting a watch,  Next: Getting Notified,  Up: Watches
+File: cvs.info,  Node: Branches motivation,  Next: Creating a branch,  Up: Branching and merging
 
-Telling CVS to watch certain files
-----------------------------------
+What branches are good for
+==========================
 
-   To enable the watch features, you first specify that certain files
-are to be watched.
+   Suppose that release 1.0 of tc has been made.  You are continuing to
+develop tc, planning to create release 1.1 in a couple of months.
+After a while your customers start to complain about a fatal bug.  You
+check out release 1.0 (*note Tags::.) and find the bug (which turns out
+to have a trivial fix).  However, the current revision of the sources
+are in a state of flux and are not expected to be stable for at least
+another month.  There is no way to make a bugfix release based on the
+newest sources.
 
- - Command: cvs watch on [`-lR'] FILES ...
-     Specify that developers should run `cvs edit' before editing
-     FILES.  CVS will create working copies of FILES read-only, to
-     remind developers to run the `cvs edit' command before working on
-     them.
-
-     If FILES includes the name of a directory, CVS arranges to watch
-     all files added to the corresponding repository directory, and
-     sets a default for files added in the future; this allows the user
-     to set notification policies on a per-directory basis.  The
-     contents of the directory are processed recursively, unless the
-     `-l' option is given.  The `-R' option can be used to force
-     recursion if the `-l' option is set in `~/.cvsrc' (*note
-     ~/.cvsrc::.).
-
-     If FILES is omitted, it defaults to the current directory.
-
-
- - Command: cvs watch off [`-lR'] FILES ...
-     Do not provide notification about work on FILES.  CVS will create
-     working copies of FILES read-write.
-
-     The FILES and options are processed as for `cvs watch on'.
-
-
-
-File: cvs.info,  Node: Getting Notified,  Next: Editing files,  Prev: Setting a watch,  Up: Watches
-
-Telling CVS to notify you
--------------------------
-
-   You can tell CVS that you want to receive notifications about
-various actions taken on a file.  You can do this without using `cvs
-watch on' for the file, but generally you will want to use `cvs watch
-on', so that developers use the `cvs edit' command.
-
- - Command: cvs watch add [`-a' ACTION] [`-lR'] FILES ...
-     Add the current user to the list of people to receive notification
-     of work done on FILES.
-
-     The `-a' option specifies what kinds of events CVS should notify
-     the user about.  ACTION is one of the following:
-
-    `edit'
-          Another user has applied the `cvs edit' command (described
-          below) to a file.
-
-    `unedit'
-          Another user has applied the `cvs unedit' command (described
-          below) or the `cvs release' command to a file, or has deleted
-          the file and allowed `cvs update' to recreate it.
-
-    `commit'
-          Another user has committed changes to a file.
-
-    `all'
-          All of the above.
-
-    `none'
-          None of the above.  (This is useful with `cvs edit',
-          described below.)
-
-     The `-a' option may appear more than once, or not at all.  If
-     omitted, the action defaults to `all'.
-
-     The FILES and options are processed as for the `cvs watch'
-     commands.
-
-
- - Command: cvs watch remove [`-a' ACTION] [`-lR'] FILES ...
-     Remove a notification request established using `cvs watch add';
-     the arguments are the same.  If the `-a' option is present, only
-     watches for the specified actions are removed.
-
-
-   When the conditions exist for notification, CVS calls the `notify'
-administrative file.  Edit `notify' as one edits the other
-administrative files (*note Intro administrative files::.).  This file
-follows the usual conventions for administrative files (*note
-syntax::.), where each line is a regular expression followed by a
-command to execute.  The command should contain a single ocurrence of
-`%s' which will be replaced by the user to notify; the rest of the
-information regarding the notification will be supplied to the command
-on standard input.  The standard thing to put in the `notify' file is
-the single line:
-
-     ALL mail %s -s \"CVS notification\"
-
-   This causes users to be notified by electronic mail.
-
-   Note that if you set this up in the straightforward way, users
-receive notifications on the server machine.  One could of course write
-a `notify' script which directed notifications elsewhere, but to make
-this easy, CVS allows you to associate a notification address for each
-user.  To do so create a file `users' in `CVSROOT' with a line for each
-user in the format USER:VALUE.  Then instead of passing the name of the
-user to be notified to `notify', CVS will pass the VALUE (normally an
-email address on some other machine).
-
-   CVS does not notify you for your own changes.  Currently this check
-is done based on whether the user name of the person taking the action
-which triggers notification matches the user name of the person getting
-notification.  In fact, in general, the watches features only track one
-edit by each user.  It probably would be more useful if watches tracked
-each working directory separately, so this behavior might be worth
-changing.
-
-
-File: cvs.info,  Node: Editing files,  Next: Watch information,  Prev: Getting Notified,  Up: Watches
-
-How to edit a file which is being watched
------------------------------------------
-
-   Since a file which is being watched is checked out read-only, you
-cannot simply edit it.  To make it read-write, and inform others that
-you are planning to edit it, use the `cvs edit' command.  Some systems
-call this a "checkout", but CVS uses that term for obtaining a copy of
-the sources (*note Getting the source::.), an operation which those
-systems call a "get" or a "fetch".
-
- - Command: cvs edit [OPTIONS] FILES ...
-     Prepare to edit the working files FILES.  CVS makes the FILES
-     read-write, and notifies users who have requested `edit'
-     notification for any of FILES.
-
-     The `cvs edit' command accepts the same OPTIONS as the `cvs watch
-     add' command, and establishes a temporary watch for the user on
-     FILES; CVS will remove the watch when FILES are `unedit'ed or
-     `commit'ted.  If the user does not wish to receive notifications,
-     she should specify `-a none'.
-
-     The FILES and options are processed as for the `cvs watch'
-     commands.
-
-
-   Normally when you are done with a set of changes, you use the `cvs
-commit' command, which checks in your changes and returns the watched
-files to their usual read-only state.  But if you instead decide to
-abandon your changes, or not to make any changes, you can use the `cvs
-unedit' command.
-
- - Command: cvs unedit [`-lR'] FILES ...
-     Abandon work on the working files FILES, and revert them to the
-     repository versions on which they are based.  CVS makes those
-     FILES read-only for which users have requested notification using
-     `cvs watch on'.  CVS notifies users who have requested `unedit'
-     notification for any of FILES.
-
-     The FILES and options are processed as for the `cvs watch'
-     commands.
-
-     If watches are not in use, the `unedit' command probably does not
-     work, and the way to revert to the repository version is to remove
-     the file and then use `cvs update' to get a new copy.  The meaning
-     is not precisely the same; removing and updating may also bring in
-     some changes which have been made in the repository since the last
-     time you updated.
-
-   When using client/server CVS, you can use the `cvs edit' and `cvs
-unedit' commands even if CVS is unable to succesfully communicate with
-the server; the notifications will be sent upon the next successful CVS
-command.
-
-
-File: cvs.info,  Node: Watch information,  Next: Watches Compatibility,  Prev: Editing files,  Up: Watches
-
-Information about who is watching and editing
----------------------------------------------
-
- - Command: cvs watchers [`-lR'] FILES ...
-     List the users currently watching changes to FILES.  The report
-     includes the files being watched, and the mail address of each
-     watcher.
-
-     The FILES and options are processed as for the `cvs watch'
-     commands.
-
-
- - Command: cvs editors [`-lR'] FILES ...
-     List the users currently working on FILES.  The report includes
-     the mail address of each user, the time when the user began
-     working with the file, and the host and path of the working
-     directory containing the file.
-
-     The FILES and options are processed as for the `cvs watch'
-     commands.
-
+   The thing to do in a situation like this is to create a "branch" on
+the revision trees for all the files that make up release 1.0 of tc.
+You can then make modifications to the branch without disturbing the
+main trunk.  When the modifications are finished you can elect to
+either incorporate them on the main trunk, or leave them on the branch.
 
