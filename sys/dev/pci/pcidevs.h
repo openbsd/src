@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.37 1998/03/17 16:28:14 mickey Exp 
+ *	OpenBSD: pcidevs,v 1.38 1998/03/24 04:00:39 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -161,7 +161,7 @@
 #define	PCI_VENDOR_NEXGEN	0x1074		/* NexGen Microsystems */
 #define	PCI_VENDOR_AIR	0x1075		/* Advanced Integration Research */
 #define	PCI_VENDOR_CHAINTECH	0x1076		/* Chaintech Computer */
-#define	PCI_VENDOR_QLOGIC	0x1077		/* Q Logic */
+#define	PCI_VENDOR_QLOGIC	0x1077		/* QLogic */
 #define	PCI_VENDOR_CYRIX	0x1078		/* Cyrix Corporation */
 #define	PCI_VENDOR_IBUS	0x1079		/* I-Bus */
 #define	PCI_VENDOR_NETWORTH	0x107a		/* NetWorth */
