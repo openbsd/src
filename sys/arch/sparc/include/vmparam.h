@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.11 1999/07/09 21:33:37 art Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.12 1999/11/05 21:19:23 art Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.13 1997/07/12 16:20:03 perry Exp $	*/
 
 /*
@@ -143,13 +143,7 @@
 #define VM_MBUF_SIZE		(NMBCLUSTERS*MCLBYTES)
 #define VM_KMEM_SIZE		(NKMEMCLUSTERS*CLBYTES)
 
-#if defined(UVM)
 #define MACHINE_NEW_NONCONTIG
-#endif
-
-#ifndef MACHINE_NEW_NONCONTIG
-#define MACHINE_NONCONTIG	/* VM <=> pmap interface modifier */
-#endif
 
 #ifdef MACHINE_NEW_NONCONTIG
 
