@@ -1,8 +1,7 @@
 .\"     $NetBSD: awi.4,v 1.1 1999/11/04 19:36:01 sommerfeld Exp $
-.\"	$OpenBSD: awi.4,v 1.2 2000/07/20 08:48:17 deraadt Exp $
+.\"	$OpenBSD: awi.4,v 1.3 2000/10/13 18:56:49 aaron Exp $
 .\"
-.\"
-.\"	$Id: awi.4,v 1.2 2000/07/20 08:48:17 deraadt Exp $
+.\"	$Id: awi.4,v 1.3 2000/10/13 18:56:49 aaron Exp $
 .\"
 .Dd October 31, 1999
 .Dt AWI 4
@@ -12,7 +11,7 @@
 .Nd
 Bay Networks BayStack 650 IEEE 802.11FH PCMCIA driver
 .Sh SYNOPSIS
-.Cd "awi*     at pcmcia? function ?"
+.Cd "awi* at pcmcia? function ?"
 .Sh DESCRIPTION
 The
 .Nm
@@ -25,15 +24,16 @@ All host/device interaction is via this shared memory, which can be
 accessed either via PCMCIA memory space or I/O space.
 The
 .Nm
-driver encapsulates all IP and ARP traffic as 802.11 frames. Transmit
-speed is fixed at 1Mbps.
+driver encapsulates all IP and ARP traffic as 802.11 frames.
+Transmit speed is fixed at 1Mbps.
 .Pp
 The driver currently only works in infrastructure mode, communicating
 with an Access Point which serves as a link-layer bridge between an
 ethernet and the wireless network.
 .Pp
 This card seems to take between 5 and 20 seconds after it has been brought up
-to synchronize with an AP.  When using
+to synchronize with an AP.
+When using
 .Xr dhclient 8
 to automatically configure an address on this card, it may be
 advisable to delay the invocation of dhclient for about 10 seconds
@@ -48,7 +48,8 @@ For more information on configuring this device, see
 Indicates that the driver was not able to allocate 32kb of PCMCIA bus
 address space into which to map the device; the driver will use the
 (slightly slower) i/o-space only access methods to read and write to
-the shared memory.  This message is in some sense to be expected and
+the shared memory.
+This message is in some sense to be expected and
 should not be a cause for alarm.
 See
 .Xr pcmcia 4
@@ -79,9 +80,6 @@ Point recently, and is looking for a new access point.
 The access point the card was most recently associated with has
 forgotten about us.
 .El
-.Sh BUGS
-Doesn't support ad-hoc mode or WEP.
-Round trip times seem higher than what one might expect.
 .Sh SEE ALSO
 .Xr ray 4 ,
 .Xr arp 4 ,
@@ -107,3 +105,6 @@ and ported to
 .Ox
 by
 .An Angelos D. Keromytis Aq angelos@dsl.cis.upenn.edu
+.Sh BUGS
+Doesn't support ad-hoc mode or WEP.
+Round trip times seem higher than what one might expect.

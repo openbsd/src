@@ -1,4 +1,4 @@
-.\" $OpenBSD: ipsec.4,v 1.33 2000/09/29 04:03:18 angelos Exp $
+.\" $OpenBSD: ipsec.4,v 1.34 2000/10/13 18:56:50 aaron Exp $
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
 .\"
@@ -282,8 +282,8 @@ packets that have been or will be processed by
 .Tn IPsec.
 .Pp
 .Xr ipnat 8
-can also be applied to 
-.Nm enc# 
+can also be applied to
+.Nm enc#
 interfaces, but special care should be taken because of the interactions
 between NAT and the IPsec flow matching, especially on the packet output path.
 Inside the TCP/IP stack, packets go through the following stages:
@@ -292,12 +292,12 @@ UL/R -> [X] -> IPF/NAT(enc0) -> IPSec -> IPF/NAT(IF) -> IF
 UL/R <-------- IPF/NAT(enc0) <- IPSec -> IPF/NAT(IF) <- IF
 .Ed
 .Pp
-With 
+With
 .Tn IF
-being the real interface and 
+being the real interface and
 .Tn UL/R
-the Upper Layer or Routing code. 
-The 
+the Upper Layer or Routing code.
+The
 .Tn [X]
 Stage on the output path represents the point where the packet
 is matched against the IPsec flow database (SPD) to determine if and how

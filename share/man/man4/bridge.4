@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bridge.4,v 1.23 2000/08/03 05:04:18 jason Exp $
+.\"	$OpenBSD: bridge.4,v 1.24 2000/10/13 18:56:50 aaron Exp $
 .\"
 .\" Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -39,10 +39,10 @@
 .Cd pseudo-device bridge 2
 .Sh DESCRIPTION
 The
-.Nm bridge
+.Nm
 device creates a logical link between two or more Ethernet interfaces or
 encapsulation interfaces (see
-.Xr enc 4 ).
+.Xr enc 4 ) .
 This link between the interfaces selectively forwards frames from
 each interface on the bridge to every other interface on the bridge.
 A bridge can serve several services, including, isolation of traffic between
@@ -91,7 +91,7 @@ input rules for the source interface are checked with the datagram;
 output rules have no effect.
 .Sh IOCTLS
 A
-.Nm bridge
+.Nm
 interface responds to all of the
 .Xr ioctl 2
 calls specific to other interfaces listed in
@@ -99,7 +99,7 @@ calls specific to other interfaces listed in
 The following
 .Xr ioctl 2
 calls are specific to
-.Nm bridge
+.Nm
 devices.
 They are defined in
 .Aq Pa sys/sockio.h .

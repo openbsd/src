@@ -1,5 +1,5 @@
-.\"	$OpenBSD: aria.4,v 1.3 2000/09/09 17:15:55 deraadt Exp $
-.\"	aria.4
+.\"	$OpenBSD: aria.4,v 1.4 2000/10/13 18:56:48 aaron Exp $
+.\"
 .\" Copyright (c) 1996 Roland C. Dowdeswell
 .\" All rights reserved.
 .\"
@@ -43,25 +43,33 @@ Aria 16 audio device driver
 The
 .Nm
 driver provides support for sound cards based on Sierra Semiconductor's
-Aria chipset.  Cards based on this chipset are capable of recording and
-playing 8- or 16-bit samples in mono or stereo up to 44.1KHz.  Some chipsets
-only play linear or ADCPM, but others will also play Mu-law and A-law
-sounds.  Three different mixer configurations are available.
+Aria chipset.
+Cards based on this chipset are capable of recording and playing
+8- or 16-bit samples in mono or stereo up to 44.1KHz.
+Some chipsets only play linear or ADCPM, but others will also play
+Mu-law and A-law sounds.
+Three different mixer configurations are available.
 .Pp
-The I/O Port Base is selected from 0x280, 0x290, 0x2a0 and 0x2b0. The
-selection method depends on the board. The Aria takes 8 ports.
+The I/O Port Base is selected from 0x280, 0x290, 0x2a0 and 0x2b0.
+The selection method depends on the board.
+The Aria takes 8 ports.
 .Pp
 The IRQ is selected from 10, 11, or 12.
 .Pp
 The DRQ line is chosen from 5 or 6, this driver will work with or without
-a DRQ.  If no DRQ is given, then the
-.Nm aria
+a DRQ.
+If no DRQ is given, then the
+.Nm
 driver will simply use Direct I/O.
 .Pp
 The flags currently supported are 0x1, for the Prometheus Aria 16/Aria 16se.
-This flag tells the driver to initialise the card.  It is a weird undocumented
-piece of horribleness, but the card will not respond until you twiddle with
-the joystick port...
+This flag tells the driver to initialise the card.
+It is a weird and undocumented piece of horribleness, but the card
+will not respond until you twiddle with the joystick port.
+.Sh SEE ALSO
+.Xr audio 4
+.Sh AUTHOR
+Roland C. Dowdeswell <roland@imrryr.org>
 .Sh BUGS
 The driver has only been tested on a Prometheus Aria 16.
 .Pp
@@ -69,14 +77,10 @@ No DMA support, yet, so don't bother setting a DRQ.
 .Pp
 The full-duplex features are horribly inconsistent (i.e., unusable).
 .Pp
-The card sometimes drops out, and needs to be reset.  This can be
-accomplished by opening and closing
+The card sometimes drops out, and needs to be reset.
+This can be accomplished by opening and closing
 .Pa /dev/audio ,
 e.g.,
 .Dq echo -n >/dev/audio
 .Pp
 The joystick and MIDI port interfaces are not supported.
-.Sh SEE ALSO
-.Xr audio 4
-.Sh AUTHOR
-Roland C. Dowdeswell <roland@imrryr.org>

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: audio.4,v 1.12 2000/05/30 17:14:57 mickey Exp $
+.\"	$OpenBSD: audio.4,v 1.13 2000/10/13 18:56:49 aaron Exp $
 .\"	$NetBSD: audio.4,v 1.20 1998/05/28 17:27:15 augustss Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -157,7 +157,7 @@ and
 calls can be used.
 The playing and recording buffers are distinct and must be
 mapped separately if both are to be used.
-Only encodings that are not emulated (i.e. where
+Only encodings that are not emulated (i.e., where
 .Dv AUDIO_ENCODINGFLAG_EMULATED
 is not set) work properly for a mapped device.
 .Pp
@@ -318,7 +318,8 @@ is the maximum value and for
 sets the current audio blocksize.
 The generic audio driver layer and the hardware driver have the
 opportunity to adjust this block size to get it within
-implementation-required limits.  Upon return from an
+implementation-required limits.
+Upon return from an
 .Dv AUDIO_SETINFO
 call, the actual blocksize set is returned in this field.
 Normally the
@@ -571,8 +572,8 @@ commands.
 The
 .Va type
 field identifies the type of this mixer control.
-Enumeration types are typically used for on/off style controls (e.g. a
-mute control) or for input/output device selection (e.g. select
+Enumeration types are typically used for on/off style controls (e.g., a
+mute control) or for input/output device selection (e.g., select
 recording input source from CD, line in, or microphone).
 Set types are similar to enumeration types but any combination
 of the mask bits can be used.
@@ -585,8 +586,8 @@ For example, a mixer level controlling the input gain on the ``line
 in'' circuit would be a class that matches an input class device
 with the name ``Inputs'' (AudioCInputs).
 Mixer controls which control audio circuitry for a particular audio
-source (e.g. line-in, CD in, DAC output) are collected under the input class,
-while those which control all audio sources (e.g. master volume,
+source (e.g., line-in, CD in, DAC output) are collected under the input class,
+while those which control all audio sources (e.g., master volume,
 equalization controls) are under the output class.
 .Pp
 The
@@ -627,20 +628,19 @@ mixer controls because they use a name from one of the AudioC* string values.
 .El
 .Sh SEE ALSO
 .Xr audioctl 1 ,
-.Xr mixerctl 1 .
-.br
+.Xr mixerctl 1 ,
 .Xr ioctl 2 ,
-.Xr ossaudio 3 .
+.Xr ossaudio 3 ,
 .Xr ac97 4 ,
-.Xr audio 9 .
-.br
+.Xr audio 9
+.Pp
 For ports using the ISA bus:
 .Xr gus 4 ,
 .Xr pas 4 ,
 .Xr pss 4 ,
 .Xr sb 4 ,
 .Xr wss 4 .
-.br
+.Pp
 For ports using the PCI bus:
 .Xr cmpci 4 ,
 .Xr eap 4 ,
@@ -655,4 +655,3 @@ If the device is used in
 .Xr mmap 2
 it is currently always mapped for writing (playing) due to
 VM system weirdness.
-.Pp
