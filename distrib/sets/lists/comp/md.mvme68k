@@ -143,3 +143,4 @@
 ./usr/share/man/cat3/kvm_dump_mkheader.0
 ./usr/share/man/cat3/kvm_dump_wrtheader.0
 ./usr/lib/libperl_pic.a
+./usr/include/mvme68k/intr.h

@@ -1,11 +1,6 @@
 ./usr/share/man/cat1/ld.so.0
 ./usr/share/man/cat1/ldd.0
 ./usr/share/man/cat1/rtld.0
-./usr/share/man/cat4/mvme68k/console.0
-./usr/share/man/cat4/mvme68k/intro.0
-./usr/share/man/cat4/mvme68k/kmem.0
-./usr/share/man/cat4/mvme68k/le.0
-./usr/share/man/cat4/mvme68k/mem.0
 ./usr/share/man/cat5/ar.0
 ./usr/share/man/cat5/ranlib.0
 ./usr/share/man/cat8/mvme68k/installboot.0
