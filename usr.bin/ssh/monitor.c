@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: monitor.c,v 1.35 2003/04/01 10:10:23 markus Exp $");
+RCSID("$OpenBSD: monitor.c,v 1.36 2003/04/01 10:22:21 markus Exp $");
 
 #include <openssl/dh.h>
 
@@ -1462,8 +1462,6 @@ mm_get_keystate(struct monitor *pmonitor)
 	Buffer m;
 	u_char *blob, *p;
 	u_int bloblen, plen;
-	u_int32_t seqnr, packets;
-	u_int64_t blocks;
 
 	debug3("%s: Waiting for new keys", __func__);
 
@@ -1493,14 +1491,8 @@ mm_get_keystate(struct monitor *pmonitor)
 	xfree(blob);
 
 	/* Now get sequence numbers for the packets */
-	seqnr = buffer_get_int(&m);
-	blocks = buffer_get_int64(&m);
-	packets = buffer_get_int(&m);
-	packet_set_state(MODE_OUT, seqnr, blocks, packets);
-	seqnr = buffer_get_int(&m);
-	blocks = buffer_get_int64(&m);
-	packets = buffer_get_int(&m);
-	packet_set_state(MODE_IN, seqnr, blocks, packets);
+	packet_set_seqnr(MODE_OUT, buffer_get_int(&m));
+	packet_set_seqnr(MODE_IN, buffer_get_int(&m));
 
  skip:
 	/* Get the key context */

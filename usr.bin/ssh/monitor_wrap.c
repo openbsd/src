@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: monitor_wrap.c,v 1.23 2003/04/01 10:10:23 markus Exp $");
+RCSID("$OpenBSD: monitor_wrap.c,v 1.24 2003/04/01 10:22:21 markus Exp $");
 
 #include <openssl/bn.h>
 #include <openssl/dh.h>
@@ -518,8 +518,6 @@ mm_send_keystate(struct monitor *pmonitor)
 	Buffer m;
 	u_char *blob, *p;
 	u_int bloblen, plen;
-	u_int32_t seqnr, packets;
-	u_int64_t blocks;
 
 	buffer_init(&m);
 
@@ -568,14 +566,8 @@ mm_send_keystate(struct monitor *pmonitor)
 	buffer_put_string(&m, blob, bloblen);
 	xfree(blob);
 
-	packet_get_state(MODE_OUT, &seqnr, &blocks, &packets);
-	buffer_put_int(&m, seqnr);
-	buffer_put_int64(&m, blocks);
-	buffer_put_int(&m, packets);
-	packet_get_state(MODE_OUT, &seqnr, &blocks, &packets);
-	buffer_put_int(&m, seqnr);
-	buffer_put_int64(&m, blocks);
-	buffer_put_int(&m, packets);
+	buffer_put_int(&m, packet_get_seqnr(MODE_OUT));
+	buffer_put_int(&m, packet_get_seqnr(MODE_IN));
 
 	debug3("%s: New keys have been sent", __func__);
  skip:
