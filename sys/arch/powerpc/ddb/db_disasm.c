@@ -1,5 +1,5 @@
 /*	$NetBSD: db_disasm.c,v 1.8 2001/06/12 05:31:44 simonb Exp $	*/
-/*	$OpenBSD: db_disasm.c,v 1.5 2003/02/20 16:48:25 drahn Exp $	*/
+/*	$OpenBSD: db_disasm.c,v 1.6 2003/03/27 17:40:19 drahn Exp $	*/
 /*
  * Copyright (c) 1996 Dale Rahn. All rights reserved.
  *
@@ -481,18 +481,18 @@ char *db_BOBI_cond[] = {
 };
 /* what about prediction directions? */
 char *db_BO_op[] = {
-	"dnz",
-	"dnz",
-	"dz",
-	"dz",
+	"dnzf",
+	"dnzf-",
+	"dzf",
+	"dzf-",
 	"",
 	"",
 	"",
 	"",
-	"dnz",
-	"dnz",
-	"dz",
-	"dz",
+	"dnzt",
+	"dnzt-",
+	"dzt",
+	"dzt-",
 	"",
 	"",
 	"",
@@ -514,6 +514,46 @@ char *db_BO_op[] = {
 	"",
 	""
 };
+
+char *BItbl[] = {
+	"", "gt", "eq", "so"
+};
+
+char BO_uses_tbl[32] = {
+	/* 0 */ 1,
+	/* 1 */ 1,
+	/* 2 */ 1,
+	/* 3 */ 1,
+	/* 4 */ 0,
+	/* 5 */ 0,
+	/* 6 */ 0, /* invalid */
+	/* 7 */ 0, /* invalid */
+	/* 8 */ 1,
+	/* 9 */ 1,
+	/* a */ 1,
+	/* b */ 1,
+	/* c */ 0,
+	/* d */ 0,
+	/* e */ 0, /* invalid */
+	/* f */ 1,
+	/* 10 */        1,
+	/* 11 */        1,
+	/* 12 */        1,
+	/* 13 */        1,
+	/* 14 */        1,
+	/* 15 */        0, /* invalid */
+	/* 16 */        0, /* invalid */
+	/* 17 */        0, /* invalid */
+	/* 18 */        0, /* invalid */
+	/* 19 */        0, /* invalid */
+	/* 1a */        0, /* invalid */
+	/* 1b */        0, /* invalid */
+	/* 1c */        0, /* invalid */
+	/* 1d */        0, /* invalid */
+	/* 1e */        0, /* invalid */
+	/* 1f */        0, /* invalid */
+};
+
 
 void disasm_process_field(u_int32_t addr, instr_t instr, char **ppfmt, char **ppoutput);
 void
@@ -633,22 +673,26 @@ disasm_process_field(u_int32_t addr, instr_t instr, char **ppfmt, char **ppoutpu
 			}
 		}
 		break;
+	case Opf_BI1:
 	case Opf_BI:
 		{
-			u_int BI;
-			BI = extract_field(instr, 31 - 10, 5);
-			if (BI != 0) {
-			pstr += sprintf (pstr, "%d,", BI);
+			int BO, BI, cr, printcomma = 0;
+			BO = extract_field(instr, 31 - 10, 5);
+			BI = extract_field(instr, 31 - 15, 5);
+			cr =  (BI >> 2) & 7;
+			if (cr != 0) {
+				pstr += sprintf (pstr, "cr%d", cr);
+				printcomma = 1;
 			}
-		}
-		break;
-	case Opf_BI1:
-		{
-			u_int BI;
-			BI = extract_field(instr, 31 - 10, 5);
-			if (BI != 0) {
-			pstr += sprintf (pstr, "%d", BI);
+			if (BO_uses_tbl[BO]) {
+				if ((cr != 0) && ((BI & 3) != 0))
+					if (BO_uses_tbl[BO])
+						pstr += sprintf (pstr, "+");
+				pstr += sprintf (pstr, "%s", BItbl[BI & 3]);
+				printcomma = 1;
 			}
+			if ((opf == Opf_BI) && printcomma)
+				pstr += sprintf (pstr, ",");
 		}
 		break;
 	case Opf_BO:
@@ -656,11 +700,14 @@ disasm_process_field(u_int32_t addr, instr_t instr, char **ppfmt, char **ppoutpu
 			int BO,BI;
 			BO = extract_field(instr, 31 - 10, 5);
 			pstr += sprintf (pstr ,"%s", db_BO_op[BO]);
-			if (BO < 8) {
-				BI = extract_field(instr, 31 - 10, 5);
+			if ((BO & 4) != 0) {
+				BI = extract_field(instr, 31 - 15, 5);
 				pstr += sprintf (pstr ,"%s",
-				    db_BOBI_cond[(BI & 0x3)|((BO & 1) << 2)]);
+				    db_BOBI_cond[(BI & 0x3)|
+				    (((BO & 8) >> 1))] );
 
+				if (BO & 1)
+					pstr += sprintf (pstr ,"-");
 			}
 		}
 		break;
