@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgthree.c,v 1.31 2003/06/17 19:47:45 miod Exp $	*/
+/*	$OpenBSD: cgthree.c,v 1.32 2003/06/18 17:35:30 miod Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -49,6 +49,8 @@
 #include <dev/wscons/wsdisplayvar.h>
 #include <dev/wscons/wscons_raster.h>
 #include <dev/rasops/rasops.h>
+#include <machine/fbvar.h>
+
 #include <dev/ic/bt458reg.h>
 
 #define	CGTHREE_CTRL_OFFSET	0x400000
@@ -116,27 +118,19 @@ union bt_cmap {
     bus_space_write_1((sc)->sc_bustag, (sc)->sc_ctrl_regs, (reg), (val))
 
 struct cgthree_softc {
-	struct device sc_dev;
+	struct sunfb sc_sunfb;
 	struct sbusdev sc_sd;
 	bus_space_tag_t sc_bustag;
 	bus_addr_t sc_paddr;
 	bus_space_handle_t sc_ctrl_regs;
 	bus_space_handle_t sc_vid_regs;
 	int sc_nscreens;
-	int sc_width, sc_height, sc_depth, sc_linebytes;
 	union bt_cmap sc_cmap;
-	struct rasops_info sc_rasops;
 	u_int sc_mode;
-	int *sc_crowp, *sc_ccolp;
 };
 
 struct wsscreen_descr cgthree_stdscreen = {
 	"std",
-	0, 0,	/* will be filled in -- XXX shouldn't, it's global. */
-	0,
-	0, 0,
-	WSSCREEN_UNDERLINE | WSSCREEN_HILIT |
-	WSSCREEN_REVERSE | WSSCREEN_WSCOLORS
 };
 
 const struct wsscreen_descr *cgthree_scrlist[] = {
@@ -159,12 +153,10 @@ int cgthree_is_console(int);
 void cgthree_loadcmap(struct cgthree_softc *, u_int, u_int);
 int cg3_bt_putcmap(union bt_cmap *, struct wsdisplay_cmap *);
 int cg3_bt_getcmap(union bt_cmap *, struct wsdisplay_cmap *);
-void cgthree_setcolor(struct cgthree_softc *, u_int,
-    u_int8_t, u_int8_t, u_int8_t);
+void cgthree_setcolor(void *, u_int, u_int8_t, u_int8_t, u_int8_t);
 void cgthree_burner(void *, u_int, u_int);
 void cgthree_reset(struct cgthree_softc *);
 void cgthree_updatecursor(struct rasops_info *);
-static int a2int(char *, int);
 
 struct wsdisplay_accessops cgthree_accessops = {
 	cgthree_ioctl,
@@ -238,15 +230,11 @@ cgthreeattach(parent, self, aux)
 	struct sbus_attach_args *sa = aux;
 	struct wsemuldisplaydev_attach_args waa;
 	int console, i;
-	long defattr;
 
 	sc->sc_bustag = sa->sa_bustag;
 	sc->sc_paddr = sbus_bus_addr(sa->sa_bustag, sa->sa_slot, sa->sa_offset);
 
-	sc->sc_depth = getpropint(sa->sa_node, "depth", 8);
-	sc->sc_linebytes = getpropint(sa->sa_node, "linebytes", 1152);
-	sc->sc_height = getpropint(sa->sa_node, "height", 900);
-	sc->sc_width = getpropint(sa->sa_node, "width", 1152);
+	fb_setsize(&sc->sc_sunfb, 8, 1152, 900, sa->sa_node, 0);
 
 	if (sa->sa_nreg != 1) {
 		printf(": expected %d registers, got %d\n", 1, sa->sa_nreg);
@@ -266,7 +254,7 @@ cgthreeattach(parent, self, aux)
 
 	if (sbus_bus_map(sa->sa_bustag, sa->sa_reg[0].sbr_slot,
 	    sa->sa_reg[0].sbr_offset + CGTHREE_VID_OFFSET,
-	    sc->sc_linebytes * sc->sc_height, BUS_SPACE_MAP_LINEAR,
+	    sc->sc_sunfb.sf_fbsize, BUS_SPACE_MAP_LINEAR,
 	    0, &sc->sc_vid_regs) != 0) {
 		printf(": cannot map vid registers\n");
 		goto fail_vid;
@@ -274,7 +262,7 @@ cgthreeattach(parent, self, aux)
 
 	console = cgthree_is_console(sa->sa_node);
 
-	sbus_establish(&sc->sc_sd, &sc->sc_dev);
+	sbus_establish(&sc->sc_sd, &sc->sc_sunfb.sf_dev);
 
 	cgthree_reset(sc);
 
@@ -284,50 +272,24 @@ cgthreeattach(parent, self, aux)
 
 	cgthree_burner(sc, 1, 0);
 
-	sc->sc_rasops.ri_depth = sc->sc_depth;
-	sc->sc_rasops.ri_stride = sc->sc_linebytes;
-	sc->sc_rasops.ri_flg = RI_CENTER |
-	    (console ? 0 : RI_CLEAR);
-	sc->sc_rasops.ri_bits = (void *)bus_space_vaddr(sc->sc_bustag,
+	sc->sc_sunfb.sf_ro.ri_bits = (void *)bus_space_vaddr(sc->sc_bustag,
 	    sc->sc_vid_regs);
-	sc->sc_rasops.ri_width = sc->sc_width;
-	sc->sc_rasops.ri_height = sc->sc_height;
-	sc->sc_rasops.ri_hw = sc;
+	sc->sc_sunfb.sf_ro.ri_hw = sc;
+	fbwscons_init(&sc->sc_sunfb, console ? 0 : RI_CLEAR);
 
-	rasops_init(&sc->sc_rasops,
-	    a2int(getpropstring(optionsnode, "screen-#rows"), 34),
-	    a2int(getpropstring(optionsnode, "screen-#columns"), 80));
-
-	cgthree_stdscreen.nrows = sc->sc_rasops.ri_rows;
-	cgthree_stdscreen.ncols = sc->sc_rasops.ri_cols;
-	cgthree_stdscreen.textops = &sc->sc_rasops.ri_ops;
-	sc->sc_rasops.ri_ops.alloc_attr(&sc->sc_rasops,
-	    WSCOL_BLACK, WSCOL_WHITE, WSATTR_WSCOLORS, &defattr);
-	sc->sc_rasops.ri_hw = sc;
+	cgthree_stdscreen.capabilities = sc->sc_sunfb.sf_ro.ri_caps;
+	cgthree_stdscreen.nrows = sc->sc_sunfb.sf_ro.ri_rows;
+	cgthree_stdscreen.ncols = sc->sc_sunfb.sf_ro.ri_cols;
+	cgthree_stdscreen.textops = &sc->sc_sunfb.sf_ro.ri_ops;
 
 	printf("\n");
 
-	cgthree_setcolor(sc, WSCOL_BLACK, 0, 0, 0);
-	cgthree_setcolor(sc, 255, 0, 0, 0);
-	cgthree_setcolor(sc, WSCOL_RED, 255, 0, 0);
-	cgthree_setcolor(sc, WSCOL_GREEN, 0, 255, 0);
-	cgthree_setcolor(sc, WSCOL_BROWN, 154, 85, 46);
-	cgthree_setcolor(sc, WSCOL_BLUE, 0, 0, 255);
-	cgthree_setcolor(sc, WSCOL_MAGENTA, 255, 255, 0);
-	cgthree_setcolor(sc, WSCOL_CYAN, 0, 255, 255);
-	cgthree_setcolor(sc, WSCOL_WHITE, 255, 255, 255);
+	fbwscons_setcolormap(&sc->sc_sunfb, cgthree_setcolor);
 
 	if (console) {
-		if (romgetcursoraddr(&sc->sc_crowp, &sc->sc_ccolp))
-			sc->sc_ccolp = sc->sc_crowp = NULL;
-		if (sc->sc_ccolp != NULL)
-			sc->sc_rasops.ri_ccol = *sc->sc_ccolp;
-		if (sc->sc_crowp != NULL)
-			sc->sc_rasops.ri_crow = *sc->sc_crowp;
-		sc->sc_rasops.ri_updatecursor = cgthree_updatecursor;
-
-		wsdisplay_cnattach(&cgthree_stdscreen, &sc->sc_rasops,
-		    sc->sc_rasops.ri_ccol, sc->sc_rasops.ri_crow, defattr);
+		sc->sc_sunfb.sf_ro.ri_updatecursor = cgthree_updatecursor;
+		fbwscons_console_init(&sc->sc_sunfb, &cgthree_stdscreen, -1,
+		    cgthree_burner);
 	}
 
 	waa.console = console;
@@ -367,13 +329,13 @@ cgthree_ioctl(v, cmd, data, flags, p)
 		break;
 	case WSDISPLAYIO_GINFO:
 		wdf = (void *)data;
-		wdf->height = sc->sc_height;
-		wdf->width  = sc->sc_width;
-		wdf->depth  = sc->sc_depth;
+		wdf->height = sc->sc_sunfb.sf_height;
+		wdf->width  = sc->sc_sunfb.sf_width;
+		wdf->depth  = sc->sc_sunfb.sf_depth;
 		wdf->cmsize = 256;
 		break;
 	case WSDISPLAYIO_LINEBYTES:
-		*(u_int *)data = sc->sc_linebytes;
+		*(u_int *)data = sc->sc_sunfb.sf_linebytes;
 		break;
 
 	case WSDISPLAYIO_GETCMAP:
@@ -418,10 +380,10 @@ cgthree_alloc_screen(v, type, cookiep, curxp, curyp, attrp)
 	if (sc->sc_nscreens > 0)
 		return (ENOMEM);
 
-	*cookiep = &sc->sc_rasops;
+	*cookiep = &sc->sc_sunfb.sf_ro;
 	*curyp = 0;
 	*curxp = 0;
-	sc->sc_rasops.ri_ops.alloc_attr(&sc->sc_rasops,
+	sc->sc_sunfb.sf_ro.ri_ops.alloc_attr(&sc->sc_sunfb.sf_ro,
 	    WSCOL_BLACK, WSCOL_WHITE, WSATTR_WSCOLORS, attrp);
 	sc->sc_nscreens++;
 	return (0);
@@ -470,30 +432,18 @@ cgthree_mmap(v, offset, prot)
 			offset -= START;
 		else
 			offset = 0;
-		if (offset >= sc->sc_linebytes * sc->sc_height)
+		if (offset >= sc->sc_sunfb.sf_fbsize)
 			return (-1);
 		return (bus_space_mmap(sc->sc_bustag, sc->sc_paddr,
 		    CGTHREE_VID_OFFSET + offset, prot, BUS_SPACE_MAP_LINEAR));
 	case WSDISPLAYIO_MODE_DUMBFB:
-		if (offset < (sc->sc_linebytes * sc->sc_height))
+		if (offset < sc->sc_sunfb.sf_fbsize)
 			return (bus_space_mmap(sc->sc_bustag, sc->sc_paddr,
 			    CGTHREE_VID_OFFSET + offset, prot,
 			    BUS_SPACE_MAP_LINEAR));
 		break;
 	}
 	return (-1);
-}
-
-static int
-a2int(char *cp, int deflt)
-{
-	int i = 0;
-
-	if (*cp == '\0')
-		return (deflt);
-	while (*cp != '\0')
-		i = i * 10 + *cp++ - '0';
-	return (i);
 }
 
 int
@@ -506,11 +456,9 @@ cgthree_is_console(node)
 }
 
 void
-cgthree_setcolor(sc, index, r, g, b)
-	struct cgthree_softc *sc;
-	u_int index;
-	u_int8_t r, g, b;
+cgthree_setcolor(void *v, u_int index, u_int8_t r, u_int8_t g, u_int8_t b)
 {
+	struct cgthree_softc *sc = v;
 	union bt_cmap *bcm = &sc->sc_cmap;
 
 	bcm->cm_map[index][0] = r;
@@ -671,8 +619,8 @@ cgthree_updatecursor(ri)
 {
 	struct cgthree_softc *sc = ri->ri_hw;
 
-	if (sc->sc_crowp != NULL)
-		*sc->sc_crowp = ri->ri_crow;
-	if (sc->sc_ccolp != NULL)
-		*sc->sc_ccolp = ri->ri_ccol;
+	if (sc->sc_sunfb.sf_crowp != NULL)
+		*sc->sc_sunfb.sf_crowp = ri->ri_crow;
+	if (sc->sc_sunfb.sf_ccolp != NULL)
+		*sc->sc_sunfb.sf_ccolp = ri->ri_ccol;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgsix.c,v 1.41 2003/06/02 18:32:41 jason Exp $	*/
+/*	$OpenBSD: cgsix.c,v 1.42 2003/06/18 17:35:30 miod Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -49,16 +49,12 @@
 #include <dev/wscons/wsdisplayvar.h>
 #include <dev/wscons/wscons_raster.h>
 #include <dev/rasops/rasops.h>
+#include <machine/fbvar.h>
 #include <dev/sbus/cgsixreg.h>
 #include <dev/ic/bt458reg.h>
 
 struct wsscreen_descr cgsix_stdscreen = {
 	"std",
-	0, 0,	/* will be filled in -- XXX shouldn't, it's global. */
-	0,
-	0, 0,
-	WSSCREEN_UNDERLINE | WSSCREEN_HILIT |
-	WSSCREEN_REVERSE | WSSCREEN_WSCOLORS
 };
 
 const struct wsscreen_descr *cgsix_scrlist[] = {
@@ -82,13 +78,11 @@ int cg6_bt_getcmap(union bt_cmap *, struct wsdisplay_cmap *);
 int cg6_bt_putcmap(union bt_cmap *, struct wsdisplay_cmap *);
 void cgsix_loadcmap_immediate(struct cgsix_softc *, u_int, u_int);
 void cgsix_loadcmap_deferred(struct cgsix_softc *, u_int, u_int);
-void cgsix_setcolor(struct cgsix_softc *, u_int,
-    u_int8_t, u_int8_t, u_int8_t);
+void cgsix_setcolor(void *, u_int, u_int8_t, u_int8_t, u_int8_t);
 void cgsix_reset(struct cgsix_softc *, u_int32_t);
 void cgsix_hardreset(struct cgsix_softc *);
 void cgsix_burner(void *, u_int, u_int);
 int cgsix_intr(void *);
-static int a2int(char *, int);
 void cgsix_ras_init(struct cgsix_softc *);
 void cgsix_ras_copyrows(void *, int, int, int);
 void cgsix_ras_copycols(void *, int, int, int, int);
@@ -142,7 +136,6 @@ cgsixattach(parent, self, aux)
 	struct sbus_attach_args *sa = aux;
 	struct wsemuldisplaydev_attach_args waa;
 	int console, i;
-	long defattr;
 	u_int32_t fhc, rev;
 
 	sc->sc_bustag = sa->sa_bustag;
@@ -153,10 +146,7 @@ cgsixattach(parent, self, aux)
 		goto fail;
 	}
 
-	sc->sc_depth = getpropint(sa->sa_node, "depth", 8);
-	sc->sc_linebytes = getpropint(sa->sa_node, "linebytes", 1152);
-	sc->sc_height = getpropint(sa->sa_node, "height", 900);
-	sc->sc_width = getpropint(sa->sa_node, "width", 1152);
+	fb_setsize(&sc->sc_sunfb, 8, 1152, 900, sa->sa_node, 0);
 
 	/*
 	 * Map just BT, FHC, FBC, THC, and video RAM.
@@ -184,7 +174,7 @@ cgsixattach(parent, self, aux)
 
 	if (sbus_bus_map(sa->sa_bustag, sa->sa_reg[0].sbr_slot,
 	    sa->sa_reg[0].sbr_offset + CGSIX_VID_OFFSET,
-	    sc->sc_linebytes * sc->sc_height, BUS_SPACE_MAP_LINEAR,
+	    sc->sc_sunfb.sf_fbsize, BUS_SPACE_MAP_LINEAR,
 	    0, &sc->sc_vid_regs) != 0) {
 		printf(": cannot map vid registers\n");
 		goto fail_vid;
@@ -232,20 +222,10 @@ cgsixattach(parent, self, aux)
 
 	sbus_establish(&sc->sc_sd, self);
 
-	sc->sc_rasops.ri_depth = sc->sc_depth;
-	sc->sc_rasops.ri_stride = sc->sc_linebytes;
-	sc->sc_rasops.ri_flg = RI_CENTER |
-	    (console ? 0 : RI_CLEAR);
-	sc->sc_rasops.ri_bits = (void *)bus_space_vaddr(sc->sc_bustag,
+	sc->sc_sunfb.sf_ro.ri_bits = (void *)bus_space_vaddr(sc->sc_bustag,
 	    sc->sc_vid_regs);
-	sc->sc_rasops.ri_width = sc->sc_width;
-	sc->sc_rasops.ri_height = sc->sc_height;
-	sc->sc_rasops.ri_hw = sc;
-
-	rasops_init(&sc->sc_rasops,
-	    a2int(getpropstring(optionsnode, "screen-#rows"), 34),
-	    a2int(getpropstring(optionsnode, "screen-#columns"), 80));
-	sc->sc_rasops.ri_hw = sc;
+	sc->sc_sunfb.sf_ro.ri_hw = sc;
+	fbwscons_init(&sc->sc_sunfb, console ? 0 : RI_CLEAR);
 
 	/*
 	 * Old rev. cg6 cards do not like the current acceleration code.
@@ -254,48 +234,31 @@ cgsixattach(parent, self, aux)
 	 * will be investigated later.
 	 */
 	if (rev < 5)
-		sc->sc_dev.dv_cfdata->cf_flags |= CG6_CFFLAG_NOACCEL;
+		sc->sc_sunfb.sf_dev.dv_cfdata->cf_flags |= CG6_CFFLAG_NOACCEL;
 
-	if ((sc->sc_dev.dv_cfdata->cf_flags & CG6_CFFLAG_NOACCEL) == 0) {
-		sc->sc_rasops.ri_ops.copyrows = cgsix_ras_copyrows;
-		sc->sc_rasops.ri_ops.copycols = cgsix_ras_copycols;
-		sc->sc_rasops.ri_ops.eraserows = cgsix_ras_eraserows;
-		sc->sc_rasops.ri_ops.erasecols = cgsix_ras_erasecols;
-		sc->sc_rasops.ri_do_cursor = cgsix_ras_do_cursor;
+	if ((sc->sc_sunfb.sf_dev.dv_cfdata->cf_flags & CG6_CFFLAG_NOACCEL)
+	    == 0) {
+		sc->sc_sunfb.sf_ro.ri_ops.copyrows = cgsix_ras_copyrows;
+		sc->sc_sunfb.sf_ro.ri_ops.copycols = cgsix_ras_copycols;
+		sc->sc_sunfb.sf_ro.ri_ops.eraserows = cgsix_ras_eraserows;
+		sc->sc_sunfb.sf_ro.ri_ops.erasecols = cgsix_ras_erasecols;
+		sc->sc_sunfb.sf_ro.ri_do_cursor = cgsix_ras_do_cursor;
 		cgsix_ras_init(sc);
 	}
 
-	cgsix_stdscreen.nrows = sc->sc_rasops.ri_rows;
-	cgsix_stdscreen.ncols = sc->sc_rasops.ri_cols;
-	cgsix_stdscreen.textops = &sc->sc_rasops.ri_ops;
-	sc->sc_rasops.ri_ops.alloc_attr(&sc->sc_rasops,
-	    WSCOL_BLACK, WSCOL_WHITE, WSATTR_WSCOLORS, &defattr);
+	cgsix_stdscreen.capabilities = sc->sc_sunfb.sf_ro.ri_caps;
+	cgsix_stdscreen.nrows = sc->sc_sunfb.sf_ro.ri_rows;
+	cgsix_stdscreen.ncols = sc->sc_sunfb.sf_ro.ri_cols;
+	cgsix_stdscreen.textops = &sc->sc_sunfb.sf_ro.ri_ops;
 
 	printf("\n");
 
-	cgsix_setcolor(sc, WSCOL_BLACK, 0, 0, 0);
-	cgsix_setcolor(sc, WSCOL_RED, 255, 0, 0);
-	cgsix_setcolor(sc, WSCOL_GREEN, 0, 255, 0);
-	cgsix_setcolor(sc, WSCOL_BROWN, 154, 85, 46);
-	cgsix_setcolor(sc, WSCOL_BLUE, 0, 0, 255);
-	cgsix_setcolor(sc, WSCOL_MAGENTA, 255, 255, 0);
-	cgsix_setcolor(sc, WSCOL_CYAN, 0, 255, 255);
-	cgsix_setcolor(sc, WSCOL_WHITE, 255, 255, 255);
-	/* for cursor inversion */
-	cgsix_setcolor(sc, (~WSCOL_WHITE) & 0xff, 0, 0, 0);
-	cgsix_setcolor(sc, (~WSCOL_BLACK) & 0xff, 255, 255, 255);
+	fbwscons_setcolormap(&sc->sc_sunfb, cgsix_setcolor);
 
 	if (console) {
-		if (romgetcursoraddr(&sc->sc_crowp, &sc->sc_ccolp))
-			sc->sc_crowp = sc->sc_ccolp = NULL;
-		if (sc->sc_ccolp != NULL)
-			sc->sc_rasops.ri_ccol = *sc->sc_ccolp;
-		if (sc->sc_crowp != NULL)
-			sc->sc_rasops.ri_crow = *sc->sc_crowp;
-		sc->sc_rasops.ri_updatecursor = cgsix_ras_updatecursor;
-
-		wsdisplay_cnattach(&cgsix_stdscreen, &sc->sc_rasops,
-		    sc->sc_rasops.ri_ccol, sc->sc_rasops.ri_crow, defattr);
+		sc->sc_sunfb.sf_ro.ri_updatecursor = cgsix_ras_updatecursor;
+		fbwscons_console_init(&sc->sc_sunfb, &cgsix_stdscreen, -1,
+		    cgsix_burner);
 	}
 
 	waa.console = console;
@@ -346,8 +309,8 @@ cgsix_ioctl(v, cmd, data, flags, p)
 		break;
 	case WSDISPLAYIO_SMODE:
 		mode = *(u_int *)data;
-		if ((sc->sc_dev.dv_cfdata->cf_flags & CG6_CFFLAG_NOACCEL)
-		    == 0) {
+		if ((sc->sc_sunfb.sf_dev.dv_cfdata->cf_flags &
+		    CG6_CFFLAG_NOACCEL) == 0) {
 			if (sc->sc_mode != WSDISPLAYIO_MODE_EMUL &&
 			    mode == WSDISPLAYIO_MODE_EMUL)
 				cgsix_ras_init(sc);
@@ -356,13 +319,13 @@ cgsix_ioctl(v, cmd, data, flags, p)
 		break;
 	case WSDISPLAYIO_GINFO:
 		wdf = (void *)data;
-		wdf->height = sc->sc_height;
-		wdf->width  = sc->sc_width;
-		wdf->depth  = sc->sc_depth;
+		wdf->height = sc->sc_sunfb.sf_height;
+		wdf->width  = sc->sc_sunfb.sf_width;
+		wdf->depth  = sc->sc_sunfb.sf_depth;
 		wdf->cmsize = 256;
 		break;
 	case WSDISPLAYIO_LINEBYTES:
-		*(u_int *)data = sc->sc_linebytes;
+		*(u_int *)data = sc->sc_sunfb.sf_linebytes;
 		break;
 	case WSDISPLAYIO_GETCMAP:
 		cm = (struct wsdisplay_cmap *)data;
@@ -585,10 +548,10 @@ cgsix_alloc_screen(v, type, cookiep, curxp, curyp, attrp)
 	if (sc->sc_nscreens > 0)
 		return (ENOMEM);
 
-	*cookiep = &sc->sc_rasops;
+	*cookiep = &sc->sc_sunfb.sf_ro;
 	*curyp = 0;
 	*curxp = 0;
-	sc->sc_rasops.ri_ops.alloc_attr(&sc->sc_rasops,
+	sc->sc_sunfb.sf_ro.ri_ops.alloc_attr(&sc->sc_sunfb.sf_ro,
 	    WSCOL_BLACK, WSCOL_WHITE, WSATTR_WSCOLORS, attrp);
 	sc->sc_nscreens++;
 	return (0);
@@ -655,8 +618,7 @@ cgsix_mmap(v, off, prot)
 			if (off < mo->mo_uaddr)
 				continue;
 			u = off - mo->mo_uaddr;
-			sz = mo->mo_size ? mo->mo_size :
-			    sc->sc_linebytes * sc->sc_height;
+			sz = mo->mo_size ? mo->mo_size : sc->sc_sunfb.sf_fbsize;
 			if (u < sz) {
 				return (bus_space_mmap(sc->sc_bustag,
 				    sc->sc_paddr, u + mo->mo_physoff,
@@ -667,7 +629,7 @@ cgsix_mmap(v, off, prot)
 
 	case WSDISPLAYIO_MODE_DUMBFB:
 		/* Allow mapping as a dumb framebuffer from offset 0 */
-		if (off >= 0 && off < (sc->sc_linebytes * sc->sc_height))
+		if (off >= 0 && off < sc->sc_sunfb.sf_fbsize)
 			return (bus_space_mmap(sc->sc_bustag, sc->sc_paddr,
 			    off + CGSIX_VID_OFFSET, prot,
 			    BUS_SPACE_MAP_LINEAR));
@@ -675,18 +637,6 @@ cgsix_mmap(v, off, prot)
 	}
 
 	return (-1);
-}
-
-static int
-a2int(char *cp, int deflt)
-{
-	int i = 0;
-
-	if (*cp == '\0')
-		return (deflt);
-	while (*cp != '\0')
-		i = i * 10 + *cp++ - '0';
-	return (i);
 }
 
 int
@@ -782,11 +732,9 @@ cgsix_loadcmap_immediate(sc, start, ncolors)
 }
 
 void
-cgsix_setcolor(sc, index, r, g, b)
-	struct cgsix_softc *sc;
-	u_int index;
-	u_int8_t r, g, b;
+cgsix_setcolor(void *v, u_int index, u_int8_t r, u_int8_t g, u_int8_t b)
 {
+	struct cgsix_softc *sc = v;
 	union bt_cmap *bcm = &sc->sc_cmap;
 
 	bcm->cm_map[index][0] = r;
@@ -1174,8 +1122,8 @@ cgsix_ras_updatecursor(ri)
 {
 	struct cgsix_softc *sc = ri->ri_hw;
 
-	if (sc->sc_crowp != NULL)
-		*sc->sc_crowp = ri->ri_crow;
-	if (sc->sc_ccolp != NULL)
-		*sc->sc_ccolp = ri->ri_ccol;
+	if (sc->sc_sunfb.sf_crowp != NULL)
+		*sc->sc_sunfb.sf_crowp = ri->ri_crow;
+	if (sc->sc_sunfb.sf_ccolp != NULL)
+		*sc->sc_sunfb.sf_ccolp = ri->ri_ccol;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwtwo.c,v 1.8 2003/06/02 18:32:41 jason Exp $	*/
+/*	$OpenBSD: bwtwo.c,v 1.9 2003/06/18 17:35:30 miod Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -49,37 +49,18 @@
 #include <dev/wscons/wsdisplayvar.h>
 #include <dev/wscons/wscons_raster.h>
 #include <dev/rasops/rasops.h>
+#include <machine/fbvar.h>
 
 #define	BWTWO_CTRL_OFFSET	0x400000
 #define	BWTWO_CTRL_SIZE	(sizeof(u_int32_t) * 8)
 #define	BWTWO_VID_OFFSET	0x800000
 #define	BWTWO_VID_SIZE	(1024 * 1024)
 
-union bt_cmap {
-	u_int8_t cm_map[256][3];	/* 256 r/b/g entries */
-	u_int32_t cm_chip[256 * 3 / 4];	/* the way the chip is loaded */
-};
-
-#define	BT_ADDR		0x00		/* map address register */
-#define	BT_CMAP		0x04		/* colormap data register */
-#define	BT_CTRL		0x08		/* control register */
-#define	BT_OMAP		0x0c		/* overlay (cursor) map register */
 #define	FBC_CTRL	0x10		/* control */
 #define	FBC_STAT	0x11		/* status */
 #define	FBC_START	0x12		/* cursor start */
 #define	FBC_END		0x13		/* cursor end */
 #define	FBC_VCTRL	0x14		/* 12 bytes of timing goo */
-
-#define	BT_WRITE(sc, reg, val) \
-    bus_space_write_4((sc)->sc_bustag, (sc)->sc_ctrl_regs, (reg), (val))
-#define	BT_READ(sc, reg) \
-    bus_space_read_4((sc)->sc_bustag, (sc)->sc_ctrl_regs, (reg))
-#define	BT_BARRIER(sc,reg,flags) \
-    bus_space_barrier((sc)->sc_bustag, (sc)->sc_ctrl_regs, (reg), \
-	sizeof(u_int32_t), (flags))
-
-#define	BT_D4M3(x)	((((x) >> 2) << 1) + ((x) >> 2)) /* (x / 4) * 3 */
-#define	BT_D4M4(x)	((x) & ~3)			 /* (x / 4) * 4 */
 
 #define	FBC_CTRL_IENAB		0x80	/* interrupt enable */
 #define	FBC_CTRL_VENAB		0x40	/* video enable */
@@ -115,25 +96,17 @@ union bt_cmap {
     bus_space_write_1((sc)->sc_bustag, (sc)->sc_ctrl_regs, (reg), (val))
 
 struct bwtwo_softc {
-	struct device sc_dev;
+	struct sunfb sc_sunfb;
 	struct sbusdev sc_sd;
 	bus_space_tag_t sc_bustag;
 	bus_addr_t sc_paddr;
 	bus_space_handle_t sc_ctrl_regs;
 	bus_space_handle_t sc_vid_regs;
 	int sc_nscreens;
-	int sc_width, sc_height, sc_depth, sc_linebytes;
-	union bt_cmap sc_cmap;
-	struct rasops_info sc_rasops;
-	int *sc_crowp, *sc_ccolp;
 };
 
 struct wsscreen_descr bwtwo_stdscreen = {
 	"std",
-	0, 0,	/* will be filled in -- XXX shouldn't, it's global. */
-	0,
-	0, 0,
-	WSSCREEN_UNDERLINE | WSSCREEN_REVERSE
 };
 
 const struct wsscreen_descr *bwtwo_scrlist[] = {
@@ -155,7 +128,6 @@ paddr_t bwtwo_mmap(void *, off_t, int);
 int bwtwo_is_console(int);
 void bwtwo_burner(void *, u_int, u_int);
 void bwtwo_updatecursor(struct rasops_info *);
-static int a2int(char *, int);
 
 struct wsdisplay_accessops bwtwo_accessops = {
 	bwtwo_ioctl,
@@ -200,15 +172,11 @@ bwtwoattach(parent, self, aux)
 	struct sbus_attach_args *sa = aux;
 	struct wsemuldisplaydev_attach_args waa;
 	int console;
-	long defattr;
 
 	sc->sc_bustag = sa->sa_bustag;
 	sc->sc_paddr = sbus_bus_addr(sa->sa_bustag, sa->sa_slot, sa->sa_offset);
 
-	sc->sc_depth = getpropint(sa->sa_node, "depth", 1);
-	sc->sc_linebytes = getpropint(sa->sa_node, "linebytes", 1152);
-	sc->sc_height = getpropint(sa->sa_node, "height", 900);
-	sc->sc_width = getpropint(sa->sa_node, "width", 1152);
+	fb_setsize(&sc->sc_sunfb, 1, 1152, 900, sa->sa_node, 0);
 
 	if (sa->sa_nreg != 1) {
 		printf(": expected %d registers, got %d\n", 1, sa->sa_nreg);
@@ -228,7 +196,7 @@ bwtwoattach(parent, self, aux)
 
 	if (sbus_bus_map(sa->sa_bustag, sa->sa_reg[0].sbr_slot,
 	    sa->sa_reg[0].sbr_offset + BWTWO_VID_OFFSET,
-	    sc->sc_linebytes * sc->sc_height, BUS_SPACE_MAP_LINEAR,
+	    sc->sc_sunfb.sf_fbsize, BUS_SPACE_MAP_LINEAR,
 	    0, &sc->sc_vid_regs) != 0) {
 		printf(": cannot map vid registers\n");
 		goto fail_vid;
@@ -236,42 +204,26 @@ bwtwoattach(parent, self, aux)
 
 	console = bwtwo_is_console(sa->sa_node);
 
-	sbus_establish(&sc->sc_sd, &sc->sc_dev);
+	sbus_establish(&sc->sc_sd, &sc->sc_sunfb.sf_dev);
 
 	bwtwo_burner(sc, 1, 0);
 
-	sc->sc_rasops.ri_depth = sc->sc_depth;
-	sc->sc_rasops.ri_stride = sc->sc_linebytes;
-	sc->sc_rasops.ri_flg = RI_CENTER |
-	    (console ? 0 : RI_CLEAR);
-	sc->sc_rasops.ri_bits = (void *)bus_space_vaddr(sc->sc_bustag,
-	    sc->sc_vid_regs);
-	sc->sc_rasops.ri_width = sc->sc_width;
-	sc->sc_rasops.ri_height = sc->sc_height;
-	sc->sc_rasops.ri_hw = sc;
-	
-	rasops_init(&sc->sc_rasops,
-	    a2int(getpropstring(optionsnode, "screen-#rows"), 34),
-	    a2int(getpropstring(optionsnode, "screen-#columns"), 80));
-
-	bwtwo_stdscreen.nrows = sc->sc_rasops.ri_rows;
-	bwtwo_stdscreen.ncols = sc->sc_rasops.ri_cols;
-	bwtwo_stdscreen.textops = &sc->sc_rasops.ri_ops;
-	sc->sc_rasops.ri_ops.alloc_attr(&sc->sc_rasops, 0, 0, 0, &defattr);
-
 	printf("\n");
 
-	if (console) {
-		if (romgetcursoraddr(&sc->sc_crowp, &sc->sc_ccolp))
-			sc->sc_ccolp = sc->sc_crowp = NULL;
-		if (sc->sc_ccolp != NULL)
-			sc->sc_rasops.ri_ccol = *sc->sc_ccolp;
-		if (sc->sc_crowp != NULL)
-			sc->sc_rasops.ri_crow = *sc->sc_crowp;
-		sc->sc_rasops.ri_updatecursor = bwtwo_updatecursor;
+	sc->sc_sunfb.sf_ro.ri_bits = (void *)bus_space_vaddr(sc->sc_bustag,
+	    sc->sc_vid_regs);
+	sc->sc_sunfb.sf_ro.ri_hw = sc;
+	fbwscons_init(&sc->sc_sunfb, console ? 0 : RI_CLEAR);
+	
+	bwtwo_stdscreen.capabilities = sc->sc_sunfb.sf_ro.ri_caps;
+	bwtwo_stdscreen.nrows = sc->sc_sunfb.sf_ro.ri_rows;
+	bwtwo_stdscreen.ncols = sc->sc_sunfb.sf_ro.ri_cols;
+	bwtwo_stdscreen.textops = &sc->sc_sunfb.sf_ro.ri_ops;
 
-		wsdisplay_cnattach(&bwtwo_stdscreen, &sc->sc_rasops,
-		    sc->sc_rasops.ri_ccol, sc->sc_rasops.ri_crow, defattr);
+	if (console) {
+		sc->sc_sunfb.sf_ro.ri_updatecursor = bwtwo_updatecursor;
+		fbwscons_console_init(&sc->sc_sunfb, &bwtwo_stdscreen, -1,
+		    bwtwo_burner);
 	}
 
 	waa.console = console;
@@ -306,13 +258,13 @@ bwtwo_ioctl(v, cmd, data, flags, p)
 		break;
 	case WSDISPLAYIO_GINFO:
 		wdf = (void *)data;
-		wdf->height = sc->sc_height;
-		wdf->width  = sc->sc_width;
-		wdf->depth  = sc->sc_depth;
+		wdf->height = sc->sc_sunfb.sf_height;
+		wdf->width  = sc->sc_sunfb.sf_width;
+		wdf->depth  = sc->sc_sunfb.sf_depth;
 		wdf->cmsize = 0;
 		break;
 	case WSDISPLAYIO_LINEBYTES:
-		*(u_int *)data = sc->sc_linebytes;
+		*(u_int *)data = sc->sc_sunfb.sf_linebytes;
 		break;
 
 	case WSDISPLAYIO_GETCMAP:
@@ -346,10 +298,11 @@ bwtwo_alloc_screen(v, type, cookiep, curxp, curyp, attrp)
 	if (sc->sc_nscreens > 0)
 		return (ENOMEM);
 
-	*cookiep = &sc->sc_rasops;
+	*cookiep = &sc->sc_sunfb.sf_ro;
 	*curyp = 0;
 	*curxp = 0;
-	sc->sc_rasops.ri_ops.alloc_attr(&sc->sc_rasops, 0, 0, 0, attrp);
+	sc->sc_sunfb.sf_ro.ri_ops.alloc_attr(&sc->sc_sunfb.sf_ro,
+	    0, 0, 0, attrp);
 	sc->sc_nscreens++;
 	return (0);
 }
@@ -389,23 +342,11 @@ bwtwo_mmap(v, offset, prot)
 	if (offset & PGOFSET)
 		return (-1);
 
-	if (offset >= 0 && offset < (sc->sc_linebytes * sc->sc_height))
+	if (offset >= 0 && offset < sc->sc_sunfb.sf_fbsize)
 		return (bus_space_mmap(sc->sc_bustag, sc->sc_paddr,
 		    BWTWO_VID_OFFSET + offset, prot, BUS_SPACE_MAP_LINEAR));
 
 	return (-1);
-}
-
-static int
-a2int(char *cp, int deflt)
-{
-	int i = 0;
-
-	if (*cp == '\0')
-		return (deflt);
-	while (*cp != '\0')
-		i = i * 10 + *cp++ - '0';
-	return (i);
 }
 
 int
@@ -445,8 +386,8 @@ bwtwo_updatecursor(ri)
 {
 	struct bwtwo_softc *sc = ri->ri_hw;
 
-	if (sc->sc_crowp != NULL)
-		*sc->sc_crowp = ri->ri_crow;
-	if (sc->sc_ccolp != NULL)
-		*sc->sc_ccolp = ri->ri_ccol;
+	if (sc->sc_sunfb.sf_crowp != NULL)
+		*sc->sc_sunfb.sf_crowp = ri->ri_crow;
+	if (sc->sc_sunfb.sf_ccolp != NULL)
+		*sc->sc_sunfb.sf_ccolp = ri->ri_ccol;
 }

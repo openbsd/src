@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgsixreg.h,v 1.7 2003/06/02 18:32:41 jason Exp $	*/
+/*	$OpenBSD: cgsixreg.h,v 1.8 2003/06/18 17:35:30 miod Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -264,7 +264,7 @@ union bt_cmap {
 #define	THC_MISC_CYCLS		0x0000000f	/* cycles before transfer */
 
 struct cgsix_softc {
-	struct device sc_dev;
+	struct sunfb sc_sunfb;
 	struct sbusdev sc_sd;
 	bus_space_tag_t sc_bustag;
 	bus_addr_t sc_paddr;
@@ -274,13 +274,10 @@ struct cgsix_softc {
 	bus_space_handle_t sc_tec_regs;
 	bus_space_handle_t sc_vid_regs;
 	bus_space_handle_t sc_fbc_regs;
-	struct rasops_info sc_rasops;
 	int sc_nscreens;
-	int sc_width, sc_height, sc_depth, sc_linebytes;
 	union bt_cmap sc_cmap;
 	void *sc_ih;
 	u_int sc_mode;
-	int *sc_crowp, *sc_ccolp;
 	u_int sc_curs_enabled, sc_curs_fg, sc_curs_bg;
 	struct wsdisplay_curpos sc_curs_pos, sc_curs_hot, sc_curs_size;
 	u_char sc_curs_image[128], sc_curs_mask[128];
