@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tcpdrop.8,v 1.4 2004/04/28 06:35:20 jmc Exp $
+.\"	$OpenBSD: tcpdrop.8,v 1.5 2004/05/24 13:57:31 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Markus Friedl <markus@openbsd.org>
 .\"
@@ -32,11 +32,11 @@ The
 command drops the TCP connection specified by the local address
 .Ar laddr ,
 port
-.Ar laddr
+.Ar lport
 and the foreign address
 .Ar faddr ,
 port
-.Ar faddr .
+.Ar fport .
 Addresses and ports can be specified by name or numeric value.
 .Sh EXAMPLES
 If a connection to
