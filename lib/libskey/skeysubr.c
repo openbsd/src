@@ -9,7 +9,7 @@
  *
  * S/Key misc routines.
  *
- * $OpenBSD: skeysubr.c,v 1.20 2001/06/23 21:03:47 millert Exp $
+ * $OpenBSD: skeysubr.c,v 1.21 2001/11/14 20:53:03 deraadt Exp $
  */
 
 #include <stdio.h>
@@ -18,6 +18,7 @@
 #include <ctype.h>
 #include <signal.h>
 #include <termios.h>
+#include <unistd.h>
 #include <md4.h>
 #include <md5.h>
 #include <sha1.h>
@@ -335,13 +336,12 @@ static void
 trapped(sig)
 	int sig;
 {
-	(void)fputs("^C\n", stderr);
-	(void)fflush(stderr);
+	write(STDERR_FILENO, "^C\n", 3);
 
 	/* Turn on echo if necesary */
 	skey_echo(1);
 
-	exit(-1);
+	_exit(-1);
 }
 
 /*
