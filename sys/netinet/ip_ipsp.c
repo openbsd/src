@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.101 2000/09/19 08:38:59 angelos Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.102 2000/12/15 06:24:03 provos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -451,11 +451,8 @@ handle_expirations(void *arg)
 	if ((tdb->tdb_flags & TDBF_TIMER) &&
 	    (tdb->tdb_exp_timeout <= time.tv_sec))
 	{
-	    /*
-             * If it's an "invalid" TDB or one that hasn't been used
-             * before, do a silent expiration.
-             */
-	    if ((!(tdb->tdb_flags & TDBF_INVALID)) && tdb->tdb_first_use)
+	    /* If it's an "invalid" TDB do a silent expiration. */
+	    if (!(tdb->tdb_flags & TDBF_INVALID))
 	      pfkeyv2_expire(tdb, SADB_EXT_LIFETIME_HARD);
 	    tdb_delete(tdb, 0);
 	    continue;
@@ -475,9 +472,7 @@ handle_expirations(void *arg)
 	if ((tdb->tdb_flags & TDBF_SOFT_TIMER) &&
 	    (tdb->tdb_soft_timeout <= time.tv_sec))
 	{
-            /* If the TDB hasn't been used, don't renew it */
-            if (tdb->tdb_first_use != 0)
-	      pfkeyv2_expire(tdb, SADB_EXT_LIFETIME_SOFT);
+	    pfkeyv2_expire(tdb, SADB_EXT_LIFETIME_SOFT);
 	    tdb->tdb_flags &= ~TDBF_SOFT_TIMER;
 	    tdb_expiration(tdb, TDBEXP_EARLY);
 	}
