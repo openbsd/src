@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_pipe.c,v 1.32 2001/06/05 18:28:18 provos Exp $	*/
+/*	$OpenBSD: sys_pipe.c,v 1.33 2001/06/23 06:04:34 art Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -126,11 +126,6 @@ sys_opipe(p, v, retval)
 	struct file *rf, *wf;
 	struct pipe *rpipe, *wpipe;
 	int fd, error;
-
-	if (pipe_pool == NULL)
-		pipe_pool = pool_create(sizeof(struct pipe), 0, 0, 0, "pipepl",
-			0, pool_page_alloc_nointr, pool_page_free_nointr,
-			M_PIPE);
 
 	rpipe = pool_get(pipe_pool, PR_WAITOK);
 	pipeinit(rpipe);
@@ -888,3 +883,12 @@ filt_pipewrite(struct knote *kn, long hint)
 
 	return (kn->kn_data >= PIPE_BUF);
 }
+
+void
+pipe_init()
+{
+	pipe_pool = pool_create(sizeof(struct pipe), 0, 0, 0, "pipepl",
+		0, pool_page_alloc_nointr, pool_page_free_nointr,
+		M_PIPE);
+}
+
