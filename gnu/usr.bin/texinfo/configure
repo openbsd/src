@@ -3579,7 +3579,7 @@ fi
    if test $ac_aux_dir; then
      MKINSTALLDIRS="sh -x $ac_aux_dir/mkinstalldirs"
    fi
-   if test -z $MKINSTALLDIRS; then
+   if test -z "$MKINSTALLDIRS"; then
      MKINSTALLDIRS="sh -x \$(top_srcdir)/mkinstalldirs"
    fi
    
