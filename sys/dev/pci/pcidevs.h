@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	MOpenBSD: pcidevs,v 1.199 1999/12/04 20:28:28 aaron Exp 
+ *	MOpenBSD: pcidevs,v 1.201 1999/12/10 01:47:51 jason Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -502,6 +502,7 @@
 #define	PCI_VENDOR_ENSONIQ	0x1274		/* Ensoniq */
 #define	PCI_VENDOR_NETAPP	0x1275		/* Network Appliance */
 #define	PCI_VENDOR_ROCKWELL	0x127a		/* Rockwell Semiconductor Systems */
+#define	PCI_VENDOR_DAVICOM	0x1282		/* Davicom Technologies */
 #define	PCI_VENDOR_LUXSONOR	0x1287		/* LuxSonor */
 #define	PCI_VENDOR_TRITECH	0x1292		/* TriTech Microelectronics */
 #define	PCI_VENDOR_KOFAX	0x1296		/* Kofax Image Products */
@@ -845,6 +846,10 @@
 
 /* D-Link products */
 #define	PCI_PRODUCT_DLINK_550TX	0x1002		/* 550TX */
+
+/* Davicom Technologies */
+#define	PCI_PRODUCT_DAVICOM_DM9100	0x9100		/* DM9100 */
+#define	PCI_PRODUCT_DAVICOM_DM9102	0x9102		/* DM9102 */
 
 /* DEC products */
 #define	PCI_PRODUCT_DEC_21050	0x0001		/* DECchip 21050 PCI-PCI */

@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	MOpenBSD: pcidevs,v 1.199 1999/12/04 20:28:28 aaron Exp 
+ *	MOpenBSD: pcidevs,v 1.201 1999/12/10 01:47:51 jason Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -1303,6 +1303,18 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "D-Link Systems",
 	    "550TX",
+	},
+	{
+	    PCI_VENDOR_DAVICOM, PCI_PRODUCT_DAVICOM_DM9100,
+	    0,
+	    "Davicom Technologies",
+	    "DM9100",
+	},
+	{
+	    PCI_VENDOR_DAVICOM, PCI_PRODUCT_DAVICOM_DM9102,
+	    0,
+	    "Davicom Technologies",
+	    "DM9102",
 	},
 	{
 	    PCI_VENDOR_DEC, PCI_PRODUCT_DEC_21050,
@@ -6918,6 +6930,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_ROCKWELL, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Rockwell Semiconductor Systems",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_DAVICOM, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "Davicom Technologies",
 	    NULL,
 	},
 	{
