@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.26 1998/02/20 14:46:18 niklas Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.27 1998/05/17 19:38:43 deraadt Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -73,19 +73,57 @@
 
 void stop __P((struct proc *p));
 void killproc __P((struct proc *, char *));
+int cansignal __P((struct proc *, struct pcred *, struct proc *, int));
 
 /*
  * Can process p, with pcred pc, send the signal signum to process q?
  */
-#define CANSIGNAL(p, pc, q, signum) \
-	((pc)->pc_ucred->cr_uid == 0 || \
-	    (pc)->p_ruid == (q)->p_cred->p_ruid || \
-	    (pc)->p_ruid == (q)->p_cred->p_svuid || \
-	    (pc)->pc_ucred->cr_uid == (q)->p_cred->p_ruid || \
-	    (pc)->pc_ucred->cr_uid == (q)->p_cred->p_svuid || \
-	    (pc)->p_ruid == (q)->p_ucred->cr_uid || \
-	    (pc)->pc_ucred->cr_uid == (q)->p_ucred->cr_uid || \
-	    ((signum) == SIGCONT && (q)->p_session == (p)->p_session))
+int
+cansignal(p, pc, q, signum)
+	struct proc *p;
+	struct pcred *pc;
+	struct proc *q;
+	int signum;
+{
+	if (pc->pc_ucred->cr_uid == 0)
+		return (1);		/* root can always signal */
+
+	if (signum == SIGCONT && q->p_session == p->p_session)
+		return (1);		/* SIGCONT in session */
+
+	/*
+	 * Using kill(), only certain signals can be sent to setugid
+	 * child processes
+	 */
+	if (q->p_flag & P_SUGID) {
+		switch (signum) {
+		case SIGKILL:
+		case SIGINT:
+		case SIGTERM:
+		case SIGSTOP:
+			if (pc->p_ruid == q->p_cred->p_ruid ||
+			    pc->pc_ucred->cr_uid == q->p_cred->p_ruid ||
+			    pc->p_ruid == q->p_ucred->cr_uid ||
+			    pc->pc_ucred->cr_uid == q->p_ucred->cr_uid)
+				return (1);
+		}
+		return (0);
+	}
+
+	/* XXX
+	 * because the P_SUGID test exists, this has extra tests which
+	 * could be removed.
+	 */
+	if (pc->p_ruid == q->p_cred->p_ruid ||
+	    pc->p_ruid == q->p_cred->p_svuid ||
+	    pc->pc_ucred->cr_uid == q->p_cred->p_ruid ||
+	    pc->pc_ucred->cr_uid == q->p_cred->p_svuid ||
+	    pc->p_ruid == q->p_ucred->cr_uid ||
+	    pc->pc_ucred->cr_uid == q->p_ucred->cr_uid)
+		return (1);
+	return (0);
+}
+
 
 /* ARGSUSED */
 int
@@ -433,7 +471,7 @@ sys_kill(cp, v, retval)
 		/* kill single process */
 		if ((p = pfind(SCARG(uap, pid))) == NULL)
 			return (ESRCH);
-		if (!CANSIGNAL(cp, pc, p, SCARG(uap, signum)))
+		if (!cansignal(cp, pc, p, SCARG(uap, signum)))
 			return (EPERM);
 		if (SCARG(uap, signum))
 			psignal(p, SCARG(uap, signum));
@@ -470,7 +508,7 @@ killpg1(cp, signum, pgid, all)
 		 */
 		for (p = allproc.lh_first; p != 0; p = p->p_list.le_next) {
 			if (p->p_pid <= 1 || p->p_flag & P_SYSTEM || 
-			    p == cp || !CANSIGNAL(cp, pc, p, signum))
+			    p == cp || !cansignal(cp, pc, p, signum))
 				continue;
 			nfound++;
 			if (signum)
@@ -489,7 +527,7 @@ killpg1(cp, signum, pgid, all)
 		}
 		for (p = pgrp->pg_members.lh_first; p != 0; p = p->p_pglist.le_next) {
 			if (p->p_pid <= 1 || p->p_flag & P_SYSTEM ||
-			    !CANSIGNAL(cp, pc, p, signum))
+			    !cansignal(cp, pc, p, signum))
 				continue;
 			nfound++;
 			if (signum)
