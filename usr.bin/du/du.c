@@ -1,4 +1,4 @@
-/*	$OpenBSD: du.c,v 1.9 2001/07/12 05:17:00 deraadt Exp $	*/
+/*	$OpenBSD: du.c,v 1.10 2001/07/30 00:53:38 deraadt Exp $	*/
 /*	$NetBSD: du.c,v 1.11 1996/10/18 07:20:35 thorpej Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)du.c	8.5 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$OpenBSD: du.c,v 1.9 2001/07/12 05:17:00 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: du.c,v 1.10 2001/07/30 00:53:38 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -305,7 +305,7 @@ prtout(size, path, hflag)
 		unit = unit_adjust(&bytes);
 
 		if (bytes == 0)
-			(void)printf("     0B\t%s\n", path);
+			(void)printf("0B\t%s\n", path);
 		else if (bytes > 10)
 			(void)printf("%.0f%c\t%s\n", bytes, "BKMGTPE"[unit], path);
 		else
