@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pppoe.8,v 1.1.1.1 2000/06/18 07:30:41 jason Exp $
+.\"	$OpenBSD: pppoe.8,v 1.2 2000/06/20 05:06:26 jason Exp $
 .\"
 .\" Copyright (c) 2000 Network Security Technologies, Inc.
 .\" (http://www.netsec.net)
@@ -106,18 +106,15 @@ Additionally, the authentication mechanism for the connection
 must be specified as well as any other parameters.
 .Sh SEE ALSO
 .Xr ppp 8
+.Rs
+.%T RFC2516 A Method for Transmitting PPP Over Ethernet (PPPoE)
+.%A L. Mamakos, et al.
+.Re
 .Sh HISTORY
 This implementation of
 .Nm pppoe
 first appeared in
 .Ox 2.8 .
-.Sh BUGS
-This is software runs completely in user mode.  As such it will have much
-more overhead than a kernel implementation.
-.Pp
-The
-.Ar service
-is not currently used by the server code.
 .Sh AUTHOR
 The
 .Nm pppoe
@@ -127,3 +124,10 @@ program was written by
 of
 .An Network Security Technologies, Inc.
 .Aq http://www.netsec.net .
+.Sh BUGS
+This is software runs completely in user mode.  As such it will have much
+more overhead than a kernel implementation.
+.Pp
+The
+.Ar service
+is not currently used by the server code.
