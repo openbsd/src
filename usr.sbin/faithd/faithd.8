@@ -1,5 +1,5 @@
-.\"	$OpenBSD: faithd.8,v 1.16 2001/06/23 05:57:09 deraadt Exp $
-.\"	$KAME: faithd.8,v 1.28 2001/04/25 11:24:15 itojun Exp $
+.\"	$OpenBSD: faithd.8,v 1.17 2001/06/30 01:05:23 itojun Exp $
+.\"	$KAME: faithd.8,v 1.31 2001/06/30 00:57:01 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
 .\" All rights reserved.
@@ -332,9 +332,9 @@ on error.
 .%A Jun-ichiro itojun Hagino
 .%A Kazu Yamamoto
 .%T "An IPv6-to-IPv4 transport relay translator"
-.%R internet draft
-.%N draft-ietf-ngtrans-tcpudp-relay-04.txt
-.%O work in progress material
+.%B RFC3142
+.%O ftp://ftp.isi.edu/in-notes/rfc3142.txt
+.%D June 2001
 .Re
 .\"
 .Sh HISTORY
@@ -346,8 +346,8 @@ command first appeared in WIDE Hydrangea IPv6 protocol stack kit.
 It is very insecure to use
 .Xr rhosts 5
 and other IP-address based authentication, for connections relayed by
-.Nm
-.Pq and any other TCP relaying services .
+.Nm Ns ,
+and any other TCP relaying services.
 .Pp
 Administrators are advised to limit accesses to
 .Nm
