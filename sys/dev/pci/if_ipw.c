@@ -1,4 +1,4 @@
-/*	$Id: if_ipw.c,v 1.6 2004/10/27 21:15:17 damien Exp $  */
+/*	$Id: if_ipw.c,v 1.7 2004/10/27 21:16:45 damien Exp $  */
 
 /*-
  * Copyright (c) 2004
@@ -874,7 +874,7 @@ ipw_watchdog(struct ifnet *ifp)
 int
 ipw_get_table1(struct ipw_softc *sc, u_int32_t *tbl)
 {
-	u_int32_t addr, data, size, i;
+	u_int32_t i, size, buf[256];
 
 	if (!(sc->flags & IPW_FLAG_FW_INITED))
 		return ENOTTY;
@@ -882,42 +882,22 @@ ipw_get_table1(struct ipw_softc *sc, u_int32_t *tbl)
 	CSR_WRITE_4(sc, IPW_CSR_AUTOINC_ADDR, sc->table1_base);
 
 	size = CSR_READ_4(sc, IPW_CSR_AUTOINC_DATA);
-	if (copyout(&size, tbl, sizeof size) != 0)
-		return EFAULT;
+	for (i = 1; i < size; i++)
+		buf[i] = MEM_READ_4(sc, CSR_READ_4(sc, IPW_CSR_AUTOINC_DATA));
 
-	for (i = 1, ++tbl; i < size; i++, tbl++) {
-		addr = CSR_READ_4(sc, IPW_CSR_AUTOINC_DATA);
-		data = MEM_READ_4(sc, addr);
-		if (copyout(&data, tbl, sizeof data) != 0)
-			return EFAULT;
-	}
-	return 0;
+	return copyout(buf, tbl, size * sizeof (u_int32_t));
 }
 
 int
 ipw_get_radio(struct ipw_softc *sc, int *ret)
 {
-	u_int32_t addr;
 	int val;
 
 	if (!(sc->flags & IPW_FLAG_FW_INITED))
 		return ENOTTY;
 
-	addr = ipw_read_table1(sc, IPW_INFO_EEPROM_ADDRESS);
-	if ((MEM_READ_4(sc, addr + 32) >> 24) & 1) {
-		val = -1;
-		copyout(&val, ret, sizeof val);
-		return 0;
-	}
-
-	if (CSR_READ_4(sc, IPW_CSR_IO) & IPW_IO_RADIO_DISABLED)
-		val = 0;
-	else
-		val = 1;
-		
-	copyout(&val, ret, sizeof val);
-
-	return 0;
+	val = (CSR_READ_4(sc, IPW_CSR_IO) & IPW_IO_RADIO_DISABLED) ? 0 : 1;
+	return copyout(&val, ret, sizeof val);
 }
 
 int

@@ -1,4 +1,4 @@
-/*      $Id: if_ipwreg.h,v 1.2 2004/10/27 21:10:22 damien Exp $ */
+/*      $Id: if_ipwreg.h,v 1.3 2004/10/27 21:16:45 damien Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -100,7 +100,6 @@
 #define IPW_INFO_CARD_DISABLED		628
 #define IPW_INFO_CURRENT_CHANNEL	756
 #define IPW_INFO_CURRENT_TX_RATE	768
-#define IPW_INFO_EEPROM_ADDRESS		816
 
 /* table2 offsets */
 #define IPW_INFO_ADAPTER_MAC	8
