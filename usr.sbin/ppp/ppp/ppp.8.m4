@@ -25,7 +25,7 @@ changecom(,)dnl
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $OpenBSD: ppp.8.m4,v 1.22 2005/03/10 09:35:10 jmc Exp $
+.\" $OpenBSD: ppp.8.m4,v 1.23 2005/03/29 20:23:48 jmc Exp $
 .\"
 .Dd September 20, 1995
 .Dt PPP 8
@@ -789,16 +789,23 @@ the user account by the same name, and the
 .Sq ~
 character by itself is substituted with the full path to the home directory
 of the current user.
+Any characters following a
+.Sq #
+character are ignored.
 To include a literal
-.Sq $
+.Sq $ ,
+.Sq ~ ,
 or
-.Sq ~
+.Sq #
 character in a command or argument, escape it with a
 .Sq \e
+character or quote the command/argument using the
+.Sq \&"
 character.
 For example:
 .Pp
 .Dl set password pa\e$ss\e~word
+.Dl set password \&"user#1234@example.net\&"
 .El
 .Pp
 The
