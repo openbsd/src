@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.8 1997/11/05 09:36:22 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.9 1998/05/28 16:48:47 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.5 1996/03/19 03:21:38 jtc Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	5.5 (Berkeley) 5/24/93";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.8 1997/11/05 09:36:22 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.9 1998/05/28 16:48:47 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -297,7 +297,7 @@ create_file_names()
     if (tmpdir == 0) tmpdir = "/tmp";
 
     len = strlen(tmpdir);
-    i = len + 13;
+    i = len + strlen(temp_form) + 1;
     if (len && tmpdir[len-1] != '/')
 	++i;
 
