@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.61 2001/09/28 20:50:07 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.62 2001/10/28 00:59:02 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -115,7 +115,6 @@
 #else
 #define DEBUG_MSG printf
 #endif /* DDB */
-static int waittime = -1;
 
 struct intrhand *intr_handlers[256];
 vm_offset_t interrupt_stack[MAX_CPUS] = {0};
@@ -1079,32 +1078,28 @@ __dead void
 boot(howto)
 	register int howto;
 {
+	/* take a snap shot before clobbering any registers */
+	if (curproc && curproc->p_addr)
+		savectx(curpcb);
+
 	/* If system is cold, just halt. */
 	if (cold) {
 		howto |= RB_HALT;
 		goto haltsys;
 	}
 
-	/* take a snap shot before clobbering any registers */
-	if (curproc && curproc->p_addr)
-		savectx(curpcb);
-
 	boothowto = howto;
-	if ((howto & RB_NOSYNC) == 0 && waittime < 0) {
-		extern struct proc proc0;
-
-		/* protect against curproc->p_stats.foo refs in sync()   XXX */
-		if (curproc == NULL)
-			curproc = &proc0;
-
-		waittime = 0;
+	if ((howto & RB_NOSYNC) == 0) {
 		vfs_shutdown();
-
 		/*
 		 * If we've been adjusting the clock, the todr
-		 * will be out of synch; adjust it now.
+		 * will be out of synch; adjust it now unless
+		 * the system was sitting in ddb.
 		 */
-		resettodr();
+		if ((howto & RB_TIMEBAD) == 0)
+			resettodr();
+		else
+			printf("WARNING: not updating battery clock\n");
 	}
 
 	/* Disable interrupts. */
