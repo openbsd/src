@@ -1,4 +1,4 @@
-$OpenBSD: README,v 1.11 1997/10/17 15:03:16 weingart Exp $
+$OpenBSD: README,v 1.12 1998/02/24 22:06:37 weingart Exp $
 
 # hmm, no copyright
 
@@ -129,10 +129,6 @@ for that drive and other info. APM connect info is passed as well not in
 that apm0 structure, so apm0 will become a slave on bios0 soon.
 To get your /boot installed properly on a hardrive you have to load /bsd
 from that hd/partition (since only boot drive geometry is passed).
-The passed geometry will be used for all the drives, if you
-will try to installboot on other disks (floppies and pseudo-disks will
-honor the disklabel), that might be useful on some bioses,
-esp. SCSI HAs which use fixed translated geometry for all the drives.
 
 
 Mon Oct 13 16:41:18 CDT 1997
@@ -143,4 +139,13 @@ memory map.  Resort to the old invasive probe if all else fails.  Add
 preliminary support for passing a memory map to the kernel, instead of
 cnvmem/extmem.  This should make weird boards easier to support in the
 future.
+
+
+Tue Jan  6 19:51:43 CST 1998
+----------------------------
+
+Query and pass PCI BIOS information to the kernel.  This should help in
+determening the correct configuration mode to use.  Pass in cnvmem/extmem
+as the user sets the amount of memory with the 'set memory' command, or
+the amount calculated by the memory find/probe routines.
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: debug_i386.S,v 1.7 1997/09/18 18:38:00 mickey Exp $	*/
+/*	$OpenBSD: debug_i386.S,v 1.8 1998/02/24 22:06:48 weingart Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -52,11 +52,11 @@ alltraps:
 #ifdef DEBUG
 	movl	$0xb8280, %edi
 	movl	0x0c*4(%esp), %eax	# trapno
-	addb	$'@', %al
+	addb	$'0', %al
 	movb	$0x17, %ah
 	shll	$16, %eax
 	movb	0x0d*4(%esp), %al	# error
-	addl	$' ', %al
+	addl	$'0', %al
 	movb	$0x17, %ah
 	movl	%ax, (%edi)
 	hlt
@@ -73,6 +73,7 @@ alltraps:
 	popl	%ds
 	popal
 	addl	$0x8, %esp
+	hlt
 	iret
 
 ENTRY(check_regs)
@@ -98,8 +99,8 @@ ENTRY(check_regs)
 	movl		%ss,  %eax; stosl # %ss
 	movl	0x04*4(%esp), %eax; stosl # %ds
 	movl	0x03*4(%esp), %eax; stosl # %es
-	movl	0x02*4(%esp), %eax; stosl # %ds
-	movl	0x01*4(%esp), %eax; stosl # %es
+	movl	0x02*4(%esp), %eax; stosl # %fs
+	movl	0x01*4(%esp), %eax; stosl # %gs
 
 #ifdef DEBUG
 	movl	$0xb8288, %edi

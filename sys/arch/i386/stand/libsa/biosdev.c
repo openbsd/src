@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosdev.c,v 1.49 1997/11/30 21:51:38 mickey Exp $	*/
+/*	$OpenBSD: biosdev.c,v 1.50 1998/02/24 22:06:46 weingart Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -89,9 +89,8 @@ bios_getdiskinfo(dev, pdi)
 {
 	u_int rv;
 
-	rv = biosdreset(dev);
-	if(rv)
-		return(1);
+	/* Just reset, don't check return code */
+	biosdreset(dev);
 
 #ifdef BIOS_DEBUG
 	printf("getinfo: try #8, %x,%p\n", dev, pdi);
@@ -105,16 +104,19 @@ bios_getdiskinfo(dev, pdi)
 			    "=b" (pdi->bios_sectors)
 			  : "0" (0x0800), "1" (dev) : "cc");
 
+#ifdef BIOS_DEBUG
+	printf("getinfo: got #8\n");
+	printf("disk 0x%x: %d,%d,%d\n", dev, pdi->bios_cylinders,
+		pdi->bios_heads, pdi->bios_sectors);
+#endif
+	if (rv & 0xff)
+		return(1);
+
 	/* Fix up info */
 	pdi->bios_number = dev;
 	pdi->bios_heads++;
 	pdi->bios_cylinders &= 0x3ff;
 	pdi->bios_cylinders++;
-#ifdef BIOS_DEBUG
-	printf("getinfo: got #8\n");
-#endif
-	if (rv & 0xff || !pdi->bios_cylinders)
-		return(1);
 
 #if 0
 	/* NOTE:
@@ -144,7 +146,7 @@ bios_getdiskinfo(dev, pdi)
 	/*
 	 * NOTE: This seems to hang on certain machines.  Use function #8
 	 * first, and verify with #21 IFF #8 succeeds first.
-	 * don't try this for a:
+	 * Do not try this for floppy 0 (to support CD-ROM boot).
 	 */
 	if (dev) {
 		__asm __volatile (DOINT(0x13) "; setc %b0"
@@ -154,6 +156,14 @@ bios_getdiskinfo(dev, pdi)
 		if(rv & 0xff)
 			return(1);
 	}
+
+	/* XXX - Sanity check */
+	if (!pdi->bios_cylinders || !pdi->bios_heads || !pdi->bios_sectors)
+		return(1);
+
+	/* CD-ROMs sometimes return heads == 1 */
+	if (pdi->bios_heads < 2)
+		return(1);
 
 	return(0);
 }
@@ -287,6 +297,10 @@ bios_getdisklabel(bd, label)
 	struct dos_mbr mbr;
 	int cyl, head, sect;
 	int error, i;
+
+	/* XXX - Sanity check */
+	if(bd->bios_heads == 0 || bd->bios_sectors == 0)
+		return("failed to read disklabel");
 
 	/* Read MBR */
 	btochs(DOSBBSECTOR, cyl, head, sect, bd->bios_heads, bd->bios_sectors);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: memprobe.c,v 1.25 1997/11/30 21:51:47 mickey Exp $	*/
+/*	$OpenBSD: memprobe.c,v 1.26 1998/02/24 22:06:56 weingart Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner, Michael Shalayeff
@@ -37,9 +37,32 @@
 #include <stand/boot/bootarg.h>
 #include "libsa.h"
 
-static int addrprobe __P((u_int));
 u_int cnvmem, extmem;		/* XXX - compatibility */
 bios_memmap_t *memory_map;
+
+
+/* Check gateA20
+ *
+ * A sanity check.
+ */
+static __inline int
+checkA20(void)
+{
+	char *p = (char *)0x100000;
+	char *q = (char *)0x000000;
+	int st;
+
+	/* Simple check */
+	if(*p != *q)
+		return(1);
+
+	/* Complex check */
+	*p = ~(*p);
+	st = (*p != *q);
+	*p = ~(*p);
+
+	return(st);
+}
 
 /* BIOS int 15, AX=E820
  *
@@ -283,14 +306,23 @@ memprobe()
 	/* XXX - Compatibility, remove later */
 	extmem = cnvmem = 0;
 	for(im = bm; im->type != BIOS_MAP_END; im++) {
-		if (im->type == BIOS_MAP_FREE) {
+		/* Count only "good" memory chunks 4K an up in size */
+		if ((im->type == BIOS_MAP_FREE) && (im->size >= 4)) {
 			printf(" %luK", (u_long)im->size);
 
-			if(im->addr < 0x100000)
+			/* We ignore "good" memory in the 640K-1M hole */
+			if(im->addr < 0xA0000)
 				cnvmem += im->size;
-			else
+			if(im->addr >= 0x100000)
 				extmem += im->size;
 		}
 	}
+
+	/* Check if gate A20 is on */
+	if(checkA20())
+		printf(" [A20 on]");
+	else
+		printf(" [A20 off!]");
+
 	printf("\n");
 }

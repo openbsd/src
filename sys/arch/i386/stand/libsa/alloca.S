@@ -38,10 +38,10 @@
 
 #if defined(LIBC_SCCS)
 	.text
-	.asciz "$OpenBSD: alloca.S,v 1.1 1997/04/30 18:10:06 mickey Exp $"
+	.asciz "$OpenBSD: alloca.S,v 1.2 1998/02/24 22:06:43 weingart Exp $"
 #endif
 
-/* like alloc, but automatic automatic free in return */
+/* like alloc, but automatic free in return */
 
 ENTRY(alloca)
 	popl	%edx		/*  pop return addr */

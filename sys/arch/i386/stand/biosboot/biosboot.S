@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosboot.S,v 1.21 1997/11/05 02:12:54 mickey Exp $	*/
+/*	$OpenBSD: biosboot.S,v 1.22 1998/02/24 22:06:39 weingart Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -94,7 +94,7 @@ ebpb:	.long	16		/* hidden sectors */
 	.word	0		/* physical disk */
 	.byte	0x29		/* signature, needed by NT */
 	.space	4, 0		/* volume serial number */
-	.asciz	"NO LABEL  "
+	.asciz	"UNIX LABEL"
 	.asciz	"UFS 4.4"
 
 	/* boot code */
@@ -179,7 +179,7 @@ ebpb:	.long	16		/* hidden sectors */
 
 	/* read error */
 	puts(2f)
-	jmp	5f
+	jmp	halt
 2:	.asciz	"\r\nRead error\r\n"
 
 3:	/* read next block */
@@ -207,7 +207,7 @@ ebpb:	.long	16		/* hidden sectors */
 	je	3f
 
 	puts(1f)
-5:
+halt:
 	cli
 	hlt
 1:	.ascii	"Bad magic"

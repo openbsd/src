@@ -1,4 +1,4 @@
-/*	$OpenBSD: apmprobe.c,v 1.3 1997/11/30 21:51:36 mickey Exp $	*/
+/*	$OpenBSD: apmprobe.c,v 1.4 1998/02/24 22:06:44 weingart Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -144,7 +144,6 @@ apmprobe()
 #else
 		printf(" apm");
 #endif
-		putchar('\n');
 		addbootarg(BOOTARG_APMINFO, sizeof(ai), &ai);
 	}
 }

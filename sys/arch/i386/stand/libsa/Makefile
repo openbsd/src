@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.29 1997/10/22 23:34:35 mickey Exp $
+#	$OpenBSD: Makefile,v 1.30 1998/02/24 22:06:42 weingart Exp $
 
 
 LIB=	sa
@@ -16,11 +16,13 @@ DIR_KERN=$S/lib/libkern
 SRCS=	gidt.S debug_i386.S alloca.S \
 	machdep.c dev_i386.c exec_i386.c cmd_i386.c \
 	biosdev.c bioscons.c gateA20.c apmprobe.c \
-	memprobe.c diskprobe.c time.c
+	memprobe.c diskprobe.c pciprobe.c smpprobe.c \
+	time.c
 
 # stand routines
 SRCS+=	alloc.c exit.c exec.c getfile.c gets.c globals.c strcmp.c strlen.c \
-	strncmp.c memcmp.c memcpy.c memset.c printf.c strerror.c strncpy.c
+	strncmp.c memcmp.c memcpy.c memset.c printf.c strerror.c strncpy.c \
+	strtol.c
 
 # math for cd9660
 #SRCS+=	divdi3.c qdivrem.c

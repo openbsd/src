@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd_i386.c,v 1.19 1997/11/30 21:51:41 mickey Exp $	*/
+/*	$OpenBSD: cmd_i386.c,v 1.20 1998/02/24 22:06:47 weingart Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff, Tobias Weingartner
@@ -42,21 +42,53 @@
 #include "libsa.h"
 #include <cmd.h>
 
-static int Xdiskinfo __P((void));
-static int Xregs __P((void));
+
+extern const char version[];
+
 static int Xboot __P((void));
+static int Xdiskinfo __P((void));
 static int Xmemory __P((void));
+static int Xregs __P((void));
+static int Xcnvmem __P((void));
+static int Xextmem __P((void));
 
 /* From gidt.S */
-int bootbuf __P((int, int));
+int bootbuf __P((void*, int));
 
 const struct cmd_table cmd_machine[] = {
-	{ "diskinfo", CMDT_CMD, Xdiskinfo },
-	{ "regs",     CMDT_CMD, Xregs },
 	{ "boot",     CMDT_CMD, Xboot },
+	{ "diskinfo", CMDT_CMD, Xdiskinfo },
 	{ "memory",   CMDT_CMD, Xmemory },
+	{ "regs",     CMDT_CMD, Xregs },
+	{"cnvmem",    CMDT_CMD, Xcnvmem},
+	{"extmem",    CMDT_CMD, Xextmem},
 	{ NULL, 0 }
 };
+
+
+/* Set size of conventional ram */
+static int
+Xcnvmem()
+{
+	if (cmd.argc != 2)
+		printf("cnvmem %d\n", cnvmem);
+	else
+		cnvmem = strtol(cmd.argv[1], NULL, 0);
+
+	return 0;
+}
+
+/* Set size of extended ram */
+static int
+Xextmem()
+{
+	if (cmd.argc != 2)
+		printf("extmem %d\n", extmem);
+	else
+		extmem = strtol(cmd.argv[1], NULL, 0);
+
+	return 0;
+}
 
 static int
 Xdiskinfo()
@@ -77,10 +109,12 @@ static int
 Xboot()
 {
 	int dev, part, st;
-	char *buf = (void *)0x7c00;
+	char buf[DEV_BSIZE], *dest = (void*)0x7c00;
 
 	if(cmd.argc != 2) {
-		printf("machine boot {fd,hd}[0123][abcd]\n");
+		printf("machine boot {fd,hd}<0123>[abcd]\n");
+		printf("Where [0123] is the disk number,"
+			" and [abcd] is the partition.\n");
 		return 0;
 	}
 
@@ -91,7 +125,7 @@ Xboot()
 		goto bad;
 	if(cmd.argv[1][2] < '0' || cmd.argv[1][2] > '3')
 		goto bad;
-	if(cmd.argv[1][3] < 'a' || cmd.argv[1][3] > 'd')
+	if((cmd.argv[1][3] < 'a' || cmd.argv[1][3] > 'd') && cmd.argv[1][3] != '\0')
 		goto bad;
 
 	printf("Booting from %s ", cmd.argv[1]);
@@ -100,27 +134,29 @@ Xboot()
 	dev += (cmd.argv[1][2] - '0');
 	part = (cmd.argv[1][3] - 'a');
 
-	printf("[%x,%d]\n", dev, part);
+	if (part > 0)
+		printf("[%x,%d]\n", dev, part);
+	else
+		printf("[%x]\n", dev);
 
 	/* Read boot sector from device */
-	st = biosd_io(F_READ, dev, 0, 0, 1, 1, buf);
+	st = biosd_io(F_READ, dev, 0, 0, 0, 1, buf);
 	if(st) goto bad;
 
 	/* Frob boot flag in buffer from HD */
-	if(dev & 0x80){
+	if((dev & 0x80) && (part > 0)){
 		int i, j;
 
 		for(i = 0, j = DOSPARTOFF; i < 4; i++, j += 16)
 			if(part == i)
-				buf[j] = 0x80;
+				buf[j] |= 0x80;
 			else
-				buf[j] = 0x00;
+				buf[j] &= ~0x80;
 	}
 
-	printf("%x %x %x %x %x\n", buf[0], buf[1], buf[2], buf[3], buf[4]);
-
 	/* Load %dl, ljmp */
-	bootbuf(dev, part);
+	bcopy(buf, dest, DEV_BSIZE);
+	bootbuf(dest, dev);
 
 bad:
 	printf("Invalid device!\n");

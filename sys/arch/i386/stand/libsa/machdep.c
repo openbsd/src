@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.22 1997/11/30 21:51:46 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.23 1998/02/24 22:06:55 weingart Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -55,11 +55,13 @@ machdep()
 	cninit();     CKPT('3');
 #ifndef _TEST
 	memprobe();   CKPT('4');
-	diskprobe();  CKPT('6');
+	diskprobe();  CKPT('5');
 
 	printf("bios:");
-	apmprobe();   CKPT('7');
-	printf("\n");
+	apmprobe();   CKPT('6');
+	pciprobe();   CKPT('7');
+	smpprobe();   CKPT('8');
+	printf("\n\n");
 #endif
-	CKPT('9');
+	CKPT('Z');
 }

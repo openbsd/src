@@ -1,4 +1,4 @@
-/*	$OpenBSD: diskprobe.c,v 1.13 1997/12/22 04:39:22 mickey Exp $	*/
+/*	$OpenBSD: diskprobe.c,v 1.14 1998/02/24 22:06:50 weingart Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -175,7 +175,6 @@ diskprobe()
 	printf(";");
 #endif
 	hardprobe();
-
 
 	/* Checksumming of hard disks */
 	for (i = 0; disksum(i++) && i < MAX_CKSUMLEN; )

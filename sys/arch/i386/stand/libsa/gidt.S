@@ -1,4 +1,4 @@
-/*	$OpenBSD: gidt.S,v 1.18 1997/10/24 22:22:26 mickey Exp $	*/
+/*	$OpenBSD: gidt.S,v 1.19 1998/02/24 22:06:52 weingart Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -216,7 +216,7 @@ idt:
 	idte(xx); idte(xx); idte(xx);  idte(xx); idte(xx); idte(xx)
 	idte(xx); idte(xx); idte(xx);  idte(xx); idte(xx); idte(xx)
 	idte(xx) 
-		/*	Maskable interrupts (32-255) */
+		/* Maskable interrupts (32-255) */
 		/* BIOS entry points (32-63) */
 		/* DOS entry points (64-80) */
 #define idtb(b)	idte(emu/**/b)
@@ -338,6 +338,7 @@ IEMUENT(44); IEMUENT(45); IEMUENT(46); IEMUENT(47)
  * Return:	%eax, %edx, %ecx, %eflags (as returned from BIOS)
  *
  */
+.globl EMUh
 EMUh:
 	/* save %eax */
 	movl	%eax, 3f
@@ -419,10 +420,19 @@ intno	= . - 1
 /* Call buffer at 07c0:0000 in real mode to simulate a BIOS boot */
 ENTRY(bootbuf)
 	popl	%eax		/* Don't need return address */
+	popl	%esi		/* Buffer */
 	popl	%edx		/* Device */
-	popl	%eax		/* Partition - Not used, overwritten */
-	prot2real		/* Switch */
+	prot2real			/* Switch */
+
+	/* Set up stack */
+	cli
+	xorl	%eax, %eax
+	pushl	%ax
+	popl	%ss
+	movl	$0xfffc, %esp
+	sti
+
+	/* Jump to buffer */
 	addr32
-	data32
-	ljmp $0x7c0, $0x000
+	ljmp $0x0, $0x7c00
 
