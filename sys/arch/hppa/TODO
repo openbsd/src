@@ -25,7 +25,7 @@ hardware manuals (man4.hppa/*):				mickey@
 * add more to lasi and asp (also wax when studied enough)
 
 gcc/egcs/binutils:					espie@ mickey@
-* move to binutils 2.9.1
+* move to binutils 2.10.1
 
 boots (sys/arch/hppa/stand/*):				mickey@ fries@
 * almost could be considered working/done, fixes and such (;
@@ -59,7 +59,7 @@ userland (*):						mickey@
 X11 (X11/*):						fries@ mickey@
 * patch is available, nothing to run at tho (;
 
-$OpenBSD: TODO,v 1.11 2000/08/15 19:48:39 mickey Exp $
+$OpenBSD: TODO,v 1.12 2000/10/11 21:02:02 mickey Exp $
 
 --
 	paranoic mickey
