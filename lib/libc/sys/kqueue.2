@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kqueue.2,v 1.12 2003/12/17 02:43:58 tedu Exp $
+.\"	$OpenBSD: kqueue.2,v 1.13 2003/12/17 12:03:05 jmc Exp $
 .\"
 .\" Copyright (c) 2000 Jonathan Lemon
 .\" All rights reserved.
@@ -213,7 +213,6 @@ Takes a descriptor as the identifier, and returns whenever
 there is data available to read.
 The behavior of the filter is slightly different depending
 on the descriptor type.
-.Pp
 .Bl -tag -width 2n
 .It Sockets
 Sockets which have previously been passed to
@@ -250,16 +249,17 @@ while there is still data pending in the socket buffer.
 Returns when the file pointer is not at the end of file.
 .Va data
 contains the offset from current position to end of file,
-and may be negative.  If
+and may be negative.
+If
 .Dv NOTE_EOF
-is set in 
+is set in
 .Va fflags ,
 .Fn kevent
-will also return when the file pointer is at the end of file.  The end
-of file condition is indicated by the presence of 
+will also return when the file pointer is at the end of file.
+The end of file condition is indicated by the presence of
 .Dv NOTE_EOF
-in 
-.Va fflags 
+in
+.Va fflags
 on return.
 .It "Fifos, Pipes"
 Returns when there is data to read;
