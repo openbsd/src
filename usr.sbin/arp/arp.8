@@ -1,4 +1,4 @@
-.\"	$OpenBSD: arp.8,v 1.14 2004/07/09 19:54:41 jaredy Exp $
+.\"	$OpenBSD: arp.8,v 1.15 2005/03/29 21:59:59 henning Exp $
 .\"	$NetBSD: arp.8,v 1.7 1995/03/01 11:50:59 chopps Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
@@ -48,10 +48,12 @@
 .Nm arp
 .Fl d a
 .Nm arp
+.Op Fl F
 .Fl s Ar hostname ether_addr
 .Op Cm temp | permanent
 .Op Cm pub
 .Nm arp
+.Op Fl F
 .Fl f Ar filename
 .Sh DESCRIPTION
 The
@@ -85,15 +87,25 @@ flag may be combined with the
 flag to delete all entries, with hostname lookups automatically
 disabled.
 Only the superuser may delete entries.
-.It Fl f Ar filename
+.It Fl F
+Force existing entries for the given host to be overwritten
+(only relevant to the
+.Fl f
+and
+.Fl s
+options).
+.It Fl f
 Process entries from
 .Ar filename
 to be set in the
 .Tn ARP
 tables.
+Any entries in the file that already exist for a given host
+will not be overwritten unless
+.Fl F
+is given.
 Entries in the file should be of the form:
-.Pp
-.Bd -filled -offset indent -compact
+.Bd -filled -offset indent
 .Ar hostname ether_addr
 .Op Cm temp | permanent
 .Op Cm pub
@@ -124,7 +136,11 @@ This behavior has traditionally been called
 Show network addresses as numbers (normally
 .Nm
 attempts to display addresses symbolically).
-.It Fl s Ar hostname ether_addr
+.It Xo
+.Fl s Ar hostname ether_addr
+.Op Cm temp | permanent
+.Op Cm pub
+.Xc
 Create an
 .Tn ARP
 entry for the host called
@@ -139,6 +155,11 @@ The
 or
 .Cm temp
 modifiers may be specified with meanings as given above.
+.Pp
+If the entry already exists for the given host, it will not
+be replaced unless
+.Fl F
+is given.
 .El
 .Sh EXAMPLES
 To view the current
@@ -157,8 +178,7 @@ To create
 .Em proxy ARP
 entries on an interface, fxp0,
 for the IP addresses 204.1.2.3 and 204.1.2.4:
-.Pp
-.Bd -unfilled -offset indent -compact
+.Bd -literal -offset indent
 # arp -s 204.1.2.3 00:90:27:bb:cc:dd pub
 # arp -s 204.1.2.4 00:90:27:bb:cc:dd pub
 .Ed

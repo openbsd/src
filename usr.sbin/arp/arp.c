@@ -1,4 +1,4 @@
-/*	$OpenBSD: arp.c,v 1.31 2005/01/04 10:57:23 pascoe Exp $ */
+/*	$OpenBSD: arp.c,v 1.32 2005/03/29 21:59:59 henning Exp $ */
 /*	$NetBSD: arp.c,v 1.12 1995/04/24 13:25:18 cgd Exp $ */
 
 /*
@@ -41,7 +41,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)arp.c	8.2 (Berkeley) 1/2/94";*/
-static char *rcsid = "$OpenBSD: arp.c,v 1.31 2005/01/04 10:57:23 pascoe Exp $";
+static char *rcsid = "$OpenBSD: arp.c,v 1.32 2005/03/29 21:59:59 henning Exp $";
 #endif /* not lint */
 
 /*
@@ -88,6 +88,7 @@ int set(int, char **);
 void usage(void);
 
 static pid_t pid;
+static int replace;	/* replace entries when adding */
 static int nflag;	/* no reverse dns lookups */
 static int aflag;	/* do it for all entries */
 static int s = -1;
@@ -113,7 +114,7 @@ main(int argc, char *argv[])
 	opterr = 0;
 	func = 0;
 
-	while ((ch = getopt(argc, argv, "andsf")) != -1) {
+	while ((ch = getopt(argc, argv, "andSsFf")) != -1) {
 		switch ((char)ch) {
 		case 'a':
 			aflag = 1;
@@ -130,6 +131,9 @@ main(int argc, char *argv[])
 			if (func)
 				usage();
 			func = F_SET;
+			break;
+		case 'F':
+			replace = 1;
 			break;
 		case 'f':
 			if (func)
@@ -160,6 +164,8 @@ main(int argc, char *argv[])
 	case F_SET:
 		if (argc < 2 || argc > 5)
 			usage();
+		if (replace)
+			(void)delete(argv[0], NULL);
 		rtn = set(argc, argv) ? 1 : 0;
 		break;
 	case F_DELETE:
@@ -205,6 +211,8 @@ file(char *name)
 			retval = 1;
 			continue;
 		}
+		if (replace)
+			(void)delete(arg[0], NULL);
 		if (set(i, args))
 			retval = 1;
 	}
@@ -459,7 +467,7 @@ print_entry(struct sockaddr_dl *sdl, struct sockaddr_inarp *sin,
 {
 	char *host;
 	struct hostent *hp;
-	char ifname[IF_NAMESIZE];
+	char ifname[IFNAMSIZ];
 
 	if (nflag == 0)
 		hp = gethostbyaddr((caddr_t)&(sin->sin_addr),
@@ -527,8 +535,8 @@ usage(void)
 	(void)fprintf(stderr, "usage: arp -d hostname\n");
 	(void)fprintf(stderr, "usage: arp -d -a\n");
 	(void)fprintf(stderr,
-	    "usage: arp -s hostname ether_addr [temp | permanent] [pub]\n");
-	(void)fprintf(stderr, "usage: arp -f filename\n");
+	    "usage: arp [-F] -s hostname ether_addr [temp | permanent] [pub]\n");
+	(void)fprintf(stderr, "usage: arp [-F] -f filename\n");
 	exit(1);
 }
 
