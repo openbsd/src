@@ -1,4 +1,4 @@
-.\"	$OpenBSD: release.8,v 1.28 2003/04/10 16:31:02 millert Exp $
+.\"	$OpenBSD: release.8,v 1.29 2003/04/16 01:04:02 millert Exp $
 .\"
 .\"	Copyright (c) 2000 Marco S. Hyman
 .\"
@@ -328,24 +328,16 @@ to
 after the build.
 .Ss "6. Make and validate the XF4 release"
 .Va XF4
-uses the same
+uses
 .Va DESTDIR
 and
 .Va RELEASEDIR
-mechanism noted in the section on building a system release, above.
-They may be the same values used above, but be warned that the
-contents of
+as described above.
+While they may be set to the values used to build the rest of the
+system, be aware that the existing contents of
 .Va DESTDIR
-will be removed if you follow this procedure.
-However,
-.Va DESTDIR
-should not be the same directory used to build the system release.  
-It may be the same if you don't care to keep the contents of the
-system release
-.Va DESTDIR .
-(The XF4
-.Va DESTDIR
-needs to be emptied for release checklist processing.)
+will be removed as part of the XF4 build (this is necessary for
+release checklist processing).
 .Pp
 The steps to build the release are (assuming you are still root, and still in
 .Va XF4BLD ) :
