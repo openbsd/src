@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_mvcur.c,v 1.6 1997/12/03 05:21:24 millert Exp $	*/
+/*	$OpenBSD: lib_mvcur.c,v 1.7 1998/05/14 09:48:49 deraadt Exp $	*/
 
 
 /***************************************************************************
@@ -969,6 +969,10 @@ int main(int argc GCC_UNUSED, char *argv[] GCC_UNUSED)
     {
 	int	fy, fx, ty, tx, n, i;
 	char	buf[BUFSIZ], capname[BUFSIZ];
+	char	tparsebuf[20], tparsebuf[20];
+
+	snprintf(tparsebuf, sizeof tparsebuf, "l %%%ds", sizeof tname);
+	snprintf(cparsebuf, sizeof cparsebuf, "d %%%ds", sizeof capname);
 
 	(void) fputs("> ", stdout);
 	(void) fgets(buf, sizeof(buf), stdin);
@@ -1020,11 +1024,11 @@ int main(int argc GCC_UNUSED, char *argv[] GCC_UNUSED)
 	    tname[sizeof(tname) - 1] = '\0';
 	    load_term();
 	}
-	else if (sscanf(buf, "l %s", tname) == 1)
+	else if (sscanf(buf, tparsebuf, tname) == 1)
 	{
 	    load_term();
 	}
-	else if (sscanf(buf, "d %s", capname) == 1)
+	else if (sscanf(buf, cparsebuf, capname) == 1)
 	{
 	    struct name_table_entry const	*np = _nc_find_entry(capname,
 							 _nc_info_hash_table);
