@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu_cons.c,v 1.7 2000/08/19 18:43:31 maja Exp $	*/
+/*	$OpenBSD: cpu_cons.c,v 1.8 2001/04/17 04:30:48 aaron Exp $	*/
 /*	$NetBSD: cpu_cons.c,v 1.17 1997/05/24 08:19:48 jonathan Exp $	*/
 
 /*
@@ -142,6 +142,7 @@ struct consdev cd = {
 	(int  (*)(dev_t))     romgetc,		/* getc */
 	(void (*)(dev_t, int))romputc,		/* putc */
 	(void (*)(dev_t, int))rompollc,		/* pollc */
+	NULL,
 	makedev (0, 0),
 	CN_DEAD,
 };

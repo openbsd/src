@@ -1,4 +1,4 @@
-/*	$OpenBSD: cons.c,v 1.9 2001/03/01 20:54:32 provos Exp $	*/
+/*	$OpenBSD: cons.c,v 1.10 2001/04/17 04:30:49 aaron Exp $	*/
 /*	$NetBSD: cons.c,v 1.30 1996/04/08 19:57:30 jonathan Exp $	*/
 
 /*
@@ -291,3 +291,14 @@ nullcnpollc(dev, on)
 {
 
 }
+
+void
+cnbell(pitch, period, volume)
+	u_int pitch, period, volume;
+{
+	if (cn_tab == NULL || cn_tab->cn_bell == NULL)
+		return;
+
+	(*cn_tab->cn_bell)(cn_tab->cn_dev, pitch, period, volume);
+}
+

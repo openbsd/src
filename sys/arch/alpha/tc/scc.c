@@ -1,4 +1,4 @@
-/*	$OpenBSD: scc.c,v 1.7 1997/01/24 19:58:15 niklas Exp $	*/
+/*	$OpenBSD: scc.c,v 1.8 2001/04/17 04:30:46 aaron Exp $	*/
 /*	$NetBSD: scc.c,v 1.28 1996/12/05 01:39:43 cgd Exp $	*/
 
 /*
@@ -236,7 +236,7 @@ extern  int cold;
 scc_regmap_t *scc_cons_addr = 0;
 static struct scc_softc coldcons_softc;
 static struct consdev scccons = {
-	NULL, NULL, sccGetc, sccPutc, sccPollc, NODEV, 0
+	NULL, NULL, sccGetc, sccPutc, sccPollc, NULL, NODEV, 0
 };
 void	scc_consinit __P((dev_t dev, scc_regmap_t *sccaddr));
 void	scc_oconsinit __P((struct scc_softc *, dev_t));

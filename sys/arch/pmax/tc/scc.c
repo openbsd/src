@@ -312,7 +312,7 @@ extern  int cold;
 scc_regmap_t *scc_cons_addr = 0;
 static struct scc_softc coldcons_softc;
 static struct consdev scccons = {
-	NULL, NULL, sccGetc, sccPutc, sccPollc, NODEV, 0
+	NULL, NULL, sccGetc, sccPutc, sccPollc, NULL, NODEV, 0
 };
 void scc_consinit __P((dev_t dev, scc_regmap_t *sccaddr));
 void scc_oconsinit __P((struct scc_softc *sc, dev_t dev));

@@ -1,4 +1,4 @@
-/* $OpenBSD: pcppivar.h,v 1.1 1999/01/02 00:02:45 niklas Exp $ */
+/* $OpenBSD: pcppivar.h,v 1.2 2001/04/17 04:30:50 aaron Exp $ */
 /* $NetBSD: pcppivar.h,v 1.1 1998/04/15 20:26:18 drochner Exp $ */
 
 /*
@@ -33,5 +33,8 @@ typedef void *pcppi_tag_t;
 struct pcppi_attach_args {
 	pcppi_tag_t pa_cookie;
 };
+
+#define PCPPI_BELL_SLEEP	0x01	/* synchronous; sleep for complete */
+#define PCPPI_BELL_POLL		0x02	/* synchronous; poll for complete */
 
 void pcppi_bell __P((pcppi_tag_t, int, int, int));

@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay.c,v 1.22 2001/04/16 15:00:49 jbm Exp $ */
+/* $OpenBSD: wsdisplay.c,v 1.23 2001/04/17 04:30:51 aaron Exp $ */
 /* $NetBSD: wsdisplay.c,v 1.37.4.1 2000/06/30 16:27:53 simonb Exp $ */
 
 /*
@@ -233,7 +233,7 @@ void (*wsdisplay_cons_kbd_pollc) __P((dev_t, int));
 
 static struct consdev wsdisplay_cons = {
 	NULL, NULL, wsdisplay_getc_dummy, wsdisplay_cnputc,
-	    wsdisplay_pollc, /* NULL, */ NODEV, CN_NORMAL
+	    wsdisplay_pollc, NULL, NODEV, CN_NORMAL
 };
 
 #ifndef WSDISPLAY_DEFAULTSCREENS
@@ -1877,9 +1877,7 @@ wsdisplay_set_cons_kbd(get, poll, bell)
 	void (*bell) __P((dev_t, u_int, u_int, u_int));
 {
 	wsdisplay_cons.cn_getc = get;
-#if 0
 	wsdisplay_cons.cn_bell = bell;
-#endif
 	wsdisplay_cons_kbd_pollc = poll;
 }
 
@@ -1887,9 +1885,7 @@ void
 wsdisplay_unset_cons_kbd()
 {
 	wsdisplay_cons.cn_getc = wsdisplay_getc_dummy;
-#if 0
 	wsdisplay_cons.cn_bell = NULL;
-#endif
 	wsdisplay_cons_kbd_pollc = 0;
 }
 

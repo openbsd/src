@@ -1,4 +1,4 @@
-/*	$OpenBSD: com.c,v 1.62 2001/03/15 21:09:17 art Exp $	*/
+/*	$OpenBSD: com.c,v 1.63 2001/04/17 04:30:49 aaron Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*
@@ -1960,7 +1960,7 @@ comcnattach(iot, iobase, rate, frequency, cflag)
 	tcflag_t cflag;
 {
 	static struct consdev comcons = {
-		NULL, NULL, comcngetc, comcnputc, comcnpollc,
+		NULL, NULL, comcngetc, comcnputc, comcnpollc, NULL,
 		NODEV, CN_NORMAL
 	};
 

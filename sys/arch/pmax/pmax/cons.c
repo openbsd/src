@@ -69,6 +69,7 @@ struct consdev cn_tab = {
 	(int (*)())0,
 	(int (*)())0,
 	(void (*)())0,
+	NULL,
 	(struct tty *)0,
 };
 

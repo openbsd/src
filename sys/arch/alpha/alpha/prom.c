@@ -1,4 +1,4 @@
-/* $OpenBSD: prom.c,v 1.10 2001/04/06 04:42:05 csapuntz Exp $ */
+/* $OpenBSD: prom.c,v 1.11 2001/04/17 04:30:45 aaron Exp $ */
 /* $NetBSD: prom.c,v 1.39 2000/03/06 21:36:05 thorpej Exp $ */
 
 /* 
@@ -42,7 +42,7 @@
 
 /* XXX this is to fake out the console routines, while booting. */
 struct consdev promcons = { NULL, NULL, promcngetc, promcnputc,
-			    nullcnpollc, makedev(23,0), 1 };
+			    nullcnpollc, NULL, makedev(23,0), 1 };
 
 struct rpb	*hwrpb;
 int		alpha_console;

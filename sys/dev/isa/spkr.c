@@ -1,4 +1,4 @@
-/*	$OpenBSD: spkr.c,v 1.4 2000/09/29 23:39:08 miod Exp $	*/
+/*	$OpenBSD: spkr.c,v 1.5 2001/04/17 04:30:50 aaron Exp $	*/
 /*	$NetBSD: spkr.c,v 1.1 1998/04/15 20:26:18 drochner Exp $	*/
 
 /*
@@ -62,7 +62,7 @@ void tone(hz, ticks)
 /* emit tone of frequency hz for given number of ticks */
     u_int hz, ticks;
 {
-	pcppi_bell(ppicookie, hz, ticks, 1);
+	pcppi_bell(ppicookie, hz, ticks, PCPPI_BELL_SLEEP);
 }
 
 static void

@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.30 2001/03/16 00:08:28 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.31 2001/04/17 04:30:47 aaron Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -292,7 +292,7 @@ static struct consdev bootcons = {
 	(void (*))NULL, 
 	bootcngetc, 
 	(void (*))bootcnputc,
-	bootcnpollc, makedev(14,0), 1};
+	bootcnpollc, NULL, makedev(14,0), 1};
 void  cmmu_init(void);
 /*
  * Console initialization: called early on from main,
