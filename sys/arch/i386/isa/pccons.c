@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccons.c,v 1.21 1996/07/19 23:00:08 dm Exp $	*/
+/*	$OpenBSD: pccons.c,v 1.22 1996/08/10 21:28:20 tholo Exp $	*/
 /*	$NetBSD: pccons.c,v 1.99.4.1 1996/06/04 20:03:53 cgd Exp $	*/
 
 /*-
@@ -70,6 +70,11 @@
 #include <dev/isa/isavar.h>
 #include <i386/isa/isa_machdep.h>
 #include <i386/isa/kbdreg.h>
+
+#include "rnd.h"
+#if NRND > 0
+#include <dev/rndvar.h>
+#endif
 
 #define	XFREE86_BUG_COMPAT
 
@@ -1576,6 +1581,10 @@ sget()
 top:
 	KBD_DELAY;
 	dt = inb(KBDATAP);
+
+#if NRND > 0
+	add_keyboard_randomness(dt);
+#endif
 
 	switch (dt) {
 	case KBR_ACK:
