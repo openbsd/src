@@ -1,10 +1,10 @@
-/*	$OpenBSD: pcmciadevs.h,v 1.61 2001/04/06 18:02:20 aaron Exp $	*/
+/*	$OpenBSD: pcmciadevs.h,v 1.62 2001/04/08 21:42:18 mickey Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcmciadevs,v 1.55 2001/03/31 14:27:09 aaron Exp 
+ *		OpenBSD: pcmciadevs,v 1.57 2001/04/08 21:42:04 mickey Exp 
  */
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
@@ -392,6 +392,7 @@
 
 /* Cards we know only by their cis */
 #define	PCMCIA_VENDOR_ACCTON	-1	/* ACCTON */
+#define	PCMCIA_VENDOR_ADDTRON	-1	/* Addtron */
 #define	PCMCIA_VENDOR_AMBICOM	-1	/* AmbiCom */
 #define	PCMCIA_VENDOR_AMD	-1	/* AMD */
 #define	PCMCIA_VENDOR_BILLIONTON	-1	/* Billionton Systems Inc. */
@@ -506,7 +507,7 @@
 #define	PCMCIA_PRODUCT_COREGA_WIRELESS_LAN_PCCA_11	PCMCIA_PRODUCT_INVALID
 #define	PCMCIA_CIS_INTERSIL_PRISM2	{ "INTERSIL", "HFA384x/IEEE", "Version 01.02", NULL }
 #define	PCMCIA_PRODUCT_INTERSIL_PRISM2	PCMCIA_PRODUCT_INVALID
-#define	PCMCIA_CIS_ADDTRON_AWP100	{ "Addtron", "AWP-100", "Version 01.02", NULL }
+#define	PCMCIA_CIS_ADDTRON_AWP100	{ "Addtron", "AWP-100 Wireless PCMCIA", "Version 01.02", NULL }
 #define	PCMCIA_PRODUCT_ADDTRON_AWP100	PCMCIA_PRODUCT_INVALID
 #define	PCMCIA_CIS_NEC_CMZ_RT_WP	{ "NEC", "Wireless Card CMZ-RT-WP", "Version 01.01", NULL }
 #define	PCMCIA_PRODUCT_NEC_CMZ_RT_WP	PCMCIA_PRODUCT_INVALID
