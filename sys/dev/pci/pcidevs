@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.508 2002/05/14 19:57:45 jason Exp $
+	$OpenBSD: pcidevs,v 1.509 2002/05/14 21:27:20 jason Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -1532,6 +1532,7 @@ product MATROX MILL_II_G550_AGP 0x2527  MGA G550 AGP
 product MITSUBISHIELEC GUI	0x0304	GUI Accel
 
 /* Motorola products */
+product MOT MPC105		0x0001	MPC105 PCI bridge
 product MOT MPC106		0x0002	MPC106 Host-PCI
 product MOT SM56		0x5600	SM56
 product MOT RAVEN		0x4801	Raven Host-PCI
@@ -2249,10 +2250,6 @@ product WINBOND W89C940F	0x0940	Linksys EtherPCI II
 
 /* Winbond Electronics products (PCI products set 2) */
 product WINBOND2 W89C940	0x1980	Linksys EtherPCI
-
-/* Motorola products */
-product MOT 	MPC105		0x0001	MPC105 PCI bridge
-product MOT	MPC106		0x0002	MPC106 PCI bridge
 
 /* Xircom products */
 product XIRCOM X3201_3		0x0002	X3201-3
