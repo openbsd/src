@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_proto.c,v 1.18 1999/12/21 09:00:52 itojun Exp $	*/
+/*	$OpenBSD: in_proto.c,v 1.19 1999/12/21 11:11:16 itojun Exp $	*/
 /*	$NetBSD: in_proto.c,v 1.14 1996/02/18 18:58:32 christos Exp $	*/
 
 /*
@@ -149,6 +149,9 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 
 #ifdef MROUTING
 #include <netinet/ip_mroute.h>
+#ifndef IPSEC
+#include <netinet/ip_ip4.h>
+#endif
 #endif /* MROUTING */
 
 #ifdef IPFILTER
@@ -210,6 +213,7 @@ struct protosw inetsw[] = {
 },
 #endif /* INET6 */
 #else /* NGIF */
+#if defined(IPSEC) || defined(MROUTING)
 { SOCK_RAW,	&inetdomain,	IPPROTO_IPIP,	PR_ATOMIC|PR_ADDR,
   ip4_input,	rip_output,	0,		rip_ctloutput,
   rip_usrreq,	/* XXX */
@@ -222,6 +226,7 @@ struct protosw inetsw[] = {
   0,		0,		0,		0,
 },
 #endif /* INET6 */
+#endif /* IPSEC || MROUTING */
 #endif /*NGIF*/
 { SOCK_RAW,	&inetdomain,	IPPROTO_IGMP,	PR_ATOMIC|PR_ADDR,
   igmp_input,	rip_output,	0,		rip_ctloutput,
