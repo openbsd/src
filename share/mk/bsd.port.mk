@@ -1,6 +1,6 @@
 #-*- mode: Fundamental; tab-width: 4; -*-
 # ex:ts=4
-#	$OpenBSD: bsd.port.mk,v 1.14 1997/09/21 10:58:41 niklas Exp $
+#	$OpenBSD: bsd.port.mk,v 1.15 1997/12/02 11:11:57 niklas Exp $
 #	$NetBSD: $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
@@ -403,10 +403,11 @@ RUN_DEPENDS+=	${EXEC_DEPENDS}
 .if defined(USE_GMAKE)
 BUILD_DEPENDS+=		gmake:${PORTSDIR}/devel/gmake
 .endif
-.if defined(USE_PERL5)
-BUILD_DEPENDS+=		perl5.00401:${PORTSDIR}/lang/perl5
-RUN_DEPENDS+=		perl5.00401:${PORTSDIR}/lang/perl5
-.endif
+# OpenBSD has perl5 in-tree
+#.if defined(USE_PERL5)
+#BUILD_DEPENDS+=		perl5.00401:${PORTSDIR}/lang/perl5
+#RUN_DEPENDS+=		perl5.00401:${PORTSDIR}/lang/perl5
+#.endif
 
 .if exists(${PORTSDIR}/../Makefile.inc)
 .include "${PORTSDIR}/../Makefile.inc"
