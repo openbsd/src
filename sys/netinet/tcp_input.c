@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.121 2002/08/19 02:28:23 itojun Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.122 2002/08/19 02:31:02 itojun Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -422,7 +422,7 @@ tcp_input(struct mbuf *m, ...)
 	struct tcphdr *th;
 #ifdef INET6
 	struct in6_addr laddr6;
-	struct ip6_hdr *ipv6 = NULL;
+	struct ip6_hdr *ip6 = NULL;
 #endif /* INET6 */
 #ifdef IPSEC
 	struct m_tag *mtag;
@@ -515,7 +515,7 @@ tcp_input(struct mbuf *m, ...)
 
 	ip = NULL;
 #ifdef INET6
-	ipv6 = NULL;
+	ip6 = NULL;
 #endif
 	switch (af) {
 	case AF_INET:
@@ -559,15 +559,15 @@ tcp_input(struct mbuf *m, ...)
 	    }
 #ifdef INET6
 	case AF_INET6:
-		ipv6 = mtod(m, struct ip6_hdr *);
+		ip6 = mtod(m, struct ip6_hdr *);
 		tlen = m->m_pkthdr.len - iphlen;
 #ifdef TCP_ECN
-		iptos = (ntohl(ipv6->ip6_flow) >> 20) & 0xff;
+		iptos = (ntohl(ip6->ip6_flow) >> 20) & 0xff;
 #endif
 
 		/* Be proactive about malicious use of IPv4 mapped address */
-		if (IN6_IS_ADDR_V4MAPPED(&ipv6->ip6_src) ||
-		    IN6_IS_ADDR_V4MAPPED(&ipv6->ip6_dst)) {
+		if (IN6_IS_ADDR_V4MAPPED(&ip6->ip6_src) ||
+		    IN6_IS_ADDR_V4MAPPED(&ip6->ip6_dst)) {
 			/* XXX stat */
 			goto drop;
 		}
@@ -580,7 +580,7 @@ tcp_input(struct mbuf *m, ...)
 		 * Note that packets with unspecified IPv6 destination is
 		 * already dropped in ip6_input.
 		 */
-		if (IN6_IS_ADDR_UNSPECIFIED(&ipv6->ip6_src)) {
+		if (IN6_IS_ADDR_UNSPECIFIED(&ip6->ip6_src)) {
 			/* XXX stat */
 			goto drop;
 		}
@@ -621,7 +621,7 @@ tcp_input(struct mbuf *m, ...)
 				break;
 #ifdef INET6
 			case AF_INET6:
-				ipv6 = mtod(m, struct ip6_hdr *);
+				ip6 = mtod(m, struct ip6_hdr *);
 				break;
 #endif
 			}
@@ -664,8 +664,8 @@ findpcb:
 	switch (af) {
 #ifdef INET6
 	case AF_INET6:
-		inp = in6_pcbhashlookup(&tcbtable, &ipv6->ip6_src, th->th_sport,
-		    &ipv6->ip6_dst, th->th_dport);
+		inp = in6_pcbhashlookup(&tcbtable, &ip6->ip6_src, th->th_sport,
+		    &ip6->ip6_dst, th->th_dport);
 		break;
 #endif
 	case AF_INET:
@@ -678,8 +678,8 @@ findpcb:
 		switch (af) {
 #ifdef INET6
 		case AF_INET6:
-			inp = in_pcblookup(&tcbtable, &ipv6->ip6_src,
-			    th->th_sport, &ipv6->ip6_dst, th->th_dport,
+			inp = in_pcblookup(&tcbtable, &ip6->ip6_src,
+			    th->th_sport, &ip6->ip6_dst, th->th_dport,
 			    INPLOOKUP_WILDCARD | INPLOOKUP_IPV6);
 			break;
 #endif /* INET6 */
@@ -761,10 +761,10 @@ findpcb:
 			 * handling - worse, they are not exactly the same.
 			 * I believe 5.5.4 is the best one, so we follow 5.5.4.
 			 */
-			if (ipv6 && !ip6_use_deprecated) {
+			if (ip6 && !ip6_use_deprecated) {
 				struct in6_ifaddr *ia6;
 
-				if ((ia6 = in6ifa_ifpwithaddr(m->m_pkthdr.rcvif, &ipv6->ip6_dst)) &&
+				if ((ia6 = in6ifa_ifpwithaddr(m->m_pkthdr.rcvif, &ip6->ip6_dst)) &&
 				    (ia6->ia6_flags & IN6_IFF_DEPRECATED)) {
 					tp = NULL;
 					goto dropwithreset;
@@ -848,7 +848,7 @@ findpcb:
 			switch (af) {
 #ifdef INET6
 			case AF_INET6:
-				inp->inp_laddr6 = ipv6->ip6_dst;
+				inp->inp_laddr6 = ip6->ip6_dst;
 
 				/*inp->inp_options = ip6_srcroute();*/ /* soon. */
 				/*
@@ -1139,8 +1139,8 @@ findpcb:
 			switch (af) {
 #ifdef INET6
 			case AF_INET6:
-				if (IN6_ARE_ADDR_EQUAL(&ipv6->ip6_src,
-				    &ipv6->ip6_dst))
+				if (IN6_ARE_ADDR_EQUAL(&ip6->ip6_src,
+				    &ip6->ip6_dst))
 					goto drop;
 				break;
 #endif /* INET6 */
@@ -1159,7 +1159,7 @@ findpcb:
 		switch (af) {
 #ifdef INET6
 		case AF_INET6:
-			if (IN6_IS_ADDR_MULTICAST(&ipv6->ip6_dst))
+			if (IN6_IS_ADDR_MULTICAST(&ip6->ip6_dst))
 				goto drop;
 			break;
 #endif /* INET6 */
@@ -1191,13 +1191,13 @@ findpcb:
 			bzero(sin6, sizeof(*sin6));
 			sin6->sin6_family = AF_INET6;
 			sin6->sin6_len = sizeof(struct sockaddr_in6);
-			sin6->sin6_addr = ipv6->ip6_src;
+			sin6->sin6_addr = ip6->ip6_src;
 			sin6->sin6_port = th->th_sport;
 			sin6->sin6_flowinfo = htonl(0x0fffffff) &
 				inp->inp_ipv6.ip6_flow;
 			laddr6 = inp->inp_laddr6;
 			if (IN6_IS_ADDR_UNSPECIFIED(&inp->inp_laddr6))
-				inp->inp_laddr6 = ipv6->ip6_dst;
+				inp->inp_laddr6 = ip6->ip6_dst;
 			/* This is a good optimization. */
 			if (in6_pcbconnect(inp, am)) {
 				inp->inp_laddr6 = laddr6;
@@ -2295,7 +2295,7 @@ dropwithreset:
 #ifdef INET6
 	case AF_INET6:
 		/* For following calls to tcp_respond */
-		if (IN6_IS_ADDR_MULTICAST(&ipv6->ip6_dst))
+		if (IN6_IS_ADDR_MULTICAST(&ip6->ip6_dst))
 			goto drop;
 		break;
 #endif /* INET6 */
