@@ -5,15 +5,25 @@ out as follows:
 .../2.2/alpha/
 		INSTALL.alpha	Installation notes; this file.
 
+		CKSUM		Output of the cksum(1) and md5(1) programs
+		MD5		usable for verification of the correctness
+				of downloaded files.
+
+		X11/		The X window system for OpenBSD/alpha 2.2
+
+
 		floppy.fs	The alpha boot and installation
 				floppy; see below.
 
-		*.gz		alpha binary distribution sets;
+		*.tar.gz	alpha binary distribution sets;
 				see below.
 
 		bsd		A stock GENERIC alpha kernel which
 				will be installed on your system
 				during the install.
+
+		bsd.rd		A ramdisk OpenBSD kernel used for simple
+				installation.
 
 In summary, there is one alpha floppy image called "floppy.fs".  This
 is a bootable install floppy which can be used both to install and to
