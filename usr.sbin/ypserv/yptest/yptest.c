@@ -1,4 +1,4 @@
-/*	$OpenBSD: yptest.c,v 1.7 1997/08/18 03:11:35 millert Exp $ */
+/*	$OpenBSD: yptest.c,v 1.8 2001/11/19 09:02:18 deraadt Exp $ */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -32,7 +32,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: yptest.c,v 1.7 1997/08/18 03:11:35 millert Exp $";
+static char rcsid[] = "$OpenBSD: yptest.c,v 1.8 2001/11/19 09:02:18 deraadt Exp $";
 #endif
 
 #include <stdio.h>
@@ -44,74 +44,76 @@ static char rcsid[] = "$OpenBSD: yptest.c,v 1.7 1997/08/18 03:11:35 millert Exp 
 #include <rpcsvc/ypclnt.h>
 
 static int
-yptest_foreach(status,key,keylen,val,vallen,data)
-int status,keylen,vallen;
-char *key,*val,*data;
+yptest_foreach(status, key, keylen, val, vallen, data)
+int status, keylen, vallen;
+char *key, *val, *data;
 {
-  if (status == 2)
-    return(0);
-  /* key avslutas med NUL */
-  /* val avslutas med NUL */
-  key[keylen] = '\0';
-  val[vallen] = '\0';
-  printf("%s %s\n",key,val);
-  return 0;
+	if (status == 2)
+		return(0);
+	/* key avslutas med NUL */
+	/* val avslutas med NUL */
+	key[keylen] = '\0';
+	val[vallen] = '\0';
+	printf("%s %s\n", key, val);
+	return 0;
 }
 
-main()
+main(argc, argv)
+	int argc;
+	char *argv[];
 {
-  char *Domain;
-  char *Map = "passwd.byname";
-  char *Key = "root";
-  int   KeyLen;
-  char *Value;
-  char *Key2;
-  int   ValLen;
-  int   Status;
-  int   Order;
-  struct ypall_callback Callback;
-  struct ypmaplist *ypml,*y;
+	char *Domain;
+	char *Map = "passwd.byname";
+	char *Key = "root";
+	int	 KeyLen;
+	char *Value;
+	char *Key2;
+	int	 ValLen;
+	int	 Status;
+	int	 Order;
+	struct ypall_callback Callback;
+	struct ypmaplist *ypml, *y;
 
-  yp_get_default_domain(&Domain);
-  
-  printf("Test 1: yp_match\n");
-  KeyLen = strlen(Key);
-  Status = yp_match(Domain,Map,Key,KeyLen,&Value,&ValLen);
-  printf("%*.*s\n",ValLen,ValLen,Value);
-  
-  printf("\nTest 2: yp_first\n");
-  Status = yp_first(Domain,Map,&Key2,&KeyLen,&Value,&ValLen);
-  printf("%*.*s %*.*s\n",KeyLen,KeyLen,Key2,ValLen,ValLen,Value);
+	yp_get_default_domain(&Domain);
+	
+	printf("Test 1: yp_match\n");
+	KeyLen = strlen(Key);
+	Status = yp_match(Domain, Map, Key, KeyLen, &Value, &ValLen);
+	printf("%*.*s\n", ValLen, ValLen, Value);
+	
+	printf("\nTest 2: yp_first\n");
+	Status = yp_first(Domain, Map, &Key2, &KeyLen, &Value, &ValLen);
+	printf("%*.*s %*.*s\n", KeyLen, KeyLen, Key2, ValLen, ValLen, Value);
 
-  printf("\nTest 3: yp_next\n");
-  while (Status == 0) {
-    Status = yp_next(Domain,Map,Key2,KeyLen,&Key2,&KeyLen,&Value,&ValLen);
-    if (Status == 0) {
-      printf("%*.*s %*.*s\n",KeyLen,KeyLen,Key2,ValLen,ValLen,Value);
-    }
-  }
-
-  printf("\nTest 4: yp_master\n");
-  Status = yp_master(Domain,Map,&Key2);
-  printf("%s\n",Key2);
-
-  printf("\nTest 5: yp_order\n");
-  Status = yp_order(Domain,Map,&Order);
-  printf("%d\n",Order);
-
-  printf("\nTest 6: yp_maplist\n");
-  ypml = NULL;
-  switch(yp_maplist(Domain, &ypml)) {
-  case 0:
-  	for(y=ypml; y; ) {
-		ypml=y;
-		printf("%s\n",ypml->map);
-		y=ypml->next;
+	printf("\nTest 3: yp_next\n");
+	while (Status == 0) {
+		Status = yp_next(Domain, Map, Key2, KeyLen, &Key2,
+		    &KeyLen, &Value, &ValLen);
+		if (Status == 0)
+			printf("%*.*s %*.*s\n", KeyLen, KeyLen, Key2,
+			    ValLen, ValLen, Value);
 	}
-  }
 
-  printf("\nTest 7: yp_all\n");
-  Callback.foreach=yptest_foreach;
-  Status = yp_all(Domain,Map,&Callback);
+	printf("\nTest 4: yp_master\n");
+	Status = yp_master(Domain, Map, &Key2);
+	printf("%s\n", Key2);
+
+	printf("\nTest 5: yp_order\n");
+	Status = yp_order(Domain, Map, &Order);
+	printf("%d\n", Order);
+
+	printf("\nTest 6: yp_maplist\n");
+	ypml = NULL;
+	switch(yp_maplist(Domain, &ypml)) {
+	case 0:
+		for(y = ypml; y; ) {
+			ypml = y;
+			printf("%s\n", ypml->map);
+			y = ypml->next;
+		}
+	}
+
+	printf("\nTest 7: yp_all\n");
+	Callback.foreach = yptest_foreach;
+	Status = yp_all(Domain, Map, &Callback);
 }
-
