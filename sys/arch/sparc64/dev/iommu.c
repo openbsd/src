@@ -1,4 +1,4 @@
-/*	$OpenBSD: iommu.c,v 1.11 2002/02/22 21:53:21 jason Exp $	*/
+/*	$OpenBSD: iommu.c,v 1.12 2002/03/07 17:44:10 jason Exp $	*/
 /*	$NetBSD: iommu.c,v 1.47 2002/02/08 20:03:45 eeh Exp $	*/
 
 /*
@@ -542,7 +542,8 @@ iommu_dvmamap_load(t, is, map, buf, buflen, p, flags)
 			"seg %d start %lx size %lx\n", seg,
 			(long)map->dm_segs[seg].ds_addr, 
 			map->dm_segs[seg].ds_len));
-		map->dm_segs[seg].ds_len = sgstart & (boundary - 1);
+		map->dm_segs[seg].ds_len =
+		    boundary - (sgstart & (boundary - 1));
 		if (++seg > map->_dm_segcnt) {
 			/* Too many segments.  Fail the operation. */
 			DPRINTF(IDB_INFO, ("iommu_dvmamap_load: "
@@ -953,6 +954,7 @@ iommu_dvmamap_sync(t, is, map, offset, len, ops)
 	bus_size_t len;
 	int ops;
 {
+	bus_addr_t orig_offset = offset;
 	bus_size_t count;
 	int i, needsflush = 0;
 
@@ -962,8 +964,17 @@ iommu_dvmamap_sync(t, is, map, offset, len, ops)
 		offset -= map->dm_segs[i].ds_len;
 	}
 
-	if (i == map->dm_nsegs)
+	if (i == map->dm_nsegs) {
+		printf("map length: 0x%llx\n", (unsigned long long)map->dm_mapsize);
+		printf("looking for 0x%llx/0x%llx\n",
+		    (unsigned long long)orig_offset, (unsigned long long)len);
+		for (i = 0; i < map->dm_nsegs; i++) {
+			printf("%d: addr 0x%llx len 0x%llx\n", i,
+			    (unsigned long long)map->dm_segs[i].ds_addr,
+			    (unsigned long long)map->dm_segs[i].ds_len);
+		}
 		panic("iommu_dvmamap_sync: too short %lu", offset);
+	}
 
 	for (; len > 0 && i < map->dm_nsegs; i++) {
 		count = min(map->dm_segs[i].ds_len - offset, len);
