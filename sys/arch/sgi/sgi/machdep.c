@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.8 2004/08/26 13:30:25 pefo Exp $ */
+/*	$OpenBSD: machdep.c,v 1.9 2004/09/09 10:25:52 miod Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -114,7 +114,6 @@ int	nbuf = NBUF;
 int	bufpages = BUFPAGES;
 
 vm_map_t exec_map;
-vm_map_t mb_map;
 vm_map_t phys_map;
 
 int	msgbufmapped;		/* set when safe to use msgbuf */
@@ -619,9 +618,6 @@ cpu_startup()
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
 	    VM_PHYS_SIZE, TRUE, FALSE, NULL);
 
-	/* Finally, allocate mbuf pool. */
-	mb_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				VM_MBUF_SIZE, FALSE, FALSE, NULL);
 #ifdef DEBUG
 	pmapdebugflag = opmapdebugflag;
 #endif
