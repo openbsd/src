@@ -116,7 +116,8 @@ cleanexit(int val)
 static RETSIGTYPE
 sigalrm(int sig)
 {
-    cleanexit(1);
+    kerb_fini();	/* not a signal race -- kerb_fini() does NOTHING */
+    _exit(val);
 }
 
 /*
