@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751.c,v 1.136 2003/02/15 23:39:12 jason Exp $	*/
+/*	$OpenBSD: hifn7751.c,v 1.137 2003/02/17 16:48:22 jason Exp $	*/
 
 /*
  * Invertex AEON / Hifn 7751 driver
@@ -1931,9 +1931,9 @@ hifn_process(crp)
 		}
 	} else {
 		if ((crd1->crd_alg == CRYPTO_MD5_HMAC ||
-                     crd1->crd_alg == CRYPTO_SHA1_HMAC ||
-                     crd1->crd_alg == CRYPTO_MD5 ||
-                     crd1->crd_alg == CRYPTO_SHA1) &&
+		     crd1->crd_alg == CRYPTO_SHA1_HMAC ||
+		     crd1->crd_alg == CRYPTO_MD5 ||
+		     crd1->crd_alg == CRYPTO_SHA1) &&
 		    (crd2->crd_alg == CRYPTO_DES_CBC ||
 		     crd2->crd_alg == CRYPTO_3DES_CBC ||
 		     crd2->crd_alg == CRYPTO_ARC4) &&
@@ -1945,9 +1945,9 @@ hifn_process(crp)
 		     crd1->crd_alg == CRYPTO_ARC4 ||
 		     crd1->crd_alg == CRYPTO_3DES_CBC) &&
 		    (crd2->crd_alg == CRYPTO_MD5_HMAC ||
-                     crd2->crd_alg == CRYPTO_SHA1_HMAC ||
-                     crd2->crd_alg == CRYPTO_MD5 ||
-                     crd2->crd_alg == CRYPTO_SHA1) &&
+		     crd2->crd_alg == CRYPTO_SHA1_HMAC ||
+		     crd2->crd_alg == CRYPTO_MD5 ||
+		     crd2->crd_alg == CRYPTO_SHA1) &&
 		    (crd1->crd_flags & CRD_F_ENCRYPT)) {
 			enccrd = crd1;
 			maccrd = crd2;
@@ -2036,7 +2036,7 @@ hifn_process(crp)
 			cmd->mac_masks |= HIFN_MAC_CMD_ALG_MD5 |
 			    HIFN_MAC_CMD_RESULT | HIFN_MAC_CMD_MODE_HASH |
 			    HIFN_MAC_CMD_POS_IPSEC;
-                       break;
+			break;
 		case CRYPTO_MD5_HMAC:
 			cmd->mac_masks |= HIFN_MAC_CMD_ALG_MD5 |
 			    HIFN_MAC_CMD_RESULT | HIFN_MAC_CMD_MODE_HMAC |
@@ -2279,7 +2279,7 @@ hifn_callback(sc, cmd, macbuf)
 
 			if (crp->crp_flags & CRYPTO_F_IMBUF)
 				m_copyback((struct mbuf *)crp->crp_buf,
-                                   crd->crd_inject, len, macbuf);
+				    crd->crd_inject, len, macbuf);
 			else if ((crp->crp_flags & CRYPTO_F_IOV) && crp->crp_mac)
 				bcopy((caddr_t)macbuf, crp->crp_mac, len);
 			break;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751var.h,v 1.46 2003/01/05 20:07:44 deraadt Exp $	*/
+/*	$OpenBSD: hifn7751var.h,v 1.47 2003/02/17 16:48:22 jason Exp $	*/
 
 /*
  * Invertex AEON / Hifn 7751 driver
@@ -107,6 +107,11 @@ struct hifn_session {
 	u_int8_t hs_iv[HIFN_IV_LENGTH];
 };
 
+/* We use a state machine on sessions */
+#define	HS_STATE_FREE	0		/* unused session entry */
+#define	HS_STATE_USED	1		/* allocated, but key not on card */
+#define	HS_STATE_KEY	2		/* allocated and key is on card */
+
 #define	HIFN_RING_SYNC(sc, r, i, f)					\
 	bus_dmamap_sync((sc)->sc_dmat, (sc)->sc_dmamap,		\
 	    offsetof(struct hifn_dma, r[i]), sizeof(struct hifn_desc), (f))
@@ -125,11 +130,6 @@ struct hifn_session {
 	bus_dmamap_sync((sc)->sc_dmat, (sc)->sc_dmamap,		\
 	    offsetof(struct hifn_dma, result_bufs[(i)][0]),		\
 	    HIFN_MAX_RESULT, (f))
-
-/* We use a state machine to on sessions */
-#define	HS_STATE_FREE	0		/* unused session entry */
-#define	HS_STATE_USED	1		/* allocated, but key not on card */
-#define	HS_STATE_KEY	2		/* allocated and key is on card */
 
 /*
  * Holds data specific to a single HIFN board.

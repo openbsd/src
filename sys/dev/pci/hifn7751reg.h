@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751reg.h,v 1.40 2003/02/15 23:39:13 jason Exp $	*/
+/*	$OpenBSD: hifn7751reg.h,v 1.41 2003/02/17 16:48:22 jason Exp $	*/
 
 /*
  * Invertex AEON / Hifn 7751 driver
@@ -438,6 +438,24 @@ struct hifn_mac_command {
  */
 #define	HIFN_MAC_CMD_POS_IPSEC		0x0200
 #define	HIFN_MAC_CMD_NEW_KEY		0x0800
+
+struct hifn_comp_command {
+	volatile u_int16_t masks;
+	volatile u_int16_t header_skip;
+	volatile u_int16_t source_count;
+	volatile u_int16_t reserved;
+};
+
+#define	HIFN_COMP_CMD_SRCLEN_M		0xc000
+#define	HIFN_COMP_CMD_SRCLEN_S		14
+#define	HIFN_COMP_CMD_ONE		0x0100	/* must be one */
+#define	HIFN_COMP_CMD_CLEARHIST		0x0010	/* clear history */
+#define	HIFN_COMP_CMD_UPDATEHIST	0x0008	/* update history */
+#define	HIFN_COMP_CMD_LZS_STRIP0	0x0004	/* LZS: strip zero */
+#define	HIFN_COMP_CMD_MPPC_RESTART	0x0004	/* MPPC: restart */
+#define	HIFN_COMP_CMD_ALG_MASK		0x0001	/* compression mode: */
+#define	HIFN_COMP_CMD_ALG_MPPC		0x0001	/*   MPPC */
+#define	HIFN_COMP_CMD_ALG_LZS		0x0000	/*   LZS */
 
 /*
  * The poll frequency and poll scalar defines are unshifted values used
