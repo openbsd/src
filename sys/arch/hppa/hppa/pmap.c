@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.114 2004/08/01 07:13:49 mickey Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.115 2004/08/05 09:06:24 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -94,6 +94,7 @@ struct pmap	kernel_pmap_store;
 int		hppa_sid_max = HPPA_SID_MAX;
 struct pool	pmap_pmap_pool;
 struct pool	pmap_pv_pool;
+int		pmap_pvlowat = 252;
 struct simplelock pvalloc_lock;
 int 		pmap_initialized;
 
@@ -589,6 +590,8 @@ pmap_init()
 	    &pool_allocator_nointr);
 	pool_init(&pmap_pv_pool, sizeof(struct pv_entry), 0, 0, 0, "pmappv",
 	    NULL);
+	pool_setlowat(&pmap_pv_pool, pmap_pvlowat);
+	pool_sethiwat(&pmap_pv_pool, pmap_pvlowat * 32);
 
 	pmap_initialized = 1;
 
