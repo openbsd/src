@@ -1,4 +1,4 @@
-/* $OpenBSD: strtonum.c,v 1.2 2004/05/03 20:53:34 millert Exp $ */
+/* $OpenBSD: strtonum.c,v 1.3 2004/06/21 23:12:25 marc Exp $ */
 /*
  * Copyright (c) 2004 Ted Unangst and Todd Miller
  * All rights reserved.
@@ -33,7 +33,7 @@ strtonum(const char *numstr, long long minval, unsigned long long maxval,
 	int error;
 	struct errval {
 		const char *errstr;
-		int errno;
+		int err;
 	} ev[4] = {
 		{ NULL,		0 },
 		{ "invalid",	EINVAL },
@@ -41,7 +41,7 @@ strtonum(const char *numstr, long long minval, unsigned long long maxval,
 		{ "too large",	ERANGE },
 	};
 
-	ev[0].errno = errno;
+	ev[0].err = errno;
 	errno = 0;
 	error = 0;
 	ull = 0;
@@ -66,7 +66,7 @@ strtonum(const char *numstr, long long minval, unsigned long long maxval,
 	}
 	if (errstrp != NULL)
 		*errstrp = ev[error].errstr;
-	errno = ev[error].errno;
+	errno = ev[error].err;
 	if (error)
 		ull = 0;
 
