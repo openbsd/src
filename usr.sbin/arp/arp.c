@@ -1,4 +1,4 @@
-/*	$OpenBSD: arp.c,v 1.28 2003/06/11 23:33:25 deraadt Exp $ */
+/*	$OpenBSD: arp.c,v 1.29 2003/06/27 22:11:22 deraadt Exp $ */
 /*	$NetBSD: arp.c,v 1.12 1995/04/24 13:25:18 cgd Exp $ */
 
 /*
@@ -41,7 +41,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)arp.c	8.2 (Berkeley) 1/2/94";*/
-static char *rcsid = "$OpenBSD: arp.c,v 1.28 2003/06/11 23:33:25 deraadt Exp $";
+static char *rcsid = "$OpenBSD: arp.c,v 1.29 2003/06/27 22:11:22 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -91,6 +91,8 @@ static pid_t pid;
 static int nflag;	/* no reverse dns lookups */
 static int aflag;	/* do it for all entries */
 static int s = -1;
+
+extern int h_errno;
 
 /* ROUNDUP() is nasty, but it is identical to what's in the kernel. */
 #define ROUNDUP(a)					\
@@ -418,7 +420,6 @@ search(in_addr_t addr, void (*action)(struct sockaddr_dl *sdl,
 	struct rt_msghdr *rtm;
 	struct sockaddr_inarp *sin;
 	struct sockaddr_dl *sdl;
-	extern int h_errno;
 
 	mib[0] = CTL_NET;
 	mib[1] = PF_ROUTE;
@@ -456,7 +457,6 @@ print_entry(struct sockaddr_dl *sdl, struct sockaddr_inarp *sin,
     struct rt_msghdr *rtm)
 {
 	char *host;
-	extern int h_errno;
 	struct hostent *hp;
 	char ifname[IF_NAMESIZE];
 
@@ -535,7 +535,6 @@ int
 rtmsg(int cmd)
 {
 	static int seq;
-	int rlen;
 	struct rt_msghdr *rtm;
 	char *cp;
 	int l;
@@ -588,7 +587,7 @@ doit:
 	l = rtm->rtm_msglen;
 	rtm->rtm_seq = ++seq;
 	rtm->rtm_type = cmd;
-	if ((rlen = write(s, (char *)&m_rtmsg, l)) < 0) {
+	if (write(s, (char *)&m_rtmsg, l) < 0) {
 		if (errno != ESRCH || cmd != RTM_DELETE) {
 			warn("writing to routing socket");
 			return (-1);
