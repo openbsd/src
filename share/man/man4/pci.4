@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pci.4,v 1.70 2003/03/06 21:04:35 jason Exp $
+.\"	$OpenBSD: pci.4,v 1.71 2003/03/06 21:58:03 jason Exp $
 .\"	$NetBSD: pci.4,v 1.29 2000/04/01 00:32:23 tsarna Exp $
 .\"
 .\" Copyright (c) 2000 Theo de Raadt.  All rights reserved.
@@ -57,6 +57,7 @@
 .Cd "pci* at schizo?"
 .Pp
 .Cd "# all architectures"
+.Cd "ppb* at pci? dev ? function ?"
 .Cd "pci* at ppb? bus ?"
 .Sh DESCRIPTION
 The system includes a machine-independent
