@@ -1,4 +1,4 @@
-/* $OpenBSD: undo.c,v 1.1 2002/02/20 22:30:54 vincent Exp $ */
+/* $OpenBSD: undo.c,v 1.2 2002/02/20 23:15:03 vincent Exp $ */
 /*
  * Copyright (c) 2002 Vincent Labrecque <vincent@openbsd.org>
  *							 All rights reserved.
@@ -91,7 +91,7 @@ find_linep(int pos, LINE **olp, int *offset)
 	p = curwp->w_linep;
 	while (pos > 0 && pos > llength(p)) {
 		pos -= llength(p) + 1;
-		if ((p = lforw(p)) == curbp->b_linep) {
+		if ((p = lforw(p)) == curwp->w_linep) {
 			*olp = NULL;
 			*offset = 0;
 			return FALSE;
@@ -255,7 +255,7 @@ undo_add_delete(LINE *lp, int offset, int size)
 {
 	REGION reg;
 	struct undo_rec *rec;
-	int dist, pos;
+	int dist, pos, skip = 0;
 
 	if (undo_disable_flag)
 		return TRUE;
@@ -265,12 +265,16 @@ undo_add_delete(LINE *lp, int offset, int size)
 	reg.r_size = size;
 
 	pos = find_offset(lp, offset);
+	
+	if (size == 1 && lgetc(lp, offset) == '\n')
+		skip = 1;
 
 	/*
 	 * Again, try to reuse last undo record, if we can
 	 */
 	rec = LIST_FIRST(&undo_list);
-	if ((rec != NULL) &&
+	if (!skip &&
+	    (rec != NULL) &&
 	    (rec->type == DELETE) &&
 	    (rec->buf == curbp) &&
 	    (rec->region.r_linep == reg.r_linep)) {
