@@ -1,5 +1,5 @@
-.\" $OpenBSD: isakmpd.conf.5,v 1.28 2000/01/22 13:39:28 aaron Exp $
-.\" $EOM: isakmpd.conf.5,v 1.34 1999/10/01 14:00:23 niklas Exp $
+.\" $OpenBSD: isakmpd.conf.5,v 1.29 2000/01/26 15:22:52 niklas Exp $
+.\" $EOM: isakmpd.conf.5,v 1.37 2000/01/25 11:19:34 niklas Exp $
 .\"
 .\" Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
 .\"
@@ -81,7 +81,7 @@ Generic global configuration parameters
 .It Em Policy-File
 The name of the file that contains
 .Xr KeyNote 4
-policies.
+policies. The default is "/etc/isakmpd/isakmpd.policy".
 .It Em Retransmits
 How many times should a message be retransmitted before giving up.
 .It Em Check-interval
@@ -397,7 +397,7 @@ An example of a configuration file:
 # A configuration sample for the isakmpd ISAKMP/Oakley (aka IKE) daemon.
 
 [General]
-Policy-File=		/etc/isakmpd/policy
+Policy-File=		/etc/isakmpd/isakmpd.policy
 Retransmits=		5
 Exchange-max-time=	120
 Listen-on=		10.1.0.2
@@ -712,4 +712,5 @@ LIFE_DURATION=		4608000,4096000:8192000
 .Sh SEE ALSO
 .Xr ipsec 4 ,
 .Xr keynote 4 ,
+.Xr isakmpd.policy 5 ,
 .Xr isakmpd 8
