@@ -1,4 +1,4 @@
-.\"	$OpenBSD: enc.4,v 1.10 2000/12/30 23:55:11 angelos Exp $
+.\"	$OpenBSD: enc.4,v 1.11 2001/03/25 22:32:45 angelos Exp $
 .\"
 .Dd October 7, 1999
 .Dt ENC 4
@@ -30,12 +30,8 @@ or incoming packets after they have been similarly processed, via
 .Pp
 The
 .Dq enc0
-interface inherits all the IPsec traffic that does not have another
-.Nm
-interface explicitly assigned to it. Thus, if one were never to assign
-an IPsec SA to another
-.Nm
-interface, all IPsec traffic could be filtered based on
+interface inherits all IPsec traffic.
+Thus all IPsec traffic can be filtered based on
 .Dq enc0 ,
 and all IPsec traffic could be seen by invoking
 .Xr tcpdump 8
@@ -58,9 +54,3 @@ or all incoming packets after they have been similarly processed:
 .Xr netintro 4 ,
 .Xr ipf 5 ,
 .Xr vpn 8
-.Sh BUGS
-The
-.Cm PROMISC
-flag is not cleared on the enc0 interface after
-.Xr tcpdump 8
-is stopped.
