@@ -1,4 +1,4 @@
-/*	$OpenBSD: iommuvar.h,v 1.2 2001/08/18 21:30:00 jason Exp $	*/
+/*	$OpenBSD: iommuvar.h,v 1.3 2001/09/26 19:31:57 jason Exp $	*/
 /*	$NetBSD: iommuvar.h,v 1.7 2001/07/20 00:07:13 eeh Exp $	*/
 
 /*
@@ -76,5 +76,6 @@ int	iommu_dvmamem_map __P((bus_dma_tag_t, struct iommu_state *,
 	    bus_dma_segment_t *, int, size_t, caddr_t *, int));
 void	iommu_dvmamem_unmap __P((bus_dma_tag_t, struct iommu_state *,
 	    caddr_t, size_t));
+paddr_t	iommu_extract __P((struct iommu_state *, vaddr_t));
 
 #endif /* _SPARC64_DEV_IOMMUVAR_H_ */
