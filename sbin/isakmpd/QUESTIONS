@@ -1,4 +1,4 @@
-$OpenBSD: QUESTIONS,v 1.4 2002/06/09 08:13:06 todd Exp $
+$OpenBSD: QUESTIONS,v 1.5 2003/11/05 12:31:21 jmc Exp $
 $EOM: QUESTIONS,v 1.12 1998/10/11 17:11:06 niklas Exp $
 
 Does the spec limit the count of SA payloads in a message?  Where if so?
@@ -19,7 +19,7 @@ cannot be authenticated?  Or should we not tear down SAs as results of
 notifications?
 
 Certicom claims to hold licenses for Elliptic Curve Cryptography? Does this
-concern us? See: http://grouper.ieee.org/groups/p1363/patents.html
+concern us? See: http://grouper.ieee.org/groups/1363/P1363/patents.html
 
 Main mode when using public key encryption authentication does not look
 like an identity protection exchange to me.  Must I really get rid of
