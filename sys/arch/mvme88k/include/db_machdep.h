@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.7 2001/03/09 05:44:40 smurph Exp $ */
+/*	$OpenBSD: db_machdep.h,v 1.8 2001/03/16 00:05:24 miod Exp $ */
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -179,5 +179,7 @@ int ddb_entry_trap __P((int level, db_regs_t *eframe));
 #endif	/* __GNUC__ */
 
 #define	db_printf_enter	db_printing
+
+int m88k_print_instruction __P((unsigned iadr, long inst));
 
 #endif	/* _M88K_DB_MACHDEP_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mvme188.h,v 1.4 2001/03/07 23:37:16 miod Exp $ */
+/*	$OpenBSD: mvme188.h,v 1.5 2001/03/16 00:05:25 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * All rights reserved.
@@ -379,11 +379,7 @@ extern unsigned int m188_curspl[MAX_CPUS];
 extern unsigned int int_mask_val[INT_LEVEL];
 extern unsigned int int_mask_shadow[MAX_CPUS];
 extern volatile unsigned int *int_mask_reg[MAX_CPUS];
-/*
- * Prototypes
- */
-void block_obio_interrupt(unsigned mask);
-void unblock_obio_interrupt(unsigned mask);
+
 #endif 
 
 #define M188_IACK		U(0xFFF85000)
