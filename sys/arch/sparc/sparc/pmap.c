@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.73 2000/02/01 16:16:36 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.74 2000/02/04 15:46:09 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
@@ -3301,7 +3301,13 @@ pmap_bootstrap4m(void)
 		sp->sg_npte++;
 
 		pte = ((int)q - KERNBASE) >> SRMMU_PPNPASHIFT;
-		pte |= PPROT_N_RX | SRMMU_PG_C | SRMMU_TEPTE;
+		pte |= PPROT_N_RX | SRMMU_TEPTE;
+
+		if ((cpuinfo.flags & CPUFLG_CACHEPAGETABLES) != 0 ||
+		    q < (caddr_t)pagetables_start ||
+		    q >= (caddr_t)pagetables_end)
+			pte |= SRMMU_PG_C;
+
 		/* write-protect kernel text */
 		if (q < (caddr_t) trapbase || q >= etext)
 			pte |= PPROT_WRITE;
@@ -3322,6 +3328,12 @@ pmap_bootstrap4m(void)
 	for (i = 1; i < ncontext; i++)
 		cpuinfo.ctx_tbl[i] = cpuinfo.ctx_tbl[0];
 #endif
+
+	if ((cpuinfo.flags & CPUFLG_CACHEPAGETABLES) == 0)
+		/* Flush page tables from cache */
+		pcache_flush((caddr_t)pagetables_start,
+			     (caddr_t)VA2PA((caddr_t)pagetables_start),
+			     pagetables_end - pagetables_start);
 
 	/*
 	 * Now switch to kernel pagetables (finally!)
@@ -3474,7 +3486,7 @@ pmap_init()
 }
 
 /*
- * Called just after enabling cache (so that we CPUFLG_CACHEPAGETABLES is
+ * Called just after enabling cache (so that CPUFLG_CACHEPAGETABLES is
  * set correctly).
  */
 void
@@ -3482,16 +3494,20 @@ pmap_cache_enable()
 {
 #ifdef SUN4M
 	if (CPU_ISSUN4M) {
+		int pte;
+
 		/*
-		 * Mark all pagetables uncacheable, if required
+		 * Deal with changed CPUFLG_CACHEPAGETABLES.
 		 *
-		 * We assume that we have not allocated any tables except
-		 * the kernel pagetables. It's safe to assume because
-		 * only userland can alloc extra pagetables and we're
-		 * still in autoconfiguration.
+		 * If the tables were uncached during the initial mapping
+		 * and cache_enable set the flag we recache the tables.
 		 */
-		if ((cpuinfo.flags & CPUFLG_CACHEPAGETABLES) == 0)
-			kvm_uncache((caddr_t)pagetables_start,
+
+		pte = getpte4m(pagetables_start);
+
+		if ((cpuinfo.flags & CPUFLG_CACHEPAGETABLES) != 0 &&
+		    (pte & SRMMU_PG_C) == 0)
+			kvm_recache((caddr_t)pagetables_start,
 				    atop(pagetables_end - pagetables_start));
 	}
 #endif
