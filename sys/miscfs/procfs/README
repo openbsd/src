@@ -1,4 +1,4 @@
-/*	$OpenBSD: README,v 1.2 1997/02/24 14:21:56 niklas Exp $	*/
+/*	$OpenBSD: README,v 1.3 2000/08/12 04:33:02 jasoni Exp $	*/
 /*	$NetBSD: README,v 1.4 1994/06/29 06:34:43 cgd Exp $	*/
 
 saute procfs lyonnais
@@ -48,6 +48,9 @@ are:
 			will get the "right" register values.
 			a multi-proc kernel would need to do some
 			synchronisation.
+
+	cmdline - r/o.	process command line parameters, separated
+			by NULLs
 
 this then looks like:
 
