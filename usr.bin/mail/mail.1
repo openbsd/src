@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mail.1,v 1.42 2003/09/04 22:14:42 jmc Exp $
+.\"	$OpenBSD: mail.1,v 1.43 2004/04/19 10:17:18 jmc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -40,81 +40,81 @@
 .Sh SYNOPSIS
 .Nm mail
 .Bk -words
-.Op Fl iInv
-.Op Fl s Ar subject
-.Op Fl c Ar list
+.Op Fl Iinv
 .Op Fl b Ar list
+.Op Fl c Ar list
+.Op Fl s Ar subject
 .Ar to-addr Op Ar ...
 .Op Fl Ar sendmail-options Op Ar ...
 .Ek
 .Nm mail
-.Op Fl iInNv
+.Op Fl IiNnv
 .Fl f
 .Op Ar name
 .Nm mail
-.Op Fl iInNv
+.Op Fl IiNnv
 .Op Fl u Ar user
 .Sh DESCRIPTION
 .Nm mail
 is an intelligent mail processing system which has
 a command syntax reminiscent of
-.Xr \&ed 1
+.Xr ed 1
 with lines replaced by messages.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-.It Fl v
-Verbose mode.
-The details of
-delivery are displayed on the user's terminal.
-.It Fl i
-Ignore tty interrupt signals.
-This is
-particularly useful when using
-.Nm mail
-on noisy phone lines.
-.It Fl I
-Forces
-.Nm mail
-to run in interactive mode, even when input is not a terminal.
-In particular, the special
-.Ic \&~
-command character, used when sending mail, is only available interactively.
-.It Fl n
-Inhibits reading
-.Pa /etc/mail.rc
-upon startup.
-.It Fl N
-Inhibits initial display of message headers
-when reading mail or editing a mail folder.
-.It Fl s Ar subject
-Specify subject on command line
-(only the first argument after the
-.Fl s
-flag is used as a subject; be careful to quote subjects
-containing spaces).
+.It Fl b Ar list
+Send blind carbon copies to
+.Ar list .
 .It Fl c Ar list
 Send carbon copies to
 .Ar list
 of users.
 .Ar list
 should be a comma separated list of names.
-.It Fl b Ar list
-Send blind carbon copies to
-.Ar list .
-.It Fl f Ar name
+.It Fl f Op Ar name
 Read in the contents of your mailbox
 (or the specified file
 .Ar name )
 for processing; when you quit,
 .Nm mail
 writes undeleted messages back to this file.
+.It Fl I
+Forces
+.Nm mail
+to run in interactive mode, even when input is not a terminal.
+In particular, the special
+.Ic ~
+command character, used when sending mail, is only available interactively.
+.It Fl i
+Ignore tty interrupt signals.
+This is
+particularly useful when using
+.Nm mail
+on noisy phone lines.
+.It Fl N
+Inhibits initial display of message headers
+when reading mail or editing a mail folder.
+.It Fl n
+Inhibits reading
+.Pa /etc/mail.rc
+upon startup.
+.It Fl s Ar subject
+Specify subject on command line
+(only the first argument after the
+.Fl s
+flag is used as a subject; be careful to quote subjects
+containing spaces).
 .It Fl u Ar user
 Is equivalent to:
 .Pp
 .Dl $ mail -f /var/mail/user
 .Pp
 except that locking is done.
+.It Fl v
+Verbose mode.
+The details of
+delivery are displayed on the user's terminal.
 .El
 .Ss Startup actions
 At startup time,
@@ -163,9 +163,9 @@ command (which can be abbreviated
 Moving among the messages is much like moving between lines in
 .Xr ed 1 ;
 you may use
-.Ic \&+
+.Ic +
 and
-.Ic \&-
+.Ic -
 to shift forwards and backwards, or simply enter a message number to move
 directly.
 .Ss Disposing of mail
@@ -202,14 +202,14 @@ deletes messages 1 and 2, while
 .Ic delete 1\-5
 deletes messages 1 through 5.
 The special name
-.Sq \&*
+.Sq *
 addresses all messages and
-.Sq \&$
+.Sq $
 addresses
 the last message; thus the command
 .Ic top
 which prints the first few lines of a message could be used in
-.Ic top \&*
+.Ic top *
 to print the first few lines of all messages.
 .Ss Replying to or originating mail
 You can use the
@@ -260,7 +260,7 @@ Such lists can be defined by placing a line like
 .Dl alias cohorts bill ozalp jkf mark kridle@ucbcory
 .Pp
 in the file
-.Pa \&.mailrc
+.Pa .mailrc
 in your home directory.
 The current list of such aliases can be displayed with the
 .Ic alias
@@ -312,11 +312,11 @@ the current message, the search proceeds backwards, and if there are no
 good messages at all,
 .Nm mail
 types
-.Dq Li \&No applicable messages
+.Dq \&No applicable messages
 and
 aborts the command.
 .Bl -tag -width delete
-.It Ic \&\-
+.It Ic -
 Print out the preceding message.
 If given a numeric
 argument
@@ -444,7 +444,7 @@ mailbox, %user means user's system mailbox, & means
 your
 .Ar mbox
 file, and
-\&+\&folder means a file in your folder
++folder means a file in your folder
 directory.
 .It Ic from
 .Pq Ic f
@@ -454,10 +454,10 @@ Takes a list of messages and prints their message headers.
 Lists the current range of headers, which is an 18\-message group.
 If
 a
-.Ql \&+
+.Ql +
 argument is given, the next 18\-message group is printed; if
 a
-.Ql \&\-
+.Ql -
 argument is given, the previous 18\-message group is printed.
 .It Ic help
 A synonym for
@@ -513,12 +513,12 @@ have the
 .Ic hold
 option set.
 .It Ic more
-.Pq Ic \mo
+.Pq Ic \&mo
 Takes a message list and invokes the pager on that list.
 .It Ic next
 .Pq Ic n
 (like
-.Ic \&+
+.Ic +
 or
 .Tn CR )
 Goes to the next message in sequence and types it.
@@ -610,7 +610,6 @@ saving a message by
 .Ic save
 or when automatically saving to
 .Ar mbox .
-.pl +1
 .It Ic saveretain
 .Ic saveretain
 is to
@@ -697,10 +696,10 @@ command.
 You can move
 .Nm mail Ns 's
 attention forward to the next window with the
-.Ic \&z
+.Ic z
 command.
 Also, you can move to the previous window by using
-.Ic \&z\&\- .
+.Ic z- .
 .El
 .Ss Tilde/escapes
 Here is a summary of the tilde escapes,
@@ -714,23 +713,23 @@ is somewhat of a misnomer since the actual escape character can be set
 by the option
 .Ic escape .
 .Bl -tag -width Ds
-.It Ic \&~! Ns Ar command
+.It Ic ~! Ns Ar command
 Execute the indicated shell command, then return to the message.
-.It Ic \&~b Ns Ar name ...
+.It Ic ~b Ns Ar name ...
 Add the given names to the list of carbon copy recipients but do not make
 the names visible in the Cc: line ("blind" carbon copy).
-.It Ic \&~c Ns Ar name ...
+.It Ic ~c Ns Ar name ...
 Add the given names to the list of carbon copy recipients.
-.It Ic \&~d
+.It Ic ~d
 Read the file
 .Pa dead.letter
 from your home directory into the message.
-.It Ic \&~e
+.It Ic ~e
 Invoke the text editor on the message collected so far.
 After the
 editing session is finished, you may continue appending text to the
 message.
-.It Ic \&~f Ns Ar messages
+.It Ic ~f Ns Ar messages
 Read the named messages into the message being sent.
 If no messages are specified, read in the current message.
 Message headers currently being ignored (by the
@@ -738,15 +737,15 @@ Message headers currently being ignored (by the
 or
 .Ic retain
 command) are not included.
-.It Ic \&~F Ns Ar messages
+.It Ic ~F Ns Ar messages
 Identical to
-.Ic \&~f ,
+.Ic ~f ,
 except all message headers are included.
-.It Ic \&~h
+.It Ic ~h
 Edit the message header fields by typing each one in turn and allowing
 the user to append text to the end or modify the field by using the
 current terminal erase and kill characters.
-.It Ic \&~m Ns Ar messages
+.It Ic ~m Ns Ar messages
 Read the named messages into the message being sent, indented by a
 tab or by the value of
 .Va indentprefix .
@@ -757,26 +756,26 @@ Message headers currently being ignored (by the
 or
 .Ic retain
 command) are not included.
-.It Ic \&~M Ns Ar messages
+.It Ic ~M Ns Ar messages
 Identical to
-.Ic \&~m ,
+.Ic ~m ,
 except all message headers are included.
-.It Ic \&~p
+.It Ic ~p
 Print out the message collected so far, prefaced by the message header
 fields.
-.It Ic \&~q
+.It Ic ~q
 Abort the message being sent, copying the message to
 .Pa dead.letter
 in your home directory if
 .Ic save
 is set.
-.It Ic \&~r Ns Ar filename
+.It Ic ~r Ns Ar filename
 Read the named file into the message.
-.It Ic \&~s Ns Ar string
+.It Ic ~s Ns Ar string
 Cause the named string to become the current subject field.
-.It Ic \&~\&t Ns Ar name ...
+.It Ic ~t Ns Ar name ...
 Add the given names to the direct recipient list.
-.It Ic \&~\&v
+.It Ic ~v
 Invoke an alternate editor (defined by the
 .Ev VISUAL
 option) on the
@@ -785,9 +784,9 @@ Usually, the alternate editor will be a
 screen editor.
 After you quit the editor, you may resume appending
 text to the end of your message.
-.It Ic \&~w Ns Ar filename
+.It Ic ~w Ns Ar filename
 Write the message onto the named file.
-.It Ic \&~\&| Ns Ar command
+.It Ic ~| Ns Ar command
 Pipe the message through the command as a filter.
 If the command gives
 no output or terminates abnormally, retain the original text of the
@@ -797,10 +796,10 @@ The command
 is often used as
 .Ic command
 to rejustify the message.
-.It Ic \&~: Ns Ar mail-command
+.It Ic ~: Ns Ar mail-command
 Execute the given mail command.
 Not all commands, however, are allowed.
-.It Ic \&~~ Ns Ar string
+.It Ic ~~ Ns Ar string
 Insert the string of text in the message prefaced by a single ~.
 If
 you have changed the escape character, then you should double
@@ -965,7 +964,7 @@ terminal.
 Pathname of the text editor to use in the
 .Ic edit
 command and
-.Ic \&~e
+.Ic ~e
 escape.
 If not defined, then a default editor is used.
 .It Ev LISTER
@@ -995,7 +994,7 @@ not defined.
 Pathname of the text editor to use in the
 .Ic visual
 command and
-.Ic \&~v
+.Ic ~v
 escape.
 .It Va crt
 The valued option
@@ -1035,7 +1034,7 @@ mail.
 If not defined, then outgoing mail is not so saved.
 .It Ar indentprefix
 String used by the
-.Ic \&~m
+.Ic ~m
 tilde escape for indenting messages, in place of the normal tab character
 .Pq Sq ^I
 Be sure to quote the value if it contains
@@ -1087,9 +1086,9 @@ system initialization file
 .Xr mail.local 8 ,
 .Xr newaliases 8 ,
 .Xr sendmail 8
-.Rs
-.%T "The Mail Reference Manual"
-.Re
+.Pp
+"The Mail Reference Manual",
+.Pa /usr/share/doc/usd/07.mail/ .
 .Sh HISTORY
 A
 .Nm mail
