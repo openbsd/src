@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_pty.c,v 1.25 2004/07/22 06:13:08 tedu Exp $	*/
+/*	$OpenBSD: tty_pty.c,v 1.26 2004/12/07 03:42:45 pat Exp $	*/
 /*	$NetBSD: tty_pty.c,v 1.33.4.1 1996/06/02 09:08:11 mrg Exp $	*/
 
 /*
@@ -1196,8 +1196,10 @@ retry:
 			cred = crget();
 			error = VOP_SETATTR(snd.ni_vp, &vattr, cred, p);
 			crfree(cred);
-			if (error)
+			if (error) {
+				vput(snd.ni_vp);
 				goto bad;
+			}
 		}
 		VOP_UNLOCK(snd.ni_vp, 0, p);
 		if (snd.ni_vp->v_usecount > 1 ||
