@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.19 2000/03/02 23:02:14 todd Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.20 2000/06/19 01:33:02 miod Exp $	*/
 /*	$NetBSD: pmap.c,v 1.64 1996/11/20 18:57:35 gwr Exp $	*/
 
 /*-
@@ -388,6 +388,7 @@ static void sun3_protection_init __P((void));
 static void pmap_common_init __P((pmap_t pmap));
 
 static void pmap_user_pmap_init __P((pmap_t pmap));
+static void pmap_page_upload __P((void));
 
 static void pmap_remove_range_mmu __P((pmap_t, vm_offset_t, vm_offset_t));
 static void pmap_remove_range_noctx __P((pmap_t, vm_offset_t, vm_offset_t));
@@ -401,6 +402,10 @@ static void pmap_enter_user __P((pmap_t pmap, vm_offset_t va, vm_offset_t pa,
 static void pmap_protect_range_noctx __P((pmap_t, vm_offset_t, vm_offset_t));
 static void pmap_protect_range_mmu __P((pmap_t, vm_offset_t, vm_offset_t));
 static void pmap_protect_range __P((pmap_t, vm_offset_t, vm_offset_t));
+
+extern int pmap_page_index __P((paddr_t));
+extern u_int pmap_free_pages __P((void));
+extern int pmap_next_page __P((vm_offset_t *));
 
 
 /*
@@ -1374,9 +1379,11 @@ pv_unlink(pmap, pa, va)
 		for (prev = head;; prev = npv, npv = npv->pv_next) {
 			pmap_stats.ps_unlink_pvsearch++;
 			if (npv == NULL) {
+#ifdef	PMAP_DEBUG
 				printf("pv_unlink: not on list (pa=%x,va=%x)\n",
 					   pa, va);
 				Debugger();	/* XXX */
+#endif
 				return;
 			}
 			if (npv->pv_pmap == pmap && npv->pv_va == va)
@@ -1491,6 +1498,8 @@ pmap_bootstrap()
 	context_init();
 
 	pmeg_clean_free();
+
+	pmap_page_upload();
 }
 
 /*
@@ -1633,6 +1642,31 @@ pmap_user_pmap_init(pmap)
 	pmap->pm_segmap = malloc(sizeof(char)*NUSEG, M_VMPMAP, M_WAITOK);
 	for (i=0; i < NUSEG; i++) {
 		pmap->pm_segmap[i] = SEGINV;
+	}
+}
+
+/* Provide memory to the VM system. */
+static void
+pmap_page_upload()
+{
+	int a, b, c, d;
+
+	if (hole_size) {
+		/*
+		 * Supply the memory in two segments so the
+		 * reserved memory (3/50 video ram at 1MB)
+		 * can be carved from the front of the 2nd.
+		 */
+		a = atop(avail_start);
+		b = atop(hole_start);
+		vm_page_physload(a, b, a, b);
+		c = atop(hole_start + hole_size);
+		d = atop(avail_end);
+		vm_page_physload(b, d, c, d);
+	} else {
+		a = atop(avail_start);
+		d = atop(avail_end);
+		vm_page_physload(a, d, a, d);
 	}
 }
 
@@ -2773,8 +2807,10 @@ pmap_extract(pmap, va)
 	}
 	PMAP_UNLOCK();
 	if ((pte & PG_VALID) == 0) {
+#ifdef	PMAP_DEBUG
 		printf("pmap_extract: invalid va=0x%x\n", va);
 		Debugger();
+#endif
 		pte = 0;
 	}
 	pa = PG_PA(pte);
