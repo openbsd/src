@@ -1294,7 +1294,7 @@ get_host(cp, grp)
 		if (isdigit(*cp)) {
 			saddr = inet_addr(cp);
 			if (saddr == -1) {
-				syslog(LOG_ERR, "Inet_addr failed");
+				syslog(LOG_ERR, "Inet_addr failed for %s.",cp);
 				return (1);
 			}
 			if ((hp = gethostbyaddr((caddr_t)&saddr, sizeof (saddr),
@@ -1308,7 +1308,7 @@ get_host(cp, grp)
 				aptr[1] = (char *)NULL;
 			}
 		} else {
-			syslog(LOG_ERR, "Gethostbyname failed");
+			syslog(LOG_ERR, "Gethostbyname failed for %s.",cp);
 			return (1);
 		}
 	}
@@ -1541,7 +1541,14 @@ do_mount(ep, grp, exflags, anoncrp, dirp, dirplen, fsb)
 				cp = dirp + dirplen - 1;
 			if (errno == EPERM) {
 				syslog(LOG_ERR,
-				   "Can't change attributes for %s.\n", dirp);
+				    "Can't change attributes for %s (%s).\n",
+				    dirp,
+				    (grp->gr_type == GT_HOST)
+				    ?grp->gr_ptr.gt_hostent->h_name
+				    :(grp->gr_type == GT_NET)
+				    ?grp->gr_ptr.gt_net.nt_name
+				    :"Unknown");
+			      /* XXX: Get address from sockaddr_iso? */
 				return (1);
 			}
 			if (opt_flags & OP_ALLDIRS) {
