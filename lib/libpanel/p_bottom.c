@@ -1,4 +1,4 @@
-/*	$OpenBSD: p_bottom.c,v 1.2 1998/07/24 17:08:07 millert Exp $	*/
+/*	$OpenBSD: p_bottom.c,v 1.3 1999/11/28 17:49:19 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -38,18 +38,35 @@
  */
 #include "panel.priv.h"
 
-MODULE_ID("$From: p_bottom.c,v 1.2 1998/02/11 12:14:01 tom Exp $")
+MODULE_ID("$From: p_bottom.c,v 1.7 1999/11/25 13:49:26 juergen Exp $")
 
 int
 bottom_panel(PANEL *pan)
 {
-  if(!pan)
-    return(ERR);
-  if(pan == _nc_bottom_panel)
-    return(OK);
-  dBug(("--> bottom_panel %s", USER_PTR(pan->user)));
-  if(_nc_panel_is_linked(pan))
-    (void)hide_panel(pan);
-  _nc_panel_link_bottom(pan);
-  return(OK);
+  int err = OK;
+
+  if (pan) {
+
+    if(!Is_Bottom(pan)) {
+      
+      dBug(("--> bottom_panel %s", USER_PTR(pan->user)));
+     
+      HIDE_PANEL(pan,err,FALSE);
+      assert(_nc_bottom_panel == _nc_stdscr_pseudo_panel);
+      
+      dStack("<lb%d>",1,pan);      
+      
+      pan->below = _nc_bottom_panel;
+      pan->above = _nc_bottom_panel->above;
+      if (pan->above)
+	pan->above->below = pan;
+      _nc_bottom_panel->above = pan;
+      
+      dStack("<lb%d>",9,pan);
+    }
+  }
+  else
+    err = ERR;
+  
+  return(err);
 }

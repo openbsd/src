@@ -1,7 +1,7 @@
-/*	$OpenBSD: lib_acs.c,v 1.2 1999/02/24 06:31:11 millert Exp $	*/
+/*	$OpenBSD: lib_acs.c,v 1.3 1999/11/28 17:49:54 millert Exp $	*/
 
 /****************************************************************************
- * Copyright (c) 1998 Free Software Foundation, Inc.                        *
+ * Copyright (c) 1998,1999 Free Software Foundation, Inc.                   *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -38,9 +38,9 @@
 #include <curses.priv.h>
 #include <term.h>	/* ena_acs, acs_chars */
 
-MODULE_ID("$From: lib_acs.c,v 1.15 1999/02/18 11:31:43 tom Exp $")
+MODULE_ID("$From: lib_acs.c,v 1.16 1999/10/30 23:00:16 tom Exp $")
 
-chtype acs_map[ACS_LEN];
+chtype acs_map[ACS_LEN] = { 0 };
 
 void _nc_init_acs(void)
 {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: curses.priv.h,v 1.20 1999/07/04 12:43:22 millert Exp $	*/
+/*	$OpenBSD: curses.priv.h,v 1.21 1999/11/28 17:53:40 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -35,7 +35,7 @@
 
 
 /*
- * $From: curses.priv.h,v 1.142 1999/07/04 01:21:35 tom Exp $
+ * $From: curses.priv.h,v 1.147 1999/11/28 00:10:37 tom Exp $
  *
  *	curses.priv.h
  *
@@ -334,7 +334,11 @@ struct screen {
 	int             _color_count;   /* count of colors in palette        */
 	unsigned short  *_color_pairs;  /* screen's color pair list          */
 	int             _pair_count;    /* count of color pairs              */
+#ifdef NCURSES_EXT_FUNCS
 	int             _default_color; /* use default colors                */
+	int             _default_fg;    /* assumed default foreground        */
+	int             _default_bg;    /* assumed default background        */
+#endif
 	chtype          _xmc_suppress;  /* attributes to suppress if xmc     */
 	chtype          _xmc_triggers;  /* attributes to process if xmc      */
 	chtype          _acs_map[ACS_LEN];
@@ -390,6 +394,8 @@ struct screen {
 
 	/* hashes for old and new lines */
 	unsigned long	*oldhash, *newhash;
+
+	bool            _cleanup;	/* cleanup after int/quit signal */
 };
 
 extern SCREEN *_nc_screen_chain;
@@ -488,7 +494,7 @@ typedef	struct {
 #define typeCalloc(type,elts) (type *)calloc((elts),sizeof(type))
 #define typeRealloc(type,elts,ptr) (type *)_nc_doalloc(ptr, (elts)*sizeof(type))
 #define FreeIfNeeded(p)  if(p != 0) free(p)
-#define FreeAndNull(p)   free(p); p = 0
+#define FreeAndNull(p)   free(p); p = 0;
 
 #include <nc_alloc.h>
 
@@ -540,15 +546,15 @@ extern const char *_nc_visbuf2(int, const char *);
 #define XMC_CHANGES(c) ((c) & SP->_xmc_suppress)
 
 
-#define toggle_attr_on(S,at) \
+#define toggle_attr_on(S,at) {\
    if (PAIR_NUMBER(at) > 0)\
       (S) = ((S) & ALL_BUT_COLOR) | (at);\
    else\
       (S) |= (at);\
-   T(("new attribute is %s", _traceattr((S))))
+   T(("new attribute is %s", _traceattr((S))));}
 
 
-#define toggle_attr_off(S,at) \
+#define toggle_attr_off(S,at) {\
    if (IGNORE_COLOR_OFF == TRUE) {\
       if (PAIR_NUMBER(at) == 0xff) /* turn off color */\
 	 (S) &= ~(at);\
@@ -560,7 +566,7 @@ extern const char *_nc_visbuf2(int, const char *);
       else /* leave color alone */\
 	 (S) &= ~(at);\
    }\
-   T(("new attribute is %s", _traceattr((S))));
+   T(("new attribute is %s", _traceattr((S))));}
 
 #define DelCharCost(count) \
 		((parm_dch != 0) \
@@ -593,7 +599,7 @@ extern const char *_nc_visbuf2(int, const char *);
 			}
 #else
 #define UpdateAttrs(c)	if (SP->_current_attr != AttrOf(c)) \
-				vidattr(AttrOf(c));
+				vidattr(AttrOf(c))
 #endif
 
 /*
@@ -735,6 +741,9 @@ extern int *_nc_oldnums;
 #define NC_BUFFERED(flag) \
 	if ((SP->_buffered != 0) != flag) \
 		_nc_set_buffer(SP->_ofp, flag)
+
+#define NC_OUTPUT ((SP != 0) ? SP->_ofp : stdout)
+#define _nc_flush() (void)fflush(NC_OUTPUT)
 
 /*
  * On systems with a broken linker, define 'SP' as a function to force the

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_update.c,v 1.3 1999/03/02 06:23:30 millert Exp $	*/
+/*	$OpenBSD: tty_update.c,v 1.4 1999/11/28 17:49:55 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -44,6 +44,10 @@
  *
  *-----------------------------------------------------------------*/
 
+#ifdef __BEOS__
+#include <OS.h>
+#endif
+
 #include <curses.priv.h>
 
 #if defined(TRACE) && HAVE_SYS_TIMES_H && HAVE_TIMES
@@ -69,15 +73,9 @@
 #endif
 #endif
 
-#ifdef __BEOS__
-/* BeOS select() only works on sockets.  Use the tty hack instead */
-#include <socket.h>
-#define select check_select
-#endif
-
 #include <term.h>
 
-MODULE_ID("$From: tty_update.c,v 1.111 1999/02/27 20:07:56 tom Exp $")
+MODULE_ID("$From: tty_update.c,v 1.122 1999/11/28 03:07:38 tom Exp $")
 
 /*
  * This define controls the line-breakout optimization.  Every once in a
@@ -99,10 +97,10 @@ MODULE_ID("$From: tty_update.c,v 1.111 1999/02/27 20:07:56 tom Exp $")
 
 static inline chtype ClrBlank ( WINDOW *win );
 static int ClrBottom(int total);
-static int InsStr( chtype *line, int count );
 static void ClearScreen( chtype blank );
 static void ClrUpdate( void );
 static void DelChar( int count );
+static void InsStr( chtype *line, int count );
 static void TransformLine( int const lineno );
 
 #ifdef POSITION_DEBUG
@@ -112,29 +110,40 @@ static void TransformLine( int const lineno );
  *
  ****************************************************************************/
 
-void position_check(int expected_y, int expected_x, char *legend)
+static void position_check(int expected_y, int expected_x, char *legend)
 /* check to see if the real cursor position matches the virtual */
 {
-    static char  buf[9];
+    char  buf[20];
     int y, x;
 
-    if (_nc_tracing)
+    if (!_nc_tracing || (expected_y < 0 && expected_x < 0))
 	return;
 
     memset(buf, '\0', sizeof(buf));
-    (void) write(1, "\033[6n", 4);	/* only works on ANSI-compatibles */
-    (void) read(0, (void *)buf, 8);
+    putp("\033[6n");	/* only works on ANSI-compatibles */
+    _nc_flush();
+    (void) read(0, buf, sizeof(buf)-1);
     _tracef("probe returned %s", _nc_visbuf(buf));
 
     /* try to interpret as a position report */
-    if (sscanf(buf, "\033[%d;%dR", &y, &x) != 2)
+    if (sscanf(buf, "\033[%d;%dR", &y, &x) != 2) {
 	_tracef("position probe failed in %s", legend);
-    else if (y - 1 != expected_y || x - 1 != expected_x)
-	_tracef("position seen (%d, %d) doesn't match expected one (%d, %d) in %s",
-		y-1, x-1, expected_y, expected_x, legend);
-    else
-	_tracef("position matches OK in %s", legend);
+    } else {
+	if (expected_x < 0)
+	    expected_x = x - 1;
+	if (expected_y < 0)
+	    expected_y = y - 1;
+	if (y - 1 != expected_y || x - 1 != expected_x) {
+	    beep();
+	    _tracef("position seen (%d, %d) doesn't match expected one (%d, %d) in %s",
+		    y-1, x-1, expected_y, expected_x, legend);
+	} else {
+	    _tracef("position matches OK in %s", legend);
+	}
+    }
 }
+#else
+#define position_check(expected_y, expected_x, legend) /* nothing */
 #endif /* POSITION_DEBUG */
 
 /****************************************************************************
@@ -150,9 +159,7 @@ static inline void GoTo(int const row, int const col)
 	TR(TRACE_MOVE, ("GoTo(%d, %d) from (%d, %d)",
 			row, col, SP->_cursrow, SP->_curscol));
 
-#ifdef POSITION_DEBUG
 	position_check(SP->_cursrow, SP->_curscol, "GoTo");
-#endif /* POSITION_DEBUG */
 
 	/*
 	 * Force restore even if msgr is on when we're in an alternate
@@ -170,6 +177,7 @@ static inline void GoTo(int const row, int const col)
 	mvcur(SP->_cursrow, SP->_curscol, row, col);
 	SP->_cursrow = row;
 	SP->_curscol = col;
+	position_check(SP->_cursrow, SP->_curscol, "GoTo2");
 }
 
 static inline void PutAttrChar(chtype ch)
@@ -181,10 +189,14 @@ static inline void PutAttrChar(chtype ch)
 			  _tracechtype(ch),
 			   SP->_cursrow, SP->_curscol));
 	UpdateAttrs(ch);
-	putc((int)TextOf(ch), SP->_ofp);
+	if (SP->_cleanup) {
+		_nc_outch((int)TextOf(ch));
+	} else {
+		putc((int)TextOf(ch), SP->_ofp); /* macro's fastest... */
 #ifdef TRACE
-	_nc_outchars++;
+		_nc_outchars++;
 #endif /* TRACE */
+	}
 	SP->_curscol++;
 	if (char_padding) {
 		TPUTS_TRACE("char_padding");
@@ -214,6 +226,21 @@ static bool check_pending(void)
 		{
 			have_pending = TRUE;
 		}
+#elif defined(__BEOS__)
+		/*
+		 * BeOS's select() is declared in socket.h, so the configure script does
+		 * not see it.  That's just as well, since that function works only for
+		 * sockets.  This (using snooze and ioctl) was distilled from Be's patch
+		 * for ncurses which uses a separate thread to simulate select().
+		 *
+		 * FIXME: the return values from the ioctl aren't very clear if we get
+		 * interrupted.
+		 */
+		int n = 0;
+		int howmany = ioctl(0, 'ichr', &n);
+		if (howmany >= 0 && n > 0) {
+			have_pending = TRUE;
+		}
 #elif HAVE_SELECT
 		fd_set fdset;
 		struct timeval ktimeout;
@@ -231,7 +258,7 @@ static bool check_pending(void)
 	}
 	if (have_pending) {
 		SP->_fifohold = 5;
-		fflush(SP->_ofp);
+		_nc_flush();
 	}
 	return FALSE;
 }
@@ -263,6 +290,8 @@ static void PutCharLR(chtype const ch)
 	putp(exit_am_mode);
 
 	PutAttrChar(ch);
+	SP->_curscol--;
+	position_check(SP->_cursrow, SP->_curscol, "exit_am_mode");
 
 	TPUTS_TRACE("enter_am_mode");
 	putp(enter_am_mode);
@@ -309,6 +338,7 @@ static void wrap_cursor(void)
     {
 	SP->_curscol--;
     }
+    position_check(SP->_cursrow, SP->_curscol, "wrap_cursor");
 }
 
 static inline void PutChar(chtype const ch)
@@ -322,9 +352,7 @@ static inline void PutChar(chtype const ch)
     if (SP->_curscol >= screen_columns)
 	wrap_cursor();
 
-#ifdef POSITION_DEBUG
     position_check(SP->_cursrow, SP->_curscol, "PutChar");
-#endif /* POSITION_DEBUG */
 }
 
 /*
@@ -755,7 +783,7 @@ struct tms before, after;
 	 */
 	UpdateAttrs(A_NORMAL);
 
-	fflush(SP->_ofp);
+	_nc_flush();
 	curscr->_attrs = newscr->_attrs;
 /*	curscr->_bkgd  = newscr->_bkgd; */
 
@@ -844,7 +872,11 @@ bool	needclear = FALSE;
 	{
 	    UpdateAttrs(blank);
 	    TPUTS_TRACE("clr_eol");
-	    if (SP->_el_cost > (screen_columns - SP->_curscol))
+	    if (SP->_el_cost > (screen_columns - SP->_curscol)
+#ifdef NCURSES_EXT_FUNCS
+	    || (SP->_coloron && !SP->_default_color && !back_color_erase)
+#endif
+	    )
 	    {
 		int count = (screen_columns - SP->_curscol);
 		while (count-- > 0)
@@ -865,13 +897,30 @@ static void ClrToEOS(chtype blank)
 {
 int row, col;
 
-	UpdateAttrs(blank);
-	TPUTS_TRACE("clr_eos");
 	row = SP->_cursrow;
-	tputs(clr_eos, screen_lines-row, _nc_outch);
+	col = SP->_curscol;
 
-	for (col = SP->_curscol; col < screen_columns; col++)
-		curscr->_line[row].text[col] = blank;
+#ifdef NCURSES_EXT_FUNCS
+	if (SP->_coloron && !SP->_default_color && !back_color_erase) {
+		int i, j, k = col;
+		for (i = row; i < screen_lines; i++) {
+			GoTo(i, k);
+			UpdateAttrs(blank);
+			for (j = k; j < screen_columns; j++)
+				PutChar(blank);
+			k = 0;
+		}
+		GoTo(row, col);
+	} else
+#endif
+	{
+		UpdateAttrs(blank);
+		TPUTS_TRACE("clr_eos");
+		tputs(clr_eos, screen_lines-row, _nc_outch);
+	}
+
+	while (col < screen_columns)
+		curscr->_line[row].text[col++] = blank;
 
 	for (row++; row < screen_lines; row++)
 	{
@@ -903,13 +952,14 @@ chtype	blank  = newscr->_line[total-1].text[last-1]; /* lower right char */
 
 	if ((tstLine == 0) || (last > (int)lenLine)) {
 		tstLine = typeRealloc(chtype, last, tstLine);
+		if (tstLine != 0) {
+			lenLine = last;
+			for (col = 0; col < last; col++)
+				tstLine[col] = blank;
+		}
 	}
 
 	if (tstLine != 0) {
-		lenLine = last;
-		for (col = 0; col < last; col++)
-			tstLine[col] = blank;
-
 		for (row = total-1; row >= 0; row--) {
 			if (memcmp(tstLine, newscr->_line[row].text, length))
 				break;
@@ -930,8 +980,9 @@ chtype	blank  = newscr->_line[total-1].text[last-1]; /* lower right char */
 		}
 	}
 #if NO_LEAKS
-	if (tstLine != 0)
+	if (tstLine != 0) {
 		FreeAndNull(tstLine);
+	}
 #endif
 	return total;
 }
@@ -1206,37 +1257,53 @@ bool	attrchanged = FALSE;
 static void ClearScreen(chtype blank)
 {
 	int	i, j;
+	bool	fast_clear = (clear_screen || clr_eos || clr_eol);
 
 	T(("ClearScreen() called"));
 
-	if (clear_screen) {
-		UpdateAttrs(blank);
-		TPUTS_TRACE("clear_screen");
-		putp(clear_screen);
-		SP->_cursrow = SP->_curscol = 0;
-#ifdef POSITION_DEBUG
-		position_check(SP->_cursrow, SP->_curscol, "ClearScreen");
-#endif /* POSITION_DEBUG */
-	} else if (clr_eos) {
-		SP->_cursrow = SP->_curscol = -1;
-		GoTo(0,0);
+#ifdef NCURSES_EXT_FUNCS
+	if (SP->_coloron
+	 && !SP->_default_color) {
+		_nc_do_color(0, FALSE, _nc_outch);
+		if (!back_color_erase) {
+			fast_clear = FALSE;
+		}
+	}
+#endif
 
-		UpdateAttrs(blank);
-		TPUTS_TRACE("clr_eos");
-		putp(clr_eos);
-	} else if (clr_eol) {
-		SP->_cursrow = SP->_curscol = -1;
+	if (fast_clear) {
+		if (clear_screen) {
+			UpdateAttrs(blank);
+			TPUTS_TRACE("clear_screen");
+			putp(clear_screen);
+			SP->_cursrow = SP->_curscol = 0;
+			position_check(SP->_cursrow, SP->_curscol, "ClearScreen");
+		} else if (clr_eos) {
+			SP->_cursrow = SP->_curscol = -1;
+			GoTo(0,0);
 
+			UpdateAttrs(blank);
+			TPUTS_TRACE("clr_eos");
+			putp(clr_eos);
+		} else if (clr_eol) {
+			SP->_cursrow = SP->_curscol = -1;
+
+			for (i = 0; i < screen_lines; i++) {
+				GoTo(i, 0);
+				UpdateAttrs(blank);
+				TPUTS_TRACE("clr_eol");
+				putp(clr_eol);
+			}
+			GoTo(0,0);
+		}
+	} else {
 		for (i = 0; i < screen_lines; i++) {
 			GoTo(i, 0);
 			UpdateAttrs(blank);
-			TPUTS_TRACE("clr_eol");
-			putp(clr_eol);
+			for (j = 0; j < screen_columns; j++)
+				PutChar(blank);
 		}
 		GoTo(0,0);
-	} else {
-		T(("cannot clear screen"));
-		return;
 	}
 
 	for (i = 0; i < screen_lines; i++) {
@@ -1254,7 +1321,7 @@ static void ClearScreen(chtype blank)
 **
 */
 
-static int InsStr(chtype *line, int count)
+static void InsStr(chtype *line, int count)
 {
 	T(("InsStr(%p,%d) called", line, count));
 
@@ -1269,7 +1336,6 @@ static int InsStr(chtype *line, int count)
 			line++;
 			count--;
 		}
-		return(OK);
 	} else if (enter_insert_mode  &&  exit_insert_mode) {
 		TPUTS_TRACE("enter_insert_mode");
 		putp(enter_insert_mode);
@@ -1285,7 +1351,6 @@ static int InsStr(chtype *line, int count)
 		}
 		TPUTS_TRACE("exit_insert_mode");
 		putp(exit_insert_mode);
-		return(OK);
 	} else {
 		while (count) {
 			TPUTS_TRACE("insert_character");
@@ -1299,8 +1364,8 @@ static int InsStr(chtype *line, int count)
 			line++;
 			count--;
 		}
-		return(OK);
 	}
+	position_check(SP->_cursrow, SP->_curscol, "InsStr");
 }
 
 /*
@@ -1334,14 +1399,8 @@ static void DelChar(int count)
 
 void _nc_outstr(const char *str)
 {
-    FILE *ofp = SP ? SP->_ofp : stdout;
-
-    (void) fputs(str, ofp);
-    (void) fflush(ofp);
-
-#ifdef TRACE
-    _nc_outchars += strlen(str);
-#endif /* TRACE */
+    (void) putp(str);
+    _nc_flush();
 }
 
 /*
@@ -1379,7 +1438,7 @@ void _nc_outstr(const char *str)
 /* Try to scroll up assuming given csr (miny, maxy). Returns ERR on failure */
 static int scroll_csr_forward(int n, int top, int bot, int miny, int maxy, chtype blank)
 {
-    int i;
+    int i, j;
 
     if (n == 1 && scroll_forward && top == miny && bot == maxy)
     {
@@ -1432,6 +1491,15 @@ static int scroll_csr_forward(int n, int top, int bot, int miny, int maxy, chtyp
     else
 	return ERR;
 
+#ifdef NCURSES_EXT_FUNCS
+    if (SP->_coloron && !SP->_default_color && !back_color_erase) {
+	for (i = 0; i < n; i++) {
+	    GoTo(bot-i, 0);
+	    for (j = 0; j < screen_columns; j++)
+		PutChar(blank);
+	}
+    }
+#endif
     return OK;
 }
 
@@ -1439,7 +1507,7 @@ static int scroll_csr_forward(int n, int top, int bot, int miny, int maxy, chtyp
 /* n > 0 */
 static int scroll_csr_backward(int n, int top, int bot, int miny, int maxy, chtype blank)
 {
-    int i;
+    int i, j;
 
     if (n == 1 && scroll_reverse && top == miny && bot == maxy)
     {
@@ -1492,6 +1560,15 @@ static int scroll_csr_backward(int n, int top, int bot, int miny, int maxy, chty
     else
 	return ERR;
 
+#ifdef NCURSES_EXT_FUNCS
+    if (SP->_coloron && !SP->_default_color && !back_color_erase) {
+	for (i = 0; i < n; i++) {
+	    GoTo(top+i, 0);
+	    for (j = 0; j < screen_columns; j++)
+		PutChar(blank);
+	}
+    }
+#endif
     return OK;
 }
 
@@ -1720,6 +1797,14 @@ void _nc_screen_init()
 void _nc_screen_wrap()
 {
     UpdateAttrs(A_NORMAL);
+#ifdef NCURSES_EXT_FUNCS
+    if (SP->_coloron
+     && !SP->_default_color) {
+	SP->_default_color = TRUE;
+	_nc_do_color(0, FALSE, _nc_outch);
+	SP->_default_color = FALSE;
+    }
+#endif
 }
 
 #if USE_XMC_SUPPORT

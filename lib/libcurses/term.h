@@ -1,11 +1,11 @@
-/*	$OpenBSD: term.h,v 1.6 1999/03/02 06:23:27 millert Exp $	*/
+/*	$OpenBSD: term.h,v 1.7 1999/11/28 17:53:40 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
- * ), to deal in the Software without restriction, including      *
+ * "Software"), to deal in the Software without restriction, including      *
  * without limitation the rights to use, copy, modify, merge, publish,      *
  * distribute, distribute with modifications, sublicense, and/or sell       *
  * copies of the Software, and to permit persons to whom the Software is    *
@@ -14,7 +14,7 @@
  * The above copyright notice and this permission notice shall be included  *
  * in all copies or substantial portions of the Software.                   *
  *                                                                          *
- * THE SOFTWARE IS PROVIDED , WITHOUT WARRANTY OF ANY KIND, EXPRESS  *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS  *
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF               *
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.   *
  * IN NO EVENT SHALL THE ABOVE COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,   *
@@ -33,7 +33,7 @@
 /*    and: Eric S. Raymond <esr@snark.thyrsus.com>                          */
 /****************************************************************************/
 
-/* $From: MKterm.h.awk.in,v 1.35 1999/02/24 01:04:55 tom Exp $ */
+/* $From: MKterm.h.awk.in,v 1.36 1999/09/01 22:36:52 Peter.Wemm Exp $ */
 
 /*
 **	term.h -- Definition of struct term
@@ -43,7 +43,7 @@
 #define _NCU_TERM_H 1
 
 #ifdef _USE_OLD_CURSES_
-#error Cannot mix new term.h with old curses.h
+#error Cannot mix ncurses term.h with old curses.h
 #endif
 
 #undef  NCURSES_VERSION

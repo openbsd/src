@@ -1,7 +1,7 @@
-/*	$OpenBSD: lib_color.c,v 1.3 1999/03/15 19:12:22 millert Exp $	*/
+/*	$OpenBSD: lib_color.c,v 1.4 1999/11/28 17:49:53 millert Exp $	*/
 
 /****************************************************************************
- * Copyright (c) 1998 Free Software Foundation, Inc.                        *
+ * Copyright (c) 1998,1999 Free Software Foundation, Inc.                   *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -36,22 +36,21 @@
 /* lib_color.c
  *
  * Handles color emulation of SYS V curses
- *
  */
 
 #include <curses.priv.h>
 
 #include <term.h>
 
-MODULE_ID("$From: lib_color.c,v 1.35 1999/03/15 01:45:14 Alexander.V.Lukyanov Exp $")
+MODULE_ID("$From: lib_color.c,v 1.40 1999/11/27 22:24:18 tom Exp $")
 
 /*
  * These should be screen structure members.  They need to be globals for
  * hystorical reasons.  So we assign them in start_color() and also in
  * set_term()'s screen-switching logic.
  */
-int COLOR_PAIRS;
-int COLORS;
+int COLOR_PAIRS = 0;
+int COLORS = 0;
 
 /*
  * Given a RGB range of 0..1000, we'll normally set the individual values
@@ -84,6 +83,23 @@ static const color_t hls_palette[] =
 	{300,	50,	100},	/* COLOR_CYAN */
 	{0,	50,	100},	/* COLOR_WHITE */
 };
+
+#ifdef NCURSES_EXT_FUNCS
+static int
+default_fg(void)
+{
+	return (SP->_default_fg >= 0) ? SP->_default_fg : COLOR_WHITE;
+}
+
+static int
+default_bg(void)
+{
+	return (SP->_default_bg >= 0) ? SP->_default_bg : COLOR_BLACK;
+}
+#else
+#define default_fg() COLOR_WHITE
+#define default_bg() COLOR_BLACK
+#endif
 
 /*
  * SVr4 curses is known to interchange color codes (1,4) and (3,6), possibly
@@ -147,12 +163,15 @@ static bool set_original_colors(void)
 
 int start_color(void)
 {
+	int n;
+	const color_t *tp;
+
 	T((T_CALLED("start_color()")));
 
 	if (set_original_colors() != TRUE)
 	{
-		set_foreground_color(COLOR_WHITE, _nc_outch);
-		set_background_color(COLOR_BLACK, _nc_outch);
+		set_foreground_color(default_fg(), _nc_outch);
+		set_background_color(default_bg(), _nc_outch);
 	}
 
 	if (max_pairs != -1)
@@ -161,7 +180,7 @@ int start_color(void)
 		returnCode(ERR);
 	if ((SP->_color_pairs = typeCalloc(unsigned short, max_pairs)) == 0)
 		returnCode(ERR);
-	SP->_color_pairs[0] = PAIR_OF(COLOR_WHITE, COLOR_BLACK);
+	SP->_color_pairs[0] = PAIR_OF(default_fg(), default_bg());
 	if (max_colors != -1)
 		COLORS = SP->_color_count = max_colors;
 	else
@@ -170,10 +189,24 @@ int start_color(void)
 
 	if ((SP->_color_table = typeMalloc(color_t, COLORS)) == 0)
 		returnCode(ERR);
-	if (hue_lightness_saturation)
-	    memcpy(SP->_color_table, hls_palette, sizeof(color_t) * COLORS);
-	else
-	    memcpy(SP->_color_table, cga_palette, sizeof(color_t) * COLORS);
+	tp = (hue_lightness_saturation) ? hls_palette : cga_palette;
+	for (n = 0; n < COLORS; n++) {
+		if (n < 8) {
+			SP->_color_table[n] = tp[n];
+		} else {
+			SP->_color_table[n] = tp[n % 8];
+			if (hue_lightness_saturation) {
+				SP->_color_table[n].green = 100;
+			} else {
+				if (SP->_color_table[n].red)
+					SP->_color_table[n].red = 1000;
+				if (SP->_color_table[n].green)
+					SP->_color_table[n].green = 1000;
+				if (SP->_color_table[n].blue)
+					SP->_color_table[n].blue = 1000;
+			}
+		}
+	}
 
 	T(("started color: COLORS = %d, COLOR_PAIRS = %d", COLORS, COLOR_PAIRS));
 
@@ -228,6 +261,7 @@ int init_pair(short pair, short f, short b)
 
 	if ((pair < 1) || (pair >= COLOR_PAIRS))
 		returnCode(ERR);
+#ifdef NCURSES_EXT_FUNCS
 	if (SP->_default_color)
 	{
 		if (f < 0)
@@ -240,6 +274,7 @@ int init_pair(short pair, short f, short b)
 			returnCode(ERR);
 	}
 	else
+#endif
 	if ((f < 0) || (f >= COLORS)
 	 || (b < 0) || (b >= COLORS))
 		returnCode(ERR);
@@ -347,7 +382,7 @@ bool has_colors(void)
 int color_content(short color, short *r, short *g, short *b)
 {
     T((T_CALLED("color_content(%d,%p,%p,%p)"), color, r, g, b));
-    if (color < 0 || color > COLORS)
+    if (color < 0 || color >= COLORS)
 	returnCode(ERR);
 
     if (r) *r = SP->_color_table[color].red;
@@ -360,7 +395,7 @@ int pair_content(short pair, short *f, short *b)
 {
 	T((T_CALLED("pair_content(%d,%p,%p)"), pair, f, b));
 
-	if ((pair < 0) || (pair > COLOR_PAIRS))
+	if ((pair < 0) || (pair >= COLOR_PAIRS))
 		returnCode(ERR);
 	if (f) *f = ((SP->_color_pairs[pair] >> C_SHIFT) & C_MASK);
 	if (b) *b =  (SP->_color_pairs[pair] & C_MASK);
@@ -374,20 +409,14 @@ void _nc_do_color(int pair, bool reverse, int (*outc)(int))
 
     if (pair == 0)
     {
-	if (orig_pair)
+	if (
+#ifdef NCURSES_EXT_FUNCS
+	    !SP->_default_color ||
+#endif
+	    !set_original_colors())
 	{
-	    TPUTS_TRACE("orig_pair");
-	    tputs(orig_pair, 1, outc);
-	}
-	else if (set_color_pair)
-	{
-	    TPUTS_TRACE("set_color_pair");
-	    tputs(tparm(set_color_pair, pair), 1, outc);
-	}
-	else
-	{
-	    set_foreground_color(COLOR_WHITE, outc);
-	    set_background_color(COLOR_BLACK, outc);
+	    set_foreground_color(default_fg(), outc);
+	    set_background_color(default_bg(), outc);
 	}
     }
     else
@@ -413,9 +442,9 @@ void _nc_do_color(int pair, bool reverse, int (*outc)(int))
 		if (set_original_colors() != TRUE)
 		{
 			if (fg == C_MASK)
-				set_foreground_color(COLOR_WHITE, outc);
+				set_foreground_color(default_fg(), outc);
 			if (bg == C_MASK)
-				set_background_color(COLOR_BLACK, outc);
+				set_background_color(default_bg(), outc);
 		}
 	    }
 	    if (fg != C_MASK)

@@ -1,7 +1,7 @@
-/*	$OpenBSD: lib_setup.c,v 1.6 1999/08/22 17:42:37 millert Exp $	*/
+/*	$OpenBSD: lib_setup.c,v 1.7 1999/11/28 17:49:54 millert Exp $	*/
 
 /****************************************************************************
- * Copyright (c) 1998 Free Software Foundation, Inc.                        *
+ * Copyright (c) 1998,1999 Free Software Foundation, Inc.                   *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -51,7 +51,7 @@
 
 #include <term.h>	/* lines, columns, cur_term */
 
-MODULE_ID("$From: lib_setup.c,v 1.55 1999/08/21 23:06:08 tom Exp $")
+MODULE_ID("$From: lib_setup.c,v 1.56 1999/10/30 23:00:16 tom Exp $")
 
 /****************************************************************************
  *
@@ -102,7 +102,7 @@ void use_env(bool f)
 	_use_env = f;
 }
 
-int LINES, COLS, TABSIZE;
+int LINES = 0, COLS = 0, TABSIZE = 0;
 
 static void _nc_get_screensize(int *linep, int *colp)
 /* Obtain lines/columns values from the environment and/or terminfo entry */
@@ -282,7 +282,7 @@ static int grab_entry(const char *const tn, TERMTYPE *const tp)
 }
 #endif
 
-char ttytype[NAMESIZE];
+char ttytype[NAMESIZE] = "";
 
 /*
  *	setupterm(termname, Filedes, errret)

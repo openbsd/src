@@ -1,4 +1,4 @@
-/*	$OpenBSD: p_show.c,v 1.2 1998/07/24 17:08:15 millert Exp $	*/
+/*	$OpenBSD: p_show.c,v 1.3 1999/11/28 17:49:19 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -38,41 +38,32 @@
  */
 #include "panel.priv.h"
 
-MODULE_ID("$From: p_show.c,v 1.2 1998/02/11 12:14:01 tom Exp $")
-
-static void
-panel_link_top(PANEL *pan)
-{
-#ifdef TRACE
-  dStack("<lt%d>",1,pan);
-  if(_nc_panel_is_linked(pan))
-    return;
-#endif
-
-  pan->above = (PANEL *)0;
-  pan->below = (PANEL *)0;
-  if(_nc_top_panel)
-    {
-      _nc_top_panel->above = pan;
-      pan->below = _nc_top_panel;
-    }
-  _nc_top_panel = pan;
-  if(!_nc_bottom_panel)
-    _nc_bottom_panel = pan;
-  _nc_calculate_obscure();
-  dStack("<lt%d>",9,pan);
-}
+MODULE_ID("$From: p_show.c,v 1.7 1999/11/25 13:49:26 juergen Exp $")
 
 int
 show_panel(PANEL *pan)
-{
+{ 
+  int err = OK;
+
   if(!pan)
     return(ERR);
-  if(pan == _nc_top_panel)
+
+  if (Is_Top(pan))
     return(OK);
+
   dBug(("--> show_panel %s", USER_PTR(pan->user)));
-  if(_nc_panel_is_linked(pan))
-    (void)hide_panel(pan);
-  panel_link_top(pan);
+
+  HIDE_PANEL(pan,err,FALSE);
+
+  dStack("<lt%d>",1,pan);
+  assert(_nc_bottom_panel == _nc_stdscr_pseudo_panel);
+
+  _nc_top_panel->above = pan;
+  pan->below = _nc_top_panel;  
+  pan->above = (PANEL *)0;
+  _nc_top_panel = pan;
+  
+  dStack("<lt%d>",9,pan);
+
   return(OK);
 }

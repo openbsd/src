@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.41 1999/11/17 05:37:53 millert Exp $
+#	$OpenBSD: Makefile,v 1.42 1999/11/28 17:53:40 millert Exp $
 
 # Uncomment this to enable tracing in libcurses
 #CURSESTRACE=-DTRACE
@@ -33,7 +33,7 @@ SRCS+=	define_key.c keybound.c keyok.c lib_adabind.c lib_addch.c lib_addstr.c \
 	lib_slkrefr.c lib_slkset.c lib_slktouch.c lib_touch.c \
 	lib_ungetch.c lib_vline.c lib_wattroff.c lib_wattron.c \
 	lib_winch.c lib_window.c nc_panel.c resizeterm.c safe_sprintf.c \
-	sigaction.c tries.c wresize.c
+	sigaction.c tries.c version.c wresize.c
 # tinfo
 SRCS+=	access.c add_tries.c alloc_entry.c alloc_ttype.c captoinfo.c \
 	comp_error.c comp_expand.c comp_hash.c comp_parse.c comp_scan.c \
@@ -173,8 +173,9 @@ MLINKS+= terminfo.3 setupterm.3 terminfo.3 setterm.3 terminfo.3 set_curterm.3 \
 MLINKS+= termcap.3 tgetent.3 termcap.3 tgetflag.3 termcap.3 tgetnum.3 \
 	termcap.3 tgetstr.3 termcap.3 tgoto.3 termcap.3 tputs.3
 
-CLEANFILES+= init_keytry.h nomacros.h codes.c comp_captab.c expanded.c \
+GENERATED= init_keytry.h nomacros.h codes.c comp_captab.c expanded.c \
 	fallback.c lib_gen.c lib_keyname.c names.c unctrl.c make_hash make_keys
+CLEANFILES+= ${GENERATED}
 
 .if make(install)
 SUBDIR+= doc

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_ttyflags.c,v 1.2 1999/08/15 11:40:55 millert Exp $	*/
+/*	$OpenBSD: lib_ttyflags.c,v 1.3 1999/11/28 17:49:54 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -40,7 +40,7 @@
 #include <curses.priv.h>
 #include <term.h>	/* cur_term */
 
-MODULE_ID("$From: lib_ttyflags.c,v 1.2 1999/07/24 22:36:12 tom Exp $")
+MODULE_ID("$From: lib_ttyflags.c,v 1.3 1999/10/22 21:38:55 tom Exp $")
 
 #undef tabs
 
@@ -135,7 +135,7 @@ int reset_shell_mode(void)
 		if (SP)
 		{
 			_nc_keypad(FALSE);
-			fflush(SP->_ofp);
+			_nc_flush();
 			NC_BUFFERED(FALSE);
 		}
 		returnCode(_nc_set_tty_mode(&cur_term->Ottyb));

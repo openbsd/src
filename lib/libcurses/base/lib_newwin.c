@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_newwin.c,v 1.1 1999/01/18 19:09:54 millert Exp $	*/
+/*	$OpenBSD: lib_newwin.c,v 1.2 1999/11/28 17:49:53 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -44,7 +44,7 @@
 
 #include <curses.priv.h>
 
-MODULE_ID("$From: lib_newwin.c,v 1.20 1998/05/23 23:21:32 Alexander.V.Lukyanov Exp $")
+MODULE_ID("$From: lib_newwin.c,v 1.22 1999/11/25 13:48:24 juergen Exp $")
 
 void _nc_freewin(WINDOW *win)
 {
@@ -61,8 +61,8 @@ int	i;
 				free(p);
 
 				if (! (win->_flags & _SUBWIN)) {
-					for (i = 0; i <= win->_maxy && win->_line[i].text; i++)
-						free(win->_line[i].text);
+					for (i = 0; i <= win->_maxy; i++)
+						FreeIfNeeded(win->_line[i].text);
 				}
 				free(win->_line);
 				free(win);

@@ -1,7 +1,7 @@
-/*	$OpenBSD: parse_entry.c,v 1.2 1999/03/02 06:23:29 millert Exp $	*/
+/*	$OpenBSD: parse_entry.c,v 1.3 1999/11/28 17:49:54 millert Exp $	*/
 
 /****************************************************************************
- * Copyright (c) 1999 Free Software Foundation, Inc.                        *
+ * Copyright (c) 1999,1999 Free Software Foundation, Inc.                   *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -50,7 +50,7 @@
 #define __INTERNAL_CAPS_VISIBLE
 #include <term_entry.h>
 
-MODULE_ID("$From: parse_entry.c,v 1.39 1999/03/01 02:28:51 tom Exp $")
+MODULE_ID("$From: parse_entry.c,v 1.40 1999/10/30 23:00:16 tom Exp $")
 
 #ifdef LINT
 static short const parametrized[] = { 0 };
@@ -58,7 +58,7 @@ static short const parametrized[] = { 0 };
 #include <parametrized.h>
 #endif
 
-struct token	_nc_curr_token;
+struct token	_nc_curr_token = { 0, 0, 0 };
 
 static	void postprocess_termcap(TERMTYPE *, bool);
 static	void postprocess_terminfo(TERMTYPE *);

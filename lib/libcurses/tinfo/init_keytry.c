@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_keytry.c,v 1.1 1999/02/24 06:31:10 millert Exp $	*/
+/*	$OpenBSD: init_keytry.c,v 1.2 1999/11/28 17:49:53 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1999 Free Software Foundation, Inc.                        *
@@ -34,7 +34,7 @@
 			/* cursor_visible,cursor_normal,cursor_invisible */
 #include <tic.h>	/* struct tinfo_fkeys */
 
-MODULE_ID("$From: init_keytry.c,v 1.1 1999/02/18 22:39:11 tom Exp $")
+MODULE_ID("$From: init_keytry.c,v 1.2 1999/09/11 17:32:57 Jeffrey.Honig Exp $")
 
 /*
 **      _nc_init_keytry()
@@ -43,11 +43,22 @@ MODULE_ID("$From: init_keytry.c,v 1.1 1999/02/18 22:39:11 tom Exp $")
 **
 */
 
+#ifdef	BROKEN_LINKER
+#undef	_nc_tinfo_fkeys
+#endif
+
 /* LINT_PREPRO
 #if 0*/
 #include <init_keytry.h>
 /* LINT_PREPRO
 #endif*/
+
+#ifdef	BROKEN_LINKER
+struct tinfo_fkeys *_nc_tinfo_fkeysf(void)
+{
+	return _nc_tinfo_fkeys;
+}
+#endif
 
 void _nc_init_keytry(void)
 {

@@ -1,7 +1,7 @@
-/*	$OpenBSD: lib_tputs.c,v 1.2 1999/03/02 06:23:29 millert Exp $	*/
+/*	$OpenBSD: lib_tputs.c,v 1.3 1999/11/28 17:49:54 millert Exp $	*/
 
 /****************************************************************************
- * Copyright (c) 1998 Free Software Foundation, Inc.                        *
+ * Copyright (c) 1998,1999 Free Software Foundation, Inc.                   *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -48,14 +48,12 @@
 #include <termcap.h>	/* ospeed */
 #include <tic.h>
 
-MODULE_ID("$From: lib_tputs.c,v 1.39 1999/02/25 10:44:29 tom Exp $")
+MODULE_ID("$From: lib_tputs.c,v 1.42 1999/10/30 23:00:16 tom Exp $")
 
-#define OUTPUT ((SP != 0) ? SP->_ofp : stdout)
+char PC = 0;		/* used by termcap library */
+speed_t ospeed = 0;	/* used by termcap library */
 
-char PC;		/* used by termcap library */
-speed_t ospeed;		/* used by termcap library */
-
-int _nc_nulls_sent;	/* used by 'tack' program */
+int _nc_nulls_sent = 0;	/* used by 'tack' program */
 
 static int (*my_outch)(int c) = _nc_outch;
 
@@ -72,7 +70,7 @@ int delay_output(int ms)
 		for (_nc_nulls_sent += nullcount; nullcount > 0; nullcount--)
 			my_outch(PC);
 		if (my_outch == _nc_outch)
-			(void) fflush(OUTPUT);
+			_nc_flush();
 	}
 
 	returnCode(OK);
@@ -84,7 +82,17 @@ int _nc_outch(int ch)
     	_nc_outchars++;
 #endif /* TRACE */
 
-	putc(ch, OUTPUT);
+	if (SP != 0
+	 && SP->_cleanup) {
+		char tmp = ch;
+		/*
+		 * POSIX says write() is safe in a signal handler, but the
+		 * buffered I/O is not.
+		 */
+		write(fileno(NC_OUTPUT), &tmp, 1);
+	} else {
+		putc(ch, NC_OUTPUT);
+	}
 	return OK;
 }
 

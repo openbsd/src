@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncurses_cfg.h,v 1.14 1999/06/27 08:15:19 millert Exp $	*/
+/*	$OpenBSD: ncurses_cfg.h,v 1.15 1999/11/28 17:53:40 millert Exp $	*/
 
 /* include/ncurses_cfg.h.  Generated automatically by configure.  */
 /****************************************************************************
@@ -47,7 +47,8 @@
 #define BSD_TPUTS 1
 #define CC_HAS_INLINE_FUNCS 1
 #define CC_HAS_PROTOS 1
-#define ETIP_NEEDS_ 1
+#define CPP_HAS_PARAM_INIT 1
+#define ETIP_NEEDS_MATH_H 1
 #define GCC_NORETURN __attribute__((noreturn))
 #define GCC_PRINTF 1
 #define GCC_SCANF 1
@@ -61,6 +62,7 @@
 #define HAVE_GETCWD 1
 #define HAVE_GETTIMEOFDAY 1
 #define HAVE_GETTTYNAM 1
+#define HAVE_HAS_KEY 1
 #define HAVE_ISASCII 1
 /* #define HAVE_LIBFORM 1 */
 /* #define HAVE_LIBMENU 1 */
@@ -78,6 +80,7 @@
 #define HAVE_POLL_H 1
 #define HAVE_REGEX_H_FUNCS 1
 #define HAVE_REMOVE 1
+#define HAVE_RESIZETERM 1
 #define HAVE_SELECT 1
 #define HAVE_SETBUF 1
 #define HAVE_SETBUFFER 1
@@ -101,16 +104,18 @@
 #define HAVE_TTYENT_H 1
 #define HAVE_TYPEINFO 1
 #define HAVE_UNISTD_H 1
-#define HAVE_USLEEP 1
+#define HAVE_UNLINK 1
+#define HAVE_USE_DEFAULT_COLORS 1
 #define HAVE_VSNPRINTF 1
 #define HAVE_VSSCANF 1
+#define HAVE_WRESIZE 1
 #define NCURSES_EXT_FUNCS 1
 #define NCURSES_NO_PADDING 1
 #define NDEBUG 1
 /* #define PURE_TERMINFO 1 */
 #define RETSIGTYPE void
 #define STDC_HEADERS 1
-#define SYSTEM_NAME "openbsd2.5"
+#define SYSTEM_NAME "openbsd2.6"
 #define TERMINFO_DIRS "/usr/share/terminfo"
 #define TYPEOF_CHTYPE long
 #define USE_DATABASE 1

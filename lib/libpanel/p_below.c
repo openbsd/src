@@ -1,4 +1,4 @@
-/*	$OpenBSD: p_below.c,v 1.2 1998/07/24 17:08:06 millert Exp $	*/
+/*	$OpenBSD: p_below.c,v 1.3 1999/11/28 17:49:19 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -37,7 +37,7 @@
  */
 #include "panel.priv.h"
 
-MODULE_ID("$From: p_below.c,v 1.2 1998/02/11 12:14:01 tom Exp $")
+MODULE_ID("$From: p_below.c,v 1.3 1999/09/18 11:03:33 juergen Exp $")
 
 PANEL*
 panel_below(const PANEL *pan)
@@ -45,11 +45,11 @@ panel_below(const PANEL *pan)
   if(!pan)
     {
       /* if top and bottom are equal, we have no or only the pseudo panel */
-      return(_nc_top_panel==_nc_bottom_panel ? (PANEL*)0 : _nc_top_panel);
+      return(EMPTY_STACK() ? (PANEL*)0 : _nc_top_panel);
     }
   else
     {
       /* we must not return the pseudo panel */
-      return(pan->below==_nc_bottom_panel ? (PANEL*) 0 : pan->below);
+      return(Is_Pseudo(pan->below) ? (PANEL*) 0 : pan->below);
     }
 }

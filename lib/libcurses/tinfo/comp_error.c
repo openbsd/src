@@ -1,7 +1,7 @@
-/*	$OpenBSD: comp_error.c,v 1.1 1999/01/18 19:10:13 millert Exp $	*/
+/*	$OpenBSD: comp_error.c,v 1.2 1999/11/28 17:49:53 millert Exp $	*/
 
 /****************************************************************************
- * Copyright (c) 1998 Free Software Foundation, Inc.                        *
+ * Copyright (c) 1998,1999 Free Software Foundation, Inc.                   *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -43,11 +43,11 @@
 
 #include <tic.h>
 
-MODULE_ID("$From: comp_error.c,v 1.16 1998/08/01 23:39:51 tom Exp $")
+MODULE_ID("$From: comp_error.c,v 1.17 1999/10/30 23:00:16 tom Exp $")
 
-bool	_nc_suppress_warnings;
-int	_nc_curr_line;		/* current line # in input */
-int	_nc_curr_col;		/* current column # in input */
+bool	_nc_suppress_warnings = FALSE;
+int	_nc_curr_line = 0;	/* current line # in input */
+int	_nc_curr_col = 0;	/* current column # in input */
 
 static const char *sourcename;
 static char termtype[MAX_NAME_SIZE+1];

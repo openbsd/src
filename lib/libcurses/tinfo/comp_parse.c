@@ -1,7 +1,7 @@
-/*	$OpenBSD: comp_parse.c,v 1.3 1999/03/02 06:23:28 millert Exp $	*/
+/*	$OpenBSD: comp_parse.c,v 1.4 1999/11/28 17:49:53 millert Exp $	*/
 
 /****************************************************************************
- * Copyright (c) 1998 Free Software Foundation, Inc.                        *
+ * Copyright (c) 1998,1999 Free Software Foundation, Inc.                   *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -56,7 +56,7 @@
 #include <tic.h>
 #include <term_entry.h>
 
-MODULE_ID("$From: comp_parse.c,v 1.34 1999/02/27 22:13:02 tom Exp $")
+MODULE_ID("$From: comp_parse.c,v 1.36 1999/10/31 00:56:12 tom Exp $")
 
 static void sanity_check(TERMTYPE *);
 void (*_nc_check_termtype)(TERMTYPE *) = sanity_check;
@@ -82,7 +82,7 @@ void (*_nc_check_termtype)(TERMTYPE *) = sanity_check;
  *	   _nc_head                _nc_tail
  */
 
-ENTRY *_nc_head, *_nc_tail;
+ENTRY *_nc_head = 0, *_nc_tail = 0;
 
 static void enqueue(ENTRY *ep)
 /* add an entry to the in-core list */
@@ -100,12 +100,12 @@ static void enqueue(ENTRY *ep)
 	    newp->last->next = newp;
 }
 
-void _nc_free_entries(ENTRY *head)
+void _nc_free_entries(ENTRY *headp)
 /* free the allocated storage consumed by list entries */
 {
     ENTRY	*ep, *next;
 
-    for (ep = head; ep; ep = next)
+    for (ep = headp; ep; ep = next)
     {
 	/*
 	 * This conditional lets us disconnect storage from the list.

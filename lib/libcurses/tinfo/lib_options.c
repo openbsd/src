@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_options.c,v 1.3 1999/07/04 12:43:16 millert Exp $	*/
+/*	$OpenBSD: lib_options.c,v 1.4 1999/11/28 17:49:54 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -46,7 +46,7 @@
 #include <term.h>	/* keypad_xmit, keypad_local, meta_on, meta_off */
 			/* cursor_visible,cursor_normal,cursor_invisible */
 
-MODULE_ID("$From: lib_options.c,v 1.35 1999/07/04 00:18:28 tom Exp $")
+MODULE_ID("$From: lib_options.c,v 1.36 1999/10/22 21:38:57 tom Exp $")
 
 int idlok(WINDOW *win,  bool flag)
 {
@@ -195,7 +195,7 @@ int cursor = SP->_cursor;
 		break;
 	}
 	SP->_cursor = vis;
-	(void) fflush(SP->_ofp);
+	_nc_flush();
 
 	returnCode(cursor==-1 ? 1 : cursor);
 }
@@ -246,13 +246,13 @@ int _nc_keypad(bool flag)
 	{
 	    TPUTS_TRACE("keypad_xmit");
 	    putp(keypad_xmit);
-	    (void) fflush(SP->_ofp);
+	    _nc_flush();
 	}
 	else if (! flag  &&  keypad_local)
 	{
 	    TPUTS_TRACE("keypad_local");
 	    putp(keypad_local);
-	    (void) fflush(SP->_ofp);
+	    _nc_flush();
 	}
 
 	if (flag && !SP->_tried) {

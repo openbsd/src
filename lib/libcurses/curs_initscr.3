@@ -1,4 +1,4 @@
-.\" $OpenBSD: curs_initscr.3,v 1.5 1998/09/13 19:16:19 millert Exp $
+.\" $OpenBSD: curs_initscr.3,v 1.6 1999/11/28 17:53:40 millert Exp $
 .\"
 .\"***************************************************************************
 .\" Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -28,7 +28,7 @@
 .\" authorization.                                                           *
 .\"***************************************************************************
 .\"
-.\" $From: curs_initscr.3x,v 1.7 1998/03/11 21:12:53 juergen Exp $
+.\" $From: curs_initscr.3x,v 1.8 1999/09/18 23:52:30 tom Exp $
 .TH curs_initscr 3 ""
 .SH NAME
 \fBinitscr\fR, \fBnewterm\fR, \fBendwin\fR,
@@ -107,6 +107,11 @@ Note that \fBinitscr\fR and \fBnewterm\fR may be macros.
 These functions are described in the XSI Curses standard, Issue 4.  It
 specifies that portable applications must not call \fBinitscr\fR more than
 once.
+
+Old versions of curses, e.g., BSD 4.4, may have returned a null pointer
+from \fBinitscr\fR when an error is detected, rather than exiting.
+It is safe but redundant to check the return value of \fBinitscr\fR 
+in XSI Curses.
 .SH SEE ALSO
 \fBcurses\fR(3), \fBcurs_kernel\fR(3), \fBcurs_refresh\fR(3),
 \fBcurs_slk\fR(3), \fBcurs_util\fR(3)

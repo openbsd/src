@@ -1,4 +1,4 @@
-/*	$OpenBSD: panel.h,v 1.4 1998/07/24 17:08:23 millert Exp $	*/
+/*	$OpenBSD: panel.h,v 1.5 1999/11/28 17:49:19 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -42,37 +42,31 @@
 
 typedef struct panel
 {
-	WINDOW *win;
-	int wstarty;
-	int wendy;
-	int wstartx;
-	int wendx;
-	struct panel *below;
-	struct panel *above;
-	NCURSES_CONST void *user;
-	struct panelcons *obscure;
-}
-PANEL;
+  WINDOW *win;
+  struct panel *below;
+  struct panel *above;
+  NCURSES_CONST void *user;
+} PANEL;
 
 #if	defined(__cplusplus)
 extern "C" {
 #endif
 
-extern  WINDOW *panel_window(const PANEL *);
-extern  void update_panels(void);
-extern  int hide_panel(PANEL *);
-extern  int show_panel(PANEL *);
-extern  int del_panel(PANEL *);
-extern  int top_panel(PANEL *);
-extern  int bottom_panel(PANEL *);
-extern  PANEL *new_panel(WINDOW *);
-extern  PANEL *panel_above(const PANEL *);
-extern  PANEL *panel_below(const PANEL *);
-extern  int set_panel_userptr(PANEL *, NCURSES_CONST void *);
+extern  WINDOW* panel_window(const PANEL *);
+extern  void    update_panels(void);
+extern  int     hide_panel(PANEL *);
+extern  int     show_panel(PANEL *);
+extern  int     del_panel(PANEL *);
+extern  int     top_panel(PANEL *);
+extern  int     bottom_panel(PANEL *);
+extern  PANEL*  new_panel(WINDOW *);
+extern  PANEL*  panel_above(const PANEL *);
+extern  PANEL*  panel_below(const PANEL *);
+extern  int     set_panel_userptr(PANEL *, NCURSES_CONST void *);
 extern  NCURSES_CONST void* panel_userptr(const PANEL *);
-extern  int move_panel(PANEL *, int, int);
-extern  int replace_panel(PANEL *,WINDOW *);
-extern	int panel_hidden(const PANEL *);
+extern  int     move_panel(PANEL *, int, int);
+extern  int     replace_panel(PANEL *,WINDOW *);
+extern	int     panel_hidden(const PANEL *);
 
 #if	defined(__cplusplus)
 }

@@ -1,5 +1,5 @@
-/*	$OpenBSD: panel.priv.h,v 1.3 1998/07/24 17:08:24 millert Exp $	*/
-/* $From: panel.priv.h,v 1.8 1997/10/21 10:19:37 juergen Exp $ */
+/*	$OpenBSD: panel.priv.h,v 1.4 1999/11/28 17:49:19 millert Exp $	*/
+/* $From: panel.priv.h,v 1.12 1999/11/25 13:49:26 juergen Exp $ */
 
 #ifndef _PANEL_PRIV_H
 #define _PANEL_PRIV_H
@@ -29,20 +29,12 @@
 #  define INLINE
 #endif
 
-typedef struct panelcons
-{
-  struct panelcons *above;
-  struct panel *pan;
-} PANELCONS;
-
 #ifdef USE_RCS_IDS
 #  define MODULE_ID(id) static const char Ident[] = id;
 #else
 #  define MODULE_ID(id) /*nothing*/
 #endif
 
-#define P_TOUCH  (0)
-#define P_UPDATE (1)
 
 #ifdef TRACE
    extern const char *_nc_my_visbuf(const void *);
@@ -77,10 +69,109 @@ typedef struct panelcons
 #define _nc_top_panel _nc_panelhook()->top_panel
 #define _nc_bottom_panel _nc_panelhook()->bottom_panel
 
-extern void _nc_panel_link_bottom(PANEL*);
-extern bool _nc_panel_is_linked(const PANEL*);
-extern void _nc_calculate_obscure(void);
-extern void _nc_free_obscure(PANEL*);
-extern void _nc_override(const PANEL*,int);
+#define EMPTY_STACK() (_nc_top_panel==_nc_bottom_panel)
+#define Is_Bottom(p)  (((p)!=(PANEL*)0) && !EMPTY_STACK() && (_nc_bottom_panel->above==(p))) 
+#define Is_Top(p) (((p)!=(PANEL*)0) && !EMPTY_STACK() && (_nc_top_panel==(p)))
+#define Is_Pseudo(p) ((p) && ((p)==_nc_bottom_panel))
+
+/* borrowed from curses.priv.h */
+#define CHANGED_RANGE(line,start,end) \
+	if (line->firstchar == _NOCHANGE \
+	 || line->firstchar > (start)) \
+		line->firstchar = start; \
+	if (line->lastchar == _NOCHANGE \
+	 || line->lastchar < (end)) \
+		line->lastchar = end
+
+/*+-------------------------------------------------------------------------
+	IS_LINKED(pan) - check to see if panel is in the stack
+--------------------------------------------------------------------------*/
+/* This works! The only case where it would fail is, when the list has
+   only one element. But this could only be the pseudo panel at the bottom */
+#define IS_LINKED(p) (((p)->above || (p)->below ||((p)==_nc_bottom_panel)) ? TRUE : FALSE)
+
+#define PSTARTX(pan) ((pan)->win->_begx)
+#define PENDX(pan)   ((pan)->win->_begx + getmaxx((pan)->win) - 1)
+#define PSTARTY(pan) ((pan)->win->_begy)
+#define PENDY(pan)   ((pan)->win->_begy + getmaxy((pan)->win) - 1)
+
+/*+-------------------------------------------------------------------------
+	PANELS_OVERLAPPED(pan1,pan2) - check panel overlapped
+---------------------------------------------------------------------------*/
+#define PANELS_OVERLAPPED(pan1,pan2) \
+(( !(pan1) || !(pan2) || \
+       PSTARTY(pan1) > PENDY(pan2) || PENDY(pan1) < PSTARTY(pan2) ||\
+       PSTARTX(pan1) > PENDX(pan2) || PENDX(pan1) < PSTARTX(pan2) ) \
+     ? FALSE : TRUE)
+
+
+/*+-------------------------------------------------------------------------
+	Compute the intersection rectangle of two overlapping rectangles
+---------------------------------------------------------------------------*/
+#define COMPUTE_INTERSECTION(pan1,pan2,ix1,ix2,iy1,iy2)\
+   ix1 = (PSTARTX(pan1) < PSTARTX(pan2)) ? PSTARTX(pan2) : PSTARTX(pan1);\
+   ix2 = (PENDX(pan1)   < PENDX(pan2))   ? PENDX(pan1)   : PENDX(pan2);\
+   iy1 = (PSTARTY(pan1) < PSTARTY(pan2)) ? PSTARTY(pan2) : PSTARTY(pan1);\
+   iy2 = (PENDY(pan1)   < PENDY(pan2))   ? PENDY(pan1)   : PENDY(pan2);\
+   assert((ix1<=ix2) && (iy1<=iy2));\
+
+
+/*+-------------------------------------------------------------------------
+	Walk through the panel stack starting at the given location and
+        check for intersections; overlapping panels are "touched", so they
+        are incrementally overwriting cells that should be hidden. 
+        If the "touch" flag is set, the panel gets touched before it is
+        updated. 
+---------------------------------------------------------------------------*/
+#define PANEL_UPDATE(pan,panstart,touch)\
+{  int y;\
+   PANEL* pan2 = ((panstart) ? (panstart) : _nc_bottom_panel);\
+   if (touch)\
+      Touchpan(pan);\
+   while(pan2) {\
+      if ((pan2 != pan) && PANELS_OVERLAPPED(pan,pan2)) {\
+        int ix1,ix2,iy1,iy2;\
+        COMPUTE_INTERSECTION(pan,pan2,ix1,ix2,iy1,iy2);\
+	for(y = iy1; y <= iy2; y++) {\
+	  if (is_linetouched(pan->win,y - PSTARTY(pan))) {\
+            struct ldat* line = &(pan2->win->_line[y - PSTARTY(pan2)]);\
+            CHANGED_RANGE(line,ix1-PSTARTX(pan2),ix2-PSTARTX(pan2));\
+          }\
+	}\
+      }\
+      pan2 = pan2->above;\
+   }\
+}
+
+/*+-------------------------------------------------------------------------
+	Remove panel from stack.
+---------------------------------------------------------------------------*/
+#define PANEL_UNLINK(pan,err) \
+{  err = ERR;\
+   if (pan) {\
+     if (IS_LINKED(pan)) {\
+       if ((pan)->below)\
+         (pan)->below->above = (pan)->above;\
+       if ((pan)->above)\
+         (pan)->above->below = (pan)->below;\
+       if ((pan) == _nc_bottom_panel) \
+         _nc_bottom_panel = (pan)->above;\
+       if ((pan) == _nc_top_panel) \
+         _nc_top_panel = (pan)->below;\
+       err = OK;\
+     }\
+     (pan)->above = (pan)->below = (PANEL*)0;\
+   }\
+}
+
+#define HIDE_PANEL(pan,err,err_if_unlinked)\
+  if (IS_LINKED(pan)) {\
+    PANEL_UPDATE(pan,(PANEL*)0,TRUE);\
+    PANEL_UNLINK(pan,err);\
+  } \
+  else {\
+    if (err_if_unlinked)\
+      err = ERR;\
+  }
 
 #endif /* _PANEL_PRIV_H */

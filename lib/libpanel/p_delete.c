@@ -1,4 +1,4 @@
-/*	$OpenBSD: p_delete.c,v 1.2 1998/07/24 17:08:08 millert Exp $	*/
+/*	$OpenBSD: p_delete.c,v 1.3 1999/11/28 17:49:19 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -38,18 +38,19 @@
  */
 #include "panel.priv.h"
 
-MODULE_ID("$From: p_delete.c,v 1.2 1998/02/11 12:14:01 tom Exp $")
+MODULE_ID("$From: p_delete.c,v 1.4 1999/11/25 13:49:26 juergen Exp $")
 
 int
 del_panel(PANEL *pan)
 {
+  int err = OK;
   if(pan)
     {
       dBug(("--> del_panel %s", USER_PTR(pan->user)));
-      if(_nc_panel_is_linked(pan))
-	(void)hide_panel(pan);
+      HIDE_PANEL(pan,err,FALSE);
       free((void *)pan);
-      return(OK);
     }
-  return(ERR);
+  else
+    err = ERR;
+  return(err);
 }

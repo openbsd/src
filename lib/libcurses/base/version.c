@@ -1,7 +1,5 @@
-/*	$OpenBSD: lib_beep.c,v 1.2 1999/11/28 17:49:53 millert Exp $	*/
-
 /****************************************************************************
- * Copyright (c) 1998 Free Software Foundation, Inc.                        *
+ * Copyright (c) 1999 Free Software Foundation, Inc.                        *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -29,47 +27,22 @@
  ****************************************************************************/
 
 /****************************************************************************
- *  Author: Zeyd M. Ben-Halim <zmbenhal@netcom.com> 1992,1995               *
- *     and: Eric S. Raymond <esr@snark.thyrsus.com>                         *
+ *  Author: Thomas E. Dickey <dickey@clark.net> 1999                        *
  ****************************************************************************/
 
-
-/*
- *	beep.c
- *
- *	The routine beep().
- *
- */
-
 #include <curses.priv.h>
-#include <term.h>	/* beep, flash */
 
-MODULE_ID("$From: lib_beep.c,v 1.7 1999/10/22 21:39:09 tom Exp $")
+MODULE_ID("$From: version.c,v 1.1 1999/10/23 13:28:49 tom Exp $")
 
-/*
- *	beep()
- *
- *	Sound the current terminal's audible bell if it has one.   If not,
- *	flash the screen if possible.
- *
- */
-
-int beep(void)
+const char *
+curses_version(void)
 {
-	int res = ERR;
+    static char my_version[80];
 
-	T((T_CALLED("beep()")));
-
-	/* FIXME: should make sure that we are not in altchar mode */
-	if (bell) {
-		TPUTS_TRACE("bell");
-		res = putp(bell);
-		_nc_flush();
-	} else if (flash_screen) {
-		TPUTS_TRACE("flash_screen");
-		res = putp(flash_screen);
-		_nc_flush();
-	}
-
-	returnCode(res);
+    T((T_CALLED("curses_version()")));
+    sprintf(my_version, "ncurses %d.%d.%d",
+	NCURSES_VERSION_MAJOR,
+	NCURSES_VERSION_MINOR,
+	NCURSES_VERSION_PATCH);
+    returnPtr(my_version);
 }

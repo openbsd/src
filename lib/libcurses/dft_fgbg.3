@@ -1,7 +1,7 @@
-.\" $OpenBSD: dft_fgbg.3,v 1.3 1998/09/13 19:16:25 millert Exp $
+.\" $OpenBSD: dft_fgbg.3,v 1.4 1999/11/28 17:53:40 millert Exp $
 .\"
 .\"***************************************************************************
-.\" Copyright (c) 1998 Free Software Foundation, Inc.                        *
+.\" Copyright (c) 1998,1999 Free Software Foundation, Inc.                   *
 .\"                                                                          *
 .\" Permission is hereby granted, free of charge, to any person obtaining a  *
 .\" copy of this software and associated documentation files (the            *
@@ -28,9 +28,9 @@
 .\" authorization.                                                           *
 .\"***************************************************************************
 .\"
-.\" Author: Thomas E. Dickey <dickey@clark.net> 1997
+.\" Author: Thomas E. Dickey <dickey@clark.net> 1997,1999
 .\"
-.\" $From: dft_fgbg.3x,v 1.6 1998/03/14 23:43:15 tom Exp $
+.\" $From: dft_fgbg.3x,v 1.7 1999/11/14 00:51:50 tom Exp $
 .TH use_default_colors 3 ""
 .SH NAME
 \fBdft_fgbg\fR \- use terminal's default colors
@@ -39,24 +39,49 @@
 \fB#include <curses.h>\fP
 
 \fBint use_default_colors(void);\fP
+.br
+\fBint assume_default_colors(int fg, int bg);\fP
 ..
 .SH DESCRIPTION
-This is an extension to the curses library.
-It is used with terminals that support ISO 6429 color, or equivalent.
+The
+.I use_default_colors()
+and
+.I assume_default_colors()
+functions are extensions to the curses library.
+They are used with terminals that support ISO 6429 color, or equivalent.
 These terminals allow the application to reset color to an unspecified
 default value (e.g., with SGR 39 or SGR 49).
-Because they are designed to support this, their design usually includes
-features to change the default foreground or background colors so that
-they do not match the assumption in XSI curses of white on black.
+XSI Curses assumes the default colors are white on black.
 .PP
 Applications that paint a colored background over the whole screen
-are not adversely impacted by this type of terminal design.
-However, there are applications that are designed to work with
-the default background.
+do not take advantage of SGR 39 and SGR 49.
+Some applications are designed to work with the default background.
+.PP
+The first function,
+.I use_default_colors()
+tells the curses library to use the terminal's 
+\fIorig_pair\fP or \fIorig_colors\fP capability when setting color pair 0.
+.PP
+The other,
+.I assume_default_colors()
+is a refinement which tells which colors to assume are set for color pair 0.
+The following are equivalent:
+.RS
+.br
+.I use_default_colors();
+.br
+.I assume_default_colors(-1,-1);
+.RE
+.PP
+Do this:
+.RS
+.I assume_default_colors(COLOR_WHITE,COLOR_BLACK);
+.RE
+to disable default colors.
 ..
 .SH RETURN VALUE
-The function returns the integer \fBERR\fP upon failure and \fBOK\fP on success.
-It will fail if either the terminal does not support
+These functions return the integer \fBERR\fP upon failure and \fBOK\fP on success.
+They will fail if either the terminal does not support
 the \fIorig_pair\fP or \fIorig_colors\fP capability.
 If the \fIinitialize_pair\fP capability is found, this causes an
 error as well.

@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright (c) 1998 Free Software Foundation, Inc.                        *
+ * Copyright (c) 1998,1999 Free Software Foundation, Inc.                   *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -49,7 +49,7 @@
 #include <ctype.h>
 #include <tic.h>
 
-MODULE_ID("$From: comp_scan.c,v 1.34 1998/11/01 00:56:39 tom Exp $")
+MODULE_ID("$From: comp_scan.c,v 1.35 1999/10/30 23:00:16 tom Exp $")
 
 /*
  * Maximum length of string capability we'll accept before raising an error.
@@ -59,11 +59,11 @@ MODULE_ID("$From: comp_scan.c,v 1.34 1998/11/01 00:56:39 tom Exp $")
 
 #define iswhite(ch)	(ch == ' '  ||  ch == '\t')
 
-int	_nc_syntax;		/* termcap or terminfo? */
-long	_nc_curr_file_pos;	/* file offset of current line */
-long	_nc_comment_start;	/* start of comment range before name */
-long	_nc_comment_end;	/* end of comment range before name */
-long	_nc_start_line;		/* start line of current entry */
+int	_nc_syntax = 0;		/* termcap or terminfo? */
+long	_nc_curr_file_pos = 0;	/* file offset of current line */
+long	_nc_comment_start = 0;	/* start of comment range before name */
+long	_nc_comment_end = 0;	/* end of comment range before name */
+long	_nc_start_line = 0;	/* start line of current entry */
 
 /*****************************************************************************
  *

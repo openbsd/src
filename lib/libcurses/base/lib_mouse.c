@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_mouse.c,v 1.4 1999/08/15 11:40:55 millert Exp $	*/
+/*	$OpenBSD: lib_mouse.c,v 1.5 1999/11/28 17:49:53 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,1999 Free Software Foundation, Inc.                   *
@@ -87,7 +87,7 @@
 #endif
 #endif
 
-MODULE_ID("$From: lib_mouse.c,v 1.44 1999/07/24 21:10:48 tom Exp $")
+MODULE_ID("$From: lib_mouse.c,v 1.45 1999/10/22 21:39:02 tom Exp $")
 
 #define MY_TRACE TRACE_ICALLS|TRACE_IEVENT
 
@@ -533,7 +533,7 @@ static void mouse_activate(bool on)
 #endif
 	}
     }
-    (void) fflush(SP->_ofp);
+    _nc_flush();
 }
 
 /**************************************************************************

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_flash.c,v 1.1 1999/01/18 19:09:43 millert Exp $	*/
+/*	$OpenBSD: lib_flash.c,v 1.2 1999/11/28 17:49:53 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -44,7 +44,7 @@
 #include <curses.priv.h>
 #include <term.h>	/* beep, flash */
 
-MODULE_ID("$From: lib_flash.c,v 1.3 1998/06/29 19:34:16 Alexander.V.Lukyanov Exp $")
+MODULE_ID("$From: lib_flash.c,v 1.4 1999/10/22 21:39:06 tom Exp $")
 
 /*
  *	flash()
@@ -64,11 +64,11 @@ int flash(void)
 	if (flash_screen) {
 		TPUTS_TRACE("flash_screen");
 		res = putp(flash_screen);
-		fflush(SP->_ofp);
+		_nc_flush();
 	} else if (bell) {
 		TPUTS_TRACE("bell");
 		res = putp(bell);
-		fflush(SP->_ofp);
+		_nc_flush();
 	}
 
 	returnCode(res);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: p_hidden.c,v 1.2 1998/07/24 17:08:09 millert Exp $	*/
+/*	$OpenBSD: p_hidden.c,v 1.3 1999/11/28 17:49:19 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -38,12 +38,12 @@
  */
 #include "panel.priv.h"
 
-MODULE_ID("$From: p_hidden.c,v 1.2 1998/02/11 12:14:01 tom Exp $")
+MODULE_ID("$From: p_hidden.c,v 1.4 1999/11/22 18:02:41 juergen Exp $")
 
 int
 panel_hidden(const PANEL *pan)
 {
   if(!pan)
     return(ERR);
-  return(_nc_panel_is_linked(pan) ? TRUE : FALSE);
+  return(IS_LINKED(pan) ? FALSE : TRUE);
 } 

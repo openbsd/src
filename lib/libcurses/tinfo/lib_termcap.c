@@ -1,7 +1,7 @@
-/*	$OpenBSD: lib_termcap.c,v 1.2 1999/03/02 06:23:29 millert Exp $	*/
+/*	$OpenBSD: lib_termcap.c,v 1.3 1999/11/28 17:49:54 millert Exp $	*/
 
 /****************************************************************************
- * Copyright (c) 1998 Free Software Foundation, Inc.                        *
+ * Copyright (c) 1998,1999 Free Software Foundation, Inc.                   *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -41,15 +41,15 @@
 #define __INTERNAL_CAPS_VISIBLE
 #include <term_entry.h>
 
-MODULE_ID("$From: lib_termcap.c,v 1.28 1999/02/27 22:12:58 tom Exp $")
+MODULE_ID("$From: lib_termcap.c,v 1.30 1999/10/30 23:00:16 tom Exp $")
 
 /*
    some of the code in here was contributed by:
    Magnus Bengtsson, d6mbeng@dtek.chalmers.se
 */
 
-char *UP;
-char *BC;
+char *UP = 0;
+char *BC = 0;
 
 /***************************************************************************
  *
@@ -164,7 +164,7 @@ int i;
  *
  ***************************************************************************/
 
-char *tgetstr(NCURSES_CONST char *id, char **area GCC_UNUSED)
+char *tgetstr(NCURSES_CONST char *id, char **area)
 {
 int i;
 
@@ -177,6 +177,12 @@ int i;
 		if (!strncmp(id, capname, 2)) {
 		    T(("found match : %s", _nc_visbuf(tp->Strings[i])));
 		    /* setupterm forces cancelled strings to null */
+		    if (area != 0
+		     && *area != 0
+		     && VALID_STRING(tp->Strings[i])) {
+			(void) strcpy(*area, tp->Strings[i]);
+			*area += strlen(*area) + 1;
+		    }
 		    returnPtr(tp->Strings[i]);
 		}
 	    }

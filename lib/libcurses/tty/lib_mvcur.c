@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_mvcur.c,v 1.3 1999/06/27 08:14:21 millert Exp $	*/
+/*	$OpenBSD: lib_mvcur.c,v 1.4 1999/11/28 17:49:54 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -155,7 +155,7 @@
 #include <term.h>
 #include <ctype.h>
 
-MODULE_ID("$From: lib_mvcur.c,v 1.57 1999/06/26 22:16:04 tom Exp $")
+MODULE_ID("$From: lib_mvcur.c,v 1.60 1999/10/03 01:08:27 Alexander.V.Lukyanov Exp $")
 
 #define STRLEN(s)       (s != 0) ? strlen(s) : 0
 
@@ -248,10 +248,10 @@ int _nc_msec_cost(const char *const cap, int affcnt)
 		{
 		    if (isdigit(*cp))
 			number = number * 10 + (*cp - '0');
-		    else if (*cp == '.')
-			number += (*++cp - 10) / 10.0;
 		    else if (*cp == '*')
 			number *= affcnt;
+		    else if (*cp == '.' && (*++cp != '>') && isdigit(*cp))
+			number += (*cp - '0') / 10.0;
 		}
 
 		cum_cost += number * 10;
@@ -736,6 +736,7 @@ onscreen_mvcur(int yold,int xold,int ynew,int xnew, bool ovw)
 {
     char	use[OPT_SIZE], *sp;
     int		tactic = 0, newcost, usecost = INFINITY;
+    int		t5_cr_cost;
 
 #if defined(MAIN) || defined(NCURSES_TEST)
     struct timeval before, after;
@@ -819,13 +820,14 @@ onscreen_mvcur(int yold,int xold,int ynew,int xnew, bool ovw)
      * tactic #5: use left margin for wrap to right-hand side,
      * unless strange wrap behavior indicated by xenl might hose us.
      */
+    t5_cr_cost = (xold>0 ? SP->_cr_cost : 0);
     if (auto_left_margin && !eat_newline_glitch
 	&& yold > 0 && cursor_left
 	&& ((newcost=relative_move(NULL, yold-1, screen_columns-1, ynew, xnew, ovw)) != INFINITY)
-	&& SP->_cr_cost + SP->_cub1_cost + newcost + newcost < usecost)
+	&& t5_cr_cost + SP->_cub1_cost + newcost < usecost)
     {
 	tactic = 5;
-	usecost = SP->_cr_cost + SP->_cub1_cost + newcost;
+	usecost = t5_cr_cost + SP->_cub1_cost + newcost;
     }
 
     /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_vidattr.c,v 1.2 1999/06/14 02:29:16 millert Exp $	*/
+/*	$OpenBSD: lib_vidattr.c,v 1.3 1999/11/28 17:49:55 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -66,7 +66,7 @@
 #include <curses.priv.h>
 #include <term.h>
 
-MODULE_ID("$From: lib_vidattr.c,v 1.23 1999/06/12 21:20:41 tom Exp $")
+MODULE_ID("$From: lib_vidattr.c,v 1.24 1999/11/14 02:53:43 tom Exp $")
 
 #define doPut(mode) TPUTS_TRACE(#mode); tputs(mode, 1, outc)
 
@@ -78,10 +78,11 @@ MODULE_ID("$From: lib_vidattr.c,v 1.23 1999/06/12 21:20:41 tom Exp $")
 
 	/* if there is no current screen, assume we *can* do color */
 #define SetColorsIf(why,old_attr) \
-	if ((!SP || SP->_coloron) && (why)) { \
+	if (can_color && (1)) { \
 		int old_pair = PAIR_NUMBER(old_attr); \
 		T(("old pair = %d -- new pair = %d", old_pair, pair)); \
 		if ((pair != old_pair) \
+		 || (fix_pair0 && (pair == 0)) \
 		 || (reverse ^ ((old_attr & A_REVERSE) != 0))) { \
 			_nc_do_color(pair, reverse, outc); \
 		} \
@@ -94,6 +95,12 @@ attr_t turn_on, turn_off;
 int pair;
 bool reverse = FALSE;
 bool used_ncv = FALSE;
+bool can_color = (SP == 0 || SP->_coloron);
+#ifdef NCURSES_EXT_FUNCS
+bool fix_pair0 = (SP != 0 && SP->_coloron && !SP->_default_color);
+#else
+#define fix_pair0 FALSE
+#endif
 
 	T((T_CALLED("vidputs(%s)"), _traceattr(newmode)));
 
@@ -163,6 +170,7 @@ bool used_ncv = FALSE;
 		}
 		if (previous_attr) {
 			doPut(exit_attribute_mode);
+			if (fix_pair0) _nc_do_color(0, FALSE, _nc_outch);
 			previous_attr &= ~A_COLOR;
 		}
 
@@ -199,6 +207,7 @@ bool used_ncv = FALSE;
 
 		if (turn_off && exit_attribute_mode) {
 			doPut(exit_attribute_mode);
+			if (fix_pair0) _nc_do_color(0, FALSE, _nc_outch);
 			turn_on  |= (newmode & (chtype)(~A_COLOR));
 			previous_attr &= ~A_COLOR;
 		}

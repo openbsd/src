@@ -1,7 +1,7 @@
-/*	$OpenBSD: lib_cur_term.c,v 1.3 1999/08/15 11:40:55 millert Exp $	*/
+/*	$OpenBSD: lib_cur_term.c,v 1.4 1999/11/28 17:49:54 millert Exp $	*/
 
 /****************************************************************************
- * Copyright (c) 1998 Free Software Foundation, Inc.                        *
+ * Copyright (c) 1998,1999 Free Software Foundation, Inc.                   *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -42,9 +42,9 @@
 #include <term_entry.h>	/* TTY, cur_term */
 #include <termcap.h>	/* ospeed */
 
-MODULE_ID("$From: lib_cur_term.c,v 1.8 1999/07/24 20:08:19 tom Exp $")
+MODULE_ID("$From: lib_cur_term.c,v 1.9 1999/10/30 23:00:16 tom Exp $")
 
-TERMINAL *cur_term;
+TERMINAL *cur_term = 0;
 
 TERMINAL *set_curterm(TERMINAL *termp)
 {

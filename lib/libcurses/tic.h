@@ -1,4 +1,4 @@
-/*	$OpenBSD: tic.h,v 1.5 1999/03/12 04:36:02 millert Exp $	*/
+/*	$OpenBSD: tic.h,v 1.6 1999/11/28 17:53:40 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -159,7 +159,16 @@ struct tinfo_fkeys {
 	chtype code;
 	};
 
+#ifdef	BROKEN_LINKER
+
+#define	_nc_tinfo_fkeys	_nc_tinfo_fkeysf()
+extern struct tinfo_fkeys *_nc_tinfo_fkeysf(void);
+
+#else
+
 extern struct tinfo_fkeys _nc_tinfo_fkeys[];
+
+#endif
 
 	/*
 	 * The file comp_captab.c contains an array of these structures, one

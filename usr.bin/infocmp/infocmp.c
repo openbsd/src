@@ -1,4 +1,4 @@
-/*	$OpenBSD: infocmp.c,v 1.5 1999/06/27 08:17:46 millert Exp $	*/
+/*	$OpenBSD: infocmp.c,v 1.6 1999/11/28 17:51:54 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,1999 Free Software Foundation, Inc.                   *
@@ -44,7 +44,7 @@
 #include <term_entry.h>
 #include <dump_entry.h>
 
-MODULE_ID("$From: infocmp.c,v 1.44 1999/06/16 00:39:48 tom Exp $")
+MODULE_ID("$From: infocmp.c,v 1.45 1999/11/27 23:59:57 tom Exp $")
 
 #define L_CURL "{"
 #define R_CURL "}"
@@ -857,7 +857,7 @@ static void dump_initializers(void)
     const char *str = 0;
     int	size;
 
-    (void) printf("static bool %s[] = %s\n", name_initializer("bool"), L_CURL);
+    (void) printf("static char %s[] = %s\n", name_initializer("bool"), L_CURL);
 
     for_each_boolean(n,term)
     {

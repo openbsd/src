@@ -1,4 +1,4 @@
-/*	$OpenBSD: p_update.c,v 1.2 1998/07/24 17:08:17 millert Exp $	*/
+/*	$OpenBSD: p_update.c,v 1.3 1999/11/28 17:49:19 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -38,7 +38,7 @@
  */
 #include "panel.priv.h"
 
-MODULE_ID("$From: p_update.c,v 1.2 1998/02/11 12:14:01 tom Exp $")
+MODULE_ID("$From: p_update.c,v 1.5 1999/11/25 13:49:26 juergen Exp $")
 
 void
 update_panels(void)
@@ -47,17 +47,16 @@ update_panels(void)
 
   dBug(("--> update_panels"));
   pan = _nc_bottom_panel;
-  while(pan)
+  while(pan && pan->above)
     {
-      _nc_override(pan,P_UPDATE);
+      PANEL_UPDATE(pan,pan->above, FALSE);
       pan = pan->above;
     }
 
   pan = _nc_bottom_panel;
   while (pan)
     {
-      if (is_wintouched(pan->win))
-	Wnoutrefresh(pan);
+      Wnoutrefresh(pan);
       pan = pan->above;
     }
 }

@@ -1,8 +1,8 @@
 '\" t
-.\" $OpenBSD: curses.3tbl,v 1.11 1999/08/15 11:41:03 millert Exp $
+.\" $OpenBSD: curses.3tbl,v 1.12 1999/11/28 17:53:40 millert Exp $
 .\"
 .\"***************************************************************************
-.\" Copyright (c) 1998 Free Software Foundation, Inc.                        *
+.\" Copyright (c) 1998,1999 Free Software Foundation, Inc.                   *
 .\"                                                                          *
 .\" Permission is hereby granted, free of charge, to any person obtaining a  *
 .\" copy of this software and associated documentation files (the            *
@@ -29,7 +29,7 @@
 .\" authorization.                                                           *
 .\"***************************************************************************
 .\"
-.\" $From: ncurses.3x,v 1.34 1999/07/24 21:37:35 tom Exp $
+.\" $From: ncurses.3x,v 1.35 1999/10/23 19:50:07 tom Exp $
 .TH ncurses 3 ""
 .ds n 5
 .ds d /usr/share/terminfo

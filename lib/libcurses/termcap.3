@@ -1,4 +1,4 @@
-.\" $OpenBSD: termcap.3,v 1.3 1998/09/13 19:16:30 millert Exp $
+.\" $OpenBSD: termcap.3,v 1.4 1999/11/28 17:53:40 millert Exp $
 .\"
 .\"***************************************************************************
 .\" Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -28,7 +28,7 @@
 .\" authorization.                                                           *
 .\"***************************************************************************
 .\"
-.\" $From: curs_termcap.3x,v 1.11 1998/07/18 02:45:56 tom Exp $
+.\" $From: curs_termcap.3x,v 1.12 1999/09/05 01:02:07 tom Exp $
 .TH termcap 3 ""
 .ds n 5
 .SH NAME
@@ -73,6 +73,9 @@ or -1 if it is not available.
 The \fBtgetstr\fR routine returns the string entry for \fIid\fR,
 or zero if it is not available.
 Use \fBtputs\fR to output the returned string.
+The return value will also be copied to the buffer pointed to by \fIarea\fR,
+and the \fIarea\fR value will be updated to point past the null ending
+this value.
 
 The \fBtgoto\fR routine instantiates the parameters into the given capability.
 The output from this routine is to be passed to \fBtputs\fR.
