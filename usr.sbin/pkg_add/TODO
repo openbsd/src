@@ -1,22 +1,16 @@
-+ add pkgname parsing
-+ handle package conflicts
-+ handle package dependencies to the level of the old implementation
-+ handle chmod/chown to the level of the old implementation
-+ handle PKGPATH
-+ replace symlinks with @symlink commands at pkg_create time
-+ basic validation of packing list at end of reading it...
-+ don't store @pkgdep in packing-lists, makes for a lot of traffic, use
-separate +REQUIRE file instead. Automatically convert from the old model.
-+ add better error handling
-- let package delete log files it cannot delete
-- smart package dependency handling
-
-Known update issues:
-- pkg_add -r can have two conflicting packages (or more) n-to-m updates
-should be handled.
-
-- switch all runtime dependencies to @newdepend.  Stuff older @libdepend
-into newer @wantlib keyword.  Makes for more systematic handling (adjust
-RUN_DEPENDS to take wildcard pkgspec by default as well) and allows us
-to put all lib dependencies into a package: base system included.
-Issue (again): converting from the old model.
+- smart handling of .libs-*: pkg_add correctly discards potential conflicts.
+It doesn't handle yet actual conflicts with .libs-*.
+- `global' replacement through pkg_add -r: the dependency solver needs
+to look into the command-line to figure out ways to solve dependencies:
+in effect, packages updated through -r must be sorted in dependency order.
+This does break pkg_add -n -r very thoroughly for complicated cases.
+And this is needed for 3.7 updates, if we don't want to have to update
+each package manually, in order.
+- handle n-to-1 updates: mostly need to allow for a list of replaced packages.
+The tricky part is that the replaced packages will often have 
+inter-dependencies, and we must ignore those inter-dependencies.
+- UStar::write method, so that we can handle long links, and that we can
+write a decent pkg_merge.
+- rewrite of PackageLocator to make listing of distant packages effective,
+which is the first step of pkg updates.
+- finish pulling the pkg_add code into Add.pm/Update.pm.
