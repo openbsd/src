@@ -1,4 +1,4 @@
-.\"	$OpenBSD: release.8,v 1.23 2003/01/16 17:40:02 millert Exp $
+.\"	$OpenBSD: release.8,v 1.24 2003/02/11 07:26:20 jmc Exp $
 .\"
 .\"	Copyright (c) 2000 Marco S. Hyman
 .\"
@@ -137,7 +137,7 @@ is your kernel configuration file.
 You should
 .Em not
 edit
-.Li GENERIC ,
+.Li GENERIC ;
 create your own kernel configuration if you need to make modifications.
 If using
 .Li GENERIC
@@ -180,7 +180,7 @@ them in the background.
 .It
 .Li "cd /usr/src && nice make obj"
 .br
-this re-builds your obj directories
+This re-builds your obj directories.
 .It
 .Li su
 .It
@@ -246,11 +246,11 @@ The release process is:
 .It
 .Li su
 .br
-you must be root to create a release
+You must be root to create a release.
 .It
 .Li "cd /usr/src/distrib/crunch && make clean && make && make install"
 .br
-create the special tools needed to build the release
+Create the special tools needed to build the release.
 .It
 .Li "export DESTDIR=your-destdir RELEASEDIR=your-releasedir"
 .It
@@ -258,7 +258,7 @@ create the special tools needed to build the release
 .It
 .Li "mkdir -p ${DESTDIR} ${RELEASEDIR}"
 .br
-these two steps ensure
+These two steps ensure
 .Va ${DESTDIR}
 exists as an empty directory and
 .Va ${RELEASEDIR}
@@ -270,7 +270,7 @@ need not be empty.
 .It
 .Li "cd /usr/src/distrib/sets && sh checkflist"
 .br
-this checks that the contents of
+This checks that the contents of
 .Va ${DESTDIR}
 pretty much match the contents of the release
 .Sq tarballs .
@@ -336,8 +336,7 @@ in the
 .Pa /usr/src
 directory.
 The X Window System is created and installed in
-.Pa
-/usr/X11R6 .
+.Pa /usr/X11R6 .
 However, the install phase of the build does
 .Em not
 overwrite

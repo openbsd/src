@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mknetid.8,v 1.9 2001/08/02 18:37:35 mpech Exp $
+.\"	$OpenBSD: mknetid.8,v 1.10 2003/02/11 07:26:20 jmc Exp $
 .\"
 .\" Copyright (c) 1996 Mats O Jansson <moj@stacken.kth.se>
 .\" All rights reserved.
@@ -37,12 +37,14 @@
 .Nd a YP filter program
 .Sh SYNOPSIS
 .Nm mknetid
+.Bk -words
 .Op Fl d Ar domain
 .Op Fl q
 .Op Fl p Ar passwdfile
 .Op Fl g Ar groupfile
 .Op Fl h Ar hostfile
 .Op Fl m Ar netidfile
+.Ek
 .Sh DESCRIPTION
 .Nm
 is used to create a map named
@@ -51,10 +53,10 @@ The map consists of information from
 .Xr passwd 5 ,
 .Xr group 5
 and
-.Xr hosts 5
-eventually concatenated with a
+.Xr hosts 5 ,
+concatenated with a
 .Xr netid 5
-file.
+file, if one exists.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds

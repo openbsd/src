@@ -1,4 +1,4 @@
-.\"	$OpenBSD: raidctl.8,v 1.26 2002/10/15 11:59:01 deraadt Exp $
+.\"	$OpenBSD: raidctl.8,v 1.27 2003/02/11 07:26:20 jmc Exp $
 .\"     $NetBSD: raidctl.8,v 1.24 2001/07/10 01:30:52 lukem Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -94,8 +94,10 @@ The device used by
 is specified by
 .Ar dev .
 .Ar dev
-may be either the full name of the device, e.g. /dev/rraid0c,
-or just simply raid0 (for /dev/rraid0c).
+may be either the full name of the device, e.g.
+.Pa /dev/rraid0c ,
+or just simply raid0 (for
+.Pa /dev/rraid0c ) .
 .Pp
 For several commands (
 .Fl BGipPsSu
@@ -157,7 +159,7 @@ A description of the contents of
 is given later.
 .It Fl C Ar config_file Ar dev
 As for
-.Ar -c ,
+.Fl c ,
 but forces the configuration to take place.  This is required the
 first time a RAID set is configured.
 .It Fl f Ar component Ar dev
@@ -347,7 +349,7 @@ There are other valid entries here, including those for Even-Odd
 parity, RAID level 5 with rotated sparing, Chained declustering,
 and Interleaved declustering, but as of this writing the code for
 those parity operations has not been tested with
-.Nx .
+.Ox .
 .Pp
 The next required section is the
 .Sq queue
@@ -380,7 +382,7 @@ for a more complete configuration file example.
 It is highly recommended that before using the RAID driver for real
 file systems that the system administrator(s) become quite familiar
 with the use of
-.Nm "" ,
+.Nm raidctl ,
 and that they understand how the component reconstruction process
 works.  The examples in this section will focus on configuring a
 number of different RAID sets of varying degrees of redundancy.
@@ -391,7 +393,7 @@ initiate reconstruction of failed components.
 In the following examples
 .Sq raid0
 will be used to denote the RAID device.
-.Sq /dev/rraid0c
+.Sq Pa /dev/rraid0c
 may be used in place of
 .Sq raid0 .
 .Pp
@@ -437,7 +439,7 @@ for more information about component labels.
 .Pp
 Once the components have been identified, and the disks have
 appropriate labels,
-.Nm ""
+.Nm
 is then used to configure the
 .Xr raid 4
 device.  To configure the device, a configuration
@@ -464,8 +466,13 @@ fifo 100
 .Ed
 .Pp
 is created in a file.  The above configuration file specifies a RAID 5
-set consisting of the components /dev/sd1e, /dev/sd2e, and /dev/sd3e,
-with /dev/sd4e available as a
+set consisting of the components
+.Pa /dev/sd1e , /dev/sd2e ,
+and
+.Pa /dev/sd3e ,
+with
+.Pa /dev/sd4e
+available as a
 .Sq hot spare
 in case one of
 the three main drives should fail. A RAID 0 set would be specified in
@@ -489,7 +496,10 @@ START queue
 fifo 100
 .Ed
 .Pp
-In this case, devices /dev/sd10e, /dev/sd11e, /dev/sd12e, and /dev/sd13e
+In this case, devices
+.Pa /dev/sd10e , /dev/sd11e , /dev/sd12e ,
+and
+.Pa /dev/sd13e
 are the components that make up this RAID set.  Note that there are no
 hot spares for a RAID 0 set, since there is no way to recover data if
 any of the components fail.
@@ -512,7 +522,11 @@ START queue
 fifo 100
 .Ed
 .Pp
-In this case, /dev/sd20e and /dev/sd21e are the two components of the
+In this case,
+.Pa /dev/sd20e
+and
+.Pa /dev/sd21e
+are the two components of the
 mirror set.  While no hot spares have been specified in this
 configuration, they easily could be, just as they were specified in
 the RAID 5 case above.  Note as well that RAID 1 sets are currently
@@ -556,7 +570,7 @@ where
 is a user-specified serial number for the RAID set.  This
 initialization step is
 .Ar required
-for all RAID sets.  As well, using different
+for all RAID sets.  Also, using different
 serial numbers between RAID sets is
 .Ar strongly encouraged ,
 as using the same serial number for all RAID sets will only serve to
@@ -631,8 +645,11 @@ START queue
 fifo 100
 .Ed
 .Pp
-/dev/sd0e is the real component, and will be the second disk of a RAID 1
-set.  The component /dev/sd6e, which must exist, but have no physical
+.Pa /dev/sd0e
+is the real component, and will be the second disk of a RAID 1
+set.  The component
+.Pa /dev/sd6e ,
+which must exist, but have no physical
 device associated with it, is simply used as a placeholder.
 Configuration (using
 .Fl C
@@ -833,8 +850,9 @@ Parity Re-write is 100% complete.
 Copyback is 100% complete.
 .Ed
 .Pp
-At this point there are at least two options.  First, if /dev/sd2e is
-known to be good (i.e. the failure was either caused by
+At this point there are at least two options.  First, if
+.Pa /dev/sd2e
+is known to be good (i.e. the failure was either caused by
 .Fl f
 or
 .Fl F ,
@@ -842,7 +860,10 @@ or the failed disk was replaced), then a copyback of the data can
 be initiated with the
 .Fl B
 option.  In this example, this would copy the entire contents of
-/dev/sd4e to /dev/sd2e.  Once the copyback procedure is complete, the
+.Pa /dev/sd4e
+to
+.Pa /dev/sd2e .
+Once the copyback procedure is complete, the
 status of the device would be (in part):
 .Bd -unfilled -offset indent
 Components:
@@ -855,8 +876,11 @@ Spares:
 .Pp
 and the system is back to normal operation.
 .Pp
-The second option after the reconstruction is to simply use /dev/sd4e
-in place of /dev/sd2e in the configuration file.  For example, the
+The second option after the reconstruction is to simply use
+.Pa /dev/sd4e
+in place of
+.Pa /dev/sd2e
+in the configuration file.  For example, the
 configuration file (in part) might now look like:
 .Bd -unfilled -offset indent
 START array
@@ -868,8 +892,11 @@ START drives
 /dev/sd3e
 .Ed
 .Pp
-This can be done as /dev/sd4e is completely interchangeable with
-/dev/sd2e at this point.  Note that extreme care must be taken when
+This can be done as
+.Pa /dev/sd4e
+is completely interchangeable with
+.Pa /dev/sd2e
+at this point.  Note that extreme care must be taken when
 changing the order of the drives in a configuration.  This is one of
 the few instances where the devices and/or their orderings can be
 changed without loss of data!  In general, the ordering of components
@@ -907,14 +934,18 @@ Reconstruction could then take place using
 .Fl F
 as describe above.
 .Pp
-A second option is to rebuild directly onto /dev/sd2e.  Once the disk
-containing /dev/sd2e has been replaced, one can simply use:
+A second option is to rebuild directly onto
+.Pa /dev/sd2e .
+Once the disk containing
+.Pa /dev/sd2e
+has been replaced, one can simply use:
 .Bd -unfilled -offset indent
 # raidctl -R /dev/sd2e raid0
 .Ed
 .Pp
-to rebuild the /dev/sd2e component.  As the rebuilding is in progress,
-the status will be:
+to rebuild the
+.Pa /dev/sd2e
+component.  As the rebuilding is in progress, the status will be:
 .Bd -unfilled -offset indent
 Components:
            /dev/sd1e: optimal
@@ -955,7 +986,8 @@ spare, the following could be done:
 .Pp
 at which point the data missing from
 .Sq component1
-would be reconstructed onto /dev/sd3e.
+would be reconstructed onto
+.Pa /dev/sd3e .
 .Pp
 .Ss RAID on RAID
 RAID sets can be layered to create more complex and much larger RAID
@@ -1128,7 +1160,7 @@ Distribution of components among controllers
 .It
 IO bandwidth
 .It
-file system access patterns
+File system access patterns
 .It
 CPU speed
 .El
@@ -1183,13 +1215,13 @@ be desirable to select a SectPerSU value of 16 blocks (8K) or 32
 blocks (16K).  Since there are 4 data sectors per stripe, the maximum
 data per stripe is 64 blocks (32K) or 128 blocks (64K).  Again,
 empirical measurement will provide the best indicators of which
-values will yeild better performance.
+values will yield better performance.
 .Pp
 The parameters used for the file system are also critical to good
 performance.  For
 .Xr newfs 8 ,
 for example, increasing the block size to 32K or 64K may improve
-performance dramatically.  As well, changing the cylinders-per-group
+performance dramatically.  Also, changing the cylinders-per-group
 parameter from 16 to 32 or higher is often not only necessary for
 larger file systems, but may also have positive performance
 implications.
@@ -1261,8 +1293,11 @@ Use:
 .Ed
 .Pp
 To re-configure the RAID set the next time it is needed, or put
-raid0.conf into /etc where it will automatically be started by
-the /etc/rc scripts.
+raid0.conf into
+.Pa /etc
+where it will automatically be started by the
+.Pa /etc/rc
+scripts.
 .El
 .Pp
 .Sh WARNINGS
@@ -1292,8 +1327,8 @@ device special files.
 .El
 .Pp
 .Sh SEE ALSO
-.Xr raid 4 ,
 .Xr ccd 4 ,
+.Xr raid 4 ,
 .Xr rc 8
 .Sh BUGS
 Hot-spare removal is currently not available.

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: route6d.8,v 1.13 2002/06/02 23:49:47 itojun Exp $
+.\"	$OpenBSD: route6d.8,v 1.14 2003/02/11 07:26:20 jmc Exp $
 .\"	$KAME: route6d.8,v 1.11 2002/06/02 15:00:30 itojun Exp $
 .\"
 .\" Copyright (c) 1996 WIDE Project. All rights reserved.
@@ -58,7 +58,7 @@ Enables aging of the statically defined routes.
 With this option, any
 statically defined routes will be removed unless corresponding updates
 arrive as if the routes are received at the startup of
-.Nm "" .
+.Nm route6d .
 .\"
 .It Fl R Ar routelog
 This option makes

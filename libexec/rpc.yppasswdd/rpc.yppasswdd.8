@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rpc.yppasswdd.8,v 1.16 2002/02/14 07:56:52 mpech Exp $
+.\"	$OpenBSD: rpc.yppasswdd.8,v 1.17 2003/02/11 07:26:20 jmc Exp $
 .\"
 .\" Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
 .\" All rights reserved.
@@ -38,11 +38,13 @@
 .Nd YP update password file daemon
 .Sh SYNOPSIS
 .Nm rpc.yppasswdd
+.Bk -words
 .Op Fl d Ar directory
 .Op Fl noshell
 .Op Fl nogecos
 .Op Fl nopw
 .Op Fl m Ar arg1 arg2 ...
+.Ek
 .Sh DESCRIPTION
 .Nm rpc.yppasswdd
 must be running on the YP master server to allow users to change information
@@ -66,7 +68,8 @@ The options are as follows:
 .Bl -tag -width Ds
 .It Fl d Ar directory
 Use the specified directory to get at the password-related files instead
-of /etc.
+of
+.Pa /etc .
 .It Fl noshell
 Don't allow changes of the shell field in the passwd file.
 .It Fl nogecos
@@ -89,7 +92,7 @@ to rebuild the passwd maps.
 .Xr make 1 ,
 .Xr securenet 5 ,
 .Xr ypserv.acl 5 ,
-.Xr ypbind 8 ,
-.Xr yp 8
+.Xr yp 8 ,
+.Xr ypbind 8
 .Sh AUTHORS
 Mats O Jansson <moj@stacken.kth.se>

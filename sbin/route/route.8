@@ -1,4 +1,4 @@
-.\"	$OpenBSD: route.8,v 1.27 2002/06/08 18:53:42 itojun Exp $
+.\"	$OpenBSD: route.8,v 1.28 2003/02/11 07:26:20 jmc Exp $
 .\"	$NetBSD: route.8,v 1.6 1995/03/18 15:00:13 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -52,7 +52,7 @@
 .Nm
 is a utility used to manually manipulate the network routing tables.
 It normally is not needed, as a
-system routing table management daemon such as
+system routing table management daemon, such as
 .Xr routed 8 ,
 should tend to this task.
 .Pp
@@ -186,7 +186,7 @@ and
 is interpreted as
 .Li 128.32.130.0 .
 A more detailed syntax is also available, for example
-.Li net 192.168.64.0/20
+.Fl net Li 192.168.64.0/20
 is interpreted to specify that the high 20 bits of the address
 192.168.64.0 are the requested network.
 .Pp
@@ -234,7 +234,7 @@ The implicit network mask generated in the
 case
 can be overridden by making sure this option follows the destination parameter.
 .Fl prefixlen
-is also available for similar purpose, in IPv6/v4 case.
+is also available for a similar purpose, for IPv6/v4.
 .Pp
 Routes have associated flags which influence operation of the protocols
 when sending to destinations matched by the routes.
@@ -361,7 +361,9 @@ Some uses of the
 .Fl ifa
 or
 .Fl ifp
-modifiers with the add command will incorrectly fail with a
+modifiers with the
+.Cm add
+command will incorrectly fail with a
 .Dq Network is unreachable
 message if there is no default route.
 See case

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ping.8,v 1.25 2002/06/22 22:47:45 jakob Exp $
+.\"	$OpenBSD: ping.8,v 1.26 2003/02/11 07:26:20 jmc Exp $
 .\"	$NetBSD: ping.8,v 1.10 1995/12/31 04:55:35 ghudson Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
@@ -44,6 +44,7 @@
 packets to network hosts
 .Sh SYNOPSIS
 .Nm ping
+.Bk -words
 .Op Fl DdfLnqRrv
 .Op Fl c Ar count
 .Op Fl I Ar ifaddr
@@ -55,6 +56,7 @@ packets to network hosts
 .Op Fl t Ar ttl
 .Op Fl w Ar maxwait
 .Ar host
+.Ek
 .Sh DESCRIPTION
 .Nm
 uses the
