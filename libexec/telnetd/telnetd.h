@@ -34,7 +34,7 @@
  */
 
 
-
+#include <err.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -229,3 +229,8 @@ int output_data (const char *format, ...)
 __attribute__ ((format (printf, 1, 2)))
 #endif
 ;
+
+void esetenv(const char *, const char *, int);   
+void mini_inetd(int);
+void socket_set_reuseaddr (int, int);
+

@@ -1368,7 +1368,7 @@ start_login(const char *host, int autologin, char *name)
      */
     sleep(1);
 
-    execv(new_login, argv.argv);
+    execv(new_login, (char *const*)argv.argv);
     save_errno = errno;
     syslog(LOG_ERR, "%s: %m\n", new_login);
     fatalperror_errno(net, new_login, save_errno);
