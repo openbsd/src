@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.h,v 1.3 1998/10/30 22:16:42 mickey Exp $	*/
+/*	$OpenBSD: cpufunc.h,v 1.4 1998/12/05 17:33:01 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -187,8 +187,10 @@ pdtlbe(pa_space_t sp, vm_offset_t off)
 struct pdc_cache;
 void fcacheall __P((struct pdc_cache *));
 void ptlball __P((struct pdc_cache *));
-int btlb_insert __P((int i, pa_space_t space, vm_offset_t va, vm_offset_t pa,
+int btlb_insert __P((pa_space_t space, vm_offset_t va, vm_offset_t pa,
 		     vm_size_t *lenp, u_int prot));
+hppa_hpa_t cpu_gethpa __P((int n));
+void heartbeat __P((int on));
 #endif
 
 #endif /* _MACHINE_CPUFUNC_H_ */
