@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_lock.c,v 1.16 2004/06/13 21:49:26 niklas Exp $	*/
+/*	$OpenBSD: kern_lock.c,v 1.17 2004/11/01 06:39:39 marius Exp $	*/
 
 /* 
  * Copyright (c) 1995
@@ -385,6 +385,10 @@ lockmgr(lkp, flags, interlkp, p)
 	if (extflags & LK_SPIN) {
 		pid = LK_KERNPROC;
 	} else {
+#ifdef DIAGNOSTIC
+		if (p == NULL)
+			panic("lockmgr: process context required");
+#endif		
 		/* Process context required. */
 		pid = p->p_pid;
 	}
