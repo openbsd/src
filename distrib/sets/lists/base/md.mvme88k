@@ -452,6 +452,8 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/emuxkireg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/emuxkivar.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/if_bgereg.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/if_gxreg.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/if_gxvar.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/if_lgereg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/if_ngereg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/if_stgereg.ph
