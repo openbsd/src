@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.28 1998/12/20 23:47:52 millert Exp $	*/
+/*	$OpenBSD: route.c,v 1.29 1999/01/08 00:38:30 deraadt Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)route.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: route.c,v 1.28 1998/12/20 23:47:52 millert Exp $";
+static char rcsid[] = "$OpenBSD: route.c,v 1.29 1999/01/08 00:38:30 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -76,7 +76,6 @@ static char rcsid[] = "$OpenBSD: route.c,v 1.28 1998/12/20 23:47:52 millert Exp 
 
 #include "keywords.h"
 
-struct	ortentry route;
 union	sockunion {
 	struct	sockaddr sa;
 	struct	sockaddr_in sin;
@@ -728,9 +727,7 @@ newroute(argc, argv)
 		if (*gateway) {
 			(void) printf(": gateway %s", gateway);
 			if (attempts > 1 && ret == 0 && af == AF_INET)
-			    (void) printf(" (%s)",
-				inet_ntoa(((struct sockaddr_in *)
-					   &route.rt_gateway)->sin_addr));
+			    (void) printf(" (%s)", routename(&so_gate.sa));
 		}
 		if (ret == 0)
 			(void) printf("\n");
