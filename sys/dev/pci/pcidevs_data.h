@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.166 1999/07/24 23:44:05 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.167 1999/07/26 16:41:18 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -799,6 +799,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "c't Magazin",
 	    "GPPCI",
+	},
+	{
+	    PCI_VENDOR_CCUBE, PCI_PRODUCT_CCUBE_CINEMASTER,
+	    0,
+	    "C-Cube",
+	    "Cinemaster C 3.0 DVD Decoder",
 	},
 	{
 	    PCI_VENDOR_CHIPS, PCI_PRODUCT_CHIPS_64310,

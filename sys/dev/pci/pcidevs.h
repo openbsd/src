@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.166 1999/07/24 23:44:05 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.167 1999/07/26 16:41:18 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -726,6 +726,9 @@
 
 /* c't Magazin products */
 #define	PCI_PRODUCT_C4T_GPPCI	0x6773		/* GPPCI */
+
+/* CCUBE products */
+#define	PCI_PRODUCT_CCUBE_CINEMASTER	0x8888		/* Cinemaster C 3.0 DVD Decoder */
 
 /* Chips and Technologies products */
 #define	PCI_PRODUCT_CHIPS_64310	0x00b8		/* 64310 */
