@@ -1,4 +1,4 @@
-/*	$OpenBSD: which.c,v 1.2 1997/04/08 02:44:07 millert Exp $	*/
+/*	$OpenBSD: which.c,v 1.3 1998/01/28 17:18:53 millert Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -31,7 +31,7 @@
  */
 
 #ifndef lint                                                              
-static char rcsid[] = "$OpenBSD: which.c,v 1.2 1997/04/08 02:44:07 millert Exp $";
+static char rcsid[] = "$OpenBSD: which.c,v 1.3 1998/01/28 17:18:53 millert Exp $";
 #endif /* not lint */                                                        
 
 #include <sys/param.h>
@@ -51,7 +51,7 @@ static char rcsid[] = "$OpenBSD: which.c,v 1.2 1997/04/08 02:44:07 millert Exp $
 
 extern char *__progname;
 
-int findprog __P((char *, char *, int));
+int findprog __P((char *, char *, int, int));
 void usage __P((void));
 
 /*
@@ -71,7 +71,7 @@ main(argc, argv)
 {
 	char *path;
 	size_t n;
-	int ch, notfound = 0, progmode = PROG_WHICH;
+	int ch, allmatches = 0, notfound = 0, progmode = PROG_WHICH;
 
 	(void)setlocale(LC_ALL, "");
 
@@ -79,8 +79,11 @@ main(argc, argv)
 		usage();
 
 	/* Don't accept command args but check since old whereis(1) used to */
-	while ((ch = getopt(argc, argv, "")) != -1) {
+	while ((ch = getopt(argc, argv, "a")) != -1) {
 		switch (ch) {
+		case 'a':
+			allmatches = 1;
+			break;
 		default:
 			usage();
 		}
@@ -115,21 +118,22 @@ main(argc, argv)
 	if (setuid(geteuid()))
 		err(-1, "Can't set uid to %u", geteuid());
 
-	for (n = 1; n < argc; n++)
-		if (findprog(argv[n], path, progmode) == 0)
+	for (n = optind; n < argc; n++)
+		if (findprog(argv[n], path, progmode, allmatches) == 0)
 			notfound++;
 
 	exit((notfound == 0) ? 0 : ((notfound == argc - 1) ? 2 : 1));
 }
 
 int
-findprog(prog, path, progmode)
+findprog(prog, path, progmode, allmatches)
 	char *prog;
 	char *path;
 	int progmode;
+	int allmatches;
 {
 	char *p, filename[MAXPATHLEN];
-	int proglen, plen;
+	int proglen, plen, rval = 0;
 	struct stat sbuf;
 
 	/* Special case if prog contains '/' */
@@ -167,20 +171,22 @@ findprog(prog, path, progmode)
 		if ((stat(filename, &sbuf) == 0) && S_ISREG(sbuf.st_mode) &&
 		    access(filename, X_OK) == 0) {
 			(void)puts(filename);
-			return(1);
+			rval = 1;
+			if (!allmatches)
+				return(rval);
 		}
 	}
 	(void)free(path);
 
 	/* whereis(1) is silent on failure. */
-	if (progmode != PROG_WHEREIS)
+	if (!rval && progmode != PROG_WHEREIS)
 		(void)printf("%s: Command not found.\n", prog);
-	return(0);
+	return(rval);
 }
 
 void
 usage()
 {
-	(void) fprintf(stderr, "Usage: %s name [...]\n", __progname);
+	(void) fprintf(stderr, "Usage: %s [-a] name [...]\n", __progname);
 	exit(1);
 }
