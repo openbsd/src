@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahc_pci.c,v 1.44 2004/08/01 01:36:24 krw Exp $	*/
+/*	$OpenBSD: ahc_pci.c,v 1.45 2004/08/13 23:38:54 krw Exp $	*/
 /*
  * Product specific probe and attach routines for:
  *      3940, 2940, aic7895, aic7890, aic7880,
@@ -40,7 +40,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: ahc_pci.c,v 1.44 2004/08/01 01:36:24 krw Exp $
+ * $Id: ahc_pci.c,v 1.45 2004/08/13 23:38:54 krw Exp $
  *
  * //depot/aic7xxx/aic7xxx/aic7xxx_pci.c#57 $
  *
@@ -75,6 +75,9 @@
 
 #include <dev/ic/smc93cx6var.h>
 
+#ifdef __hppa__
+#define AHC_ALLOW_MEMIO
+#endif
 
 static __inline uint64_t
 ahc_compose_id(u_int device, u_int vendor, u_int subdevice, u_int subvendor)
@@ -713,10 +716,11 @@ ahc_pci_attach(parent, self, aux)
 	uint32_t	   devconfig;
 	int		   error;
 	pcireg_t	   subid;
-	int		   ioh_valid, memh_valid;
+	int		   ioh_valid;
 	bus_space_tag_t    st, iot;
 	bus_space_handle_t sh, ioh;
 #ifdef AHC_ALLOW_MEMIO
+	int		   memh_valid;
 	bus_space_tag_t    memt;
 	bus_space_handle_t memh;
 	pcireg_t memtype;
@@ -767,9 +771,10 @@ ahc_pci_attach(parent, self, aux)
 	if (error != 0)
 		return;
 
-	ioh_valid = memh_valid = 0;
+	ioh_valid = 0;
 
 #ifdef AHC_ALLOW_MEMIO
+	memh_valid = 0;
 	memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, AHC_PCI_MEMADDR);
 	switch (memtype) {
 	case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT:
@@ -780,10 +785,10 @@ ahc_pci_attach(parent, self, aux)
 	default:
 		memh_valid = 0;
 	}
+	if (memh_valid == 0)
 #endif
-	ioh_valid = (pci_mapreg_map(pa, AHC_PCI_IOADDR,
-				    PCI_MAPREG_TYPE_IO, 0, &iot, 
-				    &ioh, NULL, NULL, 0) == 0);
+		ioh_valid = (pci_mapreg_map(pa, AHC_PCI_IOADDR,
+		    PCI_MAPREG_TYPE_IO, 0, &iot, &ioh, NULL, NULL, 0) == 0);
 #if 0
 	printf("%s: mem mapping: memt 0x%x, memh 0x%x, iot 0x%x, ioh 0x%lx\n",
 	       ahc_name(ahc), memt, (u_int32_t)memh, (u_int32_t)iot, ioh);

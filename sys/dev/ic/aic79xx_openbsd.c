@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx_openbsd.c,v 1.6 2004/08/06 01:29:19 marco Exp $	*/
+/*	$OpenBSD: aic79xx_openbsd.c,v 1.7 2004/08/13 23:38:54 krw Exp $	*/
 /*
  * Bus independent OpenBSD shim for the aic79xx based Adaptec SCSI controllers
  *
@@ -195,6 +195,7 @@ ahd_done(struct ahd_softc *ahd, struct scb *scb)
 
 	/* Translate the CAM status code to a SCSI error code. */
 	switch (xs->error) {
+	case CAM_SCSI_STATUS_ERROR:
         case CAM_REQ_INPROG:
         case CAM_REQ_CMP:
                 switch (xs->status) {

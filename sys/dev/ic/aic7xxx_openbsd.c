@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxx_openbsd.c,v 1.22 2004/08/01 01:36:23 krw Exp $	*/
+/*	$OpenBSD: aic7xxx_openbsd.c,v 1.23 2004/08/13 23:38:54 krw Exp $	*/
 /*	$NetBSD: aic7xxx_osm.c,v 1.14 2003/11/02 11:07:44 wiz Exp $	*/
 
 /*
@@ -235,6 +235,7 @@ ahc_done(struct ahc_softc *ahc, struct scb *scb)
 
 	/* Translate the CAM status code to a SCSI error code. */
 	switch (xs->error) {
+	case CAM_SCSI_STATUS_ERROR:
 	case CAM_REQ_INPROG:
 	case CAM_REQ_CMP:
 		switch (xs->status) {
