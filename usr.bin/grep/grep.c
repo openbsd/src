@@ -1,4 +1,4 @@
-/*	$OpenBSD: grep.c,v 1.18 2003/07/10 16:49:12 millert Exp $	*/
+/*	$OpenBSD: grep.c,v 1.19 2003/07/10 16:51:12 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -121,40 +121,40 @@ static char *optstr = "0123456789A:B:CEFGHILPSRUVZabce:f:hilnoqrsuvwxy";
 
 struct option long_options[] =
 {
-	{"binary-files",        required_argument, NULL, BIN_OPT},
-	{"help",                no_argument,       NULL, HELP_OPT},
-	{"mmap",                no_argument,       NULL, MMAP_OPT},
-	{"after-context",       required_argument, NULL, 'A'},
-	{"before-context",      required_argument, NULL, 'B'},
-	{"context",             optional_argument, NULL, 'C'},
-	{"devices",             required_argument, NULL, 'D'},
-	{"extended-regexp",     no_argument,       NULL, 'E'},
-	{"fixed-strings",       no_argument,       NULL, 'F'},
-	{"basic-regexp",        no_argument,       NULL, 'G'},
-	{"binary",              no_argument,       NULL, 'U'},
-	{"version",             no_argument,       NULL, 'V'},
-	{"text",                no_argument,       NULL, 'a'},
-	{"byte-offset",         no_argument,       NULL, 'b'},
-	{"count",               no_argument,       NULL, 'c'},
-	{"regexp",              required_argument, NULL, 'e'},
-	{"file",                required_argument, NULL, 'f'},
-	{"no-filename",         no_argument,       NULL, 'h'},
-	{"ignore-case",         no_argument,       NULL, 'i'},
-	{"files-without-match", no_argument,       NULL, 'L'},
-	{"files-with-matches",  no_argument,       NULL, 'l'},
-	{"line-number",         no_argument,       NULL, 'n'},
-	{"quiet",               no_argument,       NULL, 'q'},
-	{"silent",              no_argument,       NULL, 'q'},
-	{"recursive",           no_argument,       NULL, 'r'},
-	{"no-messages",         no_argument,       NULL, 's'},
-	{"revert-match",        no_argument,       NULL, 'v'},
-	{"word-regexp",         no_argument,       NULL, 'w'},
-	{"line-regexp",         no_argument,       NULL, 'x'},
-	{"unix-byte-offsets",   no_argument,       NULL, 'u'},
+	{"binary-files",	required_argument,	NULL, BIN_OPT},
+	{"help",		no_argument,		NULL, HELP_OPT},
+	{"mmap",		no_argument,		NULL, MMAP_OPT},
+	{"after-context",	required_argument,	NULL, 'A'},
+	{"before-context",	required_argument,	NULL, 'B'},
+	{"context",		optional_argument,	NULL, 'C'},
+	{"devices",		required_argument,	NULL, 'D'},
+	{"extended-regexp",	no_argument,		NULL, 'E'},
+	{"fixed-strings",	no_argument,		NULL, 'F'},
+	{"basic-regexp",	no_argument,		NULL, 'G'},
+	{"binary",		no_argument,		NULL, 'U'},
+	{"version",		no_argument,		NULL, 'V'},
+	{"text",		no_argument,		NULL, 'a'},
+	{"byte-offset",		no_argument,		NULL, 'b'},
+	{"count",		no_argument,		NULL, 'c'},
+	{"regexp",		required_argument,	NULL, 'e'},
+	{"file",		required_argument,	NULL, 'f'},
+	{"no-filename",		no_argument,		NULL, 'h'},
+	{"ignore-case",		no_argument,		NULL, 'i'},
+	{"files-without-match",	no_argument,		NULL, 'L'},
+	{"files-with-matches",	no_argument,		NULL, 'l'},
+	{"line-number",		no_argument,		NULL, 'n'},
+	{"quiet",		no_argument,		NULL, 'q'},
+	{"silent",		no_argument,		NULL, 'q'},
+	{"recursive",		no_argument,		NULL, 'r'},
+	{"no-messages",		no_argument,		NULL, 's'},
+	{"revert-match",	no_argument,		NULL, 'v'},
+	{"word-regexp",		no_argument,		NULL, 'w'},
+	{"line-regexp",		no_argument,		NULL, 'x'},
+	{"unix-byte-offsets",	no_argument,		NULL, 'u'},
 #ifndef NOZ
-	{"decompress",          no_argument,       NULL, 'Z'},
+	{"decompress",		no_argument,		NULL, 'Z'},
 #endif
-	{NULL,                  no_argument,       NULL, 0}
+	{NULL,			no_argument,		NULL, 0}
 };
 
 
