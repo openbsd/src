@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pci.4,v 1.85 2004/03/06 03:40:24 krw Exp $
+.\"	$OpenBSD: pci.4,v 1.86 2004/03/14 20:12:52 grange Exp $
 .\"	$NetBSD: pci.4,v 1.29 2000/04/01 00:32:23 tsarna Exp $
 .\"
 .\" Copyright (c) 2000 Theo de Raadt.  All rights reserved.
@@ -416,8 +416,7 @@ The
 configuration register the user would like to access.
 .It pi_width
 The width, in bytes, of the data the user would like to read.
-This value may be either 1, 2, or 4.
-3-byte reads and reads larger than 4 bytes are not supported.
+This value can be only 4.
 .It pi_data
 The data returned by the kernel.
 .El
