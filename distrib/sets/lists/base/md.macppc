@@ -1980,3 +1980,4 @@
 ./usr/sbin/apmd
 ./usr/sbin/wsconscfg
 ./usr/sbin/zzz
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/sbus/stp4020reg.ph

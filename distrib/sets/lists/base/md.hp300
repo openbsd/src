@@ -1,3 +1,4 @@
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/sbus/stp4020reg.ph
 ./sbin/ldconfig
 ./usr/bin/c++filt
 ./usr/bin/ldd

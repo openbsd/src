@@ -1931,3 +1931,4 @@
 ./usr/sbin/eeprom
 ./usr/sbin/fdformat
 ./usr/sbin/screenblank
+./usr/libdata/perl5/site_perl/sparc-openbsd/dev/sbus/stp4020reg.ph

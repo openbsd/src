@@ -1869,3 +1869,4 @@
 ./usr/mdec/raboot
 ./usr/mdec/sdboot
 ./usr/mdec/xxboot
+./usr/libdata/perl5/site_perl/vax-openbsd/dev/sbus/stp4020reg.ph

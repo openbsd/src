@@ -1962,3 +1962,4 @@
 ./usr/mdec/ufsboot
 ./usr/sbin/eeprom
 ./usr/sbin/screenblank
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/sbus/stp4020reg.ph

@@ -1930,3 +1930,4 @@
 ./usr/mdec/ofwboot.net
 ./usr/sbin/eeprom
 ./usr/sbin/wsconscfg
+./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/sbus/stp4020reg.ph
