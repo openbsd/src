@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_err.h,v 1.1 1996/11/11 04:55:03 downsj Exp $	*/
+/*	$OpenBSD: com_err.h,v 1.2 1996/12/16 03:17:16 downsj Exp $	*/
 
 /*-
  * Header file for common error description library.
@@ -13,10 +13,13 @@
 #ifndef __COM_ERR_H
 #define __COM_ERR_H
 
+typedef long errcode_t;		/* XXX compatibilty with newer version */
+
 #include <stdarg.h>
 
 /* ANSI C -- use prototypes etc */
 void com_err __P((const char *, long, const char *, ...));
+void com_err_va __P((const char *, long, const char *, va_list));
 char const *error_message __P((long));
 void (*com_err_hook) __P((const char *, long, const char *, va_list));
 void (*set_com_err_hook __P((void (*) (const char *, long, const char *, va_list))))
