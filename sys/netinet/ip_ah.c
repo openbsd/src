@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah.c,v 1.42 2000/06/20 04:19:10 itojun Exp $ */
+/*	$OpenBSD: ip_ah.c,v 1.43 2000/08/03 08:20:59 angelos Exp $ */
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -233,12 +233,19 @@ ah_massage_headers(struct mbuf **m0, int proto, int skip, int alg, int out)
 		ip->ip_len += skip;
 		HTONS(ip->ip_len);
 		HTONS(ip->ip_id);
-	    }
 
-	    if ((alg == CRYPTO_MD5_KPDK) || (alg == CRYPTO_SHA1_KPDK))
-	      ip->ip_off = htons(ip->ip_off & IP_DF);
-	    else
-	      ip->ip_off = 0;
+                if ((alg == CRYPTO_MD5_KPDK) || (alg == CRYPTO_SHA1_KPDK))
+                  ip->ip_off = htons(ip->ip_off & IP_DF);
+                else
+                  ip->ip_off = 0;
+            }
+            else
+            { 
+                if ((alg == CRYPTO_MD5_KPDK) || (alg == CRYPTO_SHA1_KPDK))
+                  ip->ip_off = htons(ntohs(ip->ip_off) & IP_DF);
+                else
+                  ip->ip_off = 0;
+            }
 
 	    ptr = mtod(m, unsigned char *) + sizeof(struct ip);
 
