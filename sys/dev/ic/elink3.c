@@ -1,4 +1,4 @@
-/*	$OpenBSD: elink3.c,v 1.29 1998/09/27 21:22:15 deraadt Exp $	*/
+/*	$OpenBSD: elink3.c,v 1.30 1998/12/26 23:58:33 niklas Exp $	*/
 /*	$NetBSD: elink3.c,v 1.32 1997/05/14 00:22:00 thorpej Exp $	*/
 
 /*
@@ -137,7 +137,7 @@ const u_int ep_default_to_media[8] = {
 	IFM_ETHER | IFM_100_T4,
 };
 
-/* Autoconfig defintion of driver back-end */
+/* Autoconfig definition of driver back-end */
 struct cfdriver ep_cd = {
 	NULL, "ep", DV_IFNET
 };
@@ -543,11 +543,6 @@ epinit(sc)
 	}
 
 	if (sc->bustype == EP_BUS_PCMCIA) {
-#ifdef EP_COAX_DEFAULT
-		bus_space_write_2(iot, ioh, EP_W0_ADDRESS_CFG,3<<14);
-#else
-		bus_space_write_2(iot, ioh, EP_W0_ADDRESS_CFG,0<<14);
-#endif
 		bus_space_write_2(iot, ioh, EP_W0_RESOURCE_CFG, 0x3f00);
 	}
 
