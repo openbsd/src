@@ -1,4 +1,4 @@
-/*	$OpenBSD: ral.c,v 1.9 2005/02/19 09:42:14 damien Exp $  */
+/*	$OpenBSD: ral.c,v 1.10 2005/02/19 09:45:16 damien Exp $  */
 
 /*-
  * Copyright (c) 2005
@@ -812,7 +812,7 @@ int
 ral_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 {
 	struct ral_softc *sc = ic->ic_if.if_softc;
-        enum ieee80211_state ostate;
+	enum ieee80211_state ostate;
 
 	ostate = ic->ic_state;
 	timeout_del(&sc->scan_ch);
@@ -1558,7 +1558,7 @@ ral_tx_data(struct ral_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 		m0 = ieee80211_wep_crypt(ifp, m0, 1);
 		if (m0 == NULL)
 			return ENOBUFS;
-        }
+	}
 
 	if (m0->m_pkthdr.len > ic->ic_rtsthreshold) {
 		desc = &sc->txq.desc[sc->txq.cur_encrypt];
@@ -1969,7 +1969,7 @@ ral_set_chan(struct ral_softc *sc, struct ieee80211_channel *c)
 		break;
 	}
 
-	if (sc->sc_ic.ic_state != IEEE80211_S_SCAN) {
+	if (ic->ic_state != IEEE80211_S_SCAN) {
 		/* set Japan filter bit for channel 14 */
 		tmp = ral_bbp_read(sc, 70);
 
@@ -2005,7 +2005,6 @@ ral_disable_rf_tune(struct ral_softc *sc)
 	ral_rf_write(sc, RAL_RF3, tmp);
 }
 
-/* cf IEEE80211-1999 pp123 */
 void
 ral_enable_tsf_sync(struct ral_softc *sc)
 {
@@ -2018,8 +2017,6 @@ ral_enable_tsf_sync(struct ral_softc *sc)
 	/* set beacon interval and CfpMaxDuration in 1/16TU */
 	tmp = 16 * ic->ic_bss->ni_intval;
 	RAL_WRITE(sc, RAL_CSR12, tmp);
-
-/* voir ni->ni_timoff ou on doit trouver le cfp et le atim */
 
 	/* set CFP Period to 0 */
 	RAL_WRITE(sc, RAL_CSR13, 0);
@@ -2314,5 +2311,5 @@ ral_stop(struct ifnet *ifp, int disable)
 }
 
 struct cfdriver ral_cd = {
-        0, "ral", DV_IFNET
+	0, "ral", DV_IFNET
 };

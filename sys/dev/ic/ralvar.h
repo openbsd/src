@@ -1,4 +1,4 @@
-/*	$OpenBSD: ralvar.h,v 1.1 2005/02/15 20:51:21 damien Exp $  */
+/*	$OpenBSD: ralvar.h,v 1.2 2005/02/19 09:45:16 damien Exp $  */
 
 /*-
  * Copyright (c) 2005
@@ -92,8 +92,8 @@ struct ral_softc {
 	void				(*sc_power)(struct ral_softc *, int);
 
 	bus_dma_tag_t			sc_dmat;
-        bus_space_tag_t			sc_st;
-        bus_space_handle_t		sc_sh;
+	bus_space_tag_t			sc_st;
+	bus_space_handle_t		sc_sh;
 
 	struct ieee80211_rssadapt	rssadapt;
 
