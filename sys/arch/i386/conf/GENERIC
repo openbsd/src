@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.348 2003/09/02 20:44:33 david Exp $
+#	$OpenBSD: GENERIC,v 1.349 2003/09/26 04:05:29 mickey Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -367,7 +367,7 @@ xl*	at pci? dev ? function ?		# 3C9xx ethernet
 xl*	at cardbus? dev ? function ?		# 3C575/3C656 ethernet
 rl*	at pci? dev ? function ?		# RealTek 81[23]9 ethernet
 rl*	at cardbus? dev ? function ?		# RealTek 81[23]9 ethernet
-mtd*	at pci? dev ? function ?		# Myson MTD803
+mtd*	at pci? dev ? function ?		# Myson MTD800/803/891
 tx*	at pci? dev ? function ?		# SMC 83C170 EPIC ethernet
 tl*	at pci? dev ? function ?		# Compaq Thunderlan ethernet
 vr*	at pci? dev ? function ?		# VIA Rhine ethernet
