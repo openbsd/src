@@ -3,11 +3,11 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.sparc64/MAKEDEV.md,v 1.3 2002/01/04 16:15:01 todd Exp 
-#	OpenBSD: MAKEDEV.mi,v 1.2 2002/01/04 15:59:16 todd Exp 
+#	OpenBSD: etc.sparc64/MAKEDEV.md,v 1.4 2002/01/04 16:59:18 todd Exp 
+#	OpenBSD: MAKEDEV.mi,v 1.3 2002/01/04 16:58:41 todd Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.1 2002/01/04 09:25:35 todd Exp 
 #
-#	$OpenBSD: MAKEDEV,v 1.29 2002/01/04 16:16:36 todd Exp $
+#	$OpenBSD: MAKEDEV,v 1.30 2002/01/04 16:59:38 todd Exp $
 #
 # Copyright (c) 2001 Todd T. Fries <todd@OpenBSD.org>
 # All rights reserved.
@@ -51,6 +51,7 @@
 #	raid*	RAIDframe disk devices
 # Console ports:
 #	ttyC0	wscons screen 0
+#	ttyC*	wscons virtual consoles
 #	wskbd*	wscons keyboards
 #	wsmux	wscons keyboard/mouse mux devices
 #	console	PROM console
@@ -419,8 +420,20 @@ wskbd*)
 	M wskbd$U c 67 $U 600
 	;;
 
+ttyC*)
+	U=${i##ttyC}
+	case $U in
+	[0-9a-f]) M ttyC$U c 78 $(( 16#$U )) 600 ;;
+	cfg) M ttyCcfg c 78 255 ;;
+	*) echo bad unit $U for $i; exit 1;;
+	esac
+ 
+	;;
+
 wscons)
-	R ttyCcfg wsmux wskbd0 wskbd1 wskbd2 wskbd3
+	R ttyCcfg
+	R ttyC0 ttyC1 ttyC2 ttyC3 ttyC4 ttyC5 ttyC6 ttyC7 ttyC8 ttyC9
+	R ttyCa ttyCb wsmux wskbd0 wskbd1 wskbd2 wskbd3
 	R wsmouse0 wsmouse1 wsmouse2 wsmouse3
 	;;
 
