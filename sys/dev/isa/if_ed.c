@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ed.c,v 1.28 1997/04/13 04:52:31 millert Exp $	*/
+/*	$OpenBSD: if_ed.c,v 1.29 1997/04/14 02:06:22 millert Exp $	*/
 /*	$NetBSD: if_ed.c,v 1.105 1996/10/21 22:40:45 thorpej Exp $	*/
 
 /*
@@ -70,7 +70,7 @@ struct ed_softc {
 	char	*type_str;	/* pointer to type string */
 	u_char	vendor;		/* interface vendor */
 	u_char	type;		/* interface type code */
-	u_short	spec_flags;
+	u_int16_t	spec_flags;
 #define ED_REATTACH	0x0001	/* Reattach */
 #define ED_NOTPRESENT 	0x0002	/* card not present; do not allow
 				   reconfiguration */
@@ -110,7 +110,7 @@ struct ed_softc {
 
 	u_char 	txb_new;	/* pointer to where new buffer will be added */
 	u_char	txb_next_tx;	/* pointer to next buffer ready to xmit */
-	u_short	txb_len[8];	/* buffered xmit buffer lengths */
+	u_int16_t	txb_len[8];	/* buffered xmit buffer lengths */
 	u_char	tx_page_start;	/* first page of TX buffer area */
 	u_char	rec_page_start;	/* first page of RX ring-buffer */
 	u_char	rec_page_stop;	/* last page of RX ring-buffer */
@@ -147,11 +147,11 @@ struct mbuf *edget __P((struct ed_softc *, int, int));
 static __inline void ed_rint __P((struct ed_softc *));
 static __inline void ed_xmit __P((struct ed_softc *));
 static __inline int ed_ring_copy __P((struct ed_softc *, int, caddr_t,
-					u_short));
+					u_int16_t));
 
-void ed_pio_readmem __P((struct ed_softc *, u_short, caddr_t, u_short));
-void ed_pio_writemem __P((struct ed_softc *, caddr_t, u_short, u_short));
-u_short ed_pio_write_mbufs __P((struct ed_softc *, struct mbuf *, u_short));
+void ed_pio_readmem __P((struct ed_softc *, u_int16_t, caddr_t, u_int16_t));
+void ed_pio_writemem __P((struct ed_softc *, caddr_t, u_int16_t, u_int16_t));
+u_int16_t ed_pio_write_mbufs __P((struct ed_softc *, struct mbuf *, u_int16_t));
 
 #if NED_ISA > 0
 struct cfattach ed_isa_ca = {
@@ -1925,7 +1925,7 @@ ed_xmit(sc)
 	bus_space_handle_t ioh = sc->sc_ioh;
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	int nicbase = sc->nic_base;
-	u_short len;
+	u_int16_t len;
 
 	len = sc->txb_len[sc->txb_next_tx];
 
@@ -2059,7 +2059,7 @@ outloop:
 			break;
 		}
 	} else
-		len = ed_pio_write_mbufs(sc, m0, (long)buffer);
+		len = ed_pio_write_mbufs(sc, m0, (u_int16_t)buffer);
 
 	m_freem(m0);
 	sc->txb_len[sc->txb_new] = max(len, ETHER_MIN_LEN);
@@ -2129,7 +2129,7 @@ loop:
 			ed_shared_readmem(sc, packet_ptr, packet_hdr,
 			    sizeof(packet_hdr));
 		else
-			ed_pio_readmem(sc, (long)packet_ptr, packet_hdr,
+			ed_pio_readmem(sc, (u_int16_t)packet_ptr, packet_hdr,
 			    sizeof(packet_hdr));
 		next_packet = packet_hdr[ED_RING_NEXT_PACKET];
 		len = count = packet_hdr[ED_RING_COUNT] +
@@ -2576,9 +2576,9 @@ edread(sc, buf, len)
 void
 ed_pio_readmem(sc, src, dst, amount)
 	struct ed_softc *sc;
-	u_short src;
+	u_int16_t src;
 	caddr_t dst;
-	u_short amount;
+	u_int16_t amount;
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
@@ -2619,8 +2619,8 @@ void
 ed_pio_writemem(sc, src, dst, len)
 	struct ed_softc *sc;
 	caddr_t src;
-	u_short dst;
-	u_short len;
+	u_int16_t dst;
+	u_int16_t len;
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
@@ -2668,16 +2668,16 @@ ed_pio_writemem(sc, src, dst, len)
  * Write an mbuf chain to the destination NIC memory address using programmed
  * I/O.
  */
-u_short
+u_int16_t
 ed_pio_write_mbufs(sc, m, dst)
 	struct ed_softc *sc;
 	struct mbuf *m;
-	u_short dst;
+	u_int16_t dst;
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	int nicbase = sc->nic_base, asicbase = sc->asic_base;
-	u_short len;
+	u_int16_t len;
 	int maxwait = 100; /* about 120us */
 
 	len = m->m_pkthdr.len;
@@ -2785,9 +2785,9 @@ ed_ring_copy(sc, src, dst, amount)
 	struct ed_softc *sc;
 	int src;
 	caddr_t dst;
-	u_short	amount;
+	u_int16_t amount;
 {
-	u_short	tmp_amount;
+	u_int16_t tmp_amount;
 
 	/* Does copy wrap to lower addr in ring buffer? */
 	if (src + amount > sc->mem_end) {
@@ -2797,7 +2797,7 @@ ed_ring_copy(sc, src, dst, amount)
 		if (sc->mem_shared)
 			ed_shared_readmem(sc, src, dst, tmp_amount);
 		else
-			ed_pio_readmem(sc, (long)src, dst, tmp_amount);
+			ed_pio_readmem(sc, (u_int16_t)src, dst, tmp_amount);
 
 		amount -= tmp_amount;
 		src = sc->mem_ring;
@@ -2807,7 +2807,7 @@ ed_ring_copy(sc, src, dst, amount)
 	if (sc->mem_shared)
 		ed_shared_readmem(sc, src, dst, amount);
 	else
-		ed_pio_readmem(sc, (long)src, dst, amount);
+		ed_pio_readmem(sc, (u_int16_t)src, dst, amount);
 
 	return (src + amount);
 }
