@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc64,v 1.57 2005/03/08 20:00:24 tdeval Exp $
+#	$OpenBSD: files.sparc64,v 1.58 2005/03/09 18:41:48 miod Exp $
 #	$NetBSD: files.sparc64,v 1.50 2001/08/10 20:53:50 eeh Exp $
 
 # maxpartitions must be first item in files.${ARCH}
@@ -183,6 +183,14 @@ file	arch/sparc64/dev/z8530tty.c		zstty needs-flag
 device	zskbd: tty, wskbddev, sunkbd
 attach	zskbd at zs
 file	arch/sparc64/dev/z8530kbd.c		zskbd needs-flag
+
+# Floppy drive
+device	fdc {}
+attach	fdc at sbus with fdc_sbus
+attach	fdc at ebus with fdc_ebus
+device	fd: disk
+attach	fd at fdc
+file	arch/sparc64/dev/fd.c			fdc | fd	needs-flag
 
 file	arch/sparc64/dev/consinit.c
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: auxio.c,v 1.6 2004/10/01 18:18:49 jason Exp $	*/
+/*	$OpenBSD: auxio.c,v 1.7 2005/03/09 18:41:48 miod Exp $	*/
 /*	$NetBSD: auxio.c,v 1.1 2000/04/15 03:08:13 mrg Exp $	*/
 
 /*
@@ -212,4 +212,34 @@ auxio_led_blink(void *vsc, int on)
 		bus_space_write_1(sc->sc_tag, sc->sc_led, 0, led);
 
 	splx(s);
+}
+
+int
+auxio_fd_control(u_int32_t bits)
+{
+	struct auxio_softc *sc;
+	u_int32_t led;
+
+	if (auxio_cd.cd_ndevs == 0) {
+		return ENXIO;
+	}
+
+	/*
+	 * XXX This does not handle > 1 auxio correctly.
+	 * We'll assume the floppy drive is tied to first auxio found.
+	 */
+	sc = (struct auxio_softc *)auxio_cd.cd_devs[0];
+	if (sc->sc_flags & AUXIO_EBUS)
+		led = letoh32(bus_space_read_4(sc->sc_tag, sc->sc_led, 0));
+	else
+		led = bus_space_read_1(sc->sc_tag, sc->sc_led, 0);
+
+	led = (led & ~AUXIO_LED_FLOPPY_MASK) | bits;
+
+	if (sc->sc_flags & AUXIO_EBUS)
+		bus_space_write_4(sc->sc_tag, sc->sc_led, 0, htole32(led));
+	else
+		bus_space_write_1(sc->sc_tag, sc->sc_led, 0, led);
+
+	return 0;
 }

@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.35 2005/01/15 21:25:30 krw Exp $
+dnl	$OpenBSD: install,v 1.36 2005/03/09 18:41:46 miod Exp $
 OpenBSDInstallPrelude
 
 There are several ways to install OpenBSD onto a disk. The easiest way
@@ -111,12 +111,7 @@ OpenBSDInstallPart2
 
 OpenBSDBootMsgs
 
-	While booting, you will probably see several warnings.  You
-	may be warned that the kernel can't figure out what device
-	it booted from.  Do not be alarmed, this is completely normal.
-	This warning occurs because while OpenBSD/MACHINE can boot from
-	the floppy drive, the kernel itself lacks a floppy driver.
-	On some machines, you might also get this kind of warning:
+	While booting, you might get this kind of warning:
 	"No counter-timer -- using %tick at 179MHz as system clock."
 	Unless the frequency displayed does not match your CPU speed,
 	this is nothing to worry about.

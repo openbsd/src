@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.38 2004/05/30 08:11:26 grange Exp $	*/
+/*	$OpenBSD: conf.c,v 1.39 2005/03/09 18:41:49 miod Exp $	*/
 /*	$NetBSD: conf.c,v 1.17 2001/03/26 12:33:26 lukem Exp $ */
 
 /*
@@ -83,11 +83,7 @@
 #include "spif.h"		/* has NSTTY and NSBPP */
 #include "uperf.h"
 
-#ifdef notyet
 #include "fdc.h"		/* has NFDC and NFD; see files.sparc */
-#endif
-#define NFD 0
-#define NFDC 0
 
 #include "wsdisplay.h"
 #include "wskbd.h"

@@ -1,4 +1,4 @@
-/*	$OpenBSD: auxiovar.h,v 1.6 2004/10/01 18:18:49 jason Exp $	*/
+/*	$OpenBSD: auxiovar.h,v 1.7 2005/03/09 18:41:48 miod Exp $	*/
 /*	$NetBSD: auxiovar.h,v 1.4 2000/04/15 03:08:13 mrg Exp $	*/
 
 /*
@@ -53,3 +53,7 @@ struct auxio_softc {
 #define	AUXIO_SBUS		0x4
 	struct blink_led	sc_blink;
 };
+
+#ifndef _LOCORE
+int auxio_fd_control(u_int32_t);
+#endif
