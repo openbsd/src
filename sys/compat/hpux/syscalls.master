@@ -1,4 +1,4 @@
-	$OpenBSD: syscalls.master,v 1.9 2002/10/30 20:10:48 millert Exp $
+	$OpenBSD: syscalls.master,v 1.10 2004/06/30 20:40:05 mickey Exp $
 ;	$NetBSD: syscalls.master,v 1.13 1997/03/16 03:48:04 thorpej Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
@@ -274,15 +274,15 @@
 172	UNIMPL		unsp_open
 173	UNIMPL
 174	STD		{ int hpux_sys_getcontext(char *buf, int len); }
-175	UNIMPL
-176	UNIMPL
-177	UNIMPL
+175	UNIMPL		setcontext
+176	UNIMPL		bigio
+177	UNIMPL		pipenode
 178	UNIMPL		lsync
-179	UNIMPL
+179	UNIMPL		getmachineid
 180	UNIMPL		mysite
 181	UNIMPL		sitels
-182	UNIMPL
-183	UNIMPL
+182	UNIMPL		swapclients
+183	UNIMPL		rmtprocess
 184	UNIMPL		dskless_stats
 185	UNIMPL
 186	UNIMPL		setacl
@@ -326,7 +326,7 @@
 221	UNIMPL
 222	UNIMPL
 223	UNIMPL
-224	UNIMPL
+224	UNIMPL		set_no_trunc
 225	NOARGS		{ int sys_pathconf(char *path, int name); }
 226	NOARGS		{ int sys_fpathconf(int fd, int name); }
 227	UNIMPL
@@ -359,15 +359,15 @@
 248	UNIMPL
 249	UNIMPL
 250	UNIMPL
-251	UNIMPL
-252	UNIMPL
-253	UNIMPL
-254	UNIMPL
-255	UNIMPL
-256	UNIMPL
-257	UNIMPL
-258	UNIMPL
-259	UNIMPL
+251	UNIMPL		ulconnect
+252	UNIMPL		ulcontrol
+253	UNIMPL		ulcreate
+254	UNIMPL		uldest
+255	UNIMPL		ulrecv
+256	UNIMPL		ulrecvcn
+257	UNIMPL		ulsend
+258	UNIMPL		ulshutdown
+259	UNIMPL		swapfs
 260	UNIMPL
 261	UNIMPL
 262	UNIMPL
@@ -375,14 +375,15 @@
 264	UNIMPL
 265	UNIMPL
 266	UNIMPL
-267	UNIMPL
+267	UNIMPL		tsync
 268	NOARGS		{ int compat_43_sys_getdtablesize(void); }
-269	UNIMPL
-270	UNIMPL
-271	UNIMPL
+269	NOARGS		{ int sys_poll(struct pollfd *fds, u_int nfds, \
+			    int timeout); }
+270	UNIMPL		getmsg
+271	UNIMPL		putmsg
 272	NOARGS		{ int sys_fchdir(int fd); }
-273	UNIMPL
-274	UNIMPL
+273	UNIMPL		getmount_cnt
+274	UNIMPL		getmount_entry
 275	NOARGS		{ int compat_43_sys_accept(int s, caddr_t name, \
 			    int *anamelen); }
 276	NOARGS		{ int sys_bind(int s, caddr_t name, int namelen); }
@@ -419,20 +420,20 @@
 295	UNIMPL
 296	UNIMPL
 297	UNIMPL
-298	UNIMPL
-299	UNIMPL
-300	UNIMPL
-301	UNIMPL
-302	UNIMPL
-303	UNIMPL
-304	UNIMPL
-305	UNIMPL
-306	UNIMPL
-307	UNIMPL
-308	UNIMPL
-309	UNIMPL
-310	UNIMPL
-311	UNIMPL
+298	UNIMPL		ipccreate
+299	UNIMPL		ipcname
+300	UNIMPL		ipcnamerase
+301	UNIMPL		ipclookup
+302	UNIMPL		ipcselect
+303	UNIMPL		ipcconnect
+304	UNIMPL		ipcrecvcn
+305	UNIMPL		ipcsend
+306	UNIMPL		ipcrecv
+307	UNIMPL		ipcgetnodename
+308	UNIMPL		ipcsetnodename
+309	UNIMPL		ipcontrol
+310	UNIMPL		ipcshutdown
+311	UNIMPL		ipcdest
 #ifdef SYSVSEM
 312	NOARGS		{ int sys___semctl(int semid, int semnum, int cmd, \
 			    union semun *arg); } nsemctl
@@ -451,3 +452,13 @@
 #else
 314	UNIMPL		shmctl
 #endif
+315	UNIMPL		mpctl
+316	UNIMPL		exportfs
+317	UNIMPL		getpmsg
+318	UNIMPL		putpmsg
+319	UNIMPL		strioctl
+320	UNIMPL		msync
+321	UNIMPL		msleep
+322	UNIMPL		mwakeup
+323	UNIMPL		msem_init
+324	UNIMPL		msem_remove
