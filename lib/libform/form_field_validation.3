@@ -1,4 +1,4 @@
-.\" $OpenBSD: form_field_validation.3,v 1.6 1998/07/24 02:37:12 millert Exp $
+.\" $OpenBSD: form_field_validation.3,v 1.7 1999/01/22 03:30:53 millert Exp $
 .\"
 .\"***************************************************************************
 .\" Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -31,7 +31,7 @@
 .'" $From: form_field_validation.3x,v 1.10 1998/03/11 21:12:53 juergen Exp $
 .TH form_field_validation 3 ""
 .SH NAME
-\fBform_field_validation\fR - data type validation for fields 
+\fBform_field_validation\fR - data type validation for fields
 .SH SYNOPSIS
 \fB#include <form.h>\fR
 .br
@@ -63,7 +63,7 @@ on the stack.
 .TP 5
 TYPE_INTEGER
 Integer data, parsable to an integer by \fBatoi(3)\fR.  Requires a third
-\fBint\fR argument controlling the precision, a fourth \fBlong\fR argument 
+\fBint\fR argument controlling the precision, a fourth \fBlong\fR argument
 constraining minimum value, and a fifth \fBlong\fR constraining maximum value.
 If the maximum value is less or equal the minimum value, the range is simply
 ignored. On return the field buffer is formatted according to the \fBprintf\fR
@@ -73,7 +73,7 @@ For details of the precision handling see \fBprintf's\fR man-page.
 TYPE_NUMERIC
 Numeric data (may have a decimal-point part). Requires a third
 \fBint\fR argument controlling the precision, a fourth \fBdouble\fR
-argument constraining minimum value, and a fifth \fBdouble\fR constraining 
+argument constraining minimum value, and a fifth \fBdouble\fR constraining
 maximum value. If your system supports locale's, the decimal point character
 to be used must be the one specified by your locale.
 If the maximum value is less or equal the minimum value, the range is simply

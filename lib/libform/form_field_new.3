@@ -1,5 +1,5 @@
 '\" t
-.\" $OpenBSD: form_field_new.3,v 1.7 1998/09/17 04:14:35 millert Exp $
+.\" $OpenBSD: form_field_new.3,v 1.8 1999/01/22 03:30:53 millert Exp $
 .\"
 .\"***************************************************************************
 .\" Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -29,15 +29,15 @@
 .\" authorization.                                                           *
 .\"***************************************************************************
 .\"
-.'" $From: form_field_new.3x,v 1.8 1998/08/27 21:21:04 Rick.Ohnemus Exp $
+.'" $From: form_field_new.3x,v 1.9 1998/11/29 01:06:44 Rick.Ohnemus Exp $
 .TH form_field_new 3 ""
 .SH NAME
 \fBform_field_new\fR - create and destroy form fields
 .SH SYNOPSIS
 \fB#include <form.h>\fR
 .br
-FIELD *new_field(int height, int width, 
-                 int toprow, int leftcol, 
+FIELD *new_field(int height, int width,
+                 int toprow, int leftcol,
                  int offscreen, int nbuffers);
 .br
 FIELD *dup_field(FIELD *field, int toprow, int leftcol);
