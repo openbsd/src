@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.22 2000/10/31 02:30:57 hugh Exp $ */
+/*	$OpenBSD: conf.c,v 1.23 2001/02/24 10:31:58 hugh Exp $ */
 /*	$NetBSD: conf.c,v 1.44 1999/10/27 16:38:54 ragge Exp $	*/
 
 /*-
@@ -221,7 +221,8 @@ cons_decl(smg);
 #include "smg.h"
 
 struct	consdev constab[]={
-#if VAX8600 || VAX8200 || VAX780 || VAX750 || VAX650 || VAX630 || VAX670
+#if VAX8600 || VAX8200 || VAX780 || VAX750 || VAX650 || VAX630 || VAX660 || \
+    VAX670 || VAX680
 #define NGEN	1
 	cons_init(gen), /* Generic console type; mtpr/mfpr */
 #else

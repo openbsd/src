@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.c,v 1.12 2001/01/30 17:10:05 hugh Exp $	*/
+/*	$OpenBSD: locore.c,v 1.13 2001/02/24 10:31:58 hugh Exp $	*/
 /*	$NetBSD: locore.c,v 1.43 2000/03/26 11:39:45 ragge Exp $	*/
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
@@ -75,6 +75,7 @@ extern struct cpu_dep ka630_calls;
 extern struct cpu_dep ka650_calls;
 extern struct cpu_dep ka660_calls;
 extern struct cpu_dep ka670_calls;
+extern struct cpu_dep ka680_calls;
 
 /*
  * Start is called from boot; the first routine that is called
@@ -221,6 +222,19 @@ start()
 	case VAX_BTYP_670:
 		dep_call = &ka670_calls;
 		strcpy(cpu_model,"VAX 4000/300");
+		break;
+#endif
+#if VAX680
+	case VAX_BTYP_680:
+		dep_call = &ka680_calls;
+		switch((vax_siedata & 0xff00) >> 8) {
+		case VAX_STYP_675:
+			strcpy(cpu_model,"VAX 4000/400"); break;
+		case VAX_STYP_680:
+			strcpy(cpu_model,"VAX 4000/500"); break;
+		default:
+			strcpy(cpu_model,"VAX - Unknown Omega Class");
+		}
 		break;
 #endif
 #if VAX8200

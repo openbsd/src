@@ -1,4 +1,4 @@
-#	$OpenBSD: files.vax,v 1.19 2001/02/11 06:34:36 hugh Exp $
+#	$OpenBSD: files.vax,v 1.20 2001/02/24 10:31:59 hugh Exp $
 #       $NetBSD: files.vax,v 1.60 1999/08/27 20:04:32 ragge Exp $
 #
 # new style config file for vax architecture
@@ -295,11 +295,11 @@ file	arch/vax/uba/dh.c		dh needs-flag
 # These are general files needed for compilation.
 file	dev/cons.c
 file	dev/cninit.c
-file	dev/clock_subr.c	vax8200|vax410|vax43|vax630|vax670|vax46|vax48|vax49|vax53
+file	dev/clock_subr.c	vax8200|vax410|vax43|vax630|vax660|vax670|vax680|vax46|vax48|vax49|vax53
 file	arch/vax/vax/locore.c
 file	arch/vax/vax/mem.c
 file	arch/vax/vax/clock.c
-file	arch/vax/vax/gencons.c	vax8600|vax8200|vax780|vax750|vax630|vax650|vax670
+file	arch/vax/vax/gencons.c	vax8600|vax8200|vax780|vax750|vax630|vax650|vax660|vax670|vax680
 file	arch/vax/vax/pmap.c
 file	arch/vax/vax/machdep.c
 file	arch/vax/vax/ka820.c		vax8200
@@ -314,7 +314,9 @@ file	arch/vax/vax/ka53.c		vax53
 file	arch/vax/vax/emulate.s		insn_emulate
 file	arch/vax/vax/unimpl_emul.s	insn_emulate
 file	arch/vax/vax/ka650.c		vax650
+file	arch/vax/vax/ka660.c		vax660
 file	arch/vax/vax/ka670.c		vax670
+file	arch/vax/vax/ka680.c		vax680
 file	arch/vax/vax/scb.c
 file	arch/vax/vax/conf.c
 file	arch/vax/vax/urem.s
