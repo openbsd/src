@@ -17,7 +17,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $Id: systems.h,v 1.1 1998/08/31 00:22:29 brian Exp $
+ * $Id: systems.h,v 1.2 1998/10/31 17:38:51 brian Exp $
  *
  */
 
@@ -28,7 +28,7 @@ struct cmdargs;
 
 extern int system_Select(struct bundle *bundle, const char *, const char *,
                         struct prompt *, struct datalink *);
-extern int system_IsValid(const char *, struct prompt *, int);
+extern const char *system_IsValid(const char *, struct prompt *, int);
 extern FILE *OpenSecret(const char *);
 extern void CloseSecret(FILE *);
 extern int AllowUsers(struct cmdargs const *);
