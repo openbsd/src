@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.94 2004/11/26 18:02:22 markus Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.95 2004/11/29 21:42:20 hshoexer Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -126,7 +126,8 @@ extern struct pool ipsec_policy_pool;
  * chain.
  */
 int
-pfdatatopacket(void *data, int len, struct mbuf **packet) {
+pfdatatopacket(void *data, int len, struct mbuf **packet)
+{
 	if (!(*packet = m_devget(data, len, 0, NULL, NULL)))
 		return (ENOMEM);
 	return (0);
@@ -136,7 +137,8 @@ pfdatatopacket(void *data, int len, struct mbuf **packet) {
  * Create a new PF_KEYv2 socket.
  */
 int
-pfkeyv2_create(struct socket *socket) {
+pfkeyv2_create(struct socket *socket)
+{
 	struct pfkeyv2_socket *pfkeyv2_socket;
 
 	if (!(pfkeyv2_socket = malloc(sizeof(struct pfkeyv2_socket),
@@ -1788,8 +1790,7 @@ splxret:
  */
 int
 pfkeyv2_acquire(struct ipsec_policy *ipo, union sockaddr_union *gw,
-		union sockaddr_union *laddr, u_int32_t *seq,
-		struct sockaddr_encap *ddst)
+    union sockaddr_union *laddr, u_int32_t *seq, struct sockaddr_encap *ddst)
 {
 	void *p, *headers[SADB_EXT_MAX + 1], *buffer = NULL;
 	struct sadb_ident *srcid, *dstid;
