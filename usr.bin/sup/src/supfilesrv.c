@@ -1,4 +1,4 @@
-/*	$OpenBSD: supfilesrv.c,v 1.22 2001/05/04 22:16:17 millert Exp $	*/
+/*	$OpenBSD: supfilesrv.c,v 1.23 2001/05/07 02:08:02 millert Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -1907,10 +1907,10 @@ va_dcl
 }
 
 char *
-fmttime (time)
+fmttime(time)
 	time_t time;
 {
-	static char buf[STRINGLENGTH];
+	static char buf[16];
 	char *p;
 
 	/*
@@ -1918,7 +1918,7 @@ fmttime (time)
 	 * E.g.: "Thu Nov 24 18:22:48 1986\n" -> "Nov 24 18:22:48"
 	 */
 	p = ctime(&time) + 4;
-	(void) strlcpy(buf, p, strlen(p) - 5);
+	(void) strlcpy(buf, p, sizeof(buf));
 	return (buf);
 }
 

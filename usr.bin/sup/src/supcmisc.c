@@ -1,4 +1,4 @@
-/*	$OpenBSD: supcmisc.c,v 1.10 2001/05/05 15:56:04 millert Exp $	*/
+/*	$OpenBSD: supcmisc.c,v 1.11 2001/05/07 02:08:02 millert Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -353,10 +353,11 @@ lockout(on)		/* lock out interrupts */
 	}
 }
 
-char *fmttime(time)
+char *
+fmttime(time)
 	time_t time;
 {
-	static char buf[STRINGLENGTH];
+	static char buf[16];
 	char *p;
 
 	/*
@@ -364,6 +365,6 @@ char *fmttime(time)
 	 * E.g.: "Thu Nov 24 18:22:48 1986\n" -> "Nov 24 18:22:48"
 	 */
 	p = ctime(&time) + 4;
-	(void) strlcpy(buf, p, strlen(p) - 5);
+	(void) strlcpy(buf, p, sizeof(buf));
 	return (buf);
 }
