@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.9 2003/01/30 09:47:16 henning Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.10 2003/02/11 01:41:10 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002 Theo de Raadt.  All rights reserved.
@@ -439,9 +439,9 @@ main(int argc, char *argv[])
 				err(1, "calloc");
 			omax = max;
 		} else {
-			memset(fdsr, howmany(max+1, NFDBITS),
+			memset(fdsr, 0, howmany(max+1, NFDBITS) *
 			    sizeof(fd_mask));
-			memset(fdsw, howmany(max+1, NFDBITS),
+			memset(fdsw, 0, howmany(max+1, NFDBITS) *
 			    sizeof(fd_mask));
 		}
 
