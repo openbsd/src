@@ -1,4 +1,4 @@
-.\"	$OpenBSD: installboot.8,v 1.10 1997/09/30 22:23:57 deraadt Exp $
+.\"	$OpenBSD: installboot.8,v 1.11 1997/10/07 05:01:57 deraadt Exp $
 .\"
 .\" Copyright (c) 1997 Michael Shalayeff
 .\" All rights reserved.
@@ -127,7 +127,14 @@ The typical use is
 .Pp
 And if the information supplied looks right, run the above without the
 .Fl n
-flag.
+flag.  If you are upgrading an old system, you may need to preface
+the above steps with some more steps... and do the following:
+.Pp
+.Dl boot the floppy.fs filesystem floppy
+.Dl # fsck /dev/rsd0a
+.Dl # mount /dev/sd0a /mnt
+.Dl # cp /usr/mdec/boot /mnt/boot
+.Dl # /usr/mdec/installboot -v /mnt/boot /usr/mdec/biosboot sd0
 .Pp
 If you are replacing much older versions of the bootblocks on your
 drive, you will need to use the
