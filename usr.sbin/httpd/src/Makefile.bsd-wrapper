@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.9 1998/11/06 20:42:05 millert Exp $	
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.10 1998/11/07 21:33:20 millert Exp $	
 .include <bsd.own.mk>
 PROG=httpd
 BINDIR=/usr/sbin
@@ -19,6 +19,13 @@ config:	.FORCE
 	sh ${.CURDIR}/Configure -file ${.OBJDIR}/Configuration -make ${.CURDIR}/Makefile.tmpl
 
 Makefile: helpers/GuessOS
+	# This is a nasty hack
+	@for f in CutRule GuessOS MakeEtags PrintPath TestCompile buildinfo.sh \
+	    checkheader.sh findcpp.sh fmn.sh fp2rp install.sh mfhead mkdir.sh \
+	    mkshadow.sh ppl.sh slo.sh; do \
+		test -x ${.CURDIR}/helpers/$$f || \
+		    chmod +x ${.CURDIR}/helpers/$$f ; \
+	done
 	PATH="/bin:/usr/bin:/sbin:/usr/sbin" \
 	sh ${.CURDIR}/Configure -file ${.OBJDIR}/Configuration -make ${.CURDIR}/Makefile.tmpl
 
