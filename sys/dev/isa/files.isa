@@ -1,4 +1,4 @@
-#	$OpenBSD: files.isa,v 1.82 2002/11/30 15:44:38 mickey Exp $
+#	$OpenBSD: files.isa,v 1.83 2003/04/25 21:24:15 grange Exp $
 #	$NetBSD: files.isa,v 1.21 1996/05/16 03:45:55 mycroft Exp $
 #
 # Config file and device description for machine-independent ISA code.
@@ -383,6 +383,10 @@ file	dev/isa/midi_pcppi.c    midi_pcppi
 # 8255A-based PC parallel ports
 attach	lpt at isa with lpt_isa
 file	dev/isa/lpt_isa.c		lpt_isa needs-flag
+
+# National Semiconductor LM7[89] and compatible hardware monitors
+attach	lm at isa with lm_isa
+file	dev/isa/lm_isa.c		lm_isa
 
 #
 # PCMCIA PCIC (i82365SL and compatibles):
