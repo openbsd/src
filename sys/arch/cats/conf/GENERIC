@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.14 2004/10/05 02:01:17 jsg Exp $
+#	$OpenBSD: GENERIC,v 1.15 2004/11/12 18:07:42 deraadt Exp $
 #
 # GENERIC machine description file
 #
@@ -200,6 +200,7 @@ ukbd*	at uhidev?		# USB keyboard
 wskbd*	at ukbd? mux 1
 uhid*	at uhidev?		# USB generic HID support
 aue*	at uhub?		# ADMtek AN986 Pegasus Ethernet
+#atu*	at uhub?		# Atmel AT76c50x based 802.11b
 axe*	at uhub?		# ASIX Electronics AX88172 USB Ethernet
 cue*	at uhub?		# CATC USB-EL1201A based Ethernet
 cdce*	at uhub?		# CDC Ethernet

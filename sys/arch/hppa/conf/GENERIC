@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.62 2004/10/29 20:33:41 mickey Exp $
+#	$OpenBSD: GENERIC,v 1.63 2004/11/12 18:07:42 deraadt Exp $
 
 # Machine architecture; required by config(8)
 machine		hppa
@@ -111,6 +111,7 @@ pcmcia*		at cardslot?
 #wskbd*	at ukbd? mux 1
 #uhid*	at uhidev?		# USB generic HID support
 #aue*	at uhub?		# ADMtek AN986 Pegasus Ethernet
+#atu*	at uhub?		# Atmel AT76c50x based 802.11b
 #axe*	at uhub?		# ASIX Electronics AX88172 USB Ethernet
 #cue*	at uhub?		# CATC USB-EL1201A based Ethernet
 #kue*	at uhub?		# Kawasaki KL5KUSB101B based Ethernet
