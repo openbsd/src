@@ -1,4 +1,4 @@
-/*	$OpenBSD: tftp.c,v 1.14 2003/06/25 15:45:10 deraadt Exp $	*/
+/*	$OpenBSD: tftp.c,v 1.15 2003/09/24 20:21:40 deraadt Exp $	*/
 /*	$NetBSD: tftp.c,v 1.5 1995/04/29 05:55:25 cgd Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)tftp.c	8.1 (Berkeley) 6/6/93";
 #endif
-static const char rcsid[] = "$OpenBSD: tftp.c,v 1.14 2003/06/25 15:45:10 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: tftp.c,v 1.15 2003/09/24 20:21:40 deraadt Exp $";
 #endif /* not lint */
 
 /* Many bug fixes are from Jim Guyton <guyton@rand-unix> */
@@ -151,7 +151,7 @@ send_data:
 			ap->th_block = ntohs(ap->th_block);
 			if (ap->th_opcode == ERROR) {
 				printf("Error code %d: %s\n", ap->th_code,
-					ap->th_msg);
+				    ap->th_msg);
 				goto abort;
 			}
 			if (ap->th_opcode == ACK) {
@@ -164,13 +164,10 @@ send_data:
 				 * both sides.
 				 */
 				j = synchnet(f);
-				if (j && trace) {
-					printf("discarded %d packets\n",
-							j);
-				}
-				if (ap->th_block == (block-1)) {
+				if (j && trace)
+					printf("discarded %d packets\n", j);
+				if (ap->th_block == (block-1))
 					goto send_data;
-				}
 			}
 		}
 		if (block > 0)
@@ -250,7 +247,7 @@ send_ack:
 			dp->th_block = ntohs(dp->th_block);
 			if (dp->th_opcode == ERROR) {
 				printf("Error code %d: %s\n", dp->th_code,
-					dp->th_msg);
+				    dp->th_msg);
 				goto abort;
 			}
 			if (dp->th_opcode == DATA) {
@@ -263,12 +260,10 @@ send_ack:
 				 * both sides.
 				 */
 				j = synchnet(f);
-				if (j && trace) {
+				if (j && trace)
 					printf("discarded %d packets\n", j);
-				}
-				if (dp->th_block == (block-1)) {
+				if (dp->th_block == (block-1))
 					goto send_ack;	/* resend ack */
-				}
 			}
 		}
 	/*	size = write(fd, dp->th_data, n - 4); */
@@ -413,7 +408,8 @@ static void
 printstats(const char *direction, unsigned long amount)
 {
 	double delta;
-			/* compute delta in 1/10's second units */
+
+	/* compute delta in 1/10's second units */
 	delta = ((tstop.tv_sec*10.)+(tstop.tv_usec/100000)) -
 		((tstart.tv_sec*10.)+(tstart.tv_usec/100000));
 	delta = delta/10.;      /* back to seconds */

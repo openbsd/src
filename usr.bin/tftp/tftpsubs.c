@@ -1,4 +1,4 @@
-/*	$OpenBSD: tftpsubs.c,v 1.8 2003/06/26 07:59:49 deraadt Exp $	*/
+/*	$OpenBSD: tftpsubs.c,v 1.9 2003/09/24 20:21:40 deraadt Exp $	*/
 /*	$NetBSD: tftpsubs.c,v 1.3 1994/12/08 09:51:31 jtc Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)tftpsubs.c	8.1 (Berkeley) 6/6/93";
 #endif
-static const char rcsid[] = "$OpenBSD: tftpsubs.c,v 1.8 2003/06/26 07:59:49 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: tftpsubs.c,v 1.9 2003/09/24 20:21:40 deraadt Exp $";
 #endif /* not lint */
 
 /* Simple minded read-ahead/write-behind subroutines for tftp user and
@@ -156,10 +156,10 @@ read_ahead(FILE *file, int convert)
 		if (newline) {
 			if (prevchar == '\n')
 				c = '\n';       /* lf to cr,lf */
-			else    c = '\0';       /* cr to cr,nul */
+			else
+				c = '\0';       /* cr to cr,nul */
 			newline = 0;
-		}
-		else {
+		} else {
 			c = getc(file);
 			if (c == EOF) break;
 			if (c == '\n' || c == '\r') {
@@ -194,7 +194,7 @@ writeit(FILE *file, struct tftphdr **dpp, int ct, int convert)
  * CR,NUL -> CR  and CR,LF => LF.
  * Note spec is undefined if we get CR as last byte of file or a
  * CR followed by anything else.  In this case we leave it alone.
- */
+n */
 int
 write_behind(FILE *file, int convert)
 {
@@ -224,18 +224,17 @@ write_behind(FILE *file, int convert)
 	p = buf;
 	ct = count;
 	while (ct--) {                  /* loop over the buffer */
-	    c = *p++;                   /* pick up a character */
-	    if (prevchar == '\r') {     /* if prev char was cr */
-		if (c == '\n')          /* if have cr,lf then just */
-		   fseek(file, -1, 1);  /* smash lf on top of the cr */
-		else
-		   if (c == '\0')       /* if have cr,nul then */
-			goto skipit;    /* just skip over the putc */
-		/* else just fall through and allow it */
-	    }
-	    putc(c, file);
+		c = *p++;                   /* pick up a character */
+		if (prevchar == '\r') {     /* if prev char was cr */
+			if (c == '\n')          /* if have cr,lf then just */
+				fseek(file, -1, 1);  /* smash lf on top of the cr */
+			else if (c == '\0')       /* if have cr,nul then */
+				goto skipit;    /* just skip over the putc */
+			/* else just fall through and allow it */
+		}
+		putc(c, file);
 skipit:
-	    prevchar = c;
+		prevchar = c;
 	}
 	return count;
 }
@@ -266,7 +265,7 @@ synchnet(int f)
 			j++;
 			fromlen = sizeof from;
 			(void) recvfrom(f, rbuf, sizeof (rbuf), 0,
-				(struct sockaddr *)&from, &fromlen);
+			    (struct sockaddr *)&from, &fromlen);
 		} else {
 			return(j);
 		}

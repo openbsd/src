@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.17 2003/09/24 20:19:48 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.18 2003/09/24 20:21:40 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.6 1995/05/21 16:54:10 mycroft Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #endif
-static const char rcsid[] = "$OpenBSD: main.c,v 1.17 2003/09/24 20:19:48 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: main.c,v 1.18 2003/09/24 20:21:40 deraadt Exp $";
 #endif /* not lint */
 
 /* Many bug fixes are from Jim Guyton <guyton@rand-unix> */
@@ -356,13 +356,14 @@ put(int argc, char *argv[])
 		}
 		if (verbose)
 			printf("putting %s to %s:%s [%s]\n",
-				cp, hostname, targ, mode);
+			    cp, hostname, targ, mode);
 		peeraddr.sin_port = port;
 		sendfile(fd, targ, mode);
 		return;
 	}
-				/* this assumes the target is a directory */
-				/* on a remote unix system.  hmmmm.  */
+
+	/* this assumes the target is a directory */
+	/* on a remote unix system.  hmmmm.  */
 	for (n = 1; n < argc - 1; n++) {
 		if (asprintf(&cp, "%s/%s", targ, tail(argv[n])) == -1)
 			err(1, "asprintf");
@@ -373,7 +374,7 @@ put(int argc, char *argv[])
 		}
 		if (verbose)
 			printf("putting %s to %s:%s [%s]\n",
-				argv[n], hostname, cp, mode);
+			    argv[n], hostname, cp, mode);
 		peeraddr.sin_port = port;
 		sendfile(fd, cp, mode);
 		free(cp);
@@ -446,7 +447,7 @@ get(int argc, char *argv[])
 			}
 			if (verbose)
 				printf("getting from %s:%s to %s [%s]\n",
-					hostname, src, cp, mode);
+				    hostname, src, cp, mode);
 			peeraddr.sin_port = port;
 			recvfile(fd, src, mode);
 			break;
@@ -459,7 +460,7 @@ get(int argc, char *argv[])
 		}
 		if (verbose)
 			printf("getting from %s:%s to %s [%s]\n",
-				hostname, src, cp, mode);
+			    hostname, src, cp, mode);
 		peeraddr.sin_port = port;
 		recvfile(fd, src, mode);
 	}
