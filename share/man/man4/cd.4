@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cd.4,v 1.5 1999/07/09 13:35:48 aaron Exp $
+.\"	$OpenBSD: cd.4,v 1.6 1999/09/24 19:47:59 deraadt Exp $
 .\"	$NetBSD: cd.4,v 1.3 1996/10/20 23:15:21 explorer Exp $
 .\"
 .\" Copyright (c) 1996
@@ -169,8 +169,7 @@ the information printed at boot.  This structure is defined in
 Start audio playback given a track address and length.  The structure
 is defined as follows:
 .Bd -literal -offset indent
-struct ioc_play_track
-{
+struct ioc_play_track {
 	u_char	start_track;
 	u_char	start_index;
 	u_char	end_track;
@@ -183,8 +182,7 @@ struct ioc_play_track
 Start audio playback given a block address and length.  The structure
 is defined as follows:
 .Bd -literal -offset indent
-struct ioc_play_blocks
-{
+struct ioc_play_blocks {
 	int	blk;
 	int	len;
 };
@@ -195,8 +193,7 @@ struct ioc_play_blocks
 Start audio playback given a `minutes-seconds-frames' address and
 length.  The structure is defined as follows:
 .Bd -literal -offset indent
-struct ioc_play_msf
-{
+struct ioc_play_msf {
 	u_char	start_m;
 	u_char	start_s;
 	u_char	start_f;
@@ -273,8 +270,7 @@ struct ioc_patch {
 Get (set) information about the volume settings of the output channels.  The
 argument structure is as follows:
 .Bd -literal -offset indent
-struct	ioc_vol
-{
+struct	ioc_vol {
 	u_char	vol[4];
 	/* one for each channel */
 };
@@ -334,8 +330,7 @@ Eject the
 .\"playback.  Drives with less than 16 bits of resolution will silently
 .\"ignore less-significant bits.  The structure is defined thusly:
 .\".Bd -literal -offset indent
-.\"struct	ioc_pitch
-.\"{
+.\"struct	ioc_pitch {
 .\"	short	speed;
 .\"};
 .\".Ed
