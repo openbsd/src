@@ -125,7 +125,7 @@ FSUB fsub[] = {
 	ustar_rd, tar_endrd, ustar_stwr, ustar_wr, tar_endwr, tar_trail,
 	rd_wrfile, wr_rdfile, bad_opt},
 };
-#define F_TAR	4	/* format when called as tar */
+#define F_TAR	5	/* format when called as tar */
 #define DEFLT	5	/* default write format from list above */
 
 /*
