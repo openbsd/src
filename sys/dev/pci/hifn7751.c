@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751.c,v 1.133 2002/11/19 18:40:17 jason Exp $	*/
+/*	$OpenBSD: hifn7751.c,v 1.134 2002/11/21 19:34:25 jason Exp $	*/
 
 /*
  * Invertex AEON / Hifn 7751 driver
@@ -150,6 +150,7 @@ hifn_attach(parent, self, aux)
 	u_int16_t ena;
 	int rseg;
 	caddr_t kva;
+	int algs[CRYPTO_ALGORITHM_MAX + 1];
 
 	sc->sc_pci_pc = pa->pa_pc;
 	sc->sc_pci_tag = pa->pa_tag;
@@ -290,25 +291,23 @@ hifn_attach(parent, self, aux)
 	    READ_REG_0(sc, HIFN_0_PUCNFG) | HIFN_PUCNFG_CHIPID);
 	ena = READ_REG_0(sc, HIFN_0_PUSTAT) & HIFN_PUSTAT_CHIPENA;
 
+	bzero(algs, sizeof(algs));
+
 	switch (ena) {
 	case HIFN_PUSTAT_ENA_2:
-		crypto_register(sc->sc_cid, CRYPTO_3DES_CBC, 0, 0,
-		    hifn_newsession, hifn_freesession, hifn_process);
-		crypto_register(sc->sc_cid, CRYPTO_ARC4, 0, 0,
-		    hifn_newsession, hifn_freesession, hifn_process);
+		algs[CRYPTO_3DES_CBC] = CRYPTO_ALG_FLAG_SUPPORTED;
+		algs[CRYPTO_ARC4] = CRYPTO_ALG_FLAG_SUPPORTED;
 		/*FALLTHROUGH*/
 	case HIFN_PUSTAT_ENA_1:
-		crypto_register(sc->sc_cid, CRYPTO_MD5, 0, 0,
-		    hifn_newsession, hifn_freesession, hifn_process);
-		crypto_register(sc->sc_cid, CRYPTO_SHA1, 0, 0,
-		    hifn_newsession, hifn_freesession, hifn_process);
-		crypto_register(sc->sc_cid, CRYPTO_MD5_HMAC, 0, 0,
-		    hifn_newsession, hifn_freesession, hifn_process);
-		crypto_register(sc->sc_cid, CRYPTO_SHA1_HMAC, 0, 0,
-		    hifn_newsession, hifn_freesession, hifn_process);
-		crypto_register(sc->sc_cid, CRYPTO_DES_CBC, 0, 0,
-		    hifn_newsession, hifn_freesession, hifn_process);
+		algs[CRYPTO_MD5] = CRYPTO_ALG_FLAG_SUPPORTED;
+		algs[CRYPTO_SHA1] = CRYPTO_ALG_FLAG_SUPPORTED;
+		algs[CRYPTO_MD5_HMAC] = CRYPTO_ALG_FLAG_SUPPORTED;
+		algs[CRYPTO_SHA1_HMAC] = CRYPTO_ALG_FLAG_SUPPORTED;
+		algs[CRYPTO_DES_CBC] = CRYPTO_ALG_FLAG_SUPPORTED;
 	}
+
+	crypto_register(sc->sc_cid, algs, hifn_newsession,
+	    hifn_freesession, hifn_process);
 
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap, 0,
 	    sc->sc_dmamap->dm_mapsize,

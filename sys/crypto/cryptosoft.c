@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptosoft.c,v 1.36 2002/11/12 18:23:13 jason Exp $	*/
+/*	$OpenBSD: cryptosoft.c,v 1.37 2002/11/21 19:34:25 jason Exp $	*/
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -920,40 +920,34 @@ done:
 void
 swcr_init(void)
 {
-	swcr_id = crypto_get_driverid(CRYPTOCAP_F_SOFTWARE);
+	int algs[CRYPTO_ALGORITHM_MAX + 1];
+	int flags = CRYPTOCAP_F_SOFTWARE | CRYPTOCAP_F_ENCRYPT_MAC |
+	    CRYPTOCAP_F_MAC_ENCRYPT;
+
+	swcr_id = crypto_get_driverid(flags);
 	if (swcr_id < 0) {
 		/* This should never happen */
 		panic("Software crypto device cannot initialize!");
 	}
 
-	crypto_register(swcr_id, CRYPTO_DES_CBC, 0, 0, swcr_newsession,
+	bzero(algs, sizeof(algs));
+
+	algs[CRYPTO_DES_CBC] = CRYPTO_ALG_FLAG_SUPPORTED;
+	algs[CRYPTO_3DES_CBC] = CRYPTO_ALG_FLAG_SUPPORTED;
+	algs[CRYPTO_BLF_CBC] = CRYPTO_ALG_FLAG_SUPPORTED;
+	algs[CRYPTO_CAST_CBC] = CRYPTO_ALG_FLAG_SUPPORTED;
+	algs[CRYPTO_SKIPJACK_CBC] = CRYPTO_ALG_FLAG_SUPPORTED;
+	algs[CRYPTO_MD5_HMAC] = CRYPTO_ALG_FLAG_SUPPORTED;
+	algs[CRYPTO_SHA1_HMAC] = CRYPTO_ALG_FLAG_SUPPORTED;
+	algs[CRYPTO_RIPEMD160_HMAC] = CRYPTO_ALG_FLAG_SUPPORTED;
+	algs[CRYPTO_MD5_KPDK] = CRYPTO_ALG_FLAG_SUPPORTED;
+	algs[CRYPTO_SHA1_KPDK] = CRYPTO_ALG_FLAG_SUPPORTED;
+	algs[CRYPTO_MD5] = CRYPTO_ALG_FLAG_SUPPORTED;
+	algs[CRYPTO_SHA1] = CRYPTO_ALG_FLAG_SUPPORTED;
+	algs[CRYPTO_RIJNDAEL128_CBC] = CRYPTO_ALG_FLAG_SUPPORTED;
+	algs[CRYPTO_DEFLATE_COMP] = CRYPTO_ALG_FLAG_SUPPORTED;
+	algs[CRYPTO_NULL] = CRYPTO_ALG_FLAG_SUPPORTED;
+
+	crypto_register(swcr_id, algs, swcr_newsession,
 	    swcr_freesession, swcr_process);
-	crypto_register(swcr_id, CRYPTO_3DES_CBC, 0, 0,
-	    NULL, NULL, NULL);
-	crypto_register(swcr_id, CRYPTO_BLF_CBC, 0, 0,
-	    NULL, NULL, NULL);
-	crypto_register(swcr_id, CRYPTO_CAST_CBC, 0, 0,
-	    NULL, NULL, NULL);
-	crypto_register(swcr_id, CRYPTO_SKIPJACK_CBC, 0, 0,
-	    NULL, NULL, NULL);
-	crypto_register(swcr_id, CRYPTO_MD5_HMAC, 0, 0,
-	    NULL, NULL, NULL);
-	crypto_register(swcr_id, CRYPTO_SHA1_HMAC, 0, 0,
-	    NULL, NULL, NULL);
-	crypto_register(swcr_id, CRYPTO_RIPEMD160_HMAC, 0, 0,
-	    NULL, NULL, NULL);
-	crypto_register(swcr_id, CRYPTO_MD5_KPDK, 0, 0,
-	    NULL, NULL, NULL);
-	crypto_register(swcr_id, CRYPTO_SHA1_KPDK, 0, 0,
-	    NULL, NULL, NULL);
-	crypto_register(swcr_id, CRYPTO_MD5, 0, 0,
-	    NULL, NULL, NULL);
-	crypto_register(swcr_id, CRYPTO_SHA1, 0, 0,
-	    NULL, NULL, NULL);
-	crypto_register(swcr_id, CRYPTO_RIJNDAEL128_CBC, 0, 0,
-	    NULL, NULL, NULL);
-	crypto_register(swcr_id, CRYPTO_DEFLATE_COMP, 0, 0,
-	    NULL, NULL, NULL);
-	crypto_register(swcr_id, CRYPTO_NULL, 0, 0,
-	    NULL, NULL, NULL);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lofn.c,v 1.21 2002/09/24 18:33:26 jason Exp $	*/
+/*	$OpenBSD: lofn.c,v 1.22 2002/11/21 19:34:25 jason Exp $	*/
 
 /*
  * Copyright (c) 2001-2002 Jason L. Wright (jason@thought.net)
@@ -114,6 +114,7 @@ lofn_attach(parent, self, aux)
 	const char *intrstr = NULL;
 	bus_size_t iosize;
 	u_int32_t cmd;
+	int algs[CRK_ALGORITHM_MAX + 1];
 
 	cmd = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
 	cmd |= PCI_COMMAND_MEM_ENABLE;
@@ -168,7 +169,10 @@ lofn_attach(parent, self, aux)
 		return;
 	}
 
-	crypto_kregister(sc->sc_cid, CRK_MOD_EXP, 0, lofn_kprocess);
+	bzero(algs, sizeof(algs));
+	algs[CRK_MOD_EXP] = CRYPTO_ALG_FLAG_SUPPORTED;
+
+	crypto_kregister(sc->sc_cid, algs, lofn_kprocess);
 
 	printf(": %s\n", intrstr);
 

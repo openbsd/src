@@ -1,4 +1,4 @@
-/*	$OpenBSD: nofn.c,v 1.6 2002/09/24 18:33:26 jason Exp $	*/
+/*	$OpenBSD: nofn.c,v 1.7 2002/11/21 19:34:25 jason Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -373,6 +373,7 @@ nofn_pk_enable(sc)
 	struct nofn_softc *sc;
 {
 	u_int32_t r;
+	int algs[CRK_ALGORITHM_MAX + 1];
 
 	if ((sc->sc_cid = crypto_get_driverid(0)) < 0) {
 		printf(": failed to register cid\n");
@@ -382,7 +383,9 @@ nofn_pk_enable(sc)
 	SIMPLEQ_INIT(&sc->sc_pk_queue);
 	sc->sc_pk_current = NULL;
 
-	crypto_kregister(sc->sc_cid, CRK_MOD_EXP, 0, nofn_pk_process);
+	bzero(algs, sizeof(algs));
+	algs[CRK_MOD_EXP] = CRYPTO_ALG_FLAG_SUPPORTED;
+	crypto_kregister(sc->sc_cid, algs, nofn_pk_process);
 
 	/* enable ALU */
 	r = PK_READ_4(sc, NOFN_PK_CFG2);

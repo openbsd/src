@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.119 2002/11/19 18:40:17 jason Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.120 2002/11/21 19:34:25 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -167,6 +167,8 @@ ubsec_attach(parent, self, aux)
 	struct ubsec_dma *dmap;
 	bus_size_t iosize;
 	u_int32_t cmd, i;
+	int algs[CRYPTO_ALGORITHM_MAX + 1];
+	int kalgs[CRK_ALGORITHM_MAX + 1];
 
 	SIMPLEQ_INIT(&sc->sc_queue);
 	SIMPLEQ_INIT(&sc->sc_qchip);
@@ -273,11 +275,13 @@ ubsec_attach(parent, self, aux)
 		SIMPLEQ_INSERT_TAIL(&sc->sc_freequeue, q, q_next);
 	}
 
-	crypto_register(sc->sc_cid, CRYPTO_3DES_CBC, 0, 0,
-	    ubsec_newsession, ubsec_freesession, ubsec_process);
-	crypto_register(sc->sc_cid, CRYPTO_DES_CBC, 0, 0, NULL, NULL, NULL);
-	crypto_register(sc->sc_cid, CRYPTO_MD5_HMAC, 0, 0, NULL, NULL, NULL);
-	crypto_register(sc->sc_cid, CRYPTO_SHA1_HMAC, 0, 0, NULL, NULL, NULL);
+	bzero(algs, sizeof(algs));
+	algs[CRYPTO_3DES_CBC] = CRYPTO_ALG_FLAG_SUPPORTED;
+	algs[CRYPTO_DES_CBC] = CRYPTO_ALG_FLAG_SUPPORTED;
+	algs[CRYPTO_MD5_HMAC] = CRYPTO_ALG_FLAG_SUPPORTED;
+	algs[CRYPTO_SHA1_HMAC] = CRYPTO_ALG_FLAG_SUPPORTED;
+	crypto_register(sc->sc_cid, algs, ubsec_newsession,
+	    ubsec_freesession, ubsec_process);
 
 	/*
 	 * Reset Broadcom chip
@@ -332,10 +336,13 @@ skip_rng:
 	if (sc->sc_flags & UBS_FLAGS_KEY) {
 		sc->sc_statmask |= BS_STAT_MCR2_DONE;
 
-		crypto_kregister(sc->sc_cid, CRK_MOD_EXP, 0, ubsec_kprocess);
+		bzero(kalgs, sizeof(kalgs));
+		kalgs[CRK_MOD_EXP] = CRYPTO_ALG_FLAG_SUPPORTED;
 #if 0
-		crypto_kregister(sc->sc_cid, CRK_MOD_EXP_CRT, 0, ubsec_kprocess);
+		kalgs[CRK_MOD_EXP_CRT] = CRYPTO_ALG_FLAG_SUPPORTED;
 #endif
+
+		crypto_kregister(sc->sc_cid, kalgs, ubsec_kprocess);
 	}
 
 	printf("\n");
