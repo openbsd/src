@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le_pci.c,v 1.13 2001/01/31 23:05:17 tholo Exp $	*/
+/*	$OpenBSD: if_le_pci.c,v 1.14 2001/02/26 06:46:04 tholo Exp $	*/
 /*	$NetBSD: if_le_pci.c,v 1.13 1996/10/25 21:33:32 cgd Exp $	*/
 
 /*-
@@ -199,7 +199,7 @@ le_pci_attach(parent, self, aux)
 		bus_dmamem_free(pa->pa_dmat, &seg, rseg);
 		return;
 	}
-	if (bus_dmamap_create(pa->pa_dmat, PCNET_MEMSIZE, 1, 36384,
+	if (bus_dmamap_create(pa->pa_dmat, PCNET_MEMSIZE, 1, PCNET_MEMSIZE,
 	    0, BUS_DMA_NOWAIT, &dmamap)) {
 		printf(": couldn't create dma map\n");
 		bus_dmamem_unmap(pa->pa_dmat, kva, PCNET_MEMSIZE);
