@@ -1,4 +1,4 @@
-/*	$OpenBSD: getnetnamadr.c,v 1.8 1997/08/04 10:34:48 deraadt Exp $	*/
+/*	$OpenBSD: getnetnamadr.c,v 1.9 1997/12/01 23:40:01 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997, Jason Downs.  All rights reserved.
@@ -77,7 +77,7 @@ static char sccsid[] = "@(#)getnetbyaddr.c	8.1 (Berkeley) 6/4/93";
 static char sccsid_[] = "from getnetnamadr.c	1.4 (Coimbra) 93/06/03";
 static char rcsid[] = "$From: getnetnamadr.c,v 8.7 1996/08/05 08:31:35 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: getnetnamadr.c,v 1.8 1997/08/04 10:34:48 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: getnetnamadr.c,v 1.9 1997/12/01 23:40:01 deraadt Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -134,8 +134,9 @@ getnetanswer(answer, anslen, net_i)
 	register int n;
 	u_char *eom;
 	int type, class, buflen, ancount, qdcount, haveanswer, i, nchar;
-	char aux1[30], aux2[30], ans[30], *in, *st, *pauxt, *bp, **ap,
-		*paux1 = &aux1[0], *paux2 = &aux2[0], flag = 0;
+	char aux1[MAXHOSTNAMELEN], aux2[MAXHOSTNAMELEN, ans[MAXHOSTNAMELEN];
+	char *in, *st, *pauxt, *bp, **ap;
+	char *paux1 = &aux1[0], *paux2 = &aux2[0], flag = 0;
 	static	struct netent net_entry;
 	static	char *net_aliases[MAXALIASES], netbuf[BUFSIZ+1];
 
@@ -183,7 +184,8 @@ getnetanswer(answer, anslen, net_i)
 			break;
 		cp += n;
 		ans[0] = '\0';
-		(void)strcpy(&ans[0], bp);
+		(void)strncpy(&ans[0], bp, sizeof ans-1);
+		ans[sizeof ans-1] = '\0';
 		GETSHORT(type, cp);
 		GETSHORT(class, cp);
 		cp += INT32SZ;		/* TTL */
