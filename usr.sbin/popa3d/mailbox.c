@@ -1,4 +1,4 @@
-/* $OpenBSD: mailbox.c,v 1.3 2002/03/27 14:08:43 camield Exp $ */
+/* $OpenBSD: mailbox.c,v 1.4 2002/09/06 19:18:10 deraadt Exp $ */
 
 /*
  * Mailbox access.
@@ -53,7 +53,7 @@ static int db_compare(struct db_message *msg)
  * string s2, of n2 chars.
  */
 #ifdef __GNUC__
-inline
+__inline
 #endif
 static int linecmp(char *s1, int n1, char *s2, int n2)
 {
@@ -263,7 +263,7 @@ static int mailbox_parse(int init)
 
 /* We can hash all fragments of those lines (until "end"), for UIDL */
 		if (fixed) {
-			MD5Update(&hash, line, length);
+			MD5Update(&hash, (u_char *)line, length);
 			if (end) fixed = 0;
 		}
 	} while (1);
