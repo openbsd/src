@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.h,v 1.5 1998/12/29 21:47:13 mickey Exp $	*/
+/*	$OpenBSD: cpufunc.h,v 1.6 1999/02/25 17:23:34 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -111,76 +111,88 @@ void set_psw __P((u_int psw));
 #endif
 
 #define	fdce(sp,off) __asm __volatile("fdce 0(%0,%1)":: "i" (sp), "r" (off))
-#define	fice(sp,off) __asm __volatile("fdce 0(%0,%1)":: "i" (sp), "r" (off))
+#define	fice(sp,off) __asm __volatile("fice 0(%0,%1)":: "i" (sp), "r" (off))
 #define sync_caches() \
     __asm __volatile("sync\n\tnop\n\tnop\n\tnop\n\tnop\n\tnop\n\tnop\n\tnop")
 
 static __inline void
-ficache(pa_space_t space, vm_offset_t off, vm_size_t size)
+ficache(pa_space_t sp, vm_offset_t va, vm_size_t size)
 {
+	extern int icache_stride;
+	register vm_offset_t eva = va + size;
 
+	mtsp(sp, 1);
+	while (va < eva)
+		__asm __volatile ("fic,m %2(%%sr1, %1)"
+				  : "=r" (va): "0" (va), "r" (icache_stride));
 }
 
 static __inline void
-fdcache(pa_space_t space, vm_offset_t off, vm_size_t size)
+fdcache(pa_space_t sp, vm_offset_t va, vm_size_t size)
 {
+	extern int dcache_stride;
+	register vm_offset_t eva = va + size;
 
+	mtsp(sp, 1);
+	while (va < eva)
+		__asm __volatile ("fdc,m %2(%%sr1, %1)"
+				  : "=r" (va): "0" (va), "r" (dcache_stride));
 }
 
 static __inline void
-iitlba(u_int pg, pa_space_t sp, vm_offset_t off)
-{
-	mtsp(1, sp);
-	__asm volatile("iitlba %0,(%%sr1, %1)":: "r" (pg), "r" (off));
-}
-
-static __inline void
-idtlba(u_int pg, pa_space_t sp, vm_offset_t off)
+iitlba(u_int pg, pa_space_t sp, vm_offset_t va)
 {
 	mtsp(sp, 1);
-	__asm volatile("idtlba %0,(%%sr1, %1)":: "r" (pg), "r" (off));
+	__asm volatile("iitlba %0,(%%sr1, %1)":: "r" (pg), "r" (va));
 }
 
 static __inline void
-iitlbp(u_int prot, pa_space_t sp, vm_offset_t off)
+idtlba(u_int pg, pa_space_t sp, vm_offset_t va)
 {
 	mtsp(sp, 1);
-	__asm volatile("iitlbp %0,(%%sr1, %1)":: "r" (prot), "r" (off));
+	__asm volatile("idtlba %0,(%%sr1, %1)":: "r" (pg), "r" (va));
 }
 
 static __inline void
-idtlbp(u_int prot, pa_space_t sp, vm_offset_t off)
+iitlbp(u_int prot, pa_space_t sp, vm_offset_t va)
 {
 	mtsp(sp, 1);
-	__asm volatile("idtlbp %0,(%%sr1, %1)":: "r" (prot), "r" (off));
+	__asm volatile("iitlbp %0,(%%sr1, %1)":: "r" (prot), "r" (va));
 }
 
 static __inline void
-pitlb(pa_space_t sp, vm_offset_t off)
+idtlbp(u_int prot, pa_space_t sp, vm_offset_t va)
 {
 	mtsp(sp, 1);
-	__asm volatile("pitlb %%r0(%%sr1, %0)":: "r" (off));
+	__asm volatile("idtlbp %0,(%%sr1, %1)":: "r" (prot), "r" (va));
 }
 
 static __inline void
-pdtlb(pa_space_t sp, vm_offset_t off)
+pitlb(pa_space_t sp, vm_offset_t va)
 {
 	mtsp(sp, 1);
-	__asm volatile("pdtlb %%r0(%%sr1, %0)":: "r" (off));
+	__asm volatile("pitlb %%r0(%%sr1, %0)":: "r" (va));
 }
 
 static __inline void
-pitlbe(pa_space_t sp, vm_offset_t off)
+pdtlb(pa_space_t sp, vm_offset_t va)
 {
 	mtsp(sp, 1);
-	__asm volatile("pitlbe %%r0(%%sr1, %0)":: "r" (off));
+	__asm volatile("pdtlb %%r0(%%sr1, %0)":: "r" (va));
 }
 
 static __inline void
-pdtlbe(pa_space_t sp, vm_offset_t off)
+pitlbe(pa_space_t sp, vm_offset_t va)
 {
 	mtsp(sp, 1);
-	__asm volatile("pdtlbe %%r0(%%sr1, %0)":: "r" (off));
+	__asm volatile("pitlbe %%r0(%%sr1, %0)":: "r" (va));
+}
+
+static __inline void
+pdtlbe(pa_space_t sp, vm_offset_t va)
+{
+	mtsp(sp, 1);
+	__asm volatile("pdtlbe %%r0(%%sr1, %0)":: "r" (va));
 }
 
 #ifdef _KERNEL
