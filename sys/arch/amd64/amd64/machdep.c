@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.22 2004/03/11 21:06:01 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.23 2004/05/05 16:43:53 marc Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -126,6 +126,7 @@
 #include <machine/biosvar.h>
 #include <machine/mpbiosvar.h>
 #include <machine/reg.h>
+#include <machine/kcore.h>
 
 #include <dev/isa/isareg.h>
 #include <machine/isa_machdep.h>
@@ -929,17 +930,37 @@ cpu_dump()
 	int (*dump)(dev_t, daddr_t, caddr_t, size_t);
 	char buf[dbtob(1)];
 	kcore_seg_t *segp;
+	cpu_kcore_hdr_t *cpuhdrp;
+	phys_ram_seg_t *memsegp;
+	int i;
 
 	dump = bdevsw[major(dumpdev)].d_dump;
 
 	memset(buf, 0, sizeof buf);
 	segp = (kcore_seg_t *)buf;
+	cpuhdrp = (cpu_kcore_hdr_t *)&buf[ALIGN(sizeof(*segp))];
+	memsegp = (phys_ram_seg_t *)&buf[ALIGN(sizeof(*segp)) +
+	    ALIGN(sizeof(*cpuhdrp))];
 
 	/*
 	 * Generate a segment header.
 	 */
 	CORE_SETMAGIC(*segp, KCORE_MAGIC, MID_MACHINE, CORE_CPU);
 	segp->c_size = dbtob(1) - ALIGN(sizeof(*segp));
+
+	/*
+	 * Add the machine-dependent header info.
+	 */
+	cpuhdrp->ptdpaddr = PTDpaddr;
+	cpuhdrp->nmemsegs = mem_cluster_cnt;
+
+	/*
+	 * Fill in the memory segment descriptors.
+	 */
+	for (i = 0; i < mem_cluster_cnt; i++) {
+		memsegp[i].start = mem_clusters[i].start;
+		memsegp[i].size = mem_clusters[i].size & ~PAGE_MASK;
+	}
 
 	return (dump(dumpdev, dumplo, (caddr_t)buf, dbtob(1)));
 }
