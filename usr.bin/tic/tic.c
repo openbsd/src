@@ -1,4 +1,4 @@
-/*	$OpenBSD: tic.c,v 1.27 2003/07/02 00:21:16 avsm Exp $	*/
+/*	$OpenBSD: tic.c,v 1.28 2003/10/21 23:57:04 deraadt Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,1999,2000,2001 Free Software Foundation, Inc.         *
@@ -299,8 +299,12 @@ stripped(char *src)
     while (isspace(CharOf(*src)))
 	src++;
     if (*src != '\0') {
-	char *dst = strdup(src);
-	size_t len = strlen(dst);
+	char *dst;
+	size_t len;
+
+	if ((dst = strdup(src)) == NULL)
+		failed("strdup");
+	len = strlen(dst);
 	while (--len != 0 && isspace(CharOf(dst[len])))
 	    dst[len] = '\0';
 	return dst;
