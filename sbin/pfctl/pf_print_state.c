@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_print_state.c,v 1.2 2002/06/11 02:48:12 frantzen Exp $	*/
+/*	$OpenBSD: pf_print_state.c,v 1.3 2002/07/18 21:25:01 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -234,17 +234,17 @@ print_state(struct pf_state *s, int opts)
 struct hostent *
 getpfhostname(const char *addr_str)
 {
-	in_addr_t		 addr_num;
+	struct in_addr		inaddr;
 	struct hostent		*hp;
 	static struct hostent	 myhp;
 
-	addr_num = inet_addr(addr_str);
-	if (addr_num == INADDR_NONE) {
+	if (inet_aton(addr_str, &inaddr) == 0) {
 		myhp.h_name = (char *)addr_str;
 		hp = &myhp;
 		return (hp);
 	}
-	hp = gethostbyaddr((char *)&addr_num, sizeof(addr_num), AF_INET);
+	hp = gethostbyaddr((char *)&inaddr.s_addr, sizeof(inaddr.s_addr),
+	    AF_INET);
 	if (hp == NULL) {
 		myhp.h_name = (char *)addr_str;
 		hp = &myhp;
