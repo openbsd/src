@@ -1,4 +1,4 @@
-.\"	$OpenBSD: find.1,v 1.45 2005/03/14 15:22:27 jmc Exp $
+.\"	$OpenBSD: find.1,v 1.46 2005/03/14 15:25:38 jmc Exp $
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -519,6 +519,13 @@ that are newer than
 Print out a list of all core files on local file systems:
 .Pp
 .Dl "$ find / \e! -fstype local -prune -or -name '*.core' -print"
+.Pp
+Find all files in
+.Pa /usr/src
+ending in a dot and single digit, but skip directory
+.Pa /usr/src/gnu :
+.Pp
+.Dl "$ find /usr/src -path /usr/src/gnu -prune -or -name \e*\e.[0-9]"
 .Sh SEE ALSO
 .Xr chflags 1 ,
 .Xr chmod 1 ,
