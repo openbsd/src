@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxx.c,v 1.53 2004/01/17 14:40:55 krw Exp $	*/
+/*	$OpenBSD: aic7xxx.c,v 1.54 2004/02/08 00:38:08 krw Exp $	*/
 /*	$NetBSD: aic7xxx.c,v 1.108 2003/11/02 11:07:44 wiz Exp $	*/
 
 /*
@@ -40,7 +40,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aic7xxx.c,v 1.53 2004/01/17 14:40:55 krw Exp $
+ * $Id: aic7xxx.c,v 1.54 2004/02/08 00:38:08 krw Exp $
  *
  * //depot/aic7xxx/aic7xxx/aic7xxx.c#112 $
  *
@@ -4932,8 +4932,14 @@ ahc_pause_and_flushwork(struct ahc_softc *ahc)
 	intstat = 0;
 	paused = FALSE;
 	do {
-		if (paused)
+		if (paused) {
 			ahc_unpause(ahc);
+			/*
+			 * Give the sequencer some time to service
+			 * any active selections.
+			 */
+			ahc_delay(200);
+		}
 		ahc_intr(ahc);
 		ahc_pause(ahc);
 		paused = TRUE;
@@ -5188,10 +5194,15 @@ int
 ahc_match_scb(struct ahc_softc *ahc, struct scb *scb, int target,
 	      char channel, int lun, u_int tag, role_t role)
 {
-	int targ = SCB_GET_TARGET(ahc, scb);
-	char chan = SCB_GET_CHANNEL(ahc, scb);
-	int slun = SCB_GET_LUN(scb);
-	int match;
+	char chan;
+	int targ, slun, match;
+
+	if (scb == NULL)
+		return 0;
+
+	targ = SCB_GET_TARGET(ahc, scb);
+	chan = SCB_GET_CHANNEL(ahc, scb);
+	slun = SCB_GET_LUN(scb);
 
 	match = ((chan == channel) || (channel == ALL_CHANNELS));
 	if (match != 0)
@@ -5199,7 +5210,6 @@ ahc_match_scb(struct ahc_softc *ahc, struct scb *scb, int target,
 	if (match != 0)
 		match = ((lun == slun) || (lun == CAM_LUN_WILDCARD));
 	if (match != 0) {
-#if 0
 #if AHC_TARGET_MODE
 		int group;
 
@@ -5216,7 +5226,6 @@ ahc_match_scb(struct ahc_softc *ahc, struct scb *scb, int target,
 #else /* !AHC_TARGET_MODE */
 		match = ((tag == scb->hscb->tag) || (tag == SCB_LIST_NULL));
 #endif /* AHC_TARGET_MODE */
-#endif
 	}
 
 	return match;

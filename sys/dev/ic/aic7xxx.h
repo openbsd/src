@@ -1,5 +1,5 @@
 /*
- * $OpenBSD: aic7xxx.h,v 1.9 2003/12/24 22:45:45 krw Exp $
+ * $OpenBSD: aic7xxx.h,v 1.10 2004/02/08 00:38:08 krw Exp $
  * Core definitions and data structures shareable across OS platforms.
  *
  * Copyright (c) 1994-2001 Justin T. Gibbs.
@@ -29,7 +29,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: aic7xxx.h,v 1.9 2003/12/24 22:45:45 krw Exp $
+ * $Id: aic7xxx.h,v 1.10 2004/02/08 00:38:08 krw Exp $
  *
  * $FreeBSD: src/sys/dev/aic7xxx/aic7xxx.h,v 1.40 2001/07/18 21:39:47 gibbs Exp $
  */
@@ -230,7 +230,7 @@ typedef enum {
 	 */
 	AHC_AIC7850_FE	= AHC_SPIOCAP|AHC_AUTOPAUSE|AHC_TARGETMODE|AHC_ULTRA,
 	AHC_AIC7860_FE	= AHC_AIC7850_FE,
-	AHC_AIC7870_FE	= AHC_TARGETMODE,
+	AHC_AIC7870_FE	= AHC_TARGETMODE|AHC_AUTOPAUSE,
 	AHC_AIC7880_FE	= AHC_AIC7870_FE|AHC_ULTRA,
 	/*
 	 * Although we have space for both the initiator and

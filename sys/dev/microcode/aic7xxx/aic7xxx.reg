@@ -1,4 +1,4 @@
-/* $OpenBSD: aic7xxx.reg,v 1.8 2003/12/24 23:27:55 krw Exp $ */
+/* $OpenBSD: aic7xxx.reg,v 1.9 2004/02/08 00:38:09 krw Exp $ */
 /*
  * Aic7xxx register and scratch ram definitions.
  *
@@ -1308,7 +1308,6 @@ scratch_ram {
 	 */
 	MWI_RESIDUAL {
 		size		1
-		alias	TARG_IMMEDIATE_SCB
 	}
 	/*
 	 * SCBID of the next SCB to be started by the controller.
@@ -1463,6 +1462,7 @@ scratch_ram {
 	 */
 	LAST_MSG {
 		size		1
+		alias	TARG_IMMEDIATE_SCB
 	}
 
 	/*
