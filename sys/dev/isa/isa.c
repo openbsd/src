@@ -1,4 +1,4 @@
-/*	$OpenBSD: isa.c,v 1.10 1996/05/26 00:27:23 deraadt Exp $	*/
+/*	$OpenBSD: isa.c,v 1.11 1996/07/02 22:21:15 deraadt Exp $	*/
 /*	$NetBSD: isa.c,v 1.85 1996/05/14 00:31:04 thorpej Exp $	*/
 
 /*-
@@ -127,9 +127,6 @@ isascan(parent, match)
 	struct cfdata *cf = dev->dv_cfdata;
 	struct isa_attach_args ia;
 
-	if (cf->cf_fstate == FSTATE_STAR)
-		panic("clone devices not supported on ISA bus");
-
 	ia.ia_bc = sc->sc_bc;
 	ia.ia_ic = sc->sc_ic;
 	ia.ia_iobase = cf->cf_loc[0];
@@ -139,6 +136,18 @@ isascan(parent, match)
 	ia.ia_irq = cf->cf_loc[4] == 2 ? 9 : cf->cf_loc[4];
 	ia.ia_drq = cf->cf_loc[5];
 	ia.ia_delayioh = sc->sc_delayioh;
+
+	if (cf->cf_fstate == FSTATE_STAR) {
+		struct isa_attach_args ia2 = ia;
+
+		while ((*cf->cf_attach->ca_match)(parent, dev, &ia2) > 0) {
+			config_attach(parent, dev, &ia2, isaprint);
+			dev = config_make_softc(parent, cf);
+			ia2 = ia;
+		}
+		free(dev, M_DEVBUF);
+		return;
+	}
 
 	if ((*cf->cf_attach->ca_match)(parent, dev, &ia) > 0)
 		config_attach(parent, dev, &ia, isaprint);
