@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_sstep.c,v 1.1.1.1 2004/04/21 15:23:51 aoyama Exp $	*/
+/*	$OpenBSD: db_sstep.c,v 1.1 2004/06/19 18:28:37 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
