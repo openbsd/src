@@ -73,3 +73,38 @@ void pm_eject_pcmcia __P((int));
 
 #define PMU_SET_BRIGHTNESS	0x41	/* Set backlight brightness */
 #define PMU_READ_BRIGHTNESS	0xd9	/* Read brightness button position */
+
+#define PMU_POWER_EVENTS        0x8f    /* Send power-event commands to PMU */
+#define PMU_SYSTEM_READY        0xdf    /* tell PMU we are awake */
+
+/* Bits in PMU interrupt and interrupt mask bytes */
+#define PMU_INT_ADB_AUTO	0x04	/* ADB autopoll, when PMU_INT_ADB */
+#define PMU_INT_PCEJECT		0x04	/* PC-card eject buttons */
+#define PMU_INT_SNDBRT		0x08	/* sound/brightness up/down buttons */
+#define PMU_INT_ADB		0x10	/* ADB autopoll or reply data */
+#define PMU_INT_BATTERY		0x20
+#define PMU_INT_WAKEUP		0x40
+#define PMU_INT_TICK		0x80	/* 1-second tick interrupt */
+
+/* Bits to use with the PMU_POWER_CTRL0 command */
+#define PMU_POW0_ON		0x80	/* OR this to power ON the device */
+#define PMU_POW0_OFF		0x00	/* leave bit 7 to 0 to power it OFF */
+
+/* Bits to use with the PMU_POWER_CTRL command */
+#define PMU_POW_ON		0x80	/* OR this to power ON the device */
+#define PMU_POW_OFF		0x00	/* leave bit 7 to 0 to power it OFF */
+#define PMU_POW_BACKLIGHT	0x01	/* backlight power */
+#define PMU_POW_CHARGER		0x02	/* battery charger power */
+#define PMU_POW_IRLED		0x04	/* IR led power (on wallstreet) */
+#define PMU_POW_MEDIABAY	0x08	/* media bay power (wallstreet/lombard ?) */
+
+/* PMU PMU_POWER_EVENTS commands */
+enum {
+	PMU_PWR_GET_POWERUP_EVENTS      = 0x00,
+	PMU_PWR_SET_POWERUP_EVENTS      = 0x01,
+	PMU_PWR_CLR_POWERUP_EVENTS      = 0x02,
+	PMU_PWR_GET_WAKEUP_EVENTS       = 0x03,
+	PMU_PWR_SET_WAKEUP_EVENTS       = 0x04,
+	PMU_PWR_CLR_WAKEUP_EVENTS       = 0x05,
+};
+
