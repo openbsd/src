@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptodev.h,v 1.31 2002/06/11 11:14:29 beck Exp $	*/
+/*	$OpenBSD: cryptodev.h,v 1.32 2002/07/16 06:10:58 angelos Exp $	*/
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -94,6 +94,8 @@
 #define CRYPTO_SHA1		14
 #define CRYPTO_DEFLATE_COMP	15 /* Deflate compression algorithm */
 #define CRYPTO_ALGORITHM_MAX	15 /* Keep updated - see below */
+
+#define	CRYPTO_ALGORITHM_ALL	(CRYPTO_ALGORITHM_MAX + 1)
 
 /* Algorithm flags */
 #define	CRYPTO_ALG_FLAG_SUPPORTED	0x01 /* Algorithm is supported */
