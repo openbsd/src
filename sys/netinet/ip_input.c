@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.18 1996/10/18 03:04:54 tholo Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.19 1996/10/27 00:47:33 deraadt Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -789,18 +789,6 @@ ip_dooptions(m)
 		case IPOPT_RR:
 			if ((off = cp[IPOPT_OFFSET]) < IPOPT_MINOFF) {
 				code = &cp[IPOPT_OFFSET] - (u_char *)ip;
-				goto bad;
-			}
-
-			if (!ip_dosourceroute) {
-				char buf[4*sizeof "123"];
-
-				strcpy(buf, inet_ntoa(ip->ip_dst));
-				log(LOG_WARNING,
-				    "attempted source route from %s to %s\n",
-				    inet_ntoa(ip->ip_src), buf);
-				type = ICMP_UNREACH;
-				code = ICMP_UNREACH_SRCFAIL;
 				goto bad;
 			}
 
