@@ -1,4 +1,4 @@
-/*	$OpenBSD: uturn.c,v 1.1 2004/09/15 21:32:43 mickey Exp $	*/
+/*	$OpenBSD: uturn.c,v 1.2 2004/09/26 21:54:00 mickey Exp $	*/
 
 /*
  * Copyright (c) 2004 Michael Shalayeff
@@ -74,6 +74,10 @@ uturnmatch(parent, cfdata, aux)
 	/* there will be only one */
 	if (ca->ca_type.iodc_type != HPPA_TYPE_IOA ||
 	    ca->ca_type.iodc_sv_model != HPPA_IOA_UTURN)
+		return 0;
+
+	if (ca->ca_type.iodc_model == 0x58 &&
+	    ca->ca_type.iodc_revision >= 0x20)
 		return 0;
 
 	return 1;
