@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.h,v 1.9 1996/11/06 18:41:52 etheisen Exp $	*/
+/*	$OpenBSD: exec_elf.h,v 1.10 1996/12/11 05:55:33 imp Exp $	*/
 /*
  * Copyright (c) 1995, 1996 Erik Theisen.  All rights reserved.
  *
@@ -338,6 +338,7 @@ extern Elf32_Dyn	_DYNAMIC[];
 #define DT_DEBUG	21		/* bugger */
 #define DT_TEXTREL	22		/* Allow rel. mod. to unwritable seg */
 #define DT_JMPREL	23		/* add. of PLT's relocation entries */
+#define DT_NUM		24		/* Number used. */
 #define DT_LOPROC	0x70000000	/* reserved range for processor */
 #define DT_HIPROC	0x7fffffff	/*  specific dynamic array tags */
 	
