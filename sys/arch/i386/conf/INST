@@ -1,4 +1,4 @@
-#	$OpenBSD: INST,v 1.23 1998/06/23 05:59:45 deraadt Exp $
+#	$OpenBSD: INST,v 1.24 1998/09/11 11:35:35 fgsch Exp $
 #	$NetBSD: INSTADP,v 1.17 1996/05/20 03:32:19 thorpej Exp $
 #
 #	Install kernels no longer support X.
@@ -60,14 +60,12 @@ pci0	at mainbus0
 ppb*	at pci? dev ? function ?	# PCI-PCI bridges
 pci*	at ppb? bus ?
 
-pcicmaster0	at isa? port 0x3E0 size 2
-pcic0	at pcicmaster0 irq 11 iomem 0xd4000 iosiz 4096
-pcic1	at pcicmaster0 irq 12 iomem 0xd5000 iosiz 4096
-pcicmaster1	at isa? port 0x3E2 size 2
-pcic2	at pcicmaster1 irq 11 iomem 0xd6000 iosiz 4096
-pcic3	at pcicmaster1 irq 12 iomem 0xd7000 iosiz 4096
+# ISA PCMCIA controllers
+pcic0	at isa? port 0x3e0 iomem 0xd0000 iosiz 0x4000
+pcic1	at isa? port 0x3e2 iomem 0xd4000 iosiz 0x4000
 
-pcmcia* at pcic?
+# PCMCIA bus support
+pcmcia*	at pcic? controller ? socket ?
 
 npx0	at isa? port 0xf0 irq 13	# math coprocessor
 isadma0	at isa?
@@ -85,7 +83,7 @@ com2	at isa? port 0x3e8 irq 5
 #com*	at boca? slave ?
 #rtfps0	at isa? port 0x1230 irq 10	# RT 4-port serial cards
 #com*	at rtfps? slave ?
-com3	at pcmcia? port 0x2e8 size 8 irq 3 slot ? # PCMCIA modem cards
+com*	at pcmcia? function ?		# PCMCIA modem cards
 
 # option for using CD1400 handshaking for incoming data
 # requires a special cable that exchanges the RTS and DTR lines
@@ -150,8 +148,8 @@ le*	at pci? dev ? function ?		# PCnet-PCI based ethernet cards
 de*	at pci? dev ? function ?		# DC21X4X-based ethernet cards
 ep0	at pci? dev ? function ?		# 3C590 ethernet cards
 ep*	at pci? dev ? function ?		# 3C590 ethernet cards
-ed*	at pcmcia? port 0x300 size 0x20 irq 10 slot ? # PCMCIA based ed cards
-ep*	at pcmcia? port 0x300 size 0x10 irq 10 slot ? # PCMCIA based ep cards
+#ed*	at pcmcia? function ?			# PCMCIA based ed cards
+ep*	at pcmcia? function ?			# PCMCIA based ep cards
 fpa*	at pci? dev ? function ?		# DEC DEFPA FDDI cards
 
 pseudo-device	loop	1		# network loopback
