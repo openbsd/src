@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: security,v 1.70 2005/02/07 06:08:10 david Exp $
+#	$OpenBSD: security,v 1.71 2005/02/22 10:50:55 otto Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -441,7 +441,7 @@ if [ -s /etc/exports ] ; then
 		for (i = 2; i <= NF; ++i) {
 			if ($i ~ /^-ro$/)
 				readonly = 1;
-			else if ($i !~ /^-/)
+			else if ($i !~ /^-/ || $i ~ /^-network/)
 				next;
 		}
 		if (readonly)
