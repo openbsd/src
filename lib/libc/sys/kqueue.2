@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kqueue.2,v 1.16 2004/08/02 17:49:31 brad Exp $
+.\"	$OpenBSD: kqueue.2,v 1.17 2004/09/06 05:26:34 brad Exp $
 .\"
 .\" Copyright (c) 2000 Jonathan Lemon
 .\" All rights reserved.
@@ -101,6 +101,14 @@ is a pointer to an array of kevent structures.
 .Fa nevents
 determines the size of
 .Fa eventlist .
+When
+.Fa nevents
+is zero,
+.Fn kevent
+will return immediately even if there is a
+.Fa timeout
+specified unlike
+.Xr select 2 .
 If
 .Fa timeout
 is a non-null pointer, it specifies a maximum interval to wait
@@ -342,7 +350,7 @@ The file referenced by the descriptor was renamed.
 .It Dv NOTE_REVOKE
 Access to the file was revoked via
 .Xr revoke 2
-or the underlying fileystem was unmounted.
+or the underlying file system was unmounted.
 .El
 .Pp
 On return,
@@ -496,3 +504,8 @@ system and this manual page were written by
 .Sh BUGS
 It is currently not possible to watch FIFOs, AIO, or a vnode that
 resides on anything but a UFS file system.
+.Pp
+The
+.Fa timeout
+value is limited to 24 hours; longer timeouts will be silently
+reinterpreted as 24 hours.
