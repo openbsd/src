@@ -1,4 +1,4 @@
-/*	$OpenBSD: apci.c,v 1.19 2005/02/12 18:01:08 miod Exp $	*/
+/*	$OpenBSD: apci.c,v 1.20 2005/02/14 00:52:09 miod Exp $	*/
 /*	$NetBSD: apci.c,v 1.9 2000/11/02 00:35:05 eeh Exp $	*/
 
 /*-
@@ -489,7 +489,7 @@ apciintr(arg)
 
 #define	RCVBYTE() \
 	c = apci->ap_data; \
-	if ((tp->t_state & TS_ISOPEN) != 0) \
+	if (tp != NULL && (tp->t_state & TS_ISOPEN) != 0) \
 		(*linesw[tp->t_line].l_rint)(c, tp)
 
 	for (;;) {
@@ -511,7 +511,8 @@ apciintr(arg)
 						apcieint(sc, lsr);
 				}
 			}
-			if (iflowdone == 0 && (tp->t_cflag & CRTS_IFLOW) &&
+			if (iflowdone == 0 && tp != NULL &&
+			    (tp->t_cflag & CRTS_IFLOW) &&
 			    tp->t_rawq.c_cc > (TTYHOG / 2)) {
 				apci->ap_mcr &= ~MCR_RTS;
 				iflowdone = 1;
@@ -519,11 +520,13 @@ apciintr(arg)
 			break;
 
 		case IIR_TXRDY:
-			tp->t_state &=~ (TS_BUSY|TS_FLUSH);
-			if (tp->t_line)
-				(*linesw[tp->t_line].l_start)(tp);
-			else
-				apcistart(tp);
+			if (tp != NULL) {
+				tp->t_state &=~ (TS_BUSY|TS_FLUSH);
+				if (tp->t_line)
+					(*linesw[tp->t_line].l_start)(tp);
+				else
+					apcistart(tp);
+			}
 			break;
 
 		default:
@@ -531,7 +534,7 @@ apciintr(arg)
 				return (claimed);
 			log(LOG_WARNING, "%s: weird interrupt: 0x%x\n",
 			    sc->sc_dev.dv_xname, iir);
-			/* fall through */
+			/* FALLTHROUGH */
 
 		case IIR_MLSC:
 			apcimint(sc, apci->ap_msr);
@@ -552,8 +555,6 @@ apcieint(sc, stat)
 	int c;
 
 	c = apci->ap_data;
-	if ((tp->t_state & TS_ISOPEN) == 0)
-		return;
 
 #ifdef DDB
 	if ((sc->sc_flags & APCI_ISCONSOLE) && db_console && (stat & LSR_BI)) {
@@ -561,6 +562,9 @@ apcieint(sc, stat)
 		return;
 	}
 #endif
+
+	if (tp == NULL || (tp->t_state & TS_ISOPEN) == 0)
+		return;
 
 	if (stat & (LSR_BI | LSR_FE)) {
 		c |= TTY_FE;
@@ -580,6 +584,9 @@ apcimint(sc, stat)
 {
 	struct tty *tp = sc->sc_tty;
 	struct apciregs *apci = sc->sc_apci;
+
+	if (tp == NULL)
+		return;
 
 	if ((stat & MSR_DDCD) &&
 	    (sc->sc_flags & APCI_SOFTCAR) == 0) {

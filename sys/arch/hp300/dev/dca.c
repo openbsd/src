@@ -1,4 +1,4 @@
-/*	$OpenBSD: dca.c,v 1.24 2005/02/12 18:01:08 miod Exp $	*/
+/*	$OpenBSD: dca.c,v 1.25 2005/02/14 00:52:09 miod Exp $	*/
 /*	$NetBSD: dca.c,v 1.35 1997/05/05 20:58:18 thorpej Exp $	*/
 
 /*
@@ -521,6 +521,7 @@ dcaintr(arg)
 #ifdef DEBUG
 		dcaintrcount[code & IIR_IMASK]++;
 #endif
+
 		switch (code & IIR_IMASK) {
 		case IIR_NOPEND:
 			return (1);
@@ -533,16 +534,18 @@ dcaintr(arg)
 #ifdef KGDB
 #define	RCVBYTE() \
 			code = dca->dca_data; \
-			if ((tp->t_state & TS_ISOPEN) == 0) { \
-				if (code == FRAME_END && \
-				    kgdb_dev == makedev(dcamajor, unit)) \
-					kgdb_connect(0); /* trap into kgdb */ \
-			} else \
-				(*linesw[tp->t_line].l_rint)(code, tp)
+			if (tp != NULL) { \
+				if ((tp->t_state & TS_ISOPEN) == 0) { \
+					if (code == FRAME_END && \
+					    kgdb_dev == makedev(dcamajor, unit)) \
+						kgdb_connect(0); /* trap into kgdb */ \
+				} else \
+					(*linesw[tp->t_line].l_rint)(code, tp) \
+			}
 #else
 #define	RCVBYTE() \
 			code = dca->dca_data; \
-			if ((tp->t_state & TS_ISOPEN) != 0) \
+			if (tp != NULL && (tp->t_state & TS_ISOPEN) != 0) \
 				(*linesw[tp->t_line].l_rint)(code, tp)
 #endif
 			RCVBYTE();
@@ -573,11 +576,13 @@ dcaintr(arg)
 			}
 			break;
 		case IIR_TXRDY:
-			tp->t_state &=~ (TS_BUSY|TS_FLUSH);
-			if (tp->t_line)
-				(*linesw[tp->t_line].l_start)(tp);
-			else
-				dcastart(tp);
+			if (tp != NULL) {
+				tp->t_state &=~ (TS_BUSY|TS_FLUSH);
+				if (tp->t_line)
+					(*linesw[tp->t_line].l_start)(tp);
+				else
+					dcastart(tp);
+			}
 			break;
 		case IIR_RLS:
 			dcaeint(sc, dca->dca_lsr);
@@ -587,7 +592,7 @@ dcaintr(arg)
 				return (1);
 			log(LOG_WARNING, "%s: weird interrupt: 0x%x\n",
 			    sc->sc_dev.dv_xname, code);
-			/* fall through */
+			/* FALLTHROUGH */
 		case IIR_MLSC:
 			dcamint(sc);
 			break;
@@ -605,22 +610,28 @@ dcaeint(sc, stat)
 	int c;
 
 	c = dca->dca_data;
-	if ((tp->t_state & TS_ISOPEN) == 0) {
-#ifdef KGDB
-		/* we don't care about parity errors */
-		if (((stat & (LSR_BI|LSR_FE|LSR_PE)) == LSR_PE) &&
-		    kgdb_dev == makedev(dcamajor, sc->sc_hd->hp_unit)
-		    && c == FRAME_END)
-			kgdb_connect(0); /* trap into kgdb */
-#endif
-		return;
-	}
+
 #if defined(DDB) && !defined(KGDB)
 	if ((sc->sc_flags & DCA_ISCONSOLE) && db_console && (stat & LSR_BI)) {
 		Debugger();
 		return;
 	}
 #endif
+
+	if (tp == NULL)
+		return;
+
+	if ((tp->t_state & TS_ISOPEN) == 0) {
+#ifdef KGDB
+		/* we don't care about parity errors */
+		if (((stat & (LSR_BI|LSR_FE|LSR_PE)) == LSR_PE) &&
+		    kgdb_dev == makedev(dcamajor, sc->sc_hd->hp_unit) &&
+		    c == FRAME_END)
+			kgdb_connect(0); /* trap into kgdb */
+#endif
+		return;
+	}
+
 	if (stat & (LSR_BI | LSR_FE))
 		c |= TTY_FE;
 	else if (stat & LSR_PE)
@@ -642,6 +653,10 @@ dcamint(sc)
 #ifdef DEBUG
 	dcamintcount[stat & 0xf]++;
 #endif
+
+	if (tp == NULL)
+		return;
+
 	if ((stat & MSR_DDCD) &&
 	    (sc->sc_flags & DCA_SOFTCAR) == 0) {
 		if (stat & MSR_DCD)
