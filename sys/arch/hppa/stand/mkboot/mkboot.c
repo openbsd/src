@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkboot.c,v 1.3 1998/07/27 15:41:08 mickey Exp $	*/
+/*	$OpenBSD: mkboot.c,v 1.4 1998/08/29 01:46:53 mickey Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: mkboot.c,v 1.3 1998/07/27 15:41:08 mickey Exp $";
+static char rcsid[] = "$OpenBSD: mkboot.c,v 1.4 1998/08/29 01:46:53 mickey Exp $";
 #endif /* not lint */
 #endif
 
@@ -281,7 +281,6 @@ putfile(from_file, to)
 	if (verbose)
 		warnx("wrote %d bytes of file \'%s\'", total, from_file);
 
-	bzero(buf, sizeof(buf));
 	total += sizeof(load);
 	/* insert the header */
 	lseek(to, -total, SEEK_CUR);
@@ -289,6 +288,7 @@ putfile(from_file, to)
 		err(1, to_file);
 	lseek(to, total - sizeof(load), SEEK_CUR);
 
+	bzero(buf, sizeof(buf));
 	/* pad to int */
 	n = sizeof(int) - total % sizeof(int);
 	if (total % sizeof(int)) {
