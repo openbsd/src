@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci.c,v 1.57 2005/03/30 14:02:03 dlg Exp $ */
+/*	$OpenBSD: ohci.c,v 1.58 2005/03/30 14:12:35 dlg Exp $ */
 /*	$NetBSD: ohci.c,v 1.139 2003/02/22 05:24:16 tsutsui Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
@@ -974,7 +974,7 @@ void
 ohci_power(int why, void *v)
 {
 	ohci_softc_t *sc = v;
-	u_int32_t ctl;
+	u_int32_t reg;
 	int s;
 
 #ifdef OHCI_DEBUG
@@ -987,40 +987,56 @@ ohci_power(int why, void *v)
 	case PWR_SUSPEND:
 	case PWR_STANDBY:
 		sc->sc_bus.use_polling++;
-		ctl = OREAD4(sc, OHCI_CONTROL) & ~OHCI_HCFS_MASK;
+		reg = OREAD4(sc, OHCI_CONTROL) & ~OHCI_HCFS_MASK;
 		if (sc->sc_control == 0) {
 			/*
 			 * Preserve register values, in case that APM BIOS
 			 * does not recover them.
 			 */
-			sc->sc_control = ctl;
+			sc->sc_control = reg;
 			sc->sc_intre = OREAD4(sc, OHCI_INTERRUPT_ENABLE);
+			sc->sc_ival = OHCI_GET_IVAL(OREAD4(sc,
+			    OHCI_FM_INTERVAL));
 		}
-		ctl |= OHCI_HCFS_SUSPEND;
-		OWRITE4(sc, OHCI_CONTROL, ctl);
+		reg |= OHCI_HCFS_SUSPEND;
+		OWRITE4(sc, OHCI_CONTROL, reg);
 		usb_delay_ms(&sc->sc_bus, USB_RESUME_WAIT);
 		sc->sc_bus.use_polling--;
 		break;
 	case PWR_RESUME:
 		sc->sc_bus.use_polling++;
+
 		/* Some broken BIOSes do not recover these values */
 		OWRITE4(sc, OHCI_HCCA, DMAADDR(&sc->sc_hccadma, 0));
 		OWRITE4(sc, OHCI_CONTROL_HEAD_ED, sc->sc_ctrl_head->physaddr);
 		OWRITE4(sc, OHCI_BULK_HEAD_ED, sc->sc_bulk_head->physaddr);
 		if (sc->sc_intre)
 			OWRITE4(sc, OHCI_INTERRUPT_ENABLE,
-				sc->sc_intre & (OHCI_ALL_INTRS | OHCI_MIE));
+			    sc->sc_intre & (OHCI_ALL_INTRS | OHCI_MIE));
 		if (sc->sc_control)
-			ctl = sc->sc_control;
+			reg = sc->sc_control;
 		else
-			ctl = OREAD4(sc, OHCI_CONTROL);
-		ctl |= OHCI_HCFS_RESUME;
-		OWRITE4(sc, OHCI_CONTROL, ctl);
+			reg = OREAD4(sc, OHCI_CONTROL);
+		reg |= OHCI_HCFS_RESUME;
+		OWRITE4(sc, OHCI_CONTROL, reg);
 		usb_delay_ms(&sc->sc_bus, USB_RESUME_DELAY);
-		ctl = (ctl & ~OHCI_HCFS_MASK) | OHCI_HCFS_OPERATIONAL;
-		OWRITE4(sc, OHCI_CONTROL, ctl);
+		reg = (reg & ~OHCI_HCFS_MASK) | OHCI_HCFS_OPERATIONAL;
+		OWRITE4(sc, OHCI_CONTROL, reg);
+
+		reg = (OREAD4(sc, OHCI_FM_REMAINING) & OHCI_FIT) ^ OHCI_FIT;
+		reg |= OHCI_FSMPS(sc->sc_ival) | sc->sc_ival;
+		OWRITE4(sc, OHCI_FM_INTERVAL, reg);
+		OWRITE4(sc, OHCI_PERIODIC_START, OHCI_PERIODIC(sc->sc_ival));
+
+		/* Fiddle the No OverCurrent Protection to avoid a chip bug */
+		reg = OREAD4(sc, OHCI_RH_DESCRIPTOR_A);
+		OWRITE4(sc, OHCI_RH_DESCRIPTOR_A, reg | OHCI_NOCP);
+		OWRITE4(sc, OHCI_RH_STATUS, OHCI_LPSC); /* Enable port power */
+		usb_delay_ms(&sc->sc_bus, OHCI_ENABLE_POWER_DELAY);
+		OWRITE4(sc, OHCI_RH_DESCRIPTOR_A, reg);
+
 		usb_delay_ms(&sc->sc_bus, USB_RESUME_RECOVERY);
-		sc->sc_control = sc->sc_intre = 0;
+		sc->sc_control = sc->sc_intre = sc->sc_ival = 0;
 		sc->sc_bus.use_polling--;
 		break;
 #if defined(__NetBSD__)
