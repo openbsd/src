@@ -437,8 +437,8 @@ cpu_exit(p)
 		}
 		free((void *)fs, M_SUBPROC);
 	}
-	vmspace_free(p->p_vmspace);
-	switchexit(kernel_map, p->p_addr, USPACE);
+
+	switchexit(p);
 	/* NOTREACHED */
 }
 

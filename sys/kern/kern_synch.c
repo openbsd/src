@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.24 2000/04/19 09:58:20 art Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.25 2000/06/05 11:02:51 art Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*-
@@ -754,6 +754,7 @@ setrunnable(p)
 	case 0:
 	case SRUN:
 	case SZOMB:
+	case SDEAD:
 	default:
 		panic("setrunnable");
 	case SSTOP:

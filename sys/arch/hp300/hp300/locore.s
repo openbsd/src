@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.21 1998/09/06 20:09:59 millert Exp $	*/
+/*	$OpenBSD: locore.s,v 1.22 2000/06/05 11:02:57 art Exp $	*/
 /*	$NetBSD: locore.s,v 1.79 1997/09/12 08:41:55 mycroft Exp $	*/
 
 /*
@@ -1221,12 +1221,10 @@ ENTRY(switch_exit)
 	movl	#_ASM_LABEL(nullpcb),_C_LABEL(curpcb)
 	lea	_ASM_LABEL(tmpstk),sp	| goto a tmp stack
 
-	/* Free old process's resources. */
-	movl	#USPACE,sp@-		| size of u-area
-	movl	a0@(P_ADDR),sp@-	| address of process's u-area
-	movl	_C_LABEL(kernel_map),sp@- | map it was allocated in
-	jbsr	_C_LABEL(kmem_free)	| deallocate it
-	lea	sp@(12),sp		| pop args
+        /* Schedule the vmspace and stack to be freed. */
+	movl    a0,sp@-                 | exit2(p)
+	jbsr    _C_LABEL(exit2)
+	lea     sp@(4),sp               | pop args
 
 	jra	_C_LABEL(cpu_switch)
 

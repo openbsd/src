@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.20 2000/01/06 03:21:43 smurph Exp $ */
+/*	$OpenBSD: locore.s,v 1.21 2000/06/05 11:03:01 art Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -1316,12 +1316,10 @@ ENTRY(switch_exit)
 	movl	#nullpcb,_curpcb	| save state into garbage pcb
 	lea	tmpstk,sp		| goto a tmp stack
 
-	/* Free old process's resources. */
-	movl	#USPACE,sp@-		| size of u-area
-	movl	a0@(P_ADDR),sp@-	| address of process's u-area
-	movl	_kernel_map,sp@-	| map it was allocated in
-	jbsr	_kmem_free		| deallocate it
-	lea	sp@(12),sp		| pop args
+        /* Schedule the vmspace and stack to be freed. */
+	movl    a0,sp@-                 | exit2(p)
+	jbsr    _C_LABEL(exit2)
+	lea     sp@(4),sp               | pop args
 
 	jra	_cpu_switch
 

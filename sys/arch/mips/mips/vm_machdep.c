@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.7 1999/09/03 18:01:18 art Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.8 2000/06/05 11:03:00 art Exp $	*/
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
@@ -182,10 +182,8 @@ cpu_exit(p)
 	if (machFPCurProcPtr == p)
 		machFPCurProcPtr = (struct proc *)0;
 
-	vmspace_free(p->p_vmspace);
-
 	(void) splhigh();
-	kmem_free(kernel_map, (vm_offset_t)p->p_addr, ctob(UPAGES));
+	exit2(p);		/* XXX - probably very wrong */
 	switch_exit();
 	/* NOTREACHED */
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.17 1999/08/17 10:32:16 niklas Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.18 2000/06/05 11:02:54 art Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.61 1996/05/03 19:42:35 christos Exp $	*/
 
 /*-
@@ -206,27 +206,10 @@ void
 cpu_exit(p)
 	register struct proc *p;
 {
-#ifdef USER_LDT
-	struct pcb *pcb;
-#endif
-	struct vmspace *vm;
-
 #if NNPX > 0
 	/* If we were using the FPU, forget about it. */
 	if (npxproc == p)
 		npxproc = 0;
-#endif
-
-#ifdef USER_LDT
-	pcb = &p->p_addr->u_pcb;
-	if (pcb->pcb_flags & PCB_USER_LDT)
-		i386_user_cleanup(pcb);
-#endif
-
-	vm = p->p_vmspace;
-#if !defined(UVM)
-	if (vm->vm_refcnt == 1)
-		vm_map_remove(&vm->vm_map, VM_MIN_ADDRESS, VM_MAXUSER_ADDRESS);
 #endif
 
 #if defined(UVM)
@@ -235,6 +218,20 @@ cpu_exit(p)
 	cnt.v_swtch++;
 #endif
 	switch_exit(p);
+}
+
+void
+cpu_wait(p)
+	struct proc *p;
+{
+	struct pcb *pcb;
+
+	pcb = &p->p_addr->u_pcb;
+#ifdef USER_LDT
+	if (pcb->pcb_flags & PCB_USER_LDT)
+		i386_user_cleanup(pcb);
+#endif
+	tss_free(pcb);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.11 1999/09/27 19:13:24 smurph Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.12 2000/06/05 11:03:02 art Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -42,7 +42,7 @@
  *	from: Utah $Hdr: vm_machdep.c 1.21 91/04/06$
  *	from: @(#)vm_machdep.c	7.10 (Berkeley) 5/7/91
  *	vm_machdep.c,v 1.3 1993/07/07 07:09:32 cgd Exp
- *	$Id: vm_machdep.c,v 1.11 1999/09/27 19:13:24 smurph Exp $
+ *	$Id: vm_machdep.c,v 1.12 2000/06/05 11:03:02 art Exp $
  */
 
 #include <sys/param.h>
@@ -175,10 +175,9 @@ void
 cpu_exit(struct proc *p)
 {
 	extern volatile void switch_exit();
-	vmspace_free(p->p_vmspace);
 
 	(void) splimp();
-	kmem_free(kernel_map, (vm_offset_t)p->p_addr, ctob(UPAGES));
+	exit2(p);		/* XXX - can't be right! */
 	switch_exit(p);
 	/* NOTREACHED */
 }

@@ -3087,8 +3087,6 @@ ENTRY(write_user_windows)
  */
 ENTRY(switchexit)
 	mov	%o0, %g2		! save the
-	mov	%o1, %g3		! ... three parameters
-	mov	%o2, %g4		! ... to kmem_free
 
 	/*
 	 * Change pcb to idle u. area, i.e., set %sp to top of stack
@@ -3119,10 +3117,8 @@ ENTRY(switchexit)
 	SET_SP_REDZONE(%l6, %l5)
 #endif
 	wr	%g0, PSR_S|PSR_ET, %psr	! and then enable traps
-	mov	%g2, %o0		! now ready to call kmem_free
-	mov	%g3, %o1
-	call	_kmem_free
-	 mov	%g4, %o2
+	call	_exit2
+	 mov	%g2, %o0
 
 	/*
 	 * Now fall through to `the last switch'.  %g6 was set to

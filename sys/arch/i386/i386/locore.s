@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.50 2000/05/01 00:43:41 mickey Exp $	*/
+/*	$OpenBSD: locore.s,v 1.51 2000/06/05 11:02:54 art Exp $	*/
 /*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
 
 /*-
@@ -1943,24 +1943,12 @@ ENTRY(switch_exit)
 	/* Interrupts are okay again. */
 	sti
 
-	/* Thoroughly nuke the old process's resources. */
-	pushl	P_ADDR(%edi)
-	call	_tss_free
-	pushl	P_VMSPACE(%edi)
-#if defined(UVM)
-	call	_C_LABEL(uvmspace_free)
-#else
-	call	_vmspace_free
-#endif
-	pushl	$USPACE
-	pushl	P_ADDR(%edi)
-	pushl	_kernel_map
-#if defined(UVM)
-	call	_C_LABEL(uvm_km_free)
-#else
-	call	_kmem_free
-#endif
-	addl	$20,%esp
+	/*
+	 * Schedule the dead process's vmspace and stack to be freed.
+	 */
+	pushl   %edi			/* exit2(p) */
+	call    _C_LABEL(exit2)
+	addl    $4,%esp
 
 	/* Jump into cpu_switch() with the right state. */
 	movl	%ebx,%esi

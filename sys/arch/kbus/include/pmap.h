@@ -294,7 +294,8 @@ void pmap_bootstrap __P((vm_offset_t firstaddr));
 void pmap_disp_va __P((pmap_t pmap, vm_offset_t va));
 vm_offset_t pmap_map __P((vm_offset_t, vm_offset_t, vm_offset_t, int));
 struct user;
-void switchexit __P((vm_map_t, struct user *, int));
+struct proc;
+void switchexit __P((struct proc *));
 
 #endif	/* _KERNEL */
 #endif /* !_LOCORE */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.13 2000/05/28 03:55:21 art Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.14 2000/06/05 11:02:56 art Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.30 1997/05/19 10:14:50 veego Exp $	*/
 
 /*
@@ -151,12 +151,7 @@ void
 cpu_exit(p)
 	struct proc *p;
 {
-#if defined(UVM)
-	uvmspace_free(p->p_vmspace);
-#else
-	vmspace_free(p->p_vmspace);
-#endif
-	
+
 	(void)splhigh();
 #if defined(UVM)
 	uvmexp.swtch++;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.39 2000/03/23 17:20:23 art Exp $	*/
+/*	$OpenBSD: tty.c,v 1.40 2000/06/05 11:02:51 art Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -2034,7 +2034,7 @@ ttyinfo(tp)
 		tmp = (pick->p_pctcpu * 10000 + FSCALE / 2) >> FSHIFT;
 		ttyprintf(tp, "%d%% %ldk\n",
 		    tmp / 100,
-		    pick->p_stat == SIDL || pick->p_stat == SZOMB ? 0 :
+		    pick->p_stat == SIDL || P_ZOMBIE(pick) ? 0 :
 			vm_resident_count(pick->p_vmspace));
 	}
 	tp->t_rocount = 0;	/* so pending input will be retyped if BS */
@@ -2087,7 +2087,7 @@ proc_compare(p1, p2)
 	/*
  	 * weed out zombies
 	 */
-	switch (TESTAB(p1->p_stat == SZOMB, p2->p_stat == SZOMB)) {
+	switch (TESTAB(P_ZOMBIE(p1), P_ZOMBIE(p2))) {
 	case ONLYA:
 		return (1);
 	case ONLYB:

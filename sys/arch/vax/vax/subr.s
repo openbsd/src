@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr.s,v 1.7 2000/04/27 01:10:13 bjc Exp $     */
+/*	$OpenBSD: subr.s,v 1.8 2000/06/05 11:03:05 art Exp $     */
 /*	$NetBSD: subr.s,v 1.32 1999/03/25 00:41:48 mrg Exp $	   */
 
 /*
@@ -301,8 +301,8 @@ ENTRY(cpu_exit,0)
 	mtpr	$0x18,$PR_IPL	# Block almost everything
 	addl3	$512,_scratch,sp # Change stack, and schedule it to be freed
 
-	pushl	P_VMSPACE(r6)		
-	calls	$1,_uvmspace_free	
+	pushl	r6		
+	calls	$1,_exit2
 
 	clrl	r0		# No process to switch from
 	bicl3	$0xc0000000,_scratch,r1

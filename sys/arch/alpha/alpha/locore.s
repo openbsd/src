@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.11 1999/11/13 21:33:44 deraadt Exp $	*/
+/*	$OpenBSD: locore.s,v 1.12 2000/06/05 11:02:54 art Exp $	*/
 /*	$NetBSD: locore.s,v 1.27 1996/12/03 19:54:16 cgd Exp $	*/
 
 /*
@@ -833,11 +833,9 @@ LEAF(switch_exit, 1)
 	 * the saved regs.
 	 */
 
-	/* blow away the old user struct */
-	ldq	a0, kernel_map
-	ldq	a1, P_ADDR(s2)
-	ldiq	a2, (UPAGES * NBPG)
-	CALL(kmem_free)
+	/* Schedule the vmspace and stack to be freed. */
+	mov     s2, a0
+	CALL(exit2)
 
 	/* and jump into the middle of cpu_switch. */
 #ifdef NEW_PMAP

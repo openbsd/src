@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.11 2000/03/02 23:02:15 todd Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.12 2000/06/05 11:03:04 art Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.35 1996/04/26 18:38:06 gwr Exp $	*/
 
 /*
@@ -197,8 +197,6 @@ void
 cpu_exit(p)
 	struct proc *p;
 {
-
-	vmspace_free(p->p_vmspace);
 
 	(void) splimp();
 	cnt.v_swtch++;

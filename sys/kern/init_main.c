@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.52 2000/03/23 16:54:44 art Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.53 2000/06/05 11:02:50 art Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -140,6 +140,7 @@ void	check_console __P((struct proc *));
 void	start_init __P((void *));
 void	start_pagedaemon __P((void *));
 void	start_update __P((void *));
+void	start_reaper __P((void *));
 
 #ifdef cpu_set_init_frame
 void *initframep;				/* XXX should go away */
@@ -433,7 +434,11 @@ main(framep)
 	if (kthread_create(start_pagedaemon, NULL, NULL, "pagedaemon"))
 		panic("fork pagedaemon");
 
-	/* Create process 3, the update daemon kernel thread. */
+	/* Create process 3, the reaper daemon kernel thread. */
+	if (kthread_create(start_reaper, NULL, NULL, "reaper"))
+		panic("fork reaper");
+
+	/* Create process 4, the update daemon kernel thread. */
 	if (kthread_create(start_update, NULL, NULL, "update")) {
 #ifdef DIAGNOSTIC
 		panic("fork update");
@@ -655,5 +660,13 @@ start_update(arg)
 	void *arg;
 {
 	sched_sync(curproc);
+	/* NOTREACHED */
+}
+
+void
+start_reaper(arg)
+	void *arg;
+{
+	reaper();
 	/* NOTREACHED */
 }

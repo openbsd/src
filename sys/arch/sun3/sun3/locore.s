@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.18 1997/04/05 20:22:01 kstailey Exp $	*/
+/*	$OpenBSD: locore.s,v 1.19 2000/06/05 11:03:04 art Exp $	*/
 /*	$NetBSD: locore.s,v 1.40 1996/11/06 20:19:54 cgd Exp $	*/
 
 /*
@@ -935,12 +935,10 @@ ENTRY(switch_exit)
 	lea	tmpstk,sp		| goto a tmp stack
 	movl	a0,sp@-			| pass proc ptr down
 
-	/* Free old process's u-area. */
-	movl	#USPACE,sp@-		| size of u-area
-	movl	a0@(P_ADDR),sp@-	| address of process's u-area
-	movl	_kernel_map,sp@-	| map it was allocated in
-	jbsr	_kmem_free		| deallocate it
-	lea	sp@(12),sp		| pop args
+        /* Schedule the vmspace and stack to be freed. */
+	movl    a0,sp@-                 | exit2(p)
+	jbsr    _C_LABEL(exit2)
+	lea     sp@(4),sp               | pop args
 
 	jra	_cpu_switch
 

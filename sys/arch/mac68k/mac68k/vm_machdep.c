@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.15 1999/10/10 18:29:22 art Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.16 2000/06/05 11:03:00 art Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.21 1996/09/16 18:00:31 scottr Exp $	*/
 
 /*
@@ -153,7 +153,6 @@ volatile void
 cpu_exit(p)
 	struct proc *p;
 {
-	vmspace_free(p->p_vmspace);
 
 	(void) splhigh();
 	cnt.v_swtch++;

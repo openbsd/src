@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.11 2000/01/16 22:52:22 rahnds Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.12 2000/06/05 11:03:04 art Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.1 1996/09/30 16:34:57 ws Exp $	*/
 
 /*
@@ -180,13 +180,8 @@ cpu_exit(p)
 	if (p == fpuproc)	/* release the fpu */
 		fpuproc = 0;
 	
-#ifdef UVM
-	uvmspace_free(p->p_vmspace);
-#else
-	vmspace_free(p->p_vmspace);
-#endif
 	(void)splhigh();
-	switchexit(kernel_map, p->p_addr, USPACE);
+	switchexit(p);
 }
 
 /*

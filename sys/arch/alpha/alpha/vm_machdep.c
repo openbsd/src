@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.12 1999/09/14 11:41:18 kstailey Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.13 2000/06/05 11:02:55 art Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.21 1996/11/13 21:13:15 cgd Exp $	*/
 
 /*
@@ -115,8 +115,6 @@ cpu_exit(p)
 
 	if (p == fpcurproc)
 		fpcurproc = NULL;
-
-	vmspace_free(p->p_vmspace);
 
 	(void) splhigh();
 	switch_exit(p);

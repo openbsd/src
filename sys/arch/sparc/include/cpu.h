@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.9 2000/05/18 13:31:12 jason Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.10 2000/06/05 11:02:52 art Exp $	*/
 /*	$NetBSD: cpu.h,v 1.24 1997/03/15 22:25:15 pk Exp $ */
 
 /*
@@ -75,7 +75,7 @@
  */
 #define	cpu_swapin(p)	/* nothing */
 #define	cpu_swapout(p)	/* nothing */
-#define	cpu_wait(p)	/* nothing */
+#define cpu_wait(p)	/* nothing */
 
 /*
  * Arguments to hardclock, softclock and gatherstats encapsulate the
