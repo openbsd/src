@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc64,v 1.13 2001/09/06 11:01:19 art Exp $
+#	$OpenBSD: files.sparc64,v 1.14 2001/09/08 22:33:51 jason Exp $
 #	$NetBSD: files.sparc64,v 1.50 2001/08/10 20:53:50 eeh Exp $
 
 # maxpartitions must be first item in files.${ARCH}
@@ -105,15 +105,15 @@ file dev/sun/sunms.c			ms needs-flag
 file	dev/cons.c
 file	arch/sparc64/dev/consinit.c
 
-file	arch/sparc/fpu/fpu.c
-file	arch/sparc/fpu/fpu_add.c
-file	arch/sparc/fpu/fpu_compare.c
-file	arch/sparc/fpu/fpu_div.c
-file	arch/sparc/fpu/fpu_explode.c
-file	arch/sparc/fpu/fpu_implode.c
-file	arch/sparc/fpu/fpu_mul.c
-file	arch/sparc/fpu/fpu_sqrt.c
-file	arch/sparc/fpu/fpu_subr.c
+file	arch/sparc64/fpu/fpu.c
+file	arch/sparc64/fpu/fpu_add.c
+file	arch/sparc64/fpu/fpu_compare.c
+file	arch/sparc64/fpu/fpu_div.c
+file	arch/sparc64/fpu/fpu_explode.c
+file	arch/sparc64/fpu/fpu_implode.c
+file	arch/sparc64/fpu/fpu_mul.c
+file	arch/sparc64/fpu/fpu_sqrt.c
+file	arch/sparc64/fpu/fpu_subr.c
 
 # N.B.: optimizer breaks pmap.c and/or cache.c somehow -- have not
 # identified the exact problem yet.  NOOPT_C suffices for now.
