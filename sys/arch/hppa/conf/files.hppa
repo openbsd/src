@@ -1,4 +1,4 @@
-#	$OpenBSD: files.hppa,v 1.4 1998/11/04 17:06:05 mickey Exp $
+#	$OpenBSD: files.hppa,v 1.5 1998/11/30 21:05:03 mickey Exp $
 #
 # hppa-specific configuration info
 
@@ -29,16 +29,30 @@ include "dev/wscons/files.wscons"
 #
 # Machine-independent SCSI drivers
 #
-
 include "scsi/files.scsi"
 major	{ sd = 4 }
 major	{ st = 5 }
 major	{ cd = 6 }
 
 #
+# MI ATAPI drivers
 #
-#
+include "dev/atapi/files.atapi"
 
+#
+# ISA Bus support
+#
+include "dev/isa/files.isa"
+include "dev/isa/files.isapnp"
+
+#
+# EISA Bus support
+#
+include "dev/eisa/files.eisa"
+
+#
+# General System Connect Bus
+#
 define	gscbus	{ }
 
 #
@@ -53,15 +67,14 @@ file	arch/hppa/hppa/mainbus.c	mainbus
 device	pdc
 attach	pdc at mainbus
 file	arch/hppa/dev/pdc.c		pdc
-file	arch/hppa/dev/pdcall.c		pdc
+
+device	mem
+attach	mem at mainbus
+file	arch/hppa/dev/mem.c		mem
 
 device	cpu
 attach	cpu at mainbus
 file	arch/hppa/dev/cpu.c		cpu
-
-device	led
-attach	led at mainbus
-file	arch/hppa/dev/led.c		led
 
 device	lasi: gscbus
 attach	lasi at mainbus
@@ -81,7 +94,7 @@ file	arch/hppa/dev/eba.c		eba
 
 device	sti: raster, wsconsdev
 attach	sti at mainbus
-file	arch/hppa/dev/sti.c		sti needs-flag
+file	arch/hppa/dev/sti.c		sti
 
 ###
 
@@ -114,14 +127,18 @@ major	{ ft = 8 }
 attach	fdc at gsc with fdc_gsc
 file	arch/hppa/gsc/fdc_gsc.c		fdc
 
-device	ie: ether
+#device	ie: ether
 attach	ie at gsc with ie_gsc
-file	arch/hppa/gsc/if_ie_gsc.c	ie
+file	arch/hppa/gsc/if_ie_gsc.c	ie_gsc
 file	dev/ic/i82596.c			ie
 
 device	siop: ncr53c7xx, scsi
 attach	siop at gsc
 file	arch/hppa/gsc/siop_gsc.c	siop
+
+device	hil: tty
+attach	hil at gsc
+file	arch/hppa/gsc/hil.c		hil
 
 # these we don't know yet
 #device	ciolan: ether
@@ -132,10 +149,9 @@ file	arch/hppa/gsc/siop_gsc.c	siop
 #attach	medusa at gsc
 #file	arch/hppa/gsc/medusa.c		medusa
 
-#
-# EISA Bus support
-#
-include "dev/eisa/files.eisa"
+#device	myri
+#attach	myri at gsc
+#file	arch/hppa/gsc/myri.c		myri
 
 #
 # HP-UX binary compatibility
@@ -156,7 +172,6 @@ file	arch/hppa/hppa/db_interface.c		ddb
 file	arch/hppa/hppa/db_disasm.c		ddb
 file	arch/hppa/hppa/disksubr.c		disk
 file	arch/hppa/hppa/machdep.c
-file	arch/hppa/hppa/mem.c
 file	arch/hppa/hppa/movc.S
 file	arch/hppa/hppa/cswtch.S
 file	arch/hppa/hppa/syscall.S
@@ -165,7 +180,6 @@ file	arch/hppa/hppa/process_machdep.c
 file	arch/hppa/hppa/sys_machdep.c
 file	arch/hppa/hppa/trap.c
 file	arch/hppa/hppa/vm_machdep.c
-file	arch/hppa/dev/dma.c
 file	arch/hppa/dev/clock.c
 file	netinet/in_cksum.c			inet
 
