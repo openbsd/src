@@ -1,4 +1,4 @@
-/* $OpenBSD: wscons_callbacks.h,v 1.2 2000/08/01 13:51:17 mickey Exp $ */
+/* $OpenBSD: wscons_callbacks.h,v 1.3 2001/02/10 19:42:06 mickey Exp $ */
 /* $NetBSD: wscons_callbacks.h,v 1.12 2000/03/06 21:37:16 thorpej Exp $ */
 
 /*
@@ -52,6 +52,8 @@ void	wsdisplay_set_cons_kbd __P((int (*get)(dev_t),
 				    void (*poll)(dev_t, int),
 				    void (*bell)(dev_t, u_int, u_int, u_int)));
 void	wsdisplay_unset_cons_kbd __P((void));
+struct wsdisplay_param;
+int	wsdisplay_param __P((struct device*, u_long, struct wsdisplay_param*));
 
 /*
  * Calls to the keyboard interface from the glue code.

@@ -1,4 +1,4 @@
-/* $OpenBSD: wskbd.c,v 1.7 2001/02/08 02:47:12 aaron Exp $ */
+/* $OpenBSD: wskbd.c,v 1.8 2001/02/10 19:42:06 mickey Exp $ */
 /* $NetBSD: wskbd.c,v 1.38 2000/03/23 07:01:47 thorpej Exp $ */
 
 /*
@@ -215,10 +215,11 @@ int	wskbd_set_display __P((struct device *, struct wsmux_softc *));
 
 inline void update_leds __P((struct wskbd_internal *));
 inline void update_modifier __P((struct wskbd_internal *, u_int, int, int));
-int internal_command __P((struct wskbd_softc *, u_int *, keysym_t));
+int internal_command __P((struct wskbd_softc *, u_int *, keysym_t, keysym_t));
 int wskbd_translate __P((struct wskbd_internal *, u_int, int));
 int wskbd_enable __P((struct wskbd_softc *, int));
 #if NWSDISPLAY > 0
+void change_displayparam __P((struct wskbd_softc *, int, int, int));
 void wskbd_holdscreen __P((struct wskbd_softc *, int));
 #endif
 
@@ -1285,15 +1286,44 @@ update_modifier(id, type, toggle, mask)
 	}
 }
 
+#if NWSDISPLAY > 0
+void
+change_displayparam(sc, param, updown, wraparound)
+	struct wskbd_softc *sc;
+	int param, updown, wraparound;
+{
+	int res;
+	struct wsdisplay_param dp;
+
+	if (sc->sc_displaydv == NULL)
+		return;
+
+	dp.param = param;
+	res = wsdisplay_param(sc->sc_displaydv, WSDISPLAYIO_GETPARAM, &dp);
+
+	if (res == EINVAL)
+		return; /* no such parameter */
+
+	dp.curval += updown;
+	if (dp.max < dp.curval)
+		dp.curval = wraparound ? dp.min : dp.max;
+	else
+	if (dp.curval < dp.min)
+		dp.curval = wraparound ? dp.max : dp.min;
+	wsdisplay_param(sc->sc_displaydv, WSDISPLAYIO_SETPARAM, &dp);
+}
+#endif
+
 int
-internal_command(sc, type, ksym)
+internal_command(sc, type, ksym, ksym2)
 	struct wskbd_softc *sc;
 	u_int *type;
-	keysym_t ksym;
+	keysym_t ksym, ksym2;
 {
 	switch (ksym) {
 	case KS_Cmd:
 		update_modifier(sc->id, *type, 0, MOD_COMMAND);
+		ksym = ksym2;
 		break;
 
 	case KS_Cmd1:
@@ -1359,6 +1389,27 @@ internal_command(sc, type, ksym)
 	case KS_Cmd_ResetClose:
 		wsdisplay_reset(sc->sc_displaydv, WSDISPLAY_RESETCLOSE);
 		return (1);
+	case KS_Cmd_BacklightOn:
+	case KS_Cmd_BacklightOff:
+	case KS_Cmd_BacklightToggle:
+		change_displayparam(sc, WSDISPLAYIO_PARAM_BACKLIGHT,
+				    ksym == KS_Cmd_BacklightOff ? -1 : 1,
+				    ksym == KS_Cmd_BacklightToggle ? 1 : 0);
+		return (1);
+	case KS_Cmd_BrightnessUp:
+	case KS_Cmd_BrightnessDown:
+	case KS_Cmd_BrightnessRotate:
+		change_displayparam(sc, WSDISPLAYIO_PARAM_BRIGHTNESS,
+				    ksym == KS_Cmd_BrightnessDown ? -1 : 1,
+				    ksym == KS_Cmd_BrightnessRotate ? 1 : 0);
+		return (1);
+	case KS_Cmd_ContrastUp:
+	case KS_Cmd_ContrastDown:
+	case KS_Cmd_ContrastRotate:
+		change_displayparam(sc, WSDISPLAYIO_PARAM_CONTRAST,
+				    ksym == KS_Cmd_ContrastDown ? -1 : 1,
+				    ksym == KS_Cmd_ContrastRotate ? 1 : 0);
+		return (1);
 #endif
 	}
 	return (0);
@@ -1401,7 +1452,8 @@ wskbd_translate(id, type, value)
 
 	/* if this key has a command, process it first */
 	if (sc != NULL && kp->command != KS_voidSymbol)
-		iscommand = internal_command(sc, &type, kp->command);
+		iscommand = internal_command(sc, &type, kp->command,
+					     kp->group1[0]);
 
 	/* Now update modifiers */
 	switch (kp->group1[0]) {

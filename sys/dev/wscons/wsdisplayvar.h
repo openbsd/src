@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplayvar.h,v 1.6 2001/02/08 02:47:12 aaron Exp $ */
+/* $OpenBSD: wsdisplayvar.h,v 1.7 2001/02/10 19:42:06 mickey Exp $ */
 /* $NetBSD: wsdisplayvar.h,v 1.14.4.1 2000/06/30 16:27:53 simonb Exp $ */
 
 /*
@@ -112,6 +112,7 @@ struct wsdisplay_accessops {
 				    void (*) (void *, int, int), void *));
 	int	(*load_font) __P((void *, void *, struct wsdisplay_font *));
 	void	(*scrollback) __P((void *, void *, int));
+	void	(*pollc) __P((void *, int));
 };
 
 /*
@@ -198,7 +199,10 @@ int wsdisplay_cfg_ioctl __P((struct wsdisplay_softc *sc,
 /*
  * for general use
  */
+#define WSDISPLAY_NULLSCREEN	-1
 void wsdisplay_switchtoconsole __P((void));
+const struct wsscreen_descr *
+    wsdisplay_screentype_pick __P((const struct wsscreen_list *, const char *));
 
 /*
  * for use by wskbd

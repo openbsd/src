@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsksymdef.h,v 1.5 2001/01/19 18:14:40 deraadt Exp $	*/
+/*	$OpenBSD: wsksymdef.h,v 1.6 2001/02/10 19:42:06 mickey Exp $	*/
 /*	$NetBSD: wsksymdef.h,v 1.34.4.1 2000/07/07 09:49:54 hannken Exp $ */
 
 /*-
@@ -259,6 +259,11 @@
 #define	KS_thorn 		0xfe
 #define	KS_ydiaeresis 		0xff
 
+#define KS_Odoubleacute 	0x150
+#define KS_odoubleacute 	0x151
+#define KS_Udoubleacute 	0x170
+#define KS_udoubleacute 	0x171
+
 /*
  * Group Dead (dead accents)
  */
@@ -421,8 +426,17 @@
 #define KS_Cmd_Debugger		0xf420
 #define KS_Cmd_ResetEmul	0xf421
 #define KS_Cmd_ResetClose	0xf422
-#define KS_Cmd_ScrollBack	0xf423
-#define KS_Cmd_ScrollFwd	0xf424
+#define KS_Cmd_BacklightOn	0xf423
+#define KS_Cmd_BacklightOff	0xf424
+#define KS_Cmd_BacklightToggle	0xf425
+#define KS_Cmd_BrightnessUp	0xf426
+#define KS_Cmd_BrightnessDown	0xf427
+#define KS_Cmd_BrightnessRotate	0xf428
+#define KS_Cmd_ContrastUp	0xf429
+#define KS_Cmd_ContrastDown	0xf42a
+#define KS_Cmd_ContrastRotate	0xf42b
+#define KS_Cmd_ScrollBack	0xf42c
+#define KS_Cmd_ScrollFwd	0xf42d
 
 /*
  * Group 5 (internal)
@@ -474,6 +488,7 @@
 #define KB_SV			0x0900
 #define KB_NO			0x0a00
 #define KB_ES			0x0b00
+#define KB_HU			0x0c00
 
 #define KB_NODEAD		0x0001
 #define KB_DECLK		0x0002	/* DEC LKnnn layout */
@@ -482,6 +497,7 @@
 #define KB_DVORAK		0x0010	/* Dvorak layout */
 #define KB_METAESC		0x0020	/* generate ESC prefix on ALT-key */
 #define KB_IOPENER		0x0040	/* f1-f12 -> ESC,f1-f11 */
+#define KB_MACHDEP		0x0080	/* machine dependent */
 
 #define KB_ENCTAB \
 	{ KB_USER,	"user" }, \
@@ -494,7 +510,8 @@
 	{ KB_JP,	"jp" }, \
 	{ KB_SV,	"sv" }, \
 	{ KB_NO,	"no" }, \
-	{ KB_ES,	"es" }
+	{ KB_ES,	"es" }, \
+	{ KB_HU,	"hu" }
 
 #define KB_VARTAB \
 	{ KB_NODEAD,	"nodead" }, \
@@ -503,6 +520,7 @@
 	{ KB_SWAPCTRLCAPS, "swapctrlcaps" }, \
 	{ KB_DVORAK,	"dvorak" }, \
 	{ KB_METAESC,	"metaesc" }, \
-	{ KB_IOPENER,	"iopener" }
+	{ KB_IOPENER,	"iopener" }, \
+	{ KB_MACHDEP,	"machdep" }
 
 #endif /* !_DEV_WSCONS_WSKSYMDEF_H_ */

@@ -1,4 +1,4 @@
-/* $OpenBSD: wsconsio.h,v 1.4 2001/02/05 23:39:01 matthieu Exp $ */
+/* $OpenBSD: wsconsio.h,v 1.5 2001/02/10 19:42:06 mickey Exp $ */
 /* $NetBSD: wsconsio.h,v 1.31.2.1 2000/07/07 09:49:17 hannken Exp $ */
 
 /*
@@ -225,6 +225,7 @@ struct wsmouse_calibcoords {
 #define		WSDISPLAY_TYPE_VAX_MONO	21	/* DEC VS2K/VS3100 mono */
 #define		WSDISPLAY_TYPE_SB_P9100	22	/* Tadpole SPARCbook P9100 */
 #define		WSDISPLAY_TYPE_EGA	23	/* (generic) EGA */
+#define		WSDISPLAY_TYPE_DCPVR	24	/* Dreamcast PowerVR */
 
 /* Basic display information.  Not applicable to all display types. */
 struct wsdisplay_fbinfo {
@@ -303,6 +304,8 @@ struct wsdisplay_font {
 #define WSDISPLAY_FONTENC_ISO 0
 #define WSDISPLAY_FONTENC_IBM 1
 #define WSDISPLAY_FONTENC_PCVT 2
+#define WSDISPLAY_FONTENC_ISO7 3 /* greek */
+#define WSDISPLAY_FONTENC_SONY 4
 	int fontwidth, fontheight, stride;
 	int bitorder, byteorder;
 #define	WSDISPLAY_FONTORDER_KNOWN	0	/* i.e, no need to convert */
@@ -339,6 +342,18 @@ struct wsdisplay_kbddata {
 	int idx;
 };
 #define _O_WSDISPLAYIO_SETKEYBOARD _IOWR('W', 81, struct wsdisplay_kbddata)
+
+/* Misc control.  Not applicable to all display types. */
+struct wsdisplay_param {
+        int param;
+#define	WSDISPLAYIO_PARAM_BACKLIGHT	1
+#define	WSDISPLAYIO_PARAM_BRIGHTNESS	2
+#define	WSDISPLAYIO_PARAM_CONTRAST	3
+        int min, max, curval;
+        int reserved[4];
+};
+#define	WSDISPLAYIO_GETPARAM	_IOWR('W', 82, struct wsdisplay_param)
+#define	WSDISPLAYIO_SETPARAM	_IOWR('W', 83, struct wsdisplay_param)
 
 /* XXX NOT YET DEFINED */
 /* Mapping information retrieval. */

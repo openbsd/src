@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay.c,v 1.11 2001/02/09 18:50:50 aaron Exp $ */
+/* $OpenBSD: wsdisplay.c,v 1.12 2001/02/10 19:42:06 mickey Exp $ */
 /* $NetBSD: wsdisplay.c,v 1.37.4.1 2000/06/30 16:27:53 simonb Exp $ */
 
 /*
@@ -100,8 +100,6 @@ struct wsscreen *wsscreen_attach __P((struct wsdisplay_softc *, int,
 				      const struct wsscreen_descr *, void *,
 				      int, int, long));
 void wsscreen_detach __P((struct wsscreen *));
-static const struct wsscreen_descr *
-wsdisplay_screentype_pick __P((const struct wsscreen_list *, const char *));
 int wsdisplay_addscreen __P((struct wsdisplay_softc *, int, const char *, const char *));
 static void wsdisplay_shutdownhook __P((void *));
 static void wsdisplay_addscreen_print __P((struct wsdisplay_softc *, int, int));
@@ -120,7 +118,7 @@ struct wsdisplay_softc {
 	const struct wsscreen_list *sc_scrdata;
 
 	struct wsscreen *sc_scr[WSDISPLAY_MAXSCREEN];
-	int sc_focusidx;
+	int sc_focusidx;	/* available only if sc_focus isn't null */
 	struct wsscreen *sc_focus;
 
 	int	sc_isconsole;
@@ -300,7 +298,7 @@ wsscreen_detach(scr)
 	free(scr, M_DEVBUF);
 }
 
-static const struct wsscreen_descr *
+const struct wsscreen_descr *
 wsdisplay_screentype_pick(scrdata, name)
 	const struct wsscreen_list *scrdata;
 	const char *name;
@@ -935,6 +933,17 @@ wsdisplayioctl(dev, cmd, data, flag, p)
 }
 
 int
+wsdisplay_param(dev, cmd, dp)
+	struct device *dev;
+	u_long cmd;
+	struct wsdisplay_param *dp;
+{
+	struct wsdisplay_softc *sc = (struct wsdisplay_softc *)dev;
+	return ((*sc->sc_accessops->ioctl)(sc->sc_accesscookie, cmd,
+					   (caddr_t)dp, 0, NULL));
+}
+
+int
 wsdisplay_internal_ioctl(sc, scr, cmd, data, flag, p)
 	struct wsdisplay_softc *sc;
 	struct wsscreen *scr;
@@ -983,6 +992,10 @@ wsdisplay_internal_ioctl(sc, scr, cmd, data, flag, p)
 			    scr->scr_flags |= SCR_GRAPHICS;
 	    } else if (d == WSDISPLAYIO_MODE_EMUL)
 		    return (EINVAL);
+
+	    (void)(*sc->sc_accessops->ioctl)(sc->sc_accesscookie, cmd, data,
+		    flag, p);
+
 	    return (0);
 #undef d
 
@@ -1171,9 +1184,14 @@ wsdisplaystart(tp)
 {
 	struct wsdisplay_softc *sc;
 	struct wsscreen *scr;
-	int s, n;
+	int s, n, unit;
 	u_char *buf;
 		
+	unit = WSDISPLAYUNIT(tp->t_dev);
+	if (unit >= wsdisplay_cd.cd_ndevs ||
+	    (sc = wsdisplay_cd.cd_devs[unit]) == NULL)
+		return;
+
 	s = spltty();
 	if (tp->t_state & (TS_TIMEOUT | TS_BUSY | TS_TTSTOP)) {
 		splx(s);
@@ -1182,7 +1200,6 @@ wsdisplaystart(tp)
 	if (tp->t_outq.c_cc == 0 && tp->t_wsel.si_selpid == 0)
 		goto low;
 
-	sc = wsdisplay_cd.cd_devs[WSDISPLAYUNIT(tp->t_dev)];
 	scr = sc->sc_scr[WSDISPLAYSCREEN(tp->t_dev)];
 	if (scr->scr_hold_screen) {
 		tp->t_state |= TS_TIMEOUT;
@@ -1395,7 +1412,7 @@ wsdisplay_switch3(arg, error, waitok)
 	if (error) {
 		/* try to recover, avoid recursion */
 
-		if (sc->sc_oldscreen == -1) {
+		if (sc->sc_oldscreen == WSDISPLAY_NULLSCREEN) {
 			printf("wsdisplay_switch3: giving up\n");
 			sc->sc_focus = 0;
 #ifdef WSDISPLAY_COMPAT_RAWKBD
@@ -1406,7 +1423,7 @@ wsdisplay_switch3(arg, error, waitok)
 		}
 
 		sc->sc_screenwanted = sc->sc_oldscreen;
-		sc->sc_oldscreen = -1;
+		sc->sc_oldscreen = WSDISPLAY_NULLSCREEN;
 		return (wsdisplay_switch1(arg, 0, waitok));
 	}
 
@@ -1443,7 +1460,7 @@ wsdisplay_switch2(arg, error, waitok)
 	if (error) {
 		/* try to recover, avoid recursion */
 
-		if (sc->sc_oldscreen == -1) {
+		if (sc->sc_oldscreen == WSDISPLAY_NULLSCREEN) {
 			printf("wsdisplay_switch2: giving up\n");
 			sc->sc_focus = 0;
 			sc->sc_flags &= ~SC_SWITCHPENDING;
@@ -1451,7 +1468,7 @@ wsdisplay_switch2(arg, error, waitok)
 		}
 
 		sc->sc_screenwanted = sc->sc_oldscreen;
-		sc->sc_oldscreen = -1;
+		sc->sc_oldscreen = WSDISPLAY_NULLSCREEN;
 		return (wsdisplay_switch1(arg, 0, waitok));
 	}
 
@@ -1491,6 +1508,14 @@ wsdisplay_switch1(arg, error, waitok)
 	}
 
 	no = sc->sc_screenwanted;
+	if (no == WSDISPLAY_NULLSCREEN) {
+		sc->sc_flags &= ~SC_SWITCHPENDING;
+		if (!error) {
+			sc->sc_focus = 0;
+		}
+		wakeup(sc);
+		return (error);
+	}
 	if (no < 0 || no >= WSDISPLAY_MAXSCREEN)
 		panic("wsdisplay_switch1: invalid screen %d", no);
 	scr = sc->sc_scr[no];
@@ -1526,12 +1551,14 @@ wsdisplay_switch(dev, no, waitok)
 	int s, res = 0;
 	struct wsscreen *scr;
 
-	if (no < 0 || no >= WSDISPLAY_MAXSCREEN || !sc->sc_scr[no])
+	if (no != WSDISPLAY_NULLSCREEN &&
+	    (no < 0 || no >= WSDISPLAY_MAXSCREEN || !sc->sc_scr[no]))
 		return (ENXIO);
 
 	s = spltty();
 
-	if (sc->sc_focus && no == sc->sc_focusidx) {
+	if ((sc->sc_focus && no == sc->sc_focusidx) ||
+	    (sc->sc_focus == NULL && no == WSDISPLAY_NULLSCREEN)) {
 		splx(s);
 		return (0);
 	}
@@ -1548,7 +1575,7 @@ wsdisplay_switch(dev, no, waitok)
 
 	scr = sc->sc_focus;
 	if (!scr) {
-		sc->sc_oldscreen = -1;
+		sc->sc_oldscreen = WSDISPLAY_NULLSCREEN;
 		return (wsdisplay_switch1(sc, 0, waitok));
 	} else
 		sc->sc_oldscreen = sc->sc_focusidx;
@@ -1655,7 +1682,7 @@ wsdisplay_screenstate(sc, idx)
 	struct wsdisplay_softc *sc;
 	int idx;
 {
-	if (idx >= WSDISPLAY_MAXSCREEN)
+	if (idx < 0 || idx >= WSDISPLAY_MAXSCREEN)
 		return (EINVAL);
 	if (!sc->sc_scr[idx])
 		return (ENXIO);
@@ -1666,7 +1693,7 @@ int
 wsdisplay_getactivescreen(sc)
 	struct wsdisplay_softc *sc;
 {
-	return (sc->sc_focusidx);
+	return (sc->sc_focus ? sc->sc_focusidx : WSDISPLAY_NULLSCREEN);
 }
 
 int
@@ -1676,6 +1703,15 @@ wsscreen_switchwait(sc, no)
 {
 	struct wsscreen *scr;
 	int s, res = 0;
+
+	if (no == WSDISPLAY_NULLSCREEN) {
+		s = spltty();
+		while (sc->sc_focus && res == 0) {
+			res = tsleep(sc, PCATCH, "wswait", 0);
+		}
+		splx(s);
+		return (res);
+	}
 
 	if (no < 0 || no >= WSDISPLAY_MAXSCREEN)
 		return (ENXIO);
@@ -1762,9 +1798,19 @@ wsdisplay_pollc(dev, on)
 	dev_t dev;
 	int on;
 {
+	struct wsdisplay_softc *sc = NULL;
+	int unit = WSDISPLAYUNIT(dev);
+
+	if (unit < wsdisplay_cd.cd_ndevs)
+		sc = wsdisplay_cd.cd_devs[unit];
 
 	wsdisplay_cons_pollmode = on;
 
+	/* notify to fb drivers */
+	if (sc != NULL && sc->sc_accessops->pollc != NULL)
+		(*sc->sc_accessops->pollc)(sc->sc_accesscookie, on);
+
+	/* notify to kbd drivers */
 	if (wsdisplay_cons_kbd_pollc)
 		(*wsdisplay_cons_kbd_pollc)(dev, on);
 }
@@ -1798,9 +1844,16 @@ wsdisplay_unset_cons_kbd()
 void
 wsdisplay_switchtoconsole()
 {
-	if (wsdisplay_console_device != NULL)
-		wsdisplay_switch((struct device *)wsdisplay_console_device, 
-		    0, 0);
+	struct wsdisplay_softc *sc;
+	struct wsscreen *scr;
+
+	if (wsdisplay_console_device != NULL) {
+		sc = wsdisplay_console_device;
+		scr = sc->sc_scr[0];
+		(*sc->sc_accessops->show_screen)(sc->sc_accesscookie,
+						 scr->scr_dconf->emulcookie,
+						 0, NULL, NULL);
+}
 }
 
 void

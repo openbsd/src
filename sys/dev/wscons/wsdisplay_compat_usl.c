@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay_compat_usl.c,v 1.3 2000/08/01 13:51:18 mickey Exp $ */
+/* $OpenBSD: wsdisplay_compat_usl.c,v 1.4 2001/02/10 19:42:06 mickey Exp $ */
 /* $NetBSD: wsdisplay_compat_usl.c,v 1.12 2000/03/23 07:01:47 thorpej Exp $ */
 
 /*
@@ -322,9 +322,13 @@ wsdisplay_usl_ioctl1(sc, cmd, data, flag, p)
 		return (0);
 	    case VT_ACTIVATE:
 		idx = *(int *)data - 1;
+		if (idx < 0)
+			return (EINVAL);
 		return (wsdisplay_switch((struct device *)sc, idx, 1));
 	    case VT_WAITACTIVE:
 		idx = *(int *)data - 1;
+		if (idx < 0)
+			return (EINVAL);
 		return (wsscreen_switchwait(sc, idx));
 	    case VT_GETSTATE:
 #define ss ((struct vt_stat *)data)
@@ -369,11 +373,11 @@ wsdisplay_usl_ioctl2(sc, scr, cmd, data, flag, p)
 	int flag;
 	struct proc *p;
 {
-	int res;
-	struct usl_syncdata *sd;
-	int req, intarg;
-	struct wskbd_bell_data bd;
+	int intarg, res;
+	u_long req;
 	void *arg;
+	struct usl_syncdata *sd;
+	struct wskbd_bell_data bd;
 
 	switch (cmd) {
 	    case VT_SETMODE:

@@ -1,4 +1,4 @@
-/* $OpenBSD: wsemul_vt100.c,v 1.2 2000/08/01 13:51:18 mickey Exp $ */
+/* $OpenBSD: wsemul_vt100.c,v 1.3 2001/02/10 19:42:06 mickey Exp $ */
 /* $NetBSD: wsemul_vt100.c,v 1.13 2000/04/28 21:56:16 mycroft Exp $ */
 
 /*
@@ -162,7 +162,7 @@ wsemul_vt100_cnattach(type, cookie, ccol, crow, defattr)
 #define WS_KERNEL_FG WSCOL_WHITE
 #endif
 #ifndef WS_KERNEL_BG
-#define WS_KERNEL_BG WSCOL_BLACK
+#define WS_KERNEL_BG WSCOL_BLUE
 #endif
 #ifndef WS_KERNEL_COLATTR
 #define WS_KERNEL_COLATTR 0

@@ -1,4 +1,4 @@
-/* $OpenBSD: wsemul_vt100_chars.c,v 1.1 2000/05/16 23:49:11 mickey Exp $ */
+/* $OpenBSD: wsemul_vt100_chars.c,v 1.2 2001/02/10 19:42:06 mickey Exp $ */
 /* $NetBSD: wsemul_vt100_chars.c,v 1.4 1999/02/20 18:20:02 drochner Exp $ */
 
 /*
@@ -41,7 +41,7 @@
 #include <dev/wscons/wsemul_vt100var.h>
 #include <dev/wscons/unicode.h>
 
-static u_int16_t decspcgr2uni[128] = {
+static const u_int16_t decspcgr2uni[128] = {
 	0x0000, 0x0001, 0x0002, 0x0003, 0x0004, 0x0005, 0x0006, 0x0007,
 	0x0008, 0x0009, 0x000a, 0x000b, 0x000c, 0x000d, 0x000e, 0x000f,
 	0x0010, 0x0011, 0x0012, 0x0013, 0x0014, 0x0015, 0x0016, 0x0017,
@@ -60,7 +60,7 @@ static u_int16_t decspcgr2uni[128] = {
 	0x2502, 0x2264, 0x2265, 0x03c0, 0x2260, 0x00a3, 0x00b7, 0x007f,
 };
 
-static u_int16_t dectech2uni[128] = {
+static const u_int16_t dectech2uni[128] = {
 	0x0000, 0x0001, 0x0002, 0x0003, 0x0004, 0x0005, 0x0006, 0x0007,
 	0x0008, 0x0009, 0x000a, 0x000b, 0x000c, 0x000d, 0x000e, 0x000f,
 	0x0010, 0x0011, 0x0012, 0x0013, 0x0014, 0x0015, 0x0016, 0x0017,
@@ -97,11 +97,11 @@ vt100_initchartables(edp)
 	vt100_setnrc(edp, 0);
 }
 
-static int nrcovlpos[12] = {
+static const int nrcovlpos[12] = {
     0x23, 0x40, 0x5b, 0x5c, 0x5d, 0x5e,	/* #@[\]^ */
     0x5f, 0x60, 0x7b, 0x7c, 0x7d, 0x7e	/* _`{|}~ */
 };
-static struct {
+static const struct {
 	u_int16_t c[12];
 } nrctable[] = {
 	/* british */
