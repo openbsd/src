@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd_i386.c,v 1.12 1997/10/20 14:47:42 mickey Exp $	*/
+/*	$OpenBSD: cmd_i386.c,v 1.13 1997/10/20 14:56:09 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff, Tobias Weingartner
@@ -67,12 +67,13 @@ Xdiskinfo()
 {
 	int i;
 
-	printf("Disk\tBIOS#\tCylinders\tHeads\tSectors\n");
+	printf("Disk\tBIOS#\t    BSD#\tCylinders\tHeads\tSectors\n");
 	for(i = 0; bios_diskinfo[i].bios_number != -1 && i < 10; i++){
 		int d = bios_diskinfo[i].bios_number;
 
-		printf("%cd%d\t 0x%x\t %s%d   \t%d\t%d\n",
+		printf("%cd%d\t 0x%x\t0x%x\t %s%d   \t%d\t%d\n",
 			(d & 0x80)?'h':'f', (d & 0x80)?d - 128:d, d,
+			bios_diskinfo[i].bsd_dev,
 			(bios_diskinfo[i].bios_cylinders < 100)?"  ":" ",
 			bios_diskinfo[i].bios_cylinders,
 			bios_diskinfo[i].bios_heads,
@@ -119,7 +120,7 @@ Xboot()
 	printf("[%x,%d]\n", dev, part);
 
 	/* Read boot sector from device */
-	st = biosd_rw(F_READ, dev, 0, 0, 1, 1, buf);
+	st = biosd_io(F_READ, dev, 0, 0, 1, 1, buf);
 	if(st) goto bad;
 
 	/* Frob boot flag in buffer from HD */
@@ -147,19 +148,16 @@ int
 Xmemory()
 {
 	bios_memmap_t *tm = memory_map;
-	int count, total = 0;
+	int total = 0;
 
-	for(count = 0; tm[count].type != BIOS_MAP_END; count++){
-		printf("Region %d: type %u at 0x%lx for %luKB\n", count,
-			tm[count].type, (long)tm[count].addr, (long)tm[count].size/1024);
-
-		if(tm[count].type == BIOS_MAP_FREE)
-			total += tm[count].size;
+	printf ("Map:");
+	for(; tm->type != BIOS_MAP_END; tm++){
+		printf(" [%luK]@0x%lx", (long)tm->size, (long)tm->addr);
+		if(tm->type == BIOS_MAP_FREE)
+			total += tm->size;
 	}
 
-	printf("Low ram: %dKB  High ram: %dKB\n", cnvmem, extmem);
-	printf("Total free memory: %dKB\n", total/1024);
+	printf("\nTotal: %uK, Low: %uK, High: %uK\n", total, cnvmem, extmem);
 
 	return 0;
 }
-
