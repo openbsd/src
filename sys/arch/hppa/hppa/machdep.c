@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.115 2003/10/05 14:13:28 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.116 2003/10/15 18:54:55 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999-2002 Michael Shalayeff
@@ -279,7 +279,7 @@ void
 hppa_init(start)
 	paddr_t start;
 {
-	extern u_int cpu_hzticks;
+	extern u_long cpu_hzticks;
 	extern int kernel_text;
 	vaddr_t v, v1;
 	int error;
@@ -749,7 +749,8 @@ delay(us)
 void
 microtime(struct timeval *tv)
 {
-	u_int itmr;
+	extern u_long cpu_itmr;
+	u_long itmr;
 	int s;
 
 	s = splhigh();

@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.115 2003/10/05 14:13:28 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.116 2003/10/15 18:54:55 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -144,8 +144,12 @@ netisr
 	.word	0
 	.align	16
 
-	BSS(cpu_hzticks, 4)	/* itmr ticks in one hz */
-	BSS(cpu_itmr, 4)	/* itmr value at the most recent clk int */
+	.export cpu_hzticks, data
+cpu_hzticks			/* itmr ticks in one hz */
+	.word	0
+	.export cpu_itmr, data
+cpu_itmr			/* itmr value at the most recent clk int */
+	.word	0
 
 	BSS(pdc_stack, 4)	/* temp stack for PDC call */
 	BSS(emrg_stack, 4)	/* stack for HPMC/TOC/PWRF */

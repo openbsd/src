@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.18 2003/10/05 14:13:28 mickey Exp $	*/
+/*	$OpenBSD: clock.c,v 1.19 2003/10/15 18:54:55 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998,1999 Michael Shalayeff
@@ -55,11 +55,14 @@
 void
 cpu_initclocks()
 {
-	register_t __itmr;
-	__asm __volatile("mfctl %%cr16, %0" : "=r" (__itmr));
+	extern volatile u_long cpu_itmr;
+	extern u_long cpu_hzticks;
+	u_long __itmr;
+
+	mfctl(CR_ITMR, __itmr);
 	cpu_itmr = __itmr;
 	__itmr += cpu_hzticks;
-	__asm __volatile("mtctl %0, %%cr16" :: "r" (__itmr));
+	mtctl(__itmr, CR_ITMR);
 }
 
 /*
