@@ -1,4 +1,4 @@
-/*	$OpenBSD: emul.c,v 1.7 2003/07/12 05:01:42 jason Exp $	*/
+/*	$OpenBSD: emul.c,v 1.8 2003/07/12 06:27:38 jason Exp $	*/
 /*	$NetBSD: emul.c,v 1.8 2001/06/29 23:58:40 eeh Exp $	*/
 
 /*-
@@ -496,7 +496,7 @@ emul_qf(int32_t insv, struct proc *p, union sigval sv, struct trapframe *tf)
 
 	if (ins.i_op3.i_op3 == IOP3_STQF || ins.i_op3.i_op3 == IOP3_LDQF)
 		asi = ASI_PRIMARY;
-	else if (ins.i_loadstore.i_i)
+	else if (ins.i_int & 0x2000)
 		asi = (tf->tf_tstate & TSTATE_ASI) >> TSTATE_ASI_SHIFT;
 	else
 		asi = ins.i_asi.i_asi;
