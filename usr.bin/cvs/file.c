@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.19 2004/08/03 04:28:15 jfb Exp $	*/
+/*	$OpenBSD: file.c,v 1.20 2004/08/03 04:41:19 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -364,20 +364,13 @@ cvs_file_getdir(CVSFILE *cf, int flags)
 	char fbuf[2048], pbuf[MAXPATHLEN];
 	struct dirent *ent;
 	CVSFILE *cfp;
+	struct stat st;
 	struct cvs_dir *cdp;
 	struct cvs_flist dirs;
 
 	ndirs = 0;
 	TAILQ_INIT(&dirs);
 	cdp = cf->cf_ddat;
-
-	if (cvs_readrepo(cf->cf_path, pbuf, sizeof(pbuf)) == 0) {
-		cdp->cd_repo = strdup(pbuf);
-		if (cdp->cd_repo == NULL) {
-			free(cdp);
-			return (-1);
-		}
-	}
 
 	cdp->cd_root = cvsroot_get(cf->cf_path);
 	if (cdp->cd_root == NULL) {
@@ -388,7 +381,19 @@ cvs_file_getdir(CVSFILE *cf, int flags)
 	if (flags & CF_MKADMIN)
 		cvs_mkadmin(cf, 0755);
 
-	cdp->cd_ent = cvs_ent_open(cf->cf_path, O_RDONLY);
+	/* if the CVS administrative directory exists, load the info */
+	snprintf(pbuf, sizeof(pbuf), "%s/" CVS_PATH_CVSDIR, cf->cf_path);
+	if ((stat(pbuf, &st) == 0) && S_ISDIR(st.st_mode)) {
+		if (cvs_readrepo(cf->cf_path, pbuf, sizeof(pbuf)) == 0) {
+			cdp->cd_repo = strdup(pbuf);
+			if (cdp->cd_repo == NULL) {
+				free(cdp);
+				return (-1);
+			}
+		}
+
+		cdp->cd_ent = cvs_ent_open(cf->cf_path, O_RDONLY);
+	}
 
 	fd = open(cf->cf_path, O_RDONLY);
 	if (fd == -1) {
