@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.3 1997/05/30 23:35:50 kstailey Exp $	*/
+/*	$OpenBSD: extern.h,v 1.4 1997/06/02 21:33:27 kstailey Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -61,5 +61,6 @@ void	 sflag_print __P((void));
 int	 show_text __P((char *, char *, char *));
 PERSON **sort __P((void));
 void	 stimeprint __P((WHERE *));
+char	*vs __P((char *));
 void	 userlist __P((int, char **));
 void	 vputc __P((int));

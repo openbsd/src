@@ -1,4 +1,4 @@
-/*	$OpenBSD: sprint.c,v 1.3 1997/05/30 23:35:52 kstailey Exp $	*/
+/*	$OpenBSD: sprint.c,v 1.4 1997/06/02 21:33:27 kstailey Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -38,7 +38,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)sprint.c	5.8 (Berkeley) 12/4/90";*/
-static char rcsid[] = "$OpenBSD: sprint.c,v 1.3 1997/05/30 23:35:52 kstailey Exp $";
+static char rcsid[] = "$OpenBSD: sprint.c,v 1.4 1997/06/02 21:33:27 kstailey Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -85,8 +85,8 @@ sflag_print()
 		pn = list[cnt];
 		for (w = pn->whead; w != NULL; w = w->next) {
 			(void)printf("%-*.*s %-*.*s ", UT_NAMESIZE, UT_NAMESIZE,
-			    pn->name, MAXREALNAME, MAXREALNAME,
-			    pn->realname ? pn->realname : "");
+			    vs(pn->name), MAXREALNAME, MAXREALNAME,
+			    pn->realname ? vs(pn->realname) : "");
 			if (!w->loginat) {
 				(void)printf("  *     *  No logins   ");
 				goto office;
@@ -117,12 +117,13 @@ office:
 			putchar(' ');
 			if (oflag) {
 				if (pn->office)
-					(void)printf("%-10.10s", pn->office);
+					(void)printf("%-10.10s",
+					    vs(pn->office));
 				else if (pn->officephone)
 					(void)printf("%-10.10s", " ");
 				if (pn->officephone)
 					(void)printf(" %-.15s",
-						    prphone(pn->officephone));
+					    vs(prphone(pn->officephone)));
 			} else
 				(void)printf("%.*s", MAXHOSTNAME, w->host);
 			putchar('\n');

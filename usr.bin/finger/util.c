@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.5 1997/05/30 23:35:53 kstailey Exp $	*/
+/*	$OpenBSD: util.c,v 1.6 1997/06/02 21:33:28 kstailey Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -39,7 +39,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)util.c	5.14 (Berkeley) 1/17/91";*/
-static char rcsid[] = "$OpenBSD: util.c,v 1.5 1997/05/30 23:35:53 kstailey Exp $";
+static char rcsid[] = "$OpenBSD: util.c,v 1.6 1997/06/02 21:33:28 kstailey Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -47,6 +47,7 @@ static char rcsid[] = "$OpenBSD: util.c,v 1.5 1997/05/30 23:35:53 kstailey Exp $
 #include <sys/param.h>
 #include <sys/stat.h>
 #include <sys/file.h>
+#include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
@@ -54,6 +55,7 @@ static char rcsid[] = "$OpenBSD: util.c,v 1.5 1997/05/30 23:35:53 kstailey Exp $
 #include <paths.h>
 #include <errno.h>
 #include <unistd.h>
+#include <vis.h>
 #include "finger.h"
 #include "extern.h"
 
@@ -377,4 +379,25 @@ prphone(num)
 	*p++ = *num++;
 	*p = '\0';
 	return(pbuf);
+}
+
+/* Like strvis(), but use malloc() to get the space and return a pointer
+ * to the beginning of the converted string, not the end.
+ *
+ * Recycle the malloc()ed area on each call.  This leads to a leak which
+ * does not grow.
+ */
+char *
+vs(src)
+	char *src;
+{
+	static char *dst = NULL;
+
+	if (dst != NULL)
+		free(dst);
+	if ((dst = malloc((4 * strlen(src)) + 1)) == NULL)
+		err(1, "malloc failed");
+
+	strvis(dst, src, VIS_SAFE|VIS_NOSLASH);
+	return(dst);
 }
