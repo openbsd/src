@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypbind.c,v 1.7 1996/06/08 08:24:51 deraadt Exp $ */
+/*	$OpenBSD: ypbind.c,v 1.8 1996/06/10 05:48:51 deraadt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993, 1996 Theo de Raadt <deraadt@theos.com>
@@ -33,7 +33,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: ypbind.c,v 1.7 1996/06/08 08:24:51 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ypbind.c,v 1.8 1996/06/10 05:48:51 deraadt Exp $";
 #endif
 
 #include <sys/param.h>
@@ -249,7 +249,7 @@ ypbindprog_2(rqstp, transp)
 	register SVCXPRT *transp;
 {
 	union {
-		char ypbindproc_domain_2_arg[MAXHOSTNAMELEN];
+		domainname ypbindproc_domain_2_arg;
 		struct ypbind_setdom ypbindproc_setdom_2_arg;
 	} argument;
 	struct authunix_parms *creds;
