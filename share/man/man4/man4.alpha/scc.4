@@ -1,0 +1,75 @@
+.\"
+.\" Copyright (c) 1996 Jonathan Stone.
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"      This product includes software developed by Jonathan Stone.
+.\" 3. The name of the author may not be used to endorse or promote products
+.\"    derived from this software without specific prior written permission
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+.\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.\"	$OpenBSD: scc.4,v 1.1 1998/03/07 22:42:31 millert Exp $
+.\"
+.Dd March 7, 1998
+.Dt SCC 4 alpha
+.Os
+.Sh NAME
+.Nm scc
+.Nd
+Zilog serial communications interface
+.Sh SYNOPSIS
+.Cd "scc0 at ioasic? offset ?"
+.Cd "scc1 at ioasic? offset ?"
+.Sh DESCRIPTION
+The
+.Nm
+driver provies support for the Zilog 8530 Serial Communcations
+Controller (SCC) via the IOCTL asic on Turbochannel-based alphas
+(the DEC 3000 series).  Each scc device has two serial
+ports.
+.Pp
+Input and output for each line may set to one of following baud rates;
+50, 75, 110, 134.5, 150, 300, 600, 1200, 1800, 2400, 4800, 9600,
+19200, 38400, or 57600.
+Speeds up to 230400 are supported by the chip and the motherboard,
+but speeds  higher than 57600 do not work reliably without an external
+clock signal.
+.Sh FILES
+.Bl -tag -width Pa
+.It Pa /dev/ttyB0
+.It Pa /dev/ttyB1
+.El
+.Pp
+The mapping from units to serial-hardware outlets is idiosyncratic.
+.Sh HISTORY
+The
+.Nm
+driver first appeared in
+.Bx 4.4 .
+.Sh BUGS
+The IOCTL asic provides internal DMA channels that can be programmed
+to transfer  up to 4096 bytes of data into, or out, of an SCC without
+further software intervention.  This feature of the ioctl asic is not
+yet supported.
+.Pp
+The mapping from device-special files (major and minor number) to chip
+and port is arguably backwards.

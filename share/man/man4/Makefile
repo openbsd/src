@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.28 1997/11/24 07:31:38 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.29 1998/03/07 22:42:24 millert Exp $
 #	$NetBSD: Makefile,v 1.22.4.2 1996/07/18 00:51:10 jtc Exp $
 
 MAN=	atalk.4 audio.4 acd.4 ahc.4 bpf.4 ccd.4 cd.4 ch.4 clnp.4 cltp.4 ddb.4 \
@@ -15,7 +15,7 @@ MLINKS+=random.4 arandom.4
 MLINKS+=scsi.4 scsibus.4
 MLINKS+=tty.4 cua.4
 MLINKS+=vnd.4 svnd.4
-SUBDIR=	man4.amiga man4.arm32 man4.atari man4.hp300 man4.i386 man4.mac68k \
-	man4.pc532 man4.sparc man4.sun3 man4.vax
+SUBDIR=	man4.alpha man4.amiga man4.arm32 man4.atari man4.hp300 man4.i386 \
+	man4.mac68k man4.pc532 man4.sparc man4.sun3 man4.vax
 
 .include <bsd.prog.mk>
