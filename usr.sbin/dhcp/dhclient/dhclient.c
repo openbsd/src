@@ -307,10 +307,10 @@ static void usage (appname)
 	note("%s", message);
 	note("%s", copyright);
 	note("%s", arr);
-	note("");
+	note("%s", "");
 	note("%s", contrib);
 	note("%s", url);
-	note("");
+	note("%s", "");
 
 	warn("Usage: %s [-c1u] [-p <port>] [-lf lease-file]", appname);
 	error("       [-pf pidfile] [interface]");
@@ -1111,7 +1111,7 @@ void send_discover (ipp)
 		ip->client->packet.secs = htons (65535);
 	ip->client->secs = ip->client->packet.secs;
 
-	note ("DHCPDISCOVER on %s to %s port %d interval %ld",
+	note ("DHCPDISCOVER on %s to %s port %d interval %d",
 	      ip->name,
 	      inet_ntoa (sockaddr_broadcast.sin_addr),
 	      ntohs (sockaddr_broadcast.sin_port), ip->client->interval);

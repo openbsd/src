@@ -159,12 +159,12 @@ int main (argc, argv, envp)
 
 	if (!quiet) {
 		note ("%s %s", message, DHCP_VERSION);
-		note (copyright);
-		note (arr);
-		note ("");
-		note (contrib);
-		note (url);
-		note ("");
+		note ("%s", copyright);
+		note ("%s", arr);
+		note ("%s", "");
+		note ("%s", contrib);
+		note ("%s", url);
+		note ("%s", "");
 	} else
 		log_perror = 0;
 
@@ -344,10 +344,10 @@ static void usage (appname)
 	note (message);
 	note (copyright);
 	note (arr);
-	note ("");
+	note ("%s", "");
 	note (contrib);
 	note (url);
-	note ("");
+	note ("%s", "");
 
 	warn ("Usage: %s [-i] [-d] [-i if0] [...-i ifN] [-p <port>]", appname);
 	error ("      [-pf pidfilename] [server1 [... serverN]]");

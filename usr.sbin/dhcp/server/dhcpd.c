@@ -164,12 +164,12 @@ int main (argc, argv, envp)
 
 	if (!quiet) {
 		note ("%s %s", message, DHCP_VERSION);
-		note (copyright);
-		note (arr);
-		note ("");
-		note (contrib);
-		note (url);
-		note ("");
+		note ("%s", copyright);
+		note ("%s", arr);
+		note ("%s", "");
+		note ("%s", contrib);
+		note ("%s", url);
+		note ("%s", "");
 	} else
 		log_perror = 0;
 
@@ -287,13 +287,13 @@ int main (argc, argv, envp)
 static void usage (appname)
 	char *appname;
 {
-	note (message);
-	note (copyright);
-	note (arr);
-	note ("");
-	note (contrib);
-	note (url);
-	note ("");
+	note ("%s", message);
+	note ("%s", copyright);
+	note ("%s", arr);
+	note ("%s", "");
+	note ("%s", contrib);
+	note ("%s", url);
+	note ("%s", "");
 
 	warn ("Usage: %s [-p <UDP port #>] [-d] [-f] [-cf config-file]",
 	      appname);

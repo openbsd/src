@@ -422,8 +422,7 @@ void dhcprelease (packet)
 					     packet -> raw -> chaddr),
 			      packet -> raw -> giaddr.s_addr
 			      ? inet_ntoa (packet -> raw -> giaddr)
-			      : packet -> interface -> name,
-			      lease ? "" : "not ");
+			      : packet -> interface -> name);
 			
 			lease->releasing = 1;
 			add_timeout (cur_time + 1, lease_ping_timeout, lease);

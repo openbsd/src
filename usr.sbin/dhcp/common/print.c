@@ -118,7 +118,7 @@ void dump_packet (tp)
 	debug ("yiaddr = %s", inet_ntoa (tdp -> yiaddr));
 	debug ("siaddr = %s", inet_ntoa (tdp -> siaddr));
 	debug ("giaddr = %s", inet_ntoa (tdp -> giaddr));
-	debug ("chaddr = %02.2x:%02.2x:%02.2x:%02.2x:%02.2x:%02.2x",
+	debug ("chaddr = %02x:%02x:%02x:%02x:%02x:%02x",
 	       ((unsigned char *)(tdp -> chaddr)) [0],
 	       ((unsigned char *)(tdp -> chaddr)) [1],
 	       ((unsigned char *)(tdp -> chaddr)) [2],
@@ -139,7 +139,7 @@ void dump_packet (tp)
 					 tp -> options [i].len, 1, 1));
 		}
 	}
-	debug ("");
+	debug ("%s", "");
 }
 
 void dump_raw (buf, len)

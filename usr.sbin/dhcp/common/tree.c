@@ -270,7 +270,7 @@ static TIME tree_evaluate_recurse (bufix, bufp, bufcount, tree)
 		return t1;
 
 	      default:
-		warn ("Bad node id in tree: %d.");
+		warn ("Bad node id in tree: %d.", tree -> op);
 		t1 = MAX_TIME;
 		return t1;
 	}

@@ -494,11 +494,11 @@ void do_packet PROTO ((struct interface_info *,
 
 /* errwarn.c */
 extern int warnings_occurred;
-void error PROTO ((char *, ...));
-int warn PROTO ((char *, ...));
-int note PROTO ((char *, ...));
-int debug PROTO ((char *, ...));
-int parse_warn PROTO ((char *, ...));
+void error (char *, ...) __attribute__ ((__format__ (__printf__, 1, 2)));
+int warn (char *, ...) __attribute__ ((__format__ (__printf__, 1, 2)));
+int note (char *, ...) __attribute__ ((__format__ (__printf__, 1, 2)));
+int debug (char *, ...) __attribute__ ((__format__ (__printf__, 1, 2)));
+int parse_warn (char *, ...) __attribute__ ((__format__ (__printf__, 1, 2)));
 
 /* dhcpd.c */
 extern TIME cur_time;

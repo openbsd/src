@@ -383,7 +383,7 @@ int parse_option_list (cfile, list)
 				break;
 		}
 		if (i == 256) {
-			parse_warn ("%s: expected option name.");
+			parse_warn ("%s: unexpected option name.", val);
 			skip_to_semi (cfile);
 			return 0;
 		}
