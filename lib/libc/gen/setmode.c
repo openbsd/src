@@ -1,4 +1,4 @@
-/*	$OpenBSD: setmode.c,v 1.15 2004/07/02 13:58:06 otto Exp $	*/
+/*	$OpenBSD: setmode.c,v 1.16 2005/03/01 13:51:47 miod Exp $	*/
 /*	$NetBSD: setmode.c,v 1.15 1997/02/07 22:21:06 christos Exp $	*/
 
 /*
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)setmode.c	8.2 (Berkeley) 3/25/94";
 #else
-static char rcsid[] = "$OpenBSD: setmode.c,v 1.15 2004/07/02 13:58:06 otto Exp $";
+static char rcsid[] = "$OpenBSD: setmode.c,v 1.16 2005/03/01 13:51:47 miod Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -207,8 +207,8 @@ setmode(const char *p)
 		perml = strtoul(p, &ep, 8);
 		/* The test on perml will also catch overflow. */
 		if (*ep != '\0' || (perml & ~(STANDARD_BITS|S_ISTXT))) {
-			errno = ERANGE;
 			free(saveset);
+			errno = ERANGE;
 			return (NULL);
 		}
 		perm = (mode_t)perml;

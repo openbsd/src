@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: opendir.c,v 1.10 2004/05/18 02:05:52 jfb Exp $";
+static char rcsid[] = "$OpenBSD: opendir.c,v 1.11 2005/03/01 13:51:47 miod Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -82,8 +82,8 @@ __opendir2(const char *name, int flags)
 	if ((fd = open(name, O_RDONLY | O_NONBLOCK)) == -1)
 		return (NULL);
 	if (fstat(fd, &sb) || !S_ISDIR(sb.st_mode)) {
-		errno = ENOTDIR;
 		close(fd);
+		errno = ENOTDIR;
 		return (NULL);
 	}
 	if (fcntl(fd, F_SETFD, FD_CLOEXEC) == -1 ||
