@@ -1,5 +1,5 @@
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.11 2003/06/18 18:08:59 todd Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.12 2004/01/13 15:13:14 todd Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001,2002,2003 Todd T. Fries <todd@OpenBSD.org>
@@ -17,6 +17,10 @@ dnl ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 dnl OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 dnl
 dnl
+dnl *** mac68k specific defintions
+dnl
+__devitem(ttye, ttye*, ite bitmapped consoles)dnl
+dnl
 _TITLE(make)
 _DEV(all)
 _DEV(std)
@@ -31,7 +35,7 @@ _DEV(ch, 17)
 _DEV(vnd, 19, 8)
 _DEV(ccd, 20, 9)
 _TITLE(term)
-_DEV(mac_ttye)
+_DEV(ttye)
 _DEV(mac_tty0)
 _TITLE(pty)
 _DEV(tty, 4)
@@ -114,12 +118,12 @@ target(all, xy, 0, 1, 2, 3)dnl
 target(all, rd, 0)dnl
 target(all, cd, 0, 1)dnl
 target(all, ccd, 0, 1, 2, 3)dnl
+twrget(all, ttye, ttye, 0)dnl
 target(ramd, sd, 0, 1, 2, 3)dnl
 target(ramd, st, 0, 1)dnl
 target(ramd, rd, 0, 1)dnl
 target(ramd, adb)dnl
 target(ramd, asc, 0)dnl
 target(ramd, grf, 0, 1)dnl
-target(ramd, ttye, 0)dnl
 twrget(ramd, mac_tty0, tty0, 0, 1)dnl
 target(ramd, pty, 0)dnl

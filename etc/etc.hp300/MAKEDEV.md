@@ -1,5 +1,5 @@
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.13 2003/06/18 18:08:59 todd Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.14 2004/01/13 15:13:14 todd Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001,2002,2003 Todd T. Fries <todd@OpenBSD.org>
@@ -42,6 +42,7 @@ _mkdev(st_hp300, ct*|mt*|st*,
 	esac-})dnl
 __devitem(st_hp300, st*, Exabyte tape)dnl
 __devitem(grf, grf*, raw interface to HP300 graphics devices)dnl
+__devitem(ttye, ttye*, ite bitmapped consoles)dnl
 dnl
 dnl
 _TITLE(make)
@@ -209,6 +210,7 @@ target( all, dcm, 0, 1, 2, 3)dnl
 target( all, hd, 0, 1, 2)dnl
 target( all, ct, 0, 1)dnl
 target( all, ite, 0)dnl
+target( all, ttye, 0, 1, 2, 3, 4, 5, 6)dnl
 target(ramd, ct, 0, 1)dnl
 target(ramd, hd, 0, 1, 2)dnl
 target(ramd, sd, 0, 1, 2)dnl
