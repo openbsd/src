@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380sbc.c,v 1.2 1996/01/23 19:47:00 gwr Exp $	*/
+/*	$NetBSD: ncr5380sbc.c,v 1.3 1996/02/10 00:11:48 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 David Jones, Gordon W. Ross
@@ -119,9 +119,7 @@ static void	ncr5380_machine __P((struct ncr5380_softc *));
  * Debugging stuff
  *****************************************************************/
 
-#ifdef DDB
-int Debugger();
-#else
+#ifndef DDB
 /* This is used only in recoverable places. */
 #define Debugger() printf("Debug: ncr5380.c:%d\n", __LINE__)
 #endif
