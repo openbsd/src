@@ -229,4 +229,4 @@ table3:		.long	in_cksum1		# next mbuf
 		.long	in_cksum44		# checksum 2 bytes
 		.long	in_cksum45		# checksum 3 bytes
 
-warning:	.asciz	"in_cksum: out of data at %u\n"
+warning:	.asciz	"in_cksum: out of data by %u\n"
