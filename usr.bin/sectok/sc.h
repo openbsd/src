@@ -1,4 +1,4 @@
-/* $Id: sc.h,v 1.2 2001/07/02 20:15:07 rees Exp $ */
+/* $Id: sc.h,v 1.3 2001/07/16 21:02:22 rees Exp $ */
 
 /*
  * Smartcard commander.
@@ -35,7 +35,7 @@ if it has been or is hereafter advised of the possibility of
 such damages.
 */
 
-extern int port, fd, cla;
+extern int port, fd, cla, aut0_vfyd;
 extern FILE *cmdf;
 
 int dispatch(int ac, char *av[]);

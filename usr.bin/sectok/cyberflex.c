@@ -1,4 +1,4 @@
-/* $Id: cyberflex.c,v 1.3 2001/07/02 20:15:06 rees Exp $ */
+/* $Id: cyberflex.c,v 1.4 2001/07/16 21:02:21 rees Exp $ */
 
 /*
 copyright 1999, 2000
@@ -59,6 +59,8 @@ static unsigned char key_fid[] = {0x00, 0x11};
 static unsigned char DFLTATR[] = {0x81, 0x10, 0x06, 0x01};
 static unsigned char AUT0[] = {0xad, 0x9f, 0x61, 0xfe, 0xfa, 0x20, 0xce, 0x63};
 
+int aut0_vfyd;
+
 /* default signed applet key of Cyberflex Access */
 static des_cblock app_key = {0x6A, 0x21, 0x36, 0xF5, 0xD8, 0x0C, 0x47, 0x83};
 
@@ -84,10 +86,35 @@ char *filestruct[] = {
     "program",
 };
 
+int jaut(int ac, char *av[])
+{
+    int i, r, vflag = 0;
+
+    if (fd < 0)
+	reset(ac, av);
+
+    while ((i = getopt(ac, av, "v")) != -1) {
+	switch (i) {
+	case 'v':
+	    vflag = 1;
+	    break;
+	}
+    }
+
+    cla = cyberflex_inq_class(fd);
+    if (vflag)
+	printf("Class %02x\n", cla);
+
+    r = cyberflex_verify_AUT0(fd, cla, AUT0, sizeof AUT0);
+    if (r >= 0)
+	aut0_vfyd = 1;
+    return r;
+}
+
 int jdefault(int ac, char *av[])
 {
     unsigned char buf[8];
-    int i, p1 = 4, r1, r2;
+    int i, p1 = 4, sw;
 
     optind = optreset = 1;
 
@@ -101,11 +128,13 @@ int jdefault(int ac, char *av[])
 
     if (fd < 0)
 	reset(0, NULL);
+    if (!aut0_vfyd)
+	jaut(0, NULL);
 
-    scwrite(fd, cla, 0x08, p1, 0, 0, buf, &r1, &r2);
-    if (r1 != 0x90) {
+    sectok_apdu(fd, cla, 0x08, p1, 0, 0, buf, 0, NULL, &sw);
+    if (!sectok_swOK(sw)) {
 	/* error */
-	print_r1r2(r1, r2);
+	sectok_print_sw(sw);
 	return -1;
     }
     return 0;
@@ -114,7 +143,7 @@ int jdefault(int ac, char *av[])
 int jatr(int ac, char *av[])
 {
     unsigned char buf[64];
-    int n = 0, r1, r2;
+    int n = 0, sw;
 
     if (fd < 0)
 	reset(0, NULL);
@@ -132,10 +161,10 @@ int jatr(int ac, char *av[])
 	n += sizeof DFLTATR;
     }
     buf[0] |= ((n - 2) & 0xf);
-    scwrite(fd, cla, 0xfa, 0, 0, n, buf, &r1, &r2);
-    if (r1 != 0x90) {
+    sectok_apdu(fd, cla, 0xfa, 0, 0, n, buf, 0, NULL, &sw);
+    if (!sectok_swOK(sw)) {
 	/* error */
-	print_r1r2(r1, r2);
+	sectok_print_sw(sw);
 	return -1;
     }
     return 0;
@@ -144,13 +173,13 @@ int jatr(int ac, char *av[])
 int jdata(int ac, char *av[])
 {
     unsigned char buf[32];
-    int i, r1, r2;
+    int i, sw;
 
     if (fd < 0)
 	reset(0, NULL);
 
-    scread(fd, cla, 0xca, 0, 1, 0x16, buf, &r1, &r2);
-    if (r1 == 0x90) {
+    sectok_apdu(fd, cla, 0xca, 0, 1, 0, NULL, 0x16, buf, &sw);
+    if (sectok_swOK(sw)) {
 	printf("serno ");
 	for (i = 0; i < 6; i++)
 	    printf("%02x ", buf[i]);
@@ -164,7 +193,7 @@ int jdata(int ac, char *av[])
 	printf("crypto %9.9s class %02x\n", &buf[10], buf[19]);
     } else {
 	/* error */
-	print_r1r2(r1, r2);
+	sectok_print_sw(sw);
     }
     return 0;
 }
@@ -173,7 +202,7 @@ int jdata(int ac, char *av[])
 
 int ls(int ac, char *av[])
 {
-    int p2, f0, f1, r1, r2;
+    int p2, f0, f1, sw;
     char ftype[32], fname[6];
     unsigned char buf[JDIRSIZE];
 
@@ -181,9 +210,9 @@ int ls(int ac, char *av[])
 	reset(0, NULL);
 
     for (p2 = 0; ; p2++) {
-	if (scread(fd, cla, 0xa8, 0, p2, JDIRSIZE, buf, &r1, &r2) < 0)
+	if (sectok_apdu(fd, cla, 0xa8, 0, p2, 0, NULL, JDIRSIZE, buf, &sw) < 0)
 	    break;
-	if (r1 != 0x90)
+	if (!sectok_swOK(sw))
 	    break;
 	f0 = buf[4];
 	f1 = buf[5];
@@ -222,6 +251,8 @@ int jcreate(int ac, char *av[])
 
     if (fd < 0)
 	reset(0, NULL);
+    if (!aut0_vfyd)
+	jaut(0, NULL);
 
     if (cyberflex_create_file(fd, cla, fid, fsize, 3, &sw) < 0) {
 	printf("create_file: %s\n", sectok_get_sw(sw));
@@ -245,6 +276,8 @@ int jdelete(int ac, char *av[])
 
     if (fd < 0)
 	reset(0, NULL);
+    if (!aut0_vfyd)
+	jaut(0, NULL);
 
     if (cyberflex_delete_file(fd, cla, fid, &sw) < 0) {
 	printf("delete_file: %s\n", sectok_get_sw(sw));
@@ -252,16 +285,6 @@ int jdelete(int ac, char *av[])
     }
 
     return 0;
-}
-
-int jaut(int ac, char *av[])
-{
-    if (fd < 0)
-	reset(0, NULL);
-
-    cla = cyberflex_inq_class(fd);
-    printf("Class %02x\n", cla);
-    return cyberflex_verify_AUT0(fd, cla, AUT0, sizeof AUT0);
 }
 
 #define MAX_BUF_SIZE 256
@@ -331,7 +354,7 @@ int jload(int ac, char *av[])
     char progname[5], contname[5];
     unsigned char app_data[MAX_APP_SIZE],
     data[MAX_BUF_SIZE];
-    int i, j, fd_app, size, rv, sw, r1, r2;
+    int i, j, fd_app, size, rv, sw;
     des_cblock tmp;
     des_key_schedule schedule;
 
@@ -340,6 +363,8 @@ int jload(int ac, char *av[])
 
     if (fd < 0)
 	reset(0, NULL);
+    if (!aut0_vfyd)
+	jaut(0, NULL);
 
     sectok_fmt_fid(progname, progID[0], progID[1]);
     sectok_fmt_fid(contname, contID[0], contID[1]);
@@ -407,10 +432,10 @@ int jload(int ac, char *av[])
     printf ("\n");
 
     /* select the default loader */
-    rv = scwrite(fd, cla, 0xa4, 0x04, 0, 0, NULL, &r1, &r2);
-    if (r1 != 0x90 && r1 != 0x61) {
+    rv = sectok_apdu(fd, cla, 0xa4, 0x04, 0, 0, NULL, 0, NULL, &sw);
+    if (!sectok_swOK(sw)) {
 	/* error */
-	printf("can't select default loader: %s\n", get_r1r2s(r1, r2));
+	printf("can't select default loader: %s\n", sectok_get_sw(sw));
 	return -1;
     }
 
@@ -433,36 +458,29 @@ int jload(int ac, char *av[])
 	if (size - i > MAX_APDU_SIZE) send_size = MAX_APDU_SIZE;
 	else send_size = size - i;
 
-	rv = scwrite(fd, cla, 0xd6,
-		     i / 256,	/* offset, upper byte */
-		     i % 256,	/* offset, lower byte */
-		     send_size,
-		     app_data + i, /* program file */
-		     &r1, &r2);
+	rv = sectok_apdu(fd, cla, 0xd6, i / 256, i % 256, send_size, app_data + i, 0, NULL, &sw);
 
-	if (r1 != 0x90 && r1 != 0x61) {
+	if (!sectok_swOK(sw)) {
 	    /* error */
-	    printf("updating binary %s: %s\n", progname, get_r1r2s(r1, r2));
+	    printf("updating binary %s: %s\n", progname, sectok_get_sw(sw));
 	    return -1;
 	}
     }
 
     /* manage program .. validate */
-    rv = scwrite(fd, cla, 0x0a, 01, 0, 0x08,
-		 tmp,		/* signature */
-		 &r1, &r2);
+    rv = sectok_apdu(fd, cla, 0x0a, 01, 0, 0x08, tmp, 0, NULL, &sw);
 
-    if (r1 != 0x90 && r1 != 0x61) {
+    if (!sectok_swOK(sw)) {
 	/* error */
-	printf("validating applet in %s: %s\n", progname, get_r1r2s(r1, r2));
+	printf("validating applet in %s: %s\n", progname, sectok_get_sw(sw));
 	return -1;
     }
 
     /* select the default loader */
-    rv = scwrite(fd, cla, 0xa4, 0x04, 0, 0, NULL, &r1, &r2);
-    if (r1 != 0x90 && r1 != 0x61) {
+    rv = sectok_apdu(fd, cla, 0xa4, 0x04, 0, 0, NULL, 0, NULL, &sw);
+    if (!sectok_swOK(sw)) {
 	/* error */
-	printf("selecting default loader: %s\n", get_r1r2s(r1, r2));
+	printf("selecting default loader: %s\n", sectok_get_sw(sw));
 	return -1;
     }
 
@@ -489,10 +507,10 @@ int jload(int ac, char *av[])
     for (i = 0; i < aid_len; i++) data[i + 11] = (unsigned int)aid[i];
     /* AID (7777777777) */
 
-    rv = scwrite(fd, cla, 0x0c, 0x13, 0, 11 + aid_len, data, &r1, &r2);
-    if (r1 != 0x90 && r1 != 0x61) {
+    rv = sectok_apdu(fd, cla, 0x0c, 0x13, 0, 11 + aid_len, data, 0, NULL, &sw);
+    if (!sectok_swOK(sw)) {
 	/* error */
-	printf("executing install() method in applet %s: %s\n", progname, get_r1r2s(r1, r2));
+	printf("executing install() method in applet %s: %s\n", progname, sectok_get_sw(sw));
 	return -1;
     }
 
@@ -503,26 +521,21 @@ int jload(int ac, char *av[])
 int junload(int ac, char *av[])
 {
     char progname[5], contname[5];
-    int sw, r1, r2, rv;
+    int sw, rv;
 
     if (analyze_load_options(ac, av) < 0)
 	return -1;
 
     if (fd < 0)
 	reset(0, NULL);
+    if (!aut0_vfyd)
+	jaut(0, NULL);
 
     sectok_fmt_fid(progname, progID[0], progID[1]);
     sectok_fmt_fid(contname, contID[0], contID[1]);
 
     printf ("program ID              %s\n", progname);
     printf ("container ID            %s\n", contname);
-    /*printf ("AID                     ");
-      for (i = 0 ; i < aid_len ; i ++ ) {
-      printf ("%02x", (unsigned char)aid[i]);
-      }
-      printf ("\n");*/
-
-    /*printf ("unload applet\n");*/
 
     /* select 3f.00 (root) */
     if (sectok_selectfile(fd, cla, root_fid, &sw) < 0) {
@@ -534,10 +547,10 @@ int junload(int ac, char *av[])
     if (sectok_selectfile(fd, cla, progID, &sw) >= 0) {
 
 	/* manage program -- reset */
-	rv = scwrite(fd, cla, 0x0a, 02, 0, 0x0, NULL, &r1, &r2);
-	if (rv < 0 || (r1 != 0x90 && r1 != 0x61)) {
+	rv = sectok_apdu(fd, cla, 0x0a, 02, 0, 0, NULL, 0, NULL, &sw);
+	if (!sectok_swOK(sw)) {
 	    /* error */
-	    printf("resetting applet: %s\n", get_r1r2s(r1, r2));
+	    printf("resetting applet: %s\n", sectok_get_sw(sw));
 	}
 
 	/* delete program file */
@@ -555,7 +568,7 @@ int junload(int ac, char *av[])
 
 int jselect(int ac, char *av[])
 {
-    int i, r1, r2, rv;
+    int i, sw, rv;
     unsigned char data[MAX_BUF_SIZE];
 
     optind = optreset = 1;
@@ -578,15 +591,15 @@ int jselect(int ac, char *av[])
        even with F0 card, select applet APDU (00 a4 04)
        only accepts class byte 00 (not f0) */
 
-    rv = scwrite(fd, cla, 0xa4, 0x04, 0, aid_len, data, &r1, &r2);
-    if (r1 != 0x90 && r1 != 0x61) {
+    rv = sectok_apdu(fd, cla, 0xa4, 0x04, 0, aid_len, data, 0, NULL, &sw);
+    if (!sectok_swOK(sw)) {
 	/* error */
 	printf ("selecting the cardlet: ");
 	for (i = 0 ; i < aid_len ; i ++ ) {
 	    printf ("%02x", (unsigned char)aid[i]);
 	}
 	printf ("\n");
-	print_r1r2 (r1, r2);
+	sectok_print_sw(sw);
 	return -1;
     }
 
@@ -616,7 +629,7 @@ int jdeselect(int ac, char *av[])
 /* download DES keys into 3f.00/00.11 */
 int cyberflex_load_key (int fd, unsigned char *buf)
 {
-    int sw, r1, r2, rv, argc = 0, i, j, tmp;
+    int sw, rv, argc = 0, i, j, tmp;
     unsigned char *token;
     unsigned char data[MAX_BUF_SIZE];
     unsigned char key[BLOCK_SIZE];
@@ -650,6 +663,9 @@ int cyberflex_load_key (int fd, unsigned char *buf)
 	printf ("you want to down load %d keys??\n", argc);
 	return -1;
     }
+
+    if (!aut0_vfyd)
+	jaut(0, NULL);
 
     /* Now let's do it. :) */
 
@@ -691,11 +707,10 @@ int cyberflex_load_key (int fd, unsigned char *buf)
     }
 
     /* all righty, now let's send it to the card! :) */
-    rv = scwrite(fd, cla, 0xd6, 0, 0, KEY_BLOCK_SIZE * (argc + 2) + 2,
-		 data, &r1, &r2);
-    if (r1 != 0x90 && r1 != 0x61) {
+    rv = sectok_apdu(fd, cla, 0xd6, 0, 0, KEY_BLOCK_SIZE * (argc + 2) + 2, data, 0, NULL, &sw);
+    if (!sectok_swOK(sw)) {
 	/* error */
-	printf("writing the key file 00.11: %s\n", get_r1r2s(r1, r2));
+	printf("writing the key file 00.11: %s\n", sectok_get_sw(sw));
 	return -1;
     }
 
@@ -705,11 +720,12 @@ int cyberflex_load_key (int fd, unsigned char *buf)
 /* download AUT0 key into 3f.00/00.11 */
 int load_AUT0(int fd, unsigned char *buf)
 {
-    int sw, r1, r2, rv, i, tmp;
+    int sw, rv, i, tmp;
     unsigned char data[MAX_BUF_SIZE];
     unsigned char key[BLOCK_SIZE];
 
-    printf ("load AUT0\n");
+    if (!aut0_vfyd)
+	jaut(0, NULL);
 
     printf ("ca_load_AUT0 buf=%s\n", buf);
 
@@ -742,11 +758,10 @@ int load_AUT0(int fd, unsigned char *buf)
 	return -1;
 
     /* all righty, now let's send it to the card! :) */
-    rv = scwrite(fd, cla, 0xd6, 0, 0, KEY_BLOCK_SIZE,
-		 data, &r1, &r2);
-    if (r1 != 0x90 && r1 != 0x61) {
+    rv = sectok_apdu(fd, cla, 0xd6, 0, 0, KEY_BLOCK_SIZE, data, 0, NULL, &sw);
+    if (!sectok_swOK(sw)) {
 	/* error */
-	printf("writing the key file 00.11: %s\n", get_r1r2s(r1, r2));
+	printf("writing the key file 00.11: %s\n", sectok_get_sw(sw));
 	return -1;
     }
 
@@ -784,6 +799,9 @@ int cyberflex_load_rsa(int fd, unsigned char *buf)
 	}
     }
 #endif
+
+    if (!aut0_vfyd)
+	jaut(0, NULL);
 
     rv = cyberflex_load_rsa_priv(fd, cla, key_fid, NUM_RSA_KEY_ELEMENTS, RSA_BIT_LEN,
 				 key_elements, &sw);

@@ -1,4 +1,4 @@
-/* $Id: cmds.c,v 1.3 2001/07/02 20:15:06 rees Exp $ */
+/* $Id: cmds.c,v 1.4 2001/07/16 21:02:21 rees Exp $ */
 
 /*
  * Smartcard commander.
@@ -48,42 +48,39 @@ such damages.
 #define CARDIOSIZE 200
 
 struct {
-    char *cmd;
+    char *cmd, *help;
     int (*action) (int ac, char *av[]);
 } dispatch_table[] = {
     /* Non-card commands */
-    { "help", help },
-    { "?", help },
-    { "reset", reset },
-    { "open", reset },
-    { "close", dclose },
-    { "quit", quit },
+    { "help", "[command]", help },
+    { "?", "[command]", help },
+    { "reset", "[ -1234ivf ]", reset },
+    { "open", "[ -1234ivf ]", reset },
+    { "close", "", dclose },
+    { "quit", "", quit },
 
     /* 7816-4 commands */
-    { "apdu", apdu },
-    { "fid", selfid },
-    { "isearch", isearch },
-    { "class", class },
-    { "read", dread },
-    { "write", dwrite },
+    { "apdu", "[ -c class ] ins p1 p2 p3 data ...", apdu },
+    { "fid", "fid", selfid },
+    { "isearch", "", isearch },
+    { "class", "[ class ]", class },
+    { "read", "filesize", dread },
+    { "write", "input-filename", dwrite },
 
     /* Cyberflex commands */
-    { "ls", ls },
-    { "create", jcreate },
-    { "delete", jdelete },
-    { "jdefault", jdefault },
-    { "jatr", jatr },
-    { "jdata", jdata },
-    { "jaut", jaut },
-    { "jload", jload },
-    { "junload", junload },
-    { "jselect", jselect },
-    { "jdeselect", jdeselect },
-    { NULL, NULL }
+    { "ls", "", ls },
+    { "create", "fid size", jcreate },
+    { "delete", "fid", jdelete },
+    { "jdefault", "[ -d ]", jdefault },
+    { "jatr", "", jatr },
+    { "jdata", "", jdata },
+    { "jaut", "[ -v ]", jaut },
+    { "jload", "[ -p progID ] [ -c contID ] [ -s cont_size ] [ -i inst_size ] [ -a aid ] filename", jload },
+    { "junload", "[ -p progID ] [ -c contID ]", junload },
+    { "jselect", "[ -a aid ]", jselect },
+    { "jdeselect", "", jdeselect },
+    { NULL, NULL, NULL }
 };
-/*
-    { "",  },
-*/
 
 int dispatch(int ac, char *av[])
 {
@@ -107,11 +104,21 @@ int dispatch(int ac, char *av[])
 
 int help(int ac, char *av[])
 {
-    int i;
+    int i, j;
 
-    for (i = 0; dispatch_table[i].cmd; i++) {
-	if (strlen(dispatch_table[i].cmd) > 1)
+    if (ac < 2) {
+	for (i = 0; dispatch_table[i].cmd; i++)
 	    printf("%s\n", dispatch_table[i].cmd);
+    } else {
+	for (j = 1; j < ac; j++) {
+	    for (i = 0; dispatch_table[i].cmd; i++)
+		if (!strncmp(av[j], dispatch_table[i].cmd, strlen(av[0])))
+		    break;
+	    if (dispatch_table[i].help)
+		printf("%s %s\n", dispatch_table[i].cmd, dispatch_table[i].help);
+	    else
+		printf("no help on \"%s\"\n", av[j]);
+	}
     }
 
     return 0;
@@ -153,11 +160,9 @@ int reset(int ac, char *av[])
 	}
     }
 
+    aut0_vfyd = 0;
+
     n = scxreset(fd, rflags, atr, &sw);
-    if (n && !vflag) {
-	printf("atr ");
-	dump_reply(atr, n, 0, 0);
-    }
     if (vflag)
 	parse_atr(fd, SCRV, atr, n, &param);
     if (sw != SCEOK) {
@@ -198,7 +203,7 @@ int apdu(int ac, char *av[])
     }
 
     if (ac - optind < 4) {
-	printf("usage: apdu [ -c cla ] ins p1 p2 p3 data ...\n");
+	printf("usage: apdu [ -c class ] ins p1 p2 p3 data ...\n");
 	return -1;
     }
 
