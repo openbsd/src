@@ -1,4 +1,4 @@
-/*	$OpenBSD: inst.c,v 1.1 1997/01/17 08:36:51 downsj Exp $	*/
+/*	$OpenBSD: inst.c,v 1.2 1997/02/05 11:16:37 downsj Exp $	*/
 /*	$NetBSD: inst.c,v 1.6 1996/12/21 21:23:43 thorpej Exp $	*/
 
 /*
@@ -60,6 +60,7 @@
 #include <sys/param.h>
 #include <sys/reboot.h>
 #include <sys/disklabel.h>
+#include <machine/exec.h>
 #include <a.out.h>
 #include "stand.h"
 #include "samachdep.h"
@@ -109,7 +110,7 @@ main()
 
 	printf("\n>> OpenBSD MINIROOT INSTALLATION HP9000/%s CPU\n",
 	       getmachineid());
-	printf(">> $OpenBSD: inst.c,v 1.1 1997/01/17 08:36:51 downsj Exp $\n");
+	printf(">> $OpenBSD: inst.c,v 1.2 1997/02/05 11:16:37 downsj Exp $\n");
 	gethelp();
 
 	for (;;) {
@@ -630,7 +631,9 @@ bootmini()
 	howto = RB_SINGLE;	/* _Always_ */
 
 	printf("booting: %s -s\n", bootname);
-	exec(bootname, lowram, howto);
+#define LOADALIGN(_x)	((u_long)_x + ((u_long)_x % __LDPGSZ))
+	exec(bootname, (char *)LOADALIGN(lowram), howto);
+#undef LOADALIGN
 	printf("boot: %s\n", strerror(errno));
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uboot.c,v 1.2 1997/02/03 04:48:08 downsj Exp $	*/
+/*	$OpenBSD: uboot.c,v 1.3 1997/02/05 11:16:38 downsj Exp $	*/
 /*	$NetBSD: uboot.c,v 1.2 1996/10/14 07:33:45 thorpej Exp $	*/
 
 /*-
@@ -38,6 +38,7 @@
 
 #include <sys/param.h>
 #include <sys/reboot.h>
+#include <machine/exec.h>
 #include <a.out.h>
 #include "stand.h"
 #include "samachdep.h"
@@ -71,7 +72,7 @@ main()
 
 	printf("\n>> OpenBSD UNIFIED BOOT HP9000/%s CPU\n",
 	       getmachineid());
-	printf(">> $OpenBSD: uboot.c,v 1.2 1997/02/03 04:48:08 downsj Exp $\n");
+	printf(">> $OpenBSD: uboot.c,v 1.3 1997/02/05 11:16:38 downsj Exp $\n");
 	printf(">> Enter \"reset\" to reset system.\n");
 
 	bdev   = B_TYPE(bootdev);
@@ -91,7 +92,9 @@ main()
 		} else
 			printf(": %s\n", name);
 
-		exec(name, lowram, howto);
+#define LOADALIGN(_x)	((u_long)_x + ((u_long)_x % __LDPGSZ))
+		exec(name, (char *)LOADALIGN(lowram), howto);
+#undef LOADALIGN
 		printf("boot: %s\n", strerror(errno));
 	}
 }

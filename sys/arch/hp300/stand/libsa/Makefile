@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.4 1997/01/18 03:18:19 downsj Exp $
+#	$OpenBSD: Makefile,v 1.5 1997/02/05 11:16:41 downsj Exp $
 #	$NetBSD: Makefile,v 1.5 1996/06/26 17:44:42 thorpej Exp $
 
 LIB=	sa
@@ -8,6 +8,7 @@ LIB=	sa
 
 # Don't need these now...
 # DEBUGFLAGS=-DNETIF_DEBUG -DRPC_DEBUG -DNFS_DEBUG -DRARP_DEBUG -DNET_DEBUG
+# DEBUGFLAGS+=-DEXEC_DEBUG
 
 CFLAGS+=-Dhp300 -DSTANDALONE -DCOMPAT_UFS -DNO_LSEEK ${DEBUGFLAGS}
 CFLAGS+=-I${.CURDIR}/..
