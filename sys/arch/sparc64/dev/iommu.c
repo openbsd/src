@@ -1,4 +1,4 @@
-/*	$OpenBSD: iommu.c,v 1.24 2003/02/17 01:29:20 henric Exp $	*/
+/*	$OpenBSD: iommu.c,v 1.25 2003/02/21 00:01:17 jason Exp $	*/
 /*	$NetBSD: iommu.c,v 1.47 2002/02/08 20:03:45 eeh Exp $	*/
 
 /*
@@ -71,7 +71,7 @@ int iommu_dvmamap_sync_seg(bus_dma_tag_t, struct iommu_state *,
 int iommu_dvmamap_sync_range(struct iommu_state *, vaddr_t, bus_size_t);
 
 static inline void
-iommu_strbuf_flush(struct iommu_state* is, vaddr_t va)
+iommu_strbuf_flush(struct iommu_state *is, vaddr_t va)
 {
 	int i;
 	for(i = 0; i < 2; ++i) {
@@ -84,9 +84,9 @@ iommu_strbuf_flush(struct iommu_state* is, vaddr_t va)
 	}
 }
 
-static	int iommu_strbuf_flush_done(struct iommu_state *);
+int iommu_strbuf_flush_done(struct iommu_state *);
 int64_t iommu_tsb_entry(struct iommu_state *, vaddr_t);
-static	int iommu_tv_comp(struct timeval *, struct timeval *);
+int iommu_tv_comp(struct timeval *, struct timeval *);
 
 /*
  * initialise the UltraSPARC IOMMU (SBUS or PCI):
@@ -392,7 +392,7 @@ iommu_remove(struct iommu_state *is, vaddr_t va, size_t len)
 	}
 }
 
-static int
+int
 iommu_tv_comp(struct timeval *t1, struct timeval *t2)
 {
 	if (t1->tv_sec < t2->tv_sec)
@@ -407,7 +407,7 @@ iommu_tv_comp(struct timeval *t1, struct timeval *t2)
 	return (0);
 }
 
-static int 
+int 
 iommu_strbuf_flush_done(struct iommu_state *is)
 {
 	struct timeval cur, flushtimeout;
@@ -500,11 +500,15 @@ iommu_strbuf_flush_done(struct iommu_state *is)
 	if (flush[0] == 0 || flush[1] == 0) {
 		printf("iommu_strbuf_flush_done: flush timeout %p/%llx, "
 		    "%p/%llx\n",
-		    (void *)sb[0]->sb_flushpa, flush[0],
-		    (void *)sb[1]->sb_flushpa, flush[1]);
+		    present[0] ? ldxa(sb[0]->sb_flushpa, ASI_PHYS_CACHED) : 1,
+		    flush[0],
+		    present[1] ? ldxa(sb[1]->sb_flushpa, ASI_PHYS_CACHED) : 1,
+		    flush[1]);
 		/* panic? */
 #ifdef DDB
+#if 0
 		Debugger();
+#endif
 #endif
 	}
 #endif
