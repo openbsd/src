@@ -1,8 +1,8 @@
-/*	$OpenBSD: db_defs.h,v 1.2 1997/03/12 10:42:21 downsj Exp $	*/
+/*	$OpenBSD: db_defs.h,v 1.3 1998/05/22 00:47:31 millert Exp $	*/
 
 /*
  *	from db.h	4.16 (Berkeley) 6/1/90
- *	$From: db_defs.h,v 8.5 1996/08/27 08:33:23 vixie Exp $
+ *	$From: db_defs.h,v 8.6 1997/06/01 20:34:34 vixie Exp $
  */
 
 /*
@@ -78,6 +78,9 @@
  */
 struct databuf {
 	struct databuf	*d_next;	/* linked list */
+#ifdef STATS
+	struct nameser	*d_ns;		/* NS from whence this came */
+#endif
 	u_int32_t	d_ttl;		/* time to live */
 					/* if d_zone == DB_Z_CACHE, then
 					 * d_ttl is actually the time when
@@ -93,12 +96,9 @@ struct databuf {
 	int16_t		d_class;	/* class number */
 	int16_t		d_type;		/* type number */
 	int16_t		d_size;		/* size of data area */
+	u_int32_t	d_rcnt;
 #ifdef NCACHE
 	unsigned	d_rcode :4;	/* rcode added for negative caching */
-#endif
-	unsigned	d_rcnt :12;
-#ifdef STATS
-	struct nameser	*d_ns;		/* NS from whence this came */
 #endif
 	u_int16_t	d_nstime;	/* NS response time, milliseconds */
 	u_char		d_data[sizeof(char*)]; /* malloc'd (padded) */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_send.c,v 1.1 1997/03/12 10:42:11 downsj Exp $	*/
+/*	$OpenBSD: res_send.c,v 1.2 1998/05/22 00:47:26 millert Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1989, 1993
@@ -58,9 +58,9 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)res_send.c	8.1 (Berkeley) 6/4/93";
-static char rcsid[] = "$From: res_send.c,v 8.12 1996/10/08 04:51:06 vixie Exp $";
+static char rcsid[] = "$From: res_send.c,v 8.13 1997/06/01 20:34:37 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: res_send.c,v 1.1 1997/03/12 10:42:11 downsj Exp $";
+static char rcsid[] = "$OpenBSD: res_send.c,v 1.2 1998/05/22 00:47:26 millert Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -607,7 +607,14 @@ read_len:
 			if ((long) timeout.tv_sec <= 0)
 				timeout.tv_sec = 1;
 			timeout.tv_usec = 0;
+			/* XXX - kernel can deal with > FD_SETSIZE */
+			if (s+1 > FD_SETSIZE) {
+				Perror(stderr, "s+1 > FD_SETSIZE", EMFILE);
+				res_close();
+				goto next_ns;
+			}
     wait:
+			/* XXX - kernel can deal with > FD_SETSIZE */
 			FD_ZERO(&dsmask);
 			FD_SET(s, &dsmask);
 			n = select(s+1, &dsmask, (fd_set *)NULL,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: send.c,v 1.2 1997/03/12 10:42:50 downsj Exp $	*/
+/*	$OpenBSD: send.c,v 1.3 1998/05/22 00:47:51 millert Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1989
@@ -58,9 +58,9 @@
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)send.c	5.18 (Berkeley) 3/2/91";
-static char rcsid[] = "$From: send.c,v 8.1 1994/12/15 06:24:31 vixie Exp $";
+static char rcsid[] = "$From: send.c,v 8.2 1997/06/01 20:34:40 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: send.c,v 1.2 1997/03/12 10:42:50 downsj Exp $";
+static char rcsid[] = "$OpenBSD: send.c,v 1.3 1998/05/22 00:47:51 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -338,8 +338,7 @@ wait:
 				 * timeout
 				 */
 				if (_res.options & RES_DEBUG)
-					printf("timeout (%d secs)\n", 
-						timeout.tv_sec);
+					printf("timeout\n");
 #if BSD >= 43
 				gotsomewhere = 1;
 #endif

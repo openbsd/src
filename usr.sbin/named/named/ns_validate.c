@@ -1,4 +1,4 @@
-/*	$OpenBSD: ns_validate.c,v 1.2 1997/03/12 10:42:37 downsj Exp $	*/
+/*	$OpenBSD: ns_validate.c,v 1.3 1998/05/22 00:47:46 millert Exp $	*/
 
 /**************************************************************************
  * ns_validate.c (was security.c in original ISI contribution)
@@ -611,7 +611,7 @@ dovalidate(msg, msglen, rrp, zone, flags, qdomain, server, VCode)
 	u_int32_t ttl;
 	char dname[MAXDNAME];
 	u_char *cp1;
-	u_char data[BUFSIZ];
+	u_char data[MAXDNAME*2 + INT32SZ*5];
 	register HEADER *hp = (HEADER *) msg;
 
 	dprintf(2, (ddt, "dovalidate(zone %d, flags %x)\n",

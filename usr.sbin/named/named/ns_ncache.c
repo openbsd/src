@@ -1,4 +1,4 @@
-/*	$OpenBSD: ns_ncache.c,v 1.2 1997/03/12 10:42:32 downsj Exp $	*/
+/*	$OpenBSD: ns_ncache.c,v 1.3 1998/05/22 00:47:42 millert Exp $	*/
 
 /**************************************************************************
  * ns_ncache.c
@@ -71,7 +71,7 @@ cache_n_resp(msg, msglen)
 		u_int16_t atype;
 		u_char *tp = cp;
 		u_char *cp1;
-		u_char data[BUFSIZ+MAXDNAME];
+		u_char data[MAXDNAME*2 + INT32SZ*5];
 		size_t len = sizeof data;
 
 		/* we store NXDOMAIN as T_SOA regardless of the query type */

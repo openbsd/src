@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_init.c,v 1.2 1997/03/14 03:40:33 downsj Exp $	*/
+/*	$OpenBSD: res_init.c,v 1.3 1998/05/22 00:47:24 millert Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1989, 1993
@@ -58,9 +58,9 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)res_init.c	8.1 (Berkeley) 6/7/93";
-static char rcsid[] = "$From: res_init.c,v 8.7 1996/09/28 06:51:07 vixie Exp $";
+static char rcsid[] = "$From: res_init.c,v 8.8 1997/06/01 20:34:37 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: res_init.c,v 1.2 1997/03/14 03:40:33 downsj Exp $";
+static char rcsid[] = "$OpenBSD: res_init.c,v 1.3 1998/05/22 00:47:24 millert Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -165,7 +165,7 @@ res_init()
 	register FILE *fp;
 	register char *cp, **pp;
 	register int n;
-	char buf[BUFSIZ];
+	char buf[MAXDNAME];
 	int nserv = 0;    /* number of nameserver records read from file */
 	int haveenv = 0;
 	int havesearch = 0;
@@ -438,7 +438,6 @@ res_init()
 	return (0);
 }
 
-/* ARGSUSED */
 static void
 res_setoptions(options, source)
 	char *options, *source;

@@ -1,10 +1,10 @@
-/*	$OpenBSD: db_secure.c,v 1.2 1997/03/12 10:42:25 downsj Exp $	*/
+/*	$OpenBSD: db_secure.c,v 1.3 1998/05/22 00:47:36 millert Exp $	*/
 
 #ifndef LINT
 #if 0
 static char rcsid[] = "$From: db_secure.c,v 8.6 1996/05/17 09:10:46 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: db_secure.c,v 1.2 1997/03/12 10:42:25 downsj Exp $";
+static char rcsid[] = "$OpenBSD: db_secure.c,v 1.3 1998/05/22 00:47:36 millert Exp $";
 #endif
 #endif
 
@@ -35,7 +35,7 @@ build_secure_netlist(zp)
 	struct zoneinfo *zp;
 {
 	struct netinfo *ntp = NULL, **netlistp, **end;
-	char buf[BUFSIZ];
+	char buf[MAXDNAME];
 	struct hashbuf *htp;
 	struct namebuf *snp;
 	struct databuf *dp;
@@ -71,7 +71,7 @@ build_secure_netlist(zp)
 			continue;
 		}
 		bzero(buf, sizeof(buf));
-		bcopy(dp->d_data+1, buf, dp->d_size-1);
+		bcopy(dp->d_data+1, buf, MIN(dp->d_size, sizeof(buf))-1);
 		maskptr=strchr(buf, MASK_SEP);
 		if (maskptr) {
 			*maskptr++ = 0;

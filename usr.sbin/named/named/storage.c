@@ -1,4 +1,4 @@
-/*	$OpenBSD: storage.c,v 1.2 1997/03/12 10:42:38 downsj Exp $	*/
+/*	$OpenBSD: storage.c,v 1.3 1998/05/22 00:47:47 millert Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1989
@@ -88,7 +88,7 @@ extern void panic __P((int, const char *));
  *	All rights reserved.
  */
 #ifndef lint
-static char RCSid[] = "$Id: storage.c,v 1.2 1997/03/12 10:42:38 downsj Exp $";
+static char RCSid[] = "$From: storage.c,v 8.2 1996/08/05 08:31:30 vixie Exp $";
 #endif
 
 #undef malloc

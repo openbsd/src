@@ -1,4 +1,4 @@
-/*	$OpenBSD: getnetnamadr.c,v 1.1 1997/03/12 10:42:04 downsj Exp $	*/
+/*	$OpenBSD: getnetnamadr.c,v 1.2 1998/05/22 00:47:20 millert Exp $	*/
 
 /* Copyright (c) 1993 Carlos Leandro and Rui Salgueiro
  *	Dep. Matematica Universidade de Coimbra, Portugal, Europe
@@ -44,9 +44,9 @@
 #if 0
 static char sccsid[] = "@(#)getnetbyaddr.c	8.1 (Berkeley) 6/4/93";
 static char sccsid_[] = "from getnetnamadr.c	1.4 (Coimbra) 93/06/03";
-static char rcsid[] = "$From: getnetnamadr.c,v 8.7 1996/08/05 08:31:35 vixie Exp $";
+static char rcsid[] = "$From: getnetnamadr.c,v 8.8 1997/06/01 20:34:37 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: getnetnamadr.c,v 1.1 1997/03/12 10:42:04 downsj Exp $";
+static char rcsid[] = "$OpenBSD: getnetnamadr.c,v 1.2 1998/05/22 00:47:20 millert Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -108,7 +108,7 @@ getnetanswer(answer, anslen, net_i)
 	char aux1[30], aux2[30], ans[30], *in, *st, *pauxt, *bp, **ap,
 		*paux1 = &aux1[0], *paux2 = &aux2[0], flag = 0;
 static	struct netent net_entry;
-static	char *net_aliases[MAXALIASES], netbuf[BUFSIZ+1];
+static	char *net_aliases[MAXALIASES], netbuf[PACKETSZ];
 
 	/*
 	 * find first satisfactory answer

@@ -1,11 +1,11 @@
-/*	$OpenBSD: ns_main.c,v 1.10 1998/04/25 14:05:08 d Exp $	*/
+/*	$OpenBSD: ns_main.c,v 1.11 1998/05/22 00:47:41 millert Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 #if 0
 static char sccsid[] = "@(#)ns_main.c	4.55 (Berkeley) 7/1/91";
-static char rcsid[] = "$From: ns_main.c,v 8.24 1996/11/26 10:11:22 vixie Exp $";
+static char rcsid[] = "$From: ns_main.c,v 8.25 1997/06/01 20:34:34 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: ns_main.c,v 1.10 1998/04/25 14:05:08 d Exp $";
+static char rcsid[] = "$OpenBSD: ns_main.c,v 1.11 1998/05/22 00:47:41 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -182,7 +182,7 @@ main(argc, argv, envp)
 	const int on = 1;
 	int rfd, size, len;
 	time_t lasttime, maxctime;
-	u_char buf[BUFSIZ];
+	u_char buf[PACKETSZ];
 #ifdef NeXT
 	int old_sigmask;
 #endif
@@ -873,7 +873,7 @@ main(argc, argv, envp)
 						  malloc(rbufsize))
 						) {
 						    sp->s_buf = buf;
-						    sp->s_size  = sizeof(buf);
+						    sp->s_bufsize=sizeof(buf);
 					    } else {
 						    sp->s_bufsize = rbufsize;
 					    }
@@ -906,6 +906,12 @@ main(argc, argv, envp)
 				sp->s_bufp += n;
 				sp->s_size -= n;
 			}
+
+			if (sp->s_size > 0 &&
+			    (n == -1) &&
+			    (errno == PORT_WOULDBLK))
+				continue;
+
 			/*
 			 * we don't have enough memory for the query.
 			 * if we have a query id, then we will send an
@@ -926,8 +932,10 @@ main(argc, argv, envp)
 				(void) writemsg(sp->s_rfd, sp->s_buf,
 						HFIXEDSZ);
 			    }
+			    sqrm(sp);
 			    continue;
 			}
+
 			/*
 			 * If the message is too short to contain a valid
 			 * header, try to send back an error, and drop the
@@ -948,10 +956,9 @@ main(argc, argv, envp)
 				(void) writemsg(sp->s_rfd, sp->s_buf,
 						HFIXEDSZ);
 			    }
+			    sqrm(sp);
 			    continue;
 			}
-			if ((n == -1) && (errno == PORT_WOULDBLK))
-				continue;
 			if (n <= 0) {
 				sqrm(sp);
 				continue;

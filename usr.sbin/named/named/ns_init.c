@@ -1,11 +1,11 @@
-/*	$OpenBSD: ns_init.c,v 1.4 1997/06/10 20:04:34 deraadt Exp $	*/
+/*	$OpenBSD: ns_init.c,v 1.5 1998/05/22 00:47:40 millert Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 #if 0
 static char sccsid[] = "@(#)ns_init.c	4.38 (Berkeley) 3/21/91";
-static char rcsid[] = "$From: ns_init.c,v 8.24 1996/12/02 09:17:21 vixie Exp $";
+static char rcsid[] = "$From: ns_init.c,v 8.25 1997/06/01 20:34:34 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: ns_init.c,v 1.4 1997/06/10 20:04:34 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ns_init.c,v 1.5 1998/05/22 00:47:40 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -239,7 +239,7 @@ boot_read(filename, includefile)
 	int includefile;
 {
 	register struct zoneinfo *zp;
-	char buf[BUFSIZ], obuf[BUFSIZ], *source;
+	char buf[MAXDNAME], obuf[MAXDNAME], *source;
 	FILE *fp;
 	int type;
 	int class;
@@ -564,7 +564,8 @@ boot_read(filename, includefile)
 			if (!source) {
 				/*
 				 * We will always transfer this zone again
-				 * after a reload.
+				 * after a reload.  Note that _PATH_TMPDIR
+				 * is not writable by normal users on OpenBSD.
 				 */
 				sprintf(buf, "%s/NsTmpXXXXXXXXXX",
 					_PATH_TMPDIR);
@@ -583,21 +584,25 @@ boot_read(filename, includefile)
 			    (strcmp(source, zp->z_source) ||
 			     (stat(zp->z_source, &f_time) == -1 ||
 			      (zp->z_ftime != f_time.st_mtime)))) {
-				dprintf(1, (ddt, "backup file changed\n"));
+				dprintf(1, (ddt,
+				        "backup file changed or missing\n"));
 				free(zp->z_source);
 				zp->z_source = NULL;
-				zp->z_flags &= ~Z_AUTH;
 				zp->z_serial = 0;	/* force xfer */
+				if (zp->z_flags & Z_AUTH) {
+					zp->z_flags &= ~Z_AUTH;
 #ifdef	CLEANCACHE
-                        	remove_zone(hashtab, zp - zones, 1);
+					remove_zone(hashtab, zp - zones, 1);
 #else
-                        	remove_zone(hashtab, zp - zones);
+					remove_zone(hashtab, zp - zones);
 #endif
-				/*
-				 * reload parent so that NS records are
-				 * present during the zone transfer.
-				 */
-				do_reload(zp->z_origin, zp->z_type, zp->z_class);
+					/*
+					 * reload parent so that NS records are
+					 * present during the zone transfer.
+					 */
+					do_reload(zp->z_origin, zp->z_type,
+						  zp->z_class);
+				}
 			}
 			if (zp->z_source)
 				free(source);
@@ -681,7 +686,7 @@ static void
 get_forwarders(fp)
 	FILE *fp;
 {
-	char buf[BUFSIZ];
+	char buf[MAXDNAME];
 	register struct fwdinfo *fip = NULL, *ftp = NULL;
 
 #ifdef SLAVE_FORWARD

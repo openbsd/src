@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_query.c,v 1.2 1997/03/14 03:40:34 downsj Exp $	*/
+/*	$OpenBSD: res_query.c,v 1.3 1998/05/22 00:47:25 millert Exp $	*/
 
 /*
  * ++Copyright++ 1988, 1993
@@ -58,9 +58,9 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)res_query.c	8.1 (Berkeley) 6/4/93";
-static char rcsid[] = "$From: res_query.c,v 8.9 1996/09/22 00:13:28 vixie Exp $";
+static char rcsid[] = "$From: res_query.c,v 8.10 1997/06/01 20:34:37 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: res_query.c,v 1.2 1997/03/14 03:40:34 downsj Exp $";
+static char rcsid[] = "$OpenBSD: res_query.c,v 1.3 1998/05/22 00:47:25 millert Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -329,7 +329,7 @@ res_querydomain(name, domain, class, type, answer, anslen)
 {
 	char nbuf[MAXDNAME];
 	const char *longname = nbuf;
-	int n;
+	int n, d;
 
 	if ((_res.options & RES_INIT) == 0 && res_init() == -1) {
 		h_errno = NETDB_INTERNAL;
@@ -345,15 +345,26 @@ res_querydomain(name, domain, class, type, answer, anslen)
 		 * Check for trailing '.';
 		 * copy without '.' if present.
 		 */
-		n = strlen(name) - 1;
-		if (n != (0 - 1) && name[n] == '.' && n < sizeof(nbuf) - 1) {
-			bcopy(name, nbuf, n);
+		n = strlen(name);
+		if (n >= MAXDNAME) {
+			h_errno = NO_RECOVERY;
+			return (-1);
+		}
+		n--;
+		if (n >= 0 && name[n] == '.') {
+			strncpy(nbuf, name, n);
 			nbuf[n] = '\0';
 		} else
 			longname = name;
-	} else
-		sprintf(nbuf, "%.*s.%.*s", MAXDNAME, name, MAXDNAME, domain);
-
+	} else {
+		n = strlen(name);
+		d = strlen(domain);
+		if (n + d + 1 >= MAXDNAME) {
+			h_errno = NO_RECOVERY;
+			return (-1);
+		}
+		sprintf(nbuf, "%s.%s", name, domain);
+	}
 	return (res_query(longname, class, type, answer, anslen));
 }
 
@@ -387,8 +398,8 @@ hostalias(name)
 				break;
 			for (cp2 = cp1 + 1; *cp2 && !isspace(*cp2); ++cp2)
 				;
-			strncpy(abuf, cp1, sizeof(abuf) - 1);
 			abuf[sizeof(abuf) - 1] = *cp2 = '\0';
+			strncpy(abuf, cp1, sizeof(abuf) - 1);
 			fclose(fp);
 			return (abuf);
 		}

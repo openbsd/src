@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 1997/03/12 10:42:20 downsj Exp $
+#	$OpenBSD: Makefile,v 1.3 1998/05/22 00:47:29 millert Exp $
 #	$NetBSD: Makefile,v 1.1 1996/02/02 15:28:00 mrg Exp $
 # from: $Id: Makefile,v 8.1 1994/12/15 06:23:45 vixie Exp 
 
@@ -15,7 +15,9 @@ CFLAGS+=${INCLUDE} ${CONFIG}
 LDADD=	${LIBRESOLV}
 
 makeversionc:
-	(sed -e "s|%VERSION%|${VER}|" \
+	(u=root d=`pwd` h=localhost t=`date +%c`; \
+	sed -e "s|%WHEN%|$${t}|" -e "s|%VERSION%|"${VER}"|" \
+	    -e "s|%WHOANDWHERE%|$${u}@$${h}:$${d}|" \
 	    < ${.CURDIR}/Version.c > ${.CURDIR}/version.c)
 
 .include <bsd.prog.mk>

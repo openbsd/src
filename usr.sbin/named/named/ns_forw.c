@@ -1,11 +1,11 @@
-/*	$OpenBSD: ns_forw.c,v 1.3 1997/04/27 23:09:43 deraadt Exp $	*/
+/*	$OpenBSD: ns_forw.c,v 1.4 1998/05/22 00:47:38 millert Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 #if 0
 static char sccsid[] = "@(#)ns_forw.c	4.32 (Berkeley) 3/3/91";
 static char rcsid[] = "$From: ns_forw.c,v 8.19 1996/12/02 09:27:36 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: ns_forw.c,v 1.3 1997/04/27 23:09:43 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ns_forw.c,v 1.4 1998/05/22 00:47:38 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -566,6 +566,13 @@ nslookup(nsp, qp, syslogdname, sysloginfo)
 			qs->ns = nsdp;
 			qs->nsdata = dp;
 			qs->nretry = 0;
+			/*
+			 * If this A RR has no RTT, initialize its RTT to a
+			 * small random value.
+			 */
+			if (dp->d_nstime == 0)
+				dp->d_nstime = 1 +
+					(int)(25.0*rand()/(RAND_MAX + 1.0));
 			/*
 			 * if we are being asked to fwd a query whose
 			 * nameserver list includes our own name/address(es),
