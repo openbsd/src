@@ -1,4 +1,4 @@
-/*	 $OpenBSD: uthread_machdep.c,v 1.2 2001/03/13 00:05:51 d Exp $	*/
+/*	 $OpenBSD: uthread_machdep.c,v 1.3 2003/01/24 20:58:23 marc Exp $	*/
 /* David Leonard, <d@csee.uq.edu.au>. Public domain. */
 
 /*
@@ -36,11 +36,8 @@ struct frame {
  * structure that can be later switched to.
  */
 void
-_thread_machdep_init(statep, base, len, entry)
-        struct _machdep_state* statep;
-        void *base;
-        int len;
-        void (*entry)(void);
+_thread_machdep_init(struct _machdep_state* statep, void *base, int len,
+		     void (*entry)(void))
 {
 	struct frame *f;
 
@@ -58,23 +55,33 @@ _thread_machdep_init(statep, base, len, entry)
 	f->fr_eip = (int)entry;
 
 	statep->esp = (int)f;
+
+	_thread_machdep_save_float_state(statep);
+}
+
+/*
+ * Floating point save restore copied from code in npx.c
+ * (without really understanding what it does).
+ */
+#define	fldcw(addr)		__asm("fldcw %0"  : : "m" (*addr))
+#define	fnsave(addr)		__asm("fnsave %0" : "=m" (*addr))
+#define frstor(addr)		__asm("frstor %0" : : "m" (*addr))
+#define	fwait()			__asm("fwait")
+
+void
+_thread_machdep_save_float_state(struct _machdep_state *ms)
+{
+	struct save87 *addr = &ms->fpreg;
+
+	fnsave(addr);
+	fwait();
 }
 
 void
-_thread_machdep_save_float_state(ms)
-	struct _machdep_state *ms;
+_thread_machdep_restore_float_state(struct _machdep_state *ms)
 {
-	char *fdata = (char *)&ms->fpreg;
+	struct save87 *addr = &ms->fpreg;
 
-	__asm__("fsave %0"::"m" (*fdata));
-}
-
-void
-_thread_machdep_restore_float_state(ms)
-	struct _machdep_state *ms;
-{
-	char *fdata = (char *)&ms->fpreg;
-
-	__asm__("frstor %0"::"m" (*fdata));
+	frstor(addr);
 }
 
