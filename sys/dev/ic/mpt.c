@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpt.c,v 1.8 2004/07/12 23:57:14 marco Exp $	*/
+/*	$OpenBSD: mpt.c,v 1.9 2004/10/22 04:54:26 marco Exp $	*/
 /*	$NetBSD: mpt.c,v 1.4 2003/11/02 11:07:45 wiz Exp $	*/
 
 /*
@@ -58,6 +58,9 @@ int mpt_wait_state(mpt_softc_t *, enum DB_STATE_BITS);
 int mpt_get_iocfacts(mpt_softc_t *, MSG_IOC_FACTS_REPLY *);
 int mpt_get_portfacts(mpt_softc_t *, MSG_PORT_FACTS_REPLY *);
 int mpt_send_ioc_init(mpt_softc_t *, u_int32_t);
+void mpt_print_header(mpt_softc_t *, char *, fCONFIG_PAGE_HEADER *);
+int mpt_read_config_info_mfg(mpt_softc_t *);
+int mpt_read_config_info_ioc(mpt_softc_t *);
 int mpt_read_config_info_spi(mpt_softc_t *);
 int mpt_set_initial_config_spi(mpt_softc_t *);
 int mpt_send_port_enable(mpt_softc_t *, int);
@@ -719,6 +722,12 @@ mpt_read_cfg_page(mpt_softc_t *mpt, int PageAddress, fCONFIG_PAGE_HEADER *hdr)
 	} else if (cfgp->Header.PageType == MPI_CONFIG_PAGETYPE_SCSI_DEVICE  &&
 	    cfgp->Header.PageNumber == 1) {
 		amt = sizeof (fCONFIG_PAGE_SCSI_DEVICE_1);
+	} else if (cfgp->Header.PageType == MPI_CONFIG_PAGETYPE_MANUFACTURING &&
+	    cfgp->Header.PageNumber == 0) {
+		amt = sizeof (fCONFIG_PAGE_MANUFACTURING_0);
+	} else if (cfgp->Header.PageType ==  MPI_CONFIG_PAGETYPE_IOC &&
+	    cfgp->Header.PageNumber == 2) {
+		amt = sizeof (fCONFIG_PAGE_IOC_2);
 	}
 	bcopy(((caddr_t)req->req_vbuf)+CFG_DATA_OFF, hdr, amt);
 	mpt_free_request(mpt, req);
@@ -807,6 +816,107 @@ mpt_write_cfg_page(mpt_softc_t *mpt, int PageAddress, fCONFIG_PAGE_HEADER *hdr)
 	mpt_free_reply(mpt, (req->sequence << 1));
 
 	mpt_free_request(mpt, req);
+	return (0);
+}
+
+void
+mpt_print_header(mpt_softc_t *mpt, char *s, fCONFIG_PAGE_HEADER *phdr)
+{
+	mpt_prt(mpt, "%s %x: %x %x %x %x",
+	    s,
+	    phdr->PageNumber,
+	    phdr->PageType,
+	    phdr->PageNumber,
+	    phdr->PageLength,
+	    phdr->PageVersion);
+}
+
+/*
+ * Read manufacturing configuration information
+ */
+int
+mpt_read_config_info_mfg(mpt_softc_t *mpt)
+{
+	int rv;
+
+	/* retrieve manufacturing  headers */
+	rv = mpt_read_cfg_header(mpt, MPI_CONFIG_PAGETYPE_MANUFACTURING, 0,
+	    0, &mpt->mpt_mfg_page0.Header);
+	if (rv) {
+		mpt_prt(mpt, "Could not retrieve Manufacturing Page 0 Header.");
+		return (-1);
+	} else if (mpt->verbose > 1) {
+		mpt_print_header(mpt, "Manufacturing Header Page",
+		    &mpt->mpt_mfg_page0.Header);
+	}
+
+	/* retrieve manufacturing config pages using retrieved headers */
+
+	return (0);
+}
+
+/*
+ * Read IOC configuration information
+ */
+int
+mpt_read_config_info_ioc(mpt_softc_t *mpt)
+{
+	int rv, i;
+	fCONFIG_PAGE_HEADER *phdr[5] = {
+		phdr[0] = &mpt->mpt_ioc_page0.Header,
+		phdr[1] = &mpt->mpt_ioc_page1.Header,
+		phdr[2] = &mpt->mpt_ioc_page2.Header,
+		phdr[3] = &mpt->mpt_ioc_page3.Header,
+		phdr[4] = &mpt->mpt_ioc_page4.Header
+	};
+
+	for (i = 0; i < 5 /* 5 pages total */; i++) {
+		/* retrieve IOC headers */
+		rv = mpt_read_cfg_header(mpt, MPI_CONFIG_PAGETYPE_IOC, i,
+		    0, phdr[i]);
+		if (rv) {
+			mpt_prt(mpt, "Could not retrieve IOC Page %i header.",
+			   i);
+			return (-1);
+		} else if (mpt->verbose > 1) {
+			mpt_print_header(mpt, "IOC Header Page", phdr[i]);
+		}
+
+		/* retrieve IOC config pages using retrieved headers */
+		rv = mpt_read_cfg_page(mpt, i, phdr[i]);
+		if (rv) {
+			mpt_prt(mpt, "Could not retrieve IOC Page %i", i);
+			return (-1);
+		}
+	}
+
+	/* mpt->verbose = 2; */
+	if (mpt->verbose > 1) {
+		mpt_prt(mpt, "IOC Page 0 data: %x %x %x %x %x %x %x %x",
+		    mpt->mpt_ioc_page0.TotalNVStore,
+		    mpt->mpt_ioc_page0.FreeNVStore,
+		    mpt->mpt_ioc_page0.DeviceID,
+		    mpt->mpt_ioc_page0.VendorID,
+		    mpt->mpt_ioc_page0.RevisionID,
+		    mpt->mpt_ioc_page0.ClassCode,
+		    mpt->mpt_ioc_page0.SubsystemID,
+		    mpt->mpt_ioc_page0.SubsystemVendorID
+		);
+
+		mpt_prt(mpt, "IOC Page 1 data: %x %x %x",
+		    mpt->mpt_ioc_page1.Flags,
+		    mpt->mpt_ioc_page1.CoalescingTimeout,
+		    mpt->mpt_ioc_page1.CoalescingDepth);
+
+		mpt_prt(mpt, "IOC Page 2 data: %x %x %x %x %x",
+		    mpt->mpt_ioc_page2.CapabilitiesFlags,
+		    mpt->mpt_ioc_page2.MaxPhysDisks,
+		    mpt->mpt_ioc_page2.NumActivePhysDisks,
+		    mpt->mpt_ioc_page2.MaxVolumes,
+		    mpt->mpt_ioc_page2.NumActiveVolumes);
+	}
+	/* mpt->verbose = 1; */
+
 	return (0);
 }
 
@@ -1275,6 +1385,22 @@ mpt_init(mpt_softc_t *mpt, u_int32_t who)
 			if (mpt_set_initial_config_spi(mpt)) {
 				return (EIO);
 			}
+		}
+
+		/*
+		 * Read manufacturing pages
+		 */
+		if (mpt_read_config_info_mfg(mpt)) {
+			mpt_prt(mpt, "could not retrieve manufacturing pages");
+			return (EIO);
+		}
+
+		/*
+		 * Read IOC pages
+		 */
+		if (mpt_read_config_info_ioc(mpt)) {
+			mpt_prt(mpt, "could not retrieve IOC pages");
+			return (EIO);
 		}
 
 		/*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpt_openbsd.h,v 1.9 2004/08/23 20:52:15 marco Exp $	*/
+/*	$OpenBSD: mpt_openbsd.h,v 1.10 2004/10/22 04:54:26 marco Exp $	*/
 /*	$NetBSD: mpt_netbsd.h,v 1.2 2003/04/16 23:02:14 thorpej Exp $	*/
 
 /*
@@ -106,6 +106,7 @@
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
+#include <sys/ioctl.h>
 #include <sys/kernel.h>
 #include <sys/timeout.h>
 #include <sys/errno.h>
@@ -120,7 +121,11 @@
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
 
+#include <dev/biovar.h>
+#include <dev/ic/mpt_ioctl.h>
 #include <dev/ic/mpt_mpilib.h>
+
+#include "bio.h"
 
 /*
  * macro to convert from milliseconds to hz without integer overflow
@@ -245,6 +250,24 @@ typedef struct mpt_softc {
 		struct mpt_fc_cfg {
 			uint8_t		nada;
 		} fc;
+
+		struct mpt_mfg_cfg {
+			fCONFIG_PAGE_MANUFACTURING_0 _mfg_page0;
+		} mfg;
+#define mpt_mfg_page0		cfg.mfg._mfg_page0
+
+		struct mpt_ioc_cfg {
+			fCONFIG_PAGE_IOC_0 _ioc_page0;
+			fCONFIG_PAGE_IOC_1 _ioc_page1;
+			fCONFIG_PAGE_IOC_2 _ioc_page2;
+			fCONFIG_PAGE_IOC_3 _ioc_page3;
+			fCONFIG_PAGE_IOC_4 _ioc_page4;
+		} ioc;
+#define mpt_ioc_page0		cfg.ioc._ioc_page0
+#define mpt_ioc_page1		cfg.ioc._ioc_page1
+#define mpt_ioc_page2		cfg.ioc._ioc_page2
+#define mpt_ioc_page3		cfg.ioc._ioc_page3
+#define mpt_ioc_page4		cfg.ioc._ioc_page4
 	} cfg;
 
 	bus_space_tag_t		sc_st;
