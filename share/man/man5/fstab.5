@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fstab.5,v 1.11 2000/04/13 13:28:49 deraadt Exp $
+.\"	$OpenBSD: fstab.5,v 1.12 2000/07/31 22:15:11 pjanzen Exp $
 .\"	$NetBSD: fstab.5,v 1.5.2.1 1995/11/16 20:11:11 pk Exp $
 .\"
 .\" Copyright (c) 1980, 1989, 1991, 1993
@@ -275,10 +275,9 @@ file:
 /dev/sd0i /home ffs rw 1 6
 
 /dev/sd1b none swap sw 0 0
-/dev/cd0a /cdrom cd9660 ro 0 0 
+/dev/cd0a /cdrom cd9660 ro,noauto 0 0 
 .Ed
 .Pp
-
 .Sh FILES
 .Bl -tag -width /etc/fstab -compact
 .It Pa /etc/fstab
