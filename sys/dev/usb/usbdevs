@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.137 2005/03/08 09:53:21 dlg Exp $
+$OpenBSD: usbdevs,v 1.138 2005/03/08 12:12:08 dlg Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -158,6 +158,7 @@ vendor SONY		0x054c	Sony
 vendor VISION		0x0553	VLSI Vision
 vendor ASAHIKASEI	0x0556	Asahi Kasei Microsystems
 vendor ATEN		0x0557	ATEN International
+vendor SAMSUNG		0x055d	Samsung
 vendor MUSTEK		0x055f	Mustek Systems
 vendor TELEX		0x0562	Telex Communications
 vendor PERACOM		0x0565	Peracom Networks
@@ -461,6 +462,7 @@ product ABOCOM BWU613		0xb000	BWU613
 
 /* Accton products */
 product ACCTON USB320_EC	0x1046	USB320-EC Ethernet
+product ACCTON 2664W		0x3501	2664W
 product ACCTON 111		0x3503	T-Sinus 111 WLAN
 product ACCTON SS1001		0x5046	SpeedStream Ethernet
 
@@ -600,11 +602,13 @@ product ATI2 205		0xa001	USB Cable 205
 product ATMEL UHB124		0x3301	UHB124 hub
 product ATMEL WN210		0x3301	W-Buddie WN210
 product ATMEL DWL900AP		0x5601	DWL-900AP Wireless access point
-product ATMEL AT76C503		0x7603	AT76C503
-product ATMEL AT76C503RFMD	0x7605	AT76C503 RFMD
-product ATMEL AT76C505RFMD2958	0x7613	AT76C503 RFMD 2958
-product ATMEL AT76C505A		0x7614	AT76C505A RFMD 2958
-product ATMEL AT76C505AS	0x7617	AT76C505AS RFMD 2958
+product ATMEL AT76C503I1	0x7603	AT76C503 (Intersil 3861 Radio)
+product ATMEL AT76C503I2	0x7604	AT76C503 (Intersil 3863 Radio)
+product ATMEL AT76C503RFMD	0x7605	AT76C503 (RFMD Radio)
+product ATMEL AT76C505RFMD	0x7606	AT76C505 (RFMD Radio)
+product ATMEL AT76C505RFMD2958	0x7613	AT76C505 (RFMD 2958 Radio)
+product ATMEL AT76C505A		0x7614	AT76C505A (RFMD 2958 Radio)
+product ATMEL AT76C505AS	0x7617	AT76C505AS (RFMD 2958 Radio)
 
 /* Audio-Technica products */
 product AUDIOTECHNICA ATCHA4USB	0x0009	ATC-HA4USB USB headphone
@@ -760,7 +764,7 @@ product DIAMOND RIO500USB	0x0001	Rio 500
 product DICKSMITH WL200U	0x0002	WL-200U
 product DICKSMITH CHUSB611G	0x0013	CHUSB 611G
 product DICKSMITH WL240U	0x0014	WL-240U
-product DICKSMITH XH1153	0x5743	HX1153 802.11b
+product DICKSMITH XH1153	0x5743	XH1153 802.11b
 
 /* Digi International products */
 product DIGI ACCELEPORT2	0x0002	AccelePort 2
@@ -1540,6 +1544,9 @@ product SANWASUPPLY JYDV9USB	0x9806	JY-DV9USB gamepad
 /* Sanyo Electric products */
 product SANYO SCP4900 		0x0701	Sanyo SCP-4900 Phone
 
+/* Samsung products */
+product SAMSUNG SWL2100W	0xa000	SWL-2100U
+
 /* ScanLogic products */
 product SCANLOGIC SL11R		0x0002	SL11R-IDE
 product SCANLOGIC 336CX		0x0300	Phantom 336CX - C3
@@ -1614,6 +1621,7 @@ product SMC 2202USB		0x0200	10/100 Ethernet
 product SMC 2206USB		0x0201	EZ Connect Ethernet
 product SMC2 2020HUB            0x2020  Hub
 product SMC3 2662WV1		0xa001	EZ Connect 11Mbps
+product SMC3 2662WV2		0xa002	EZ Connect 11Mbps v2
 
 /* SOHOware products */
 product SOHOWARE NUB100		0x9100	NUB100 Ethernet
