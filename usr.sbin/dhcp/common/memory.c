@@ -42,7 +42,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: memory.c,v 1.1 1998/08/18 03:43:26 deraadt Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: memory.c,v 1.2 2000/06/23 01:44:15 beck Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -630,20 +630,23 @@ void release_lease (lease)
 	supersede_lease (lease, &lt, 1);
 }
 
-/* Abandon the specified lease (set its timeout to infinity and its
-   particulars to zero, and re-hash it as appropriate. */
+/* Abandon the specified lease for the specified time. sets it's 
+   particulars to zero, the end time apropriately and re-hash it as
+   appropriate. abandons permanently if abtime is 0 */
 
 void abandon_lease (lease, message)
 	struct lease *lease;
 	char *message;
 {
 	struct lease lt;
+	TIME abtime;
 
+	abtime = lease -> subnet -> group -> default_lease_time;
 	lease -> flags |= ABANDONED_LEASE;
 	lt = *lease;
-	lt.ends = MAX_TIME;
-	warn ("Abandoning IP address %s: %s",
-	      piaddr (lease -> ip_addr), message);
+	lt.ends = cur_time + abtime;
+	warn ("Abandoning IP address %s for %d seconds: %s",
+	      piaddr (lease -> ip_addr), abtime, message);
 	lt.hardware_addr.htype = 0;
 	lt.hardware_addr.hlen = 0;
 	lt.uid = (unsigned char *)0;
