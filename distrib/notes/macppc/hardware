@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.12 2002/10/20 21:17:34 henning Exp $
+dnl	$OpenBSD: hardware,v 1.13 2002/11/08 19:29:25 mickey Exp $
 OpenBSD/MACHINE OSREV runs on iMac, G4 Power Macintosh, G4 Cube as well
 as PowerBook and iBook machines.
 
@@ -87,10 +87,21 @@ Supported devices {:-include-:}:
 		AWACS
 		USB audio (uaudio)
 
+	Radio Receiver Devices
+		Brooktree 848/849/878/879-based TV tuner
+
 	Miscellaneous
 		USB Hubs
 		USB printers
 		USB Zip drives
+		Brooktree 8[47][89] based frame grabber and TV tuner cards,
+		including:
+			Hauppage Wincast TV
+			STB TV PCI Television Tuner
+			Miro PC TV
+			Intel Smart Video Recorder III
+			IMS TV Turbo
+			AVer Media TV/FM
 
 	Cryptography Accelerators
 		Hifn 7751/7811/7951 (hifn)
