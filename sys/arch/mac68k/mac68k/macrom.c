@@ -1,4 +1,4 @@
-/*	$OpenBSD: macrom.c,v 1.13 1997/04/05 16:19:29 briggs Exp $	*/
+/*	$OpenBSD: macrom.c,v 1.14 1997/04/14 02:10:21 briggs Exp $	*/
 /*	$NetBSD: macrom.c,v 1.31 1997/03/01 17:20:34 scottr Exp $	*/
 
 /*-
@@ -1098,6 +1098,7 @@ setup_egret(void)
 #endif
 }
 
+#ifndef HWDIRECT
 static void     setup_pm __P((void));
 
 static void
@@ -1118,6 +1119,7 @@ setup_pm(void)
 		);
 	} else printf("Help ...  No vector for InitPM!!\n");
 }
+#endif
 
 void
 mrg_initadbintr()
