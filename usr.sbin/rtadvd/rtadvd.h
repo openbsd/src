@@ -1,5 +1,5 @@
-/*	$OpenBSD: rtadvd.h,v 1.5 2000/07/06 10:14:48 itojun Exp $	*/
-/*	$KAME: rtadvd.h,v 1.9 2000/06/22 20:16:13 itojun Exp $	*/
+/*	$OpenBSD: rtadvd.h,v 1.6 2001/01/15 11:06:30 itojun Exp $	*/
+/*	$KAME: rtadvd.h,v 1.14 2000/11/11 06:57:22 jinmei Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -31,7 +31,8 @@
  */
 
 #define ALLNODES "ff02::1"
-#define ALLROUTERS "ff02::2"
+#define ALLROUTERS_LINK "ff02::2"
+#define ALLROUTERS_SITE "ff05::2"
 #define ANY "::"
 #define RTSOLLEN 8
 
@@ -74,7 +75,9 @@ struct prefix {
 	struct prefix *prev;	/* previous link */
 
 	u_int32_t validlifetime; /* AdvValidLifetime */
+	long	vltimeexpire;	/* expiration of vltime; decrement case only */
 	u_int32_t preflifetime;	/* AdvPreferredLifetime */
+	long	pltimeexpire;	/* expiration of pltime; decrement case only */
 	u_int onlinkflg;	/* bool: AdvOnLinkFlag */
 	u_int autoconfflg;	/* bool: AdvAutonomousFlag */
 #ifdef MIP6
@@ -122,6 +125,7 @@ struct	rainfo {
 	u_int	hoplimit;	/* AdvCurHopLimit */
 	struct prefix prefix;	/* AdvPrefixList(link head) */
 	int	pfxs;		/* number of prefixes */
+	long	clockskew;	/* used for consisitency check of lifetimes */
 
 #ifdef MIP6
 	u_short	hapref;		/* Home Agent Preference */
@@ -145,6 +149,10 @@ struct	rainfo {
 void ra_timeout __P((void *));
 void ra_timer_update __P((void *, struct timeval *));
 
+int prefix_match __P((struct in6_addr *, int, struct in6_addr *, int));
+struct rainfo *if_indextorainfo __P((int));
+
+extern struct in6_addr in6a_site_allrouters;
 #ifdef MIP6
 extern int mobileip6;
 #endif

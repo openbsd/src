@@ -1,5 +1,5 @@
-/*	$OpenBSD: if.h,v 1.4 2000/07/06 10:14:47 itojun Exp $	*/
-/*	$KAME: if.h,v 1.3 2000/05/27 11:47:09 itojun Exp $	*/
+/*	$OpenBSD: if.h,v 1.5 2001/01/15 11:06:26 itojun Exp $	*/
+/*	$KAME: if.h,v 1.4 2000/09/06 20:06:30 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
@@ -52,6 +52,7 @@ int get_ifm_ifindex __P((char *buf));
 int get_ifam_ifindex __P((char *buf));
 int get_ifm_flags __P((char *buf));
 int get_prefixlen __P((char *buf));
+int prefixlen __P((u_char *, u_char *));
 int rtmsg_type __P((char *buf));
 int ifmsg_type __P((char *buf));
 int rtmsg_len __P((char *buf));

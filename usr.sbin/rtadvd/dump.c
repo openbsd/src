@@ -1,5 +1,5 @@
-/*	$OpenBSD: dump.c,v 1.2 2000/07/06 10:14:46 itojun Exp $	*/
-/*	$KAME: dump.c,v 1.11 2000/05/27 11:30:43 jinmei Exp $	*/
+/*	$OpenBSD: dump.c,v 1.3 2001/01/15 11:06:25 itojun Exp $	*/
+/*	$KAME: dump.c,v 1.15 2000/11/11 06:57:22 jinmei Exp $	*/
 
 /*
  * Copyright (C) 2000 WIDE Project.
@@ -31,6 +31,7 @@
  */
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/queue.h>
 
 #include <net/if.h>
 #if defined(__FreeBSD__) && __FreeBSD__ >= 3
@@ -97,7 +98,9 @@ if_dump()
 	struct prefix *pfx;
 	char prefixbuf[INET6_ADDRSTRLEN];
 	int first;
+	struct timeval now;
 
+	gettimeofday(&now, NULL); /* XXX: unused in most cases */
 	for (rai = ralist; rai; rai = rai->next) {
 		fprintf(fp, "%s:\n", rai->ifname);
 
@@ -155,6 +158,9 @@ if_dump()
 			rai->hapref, rai->hatime);
 #endif 
 
+		if (rai->clockskew)
+			fprintf(fp, "  Clock skew: %ldsec\n",
+				rai->clockskew);  
 		for (first = 1, pfx = rai->prefix.next; pfx != &rai->prefix;
 		     pfx = pfx->next) {
 			if (first) {
@@ -177,15 +183,27 @@ if_dump()
 				break;
 			}
 			if (pfx->validlifetime == ND6_INFINITE_LIFETIME)
-				fprintf(fp, "vltime: infinity, ");
+				fprintf(fp, "vltime: infinity");
 			else
-				fprintf(fp, "vltime: %ld, ",
+				fprintf(fp, "vltime: %ld",
 					(long)pfx->validlifetime);
-			if (pfx->preflifetime ==  ND6_INFINITE_LIFETIME)
-				fprintf(fp, "pltime: infinity, ");
+			if (pfx->vltimeexpire != 0)
+				fprintf(fp, "(decr,expire %ld), ", (long)
+					pfx->vltimeexpire > now.tv_sec ?
+					pfx->vltimeexpire - now.tv_sec : 0);
 			else
-				fprintf(fp, "pltime: %ld, ",
+				fprintf(fp, ", ");
+			if (pfx->preflifetime ==  ND6_INFINITE_LIFETIME)
+				fprintf(fp, "pltime: infinity");
+			else
+				fprintf(fp, "pltime: %ld",
 					(long)pfx->preflifetime);
+			if (pfx->pltimeexpire != 0)
+				fprintf(fp, "(decr,expire %ld), ", (long)
+					pfx->pltimeexpire > now.tv_sec ?
+					pfx->pltimeexpire - now.tv_sec : 0);
+			else
+				fprintf(fp, ", ");
 			fprintf(fp, "flags: %s%s%s",
 				pfx->onlinkflg ? "L" : "",
 				pfx->autoconfflg ? "A" : "",
