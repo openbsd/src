@@ -1,16 +1,15 @@
-#	$OpenBSD: GECKO,v 1.5 1999/03/04 23:26:13 mickey Exp $
+#	$OpenBSD: GECKO,v 1.6 1999/04/20 20:32:18 mickey Exp $
 #
 # HP 9000/712/{60,80,80i,100} boxens
 #
-# neverseen devices: telephony, X.21 m-proto adapter, TR/9000
+# neverseen devices: telephony, X.21 m-proto adapter, TR/9000, IEEE488
 
-machine hppa
-
-include	"../../../conf/GENERIC"
+include	"arch/hppa/conf/std.hppa"
+include	"conf/GENERIC"
 
 maxusers	16
 
-option		HP7100LC
+option		HP7100LC_CPU
 #option		FPEMUL		# has FPU onboard
 
 #option		NS		# XNS
@@ -22,16 +21,11 @@ option		HP7100LC
 #option		CCITT,LLC,HDLC	# X.25
 
 #option	 	COMPAT_HPUX	# HP-UX binary compatibility
+#option		COMPAT_LINUX	# MkLinux/Linux binary compatibility
 #option		COMPAT_OSF1	# OSF1 binary compatibility
-#option		COMPAT_LINUX	# Mach/Linux binary compatibility
 
 config	bsd swap generic
 
-mainbus0	at root		# root "bus"
-
-mem0	at mainbus0		# /dev/*mem, and memory controller
-pdc0	at mainbus0		# PDC/IODC wrapper for boot console
-cpu0	at mainbus0 #irq 31	# HP PA7100LC processor
 lasi0	at mainbus0 irq 28	# LASI host adapter (LSI ???)
 #lasi1	at mainbus0 irq ?	# LASI host adapter in the GIO slot
 sti0	at mainbus0 		# onboard HCRX-8 graphics

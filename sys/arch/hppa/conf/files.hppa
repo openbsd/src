@@ -1,4 +1,4 @@
-#	$OpenBSD: files.hppa,v 1.11 1999/02/25 16:59:24 mickey Exp $
+#	$OpenBSD: files.hppa,v 1.12 1999/04/20 20:32:19 mickey Exp $
 #
 # hppa-specific configuration info
 
@@ -6,12 +6,6 @@
 maxpartitions 16
 
 maxusers 2 8 64
-
-defopt	HP7100
-defopt	HP7100LC
-defopt	HP7150
-defopt	HP7200
-defopt	FPEMUL
 
 # 
 # "workstation console" routines
@@ -74,6 +68,11 @@ device	cpu
 attach	cpu at mainbus
 file	arch/hppa/dev/cpu.c		cpu
 
+device	fpu
+attach	fpu at mainbus
+file	arch/hppa/dev/fpu.c		fpu
+
+# as goes w/ 7100LC, 7300LC, 7200, 8000, 8200
 device	lasi: gscbus
 attach	lasi at mainbus
 file	arch/hppa/dev/lasi.c		lasi
@@ -86,9 +85,9 @@ device	wax: gscbus, eisabus
 attach	wax at mainbus
 file	arch/hppa/dev/wax.c		wax
 
-device	eba: eisabus
-attach	eba at mainbus
-file	arch/hppa/dev/eba.c		eba
+device	mongoose: eisabus
+attach	mongoose at mainbus
+file	arch/hppa/dev/mongoose.c	mongoose
 
 device	dino: pcibus
 attach	dino at mainbus
@@ -117,6 +116,7 @@ device	gsc {[irq = -1]}
 attach	gsc at gscbus
 file	arch/hppa/gsc/gscbus.c		gsc
 
+# com and lpt are both on WD 16C552
 attach	com at gsc with com_gsc
 file	arch/hppa/gsc/com_gsc.c		com
 
@@ -155,6 +155,7 @@ attach	atwo at gsc
 file	arch/hppa/gsc/atwo.c		atwo
 
 # these we don't know yet
+# AMD Supernet2 FDDI ?
 #device	medusa: fddi
 #attach	medusa at gsc
 #file	arch/hppa/gsc/medusa.c		medusa
@@ -179,6 +180,7 @@ file	arch/hppa/hppa/hpux_machdep.c		compat_hpux
 include "compat/osf1/files.osf1"
 file	arch/hppa/hppa/osf1_machdep.c		compat_osf1
 include	"compat/linux/files.linux"
+include "compat/ossaudio/files.ossaudio"
 file	arch/hppa/hppa/linux_machdep.c		compat_linux
 
 # FP emulation
@@ -200,7 +202,7 @@ file	arch/hppa/hppa/process_machdep.c
 file	arch/hppa/hppa/sys_machdep.c
 file	arch/hppa/hppa/trap.c
 file	arch/hppa/hppa/vm_machdep.c
-#file	arch/hppa/hppa/in_cksum.s		inet
+#file	arch/hppa/hppa/in_cksum.S		inet
 file	netinet/in_cksum.c			inet
 file	arch/hppa/dev/clock.c
 
