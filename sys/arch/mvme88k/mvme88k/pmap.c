@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.81 2003/10/06 06:31:28 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.82 2003/10/06 14:59:29 miod Exp $	*/
 /*
  * Copyright (c) 2001, 2002, 2003 Miodrag Vallat
  * Copyright (c) 1998-2001 Steve Murphree, Jr.
@@ -412,8 +412,10 @@ pmap_expand_kmap(vaddr_t virt, vm_prot_t prot)
 
 	/* segment table entry derivate from map and virt. */
 	sdt = SDTENT(kernel_pmap, virt);
+#ifdef DEBUG
 	if (SDT_VALID(sdt))
 		panic("pmap_expand_kmap: segment table entry VALID");
+#endif
 
 	kpdt_ent = kpdt_free;
 	if (kpdt_ent == KPDT_ENTRY_NULL)
@@ -424,8 +426,10 @@ pmap_expand_kmap(vaddr_t virt, vm_prot_t prot)
 	*sdt = kpdt_ent->phys | template;
 	/* virtual table */
 	*(sdt + SDT_ENTRIES) = (vaddr_t)kpdt_ent | template;
+#ifdef DEBUG	/* XXX - necessary? */
 	kpdt_ent->phys = (paddr_t)0;
 	kpdt_ent->next = NULL;
+#endif
 
 	return (pt_entry_t *)(kpdt_ent) + PDTIDX(virt);
 }
@@ -2621,15 +2625,17 @@ changebit_Retry:
 
 		pte = pmap_pte(pmap, va);
 
-#ifdef DIAGNOSTIC
 		/*
 		 * Check for existing and valid pte
 		 */
+#ifdef DIAGNOSTIC
 		if (pte == PT_ENTRY_NULL)
 			panic("pmap_changebit: bad pv list entry.");
-		if (!PDT_VALID(pte))
-			printf("pmap_changebit: invalid pte %x pg %x %x\n",
-			    *pte, pg, VM_PAGE_TO_PHYS(pg));
+#endif
+		if (!PDT_VALID(pte)) {
+			goto next;	 /*  no page mapping */
+		}
+#ifdef DIAGNOSTIC
 		if (ptoa(PG_PFNUM(*pte)) != VM_PAGE_TO_PHYS(pg))
 			panic("pmap_changebit: pte %x doesn't point to page %x %x\n",
 			    *pte, pg, VM_PAGE_TO_PHYS(pg));
@@ -2651,7 +2657,7 @@ changebit_Retry:
 		if (npte != opte) {
 			flush_atc_entry(users, va, kflush);
 		}
-
+next:
 		simple_unlock(&pmap->pm_lock);
 	}
 	SPLX(spl);
@@ -2734,29 +2740,28 @@ testbit_Retry:
 	}
 
 	/* for each listed pmap, check modified bit for given page */
-	pvep = pvl;
-	while (pvep != PV_ENTRY_NULL) {
+	for (pvep = pvl; pvep != PV_ENTRY_NULL; pvep = pvep->pv_next) {
 		if (!simple_lock_try(&pvep->pv_pmap->pm_lock)) {
 			goto testbit_Retry;
 		}
 
 		pte = pmap_pte(pvep->pv_pmap, pvep->pv_va);
+#ifdef DIAGNOSTIC
 		if (pte == PT_ENTRY_NULL) {
-			printf("pmap_testbit: pte from pv_list not in map virt = 0x%x\n", pvep->pv_va);
-			panic("pmap_testbit: bad pv list entry");
+			panic("pmap_testbit: pte from pv_list not in map virt = 0x%x\n", pvep->pv_va);
 		}
+#endif
 		if (*pte & bit) {
 			simple_unlock(&pvep->pv_pmap->pm_lock);
 			pvl->pv_flags |= bit;
 #ifdef DEBUG
 			if ((pmap_con_dbg & (CD_TBIT | CD_FULL)) == (CD_TBIT | CD_FULL))
-				printf("(pmap_testbit: %x) modified page pte@0x%p\n", curproc, pte);
+				printf("(pmap_testbit: %x) true on page pte@0x%p\n", curproc, pte);
 #endif
 			SPLX(spl);
 			return (TRUE);
 		}
 		simple_unlock(&pvep->pv_pmap->pm_lock);
-		pvep = pvep->pv_next;
 	}
 
 	SPLX(spl);
