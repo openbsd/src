@@ -1,4 +1,4 @@
-/*	$OpenBSD: gencode.c,v 1.7 1998/06/04 23:11:34 deraadt Exp $	*/
+/*	$OpenBSD: gencode.c,v 1.8 1998/06/11 00:01:18 provos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996
@@ -498,6 +498,11 @@ init_linktype(type)
 		off_nl = 4;
 		return;
 
+	case DLT_ENC:
+		off_linktype = -1;
+		off_nl = 12;
+		return;
+
 	case DLT_PPP:
 		off_linktype = 2;
 		off_nl = 4;
@@ -580,6 +585,7 @@ gen_linktype(proto)
 			proto = 0x0021;		/* XXX - need ppp.h defs */
 		break;
 
+	case DLT_ENC:
 	case DLT_LOOP:
 	case DLT_NULL:
 		/* XXX */
