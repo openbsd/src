@@ -1,4 +1,4 @@
-.\"	$OpenBSD: scsi.4,v 1.8 1999/08/24 01:20:21 csapuntz Exp $
+.\"	$OpenBSD: scsi.4,v 1.9 2001/06/26 02:09:10 pjanzen Exp $
 .\"
 .Dd August 4, 1996
 .Dt SCSI 4
@@ -31,7 +31,7 @@ still be performed against the device.
 The option SCSIDEBUG enables the debug ioctl.
 .Pp
 All devices and the SCSI busses support boot time allocation so that
-an upper number of devices and controllers do not need to be configured;
+an upper number of devices and controllers does not need to be configured;
 .Em "device sd* at scsibus? target ? lun ?"
 will suffice for any number of disk drivers.
 .Pp

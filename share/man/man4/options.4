@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.69 2001/06/25 23:18:12 mickey Exp $
+.\"	$OpenBSD: options.4,v 1.70 2001/06/26 02:09:09 pjanzen Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -266,7 +266,8 @@ This code will cause the kernel to panic if corruption of internal data
 structures is detected.
 .It Cd option SMALL_KERNEL
 Removes some optimizations from the kernel to reduce the size of the
-resulting kernel binary. This option can decrease system performance.
+resulting kernel binary.
+This option can decrease system performance.
 .It Cd option GPROF
 Adds code to the kernel for kernel profiling with
 .Xr kgmon 8 .
@@ -638,12 +639,13 @@ and
 for details.
 .It Cd option USER_PCICONF
 Enables the user level acces to the PCI bus configuration space
-through ioctls on the 
-.Pa /dev/pci 
-device. It's used by the 
+through ioctls on the
+.Pa /dev/pci
+device.
+It's used by the
 .Xr XFree86 1
-server on some architectures. 
-See 
+server on some architectures.
+See
 .Xr pci 4
 for details.
 .El
@@ -653,7 +655,7 @@ for details.
 Enables
 .Em IPFORWARDING
 and (on most ports) increases the size of
-.Em NMBCLUSTERS.
+.Em NMBCLUSTERS .
 In general,
 .Em GATEWAY
 is used to indicate that a system should act as a router, and

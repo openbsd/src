@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pciide.4,v 1.13 2001/04/03 05:50:59 chris Exp $
+.\"	$OpenBSD: pciide.4,v 1.14 2001/06/26 02:09:09 pjanzen Exp $
 .\"	$NetBSD: pciide.4,v 1.8 1999/03/16 01:19:17 garbled Exp $
 .\"
 .\" Copyright (c) 1998 Manuel Bouyer.
@@ -91,7 +91,7 @@ cause a machine hang.
 .Xr wd 4 ,
 .Xr wdc 4
 .Sh BUGS
-There's no way to reliably know if a PCI064x controller is enabled or not.
+There's no way to know reliably if a PCI064x controller is enabled or not.
 If the driver finds a PCI064x, it will assume it is enabled unless
 .Dv PCIIDE_CMD064x_DISABLE
 is specified in the kernel config file.
@@ -99,17 +99,25 @@ This will be a problem only if the controller has been disabled in the BIOS
 and another controller has been installed which uses the ISA legacy I/O ports
 and interrupts.
 .Pp
-For proper operation of UltraDMA 3 (44 MB/sec), 4 (66 MB/sec), or 5 (100 MB/sec),
-a 40-pin, 80-conductor cable must be used.  On some controllers, the pciide
-driver can probe the chip and see if it detects that an 80-conductor or 40-
-conductor cable was used.  If not, it will down-grade to UltraDMA 2 mode.
+For proper operation of UltraDMA 3
+.Pq 44 MB/sec ,
+4
+.Pq 66 MB/sec ,
+or 5
+.Pq 100 MB/sec ,
+a 40-pin, 80-conductor cable must be used.
+On some controllers, the pciide driver can probe the chip and see if it
+detects that an 80-conductor or 40-conductor cable was used.
+If not, it will down-grade to UltraDMA 2 mode.
 On other controllers, no such capability exists, and the driver assumes
-you are using an 80-conductor cable.  If you are getting errors about
+you are using an 80-conductor cable.
+If you are getting errors about
 corrupted data, check to make sure you are using the correct cable.
 An 80-conductor cable is recommended for any IDE installation, not just
 ones using faster UltraDMA modes, because it will decrease electrical
-noise and increase data reliability.  
+noise and increase data reliability.
 .Pp
 The timings used for the PIO and DMA modes for controllers listed above
-are for a PCI bus running at 30 or 33 Mhz. These timings will work on a slower
-bus, but they may cause errors on an over-clocked bus.
+are for a PCI bus running at 30 or 33 MHz.
+These timings will work on a slower bus,
+but they may cause errors on an over-clocked bus.
