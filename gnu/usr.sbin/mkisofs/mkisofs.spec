@@ -1,12 +1,12 @@
-#	$OpenBSD: mkisofs.spec,v 1.2 1998/04/05 00:39:37 deraadt Exp $
-# $From: mkisofs.spec,v 1.3 1997/04/10 02:46:57 eric Rel $
+#	$OpenBSD: mkisofs.spec,v 1.3 1999/11/29 21:53:15 d Exp $
+# $Id: mkisofs.spec,v 1.3 1999/11/29 21:53:15 d Exp $
 Summary: Creates a ISO9660 filesystem image
 Name: mkisofs
-Version: 1.11
+Version: 1.11.3
 Release: 1
 Copyright: GPL
 Group: Utilities/System
-Source: tsx-11.mit.edu:/pub/linux/packages/mkisofs/mkisofs-1.11.2.tar.gz
+Source: tsx-11.mit.edu:/pub/linux/packages/mkisofs/mkisofs-1.11.3.tar.gz
 
 %description
 This is the mkisofs package.  It is used to create ISO 9660

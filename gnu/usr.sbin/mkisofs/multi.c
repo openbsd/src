@@ -1,4 +1,4 @@
-/*	$OpenBSD: multi.c,v 1.2 1998/04/05 00:39:38 deraadt Exp $	*/
+/*	$OpenBSD: multi.c,v 1.3 1999/11/29 21:53:15 d Exp $	*/
 /*
  * File multi.c - scan existing iso9660 image and merge into 
  * iso9660 filesystem.  Used for multisession support.
@@ -20,7 +20,7 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  
  */
 
-static char rcsid[] ="$From: multi.c,v 1.4 1997/03/08 17:08:53 eric Rel $";
+static char rcsid[] ="$From: multi.c,v 1.6.1.3 1998/06/02 03:00:25 eric Exp $";
 
 #include <stdlib.h>
 #include <string.h>
@@ -909,6 +909,7 @@ FDECL2(merge_old_directory_into_tree, struct directory_entry *, dpnt,
   strcat(whole_path, SPATH_SEPARATOR);
   strcat(whole_path, dpnt->name);
   this_dir->de_name = strdup(whole_path);
+  this_dir->whole_name = strdup(whole_path);
 
   /*
    * Now fill this directory using information from the previous

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tree.c,v 1.2 1998/04/05 00:39:41 deraadt Exp $	*/
+/*	$OpenBSD: tree.c,v 1.3 1999/11/29 21:53:15 d Exp $	*/
 /*
  * File tree.c - scan directory  tree and build memory structures for iso9660
  * filesystem
@@ -21,7 +21,7 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
-static char rcsid[] ="$From: tree.c,v 1.7 1997/03/25 03:55:28 eric Rel $";
+static char rcsid[] ="$From: tree.c,v 1.9.1.2 1998/06/02 03:17:31 eric Exp $";
 
 /* ADD_FILES changes made by Ross Biro biro@yggdrasil.com 2/23/95 */
 
@@ -1014,6 +1014,7 @@ FDECL3(scan_directory_tree,char *, path, struct directory_entry *, de,
 			 sizeof(struct directory_entry));
 		  s_entry1->table = NULL;
 		  s_entry1->name = strdup(this_dir->contents->name);
+		  s_entry1->whole_name = strdup(this_dir->contents->whole_name);
 		  s_entry1->next = reloc_dir->contents;
 		  reloc_dir->contents = s_entry1;
 		  s_entry1->priority  =  32768;

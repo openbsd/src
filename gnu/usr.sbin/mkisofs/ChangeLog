@@ -1,3 +1,26 @@
+Wed Nov  5 10:46:29 1997  Andreas Buschmann US/EC4 60/1F/110 #40409  <buschman@lts.sel.alcatel.de>
+
+	Circumvent a bug in the SunOS / Solaris CD-ROM driver (and maybe HP/UX, too).
+       
+       * mkisofs.8 (-S): Document switch.
+       *  mkisofs.c (split_SL_field): new Variable, new switch -S.
+       *  mkisofs.h (split_SL_field): new Variable.
+       * rock.c (generate_rock_ridge_attributes): only split SL field,
+       when split_SL_field is set.
+ 
+Tue Jun  3 15:32:21 1997  Andreas Buschmann <buschman@lts.sel.alcatel.de>
+ 
+       Circumvent a bug in the SunOS CD-ROM driver (and maybee HP/UX, too).
+ 
+       * mkisofs.8 (-s): Document switch.
+       * mkisofs.c (split_SL_component): new Variable, new switch -s.
+       * mkisofs.h (split_SL_component): new Variable.
+       * rock.c (generate_rock_ridge_attributes): only split SL
+       components, when split_SL_component is set.
+       
+       * defaults.h: Added SunOS string.
+       
+
 Wed Mar 19 16:50:17 1997  Fred Fish  <fnf@ninemoons.com>
 
 	* Makefile.in (CFLAGS): Let configure set basic flags.  Move
