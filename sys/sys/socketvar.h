@@ -1,4 +1,4 @@
-/*	$OpenBSD: socketvar.h,v 1.35 2004/09/16 13:11:00 markus Exp $	*/
+/*	$OpenBSD: socketvar.h,v 1.36 2004/11/17 13:46:33 markus Exp $	*/
 /*	$NetBSD: socketvar.h,v 1.18 1996/02/09 18:25:38 christos Exp $	*/
 
 /*-
@@ -149,11 +149,10 @@ do {									\
  * How much space is there in a socket buffer (so->so_snd or so->so_rcv)?
  * This is problematical if the fields are unsigned, as the space might
  * still be negative (cc > hiwat or mbcnt > mbmax).  Should detect
- * overflow and return 0.  Should use "lmin" but it doesn't exist now.
+ * overflow and return 0.
  */
 #define	sbspace(sb) \
-    ((long) imin((int)((sb)->sb_hiwat - (sb)->sb_cc), \
-	 (int)((sb)->sb_mbmax - (sb)->sb_mbcnt)))
+    lmin((sb)->sb_hiwat - (sb)->sb_cc, (sb)->sb_mbmax - (sb)->sb_mbcnt)
 
 /* do we have to send all at once on a socket? */
 #define	sosendallatonce(so) \
