@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_table.c,v 1.23 2003/01/15 16:28:56 cedric Exp $	*/
+/*	$OpenBSD: pf_table.c,v 1.24 2003/01/15 16:55:10 cedric Exp $	*/
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -1306,18 +1306,21 @@ pfr_ina_define(struct pfr_table *tbl, struct pfr_addr *addr, int size,
 		p = pfr_create_kentry(&ad);
 		if (p == NULL)
 			senderr(ENOMEM);
+		if (pfr_route_kentry(shadow, p)) {
+			pfr_destroy_kentry(p);
+			continue;
+		}
 		SLIST_INSERT_HEAD(&addrq, p, pfrke_workq);
 		xaddr++;
 	}
-	if (!(flags & PFR_FLAG_ADDRSTOO))
-		shadow->pfrkt_cnt = NO_ADDRESSES;
 	if (!(flags & PFR_FLAG_DUMMY)) {
 		if (kt->pfrkt_shadow != NULL)
 			pfr_destroy_ktable(kt->pfrkt_shadow, 1);
 		kt->pfrkt_flags |= PFR_TFLAG_INACTIVE;
 		pfr_insert_ktables(&tableq);
+		shadow->pfrkt_cnt = (flags & PFR_FLAG_ADDRSTOO) ?
+		    xaddr : NO_ADDRESSES;
 		kt->pfrkt_shadow = shadow;
-		pfr_insert_kentries(shadow, &addrq, 0);
 	} else {
 		pfr_destroy_ktable(shadow, 0);
 		pfr_destroy_ktables(&tableq, 0);
