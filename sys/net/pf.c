@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.462 2004/11/12 19:44:44 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.463 2004/11/19 18:20:10 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -5000,9 +5000,6 @@ pf_route(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 	if (r->rt == PF_DUPTO) {
 		if ((m0 = m_copym2(*m, 0, M_COPYALL, M_NOWAIT)) == NULL)
 			return;
-		if ((mtag = m_tag_copy(mtag)) == NULL)
-			goto bad;
-		m_tag_prepend(m0, mtag);
 	} else {
 		if ((r->rt == PF_REPLYTO) == (r->direction == dir))
 			return;
@@ -5197,9 +5194,6 @@ pf_route6(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 	if (r->rt == PF_DUPTO) {
 		if ((m0 = m_copym2(*m, 0, M_COPYALL, M_NOWAIT)) == NULL)
 			return;
-		if ((mtag = m_tag_copy(mtag)) == NULL)
-			goto bad;
-		m_tag_prepend(m0, mtag);
 	} else {
 		if ((r->rt == PF_REPLYTO) == (r->direction == dir))
 			return;
