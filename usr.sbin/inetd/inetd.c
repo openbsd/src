@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.6 1996/06/29 01:02:24 deraadt Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.7 1996/07/28 05:13:19 joshd Exp $	*/
 /*	$NetBSD: inetd.c,v 1.11 1996/02/22 11:14:41 mycroft Exp $	*/
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inetd.c	5.30 (Berkeley) 6/3/91";*/
-static char rcsid[] = "$OpenBSD: inetd.c,v 1.6 1996/06/29 01:02:24 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: inetd.c,v 1.7 1996/07/28 05:13:19 joshd Exp $";
 #endif /* not lint */
 
 /*
@@ -275,8 +275,9 @@ main(argc, argv, envp)
 	register struct group *grp;
 	register int tmpint;
 	struct sigvec sv;
-	int ch, pid, dofork;
+	int ch, pid, dofork, plen;
 	char buf[50];
+	struct sockaddr_in peer;
 
 	Argv = argv;
 	if (envp == 0 || *envp == 0)
@@ -378,6 +379,16 @@ main(argc, argv, envp)
 					continue;
 				syslog(LOG_WARNING, "accept (for %s): %m",
 					sep->se_service);
+				continue;
+			}
+			plen = sizeof(peer);
+			if (getpeername(ctrl, (struct sockaddr *)&peer, &plen) < 0)
+			{	syslog(LOG_WARNING, "could not getpeername");
+				continue;
+			}
+			if (ntohs(peer.sin_port) == 20)
+			{	syslog(LOG_INFO, "Connect to %s from port %d",
+				       sep->se_service, ntohs(peer.sin_port));
 				continue;
 			}
 		} else
