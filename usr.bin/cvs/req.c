@@ -1,4 +1,4 @@
-/*	$OpenBSD: req.c,v 1.11 2005/01/13 06:09:14 jfb Exp $	*/
+/*	$OpenBSD: req.c,v 1.12 2005/02/22 16:33:44 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -51,9 +51,11 @@ extern int   cvs_readonly;
 
 
 static int  cvs_req_set          (int, char *);
+static int  cvs_req_noop         (int, char *);
 static int  cvs_req_root         (int, char *);
 static int  cvs_req_validreq     (int, char *);
 static int  cvs_req_validresp    (int, char *);
+static int  cvs_req_expandmod    (int, char *);
 static int  cvs_req_directory    (int, char *);
 static int  cvs_req_useunchanged (int, char *);
 static int  cvs_req_case         (int, char *);
@@ -102,7 +104,7 @@ struct cvs_reqhdlr {
 	{ NULL                  },
 	{ NULL                  },
 	{ cvs_req_set           },
-	{ NULL                  },
+	{ cvs_req_expandmod     },
 	{ cvs_req_command       },
 	{ NULL                  },
 	{ NULL                  },
@@ -131,7 +133,7 @@ struct cvs_reqhdlr {
 	{ NULL                  },
 	{ cvs_req_command       },
 	{ cvs_req_command       },
-	{ cvs_req_command       },
+	{ cvs_req_noop          },
 	{ NULL                  },
 	{ NULL                  },
 	{ NULL                  },
@@ -181,11 +183,24 @@ cvs_req_handle(char *line)
 	return (*cvs_req_swtab[req->req_id].hdlr)(req->req_id, cp);
 }
 
+/*
+ * cvs_req_noop()
+ */
+static int
+cvs_req_noop(int reqid, char *line)
+{
+	int ret;
+
+	ret = cvs_sendresp(CVS_RESP_OK, NULL);
+	if (ret < 0)
+		return (-1);
+	return (0);
+}
+
 
 static int
 cvs_req_root(int reqid, char *line)
 {
-
 	if (cvs_req_rootpath != NULL) {
 		cvs_log(LP_ERR, "duplicate Root request received");
 		return (-1);
@@ -250,6 +265,23 @@ cvs_req_directory(int reqid, char *line)
 
 	return (0);
 }
+
+
+/*
+ * cvs_req_expandmod()
+ *
+ */
+static int
+cvs_req_expandmod(int reqid, char *line)
+{
+	int ret;
+
+	ret = cvs_sendresp(CVS_RESP_OK, NULL);
+	if (ret < 0)
+		return (-1);
+	return (0);
+}
+
 
 /*
  * cvs_req_useunchanged()
@@ -420,13 +452,12 @@ cvs_req_command(int reqid, char *line)
 	int ret;
 
 	switch (reqid) {
-	case CVS_REQ_NOOP:	/* do nothing */
-		break;
 	case CVS_REQ_VERSION:
 		ret = cvs_sendresp(CVS_RESP_M, CVS_VERSION);
 		break;
 	case CVS_REQ_ADD:
 	case CVS_REQ_ANNOTATE:
+	case CVS_REQ_CO:
 	case CVS_REQ_CI:
 	case CVS_REQ_DIFF:
 	case CVS_REQ_LOG:
