@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_run.c,v 1.10 1997/08/07 09:18:06 niklas Exp $	*/
+/*	$OpenBSD: db_run.c,v 1.11 1998/03/16 08:44:32 pefo Exp $	*/
 /*	$NetBSD: db_run.c,v 1.8 1996/02/05 01:57:12 christos Exp $	*/
 
 /* 
@@ -268,7 +268,9 @@ void
 db_set_single_step(regs)
 	register db_regs_t *regs;
 {
-	db_addr_t pc = PC_REGS(regs), brpc;
+	db_addr_t pc = PC_REGS(regs);
+#ifndef SOFTWARE_SSTEP_EMUL
+	db_addr_t brpc;
 	u_int inst;
 
 	/*
@@ -286,6 +288,7 @@ db_set_single_step(regs)
 	    pc = next_instr_address(pc, 1);
 #endif
 	}
+#endif /*SOFTWARE_SSTEP_EMUL*/
 	pc = next_instr_address(pc, 0);
 	db_not_taken_bkpt = db_set_temp_breakpoint(pc);
 }
