@@ -1,4 +1,4 @@
-/*	$OpenBSD: netbsd_misc.c,v 1.9 2001/02/26 16:32:32 art Exp $	*/
+/*	$OpenBSD: netbsd_misc.c,v 1.10 2001/02/26 17:24:55 art Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -76,22 +76,8 @@ netbsd_sys_fdatasync(p, v, retval)
 	struct netbsd_sys_fdatasync_args /* {
 		syscallarg(int) fd;
 	} */ *uap = v;
-	register struct vnode *vp;
-	struct file *fp;
-	int error;
 
-	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
-		return (error);
-	vp = (struct vnode *)fp->f_data;
-	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
-	error = VOP_FSYNC(vp, fp->f_cred, MNT_WAIT, p);
-#ifdef FFS_SOFTUPDATES
-	if (error == 0 && vp->v_mount && (vp->v_mount->mnt_flag & MNT_SOFTDEP))
-		error = softdep_fsync(vp);
-#endif  
-
-	VOP_UNLOCK(vp, 0, p);
-	return (error);
+	return sys_fsync(p, uap, retval);
 }
 
 /*ARGSUSED*/
