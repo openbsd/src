@@ -1,5 +1,5 @@
-/*	$OpenBSD: ncr5380.c,v 1.8 1996/06/08 16:21:11 briggs Exp $	*/
-/*	$NetBSD: ncr5380.c,v 1.30 1996/06/07 02:44:15 briggs Exp $	*/
+/*	$OpenBSD: ncr5380.c,v 1.9 1996/06/23 16:08:23 briggs Exp $	*/
+/*	$NetBSD: ncr5380.c,v 1.31 1996/06/23 15:02:58 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -125,6 +125,8 @@ u_char	opcode;
  * large. In 99% of the invocations nearly no timeout is needed but in
  * some cases (especially when using my tapedrive, a Tandberg 3600) the
  * device is busy internally and the first SCSI-phase will be delayed.
+ *
+ * -- A sleeping Fujitsu M2512 is even worse; try 2.5 sec     -hf 20 Jun
  */
 extern __inline__ int wait_req_true(void)
 {
