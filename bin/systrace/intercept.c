@@ -1,4 +1,4 @@
-/*	$OpenBSD: intercept.c,v 1.3 2002/06/04 19:15:54 deraadt Exp $	*/
+/*	$OpenBSD: intercept.c,v 1.4 2002/06/04 19:25:54 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -288,7 +288,9 @@ intercept_open(void)
 {
 	int fd;
 
-	fd = intercept.open();
+	if ((fd = intercept.open()) == -1)
+		return (-1);
+
 	if (fcntl(fd, F_SETFL, O_NONBLOCK) == -1)
 		warn("fcntl(O_NONBLOCK)");
 
