@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getnetgrent.3,v 1.3 1997/02/26 04:34:46 downsj Exp $
+.\"	$OpenBSD: getnetgrent.3,v 1.4 1997/03/29 03:50:39 deraadt Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -42,9 +42,9 @@
 .Nd netgroup database operations
 .Sh SYNOPSIS
 .Ft int
-.Fn getnetgrent "const char **host, const char **user, const char **domain"
+.Fn getnetgrent "const char **host" "const char **user" "const char **domain"
 .Ft int
-.Fn innetgr "const char *netgroup, const char *host, const char *user, const char *domain"
+.Fn innetgr "const char *netgroup" "const char *host" "const char *user" "const char *domain"
 .Ft void
 .Fn setnetgrent "const char *netgroup"
 .Ft void
