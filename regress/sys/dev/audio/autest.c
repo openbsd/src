@@ -1,4 +1,4 @@
-/*	$OpenBSD: autest.c,v 1.4 2003/02/04 07:49:34 jason Exp $	*/
+/*	$OpenBSD: autest.c,v 1.5 2003/02/04 08:01:50 jason Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -274,12 +274,12 @@ enc_ulinear_8(int fd, audio_encoding_t *enc, int chans)
 	}
 
 	for (i = 0, p = samples; i < inf.play.sample_rate; i++) {
-		double d;
+		float d;
 		u_int8_t v;
 
-		d = 127.0 * sin(((double)i / (double)inf.play.sample_rate) *
+		d = 127.0 * sinf(((float)i / (float)inf.play.sample_rate) *
 		    (2 * M_PI * 440.0));
-		d = rint(d + 127.0);
+		d = rintf(d + 127.0);
 		v = d;
 
 		for (j = 0; j < chans; j++) {
@@ -326,12 +326,12 @@ enc_slinear_8(int fd, audio_encoding_t *enc, int chans)
 	}
 
 	for (i = 0, p = samples; i < inf.play.sample_rate; i++) {
-		double d;
+		float d;
 		int8_t v;
 
-		d = 127.0 * sin(((double)i / (double)inf.play.sample_rate) *
+		d = 127.0 * sinf(((float)i / (float)inf.play.sample_rate) *
 		    (2 * M_PI * 440.0));
-		d = rint(d);
+		d = rintf(d);
 		v = d;
 
 		for (j = 0; j < chans; j++) {
@@ -378,12 +378,12 @@ enc_slinear_be_16(int fd, audio_encoding_t *enc, int chans)
 	}
 
 	for (i = 0, p = samples; i < inf.play.sample_rate; i++) {
-		double d;
+		float d;
 		int16_t v;
 
-		d = 32767.0 * sin(((double)i / (double)inf.play.sample_rate) *
+		d = 32767.0 * sinf(((float)i / (float)inf.play.sample_rate) *
 		    (2 * M_PI * 440.0));
-		d = rint(d);
+		d = rintf(d);
 		v = d;
 
 		for (j = 0; j < chans; j++) {
@@ -432,12 +432,12 @@ enc_slinear_le_16(int fd, audio_encoding_t *enc, int chans)
 	}
 
 	for (i = 0, p = samples; i < inf.play.sample_rate; i++) {
-		double d;
+		float d;
 		int16_t v;
 
-		d = 32767.0 * sin(((double)i / (double)inf.play.sample_rate) *
+		d = 32767.0 * sinf(((float)i / (float)inf.play.sample_rate) *
 		    (2 * M_PI * 440.0));
-		d = rint(d);
+		d = rintf(d);
 		v = d;
 
 		for (j = 0; j < chans; j++) {
@@ -486,12 +486,12 @@ enc_ulinear_le_16(int fd, audio_encoding_t *enc, int chans)
 	}
 
 	for (i = 0, p = samples; i < inf.play.sample_rate; i++) {
-		double d;
+		float d;
 		u_int16_t v;
 
-		d = 32767.0 * sin(((double)i / (double)inf.play.sample_rate) *
+		d = 32767.0 * sinf(((float)i / (float)inf.play.sample_rate) *
 		    (2 * M_PI * 440.0));
-		d = rint(d + 32767.0);
+		d = rintf(d + 32767.0);
 		v = d;
 
 		for (j = 0; j < chans; j++) {
@@ -540,12 +540,12 @@ enc_ulinear_be_16(int fd, audio_encoding_t *enc, int chans)
 	}
 
 	for (i = 0, p = samples; i < inf.play.sample_rate; i++) {
-		double d;
+		float d;
 		u_int16_t v;
 
-		d = 32767.0 * sin(((double)i / (double)inf.play.sample_rate) *
+		d = 32767.0 * sinf(((float)i / (float)inf.play.sample_rate) *
 		    (2 * M_PI * 440.0));
-		d = rint(d + 32767.0);
+		d = rintf(d + 32767.0);
 		v = d;
 
 		for (j = 0; j < chans; j++) {
@@ -604,11 +604,11 @@ enc_adpcm_8(int fd, audio_encoding_t *enc, int chans)
 	}
 
 	for (i = 0; i < inf.play.sample_rate; i++) {
-		double d;
+		float d;
 
-		d = 32767.0 * sin(((double)i / (double)inf.play.sample_rate) *
+		d = 32767.0 * sinf(((float)i / (float)inf.play.sample_rate) *
 		    (2 * M_PI * 440.0));
-		samples[i] = rint(d);
+		samples[i] = rintf(d);
 	}
 
 	outbuf = (char *)malloc((inf.play.sample_rate / 2) * chans);
@@ -677,7 +677,7 @@ enc_ulaw_8(int fd, audio_encoding_t *enc, int chans)
 	for (i = 0; i < inf.play.sample_rate; i++) {
 		float x;
 
-		x = 32765.0 * sin(((double)i / (double)inf.play.sample_rate) *
+		x = 32765.0 * sinf(((float)i / (float)inf.play.sample_rate) *
 		    (2 * M_PI * 440.0));
 		samples[i] = x;
 	}
@@ -739,7 +739,7 @@ enc_alaw_8(int fd, audio_encoding_t *enc, int chans)
 	for (i = 0; i < inf.play.sample_rate; i++) {
 		float x;
 
-		x = 32767.0 * sin(((double)i / (double)inf.play.sample_rate) *
+		x = 32767.0 * sinf(((float)i / (float)inf.play.sample_rate) *
 		    (2 * M_PI * 440.0));
 		samples[i] = x;
 	}
