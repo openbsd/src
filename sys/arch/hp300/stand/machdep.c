@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.4 1997/04/16 07:10:29 downsj Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.5 1997/04/16 11:26:36 downsj Exp $	*/
 /*	$NetBSD: machdep.c,v 1.6 1996/10/14 07:33:46 thorpej Exp $	*/
 
 /*
@@ -167,7 +167,7 @@ machdep_start(entry, howto, loadaddr, ssym, esym)
 	/* Fix what we were passed in from exec() */
 	entry = loadaddr;
 #define	round_to_size(x) (((int)(x) + sizeof(int) - 1) & ~(sizeof(int) - 1))
-	esym = (char *)round_to_size(addr - (char *)loadaddr);
+	esym = (char *)round_to_size(esym - (char *)loadaddr);
 #undef round_to_size
 
 	asm("movl %0,d7" : : "m" (howto));
