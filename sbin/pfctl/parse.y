@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.364 2003/04/13 23:39:18 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.365 2003/04/13 23:51:51 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -1045,7 +1045,7 @@ hfsc_opts	:	{
 		}
 		;
 
-hfscopts_list	: hfscopts_item	
+hfscopts_list	: hfscopts_item
 		| hfscopts_list comma hfscopts_item
 		;
 
@@ -1064,7 +1064,7 @@ hfscopts_item	: LINKSHARE bandwidth				{
 			}
 			hfsc_opts.linkshare.m1 = $3;
 			hfsc_opts.linkshare.d = $4;
-		 	hfsc_opts.linkshare.m2 = $5;
+			hfsc_opts.linkshare.m2 = $5;
 			hfsc_opts.linkshare.used = 1;
 		}
 		| REALTIME bandwidth				{
