@@ -643,8 +643,11 @@ Convert(Month, Day, Year, Hours, Minutes, Seconds, Meridian, DSTmode)
 
     if (Year < 0)
 	Year = -Year;
-    if (Year < 100)
+    if (Year < 100) {
 	Year += 1900;
+	if (Year < EPOCH)
+		Year += 100;
+    }
     DaysInMonth[1] = Year % 4 == 0 && (Year % 100 != 0 || Year % 400 == 0)
 		    ? 29 : 28;
     /* Checking for 2038 bogusly assumes that time_t is 32 bits.  But
