@@ -7,7 +7,7 @@
  */
 
 #include "includes.h"
-RCSID("$Id: ssh-keygen.c,v 1.15 2000/02/04 13:16:16 markus Exp $");
+RCSID("$Id: ssh-keygen.c,v 1.16 2000/02/04 14:34:09 markus Exp $");
 
 #include "rsa.h"
 #include "ssh.h"
@@ -79,7 +79,7 @@ do_fingerprint(struct passwd *pw)
 	FILE *f;
 	BIGNUM *e, *n;
 	RSA *public_key;
-	char *comment = NULL, char *cp, *ep, line[16*1024];
+	char *comment = NULL, *cp, *ep, line[16*1024];
 	int i, skip = 0, num = 1, invalid = 1;
 	struct stat st;
 
