@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.133 2002/07/23 18:01:15 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.134 2002/07/26 09:54:29 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -209,6 +209,10 @@ typedef struct {
 			int			 action;
 			struct node_state_opt	*options;
 		}			keep_state;
+		struct {
+			u_int8_t	log;
+			u_int8_t	quick;
+		}			logquick;
 	} v;
 	int lineno;
 } YYSTYPE;
@@ -226,7 +230,7 @@ typedef struct {
 %token	<v.i>	PORTUNARY PORTBINARY
 %type	<v.interface>	interface if_list if_item_not if_item
 %type	<v.number>	number port icmptype icmp6type minttl uid gid maxmss
-%type	<v.i>	no dir log quick af nodf allowopts fragment fragcache
+%type	<v.i>	no dir log af nodf allowopts fragment fragcache
 %type	<v.b>	action flag flags blockspec
 %type	<v.range>	dport rport
 %type	<v.proto>	proto proto_list proto_item
@@ -242,6 +246,7 @@ typedef struct {
 %type	<v.string>	label string
 %type	<v.keep_state>	keep
 %type	<v.state_opt>	state_opt_spec state_opt_list state_opt_item
+%type	<v.logquick>	logquick
 %%
 
 ruleset		: /* empty */
@@ -346,7 +351,7 @@ scrubrule	: SCRUB dir interface fromto nodf minttl maxmss fragcache
 		}
 		;
 
-pfrule		: action dir log quick interface route af proto fromto
+pfrule		: action dir logquick interface route af proto fromto
 		  uids gids flags icmpspec keep fragment allowopts label
 		{
 			struct pf_rule r;
@@ -364,15 +369,15 @@ pfrule		: action dir log quick interface route af proto fromto
 			} else
 				r.return_icmp = $1.w;
 			r.direction = $2;
-			r.log = $3;
-			r.quick = $4;
+			r.log = $3.log;
+			r.quick = $3.quick;
 
-			r.af = $7;
-			r.flags = $12.b1;
-			r.flagset = $12.b2;
+			r.af = $6;
+			r.flags = $11.b1;
+			r.flagset = $11.b2;
 
-			r.keep_state = $14.action;
-			o = $14.options;
+			r.keep_state = $13.action;
+			o = $13.options;
 			while (o) {
 				struct node_state_opt *p = o;
 
@@ -400,43 +405,43 @@ pfrule		: action dir log quick interface route af proto fromto
 				free(p);
 			}
 
-			if ($15)
+			if ($14)
 				r.rule_flag |= PFRULE_FRAGMENT;
-			r.allow_opts = $16;
+			r.allow_opts = $15;
 
-			if ($6.rt) {
-				r.rt = $6.rt;
-				if ($6.string) {
-					memcpy(r.rt_ifname, $6.string,
+			if ($5.rt) {
+				r.rt = $5.rt;
+				if ($5.string) {
+					memcpy(r.rt_ifname, $5.string,
 					    sizeof(r.rt_ifname));
-					free($6.string);
+					free($5.string);
 				}
-				if ($6.addr) {
+				if ($5.addr) {
 					if (!r.af)
-						r.af = $6.af;
-					else if (r.af != $6.af) {
+						r.af = $5.af;
+					else if (r.af != $5.af) {
 						yyerror("address family"
 						    " mismatch");
 						YYERROR;
 					}
-					memcpy(&r.rt_addr, $6.addr,
+					memcpy(&r.rt_addr, $5.addr,
 					    sizeof(r.rt_addr));
-					free($6.addr);
+					free($5.addr);
 				}
 			}
 
-			if ($17) {
-				if (strlen($17) >= PF_RULE_LABEL_SIZE) {
+			if ($16) {
+				if (strlen($16) >= PF_RULE_LABEL_SIZE) {
 					yyerror("rule label too long (max "
 					    "%d chars)", PF_RULE_LABEL_SIZE-1);
 					YYERROR;
 				}
-				strlcpy(r.label, $17, sizeof(r.label));
-				free($17);
+				strlcpy(r.label, $16, sizeof(r.label));
+				free($16);
 			}
 
-			expand_rule(&r, $5, $8, $9.src.host, $9.src.port,
-			    $9.dst.host, $9.dst.port, $10, $11, $13);
+			expand_rule(&r, $4, $7, $8.src.host, $8.src.port,
+			    $8.dst.host, $8.dst.port, $9, $10, $12);
 		}
 		;
 
@@ -498,17 +503,19 @@ fragcache	: /* empty */		{ $$ = 0; }
 		;
 
 
-dir		: IN			{ $$ = PF_IN; }
+dir		: IN				{ $$ = PF_IN; }
 		| OUT				{ $$ = PF_OUT; }
 		;
 
-log		: /* empty */			{ $$ = 0; }
-		| LOG				{ $$ = 1; }
-		| LOGALL			{ $$ = 2; }
+logquick	: /* empty */			{ $$.log = 0; $$.quick = 0; }
+		| log				{ $$.log = $1; $$.quick = 0; }
+		| QUICK				{ $$.log = 0; $$.quick = 1; }
+		| log QUICK			{ $$.log = $1; $$.quick = 1; }
+		| QUICK log			{ $$.log = $2; $$.quick = 1; }
 		;
 
-quick		: /* empty */			{ $$ = 0; }
-		| QUICK				{ $$ = 1; }
+log		: LOG				{ $$ = 1; }
+		| LOGALL			{ $$ = 2; }
 		;
 
 interface	: /* empty */			{ $$ = NULL; }
