@@ -76,6 +76,7 @@
 #include <sparc/dev/btvar.h>
 #include <sparc/dev/cgsixreg.h>
 #include <sparc/dev/sbusvar.h>
+#include <sparc/dev/pfourreg.h>
 
 union cursor_cmap {		/* colormap, like bt_cmap, but tiny */
 	u_char	cm_map[2][3];	/* 2 R/G/B entries */
@@ -149,19 +150,23 @@ cgsixmatch(parent, vcf, aux)
 	struct cfdata *cf = vcf;
 	struct confargs *ca = aux;
 	struct romaux *ra = &ca->ca_ra;
-	struct cg6_layout *p = (struct cg6_layout *)ra->ra_vaddr;
 
 	if (strcmp(cf->cf_driver->cd_name, ra->ra_name))
 		return (0);
 	if (ca->ca_bustype == BUS_SBUS)
 		return (1);
 #ifdef SUN4
-	ra->ra_len = NBPG;
-	bus_tmp(&p->cg6_fhc_un.un_fhc, ca->ca_bustype);
-	return (probeget(&p->cg6_fhc_un.un_fhc, 4) != 0);
-#else
-	return (0);
+	if (ca->ca_bustype == BUS_PFOUR &&
+	    PFOUR_ID(ra->ra_pfour) == PFOUR_ID_FASTCOLOR)
+		return (1);
+	if (ca->ca_bustype == BUS_OBIO) {
+		struct cg6_layout *p = (struct cg6_layout *)ra->ra_paddr;
+		void *tmp = bus_tmp(&p->cg6_fhc_un.un_fhc, ca->ca_bustype);
+
+		return (probeget(tmp, 4) != 0);
+	}		
 #endif
+	return (0);
 }
 
 /*
@@ -177,7 +182,6 @@ cgsixattach(parent, self, args)
 	register int node, ramsize, i;
 	register volatile struct bt_regs *bt;
 	register volatile struct cg6_layout *p;
-	int sbus = 1;
 	char *nam;
 	extern struct tty *fbconstty;
 
@@ -186,21 +190,32 @@ cgsixattach(parent, self, args)
 	sc->sc_fb.fb_type.fb_type = FBTYPE_SUNFAST_COLOR;
 
 	switch (ca->ca_bustype) {
-	case BUS_OBIO:
-	case BUS_VME32:
-	case BUS_VME16:
-		sbus = node = 0;
+#if defined(SUN4)
+	case BUS_PFOUR:
+		node = 0;
+#if 0
+		/*
+		 * XXX cg6 reset routine is not good enough to
+		 * rebuild state correctly!
+		 */
+		pfour_reset();
+#endif
+		/*
+		 * XXX pfour register is confused?
+		 */
+		sc->sc_fb.fb_type.fb_width = 1152;
+		sc->sc_fb.fb_type.fb_height = 900;
 		nam = "cgsix";
 		break;
-
+	case BUS_VME32:
+		node = 0;
+		nam = "cgsix";
+		break;
+#endif /* SUN4 */
 	case BUS_SBUS:
 		node = ca->ca_ra.ra_node;
 		nam = getpropstring(node, "model");
 		break;
-
-	case BUS_MAIN:
-		printf("cgsix on mainbus?\n");
-		return;
 	}
 
 	sc->sc_fb.fb_type.fb_depth = 8;
@@ -251,8 +266,10 @@ cgsixattach(parent, self, args)
 		printf(" (console)\n");
 	} else
 		printf("\n");
-	if (sbus)
+#if defined(SUN4C) || defined(SUN4M)
+	if (ca->ca_bustype == BUS_SBUS)
 		sbus_establish(&sc->sc_sd, &sc->sc_dev);
+#endif /* SUN4C || SUN4M */
 	if (node == fbnode)
 		fb_attach(&sc->sc_fb);
 }
