@@ -1,5 +1,8 @@
 $ more L0.1a
 #print
+WARNING: This course was written for UNIX in 1979, not 1999,
+and has not yet been fully updated. Some details may be way out of date!
+
 This course will help you learn about basic file
 handling commands.  You should first understand
 the special characters ERASE and KILL: 

@@ -1,4 +1,7 @@
 #print
+WARNING: This course was written for UNIX in 1979, not 1999,
+and has not yet been updated. Some details may be way out of date!
+
 In the basic files course you learned about the "ls" command
 for listing the names of files in the current directory.
 You will now learn some of the extra abilities of "ls".

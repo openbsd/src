@@ -16,10 +16,11 @@ Spell may also output a number of words
 that aren't mistakes; you may have to select real errors
 from the false ones.
 
-By the way, spell takes a minute to run;
-go get a cup of coffee or something while you wait.
+By the way, an alternative is ispell, which you'll find in the
+Ports Tree on OpenBSD. Ispell gives the words one at a time and
+presents alternatives.
 #create memo1
-(This comes from a federalist paper by alexander hamilton.)
+(This comes from a federalist paper by Alexander Hamilton.)
    It has been mentioned as one of the advantages to be expected
 from the cooperation of the Senate, in the business
 of appointments, that it would contribute to the

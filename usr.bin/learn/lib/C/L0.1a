@@ -1,4 +1,8 @@
 #print
+WARNING: This course was written for C as it was in 1979, not 1999,
+and has not yet been updated. Some details may be way out of date!
+In particular, there is not yet any updating for ANSI C.
+
 This script is loosely based on the material in
 "The C Programming Language", by Brian Kernighan
 and Dennis Ritchie (Prentice-Hall, 1978).

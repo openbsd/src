@@ -4,6 +4,10 @@ delim $$
 .EN
 .pl 1
 .ll 55
+WARNING: This course was written for UNIX in 1979, not 1999,
+and has not yet been updated. Some details may be way out of date!
+This course in particular may not work well on modern terminals/xterms!
+
 This script is designed to teach you the "eqn" language
 for typing mathematics. 
 There are two versions of the program. "eqn" is for

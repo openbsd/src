@@ -1,4 +1,9 @@
 #print
+WARNING: This course was written for UNIX in 1979, not 1999,
+and has not yet been updated. Some details may be way out of date!
+In particular, Berkeley UNIX includes the -me macros, which are
+preferred over -ms, but we don't yet have a course on the -me macros.
+
 This script deals with the use of the "-ms" macro
 package to produce Bell Laboratories style documents.
 Before trying it, you should be familiar with the
