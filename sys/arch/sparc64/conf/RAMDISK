@@ -1,4 +1,4 @@
-# 	$OpenBSD: RAMDISK,v 1.6 2001/09/29 03:17:21 art Exp $
+# 	$OpenBSD: RAMDISK,v 1.7 2001/10/09 21:32:04 deraadt Exp $
 
 # Machine architecture; required by config(8)
 machine		sparc64
@@ -8,8 +8,6 @@ option		_LP64
 
 # maxusers means mostly "let's get small" in terms of kernel malloc's
 maxusers	2
-# force default minimum number of buffers and dependents
-option		NBUF=16
 
 option		RAMDISK_HOOKS
 option		MINIROOTSIZE=6144
