@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.56 2004/01/05 23:53:24 mpf Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.57 2004/01/12 04:48:25 tedu Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -221,9 +221,10 @@ tun_clone_destroy(ifp)
 	struct tun_softc *tp = ifp->if_softc;
 	int s;
 
-	if (!SLIST_EMPTY(&tp->tun_rsel.si_note) ||
-	    !SLIST_EMPTY(&tp->tun_wsel.si_note))
-		return(EBUSY);
+	s = splhigh();
+	klist_invalidate(&tp->tun_rsel.si_note);
+	klist_invalidate(&tp->tun_wsel.si_note);
+	splx(s);
 
 	s = splimp();
 	LIST_REMOVE(tp, tun_list);
@@ -912,7 +913,8 @@ filt_tunrdetach(struct knote *kn)
 	struct tun_softc *tp = (struct tun_softc *)kn->kn_hook;
 
 	s = splhigh();
-	SLIST_REMOVE(&tp->tun_rsel.si_note, kn, knote, kn_selnext);
+	if (!(kn->kn_status & KN_DETACHED))
+		SLIST_REMOVE(&tp->tun_rsel.si_note, kn, knote, kn_selnext);
 	splx(s);
 }
 
@@ -923,6 +925,11 @@ filt_tunread(struct knote *kn, long hint)
 	struct tun_softc *tp;
 	struct ifnet *ifp;
 	struct mbuf *m;
+
+	if (kn->kn_status & KN_DETACHED) {
+		kn->kn_data = 0;
+		return 1;
+	}
 
 	tp = (struct tun_softc *)kn->kn_hook;
 	ifp = &tp->tun_if;
@@ -949,7 +956,8 @@ filt_tunwdetach(struct knote *kn)
 	struct tun_softc *tp = (struct tun_softc *)kn->kn_hook;
 
 	s = splhigh();
-	SLIST_REMOVE(&tp->tun_wsel.si_note, kn, knote, kn_selnext);
+	if (!(kn->kn_status & KN_DETACHED))
+		SLIST_REMOVE(&tp->tun_wsel.si_note, kn, knote, kn_selnext);
 	splx(s);
 }
 
@@ -958,6 +966,11 @@ filt_tunwrite(struct knote *kn, long hint)
 {
 	struct tun_softc *tp;
 	struct ifnet *ifp;
+
+	if (kn->kn_status & KN_DETACHED) {
+		kn->kn_data = 0;
+		return 1;
+	}
 
 	tp = (struct tun_softc *)kn->kn_hook;
 	ifp = &tp->tun_if;
