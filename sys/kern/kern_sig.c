@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.33 1999/02/26 05:10:40 art Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.34 1999/07/18 17:05:13 deraadt Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -329,6 +329,7 @@ execsigs(p)
 	ps->ps_sigstk.ss_size = 0;
 	ps->ps_sigstk.ss_sp = 0;
 	ps->ps_flags = 0;
+	p->p_flag &= ~P_NOCLDWAIT;	
 }
 
 /*
