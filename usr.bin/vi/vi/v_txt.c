@@ -1,4 +1,4 @@
-/*	$OpenBSD: v_txt.c,v 1.13 2002/02/17 19:42:34 millert Exp $	*/
+/*	$OpenBSD: v_txt.c,v 1.14 2005/01/08 05:18:52 pvalchev Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -1458,6 +1458,7 @@ done:	/* Leave input mode. */
 
 err:
 alloc_err:
+	F_CLR(sp, SC_TINPUT);
 	txt_err(sp, &sp->tiq);
 	return (1);
 }
