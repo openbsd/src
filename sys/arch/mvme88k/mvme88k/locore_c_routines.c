@@ -1,4 +1,4 @@
-/* $OpenBSD: locore_c_routines.c,v 1.37 2003/10/11 22:07:47 miod Exp $	*/
+/* $OpenBSD: locore_c_routines.c,v 1.38 2004/01/05 20:07:03 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -457,6 +457,7 @@ getipl(void)
 #endif /* MVME188 */
 #if defined(MVME187) || defined(MVME197)
 	case BRD_187:
+	case BRD_8120:
 	case BRD_197:
 		curspl = *md.intr_mask & 0x07;
 		break;
@@ -491,6 +492,7 @@ setipl(unsigned level)
 #endif /* MVME188 */
 #if defined(MVME187) || defined(MVME197)
 	case BRD_187:
+	case BRD_8120:
 	case BRD_197:
 		curspl = *md.intr_mask & 0x07;
 		*md.intr_mask = level;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssh.c,v 1.22 2004/01/04 01:14:04 miod Exp $	*/
+/*	$OpenBSD: ssh.c,v 1.23 2004/01/05 20:06:59 miod Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -221,7 +221,7 @@ sshmatch(pdp, vcf, args)
 	 * Since the BUG will do the right thing, we'll defer a dummy read
 	 * from the controller and retry.
 	 */
-	if (brdtyp == BRD_187 || brdtyp == BRD_197) {
+	if (brdtyp == BRD_187 || brdtyp == BRD_8120 || brdtyp == BRD_197) {
 		struct mvmeprom_dskio dio;
 		char buf[MVMEPROM_BLOCK_SIZE];
 

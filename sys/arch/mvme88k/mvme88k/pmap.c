@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.104 2004/01/04 22:51:55 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.105 2004/01/05 20:07:03 miod Exp $	*/
 /*
  * Copyright (c) 2001, 2002, 2003 Miodrag Vallat
  * Copyright (c) 1998-2001 Steve Murphree, Jr.
@@ -888,7 +888,7 @@ pmap_bootstrap(vaddr_t load_start, paddr_t *phys_start, paddr_t *phys_end,
 	 * used by the 1x7 ethernet driver. Remove this when that is fixed.
 	 * XXX -nivas
 	 */
-	if (brdtyp == BRD_187 || brdtyp == BRD_197) {
+	if (brdtyp == BRD_187 || brdtyp == BRD_8120 || brdtyp == BRD_197) {
 		*phys_start = vaddr;
 		etherlen = ETHERPAGES * PAGE_SIZE;
 		etherbuf = (void *)vaddr;

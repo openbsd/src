@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.126 2004/01/04 01:43:16 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.127 2004/01/05 20:07:03 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -519,6 +519,7 @@ cpu_startup()
 	switch (brdtyp) {
 #ifdef MVME187
 	case BRD_187:
+	case BRD_8120:
 		/*
 		 * Grab the SRAM space that we hardwired in pmap_bootstrap
 		 */
@@ -1374,6 +1375,7 @@ setupiackvectors()
 	switch (brdtyp) {
 #ifdef MVME187
 	case BRD_187:
+	case BRD_8120:
 #ifdef MAP_VEC /* do for MVME188 too */
 		vaddr = (u_char *)iomap_mapin(M187_IACK, NBPG, 1);
 #else
@@ -2318,12 +2320,6 @@ mvme_bootstrap()
 	bugbrdid(&brdid);
 	brdtyp = brdid.model;
 
-	/* to support the M8120.  It's based off of MVME187 */
-	if (brdtyp == BRD_8120) {
-		brdtyp = BRD_187;
-		/* XXX Need to flag the 8120 has a second cl(4) device on-board */
-	}
-
 	/*
 	 * set up interrupt and fp exception handlers
 	 * based on the machine.
@@ -2345,6 +2341,7 @@ mvme_bootstrap()
 #endif /* MVME188 */
 #ifdef MVME187
 	case BRD_187:
+	case BRD_8120:
 		cmmu = &cmmu8820x;
 		md.interrupt_func = &m187_ext_int;
 		md.intr_mask = (u_char *)M187_IMASK;
@@ -2376,6 +2373,7 @@ mvme_bootstrap()
 	switch (brdtyp) {
 #ifdef MVME187
 	case BRD_187:
+	case BRD_8120:
 		last_addr = memsize187();
 		break;
 #endif

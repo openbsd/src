@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcctwo.c,v 1.18 2003/10/05 20:27:48 miod Exp $ */
+/*	$OpenBSD: pcctwo.c,v 1.19 2004/01/05 20:06:59 miod Exp $ */
 /*
  * Copyright (c) 1995 Theo de Raadt
  * All rights reserved.
@@ -77,8 +77,8 @@ int pcctwo_scan(struct device *parent, void *child, void *args);
 
 int
 pcctwomatch(parent, vcf, args)
-struct device *parent;
-void *vcf, *args;
+	struct device *parent;
+	void *vcf, *args;
 {
 	struct confargs *ca = args;
 	struct pcctworeg *pcc2;
@@ -86,6 +86,7 @@ void *vcf, *args;
 	/* Bomb if wrong cpu */
 	switch (brdtyp) {
 	case BRD_187:
+	case BRD_8120:
 		pcc2 = (struct pcctworeg *)(IIOV(ca->ca_paddr) + PCC2_PCC2CHIP_OFF);
 		break;
 	case BRD_197: /* pcctwo is a child of buswitch XXX smurph */

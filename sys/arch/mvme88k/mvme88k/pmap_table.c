@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_table.c,v 1.16 2003/10/11 22:08:57 miod Exp $	*/
+/*	$OpenBSD: pmap_table.c,v 1.17 2004/01/05 20:07:03 miod Exp $	*/
 
 /*
  * Mach Operating System
@@ -76,6 +76,7 @@ pmap_table_build(void)
 	switch (brdtyp) {
 #ifdef MVME187
 	case BRD_187:
+	case BRD_8120:
 		return m187_board_table;
 #endif
 #ifdef MVME188

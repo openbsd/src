@@ -1,4 +1,4 @@
-/*	$OpenBSD: m8820x.c,v 1.26 2004/01/02 17:08:57 miod Exp $	*/
+/*	$OpenBSD: m8820x.c,v 1.27 2004/01/05 20:07:03 miod Exp $	*/
 /*
  * Copyright (c) 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -370,6 +370,7 @@ m8820x_setup_board_config()
 	switch (brdtyp) {
 #ifdef MVME187
 	case BRD_187:
+	case BRD_8120:
 		/* There is no WHOAMI reg on MVME187 - fake it... */
 		vme188_config = 10;
 		m8820x_cmmu[0].cmmu_regs = (void *)SBC_CMMU_I;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sram.c,v 1.13 2004/01/01 19:59:22 miod Exp $ */
+/*	$OpenBSD: sram.c,v 1.14 2004/01/05 20:06:59 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -67,7 +67,7 @@ srammatch(parent, vcf, args)
 {
 	struct confargs *ca = args;
 
-	if (brdtyp != BRD_187)	/* The only one... */
+	if (brdtyp != BRD_187 && brdtyp != BRD_8120)	/* The only one... */
 		return (0);
 
 	ca->ca_paddr = (void *)0xffe00000;
@@ -87,6 +87,7 @@ sramattach(parent, self, args)
 	switch (brdtyp) {
 #ifdef MVME187
 	case BRD_187:
+	case BRD_8120:
 		sc->sc_len = 128*1024;		/* always 128K */
 		break;
 #endif
