@@ -1,4 +1,4 @@
-.\"	$OpenBSD: openpty.3,v 1.13 2004/02/21 13:47:41 espie Exp $
+.\"	$OpenBSD: openpty.3,v 1.14 2004/11/25 16:41:55 jmc Exp $
 .\" Copyright (c) 1995
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -148,9 +148,13 @@ return 0, and the parent process of
 .Fn forkpty
 returns the process ID of the child process.
 .Sh FILES
-.Bl -tag -width /dev/[pt]ty[pqrstuvwxyzPQRST][0123456789abcdef] -compact
-.It Pa /dev/[pt]ty[pqrstuvwxyzPQRST][0123456789abcdef]
+.Bl -tag -width /dev/tty[p-zP-T][0-9a-zA-Z]x -compact
+.It Pa /dev/pty[p-zP-T][0-9a-zA-Z]
+master pseudo terminals
+.It Pa /dev/tty[p-zP-T][0-9a-zA-Z]
+slave pseudo terminals
 .It Pa /dev/ptm
+pseudo terminal management device
 .El
 .Sh ERRORS
 .Fn openpty
