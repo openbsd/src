@@ -7,19 +7,19 @@
 .br
 int set_menu_fore(MENU *menu, chtype attr);
 .br
-chtype menu_fore(MENU *menu);
+chtype menu_fore(const MENU *menu);
 .br
 int set_menu_back(MENU *menu, chtype attr);
 .br
-chtype menu_back(MENU *menu);
+chtype menu_back(const MENU *menu);
 .br
 int set_menu_grey(MENU *menu, chtype attr);
 .br
-chtype menu_grey(MENU *menu);
+chtype menu_grey(const MENU *menu);
 .br
 int set_menu_pad(MENU *menu, int pad);
 .br
-chtype menu_pad(MENU *menu);
+int menu_pad(const MENU *menu);
 .br
 .SH DESCRIPTION
 The function \fBset_menu_fore\fR sets the foreground attribute of

@@ -5,15 +5,15 @@
 .SH SYNOPSIS
 \fB#include <menu.h>\fR
 .br
-int set_menu_window(MENU *menu, WINDOW *win);
+int set_menu_win(MENU *menu, WINDOW *win);
 .br
-WINDOW *menu_window(MENU *menu);
+WINDOW *menu_win(const MENU *menu);
 .br
 int set_menu_sub(MENU *menu, WINDOW *sub);
 .br
-WINDOW *menu_sub(MENU *menu);
+WINDOW *menu_sub(const MENU *menu);
 .br
-int scale_window(MENU *menu, int *rows, int *columns);
+int scale_menu(const MENU *menu, int *rows, int *columns);
 .br
 .SH DESCRIPTION
 Every menu has an associated pair of \fBcurses\fR windows.  The menu window
@@ -23,11 +23,11 @@ displays the items of the menu that are currently available for selection.
 The first four functions get and set those windows.  It is not necessary to set
 either window; by default, the driver code uses \fBstdscr\fR for both.
 
-In the \fBset_\fR functions, window argument of \fBNULL\fR is treated as tbough
+In the \fBset_\fR functions, window argument of \fBNULL\fR is treated as though
 it were \fBstsdcr\fR.  A menu argument of \fBNULL\fR is treated as a request
 to change the system default menu window or subwindow.
 
-The function \fBscale_window\fR returns the minimum size required for the
+The function \fBscale_menu\fR returns the minimum size required for the
 subwindow of \fImenu\fR. 
 .SH RETURN VALUE
 Routines that return pointers return \fBNULL\fR on error.  Routines that return

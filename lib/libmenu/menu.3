@@ -1,4 +1,5 @@
 '\" t
+.\" Id: menu.3x,v 1.9 1997/01/05 01:23:39 tom Exp $
 .TH menus 3X ""
 .SH NAME
 \fBmenus\fR - curses extension for programming menus
@@ -13,7 +14,7 @@ menus, display menus on the screen, and handle interaction with the user.
 
 The \fBmenus\fR library uses the \fBcurses\fR libraries, and a curses
 initialization routine such as \fBinitscr\fR must be called before using any of
-these functions.  To use the \Bmenus\fR library, link with the options 
+these functions.  To use the \fBmenus\fR library, link with the options 
 \fB-lmenu -lcurses\fR.
 
 .SS Current Default Values for Item Attributes
@@ -29,70 +30,75 @@ rendering of items already created.
 The following table lists each \fBmenu\fR routine and the name of
 the manual page on which it is described.
 
-.nf 
-\fBcurses\fR Routine Name    Manual Page Name
-_________________________________________
-\fBcurrent_item\fR           mitem_current(3X)
-\fBfree_item\fR              mitem_new(3X)
-\fBfree_menu\fR              menu_new(3X)
-\fBitem_count\fR             menu_items(3X)
-\fBitem_description\fR       mitem_name(3X)
-\fBitem_index\fR             mitem_current(3X)
-\fBitem_init\fR              menu_hook(3X)
-\fBitem_name\fR              mitem_name(3X)
-\fBitem_opts\fR              mitem_opts(3X)
-\fBitem_opts_off\fR          mitem_opts(3X)
-\fBitem_opts_on\fR           mitem_opts(3X)
-\fBitem_term\fR              menu_hook(3X)
-\fBitem_userptr\fR           mitem_userptr(3X)
-\fBitem_value\fR             mitem_value(3X)
-\fBitem_visible\fR           mitem_visible(3X)
-\fBmenu_back\fR              menu_attribs(3X)
-\fBmenu_driver\fR            menu_driver(3X)
-\fBmenu_fore\fR              menu_fore(3X)
-\fBmenu_format\fR            menu_format(3X)
-\fBmenu_grey\fR              menu_attribs(3X)
-\fBmenu_init\fR              menu_hook(3X)
-\fBmenu_items\fR             menu_items(3X)
-\fBmenu_mark\fR              menu_mark(3X)
-\fBmenu_opts\fR              menu_opts(3X)
-\fBmenu_opts_off\fR          menu_opts(3X)
-\fBmenu_opts_on\fR           menu_opts(3X)
-\fBmenu_pad\fR               menu_attribs(3X)
-\fBmenu_pattern\fR           menu_pattern(3X)
-\fBmenu_sub\fR               menu_win(3X)
-\fBmenu_term\fR              menu_hook(3X)
-\fBmenu_userptr\fR           menu_userptr(3X)
-\fBmenu_win\fR               menu_win(3X)
-\fBnew_item\fR               mitem_new(3X)
-\fBnew_menu\fR               menu_new(3X)
-\fBpos_menu_cursor\fR        menu_cursor(3X)
-\fBpost_menu\fR              menu_post(3X)
-\fBscale_menu\fR             menu_win(3X)
-\fBset_current_item\fR       menu_current_item(3X)
-\fBset_item_init\fR          menu_hook(3X)
-\fBset_item_opts\fR          mitem_opts(3X)
-\fBset_item_term\fR          menu_hook(3X)
-\fBset_item_userptr\fR       mitem_userptr(3X)
-\fBset_item_value\fR         mitem_value(3X)
-\fBset_menu_back\fR          menu_attribs(3X)
-\fBset_menu_fore\fR          menu_attribs(3X)
-\fBset_menu_format\fR        menu_format(3X)
-\fBset_menu_grey\fR          menu_attribs(3X)
-\fBset_menu_init\fR          menu_hook(3X)
-\fBset_menu_items\fR         menu_items(3X)
-\fBset_menu_mark\fR          menu_mark(3X)
-\fBset_menu_opts\fR          mitem_opts(3X)
-\fBset_menu_pad\fR           menu_attribs(3X)
-\fBset_menu_pattern\fR       menu_pattern(3X)
-\fBset_menu_sub\fR           menu_win(3X)
-\fBset_menu_term\fR          menu_hook(3X)
-\fBset_menu_userptr\fR       menu_userptr(3X)
-\fBset_menu_win\fR           menu_win(3X)
-\fBset_top_row\fR            mitem_current(3X)
-\fBtop_row\fR                mitem_current(3X)
-\fBunpost_menu\fR            menu_post(3X)
-.fi
+.TS 
+l l .
+\fBcurses\fR Routine Name	Manual Page Name
+=
+\fBcurrent_item\fR	mitem_current(3X)
+\fBfree_item\fR 	mitem_new(3X)
+\fBfree_menu\fR 	menu_new(3X)
+\fBitem_count\fR	menu_items(3X)
+\fBitem_description\fR	mitem_name(3X)
+\fBitem_index\fR	mitem_current(3X)
+\fBitem_init\fR 	menu_hook(3X)
+\fBitem_name\fR 	mitem_name(3X)
+\fBitem_opts\fR 	mitem_opts(3X)
+\fBitem_opts_off\fR	mitem_opts(3X)
+\fBitem_opts_on\fR	mitem_opts(3X)
+\fBitem_term\fR 	menu_hook(3X)
+\fBitem_userptr\fR	mitem_userptr(3X)
+\fBitem_value\fR	mitem_value(3X)
+\fBitem_visible\fR	mitem_visible(3X)
+\fBmenu_back\fR 	menu_attribs(3X)
+\fBmenu_driver\fR	menu_driver(3X)
+\fBmenu_fore\fR 	menu_attribs(3X)
+\fBmenu_format\fR	menu_format(3X)
+\fBmenu_grey\fR 	menu_attribs(3X)
+\fBmenu_init\fR 	menu_hook(3X)
+\fBmenu_items\fR	menu_items(3X)
+\fBmenu_mark\fR 	menu_mark(3X)
+\fBmenu_opts\fR 	menu_opts(3X)
+\fBmenu_opts_off\fR	menu_opts(3X)
+\fBmenu_opts_on\fR	menu_opts(3X)
+\fBmenu_pad\fR  	menu_attribs(3X)
+\fBmenu_pattern\fR	menu_pattern(3X)
+\fBmenu_request_by_name\fR	menu_requestname(3X)
+\fBmenu_request_name\fR	menu_requestname(3X)
+\fBmenu_spacing\fR	menu_spacing(3X)
+\fBmenu_sub\fR  	menu_win(3X)
+\fBmenu_term\fR 	menu_hook(3X)
+\fBmenu_userptr\fR	menu_userptr(3X)
+\fBmenu_win\fR  	menu_win(3X)
+\fBnew_item\fR  	mitem_new(3X)
+\fBnew_menu\fR  	menu_new(3X)
+\fBpos_menu_cursor\fR	menu_cursor(3X)
+\fBpost_menu\fR 	menu_post(3X)
+\fBscale_menu\fR	menu_win(3X)
+\fBset_current_item\fR	menu_current_item(3X)
+\fBset_item_init\fR	menu_hook(3X)
+\fBset_item_opts\fR	mitem_opts(3X)
+\fBset_item_term\fR	menu_hook(3X)
+\fBset_item_userptr\fR	mitem_userptr(3X)
+\fBset_item_value\fR	mitem_value(3X)
+\fBset_menu_back\fR	menu_attribs(3X)
+\fBset_menu_fore\fR	menu_attribs(3X)
+\fBset_menu_format\fR	menu_format(3X)
+\fBset_menu_grey\fR	menu_attribs(3X)
+\fBset_menu_init\fR	menu_hook(3X)
+\fBset_menu_items\fR	menu_items(3X)
+\fBset_menu_mark\fR	menu_mark(3X)
+\fBset_menu_opts\fR	mitem_opts(3X)
+\fBset_menu_pad\fR	menu_attribs(3X)
+\fBset_menu_pattern\fR	menu_pattern(3X)
+\fBset_menu_spacing\fR	menu_spacing(3X)
+\fBset_menu_sub\fR	menu_win(3X)
+\fBset_menu_term\fR	menu_hook(3X)
+\fBset_menu_userptr\fR	menu_userptr(3X)
+\fBset_menu_win\fR	menu_win(3X)
+\fBset_top_row\fR	mitem_current(3X)
+\fBtop_row\fR   	mitem_current(3X)
+\fBunpost_menu\fR	menu_post(3X)
+.TE
 .SH RETURN VALUE
 Routines that return pointers return \fBNULL\fR on error.  Routines that return
 an integer return one of the following error codes:
@@ -139,8 +145,8 @@ descriptions of the entry points.
 The header file \fB<menu.h>\fR automatically includes the header files
 \fB<curses.h>\fR and \fB<eti.h>\fR.
 
-In your library list, libmenu.a should be before libncurses.a; that is,
-you want to say `-lmenu -lncurses', not the other way around (which would
+In your library list, libmenu.a should be before libcurses.a; that is,
+you want to say `-lmenu -lcurses', not the other way around (which would
 give you a link error using GNU \fBld\fR(1) and many other linkers).
 .SH PORTABILITY
 These routines emulate the System V menu library.  They were not supported on

@@ -5,14 +5,14 @@
 .SH SYNOPSIS
 \fB#include <menu.h>\fR
 .br
-int set_menu_pattern(MENU *menu, char *pattern);
+int set_menu_pattern(MENU *menu, const char *pattern);
 .br
-char *menu_pattern(MENU *menu);
+char *menu_pattern(const MENU *menu);
 .br
 .SH DESCRIPTION
 Every menu has an associated pattern match buffer.  As input events that are
 printable ASCII characters come in, they are appended to this match buffer
-and tested for a match, as decribed in \fBmenu_driver\fR(3x).
+and tested for a match, as described in \fBmenu_driver\fR(3x).
 
 The function \fBset_menu_pattern\fR sets the pattern buffer for the given menu
 and tries to find the first matching item.  If it succeeds, that item becomes
@@ -22,7 +22,7 @@ The function \fBmenu_pattern\fR returns the pattern buffer of the given
 \fImenu\fR.
 .SH RETURN VALUE
 The function \fBmenu_pattern\fR returns \fBNULL\fR on error.  The function
-\fBset_menu_pattern\fR maty return the following error codes:
+\fBset_menu_pattern\fR may return the following error codes:
 .TP 5
 \fBE_OK\fR
 The routine succeeded.

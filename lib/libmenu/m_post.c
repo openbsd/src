@@ -1,23 +1,24 @@
-
-/***************************************************************************
-*                            COPYRIGHT NOTICE                              *
-****************************************************************************
-*                ncurses is copyright (C) 1992-1995                        *
-*                          Zeyd M. Ben-Halim                               *
-*                          zmbenhal@netcom.com                             *
-*                          Eric S. Raymond                                 *
-*                          esr@snark.thyrsus.com                           *
-*                                                                          *
-*        Permission is hereby granted to reproduce and distribute ncurses  *
-*        by any means and for any fee, whether alone or as part of a       *
-*        larger distribution, in source or in binary form, PROVIDED        *
-*        this notice is included with any such distribution, and is not    *
-*        removed from any of its header files. Mention of ncurses in any   *
-*        applications linked with it is highly appreciated.                *
-*                                                                          *
-*        ncurses comes AS IS with no warranty, implied or expressed.       *
-*                                                                          *
-***************************************************************************/
+/*-----------------------------------------------------------------------------+
+|           The ncurses menu library is  Copyright (C) 1995-1997               |
+|             by Juergen Pfeifer <Juergen.Pfeifer@T-Online.de>                 |
+|                          All Rights Reserved.                                |
+|                                                                              |
+| Permission to use, copy, modify, and distribute this software and its        |
+| documentation for any purpose and without fee is hereby granted, provided    |
+| that the above copyright notice appear in all copies and that both that      |
+| copyright notice and this permission notice appear in supporting             |
+| documentation, and that the name of the above listed copyright holder(s) not |
+| be used in advertising or publicity pertaining to distribution of the        |
+| software without specific, written prior permission.                         | 
+|                                                                              |
+| THE ABOVE LISTED COPYRIGHT HOLDER(S) DISCLAIM ALL WARRANTIES WITH REGARD TO  |
+| THIS SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FIT-  |
+| NESS, IN NO EVENT SHALL THE ABOVE LISTED COPYRIGHT HOLDER(S) BE LIABLE FOR   |
+| ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RE- |
+| SULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, |
+| NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH    |
+| THE USE OR PERFORMANCE OF THIS SOFTWARE.                                     |
++-----------------------------------------------------------------------------*/
 
 /***************************************************************************
 * Module menu_post                                                         *
@@ -25,6 +26,8 @@
 ***************************************************************************/
 
 #include "menu.priv.h"
+
+MODULE_ID("Id: m_post.c,v 1.12 1997/05/01 16:47:26 juergen Exp $")
 
 /*---------------------------------------------------------------------------
 |   Facility      :  libnmenu  
@@ -39,10 +42,47 @@ void _nc_Post_Item(const MENU * menu, const ITEM * item)
 {
   int i;
   chtype ch;
+  int item_x, item_y;
+  int count = 0;
   bool isfore = FALSE, isback=FALSE, isgrey = FALSE;
   
   assert(menu->win);
   
+  getyx(menu->win,item_y,item_x);
+  
+  /* We need a marker iff
+     - it is a onevalued menu and it is the current item
+     - or it has a selection value
+     */
+  wattron(menu->win,menu->back);
+  if (item->value || (item==menu->curitem))
+    {
+      if (menu->marklen) 
+	{
+	  /* In a multi selection menu we use the fore attribute
+	     for a selected marker that is not the current one.
+	     This improves visualization of the menu, because now
+	     always the 'normal' marker denotes the current
+	     item. */
+	  if (!(menu->opt & O_ONEVALUE) && item->value && item!=menu->curitem)
+	    {
+	      wattron(menu->win,menu->fore);
+	      isfore = TRUE;
+	    }
+	  waddstr(menu->win,menu->mark);
+	  if (isfore)
+	    {
+	      wattron(menu->win,menu->fore);
+	      isfore = FALSE;
+	    }
+	}
+    }
+  else			/* otherwise we have to wipe out the marker area */ 
+    for(ch=' ',i=menu->marklen;i>0;i--) 
+      waddch(menu->win,ch);
+  wattroff(menu->win,menu->back);
+  count += menu->marklen;
+
   /* First we have to calculate the attribute depending on selectability
      and selection status
      */
@@ -64,35 +104,61 @@ void _nc_Post_Item(const MENU * menu, const ITEM * item)
 	  isback = TRUE;
 	}
     }
-  
-  /* We need a marker iff
-     - it is a onevalued menu and it is the current item
-     - or it has a selection value
-     */
-  if (item->value || ((menu->opt&O_ONEVALUE) && (item==menu->curitem))	)
-    {
-      if (menu->marklen) 
-	waddstr(menu->win,menu->mark);
-    }
-  else			/* otherwise we have to wipe out the marker area */ 
-    for(ch=menu->pad,i=menu->marklen;i>0;i--) 
-      waddch(menu->win,ch);
-  
+
   waddnstr(menu->win,item->name.str,item->name.length);
-  for(ch=menu->pad,i=menu->namelen-item->name.length;i>0;i--)
+  for(ch=' ',i=menu->namelen-item->name.length;i>0;i--)
     {
       waddch(menu->win,ch);
     }
-  
+  count += menu->namelen;
+
   /* Show description if required and available */
   if ( (menu->opt & O_SHOWDESC) && menu->desclen>0 )
     {
-      waddch(menu->win,menu->pad);
+      int m = menu->spc_desc/2;
+      int cy = -1, cx = -1;
+
+      for(ch=' ',i=0; i < menu->spc_desc; i++)
+	{
+	  if (i==m)
+	    {
+	      waddch(menu->win,menu->pad);
+	      getyx(menu->win,cy,cx);
+	    }
+	  else
+	    waddch(menu->win,ch);
+	}
       if (item->description.length)
 	waddnstr(menu->win,item->description.str,item->description.length);
-      for(ch=menu->pad,i=menu->desclen-item->description.length; i>0; i--)
+      for(ch=' ',i=menu->desclen-item->description.length; i>0; i--)
 	{
 	  waddch(menu->win,ch);
+	}
+      count += menu->desclen + menu->spc_desc;
+
+      if (menu->spc_rows > 1)
+	{
+	  int j, k, ncy, ncx;
+
+	  assert(cx>=0 && cy>=0);
+	  getyx(menu->win,ncy,ncx);
+	  if (isgrey) wattroff(menu->win,menu->grey);
+	  else if (isfore) wattroff(menu->win,menu->fore);
+	  wattron(menu->win,menu->back);
+	  for(j=1; j < menu->spc_rows;j++)
+	    {
+	      if ((item_y+j) < getmaxy(menu->win))
+		{
+		  wmove (menu->win,item_y+j,item_x);
+		  for(k=0;k<count;k++)
+		    waddch(menu->win,' ');
+		}
+	      if ((cy+j) < getmaxy(menu->win))
+		mvwaddch(menu->win,cy+j,cx-1,menu->pad);
+	    }
+	  wmove(menu->win,ncy,ncx);
+	  if (!isback)
+	    wattroff(menu->win,menu->back);
 	}
     }
   
@@ -119,30 +185,52 @@ void _nc_Draw_Menu(const MENU * menu)
   ITEM *lasthor, *lastvert;
   ITEM *hitem;
   int y = 0;
-  
+  chtype s_bkgd;
+
   assert(item && menu->win);
-  
+
+  s_bkgd = getbkgd(menu->win);
+  wbkgdset(menu->win,menu->back);
+  werase(menu->win);
+  wbkgdset(menu->win,s_bkgd);
+
   lastvert = (menu->opt & O_NONCYCLIC) ? (ITEM *)0 : item;  
-  
+
   do
     {  
-      wmove(menu->win,y++,0);
-      
+      wmove(menu->win,y,0);
+
       hitem   = item;
       lasthor = (menu->opt & O_NONCYCLIC) ? (ITEM *)0 : hitem;
       
       do
 	{
 	  _nc_Post_Item( menu, hitem);
+
+	  wattron(menu->win,menu->back);
 	  if ( ((hitem = hitem->right) != lasthor) && hitem )
 	    {
-	      waddch( menu->win,menu->pad);
+	      int i,j, cy, cx;
+	      chtype ch = ' ';
+
+	      getyx(menu->win,cy,cx);
+	      for(j=0;j<menu->spc_rows;j++)
+		{
+		  wmove(menu->win,cy+j,cx);
+		  for(i=0; i < menu->spc_cols; i++)
+		    {
+		      waddch( menu->win,ch);
+		    }
+		}
+	      wmove(menu->win,cy,cx+menu->spc_cols);
 	    }
 	} while (hitem && (hitem != lasthor));
+      wattroff(menu->win,menu->back);
       
       item = item->down;
+      y += menu->spc_rows;
       
-    } while( item && (item != lastvert) );	
+    } while( item && (item != lastvert) );
 }
 
 /*---------------------------------------------------------------------------
@@ -173,6 +261,8 @@ int post_menu(MENU * menu)
   if (menu->items && *(menu->items))
     {
       int y;
+      int h = 1 + menu->spc_rows * (menu->rows - 1);
+
       WINDOW *win = Get_Menu_Window(menu);
       int maxy = getmaxy(win);
       int maxx = getmaxx(win);
@@ -180,9 +270,9 @@ int post_menu(MENU * menu)
       if (maxx < menu->width || maxy < menu->height)
 	RETURN(E_NO_ROOM);
 
-      if ( (menu->win = newpad(menu->rows,menu->width)) )
+      if ( (menu->win = newpad(h,menu->width)) )
 	{
-	  y = (maxy >= menu->rows) ? menu->rows : maxy;
+	  y = (maxy >= h) ? h : maxy;
 	  if (y>=menu->height) 
 	    y = menu->height;
 	  if(!(menu->sub = subpad(menu->win,y,menu->width,0,0)))

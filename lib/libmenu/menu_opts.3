@@ -11,11 +11,11 @@ int menu_opts_on(MENU *menu, OPTIONS opts);
 .br
 int menu_opts_off(MENU *menu, OPTIONS opts);
 .br
-OPTIONS menu_opts(MENU *menu);
+OPTIONS menu_opts(const MENU *menu);
 .br
 .SH DESCRIPTION
 The function \fBset_menu_opts\fR sets all the given menu's option bits (menu
-option bits may be logically-ored together).
+option bits may be logically-OR'ed together).
 
 The function \fBmenu_opts_on\fR turns on the given option bits, and leaves
 others alone.

@@ -13,7 +13,7 @@ int unpost_menu(MENU *menu);
 The function \fBpost_menu\fR displays a menu to its associated subwindow.  To
 trigger physical display of the subwindow, use \fBrefresh\fR or some equivalent
 \fBcurses\fR routine (the implicit \fBdoupdate\fR triggered by an \fBcurses\fR
-input request will do).
+input request will do). \fBpost_menu\fR resets the selection status of all items.
 
 The function \fBunpost_menu\fR erases menu from its associated subwindow.
 .SH RETURN VALUE

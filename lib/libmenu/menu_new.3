@@ -7,13 +7,13 @@
 .br
 MENU *new_menu(ITEM **items);
 .br
-char *free_menu(MENU *menu);
+int free_menu(MENU *menu);
 .br
 .SH DESCRIPTION
 The function \fBnew_menu\fR creates a new menu connected to a specified item
 pointer array (which must be \fBNULL\fR-terminated).
 
-The function \fBfree_menu\fR discomnnects \fImenu\fR from its item array
+The function \fBfree_menu\fR disconnects \fImenu\fR from its item array
 and frees the storage allocated for the menu.
 .SH RETURN VALUE
 The function \fBnew_menu\fR returns \fBNULL\fR on error.

@@ -1,0 +1,55 @@
+'\" t
+.TH menu_spacing 3X ""
+.SH NAME
+\fBmenu_spacing\fR - Control spacing between menu items.
+.SH SYNOPSIS
+\fB#include <menu.h>\fR
+.br
+int set_menu_spacing(MENU *menu,
+                     int spc_description
+                     int spc_rows,
+                     int spc_columns);
+.br
+int menu_spacing(const MENU *menu,
+                 int* spc_description
+                 int* spc_rows,
+                 int* spc_columns);
+.br
+.SH DESCRIPTION
+The function \fBset_menu_spacing\fR sets the spacing informations for the menu.
+\fBspc_description\fR controls the number of spaces between an item name and an item
+description. It must not be larger than \fBTABSIZE\fR. The menu system puts in the
+middle of this spacing area the pad character. The remaining parts are filled with
+spaces.
+\fBspc_rows\fR controls the number of rows that are used for an item. It must not be
+larger than 3. The menu system inserts then blank lines between item rows, these lines
+will contain the pad character in the appropriate positions.
+\fBspc_columns\fR controls the number of blanks between columns of items. It must not
+be larger than TABSIZE.
+A value of 0 for all the spacing values resets them to the default, which is 1 for all
+of them.
+.br
+The function \fBmenu_spacing\fR passes back the spacing info for the menu. If a
+pointer is NULL, this specific info is simply not returned.
+.SH RETURN VALUE
+Both routines return \fBE_OK\fR on success. \fBset_menu_spacing\fR may return
+\fBE_POSTED\fR if the menu is posted, or \fBE_BAD_ARGUMENT\fR if one of the
+spacing values is out of range.
+.SH SEE ALSO
+\fBcurses\fR(3X), \fBmenu\fR(3X).
+.SH NOTES
+The header file \fB<menu.h>\fR automatically includes the header file
+\fB<curses.h>\fR.
+.SH PORTABILITY
+These routines are specific to ncurses.  They were not supported on
+Version 7, BSD or System V implementations.  It is recommended that
+any code depending on them be conditioned using NCURSES_VERSION.
+.SH AUTHORS
+Juergen Pfeifer.  Manual pages and adaptation for new curses by Eric
+S. Raymond.
+.\"#
+.\"# The following sets edit modes for GNU EMACS
+.\"# Local Variables:
+.\"# mode:nroff
+.\"# fill-column:79
+.\"# End:

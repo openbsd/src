@@ -1,23 +1,24 @@
-
-/***************************************************************************
-*                            COPYRIGHT NOTICE                              *
-****************************************************************************
-*                ncurses is copyright (C) 1992-1995                        *
-*                          Zeyd M. Ben-Halim                               *
-*                          zmbenhal@netcom.com                             *
-*                          Eric S. Raymond                                 *
-*                          esr@snark.thyrsus.com                           *
-*                                                                          *
-*        Permission is hereby granted to reproduce and distribute ncurses  *
-*        by any means and for any fee, whether alone or as part of a       *
-*        larger distribution, in source or in binary form, PROVIDED        *
-*        this notice is included with any such distribution, and is not    *
-*        removed from any of its header files. Mention of ncurses in any   *
-*        applications linked with it is highly appreciated.                *
-*                                                                          *
-*        ncurses comes AS IS with no warranty, implied or expressed.       *
-*                                                                          *
-***************************************************************************/
+/*-----------------------------------------------------------------------------+
+|           The ncurses menu library is  Copyright (C) 1995-1997               |
+|             by Juergen Pfeifer <Juergen.Pfeifer@T-Online.de>                 |
+|                          All Rights Reserved.                                |
+|                                                                              |
+| Permission to use, copy, modify, and distribute this software and its        |
+| documentation for any purpose and without fee is hereby granted, provided    |
+| that the above copyright notice appear in all copies and that both that      |
+| copyright notice and this permission notice appear in supporting             |
+| documentation, and that the name of the above listed copyright holder(s) not |
+| be used in advertising or publicity pertaining to distribution of the        |
+| software without specific, written prior permission.                         | 
+|                                                                              |
+| THE ABOVE LISTED COPYRIGHT HOLDER(S) DISCLAIM ALL WARRANTIES WITH REGARD TO  |
+| THIS SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FIT-  |
+| NESS, IN NO EVENT SHALL THE ABOVE LISTED COPYRIGHT HOLDER(S) BE LIABLE FOR   |
+| ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RE- |
+| SULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, |
+| NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH    |
+| THE USE OR PERFORMANCE OF THIS SOFTWARE.                                     |
++-----------------------------------------------------------------------------*/
 
 /***************************************************************************
 * Module menu_global                                                       *
@@ -26,6 +27,8 @@
 
 #include "menu.priv.h"
 
+MODULE_ID("Id: m_global.c,v 1.7 1997/05/01 16:47:26 juergen Exp $")
+
 MENU _nc_Default_Menu = {
   16,				  /* Nr. of chars high */
   1,				  /* Nr. of chars wide */
@@ -33,10 +36,14 @@ MENU _nc_Default_Menu = {
   1,			          /* Nr. of items wide */
   16,				  /* Nr. of formatted items high */
   1,				  /* Nr. of formatted items wide */
+  16,				  /* Nr. of items high (actual) */
   0,				  /* length of widest name */
   0,				  /* length of widest description */
   1,				  /* length of mark */
   1,				  /* length of one item */
+  1,                              /* Spacing for descriptor */ 
+  1,                              /* Spacing for columns */
+  1,                              /* Spacing for rows */
   (char *)0,			  /* buffer used to store match chars */
   0,				  /* Index into pattern buffer */
   (WINDOW *)0,			  /* Window containing entire menu */
@@ -176,7 +183,7 @@ bool _nc_Connect_Items(MENU *menu, ITEM **items)
   else
     return(FALSE);
   
-  if (ItemCount > 0)
+  if (ItemCount != 0)
     {
       menu->items  = items;
       menu->nitems = ItemCount;
@@ -225,18 +232,18 @@ void _nc_Calculate_Item_Length_and_Width(MENU * menu)
   int l;
   
   assert(menu);
-  if (menu->items && *(menu->items))
-    {
-      l = menu->namelen + menu->marklen;
-      if ( (menu->opt & O_SHOWDESC) && (menu->desclen > 0) )
-	l += (menu->desclen + 1);
-      
-      menu->itemlen = l;
-      l *= menu->cols;
-      l += (menu->cols-1);	/* for the padding between the columns */
-      menu->width = l;
-    }
-}
+
+  menu->height  = 1 + menu->spc_rows * (menu->arows - 1);
+
+  l = menu->namelen + menu->marklen;
+  if ( (menu->opt & O_SHOWDESC) && (menu->desclen > 0) )
+    l += (menu->desclen + menu->spc_desc);
+  
+  menu->itemlen = l;
+  l *= menu->cols;
+  l += (menu->cols-1)*menu->spc_cols; /* for the padding between the columns */
+  menu->width = l;
+}  
 
 /*---------------------------------------------------------------------------
 |   Facility      :  libnmenu  
@@ -384,7 +391,7 @@ void _nc_Show_Menu(const MENU *menu)
     {
       /* adjust the internal subwindow to start on the current top */
       assert(menu->sub);
-      mvderwin(menu->sub,menu->toprow,0);
+      mvderwin(menu->sub,menu->spc_rows * menu->toprow,0);
       win = Get_Menu_Window(menu);
       
       maxy = getmaxy(win);

@@ -1,29 +1,29 @@
-
-/***************************************************************************
-*                            COPYRIGHT NOTICE                              *
-****************************************************************************
-*                ncurses is copyright (C) 1992-1995                        *
-*                          Zeyd M. Ben-Halim                               *
-*                          zmbenhal@netcom.com                             *
-*                          Eric S. Raymond                                 *
-*                          esr@snark.thyrsus.com                           *
-*                                                                          *
-*        Permission is hereby granted to reproduce and distribute ncurses  *
-*        by any means and for any fee, whether alone or as part of a       *
-*        larger distribution, in source or in binary form, PROVIDED        *
-*        this notice is included with any such distribution, and is not    *
-*        removed from any of its header files. Mention of ncurses in any   *
-*        applications linked with it is highly appreciated.                *
-*                                                                          *
-*        ncurses comes AS IS with no warranty, implied or expressed.       *
-*                                                                          *
-***************************************************************************/
+/*-----------------------------------------------------------------------------+
+|           The ncurses menu library is  Copyright (C) 1995-1997               |
+|             by Juergen Pfeifer <Juergen.Pfeifer@T-Online.de>                 |
+|                          All Rights Reserved.                                |
+|                                                                              |
+| Permission to use, copy, modify, and distribute this software and its        |
+| documentation for any purpose and without fee is hereby granted, provided    |
+| that the above copyright notice appear in all copies and that both that      |
+| copyright notice and this permission notice appear in supporting             |
+| documentation, and that the name of the above listed copyright holder(s) not |
+| be used in advertising or publicity pertaining to distribution of the        |
+| software without specific, written prior permission.                         | 
+|                                                                              |
+| THE ABOVE LISTED COPYRIGHT HOLDER(S) DISCLAIM ALL WARRANTIES WITH REGARD TO  |
+| THIS SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FIT-  |
+| NESS, IN NO EVENT SHALL THE ABOVE LISTED COPYRIGHT HOLDER(S) BE LIABLE FOR   |
+| ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RE- |
+| SULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, |
+| NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH    |
+| THE USE OR PERFORMANCE OF THIS SOFTWARE.                                     |
++-----------------------------------------------------------------------------*/
 
 #ifndef ETI_MENU
 #define ETI_MENU
 
 #include <curses.h>
-#include <term.h>
 #include <eti.h>
 
 #ifdef __cplusplus
@@ -46,7 +46,7 @@ typedef int Item_Options;
 
 typedef struct
 {
-  char*          str;
+  char*    str;
   unsigned short length;
 } TEXT;
 
@@ -55,7 +55,7 @@ typedef struct tagITEM
   TEXT           name;        /* name of menu item                         */
   TEXT           description; /* description of item, optional in display  */ 
   struct tagMENU *imenu;      /* Pointer to parent menu                    */
-  void           *userptr;    /* Pointer to user defined per item data     */ 
+  const void     *userptr;    /* Pointer to user defined per item data     */ 
   Item_Options   opt;         /* Item options                              */ 
   short          index;       /* Item number if connected to a menu        */
   short          y;           /* y and x location of item in menu          */
@@ -79,10 +79,14 @@ typedef struct tagMENU
   short          cols;                  /* Nr. of items wide               */
   short          frows;                 /* Nr. of formatted items high     */
   short          fcols;                 /* Nr. of formatted items wide     */
+  short          arows;                 /* Nr. of items high (actual)      */
   short          namelen;               /* Max. name length                */
   short          desclen;               /* Max. description length         */
   short          marklen;               /* Length of mark, if any          */
   short          itemlen;               /* Length of one item              */
+  short          spc_desc;              /* Spacing for descriptor          */
+  short          spc_cols;              /* Spacing for columns             */
+  short          spc_rows;              /* Spacing for rows                */ 
   char          *pattern;               /* Buffer to store match chars     */
   short          pindex;                /* Index into pattern buffer       */
   WINDOW        *win;                   /* Window containing menu          */
@@ -103,7 +107,7 @@ typedef struct tagMENU
   Menu_Hook      iteminit;
   Menu_Hook      itemterm;
 
-  void          *userptr;               /* Pointer to menus user data      */
+  const void    *userptr;               /* Pointer to menus user data      */
   char          *mark;                  /* Pointer to marker string        */
 
   Menu_Options   opt;                   /* Menu options                    */
@@ -131,19 +135,30 @@ typedef struct tagMENU
 #define REQ_BACK_PATTERN        (KEY_MAX + 15)
 #define REQ_NEXT_MATCH          (KEY_MAX + 16)
 #define REQ_PREV_MATCH          (KEY_MAX + 17)
+
+#define MIN_MENU_COMMAND        (KEY_MAX + 1)
 #define MAX_MENU_COMMAND        (KEY_MAX + 17)
 
 /*
  * Some AT&T code expects MAX_COMMAND to be out-of-band not
- * just for meny commands but for forms ones as well.
+ * just for menu commands but for forms ones as well.
  */
-#define MAX_COMMAND             (KEY_MAX + 128)
+#if defined(MAX_COMMAND)
+#  if (MAX_MENU_COMMAND > MAX_COMMAND)
+#    error Something is wrong -- MAX_MENU_COMMAND is greater than MAX_COMMAND
+#  elif (MAX_COMMAND != (KEY_MAX + 128))
+#    error Something is wrong -- MAX_COMMAND is already inconsistently defined.
+#  endif
+#else
+#  define MAX_COMMAND (KEY_MAX + 128)
+#endif
+
 
 /* --------- prototypes for libmenu functions ----------------------------- */
 
 extern ITEM     **menu_items(const MENU *),
                 *current_item(const MENU *),
-                *new_item(char *,char *);
+                *new_item(const char *,const char *);
 
 extern MENU     *new_menu(ITEM **);
 
@@ -158,14 +173,16 @@ Menu_Hook       item_init(const MENU *),
 extern WINDOW   *menu_sub(const MENU *),
                 *menu_win(const MENU *);
 
-extern char     *item_description(const ITEM *),
-                *item_name(const ITEM *),
-                *menu_mark(const MENU *),
-                *menu_pattern(const MENU *);
+extern const char *item_description(const ITEM *),
+                  *item_name(const ITEM *),
+                  *menu_mark(const MENU *),
+                  *menu_request_name(int);
 
-extern char     *item_userptr(const ITEM *),
-                *menu_userptr(const MENU *);
-  
+extern char       *menu_pattern(const MENU *);
+
+extern const void *menu_userptr(const MENU *),
+                  *item_userptr(const ITEM *);
+
 extern chtype   menu_back(const MENU *),
                 menu_fore(const MENU *),
                 menu_grey(const MENU *);
@@ -187,7 +204,7 @@ extern int      free_item(ITEM *),
                 set_item_init(MENU *,void(*)(MENU *)),
                 set_item_opts(ITEM *,Item_Options),
                 set_item_term(MENU *,void(*)(MENU *)),
-                set_item_userptr(ITEM *, char *),
+                set_item_userptr(ITEM *, const void *),
                 set_item_value(ITEM *,bool),
                 set_menu_back(MENU *,chtype),
                 set_menu_fore(MENU *,chtype),
@@ -195,17 +212,21 @@ extern int      free_item(ITEM *),
                 set_menu_grey(MENU *,chtype),
                 set_menu_init(MENU *,void(*)(MENU *)),
                 set_menu_items(MENU *,ITEM **),
-                set_menu_mark(MENU *, char *),
+                set_menu_mark(MENU *, const char *),
                 set_menu_opts(MENU *,Menu_Options),
                 set_menu_pad(MENU *,int),
                 set_menu_pattern(MENU *,const char *),
                 set_menu_sub(MENU *,WINDOW *),
                 set_menu_term(MENU *,void(*)(MENU *)),
-                set_menu_userptr(MENU *,char *),
+                set_menu_userptr(MENU *,const void *),
                 set_menu_win(MENU *,WINDOW *),
                 set_top_row(MENU *,int),
                 top_row(const MENU *),
-                unpost_menu(MENU *);
+                unpost_menu(MENU *),
+                menu_request_by_name(const char *),
+                set_menu_spacing(MENU *,int,int,int),
+                menu_spacing(const MENU *,int *,int *,int *);
+
 
 extern bool     item_value(const ITEM *),
                 item_visible(const ITEM *);

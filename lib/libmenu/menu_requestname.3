@@ -1,0 +1,40 @@
+'\" t
+.TH menu_requestname 3X ""
+.SH NAME
+\fBmenu_requestname\fR - handle printable menu request names
+.SH SYNOPSIS
+\fB#include <menu.h>\fR
+.br
+const char *menu_request_name(int request);
+.br
+int menu_request_by_name(const char *name);
+.br
+.SH DESCRIPTION
+The function \fBmenu_request_name\fR returns the printable name of a menu
+request code.
+.br
+The function \fBmenu_request_by_name\fR searches in the name-table for a request
+with the given name and returns its request code. Otherwise E_NO_MATCH is returned.
+.SH RETURN VALUE
+\fBmenu_request_name\fR returns \fBNULL\fR on error and sets errno
+to \fBE_BAD_ARGUMENT\fR.
+.br
+\fBmenu_request_by_name\fR returns \fBE_NO_MATCH\fR on error.
+.SH SEE ALSO
+\fBcurses\fR(3X), \fBmenu\fR(3X).
+.SH NOTES
+The header file \fB<menu.h>\fR automatically includes the header file
+\fB<curses.h>\fR.
+.SH PORTABILITY
+These routines are specific to ncurses.  They were not supported on
+Version 7, BSD or System V implementations.  It is recommended that
+any code depending on them be conditioned using NCURSES_VERSION.
+.SH AUTHORS
+Juergen Pfeifer.  Manual pages and adaptation for new curses by Eric
+S. Raymond.
+.\"#
+.\"# The following sets edit modes for GNU EMACS
+.\"# Local Variables:
+.\"# mode:nroff
+.\"# fill-column:79
+.\"# End:

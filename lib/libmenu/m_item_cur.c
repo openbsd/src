@@ -1,23 +1,24 @@
-
-/***************************************************************************
-*                            COPYRIGHT NOTICE                              *
-****************************************************************************
-*                ncurses is copyright (C) 1992-1995                        *
-*                          Zeyd M. Ben-Halim                               *
-*                          zmbenhal@netcom.com                             *
-*                          Eric S. Raymond                                 *
-*                          esr@snark.thyrsus.com                           *
-*                                                                          *
-*        Permission is hereby granted to reproduce and distribute ncurses  *
-*        by any means and for any fee, whether alone or as part of a       *
-*        larger distribution, in source or in binary form, PROVIDED        *
-*        this notice is included with any such distribution, and is not    *
-*        removed from any of its header files. Mention of ncurses in any   *
-*        applications linked with it is highly appreciated.                *
-*                                                                          *
-*        ncurses comes AS IS with no warranty, implied or expressed.       *
-*                                                                          *
-***************************************************************************/
+/*-----------------------------------------------------------------------------+
+|           The ncurses menu library is  Copyright (C) 1995-1997               |
+|             by Juergen Pfeifer <Juergen.Pfeifer@T-Online.de>                 |
+|                          All Rights Reserved.                                |
+|                                                                              |
+| Permission to use, copy, modify, and distribute this software and its        |
+| documentation for any purpose and without fee is hereby granted, provided    |
+| that the above copyright notice appear in all copies and that both that      |
+| copyright notice and this permission notice appear in supporting             |
+| documentation, and that the name of the above listed copyright holder(s) not |
+| be used in advertising or publicity pertaining to distribution of the        |
+| software without specific, written prior permission.                         | 
+|                                                                              |
+| THE ABOVE LISTED COPYRIGHT HOLDER(S) DISCLAIM ALL WARRANTIES WITH REGARD TO  |
+| THIS SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FIT-  |
+| NESS, IN NO EVENT SHALL THE ABOVE LISTED COPYRIGHT HOLDER(S) BE LIABLE FOR   |
+| ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RE- |
+| SULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, |
+| NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH    |
+| THE USE OR PERFORMANCE OF THIS SOFTWARE.                                     |
++-----------------------------------------------------------------------------*/
 
 /***************************************************************************
 * Module menu_item_cur                                                     *
@@ -25,6 +26,8 @@
 ***************************************************************************/
 
 #include "menu.priv.h"
+
+MODULE_ID("Id: m_item_cur.c,v 1.7 1997/05/01 16:47:26 juergen Exp $")
 
 /*---------------------------------------------------------------------------
 |   Facility      :  libnmenu  
@@ -83,11 +86,11 @@ ITEM *current_item(const MENU * menu)
 |   
 |   Description   :  Return the logical index of this item.
 |
-|   Return Values :  The index or -1 if this is an invalid item pointer
+|   Return Values :  The index or ERR if this is an invalid item pointer
 +--------------------------------------------------------------------------*/
 int item_index(const ITEM *item)
 {
-  return (item && item->imenu) ? item->index : -1;
+  return (item && item->imenu) ? item->index : ERR;
 }
 
 /*---------------------------------------------------------------------------
@@ -111,7 +114,7 @@ int set_top_row(MENU * menu, int row)
       if (menu->items == (ITEM **)0)
 	RETURN(E_NOT_CONNECTED);
       
-      if ((row<0) || (row>=(menu->rows - menu->height)))
+      if ((row<0) || (row > (menu->rows - menu->arows)))
 	RETURN(E_BAD_ARGUMENT);
     }
   else
@@ -137,7 +140,7 @@ int set_top_row(MENU * menu, int row)
 |   
 |   Description   :  Return the top row of the menu
 |
-|   Return Values :  The row number or -1 if there is no row
+|   Return Values :  The row number or ERR if there is no row
 +--------------------------------------------------------------------------*/
 int top_row(const MENU * menu)
 {
@@ -147,7 +150,7 @@ int top_row(const MENU * menu)
       return menu->toprow;
     }
   else
-    return(-1);
+    return(ERR);
 }
 
 /* m_item_cur.c ends here */

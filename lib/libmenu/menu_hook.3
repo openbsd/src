@@ -7,19 +7,19 @@
 .br
 int set_item_init(MENU *menu, void (*func)(MENU *));
 .br
-void (*)(MENU *) item_init(MWNU *menu);
+void (*)(MENU *) item_init(const MENU *menu);
 .br
 int set_item_term(MENU *menu, void (*func)(MENU *));
 .br
-void (*)(MENU *) item_term(MWNU *menu);
+void (*)(MENU *) item_term(const MENU *menu);
 .br
 int set_menu_init(MENU *menu, void (*func)(MENU *));
 .br
-void (*)(MENU *) menu_init(MWNU *menu);
+void (*)(MENU *) menu_init(const MENU *menu);
 .br
 int set_menu_term(MENU *menu, void (*func)(MENU *));
 .br
-void (*)(MENU *) menu_term(MWNU *menu);
+void (*)(MENU *) menu_term(const MENU *menu);
 .br
 .SH DESCRIPTION
 These functions make it possible to set hook functions to be called at various

@@ -7,9 +7,9 @@
 .br
 int set_menu_items(MENU *menu, ITEM **items);
 .br
-ITEM **menu_items(MENU *menu);
+ITEM **menu_items(const MENU *menu);
 .br
-int item_count(MENU *menu);
+int item_count(const MENU *menu);
 .br
 .SH DESCRIPTION
 The function \fBset_menu_items\fR changes the item pointer array of the given
