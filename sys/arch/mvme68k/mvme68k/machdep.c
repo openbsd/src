@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.78 2003/11/06 21:09:35 mickey Exp $ */
+/*	$OpenBSD: machdep.c,v 1.79 2003/12/20 00:34:32 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -396,7 +396,7 @@ again:
 #ifdef DEBUG
 	pmapdebug = opmapdebug;
 #endif
-	printf("avail mem = %ld (%ld pages)\n", ptoa(uvmexp.free), uvmexp.free);
+	printf("avail mem = %ld (%d pages)\n", ptoa(uvmexp.free), uvmexp.free);
 	printf("using %d buffers containing %d bytes of memory\n",
 			 nbuf, bufpages * PAGE_SIZE);
 
@@ -506,8 +506,7 @@ identifycpu()
 	switch (cputyp) {
 #ifdef MVME147
 	case CPU_147:
-		bcopy(&brdid.suffix, suffix, sizeof brdid.suffix);
-		snprintf(suffix, sizeof suffix, "MVME%x", brdid.model, suffix);
+		snprintf(suffix, sizeof suffix, "MVME%x", brdid.model);
 		cpuspeed = pccspeed((struct pccreg *)IIOV(0xfffe1000));
 		snprintf(speed, sizeof speed, "%02d", cpuspeed);
 		break;
@@ -681,7 +680,7 @@ halt_establish(fn, pri)
 
 __dead void
 boot(howto)
-	register int howto;
+	int howto;
 {
 	/* If system is cold, just halt. */
 	if (cold) {

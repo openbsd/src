@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.50 2003/06/02 23:27:51 millert Exp $ */
+/*	$OpenBSD: trap.c,v 1.51 2003/12/20 00:34:32 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -616,7 +616,7 @@ copyfault:
 			if (type == T_MMUFLT) {
 				if (p && p->p_addr->u_pcb.pcb_onfault)
 					goto copyfault;
-				printf("uvm_fault(%x, %x, 0, %x) -> %x\n",
+				printf("uvm_fault(%p, %lx, 0, %x) -> %x\n",
 					 map, va, ftype, rv);
 				printf("  type %x, code [mmu,,ssw]: %x\n",
 					 type, code);
@@ -631,9 +631,9 @@ copyfault:
 	}
 	sv.sival_int = v;
 	trapsignal(p, i, ucode, typ, sv);
+out:
 	if ((type & T_USER) == 0)
 		return;
-out:
 	userret(p, &frame, sticks, v, 1);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmel.c,v 1.10 2003/06/02 05:09:14 deraadt Exp $ */
+/*	$OpenBSD: vmel.c,v 1.11 2003/12/20 00:34:28 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -162,10 +162,12 @@ vmelmmap(dev, off, prot)
 {
 	int unit = minor(dev);
 	struct vmelsoftc *sc = (struct vmelsoftc *) vmel_cd.cd_devs[unit];
-	void * pa;
+	void *pa;
 
 	pa = vmepmap(sc->sc_vme, (void *)(int)off, NBPG, BUS_VMEL);
-	printf("vmel %x pa %x\n", off, pa);
+#ifdef DEBUG
+	printf("vmel %llx pa %p\n", off, pa);
+#endif
 	if (pa == NULL)
 		return (-1);
 	return (m68k_btop(pa));

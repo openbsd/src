@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssh.c,v 1.6 2003/09/22 21:39:39 miod Exp $ */
+/*	$OpenBSD: ssh.c,v 1.7 2003/12/20 00:34:28 miod Exp $ */
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -948,7 +948,7 @@ ssh_checkintr(sc, istat, dstat, sstat0, status)
 					  *((long *)&rp->ssh_dcmd));
 #endif
 		if ((rp->ssh_sbcl & SSH_REQ) == 0) {
-			printf ("Phase mismatch: REQ not asserted! %02x dsp %x\n",
+			printf ("Phase mismatch: REQ not asserted! %02x dsp %lx\n",
 					  rp->ssh_sbcl, rp->ssh_dsp);
 #ifdef DEBUG
 			Debugger();
@@ -1047,7 +1047,7 @@ ssh_checkintr(sc, istat, dstat, sstat0, status)
 			int n = rp->ssh_temp - sc->sc_scriptspa;
 
 			if (acb->iob_curlen && acb->iob_curlen != acb->ds.chain[0].datalen)
-				printf("%s: iob_curbuf/len already set? n %x iob %x/%x chain[0] %x/%x\n",
+				printf("%s: iob_curbuf/len already set? n %x iob %lx/%lx chain[0] %p/%lx\n",
 						 sc->sc_dev.dv_xname, n, acb->iob_curbuf, acb->iob_curlen,
 						 acb->ds.chain[0].databuf, acb->ds.chain[0].datalen);
 			if (n < Ent_datain)
@@ -1184,7 +1184,7 @@ ssh_checkintr(sc, istat, dstat, sstat0, status)
 			break;
 		}
 		if (acb == NULL) {
-			printf("%s: target ID %02x reselect nexus_list %x\n",
+			printf("%s: target ID %02x reselect nexus_list %p\n",
 					 sc->sc_dev.dv_xname, reselid,
 					 sc->nexus_list.tqh_first);
 			panic("unable to find reselecting device");
@@ -1252,7 +1252,7 @@ ssh_checkintr(sc, istat, dstat, sstat0, status)
 	if (sstat0 == 0 && dstat & SSH_DSTAT_SIR) {
 		dma_cachectl (&acb->stat[0], 1);
 		dma_cachectl (&acb->msg[0], 1);
-		printf ("SSH interrupt: %x sts %x msg %x %x sbcl %x\n",
+		printf ("SSH interrupt: %lx sts %x msg %x %x sbcl %x\n",
 				  rp->ssh_dsps, acb->stat[0], acb->msg[0], acb->msg[1],
 				  rp->ssh_sbcl);
 		sshreset (sc);
@@ -1272,12 +1272,12 @@ ssh_checkintr(sc, istat, dstat, sstat0, status)
 	 * then panics.
 	 * XXXX need to clean this up to print out the info, reset, and continue
 	 */
-	printf ("sshchkintr: target %x ds %x\n", target, &acb->ds);
-	printf ("scripts %x ds %x rp %x dsp %x dcmd %x\n", sc->sc_scriptspa,
+	printf ("sshchkintr: target %x ds %p\n", target, &acb->ds);
+	printf ("scripts %lx ds %lx rp %lx dsp %lx dcmd %lx\n", sc->sc_scriptspa,
 	  kvtop((vaddr_t)&acb->ds), kvtop((vaddr_t)rp), rp->ssh_dsp,
 	  *((long *)&rp->ssh_dcmd));
-	printf ("sshchkintr: istat %x dstat %x sstat0 %x dsps %x "
-			  "dsa %x sbcl %x sts %x msg %x %x sfbr %x\n",
+	printf ("sshchkintr: istat %x dstat %x sstat0 %x dsps %lx "
+			  "dsa %lx sbcl %x sts %x msg %x %x sfbr %x\n",
 			  istat, dstat, sstat0, rp->ssh_dsps, rp->ssh_dsa,
 			  rp->ssh_sbcl, acb->stat[0], acb->msg[0], acb->msg[1],
 			  rp->ssh_sfbr);
