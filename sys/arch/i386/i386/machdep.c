@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.258 2003/12/29 08:14:18 grange Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.259 2004/01/03 15:17:48 markus Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -1608,6 +1608,11 @@ natsem6x86_cpu_setup(cpu_device, model, step)
 	extern int clock_broken_latch;
 
 	clock_broken_latch = 1;
+	switch (model) {
+	case 4:
+		cpu_feature &= ~CPUID_TSC;
+		break;
+	}
 #endif
 }
 
