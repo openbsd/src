@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vrreg.h,v 1.8 2003/10/10 18:05:12 jason Exp $	*/
+/*	$OpenBSD: if_vrreg.h,v 1.9 2003/10/10 19:02:24 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -407,6 +407,7 @@ struct vr_chain {
 	struct vr_desc		*vr_ptr;
 	struct mbuf		*vr_mbuf;
 	struct vr_chain		*vr_nextdesc;
+	bus_dmamap_t		vr_map;
 };
 
 struct vr_chain_onefrag {

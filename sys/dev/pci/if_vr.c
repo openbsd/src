@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vr.c,v 1.35 2003/10/10 18:19:16 jason Exp $	*/
+/*	$OpenBSD: if_vr.c,v 1.36 2003/10/10 19:02:24 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -1187,6 +1187,13 @@ vr_txeof(sc)
 			cur_tx->vr_mbuf = NULL;
 		}
 
+		if (cur_tx->vr_map != NULL) {
+			if (cur_tx->vr_map->dm_nsegs > 0)
+				bus_dmamap_unload(sc->sc_dmat, cur_tx->vr_map);
+			bus_dmamap_destroy(sc->sc_dmat, cur_tx->vr_map);
+			cur_tx->vr_map = NULL;
+		}
+
 		if (sc->vr_cdata.vr_tx_head == sc->vr_cdata.vr_tx_tail) {
 			sc->vr_cdata.vr_tx_head = NULL;
 			sc->vr_cdata.vr_tx_tail = NULL;
@@ -1338,58 +1345,45 @@ vr_encap(sc, c, m_head)
 	struct vr_chain		*c;
 	struct mbuf		*m_head;
 {
-	int			frag = 0;
 	struct vr_desc		*f = NULL;
 	int			total_len;
-	struct mbuf		*m;
+	struct mbuf		*m = m_head;
+	struct mbuf		*m_new = NULL;
 
 	m = m_head;
 	total_len = 0;
 
-	/*
-	 * The VIA Rhine wants packet buffers to be longword
-	 * aligned, but very often our mbufs aren't. Rather than
-	 * waste time trying to decide when to copy and when not
-	 * to copy, just do it all the time.
-	 */
-	if (m != NULL) {
-		struct mbuf		*m_new = NULL;
-
-		MGETHDR(m_new, M_DONTWAIT, MT_DATA);
-		if (m_new == NULL) {
+	MGETHDR(m_new, M_DONTWAIT, MT_DATA);
+	if (m_new == NULL)
+		return(1);
+	if (m_head->m_pkthdr.len > MHLEN) {
+		MCLGET(m_new, M_DONTWAIT);
+		if (!(m_new->m_flags & M_EXT)) {
+			m_freem(m_new);
 			return(1);
 		}
-		if (m_head->m_pkthdr.len > MHLEN) {
-			MCLGET(m_new, M_DONTWAIT);
-			if (!(m_new->m_flags & M_EXT)) {
-				m_freem(m_new);
-				return(1);
-			}
-		}
-		m_copydata(m_head, 0, m_head->m_pkthdr.len,	
-					mtod(m_new, caddr_t));
-		m_new->m_pkthdr.len = m_new->m_len = m_head->m_pkthdr.len;
-		m_freem(m_head);
-		m_head = m_new;
-		/*
-		 * The Rhine chip doesn't auto-pad, so we have to make
-		 * sure to pad short frames out to the minimum frame length
-		 * ourselves.
-		 */
-		if (m_head->m_len < VR_MIN_FRAMELEN) {
-			/* data field should be padded with octets of zero */
-			bzero(&m_new->m_data[m_head->m_len],
-			    VR_MIN_FRAMELEN-m_head->m_len);
-			m_new->m_pkthdr.len += VR_MIN_FRAMELEN - m_new->m_len;
-			m_new->m_len = m_new->m_pkthdr.len;
-		}
-		f = c->vr_ptr;
-		f->vr_data = vtophys(mtod(m_new, caddr_t));
-		f->vr_ctl = total_len = m_new->m_len;
-		f->vr_ctl |= VR_TXCTL_TLINK|VR_TXCTL_FIRSTFRAG;
-		f->vr_status = 0;
-		frag = 1;
 	}
+	m_copydata(m_head, 0, m_head->m_pkthdr.len, mtod(m_new, caddr_t));
+	m_new->m_pkthdr.len = m_new->m_len = m_head->m_pkthdr.len;
+	m_freem(m_head);
+	m_head = m_new;
+	/*
+	 * The Rhine chip doesn't auto-pad, so we have to make
+	 * sure to pad short frames out to the minimum frame length
+	 * ourselves.
+	 */
+	if (m_head->m_len < VR_MIN_FRAMELEN) {
+		/* data field should be padded with octets of zero */
+		bzero(&m_new->m_data[m_head->m_len],
+		    VR_MIN_FRAMELEN-m_head->m_len);
+		m_new->m_pkthdr.len += VR_MIN_FRAMELEN - m_new->m_len;
+		m_new->m_len = m_new->m_pkthdr.len;
+	}
+	f = c->vr_ptr;
+	f->vr_data = vtophys(mtod(m_new, caddr_t));
+	f->vr_ctl = total_len = m_new->m_len;
+	f->vr_ctl |= VR_TXCTL_TLINK|VR_TXCTL_FIRSTFRAG;
+	f->vr_status = 0;
 
 	c->vr_mbuf = m_head;
 	c->vr_ptr->vr_ctl |= VR_TXCTL_LASTFRAG|VR_TXCTL_FINT;
@@ -1749,9 +1743,18 @@ vr_stop(sc)
 	 * Free the TX list buffers.
 	 */
 	for (i = 0; i < VR_TX_LIST_CNT; i++) {
+		bus_dmamap_t map;
+
 		if (sc->vr_cdata.vr_tx_chain[i].vr_mbuf != NULL) {
 			m_freem(sc->vr_cdata.vr_tx_chain[i].vr_mbuf);
 			sc->vr_cdata.vr_tx_chain[i].vr_mbuf = NULL;
+		}
+		map = sc->vr_cdata.vr_tx_chain[i].vr_map;
+		if (map != NULL) {
+			if (map->dm_nsegs > 0)
+				bus_dmamap_unload(sc->sc_dmat, map);
+			bus_dmamap_destroy(sc->sc_dmat, map);
+			sc->vr_cdata.vr_tx_chain[i].vr_map = NULL;
 		}
 	}
 
