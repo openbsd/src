@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_mmap.c,v 1.41 2003/04/17 03:50:54 drahn Exp $	*/
+/*	$OpenBSD: uvm_mmap.c,v 1.42 2003/04/18 23:47:59 drahn Exp $	*/
 /*	$NetBSD: uvm_mmap.c,v 1.49 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -168,12 +168,20 @@ sys_mquery(struct proc *p, void *v, register_t *retval)
 
 	/* prevent a user requested address from falling in heap space */
 	if ((vaddr + SCARG(uap, size) > (vaddr_t)p->p_vmspace->vm_daddr) &&
-	    (vaddr < (vaddr_t)p->p_vmspace->vm_daddr + MAXDSIZ))
+	    (vaddr < (vaddr_t)p->p_vmspace->vm_daddr + MAXDSIZ)) {
+		if (flags & UVM_FLAG_FIXED) {
+			error = EINVAL;
+			goto done;
+		}
 		vaddr = round_page((vaddr_t)p->p_vmspace->vm_daddr + MAXDSIZ);
+	}
 
 	if (uvm_map_findspace(&p->p_vmspace->vm_map, vaddr, SCARG(uap, size),
 	    &vaddr, uobj, uoff, 0, flags) == NULL) {
-		error = ENOMEM;
+		if (flags & UVM_FLAG_FIXED)
+			error = EINVAL;
+		else
+			error = ENOMEM;
 	} else {
 		/*
 		 * XXX?
@@ -185,7 +193,7 @@ sys_mquery(struct proc *p, void *v, register_t *retval)
 		 */
 		error = copyout(&vaddr, SCARG(uap, addr), sizeof(void *));
 	}
-
+done:
 	if (fp != NULL)
 		FRELE(fp);
 	return (error);
