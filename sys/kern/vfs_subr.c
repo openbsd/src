@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.28 1998/12/10 21:46:58 art Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.29 1998/12/22 10:43:37 art Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -1246,7 +1246,7 @@ vprint(label, vp)
 
 	if (label != NULL)
 		printf("%s: ", label);
-	printf("type %s, usecount %d, writecount %d, refcount %ld,",
+	printf("type %s, usecount %d, writecount %d, holdcount %ld,",
 		typename[vp->v_type], vp->v_usecount, vp->v_writecount,
 		vp->v_holdcnt);
 	buf[0] = '\0';
