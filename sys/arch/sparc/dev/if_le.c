@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le.c,v 1.14 1998/12/13 21:47:09 deraadt Exp $	*/
+/*	$OpenBSD: if_le.c,v 1.15 1998/12/22 15:40:30 jason Exp $	*/
 /*	$NetBSD: if_le.c,v 1.50 1997/09/09 20:54:48 pk Exp $	*/
 
 /*-
@@ -213,7 +213,9 @@ lemediachange(ifp)
 {
 	struct am7990_softc *sc = ifp->if_softc;
 	struct ifmedia *ifm = &sc->sc_ifmedia;
+#if defined(SUN4M)
 	struct le_softc *lesc = (struct le_softc *)sc;
+#endif
 
 	if (IFM_TYPE(ifm->ifm_media) != IFM_ETHER)
 		return (EINVAL);
