@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.129 1999/09/13 13:08:13 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.130 1999/09/19 16:38:42 fgsch Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -77,10 +77,6 @@ pcmcia*	at pcic? controller ? socket ?
 
 # USB Generic HID devices
 #uhid*	at uhub? port ? configuration ? interface ?
-
-# USB Mass Storage
-#umass*	at uhub? port ? configuration ? interface ?
-#scsibus* at umass? channel ?
 
 # USB Generic driver
 #ugen*	at uhub? port ? configuration ? interface ?
