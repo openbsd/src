@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.4 2001/07/06 00:38:19 smurph Exp $
+#	$OpenBSD: RAMDISK,v 1.5 2001/08/23 06:10:42 matthieu Exp $
 #
 # MVMEPPC GENERIC config file
 #
@@ -40,7 +40,7 @@ pchb*		at pci?				# PCI host bridge
 pcib*		at pci? dev ? function ?	# PCI-ISA bridge
 siop*		at pci? dev ? function ?
 #ncr*		at pci? dev ? function ?
-#de*		at pci? dev ? function ?
+de*		at pci? dev ? function ?
 #vme*		at pci? dev ? function ?
 #pciide*	at pci? dev ? function ?
 
