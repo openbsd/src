@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdc.h,v 1.19 2002/03/14 01:26:32 millert Exp $	*/
+/*	$OpenBSD: pdc.h,v 1.20 2002/05/20 03:27:42 mickey Exp $	*/
 
 /*
  * Copyright (c) 1990 mt Xinu, Inc.  All rights reserved.
@@ -92,6 +92,7 @@
 #define	IODC_MAXIOSIZ	(64 * 1024)	/* maximum buffer size for IODC call */
 
 #define	PDC_ALIGNMENT	__attribute__ ((__aligned__(64)))
+#define	PDC_STACKSIZE	(4*NBPG)
 
 /*
  * The PDC Entry Points and their arguments...
