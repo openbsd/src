@@ -8,7 +8,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshconnect.c,v 1.51 2000/01/16 23:03:10 markus Exp $");
+RCSID("$OpenBSD: sshconnect.c,v 1.52 2000/01/16 23:53:02 markus Exp $");
 
 #include <ssl/bn.h>
 #include "xmalloc.h"
@@ -1406,6 +1406,10 @@ ssh_kex(char *host, struct sockaddr *hostaddr)
 		rsa_public_encrypt(key, key, public_key);
 	}
 
+	/* Destroy the public keys since we no longer need them. */
+	RSA_free(public_key);
+	RSA_free(host_key);
+
 	if (options.cipher == SSH_CIPHER_NOT_SET) {
 		if (cipher_mask() & supported_ciphers & (1 << ssh_cipher_default))
 			options.cipher = ssh_cipher_default;
@@ -1431,8 +1435,9 @@ ssh_kex(char *host, struct sockaddr *hostaddr)
 	for (i = 0; i < 8; i++)
 		packet_put_char(cookie[i]);
 
-	/* Send the encrypted encryption key. */
+	/* Send and destroy the encrypted encryption key integer. */
 	packet_put_bignum(key);
+	BN_clear_free(key);
 
 	/* Send protocol flags. */
 	packet_put_int(client_flags);
@@ -1440,11 +1445,6 @@ ssh_kex(char *host, struct sockaddr *hostaddr)
 	/* Send the packet now. */
 	packet_send();
 	packet_write_wait();
-
-	/* Destroy the session key integer and the public keys since we no longer need them. */
-	BN_clear_free(key);
-	RSA_free(public_key);
-	RSA_free(host_key);
 
 	debug("Sent encrypted session key.");
 
