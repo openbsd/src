@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wx.c,v 1.8 2000/12/07 02:35:55 mjacob Exp $	*/
+/*	$OpenBSD: if_wx.c,v 1.9 2001/01/29 04:33:59 deraadt Exp $	*/
 /*
  * Copyright (c) 1999, Traakan Software
  * All rights reserved.
@@ -215,14 +215,42 @@ wx_attach(parent, self, aux)
 		printf(": can't map registers\n");
 		return;
 	}
+#ifndef __OpenBSD__
 	printf(": Intel GigaBit Ethernet\n");
+#endif
+
+	sc->wx_idnrev = (PCI_PRODUCT(pa->pa_id) << 16) |
+		(pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_CLASS_REG) & 0xff);
+
+	data = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_BHLC_REG);
+	data &= ~(PCI_CACHELINE_MASK << PCI_CACHELINE_SHIFT);
+	data |= (WX_CACHELINE_SIZE << PCI_CACHELINE_SHIFT);
+	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_BHLC_REG, data);
+
+	if (wx_attach_common(sc)) {
+#ifdef __OpenBSD__
+		printf("\n");
+#endif
+		return;
+	}
+
+#ifndef __OpenBSD__
+	printf("%s: Ethernet address %s\n",
+	    sc->wx_name, ether_sprintf(sc->wx_enaddr));
+#else
+	printf(": address %s", ether_sprintf(sc->wx_enaddr));
+#endif
 
 	/*
 	 * Allocate our interrupt.
 	 */
 	if (pci_intr_map(pc, pa->pa_intrtag, pa->pa_intrpin,
 	    pa->pa_intrline, &ih)) {
+#ifndef __OpenBSD__
 		printf("%s: couldn't map interrupt\n", sc->wx_name);
+#else
+		printf(", couldn't map interrupt\n");
+#endif
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih);
@@ -233,27 +261,21 @@ wx_attach(parent, self, aux)
 	sc->w.ih = pci_intr_establish(pc, ih, IPL_NET, wx_intr, sc);
 #endif
 	if (sc->w.ih == NULL) {
+#ifndef __OpenBSD__
 		printf("%s: couldn't establish interrupt", sc->wx_name);
+#else
+		printf(", couldn't establish interrupt\n");
+#endif
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
 		return;
 	}
+#ifndef __OpenBSD__
 	printf("%s: interrupting at %s\n", sc->wx_name, intrstr);
-	sc->wx_idnrev = (PCI_PRODUCT(pa->pa_id) << 16) |
-		(pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_CLASS_REG) & 0xff);
-
-	data = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_BHLC_REG);
-	data &= ~(PCI_CACHELINE_MASK << PCI_CACHELINE_SHIFT);
-	data |= (WX_CACHELINE_SIZE << PCI_CACHELINE_SHIFT);
-	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_BHLC_REG, data);
-
-	if (wx_attach_common(sc)) {
-		return;
-	}
-
-	printf("%s: Ethernet address %s\n",
-	    sc->wx_name, ether_sprintf(sc->wx_enaddr));
+#else
+	printf(", %s\n", intrstr);
+#endif
 
 	ifp = &sc->wx_if;
 	bcopy(sc->wx_name, ifp->if_xname, IFNAMSIZ);
