@@ -1,4 +1,4 @@
-/*    $OpenBSD: if_edreg.h,v 1.3 1996/03/08 16:43:00 niklas Exp $      */
+/*    $OpenBSD: if_edreg.h,v 1.4 1998/03/16 10:41:42 downsj Exp $      */
 /*    $NetBSD: if_edreg.h,v 1.15 1996/01/10 16:49:22 chuck Exp $      */
 
 /*
@@ -158,8 +158,13 @@
  */
 #define ED_WD790_REV	7
 
-#define ED_WD790	0x20
-#define ED_WD795	0x40
+#define ED_WD790	0x20		/* and 0x21... */
+#define ED_WD795	0x40		/* and 0x41... */
+
+/*
+ * PIO mode register for the 83C795
+ */
+#define ED_WD795_PIO	8
 
 /*
  * 79X RAM Address Register (RAR)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ed.c,v 1.34 1998/02/15 01:49:58 deraadt Exp $	*/
+/*	$OpenBSD: if_ed.c,v 1.35 1998/03/16 10:41:39 downsj Exp $	*/
 /*	$NetBSD: if_ed.c,v 1.105 1996/10/21 22:40:45 thorpej Exp $	*/
 
 /*
@@ -625,7 +625,7 @@ ed_find_WD80x3(sc, cf, ia)
 	bus_space_handle_t delaybah = ia->ia_delaybah;
 	bus_space_handle_t memh;
 	u_int memsize;
-	u_char iptr, isa16bit, sum;
+	u_char iptr, isa16bit, sum, wd790rev;
 	int i, rv, memfail, mapped_mem = 0;
 	int asicbase, nicbase;
 
@@ -735,8 +735,19 @@ ed_find_WD80x3(sc, cf, ia)
 		break;
 	case ED_TYPE_SMC8216C:
 	case ED_TYPE_SMC8216T:
-		sc->type_str = (sc->type == ED_TYPE_SMC8216C) ?
-		    "SMC8216/SMC8216C" : "SMC8216T";
+		wd790rev = bus_space_read_1(iot, ioh, asicbase + ED_WD790_REV);
+		if (wd790rev < ED_WD795)
+			sc->type_str = (sc->type == ED_TYPE_SMC8216C) ?
+			    "SMC8216/SMC8216C" : "SMC8216T";
+		else {
+			sc->type_str = "SMC8416C/SMC8416BT";
+			if (bus_space_read_1(iot, ioh,
+					     asicbase + ED_WD795_PIO)) {
+				printf ("%s: detected SMC8416 in PIO mode, unsupported hardware configuration.\n", sc->sc_dev.dv_xname);
+				goto out;
+			}
+		}
+
 		bus_space_write_1(iot, ioh, asicbase + ED_WD790_HWR,
 		    bus_space_read_1(iot, ioh, asicbase + ED_WD790_HWR)
 		    | ED_WD790_HWR_SWH);
@@ -752,9 +763,6 @@ ed_find_WD80x3(sc, cf, ia)
 			memsize = 16384;
 			break;
 		case ED_WD790_RAR_SZ8:
-			/* 8216 has 16K shared mem -- 8416 has 8K */
-			sc->type_str = (sc->type == ED_TYPE_SMC8216C) ?
-				"SMC8416C/SMC8416BT" : "SMC8416T";
 			memsize = 8192;
 			break;
 		}
