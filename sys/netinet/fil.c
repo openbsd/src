@@ -1,4 +1,4 @@
-/*	$OpenBSD: fil.c,v 1.8 1997/02/11 22:23:08 kstailey Exp $	*/
+/*	$OpenBSD: fil.c,v 1.9 1997/04/03 15:46:36 kstailey Exp $	*/
 /*
  * (C)opyright 1993-1996 by Darren Reed.
  *
@@ -187,8 +187,8 @@ fr_makefrip(hlen, ip, fin)
 	tcp = (tcphdr_t *)((char *)ip + hlen);
 	fin->fin_dp = (void *)tcp;
 	(*(((u_short *)fi) + 1)) = (*(((u_short *)ip) + 4));
-	(*(((u_long *)fi) + 1)) = (*(((u_long *)ip) + 3));
-	(*(((u_long *)fi) + 2)) = (*(((u_long *)ip) + 4));
+	(*(((u_int32_t *)fi) + 1)) = (*(((u_int32_t *)ip) + 3));
+	(*(((u_int32_t *)fi) + 2)) = (*(((u_int32_t *)ip) + 4));
 
 	fi->fi_fl = (hlen > sizeof(struct ip)) ? FI_OPTIONS : 0;
 	off = (ip->ip_off & 0x1fff) << 3;
