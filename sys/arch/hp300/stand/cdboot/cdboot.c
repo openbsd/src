@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdboot.c,v 1.1 1999/08/16 09:43:08 downsj Exp $	*/
+/*	$OpenBSD: cdboot.c,v 1.2 1999/08/16 10:20:07 downsj Exp $	*/
 /*	$NetBSD: uboot.c,v 1.3 1997/04/27 21:17:13 thorpej Exp $	*/
 
 /*-
@@ -76,7 +76,6 @@ main()
 
 	printf("\n>> OpenBSD [%dKB] CDROM BOOT %s HP9000/%s CPU\n",
 	       (__LDPGSZ / 1024), version, getmachineid());
-	printf(">> Enter \"reset\" to reset system.\n");
 
 	bdev   = B_TYPE(bootdev);
 	badapt = B_ADAPTOR(bootdev);
