@@ -1,4 +1,4 @@
-/*	$OpenBSD: dpd.c,v 1.8 2005/02/24 16:05:42 markus Exp $	*/
+/*	$OpenBSD: dpd.c,v 1.9 2005/02/24 16:16:46 markus Exp $	*/
 
 /*
  * Copyright (c) 2004 Håkan Olsson.  All rights reserved.
@@ -305,8 +305,6 @@ dpd_event(void *v_sa)
 #endif
 
 	isakmp_sa->dpd_event = 0;
-	if (isakmp_sa->flags & SA_FLAG_REPLACED)
-		return;
 
 	/* Check if there's been any incoming SA activity since last time.  */
 	args.isakmp_sa = isakmp_sa;
@@ -357,8 +355,6 @@ dpd_check_event(void *v_sa)
 	struct sa	*sa;
 
 	isakmp_sa->dpd_event = 0;
-	if (isakmp_sa->flags & SA_FLAG_REPLACED)
-		return;
 
 	if (++isakmp_sa->dpd_failcount < DPD_RETRANS_MAX) {
 		LOG_DBG((LOG_MESSAGE, 10, "dpd_check_event: "
