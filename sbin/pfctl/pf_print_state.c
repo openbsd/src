@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_print_state.c,v 1.3 2002/07/18 21:25:01 deraadt Exp $	*/
+/*	$OpenBSD: pf_print_state.c,v 1.4 2002/07/19 12:31:59 dhartmei Exp $	*/
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -101,19 +101,34 @@ print_addr(struct pf_addr_wrap *addr, struct pf_addr *mask, u_int8_t af)
 void
 print_name(struct pf_addr *addr, struct pf_addr *mask, int af)
 {
-	char buf[48];
-	struct hostent *hp;
+	char host[NI_MAXHOST];
 
-	if (inet_ntop(af, addr, buf, sizeof(buf)) == NULL)
-		printf("?");
-	else {
-		hp = getpfhostname(buf);
-		printf("%s", hp->h_name);
+	strlcpy(host, "?", sizeof(host));
+	switch (af) {
+	case AF_INET: {
+		struct sockaddr_in sin;
+
+		memset(&sin, 0, sizeof(sin));
+		sin.sin_len = sizeof(sin);
+		sin.sin_family = AF_INET;
+		sin.sin_addr = addr->v4;
+		getnameinfo((struct sockaddr *)&sin, sin.sin_len,
+		    host, sizeof(host), NULL, 0, NI_NOFQDN);
+		break;
 	}
-	if (mask != NULL) {
-		if (!PF_AZERO(mask, af))
-			printf("/%u", unmask(mask, af));
+	case AF_INET6: {
+		struct sockaddr_in6 sin6;
+
+		memset(&sin6, 0, sizeof(sin6));
+		sin6.sin6_len = sizeof(sin6);
+		sin6.sin6_family = AF_INET6;
+		sin6.sin6_addr = addr->v6;
+		getnameinfo((struct sockaddr *)&sin6, sin6.sin6_len,
+		    host, sizeof(host), NULL, 0, NI_NOFQDN);
+		break;
 	}
+	}
+	printf("%s", host);
 }
 
 void
@@ -229,25 +244,4 @@ print_state(struct pf_state *s, int opts)
 			printf(", rule %u", s->rule.nr);
 		printf("\n");
 	}
-}
-
-struct hostent *
-getpfhostname(const char *addr_str)
-{
-	struct in_addr		inaddr;
-	struct hostent		*hp;
-	static struct hostent	 myhp;
-
-	if (inet_aton(addr_str, &inaddr) == 0) {
-		myhp.h_name = (char *)addr_str;
-		hp = &myhp;
-		return (hp);
-	}
-	hp = gethostbyaddr((char *)&inaddr.s_addr, sizeof(inaddr.s_addr),
-	    AF_INET);
-	if (hp == NULL) {
-		myhp.h_name = (char *)addr_str;
-		hp = &myhp;
-	}
-	return (hp);
 }
