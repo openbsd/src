@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmds.c,v 1.18 2004/02/20 20:34:32 deraadt Exp $	*/
+/*	$OpenBSD: cmds.c,v 1.19 2004/05/26 18:17:58 deraadt Exp $	*/
 /*	$NetBSD: cmds.c,v 1.7 1997/02/11 09:24:03 mrg Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.1 (Berkeley) 6/6/93";
 #endif
-static const char rcsid[] = "$OpenBSD: cmds.c,v 1.18 2004/02/20 20:34:32 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: cmds.c,v 1.19 2004/05/26 18:17:58 deraadt Exp $";
 #endif /* not lint */
 
 #include "tip.h"
@@ -63,8 +63,7 @@ void	intcopy();		/* interrupt routine for file transfers */
  *  get a file from the remote host
  */
 void
-getfl(c)
-	char c;
+getfl(char c)
 {
 	char buf[256], *cp, *expand();
 	
@@ -94,8 +93,7 @@ getfl(c)
  * Cu-like take command
  */
 void
-cu_take(cc)
-	char cc;
+cu_take(char cc)
 {
 	int fd, argc;
 	char line[BUFSIZ], *expand(), *cp;
@@ -139,7 +137,7 @@ transfer(buf, fd, eofchars)
 
 	parwrite(FD, buf, size(buf));
 	quit = 0;
-	kill(pid, SIGIOT);
+	kill(tipout_pid, SIGIOT);
 	read(repdes[0], (char *)&ccc, 1);  /* Wait until read process stops */
 	
 	/*
@@ -296,7 +294,7 @@ transmit(fd, eofchars, command)
 	time_t start_t, stop_t;
 	sig_t f;
 
-	kill(pid, SIGIOT);	/* put TIPOUT into a wait state */
+	kill(tipout_pid, SIGIOT);	/* put TIPOUT into a wait state */
 	stop = 0;
 	f = signal(SIGINT, stopsnd);
 	tcsetattr(0, TCSAFLUSH, &defchars);
@@ -422,8 +420,7 @@ cu_put(cc)
  *  wait for echo & handle timeout
  */
 void
-send(c)
-	int c;
+send(int c)
 {
 	char cc;
 	int retry = 0;
@@ -473,7 +470,7 @@ pipeout(c)
 	putchar(c);
 	if (prompt("Local command? ", buf, sizeof(buf)))
 		return;
-	kill(pid, SIGIOT);	/* put TIPOUT into a wait state */
+	kill(tipout_pid, SIGIOT);	/* put TIPOUT into a wait state */
 	signal(SIGINT, SIG_IGN);
 	signal(SIGQUIT, SIG_IGN);
 	tcsetattr(0, TCSAFLUSH, &defchars);
@@ -516,7 +513,7 @@ pipeout(c)
  *  2 <-> local tty out
  */
 void
-consh(c)
+consh(int c)
 {
 	char buf[256];
 	int status, p;
@@ -526,7 +523,7 @@ consh(c)
 	putchar(c);
 	if (prompt("Local command? ", buf, sizeof(buf)))
 		return;
-	kill(pid, SIGIOT);	/* put TIPOUT into a wait state */
+	kill(tipout_pid, SIGIOT);	/* put TIPOUT into a wait state */
 	signal(SIGINT, SIG_IGN);
 	signal(SIGQUIT, SIG_IGN);
 	tcsetattr(0, TCSAFLUSH, &defchars);
@@ -567,7 +564,7 @@ consh(c)
  * Escape to local shell
  */
 void
-shell()
+shell(void)
 {
 	int status;
 	char *cp;
@@ -609,7 +606,7 @@ setscript()
 	/*
 	 * enable TIPOUT side for dialogue
 	 */
-	kill(pid, SIGEMT);
+	kill(tipout_pid, SIGEMT);
 	if (boolean(value(SCRIPT)))
 		write(fildes[1], value(RECORD), size(value(RECORD)));
 	write(fildes[1], "\n", 1);
@@ -646,7 +643,7 @@ tipabort(msg)
 	char *msg;
 {
 
-	kill(pid, SIGTERM);
+	kill(tipout_pid, SIGTERM);
 	disconnect(msg);
 	if (msg != NOSTR)
 		printf("\r\n%s", msg);
@@ -747,7 +744,7 @@ variable()
 	vlex(buf);
 	if (vtable[BEAUTIFY].v_access&CHANGED) {
 		vtable[BEAUTIFY].v_access &= ~CHANGED;
-		kill(pid, SIGSYS);
+		kill(tipout_pid, SIGSYS);
 	}
 	if (vtable[SCRIPT].v_access&CHANGED) {
 		vtable[SCRIPT].v_access &= ~CHANGED;

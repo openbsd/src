@@ -1,4 +1,4 @@
-/*	$OpenBSD: acu.c,v 1.9 2003/06/03 02:56:18 millert Exp $	*/
+/*	$OpenBSD: acu.c,v 1.10 2004/05/26 18:17:58 deraadt Exp $	*/
 /*	$NetBSD: acu.c,v 1.4 1996/12/29 10:34:03 cgd Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)acu.c	8.1 (Berkeley) 6/6/93";
 #endif
-static const char rcsid[] = "$OpenBSD: acu.c,v 1.9 2003/06/03 02:56:18 millert Exp $";
+static const char rcsid[] = "$OpenBSD: acu.c,v 1.10 2004/05/26 18:17:58 deraadt Exp $";
 #endif /* not lint */
 
 #include "tip.h"
@@ -174,7 +174,7 @@ disconnect(reason)
 }
 
 static void
-acuabort(s)
+acuabort(int s)
 {
 	signal(s, SIG_IGN);
 	longjmp(jmpbuf, 1);

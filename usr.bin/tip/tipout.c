@@ -1,4 +1,4 @@
-/*	$OpenBSD: tipout.c,v 1.10 2003/06/03 02:56:18 millert Exp $	*/
+/*	$OpenBSD: tipout.c,v 1.11 2004/05/26 18:17:59 deraadt Exp $	*/
 /*	$NetBSD: tipout.c,v 1.5 1996/12/29 10:34:12 cgd Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)tipout.c	8.1 (Berkeley) 6/6/93";
 #endif
-static const char rcsid[] = "$OpenBSD: tipout.c,v 1.10 2003/06/03 02:56:18 millert Exp $";
+static const char rcsid[] = "$OpenBSD: tipout.c,v 1.11 2004/05/26 18:17:59 deraadt Exp $";
 #endif /* not lint */
 
 #include "tip.h"
@@ -95,11 +95,13 @@ intEMT()
 }
 
 void
-intTERM()
+intTERM(int signo)
 {
 
 	if (boolean(value(SCRIPT)) && fscript != NULL)
 		fclose(fscript);
+	if (signo && tipin_pid)
+		kill(tipin_pid, signo);
 	exit(0);
 }
 
@@ -140,7 +142,7 @@ tipout()
 				sigemptyset(&mask);
 				sigaddset(&mask, SIGTERM);
 				sigprocmask(SIG_BLOCK, &mask, NULL);
-				intTERM();
+				intTERM(0);
 				/*NOTREACHED*/
 			}
 			continue;

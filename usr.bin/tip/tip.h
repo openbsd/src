@@ -1,4 +1,4 @@
-/*	$OpenBSD: tip.h,v 1.17 2003/10/15 22:33:18 deraadt Exp $	*/
+/*	$OpenBSD: tip.h,v 1.18 2004/05/26 18:17:59 deraadt Exp $	*/
 /*	$NetBSD: tip.h,v 1.7 1997/04/20 00:02:46 mellon Exp $	*/
 
 /*
@@ -245,7 +245,8 @@ int	AC;			/* open file descriptor to dialer (v831 only) */
 int	vflag;			/* print .tiprc initialization sequence */
 int	noesc;			/* no `~' escape char */
 int	sfd;			/* for ~< operation */
-int	pid;			/* pid of tipout */
+pid_t	tipin_pid;		/* pid of tipin */
+pid_t	tipout_pid;		/* pid of tipout */
 uid_t	uid, euid;		/* real and effective user id's */
 gid_t	gid, egid;		/* real and effective group id's */
 int	stop;			/* stop transfer session flag */

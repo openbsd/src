@@ -1,4 +1,4 @@
-/*	$OpenBSD: tip.c,v 1.22 2003/10/15 22:33:18 deraadt Exp $	*/
+/*	$OpenBSD: tip.c,v 1.23 2004/05/26 18:17:59 deraadt Exp $	*/
 /*	$NetBSD: tip.c,v 1.13 1997/04/20 00:03:05 mellon Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static char sccsid[] = "@(#)tip.c	8.1 (Berkeley) 6/6/93";
 #endif
-static const char rcsid[] = "$OpenBSD: tip.c,v 1.22 2003/10/15 22:33:18 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: tip.c,v 1.23 2004/05/26 18:17:59 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -55,7 +55,7 @@ static const char rcsid[] = "$OpenBSD: tip.c,v 1.22 2003/10/15 22:33:18 deraadt 
 int	disc = TTYDISC;		/* tip normally runs this way */
 void	intprompt();
 void	timeout();
-void	cleanup();
+void	cleanup(int);
 char	PNbuf[256];			/* This limits the size of a number */
 
 int
@@ -138,6 +138,7 @@ notnumber:
 	(void)signal(SIGQUIT, cleanup);
 	(void)signal(SIGHUP, cleanup);
 	(void)signal(SIGTERM, cleanup);
+	(void)signal(SIGCHLD, SIG_IGN);
 
 	if ((i = hunt(system)) == 0) {
 		printf("all ports busy\n");
@@ -203,12 +204,12 @@ cucommon:
 	i = fcntl(FD, F_GETFL);
 	if (i == -1) {
 		perror("fcntl");
-		cleanup();
+		cleanup(0);
 	}
 	i = fcntl(FD, F_SETFL, i & ~O_NONBLOCK);
 	if (i == -1) {
 		perror("fcntl");
-		cleanup();
+		cleanup(0);
 	}
 
 	tcgetattr(0, &defterm);
@@ -236,7 +237,8 @@ cucommon:
 	 * so, fork one process for local side and one for remote.
 	 */
 	printf(cumode ? "Connected\r\n" : "\07connected\r\n");
-	if ((pid = fork()))
+	tipin_pid = getpid();
+	if ((tipout_pid = fork()))
 		tipin();
 	else
 		tipout();
@@ -245,7 +247,7 @@ cucommon:
 }
 
 void
-cleanup()
+cleanup(int signo)
 {
 
 	daemon_uid();
@@ -253,6 +255,10 @@ cleanup()
 	if (odisc)
 		ioctl(0, TIOCSETD, (char *)&odisc);
 	unraw();
+	if (signo && tipout_pid) {
+		kill(tipout_pid, signo);
+		wait(NULL);
+	}
 	exit(0);
 }
 
