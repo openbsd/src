@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.113 2002/12/18 16:28:40 dhartmei Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.114 2002/12/18 19:04:38 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -663,8 +663,8 @@ struct pfioc_state_kill {
 struct pfioc_states {
 	int	ps_len;
 	union {
-		caddr_t psu_buf;
-		struct pf_state *psu_states;
+		caddr_t		 psu_buf;
+		struct pf_state	*psu_states;
 	} ps_u;
 #define ps_buf		ps_u.psu_buf
 #define ps_states	ps_u.psu_states
@@ -828,13 +828,14 @@ int	pf_normalize_ip(struct mbuf **, int, struct ifnet *, u_short *);
 void	pf_purge_expired_fragments(void);
 int	pf_routable(struct pf_addr *addr, sa_family_t af);
 
-extern struct pf_status pf_status;
-extern struct pool pf_frent_pl, pf_frag_pl;
+extern struct pf_status	pf_status;
+extern struct pool	pf_frent_pl, pf_frag_pl;
+
 struct pf_pool_limit {
 	void		*pp;
 	unsigned	 limit;
 };
-extern struct pf_pool_limit pf_pool_limits[PF_LIMIT_MAX];
+extern struct pf_pool_limit	pf_pool_limits[PF_LIMIT_MAX];
 
 #endif /* _KERNEL */
 
