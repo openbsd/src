@@ -1,4 +1,4 @@
-/*	$OpenBSD: diffdir.c,v 1.27 2004/03/16 00:40:34 millert Exp $	*/
+/*	$OpenBSD: diffdir.c,v 1.28 2004/10/02 18:13:24 millert Exp $	*/
 
 /*
  * Copyright (c) 2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -21,7 +21,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: diffdir.c,v 1.27 2004/03/16 00:40:34 millert Exp $";
+static const char rcsid[] = "$OpenBSD: diffdir.c,v 1.28 2004/10/02 18:13:24 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -183,18 +183,26 @@ slurpdir(char *path, char **bufp, int enoentok)
 	}
 	fstat(fd, &sb);
 
-	bufsize = sb.st_size;
-	if (bufsize < sb.st_blksize)
-		bufsize = sb.st_blksize;
-	buf = emalloc(bufsize);
-
-	nbytes = getdirentries(fd, buf, bufsize, &base);
-	if (nbytes <= 0) {
-		free(buf);
-		warn("%s", path);
-		return (NULL);
-	}
-	ebuf = buf + nbytes;
+	bufsize = 0;
+	ebuf = buf = NULL;
+	do {
+		bufsize += roundup(MAX(sb.st_size, sb.st_blksize),
+		    sizeof(struct dirent));
+		if (buf == NULL)
+		    buf = ebuf = emalloc(bufsize);
+		else {
+		    cp = erealloc(buf, bufsize);
+		    ebuf = cp + (ebuf - buf);
+		    buf = cp;
+		}
+		nbytes = getdirentries(fd, ebuf, bufsize, &base);
+		if (nbytes == -1) {
+			free(buf);
+			warn("%s", path);
+			return (NULL);
+		}
+		ebuf += nbytes;
+	} while (nbytes == bufsize);
 	close(fd);
 
 	/*
