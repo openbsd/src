@@ -3,8 +3,8 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.cats/MAKEDEV.md,v 1.1 2004/02/01 05:26:50 drahn Exp 
-#	OpenBSD: MAKEDEV.mi,v 1.66 2004/01/13 15:13:14 todd Exp 
+#	OpenBSD: etc.cats/MAKEDEV.md,v 1.2 2004/02/10 01:31:20 millert Exp 
+#	OpenBSD: MAKEDEV.mi,v 1.68 2004/02/10 01:31:20 millert Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.9 2004/01/12 22:18:24 todd Exp 
 #
 #
@@ -81,6 +81,7 @@
 #	bktr*	video capturing
 #	tuner*	tuner device
 #	radio*	FM tuner device
+#	ptm	pty master device
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 T=$0
 
@@ -235,6 +236,10 @@ ttyE*)
 	E)	major=25; minor=$unit ;;
 	esac
 	M tty$type$unit c $major $minor 660
+	;;
+
+ptm)
+	M ptm c 98 0 666
 	;;
 
 radio*)
@@ -467,7 +472,7 @@ fd)
 all)
 	R ccd0 ccd1 ccd2 ccd3 vnd0 vnd1 vnd2 vnd3 sd0 sd1 sd2 sd3 sd4
 	R cd0 cd1 rd0 tun0 tun1 tun2 tun3 bpf0 bpf1 bpf2 bpf3 bpf4
-	R bpf5 bpf6 bpf7 bpf8 bpf9 pty0 pty1 pty2 xfs0 ss0 ss1 ch0
+	R bpf5 bpf6 bpf7 bpf8 bpf9 pty0 pty1 pty2 xfs0 ss0 ss1 ch0 ptm
 	R local wscons pci iop0 iop1 usbs tuner0 radio0 audio0 uk0
 	R random lkm tty00 tty01 tty02 tty03 apm crypto pf systrace
 	R wd0 wd1 wd2 wd3 raid0 raid1 raid2 raid3 std st0 st1 fd
@@ -489,22 +494,6 @@ esac
 done
 }
 R "$@"
-if [ "$os" = "SunOS" ]; then
-	eo=transform
-	transform() {
-		case $mode in
-		600) mask=077;;
-		640) mask=027;;
-		660) mask=007;;
-		644) mask=022;;
-		666) mask=0;;
-		440) mask=227;;
-		esac
-		echo `echo "$@"|sed \
-		    's/mknod -m \([0-9]*\) /umask '$mask';mknod /;s/-m [0-9]* //g;\
-		    s/operator/5/g;s/root.kmem/root.2/g;s/root\./root:/g'`
-	}
-fi
 list="$RMlist"
 for mode in $modes; do
 	list="$list;${mklist[$mode]}"
@@ -513,7 +502,7 @@ for group in $groups; do
 	list="$list;${grplist[$group]}"
 done
 list="$list;$MKlist"
-if [ "$eo" = "echo" -o "$eo" = "transform" ]; then
+if [ "$eo" = "echo" ]; then
 	$eo "$list"
 else
 	echo "$list" | sh
