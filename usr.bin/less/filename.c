@@ -1,4 +1,4 @@
-/*	$OpenBSD: filename.c,v 1.6 2003/04/06 18:42:57 deraadt Exp $	*/
+/*	$OpenBSD: filename.c,v 1.7 2003/04/06 23:38:06 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1984,1985,1989,1994,1995  Mark Nudelman
@@ -63,7 +63,7 @@ dirfile(dirname, filename)
 	if (pathname == NULL)
 		return (NULL);
 #if MSOFTC || OS2
-	sprintf(pathname, "%s\\%s", dirname, filename);
+	snprintf(pathname, len, "%s\\%s", dirname, filename);
 #else
 	snprintf(pathname, len, "%s/%s", dirname, filename);
 #endif
@@ -190,11 +190,11 @@ fexpand(s)
 		switch (*fr)
 		{
 		case '%':
-			strcpy(to, get_filename(curr_ifile));
+			strlcpy(to, get_filename(curr_ifile), e + n + 1 - to);
 			to += strlen(to);
 			break;
 		case '#':
-			strcpy(to, get_filename(old_ifile));
+			strlcpy(to, get_filename(old_ifile), e + n + 1 - to);
 			to += strlen(to);
 			break;
 		default:
@@ -217,6 +217,8 @@ fcomplete(s)
 	char *s;
 {
 	char *fpat;
+	size_t l;
+
 	/*
 	 * Complete the filename "s" by globbing "s*".
 	 */
@@ -232,14 +234,16 @@ fcomplete(s)
 	for (slash = s+strlen(s)-1;  slash > s;  slash--)
 		if (*slash == '/' || *slash == '\\')
 			break;
-	fpat = (char *) ecalloc(strlen(s)+4, sizeof(char));
+	l = strlen(s)+4;
+	fpat = (char *) ecalloc(l, sizeof(char));
 	if (strchr(slash, '.') == NULL)
-		sprintf(fpat, "%s*.*", s);
+		snprintf(fpat, l, "%s*.*", s);
 	else
-		sprintf(fpat, "%s*", s);
+		snprintf(fpat, l, "%s*", s);
 #else
-	fpat = (char *) ecalloc(strlen(s)+2, sizeof(char));
-	snprintf(fpat, strlen(s)+2, "%s*", s);
+	l = strlen(s)+2;
+	fpat = (char *) ecalloc(l, sizeof(char));
+	snprintf(fpat, l, "%s*", s);
 #endif
 	s = glob(fpat);
 	if (strcmp(s,fpat) == 0)
@@ -405,8 +409,8 @@ glob(filename)
 	gfilename = (char *) ecalloc(length, sizeof(char));
 	for (cnt = 0;  list[cnt] != NULL;  cnt++)
 	{
-		strcat(gfilename, list[cnt], length);
-	  	strcat(gfilename, " ", length);
+		strlcat(gfilename, list[cnt], length);
+	  	strlcat(gfilename, " ", length);
 	}
 	_fnexplodefree(list);
 }

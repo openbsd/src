@@ -1,4 +1,4 @@
-/*	$OpenBSD: help.c,v 1.2 2001/01/29 01:58:02 niklas Exp $	*/
+/*	$OpenBSD: help.c,v 1.3 2003/04/06 23:38:07 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1984,1985,1989,1994,1995  Mark Nudelman
@@ -46,6 +46,7 @@ help(nomsg)
 {
 	char *helpfile;
 	char *cmd;
+	size_t len;
 
 	helpfile = find_helpfile();
 	if (helpfile == NULL)
@@ -65,18 +66,18 @@ help(nomsg)
 	 */
 #if MSOFTC
 	putenv("LESS=-m -H -+E -+s -PmHELP -- ?eEND -- Press g to see it again:Press RETURN for more., or q when done");
-	cmd = (char *) ecalloc(strlen(helpfile) + strlen(progname) + 3,
-				sizeof(char));
-	sprintf(cmd, "-%s %s", progname, helpfile);
+	len = strlen(helpfile) + strlen(progname) + 3;
+	cmd = (char *) ecalloc(len, sizeof(char));
+	snprintf(cmd, len, "-%s %s", progname, helpfile);
 #else
-	cmd = (char *) ecalloc(strlen(helpfile) + strlen(progname) + 150,
-				sizeof(char));
+	len = strlen(helpfile) + strlen(progname) + 150;
+	cmd = (char *) ecalloc(len, sizeof(char));
 #if OS2
-	sprintf(cmd, 
+	snprintf(cmd, len,
 	 "-%s -m -H -+E -+s \"-PmHELP -- ?eEND -- Press g to see it again:Press RETURN for more., or q when done \" %s",
 		progname, helpfile);
 #else
-	sprintf(cmd, 
+	snprintf(cmd, len,
 	 "-%s -m -H -+E -+s '-PmHELP -- ?eEND -- Press g to see it again:Press RETURN for more., or q when done ' %s",
 		progname, helpfile);
 #endif

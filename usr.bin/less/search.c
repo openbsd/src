@@ -1,4 +1,4 @@
-/*	$OpenBSD: search.c,v 1.3 2001/11/19 19:02:14 mpech Exp $	*/
+/*	$OpenBSD: search.c,v 1.4 2003/04/06 23:38:07 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1984,1985,1989,1994,1995  Mark Nudelman
@@ -295,7 +295,7 @@ compile_pattern(pattern)
 #endif
 #if NO_REGEX
 	static char lpbuf[100];
-	strcpy(lpbuf, pattern);
+	strlcpy(lpbuf, pattern, sizeof lbuf);
 	last_pattern = lpbuf;
 #endif
 	return (0);

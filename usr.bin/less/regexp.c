@@ -1,4 +1,4 @@
-/*	$OpenBSD: regexp.c,v 1.5 2003/04/06 18:42:57 deraadt Exp $	*/
+/*	$OpenBSD: regexp.c,v 1.6 2003/04/06 23:38:07 deraadt Exp $	*/
 
 /*
  * regcomp and regexec -- regsub and regerror are elsewhere
@@ -1166,7 +1166,8 @@ char *op;
 	case OPEN+7:
 	case OPEN+8:
 	case OPEN+9:
-		sprintf(buf+strlen(buf), "OPEN%d", OP(op)-OPEN);
+		snprintf(buf+strlen(buf), sizeof buf - strlen(buf),
+		    "OPEN%d", OP(op)-OPEN);
 		p = NULL;
 		break;
 	case CLOSE+1:
@@ -1178,7 +1179,8 @@ char *op;
 	case CLOSE+7:
 	case CLOSE+8:
 	case CLOSE+9:
-		sprintf(buf+strlen(buf), "CLOSE%d", OP(op)-CLOSE);
+		snprintf(buf+strlen(buf), sizeof buf - strlen(buf),
+		    "CLOSE%d", OP(op)-CLOSE);
 		p = NULL;
 		break;
 	case STAR:

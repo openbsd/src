@@ -1,4 +1,4 @@
-/*	$OpenBSD: prompt.c,v 1.5 2001/11/19 19:02:14 mpech Exp $	*/
+/*	$OpenBSD: prompt.c,v 1.6 2003/04/06 23:38:07 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1984,1985,1989,1994,1995  Mark Nudelman
@@ -100,7 +100,7 @@ setmp()
 ap_pos(pos)
 	POSITION pos;
 {
-	sprintf(mp, "%qd", pos);
+	snprintf(mp, message + sizeof message - mp, "%qd", pos);
 	setmp();
 }
 
@@ -111,7 +111,7 @@ ap_pos(pos)
 ap_int(n)
 	int n;
 {
-	sprintf(mp, "%d", n);
+	snprintf(mp, message + sizeof message - mp, "%d", n);
 	setmp();
 }
 
@@ -132,7 +132,8 @@ ap_str(s)
 	static void
 ap_quest()
 {
-	*mp++ = '?';
+	if (mp < message + sizeof message - 1)
+		*mp++ = '?';
 }
 
 /*

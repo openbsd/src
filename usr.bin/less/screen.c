@@ -1,4 +1,4 @@
-/*	$OpenBSD: screen.c,v 1.9 2003/04/05 01:03:35 deraadt Exp $	*/
+/*	$OpenBSD: screen.c,v 1.10 2003/04/06 23:38:07 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1984,1985,1989,1994,1995  Mark Nudelman
@@ -690,8 +690,9 @@ get_term()
 		char *termcap;
 		if ((sp = homefile("termcap.dat")) != NULL)
 		{
-			termcap = (char *) ecalloc(strlen(sp)+9, sizeof(char));
-			sprintf(termcap, "TERMCAP=%s", sp);
+			size_t l = strlen(sp)+9;
+			termcap = (char *) ecalloc(l, sizeof(char));
+			snprintf(termcap, l, "TERMCAP=%s", sp);
 			free(sp);
 			putenv(termcap);
 		}
@@ -883,7 +884,7 @@ get_term()
 		t2 = "";
 	else
 	{
-		strcpy(sp, tgoto(sc_move, 0, 0));
+		strlcpy(sp, tgoto(sc_move, 0, 0), sbuf + sizeof sbuf - sp);
 		t2 = sp;
 		sp += strlen(sp) + 1;
 	}
@@ -900,7 +901,7 @@ get_term()
 		t2 = "";
 	else
 	{
-		strcpy(sp, tgoto(sc_move, 0, sc_height-1));
+		strlcpy(sp, tgoto(sc_move, 0, sc_height-1), sbuf + sizeof sbuf - sp);
 		t2 = sp;
 		sp += strlen(sp) + 1;
 	}
