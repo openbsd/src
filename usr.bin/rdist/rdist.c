@@ -1,4 +1,4 @@
-/*	$OpenBSD: rdist.c,v 1.14 2003/04/05 20:31:58 deraadt Exp $	*/
+/*	$OpenBSD: rdist.c,v 1.15 2003/05/06 22:10:11 millert Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -39,7 +39,7 @@ static char RCSid[] =
 "$From: rdist.c,v 6.65 1995/12/12 00:20:39 mcooper Exp $";
 #else
 static char RCSid[] = 
-"$OpenBSD: rdist.c,v 1.14 2003/04/05 20:31:58 deraadt Exp $";
+"$OpenBSD: rdist.c,v 1.15 2003/05/06 22:10:11 millert Exp $";
 #endif
 
 static char sccsid[] = "@(#)main.c	5.1 (Berkeley) 6/6/85";
@@ -90,6 +90,7 @@ static void addhostlist(name, hostlist)
 
 	new = (struct namelist *) xmalloc(sizeof(struct namelist));
 	new->n_name = xstrdup(name);
+	new->n_regex = NULL;
 	new->n_next = NULL;
 
 	if (*hostlist) {
@@ -401,7 +402,7 @@ docmdargs(nargs, args)
 	struct namelist *files, *hosts;
 	struct subcmd *cmds;
 	char *dest;
-	static struct namelist tnl = { NULL, NULL };
+	static struct namelist tnl;
 	int i;
 
 	if (nargs < 2)
@@ -423,6 +424,8 @@ docmdargs(nargs, args)
 	if ((dest = strchr(cp, ':')) != NULL)
 		*dest++ = '\0';
 	tnl.n_name = cp;
+	tnl.n_regex = NULL;
+	tnl.n_next = NULL;
 	hosts = expand(&tnl, E_ALL);
 	if (nerrs)
 		exit(1);

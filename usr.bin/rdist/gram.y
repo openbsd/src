@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: gram.y,v 1.5 2002/05/30 07:36:44 deraadt Exp $	*/
+/*	$OpenBSD: gram.y,v 1.6 2003/05/06 22:10:11 millert Exp $	*/
 
 /*
  * Copyright (c) 1993 Michael A. Cooper
@@ -41,7 +41,7 @@ static char RCSid[] =
 "$From: gram.y,v 6.29 1994/04/11 23:59:15 mcooper Exp mcooper $";
 #else
 static char RCSid[] = 
-"$OpenBSD: gram.y,v 1.5 2002/05/30 07:36:44 deraadt Exp $";
+"$OpenBSD: gram.y,v 1.6 2003/05/06 22:10:11 millert Exp $";
 #endif
 
 static	char *sccsid = "@(#)gram.y	5.2 (Berkeley) 85/06/21";
@@ -196,11 +196,20 @@ cmd:		  INSTALL options opt_namelist ';' = {
 		}
 		| PATTERN namelist ';' = {
 			struct namelist *nl;
-			char *cp, *re_comp();
+			char ebuf[BUFSIZ];
+			regex_t reg;
+			int ecode;
 
-			for (nl = $2; nl != NULL; nl = nl->n_next)
-				if ((cp = re_comp(nl->n_name)) != NULL)
-					yyerror(cp);
+			for (nl = $2; nl != NULL; nl = nl->n_next) {
+				/* check for a valid regex */
+				ecode = regcomp(&reg, nl->n_name, REG_NOSUB);
+				if (ecode) {
+					regerror(ecode, &reg, ebuf,
+					    sizeof(ebuf));
+					yyerror(ebuf);
+				}
+				regfree(&reg);
+			}
 			$1->sc_args = expand($2, E_VARS);
 			$$ = $1;
 		}
@@ -539,6 +548,7 @@ makenl(name)
 
 	nl = ALLOC(namelist);
 	nl->n_name = name;
+	nl->n_regex = NULL;
 	nl->n_next = NULL;
 
 	return(nl);

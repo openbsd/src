@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.16 2003/04/19 17:22:29 millert Exp $	*/
+/*	$OpenBSD: client.c,v 1.17 2003/05/06 22:10:11 millert Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -39,7 +39,7 @@ static char RCSid[] =
 "$From: client.c,v 6.80 1996/02/28 20:34:27 mcooper Exp $";
 #else
 static char RCSid[] = 
-"$OpenBSD: client.c,v 1.16 2003/04/19 17:22:29 millert Exp $";
+"$OpenBSD: client.c,v 1.17 2003/05/06 22:10:11 millert Exp $";
 #endif
 
 static char sccsid[] = "@(#)client.c";
@@ -219,6 +219,7 @@ static void addcmdspecialfile(starget, rname, destdir)
 	if (isokay) {
 		new = (struct namelist *) xmalloc(sizeof(struct namelist));
 		new->n_name = xstrdup(rfile);
+		new->n_regex = NULL;
 		new->n_next = updfilelist;
 		updfilelist = new;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: docmd.c,v 1.13 2003/04/19 17:22:29 millert Exp $	*/
+/*	$OpenBSD: docmd.c,v 1.14 2003/05/06 22:10:11 millert Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -39,7 +39,7 @@ static char RCSid[] =
 "$From: docmd.c,v 6.86 1996/01/30 02:29:43 mcooper Exp $";
 #else
 static char RCSid[] = 
-"$OpenBSD: docmd.c,v 1.13 2003/04/19 17:22:29 millert Exp $";
+"$OpenBSD: docmd.c,v 1.14 2003/05/06 22:10:11 millert Exp $";
 #endif
 
 static char sccsid[] = "@(#)docmd.c	5.1 (Berkeley) 6/6/85";
@@ -836,15 +836,31 @@ extern int except(file)
 		}
 		if (sc->sc_type == PATTERN) {
 			for (nl = sc->sc_args; nl != NULL; nl = nl->n_next) {
-				char *cp, *re_comp();
+				char ebuf[BUFSIZ];
+				int ecode = 0;
 
-				if ((cp = re_comp(nl->n_name)) != NULL) {
-					error("Regex error \"%s\" for \"%s\".",
-					      cp, nl->n_name);
-					return(0);
+				/* allocate and compile n_regex as needed */
+				if (nl->n_regex == NULL) {
+					nl->n_regex = (regex_t *)
+					    xmalloc(sizeof(regex_t));
+					ecode = regcomp(nl->n_regex, nl->n_name,
+							REG_NOSUB);
 				}
-				if (re_exec(file) > 0)
-  					return(1);
+				if (ecode == 0) {
+					ecode = regexec(nl->n_regex, file, 0,
+					    NULL, 0);
+				}
+				switch (ecode) {
+				case REG_NOMATCH:
+					break;
+				case 0:
+					return(1);	/* match! */
+				default:
+					regerror(ecode, nl->n_regex, ebuf,
+						 sizeof(ebuf));
+					error("Regex error \"%s\" for \"%s\".",
+					      ebuf, nl->n_name);
+				}
 			}
 		}
 	}
