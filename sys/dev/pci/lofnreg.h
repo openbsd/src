@@ -1,4 +1,4 @@
-/*	$OpenBSD: lofnreg.h,v 1.6 2001/06/26 06:33:52 jason Exp $	*/
+/*	$OpenBSD: lofnreg.h,v 1.7 2001/06/26 16:34:48 jason Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -38,8 +38,23 @@
 #define	LOFN_WIN_2	0x4000
 #define	LOFN_WIN_3	0x6000
 
+#define	LOFN_REG_MASK		0x0f80		/* Register number mask */
+#define	LOFN_REG_SHIFT		7
+#define	LOFN_WORD_MASK		0x007c		/* Word index mask */
+#define	LOFN_WORD_SHIFT		2
+
+/* Bignum registers */
+#define	LOFN_REL_DATA		0x0000		/* Data registers */
+#define	LOFN_REL_DATA_END	0x07ff
+/* Length registers */
+#define	LOFN_REL_LEN		0x1000		/* Length tags */
+#define	LOFN_REL_LEN_REGS	0x103f
+/* RNG FIFO space */
 #define	LOFN_REL_RNG		0x1080		/* RNG FIFO start */
 #define	LOFN_REL_RNG_END	0x10bf		/* RNG FIFO end */
+/* Instruction space */
+#define	LOFN_REL_INSTR		0x1100		/* Instructions */
+#define	LOFN_REL_INSTR_END	0x117f
 /* Control and status registers, relative to window number */
 #define	LOFN_REL_CR		0x1fd4		/* Command */
 #define	LOFN_REL_SR		0x1fd8		/* Status */
