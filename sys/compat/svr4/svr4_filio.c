@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_filio.c,v 1.3 1996/04/21 22:18:19 deraadt Exp $	 */
+/*	$OpenBSD: svr4_filio.c,v 1.4 1997/11/04 07:48:51 niklas Exp $	 */
 /*	$NetBSD: svr4_filio.c,v 1.5 1996/04/11 12:54:40 christos Exp $	 */
 
 /*
@@ -37,7 +37,6 @@
 #include <sys/termios.h>
 #include <sys/tty.h>
 #include <sys/socket.h>
-#include <sys/ioctl.h>
 #include <sys/mount.h>
 #include <net/if.h>
 #include <sys/malloc.h>
