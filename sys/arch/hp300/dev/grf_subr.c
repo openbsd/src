@@ -1,5 +1,5 @@
-/*	$OpenBSD: grf_subr.c,v 1.2 1997/02/03 04:47:30 downsj Exp $	*/
-/*	$NetBSD: grf_subr.c,v 1.2 1997/01/30 09:18:49 thorpej Exp $	*/
+/*	$OpenBSD: grf_subr.c,v 1.3 1997/02/04 07:15:26 downsj Exp $	*/
+/*	$NetBSD: grf_subr.c,v 1.3 1997/01/31 21:16:50 carrel Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -88,6 +88,7 @@ grfdev_attach(sc, init, regs, sw)
 			return;
 		}
 
+		gp->g_flags = GF_ALIVE;
 		gp->g_sw = sw;
 		gp->g_display.gd_id = gp->g_sw->gd_swid;
 	}

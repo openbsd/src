@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.15 1997/02/04 06:21:30 downsj Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.16 1997/02/04 07:15:28 downsj Exp $	*/
 /*	$NetBSD: machdep.c,v 1.77 1996/12/11 16:49:23 thorpej Exp $	*/
 
 /*
@@ -616,7 +616,7 @@ identifycpu()
 #ifndef HP330
 	case HP_330:
 #endif
-#if !defined(HP360) && !defined(HP370)
+#if !defined(HP340) && !defined(HP360) && !defined(HP370)
 	case HP_340:
 	case HP_360:
 	case HP_370:
