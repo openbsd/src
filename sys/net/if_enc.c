@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_enc.c,v 1.27 2000/04/10 07:34:53 angelos Exp $	*/
+/*	$OpenBSD: if_enc.c,v 1.28 2000/04/12 18:05:47 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -260,6 +260,17 @@ struct ifnet *ifp;
 	    m = mp;
 	    mp = NULL;
 	}
+
+#ifdef INET
+	/* Fix header checksum for IPv4 */
+        if (tdb->tdb_dst.sa.sa_family == AF_INET)
+	{
+	    struct ip *ip;
+
+	    ip = mtod(m, struct ip *);
+	    ip->ip_sum = in_cksum(m, ip->ip_hl << 2);
+        }
+#endif
 
 	protoflag = tdb->tdb_dst.sa.sa_family;
 
