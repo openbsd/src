@@ -1,33 +1,35 @@
-/*	$OpenBSD: print-gre.c,v 1.2 2000/10/03 14:31:57 ho Exp $	*/
+/*	$OpenBSD: print-gre.c,v 1.3 2002/09/18 18:49:03 jason Exp $	*/
 
 /*
- * Copyright (c) 1996
- *      The Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
+ * All rights reserved.
  *
- * Redistribution and use in source and binary forms are permitted
- * provided that the above copyright notice and this paragraph are
- * duplicated in all such forms and that any documentation,
- * advertising materials, and other materials related to such
- * distribution and use acknowledge that the software was developed
- * by the University of California, Lawrence Berkeley Laboratory,
- * Berkeley, CA.  The name of the University may not be used to
- * endorse or promote products derived from this software without
- * specific prior written permission.
- * THIS SOFTWARE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
- * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
- * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by Jason L. Wright
+ * 4. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
  *
- * Initial contribution from John Hawkinson <jhawk@bbnplanet.com>
- *
- * This module implements support for decoding GRE (Generic Routing
- * Encapsulation) tunnels; they're documented in RFC1701 and RFC1702.
- * This code only supports the IP encapsulation thereof.
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT,
+ * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+ * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+ * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  */
-
-#ifndef lint
-static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-gre.c,v 1.2 2000/10/03 14:31:57 ho Exp $";
-#endif
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -38,106 +40,117 @@ static const char rcsid[] =
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
 
-#include <netdb.h>
 #include <stdio.h>
 
 #include "interface.h"
 #include "addrtoname.h"
-#include "extract.h"		/* must come after interface.h */
+#include "extract.h"
 
-#define GRE_SIZE (20)
+#define	GRE_CP		0x8000		/* checksum present */
+#define	GRE_RP		0x4000		/* routing present */
+#define	GRE_KP		0x2000		/* key present */
+#define	GRE_SP		0x1000		/* sequence# present */
+#define	GRE_sP		0x0800		/* source routing */
+#define	GRE_RECRS	0x0700		/* recursion count */
+#define	GRE_VERS	0x0007		/* protocol version */
 
-struct gre {
-	u_short flags;
-	u_short proto;
-	union {
-		struct gre_ckof {
-			u_short cksum;
-			u_short offset;
-		}        gre_ckof;
-		u_int32_t key;
-		u_int32_t seq;
-	}     gre_void1;
-	union {
-		u_int32_t key;
-		u_int32_t seq;
-		u_int32_t routing;
-	}     gre_void2;
-	union {
-		u_int32_t seq;
-		u_int32_t routing;
-	}     gre_void3;
-	union {
-		u_int32_t routing;
-	}     gre_void4;
-};
+#define	GREPROTO_IP	0x0800		/* IP */
 
-#define GRE_CP		0x8000	/* Checksum Present */
-#define GRE_RP		0x4000	/* Routing Present */
-#define GRE_KP		0x2000	/* Key Present */
-#define GRE_SP		0x1000	/* Sequence Present */
-
-
-#define GREPROTO_IP	0x0800
-
-
-/*
- * Deencapsulate and print a GRE-tunneled IP datagram
- */
 void
 gre_print(const u_char *bp, u_int length)
 {
-	const u_char *cp = bp + 4;
-	const struct gre *gre;
-	u_short flags, proto;
+	u_int len = length;
+	u_int16_t flags, prot;
 
-	gre = (const struct gre *)bp;
-
-	if (length < GRE_SIZE) {
+	if (len < 2)
 		goto trunc;
-	}
-	flags = EXTRACT_16BITS(&gre->flags);
-	proto = EXTRACT_16BITS(&gre->proto);
-
-	if (vflag) {
-		/* Decode the flags */
-		putchar('[');
-		if (flags & GRE_CP)
-			putchar('C');
-		if (flags & GRE_RP)
-			putchar('R');
-		if (flags & GRE_KP)
-			putchar('K');
-		if (flags & GRE_SP)
-			putchar('S');
-		fputs("] ", stdout);
-	}
-	/* Checksum & Offset are present */
-	if ((flags & GRE_CP) | (flags & GRE_RP))
-		cp += 4;
-
-	/* We don't support routing fields (variable length) now. Punt. */
-	if (flags & GRE_RP)
+	flags = EXTRACT_16BITS(bp);
+	if ((flags & 7) != 0) {
+		printf("gre: unknown version %u", flags & 7);
 		return;
+	}
+	if (vflag) {
+		printf("[%s%s%s%s%s] ",
+		    (flags & GRE_CP) ? "C" : "",
+		    (flags & GRE_RP) ? "R" : "",
+		    (flags & GRE_KP) ? "K" : "",
+		    (flags & GRE_SP) ? "S" : "",
+		    (flags & GRE_sP) ? "s" : "");
+	}
+	len -= 2;
+	bp += 2;
 
-	if (flags & GRE_KP)
-		cp += 4;
-	if (flags & GRE_SP)
-		cp += 4;
+	if (len < 2)
+		goto trunc;
+	prot = EXTRACT_16BITS(bp);
+	len -= 2;
+	bp += 2;
 
-	switch (proto) {
+	if ((flags & GRE_CP) | (flags & GRE_RP)) {
+		if (len < 2)
+			goto trunc;
+		if (vflag)
+			printf("sum 0x%x ", EXTRACT_16BITS(bp));
+		bp += 2;
+		len -= 2;
 
+		if (len < 2)
+			goto trunc;
+		printf("off 0x%x ", EXTRACT_16BITS(bp));
+		bp += 2;
+		len -= 2;
+	}
+
+	if (flags & GRE_KP) {
+		if (len < 4)
+			goto trunc;
+		printf("key=0x%x ", EXTRACT_32BITS(bp));
+		bp += 4;
+		len -= 4;
+	}
+
+	if (flags & GRE_SP) {
+		if (len < 4)
+			goto trunc;
+		printf("seq=0x%x ", EXTRACT_32BITS(bp));
+		bp += 4;
+		len -= 4;
+	}
+
+	if (flags & GRE_RP) {
+		/* Just skip over routing info */
+		for (;;) {
+			u_int16_t af;
+			u_int8_t sreoff;
+			u_int8_t srelen;
+
+			if (len < 4)
+				goto trunc;
+			af = EXTRACT_16BITS(bp);
+			sreoff = *(bp + 2);
+			srelen = *(bp + 3);
+			bp += 4;
+			len -= 4;
+
+			if (af == 0 && srelen == 0)
+				break;
+
+			if (len < srelen)
+				goto trunc;
+			bp += srelen;
+			len -= srelen;
+		}
+	}
+
+	switch (prot) {
 	case GREPROTO_IP:
-		ip_print(cp, length - ((cp - bp) / sizeof(u_char)));
+		ip_print(bp, len);
 		break;
-
 	default:
-		printf("gre-proto-0x%04X", proto);
-		break;
+		printf("gre-proto-0x%x", prot);
 	}
 	return;
 
 trunc:
-	fputs("[|gre]", stdout);
-
+	printf("[|gre]");
 }
