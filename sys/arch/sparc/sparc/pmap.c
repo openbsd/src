@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.104 2001/12/07 10:44:52 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.105 2001/12/07 10:52:25 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
@@ -6019,10 +6019,7 @@ pmap_phys_address(x)
  * in locked kernel space.  A cache flush is also done.
  */
 void
-kvm_setcache(va, npages, cached)
-	caddr_t va;
-	int npages;
-	int cached;
+kvm_uncache(caddr_t va, int npages)
 {
 	int pte;
 	struct pvlist *pv;
@@ -6043,15 +6040,9 @@ kvm_setcache(va, npages, cached)
 #endif
 			pv = pvhead((pte & SRMMU_PPNMASK) >> SRMMU_PPNSHIFT);
 			if (pv) {
-				if (cached)
-					pv_changepte4m(pv, SRMMU_PG_C, 0);
-				else
-					pv_changepte4m(pv, 0, SRMMU_PG_C);
+				pv_changepte4m(pv, 0, SRMMU_PG_C);
 			}
-			if (cached)
-				pte |= SRMMU_PG_C;
-			else
-				pte &= ~SRMMU_PG_C;
+			pte &= ~SRMMU_PG_C;
 			tlb_flush_page((vaddr_t)va);
 			setpgt4m(ptep, pte);
 
@@ -6072,15 +6063,9 @@ kvm_setcache(va, npages, cached)
 			pv = pvhead(pte & PG_PFNUM);
 			/* XXX - we probably don't need to check for OBMEM */
 			if ((pte & PG_TYPE) == PG_OBMEM && pv) {
-				if (cached)
-					pv_changepte4_4c(pv, 0, PG_NC);
-				else
-					pv_changepte4_4c(pv, PG_NC, 0);
+				pv_changepte4_4c(pv, PG_NC, 0);
 			}
-			if (cached)
-				pte &= ~PG_NC;
-			else
-				pte |= PG_NC;
+			pte |= PG_NC;
 			setpte4(va, pte);
 			if ((pte & PG_TYPE) == PG_OBMEM)
 				cache_flush_page((int)va);
