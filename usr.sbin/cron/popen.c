@@ -1,4 +1,4 @@
-/*	$OpenBSD: popen.c,v 1.13 2002/01/09 00:51:00 millert Exp $	*/
+/*	$OpenBSD: popen.c,v 1.14 2002/06/23 03:07:19 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)popen.c	8.3 (Berkeley) 4/6/94";
 #else
-static char rcsid[] = "$OpenBSD: popen.c,v 1.13 2002/01/09 00:51:00 millert Exp $";
+static char rcsid[] = "$OpenBSD: popen.c,v 1.14 2002/06/23 03:07:19 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -133,11 +133,11 @@ cron_popen(program, type, e)
 
 			pwd = getpwuid(e->uid);
 			if (pwd == NULL) {
-				fprintf(stderr, "getpwuid: couldn't get entry for %d\n", e->uid);
+				fprintf(stderr, "getpwuid: couldn't get entry for %u\n", e->uid);
 				_exit(ERROR_EXIT);
 			}
 			if (setusercontext(0, pwd, e->uid, LOGIN_SETALL) < 0) {
-				fprintf(stderr, "setusercontext failed for %d\n", e->uid);
+				fprintf(stderr, "setusercontext failed for %u\n", e->uid);
 				_exit(ERROR_EXIT);
 			}
 #else

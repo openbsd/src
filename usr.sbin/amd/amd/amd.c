@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)amd.c	8.1 (Berkeley) 6/6/93
- *	$Id: amd.c,v 1.7 2002/06/11 05:29:54 itojun Exp $
+ *	$Id: amd.c,v 1.8 2002/06/23 03:07:18 deraadt Exp $
  */
 
 #ifndef lint
@@ -302,7 +302,7 @@ char *argv[];
 	 * Now check we are root.
 	 */
 	if (geteuid() != 0) {
-		plog(XLOG_FATAL, "Must be root to mount filesystems (euid = %d)", geteuid());
+		plog(XLOG_FATAL, "Must be root to mount filesystems (euid = %u)", geteuid());
 		going_down(1);
 	}
 

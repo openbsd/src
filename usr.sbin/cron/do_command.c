@@ -1,4 +1,4 @@
-/*	$OpenBSD: do_command.c,v 1.15 2002/06/21 21:10:32 millert Exp $	*/
+/*	$OpenBSD: do_command.c,v 1.16 2002/06/23 03:07:19 deraadt Exp $	*/
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
  */
@@ -21,7 +21,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$OpenBSD: do_command.c,v 1.15 2002/06/21 21:10:32 millert Exp $";
+static char rcsid[] = "$OpenBSD: do_command.c,v 1.16 2002/06/23 03:07:19 deraadt Exp $";
 #endif
 
 #include "cron.h"
@@ -31,9 +31,9 @@ static int		safe_p(const char *, const char *);
 
 void
 do_command(entry *e, user *u) {
-	Debug(DPROC, ("[%ld] do_command(%s, (%s,%ld,%ld))\n",
+	Debug(DPROC, ("[%ld] do_command(%s, (%s,%lu,%lu))\n",
 		      (long)getpid(), e->cmd, u->name,
-		      (long)e->uid, (long)e->gid))
+		      (u_long)e->uid, (u_long)e->gid))
 
 	/* fork to become asynchronous -- parent process is done immediately,
 	 * and continues to run the normal cron code, which means return to
@@ -203,16 +203,16 @@ child_process(entry *e, user *u) {
 			/* XXX - should just pass in a login_cap_t * */
 			pwd = getpwuid(e->uid);
 			if (pwd == NULL) {
-				fprintf(stderr, "getpwuid: couldn't get entry for %d\n", e->uid);
+				fprintf(stderr, "getpwuid: couldn't get entry for %u\n", e->uid);
 				_exit(ERROR_EXIT);
 			}
 			if (setusercontext(0, pwd, e->uid, LOGIN_SETALL) < 0) {
-				fprintf(stderr, "setusercontext failed for %d\n", e->uid);
+				fprintf(stderr, "setusercontext failed for %u\n", e->uid);
 				_exit(ERROR_EXIT);
 			}
 #ifdef BSD_AUTH
 			if (auth_approval(0, 0, pwd->pw_name, "cron") <= 0) {
-				fprintf(stderr, "approval failed for %d\n", e->uid);
+				fprintf(stderr, "approval failed for %u\n", e->uid);
 				_exit(ERROR_EXIT);
 			}
 #endif /* BSD_AUTH */

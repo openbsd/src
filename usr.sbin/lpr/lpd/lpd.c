@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpd.c,v 1.36 2002/06/11 22:47:07 millert Exp $ */
+/*	$OpenBSD: lpd.c,v 1.37 2002/06/23 03:07:19 deraadt Exp $ */
 /*	$NetBSD: lpd.c,v 1.33 2002/01/21 14:42:29 wiz Exp $	*/
 
 /*
@@ -45,7 +45,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)lpd.c	8.7 (Berkeley) 5/10/95";
 #else
-static const char rcsid[] = "$OpenBSD: lpd.c,v 1.36 2002/06/11 22:47:07 millert Exp $";
+static const char rcsid[] = "$OpenBSD: lpd.c,v 1.37 2002/06/23 03:07:19 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -160,7 +160,7 @@ main(int argc, char **argv)
 	 * We want to run with euid of daemon most of the time.
 	 */
 	if ((pw = getpwuid(DEFUID)) == NULL)
-		errx(1, "daemon uid (%d) not in password file", DEFUID);
+		errx(1, "daemon uid (%u) not in password file", DEFUID);
 	real_uid = pw->pw_uid;
 	real_gid = pw->pw_gid;
 	effective_uid = 0;

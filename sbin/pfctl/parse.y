@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.104 2002/06/20 08:47:58 dhartmei Exp $	*/
+/*	$OpenBSD: parse.y,v 1.105 2002/06/23 03:07:21 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -825,7 +825,7 @@ uid_item	: uid				{
 
 uid		: NUMBER			{
 			if ($1 < 0 || $1 >= UID_MAX) {
-				yyerror("illegal uid value %d", $1);
+				yyerror("illegal uid value %u", $1);
 				YYERROR;
 			}
 			$$ = $1;
@@ -893,7 +893,7 @@ gid_item	: gid				{
 
 gid		: NUMBER			{
 			if ($1 < 0 || $1 >= GID_MAX) {
-				yyerror("illegal gid value %d", $1);
+				yyerror("illegal gid value %u", $1);
 				YYERROR;
 			}
 			$$ = $1;

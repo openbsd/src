@@ -1,4 +1,4 @@
-/*	$OpenBSD: username.c,v 1.5 2002/02/16 21:27:55 millert Exp $	*/
+/*	$OpenBSD: username.c,v 1.6 2002/06/23 03:07:22 deraadt Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -117,7 +117,7 @@ int wecare;		/* 1 = enter it always, 0 = nice to have */
     int hashindex;
 
 #ifdef DEBUG
-    fprintf(stderr, "enter_hash(%d, %s, %d)\n", uid, name, wecare);
+    fprintf(stderr, "enter_hash(%u, %s, %d)\n", uid, name, wecare);
 #endif
 
     hashindex = hashit(uid);

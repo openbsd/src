@@ -1,4 +1,4 @@
-/*	$OpenBSD: calendar.c,v 1.17 2002/02/16 21:27:44 millert Exp $	*/
+/*	$OpenBSD: calendar.c,v 1.18 2002/06/23 03:07:21 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -43,7 +43,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)calendar.c  8.3 (Berkeley) 3/25/94";
 #else
-static char rcsid[] = "$OpenBSD: calendar.c,v 1.17 2002/02/16 21:27:44 millert Exp $";
+static char rcsid[] = "$OpenBSD: calendar.c,v 1.18 2002/06/23 03:07:21 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -190,8 +190,8 @@ main(argc, argv)
 				(void)setlocale(LC_ALL, "");
 				if (setusercontext(NULL, pw, pw->pw_uid,
 				    LOGIN_SETALL ^ LOGIN_SETLOGIN))
-					err(1, "unable to set user context (uid %d)",
-					    (int)pw->pw_uid);
+					err(1, "unable to set user context (uid %u)",
+					    pw->pw_uid);
 				if (acstat) {
 					if (chdir(pw->pw_dir) ||
 					    stat(calendarFile, &sbuf) != 0 ||
@@ -233,11 +233,11 @@ main(argc, argv)
 				 * if there's only a zombie now.
 				 */
 				(void)kill(kid, SIGTERM);
-				warnx("uid %d did not finish in time", (int)pw->pw_uid);
+				warnx("uid %u did not finish in time", pw->pw_uid);
 			}
 			if (time(NULL) - t >= SECSPERDAY)
-				errx(2, "'calendar -a' took more than a day; stopped at uid %d",
-				    (int)pw->pw_uid);
+				errx(2, "'calendar -a' took more than a day; stopped at uid %u",
+				    pw->pw_uid);
 		}
 		for (;;) {
 			deadkid = waitpid(-1, &kidstat, WNOHANG);

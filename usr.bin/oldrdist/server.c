@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.19 2002/06/12 06:07:16 mpech Exp $	*/
+/*	$OpenBSD: server.c,v 1.20 2002/06/23 03:07:21 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)server.c	8.1 (Berkeley) 6/9/93"; */
-static char *rcsid = "$OpenBSD: server.c,v 1.19 2002/06/12 06:07:16 mpech Exp $";
+static char *rcsid = "$OpenBSD: server.c,v 1.20 2002/06/23 03:07:21 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/wait.h>
@@ -392,14 +392,14 @@ sendf(rname, opts)
 
 	if (pw == NULL || pw->pw_uid != stb.st_uid)
 		if ((pw = getpwuid(stb.st_uid)) == NULL) {
-			log(lfp, "%s: no password entry for uid %d \n",
+			log(lfp, "%s: no password entry for uid %u \n",
 				target, stb.st_uid);
 			pw = NULL;
 			(void) snprintf(user, sizeof(user), ":%lu", stb.st_uid);
 		}
 	if (gr == NULL || gr->gr_gid != stb.st_gid)
 		if ((gr = getgrgid(stb.st_gid)) == NULL) {
-			log(lfp, "%s: no name for group %d\n",
+			log(lfp, "%s: no name for group %u\n",
 				target, stb.st_gid);
 			gr = NULL;
 			(void) snprintf(group, sizeof(group), ":%lu",

@@ -1,4 +1,4 @@
-/*	$OpenBSD: supfilesrv.c,v 1.29 2002/06/12 06:07:16 mpech Exp $	*/
+/*	$OpenBSD: supfilesrv.c,v 1.30 2002/06/23 03:07:22 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -1691,7 +1691,7 @@ changeuid(namep, passwordp, fileuid, filegid)
 		pwd = getpwuid(fileuid);
 		if (pwd == NULL) {
 			(void) snprintf(errbuf, sizeof errbuf,
-				"Reason:  Unknown user id %d", fileuid);
+				"Reason:  Unknown user id %u", fileuid);
 			return (errbuf);
 		}
 		grp = getgrgid(filegid);
