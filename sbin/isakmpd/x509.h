@@ -1,5 +1,5 @@
-/*	$OpenBSD: x509.h,v 1.4 1999/07/17 21:54:39 niklas Exp $	*/
-/*	$EOM: x509.h,v 1.6 1999/07/17 20:44:12 niklas Exp $	*/
+/*	$OpenBSD: x509.h,v 1.5 1999/08/26 22:29:49 niklas Exp $	*/
+/*	$EOM: x509.h,v 1.8 1999/08/18 00:44:58 angelos Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niels Provos.  All rights reserved.
@@ -36,6 +36,8 @@
 
 #ifndef _X509_H_
 #define _X509_H_
+
+#include "libcrypto.h"
 
 #define X509v3_RFC_NAME		1
 #define X509v3_DNS_NAME		2
@@ -82,4 +84,5 @@ int x509_cert_subjectaltname (X509 *cert, u_char **, u_int *);
 int x509_check_subjectaltname (u_char *, u_int, X509 *);
 X509 *x509_from_asn (u_char *, u_int);
 
+int x509_generate_kn(X509 *);
 #endif /* _X509_H_ */
