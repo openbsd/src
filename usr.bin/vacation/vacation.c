@@ -1,4 +1,4 @@
-/*	$OpenBSD: vacation.c,v 1.20 2003/06/10 22:20:53 deraadt Exp $	*/
+/*	$OpenBSD: vacation.c,v 1.21 2003/08/09 23:47:32 millert Exp $	*/
 /*	$NetBSD: vacation.c,v 1.7 1995/04/29 05:58:27 cgd Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)vacation.c	8.2 (Berkeley) 1/26/94";
 #endif
-static char rcsid[] = "$OpenBSD: vacation.c,v 1.20 2003/06/10 22:20:53 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: vacation.c,v 1.21 2003/08/09 23:47:32 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -218,7 +218,7 @@ readheaders(void)
 				for (p = buf + 5; *p && *p != ' '; ++p)
 					;
 				*p = '\0';
-				(void)strlcpy(from, buf + 5, sizeof from);
+				(void)strlcpy(from, buf + 5, sizeof(from));
 				if ((p = strchr(from, '\n')))
 					*p = '\0';
 				if (junkmail())
@@ -234,7 +234,7 @@ readheaders(void)
 				break;
 			for (p = buf + 12; *p && isspace(*p); ++p)
 				;
-			if (strlcpy(from, p, sizeof from ) > sizeof from) {
+			if (strlcpy(from, p, sizeof(from)) >= sizeof(from)) {
 				syslog(LOG_NOTICE,
 				       "Return-Path %s exceeds limits", p);
 				exit(1);
@@ -270,7 +270,7 @@ readheaders(void)
 				break;
 			for (p = buf + 8; *p && isspace(*p); ++p)
 				;
-			if (strlcpy(subj, p, sizeof subj ) > sizeof subj) {
+			if (strlcpy(subj, p, sizeof(subj)) >= sizeof(subj)) {
 				syslog(LOG_NOTICE,
 				       "Subject %s exceeds limits", p);
 				exit(1);
