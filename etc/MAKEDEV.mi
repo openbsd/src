@@ -1,6 +1,6 @@
 include(MAKEDEV.sub)dnl
 dnl
-vers(a,{-$OpenBSD: MAKEDEV.mi,v 1.26 2002/02/10 21:52:30 deraadt Exp $-})dnl
+vers(a,{-$OpenBSD: MAKEDEV.mi,v 1.27 2002/02/14 04:37:15 todd Exp $-})dnl
 dnl
 divert(1)dnl
 {-#-}
@@ -115,7 +115,6 @@ target(all,std)dnl
 target(all,vnd,0,1,2,3)dnl
 target(all,ccd,0,1,2,3)dnl
 target(all,raid,0,1,2,3)dnl
-target(all,hd,0,1,2,3,4)dnl
 target(all,rd,0)dnl
 target(all,rz,0,1,2,3,4)dnl
 target(all,hk,0,1,2,3)dnl
@@ -193,6 +192,7 @@ twrget(all,grf_amiga,grf,0,1,2,3,4,5,6)dnl
 target(all,par,0)dnl
 twrget(all,amouse,mouse,0,1)dnl
 twrget(all,akbd,kbd)dnl
+target(all,apci,0)dnl
 target(all,ppi,0)dnl
 target(all,view0,0,1,2,3,4,5)dnl
 target(all,local)dnl
@@ -259,29 +259,6 @@ _mkdev(st,st*,{-n=Mult($U,16)
 		M ${pre}rst$U	c major_st_c $n 660 operator
 		n=Add($n,1)
 	done-})dnl
-_mkdev(st_hp300,ct*|mt*|st*,
-{-case $i in
-	ct*) name=ct blk=major_ct_b chr=major_ct_c;;
-	mt*) name=mt blk=major_mt_b chr=major_mt_c;;
-	st*) name=st blk=major_st_hp300_b chr=major_st_hp300_c;;
-	esac
-	case $U in
-	[0-7])
-		four=Add($U,4) eight=Add($U,8)
-		twelve=Add($U,12) twenty=Add($U,20)
-		M r$name$U	c $chr $U 660 operator
-		M r$name$four	c $chr $four 660 operator
-		M r$name$eight	c $chr $eight 660 operator
-		M r$name$twelve	c $chr $twelve 660 operator
-		MKlist="$MKlist;ln r$name$four nr$name$U";: sanity w/pdp11 v7
-		MKlist="$MKlist;ln r$name$twelve nr$name$eight";: ditto
-		RMlist="$RMlist nr$name$U nr$name$eight"
-		;;
-	*)
-		echo bad unit for tape in: $1
-		;;
-	esac-})dnl
-__devitem(st_hp300,st*,Exabyte tape)dnl
 __devitem(ct,ct*,HP300 HP-IB cartridge tape)dnl
 __devitem(mt,mt*,(Magnetic) 9-track reel tape)dnl
 __devitem(ht,ht*,massbus tm03 & tu??)dnl
@@ -396,19 +373,52 @@ target(ramd,wd,0,1)dnl
 target(ramd,rd,0)dnl
 -})dnl
 ifelse(MACHINE,hp300,{-dnl
-target(ramd,ct,0,1)dnl
-target(ramd,hd,0,1,2,3,4)dnl
-target(ramd,sd,0,1,2,3,4)dnl
-target(ramd,rd,0,1)dnl
-target(ramd,pty,0)dnl
-target(ramd,hil)dnl
-target(ramd,grf,0)dnl
-target(ramd,apci,0)dnl
-target(ramd,ite,0)dnl
-target(ramd,dca,0)dnl
-target(ramd,dcm,0,1)dnl
-target(ramd,bpf,0,1)dnl
-target(ramd,tun,0,1)dnl
+_mkdev(st_hp300,ct*|mt*|st*,
+{-case $i in
+	ct*) name=ct blk=major_ct_b chr=major_ct_c;;
+	mt*) name=mt blk=major_mt_b chr=major_mt_c;;
+	st*) name=st blk=major_st_hp300_b chr=major_st_hp300_c;;
+	esac
+	case $U in
+	[0-7])
+		four=Add($U,4) eight=Add($U,8)
+		twelve=Add($U,12) twenty=Add($U,20)
+		M r$name$U	c $chr $U 660 operator
+		M r$name$four	c $chr $four 660 operator
+		M r$name$eight	c $chr $eight 660 operator
+		M r$name$twelve	c $chr $twelve 660 operator
+		MKlist="$MKlist;ln r$name$four nr$name$U";: sanity w/pdp11 v7
+		MKlist="$MKlist;ln r$name$twelve nr$name$eight";: ditto
+		RMlist="$RMlist nr$name$U nr$name$eight"
+		;;
+	*)
+		echo bad unit for tape in: $1
+		;;
+	esac-})dnl
+__devitem(st_hp300,st*,Exabyte tape)dnl
+__devitem(grf,grf*,raw interface to HP300 graphics devices)dnl
+target( all,	grf,	0)dnl
+dnl XXX target( all,	hil,	0,1,2,3,4,5,6,7)dnl
+target( all,	hil,	)dnl
+twrget( all,	st_hp300,st,0,1)dnl
+target( all,	dca,	0,1)dnl
+target( all,	dcm,	0,1,2,3)dnl
+target( all,	hd,	0,1,2)dnl
+target( all,	ct,	0,1)dnl
+target( all,	ite,	0)dnl
+target(ramd,	ct,	0,1)dnl
+target(ramd,	hd,	0,1,2)dnl
+target(ramd,	sd,	0,1,2)dnl
+target(ramd,	rd,	0,1)dnl
+target(ramd,	pty,	0)dnl
+target(ramd,	hil,	)dnl
+target(ramd,	grf,	0)dnl
+target(ramd,	apci,	0)dnl
+target(ramd,	ite,	0)dnl
+target(ramd,	dca,	0)dnl
+target(ramd,	dcm,	0,1)dnl
+target(ramd,	bpf,	0,1)dnl
+target(ramd,	tun,	0,1)dnl
 -})dnl
 ifelse(MACHINE,hppa,{-dnl
 target(ramd,st,0,1)dnl
@@ -441,6 +451,7 @@ target(ramd,tty0,0,1)dnl
 target(ramd,pty,0)dnl
 -})dnl
 ifelse(MACHINE,vax,{-
+target( all,	hd,	0,1,2)dnl
 target(ramd,fd,0)dnl
 target(ramd,sd,0,1,2,3)dnl
 target(ramd,rd,0)dnl
@@ -713,7 +724,6 @@ __devitem(grf_mac,grf*,{-custom chip (grf0){-,-} Retina Z2/Z3 (grf1/grf2){-,-}
 {-#-}		Cirrus boards (grf3){-,-} A2410 (grf4) video or
 {-#-}		CyberVision 64 (grf5)-})dnl
 __devitem(grf_amiga,grf*,{-Motherboard bitmapped video.-})dnl
-__devitem(grf_hp300,grf*,raw interface to HP300 graphics devices)dnl
 __devitem(ite,ite*,terminal emulator interface to HP300 graphics devices)dnl
 __devitem({-hil-},{-hil-},HP300 HIL input devices)dnl
 __devitem(oppr,openprom)dnl
@@ -898,6 +908,7 @@ dnl
 
 dodisk()
 {
+	[ "$DEBUG" ] && set -x
 	n=Add(Mult(${5},${7:-16}),${6}) count=0
 	RMlist="$RMlist {-$-}1{-$-}2? r{-$-}1{-$-}2?"
 	[ 0$7 -ne 8 ] && l="i j k l m n o p"

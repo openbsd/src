@@ -1,5 +1,5 @@
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.2 2002/02/09 16:59:50 deraadt Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.3 2002/02/14 04:37:15 todd Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001 Todd T. Fries <todd@OpenBSD.org>
@@ -40,8 +40,8 @@ _DEV(sd,8,4)
 _DEV(vnd,19,6)
 _DEV(rd,34,8)
 _TITLE(termp)
-_DEV(dca)
-_DEV(dcm)
+_DEV(dca,12)
+_DEV(dcm,15)
 _DEV(apci)
 _TITLE(pty)
 _DEV(tty,4)
@@ -51,9 +51,9 @@ _DEV(ppi,11)
 _TITLE(call)
 _TITLE(spec)
 _DEV(fdesc,21)
-_DEV(grf_hp300)
+_DEV(grf,10)
 _DEV(ite)
-_DEV(hil,)
+_DEV(hil,14)
 _DEV(bpf,22)
 _DEV(tun,23)
 _DEV(pf,33)
@@ -77,8 +77,8 @@ _std(1,2,36,3,6)
 dca*)
 	case $U in
 	0|1|2|3)
-		M tty$U c 12 $U 660 dialer uucp
-		M cua$U c 12 Add($U,128) 660 dialer uucp
+		M tty$U c major_dca_c $U 660 dialer uucp
+		M cua$U c major_dca_c Add($U,128) 660 dialer uucp
 		;;
 	*)
 		echo bad unit for dca in: $i
@@ -126,7 +126,7 @@ apci*)
 ppi*)
 	case $U in
 	0|1|2|3)
-		M ppi$U c MACHINE_ppi_maj $U 600
+		M ppi$U c major_ppi_c $U 600
 		;;
 	*)
 		echo bad unit for ppi in: $i
@@ -148,7 +148,7 @@ ite*)
 grf*)
 	case $U in
 	0|1|2|3)
-		M grf$U c 10 $U
+		M grf$U c major_grf_c $U
 #		echo "grf$U: use MAKEDEV.hpux to make HP-UX names for device"
 		;;
 	*)
