@@ -129,6 +129,7 @@
 ./usr/lib/libopcodes.a
 ./usr/lib/libreadline.a
 ./usr/lib/libreadline_pic.a
+./usr/lib/libsectok_pic.a
 ./usr/libdata/ldscripts/elf32lmip.x
 ./usr/libdata/ldscripts/elf32lmip.xbn
 ./usr/libdata/ldscripts/elf32lmip.xn

@@ -1530,6 +1530,8 @@
 ./usr/lib/libresolv_p.a
 ./usr/lib/librpcsvc.a
 ./usr/lib/librpcsvc_p.a
+./usr/lib/libsectok.a
+./usr/lib/libsectok_p.a
 ./usr/lib/libskey.a
 ./usr/lib/libskey_p.a
 ./usr/lib/libssl.a

@@ -1,9 +1,9 @@
 ./dev/audio
 ./dev/audioctl
 ./dev/mixer
-./dev/sound
 ./dev/scan0
 ./dev/scan1
+./dev/sound
 ./sbin/ancontrol
 ./sbin/fdisk
 ./sbin/ldconfig
@@ -65,6 +65,7 @@
 ./usr/lib/libpcap.so.1.1
 ./usr/lib/libperl.so.6.1
 ./usr/lib/libreadline.so.0.0
+./usr/lib/libsectok.so.1.0
 ./usr/lib/libskey.so.1.0
 ./usr/lib/libssl.so.4.1
 ./usr/lib/libstdc++.so.30.0

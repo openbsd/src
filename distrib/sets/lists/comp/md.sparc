@@ -114,6 +114,7 @@
 ./usr/lib/libperl_pic.a
 ./usr/lib/libreadline.a
 ./usr/lib/libreadline_pic.a
+./usr/lib/libsectok_pic.a
 ./usr/lib/libskey_pic.a
 ./usr/lib/libssl_pic.a
 ./usr/lib/libstdc++_pic.a
