@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike_phase_1.c,v 1.22 2001/03/07 07:33:53 angelos Exp $	*/
+/*	$OpenBSD: ike_phase_1.c,v 1.23 2001/03/13 14:05:18 ho Exp $	*/
 /*	$EOM: ike_phase_1.c,v 1.31 2000/12/11 23:47:56 niklas Exp $	*/
 
 /*
@@ -598,8 +598,9 @@ ike_phase_1_post_exchange_KE_NONCE (struct message *msg)
 		 "dh_create_shared failed");
       return -1;
     }
-  LOG_DBG_BUF ((LOG_MISC, 80, "ike_phase_1_post_exchange_KE_NONCE: g^xy",
-		ie->g_xy, ie->g_x_len));
+  LOG_DBG_BUF ((LOG_NEGOTIATION, 80, 
+		"ike_phase_1_post_exchange_KE_NONCE: g^xy", ie->g_xy, 
+		ie->g_x_len));
 
   /* Compute the SKEYID depending on the authentication method.  */
   ie->skeyid = ie->ike_auth->gen_skeyid (exchange, &ie->skeyid_len);
@@ -608,8 +609,9 @@ ike_phase_1_post_exchange_KE_NONCE (struct message *msg)
       /* XXX Log and teardown?  */
       return -1;
     }
-  LOG_DBG_BUF ((LOG_MISC, 80, "ike_phase_1_post_exchange_KE_NONCE: SKEYID",
-		ie->skeyid, ie->skeyid_len));
+  LOG_DBG_BUF ((LOG_NEGOTIATION, 80, 
+		"ike_phase_1_post_exchange_KE_NONCE: SKEYID", ie->skeyid,
+		ie->skeyid_len));
 
   /* SKEYID_d.  */
   ie->skeyid_d = malloc (ie->skeyid_len);
@@ -631,8 +633,9 @@ ike_phase_1_post_exchange_KE_NONCE (struct message *msg)
   prf->Update (prf->prfctx, exchange->cookies, ISAKMP_HDR_COOKIES_LEN);
   prf->Update (prf->prfctx, "\0", 1);
   prf->Final (ie->skeyid_d, prf->prfctx);
-  LOG_DBG_BUF ((LOG_MISC, 80, "ike_phase_1_post_exchange_KE_NONCE: SKEYID_d",
-		ie->skeyid_d, ie->skeyid_len));
+  LOG_DBG_BUF ((LOG_NEGOTIATION, 80, 
+		"ike_phase_1_post_exchange_KE_NONCE: SKEYID_d",	ie->skeyid_d,
+		ie->skeyid_len));
 
   /* SKEYID_a.  */
   ie->skeyid_a = malloc (ie->skeyid_len);
@@ -649,8 +652,9 @@ ike_phase_1_post_exchange_KE_NONCE (struct message *msg)
   prf->Update (prf->prfctx, exchange->cookies, ISAKMP_HDR_COOKIES_LEN);
   prf->Update (prf->prfctx, "\1", 1);
   prf->Final (ie->skeyid_a, prf->prfctx);
-  LOG_DBG_BUF ((LOG_MISC, 80, "ike_phase_1_post_exchange_KE_NONCE: SKEYID_a",
-		ie->skeyid_a, ie->skeyid_len));
+  LOG_DBG_BUF ((LOG_NEGOTIATION, 80, 
+		"ike_phase_1_post_exchange_KE_NONCE: SKEYID_a",	ie->skeyid_a,
+		ie->skeyid_len));
 
   /* SKEYID_e.  */
   ie->skeyid_e = malloc (ie->skeyid_len);
@@ -669,8 +673,9 @@ ike_phase_1_post_exchange_KE_NONCE (struct message *msg)
   prf->Update (prf->prfctx, "\2", 1);
   prf->Final (ie->skeyid_e, prf->prfctx);
   prf_free (prf);
-  LOG_DBG_BUF ((LOG_MISC, 80, "ike_phase_1_post_exchange_KE_NONCE: SKEYID_e",
-		ie->skeyid_e, ie->skeyid_len));
+  LOG_DBG_BUF ((LOG_NEGOTIATION, 80, 
+		"ike_phase_1_post_exchange_KE_NONCE: SKEYID_e",	ie->skeyid_e, 
+		ie->skeyid_len));
 
   /* Key length determination.  */
   if (!exchange->key_length)
@@ -860,7 +865,7 @@ ike_phase_1_send_ID (struct message *msg)
   memcpy (*id, buf + ISAKMP_GEN_SZ, *id_len);
   snprintf (header, 80, "ike_phase_1_send_ID: %s",
 	    constant_name (ipsec_id_cst, GET_ISAKMP_ID_TYPE (buf)));
-  LOG_DBG_BUF ((LOG_MISC, 40, header, buf + ISAKMP_ID_DATA_OFF,
+  LOG_DBG_BUF ((LOG_NEGOTIATION, 40, header, buf + ISAKMP_ID_DATA_OFF,
 		sz - ISAKMP_ID_DATA_OFF));
 
   return 0;
@@ -932,7 +937,7 @@ ike_phase_1_recv_ID (struct message *msg)
   memcpy (*id, payload->p + ISAKMP_GEN_SZ, *id_len);
   snprintf (header, 80, "ike_phase_1_recv_ID: %s",
 	    constant_name (ipsec_id_cst, GET_ISAKMP_ID_TYPE (payload->p)));
-  LOG_DBG_BUF ((LOG_MISC, 40, header, payload->p + ISAKMP_ID_DATA_OFF,
+  LOG_DBG_BUF ((LOG_NEGOTIATION, 40, header, payload->p + ISAKMP_ID_DATA_OFF,
 		*id_len + ISAKMP_GEN_SZ - ISAKMP_ID_DATA_OFF));
   payload->flags |= PL_MARK;
 
@@ -989,7 +994,7 @@ ike_phase_1_recv_AUTH (struct message *msg)
   prf_free (prf);
   snprintf (header, 80, "ike_phase_1_recv_AUTH: computed HASH_%c",
 	    initiator ? 'R' : 'I');
-  LOG_DBG_BUF ((LOG_MISC, 80, header, hash->digest, hashsize));
+  LOG_DBG_BUF ((LOG_NEGOTIATION, 80, header, hash->digest, hashsize));
 
   /* Check that the hash we got matches the one we computed.  */
   if (memcmp (*hash_p, hash->digest, hashsize) != 0)
@@ -1074,7 +1079,7 @@ ike_phase_1_validate_prop (struct exchange *exchange, struct sa *sa,
 	}
 
       /* All protocols were OK, we succeeded.  */
-      LOG_DBG ((LOG_MISC, 20, "ike_phase_1_validate_prop: success"));
+      LOG_DBG ((LOG_NEGOTIATION, 20, "ike_phase_1_validate_prop: success"));
       conf_free_list (conf);
       if (vs.life)
 	free (vs.life);
@@ -1093,7 +1098,7 @@ ike_phase_1_validate_prop (struct exchange *exchange, struct sa *sa,
 	free (vs.life);
     }
 
-  LOG_DBG ((LOG_MISC, 20, "ike_phase_1_validate_prop: failure"));
+  LOG_DBG ((LOG_NEGOTIATION, 20, "ike_phase_1_validate_prop: failure"));
   conf_free_list (conf);
   return 0;
 }
@@ -1118,7 +1123,8 @@ attribute_unacceptable (u_int16_t type, u_int8_t *value, u_int16_t len,
 
   if (!tag)
     {
-      log_print ("attribute_unacceptable: attribute type %d not known", type);
+      LOG_DBG ((LOG_NEGOTIATION, 60, 
+		"attribute_unacceptable: attribute type %d not known", type));
       return 1;
     }
 
@@ -1134,8 +1140,9 @@ attribute_unacceptable (u_int16_t type, u_int8_t *value, u_int16_t len,
       if (!str)
 	{
 	  /* This attribute does not exist in this policy.  */
-	  log_print ("attribute_unacceptable: attr %s does not exist in %s",
-		     tag, xf->field);
+	  LOG_DBG ((LOG_NEGOTIATION, 70,
+		    "attribute_unacceptable: attr %s does not exist in %s",
+		    tag, xf->field));
 	  return 1;
 	}
 
@@ -1158,8 +1165,9 @@ attribute_unacceptable (u_int16_t type, u_int8_t *value, u_int16_t len,
 	  LIST_INSERT_HEAD (&vs->attrs, node, link);
 	  return 0;
 	}
-      log_print ("attribute_unacceptable: %s: got %s, expected %s",
-		 tag, constant_lookup (map, decode_16 (value)), str);
+      LOG_DBG ((LOG_NEGOTIATION, 70, 
+		"attribute_unacceptable: %s: got %s, expected %s", tag, 
+		constant_lookup (map, decode_16 (value)), str));
       return 1;
 
     case IKE_ATTR_GROUP_PRIME:
@@ -1180,8 +1188,8 @@ attribute_unacceptable (u_int16_t type, u_int8_t *value, u_int16_t len,
       if (!life_conf)
 	{
 	  /* Life attributes given, but not in our policy.  */
-	  log_print ("attribute_unacceptable: "
-		     "received unexpected life attribute");
+	  LOG_DBG ((LOG_NEGOTIATION, 70, "attribute_unacceptable: "
+		    "received unexpected life attribute"));
 	  return 1;
 	}
 
@@ -1199,8 +1207,8 @@ attribute_unacceptable (u_int16_t type, u_int8_t *value, u_int16_t len,
 	      str = conf_get_str (life->field, "LIFE_TYPE");
 	      if (!str)
 		{
-		  log_print ("attribute_unacceptable: "
-			     "section [%s] has no LIFE_TYPE", life->field);
+		  LOG_DBG ((LOG_NEGOTIATION, 70, "attribute_unacceptable: "
+			    "section [%s] has no LIFE_TYPE", life->field));
 		  continue;
 		}
 
@@ -1215,16 +1223,17 @@ attribute_unacceptable (u_int16_t type, u_int8_t *value, u_int16_t len,
 		  goto bail_out;
 		}
 	    }
-	  log_print ("attribute_unacceptable: unrecognized LIFE_TYPE %d",
-		     decode_16 (value));
+	  LOG_DBG ((LOG_NEGOTIATION, 70, 
+		    "attribute_unacceptable: unrecognized LIFE_TYPE %d",
+		    decode_16 (value)));
 	  vs->life = 0;
 	  break;
 
 	case IKE_ATTR_LIFE_DURATION:
 	  if (!vs->life)
 	    {
-	      log_print ("attribute_unacceptable: "
-			 "LIFE_DURATION without LIFE_TYPE");
+	      LOG_DBG ((LOG_NEGOTIATION, 70, "attribute_unacceptable: "
+			"LIFE_DURATION without LIFE_TYPE"));
 	      rv = 1;
 	      goto bail_out;
 	    }

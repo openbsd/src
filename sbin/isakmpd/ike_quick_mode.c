@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike_quick_mode.c,v 1.45 2001/02/19 16:58:04 angelos Exp $	*/
+/*	$OpenBSD: ike_quick_mode.c,v 1.46 2001/03/13 14:05:18 ho Exp $	*/
 /*	$EOM: ike_quick_mode.c,v 1.139 2001/01/26 10:43:17 niklas Exp $	*/
 
 /*
@@ -145,10 +145,10 @@ check_policy (struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
       keynote_ids = calloc (keynote_policy_asserts_num, sizeof *keynote_ids);
       if (!keynote_ids)
         {
-            log_print ("check_policy: "
-		       "failed to allocate %d bytes for book keeping",
-		       keynote_policy_asserts_num * sizeof *keynote_ids);
-            return 0;
+	  log_error ("check_policy: "
+		     "failed to allocate %d bytes for book keeping",
+		     keynote_policy_asserts_num * sizeof *keynote_ids);
+	  return 0;
         }
     }
 
@@ -157,7 +157,7 @@ check_policy (struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
       x509_ids = calloc (x509_policy_asserts_num, sizeof *x509_ids);
       if (!x509_ids)
         {
-          log_print ("check_policy: "
+          log_error ("check_policy: "
 		     "failed to allocate %d bytes for book keeping",
 		     x509_policy_asserts_num * sizeof *x509_ids);
           free (keynote_ids);
@@ -199,7 +199,7 @@ check_policy (struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
       principal = calloc (nprinc, sizeof(*principal));
       if (principal == NULL)
         {
-	  log_print ("check_policy: failed to allocate %d bytes",
+	  log_error ("check_policy: failed to allocate %d bytes",
 		     nprinc * sizeof(*principal));
 	  goto policydone;
 	}
@@ -208,7 +208,7 @@ check_policy (struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
 			     strlen ("passphrase:"), sizeof (char));
       if (principal[0] == NULL)
         {
-	  log_print ("check_policy: failed to allocate %d bytes",
+	  log_error ("check_policy: failed to allocate %d bytes",
 		     isakmp_sa->recv_certlen + 1 + strlen ("passphrase:"));
 	  goto policydone;
 	}
@@ -221,9 +221,9 @@ check_policy (struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
 			     32 + 1, sizeof (char));
       if (principal[1] == NULL)
         {
-	    log_print ("check_policy: failed to allocate %d bytes",
-		       strlen ("passphrase-md5-hex:") + 33);
-	    goto policydone;
+	  log_error ("check_policy: failed to allocate %d bytes",
+		     strlen ("passphrase-md5-hex:") + 33);
+	  goto policydone;
 	}
 
       strcpy (principal[1], "passphrase-md5-hex:");
@@ -236,9 +236,9 @@ check_policy (struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
 			     32 + 1, sizeof (char));
       if (principal[2] == NULL)
         {
-	    log_print ("check_policy: failed to allocate %d bytes",
-		       strlen ("passphrase-sha1-hex:") + 33);
-	    goto policydone;
+	  log_error ("check_policy: failed to allocate %d bytes",
+		     strlen ("passphrase-sha1-hex:") + 33);
+	  goto policydone;
 	}
 
       strcpy (principal[2], "passphrase-sha1-hex:");
@@ -255,7 +255,7 @@ check_policy (struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
       principal = calloc (nprinc, sizeof(*principal));
       if (principal == NULL)
         {
-	  log_print ("check_policy: failed to allocate %d bytes",
+	  log_error ("check_policy: failed to allocate %d bytes",
 		     nprinc * sizeof(*principal));
 	  goto policydone;
 	}
@@ -264,7 +264,7 @@ check_policy (struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
       principal[0] = strdup (isakmp_sa->recv_key);
       if (principal[0] == NULL)
         {
-	  log_print ("check_policy: failed to allocate %d bytes",
+	  log_error ("check_policy: failed to allocate %d bytes",
 		     strlen (isakmp_sa->recv_key));
 	  goto policydone;
 	}
@@ -283,7 +283,7 @@ check_policy (struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
       principal = calloc (2, sizeof(*principal));
       if (principal == NULL)
         {
-	  log_print ("check_policy: failed to get memory for principal");
+	  log_error ("check_policy: failed to get memory for principal");
 	  goto policydone;
 	}
 
@@ -310,7 +310,7 @@ check_policy (struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
 			     sizeof (char));
       if (principal[1] == NULL)
 	{
-	  log_print ("check_policy: failed to allocate memory for principal");
+	  log_error ("check_policy: failed to allocate memory for principal");
 	  LC (RSA_free, (key));
 	  goto policydone;
 	}
@@ -329,7 +329,7 @@ check_policy (struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
           principal[1] = calloc (259, sizeof (char));
           if (principal[1] == NULL)
             {
-	      log_print ("check_policy: failed to allocate memory for principal[1]");
+	      log_error ("check_policy: failed to allocate memory for principal[1]");
 	      LC (RSA_free, (key));
 	      goto policydone;
             }
@@ -366,7 +366,7 @@ check_policy (struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
    */
   for (i = 0; i < nprinc; i++)
     {
-      LOG_DBG ((LOG_MISC, 40, "check_policy: adding authorizer [%s]",
+      LOG_DBG ((LOG_POLICY, 40, "check_policy: adding authorizer [%s]",
 		principal[i]));
 
       if (LK (kn_add_authorizer, (isakmp_sa->policy_id, principal[i])) == -1)
@@ -383,7 +383,7 @@ check_policy (struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
   /* Ask policy */
   result = LK (kn_do_query, (isakmp_sa->policy_id, return_values,
 			     RETVALUES_NUM));
-  LOG_DBG ((LOG_MISC, 40, "check_policy: kn_do_query returned %d", result));
+  LOG_DBG ((LOG_POLICY, 40, "check_policy: kn_do_query returned %d", result));
 
   /* Cleanup environment */
   LK (kn_cleanup_action_environment, (isakmp_sa->policy_id));
@@ -402,7 +402,7 @@ check_policy (struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
   /* Check what policy said.  */
   if (result < 0)
     {
-      LOG_DBG ((LOG_MISC, 40, "check_policy: proposal refused"));
+      LOG_DBG ((LOG_POLICY, 40, "check_policy: proposal refused"));
       result = 0;
       goto policydone;
     }
@@ -880,8 +880,8 @@ initiator_send_HASH_SA_NONCE (struct message *msg)
       id = ipsec_build_id (local_id, &sz);
       if (!id)
 	return -1;
-      LOG_DBG_BUF ((LOG_MISC, 90, "initiator_send_HASH_SA_NONCE: IDic", id,
-		    sz));
+      LOG_DBG_BUF ((LOG_NEGOTIATION, 90, "initiator_send_HASH_SA_NONCE: IDic",
+		    id, sz));
       if (message_add_payload (msg, ISAKMP_PAYLOAD_ID, id, sz, 1))
 	{
 	  free (id);
@@ -891,8 +891,8 @@ initiator_send_HASH_SA_NONCE (struct message *msg)
       id = ipsec_build_id (remote_id, &sz);
       if (!id)
 	return -1;
-      LOG_DBG_BUF ((LOG_MISC, 90, "initiator_send_HASH_SA_NONCE: IDrc", id,
-		    sz));
+      LOG_DBG_BUF ((LOG_NEGOTIATION, 90, "initiator_send_HASH_SA_NONCE: IDrc",
+		    id, sz));
       if (message_add_payload (msg, ISAKMP_PAYLOAD_ID, id, sz, 1))
 	{
 	  free (id);
@@ -933,8 +933,8 @@ initiator_send_HASH_SA_NONCE (struct message *msg)
       encode_32 (id + ISAKMP_ID_DATA_OFF,
 	      ntohl (((struct sockaddr_in *)src)->sin_addr.s_addr));
 
-      LOG_DBG_BUF ((LOG_MISC, 90, "initiator_send_HASH_SA_NONCE: IDic", id,
-		    sz));
+      LOG_DBG_BUF ((LOG_NEGOTIATION, 90, "initiator_send_HASH_SA_NONCE: IDic",
+		    id, sz));
       if (message_add_payload (msg, ISAKMP_PAYLOAD_ID, id, sz, 1))
 	{
 	  free (id);
@@ -945,8 +945,8 @@ initiator_send_HASH_SA_NONCE (struct message *msg)
       id = ipsec_build_id (remote_id, &sz);
       if (!id)
 	return -1;
-      LOG_DBG_BUF ((LOG_MISC, 90, "initiator_send_HASH_SA_NONCE: IDrc", id,
-		    sz));
+      LOG_DBG_BUF ((LOG_NEGOTIATION, 90, "initiator_send_HASH_SA_NONCE: IDrc",
+		    id, sz));
       if (message_add_payload (msg, ISAKMP_PAYLOAD_ID, id, sz, 1))
 	{
 	  free (id);
@@ -1027,29 +1027,30 @@ initiator_recv_HASH_SA_NONCE (struct message *msg)
   socklen_t srclen, dstlen;
 
   /* Allocate the prf and start calculating our HASH(1).  XXX Share?  */
-  LOG_DBG_BUF ((LOG_MISC, 90, "initiator_recv_HASH_SA_NONCE: SKEYID_a",
+  LOG_DBG_BUF ((LOG_NEGOTIATION, 90, "initiator_recv_HASH_SA_NONCE: SKEYID_a",
 		isa->skeyid_a, isa->skeyid_len));
   prf = prf_alloc (isa->prf_type, hash->type, isa->skeyid_a, isa->skeyid_len);
   if (!prf)
     return -1;
 
   prf->Init (prf->prfctx);
-  LOG_DBG_BUF ((LOG_MISC, 90, "initiator_recv_HASH_SA_NONCE: message_id",
+  LOG_DBG_BUF ((LOG_NEGOTIATION, 90, 
+		"initiator_recv_HASH_SA_NONCE: message_id",
 		exchange->message_id, ISAKMP_HDR_MESSAGE_ID_LEN));
   prf->Update (prf->prfctx, exchange->message_id, ISAKMP_HDR_MESSAGE_ID_LEN);
-  LOG_DBG_BUF ((LOG_MISC, 90, "initiator_recv_HASH_SA_NONCE: NONCE_I_b",
+  LOG_DBG_BUF ((LOG_NEGOTIATION, 90, "initiator_recv_HASH_SA_NONCE: NONCE_I_b",
 		exchange->nonce_i, exchange->nonce_i_len));
   prf->Update (prf->prfctx, exchange->nonce_i, exchange->nonce_i_len);
   rest = hashp->p + GET_ISAKMP_GEN_LENGTH (hashp->p);
   rest_len = (GET_ISAKMP_HDR_LENGTH (msg->iov[0].iov_base)
 	      - (rest - (u_int8_t*)msg->iov[0].iov_base));
-  LOG_DBG_BUF ((LOG_MISC, 90,
+  LOG_DBG_BUF ((LOG_NEGOTIATION, 90,
 		"initiator_recv_HASH_SA_NONCE: payloads after HASH(2)", rest,
 		rest_len));
   prf->Update (prf->prfctx, rest, rest_len);
   prf->Final (hash->digest, prf->prfctx);
   prf_free (prf);
-  LOG_DBG_BUF ((LOG_MISC, 80,
+  LOG_DBG_BUF ((LOG_NEGOTIATION, 80,
 		"initiator_recv_HASH_SA_NONCE: computed HASH(2)",
 		hash->digest, hashsize));
   if (memcmp (hashp->p + ISAKMP_HASH_DATA_OFF, hash->digest, hashsize) != 0)
@@ -1102,7 +1103,7 @@ initiator_recv_HASH_SA_NONCE (struct message *msg)
 	}
       memcpy (ie->id_ci, idp->p, ie->id_ci_sz);
       idp->flags |= PL_MARK;
-      LOG_DBG_BUF ((LOG_MISC, 90,
+      LOG_DBG_BUF ((LOG_NEGOTIATION, 90,
 		    "initiator_recv_HASH_SA_NONCE: IDci",
 		    ie->id_ci + ISAKMP_GEN_SZ, ie->id_ci_sz
 		    - ISAKMP_GEN_SZ));
@@ -1118,7 +1119,7 @@ initiator_recv_HASH_SA_NONCE (struct message *msg)
 	}
       memcpy (ie->id_cr, idp->p, ie->id_cr_sz);
       idp->flags |= PL_MARK;
-      LOG_DBG_BUF ((LOG_MISC, 90,
+      LOG_DBG_BUF ((LOG_NEGOTIATION, 90,
 		    "initiator_recv_HASH_SA_NONCE: IDcr",
 		    ie->id_cr + ISAKMP_GEN_SZ, ie->id_cr_sz
 		    - ISAKMP_GEN_SZ));
@@ -1257,25 +1258,25 @@ initiator_send_HASH (struct message *msg)
     }
 
   /* Allocate the prf and start calculating our HASH(3).  XXX Share?  */
-  LOG_DBG_BUF ((LOG_MISC, 90, "initiator_send_HASH: SKEYID_a", isa->skeyid_a,
-		isa->skeyid_len));
+  LOG_DBG_BUF ((LOG_NEGOTIATION, 90, "initiator_send_HASH: SKEYID_a", 
+		isa->skeyid_a, isa->skeyid_len));
   prf = prf_alloc (isa->prf_type, isa->hash, isa->skeyid_a, isa->skeyid_len);
   if (!prf)
     return -1;
   prf->Init (prf->prfctx);
   prf->Update (prf->prfctx, "\0", 1);
-  LOG_DBG_BUF ((LOG_MISC, 90, "initiator_send_HASH: message_id",
+  LOG_DBG_BUF ((LOG_NEGOTIATION, 90, "initiator_send_HASH: message_id",
 		exchange->message_id, ISAKMP_HDR_MESSAGE_ID_LEN));
   prf->Update (prf->prfctx, exchange->message_id, ISAKMP_HDR_MESSAGE_ID_LEN);
-  LOG_DBG_BUF ((LOG_MISC, 90, "initiator_send_HASH: NONCE_I_b",
+  LOG_DBG_BUF ((LOG_NEGOTIATION, 90, "initiator_send_HASH: NONCE_I_b",
 		exchange->nonce_i, exchange->nonce_i_len));
   prf->Update (prf->prfctx, exchange->nonce_i, exchange->nonce_i_len);
-  LOG_DBG_BUF ((LOG_MISC, 90, "initiator_send_HASH: NONCE_R_b",
+  LOG_DBG_BUF ((LOG_NEGOTIATION, 90, "initiator_send_HASH: NONCE_R_b",
 		exchange->nonce_r, exchange->nonce_r_len));
   prf->Update (prf->prfctx, exchange->nonce_r, exchange->nonce_r_len);
   prf->Final (buf + ISAKMP_GEN_SZ, prf->prfctx);
   prf_free (prf);
-  LOG_DBG_BUF ((LOG_MISC, 90, "initiator_send_HASH: HASH(3)",
+  LOG_DBG_BUF ((LOG_NEGOTIATION, 90, "initiator_send_HASH: HASH(3)",
 		buf + ISAKMP_GEN_SZ, hashsize));
 
   if (ie->group)
@@ -1353,7 +1354,7 @@ post_quick_mode (struct message *msg)
 		  if (keymat != iproto->keymat[i])
 		    {
 		      /* Hash in last round's KEYMAT.  */
-		      LOG_DBG_BUF ((LOG_MISC, 90,
+		      LOG_DBG_BUF ((LOG_NEGOTIATION, 90,
 				    "post_quick_mode: last KEYMAT",
 				    keymat - prf->blocksize,
 				    prf->blocksize));
@@ -1364,29 +1365,30 @@ post_quick_mode (struct message *msg)
 		  /* If PFS is used hash in g^xy.  */
 		  if (ie->g_xy)
 		    {
-		      LOG_DBG_BUF ((LOG_MISC, 90, "post_quick_mode: g^xy",
-				    ie->g_xy, ie->g_x_len));
+		      LOG_DBG_BUF ((LOG_NEGOTIATION, 90, 
+				    "post_quick_mode: g^xy", ie->g_xy, 
+				    ie->g_x_len));
 		      prf->Update (prf->prfctx, ie->g_xy, ie->g_x_len);
 		    }
-		  LOG_DBG ((LOG_MISC, 90,
+		  LOG_DBG ((LOG_NEGOTIATION, 90,
 			    "post_quick_mode: suite %d proto %d", proto->no,
 			    proto->proto));
 		  prf->Update (prf->prfctx, &proto->proto, 1);
-		  LOG_DBG_BUF ((LOG_MISC, 90, "post_quick_mode: SPI",
+		  LOG_DBG_BUF ((LOG_NEGOTIATION, 90, "post_quick_mode: SPI",
 				proto->spi[i], proto->spi_sz[i]));
 		  prf->Update (prf->prfctx, proto->spi[i], proto->spi_sz[i]);
-		  LOG_DBG_BUF ((LOG_MISC, 90, "post_quick_mode: Ni_b",
+		  LOG_DBG_BUF ((LOG_NEGOTIATION, 90, "post_quick_mode: Ni_b",
 				exchange->nonce_i, exchange->nonce_i_len));
 		  prf->Update (prf->prfctx, exchange->nonce_i,
 			       exchange->nonce_i_len);
-		  LOG_DBG_BUF ((LOG_MISC, 90, "post_quick_mode: Nr_b",
+		  LOG_DBG_BUF ((LOG_NEGOTIATION, 90, "post_quick_mode: Nr_b",
 				exchange->nonce_r, exchange->nonce_r_len));
 		  prf->Update (prf->prfctx, exchange->nonce_r,
 			       exchange->nonce_r_len);
 		  prf->Final (keymat, prf->prfctx);
 		}
 	      prf_free (prf);
-	      LOG_DBG_BUF ((LOG_MISC, 90, "post_quick_mode: KEYMAT",
+	      LOG_DBG_BUF ((LOG_NEGOTIATION, 90, "post_quick_mode: KEYMAT",
 			    iproto->keymat[i], ie->keymat_len));
 	    }
 	}
@@ -1442,16 +1444,17 @@ responder_recv_HASH_SA_NONCE (struct message *msg)
    * Check the payload's integrity.
    * XXX Share with ipsec_fill_in_hash?
    */
-  LOG_DBG_BUF ((LOG_MISC, 90, "responder_recv_HASH_SA_NONCE: SKEYID_a",
+  LOG_DBG_BUF ((LOG_NEGOTIATION, 90, "responder_recv_HASH_SA_NONCE: SKEYID_a",
 		isa->skeyid_a, isa->skeyid_len));
   prf = prf_alloc (isa->prf_type, isa->hash, isa->skeyid_a, isa->skeyid_len);
   if (!prf)
     goto cleanup;
   prf->Init (prf->prfctx);
-  LOG_DBG_BUF ((LOG_MISC, 90, "responder_recv_HASH_SA_NONCE: message_id",
+  LOG_DBG_BUF ((LOG_NEGOTIATION, 90, 
+		"responder_recv_HASH_SA_NONCE: message_id",
 		exchange->message_id, ISAKMP_HDR_MESSAGE_ID_LEN));
   prf->Update (prf->prfctx, exchange->message_id, ISAKMP_HDR_MESSAGE_ID_LEN);
-  LOG_DBG_BUF ((LOG_MISC, 90,
+  LOG_DBG_BUF ((LOG_NEGOTIATION, 90,
 		"responder_recv_HASH_SA_NONCE: message after HASH",
 		hash + hash_len,
 		msg->iov[0].iov_len - ISAKMP_HDR_SZ - hash_len));
@@ -1459,7 +1462,7 @@ responder_recv_HASH_SA_NONCE (struct message *msg)
 	       msg->iov[0].iov_len - ISAKMP_HDR_SZ - hash_len);
   prf->Final (my_hash, prf->prfctx);
   prf_free (prf);
-  LOG_DBG_BUF ((LOG_MISC, 90,
+  LOG_DBG_BUF ((LOG_NEGOTIATION, 90,
 		"responder_recv_HASH_SA_NONCE: computed HASH(1)", my_hash,
 		hash_len - ISAKMP_GEN_SZ));
   if (memcmp (hash + ISAKMP_GEN_SZ, my_hash, hash_len - ISAKMP_GEN_SZ) != 0)
@@ -1496,7 +1499,7 @@ responder_recv_HASH_SA_NONCE (struct message *msg)
 	}
       memcpy (ie->id_ci, idp->p, ie->id_ci_sz);
       idp->flags |= PL_MARK;
-      LOG_DBG_BUF ((LOG_MISC, 90,
+      LOG_DBG_BUF ((LOG_NEGOTIATION, 90,
 		    "responder_recv_HASH_SA_NONCE: IDci",
 		    ie->id_ci + ISAKMP_GEN_SZ, ie->id_ci_sz
 		    - ISAKMP_GEN_SZ));
@@ -1512,7 +1515,7 @@ responder_recv_HASH_SA_NONCE (struct message *msg)
 	}
       memcpy (ie->id_cr, idp->p, ie->id_cr_sz);
       idp->flags |= PL_MARK;
-      LOG_DBG_BUF ((LOG_MISC, 90,
+      LOG_DBG_BUF ((LOG_NEGOTIATION, 90,
 		    "responder_recv_HASH_SA_NONCE: IDcr",
 		    ie->id_cr + ISAKMP_GEN_SZ, ie->id_cr_sz
 		    - ISAKMP_GEN_SZ));
@@ -1756,8 +1759,8 @@ responder_send_HASH_SA_NONCE (struct message *msg)
 	  return -1;
 	}
       memcpy (id, ie->id_ci, sz);
-      LOG_DBG_BUF ((LOG_MISC, 90, "responder_send_HASH_SA_NONCE: IDic", id,
-		    sz));
+      LOG_DBG_BUF ((LOG_NEGOTIATION, 90, "responder_send_HASH_SA_NONCE: IDic",
+		    id, sz));
       if (message_add_payload (msg, ISAKMP_PAYLOAD_ID, id, sz, 1))
 	{
 	  free (id);
@@ -1772,8 +1775,8 @@ responder_send_HASH_SA_NONCE (struct message *msg)
 	  return -1;
 	}
       memcpy (id, ie->id_cr, sz);
-      LOG_DBG_BUF ((LOG_MISC, 90, "responder_send_HASH_SA_NONCE: IDrc", id,
-		    sz));
+      LOG_DBG_BUF ((LOG_NEGOTIATION, 90, "responder_send_HASH_SA_NONCE: IDrc",
+		    id, sz));
       if (message_add_payload (msg, ISAKMP_PAYLOAD_ID, id, sz, 1))
 	{
 	  free (id);
@@ -1782,18 +1785,19 @@ responder_send_HASH_SA_NONCE (struct message *msg)
     }
 
   /* Allocate the prf and start calculating our HASH(2).  XXX Share?  */
-  LOG_DBG ((LOG_MISC, 95, "responder_recv_HASH: isakmp_sa %p isa %p",
+  LOG_DBG ((LOG_NEGOTIATION, 95, "responder_recv_HASH: isakmp_sa %p isa %p",
 	    isakmp_sa, isa));
-  LOG_DBG_BUF ((LOG_MISC, 90, "responder_send_HASH_SA_NONCE: SKEYID_a",
+  LOG_DBG_BUF ((LOG_NEGOTIATION, 90, "responder_send_HASH_SA_NONCE: SKEYID_a",
 		isa->skeyid_a, isa->skeyid_len));
   prf = prf_alloc (isa->prf_type, hash->type, isa->skeyid_a, isa->skeyid_len);
   if (!prf)
     return -1;
   prf->Init (prf->prfctx);
-  LOG_DBG_BUF ((LOG_MISC, 90, "responder_send_HASH_SA_NONCE: message_id",
+  LOG_DBG_BUF ((LOG_NEGOTIATION, 90, 
+		"responder_send_HASH_SA_NONCE: message_id", 
 		exchange->message_id, ISAKMP_HDR_MESSAGE_ID_LEN));
   prf->Update (prf->prfctx, exchange->message_id, ISAKMP_HDR_MESSAGE_ID_LEN);
-  LOG_DBG_BUF ((LOG_MISC, 90, "responder_send_HASH_SA_NONCE: NONCE_I_b",
+  LOG_DBG_BUF ((LOG_NEGOTIATION, 90, "responder_send_HASH_SA_NONCE: NONCE_I_b",
 		exchange->nonce_i, exchange->nonce_i_len));
   prf->Update (prf->prfctx, exchange->nonce_i, exchange->nonce_i_len);
 
@@ -1804,7 +1808,7 @@ responder_send_HASH_SA_NONCE (struct message *msg)
       snprintf (header, 80,
 		"responder_send_HASH_SA_NONCE: payload %d after HASH(2)",
 		i - 1);
-      LOG_DBG_BUF ((LOG_MISC, 90, header, msg->iov[i].iov_base,
+      LOG_DBG_BUF ((LOG_NEGOTIATION, 90, header, msg->iov[i].iov_base,
 		    msg->iov[i].iov_len));
       prf->Update (prf->prfctx, msg->iov[i].iov_base, msg->iov[i].iov_len);
     }
@@ -1812,7 +1816,8 @@ responder_send_HASH_SA_NONCE (struct message *msg)
   prf_free (prf);
   snprintf (header, 80, "responder_send_HASH_SA_NONCE: HASH_%c",
 	    initiator ? 'I' : 'R');
-  LOG_DBG_BUF ((LOG_MISC, 80, header, buf + ISAKMP_HASH_DATA_OFF, hashsize));
+  LOG_DBG_BUF ((LOG_NEGOTIATION, 80, header, buf + ISAKMP_HASH_DATA_OFF,
+		hashsize));
 
   if (ie->group)
     message_register_post_send (msg, gen_g_xy);
@@ -1839,7 +1844,7 @@ gen_g_xy (struct message *msg)
       log_print ("gen_g_xy: dh_create_shared failed");
       return;
     }
-  LOG_DBG_BUF ((LOG_MISC, 80, "gen_g_xy: g^xy", ie->g_xy, ie->g_x_len));
+  LOG_DBG_BUF ((LOG_NEGOTIATION, 80, "gen_g_xy: g^xy", ie->g_xy, ie->g_x_len));
 }
 
 static int
@@ -1867,27 +1872,27 @@ responder_recv_HASH (struct message *msg)
     }
 
   /* Allocate the prf and start calculating our HASH(3).  XXX Share?  */
-  LOG_DBG ((LOG_MISC, 95, "responder_recv_HASH: isakmp_sa %p isa %p",
+  LOG_DBG ((LOG_NEGOTIATION, 95, "responder_recv_HASH: isakmp_sa %p isa %p",
 	    isakmp_sa, isa));
-  LOG_DBG_BUF ((LOG_MISC, 90, "responder_recv_HASH: SKEYID_a", isa->skeyid_a,
-		isa->skeyid_len));
+  LOG_DBG_BUF ((LOG_NEGOTIATION, 90, "responder_recv_HASH: SKEYID_a",
+		isa->skeyid_a, isa->skeyid_len));
   prf = prf_alloc (isa->prf_type, isa->hash, isa->skeyid_a, isa->skeyid_len);
   if (!prf)
     goto cleanup;
   prf->Init (prf->prfctx);
   prf->Update (prf->prfctx, "\0", 1);
-  LOG_DBG_BUF ((LOG_MISC, 90, "responder_recv_HASH: message_id",
+  LOG_DBG_BUF ((LOG_NEGOTIATION, 90, "responder_recv_HASH: message_id",
 		exchange->message_id, ISAKMP_HDR_MESSAGE_ID_LEN));
   prf->Update (prf->prfctx, exchange->message_id, ISAKMP_HDR_MESSAGE_ID_LEN);
-  LOG_DBG_BUF ((LOG_MISC, 90, "responder_recv_HASH: NONCE_I_b",
+  LOG_DBG_BUF ((LOG_NEGOTIATION, 90, "responder_recv_HASH: NONCE_I_b",
 		exchange->nonce_i, exchange->nonce_i_len));
   prf->Update (prf->prfctx, exchange->nonce_i, exchange->nonce_i_len);
-  LOG_DBG_BUF ((LOG_MISC, 90, "responder_recv_HASH: NONCE_R_b",
+  LOG_DBG_BUF ((LOG_NEGOTIATION, 90, "responder_recv_HASH: NONCE_R_b",
 		exchange->nonce_r, exchange->nonce_r_len));
   prf->Update (prf->prfctx, exchange->nonce_r, exchange->nonce_r_len);
   prf->Final (my_hash, prf->prfctx);
   prf_free (prf);
-  LOG_DBG_BUF ((LOG_MISC, 90,
+  LOG_DBG_BUF ((LOG_NEGOTIATION, 90,
 		"responder_recv_HASH: computed HASH(3)", my_hash,
 		hash_len - ISAKMP_GEN_SZ));
   if (memcmp (hash + ISAKMP_GEN_SZ, my_hash, hash_len - ISAKMP_GEN_SZ) != 0)

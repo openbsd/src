@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.h,v 1.8 2000/04/07 22:05:08 niklas Exp $	*/
+/*	$OpenBSD: log.h,v 1.9 2001/03/13 14:05:18 ho Exp $	*/
 /*	$EOM: log.h,v 1.19 2000/03/30 14:27:23 ho Exp $	*/
 
 /*
@@ -48,10 +48,11 @@
 
 enum log_classes {
   LOG_MISC, LOG_TRANSPORT, LOG_MESSAGE, LOG_CRYPTO, LOG_TIMER, LOG_SYSDEP,
-  LOG_SA, LOG_EXCHANGE, LOG_ENDCLASS
+  LOG_SA, LOG_EXCHANGE, LOG_NEGOTIATION, LOG_POLICY, LOG_ENDCLASS
 };
 #define LOG_CLASSES_TEXT \
-  { "Misc", "Trpt", "Mesg", "Cryp", "Timr", "Sdep", "SA  ", "Exch" }
+  { "Misc", "Trpt", "Mesg", "Cryp", "Timr", "Sdep", "SA  ", "Exch", "Negt", \
+    "Plcy" }
 
 /*
  * "Class" LOG_REPORT will always be logged to the current log channel,

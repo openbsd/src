@@ -1,4 +1,4 @@
-/*	$OpenBSD: message.c,v 1.36 2001/01/27 12:03:34 niklas Exp $	*/
+/*	$OpenBSD: message.c,v 1.37 2001/03/13 14:05:19 ho Exp $	*/
 /*	$EOM: message.c,v 1.156 2000/10/10 12:36:39 provos Exp $	*/
 
 /*
@@ -1662,7 +1662,7 @@ message_negotiate_sa (struct message *msg,
 			  - ISAKMP_TRANSFORM_SA_ATTRS_OFF,
 			  exchange->doi->is_attribute_incompatible, msg))
 	{
-	  LOG_DBG ((LOG_MESSAGE, 30,
+	  LOG_DBG ((LOG_NEGOTIATION, 30,
 		    "message_negotiate_sa: "
 		    "transform %d proto %d proposal %d ok",
 		    GET_ISAKMP_TRANSFORM_NO (tp->p),
@@ -1692,7 +1692,7 @@ message_negotiate_sa (struct message *msg,
 	{
 	  if (!suite_ok_so_far)
 	    {
-	      LOG_DBG ((LOG_MESSAGE, 30,
+	      LOG_DBG ((LOG_NEGOTIATION, 30,
 			"message_negotiate_sa: proto %d proposal %d failed",
 			GET_ISAKMP_PROP_PROTO (propp->p),
 			GET_ISAKMP_PROP_NO (propp->p)));
@@ -1725,7 +1725,7 @@ message_negotiate_sa (struct message *msg,
 	    {
 	      if (!validate || validate (exchange, sa, msg->isakmp_sa))
 		{
-		  LOG_DBG ((LOG_MESSAGE, 30,
+		  LOG_DBG ((LOG_NEGOTIATION, 30,
 			    "message_negotiate_sa: proposal %d succeeded",
 			    GET_ISAKMP_PROP_NO (propp->p)));
 
@@ -1738,7 +1738,7 @@ message_negotiate_sa (struct message *msg,
 	      else
 		{
 		  /* Backtrack.  */
-		  LOG_DBG ((LOG_MESSAGE, 30,
+		  LOG_DBG ((LOG_NEGOTIATION, 30,
 			    "message_negotiate_sa: proposal %d failed",
 			    GET_ISAKMP_PROP_NO (propp->p)));
 		  next_tp = saved_tp;
