@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: just-fixinc,v 1.1.1.4 2000/09/24 23:21:00 espie Exp $
+# $Id: just-fixinc,v 1.1.1.5 2001/01/29 15:12:56 espie Exp $
 # This script exists for use after installing
 # the GCC binaries from a distribution tape/CD-ROM.
 # Use it *after* copying the directory of binaries

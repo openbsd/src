@@ -1,17 +1,17 @@
 
                        GCC Frequently Asked Questions
-                                      
+
    The latest version of this document is always available at
    [1]http://www.gnu.org/software/gcc/faq.html.
-   
+
    This FAQ tries to answer specific questions concerning GCC. For
    general information regarding C, C++, resp. Fortran please check the
    [2]comp.lang.c FAQ, [3]comp.lang.c++ FAQ, [4]comp.std.c++ FAQ, and the
    [5]Fortran Information page.
      _________________________________________________________________
-   
+
                                    Questions
-                                       
+
     1. [6]General information
          1. [7]What is the relationship between GCC and EGCS
          2. [8]What is the relationship between GCC and Cygnus
@@ -63,9 +63,9 @@
             them
         16. [51]What is libstdc++-v3 and how can I use it with g++?
      _________________________________________________________________
-   
+
                               General information
-                                       
+
 What is the relationship between GCC and EGCS
 
    In 1990/1991 gcc version 1 had reached a point of stability. For the
@@ -73,40 +73,40 @@ What is the relationship between GCC and EGCS
    in its design that would be difficult to resolve, so a major effort
    was made to resolve those limitiations and gcc version 2 was the
    result.
-   
+
    When we had gcc2 in a useful state, development efforts on gcc1
    stopped and we all concentrated on making gcc2 better than gcc1 could
    ever be. This is the kind of step forward we wanted to make with the
    EGCS project when it was formed in 1997.
-   
+
    In April 1999 the Free Software Foundation officially halted
    development on the gcc2 compiler and appointed the EGCS project as the
    official GCC maintainers.
-   
+
    We are in the process of merging GCC and EGCS, which will take some
    time. The net result will be a single project which will carry forward
    GCC development under the ultimate control of the [52]GCC Steering
    Committee.
      _________________________________________________________________
-   
+
 What is the relationship between GCC and Cygnus
 
    It is a common mis-conception that Cygnus controls either directly or
    indirectly GCC.
-   
+
    While Cygnus does donate hardware, network connections, code and
    developer time to GCC development, Cygnus does not control GCC.
-   
+
    Overall control of GCC is in the hands of the [53]GCC Steering
    Committee which includes people from a variety of different
    organizations and backgrounds. The purpose of the steering committee
    is to make decisions in the best interest of GCC and to help ensure
    that no individual or company has control over the project.
-   
+
    To summarize, Cygnus contributes to GCCproject, but does not exert a
    controlling influence over GCC.
      _________________________________________________________________
-   
+
 What is an open development model?
 
    With GCC, we are going to try a bazaar style[54][1] approach to its
@@ -115,34 +115,34 @@ What is an open development model?
    mailing list. All of the discussions on the development mailing list
    are available via the web. We're going to be making releases with a
    much higher frequency than they have been made in the past.
-   
+
    In addition to weekly snapshots of the GCC development sources, we
    have the sources readable from a CVS server by anyone. Furthermore we
    are using remote CVS to allow remote maintainers write access to the
    sources.
-   
+
    There have been many potential gcc developers who were not able to
    participate in gcc development in the past. We want these people to
    help in any way they can; we ultimately want GCC to be the best
    compiler in the world.
-   
+
    A compiler is a complicated piece of software, there will still be
    strong central maintainers who will reject patches, who will demand
    documentation of implementations, and who will keep the level of
    quality as high as it is today. Code that could use wider testing may
    be integrated--code that is simply ill-conceived won't be.
-   
+
    GCC is not the first piece of software to use this open development
    process; FreeBSD, the Emacs lisp repository, and the Linux kernel are
    a few examples of the bazaar style of development.
-   
+
    With GCC, we will be adding new features and optimizations at a rate
    that has not been done since the creation of gcc2; these additions
    will inevitably have a temporarily destabilizing effect. With the help
    of developers working together with this bazaar style development, the
    resulting stability and quality levels will be better than we've had
    before.
-   
+
      _[1]_ We've been discussing different development models a lot over
      the past few months. The paper which started all of this introduced
      two terms: A _cathedral_ development model versus a _bazaar_
@@ -150,7 +150,7 @@ What is an open development model?
      called ``[55]The Cathedral and the Bazaar''. The paper is a useful
      starting point for discussions.
      _________________________________________________________________
-   
+
 How to report bugs
 
    There are complete instructions in the [56]gcc info manual, section
@@ -158,12 +158,12 @@ How to report bugs
    the GNU info program is installed on your system by `info --node
    "(gcc)Bugs"'. Or see the file [57]BUGS included with the GCC source
    code.
-   
+
    Before you report a bug for the _C++ compiler_, please check the
    [58]list of well-known bugs. If you want to report a bug with _egcs
    1.0.x_ or _egcs 1.1.x_, we strongly recommend upgrading to the current
    release first.
-   
+
    In short, if GCC says Internal compiler error (or any other error that
    you'd like us to be able to reproduce, for that matter), please mail a
    bug report to [59]gcc-bugs@gcc.gnu.org or [60]bug-gcc@gnu.org
@@ -173,31 +173,31 @@ How to report bugs
      * All options you passed to the compiler
      * Preprocessed output of the source file that caused the compiler
        error
-       
+
    All this can normally be accomplished by mailing the command line, the
    output of the command, and the resulting `_your-file_.i' for C, or
    `_your-file_.ii' for C++, corresponding to:
-   
+
    gcc -v --save-temps _all-your-options_ _your-file_.c
-   
+
    Typically the CPP output (extension .i for C or .ii for C++) will be
    large, so please compress the resulting file with one of the popular
    compression programs such as bzip2, gzip, zip, pkzip or compress (in
    decreasing order of preference). Use maximum compression (-9) if
    available. Please include the compressed CPP output in your bug
    report.
-   
+
    Since we're supposed to be able to re-create the assembly output
    (extension .s), you usually don't have to include it in the bug
    report, although you may want to post parts of it to point out
    assembly code you consider to be wrong.
-   
+
    Whether to use MIME attachments or uuencode is up to you. In any case,
    make sure the compiler command line, version and error output are in
    plain text, so that we don't have to decode the bug report in order to
    tell who should take care of it. A meaningful subject indicating
    language and platform also helps.
-   
+
    The gcc lists have message size limits (100 kbytes) and bug reports
    over those limits will currently be bounced. We're trying to find a
    way to allow larger bug reports to be posted, but this is currently
@@ -209,7 +209,7 @@ How to report bugs
    output in multiple files (using split, for example) and post them in
    separate messages, but we prefer to have self-contained bug reports in
    single messages.
-   
+
    If you fail to supply enough information for a bug report to be
    reproduced, someone will probably ask you to post additional
    information (or just ignore your bug report, if they're in a bad day,
@@ -220,7 +220,7 @@ How to report bugs
    supplied in the incomplete bug report (including the preprocessor
    output), so that the new bug report is self-contained.
      _________________________________________________________________
-   
+
 How do I get a bug fixed or a feature added?
 
    There are lots of ways to get something fixed. The list below may be
@@ -247,44 +247,44 @@ How do I get a bug fixed or a feature added?
        of your changes, your code may or may not ever make it into an
        official release of GCC.
      _________________________________________________________________
-   
+
                                  Installation
-                                       
+
 Problems building the Fortran compiler
 
    The Fortran front end can not be built with most vendor compilers; it
    must be built with gcc. As a result, you may get an error if you do
    not follow the install instructions carefully.
-   
+
    In particular, instead of using "make" to build GCC, you should use
    "make bootstrap" if you are building a native compiler or "make cross"
    if you are building a cross compiler.
-   
+
    It has also been reported that the Fortran compiler can not be built
    on Red Hat 4.X GNU/Linux for the Alpha. Fixing this may require
    upgrading binutils or to Red Hat 5.0; we'll provide more information
    as it becomes available.
      _________________________________________________________________
-   
+
 How to install multiple versions of gcc
 
    It may be desirable to install multiple versions of the compiler on
    the same system. This can be done by using different prefix paths at
    configure time and a few symlinks.
-   
+
    Basically, configure the two compilers with different --prefix
    options, then build and install each compiler. Assume you want "gcc"
    to be the latest compiler and available in /usr/local/bin; also assume
    that you want "gcc2" to be the older gcc2 compiler and also available
    in /usr/local/bin.
-   
+
    The easiest way to do this is to configure the new GCC with
    --prefix=/usr/local/gcc and the older gcc2 with
    --prefix=/usr/local/gcc2. Build and install both compilers. Then make
    a symlink from /usr/local/bin/gcc to /usr/local/gcc/bin/gcc and from
    /usr/local/bin/gcc2 to /usr/local/gcc2/bin/gcc. Create similar links
    for the "g++", "c++" and "g77" compiler drivers.
-   
+
    An alternative to using symlinks is to configure with a
    --program-transform-name option. This option specifies a sed command
    to process installed program names with. Using it you can, for
@@ -303,46 +303,46 @@ How to install multiple versions of gcc
    /usr/local/gcc/bin with names prefixed by "new-". You can use
    --program-transform-name if you have multiple versions of GCC, and
    wish to be sure about which version you are invoking.
-   
+
    If you use --prefix, GCC may have difficulty locating a GNU assembler
    or linker on your system, [62]GCC can not find GNU as/GNU ld explains
    how to deal with this.
      _________________________________________________________________
-   
+
 Dynamic linker is unable to find GCC libraries
 
    This problem manifests itself by programs not finding shared libraries
    they depend on when the programs are started. Note this problem often
    manifests itself with failures in the libio/libstdc++ tests after
    configuring with --enable-shared and building GCC.
-   
+
    GCC does not specify a runpath so that the dynamic linker can find
    dynamic libraries at runtime.
-   
+
    The short explanation is that if you always pass a -R option to the
    linker, then your programs become dependent on directories which may
    be NFS mounted, and programs may hang unnecessarily when an NFS server
    goes down.
-   
+
    The problem is not programs that do require the directories; those
    programs are going to hang no matter what you do. The problem is
    programs that do not require the directories.
-   
+
    SunOS effectively always passed a -R option for every -L option; this
    was a bad idea, and so it was removed for Solaris. We should not
    recreate it.
-   
+
    However, if you feel you really need such an option to be passed
    automatically to the linker, you may add it to the gcc specs file.
    This file can be found in the same directory that contains cc1 (run
    gcc -print-prog-name=cc1 to find it). You may add linker flags such as
    -R or -rpath, depending on platform and linker, to the *link or *lib
    specs.
-   
+
    Another alterative is to install a wrapper script around gcc, g++ or
    ld that adds the appropriate directory to the environment variable
    LD_RUN_PATH or equivalent (again, it's platform-dependent).
-   
+
    Yet another option, that works on a few platforms, is to hard-code the
    full pathname of the library into its soname. This can only be
    accomplished by modifying the appropriate .ml file within
@@ -350,7 +350,7 @@ Dynamic linker is unable to find GCC libraries
    so that $(libdir)/ appears just before the library name in -soname or
    -h options.
      _________________________________________________________________
-   
+
 GCC can not find GNU as/GNU ld
 
    GCC searches the PATH for an assembler and a loader, but it only does
@@ -359,19 +359,19 @@ GCC can not find GNU as/GNU ld
    which the system asembler and loader can be found, you may have to
    take one of the following actions to arrange that gcc uses the GNU
    versions of those programs.
-   
+
    To ensure that GCC finds the GNU assembler (the GNU loader), which are
    required by [63]some configurations, you should configure these with
    the same --prefix option as you used for GCC. Then build & install GNU
    as (GNU ld) and proceed with building GCC.
-   
+
    Another alternative is to create links to GNU as and ld in any of the
    directories printed by the command `gcc -print-search-dirs | grep
    '^programs:''. The link to `ld' should be named `real-ld' if `ld'
    already exists. If such links do not exist while you're compiling GCC,
    you may have to create them in the build directories too, within the
    gcc directory _and_ in all the gcc/stage* subdirectories.
-   
+
    GCC 2.95 allows you to specify the full pathname of the assembler and
    the linker to use. The configure flags are `--with-as=/path/to/as' and
    `--with-ld=/path/to/ld'. GCC will try to use these pathnames before
@@ -382,7 +382,7 @@ GCC can not find GNU as/GNU ld
    you to override the search path for assembler and linker with
    command-line options -B/path/ if the specified filenames exist.
      _________________________________________________________________
-   
+
 cpp: Usage:... Error
 
    If you get an error like this when building GCC (particularly when
@@ -396,27 +396,27 @@ cpp: Usage:... Error
    '.', look for an empty pathname in those variables. Note that ':' at
    either the start or end of these variables is an implicit '.' and will
    cause problems.
-   
+
    Also note '::' in these paths will also cause similar problems.
      _________________________________________________________________
-   
+
                               Testsuite problems
-                                       
+
 Why is there no testsuite in GCC 2.95
 
    The GCC testsuite is not included in the GCC 2.95 release due to the
    uncertain copyright status of some tests.
-   
+
    The GCC team will be reviewing the entire testsuite to find and remove
    any tests with uncertain copyright status. Once those tests are
    removed from the testsuite, the testsuite as a whole will be
    copyrighted under the terms of the GPL and included in future GCC
    releases.
-   
+
    It is believed that only a few tests have uncertain copyright status
    and thus only a few tests will need to be removed from the testsuite.
      _________________________________________________________________
-   
+
 Unable to run the testsuite
 
    If you get a message about unable to find "standard.exp" when trying
@@ -425,7 +425,7 @@ Unable to run the testsuite
    [64]dejagnu snapshot available until a new version of dejagnu can be
    released.
      _________________________________________________________________
-   
+
 How do I pass flags like -fnew-abi to the testsuite?
 
    If you invoke runtest directly, you can use the --tool_opts option,
@@ -436,7 +436,7 @@ How do I pass flags like -fnew-abi to the testsuite?
    e.g:
   make RUNTESTFLAGS='--tool_opts "-fnew-abi -fno-honor-std"' check-g++
      _________________________________________________________________
-   
+
 How can I run the test suite with multiple options?
 
    If you invoke runtest directly, you can use the --target_board option,
@@ -449,21 +449,21 @@ How can I run the test suite with multiple options?
 
    Either of these examples will run the tests three times. Once with
    -fPIC, once with -fpic, and once with no additional flags.
-   
+
    This technique is particularly useful on multilibbed targets.
      _________________________________________________________________
-   
+
                            Platform-specific issues
-                                       
+
    Please read the [65]host/target specific installation notes, too.
-   
+
 Problems with exception handling on x86 platforms
 
    If you are using the GNU assembler (aka gas) on an x86 platform and
    exception handling is not working correctly, then odds are you're
    using a buggy assembler. Releases of binutils prior to 2.9 are known
    to assemble exception handling code incorrectly.
-   
+
    We recommend binutils-2.9.1 or newer. Some post-2.9.1 snapshots of
    binutils fix some subtle bugs, particularly on x86 and alpha. They are
    available at [66]ftp://tsx-11.mit.edu/pub/linux/packages/GCC/. The
@@ -471,7 +471,7 @@ Problems with exception handling on x86 platforms
    than that, be aware that snapshots are in general untested and may not
    work (or even build). Use them at your own risk.
      _________________________________________________________________
-   
+
 Problems with invalid `asm' statements
 
    Previous releases of GCC (for example, GCC 2.7.2 or EGCS 1.1.2) did
@@ -483,7 +483,7 @@ Problems with invalid `asm' statements
    clobber registers that were destined to overlap operands; it could
    arguably be interpreted that it was correct to clobber an input
    operand to mark it as not holding a usable value after the asm.
-   
+
    For the general case, there is no way to tell whether a specified
    clobber is _intended_ to overlap with a specific (input) operand or is
    a program error, where the choice of actual register for operands
@@ -497,13 +497,13 @@ Problems with invalid `asm' statements
    Unfortunately, a lot of existing software, for example the [68]Linux
    kernel version 2.0.35 for the Intel x86, has constructs where input
    operands are marked as clobbered.
-   
+
    The manual now describes how to write constructs with operands that
    are modified by the construct, but not actually used. To write an asm
    which modifies an input operand but does not output anything usable,
    specify that operand as an _output operand_ outputting to an _unused
    dummy variable_.
-   
+
    In the following example for the x86 architecture (taken from the
    Linux 2.0.35 kernel -- include/asm-i386/delay.h), the register-class
    constraint "a" denotes a register class containing the single register
@@ -528,7 +528,7 @@ __delay (int loops)
    constructs, this obviousness-detection is not needed other than for
    reasons of compatibility with an existing code-base, and that code
    base can be corrected.
-   
+
    This corrected and clobber-less version, is _valid_ for GCC 2.95 as
    well as for previous versions of GCC and EGCS:
 extern __inline__ void
@@ -546,7 +546,7 @@ __delay (int loops)
    unused. Normally asm constructs with only unused output operands may
    be removed by gcc, unless marked volatile as above.
      _________________________________________________________________
-   
+
 Building Linux kernels
 
    The linux kernel violates certain aliasing rules specified in the
@@ -555,7 +555,7 @@ Building Linux kernels
    will produce malfunctioning kernels. To work around this problem, the
    flag -fno-strict-aliasing must be added to the CFLAGS variable in the
    main kernel Makefile.
-   
+
    If you try to build a 2.0.x kernel for Intel machines with any
    compiler other than GCC 2.7.2, then you are on your own. The 2.0.x
    kernels are to be built only with gcc 2.7.2. They use certain asm
@@ -564,7 +564,7 @@ Building Linux kernels
    be interested in this [69]patch which fixes some of the asm problems.
    You will also want to change asm constructs to [70]avoid clobbering
    their input operands.
-   
+
    If you installed a recent binutils/gas snapshot on your GNU/Linux
    system, you may not be able to build the kernel because objdump does
    not understand the "-k" switch. The solution for this problem is to
@@ -573,7 +573,7 @@ Building Linux kernels
    this program to decide if you have an old or a new binutils. Problems
    occur if you installed a new binutils but haven't removed encaps,
    because the Makefile thinks you have the old one.)
-   
+
    Finally, you may get errors with the X driver of the form
   _X11TransSocketUNIXConnect: Can't connect: errno = 111
 
@@ -582,59 +582,59 @@ Building Linux kernels
    is now broken since GCC optimizes more aggressively . The newer 2.1.x
    kernels already have a fix which should also work in 2.0.32.
      _________________________________________________________________
-   
+
 How do I compile X11 headers with g++
 
    When compiling X11 headers with a GCC 2.95 or newer, g++ will complain
    that types are missing. These headers assume that omitting the type
    means 'int'; this assumption is wrong for C++.
-   
+
    g++ accepts such (illegal) constructs with the option -fpermissive; it
    will assume that missing type is 'int' (as defined by the C89
    standard).
-   
+
    Since the upcoming C99 standard also obsoletes the implicit type
    assumptions, the X11 headers have to get fixed eventually.
      _________________________________________________________________
-   
+
 How to build a cross compiler
 
    Building cross compilers is a rather complex undertaking because they
    usually need additional software (cross assembler, cross linker,
    target libraries, target include files, etc).
-   
+
    We recommend reading the [71]crossgcc FAQ for information about
    building cross compilers.
-   
+
    If you have all the pieces available, then `make cross' should build a
    cross compiler. `make LANGUAGES="c c++" install' will install the
    cross compiler.
-   
+
    Note that if you're trying to build a cross compiler in a tree which
    includes binutils-2.8 in addition to GCC, then you're going to need to
    make a couple minor tweaks so that the cross assembler, linker and nm
    utilities will be found.
-   
+
    binutils-2.8 builds those files as gas.new, ld.new and nm.new; GCC
    looks for them using gas-new, ld-new and nm-new, so you may have to
    arrange for any symlinks which point to <file>.new to be changed to
    <file>-new.
      _________________________________________________________________
-   
+
                                Bugs and Non-Bugs
-                                       
+
    Unfortunately, improvements in tools that are widely used are sooner
    or later bound to break _something_. Sometimes, the code that breaks
    was wrong, and then that code should be fixed, even if it works for
    earlier versions of gcc or other compilers. The following problems
    with some releases of widely used packages have been identified:
-   
+
    There is a separate [72]list of well-known bugs describing known
    deficiencies. Naturally we'd like that list to be of zero length.
-   
+
    To report a bug, see [73]How to report bugs.
      _________________________________________________________________
-   
+
 FD_ZERO macro
 
    The FD_ZERO macro in (e.g.) libc-5.4.46 is incorrect. It uses
@@ -653,18 +653,18 @@ FD_ZERO macro
                           : "memory"); \
     } while (0)
      _________________________________________________________________
-   
+
 Octave 2.0.13 does not compile
 
    Apparently Octave 2.0.13 uses some C++ features which have been
    obsoleted and thus fails to build with EGCS 1.1 and later. This
    [75]patch to Octave should fix this.
-   
+
    Octave 2.0.13.96, a test release, has been compiled without patches by
    egcs 1.1.2. It is available at
    [76]ftp://ftp.che.wisc.edu/pub/octave/test-releases/.
      _________________________________________________________________
-   
+
 Why can't I initialize a static variable with stdin?
 
    This has nothing to do with gcc, but people ask us about it a lot.
@@ -678,19 +678,19 @@ Why can't I initialize a static variable with stdin?
    limit on the number of open FILE objects. It is surprising for people
    used to traditional Unix C libraries, but it is permitted by the C
    standard.
-   
+
    This construct commonly occurs in code generated by old versions of
    lex or yacc. We suggest you try regenerating the parser with a current
    version of flex or bison, respectively. In your own code, the
    appropriate fix is to move the initialization to the beginning of
    main.
-   
+
    There is a common misconception that the GCC developers are
    responsible for GNU libc. These are in fact two entirely separate
    projects. The appropriate place to ask questions relating to GNU libc
    is [77]libc-alpha@sourceware.cygnus.com.
      _________________________________________________________________
-   
+
 Why can't I use #if here?
 
    Let me guess... you wrote code that looks something like this:
@@ -717,7 +717,7 @@ test.c:11: parse error before `#'
    to put #ifdef (or any other directive) inside the arguments of a
    macro. Your C library's string.h happens to define memcpy as a macro -
    this is perfectly legitimate. The code therefore will not compile.
-   
+
    We have two good reasons for not allowing directives inside macro
    arguments. First, it is not portable. It is "undefined behavior"
    according to the C standard; that means different compilers will do
@@ -729,7 +729,7 @@ test.c:11: parse error before `#'
    from the above example. A very few might do what you expected it to.
    We therefore feel it is most useful for GCC to reject this construct
    immediately so that it is found and fixed.
-   
+
    Second, it is extraordinarily difficult to implement the preprocessor
    such that it does what you would expect for every possible directive
    found inside a macro argument. The best example is perhaps
@@ -740,7 +740,7 @@ blah)
 
    which is impossible to implement in portable C without leaking memory.
    Allowing only a subset of directives would be confusing.
-   
+
    It is always possible to rewrite code which uses conditionals inside
    macros so that it doesn't. You could write the above example
 #ifdef PLATFORM1
@@ -752,33 +752,33 @@ blah)
    This is a bit more typing, but I personally think it's better style in
    addition to being more portable.
      _________________________________________________________________
-   
+
                                  Miscellaneous
-                                       
+
 Virtual memory exhausted error
 
    This error means your system ran out of memory; this can happen for
    large files, particularly when optimizing. If you're getting this
    error you should consider trying to simplify your files or reducing
    the optimization level.
-   
+
    Note that using -pedantic or -Wreturn-type can cause an explosion in
    the amount of memory needed for template-heavy C++ code, such as code
    that uses STL. Also note that -Wall includes -Wreturn-type, so if you
    use -Wall you will need to specify -Wno-return-type to turn it off.
      _________________________________________________________________
-   
+
 Snapshots, how, when, why
 
    We make snapshots of the GCC sources about once a week; there is no
    predetermined schedule. These snapshots are intended to give everyone
    access to work in progress. Any given snapshot may generate incorrect
    code or even fail to build.
-   
+
    If you plan on downloading and using snapshots, we highly recommend
    you subscribe to the GCC mailing lists. See [78]mailing lists on the
    main GCC page for instructions on how to subscribe.
-   
+
    When using the diff files to update from older snapshots to newer
    snapshots, make sure to use "-E" and "-p" arguments to patch so that
    empty files are deleted and full pathnames are provided to patch. If
@@ -787,7 +787,7 @@ Snapshots, how, when, why
    various other programs if you use diff files to update from one
    snapshot to the next.
      _________________________________________________________________
-   
+
 Friend Templates
 
    In order to make a specialization of a template function a friend of a
@@ -830,89 +830,89 @@ void bar(foo<T>) { /* ... */ }
    taken as a non-template function. Furthermore, in some cases, you may
    have to explicitly specify the template arguments, to remove
    ambiguity.
-   
+
    An error in the last public comment draft of the ANSI/ISO C++ Standard
    and the fact that previous releases of gcc would accept such friend
    declarations as template declarations has led people to believe that
    the forward declaration was not necessary, but, according to the final
    version of the Standard, it is.
      _________________________________________________________________
-   
+
 Where to find libg++
 
    Many folks have been asking where to find libg++ for GCC. First we
    should point out that few programs actually need libg++; most only
    need libstdc++/libio which are included in the GCC distribution.
-   
+
    If you do need libg++ you can get a libg++ release that works with GCC
    from [79]ftp://egcs.cygnus.com/pub/egcs/infrastructure/. Note that the
    2.8.2 snapshot pre-dates the 2.8.1.2 release.
      _________________________________________________________________
-   
+
 autoconf, bison, xgettext, automake, etc
 
    If you're using diffs up dated from one snapshot to the next, or if
    you're using the CVS repository, you may need several additional
    programs to build GCC.
-   
+
    These include, but are not necessarily limited to autoconf, automake,
    bison, and xgettext.
-   
+
    This is necessary because neither diff nor cvs keep timestamps
    correct. This causes problems for generated files as "make" may think
    those generated files are out of date and try to regenerate them.
-   
+
    An easy way to work around this problem is to use the gcc_update
    script in the contrib subdirectory of GCC, which handles this
    transparently without requiring installation of any additional tools.
    (Note: Up to and including GCC 2.95 this script was called egcs_update
    .)
-   
+
    When building from diffs or CVS or if you modified some sources, you
    may also need to obtain development versions of some GNU tools, as the
    production versions do not necessarily handle all features needed to
    rebuild GCC.
-   
+
    Autoconf is available from [80]http://sourceware.cygnus.com/autoconf/;
    have a look at [81]ftp://egcs.cygnus.com/pub/egcs/infrastructure/ for
    the other packages.
      _________________________________________________________________
-   
+
 Conflicts when using cvs update
 
    It is not uncommon to get CVS conflict messages for some generated
    files when updating your local sources from the CVS repository.
    Typically such conflicts occur with bison or autoconf generated files.
-   
+
    As long as you haven't been making modifications to the generated
    files or the generator files, it is safe to delete the offending file,
    then run cvs update again to get a new copy.
      _________________________________________________________________
-   
+
 Problems debugging GCC code
 
    On some systems GCC will produce dwarf debug records by default;
    however the gdb-4.16 release may not be able to read such debug
    records.
-   
+
    You can either use the argument "-gstabs" instead of "-g" or pick up a
    copy of gdb-4.17 to work around the problem.
      _________________________________________________________________
-   
+
 Using GCC with GNAT/Ada
 
    The GNU Ada front-end is not currently supported by GCC; however, it
    is possible to build the GNAT compiler with a little work.
-   
+
    First, retrieve the gnat-3.10p sources. The sources for the Ada front
    end and runtime all live in the "ada" subdirectory. Move that
    subdirectory to egcs/gcc/ada.
-   
+
    Second, apply the patch found in egcs/gcc/README.gnat.
-   
+
    Finally, rebuild per the GNAT build instructions.
      _________________________________________________________________
-   
+
 Using GCC with GNU Pascal
 
    The [82]GNU Pascal front-end does work with EGCS 1.1 It does not work
@@ -920,59 +920,59 @@ Using GCC with GNU Pascal
    can be found at
    [83]ftp://agnes.dida.physik.uni-essen.de/gnu-pascal/beta/.
      _________________________________________________________________
-   
+
 Using CVS to download snapshots
 
    It is possible to checkout specific snapshots with CVS or to check out
    the latest snapshot.
-   
+
    We use CVS tags to identify each snapshot we make. Snapshot tags have
    the form "egcs_ss_YYYYMMDD". In addition, the latest official snapshot
    always has the tag "gcc_latest_snapshot".
      _________________________________________________________________
-   
+
 Why can't I build a shared library?
 
    When building a shared library you may get an error message from the
    linker like `assert pure-text failed:' or `DP relative code in file'.
-   
+
    This kind of error occurs when you've failed to provide proper flags
    to gcc when linking the shared library.
-   
+
    You can get this error even if all the .o files for the shared library
    were compiled with the proper PIC option. When building a shared
    library, gcc will compile additional code to be included in the
    library. That additional code must also be compiled with the proper
    PIC option.
-   
+
    Adding the proper PIC option (-fpic or -fPIC) to the link line which
    creates the shared library will fix this problem on targets that
    support PIC in this manner. For example:
         gcc -c -fPIC myfile.c
         gcc -shared -o libmyfile.so -fPIC myfile.o
      _________________________________________________________________
-   
+
 How to work around too long C++ symbol names? (-fsquangle)
 
    If the standard assembler of your platform can't cope with the large
    symbol names that the default g++ name mangling mechanism produces,
    your best bet is to use GNU as, from the GNU binutils package.
-   
+
    Unfortunately, GNU as does not support all platforms supported by
    egcs, so you may have to use an experimental work-around: the
    -fsquangle option, that enables compression of symbol names.
-   
+
    Note that this option is still under development, and subject to
    change. Since it modifies the name mangling mechanism, you'll need to
    build libstdc++ and any other C++ libraries with this option enabled.
    Furthermore, if this option changes its behavior in the future, you'll
    have to rebuild them all again. :-(
-   
+
    This option can be enabled by default by initializing
    `flag_do_squangling' with `1' in `gcc/cp/decl2.c' (it is not
    initialized by default), then rebuilding egcs and any C++ libraries.
      _________________________________________________________________
-   
+
 When building from CVS sources, I see 'gperf: invalid option -- F', even with
 the most current version of gperf.
 
@@ -980,11 +980,11 @@ the most current version of gperf.
    is used when building egcs from CVS sources. You will need to obtain a
    patch for gperf and rebuild the program; this patch is available at
    [84]ftp://egcs.cygnus.com/pub/egcs/infrastructure/
-   
+
    Patches for other tools, particularly autoconf, may also be necessary
    if you're building from CVS sources. Please see the [85]FAQ entry
    regarding these tools to determine if anything else is needed.
-   
+
    These patched utilities should _only_ be required if you are building
    from CVS sources. For example, gperf is used to generate C code for a
    perfect hash function given an input file. Distributions of egcs
@@ -992,7 +992,7 @@ the most current version of gperf.
    provide only the gperf input file. So gperf should only be necessary
    if you are building anything obtained from CVS.
      _________________________________________________________________
-   
+
 When building C++, the linker says my constructors, destructors or virtual
 tables are undefined, but I defined them
 
@@ -1003,39 +1003,39 @@ tables are undefined, but I defined them
    constructors, the assignment operator, the destructor and the virtual
    table of a class in the translation unit that defines its first such
    non-inline method.
-   
+
    Therefore, if you fail to define this particular method, the linker
    may complain about the lack of definitions for apparently unrelated
    symbols. Unfortunately, in order to improve this error message, it
    might be necessary to change the linker, and this can't always be
    done.
-   
+
    The solution is to ensure that all virtual methods that are not pure
    are defined. Note that a destructor must be defined even if it is
    declared pure-virtual [class.dtor]/7.
      _________________________________________________________________
-   
+
 What is libstdc++-v3 and how can I use it with g++?
 
    From the [86]libstdc++-FAQ: "The EGCS Standard C++ Library v3, or
    libstdc++-2.90.x, is an ongoing project to implement the ISO 14882
    Standard C++ library as described in chapters 17 through 27 and annex
    D."
-   
+
    At the moment the libstdc++-v3 is no "drop in replacement" for GCC's
    libstdc++. The best way to use it is as follows:
     1. Build and install GCC
     2. Build and install libstdc++-v3
     3. Use compiler flags to use the new libstdc++
-       
+
    Please note that the libstdc++-v3 is not yet complete and should only
    be used by experienced programmers.
-   
+
    For more information please refer to the [87]libstdc++-v3 homepage
      _________________________________________________________________
-   
+
    [88]Return to the GCC home page
-   
+
    _Last modified: October 19, 1999_
 
 References
