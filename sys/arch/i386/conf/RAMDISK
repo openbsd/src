@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.41 1998/09/22 18:47:44 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.42 1998/09/22 18:49:13 deraadt Exp $
 #	from: OpenBSD: INST,v 1.19 1996/11/05 03:49:13 tholo Exp 
 #
 #	Install kernels no longer support X.
@@ -157,9 +157,9 @@ acd*	at atapibus? drive?
 
 we0	at isa? port 0x280 iomem 0xd0000 irq 9	# WD/SMC 80x3 ethernet series
 we1	at isa? port 0x300 iomem 0xcc000 irq 10	#
-ec0	at isa? port 0x250 iomem 0xd8000 irq 9	# 3C503 ethernet cards
-ne0	at isa? port 0x240 iomem 0xd8000 irq 9	# NE[12]000 ethernet cards
-ne1	at isa? port 0x300 irq 10		# NE[12]000 ethernet cards
+ec0	at isa? port 0x250 iomem 0xd8000 irq 9	# 3C503 ethernet card
+ne0	at isa? port 0x240 iomem 0xd8000 irq 9	# NE[12]000 ethernet card
+ne1	at isa? port 0x300 irq 10		# NE[12]000 ethernet card
 #eg0	at isa? port 0x310 irq 5		# 3C505/Etherlink+ ethernet cards
 #el0	at isa? port 0x300 irq 9		# 3C501 ethernet cards
 ep0	at isa? port ? irq ?			# 3C509 ethernet cards
@@ -176,14 +176,14 @@ ep*	at isapnp?				# 3C509 PnP ethernet cards
 le*	at isapnp?
 de*	at pci? dev ? function ?		# DC21X4X-based ethernet cards
 fxp*	at pci? dev ? function ?		# EtherExpress 10/100B ethernet cards
-ep0	at pci? dev ? function ?		# 3C590 ethernet cards
-ep*	at pci? dev ? function ?		# 3C590 ethernet cards
+ep0	at pci? dev ? function ?		# 3C59x ethernet cards
+ep*	at pci? dev ? function ?		# 3C59x ethernet cards
 ne*	at pci? dev ? function ?		# NE2000-compat ethernet cards
-ne*	at pcmcia? function ?			# PCMCIA based ne cards
-ep*	at pcmcia? function ?			# PCMCIA based ep cards
+ne*	at pcmcia? function ?			# PCMCIA based NE2000 cards
+ep*	at pcmcia? function ?			# PCMCIA based 3c5xx cards
 sm*	at pcmcia? function ?			# PCMCIA based sm cards
 #fpa*	at pci? dev ? function ?		# DEC DEFPA FDDI cards
-xl*	at pci? dev ? function ?		# 3C900/3C905 ethernet cards
+xl*	at pci? dev ? function ?		# 3C9xx ethernet cards
 tx*	at pci? dev ? function ?		# SMC 83C170 EPIC ethernet cards
 
 # Media Independent Interface (mii) drivers
