@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.76 2000/03/22 07:34:29 niklas Exp $
+#	$OpenBSD: MAKEDEV,v 1.77 2000/03/29 21:46:07 aaron Exp $
 #	$NetBSD: MAKEDEV,v 1.40 1996/03/31 00:50:47 perry Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -212,7 +212,7 @@ ramdisk)
 usbs)
 	sh $this usb0 usb1
 	sh $this uhid0 uhid1 uhid2 uhid3
-#	sh $this ulpt0 ulpt1
+	sh $this ulpt0 ulpt1
 	;;
 
 std)
@@ -247,12 +247,12 @@ uhid*)
 	chmod 666 uhid$unit
 	;;
 
-#ulpt*)
-#	rm -f ulpt$unit
-#	mknod ulpt$unit c ?? $unit
-#	chown root.wheel ulpt$unit
-#	chmod 600 ulpt$unit
-#	;;
+ulpt*)
+	rm -f ulpt$unit
+	mknod ulpt$unit c 63 $unit
+	chown root.wheel ulpt$unit
+	chmod 600 ulpt$unit
+	;;
 
 ugen*)
 	for j in 00 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15
