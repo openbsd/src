@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgthree.c,v 1.23 2002/08/12 16:18:59 jason Exp $	*/
+/*	$OpenBSD: cgthree.c,v 1.24 2002/08/31 21:18:48 jason Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -310,17 +310,17 @@ cgthreeattach(parent, self, aux)
 
 	printf("\n");
 
-	if (console) {
-		cgthree_setcolor(sc, WSCOL_BLACK, 0, 0, 0);
-		cgthree_setcolor(sc, 255, 0, 0, 0);
-		cgthree_setcolor(sc, WSCOL_RED, 255, 0, 0);
-		cgthree_setcolor(sc, WSCOL_GREEN, 0, 255, 0);
-		cgthree_setcolor(sc, WSCOL_BROWN, 154, 85, 46);
-		cgthree_setcolor(sc, WSCOL_BLUE, 0, 0, 255);
-		cgthree_setcolor(sc, WSCOL_MAGENTA, 255, 255, 0);
-		cgthree_setcolor(sc, WSCOL_CYAN, 0, 255, 255);
-		cgthree_setcolor(sc, WSCOL_WHITE, 255, 255, 255);
+	cgthree_setcolor(sc, WSCOL_BLACK, 0, 0, 0);
+	cgthree_setcolor(sc, 255, 0, 0, 0);
+	cgthree_setcolor(sc, WSCOL_RED, 255, 0, 0);
+	cgthree_setcolor(sc, WSCOL_GREEN, 0, 255, 0);
+	cgthree_setcolor(sc, WSCOL_BROWN, 154, 85, 46);
+	cgthree_setcolor(sc, WSCOL_BLUE, 0, 0, 255);
+	cgthree_setcolor(sc, WSCOL_MAGENTA, 255, 255, 0);
+	cgthree_setcolor(sc, WSCOL_CYAN, 0, 255, 255);
+	cgthree_setcolor(sc, WSCOL_WHITE, 255, 255, 255);
 
+	if (console) {
 		if (romgetcursoraddr(&sc->sc_crowp, &sc->sc_ccolp))
 			sc->sc_ccolp = sc->sc_crowp = NULL;
 		if (sc->sc_ccolp != NULL)

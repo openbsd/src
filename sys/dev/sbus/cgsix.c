@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgsix.c,v 1.31 2002/08/16 02:54:54 jason Exp $	*/
+/*	$OpenBSD: cgsix.c,v 1.32 2002/08/31 21:18:48 jason Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -273,17 +273,17 @@ cgsixattach(parent, self, aux)
 
 	printf("\n");
 
-	if (console) {
-		cgsix_setcolor(sc, WSCOL_BLACK, 0, 0, 0);
-		cgsix_setcolor(sc, 255, 0, 0, 0);
-		cgsix_setcolor(sc, WSCOL_RED, 255, 0, 0);
-		cgsix_setcolor(sc, WSCOL_GREEN, 0, 255, 0);
-		cgsix_setcolor(sc, WSCOL_BROWN, 154, 85, 46);
-		cgsix_setcolor(sc, WSCOL_BLUE, 0, 0, 255);
-		cgsix_setcolor(sc, WSCOL_MAGENTA, 255, 255, 0);
-		cgsix_setcolor(sc, WSCOL_CYAN, 0, 255, 255);
-		cgsix_setcolor(sc, WSCOL_WHITE, 255, 255, 255);
+	cgsix_setcolor(sc, WSCOL_BLACK, 0, 0, 0);
+	cgsix_setcolor(sc, 255, 0, 0, 0);
+	cgsix_setcolor(sc, WSCOL_RED, 255, 0, 0);
+	cgsix_setcolor(sc, WSCOL_GREEN, 0, 255, 0);
+	cgsix_setcolor(sc, WSCOL_BROWN, 154, 85, 46);
+	cgsix_setcolor(sc, WSCOL_BLUE, 0, 0, 255);
+	cgsix_setcolor(sc, WSCOL_MAGENTA, 255, 255, 0);
+	cgsix_setcolor(sc, WSCOL_CYAN, 0, 255, 255);
+	cgsix_setcolor(sc, WSCOL_WHITE, 255, 255, 255);
 
+	if (console) {
 		if (romgetcursoraddr(&sc->sc_crowp, &sc->sc_ccolp))
 			sc->sc_crowp = sc->sc_ccolp = NULL;
 		if (sc->sc_ccolp != NULL)
