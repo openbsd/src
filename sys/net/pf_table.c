@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_table.c,v 1.26 2003/02/27 12:56:05 cedric Exp $	*/
+/*	$OpenBSD: pf_table.c,v 1.27 2003/02/28 11:04:05 cedric Exp $	*/
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -694,6 +694,7 @@ pfr_lookup_addr(struct pfr_ktable *kt, struct pfr_addr *ad, int exact)
 	union sockaddr_union	 sa, mask;
 	struct radix_node_head	*head;
 	struct pfr_kentry	*ke;
+	int			 s;
 
 	bzero(&sa, sizeof(sa));
 	if (ad->pfra_af == AF_INET) {
@@ -705,7 +706,9 @@ pfr_lookup_addr(struct pfr_ktable *kt, struct pfr_addr *ad, int exact)
 	}
 	if (ADDR_NETWORK(ad)) {
 		pfr_prepare_network(&mask, ad->pfra_af, ad->pfra_net);
+		s = splsoftnet(); /* rn_lookup makes use of globals */
 		ke = (struct pfr_kentry *)rn_lookup(&sa, &mask, head);
+		splx(s);
 	} else {
 		ke = (struct pfr_kentry *)rn_match(&sa, head);
 		if (exact && ke && KENTRY_NETWORK(ke))
