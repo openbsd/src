@@ -1,4 +1,4 @@
-/* $OpenBSD: isakmpd.c,v 1.73 2005/02/27 13:12:12 hshoexer Exp $	 */
+/* $OpenBSD: isakmpd.c,v 1.74 2005/03/22 17:27:59 cloder Exp $	 */
 /* $EOM: isakmpd.c,v 1.54 2000/10/05 09:28:22 niklas Exp $	 */
 
 /*
@@ -191,9 +191,11 @@ parse_args(int argc, char *argv[])
 			app_none++;
 			break;
 
+#ifdef USE_NAT_TRAVERSAL
 		case 'N':
 			udp_encap_default_port = optarg;
 			break;
+#endif
 
 		case 'p':
 			udp_default_port = optarg;
