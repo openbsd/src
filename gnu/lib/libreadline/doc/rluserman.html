@@ -1,0 +1,1566 @@
+<HTML>
+<HEAD>
+<!-- This HTML file has been created by texi2html 1.52
+     from /usr/homes/chet/src/bash/readline-src/doc/rluserman.texinfo on 1 March 2000 -->
+
+<TITLE>GNU Readline Library</TITLE>
+</HEAD>
+<BODY>
+<H1>GNU Readline Library User Interface</H1>
+<H2>Edition 4.1, for <CODE>Readline Library</CODE> Version 4.1.</H2>
+<H2>January 2000</H2>
+<ADDRESS>Brian Fox, Free Software Foundation</ADDRESS>
+<ADDRESS>Chet Ramey, Case Western Reserve University</ADDRESS>
+<P>
+<P><HR><P>
+<H1>Table of Contents</H1>
+<UL>
+<LI><A NAME="TOC1" HREF="rluserman.html#SEC1">Command Line Editing</A>
+<UL>
+<LI><A NAME="TOC2" HREF="rluserman.html#SEC2">Introduction to Line Editing</A>
+<LI><A NAME="TOC3" HREF="rluserman.html#SEC3">Readline Interaction</A>
+<UL>
+<LI><A NAME="TOC4" HREF="rluserman.html#SEC4">Readline Bare Essentials</A>
+<LI><A NAME="TOC5" HREF="rluserman.html#SEC5">Readline Movement Commands</A>
+<LI><A NAME="TOC6" HREF="rluserman.html#SEC6">Readline Killing Commands</A>
+<LI><A NAME="TOC7" HREF="rluserman.html#SEC7">Readline Arguments</A>
+<LI><A NAME="TOC8" HREF="rluserman.html#SEC8">Searching for Commands in the History</A>
+</UL>
+<LI><A NAME="TOC9" HREF="rluserman.html#SEC9">Readline Init File</A>
+<UL>
+<LI><A NAME="TOC10" HREF="rluserman.html#SEC10">Readline Init File Syntax</A>
+<LI><A NAME="TOC11" HREF="rluserman.html#SEC11">Conditional Init Constructs</A>
+<LI><A NAME="TOC12" HREF="rluserman.html#SEC12">Sample Init File</A>
+</UL>
+<LI><A NAME="TOC13" HREF="rluserman.html#SEC13">Bindable Readline Commands</A>
+<UL>
+<LI><A NAME="TOC14" HREF="rluserman.html#SEC14">Commands For Moving</A>
+<LI><A NAME="TOC15" HREF="rluserman.html#SEC15">Commands For Manipulating The History</A>
+<LI><A NAME="TOC16" HREF="rluserman.html#SEC16">Commands For Changing Text</A>
+<LI><A NAME="TOC17" HREF="rluserman.html#SEC17">Killing And Yanking</A>
+<LI><A NAME="TOC18" HREF="rluserman.html#SEC18">Specifying Numeric Arguments</A>
+<LI><A NAME="TOC19" HREF="rluserman.html#SEC19">Letting Readline Type For You</A>
+<LI><A NAME="TOC20" HREF="rluserman.html#SEC20">Keyboard Macros</A>
+<LI><A NAME="TOC21" HREF="rluserman.html#SEC21">Some Miscellaneous Commands</A>
+</UL>
+<LI><A NAME="TOC22" HREF="rluserman.html#SEC22">Readline vi Mode</A>
+</UL>
+</UL>
+<P><HR><P>
+
+<P>
+This document describes the end user interface of the GNU Readline Library,
+a utility which aids in the consistency of user interface across discrete
+programs that need to provide a command line interface.
+
+</P>
+<P>
+Published by the Free Software Foundation <BR>
+59 Temple Place, Suite 330, <BR>
+Boston, MA 02111 USA
+
+</P>
+<P>
+Permission is granted to make and distribute verbatim copies of
+this manual provided the copyright notice and this permission notice
+are preserved on all copies.
+
+</P>
+<P>
+Permission is granted to copy and distribute modified versions of this
+manual under the conditions for verbatim copying, provided that the entire
+resulting derived work is distributed under the terms of a permission
+notice identical to this one.
+
+</P>
+<P>
+Permission is granted to copy and distribute translations of this manual
+into another language, under the above conditions for modified versions,
+except that this permission notice may be stated in a translation approved
+by the Free Software Foundation.
+
+</P>
+<P>
+Copyright (C) 1988-1999 Free Software Foundation, Inc.
+
+</P>
+
+
+
+<H1><A NAME="SEC1" HREF="rluserman.html#TOC1">Command Line Editing</A></H1>
+
+<P>
+This chapter describes the basic features of the GNU
+command line editing interface.
+
+</P>
+
+<UL>
+<LI><A HREF="rluserman.html#SEC2">Introduction and Notation</A>: Notation used in this text.
+<LI><A HREF="rluserman.html#SEC3">Readline Interaction</A>: The minimum set of commands for editing a line.
+<LI><A HREF="rluserman.html#SEC9">Readline Init File</A>: Customizing Readline from a user's view.
+<LI><A HREF="rluserman.html#SEC13">Bindable Readline Commands</A>: A description of most of the Readline commands
+				available for binding
+<LI><A HREF="rluserman.html#SEC22">Readline vi Mode</A>: A short description of how to make Readline
+				behave like the vi editor.
+</UL>
+
+
+
+<H2><A NAME="SEC2" HREF="rluserman.html#TOC2">Introduction to Line Editing</A></H2>
+
+<P>
+The following paragraphs describe the notation used to represent
+keystrokes.
+
+</P>
+<P>
+The text <KBD>C-k</KBD> is read as `Control-K' and describes the character
+produced when the <KBD>k</KBD> key is pressed while the Control key
+is depressed.
+
+</P>
+<P>
+The text <KBD>M-k</KBD> is read as `Meta-K' and describes the character
+produced when the Meta key (if you have one) is depressed, and the <KBD>k</KBD>
+key is pressed.
+The Meta key is labeled <KBD>ALT</KBD> on many keyboards.
+On keyboards with two keys labeled <KBD>ALT</KBD> (usually to either side of
+the space bar), the <KBD>ALT</KBD> on the left side is generally set to
+work as a Meta key.
+The <KBD>ALT</KBD> key on the right may also be configured to work as a
+Meta key or may be configured as some other modifier, such as a
+Compose key for typing accented characters.
+
+</P>
+<P>
+If you do not have a Meta or <KBD>ALT</KBD> key, or another key working as
+a Meta key, the identical keystroke can be generated by typing <KBD>ESC</KBD>
+<I>first</I>, and then typing <KBD>k</KBD>.
+Either process is known as <EM>metafying</EM> the <KBD>k</KBD> key.
+
+</P>
+<P>
+The text <KBD>M-C-k</KBD> is read as `Meta-Control-k' and describes the
+character produced by <EM>metafying</EM> <KBD>C-k</KBD>.
+
+</P>
+<P>
+In addition, several keys have their own names.  Specifically,
+<KBD>DEL</KBD>, <KBD>ESC</KBD>, <KBD>LFD</KBD>, <KBD>SPC</KBD>, <KBD>RET</KBD>, and <KBD>TAB</KBD> all
+stand for themselves when seen in this text, or in an init file
+(see section <A HREF="rluserman.html#SEC9">Readline Init File</A>).
+If your keyboard lacks a <KBD>LFD</KBD> key, typing <KBD>C-j</KBD> will
+produce the desired character.
+The <KBD>RET</KBD> key may be labeled <KBD>Return</KBD> or <KBD>Enter</KBD> on
+some keyboards.
+
+</P>
+
+
+<H2><A NAME="SEC3" HREF="rluserman.html#TOC3">Readline Interaction</A></H2>
+<P>
+<A NAME="IDX1"></A>
+
+</P>
+<P>
+Often during an interactive session you type in a long line of text,
+only to notice that the first word on the line is misspelled.  The
+Readline library gives you a set of commands for manipulating the text
+as you type it in, allowing you to just fix your typo, and not forcing
+you to retype the majority of the line.  Using these editing commands,
+you move the cursor to the place that needs correction, and delete or
+insert the text of the corrections.  Then, when you are satisfied with
+the line, you simply press <KBD>RETURN</KBD>.  You do not have to be at the
+end of the line to press <KBD>RETURN</KBD>; the entire line is accepted
+regardless of the location of the cursor within the line.
+
+</P>
+
+<UL>
+<LI><A HREF="rluserman.html#SEC4">Readline Bare Essentials</A>: The least you need to know about Readline.
+<LI><A HREF="rluserman.html#SEC5">Readline Movement Commands</A>: Moving about the input line.
+<LI><A HREF="rluserman.html#SEC6">Readline Killing Commands</A>: How to delete text, and how to get it back!
+<LI><A HREF="rluserman.html#SEC7">Readline Arguments</A>: Giving numeric arguments to commands.
+<LI><A HREF="rluserman.html#SEC8">Searching</A>: Searching through previous lines.
+</UL>
+
+
+
+<H3><A NAME="SEC4" HREF="rluserman.html#TOC4">Readline Bare Essentials</A></H3>
+<P>
+<A NAME="IDX2"></A>
+<A NAME="IDX3"></A>
+<A NAME="IDX4"></A>
+
+</P>
+<P>
+In order to enter characters into the line, simply type them.  The typed
+character appears where the cursor was, and then the cursor moves one
+space to the right.  If you mistype a character, you can use your
+erase character to back up and delete the mistyped character.
+
+</P>
+<P>
+Sometimes you may mistype a character, and
+not notice the error until you have typed several other characters.  In
+that case, you can type <KBD>C-b</KBD> to move the cursor to the left, and then
+correct your mistake.  Afterwards, you can move the cursor to the right
+with <KBD>C-f</KBD>.
+
+</P>
+<P>
+When you add text in the middle of a line, you will notice that characters
+to the right of the cursor are `pushed over' to make room for the text
+that you have inserted.  Likewise, when you delete text behind the cursor,
+characters to the right of the cursor are `pulled back' to fill in the
+blank space created by the removal of the text.  A list of the bare
+essentials for editing the text of an input line follows.
+
+</P>
+<DL COMPACT>
+
+<DT><KBD>C-b</KBD>
+<DD>
+Move back one character.
+<DT><KBD>C-f</KBD>
+<DD>
+Move forward one character.
+<DT><KBD>DEL</KBD> or <KBD>Backspace</KBD>
+<DD>
+Delete the character to the left of the cursor.
+<DT><KBD>C-d</KBD>
+<DD>
+Delete the character underneath the cursor.
+<DT>Printing characters
+<DD>
+Insert the character into the line at the cursor.
+<DT><KBD>C-_</KBD> or <KBD>C-x C-u</KBD>
+<DD>
+Undo the last editing command.  You can undo all the way back to an
+empty line.
+</DL>
+
+<P>
+(Depending on your configuration, the <KBD>Backspace</KBD> key be set to
+delete the character to the left of the cursor and the <KBD>DEL</KBD> key set
+to delete the character underneath the cursor, like <KBD>C-d</KBD>, rather
+than the character to the left of the cursor.)
+
+</P>
+
+
+<H3><A NAME="SEC5" HREF="rluserman.html#TOC5">Readline Movement Commands</A></H3>
+
+<P>
+The above table describes the most basic keystrokes that you need
+in order to do editing of the input line.  For your convenience, many
+other commands have been added in addition to <KBD>C-b</KBD>, <KBD>C-f</KBD>,
+<KBD>C-d</KBD>, and <KBD>DEL</KBD>.  Here are some commands for moving more rapidly
+about the line.
+
+</P>
+<DL COMPACT>
+
+<DT><KBD>C-a</KBD>
+<DD>
+Move to the start of the line.
+<DT><KBD>C-e</KBD>
+<DD>
+Move to the end of the line.
+<DT><KBD>M-f</KBD>
+<DD>
+Move forward a word, where a word is composed of letters and digits.
+<DT><KBD>M-b</KBD>
+<DD>
+Move backward a word.
+<DT><KBD>C-l</KBD>
+<DD>
+Clear the screen, reprinting the current line at the top.
+</DL>
+
+<P>
+Notice how <KBD>C-f</KBD> moves forward a character, while <KBD>M-f</KBD> moves
+forward a word.  It is a loose convention that control keystrokes
+operate on characters while meta keystrokes operate on words.
+
+</P>
+
+
+<H3><A NAME="SEC6" HREF="rluserman.html#TOC6">Readline Killing Commands</A></H3>
+
+<P>
+<A NAME="IDX5"></A>
+<A NAME="IDX6"></A>
+
+</P>
+<P>
+<EM>Killing</EM> text means to delete the text from the line, but to save
+it away for later use, usually by <EM>yanking</EM> (re-inserting)
+it back into the line.
+(`Cut' and `paste' are more recent jargon for `kill' and `yank'.)
+
+</P>
+<P>
+If the description for a command says that it `kills' text, then you can
+be sure that you can get the text back in a different (or the same)
+place later.
+
+</P>
+<P>
+When you use a kill command, the text is saved in a <EM>kill-ring</EM>.
+Any number of consecutive kills save all of the killed text together, so
+that when you yank it back, you get it all.  The kill
+ring is not line specific; the text that you killed on a previously
+typed line is available to be yanked back later, when you are typing
+another line.
+<A NAME="IDX7"></A>
+
+</P>
+<P>
+Here is the list of commands for killing text.
+
+</P>
+<DL COMPACT>
+
+<DT><KBD>C-k</KBD>
+<DD>
+Kill the text from the current cursor position to the end of the line.
+
+<DT><KBD>M-d</KBD>
+<DD>
+Kill from the cursor to the end of the current word, or, if between
+words, to the end of the next word.
+Word boundaries are the same as those used by <KBD>M-f</KBD>.
+
+<DT><KBD>M-DEL</KBD>
+<DD>
+Kill from the cursor the start of the previous word, or, if between
+words, to the start of the previous word.
+Word boundaries are the same as those used by <KBD>M-b</KBD>.
+
+<DT><KBD>C-w</KBD>
+<DD>
+Kill from the cursor to the previous whitespace.  This is different than
+<KBD>M-DEL</KBD> because the word boundaries differ.
+
+</DL>
+
+<P>
+Here is how to <EM>yank</EM> the text back into the line.  Yanking
+means to copy the most-recently-killed text from the kill buffer.
+
+</P>
+<DL COMPACT>
+
+<DT><KBD>C-y</KBD>
+<DD>
+Yank the most recently killed text back into the buffer at the cursor.
+
+<DT><KBD>M-y</KBD>
+<DD>
+Rotate the kill-ring, and yank the new top.  You can only do this if
+the prior command is <KBD>C-y</KBD> or <KBD>M-y</KBD>.
+</DL>
+
+
+
+<H3><A NAME="SEC7" HREF="rluserman.html#TOC7">Readline Arguments</A></H3>
+
+<P>
+You can pass numeric arguments to Readline commands.  Sometimes the
+argument acts as a repeat count, other times it is the <I>sign</I> of the
+argument that is significant.  If you pass a negative argument to a
+command which normally acts in a forward direction, that command will
+act in a backward direction.  For example, to kill text back to the
+start of the line, you might type <SAMP>`M-- C-k'</SAMP>.
+
+</P>
+<P>
+The general way to pass numeric arguments to a command is to type meta
+digits before the command.  If the first `digit' typed is a minus
+sign (<SAMP>`-'</SAMP>), then the sign of the argument will be negative.  Once
+you have typed one meta digit to get the argument started, you can type
+the remainder of the digits, and then the command.  For example, to give
+the <KBD>C-d</KBD> command an argument of 10, you could type <SAMP>`M-1 0 C-d'</SAMP>.
+
+</P>
+
+
+<H3><A NAME="SEC8" HREF="rluserman.html#TOC8">Searching for Commands in the History</A></H3>
+
+<P>
+Readline provides commands for searching through the command history
+for lines containing a specified string.
+There are two search modes:  <VAR>incremental</VAR> and <VAR>non-incremental</VAR>.
+
+</P>
+<P>
+Incremental searches begin before the user has finished typing the
+search string.
+As each character of the search string is typed, Readline displays
+the next entry from the history matching the string typed so far.
+An incremental search requires only as many characters as needed to
+find the desired history entry.
+To search backward in the history for a particular string, type
+<KBD>C-r</KBD>.  Typing <KBD>C-s</KBD> searches forward through the history.
+The characters present in the value of the <CODE>isearch-terminators</CODE> variable
+are used to terminate an incremental search.
+If that variable has not been assigned a value, the <KBD>ESC</KBD> and
+<KBD>C-J</KBD> characters will terminate an incremental search.
+<KBD>C-g</KBD> will abort an incremental search and restore the original line.
+When the search is terminated, the history entry containing the
+search string becomes the current line.
+
+</P>
+<P>
+To find other matching entries in the history list, type <KBD>C-r</KBD> or
+<KBD>C-s</KBD> as appropriate.
+This will search backward or forward in the history for the next
+entry matching the search string typed so far.
+Any other key sequence bound to a Readline command will terminate
+the search and execute that command.
+For instance, a <KBD>RET</KBD> will terminate the search and accept
+the line, thereby executing the command from the history list.
+
+</P>
+<P>
+Non-incremental searches read the entire search string before starting
+to search for matching history lines.  The search string may be
+typed by the user or be part of the contents of the current line.
+
+</P>
+
+
+<H2><A NAME="SEC9" HREF="rluserman.html#TOC9">Readline Init File</A></H2>
+<P>
+<A NAME="IDX8"></A>
+
+</P>
+<P>
+Although the Readline library comes with a set of Emacs-like
+keybindings installed by default, it is possible to use a different set
+of keybindings.
+Any user can customize programs that use Readline by putting
+commands in an <EM>inputrc</EM> file, conventionally in his home directory.
+The name of this
+file is taken from the value of the environment variable <CODE>INPUTRC</CODE>.  If
+that variable is unset, the default is <TT>`~/.inputrc'</TT>.
+
+</P>
+<P>
+When a program which uses the Readline library starts up, the
+init file is read, and the key bindings are set.
+
+</P>
+<P>
+In addition, the <CODE>C-x C-r</CODE> command re-reads this init file, thus
+incorporating any changes that you might have made to it.
+
+</P>
+
+<UL>
+<LI><A HREF="rluserman.html#SEC10">Readline Init File Syntax</A>: Syntax for the commands in the inputrc file.
+
+<LI><A HREF="rluserman.html#SEC11">Conditional Init Constructs</A>: Conditional key bindings in the inputrc file.
+
+<LI><A HREF="rluserman.html#SEC12">Sample Init File</A>: An example inputrc file.
+</UL>
+
+
+
+<H3><A NAME="SEC10" HREF="rluserman.html#TOC10">Readline Init File Syntax</A></H3>
+
+<P>
+There are only a few basic constructs allowed in the
+Readline init file.  Blank lines are ignored.
+Lines beginning with a <SAMP>`#'</SAMP> are comments.
+Lines beginning with a <SAMP>`$'</SAMP> indicate conditional
+constructs (see section <A HREF="rluserman.html#SEC11">Conditional Init Constructs</A>).  Other lines
+denote variable settings and key bindings.
+
+</P>
+<DL COMPACT>
+
+<DT>Variable Settings
+<DD>
+You can modify the run-time behavior of Readline by
+altering the values of variables in Readline
+using the <CODE>set</CODE> command within the init file.  Here is how to
+change from the default Emacs-like key binding to use
+<CODE>vi</CODE> line editing commands:
+
+
+<PRE>
+set editing-mode vi
+</PRE>
+
+A great deal of run-time behavior is changeable with the following
+variables.
+
+<DL COMPACT>
+
+<DT><CODE>bell-style</CODE>
+<DD>
+<A NAME="IDX9"></A>
+Controls what happens when Readline wants to ring the terminal bell.
+If set to <SAMP>`none'</SAMP>, Readline never rings the bell.  If set to
+<SAMP>`visible'</SAMP>, Readline uses a visible bell if one is available.
+If set to <SAMP>`audible'</SAMP> (the default), Readline attempts to ring
+the terminal's bell.
+
+<DT><CODE>comment-begin</CODE>
+<DD>
+<A NAME="IDX10"></A>
+The string to insert at the beginning of the line when the
+<CODE>insert-comment</CODE> command is executed.  The default value
+is <CODE>"#"</CODE>.
+
+<DT><CODE>completion-ignore-case</CODE>
+<DD>
+If set to <SAMP>`on'</SAMP>, Readline performs filename matching and completion
+in a case-insensitive fashion.
+The default value is <SAMP>`off'</SAMP>.
+
+<DT><CODE>completion-query-items</CODE>
+<DD>
+<A NAME="IDX11"></A>
+The number of possible completions that determines when the user is
+asked whether he wants to see the list of possibilities.  If the
+number of possible completions is greater than this value,
+Readline will ask the user whether or not he wishes to view
+them; otherwise, they are simply listed.  The default limit is
+<CODE>100</CODE>.
+
+<DT><CODE>convert-meta</CODE>
+<DD>
+<A NAME="IDX12"></A>
+If set to <SAMP>`on'</SAMP>, Readline will convert characters with the
+eighth bit set to an ASCII key sequence by stripping the eighth
+bit and prefixing an <KBD>ESC</KBD> character, converting them to a
+meta-prefixed key sequence.  The default value is <SAMP>`on'</SAMP>.
+
+<DT><CODE>disable-completion</CODE>
+<DD>
+<A NAME="IDX13"></A>
+If set to <SAMP>`On'</SAMP>, Readline will inhibit word completion.
+Completion  characters will be inserted into the line as if they had
+been mapped to <CODE>self-insert</CODE>.  The default is <SAMP>`off'</SAMP>.
+
+<DT><CODE>editing-mode</CODE>
+<DD>
+<A NAME="IDX14"></A>
+The <CODE>editing-mode</CODE> variable controls which default set of
+key bindings is used.  By default, Readline starts up in Emacs editing
+mode, where the keystrokes are most similar to Emacs.  This variable can be
+set to either <SAMP>`emacs'</SAMP> or <SAMP>`vi'</SAMP>.
+
+<DT><CODE>enable-keypad</CODE>
+<DD>
+<A NAME="IDX15"></A>
+When set to <SAMP>`on'</SAMP>, Readline will try to enable the application
+keypad when it is called.  Some systems need this to enable the
+arrow keys.  The default is <SAMP>`off'</SAMP>.
+
+<DT><CODE>expand-tilde</CODE>
+<DD>
+<A NAME="IDX16"></A>
+If set to <SAMP>`on'</SAMP>, tilde expansion is performed when Readline
+attempts word completion.  The default is <SAMP>`off'</SAMP>.
+
+<DT><CODE>horizontal-scroll-mode</CODE>
+<DD>
+<A NAME="IDX17"></A>
+This variable can be set to either <SAMP>`on'</SAMP> or <SAMP>`off'</SAMP>.  Setting it
+to <SAMP>`on'</SAMP> means that the text of the lines being edited will scroll
+horizontally on a single screen line when they are longer than the width
+of the screen, instead of wrapping onto a new screen line.  By default,
+this variable is set to <SAMP>`off'</SAMP>.
+
+<DT><CODE>input-meta</CODE>
+<DD>
+<A NAME="IDX18"></A>
+<A NAME="IDX19"></A>
+If set to <SAMP>`on'</SAMP>, Readline will enable eight-bit input (it
+will not strip the eighth bit from the characters it reads),
+regardless of what the terminal claims it can support.  The
+default value is <SAMP>`off'</SAMP>.  The name <CODE>meta-flag</CODE> is a
+synonym for this variable.
+
+<DT><CODE>isearch-terminators</CODE>
+<DD>
+<A NAME="IDX20"></A>
+The string of characters that should terminate an incremental search without
+subsequently executing the character as a command (see section <A HREF="rluserman.html#SEC8">Searching for Commands in the History</A>).
+If this variable has not been given a value, the characters <KBD>ESC</KBD> and
+<KBD>C-J</KBD> will terminate an incremental search.
+
+<DT><CODE>keymap</CODE>
+<DD>
+<A NAME="IDX21"></A>
+Sets Readline's idea of the current keymap for key binding commands.
+Acceptable <CODE>keymap</CODE> names are
+<CODE>emacs</CODE>,
+<CODE>emacs-standard</CODE>,
+<CODE>emacs-meta</CODE>,
+<CODE>emacs-ctlx</CODE>,
+<CODE>vi</CODE>,
+<CODE>vi-command</CODE>, and
+<CODE>vi-insert</CODE>.
+<CODE>vi</CODE> is equivalent to <CODE>vi-command</CODE>; <CODE>emacs</CODE> is
+equivalent to <CODE>emacs-standard</CODE>.  The default value is <CODE>emacs</CODE>.
+The value of the <CODE>editing-mode</CODE> variable also affects the
+default keymap.
+
+<DT><CODE>mark-directories</CODE>
+<DD>
+If set to <SAMP>`on'</SAMP>, completed directory names have a slash
+appended.  The default is <SAMP>`on'</SAMP>.
+
+<DT><CODE>mark-modified-lines</CODE>
+<DD>
+<A NAME="IDX22"></A>
+This variable, when set to <SAMP>`on'</SAMP>, causes Readline to display an
+asterisk (<SAMP>`*'</SAMP>) at the start of history lines which have been modified.
+This variable is <SAMP>`off'</SAMP> by default.
+
+<DT><CODE>output-meta</CODE>
+<DD>
+<A NAME="IDX23"></A>
+If set to <SAMP>`on'</SAMP>, Readline will display characters with the
+eighth bit set directly rather than as a meta-prefixed escape
+sequence.  The default is <SAMP>`off'</SAMP>.
+
+<DT><CODE>print-completions-horizontally</CODE>
+<DD>
+If set to <SAMP>`on'</SAMP>, Readline will display completions with matches
+sorted horizontally in alphabetical order, rather than down the screen.
+The default is <SAMP>`off'</SAMP>.
+
+<DT><CODE>show-all-if-ambiguous</CODE>
+<DD>
+<A NAME="IDX24"></A>
+This alters the default behavior of the completion functions.  If
+set to <SAMP>`on'</SAMP>, 
+words which have more than one possible completion cause the
+matches to be listed immediately instead of ringing the bell.
+The default value is <SAMP>`off'</SAMP>.
+
+<DT><CODE>visible-stats</CODE>
+<DD>
+<A NAME="IDX25"></A>
+If set to <SAMP>`on'</SAMP>, a character denoting a file's type
+is appended to the filename when listing possible
+completions.  The default is <SAMP>`off'</SAMP>.
+
+</DL>
+
+<DT>Key Bindings
+<DD>
+The syntax for controlling key bindings in the init file is
+simple.  First you need to find the name of the command that you
+want to change.  The following sections contain tables of the command
+name, the default keybinding, if any, and a short description of what
+the command does.
+
+Once you know the name of the command, simply place the name of the key
+you wish to bind the command to, a colon, and then the name of the
+command on a line in the init file.  The name of the key
+can be expressed in different ways, depending on which is most
+comfortable for you.
+
+<DL COMPACT>
+
+<DT><VAR>keyname</VAR>: <VAR>function-name</VAR> or <VAR>macro</VAR>
+<DD>
+<VAR>keyname</VAR> is the name of a key spelled out in English.  For example:
+
+<PRE>
+Control-u: universal-argument
+Meta-Rubout: backward-kill-word
+Control-o: "&#62; output"
+</PRE>
+
+In the above example, <KBD>C-u</KBD> is bound to the function
+<CODE>universal-argument</CODE>, and <KBD>C-o</KBD> is bound to run the macro
+expressed on the right hand side (that is, to insert the text
+<SAMP>`&#62; output'</SAMP> into the line).
+
+<DT>"<VAR>keyseq</VAR>": <VAR>function-name</VAR> or <VAR>macro</VAR>
+<DD>
+<VAR>keyseq</VAR> differs from <VAR>keyname</VAR> above in that strings
+denoting an entire key sequence can be specified, by placing
+the key sequence in double quotes.  Some GNU Emacs style key
+escapes can be used, as in the following example, but the
+special character names are not recognized.
+
+
+<PRE>
+"\C-u": universal-argument
+"\C-x\C-r": re-read-init-file
+"\e[11~": "Function Key 1"
+</PRE>
+
+In the above example, <KBD>C-u</KBD> is bound to the function
+<CODE>universal-argument</CODE> (just as it was in the first example),
+<SAMP>`<KBD>C-x</KBD> <KBD>C-r</KBD>'</SAMP> is bound to the function <CODE>re-read-init-file</CODE>,
+and <SAMP>`<KBD>ESC</KBD> <KBD>[</KBD> <KBD>1</KBD> <KBD>1</KBD> <KBD>~</KBD>'</SAMP> is bound to insert
+the text <SAMP>`Function Key 1'</SAMP>.
+
+</DL>
+
+The following GNU Emacs style escape sequences are available when
+specifying key sequences:
+
+<DL COMPACT>
+
+<DT><CODE><KBD>\C-</KBD></CODE>
+<DD>
+control prefix
+<DT><CODE><KBD>\M-</KBD></CODE>
+<DD>
+meta prefix
+<DT><CODE><KBD>\e</KBD></CODE>
+<DD>
+an escape character
+<DT><CODE><KBD>\\</KBD></CODE>
+<DD>
+backslash
+<DT><CODE><KBD>\"</KBD></CODE>
+<DD>
+<KBD>"</KBD>, a double quotation mark
+<DT><CODE><KBD>\'</KBD></CODE>
+<DD>
+<KBD>'</KBD>, a single quote or apostrophe
+</DL>
+
+In addition to the GNU Emacs style escape sequences, a second
+set of backslash escapes is available:
+
+<DL COMPACT>
+
+<DT><CODE>\a</CODE>
+<DD>
+alert (bell)
+<DT><CODE>\b</CODE>
+<DD>
+backspace
+<DT><CODE>\d</CODE>
+<DD>
+delete
+<DT><CODE>\f</CODE>
+<DD>
+form feed
+<DT><CODE>\n</CODE>
+<DD>
+newline
+<DT><CODE>\r</CODE>
+<DD>
+carriage return
+<DT><CODE>\t</CODE>
+<DD>
+horizontal tab
+<DT><CODE>\v</CODE>
+<DD>
+vertical tab
+<DT><CODE>\<VAR>nnn</VAR></CODE>
+<DD>
+the character whose <CODE>ASCII</CODE> code is the octal value <VAR>nnn</VAR>
+(one to three digits)
+<DT><CODE>\x<VAR>nnn</VAR></CODE>
+<DD>
+the character whose <CODE>ASCII</CODE> code is the hexadecimal value <VAR>nnn</VAR>
+(one to three digits)
+</DL>
+
+When entering the text of a macro, single or double quotes must
+be used to indicate a macro definition.
+Unquoted text is assumed to be a function name.
+In the macro body, the backslash escapes described above are expanded.
+Backslash will quote any other character in the macro text,
+including <SAMP>`"'</SAMP> and <SAMP>`''</SAMP>.
+For example, the following binding will make <SAMP>`C-x \'</SAMP>
+insert a single <SAMP>`\'</SAMP> into the line:
+
+<PRE>
+"\C-x\\": "\\"
+</PRE>
+
+</DL>
+
+
+
+<H3><A NAME="SEC11" HREF="rluserman.html#TOC11">Conditional Init Constructs</A></H3>
+
+<P>
+Readline implements a facility similar in spirit to the conditional
+compilation features of the C preprocessor which allows key
+bindings and variable settings to be performed as the result
+of tests.  There are four parser directives used.
+
+</P>
+<DL COMPACT>
+
+<DT><CODE>$if</CODE>
+<DD>
+The <CODE>$if</CODE> construct allows bindings to be made based on the
+editing mode, the terminal being used, or the application using
+Readline.  The text of the test extends to the end of the line;
+no characters are required to isolate it.
+
+<DL COMPACT>
+
+<DT><CODE>mode</CODE>
+<DD>
+The <CODE>mode=</CODE> form of the <CODE>$if</CODE> directive is used to test
+whether Readline is in <CODE>emacs</CODE> or <CODE>vi</CODE> mode.
+This may be used in conjunction
+with the <SAMP>`set keymap'</SAMP> command, for instance, to set bindings in
+the <CODE>emacs-standard</CODE> and <CODE>emacs-ctlx</CODE> keymaps only if
+Readline is starting out in <CODE>emacs</CODE> mode.
+
+<DT><CODE>term</CODE>
+<DD>
+The <CODE>term=</CODE> form may be used to include terminal-specific
+key bindings, perhaps to bind the key sequences output by the
+terminal's function keys.  The word on the right side of the
+<SAMP>`='</SAMP> is tested against both the full name of the terminal and
+the portion of the terminal name before the first <SAMP>`-'</SAMP>.  This
+allows <CODE>sun</CODE> to match both <CODE>sun</CODE> and <CODE>sun-cmd</CODE>,
+for instance.
+
+<DT><CODE>application</CODE>
+<DD>
+The <VAR>application</VAR> construct is used to include
+application-specific settings.  Each program using the Readline
+library sets the <VAR>application name</VAR>, and you can test for it. 
+This could be used to bind key sequences to functions useful for
+a specific program.  For instance, the following command adds a
+key sequence that quotes the current or previous word in Bash:
+
+<PRE>
+$if Bash
+# Quote the current or previous word
+"\C-xq": "\eb\"\ef\""
+$endif
+</PRE>
+
+</DL>
+
+<DT><CODE>$endif</CODE>
+<DD>
+This command, as seen in the previous example, terminates an
+<CODE>$if</CODE> command.
+
+<DT><CODE>$else</CODE>
+<DD>
+Commands in this branch of the <CODE>$if</CODE> directive are executed if
+the test fails.
+
+<DT><CODE>$include</CODE>
+<DD>
+This directive takes a single filename as an argument and reads commands
+and bindings from that file.
+
+<PRE>
+$include /etc/inputrc
+</PRE>
+
+</DL>
+
+
+
+<H3><A NAME="SEC12" HREF="rluserman.html#TOC12">Sample Init File</A></H3>
+
+<P>
+Here is an example of an inputrc file.  This illustrates key
+binding, variable assignment, and conditional syntax.
+
+</P>
+
+<PRE>
+# This file controls the behaviour of line input editing for
+# programs that use the Gnu Readline library.  Existing programs
+# include FTP, Bash, and Gdb.
+#
+# You can re-read the inputrc file with C-x C-r.
+# Lines beginning with '#' are comments.
+#
+# First, include any systemwide bindings and variable assignments from
+# /etc/Inputrc
+$include /etc/Inputrc
+
+#
+# Set various bindings for emacs mode.
+
+set editing-mode emacs 
+
+$if mode=emacs
+
+Meta-Control-h:	backward-kill-word	Text after the function name is ignored
+
+#
+# Arrow keys in keypad mode
+#
+#"\M-OD":        backward-char
+#"\M-OC":        forward-char
+#"\M-OA":        previous-history
+#"\M-OB":        next-history
+#
+# Arrow keys in ANSI mode
+#
+"\M-[D":        backward-char
+"\M-[C":        forward-char
+"\M-[A":        previous-history
+"\M-[B":        next-history
+#
+# Arrow keys in 8 bit keypad mode
+#
+#"\M-\C-OD":       backward-char
+#"\M-\C-OC":       forward-char
+#"\M-\C-OA":       previous-history
+#"\M-\C-OB":       next-history
+#
+# Arrow keys in 8 bit ANSI mode
+#
+#"\M-\C-[D":       backward-char
+#"\M-\C-[C":       forward-char
+#"\M-\C-[A":       previous-history
+#"\M-\C-[B":       next-history
+
+C-q: quoted-insert
+
+$endif
+
+# An old-style binding.  This happens to be the default.
+TAB: complete
+
+# Macros that are convenient for shell interaction
+$if Bash
+# edit the path
+"\C-xp": "PATH=${PATH}\e\C-e\C-a\ef\C-f"
+# prepare to type a quoted word -- insert open and close double quotes
+# and move to just after the open quote
+"\C-x\"": "\"\"\C-b"
+# insert a backslash (testing backslash escapes in sequences and macros)
+"\C-x\\": "\\"
+# Quote the current or previous word
+"\C-xq": "\eb\"\ef\""
+# Add a binding to refresh the line, which is unbound
+"\C-xr": redraw-current-line
+# Edit variable on current line.
+"\M-\C-v": "\C-a\C-k$\C-y\M-\C-e\C-a\C-y="
+$endif
+
+# use a visible bell if one is available
+set bell-style visible
+
+# don't strip characters to 7 bits when reading
+set input-meta on
+
+# allow iso-latin1 characters to be inserted rather than converted to
+# prefix-meta sequences
+set convert-meta off
+
+# display characters with the eighth bit set directly rather than
+# as meta-prefixed characters
+set output-meta on
+
+# if there are more than 150 possible completions for a word, ask the
+# user if he wants to see all of them
+set completion-query-items 150
+
+# For FTP
+$if Ftp
+"\C-xg": "get \M-?"
+"\C-xt": "put \M-?"
+"\M-.": yank-last-arg
+$endif
+</PRE>
+
+
+
+<H2><A NAME="SEC13" HREF="rluserman.html#TOC13">Bindable Readline Commands</A></H2>
+
+
+<UL>
+<LI><A HREF="rluserman.html#SEC14">Commands For Moving</A>: Moving about the line.
+<LI><A HREF="rluserman.html#SEC15">Commands For History</A>: Getting at previous lines.
+<LI><A HREF="rluserman.html#SEC16">Commands For Text</A>: Commands for changing text.
+<LI><A HREF="rluserman.html#SEC17">Commands For Killing</A>: Commands for killing and yanking.
+<LI><A HREF="rluserman.html#SEC18">Numeric Arguments</A>: Specifying numeric arguments, repeat counts.
+<LI><A HREF="rluserman.html#SEC19">Commands For Completion</A>: Getting Readline to do the typing for you.
+<LI><A HREF="rluserman.html#SEC20">Keyboard Macros</A>: Saving and re-executing typed characters
+<LI><A HREF="rluserman.html#SEC21">Miscellaneous Commands</A>: Other miscellaneous commands.
+</UL>
+
+<P>
+This section describes Readline commands that may be bound to key
+sequences.
+
+</P>
+<P>
+Command names without an accompanying key sequence are unbound by default.
+In the following descriptions, <VAR>point</VAR> refers to the current cursor
+position, and <VAR>mark</VAR> refers to a cursor position saved by the
+<CODE>set-mark</CODE> command.
+The text between the point and mark is referred to as the <VAR>region</VAR>.
+
+</P>
+
+
+<H3><A NAME="SEC14" HREF="rluserman.html#TOC14">Commands For Moving</A></H3>
+<DL COMPACT>
+
+<DT><CODE>beginning-of-line (C-a)</CODE>
+<DD>
+<A NAME="IDX26"></A>
+Move to the start of the current line.
+
+<DT><CODE>end-of-line (C-e)</CODE>
+<DD>
+<A NAME="IDX27"></A>
+Move to the end of the line.
+
+<DT><CODE>forward-char (C-f)</CODE>
+<DD>
+<A NAME="IDX28"></A>
+Move forward a character.
+
+<DT><CODE>backward-char (C-b)</CODE>
+<DD>
+<A NAME="IDX29"></A>
+Move back a character.
+
+<DT><CODE>forward-word (M-f)</CODE>
+<DD>
+<A NAME="IDX30"></A>
+Move forward to the end of the next word.  Words are composed of
+letters and digits.
+
+<DT><CODE>backward-word (M-b)</CODE>
+<DD>
+<A NAME="IDX31"></A>
+Move back to the start of the current or previous word.  Words are
+composed of letters and digits.
+
+<DT><CODE>clear-screen (C-l)</CODE>
+<DD>
+<A NAME="IDX32"></A>
+Clear the screen and redraw the current line,
+leaving the current line at the top of the screen.
+
+<DT><CODE>redraw-current-line ()</CODE>
+<DD>
+<A NAME="IDX33"></A>
+Refresh the current line.  By default, this is unbound.
+
+</DL>
+
+
+
+<H3><A NAME="SEC15" HREF="rluserman.html#TOC15">Commands For Manipulating The History</A></H3>
+
+<DL COMPACT>
+
+<DT><CODE>accept-line (Newline, Return)</CODE>
+<DD>
+<A NAME="IDX34"></A>
+Accept the line regardless of where the cursor is.  If this line is
+non-empty, add it to the history list.  If this line was a history
+line, then restore the history line to its original state.
+
+<DT><CODE>previous-history (C-p)</CODE>
+<DD>
+<A NAME="IDX35"></A>
+Move `up' through the history list.
+
+<DT><CODE>next-history (C-n)</CODE>
+<DD>
+<A NAME="IDX36"></A>
+Move `down' through the history list.
+
+<DT><CODE>beginning-of-history (M-&#60;)</CODE>
+<DD>
+<A NAME="IDX37"></A>
+Move to the first line in the history.
+
+<DT><CODE>end-of-history (M-&#62;)</CODE>
+<DD>
+<A NAME="IDX38"></A>
+Move to the end of the input history, i.e., the line currently
+being entered.
+
+<DT><CODE>reverse-search-history (C-r)</CODE>
+<DD>
+<A NAME="IDX39"></A>
+Search backward starting at the current line and moving `up' through
+the history as necessary.  This is an incremental search.
+
+<DT><CODE>forward-search-history (C-s)</CODE>
+<DD>
+<A NAME="IDX40"></A>
+Search forward starting at the current line and moving `down' through
+the the history as necessary.  This is an incremental search.
+
+<DT><CODE>non-incremental-reverse-search-history (M-p)</CODE>
+<DD>
+<A NAME="IDX41"></A>
+Search backward starting at the current line and moving `up'
+through the history as necessary using a non-incremental search
+for a string supplied by the user.
+
+<DT><CODE>non-incremental-forward-search-history (M-n)</CODE>
+<DD>
+<A NAME="IDX42"></A>
+Search forward starting at the current line and moving `down'
+through the the history as necessary using a non-incremental search
+for a string supplied by the user.
+
+<DT><CODE>history-search-forward ()</CODE>
+<DD>
+<A NAME="IDX43"></A>
+Search forward through the history for the string of characters
+between the start of the current line and the point.
+This is a non-incremental search.
+By default, this command is unbound.
+
+<DT><CODE>history-search-backward ()</CODE>
+<DD>
+<A NAME="IDX44"></A>
+Search backward through the history for the string of characters
+between the start of the current line and the point.  This
+is a non-incremental search.  By default, this command is unbound.
+
+<DT><CODE>yank-nth-arg (M-C-y)</CODE>
+<DD>
+<A NAME="IDX45"></A>
+Insert the first argument to the previous command (usually
+the second word on the previous line).  With an argument <VAR>n</VAR>,
+insert the <VAR>n</VAR>th word from the previous command (the words
+in the previous command begin with word 0).  A negative argument
+inserts the <VAR>n</VAR>th word from the end of the previous command.
+
+<DT><CODE>yank-last-arg (M-., M-_)</CODE>
+<DD>
+<A NAME="IDX46"></A>
+Insert last argument to the previous command (the last word of the
+previous history entry).  With an
+argument, behave exactly like <CODE>yank-nth-arg</CODE>.
+Successive calls to <CODE>yank-last-arg</CODE> move back through the history
+list, inserting the last argument of each line in turn.
+
+</DL>
+
+
+
+<H3><A NAME="SEC16" HREF="rluserman.html#TOC16">Commands For Changing Text</A></H3>
+
+<DL COMPACT>
+
+<DT><CODE>delete-char (C-d)</CODE>
+<DD>
+<A NAME="IDX47"></A>
+Delete the character under the cursor.  If the cursor is at the
+beginning of the line, there are no characters in the line, and
+the last character typed was not bound to <CODE>delete-char</CODE>, then
+return <CODE>EOF</CODE>.
+
+<DT><CODE>backward-delete-char (Rubout)</CODE>
+<DD>
+<A NAME="IDX48"></A>
+Delete the character behind the cursor.  A numeric argument means
+to kill the characters instead of deleting them.
+
+<DT><CODE>forward-backward-delete-char ()</CODE>
+<DD>
+<A NAME="IDX49"></A>
+Delete the character under the cursor, unless the cursor is at the
+end of the line, in which case the character behind the cursor is
+deleted.  By default, this is not bound to a key.
+
+<DT><CODE>quoted-insert (C-q, C-v)</CODE>
+<DD>
+<A NAME="IDX50"></A>
+Add the next character typed to the line verbatim.  This is
+how to insert key sequences like <KBD>C-q</KBD>, for example.
+
+<DT><CODE>tab-insert (M-TAB)</CODE>
+<DD>
+<A NAME="IDX51"></A>
+Insert a tab character.
+
+<DT><CODE>self-insert (a, b, A, 1, !, ...)</CODE>
+<DD>
+<A NAME="IDX52"></A>
+Insert yourself.
+
+<DT><CODE>transpose-chars (C-t)</CODE>
+<DD>
+<A NAME="IDX53"></A>
+Drag the character before the cursor forward over
+the character at the cursor, moving the
+cursor forward as well.  If the insertion point
+is at the end of the line, then this
+transposes the last two characters of the line.
+Negative arguments have no effect.
+
+<DT><CODE>transpose-words (M-t)</CODE>
+<DD>
+<A NAME="IDX54"></A>
+Drag the word before point past the word after point,
+moving point past that word as well.
+
+<DT><CODE>upcase-word (M-u)</CODE>
+<DD>
+<A NAME="IDX55"></A>
+Uppercase the current (or following) word.  With a negative argument,
+uppercase the previous word, but do not move the cursor.
+
+<DT><CODE>downcase-word (M-l)</CODE>
+<DD>
+<A NAME="IDX56"></A>
+Lowercase the current (or following) word.  With a negative argument,
+lowercase the previous word, but do not move the cursor.
+
+<DT><CODE>capitalize-word (M-c)</CODE>
+<DD>
+<A NAME="IDX57"></A>
+Capitalize the current (or following) word.  With a negative argument,
+capitalize the previous word, but do not move the cursor.
+
+</DL>
+
+
+
+<H3><A NAME="SEC17" HREF="rluserman.html#TOC17">Killing And Yanking</A></H3>
+
+<DL COMPACT>
+
+<DT><CODE>kill-line (C-k)</CODE>
+<DD>
+<A NAME="IDX58"></A>
+Kill the text from point to the end of the line.
+
+<DT><CODE>backward-kill-line (C-x Rubout)</CODE>
+<DD>
+<A NAME="IDX59"></A>
+Kill backward to the beginning of the line.
+
+<DT><CODE>unix-line-discard (C-u)</CODE>
+<DD>
+<A NAME="IDX60"></A>
+Kill backward from the cursor to the beginning of the current line.
+
+<DT><CODE>kill-whole-line ()</CODE>
+<DD>
+<A NAME="IDX61"></A>
+Kill all characters on the current line, no matter point is.
+By default, this is unbound.
+
+<DT><CODE>kill-word (M-d)</CODE>
+<DD>
+<A NAME="IDX62"></A>
+Kill from point to the end of the current word, or if between
+words, to the end of the next word.
+Word boundaries are the same as <CODE>forward-word</CODE>.
+
+<DT><CODE>backward-kill-word (M-DEL)</CODE>
+<DD>
+<A NAME="IDX63"></A>
+Kill the word behind point.
+Word boundaries are the same as <CODE>backward-word</CODE>.
+
+<DT><CODE>unix-word-rubout (C-w)</CODE>
+<DD>
+<A NAME="IDX64"></A>
+Kill the word behind point, using white space as a word boundary.
+The killed text is saved on the kill-ring.
+
+<DT><CODE>delete-horizontal-space ()</CODE>
+<DD>
+<A NAME="IDX65"></A>
+Delete all spaces and tabs around point.  By default, this is unbound.
+
+<DT><CODE>kill-region ()</CODE>
+<DD>
+<A NAME="IDX66"></A>
+Kill the text in the current region.
+By default, this command is unbound.
+
+<DT><CODE>copy-region-as-kill ()</CODE>
+<DD>
+<A NAME="IDX67"></A>
+Copy the text in the region to the kill buffer, so it can be yanked
+right away.  By default, this command is unbound.
+
+<DT><CODE>copy-backward-word ()</CODE>
+<DD>
+<A NAME="IDX68"></A>
+Copy the word before point to the kill buffer.
+The word boundaries are the same as <CODE>backward-word</CODE>.
+By default, this command is unbound.
+
+<DT><CODE>copy-forward-word ()</CODE>
+<DD>
+<A NAME="IDX69"></A>
+Copy the word following point to the kill buffer.
+The word boundaries are the same as <CODE>forward-word</CODE>.
+By default, this command is unbound.
+
+<DT><CODE>yank (C-y)</CODE>
+<DD>
+<A NAME="IDX70"></A>
+Yank the top of the kill ring into the buffer at the current
+cursor position.
+
+<DT><CODE>yank-pop (M-y)</CODE>
+<DD>
+<A NAME="IDX71"></A>
+Rotate the kill-ring, and yank the new top.  You can only do this if
+the prior command is yank or yank-pop.
+</DL>
+
+
+
+<H3><A NAME="SEC18" HREF="rluserman.html#TOC18">Specifying Numeric Arguments</A></H3>
+<DL COMPACT>
+
+<DT><CODE>digit-argument (M-0, M-1, ... M--)</CODE>
+<DD>
+<A NAME="IDX72"></A>
+Add this digit to the argument already accumulating, or start a new
+argument.  <KBD>M--</KBD> starts a negative argument.
+
+<DT><CODE>universal-argument ()</CODE>
+<DD>
+<A NAME="IDX73"></A>
+This is another way to specify an argument.
+If this command is followed by one or more digits, optionally with a
+leading minus sign, those digits define the argument.
+If the command is followed by digits, executing <CODE>universal-argument</CODE>
+again ends the numeric argument, but is otherwise ignored.
+As a special case, if this command is immediately followed by a
+character that is neither a digit or minus sign, the argument count
+for the next command is multiplied by four.
+The argument count is initially one, so executing this function the
+first time makes the argument count four, a second time makes the
+argument count sixteen, and so on.
+By default, this is not bound to a key.
+</DL>
+
+
+
+<H3><A NAME="SEC19" HREF="rluserman.html#TOC19">Letting Readline Type For You</A></H3>
+
+<DL COMPACT>
+
+<DT><CODE>complete (TAB)</CODE>
+<DD>
+<A NAME="IDX74"></A>
+Attempt to do completion on the text before the cursor.  This is
+application-specific.  Generally, if you are typing a filename
+argument, you can do filename completion; if you are typing a command,
+you can do command completion; if you are typing in a symbol to GDB, you
+can do symbol name completion; if you are typing in a variable to Bash,
+you can do variable name completion, and so on.
+
+<DT><CODE>possible-completions (M-?)</CODE>
+<DD>
+<A NAME="IDX75"></A>
+List the possible completions of the text before the cursor.
+
+<DT><CODE>insert-completions (M-*)</CODE>
+<DD>
+<A NAME="IDX76"></A>
+Insert all completions of the text before point that would have
+been generated by <CODE>possible-completions</CODE>.
+
+<DT><CODE>menu-complete ()</CODE>
+<DD>
+<A NAME="IDX77"></A>
+Similar to <CODE>complete</CODE>, but replaces the word to be completed
+with a single match from the list of possible completions.
+Repeated execution of <CODE>menu-complete</CODE> steps through the list
+of possible completions, inserting each match in turn.
+At the end of the list of completions, the bell is rung and the
+original text is restored.
+An argument of <VAR>n</VAR> moves <VAR>n</VAR> positions forward in the list
+of matches; a negative argument may be used to move backward
+through the list.
+This command is intended to be bound to <CODE>TAB</CODE>, but is unbound
+by default.
+
+<DT><CODE>delete-char-or-list ()</CODE>
+<DD>
+<A NAME="IDX78"></A>
+Deletes the character under the cursor if not at the beginning or
+end of the line (like <CODE>delete-char</CODE>).
+If at the end of the line, behaves identically to
+<CODE>possible-completions</CODE>.
+This command is unbound by default.
+
+</DL>
+
+
+
+<H3><A NAME="SEC20" HREF="rluserman.html#TOC20">Keyboard Macros</A></H3>
+<DL COMPACT>
+
+<DT><CODE>start-kbd-macro (C-x ()</CODE>
+<DD>
+<A NAME="IDX79"></A>
+Begin saving the characters typed into the current keyboard macro.
+
+<DT><CODE>end-kbd-macro (C-x ))</CODE>
+<DD>
+<A NAME="IDX80"></A>
+Stop saving the characters typed into the current keyboard macro
+and save the definition.
+
+<DT><CODE>call-last-kbd-macro (C-x e)</CODE>
+<DD>
+<A NAME="IDX81"></A>
+Re-execute the last keyboard macro defined, by making the characters
+in the macro appear as if typed at the keyboard.
+
+</DL>
+
+
+
+<H3><A NAME="SEC21" HREF="rluserman.html#TOC21">Some Miscellaneous Commands</A></H3>
+<DL COMPACT>
+
+<DT><CODE>re-read-init-file (C-x C-r)</CODE>
+<DD>
+<A NAME="IDX82"></A>
+Read in the contents of the <VAR>inputrc</VAR> file, and incorporate
+any bindings or variable assignments found there.
+
+<DT><CODE>abort (C-g)</CODE>
+<DD>
+<A NAME="IDX83"></A>
+Abort the current editing command and
+ring the terminal's bell (subject to the setting of
+<CODE>bell-style</CODE>).
+
+<DT><CODE>do-uppercase-version (M-a, M-b, M-<VAR>x</VAR>, ...)</CODE>
+<DD>
+<A NAME="IDX84"></A>
+If the metafied character <VAR>x</VAR> is lowercase, run the command
+that is bound to the corresponding uppercase character.
+
+<DT><CODE>prefix-meta (ESC)</CODE>
+<DD>
+<A NAME="IDX85"></A>
+Make the next character typed be metafied.  This is for keyboards
+without a meta key.  Typing <SAMP>`ESC f'</SAMP> is equivalent to typing
+<SAMP>`M-f'</SAMP>.
+
+<DT><CODE>undo (C-_, C-x C-u)</CODE>
+<DD>
+<A NAME="IDX86"></A>
+Incremental undo, separately remembered for each line.
+
+<DT><CODE>revert-line (M-r)</CODE>
+<DD>
+<A NAME="IDX87"></A>
+Undo all changes made to this line.  This is like executing the <CODE>undo</CODE>
+command enough times to get back to the beginning.
+
+<DT><CODE>tilde-expand (M-~)</CODE>
+<DD>
+<A NAME="IDX88"></A>
+Perform tilde expansion on the current word.
+
+<DT><CODE>set-mark (C-@)</CODE>
+<DD>
+<A NAME="IDX89"></A>
+Set the mark to the current point.  If a
+numeric argument is supplied, the mark is set to that position.
+
+<DT><CODE>exchange-point-and-mark (C-x C-x)</CODE>
+<DD>
+<A NAME="IDX90"></A>
+Swap the point with the mark.  The current cursor position is set to
+the saved position, and the old cursor position is saved as the mark.
+
+<DT><CODE>character-search (C-])</CODE>
+<DD>
+<A NAME="IDX91"></A>
+A character is read and point is moved to the next occurrence of that
+character.  A negative count searches for previous occurrences.
+
+<DT><CODE>character-search-backward (M-C-])</CODE>
+<DD>
+<A NAME="IDX92"></A>
+A character is read and point is moved to the previous occurrence
+of that character.  A negative count searches for subsequent
+occurrences.
+
+<DT><CODE>insert-comment (M-#)</CODE>
+<DD>
+<A NAME="IDX93"></A>
+The value of the <CODE>comment-begin</CODE>
+variable is inserted at the beginning of the current line,
+and the line is accepted as if a newline had been typed.
+
+<DT><CODE>dump-functions ()</CODE>
+<DD>
+<A NAME="IDX94"></A>
+Print all of the functions and their key bindings to the
+Readline output stream.  If a numeric argument is supplied,
+the output is formatted in such a way that it can be made part
+of an <VAR>inputrc</VAR> file.  This command is unbound by default.
+
+<DT><CODE>dump-variables ()</CODE>
+<DD>
+<A NAME="IDX95"></A>
+Print all of the settable variables and their values to the
+Readline output stream.  If a numeric argument is supplied,
+the output is formatted in such a way that it can be made part
+of an <VAR>inputrc</VAR> file.  This command is unbound by default.
+
+<DT><CODE>dump-macros ()</CODE>
+<DD>
+<A NAME="IDX96"></A>
+Print all of the Readline key sequences bound to macros and the
+strings they ouput.  If a numeric argument is supplied,
+the output is formatted in such a way that it can be made part
+of an <VAR>inputrc</VAR> file.  This command is unbound by default.
+
+</DL>
+
+
+
+<H2><A NAME="SEC22" HREF="rluserman.html#TOC22">Readline vi Mode</A></H2>
+
+<P>
+While the Readline library does not have a full set of <CODE>vi</CODE>
+editing functions, it does contain enough to allow simple editing
+of the line.  The Readline <CODE>vi</CODE> mode behaves as specified in
+the POSIX 1003.2 standard.
+
+</P>
+<P>
+In order to switch interactively between <CODE>emacs</CODE> and <CODE>vi</CODE>
+editing modes, use the command M-C-j (toggle-editing-mode).
+The Readline default is <CODE>emacs</CODE> mode.
+
+</P>
+<P>
+When you enter a line in <CODE>vi</CODE> mode, you are already placed in
+`insertion' mode, as if you had typed an <SAMP>`i'</SAMP>.  Pressing <KBD>ESC</KBD>
+switches you into `command' mode, where you can edit the text of the
+line with the standard <CODE>vi</CODE> movement keys, move to previous
+history lines with <SAMP>`k'</SAMP> and subsequent lines with <SAMP>`j'</SAMP>, and
+so forth.
+
+</P>
+
+<P><HR><P>
+This document was generated on 1 March 2000 using the
+<A HREF="http://wwwinfo.cern.ch/dis/texi2html/">texi2html</A>
+translator version 1.52.</P>
+</BODY>
+</HTML>
