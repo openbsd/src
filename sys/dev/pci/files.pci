@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.44 1999/08/04 23:38:03 niklas Exp $
+#	$OpenBSD: files.pci,v 1.45 1999/08/13 05:32:29 fgsch Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -188,3 +188,12 @@ file	dev/pci/if_wb.c			wb
 device	wdt: pcibus
 attach	wdt at pci
 file	dev/pci/wdt.c			wdt	needs-flag
+
+# UHCI USB controller
+attach	uhci at pci with uhci_pci
+file	dev/pci/uhci_pci.c		uhci
+
+# OHCI USB controller
+attach	ohci at pci with ohci_pci
+file	dev/pci/ohci_pci.c		ohci
+
