@@ -1,4 +1,4 @@
-/*	$OpenBSD: osiop.c,v 1.8 2003/04/11 02:00:49 krw Exp $	*/
+/*	$OpenBSD: osiop.c,v 1.9 2003/04/12 01:16:57 krw Exp $	*/
 /*	$NetBSD: osiop.c,v 1.9 2002/04/05 18:27:54 bouyer Exp $	*/
 
 /*
@@ -1422,7 +1422,7 @@ osiop_checkintr(sc, istat, dstat, sstat0, status)
 				n = (n - Ent_dataout) / 16;
 			else
 				n = (n - Ent_datain) / 16;
-			if (n <= 0 && n > OSIOP_NSG)
+			if (n < 0 || n >= OSIOP_NSG)
 				printf("TEMP invalid %ld\n", n);
 			else {
 				acb->curaddr = ds->data[n].addr;
@@ -1446,7 +1446,6 @@ osiop_checkintr(sc, istat, dstat, sstat0, status)
 		 */
 		if (acb->curlen > 0) {
 			int i, j;
-
 #ifdef OSIOP_DEBUG
 			if (osiop_debug & DEBUG_DISC)
 				printf("%s: adjusting DMA chain\n",
@@ -1484,10 +1483,11 @@ osiop_checkintr(sc, istat, dstat, sstat0, status)
 			    i < OSIOP_NSG && ds->data[i].count > 0;
 			    i++, j++) {
 #ifdef OSIOP_DEBUG
-			if (osiop_debug & DEBUG_DISC)
-				printf("  chain[%d]: %x/%x -> %x/%x\n", j,
-				    ds->data[j].addr, ds->data[j].count,
-				    ds->data[i].addr, ds->data[i].count);
+				if (osiop_debug & DEBUG_DISC)
+					printf("  chain[%d]: %x/%x -> %x/%x\n",
+					    j,
+					    ds->data[j].addr, ds->data[j].count,
+					    ds->data[i].addr, ds->data[i].count);
 #endif
 				ds->data[j].addr  = ds->data[i].addr;
 				ds->data[j].count = ds->data[i].count;
