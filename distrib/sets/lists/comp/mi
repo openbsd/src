@@ -2414,7 +2414,6 @@
 ./usr/share/man/cat3/des_enc_write.0
 ./usr/share/man/cat3/des_is_weak_key.0
 ./usr/share/man/cat3/des_key_sched.0
-./usr/share/man/cat3/des_modes.0
 ./usr/share/man/cat3/des_ofb_encrypt.0
 ./usr/share/man/cat3/des_pcbc_encrypt.0
 ./usr/share/man/cat3/des_quad_cksum.0
