@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.21 2003/04/05 17:18:26 deraadt Exp $	*/
+/*	$OpenBSD: server.c,v 1.22 2003/04/06 17:57:45 ho Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)server.c	8.1 (Berkeley) 6/9/93"; */
-static char *rcsid = "$OpenBSD: server.c,v 1.21 2003/04/05 17:18:26 deraadt Exp $";
+static char *rcsid = "$OpenBSD: server.c,v 1.22 2003/04/06 17:57:45 ho Exp $";
 #endif /* not lint */
 
 #include <sys/wait.h>
@@ -251,7 +251,7 @@ install(src, dest, destdir, opts)
 	if (opts & WHOLE)
 		source[0] = '\0';
 	else
-		strcpy(source, src);
+		strlcpy(source, src, sizeof source);
 
 	if (dest == NULL) {
 		opts &= ~WHOLE; /* WHOLE mode only useful if renaming */
@@ -582,10 +582,10 @@ savelink(stp)
 		lp->inum = stp->st_ino;
 		lp->devnum = stp->st_dev;
 		lp->count = stp->st_nlink - 1;
-		strcpy(lp->pathname, target);
-		strcpy(lp->src, source);
+		strlcpy(lp->pathname, target, sizeof lp->pathname);
+		strlcpy(lp->src, source, sizeof lp->src);
 		if (Tdest)
-			strcpy(lp->target, Tdest);
+			strlcpy(lp->target, Tdest, sizeof lp->target);
 		else
 			*lp->target = 0;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: expand.c,v 1.9 2002/02/16 21:27:50 millert Exp $	*/
+/*	$OpenBSD: expand.c,v 1.10 2003/04/06 17:57:45 ho Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)expand.c	8.1 (Berkeley) 6/9/93"; */
-static char *rcsid = "$OpenBSD: expand.c,v 1.9 2002/02/16 21:27:50 millert Exp $";
+static char *rcsid = "$OpenBSD: expand.c,v 1.10 2003/04/06 17:57:45 ho Exp $";
 #endif /* not lint */
 
 #include "defs.h"
@@ -49,6 +49,7 @@ static char	shchars[] = "${[*?";
 int	which;		/* bit mask of types to expand */
 int	eargc;		/* expanded arg count */
 char	**eargv;	/* expanded arg vectors */
+char	pathbuf[BUFSIZ];
 char	*path;
 char	*pathp;
 char	*lastpathp;
@@ -90,7 +91,6 @@ expand(list, wh)
 {
 	struct namelist *nl, *prev;
 	int n;
-	char pathbuf[BUFSIZ];
 	char *argvbuf[GAVSIZ];
 
 	if (debug) {
@@ -212,7 +212,8 @@ expstr(s)
 			*cp1 = '\0';
 			if (pw == NULL || strcmp(pw->pw_name, buf+1) != 0) {
 				if ((pw = getpwnam(buf+1)) == NULL) {
-					strcat(buf, ": unknown user name");
+					strlcat(buf, ": unknown user name",
+						sizeof buf);
 					yyerror(buf+1);
 					return;
 				}
@@ -319,7 +320,8 @@ matchdir(pattern)
 			if (which & E_TILDE)
 				Cat(path, dp->d_name);
 			else {
-				strcpy(pathp, dp->d_name);
+				strlcpy(pathp, dp->d_name,
+					pathbuf + sizeof pathbuf - pathp);
 				Cat(tilde, tpathp);
 				*pathp = '\0';
 			}
@@ -330,8 +332,8 @@ matchdir(pattern)
 patherr1:
 	closedir(dirp);
 patherr2:
-	strcat(path, ": ");
-	strcat(path, strerror(errno));
+	strlcat(path, ": ", pathbuf + sizeof pathbuf - path);
+	strlcat(path, strerror(errno), pathbuf + sizeof pathbuf - path);
 	yyerror(path);
 }
 
@@ -391,8 +393,8 @@ pend:
 doit:
 			savec = *pm;
 			*pm = 0;
-			strcpy(lm, pl);
-			strcat(restbuf, pe + 1);
+			strlcpy(lm, pl, restbuf + sizeof restbuf - lm);
+			strlcat(restbuf, pe + 1, sizeof restbuf);
 			*pm = savec;
 			if (s == 0) {
 				spathp = pathp;
@@ -630,7 +632,7 @@ exptilde(buf, file, maxlen)
 	extern char homedir[];
 
 	if (*file != '~') {
-		strcpy(buf, file);
+		strlcpy(buf, file, maxlen);
 		return(buf);
 	}
 	if (*++file == '\0') {
