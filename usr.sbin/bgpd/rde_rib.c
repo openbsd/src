@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.59 2004/08/17 15:39:36 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.60 2004/11/10 12:41:58 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -726,14 +726,12 @@ nexthop_update(struct kroute_nexthop *msg)
 		nh->state = NEXTHOP_UNREACH;
 
 	if (msg->connected) {
-		if (!(nh->flags & NEXTHOP_LINKLOCAL))
-			/* use linklocal address if provided */
-			nh->true_nexthop = nh->exit_nexthop;
 		nh->flags |= NEXTHOP_CONNECTED;
-	} else {
-		nh->true_nexthop = msg->gateway;
-		nh->flags &= ~NEXTHOP_LINKLOCAL;
-	}
+		memcpy(&nh->true_nexthop, &nh->exit_nexthop,
+		    sizeof(nh->true_nexthop));
+	} else
+		memcpy(&nh->true_nexthop, &msg->gateway,
+		    sizeof(nh->true_nexthop));
 
 	nh->nexthop_netlen = msg->kr.kr4.prefixlen;
 	nh->nexthop_net.af = AF_INET;
