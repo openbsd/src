@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.101 1999/08/03 22:52:42 deraadt Exp $
+#	$OpenBSD: rc,v 1.102 1999/08/04 17:07:27 millert Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -301,13 +301,14 @@ fi
 if [ ! -f /etc/motd ]; then
 	install -c -o root -g wheel -m 664 /dev/null /etc/motd
 fi
-T=/tmp/_motd
-rm -f $T
-sysctl -n kern.version | sed 1q > $T
-echo "" >> $T
-sed '1,/^$/d' < /etc/motd >> $T
-cmp -s $T /etc/motd || cp $T /etc/motd
-rm -f $T
+T=`mktemp /tmp/_motd.XXXXXX` 
+if [ $? -ne 0 ]; then
+	sysctl -n kern.version | sed 1q > $T
+	echo "" >> $T
+	sed '1,/^$/d' < /etc/motd >> $T
+	cmp -s $T /etc/motd || cp $T /etc/motd
+	rm -f $T
+fi
 
 # nvi file recovery
 if [ ! -d /var/tmp/vi.recover ]; then
