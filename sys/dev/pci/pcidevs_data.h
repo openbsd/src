@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.261 2000/05/30 08:27:59 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.262 2000/05/30 16:15:58 mickey Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -2221,6 +2221,42 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Intel",
 	    "82443BX",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82440MX,
+	    0,
+	    "Intel",
+	    "82440MX Host",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82440MX_ACA,
+	    0,
+	    "Intel",
+	    "82440MX AC97 Audio",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82440MX_ISA,
+	    0,
+	    "Intel",
+	    "82440MX PCI-ISA",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82440MX_IDE,
+	    0,
+	    "Intel",
+	    "82440MX IDE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82440MX_USB,
+	    0,
+	    "Intel",
+	    "82440MX USB",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82440MX_PM,
+	    0,
+	    "Intel",
+	    "82440MX Power Management",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82440BX,
