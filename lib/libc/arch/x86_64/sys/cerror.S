@@ -1,4 +1,4 @@
-/*	$OpenBSD: cerror.S,v 1.2 2004/02/10 16:46:30 drahn Exp $	*/
+/*	$OpenBSD: cerror.S,v 1.3 2004/02/18 16:51:21 miod Exp $	*/
 /*	$NetBSD: cerror.S,v 1.2 2002/06/03 18:30:33 fvdl Exp $	*/
 
 /*-
@@ -47,10 +47,10 @@
 
 _ENTRY(CERROR)
 #ifdef PIC
-	movq    PIC_GOT(_C_LABEL(errno)), %rcx
-	movq    %rax, (%rcx)
+	movq	PIC_GOT(_C_LABEL(errno)), %rcx
+	movl	%eax, (%rcx)
 #else
-	movq    %rax, _C_LABEL(errno)(%rip)
+	movl	%eax, _C_LABEL(errno)(%rip)
 #endif /* PIC */
 	movq	$-1,%rax
 	ret
