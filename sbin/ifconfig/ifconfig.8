@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.97 2004/12/07 23:39:48 jmc Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.98 2005/01/20 17:52:53 mcbride Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -75,7 +75,7 @@
 .Ar pfsync-interface
 .Cm syncpeer
 .Ar peer_address
-.Cm syncif
+.Cm syncdev
 .Ar iface
 .Nm
 .Ar pppoe-interface
@@ -622,6 +622,16 @@ Valid states are
 .Ar backup ,
 and
 .Ar master .
+.It Cm syncdev Ar iface
+If the driver is a
+.Xr pfsync 4
+pseudo-device, use the specified interface
+to send and receive pfsync state synchronisation messages.
+.It Fl syncdev
+If the driver is a
+.Xr pfsync 4
+pseudo-device, stop sending pfsync state
+synchronisation messages over the network.
 .It Cm syncpeer Ar peer_address
 If the driver is a
 .Xr pfsync 4
@@ -637,16 +647,6 @@ traffic can be protected using
 If the driver is a
 .Xr pfsync 4
 pseudo-device, broadcast the packets using multicast.
-.It Cm syncif Ar iface
-If the driver is a
-.Xr pfsync 4
-pseudo-device, use the specified interface
-to send and receive pfsync state synchronisation messages.
-.It Fl syncif
-If the driver is a
-.Xr pfsync 4
-pseudo-device, stop sending pfsync state
-synchronisation messages over the network.
 .It Cm tentative
 (inet6 only)
 Set the IPv6 tentative address bit.

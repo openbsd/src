@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pfsync.4,v 1.19 2004/08/03 09:15:33 jmc Exp $
+.\"	$OpenBSD: pfsync.4,v 1.20 2005/01/20 17:52:53 mcbride Exp $
 .\"
 .\" Copyright (c) 2002 Michael Shalayeff
 .\" Copyright (c) 2003-2004 Ryan McBride
@@ -98,7 +98,7 @@ interface, by specifying a synchronisation interface using
 For example, the following command sets fxp0 as the synchronisation
 interface:
 .Bd -literal -offset indent
-# ifconfig pfsync0 syncif fxp0
+# ifconfig pfsync0 syncdev fxp0
 .Ed
 .Pp
 By default, state change messages are sent out on the synchronisation
@@ -110,12 +110,12 @@ When a peer address is specified using the
 keyword, the peer address is used as a destination for the pfsync traffic,
 and the traffic can then be protected using
 .Xr ipsec 4 .
-In such a configuration, the syncif should be set to the
+In such a configuration, the syncdev should be set to the
 .Xr enc 4
 interface, as this is where the traffic arrives when it is decapsulated,
 e.g.:
 .Bd -literal -offset indent
-# ifconfig pfsync0 syncpeer 10.0.0.2 syncif enc0
+# ifconfig pfsync0 syncpeer 10.0.0.2 syncdev enc0
 .Ed
 .Pp
 It is important that the pfsync traffic be well secured
@@ -187,7 +187,7 @@ inet 192.168.0.1 255.255.255.0 192.168.0.255 vhid 2 pass bar
 .Pp
 .Pa /etc/hostname.pfsync0 :
 .Bd -literal -offset indent
-up syncif sis2
+up syncdev sis2
 .Ed
 .Pp
 .Xr pf 4
