@@ -1,4 +1,4 @@
-.\"	$OpenBSD: atc.6,v 1.8 2001/11/17 05:27:03 pjanzen Exp $
+.\"	$OpenBSD: atc.6,v 1.9 2001/11/17 05:45:03 pjanzen Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -46,8 +46,8 @@
 .Nd air traffic controller game
 .Sh SYNOPSIS
 .Nm atc
-.Op Fl u?lstpq
-.Op Fl gf Ar "game name"
+.Op Fl lpqstu?
+.Op Fl fg Ar "game name"
 .Op Fl r Ar "random seed"
 .Sh DESCRIPTION
 .Nm
@@ -60,16 +60,27 @@ The speed
 .Pq update time
 and frequency of the planes depend on the
 difficulty of the chosen arena.
-.Sh OPTIONS
+.Pp
 .Bl -tag -width "-g gamex"
-.It Fl u
-Print the usage line and exit.
-.It Fl ?
+.It Fl f Ar game
+Play the named game.
+If the game listed is not one of the ones printed by the
+.Fl l
+option, the default game is played.
+.It Fl g Ar game
 Same as
-.Fl u .
+.Fl f .
 .It Fl l
 Print a list of available games and exit.
 The first game name printed is the default game.
+.It Fl p
+Print the path to the special directory where
+.Nm
+expects to find its private files.
+This is used during the installation of the program.
+.It Fl q
+Play quietly
+.Pq no bells .
 .It Fl s
 Print the score list
 .Pq formerly the Top Ten list .
@@ -80,25 +91,14 @@ successfully dealt with.
 .It Fl t
 Same as
 .Fl s .
-.It Fl p
-Print the path to the special directory where
-.Nm
-expects to find its private files.
-This is used during the installation of the program.
-.It Fl q
-Play quietly
-.Pq no bells .
-.It Fl g Ar game
-Play the named game.
-If the game listed is not one of the ones printed from the
-.Fl l
-option, the default game is played.
-.It Fl f Ar game
-Same as
-.Fl g .
 .It Fl r Ar seed
 Set the random seed.
 The purpose of this flag is questionable.
+.It Fl u
+Print the usage line and exit.
+.It Fl ?
+Same as
+.Fl u .
 .El
 .Sh GOALS
 Your goal in
@@ -421,7 +421,6 @@ can be used instead of
 .El
 .Ed
 .Ss "MARKING, UNMARKING AND IGNORING"
-.Pp
 Planes are
 .Em marked
 by default when they enter the arena.
@@ -583,14 +582,16 @@ line:		[ (  1  1 ) (  6  6 ) ]
 		[ (  1  7 ) ( 11  7 ) ] ;
 .Ed
 .Sh FILES
-Files are kept in a special directory.
-See the OPTIONS for a way to print this path out.
+Files are kept in a special directory, which can be shown by using the
+.Fl p
+flag.
 .Pp
 .Bl -tag -width "/usr/share/games/atc/Game_List" -compact
 .It Pa /var/games/atc_score
 Score file
 .It Pa /usr/share/games/atc/Game_List
 The list of playable games.
+.El
 .Sh AUTHORS
 Ed James, UC Berkeley: edjames@ucbvax.berkeley.edu, ucbvax!edjames
 .Pp
