@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.29 1999/12/12 03:16:26 mickey Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.30 1999/12/12 17:45:23 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998,1999 Michael Shalayeff
@@ -1543,7 +1543,10 @@ pmap_changebit(pg, set, reset)
 	register paddr_t pa = VM_PAGE_TO_PHYS(pg);
 	int s;
 
-printf("pmap_changebit(%p[%x], %x, %x)\n", pg, pa, set, reset);
+#ifdef PMAPDEBUG
+	if (pmapdebug & PDB_FOLLOW)
+		printf("pmap_changebit(%p[%x], %x, %x)\n", pg, pa, set, reset);
+#endif
 
 	s = splimp();
 	if (!(pv = pmap_find_pv(pa)) || !pv->pv_pmap) {
