@@ -1,8 +1,8 @@
-/*	$OpenBSD: log.h,v 1.5 1999/03/24 14:59:41 niklas Exp $	*/
-/*	$EOM: log.h,v 1.11 1999/03/04 18:53:28 niklas Exp $	*/
+/*	$OpenBSD: log.h,v 1.6 1999/04/19 21:06:51 niklas Exp $	*/
+/*	$EOM: log.h,v 1.17 1999/04/16 17:33:08 ho Exp $	*/
 
 /*
- * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
+ * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -40,10 +40,25 @@
 #include <sys/types.h>
 #include <stdio.h>
 
+/*
+ * We cannot do the log strings dynamically sizeable as out of memory is one
+ * of the situations we need to report about.
+ */
+#define LOG_SIZE	200
+
 enum log_classes {
   LOG_MISC, LOG_TRANSPORT, LOG_MESSAGE, LOG_CRYPTO, LOG_TIMER, LOG_SYSDEP,
-  LOG_ENDCLASS
+  LOG_SA, LOG_EXCHANGE, LOG_ENDCLASS
 };
+#define LOG_CLASSES_TEXT \
+  { "Misc", "Trpt", "Mesg", "Cryp", "Timr", "Sdep", "SA  ", "Exch" }
+
+/*
+ * "Class" LOG_REPORT will always be logged to the current log channel,
+ * regardless of level.
+ */
+#define LOG_PRINT  -1
+#define LOG_REPORT -2
 
 extern FILE *log_current (void);
 extern void log_debug (int, int, const char *, ...);
