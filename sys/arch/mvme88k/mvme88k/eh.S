@@ -1,4 +1,4 @@
-/*	$OpenBSD: eh.S,v 1.6 1999/02/09 06:36:28 smurph Exp $	*/
+/*	$OpenBSD: eh.S,v 1.7 1999/05/29 04:41:46 smurph Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -238,6 +238,8 @@
 #define EF_FLAGS		EF_MODE
 
 #define FLAG_FROM_KERNEL	8	/* this should be in asm.h */
+
+#define INTSTACK		0	/* To make interupts use their own stack */
 
 	text
 	align 8
@@ -1664,7 +1666,7 @@ LABEL(setup_phase_one)
 	 * If it's not the interrupt exception, enable interrupts and
 	 * take care of any data access exceptions......
 	 *
-#if notyet
+#if INTSTACK
 	 * If interrupt exception, switch to interrupt stack if not
 	 * already there. Else, switch to kernel stack.
 #endif
@@ -1673,7 +1675,7 @@ LABEL(setup_phase_one)
         ld	r2,  r31, REG_OFF(EF_EPSR)
   	bb1	PSR_SUPERVISOR_MODE_BIT, r2, 1f  /* If in kernel mode */
 
-#if notyet
+#if INTSTACK
 	ld	r3,  r31, REG_OFF(EF_VECTOR)
 	cmp	r3,  r3, 1		/* is interrupt ? */
 	bb0	eq,  r3, 2f
@@ -1687,13 +1689,13 @@ LABEL(setup_phase_one)
 	addu	r31, r31, USIZE        /* point at proper end */
 	br	3f
   1:
-#if notyet
+#if INTSTACK
 	ld	r3,  r31, REG_OFF(EF_VECTOR)
 	cmp	r3,  r3, 1		/* is interrupt ? */
 	bb0	eq,  r3, 3f		/* no, we will stay on kern stack */
 	or.u	r31, r0,  hi16(_intstack_end)	/* swith to int stack */
 	or	r31, r31, lo16(_intstack_end)
-#endif /* notyet */
+#endif /* INTSTACK */
  /* This label is here for debugging */
  exception_handler_has_ksp:  global exception_handler_has_ksp
   3:    /*

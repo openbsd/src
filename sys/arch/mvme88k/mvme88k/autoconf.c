@@ -29,7 +29,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: autoconf.c,v 1.4 1998/12/15 05:11:01 smurph Exp $
+ *	$Id: autoconf.c,v 1.5 1999/05/29 04:41:45 smurph Exp $
  */
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,7 +74,7 @@ void
 configure()
 {
 	bootdv = NULL; /* set by device drivers (if found) */
-/*	rminit(extiomap, (long)EIOMAPSIZE, (long)1, "extio", EIOMAPSIZE/16);*/
+	/*rminit(extiomap, (long)EIOMAPSIZE, (long)1, "extio", EIOMAPSIZE/16);*/
 	
 	if (config_rootfound("mainbus", "mainbus") == 0)
 		panic("no mainbus found");
@@ -124,8 +124,7 @@ swapconf()
 {
 	register struct swdevt *swp;
 	register int nblks;
-
-	for (swp = swdevt; swp->sw_dev != NODEV; swp++)
+	for (swp = swdevt; swp->sw_dev != NODEV; swp++){
 		if (bdevsw[major(swp->sw_dev)].d_psize) {
 			nblks =
 			  (*bdevsw[major(swp->sw_dev)].d_psize)(swp->sw_dev);
@@ -133,6 +132,7 @@ swapconf()
 			    (swp->sw_nblks == 0 || swp->sw_nblks > nblks))
 				swp->sw_nblks = nblks;
 		}
+	}
 	dumpconf();
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cl.c,v 1.3 1999/01/11 05:11:42 millert Exp $ */
+/*	$OpenBSD: cl.c,v 1.4 1999/05/29 04:41:43 smurph Exp $ */
 
 /*
  * Copyright (c) 1995 Dale Rahn. All rights reserved.
@@ -42,34 +42,16 @@
 #include <sys/systm.h>
 #include <sys/time.h>
 #include <sys/device.h>
-/* #include <sys/queue.h> */
 #include <machine/cpu.h>
 #include <machine/autoconf.h>
 #include <dev/cons.h>
-#if defined(MVME187)
 #include <mvme88k/dev/clreg.h>
-#else
-#include <mvme68k/dev/clreg.h>
-#endif
 #include <sys/syslog.h>
 #include "cl.h"
-
 #include "pcctwo.h"
-
-#if NPCCTWO > 0
-#if defined(MVME187)
 #include <mvme88k/dev/pcctworeg.h>
-#else
-#include <mvme68k/dev/pcctworeg.h>
-#endif
-#endif
-
-#if defined(MVME187)
 #include <machine/psl.h>
 #define splcl()	splx(IPL_TTY)
-#else
-#define splcl() spl3()
-#endif
 
 /* min timeout 0xa, what is a good value */
 #define CL_TIMEOUT	0x10
@@ -234,7 +216,8 @@ struct tty * cltty(dev)
 	return sc->sc_cl[channel].tty;
 }
 
-int	clprobe(parent, self, aux)
+int	
+clprobe(parent, self, aux)
 	struct device *parent;
 	void *self;
 	void *aux;
@@ -277,14 +260,14 @@ clattach(parent, self, aux)
 	if ((u_char *)ca->ca_paddr == (u_char *)cl_cons.cl_paddr) {
 		/* if this device is configured as console,
 		 * line cl_cons.channel is the console */
-		sc->sc_cl[cl_cons.channel].cl_consio = 1;
-		printf(" console");
+		sc->sc_cl[0].cl_consio = 1;
+		printf(" console ");
 	} else {
 		/* reset chip only if we are not console device */
 		/* wait for GFRCR */
 	}
         /* allow chip to settle before continuing */
-        delay(100);
+        delay(800);
 
 	/* set up global registers */
 	sc->cl_reg->cl_tpr = CL_TIMEOUT;
@@ -357,25 +340,18 @@ clattach(parent, self, aux)
 	sc->sc_ih_r.ih_arg = sc;
 	sc->sc_ih_r.ih_ipl = ca->ca_ipl;
 	sc->sc_ih_r.ih_wantframe = 0;
-	switch (ca->ca_bustype) {
-	case BUS_PCCTWO:
-		dopoll = 0;
-		intr_establish(PCC2_VECT + SRXEIRQ, &sc->sc_ih_e);
-		intr_establish(PCC2_VECT + SMOIRQ, &sc->sc_ih_m);
-		intr_establish(PCC2_VECT + STxIRQ, &sc->sc_ih_t);
-		intr_establish(PCC2_VECT + SRxIRQ, &sc->sc_ih_r);
-		sc->sc_pcctwo = ca->ca_master;
-		sc->sc_pcctwo->pcc2_sccerr = 0x01; /* clear errors */
+	dopoll = 0;
+	intr_establish(PCC2_VECT + SRXEIRQ, &sc->sc_ih_e);
+	intr_establish(PCC2_VECT + SMOIRQ, &sc->sc_ih_m);
+	intr_establish(PCC2_VECT + STxIRQ, &sc->sc_ih_t);
+	intr_establish(PCC2_VECT + SRxIRQ, &sc->sc_ih_r);
+	sc->sc_pcctwo = ca->ca_master;
+	sc->sc_pcctwo->pcc2_sccerr = 0x01; /* clear errors */
 
-		/* enable all interrupts at ca_ipl */
-		sc->sc_pcctwo->pcc2_sccirq = 0x10 | (ca->ca_ipl & 0x7);
-		sc->sc_pcctwo->pcc2_scctx  = 0x10 | (ca->ca_ipl & 0x7);
-		sc->sc_pcctwo->pcc2_sccrx  = 0x10 | (ca->ca_ipl & 0x7);
-		break;
-	default:	
-		/* oops */
-		panic ("cl driver on unknown bus");
-	}
+	/* enable all interrupts at ca_ipl */
+	sc->sc_pcctwo->pcc2_sccirq = 0x10 | (ca->ca_ipl & 0x7);
+	sc->sc_pcctwo->pcc2_scctx  = 0x10 | (ca->ca_ipl & 0x7);
+	sc->sc_pcctwo->pcc2_sccrx  = 0x10 | (ca->ca_ipl & 0x7);
 
 	evcnt_attach(&sc->sc_dev, "intr", &sc->sc_txintrcnt);
 	evcnt_attach(&sc->sc_dev, "intr", &sc->sc_rxintrcnt);

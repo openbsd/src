@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	8.1 (Berkeley) 6/10/93
-#	$OpenBSD: Makefile,v 1.4 1998/12/15 06:32:33 smurph Exp $
+#	$OpenBSD: Makefile,v 1.5 1999/05/29 04:41:47 smurph Exp $
 
 RELOC=0xCF0000 
 
@@ -18,7 +18,7 @@ CLEANFILES+=bootsd
 
 SRCS=   boot.c conf.c version.c
 
-LIBS=	${LIBSA} ${LIBBUG} ${LIBZ} -lgcc -lc -lgcc
+LIBS=	${LIBSA} ${LIBBUG} ${LIBZ} ${LIBGCC}
 
 OBJS= ${SRCS:N*.h:R:S/$/.o/g}
 
@@ -27,10 +27,10 @@ ALL=	${BOOTS}
 
 all: ${ALL}
 
-bootsd: ${OBJS} ${BUGCRT} ${LIBS}
+bootsd: ${OBJS} ${SDCRT} ${LIBS}
 	${LD} ${LDFLAGS} -o $@ \
 		${SDCRT} ${OBJS} ${LIBS}
-#${SRTOBJ}
+
 install:
 	install -c -m 555 -g bin -o bin ${BOOTS} ${DESTDIR}${MDEC_DIR}
 

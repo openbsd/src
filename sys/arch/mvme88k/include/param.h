@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.8 1999/02/09 06:36:27 smurph Exp $ */
+/*	$OpenBSD: param.h,v 1.9 1999/05/29 04:41:45 smurph Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1988 University of Utah.
@@ -40,7 +40,7 @@
  * from: Utah $Hdr: machparam.h 1.11 89/08/14$
  *
  *	@(#)param.h	7.8 (Berkeley) 6/28/91
- *	$Id: param.h,v 1.8 1999/02/09 06:36:27 smurph Exp $
+ *	$Id: param.h,v 1.9 1999/05/29 04:41:45 smurph Exp $
  */
 #ifndef _MACHINE_PARAM_H_
 #define _MACHINE_PARAM_H_
@@ -96,7 +96,7 @@
 #define	SINCR		1		/* increment of stack/NBPG */
 #define USPACE		ctob(UPAGES)
 
-#define	UPAGES		3		/* pages of u-area */
+#define	UPAGES		4		/* pages of u-area */
 #define	UADDR		0xEEE00000	/* address of u */
 #define	UVPN		(UADDR>>PGSHIFT)/* virtual page number of u */
 #define	KERNELSTACK	(UADDR+UPAGES*NBPG)	/* top of kernel stack */

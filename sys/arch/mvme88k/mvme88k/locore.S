@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.7 1999/02/09 06:36:28 smurph Exp $	*/
+/*	$OpenBSD: locore.S,v 1.8 1999/05/29 04:41:46 smurph Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -213,8 +213,11 @@ LABEL(_start_text)	/* This is the *real* start upon poweron or reset */
 	set     r11, r11, 1<PSR_SHADOW_FREEZE_BIT>
 	set     r11, r11, 1<PSR_FPU_DISABLE_BIT>
 #endif
+#define PSR_MXM_DISABLE_BIT		 2
+
 	set	r11, r0,  1<PSR_SUPERVISOR_MODE_BIT>
 	set	r11, r11, 1<PSR_INTERRUPT_DISABLE_BIT>
+	set	r11, r11, 1<PSR_MXM_DISABLE_BIT> /* a cheat! for now... */
 	stcr	r11, PSR
         FLUSH_PIPELINE
 
@@ -313,7 +316,7 @@ _msgsw:
 	global	_intstack
 	global	_intstack_end
 _intstack:
-	space	(4 * NBPG)	/* 16K */
+	space	(4 * NBPG)	/* 16K, just to be safe*/
 _intstack_end:
 
 /*

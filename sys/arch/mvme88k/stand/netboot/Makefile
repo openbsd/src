@@ -1,5 +1,5 @@
 
-#	$OpenBSD: Makefile,v 1.5 1998/12/15 06:32:35 smurph Exp $
+#	$OpenBSD: Makefile,v 1.6 1999/05/29 04:41:48 smurph Exp $
 
 RELOC=0xAF0000
 SIZE?=	size
@@ -21,7 +21,7 @@ CLEANFILES+=netboot netboot.bin
 SRCS=   boot.c conf.c version.c devopen.c dev_net.c
 SRCS+=	if_ie.c if_le.c
 OBJS=  ${SRCS:S/.c/.o/g}
-LIBS= ${LIBSA} ${LIBBUG} ${LIBZ} -lgcc -lc -lgcc
+LIBS= ${LIBSA} ${LIBBUG} ${LIBZ} ${LIBGCC}
 LDFLAGS+= -s -N -T ${RELOC} 
 #LDFLAGS+= -nostdlib -s -N -Ttext ${RELOC}
 

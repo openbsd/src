@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.14 1999/05/24 23:09:05 jason Exp $	*/
+/* $OpenBSD: machdep.c,v 1.15 1999/05/29 04:41:46 smurph Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -128,6 +128,9 @@ volatile u_char *pcc2intr_ipl;
 volatile vm_offset_t bugromva;
 volatile vm_offset_t sramva;
 volatile vm_offset_t obiova;
+volatile vm_offset_t extiova;
+volatile vm_offset_t vmea16va;
+volatile vm_offset_t vmea32d16va;
 
 
 int physmem;		/* available physical memory, in pages */
@@ -143,7 +146,7 @@ int BugWorks = 0;
  */
 int   safepri = 0;
 
-#if 0 /*XXX_FUTURE*/
+#if 1 /*XXX_FUTURE*/
 /*
  * iomap stuff is for managing chunks of virtual address space that
  * can be allocated to IO devices.
@@ -197,7 +200,7 @@ char *esym;
 
 int boothowto;	/* read in kern/bootstrap */
 int cputyp;
-int cpuspeed = 33;	/* 25 MHZ XXX should be read from NVRAM */
+int cpuspeed = 25;	/* 25 MHZ XXX should be read from NVRAM */
 
 #ifndef roundup
 #define roundup(value, stride) (((unsigned)(value) + (stride) - 1) & ~((stride)-1))
@@ -220,8 +223,9 @@ int		no_symbols = 1;
 struct proc	*lastproc;
 pcb_t		curpcb;
 
-
 extern struct user *proc0paddr;
+extern void *etherbuf;
+extern int etherlen;
 
 /* XXX this is to fake out the console routines, while booting. */
 #include "bugtty.h"
@@ -348,11 +352,11 @@ identifycpu()
 {
     cpuspeed = getcpuspeed();
     sprintf(cpu_model, "Motorola MVME%x %dMhz", cputyp, cpuspeed);
-	printf("\nModel: %s\n", cpu_model);
+    printf("\nModel: %s\n", cpu_model);
 }
 
 /* The following two functions assume UPAGES == 3 */
-#if	UPAGES != 3
+#if	UPAGES != 4
 #error "UPAGES changed?"
 #endif
 
@@ -377,12 +381,12 @@ void
 load_u_area(struct proc *p)
 {
     pte_template_t *t;
-
+	 
 	int i; 
 	for (i=0; i<UPAGES; i++) {
 		t = kvtopte(UADDR + (i * NBPG));
 		t->bits = p->p_md.md_upte[i];
-}
+	}
 	for (i=0; i<UPAGES; i++) {
 		cmmu_flush_tlb(1, UADDR + (i * NBPG), NBPG);
 	}
@@ -477,7 +481,23 @@ cpu_startup()
 		printf("obiova %x: OBIO not free\n", obiova);
 		panic("bad OBIO");
 	}
+   
+#if 0
+   /*
+	 * Grab the EXTIO space that we hardwired in pmap_bootstrap
+	 */
 
+	extiova = IOMAP_MAP_START;
+
+	vm_map_find(kernel_map, vm_object_allocate(IOMAP_SIZE), 0,
+		(vm_offset_t *)&extiova, IOMAP_SIZE, TRUE);
+
+	if (extiova != IOMAP_MAP_START) {
+		printf("extiova %x: EXTIO not free\n", extiova);
+		panic("bad EXTIO");
+	}
+#endif 
+	
 	/*
 	 * Now allocate buffers proper.  They are different than the above
 	 * in that they usually occupy more virtual memory than physical.
@@ -535,7 +555,7 @@ cpu_startup()
 		panic("cpu_startup: unable to create phys_map");
 	}
 
-#if 0 /*XXX_FUTURE*/
+#if 1 /*XXX_FUTURE*/
 	iomap_map = vm_map_create(kernel_pmap, IOMAP_MAP_START,
 			IOMAP_MAP_START + IOMAP_SIZE, TRUE);
 	if (iomap_map == NULL) {
@@ -666,7 +686,7 @@ allocsys(v)
 	valloc(swbuf, struct buf, nswbuf);
 	valloc(buf, struct buf, nbuf);
 
-#if 0 /*XXX_FUTURE*/
+#if 1 /*XXX_FUTURE*/
 	/*
 	 * Arbitrarily limit the number of devices mapping
 	 * the IO space at a given time to NIOPMAP (= 32, default).
@@ -1760,10 +1780,12 @@ db_splx(int s)
 }
 #endif /* DDB */	
 
+
 /*
  * Called from locore.S during boot,
  * this is the first C code that's run.
  */
+
 
 void
 m187_bootstrap(void)
@@ -1786,21 +1808,6 @@ m187_bootstrap(void)
     cputyp = brdid.brdno;
 
     vm_set_page_size();
-
-#if 0
-    esym  = kflags.esym;
-    boothowto = kflags.bflags;
-    bootdev = kflags.bdev;
-#endif /* 0 */
-    
-#if 0
-    end_loaded = kflags.end_load;
-    if (esym != NULL) {
-    	end = (char *)((int)(kflags.symtab));
-    } else {
-    	first_addr = (vm_offset_t)&end;
-    }
-#endif
 
     first_addr = m88k_round_page(first_addr);
 

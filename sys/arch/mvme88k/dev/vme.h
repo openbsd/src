@@ -1,4 +1,4 @@
-/*	$OpenBSD: vme.h,v 1.2 1998/12/15 05:52:31 smurph Exp $ */
+/*	$OpenBSD: vme.h,v 1.3 1999/05/29 04:41:44 smurph Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -188,8 +188,8 @@ struct vme2reg {
 #define	VME2_MASTERCTL_AM24UB	0x3b	/* A24 Non-priv. Block Transfer */
 #define	VME2_MASTERCTL_AM24UP	0x3a	/* A24 Non-priv. Program Access */
 #define	VME2_MASTERCTL_AM24UD	0x39	/* A24 Non-priv. Data Access */
-#define	VME2_MASTERCTL_AM16S	0x2d	/* A16 Supervisory Access */
-#define	VME2_MASTERCTL_AM16U	0x29	/* A16 Non-priv. Access */
+#define	VME2_MASTERCTL_AM16S		0x2d	/* A16 Supervisory Access */
+#define	VME2_MASTERCTL_AM16U		0x29	/* A16 Non-priv. Access */
 #define	VME2_MASTERCTL_AM32SB	0x0f	/* A32 Supervisory Block Transfer */
 #define	VME2_MASTERCTL_AM32SP	0x0e	/* A32 Supervisory Program Access */
 #define	VME2_MASTERCTL_AM32SD	0x0d	/* A32 Supervisory Data Access */
@@ -228,6 +228,10 @@ struct vme2reg {
 /*58*/	volatile u_long		vme2_t2cmp;
 /*5c*/	volatile u_long		vme2_t2count;
 /*60*/	volatile u_long		vme2_tctl;
+#define VME2_TCTL1_CEN		0x01
+#define VME2_TCTL1_COC		0x02
+#define VME2_TCTL1_COVF		0x04
+#define VME2_TCTL1_OVF		0xf0
 #define VME2_TCTL_SCON		0x40000000	/* we are SCON */
 #define VME2_TCTL_SYSFAIL	0x20000000	/* light SYSFAIL led */
 #define VME2_TCTL_SRST		0x00800000	/* system reset */
@@ -306,6 +310,7 @@ struct vme2reg {
 #define VME2_IRQL4_VME2SHIFT	4
 #define VME2_IRQL4_VME1SHIFT	0
 /*88*/	volatile u_long		vme2_vbr;
+#define VME2_SYSFAIL       (1 << 22)
 #define VME2_VBR_0SHIFT		28
 #define VME2_VBR_1SHIFT		24
 #define VME2_VBR_GPOXXXX	0x00ffffff

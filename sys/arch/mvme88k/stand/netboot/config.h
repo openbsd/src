@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.h,v 1.1 1998/08/22 08:37:56 smurph Exp $ */
+/*	$OpenBSD: config.h,v 1.2 1999/05/29 04:41:48 smurph Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -45,6 +45,8 @@
 #define CPU_172			0x172
 #define CPU_177			0x177
 #define CPU_187			0x187
+#define CPU_188			0x188
+#define CPU_197			0x197
 
 struct brdid {
 	u_long  eye_catcher;

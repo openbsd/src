@@ -1,4 +1,4 @@
-/*	$OpenBSD: process_machdep.c,v 1.5 1999/02/09 06:36:30 smurph Exp $ */
+/*	$OpenBSD: process_machdep.c,v 1.6 1999/05/29 04:41:47 smurph Exp $ */
 
 /*
  * Copyright (c) 1993 The Regents of the University of California.
@@ -74,16 +74,14 @@
 #include <machine/frame.h>
 #endif
 #include <sys/ptrace.h>
+/* NOTE: struct reg == struct trapframe */
 
 int
 process_read_regs(p, regs)
 	struct proc *p;
 	struct reg *regs;
 {
-#if 0
-	/* NOTE: struct reg == struct trapframe */
 	bcopy(p->p_md.md_tf, (caddr_t)regs, sizeof(struct reg));
-#endif
 	return (0);
 }
 
@@ -92,11 +90,7 @@ process_write_regs(p, regs)
 	struct proc *p;
 	struct reg *regs;
 {
-#if 0
-	int	psr = p->p_md.md_tf->tf_epsr & ~PSR_ICC;
 	bcopy((caddr_t)regs, p->p_md.md_tf, sizeof(struct reg));
-	p->p_md.md_tf->tf_epsr = psr | (regs->r_epsr & PSR_ICC);
-#endif
 	return (0);
 }
 
@@ -104,10 +98,8 @@ int
 process_sstep(p, sstep)
 	struct proc *p;
 {
-#if 0
 	if (sstep)
-		return EINVAL;
-#endif
+		cpu_singlestep(p);
 	return (0);
 }
 
@@ -116,10 +108,8 @@ process_set_pc(p, addr)
 	struct proc *p;
 	caddr_t addr;
 {
-#if 0
-	p->p_md.md_tf->tf_pc = (u_int)addr;
-	p->p_md.md_tf->tf_npc = (u_int)addr + 4;
-#endif
+	p->p_md.md_tf->sxip = (u_int)addr;
+	p->p_md.md_tf->snip = (u_int)addr + 4;
 	return (0);
 }
 

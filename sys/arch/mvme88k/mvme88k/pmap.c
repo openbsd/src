@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.6 1999/02/09 06:36:30 smurph Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.7 1999/05/29 04:41:46 smurph Exp $	*/
 /*
  * Copyright (c) 1996 Nivas Madhur
  * All rights reserved.
@@ -257,7 +257,7 @@ static pv_entry_t	pv_head_table;	/* array of entries, one per page */
 #define UNLOCK_PVH(index)
 
 #define ETHERPAGES 16
-void	*etherbuf;
+void	*etherbuf=NULL;
 int	etherlen;
 
 /*
@@ -1125,119 +1125,132 @@ pmap_bootstrap(vm_offset_t	load_start,	/* IN */
      * the translation tree. I don't think we need to map it CACHE_INH
      * here...
      */
-    if (kmapva != vaddr) {
+   if (kmapva != vaddr) {
 #ifdef DEBUG
-    	if ((pmap_con_dbg & (CD_BOOT | CD_FULL)) == (CD_BOOT | CD_FULL)) {
-	    printf("(pmap_bootstrap) correcting vaddr\n");
-	}
+      if ((pmap_con_dbg & (CD_BOOT | CD_FULL)) == (CD_BOOT | CD_FULL)) {
+	      printf("(pmap_bootstrap) correcting vaddr\n");
+	   }
 #endif
-	while (vaddr < (*virt_start - kernel_pmap_size))
-	  vaddr = M88K_ROUND_PAGE(vaddr + 1);
-    }
+	   while (vaddr < (*virt_start - kernel_pmap_size))
+	      vaddr = M88K_ROUND_PAGE(vaddr + 1);
+   }
 
-    vaddr = PMAPER(
-		vaddr,
-		(vm_offset_t)kmap,
-		*phys_start,
-		(VM_PROT_WRITE|VM_PROT_READ)|(CACHE_GLOBAL << 16));
+   vaddr = PMAPER(vaddr,(vm_offset_t)kmap,*phys_start,
+	   (VM_PROT_WRITE|VM_PROT_READ)|(CACHE_GLOBAL << 16));
+    
+   if (vaddr != *virt_start) {
+ #ifdef DEBUG
+      if ((pmap_con_dbg & (CD_BOOT | CD_FULL)) == (CD_BOOT | CD_FULL)) {
+         printf("1:vaddr %x *virt_start %x *phys_start %x\n", vaddr,
+         *virt_start, *phys_start);
+      }
+ #endif
+      *virt_start = vaddr;
+      *phys_start = round_page(*phys_start);
+   }
 	
-    etherlen = ETHERPAGES * NBPG;
 
     /*
-     *	Get ethernet buffer - need etherlen bytes physically contiguous.
+     *  Get ethernet buffer - need etherlen bytes physically contiguous.
      *  1 to 1 mapped as well???. There is actually a bug in the macros
      *  used by the 1x7 ethernet driver. Remove this when that is fixed.
      *  XXX -nivas
      */
-
-    if (vaddr != *virt_start) {
-#ifdef DEBUG
-        if ((pmap_con_dbg & (CD_BOOT | CD_FULL)) == (CD_BOOT | CD_FULL)) {
- 	    printf("1:vaddr %x *virt_start %x *phys_start %x\n", vaddr,
-		*virt_start, *phys_start);
-	}
-#endif
-	*virt_start = vaddr;
-	*phys_start = round_page(*phys_start);
-    }
-
+    etherlen = (ETHERPAGES * NBPG);
     *phys_start = vaddr;
-
+   
     etherbuf = (void *)vaddr;
-
-    vaddr = PMAPER(
-		vaddr,
-		*phys_start,
-		*phys_start + etherlen,
-		(VM_PROT_WRITE|VM_PROT_READ)|(CACHE_INH << 16));
-
+   
+    vaddr = PMAPER(vaddr,*phys_start,*phys_start + etherlen,
+     (VM_PROT_WRITE|VM_PROT_READ)|(CACHE_INH << 16));
     *virt_start += etherlen;
-    *phys_start += etherlen;
-
+    *phys_start += etherlen; 
+   
     if (vaddr != *virt_start) {
 #ifdef DEBUG
-        if ((pmap_con_dbg & (CD_BOOT | CD_FULL)) == (CD_BOOT | CD_FULL)) {
-	     printf("2:vaddr %x *virt_start %x *phys_start %x\n", vaddr,
-		*virt_start, *phys_start);
-	}
+	if ((pmap_con_dbg & (CD_BOOT | CD_FULL)) == (CD_BOOT | CD_FULL)) {
+   	      printf("2:vaddr %x *virt_start %x *phys_start %x\n", vaddr,
+   		      *virt_start, *phys_start);
+        }
 #endif
-	*virt_start = vaddr;
-	*phys_start = round_page(*phys_start);
+   	*virt_start = vaddr;
+   	*phys_start = round_page(*phys_start);
     }
 
-    *virt_start = round_page(*virt_start);
-    *virt_end = VM_MAX_KERNEL_ADDRESS;
 
-    /*
-     * Map a few more pages for phys routines and debugger.
-     */
+   *virt_start = round_page(*virt_start);
+   *virt_end = VM_MAX_KERNEL_ADDRESS;
 
-    phys_map_vaddr1 = round_page(*virt_start);
-    phys_map_vaddr2 = phys_map_vaddr1 + PAGE_SIZE;
+   /*
+    * Map a few more pages for phys routines and debugger.
+    */
 
-    /*
-     * To make 1:1 mapping of virt:phys, throw away a few phys pages.
-     * XXX what is this? nivas
-     */
+   phys_map_vaddr1 = round_page(*virt_start);
+   phys_map_vaddr2 = phys_map_vaddr1 + PAGE_SIZE;
 
+   /*
+    * To make 1:1 mapping of virt:phys, throw away a few phys pages.
+    * XXX what is this? nivas
+    */
    
-    *phys_start += 2 * PAGE_SIZE;
-    *virt_start += 2 * PAGE_SIZE;
+   *phys_start += 2 * PAGE_SIZE;
+   *virt_start += 2 * PAGE_SIZE;
 
-    /*
-     * Map all IO space 1-to-1. Ideally, I would like to not do this
-     * but have va for the given IO address dynamically allocated. But
-     * on the 88200, 2 of the BATCs are hardwired to do map the IO space
-     * 1-to-1; I decided to map the rest of the IO space 1-to-1.
-     * And bug ROM & the SRAM need to be mapped 1-to-1 if we ever want to
-     * execute bug system calls after the MMU has been turned on.
-     * OBIO should be mapped cache inhibited.
-     */
+   /*
+    * Map all IO space 1-to-1. Ideally, I would like to not do this
+    * but have va for the given IO address dynamically allocated. But
+    * on the 88200, 2 of the BATCs are hardwired to do map the IO space
+    * 1-to-1; I decided to map the rest of the IO space 1-to-1.
+    * And bug ROM & the SRAM need to be mapped 1-to-1 if we ever want to
+    * execute bug system calls after the MMU has been turned on.
+    * OBIO should be mapped cache inhibited.
+    */
 
-    PMAPER(
+   PMAPER(
             BUGROM_START,
             BUGROM_START,
             BUGROM_START + BUGROM_SIZE,
             VM_PROT_WRITE|VM_PROT_READ|(CACHE_INH << 16));
 
-    PMAPER(
+   PMAPER(
             SRAM_START,
             SRAM_START,
             SRAM_START + SRAM_SIZE,
             VM_PROT_WRITE|VM_PROT_READ|(CACHE_GLOBAL << 16));
 
-    PMAPER(
+   PMAPER(
             OBIO_START,
             OBIO_START,
             OBIO_START + OBIO_SIZE,
             VM_PROT_WRITE|VM_PROT_READ|(CACHE_INH << 16));
+
+#if 0
+   PMAPER(
+            VMEA16,
+            VMEA16,
+            VMEA16 + VMEA16_SIZE,
+            VM_PROT_WRITE|VM_PROT_READ|(CACHE_INH << 16));
+    
+	PMAPER(
+            VMEA32D16,
+            VMEA32D16,
+            VMEA32D16 + VMEA32D16_SIZE,
+            VM_PROT_WRITE|VM_PROT_READ|(CACHE_INH << 16));
+	
+   PMAPER(
+            IOMAP_MAP_START,
+            IOMAP_MAP_START,
+            IOMAP_MAP_START + IOMAP_SIZE,
+            VM_PROT_WRITE|VM_PROT_READ|(CACHE_INH << 16));
+#endif /* 0 */
 
 	/*
 	 * Allocate all the submaps we need. Note that SYSMAP just allocates
 	 * kernel virtual address with no physical backing memory. The idea
 	 * is physical memory will be mapped at this va before using that va.
 	 * This means that if different physcal pages are going to be mapped
-	 * at different times, we better do a tlb flush before using it -	         * else we will be referencing the wrong page.
+	 * at different times, we better do a tlb flush before using it -	         
+    * else we will be referencing the wrong page.
 	 */
 
 #define	SYSMAP(c, p, v, n)	\

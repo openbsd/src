@@ -1,4 +1,4 @@
-/*	$Id: if_ie.c,v 1.4 1999/03/03 22:10:32 jason Exp $ */
+/*	$Id: if_ie.c,v 1.5 1999/05/29 04:41:43 smurph Exp $ */
 
 /*-
  * Copyright (c) 1998 Steve Murphree, Jr. 
@@ -139,23 +139,8 @@ Mode of operation:
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
 #include <machine/pmap.h>
-
-#if !defined(MVME187)
-#include "mc.h"
-#endif
 #include "pcctwo.h"
-
-#if NMC > 0
-#include <mvme68k/dev/mcreg.h>
-#endif
-#if NPCCTWO > 0
-#if defined(MVME187)
 #include <mvme88k/dev/pcctworeg.h>
-#else
-#include <mvme68k/dev/pcctworeg.h>
-#endif
-#endif
-
 #include <mvme88k/dev/if_ie.h>
 #include <mvme88k/dev/i82586.h>
 #include <machine/board.h>
@@ -285,12 +270,7 @@ struct ie_softc {
 #ifdef IEDEBUG
 	int sc_debug;
 #endif
-#if NMC > 0
-	struct mcreg *sc_mc;
-#endif
-#if NPCCTWO > 0
 	struct pcctworeg *sc_pcc2;
-#endif
 };
 
 static void ie_obreset __P((struct ie_softc *));
@@ -391,7 +371,6 @@ iematch(parent, vcf, args)
 	int ret;
 	
 	if ((ret = badvaddr(IIOV(ca->ca_vaddr), 1)) <=0){
-	    printf("==> ie: failed address check returning %ld.\n", ret);
 	    return(0);
 	}
 	return (1);
@@ -462,14 +441,16 @@ ieattach(parent, self, aux)
 	sc->sc_msize = etherlen;
 	sc->sc_reg = ca->ca_vaddr;
 	ieo = (volatile struct ieob *) sc->sc_reg;
-
-        /* Are we the boot device? */
-        if (ca->ca_paddr == bootaddr)
-                bootdv = self;
-
+	
+	/* Are we the boot device? */
+	if (ca->ca_paddr == bootaddr)
+	bootdv = self;
+   
+	/* get the first avaliable etherbuf */
 	sc->sc_maddr = etherbuf;	/* maddr = vaddr */
+	if (sc->sc_maddr == NULL) panic("ie: too many ethernet boards");
 	pa = pmap_extract(pmap_kernel(), (vm_offset_t)sc->sc_maddr);
-	if (pa == 0) panic("ie pmap_extract");
+	if (pa == 0) panic("ie: pmap_extract");
 	sc->sc_iobase = (caddr_t)pa;	/* iobase = paddr (24 bit) */
 
 	/*printf("maddrP %x iobaseV %x\n", sc->sc_maddr, sc->sc_iobase);*/
@@ -531,29 +512,13 @@ ieattach(parent, self, aux)
 	sc->sc_failih.ih_arg = sc;
 	sc->sc_failih.ih_ipl = pri;
 
-	switch (sc->sc_bustype) {
-#if NMC > 0
-	case BUS_MC:
-		mcintr_establish(MCV_IE, &sc->sc_ih);
-		sc->sc_mc = (struct mcreg *)ca->ca_master;
-		sc->sc_mc->mc_ieirq = pri | MC_SC_SNOOP | MC_IRQ_IEN |
-		    MC_IRQ_ICLR;
-		mcintr_establish(MCV_IEFAIL, &sc->sc_failih);
-		sc->sc_mc->mc_iefailirq = pri | MC_IRQ_IEN | MC_IRQ_ICLR;
-		break;
-#endif
-#if NPCCTWO > 0
-	case BUS_PCCTWO:
-		pcctwointr_establish(PCC2V_IE, &sc->sc_ih);
-		sc->sc_pcc2 = (struct pcctworeg *)ca->ca_master;
-		sc->sc_pcc2->pcc2_ieirq = pri | PCC2_SC_SNOOP |
-		    PCC2_IRQ_IEN | PCC2_IRQ_ICLR;
-		pcctwointr_establish(PCC2V_IEFAIL, &sc->sc_failih);
-		sc->sc_pcc2->pcc2_iefailirq = pri | PCC2_IRQ_IEN |
-		    PCC2_IRQ_ICLR;
-		break;
-#endif
-	}
+	pcctwointr_establish(PCC2V_IE, &sc->sc_ih);
+	sc->sc_pcc2 = (struct pcctworeg *)ca->ca_master;
+	sc->sc_pcc2->pcc2_ieirq = pri | PCC2_SC_SNOOP |
+	    PCC2_IRQ_IEN | PCC2_IRQ_ICLR;
+	pcctwointr_establish(PCC2V_IEFAIL, &sc->sc_failih);
+	sc->sc_pcc2->pcc2_iefailirq = pri | PCC2_IRQ_IEN |
+	    PCC2_IRQ_ICLR;
 
 	evcnt_attach(&sc->sc_dev, "intr", &sc->sc_intrcnt);
 }
@@ -580,22 +545,9 @@ void *v;
 {
 	struct ie_softc *sc = v;
 
-	switch (sc->sc_bustype) {
-#if NMC > 0
-	case BUS_MC:
-		sc->sc_mc->mc_ieirq |= MC_IRQ_ICLR;		/* safe: clear irq */
-		sc->sc_mc->mc_iefailirq |= MC_IRQ_ICLR;		/* clear failure */
-		sc->sc_mc->mc_ieerr = MC_IEERR_SCLR;		/* reset error */
-		break;
-#endif
-#if NPCCTWO > 0
-	case BUS_PCCTWO:
-		sc->sc_pcc2->pcc2_ieirq |= PCC2_IRQ_ICLR;	/* safe: clear irq */
-		sc->sc_pcc2->pcc2_iefailirq |= PCC2_IRQ_ICLR;	/* clear failure */
-		sc->sc_pcc2->pcc2_ieerr = PCC2_IEERR_SCLR;	/* reset error */
-		break;
-#endif
-	}
+	sc->sc_pcc2->pcc2_ieirq |= PCC2_IRQ_ICLR;	/* safe: clear irq */
+	sc->sc_pcc2->pcc2_iefailirq |= PCC2_IRQ_ICLR;	/* clear failure */
+	sc->sc_pcc2->pcc2_ieerr = PCC2_IEERR_SCLR;	/* reset error */
 
 	iereset(sc);
 	return (1);
@@ -617,18 +569,7 @@ void *v;
 loop:
 	/* Ack interrupts FIRST in case we receive more during the ISR. */
 	ie_ack(sc, IE_ST_WHENCE & status);
-	switch (sc->sc_bustype) {
-#if NMC > 0
-	case BUS_MC:
-		sc->sc_mc->mc_ieirq |= MC_IRQ_ICLR;		/* clear irq */
-		break;
-#endif
-#if NPCCTWO > 0
-	case BUS_PCCTWO:
-		sc->sc_pcc2->pcc2_ieirq |= PCC2_IRQ_ICLR;	/* clear irq */
-		break;
-#endif
-	}
+	sc->sc_pcc2->pcc2_ieirq |= PCC2_IRQ_ICLR;	/* clear irq */
 
 	if (status & (IE_ST_RECV | IE_ST_RNR)) {
 #ifdef IEDEBUG

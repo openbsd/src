@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.7 1998/12/15 06:02:54 smurph Exp $
+#	$OpenBSD: GENERIC,v 1.8 1999/05/29 04:41:42 smurph Exp $
 
 machine		mvme88k 
 
@@ -17,7 +17,7 @@ config		bsd		swap generic
 mainbus0 at root
 # ------------------------------ mainbus devices ------------------------
 #bugtty0 at mainbus0
-sram0	at mainbus0 addr 0xffe00000
+#sram0	at mainbus0 addr 0xffe00000
 pcctwo0 at mainbus0 addr 0xfff00000
 # ------------------------------ pcctwo devices -------------------------
 clock0	at pcctwo0 ipl 5

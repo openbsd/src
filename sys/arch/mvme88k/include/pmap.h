@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.5 1999/02/09 06:36:27 smurph Exp $ */
+/*	$OpenBSD: pmap.h,v 1.6 1999/05/29 04:41:45 smurph Exp $ */
 /*
  * Mach Operating System
  * Copyright (c) 1991 Carnegie Mellon University
@@ -94,6 +94,12 @@ void _pmap_deactivate(pmap_t pmap, pcb_t, int my_cpu);
 void pmap_activate(pmap_t my_pmap, pcb_t);
 void pmap_deactivate(pmap_t pmap, pcb_t);
 int pmap_check_transaction(pmap_t pmap, vm_offset_t va, vm_prot_t type);
+
+vm_offset_t pmap_map(
+		vm_offset_t virt,
+		vm_offset_t start,
+		vm_offset_t end,
+		vm_prot_t prot);
 
 vm_offset_t pmap_map_batc(
       vm_offset_t virt,

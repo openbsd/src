@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.4 1999/02/09 06:36:27 smurph Exp $ */
+/*	$OpenBSD: proc.h,v 1.5 1999/05/29 04:41:45 smurph Exp $ */
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -43,7 +43,7 @@
  *	@(#)proc.h	8.1 (Berkeley) 6/11/93
  *
  * from: Header: proc.h,v 1.6 92/11/26 02:04:41 torek Exp  (LBL)
- * $Id: proc.h,v 1.4 1999/02/09 06:36:27 smurph Exp $
+ * $Id: proc.h,v 1.5 1999/05/29 04:41:45 smurph Exp $
  */
 
 #include <machine/pcb.h>
@@ -56,4 +56,6 @@ struct mdproc {
 	struct	trapframe *md_tf;	/* trap/syscall registers */
 	struct	fpstate *md_fpstate;	/* fpu state, if any; always resident */
 	int 	md_upte[UPAGES];	/* ptes for mapping u page */
+	int	md_ss_addr;		/* single step address for ptrace */
+	int	md_ss_instr;		/* single step instruction for ptrace */
 };

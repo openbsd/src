@@ -1,4 +1,4 @@
-/*	$OpenBSD: siop.c,v 1.2 1998/12/15 05:52:31 smurph Exp $ */
+/*	$OpenBSD: siop.c,v 1.3 1999/05/29 04:41:44 smurph Exp $ */
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -184,6 +184,19 @@ void siop_dump_trace __P((void));
 int kludge_city = 1;
 
 /*
+ * dummy routine to debug while loops
+ */
+void
+wdummy(void)
+{
+	static int wcount;
+	wcount++;
+	if (wcount > 400000) {
+		wcount = 0;
+	}
+}
+
+/*
  * default minphys routine for siop based controllers
  */
 void
@@ -213,8 +226,9 @@ siop_scsicmd(xs)
 	slp = xs->sc_link;
 	sc = slp->adapter_softc;
 	flags = xs->flags;
-
-	/* XXXX ?? */
+   xs->error = XS_NOERROR;
+	
+   /* XXXX ?? */
 	if (flags & SCSI_DATA_UIO)
 		panic("siop: scsi data uio requested");
 
@@ -921,7 +935,9 @@ siop_checkintr(sc, istat, dstat, sstat0, status)
 	 * Flush DMA and SCSI FIFOs.
 	 */
 	rp->siop_ctest8 |= SIOP_CTEST8_CLF;
-	while ((rp->siop_ctest1 & SIOP_CTEST1_FMT) != SIOP_CTEST1_FMT)
+	while ((rp->siop_ctest1 & SIOP_CTEST1_FMT) != SIOP_CTEST1_FMT){
+		wdummy();
+	}
 		;
 	rp->siop_ctest8 &= ~SIOP_CTEST8_CLF;
 #ifdef DEBUG

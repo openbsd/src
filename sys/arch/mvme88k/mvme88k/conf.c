@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.10 1999/02/09 06:36:28 smurph Exp $	*/
+/*	$OpenBSD: conf.c,v 1.11 1999/05/29 04:41:46 smurph Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -107,21 +107,19 @@ cdev_decl(ctty);
 cdev_decl(mm);
 cdev_decl(sw);
 
-#if 1 /*notyet*/
 #include "sram.h"
 cdev_decl(sram);
 
 #include "nvram.h"
 cdev_decl(nvram);
-#endif
 
-#if notyet
 #include "vmel.h"
 cdev_decl(vmel);
 
 #include "vmes.h"
 cdev_decl(vmes);
 
+#if notyet
 #include "flash.h"
 cdev_decl(flash);
 #endif /* notyet */
@@ -145,6 +143,9 @@ cdev_decl(cl);
 
 #include "bugtty.h"
 cdev_decl(bugtty);
+
+#include "vx.h"
+cdev_decl(vx);
 
 /* open, close, write, ioctl */
 #define	cdev_lp_init(c,n) { \
@@ -192,6 +193,12 @@ cdev_decl(tun);
 #define NLKM 0
 #endif
 
+#ifdef IPFILTER
+#define NIPF 1
+#else
+#define NIPF 0
+#endif
+
 cdev_decl(lkm);
 
 struct cdevsw	cdevsw[] =
@@ -203,18 +210,10 @@ struct cdevsw	cdevsw[] =
 	cdev_tty_init(NPTY,pts),	/* 4: pseudo-tty slave */
 	cdev_ptc_init(NPTY,ptc),	/* 5: pseudo-tty master */
 	cdev_log_init(1,log),		/* 6: /dev/klog */
-#if 1
 	cdev_mdev_init(NSRAM,sram),	/* 7: /dev/sramX */
-#else
-	cdev_notdef(),			/* 7: */
-#endif /* notyet */
 	cdev_disk_init(NSD,sd),		/* 8: SCSI disk */
 	cdev_disk_init(NCD,cd),		/* 9: SCSI CD-ROM */
-#if 1
 	cdev_mdev_init(NNVRAM,nvram),	/* 10: /dev/nvramX */
-#else
-	cdev_notdef(),			/* 10: */
-#endif /* notyet */
 
 #if notyet
 	cdev_mdev_init(NFLASH,flash),	/* 11: /dev/flashX */
@@ -225,7 +224,7 @@ struct cdevsw	cdevsw[] =
 #endif /* notyet */
 	cdev_tty_init(NCL,cl),		/* 13: CL-CD1400 serial (tty0[0-3]) */
 	cdev_tty_init(NBUGTTY,bugtty),	/* 14: BUGtty (ttyB) */
-	cdev_notdef(),			/* 15 */
+	cdev_tty_init(NVX,vx),			/* 15: MVME332XT serial/lpt ttyv[0-7][a-i] */
 	cdev_notdef(),			/* 16 */
 	cdev_notdef(),			/* 17: concatenated disk */
 	cdev_disk_init(NRD,rd),		/* 18: ramdisk disk */
@@ -245,25 +244,20 @@ struct cdevsw	cdevsw[] =
 #if notyet
 	cdev_lp_init(NLP,lp),		/* 28: lp */
 	cdev_lp_init(NLPTWO,lptwo),	/* 29: lptwo */
-#else
+#else                      
 	cdev_notdef(),			/* 28: lp */
 	cdev_notdef(),			/* 29: lptwo */
 #endif /* notyet */
 	cdev_notdef(),			/* 30 */
-#if notyet
 	cdev_mdev_init(NVMEL,vmel),	/* 31: /dev/vmelX */
 	cdev_mdev_init(NVMES,vmes),	/* 32: /dev/vmesX */
-#else /* notyet */
-	cdev_notdef(),			/* 31: /dev/vmelX */
-	cdev_notdef(),			/* 32: /dev/vmesX */
-#endif /* notyet */
 	cdev_lkm_dummy(),		/* 33 */
 	cdev_lkm_dummy(),		/* 34 */
 	cdev_lkm_dummy(),		/* 35 */
 	cdev_lkm_dummy(),		/* 36 */
 	cdev_lkm_dummy(),		/* 37 */
 	cdev_lkm_dummy(),		/* 38 */
-	cdev_notdef(),			/* 39 */
+	cdev_gen_ipf(NIPF,ipl),         /* 39: IP filter */
 	cdev_notdef(),			/* 40 */
 	cdev_notdef(),			/* 41 */
 	cdev_notdef(),			/* 42 */

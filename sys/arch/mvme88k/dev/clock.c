@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.4 1998/12/15 05:52:29 smurph Exp $ */
+/*	$OpenBSD: clock.c,v 1.5 1999/05/29 04:41:43 smurph Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -89,10 +89,13 @@
 
 #include <machine/psl.h>
 #include <machine/autoconf.h>
+#include <machine/bugio.h>
 #include <machine/cpu.h>
 
 #include <mvme88k/dev/pcctworeg.h>
+#include <mvme88k/dev/vme.h>
 #include "pcctwo.h"
+extern struct vme2reg *sys_vme2;
 
 /*
  * Statistics clock interval and variance, in usec.  Variance must be a
@@ -104,7 +107,7 @@
  */
 int statvar = 8192;
 int statmin;			/* statclock interval - 1/2*variance */
-int timerok;
+int timerok = 0;
 
 u_long delay_factor = 1;
 
@@ -203,6 +206,7 @@ clockintr(arg)
 #if NBUGTTY > 0
 	bugtty_chkinput();
 #endif /* NBUGTTY */
+	timerok = 1;
 	return (1);
 }
 
@@ -287,18 +291,30 @@ statintr(cap)
 	return (1);
 }
 
+
 delay(us)
 	register int us;
 {
 	volatile register int c;
-
+	unsigned long st;
 	/*
-	 * XXX MVME167 doesn't have a 3rd free-running timer,
-	 * so we use a stupid loop. Fix the code to watch t1:
-	 * the profiling timer.
+	 * We use the vme system controller for the delay clock.
+	 * Do not go to the real timer until vme device is present
 	 */
-	c = 4 * us;
-	while (--c > 0)
-		;
-	return (0);
+	if (sys_vme2 == NULL) {
+	    c = 5 * us;
+	    while (--c > 0);
+	    return(0);
+	}
+   sys_vme2->vme2_irql1 |= (0 << VME2_IRQL1_TIC1SHIFT);
+   sys_vme2->vme2_t1count = 0;
+   sys_vme2->vme2_tctl |= (VME2_TCTL1_CEN | VME2_TCTL1_COVF);
+
+   while (sys_vme2->vme2_t1count < us)
+      ;
+   sys_vme2->vme2_tctl &= ~(VME2_TCTL1_CEN | VME2_TCTL1_COVF);
+   return (0);	    
 }
+
+
+

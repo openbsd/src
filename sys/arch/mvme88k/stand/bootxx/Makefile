@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	8.1 (Berkeley) 6/10/93
-#	$OpenBSD: Makefile,v 1.3 1998/12/15 06:32:34 smurph Exp $
+#	$OpenBSD: Makefile,v 1.4 1999/05/29 04:41:48 smurph Exp $
 
 RELOC=0xAF0000 
 
@@ -17,7 +17,7 @@ CLEANFILES+=bootxx
 
 SRCS=   bootxx.c conf.c version.c
 
-LIBS=	${LIBSA} ${LIBBUG} ${LIBZ} -lgcc -lc -lgcc
+LIBS=	${LIBSA} ${LIBBUG} ${LIBZ} ${LIBGCC}
 
 OBJS= ${SRCS:N*.h:R:S/$/.o/g}
 

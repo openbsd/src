@@ -1,4 +1,4 @@
-/*	$OpenBSD: bugio.c,v 1.2 1998/12/15 05:52:29 smurph Exp $ */
+/*	$OpenBSD: bugio.c,v 1.3 1999/05/29 04:41:42 smurph Exp $ */
 /*  Copyright (c) 1998 Steve Murphree, Jr. */
 #include <machine/bugio.h>
 
@@ -10,6 +10,7 @@
 #define	DSKRD	"0x0010"
 #define	DSKWR	"0x0011"
 #define	DSKCFIG	"0x0012"
+#define	NETCFG	"0x001A"
 #define	NETCTRL	"0x001D"
 #define	OUTCHR	"0x0020"
 #define	OUTSTR	"0x0021"
@@ -156,6 +157,15 @@ bugrtcrd(struct bugrtc *rtc)
 	OSCTXT();
 }
 
+bugdelay(int delay)
+{
+	BUGCTXT();
+	asm("or r2,r0,%0" : : "r" (delay));
+	asm("or r9,r0, " DELAY);
+	asm("tb0 0,r0,0x1F0");
+	OSCTXT();
+}
+
 bugreturn(void)
 {
 	BUGCTXT();
@@ -179,6 +189,50 @@ bugnetctrl(struct bugniocall *niocall)
 {
 /*	BUGCTXT();*/
 	asm("or r2,r0,%0" : : "r" (niocall));
+	asm("or r9,r0, " NETCTRL);
+	asm("tb0 0,r0,0x1F0");
+/*	OSCTXT();*/
+}
+
+typedef struct netcnfgp { 
+    unsigned int magic;
+    unsigned int nodemem;
+    unsigned int bfla;
+    unsigned int bfea;
+    unsigned int bfed;
+    unsigned int bfl;
+    unsigned int bfbo;
+    unsigned int tbuffer;
+    unsigned char cipa[4];
+    unsigned char sipa[4];
+    unsigned char netmask[4];
+    unsigned char broadcast[4];
+    unsigned char gipa[4];
+    unsigned char bootp_retry;
+    unsigned char tftp_retry;
+    unsigned char bootp_ctl;
+    unsigned char cnfgp_ctl;
+    unsigned char filename[64];
+    unsigned char argfname[64];
+} NETCNFGP;
+
+struct bugniotcall {
+	unsigned char clun;
+	unsigned char dlun;
+	unsigned char ci;
+	unsigned char cd;
+	NETCNFGP * netcfngp_p;
+	void * unused;
+#define NIOT_READ  (1<<0)
+#define NIOT_WRITE (1<<1)
+#define NIOT_NVRAM (1<<2)    
+	unsigned long cntrlflag;
+};
+
+bugnetcfg(struct bugniotcall *niotcall)
+{
+/*	BUGCTXT();*/
+	asm("or r2,r0,%0" : : "r" (niotcall));
 	asm("or r9,r0, " NETCTRL);
 	asm("tb0 0,r0,0x1F0");
 /*	OSCTXT();*/

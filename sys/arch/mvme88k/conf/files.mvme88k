@@ -1,4 +1,4 @@
-#	$OpenBSD: files.mvme88k,v 1.3 1999/02/09 06:36:24 smurph Exp $
+#	$OpenBSD: files.mvme88k,v 1.4 1999/05/29 04:41:42 smurph Exp $
 #	
 maxpartitions 16
 
@@ -103,4 +103,17 @@ file	arch/mvme88k/dev/bugio.c
 device ie: ifnet, ether
 attach ie at pcctwo: ifnet, ether
 file    arch/mvme88k/dev/if_ie.c			ie
+
+device ve: ether, ifnet, ifmedia
+attach ve at vmes
+file    arch/mvme88k/dev/if_ve.c			ve
+
+device vx: tty
+attach vx at vmes
+file	arch/mvme88k/dev/vx.c				vx needs-count
+
+device vs: scsi
+attach vs at vmes
+file	arch/mvme88k/dev/vs.c				vs
+file	arch/mvme88k/dev/vsdma.c			vs
 

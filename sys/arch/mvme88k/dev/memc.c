@@ -1,4 +1,4 @@
-/*	$OpenBSD: memc.c,v 1.2 1998/12/15 05:52:30 smurph Exp $ */
+/*	$OpenBSD: memc.c,v 1.3 1999/05/29 04:41:44 smurph Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -84,7 +84,7 @@ memcmatch(parent, vcf, args)
 	struct confargs *ca = args;
 	struct memcreg *memc = (struct memcreg *)ca->ca_vaddr;
 
-	if (badvaddr(memc, 1))
+	if (badvaddr(memc, 4))
 		return (0);
 	if (memc->memc_chipid==MEMC_CHIPID || memc->memc_chipid==MCECC_CHIPID)
 		return (1);

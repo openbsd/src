@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.7 1999/02/09 06:36:30 smurph Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.8 1999/05/29 04:41:47 smurph Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -42,7 +42,7 @@
  *	from: Utah $Hdr: vm_machdep.c 1.21 91/04/06$
  *	from: @(#)vm_machdep.c	7.10 (Berkeley) 5/7/91
  *	vm_machdep.c,v 1.3 1993/07/07 07:09:32 cgd Exp
- *	$Id: vm_machdep.c,v 1.7 1999/02/09 06:36:30 smurph Exp $
+ *	$Id: vm_machdep.c,v 1.8 1999/05/29 04:41:47 smurph Exp $
  */
 
 #include <sys/param.h>
@@ -61,10 +61,8 @@
 #include <machine/cpu.h>
 #include <machine/pte.h>
 
-#ifdef XXX_FUTURE
 extern struct map *iomap;
-#endif
-extern struct map extiomap;
+extern vm_map_t   iomap_map;
 
 /*
  * Finish a fork operation, with process p2 nearly set up.
@@ -304,35 +302,48 @@ iomap_mapin(vm_offset_t pa, vm_size_t len, boolean_t canwait)
 	if (len == 0)
 		return NULL;
 	
-	off = (u_long)pa & PGOFSET;
+	ppa = pa;
+   off = (u_long)ppa & PGOFSET;
 
 	len = round_page(off + len);
 
 	s = splimp();
 	for (;;) {
-		iova = rmalloc(&extiomap, len);
+		iova = rmalloc(iomap, len);
 		if (iova != 0)
 			break;
 		if (canwait) {
-			(void)tsleep(&extiomap, PRIBIO+1, "iomapin", 0);
+			(void)tsleep(iomap, PRIBIO+1, "iomapin", 0);
 			continue;
 		}
 		splx(s);
 		return NULL;
 	}
 	splx(s);
+	
+   cmmu_flush_tlb(1, iova, len);
 
-	tva = iova;
-	pa = trunc_page(pa);
+   ppa = trunc_page(ppa);
 
-	while (len) {
-		pmap_enter(kernel_pmap, tva, pa,
-		    	VM_PROT_READ|VM_PROT_WRITE, 1);
+#ifndef NEW_MAPPING
+   tva = iova;
+#else
+   tva = ppa;
+#endif 
+   
+   while (len>0) {
+		pmap_enter(vm_map_pmap(iomap_map), tva, ppa,
+		    	VM_PROT_WRITE|VM_PROT_READ|(CACHE_INH << 16), 1);
 		len -= PAGE_SIZE;
 		tva += PAGE_SIZE;
 		ppa += PAGE_SIZE;
 	}
+#ifndef NEW_MAPPING
 	return (iova + off);
+#else
+	return (pa + off);
+#endif 
+
 }
 
 /*
@@ -348,11 +359,11 @@ iomap_mapout(vm_offset_t kva, vm_size_t len)
 	kva = trunc_page(kva);
 	len = round_page(off + len);
 
-	pmap_remove(kernel_pmap, kva, kva + len);
+	pmap_remove(vm_map_pmap(iomap_map), kva, kva + len);
 
 	s = splimp();
-	rmfree(&extiomap, len, kva);
-	wakeup(&extiomap);
+	rmfree(iomap, len, kva);
+	wakeup(iomap);
 	splx(s);
 	return 1;
 }
@@ -420,10 +431,18 @@ int
 badvaddr(vm_offset_t va, int size)
 {
 	register int 	x;
-
-	if (badaddr(va, size)) {
-		return -1;
+	int i;
+	int ret = 0;
+	
+	for (i=0; i<5; i++){
+	    ret = badaddr(va, size);
+	    if (ret) 
+		delay(500);
+	    else
+		break;
 	}
+	if (ret) 
+	    return -1;
 
 	switch (size) {
 	case 1:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.6 1999/02/09 06:36:30 smurph Exp $	*/
+/*	$OpenBSD: trap.c,v 1.7 1999/05/29 04:41:47 smurph Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -57,12 +57,17 @@
 #include <machine/m88100.h>		/* DMT_VALID, etc. */
 #include <machine/trap.h>
 #include <machine/psl.h>		/* FIP_E, etc. */
+#include <machine/pcb.h>		/* FIP_E, etc. */
 
 #include <sys/systm.h>
 
 #if (DDB)
 #include <machine/db_machdep.h>
+#else 
+#define PC_REGS(regs) ((regs->sxip & 2) ?  regs->sxip & ~3 : \
+	(regs->snip & 2 ? regs->snip & ~3 : regs->sfip & ~3))
 #endif /* DDB */
+#define BREAKPOINT (0xF000D1F8U) /* Single Step Breakpoint */
 
 #define TRAPTRACE
 #if defined(TRAPTRACE)
@@ -191,6 +196,7 @@ trap(unsigned type, struct m88100_saved_state *frame)
     union sigval sv;
     int result;
     int sig = 0;
+    unsigned pc = PC_REGS(frame);  /* get program counter (sxip) */
 
     extern vm_map_t kernel_map;
     extern int fubail(), subail();
@@ -392,11 +398,12 @@ trap(unsigned type, struct m88100_saved_state *frame)
     case T_DATAFLT+T_USER:
     user_fault:
 
-	if (type == T_INSTFLT+T_USER)
+	if (type == T_INSTFLT+T_USER){
 		fault_addr = frame->sxip & XIP_ADDR;
-	else
+	}else{
 		fault_addr = frame->dma0;
-
+	}
+	
 	if (frame->dmt0 & (DMT_WRITE|DMT_LOCKBAR)) {
 	    ftype = VM_PROT_READ|VM_PROT_WRITE;
 	    fault_code = VM_PROT_WRITE;
@@ -502,9 +509,61 @@ trap(unsigned type, struct m88100_saved_state *frame)
 	 * is executed.  When this breakpoint is hit, we get the
 	 * T_STEPBPT trap.
 	 */
+#if 0
 	frame->sfip = frame->snip;    /* set up next FIP */
 	frame->snip = frame->sxip;    /* set up next NIP */
 	break;
+#endif
+    {
+	register unsigned va;
+	unsigned instr;
+	struct uio uio;
+	struct iovec iov;
+
+	/* compute address of break instruction */
+	va = pc;
+
+	/* read break instruction */
+	instr = fuiword((caddr_t)pc);
+#if 1
+	printf("trap: %s (%d) breakpoint %x at %x: (adr %x ins %x)\n",
+		p->p_comm, p->p_pid, instr, pc,
+		p->p_md.md_ss_addr, p->p_md.md_ss_instr); /* XXX */
+#endif
+	/* check and see if we got here by accident */
+/*
+	if (p->p_md.md_ss_addr != pc || instr != BREAKPOINT) {
+		sig = SIGTRAP;
+		fault_type = TRAP_TRACE;
+		break;
+	}
+*/
+	/* restore original instruction and clear BP  */
+	/*sig = suiword((caddr_t)pc, p->p_md.md_ss_instr);*/
+	instr = p->p_md.md_ss_instr;
+	if (instr == 0){
+		printf("Warning: can't restore instruction at %x: %x\n",
+			p->p_md.md_ss_addr, p->p_md.md_ss_instr);
+	} else {
+		iov.iov_base = (caddr_t)&instr;
+		iov.iov_len = sizeof(int); 
+		uio.uio_iov = &iov;
+		uio.uio_iovcnt = 1; 
+		uio.uio_offset = (off_t)pc;
+		uio.uio_resid = sizeof(int);
+		uio.uio_segflg = UIO_SYSSPACE;
+		uio.uio_rw = UIO_WRITE;
+		uio.uio_procp = curproc;
+	}
+
+	frame->sfip = frame->snip;    /* set up next FIP */
+	frame->snip = frame->sxip;    /* set up next NIP */
+	frame->snip |= 2;	      /* set valid bit   */	    	
+	p->p_md.md_ss_addr = 0;
+	sig = SIGTRAP;
+	fault_type = TRAP_BRKPT;
+	break;
+    }
 
     case T_USERBPT+T_USER:
 	/*
@@ -786,3 +845,206 @@ init_sir()
 	sir_routines[1] = softclock;
 	next_sir = 2;
 }
+
+
+/************************************\
+* User Single Step Debugging Support *
+\************************************/
+
+/*
+ * Read bytes from address space for debugger.
+ */
+void
+ss_read_bytes(addr, size, data)
+	unsigned     	addr;
+	register int    size;
+	register char   *data;
+{
+    register char	*src;
+
+    src = (char *)addr;
+
+    while(--size >= 0) {
+	*data++ = *src++;
+    }
+}
+
+unsigned 
+ss_get_value(unsigned addr, int size, int is_signed)
+{
+	char data[sizeof(unsigned)];
+	unsigned value, extend;
+	int i;
+
+	ss_read_bytes(addr, size, data);
+
+	value = 0;
+	extend = (~(db_expr_t)0) << (size * 8 - 1);
+	for (i = 0; i < size; i++)
+		value = (value << 8) + (data[i] & 0xFF);
+	    
+	if (size < sizeof(unsigned) && is_signed && (value & extend))
+		value |= extend;
+	return (value);
+}
+
+
+/*
+ * ss_branch_taken(instruction, program counter, func, func_data)
+ *
+ * instruction will be a control flow instruction location at address pc.
+ * Branch taken is supposed to return the address to which the instruction
+ * would jump if the branch is taken. Func can be used to get the current
+ * register values when invoked with a register number and func_data as
+ * arguments.
+ *
+ * If the instruction is not a control flow instruction, panic.
+ */
+unsigned
+ss_branch_taken(
+    unsigned inst,
+    unsigned pc,
+    unsigned (*func)(unsigned int, struct trapframe *),
+    struct trapframe *func_data)  /* 'opaque' */
+{
+
+  /* check if br/bsr */
+  if ((inst & 0xf0000000U) == 0xc0000000U)
+    {
+      /* signed 26 bit pc relative displacement, shift left two bits */
+      inst = (inst & 0x03ffffffU)<<2;
+      /* check if sign extension is needed */
+      if (inst & 0x08000000U)
+	inst |= 0xf0000000U;
+      return pc + inst;
+    }
+
+  /* check if bb0/bb1/bcnd case */
+  switch ((inst & 0xf8000000U))
+    {
+    case 0xd0000000U: /* bb0 */
+    case 0xd8000000U: /* bb1 */
+    case 0xe8000000U: /* bcnd */
+      /* signed 16 bit pc relative displacement, shift left two bits */
+      inst = (inst & 0x0000ffffU)<<2;
+      /* check if sign extension is needed */
+      if (inst & 0x00020000U)
+	inst |= 0xfffc0000U;
+      return pc + inst;
+    }
+
+  /* check jmp/jsr case */
+  /* check bits 5-31, skipping 10 & 11 */
+  if ((inst & 0xfffff3e0U) == 0xf400c000U)
+    return (*func)(inst & 0x1f, func_data);  /* the register value */
+
+  return 0; /* keeps compiler happy */
+}
+
+/*
+ * ss_getreg_val - handed a register number and an exception frame.
+ *              Returns the value of the register in the specified
+ *              frame. Only makes sense for general registers.
+ */
+unsigned
+ss_getreg_val(unsigned regno, struct trapframe *tf)
+{
+    if (regno == 0)
+	return 0;
+    else if (regno < 31)
+	return tf->r[regno];
+    else {
+	panic("bad register number to ss_getreg_val.");
+	return 0;/*to make compiler happy */
+    }
+}
+
+unsigned 
+ss_get_next_addr(struct trapframe *regs)
+{
+    unsigned inst;
+    unsigned pc = PC_REGS(regs);
+    unsigned addr = 0;
+    
+    inst = ss_get_value(pc, sizeof(int), FALSE);
+    addr = ss_branch_taken(inst, pc, ss_getreg_val, regs);
+    if (addr) return(addr);
+    return(pc + 4);
+}
+
+int
+cpu_singlestep(p)
+	register struct proc *p;
+{
+	register unsigned va;
+	struct trapframe *sstf = p->p_md.md_tf;
+	int i;
+
+	int bpinstr = BREAKPOINT;
+	int curinstr;
+	struct uio uio;
+	struct iovec iov;
+
+	/*
+	 * Fetch what's at the current location.
+	 */
+	iov.iov_base = (caddr_t)&curinstr;
+	iov.iov_len = sizeof(int); 
+	uio.uio_iov = &iov;
+	uio.uio_iovcnt = 1; 
+	uio.uio_offset = (off_t)sstf->sxip;
+	uio.uio_resid = sizeof(int);
+	uio.uio_segflg = UIO_SYSSPACE;
+	uio.uio_rw = UIO_READ;
+	uio.uio_procp = curproc;
+	procfs_domem(curproc, p, NULL, &uio);
+
+	/* compute next address after current location */
+	if(curinstr != 0) {
+		va = ss_get_next_addr(sstf);
+		printf("SS %s (%d): next breakpoint set at %x\n", 
+			p->p_comm, p->p_pid, va);
+	}
+	else {
+		va = PC_REGS(sstf) + 4;
+	}
+	if (p->p_md.md_ss_addr) {
+		printf("SS %s (%d): breakpoint already set at %x (va %x)\n",
+			p->p_comm, p->p_pid, p->p_md.md_ss_addr, va); /* XXX */
+		return (EFAULT);
+	}
+	
+	p->p_md.md_ss_addr = va;
+
+	/*
+	 * Fetch what's at the current location.
+	 */
+	iov.iov_base = (caddr_t)&p->p_md.md_ss_instr;
+	iov.iov_len = sizeof(int); 
+	uio.uio_iov = &iov;
+	uio.uio_iovcnt = 1; 
+	uio.uio_offset = (off_t)va;
+	uio.uio_resid = sizeof(int);
+	uio.uio_segflg = UIO_SYSSPACE;
+	uio.uio_rw = UIO_READ;
+	uio.uio_procp = curproc;
+	procfs_domem(curproc, p, NULL, &uio);
+
+	/*
+	 * Store breakpoint instruction at the "next" location now.
+	 */
+	iov.iov_base = (caddr_t)&bpinstr;
+	iov.iov_len = sizeof(int); 
+	uio.uio_iov = &iov;
+	uio.uio_iovcnt = 1; 
+	uio.uio_offset = (off_t)va;
+	uio.uio_resid = sizeof(int);
+	uio.uio_segflg = UIO_SYSSPACE;
+	uio.uio_rw = UIO_WRITE;
+	uio.uio_procp = curproc;
+	i = procfs_domem(curproc, p, NULL, &uio);
+
+	if (i < 0) return (EFAULT);
+	return (0);
+}
+
