@@ -1,4 +1,4 @@
-/*	$OpenBSD: utils.c,v 1.14 1999/05/06 17:19:47 millert Exp $	*/
+/*	$OpenBSD: utils.c,v 1.15 2001/05/11 14:01:50 art Exp $	*/
 /*	$NetBSD: utils.c,v 1.6 1997/02/26 14:40:51 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)utils.c	8.3 (Berkeley) 4/1/94";
 #else
-static char rcsid[] = "$OpenBSD: utils.c,v 1.14 1999/05/06 17:19:47 millert Exp $";
+static char rcsid[] = "$OpenBSD: utils.c,v 1.15 2001/05/11 14:01:50 art Exp $";
 #endif
 #endif /* not lint */
 
@@ -124,7 +124,7 @@ copy_file(entp, dne)
 #ifdef VM_AND_BUFFER_CACHE_SYNCHRONIZED
 	if (fs->st_size <= 8 * 1048576) {
 		if ((p = mmap(NULL, (size_t)fs->st_size, PROT_READ,
-		    0, from_fd, (off_t)0)) == MAP_FAILED) {
+		    MAP_FILE|MAP_SHARED, from_fd, (off_t)0)) == MAP_FAILED) {
 			warn("mmap: %s", entp->fts_path);
 			rval = 1;
 		} else {
