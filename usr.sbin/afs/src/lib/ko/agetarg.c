@@ -92,6 +92,7 @@ mandoc_template(struct agetargs *args,
     char timestr[64], cmd[64];
     const char *p;
     time_t t;
+    extern char *__progname;
 
     printf(".\\\" Things to fix:\n");
     printf(".\\\"   * correct section, and operating system\n");
@@ -101,8 +102,8 @@ mandoc_template(struct agetargs *args,
     t = time(NULL);
     strftime(timestr, sizeof(timestr), "%b %d, %Y", localtime(&t));
     printf(".Dd %s\n", timestr);
-    p = strrchr(getprogname(), '/');
-    if(p) p++; else p = getprogname();
+    p = strrchr(__progname, '/');
+    if(p) p++; else p = __progname;
     strncpy(cmd, p, sizeof(cmd));
     cmd[sizeof(cmd)-1] = '\0';
     strupr(cmd);
@@ -176,7 +177,7 @@ aarg_printusage (struct agetargs *args,
     size_t max_len = 0;
 
     if (progname == NULL)
-	progname = getprogname();
+	progname = __progname;
 
     if(getenv("GETARGMANDOC")){
 	mandoc_template(args, extra_string, style);
