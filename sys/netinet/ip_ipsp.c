@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.119 2001/05/29 01:17:24 angelos Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.120 2001/05/30 10:56:46 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -812,6 +812,12 @@ tdb_delete(struct tdb *tdbp)
     timeout_del(&tdbp->tdb_first_tmo);
     timeout_del(&tdbp->tdb_stimer_tmo);
     timeout_del(&tdbp->tdb_sfirst_tmo);
+
+    if (tdbp->tdb_local_auth)
+    {
+	ipsp_reffree(tdbp->tdb_local_auth);
+	tdbp->tdb_local_auth = NULL;
+    }
 
     if (tdbp->tdb_srcid)
     {
