@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.18 1997/02/03 01:05:42 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.19 1997/02/03 01:22:08 millert Exp $	*/
 /*	$NetBSD: main.c,v 1.17 1997/02/01 10:45:07 lukem Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.18 1997/02/03 01:05:42 millert Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.19 1997/02/03 01:22:08 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -103,8 +103,6 @@ main(argc, argv)
 	fromatty = isatty(fileno(stdin));
 	if (fromatty)
 		verbose = 1;		/* verbose if from a tty */
-	if (isatty(fileno(stdout)))
-		progress = 1;		/* progress bar on if going to a tty */
 
 	while ((ch = getopt(argc, argv, "adginpPr:tvV")) != -1) {
 		switch (ch) {
