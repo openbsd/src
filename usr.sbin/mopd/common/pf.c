@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.10 2004/04/14 20:37:28 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.11 2004/05/08 20:23:21 canacar Exp $ */
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -30,7 +30,7 @@
 
 #ifndef LINT
 static const char rcsid[] =
-    "$OpenBSD: pf.c,v 1.10 2004/04/14 20:37:28 henning Exp $";
+    "$OpenBSD: pf.c,v 1.11 2004/05/08 20:23:21 canacar Exp $";
 #endif
 
 #include <stdio.h>
@@ -151,6 +151,19 @@ pfInit(char *interface, int mode, u_short protocol, int typ)
 		syslog(LOG_ERR,"pfInit: BIOCSETF: %m");
 		return (-1);
 	}
+
+	/* XXX set the same write filter (for protocol only) */
+	if (ioctl(fd, BIOCSETWF, (caddr_t) & filter) < 0) {
+		syslog(LOG_ERR,"pfInit: BIOCSETWF: %m");
+		return (-1);
+	}
+
+	/* Lock the interface to prevent further changes */
+	if (ioctl(fd, BIOCLOCK) < 0) {
+		syslog(LOG_ERR,"pfInit: BIOCLOCK: %m");
+		return (-1);
+	}
+
 	return (fd);
 }
 
