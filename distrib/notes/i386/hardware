@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.170 2004/12/01 01:46:45 pvalchev Exp $
+dnl	$OpenBSD: hardware,v 1.171 2004/12/05 04:03:54 jsg Exp $
 OpenBSD/MACHINE OSREV works across a broad range of standard PCs and
 clones, with a wide variety of processors and I/O bus architectures.  It
 can be expected to install and run with minimal difficulties on most
@@ -532,7 +532,7 @@ Supported hardware {:-include-:}:
 		    Linksys WUSB11 v3.0
 		    Linksys WUSB12
 		    Melco WLI-USB-KS11G
-		    MicroSoft MN510
+		    Microsoft MN510
 		    Netgear MA111
 		    Siemens SpeedStream SS1022
 		    Syntax USB-400

@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.40 2004/10/29 11:45:01 jsg Exp $
+dnl	$OpenBSD: hardware,v 1.41 2004/12/05 04:03:54 jsg Exp $
 OpenBSD/MACHINE OSREV runs on iMac, G4 Power Macintosh, and G4 Cube, as well
 as PowerBook and iBook machines.
 
@@ -138,7 +138,7 @@ Supported devices {:-include-:}:
 			Linksys WUSB11 v3.0
 			Linksys WUSB12
 			Melco WLI-USB-KS11G
-			MicroSoft MN510
+			Microsoft MN510
 			Netgear MA111
 			Siemens SpeedStream SS1022
 			Syntax USB-400

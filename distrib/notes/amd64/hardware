@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.25 2004/12/02 01:58:25 pvalchev Exp $
+dnl	$OpenBSD: hardware,v 1.26 2004/12/05 04:03:54 jsg Exp $
 OpenBSD/MACHINE OSREV should work on all Athlon 64-based and
 compatible designs.
 
@@ -433,7 +433,7 @@ dnl		    US Robotics 2445 PCMCIA
 		    Linksys WUSB11 v3.0
 		    Linksys WUSB12
 		    Melco WLI-USB-KS11G
-		    MicroSoft MN510
+		    Microsoft MN510
 		    Netgear MA111
 		    Siemens SpeedStream SS1022
 		    Syntax USB-400

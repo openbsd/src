@@ -1,4 +1,4 @@
-/* $OpenBSD: mouse_protocols.c,v 1.9 2004/11/29 06:20:02 jsg Exp $ */
+/* $OpenBSD: mouse_protocols.c,v 1.10 2004/12/05 04:03:53 jsg Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Baptiste Marchand, Julien Montagne and Jerome Verdon
@@ -90,7 +90,7 @@ extern mouse_t	mouse;
 
 /* Cflags of each mouse protocol, ordered by P_XXX */
 static unsigned short mousecflags[] = {
-	(CS7 | CREAD | CLOCAL | HUPCL),	/* MicroSoft */
+	(CS7 | CREAD | CLOCAL | HUPCL),	/* Microsoft */
 	(CS8 | CSTOPB | CREAD | CLOCAL | HUPCL),	/* MouseSystems */
 	(CS8 | CSTOPB | CREAD | CLOCAL | HUPCL),	/* Logitech */
 	(CS8 | PARENB | PARODD | CREAD | CLOCAL | HUPCL),	/* MMSeries */
@@ -104,7 +104,7 @@ static unsigned short mousecflags[] = {
 /* array ordered by P_XXX giving protocol properties */
 static unsigned char proto[][7] = {
 	/* mask hd_id   dp_mask dp_id   bytes b4_mask b4_id */
-	{0x40, 0x40, 0x40, 0x00, 3, ~0x23, 0x00},	/* MicroSoft */
+	{0x40, 0x40, 0x40, 0x00, 3, ~0x23, 0x00},	/* Microsoft */
 	{0xf8, 0x80, 0x00, 0x00, 5, 0x00, 0xff},	/* MouseSystems */
 	{0xe0, 0x80, 0x80, 0x00, 3, 0x00, 0xff},	/* Logitech */
 	{0xe0, 0x80, 0x80, 0x00, 3, 0x00, 0xff},	/* MMSeries */
@@ -640,9 +640,9 @@ mouse_init(void)
 	 ** The protocols supported by the (European) MouseMan are:
 	 **   -  5 byte packed binary protocol, as with the Mouse Systems
 	 **      mouse. Selected by sequence "*U".
-	 **   -  2 button 3 byte MicroSoft compatible protocol. Selected
+	 **   -  2 button 3 byte Microsoft compatible protocol. Selected
 	 **      by sequence "*V".
-	 **   -  3 button 3+1 byte MicroSoft compatible protocol (default).
+	 **   -  3 button 3+1 byte Microsoft compatible protocol (default).
 	 **      Selected by sequence "*X".
 	 **
 	 ** The following baud rates are supported:
