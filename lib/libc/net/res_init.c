@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_init.c,v 1.17 1999/09/03 16:23:19 millert Exp $	*/
+/*	$OpenBSD: res_init.c,v 1.18 1999/09/03 21:14:51 deraadt Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1989, 1993
@@ -60,7 +60,7 @@
 static char sccsid[] = "@(#)res_init.c	8.1 (Berkeley) 6/7/93";
 static char rcsid[] = "$From: res_init.c,v 8.7 1996/09/28 06:51:07 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: res_init.c,v 1.17 1999/09/03 16:23:19 millert Exp $";
+static char rcsid[] = "$OpenBSD: res_init.c,v 1.18 1999/09/03 21:14:51 deraadt Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -476,7 +476,7 @@ res_setoptions(options, source)
 			char *p = cp + sizeof("ndots:") - 1;
 			l = strtol(p, &endp, 10);
 			if (l >= 0 && endp != p &&
-			    (*endp = '\0' || issapce(*endp))) {
+			    (*endp = '\0' || isspace(*endp))) {
 				if (l <= RES_MAXNDOTS)
 					_res.ndots = l;
 				else
