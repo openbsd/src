@@ -1,7 +1,7 @@
 #!/bin/sh
 
 #
-#    $OpenBSD: rc.vpn,v 1.9 2000/01/13 05:19:10 angelos Exp $
+#    $OpenBSD: rc.vpn,v 1.10 2000/04/22 01:57:17 angelos Exp $
 #
 # Richard Reiner, Ph.D., FSC Internet Corp.
 # rreiner@fscinternet.com
@@ -33,13 +33,12 @@ REMOTE_NET_1=192.168.2.0/255.255.255.0
 
 # Crypto options and keys, note that key/iv lengths need to correspond
 # to the selected encryption and authentication algorithms.
-ENC=des
+ENC=3des
 AUTH=sha1
 SPI_OUT=1000
 SPI_IN=1001
-KEY=2ea140ac3911cb27
-AUTHKEY=176cc284bc1631afbd1468fbe976fa729fcb4321
-IV=c4b279f1a9bcd849
+KEYFILE=/etc/esp-enc-key
+AUTHKEYFILE=/etc/esp-auth-key
 
 #############################################################################
 ############# -- NO CHANGES SHOULD BE NEEDED BELOW THIS LINE -- #############
@@ -74,11 +73,11 @@ fi
 
 $DEBUG $ipsecadm new esp -src $GW_LOCAL -dst $GW_PEER \
     -forcetunnel -spi $SPI_OUT -enc $ENC -auth $AUTH \
-    -key $KEY -authkey $AUTHKEY
+    -keyfile $KEYFILE -authkeyfile $AUTHKEYFILE
 
 $DEBUG $ipsecadm new esp -src $GW_PEER -dst $GW_LOCAL \
     -forcetunnel -spi $SPI_IN -enc $ENC -auth $AUTH \
-    -key $KEY -authkey $AUTHKEY
+    -keyfile $KEYFILE -authkeyfile $AUTHKEYFILE
 
 #
 # Create the flows
