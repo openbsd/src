@@ -1,4 +1,4 @@
-/*	$OpenBSD: more.c,v 1.7 2003/05/28 01:09:11 millert Exp $	*/
+/*	$OpenBSD: more.c,v 1.8 2003/05/28 16:41:24 millert Exp $	*/
 
 /*-
  * Copyright (c) 1980 The Regents of the University of California.
@@ -43,7 +43,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)more.c	5.28 (Berkeley) 3/1/93";
 #else
-static const char rcsid[] = "$OpenBSD: more.c,v 1.7 2003/05/28 01:09:11 millert Exp $";
+static const char rcsid[] = "$OpenBSD: more.c,v 1.8 2003/05/28 16:41:24 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -741,8 +741,7 @@ getline(FILE *f, int *length)
 		}
 		*p++ = c;
 		if (c == '\t') {
-			/* XXX - grouping bug? (millert) */
-			if (!hardtabs || column < promptlen && !hard) {
+			if (!hardtabs || (column < promptlen && !hard)) {
 				if (hardtabs && eraseln && !dumb) {
 					column = 1 + (column | 7);
 					tputs(eraseln, 1, putch);
@@ -1347,7 +1346,7 @@ execute(char *filename, char *cmd, char *av0, char *av1, char *av2)
 			close(0);
 			open(_PATH_TTY, 0);
 		}
-		execv(cmd, argp);
+		execvp(cmd, argp);
 		write(STDERR_FILENO, "exec failed\n", 12);
 		exit(1);
 	}
