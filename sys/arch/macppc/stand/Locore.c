@@ -1,4 +1,4 @@
-/*	$OpenBSD: Locore.c,v 1.8 2001/06/23 01:53:00 drahn Exp $	*/
+/*	$OpenBSD: Locore.c,v 1.1 2001/09/01 15:39:02 drahn Exp $	*/
 /*	$NetBSD: Locore.c,v 1.1 1997/04/16 20:29:11 thorpej Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <lib/libsa/stand.h>
-#include <powerpc/stand/openfirm.h>
+#include <macppc/stand/openfirm.h>
 
 /*
 #include "machine/cpu.h"

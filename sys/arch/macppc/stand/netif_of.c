@@ -1,4 +1,4 @@
-/*	$OpenBSD: netif_of.c,v 1.4 1999/11/09 06:30:15 rahnds Exp $	*/
+/*	$OpenBSD: netif_of.c,v 1.1 2001/09/01 15:39:02 drahn Exp $	*/
 /*	$NetBSD: netif_of.c,v 1.1 1997/04/16 20:29:19 thorpej Exp $	*/
 
 /*
@@ -58,8 +58,8 @@
 #include <lib/libsa/net.h>
 #include <lib/libsa/netif.h>
 
-#include <powerpc/stand/ofdev.h>
-#include <powerpc/stand/openfirm.h>
+#include <macppc/stand/ofdev.h>
+#include <macppc/stand/openfirm.h>
 
 static struct netif netif_of;
 

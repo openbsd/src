@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.4 2001/06/23 01:53:01 drahn Exp $
+#	$OpenBSD: Makefile.inc,v 1.1 2001/09/01 15:39:02 drahn Exp $
 #	$NetBSD: Makefile.inc,v 1.1 1996/09/30 16:34:59 ws Exp $
 
 .if !defined(__stand_makefile_inc)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofdev.c,v 1.8 2001/03/14 08:11:25 drahn Exp $	*/
+/*	$OpenBSD: ofdev.c,v 1.1 2001/09/01 15:39:02 drahn Exp $	*/
 /*	$NetBSD: ofdev.c,v 1.1 1997/04/16 20:29:20 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@
 #include <lib/libsa/nfs.h>
 #include <hfs.h>
 
-#include <powerpc/stand/ofdev.h>
+#include <macppc/stand/ofdev.h>
 
 extern char bootdev[];
 

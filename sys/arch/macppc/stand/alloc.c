@@ -1,4 +1,4 @@
-/*	$OpenBSD: alloc.c,v 1.6 1999/11/09 06:30:15 rahnds Exp $	*/
+/*	$OpenBSD: alloc.c,v 1.1 2001/09/01 15:39:02 drahn Exp $	*/
 /*	$NetBSD: alloc.c,v 1.1 1997/04/16 20:29:16 thorpej Exp $	*/
 
 /*
@@ -54,7 +54,7 @@
 
 #include <lib/libsa/stand.h>
 
-#include <powerpc/stand/openfirm.h>
+#include <macppc/stand/openfirm.h>
 
 /*
  * Each block actually has ALIGN(struct ml) + ALIGN(size) bytes allocated

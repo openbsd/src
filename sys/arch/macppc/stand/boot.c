@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.13 2001/06/23 01:53:01 drahn Exp $	*/
+/*	$OpenBSD: boot.c,v 1.1 2001/09/01 15:39:02 drahn Exp $	*/
 /*	$NetBSD: boot.c,v 1.1 1997/04/16 20:29:17 thorpej Exp $	*/
 
 /*
@@ -58,8 +58,8 @@
 
 #include <machine/cpu.h>
 
-#include <powerpc/stand/ofdev.h>
-#include <powerpc/stand/openfirm.h>
+#include <macppc/stand/ofdev.h>
+#include <macppc/stand/openfirm.h>
 
 char bootdev[128];
 char bootfile[128];
@@ -184,7 +184,7 @@ main()
 	void *ssym, *esym;
 	int fd;
 	
-	printf("\n>> OpenBSD/powerpc Boot\n");
+	printf("\n>> OpenBSD/macppc Boot\n");
 
 	/*
 	 * Get the boot arguments from Openfirmware
