@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sis.c,v 1.8 2000/12/06 15:48:28 mickey Exp $ */
+/*	$OpenBSD: if_sis.c,v 1.9 2001/02/20 19:15:19 jason Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -30,7 +30,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/pci/if_sis.c,v 1.21 2000/08/22 23:26:51 wpaul Exp $
+ * $FreeBSD: src/sys/pci/if_sis.c,v 1.30 2001/02/06 10:11:47 phk Exp $
  */
 
 /*
@@ -1428,8 +1428,7 @@ int sis_ifmedia_upd(ifp)
 	sc->sis_link = 0;
 	if (mii->mii_instance) {
 		struct mii_softc	*miisc;
-		for (miisc = LIST_FIRST(&mii->mii_phys); miisc != NULL;
-		    miisc = LIST_NEXT(miisc, mii_list))
+		LIST_FOREACH(miisc, &mii->mii_phys, mii_list)
 			mii_phy_reset(miisc);
 	}
 	mii_mediachg(mii);
