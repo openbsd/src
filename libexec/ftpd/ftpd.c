@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.162 2004/12/06 23:04:14 deraadt Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.163 2005/03/15 12:22:58 niallo Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -70,7 +70,7 @@ static const char copyright[] =
 static const char sccsid[] = "@(#)ftpd.c	8.4 (Berkeley) 4/16/94";
 #else
 static const char rcsid[] =
-    "$OpenBSD: ftpd.c,v 1.162 2004/12/06 23:04:14 deraadt Exp $";
+    "$OpenBSD: ftpd.c,v 1.163 2005/03/15 12:22:58 niallo Exp $";
 #endif
 #endif /* not lint */
 
@@ -287,6 +287,7 @@ main(int argc, char *argv[])
 	FILE *fp;
 	struct hostent *hp;
 	struct sigaction sa;
+	int error = 0;
 
 	tzset();		/* in case no timezone database in ~ftp */
 	sigfillset(&allsigs);	/* used to block signals while root */
@@ -625,12 +626,15 @@ main(int argc, char *argv[])
 		strlcpy(hostname, hp->h_name, sizeof(hostname));
 
 	if (multihome) {
-		getnameinfo((struct sockaddr *)&ctrl_addr, ctrl_addr.su_len,
-		    dhostname, sizeof(dhostname), NULL, 0, 0);
+		error = getnameinfo((struct sockaddr *)&ctrl_addr,
+		    ctrl_addr.su_len, dhostname, sizeof(dhostname), NULL, 0, 0);
 	}
 
-	reply(220, "%s FTP server (%s) ready.",
-	    (multihome ? dhostname : hostname), version);
+	if (error != 0)
+		reply(220, "FTP server (%s) ready.", version);
+	else
+		reply(220, "%s FTP server (%s) ready.",
+		    (multihome ? dhostname : hostname), version);
 
 	monitor_init();
 
@@ -1366,6 +1370,7 @@ dataconn(char *name, off_t size, char *mode)
 	in_port_t *p;
 	u_char *fa, *ha;
 	int alen;
+	int error;
 
 	file_size = size;
 	byte_count = 0;
@@ -1443,11 +1448,16 @@ dataconn(char *name, off_t size, char *mode)
 		if (file == NULL) {
 			char hbuf[MAXHOSTNAMELEN], pbuf[10];
 
-			getnameinfo((struct sockaddr *)&data_source,
+			error = getnameinfo((struct sockaddr *)&data_source,
 			    data_source.su_len, hbuf, sizeof(hbuf), pbuf,
 			    sizeof(pbuf), NI_NUMERICHOST | NI_NUMERICSERV);
-			reply(425, "Can't create data socket (%s,%s): %s.",
-			    hbuf, pbuf, strerror(errno));
+			if (error != 0)
+				reply(425, "Can't create data socket: %s.",
+				    strerror(errno));
+			else
+				reply(425,
+				    "Can't create data socket (%s,%s): %s.",
+				    hbuf, pbuf, strerror(errno));
 			return (NULL);
 		}
 
@@ -1769,13 +1779,14 @@ statcmd(void)
 	u_char *a, *p;
 	char hbuf[MAXHOSTNAMELEN];
 	int ispassive;
+	int error;
 
 	lreply(211, "%s FTP server status:", hostname);
 	printf("     %s\r\n", version);
-	getnameinfo((struct sockaddr *)&his_addr, his_addr.su_len,
+	error = getnameinfo((struct sockaddr *)&his_addr, his_addr.su_len,
 	    hbuf, sizeof(hbuf), NULL, 0, NI_NUMERICHOST);
 	printf("     Connected to %s", remotehost);
-	if (strcmp(remotehost, hbuf) != 0)
+	if (error == 0 && strcmp(remotehost, hbuf) != 0)
 		printf(" (%s)", hbuf);
 	printf("\r\n");
 	if (logged_in) {
@@ -2135,8 +2146,10 @@ dolog(struct sockaddr *sa)
 {
 	char hbuf[sizeof(remotehost)];
 
-	getnameinfo(sa, sa->sa_len, hbuf, sizeof(hbuf), NULL, 0, 0);
-	(void) strlcpy(remotehost, hbuf, sizeof(remotehost));
+	if (getnameinfo(sa, sa->sa_len, hbuf, sizeof(hbuf), NULL, 0, 0) == 0)
+		(void) strlcpy(remotehost, hbuf, sizeof(remotehost));
+	else
+		(void) strlcpy(remotehost, "unknown", sizeof(remotehost));
 
 #ifdef HASSETPROCTITLE
 	snprintf(proctitle, sizeof(proctitle), "%s: connected", remotehost);
