@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ether.c,v 1.5 1999/12/25 07:25:25 angelos Exp $  */
+/*	$OpenBSD: ip_ether.c,v 1.6 2000/01/07 21:59:34 angelos Exp $  */
 
 /*
  * The author of this code is Angelos D. Keromytis (kermit@adk.gr)
@@ -34,28 +34,23 @@
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/domain.h>
-#include <sys/protosw.h>
 #include <sys/socket.h>
-#include <sys/errno.h>
 #include <sys/time.h>
 #include <sys/kernel.h>
 #include <sys/sysctl.h>
-#include <machine/cpu.h>
 
 #include <net/if.h>
 #include <net/route.h>
 #include <net/netisr.h>
 
+#ifdef INET
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <netinet/in_pcb.h>
 #include <netinet/in_var.h>
 #include <netinet/ip_var.h>
-#include <netinet/ip_icmp.h>
-
-#include <sys/socketvar.h>
-#include <net/raw_cb.h>
+#endif /* INET */
 
 #include <netinet/ip_ipsp.h>
 #include <netinet/ip_ether.h>
