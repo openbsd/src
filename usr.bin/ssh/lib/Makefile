@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.25 2001/06/24 05:35:34 markus Exp $
+#	$OpenBSD: Makefile,v 1.26 2001/06/26 05:33:35 markus Exp $
 
 .PATH:		${.CURDIR}/..
 
@@ -9,6 +9,7 @@ SRCS=   authfd.c authfile.c bufaux.c buffer.c canohost.c \
 	rsa.c tildexpand.c ttymodes.c uidswap.c xmalloc.c atomicio.c \
 	key.c dispatch.c kex.c mac.c uuencode.c misc.c \
 	rijndael.c ssh-dss.c ssh-rsa.c dh.c kexdh.c kexgex.c \
+	scard.c
 
 NOPROFILE= yes
 NOPIC=	yes
@@ -25,5 +26,9 @@ CFLAGS+= -DAFS
 SRCS+=  radix.c
 .endif # AFS
 .endif # KERBEROS
+
+.if (${SMARTCARD:L} == "yes")
+CFLAGS+= -DSMARTCARD
+.endif # SMARTCARD
 
 .include <bsd.lib.mk>

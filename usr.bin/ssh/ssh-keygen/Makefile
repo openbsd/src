@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.17 2001/03/04 00:51:26 markus Exp $
+#	$OpenBSD: Makefile,v 1.18 2001/06/26 05:33:36 markus Exp $
 
 .PATH:		${.CURDIR}/..
 
@@ -16,3 +16,8 @@ SRCS=	ssh-keygen.c
 
 LDADD+=	-lcrypto
 DPADD+=	${LIBCRYPTO}
+
+.if (${SMARTCARD:L} == "yes")
+CFLAGS+= -DSMARTCARD
+LDADD+=	-lsectok
+.endif # SMARTCARD
