@@ -1,6 +1,7 @@
 /* xdr_ld.c  - xdr routines for remote dbx interface to VxWorks  */
 
-/*  Copyright 1984, 1985, 1986, 1987, 1988, 1989, 1992 Free Software Foundation, Inc.
+/*  Copyright 1984, 1985, 1986, 1987, 1988, 1989, 1992, 1993, 1998
+    Free Software Foundation, Inc.
 
     This code was donated by Wind River Systems, Inc. */
 
@@ -79,6 +80,6 @@ bool_t xdr_ldtabl (xdrs,objp)
     ldtabl *objp;
 
     {
-    return (xdr_array (xdrs, (char *) &objp->tbl_ent, (UINT *) &objp->tbl_size, 
+    return (xdr_array (xdrs, (char **) &objp->tbl_ent, (UINT *) &objp->tbl_size, 
 	    MAXTBLSZ, sizeof(ldfile), xdr_ldfile));
     }

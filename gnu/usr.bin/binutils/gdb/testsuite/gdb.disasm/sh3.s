@@ -1,7 +1,7 @@
 	.file	"test.c"
 	.data
 
-! Hitachi SH cc1 (cygnus-2.7.1-950728) arguments: -O -fpeephole
+! Renesas SH cc1 (cygnus-2.7.1-950728) arguments: -O -fpeephole
 ! -ffunction-cse -freg-struct-return -fdelayed-branch -fcommon -fgnu-linker
 
 gcc2_compiled.:

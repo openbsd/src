@@ -1,4 +1,5 @@
-#   Copyright (C) 1988, 1990, 1991, 1992, 1994 Free Software Foundation, Inc.
+#   Copyright 1988, 1990, 1991, 1992, 1994, 1995, 1996, 1997, 1999, 2000
+#   Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -12,7 +13,7 @@
 # 
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  
 
 # Please email any bugs, comments, and/or additions to this file to:
 # bug-gdb@prep.ai.mit.edu
@@ -21,14 +22,19 @@
 
 # These tests don't work for targets can't take arguments...
 
-if $noargs then {
-	verbose "Skipping a2-run.exp because of noargs."
-	return
-	}
+if [target_info exists noargs] then {
+    verbose "Skipping a2-run.exp because of noargs."
+    return
+}
+
+# Can't do this test without stdio support.
+if [gdb_skip_stdio_test "a2run.exp"] {
+    return
+}
 
 if $tracelevel then {
-	strace $tracelevel
-	}
+    strace $tracelevel
+}
 
 #
 # test running programs
@@ -39,9 +45,8 @@ set bug_id 0
 set testfile "run"
 set srcfile ${testfile}.c
 set binfile ${objdir}/${subdir}/${testfile}
-if  { [compile "${srcdir}/${subdir}/${srcfile} -g -o ${binfile}"] != "" } {
-    perror "Couldn't compile ${srcfile}"
-    return -1
+if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug}] != "" } {
+    gdb_suppress_entire_file "Testcase compile failed, so all tests in this file will automatically fail."
 }
 
 gdb_exit
@@ -51,16 +56,16 @@ gdb_load ${binfile}
 
 # Run with no arguments.
 # On VxWorks this justs make sure the program was run.
-send "run\n"
-expect -re "run\[\r\n\]+" {}
+gdb_run_cmd
+
 if [istarget "*-*-vxworks*"] then {
     set timeout 120
     verbose "Timeout is now $timeout seconds" 2
-    expect {
-	-i $shell_id "Program exited normally" {
+    gdb_expect {
+	 "Program exited normally" {
 	    unresolved "run \"$testfile\" with no args"
 	}
-	-i $shell_id -re "usage:  factorial <number>" {
+	 -re "usage:  factorial <number>" {
 	    pass "run \"$testfile\" with no args"
 	}
 	timeout	{
@@ -69,32 +74,35 @@ if [istarget "*-*-vxworks*"] then {
     }
     set timeout 10
     verbose "Timeout is now $timeout seconds" 2
-    expect -re "$prompt $" {}
+    gdb_expect -re "$gdb_prompt $" {}
 } else {
-    expect {
-	-re "Starting program.*usage:  factorial <number>.*Program exited with code 01.*$prompt $" {
+    gdb_expect {
+	-re ".*usage:  factorial <number>.*Program exited with code 01.*$gdb_prompt $" {
 	    pass "run \"$testfile\" with no args"
 	}
-	-re ".*$prompt $" {
+	-re ".*usage:  factorial <number>.* EXIT code 1.*Program exited normally.*$gdb_prompt $" {
+	    pass "run \"$testfile\" with no args (exit wrapper)"
+	}
+	-re ".*$gdb_prompt $" {
 	    fail "run \"$testfile\" with no args"
+	    verbose "expect_out is $expect_out(buffer)" 2
 	}
 	timeout	{
 	    fail "(timeout) run \"$testfile\" no args"
 	}
     }
 }
-
 # Now run with some arguments
 if [istarget "*-*-vxworks*"] then {
-    send "run vxmain \"5\"\n"
-    expect -re "run vxmain \"5\"\r\n" {}
+    send_gdb "run vxmain \"5\"\n"
+    gdb_expect -re "run vxmain \"5\"\r\n" {}
     set timeout 120
     verbose "Timeout is now $timeout seconds" 2
-    expect {
-	-i $shell_id "Program exited normally" {
+    gdb_expect {
+	 "Program exited normally" {
 	    unresolved "run \"$testfile\" with arg"
 	}
-	-i $shell_id "120" {
+	 "120" {
 	    pass "run \"$testfile\" with arg"
 	}
 	timeout {
@@ -103,62 +111,63 @@ if [istarget "*-*-vxworks*"] then {
     }
     set timeout 10
     verbose "Timeout is now $timeout seconds" 2
-    expect -re "$prompt $" {}
+    gdb_expect -re "$gdb_prompt $" {}
 } else {
-	setup_xfail "mips-idt-*"
-	send "run 5\n"
-	expect {
-	    -re "Starting program.*$testfile.*120.*$prompt $"\
+	setup_xfail "mips-idt-*" "arm-*-coff strongarm-*-coff"
+	gdb_run_cmd 5
+	gdb_expect {
+	    -re ".*120.*$gdb_prompt $"\
 				{ pass "run \"$testfile\" with arg" }
-	    -re ".*$prompt $"	{ fail "run \"$testfile\" with arg" }
+	    -re ".*$gdb_prompt $"	{ fail "run \"$testfile\" with arg" }
 	    timeout		{ fail "(timeout) run \"$testfile\" with arg" }
 	}
 }
 
 # Run again with same arguments.
 setup_xfail "mips-idt-*"
-send "run\n"
-expect -re "run\[\r\n\]+" {}
+gdb_run_cmd
+
 if [istarget "*-*-vxworks*"] then {
     set timeout 120
     verbose "Timeout is now $timeout seconds" 2
-    expect {
-	-i $shell_id "Program exited normally" {
+    gdb_expect {
+	 "Program exited normally" {
 	    unresolved "run \"$testfile\" again with same args"
 	}
-	-i $shell_id "120" { pass "run \"$testfile\" again with same args" }
+	 "120" { pass "run \"$testfile\" again with same args" }
 	timeout { fail "(timeout) run \"$testfile\" again with same args" }
     }
     set timeout 10
     verbose "Timeout is now $timeout seconds" 2
-    expect -re "$prompt $" {}
+    gdb_expect -re "$gdb_prompt $" {}
 } else {
-    expect {
-	    -re "Starting program.*120.*$prompt $"\
+    setup_xfail "arm-*-coff strongarm-*-coff"
+    gdb_expect {
+	    -re ".*120.*$gdb_prompt $"\
 				{ pass "run \"$testfile\" again with same args" }
-	    -re ".*$prompt $"	{ fail "run \"$testfile\" again with same args" }
+	    -re ".*$gdb_prompt $"	{ fail "run \"$testfile\" again with same args" }
 	    timeout		{ fail "(timeout) run \"$testfile\" again with same args" }
 	}
 }
 
 # Use "set args" command to specify no arguments as default and run again.
 if [istarget "*-*-vxworks*"] then {
-    send "set args main\n"
+    send_gdb "set args main\n"
 } else {
-    send "set args\n"
+    send_gdb "set args\n"
 }
-expect -re "$prompt $"
+gdb_expect -re "$gdb_prompt $"
 
-send "run\n"
-expect -re "run\[\r\n\]+" {}
+gdb_run_cmd
+
 if [istarget "*-*-vxworks*"] then {
     set timeout 120
     verbose "Timeout is now $timeout seconds" 2
-    expect {
-	-i $shell_id "Program exited normally" {
+    gdb_expect {
+	 "Program exited normally" {
 	    unresolved "run after setting args to nil"
 	}
-	-i $shell_id "usage:  factorial <number>" {
+	 "usage:  factorial <number>" {
 	    pass "run after setting args to nil"
 	}
 	timeout {
@@ -167,13 +176,13 @@ if [istarget "*-*-vxworks*"] then {
     }
     set timeout 10
     verbose "Timeout is now $timeout seconds" 2
-    expect -re "$prompt $" {}
+    gdb_expect -re "$gdb_prompt $" {}
 } else {
-    expect {
-	-re "Starting program.*usage:  factorial <number>.*$prompt $" {
+    gdb_expect {
+	-re ".*usage:  factorial <number>.*$gdb_prompt $" {
 	    pass "run after setting args to nil"
 	}
-	-re ".*$prompt $" {
+	-re ".*$gdb_prompt $" {
 	    fail "run after setting args to nil"
 	}
 	timeout {
@@ -185,21 +194,21 @@ if [istarget "*-*-vxworks*"] then {
 # Use "set args" command to specify an argument and run again.
 setup_xfail "mips-idt-*"
 if [istarget "*-*-vxworks*"] then {
-   send "set args vxmain \"6\"\n"
+   send_gdb "set args vxmain \"6\"\n"
 } else {
-	send "set args 6\n"
+	send_gdb "set args 6\n"
 }
-expect -re "$prompt $"
-send "run\n"
-expect -re "run\[\r\n\]+" {}
+gdb_expect -re "$gdb_prompt $"
+gdb_run_cmd
+
 if [istarget "*-*-vxworks*"] then {
     set timeout 120
     verbose "Timeout is now $timeout seconds" 2
-    expect {
-	-i $shell_id "Program exited normally" {
+    gdb_expect {
+	 "Program exited normally" {
 	    unresolved "run \"$testfile\" again after setting args"
 	}
-	-i $shell_id "720" {
+	 "720" {
 	    pass "run \"$testfile\" again after setting args"
 	}
 	timeout {
@@ -208,13 +217,14 @@ if [istarget "*-*-vxworks*"] then {
     }
     set timeout 10
     verbose "Timeout is now $timeout seconds" 2
-    expect -re "$prompt $" {}
+    gdb_expect -re "$gdb_prompt $" {}
 } else {
-    expect {
-	    -re "Starting program.*720.*$prompt $" {
+    setup_xfail "arm-*-coff strongarm-*-coff"
+    gdb_expect {
+	    -re ".*720.*$gdb_prompt $" {
 		pass "run \"$testfile\" again after setting args"
 	    }
-	    -re ".*$prompt $" {
+	    -re ".*$gdb_prompt $" {
 		fail "run \"$testfile\" again after setting args"
 	    }
 	    timeout {
@@ -225,13 +235,13 @@ if [istarget "*-*-vxworks*"] then {
 
 # GOAL: Test that shell is being used with "run".  For remote debugging
 # targets, there is no guarantee that a "shell" (whatever that is) is used.
-if [isnative] then {
-    send "run `echo 8`\n"
-    expect {
-	-re "Starting program.*40320.*$prompt $" {
+if ![is_remote target] then {
+    send_gdb "run `echo 8`\n"
+    gdb_expect {
+	-re "Starting program.*40320.*$gdb_prompt $" {
 	    pass "run \"$testfile\" with shell"
 	}
-	-re ".*$prompt $" {
+	-re ".*$gdb_prompt $" {
 	    fail "run \"$testfile\" with shell"
 	}
 	timeout	{
@@ -242,7 +252,6 @@ if [isnative] then {
 
 # Reset the default arguments for VxWorks
 if [istarget "*-*-vxworks*"] then {
-    send "set args main\n"
-    expect -re ".*$prompt $" {}
+    send_gdb "set args main\n"
+    gdb_expect -re ".*$gdb_prompt $" {}
 }
-

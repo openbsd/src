@@ -1,7 +1,11 @@
+#ifdef PROTOTYPES
+int main (int argc, char **argv, char **envp)
+#else
 main (argc, argv, envp)
      int argc;
      char **argv;
      char **envp;
+#endif
 {
     extern void dummy();
 #ifdef usestubs
@@ -9,6 +13,8 @@ main (argc, argv, envp)
     breakpoint();
 #endif
     dummy();
+    return 0;
+    
 }
 
 /* We put main() right up front so its line number doesn't keep changing.  */
@@ -44,7 +50,6 @@ unsigned long	v_unsigned_long;
 
 float		v_float;
 double		v_double;
-
 /*
  *	Now some derived types, which are arrays, functions-returning,
  *	pointers, structures, unions, and enumerations.
@@ -70,7 +75,6 @@ unsigned long	v_unsigned_long_array[2];
 
 float		v_float_array[2];
 double		v_double_array[2];
-
 /**** pointers *******/
 
 char		*v_char_pointer;
@@ -203,8 +207,6 @@ void dummy()
   
   v_float = 100.0;
   v_double = 200.0;
-
-
   v_char_array[0] = v_char;
   v_signed_char_array[0] = v_signed_char;
   v_unsigned_char_array[0] = v_unsigned_char;
@@ -223,7 +225,6 @@ void dummy()
 
   v_float_array[0] = v_float;
   v_double_array[0] = v_double;
-
   v_char_pointer = &v_char;
   v_signed_char_pointer = &v_signed_char;
   v_unsigned_char_pointer = &v_unsigned_char;

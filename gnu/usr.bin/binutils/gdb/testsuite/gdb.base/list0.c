@@ -1,6 +1,6 @@
 #include "list0.h"
 
-main ()
+int main ()
 {
     int x;
 #ifdef usestubs
@@ -33,6 +33,7 @@ main ()
     foo (x++);
     foo (x++);
     foo (x++);
+    return 0;
 }
 
 static void

@@ -1,5 +1,5 @@
 # step.exp -- Expect script to test gdb with step.c
-# Copyright (C) 1992 Free Software Foundation, Inc.
+# Copyright (C) 1992, 1997 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -13,7 +13,7 @@
 # 
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  
 
 # Please email any bugs, comments, and/or additions to this file to:
 # bug-gdb@prep.ai.mit.edu
@@ -44,32 +44,32 @@ if $tracelevel then {
 set program_exited 0
 
 proc set_bp { where } {
-    global prompt
+    global gdb_prompt
 
-    send "break $where\n"
+    send_gdb "break $where\n"
     # The first regexp is what we get with -g, the second without -g.
-    expect {
-	-re "Break.* at .*: file .*, line \[0-9\]*.*$prompt $" {}
-	-re "Breakpoint \[0-9\]* at 0x\[0-9a-f\]*.*$prompt $" {}
-	-re "$prompt $" { fail "setting breakpoint at $where" ; return 0 }
+    gdb_expect {
+	-re "Break.* at .*: file .*, line \[0-9\]*.*$gdb_prompt $" {}
+	-re "Breakpoint \[0-9\]* at 0x\[0-9a-f\]*.*$gdb_prompt $" {}
+	-re "$gdb_prompt $" { fail "setting breakpoint at $where" ; return 0 }
 	timeout { fail "setting breakpoint at $where (timeout)" ; return 0 }
     }
     pass "set_bp"
 }
 
 proc step_it { cmd } {
-    global prompt
+    global gdb_prompt
     global program_exited
 
-    send "$cmd\n"
-    expect {
-	-re "0x\[0-9A-Fa-f\]* *in.*\r\n$prompt $" { pass "step_it"; return 0 }
-	-re "0x\[0-9A-Fa-f\]* *\[0-9\]*.*\r\n$prompt $" { pass "step_it"; return 1 }
-	-re "Program exited .*\n$prompt $" {
+    send_gdb "$cmd\n"
+    gdb_expect {
+	-re "0x\[0-9A-Fa-f\]* *in.*\r\n$gdb_prompt $" { pass "step_it"; return 0 }
+	-re "0x\[0-9A-Fa-f\]* *\[0-9\]*.*\r\n$gdb_prompt $" { pass "step_it"; return 1 }
+	-re "Program exited .*\n$gdb_prompt $" {
 		set program_exited 1
 		return -1
 	    }
-	-re "$prompt $"	{ fail "single-stepping ($cmd).\n" ; return -1 }
+	-re "$gdb_prompt $"	{ fail "single-stepping ($cmd).\n" ; return -1 }
 	timeout	{ fail "single-stepping ($cmd) timout.\n" ; return -1 }
     }
 }
@@ -83,30 +83,30 @@ proc step_source {} {
 }
 
 proc continue_all {} {
-    global prompt
+    global gdb_prompt
 
-    send "continue\n"
-    expect {
-	-re "Breakpoint \[0-9\]*, thread\[0-9\]* .*$prompt $" { 
+    send_gdb "continue\n"
+    gdb_expect {
+	-re "Breakpoint \[0-9\]*, thread\[0-9\]* .*$gdb_prompt $" { 
 	    pass "continue_all"
 	    return 0
 	}
-	-re "Program exited .*\n$prompt $" {
+	-re "Program exited .*\n$gdb_prompt $" {
 	    set program_exited 1
 	    return 1;
 	}
-	-re "$prompt $" { fail "continue" ; return -1 }
+	-re "$gdb_prompt $" { fail "continue" ; return -1 }
 	timeout { fail "continue (timeout)" ; return -1 }
     }
 }
 
 proc check_threads { num_threads } {
-    global prompt
+    global gdb_prompt
 
     set curr_thread 0
-    send "info threads\n"
+    send_gdb "info threads\n"
     while { $num_threads > 0 } {
-	expect {
+	gdb_expect {
 	    -re "\\* *\[0-9\]* process \[0-9\]* thread \[0-9\]* .*\n" {
 		incr curr_thread
 		set num_threads [expr $num_threads - 1]
@@ -114,7 +114,7 @@ proc check_threads { num_threads } {
 	    -re " *\[0-9\]* process \[0-9\]* thread \[0-9\]* .*\n" {
 		set num_threads [expr $num_threads - 1]
 	    }
-	    -re "$prompt $" {
+	    -re "$gdb_prompt $" {
 		if { $num_threads < 0 } {
 		    fail "check_threads (too many)" ; return -1
 		}
@@ -166,7 +166,7 @@ proc do_tests {} {
     global objdir
     global srcdir
     global binfile
-    global prompt
+    global gdb_prompt
 
     set prms_id 0
     set bug_id 0
@@ -178,8 +178,8 @@ proc do_tests {} {
     gdb_reinitialize_dir $srcdir/$subdir
     gdb_load $objdir/$subdir/$binfile
 
-    send "set width 0\n"
-    expect -re "$prompt $"
+    send_gdb "set width 0\n"
+    gdb_expect -re "$gdb_prompt $"
 
     test_cond_wait
 }

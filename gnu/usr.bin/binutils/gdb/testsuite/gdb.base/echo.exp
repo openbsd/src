@@ -1,4 +1,4 @@
-#   Copyright (C) 1988, 1990, 1991, 1992 Free Software Foundation, Inc.
+#   Copyright (C) 1988, 1990, 1991, 1992, 1997 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -12,16 +12,19 @@
 # 
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  
 
 # Please email any bugs, comments, and/or additions to this file to:
 # bug-gdb@prep.ai.mit.edu
 
 # This file was written by Rob Savoye. (rob@cygnus.com)
 
+# Crank up gdb.
+gdb_start
+
 if $tracelevel then {
-	strace $tracelevel
-	}
+    strace $tracelevel
+}
 
 #
 # test the echo command
@@ -38,21 +41,4 @@ set prms_id 0
 #	ex: set bug_id 12
 set bug_id 0
 
-# this sends a string to the stdin of the tool being tested. The string
-# should be between the quotes.
-send "echo Hello world!\n"
-
-# any shell style globbing can be used between the ""
-# regular expressions can be used instead by preceding the
-# first quote with the option -re
-#	ex: "file deleted"	{ fail "removed source file" }
-# the string between the quotes after a fail or pass is what
-# gets printed if the pattern matches. There can be multiple
-# send/expect sequences in one test.
-expect {
-	-re "Hello world.*$prompt $"	{ pass "Echo test" }
-	-re "$prompt $"			{ fail "Echo test" }
-	timeout				{ fail "(timeout) Echo test" }
-	}
-
-# this dumps the output to the detailed log for this tool
+gdb_test "echo Hello world!\\n" "Hello world!" "Echo test"

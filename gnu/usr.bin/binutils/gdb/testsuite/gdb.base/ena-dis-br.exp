@@ -1,0 +1,488 @@
+# Copyright 1997, 1998, 1999, 2003 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+
+# Please email any bugs, comments, and/or additions to this file to:
+# bug-gdb@prep.ai.mit.edu
+
+if $tracelevel then {
+	strace $tracelevel
+	}
+
+global usestubs
+
+#
+# test running programs
+#
+set prms_id 0
+set bug_id 0
+
+set testfile "break"
+set srcfile ${testfile}.c
+set srcfile1 ${testfile}1.c
+set binfile ${objdir}/${subdir}/${testfile}
+
+if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}0.o" object {debug additional_flags=-w}] != "" } {
+     gdb_suppress_entire_file "Testcase compile failed, so all tests in this file will automatically fail."
+}
+
+if  { [gdb_compile "${srcdir}/${subdir}/${srcfile1}" "${binfile}1.o" object {debug additional_flags=-w}] != "" } {
+     gdb_suppress_entire_file "Testcase compile failed, so all tests in this file will automatically fail."
+}
+
+if  { [gdb_compile "${binfile}0.o ${binfile}1.o" "${binfile}" executable {debug additional_flags=-w}] != "" } {
+     gdb_suppress_entire_file "Testcase compile failed, so all tests in this file will automatically fail."
+}
+
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+gdb_load ${binfile}
+
+set bp_location1 [gdb_get_line_number "set breakpoint 1 here"]
+set bp_location8 [gdb_get_line_number "set breakpoint 8 here" $srcfile1]
+set bp_location9 [gdb_get_line_number "set breakpoint 9 here" $srcfile1]
+set bp_location11 [gdb_get_line_number "set breakpoint 11 here"]
+set bp_location13 [gdb_get_line_number "set breakpoint 13 here" $srcfile1]
+set bp_location14 [gdb_get_line_number "set breakpoint 14 here" $srcfile1]
+set bp_location15 [gdb_get_line_number "set breakpoint 15 here" $srcfile1]
+set bp_location16 [gdb_get_line_number "set breakpoint 16 here" $srcfile1]
+set bp_location17 [gdb_get_line_number "set breakpoint 17 here" $srcfile1]
+set bp_location18 [gdb_get_line_number "set breakpoint 18 here" $srcfile1]
+
+if ![runto_main] then { fail "enable/disable break tests suppressed" }
+
+# Verify that we can set a breakpoint (the location is irrelevant),
+# then enable it (yes, it's already enabled by default), then hit it.
+#
+send_gdb "break marker1\n"
+gdb_expect {
+  -re "Breakpoint (\[0-9\]*) at .*, line ($bp_location15|$bp_location16).*$gdb_prompt $"\
+          {pass "break marker1"}
+  -re "$gdb_prompt $"\
+          {fail "break marker1"}
+  timeout {fail "(timeout) break marker1"}
+}
+
+send_gdb "enable $expect_out(1,string)\n"
+gdb_expect {
+  -re "$gdb_prompt $"\
+          {pass "enable break marker1"}
+  timeout {fail "(timeout) enable break marker1"}
+}
+
+send_gdb "info break $expect_out(1,string)\n"
+gdb_expect {
+  -re "\[0-9\]*\[ \t\]+breakpoint\[ \t\]+keep\[ \t\]+y.*$gdb_prompt $"\
+          {pass "info break marker1"}
+  -re "$gdb_prompt $"\
+          {fail "info break marker1"}
+  timeout {fail "(timeout) info break marker1"}
+}
+
+# See the comments in condbreak.exp for "run until breakpoint at marker1" 
+# for an explanation of the xfail below.
+send_gdb "continue\n"
+gdb_expect {
+  -re "Breakpoint \[0-9\]*, marker1.*$gdb_prompt $"\
+          {pass "continue to break marker1"}
+  -re "Breakpoint \[0-9\]*, $hex in marker1.*$gdb_prompt $"\
+          {xfail "continue to break marker1"}
+  -re "$gdb_prompt $"\
+          {fail "continue to break marker1"}
+  timeout {fail "(timeout) continue to break marker1"}
+}
+
+send_gdb "delete $expect_out(1,string)\n"
+gdb_expect {
+  -re "$gdb_prompt $"\
+          {pass "delete break marker1"}
+  timeout {fail "(timeout) delete break marker1"}
+}
+
+# Verify that we can set a breakpoint to be self-disabling after
+# the first time it triggers.
+#
+send_gdb "break marker2\n"
+gdb_expect {
+  -re "Breakpoint (\[0-9\]*) at .*, line ($bp_location8|$bp_location9).*$gdb_prompt $"\
+          {pass "break marker2"}
+  -re "$gdb_prompt $"\
+          {fail "break marker2"}
+  timeout {fail "(timeout) break marker2"}
+}
+
+send_gdb "enable once $expect_out(1,string)\n"
+gdb_expect {
+  -re "$gdb_prompt $"\
+          {pass "enable once break marker2"}
+  timeout {fail "(timeout) enable once break marker2"}
+}
+
+send_gdb "info break $expect_out(1,string)\n"
+gdb_expect {
+  -re "\[0-9\]*\[ \t\]+breakpoint\[ \t\]+dis\[ \t\]+y.*$gdb_prompt $"\
+          {pass "info auto-disabled break marker2"}
+  -re "$gdb_prompt $"\
+          {fail "info auto-disabled break marker2"}
+  timeout {fail "(timeout) info auto-disabled break marker2"}
+}
+
+# See the comments in condbreak.exp for "run until breakpoint at marker1" 
+# for an explanation of the xfail below.
+send_gdb "continue\n"
+gdb_expect {
+  -re "Breakpoint \[0-9\]*, marker2.*$gdb_prompt $"\
+          {pass "continue to auto-disabled break marker2"}
+  -re "Breakpoint \[0-9\]*, $hex in marker2.*$gdb_prompt $"\
+          {xfail "continue to auto-disabled break marker2"}
+  -re "$gdb_prompt $"\
+          {fail "continue to auto-disabled break marker2"}
+  timeout {fail "(timeout) continue to auto-disabled break marker2"}
+}
+
+send_gdb "info break $expect_out(1,string)\n"
+gdb_expect {
+  -re "\[0-9\]*\[ \t\]+breakpoint\[ \t\]+dis\[ \t\]+n.*$gdb_prompt $"\
+          {pass "info auto-disabled break marker2"}
+  -re "$gdb_prompt $"\
+          {fail "info auto-disabled break marker2"}
+  timeout {fail "(timeout) info auto-disabled break marker2"}
+}
+
+# Verify that we don't stop at a disabled breakpoint.
+#
+gdb_continue_to_end "no stop"
+rerun_to_main
+gdb_continue_to_end "no stop at auto-disabled break marker2"
+
+# Verify that we can set a breakpoint to be self-deleting after
+# the first time it triggers.
+#
+if ![runto_main] then { fail "enable/disable break tests suppressed" }
+
+send_gdb "break marker3\n"
+gdb_expect {
+  -re "Breakpoint (\[0-9\]*) at .*, line ($bp_location17|$bp_location18).*$gdb_prompt $"\
+          {pass "break marker3"}
+  -re "$gdb_prompt $"\
+          {fail "break marker3"}
+  timeout {fail "(timeout) break marker3"}
+}
+
+send_gdb "enable del $expect_out(1,string)\n"
+gdb_expect {
+  -re "$gdb_prompt $"\
+          {pass "enable del break marker3"}
+  timeout {fail "(timeout) enable del break marker3"}
+}
+
+send_gdb "info break $expect_out(1,string)\n"
+gdb_expect {
+  -re "\[0-9\]*\[ \t\]+breakpoint\[ \t\]+del\[ \t\]+y.*$gdb_prompt $"\
+          {pass "info auto-deleted break marker2"}
+  -re "$gdb_prompt $"\
+          {fail "info auto-deleted break marker2"}
+  timeout {fail "(timeout) info auto-deleted break marker2"}
+}
+
+send_gdb "continue\n"
+gdb_expect {
+  -re ".*marker3 .*:($bp_location17|$bp_location18).*$gdb_prompt $"\
+          {pass "continue to auto-deleted break marker3"}
+  -re "Breakpoint \[0-9\]*, marker3.*$gdb_prompt $"\
+          {fail "continue to auto-deleted break marker3"}
+  -re "$gdb_prompt $"\
+          {fail "continue to auto-deleted break marker3"}
+  timeout {fail "(timeout) continue to break marker3"}
+}
+
+send_gdb "info break $expect_out(1,string)\n"
+gdb_expect {
+  -re ".*No breakpoint or watchpoint number.*$gdb_prompt $"\
+          {pass "info auto-deleted break marker3"}
+  -re "\[0-9\]*\[ \t\]+breakpoint\[ \t\].*$gdb_prompt $"\
+          {fail "info auto-deleted break marker3"}
+  -re "$gdb_prompt $"\
+          {fail "info auto-deleted break marker3"}
+  timeout {fail "(timeout) info auto-deleted break marker3"}
+}
+
+# Verify that we can set a breakpoint and manually disable it (we've
+# already proven that disabled bp's don't trigger).
+#
+send_gdb "break marker4\n"
+gdb_expect {
+  -re "Breakpoint (\[0-9\]*) at .*, line ($bp_location14|$bp_location13).*$gdb_prompt $"\
+          {pass "break marker4"}
+  -re "$gdb_prompt $"\
+          {fail "break marker4"}
+  timeout {fail "(timeout) break marker4"}
+}
+
+send_gdb "disable $expect_out(1,string)\n"
+gdb_expect {
+  -re "$gdb_prompt $"\
+          {pass "disable break marker4"}
+  timeout {fail "(timeout) disable break marker4"}
+}
+
+send_gdb "info break $expect_out(1,string)\n"
+gdb_expect {
+  -re "\[0-9\]*\[ \t\]+breakpoint\[ \t\]+keep\[ \t\]+n.*$gdb_prompt $"\
+          {pass "info break marker4"}
+  -re "$gdb_prompt $"\
+          {fail "info break marker4"}
+  timeout {fail "(timeout) info break marker4"}
+}
+
+# Verify that we can set a breakpoint with an ignore count N, which
+# should cause the next N triggers of the bp to be ignored.  (This is
+# a flavor of enablement/disablement, after all.)
+#
+if ![runto_main] then { fail "enable/disable break tests suppressed" }
+
+send_gdb "break marker1\n"
+gdb_expect {
+  -re "Breakpoint (\[0-9\]*) at .*, line ($bp_location15|$bp_location16).*$gdb_prompt $"\
+          {pass "break marker1"}
+  -re "$gdb_prompt $"\
+          {fail "break marker1"}
+  timeout {fail "(timeout) break marker1"}
+}
+
+# Verify that an ignore of a non-existent breakpoint is gracefully
+# handled.
+#
+send_gdb "ignore 999 2\n"
+gdb_expect {
+  -re "No breakpoint number 999..*$gdb_prompt $"\
+          {pass "ignore non-existent break"}
+  -re "$gdb_prompt $"\
+          {fail "ignore non-existent break"}
+  timeout {fail "(timeout) ignore non-existent break"}
+}
+
+# Verify that a missing ignore count is gracefully handled.
+#
+send_gdb "ignore $expect_out(1,string) \n"
+gdb_expect {
+  -re "Second argument .specified ignore-count. is missing..*$gdb_prompt $"\
+          {pass "ignore break with missing ignore count"}
+  -re "$gdb_prompt $"\
+          {fail "ignore break with missing ignore count"}
+  timeout {fail "(timeout) ignore break with missing ignore count"}
+}
+
+# Verify that a negative or zero ignore count is handled gracefully
+# (they both are treated the same).
+#
+send_gdb "ignore $expect_out(1,string) -1\n"
+gdb_expect {
+  -re "Will stop next time breakpoint \[0-9\]* is reached..*$gdb_prompt $"\
+          {pass "ignore break marker1 -1"}
+  -re "$gdb_prompt $"\
+          {fail "ignore break marker1 -1"}
+  timeout {fail "(timeout) ignore break marker1 -1"}
+}
+
+send_gdb "ignore $expect_out(1,string) 0\n"
+gdb_expect {
+  -re "Will stop next time breakpoint \[0-9\]* is reached..*$gdb_prompt $"\
+          {pass "ignore break marker1 0"}
+  -re "$gdb_prompt $"\
+          {fail "ignore break marker1 0"}
+  timeout {fail "(timeout) ignore break marker1 0"}
+}
+
+send_gdb "ignore $expect_out(1,string) 1\n"
+gdb_expect {
+  -re "Will ignore next crossing of breakpoint \[0-9\]*.*$gdb_prompt $"\
+          {pass "ignore break marker1"}
+  -re "$gdb_prompt $"\
+          {fail "ignore break marker1"}
+  timeout {fail "(timeout) ignore break marker1"}
+}
+
+send_gdb "info break $expect_out(1,string)\n"
+gdb_expect {
+  -re "\[0-9\]*\[ \t\]+breakpoint\[ \t\]+keep\[ \t\]+y.*ignore next 1 hits.*$gdb_prompt $"\
+          {pass "info ignored break marker1"}
+  -re "$gdb_prompt $"\
+          {fail "info ignored break marker1"}
+  timeout {fail "(timeout) info ignored break marker1"}
+}
+
+gdb_continue_to_end "no stop at ignored break marker1"
+rerun_to_main
+
+# See the comments in condbreak.exp for "run until breakpoint at marker1" 
+# for an explanation of the xfail below.
+send_gdb "continue\n"
+gdb_expect {
+  -re "Breakpoint \[0-9\]*, marker1.*$gdb_prompt $"\
+          {pass "continue to break marker1, 2nd time"}
+  -re "Breakpoint \[0-9\]*, $hex in marker1.*$gdb_prompt $"\
+          {xfail "continue to break marker1, 2nd time"}
+  -re "$gdb_prompt $"\
+          {fail "continue to break marker1, 2nd time"}
+  timeout {fail "(timeout) continue to break marker1, 2nd time"}
+}
+
+# Verify that we can specify both an ignore count and an auto-delete.
+#
+if ![runto_main] then { fail "enable/disable break tests suppressed" }
+
+send_gdb "break marker1\n"
+gdb_expect {
+  -re "Breakpoint (\[0-9\]*) at .*, line ($bp_location15|$bp_location16).*$gdb_prompt $"\
+          {pass "break marker1"}
+  -re "$gdb_prompt $"\
+          {fail "break marker1"}
+  timeout {fail "(timeout) break marker1"}
+}
+
+send_gdb "ignore $expect_out(1,string) 1\n"
+gdb_expect {
+  -re "Will ignore next crossing of breakpoint \[0-9\]*.*$gdb_prompt $"\
+          {pass "ignore break marker1"}
+  -re "$gdb_prompt $"\
+          {fail "ignore break marker1"}
+  timeout {fail "(timeout) ignore break marker1"}
+}
+
+send_gdb "enable del $expect_out(1,string)\n"
+gdb_expect {
+  -re "$gdb_prompt $"\
+          {pass "enable del break marker1"}
+  timeout {fail "(timeout) enable del break marker1"}
+}
+
+send_gdb "info break $expect_out(1,string)\n"
+gdb_expect {
+  -re "\[0-9\]*\[ \t\]+breakpoint\[ \t\]+del\[ \t\]+y.*ignore next 1 hits.*$gdb_prompt $"\
+          {pass "info break marker1"}
+  -re "$gdb_prompt $"\
+          {fail "info break marker1"}
+  timeout {fail "(timeout) info break marker2"}
+}
+
+gdb_continue_to_end "no stop at ignored & auto-deleted break marker1"
+rerun_to_main
+
+send_gdb "continue\n"
+gdb_expect {
+  -re ".*marker1 .*:($bp_location15|$bp_location16).*$gdb_prompt $"\
+          {pass "continue to ignored & auto-deleted break marker1"}
+  -re "Breakpoint \[0-9\]*, marker1.*$gdb_prompt $"\
+          {fail "continue to ignored & auto-deleted break marker1"}
+  -re "$gdb_prompt $"\
+          {fail "continue to ignored & auto-deleted break marker1"}
+  timeout {fail "(timeout) continue to ignored & auto-deleted break marker1"}
+}
+
+# Verify that a disabled breakpoint's ignore count isn't updated when
+# the bp is encountered.
+#
+if ![runto_main] then { fail "enable/disable break tests suppressed" }
+
+send_gdb "break marker1\n"
+gdb_expect {
+  -re "Breakpoint (\[0-9\]*) at .*, line ($bp_location15|$bp_location16).*$gdb_prompt $"\
+          {pass "break marker1"}
+  -re "$gdb_prompt $"\
+          {fail "break marker1"}
+  timeout {fail "(timeout) break marker1"}
+}
+
+send_gdb "ignore $expect_out(1,string) 10\n"
+gdb_expect {
+  -re "Will ignore next 10 crossings of breakpoint \[0-9\]*.*$gdb_prompt $"\
+          {pass "ignore break marker1"}
+  -re "$gdb_prompt $"\
+          {fail "ignore break marker1"}
+  timeout {fail "(timeout) ignore break marker1"}
+}
+
+send_gdb "disable $expect_out(1,string)\n"
+gdb_expect {
+  -re "$gdb_prompt $"\
+          {pass "disable break marker1"}
+  timeout {fail "(timeout) disable break marker1"}
+}
+
+gdb_continue_to_end "no stop at ignored & disabled break marker1"
+rerun_to_main
+
+send_gdb "info break $expect_out(1,string)\n"
+gdb_expect {
+  -re "\[0-9\]*\[ \t\]+breakpoint\[ \t\]+keep\[ \t\]+n.*ignore next 10 hits.*$gdb_prompt $"\
+          {pass "info ignored & disabled break marker1"}
+  -re "$gdb_prompt $"\
+          {fail "info ignored & disabled break marker1"}
+  timeout {fail "(timeout) info ignored & disabled break marker1"}
+}
+
+# Verify that GDB correctly handles the "continue" command with an argument,
+# which is an ignore count to set on the currently stopped-at breakpoint.
+# (Also verify that GDB gracefully handles the case where the inferior
+# isn't stopped at a breakpoint.)
+#
+if ![runto_main] then { fail "enable/disable break tests suppressed" }
+
+send_gdb "break $bp_location1\n"
+gdb_expect {
+  -re "Breakpoint \[0-9\]*.*, line $bp_location1.*$gdb_prompt $"\
+          {pass "prepare to continue with ignore count"}
+  -re "$gdb_prompt $"\
+          {fail "prepare to continue with ignore count"}
+  timeout {fail "(timeout) prepare to continue with ignore count"}
+}
+send_gdb "continue 2\n"
+gdb_expect {
+  -re "Will ignore next crossing of breakpoint \[0-9\]*.  Continuing..*$gdb_prompt $"\
+          {pass "continue with ignore count"}
+  -re "$gdb_prompt $"\
+          {fail "continue with ignore count"}
+  timeout {fail "(timeout) continue with ignore count"}
+}
+
+send_gdb "next\n"
+gdb_expect {
+  -re ".*$bp_location11\[ \t\]*marker1.*$gdb_prompt $"\
+          {pass "step after continue with ignore count"}
+  -re "$gdb_prompt $"\
+          {fail "step after continue with ignore count"}
+  timeout {fail "(timeout) step after continue with ignore count"}
+}
+
+# ??rehrauer: Huh.  This appears to be an actual bug.  (No big
+# surprise, since this feature hasn't been tested...)  Looks like
+# GDB is currently trying to set the ignore count of bp # -1!
+#
+setup_xfail hppa_*_*
+send_gdb "continue 2\n"
+gdb_expect {
+  -re "Not stopped at any breakpoint; argument ignored..*$gdb_prompt $"\
+          {pass "continue with ignore count, not stopped at bpt"}
+  -re "No breakpoint number -1.*$gdb_prompt $"\
+          {xfail "(DTS'd) continue with ignore count, not stopped at bpt"}
+  -re "$gdb_prompt $"\
+          {fail "continue with ignore count, not stopped at bpt"}
+  timeout {fail "(timeout) step after continue with ignore count, not stopped at bpt"}
+}
+
+gdb_exit
+return 0

@@ -1,5 +1,5 @@
 # step2.exp -- Expect script to test gdb step.c
-# Copyright (C) 1992 Free Software Foundation, Inc.
+# Copyright (C) 1992, 1997 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -13,7 +13,7 @@
 # 
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  
 
 # Please email any bugs, comments, and/or additions to this file to:
 # bug-gdb@prep.ai.mit.edu
@@ -30,7 +30,7 @@ set program_exited 0
 
 # A simple and crude test to see that we can step two threads independently
 proc test_multi_threaded_stepping {} {
-    global prompt
+    global gdb_prompt
     global hex
     global srcfile
     global decimal
@@ -53,13 +53,13 @@ proc test_multi_threaded_stepping {} {
     set thread2started 0
     set thread2condwait 0
     
-    send "run\n"
-    expect {
+    send_gdb "run\n"
+    gdb_expect {
 	-re "The program .* has been started already.*y or n. $" {
-	    send "y\n"
+	    send_gdb "y\n"
 	    exp_continue
 	}
-	-re ".*Breakpoint \[0-9\]+,.*thread1.* at .*$srcfile:.*\[\t \].*$prompt $" {
+	-re ".*Breakpoint \[0-9\]+,.*thread1.* at .*$srcfile:.*\[\t \].*$gdb_prompt $" {
 	    if { $thread1started != 0 } then {
 		fail "thread1 started"
 		return
@@ -67,10 +67,10 @@ proc test_multi_threaded_stepping {} {
 		set thread1started 1
 		pass "thread1 started"
 	    }
-	    send "step\n"
+	    send_gdb "step\n"
 	    exp_continue
 	}
-	-re ".*Breakpoint \[0-9\]+,.*thread2.* at .*$srcfile:.*\[\t \].*$prompt $" {
+	-re ".*Breakpoint \[0-9\]+,.*thread2.* at .*$srcfile:.*\[\t \].*$gdb_prompt $" {
 	    if { $thread2started != 0 } then {
 		fail "thread2 started"
 		return
@@ -78,10 +78,10 @@ proc test_multi_threaded_stepping {} {
 		set thread2started 1
 		pass "thread2 started"
 	    }
-	    send "step\n"
+	    send_gdb "step\n"
 	    exp_continue
 	}
-	-re ".*pthread_cond_wait.*cv_a.*$prompt" {
+	-re ".*pthread_cond_wait.*cv_a.*$gdb_prompt" {
 	    if { $thread1started == 0 } then {
 		fail "thread1 condwait"
 		return
@@ -94,11 +94,11 @@ proc test_multi_threaded_stepping {} {
 		pass "multi threaded stepping"
 		return
 	    }
-	    send "step\n"
+	    send_gdb "step\n"
 	    exp_continue
 	}
 		    
-	-re ".*pthread_cond_wait.*cv_b.*$prompt" {
+	-re ".*pthread_cond_wait.*cv_b.*$gdb_prompt" {
 	    if { $thread2started == 0 } then {
 		fail "thread2 condwait"
 		return
@@ -111,12 +111,12 @@ proc test_multi_threaded_stepping {} {
 		pass "multi threaded stepping"
 		return
 	    }
-	    send "step\n"
+	    send_gdb "step\n"
 	    exp_continue
 	}
 		    
-	-re "$prompt" {
-	    send "step\n"
+	-re "$gdb_prompt" {
+	    send_gdb "step\n"
 	    exp_continue
 	}
 	default { fail "multi threaded stepping" }

@@ -1,3 +1,22 @@
+2003-10-31  Kevin Buettner  <kevin@redhat.com>
+
+	* sim-frv.h: New file.
+
+2003-10-15  J"orn Rennecke <joern.rennecke@superh.com>
+
+	* callback.h (struct host_callback_struct): New members ftruncate
+	and truncate.
+
+2003-06-10  Corinna Vinschen  <vinschen@redhat.com>
+
+	* gdb/fileio.h: New file.
+
+2003-05-07  Andrew Cagney  <cagney@redhat.com>
+
+	* sim-d10v.h (sim_d10v_translate_addr): Add regcache parameter.
+	(sim_d10v_translate_imap_addr): Add regcache parameter.
+	(sim_d10v_translate_dmap_addr): Ditto.
+
 2003-03-27  Nick Clifton  <nickc@redhat.com>
 
 	* sim-arm.h (sim_arm_regs): Add iWMMXt registers.

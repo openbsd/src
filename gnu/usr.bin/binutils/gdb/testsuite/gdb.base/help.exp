@@ -1,4 +1,6 @@
-#   Copyright (C) 1988, 1990, 1991, 1992 Free Software Foundation, Inc.
+#   Copyright 1988, 1990, 1991, 1992, 1994, 1995, 1996, 1997, 1998, 1999,
+#   2000, 2002
+#   Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -12,7 +14,7 @@
 # 
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 # Please email any bugs, comments, and/or additions to this file to:
 # bug-gdb@prep.ai.mit.edu
@@ -26,2966 +28,572 @@
 set prms_id 0
 set bug_id 0
 
+gdb_start
+
 # force the height of the debugger to be pretty large so no pagers getused
-send "set height 400\n"
-expect -re "$prompt $"
+gdb_test "set height 400" "" "test set height"
 
 # use a larger expect input buffer for long help outputs.
-match_max 6000
-
 # test help add-symbol-file
-send "help add-symbol-file\n"
-expect 	{
-	-re "Usage: add-symbol-file FILE ADDR.*
-Load the symbols from FILE, assuming FILE has been dynamically loaded..*
-ADDR is the starting address of the file\'s text..*$prompt $" \
- 			{ pass "help add-symbol-file" }
-	-re ".*$prompt $"	{ fail "help add-symbol-file" }
-	timeout		{ fail "(timeout) help add-symbol-file" }
-	}
-
-
+gdb_test "help add-symbol-file" "Usage: add-symbol-file FILE ADDR \\\[-s <SECT> <SECT_ADDR> -s <SECT> <SECT_ADDR> \.\.\.\\\]\[\r\n\]+Load the symbols from FILE, assuming FILE has been dynamically loaded\.\[\r\n\]+ADDR is the starting address of the file's text\.\[\r\n\]+The optional arguments are section-name section-address pairs and\[\r\n\]+should be specified if the data and bss segments are not contiguous\[\r\n\]+with the text\.  SECT is a section name to be loaded at SECT_ADDR\." "help add-symbol-file"
+# test help advance
+gdb_test "help advance" "Continue the program up to the given location \\(same form as args for break command\\)\.\[\r\n]+Execution will also stop upon exit from the current stack frame\." "help advance"
 # test help aliases
-send "help aliases\n"
-expect {
-	-re "Aliases of other commands..*
-List of commands\:.*
-Type \"help\" followed by command name for full documentation..*
-Command name abbreviations are allowed if unambiguous..*$prompt $"\
-			{ pass "help aliases" }
-	-re "$prompt $" { fail "help aliases" }
-	timeout		{ fail "(timeout) help aliases" }
-	}
-
-
-send "help attach\n"
-expect {
-	-re "Attach to a process or file outside of GDB..*
-This command attaches to another target, of the same type as your last.*
-`target' command .`info files' will show your target stack.*
-The command may take as argument a process id or a device file..*
-For a process id, you must have permission to send the process a signal,.*
-and it must have the same effective uid as the debugger..*
-When using \"attach\", you should use the \"file\" command to specify.*
-the program running in the process, and to load its symbol table..*$prompt $"\
-			{ pass "help attach" }
-	-re "$prompt $"	{ fail "help attach" }
-	timeout		{ fail "(timeout) help attach" }
-	} 
-
-#	-re "$prompt $"	{ fail "help attach" }
-
+gdb_test "help aliases" "Aliases of other commands\.\[\r\n\]+List of commands\:.*\[\r\n\]+Type \"help\" followed by command name for full documentation\.\[\r\n\]+Command name abbreviations are allowed if unambiguous\." "help aliases"
+# test help append
+gdb_test "help append" "Append target code/data to a local file\.\[\r\n\]+List of append subcommands:.*" 
+gdb_test "help append binary" "Append target code/data to a raw binary file\.\[\r\n\]+List of append binary subcommands:.*" 
+gdb_test "help append memory" "Append contents of memory to a raw binary file\.\[\r\n\]+Arguments are FILE START STOP\.  Writes the contents of memory within the\[\r\n\]+range \\\[START \.\. STOP\\) to the specifed FILE in raw target ordered bytes\." 
+gdb_test "help append value" "Append the value of an expression to a raw binary file\.\[\r\n\]+Arguments are FILE EXPRESSION\.  Writes the value of EXPRESSION to\[\r\n\]+the specified FILE in raw target ordered bytes\." 
+gdb_test "help append binary memory" "Append contents of memory to a raw binary file\.\[\r\n\]+Arguments are FILE START STOP\.  Writes the contents of memory within the\[\r\n\]+range \\\[START \.\. STOP\\) to the specifed FILE in raw target ordered bytes\." 
+gdb_test "help append binary value" "Append the value of an expression to a raw binary file\.\[\r\n\]+Arguments are FILE EXPRESSION\.  Writes the value of EXPRESSION\[\r\n\]+to the specified FILE in raw target ordered bytes\." 
+# test help attach
+gdb_test "help attach" "Attach to a process or file outside of GDB\.\[\r\n\]+This command attaches to another target, of the same type as your last\[\r\n\]+\"target\" command \\(\"info files\" will show your target stack\\)\.\[\r\n\]+The command may take as argument a process id or a device file\.\[\r\n\]+For a process id, you must have permission to send the process a signal,\[\r\n\]+and it must have the same effective uid as the debugger\.\[\r\n\]+When using \"attach\" with a process id, the debugger finds the\[\r\n\]+program running in the process, looking first in the current working\[\r\n\]+directory, or \\(if not found there\\) using the source file search path\[\r\n\]+\\(see the \"directory\" command\\)\.  You can also use the \"file\" command\[\r\n\]+to specify the program, and to load its symbol table\." "help attach"
 # test help breakpoint "b" abbreviation
-send "help b\n"
-expect {
-	-re "Set breakpoint at specified line or function..*
-Argument may be line number, function name, or \"\[*\]\" and an address..*
-If line number is specified, break at start of code for that line..*
-If function is specified, break at start of code for that function..*
-If an address is specified, break at that exact address..*
-With no arg, uses current execution address of selected stack frame..*
-This is useful for breaking on return to a stack frame..*
-Multiple breakpoints at one place are permitted, and useful if conditional..*
-Do \"help breakpoints\" for info on other commands dealing with breakpoints..*$prompt $"\
-			{ pass "help breakpoint \"b\" abbreviation" }
-	-re "$prompt $"	{ fail "help breakpoint \"b\" abbreviation" }
-	timeout		{ fail "(timeout) help breakpoint \"b\" abbreviation" }
-	}
-
-
+gdb_test "help b" "Set breakpoint at specified line or function\.\[\r\n\]+Argument may be line number, function name, or \"\[*\]\" and an address\.\[\r\n\]+If line number is specified, break at start of code for that line\.\[\r\n\]+If function is specified, break at start of code for that function\.\[\r\n\]+If an address is specified, break at that exact address\.\[\r\n\]+With no arg, uses current execution address of selected stack frame\.\[\r\n\]+This is useful for breaking on return to a stack frame\.\[\r\n\]+Multiple breakpoints at one place are permitted, and useful if conditional\.\[\r\n\]+Do \"help breakpoints\" for info on other commands dealing with breakpoints\." "help breakpoint \"b\" abbreviation"
 # test help breakpoint "br" abbreviation
-send "help br\n"
-expect {
-	-re "Set breakpoint at specified line or function..*
-Argument may be line number, function name, or \"\[*\]\" and an address..*
-If line number is specified, break at start of code for that line..*
-If function is specified, break at start of code for that function..*
-If an address is specified, break at that exact address..*
-With no arg, uses current execution address of selected stack frame..*
-This is useful for breaking on return to a stack frame..*
-Multiple breakpoints at one place are permitted, and useful if conditional..*
-Do \"help breakpoints\" for info on other commands dealing with breakpoints..*$prompt $"\
-			{ pass "help breakpoint \"br\" abbreviation" }
-	-re "$prompt $"	{ fail "help breakpoint \"br\" abbreviation" }
-	timeout		{ fail "(timeout) help breakpoint \"br\" abbreviation" }
-	}
-
-
+gdb_test "help br" "Set breakpoint at specified line or function\.\[\r\n\]+Argument may be line number, function name, or \"\[*\]\" and an address\.\[\r\n\]+If line number is specified, break at start of code for that line\.\[\r\n\]+If function is specified, break at start of code for that function\.\[\r\n\]+If an address is specified, break at that exact address\.\[\r\n\]+With no arg, uses current execution address of selected stack frame\.\[\r\n\]+This is useful for breaking on return to a stack frame\.\[\r\n\]+Multiple breakpoints at one place are permitted, and useful if conditional\.\[\r\n\]+Do \"help breakpoints\" for info on other commands dealing with breakpoints\." "help breakpoint \"br\" abbreviation"
 # test help breakpoint "bre" abbreviation
-send "help bre\n"
-expect {
-	-re "Set breakpoint at specified line or function..*
-Argument may be line number, function name, or \"\[*\]\" and an address..*
-If line number is specified, break at start of code for that line..*
-If function is specified, break at start of code for that function..*
-If an address is specified, break at that exact address..*
-With no arg, uses current execution address of selected stack frame..*
-This is useful for breaking on return to a stack frame..*
-Multiple breakpoints at one place are permitted, and useful if conditional..*
-Do \"help breakpoints\" for info on other commands dealing with breakpoints..*$prompt $"\
-			{ pass "help breakpoint \"bre\" abbreviation" }
-	-re "$prompt $"	{ fail "help breakpoint \"bre\" abbreviation" }
-	timeout		{ fail "(timeout) help breakpoint \"bre\" abbreviation" }
-	}
-
-
+gdb_test "help bre" "Set breakpoint at specified line or function\.\[\r\n\]+Argument may be line number, function name, or \"\[*\]\" and an address\.\[\r\n\]+If line number is specified, break at start of code for that line\.\[\r\n\]+If function is specified, break at start of code for that function\.\[\r\n\]+If an address is specified, break at that exact address\.\[\r\n\]+With no arg, uses current execution address of selected stack frame\.\[\r\n\]+This is useful for breaking on return to a stack frame\.\[\r\n\]+Multiple breakpoints at one place are permitted, and useful if conditional\.\[\r\n\]+Do \"help breakpoints\" for info on other commands dealing with breakpoints\." "help breakpoint \"bre\" abbreviation"
 # test help breakpoint "brea" abbreviation
-send "help brea\n"
-expect {
-	-re "Set breakpoint at specified line or function..*
-Argument may be line number, function name, or \"\[*\]\" and an address..*
-If line number is specified, break at start of code for that line..*
-If function is specified, break at start of code for that function..*
-If an address is specified, break at that exact address..*
-With no arg, uses current execution address of selected stack frame..*
-This is useful for breaking on return to a stack frame..*
-Multiple breakpoints at one place are permitted, and useful if conditional..*
-Do \"help breakpoints\" for info on other commands dealing with breakpoints..*$prompt $"\
-			{ pass "help breakpoint \"brea\" abbreviation" }
-	-re "$prompt $"	{ fail "help breakpoint \"brea\" abbreviation" }
-	timeout		{ fail "(timeout) help breakpoint \"brea\" abbreviation" }
-	}
-
-
+gdb_test "help brea" "Set breakpoint at specified line or function\.\[\r\n\]+Argument may be line number, function name, or \"\[*\]\" and an address\.\[\r\n\]+If line number is specified, break at start of code for that line\.\[\r\n\]+If function is specified, break at start of code for that function\.\[\r\n\]+If an address is specified, break at that exact address\.\[\r\n\]+With no arg, uses current execution address of selected stack frame\.\[\r\n\]+This is useful for breaking on return to a stack frame\.\[\r\n\]+Multiple breakpoints at one place are permitted, and useful if conditional\.\[\r\n\]+Do \"help breakpoints\" for info on other commands dealing with breakpoints\." "help breakpoint \"brea\" abbreviation"
 # test help breakpoint "break" abbreviation
-send "help break\n"
-expect {
-	-re "Set breakpoint at specified line or function..*
-Argument may be line number, function name, or \"\[*\]\" and an address..*
-If line number is specified, break at start of code for that line..*
-If function is specified, break at start of code for that function..*
-If an address is specified, break at that exact address..*
-With no arg, uses current execution address of selected stack frame..*
-This is useful for breaking on return to a stack frame..*
-Multiple breakpoints at one place are permitted, and useful if conditional..*
-Do \"help breakpoints\" for info on other commands dealing with breakpoints..*$prompt $"\
-			{ pass "help breakpoint \"break\" abbreviation" }
-	-re "$prompt $"	{ fail "help breakpoint \"break\" abbreviation" }
-	timeout		{ fail "(timeout) help breakpoint \"break\" abbreviation" }
-	}
-
-
+gdb_test "help break" "Set breakpoint at specified line or function\.\[\r\n\]+Argument may be line number, function name, or \"\[*\]\" and an address\.\[\r\n\]+If line number is specified, break at start of code for that line\.\[\r\n\]+If function is specified, break at start of code for that function\.\[\r\n\]+If an address is specified, break at that exact address\.\[\r\n\]+With no arg, uses current execution address of selected stack frame\.\[\r\n\]+This is useful for breaking on return to a stack frame\.\[\r\n\]+Multiple breakpoints at one place are permitted, and useful if conditional\.\[\r\n\]+Do \"help breakpoints\" for info on other commands dealing with breakpoints\." "help breakpoint \"break\" abbreviation"
 # test help breakpoints
-send "help breakpoints\n"
-expect {
-	-re "Making program stop at certain points..*
-List of commands\:.*
-watch -- Set a watchpoint for an expression.*
-catch -- Set breakpoints to catch exceptions that are raised.*
-break -- Set breakpoint at specified line or function.*
-clear -- Clear breakpoint at specified line or function.*
-delete -- Delete some breakpoints or auto-display expressions.*
-disable -- Disable some breakpoints.*
-enable -- Enable some breakpoints.*
-tbreak -- Set a temporary breakpoint.*
-condition -- Specify breakpoint number N to break only if COND is true.*
-commands -- Set commands to be executed when a breakpoint is hit.*
-ignore -- Set ignore-count of breakpoint number N to COUNT.*
-Type \"help\" followed by command name for full documentation..*
-Command name abbreviations are allowed if unambiguous..*$prompt $"\
-			{ pass "help breakpoints" }
-	-re "$prompt $"	{ fail "help breakpoints" }
-	timeout		{ fail "(timeout) help breakpoints" }
-	}
-
-
+gdb_test "help breakpoints" "Making program stop at certain points\.\[\r\n\]+List of commands:\[\r\n\]+awatch -- Set a watchpoint for an expression\[\r\n\]+break -- Set breakpoint at specified line or function\[\r\n\]+catch -- Set catchpoints to catch events\[\r\n\]+clear -- Clear breakpoint at specified line or function\[\r\n\]+commands -- Set commands to be executed when a breakpoint is hit\[\r\n\]+condition -- Specify breakpoint number N to break only if COND is true\[\r\n\]+delete -- Delete some breakpoints or auto-display expressions\[\r\n\]+disable -- Disable some breakpoints\[\r\n\]+enable -- Enable some breakpoints\[\r\n\]+hbreak -- Set a hardware assisted  breakpoint\[\r\n\]+ignore -- Set ignore-count of breakpoint number N to COUNT\[\r\n\]+rbreak -- Set a breakpoint for all functions matching REGEXP\[\r\n\]+rwatch -- Set a read watchpoint for an expression\[\r\n\]+tbreak -- Set a temporary breakpoint\[\r\n\]+tcatch -- Set temporary catchpoints to catch events\[\r\n\]+thbreak -- Set a temporary hardware assisted breakpoint\[\r\n\]+watch -- Set a watchpoint for an expression\[\r\n\]+Type \"help\" followed by command name for full documentation\.\[\r\n\]+Command name abbreviations are allowed if unambiguous\." "help breakpoints"
 # test help backtrace "bt" abbreviation
-send "help bt\n"
-expect {
-	-re "Print backtrace of all stack frames, or innermost COUNT frames..*
-With a negative argument, print outermost -COUNT frames..*$prompt $"\
-			{ pass "help backtrace \"bt\" abbreviation" }
-	-re "$prompt $"	{ fail "help backtrace \"bt\" abbreviation" }
-	timeout		{ fail "(timeout) help backtrace \"bt\" abbreviation" }
-	}
-
-
+gdb_test "help bt" "Print backtrace of all stack frames, or innermost COUNT frames\.\[\r\n\]+With a negative argument, print outermost -COUNT frames\.\[\r\n\]+Use of the 'full' qualifier also prints the values of the local variables\." "help backtrace \"bt\" abbreviation"
 # test help backtrace
-send "help backtrace\n"
-expect {
-	-re "Print backtrace of all stack frames, or innermost COUNT frames..*
-With a negative argument, print outermost -COUNT frames..*$prompt $"\
-			{ pass "help backtrace" }
-	-re "$prompt $"	{ fail "help backtrace" }
-	timeout		{ fail "(timeout) help backtrace" }
-	}
-
-
+gdb_test "help backtrace" "Print backtrace of all stack frames, or innermost COUNT frames\.\[\r\n\]+With a negative argument, print outermost -COUNT frames\.\[\r\n\]+Use of the 'full' qualifier also prints the values of the local variables\." "help backtrace"
 # test help continue "c" abbreviation
-send "help c\n"
-expect {
-	-re "Continue program being debugged.*$prompt $"\
-			{ pass "help continue \"c\" abbreviation" }
-	-re "$prompt $"	{ fail "help continue \"c\" abbreviation" }
-	timeout		{ fail "(timeout) help continue \"c\" abbreviation" }
-	}
-
-
+gdb_test "help c" "Continue program being debugged.*" "help continue \"c\" abbreviation"
 # test help continue
-send "help continue\n"
-expect {
-	-re "Continue program being debugged.*$prompt $"\
-			{ pass "help continue" }
-	-re "$prompt $"	{ fail "help continue" }
-	timeout		{ fail "(timeout) help continue" }
-	}
-
-
+gdb_test "help continue" "Continue program being debugged.*" "help continue"
 # test help call
-send "help call\n"
-expect {
-	-re "Call a function.*$prompt $"\
-			{ pass "help call" }
-	-re "$prompt $"	{ fail "help call" }
-	timeout		{ fail "(timeout) help call" }
-	}
-
-
+gdb_test "help call" "Call a function.*" "help call"
 # test help catch
-send "help catch\n"
-expect {
-	-re "Set breakpoints to catch exceptions that are raised..*
-Argument may be a single exception to catch, multiple exceptions.*
-to catch, or the default exception \"default\".  If no arguments.*
-are given, breakpoints are set at all exception handlers catch clauses.*
-within the current scope..*
-A condition specified for the catch applies to all breakpoints set.*
-with this command.*
-Do \"help breakpoints\" for info on other commands dealing with breakpoints..*$prompt $"\
-			{ pass "help catch" }
-	-re "$prompt $"	{ fail "help catch" }
-	timeout		{ fail "(timeout) help catch" }
-	}
-
-
+gdb_test "help catch" "Set catchpoints to catch events.*Raised signals may be caught:.*catch signal.*all signals.*catch signal.*signame.*a particular signal.*Raised exceptions may be caught:.*catch throw.*all exceptions, when thrown.*catch throw.*exceptname.*a particular exception, when thrown.*catch catch.*all exceptions, when caught.*catch catch.*exceptname.*a particular exception, when caught.*Thread or process events may be caught:.*catch thread_start.*any threads, just after creation.*catch thread_exit.*any threads, just before expiration.*catch thread_join.*any threads, just after joins.*catch start.*any processes, just after creation.*catch exit.*any processes, just before expiration.*catch fork.*calls to fork.*catch vfork.*calls to vfork.*catch exec.*calls to exec.*Dynamically.linked library events may be caught:.*catch load.*loads of any library.*catch load.*libname.*loads of a particular library.*catch unload.*unloads of any library.*catch unload.*libname.*unloads of a particular library.*The act of your program's execution stopping may also be caught:.*catch stop.*Do.*help set follow-fork-mode.*for info on debugging your program.*after a fork or vfork is caught.*Do.*help breakpoints.*for info on other commands dealing with breakpoints." "help catch"
 # test help cd
-send "help cd\n"
-expect {
-	-re "Set working directory to DIR for debugger and program being debugged..*
-The change does not take effect for the program being debugged.*
-until the next time it is started..*$prompt $"\
-			{ pass "help cd" }
-	-re "$prompt $"	{ fail "help cd" }
-	timeout		{ fail "(timeout) help cd" }
-	}
-
-
+gdb_test "help cd" "Set working directory to DIR for debugger and program being debugged\.\[\r\n\]+The change does not take effect for the program being debugged\[\r\n\]+until the next time it is started\." "help cd"
 # test help clear
-send "help clear\n"
-expect {
-	-re "Clear breakpoint at specified line or function.*
-Argument may be line number, function name, or .* and an address.*
-If line number is specified, all breakpoints in that line are cleared.*
-If function is specified, breakpoints at beginning of function are cleared.*
-If an address is specified, breakpoints at that address are cleared.*
-With no argument, clears all breakpoints in the line that the selected frame.*
-is executing in..*
-See also the \"delete\" command which clears breakpoints by number..*$prompt $"\
-			{ pass "help clear" }
-	-re "$prompt $"	{ fail "help clear" }
-	timeout		{ fail "(timeout) help clear" }
-	}
-
-
+gdb_test "help clear" "Clear breakpoint at specified line or function\.\[\r\n\]+Argument may be line number, function name, or \"\\*\" and an address\.\[\r\n\]+If line number is specified, all breakpoints in that line are cleared\.\[\r\n\]+If function is specified, breakpoints at beginning of function are cleared\.\[\r\n\]+If an address is specified, breakpoints at that address are cleared\.\[\r\n\]+With no argument, clears all breakpoints in the line that the selected frame\[\r\n\]+is executing in\.\[\r\n\]+See also the \"delete\" command which clears breakpoints by number\." "help clear"
 # test help commands
-send "help commands\n"
-expect {
-	-re "Set commands to be executed when a breakpoint is hit..*
-Give breakpoint number as argument after \"commands\"..*
-With no argument, the targeted breakpoint is the last one set..*
-The commands themselves follow starting on the next line..*
-Type a line containing \"end\" to indicate the end of them..*
-Give \"silent\" as the first line to make the breakpoint silent;.*
-then no output is printed when it is hit, except what the commands print..*$prompt $"\
-			{ pass "help commands" }
-	-re "$prompt $"	{ fail "help commands" }
-	timeout		{ fail "(timeout) help commands" }
-	}
-
-
+gdb_test "help commands" "Set commands to be executed when a breakpoint is hit\.\[\r\n\]+Give breakpoint number as argument after \"commands\"\.\[\r\n\]+With no argument, the targeted breakpoint is the last one set\.\[\r\n\]+The commands themselves follow starting on the next line\.\[\r\n\]+Type a line containing \"end\" to indicate the end of them\.\[\r\n\]+Give \"silent\" as the first line to make the breakpoint silent;\[\r\n\]+then no output is printed when it is hit, except what the commands print\." "help commands"
 # test help condition
-send "help condition\n"
-expect {
-	-re "Specify breakpoint number N to break only if COND is true..*
-Usage is `condition N COND', where N is an integer and COND is an.*
-expression to be evaluated whenever breakpoint N is reached.  .*$prompt $"\
-			{ pass "help condition" }
-	-re "$prompt $"	{ fail "help condition" }
-	timeout		{ fail "(timeout) help condition" }
-	}
-
-
+gdb_test "help condition" "Specify breakpoint number N to break only if COND is true\.\[\r\n\]+Usage is `condition N COND', where N is an integer and COND is an\[\r\n\]+expression to be evaluated whenever breakpoint N is reached." "help condition"
 # test help core-file
-send "help core-file\n"
-expect {
-	-re "Use FILE as core dump for examining memory and registers..*
-No arg means have no core file.  This command has been superseded by the.*
-`target core' and `detach' commands..*$prompt $"\
-			{ pass "help core-file" }
-	-re "$prompt $"	{ fail "help core-file" }
-	timeout		{ fail "(timeout) help core-file" }
-	}
-
-
+gdb_test "help core-file" "Use FILE as core dump for examining memory and registers\.\[\r\n\]+No arg means have no core file\.  This command has been superseded by the\[\r\n\]+`target core' and `detach' commands\." "help core-file"
 # test help delete "d" abbreviation
-send "help d\n"
-expect {
-	-re "Delete some breakpoints or auto-display expressions..*
-Arguments are breakpoint numbers with spaces in between..*
-To delete all breakpoints, give no argument..*
-Also a prefix command for deletion of other GDB objects..*
-The \"unset\" command is also an alias for \"delete\"..*
-List of delete subcommands:.*
-delete display -- Cancel some expressions to be displayed when program stops.*
-delete breakpoints -- Delete some breakpoints or auto-display expressions.*
-Type \"help delete\" followed by delete subcommand name for full documentation..*
-Command name abbreviations are allowed if unambiguous..*$prompt $"\
-			{ pass "help delete \"d\" abbreviation" }
-	-re "$prompt $"	{ fail "help delete \"d\" abbreviation" }
-	timeout		{ fail "(timeout) help delete \"d\" abbreviation" }
-	}
-
-
+gdb_test "help d" "Delete some breakpoints or auto-display expressions\.\[\r\n\]+Arguments are breakpoint numbers with spaces in between\.\[\r\n\]+To delete all breakpoints, give no argument\.\[\r\n\]+Also a prefix command for deletion of other GDB objects\.\[\r\n\]+The \"unset\" command is also an alias for \"delete\"\.\[\r\n\]+List of delete subcommands:\[\r\n\]+delete breakpoints -- Delete some breakpoints or auto-display expressions\[\r\n\]+delete display -- Cancel some expressions to be displayed when program stops\[\r\n\]+delete mem -- Delete memory region\[\r\n\]+delete tracepoints -- Delete specified tracepoints\[\r\n\]+Type \"help delete\" followed by delete subcommand name for full documentation\.\[\r\n\]+Command name abbreviations are allowed if unambiguous\." "help delete \"d\" abbreviation"
 # test help delete
-send "help delete\n"
-expect {
-	-re "Delete some breakpoints or auto-display expressions..*
-Arguments are breakpoint numbers with spaces in between..*
-To delete all breakpoints, give no argument..*
-Also a prefix command for deletion of other GDB objects..*
-The \"unset\" command is also an alias for \"delete\"..*
-List of delete subcommands:.*
-delete display -- Cancel some expressions to be displayed when program stops.*
-delete breakpoints -- Delete some breakpoints or auto-display expressions.*
-Type \"help delete\" followed by delete subcommand name for full documentation..*
-Command name abbreviations are allowed if unambiguous..*$prompt $"\
-			{ pass "help delete" }
-	-re "$prompt $"	{ fail "help delete" }
-	timeout		{ fail "(timeout) help delete" }
-	}
-
-
+gdb_test "help delete" "Delete some breakpoints or auto-display expressions\.\[\r\n\]+Arguments are breakpoint numbers with spaces in between\.\[\r\n\]+To delete all breakpoints, give no argument\.\[\r\n\]+Also a prefix command for deletion of other GDB objects\.\[\r\n\]+The \"unset\" command is also an alias for \"delete\"\.\[\r\n\]+List of delete subcommands:\[\r\n\]+delete breakpoints -- Delete some breakpoints or auto-display expressions\[\r\n\]+delete display -- Cancel some expressions to be displayed when program stops\[\r\n\]+delete mem -- Delete memory region\[\r\n\]+delete tracepoints -- Delete specified tracepoints\[\r\n\]+Type \"help delete\" followed by delete subcommand name for full documentation\.\[\r\n\]+Command name abbreviations are allowed if unambiguous\." "help delete"
 # test help data
-send "help data\n"
-expect {
-	-re ".*
-Examining data..*
-List of commands:.*
-Type \"help\" followed by command name for full documentation..*
-Command name abbreviations are allowed if unambiguous..*$prompt $"\
-			{ pass "help data" }
-	-re "$prompt $"	{ fail "help data" }
-	timeout		{ fail "(timeout) help data" }
-	}
-
-
+gdb_test "help data" "Examining data\.\[\r\n\]+List of commands:.*\[\r\n\]+Type \"help\" followed by command name for full documentation\.\[\r\n\]+Command name abbreviations are allowed if unambiguous\." "help data"
 # test help define
-send "help define\n"
-expect {
-	-re "Define a new command.*$prompt $"\
-			{ pass "help define" }
-	-re "$prompt $"	{ fail "help define" }
-	timeout		{ fail "(timeout) help define" }
-	}
-
-
+gdb_test "help define" "Define a new command.*" "help define"
 # test help delete breakpoints
-send "help delete breakpoints\n"
-expect {
-	-re "Delete some breakpoints or auto-display expressions..*
-Arguments are breakpoint numbers with spaces in between..*
-To delete all breakpoints, give no argument..*
-This command may be abbreviated \"delete\"..*$prompt $"\
-			{ pass "help delete breakpoints" }
-	-re "$prompt $"	{ fail "help delete breakpoints" }
-	timeout		{ fail "(timeout) help delete breakpoints" }
-	}
-
-
+gdb_test "help delete breakpoints" "Delete some breakpoints or auto-display expressions\.\[\r\n\]+Arguments are breakpoint numbers with spaces in between\.\[\r\n\]+To delete all breakpoints, give no argument\.\[\r\n\]+This command may be abbreviated \"delete\"\." "help delete breakpoints"
 # test help delete display
-send "help delete display\n"
-expect {
-	-re "Cancel some expressions to be displayed when program stops..*
-Arguments are the code numbers of the expressions to stop displaying..*
-No argument means cancel all automatic-display expressions..*
-Do \"info display\" to see current list of code numbers..*$prompt $"\
-			{ pass "help delete display" }
-	-re "$prompt $"	{ fail "help delete display" }
-	timeout		{ fail "(timeout) help delete display" }
-	}
-
-
+gdb_test "help delete display" "Cancel some expressions to be displayed when program stops\.\[\r\n\]+Arguments are the code numbers of the expressions to stop displaying\.\[\r\n\]+No argument means cancel all automatic-display expressions\.\[\r\n\]+Do \"info display\" to see current list of code numbers\." "help delete display"
 # test help detach
-send "help detach\n"
-expect {
-	-re "Detach a process or file previously attached..*
-If a process, it is no longer traced, and it continues its execution.  If you.*
-were debugging a file, the file is closed and gdb no longer accesses it..*$prompt $"\
-			{ pass "help detach" }
-	-re "$prompt $"	{ fail "help detach" }
-	timeout		{ fail "(timeout) help detach" }
-	}
-
-
+gdb_test "help detach" "Detach a process or file previously attached\.\[\r\n\]+If a process, it is no longer traced, and it continues its execution\.\[ \r\n\]+If\[ \r\n\]+you were debugging a file, the file is closed and gdb no longer accesses it\." "help detach"
 # test help directory
-send "help directory\n"
-expect {
-	-re "Add directory DIR to beginning of search path for source files..*
-Forget cached info on source file locations and line positions..*
-DIR can also be .cwd for the current working directory, or .cdir for the.*
-directory in which the source file was compiled into object code..*
-With no argument, reset the search path to .cdir:.cwd, the default..*$prompt $"\
-			{ pass "help directory" }
-	-re "$prompt $"	{ fail "help directory" }
-	timeout		{ fail "(timeout) help directory" }
-	}
-
-
+gdb_test "help directory" "Add directory DIR to beginning of search path for source files\.\[\r\n\]+Forget cached info on source file locations and line positions\.\[\r\n\]+DIR can also be \\\$cwd for the current working directory, or \\\$cdir for the\[\r\n\]+directory in which the source file was compiled into object code\.\[\r\n\]+With no argument, reset the search path to \\\$cdir:\\\$cwd, the default\." "help directory"
 # test help disable "dis" abbreviation
-send "help dis\n"
-expect {
-	-re "Disable some breakpoints..*
-Arguments are breakpoint numbers with spaces in between..*
-To disable all breakpoints, give no argument..*
-A disabled breakpoint is not forgotten, but has no effect until reenabled..*
-List of disable subcommands:.*
-disable display -- Disable some expressions to be displayed when program stops.*
-disable breakpoints -- Disable some breakpoints.*
-Type \"help disable\" followed by disable subcommand name for full documentation..*
-Command name abbreviations are allowed if unambiguous..*$prompt $"\
-			{ pass "help disable \"dis\" abbreviation" }
-	-re "$prompt $"	{ fail "help disable \"dis\" abbreviation" }
-	timeout		{ fail "(timeout) help disable \"dis\" abbreviation" }
-	}
-
-
+gdb_test "help dis" "Disable some breakpoints\.\[\r\n\]+Arguments are breakpoint numbers with spaces in between\.\[\r\n\]+To disable all breakpoints, give no argument\.\[\r\n\]+A disabled breakpoint is not forgotten, but has no effect until reenabled\.\[\r\n\]+List of disable subcommands:\[\r\n\]+disable breakpoints -- Disable some breakpoints\[\r\n\]+disable display -- Disable some expressions to be displayed when program stops\[\r\n\]+disable mem -- Disable memory region\[\r\n\]+disable tracepoints -- Disable specified tracepoints\[\r\n\]+Type \"help disable\" followed by disable subcommand name for full documentation\.\[\r\n\]+Command name abbreviations are allowed if unambiguous\." "help disable \"dis\" abbreviation"
 # test help disable "disa" abbreviation
-send "help disa\n"
-expect {
-	-re "Disable some breakpoints..*
-Arguments are breakpoint numbers with spaces in between..*
-To disable all breakpoints, give no argument..*
-A disabled breakpoint is not forgotten, but has no effect until reenabled..*
-List of disable subcommands:.*
-disable display -- Disable some expressions to be displayed when program stops.*
-disable breakpoints -- Disable some breakpoints.*
-Type \"help disable\" followed by disable subcommand name for full documentation..*
-Command name abbreviations are allowed if unambiguous..*$prompt $"\
-			{ pass "help disable \"disa\" abbreviation" }
-	-re "$prompt $"	{ fail "help disable \"disa\" abbreviation" }
-	timeout		{ fail "(timeout) help disable \"disa\" abbreviation" }
-	}
-
-
+gdb_test "help disa" "Disable some breakpoints\.\[\r\n\]+Arguments are breakpoint numbers with spaces in between\.\[\r\n\]+To disable all breakpoints, give no argument\.\[\r\n\]+A disabled breakpoint is not forgotten, but has no effect until reenabled\.\[\r\n\]+List of disable subcommands:\[\r\n\]+disable breakpoints -- Disable some breakpoints\[\r\n\]+disable display -- Disable some expressions to be displayed when program stops\[\r\n\]+disable mem -- Disable memory region\[\r\n\]+disable tracepoints -- Disable specified tracepoints\[\r\n\]+Type \"help disable\" followed by disable subcommand name for full documentation\.\[\r\n\]+Command name abbreviations are allowed if unambiguous\." "help disable \"disa\" abbreviation"
 # test help disable
-send "help disable\n"
-expect {
-	-re "Disable some breakpoints..*
-Arguments are breakpoint numbers with spaces in between..*
-To disable all breakpoints, give no argument..*
-A disabled breakpoint is not forgotten, but has no effect until reenabled..*
-List of disable subcommands:.*
-disable display -- Disable some expressions to be displayed when program stops.*
-disable breakpoints -- Disable some breakpoints.*
-Type \"help disable\" followed by disable subcommand name for full documentation..*
-Command name abbreviations are allowed if unambiguous..*$prompt $"\
-			{ pass "help disable" }
-	-re "$prompt $"	{ fail "help disable" }
-	timeout		{ fail "(timeout) help disable" }
-	}
-
-
+gdb_test "help disable" "Disable some breakpoints\.\[\r\n\]+Arguments are breakpoint numbers with spaces in between\.\[\r\n\]+To disable all breakpoints, give no argument\.\[\r\n\]+A disabled breakpoint is not forgotten, but has no effect until reenabled\.\[\r\n\]+List of disable subcommands:\[\r\n\]+disable breakpoints -- Disable some breakpoints\[\r\n\]+disable display -- Disable some expressions to be displayed when program stops\[\r\n\]+disable mem -- Disable memory region\[\r\n\]+disable tracepoints -- Disable specified tracepoints\[\r\n\]+Type \"help disable\" followed by disable subcommand name for full documentation\.\[\r\n\]+Command name abbreviations are allowed if unambiguous\." "help disable"
 # test help disable breakpoints
-send "help disable breakpoints\n"
-expect {
-	-re "Disable some breakpoints..*
-Arguments are breakpoint numbers with spaces in between..*
-To disable all breakpoints, give no argument..*
-A disabled breakpoint is not forgotten, but has no effect until reenabled..*
-This command may be abbreviated \"disable\"..*$prompt $"\
-			{ pass "help disable breakpoints" }
-	-re "$prompt $"	{ fail "help disable breakpoints" }
-	timeout		{ fail "(timeout) help disable breakpoints" }
-	}
-
-
+gdb_test "help disable breakpoints" "Disable some breakpoints\.\[\r\n\]+Arguments are breakpoint numbers with spaces in between\.\[\r\n\]+To disable all breakpoints, give no argument\.\[\r\n\]+A disabled breakpoint is not forgotten, but has no effect until reenabled\.\[\r\n\]+This command may be abbreviated \"disable\"." "help disable breakpoints"
 # test help disable display
-send "help disable display\n"
-expect {
-	-re "Disable some expressions to be displayed when program stops..*
-Arguments are the code numbers of the expressions to stop displaying..*
-No argument means disable all automatic-display expressions..*
-Do \"info display\" to see current list of code numbers..*$prompt $"\
-			{ pass "help disable display" }
-	-re "$prompt $"	{ fail "help disable display" }
-	timeout		{ fail "(timeout) help disable display" }
-	}
-
-
+gdb_test "help disable display" "Disable some expressions to be displayed when program stops\.\[\r\n\]+Arguments are the code numbers of the expressions to stop displaying\.\[\r\n\]+No argument means disable all automatic-display expressions\.\[\r\n\]+Do \"info display\" to see current list of code numbers\." "help disable display"
 # test help disassemble
-send "help disassemble\n"
-expect {
-	-re "Disassemble a specified section of memory..*
-Default is the function surrounding the pc of the selected frame..*
-With a single argument, the function surrounding that address is dumped..*
-Two arguments are taken as a range of memory to dump..*$prompt $"\
-			{ pass "help disassemble" }
-	-re "$prompt $"	{ fail "help disassemble" }
-	timeout		{ fail "(timeout) help disassemble" }
-	}
-
-
+gdb_test "help disassemble" "Disassemble a specified section of memory\.\[\r\n\]+Default is the function surrounding the pc of the selected frame\.\[\r\n\]+With a single argument, the function surrounding that address is dumped\.\[\r\n\]+Two arguments are taken as a range of memory to dump\." "help disassemble"
 # test help display
-send "help display\n"
-expect {
-	-re "Print value of expression EXP each time the program stops..*
-/FMT may be used before EXP as in the \"print\" command..*
-/FMT \"i\" or \"s\" or including a size-letter is allowed,.*
-as in the \"x\" command, and then EXP is used to get the address to examine.*
-and examining is done as in the \"x\" command..*
-With no argument, display all currently requested auto-display expressions..*
-Use \"undisplay\" to cancel display requests previously made..*$prompt $"\
-			{ pass "help display" }
-	-re "$prompt $"	{ fail "help display" }
-	timeout		{ fail "(timeout) help display" }
-	}
-
-
+gdb_test "help display" "Print value of expression EXP each time the program stops\.\[\r\n\]+/FMT may be used before EXP as in the \"print\" command\.\[\r\n\]+/FMT \"i\" or \"s\" or including a size-letter is allowed,\[\r\n\]+as in the \"x\" command, and then EXP is used to get the address to examine\[\r\n\]+and examining is done as in the \"x\" command\.\[\r\n\]+With no argument, display all currently requested auto-display expressions\.\[\r\n\]+Use \"undisplay\" to cancel display requests previously made\." "help display"
 # test help do
-send "help do\n"
-expect {
-	-re "Select and print stack frame called by this one..*
-An argument says how many frames down to go..*$prompt $"\
-			{ pass "help do" }
-	-re "$prompt $"	{ fail "help do" }
-	timeout		{ fail "(timeout) help do" }
-	}
-
-
+gdb_test "help do" "Select and print stack frame called by this one\.\[\r\n\]+An argument says how many frames down to go\." "help do"
 # test help document
-send "help document\n"
-expect {
-	-re "Document a user-defined command..*
-Give command name as argument.  Give documentation on following lines..*
-End with a line of just \"end\"..*$prompt $"\
-			{ pass "help document" }
-	-re "$prompt $"	{ fail "help document" }
-	timeout		{ fail "(timeout) help document" }
-	}
-
-
-
+gdb_test "help document" "Document a user-defined command\.\[\r\n\]+Give command name as argument\.  Give documentation on following lines\.\[\r\n\]+End with a line of just \"end\"\." "help document"
 # test help down
-send "help down\n"
-expect {
-	-re "Select and print stack frame called by this one..*
-An argument says how many frames down to go..*$prompt $"\
-			{ pass "help down" }
-	-re "$prompt $"	{ fail "help down" }
-	timeout		{ fail "(timeout) help down" }
-	}
-
-
+gdb_test "help down" "Select and print stack frame called by this one\.\[\r\n\]+An argument says how many frames down to go\." "help down"
 # test help down-silently
-send "help down-silently\n"
-expect {
-	-re "Same as the `down' command, but does not print anything..*
-This is useful in command scripts..*$prompt $"\
-			{ pass "help down-silently" }
-	-re "$prompt $"	{ fail "help down-silently" }
-	timeout		{ fail "(timeout) help down-silently" }
-	}
-
-
+gdb_test "help down-silently" "Same as the `down' command, but does not print anything\.\[\r\n\]+This is useful in command scripts\." "help down-silently"
+# test help dump 
+gdb_test "help dump" "Dump target code/data to a local file\.\[\r\n\]+List of dump subcommands:.*" 
+gdb_test "help dump binary" "Write target code/data to a raw binary file\.\[\r\n\]+List of dump binary subcommands:.*" 
+gdb_test "help dump ihex" "Write target code/data to an intel hex file\.\[\r\n\]+List of dump ihex subcommands:.*" 
+gdb_test "help dump memory" "Write contents of memory to a raw binary file\.\[\r\n\]+Arguments are FILE START STOP\.  Writes the contents of memory within the\[\r\n\]+range \\\[START \.\. STOP\\) to the specifed FILE in raw target ordered bytes\." 
+gdb_test "help dump srec" "Write target code/data to an srec file\.\[\r\n\]+List of dump srec subcommands:.*" 
+gdb_test "help dump tekhex" "Write target code/data to a tekhex file\.\[\r\n\]+List of dump tekhex subcommands:.*" 
+gdb_test "help dump value" "Write the value of an expression to a raw binary file\.\[\r\n\]+Arguments are FILE EXPRESSION\.  Writes the value of EXPRESSION to\[\r\n\]+the specified FILE in raw target ordered bytes\." 
+gdb_test "help dump binary memory" "Write contents of memory to a raw binary file\.\[\r\n\]+Arguments are FILE START STOP\.  Writes the contents of memory\[\r\n\]+within the range \\\[START \.\. STOP\\) to the specifed FILE in binary format\." 
+gdb_test "help dump binary value" "Write the value of an expression to a raw binary file\.\[\r\n\]+Arguments are FILE EXPRESSION\.  Writes the value of EXPRESSION\[\r\n\]+to the specified FILE in raw target ordered bytes\." "help dump binary value"
+gdb_test "help dump ihex memory" "Write contents of memory to an ihex file\.\[\r\n\]+Arguments are FILE START STOP\.  Writes the contents of memory within\[\r\n\]+the range \\\[START \.\. STOP\\) to the specifed FILE in intel hex format\." 
+gdb_test "help dump ihex value" "Write the value of an expression to an ihex file\.\[\r\n\]+Arguments are FILE EXPRESSION\.  Writes the value of EXPRESSION\[\r\n\]+to the specified FILE in intel hex format\." 
+gdb_test "help dump srec memory" "Write contents of memory to an srec file\.\[\r\n\]+Arguments are FILE START STOP\.  Writes the contents of memory\[\r\n\]+within the range \\\[START \.\. STOP\\) to the specifed FILE in srec format\." 
+gdb_test "help dump srec value" "Write the value of an expression to an srec file\.\[\r\n\]+Arguments are FILE EXPRESSION\.  Writes the value of EXPRESSION\[\r\n\]+to the specified FILE in srec format\." 
+gdb_test "help dump tekhex memory" "Write contents of memory to a tekhex file\.\[\r\n\]+Arguments are FILE START STOP\.  Writes the contents of memory\[\r\n\]+within the range \\\[START \.\. STOP\\) to the specifed FILE in tekhex format\." 
+gdb_test "help dump tekhex value" "Write the value of an expression to a tekhex file\.\[\r\n\]+Arguments are FILE EXPRESSION\.  Writes the value of EXPRESSION\[\r\n\]+to the specified FILE in tekhex format\." 
 # this command was removed from GDB 4.5.8
 # test help dump-me
-#send "help dump-me\n"
-#expect {
-#	-re "Get fatal error; make debugger dump its core..*$prompt $"\
-#			{ pass "help dump-me" }
-#	-re "$prompt $"	{ fail "help dump-me" }
-#	timeout		{ fail "(timeout) help dump-me" }
-#	}
-
+#send_gdb "help dump-me"
+# -re "Get fatal error; make debugger dump its core\."
+# 
+# }
 # test help echo
-send "help echo\n"
-expect {
-	-re "Print a constant string.  Give string as argument..*
-C escape sequences may be used in the argument..*
-No newline is added at the end of the argument;.*
-use \".n\" if you want a newline to be printed..*
-Since leading and trailing whitespace are ignored in command arguments,.*
-if you want to print some you must use \".\" before leading whitespace.*
-to be printed or after trailing whitespace..*$prompt $"\
-			{ pass "help echo" }
-	-re "$prompt $"	{ fail "help echo" }
-	timeout		{ fail "(timeout) help echo" }
-	}
-
-
+gdb_test "help echo" "Print a constant string\.  Give string as argument\.\[\r\n\]+C escape sequences may be used in the argument\.\[\r\n\]+No newline is added at the end of the argument;\[\r\n\]+use \"\\\\n\" if you want a newline to be printed\.\[\r\n\]+Since leading and trailing whitespace are ignored in command arguments,\[\r\n\]+if you want to print some you must use \"\\\\\" before leading whitespace\[\r\n\]+to be printed or after trailing whitespace\." "help echo"
 # test help enable breakpoints delete
-send "help enable breakpoints delete\n"
-expect {
-	-re "Enable breakpoints and delete when hit.  Give breakpoint numbers..*
-If a breakpoint is hit while enabled in this fashion, it is deleted..*$prompt $"\
-			{ pass "help enable breakpoints delete" }
-	-re "$prompt $"	{ fail "help enable breakpoints delete" }
-	timeout		{ fail "(timeout) help enable breakpoints delete" }
-	}
-
-
+gdb_test "help enable breakpoints delete" "Enable breakpoints and delete when hit\.  Give breakpoint numbers\.\[\r\n\]+If a breakpoint is hit while enabled in this fashion, it is deleted\." "help enable breakpoints delete"
 # test help enable breakpoints once
-send "help enable breakpoints once\n"
-expect {
-	-re "Enable breakpoints for one hit..*$prompt $"\
-			{ pass "help enable breakpoints once" }
-	-re "$prompt $"	{ fail "help enable breakpoints once" }
-	timeout		{ fail "(timeout) help enable breakpoints once" }
-	}
-
-
+gdb_test "help enable breakpoints once" "Enable breakpoints for one hit.*" "help enable breakpoints once"
 # test help enable breakpoints
-send "help enable breakpoints\n"
-expect {
-	-re "Enable some breakpoints..*
-Give breakpoint numbers .separated by spaces. as arguments..*
-This is used to cancel the effect of the \"disable\" command..*
-May be abbreviated to simply \"enable\"..*.*
-List of enable breakpoints subcommands:.*
-enable breakpoints delete -- Enable breakpoints and delete when hit.*
-enable breakpoints once -- Enable breakpoints for one hit.*
-Type \"help enable breakpoints\" followed by enable breakpoints subcommand name for full documentation..*
-Command name abbreviations are allowed if unambiguous..*$prompt $"\
-			{ pass "help enable breakpoints" }
-	-re "$prompt $"	{ fail "help enable breakpoints" }
-	timeout		{ fail "(timeout) help enable breakpoints" }
-	}
-
-
+gdb_test "help enable breakpoints" "Enable some breakpoints\.\[\r\n\]+Give breakpoint numbers \\(separated by spaces\\) as arguments\.\[\r\n\]+This is used to cancel the effect of the \"disable\" command\.\[\r\n\]+May be abbreviated to simply \"enable\"\.\[\r\n\]+List of enable breakpoints subcommands:\[\r\n\]+enable breakpoints delete -- Enable breakpoints and delete when hit\[\r\n\]+enable breakpoints once -- Enable breakpoints for one hit\[\r\n\]+Type \"help enable breakpoints\" followed by enable breakpoints subcommand name for full documentation\.\[\r\n\]+Command name abbreviations are allowed if unambiguous\." "help enable breakpoints"
 # test help enable delete
-send "help enable delete\n"
-expect {
-	-re "Enable breakpoints and delete when hit.  Give breakpoint numbers..*
-If a breakpoint is hit while enabled in this fashion, it is deleted..*$prompt $"\
-			{ pass "help enable delete" }
-	-re "$prompt $"	{ fail "help enable delete" }
-	timeout		{ fail "(timeout) help enable delete" }
-	}
-
-
+gdb_test "help enable delete" "Enable breakpoints and delete when hit\.  Give breakpoint numbers\.\[\r\n\]+If a breakpoint is hit while enabled in this fashion, it is deleted\." "help enable delete"
 # test help enable display
-send "help enable display\n"
-expect {
-	-re "Enable some expressions to be displayed when program stops..*
-Arguments are the code numbers of the expressions to resume displaying..*
-No argument means enable all automatic-display expressions..*
-Do \"info display\" to see current list of code numbers..*$prompt $"\
-			{ pass "help enable display" }
-	-re "$prompt $"	{ fail "help enable display" }
-	timeout		{ fail "(timeout) help enable display" }
-	}
-
-
+gdb_test "help enable display" "Enable some expressions to be displayed when program stops\.\[\r\n\]+Arguments are the code numbers of the expressions to resume displaying\.\[\r\n\]+No argument means enable all automatic-display expressions\.\[\r\n\]+Do \"info display\" to see current list of code numbers\." "help enable display"
 # test help enable once
-send "help enable once\n"
-expect {
-	-re "Enable breakpoints for one hit.*$prompt $"\
-			{ pass "help enable once" }
-	-re "$prompt $"	{ fail "help enable once" }
-	timeout		{ fail "(timeout) help enable once" }
-	}
-
-
+gdb_test "help enable once" "Enable breakpoints for one hit.*" "help enable once"
 # test help enable
-send "help enable\n"
-expect {
-	-re "Enable some breakpoints..*
-Give breakpoint numbers .separated by spaces. as arguments..*
-With no subcommand, breakpoints are enabled until you command otherwise..*
-This is used to cancel the effect of the \"disable\" command..*
-With a subcommand you can enable temporarily..*
-List of enable subcommands:.*
-enable display -- Enable some expressions to be displayed when program stops.*
-enable once -- Enable breakpoints for one hit.*
-enable delete -- Enable breakpoints and delete when hit.*
-Type \"help enable\" followed by enable subcommand name for full documentation..*
-Command name abbreviations are allowed if unambiguous..*$prompt $"\
-			{ pass "help enable" }
-	-re "$prompt $"	{ fail "help enable" }
-	timeout		{ fail "(timeout) help enable" }
-	}
-
-
+gdb_test "help enable" "Enable some breakpoints\.\[\r\n\]+Give breakpoint numbers \\(separated by spaces\\) as arguments\.\[\r\n\]+With no subcommand, breakpoints are enabled until you command otherwise\.\[\r\n\]+This is used to cancel the effect of the \"disable\" command\.\[\r\n\]+With a subcommand you can enable temporarily\.\[\r\n\]+List of enable subcommands:\[\r\n\]+enable delete -- Enable breakpoints and delete when hit\[\r\n\]+enable display -- Enable some expressions to be displayed when program stops\[\r\n\]+enable mem -- Enable memory region\[\r\n\]+enable once -- Enable breakpoints for one hit\[\r\n\]+enable tracepoints -- Enable specified tracepoints\[\r\n\]+Type \"help enable\" followed by enable subcommand name for full documentation\.\[\r\n\]+Command name abbreviations are allowed if unambiguous\." "help enable"
 # test help exec-file
-send "help exec-file\n"
-expect {
-	-re "Use FILE as program for getting contents of pure memory..*
-If FILE cannot be found as specified, your execution directory path.*
-is searched for a command of that name..*
-No arg means have no executable file..*$prompt $"\
-			{ pass "help exec-file" }
-	-re "$prompt $"	{ fail "help exec-file" }
-	timeout		{ fail "(timeout) help exec-file" }
-	}
-
-
+gdb_test "help exec-file" "Use FILE as program for getting contents of pure memory\.\[\r\n\]+If FILE cannot be found as specified, your execution directory path\[\r\n\]+is searched for a command of that name\.\[\r\n\]+No arg means have no executable file\." "help exec-file"
 # test help frame "f" abbreviation
-send "help f\n"
-expect {
-	-re "Select and print a stack frame..*
-With no argument, print the selected stack frame.  .See also \"info frame\".*
-An argument specifies the frame to select..*
-It can be a stack frame number or the address of the frame..*
-With argument, nothing is printed if input is coming from.*
-a command file or a user-defined command..*$prompt $"\
-			{ pass "help frame \"f\" abbreviation" }
-	-re "$prompt $"	{ fail "help frame \"f\" abbreviation" }
-	timeout		{ fail "(timeout) help frame \"f\" abbreviation" }
-	}
-
-
+gdb_test "help f" "Select and print a stack frame\.\[\r\n\]+With no argument, print the selected stack frame\.  \\(See also \"info frame\"\\)\.\[\r\n\]+An argument specifies the frame to select\.\[\r\n\]+It can be a stack frame number or the address of the frame\.\[\r\n\]+With argument, nothing is printed if input is coming from\[\r\n\]+a command file or a user-defined command\." "help frame \"f\" abbreviation"
 # test help frame
-send "help frame\n"
-expect {
-	-re "Select and print a stack frame..*
-With no argument, print the selected stack frame.  .See also \"info frame\"...*
-An argument specifies the frame to select..*
-It can be a stack frame number or the address of the frame..*
-With argument, nothing is printed if input is coming from.*
-a command file or a user-defined command..*$prompt $"\
-			{ pass "help frame" }
-	-re "$prompt $"	{ fail "help frame" }
-	timeout		{ fail "(timeout) help frame" }
-	}
-
-
+gdb_test "help frame" "Select and print a stack frame\.\[\r\n\]+With no argument, print the selected stack frame\.  \\(See also \"info frame\"\\)\.\[\r\n\]+An argument specifies the frame to select\.\[\r\n\]+It can be a stack frame number or the address of the frame\.\[\r\n\]+With argument, nothing is printed if input is coming from\[\r\n\]+a command file or a user-defined command\." "help frame"
 # test help fg
-send "help fg\n"
-expect {
-	-re "Continue program being debugged.*$prompt $"\
-			{ pass "help fg" }
-	-re "$prompt $"	{ fail "help fg" }
-	timeout		{ fail "(timeout) help fg" }
-	}
-
-
+gdb_test "help fg" "Continue program being debugged.*" "help fg"
 # test help file
-send "help file\n"
-expect {
-	-re "Use FILE as program to be debugged..*
-It is read for its symbols, for getting the contents of pure memory,.*
-and it is the program executed when you use the `run' command..*
-If FILE cannot be found as specified, your execution directory path.*
-..PATH. is searched for a command of that name..*
-No arg means to have no executable file and no symbols..*$prompt $"\
-			{ pass "help file" }
-	-re "$prompt $"	{ fail "help file" }
-	timeout		{ fail "(timeout) help file" }
-	}
-
-
+gdb_test "help file" "Use FILE as program to be debugged\.\[\r\n\]+It is read for its symbols, for getting the contents of pure memory,\[\r\n\]+and it is the program executed when you use the `run' command\.\[\r\n\]+If FILE cannot be found as specified, your execution directory path\[\r\n\]+\\(\\\$PATH\\) is searched for a command of that name\.\[\r\n\]+No arg means to have no executable file and no symbols\." "help file"
 # test help files
-send "help files\n"
-expect {
-	-re "Specifying.*$prompt $"  { pass "help files" }
-	-re "$prompt $"	{ fail "help files" }
-	timeout		{ fail "(timeout) help files" }
-	}
-
-
+gdb_test "help files" "Specifying.*" "help files"
 # test help finish
-send "help finish\n"
-expect {
-	-re "Execute until selected stack frame returns..*
-Upon return, the value returned is printed and put in the value history..*$prompt $"\
-			{ pass "help finish" }
-	-re "$prompt $"	{ fail "help finish" }
-	timeout		{ fail "(timeout) help finish" }
-	}
-
-
+gdb_test "help finish" "Execute until selected stack frame returns\.\[\r\n\]+Upon return, the value returned is printed and put in the value history\." "help finish"
 # test help forward-search
-send "help forward-search\n"
-expect {
-	-re "Search for regular expression .see regex.3.. from last line listed..*$prompt $"\
-			{ pass "help forward-search" }
-	-re "$prompt $"	{ fail "help forward-search" }
-	timeout		{ fail "(timeout) help forward-search" }
-	}
-
-
+gdb_test "help forward-search" "Search for regular expression \\(see regex\\(3\\)\\) from last line listed.*" "help forward-search"
+# test help gcore
+send_gdb "help gcore\n"
+gdb_expect {
+    -re "Undefined command: \"gcore\"\.  Try \"help\".*$gdb_prompt $" {
+	pass "help gcore"
+    }
+    -re "Save a core file with the current state of the debugged process\.\[\r\n\]+Argument is optional filename\.  Default filename is 'core\.<process_id>'.*$gdb_prompt $" {
+	pass "help gcore"
+    }
+    default { fail "help gcore" }
+}
+send_gdb "help generate-core-file\n"
+gdb_expect {
+    -re "Undefined command: \"generate-core-file\"\.  Try \"help\".*$gdb_prompt $" {
+	pass "help gcore"
+    }
+    -re "Save a core file with the current state of the debugged process\.\[\r\n\]+Argument is optional filename\.  Default filename is 'core\.<process_id>'.*$gdb_prompt $" {
+	pass "help gcore"
+    }
+    default { fail "help gcore" }
+}
 # test help help "h" abbreviation 
-send "help h\n"
-expect {
-	-re "Print list of commands..*$prompt $"\
-			{ pass "help help \"h\" abbreviation" }
-	-re "$prompt $"	{ fail "help help \"h\" abbreviation" }
-	timeout		{ fail "(timeout) help help \"h\" abbreviation" }
-	}
-
-
+gdb_test "help h" "Print list of commands\." "help help \"h\" abbreviation"
 # test help help
-send "help help\n"
-expect {
-	-re "Print list of commands..*$prompt $"\
-			{ pass "help help" }
-	-re "$prompt $"	{ fail "help help" }
-	timeout		{ fail "(timeout) help help" }
-	}
-
-
+gdb_test "help help" "Print list of commands\." "help help"
 # test help handle
-send "help handle\n"
-expect {
-	-re "Specify how to handle a signal..*$prompt $"\
-			{ pass "help handle" }
-	-re "$prompt $"	{ fail "help handle" }
-	timeout		{ fail "(timeout) help handle" }
-	}
-
-
+gdb_test "help handle" "Specify how to handle a signal\..*" "help handle"
 # test help info "i" abbreviation
-send "help i\n"
-expect {
-	-re "Generic command for showing things about the program being debugged..*
-List of info subcommands:.*
-Type \"help info\" followed by info subcommand name for full documentation..*
-Command name abbreviations are allowed if unambiguous..*$prompt $"\
-			{ pass "help info \"i\" abbreviation" }
-	-re "$prompt $"	{ fail "help info \"i\" abbreviation" }
-	timeout		{ fail "(timeout) help info \"i\" abbreviation" }
-	}
-
-
+gdb_test "help i" "Generic command for showing things about the program being debugged\.\[\r\n\]+List of info subcommands:.*\[\r\n\]+Type \"help info\" followed by info subcommand name for full documentation\.\[\r\n\]+Command name abbreviations are allowed if unambiguous\." "help info \"i\" abbreviation"
 # test help info
-send "help info\n"
-expect {
-	-re "Generic command for showing things about the program being debugged..*
-List of info subcommands:.*
-Type \"help info\" followed by info subcommand name for full documentation..*
-Command name abbreviations are allowed if unambiguous..*$prompt $"\
-			{ pass "help info" }
-	-re "$prompt $"	{ fail "help info" }
-	timeout		{ fail "(timeout) help info" }
-	}
-
-
+gdb_test "help info" "Generic command for showing things about the program being debugged\.\[\r\n\]+List of info subcommands:.*\[\r\n\]+Type \"help info\" followed by info subcommand name for full documentation\.\[\r\n\]+Command name abbreviations are allowed if unambiguous\." "help info"
 # test help ignore
-send "help ignore\n"
-expect {
-	-re "Set ignore-count of breakpoint number N to COUNT..*
-Usage is `ignore N COUNT'..*$prompt $"\
-			{ pass "help ignore" }
-	-re "$prompt $"	{ fail "help ignore" }
-	timeout		{ fail "(timeout) help ignore" }
-	}
-
-
+gdb_test "help ignore" "Set ignore-count of breakpoint number N to COUNT\.\[\r\n\]+Usage is `ignore N COUNT'\." "help ignore"
 # test help info address
-send "help info address\n"
-expect {
-	-re "Describe where variable VAR is stored..*$prompt $"\
-			{ pass "help info address" }
-	-re "$prompt $"	{ fail "help info address" }
-	timeout		{ fail "(timeout) help info address" }
-	}
-
-
+gdb_test "help info address" "Describe where symbol SYM is stored\." "help info address"
 # test help info all-registers
-send "help info all-registers\n"
-expect {
-	-re "List of all registers and their contents, for selected stack frame..*
-Register name as argument means describe only that register..*$prompt $"\
-			{ pass "help info all-registers" }
-	-re "$prompt $"	{ fail "help info all-registers" }
-	timeout		{ fail "(timeout) help info all-registers" }
-	}
-
-
+gdb_test "help info all-registers" "List of all registers and their contents, for selected stack frame\.\[\r\n\]+Register name as argument means describe only that register\." "help info all-registers"
 # test help info args
-send "help info args\n"
-expect {
-	-re "Argument variables of current stack frame..*$prompt $"\
-			{ pass "help info args" }
-	-re "$prompt $"	{ fail "help info args" }
-	timeout		{ fail "(timeout) help info args" }
-	}
-
-
+gdb_test "help info args" "Argument variables of current stack frame\." "help info args"
 # test help info breakpoints
-send "help info breakpoints\n"
-expect {
-	-re "Status of user-settable breakpoints, or breakpoint number NUMBER..*
-breakpoint set..*$prompt $"\
-			{ pass "help info breakpoints" }
-	-re "$prompt $"	{ fail "help info breakpoints" }
-	timeout		{ fail "(timeout) help info breakpoints" }
-	}
-
-
+gdb_test "help info breakpoints" "Status of user-settable breakpoints, or breakpoint number NUMBER\..*\[\r\n\]+breakpoint set\." "help info breakpoints"
 # test help info catch
-send "help info catch\n"
-expect {
-	-re "Exceptions that can be caught in the current stack frame..*$prompt $"\
-			{ pass "help info catch" }
-	-re "$prompt $"	{ fail "help info catch" }
-	timeout		{ fail "(timeout) help info catch" }
-	}
-
-
+gdb_test "help info catch" "Exceptions that can be caught in the current stack frame\." "help info catch"
 # test help info copying
-send "help info copying\n"
-expect {
-	-re "Conditions for redistributing copies of GDB..*$prompt $"\
-			{ pass "help info copying" }
-	-re "$prompt $"	{ fail "help info copying" }
-	timeout		{ fail "(timeout) help info copying" }
-	}
-
-
+gdb_test "help info copying" "Conditions for redistributing copies of GDB\." "help info copying"
 # test help info display
-send "help info display\n"
-expect {
-	-re "Expressions to display when program stops, with code numbers..*$prompt $"\
-			{ pass "help info display" }
-	-re "$prompt $"	{ fail "help info display" }
-	timeout		{ fail "(timeout) help info display" }
-	}
-
-
+gdb_test "help info display" "Expressions to display when program stops, with code numbers\." "help info display"
 # test help info frame "f" abbreviation
-send "help info f\n"
-expect {
-	-re "All about selected stack frame, or frame at ADDR..*$prompt $"\
-			{ pass "help info frame \"f\" abbreviation" }
-	-re "$prompt $"	{ fail "help info frame \"f\" abbreviation" }
-	timeout		{ fail "(timeout) help info frame \"f\" abbreviation" }
-	}
-
-
+gdb_test "help info f" "All about selected stack frame, or frame at ADDR\." "help info frame \"f\" abbreviation"
 # test help info frame
-send "help info frame\n"
-expect {
-	-re "All about selected stack frame, or frame at ADDR..*$prompt $"\
-			{ pass "help info frame" }
-	-re "$prompt $"	{ fail "help info frame" }
-	timeout		{ fail "(timeout) help info frame" }
-	}
-
-
+gdb_test "help info frame" "All about selected stack frame, or frame at ADDR\." "help info frame"
 # test help info files
-send "help info files\n"
-expect {
-	-re "Names of targets and files being debugged..*
-Shows the entire stack of targets currently in use .including the exec-file,.*
-core-file, and process, if any., as well as the symbol file name..*$prompt $"\
-			{ pass "help info files" }
-	-re "$prompt $"	{ fail "help info files" }
-	timeout		{ fail "(timeout) help info files" }
-	}
-
-
+gdb_test "help info files" "Names of targets and files being debugged\.\[\r\n\]+Shows the entire stack of targets currently in use \\(including the exec-file,\[\r\n\]+core-file, and process, if any\\), as well as the symbol file name\." "help info files"
 # test help info float
-send "help info float\n"
-expect {
-	-re "Print the status of the floating point unit.*$prompt $"\
-			{ pass "help info float" }
-	-re "$prompt $"	{ fail "help info float" }
-	timeout		{ fail "(timeout) help info float" }
-	}
-
-
+gdb_test "help info float" "Print the status of the floating point unit" "help info float"
 # test help info functions
-send "help info functions\n"
-expect {
-	-re "All function names, or those matching REGEXP..*$prompt $"\
-			{ pass "help info functions" }
-	-re "$prompt $"	{ fail "help info functions" }
-	timeout		{ fail "(timeout) help info functions" }
-	}
-
-
+gdb_test "help info functions" "All function names, or those matching REGEXP\." "help info functions"
 # test help info line
-send "help info line\n"
-expect {
-	-re "Core addresses of the code for a source line..*
-Line can be specified as.*
-  LINENUM, to list around that line in current file,.*
-  FILE:LINENUM, to list around that line in that file,.*
-  FUNCTION, to list around beginning of that function,.*
-  FILE:FUNCTION, to distinguish among like-named static functions..*
-Default is to describe the last source line that was listed..*
-This sets the default address for \"x\" to the line's first instruction.*
-so that \"x.i\" suffices to start examining the machine code..*
-The address is also stored as the value of \"._\"..*$prompt $"\
-			{ pass "help info line" }
-	-re "$prompt $"	{ fail "help info line" }
-	timeout		{ fail "(timeout) help info line" }
-	}
-
-
+gdb_test "help info line" "Core addresses of the code for a source line\.\[\r\n\]+Line can be specified as\[\r\n\]+  LINENUM, to list around that line in current file,\[\r\n\]+  FILE:LINENUM, to list around that line in that file,\[\r\n\]+  FUNCTION, to list around beginning of that function,\[\r\n\]+  FILE:FUNCTION, to distinguish among like-named static functions\.\[\r\n\]+Default is to describe the last source line that was listed\.\[\r\n\]+This sets the default address for \"x\" to the line's first instruction\[\r\n\]+so that \"x/i\" suffices to start examining the machine code\.\[\r\n\]+The address is also stored as the value of \"\\\$_\"\." "help info line"
 # test help info locals
-send "help info locals\n"
-expect {
-	-re "Local variables of current stack frame..*$prompt $"\
-			{ pass "help info locals" }
-	-re "$prompt $"	{ fail "help info locals" }
-	timeout		{ fail "(timeout) help info locals" }
-	}
-
-
+gdb_test "help info locals" "Local variables of current stack frame\." "help info locals"
 # test help info program
-send "help info program\n"
-expect {
-	-re "Execution status of the program..*$prompt $"\
-			{ pass "help info program" }
-	-re "$prompt $"	{ fail "help info program" }
-	timeout		{ fail "(timeout) help info program" }
-	}
-
-
+gdb_test "help info program" "Execution status of the program\." "help info program"
 # test help info registers
-send "help info registers\n"
-expect {
-	-re "List of integer registers and their contents, for selected stack frame..*
-Register name as argument means describe only that register..*$prompt $"\
-			{ pass "help info registers" }
-	-re "$prompt $"	{ fail "help info registers" }
-	timeout		{ fail "(timeout) help info registers" }
-	}
-
-
+gdb_test "help info registers" "List of integer registers and their contents, for selected stack frame\.\[\r\n\]+Register name as argument means describe only that register\." "help info registers"
 # test help info stack "s" abbreviation
-send "help info s\n"
-expect {
-	-re "Backtrace of the stack, or innermost COUNT frames..*$prompt $"\
-			{ pass "help info stack \"s\" abbreviation" }
-	-re "$prompt $"	{ fail "help info stack \"s\" abbreviation" }
-	timeout		{ fail "(timeout) help info stack \"s\" abbreviation" }
-	}
-
-
+gdb_test "help info s" "Backtrace of the stack, or innermost COUNT frames\." "help info stack \"s\" abbreviation"
 # test help info stack
-send "help info stack\n"
-expect {
-	-re "Backtrace of the stack, or innermost COUNT frames..*$prompt $"\
-			{ pass "help info stack" }
-	-re "$prompt $"	{ fail "help info stack" }
-	timeout		{ fail "(timeout) help info stack" }
-	}
-
-
+gdb_test "help info stack" "Backtrace of the stack, or innermost COUNT frames\." "help info stack"
 # test help info set
-send "help info set\n"
-expect {
-	-re "Show all GDB settings..*$prompt $"\
-			{ pass "help info set" }
-	-re "$prompt $"	{ fail "help info set" }
-	timeout		{ fail "(timeout) help info set" }
-	}
-
-
+gdb_test "help info set" "Show all GDB settings\." "help info set"
 # test help info signals
-send "help info signals\n"
-expect {
-	-re "What debugger does when program gets various signals.*$prompt $"\
-			{ pass "help info signals" }
-	-re "$prompt $"	{ fail "help info signals" }
-	timeout		{ fail "(timeout) help info signals" }
-	}
-
-
+gdb_test "help info signals" "What debugger does when program gets various signals.*" "help info signals"
 # test help info source
-send "help info source\n"
-expect {
-	-re "Information about the current source file..*$prompt $"\
-			{ pass "help info source" }
-	-re "$prompt $"	{ fail "help info source" }
-	timeout		{ fail "(timeout) help aliases" }
-	}
-
-
+gdb_test "help info source" "Information about the current source file\." "help info source"
 # test help info sources
-send "help info sources\n"
-expect {
-	-re "Source files in the program..*$prompt $"\
-			{ pass "help info sources" }
-	-re "$prompt $"	{ fail "help info sources" }
-	timeout		{ fail "(timeout) help info sources" }
-	}
-
-
+gdb_test "help info sources" "Source files in the program\." "help info sources"
+# test help info symbol
+gdb_test "help info symbol" "Describe what symbol is at location ADDR.*"
 # test help info target
-send "help info target\n"
-expect {
-	-re "Names of targets and files being debugged..*
-Shows the entire stack of targets currently in use .including the exec-file,.*
-core-file, and process, if any., as well as the symbol file name..*$prompt $"\
-			{ pass "help info target" }
-	-re "$prompt $"	{ fail "help info target" }
-	timeout		{ fail "(timeout) help info target" }
-	}
-
-
+gdb_test "help info target" "Names of targets and files being debugged\.\[\r\n\]+Shows the entire stack of targets currently in use \\(including the exec-file,\[\r\n\]+core-file, and process, if any\\), as well as the symbol file name\." "help info target"
 # test help info terminal
-send "help info terminal\n"
-expect {
-	-re "Print inferior's saved terminal status..*$prompt $"\
-			{ pass "help info terminal" }
-	-re "$prompt $"	{ fail "help info terminal" }
-	timeout		{ fail "(timeout) help info terminal" }
-	}
-
-
+gdb_test "help info terminal" "Print inferior's saved terminal status\." "help info terminal"
 # test help info types
-send "help info types\n"
-expect {
-	-re "All type names, or those matching REGEXP..*$prompt $"\
-			{ pass "help info types" }
-	-re "$prompt $"	{ fail "help info types" }
-	timeout		{ fail "(timeout) help info types" }
-	}
-
-
+gdb_test "help info types" "All type names, or those matching REGEXP\." "help info types"
 # test help info variables
-send "help info variables\n"
-expect {
-	-re "All global and static variable names, or those matching REGEXP..*$prompt $"\
-			{ pass "help info variables" }
-	-re "$prompt $"	{ fail "help info variables" }
-	timeout		{ fail "(timeout) help info variables" }
-	}
-
-
+gdb_test "help info variables" "All global and static variable names, or those matching REGEXP\." "help info variables"
 # test help info warranty
-send "help info warranty\n"
-expect {
-	-re "Various kinds of warranty you do not have..*$prompt $"\
-			{ pass "help info warranty" }
-	-re "$prompt $"	{ fail "help info warranty" }
-	timeout		{ fail "(timeout) help info warranty" }
-	}
-
-
+gdb_test "help info warranty" "Various kinds of warranty you do not have\." "help info warranty"
 # test help info watchpoints
-send "help info watchpoints\n"
-expect {
-	-re "Synonym for ``info breakpoints''..*$prompt $"\
-			{ pass "help info watchpoints" }
-	-re "$prompt $"	{ fail "help info watchpoints" }
-	timeout		{ fail "(timeout) help info watchpoints" }
-	}
-
-
+gdb_test "help info watchpoints" "Synonym for ``info breakpoints''\." "help info watchpoints"
 # test help inspect
-send "help inspect\n"
-expect {
-	-re "Same as \"print\" command, except that if you are running in the epoch.*
-environment, the value is printed in its own window..*$prompt $"\
-			{ pass "help inspect" }
-	-re "$prompt $"	{ fail "help inspect" }
-	timeout		{ fail "(timeout) help inspect" }
-	}
-
-
+gdb_test "help inspect" "Same as \"print\" command, except that if you are running in the epoch\[\r\n\]+environment, the value is printed in its own window\." "help inspect"
 # test help jump
-send "help jump\n"
-expect {
-	-re "Continue program being debugged at specified line or address..*
-Give as argument either LINENUM or \[*\]+ADDR, where ADDR is an expression.*
-for an address to start at..*$prompt $"\
-			{ pass "help jump" }
-	-re "$prompt $"	{ fail "help jump" }
-	timeout		{ fail "(timeout) help jump" }
-	}
-
-
+gdb_test "help jump" "Continue program being debugged at specified line or address\.\[\r\n\]+Give as argument either LINENUM or \[*\]+ADDR, where ADDR is an expression\[\r\n\]+for an address to start at\." "help jump"
 # test help kill
-send "help kill\n"
-expect {
-	-re "Kill execution of program being debugged..*$prompt $"\
-			{ pass "help kill" }
-	-re "$prompt $"	{ fail "help kill" }
-	timeout		{ fail "(timeout) help kill" }
-	}
-
-
+gdb_test "help kill" "Kill execution of program being debugged\." "help kill"
 # test help list "l" abbreviation
-send "help l\n"
-expect {
-	-re "List specified function or line..*
-With no argument, lists ten more lines after or around previous listing..*
-\"list -\" lists the ten lines before a previous ten-line listing..*
-One argument specifies a line, and ten lines are listed around that line..*
-Two arguments with comma between specify starting and ending lines to list..*
-Lines can be specified in these ways:.*
-  LINENUM, to list around that line in current file,.*
-  FILE:LINENUM, to list around that line in that file,.*
-  FUNCTION, to list around beginning of that function,.*
-  FILE:FUNCTION, to distinguish among like-named static functions..*
-  \[*\]+ADDRESS, to list around the line containing that address..*
-With two args if one is empty it stands for ten lines away from the other arg..*$prompt $"\
-			{ pass "help list \"l\" abbreviation" }
-	-re "$prompt $"	{ fail "help list \"l\" abbreviation" }
-	timeout		{ fail "(timeout) help list \"l\" abbreviation" }
-	}
-
-
+gdb_test "help l" "List specified function or line\.\[\r\n\]+With no argument, lists ten more lines after or around previous listing\.\[\r\n\]+\"list -\" lists the ten lines before a previous ten-line listing\.\[\r\n\]+One argument specifies a line, and ten lines are listed around that line\.\[\r\n\]+Two arguments with comma between specify starting and ending lines to list\.\[\r\n\]+Lines can be specified in these ways:\[\r\n\]+  LINENUM, to list around that line in current file,\[\r\n\]+  FILE:LINENUM, to list around that line in that file,\[\r\n\]+  FUNCTION, to list around beginning of that function,\[\r\n\]+  FILE:FUNCTION, to distinguish among like-named static functions\.\[\r\n\]+  \[*\]ADDRESS, to list around the line containing that address\.\[\r\n\]+With two args if one is empty it stands for ten lines away from the other arg\." "help list \"l\" abbreviation"
 # test help list
-send "help list\n"
-expect {
-	-re "List specified function or line..*
-With no argument, lists ten more lines after or around previous listing..*
-\"list -\" lists the ten lines before a previous ten-line listing..*
-One argument specifies a line, and ten lines are listed around that line..*
-Two arguments with comma between specify starting and ending lines to list..*
-Lines can be specified in these ways:.*
-  LINENUM, to list around that line in current file,.*
-  FILE:LINENUM, to list around that line in that file,.*
-  FUNCTION, to list around beginning of that function,.*
-  FILE:FUNCTION, to distinguish among like-named static functions..*
-  \[*\]+ADDRESS, to list around the line containing that address..*
-With two args if one is empty it stands for ten lines away from the other arg..*$prompt $"\
-			{ pass "help list" }
-	-re "$prompt $"	{ fail "help list" }
-	timeout		{ fail "(timeout) help list" }
-	}
-
-
+gdb_test "help list" "List specified function or line\.\[\r\n\]+With no argument, lists ten more lines after or around previous listing\.\[\r\n\]+\"list -\" lists the ten lines before a previous ten-line listing\.\[\r\n\]+One argument specifies a line, and ten lines are listed around that line\.\[\r\n\]+Two arguments with comma between specify starting and ending lines to list\.\[\r\n\]+Lines can be specified in these ways:\[\r\n\]+  LINENUM, to list around that line in current file,\[\r\n\]+  FILE:LINENUM, to list around that line in that file,\[\r\n\]+  FUNCTION, to list around beginning of that function,\[\r\n\]+  FILE:FUNCTION, to distinguish among like-named static functions\.\[\r\n\]+  \[*\]ADDRESS, to list around the line containing that address\.\[\r\n\]+With two args if one is empty it stands for ten lines away from the other arg\." "help list"
 # test help load
-send "help load\n"
-expect {
-	-re "Dynamically load FILE into the running program, and record its symbols.*
-for access from GDB..*$prompt $"\
-			{ pass "help load" }
-	-re "$prompt $"	{ fail "help load" }
-	timeout		{ fail "(timeout) help load" }
-	}
-
-
+gdb_test "help load" "Dynamically load FILE into the running program, and record its symbols\[\r\n\]+for access from GDB\." "help load"
 # test help make
-send "help make\n"
-expect {
-	-re "Run the ``make'' program using the rest of the line as arguments..*$prompt $"\
-			{ pass "help make" }
-	-re "$prompt $"	{ fail "help make" }
-	timeout		{ fail "(timeout) help make" }
-	}
-
-
+gdb_test "help make" "Run the ``make'' program using the rest of the line as arguments\." "help make"
 # test help next "n" abbreviation
-send "help n\n"
-expect {
-	-re "Step program, proceeding through subroutine calls..*
-Like the \"step\" command as long as subroutine calls do not happen;.*
-when they do, the call is treated as one instruction..*
-Argument N means do this N times .or till program stops for another reason...*$prompt $"\
-			{ pass "help next \"n\" abbreviation" }
-	-re "$prompt $"	{ fail "help next \"n\" abbreviation" }
-	timeout		{ fail "(timeout) help next \"n\" abbreviation" }
-	}
-
-
+gdb_test "help n" "Step program, proceeding through subroutine calls\.\[\r\n\]+Like the \"step\" command as long as subroutine calls do not happen;\[\r\n\]+when they do, the call is treated as one instruction\.\[\r\n\]+Argument N means do this N times \\(or till program stops for another reason\\)\." "help next \"n\" abbreviation"
 # test help next
-send "help next\n"
-expect {
-	-re "Step program, proceeding through subroutine calls..*
-Like the \"step\" command as long as subroutine calls do not happen;.*
-when they do, the call is treated as one instruction..*
-Argument N means do this N times .or till program stops for another reason...*$prompt $"\
-			{ pass "help next" }
-	-re "$prompt $"	{ fail "help next" }
-	timeout		{ fail "(timeout) help next" }
-	}
-
-
+gdb_test "help next" "Step program, proceeding through subroutine calls\.\[\r\n\]+Like the \"step\" command as long as subroutine calls do not happen;\[\r\n\]+when they do, the call is treated as one instruction\.\[\r\n\]+Argument N means do this N times \\(or till program stops for another reason\\)\." "help next"
 # test help nexti
-send "help ni\n"
-expect {
-	-re "Step one instruction, but proceed through subroutine calls..*
-Argument N means do this N times .or till program stops for another reason...*$prompt $"\
-			{ pass "help nexti" }
-	-re "$prompt $"	{ fail "help nexti" }
-	timeout		{ fail "(timeout) help nexti" }
-	}
-
-
+gdb_test "help ni" "Step one instruction, but proceed through subroutine calls\.\[\r\n\]+Argument N means do this N times \\(or till program stops for another reason\\)\." "help nexti"
 # all the commands that used to be here are now in "maintainance" instead
 # test help obscure
-send "help obscure\n"
-expect {
-	-re "Obscure features..*
-List of commands:.*
-Type \"help\" followed by command name for full documentation..*
-Command name abbreviations are allowed if unambiguous..*$prompt $"\
-			{ pass "help obscure" }
-	-re "$prompt $"	{ fail "help obscure" }
-	timeout		{ fail "(timeout) help obscure" }
-	}
-
-
+gdb_test "help obscure" "Obscure features\.\[\r\n\]+List of commands:.*\[\r\n\]+Type \"help\" followed by command name for full documentation\.\[\r\n\]+Command name abbreviations are allowed if unambiguous\." "help obscure"
 # test help output
-send "help output\n"
-expect {
-	-re "Like \"print\" but don't put in value history and don't print newline..*
-This is useful in user-defined commands..*$prompt $"\
-			{ pass "help output" }
-	-re "$prompt $"	{ fail "help output" }
-	timeout		{ fail "(timeout) help output" }
-	}
-
-
+gdb_test "help output" "Like \"print\" but don't put in value history and don't print newline\.\[\r\n\]+This is useful in user-defined commands\." "help output"
+# test help overlay
+gdb_test "help overlay"       "Commands for debugging overlays.*"
+gdb_test "help overlay off"   "Disable overlay debugging\."
+gdb_test "help overlay manual" "Enable overlay debugging\."
+gdb_test "help overlay auto"  "Enable automatic overlay debugging\."
+gdb_test "help overlay list"  "List mappings of overlay sections\."
+gdb_test "help overlay map"   "Assert that an overlay section is mapped\."
+gdb_test "help overlay unmap" "Assert that an overlay section is unmapped\."
+gdb_test "help overlay load"  "Read the overlay mapping state from the target\."
 # test help print "p" abbreviation
-send "help p\n"
-expect {
-	-re "Print value of expression EXP..*
-Variables accessible are those of the lexical environment of the selected.*
-EXP may be preceded with /FMT, where FMT is a format letter.*
-but no count or size letter .see \"x\" command...*$prompt $"\
-			{ pass "help print \"p\" abbreviation" }
-	-re "$prompt $"	{ fail "help print \"p\" abbreviation" }
-	timeout		{ fail "(timeout) help print \"p\" abbreviation" }
-	}
-
-
+gdb_test "help p" "Print value of expression EXP\.\[\r\n\]+Variables accessible are those of the lexical environment of the selected.*\[\r\n\]+EXP may be preceded with /FMT, where FMT is a format letter\[\r\n\]+but no count or size letter \\(see \"x\" command\\)\." "help print \"p\" abbreviation"
 # test help print
-send "help print\n"
-expect {
-	-re "Print value of expression EXP..*
-Variables accessible are those of the lexical environment of the selected.*
-EXP may be preceded with /FMT, where FMT is a format letter.*
-but no count or size letter .see \"x\" command...*$prompt $"\
-			{ pass "help print" }
-	-re "$prompt $"	{ fail "help print" }
-	timeout		{ fail "(timeout) help print" }
-	}
-
-
+gdb_test "help print" "Print value of expression EXP\.\[\r\n\]+Variables accessible are those of the lexical environment of the selected.*\[\r\n\]+EXP may be preceded with /FMT, where FMT is a format letter\[\r\n\]+but no count or size letter \\(see \"x\" command\\)\." "help print"
 # test help path
-send "help path\n"
-expect {
-	-re "Add directory DIR.s. to beginning of search path for object files..*
-.cwd in the path means the current working directory..*
-This path is equivalent to the .PATH shell variable.  It is a list of.*
-directories, separated by colons.  These directories are searched to find.*
-fully linked executable files and separately compiled object files as needed..*$prompt $"\
-			{ pass "help path" }
-	-re "$prompt $"	{ fail "help path" }
-	timeout		{ fail "(timeout) help path" }
-	}
-
-
+gdb_test "help path" "Add directory DIR\\(s\\) to beginning of search path for object files\.\[\r\n\]+\\\$cwd in the path means the current working directory\.\[\r\n\]+This path is equivalent to the \\\$PATH shell variable\.  It is a list of\[\r\n\]+directories, separated by colons\.  These directories are searched to find\[\r\n\]+fully linked executable files and separately compiled object files as needed\." "help path"
 # test help printcmds
-send "help printcmds\n"
-expect {
-	-re "Undefined command: \"printcmds\".  Try \"help\"..*$prompt $"\
-			{ pass "help printcmds" }
-	-re "$prompt $"	{ fail "help printcmds" }
-	timeout		{ fail "(timeout) help printcmds" }
-	}
-
-
+gdb_test "help printcmds" "Undefined command: \"printcmds\"\.  Try \"help\"\." "help printcmds"
 # test help printf
-send "help printf\n"
-expect {
-	-re "printf \"printf format string\", arg1, arg2, arg3, ..., argn.*
-This is useful for formatted output in user-defined commands..*$prompt $"\
-			{ pass "help printf" }
-	-re "$prompt $"	{ fail "help printf" }
-	timeout		{ fail "(timeout) help printf" }
-	}
-
-
-# this command doesn't exist in GDB 4.5.8
-# test help printsyms
-#send "help printsyms\n"
-#expect {
-#	-re "Print dump of current symbol definitions to file OUTFILE..*
-#If a SOURCE file is specified, dump only that file's symbols..*$prompt $"\
-#			{ pass "help printsyms" }
-#	-re "$prompt $"	{ fail "help printsyms" }
-#	timeout		{ fail "(timeout) help printsyms" }
-#	}
-
+gdb_test "help printf" "printf \"printf format string\", arg1, arg2, arg3, \.\.\., argn\[\r\n\]+This is useful for formatted output in user-defined commands\." "help printf"
 # test help ptype
-send "help ptype\n"
-expect {
-	-re "Print definition of type.*$prompt $"\
-			{ pass "help ptype" }
-	-re "$prompt $"	{ fail "help ptype" }
-	timeout		{ fail "(timeout) help ptype" }
-	}
-
-
+gdb_test "help ptype" "Print definition of type.*" "help ptype"
 # test help pwd
-send "help pwd\n"
-expect {
-	-re "Print working directory.  This is used for your program as well..*$prompt $"\
-			{ pass "help pwd" }
-	-re "$prompt $"	{ fail "help pwd" }
-	timeout		{ fail "(timeout) help pwd" }
-	}
-
-
+gdb_test "help pwd" "Print working directory\.  This is used for your program as well\." "help pwd"
 # test help quit "q" abbreviation
-send "help q\n"
-expect {
-	-re "Exit gdb..*$prompt $"\
-			{ pass "help quit \"q\" abbreviation" }
-	-re "$prompt $"	{ fail "help quit \"q\" abbreviation" }
-	timeout		{ fail "(timeout) help quit \"q\" abbreviation" }
-	}
-
-
+gdb_test "help q" "Exit gdb\." "help quit \"q\" abbreviation"
 # test help quit
-send "help quit\n"
-expect {
-	-re "Exit gdb..*$prompt $"\
-			{ pass "help quit" }
-	-re "$prompt $"	{ fail "help quit" }
-	timeout		{ fail "(timeout) help quit" }
-	}
-
-
+gdb_test "help quit" "Exit gdb\." "help quit"
 # test help run "r" abbreviation
-send "help r\n"
-expect {
-	-re "Start debugged program.  You may specify arguments to give it..*
-Args may include .*, or .*; they are expanded using \"sh\"..*
-Input and output redirection with \".\", \".\", or \"..\" are also allowed..*
-With no arguments, uses arguments last specified .with \"run\" or \"set args\"...*
-To cancel previous arguments and run with no arguments,.*
-use \"set args\" without arguments..*$prompt $"\
-			{ pass "help run \"r\" abbreviation" }
-	-re "$prompt $"	{ fail "help run \"r\" abbreviation" }
-	timeout		{ fail "(timeout) help run \"r\" abbreviation" }
-	}
-
-
+gdb_test "help r" "Start debugged program\.  You may specify arguments to give it\.\[\r\n\]+Args may include \"\\*\", or \"\\\[\.\.\.\\\]\"; they are expanded using \"sh\"\.\[\r\n\]+Input and output redirection with \">\", \"<\", or \">>\" are also allowed\.\[\r\n\]+With no arguments, uses arguments last specified \\(with \"run\" or \"set args\"\\)\.\[\r\n\]+To cancel previous arguments and run with no arguments,\[\r\n\]+use \"set args\" without arguments\." "help run \"r\" abbreviation"
 # test help run
-send "help run\n"
-expect {
-	-re "Start debugged program.  You may specify arguments to give it..*
-Args may include .*, or .*; they are expanded using \"sh\"..*
-Input and output redirection with \".\", \".\", or \"..\" are also allowed..*
-With no arguments, uses arguments last specified .with \"run\" or \"set args\"...*
-To cancel previous arguments and run with no arguments,.*
-use \"set args\" without arguments..*$prompt $"\
-			{ pass "help run" }
-	-re "$prompt $"	{ fail "help run" }
-	timeout		{ fail "(timeout) help run" }
-	}
-
-
+gdb_test "help run" "Start debugged program\.  You may specify arguments to give it\.\[\r\n\]+Args may include \"\\*\", or \"\\\[\.\.\.\\\]\"; they are expanded using \"sh\"\.\[\r\n\]+Input and output redirection with \">\", \"<\", or \">>\" are also allowed\.\[\r\n\]+With no arguments, uses arguments last specified \\(with \"run\" or \"set args\"\\)\.\[\r\n\]+To cancel previous arguments and run with no arguments,\[\r\n\]+use \"set args\" without arguments\." "help run"
 # test help rbreak
-send "help rbreak\n"
-expect {
-	-re "Set a breakpoint for all functions matching REGEXP..*$prompt $"\
-			{ pass "help rbreak" }
-	-re "$prompt $"	{ fail "help rbreak" }
-	timeout		{ fail "(timeout) help rbreak" }
-	}
-
-
+gdb_test "help rbreak" "Set a breakpoint for all functions matching REGEXP\." "help rbreak"
+# test help restore
+gdb_test "help restore" "Restore the contents of FILE to target memory\.\[\r\n\]+Arguments are FILE OFFSET START END where all except FILE are optional\.\[\r\n\]+OFFSET will be added to the base address of the file \\(default zero\\)\.\[\r\n\]+If START and END are given, only the file contents within that range\[\r\n\]+\\(file relative\\) will be restored to target memory\."
 # test help return
-send "help return\n"
-expect {
-	-re "Make selected stack frame return to its caller..*
-Control remains in the debugger, but when you continue.*
-execution will resume in the frame above the one now selected..*
-If an argument is given, it is an expression for the value to return..*$prompt $"\
-			{ pass "help return" }
-	-re "$prompt $"	{ fail "help return" }
-	timeout		{ fail "(timeout) help return" }
-	}
-
-
+gdb_test "help return" "Make selected stack frame return to its caller\.\[\r\n\]+Control remains in the debugger, but when you continue\[\r\n\]+execution will resume in the frame above the one now selected\.\[\r\n\]+If an argument is given, it is an expression for the value to return\." "help return"
 # test help reverse-search
-send "help reverse-search\n"
-expect {
-	-re "Search backward for regular expression .see regex.3.. from last line listed..*$prompt $"\
-			{ pass "help reverse-search" }
-	-re "$prompt $"	{ fail "help reverse-search" }
-	timeout		{ fail "(timeout) help reverse-search" }
-	}
-
-
+gdb_test "help reverse-search" "Search backward for regular expression \\(see regex\\(3\\)\\) from last line listed\..*" "help reverse-search"
 # test help running
-send "help running\n"
-expect {
-	-re "Running the program..*
-List of commands:.*
-Type \"help\" followed by command name for full documentation..*
-Command name abbreviations are allowed if unambiguous..*$prompt $"\
-			{ pass "help running" }
-	-re "$prompt $"	{ fail "help running" }
-	timeout		{ fail "(timeout) help running" }
-	}
-
-
+gdb_test "help running" "Running the program\.\[\r\n\]+List of commands:.*\[\r\n\]+Type \"help\" followed by command name for full documentation\.\[\r\n\]+Command name abbreviations are allowed if unambiguous\." "help running"
 # test help step "s" abbreviation
-send "help s\n"
-expect {
-	-re "Step program until it reaches a different source line..*
-Argument N means do this N times .or till program stops for another reason...*$prompt $"\
-			{ pass "help step \"s\" abbreviation" }
-	-re "$prompt $"	{ fail "help step \"s\" abbreviation" }
-	timeout		{ fail "(timeout) help step \"s\" abbreviation" }
-	}
-
-
+gdb_test "help s" "Step program until it reaches a different source line\.\[\r\n\]+Argument N means do this N times \\(or till program stops for another reason\\)\." "help step \"s\" abbreviation"
 # test help step
-send "help step\n"
-expect {
-	-re "Step program until it reaches a different source line..*
-Argument N means do this N times .or till program stops for another reason...*$prompt $"\
-			{ pass "help step" }
-	-re "$prompt $"	{ fail "help step" }
-	timeout		{ fail "(timeout) help step" }
-	}
-
-
+gdb_test "help step" "Step program until it reaches a different source line\.\[\r\n\]+Argument N means do this N times \\(or till program stops for another reason\\)\." "help step #1"
 # test help search
-send "help search\n"
-expect {
-	-re "Search for regular expression .see regex.3.. from last line listed..*$prompt $"\
-			{ pass "help search" }
-	-re "$prompt $"	{ fail "help search" }
-	timeout		{ fail "(timeout) help search" }
-	}
-
-
+gdb_test "help search" "Search for regular expression \\(see regex\\(3\\)\\) from last line listed\..*" "help search"
 # test help section
-send "help section\n"
-expect {
-	-re "Change the base address of section SECTION of the exec file to ADDR..*
-This can be used if the exec file does not contain section addresses,.*
-.such as in the a.out format., or when the addresses specified in the.*
-file itself are wrong.  Each section must be changed separately.  The.*
-``info files'' command lists all the sections and their addresses..*$prompt $"\
-			{ pass "help section" }
-	-re "$prompt $"	{ fail "help section" }
-	timeout		{ fail "(timeout) help section" }
-	}
-
-
+gdb_test "help section" "Change the base address of section SECTION of the exec file to ADDR\.\[\r\n\]+This can be used if the exec file does not contain section addresses,\[\r\n\]+\\(such as in the a\.out format\\), or when the addresses specified in the\[\r\n\]+file itself are wrong\.  Each section must be changed separately\.  The\[\r\n\]+``info files'' command lists all the sections and their addresses\." "help section"
 #test help set annotate
-send "help set annotate\n"
-expect {
-	-re "Set annotation_level.*
-0 == normal;     1 == fullname \\(for use when running under emacs\\).*
-2 == output annotated suitably for use by programs that control GDB..*$prompt $"\
-			{ pass "help set annotate" }
-	-re "$prompt $"	{ fail "help set annotate" }
-	timeout		{ fail "(timeout) help set annotate" }
-	}
-
-
+gdb_test "help set annotate" "Set annotation_level\.\[\r\n\]+0 == normal;     1 == fullname \\(for use when running under emacs\\)\[\r\n\]+2 == output annotated suitably for use by programs that control GDB\." "help set annotate"
 # test help set args
-send "help set args\n"
-expect {
-	-re "Set arguments to give program being debugged when it is started..*
-Follow this command with any number of args, to be passed to the program..*$prompt $"\
-			{ pass "help set args" }
-	-re "$prompt $"	{ fail "help set args" }
-	timeout		{ fail "(timeout) help set args" }
-	}
-
-
+gdb_test "help set args" "Set argument list to give program being debugged when it is started\.\[\r\n\]+Follow this command with any number of args, to be passed to the program\."
 # test help set check "c" abbreviation
-send "help set c\n"
-expect {
-	-re "Set the status of the type/range checker.*
-List of set check subcommands:.*
-set check range -- Set range checking.*
-set check type -- Set type checking.*
-Type \"help set check\" followed by set check subcommand name for full documentation..*
-Command name abbreviations are allowed if unambiguous..*$prompt $"\
-			{ pass "help set check \"c\" abbreviation" }
-	-re "$prompt $"	{ fail "help set check \"c\" abbreviation" }
-	timeout		{ fail "(timeout) help set check \"c\" abbreviation" }
-	}
-
-
+gdb_test "help set c" "Set the status of the type/range checker\.\[\r\n\]+List of set check subcommands:\[\r\n\]+set check range -- Set range checking\[\r\n\]+set check type -- Set type checking\[\r\n\]+Type \"help set check\" followed by set check subcommand name for full documentation\.\[\r\n\]+Command name abbreviations are allowed if unambiguous\." "help set check \"c\" abbreviation"
 # test help set check "ch" abbreviation
-send "help set ch\n"
-expect {
-	-re "Set the status of the type/range checker.*
-List of set check subcommands:.*
-set check range -- Set range checking.*
-set check type -- Set type checking.*
-Type \"help set check\" followed by set check subcommand name for full documentation..*
-Command name abbreviations are allowed if unambiguous..*$prompt $"\
-			{ pass "help set check \"ch\" abbreviation" }
-	-re "$prompt $"	{ fail "help set check \"ch\" abbreviation" }
-	timeout		{ fail "(timeout) help set check \"ch\" abbreviation" }
-	}
-
-
+gdb_test "help set ch" "Set the status of the type/range checker\.\[\r\n\]+List of set check subcommands:\[\r\n\]+set check range -- Set range checking\[\r\n\]+set check type -- Set type checking\[\r\n\]+Type \"help set check\" followed by set check subcommand name for full documentation\.\[\r\n\]+Command name abbreviations are allowed if unambiguous\." "help set check \"ch\" abbreviation"
 # test help set check
-send "help set check\n"
-expect {
-	-re "Set the status of the type/range checker.*
-List of set check subcommands:.*
-set check range -- Set range checking.*
-set check type -- Set type checking.*
-Type \"help set check\" followed by set check subcommand name for full documentation..*
-Command name abbreviations are allowed if unambiguous..*$prompt $"\
-			{ pass "help set check" }
-	-re "$prompt $"	{ fail "help set check" }
-	timeout		{ fail "(timeout) help set check" }
-	}
-
-
+gdb_test "help set check" "Set the status of the type/range checker\.\[\r\n\]+List of set check subcommands:\[\r\n\]+set check range -- Set range checking\[\r\n\]+set check type -- Set type checking\[\r\n\]+Type \"help set check\" followed by set check subcommand name for full documentation\.\[\r\n\]+Command name abbreviations are allowed if unambiguous\." "help set check"
 # test help set check range
-send "help set check range\n"
-expect {
-	-re "Set range checking.  .on/warn/off/auto..*$prompt $"\
-			{ pass "help set check range" }
-	-re "$prompt $"	{ fail "help set check range" }
-	timeout		{ fail "(timeout) help set check range" }
-	}
-
-
+gdb_test "help set check range" "Set range checking\.  \\(on/warn/off/auto\\)" "help set check range"
 # test help set check type
-send "help set check type\n"
-expect {
-	-re "Set type checking.  .on/warn/off/auto..*$prompt $"\
-			{ pass "help set check type" }
-	-re "$prompt $"	{ fail "help set check type" }
-	timeout		{ fail "(timeout) help set check type" }
-	}
-
-
+gdb_test "help set check type" "Set type checking\.  \\(on/warn/off/auto\\)." "help set check type"
 # test help set complaints
-send "help set complaints\n"
-expect {
-	-re "Set max number of complaints about incorrect symbols..*$prompt $"\
-			{ pass "help set complaints" }
-	-re "$prompt $"	{ fail "help set complaints" }
-	timeout		{ fail "(timeout) help set complaints" }
-	}
-
-
+gdb_test "help set complaints" "Set max number of complaints about incorrect symbols\." "help set complaints"
 # test help set confirm
-send "help set confirm\n"
-expect {
-	-re "Set whether to confirm potentially dangerous operations..*$prompt $"\
-			{ pass "help set confirm" }
-	-re "$prompt $"	{ fail "help set confirm" }
-	timeout		{ fail "(timeout) help set confirm" }
-	}
-
-
+gdb_test "help set confirm" "Set whether to confirm potentially dangerous operations\." "help set confirm"
 # test help set editing
-send "help set editing\n"
-expect {
-	-re "Set editing of command lines as they are typed..*
-Use \"on\" to enable to enable the editing, and \"off\" to disable it..*
-Without an argument, command line editing is enabled.  To edit, use.*
-EMACS-like or VI-like commands like control-P or ESC..*$prompt $"\
-			{ pass "help set editing" }
-	-re "$prompt $"	{ fail "help set editing" }
-	timeout		{ fail "(timeout) help set editing" }
-	}
-
-
+gdb_test "help set editing" "Set editing of command lines as they are typed\.\[\r\n\]+Use \"on\" to enable the editing, and \"off\" to disable it\.\[\r\n\]+Without an argument, command line editing is enabled\.  To edit, use\[\r\n\]+EMACS-like or VI-like commands like control-P or ESC\." "help set editing"
 # test help set environment
-send "help set environment\n"
-expect {
-	-re "Set environment variable value to give the program..*
-Arguments are VAR VALUE where VAR is variable name and VALUE is value..*
-VALUES of environment variables are uninterpreted strings..*
-This does not affect the program until the next \"run\" command..*$prompt $"\
-			{ pass "help set environment" }
-	-re "$prompt $"	{ fail "help set environment" }
-	timeout		{ fail "(timeout) help set environment" }
-	}
-
-
+gdb_test "help set environment" "Set environment variable value to give the program\.\[\r\n\]+Arguments are VAR VALUE where VAR is variable name and VALUE is value\.\[\r\n\]+VALUES of environment variables are uninterpreted strings\.\[\r\n\]+This does not affect the program until the next \"run\" command\." "help set environment"
 # test help set height
-send "help set height\n"
-expect {
-	-re "Set number of lines gdb thinks are in a page..*$prompt $"\
-			{ pass "help set height" }
-	-re "$prompt $"	{ fail "help set height" }
-	timeout		{ fail "(timeout) help set height" }
-	}
-
-
+gdb_test "help set height" "Set number of lines gdb thinks are in a page\." "help set height"
 # test help set history expansion
-send "help set history expansion\n"
-expect {
-	-re "Set history expansion on command input..*
-Without an argument, history expansion is enabled..*$prompt $"\
-			{ pass "help set history expansion" }
-	-re "$prompt $"	{ fail "help set history expansion" }
-	timeout		{ fail "(timeout) help set history expansion" }
-	}
-
-
+gdb_test "help set history expansion" "Set history expansion on command input\.\[\r\n\]+Without an argument, history expansion is enabled\." "help set history expansion"
 # test help set history filename
-send "help set history filename\n"
-expect {
-	-re "Set the filename in which to record the command history.*
- .the list of previous commands of which a record is kept...*$prompt $"\
-			{ pass "help set history filename" }
-	-re "$prompt $"	{ fail "help set history filename" }
-	timeout		{ fail "(timeout) help set history filename" }
-	}
-
-
+gdb_test "help set history filename" "Set the filename in which to record the command history\[\r\n\]+\\(the list of previous commands of which a record is kept\\)\." "help set history filename"
 # test help set history save
-send "help set history save\n"
-expect {
-	-re "Set saving of the history record on exit..*
-Use \"on\" to enable to enable the saving, and \"off\" to disable it..*
-Without an argument, saving is enabled..*$prompt $"\
-			{ pass "help set history save" }
-	-re "$prompt $"	{ fail "help set history save" }
-	timeout		{ fail "(timeout) help set history save" }
-	}
-
-
+gdb_test "help set history save" "Set saving of the history record on exit\.\[\r\n\]+Use \"on\" to enable the saving, and \"off\" to disable it\.\[\r\n\]+Without an argument, saving is enabled\." "help set history save"
 # test help set history size
-send "help set history size\n"
-expect {
-	-re "Set the size of the command history, .*
-ie. the number of previous commands to keep a record of..*$prompt $"\
-			{ pass "help set history size" }
-	-re "$prompt $"	{ fail "help set history size" }
-	timeout		{ fail "(timeout) help set history size" }
-	}
-
-
+gdb_test "help set history size" "Set the size of the command history,\[\r\n\]+ie\. the number of previous commands to keep a record of\." "help set history size"
 # test help set history
-send "help set history\n"
-expect {
-	-re "Generic command for setting command history parameters..*
-List of set history subcommands:.*
-set history filename -- Set the filename in which to record the command history.*
-set history size -- Set the size of the command history.*
-set history save -- Set saving of the history record on exit.*
-set history expansion -- Set history expansion on command input.*
-Type \"help set history\" followed by set history subcommand name for full documentation..*
-Command name abbreviations are allowed if unambiguous..*$prompt $"\
-			{ pass "help set history" }
-	-re "$prompt $"	{ fail "help set history" }
-	timeout		{ fail "(timeout) help set history" }
-	}
-
-
+gdb_test "help set history" "Generic command for setting command history parameters\.\[\r\n\]+List of set history subcommands:\[\r\n\]+set history expansion -- Set history expansion on command input\[\r\n\]+set history filename -- Set the filename in which to record the command history\[\r\n\]+set history save -- Set saving of the history record on exit\[\r\n\]+set history size -- Set the size of the command history\[\r\n\]+Type \"help set history\" followed by set history subcommand name for full documentation\.\[\r\n\]+Command name abbreviations are allowed if unambiguous\." "help set history"
 # test help set language
-send "help set language\n"
-expect {
-	-re "Set the current source language..*$prompt $"\
-			{ pass "help set language" }
-	-re "$prompt $"	{ fail "help set language" }
-	timeout		{ fail "(timeout) help set language" }
-	}
-
-
+gdb_test "help set language" "Set the current source language\." "help set language"
 # test help set listsize
-send "help set listsize\n"
-expect {
-	-re "Set number of source lines gdb will list by default..*$prompt $"\
-			{ pass "help set listsize" }
-	-re "$prompt $"	{ fail "help set listsize" }
-	timeout		{ fail "(timeout) help set listsize" }
-	}
-
-
+gdb_test "help set listsize" "Set number of source lines gdb will list by default\." "help set listsize"
 # test help set print "p" abbreviation
 # FIXME -- Ultrix hangs randomly on this very long output from gdb and
 # continues with its output only if something is sent to gdb.
-# This behaviour throws expect and gdb out of sync, so we better skip this 
-# test.
 # Also, if the system is slow, it may time out because the output is large.
-# Just skip the test rather than bothering with increasing the timeout.
-if 0 then {
-send "help set p\n"
-expect {
-	-re ".*
-Generic command for setting how things print..*
-List of set print subcommands:.*
-Type \"help set print\" followed by set print subcommand name for full documentation..*
-Command name abbreviations are allowed if unambiguous..*$prompt $"\
-			{ pass "help set print \"p\" abbreviatio" }
-	-re "$prompt $"	{ fail "help set print \"p\" abbreviatio" }
-	timeout		{ fail "(timeout) help set print \"p\" abbreviatio" }
-	}
-
+gdb_test "help set p" "Generic command for setting how things print\.\[\r\n\]+List of set print subcommands:.*\[\r\n\]+Type \"help set print\" followed by set print subcommand name for full documentation\.\[\r\n\]+Command name abbreviations are allowed if unambiguous\." "help set print \"p\" abbreviation"
 # test help set print "pr" abbreviation
-send "help set pr\n"
-expect {
-	-re ".*
-Generic command for setting how things print..*
-List of set print subcommands:.*
-Type \"help set print\" followed by set print subcommand name for full documentation..*
-Command name abbreviations are allowed if unambiguous..*$prompt $"\
-			{ pass "help set print \"pr\" abbreviation" }
-	-re "$prompt $"	{ fail "help set print \"pr\" abbreviation" }
-	timeout		{ fail "(timeout) help set print \"pr\" abbreviation" }
-	}
-
-
+gdb_test "help set pr" "Generic command for setting how things print\.\[\r\n\]+List of set print subcommands:.*\[\r\n\]+Type \"help set print\" followed by set print subcommand name for full documentation\.\[\r\n\]+Command name abbreviations are allowed if unambiguous\." "help set print \"pr\" abbreviation"
 # test help set print
-send "help set print\n"
-expect {
-	-re ".*
-Generic command for setting how things print..*
-List of set print subcommands:.*
-Type \"help set print\" followed by set print subcommand name for full documentation..*
-Command name abbreviations are allowed if unambiguous..*$prompt $"\
-			{ pass "help set print" }
-	-re "$prompt $"	{ fail "help set print" }
-	timeout		{ fail "(timeout) help set print" }
-	}
-}
-
+gdb_test "help set print" "Generic command for setting how things print\.\[\r\n\]+List of set print subcommands:.*\[\r\n\]+Type \"help set print\" followed by set print subcommand name for full documentation\.\[\r\n\]+Command name abbreviations are allowed if unambiguous\." "help set print"
 # test help set print address
-send "help set print address\n"
-expect {
-	-re "Set printing of addresses..*$prompt $"\
-			{ pass "help set print address" }
-	-re "$prompt $"	{ fail "help set print address" }
-	timeout		{ fail "(timeout) help set print address" }
-	}
-
-
+gdb_test "help set print address" "Set printing of addresses\." "help set print address"
 # test help set print array
-send "help set print array\n"
-expect {
-	-re "Set prettyprinting of arrays..*$prompt $"\
-			{ pass "help set print array" }
-	-re "$prompt $"	{ fail "help set print array" }
-	timeout		{ fail "(timeout) help set print array" }
-	}
-
-
+gdb_test "help set print array" "Set prettyprinting of arrays\." "help set print array"
 # test help set print asm-demangle
-send "help set print asm-demangle\n"
-expect {
-	-re "Set demangling of C\[+\]+ names in disassembly listings..*$prompt $"\
-			{ pass "help set print asm-demangle" }
-	-re "$prompt $"	{ fail "help set print asm-demangle" }
-	timeout		{ fail "(timeout) help set print asm-demangle" }
-	}
-
-
+gdb_test "help set print asm-demangle" "Set demangling of C\[+\]+/ObjC names in disassembly listings\." "help set print asm-demangle"
 # test help set print demangle
-send "help set print demangle\n"
-expect {
-	-re "Set demangling of encoded C\[+\]+ names when displaying symbols..*$prompt $"\
-			{ pass "help set print demangle" }
-	-re "$prompt $"	{ fail "help set print demangle" }
-	timeout		{ fail "(timeout) help set print demangle" }
-	}
-
-
+gdb_test "help set print demangle" "Set demangling of encoded C\[+\]+/ObjC names when displaying symbols\." "help set print demangle"
 # test help set print elements
-send "help set print elements\n"
-expect {
-	-re "Set limit on string chars or array elements to print..*
-\"set print elements 0\" causes there to be no limit..*$prompt $"\
-			{ pass "help set print elements" }
-	-re "$prompt $"	{ fail "help set print elements" }
-	timeout		{ fail "(timeout) help set print elements" }
-	}
-
-
+gdb_test "help set print elements" "Set limit on string chars or array elements to print\.\[\r\n\]+\"set print elements 0\" causes there to be no limit\." "help set print elements"
 # test help set print object
-send "help set print object\n"
-expect {
-	-re "Set printing of object's derived type based on vtable info..*$prompt $"\
-			{ pass "help set print object" }
-	-re "$prompt $"	{ fail "help set print object" }
-	timeout		{ fail "(timeout) help set print object" }
-	}
-
-
+gdb_test "help set print object" "Set printing of object's derived type based on vtable info\." "help set print object"
 # test help set print pretty
-send "help set print pretty\n"
-expect {
-	-re "Set prettyprinting of structures..*$prompt $"\
-			{ pass "help set print pretty" }
-	-re "$prompt $"	{ fail "help set print pretty" }
-	timeout		{ fail "(timeout) help set print pretty" }
-	}
-
-
+gdb_test "help set print pretty" "Set prettyprinting of structures\." "help set print pretty"
 # test help set print sevenbit-strings
-send "help set print sevenbit-strings\n"
-expect {
-	-re "Set printing of 8-bit characters in strings as .nnn..*$prompt $"\
-			{ pass "help set print sevenbit-strings" }
-	-re "$prompt $"	{ fail "help set print sevenbit-strings" }
-	timeout		{ fail "(timeout) help set print sevenbit-strings" }
-	}
-
-
+gdb_test "help set print sevenbit-strings" "Set printing of 8-bit characters in strings as \\\\nnn\." "help set print sevenbit-strings"
 # test help set print union
-send "help set print union\n"
-expect {
-	-re "Set printing of unions interior to structures..*$prompt $"\
-			{ pass "help set print union" }
-	-re "$prompt $"	{ fail "help set print union" }
-	timeout		{ fail "(timeout) help set print union" }
-	}
-
-
+gdb_test "help set print union" "Set printing of unions interior to structures\." "help set print union"
 # test help set print vtbl
-send "help set print vtbl\n"
-expect {
-	-re "Set printing of C\[+\]+ virtual function tables..*$prompt $"\
-			{ pass "help set print vtbl" }
-	-re "$prompt $"	{ fail "help set print vtbl" }
-	timeout		{ fail "(timeout) help set print vtbl" }
-	}
-
-
+gdb_test "help set print vtbl" "Set printing of C\[+\]+ virtual function tables\." "help set print vtbl"
 # test help set prompt
-send "help set prompt\n"
-expect {
-	-re "Set gdb's prompt.*$prompt $"\
-			{ pass "help set prompt" }
-	-re "$prompt $"	{ fail "help set prompt" }
-	timeout		{ fail "(timeout) help set prompt" }
-	}
-
-
+gdb_test "help set prompt" "Set gdb's prompt" "help set prompt"
 # test help set radix
-send "help set radix\n"
-expect {
-	-re "Set default input and output number radices.*
-Use \'set input-radix\' or \'set output-radix\' to independently set each..*
-Without an argument, sets both radices back to the default value of 10..*
-.*$prompt $"\
-			{ pass "help set radix" }
-	-re "Set default input and output number radix..*$prompt $"\
-			{ fail "help set radix (obsolete radix support)" }
-	-re "$prompt $"	{ fail "help set radix" }
-	timeout		{ fail "(timeout) help set radix" }
-	}
-
-
+gdb_test "help set radix" "Set default input and output number radices\.\[\r\n\]+Use \'set input-radix\' or \'set output-radix\' to independently set each\.\[\r\n\]+Without an argument, sets both radices back to the default value of 10\." "help set radix"
 # test help set symbol-reloading
-send "help set symbol-reloading\n"
-expect {
-	-re "Set dynamic symbol table reloading multiple times in one run..*$prompt $"\
-			{ pass "help set symbol-reloading" }
-	-re "$prompt $"	{ fail "help set symbol-reloading" }
-	timeout		{ fail "(timeout) help set symbol-reloading" }
-	}
-
-
+gdb_test "help set symbol-reloading" "Set dynamic symbol table reloading multiple times in one run\." "help set symbol-reloading"
 # test help set variable
-send "help set variable\n"
-expect {
-	-re ".*
-Evaluate expression EXP and assign result to variable VAR, using assignment.*
-syntax appropriate for the current language .VAR = EXP or VAR := EXP for.*
-example..  VAR may be a debugger \"convenience\" variable .names starting.*
-with \\\$., a register .a few standard names starting with \\\$., or an actual.*
-variable in the program being debugged.  EXP is any valid expression.*
-This may usually be abbreviated to simply \"set\"..*$prompt $"\
-			{ pass "help set variable" }
-	-re "$prompt $"	{ fail "help set variable" }
-	timeout		{ fail "(timeout) help set variable" }
-	}
-
-
+gdb_test "help set variable" "Evaluate expression EXP and assign result to variable VAR, using assignment\[\r\n\]+syntax appropriate for the current language \\(VAR = EXP or VAR := EXP for\[\r\n\]+example\\)\.  VAR may be a debugger \"convenience\" variable \\(names starting\[\r\n\]+with \\\$\\), a register \\(a few standard names starting with \\\$\\), or an actual\[\r\n\]+variable in the program being debugged\.  EXP is any valid expression\.\[\r\n\]+This may usually be abbreviated to simply \"set\"\." "help set variable"
 # test help set verbose
-send "help set verbose\n"
-expect {
-	-re "Set verbosity..*$prompt $"\
-			{ pass "help set verbose" }
-	-re "Set verbose printing of informational messages.*$prompt $"\
-			{ pass "help set verbose. FIXME" }
-	-re "$prompt $"	{ fail "help set verbose" }
-	timeout		{ fail "(timeout) help set verbose" }
-	}
-
-
+gdb_test "help set verbose" "Set verbosity\." "help set verbose"
 #test help set width
-send "help set width\n"
-expect {
-	-re "Set number of characters gdb thinks are in a line..*$prompt $"\
-			{ pass "help set width" }
-	-re "$prompt $"	{ fail "help set width" }
-	timeout		{ fail "(timeout) help set width" }
-	}
-
-
+gdb_test "help set width" "Set number of characters gdb thinks are in a line\." "help set width"
 # test help set write
 # This is only supported on targets which use exec.o.
-if ![istarget "rs6000-*-*"] then {
-    send "help set write\n"
-    expect {
-	-re "Set writing into executable and core files..*$prompt $"\
-			{ pass "help set write" }
-	-re "$prompt $"	{ fail "help set write" }
-	timeout		{ fail "(timeout) help set write" }
-	}
-}
-
+gdb_test "help set write" "Set writing into executable and core files\." "help set write"
 # test help set
 # FIXME -- Ultrix hangs randomly on this very long output from gdb and
 # continues with its output only if something is sent to gdb.
-# This behaviour throws expect and gdb out of sync, so we better skip this 
-# test.
 # Also, if the system is slow, it may time out because the output is large.
-# Just skip the test rather than bothering with increasing the timeout.
-if 0 then {
-if ![istarget "*-*-ultrix*"] then {
-    send "help set\n"
-    expect {
-	-re ".*
-Evaluate expression EXP and assign result to variable VAR, using assignment.*
-syntax appropriate for the current language .VAR = EXP or VAR := EXP for.*
-example..  VAR may be a debugger \"convenience\" variable .names starting.*
-with \\\$., a register .a few standard names starting with \\\$., or an actual.*
-variable in the program being debugged.  EXP is any valid expression.*
-set listsize -- Set number of source lines gdb will list by default.*
-Type \"help set\" followed by set subcommand name for full documentation..*
-Command name abbreviations are allowed if unambiguous..*
-$prompt $"\
-			{ pass "help set" }
-	-re "$prompt $"	{ fail "help set" }
-	timeout		{ fail "(timeout) help set" }
-	}
-}
-}
-
+gdb_test "help set" "Evaluate expression EXP and assign result to variable VAR, using assignment\[\r\n\]+syntax appropriate for the current language \\(VAR = EXP or VAR := EXP for\[\r\n\]+example\\)\.  VAR may be a debugger \"convenience\" variable \\(names starting\[\r\n\]+with \\\$\\), a register \\(a few standard names starting with \\\$\\), or an actual\[\r\n\]+variable in the program being debugged\.  EXP is any valid expression.*\[\r\n\]+set listsize -- Set number of source lines gdb will list by default.*\[\r\n\]+Type \"help set\" followed by set subcommand name for full documentation\.\[\r\n\]+Command name abbreviations are allowed if unambiguous..*\[\r\n\]+" "help set"
 # test help shell
-send "help shell\n"
-expect {
-	-re "Execute the rest of the line as a shell command.  .*
-With no arguments, run an inferior shell..*$prompt $"\
-			{ pass "help shell" }
-	-re "$prompt $"	{ fail "help shell" }
-	timeout		{ fail "(timeout) help shell" }
-	}
-
-
+gdb_test "help shell" "Execute the rest of the line as a shell command\.\[\r\n\]+With no arguments, run an inferior shell\." "help shell"
 #test help show annotate
-send "help show annotate\n"
-expect {
-	-re "Show annotation_level.*
-0 == normal;     1 == fullname \\(for use when running under emacs\\).*
-2 == output annotated suitably for use by programs that control GDB..*$prompt $"\
-			{ pass "help show annotate" }
-	-re "$prompt $"	{ fail "help show annotate" }
-	timeout		{ fail "(timeout) help show annotate" }
-	}
-
-
+gdb_test "help show annotate" "Show annotation_level\.\[\r\n\]+0 == normal;     1 == fullname \\(for use when running under emacs\\)\[\r\n\]+2 == output annotated suitably for use by programs that control GDB\." "help show annotate"
 # test help show args
-send "help show args\n"
-expect {
-	-re "Show arguments to give program being debugged when it is started..*
-Follow this command with any number of args, to be passed to the program..*$prompt $"\
-			{ pass "help show args" }
-	-re "$prompt $"	{ fail "help show args" }
-	timeout		{ fail "(timeout) help show args" }
-	}
-
-
+gdb_test "help show args" "Show argument list to give program being debugged when it is started\.\[\r\n\]+Follow this command with any number of args, to be passed to the program\."
 # test help show check "c" abbreviation
-send "help show c\n"
-expect {
-	-re "Show the status of the type/range checker.*
-List of show check subcommands:.*
-show check range -- Show range checking.*
-show check type -- Show type checking.*
-Type \"help show check\" followed by show check subcommand name for full documentation..*
-Command name abbreviations are allowed if unambiguous..*$prompt $"\
-			{ pass "help show check \"c\" abbreviation" }
-	-re "$prompt $"	{ fail "help show check \"c\" abbreviation" }
-	timeout		{ fail "(timeout) help show check \"c\" abbreviation" }
-	}
-
-
+gdb_test "help show c" "Show the status of the type/range checker\.\[\r\n\]+List of show check subcommands:\[\r\n\]+show check range -- Show range checking\[\r\n\]+show check type -- Show type checking\[\r\n\]+Type \"help show check\" followed by show check subcommand name for full documentation\.\[\r\n\]+Command name abbreviations are allowed if unambiguous\." "help show check \"c\" abbreviation"
 # test help show check
-send "help show check\n"
-expect {
-	-re "Show the status of the type/range checker.*
-List of show check subcommands:.*
-show check range -- Show range checking.*
-show check type -- Show type checking.*
-Type \"help show check\" followed by show check subcommand name for full documentation..*
-Command name abbreviations are allowed if unambiguous..*$prompt $"\
-			{ pass "help show check" }
-	-re "$prompt $"	{ fail "help show check" }
-	timeout		{ fail "(timeout) help show check" }
-	}
-
-
+gdb_test "help show check" "Show the status of the type/range checker\.\[\r\n\]+List of show check subcommands:\[\r\n\]+show check range -- Show range checking\[\r\n\]+show check type -- Show type checking\[\r\n\]+Type \"help show check\" followed by show check subcommand name for full documentation\.\[\r\n\]+Command name abbreviations are allowed if unambiguous\." "help show check"
 # test help show check range
-send "help show check range\n"
-expect {
-	-re "Show range checking.  .on/warn/off/auto..*$prompt $"\
-			{ pass "help show check range" }
-	-re "$prompt $"	{ fail "help show check range" }
-	timeout		{ fail "(timeout) help show check range" }
-	}
-
-
+gdb_test "help show check range" "Show range checking\.  \\(on/warn/off/auto\\)" "help show check range"
 # test help show check type
-send "help show check type\n"
-expect {
-	-re "Show type checking.  .on/warn/off/auto..*$prompt $"\
-			{ pass "help show check type" }
-	-re "$prompt $"	{ fail "help show check type" }
-	timeout		{ fail "(timeout) help show check type" }
-	}
-
-
+gdb_test "help show check type" "Show type checking\.  \\(on/warn/off/auto\\)" "help show check type"
 # test help show commands
-send "help show commands\n"
-expect {
-	-re "Show the history of commands you typed..*
-You can supply a command number to start with, or a `\[+\]' to start after.*
-the previous command number shown..*$prompt $"\
-			{ pass "help show commands" }
-	-re "$prompt $"	{ fail "help show commands" }
-	timeout		{ fail "(timeout) help show commands" }
-	}
-
-
+gdb_test "help show commands" "Show the history of commands you typed\.\[\r\n\]+You can supply a command number to start with, or a `\[+\]' to start after\[\r\n\]+the previous command number shown\." "help show commands"
 # test help show complaints
-send "help show complaints\n"
-expect {
-	-re "Show max number of complaints about incorrect symbols..*$prompt $"\
-			{ pass "help show complaints" }
-	-re "$prompt $"	{ fail "help show complaints" }
-	timeout		{ fail "(timeout) help show complaints" }
-	}
-
-
+gdb_test "help show complaints" "Show max number of complaints about incorrect symbols\." "help show complaints"
 # test help show confirm
-send "help show confirm\n"
-expect {
-	-re "Show whether to confirm potentially dangerous operations..*$prompt $"\
-			{ pass "help show confirm" }
-	-re "$prompt $"	{ fail "help show confirm" }
-	timeout		{ fail "(timeout) help show confirm" }
-	}
-
-
+gdb_test "help show confirm" "Show whether to confirm potentially dangerous operations\." "help show confirm"
 # test help show convenience
-send "help show convenience\n"
-expect {
-	-re "Debugger convenience .\".foo\". variables..*
-These variables are created when you assign them values;.*
-thus, \"print .foo=1\" gives \".foo\" the value 1.  Values may be any type..*
-A few convenience variables are given values automatically:.*
-\"._\"holds the last address examined with \"x\" or \"info lines\",.*
-\".__\" holds the contents of the last address examined with \"x\"..*$prompt $"\
-			{ pass "help show convenience" }
-	-re "$prompt $"	{ fail "help show convenience" }
-	timeout		{ fail "(timeout) help show convenience" }
-	}
-
-
+gdb_test "help show convenience" "Debugger convenience \\(\"\\\$foo\"\\) variables\.\[\r\n\]+These variables are created when you assign them values;\[\r\n\]+thus, \"print \\\$foo=1\" gives \"\\\$foo\" the value 1\.  Values may be any type\.\[\r\n\]+A few convenience variables are given values automatically:\[\r\n\]+\"\\\$_\"holds the last address examined with \"x\" or \"info lines\",\[\r\n\]+\"\\\$__\" holds the contents of the last address examined with \"x\"\." "help show convenience"
 # test help show directories
-send "help show directories\n"
-expect {
-	-re "Current search path for finding source files..*
-.cwd in the path means the current working directory..*
-.cdir in the path means the compilation directory of the source file..*$prompt $"\
-			{ pass "help show directories" }
-	-re "$prompt $"	{ fail "help show directories" }
-	timeout		{ fail "(timeout) help show directories" }
-	}
-
-
+gdb_test "help show directories" "Current search path for finding source files\.\[\r\n\]+\\\$cwd in the path means the current working directory\.\[\r\n\]+\\\$cdir in the path means the compilation directory of the source file\." "help show directories"
 # test help show editing
-send "help show editing\n"
-expect {
-	-re "Show editing of command lines as they are typed..*
-Use \"on\" to enable to enable the editing, and \"off\" to disable it..*
-Without an argument, command line editing is enabled.  To edit, use.*
-EMACS-like or VI-like commands like control-P or ESC..*$prompt $"\
-			{ pass "help show editing" }
-	-re "$prompt $"	{ fail "help show editing" }
-	timeout		{ fail "(timeout) help show editing" }
-	}
-
-
+gdb_test "help show editing" "Show editing of command lines as they are typed\.\[\r\n\]+Use \"on\" to enable the editing, and \"off\" to disable it\.\[\r\n\]+Without an argument, command line editing is enabled\.  To edit, use\[\r\n\]+EMACS-like or VI-like commands like control-P or ESC\." "help show editing"
 # test help show environment
-send "help show environment\n"
-expect {
-	-re "The environment to give the program, or one variable's value..*
-With an argument VAR, prints the value of environment variable VAR to.*
-give the program being debugged.  With no arguments, prints the entire.*
-environment to be given to the program..*$prompt $"\
-			{ pass "help show environment" }
-	-re "$prompt $"	{ fail "help show environment" }
-	timeout		{ fail "(timeout) help show environment" }
-	}
-
-
+gdb_test "help show environment" "The environment to give the program, or one variable's value\.\[\r\n\]+With an argument VAR, prints the value of environment variable VAR to\[\r\n\]+give the program being debugged\.  With no arguments, prints the entire\[\r\n\]+environment to be given to the program\." "help show environment"
 # test help show height
-send "help show height\n"
-expect {
-	-re "Show number of lines gdb thinks are in a page..*$prompt $"\
-			{ pass "help show height" }
-	-re "$prompt $"	{ fail "help show height" }
-	timeout		{ fail "(timeout) help show height" }
-	}
-
-
+gdb_test "help show height" "Show number of lines gdb thinks are in a page\." "help show height"
 # test help show history expansion
-send "help show history expansion\n"
-expect {
-	-re "Show history expansion on command input..*
-Without an argument, history expansion is enabled..*$prompt $"\
-			{ pass "help show history expansion" }
-	-re "$prompt $"	{ fail "help show history expansion" }
-	timeout		{ fail "(timeout) help show history expansion" }
-	}
-
-
+gdb_test "help show history expansion" "Show history expansion on command input\.\[\r\n\]+Without an argument, history expansion is enabled\." "help show history expansion"
 # test help show history filename
-send "help show history filename\n"
-expect {
-	-re "Show the filename in which to record the command history.*
- .the list of previous commands of which a record is kept...*$prompt $"\
-			{ pass "help show history filename" }
-	-re "$prompt $"	{ fail "help show history filename" }
-	timeout		{ fail "(timeout) help show history filename" }
-	}
-
-
+gdb_test "help show history filename" "Show the filename in which to record the command history\[\r\n\]+\\(the list of previous commands of which a record is kept\\)\." "help show history filename"
 # test help show history save
-send "help show history save\n"
-expect {
-	-re "Show saving of the history record on exit..*
-Use \"on\" to enable to enable the saving, and \"off\" to disable it..*
-Without an argument, saving is enabled..*$prompt $"\
-			{ pass "help show history save" }
-	-re "$prompt $"	{ fail "help show history save" }
-	timeout		{ fail "(timeout) help show history save" }
-	}
-
-
+gdb_test "help show history save" "Show saving of the history record on exit\.\[\r\n\]+Use \"on\" to enable the saving, and \"off\" to disable it\.\[\r\n\]+Without an argument, saving is enabled\." "help show history save"
 # test help show history size
-send "help show history size\n"
-expect {
-	-re "Show the size of the command history, .*
-ie. the number of previous commands to keep a record of..*$prompt $"\
-			{ pass "help show history size" }
-	-re "$prompt $"	{ fail "help show history size" }
-	timeout		{ fail "(timeout) help show history size" }
-	}
-
-
+gdb_test "help show history size" "Show the size of the command history,\[\r\n\]+ie\. the number of previous commands to keep a record of\." "help show history size"
 # test help show history
-send "help show history\n"
-expect {
-	-re "Generic command for showing command history parameters..*
-List of show history subcommands:.*
-show history filename -- Show the filename in which to record the command history.*
-show history size -- Show the size of the command history.*
-show history save -- Show saving of the history record on exit.*
-show history expansion -- Show history expansion on command input.*
-Type \"help show history\" followed by show history subcommand name for full documentation..*
-Command name abbreviations are allowed if unambiguous..*$prompt $"\
-			{ pass "help show history" }
-	-re "$prompt $"	{ fail "help show history" }
-	timeout		{ fail "(timeout) help show history" }
-	}
-
-
+gdb_test "help show history" "Generic command for showing command history parameters\.\[\r\n\]+List of show history subcommands:\[\r\n\]+show history expansion -- Show history expansion on command input\[\r\n\]+show history filename -- Show the filename in which to record the command history\[\r\n\]+show history save -- Show saving of the history record on exit\[\r\n\]+show history size -- Show the size of the command history\[\r\n\]+Type \"help show history\" followed by show history subcommand name for full documentation\.\[\r\n\]+Command name abbreviations are allowed if unambiguous\." "help show history"
 # test help show language
-send "help show language\n"
-expect {
-	-re "Show the current source language..*$prompt $"\
-			{ pass "help show language" }
-	-re "$prompt $"	{ fail "help show language" }
-	timeout		{ fail "(timeout) help show language" }
-	}
-
-
+gdb_test "help show language" "Show the current source language\." "help show language"
 # test help show listsize
-send "help show listsize\n"
-expect {
-	-re "Show number of source lines gdb will list by default..*$prompt $"\
-			{ pass "help show listsize" }
-	-re "$prompt $"	{ fail "help show listsize" }
-	timeout		{ fail "(timeout) help show listsize" }
-	}
-
-
+gdb_test "help show listsize" "Show number of source lines gdb will list by default\." "help show listsize"
 # test help show print "p" abbreviation
-send "help show p\n"
-expect {
-	-re "Generic command for showing print settings..*
-List of show print subcommands:.*
-Type \"help show print\" followed by show print subcommand name for full documentation..*
-Command name abbreviations are allowed if unambiguous..*$prompt $"\
-			{ pass "help show print \"p\" abbreviation" }
-	-re "$prompt $"	{ fail "help show print \"p\" abbreviation" }
-	timeout		{ fail "(timeout) help show print \"p\" abbreviation" }
-	}
-
-
+gdb_test "help show p" "Generic command for showing print settings\.\[\r\n\]+List of show print subcommands:.*\[\r\n\]+Type \"help show print\" followed by show print subcommand name for full documentation\.\[\r\n\]+Command name abbreviations are allowed if unambiguous\." "help show print \"p\" abbreviation"
 # test help show print "pr" abbreviation
-send "help show pr\n"
-expect {
-	-re "Generic command for showing print settings..*
-List of show print subcommands:.*
-Type \"help show print\" followed by show print subcommand name for full documentation..*
-Command name abbreviations are allowed if unambiguous..*$prompt $"\
-			{ pass "help show print \"pr\" abbreviation" }
-	-re "$prompt $"	{ fail "help show print \"pr\" abbreviation" }
-	timeout		{ fail "(timeout) help show print \"pr\" abbreviation" }
-	}
-
-
+gdb_test "help show pr" "Generic command for showing print settings\.\[\r\n\]+List of show print subcommands:.*\[\r\n\]+Type \"help show print\" followed by show print subcommand name for full documentation\.\[\r\n\]+Command name abbreviations are allowed if unambiguous\." "help show print \"pr\" abbreviation"
 # test help show print
-send "help show print\n"
-expect {
-	-re "Generic command for showing print settings..*
-List of show print subcommands:.*
-Type \"help show print\" followed by show print subcommand name for full documentation..*
-Command name abbreviations are allowed if unambiguous..*$prompt $"\
-			{ pass "help show print" }
-	-re "$prompt $"	{ fail "help show print" }
-	timeout		{ fail "(timeout) help show print" }
-	}
-
-
+gdb_test "help show print" "Generic command for showing print settings\.\[\r\n\]+List of show print subcommands:.*\[\r\n\]+Type \"help show print\" followed by show print subcommand name for full documentation\.\[\r\n\]+Command name abbreviations are allowed if unambiguous\." "help show print"
 # test help show paths
-send "help show paths\n"
-expect {
-	-re "Current search path for finding object files..*
-.cwd in the path means the current working directory..*
-This path is equivalent to the .PATH shell variable.  It is a list of.*
-directories, separated by colons.  These directories are searched to find.*
-fully linked executable files and separately compiled object files as needed..*$prompt $"\
-			{ pass "help show paths" }
-	-re "$prompt $"	{ fail "help show paths" }
-	timeout		{ fail "(timeout) help show paths" }
-	}
-
-
+gdb_test "help show paths" "Current search path for finding object files\.\[\r\n\]+\\\$cwd in the path means the current working directory\.\[\r\n\]+This path is equivalent to the \\\$PATH shell variable\.  It is a list of\[\r\n\]+directories, separated by colons\.  These directories are searched to find\[\r\n\]+fully linked executable files and separately compiled object files as needed\." "help show paths"
 # test help show print address
-send "help show print address\n"
-expect {
-	-re "Show printing of addresses..*$prompt $"\
-			{ pass "help show print address" }
-	-re "$prompt $"	{ fail "help show print address" }
-	timeout		{ fail "(timeout) help show print address" }
-	}
-
-
+gdb_test "help show print address" "Show printing of addresses\." "help show print address"
 # test help show print array
-send "help show print array\n"
-expect {
-	-re "Show prettyprinting of arrays..*$prompt $"\
-			{ pass "help show print array" }
-	-re "$prompt $"	{ fail "help show print array" }
-	timeout		{ fail "(timeout) help show print array" }
-	}
-
-
+gdb_test "help show print array" "Show prettyprinting of arrays\." "help show print array"
 # test help show print asm-demangle
-send "help show print asm-demangle\n"
-expect {
-	-re "Show demangling of C\[+\]+ names in disassembly listings..*$prompt $"\
-			{ pass "help show print asm-demangle" }
-	-re "$prompt $"	{ fail "help show print asm-demangle" }
-	timeout		{ fail "(timeout) help show print asm-demangle" }
-	}
-
-
+gdb_test "help show print asm-demangle" "Show demangling of C\[+\]+/ObjC names in disassembly listings\." "help show print asm-demangle"
 # test help show print demangle
-send "help show print demangle\n"
-expect {
-	-re "Show demangling of encoded C\[+\]+ names when displaying symbols..*$prompt $"\
-			{ pass "help show print demangle" }
-	-re "$prompt $"	{ fail "help show print demangle" }
-	timeout		{ fail "(timeout) help show print demangle" }
-	}
-
-
+gdb_test "help show print demangle" "Show demangling of encoded C\[+\]+/ObjC names when displaying symbols\." "help show print demangle"
 # test help show print elements
-send "help show print elements\n"
-expect {
-	-re "Show limit on string chars or array elements to print..*
-\"set print elements 0\" causes there to be no limit..*$prompt $"\
-			{ pass "help show print elements" }
-	-re "$prompt $"	{ fail "help show print elements" }
-	timeout		{ fail "(timeout) help show print elements" }
-	}
-
-
+gdb_test "help show print elements" "Show limit on string chars or array elements to print\.\[\r\n\]+\"set print elements 0\" causes there to be no limit\." "help show print elements"
 # test help show print object
-send "help show print object\n"
-expect {
-	-re "Show printing of object's derived type based on vtable info..*$prompt $"\
-			{ pass "help show print object" }
-	-re "$prompt $"	{ fail "help show print object" }
-	timeout		{ fail "(timeout) help show print object" }
-	}
-
-
+gdb_test "help show print object" "Show printing of object's derived type based on vtable info\." "help show print object"
 # test help show print pretty
-send "help show print pretty\n"
-expect {
-	-re "Show prettyprinting of structures..*$prompt $"\
-			{ pass "help show print pretty" }
-	-re "$prompt $"	{ fail "help show print pretty" }
-	timeout		{ fail "(timeout) help show print pretty" }
-	}
-
-
+gdb_test "help show print pretty" "Show prettyprinting of structures\." "help show print pretty"
 # test help show print sevenbit-strings
-send "help show print sevenbit-strings\n"
-expect {
-	-re "Show printing of 8-bit characters in strings as .nnn..*$prompt $"\
-			{ pass "help show print sevenbit-strings" }
-	-re "$prompt $"	{ fail "help show print sevenbit-strings" }
-	timeout		{ fail "(timeout) help show print sevenbit-strings" }
-	}
-
-
+gdb_test "help show print sevenbit-strings" "Show printing of 8-bit characters in strings as \\\\nnn\." "help show print sevenbit-strings"
 # test help show print union
-send "help show print union\n"
-expect {
-	-re "Show printing of unions interior to structures..*$prompt $"\
-			{ pass "help show print union" }
-	-re "$prompt $"	{ fail "help show print union" }
-	timeout		{ fail "(timeout) help show print union" }
-	}
-
-
+gdb_test "help show print union" "Show printing of unions interior to structures\." "help show print union"
 # test help show print vtbl
-send "help show print vtbl\n"
-expect {
-	-re "Show printing of C\[+\]+ virtual function tables..*$prompt $"\
-			{ pass "help show print vtbl" }
-	-re "$prompt $"	{ fail "help show print vtbl" }
-	timeout		{ fail "(timeout) help show print vtbl" }
-	}
-
-
+gdb_test "help show print vtbl" "Show printing of C\[+\]+ virtual function tables\." "help show print vtbl"
 # test help show prompt
-send "help show prompt\n"
-expect {
-	-re "Show gdb's prompt.*$prompt $"\
-			{ pass "help show prompt" }
-	-re "$prompt $"	{ fail "help show prompt" }
-	timeout		{ fail "(timeout) help show prompt" }
-	}
-
-
+gdb_test "help show prompt" "Show gdb's prompt" "help show prompt"
 # test help show radix
-send "help show radix\n"
-expect {
-	-re "Show the default input and output number radices.*
-Use \'show input-radix\' or \'show output-radix\' to independently show each.*
-$prompt $"\
-			{ pass "help show radix" }
-	-re "Show default input and output number radix..*$prompt $"\
-			{ fail "help show radix (obsolete radix support)" }
-	-re "$prompt $"	{ fail "help show radix" }
-	timeout		{ fail "(timeout) help show radix" }
-	}
-
-
+gdb_test "help show radix" "Show the default input and output number radices\.\[\r\n\]+Use \'show input-radix\' or \'show output-radix\' to independently show each\." "help show radix"
 # test help show symbol-reloading
-send "help show symbol-reloading\n"
-expect {
-	-re "Show dynamic symbol table reloading multiple times in one run..*$prompt $"\
-			{ pass "help show symbol-reloading" }
-	-re "$prompt $"	{ fail "help show symbol-reloading" }
-	timeout		{ fail "(timeout) help show symbol-reloading" }
-	}
-
-
+gdb_test "help show symbol-reloading" "Show dynamic symbol table reloading multiple times in one run\." "help show symbol-reloading"
 # test help show user
-send "help show user\n"
-expect {
-	-re "Show definitions of user defined commands..*
-Argument is the name of the user defined command..*
-With no argument, show definitions of all user defined commands..*$prompt $"\
-			{ pass "help show user" }
-	-re "$prompt $"	{ fail "help show user" }
-	timeout		{ fail "(timeout) help show user" }
-	}
-
-
+gdb_test "help show user" "Show definitions of user defined commands\.\[\r\n\]+Argument is the name of the user defined command\.\[\r\n\]+With no argument, show definitions of all user defined commands\." "help show user"
 # test help show values
-send "help show values\n"
-expect {
-	-re "Elements of value history around item number IDX .or last ten...*$prompt $"\
-			{ pass "help show values" }
-	-re "$prompt $"	{ fail "help show values" }
-	timeout		{ fail "(timeout) help show values" }
-	}
-
-
+gdb_test "help show values" "Elements of value history around item number IDX \\(or last ten\\)\." "help show values"
 # test help show verbose
-send "help show verbose\n"
-expect {
-	-re "Show verbosity..*$prompt $"\
-			{ pass "help show verbose" }
-	-re "Show verbose printing of informational messages..*$prompt $"\
-			{ pass "help show verbose. FIXME" }
-	-re "$prompt $"	{ fail "help show verbose" }
-	timeout		{ fail "(timeout) help show verbose" }
-	}
-
-
+gdb_test "help show verbose" "Show verbosity\." "help show verbose"
 # test help show version
-send "help show version\n"
-expect {
-	-re "Show what version of GDB this is..*$prompt $"\
-			{ pass "help show version" }
-	-re "$prompt $"	{ fail "help show version" }
-	timeout		{ fail "(timeout) help show version" }
-	}
-
-
+gdb_test "help show version" "Show what version of GDB this is\." "help show version"
 # test help show width
-send "help show width\n"
-expect {
-	-re "Show number of characters gdb thinks are in a line..*$prompt $"\
-			{ pass "help show width" }
-	-re "$prompt $"	{ fail "help show width" }
-	timeout		{ fail "(timeout) help show width" }
-	}
-
-
+gdb_test "help show width" "Show number of characters gdb thinks are in a line\." "help show width"
 # test help show write
 # This is only supported on targets which use exec.o.
-if ![istarget "rs6000-*-*"] then {
-    send "help show write\n"
-    expect {
-	-re "Show writing into executable and core files..*$prompt $"\
-			{ pass "help show write" }
-	-re "$prompt $"	{ fail "help show write" }
-	timeout		{ fail "(timeout) help show write" }
-	}
-}
-
+gdb_test "help show write" "Show writing into executable and core files\." "help show write"
 # test help show
-# If the system is slow, it may time out because the output is large.
-# Just skip the test rather than bothering with increasing the timeout.
-if 0 then {
-send "help show\n"
-expect {
-	-re "Generic command for showing things about the debugger..*
-List of show subcommands:.*
-show listsize -- Show number of source lines gdb will list by default.*
-show directories -- Current search path for finding source files.*
-Type \"help show\" followed by show subcommand name for full documentation..*
-Command name abbreviations are allowed if unambiguous..*$prompt $"\
-			{ pass "help show" }
-	-re "$prompt $"	{ fail "help show" }
-	timeout		{ fail "(timeout) help show" }
-	}
-}
-
-
-
+# FIXME -- Ultrix hangs randomly on this very long output from gdb and
+# continues with its output only if something is sent to gdb.
+# Also, if the system is slow, it may time out because the output is large.
+gdb_test "help show" "Generic command for showing things about the debugger\.\[\r\n\]+List of show subcommands:.*\[\r\n\]+show directories -- Current search path for finding source files.*\[\r\n\]+show listsize -- Show number of source lines gdb will list by default.*\[\r\n\]+Type \"help show\" followed by show subcommand name for full documentation\.\[\r\n\]+Command name abbreviations are allowed if unambiguous\." "help show"
 # test help step
-send "help step\n"
-expect {
-	-re "Step program until it reaches a different source line..*
-Argument N means do this N times .or till program stops for another reason...*$prompt $"\
-			{ pass "help step" }
-	-re "$prompt $"	{ fail "help step" }
-	timeout		{ fail "(timeout) help step" }
-	}
-
+gdb_test "help step" "Step program until it reaches a different source line\.\[\r\n\]+Argument N means do this N times \\(or till program stops for another reason\\)\." "help step #2"
 # test help stepi "si" abbreviation
-send "help si\n"
-expect {
-	-re "Step one instruction exactly..*
-Argument N means do this N times .or till program stops for another reason...*$prompt $"\
-			{ pass "help stepi \"si\" abbreviation" }
-	-re "$prompt $"	{ fail "help stepi \"si\" abbreviation" }
-	timeout		{ fail "(timeout) help stepi \"si\" abbreviation" }
-	}
-
-
+gdb_test "help si" "Step one instruction exactly\.\[\r\n\]+Argument N means do this N times \\(or till program stops for another reason\\)\." "help stepi \"si\" abbreviation"
 # test help stepi
-send "help stepi\n"
-expect {
-	-re "Step one instruction exactly..*
-Argument N means do this N times .or till program stops for another reason...*$prompt $"\
-			{ pass "help stepi" }
-	-re "$prompt $"	{ fail "help stepi" }
-	timeout		{ fail "(timeout) help stepi" }
-	}
-
-
+gdb_test "help stepi" "Step one instruction exactly\.\[\r\n\]+Argument N means do this N times \\(or till program stops for another reason\\)\." "help stepi"
 # test help signal
-send "help signal\n"
-expect {
-	-re "Continue program giving it signal.*$prompt $"\
-			{ pass "help signal" }
-	-re "$prompt $"	{ fail "help signal" }
-	timeout		{ fail "(timeout) help signal" }
-	}
-
-
+gdb_test "help signal" "Continue program giving it signal.*" "help signal"
 # test help source
 # vxgdb reads .vxgdbinit
-send "help source\n"
-expect {
-	-re "Read commands from a file named FILE..*
-Note that the file \".(vx)?gdbinit\" is read automatically in this way.*
-when gdb is started..*$prompt $"\
-			{ pass "help source" }
-	-re "$prompt $"	{ fail "help source" }
-	timeout		{ fail "(timeout) help source" }
-	}
-
-
+gdb_test "help source" "Read commands from a file named FILE\.\[\r\n\]+Note that the file \"\[^\"\]*\" is read automatically in this way\[\r\n\]+when gdb is started\." "help source"
 # test help stack
-send "help stack\n"
-expect {
-	-re "Examining the stack..*
-The stack is made up of stack frames.  Gdb assigns numbers to stack frames.*
-counting from zero for the innermost .currently executing. frame..*
-At any time gdb identifies one frame as the \"selected\" frame..*
-Variable lookups are done with respect to the selected frame..*
-When the program being debugged stops, gdb selects the innermost frame..*
-The commands below can be used to select other frames by number or address..*
-List of commands:.*
-bt -- Print backtrace of all stack frames.*
-backtrace -- Print backtrace of all stack frames.*
-select-frame -- Select a stack frame without printing anything.*
-frame -- Select and print a stack frame.*
-down -- Select and print stack frame called by this one.*
-up -- Select and print stack frame that called this one.*
-return -- Make selected stack frame return to its caller.*
-Type \"help\" followed by command name for full documentation..*
-Command name abbreviations are allowed if unambiguous..*$prompt $"\
-			{ pass "help stack" }
-	-re "$prompt $"	{ fail "help stack" }
-	timeout		{ fail "(timeout) help stack" }
-	}
-
-
+gdb_test "help stack" "Examining the stack\..*\[\r\n\]+When the program being debugged stops, gdb selects the innermost frame\.\[\r\n\]+The commands below can be used to select other frames by number or address\.\[\r\n\]+List of commands:\[\r\n\]+backtrace -- Print backtrace of all stack frames\[\r\n\]+bt -- Print backtrace of all stack frames\[\r\n\]+down -- Select and print stack frame called by this one\[\r\n\]+frame -- Select and print a stack frame\[\r\n\]+return -- Make selected stack frame return to its caller\[\r\n\]+select-frame -- Select a stack frame without printing anything\[\r\n\]+up -- Select and print stack frame that called this one\[\r\n\]+Type \"help\" followed by command name for full documentation\.\[\r\n\]+Command name abbreviations are allowed if unambiguous\." "help stack"
 # test help status
-send "help status\n"
-expect {
-	-re "Status inquiries..*
-List of commands:.*
-show -- Generic command for showing things about the debugger.*
-info -- Generic command for showing things about the program being debugged.*
-Type \"help\" followed by command name for full documentation..*
-Command name abbreviations are allowed if unambiguous..*$prompt $"\
-			{ pass "help status" }
-	-re "$prompt $"	{ fail "help status" }
-	timeout		{ fail "(timeout) help status" }
-	}
-
+gdb_test "help status" "Status inquiries\.\[\r\n\]+List of commands:\[\r\n\]+info -- Generic command for showing things about the program being debugged.*\[\r\n\]+show -- Generic command for showing things about the debugger\[\r\n\]+Type \"help\" followed by command name for full documentation\.\[\r\n\]+Command name abbreviations are allowed if unambiguous\." "help status"
 
 # test help support
 # FIXME -- Ultrix hangs randomly on this very long output from gdb and
 # continues with its output only if something is sent to gdb.
-# This behaviour throws expect and gdb out of sync, so we better skip this 
-# test.
 # Also, if the system is slow, it may time out because the output is large.
-# Just skip the test rather than bothering with increasing the timeout.
-if 0 then {
-send "help support\n"
-expect {
-	-re "Support facilities..*
-List of commands:.*
-show confirm -- Show whether to confirm potentially dangerous operations.*
-show history -- Generic command for showing command history parameters.*
-down-silently -- Same as the `down' command.*
-up-silently -- Same as the `up' command.*
-Type \"help\" followed by command name for full documentation..*
-Command name abbreviations are allowed if unambiguous..*$prompt $"\
-			{ pass "help support" }
-	-re "$prompt $"	{ fail "help support" }
-	timeout		{ fail "(timeout) help support" }
-	}
-}
-
+gdb_test "help support" "Support facilities\.\[\r\n\]+List of commands:.*\[\r\n\]+show confirm -- Show whether to confirm potentially dangerous operations.*\[\r\n\]+show history -- Generic command for showing command history parameters.*\[\r\n\]+Type \"help\" followed by command name for full documentation\.\[\r\n\]+Command name abbreviations are allowed if unambiguous\." "help support"
 # test help symbol-file
-send "help symbol-file\n"
-expect {
-	-re "Load symbol table from executable file FILE..*
-The `file' command can also load symbol tables, as well as setting the file.*
-to execute..*$prompt $"\
-			{ pass "help symbol-file" }
-	-re "$prompt $"	{ fail "help symbol-file" }
-	timeout		{ fail "(timeout) help symbol-file" }
-	}
-
-
+gdb_test "help symbol-file" "Load symbol table from executable file FILE\.\[\r\n\]+The `file' command can also load symbol tables, as well as setting the file\[\r\n\]+to execute\." "help symbol-file"
 # test help target child
-send "help target child\n"
-expect {
-	-re "Unix child process .started by the \"run\" command...*$prompt $"\
-	    { pass "help target child (non-procfs version)" }
-	-re "Undefined target command: \"child\".  Try \"help target\"..*$prompt $"\
-	    { pass "help target child (procfs version)" }
-	-re "$prompt $"	{ fail "help target child" }
-	timeout		{ fail "(timeout) help target child" }
-	}
-
-
+gdb_test "help target child" "(Unix|Win32) child process \\(started by the \"run\" command\\)\.|Undefined target command: \"child\"\.  Try \"help target\"\." "help target child"
 # test help target procfs
-send "help target procfs\n"
-expect {
-	-re "Unix /proc child process .started by the \"run\" command...*$prompt $"\
-	    { pass "help target procfs (procfs version)" }
-	-re "Undefined target command: \"procfs\".  Try \"help target\"..*$prompt $"\
-	    { pass "help target procfs (non-procfs version)" }
-	-re "$prompt $"	{ fail "help target procfs" }
-	timeout		{ fail "(timeout) help target procfs" }
-	}
-
-
+gdb_test "help target procfs" "Unix /proc child process \\(started by the \"run\" command\\)\.|Undefined target command: \"procfs\"\.  Try \"help target\"\." "help target procfs (procfs version)"
 # test help target core
-send "help target core\n"
-expect {
-	-re "Use a core file as a target.  Specify the filename of the core file..*$prompt $"\
-			{ pass "help target core" }
-	-re "Undefined target command: \"core\".  Try \"help target\"..*$prompt $"\
-			{ pass "help target core" }
-	-re "$prompt $"	{ fail "help target core" }
-	timeout		{ fail "(timeout) help target core" }
-	}
-
-
+gdb_test "help target core" "Use a core file as a target\.  Specify the filename of the core file\.|(Undefined target command: \"core\"\.  Try \"help target\"\.)" "help target core"
 # test help target exec
-send "help target exec\n"
-expect {
-	-re "Use an executable file as a target..*
-Specify the filename of the executable file..*$prompt $"\
-			{ pass "help target exec" }
-	-re "$prompt $"	{ fail "help target exec" }
-	timeout		{ fail "(timeout) help target exec" }
-	}
-
-
+gdb_test "help target exec" "Use an executable file as a target\.\[\r\n\]+Specify the filename of the executable file\." "help target exec"
 # test help target remote
-if ![istarget "*-*-udi*"] then {
-    send "help target remote\n"
-    expect {
-	-re "Use a remote computer via a serial line, using a gdb-specific protocol..*
-Specify the serial device it is connected to .e.g. /dev/ttya...*$prompt $"\
-			{ pass "help target remote" }
-	-re "$prompt $"	{ fail "help target remote" }
-	timeout		{ fail "(timeout) help target remote" }
-    }
-}
-
+gdb_test "help target remote" "Use a remote computer via a serial line, using a gdb-specific protocol\.\[\r\n\]+Specify the serial device it is connected to\[\r\n\]+\\(e.g. .*" "help target remote"
 # test help target
 # the child process target may be "target child" or "target procfs"
-send "help target\n"
-expect {
-	-re "Connect to a target machine or process..*
-The first argument is the type or protocol of the target machine..*
-Remaining arguments are interpreted by the target protocol.  For more.*
-information on the arguments for a particular protocol, type.*
-`help target ' followed by the protocol name..*
-List of target subcommands:.*
-target exec -- Use an executable file as a target.*
-Type \"help target\" followed by target subcommand name for full documentation..*
-Command name abbreviations are allowed if unambiguous..*$prompt $"\
-			{ pass "help target" }
-	-re "$prompt $"	{ fail "help target" }
-	timeout		{ fail "(timeout) help target" }
-	}
-
-
+gdb_test "help target" "Connect to a target machine or process\.\[\r\n\]+The first argument is the type or protocol of the target machine\.\[\r\n\]+Remaining arguments are interpreted by the target protocol\.  For more\[\r\n\]+information on the arguments for a particular protocol, type\[\r\n\]+`help target ' followed by the protocol name\.\[\r\n\]+List of target subcommands:.*\[\r\n\]+target exec -- Use an executable file as a target.*\[\r\n\]+Type \"help target\" followed by target subcommand name for full documentation\.\[\r\n\]+Command name abbreviations are allowed if unambiguous\." "help target"
 # test help tbreak
-send "help tbreak\n"
-expect {
-	-re "Set a temporary breakpoint.*$prompt $"\
-			{ pass "help tbreak" }
-	-re "$prompt $"	{ fail "help tbreak" }
-	timeout		{ fail "(timeout) help tbreak" }
-	}
-
-
+gdb_test "help tbreak" "Set a temporary breakpoint.*" "help tbreak"
 # test help tty
-send "help tty\n"
-expect {
-	-re "Set terminal for future runs of program being debugged..*$prompt $"\
-			{ pass "help tty" }
-	-re "$prompt $"	{ fail "help tty" }
-	timeout		{ fail "(timeout) help tty" }
-	}
-
-
+gdb_test "help tty" "Set terminal for future runs of program being debugged\." "help tty"
 # test help until "u" abbreviation
-send "help u\n"
-expect {
-	-re "Execute until the program reaches a source line greater than the current.*
-or a specified line or address or function .same args as break command...*
-Execution will also stop upon exit from the current stack frame..*$prompt $"\
-			{ pass "help until \"u\" abbreviation" }
-	-re "$prompt $"	{ fail "help until \"u\" abbreviation" }
-	timeout		{ fail "(timeout) help until \"u\" abbreviation" }
-	}
-
-
+gdb_test "help u" "Execute until the program reaches a source line greater than the current\[\r\n\]+or a specified location \\(same args as break command\\) within the current frame\." "help until \"u\" abbreviation"
 # test help until
-send "help until\n"
-expect {
-	-re "Execute until the program reaches a source line greater than the current.*
-or a specified line or address or function .same args as break command...*
-Execution will also stop upon exit from the current stack frame..*$prompt $"\
-			{ pass "help until" }
-	-re "$prompt $"	{ fail "help until" }
-	timeout		{ fail "(timeout) help until" }
-	}
-
-
+gdb_test "help until" "Execute until the program reaches a source line greater than the current\[\r\n\]+or a specified location \\(same args as break command\\) within the current frame\." "help until"
 # test help undisplay
-send "help undisplay\n"
-expect {
-	-re "Cancel some expressions to be displayed when program stops..*
-Arguments are the code numbers of the expressions to stop displaying..*
-No argument means cancel all automatic-display expressions..*
-\"delete display\" has the same effect as this command..*
-Do \"info display\" to see current list of code numbers..*$prompt $"\
-			{ pass "help undisplay" }
-	-re "$prompt $"	{ fail "help undisplay" }
-	timeout		{ fail "(timeout) help undisplay" }
-	}
-
-
+gdb_test "help undisplay" "Cancel some expressions to be displayed when program stops\.\[\r\n\]+Arguments are the code numbers of the expressions to stop displaying\.\[\r\n\]+No argument means cancel all automatic-display expressions\.\[\r\n\]+\"delete display\" has the same effect as this command\.\[\r\n\]+Do \"info display\" to see current list of code numbers\." "help undisplay"
 # test help unset environment
-send "help unset environment\n"
-expect {
-	-re "Cancel environment variable VAR for the program..*
-This does not affect the program until the next \"run\" command..*$prompt $"\
-			{ pass "help unset environment" }
-	-re "$prompt $"	{ fail "help unset environment" }
-	timeout		{ fail "(timeout) help unset environment" }
-	}
-
-
+gdb_test "help unset environment" "Cancel environment variable VAR for the program\.\[\r\n\]+This does not affect the program until the next \"run\" command\." "help unset environment"
 # test help unset
-send "help unset\n"
-expect {
-	-re "Complement to certain \"set\" commands.*
-List of unset subcommands:.*
-unset environment -- Cancel environment variable VAR for the program.*
-Type \"help unset\" followed by unset subcommand name for full documentation..*
-Command name abbreviations are allowed if unambiguous..*$prompt $"\
-			{ pass "help unset" }
-	-re "$prompt $"	{ fail "help unset" }
-	timeout		{ fail "(timeout) help unset" }
-	}
-
-
+gdb_test "help unset" "Complement to certain \"set\" commands\.\[\r\n\]+List of unset subcommands:\[\r\n\]+unset environment -- Cancel environment variable VAR for the program\[\r\n\]+Type \"help unset\" followed by unset subcommand name for full documentation\.\[\r\n\]+Command name abbreviations are allowed if unambiguous\." "help unset"
 # test help up
-send "help up\n"
-expect {
-	-re "Select and print stack frame that called this one..*
-An argument says how many frames up to go..*$prompt $"\
-			{ pass "help up" }
-	-re "$prompt $"	{ fail "help up" }
-	timeout		{ fail "(timeout) help up" }
-	}
-
-
+gdb_test "help up" "Select and print stack frame that called this one\.\[\r\n\]+An argument says how many frames up to go\." "help up"
 # test help up-silently
-send "help up-silently\n"
-expect {
-	-re "Same as the `up' command, but does not print anything..*
-This is useful in command scripts..*$prompt $"\
-			{ pass "help up-silently" }
-	-re "$prompt $"	{ fail "help up-silently" }
-	timeout		{ fail "(timeout) help up-silently" }
-	}
-
-
+gdb_test "help up-silently" "Same as the `up' command, but does not print anything\.\[\r\n\]+This is useful in command scripts\." "help up-silently"
 # test help user-defined
-send "help user-defined\n"
-expect {
-	-re "User-defined commands..*
-The commands in this class are those defined by the user..*
-Use the \"define\" command to define a command..*
-List of commands:.*
-Type \"help\" followed by command name for full documentation..*
-Command name abbreviations are allowed if unambiguous..*$prompt $"\
-			{ pass "help user-defined" }
-	-re "$prompt $"	{ fail "help user-defined" }
-	timeout		{ fail "(timeout) help user-defined" }
-	}
-
-
+gdb_test "help user-defined" "User-defined commands\.\[\r\n\]+The commands in this class are those defined by the user\.\[\r\n\]+Use the \"define\" command to define a command\.\[\r\n\]+List of commands:.*\[\r\n\]+Type \"help\" followed by command name for full documentation\.\[\r\n\]+Command name abbreviations are allowed if unambiguous\." "help user-defined"
 # test help watch
-send "help watch\n"
-expect {
-	-re "Set a watchpoint for an expression..*
-A watchpoint stops execution of your program whenever the value of.*
-an expression changes..*$prompt $"\
-			{ pass "help watch" }
-	-re "$prompt $"	{ fail "help watch" }
-	timeout		{ fail "(timeout) help watch" }
-	}
-
-
+gdb_test "help watch" "Set a watchpoint for an expression\.\[\r\n\]+A watchpoint stops execution of your program whenever the value of\[\r\n\]+an expression changes\." "help watch"
 # test help whatis
-send "help whatis\n"
-expect {
-	-re "Print data type of expression EXP..*$prompt $"\
-			{ pass "help whatis" }
-	-re "$prompt $"	{ fail "help whatis" }
-	timeout		{ fail "(timeout) help whatis" }
-	}
-
-
+gdb_test "help whatis" "Print data type of expression EXP\." "help whatis"
 # test help where
-send "help where\n"
-expect {
-	-re "Print backtrace of all stack frames, or innermost COUNT frames..*
-With a negative argument, print outermost -COUNT frames..*$prompt $"\
-			{ pass "help where" }
-	-re "$prompt $"	{ fail "help where" }
-	timeout		{ fail "(timeout) help where" }
-	}
-
-
+gdb_test "help where" "Print backtrace of all stack frames, or innermost COUNT frames\.\[\r\n\]+With a negative argument, print outermost -COUNT frames\.\[\r\n\]+Use of the 'full' qualifier also prints the values of the local variables\." "help where"
 # test help x
-send "help x\n"
-expect {
-	-re "Examine memory: x/FMT ADDRESS..*
-ADDRESS is an expression for the memory address to examine..*
-FMT is a repeat count followed by a format letter and a size letter..*
-Defaults for format and size letters are those previously used..*
-Default count is 1.  Default address is following last thing printed.*
-with this command or \"print\"..*$prompt $"\
-			{ pass "help x" }
-	-re "$prompt $"	{ fail "help x" }
-	timeout		{ fail "(timeout) help x" }
-	}
-
-
+gdb_test "help x" "Examine memory: x/FMT ADDRESS\.\[\r\n\]+ADDRESS is an expression for the memory address to examine\.\[\r\n\]+FMT is a repeat count followed by a format letter and a size letter\..*\[\r\n\]+Defaults for format and size letters are those previously used\.\[\r\n\]+Default count is 1\.  Default address is following last thing printed\[\r\n\]+with this command or \"print\"\." "help x"
 # test help info bogus-gdb-command
-send "help info bogus-gdb-command\n"
-expect {
-	-re "Undefined info command: \"bogus-gdb-command\".  Try \"help info\"..*$prompt $"\
-			{ pass "help info bogus-gdb-command" }
-	-re "$prompt $"	{ fail "help info bogus-gdb-command" }
-	timeout		{ fail "(timeout) help info bogus-gdb-command" }
-	}
-
-
+gdb_test "help info bogus-gdb-command" "Undefined info command: \"bogus-gdb-command\"\.  Try \"help info\"\." "help info bogus-gdb-command"
 # test help gotcha
-send "help gotcha\n"
-expect {
-	-re "Undefined command: \"gotcha\".  Try \"help\"..*$prompt $"\
-			{ pass "help gotcha" }
-	-re "$prompt $"	{ fail "help gotcha" }
-	timeout		{ fail "(timeout) help gotcha" }
-	}
-
+gdb_test "help gotcha" "Undefined command: \"gotcha\"\.  Try \"help\"\." "help gotcha"
+# test apropos regex
+gdb_test "apropos \\\(print\[\^ bsiedf\\\".-\]\\\)" "handle -- Specify how to handle a signal"
+# test apropos >1 word string
+gdb_test "apropos handle a signal" "handle -- Specify how to handle a signal"
+# test apropos apropos
+gdb_test "apropos apropos" "apropos -- Search for commands matching a REGEXP"

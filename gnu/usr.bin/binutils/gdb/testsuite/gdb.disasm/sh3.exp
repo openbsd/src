@@ -1,4 +1,4 @@
-# Copyright (C) 1992 Free Software Foundation, Inc.
+# Copyright (C) 1992, 1997 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -12,7 +12,7 @@
 # 
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  
 
 # Please email any bugs, comments, and/or additions to this file to:
 # bug-gdb@prep.ai.mit.edu
@@ -34,18 +34,17 @@ set bug_id 0
 set testfile "sh3"
 set srcfile ${srcdir}/${subdir}/${testfile}.s
 set binfile ${objdir}/${subdir}/${testfile}
-if  { [compile "${srcfile} -o ${binfile}"] != "" } {
-    perror "Couldn't link ${binfile}"
-    return -1
+if  { [gdb_compile "${srcfile}" "${binfile}" executable ""] != "" } {
+     gdb_suppress_entire_file "Testcase compile failed, so all tests in this file will automatically fail."
 }
 
 proc all_fp_move_and_load_tests { } {
-    global prompt
+    global gdb_prompt
     global hex
     global decimal
 
-    send "x/9i fp_move_and_load_tests\n"
-    expect {
+    send_gdb "x/9i fp_move_and_load_tests\n"
+    gdb_expect {
 	-re "
 .*fmov.s\t@r0,fr0.*
 .*fmov.s\tfr0,@r0.*
@@ -56,19 +55,19 @@ proc all_fp_move_and_load_tests { } {
 .*fmov\tfr0,fr1.*
 .*fldi0\tfr0.*
 .*fldi1\tfr0.*
-.*$prompt $" { pass "fp_move_and_load_tests" }
-	-re "$prompt $" { fail "fp_move_and_load_tests" }
+.*$gdb_prompt $" { pass "fp_move_and_load_tests" }
+	-re "$gdb_prompt $" { fail "fp_move_and_load_tests" }
 	timeout { fail "(timeout) fp_move_and_load_tests" }
     }
 }
 
 proc all_fp_arithmetic_tests { } {
-    global prompt
+    global gdb_prompt
     global hex
     global decimal
 
-    send "x/13i fp_arithmetic_tests\n"
-    expect {
+    send_gdb "x/13i fp_arithmetic_tests\n"
+    gdb_expect {
 	-re "
 .*fadd\tfr0,fr1.*
 .*fsub\tfr0,fr1.*
@@ -83,19 +82,19 @@ proc all_fp_arithmetic_tests { } {
 .*fsqrt\tfr0.*
 .*float\tfpul,fr0.*
 .*ftrc\tfr0,fpul.*
-.*$prompt $" { pass "fp_arithmetic_tests" }
-	-re "$prompt $" { fail "fp_arithmetic_tests" }
+.*$gdb_prompt $" { pass "fp_arithmetic_tests" }
+	-re "$gdb_prompt $" { fail "fp_arithmetic_tests" }
 	timeout { fail "(timeout) fp_arithmetic_tests" }
     }
 }
 
 proc all_fp_misc_tests { } {
-    global prompt
+    global gdb_prompt
     global hex
     global decimal
 
-    send "x/10i fp_misc_tests\n"
-    expect {
+    send_gdb "x/10i fp_misc_tests\n"
+    gdb_expect {
 	-re "
 .*fsts\tfpul,fr0.*
 .*flds\tfr0,fpul.*
@@ -107,8 +106,8 @@ proc all_fp_misc_tests { } {
 .*sts\\.l\tfpul,@-r3.*
 .*sts\tfpscr,r3.*
 .*sts\\.l\tfpscr,@-r3.*
-.*$prompt $" { pass "fp_misc_tests" }
-	-re "$prompt $" { fail "fp_misc_tests" }
+.*$gdb_prompt $" { pass "fp_misc_tests" }
+	-re "$gdb_prompt $" { fail "fp_misc_tests" }
 	timeout { fail "(timeout) fp_misc_tests" }
     }
 }

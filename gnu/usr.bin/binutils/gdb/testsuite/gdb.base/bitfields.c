@@ -5,7 +5,7 @@
    this may cause some tests to fail.  But at least we can still compile
    the test program and run the tests... */
 
-#ifndef __STDC__
+#if !defined(__STDC__) && !defined(__cplusplus)
 #define signed  /**/
 #endif
 
@@ -80,7 +80,7 @@ int main ()
   break1 ();
   flags.uc = 0;
 
-  flags.s1 = 1;
+  flags.s1 = -1;
   break1 ();
   flags.s1 = 0;
 
@@ -131,10 +131,10 @@ int main ()
   flags.u3 = 0;
   flags.u9 = 0;
 
-  flags.s1 = 0x1;
-  flags.s2 = 0x3;
-  flags.s3 = 0x7;
-  flags.s9 = 0x1FF;
+  flags.s1 = -1;
+  flags.s2 = -1;
+  flags.s3 = -1;
+  flags.s9 = -1;
   flags.sc = 0xFF;
   break2 ();
   flags.s1 = 0;
@@ -169,20 +169,20 @@ int main ()
   break4 ();
 
   /* Maximally negative values */
-  flags.s1 = 0x1;
-  flags.s2 = 0x2;
-  flags.s3 = 0x4;
-  flags.s9 = 0x100;
+  flags.s1 = -0x1;
+  flags.s2 = -0x2;
+  flags.s3 = -0x4;
+  flags.s9 = -0x100;
   /* Extract bitfield value so that bitfield.exp can check if the target
      understands signed bitfields.  */
   i = flags.s9;
   break4 ();
 
   /* -1 */
-  flags.s1 = 0x1;
-  flags.s2 = 0x3;
-  flags.s3 = 0x7;
-  flags.s9 = 0x1FF;
+  flags.s1 = -1;
+  flags.s2 = -1;
+  flags.s3 = -1;
+  flags.s9 = -1;
   break4 ();
 
   flags.s1 = 0;

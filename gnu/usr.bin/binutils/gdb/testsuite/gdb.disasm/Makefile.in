@@ -1,20 +1,13 @@
-#### host, target, and site specific Makefile frags come in here.
-
 VPATH = @srcdir@
 srcdir = @srcdir@
 
 .PHONY: all clean mostlyclean distclean realclean
 
-all: 
-	@echo "Nothing to be done for all..."	
+all info install-info dvi install uninstall installcheck check:
+	@echo "Nothing to be done for $@..."
 
 clean mostlyclean:
-	-rm -f *.o *.diff *~ *.bad core sh3 hppa
+	-rm -f *.o *.diff *~ *.bad core h8300s hppa mn10300 sh3
 
 distclean maintainer-clean realclean: clean
 	-rm -f Makefile config.status config.log
-
-Makefile: $(srcdir)/Makefile.in $(srcdir)/configure.in
-	$(SHELL) ./config.status --recheck
-
-

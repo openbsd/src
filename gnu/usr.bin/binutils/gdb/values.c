@@ -1,22 +1,25 @@
 /* Low level packing and unpacking of values for GDB, the GNU Debugger.
-   Copyright 1986, 1987, 1989, 1991, 1993, 1994, 1995, 1996
-   Free Software Foundation, Inc.
 
-This file is part of GDB.
+   Copyright 1986, 1987, 1988, 1989, 1990, 1991, 1992, 1993, 1994,
+   1995, 1996, 1997, 1998, 1999, 2000, 2002, 2003 Free Software
+   Foundation, Inc.
 
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
+   This file is part of GDB.
 
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+   This program is free software; you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation; either version 2 of the License, or
+   (at your option) any later version.
 
-You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software
-Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+
+   You should have received a copy of the GNU General Public License
+   along with this program; if not, write to the Free Software
+   Foundation, Inc., 59 Temple Place - Suite 330,
+   Boston, MA 02111-1307, USA.  */
 
 #include "defs.h"
 #include "gdb_string.h"
@@ -24,24 +27,27 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #include "gdbtypes.h"
 #include "value.h"
 #include "gdbcore.h"
-#include "frame.h"
 #include "command.h"
 #include "gdbcmd.h"
 #include "target.h"
 #include "language.h"
 #include "scm-lang.h"
 #include "demangle.h"
+#include "doublest.h"
+#include "gdb_assert.h"
+#include "regcache.h"
+#include "block.h"
 
-/* Local function prototypes. */
+/* Prototypes for exported functions. */
 
-static value_ptr value_headof PARAMS ((value_ptr, struct type *,
-				       struct type *));
+void _initialize_values (void);
 
-static void show_values PARAMS ((char *, int));
+/* Prototypes for local functions. */
 
-static void show_convenience PARAMS ((char *, int));
+static void show_values (char *, int);
 
-static int vb_match PARAMS ((struct type *, int, struct type *));
+static void show_convenience (char *, int);
+
 
 /* The value-history records all the values printed
    by print commands during this session.  Each chunk
@@ -52,10 +58,10 @@ static int vb_match PARAMS ((struct type *, int, struct type *));
 #define VALUE_HISTORY_CHUNK 60
 
 struct value_history_chunk
-{
-  struct value_history_chunk *next;
-  value_ptr values[VALUE_HISTORY_CHUNK];
-};
+  {
+    struct value_history_chunk *next;
+    struct value *values[VALUE_HISTORY_CHUNK];
+  };
 
 /* Chain of chunks now in use.  */
 
@@ -67,30 +73,33 @@ static int value_history_count;	/* Abs number of last entry stored */
    (except for those released by calls to release_value)
    This is so they can be freed after each command.  */
 
-static value_ptr all_values;
+static struct value *all_values;
 
 /* Allocate a  value  that has the correct length for type TYPE.  */
 
-value_ptr
-allocate_value (type)
-     struct type *type;
+struct value *
+allocate_value (struct type *type)
 {
-  register value_ptr val;
+  struct value *val;
   struct type *atype = check_typedef (type);
 
   val = (struct value *) xmalloc (sizeof (struct value) + TYPE_LENGTH (atype));
   VALUE_NEXT (val) = all_values;
   all_values = val;
   VALUE_TYPE (val) = type;
+  VALUE_ENCLOSING_TYPE (val) = type;
   VALUE_LVAL (val) = not_lval;
   VALUE_ADDRESS (val) = 0;
-  VALUE_FRAME (val) = 0;
+  VALUE_FRAME_ID (val) = null_frame_id;
   VALUE_OFFSET (val) = 0;
   VALUE_BITPOS (val) = 0;
   VALUE_BITSIZE (val) = 0;
   VALUE_REGNO (val) = -1;
   VALUE_LAZY (val) = 0;
   VALUE_OPTIMIZED_OUT (val) = 0;
+  VALUE_BFD_SECTION (val) = NULL;
+  VALUE_EMBEDDED_OFFSET (val) = 0;
+  VALUE_POINTED_TO_OFFSET (val) = 0;
   val->modifiable = 1;
   return val;
 }
@@ -98,17 +107,15 @@ allocate_value (type)
 /* Allocate a  value  that has the correct length
    for COUNT repetitions type TYPE.  */
 
-value_ptr
-allocate_repeat_value (type, count)
-     struct type *type;
-     int count;
+struct value *
+allocate_repeat_value (struct type *type, int count)
 {
-  int low_bound = current_language->string_lower_bound; /* ??? */
+  int low_bound = current_language->string_lower_bound;		/* ??? */
   /* FIXME-type-allocation: need a way to free this type when we are
      done with it.  */
   struct type *range_type
-    = create_range_type ((struct type *) NULL, builtin_type_int,
-			 low_bound, count + low_bound - 1);
+  = create_range_type ((struct type *) NULL, builtin_type_int,
+		       low_bound, count + low_bound - 1);
   /* FIXME-type-allocation: need a way to free this type when we are
      done with it.  */
   return allocate_value (create_array_type ((struct type *) NULL,
@@ -118,8 +125,8 @@ allocate_repeat_value (type, count)
 /* Return a mark in the value chain.  All values allocated after the
    mark is obtained (except for those released) are subject to being freed
    if a subsequent value_free_to_mark is passed the mark.  */
-value_ptr
-value_mark ()
+struct value *
+value_mark (void)
 {
   return all_values;
 }
@@ -127,10 +134,10 @@ value_mark ()
 /* Free all values allocated since MARK was obtained by value_mark
    (except for those released).  */
 void
-value_free_to_mark (mark)
-     value_ptr mark;
+value_free_to_mark (struct value *mark)
 {
-  value_ptr val, next;
+  struct value *val;
+  struct value *next;
 
   for (val = all_values; val && val != mark; val = next)
     {
@@ -144,9 +151,10 @@ value_free_to_mark (mark)
    Called after each command, successful or not.  */
 
 void
-free_all_values ()
+free_all_values (void)
 {
-  register value_ptr val, next;
+  struct value *val;
+  struct value *next;
 
   for (val = all_values; val; val = next)
     {
@@ -161,10 +169,9 @@ free_all_values ()
    so it will not be freed automatically.  */
 
 void
-release_value (val)
-     register value_ptr val;
+release_value (struct value *val)
 {
-  register value_ptr v;
+  struct value *v;
 
   if (all_values == val)
     {
@@ -183,11 +190,11 @@ release_value (val)
 }
 
 /* Release all values up to mark  */
-value_ptr
-value_release_to_mark (mark)
-     value_ptr mark;
+struct value *
+value_release_to_mark (struct value *mark)
 {
-  value_ptr val, next;
+  struct value *val;
+  struct value *next;
 
   for (val = next = all_values; next; next = VALUE_NEXT (next))
     if (VALUE_NEXT (next) == mark)
@@ -204,26 +211,30 @@ value_release_to_mark (mark)
    It contains the same contents, for same memory address,
    but it's a different block of storage.  */
 
-value_ptr
-value_copy (arg)
-     value_ptr arg;
+struct value *
+value_copy (struct value *arg)
 {
-  register struct type *type = VALUE_TYPE (arg);
-  register value_ptr val = allocate_value (type);
+  struct type *encl_type = VALUE_ENCLOSING_TYPE (arg);
+  struct value *val = allocate_value (encl_type);
+  VALUE_TYPE (val) = VALUE_TYPE (arg);
   VALUE_LVAL (val) = VALUE_LVAL (arg);
   VALUE_ADDRESS (val) = VALUE_ADDRESS (arg);
   VALUE_OFFSET (val) = VALUE_OFFSET (arg);
   VALUE_BITPOS (val) = VALUE_BITPOS (arg);
   VALUE_BITSIZE (val) = VALUE_BITSIZE (arg);
-  VALUE_FRAME (val) = VALUE_FRAME (arg);
+  VALUE_FRAME_ID (val) = VALUE_FRAME_ID (arg);
   VALUE_REGNO (val) = VALUE_REGNO (arg);
   VALUE_LAZY (val) = VALUE_LAZY (arg);
   VALUE_OPTIMIZED_OUT (val) = VALUE_OPTIMIZED_OUT (arg);
+  VALUE_EMBEDDED_OFFSET (val) = VALUE_EMBEDDED_OFFSET (arg);
+  VALUE_POINTED_TO_OFFSET (val) = VALUE_POINTED_TO_OFFSET (arg);
+  VALUE_BFD_SECTION (val) = VALUE_BFD_SECTION (arg);
   val->modifiable = arg->modifiable;
   if (!VALUE_LAZY (val))
     {
-      memcpy (VALUE_CONTENTS_RAW (val), VALUE_CONTENTS_RAW (arg),
-	      TYPE_LENGTH (VALUE_TYPE (arg)));
+      memcpy (VALUE_CONTENTS_ALL_RAW (val), VALUE_CONTENTS_ALL_RAW (arg),
+	      TYPE_LENGTH (VALUE_ENCLOSING_TYPE (arg)));
+
     }
   return val;
 }
@@ -236,8 +247,7 @@ value_copy (arg)
    value history index of this new item.  */
 
 int
-record_latest_value (val)
-     value_ptr val;
+record_latest_value (struct value *val)
 {
   int i;
 
@@ -259,9 +269,9 @@ record_latest_value (val)
   i = value_history_count % VALUE_HISTORY_CHUNK;
   if (i == 0)
     {
-      register struct value_history_chunk *new
-	= (struct value_history_chunk *)
-	  xmalloc (sizeof (struct value_history_chunk));
+      struct value_history_chunk *new
+      = (struct value_history_chunk *)
+      xmalloc (sizeof (struct value_history_chunk));
       memset (new->values, 0, sizeof new->values);
       new->next = value_history_chain;
       value_history_chain = new;
@@ -277,13 +287,12 @@ record_latest_value (val)
 
 /* Return a copy of the value in the history with sequence number NUM.  */
 
-value_ptr
-access_value_history (num)
-     int num;
+struct value *
+access_value_history (int num)
 {
-  register struct value_history_chunk *chunk;
-  register int i;
-  register int absnum = num;
+  struct value_history_chunk *chunk;
+  int i;
+  int absnum = num;
 
   if (absnum <= 0)
     absnum += value_history_count;
@@ -317,39 +326,37 @@ access_value_history (num)
    because the type pointers become invalid.  */
 
 void
-clear_value_history ()
+clear_value_history (void)
 {
-  register struct value_history_chunk *next;
-  register int i;
-  register value_ptr val;
+  struct value_history_chunk *next;
+  int i;
+  struct value *val;
 
   while (value_history_chain)
     {
       for (i = 0; i < VALUE_HISTORY_CHUNK; i++)
 	if ((val = value_history_chain->values[i]) != NULL)
-	  free ((PTR)val);
+	  xfree (val);
       next = value_history_chain->next;
-      free ((PTR)value_history_chain);
+      xfree (value_history_chain);
       value_history_chain = next;
     }
   value_history_count = 0;
 }
 
 static void
-show_values (num_exp, from_tty)
-     char *num_exp;
-     int from_tty;
+show_values (char *num_exp, int from_tty)
 {
-  register int i;
-  register value_ptr val;
+  int i;
+  struct value *val;
   static int num = 1;
 
   if (num_exp)
     {
-	/* "info history +" should print from the stored position.
-	   "info history <exp>" should print around value number <exp>.  */
+      /* "info history +" should print from the stored position.
+         "info history <exp>" should print around value number <exp>.  */
       if (num_exp[0] != '+' || num_exp[1] != '\0')
-	num = parse_and_eval_address (num_exp) - 5;
+	num = parse_and_eval_long (num_exp) - 5;
     }
   else
     {
@@ -395,13 +402,12 @@ static struct internalvar *internalvars;
    one is created, with a void value.  */
 
 struct internalvar *
-lookup_internalvar (name)
-     char *name;
+lookup_internalvar (char *name)
 {
-  register struct internalvar *var;
+  struct internalvar *var;
 
   for (var = internalvars; var; var = var->next)
-    if (STREQ (var->name, name))
+    if (strcmp (var->name, name) == 0)
       return var;
 
   var = (struct internalvar *) xmalloc (sizeof (struct internalvar));
@@ -413,16 +419,10 @@ lookup_internalvar (name)
   return var;
 }
 
-value_ptr
-value_of_internalvar (var)
-     struct internalvar *var;
+struct value *
+value_of_internalvar (struct internalvar *var)
 {
-  register value_ptr val;
-
-#ifdef IS_TRAPPED_INTERNALVAR
-  if (IS_TRAPPED_INTERNALVAR (var->name))
-    return VALUE_OF_TRAPPED_INTERNALVAR (var);
-#endif 
+  struct value *val;
 
   val = value_copy (var->value);
   if (VALUE_LAZY (val))
@@ -433,17 +433,10 @@ value_of_internalvar (var)
 }
 
 void
-set_internalvar_component (var, offset, bitpos, bitsize, newval)
-     struct internalvar *var;
-     int offset, bitpos, bitsize;
-     value_ptr newval;
+set_internalvar_component (struct internalvar *var, int offset, int bitpos,
+			   int bitsize, struct value *newval)
 {
-  register char *addr = VALUE_CONTENTS (var->value) + offset;
-
-#ifdef IS_TRAPPED_INTERNALVAR
-  if (IS_TRAPPED_INTERNALVAR (var->name))
-    SET_TRAPPED_INTERNALVAR (var, newval, bitpos, bitsize, offset);
-#endif
+  char *addr = VALUE_CONTENTS (var->value) + offset;
 
   if (bitsize)
     modify_field (addr, value_as_long (newval),
@@ -453,16 +446,9 @@ set_internalvar_component (var, offset, bitpos, bitsize, newval)
 }
 
 void
-set_internalvar (var, val)
-     struct internalvar *var;
-     value_ptr val;
+set_internalvar (struct internalvar *var, struct value *val)
 {
-  value_ptr newval;
-
-#ifdef IS_TRAPPED_INTERNALVAR
-  if (IS_TRAPPED_INTERNALVAR (var->name))
-    SET_TRAPPED_INTERNALVAR (var, val, 0, 0, 0);
-#endif
+  struct value *newval;
 
   newval = value_copy (val);
   newval->modifiable = 1;
@@ -479,15 +465,14 @@ set_internalvar (var, val)
      something in the value chain (i.e., before release_value is
      called), because after the error free_all_values will get called before
      long.  */
-  free ((PTR)var->value);
+  xfree (var->value);
   var->value = newval;
   release_value (newval);
   /* End code which must not call error().  */
 }
 
 char *
-internalvar_name (var)
-     struct internalvar *var;
+internalvar_name (struct internalvar *var)
 {
   return var->name;
 }
@@ -496,34 +481,28 @@ internalvar_name (var)
    because that makes the values invalid.  */
 
 void
-clear_internalvars ()
+clear_internalvars (void)
 {
-  register struct internalvar *var;
+  struct internalvar *var;
 
   while (internalvars)
     {
       var = internalvars;
       internalvars = var->next;
-      free ((PTR)var->name);
-      free ((PTR)var->value);
-      free ((PTR)var);
+      xfree (var->name);
+      xfree (var->value);
+      xfree (var);
     }
 }
 
 static void
-show_convenience (ignore, from_tty)
-     char *ignore;
-     int from_tty;
+show_convenience (char *ignore, int from_tty)
 {
-  register struct internalvar *var;
+  struct internalvar *var;
   int varseen = 0;
 
   for (var = internalvars; var; var = var->next)
     {
-#ifdef IS_TRAPPED_INTERNALVAR
-      if (IS_TRAPPED_INTERNALVAR (var->name))
-	continue;
-#endif
       if (!varseen)
 	{
 	  varseen = 1;
@@ -544,8 +523,7 @@ use \"set\" as in \"set $foo = 5\" to define them.\n");
    Does not deallocate the value.  */
 
 LONGEST
-value_as_long (val)
-     register value_ptr val;
+value_as_long (struct value *val)
 {
   /* This coerces arrays and functions, which is necessary (e.g.
      in disassemble_command).  It also dereferences references, which
@@ -555,22 +533,21 @@ value_as_long (val)
 }
 
 DOUBLEST
-value_as_double (val)
-     register value_ptr val;
+value_as_double (struct value *val)
 {
   DOUBLEST foo;
   int inv;
-  
+
   foo = unpack_double (VALUE_TYPE (val), VALUE_CONTENTS (val), &inv);
   if (inv)
     error ("Invalid floating value found in program.");
   return foo;
 }
-/* Extract a value as a C pointer.
-   Does not deallocate the value.  */
+/* Extract a value as a C pointer. Does not deallocate the value.  
+   Note that val's type may not actually be a pointer; value_as_long
+   handles all the cases.  */
 CORE_ADDR
-value_as_pointer (val)
-     value_ptr val;
+value_as_address (struct value *val)
 {
   /* Assume a CORE_ADDR can fit in a LONGEST (for now).  Not sure
      whether we want this to be true eventually.  */
@@ -578,9 +555,95 @@ value_as_pointer (val)
   /* ADDR_BITS_REMOVE is wrong if we are being called for a
      non-address (e.g. argument to "signal", "info break", etc.), or
      for pointers to char, in which the low bits *are* significant.  */
-  return ADDR_BITS_REMOVE(value_as_long (val));
+  return ADDR_BITS_REMOVE (value_as_long (val));
 #else
-  return value_as_long (val);
+
+  /* There are several targets (IA-64, PowerPC, and others) which
+     don't represent pointers to functions as simply the address of
+     the function's entry point.  For example, on the IA-64, a
+     function pointer points to a two-word descriptor, generated by
+     the linker, which contains the function's entry point, and the
+     value the IA-64 "global pointer" register should have --- to
+     support position-independent code.  The linker generates
+     descriptors only for those functions whose addresses are taken.
+
+     On such targets, it's difficult for GDB to convert an arbitrary
+     function address into a function pointer; it has to either find
+     an existing descriptor for that function, or call malloc and
+     build its own.  On some targets, it is impossible for GDB to
+     build a descriptor at all: the descriptor must contain a jump
+     instruction; data memory cannot be executed; and code memory
+     cannot be modified.
+
+     Upon entry to this function, if VAL is a value of type `function'
+     (that is, TYPE_CODE (VALUE_TYPE (val)) == TYPE_CODE_FUNC), then
+     VALUE_ADDRESS (val) is the address of the function.  This is what
+     you'll get if you evaluate an expression like `main'.  The call
+     to COERCE_ARRAY below actually does all the usual unary
+     conversions, which includes converting values of type `function'
+     to `pointer to function'.  This is the challenging conversion
+     discussed above.  Then, `unpack_long' will convert that pointer
+     back into an address.
+
+     So, suppose the user types `disassemble foo' on an architecture
+     with a strange function pointer representation, on which GDB
+     cannot build its own descriptors, and suppose further that `foo'
+     has no linker-built descriptor.  The address->pointer conversion
+     will signal an error and prevent the command from running, even
+     though the next step would have been to convert the pointer
+     directly back into the same address.
+
+     The following shortcut avoids this whole mess.  If VAL is a
+     function, just return its address directly.  */
+  if (TYPE_CODE (VALUE_TYPE (val)) == TYPE_CODE_FUNC
+      || TYPE_CODE (VALUE_TYPE (val)) == TYPE_CODE_METHOD)
+    return VALUE_ADDRESS (val);
+
+  COERCE_ARRAY (val);
+
+  /* Some architectures (e.g. Harvard), map instruction and data
+     addresses onto a single large unified address space.  For
+     instance: An architecture may consider a large integer in the
+     range 0x10000000 .. 0x1000ffff to already represent a data
+     addresses (hence not need a pointer to address conversion) while
+     a small integer would still need to be converted integer to
+     pointer to address.  Just assume such architectures handle all
+     integer conversions in a single function.  */
+
+  /* JimB writes:
+
+     I think INTEGER_TO_ADDRESS is a good idea as proposed --- but we
+     must admonish GDB hackers to make sure its behavior matches the
+     compiler's, whenever possible.
+
+     In general, I think GDB should evaluate expressions the same way
+     the compiler does.  When the user copies an expression out of
+     their source code and hands it to a `print' command, they should
+     get the same value the compiler would have computed.  Any
+     deviation from this rule can cause major confusion and annoyance,
+     and needs to be justified carefully.  In other words, GDB doesn't
+     really have the freedom to do these conversions in clever and
+     useful ways.
+
+     AndrewC pointed out that users aren't complaining about how GDB
+     casts integers to pointers; they are complaining that they can't
+     take an address from a disassembly listing and give it to `x/i'.
+     This is certainly important.
+
+     Adding an architecture method like INTEGER_TO_ADDRESS certainly
+     makes it possible for GDB to "get it right" in all circumstances
+     --- the target has complete control over how things get done, so
+     people can Do The Right Thing for their target without breaking
+     anyone else.  The standard doesn't specify how integers get
+     converted to pointers; usually, the ABI doesn't either, but
+     ABI-specific code is a more reasonable place to handle it.  */
+
+  if (TYPE_CODE (VALUE_TYPE (val)) != TYPE_CODE_PTR
+      && TYPE_CODE (VALUE_TYPE (val)) != TYPE_CODE_REF
+      && INTEGER_TO_ADDRESS_P ())
+    return INTEGER_TO_ADDRESS (VALUE_TYPE (val), VALUE_CONTENTS (val));
+
+  return unpack_long (VALUE_TYPE (val), VALUE_CONTENTS (val));
 #endif
 }
 
@@ -599,13 +662,11 @@ value_as_pointer (val)
    to an INT (or some size).  After all, it is only an offset.  */
 
 LONGEST
-unpack_long (type, valaddr)
-     struct type *type;
-     char *valaddr;
+unpack_long (struct type *type, const char *valaddr)
 {
-  register enum type_code code = TYPE_CODE (type);
-  register int len = TYPE_LENGTH (type);
-  register int nosign = TYPE_UNSIGNED (type);
+  enum type_code code = TYPE_CODE (type);
+  int len = TYPE_LENGTH (type);
+  int nosign = TYPE_UNSIGNED (type);
 
   if (current_language->la_language == language_scm
       && is_scmvalue_type (type))
@@ -626,13 +687,13 @@ unpack_long (type, valaddr)
 	return extract_signed_integer (valaddr, len);
 
     case TYPE_CODE_FLT:
-      return extract_floating (valaddr, len);
+      return extract_typed_floating (valaddr, type);
 
     case TYPE_CODE_PTR:
     case TYPE_CODE_REF:
       /* Assume a CORE_ADDR can fit in a LONGEST (for now).  Not sure
-	 whether we want this to be true eventually.  */
-      return extract_address (valaddr, len);
+         whether we want this to be true eventually.  */
+      return extract_typed_address (valaddr, type);
 
     case TYPE_CODE_MEMBER:
       error ("not implemented: member types in unpack_long");
@@ -640,7 +701,7 @@ unpack_long (type, valaddr)
     default:
       error ("Value can't be converted to integer.");
     }
-  return 0; /* Placate lint.  */
+  return 0;			/* Placate lint.  */
 }
 
 /* Return a double value from the specified type and address.
@@ -650,41 +711,48 @@ unpack_long (type, valaddr)
    format, result is in host format.  */
 
 DOUBLEST
-unpack_double (type, valaddr, invp)
-     struct type *type;
-     char *valaddr;
-     int *invp;
+unpack_double (struct type *type, const char *valaddr, int *invp)
 {
-  register enum type_code code = TYPE_CODE (type);
-  register int len = TYPE_LENGTH (type);
-  register int nosign = TYPE_UNSIGNED (type);
+  enum type_code code;
+  int len;
+  int nosign;
 
   *invp = 0;			/* Assume valid.   */
   CHECK_TYPEDEF (type);
+  code = TYPE_CODE (type);
+  len = TYPE_LENGTH (type);
+  nosign = TYPE_UNSIGNED (type);
   if (code == TYPE_CODE_FLT)
     {
-#ifdef INVALID_FLOAT
-      if (INVALID_FLOAT (valaddr, len))
+      /* NOTE: cagney/2002-02-19: There was a test here to see if the
+	 floating-point value was valid (using the macro
+	 INVALID_FLOAT).  That test/macro have been removed.
+
+	 It turns out that only the VAX defined this macro and then
+	 only in a non-portable way.  Fixing the portability problem
+	 wouldn't help since the VAX floating-point code is also badly
+	 bit-rotten.  The target needs to add definitions for the
+	 methods TARGET_FLOAT_FORMAT and TARGET_DOUBLE_FORMAT - these
+	 exactly describe the target floating-point format.  The
+	 problem here is that the corresponding floatformat_vax_f and
+	 floatformat_vax_d values these methods should be set to are
+	 also not defined either.  Oops!
+
+         Hopefully someone will add both the missing floatformat
+         definitions and the new cases for floatformat_is_valid ().  */
+
+      if (!floatformat_is_valid (floatformat_from_type (type), valaddr))
 	{
 	  *invp = 1;
-	  return 1.234567891011121314;
+	  return 0.0;
 	}
-#endif
-      return extract_floating (valaddr, len);
+
+      return extract_typed_floating (valaddr, type);
     }
   else if (nosign)
     {
       /* Unsigned -- be sure we compensate for signed LONGEST.  */
-#ifndef _MSC_VER
-      return (unsigned LONGEST) unpack_long (type, valaddr);
-#else
-#if (_MSC_VER > 800)
-      return (unsigned LONGEST) unpack_long (type, valaddr);
-#else
-      /* FIXME!!! msvc22 doesn't support unsigned __int64 -> double */
-      return (LONGEST) unpack_long (type, valaddr);
-#endif
-#endif /* _MSC_VER */
+      return (ULONGEST) unpack_long (type, valaddr);
     }
   else
     {
@@ -699,7 +767,7 @@ unpack_double (type, valaddr, invp)
    host byte order.
 
    If you want functions and arrays to be coerced to pointers, and
-   references to be dereferenced, call value_as_pointer() instead.
+   references to be dereferenced, call value_as_address() instead.
 
    C++: It is assumed that the front-end has taken care of
    all matters concerning pointers to members.  A pointer
@@ -707,425 +775,243 @@ unpack_double (type, valaddr, invp)
    to an INT (or some size).  After all, it is only an offset.  */
 
 CORE_ADDR
-unpack_pointer (type, valaddr)
-     struct type *type;
-     char *valaddr;
+unpack_pointer (struct type *type, const char *valaddr)
 {
   /* Assume a CORE_ADDR can fit in a LONGEST (for now).  Not sure
      whether we want this to be true eventually.  */
   return unpack_long (type, valaddr);
 }
+
 
+/* Get the value of the FIELDN'th field (which must be static) of
+   TYPE.  Return NULL if the field doesn't exist or has been
+   optimized out. */
+
+struct value *
+value_static_field (struct type *type, int fieldno)
+{
+  struct value *retval;
+
+  if (TYPE_FIELD_STATIC_HAS_ADDR (type, fieldno))
+    {
+      retval = value_at (TYPE_FIELD_TYPE (type, fieldno),
+			 TYPE_FIELD_STATIC_PHYSADDR (type, fieldno),
+			 NULL);
+    }
+  else
+    {
+      char *phys_name = TYPE_FIELD_STATIC_PHYSNAME (type, fieldno);
+      struct symbol *sym = lookup_symbol (phys_name, 0, VAR_DOMAIN, 0, NULL);
+      if (sym == NULL)
+	{
+	  /* With some compilers, e.g. HP aCC, static data members are reported
+	     as non-debuggable symbols */
+	  struct minimal_symbol *msym = lookup_minimal_symbol (phys_name, NULL, NULL);
+	  if (!msym)
+	    return NULL;
+	  else
+	    {
+	      retval = value_at (TYPE_FIELD_TYPE (type, fieldno),
+				 SYMBOL_VALUE_ADDRESS (msym),
+				 SYMBOL_BFD_SECTION (msym));
+	    }
+	}
+      else
+	{
+	  /* SYM should never have a SYMBOL_CLASS which will require
+	     read_var_value to use the FRAME parameter.  */
+	  if (symbol_read_needs_frame (sym))
+	    warning ("static field's value depends on the current "
+		     "frame - bad debug info?");
+	  retval = read_var_value (sym, NULL);
+ 	}
+      if (retval && VALUE_LVAL (retval) == lval_memory)
+	SET_FIELD_PHYSADDR (TYPE_FIELD (type, fieldno),
+			    VALUE_ADDRESS (retval));
+    }
+  return retval;
+}
+
+/* Change the enclosing type of a value object VAL to NEW_ENCL_TYPE.  
+   You have to be careful here, since the size of the data area for the value 
+   is set by the length of the enclosing type.  So if NEW_ENCL_TYPE is bigger 
+   than the old enclosing type, you have to allocate more space for the data.  
+   The return value is a pointer to the new version of this value structure. */
+
+struct value *
+value_change_enclosing_type (struct value *val, struct type *new_encl_type)
+{
+  if (TYPE_LENGTH (new_encl_type) <= TYPE_LENGTH (VALUE_ENCLOSING_TYPE (val))) 
+    {
+      VALUE_ENCLOSING_TYPE (val) = new_encl_type;
+      return val;
+    }
+  else
+    {
+      struct value *new_val;
+      struct value *prev;
+      
+      new_val = (struct value *) xrealloc (val, sizeof (struct value) + TYPE_LENGTH (new_encl_type));
+
+      VALUE_ENCLOSING_TYPE (new_val) = new_encl_type;
+ 
+      /* We have to make sure this ends up in the same place in the value
+	 chain as the original copy, so it's clean-up behavior is the same. 
+	 If the value has been released, this is a waste of time, but there
+	 is no way to tell that in advance, so... */
+      
+      if (val != all_values) 
+	{
+	  for (prev = all_values; prev != NULL; prev = prev->next)
+	    {
+	      if (prev->next == val) 
+		{
+		  prev->next = new_val;
+		  break;
+		}
+	    }
+	}
+      
+      return new_val;
+    }
+}
+
 /* Given a value ARG1 (offset by OFFSET bytes)
    of a struct or union type ARG_TYPE,
-   extract and return the value of one of its fields.
-   FIELDNO says which field.
+   extract and return the value of one of its (non-static) fields.
+   FIELDNO says which field. */
 
-   For C++, must also be able to return values from static fields */
-
-value_ptr
-value_primitive_field (arg1, offset, fieldno, arg_type)
-     register value_ptr arg1;
-     int offset;
-     register int fieldno;
-     register struct type *arg_type;
+struct value *
+value_primitive_field (struct value *arg1, int offset,
+		       int fieldno, struct type *arg_type)
 {
-  register value_ptr v;
-  register struct type *type;
+  struct value *v;
+  struct type *type;
 
   CHECK_TYPEDEF (arg_type);
   type = TYPE_FIELD_TYPE (arg_type, fieldno);
 
   /* Handle packed fields */
 
-  offset += TYPE_FIELD_BITPOS (arg_type, fieldno) / 8;
   if (TYPE_FIELD_BITSIZE (arg_type, fieldno))
     {
       v = value_from_longest (type,
-			   unpack_field_as_long (arg_type,
-						 VALUE_CONTENTS (arg1),
-						 fieldno));
+			      unpack_field_as_long (arg_type,
+						    VALUE_CONTENTS (arg1)
+						    + offset,
+						    fieldno));
       VALUE_BITPOS (v) = TYPE_FIELD_BITPOS (arg_type, fieldno) % 8;
       VALUE_BITSIZE (v) = TYPE_FIELD_BITSIZE (arg_type, fieldno);
+      VALUE_OFFSET (v) = VALUE_OFFSET (arg1) + offset
+	+ TYPE_FIELD_BITPOS (arg_type, fieldno) / 8;
+    }
+  else if (fieldno < TYPE_N_BASECLASSES (arg_type))
+    {
+      /* This field is actually a base subobject, so preserve the
+         entire object's contents for later references to virtual
+         bases, etc.  */
+      v = allocate_value (VALUE_ENCLOSING_TYPE (arg1));
+      VALUE_TYPE (v) = type;
+      if (VALUE_LAZY (arg1))
+	VALUE_LAZY (v) = 1;
+      else
+	memcpy (VALUE_CONTENTS_ALL_RAW (v), VALUE_CONTENTS_ALL_RAW (arg1),
+		TYPE_LENGTH (VALUE_ENCLOSING_TYPE (arg1)));
+      VALUE_OFFSET (v) = VALUE_OFFSET (arg1);
+      VALUE_EMBEDDED_OFFSET (v)
+	= offset +
+	VALUE_EMBEDDED_OFFSET (arg1) +
+	TYPE_FIELD_BITPOS (arg_type, fieldno) / 8;
     }
   else
     {
+      /* Plain old data member */
+      offset += TYPE_FIELD_BITPOS (arg_type, fieldno) / 8;
       v = allocate_value (type);
       if (VALUE_LAZY (arg1))
 	VALUE_LAZY (v) = 1;
       else
-	memcpy (VALUE_CONTENTS_RAW (v), VALUE_CONTENTS_RAW (arg1) + offset,
+	memcpy (VALUE_CONTENTS_RAW (v),
+		VALUE_CONTENTS_RAW (arg1) + offset,
 		TYPE_LENGTH (type));
+      VALUE_OFFSET (v) = VALUE_OFFSET (arg1) + offset
+			 + VALUE_EMBEDDED_OFFSET (arg1);
     }
   VALUE_LVAL (v) = VALUE_LVAL (arg1);
   if (VALUE_LVAL (arg1) == lval_internalvar)
     VALUE_LVAL (v) = lval_internalvar_component;
   VALUE_ADDRESS (v) = VALUE_ADDRESS (arg1);
-  VALUE_OFFSET (v) = offset + VALUE_OFFSET (arg1);
+  VALUE_REGNO (v) = VALUE_REGNO (arg1);
+/*  VALUE_OFFSET (v) = VALUE_OFFSET (arg1) + offset
+   + TYPE_FIELD_BITPOS (arg_type, fieldno) / 8; */
   return v;
 }
 
 /* Given a value ARG1 of a struct or union type,
-   extract and return the value of one of its fields.
-   FIELDNO says which field.
+   extract and return the value of one of its (non-static) fields.
+   FIELDNO says which field. */
 
-   For C++, must also be able to return values from static fields */
-
-value_ptr
-value_field (arg1, fieldno)
-     register value_ptr arg1;
-     register int fieldno;
+struct value *
+value_field (struct value *arg1, int fieldno)
 {
   return value_primitive_field (arg1, 0, fieldno, VALUE_TYPE (arg1));
 }
 
 /* Return a non-virtual function as a value.
    F is the list of member functions which contains the desired method.
-   J is an index into F which provides the desired method. */
+   J is an index into F which provides the desired method.
 
-value_ptr
-value_fn_field (arg1p, f, j, type, offset)
-     value_ptr *arg1p;
-     struct fn_field *f;
-     int j;
-     struct type *type;
-     int offset;
+   We only use the symbol for its address, so be happy with either a
+   full symbol or a minimal symbol.
+ */
+
+struct value *
+value_fn_field (struct value **arg1p, struct fn_field *f, int j, struct type *type,
+		int offset)
 {
-  register value_ptr v;
-  register struct type *ftype = TYPE_FN_FIELD_TYPE (f, j);
+  struct value *v;
+  struct type *ftype = TYPE_FN_FIELD_TYPE (f, j);
+  char *physname = TYPE_FN_FIELD_PHYSNAME (f, j);
   struct symbol *sym;
+  struct minimal_symbol *msym;
 
-  sym = lookup_symbol (TYPE_FN_FIELD_PHYSNAME (f, j),
-		       0, VAR_NAMESPACE, 0, NULL);
-  if (! sym) 
+  sym = lookup_symbol (physname, 0, VAR_DOMAIN, 0, NULL);
+  if (sym != NULL)
+    {
+      msym = NULL;
+    }
+  else
+    {
+      gdb_assert (sym == NULL);
+      msym = lookup_minimal_symbol (physname, NULL, NULL);
+      if (msym == NULL)
 	return NULL;
-/*
-	error ("Internal error: could not find physical method named %s",
-		    TYPE_FN_FIELD_PHYSNAME (f, j));
-*/
-  
+    }
+
   v = allocate_value (ftype);
-  VALUE_ADDRESS (v) = BLOCK_START (SYMBOL_BLOCK_VALUE (sym));
-  VALUE_TYPE (v) = ftype;
+  if (sym)
+    {
+      VALUE_ADDRESS (v) = BLOCK_START (SYMBOL_BLOCK_VALUE (sym));
+    }
+  else
+    {
+      VALUE_ADDRESS (v) = SYMBOL_VALUE_ADDRESS (msym);
+    }
 
   if (arg1p)
-   {
-    if (type != VALUE_TYPE (*arg1p))
-      *arg1p = value_ind (value_cast (lookup_pointer_type (type),
-				      value_addr (*arg1p)));
+    {
+      if (type != VALUE_TYPE (*arg1p))
+	*arg1p = value_ind (value_cast (lookup_pointer_type (type),
+					value_addr (*arg1p)));
 
-    /* Move the `this' pointer according to the offset. 
-    VALUE_OFFSET (*arg1p) += offset;
-    */
+      /* Move the `this' pointer according to the offset.
+         VALUE_OFFSET (*arg1p) += offset;
+       */
     }
 
   return v;
 }
 
-/* Return a virtual function as a value.
-   ARG1 is the object which provides the virtual function
-   table pointer.  *ARG1P is side-effected in calling this function.
-   F is the list of member functions which contains the desired virtual
-   function.
-   J is an index into F which provides the desired virtual function.
-
-   TYPE is the type in which F is located.  */
-value_ptr
-value_virtual_fn_field (arg1p, f, j, type, offset)
-     value_ptr *arg1p;
-     struct fn_field *f;
-     int j;
-     struct type *type;
-     int offset;
-{
-  value_ptr arg1 = *arg1p;
-  struct type *type1 = check_typedef (VALUE_TYPE (arg1));
-  struct type *entry_type;
-  /* First, get the virtual function table pointer.  That comes
-     with a strange type, so cast it to type `pointer to long' (which
-     should serve just fine as a function type).  Then, index into
-     the table, and convert final value to appropriate function type.  */
-  value_ptr entry, vfn, vtbl;
-  value_ptr vi = value_from_longest (builtin_type_int, 
-				     (LONGEST) TYPE_FN_FIELD_VOFFSET (f, j));
-  struct type *fcontext = TYPE_FN_FIELD_FCONTEXT (f, j);
-  struct type *context;
-  if (fcontext == NULL)
-   /* We don't have an fcontext (e.g. the program was compiled with
-      g++ version 1).  Try to get the vtbl from the TYPE_VPTR_BASETYPE.
-      This won't work right for multiple inheritance, but at least we
-      should do as well as GDB 3.x did.  */
-    fcontext = TYPE_VPTR_BASETYPE (type);
-  context = lookup_pointer_type (fcontext);
-  /* Now context is a pointer to the basetype containing the vtbl.  */
-  if (TYPE_TARGET_TYPE (context) != type1)
-    {
-      arg1 = value_ind (value_cast (context, value_addr (arg1)));
-      type1 = check_typedef (VALUE_TYPE (arg1));
-    }
-
-  context = type1;
-  /* Now context is the basetype containing the vtbl.  */
-
-  /* This type may have been defined before its virtual function table
-     was.  If so, fill in the virtual function table entry for the
-     type now.  */
-  if (TYPE_VPTR_FIELDNO (context) < 0)
-    fill_in_vptr_fieldno (context);
-
-  /* The virtual function table is now an array of structures
-     which have the form { int16 offset, delta; void *pfn; }.  */
-  vtbl = value_ind (value_primitive_field (arg1, 0, 
-					   TYPE_VPTR_FIELDNO (context),
-					   TYPE_VPTR_BASETYPE (context)));
-
-  /* Index into the virtual function table.  This is hard-coded because
-     looking up a field is not cheap, and it may be important to save
-     time, e.g. if the user has set a conditional breakpoint calling
-     a virtual function.  */
-  entry = value_subscript (vtbl, vi);
-  entry_type = check_typedef (VALUE_TYPE (entry));
-
-  if (TYPE_CODE (entry_type) == TYPE_CODE_STRUCT)
-    {
-      /* Move the `this' pointer according to the virtual function table. */
-      VALUE_OFFSET (arg1) += value_as_long (value_field (entry, 0));
-      
-      if (! VALUE_LAZY (arg1))
-	{
-	  VALUE_LAZY (arg1) = 1;
-	  value_fetch_lazy (arg1);
-	}
-
-      vfn = value_field (entry, 2);
-    }
-  else if (TYPE_CODE (entry_type) == TYPE_CODE_PTR)
-    vfn = entry;
-  else
-    error ("I'm confused:  virtual function table has bad type");
-  /* Reinstantiate the function pointer with the correct type.  */
-  VALUE_TYPE (vfn) = lookup_pointer_type (TYPE_FN_FIELD_TYPE (f, j));
-
-  *arg1p = arg1;
-  return vfn;
-}
-
-/* ARG is a pointer to an object we know to be at least
-   a DTYPE.  BTYPE is the most derived basetype that has
-   already been searched (and need not be searched again).
-   After looking at the vtables between BTYPE and DTYPE,
-   return the most derived type we find.  The caller must
-   be satisfied when the return value == DTYPE.
-
-   FIXME-tiemann: should work with dossier entries as well.  */
-
-static value_ptr
-value_headof (in_arg, btype, dtype)
-     value_ptr in_arg;
-     struct type *btype, *dtype;
-{
-  /* First collect the vtables we must look at for this object.  */
-  /* FIXME-tiemann: right now, just look at top-most vtable.  */
-  value_ptr arg, vtbl, entry, best_entry = 0;
-  int i, nelems;
-  int offset, best_offset = 0;
-  struct symbol *sym;
-  CORE_ADDR pc_for_sym;
-  char *demangled_name;
-  struct minimal_symbol *msymbol;
-
-  btype = TYPE_VPTR_BASETYPE (dtype);
-  CHECK_TYPEDEF (btype);
-  arg = in_arg;
-  if (btype != dtype)
-    arg = value_cast (lookup_pointer_type (btype), arg);
-  vtbl = value_ind (value_field (value_ind (arg), TYPE_VPTR_FIELDNO (btype)));
-
-  /* Check that VTBL looks like it points to a virtual function table.  */
-  msymbol = lookup_minimal_symbol_by_pc (VALUE_ADDRESS (vtbl));
-  if (msymbol == NULL
-      || (demangled_name = SYMBOL_NAME (msymbol)) == NULL
-      || !VTBL_PREFIX_P (demangled_name))
-    {
-      /* If we expected to find a vtable, but did not, let the user
-	 know that we aren't happy, but don't throw an error.
-	 FIXME: there has to be a better way to do this.  */
-      struct type *error_type = (struct type *)xmalloc (sizeof (struct type));
-      memcpy (error_type, VALUE_TYPE (in_arg), sizeof (struct type));
-      TYPE_NAME (error_type) = savestring ("suspicious *", sizeof ("suspicious *"));
-      VALUE_TYPE (in_arg) = error_type;
-      return in_arg;
-    }
-
-  /* Now search through the virtual function table.  */
-  entry = value_ind (vtbl);
-  nelems = longest_to_int (value_as_long (value_field (entry, 2)));
-  for (i = 1; i <= nelems; i++)
-    {
-      entry = value_subscript (vtbl, value_from_longest (builtin_type_int, 
-						      (LONGEST) i));
-      /* This won't work if we're using thunks. */
-      if (TYPE_CODE (check_typedef (VALUE_TYPE (entry))) != TYPE_CODE_STRUCT)
-	break;
-      offset = longest_to_int (value_as_long (value_field (entry, 0)));
-      /* If we use '<=' we can handle single inheritance
-       * where all offsets are zero - just use the first entry found. */
-      if (offset <= best_offset)
-	{
-	  best_offset = offset;
-	  best_entry = entry;
-	}
-    }
-  /* Move the pointer according to BEST_ENTRY's offset, and figure
-     out what type we should return as the new pointer.  */
-  if (best_entry == 0)
-    {
-      /* An alternative method (which should no longer be necessary).
-       * But we leave it in for future use, when we will hopefully
-       * have optimizes the vtable to use thunks instead of offsets. */
-      /* Use the name of vtable itself to extract a base type. */
-      demangled_name += 4;  /* Skip _vt$ prefix. */
-    }
-  else
-    {
-      pc_for_sym = value_as_pointer (value_field (best_entry, 2));
-      sym = find_pc_function (pc_for_sym);
-      demangled_name = cplus_demangle (SYMBOL_NAME (sym), DMGL_ANSI);
-      *(strchr (demangled_name, ':')) = '\0';
-    }
-  sym = lookup_symbol (demangled_name, 0, VAR_NAMESPACE, 0, 0);
-  if (sym == NULL)
-    error ("could not find type declaration for `%s'", demangled_name);
-  if (best_entry)
-    {
-      free (demangled_name);
-      arg = value_add (value_cast (builtin_type_int, arg),
-		       value_field (best_entry, 0));
-    }
-  else arg = in_arg;
-  VALUE_TYPE (arg) = lookup_pointer_type (SYMBOL_TYPE (sym));
-  return arg;
-}
-
-/* ARG is a pointer object of type TYPE.  If TYPE has virtual
-   function tables, probe ARG's tables (including the vtables
-   of its baseclasses) to figure out the most derived type that ARG
-   could actually be a pointer to.  */
-
-value_ptr
-value_from_vtable_info (arg, type)
-     value_ptr arg;
-     struct type *type;
-{
-  /* Take care of preliminaries.  */
-  if (TYPE_VPTR_FIELDNO (type) < 0)
-    fill_in_vptr_fieldno (type);
-  if (TYPE_VPTR_FIELDNO (type) < 0)
-    return 0;
-
-  return value_headof (arg, 0, type);
-}
-
-/* Return true if the INDEXth field of TYPE is a virtual baseclass
-   pointer which is for the base class whose type is BASECLASS.  */
-
-static int
-vb_match (type, index, basetype)
-     struct type *type;
-     int index;
-     struct type *basetype;
-{
-  struct type *fieldtype;
-  char *name = TYPE_FIELD_NAME (type, index);
-  char *field_class_name = NULL;
-
-  if (*name != '_')
-    return 0;
-  /* gcc 2.4 uses _vb$.  */
-  if (name[1] == 'v' && name[2] == 'b' && is_cplus_marker (name[3]))
-    field_class_name = name + 4;
-  /* gcc 2.5 will use __vb_.  */
-  if (name[1] == '_' && name[2] == 'v' && name[3] == 'b' && name[4] == '_')
-    field_class_name = name + 5;
-
-  if (field_class_name == NULL)
-    /* This field is not a virtual base class pointer.  */
-    return 0;
-
-  /* It's a virtual baseclass pointer, now we just need to find out whether
-     it is for this baseclass.  */
-  fieldtype = TYPE_FIELD_TYPE (type, index);
-  if (fieldtype == NULL
-      || TYPE_CODE (fieldtype) != TYPE_CODE_PTR)
-    /* "Can't happen".  */
-    return 0;
-
-  /* What we check for is that either the types are equal (needed for
-     nameless types) or have the same name.  This is ugly, and a more
-     elegant solution should be devised (which would probably just push
-     the ugliness into symbol reading unless we change the stabs format).  */
-  if (TYPE_TARGET_TYPE (fieldtype) == basetype)
-    return 1;
-
-  if (TYPE_NAME (basetype) != NULL
-      && TYPE_NAME (TYPE_TARGET_TYPE (fieldtype)) != NULL
-      && STREQ (TYPE_NAME (basetype),
-		TYPE_NAME (TYPE_TARGET_TYPE (fieldtype))))
-    return 1;
-  return 0;
-}
-
-/* Compute the offset of the baseclass which is
-   the INDEXth baseclass of class TYPE,
-   for value at VALADDR (in host) at ADDRESS (in target).
-   The result is the offset of the baseclass value relative
-   to (the address of)(ARG) + OFFSET.
-
-   -1 is returned on error. */
-
-int
-baseclass_offset (type, index, valaddr, address)
-     struct type *type;
-     int index;
-     char *valaddr;
-     CORE_ADDR address;
-{
-  struct type *basetype = TYPE_BASECLASS (type, index);
-
-  if (BASETYPE_VIA_VIRTUAL (type, index))
-    {
-      /* Must hunt for the pointer to this virtual baseclass.  */
-      register int i, len = TYPE_NFIELDS (type);
-      register int n_baseclasses = TYPE_N_BASECLASSES (type);
-
-      /* First look for the virtual baseclass pointer
-	 in the fields.  */
-      for (i = n_baseclasses; i < len; i++)
-	{
-	  if (vb_match (type, i, basetype))
-	    {
-	      CORE_ADDR addr
-		= unpack_pointer (TYPE_FIELD_TYPE (type, i),
-				  valaddr + (TYPE_FIELD_BITPOS (type, i) / 8));
-
-	      return addr - (LONGEST) address;
-	    }
-	}
-      /* Not in the fields, so try looking through the baseclasses.  */
-      for (i = index+1; i < n_baseclasses; i++)
-	{
-	  int boffset =
-	      baseclass_offset (type, i, valaddr, address);
-	  if (boffset)
-	    return boffset;
-	}
-      /* Not found.  */
-      return -1;
-    }
-
-  /* Baseclass is easily computed.  */
-  return TYPE_BASECLASS_BITPOS (type, index) / 8;
-}
 
 /* Unpack a field FIELDNO of the specified TYPE, from the anonymous object at
    VALADDR.
@@ -1142,18 +1028,18 @@ baseclass_offset (type, index, valaddr, address)
    If the field is signed, we also do sign extension. */
 
 LONGEST
-unpack_field_as_long (type, valaddr, fieldno)
-     struct type *type;
-     char *valaddr;
-     int fieldno;
+unpack_field_as_long (struct type *type, const char *valaddr, int fieldno)
 {
-  unsigned LONGEST val;
-  unsigned LONGEST valmask;
+  ULONGEST val;
+  ULONGEST valmask;
   int bitpos = TYPE_FIELD_BITPOS (type, fieldno);
   int bitsize = TYPE_FIELD_BITSIZE (type, fieldno);
   int lsbcount;
+  struct type *field_type;
 
   val = extract_unsigned_integer (valaddr + bitpos / 8, sizeof (val));
+  field_type = TYPE_FIELD_TYPE (type, fieldno);
+  CHECK_TYPEDEF (field_type);
 
   /* Extract bits.  See comment above. */
 
@@ -1168,9 +1054,9 @@ unpack_field_as_long (type, valaddr, fieldno)
 
   if ((bitsize > 0) && (bitsize < 8 * (int) sizeof (val)))
     {
-      valmask = (((unsigned LONGEST) 1) << bitsize) - 1;
+      valmask = (((ULONGEST) 1) << bitsize) - 1;
       val &= valmask;
-      if (!TYPE_UNSIGNED (TYPE_FIELD_TYPE (type, fieldno)))
+      if (!TYPE_UNSIGNED (field_type))
 	{
 	  if (val & (valmask ^ (valmask >> 1)))
 	    {
@@ -1187,10 +1073,7 @@ unpack_field_as_long (type, valaddr, fieldno)
    indicate which bits (in target bit order) comprise the bitfield.  */
 
 void
-modify_field (addr, fieldval, bitpos, bitsize)
-     char *addr;
-     LONGEST fieldval;
-     int bitpos, bitsize;
+modify_field (char *addr, LONGEST fieldval, int bitpos, int bitsize)
 {
   LONGEST oword;
 
@@ -1202,10 +1085,10 @@ modify_field (addr, fieldval, bitpos, bitsize)
 
   /* Warn if value is too big to fit in the field in question.  */
   if (bitsize < (8 * (int) sizeof (fieldval))
-      && 0 != (fieldval & ~((1<<bitsize)-1)))
+      && 0 != (fieldval & ~((1 << bitsize) - 1)))
     {
       /* FIXME: would like to include fieldval in the message, but
-	 we don't have a sprintf_longest.  */
+         we don't have a sprintf_longest.  */
       warning ("Value does not fit in %d bits.", bitsize);
 
       /* Truncate it, otherwise adjoining fields may be corrupted.  */
@@ -1220,9 +1103,9 @@ modify_field (addr, fieldval, bitpos, bitsize)
 
   /* Mask out old value, while avoiding shifts >= size of oword */
   if (bitsize < 8 * (int) sizeof (oword))
-    oword &= ~(((((unsigned LONGEST)1) << bitsize) - 1) << bitpos);
+    oword &= ~(((((ULONGEST) 1) << bitsize) - 1) << bitpos);
   else
-    oword &= ~((~(unsigned LONGEST)0) << bitpos);
+    oword &= ~((~(ULONGEST) 0) << bitpos);
   oword |= fieldval << bitpos;
 
   store_signed_integer (addr, sizeof oword, oword);
@@ -1230,15 +1113,13 @@ modify_field (addr, fieldval, bitpos, bitsize)
 
 /* Convert C numbers into newly allocated values */
 
-value_ptr
-value_from_longest (type, num)
-     struct type *type;
-     register LONGEST num;
+struct value *
+value_from_longest (struct type *type, LONGEST num)
 {
-  register value_ptr val = allocate_value (type);
-  register enum type_code code;
-  register int len;
- retry:
+  struct value *val = allocate_value (type);
+  enum type_code code;
+  int len;
+retry:
   code = TYPE_CODE (type);
   len = TYPE_LENGTH (type);
 
@@ -1254,33 +1135,66 @@ value_from_longest (type, num)
     case TYPE_CODE_RANGE:
       store_signed_integer (VALUE_CONTENTS_RAW (val), len, num);
       break;
-      
+
     case TYPE_CODE_REF:
     case TYPE_CODE_PTR:
-      /* This assumes that all pointers of a given length
-	 have the same form.  */
-      store_address (VALUE_CONTENTS_RAW (val), len, (CORE_ADDR) num);
+      store_typed_address (VALUE_CONTENTS_RAW (val), type, (CORE_ADDR) num);
       break;
 
     default:
-      error ("Unexpected type encountered for integer constant.");
+      error ("Unexpected type (%d) encountered for integer constant.", code);
     }
   return val;
 }
 
-value_ptr
-value_from_double (type, num)
-     struct type *type;
-     DOUBLEST num;
+
+/* Create a value representing a pointer of type TYPE to the address
+   ADDR.  */
+struct value *
+value_from_pointer (struct type *type, CORE_ADDR addr)
 {
-  register value_ptr val = allocate_value (type);
+  struct value *val = allocate_value (type);
+  store_typed_address (VALUE_CONTENTS_RAW (val), type, addr);
+  return val;
+}
+
+
+/* Create a value for a string constant to be stored locally
+   (not in the inferior's memory space, but in GDB memory).
+   This is analogous to value_from_longest, which also does not
+   use inferior memory.  String shall NOT contain embedded nulls.  */
+
+struct value *
+value_from_string (char *ptr)
+{
+  struct value *val;
+  int len = strlen (ptr);
+  int lowbound = current_language->string_lower_bound;
+  struct type *rangetype =
+  create_range_type ((struct type *) NULL,
+		     builtin_type_int,
+		     lowbound, len + lowbound - 1);
+  struct type *stringtype =
+  create_array_type ((struct type *) NULL,
+		     *current_language->string_char_type,
+		     rangetype);
+
+  val = allocate_value (stringtype);
+  memcpy (VALUE_CONTENTS_RAW (val), ptr, len);
+  return val;
+}
+
+struct value *
+value_from_double (struct type *type, DOUBLEST num)
+{
+  struct value *val = allocate_value (type);
   struct type *base_type = check_typedef (type);
-  register enum type_code code = TYPE_CODE (base_type);
-  register int len = TYPE_LENGTH (base_type);
+  enum type_code code = TYPE_CODE (base_type);
+  int len = TYPE_LENGTH (base_type);
 
   if (code == TYPE_CODE_FLT)
     {
-      store_floating (VALUE_CONTENTS_RAW (val), len, num);
+      store_typed_floating (VALUE_CONTENTS_RAW (val), base_type, num);
     }
   else
     error ("Unexpected type encountered for floating constant.");
@@ -1288,50 +1202,54 @@ value_from_double (type, num)
   return val;
 }
 
-/* Deal with the value that is "about to be returned".  */
+/* Deal with the return-value of a function that has "just returned".
 
-/* Return the value that a function returning now
-   would be returning to its caller, assuming its type is VALTYPE.
-   RETBUF is where we look for what ought to be the contents
-   of the registers (in raw form).  This is because it is often
-   desirable to restore old values to those registers
-   after saving the contents of interest, and then call
-   this function using the saved values.
-   struct_return is non-zero when the function in question is
-   using the structure return conventions on the machine in question;
-   0 when it is using the value returning conventions (this often
-   means returning pointer to where structure is vs. returning value). */
+   Extract the return-value (as a "struct value") that a function,
+   using register convention, has just returned to its caller.  Assume
+   that the type of the function is VALTYPE, and that the "just
+   returned" register state is found in RETBUF.
 
-value_ptr
-value_being_returned (valtype, retbuf, struct_return)
-     register struct type *valtype;
-     char retbuf[REGISTER_BYTES];
-     int struct_return;
-     /*ARGSUSED*/
+   The function has "just returned" because GDB halts a returning
+   function by setting a breakpoint at the return address (in the
+   caller), and not the return instruction (in the callee).
+
+   Because, in the case of a return from an inferior function call,
+   GDB needs to restore the inferiors registers, RETBUF is normally a
+   copy of the inferior's registers.  */
+
+struct value *
+register_value_being_returned (struct type *valtype, struct regcache *retbuf)
 {
-  register value_ptr val;
-  CORE_ADDR addr;
+  struct value *val = allocate_value (valtype);
 
-#if defined (EXTRACT_STRUCT_VALUE_ADDRESS)
-  /* If this is not defined, just use EXTRACT_RETURN_VALUE instead.  */
-  if (struct_return) {
-    addr = EXTRACT_STRUCT_VALUE_ADDRESS (retbuf);
-    if (!addr)
-      error ("Function return value unknown");
-    return value_at (valtype, addr);
-  }
-#endif
+  /* If the function returns void, don't bother fetching the return
+     value.  See also "using_struct_return".  */
+  if (TYPE_CODE (valtype) == TYPE_CODE_VOID)
+    return val;
 
-  val = allocate_value (valtype);
-  CHECK_TYPEDEF (valtype);
-  EXTRACT_RETURN_VALUE (valtype, retbuf, VALUE_CONTENTS_RAW (val));
+  if (!gdbarch_return_value_p (current_gdbarch))
+    {
+      /* NOTE: cagney/2003-10-20: Unlike "gdbarch_return_value", the
+         EXTRACT_RETURN_VALUE and USE_STRUCT_CONVENTION methods do not
+         handle the edge case of a function returning a small
+         structure / union in registers.  */
+      CHECK_TYPEDEF (valtype);
+      EXTRACT_RETURN_VALUE (valtype, retbuf, VALUE_CONTENTS_RAW (val));
+      return val;
+    }
 
+  /* This function only handles "register convention".  */
+  gdb_assert (gdbarch_return_value (current_gdbarch, valtype,
+				    NULL, NULL, NULL)
+	      == RETURN_VALUE_REGISTER_CONVENTION);
+  gdbarch_return_value (current_gdbarch, valtype, retbuf,
+			VALUE_CONTENTS_RAW (val) /*read*/, NULL /*write*/);
   return val;
 }
 
-/* Should we use EXTRACT_STRUCT_VALUE_ADDRESS instead of
-   EXTRACT_RETURN_VALUE?  GCC_P is true if compiled with gcc
-   and TYPE is the type (which is known to be struct, union or array).
+/* Should we use DEPRECATED_EXTRACT_STRUCT_VALUE_ADDRESS instead of
+   EXTRACT_RETURN_VALUE?  GCC_P is true if compiled with gcc and TYPE
+   is the type (which is known to be struct, union or array).
 
    On most machines, the struct convention is used unless we are
    using gcc and the type is of a special size.  */
@@ -1343,79 +1261,61 @@ value_being_returned (valtype, retbuf, struct_return)
    2.0-2.3.3.  This is somewhat unfortunate, but changing gcc2_compiled
    would cause more chaos than dealing with some struct returns being
    handled wrong.  */
-#if !defined (USE_STRUCT_CONVENTION)
-#define USE_STRUCT_CONVENTION(gcc_p, type)\
-  (!((gcc_p == 1) && (TYPE_LENGTH (value_type) == 1                \
-		      || TYPE_LENGTH (value_type) == 2             \
-		      || TYPE_LENGTH (value_type) == 4             \
-		      || TYPE_LENGTH (value_type) == 8             \
-		      )                                            \
-     ))
-#endif
 
-/* Some fundamental types (such as long double) are returned on the stack for
-   certain architectures.  This macro should return true for any type besides
-   struct, union or array that gets returned on the stack.  */
+int
+generic_use_struct_convention (int gcc_p, struct type *value_type)
+{
+  return !((gcc_p == 1)
+	   && (TYPE_LENGTH (value_type) == 1
+	       || TYPE_LENGTH (value_type) == 2
+	       || TYPE_LENGTH (value_type) == 4
+	       || TYPE_LENGTH (value_type) == 8));
+}
 
-#ifndef RETURN_VALUE_ON_STACK
-#define RETURN_VALUE_ON_STACK(TYPE) 0
-#endif
-
-/* Return true if the function specified is using the structure returning
-   convention on this machine to return arguments, or 0 if it is using
-   the value returning convention.  FUNCTION is the value representing
-   the function, FUNCADDR is the address of the function, and VALUE_TYPE
-   is the type returned by the function.  GCC_P is nonzero if compiled
+/* Return true if the function returning the specified type is using
+   the convention of returning structures in memory (passing in the
+   address as a hidden first parameter).  GCC_P is nonzero if compiled
    with GCC.  */
 
 int
-using_struct_return (function, funcaddr, value_type, gcc_p)
-     value_ptr function;
-     CORE_ADDR funcaddr;
-     struct type *value_type;
-     int gcc_p;
-     /*ARGSUSED*/
+using_struct_return (struct type *value_type, int gcc_p)
 {
-  register enum type_code code = TYPE_CODE (value_type);
+  enum type_code code = TYPE_CODE (value_type);
 
   if (code == TYPE_CODE_ERROR)
     error ("Function return type unknown.");
 
-  if (code == TYPE_CODE_STRUCT
-      || code == TYPE_CODE_UNION
-      || code == TYPE_CODE_ARRAY
-      || RETURN_VALUE_ON_STACK (value_type))
-    return USE_STRUCT_CONVENTION (gcc_p, value_type);
+  if (code == TYPE_CODE_VOID)
+    /* A void return value is never in memory.  See also corresponding
+       code in "register_value_being_returned".  */
+    return 0;
 
-  return 0;
+  if (!gdbarch_return_value_p (current_gdbarch))
+    {
+      /* FIXME: cagney/2003-10-01: The below is dead.  Instead an
+	 architecture should implement "gdbarch_return_value".  Using
+	 that new function it is possible to exactly specify the ABIs
+	 "struct return" vs "register return" conventions.  */
+      if (code == TYPE_CODE_STRUCT
+	  || code == TYPE_CODE_UNION
+	  || code == TYPE_CODE_ARRAY
+	  || RETURN_VALUE_ON_STACK (value_type))
+	return USE_STRUCT_CONVENTION (gcc_p, value_type);
+      else
+	return 0;
+    }
+
+  /* Probe the architecture for the return-value convention.  */
+  return (gdbarch_return_value (current_gdbarch, value_type,
+				NULL, NULL, NULL)
+	  == RETURN_VALUE_STRUCT_CONVENTION);
 }
 
-/* Store VAL so it will be returned if a function returns now.
-   Does not verify that VAL's type matches what the current
-   function wants to return.  */
-
 void
-set_return_value (val)
-     value_ptr val;
-{
-  struct type *type = check_typedef (VALUE_TYPE (val));
-  register enum type_code code = TYPE_CODE (type);
-
-  if (code == TYPE_CODE_ERROR)
-    error ("Function return type unknown.");
-
-  if (   code == TYPE_CODE_STRUCT
-      || code == TYPE_CODE_UNION)	/* FIXME, implement struct return.  */
-    error ("GDB does not support specifying a struct or union return value.");
-
-  STORE_RETURN_VALUE (type, VALUE_CONTENTS (val));
-}
-
-void
-_initialize_values ()
+_initialize_values (void)
 {
   add_cmd ("convenience", no_class, show_convenience,
-	    "Debugger convenience (\"$foo\") variables.\n\
+	   "Debugger convenience (\"$foo\") variables.\n\
 These variables are created when you assign them values;\n\
 thus, \"print $foo=1\" gives \"$foo\" the value 1.  Values may be any type.\n\n\
 A few convenience variables are given values automatically:\n\

@@ -1,0 +1,643 @@
+2004-03-23  Daniel Jacobowitz  <drow@mvista.com>
+
+	* linux-low.c (linux_wait): Clear all_processes list also.
+
+2004-03-12  Daniel Jacobowitz  <drow@mvista.com>
+
+	* linux-low.c: Include <errno.h>.  Remove extern declaration of
+	errno.
+
+2004-03-12  Daniel Jacobowitz  <drow@mvista.com>
+
+	* gdbreplay.c, server.h, utils.c: Update copyright years.
+
+2004-03-04  Nathan J. Williams  <nathanw@wasabisystems.com>
+
+	* server.c (main): Print child status or termination signal from
+	variable 'signal', not 'sig'.
+
+2004-03-04  Nathan J. Williams  <nathanw@wasabisystems.com>
+
+	* linux-low.c (linux_read_memory): Change return type to
+	int.  Check for and return error from ptrace().
+	* target.c (read_inferior_memory): Change return type to int.  Pass
+	back return status from the_target->read_memory().
+	* target.h (struct target_ops): Adapt *read_memory() prototype.
+	Update comment.
+	(read_inferior_memory): Adapt prototype.
+	* server.c (main): Return an error packet if
+	read_inferior_memory() returns an error.
+
+2004-03-04  Daniel Jacobowitz  <drow@mvista.com>
+
+	* Makefile.in (distclean): Remove config.h, stamp-h, and config.log.
+	Unify with other clean targets.
+
+2004-02-29  Daniel Jacobowitz  <drow@mvista.com>
+
+	* server.c (handle_v_cont): Call set_desired_inferior.
+
+2004-02-29  Daniel Jacobowitz  <drow@mvista.com>
+
+	* remote-utils.c (prepare_resume_reply): Always supply "thread:".
+
+2004-02-29  Daniel Jacobowitz  <drow@mvista.com>
+
+	* linux-low.c (linux_wait): Unblock async I/O.
+	(linux_resume): Block and enable async I/O.
+	* remote-utils.c (block_async_io, unblock_async_io): New functions.
+	* server.h (block_async_io, unblock_async_io): Add prototypes.
+
+2004-02-29  Daniel Jacobowitz  <drow@mvista.com>
+
+	* remote-utils.c (remote_open): Print a status notice after
+	opening a TCP port.
+	* server.c (attach_inferior): Print a status notice after
+	attaching.
+
+2004-02-29  Daniel Jacobowitz  <drow@mvista.com>
+
+	* linux-arm-low.c (arm_get_pc): Print out stop PC in debug mode.
+
+2004-02-26  Daniel Jacobowitz  <drow@mvista.com>
+
+	* remote-utils.c (write_enn): Use "E01" instead of "ENN" for the
+	error packet.
+	* server.c, target.h: Update copyright years.
+
+2004-02-25  Roland McGrath  <roland@redhat.com>
+
+	* target.h (struct target_ops): New member `read_auxv'.
+	* server.c (handle_query): Handle qPart:auxv:read: query using that.
+	* linux-low.c (linux_read_auxv): New function.
+	(linux_target_ops): Initialize `read_auxv' member to that.
+
+2004-02-17  Ulrich Weigand <Ulrich.Weigand@de.ibm.com>
+
+	Committed by Jim Blandy  <jimb@redhat.com>.
+
+	* linux-s390-low.c (s390_num_regs): Update.
+	(s390_regmap): Remove control registers.  Use __s390x__ predefine
+	instead of GPR_SIZE to distiguish s390 and s390x targets.
+
+2004-01-31  Daniel Jacobowitz  <drow@mvista.com>
+
+	* linux-low.c: Update copyright year.
+	(check_removed_breakpoint): Clear pending_is_breakpoint.
+	(linux_set_resume_request, linux_queue_one_thread)
+	(resume_status_pending_p): New functions.
+	(linux_continue_one_thread): Use process->resume.
+	(linux_resume): Only resume threads if there are no pending events.
+	* linux-low.h (struct process_info): Add resume request
+	pointer.
+
+2004-01-30  Daniel Jacobowitz  <drow@mvista.com>
+
+	* regcache.c (new_register_cache): Clear the allocated register
+	buffer.  Suggested by Atsushi Nemoto <anemo@mba.ocn.ne.jp>.
+
+2003-10-13  Daniel Jacobowitz  <drow@mvista.com>
+
+	* linux-low.c (linux_resume): Take a struct thread_resume *
+	argument.
+	(linux_wait): Update call.
+	(resume_ptr): New static variable.
+	(linux_continue_one_thread): Renamed from
+	linux_continue_one_process.  Use resume_ptr.
+	(linux_resume): Use linux_continue_one_thread.
+	* server.c (handle_v_cont, handle_v_requests): New functions.
+	(myresume): New function.
+	(main): Handle 'v' case.
+	* target.h (struct thread_resume): New type.
+	(struct target_ops): Change argument of "resume" to struct
+	thread_resume *.
+	(myresume): Delete macro.
+
+2003-08-08  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* Makefile.in (install-only): Create dest dir. Support DESTDIR.
+	(uninstall): Support DESTDIR.
+
+Mon Jul 21 20:09:34 UTC 2003  Brendan Conoboy  <blc@redhat.com>
+
+	* configure.srv: Add xscale*linux copy of arm*linux entry.
+
+2003-07-24  Daniel Jacobowitz  <drow@mvista.com>
+
+	* linux-arm-low.c (arm_reinsert_addr): New function.
+	(the_low_target): Add arm_reinsert_addr.
+
+2003-07-08  Mark Kettenis  <kettenis@gnu.org>
+
+	* mem-break.c: Remove whitespace at end of file.
+
+2003-06-28  Daniel Jacobowitz  <drow@mvista.com>
+
+	* configure.in: Check whether we need to prototype strerror.
+	* server.h: Optionally prototype strerror.
+	* gdbreplay.c (perror_with_name): Use strerror.
+	* linux-low.c (linux_attach_lwp): Use strerror.
+	* utils.c (perror_with_name): Use strerror.
+	* config.in, configure: Regenerated.
+
+2003-06-28  Daniel Jacobowitz  <drow@mvista.com>
+
+	* linux-sh-low.c (sh_regmap): Fix FP register offsets, reported by
+	SUGIOKA Toshinobu <sugioka@itonet.co.jp>.
+
+2003-06-20  Daniel Jacobowitz  <drow@mvista.com>
+
+	* Makefile.in (SFILES): Update.
+	* low-hppabsd.c, low-lynx.c, low-nbsd.c, low-sim.c, low-sparc.c,
+	low-sun3.c: Remove files.
+
+2003-06-17  Daniel Jacobowitz  <drow@mvista.com>
+
+	* linux-low.c: Move comment to linux_thread_alive where it belonged.
+	(linux_detach_one_process, linux_detach): New functions.
+	(linux_target_ops): Add linux_detach.
+	* server.c (main): Handle 'D' packet.
+	* target.h (struct target_ops): Add "detach" member.
+	(detach_inferior): Define.
+
+2003-06-13  Mark Kettenis  <kettenis@gnu.org>
+
+	From Kelley Cook  <kelleycook@wideopenwest.com>:
+	* configure.srv: Accept i[34567]86 variants.
+
+2003-06-05  Daniel Jacobowitz  <drow@mvista.com>
+
+	* linux-low.c (linux_wait_for_event): Correct comment typos.
+	(linux_resume_one_process): Call check_removed_breakpoint.
+	(linux_send_signal): New function.
+	(linux_target_ops): Add linux_send_signal.
+	* remote-utils.c (putpkt, input_interrupt): Use send_signal instead
+	of kill.
+	* target.h (struct target_ops): Add send_signal.
+
+2003-05-29  Jim Blandy  <jimb@redhat.com>
+
+	* linux-low.c (usr_store_inferior_registers): Transfer buf in
+	PTRACE_XFER_TYPE-sized chunks, not int-sized chunks.  Otherwise,
+	if 'int' is smaller than PTRACE_XFER_TYPE, you end up throwing
+	away part of the register's value.
+
+2003-03-26  Daniel Jacobowitz  <drow@mvista.com>
+
+	* linux-low.c (linux_create_inferior): Use __SIGRTMIN.
+	(linux_wait_for_event, linux_init_signals): Likewise.
+
+2003-03-17  Daniel Jacobowitz  <drow@mvista.com>
+
+	* configure.in: Check for stdlib.h.
+	* configure: Regenerated.
+	* config.in: Regenerated.
+
+2003-01-04  Andreas Schwab  <schwab@suse.de>
+
+	* linux-m68k-low.c (m68k_num_regs): Define to 29 instead of 31.
+
+2003-01-02  Andrew Cagney  <ac131313@redhat.com>
+
+	* Makefile.in: Remove obsolete code.
+
+2002-11-20  Daniel Jacobowitz  <drow@mvista.com>
+
+	* linux-s390-low.c (s390_regmap): Check GPR_SIZE instead of
+	defined(PT_FPR0_HI).
+
+2002-11-17  Stuart Hughes  <seh@zee2.com>
+
+	* linux-arm-low.c (arm_num_regs): Increase.
+	(arm_regmap): Include status register.
+
+2002-11-17  Daniel Jacobowitz  <drow@mvista.com>
+
+	* linux-low.c (register_addr): Remove incorrect -1 check.
+
+2002-08-29  Daniel Jacobowitz  <drow@mvista.com>
+
+	* linux-low.c (linux_create_inferior): Call setpgid.  Return
+	the new PID.
+	(unstopped_p, linux_signal_pid): Remove.
+	(linux_target_ops): Remove linux_signal_pid.
+	* remote-utils.c (putpkt, input_interrupt): Use signal_pid
+	global instead of target method.
+	* target.h (struct target_ops): Remove signal_pid.  Update comment
+	for create_inferior.
+	* server.c (signal_pid): New variable.
+	(create_inferior): Set signal_pid.  Block SIGTTOU and SIGTTIN in
+	gdbserver.  Set the child to be the foreground process group.
+	(attach_inferior): Set signal_pid.
+
+2002-08-23  Daniel Jacobowitz  <drow@mvista.com>
+
+	* ChangeLog: New file, with entries from gdb/ChangeLog after GDB 5.2.
+
+2002-08-20  Jim Blandy  <jimb@redhat.com>
+
+	* Makefile.in (LDFLAGS): Allow the configure script to establish a
+	default for this.
+
+2002-08-01  Andrew Cagney  <cagney@redhat.com>
+
+	* Makefile.in: Make chill references obsolete.
+
+2002-07-24  Kevin Buettner  <kevinb@redhat.com>
+
+	* configure.in (unistd.h): Add to AC_CHECK_HEADERS list.
+	* configure: Regenerate.
+	* config.in: Regenerate.
+
+2002-07-09  David O'Brien  <obrien@FreeBSD.org>
+
+	* gdbreplay.c (stdlib.h, unistd.h): Conditionaly include.
+	(perror_with_name, remote_close, remote_open, expect, play): Static.
+
+2002-07-04  Michal Ludvig  <mludvig@suse.cz>
+
+	* linux-x86-64-low.c (x86_64_regmap): Make it an array of
+	byte offsets instead of an array of indexes.
+	(x86_64_store_gregset, x86_64_store_fpregset): Parameter made const.
+
+2002-06-13  Daniel Jacobowitz  <drow@mvista.com>
+
+	* regcache.c: Add comment.
+
+2002-06-11  Daniel Jacobowitz  <drow@mvista.com>
+
+	* thread-db.c: New file.
+	* proc-service.c: New file.
+	* acinclude.m4: New file.
+	* Makefile.in: Add GDBSERVER_LIBS, gdb_proc_service_h,
+	proc-service.o, and thread-db.o.
+	(linux-low.o): Add USE_THREAD_DB.
+	* acconfig.h: Add HAVE_PRGREGSET_T, HAVE_PRFPREGSET_T,
+	HAVE_LWPID_T, HAVE_PSADDR_T, and PRFPREGSET_T_BROKEN.
+	* aclocal.m4: Regenerated.
+	* config.in: Regenerated.
+	* configure: Regenerated.
+	* configure.in: Check for proc_service.h, sys/procfs.h,
+	thread_db.h, and linux/elf.h headrs.
+	Check for lwpid_t, psaddr_t, prgregset_t, prfpregset_t, and
+	PRFPREGSET_T_BROKEN.  Introduce srv_thread_depfiles and USE_THREAD_DB.
+	Check for -lthread_db and thread support.
+	* configure.srv: Enable thread_db support for ARM, i386, MIPS,
+	PowerPC, and SuperH.
+	* i387-fp.c: Constify arguments.
+	* i387-fp.h: Likewise.
+	* inferiors.c: (struct thread_info): Renamed from
+	`struct inferior_info'.  Remove PID member.  Use generic inferior
+	list header.  All uses updated.
+	(inferiors, signal_pid): Removed.
+	(all_threads): New variable.
+	(get_thread): Define.
+	(add_inferior_to_list): New function.
+	(for_each_inferior): New function.
+	(change_inferior_id): New function.
+	(add_inferior): Removed.
+	(remove_inferior): New function.
+	(add_thread): New function.
+	(free_one_thread): New function.
+	(remove_thread): New function.
+	(clear_inferiors): Use for_each_inferior and free_one_thread.
+	(find_inferior): New function.
+	(find_inferior_id): New function.
+	(inferior_target_data): Update argument type.
+	(set_inferior_target_data): Likewise.
+	(inferior_regcache_data): Likewise.
+	(set_inferior_regcache_data): Likewise.
+	* linux-low.c (linux_bp_reinsert): Remove.
+	(all_processes, stopping_threads, using_thrads)
+	(struct pending_signals, debug_threads, pid_of): New.
+	(inferior_pid): Replace with macro.
+	(struct inferior_linux_data): Remove.
+	(get_stop_pc, add_process): New functions.
+	(linux_create_inferior): Restore SIGRTMIN+1 before calling exec.
+	Use add_process and add_thread.
+	(linux_attach_lwp): New function, based on old linux_attach.  Use
+	add_process and add_thread.  Set stop_expected for new threads.
+	(linux_attach): New function.
+	(linux_kill_one_process): New function.
+	(linux_kill): Kill all LWPs.
+	(linux_thread_alive): Use find_inferior_id.
+	(check_removed_breakpoints, status_pending_p): New functions.
+	(linux_wait_for_process): Renamed from linux_wait_for_one_inferior.
+	Update.  Use WNOHANG.  Wait for cloned processes also.  Update process
+	struct for the found process.
+	(linux_wait_for_event): New function.
+	(linux_wait): Use it.  Support LWPs.
+	(send_sigstop, wait_for_sigstop, stop_all_processes)
+	(linux_resume_one_process, linux_continue_one_process): New functions.
+	(linux_resume): Support LWPs.
+	(REGISTER_RAW_SIZE): Remove.
+	(fetch_register): Use register_size instead.  Call supply_register.
+	(usr_store_inferior_registers): Likewise.  Call collect_register.
+	Fix recursive case.
+	(regsets_fetch_inferior_registers): Improve error message.
+	(regsets_store_inferior_registers): Add debugging.
+	(linux_look_up_symbols): Call thread_db_init if USE_THREAD_DB.
+	(unstopped_p, linux_signal_pid): New functions.
+	(linux_target_ops): Add linux_signal_pid.
+	(linux_init_signals): New function.
+	(initialize_low): Call it.  Initialize using_threads.
+	* regcache.c (inferior_regcache_data): Add valid
+	flag.
+	(get_regcache): Fetch registers lazily.  Add fetch argument
+	and update all callers.
+	(regcache_invalidate_one, regcache_invalidate): New
+	functions.
+	(new_register_cache): Renamed from create_register_cache.
+	Return the new regcache.
+	(free_register_cache): Change argument to a void *.
+	(registers_to_string, registers_from_string): Call get_regcache
+	with fetch flag set.
+	(register_data): Make static.  Pass fetch flag to get_regcache.
+	(supply_register): Call get_regcache with fetch flag clear.
+	(collect_register): Call get_regcache with fetch flag set.
+	(collect_register_as_string): New function.
+	* regcache.h: Update.
+	* remote-utils.c (putpkt): Flush after debug output and use
+	stderr.
+	Handle input interrupts while waiting for an ACK.
+	(input_interrupt): Use signal_pid method.
+	(getpkt): Flush after debug output and use stderr.
+	(outreg): Use collect_register_as_string.
+	(new_thread_notify, dead_thread_notify): New functions.
+	(prepare_resume_reply): Check using_threads.  Set thread_from_wait
+	and general_thread.
+	(look_up_one_symbol): Flush after debug output.
+	* server.c (step_thread, server_waiting): New variables.
+	(start_inferior): Don't use signal_pid.  Update call to mywait.
+	(attach_inferior): Update call to mywait.
+	(handle_query): Handle qfThreadInfo and qsThreadInfo.
+	(main): Don't fetch/store registers explicitly.  Use
+	set_desired_inferior.  Support proposed ``Hs'' packet.  Update
+	calls to mywait.
+	* server.h: Update.
+	(struct inferior_list, struct_inferior_list_entry): New.
+	* target.c (set_desired_inferior): New.
+	(write_inferior_memory): Constify.
+	(mywait): New function.
+	* target.h: Update.
+	(struct target_ops): New signal_pid method.
+	(mywait): Removed macro, added prototype.
+
+	* linux-low.h (regset_func): Removed.
+	(regset_fill_func, regset_store_func): New.
+	(enum regset_type): New.
+	(struct regset_info): Add type field.  Use new operation types.
+	(struct linux_target_ops): stop_pc renamed to get_pc.
+	Add decr_pc_after_break and breakpoint_at.
+	(get_process, get_thread_proess, get_process_thread)
+	(strut process_info, all_processes, linux_attach_lwp)
+	(thread_db_init): New.
+
+	* linux-arm-low.c (arm_get_pc, arm_set_pc,
+	arm_breakpoint, arm_breakpoint_len, arm_breakpoint_at): New.
+	(the_low_target): Add new members.
+	* linux-i386-low.c (i386_store_gregset, i386_store_fpregset)
+	(i386_store_fpxregset): Constify.
+	(target_regsets): Add new kind identifier.
+	(i386_get_pc): Renamed from i386_stop_pc.  Simplify.
+	(i386_set_pc): Add debugging.
+	(i386_breakpoint_at): New function.
+	(the_low_target): Add new members.
+	* linux-mips-low.c (mips_get_pc, mips_set_pc)
+	(mips_breakpoint, mips_breakpoint_len, mips_reinsert_addr)
+	(mips_breakpoint_at): New.
+	(the_low_target): Add new members.
+	* linux-ppc-low.c (ppc_get_pc, ppc_set_pc)
+	(ppc_breakpoint, ppc_breakpoint_len, ppc_breakpoint_at): New.
+	(the_low_target): Add new members.
+	* linux-sh-low.c (sh_get_pc, sh_set_pc)
+	(sh_breakpoint, sh_breakpoint_len, sh_breakpoint_at): New.
+	(the_low_target): Add new members.
+	* linux-x86-64-low.c (target_regsets): Add new kind
+	identifier.
+
+2002-05-15  Daniel Jacobowitz  <drow@mvista.com>
+
+	From Martin Pool <mbp@samba.org>:
+	* server.c (gdbserver_usage): New function.
+	(main): Call it.
+
+2002-05-14  Daniel Jacobowitz  <drow@mvista.com>
+
+	* mem-break.c (reinsert_breakpoint_by_bp): Correct typo
+	stop_at -> stop_pc.
+
+2002-05-04  Andrew Cagney  <ac131313@redhat.com>
+
+	* Makefile.in: Remove obsolete code.
+
+2002-04-24  Michal Ludvig  <mludvig@suse.cz>
+
+	* linux-low.c (regsets_fetch_inferior_registers),
+	(regsets_store_inferior_registers): Removed cast to int from
+	ptrace() calls.
+	* regcache.h: Added declaration of struct inferior_info.
+
+2002-04-20  Daniel Jacobowitz  <drow@mvista.com>
+
+	* inferiors.c (struct inferior_info): Add regcache_data.
+	(add_inferior): Call create_register_cache.
+	(clear_inferiors): Call free_register_cache.
+	(inferior_regcache_data, set_inferior_regcache_data): New functions.
+	* regcache.c (struct inferior_regcache_data): New.
+	(registers): Remove.
+	(get_regcache): New function.
+	(create_register_cache, free_register_cache): New functions.
+	(set_register_cache): Don't initialize the register cache here.
+	(registers_to_string, registers_from_string, register_data): Call
+	get_regcache.
+	* regcache.h: Add prototypes.
+	* server.h: Likewise.
+
+2002-04-20  Daniel Jacobowitz  <drow@mvista.com>
+
+	* mem-break.c: New file.
+	* mem-break.h: New file.
+	* Makefile.in: Add mem-break.o rule; update server.h
+	dependencies.
+	* inferiors.c (struct inferior_info): Add target_data
+	member.
+	(clear_inferiors): Free target_data member if set.
+	(inferior_target_data, set_inferior_target_data): New functions.
+	* linux-i386-low.c (i386_breakpoint, i386_breakpoint_len)
+	(i386_stop_pc, i386_set_pc): New.  Add to the_low_target.
+	* linux-low.c (linux_bp_reinsert): New variable.
+	(struct inferior_linux_data): New.
+	(linux_create_inferior): Use set_inferior_target_data.
+	(linux_attach): Likewise.  Call add_inferior.
+	(linux_wait_for_one_inferior): New function.
+	(linux_wait): Call it.
+	(linux_write_memory): Add const.
+	(initialize_low): Call set_breakpoint_data.
+	* linux-low.h (struct linux_target_ops): Add breakpoint
+	handling members.
+	* server.c (attach_inferior): Remove extra add_inferior
+	call.
+	* server.h: Include mem-break.h.  Update inferior.c
+	prototypes.
+	* target.c (read_inferior_memory)
+	(write_inferior_memory): New functions.
+	* target.h (read_inferior_memory)
+	(write_inferior_memory): Change macros to prototypes.
+	(struct target_ops): Update comments.  Add const to write_memory
+	definition.
+
+2002-04-11  Daniel Jacobowitz  <drow@mvista.com>
+
+	* linux-low.c (usr_store_inferior_registers): Support
+	registers which are allowed to fail to store.
+	* linux-low.h (linux_target_ops): Likewise.
+	* linux-ppc-low.c (ppc_regmap): Support FPSCR.
+	(ppc_cannot_store_register): FPSCR may not be storable.
+
+2002-04-09  Daniel Jacobowitz  <drow@mvista.com>
+
+	* server.h: Include <string.h> if HAVE_STRING_H.
+	* ChangeLog: Correct paths in last ChangeLog entry.
+
+2002-04-09  Daniel Jacobowitz  <drow@mvista.com>
+
+	* linux-low.h: Remove obsolete prototypes.
+	(struct linux_target_ops): New.
+	(extern the_low_target): New.
+	* linux-low.c (num_regs, regmap): Remove declarations.
+	(register_addr): Use the_low_target explicitly.
+	(fetch_register): Likewise.
+	(usr_fetch_inferior_registers): Likewise.
+	(usr_store_inferior_registers): Likewise.
+	* linux-arm-low.c (num_regs): Remove.
+	(arm_num_regs): Define.
+	(arm_regmap): Renamed from regmap, made static.
+	(arm_cannot_fetch_register): Renamed from cannot_fetch_register,
+	made static.
+	(arm_cannot_store_register): Renamed from cannot_store_register,
+	made static.
+	(the_low_target): New.
+	* linux-i386-low.c (num_regs): Remove.
+	(i386_num_regs): Define.
+	(i386_regmap): Renamed from regmap, made static.
+	(i386_cannot_fetch_register): Renamed from cannot_fetch_register,
+	made static.
+	(i386_cannot_store_register): Renamed from cannot_store_register,
+	made static.
+	(the_low_target): New.
+	* linux-ia64-low.c (num_regs): Remove.
+	(ia64_num_regs): Define.
+	(ia64_regmap): Renamed from regmap, made static.
+	(ia64_cannot_fetch_register): Renamed from cannot_fetch_register,
+	made static.
+	(ia64_cannot_store_register): Renamed from cannot_store_register,
+	made static.
+	(the_low_target): New.
+	* linux-m68k-low.c (num_regs): Remove.
+	(m68k_num_regs): Define.
+	(m68k_regmap): Renamed from regmap, made static.
+	(m68k_cannot_fetch_register): Renamed from cannot_fetch_register,
+	made static.
+	(m68k_cannot_store_register): Renamed from cannot_store_register,
+	made static.
+	(the_low_target): New.
+	* linux-mips-low.c (num_regs): Remove.
+	(mips_num_regs): Define.
+	(mips_regmap): Renamed from regmap, made static.
+	(mips_cannot_fetch_register): Renamed from cannot_fetch_register,
+	made static.
+	(mips_cannot_store_register): Renamed from cannot_store_register,
+	made static.
+	(the_low_target): New.
+	* linux-ppc-low.c (num_regs): Remove.
+	(ppc_num_regs): Define.
+	(ppc_regmap): Renamed from regmap, made static.
+	(ppc_cannot_fetch_register): Renamed from cannot_fetch_register,
+	made static.
+	(ppc_cannot_store_register): Renamed from cannot_store_register,
+	made static.
+	(the_low_target): New.
+	* linux-s390-low.c (num_regs): Remove.
+	(s390_num_regs): Define.
+	(s390_regmap): Renamed from regmap, made static.
+	(s390_cannot_fetch_register): Renamed from cannot_fetch_register,
+	made static.
+	(s390_cannot_store_register): Renamed from cannot_store_register,
+	made static.
+	(the_low_target): New.
+	* linux-sh-low.c (num_regs): Remove.
+	(sh_num_regs): Define.
+	(sh_regmap): Renamed from regmap, made static.
+	(sh_cannot_fetch_register): Renamed from cannot_fetch_register,
+	made static.
+	(sh_cannot_store_register): Renamed from cannot_store_register,
+	made static.
+	(the_low_target): New.
+	* linux-x86-64-low.c (x86_64_regmap): Renamed from regmap.
+	(the_low_target): New.
+
+2002-04-09  Daniel Jacobowitz  <drow@mvista.com>
+
+	* Makefile.in: Add stamp-h target.
+	* configure.in: Create stamp-h.
+	* configure: Regenerated.
+
+2002-04-09  Daniel Jacobowitz  <drow@mvista.com>
+
+	* inferiors.c: New file.
+	* target.c: New file.
+	* target.h: New file.
+	* Makefile.in:  Add target.o and inferiors.o.  Update
+	dependencies.
+	* linux-low.c (inferior_pid): New static variable,
+	moved from server.c.
+	(linux_create_inferior): Renamed from create_inferior.
+	Call add_inferior.  Return 0 on success instead of a PID.
+	(linux_attach): Renamed from myattach.
+	(linux_kill): Renamed from kill_inferior.  Call clear_inferiors ().
+	(linux_thread_alive): Renamed from mythread_alive.
+	(linux_wait): Renamed from mywait.  Call clear_inferiors () if the
+	child dies.
+	(linux_resume): Renamed from myresume.  Add missing ``return 0''.
+	(regsets_store_inferior_registers): Correct error message.
+	Add missing ``return 0''.
+	(linux_fetch_registers): Renamed from fetch_inferior_registers.
+	(linux_store_registers): Renamed from store_inferior_registers.
+	(linux_read_memory): Renamed from read_inferior_memory.
+	(linux_write_memory): Renamed from write_inferior_memory.
+	(linux_target_ops): New structure.
+	(initialize_low): Call set_target_ops ().
+	* remote-utils.c (unhexify): New function.
+	(hexify): New function.
+	(input_interrupt): Send signals to ``signal_pid''.
+	* server.c (inferior_pid): Remove.
+	(start_inferior): Update create_inferior call.
+	(attach_inferior): Call add_inferior.
+	(handle_query): New function.
+	(main): Call handle_query for `q' packets.
+	* server.h: Include "target.h".  Remove obsolete prototypes.
+	Add prototypes for "inferiors.c", "target.c", hexify, and unhexify.
+
+2002-04-09  Daniel Jacobowitz  <drow@mvista.com>
+
+	* Makefile.in: Add WARN_CFLAGS.  Update configury
+	dependencies.
+	* configure.in: Check for <string.h>
+	* configure: Regenerate.
+	* config.in: Regenerate.
+	* gdbreplay.c: Include needed system headers.
+	(remote_open): Remove strchr prototype.
+	* linux-low.h: Correct #ifdef to HAVE_LINUX_USRREGS.
+	* regcache.c (supply_register): Change buf argument to const void *.
+	(supply_register_by_name): Likewise.
+	(collect_register): Change buf argument to void *.
+	(collect_register_by_name): Likewise.
+	* regcache.h: Add missing prototypes.
+	* remote-utils.c: Include <arpa/inet.h> for inet_ntoa.
+	* server.c (handle_query): New function.
+	(attached): New static variable, moved out of main.
+	(main): Quiet longjmp clobber warnings.
+	* server.h: Add ATTR_NORETURN and ATTR_FORMAT.  Update prototypes.
+	* utils.c (error): Remove NORETURN.
+	(fatal): Likewise.

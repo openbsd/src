@@ -1,0 +1,19 @@
+# Host: PowerPC64, running Linux
+
+XM_FILE= xm-linux.h
+XM_CLIBS=
+
+NAT_FILE= nm-ppc64-linux.h
+NATDEPFILES= infptrace.o inftarg.o fork-child.o linux-proc.o \
+	ppc-linux-nat.o proc-service.o thread-db.o lin-lwp.o \
+	gcore.o linux-nat.o
+
+# The PowerPC has severe limitations on TOC size, and uses them even
+# for non-PIC code.  GDB overflows those tables when compiling with
+# -mfull-toc (the default), so we need to ask GCC to use as few TOC
+# entries as possible.
+MH_CFLAGS= -mminimal-toc
+
+# The dynamically loaded libthread_db needs access to symbols in the
+# gdb executable.
+LOADLIBES= -ldl -rdynamic

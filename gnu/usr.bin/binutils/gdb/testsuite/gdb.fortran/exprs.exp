@@ -1,4 +1,4 @@
-# Copyright (C) 1994 Free Software Foundation, Inc.
+# Copyright (C) 1994, 1997 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -12,12 +12,13 @@
 # 
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  
 
 # Please email any bugs, comments, and/or additions to this file to:
 # bug-gdb@prep.ai.mit.edu
 
-# This file was adapted from Chill tests by Stan Shebs (shebs@cygnus.com).
+# This file was adapted from old Chill tests by Stan Shebs
+# (shebs@cygnus.com).
 
 if $tracelevel then {
 	strace $tracelevel
@@ -30,33 +31,21 @@ set bug_id 0
 # fails, then we skip the other tests.
 
 proc set_lang_fortran {} {
-    global prompt
-
-    send "set language fortran\n"
-    expect {
-	-re ".*$prompt $" {}
-	timeout { fail "set language fortran (timeout)" ; return 0 }
+    global gdb_prompt
+    
+    if [gdb_test "set language fortran" ""] {
+	return 0;
     }
 
-    send "show language\n"
-    expect {
-	-re ".* source language is \"fortran\".*$prompt $" {
-	    pass "set language to \"fortran\""
-	    return 1
-	}
-	-re ".*$prompt $" {
-	    fail "setting language to \"fortran\""
-	    return 0
-	}
-	timeout {
-	    fail "can't show language (timeout)"
-	    return 0
-	}
+    if ![gdb_test "show language" ".* source language is \"fortran\".*"] {
+	return 1;
+    } else {
+	return 0;
     }
 }
 
 proc test_integer_literals_accepted {} {
-    global prompt
+    global gdb_prompt
 
     # Test various decimal values.
 
@@ -65,7 +54,7 @@ proc test_integer_literals_accepted {} {
 }
 
 proc test_character_literals_accepted {} {
-    global prompt
+    global gdb_prompt
 
     # Test various character values.
 
@@ -73,13 +62,13 @@ proc test_character_literals_accepted {} {
 }
 
 proc test_integer_literals_rejected {} {
-    global prompt
+    global gdb_prompt
 
     test_print_reject "p _"
 }
 
 proc test_logical_literals_accepted {} {
-    global prompt
+    global gdb_prompt
 
     # Test the only possible values for a logical, TRUE and FALSE.
 
@@ -88,7 +77,7 @@ proc test_logical_literals_accepted {} {
 }
 
 proc test_float_literals_accepted {} {
-    global prompt
+    global gdb_prompt
 
     # Test various floating point formats
 
@@ -143,7 +132,7 @@ proc test_float_literals_accepted {} {
 }
 
 proc test_convenience_variables {} {
-    global prompt
+    global gdb_prompt
 
     gdb_test "set \$foo = 101"	" = 101\[\r\n\]*" \
 	"Set a new convenience variable"
@@ -174,7 +163,7 @@ proc test_convenience_variables {} {
 }
 
 proc test_value_history {} {
-    global prompt
+    global gdb_prompt
 
     gdb_test "print 101"	"\\\$1 = 101" \
 	"Set value-history\[1\] using \$1"
@@ -222,7 +211,7 @@ proc test_value_history {} {
 }
 
 proc test_arithmetic_expressions {} {
-    global prompt
+    global gdb_prompt
 
     # Test unary minus with various operands
 
@@ -269,7 +258,7 @@ gdb_exit
 gdb_start
 gdb_reinitialize_dir $srcdir/$subdir
 
-send "set print sevenbit-strings\n" ; expect -re ".*$prompt $"
+gdb_test "set print sevenbit-strings" ""
 
 if [set_lang_fortran] then {
     test_value_history

@@ -1,0 +1,265 @@
+#   Copyright 2003
+#   Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  
+
+# Please email any bugs, comments, and/or additions to this file to:
+# bug-gdb@prep.ai.mit.edu
+
+# This file was written by Joel Brobecker (brobecker@gnat.com), derived
+# from xfullpath.exp.
+
+if $tracelevel then {
+    strace $tracelevel
+}
+
+set prms_id 0
+set bug_id 0
+
+# are we on a target board
+if [is_remote target] {
+    return
+}
+
+proc setup_test { executable } {
+    global gdb_prompt
+    global timeout
+
+    # load yourself into the debugger
+    # This can take a relatively long time, particularly for testing where
+    # the executable is being accessed over a network, or where gdb does not
+    # support partial symbols for a particular target and has to load the
+    # entire symbol table.  Set the timeout to 10 minutes, which should be
+    # adequate for most environments (it *has* timed out with 5 min on a
+    # SPARCstation SLC under moderate load, so this isn't unreasonable).
+    # After gdb is started, set the timeout to 30 seconds for the duration
+    # of this test, and then back to the original value.
+
+    set oldtimeout $timeout
+    set timeout 600
+    verbose "Timeout is now $timeout seconds" 2
+    if {[gdb_load $executable] <0} then {
+	set timeout $oldtimeout
+	verbose "Timeout is now $timeout seconds" 2
+	return -1
+    }
+    set timeout $oldtimeout
+    verbose "Timeout is now $timeout seconds" 2
+
+    # Set a breakpoint at main
+    gdb_test "break captured_main" \
+            "Breakpoint.*at.* file.*, line.*" \
+            "breakpoint in captured_main"
+
+    # run yourself
+    # It may take a very long time for the inferior gdb to start (lynx),
+    # so we bump it back up for the duration of this command.
+    set timeout 600
+
+    set description "run until breakpoint at captured_main"
+    send_gdb "run -nw\n"
+    gdb_expect {
+        -re "Starting program.*Breakpoint \[0-9\]+,.*captured_main .data.* at .*main.c:.*$gdb_prompt $" {
+            pass "$description"
+        }
+        -re "Starting program.*Breakpoint \[0-9\]+,.*captured_main .data.*$gdb_prompt $" {
+            xfail "$description (line numbers scrambled?)"
+        }
+        -re "vfork: No more processes.*$gdb_prompt $" {
+            fail "$description (out of virtual memory)"
+            set timeout $oldtimeout
+            verbose "Timeout is now $timeout seconds" 2
+            return -1
+        }
+        -re ".*$gdb_prompt $" {
+            fail "$description"
+            set timeout $oldtimeout
+            verbose "Timeout is now $timeout seconds" 2
+            return -1
+        }
+        timeout {
+            fail "$description (timeout)"
+        }
+    }
+
+    set timeout $oldtimeout
+    verbose "Timeout is now $timeout seconds" 2
+
+    return 0
+}
+
+proc attach_first_observer { } {
+    gdb_test "set \$first_obs = observer_attach_normal_stop (&observer_test_first_notification_function)" \
+             "" "attach first observer"
+}
+
+proc attach_second_observer { } {
+    gdb_test "set \$second_obs = observer_attach_normal_stop (&observer_test_second_notification_function)" \
+             "" "attach second observer"
+}
+
+proc attach_third_observer { } {
+    gdb_test "set \$third_obs = observer_attach_normal_stop (&observer_test_third_notification_function)" \
+             "" "attach third observer"
+}
+
+proc detach_first_observer { } {
+    gdb_test "call observer_detach_normal_stop (\$first_obs)" \
+             "" "detach first observer"
+}
+
+proc detach_second_observer { } {
+    gdb_test "call observer_detach_normal_stop (\$second_obs)" \
+             "" "detach second observer"
+}
+
+proc detach_third_observer { } {
+    gdb_test "call observer_detach_normal_stop (\$third_obs)" \
+             "" "detach third observer"
+}
+
+proc check_counters { first second third message } {
+    gdb_test "print observer_test_first_observer" \
+             ".\[0-9\]+ =.*$first" \
+             "check first observer counter value ($message)"
+    gdb_test "print observer_test_second_observer" \
+             ".\[0-9\]+ =.*$second" \
+             "check second observer counter value ($message)"
+    gdb_test "print observer_test_third_observer" \
+             ".\[0-9\]+ =.*$third" \
+             "check third observer counter value ($message)"
+}
+
+proc reset_counters { } {
+    gdb_test "set variable observer_test_first_observer = 0" "" \
+             "reset first observer counter"
+    gdb_test "set variable observer_test_second_observer = 0" "" \
+             "reset second observer counter"
+    gdb_test "set variable observer_test_third_observer = 0" "" \
+             "reset third observer counter"
+}
+
+proc test_normal_stop_notifications { first second third message } {
+    reset_counters
+    gdb_test "call observer_notify_normal_stop ()" "" \
+             "sending notification ($message)"
+    check_counters $first $second $third $message
+}
+
+proc test_observer_normal_stop { executable } {
+
+    set setup_result [setup_test $executable]
+    if {$setup_result <0} then {
+        return -1
+    }
+
+    # First, try sending a notification without any observer attached.
+    test_normal_stop_notifications 0 0 0 "no observer"
+
+    # Now, attach one observer, and send a notification.
+    attach_second_observer
+    test_normal_stop_notifications 0 1 0 "one observer"
+
+    # Remove the observer, and send a notification.
+    detach_second_observer
+    test_normal_stop_notifications 0 0 0 "no observer"
+
+    # With a new observer.
+    attach_first_observer
+    test_normal_stop_notifications 1 0 0 "a new observer"
+
+    # With 2 observers.
+    attach_second_observer
+    test_normal_stop_notifications 1 1 0 "2 observers"
+
+    # With 3 observers.
+    attach_third_observer
+    test_normal_stop_notifications 1 1 1 "3 observers"
+
+    # Remove middle observer.
+    detach_second_observer
+    test_normal_stop_notifications 1 0 1 "middle observer removed"
+
+    # Remove first observer.
+    detach_first_observer
+    test_normal_stop_notifications 0 0 1 "first observer removed"
+
+    # Remove last observer.
+    detach_third_observer
+    test_normal_stop_notifications 0 0 0 "last observer removed"
+
+    # Go back to 3 observers, and remove them in a different order...
+    attach_first_observer
+    attach_second_observer
+    attach_third_observer
+    test_normal_stop_notifications 1 1 1 "3 observers again"
+
+    # Remove the third observer.
+    detach_third_observer
+    test_normal_stop_notifications 1 1 0 "third observer removed"
+
+    # Remove the second observer.
+    detach_second_observer
+    test_normal_stop_notifications 1 0 0 "second observer removed"
+
+    # Remove the first observer, no more observers.
+    detach_first_observer
+    test_normal_stop_notifications 0 0 0 "last observer removed"
+
+    return 0
+}
+
+# Find a pathname to a file that we would execute if the shell was asked
+# to run $arg using the current PATH.
+
+proc find_gdb { arg } {
+
+    # If the arg directly specifies an existing executable file, then
+    # simply use it.
+
+    if [file executable $arg] then {
+	return $arg
+    }
+
+    set result [which $arg]
+    if [string match "/" [ string range $result 0 0 ]] then {
+	return $result
+    }
+
+    # If everything fails, just return the unqualified pathname as default
+    # and hope for best.
+
+    return $arg
+}
+
+# Run the test with self.
+# Copy the file executable file in case this OS doesn't like to edit its own
+# text space.
+
+set GDB_FULLPATH [find_gdb $GDB]
+
+# Remove any old copy lying around.
+remote_file host delete x$tool
+
+gdb_start
+set file [remote_download host $GDB_FULLPATH x$tool]
+set result [test_observer_normal_stop $file];
+gdb_exit;
+catch "remote_file host delete $file";
+
+if {$result <0} then {
+    warning "Couldn't test self"
+    return -1
+}

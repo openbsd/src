@@ -877,63 +877,6 @@ var2:
 var3:
 .long 42
 
-# Manually hacked version of the following.  The manual hacking is to
-# remove the extra names (which GDB 4.9 bogusly relies on).
-
-# Virtual base classes in which there are no variables of the base
-# class types.
-
-# class only_one_instance {
-#  public:
-#   int x;
-# };
-
-# class inherit_path_a : public virtual only_one_instance {
-#   int a;
-# };
-
-# class inherit_path_b : public virtual only_one_instance {
-#   int b;
-# };
-
-# class combine_paths : public inherit_path_a, public inherit_path_b {
-#   int comb;
-# };
-
-# combine_paths v_comb;
-
-# These are the unhacked stabs I started with (only change has been to
-# convert them to weird.def format, and change the numbers to the 400
-# range.  
-
-# .stabs "only_one_instance:Tt444=s4x:1,0,32;;", N_LSYM,0,0, 0
-# .stabs "inherit_path_a:Tt445=s12!1,120,444;$vb444:446=*444,0;a:/01,32,32;;",
-#       N_LSYM,0,0, 0
-# .stabs "inherit_path_b:Tt447=s12!1,120,444;$vb444:446,0;b:/01,32,32;;", N_LSYM,0,0, 0
-# .stabs "combine_paths:Tt448=s24!2,020,445;0264,447;comb:/01,128,32;;", N_LSYM,0,0, 0
-# .stabs "v_comb:G448", N_GSYM,0,0, 0
-
-# Hacked version, without class names.
-
-.stabs "v_comb:G448=s24!2,020,445=s12!1,120,444=s4x:1,0,32;;;$vb444:446=@s32;*444,0;a:/01,32,32;;;0264,447=s12!1,120,444;$vb444:446,0;b:/01,32,32;;;comb:/01,128,32;;", N_GSYM,0,0, 0
-
-	.globl v_comb
-	.align 1
-v_comb:
-# virtual base class pointer for inherit_path_a 
-	.long v_comb_shared 
-# a 
-	.long 43 
-# virtual base class pointer for inherit_path_b 
-	.long v_comb_shared 
-# b 
-	.long 44 
-# comb 
-	.long 45 
-v_comb_shared:
-# x 
-	.long 42 
-
 .stabs "sym92:\ !#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[]^_`abcdefghijklmnopqrstuvwxyz{|}~",N_LSYM,0,0,0
 .stabs "type92:t92=\ !#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[]^_`abcdefghijklmnopqrstuvwxyz{|}~",N_LSYM,0,0,0
 .stabs "attr92:G392=@\ !#$%&'()*+,-./0123456789:<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[]^_`abcdefghijklmnopqrstuvwxyz{|}~;1",N_GSYM,0,0, 0

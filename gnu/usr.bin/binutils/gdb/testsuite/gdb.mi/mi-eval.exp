@@ -1,0 +1,62 @@
+# Copyright 1999, 2000, 2002 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  
+
+# Please email any bugs, comments, and/or additions to this file to:
+# bug-gdb@prep.ai.mit.edu
+
+#
+# Test essential Machine interface (MI) operations
+#
+# Verify -data-evaluate-expression. There are really minimal tests.
+
+# The goal is not to test gdb functionality, which is done by other tests,
+# but to verify the correct output response to MI operations.
+#
+
+load_lib mi-support.exp
+set MIFLAGS "-i=mi"
+
+gdb_exit
+if [mi_gdb_start] {
+    continue
+}
+
+set testfile "basics"
+set srcfile ${testfile}.c
+set binfile ${objdir}/${subdir}/${testfile}
+if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug additional_flags=-DFAKEARGV}] != "" } {
+     gdb_suppress_entire_file "Testcase compile failed, so all tests in this file will automatically fail."
+}
+
+mi_delete_breakpoints
+mi_gdb_reinitialize_dir $srcdir/$subdir
+mi_gdb_reinitialize_dir $srcdir/$subdir
+mi_gdb_load ${binfile}
+
+mi_runto callee4
+mi_next_to "callee4" "" "basics.c" "9" "next at callee4"
+
+mi_gdb_test "211-data-evaluate-expression A" "211\\^done,value=\"1\"" "eval A"
+
+mi_gdb_test "311-data-evaluate-expression &A" "311\\^done,value=\"$hex\"" "eval &A"
+
+mi_gdb_test "411-data-evaluate-expression A+3" "411\\^done,value=\"4\"" "eval A+3"
+
+mi_gdb_test "511-data-evaluate-expression \"A + 3\"" "511\\^done,value=\"4\"" "eval A + 3"
+
+
+mi_gdb_exit
+return 0

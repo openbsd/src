@@ -93,6 +93,8 @@ struct host_callback_struct
   void (*flush_stderr) PARAMS ((host_callback *));
   int (*stat) PARAMS ((host_callback *, const char *, struct stat *));
   int (*fstat) PARAMS ((host_callback *, int, struct stat *));
+  int (*ftruncate) PARAMS ((host_callback *, int, long));
+  int (*truncate) PARAMS ((host_callback *, const char *, long));
 
   /* When present, call to the client to give it the oportunity to
      poll any io devices for a request to quit (indicated by a nonzero

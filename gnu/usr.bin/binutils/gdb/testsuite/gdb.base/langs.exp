@@ -1,3 +1,22 @@
+#   Copyright (C) 1997, 1998 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  
+
+# Please email any bugs, comments, and/or additions to this file to:
+# bug-gdb@prep.ai.mit.edu
+
 if $tracelevel then {
 	strace $tracelevel
 }
@@ -7,47 +26,77 @@ set bug_id 0
 
 set testfile langs
 set binfile ${objdir}/${subdir}/${testfile}
-if  { [compile "-g -c ${srcdir}/${subdir}/langs0.c"] != "" } {
-    perror "Couldn't compile langs0.c to object"
-    return -1
+
+if [is_remote host] {
+    remote_download host ${srcdir}/${subdir}/langs1.f
+    remote_download host ${srcdir}/${subdir}/langs2.cxx
 }
-execute_anywhere "mv langs0.o ${binfile}0.o"
-if  { [compile "-g -c ${srcdir}/${subdir}/langs1.c"] != "" } {
-    perror "Couldn't compile langs1.c to object"
-    return -1
+
+
+if  { [gdb_compile "${srcdir}/${subdir}/langs0.c" "${binfile}0.o" object {debug}] != "" } {
+     gdb_suppress_entire_file "Testcase compile failed, so all tests in this file will automatically fail."
 }
-execute_anywhere "mv langs1.o ${binfile}1.o"
-if  { [compile "-g -c ${srcdir}/${subdir}/langs2.c"] != "" } {
-    perror "Couldn't compile langs2.c to object"
-    return -1
+
+if  { [gdb_compile "${srcdir}/${subdir}/langs1.c" "${binfile}1.o" object {debug}] != "" } {
+     gdb_suppress_entire_file "Testcase compile failed, so all tests in this file will automatically fail."
 }
-execute_anywhere "mv langs2.o ${binfile}2.o"
-if  { [compile "${binfile}0.o ${binfile}1.o ${binfile}2.o  -o ${binfile}"] != "" } {
-    perror "Couldn't link langs."
-    return -1
+
+if  { [gdb_compile "${srcdir}/${subdir}/langs2.c" "${binfile}2.o" object {debug}] != "" } {
+     gdb_suppress_entire_file "Testcase compile failed, so all tests in this file will automatically fail."
 }
+
+if  { [gdb_compile "${binfile}0.o ${binfile}1.o ${binfile}2.o" ${binfile} executable {debug}] != "" } {
+     gdb_suppress_entire_file "Testcase compile failed, so all tests in this file will automatically fail."
+}
+
+set oldtimeout $timeout
+set timeout 10
+
+
 
 # Create and source the file that provides information about the compiler
 # used to compile the test case.
-execute_anywhere "rm -f ${binfile}.ci"
-if  { [compile "-E ${srcdir}/${subdir}/compiler.c > ${binfile}.ci"] != "" } {
-    perror "Couldn't make ${binfile}.ci file"
-    return -1
+if [get_compiler_info ${binfile}] {
+    return -1;
 }
-source ${binfile}.ci
 
 gdb_exit
 gdb_start
 gdb_reinitialize_dir $srcdir/$subdir
 gdb_load $binfile
 
-gdb_test "b langs0" {Function "langs0" not defined\.} \
-    "break on nonexistent function in langs.exp"
+gdb_test_multiple "b langs0" "break on nonexistent function in langs.exp" {
+	-re "Function \"langs0\" not defined\..*Make breakpoint pending on future shared library load.*y or .n.. $" {
+
+		gdb_test "n" "" "break on nonexistent function in langs.exp"
+	}
+	-re "Breakpoint .* (deferred).*$gdb_prompt $" {
+		pass "break on nonexistent function in langs.exp"
+	}
+}
+
+if {$hp_aCC_compiler} {
+    set isfixed 1
+    set lang c\\+\\+
+    set ext cxx
+    set foo_func foo__Fi__Fi
+    set do_func do::langs0
+} else {
+    if {$hp_cc_compiler} {
+        set isfixed 1
+        set lang c
+        set ext c
+    } else {
+        set isfixed 0
+    }
+    set foo_func foo__Fi
+    set do_func langs0__2do
+}
 
 if [runto csub] then {
-    global noresults
 
-    gdb_test "show language" "currently c\".*" \
+    if { !$isfixed } { set lang c }
+    gdb_test "show language" "currently $lang\".*" \
 	"show language at csub in langs.exp"
     # On some machines, foo doesn't get demangled because the N_SOL for
     # langs2.cxx is seen only after the function stab for foo.  So
@@ -55,42 +104,68 @@ if [runto csub] then {
     # even though only the latter is correct.  I haven't tried to xfail it
     # because it depends on details of the compiler.
     
-    if {!$gcc_compiled} then { setup_xfail "hppa*-*-hpux*" }
-    gdb_test "bt" "#0.*csub.*#1.*(foo|foo__Fi) \\(.*#2.*cppsub_ .*#3.*fsub.*#4.*langs0__2do \\(.*#5  \[0-9a-fx\]* in main.*" "backtrace in langs.exp"
+    # Take out xfail. This test has been passing for some time now.
+    #if {!$gcc_compiled} then { setup_xfail "hppa*-*-hpux*" }
+    gdb_test "bt" "#0.*csub.*#1.*(foo|$foo_func) \\(.*#2.*cppsub_ .*#3.*fsub.*#4.*$do_func \\(.*#5  \[0-9a-fx\]* in main.*" "backtrace in langs.exp"
 
+    if { !$isfixed } { set lang c\\+\\+; set ext cxx }
     if {!$gcc_compiled} then { setup_xfail "rs6000-*-*" }
-    gdb_test "up" ".* in (foo|foo__Fi) .* at langs2\\.cxx.*return csub \\(.*" \
+    gdb_test "up" ".* in (foo|$foo_func).* at langs2\\.$ext.*return csub \\(.*" \
 	"up to foo in langs.exp"
-    gdb_test "show language" "currently c\\+\\+.*" \
+    gdb_test "show language" "currently $lang.*" \
 	"show language at foo in langs.exp"
 
     if {!$gcc_compiled} then { setup_xfail "rs6000-*-*" }
-    gdb_test "up" ".* in cppsub_ .* at langs2\\.cxx.*return foo \\(.*" \
+    gdb_test "up" ".* in cppsub_ .* at langs2\\.$ext.*return foo \\(.*" \
 	"up to cppsub_ in langs.exp"
-    gdb_test "show language" "currently c\\+\\+.*" \
+    gdb_test "show language" "currently $lang.*" \
 	"show language at cppsub_ in langs.exp"
 
+    if { !$isfixed } { set lang fortran }
     if {!$gcc_compiled} then { setup_xfail "rs6000-*-*" }
-    gdb_test "up" ".* in fsub.* at langs1\\.f.*return \\(cppsub .*" \
+    gdb_test "up" ".* in fsub.* at langs1\\.f.*" \
 	"up to fsub in langs.exp"
-    gdb_test "show language" "currently fortran.*" \
+    gdb_test "show language" "currently $lang.*" \
 	"show language at fsub in langs.exp"
 
-    if {!$gcc_compiled} then { setup_xfail "hppa*-*-hpux*" }
-    gdb_test "up" ".* in langs0__2do .* at .*langs0\\.c.*return fsub.*" \
+    # Take out xfail. This test has been passing for sometime now.
+    #if {!$gcc_compiled} then { setup_xfail "hppa*-*-hpux*" }
+    if { !$isfixed } { set lang c }
+    gdb_test "up" ".* in $do_func .* at .*langs0\\.c.*return fsub.*" \
 	"up to langs0__2do in langs.exp"
-    gdb_test "show language" "currently c\".*" \
+    gdb_test "show language" "currently $lang\".*" \
 	"show language at langs0__2do in langs.exp"
 
     gdb_test "up" ".* in main .* at .*langs0\\.c.*if \\(langs0__2do \\(.*" \
 	"up to main in langs.exp"
-    gdb_test "show language" "currently c\".*" \
+    gdb_test "show language" "currently $lang\".*" \
 	"show language at main in langs.exp"
 
-    if $noresults==1 then { return }
+    if [target_info exists gdb,noresults] { return }
 
-    gdb_test "cont" "Program exited normally\\." \
-	"continue to exit in langs.exp"
+    if [target_info exists use_gdb_stub] {
+	gdb_breakpoint "exit"
+	gdb_test "cont" "Breakpoint .*exit.*" "continue to exit in langs.exp"
+    } else {
+	gdb_test "cont" "Program exited normally\\..*" \
+		"continue to exit in langs.exp"
+    }
 }
 
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+gdb_load $binfile
+
+# Try exercising the "minimal" language a bit...
+
+if [runto csub] then {
+    gdb_test "set lang minimal" \
+             "Warning: the current language does not match this frame." \
+             "set lang to minimal"
+    
+    gdb_test "print x" " = 5000" "print parameter value"
+}
+
+set timeout $oldtimeout
 return 0

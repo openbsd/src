@@ -1,196 +1,128 @@
-/* sparc-dependent portions of the RPC protocol
-   used with a VxWorks target 
+/* SPARC-specific portions of the RPC protocol for VxWorks.
 
-Contributed by Wind River Systems.
+   Contributed by Wind River Systems.
 
-This file is part of GDB.
+   This file is part of GDB.
 
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
+   This program is free software; you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation; either version 2 of the License, or
+   (at your option) any later version.
 
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software
-Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+   You should have received a copy of the GNU General Public License
+   along with this program; if not, write to the Free Software
+   Foundation, Inc., 59 Temple Place - Suite 330,
+   Boston, MA 02111-1307, USA.  */
 
-#include <stdio.h>
 #include "defs.h"
-
-#include "vx-share/regPacket.h"  
-#include "frame.h"
-#include "inferior.h"
-#include "wait.h"
-#include "target.h"
-#include "gdbcore.h"
-#include "command.h"
-#include "symtab.h"
-#include "symfile.h"		/* for struct complaint */
+#include "regcache.h"
 
 #include "gdb_string.h"
-#include <errno.h>
-#include <signal.h>
-#include <fcntl.h>
-#include <sys/types.h>
-#include <sys/time.h>
-#include <sys/socket.h>
 
-#ifdef _AIX                     /* IBM claims "void *malloc()" not char * */
-#define malloc bogon_malloc
-#endif
+#include "sparc-tdep.h"
 
-#include <rpc/rpc.h>
-#include <sys/time.h>		/* UTek's <rpc/rpc.h> doesn't #incl this */
-#include <netdb.h>
 #include "vx-share/ptrace.h"
-#include "vx-share/xdr_ptrace.h"
-#include "vx-share/xdr_ld.h"
-#include "vx-share/xdr_rdb.h"
-#include "vx-share/dbgRpcLib.h"
+#include "vx-share/regPacket.h"
 
-/* get rid of value.h if possible */
-#include <value.h>
-#include <symtab.h>
+#define SPARC_R_G1	(SPARC_R_G0 + SPARC_GREG_SIZE)
 
-/* Flag set if target has fpu */
+const struct sparc_gregset vxsparc_gregset =
+{
+  SPARC_R_PSR,			/* %psr */
+  SPARC_R_PC,			/* %pc */
+  SPARC_R_NPC,			/* %npc */
+  SPARC_R_Y,			/* %y */
+  SPARC_R_WIM,			/* %wim */
+  SPARC_R_TBR,			/* %tbr */
+  SPARC_R_G1,			/* %g1 */
+  SPARC_R_I0			/* %l0 */
+};
+
+/* Flag set if target has an FPU.  */
 
 extern int target_has_fp;
-
-/* sparc floating point format descriptor, from "sparc-tdep.c."  */
-
-extern struct ext_format ext_format_sparc;
 
 /* Generic register read/write routines in remote-vx.c.  */
 
 extern void net_read_registers ();
 extern void net_write_registers ();
 
-/* Read a register or registers from the VxWorks target.
-   REGNO is the register to read, or -1 for all; currently,
-   it is ignored.  FIXME look at regno to improve efficiency.  */
+/* Read a register or registers from the VxWorks target.  REGNUM is
+   the register to read, or -1 for all; currently, it is ignored.
+   FIXME: Look at REGNUM to improve efficiency.  */
 
 void
-vx_read_register (regno)
-     int regno;
+vx_read_register (int regnum)
 {
-  char sparc_greg_packet[SPARC_GREG_PLEN];
-  char sparc_fpreg_packet[SPARC_FPREG_PLEN];
+  struct regcache *regcache = current_regcache;
+  char gregs[SPARC_GREG_PLEN];
+  char fpregs[SPARC_FPREG_PLEN];
   CORE_ADDR sp;
 
-  /* Get general-purpose registers.  When copying values into
-     registers [], don't assume that a location in registers []
-     is properly aligned for the target data type.  */
+  /* Get the general-purpose registers.  */
+  net_read_registers (gregs, SPARC_GREG_PLEN, PTRACE_GETREGS);
+  sparc32_supply_gregset (&vxsparc_gregset, regcache, -1, gregs);
 
-  net_read_registers (sparc_greg_packet, SPARC_GREG_PLEN, PTRACE_GETREGS);
-
-  /* Now copy the register values into registers[].
-     Note that this code depends on the ordering of the REGNUMs
-     as defined in "tm-sparc.h".  */
-
-  bcopy (&sparc_greg_packet[SPARC_R_G0],
-	 &registers[REGISTER_BYTE (G0_REGNUM)], 32 * SPARC_GREG_SIZE);
-  bcopy (&sparc_greg_packet[SPARC_R_Y],
-	 &registers[REGISTER_BYTE (Y_REGNUM)], 6 * SPARC_GREG_SIZE);
-
-  /* Now write the local and in registers to the register window
-     spill area in the frame.  VxWorks does not do this for the
-     active frame automatically; it greatly simplifies debugging
-     (FRAME_FIND_SAVED_REGS, in particular, depends on this).  */
-
-  sp = extract_address (&registers[REGISTER_BYTE (SP_REGNUM)], 
-	REGISTER_RAW_SIZE (CORE_ADDR));
-  write_memory (sp, &registers[REGISTER_BYTE (L0_REGNUM)],
-		16 * REGISTER_RAW_SIZE (L0_REGNUM));
-
-  /* If the target has floating point registers, fetch them.
-     Otherwise, zero the floating point register values in
-     registers[] for good measure, even though we might not
-     need to.  */
-
+  /* If the target has floating-point registers, fetch them.
+     Otherwise, zero the floating-point register values in GDB's
+     register cache for good measure, even though we might not need
+     to.  */
   if (target_has_fp)
-    {
-      net_read_registers (sparc_fpreg_packet, SPARC_FPREG_PLEN,
-                          PTRACE_GETFPREGS);
-      bcopy (&sparc_fpreg_packet[SPARC_R_FP0], 
-             &registers[REGISTER_BYTE (FP0_REGNUM)], 32 * SPARC_FPREG_SIZE);
-      bcopy (&sparc_fpreg_packet[SPARC_R_FSR],
-	     &registers[REGISTER_BYTE (FPS_REGNUM)], 1 * SPARC_FPREG_SIZE);
-    }
+    net_read_registers (fpregs, SPARC_FPREG_PLEN, PTRACE_GETFPREGS);
   else
-    { 
-      bzero (&registers[REGISTER_BYTE (FP0_REGNUM)], 32 * SPARC_FPREG_SIZE);
-      bzero (&registers[REGISTER_BYTE (FPS_REGNUM)], 1 * SPARC_FPREG_SIZE);
-    }
-
-  /* Mark the register cache valid.  */
-
-  registers_fetched ();
+    memset (fpregs, 0, SPARC_FPREG_PLEN);
+  sparc32_supply_fpregset (regcache, -1, fpregs);
 }
 
-/* Store a register or registers into the VxWorks target.
-   REGNO is the register to store, or -1 for all; currently,
-   it is ignored.  FIXME look at regno to improve efficiency.  */
+/* Store a register or registers into the VxWorks target.  REGNUM is
+   the register to store, or -1 for all; currently, it is ignored.
+   FIXME: Look at REGNUM to improve efficiency.  */
 
 void
-vx_write_register (regno)
-     int regno;
+vx_write_register (int regnum)
 {
-  char sparc_greg_packet[SPARC_GREG_PLEN];
-  char sparc_fpreg_packet[SPARC_FPREG_PLEN];
-  int in_gp_regs;
-  int in_fp_regs;
+  struct regcache *regcache = current_regcache;
+  char gregs[SPARC_GREG_PLEN];
+  char fpregs[SPARC_FPREG_PLEN];
+  int gregs_p = 1;
+  int fpregs_p = 1;
   CORE_ADDR sp;
 
-  /* Store general purpose registers.  When copying values from
-     registers [], don't assume that a location in registers []
-     is properly aligned for the target data type.  */
-
-  in_gp_regs = 1;
-  in_fp_regs = 1;
-  if (regno >= 0)
+  if (regnum != -1)
     {
-      if ((G0_REGNUM <= regno && regno <= I7_REGNUM)
-          || (Y_REGNUM <= regno && regno <= NPC_REGNUM))
-	in_fp_regs = 0;
+      if ((SPARC_G0_REGNUM <= regnum && regnum <= SPARC_I7_REGNUM)
+	  || (SPARC32_Y_REGNUM <= regnum && regnum <= SPARC32_NPC_REGNUM))
+	fpregs_p = 0;
       else
-	in_gp_regs = 0;
+	gregs_p = 0;
     }
-  if (in_gp_regs)
+
+  /* Store the general-purpose registers.  */
+  if (gregs_p)
     {
-      bcopy (&registers[REGISTER_BYTE (G0_REGNUM)],
-	     &sparc_greg_packet[SPARC_R_G0], 32 * SPARC_GREG_SIZE);
-      bcopy (&registers[REGISTER_BYTE (Y_REGNUM)],
-	     &sparc_greg_packet[SPARC_R_Y], 6 * SPARC_GREG_SIZE);
+      sparc32_collect_gregset (&vxsparc_gregset, regcache, -1, gregs);
+      net_write_registers (gregs, SPARC_GREG_PLEN, PTRACE_SETREGS);
 
-      net_write_registers (sparc_greg_packet, SPARC_GREG_PLEN, PTRACE_SETREGS);
+      /* Deal with the stack regs.  */
+      if (regnum == -1 || regnum == SPARC_SP_REGNUM
+	  || (regnum >= SPARC_L0_REGNUM && regnum <= SPARC_I7_REGNUM))
+	{
+	  ULONGEST sp;
 
-      /* If this is a local or in register, or we're storing all
-         registers, update the register window spill area.  */
-
-      if (regno < 0 || (L0_REGNUM <= regno && regno <= I7_REGNUM))
-        {
-  	  sp = extract_address (&registers[REGISTER_BYTE (SP_REGNUM)], 
-		REGISTER_RAW_SIZE (CORE_ADDR));
-	  write_memory (sp, &registers[REGISTER_BYTE (L0_REGNUM)],
-			16 * REGISTER_RAW_SIZE (L0_REGNUM));
+	  regcache_cooked_read_unsigned (regcache, SPARC_SP_REGNUM, &sp);
+	  sparc_collect_rwindow (regcache, sp, regnum);
 	}
     }
 
-  /* Store floating point registers if the target has them.  */
-
-  if (in_fp_regs && target_has_fp)
+  /* Store the floating-point registers if the target has them.  */
+  if (fpregs_p && target_has_fp)
     {
-      bcopy (&registers[REGISTER_BYTE (FP0_REGNUM)], 
-	     &sparc_fpreg_packet[SPARC_R_FP0], 32 * SPARC_FPREG_SIZE);
-      bcopy (&registers[REGISTER_BYTE (FPS_REGNUM)], 
-	     &sparc_fpreg_packet[SPARC_R_FSR], 1 * SPARC_FPREG_SIZE);
-
-      net_write_registers (sparc_fpreg_packet, SPARC_FPREG_PLEN,
-                           PTRACE_SETFPREGS);
+      sparc32_collect_fpregset (regcache, -1, fpregs);
+      net_write_registers (fpregs, SPARC_FPREG_PLEN, PTRACE_SETFPREGS);
     }
 }

@@ -1,7 +1,30 @@
+#   Copyright 1988, 1990, 1991, 1992, 1994, 1995, 1996, 1997, 1998, 1999,
+#   2000, 2001, 2002, 2003
+#   Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  
+
+# Please email any bugs, comments, and/or additions to this file to:
+# bug-gdb@prep.ai.mit.edu
+
 # Start with a fresh gdb
 
 gdb_exit
 gdb_start
+
+set timeout 60
 
 #
 # test default actions of gdb commands
@@ -9,197 +32,110 @@ gdb_start
 
 #load_lib gdb.exp
 
-gdb_test "add-symbol-file" "add-symbol-file takes a file name and an address"
+gdb_test "add-symbol-file" "add-symbol-file takes a file name and an address" "add-symbol-file"
+
+# test append
+gdb_test "append" "\"append\" must be followed by a subcommand\.\[\r\n\]+List of append subcommands:.*" 
+gdb_test "append binary" "\"append binary\" must be followed by a subcommand\.\[\r\n\]+List of append binary subcommands:.*" 
+gdb_test "append memory" "Missing filename\." 
+gdb_test "append value"  "Missing filename\." 
+gdb_test "append binary memory" "Missing filename\." 
+gdb_test "append binary value"  "Missing filename\." 
 
 setup_xfail "mips-idt-*"
-send "attach\n"
-expect {
-    -re "Argument required .(process-id|program) to attach.*$prompt $"\
+send_gdb "attach\n"
+gdb_expect {
+    -re "Argument required .(process-id|program) to attach.*$gdb_prompt $"\
 			{ pass "attach" }
-    -re "You can't do that when your target is `None'.*$prompt $"\
+    -re "You can't do that when your target is `None'.*$gdb_prompt $"\
 			{ pass "attach" }
-    -re "Don't know how to attach.  Try \"help target\"..*$prompt $"\
+    -re "You can't do that without a process to debug.*$gdb_prompt $"\
+			{ pass "attach" }
+    -re "Don't know how to attach.  Try \"help target\"..*$gdb_prompt $"\
 			{ pass "attach" }
     -re "Kill it. .y or n." {
-	send "y\n"
+	send_gdb "y\n"
 	exp_continue
     }
-    -re "$prompt $" { fail "attach" }
+    -re "$gdb_prompt $" { fail "attach" }
     timeout { fail "(timeout) attach" }
 }
 
-# FIXME: attach kills the udi connection
-if [istarget "a29k-*-udi"] then {
-    gdb_exit
-    gdb_start
-}
+if ![target_info exists use_gdb_stub] {
+    gdb_test "break" "No default breakpoint address now." "break"
+    foreach i "b br bre brea" {
+	gdb_test $i "No default breakpoint address now." "break \"$i\" abbreviation"
+    }
 
-gdb_test "break" "No default breakpoint address now."
-foreach i "b br bre brea" {
-    gdb_test $i "No default breakpoint address now." "break \"$i\" abbreviation"
-	}
+    
+    setup_xfail "mips-idt-*"
+    gdb_test "backtrace" "No stack."
 
-setup_xfail "mips-idt-*" "a29k-*-udi" "h8300-*-hms"
-gdb_test "backtrace" "No stack."
-foreach i "bt ba bac" {
-    setup_xfail "mips-idt-*" "a29k-*-udi" "h8300-*-hms"
-    gdb_test $i "No stack." "backtrace \"$i\" abbreviation"
+    # ba and bac are no longer unique command prefixes. So these tests
+    # elict an error from GDB.
+    # GDB needs to be fixed to map unique alias here for ba bac.
+    #
+    foreach i "bt ba bac" {
+	setup_xfail "mips-idt-*"
+	gdb_test $i "No stack." "backtrace \"$i\" abbreviation"
+    }
+} else {
+    warning "Skipping backtrace and break tests because of GDB stub."
 }
 
 # This works on the MIPS IDT board, but confuses future tests.
 if ![istarget "mips-idt-*"] then {
-    setup_xfail "a29k-*-udi"
-    gdb_test "continue" "The program is not being run."
-    setup_xfail "a29k-*-udi"
+    gdb_test "continue" "The program is not being run." "continue"
     gdb_test "c" "The program is not being run." "continue \"c\" abbreviation"
 }
 
-# FIXME: continue kills the udi connection
-if [istarget "a29k-*-udi"] then {
-    gdb_exit
-    gdb_start
-}
-
 #test call
-send "call\n"
-expect {
-	-re "The history is empty..*$prompt $"\
-			{ pass "call" }
-	-re ".*$prompt $"	{ fail "call" }
-	timeout		{ fail "(timeout) call" }
-	}
+gdb_test "call" "The history is empty..*" "call"
 
 
 #test catch
-setup_xfail "h8300*-*-*"
-send "catch\n"
-expect {
-	-re "No selected frame..*$prompt $"\
-			{ pass "catch" }
-	-re ".*$prompt $"	{ fail "catch" }
-	timeout		{ fail "(timeout) catch" }
-	}
-
+gdb_test "catch" "Catch requires an event name..*" "catch"
 
 #test cd
-send "cd\n"
-expect {
-	-re "Argument required .new working directory.*$prompt $"\
-			{ pass "cd" }
-	-re ".*$prompt $"	{ fail "cd" }
-	timeout		{ fail "(timeout) cd" }
-	}
-
+gdb_test "cd" "Argument required .new working directory.*" "cd"
 
 #test clear
-send "clear\n"
-expect {
-	-re "No source file specified..*$prompt $"\
-			{ pass "clear" }
-	-re ".*$prompt $"	{ fail "clear" }
-	timeout		{ fail "(timeout) clear" }
-	}
-
+gdb_test "clear" "No source file specified..*" "clear"
 
 #test commands
-send "commands\n"
-expect {
-	-re "No breakpoint number 0..*$prompt $"\
-			{ pass "commands" }
-	-re ".*$prompt $"	{ fail "commands" }
-	timeout		{ fail "(timeout) commands" }
-	}
-
+gdb_test "commands" "No breakpoint number 0..*" "commands"
 
 #test condition
-send "condition\n"
-expect {
-	-re "Argument required .breakpoint number.*$prompt $"\
-			{ pass "condition" }
-	-re ".*$prompt $"	{ fail "condition" }
-	timeout		{ fail "(timeout) condition" }
-	}
-
+gdb_test "condition" "Argument required .breakpoint number.*" "condition"
 
 #test core-file
-send "core-file\n"
-expect {
-	-re "No core file now..*$prompt $"\
-			{ pass "core-file" }
-	-re "GDB can't read core files on this machine..*$prompt $"\
-			{ pass "core-file" }
-	-re ".*$prompt $"	{ fail "core-file" }
-	timeout		{ fail "(timeout) core-file" }
-	}
-
-
+gdb_test "core-file" "No core file now.|GDB can't read core files on this machine." "core-file"
 #test delete "d" abbreviation
-send "d\n"
-expect {
-	-re "$prompt $"\
-			{ pass "delete \"d\" abbreviation" }
-	timeout		{ fail "(timeout) delete \"d\" abbreviation" }
-	}
-
-
+gdb_test "d" "" "delete \"d\" abbreviation"
 #test delete
-send "delete\n"
-expect {
-	-re "$prompt $"\
-			{ pass "delete" }
-	timeout		{ fail "(timeout) delete" }
-	}
-
-
+gdb_test "delete" "" "delete"
 #test define
-send "define\n"
-expect {
-	-re "Argument required \[(\]name of command to define\[)\]..*$prompt $"\
-			{ pass "define" }
-	timeout		{ fail "(timeout) define" }
-	}
-
-
+gdb_test "define" "Argument required \[(\]name of command to define\[)\]." "define"
 #test delete breakpoints
-send "delete breakpoints\n"
-expect {
-	-re "$prompt $"\
-			{ pass "delete breakpoints" }
-	timeout		{ fail "(timeout) delete breakpoints" }
-	}
-
-
+gdb_test "delete breakpoints" "" "delete breakpoints"
 #test delete display
 # FIXME -- need to dump full output to detailed log
-send "delete display\n"
-expect {
-	-re "delete display.*Delete all auto-display expressions.*y or n. $"\
-	    { send "y\n"
-		expect {
-		    -re "$prompt $"\
-			{ pass "delete display prompt" }
-		    timeout		{ fail "(timeout) delete display prompt" }
-		    }
-		}
-	timeout		{ fail "(timeout) delete display prompt" }
-
+send_gdb "delete display\n"
+gdb_expect {
+    -re "Delete all auto-display expressions.*y or n. $" {
+	send_gdb "y\n"
+	gdb_expect {
+	    -re "$gdb_prompt $"     { pass "delete display prompt" }
+	    timeout		{ fail "(timeout) delete display prompt" }
 	}
+    }
+    timeout		{ fail "(timeout) delete display prompt" }
 
+}
 
 #test detach
-gdb_test "detach" ""
-#send "detach\n"
-#expect {
-#	-re "$prompt $"\
-#			{ pass "detach" }
-#	timeout		{ fail "(timeout) detach" }
-#	}
+gdb_test "detach" "" "detach"
 
-# FIXME: continue kills the udi connection
-if [istarget "a29k-*-udi"] then {
-    gdb_exit
-    gdb_start
-}
 if [istarget "h8300-*-hms"] then {
     gdb_exit
     gdb_start
@@ -207,2270 +143,676 @@ if [istarget "h8300-*-hms"] then {
 
 #test directory
 # FIXME -- need to dump full output to detailed log
-send "directory\n"
-expect {
-	-re "Reinitialize source path to empty.*y or n. $"\
-	    { send "y\n"
-		expect {
-		    -re "Source directories searched: .cdir:.cwd.*$prompt $"\
-			{ pass "directory prompt" }
-		    timeout		{ fail "(timeout) directory prompt" }
-		    }
-	    }
-	}
 
+send_gdb "directory\n"
+gdb_expect {
+    -re "Reinitialize source path to empty.*y or n. $"  {
+	send_gdb "y\n"
+	gdb_expect {
+	    -re "Source directories searched: .cdir:.cwd.*$gdb_prompt $"\
+		    { pass "directory prompt" }
+	    timeout		{ fail "(timeout) directory prompt" }
+	}
+    }
+}
 
 #test disable "dis" abbreviation
-send "dis\n"
-expect {
-	-re "$prompt $"\
-			{ pass "disable \"dis\" abbreviation" }
-	timeout		{ fail "(timeout) disable \"dis\" abbreviation" }
-	}
-
-
+gdb_test "dis" "" "disable \"dis\" abbreviation"
 #test disable "disa" abbreviation
-send "disa\n"
-expect {
-	-re "$prompt $"\
-			{ pass "disable \"disa\" abbreviation" }
-	timeout		{ fail "(timeout) disable \"disa\" abbreviation" }
-	}
-
-
+gdb_test "disa" "" "disable \"disa\" abbreviation"
 #test disable
-send "disable\n"
-expect {
-	-re "$prompt $"\
-			{ pass "disable" }
-	timeout		{ fail "(timeout) disable" }
-	}
-
-
+gdb_test "disable" "" "disable"
 #test disable breakpoints
-send "disable breakpoints\n"
-expect {
-	-re "$prompt $"\
-			{ pass "disable breakpoints" }
-	timeout		{ fail "(timeout) disable breakpoints" }
-	}
-
-
+gdb_test "disable breakpoints" "" "disable breakpoints"
 #test disable display
-send "disable display\n"
-expect {
-	-re "$prompt $"\
-			{ pass "disable display" }
-	timeout		{ fail "(timeout) disable display" }
-	}
-
-
+gdb_test "disable display" "" "disable display"
 #test disassemble
-send "disassemble\n"
-expect {
-	-re "No frame selected..*$prompt $"\
-			{ pass "disassemble" }
-	-re ".*$prompt $"	{ fail "disassemble" }
-	timeout		{ fail "(timeout) disassemble" }
-	}
-
-
+gdb_test "disassemble" "No frame selected." "disassemble"
 #test display
-send "display\n"
-expect {
-	-re "$prompt $"\
-			{ pass "display" }
-	timeout		{ fail "(timeout) display" }
-	}
-
-
+gdb_test "display" "" "display"
 #test do
-send "do\n"
-expect {
-	-re "No stack..*$prompt $"\
-			{ pass "do" }
-	-re ".*$prompt $"	{ fail "do" }
-	timeout		{ fail "(timeout) do" }
-	}
-
-
+gdb_test "do" "No stack." "do"
 #test document
-send "document\n"
-expect {
-	-re "Argument required .name of command to define.*$prompt $"\
-			{ pass "document" }
-	-re ".*$prompt $"	{ fail "document" }
-	timeout		{ fail "(timeout) document" }
-	}
-
-
+gdb_test "document" "Argument required .name of command to define.*" "document"
 #test down
-send "down\n"
-expect {
-	-re "No stack.*$prompt $"\
-			{ pass "down" }
-	-re ".*$prompt $"	{ fail "down" }
-	timeout		{ fail "(timeout) down" }
-	}
-
-
+gdb_test "down" "No stack.*" "down"
 #test down-silently
-send "down-silently\n"
-expect {
-	-re "No stack..*$prompt $"\
-			{ pass "down-silently" }
-	-re ".*$prompt $"	{ fail "down-silently" }
-	timeout		{ fail "(timeout) down-silently" }
-	}
-
-
+gdb_test "down-silently" "No stack." "down-silently"
+# test dump
+gdb_test "dump" "\"dump\" must be followed by a subcommand\.\[\r\n\]+List of dump subcommands:.*" 
+gdb_test "dump binary" "\"dump binary\" must be followed by a subcommand\.\[\r\n\]+List of dump binary subcommands:.*" 
+gdb_test "dump ihex" "\"dump ihex\" must be followed by a subcommand\.\[\r\n\]+List of dump ihex subcommands:.*" 
+gdb_test "dump memory" "Missing filename\." 
+gdb_test "dump srec" "\"dump srec\" must be followed by a subcommand\.\[\r\n\]+List of dump srec subcommands:.*" 
+gdb_test "dump tekhex" "\"dump tekhex\" must be followed by a subcommand\.\[\r\n\]+List of dump tekhex subcommands:.*" 
+gdb_test "dump value" "Missing filename\." 
+gdb_test "dump binary memory" "Missing filename\." 
+gdb_test "dump binary value"  "Missing filename\." 
+gdb_test "dump ihex memory" "Missing filename\." 
+gdb_test "dump ihex value"  "Missing filename\." 
+gdb_test "dump srec memory" "Missing filename\." 
+gdb_test "dump srec value"  "Missing filename\." 
+gdb_test "dump tekhex memory" "Missing filename\." 
+gdb_test "dump tekhex value"  "Missing filename\." 
 #test echo
-send "echo\n"
-expect {
-	-re "$prompt $"\
-			{ pass "echo" }
-	timeout		{ fail "(timeout) echo" }
-	}
-
-
+gdb_test "echo" "" "echo"
 #test enable breakpoints delete
-send "enable breakpoints delete\n"
-expect {
-	-re "Argument required .one or more breakpoint numbers.*$prompt $"\
-			{ pass "enable breakpoints delete" }
-	-re ".*$prompt $"	{ fail "enable breakpoints delete" }
-	timeout		{ fail "(timeout) enable breakpoints delete" }
-	}
-
-
+gdb_test "enable breakpoints delete" "Argument required .one or more breakpoint numbers.*" "enable breakpoints delete"
 #test enable breakpoints once
-send "enable breakpoints once\n"
-expect {
-	-re "Argument required .one or more breakpoint numbers.*$prompt $"\
-			{ pass "enable breakpoints once" }
-	-re ".*$prompt $"	{ fail "enable breakpoints once" }
-	timeout		{ fail "(timeout) enable breakpoints once" }
-	}
-
-
+gdb_test "enable breakpoints once" "Argument required .one or more breakpoint numbers.*" "enable breakpoints once"
 #test enable breakpoints
-send "enable breakpoints\n"
-expect {
-	-re "$prompt $"\
-			{ pass "enable breakpoints" }
-	timeout		{ fail "(timeout) enable breakpoints" }
-	}
-
-
+gdb_test "enable breakpoints" "" "enable breakpoints"
 #test enable delete
-send "enable delete\n"
-expect {
-	-re "Argument required .one or more breakpoint numbers.*$prompt $"\
-			{ pass "enable delete" }
-	-re ".*$prompt $"	{ fail "enable delete" }
-	timeout		{ fail "(timeout) enable delete" }
-	}
-
-
+gdb_test "enable delete" "Argument required .one or more breakpoint numbers.*" "enable delete"
 #test enable display
-send "enable display\n"
-expect {
-	-re "$prompt $"\
-			{ pass "enable display" }
-	timeout		{ fail "(timeout) enable display" }
-	}
-
-
+gdb_test "enable display" "" "enable display"
 #test enable once
-send "enable once\n"
-expect {
-	-re "Argument required .one or more breakpoint numbers.*$prompt $"\
-			{ pass "enable once" }
-	-re ".*$prompt $"	{ fail "enable once" }
-	timeout		{ fail "(timeout) enable once" }
-	}
-
-
+gdb_test "enable once" "Argument required .one or more breakpoint numbers.*" "enable once"
 #test enable
-send "enable\n"
-expect {
-	-re "$prompt $"\
-			{ pass "enable" }
-	timeout		{ fail "(timeout) enable" }
-	}
-
-
+gdb_test "enable" "" "enable"
 #test exec-file
-send "exec-file\n"
-expect {
-    -re "No exec file now..*$prompt $" {
+send_gdb "exec-file\n"
+gdb_expect {
+    -re "No executable file now..*$gdb_prompt $" {
 	pass "exec-file"
     }
     -re "exec-file.*A program is being debugged already.  Kill it. .y or n.*$" {
-	send "n\n"
+	send_gdb "n\n"
 	if $verbose>1 then {
 	    send_user "\tDidn't kill program being debugged\n"
 	}
-	expect -re "$prompt $" { }
+	gdb_expect -re "$gdb_prompt $" { }
 	pass "exec-file"
     }
-    -re "$prompt $"	{ fail "exec-file" }
-	timeout		{ fail "(timeout) exec-file" }
-	}
-
-
-#test frame "f" abbreviation
-setup_xfail "a29k-*-udi"
-setup_xfail "h8300*-*-*"
-send "f\n"
-expect {
-	-re "No stack..*$prompt $"\
-			{ pass "frame \"f\" abbreviation" }
-	-re ".*$prompt $"	{ fail "frame \"f\" abbreviation" }
-	timeout		{ fail "(timeout) frame \"f\" abbreviation" }
-	}
-
-
-#test frame
-setup_xfail "a29k-*-udi"
-setup_xfail "h8300*-*-*"
-send "frame\n"
-expect {
-	-re "No stack..*$prompt $"\
-			{ pass "frame" }
-	-re ".*$prompt $"	{ fail "frame" }
-	timeout		{ fail "(timeout) frame" }
-	}
-
-
-#test fg
-setup_xfail "a29k-*-udi"
-send "fg\n"
-expect {
-	-re "The program is not being run..*$prompt $"\
-			{ pass "fg" }
-	-re ".*$prompt $"	{ fail "fg" }
-	timeout		{ fail "(timeout) fg" }
-	}
-
-# FIXME: fg kills the udi connection
-if [istarget "a29k-*-udi"] then {
-    gdb_exit
-    gdb_start
+    -re "$gdb_prompt $"	{ fail "exec-file" }
+    timeout		{ fail "(timeout) exec-file" }
 }
 
+#test frame "f" abbreviation
+gdb_test "f" "No stack." "frame \"f\" abbreviation"
+#test frame
+gdb_test "frame" "No stack." "frame"
+#test fg
+gdb_test "fg" "The program is not being run." "fg"
+# FIXME: fg kills the udi connection
 #test file
-send "file\n"
-expect {
-	-re "No exec file now..*$prompt $"\
-			{ pass "file" }
-	-re ".*A program is being debugged already.  Kill it. .y or n.*$" {
-	    send "n\n"
-	    if $verbose>1 then {
-		send_user "\t\tDidn't kill program being debugged\n"
-	    }
-	    expect -re "$prompt $" { }
-	    pass "file"
+send_gdb "file\n"
+gdb_expect {
+    -re "No executable file now..*$gdb_prompt $"\
+	    { pass "file" }
+    -re ".*A program is being debugged already.  Kill it. .y or n.*$" {
+	send_gdb "n\n"
+	if $verbose>1 then {
+	    send_user "\t\tDidn't kill program being debugged\n"
 	}
-	-re ".*$prompt $"	{ fail "file" }
-	timeout		{ fail "(timeout) file" }
-	}
-
+	gdb_expect -re "$gdb_prompt $" { }
+	pass "file"
+    }
+    -re ".*$gdb_prompt $"	{ fail "file" }
+    timeout		{ fail "(timeout) file" }
+}
 
 #test finish
-setup_xfail "a29k-*-udi"
-setup_xfail "h8300*-*-*"
-send "finish\n"
-expect {
-	-re "The program is not running..*$prompt $"\
-			{ pass "finish" }
-	-re ".*$prompt $"	{ fail "finish" }
-	timeout		{ fail "(timeout) finish" }
-	}
-
-
+gdb_test "finish" "The program is not running." "finish"
 #test forward-search
 # The message here comes from the regexp library, not gdb, and so can
 # vary on different systems.
-send "forward-search\n"
-expect {
-	-re "No previous regular expression.*$prompt $"\
-			{ pass "forward-search" }
-	-re "There is no previous regular expression.*$prompt $"\
-			{ pass "forward-search" }
-	-re ".*$prompt $"	{ fail "forward-search" }
-	timeout		{ fail "(timeout) forward-search" }
-	}
-
-
+gdb_test "forward-search" "No previous regular expression.*|There is no previous regular expression.*" "forward-search"
+#test gcore
+send_gdb "gcore\n"
+gdb_expect {
+    -re "You can\'t do that without a process to debug.*$gdb_prompt $" {
+	pass "gcore"
+    }
+    -re "Undefined command: .*$gdb_prompt $" {
+	pass "gcore"
+    }
+    default { fail "gcore" }
+}
+send_gdb "generate-core-file\n"
+gdb_expect {
+    -re "You can\'t do that without a process to debug.*$gdb_prompt $" {
+	pass "generate-core-file"
+    }
+    -re "Undefined command: .*$gdb_prompt $" {
+	pass "generate-core-file"
+    }
+    default { fail "generate-core-file" }
+}
 #test help "h" abbreviation
-send "h\n"
-expect {
-	-re "List of classes of commands:.*
-running -- Running the program.*
-stack -- Examining the stack.*
-data -- Examining data.*
-breakpoints -- Making program stop at certain points.*
-files -- Specifying and examining files.*
-status -- Status inquiries.*
-support -- Support facilities.*
-user-defined -- User-defined commands.*
-aliases -- Aliases of other commands.*
-obscure -- Obscure features.*
-Type \"help\" followed by a class name for a list of commands in that class..*
-Type \"help\" followed by command name for full documentation..*
-Command name abbreviations are allowed if unambiguous..*$prompt $"\
-			{ pass "help \"h\" abbreviation" }
-	-re ".*$prompt $"	{ fail "help \"h\" abbreviation" }
-	timeout		{ fail "(timeout) help \"h\" abbreviation" }
-	}
-
-
+gdb_test "h" "List of classes of commands:(\[^\r\n\]*\[\r\n\])+aliases -- Aliases of other commands(\[^\r\n\]*\[\r\n\])+breakpoints -- Making program stop at certain points(\[^\r\n\]*\[\r\n\])+data -- Examining data(\[^\r\n\]*\[\r\n\])+files -- Specifying and examining files(\[^\r\n\]*\[\r\n\])+obscure -- Obscure features(\[^\r\n\]*\[\r\n\])+running -- Running the program(\[^\r\n\]*\[\r\n\])+stack -- Examining the stack(\[^\r\n\]*\[\r\n\])+status -- Status inquiries(\[^\r\n\]*\[\r\n\])+support -- Support facilities(\[^\r\n\]*\[\r\n\])+user-defined -- User-defined commands(\[^\r\n\]*\[\r\n\])+Type \"help\" followed by a class name for a list of commands in that class.(\[^\r\n\]*\[\r\n\])+Type \"help\" followed by command name for full documentation.(\[^\r\n\]*\[\r\n\])+Command name abbreviations are allowed if unambiguous." "help \"h\" abbreviation"
 #test help
-send "help\n"
-expect {
-	-re "List of classes of commands:.*
-running -- Running the program.*
-stack -- Examining the stack.*
-data -- Examining data.*
-breakpoints -- Making program stop at certain points.*
-files -- Specifying and examining files.*
-status -- Status inquiries.*
-support -- Support facilities.*
-user-defined -- User-defined commands.*
-aliases -- Aliases of other commands.*
-obscure -- Obscure features.*
-Type \"help\" followed by a class name for a list of commands in that class..*
-Type \"help\" followed by command name for full documentation..*
-Command name abbreviations are allowed if unambiguous..*$prompt $"\
-			{ pass "help" }
-	-re ".*$prompt $"	{ fail "help" }
-	timeout		{ fail "(timeout) help" }
-	}
-
-
+gdb_test "help" "List of classes of commands:(\[^\r\n\]*\[\r\n\])+aliases -- Aliases of other commands(\[^\r\n\]*\[\r\n\])+breakpoints -- Making program stop at certain points(\[^\r\n\]*\[\r\n\])+data -- Examining data(\[^\r\n\]*\[\r\n\])+files -- Specifying and examining files(\[^\r\n\]*\[\r\n\])+obscure -- Obscure features(\[^\r\n\]*\[\r\n\])+running -- Running the program(\[^\r\n\]*\[\r\n\])+stack -- Examining the stack(\[^\r\n\]*\[\r\n\])+status -- Status inquiries(\[^\r\n\]*\[\r\n\])+support -- Support facilities(\[^\r\n\]*\[\r\n\])+user-defined -- User-defined commands(\[^\r\n\]*\[\r\n\])+Type \"help\" followed by a class name for a list of commands in that class.(\[^\r\n\]*\[\r\n\])+Type \"help\" followed by command name for full documentation.(\[^\r\n\]*\[\r\n\])+Command name abbreviations are allowed if unambiguous." "help"
 #test handle
-send "handle\n"
-expect {
-	-re "Argument required .signal to handle.*$prompt $"\
-			{ pass "handle" }
-	-re ".*$prompt $"	{ fail "handle" }
-	timeout		{ fail "(timeout) handle" }
-	}
-
-
+gdb_test "handle" "Argument required .signal to handle.*" "handle"
 #test info "i" abbreviation 
-send "i\n"
-expect {
-	-re "\"info\" must be followed by the name of an info command..*
-List of info subcommands:.*
-Type \"help info\" followed by info subcommand name for full documentation..*
-Command name abbreviations are allowed if unambiguous..*$prompt $"\
-			{ pass "info \"i\" abbreviation" }
-	-re ".*$prompt $"	{ fail "info \"i\" abbreviation" }
-	timeout		{ fail "(timeout) info \"i\" abbreviation" }
-	}
-
-
+gdb_test "i" "\"info\" must be followed by the name of an info command.(\[^\r\n\]*\[\r\n\])+List of info subcommands:(\[^\r\n\]*\[\r\n\])+Type \"help info\" followed by info subcommand name for full documentation.(\[^\r\n\]*\[\r\n\])+Command name abbreviations are allowed if unambiguous." "info \"i\" abbreviation"
 #test info
-send "info\n"
-expect {
-	-re "\"info\" must be followed by the name of an info command..*
-List of info subcommands:.*
-Type \"help info\" followed by info subcommand name for full documentation..*
-Command name abbreviations are allowed if unambiguous..*$prompt $"\
-			{ pass "info" }
-	-re ".*$prompt $"	{ fail "info" }
-	timeout		{ fail "(timeout) info" }
-	}
-
-
+gdb_test "info" "\"info\" must be followed by the name of an info command.(\[^\r\n\]*\[\r\n\])+List of info subcommands:(\[^\r\n\]*\[\r\n\])+Type \"help info\" followed by info subcommand name for full documentation.(\[^\r\n\]*\[\r\n\])+Command name abbreviations are allowed if unambiguous." "info"
 #test ignore
-send "ignore\n"
-expect {
-	-re "Argument required .a breakpoint number.*$prompt $"\
-			{ pass "ignore" }
-	-re ".*$prompt $"	{ fail "ignore" }
-	timeout		{ fail "(timeout) ignore" }
-	}
-
-
+gdb_test "ignore" "Argument required .a breakpoint number.*" "ignore"
 #test info address
-send "info address\n"
-expect {
-	-re "Argument required..*$prompt $"\
-			{ pass "info address" }
-	-re ".*$prompt $"	{ fail "info address" }
-	timeout		{ fail "(timeout) info address" }
-	}
-
-
+gdb_test "info address" "Argument required." "info address"
 #test info all-registers
-setup_xfail "a29k-*-udi"
-setup_xfail "h8300*-*-*"
-send "info all-registers\n"
-expect {
-	-re "The program has no registers now..*$prompt $"\
-			{ pass "info all-registers" }
-	-re ".*$prompt $"	{ fail "info all-registers" }
-	timeout		{ fail "(timeout) info all-registers" }
-	}
-
-
+gdb_test "info all-registers" "The program has no registers now." "info all-registers"
 #test info args
-send "info args\n"
-setup_xfail "h8300*-*-*"
-expect {
-	-re "No frame selected..*$prompt $"\
-			{ pass "info args" }
-	-re ".*$prompt $"	{ fail "info args" }
-	timeout		{ fail "(timeout) info args" }
-	}
-
-
+gdb_test "info args" "No frame selected." "info args"
 #test info bogus-gdb-command
-send "info bogus-gdb-command\n"
-expect {
-	-re "Undefined info command: \"bogus-gdb-command\".  Try \"help info\"..*$prompt $"\
-			{ pass "info bogus-gdb-command" }
-	-re ".*$prompt $"	{ fail "info bogus-gdb-command" }
-	timeout		{ fail "(timeout) info bogus-gdb-command" }
-	}
-
-
+gdb_test "info bogus-gdb-command" "Undefined info command: \"bogus-gdb-command\".  Try \"help info\".*" "info bogus-gdb-command"
 #test info breakpoints
-send "info breakpoints\n"
-expect {
-	-re "No breakpoints or watchpoints..*$prompt $"\
-			{ pass "info breakpoints" }
-	-re ".*$prompt $"	{ fail "info breakpoints" }
-	timeout		{ fail "(timeout) info breakpoints" }
-	}
-
-
+gdb_test "info breakpoints" "No breakpoints or watchpoints." "info breakpoints"
 #test info catch
-setup_xfail "h8300*-*-*"
-send "info catch\n"
-expect {
-	-re "No frame selected..*$prompt $"\
-			{ pass "info catch" }
-	-re ".*$prompt $"	{ fail "info catch" }
-	timeout		{ fail "(timeout) info catch" }
-	}
-
-
+gdb_test "info catch" "You can't do that without a process to debug." "info catch"
 #test info copying
 # FIXME -- doesn't work worth a shit
-#send "info copying\n"
-#expect {
-#	-re "GNU GENERAL PUBLIC LICENSE.*\
-#of preserving the free status of all derivatives of our free software and.*\
-#of promoting the sharing and reuse of software generally..*$prompt $"\
-#			{ pass "info copying" }
-#	timeout		{ fail "(timeout) info copying" }
+#send_gdb "info copying"
+#	-re "GNU GENERAL PUBLIC LICENSE.*#of preserving the free status of all derivatives of our free software and.*#of promoting the sharing and reuse of software generally."# 
+gdb_test "info copying"
 #	}
 #
 #
-
 #test info display
-send "info display\n"
-expect {
-	-re "There are no auto-display expressions now..*$prompt $"\
-			{ pass "info display" }
-	-re ".*$prompt $"	{ fail "info display" }
-	timeout		{ fail "(timeout) info display" }
-	}
-
-
+gdb_test "info display" "There are no auto-display expressions now." "info display"
 #test info frame "f" abbreviation
-setup_xfail "h8300*-*-*"
-send "info f\n"
-expect {
-	-re "No stack..*$prompt $"\
-			{ pass "info frame \"f\" abbreviation" }
-	-re "No selected frame..*$prompt $"\
-			{ pass "info frame \"f\" abbreviation" }
-	-re ".*$prompt $"	{ fail "info frame \"f\" abbreviation" }
-	timeout		{ fail "(timeout) info frame \"f\" abbreviation" }
-	}
-
-
+gdb_test "info f" "No stack.*|No selected frame.*" "info frame \"f\" abbreviation"
 #test info frame
-setup_xfail "h8300*-*-*"
-send "info frame\n"
-expect {
-	-re "No stack..*$prompt $"\
-			{ pass "info frame" }
-	-re "No selected frame..*$prompt $"\
-			{ pass "info frame" }
-	-re ".*$prompt $"	{ fail "info frame" }
-	timeout		{ fail "(timeout) info frame" }
-	}
-
-
+gdb_test "info frame" "No stack.|No selected frame." "info frame"
 #test info files
-send "info files\n"
-expect {
-	-re "$prompt $"\
-			{ pass "info files" }
-	timeout		{ fail "(timeout) info files" }
-	}
-
-
+gdb_test "info files" "" "info files"
 #test info float
-send "info float\n"
-expect {
-	-re "No floating point info available for this processor..*$prompt $"\
-			{ pass "info float" }
-	-re ".*$prompt $"	{ fail "info float" }
-	timeout		{ fail "(timeout) info float" }
-	}
-
-
+gdb_test "info float" "The program has no registers now." "info float"
 #test info functions
-send "info functions\n"
-expect {
-	-re "All defined functions:.*$prompt $"\
-			{ pass "info functions" }
-	-re ".*$prompt $"	{ fail "info functions" }
-	timeout		{ fail "(timeout) info functions" }
-	}
-
-gdb_test "info line" "No line number information.*" "info line"
-
+gdb_test "info functions" "All defined functions:" "info functions"
 #test info locals
-setup_xfail "h8300*-*-*"
-send "info locals\n"
-expect {
-	-re "No frame selected..*$prompt $"\
-			{ pass "info locals" }
-	-re ".*$prompt $"	{ fail "info locals" }
-	timeout		{ fail "(timeout) info locals" }
-	}
-
-
+gdb_test "info locals" "No frame selected." "info locals"
 #test info program
-setup_xfail "h8300*-*-*"
-setup_xfail "a29k-*-udi"
-send "info program\n"
-expect {
-	-re "The program being debugged is not being run..*$prompt $"\
-			{ pass "info program" }
-	-re ".*$prompt $"	{ fail "info program" }
-	timeout		{ fail "(timeout) info program" }
-	}
-
-
+gdb_test "info program" "The program being debugged is not being run." "info program"
 #test info registers
-setup_xfail "h8300*-*-*"
-setup_xfail "a29k-*-udi"
-send "info registers\n"
-expect {
-	-re "The program has no registers now..*$prompt $"\
-			{ pass "info registers" }
-	-re ".*$prompt $"	{ fail "info registers" }
-	timeout		{ fail "(timeout) info registers" }
-	}
-
-
+gdb_test "info registers" "The program has no registers now." "info registers"
 #test info stack "s" abbreviation
-setup_xfail "h8300*-*-*"
-setup_xfail "a29k-*-udi"
-send "info s\n"
-expect {
-	-re "No stack..*$prompt $"\
-			{ pass "info stack \"s\" abbreviation" }
-	-re ".*$prompt $"	{ fail "info stack \"s\" abbreviation" }
-	timeout		{ fail "(timeout) info stack \"s\" abbreviation" }
-	}
-
-
+gdb_test "info s" "No stack." "info stack \"s\" abbreviation"
 #test info stack
-setup_xfail "a29k-*-udi"
-setup_xfail "h8300*-*-*"
-send "info stack\n"
-expect {
-	-re "No stack..*$prompt $"\
-			{ pass "info stack" }
-	-re ".*$prompt $"	{ fail "info stack" }
-	timeout		{ fail "(timeout) info stack" }
-	}
-
-
+gdb_test "info stack" "No stack." "info stack"
 #test info set
 # FIXME -- needs to match the entire output
-send "info set\n"
-expect {
-	-re "confirm:  Whether to confirm potentially dangerous operations is on..*
-history filename:  The filename in which to record the command history is .*
-listsize:  Number of source lines gdb will list by default is 10..*$prompt $"\
-			{ pass "info set" }
-	-re "\n$prompt $"	{ fail "info set" }
-	timeout		{ fail "(timeout) info set" }
-	}
-
-
+# FIXME -- on native solaris 2.8, this test fails due to this line:
+#  prompt:  Gdb's prompt is "(gdb) ".^M
+gdb_test "info set" "confirm:  Whether to confirm potentially dangerous operations is o\[a-z\]*.(\[^\r\n\]*\[\r\n\])+history filename:  The filename in which to record the command history is (\[^\r\n\]*\[\r\n\])+listsize:  Number of source lines gdb will list by default is 10.*" "info set"
+gdb_test "info symbol" "Argument required .address.."
 #test info source
-send "info source\n"
-expect {
-	-re "No current source file..*$prompt $"\
-			{ pass "info source" }
-	-re ".*$prompt $"	{ fail "info source" }
-	timeout		{ fail "(timeout) info source" }
-	}
-
-
+gdb_test  "info source" "No current source file..*" "info source"
 #test info sources
-send "info sources\n"
-expect {
-	-re "No symbol table is loaded.  Use the \"file\" command..*$prompt $"\
-			{ pass "info sources" }
-	-re ".*$prompt $"	{ fail "info sources" }
-	timeout		{ fail "(timeout) info sources" }
-	}
-
-
+gdb_test "info sources" "No symbol table is loaded.  Use the \"file\" command.*" "info sources"
 #test info target
-send "info target\n"
-expect {
-	-re "$prompt $"\
-			{ pass "info target" }
-	timeout		{ fail "(timeout) info target" }
-	}
-
-
+gdb_test "info target" "" "info target"
 #test info terminal
-send "info terminal\n"
-expect {
-	-re "No saved terminal information..*$prompt $"\
-			{ pass "info terminal" }
-	-re ".*$prompt $"	{ fail "info terminal" }
-	timeout		{ fail "(timeout) info terminal" }
-	}
-
-
+gdb_test "info terminal" "No saved terminal information." "info terminal"
 #test info types
-send "info types\n"
-expect {
-	-re "All defined types:.*$prompt $"\
-			{ pass "info types" }
-	-re ".*$prompt $"	{ fail "info types" }
-	timeout		{ fail "(timeout) info types" }
-	}
-
-
+gdb_test "info types" "All defined types:" "info types"
 #test info variables
-send "info variables\n"
-expect {
-	-re "All defined variables:.*$prompt $"\
-			{ pass "info variables" }
-	-re ".*$prompt $"	{ fail "info variables" }
-	timeout		{ fail "(timeout) info variables" }
-	}
-
-
+gdb_test "info variables" "All defined variables:" "info variables"
+#test info vector
+gdb_test "info vector" "The program has no registers now." "info vector"
 #test info warranty
-send "info warranty\n"
-expect {
-	-re "NO WARRANTY.*
-  11. BECAUSE THE PROGRAM IS LICENSED FREE OF CHARGE, THERE IS NO WARRANTY.*
-FOR THE PROGRAM, TO THE EXTENT PERMITTED BY APPLICABLE LAW.  EXCEPT WHEN.*
-OTHERWISE STATED IN WRITING THE COPYRIGHT HOLDERS AND/OR OTHER PARTIES.*
-PROVIDE THE PROGRAM \"AS IS\" WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESSED.*
-OR IMPLIED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF.*
-MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.  THE ENTIRE RISK AS.*
-TO THE QUALITY AND PERFORMANCE OF THE PROGRAM IS WITH YOU.  SHOULD THE.*
-PROGRAM PROVE DEFECTIVE, YOU ASSUME THE COST OF ALL NECESSARY SERVICING,.*
-REPAIR OR CORRECTION..*
-  12. IN NO EVENT UNLESS REQUIRED BY APPLICABLE LAW OR AGREED TO IN WRITING.*
-WILL ANY COPYRIGHT HOLDER, OR ANY OTHER PARTY WHO MAY MODIFY AND/OR.*
-REDISTRIBUTE THE PROGRAM AS PERMITTED ABOVE, BE LIABLE TO YOU FOR DAMAGES,.*
-INCLUDING ANY GENERAL, SPECIAL, INCIDENTAL OR CONSEQUENTIAL DAMAGES ARISING.*
-OUT OF THE USE OR INABILITY TO USE THE PROGRAM .INCLUDING BUT NOT LIMITED.*
-TO LOSS OF DATA OR DATA BEING RENDERED INACCURATE OR LOSSES SUSTAINED BY.*
-YOU OR THIRD PARTIES OR A FAILURE OF THE PROGRAM TO OPERATE WITH ANY OTHER.*
-PROGRAMS., EVEN IF SUCH HOLDER OR OTHER PARTY HAS BEEN ADVISED OF THE.*
-POSSIBILITY OF SUCH DAMAGES..*$prompt $"\
-			{ pass "info warranty" }
-	-re ".*$prompt $"	{ fail "info warranty" }
-	timeout		{ fail "(timeout) info warranty" }
-	}
-
-
+gdb_test "info warranty" "NO WARRANTY(\[^\r\n\]*\[\r\n\])+  *11.  *BECAUSE THE PROGRAM IS LICENSED FREE OF CHARGE, THERE IS NO WARRANTY(\[^\r\n\]*\[\r\n\])+FOR THE PROGRAM, TO THE EXTENT PERMITTED BY APPLICABLE LAW.  EXCEPT WHEN(\[^\r\n\]*\[\r\n\])+OTHERWISE STATED IN WRITING THE COPYRIGHT HOLDERS AND/OR OTHER PARTIES(\[^\r\n\]*\[\r\n\])+PROVIDE THE PROGRAM \"AS IS\" WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESSED(\[^\r\n\]*\[\r\n\])+OR IMPLIED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF(\[^\r\n\]*\[\r\n\])+MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.  THE ENTIRE RISK AS(\[^\r\n\]*\[\r\n\])+TO THE QUALITY AND PERFORMANCE OF THE PROGRAM IS WITH YOU.  SHOULD THE(\[^\r\n\]*\[\r\n\])+PROGRAM PROVE DEFECTIVE, YOU ASSUME THE COST OF ALL NECESSARY SERVICING,(\[^\r\n\]*\[\r\n\])+REPAIR OR CORRECTION.(\[^\r\n\]*\[\r\n\])+  *12.  *IN NO EVENT UNLESS REQUIRED BY APPLICABLE LAW OR AGREED TO IN WRITING(\[^\r\n\]*\[\r\n\])+WILL ANY COPYRIGHT HOLDER, OR ANY OTHER PARTY WHO MAY MODIFY AND/OR(\[^\r\n\]*\[\r\n\])+REDISTRIBUTE THE PROGRAM AS PERMITTED ABOVE, BE LIABLE TO YOU FOR DAMAGES,(\[^\r\n\]*\[\r\n\])+INCLUDING ANY GENERAL, SPECIAL, INCIDENTAL OR CONSEQUENTIAL DAMAGES ARISING(\[^\r\n\]*\[\r\n\])+OUT OF THE USE OR INABILITY TO USE THE PROGRAM .INCLUDING BUT NOT LIMITED(\[^\r\n\]*\[\r\n\])+TO LOSS OF DATA OR DATA BEING RENDERED INACCURATE OR LOSSES SUSTAINED BY(\[^\r\n\]*\[\r\n\])+YOU OR THIRD PARTIES OR A FAILURE OF THE PROGRAM TO OPERATE WITH ANY OTHER(\[^\r\n\]*\[\r\n\])+PROGRAMS., EVEN IF SUCH HOLDER OR OTHER PARTY HAS BEEN ADVISED OF THE(\[^\r\n\]*\[\r\n\])+POSSIBILITY OF SUCH DAMAGES.*" "info warranty"
 #test info watchpoints
-send "info watchpoints\n"
-expect {
-	-re "No breakpoints or watchpoints..*$prompt $"\
-			{ pass "info watchpoints" }
-	-re ".*$prompt $"	{ fail "info watchpoints" }
-	timeout		{ fail "(timeout) info watchpoints" }
-	}
-
-
+gdb_test "info watchpoints" "No breakpoints or watchpoints." "info watchpoints"
 #test inspect
-send "inspect\n"
-expect {
-	-re "The history is empty..*$prompt $"\
-			{ pass "inspect" }
-	-re ".*$prompt $"	{ fail "inspect" }
-	timeout		{ fail "(timeout) inspect" }
-	}
-
-
+gdb_test "inspect" "The history is empty." "inspect"
 #test jump
-setup_xfail "a29k-*-udi"
-setup_xfail "h8300*-*-*"
-send "jump\n"
-expect {
-	-re "The program is not being run..*$prompt $"\
-			{ pass "jump" }
-	-re ".*$prompt $"	{ fail "jump" }
-	timeout		{ fail "(timeout) jump" }
-	}
-
-
+gdb_test "jump" "The program is not being run." "jump"
 #test kill
-send "kill\n"
-expect {
-	-re "The program is not being run..*$prompt $"\
-			{ pass "kill" }
-	-re ".*$prompt $"	{ fail "kill" }
-	timeout		{ fail "(timeout) kill" }
-	}
-
-
+gdb_test "kill" "The program is not being run." "kill"
 #test list "l" abbreviation
-send "l\n"
-expect {
-	-re "No symbol table is loaded.  Use the \"file\" command..*$prompt $"\
-			{ pass "list \"l\" abbreviation" }
-	-re ".*$prompt $"	{ fail "list \"l\" abbreviation" }
-	timeout		{ fail "(timeout) list \"l\" abbreviation" }
-	}
-
-
+gdb_test "l" "No symbol table is loaded.  Use the \"file\" command.*" "list \"l\" abbreviation"
 #test list
-send "list\n"
-expect {
-	-re "No symbol table is loaded.  Use the \"file\" command..*$prompt $"\
-			{ pass "list" }
-	-re ".*$prompt $"	{ fail "list" }
-	timeout		{ fail "(timeout) list" }
-	}
-
-
+gdb_test "list" "No symbol table is loaded.  Use the \"file\" command.*" "list"
 #test load
 # The ``takes a file name'' case is for vxgdb.
 # The ``Use the "file" command'' case is for newer GDB versions which try
 # to deduce the filename from the exec file.
-send "load\n"
-expect {
-	-re "You can't do that when your target is `None'.*$prompt $"\
-			{ pass "load" }
-	-re "The load command takes a file name.*$prompt $"\
-			{ pass "load" }
-	-re "Must specify at least a file name with the load command.*$prompt $"\
-			{ pass "load" }
-	-re "Use the .file. or .exec-file. command.*$prompt $"\
-			{ pass "load" }
-	-re ".*$prompt $"	{ fail "load" }
-	timeout		{ fail "(timeout) load" }
-	}
-
-
+gdb_test "load" "You can't do that when your target is `None'.*|The load command takes a file name.*|Must specify at least a file name with the load command.*|.*Use the .file. or .exec-file. command.*" "load"
 #test next "n" abbreviation
-setup_xfail "h8300*-*-*"
-setup_xfail "a29k-*-udi"
-send "n\n"
-expect {
-	-re "The program is not being run..*$prompt $"\
-			{ pass "next \"n\" abbreviation" }
-	-re ".*$prompt $"	{ fail "next \"n\" abbreviation" }
-	timeout		{ fail "(timeout) next \"n\" abbreviation" }
-	}
-
-
+gdb_test "n" "The program is not being run." "next \"n\" abbreviation"
 #test next
-setup_xfail "h8300*-*-*"
-setup_xfail "a29k-*-udi"
-send "next\n"
-expect {
-	-re "The program is not being run..*$prompt $"\
-			{ pass "next" }
-	-re ".*$prompt $"	{ fail "next" }
-	timeout		{ fail "(timeout) next" }
-	}
-
-
+gdb_test "next" "The program is not being run." "next"
 #test nexti "ni" abbreviation
-setup_xfail "a29k-*-udi"
-send "ni\n"
-expect {
-	-re "The program is not being run..*$prompt $"\
-			{ pass "nexti \"ni\" abbreviation" }
-	-re ".*$prompt $"	{ fail "nexti \"ni\" abbreviation" }
-	timeout		{ fail "(timeout) nexti \"ni\" abbreviation" }
-	}
-
-
+gdb_test "ni" "The program is not being run." "nexti \"ni\" abbreviation"
 #test nexti
-setup_xfail "a29k-*-udi"
-send "nexti\n"
-expect {
-	-re "The program is not being run..*$prompt $"\
-			{ pass "nexti" }
-	-re ".*$prompt $"	{ fail "nexti" }
-	timeout		{ fail "(timeout) nexti" }
-	}
-
-
+gdb_test "nexti" "The program is not being run." "nexti"
 #test output
-send "output\n"
-expect {
-	-re "Argument required .expression to compute.*$prompt $"\
-			{ pass "output" }
-	-re ".*$prompt $"	{ fail "output" }
-	timeout		{ fail "(timeout) output" }
-	}
+gdb_test "output" "Argument required .expression to compute.*" "output"
 
+#test overlay
+gdb_test "overlay" "\"overlay\" must be followed by the name of .*"
+#test a non-existant overlay subcommand
+gdb_test "overlay on"     "Undefined overlay command.* Try \"help overlay\"."
+gdb_test "overlay manual" "" "overlay manual #1"
+gdb_test "overlay auto"   ""
+gdb_test "overlay off"    ""
+gdb_test "overlay list"   "No sections are mapped."
+gdb_test "overlay map"    "Overlay debugging not enabled.*" "overlay map #1"
+gdb_test "overlay unmap"  "Overlay debugging not enabled.*" "overlay unmap #1"
+gdb_test "overlay manual" "" "overlay manual #2"
+gdb_test "overlay map"    "Argument required: name of an overlay section." "overlay map #2"
+gdb_test "overlay unmap"  "Argument required: name of an overlay section." "overlay unmap #2"
 
 #test print "p" abbreviation
-send "p\n"
-expect {
-	-re "The history is empty..*$prompt $"\
-			{ pass "print \"p\" abbreviation" }
-	-re ".*$prompt $"	{ fail "print \"p\" abbreviation" }
-	timeout		{ fail "(timeout) print \"p\" abbreviation" }
-	}
-
-
+gdb_test "p" "The history is empty." "print \"p\" abbreviation"
 #test print
-send "print\n"
-expect {
-	-re "The history is empty..*$prompt $"\
-			{ pass "print" }
-	-re ".*$prompt $"	{ fail "print" }
-	timeout		{ fail "(timeout) print" }
-	}
-
-
+gdb_test "print" "The history is empty." "print"
 #test printf
-send "printf\n"
-expect {
-	-re "Argument required .format-control string and values to print.*$prompt $"\
-			{ pass "printf" }
-	-re ".*$prompt $"	{ fail "printf" }
-	timeout		{ fail "(timeout) printf" }
-	}
-
-
-# this command was removed from GDB 4.5.8
-#test printsyms
-#send "printsyms\n"
-#expect {
-#	-re "printsyms takes an output file name and optional symbol file name.*$prompt $"\
-#			{ pass "printsyms" }
-#	-re ".*$prompt $"	{ fail "printsyms" }
-#	timeout		{ fail "(timeout) printsyms" }
-#	}
-
+gdb_test "printf" "Argument required .format-control string and values to print.*" "printf"
 #test ptype
-send "ptype\n"
-expect {
-	-re "The history is empty..*$prompt $"\
-			{ pass "ptype" }
-	-re ".*$prompt $"	{ fail "ptype" }
-	timeout		{ fail "(timeout) ptype" }
-	}
-
-
+gdb_test "ptype" "The history is empty." "ptype"
 #test pwd
-send "pwd\n"
-expect {
-	-re "Working directory .*$prompt $"\
-			{ pass "pwd" }
-	-re ".*$prompt $"	{ fail "pwd" }
-	timeout		{ fail "(timeout) pwd" }
-	}
-
+gdb_test "pwd" "Working directory .*" "pwd"
 
 #test run "r" abbreviation
 if [istarget "*-*-vxworks*"] then {
-    send "set args\n"
-    expect -re "$prompt $" {}
+    gdb_test "set args" "" "" 
+
     gdb_test "r" "Starting program: .*
 You must specify a function name to run, and arguments if any"\
 		"run \"r\" abbreviation"
-    send "set args main\n"
-    expect -re "$prompt $" {}
+    gdb_test "set args main" "" "" 
+
 } else {
-    send "r\n"
-    expect {
+    send_gdb "r\n"
+    gdb_expect {
 	    -re "Starting program:  .*
-You can't do that when your target is `None'.*$prompt $"\
+You can't do that when your target is `None'.*$gdb_prompt $"\
 			{ pass "run \"r\" abbreviation" }
 	    -re "Starting program:  .*
 No executable file specified.*
-Use the \"file\" or \"exec-file\" command.*$prompt $"\
+Use the \"file\" or \"exec-file\" command.*$gdb_prompt $"\
 			{ pass "run \"r\" abbreviation" }
 	    -re "Starting program:  .*
-No image loaded into target.*$prompt $"\
+No executable specified, use .target exec.\\..*$gdb_prompt $"\
 			{ pass "run \"r\" abbreviation" }
 	    -re "Starting program:  .*
-No program loaded.*$prompt $"\
+No image loaded into target.*$gdb_prompt $"\
 			{ pass "run \"r\" abbreviation" }
-	    -re "Don't know how to run.  Try \"help target\"..*$prompt $"\
+	    -re "Starting program:  .*
+No program loaded.*$gdb_prompt $"\
 			{ pass "run \"r\" abbreviation" }
-	    -re ".*$prompt $"	{ fail "run \"r\" abbreviation" }
+	    -re "Don't know how to run.  Try \"help target\"..*$gdb_prompt $"\
+			{ pass "run \"r\" abbreviation" }
+	    -re ".*$gdb_prompt $"	{ fail "run \"r\" abbreviation" }
 	    timeout		{ fail "(timeout) run \"r\" abbreviation" }
 	}
 }
 
 #test run
 if [istarget "*-*-vxworks*"] then {
-    send "set args\n"
-    expect -re "$prompt $" {}
+    gdb_test "set args" "" "" 
+
     gdb_test "run" "Starting program: .*
 You must specify a function name to run, and arguments if any"
-    send "set args main\n"
-    expect -re "$prompt $" {}
+    gdb_test "set args main" "" "" 
+
 } else {
-    send "run\n"
-    expect {
-	    -re "Starting program:.*You can't do that when your target is `None'.*$prompt $" { pass "run" }
+    send_gdb "run\n"
+    gdb_expect {
+	    -re "Starting program:.*You can't do that when your target is `None'.*$gdb_prompt $" { pass "run" }
 	    -re "Starting program:  .*
 No executable file specified.*
-Use the \"file\" or \"exec-file\" command.*$prompt $"\
+Use the \"file\" or \"exec-file\" command.*$gdb_prompt $"\
 			{ pass "run" }
 	    -re "Starting program:  .*
-No image loaded into target.*$prompt $"\
+No executable specified, use .target exec.\\..*$gdb_prompt $"\
 			{ pass "run" }
 	    -re "Starting program:  .*
-No program loaded.*$prompt $"\
+No image loaded into target.*$gdb_prompt $"\
+			{ pass "run" }
+	    -re "Starting program:  .*
+No program loaded.*$gdb_prompt $"\
 			{ pass "run \"r\" abbreviation" }
-	    -re "Don't know how to run.  Try \"help target\"..*$prompt $"\
+	    -re "Don't know how to run.  Try \"help target\"..*$gdb_prompt $"\
 			{ pass "run" }
-	    -re ".*$prompt $"	{ fail "run" }
+	    -re ".*$gdb_prompt $"	{ fail "run" }
 	    timeout		{ fail "(timeout) run" }
 	}
 }
 
 #test rbreak
-send "rbreak\n"
-expect {
-	-re "$prompt $"\
-			{ pass "rbreak" }
-	timeout		{ fail "(timeout) rbreak" }
-	}
+gdb_test "rbreak" "" "rbreak"
 
+# test restore
+gdb_test "restore" "You can't do that without a process to debug\."
 
 #test return
-# The middle case accommodates the a29k, where doing the "ni" above causes
-# an initial stack to be created.
-send "return\n"
-setup_xfail "h8300*-*-*"
-expect {
-	-re "No selected frame..*$prompt $"\
-			{ pass "return" }
-	-re "Make .* return now.*y or n. $" {
-	    send "y\n"
-	    exp_continue
-	}
-	-re ".*$prompt $"	{ fail "return" }
-	timeout		{ fail "(timeout) return" }
-	}
+# The middle case accomodated the obsolete a29k, where doing the "ni"
+# above causes an initial stack to be created.
+gdb_test "return" "No selected frame..*" "return"  "Make .* return now.*y or n. $" "y"
 
 
 #test reverse-search
-send "reverse-search\n"
-expect {
-	-re "No previous regular expression.*$prompt $"\
-			{ pass "reverse-search" }
-	-re "There is no previous regular expression.*$prompt $"\
-			{ pass "forward-search" }
-	-re ".*$prompt $"	{ fail "reverse-search" }
-	timeout		{ fail "(timeout) reverse-search" }
-	}
-
-
+gdb_test "reverse-search" "No previous regular expression.*|There is no previous regular expression.*" "reverse-search"
 #test step "s" abbreviation
-setup_xfail "a29k-*-udi"
-setup_xfail "h8300*-*-*"
-send "s\n"
-expect {
-	-re "The program is not being run..*$prompt $"\
-			{ pass "step \"s\" abbreviation" }
-	-re ".*$prompt $"	{ fail "step \"s\" abbreviation" }
-	timeout		{ fail "(timeout) step \"s\" abbreviation" }
-	}
-
-
+gdb_test "s" "The program is not being run." "step \"s\" abbreviation #1"
 #test step
-setup_xfail "a29k-*-udi"
-setup_xfail "h8300*-*-*"
-send "step\n"
-expect {
-	-re "The program is not being run..*$prompt $"\
-			{ pass "step" }
-	-re ".*$prompt $"	{ fail "step" }
-	timeout		{ fail "(timeout) step" }
-	}
-
-
+gdb_test "step" "The program is not being run." "step #1"
 #test search
-send "search\n"
-expect {
-	-re "No previous regular expression.*$prompt $"\
-			{ pass "search" }
-	-re "There is no previous regular expression.*$prompt $"\
-			{ pass "forward-search" }
-	-re ".*$prompt $"	{ fail "search" }
-	timeout		{ fail "(timeout) search" }
-	}
-
-
+gdb_test "search" "No previous regular expression.*|There is no previous regular expression.*" "search"
 #test section
-send "section\n"
-expect {
-	-re "Must specify section name and its virtual address.*$prompt $"\
-			{ pass "section" }
-	-re ".*$prompt $"	{ fail "section" }
-	timeout		{ fail "(timeout) section" }
-	}
-
-
+gdb_test "section" "Must specify section name and its virtual address.*" "section"
 #test set annotate
-send "set annotate\n"
-expect {
-	-re "Argument required .integer to set it to.*$prompt $"\
-			{ pass "set annotate" }
-	-re ".*$prompt $"	{ fail "set annotate" }
-	timeout		{ fail "(timeout) set annotate" }
-	}
-
-
+gdb_test "set annotate" "Argument required .integer to set it to.*" "set annotate"
 #test set args
-send "set args\n"
-expect {
-	-re "$prompt $"\
-			{ pass "set args" }
-	timeout		{ fail "(timeout) set args" }
-	}
-
-
+gdb_test "set args" "" "set args"
 #test set check "c" abbreviation
-send "set c\n"
-expect {
-	-re "\"set check\" must be followed by the name of a check subcommand..*
-List of set check subcommands:.*
-set check range -- Set range checking.*
-set check type -- Set type checking.*
-Type \"help set check\" followed by set check subcommand name for full documentation..*
-Command name abbreviations are allowed if unambiguous..*$prompt $"\
-			{ pass "set check \"c\" abbreviation" }
-	-re ".*$prompt $"	{ fail "set check \"c\" abbreviation" }
-	timeout		{ fail "(timeout) set check \"c\" abbreviation" }
-	}
-
-
+gdb_test "set c" "\"set check\" must be followed by the name of a check subcommand.(\[^\r\n\]*\[\r\n\])+List of set check subcommands:(\[^\r\n\]*\[\r\n\])+set check range -- Set range checking(\[^\r\n\]*\[\r\n\])+set check type -- Set type checking(\[^\r\n\]*\[\r\n\])+Type \"help set check\" followed by set check subcommand name for full documentation.(\[^\r\n\]*\[\r\n\])+Command name abbreviations are allowed if unambiguous." "set check \"c\" abbreviation"
 #test set check "ch" abbreviation
-send "set ch\n"
-expect {
-	-re "\"set check\" must be followed by the name of a check subcommand..*
-List of set check subcommands:.*
-set check range -- Set range checking.*
-set check type -- Set type checking.*
-Type \"help set check\" followed by set check subcommand name for full documentation..*
-Command name abbreviations are allowed if unambiguous..*$prompt $"\
-			{ pass "set check \"ch\" abbreviation" }
-	-re ".*$prompt $"	{ fail "set check \"ch\" abbreviation" }
-	timeout		{ fail "(timeout) set check \"ch\" abbreviation" }
-	}
-
-
+gdb_test "set ch" "\"set check\" must be followed by the name of a check subcommand.(\[^\r\n\]*\[\r\n\])+List of set check subcommands:(\[^\r\n\]*\[\r\n\])+set check range -- Set range checking(\[^\r\n\]*\[\r\n\])+set check type -- Set type checking(\[^\r\n\]*\[\r\n\])+Type \"help set check\" followed by set check subcommand name for full documentation.(\[^\r\n\]*\[\r\n\])+Command name abbreviations are allowed if unambiguous." "set check \"ch\" abbreviation"
 #test set check
-send "set check\n"
-expect {
-	-re "\"set check\" must be followed by the name of a check subcommand..*
-List of set check subcommands:.*
-set check range -- Set range checking.*
-set check type -- Set type checking.*
-Type \"help set check\" followed by set check subcommand name for full documentation..*
-Command name abbreviations are allowed if unambiguous..*$prompt $"\
-			{ pass "set check" }
-	-re ".*$prompt $"	{ fail "set check" }
-	timeout		{ fail "(timeout) set check" }
-	}
-
-
+gdb_test "set check" "\"set check\" must be followed by the name of a check subcommand.(\[^\r\n\]*\[\r\n\])+List of set check subcommands:(\[^\r\n\]*\[\r\n\])+set check range -- Set range checking(\[^\r\n\]*\[\r\n\])+set check type -- Set type checking(\[^\r\n\]*\[\r\n\])+Type \"help set check\" followed by set check subcommand name for full documentation.(\[^\r\n\]*\[\r\n\])+Command name abbreviations are allowed if unambiguous." "set check"
 #test set check range
-send "set check range\n"
-expect {
-	-re "$prompt $"\
-			{ pass "set check range" }
-	timeout		{ fail "(timeout) set check range" }
-	}
-
-
+gdb_test "set check range" "" "set check range"
 #test set check type
-send "set check type\n"
-expect {
-	-re "$prompt $"\
-			{ pass "set check type" }
-	timeout		{ fail "(timeout) set check type" }
-	}
-
-
+gdb_test "set check type" "" "set check type"
 #test set complaints
-send "set complaints\n"
-expect {
-	-re "Argument required .integer to set it to.*$prompt $"\
-			{ pass "set complaints" }
-	-re ".*$prompt $"	{ fail "set complaints" }
-	timeout		{ fail "(timeout) set complaints" }
-	}
-
-
+gdb_test "set complaints" "Argument required .integer to set it to.*" "set complaints"
 #test set confirm
-send "set confirm\n"
-expect {
-	-re "$prompt $"\
-			{ pass "set confirm" }
-	timeout		{ fail "(timeout) set confirm" }
-	}
-
-
-#test set editing
-send "set editing\n"
-expect {
-	-re "$prompt $"\
-			{ pass "set editing" }
-	timeout		{ fail "(timeout) set editing" }
-	}
-
-
+gdb_test "set confirm" "" "set confirm"
+# Don't test set editing. What if we're talking to a gdb that
+# won't do editing correctly while we're talking to it?
+# gdb_test "set editing" "" "set editing"
 
 #test set environment
-send "set environment\n"
-expect {
-	-re "Argument required .environment variable and value.*$prompt $"\
-			{ pass "set environment" }
-	-re ".*$prompt $"	{ fail "set environment" }
-	timeout		{ fail "(timeout) set environment" }
-	}
-
-
+gdb_test "set environment" "Argument required .environment variable and value.*" "set environment"
 #test set height
-send "set height\n"
-expect {
-	-re "Argument required .integer to set it to.*$prompt $"\
-			{ pass "set height" }
-	-re ".*$prompt $"	{ fail "set height" }
-	timeout		{ fail "(timeout) set height" }
-	}
-
-
+gdb_test "set height" "Argument required .integer to set it to.*" "set height"
 #test set history expansion
-send "set history expansion\n"
-expect {
-	-re "$prompt $"\
-			{ pass "set history expansion" }
-	timeout		{ fail "(timeout) set history expansion" }
-	}
-
-
+gdb_test "set history expansion" "" "set history expansion"
 #test set history filename
-send "set history filename\n"
-expect {
-	-re "Argument required .filename to set it to.*$prompt $" {
-	    pass "set history filename"
-	}
-	-re ".*$prompt $" {
-	    fail "set history filename"
-	}
-	timeout	{
-	    fail "(timeout) set history filename"
-	}
-    }
-
-
+gdb_test "set history filename" "Argument required .filename to set it to.*" "set history filename"
 #test set history save
-send "set history save\n"
-expect {
-	-re "$prompt $"\
-			{ pass "set history save" }
-	timeout		{ fail "(timeout) set history save" }
-	}
-
-
+gdb_test "set history save" "" "set history save"
 #test set history size
-send "set history size\n"
-expect {
-	-re "Argument required .integer to set it to.*$prompt $"\
-			{ pass "set history size" }
-	-re ".*$prompt $"	{ fail "set history size" }
-	timeout		{ fail "(timeout) set history size" }
-	}
-
-
+gdb_test "set history size" "Argument required .integer to set it to.*" "set history size"
 #test set history
-send "set history\n"
-expect {
-	-re "\"set history\" must be followed by the name of a history subcommand..*
-List of set history subcommands:.*
-set history filename -- Set the filename in which to record the command history.*
-set history size -- Set the size of the command history.*
-set history save -- Set saving of the history record on exit.*
-set history expansion -- Set history expansion on command input.*
-Type \"help set history\" followed by set history subcommand name for full documentation..*
-Command name abbreviations are allowed if unambiguous..*$prompt $"\
-			{ pass "set history" }
-	-re ".*$prompt $"	{ fail "set history" }
-	timeout		{ fail "(timeout) set history" }
-	}
-
-
+gdb_test "set history" "\"set history\" must be followed by the name of a history subcommand.(\[^\r\n\]*\[\r\n\])+List of set history subcommands:(\[^\r\n\]*\[\r\n\])+set history expansion -- Set history expansion on command input(\[^\r\n\]*\[\r\n\])+set history filename -- Set the filename in which to record the command history(\[^\r\n\]*\[\r\n\])+set history save -- Set saving of the history record on exit(\[^\r\n\]*\[\r\n\])+set history size -- Set the size of the command history(\[^\r\n\]*\[\r\n\])+Type \"help set history\" followed by set history subcommand name for full documentation.(\[^\r\n\]*\[\r\n\])+Command name abbreviations are allowed if unambiguous." "set history"
 #test set language
-send "set language\n"
-expect {
-	-re "The currently understood settings are:.*
-local or auto    Automatic setting based on source file.*
-c                Use the C language.*
-c\[+\]+              Use the C\[+\]+ language.*
-modula-2         Use the Modula-2 language.*$prompt $" {
-           pass "set language"
-        }
-	-re ".*$prompt $" {
-	    fail "set language"
-	}
-	timeout	{
-	    fail "(timeout) set language"
-	}
-	}
-
-
+gdb_test "set language" "The currently understood settings are:(\[^\r\n\]*\[\r\n\])+local or auto  *Automatic setting based on source file(\[^\r\n\]*\[\r\n\])+c  *Use the C language(\[^\r\n\]*\[\r\n\])+c\[+\]+  *Use the C\[+\]+ language(\[^\r\n\]*\[\r\n\])+modula-2  *Use the Modula-2 language.*" "set language"
 #test set listsize
-send "set listsize\n"
-expect {
-	-re "Argument required .integer to set it to.*$prompt $" {
-	    pass "set listsize"
-	}
-	-re ".*$prompt $"	{ fail "set listsize" }
-	timeout		{ fail "(timeout) set listsize" }
-	}
-
-
+gdb_test "set listsize" "Argument required .integer to set it to.*" "set listsize"
 #test set print "p" abbreviation
-send "set p\n"
-expect {
-	-re "\"set print\" must be followed by the name of a print subcommand..*
-List of set print subcommands:.*
-Type \"help set print\" followed by set print subcommand name for full documentation..*
-Command name abbreviations are allowed if unambiguous..*$prompt $" {
-            pass "set print \"p\" abbreviation"
-        }
-	-re ".*$prompt $"	{ fail "set print \"p\" abbreviation" }
-	timeout		{ fail "(timeout) set print \"p\" abbreviation" }
-	}
-
-
+gdb_test "set p" "\"set print\" must be followed by the name of a print subcommand.(\[^\r\n\]*\[\r\n\])+List of set print subcommands:(\[^\r\n\]*\[\r\n\])+Type \"help set print\" followed by set print subcommand name for full documentation.(\[^\r\n\]*\[\r\n\])+Command name abbreviations are allowed if unambiguous." "set print \"p\" abbreviation"
 #test set print "pr" abbreviation
-send "set pr\n"
-expect {
-	-re "\"set print\" must be followed by the name of a print subcommand..*
-List of set print subcommands:.*
-Type \"help set print\" followed by set print subcommand name for full documentation..*
-Command name abbreviations are allowed if unambiguous..*$prompt $" {
-            pass "set print \"pr\" abbreviation"
-	}
-	-re ".*$prompt $"	{ fail "set print \"pr\" abbreviation" }
-	timeout		{ fail "(timeout) set print \"pr\" abbreviation" }
-	}
-
-
+gdb_test "set pr" "\"set print\" must be followed by the name of a print subcommand.(\[^\r\n\]*\[\r\n\])+List of set print subcommands:(\[^\r\n\]*\[\r\n\])+Type \"help set print\" followed by set print subcommand name for full documentation.(\[^\r\n\]*\[\r\n\])+Command name abbreviations are allowed if unambiguous." "set print \"pr\" abbreviation"
 #test set print
-send "set print\n"
-expect {
-	-re "\"set print\" must be followed by the name of a print subcommand..*
-List of set print subcommands:.*
-Type \"help set print\" followed by set print subcommand name for full documentation..*
-Command name abbreviations are allowed if unambiguous..*$prompt $" {
-            pass "set print"
-        }
-	-re ".*$prompt $"	{ fail "set print" }
-	timeout		{ fail "(timeout) set print" }
-	}
-
-
+gdb_test "set print" "\"set print\" must be followed by the name of a print subcommand.(\[^\r\n\]*\[\r\n\])+List of set print subcommands:(\[^\r\n\]*\[\r\n\])+Type \"help set print\" followed by set print subcommand name for full documentation.(\[^\r\n\]*\[\r\n\])+Command name abbreviations are allowed if unambiguous." "set print"
 #test set print address
-send "set print address\n"
-expect {
-	-re "$prompt $"\
-			{ pass "set print address" }
-	timeout		{ fail "(timeout) set print address" }
-	}
-
-
+gdb_test "set print address" "" "set print address"
 #test set print array
-send "set print array\n"
-expect {
-	-re "$prompt $"\
-			{ pass "set print array" }
-	timeout		{ fail "(timeout) set print array" }
-	}
-
-
+gdb_test "set print array" "" "set print array"
 #test set print asm-demangle
-send "set print asm-demangle\n"
-expect {
-	-re "$prompt $"\
-			{ pass "set print asm-demangle" }
-	timeout		{ fail "(timeout) set print asm-demangle" }
-	}
-
-
+gdb_test "set print asm-demangle" "" "set print asm-demangle"
 #test set print demangle
-send "set print demangle\n"
-expect {
-	-re "$prompt $"\
-			{ pass "set print demangle" }
-	timeout		{ fail "(timeout) set print demangle" }
-	}
-
-
+gdb_test "set print demangle" "" "set print demangle"
 #test set print elements
-send "set print elements\n"
-expect {
-	-re "Argument required .integer to set it to.*$prompt $"\
-			{ pass "set print elements" }
-	-re ".*$prompt $"	{ fail "set print elements" }
-	timeout		{ fail "(timeout) set print elements" }
-	}
-
-
+gdb_test "set print elements" "Argument required .integer to set it to.*" "set print elements"
 #test set print object
-send "set print object\n"
-expect {
-	-re "$prompt $"\
-			{ pass "set print object" }
-	timeout		{ fail "(timeout) set print object" }
-	}
-
-
+gdb_test "set print object" "" "set print object"
 #test set print pretty
-send "set print pretty\n"
-expect {
-	-re "$prompt $"\
-			{ pass "set print pretty" }
-	timeout		{ fail "(timeout) set print pretty" }
-	}
-
-
+gdb_test "set print pretty" "" "set print pretty"
 #test set print sevenbit-strings
-send "set print sevenbit-strings\n"
-expect {
-	-re "$prompt $"\
-			{ pass "set print sevenbit-strings" }
-	timeout		{ fail "(timeout) set print sevenbit-strings" }
-	}
-
-
+gdb_test "set print sevenbit-strings" "" "set print sevenbit-strings"
 #test set print union
-send "set print union\n"
-expect {
-	-re "$prompt $"\
-			{ pass "set print union" }
-	timeout		{ fail "(timeout) set print union" }
-	}
-
-
+gdb_test "set print union" "" "set print union"
 #test set print vtbl
-send "set print vtbl\n"
-expect {
-	-re "$prompt $"\
-			{ pass "set print vtbl" }
-	timeout		{ fail "(timeout) set print vtbl" }
-	}
-
-
+gdb_test "set print vtbl" "" "set print vtbl"
 # FIXME -- need a test for "set prompt"
 #test set radix
-send "set radix\n"
-expect {
-	-re "Input and output radices now set to decimal 10, hex a, octal 12.*$prompt $"\
-			{ pass "set radix" }
-	-re "Argument required .integer to set it to.*$prompt $"\
-			{ fail "set radix (obsolete radix support)" }
-	-re ".*$prompt $"	{ fail "set radix" }
-	timeout		{ fail "(timeout) set radix" }
-	}
-
-
+gdb_test "set radix" "Input and output radices now set to decimal 10, hex a, octal 12.*" "set radix"
 #test set symbol-reloading
-send "set symbol-reloading\n"
-expect {
-	-re "$prompt $"\
-			{ pass "set symbol-reloading" }
-	timeout		{ fail "(timeout) set symbol-reloading" }
-	}
-
-
+gdb_test "set symbol-reloading" "" "set symbol-reloading"
 #test set variable
-send "set variable\n"
-expect {
-	-re "Argument required .expression to compute.*$prompt $"\
-			{ pass "set variable" }
-	-re ".*$prompt $"	{ fail "set variable" }
-	timeout		{ fail "(timeout) set variable" }
-	}
-
-
+gdb_test "set variable" "Argument required .expression to compute.*" "set variable"
 #test set verbose
-send "set verbose\n"
-expect {
-	-re "$prompt $"\
-			{ pass "set verbose" }
-	timeout		{ fail "(timeout) set verbose" }
-	}
-
-
+gdb_test "set verbose" "" "set verbose"
 #test set width
-send "set width\n"
-expect {
-	-re "Argument required .integer to set it to.*$prompt $"\
-			{ pass "set width" }
-	-re ".*$prompt $"	{ fail "set width" }
-	timeout		{ fail "(timeout) set width" }
-	}
-
-
+gdb_test "set width" "Argument required .integer to set it to.*" "set width"
 #test set write
 # This is only supported on targets which use exec.o.
-if ![istarget "rs6000-*-*"] then {
-    send "set write\n"
-    expect {
-	-re "set write\[\r\n\]*$prompt $"\
-			{ pass "set write" }
-	-re "$prompt $" { fail "set write" }
-	timeout		{ fail "(timeout) set write" }
-	}
-    gdb_test "set write off" ""
-}
-
+gdb_test "set write" "" "set write"
 #test set
-send "set\n"
-expect {
-	-re "Argument required .expression to compute.*$prompt $"\
-			{ pass "set" }
-	-re ".*$prompt $"	{ fail "set" }
-	timeout		{ fail "(timeout) set" }
-	}
-
-
+gdb_test "set" "Argument required .expression to compute.*" "set"
 #test shell echo Hi dad!
-send "shell echo Hi dad!\n"
-expect {
-	-re "Hi dad!.*$prompt $"\
-			{ pass "shell echo Hi dad!" }
-	-re ".*$prompt $"	{ fail "shell echo Hi dad!" }
-	timeout		{ fail "(timeout) shell echo Hi dad!" }
-	}
-
-
+gdb_test "shell echo Hi dad!" "Hi dad!" "shell echo Hi dad!"
 #test show annotate
-send "show annotate\n"
-expect {
-	-re "Annotation_level is 0..*$prompt $" \
-				{ pass "show annotate" }
-	-re ".*$prompt $"	{ fail "show annotate" }
-	timeout			{ fail "(timeout) show annotate" }
-	}
-
-
+gdb_test "show annotate" "Annotation_level is 0." 	 "show annotate"
 #test show args
-send "show args\n"
-expect {
-	-re "Arguments to give program being debugged when it is started is \"\"..*$prompt $"\
-			{ pass "show args" }
-	-re ".*$prompt $"	{ fail "show args" }
-	timeout		{ fail "(timeout) show args" }
-	}
-
-
+gdb_test "show args" "Argument list to give program being debugged when it is started is \"\"." "show args"
 #test show check "c" abbreviation
-send "show c\n"
-expect {
-	-re "range:  Range checking is \"auto; currently off\"..*
-type:  Type checking is \"auto; currently off\"..*$prompt $"\
-			{ pass "show check \"c\" abbreviation" }
-	-re ".*$prompt $"	{ fail "show check \"c\" abbreviation" }
-	timeout		{ fail "(timeout) show check \"c\" abbreviation" }
-	}
-
-
+gdb_test "show c" "range:  *Range checking is \"auto; currently off\".(\[^\r\n\]*\[\r\n\])+type:  *Type checking is \"auto; currently off\".*" "show check \"c\" abbreviation"
 #test show check "ch" abbreviation
-send "show ch\n"
-expect {
-	-re "range:  Range checking is \"auto; currently off\"..*
-type:  Type checking is \"auto; currently off\"..*$prompt $"\
-			{ pass "show check \"ch\" abbreviation" }
-	-re ".*$prompt $"	{ fail "show check \"ch\" abbreviation" }
-	timeout		{ fail "(timeout) show check \"ch\" abbreviation" }
-	}
-
-
+gdb_test "show ch" "range: *Range checking is \"auto; currently off\".(\[^\r\n\]*\[\r\n\])+type:  *Type checking is \"auto; currently off\"." "show check \"ch\" abbreviation"
 #test show check
-send "show check\n"
-expect {
-	-re "range:  Range checking is \"auto; currently off\"..*
-type:  Type checking is \"auto; currently off\"..*$prompt $"\
-			{ pass "show check" }
-	-re ".*$prompt $"	{ fail "show check" }
-	timeout		{ fail "(timeout) show check" }
-	}
-
-
+gdb_test "show check" "range:  *Range checking is \"auto; currently off\".(\[^\r\n\]*\[\r\n\])+type:  *Type checking is \"auto; currently off\"." "show check"
 #test show check range
-send "show check range\n"
-expect {
-	-re "Range checking is \"auto; currently off\"..*$prompt $"\
-			{ pass "show check range" }
-	-re ".*$prompt $"	{ fail "show check range" }
-	timeout		{ fail "(timeout) show check range" }
-	}
-
-
+gdb_test "show check range" "Range checking is \"auto; currently off\"." "show check range"
 #test show check type
-send "show check type\n"
-expect {
-	-re "Type checking is \"auto; currently off\"..*$prompt $"\
-			{ pass "show check type" }
-	-re ".*$prompt $"	{ fail "show check type" }
-	timeout		{ fail "(timeout) show check type" }
-	}
-
-
+gdb_test "show check type" "Type checking is \"auto; currently off\"." "show check type"
 #test show commands
-send "show commands\n"
-expect {
-	-re "$prompt $"\
-			{ pass "show commands" }
-	timeout		{ fail "(timeout) show commands" }
-	}
-
-
+gdb_test "show commands" "" "show commands"
 #test show complaints
-send "show complaints\n"
-expect {
-	-re "Max number of complaints about incorrect symbols is 0..*$prompt $"\
-			{ pass "show complaints" }
-	-re ".*$prompt $"	{ fail "show complaints" }
-	timeout		{ fail "(timeout) show complaints" }
-	}
-
-
+gdb_test "show complaints" "Max number of complaints about incorrect symbols is 0." "show complaints"
 #test show confirm
-send "show confirm\n"
-expect {
-	-re "Whether to confirm potentially dangerous operations is on..*$prompt $"\
-			{ pass "show confirm" }
-	-re ".*$prompt $"	{ fail "show confirm" }
-	timeout		{ fail "(timeout) show confirm" }
-	}
-
-
+gdb_test "show confirm" "Whether to confirm potentially dangerous operations is o\[a-z\]*." "show confirm"
 #test show convenience
-send "show convenience\n"
-expect {
-	-re "No debugger convenience variables now defined..*
-Convenience variables have names starting with \".\";.*
-use \"set\" as in \"set .foo = 5\" to define them..*$prompt $"\
-			{ pass "show convenience" }
-	-re ".*$prompt $"	{ fail "show convenience" }
-	timeout		{ fail "(timeout) show convenience" }
-	}
-
-
+gdb_test "show convenience" "No debugger convenience variables now defined.(\[^\r\n\]*\[\r\n\])+Convenience variables have names starting with \".\";(\[^\r\n\]*\[\r\n\])+use \"set\" as in \"set .foo = 5\" to define them." "show convenience"
 #test show directories
-send "show directories\n"
-expect {
-	-re "Source directories searched: .cdir:.cwd.*$prompt $"\
-			{ pass "show directories" }
-	-re ".*$prompt $"	{ fail "show directories" }
-	timeout		{ fail "(timeout) show directories" }
-	}
-
-
+gdb_test "show directories" "Source directories searched: .cdir:.cwd" "show directories"
 #test show editing
-send "show editing\n"
-expect {
-	-re "Editing of command lines as they are typed is on..*$prompt $"\
-			{ pass "show editing" }
-	-re ".*$prompt $"	{ fail "show editing" }
-	timeout		{ fail "(timeout) show editing" }
-	}
-
-
+gdb_test "show editing" "Editing of command lines as they are typed is o\[a-z\]*." "show editing"
 #test show height
-send "show height\n"
-expect {
-	-re "Number of lines gdb thinks are in a page is.*$prompt $"\
-			{ pass "show height" }
-	-re ".*$prompt $"	{ fail "show height" }
-	timeout		{ fail "(timeout) show height" }
-	}
-
-
+gdb_test "show height" "Number of lines gdb thinks are in a page is.*" "show height"
 #test show history expansion
-send "show history expansion\n"
-expect {
-	-re "History expansion on command input is on.*$prompt $"\
-			{ pass "show history expansion" }
-	-re ".*$prompt $"	{ fail "show history expansion" }
-	timeout		{ fail "(timeout) show history expansion" }
-	}
-
-
+gdb_test "show history expansion" "History expansion on command input is o\[a-z\]*.*" "show history expansion"
 #test show history filename
-send "show history filename\n"
-expect {
-	-re "The filename in which to record the command history is.*.gdb_history.*$prompt $" { pass "show history filename" }
-	-re ".*$prompt $"	{ fail "show history filename" }
-	timeout		{ fail "(timeout) show history filename" }
-	}
-
-
+gdb_test "show history filename" "The filename in which to record the command history is.*.gdb_history.*" "show history filename"
 #test show history save
-send "show history save\n"
-expect {
-	-re "Saving of the history record on exit is on..*$prompt $" {
-	    pass "show history save"
-	}
-	-re ".*$prompt $"	{ fail "show history save" }
-	timeout		{ fail "(timeout) show history save" }
-	}
-
-
+gdb_test "show history save" "Saving of the history record on exit is on." "show history save"
 #test show history size
-send "show history size\n"
-expect {
-	-re "The size of the command history is.*$prompt $"\
-			{ pass "show history size" }
-	-re ".*$prompt $"	{ fail "show history size" }
-	timeout		{ fail "(timeout) show history size" }
-	}
-
-
+gdb_test "show history size" "The size of the command history is.*" "show history size"
 #test show history
-send "show history\n"
-expect {
-	-re "filename:  The filename in which to record the command history is.*.gdb_history.*
-size:  The size of the command history is.*
-save:  Saving of the history record on exit is o.*
-expansion:  History expansion on command input is o.*$prompt $"
-			{ pass "show history" }
-	-re ".*$prompt $"	{ fail "show history" }
-	timeout		{ fail "(timeout) show history" }
-	}
-
-
+gdb_test "show history" "expansion:  *History expansion on command input is o(\[^\r\n\]*\[\r\n\])+filename:  *The filename in which to record the command history is.*.gdb_history(\[^\r\n\]*\[\r\n\])+save: *Saving of the history record on exit is o(\[^\r\n\]*\[\r\n\])+size: * The size of the command history is.*" "show history"
 #test show language
-send "show language\n"
-expect {
-	-re "The current source language is \"auto; currently c\"..*$prompt $"\
-			{ pass "show language" }
-	-re ".*$prompt $"	{ fail "show language" }
-	timeout		{ fail "(timeout) show language" }
-	}
-
-
+gdb_test "show language" "The current source language is \"auto; currently c\"." "show language"
 #test show listsize
-send "show listsize\n"
-expect {
-	-re "Number of source lines gdb will list by default is 10..*$prompt $"\
-			{ pass "show listsize" }
-	-re ".*$prompt $"	{ fail "show listsize" }
-	timeout		{ fail "(timeout) show listsize" }
-	}
-
-
+gdb_test "show listsize" "Number of source lines gdb will list by default is 10." "show listsize"
 #test show print "p" abbreviation
-send "show p\n"
-expect {
-	-re ".*$prompt $"\
-			{ pass "show print \"p\" abbreviation" }
-	timeout		{ fail "(timeout) show print \"p\" abbreviation" }
-	}
-
-
+gdb_test "show p" ".*" "show p"
 #test show print "pr" abbreviation
-send "show pr\n"
-expect {
-	-re ".*$prompt $"\
-			{ pass "show print \"pr\" abbreviation" }
-	timeout		{ fail "(timeout) show print \"pr\" abbreviation" }
-	}
-
-
-
+gdb_test "show pr" ".*" "show pr"
 #test show print
-send "show print\n"
-expect {
-	-re ".*$prompt $"\
-			{ pass "show print" }
-	timeout		{ fail "(timeout) show print" }
-	}
-
-
+gdb_test "show print" "" "show print"
 #test show paths
-send "show paths\n"
-expect {
-	-re "Executable and object file path:.*$prompt $"\
-			{ pass "show paths" }
-	-re ".*$prompt $"	{ fail "show paths" }
-	timeout		{ fail "(timeout) show paths" }
-	}
-
-
+gdb_test "show paths" "Executable and object file path:.*" "show paths"
 #test show print address
-send "show print address\n"
-expect {
-	-re "Printing of addresses is on..*$prompt $"\
-			{ pass "show print address" }
-	-re ".*$prompt $"	{ fail "show print address" }
-	timeout		{ fail "(timeout) show print address" }
-	}
-
-
+gdb_test "show print address" "Printing of addresses is on." "show print address"
 #test show print array
-send "show print array\n"
-expect {
-	-re "Prettyprinting of arrays is on..*$prompt $"\
-			{ pass "show print array" }
-	-re ".*$prompt $"	{ fail "show print array" }
-	timeout		{ fail "(timeout) show print array" }
-	}
-
-
+gdb_test "show print array" "Prettyprinting of arrays is on." "show print array"
 #test show print asm-demangle
-send "show print asm-demangle\n"
-expect {
-	-re "Demangling of C\[+\]+ names in disassembly listings is on..*$prompt $"\
-			{ pass "show print asm-demangle" }
-	-re ".*$prompt $"	{ fail "show print asm-demangle" }
-	timeout		{ fail "(timeout) show print asm-demangle" }
-	}
-
-
+gdb_test "show print asm-demangle" "Demangling of C\[+\]+/ObjC names in disassembly listings is on." "show print asm-demangle"
 #test show print demangle
-send "show print demangle\n"
-expect {
-	-re "Demangling of encoded C\[+\]+ names when displaying symbols is on..*$prompt $"\
-			{ pass "show print demangle" }
-	-re ".*$prompt $"	{ fail "show print demangle" }
-	timeout		{ fail "(timeout) show print demangle" }
-	}
-
-
+gdb_test "show print demangle" "Demangling of encoded C\[+\]+/ObjC names when displaying symbols is on." "show print demangle"
 #test show print elements
-send "show print elements\n"
-expect {
-	-re "Limit on string chars or array elements to print is 200..*$prompt $"\
-			{ pass "show print elements" }
-	-re ".*$prompt $"	{ fail "show print elements" }
-	timeout		{ fail "(timeout) show print elements" }
-	}
-
-
+gdb_test "show print elements" "Limit on string chars or array elements to print is 200." "show print elements"
 #test show print object
-send "show print object\n"
-expect {
-	-re "Printing of object's derived type based on vtable info is on..*$prompt $"\
-			{ pass "show print object" }
-	-re ".*$prompt $"	{ fail "show print object" }
-	timeout		{ fail "(timeout) show print object" }
-	}
-
-
+gdb_test "show print object" "Printing of object's derived type based on vtable info is on." "show print object"
 #test show print pretty
-send "show print pretty\n"
-expect {
-	-re "Prettyprinting of structures is on..*$prompt $"\
-			{ pass "show print pretty" }
-	-re ".*$prompt $"	{ fail "show print pretty" }
-	timeout		{ fail "(timeout) show print pretty" }
-	}
-
-
+gdb_test "show print pretty" "Prettyprinting of structures is on." "show print pretty"
 #test show print sevenbit-strings
-send "show print sevenbit-strings\n"
-expect {
-	-re "Printing of 8-bit characters in strings as .nnn is on..*$prompt $"\
-			{ pass "show print sevenbit-strings" }
-	-re ".*$prompt $"	{ fail "show print sevenbit-strings" }
-	timeout		{ fail "(timeout) show print sevenbit-strings" }
-	}
-
-
+gdb_test "show print sevenbit-strings" "Printing of 8-bit characters in strings as .nnn is on." "show print sevenbit-strings"
 #test show print union
-send "show print union\n"
-expect {
-	-re "Printing of unions interior to structures is on..*$prompt $"\
-			{ pass "show print union" }
-	-re ".*$prompt $"	{ fail "show print union" }
-	timeout		{ fail "(timeout) show print union" }
-	}
-
-
+gdb_test "show print union" "Printing of unions interior to structures is on." "show print union"
 #test show print vtbl
-send "show print vtbl\n"
-expect {
-	-re "Printing of C\[+\]+ virtual function tables is on..*$prompt $"\
-			{ pass "show print vtbl" }
-	-re ".*$prompt $"	{ fail "show print vtbl" }
-	timeout		{ fail "(timeout) show print vtbl" }
-	}
-
-
+gdb_test "show print vtbl" "Printing of C\[+\]+ virtual function tables is on." "show print vtbl"
 #test show prompt
-# In the FAIL case, can't just look for $prompt because that will match
-# the output, rather than the prompt.  So look for $prompt at the start
+# In the FAIL case, can't just look for $gdb_prompt because that will match
+# the output, rather than the prompt. So look for $gdb_prompt at the start
 # of a line.
-send "show prompt\n"
-expect {
-	-re "Gdb's prompt is \"$prompt \".*$prompt $"\
-			{ pass "show prompt" }
-	-re ".*\r\n$prompt $"	{ fail "show prompt" }
-	timeout		{ fail "(timeout) show prompt" }
-	}
-
-
+gdb_test "show prompt" "Gdb's prompt is \"$gdb_prompt \".*" "show prompt"
 #test show radix
-send "show radix\n"
-expect {
-        -re "Input and output radices set to decimal 10, hex a, octal 12..*$prompt $"\
-			{ pass "show radix" }
-	-re "Default input and output number radix is 10..*$prompt $"\
-			{ fail "show radix (obsolete radix support)" }
-	-re ".*$prompt $"	{ fail "show radix" }
-	timeout		{ fail "(timeout) show radix" }
-	}
-
-
+gdb_test "show radix" "Input and output radices set to decimal 10, hex a, octal 12." "show radix"
 #test show symbol-reloading
-send "show symbol-reloading\n"
-expect {
-	-re "Dynamic symbol table reloading multiple times in one run is on..*$prompt $"\
-			{ pass "show symbol-reloading" }
-	-re ".*$prompt $"	{ fail "show symbol-reloading" }
-	timeout		{ fail "(timeout) show symbol-reloading" }
-	}
-
-
+gdb_test "show symbol-reloading" "Dynamic symbol table reloading multiple times in one run is on." "show symbol-reloading"
 #test show user
-send "show user\n"
-expect {
-	-re "$prompt $"\
-			{ pass "show user" }
-	timeout		{ fail "(timeout) show user" }
-	}
-
-
+gdb_test "show user" "" "show user"
 #test show values
-send "show values\n"
-expect {
-	-re "$prompt $"\
-			{ pass "show values" }
-	timeout		{ fail "(timeout) show values" }
-	}
-
-
+gdb_test "show values" "" "show values"
 #test show verbose
-send "show verbose\n"
-expect {
-	-re "Verbose printing of informational messages is on..*$prompt $"\
-			{ pass "show verbose" }
-	-re ".*$prompt $"	{ fail "show verbose" }
-	timeout		{ fail "(timeout) show verbose" }
-	}
-
-
+gdb_test "show verbose" "Verbose printing of informational messages is o.*|Verbosity is off.*" "show verbose"
 #test show version
-send "show version\n"
-expect {
-	-re "GNU gdb \[0-9\.\]*.*
-Copyright \[0-9\]* Free Software Foundation, Inc.*
-GDB is free software, covered by the GNU General Public License, and you are.*
-welcome to change it and/or distribute copies of it under certain conditions.*
-Type \"show copying\" to see the conditions.*
-There is absolutely no warranty for GDB.  Type \"show warranty\" for details.*
-This GDB was configured as .*$prompt $"\
-			{ pass "show version" }
-	-re "GDB is free software and you are welcome to distribute copies of it.*
- under certain conditions; type \"show copying\" to see the conditions..*
-There is absolutely no warranty for GDB; type \"show warranty\" for details..*
-GDB.*Copyright \[0-9\]* Free Software Foundation, Inc..*$prompt $"\
-			{ pass "show version (obsolescent gdb)" }
-	-re ".*$prompt $"	{ fail "show version" }
-	timeout		{ fail "(timeout) show version" }
-	}
-
-
+gdb_test "show version" "GNU gdb \[0-9\.\]*(\[^\r\n\]*\[\r\n\])+Copyright \[0-9\]* Free Software Foundation, Inc(\[^\r\n\]*\[\r\n\])+GDB is free software, covered by the GNU General Public License, and you are(\[^\r\n\]*\[\r\n\])+welcome to change it and/or distribute copies of it under certain conditions(\[^\r\n\]*\[\r\n\])+Type \"show copying\" to see the conditions(\[^\r\n\]*\[\r\n\])+There is absolutely no warranty for GDB.  Type \"show warranty\" for details(\[^\r\n\]*\[\r\n\])+This GDB was configured as .*|GDB is free software and you are welcome to distribute copies of it(\[^\r\n\]*\[\r\n\])+ under certain conditions; type \"show copying\" to see the conditions.(\[^\r\n\]*\[\r\n\])+There is absolutely no warranty for GDB; type \"show warranty\" for details.(\[^\r\n\]*\[\r\n\])+GDB.*Copyright \[0-9\]* Free Software Foundation, Inc.*" "show version"
 #test show width
-send "show width\n"
-expect {
-	-re "Number of characters gdb thinks are in a line is.*$prompt $"\
-			{ pass "show width" }
-	-re ".*$prompt $"	{ fail "show width" }
-	timeout		{ fail "(timeout) show width" }
-	}
-
-
+gdb_test "show width" "Number of characters gdb thinks are in a line is.*" "show width"
 #test show write
 # This is only supported on targets which use exec.o.
-if ![istarget "rs6000-*-*"] then {
-    send "show write\n"
-    expect {
-	-re "Writing into executable and core files is off..*$prompt $"\
-			{ pass "show write" }
-	-re ".*$prompt $"	{ fail "show write" }
-	timeout		{ fail "(timeout) show write" }
-	}
-}
-
+gdb_test "show write" "Writing into executable and core files is o.*" "show write"
 #test show
-send "show\n"
-expect {
-	-re "confirm:  Whether to confirm potentially dangerous operations is on..*
-history filename:  The filename in which to record the command history is .*
-history size:  The size of the command history is.*
-history save:  Saving of the history record on exit is on..*
-print elements:  Limit on string chars or array elements to print is 200..*
-listsize:  Number of source lines gdb will list by default is 10.*$prompt $"\
-			{ pass "show" }
-	-re "\n$prompt $"	{ fail "show" }
-	timeout		{ fail "(timeout) show" }
-	}
-
-
+gdb_test "show" "confirm:  *Whether to confirm potentially dangerous operations is on.(\[^\r\n\]*\[\r\n\])+history filename:  *The filename in which to record the command history is (\[^\r\n\]*\[\r\n\])+history save:  *Saving of the history record on exit is on.(\[^\r\n\]*\[\r\n\])+history size:  *The size of the command history is(\[^\r\n\]*\[\r\n\])+listsize:  *Number of source lines gdb will list by default is 10(\[^\r\n]*\[\r\n\])+print elements:  *Limit on string chars or array elements to print is 200..*" "show"
 #test stepi "si" abbreviation
-setup_xfail "a29k-*-udi"
-send "si\n"
-expect {
-	-re "The program is not being run..*$prompt $"\
-			{ pass "stepi \"si\" abbreviation" }
-	-re ".*$prompt $"	{ fail "stepi \"si\" abbreviation" }
-	timeout		{ fail "(timeout) stepi \"si\" abbreviation" }
-	}
-
-
+gdb_test  "si" "The program is not being run." "stepi \"si\" abbreviation"
 #test stepi
-setup_xfail "a29k-*-udi"
-send "stepi\n"
-expect {
-	-re "The program is not being run..*$prompt $"\
-			{ pass "stepi" }
-	-re ".*$prompt $"	{ fail "stepi" }
-	timeout		{ fail "(timeout) stepi" }
-	}
-
-
+gdb_test "stepi" "The program is not being run." "stepi"
 #test signal
-setup_xfail "a29k-*-udi"
-setup_xfail "h8300*-*-*"
-send "signal\n"
-expect {
-	-re "The program is not being run..*$prompt $"\
-			{ pass "signal" }
-	-re ".*$prompt $"	{ fail "signal" }
-	timeout		{ fail "(timeout) signal" }
-	}
-
-
+gdb_test "signal" "The program is not being run." "signal"
 #test source
-send "source\n"
-expect {
-	-re "source command requires pathname of file to source..*$prompt"
-			{ pass "source" }
-	-re "No such file or directory.*$prompt $" { pass "source" }
-	-re ".*$prompt $"	{ fail "source" }
-	timeout		{ fail "(timeout) source" }
-	}
-
+gdb_test "source" "source command requires pathname of file to source..*|No such file or directory.*" "source"
 #test step "s" abbreviation
-setup_xfail "a29k-*-udi"
-setup_xfail "h8300*-*-*"
-send "s\n"
-expect {
-	-re "The program is not being run..*$prompt $"\
-			{ pass "step \"s\" abbreviation" }
-	-re ".*$prompt $"	{ fail "step \"s\" abbreviation" }
-	timeout		{ fail "(timeout) step \"s\" abbreviation" }
-	}
-
-
+gdb_test "s" "The program is not being run." "step \"s\" abbreviation #2"
 #test step
-setup_xfail "a29k-*-udi"
-setup_xfail "h8300*-*-*"
-send "step\n"
-expect {
-	-re "The program is not being run..*$prompt $"\
-			{ pass "step" }
-	-re ".*$prompt $"	{ fail "step" }
-	timeout		{ fail "(timeout) step" }
-	}
-
-
+gdb_test "step" "The program is not being run." "step #2"
 #test symbol-file
-send "symbol-file\n"
-expect {
-	-re "$prompt $"\
-			{ pass "symbol-file" }
-	timeout		{ fail "(timeout) symbol-file" }
-	}
-
+gdb_test "symbol-file" "" "symbol-file"
 
 #test target child
-send "target child\n"
-expect {
-	-re "Use the \"run\" command to start a Unix child process..*$prompt $"\
-	    { pass "target child (non-procfs version)" }
-	-re "Undefined target command: \"child\".  Try \"help target\"..*$prompt $"\
-	    { pass "target child (procfs version)" }
-	
-	-re ".*$prompt $"	{ fail "target child" }
-	timeout		{ fail "(timeout) target child" }
-	}
-
+gdb_test "target child" "Use the \"run\" command to start a Unix child process.*|Undefined target command: \"child\".  *Try \"help target\".*" "target child"
 
 #test target procfs
-send "target procfs\n"
-expect {
-	-re "Use the \"run\" command to start a Unix child process..*$prompt $"\
-	    { pass "target procfs (procfs version)" }
-	-re "Undefined target command: \"procfs\".  Try \"help target\"..*$prompt $"\
-	    { pass "target procfs (non-procfs version)" }
-	
-	-re ".*$prompt $"	{ fail "target procfs" }
-	timeout		{ fail "(timeout) target procfs" }
-	}
-
+gdb_test "target procfs" "Use the \"run\" command to start a Unix child process.*|Undefined target command: \"procfs\".  *Try \"help target\".*" "target procfs"
 
 #test target core
-send "target core\n"
-expect {
-	-re "No core file specified..*$prompt $"\
-			{ pass "target core" }
-	-re ".*A program is being debugged already.  Kill it. .y or n.*$" {
-	    send "n\n"
-	    if $verbose>1 then {
-		send_user "\t\tDidn't kill program being debugged\n"
-	    }
-	    expect -re "$prompt $" { }
-	    pass "target core"
+send_gdb "target core\n"
+gdb_expect {
+    -re "No core file specified..*$gdb_prompt $" { pass "target core" }
+    -re ".*A program is being debugged already.  Kill it. .y or n.*$" {
+	send_gdb "n\n"
+	if $verbose>1 then {
+	    send_user "\t\tDidn't kill program being debugged\n"
 	}
-	-re "Undefined target command: \"core\".  Try \"help target\"..*$prompt $"\
-			{ pass "target core" }
-	-re ".*$prompt $"	{ fail "target core" }
-	timeout		{ fail "(timeout) target core" }
-	}
-
+	gdb_expect -re "$gdb_prompt $" { }
+	pass "target core"
+    }
+    -re "Undefined target command: \"core\".  Try \"help target\"..*$gdb_prompt $" { pass "target core" }
+    -re ".*$gdb_prompt $"	{ fail "target core" }
+    timeout		{ fail "(timeout) target core" }
+}
 
 #test target exec
-send "target exec\n"
-expect {
-	-re "No exec file now..*$prompt $"\
+send_gdb "target exec\n"
+gdb_expect {
+	-re "No executable file now..*$gdb_prompt $"\
 			{ pass "target exec" }
 	-re ".*A program is being debugged already.  Kill it. .y or n.*$" {
-	    send "n\n"
+	    send_gdb "n\n"
 	    if $verbose>1 then {
 		send_user "\t\tDidn't kill program being debugged\n"
 	    }
-	    expect -re "$prompt $" { }
+	    gdb_expect -re "$gdb_prompt $" { }
 	    pass "target exec"
 	}
-	-re ".*$prompt $"	{ fail "target exec" }
+	-re ".*$gdb_prompt $"	{ fail "target exec" }
 	timeout		{ fail "(timeout) target exec" }
 	}
 
-
 #test target remote
 if ![istarget "*-*-udi*"] then {
-    send "target remote\n"
-    expect {
-	-re "To open a remote debug connection, you need to specify what serial.*
-device is attached to the remote system .e.g. /dev/ttya.*$prompt $"\
+    send_gdb "target remote\n"
+    gdb_expect {
+	-re "To open a remote debug connection, you need to specify what.*serial.*device is attached to the remote system.*.e.g. .*$gdb_prompt $"\
 			{ pass "target remote" }
 	-re ".*A program is being debugged already.  Kill it. .y or n.*$" {
-	    send "n\n"
+	    send_gdb "n\n"
 	    if $verbose>1 then {
 		send_user "\t\tDidn't kill program being debugged\n"
 	    }
-	    expect -re "$prompt $" { }
+	    gdb_expect -re "$gdb_prompt $" { }
 	    pass "target remote"
 	}
-	-re ".*$prompt $"	{ fail "target remote" }
+	-re ".*$gdb_prompt $"	{ fail "target remote" }
 	timeout		{ fail "(timeout) target remote" }
     }
 }
 
 #test target
-send "target\n"
-expect {
-	-re "Argument required .target name.*$prompt $"\
-			{ pass "target" }
-	-re ".*$prompt $"	{ fail "target" }
-	timeout		{ fail "(timeout) target" }
-	}
-
-
+gdb_test "target" "Argument required .target name.*" "target"
 #test tbreak
-send "tbreak\n"
-expect {
-	-re "No default breakpoint address now..*$prompt $"\
-			{ pass "tbreak" }
-	-re ".*$prompt $"	{ fail "tbreak" }
-	timeout		{ fail "(timeout) tbreak" }
-	}
-
-
+gdb_test "tbreak" "No default breakpoint address now." "tbreak"
 #test tty
-send "tty\n"
-expect {
-	-re "Argument required .terminal name for running target process.*$prompt $"\
-			{ pass "tty" }
-	-re ".*$prompt $"	{ fail "tty" }
-	timeout		{ fail "(timeout) tty" }
-	}
-
-
+gdb_test "tty" "Argument required .terminal name for running target process.*" "tty"
 #test until "u" abbreviation
-setup_xfail "a29k-*-udi"
-setup_xfail "h8300*-*-*"
-send "u\n"
-expect {
-	-re "The program is not running..*$prompt $"\
-			{ pass "until \"u\" abbreviation" }
-	-re ".*$prompt $"	{ fail "until \"u\" abbreviation" }
-	timeout		{ fail "(timeout) until \"u\" abbreviation" }
-	}
-
-
+gdb_test "u" "The program is not running." "until \"u\" abbreviation"
 #test until
-setup_xfail "a29k-*-udi"
-setup_xfail "h8300*-*-*"
-send "until\n"
-expect {
-	-re "The program is not running..*$prompt $"\
-			{ pass "until" }
-	-re ".*$prompt $"	{ fail "until" }
-	timeout		{ fail "(timeout) until" }
-	}
-
-
+gdb_test "until" "The program is not running." "until"
 #test undisplay
 # FIXME -- need to dump full output to detailed log
-send "undisplay\n"
-expect {
-	-re "Delete all auto-display expressions.*y or n. $"\
-	    { send "y\n"
-		expect {
-		    -re "$prompt $"\
-			{ pass "undisplay prompt" }
-		    timeout		{ fail "(timeout) (timeout) undisplay prompt" }
-		    }
-		}
-	timeout		{ fail "(timeout) (timeout) undisplay prompt" }
+send_gdb "undisplay\n"
+gdb_expect {
+    -re "Delete all auto-display expressions.*y or n. $" {
+	send_gdb "y\n"
+	gdb_expect {
+	    -re "$gdb_prompt $" { pass "undisplay prompt" }
+	    timeout { fail "(timeout) (timeout) undisplay prompt"    }
 	}
-
+    }
+    timeout		{ fail "(timeout) (timeout) undisplay prompt" }
+}
 
 #test unset environment
-send "unset environment\n"
-expect {
-	-re "Delete all environment variables?.*y or n. $"\
-	    { send "y\n"
-		expect {
-		    -re "$prompt $"\
-			{ pass "unset environmentprompt" }
-		    timeout		{ fail "(timeout) (timeout) unset environment prompt" }
-		    }
-		}
-	timeout		{ fail "(timeout) (timeout) unset environment prompt" }
+send_gdb "unset environment\n"
+gdb_expect {
+    -re "Delete all environment variables?.*y or n. $" { 
+	send_gdb "y\n"
+	gdb_expect {
+	    -re "$gdb_prompt $" { pass "unset environmentprompt" }
+	    timeout {
+		fail "(timeout) (timeout) unset environment prompt"
+	    }
 	}
-
-
+    }
+    timeout { 
+	fail "(timeout) (timeout) unset environment prompt"
+    }
+}
 
 #test unset
-send "unset\n"
-expect {
-	-re "\"unset\" must be followed by the name of an unset subcommand..*
-List of unset subcommands:.*
-unset environment -- Cancel environment variable VAR for the program.*
-Type \"help unset\" followed by unset subcommand name for full documentation..*
-Command name abbreviations are allowed if unambiguous..*$prompt $"\
-			{ pass "unset" }
-	-re ".*$prompt $"	{ fail "unset" }
-	timeout		{ fail "(timeout) unset" }
-	}
-
-
+gdb_test "unset" "\"unset\" must be followed by the name of an unset subcommand.(\[^\r\n\]*\[\r\n\])+List of unset subcommands:(\[^\r\n\]*\[\r\n\])+unset environment -- Cancel environment variable VAR for the program(\[^\r\n\]*\[\r\n\])+Type \"help unset\" followed by unset subcommand name for full documentation.(\[^\r\n\]*\[\r\n\])+Command name abbreviations are allowed if unambiguous." "unset"
 #test up
-setup_xfail "h8300*-*-*"
-gdb_test "up" "No stack\\." "up in default.exp"
-
 #test up-silently
-setup_xfail "h8300*-*-*"
-send "up-silently\n"
-expect {
-	-re "No stack..*$prompt $"\
-			{ pass "up-silently" }
-	-re ".*$prompt $"	{ fail "up-silently" }
-	timeout		{ fail "(timeout) up-silently" }
-	}
-
-
+gdb_test "up-silently" "No stack." "up-silently"
 #test watch
-send "watch\n"
-expect {
-	-re "Argument required .expression to compute.*$prompt $"\
-			{ pass "watch" }
-	-re ".*$prompt $"	{ fail "watch" }
-	timeout		{ fail "(timeout) watch" }
-	}
-
-
+gdb_test "watch" "Argument required .expression to compute.*" "watch"
 #test whatis
-send "whatis\n"
-expect {
-	-re "The history is empty..*$prompt $"\
-			{ pass "whatis" }
-	-re ".*$prompt $"	{ fail "whatis" }
-	timeout		{ fail "(timeout) whatis" }
-	}
-
-
+gdb_test "whatis" "The history is empty." "whatis"
 #test where
-setup_xfail "h8300*-*-*"
-setup_xfail "a29k-*-udi"
-send "where\n"
-expect {
-	-re "No stack..*$prompt $"\
-			{ pass "where" }
-	-re ".*$prompt $"	{ fail "where" }
-	timeout		{ fail "(timeout) where" }
-	}
-
-
+gdb_test "where" "No stack." "where"
 #test x
 #The case in which it prints a number is for vxgdb.
-setup_xfail "h8300*-*-*"
-send "x\n"
-expect {
-	-re "0x0:.*Cannot access memory at address 0x0..*$prompt $"\
-			{ pass "x" }
-	-re "0x0:.*0x\[0-9\]*.*$prompt $"\
-			{ pass "x" }
-	-re ".*$prompt $"	{ fail "x" }
-	timeout		{ fail "(timeout) x" }
-	}
+send_gdb "x\n"
+gdb_expect {
+    -re "0x0:.*Cannot access memory at address 0x0..*$gdb_prompt $" {
+        pass "x"
+    }
+    -re "0x0:.*Error accessing memory address 0x0:.*$gdb_prompt $" {
+        pass "x"
+    }
+    -re ".*$gdb_prompt $" { fail "x" }
+    timeout { fail "(timeout) x" }
+}
 
+gdb_exit

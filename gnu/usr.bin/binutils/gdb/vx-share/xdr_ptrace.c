@@ -1,6 +1,7 @@
 /* xdr_ptrace.c  - xdr routines for remote ptrace calls */
  
-/*  Copyright 1984, 1985, 1986, 1987, 1988, 1989, 1992 Free Software Foundation, Inc.
+/*  Copyright 1984, 1985, 1986, 1987, 1988, 1989, 1991, 1992, 1993, 1998
+    Free Software Foundation, Inc.
 
     This code was donated by Wind River Systems, Inc. */
 
@@ -109,7 +110,7 @@ bool_t xdr_ptrace_return(xdrs, objp)
     {
     if (! xdr_int(xdrs, &objp->status)) 
 	return(FALSE);
-    if (! xdr_int(xdrs, &objp->errno)) 
+    if (! xdr_int(xdrs, &objp->errno_num)) 
 	return(FALSE);
     if (! xdr_ptrace_info(xdrs, &objp->info)) 
 	return(FALSE);

@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <unistd.h>
 /*
  *	Since using watchpoints can be very slow, we have to take some pains to
  *	ensure that we don't run too long with them enabled or we run the risk
@@ -28,6 +29,7 @@ int ival1 = -1;
 int ival2 = -1;
 int ival3 = -1;
 int ival4 = -1;
+int ival5 = -1;
 char buf[10];
 struct foo
 {
@@ -53,9 +55,44 @@ void marker5 ()
 {
 }
 
+void marker6 ()
+{
+}
+
+#ifdef PROTOTYPES
+void recurser (int  x)
+#else
+void recurser (x) int  x;
+#endif
+{
+  int  local_x;
+
+  if (x > 0)
+    recurser (x-1);
+  local_x = x;
+}
+
 void
 func2 ()
 {
+  int  local_a;
+  static int  static_b;
+
+  ival5++;
+  local_a = ival5;
+  static_b = local_a;
+}
+
+void
+func3 ()
+{
+  int x;
+  int y;
+
+  x = 0;
+  x = 1;				/* second x assignment */
+  y = 1;
+  y = 2;
 }
 
 int
@@ -75,6 +112,10 @@ func1 ()
 
 int main ()
 {
+#ifdef usestubs
+  set_debug_traps();
+  breakpoint();
+#endif
   struct1.val = 1;
   struct2.val = 2;
   ptr1 = &struct1;
@@ -116,5 +157,33 @@ int main ()
      are not evaluating the watchpoint expression correctly.  */
   struct1.val = 5;
   marker5 ();
+
+  /* We're going to watch locals of func2, to see that out-of-scope
+     watchpoints are detected and properly deleted.
+     */
+  marker6 ();
+
+  /* This invocation is used for watches of a single
+     local variable. */
+  func2 ();
+
+  /* This invocation is used for watches of an expression
+     involving a local variable. */
+  func2 ();
+
+  /* This invocation is used for watches of a static
+     (non-stack-based) local variable. */
+  func2 ();
+
+  /* This invocation is used for watches of a local variable
+     when recursion happens.
+     */
+  marker6 ();
+  recurser (2);
+
+  marker6 ();
+
+  func3 ();
+
   return 0;
 }

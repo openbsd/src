@@ -5,13 +5,25 @@ static int filelocal_bss;	/* In BSS section */
 #endif
 static const int filelocal_ro = 201;	/* In Read-Only Data section */
 
-main ()
+extern void init1();
+extern void foo();
+
+int autovars (int bcd, int abc);
+int localscopes (int x);
+int useit (int val);
+void init0();
+void marker1 ();
+void marker2 ();
+void marker3 ();
+void marker4 ();
+
+int main ()
 {
 #ifdef usestubs
   set_debug_traps();
   breakpoint();
 #endif
-  init ();
+  init0 ();
   foo ();
   autovars (5, 6);
   localscopes (0);
@@ -19,14 +31,14 @@ main ()
 
 /* On some systems, such as AIX, unreferenced variables are deleted
    from the executable.  */
-usestatics ()
+void usestatics ()
 {
   useit (filelocal);
   useit (filelocal_bss);
   useit (filelocal_ro);
 }
 
-init ()
+void init0 ()
 {
   filelocal_bss = 101;
   init1 ();
@@ -34,9 +46,14 @@ init ()
 
 /* This is to derail optimizer in localscopes.
    Return 1 + 2 + . . . + N.  */
+#ifdef PROTOTYPES
+int
+sum_upto (int n)
+#else
 int
 sum_upto (n)
      int n;
+#endif
 {
   int i;
   int retval = 0;
@@ -46,8 +63,13 @@ sum_upto (n)
   return retval;
 }
 
+#ifdef PROTOTYPES
+int
+useit (int val)
+#else
 int
 useit (val)
+#endif
 {
     static int usedval;
 
@@ -55,10 +77,15 @@ useit (val)
     return val + sum_upto (0);
 }
 
+#ifdef PROTOTYPES
+int
+autovars (int bcd, int abc)
+#else
 int
 autovars (bcd, abc)
      int bcd;
      int abc;
+#endif
 {
     int  i0 =  useit (0),  i1 =  useit (1),  i2 =  useit (2);
     int  i3 =  useit (3),  i4 =  useit (4),  i5 =  useit (5);
@@ -133,9 +160,14 @@ autovars (bcd, abc)
       + i91 + i92 + i93 + i94 + i95 + i96 + i97 + i98 + i99 + abc + bcd;
 }
 
+#ifdef PROTOTYPES
+int
+localscopes (int x)
+#else
 int
 localscopes (x)
      int x;
+#endif
 {
     int localval;
     int retval;
@@ -170,7 +202,7 @@ localscopes (x)
     return retval;
 }
 
-marker1 () {}
-marker2 () {}
-marker3 () {}
-marker4 () {}
+void marker1 () {}
+void marker2 () {}
+void marker3 () {}
+void marker4 () {}

@@ -5,24 +5,22 @@
 #include "command.h"
 #include "gdbcmd.h"
 
-static void
-show_copying_command PARAMS ((char *, int));
+static void show_copying_command (char *, int);
 
-static void
-show_warranty_command PARAMS ((char *, int));
+static void show_warranty_command (char *, int);
+
+void _initialize_copying (void);
 
 extern int immediate_quit;
 static void
-show_copying_command (ignore, from_tty)
-     char *ignore;
-     int from_tty;
+show_copying_command (char *ignore, int from_tty)
 {
   immediate_quit++;
   printf_filtered ("		    GNU GENERAL PUBLIC LICENSE\n");
   printf_filtered ("		       Version 2, June 1991\n");
   printf_filtered ("\n");
   printf_filtered (" Copyright (C) 1989, 1991 Free Software Foundation, Inc.\n");
-  printf_filtered ("                          675 Mass Ave, Cambridge, MA 02139, USA\n");
+  printf_filtered ("                       59 Temple Place, Suite 330, Boston, MA  02111-1307  USA\n");
   printf_filtered (" Everyone is permitted to copy and distribute verbatim copies\n");
   printf_filtered (" of this license document, but changing it is not allowed.\n");
   printf_filtered ("\n");
@@ -279,9 +277,7 @@ show_copying_command (ignore, from_tty)
 }
 
 static void
-show_warranty_command (ignore, from_tty)
-     char *ignore;
-     int from_tty;
+show_warranty_command (char *ignore, int from_tty)
 {
   immediate_quit++;
   printf_filtered ("			    NO WARRANTY\n");
@@ -310,7 +306,7 @@ show_warranty_command (ignore, from_tty)
 }
 
 void
-_initialize_copying ()
+_initialize_copying (void)
 {
   add_cmd ("copying", no_class, show_copying_command,
 	   "Conditions for redistributing copies of GDB.",

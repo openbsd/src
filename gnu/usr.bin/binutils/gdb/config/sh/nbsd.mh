@@ -1,0 +1,4 @@
+# Host: SuperH running NetBSD
+NAT_CLIBS=
+NATDEPFILES= infptrace.o inftarg.o fork-child.o shnbsd-nat.o
+NAT_FILE= nm-nbsd.h

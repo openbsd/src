@@ -3,4 +3,4 @@ TDEPFILES= h8300-tdep.o remote-e7000.o ser-e7kpc.o monitor.o remote-hms.o dsrec.
 TM_FILE= tm-h8300.h
 
 SIM_OBS = remote-sim.o
-SIM = ../sim/h8300/compile.o
+SIM = ../sim/h8300/libsim.a

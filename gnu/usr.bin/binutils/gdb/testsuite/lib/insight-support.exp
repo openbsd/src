@@ -1,0 +1,318 @@
+# GDB Testsuite Support for Insight.
+#
+# Copyright 2001 Red Hat, Inc.
+#
+# This program is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License (GPL) as published by
+# the Free Software Foundation; either version 2 of the License, or (at
+# your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# Initializes the display for gdbtk testing.
+# Returns 1 if tests should run, 0 otherwise.
+proc gdbtk_initialize_display {} {
+  global _using_windows
+
+  # This is hacky, but, we don't have much choice. When running
+  # expect under Windows, tcl_platform(platform) is "unix".
+  if {![info exists _using_windows]} {
+    set _using_windows [expr {![catch {exec cygpath --help}]}]
+  }
+
+  if {![_gdbtk_xvfb_init]} {
+    if {$_using_windows} {
+      untested "No GDB_DISPLAY -- skipping tests"
+    } else {
+      untested "No GDB_DISPLAY or Xvfb -- skipping tests"
+    }
+
+    return 0
+  }
+
+  return 1
+}
+
+# From dejagnu:
+# srcdir = testsuite src dir (e.g., devo/gdb/testsuite)
+# objdir = testsuite obj dir (e.g., gdb/testsuite)
+# subdir = subdir of testsuite (e.g., gdb.gdbtk)
+#
+# To gdbtk:
+# env(DEFS)=the "defs" files (e.g., devo/gdb/testsuite/gdb.gdbtk/defs)
+# env(SRCDIR)=directory containing the test code (e.g., *.test)
+# env(OBJDIR)=directory which contains any executables
+#            (e.g., gdb/testsuite/gdb.gdbtk)
+proc gdbtk_start {test} {
+  global verbose
+  global GDB
+  global GDBFLAGS
+  global env srcdir subdir objdir
+
+  gdb_stop_suppressing_tests;
+
+  # Need to convert ::GDB to use (-)?insight...
+  if {[regsub {gdb$} $GDB insight newGDB]} {
+    set INSIGHT $newGDB
+  } else {
+    perror "Cannot find Insight executable"
+    exit 1
+  }
+
+  verbose "Starting $INSIGHT -nx -q --tclcommand=$test"
+
+  set real_test [which $test]
+  if {$real_test == 0} {
+    perror "$test is not found"
+    exit 1
+  }
+
+  if {![is_remote host]} {
+    if { [which $INSIGHT] == 0 } {
+      perror "$INSIGHT does not exist."
+      exit 1
+    }
+  }
+
+  set wd [pwd]
+
+  # Find absolute path to test
+  set test [to_tcl_path -abs $test]
+
+  # Set some environment variables
+  cd $srcdir
+  set abs_srcdir [pwd]
+  set env(DEFS) [to_tcl_path -abs [file join $abs_srcdir $subdir defs]]
+
+  cd $wd
+  cd [file join $objdir $subdir]
+  set env(OBJDIR) [pwd]
+  cd $wd
+
+  # Set info about target into env
+  _gdbtk_export_target_info
+
+  set env(SRCDIR) $abs_srcdir
+  set env(GDBTK_VERBOSE) 1
+  set env(GDBTK_LOGFILE) [to_tcl_path [file join $objdir gdb.log]]
+
+  set err [catch {exec $INSIGHT -nx -q --tclcommand=$test} res]
+  if { $err } {
+    perror "Execing $INSIGHT failed: $res"
+    append res "\nERROR gdb-crash"
+  }
+  return $res
+}
+
+# Start xvfb when using it.
+# The precedence is:
+#   1. If GDB_DISPLAY is set (and not ""), use it
+#   2. If Xvfb exists, use it (not on cygwin)
+#   3. Skip tests
+proc _gdbtk_xvfb_init {} {
+  global env spawn_id _xvfb_spawn_id _using_windows
+
+  if {[info exists env(GDB_DISPLAY)]} {
+    if {$env(GDB_DISPLAY) != ""} {
+      set env(DISPLAY) $env(GDB_DISPLAY)
+    } else {
+      # Suppress tests
+      return 0
+    }
+  } elseif {!$_using_windows && [which Xvfb] != 0} {
+    set screen ":[getpid]"
+    set pid [spawn  Xvfb $screen -ac]
+    set _xvfb_spawn_id $spawn_id
+    set env(DISPLAY) localhost$screen
+  } else {
+    # No Xvfb found -- skip test
+    return 0
+  }
+
+  return 1
+}
+
+# Kill xvfb
+proc _gdbtk_xvfb_exit {} {
+  global objdir subdir env _xvfb_spawn_id
+
+  if {[info exists _xvfb_spawn_id]} {
+    exec kill [exp_pid -i $_xvfb_spawn_id]
+    wait -i $_xvfb_spawn_id
+  }
+}
+
+# help proc for setting tcl-style paths from unix-style paths
+# pass "-abs" to make it an absolute path
+proc to_tcl_path {unix_path {arg {}}} {
+  global _using_windows
+
+  if {[string compare $unix_path "-abs"] == 0} {
+    set unix_path $arg
+    set wd [pwd]
+    cd [file dirname $unix_path]
+    set dirname [pwd]
+    set unix_name [file join $dirname [file tail $unix_path]]
+    cd $wd
+  }
+
+  if {$_using_windows} {
+    set unix_path [exec cygpath -aw $unix_path]
+    set unix_path [join [split $unix_path \\] /]
+  }
+
+  return $unix_path
+}
+  
+# Set information about the target into the environment
+# variable TARGET_INFO. This array will contain a list
+# of commands that are necessary to run a target.
+#
+# This is mostly devined from how dejagnu works, what
+# procs are defined, and analyzing unix.exp, monitor.exp,
+# and sim.exp.
+#
+# Array elements exported:
+# Index   Meaning
+# -----   -------
+# init    list of target/board initialization commands
+# target  target command for target/board
+# load    load command for target/board
+# run     run command for target_board
+proc _gdbtk_export_target_info {} {
+  global env
+
+  # Figure out what "target class" the testsuite is using,
+  # i.e., sim, monitor, native
+  if {[string compare [info proc gdb_target_monitor] gdb_target_monitor] == 0} {
+    # Using a monitor/remote target
+    set target monitor
+  } elseif {[string compare [info proc gdb_target_sim] gdb_target_sim] == 0} {
+    # Using a simulator target
+    set target simulator
+  } elseif {[string compare [info proc gdb_target_sid] gdb_target_sid] == 0} {
+    # Using sid
+    set target sid
+  } else {
+    # Assume native
+    set target native
+  }
+
+  # Now setup the array to be exported.
+  set info(init) {}
+  set info(target) {}
+  set info(load) {}
+  set info(run) {}
+
+  switch $target {
+    simulator {
+      set opts "[target_info gdb,target_sim_options]"
+      set info(target) "target sim $opts"
+      set info(load) "load"
+      set info(run) "run"
+    }
+
+    monitor {
+      # Setup options for the connection
+      if {[target_info exists baud]} {
+	lappend info(init) "set remotebaud [target_info baud]"
+      }
+      if {[target_info exists binarydownload]} {
+	lappend info(init) "set remotebinarydownload [target_info binarydownload]"
+      }
+      if {[target_info exists disable_x_packet]} {
+	lappend info(init) "set remote X-packet disable"
+      }
+      if {[target_info exists disable_z_packet]} {
+	lappend info(init) "set remote Z-packet disable"
+      }
+
+      # Get target name and connection info
+      if {[target_info exists gdb_protocol]} {
+	set targetname "[target_info gdb_protocol]"
+      } else {
+	set targetname "not_specified"
+      }
+      if {[target_info exists gdb_serial]} {
+	set serialport "[target_info gdb_serial]"
+      } elseif {[target_info exists netport]} {
+	set serialport "[target_info netport]"
+      } else {
+	set serialport "[target_info serial]"
+      }
+
+      set info(target) "target $targetname $serialport"
+      set info(load) "load"
+      set info(run) "continue"
+    }
+
+    sid {
+      # We must start sid first, since Insight won't have a clue
+      # about how to do this.
+      sid_start
+      set info(target) "target [target_info gdb_protocol] [target_info netport]"
+      set info(load) "load"
+      set info(run) "continue"
+    }
+
+    native {
+      set info(run) "run"
+    }
+  }
+
+  # Export the array to the environment
+  set env(TARGET_INFO) [array get info]
+}
+
+# gdbtk tests call this function to print out the results of the
+# tests. The argument is a proper list of lists of the form:
+# {status name description msg}. All of these things typically
+# come from the testsuite harness.
+proc gdbtk_analyze_results {results} {
+  foreach test $results {
+    set status [lindex $test 0]
+    set name [lindex $test 1]
+    set description [lindex $test 2]
+    set msg [lindex $test 3]
+
+    switch $status {
+      PASS {
+	pass "$description ($name)"
+      }
+
+      FAIL {
+	fail "$description ($name)"
+      }
+
+      ERROR {
+	perror "$name"
+      }
+
+      XFAIL {
+	xfail "$description ($name)"
+      }
+
+      XPASS {
+	xpass "$description ($name)"
+      }
+    }
+  }
+}
+
+proc gdbtk_done {{results {}}} {
+  global _xvfb_spawn_id
+  gdbtk_analyze_results $results
+
+  # Kill off xvfb if using it
+  if {[info exists _xvfb_spawn_id]} {
+    _gdbtk_xvfb_exit
+  }
+
+  # Yich. If we're using sid, we must kill it
+  if {[string compare [info proc gdb_target_sid] gdb_target_sid] == 0} {
+    sid_exit
+  }
+}

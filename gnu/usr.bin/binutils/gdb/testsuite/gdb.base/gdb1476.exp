@@ -1,0 +1,72 @@
+# Copyright 2004 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  
+
+# Please email any bugs, comments, and/or additions to this file to:
+# bug-gdb@gnu.org
+
+# This file is part of the gdb testsuite.
+
+if $tracelevel {
+    strace $tracelevel
+}
+
+# Testcase for backtrace/gdb1476.
+
+set prms_id 0
+set bug_id 0
+
+set testfile "gdb1476"
+set srcfile ${testfile}.c
+set binfile ${objdir}/${subdir}/${testfile}
+if { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug}] != "" } {
+    gdb_suppress_entire_file "Testcase compile failed, so all tests in this file will automatically fail."
+}
+
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+gdb_load ${binfile}
+
+#
+# Run to `main' where we begin our tests.
+#
+
+if ![runto_main] then {
+    gdb_suppress_tests
+}
+
+# If we can examine what's at memory address 0, it is possible that we
+# could also execute it.  This could probably make us run away,
+# executing random code, which could have all sorts of ill effects,
+# especially on targets without an MMU.  Don't run the tests in that
+# case.
+
+send_gdb "x 0\n"
+gdb_expect {
+    -re "0x0:.*Cannot access memory at address 0x0.*$gdb_prompt $" { }
+    -re "0x0:.*Error accessing memory address 0x0.*$gdb_prompt $" { }
+    -re ".*$gdb_prompt $" {
+	untested "Memory at address 0 is possibly executable"
+	return
+    }
+}
+
+gdb_test "continue" "Program received signal SIGSEGV.*" \
+	"continue to null pointer call"
+
+gdb_test "backtrace 10" \
+	"#0\[ \t\]*0x0* in .*\r\n#1\[ \t\]*$hex in x.*\r\n#2\[ \t\]*$hex in main.*" \
+	"backtrace from null pointer call"

@@ -1,8 +1,6 @@
 /* Definitions to make GDB run on a vax under Ultrix. */
 
 #include "vax/xm-vax.h"
-extern char *strdup();
-
 /* This is required for Ultrix 3.1b, not for later versions.  Ultrix
    3.1b can't just use xm-vaxult2.h because Ultrix 3.1b does define
    FD_SET.  Sure, we could have separate configurations for vaxult2,

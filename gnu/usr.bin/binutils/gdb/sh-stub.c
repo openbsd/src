@@ -1,8 +1,8 @@
-/* sh-stub.c -- debugging stub for the Hitachi-SH. 
+/* sh-stub.c -- debugging stub for the Renesas-SH.
 
  NOTE!! This code has to be compiled with optimization, otherwise the 
  function inlining which generates the exception handlers won't work.
- 
+
 */
 
 /*   This is originally based on an m68k software stub written by Glenn
@@ -147,33 +147,37 @@
 #include <string.h>
 #include <setjmp.h>
 
+/* Renesas SH architecture instruction encoding masks */
 
+#define COND_BR_MASK   0xff00
+#define UCOND_DBR_MASK 0xe000
+#define UCOND_RBR_MASK 0xf0df
+#define TRAPA_MASK     0xff00
 
-#define COND_BR_MASK	0xff00
-#define UCOND_DBR_MASK	0xe000
-#define UCOND_RBR_MASK	0xf0df
-#define TRAPA_MASK		0xff00
+#define COND_DISP      0x00ff
+#define UCOND_DISP     0x0fff
+#define UCOND_REG      0x0f00
 
-#define COND_DISP		0x00ff
-#define UCOND_DISP		0x0fff
-#define UCOND_REG		0x0f00
+/* Renesas SH instruction opcodes */
 
-#define BF_INSTR		0x8b00
-#define BT_INSTR		0x8900
-#define BRA_INSTR		0xa000
-#define BSR_INSTR		0xb000
-#define JMP_INSTR		0x402b
-#define JSR_INSTR		0x400b
-#define RTS_INSTR		0x000b
-#define RTE_INSTR		0x002b
-#define TRAPA_INSTR		0xc300
+#define BF_INSTR       0x8b00
+#define BT_INSTR       0x8900
+#define BRA_INSTR      0xa000
+#define BSR_INSTR      0xb000
+#define JMP_INSTR      0x402b
+#define JSR_INSTR      0x400b
+#define RTS_INSTR      0x000b
+#define RTE_INSTR      0x002b
+#define TRAPA_INSTR    0xc300
+#define SSTEP_INSTR    0xc3ff
 
-#define SSTEP_INSTR		0xc3ff
+/* Renesas SH processor register masks */
 
-#define T_BIT_MASK		0x0001
+#define T_BIT_MASK     0x0001
+
 /*
  * BUFMAX defines the maximum number of characters in inbound/outbound
- * buffers at least NUMREGBYTES*2 are needed for register packets
+ * buffers. At least NUMREGBYTES*2 are needed for register packets.
  */
 #define BUFMAX 1024
 
@@ -195,15 +199,14 @@ static int hex (char);
 static char *mem2hex (char *, char *, int);
 static char *hex2mem (char *, char *, int);
 static int hexToInt (char **, int *);
-static void getpacket (char *);
+static unsigned char *getpacket (void);
 static void putpacket (char *);
 static void handle_buserror (void);
 static int computeSignal (int exceptionVector);
 static void handle_exception (int exceptionVector);
 void init_serial();
 
-
-int putDebugChar (char);
+void putDebugChar (char);
 char getDebugChar (void);
 
 /* These are in the file but in asm statements so the compiler can't see them */
@@ -229,22 +232,9 @@ void breakpoint (void);
 int init_stack[init_stack_size] __attribute__ ((section ("stack"))) = {0};
 int stub_stack[stub_stack_size] __attribute__ ((section ("stack"))) = {0};
 
-typedef struct
-  {
-    void (*func_cold) ();
-    int *stack_cold;
-    void (*func_warm) ();
-    int *stack_warm;
-    void (*(handler[256 - 4])) ();
-  }
-vec_type;
-
 
 void INIT ();
 void BINIT ();
-
-/* When you link take care that this is at address 0 -
-   or wherever your vbr points */
 
 #define CPU_BUS_ERROR_VEC  9
 #define DMA_BUS_ERROR_VEC 10
@@ -256,9 +246,613 @@ void BINIT ();
 #define USER_VEC         255
 
 
-#define BCR  (*(volatile short *)(0x05FFFFA0)) /* Bus control register */
-#define BAS  (0x800)				/* Byte access select */
-#define WCR1 (*(volatile short *)(0x05ffffA2)) /* Wait state control register */
+
+char in_nmi;   /* Set when handling an NMI, so we don't reenter */
+int dofault;  /* Non zero, bus errors will raise exception */
+
+int *stub_sp;
+
+/* debug > 0 prints ill-formed commands in valid packets & checksum errors */
+int remote_debug;
+
+/* jump buffer used for setjmp/longjmp */
+jmp_buf remcomEnv;
+
+enum regnames
+  {
+    R0, R1, R2, R3, R4, R5, R6, R7,
+    R8, R9, R10, R11, R12, R13, R14,
+    R15, PC, PR, GBR, VBR, MACH, MACL, SR,
+    TICKS, STALLS, CYCLES, INSTS, PLR
+  };
+
+typedef struct
+  {
+    short *memAddr;
+    short oldInstr;
+  }
+stepData;
+
+int registers[NUMREGBYTES / 4];
+stepData instrBuffer;
+char stepped;
+static const char hexchars[] = "0123456789abcdef";
+static char remcomInBuffer[BUFMAX];
+static char remcomOutBuffer[BUFMAX];
+
+char highhex(int  x)
+{
+  return hexchars[(x >> 4) & 0xf];
+}
+
+char lowhex(int  x)
+{
+  return hexchars[x & 0xf];
+}
+
+/*
+ * Assembly macros
+ */
+
+#define BREAKPOINT()   asm("trapa	#0x20"::);
+
+
+/*
+ * Routines to handle hex data
+ */
+
+static int
+hex (char ch)
+{
+  if ((ch >= 'a') && (ch <= 'f'))
+    return (ch - 'a' + 10);
+  if ((ch >= '0') && (ch <= '9'))
+    return (ch - '0');
+  if ((ch >= 'A') && (ch <= 'F'))
+    return (ch - 'A' + 10);
+  return (-1);
+}
+
+/* convert the memory, pointed to by mem into hex, placing result in buf */
+/* return a pointer to the last char put in buf (null) */
+static char *
+mem2hex (char *mem, char *buf, int count)
+{
+  int i;
+  int ch;
+  for (i = 0; i < count; i++)
+    {
+      ch = *mem++;
+      *buf++ = highhex (ch);
+      *buf++ = lowhex (ch);
+    }
+  *buf = 0;
+  return (buf);
+}
+
+/* convert the hex array pointed to by buf into binary, to be placed in mem */
+/* return a pointer to the character after the last byte written */
+
+static char *
+hex2mem (char *buf, char *mem, int count)
+{
+  int i;
+  unsigned char ch;
+  for (i = 0; i < count; i++)
+    {
+      ch = hex (*buf++) << 4;
+      ch = ch + hex (*buf++);
+      *mem++ = ch;
+    }
+  return (mem);
+}
+
+/**********************************************/
+/* WHILE WE FIND NICE HEX CHARS, BUILD AN INT */
+/* RETURN NUMBER OF CHARS PROCESSED           */
+/**********************************************/
+static int
+hexToInt (char **ptr, int *intValue)
+{
+  int numChars = 0;
+  int hexValue;
+
+  *intValue = 0;
+
+  while (**ptr)
+    {
+      hexValue = hex (**ptr);
+      if (hexValue >= 0)
+	{
+	  *intValue = (*intValue << 4) | hexValue;
+	  numChars++;
+	}
+      else
+	break;
+
+      (*ptr)++;
+    }
+
+  return (numChars);
+}
+
+/*
+ * Routines to get and put packets
+ */
+
+/* scan for the sequence $<data>#<checksum>     */
+
+char *
+getpacket (void)
+{
+  unsigned char *buffer = &remcomInBuffer[0];
+  unsigned char checksum;
+  unsigned char xmitcsum;
+  int count;
+  char ch;
+
+  while (1)
+    {
+      /* wait around for the start character, ignore all other characters */
+      while ((ch = getDebugChar ()) != '$')
+	;
+
+retry:
+      checksum = 0;
+      xmitcsum = -1;
+      count = 0;
+
+      /* now, read until a # or end of buffer is found */
+      while (count < BUFMAX)
+	{
+	  ch = getDebugChar ();
+          if (ch == '$')
+            goto retry;
+	  if (ch == '#')
+	    break;
+	  checksum = checksum + ch;
+	  buffer[count] = ch;
+	  count = count + 1;
+	}
+      buffer[count] = 0;
+
+      if (ch == '#')
+	{
+ 	  ch = getDebugChar ();
+ 	  xmitcsum = hex (ch) << 4;
+ 	  ch = getDebugChar ();
+ 	  xmitcsum += hex (ch);
+
+	  if (checksum != xmitcsum)
+	    {
+	      putDebugChar ('-');	/* failed checksum */
+	    }
+	  else
+	    {
+	      putDebugChar ('+');	/* successful transfer */
+
+	      /* if a sequence char is present, reply the sequence ID */
+	      if (buffer[2] == ':')
+		{
+		  putDebugChar (buffer[0]);
+		  putDebugChar (buffer[1]);
+
+ 		  return &buffer[3];
+		}
+
+	      return &buffer[0];
+	    }
+	}
+    }
+}
+
+
+/* send the packet in buffer. */
+
+static void
+putpacket (char *buffer)
+{
+  int checksum;
+  int count;
+
+  /*  $<packet info>#<checksum>. */
+  do
+    {
+      char *src = buffer;
+      putDebugChar ('$');
+      checksum = 0;
+
+      while (*src)
+	{
+	  int runlen;
+
+	  /* Do run length encoding */
+	  for (runlen = 0; runlen < 100; runlen ++) 
+	    {
+	      if (src[0] != src[runlen]) 
+		{
+		  if (runlen > 3) 
+		    {
+		      int encode;
+		      /* Got a useful amount */
+		      putDebugChar (*src);
+		      checksum += *src;
+		      putDebugChar ('*');
+		      checksum += '*';
+		      checksum += (encode = runlen + ' ' - 4);
+		      putDebugChar (encode);
+		      src += runlen;
+		    }
+		  else
+		    {
+		      putDebugChar (*src);
+		      checksum += *src;
+		      src++;
+		    }
+		  break;
+		}
+	    }
+	}
+
+
+      putDebugChar ('#');
+      putDebugChar (highhex(checksum));
+      putDebugChar (lowhex(checksum));
+    }
+  while  (getDebugChar() != '+');
+}
+
+
+/* a bus error has occurred, perform a longjmp
+   to return execution and allow handling of the error */
+
+void
+handle_buserror (void)
+{
+  longjmp (remcomEnv, 1);
+}
+
+/*
+ * this function takes the SH-1 exception number and attempts to
+ * translate this number into a unix compatible signal value
+ */
+static int
+computeSignal (int exceptionVector)
+{
+  int sigval;
+  switch (exceptionVector)
+    {
+    case INVALID_INSN_VEC:
+      sigval = 4;
+      break;			
+    case INVALID_SLOT_VEC:
+      sigval = 4;
+      break;			
+    case CPU_BUS_ERROR_VEC:
+      sigval = 10;
+      break;			
+    case DMA_BUS_ERROR_VEC:
+      sigval = 10;
+      break;	
+    case NMI_VEC:
+      sigval = 2;
+      break;	
+
+    case TRAP_VEC:
+    case USER_VEC:
+      sigval = 5;
+      break;
+
+    default:
+      sigval = 7;		/* "software generated"*/
+      break;
+    }
+  return (sigval);
+}
+
+void
+doSStep (void)
+{
+  short *instrMem;
+  int displacement;
+  int reg;
+  unsigned short opcode;
+
+  instrMem = (short *) registers[PC];
+
+  opcode = *instrMem;
+  stepped = 1;
+
+  if ((opcode & COND_BR_MASK) == BT_INSTR)
+    {
+      if (registers[SR] & T_BIT_MASK)
+	{
+	  displacement = (opcode & COND_DISP) << 1;
+	  if (displacement & 0x80)
+	    displacement |= 0xffffff00;
+	  /*
+		   * Remember PC points to second instr.
+		   * after PC of branch ... so add 4
+		   */
+	  instrMem = (short *) (registers[PC] + displacement + 4);
+	}
+      else
+	instrMem += 1;
+    }
+  else if ((opcode & COND_BR_MASK) == BF_INSTR)
+    {
+      if (registers[SR] & T_BIT_MASK)
+	instrMem += 1;
+      else
+	{
+	  displacement = (opcode & COND_DISP) << 1;
+	  if (displacement & 0x80)
+	    displacement |= 0xffffff00;
+	  /*
+		   * Remember PC points to second instr.
+		   * after PC of branch ... so add 4
+		   */
+	  instrMem = (short *) (registers[PC] + displacement + 4);
+	}
+    }
+  else if ((opcode & UCOND_DBR_MASK) == BRA_INSTR)
+    {
+      displacement = (opcode & UCOND_DISP) << 1;
+      if (displacement & 0x0800)
+	displacement |= 0xfffff000;
+
+      /*
+	   * Remember PC points to second instr.
+	   * after PC of branch ... so add 4
+	   */
+      instrMem = (short *) (registers[PC] + displacement + 4);
+    }
+  else if ((opcode & UCOND_RBR_MASK) == JSR_INSTR)
+    {
+      reg = (char) ((opcode & UCOND_REG) >> 8);
+
+      instrMem = (short *) registers[reg];
+    }
+  else if (opcode == RTS_INSTR)
+    instrMem = (short *) registers[PR];
+  else if (opcode == RTE_INSTR)
+    instrMem = (short *) registers[15];
+  else if ((opcode & TRAPA_MASK) == TRAPA_INSTR)
+    instrMem = (short *) ((opcode & ~TRAPA_MASK) << 2);
+  else
+    instrMem += 1;
+
+  instrBuffer.memAddr = instrMem;
+  instrBuffer.oldInstr = *instrMem;
+  *instrMem = SSTEP_INSTR;
+}
+
+
+/* Undo the effect of a previous doSStep.  If we single stepped,
+   restore the old instruction. */
+
+void
+undoSStep (void)
+{
+  if (stepped)
+    {  short *instrMem;
+      instrMem = instrBuffer.memAddr;
+      *instrMem = instrBuffer.oldInstr;
+    }
+  stepped = 0;
+}
+
+/*
+This function does all exception handling.  It only does two things -
+it figures out why it was called and tells gdb, and then it reacts
+to gdb's requests.
+
+When in the monitor mode we talk a human on the serial line rather than gdb.
+
+*/
+
+
+void
+gdb_handle_exception (int exceptionVector)
+{
+  int sigval, stepping;
+  int addr, length;
+  char *ptr;
+
+  /* reply to host that an exception has occurred */
+  sigval = computeSignal (exceptionVector);
+  remcomOutBuffer[0] = 'S';
+  remcomOutBuffer[1] = highhex(sigval);
+  remcomOutBuffer[2] = lowhex (sigval);
+  remcomOutBuffer[3] = 0;
+
+  putpacket (remcomOutBuffer);
+
+  /*
+   * exception 255 indicates a software trap
+   * inserted in place of code ... so back up
+   * PC by one instruction, since this instruction
+   * will later be replaced by its original one!
+   */
+  if (exceptionVector == 0xff
+      || exceptionVector == 0x20)
+    registers[PC] -= 2;
+
+  /*
+   * Do the thangs needed to undo
+   * any stepping we may have done!
+   */
+  undoSStep ();
+
+  stepping = 0;
+
+  while (1)
+    {
+      remcomOutBuffer[0] = 0;
+      ptr = getpacket ();
+
+      switch (*ptr++)
+	{
+	case '?':
+	  remcomOutBuffer[0] = 'S';
+	  remcomOutBuffer[1] = highhex (sigval);
+	  remcomOutBuffer[2] = lowhex (sigval);
+	  remcomOutBuffer[3] = 0;
+	  break;
+	case 'd':
+	  remote_debug = !(remote_debug);	/* toggle debug flag */
+	  break;
+	case 'g':		/* return the value of the CPU registers */
+	  mem2hex ((char *) registers, remcomOutBuffer, NUMREGBYTES);
+	  break;
+	case 'G':		/* set the value of the CPU registers - return OK */
+	  hex2mem (ptr, (char *) registers, NUMREGBYTES);
+	  strcpy (remcomOutBuffer, "OK");
+	  break;
+
+	  /* mAA..AA,LLLL  Read LLLL bytes at address AA..AA */
+	case 'm':
+	  if (setjmp (remcomEnv) == 0)
+	    {
+	      dofault = 0;
+	      /* TRY, TO READ %x,%x.  IF SUCCEED, SET PTR = 0 */
+	      if (hexToInt (&ptr, &addr))
+		if (*(ptr++) == ',')
+		  if (hexToInt (&ptr, &length))
+		    {
+		      ptr = 0;
+		      mem2hex ((char *) addr, remcomOutBuffer, length);
+		    }
+	      if (ptr)
+		strcpy (remcomOutBuffer, "E01");
+	    }
+	  else
+	    strcpy (remcomOutBuffer, "E03");
+
+	  /* restore handler for bus error */
+	  dofault = 1;
+	  break;
+
+	  /* MAA..AA,LLLL: Write LLLL bytes at address AA.AA return OK */
+	case 'M':
+	  if (setjmp (remcomEnv) == 0)
+	    {
+	      dofault = 0;
+
+	      /* TRY, TO READ '%x,%x:'.  IF SUCCEED, SET PTR = 0 */
+	      if (hexToInt (&ptr, &addr))
+		if (*(ptr++) == ',')
+		  if (hexToInt (&ptr, &length))
+		    if (*(ptr++) == ':')
+		      {
+			hex2mem (ptr, (char *) addr, length);
+			ptr = 0;
+			strcpy (remcomOutBuffer, "OK");
+		      }
+	      if (ptr)
+		strcpy (remcomOutBuffer, "E02");
+	    }
+	  else
+	    strcpy (remcomOutBuffer, "E03");
+
+	  /* restore handler for bus error */
+	  dofault = 1;
+	  break;
+
+	  /* cAA..AA    Continue at address AA..AA(optional) */
+	  /* sAA..AA   Step one instruction from AA..AA(optional) */
+	case 's':
+	  stepping = 1;
+	case 'c':
+	  {
+	    /* tRY, to read optional parameter, pc unchanged if no parm */
+	    if (hexToInt (&ptr, &addr))
+	      registers[PC] = addr;
+
+	    if (stepping)
+	      doSStep ();
+	  }
+	  return;
+	  break;
+
+	  /* kill the program */
+	case 'k':		/* do nothing */
+	  break;
+	}			/* switch */
+
+      /* reply to the request */
+      putpacket (remcomOutBuffer);
+    }
+}
+
+
+#define GDBCOOKIE 0x5ac 
+static int ingdbmode;
+/* We've had an exception - choose to go into the monitor or
+   the gdb stub */
+void handle_exception(int exceptionVector)
+{
+#ifdef MONITOR
+    if (ingdbmode != GDBCOOKIE)
+      monitor_handle_exception (exceptionVector);
+    else 
+#endif
+      gdb_handle_exception (exceptionVector);
+
+}
+
+void
+gdb_mode (void)
+{
+  ingdbmode = GDBCOOKIE;
+  breakpoint();
+}
+/* This function will generate a breakpoint exception.  It is used at the
+   beginning of a program to sync up with a debugger and can be used
+   otherwise as a quick means to stop program execution and "break" into
+   the debugger. */
+
+void
+breakpoint (void)
+{
+      BREAKPOINT ();
+}
+
+/**** Processor-specific routines start here ****/
+/**** Processor-specific routines start here ****/
+/**** Processor-specific routines start here ****/
+
+/* Note:
+
+   The Renesas SH family uses two exception architectures:
+
+   SH1 & SH2:
+
+       These processors utilize an exception vector table.
+       Exceptions are vectored to the address stored at VBR + (exception_num * 4)
+
+  SH3, SH3E, & SH4:
+
+       These processors have fixed entry points relative to the VBR for
+       various exception classes.
+*/
+
+#if defined(__sh1__) || defined(__sh2__)
+
+/* SH1/SH2 exception vector table format */
+
+typedef struct
+  {
+    void (*func_cold) ();
+    int *stack_cold;
+    void (*func_warm) ();
+    int *stack_warm;
+    void (*(handler[256 - 4])) ();
+  }
+vec_type;
+
+/* vectable is the SH1/SH2 vector table. It must be at address 0
+   or wherever your vbr points. */
 
 const vec_type vectable =
 { 
@@ -520,571 +1114,9 @@ const vec_type vectable =
      &catch_exception_random,
      &catch_exception_255}};
 
-
-char in_nmi;   /* Set when handling an NMI, so we don't reenter */
-int dofault;  /* Non zero, bus errors will raise exception */
-
-int *stub_sp;
-
-/* debug > 0 prints ill-formed commands in valid packets & checksum errors */
-int remote_debug;
-
-/* jump buffer used for setjmp/longjmp */
-jmp_buf remcomEnv;
-
-enum regnames
-  {
-    R0, R1, R2, R3, R4, R5, R6, R7,
-    R8, R9, R10, R11, R12, R13, R14,
-    R15, PC, PR, GBR, VBR, MACH, MACL, SR,
-    TICKS, STALLS, CYCLES, INSTS, PLR
-  };
-
-typedef struct
-  {
-    short *memAddr;
-    short oldInstr;
-  }
-stepData;
-
-int registers[NUMREGBYTES / 4];
-stepData instrBuffer;
-char stepped;
-static const char hexchars[] = "0123456789abcdef";
-char remcomInBuffer[BUFMAX];
-char remcomOutBuffer[BUFMAX];
-
-char highhex(int  x)
-{
-  return hexchars[(x >> 4) & 0xf];
-}
-
-char lowhex(int  x)
-{
-  return hexchars[x & 0xf];
-}
-
-/*
- * Assembly macros
- */
-
-#define BREAKPOINT()   asm("trapa	#0x20"::);
-
-
-/*
- * Routines to handle hex data
- */
-
-static int
-hex (char ch)
-{
-  if ((ch >= 'a') && (ch <= 'f'))
-    return (ch - 'a' + 10);
-  if ((ch >= '0') && (ch <= '9'))
-    return (ch - '0');
-  if ((ch >= 'A') && (ch <= 'F'))
-    return (ch - 'A' + 10);
-  return (-1);
-}
-
-/* convert the memory, pointed to by mem into hex, placing result in buf */
-/* return a pointer to the last char put in buf (null) */
-static char *
-mem2hex (char *mem, char *buf, int count)
-{
-  int i;
-  int ch;
-  for (i = 0; i < count; i++)
-    {
-      ch = *mem++;
-      *buf++ = highhex (ch);
-      *buf++ = lowhex (ch);
-    }
-  *buf = 0;
-  return (buf);
-}
-
-/* convert the hex array pointed to by buf into binary, to be placed in mem */
-/* return a pointer to the character after the last byte written */
-
-static char *
-hex2mem (char *buf, char *mem, int count)
-{
-  int i;
-  unsigned char ch;
-  for (i = 0; i < count; i++)
-    {
-      ch = hex (*buf++) << 4;
-      ch = ch + hex (*buf++);
-      *mem++ = ch;
-    }
-  return (mem);
-}
-
-/**********************************************/
-/* WHILE WE FIND NICE HEX CHARS, BUILD AN INT */
-/* RETURN NUMBER OF CHARS PROCESSED           */
-/**********************************************/
-static int
-hexToInt (char **ptr, int *intValue)
-{
-  int numChars = 0;
-  int hexValue;
-
-  *intValue = 0;
-
-  while (**ptr)
-    {
-      hexValue = hex (**ptr);
-      if (hexValue >= 0)
-	{
-	  *intValue = (*intValue << 4) | hexValue;
-	  numChars++;
-	}
-      else
-	break;
-
-      (*ptr)++;
-    }
-
-  return (numChars);
-}
-
-/*
- * Routines to get and put packets
- */
-
-/* scan for the sequence $<data>#<checksum>     */
-
-static
-void
-getpacket (char *buffer)
-{
-  unsigned char checksum;
-  unsigned char xmitcsum;
-  int i;
-  int count;
-  char ch;
-  do
-    {
-      /* wait around for the start character, ignore all other characters */
-      while ((ch = getDebugChar ()) != '$');
-      checksum = 0;
-      xmitcsum = -1;
-
-      count = 0;
-
-      /* now, read until a # or end of buffer is found */
-      while (count < BUFMAX)
-	{
-	  ch = getDebugChar ();
-	  if (ch == '#')
-	    break;
-	  checksum = checksum + ch;
-	  buffer[count] = ch;
-	  count = count + 1;
-	}
-      buffer[count] = 0;
-
-      if (ch == '#')
-	{
-	  xmitcsum = hex (getDebugChar ()) << 4;
-	  xmitcsum += hex (getDebugChar ());
-	  if (checksum != xmitcsum)
-	    putDebugChar ('-');	/* failed checksum */
-	  else
-	    {
-	      putDebugChar ('+');	/* successful transfer */
-	      /* if a sequence char is present, reply the sequence ID */
-	      if (buffer[2] == ':')
-		{
-		  putDebugChar (buffer[0]);
-		  putDebugChar (buffer[1]);
-		  /* remove sequence chars from buffer */
-		  count = strlen (buffer);
-		  for (i = 3; i <= count; i++)
-		    buffer[i - 3] = buffer[i];
-		}
-	    }
-	}
-    }
-  while (checksum != xmitcsum);
-
-}
-
-
-/* send the packet in buffer.  The host get's one chance to read it.
-   This routine does not wait for a positive acknowledge.  */
-
-static void
-putpacket (register char *buffer)
-{
-  register  int checksum;
-  register  int count;
-
-  /*  $<packet info>#<checksum>. */
-  do
-    {
-      char *src = buffer;
-      putDebugChar ('$');
-      checksum = 0;
-
-      while (*src)
-	{
-	  int runlen;
-
-	  /* Do run length encoding */
-	  for (runlen = 0; runlen < 100; runlen ++) 
-	    {
-	      if (src[0] != src[runlen]) 
-		{
-		  if (runlen > 3) 
-		    {
-		      int encode;
-		      /* Got a useful amount */
-		      putDebugChar (*src);
-		      checksum += *src;
-		      putDebugChar ('*');
-		      checksum += '*';
-		      checksum += (encode = runlen + ' ' - 4);
-		      putDebugChar (encode);
-		      src += runlen;
-		    }
-		  else
-		    {
-		      putDebugChar (*src);
-		      checksum += *src;
-		      src++;
-		    }
-		  break;
-		}
-	    }
-	}
-
-
-      putDebugChar ('#');
-      putDebugChar (highhex(checksum));
-      putDebugChar (lowhex(checksum));
-    }
-  while  (getDebugChar() != '+');
-
-}
-
-
-/* a bus error has occurred, perform a longjmp
-   to return execution and allow handling of the error */
-
-void
-handle_buserror (void)
-{
-  longjmp (remcomEnv, 1);
-}
-
-/*
- * this function takes the SH-1 exception number and attempts to
- * translate this number into a unix compatible signal value
- */
-static int
-computeSignal (int exceptionVector)
-{
-  int sigval;
-  switch (exceptionVector)
-    {
-    case INVALID_INSN_VEC:
-      sigval = 4;
-      break;			
-    case INVALID_SLOT_VEC:
-      sigval = 4;
-      break;			
-    case CPU_BUS_ERROR_VEC:
-      sigval = 10;
-      break;			
-    case DMA_BUS_ERROR_VEC:
-      sigval = 10;
-      break;	
-    case NMI_VEC:
-      sigval = 2;
-      break;	
-
-    case TRAP_VEC:
-    case USER_VEC:
-      sigval = 5;
-      break;
-
-    default:
-      sigval = 7;		/* "software generated"*/
-      break;
-    }
-  return (sigval);
-}
-
-void
-doSStep (void)
-{
-  short *instrMem;
-  int displacement;
-  int reg;
-  unsigned short opcode;
-
-  instrMem = (short *) registers[PC];
-
-  opcode = *instrMem;
-  stepped = 1;
-
-  if ((opcode & COND_BR_MASK) == BT_INSTR)
-    {
-      if (registers[SR] & T_BIT_MASK)
-	{
-	  displacement = (opcode & COND_DISP) << 1;
-	  if (displacement & 0x80)
-	    displacement |= 0xffffff00;
-	  /*
-		   * Remember PC points to second instr.
-		   * after PC of branch ... so add 4
-		   */
-	  instrMem = (short *) (registers[PC] + displacement + 4);
-	}
-      else
-	instrMem += 1;
-    }
-  else if ((opcode & COND_BR_MASK) == BF_INSTR)
-    {
-      if (registers[SR] & T_BIT_MASK)
-	instrMem += 1;
-      else
-	{
-	  displacement = (opcode & COND_DISP) << 1;
-	  if (displacement & 0x80)
-	    displacement |= 0xffffff00;
-	  /*
-		   * Remember PC points to second instr.
-		   * after PC of branch ... so add 4
-		   */
-	  instrMem = (short *) (registers[PC] + displacement + 4);
-	}
-    }
-  else if ((opcode & UCOND_DBR_MASK) == BRA_INSTR)
-    {
-      displacement = (opcode & UCOND_DISP) << 1;
-      if (displacement & 0x0800)
-	displacement |= 0xfffff000;
-
-      /*
-	   * Remember PC points to second instr.
-	   * after PC of branch ... so add 4
-	   */
-      instrMem = (short *) (registers[PC] + displacement + 4);
-    }
-  else if ((opcode & UCOND_RBR_MASK) == JSR_INSTR)
-    {
-      reg = (char) ((opcode & UCOND_REG) >> 8);
-
-      instrMem = (short *) registers[reg];
-    }
-  else if (opcode == RTS_INSTR)
-    instrMem = (short *) registers[PR];
-  else if (opcode == RTE_INSTR)
-    instrMem = (short *) registers[15];
-  else if ((opcode & TRAPA_MASK) == TRAPA_INSTR)
-    instrMem = (short *) ((opcode & ~TRAPA_MASK) << 2);
-  else
-    instrMem += 1;
-
-  instrBuffer.memAddr = instrMem;
-  instrBuffer.oldInstr = *instrMem;
-  *instrMem = SSTEP_INSTR;
-}
-
-void
-undoSStep (void)
-{
-  /*
-    If we single stepped,
- restore the old instruction!
-*/
-  if (stepped)
-    {  short *instrMem;
-      instrMem = instrBuffer.memAddr;
-      *instrMem = instrBuffer.oldInstr;
-    }
-  stepped = 0;
-}
-
-/*
-This function does all exception handling.  It only does two things -
-it figures out why it was called and tells gdb, and then it reacts
-to gdb's requests.
-
-When in the monitor mode we talk a human on the serial line rather than gdb.
-
-*/
-
-
-void
-gdb_handle_exception (int exceptionVector)
-{
-  int sigval;
-  int addr, length;
-  char *ptr;
-
-  /* reply to host that an exception has occurred */
-  sigval = computeSignal (exceptionVector);
-  remcomOutBuffer[0] = 'S';
-  remcomOutBuffer[1] = highhex(sigval);
-  remcomOutBuffer[2] = lowhex (sigval);
-  remcomOutBuffer[3] = 0;
-
-  putpacket (remcomOutBuffer);
-
-  /*
-   * exception 255 indicates a software trap
-   * inserted in place of code ... so back up
-   * PC by one instruction, since this instruction
-   * will later be replaced by its original one!
-   */
-  if (exceptionVector == 0xff
-      || exceptionVector == 0x20)
-    registers[PC] -= 2;
-
-  /*
-   * Do the thangs needed to undo
-   * any stepping we may have done!
-   */
-  undoSStep ();
-
-  while (1)
-    {
-      remcomOutBuffer[0] = 0;
-      getpacket (remcomInBuffer);
-
-      switch (remcomInBuffer[0])
-	{
-	case '?':
-	  remcomOutBuffer[0] = 'S';
-	  remcomOutBuffer[1] = highhex (sigval);
-	  remcomOutBuffer[2] = lowhex (sigval);
-	  remcomOutBuffer[3] = 0;
-	  break;
-	case 'd':
-	  remote_debug = !(remote_debug);	/* toggle debug flag */
-	  break;
-	case 'g':		/* return the value of the CPU registers */
-	  mem2hex ((char *) registers, remcomOutBuffer, NUMREGBYTES);
-	  break;
-	case 'G':		/* set the value of the CPU registers - return OK */
-	  hex2mem (&remcomInBuffer[1], (char *) registers, NUMREGBYTES);
-	  strcpy (remcomOutBuffer, "OK");
-	  break;
-
-	  /* mAA..AA,LLLL  Read LLLL bytes at address AA..AA */
-	case 'm':
-	  if (setjmp (remcomEnv) == 0)
-	    {
-	      dofault = 0;
-	      /* TRY, TO READ %x,%x.  IF SUCCEED, SET PTR = 0 */
-	      ptr = &remcomInBuffer[1];
-	      if (hexToInt (&ptr, &addr))
-		if (*(ptr++) == ',')
-		  if (hexToInt (&ptr, &length))
-		    {
-		      ptr = 0;
-		      mem2hex ((char *) addr, remcomOutBuffer, length);
-		    }
-	      if (ptr)
-		strcpy (remcomOutBuffer, "E01");
-	    }
-	  else
-	    strcpy (remcomOutBuffer, "E03");
-
-	  /* restore handler for bus error */
-	  dofault = 1;
-	  break;
-
-	  /* MAA..AA,LLLL: Write LLLL bytes at address AA.AA return OK */
-	case 'M':
-	  if (setjmp (remcomEnv) == 0)
-	    {
-	      dofault = 0;
-
-	      /* TRY, TO READ '%x,%x:'.  IF SUCCEED, SET PTR = 0 */
-	      ptr = &remcomInBuffer[1];
-	      if (hexToInt (&ptr, &addr))
-		if (*(ptr++) == ',')
-		  if (hexToInt (&ptr, &length))
-		    if (*(ptr++) == ':')
-		      {
-			hex2mem (ptr, (char *) addr, length);
-			ptr = 0;
-			strcpy (remcomOutBuffer, "OK");
-		      }
-	      if (ptr)
-		strcpy (remcomOutBuffer, "E02");
-	    }
-	  else
-	    strcpy (remcomOutBuffer, "E03");
-
-	  /* restore handler for bus error */
-	  dofault = 1;
-	  break;
-
-	  /* cAA..AA    Continue at address AA..AA(optional) */
-	  /* sAA..AA   Step one instruction from AA..AA(optional) */
-	case 'c':
-	case 's':
-	  {
-	    /* tRY, to read optional parameter, pc unchanged if no parm */
-	    ptr = &remcomInBuffer[1];
-	    if (hexToInt (&ptr, &addr))
-	      registers[PC] = addr;
-
-	    if (remcomInBuffer[0] == 's')
-	      doSStep ();
-	  }
-	  return;
-	  break;
-
-	  /* kill the program */
-	case 'k':		/* do nothing */
-	  break;
-	}			/* switch */
-
-      /* reply to the request */
-      putpacket (remcomOutBuffer);
-    }
-}
-
-
-#define GDBCOOKIE 0x5ac 
-static int ingdbmode;
-/* We've had an exception - choose to go into the monitor or
-   the gdb stub */
-void handle_exception(int exceptionVector)
-{
-#ifdef MONITOR
-    if (ingdbmode != GDBCOOKIE)
-      monitor_handle_exception (exceptionVector);
-    else 
-#endif
-      gdb_handle_exception (exceptionVector);
-
-}
-
-void
-gdb_mode()
-{
-  ingdbmode = GDBCOOKIE;
-  breakpoint();
-}
-/* This function will generate a breakpoint exception.  It is used at the
-   beginning of a program to sync up with a debugger and can be used
-   otherwise as a quick means to stop program execution and "break" into
-   the debugger. */
-
-void
-breakpoint (void)
-{
-      BREAKPOINT ();
-}
+#define BCR  (*(volatile short *)(0x05FFFFA0)) /* Bus control register */
+#define BAS  (0x800)				/* Byte access select */
+#define WCR1 (*(volatile short *)(0x05ffffA2)) /* Wait state control register */
 
 asm ("_BINIT: mov.l  L1,r15");
 asm ("bra _INIT");
@@ -1292,7 +1324,7 @@ static __inline__ void code_for_catch_exception(int n)
 
 
 static  void
-exceptions()
+exceptions (void)
 {
   code_for_catch_exception (CPU_BUS_ERROR_VEC);
   code_for_catch_exception (DMA_BUS_ERROR_VEC);
@@ -1457,17 +1489,15 @@ exceptions()
 #define BPS			32	/* 9600 for 10 Mhz */
 #endif
 
-char getDebugChar (void);
-int putDebugChar (char);
 void handleError (char theSSR);
 
 void
-nop ()
+nop (void)
 {
 
 }
 void 
-init_serial()
+init_serial (void)
 {
   int i;
 
@@ -1526,12 +1556,12 @@ getDebugChar (void)
 }
 
 int 
-putDebugCharReady()
+putDebugCharReady (void)
 {
   return (SSR1 & SCI_TDRE);
 }
 
-int 
+void
 putDebugChar (char ch)
 {
   while (!putDebugCharReady())
@@ -1542,7 +1572,6 @@ putDebugChar (char ch)
    */
   TDR1 = ch;
   SSR1 &= ~SCI_TDRE;
-  return 1;
 }
 
 void 
@@ -1551,3 +1580,4 @@ handleError (char theSSR)
   SSR1 &= ~(SCI_ORER | SCI_PER | SCI_FER);
 }
 
+#endif

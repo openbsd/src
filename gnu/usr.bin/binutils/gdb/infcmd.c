@@ -1,21 +1,24 @@
 /* Memory-access and commands for "inferior" process, for GDB.
-   Copyright 1986, 1987, 1988, 1989, 1991, 1992, 1995, 1996 Free Software Foundation, Inc.
+   Copyright 1986, 1987, 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995,
+   1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004
+   Free Software Foundation, Inc.
 
-This file is part of GDB.
+   This file is part of GDB.
 
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
+   This program is free software; you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation; either version 2 of the License, or
+   (at your option) any later version.
 
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software
-Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+   You should have received a copy of the GNU General Public License
+   along with this program; if not, write to the Free Software
+   Foundation, Inc., 59 Temple Place - Suite 330,
+   Boston, MA 02111-1307, USA.  */
 
 #include "defs.h"
 #include <signal.h>
@@ -27,65 +30,93 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #include "environ.h"
 #include "value.h"
 #include "gdbcmd.h"
+#include "symfile.h"
 #include "gdbcore.h"
 #include "target.h"
 #include "language.h"
+#include "symfile.h"
+#include "objfiles.h"
+#include "completer.h"
+#include "ui-out.h"
+#include "event-top.h"
+#include "parser-defs.h"
+#include "regcache.h"
+#include "reggroups.h"
+#include "block.h"
+#include <ctype.h>
+#include "gdb_assert.h"
 
-static void continue_command PARAMS ((char *, int));
+/* Functions exported for general use, in inferior.h: */
 
-static void until_next_command PARAMS ((int));
+void all_registers_info (char *, int);
 
-static void until_command PARAMS ((char *, int));
+void registers_info (char *, int);
 
-static void path_info PARAMS ((char *, int));
+void nexti_command (char *, int);
 
-static void path_command PARAMS ((char *, int));
+void stepi_command (char *, int);
 
-static void unset_command PARAMS ((char *, int));
+void continue_command (char *, int);
 
-static void float_info PARAMS ((char *, int));
+void interrupt_target_command (char *args, int from_tty);
 
-static void detach_command PARAMS ((char *, int));
+/* Local functions: */
 
-static void nofp_registers_info PARAMS ((char *, int));
+static void nofp_registers_info (char *, int);
 
-static void all_registers_info PARAMS ((char *, int));
+static void print_return_value (int struct_return, struct type *value_type);
 
-static void registers_info PARAMS ((char *, int));
+static void finish_command_continuation (struct continuation_arg *);
 
-#if !defined (DO_REGISTERS_INFO)
-static void do_registers_info PARAMS ((int, int));
-#endif
+static void until_next_command (int);
 
-static void unset_environment_command PARAMS ((char *, int));
+static void until_command (char *, int);
 
-static void set_environment_command PARAMS ((char *, int));
+static void path_info (char *, int);
 
-static void environment_info PARAMS ((char *, int));
+static void path_command (char *, int);
 
-static void program_info PARAMS ((char *, int));
+static void unset_command (char *, int);
 
-static void finish_command PARAMS ((char *, int));
+static void float_info (char *, int);
 
-static void signal_command PARAMS ((char *, int));
+static void detach_command (char *, int);
 
-static void jump_command PARAMS ((char *, int));
+static void disconnect_command (char *, int);
 
-static void step_1 PARAMS ((int, int, char *));
+static void unset_environment_command (char *, int);
 
-static void nexti_command PARAMS ((char *, int));
+static void set_environment_command (char *, int);
 
-static void stepi_command PARAMS ((char *, int));
+static void environment_info (char *, int);
 
-static void next_command PARAMS ((char *, int));
+static void program_info (char *, int);
 
-static void step_command PARAMS ((char *, int));
+static void finish_command (char *, int);
 
-static void run_command PARAMS ((char *, int));
+static void signal_command (char *, int);
 
-#ifdef CALL_DUMMY_BREAKPOINT_OFFSET
-static void breakpoint_auto_delete_contents PARAMS ((PTR));
-#endif
+static void jump_command (char *, int);
+
+static void step_1 (int, int, char *);
+static void step_once (int skip_subroutines, int single_inst, int count);
+static void step_1_continuation (struct continuation_arg *arg);
+
+static void next_command (char *, int);
+
+static void step_command (char *, int);
+
+static void run_command (char *, int);
+
+static void run_no_args_command (char *args, int from_tty);
+
+static void go_command (char *line_no, int from_tty);
+
+static int strip_bg_char (char **);
+
+void _initialize_infcmd (void);
+
+#define GO_USAGE   "Usage: go <location>\n"
 
 #define ERROR_NO_INFERIOR \
    if (!target_has_execution) error ("The program is not being run.");
@@ -94,6 +125,12 @@ static void breakpoint_auto_delete_contents PARAMS ((PTR));
    Empty string (pointer to '\0') means no args.  */
 
 static char *inferior_args;
+
+/* The inferior arguments as a vector.  If INFERIOR_ARGC is nonzero,
+   then we must compute INFERIOR_ARGS from this (via the target).  */
+
+static int inferior_argc;
+static char **inferior_argv;
 
 /* File name for default use for standard in/out in the inferior.  */
 
@@ -104,7 +141,7 @@ char *inferior_io_terminal;
    being debugged it should be nonzero (currently 3 is used) for remote
    debugging.  */
 
-int inferior_pid;
+ptid_t inferior_ptid;
 
 /* Last signal that the inferior received (why it stopped).  */
 
@@ -140,24 +177,20 @@ int stopped_by_random_signal;
    If this is nonzero, respond to a single-step signal
    by continuing to step if the pc is in this range.  */
 
-CORE_ADDR step_range_start; /* Inclusive */
-CORE_ADDR step_range_end; /* Exclusive */
+CORE_ADDR step_range_start;	/* Inclusive */
+CORE_ADDR step_range_end;	/* Exclusive */
 
 /* Stack frame address as of when stepping command was issued.
    This is how we know when we step into a subroutine call,
    and how to set the frame for the breakpoint used to step out.  */
 
-CORE_ADDR step_frame_address;
+struct frame_id step_frame_id;
 
 /* Our notion of the current stack pointer.  */
 
 CORE_ADDR step_sp;
 
-/* 1 means step over all subroutine calls.
-   0 means don't step over calls (used by stepi).
-   -1 means step over calls to undebuggable functions.  */
-
-int step_over_calls;
+enum step_over_calls_kind step_over_calls;
 
 /* If stepping, nonzero means step count is > 1
    so don't print frame next time inferior stops
@@ -169,13 +202,176 @@ int step_multi;
    in format described in environ.h.  */
 
 struct environ *inferior_environ;
+
+/* Accessor routines. */
+
+char *
+get_inferior_args (void)
+{
+  if (inferior_argc != 0)
+    {
+      char *n, *old;
+
+      n = gdbarch_construct_inferior_arguments (current_gdbarch,
+						inferior_argc, inferior_argv);
+      old = set_inferior_args (n);
+      xfree (old);
+    }
+
+  if (inferior_args == NULL)
+    inferior_args = xstrdup ("");
+
+  return inferior_args;
+}
+
+char *
+set_inferior_args (char *newargs)
+{
+  char *saved_args = inferior_args;
+
+  inferior_args = newargs;
+  inferior_argc = 0;
+  inferior_argv = 0;
+
+  return saved_args;
+}
+
+void
+set_inferior_args_vector (int argc, char **argv)
+{
+  inferior_argc = argc;
+  inferior_argv = argv;
+}
+
+/* Notice when `set args' is run.  */
+static void
+notice_args_set (char *args, int from_tty, struct cmd_list_element *c)
+{
+  inferior_argc = 0;
+  inferior_argv = 0;
+}
+
+/* Notice when `show args' is run.  */
+static void
+notice_args_read (char *args, int from_tty, struct cmd_list_element *c)
+{
+  /* Might compute the value.  */
+  get_inferior_args ();
+}
 
 
-/* ARGSUSED */
+/* Compute command-line string given argument vector.  This does the
+   same shell processing as fork_inferior.  */
+char *
+construct_inferior_arguments (struct gdbarch *gdbarch, int argc, char **argv)
+{
+  char *result;
+
+  if (STARTUP_WITH_SHELL)
+    {
+      /* This holds all the characters considered special to the
+	 typical Unix shells.  We include `^' because the SunOS
+	 /bin/sh treats it as a synonym for `|'.  */
+      char *special = "\"!#$&*()\\|[]{}<>?'\"`~^; \t\n";
+      int i;
+      int length = 0;
+      char *out, *cp;
+
+      /* We over-compute the size.  It shouldn't matter.  */
+      for (i = 0; i < argc; ++i)
+	length += 2 * strlen (argv[i]) + 1 + 2 * (argv[i][0] == '\0');
+
+      result = (char *) xmalloc (length);
+      out = result;
+
+      for (i = 0; i < argc; ++i)
+	{
+	  if (i > 0)
+	    *out++ = ' ';
+
+	  /* Need to handle empty arguments specially.  */
+	  if (argv[i][0] == '\0')
+	    {
+	      *out++ = '\'';
+	      *out++ = '\'';
+	    }
+	  else
+	    {
+	      for (cp = argv[i]; *cp; ++cp)
+		{
+		  if (strchr (special, *cp) != NULL)
+		    *out++ = '\\';
+		  *out++ = *cp;
+		}
+	    }
+	}
+      *out = '\0';
+    }
+  else
+    {
+      /* In this case we can't handle arguments that contain spaces,
+	 tabs, or newlines -- see breakup_args().  */
+      int i;
+      int length = 0;
+
+      for (i = 0; i < argc; ++i)
+	{
+	  char *cp = strchr (argv[i], ' ');
+	  if (cp == NULL)
+	    cp = strchr (argv[i], '\t');
+	  if (cp == NULL)
+	    cp = strchr (argv[i], '\n');
+	  if (cp != NULL)
+	    error ("can't handle command-line argument containing whitespace");
+	  length += strlen (argv[i]) + 1;
+	}
+
+      result = (char *) xmalloc (length);
+      result[0] = '\0';
+      for (i = 0; i < argc; ++i)
+	{
+	  if (i > 0)
+	    strcat (result, " ");
+	  strcat (result, argv[i]);
+	}
+    }
+
+  return result;
+}
+
+
+/* This function detects whether or not a '&' character (indicating
+   background execution) has been added as *the last* of the arguments ARGS
+   of a command. If it has, it removes it and returns 1. Otherwise it
+   does nothing and returns 0. */
+static int
+strip_bg_char (char **args)
+{
+  char *p = NULL;
+
+  p = strchr (*args, '&');
+
+  if (p)
+    {
+      if (p == (*args + strlen (*args) - 1))
+	{
+	  if (strlen (*args) > 1)
+	    {
+	      do
+		p--;
+	      while (*p == ' ' || *p == '\t');
+	      *(p + 1) = '\0';
+	    }
+	  else
+	    *args = 0;
+	  return 1;
+	}
+    }
+  return 0;
+}
+
 void
-tty_command (file, from_tty)
-     char *file;
-     int from_tty;
+tty_command (char *file, int from_tty)
 {
   if (file == 0)
     error_no_arg ("terminal name for running target process");
@@ -184,30 +380,43 @@ tty_command (file, from_tty)
 }
 
 static void
-run_command (args, from_tty)
-     char *args;
-     int from_tty;
+run_command (char *args, int from_tty)
 {
   char *exec_file;
 
   dont_repeat ();
 
-  if (inferior_pid != 0 && target_has_execution)
+  if (! ptid_equal (inferior_ptid, null_ptid) && target_has_execution)
     {
-      if (
-	  !query ("The program being debugged has been started already.\n\
+      if (from_tty
+	  && !query ("The program being debugged has been started already.\n\
 Start it from the beginning? "))
 	error ("Program not restarted.");
       target_kill ();
+#if defined(SOLIB_RESTART)
+      SOLIB_RESTART ();
+#endif
+      init_wait_for_inferior ();
     }
 
   clear_breakpoint_hit_counts ();
 
-  exec_file = (char *) get_exec_file (0);
+  /* Purge old solib objfiles. */
+  objfile_purge_solibs ();
 
-  /* The exec file is re-read every time we do a generic_mourn_inferior, so
-     we just have to worry about the symbol file.  */
+  do_run_cleanups (NULL);
+
+  /* The comment here used to read, "The exec file is re-read every
+     time we do a generic_mourn_inferior, so we just have to worry
+     about the symbol file."  The `generic_mourn_inferior' function
+     gets called whenever the program exits.  However, suppose the
+     program exits, and *then* the executable file changes?  We need
+     to check again here.  Since reopen_exec_file doesn't do anything
+     if the timestamp hasn't changed, I don't see the harm.  */
+  reopen_exec_file ();
   reread_symbols ();
+
+  exec_file = (char *) get_exec_file (0);
 
   /* We keep symbols from add-symbol-file, on the grounds that the
      user might want to add some symbols before running the program
@@ -217,38 +426,90 @@ Start it from the beginning? "))
      the user has to manually nuke all symbols between runs if they
      want them to go away (PR 2207).  This is probably reasonable.  */
 
-  if (args)
+  if (!args)
     {
-      char *cmd;
-      cmd = concat ("set args ", args, NULL);
-      make_cleanup (free, cmd);
-      execute_command (cmd, from_tty);
+      if (event_loop_p && target_can_async_p ())
+	async_disable_stdin ();
+    }
+  else
+    {
+      int async_exec = strip_bg_char (&args);
+
+      /* If we get a request for running in the bg but the target
+         doesn't support it, error out. */
+      if (event_loop_p && async_exec && !target_can_async_p ())
+	error ("Asynchronous execution not supported on this target.");
+
+      /* If we don't get a request of running in the bg, then we need
+         to simulate synchronous (fg) execution. */
+      if (event_loop_p && !async_exec && target_can_async_p ())
+	{
+	  /* Simulate synchronous execution */
+	  async_disable_stdin ();
+	}
+
+      /* If there were other args, beside '&', process them. */
+      if (args)
+	{
+          char *old_args = set_inferior_args (xstrdup (args));
+          xfree (old_args);
+	}
     }
 
   if (from_tty)
     {
-      puts_filtered("Starting program: ");
+      ui_out_field_string (uiout, NULL, "Starting program");
+      ui_out_text (uiout, ": ");
       if (exec_file)
-	puts_filtered(exec_file);
-      puts_filtered(" ");
-      puts_filtered(inferior_args);
-      puts_filtered("\n");
-      gdb_flush (gdb_stdout);
+	ui_out_field_string (uiout, "execfile", exec_file);
+      ui_out_spaces (uiout, 1);
+      /* We call get_inferior_args() because we might need to compute
+	 the value now.  */
+      ui_out_field_string (uiout, "infargs", get_inferior_args ());
+      ui_out_text (uiout, "\n");
+      ui_out_flush (uiout);
     }
 
-  target_create_inferior (exec_file, inferior_args,
+  /* We call get_inferior_args() because we might need to compute
+     the value now.  */
+  target_create_inferior (exec_file, get_inferior_args (),
 			  environ_vector (inferior_environ));
 }
-
+
+
 static void
-continue_command (proc_count_exp, from_tty)
-     char *proc_count_exp;
-     int from_tty;
+run_no_args_command (char *args, int from_tty)
 {
+  char *old_args = set_inferior_args (xstrdup (""));
+  xfree (old_args);
+}
+
+
+void
+continue_command (char *proc_count_exp, int from_tty)
+{
+  int async_exec = 0;
   ERROR_NO_INFERIOR;
 
-  /* If have argument, set proceed count of breakpoint we stopped at.  */
+  /* Find out whether we must run in the background. */
+  if (proc_count_exp != NULL)
+    async_exec = strip_bg_char (&proc_count_exp);
 
+  /* If we must run in the background, but the target can't do it,
+     error out. */
+  if (event_loop_p && async_exec && !target_can_async_p ())
+    error ("Asynchronous execution not supported on this target.");
+
+  /* If we are not asked to run in the bg, then prepare to run in the
+     foreground, synchronously. */
+  if (event_loop_p && !async_exec && target_can_async_p ())
+    {
+      /* Simulate synchronous execution */
+      async_disable_stdin ();
+    }
+
+  /* If have argument (besides '&'), set proceed count of breakpoint
+     we stopped at.  */
   if (proc_count_exp != NULL)
     {
       bpstat bs = stop_bpstat;
@@ -261,7 +522,7 @@ continue_command (proc_count_exp, from_tty)
       while (num != 0)
 	{
 	  set_ignore_count (num,
-			    parse_and_eval_address (proc_count_exp) - 1,
+			    parse_and_eval_long (proc_count_exp) - 1,
 			    from_tty);
 	  /* set_ignore_count prints a message ending with a period.
 	     So print two spaces before "Continuing.".  */
@@ -281,79 +542,200 @@ continue_command (proc_count_exp, from_tty)
 
 /* Step until outside of current statement.  */
 
-/* ARGSUSED */
 static void
-step_command (count_string, from_tty)
-     char *count_string;
-     int from_tty;
+step_command (char *count_string, int from_tty)
 {
   step_1 (0, 0, count_string);
 }
 
 /* Likewise, but skip over subroutine calls as if single instructions.  */
 
-/* ARGSUSED */
 static void
-next_command (count_string, from_tty)
-     char *count_string;
-     int from_tty;
+next_command (char *count_string, int from_tty)
 {
   step_1 (1, 0, count_string);
 }
 
 /* Likewise, but step only one instruction.  */
 
-/* ARGSUSED */
-static void
-stepi_command (count_string, from_tty)
-     char *count_string;
-     int from_tty;
+void
+stepi_command (char *count_string, int from_tty)
 {
   step_1 (0, 1, count_string);
 }
 
-/* ARGSUSED */
-static void
-nexti_command (count_string, from_tty)
-     char *count_string;
-     int from_tty;
+void
+nexti_command (char *count_string, int from_tty)
 {
   step_1 (1, 1, count_string);
 }
 
 static void
-step_1 (skip_subroutines, single_inst, count_string)
-     int skip_subroutines;
-     int single_inst;
-     char *count_string;
+disable_longjmp_breakpoint_cleanup (void *ignore)
 {
-  register int count = 1;
+  disable_longjmp_breakpoint ();
+}
+
+static void
+step_1 (int skip_subroutines, int single_inst, char *count_string)
+{
+  int count = 1;
   struct frame_info *frame;
   struct cleanup *cleanups = 0;
+  int async_exec = 0;
 
   ERROR_NO_INFERIOR;
-  count = count_string ? parse_and_eval_address (count_string) : 1;
 
-  if (!single_inst || skip_subroutines) /* leave si command alone */
+  if (count_string)
+    async_exec = strip_bg_char (&count_string);
+
+  /* If we get a request for running in the bg but the target
+     doesn't support it, error out. */
+  if (event_loop_p && async_exec && !target_can_async_p ())
+    error ("Asynchronous execution not supported on this target.");
+
+  /* If we don't get a request of running in the bg, then we need
+     to simulate synchronous (fg) execution. */
+  if (event_loop_p && !async_exec && target_can_async_p ())
     {
-      enable_longjmp_breakpoint();
-      cleanups = make_cleanup(disable_longjmp_breakpoint, 0);
+      /* Simulate synchronous execution */
+      async_disable_stdin ();
     }
 
-  for (; count > 0; count--)
+  count = count_string ? parse_and_eval_long (count_string) : 1;
+
+  if (!single_inst || skip_subroutines)		/* leave si command alone */
+    {
+      enable_longjmp_breakpoint ();
+      if (!event_loop_p || !target_can_async_p ())
+	cleanups = make_cleanup (disable_longjmp_breakpoint_cleanup, 0 /*ignore*/);
+      else
+        make_exec_cleanup (disable_longjmp_breakpoint_cleanup, 0 /*ignore*/);
+    }
+
+  /* In synchronous case, all is well, just use the regular for loop. */
+  if (!event_loop_p || !target_can_async_p ())
+    {
+      for (; count > 0; count--)
+	{
+	  clear_proceed_status ();
+
+	  frame = get_current_frame ();
+	  if (!frame)		/* Avoid coredump here.  Why tho? */
+	    error ("No current frame");
+	  step_frame_id = get_frame_id (frame);
+	  step_sp = read_sp ();
+
+	  if (!single_inst)
+	    {
+	      find_pc_line_pc_range (stop_pc, &step_range_start, &step_range_end);
+	      if (step_range_end == 0)
+		{
+		  char *name;
+		  if (find_pc_partial_function (stop_pc, &name, &step_range_start,
+						&step_range_end) == 0)
+		    error ("Cannot find bounds of current function");
+
+		  target_terminal_ours ();
+		  printf_filtered ("\
+Single stepping until exit from function %s, \n\
+which has no line number information.\n", name);
+		}
+	    }
+	  else
+	    {
+	      /* Say we are stepping, but stop after one insn whatever it does.  */
+	      step_range_start = step_range_end = 1;
+	      if (!skip_subroutines)
+		/* It is stepi.
+		   Don't step over function calls, not even to functions lacking
+		   line numbers.  */
+		step_over_calls = STEP_OVER_NONE;
+	    }
+
+	  if (skip_subroutines)
+	    step_over_calls = STEP_OVER_ALL;
+
+	  step_multi = (count > 1);
+	  proceed ((CORE_ADDR) -1, TARGET_SIGNAL_DEFAULT, 1);
+
+	  if (!stop_step)
+	    break;
+	}
+
+      if (!single_inst || skip_subroutines)
+	do_cleanups (cleanups);
+      return;
+    }
+  /* In case of asynchronous target things get complicated, do only
+     one step for now, before returning control to the event loop. Let
+     the continuation figure out how many other steps we need to do,
+     and handle them one at the time, through step_once(). */
+  else
+    {
+      if (event_loop_p && target_can_async_p ())
+	step_once (skip_subroutines, single_inst, count);
+    }
+}
+
+/* Called after we are done with one step operation, to check whether
+   we need to step again, before we print the prompt and return control
+   to the user. If count is > 1, we will need to do one more call to
+   proceed(), via step_once(). Basically it is like step_once and
+   step_1_continuation are co-recursive. */
+static void
+step_1_continuation (struct continuation_arg *arg)
+{
+  int count;
+  int skip_subroutines;
+  int single_inst;
+
+  skip_subroutines = arg->data.integer;
+  single_inst      = arg->next->data.integer;
+  count            = arg->next->next->data.integer;
+
+  if (stop_step)
+    step_once (skip_subroutines, single_inst, count - 1);
+  else
+    if (!single_inst || skip_subroutines)
+      do_exec_cleanups (ALL_CLEANUPS);
+}
+
+/* Do just one step operation. If count >1 we will have to set up a
+   continuation to be done after the target stops (after this one
+   step). This is useful to implement the 'step n' kind of commands, in
+   case of asynchronous targets. We had to split step_1 into two parts,
+   one to be done before proceed() and one afterwards. This function is
+   called in case of step n with n>1, after the first step operation has
+   been completed.*/
+static void 
+step_once (int skip_subroutines, int single_inst, int count)
+{ 
+  struct continuation_arg *arg1; 
+  struct continuation_arg *arg2;
+  struct continuation_arg *arg3; 
+  struct frame_info *frame;
+
+  if (count > 0)
     {
       clear_proceed_status ();
 
       frame = get_current_frame ();
-      if (!frame)			/* Avoid coredump here.  Why tho? */
+      if (!frame)		/* Avoid coredump here.  Why tho? */
 	error ("No current frame");
-      step_frame_address = FRAME_FP (frame);
+      step_frame_id = get_frame_id (frame);
       step_sp = read_sp ();
 
-      if (! single_inst)
+      if (!single_inst)
 	{
 	  find_pc_line_pc_range (stop_pc, &step_range_start, &step_range_end);
-	  if (step_range_end == 0)
+
+	  /* If we have no line info, switch to stepi mode.  */
+	  if (step_range_end == 0 && step_stop_if_no_debug)
+	    {
+	      step_range_start = step_range_end = 1;
+	    }
+	  else if (step_range_end == 0)
 	    {
 	      char *name;
 	      if (find_pc_partial_function (stop_pc, &name, &step_range_start,
@@ -374,43 +756,61 @@ which has no line number information.\n", name);
 	    /* It is stepi.
 	       Don't step over function calls, not even to functions lacking
 	       line numbers.  */
-	    step_over_calls = 0;
+	    step_over_calls = STEP_OVER_NONE;
 	}
 
       if (skip_subroutines)
-	step_over_calls = 1;
+	step_over_calls = STEP_OVER_ALL;
 
       step_multi = (count > 1);
+      arg1 =
+	(struct continuation_arg *) xmalloc (sizeof (struct continuation_arg));
+      arg2 =
+	(struct continuation_arg *) xmalloc (sizeof (struct continuation_arg));
+      arg3 =
+	(struct continuation_arg *) xmalloc (sizeof (struct continuation_arg));
+      arg1->next = arg2;
+      arg1->data.integer = skip_subroutines;
+      arg2->next = arg3;
+      arg2->data.integer = single_inst;
+      arg3->next = NULL;
+      arg3->data.integer = count;
+      add_intermediate_continuation (step_1_continuation, arg1);
       proceed ((CORE_ADDR) -1, TARGET_SIGNAL_DEFAULT, 1);
-      if (! stop_step)
-	break;
-
-      /* FIXME: On nexti, this may have already been done (when we hit the
-	 step resume break, I think).  Probably this should be moved to
-	 wait_for_inferior (near the top).  */
-#if defined (SHIFT_INST_REGS)
-      SHIFT_INST_REGS();
-#endif
     }
-
-  if (!single_inst || skip_subroutines)
-    do_cleanups(cleanups);
 }
+
 
 /* Continue program at specified address.  */
 
 static void
-jump_command (arg, from_tty)
-     char *arg;
-     int from_tty;
+jump_command (char *arg, int from_tty)
 {
-  register CORE_ADDR addr;
+  CORE_ADDR addr;
   struct symtabs_and_lines sals;
   struct symtab_and_line sal;
   struct symbol *fn;
   struct symbol *sfn;
+  int async_exec = 0;
 
   ERROR_NO_INFERIOR;
+
+  /* Find out whether we must run in the background. */
+  if (arg != NULL)
+    async_exec = strip_bg_char (&arg);
+
+  /* If we must run in the background, but the target can't do it,
+     error out. */
+  if (event_loop_p && async_exec && !target_can_async_p ())
+    error ("Asynchronous execution not supported on this target.");
+
+  /* If we are not asked to run in the bg, then prepare to run in the
+     foreground, synchronously. */
+  if (event_loop_p && !async_exec && target_can_async_p ())
+    {
+      /* Simulate synchronous execution */
+      async_disable_stdin ();
+    }
 
   if (!arg)
     error_no_arg ("starting address");
@@ -422,12 +822,12 @@ jump_command (arg, from_tty)
     }
 
   sal = sals.sals[0];
-  free ((PTR)sals.sals);
+  xfree (sals.sals);
 
   if (sal.symtab == 0 && sal.pc == 0)
     error ("No source file has been specified.");
 
-  resolve_sal_pc (&sal);			/* May error out */
+  resolve_sal_pc (&sal);	/* May error out */
 
   /* See if we are trying to jump to another function. */
   fn = get_frame_function (get_current_frame ());
@@ -435,10 +835,24 @@ jump_command (arg, from_tty)
   if (fn != NULL && sfn != fn)
     {
       if (!query ("Line %d is not in `%s'.  Jump anyway? ", sal.line,
-		  SYMBOL_SOURCE_NAME (fn)))
+		  SYMBOL_PRINT_NAME (fn)))
 	{
 	  error ("Not confirmed.");
 	  /* NOTREACHED */
+	}
+    }
+
+  if (sfn != NULL)
+    {
+      fixup_symbol_section (sfn, 0);
+      if (section_is_overlay (SYMBOL_BFD_SECTION (sfn)) &&
+	  !section_is_mapped (SYMBOL_BFD_SECTION (sfn)))
+	{
+	  if (!query ("WARNING!!!  Destination is in unmapped overlay!  Jump anyway? "))
+	    {
+	      error ("Not confirmed.");
+	      /* NOTREACHED */
+	    }
 	}
     }
 
@@ -454,13 +868,26 @@ jump_command (arg, from_tty)
   clear_proceed_status ();
   proceed (addr, TARGET_SIGNAL_0, 0);
 }
+
+
+/* Go to line or address in current procedure */
+static void
+go_command (char *line_no, int from_tty)
+{
+  if (line_no == (char *) NULL || !*line_no)
+    printf_filtered (GO_USAGE);
+  else
+    {
+      tbreak_command (line_no, from_tty);
+      jump_command (line_no, from_tty);
+    }
+}
+
 
 /* Continue program giving it specified signal.  */
 
 static void
-signal_command (signum_exp, from_tty)
-     char *signum_exp;
-     int from_tty;
+signal_command (char *signum_exp, int from_tty)
 {
   enum target_signal oursig;
 
@@ -478,7 +905,7 @@ signal_command (signum_exp, from_tty)
   if (oursig == TARGET_SIGNAL_UNKNOWN)
     {
       /* No, try numeric.  */
-      int num = parse_and_eval_address (signum_exp);
+      int num = parse_and_eval_long (signum_exp);
 
       if (num == 0)
 	oursig = TARGET_SIGNAL_0;
@@ -503,106 +930,6 @@ signal_command (signum_exp, from_tty)
   proceed (oursig == TARGET_SIGNAL_0 ? (CORE_ADDR) -1 : stop_pc, oursig, 0);
 }
 
-/* Call breakpoint_auto_delete on the current contents of the bpstat
-   pointed to by arg (which is really a bpstat *).  */
-
-#ifdef CALL_DUMMY_BREAKPOINT_OFFSET
-
-static void
-breakpoint_auto_delete_contents (arg)
-     PTR arg;
-{
-  breakpoint_auto_delete (*(bpstat *)arg);
-}
-
-#endif	/* CALL_DUMMY_BREAKPOINT_OFFSET */
-
-/* Execute a "stack dummy", a piece of code stored in the stack
-   by the debugger to be executed in the inferior.
-
-   To call: first, do PUSH_DUMMY_FRAME.
-   Then push the contents of the dummy.  It should end with a breakpoint insn.
-   Then call here, passing address at which to start the dummy.
-
-   The contents of all registers are saved before the dummy frame is popped
-   and copied into the buffer BUFFER.
-
-   The dummy's frame is automatically popped whenever that break is hit.
-   If that is the first time the program stops, run_stack_dummy
-   returns to its caller with that frame already gone and returns 0.
-   Otherwise, run_stack-dummy returns 1 (the frame will eventually be popped
-   when we do hit that breakpoint).  */
-
-/* DEBUG HOOK:  4 => return instead of letting the stack dummy run.  */
-
-static int stack_dummy_testing = 0;
-
-int
-run_stack_dummy (addr, buffer)
-     CORE_ADDR addr;
-     char buffer[REGISTER_BYTES];
-{
-  struct cleanup *old_cleanups = make_cleanup (null_cleanup, 0);
-
-  /* Now proceed, having reached the desired place.  */
-  clear_proceed_status ();
-  if (stack_dummy_testing & 4)
-    {
-      POP_FRAME;
-      return(0);
-    }
-#ifdef CALL_DUMMY_BREAKPOINT_OFFSET
-  {
-    struct breakpoint *bpt;
-    struct symtab_and_line sal;
-
-#if CALL_DUMMY_LOCATION != AT_ENTRY_POINT
-    sal.pc = addr - CALL_DUMMY_START_OFFSET + CALL_DUMMY_BREAKPOINT_OFFSET;
-#else
-    sal.pc = CALL_DUMMY_ADDRESS ();
-#endif
-    sal.symtab = NULL;
-    sal.line = 0;
-
-    /* Set up a FRAME for the dummy frame so we can pass it to
-       set_momentary_breakpoint.  We need to give the breakpoint a
-       frame in case there is only one copy of the dummy (e.g.
-       CALL_DUMMY_LOCATION == AFTER_TEXT_END).  */
-    flush_cached_frames ();
-    set_current_frame (create_new_frame (read_fp (), sal.pc));
-
-    /* If defined, CALL_DUMMY_BREAKPOINT_OFFSET is where we need to put
-       a breakpoint instruction.  If not, the call dummy already has the
-       breakpoint instruction in it.
-
-       addr is the address of the call dummy plus the CALL_DUMMY_START_OFFSET,
-       so we need to subtract the CALL_DUMMY_START_OFFSET.  */
-    bpt = set_momentary_breakpoint (sal,
-				    get_current_frame (),
-				    bp_call_dummy);
-    bpt->disposition = del;
-
-    /* If all error()s out of proceed ended up calling normal_stop (and
-       perhaps they should; it already does in the special case of error
-       out of resume()), then we wouldn't need this.  */
-    make_cleanup (breakpoint_auto_delete_contents, &stop_bpstat);
-  }
-#endif /* CALL_DUMMY_BREAKPOINT_OFFSET.  */
-
-  proceed_to_finish = 1;	/* We want stop_registers, please... */
-  proceed (addr, TARGET_SIGNAL_0, 0);
-
-  discard_cleanups (old_cleanups);
-
-  if (!stop_stack_dummy)
-    return 1;
-
-  /* On return, the stack dummy has been popped already.  */
-
-  memcpy (buffer, stop_registers, sizeof stop_registers);
-  return 0;
-}
-
 /* Proceed until we reach a different source line with pc greater than
    our current one or exit the function.  We skip calls in both cases.
 
@@ -611,16 +938,14 @@ run_stack_dummy (addr, buffer)
    we set.  This may involve changes to wait_for_inferior and the
    proceed status code.  */
 
-/* ARGSUSED */
 static void
-until_next_command (from_tty)
-     int from_tty;
+until_next_command (int from_tty)
 {
   struct frame_info *frame;
   CORE_ADDR pc;
   struct symbol *func;
   struct symtab_and_line sal;
- 
+
   clear_proceed_status ();
 
   frame = get_current_frame ();
@@ -631,135 +956,352 @@ until_next_command (from_tty)
 
   pc = read_pc ();
   func = find_pc_function (pc);
-  
+
   if (!func)
     {
       struct minimal_symbol *msymbol = lookup_minimal_symbol_by_pc (pc);
-      
+
       if (msymbol == NULL)
 	error ("Execution is not within a known function.");
-      
+
       step_range_start = SYMBOL_VALUE_ADDRESS (msymbol);
       step_range_end = pc;
     }
   else
     {
       sal = find_pc_line (pc, 0);
-      
+
       step_range_start = BLOCK_START (SYMBOL_BLOCK_VALUE (func));
       step_range_end = sal.end;
     }
-  
-  step_over_calls = 1;
-  step_frame_address = FRAME_FP (frame);
+
+  step_over_calls = STEP_OVER_ALL;
+  step_frame_id = get_frame_id (frame);
   step_sp = read_sp ();
 
   step_multi = 0;		/* Only one call to proceed */
-  
+
   proceed ((CORE_ADDR) -1, TARGET_SIGNAL_DEFAULT, 1);
 }
 
-static void 
-until_command (arg, from_tty)
-     char *arg;
-     int from_tty;
+static void
+until_command (char *arg, int from_tty)
 {
+  int async_exec = 0;
+
   if (!target_has_execution)
     error ("The program is not running.");
+
+  /* Find out whether we must run in the background. */
+  if (arg != NULL)
+    async_exec = strip_bg_char (&arg);
+
+  /* If we must run in the background, but the target can't do it,
+     error out. */
+  if (event_loop_p && async_exec && !target_can_async_p ())
+    error ("Asynchronous execution not supported on this target.");
+
+  /* If we are not asked to run in the bg, then prepare to run in the
+     foreground, synchronously. */
+  if (event_loop_p && !async_exec && target_can_async_p ())
+    {
+      /* Simulate synchronous execution */
+      async_disable_stdin ();
+    }
+
   if (arg)
-    until_break_command (arg, from_tty);
+    until_break_command (arg, from_tty, 0);
   else
     until_next_command (from_tty);
 }
-
-/* "finish": Set a temporary breakpoint at the place
-   the selected frame will return to, then continue.  */
 
 static void
-finish_command (arg, from_tty)
-     char *arg;
-     int from_tty;
+advance_command (char *arg, int from_tty)
+{
+  int async_exec = 0;
+
+  if (!target_has_execution)
+    error ("The program is not running.");
+
+  if (arg == NULL)
+    error_no_arg ("a location");
+
+  /* Find out whether we must run in the background.  */
+  if (arg != NULL)
+    async_exec = strip_bg_char (&arg);
+
+  /* If we must run in the background, but the target can't do it,
+     error out.  */
+  if (event_loop_p && async_exec && !target_can_async_p ())
+    error ("Asynchronous execution not supported on this target.");
+
+  /* If we are not asked to run in the bg, then prepare to run in the
+     foreground, synchronously.  */
+  if (event_loop_p && !async_exec && target_can_async_p ())
+    {
+      /* Simulate synchronous execution.  */
+      async_disable_stdin ();
+    }
+
+  until_break_command (arg, from_tty, 1);
+}
+
+
+/* Print the result of a function at the end of a 'finish' command.  */
+
+static void
+print_return_value (int struct_return, struct type *value_type)
+{
+  struct cleanup *old_chain;
+  struct ui_stream *stb;
+  struct value *value;
+
+  if (!struct_return)
+    {
+      /* The return value can be found in the inferior's registers.  */
+      value = register_value_being_returned (value_type, stop_registers);
+    }
+  /* FIXME: cagney/2004-01-17: When both return_value and
+     extract_returned_value_address are available, should use that to
+     find the address of and then extract the returned value.  */
+  /* FIXME: 2003-09-27: When returning from a nested inferior function
+     call, it's possible (with no help from the architecture vector)
+     to locate and return/print a "struct return" value.  This is just
+     a more complicated case of what is already being done in in the
+     inferior function call code.  In fact, when inferior function
+     calls are made async, this will likely be made the norm.  */
+  else if (gdbarch_return_value_p (current_gdbarch))
+    /* We cannot determine the contents of the structure because it is
+       on the stack, and we don't know where, since we did not
+       initiate the call, as opposed to the call_function_by_hand
+       case.  */
+    {
+      gdb_assert (gdbarch_return_value (current_gdbarch, value_type,
+					NULL, NULL, NULL)
+		  == RETURN_VALUE_STRUCT_CONVENTION);
+      ui_out_text (uiout, "Value returned has type: ");
+      ui_out_field_string (uiout, "return-type", TYPE_NAME (value_type));
+      ui_out_text (uiout, ".");
+      ui_out_text (uiout, " Cannot determine contents\n");
+      return;
+    }
+  else
+    {
+      if (DEPRECATED_EXTRACT_STRUCT_VALUE_ADDRESS_P ())
+	{
+	  CORE_ADDR addr = DEPRECATED_EXTRACT_STRUCT_VALUE_ADDRESS (stop_registers);
+	  if (!addr)
+	    error ("Function return value unknown.");
+	  value = value_at (value_type, addr, NULL);
+	}
+      else
+	{
+	  /* It is "struct return" yet the value is being extracted,
+             presumably from registers, using EXTRACT_RETURN_VALUE.
+             This doesn't make sense.  Unfortunately, the legacy
+             interfaces allowed this behavior.  Sigh!  */
+	  value = allocate_value (value_type);
+	  CHECK_TYPEDEF (value_type);
+	  /* If the function returns void, don't bother fetching the
+	     return value.  */
+	  EXTRACT_RETURN_VALUE (value_type, stop_registers,
+				VALUE_CONTENTS_RAW (value));
+	}
+    }
+
+  /* Print it.  */
+  stb = ui_out_stream_new (uiout);
+  old_chain = make_cleanup_ui_out_stream_delete (stb);
+  ui_out_text (uiout, "Value returned is ");
+  ui_out_field_fmt (uiout, "gdb-result-var", "$%d",
+		    record_latest_value (value));
+  ui_out_text (uiout, " = ");
+  value_print (value, stb->stream, 0, Val_no_prettyprint);
+  ui_out_field_stream (uiout, "return-value", stb);
+  ui_out_text (uiout, "\n");
+  do_cleanups (old_chain);
+}
+
+/* Stuff that needs to be done by the finish command after the target
+   has stopped.  In asynchronous mode, we wait for the target to stop
+   in the call to poll or select in the event loop, so it is
+   impossible to do all the stuff as part of the finish_command
+   function itself.  The only chance we have to complete this command
+   is in fetch_inferior_event, which is called by the event loop as
+   soon as it detects that the target has stopped. This function is
+   called via the cmd_continuation pointer.  */
+
+static void
+finish_command_continuation (struct continuation_arg *arg)
+{
+  struct symbol *function;
+  struct breakpoint *breakpoint;
+  struct cleanup *cleanups;
+
+  breakpoint = (struct breakpoint *) arg->data.pointer;
+  function = (struct symbol *) arg->next->data.pointer;
+  cleanups = (struct cleanup *) arg->next->next->data.pointer;
+
+  if (bpstat_find_breakpoint (stop_bpstat, breakpoint) != NULL
+      && function != NULL)
+    {
+      struct type *value_type;
+      int struct_return;
+      int gcc_compiled;
+
+      value_type = TYPE_TARGET_TYPE (SYMBOL_TYPE (function));
+      if (!value_type)
+	internal_error (__FILE__, __LINE__,
+			"finish_command: function has no target type");
+
+      if (TYPE_CODE (value_type) == TYPE_CODE_VOID)
+	{
+	  do_exec_cleanups (cleanups);
+	  return;
+	}
+
+      CHECK_TYPEDEF (value_type);
+      gcc_compiled = BLOCK_GCC_COMPILED (SYMBOL_BLOCK_VALUE (function));
+      struct_return = using_struct_return (value_type, gcc_compiled);
+
+      print_return_value (struct_return, value_type); 
+    }
+
+  do_exec_cleanups (cleanups);
+}
+
+/* "finish": Set a temporary breakpoint at the place the selected
+   frame will return to, then continue.  */
+
+static void
+finish_command (char *arg, int from_tty)
 {
   struct symtab_and_line sal;
-  register struct frame_info *frame;
-  register struct symbol *function;
+  struct frame_info *frame;
+  struct symbol *function;
   struct breakpoint *breakpoint;
   struct cleanup *old_chain;
+  struct continuation_arg *arg1, *arg2, *arg3;
+
+  int async_exec = 0;
+
+  /* Find out whether we must run in the background.  */
+  if (arg != NULL)
+    async_exec = strip_bg_char (&arg);
+
+  /* If we must run in the background, but the target can't do it,
+     error out.  */
+  if (event_loop_p && async_exec && !target_can_async_p ())
+    error ("Asynchronous execution not supported on this target.");
+
+  /* If we are not asked to run in the bg, then prepare to run in the
+     foreground, synchronously.  */
+  if (event_loop_p && !async_exec && target_can_async_p ())
+    {
+      /* Simulate synchronous execution.  */
+      async_disable_stdin ();
+    }
 
   if (arg)
     error ("The \"finish\" command does not take any arguments.");
   if (!target_has_execution)
     error ("The program is not running.");
-  if (selected_frame == NULL)
+  if (deprecated_selected_frame == NULL)
     error ("No selected frame.");
 
-  frame = get_prev_frame (selected_frame);
+  frame = get_prev_frame (deprecated_selected_frame);
   if (frame == 0)
     error ("\"finish\" not meaningful in the outermost frame.");
 
   clear_proceed_status ();
 
-  sal = find_pc_line (frame->pc, 0);
-  sal.pc = frame->pc;
+  sal = find_pc_line (get_frame_pc (frame), 0);
+  sal.pc = get_frame_pc (frame);
 
-  breakpoint = set_momentary_breakpoint (sal, frame, bp_finish);
+  breakpoint = set_momentary_breakpoint (sal, get_frame_id (frame), bp_finish);
 
-  old_chain = make_cleanup(delete_breakpoint, breakpoint);
+  if (!event_loop_p || !target_can_async_p ())
+    old_chain = make_cleanup_delete_breakpoint (breakpoint);
+  else
+    old_chain = make_exec_cleanup_delete_breakpoint (breakpoint);
 
   /* Find the function we will return from.  */
 
-  function = find_pc_function (selected_frame->pc);
+  function = find_pc_function (get_frame_pc (deprecated_selected_frame));
 
-  /* Print info on the selected frame, including level number
-     but not source.  */
+  /* Print info on the selected frame, including level number but not
+     source.  */
   if (from_tty)
     {
       printf_filtered ("Run till exit from ");
-      print_stack_frame (selected_frame, selected_frame_level, 0);
+      print_stack_frame (deprecated_selected_frame,
+			 frame_relative_level (deprecated_selected_frame), 0);
     }
 
-  proceed_to_finish = 1;		/* We want stop_registers, please... */
+  /* If running asynchronously and the target support asynchronous
+     execution, set things up for the rest of the finish command to be
+     completed later on, when gdb has detected that the target has
+     stopped, in fetch_inferior_event.  */
+  if (event_loop_p && target_can_async_p ())
+    {
+      arg1 =
+	(struct continuation_arg *) xmalloc (sizeof (struct continuation_arg));
+      arg2 =
+	(struct continuation_arg *) xmalloc (sizeof (struct continuation_arg));
+      arg3 =
+	(struct continuation_arg *) xmalloc (sizeof (struct continuation_arg));
+      arg1->next = arg2;
+      arg2->next = arg3;
+      arg3->next = NULL;
+      arg1->data.pointer = breakpoint;
+      arg2->data.pointer = function;
+      arg3->data.pointer = old_chain;
+      add_continuation (finish_command_continuation, arg1);
+    }
+
+  proceed_to_finish = 1;	/* We want stop_registers, please...  */
   proceed ((CORE_ADDR) -1, TARGET_SIGNAL_DEFAULT, 0);
 
-  /* Did we stop at our breakpoint? */
-  if (bpstat_find_breakpoint(stop_bpstat, breakpoint) != NULL
-      && function != 0)
+  /* Do this only if not running asynchronously or if the target
+     cannot do async execution.  Otherwise, complete this command when
+     the target actually stops, in fetch_inferior_event.  */
+  if (!event_loop_p || !target_can_async_p ())
     {
-      struct type *value_type;
-      register value_ptr val;
-      CORE_ADDR funcaddr;
+      /* Did we stop at our breakpoint?  */
+      if (bpstat_find_breakpoint (stop_bpstat, breakpoint) != NULL
+	  && function != NULL)
+	{
+	  struct type *value_type;
+	  int struct_return;
+	  int gcc_compiled;
 
-      value_type = TYPE_TARGET_TYPE (SYMBOL_TYPE (function));
-      if (!value_type)
-	fatal ("internal: finish_command: function has no target type");
-      
-      if (TYPE_CODE (value_type) == TYPE_CODE_VOID)
-	return;
+	  value_type = TYPE_TARGET_TYPE (SYMBOL_TYPE (function));
+	  if (!value_type)
+	    internal_error (__FILE__, __LINE__,
+			    "finish_command: function has no target type");
 
-      funcaddr = BLOCK_START (SYMBOL_BLOCK_VALUE (function));
+	  /* FIXME: Shouldn't we do the cleanups before returning?  */
+	  if (TYPE_CODE (value_type) == TYPE_CODE_VOID)
+	    return;
 
-      val = value_being_returned (value_type, stop_registers,
-	      using_struct_return (value_of_variable (function, NULL),
-				   funcaddr,
-				   check_typedef (value_type),
-		BLOCK_GCC_COMPILED (SYMBOL_BLOCK_VALUE (function))));
+	  CHECK_TYPEDEF (value_type);
+	  gcc_compiled = BLOCK_GCC_COMPILED (SYMBOL_BLOCK_VALUE (function));
+	  struct_return = using_struct_return (value_type, gcc_compiled);
 
-      printf_filtered ("Value returned is $%d = ", record_latest_value (val));
-      value_print (val, gdb_stdout, 0, Val_no_prettyprint);
-      printf_filtered ("\n");
+	  print_return_value (struct_return, value_type); 
+	}
+
+      do_cleanups (old_chain);
     }
-  do_cleanups(old_chain);
 }
 
-/* ARGSUSED */
+
 static void
-program_info (args, from_tty)
-    char *args;
-    int from_tty;
+program_info (char *args, int from_tty)
 {
   bpstat bs = stop_bpstat;
   int num = bpstat_num (&bs);
-  
+
   if (!target_has_execution)
     {
       printf_filtered ("The program being debugged is not being run.\n");
@@ -768,17 +1310,20 @@ program_info (args, from_tty)
 
   target_files_info ();
   printf_filtered ("Program stopped at %s.\n",
-		   local_hex_string((unsigned long) stop_pc));
+		   local_hex_string ((unsigned long) stop_pc));
   if (stop_step)
     printf_filtered ("It stopped after being stepped.\n");
   else if (num != 0)
     {
       /* There may be several breakpoints in the same place, so this
-	 isn't as strange as it seems.  */
+         isn't as strange as it seems.  */
       while (num != 0)
 	{
 	  if (num < 0)
-	    printf_filtered ("It stopped at a breakpoint that has since been deleted.\n");
+	    {
+	      printf_filtered ("It stopped at a breakpoint that has ");
+	      printf_filtered ("since been deleted.\n");
+	    }
 	  else
 	    printf_filtered ("It stopped at breakpoint %d.\n", num);
 	  num = bpstat_num (&bs);
@@ -792,17 +1337,18 @@ program_info (args, from_tty)
     }
 
   if (!from_tty)
-    printf_filtered ("Type \"info stack\" or \"info registers\" for more information.\n");
+    {
+      printf_filtered ("Type \"info stack\" or \"info registers\" ");
+      printf_filtered ("for more information.\n");
+    }
 }
 
 static void
-environment_info (var, from_tty)
-     char *var;
-     int from_tty;
+environment_info (char *var, int from_tty)
 {
   if (var)
     {
-      register char *val = get_in_environ (inferior_environ, var);
+      char *val = get_in_environ (inferior_environ, var);
       if (val)
 	{
 	  puts_filtered (var);
@@ -819,7 +1365,7 @@ environment_info (var, from_tty)
     }
   else
     {
-      register char **vector = environ_vector (inferior_environ);
+      char **vector = environ_vector (inferior_environ);
       while (*vector)
 	{
 	  puts_filtered (*vector++);
@@ -829,11 +1375,9 @@ environment_info (var, from_tty)
 }
 
 static void
-set_environment_command (arg, from_tty)
-     char *arg;
-     int from_tty;
+set_environment_command (char *arg, int from_tty)
 {
-  register char *p, *val, *var;
+  char *p, *val, *var;
   int nullset = 0;
 
   if (arg == 0)
@@ -846,14 +1390,14 @@ set_environment_command (arg, from_tty)
   if (p != 0 && val != 0)
     {
       /* We have both a space and an equals.  If the space is before the
-	 equals, walk forward over the spaces til we see a nonspace 
-	 (possibly the equals). */
+         equals, walk forward over the spaces til we see a nonspace 
+         (possibly the equals). */
       if (p > val)
 	while (*val == ' ')
 	  val++;
 
       /* Now if the = is after the char following the spaces,
-	 take the char following the spaces.  */
+         take the char following the spaces.  */
       if (p > val)
 	p = val - 1;
     }
@@ -877,28 +1421,28 @@ set_environment_command (arg, from_tty)
 	val++;
     }
 
-  while (p != arg && (p[-1] == ' ' || p[-1] == '\t')) p--;
+  while (p != arg && (p[-1] == ' ' || p[-1] == '\t'))
+    p--;
 
   var = savestring (arg, p - arg);
   if (nullset)
     {
-      printf_filtered ("Setting environment variable \"%s\" to null value.\n", var);
+      printf_filtered ("Setting environment variable ");
+      printf_filtered ("\"%s\" to null value.\n", var);
       set_in_environ (inferior_environ, var, "");
     }
   else
     set_in_environ (inferior_environ, var, val);
-  free (var);
+  xfree (var);
 }
 
 static void
-unset_environment_command (var, from_tty)
-     char *var;
-     int from_tty;
+unset_environment_command (char *var, int from_tty)
 {
   if (var == 0)
     {
       /* If there is no argument, delete all environment variables.
-	 Ask for confirmation if reading from the terminal.  */
+         Ask for confirmation if reading from the terminal.  */
       if (!from_tty || query ("Delete all environment variables? "))
 	{
 	  free_environ (inferior_environ);
@@ -913,11 +1457,8 @@ unset_environment_command (var, from_tty)
 
 static const char path_var_name[] = "PATH";
 
-/* ARGSUSED */
 static void
-path_info (args, from_tty)
-     char *args;
-     int from_tty;
+path_info (char *args, int from_tty)
 {
   puts_filtered ("Executable and object file path: ");
   puts_filtered (get_in_environ (inferior_environ, path_var_name));
@@ -927,9 +1468,7 @@ path_info (args, from_tty)
 /* Add zero or more directories to the front of the execution path.  */
 
 static void
-path_command (dirname, from_tty)
-     char *dirname;
-     int from_tty;
+path_command (char *dirname, int from_tty)
 {
   char *exec_path;
   char *env;
@@ -938,198 +1477,289 @@ path_command (dirname, from_tty)
   /* Can be null if path is not set */
   if (!env)
     env = "";
-  exec_path = strsave (env);
+  exec_path = xstrdup (env);
   mod_path (dirname, &exec_path);
   set_in_environ (inferior_environ, path_var_name, exec_path);
-  free (exec_path);
+  xfree (exec_path);
   if (from_tty)
-    path_info ((char *)NULL, from_tty);
+    path_info ((char *) NULL, from_tty);
 }
 
-/* The array of register names.  */
 
-char *reg_names[] = REGISTER_NAMES;
-
-/* Print out the machine register regnum. If regnum is -1,
-   print all registers (fpregs == 1) or all non-float registers
-   (fpregs == 0).
+/* Print out the machine register regnum. If regnum is -1, print all
+   registers (print_all == 1) or all non-float and non-vector
+   registers (print_all == 0).
 
    For most machines, having all_registers_info() print the
-   register(s) one per line is good enough. If a different format
-   is required, (eg, for MIPS or Pyramid 90x, which both have
-   lots of regs), or there is an existing convention for showing
-   all the registers, define the macro DO_REGISTERS_INFO(regnum, fp)
-   to provide that format.  */  
+   register(s) one per line is good enough.  If a different format is
+   required, (eg, for MIPS or Pyramid 90x, which both have lots of
+   regs), or there is an existing convention for showing all the
+   registers, define the architecture method PRINT_REGISTERS_INFO to
+   provide that format.  */
 
-#if !defined (DO_REGISTERS_INFO)
-
-#define DO_REGISTERS_INFO(regnum, fp) do_registers_info(regnum, fp)
-
-static void
-do_registers_info (regnum, fpregs)
-     int regnum;
-     int fpregs;
+void
+default_print_registers_info (struct gdbarch *gdbarch,
+			      struct ui_file *file,
+			      struct frame_info *frame,
+			      int regnum, int print_all)
 {
-  register int i;
-  int numregs = ARCH_NUM_REGS;
+  int i;
+  const int numregs = NUM_REGS + NUM_PSEUDO_REGS;
+  char raw_buffer[MAX_REGISTER_SIZE];
+  char virtual_buffer[MAX_REGISTER_SIZE];
+
+  if (DEPRECATED_DO_REGISTERS_INFO_P ())
+    {
+      DEPRECATED_DO_REGISTERS_INFO (regnum, print_all);
+      return;
+    }
 
   for (i = 0; i < numregs; i++)
     {
-      char raw_buffer[MAX_REGISTER_RAW_SIZE];
-      char virtual_buffer[MAX_REGISTER_VIRTUAL_SIZE];
-
-      /* Decide between printing all regs, nonfloat regs, or specific reg.  */
-      if (regnum == -1) {
-	if (TYPE_CODE (REGISTER_VIRTUAL_TYPE (i)) == TYPE_CODE_FLT && !fpregs)
-	  continue;
-      } else {
-        if (i != regnum)
-	  continue;
-      }
+      /* Decide between printing all regs, non-float / vector regs, or
+         specific reg.  */
+      if (regnum == -1)
+	{
+	  if (print_all)
+	    {
+	      if (!gdbarch_register_reggroup_p (gdbarch, i, all_reggroup))
+		continue;
+	    }
+	  else
+	    {
+	      if (!gdbarch_register_reggroup_p (gdbarch, i, general_reggroup))
+		continue;
+	    }
+	}
+      else
+	{
+	  if (i != regnum)
+	    continue;
+	}
 
       /* If the register name is empty, it is undefined for this
-	 processor, so don't display anything.  */
-      if (reg_names[i] == NULL || *(reg_names[i]) == '\0')
+         processor, so don't display anything.  */
+      if (REGISTER_NAME (i) == NULL || *(REGISTER_NAME (i)) == '\0')
 	continue;
 
-      fputs_filtered (reg_names[i], gdb_stdout);
-      print_spaces_filtered (15 - strlen (reg_names[i]), gdb_stdout);
+      fputs_filtered (REGISTER_NAME (i), file);
+      print_spaces_filtered (15 - strlen (REGISTER_NAME (i)), file);
 
       /* Get the data in raw format.  */
-      if (read_relative_register_raw_bytes (i, raw_buffer))
+      if (! frame_register_read (frame, i, raw_buffer))
 	{
-	  printf_filtered ("Invalid register contents\n");
+	  fprintf_filtered (file, "*value not available*\n");
 	  continue;
 	}
 
+      /* FIXME: cagney/2002-08-03: This code shouldn't be necessary.
+         The function frame_register_read() should have returned the
+         pre-cooked register so no conversion is necessary.  */
       /* Convert raw data to virtual format if necessary.  */
-#ifdef REGISTER_CONVERTIBLE
-      if (REGISTER_CONVERTIBLE (i))
+      if (DEPRECATED_REGISTER_CONVERTIBLE_P ()
+	  && DEPRECATED_REGISTER_CONVERTIBLE (i))
 	{
-	  REGISTER_CONVERT_TO_VIRTUAL (i, REGISTER_VIRTUAL_TYPE (i),
+	  DEPRECATED_REGISTER_CONVERT_TO_VIRTUAL (i, register_type (current_gdbarch, i),
 				       raw_buffer, virtual_buffer);
 	}
       else
-#endif
-	memcpy (virtual_buffer, raw_buffer,
-		REGISTER_VIRTUAL_SIZE (i));
-
-      /* If virtual format is floating, print it that way, and in raw hex.  */
-      if (TYPE_CODE (REGISTER_VIRTUAL_TYPE (i)) == TYPE_CODE_FLT)
 	{
-	  register int j;
+	  memcpy (virtual_buffer, raw_buffer,
+		  DEPRECATED_REGISTER_VIRTUAL_SIZE (i));
+	}
 
-#ifdef INVALID_FLOAT
-	  if (INVALID_FLOAT (virtual_buffer, REGISTER_VIRTUAL_SIZE (i)))
-	    printf_filtered ("<invalid float>");
-	  else
-#endif
-	    val_print (REGISTER_VIRTUAL_TYPE (i), virtual_buffer, 0,
-		       gdb_stdout, 0, 1, 0, Val_pretty_default);
+      /* If virtual format is floating, print it that way, and in raw
+         hex.  */
+      if (TYPE_CODE (register_type (current_gdbarch, i)) == TYPE_CODE_FLT)
+	{
+	  int j;
 
-	  printf_filtered ("\t(raw 0x");
-	  for (j = 0; j < REGISTER_RAW_SIZE (i); j++)
+	  val_print (register_type (current_gdbarch, i), virtual_buffer, 0, 0,
+		     file, 0, 1, 0, Val_pretty_default);
+
+	  fprintf_filtered (file, "\t(raw 0x");
+	  for (j = 0; j < DEPRECATED_REGISTER_RAW_SIZE (i); j++)
 	    {
-	      register int idx = TARGET_BYTE_ORDER == BIG_ENDIAN ? j
-		: REGISTER_RAW_SIZE (i) - 1 - j;
-	      printf_filtered ("%02x", (unsigned char)raw_buffer[idx]);
+	      int idx;
+	      if (TARGET_BYTE_ORDER == BFD_ENDIAN_BIG)
+		idx = j;
+	      else
+		idx = DEPRECATED_REGISTER_RAW_SIZE (i) - 1 - j;
+	      fprintf_filtered (file, "%02x", (unsigned char) raw_buffer[idx]);
 	    }
-	  printf_filtered (")");
+	  fprintf_filtered (file, ")");
 	}
-
-/* FIXME!  val_print probably can handle all of these cases now...  */
-
-      /* Else if virtual format is too long for printf,
-	 print in hex a byte at a time.  */
-      else if (REGISTER_VIRTUAL_SIZE (i) > (int) sizeof (long))
-	{
-	  register int j;
-	  printf_filtered ("0x");
-	  for (j = 0; j < REGISTER_VIRTUAL_SIZE (i); j++)
-	    printf_filtered ("%02x", (unsigned char)virtual_buffer[j]);
-	}
-      /* Else print as integer in hex and in decimal.  */
       else
 	{
-	  val_print (REGISTER_VIRTUAL_TYPE (i), raw_buffer, 0,
-		     gdb_stdout, 'x', 1, 0, Val_pretty_default);
-	  printf_filtered ("\t");
-	  val_print (REGISTER_VIRTUAL_TYPE (i), raw_buffer, 0,
-		     gdb_stdout,   0, 1, 0, Val_pretty_default);
+	  /* Print the register in hex.  */
+	  val_print (register_type (current_gdbarch, i), virtual_buffer, 0, 0,
+		     file, 'x', 1, 0, Val_pretty_default);
+          /* If not a vector register, print it also according to its
+             natural format.  */
+	  if (TYPE_VECTOR (register_type (current_gdbarch, i)) == 0)
+	    {
+	      fprintf_filtered (file, "\t");
+	      val_print (register_type (current_gdbarch, i), virtual_buffer, 0, 0,
+			 file, 0, 1, 0, Val_pretty_default);
+	    }
 	}
 
-      /* The SPARC wants to print even-numbered float regs as doubles
-	 in addition to printing them as floats.  */
-#ifdef PRINT_REGISTER_HOOK
-      PRINT_REGISTER_HOOK (i);
-#endif
-
-      printf_filtered ("\n");
+      fprintf_filtered (file, "\n");
     }
 }
-#endif /* no DO_REGISTERS_INFO.  */
 
-static void
-registers_info (addr_exp, fpregs)
-     char *addr_exp;
-     int fpregs;
+void
+registers_info (char *addr_exp, int fpregs)
 {
   int regnum, numregs;
-  register char *end;
+  char *end;
 
   if (!target_has_registers)
     error ("The program has no registers now.");
-  if (selected_frame == NULL)
+  if (deprecated_selected_frame == NULL)
     error ("No selected frame.");
 
   if (!addr_exp)
     {
-      DO_REGISTERS_INFO(-1, fpregs);
+      gdbarch_print_registers_info (current_gdbarch, gdb_stdout,
+				    deprecated_selected_frame, -1, fpregs);
       return;
     }
 
-  do
-    {      
+  while (*addr_exp != '\0')
+    {
+      char *start;
+      const char *end;
+
+      /* Keep skipping leading white space.  */
+      if (isspace ((*addr_exp)))
+	{
+	  addr_exp++;
+	  continue;
+	}
+
+      /* Discard any leading ``$''.  Check that there is something
+         resembling a register following it.  */
       if (addr_exp[0] == '$')
 	addr_exp++;
+      if (isspace ((*addr_exp)) || (*addr_exp) == '\0')
+	error ("Missing register name");
+
+      /* Find the start/end of this register name/num/group.  */
+      start = addr_exp;
+      while ((*addr_exp) != '\0' && !isspace ((*addr_exp)))
+	addr_exp++;
       end = addr_exp;
-      while (*end != '\0' && *end != ' ' && *end != '\t')
-	++end;
-      numregs = ARCH_NUM_REGS;
-      for (regnum = 0; regnum < numregs; regnum++)
-	if (!strncmp (addr_exp, reg_names[regnum], end - addr_exp)
-	    && strlen (reg_names[regnum]) == end - addr_exp)
-	  goto found;
-      if (*addr_exp >= '0' && *addr_exp <= '9')
-	regnum = atoi (addr_exp);		/* Take a number */
-      if (regnum >= numregs)		/* Bad name, or bad number */
-	error ("%.*s: invalid register", end - addr_exp, addr_exp);
+      
+      /* Figure out what we've found and display it.  */
 
-found:
-      DO_REGISTERS_INFO(regnum, fpregs);
+      /* A register name?  */
+      {
+	int regnum = frame_map_name_to_regnum (deprecated_selected_frame,
+					       start, end - start);
+	if (regnum >= 0)
+	  {
+	    gdbarch_print_registers_info (current_gdbarch, gdb_stdout,
+					  deprecated_selected_frame, regnum, fpregs);
+	    continue;
+	  }
+      }
+	
+      /* A register number?  (how portable is this one?).  */
+      {
+	char *endptr;
+	int regnum = strtol (start, &endptr, 0);
+	if (endptr == end
+	    && regnum >= 0
+	    && regnum < NUM_REGS + NUM_PSEUDO_REGS)
+	  {
+	    gdbarch_print_registers_info (current_gdbarch, gdb_stdout,
+					  deprecated_selected_frame, regnum, fpregs);
+	    continue;
+	  }
+      }
 
-      addr_exp = end;
-      while (*addr_exp == ' ' || *addr_exp == '\t')
-	++addr_exp;
-    } while (*addr_exp != '\0');
+      /* A register group?  */
+      {
+	struct reggroup *group;
+	for (group = reggroup_next (current_gdbarch, NULL);
+	     group != NULL;
+	     group = reggroup_next (current_gdbarch, group))
+	  {
+	    /* Don't bother with a length check.  Should the user
+	       enter a short register group name, go with the first
+	       group that matches.  */
+	    if (strncmp (start, reggroup_name (group), end - start) == 0)
+	      break;
+	  }
+	if (group != NULL)
+	  {
+	    int regnum;
+	    for (regnum = 0; regnum < NUM_REGS + NUM_PSEUDO_REGS; regnum++)
+	      {
+		if (gdbarch_register_reggroup_p (current_gdbarch, regnum,
+						 group))
+		  gdbarch_print_registers_info (current_gdbarch,
+						gdb_stdout, deprecated_selected_frame,
+						regnum, fpregs);
+	      }
+	    continue;
+	  }
+      }
+
+      /* Nothing matched.  */
+      error ("Invalid register `%.*s'", (int) (end - start), start);
+    }
 }
 
-static void
-all_registers_info (addr_exp, from_tty)
-     char *addr_exp;
-     int from_tty;
+void
+all_registers_info (char *addr_exp, int from_tty)
 {
   registers_info (addr_exp, 1);
 }
 
 static void
-nofp_registers_info (addr_exp, from_tty)
-     char *addr_exp;
-     int from_tty;
+nofp_registers_info (char *addr_exp, int from_tty)
 {
   registers_info (addr_exp, 0);
 }
+
+static void
+print_vector_info (struct gdbarch *gdbarch, struct ui_file *file,
+		   struct frame_info *frame, const char *args)
+{
+  if (!target_has_registers)
+    error ("The program has no registers now.");
+  if (deprecated_selected_frame == NULL)
+    error ("No selected frame.");
+
+  if (gdbarch_print_vector_info_p (gdbarch))
+    gdbarch_print_vector_info (gdbarch, file, frame, args);
+  else
+    {
+      int regnum;
+      int printed_something = 0;
+
+      for (regnum = 0; regnum < NUM_REGS + NUM_PSEUDO_REGS; regnum++)
+	{
+	  if (gdbarch_register_reggroup_p (gdbarch, regnum, vector_reggroup))
+	    {
+	      printed_something = 1;
+	      gdbarch_print_registers_info (gdbarch, file, frame, regnum, 1);
+	    }
+	}
+      if (!printed_something)
+	fprintf_filtered (file, "No vector information\n");
+    }
+}
+
+static void
+vector_info (char *args, int from_tty)
+{
+  print_vector_info (current_gdbarch, gdb_stdout, deprecated_selected_frame, args);
+}
 
+
 /*
  * TODO:
  * Should save/restore the tty state since it might be that the
@@ -1147,15 +1777,12 @@ nofp_registers_info (addr_exp, from_tty)
    and wait for the trace-trap that results from attaching.  */
 
 void
-attach_command (args, from_tty)
-     char *args;
-     int from_tty;
+attach_command (char *args, int from_tty)
 {
-#ifdef SOLIB_ADD
-  extern int auto_solib_add;
-#endif
+  char *exec_file;
+  char *full_exec_path = NULL;
 
-  dont_repeat ();			/* Not for the faint of heart */
+  dont_repeat ();		/* Not for the faint of heart */
 
   if (target_has_execution)
     {
@@ -1178,24 +1805,59 @@ attach_command (args, from_tty)
      wait_for_inferior as soon as the target reports a stop.  */
   init_wait_for_inferior ();
   clear_proceed_status ();
-  stop_soon_quietly = 1;
 
   /* No traps are generated when attaching to inferior under Mach 3
      or GNU hurd.  */
 #ifndef ATTACH_NO_WAIT
+  /* Careful here. See comments in inferior.h.  Basically some OSes
+     don't ignore SIGSTOPs on continue requests anymore.  We need a
+     way for handle_inferior_event to reset the stop_signal variable
+     after an attach, and this is what STOP_QUIETLY_NO_SIGSTOP is for.  */
+  stop_soon = STOP_QUIETLY_NO_SIGSTOP;
   wait_for_inferior ();
+  stop_soon = NO_STOP_QUIETLY;
 #endif
+
+  /*
+   * If no exec file is yet known, try to determine it from the
+   * process itself.
+   */
+  exec_file = (char *) get_exec_file (0);
+  if (!exec_file)
+    {
+      exec_file = target_pid_to_exec_file (PIDGET (inferior_ptid));
+      if (exec_file)
+	{
+	  /* It's possible we don't have a full path, but rather just a
+	     filename.  Some targets, such as HP-UX, don't provide the
+	     full path, sigh.
+
+	     Attempt to qualify the filename against the source path.
+	     (If that fails, we'll just fall back on the original
+	     filename.  Not much more we can do...)
+	   */
+	  if (!source_full_path_of (exec_file, &full_exec_path))
+	    full_exec_path = savestring (exec_file, strlen (exec_file));
+
+	  exec_file_attach (full_exec_path, from_tty);
+	  symbol_file_add_main (full_exec_path, from_tty);
+	}
+    }
 
 #ifdef SOLIB_ADD
-  if (auto_solib_add)
-    {
-      /* Add shared library symbols from the newly attached process, if any.  */
-      SOLIB_ADD ((char *)0, from_tty, (struct target_ops *)0);
-      re_enable_breakpoints_in_shlibs ();
-    }
+  /* Add shared library symbols from the newly attached process, if any.  */
+  SOLIB_ADD ((char *) 0, from_tty, &current_target, auto_solib_add);
+  re_enable_breakpoints_in_shlibs ();
 #endif
 
+  /* Take any necessary post-attaching actions for this platform.
+   */
+  target_post_attach (PIDGET (inferior_ptid));
+
   normal_stop ();
+
+  if (attach_hook)
+    attach_hook ();
 }
 
 /*
@@ -1210,52 +1872,111 @@ attach_command (args, from_tty)
  */
 
 static void
-detach_command (args, from_tty)
-     char *args;
-     int from_tty;
+detach_command (char *args, int from_tty)
 {
-  dont_repeat ();			/* Not for the faint of heart */
+  dont_repeat ();		/* Not for the faint of heart */
   target_detach (args, from_tty);
+#if defined(SOLIB_RESTART)
+  SOLIB_RESTART ();
+#endif
+  if (detach_hook)
+    detach_hook ();
 }
 
-/* ARGSUSED */
+/* Disconnect from the current target without resuming it (leaving it
+   waiting for a debugger).
+
+   We'd better not have left any breakpoints in the program or the
+   next debugger will get confused.  Currently only supported for some
+   remote targets, since the normal attach mechanisms don't work on
+   stopped processes on some native platforms (e.g. GNU/Linux).  */
+
 static void
-float_info (addr_exp, from_tty)
-     char *addr_exp;
-     int from_tty;
+disconnect_command (char *args, int from_tty)
 {
-#ifdef FLOAT_INFO
-	FLOAT_INFO;
-#else
-	printf_filtered ("No floating point info available for this processor.\n");
+  dont_repeat ();		/* Not for the faint of heart */
+  target_disconnect (args, from_tty);
+#if defined(SOLIB_RESTART)
+  SOLIB_RESTART ();
 #endif
+  if (detach_hook)
+    detach_hook ();
+}
+
+/* Stop the execution of the target while running in async mode, in
+   the backgound. */
+void
+interrupt_target_command (char *args, int from_tty)
+{
+  if (event_loop_p && target_can_async_p ())
+    {
+      dont_repeat ();		/* Not for the faint of heart */
+      target_stop ();
+    }
+}
+
+static void
+print_float_info (struct gdbarch *gdbarch, struct ui_file *file,
+		  struct frame_info *frame, const char *args)
+{
+  if (!target_has_registers)
+    error ("The program has no registers now.");
+  if (deprecated_selected_frame == NULL)
+    error ("No selected frame.");
+
+  if (gdbarch_print_float_info_p (gdbarch))
+    gdbarch_print_float_info (gdbarch, file, frame, args);
+  else
+    {
+      int regnum;
+      int printed_something = 0;
+
+      for (regnum = 0; regnum < NUM_REGS + NUM_PSEUDO_REGS; regnum++)
+	{
+	  if (gdbarch_register_reggroup_p (gdbarch, regnum, float_reggroup))
+	    {
+	      printed_something = 1;
+	      gdbarch_print_registers_info (gdbarch, file, frame, regnum, 1);
+	    }
+	}
+      if (!printed_something)
+	fprintf_filtered (file, "\
+No floating-point info available for this processor.\n");
+    }
+}
+
+static void
+float_info (char *args, int from_tty)
+{
+  print_float_info (current_gdbarch, gdb_stdout, deprecated_selected_frame, args);
 }
 
-/* ARGSUSED */
 static void
-unset_command (args, from_tty)
-     char *args;
-     int from_tty;
+unset_command (char *args, int from_tty)
 {
-  printf_filtered ("\"unset\" must be followed by the name of an unset subcommand.\n");
+  printf_filtered ("\"unset\" must be followed by the name of ");
+  printf_filtered ("an unset subcommand.\n");
   help_list (unsetlist, "unset ", -1, gdb_stdout);
 }
 
 void
-_initialize_infcmd ()
+_initialize_infcmd (void)
 {
   struct cmd_list_element *c;
-  
-  add_com ("tty", class_run, tty_command,
-	   "Set terminal for future runs of program being debugged.");
 
-  add_show_from_set
-    (add_set_cmd ("args", class_run, var_string_noescape, (char *)&inferior_args,
-		  
-"Set arguments to give program being debugged when it is started.\n\
+  c = add_com ("tty", class_run, tty_command,
+	       "Set terminal for future runs of program being debugged.");
+  set_cmd_completer (c, filename_completer);
+
+  c = add_set_cmd ("args", class_run, var_string_noescape,
+		   (char *) &inferior_args,
+		   "Set argument list to give program being debugged when it is started.\n\
 Follow this command with any number of args, to be passed to the program.",
-		  &setlist),
-     &showlist);
+		   &setlist);
+  set_cmd_completer (c, filename_completer);
+  set_cmd_sfunc (c, notice_args_set);
+  c = add_show_from_set (c, &showlist);
+  set_cmd_sfunc (c, notice_args_read);
 
   c = add_cmd
     ("environment", no_class, environment_info,
@@ -1263,55 +1984,65 @@ Follow this command with any number of args, to be passed to the program.",
 With an argument VAR, prints the value of environment variable VAR to\n\
 give the program being debugged.  With no arguments, prints the entire\n\
 environment to be given to the program.", &showlist);
-  c->completer = noop_completer;
+  set_cmd_completer (c, noop_completer);
 
   add_prefix_cmd ("unset", no_class, unset_command,
-		  "Complement to certain \"set\" commands",
+		  "Complement to certain \"set\" commands.",
 		  &unsetlist, "unset ", 0, &cmdlist);
-  
+
   c = add_cmd ("environment", class_run, unset_environment_command,
-	      "Cancel environment variable VAR for the program.\n\
+	       "Cancel environment variable VAR for the program.\n\
 This does not affect the program until the next \"run\" command.",
-	   &unsetlist);
-  c->completer = noop_completer;
+	       &unsetlist);
+  set_cmd_completer (c, noop_completer);
 
   c = add_cmd ("environment", class_run, set_environment_command,
 	       "Set environment variable value to give the program.\n\
 Arguments are VAR VALUE where VAR is variable name and VALUE is value.\n\
 VALUES of environment variables are uninterpreted strings.\n\
 This does not affect the program until the next \"run\" command.",
-	   &setlist);
-  c->completer = noop_completer;
- 
-  add_com ("path", class_files, path_command,
-       "Add directory DIR(s) to beginning of search path for object files.\n\
+	       &setlist);
+  set_cmd_completer (c, noop_completer);
+
+  c = add_com ("path", class_files, path_command,
+	       "Add directory DIR(s) to beginning of search path for object files.\n\
 $cwd in the path means the current working directory.\n\
 This path is equivalent to the $PATH shell variable.  It is a list of\n\
 directories, separated by colons.  These directories are searched to find\n\
 fully linked executable files and separately compiled object files as needed.");
+  set_cmd_completer (c, filename_completer);
 
   c = add_cmd ("paths", no_class, path_info,
-	    "Current search path for finding object files.\n\
+	       "Current search path for finding object files.\n\
 $cwd in the path means the current working directory.\n\
 This path is equivalent to the $PATH shell variable.  It is a list of\n\
 directories, separated by colons.  These directories are searched to find\n\
-fully linked executable files and separately compiled object files as needed.", &showlist);
-  c->completer = noop_completer;
+fully linked executable files and separately compiled object files as needed.",
+	       &showlist);
+  set_cmd_completer (c, noop_completer);
 
- add_com ("attach", class_run, attach_command,
- 	   "Attach to a process or file outside of GDB.\n\
+  add_com ("attach", class_run, attach_command,
+	   "Attach to a process or file outside of GDB.\n\
 This command attaches to another target, of the same type as your last\n\
-`target' command (`info files' will show your target stack).\n\
+\"target\" command (\"info files\" will show your target stack).\n\
 The command may take as argument a process id or a device file.\n\
 For a process id, you must have permission to send the process a signal,\n\
 and it must have the same effective uid as the debugger.\n\
-When using \"attach\", you should use the \"file\" command to specify\n\
-the program running in the process, and to load its symbol table.");
+When using \"attach\" with a process id, the debugger finds the\n\
+program running in the process, looking first in the current working\n\
+directory, or (if not found there) using the source file search path\n\
+(see the \"directory\" command).  You can also use the \"file\" command\n\
+to specify the program, and to load its symbol table.");
 
   add_com ("detach", class_run, detach_command,
 	   "Detach a process or file previously attached.\n\
-If a process, it is no longer traced, and it continues its execution.  If you\n\
-were debugging a file, the file is closed and gdb no longer accesses it.");
+If a process, it is no longer traced, and it continues its execution.  If\n\
+you were debugging a file, the file is closed and gdb no longer accesses it.");
+
+  add_com ("disconnect", class_run, disconnect_command,
+	   "Disconnect from a target.\n\
+The target will wait for another debugger to connect.  Not available for\n\
+all targets.");
 
   add_com ("signal", class_run, signal_command,
 	   "Continue program giving it signal specified by the argument.\n\
@@ -1337,22 +2068,45 @@ Like the \"step\" command as long as subroutine calls do not happen;\n\
 when they do, the call is treated as one instruction.\n\
 Argument N means do this N times (or till program stops for another reason).");
   add_com_alias ("n", "next", class_run, 1);
+  if (xdb_commands)
+    add_com_alias ("S", "next", class_run, 1);
 
   add_com ("step", class_run, step_command,
 	   "Step program until it reaches a different source line.\n\
 Argument N means do this N times (or till program stops for another reason).");
   add_com_alias ("s", "step", class_run, 1);
 
-  add_com ("until", class_run, until_command,
-	   "Execute until the program reaches a source line greater than the current\n\
-or a specified line or address or function (same args as break command).\n\
-Execution will also stop upon exit from the current stack frame.");
+  c = add_com ("until", class_run, until_command,
+	       "Execute until the program reaches a source line greater than the current\n\
+or a specified location (same args as break command) within the current frame.");
+  set_cmd_completer (c, location_completer);
   add_com_alias ("u", "until", class_run, 1);
-  
-  add_com ("jump", class_run, jump_command,
-	   "Continue program being debugged at specified line or address.\n\
+
+  c = add_com ("advance", class_run, advance_command,
+	       "Continue the program up to the given location (same form as args for break command).\n\
+Execution will also stop upon exit from the current stack frame.");
+  set_cmd_completer (c, location_completer);
+
+  c = add_com ("jump", class_run, jump_command,
+	       "Continue program being debugged at specified line or address.\n\
 Give as argument either LINENUM or *ADDR, where ADDR is an expression\n\
 for an address to start at.");
+  set_cmd_completer (c, location_completer);
+
+  if (xdb_commands)
+    {
+      c = add_com ("go", class_run, go_command,
+		   "Usage: go <location>\n\
+Continue program being debugged, stopping at specified line or \n\
+address.\n\
+Give as argument either LINENUM or *ADDR, where ADDR is an \n\
+expression for an address to start at.\n\
+This command is a combination of tbreak and jump.");
+      set_cmd_completer (c, location_completer);
+    }
+
+  if (xdb_commands)
+    add_com_alias ("g", "go", class_run, 1);
 
   add_com ("continue", class_run, continue_command,
 	   "Continue program being debugged, after signal or breakpoint.\n\
@@ -1362,21 +2116,33 @@ the breakpoint won't break until the Nth time it is reached).");
   add_com_alias ("c", "cont", class_run, 1);
   add_com_alias ("fg", "cont", class_run, 1);
 
-  add_com ("run", class_run, run_command,
+  c = add_com ("run", class_run, run_command,
 	   "Start debugged program.  You may specify arguments to give it.\n\
 Args may include \"*\", or \"[...]\"; they are expanded using \"sh\".\n\
 Input and output redirection with \">\", \"<\", or \">>\" are also allowed.\n\n\
 With no arguments, uses arguments last specified (with \"run\" or \"set args\").\n\
 To cancel previous arguments and run with no arguments,\n\
 use \"set args\" without arguments.");
+  set_cmd_completer (c, filename_completer);
   add_com_alias ("r", "run", class_run, 1);
+  if (xdb_commands)
+    add_com ("R", class_run, run_no_args_command,
+	     "Start debugged program with no arguments.");
+
+  add_com ("interrupt", class_run, interrupt_target_command,
+	   "Interrupt the execution of the debugged program.");
 
   add_info ("registers", nofp_registers_info,
-    "List of integer registers and their contents, for selected stack frame.\n\
+	    "List of integer registers and their contents, for selected stack frame.\n\
 Register name as argument means describe only that register.");
+  add_info_alias ("r", "registers", 1);
 
+  if (xdb_commands)
+    add_com ("lr", class_info, nofp_registers_info,
+	     "List of integer registers and their contents, for selected stack frame.\n\
+  Register name as argument means describe only that register.");
   add_info ("all-registers", all_registers_info,
-"List of all registers and their contents, for selected stack frame.\n\
+	    "List of all registers and their contents, for selected stack frame.\n\
 Register name as argument means describe only that register.");
 
   add_info ("program", program_info,
@@ -1385,7 +2151,9 @@ Register name as argument means describe only that register.");
   add_info ("float", float_info,
 	    "Print the status of the floating point unit\n");
 
-  inferior_args = savestring ("", 1);	/* Initially no args */
+  add_info ("vector", vector_info,
+	    "Print the status of the vector unit\n");
+
   inferior_environ = make_environ ();
   init_environ (inferior_environ);
 }

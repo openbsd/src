@@ -71,8 +71,12 @@ char carray[] = {'a', 'n', ' ', 'a', 'r', 'r', 'a', 'y', '\0'};
 /* Test various permutations and interleaving of integral arguments */
 
 
+#ifdef PROTOTYPES
+void call0a (char c, short s, int i, long l)
+#else
 call0a (c, s, i, l)
 char c; short s; int i; long l;
+#endif
 {
   c = 'a';
   s = 5;
@@ -80,26 +84,42 @@ char c; short s; int i; long l;
   l = 7;
 }
 
+#ifdef PROTOTYPES
+void call0b (short s, int i, long l, char c)
+#else
 call0b (s, i, l, c)
 short s; int i; long l; char c;
+#endif
 {
   s = 6; i = 7; l = 8; c = 'j';
 }
 
+#ifdef PROTOTYPES
+void call0c (int i, long l, char c, short s)
+#else
 call0c (i, l, c, s)
 int i; long l; char c; short s;
+#endif
 {
   i = 3; l = 4; c = 'k'; s = 5;
 }
 
+#ifdef PROTOTYPES
+void call0d (long l, char c, short s, int i)
+#else
 call0d (l, c, s, i)
 long l; char c; short s; int i;
+#endif
 {
   l = 7; c = 'z'; s = 8; i = 9;
 }
 
+#ifdef PROTOTYPES
+void call0e (char c1, long l, char c2, int i, char c3, short s, char c4, char c5)
+#else
 call0e (c1, l, c2, i, c3, s, c4, c5)
 char c1; long l; char c2; int i; char c3; short s; char c4; char c5;
+#endif
 {
   c1 = 'a'; l = 5; c2 = 'b'; i = 7; c3 = 'c'; s = 7; c4 = 'f'; c5 = 'g';
 }
@@ -108,33 +128,53 @@ char c1; long l; char c2; int i; char c3; short s; char c4; char c5;
 /* Test various permutations and interleaving of unsigned integral arguments */
 
 
+#ifdef PROTOTYPES
+void call1a (unsigned char uc, unsigned short us, unsigned int ui, unsigned long ul)
+#else
 call1a (uc, us, ui, ul)
 unsigned char uc; unsigned short us; unsigned int ui; unsigned long ul;
+#endif
 {
   uc = 5; us = 6; ui = 7; ul = 8;
 }
 
+#ifdef PROTOTYPES
+void call1b (unsigned short us, unsigned int ui, unsigned long ul, unsigned char uc)
+#else
 call1b (us, ui, ul, uc)
 unsigned short us; unsigned int ui; unsigned long ul; unsigned char uc;
+#endif
 {
   uc = 5; us = 6; ui = 7; ul = 8;
 }
 
+#ifdef PROTOTYPES
+void call1c (unsigned int ui, unsigned long ul, unsigned char uc, unsigned short us)
+#else
 call1c (ui, ul, uc, us)
 unsigned int ui; unsigned long ul; unsigned char uc; unsigned short us;
+#endif
 {
   uc = 5; us = 6; ui = 7; ul = 8;
 }
 
+#ifdef PROTOTYPES
+void call1d (unsigned long ul, unsigned char uc, unsigned short us, unsigned int ui)
+#else
 call1d (ul, uc, us, ui)
 unsigned long ul; unsigned char uc; unsigned short us; unsigned int ui;
+#endif
 {
   uc = 5; us = 6; ui = 7; ul = 8;
 }
 
+#ifdef PROTOTYPES
+void call1e (unsigned char uc1, unsigned long ul, unsigned char uc2, unsigned int ui, unsigned char uc3, unsigned short us, unsigned char uc4, unsigned char uc5)
+#else
 call1e (uc1, ul, uc2, ui, uc3, us, uc4, uc5)
 unsigned char uc1; unsigned long ul; unsigned char uc2; unsigned int ui;
 unsigned char uc3; unsigned short us; unsigned char uc4; unsigned char uc5;
+#endif
 {
   uc1 = 5; ul = 7; uc2 = 8; ui = 9; uc3 = 10; us = 11; uc4 = 12; uc5 = 55;
 }
@@ -143,57 +183,93 @@ unsigned char uc3; unsigned short us; unsigned char uc4; unsigned char uc5;
    floating point arguments. */
 
 
+#ifdef PROTOTYPES
+void call2a (char c, float f1, short s, double d1, int i, float f2, long l, double d2)
+#else
 call2a (c, f1, s, d1, i, f2, l, d2)
 char c; float f1; short s; double d1; int i; float f2; long l; double d2;
+#endif
 {
   c = 'a'; f1 = 0.0; s = 5; d1 = 0.0; i = 6; f2 = 0.1; l = 7; d2 = 0.2;
 }
 
+#ifdef PROTOTYPES
+void call2b (float f1, short s, double d1, int i, float f2, long l, double d2, char c)
+#else
 call2b (f1, s, d1, i, f2, l, d2, c)
 float f1; short s; double d1; int i; float f2; long l; double d2; char c;
+#endif
 {
   c = 'a'; f1 = 0.0; s = 5; d1 = 0.0; i = 6; f2 = 0.1; l = 7; d2 = 0.2;
 }
 
+#ifdef PROTOTYPES
+void call2c (short s, double d1, int i, float f2, long l, double d2, char c, float f1)
+#else
 call2c (s, d1, i, f2, l, d2, c, f1)
 short s; double d1; int i; float f2; long l; double d2; char c; float f1;
+#endif
 {
   c = 'a'; f1 = 0.0; s = 5; d1 = 0.0; i = 6; f2 = 0.1; l = 7; d2 = 0.2;
 }
 
+#ifdef PROTOTYPES
+void call2d (double d1, int i, float f2, long l, double d2, char c, float f1, short s)
+#else
 call2d (d1, i, f2, l, d2, c, f1, s)
 double d1; int i; float f2; long l; double d2; char c; float f1; short s;
+#endif
 {
   c = 'a'; f1 = 0.0; s = 5; d1 = 0.0; i = 6; f2 = 0.1; l = 7; d2 = 0.2;
 }
 
+#ifdef PROTOTYPES
+void call2e (int i, float f2, long l, double d2, char c, float f1, short s, double d1)
+#else
 call2e (i, f2, l, d2, c, f1, s, d1)
 int i; float f2; long l; double d2; char c; float f1; short s; double d1;
+#endif
 {
   c = 'a'; f1 = 0.0; s = 5; d1 = 0.0; i = 6; f2 = 0.1; l = 7; d2 = 0.2;
 }
 
+#ifdef PROTOTYPES
+void call2f (float f2, long l, double d2, char c, float f1, short s, double d1, int i)
+#else
 call2f (f2, l, d2, c, f1, s, d1, i)
 float f2; long l; double d2; char c; float f1; short s; double d1; int i;
+#endif
 {
   c = 'a'; f1 = 0.0; s = 5; d1 = 0.0; i = 6; f2 = 0.1; l = 7; d2 = 0.2;
 }
 
+#ifdef PROTOTYPES
+void call2g (long l, double d2, char c, float f1, short s, double d1, int i, float f2)
+#else
 call2g (l, d2, c, f1, s, d1, i, f2)
 long l; double d2; char c; float f1; short s; double d1; int i; float f2;
+#endif
 {
   c = 'a'; f1 = 0.0; s = 5; d1 = 0.0; i = 6; f2 = 0.1; l = 7; d2 = 0.2;
 }
 
+#ifdef PROTOTYPES
+void call2h (double d2, char c, float f1, short s, double d1, int i, float f2, long l)
+#else
 call2h (d2, c, f1, s, d1, i, f2, l)
 double d2; char c; float f1; short s; double d1; int i; float f2; long l;
+#endif
 {
   c = 'a'; f1 = 0.0; s = 5; d1 = 0.0; i = 6; f2 = 0.1; l = 7; d2 = 0.2;
 }
 
+#ifdef PROTOTYPES
+void call2i (char c1, float f1, char c2, char c3, double d1, char c4, char c5, char c6, float f2, short s, char c7, double d2)
+#else
 call2i (c1, f1, c2, c3, d1, c4, c5, c6, f2, s, c7, d2)
 char c1; float f1; char c2; char c3; double d1; char c4; char c5; char c6;
 float f2; short s; char c7; double d2;
+#endif
 {
   c1 = 'a'; f1 = 0.0; c2 = 5; d1 = 0.0; c3 = 6; f2 = 0.1; c4 = 7; d2 = 0.2;
   c5 = 's'; c6 = 'f'; c7 = 'z'; s = 77;
@@ -203,21 +279,33 @@ float f2; short s; char c7; double d2;
 /* Test pointers to various integral and floating types. */
 
 
+#ifdef PROTOTYPES
+void call3a (char *cp, short *sp, int *ip, long *lp)
+#else
 call3a (cp, sp, ip, lp)
 char *cp; short *sp; int *ip; long *lp;
+#endif
 {
   cp = 0; sp = 0; ip = 0; lp = 0;
 }
 
+#ifdef PROTOTYPES
+void call3b (unsigned char *ucp, unsigned short *usp, unsigned int *uip, unsigned long *ulp)
+#else
 call3b (ucp, usp, uip, ulp)
 unsigned char *ucp; unsigned short *usp; unsigned int *uip;
 unsigned long *ulp;
+#endif
 {
   ucp = 0; usp = 0; uip = 0; ulp = 0;
 }
 
+#ifdef PROTOTYPES
+void call3c (float *fp, double *dp)
+#else
 call3c (fp, dp)
 float *fp; double *dp;
+#endif
 {
   fp = 0; dp = 0;
 }
@@ -226,12 +314,20 @@ float *fp; double *dp;
 /* Test passing structures and unions by reference. */
 
 
+#ifdef PROTOTYPES
+void call4a (struct stag *stp)
+#else
 call4a (stp)
-struct stag *stp; {
-stp = 0;}
+struct stag *stp;
+#endif
+{stp = 0;}
 
+#ifdef PROTOTYPES
+void call4b (union utag *unp)
+#else
 call4b (unp)
 union utag *unp;
+#endif
 {
   unp = 0;
 }
@@ -240,165 +336,258 @@ union utag *unp;
 /* Test passing structures and unions by value. */
 
 
+#ifdef PROTOTYPES
+void call5a (struct stag st)
+#else
 call5a (st)
-struct stag st; {st.s1 = 5;}
+struct stag st;
+#endif
+{st.s1 = 5;}
 
+#ifdef PROTOTYPES
+void call5b (union utag un)
+#else
 call5b (un)
-union utag un; {un.u1 = 7;}
+union utag un;
+#endif
+{un.u1 = 7;}
 
 
 /* Test shuffling of args */
 
 
-call6a (c, s, i, l, f, d, uc, us, ui, ul)
-char c; short s; int i; long l; float f; double d;
-unsigned char uc; unsigned short us; unsigned int ui; unsigned long ul;
+void call6k ()
 {
-  c = c;
-    call6b (s, i, l, f, d, uc, us, ui, ul);
 }
 
-call6b (s, i, l, f, d, uc, us, ui, ul)
-short s; int i; long l; float f; double d;
-unsigned char uc; unsigned short us; unsigned int ui; unsigned long ul;
-{
-  s = s;
-    call6c (i, l, f, d, uc, us, ui, ul);
-}
-
-call6c (i, l, f, d, uc, us, ui, ul)
-int i; long l; float f; double d;
-unsigned char uc; unsigned short us; unsigned int ui; unsigned long ul;
-{
-  i = i;
-    call6d (l, f, d, uc, us, ui, ul);
-}
-
-call6d (l, f, d, uc, us, ui, ul)
-long l; float f; double d;
-unsigned char uc; unsigned short us; unsigned int ui; unsigned long ul;
-{
-  l = l;
-    call6e (f, d, uc, us, ui, ul);
-}
-
-call6e (f, d, uc, us, ui, ul)
-float f; double d;
-unsigned char uc; unsigned short us; unsigned int ui; unsigned long ul;
-{
-  f = f;
-    call6f (d, uc, us, ui, ul);
-}
-
-call6f (d, uc, us, ui, ul)
-double d;
-unsigned char uc; unsigned short us; unsigned int ui; unsigned long ul;
-{
-  d = d;
-    call6g (uc, us, ui, ul);
-}
-
-call6g (uc, us, ui, ul)
-unsigned char uc; unsigned short us; unsigned int ui; unsigned long ul;
-{
-  uc = uc;
-    call6h (us, ui, ul);
-}
-
-call6h (us, ui, ul)
-unsigned short us; unsigned int ui; unsigned long ul;
-{
-  us = us;
-    call6i (ui, ul);
-}
-
-call6i (ui, ul)
-unsigned int ui; unsigned long ul;
-{
-  ui = ui;
-    call6j (ul);
-}
-
+#ifdef PROTOTYPES
+void call6j (unsigned long ul)
+#else
 call6j (ul)
 unsigned long ul;
+#endif
 {
   ul = ul;
     call6k ();
 }
 
-call6k ()
+#ifdef PROTOTYPES
+void call6i (unsigned int ui, unsigned long ul)
+#else
+call6i (ui, ul)
+unsigned int ui; unsigned long ul;
+#endif
 {
+  ui = ui;
+    call6j (ul);
 }
 
+#ifdef PROTOTYPES
+void call6h (unsigned short us, unsigned int ui, unsigned long ul)
+#else
+call6h (us, ui, ul)
+unsigned short us; unsigned int ui; unsigned long ul;
+#endif
+{
+  us = us;
+    call6i (ui, ul);
+}
+
+#ifdef PROTOTYPES
+void call6g (unsigned char uc, unsigned short us, unsigned int ui, unsigned long ul)
+#else
+call6g (uc, us, ui, ul)
+unsigned char uc; unsigned short us; unsigned int ui; unsigned long ul;
+#endif
+{
+  uc = uc;
+    call6h (us, ui, ul);
+}
+
+#ifdef PROTOTYPES
+void call6f (double d, unsigned char uc, unsigned short us, unsigned int ui, unsigned long ul)
+#else
+call6f (d, uc, us, ui, ul)
+double d;
+unsigned char uc; unsigned short us; unsigned int ui; unsigned long ul;
+#endif
+{
+  d = d;
+    call6g (uc, us, ui, ul);
+}
+
+#ifdef PROTOTYPES
+void call6e (float f, double d, unsigned char uc, unsigned short us, unsigned int ui, unsigned long ul)
+#else
+call6e (f, d, uc, us, ui, ul)
+float f; double d;
+unsigned char uc; unsigned short us; unsigned int ui; unsigned long ul;
+#endif
+{
+  f = f;
+    call6f (d, uc, us, ui, ul);
+}
+
+#ifdef PROTOTYPES
+void call6d (long l, float f, double d, unsigned char uc, unsigned short us, unsigned int ui, unsigned long ul)
+#else
+call6d (l, f, d, uc, us, ui, ul)
+long l; float f; double d;
+unsigned char uc; unsigned short us; unsigned int ui; unsigned long ul;
+#endif
+{
+  l = l;
+    call6e (f, d, uc, us, ui, ul);
+}
+
+#ifdef PROTOTYPES
+void call6c (int i, long l, float f, double d, unsigned char uc, unsigned short us, unsigned int ui, unsigned long ul)
+#else
+call6c (i, l, f, d, uc, us, ui, ul)
+int i; long l; float f; double d;
+unsigned char uc; unsigned short us; unsigned int ui; unsigned long ul;
+#endif
+{
+  i = i;
+    call6d (l, f, d, uc, us, ui, ul);
+}
+
+#ifdef PROTOTYPES
+void call6b (short s, int i, long l, float f, double d, unsigned char uc, unsigned short us, unsigned int ui, unsigned long ul)
+#else
+call6b (s, i, l, f, d, uc, us, ui, ul)
+short s; int i; long l; float f; double d;
+unsigned char uc; unsigned short us; unsigned int ui; unsigned long ul;
+#endif
+{
+  s = s;
+    call6c (i, l, f, d, uc, us, ui, ul);
+}
+
+#ifdef PROTOTYPES
+void call6a (char c, short s, int i, long l, float f, double d, unsigned char uc, unsigned short us, unsigned int ui, unsigned long ul)
+#else
+call6a (c, s, i, l, f, d, uc, us, ui, ul)
+char c; short s; int i; long l; float f; double d;
+unsigned char uc; unsigned short us; unsigned int ui; unsigned long ul;
+#endif
+{
+  c = c;
+    call6b (s, i, l, f, d, uc, us, ui, ul);
+}
 
 /*  Test shuffling of args, round robin */
 
 
-call7a (c, i, s, l, f, uc, d, us, ul, ui)
+#ifdef PROTOTYPES
+void call7k (char c, int i, short s, long l, float f, unsigned char uc, double d, unsigned short us, unsigned long ul, unsigned int ui)
+#else
+call7k (c, i, s, l, f, uc, d, us, ul, ui)
 char c; int i; short s; long l; float f; unsigned char uc; double d; unsigned short us; unsigned long ul; unsigned int ui;
+#endif
 {
-    call7b (i, s, l, f, uc, d, us, ul, ui, c);
+  c = 'a'; i = 7; s = 8; l = 7; f = 0.3; uc = 44; d = 0.44; us = 77;
+  ul = 43; ui = 33;
 }
 
-call7b (i, s, l, f, uc, d, us, ul, ui, c)
-int i; short s; long l; float f; unsigned char uc; double d; unsigned short us; unsigned long ul; unsigned int ui; char c;
-{
-    call7c (s, l, f, uc, d, us, ul, ui, c, i);
-}
-
-call7c (s, l, f, uc, d, us, ul, ui, c, i)
-short s; long l; float f; unsigned char uc; double d; unsigned short us; unsigned long ul; unsigned int ui; char c; int i;
-{
-    call7d (l, f, uc, d, us, ul, ui, c, i, s);
-}
-
-call7d (l, f, uc, d, us, ul, ui, c, i, s)
-long l; float f; unsigned char uc; double d; unsigned short us; unsigned long ul; unsigned int ui; char c; int i; short s;
-{
-    call7e (f, uc, d, us, ul, ui, c, i, s, l);
-}
-
-call7e (f, uc, d, us, ul, ui, c, i, s, l)
-float f; unsigned char uc; double d; unsigned short us; unsigned long ul; unsigned int ui; char c; int i; short s; long l;
-{
-    call7f (uc, d, us, ul, ui, c, i, s, l, f);
-}
-
-call7f (uc, d, us, ul, ui, c, i, s, l, f)
-unsigned char uc; double d; unsigned short us; unsigned long ul; unsigned int ui; char c; int i; short s; long l; float f;
-{
-    call7g (d, us, ul, ui, c, i, s, l, f, uc);
-}
-
-call7g (d, us, ul, ui, c, i, s, l, f, uc)
-double d; unsigned short us; unsigned long ul; unsigned int ui; char c; int i; short s; long l; float f; unsigned char uc;
-{
-    call7h (us, ul, ui, c, i, s, l, f, uc, d);
-}
-
-call7h (us, ul, ui, c, i, s, l, f, uc, d)
-unsigned short us; unsigned long ul; unsigned int ui; char c; int i; short s; long l; float f; unsigned char uc; double d;
-{
-    call7i (ul, ui, c, i, s, l, f, uc, d, us);
-}
-
-call7i (ul, ui, c, i, s, l, f, uc, d, us)
-unsigned long ul; unsigned int ui; char c; int i; short s; long l; float f; unsigned char uc; double d; unsigned short us;
-{
-    call7j (ui, c, i, s, l, f, uc, d, us, ul);
-}
-
+#ifdef PROTOTYPES
+void call7j (unsigned int ui, char c, int i, short s, long l, float f, unsigned char uc, double d, unsigned short us, unsigned long ul)
+#else
 call7j (ui, c, i, s, l, f, uc, d, us, ul)
 unsigned int ui; char c; int i; short s; long l; float f; unsigned char uc; double d; unsigned short us; unsigned long ul;
+#endif
 {
     call7k (c, i, s, l, f, uc, d, us, ul, ui);
 }
 
-call7k (c, i, s, l, f, uc, d, us, ul, ui)
-char c; int i; short s; long l; float f; unsigned char uc; double d; unsigned short us; unsigned long ul; unsigned int ui;
+#ifdef PROTOTYPES
+void call7i (unsigned long ul, unsigned int ui, char c, int i, short s, long l, float f, unsigned char uc, double d, unsigned short us)
+#else
+call7i (ul, ui, c, i, s, l, f, uc, d, us)
+unsigned long ul; unsigned int ui; char c; int i; short s; long l; float f; unsigned char uc; double d; unsigned short us;
+#endif
 {
-  c = 'a'; i = 7; s = 8; l = 7; f = 0.3; uc = 44; d = 0.44; us = 77;
-  ul = 43; ui = 33;
+    call7j (ui, c, i, s, l, f, uc, d, us, ul);
+}
+
+#ifdef PROTOTYPES
+void call7h (unsigned short us, unsigned long ul, unsigned int ui, char c, int i, short s, long l, float f, unsigned char uc, double d)
+#else
+call7h (us, ul, ui, c, i, s, l, f, uc, d)
+unsigned short us; unsigned long ul; unsigned int ui; char c; int i; short s; long l; float f; unsigned char uc; double d;
+#endif
+{
+    call7i (ul, ui, c, i, s, l, f, uc, d, us);
+}
+
+#ifdef PROTOTYPES
+void call7g (double d, unsigned short us, unsigned long ul, unsigned int ui, char c, int i, short s, long l, float f, unsigned char uc)
+#else
+call7g (d, us, ul, ui, c, i, s, l, f, uc)
+double d; unsigned short us; unsigned long ul; unsigned int ui; char c; int i; short s; long l; float f; unsigned char uc;
+#endif
+{
+    call7h (us, ul, ui, c, i, s, l, f, uc, d);
+}
+
+#ifdef PROTOTYPES
+void call7f (unsigned char uc, double d, unsigned short us, unsigned long ul, unsigned int ui, char c, int i, short s, long l, float f)
+#else
+call7f (uc, d, us, ul, ui, c, i, s, l, f)
+unsigned char uc; double d; unsigned short us; unsigned long ul; unsigned int ui; char c; int i; short s; long l; float f;
+#endif
+{
+    call7g (d, us, ul, ui, c, i, s, l, f, uc);
+}
+
+#ifdef PROTOTYPES
+void call7e (float f, unsigned char uc, double d, unsigned short us, unsigned long ul, unsigned int ui, char c, int i, short s, long l)
+#else
+call7e (f, uc, d, us, ul, ui, c, i, s, l)
+float f; unsigned char uc; double d; unsigned short us; unsigned long ul; unsigned int ui; char c; int i; short s; long l;
+#endif
+{
+    call7f (uc, d, us, ul, ui, c, i, s, l, f);
+}
+
+#ifdef PROTOTYPES
+void call7d (long l, float f, unsigned char uc, double d, unsigned short us, unsigned long ul, unsigned int ui, char c, int i, short s)
+#else
+call7d (l, f, uc, d, us, ul, ui, c, i, s)
+long l; float f; unsigned char uc; double d; unsigned short us; unsigned long ul; unsigned int ui; char c; int i; short s;
+#endif
+{
+    call7e (f, uc, d, us, ul, ui, c, i, s, l);
+}
+
+#ifdef PROTOTYPES
+void call7c (short s, long l, float f, unsigned char uc, double d, unsigned short us, unsigned long ul, unsigned int ui, char c, int i)
+#else
+call7c (s, l, f, uc, d, us, ul, ui, c, i)
+short s; long l; float f; unsigned char uc; double d; unsigned short us; unsigned long ul; unsigned int ui; char c; int i;
+#endif
+{
+    call7d (l, f, uc, d, us, ul, ui, c, i, s);
+}
+
+#ifdef PROTOTYPES
+void call7b (int i, short s, long l, float f, unsigned char uc, double d, unsigned short us, unsigned long ul, unsigned int ui, char c)
+#else
+call7b (i, s, l, f, uc, d, us, ul, ui, c)
+int i; short s; long l; float f; unsigned char uc; double d; unsigned short us; unsigned long ul; unsigned int ui; char c;
+#endif
+{
+    call7c (s, l, f, uc, d, us, ul, ui, c, i);
+}
+
+#ifdef PROTOTYPES
+void call7a (char c, int i, short s, long l, float f, unsigned char uc, double d, unsigned short us, unsigned long ul, unsigned int ui)
+#else
+call7a (c, i, s, l, f, uc, d, us, ul, ui)
+char c; int i; short s; long l; float f; unsigned char uc; double d; unsigned short us; unsigned long ul; unsigned int ui;
+#endif
+{
+    call7b (i, s, l, f, uc, d, us, ul, ui, c);
 }
 
 
@@ -412,13 +601,17 @@ typedef struct s
   long l;
 } SVAL;	
 
-hitbottom ()
+void hitbottom ()
 {
 }
 
+#ifdef PROTOTYPES
+void recurse (SVAL a, int depth)
+#else
 void recurse (a, depth)
 SVAL a;
 int depth;
+#endif
 {
   a.s = a.i = a.l = --depth;
   if (depth == 0)
@@ -427,7 +620,7 @@ int depth;
     recurse (a, depth);
 }
 
-test_struct_args ()
+void test_struct_args ()
 {
   SVAL s; s.s = 5; s.i = 5; s.l = 5;
 
@@ -438,12 +631,16 @@ test_struct_args ()
    calls alloca may do things differently with respect to frames.  So give
    it a try.  */
 
-int
+#ifdef PROTOTYPES
+void localvars_after_alloca (char c, short s, int i, long l)
+#else
+void
 localvars_after_alloca (c, s, i, l)
      char c;
      short s;
      int i;
      long l;
+#endif
 {
 #ifdef HAVE_STACK_ALLOCA
   /* No need to use the alloca.c alloca-on-top-of-malloc; it doesn't
@@ -458,21 +655,29 @@ localvars_after_alloca (c, s, i, l)
   l = 7;
 }
 
+#ifdef PROTOTYPES
+void call_after_alloca_subr (char c, short s, int i, long l, unsigned char uc, unsigned short us, unsigned int ui, unsigned long ul)
+#else
 void
 call_after_alloca_subr (c, s, i, l, uc, us, ui, ul)
 char c; int i; short s; long l; unsigned char uc; unsigned short us; unsigned long ul; unsigned int ui;
+#endif
 {
   c = 'a';
   i = 7; s = 8; l = 7; uc = 44; us = 77;
   ul = 43; ui = 33;
 }
 
-int
+#ifdef PROTOTYPES
+void call_after_alloca (char c, short s, int i, long l)
+#else
+void
 call_after_alloca (c, s, i, l)
      char c;
      short s;
      int i;
      long l;
+#endif
 {
 #ifdef HAVE_STACK_ALLOCA
   /* No need to use the alloca.c alloca-on-top-of-malloc; it doesn't
@@ -491,9 +696,13 @@ call_after_alloca (c, s, i, l)
    will require a trampoline between dyncall and this function on the
    call path, then another trampoline on between this function and main
    on the return path.  */
+#ifdef PROTOTYPES
+double call_with_trampolines (double d1)
+#else
 double
 call_with_trampolines (d1)
 double d1;
+#endif
 {
   return d1;
 } /* End of call_with_trampolines, this comment is needed by funcargs.exp */
@@ -506,10 +715,10 @@ marker_indirect_call () {}
 void
 marker_call_with_trampolines () {}
 
-main ()
+int main ()
 {
-  int (*pointer_to_call0a) () = call0a;
-  double (*pointer_to_call_with_trampolines) () = call_with_trampolines;
+  void (*pointer_to_call0a) (char, short, int, long) = (void (*)(char, short, int, long))call0a;
+  double (*pointer_to_call_with_trampolines) (double) = call_with_trampolines;
 
 #ifdef usestubs
   set_debug_traps();
@@ -538,7 +747,7 @@ main ()
   call2f (f, l, d, c, f, s, d, i);
   call2g (l, d, c, f, s, d, i, f);
   call2h (d, c, f, s, d, i, f, l);
-  call2i (c, f, c, c, d, c, c, c, f, s, c, d);;
+  call2i (c, f, c, c, d, c, c, c, f, s, c, d);
 
   /* Test dereferencing pointers to various integral and floating types */
 
@@ -579,4 +788,5 @@ main ()
   (*pointer_to_call0a) (c, s, i, l);	/* Second step into call0a.  */
   marker_call_with_trampolines ();
   (*pointer_to_call_with_trampolines) (d); /* Test multiple trampolines.  */
+  return 0;
 }

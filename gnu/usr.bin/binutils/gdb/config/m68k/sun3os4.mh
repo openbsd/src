@@ -1,12 +1,4 @@
-# Host: Sun 3, running SunOS 4
-XDEPFILES= 
-XM_FILE= xm-sun3os4.h
-NAT_FILE= nm-sun3.h
-NATDEPFILES= fork-child.o inftarg.o infptrace.o corelow.o sun3-nat.o
-GDBSERVER_DEPFILES= low-sun3.o
-
-# SunOS 4.x has memory allocation calls in the C runtime.  However
-# since free() is never called with these objects, it is safe to
-# define MMCHECK_FORCE to 1 and thus force installation of the mmalloc
-# corruption checks.
-MMALLOC_CFLAGS = -I$(MMALLOC_SRC) -DMMCHECK_FORCE=1
+# OBSOLETE # Host: Sun 3, running SunOS 4
+# OBSOLETE XM_FILE= xm-sun3os4.h
+# OBSOLETE NAT_FILE= nm-sun3.h
+# OBSOLETE NATDEPFILES= fork-child.o inftarg.o infptrace.o corelow.o sun3-nat.o

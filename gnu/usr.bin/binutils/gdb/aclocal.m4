@@ -1,10 +1,23 @@
+dnl aclocal.m4 generated automatically by aclocal 1.4
+
+dnl Copyright (C) 1994, 1995-8, 1999 Free Software Foundation, Inc.
+dnl This file is free software; the Free Software Foundation
+dnl gives unlimited permission to copy and/or distribute it,
+dnl with or without modifications, as long as this notice is preserved.
+
+dnl This program is distributed in the hope that it will be useful,
+dnl but WITHOUT ANY WARRANTY, to the extent permitted by law; without
+dnl even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+dnl PARTICULAR PURPOSE.
+
 dnl written by Rob Savoye <rob@cygnus.com> for Cygnus Support
 dnl major rewriting for Tcl 7.5 by Don Libes <libes@nist.gov>
 
-sinclude(../bfd/aclocal.m4)
+dnl gdb/configure.in uses BFD_NEED_DECLARATION, so get its definition.
+sinclude(../bfd/acinclude.m4)
 
-dnl CY_AC_PATH_TCLCONFIG and CY_AC_LOAD_TCLCONFIG should be invoked
-dnl (in that order) before any other TCL macros.  Similarly for TK.
+dnl This gets the standard macros, like the TCL, TK, etc ones.
+sinclude(../config/acinclude.m4)
 
 dnl CYGNUS LOCAL: This gets the right posix flag for gcc
 AC_DEFUN(CY_AC_TCL_LYNX_POSIX,
@@ -74,9 +87,10 @@ AC_DEFUN(CY_AC_PATH_TCLH, [
 # be careful that we don't match stuff like tclX by accident.
 # the alternative search directory is involked by --with-tclinclude
 #
+
 no_tcl=true
-AC_MSG_CHECKING(for Tcl private headers)
-AC_ARG_WITH(tclinclude, [  --with-tclinclude       directory where tcl private headers are], with_tclinclude=${withval})
+AC_MSG_CHECKING(for Tcl private headers. dir=${configdir})
+AC_ARG_WITH(tclinclude, [  --with-tclinclude=DIR   Directory where tcl private headers are], with_tclinclude=${withval})
 AC_CACHE_VAL(ac_cv_c_tclh,[
 # first check to see if --with-tclinclude was specified
 if test x"${with_tclinclude}" != x ; then
@@ -164,7 +178,7 @@ AC_DEFUN(CY_AC_PATH_TCLCONFIG, [
 if test x"${no_tcl}" = x ; then
   # we reset no_tcl in case something fails here
   no_tcl=true
-  AC_ARG_WITH(tclconfig, [  --with-tclconfig           directory containing tcl configuration (tclConfig.sh)],
+  AC_ARG_WITH(tclconfig, [  --with-tclconfig=DIR    Directory containing tcl configuration (tclConfig.sh)],
          with_tclconfig=${withval})
   AC_MSG_CHECKING([for Tcl configuration])
   AC_CACHE_VAL(ac_cv_c_tclconfig,[
@@ -187,8 +201,8 @@ if test x"${no_tcl}" = x ; then
 		`ls -dr ../../tcl[[7-9]]* 2>/dev/null` \
 		../../../tcl \
 		`ls -dr ../../../tcl[[7-9]]* 2>/dev/null` ; do
-      if test -f "$i/unix/tclConfig.sh" ; then
-        ac_cv_c_tclconfig=`(cd $i/unix; pwd)`
+      if test -f "$i/${configdir}/tclConfig.sh" ; then
+        ac_cv_c_tclconfig=`(cd $i/${configdir}; pwd)`
 	break
       fi
     done
@@ -207,8 +221,8 @@ if test x"${no_tcl}" = x ; then
     for i in \
 		${srcdir}/../tcl \
 		`ls -dr ${srcdir}/../tcl[[7-9]]* 2>/dev/null` ; do
-      if test -f "$i/unix/tclConfig.sh" ; then
-        ac_cv_c_tclconfig=`(cd $i/unix; pwd)`
+      if test -f "$i/${configdir}/tclConfig.sh" ; then
+        ac_cv_c_tclconfig=`(cd $i/${configdir}; pwd)`
 	break
       fi
     done
@@ -257,6 +271,7 @@ dnl not used, don't export to save symbols
     AC_SUBST(TCL_LD_FLAGS)
 dnl don't export, not used outside of configure
     AC_SUBST(TCL_LD_SEARCH_FLAGS)
+    AC_SUBST(TCL_CC_SEARCH_FLAGS)
     AC_SUBST(TCL_COMPAT_OBJS)
     AC_SUBST(TCL_RANLIB)
     AC_SUBST(TCL_BUILD_LIB_SPEC)
@@ -298,7 +313,7 @@ AC_DEFUN(CY_AC_PATH_TKH, [
 #
 no_tk=true
 AC_MSG_CHECKING(for Tk private headers)
-AC_ARG_WITH(tkinclude, [  --with-tkinclude       directory where tk private headers are], with_tkinclude=${withval})
+AC_ARG_WITH(tkinclude, [  --with-tkinclude=DIR    Directory where tk private headers are], with_tkinclude=${withval})
 AC_CACHE_VAL(ac_cv_c_tkh,[
 # first check to see if --with-tkinclude was specified
 if test x"${with_tkinclude}" != x ; then
@@ -386,7 +401,7 @@ AC_DEFUN(CY_AC_PATH_TKCONFIG, [
 if test x"${no_tk}" = x ; then
   # we reset no_tk in case something fails here
   no_tk=true
-  AC_ARG_WITH(tkconfig, [  --with-tkconfig           directory containing tk configuration (tkConfig.sh)],
+  AC_ARG_WITH(tkconfig, [  --with-tkconfig=DIR     Directory containing tk configuration (tkConfig.sh)],
          with_tkconfig=${withval})
   AC_MSG_CHECKING([for Tk configuration])
   AC_CACHE_VAL(ac_cv_c_tkconfig,[
@@ -409,8 +424,8 @@ if test x"${no_tk}" = x ; then
 		`ls -dr ../../tk[[4-9]]* 2>/dev/null` \
 		../../../tk \
 		`ls -dr ../../../tk[[4-9]]* 2>/dev/null` ; do
-      if test -f "$i/unix/tkConfig.sh" ; then
-        ac_cv_c_tkconfig=`(cd $i/unix; pwd)`
+      if test -f "$i/${configdir}/tkConfig.sh" ; then
+        ac_cv_c_tkconfig=`(cd $i/${configdir}; pwd)`
 	break
       fi
     done
@@ -429,8 +444,8 @@ if test x"${no_tk}" = x ; then
     for i in \
 		${srcdir}/../tk \
 		`ls -dr ${srcdir}/../tk[[4-9]]* 2>/dev/null` ; do
-      if test -f "$i/unix/tkConfig.sh" ; then
-        ac_cv_c_tkconfig=`(cd $i/unix; pwd)`
+      if test -f "$i/${configdir}/tkConfig.sh" ; then
+        ac_cv_c_tkconfig=`(cd $i/${configdir}; pwd)`
 	break
       fi
     done
@@ -472,9 +487,554 @@ dnl    AC_SUBST(TK_PREFIX)
 dnl not used, don't export to save symbols
 dnl    AC_SUBST(TK_EXEC_PREFIX)
 
+    AC_SUBST(TK_BUILD_INCLUDES)
     AC_SUBST(TK_XINCLUDES)
     AC_SUBST(TK_XLIBSW)
     AC_SUBST(TK_BUILD_LIB_SPEC)
     AC_SUBST(TK_LIB_SPEC)
 ])
+
+# check for Itcl headers. 
+
+AC_DEFUN(CY_AC_PATH_ITCLCONFIG, [
+#
+# Ok, lets find the itcl configuration
+# First, look for one uninstalled.  
+# the alternative search directory is invoked by --with-itclconfig
+#
+
+if test x"${no_itcl}" = x ; then
+  # we reset no_itcl in case something fails here
+  no_itcl=true
+  AC_ARG_WITH(itclconfig, [  --with-itclconfig       Directory containing itcl configuration (itclConfig.sh)],
+         with_itclconfig=${withval})
+  AC_MSG_CHECKING([for Itcl configuration])
+  AC_CACHE_VAL(ac_cv_c_itclconfig,[
+
+  # First check to see if --with-itclconfig was specified.
+  if test x"${with_itclconfig}" != x ; then
+    if test -f "${with_itclconfig}/itclConfig.sh" ; then
+      ac_cv_c_itclconfig=`(cd ${with_itclconfig}; pwd)`
+    else
+      AC_MSG_ERROR([${with_itclconfig} directory doesn't contain itclConfig.sh])
+    fi
+  fi
+
+  # then check for a private Itcl library
+  if test x"${ac_cv_c_itclconfig}" = x ; then
+    for i in \
+		../itcl/itcl \
+		`ls -dr ../itcl[[4-9]]*/itcl 2>/dev/null` \
+		../../itcl \
+		`ls -dr ../../itcl[[4-9]]*/itcl 2>/dev/null` \
+		../../../itcl \
+		`ls -dr ../../../itcl[[4-9]]*/itcl 2>/dev/null` ; do
+      if test -f "$i/itclConfig.sh" ; then
+        ac_cv_c_itclconfig=`(cd $i; pwd)`
+	break
+      fi
+    done
+  fi
+  # check in a few common install locations
+  if test x"${ac_cv_c_itclconfig}" = x ; then
+    for i in `ls -d ${prefix}/lib /usr/local/lib 2>/dev/null` ; do
+      if test -f "$i/itclConfig.sh" ; then
+        ac_cv_c_itclconfig=`(cd $i; pwd)`
+	break
+      fi
+    done
+  fi
+  # check in a few other private locations
+  if test x"${ac_cv_c_itclconfig}" = x ; then
+    for i in \
+		${srcdir}/../itcl/itcl \
+		`ls -dr ${srcdir}/../itcl[[4-9]]*/itcl 2>/dev/null` ; do
+      if test -f "$i/itclConfig.sh" ; then
+        ac_cv_c_itclconfig=`(cd $i; pwd)`
+	break
+      fi
+    done
+  fi
+  ])
+  if test x"${ac_cv_c_itclconfig}" = x ; then
+    ITCLCONFIG="# no Itcl configs found"
+    AC_MSG_WARN(Can't find Itcl configuration definitions)
+  else
+    no_itcl=
+    ITCLCONFIG=${ac_cv_c_itclconfig}/itclConfig.sh
+    AC_MSG_RESULT(found $ITCLCONFIG)
+  fi
+fi
+])
+
+# Defined as a separate macro so we don't have to cache the values
+# from PATH_ITCLCONFIG (because this can also be cached).
+AC_DEFUN(CY_AC_LOAD_ITCLCONFIG, [
+    if test -f "$ITCLCONFIG" ; then
+      . $ITCLCONFIG
+    fi
+
+    AC_SUBST(ITCL_VERSION)
+dnl not actually used, don't export to save symbols
+dnl    AC_SUBST(ITCL_MAJOR_VERSION)
+dnl    AC_SUBST(ITCL_MINOR_VERSION)
+    AC_SUBST(ITCL_DEFS)
+
+dnl not used, don't export to save symbols
+    dnl AC_SUBST(ITCL_LIB_FILE)
+
+dnl not used outside of configure
+dnl    AC_SUBST(ITCL_LIBS)
+dnl not used, don't export to save symbols
+dnl    AC_SUBST(ITCL_PREFIX)
+
+dnl not used, don't export to save symbols
+dnl    AC_SUBST(ITCL_EXEC_PREFIX)
+
+    AC_SUBST(ITCL_BUILD_INCLUDES)
+    AC_SUBST(ITCL_BUILD_LIB_SPEC)
+    AC_SUBST(ITCL_LIB_SPEC)
+])
+
+# check for Itcl headers. 
+
+AC_DEFUN(CY_AC_PATH_ITCLH, [
+AC_MSG_CHECKING(for Itcl private headers. srcdir=${srcdir})
+if test x"${ac_cv_c_itclh}" = x ; then
+  for i in ${srcdir}/../itcl ${srcdir}/../../itcl ${srcdir}/../../../itcl ${srcdir}/../itcl/itcl; do
+    if test -f $i/generic/itcl.h ; then
+      ac_cv_c_itclh=`(cd $i/generic; pwd)`
+      break
+    fi
+  done
+fi
+if test x"${ac_cv_c_itclh}" = x ; then
+  ITCLHDIR="# no Itcl private headers found"
+  AC_MSG_ERROR([Can't find Itcl private headers])
+fi
+if test x"${ac_cv_c_itclh}" != x ; then
+     ITCLHDIR="-I${ac_cv_c_itclh}"
+fi
+# should always be here
+#     ITCLLIB="../itcl/itcl/unix/libitcl.a"
+AC_SUBST(ITCLHDIR)
+#AC_SUBST(ITCLLIB)
+])
+
+
+AC_DEFUN(CY_AC_PATH_ITKCONFIG, [
+#
+# Ok, lets find the itk configuration
+# First, look for one uninstalled.  
+# the alternative search directory is invoked by --with-itkconfig
+#
+
+if test x"${no_itk}" = x ; then
+  # we reset no_itk in case something fails here
+  no_itk=true
+  AC_ARG_WITH(itkconfig, [  --with-itkconfig        Directory containing itk configuration (itkConfig.sh)],
+         with_itkconfig=${withval})
+  AC_MSG_CHECKING([for Itk configuration])
+  AC_CACHE_VAL(ac_cv_c_itkconfig,[
+
+  # First check to see if --with-itkconfig was specified.
+  if test x"${with_itkconfig}" != x ; then
+    if test -f "${with_itkconfig}/itkConfig.sh" ; then
+      ac_cv_c_itkconfig=`(cd ${with_itkconfig}; pwd)`
+    else
+      AC_MSG_ERROR([${with_itkconfig} directory doesn't contain itkConfig.sh])
+    fi
+  fi
+
+  # then check for a private Itk library
+  if test x"${ac_cv_c_itkconfig}" = x ; then
+    for i in \
+		../itcl/itk \
+		`ls -dr ../itcl[[4-9]]*/itk 2>/dev/null` \
+		../../itk \
+		`ls -dr ../../itcl[[4-9]]*/itk 2>/dev/null` \
+		../../../itk \
+		`ls -dr ../../../itcl[[4-9]]*/itk 2>/dev/null` ; do
+      if test -f "$i/itkConfig.sh" ; then
+        ac_cv_c_itkconfig=`(cd $i; pwd)`
+	break
+      fi
+    done
+  fi
+  # check in a few common install locations
+  if test x"${ac_cv_c_itkconfig}" = x ; then
+    for i in `ls -d ${prefix}/lib /usr/local/lib 2>/dev/null` ; do
+      if test -f "$i/itkConfig.sh" ; then
+        ac_cv_c_itkconfig=`(cd $i; pwd)`
+	break
+      fi
+    done
+  fi
+  # check in a few other private locations
+  if test x"${ac_cv_c_itkconfig}" = x ; then
+    for i in \
+		${srcdir}/../itcl/itk \
+		`ls -dr ${srcdir}/../itcl[[4-9]]*/itk 2>/dev/null` ; do
+      if test -f "$i/itkConfig.sh" ; then
+        ac_cv_c_itkconfig=`(cd $i; pwd)`
+	break
+      fi
+    done
+  fi
+  ])
+  if test x"${ac_cv_c_itkconfig}" = x ; then
+    ITKCONFIG="# no Itk configs found"
+    AC_MSG_WARN(Can't find Itk configuration definitions)
+  else
+    no_itk=
+    ITKCONFIG=${ac_cv_c_itkconfig}/itkConfig.sh
+    AC_MSG_RESULT(found $ITKCONFIG)
+  fi
+fi
+
+])
+
+# Defined as a separate macro so we don't have to cache the values
+# from PATH_ITKCONFIG (because this can also be cached).
+AC_DEFUN(CY_AC_LOAD_ITKCONFIG, [
+    if test -f "$ITKCONFIG" ; then
+      . $ITKCONFIG
+    fi
+
+    AC_SUBST(ITK_VERSION)
+dnl not actually used, don't export to save symbols
+dnl    AC_SUBST(ITK_MAJOR_VERSION)
+dnl    AC_SUBST(ITK_MINOR_VERSION)
+    AC_SUBST(ITK_DEFS)
+
+dnl not used, don't export to save symbols
+    dnl AC_SUBST(ITK_LIB_FILE)
+
+dnl not used outside of configure
+dnl    AC_SUBST(ITK_LIBS)
+dnl not used, don't export to save symbols
+dnl    AC_SUBST(ITK_PREFIX)
+
+dnl not used, don't export to save symbols
+dnl    AC_SUBST(ITK_EXEC_PREFIX)
+
+    AC_SUBST(ITK_BUILD_INCLUDES)
+    AC_SUBST(ITK_BUILD_LIB_SPEC)
+    AC_SUBST(ITK_LIB_SPEC)
+])
+
+AC_DEFUN(CY_AC_PATH_ITKH, [
+AC_MSG_CHECKING(for Itk private headers. srcdir=${srcdir})
+if test x"${ac_cv_c_itkh}" = x ; then
+  for i in ${srcdir}/../itcl ${srcdir}/../../itcl ${srcdir}/../../../itcl ${srcdir}/../itcl/itk; do
+    if test -f $i/generic/itk.h ; then
+      ac_cv_c_itkh=`(cd $i/generic; pwd)`
+      break
+    fi
+  done
+fi
+if test x"${ac_cv_c_itkh}" = x ; then
+  ITKHDIR="# no Itk private headers found"
+  AC_MSG_ERROR([Can't find Itk private headers])
+fi
+if test x"${ac_cv_c_itkh}" != x ; then
+     ITKHDIR="-I${ac_cv_c_itkh}"
+fi
+# should always be here
+#     ITKLIB="../itcl/itk/unix/libitk.a"
+AC_SUBST(ITKHDIR)
+#AC_SUBST(ITKLIB)
+])
+
+
+dnl sinclude(../gettext.m4) already included by bfd/acinclude.m4
+dnl The lines below arrange for aclocal not to bring gettext.m4's
+dnl CY_GNU_GETTEXT into aclocal.m4.
+ifelse(yes,no,[
+AC_DEFUN([CY_GNU_GETTEXT],)
+])
+
+
+# Copyright 1996, 1997, 1999, 2000, 2001 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2, or (at your option)
+# any later version.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+# 02111-1307, USA.
+
+# serial 1
+
+# @defmac AC_PROG_CC_STDC
+# @maindex PROG_CC_STDC
+# @ovindex CC
+# If the C compiler in not in ANSI C mode by default, try to add an option
+# to output variable @code{CC} to make it so.  This macro tries various
+# options that select ANSI C on some system or another.  It considers the
+# compiler to be in ANSI C mode if it handles function prototypes correctly.
+#
+# If you use this macro, you should check after calling it whether the C
+# compiler has been set to accept ANSI C; if not, the shell variable
+# @code{am_cv_prog_cc_stdc} is set to @samp{no}.  If you wrote your source
+# code in ANSI C, you can make an un-ANSIfied copy of it by using the
+# program @code{ansi2knr}, which comes with Ghostscript.
+# @end defmac
+
+AC_DEFUN([AM_PROG_CC_STDC],
+[AC_REQUIRE([AC_PROG_CC])
+AC_BEFORE([$0], [AC_C_INLINE])
+AC_BEFORE([$0], [AC_C_CONST])
+dnl Force this before AC_PROG_CPP.  Some cpp's, eg on HPUX, require
+dnl a magic option to avoid problems with ANSI preprocessor commands
+dnl like #elif.
+dnl FIXME: can't do this because then AC_AIX won't work due to a
+dnl circular dependency.
+dnl AC_BEFORE([$0], [AC_PROG_CPP])
+AC_MSG_CHECKING([for ${CC-cc} option to accept ANSI C])
+AC_CACHE_VAL(am_cv_prog_cc_stdc,
+[am_cv_prog_cc_stdc=no
+ac_save_CC="$CC"
+# Don't try gcc -ansi; that turns off useful extensions and
+# breaks some systems' header files.
+# AIX			-qlanglvl=ansi
+# Ultrix and OSF/1	-std1
+# HP-UX 10.20 and later	-Ae
+# HP-UX older versions	-Aa -D_HPUX_SOURCE
+# SVR4			-Xc -D__EXTENSIONS__
+for ac_arg in "" -qlanglvl=ansi -std1 -Ae "-Aa -D_HPUX_SOURCE" "-Xc -D__EXTENSIONS__"
+do
+  CC="$ac_save_CC $ac_arg"
+  AC_TRY_COMPILE(
+[#include <stdarg.h>
+#include <stdio.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+/* Most of the following tests are stolen from RCS 5.7's src/conf.sh.  */
+struct buf { int x; };
+FILE * (*rcsopen) (struct buf *, struct stat *, int);
+static char *e (p, i)
+     char **p;
+     int i;
+{
+  return p[i];
+}
+static char *f (char * (*g) (char **, int), char **p, ...)
+{
+  char *s;
+  va_list v;
+  va_start (v,p);
+  s = g (p, va_arg (v,int));
+  va_end (v);
+  return s;
+}
+int test (int i, double x);
+struct s1 {int (*f) (int a);};
+struct s2 {int (*f) (double a);};
+int pairnames (int, char **, FILE *(*)(struct buf *, struct stat *, int), int, int);
+int argc;
+char **argv;
+], [
+return f (e, argv, 0) != argv[0]  ||  f (e, argv, 1) != argv[1];
+],
+[am_cv_prog_cc_stdc="$ac_arg"; break])
+done
+CC="$ac_save_CC"
+])
+if test -z "$am_cv_prog_cc_stdc"; then
+  AC_MSG_RESULT([none needed])
+else
+  AC_MSG_RESULT([$am_cv_prog_cc_stdc])
+fi
+case "x$am_cv_prog_cc_stdc" in
+  x|xno) ;;
+  *) CC="$CC $am_cv_prog_cc_stdc" ;;
+esac
+])
+
+dnl From Bruno Haible.
+
+AC_DEFUN([AM_ICONV],
+[
+  dnl Some systems have iconv in libc, some have it in libiconv (OSF/1 and
+  dnl those with the standalone portable GNU libiconv installed).
+
+  AC_ARG_WITH([libiconv-prefix],
+[  --with-libiconv-prefix=DIR  search for libiconv in DIR/include and DIR/lib], [
+    for dir in `echo "$withval" | tr : ' '`; do
+      if test -d $dir/include; then CPPFLAGS="$CPPFLAGS -I$dir/include"; fi
+      if test -d $dir/lib; then LDFLAGS="$LDFLAGS -L$dir/lib"; fi
+    done
+   ])
+
+  AC_CACHE_CHECK(for iconv, am_cv_func_iconv, [
+    am_cv_func_iconv="no, consider installing GNU libiconv"
+    am_cv_lib_iconv=no
+    AC_TRY_LINK([#include <stdlib.h>
+#include <iconv.h>],
+      [iconv_t cd = iconv_open("","");
+       iconv(cd,NULL,NULL,NULL,NULL);
+       iconv_close(cd);],
+      am_cv_func_iconv=yes)
+    if test "$am_cv_func_iconv" != yes; then
+      am_save_LIBS="$LIBS"
+      LIBS="$LIBS -liconv"
+      AC_TRY_LINK([#include <stdlib.h>
+#include <iconv.h>],
+        [iconv_t cd = iconv_open("","");
+         iconv(cd,NULL,NULL,NULL,NULL);
+         iconv_close(cd);],
+        am_cv_lib_iconv=yes
+        am_cv_func_iconv=yes)
+      LIBS="$am_save_LIBS"
+    fi
+  ])
+  if test "$am_cv_func_iconv" = yes; then
+    AC_DEFINE(HAVE_ICONV, 1, [Define if you have the iconv() function.])
+    AC_MSG_CHECKING([for iconv declaration])
+    AC_CACHE_VAL(am_cv_proto_iconv, [
+      AC_TRY_COMPILE([
+#include <stdlib.h>
+#include <iconv.h>
+extern
+#ifdef __cplusplus
+"C"
+#endif
+#if defined(__STDC__) || defined(__cplusplus)
+size_t iconv (iconv_t cd, char * *inbuf, size_t *inbytesleft, char * *outbuf, size_t *outbytesleft);
+#else
+size_t iconv();
+#endif
+], [], am_cv_proto_iconv_arg1="", am_cv_proto_iconv_arg1="const")
+      am_cv_proto_iconv="extern size_t iconv (iconv_t cd, $am_cv_proto_iconv_arg1 char * *inbuf, size_t *inbytesleft, char * *outbuf, size_t *outbytesleft);"])
+    am_cv_proto_iconv=`echo "[$]am_cv_proto_iconv" | tr -s ' ' | sed -e 's/( /(/'`
+    AC_MSG_RESULT([$]{ac_t:-
+         }[$]am_cv_proto_iconv)
+    AC_DEFINE_UNQUOTED(ICONV_CONST, $am_cv_proto_iconv_arg1,
+      [Define as const if the declaration of iconv() needs const.])
+  fi
+  LIBICONV=
+  if test "$am_cv_lib_iconv" = yes; then
+    LIBICONV="-liconv"
+  fi
+  AC_SUBST(LIBICONV)
+])
+
+# AC_GNU_SOURCE
+# -------------
+# FIXME: Remove thise once we start using Autoconf 2.5x (x>=4).
+AC_DEFUN([AC_GNU_SOURCE],
+[AC_BEFORE([$0], [AC_TRY_COMPILE])dnl
+AC_BEFORE([$0], [AC_TRY_RUN])dnl
+AC_DEFINE([_GNU_SOURCE])
+])
+
+dnl written by Guido Draheim <guidod@gmx.de>, original by Alexandre Oliva 
+dnl Version 1.3 (2001/03/02)
+dnl source http://www.gnu.org/software/ac-archive/Miscellaneous/ac_define_dir.html
+
+AC_DEFUN([AC_DEFINE_DIR], [
+  test "x$prefix" = xNONE && prefix="$ac_default_prefix"
+  test "x$exec_prefix" = xNONE && exec_prefix='${prefix}'
+  ac_define_dir=`eval echo [$]$2`
+  ac_define_dir=`eval echo [$]ac_define_dir`
+  ifelse($3, ,
+    AC_DEFINE_UNQUOTED($1, "$ac_define_dir"),
+    AC_DEFINE_UNQUOTED($1, "$ac_define_dir", $3))
+])
+
+dnl See whether we need a declaration for a function.
+dnl The result is highly dependent on the INCLUDES passed in, so make sure
+dnl to use a different cache variable name in this macro if it is invoked
+dnl in a different context somewhere else.
+dnl gcc_AC_CHECK_DECL(SYMBOL,
+dnl 	[ACTION-IF-FOUND [, ACTION-IF-NOT-FOUND [, INCLUDES]]])
+AC_DEFUN(gcc_AC_CHECK_DECL,
+[AC_MSG_CHECKING([whether $1 is declared])
+AC_CACHE_VAL(gcc_cv_have_decl_$1,
+[AC_TRY_COMPILE([$4],
+[#ifndef $1
+char *(*pfn) = (char *(*)) $1 ;
+#endif], eval "gcc_cv_have_decl_$1=yes", eval "gcc_cv_have_decl_$1=no")])
+if eval "test \"`echo '$gcc_cv_have_decl_'$1`\" = yes"; then
+  AC_MSG_RESULT(yes) ; ifelse([$2], , :, [$2])
+else
+  AC_MSG_RESULT(no) ; ifelse([$3], , :, [$3])
+fi
+])dnl
+
+dnl Check multiple functions to see whether each needs a declaration.
+dnl Arrange to define HAVE_DECL_<FUNCTION> to 0 or 1 as appropriate.
+dnl gcc_AC_CHECK_DECLS(SYMBOLS,
+dnl 	[ACTION-IF-NEEDED [, ACTION-IF-NOT-NEEDED [, INCLUDES]]])
+AC_DEFUN(gcc_AC_CHECK_DECLS,
+[for ac_func in $1
+do
+changequote(, )dnl
+  ac_tr_decl=HAVE_DECL_`echo $ac_func | tr 'abcdefghijklmnopqrstuvwxyz' 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'`
+changequote([, ])dnl
+gcc_AC_CHECK_DECL($ac_func,
+  [AC_DEFINE_UNQUOTED($ac_tr_decl, 1) $2],
+  [AC_DEFINE_UNQUOTED($ac_tr_decl, 0) $3],
+dnl It is possible that the include files passed in here are local headers
+dnl which supply a backup declaration for the relevant prototype based on
+dnl the definition of (or lack of) the HAVE_DECL_ macro.  If so, this test
+dnl will always return success.  E.g. see libiberty.h's handling of
+dnl `basename'.  To avoid this, we define the relevant HAVE_DECL_ macro to
+dnl 1 so that any local headers used do not provide their own prototype
+dnl during this test.
+#undef $ac_tr_decl
+#define $ac_tr_decl 1
+  $4
+)
+done
+dnl Automatically generate config.h entries via autoheader.
+if test x = y ; then
+  patsubst(translit([$1], [a-z], [A-Z]), [\w+],
+    [AC_DEFINE([HAVE_DECL_\&], 1,
+      [Define to 1 if we found this declaration otherwise define to 0.])])dnl
+fi
+])
+
+
+# Add --enable-maintainer-mode option to configure.
+# From Jim Meyering
+
+# serial 1
+
+AC_DEFUN(AM_MAINTAINER_MODE,
+[AC_MSG_CHECKING([whether to enable maintainer-specific portions of Makefiles])
+  dnl maintainer-mode is disabled by default
+  AC_ARG_ENABLE(maintainer-mode,
+[  --enable-maintainer-mode enable make rules and dependencies not useful
+                          (and sometimes confusing) to the casual installer],
+      USE_MAINTAINER_MODE=$enableval,
+      USE_MAINTAINER_MODE=no)
+  AC_MSG_RESULT($USE_MAINTAINER_MODE)
+  AM_CONDITIONAL(MAINTAINER_MODE, test $USE_MAINTAINER_MODE = yes)
+  MAINT=$MAINTAINER_MODE_TRUE
+  AC_SUBST(MAINT)dnl
+]
+)
+
+# Define a conditional.
+
+AC_DEFUN(AM_CONDITIONAL,
+[AC_SUBST($1_TRUE)
+AC_SUBST($1_FALSE)
+if $2; then
+  $1_TRUE=
+  $1_FALSE='#'
+else
+  $1_TRUE='#'
+  $1_FALSE=
+fi])
 

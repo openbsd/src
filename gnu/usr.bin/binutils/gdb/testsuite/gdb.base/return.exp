@@ -1,4 +1,4 @@
-# Copyright (C) 1992 Free Software Foundation, Inc.
+# Copyright (C) 1992, 1997, 2001 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -12,7 +12,7 @@
 # 
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  
 
 # Please email any bugs, comments, and/or additions to this file to:
 # bug-gdb@prep.ai.mit.edu
@@ -29,44 +29,43 @@ set bug_id 0
 set testfile "return"
 set srcfile ${testfile}.c
 set binfile ${objdir}/${subdir}/${testfile}
-if  { [compile "${srcdir}/${subdir}/${srcfile} -g -o ${binfile}"] != "" } {
-    perror "Couldn't compile ${srcfile}"
-    return -1
+if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug}] != "" } {
+     gdb_suppress_entire_file "Testcase compile failed, so all tests in this file will automatically fail."
 }
 
 proc return_tests { } {
-    global prompt
+    global gdb_prompt
 
 
     if { ! [ runto func1 ] } then { return 0 }
-    send "return\n"
-    expect {
+    send_gdb "return\n"
+    gdb_expect {
 	-re "Make .* return now.*y or n. $" {
-	    send "y\n"
+	    send_gdb "y\n"
 	    exp_continue
 	}
-	-re "func1 ..;.*$prompt $" {
-	    send "step\n"
+	-re "func1 ..;.*$gdb_prompt $" {
+	    send_gdb "step\n"
 	    exp_continue
 	}
-    -re ".*in main after func1.*$prompt $" { pass "simple return" }
-    -re "$prompt $" { fail "simple return" }
+    -re ".*in main after func1.*$gdb_prompt $" { pass "simple return" }
+    -re "$gdb_prompt $" { fail "simple return" }
     timeout { fail "(timeout) simple return" }
     }
 
     # Set breakpoints in other interesting functions.
-    send "break func2\n" ; expect -re ".*$prompt $"
-    send "break func3\n" ; expect -re ".*$prompt $"
+    gdb_test "break func2" "" "break func2"
+    gdb_test "break func3" "" "break func3"
 
     gdb_test "continue" "return -5;" "continue to return of -5"
-    send "return 5\n"
-    expect {
+    send_gdb "return 5\n"
+    gdb_expect {
 	-re "Make .* return now.*y or n. $" {
-	    send "y\n"
+	    send_gdb "y\n"
 	    exp_continue
 	}
-    -re ".*tmp2 = func2.*$prompt $" { }
-    -re "$prompt $" { fail "did not return (integer test)" }
+    -re ".*tmp2 = func2.*$gdb_prompt $" { }
+    -re "$gdb_prompt $" { fail "did not return (integer test)" }
     timeout { fail "(timeout) did not return (integer test)" }
     }
     gdb_test "next" "tmp3 = func3.*" "next over call to func2"
@@ -74,31 +73,23 @@ proc return_tests { } {
     gdb_test "p tmp2" ".* = 5" "correct value returned (integer test)"
 
     gdb_test "continue" "return -5.0;" "continue to return of -5.0"
-    send "return 5.0\n"
-    expect {
+
+    # Return of a double does not work for 68hc11 (need struct return
+    # in memory).
+    setup_xfail "m6811-*-*"
+    send_gdb "return 5.0\n"
+    gdb_expect {
 	-re "Make .* return now.*y or n. $" {
-	    send "y\n"
+	    send_gdb "y\n"
 	    exp_continue
 	}
-    -re ".*tmp3 = func3.*$prompt $" { }
-    -re "$prompt $" { fail "did not return (double test)" }
-    timeout { fail "(timeout) did not return (double test)" }
+	-re ".*tmp3 = func3.*$gdb_prompt $" { }
+	-re "$gdb_prompt $" { fail "did not return (double test)" }
+	timeout { fail "(timeout) did not return (double test)" }
     }
 
+    setup_xfail "m6811-*-*"
     gdb_test "next" "printf.*" "next over call to func3"
-
-    # This test is going to fail on all i*86 systems using an i*87.
-    # When returning a floating point value from a function, all known
-    # compilers do this via a `fldl' instruction, which pushes the floating
-    # value on the i387 stack. This causes two problems:
-    # a) Most i*86 targets do not store (or cannot store, see comment in
-    #    in i386v-nat.c:i386_register_u_addr) the floating point registers
-    #    to the target.
-    # b) gdb would have to figure out if the `fldl' instruction (or variants
-    #    of it) has already been executed. If not, it would have to simulate
-    #    a push instruction, as it is not enough to write the register,
-    #    the floating point `stack pointer' has to be updated too.
-    #    Do not expect this to get fixed anytime soon.
 
     # This test also fails for sparc Solaris 2.3 & 2.4, but passes under 2.5
     # At the time the `next' is issued, the floating point unit for the
@@ -109,8 +100,8 @@ proc return_tests { } {
     # process start, making this test pass, it will be for a version that
     # is not xfailed.
 
-    setup_xfail "i*86-*-*" "sparc-*-solaris2.3*" "sparc-*-solaris2.4*"
-    gdb_test "p tmp3" ".* = 5.*" "correct value returned double test (known problem with i*86 and sparc solaris"
+    setup_xfail "sparc-*-solaris2.3*" "sparc-*-solaris2.4*" "m6811-*-*"
+    gdb_test "p tmp3" ".* = 5.*" "correct value returned double test (known problem with sparc solaris)"
 }
 
 
@@ -121,4 +112,5 @@ gdb_start
 gdb_reinitialize_dir $srcdir/$subdir
 gdb_load ${binfile}
 
+set timeout 30
 return_tests

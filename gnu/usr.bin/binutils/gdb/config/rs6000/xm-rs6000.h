@@ -1,22 +1,24 @@
 /* Parameters for hosting on an RS6000, for GDB, the GNU debugger.
-   Copyright 1986, 1987, 1989, 1991, 1992, 1993 Free Software Foundation, Inc.
+   Copyright 1986, 1987, 1989, 1991, 1992, 1993, 1994, 1995, 1996, 1998,
+   2000, 2001 Free Software Foundation, Inc.
    Contributed by IBM Corporation.
 
-This file is part of GDB.
+   This file is part of GDB.
 
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
+   This program is free software; you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation; either version 2 of the License, or
+   (at your option) any later version.
 
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software
-Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+   You should have received a copy of the GNU General Public License
+   along with this program; if not, write to the Free Software
+   Foundation, Inc., 59 Temple Place - Suite 330,
+   Boston, MA 02111-1307, USA.  */
 
 /* The following text is taken from config/rs6000.mh:
  * # The IBM version of /usr/include/rpc/rpc.h has a bug -- it says
@@ -35,14 +37,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 /* Big end is at the low address */
 
-#define	HOST_BYTE_ORDER	BIG_ENDIAN
-
 /* At least as of AIX 3.2, we have termios.  */
 #define	HAVE_TERMIOS 1
 /* #define HAVE_TERMIO 1 */
 
 #define	USG 1
-#define	HAVE_SIGSETMASK	1
 
 #define FIVE_ARG_PTRACE
 
@@ -62,30 +61,24 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 #define	vfork	fork
 
-/* Setpgrp() takes arguments, unlike ordinary Sys V's.  */
-
-#define	SETPGRP_ARGS 1
-
-/* AIX doesn't have strdup, so we need to declare it for libiberty */
-extern char *strdup PARAMS ((char *));
-
 /* Signal handler for SIGWINCH `window size changed'. */
 
 #define	SIGWINCH_HANDLER  aix_resizewindow
-extern	void	aix_resizewindow PARAMS ((void));
+extern void aix_resizewindow (int);
 
 /* This doesn't seem to be declared in any header file I can find.  */
-char *termdef PARAMS ((int, int));
+char *termdef (int, int);
 
 /* `lines_per_page' and `chars_per_line' are local to utils.c. Rectify this. */
 
 #define	SIGWINCH_HANDLER_BODY	\
 									\
 /* Respond to SIGWINCH `window size changed' signal, and reset GDB's	\
-   window settings approproatelt. */					\
+   window settings appropriately. */					\
 									\
 void 						\
-aix_resizewindow ()				\
+aix_resizewindow (signo)			\
+     int signo;					\
 {						\
   int fd = fileno (stdout);			\
   if (isatty (fd)) {				\
@@ -99,8 +92,3 @@ aix_resizewindow ()				\
       chars_per_line = val;			\
   }						\
 }
-
-/* setpgrp() messes up controling terminal. The other version of it
-   requires libbsd.a. */
-#define	setpgrp(XX,YY)		setpgid (XX, YY)
-

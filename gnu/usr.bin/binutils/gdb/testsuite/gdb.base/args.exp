@@ -1,0 +1,89 @@
+# Copyright 2003 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+
+# Please email any bugs, comments, and/or additions to this file to:
+# bug-gdb@prep.ai.mit.edu
+
+# This is a test for the gdb invocation option --args.
+
+if $tracelevel then {
+    strace $tracelevel
+}
+
+
+global GDBFLAGS
+
+# Skip test if target does not support argument passing.
+if [target_info exists noargs] {
+    return;
+}
+
+# No loading needs to be done when the target is `exec'.  Some targets
+# require that the program be loaded, however.
+proc args_load {} {
+    global binfile
+    if [target_info exists is_simulator] {
+	gdb_load ${binfile}
+    }
+}
+
+set testfile "args"
+set srcfile ${testfile}.c
+set binfile ${objdir}/${subdir}/${testfile}
+
+if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug additional_flags=-w}] != "" } {
+    gdb_suppress_entire_file "Testcase compile failed, so all tests in this file will automatically fail."
+}
+
+#
+# Test that the --args are processed correctly.
+#
+set old_gdbflags $GDBFLAGS
+set GDBFLAGS "--args $binfile 1 3"
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+args_load
+gdb_test "run" \
+	"Starting program.*args(\\.exe)? 1 3.*3\r\n.*args\r\n1\r\n3.*Program exited normally." \
+	"correct args printed"
+
+#
+# Test that the --args are processed correctly even if one of them is empty.
+#
+set GDBFLAGS "--args $binfile 1 '' 3"
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+args_load
+gdb_test "run" \
+	"Starting program.*args(\\.exe)? 1 \\\\'\\\\' 3.*4\r\n.*args\r\n1\r\n''\r\n3.*Program exited normally." \
+	"correct args printed, one empty"
+
+#
+# try with 2 empty args
+#
+set GDBFLAGS "--args $binfile 1 '' '' 3"
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+args_load
+gdb_test "run" \
+	"Starting program.*args(\\.exe)? 1 \\\\'\\\\' \\\\'\\\\' 3.*5\r\n.*args\r\n1\r\n''\r\n''\r\n3.*Program exited normally." \
+	"correct args printed, two empty"
+
+set GDBFLAGS $old_gdbflags
+

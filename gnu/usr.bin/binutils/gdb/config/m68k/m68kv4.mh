@@ -1,12 +1,7 @@
-# Host: Motorola 680x0 running SVR4 (Commodore Amiga amix or Atari TT ASV)
-
-XM_FILE= xm-m68kv4.h
-XDEPFILES=
-
-NAT_FILE= nm-sysv4.h
-NATDEPFILES= corelow.o core-regset.o solib.o procfs.o fork-child.o
-
-# SVR4 comes standard with terminfo, and in some implementations, the
-# old termcap descriptions are incomplete.  So ensure that we use the
-# new terminfo interface and latest terminal descriptions.
-TERMCAP=-ltermlib
+# OBSOLETE # Host: Motorola 680x0 running SVR4 (Commodore Amiga amix or Atari TT ASV)
+# OBSOLETE 
+# OBSOLETE XM_FILE= xm-m68kv4.h
+# OBSOLETE 
+# OBSOLETE NAT_FILE= nm-sysv4.h
+# OBSOLETE NATDEPFILES= corelow.o core-regset.o solib.o solib-svr4.o solib-legacy.o \
+# OBSOLETE 	fork-child.o procfs.o proc-api.o proc-events.o proc-flags.o proc-why.o

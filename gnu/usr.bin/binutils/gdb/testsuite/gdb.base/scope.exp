@@ -1,4 +1,5 @@
-# Copyright (C) 1992, 1994 Free Software Foundation, Inc.
+# Copyright 1992, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2002, 2003,
+# 2004 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -12,7 +13,7 @@
 # 
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  
 
 # Please email any bugs, comments, and/or additions to this file to:
 # bug-gdb@prep.ai.mit.edu
@@ -28,923 +29,435 @@ set bug_id 0
 
 set testfile "scope"
 set binfile ${objdir}/${subdir}/${testfile}
-if  { [compile "-g -c ${srcdir}/${subdir}/scope0.c"] != "" } {
-    perror "Couldn't compile scope0.c to object"
-    return -1
+
+
+if  { [gdb_compile "${srcdir}/${subdir}/scope0.c" "${binfile}0.o" object {debug}] != "" } {
+     gdb_suppress_entire_file "Testcase compile failed, so all tests in this file will automatically fail."
 }
-execute_anywhere "mv scope0.o ${binfile}0.o"
-if  { [compile "-g -c ${srcdir}/${subdir}/scope1.c"] != "" } {
-    perror "Couldn't compile scope1.c to object"
-    return -1
+
+if  { [gdb_compile "${srcdir}/${subdir}/scope1.c" "${binfile}1.o" object {debug}] != "" } {
+     gdb_suppress_entire_file "Testcase compile failed, so all tests in this file will automatically fail."
 }
-execute_anywhere "mv scope1.o ${binfile}1.o"
-if  { [compile "${objdir}/${subdir}/scope0.o ${objdir}/${subdir}/scope1.o -o ${binfile}"] != "" } {
-    perror "Couldn't link scope."
-    return -1
+
+if  { [gdb_compile "${binfile}0.o ${binfile}1.o" ${binfile} executable {debug}] != "" } {
+     gdb_suppress_entire_file "Testcase compile failed, so all tests in this file will automatically fail."
 }
 
 # Create and source the file that provides information about the compiler
 # used to compile the test case.
-execute_anywhere "rm -f ${binfile}.ci"
-if  { [compile "-E ${srcdir}/${subdir}/compiler.c > ${binfile}.ci"] != "" } {
-    perror "Couldn't make ${binfile}.ci file"
-    return -1
+if [get_compiler_info ${binfile}] {
+    return -1;
 }
-source ${binfile}.ci
 
 # Test locating various things when stopped just inside main, after
-# running init().  To prevent cascading of errors, we report the
+# running init0().  To prevent cascading of errors, we report the
 # first one and quit.  If all pass, then we print the pass results.
 
 proc test_at_main {} {
-    global prompt
+    global gdb_prompt
     global decimal
     global det_file
     global srcdir
     global subdir
-    global gcc_compiled
+    global hp_cc_compiler
 
     # skip past init.  There may be a call to __main at the start of
-    # main, so the first next may only get us to the init call.
-    send "next\n"
-    expect {
-	-re "$decimal.*foo \\(\\);\r\n$prompt $" {
-	    pass "next over init() in main"
-	}
-	-re "$decimal.*init \\(\\);\r\n$prompt $"\
-		{ send "next\n" ; exp_continue }
-	-re "$prompt $" { fail "next over init() in main" ; return }
-	timeout { fail "(timeout) next over init() in main" ; return }
+    # main, so the first next may only get us to the init0 call.
+    if [gdb_test "next" "$decimal.*foo \\(\\);" "next over init0() in main"  "$decimal.*init0 \\(\\);" "next"] { 
+      gdb_suppress_tests ; 
     }
+
 
     # Print scope0.c::filelocal, which is 1
 
-    send "print filelocal\n"
-    expect {
-	-re "\\\$$decimal = 1\r\n$prompt $" { pass "print filelocal" }
-	-re "$prompt $" { fail "print filelocal" ; return }
-	timeout {
-	    fail "(timeout) print filelocal" ; return
-	}
+    if [gdb_test "print filelocal" "\\\$$decimal = 1" "print filelocal" ] { 
+      gdb_suppress_tests ; 
     }
 
-    send "print 'scope0.c'::filelocal\n"
-    expect {
-	-re "\\\$$decimal = 1\r\n$prompt $" {
-	    pass "print 'scope0.c'::filelocal at main"
-	}
-	-re "No symbol \"scope0.c\" in current context.*$prompt $" {
-	    send "print '$srcdir/$subdir/scope0.c'::filelocal\n"
-	    exp_continue
-	}
-	-re "$prompt $" { fail "print 'scope0.c'::filelocal at main" ; return }
-	timeout {
-	    fail "(timeout) print 'scope0.c'::filelocal at main" ; return
-	}
+
+    if [gdb_test "print 'scope0.c'::filelocal" "\\\$$decimal = 1" "print 'scope0.c'::filelocal at main"  "No symbol \"scope0.c\" in current context.*" "print '$srcdir/$subdir/scope0.c'::filelocal"] { 
+      gdb_suppress_tests ; 
     }
+
 
     # Print scope0.c::filelocal_bss, which is 101
 
-    send "print filelocal_bss\n"
-    expect {
-	-re "\\\$$decimal = 101\r\n$prompt $" {
-	    pass "print filelocal_bss"
-	}
-	-re "$prompt $" { fail "print filelocal_bss" ; return }
-	timeout {
-	    fail "(timeout) print filelocal_bss" ; return
-	}
+    if [gdb_test "print filelocal_bss" "\\\$$decimal = 101" "print filelocal_bss" ] { 
+      gdb_suppress_tests ; 
     }
 
-    send "print 'scope0.c'::filelocal_bss\n"
-    expect {
-	-re "\\\$$decimal = 101\r\n$prompt $" {
-	    pass "print 'scope0.c'::filelocal_bss in test_at_main"
-	}
-	-re "No symbol \"scope0.c\" in current context.*$prompt $" {
-	    send "print '$srcdir/$subdir/scope0.c'::filelocal_bss\n"
-	    exp_continue
-	}
-	-re "$prompt $" { 
-	    fail "print 'scope0.c'::filelocal_bss in test_at_main" ; return 
-	}
-	timeout {
-	    fail "(timeout) print 'scope0.c'::filelocal_bss in test_at_main"
-	    return
-	}
+
+    if [gdb_test "print 'scope0.c'::filelocal_bss" "\\\$$decimal = 101" "print 'scope0.c'::filelocal_bss in test_at_main"  "No symbol \"scope0.c\" in current context.*" "print '$srcdir/$subdir/scope0.c'::filelocal_bss"] { 
+      gdb_suppress_tests ; 
     }
+
 
     # Print scope0.c::filelocal_ro, which is 201
 
     # No clue why the powerpc fails this test.
     setup_xfail "powerpc-*-*"
-    if {$gcc_compiled} then { setup_xfail "rs6000-*-*" }
-    send "print filelocal_ro\n"
-    expect {
-	-re "\\\$$decimal = 201\r\n$prompt $" {
-	    pass "print filelocal_ro in test_at_main"
-	}
-	-re "$prompt $" {
-	    fail "print filelocal_ro in test_at_main"
-	    return
-	}
-	timeout {
-	    fail "(timeout) print filelocal_ro in test_at_main"
-	    return
-	}
+    if { [test_compiler_info gcc-*-*] } then { setup_xfail "rs6000-*-*" }
+    if [gdb_test "print filelocal_ro" "\\\$$decimal = 201" "print filelocal_ro in test_at_main" ] { 
+      gdb_suppress_tests ; 
     }
 
-    if {$gcc_compiled} then { setup_xfail "rs6000-*-*" }
+
+    if { [test_compiler_info gcc-*-*] } then { setup_xfail "rs6000-*-*" }
     setup_xfail "powerpc-*-*"
-    send "print 'scope0.c'::filelocal_ro\n"
-    expect {
-	-re "\\\$$decimal = 201\r\n$prompt $" {
-	    pass "print 'scope0.c'::filelocal_ro"
-	}
-	-re "No symbol \"scope0.c\" in current context.*$prompt $" {
-	    send "print '$srcdir/$subdir/scope0.c'::filelocal_ro\n"
-	    exp_continue
-	}
-	-re "$prompt $" { fail "print 'scope0.c'::filelocal_ro" ; return }
-	timeout {
-	    fail "(timeout) print 'scope0.c'::filelocal_ro" ; return
-	}
+    if [gdb_test "print 'scope0.c'::filelocal_ro" "\\\$$decimal = 201" "print 'scope0.c'::filelocal_ro"  "No symbol \"scope0.c\" in current context.*" "print '$srcdir/$subdir/scope0.c'::filelocal_ro"] { 
+      gdb_suppress_tests ; 
     }
+
 
     # Print scope1.c::filelocal, which is 2
 
-    if {$gcc_compiled} then { setup_xfail "rs6000-*-*" }
-    send "print 'scope1.c'::filelocal\n"
-    expect {
-	-re "\\\$$decimal = 2\r\n$prompt $" {
-	    pass "print 'scope1.c'::filelocal"
-	}
-	-re "No symbol \"scope1.c\" in current context.*$prompt $" {
-	    send "print '$srcdir/$subdir/scope1.c'::filelocal\n"
-	    exp_continue
-	}
-	-re "$prompt $" { fail "print 'scope1.c'::filelocal" ; return }
-	timeout {
-	    fail "(timeout) print 'scope1.c'::filelocal" ; return
-	}
+    if { [test_compiler_info gcc-*-*] } then { setup_xfail "rs6000-*-*" }
+    if [gdb_test "print 'scope1.c'::filelocal" "\\\$$decimal = 2" "print 'scope1.c'::filelocal"  "No symbol \"scope1.c\" in current context.*" "print '$srcdir/$subdir/scope1.c'::filelocal"] { 
+      gdb_suppress_tests ; 
     }
+
 
     # Print scope1.c::filelocal_bss, which is 102
 
-    if {$gcc_compiled} then { setup_xfail "rs6000-*-*" }
-    send "print 'scope1.c'::filelocal_bss\n"
-    expect {
-	-re "\\\$$decimal = 102\r\n$prompt $" {
-	    pass "print 'scope1.c'::filelocal_bss"
-	}
-	-re "No symbol \"scope1.c\" in current context.*$prompt $" {
-	    send "print '$srcdir/$subdir/scope1.c'::filelocal_bss\n"
-	    exp_continue
-	}
-	-re "$prompt $" { fail "print 'scope1.c'::filelocal_bss" ; return }
-	timeout {
-	    fail "(timeout) print 'scope1.c'::filelocal_bss" ; return
-	}
+    if { [test_compiler_info gcc-*-*] } then { setup_xfail "rs6000-*-*" }
+    if [gdb_test "print 'scope1.c'::filelocal_bss" "\\\$$decimal = 102" "print 'scope1.c'::filelocal_bss"  "No symbol \"scope1.c\" in current context.*" "print '$srcdir/$subdir/scope1.c'::filelocal_bss"] { 
+      gdb_suppress_tests ; 
     }
+
 
     # Print scope1.c::filelocal_ro, which is 202
 
-    if {$gcc_compiled} then { setup_xfail "rs6000-*-*" }
-    send "print 'scope1.c'::filelocal_ro\n"
-    expect {
-	-re "\\\$$decimal = 202\r\n$prompt $" {
-	    pass "print 'scope1.c'::filelocal_ro"
-	}
-	-re "No symbol \"scope1.c\" in current context.*$prompt $" {
-	    send "print '$srcdir/$subdir/scope1.c'::filelocal_ro\n"
-	    exp_continue
-	}
-	-re "$prompt " {fail "print 'scope1.c'::filelocal_ro" ; return }
-	timeout {
-	    fail "(timeout) print 'scope1.c'::filelocal_ro" ; return
-	}
+    if { [test_compiler_info gcc-*-*] } then { setup_xfail "rs6000-*-*" }
+    if {$hp_cc_compiler} then { setup_xfail "hppa2.0w-*-*" 11747CLLbs}
+    if [gdb_test "print 'scope1.c'::filelocal_ro" "\\\$$decimal = 202" "print 'scope1.c'::filelocal_ro"  "No symbol \"scope1.c\" in current context.*" "print '$srcdir/$subdir/scope1.c'::filelocal_ro"] { 
+      gdb_suppress_tests ; 
     }
+
 
     # Print scope1.c::foo::funclocal, which is 3
 
-    if {!$gcc_compiled} then { setup_xfail "hppa*-*-hpux*" }
-    send "print foo::funclocal\n"
-    expect {
-	-re "\\\$$decimal = 3\r\n$prompt $" { pass "print foo::funclocal" }
-	-re "$prompt $" { fail "print foo::funclocal" ; return }
-	timeout {
-	    fail "(timeout) print foo::funclocal" ; return
-	}
+    if [gdb_test "print foo::funclocal" "\\\$$decimal = 3" "print foo::funclocal" ] { 
+      gdb_suppress_tests ; 
     }
 
-    if {$gcc_compiled} then { setup_xfail "rs6000-*-*" }
-    send "print 'scope1.c'::foo::funclocal\n"
-    expect {
-	-re "\\\$$decimal = 3\r\n$prompt $" {
-	    pass "print 'scope1.c'::foo::funclocal"
-	}
-	-re "No symbol \"scope1.c\" in current context.*$prompt $" {
-	    send "print '$srcdir/$subdir/scope1.c'::foo::funclocal\n"
-	    exp_continue
-	}
-	-re "$prompt $" { fail "print 'scope1.c'::foo::funclocal" ; return }
-	timeout {
-	    fail "(timeout) print 'scope1.c'::foo::funclocal" ; return
-	}
+
+    if { [test_compiler_info gcc-*-*] } then { setup_xfail "rs6000-*-*" }
+    if [gdb_test "print 'scope1.c'::foo::funclocal" "\\\$$decimal = 3" "print 'scope1.c'::foo::funclocal"  "No symbol \"scope1.c\" in current context.*" "print '$srcdir/$subdir/scope1.c'::foo::funclocal"] { 
+      gdb_suppress_tests ; 
     }
+
 
     # Print scope1.c::foo::funclocal_ro, which is 203
 
-    send "print foo::funclocal_ro\n"
-    expect {
-	-re "\\\$$decimal = 203\r\n$prompt $" {
-	    pass "print foo::funclocal_ro"
-	}
-	-re "$prompt $" { fail "print foo::funclocal_ro" ; return }
-	timeout {
-	    fail "(timeout) print foo::funclocal_ro" ; return
-	}
+    if [gdb_test "print foo::funclocal_ro" "\\\$$decimal = 203" "print foo::funclocal_ro" ] { 
+      gdb_suppress_tests ; 
     }
 
-    if {$gcc_compiled} then { setup_xfail "rs6000-*-*" }
-    send "print 'scope1.c'::foo::funclocal_ro\n"
-    expect {
-	-re "\\\$$decimal = 203\r\n$prompt $" {
-	    pass "print 'scope1.c'::foo::funclocal_ro" }
-	-re "No symbol \"scope1.c\" in current context.*$prompt $" {
-	    send "print '$srcdir/$subdir/scope1.c'::foo::funclocal_ro\n"
-	    exp_continue
-	}
-	-re "$prompt $" { fail "print 'scope1.c'::foo::funclocal_ro" ; return }
-	timeout {
-	    fail "(timeout) print 'scope1.c'::foo::funclocal_ro" ; return
-	}
+
+    if { [test_compiler_info gcc-*-*] } then { setup_xfail "rs6000-*-*" }
+    if [gdb_test "print 'scope1.c'::foo::funclocal_ro" "\\\$$decimal = 203" "print 'scope1.c'::foo::funclocal_ro"  "No symbol \"scope1.c\" in current context.*" "print '$srcdir/$subdir/scope1.c'::foo::funclocal_ro"] { 
+      gdb_suppress_tests ; 
     }
+
 
     # Print scope1.c::bar::funclocal, which is 4
 
-    send "print bar::funclocal\n"
-    expect {
-	-re "\\\$$decimal = 4\r\n$prompt $" { pass "print bar::funclocal" }
-	-re "$prompt $" { fail "print bar::funclocal" ; return }
-	timeout {
-	    fail "(timeout) print bar::funclocal" ; return
-	}
+    if [gdb_test "print bar::funclocal" "\\\$$decimal = 4" "print bar::funclocal" ] { 
+      gdb_suppress_tests ; 
     }
 
-    if {$gcc_compiled} then { setup_xfail "rs6000-*-*" }
-    send "print 'scope1.c'::bar::funclocal\n"
-    expect {
-	-re "\\\$$decimal = 4\r\n$prompt $" {
-	    pass "print 'scope1.c'::bar::funclocal"
-	}
-	-re "No symbol \"scope1.c\" in current context.*$prompt $" {
-	    send "print '$srcdir/$subdir/scope1.c'::bar::funclocal\n"
-	    exp_continue
-	}
-	-re "$prompt $" { fail "print 'scope1.c'::bar::funclocal" ; return }
-	timeout {
-	    fail "(timeout) print 'scope1.c'::bar::funclocal" ; return
-	}
+
+    if { [test_compiler_info gcc-*-*] } then { setup_xfail "rs6000-*-*" }
+    if [gdb_test "print 'scope1.c'::bar::funclocal" "\\\$$decimal = 4" "print 'scope1.c'::bar::funclocal"  "No symbol \"scope1.c\" in current context.*" "print '$srcdir/$subdir/scope1.c'::bar::funclocal"] { 
+      gdb_suppress_tests ; 
     }
+    gdb_stop_suppressing_tests;
+
 }
 
 proc test_at_foo {} {
-    global prompt
+    global gdb_prompt
     global decimal
     global det_file
     global srcdir
     global subdir
-    global gcc_compiled
 
-    send "next\n"
-    expect {
-	-re ".*bar \\(\\);\r\n$prompt $" {}
-	-re "$prompt $" { fail "continue to foo()" ; return }
-	timeout { fail "(timeout) continue to foo()" ; return }
+    if [gdb_test "next" ".*bar \\(\\);" "" ] { 
+      gdb_suppress_tests ; 
     }
+
 
     # Print scope0.c::filelocal, which is 1
 
-    send "print 'scope0.c'::filelocal\n"
-    expect {
-	-re "\\\$$decimal = 1\r\n$prompt $" {
-	    pass "print 'scope0.c'::filelocal at foo"
-	}
-	-re "No symbol \"scope0.c\" in current context.*$prompt $" {
-	    send "print '$srcdir/$subdir/scope0.c'::filelocal\n"
-	    exp_continue
-	}
-	-re "$prompt $" { fail "print 'scope0.c'::filelocal at foo" ; return }
-	timeout {
-	    fail "(timeout) print 'scope0.c'::filelocal at foo" ; return
-	}
+    if [gdb_test "print 'scope0.c'::filelocal" "\\\$$decimal = 1" "print 'scope0.c'::filelocal at foo"  "No symbol \"scope0.c\" in current context.*" "print '$srcdir/$subdir/scope0.c'::filelocal"] { 
+      gdb_suppress_tests ; 
     }
+
 
     # Print scope0.c::filelocal_bss, which is 101
 
-    send "print 'scope0.c'::filelocal_bss\n"
-    expect {
-	-re "\\\$$decimal = 101\r\n$prompt $" {
-	    pass "print 'scope0.c'::filelocal_bss in test_at_foo"
-	}
-	-re "No symbol \"scope0.c\" in current context.*$prompt $" {
-	    send "print '$srcdir/$subdir/scope0.c'::filelocal_bss\n"
-	    exp_continue
-	}
-	-re "$prompt $" {
-	    fail "print 'scope0.c'::filelocal_bss in test_at_foo"
-	    return
-	}
-	timeout {
-	    fail "(timeout) print 'scope0.c'::filelocal_bss in test_at_foo"
-	    return
-	}
+    if [gdb_test "print 'scope0.c'::filelocal_bss" "\\\$$decimal = 101" "print 'scope0.c'::filelocal_bss in test_at_foo"  "No symbol \"scope0.c\" in current context.*" "print '$srcdir/$subdir/scope0.c'::filelocal_bss"] { 
+      gdb_suppress_tests ; 
     }
+
 
     # Print scope0.c::filelocal_ro, which is 201
 
-    if {$gcc_compiled} then { setup_xfail "rs6000-*-*" }
+    if { [test_compiler_info gcc-*-*] } then { setup_xfail "rs6000-*-*" }
     setup_xfail "powerpc-*-*"
-    send "print 'scope0.c'::filelocal_ro\n"
-    expect {
-	-re "\\\$$decimal = 201\r\n$prompt $" { pass "print 'scope0.c'::filelocal_ro" }
-	-re "No symbol \"scope0.c\" in current context.*$prompt $" {
-	    send "print '$srcdir/$subdir/scope0.c'::filelocal_ro\n"
-	    exp_continue
-	}
-	-re "$prompt $" { fail "print 'scope0.c'::filelocal_ro" ; return }
-	timeout {
-	    fail "(timeout) print 'scope0.c'::filelocal_ro" ; return
-	}
+    if [gdb_test "print 'scope0.c'::filelocal_ro" "\\\$$decimal = 201" "print 'scope0.c'::filelocal_ro"  "No symbol \"scope0.c\" in current context.*" "print '$srcdir/$subdir/scope0.c'::filelocal_ro"] { 
+      gdb_suppress_tests ; 
     }
+
 
     gdb_test "print filelocal" "\\\$$decimal = 2" "print filelocal at foo"
 
     # Print scope1.c::filelocal, which is 2
 
-    if {$gcc_compiled} then { setup_xfail "rs6000-*-*" }
-    send "print 'scope1.c'::filelocal\n"
-    expect {
-	-re "\\\$$decimal = 2\r\n$prompt $" {
-	    pass "print 'scope1.c'::filelocal at foo"
-	}
-	-re "No symbol \"scope1.c\" in current context.*$prompt $" {
-	    send "print '$srcdir/$subdir/scope1.c'::filelocal\n"
-	    exp_continue
-	}
-	-re "$prompt $" { fail "print 'scope1.c'::filelocal at foo" ; return }
-	timeout {
-	    fail "(timeout) print 'scope1.c'::filelocal at foo" ; return
-	}
+    if { [test_compiler_info gcc-*-*] } then { setup_xfail "rs6000-*-*" }
+    if [gdb_test "print 'scope1.c'::filelocal" "\\\$$decimal = 2" "print 'scope1.c'::filelocal at foo"  "No symbol \"scope1.c\" in current context.*" "print '$srcdir/$subdir/scope1.c'::filelocal"] { 
+      gdb_suppress_tests ; 
     }
+
 
     gdb_test "print filelocal_bss" "\\\$$decimal = 102" \
 	"print filelocal_bss at foo"
 
-    if {$gcc_compiled} then { setup_xfail "rs6000-*-*" }
-    send "print 'scope1.c'::filelocal_bss\n"
-    expect {
-	-re "\\\$$decimal = 102\r\n$prompt $" {
-	    pass "print 'scope1.c'::filelocal_bss at foo"
-	}
-	-re "No symbol \"scope1.c\" in current context.*$prompt $" {
-	    send "print '$srcdir/$subdir/scope1.c'::filelocal_bss\n"
-	    exp_continue
-	}
-	-re "$prompt $" { fail "print 'scope1.c'::filelocal_bss at foo" }
-	timeout {
-	    fail "(timeout) print 'scope1.c'::filelocal_bss at foo"
-	}
-    }
+    if { [test_compiler_info gcc-*-*] } then { setup_xfail "rs6000-*-*" }
+    gdb_test "print 'scope1.c'::filelocal_bss" "\\\$$decimal = 102" "print 'scope1.c'::filelocal_bss at foo"  "No symbol \"scope1.c\" in current context.*" "print '$srcdir/$subdir/scope1.c'::filelocal_bss"
+
 
     gdb_test "print filelocal_ro" "\\\$$decimal = 202" \
 	"print filelocal_ro at foo"
 
-    if {$gcc_compiled} then { setup_xfail "rs6000-*-*" }
-    send "print 'scope1.c'::filelocal_ro\n"
-    expect {
-	-re "\\\$$decimal = 202\r\n$prompt $" { pass "print 'scope1.c'::filelocal_ro at foo" }
-	-re "No symbol \"scope1.c\" in current context.*$prompt $" {
-	    send "print '$srcdir/$subdir/scope1.c'::filelocal_ro\n"
-	    exp_continue
-	}
-	-re "$prompt $" { fail "print 'scope1.c'::filelocal_ro at foo" }
-	timeout {
-	    fail "(timeout) print 'scope1.c'::filelocal_ro at foo"
-	}
-    }
+    if { [test_compiler_info gcc-*-*] } then { setup_xfail "rs6000-*-*" }
+    gdb_test "print 'scope1.c'::filelocal_ro" "\\\$$decimal = 202" "print 'scope1.c'::filelocal_ro at foo"  "No symbol \"scope1.c\" in current context.*" "print '$srcdir/$subdir/scope1.c'::filelocal_ro"
+
 
     # Print scope1.c::foo::funclocal, which is 3
 
     gdb_test "print funclocal" "\\\$$decimal = 3" "print funclocal at foo"
 
-    if {!$gcc_compiled} then { setup_xfail "hppa*-*-hpux*" }
     gdb_test "print foo::funclocal" "\\\$$decimal = 3" \
 	"print foo::funclocal at foo"
 
-    if {$gcc_compiled} then { setup_xfail "rs6000-*-*" }
-    if {!$gcc_compiled} then { setup_xfail "hppa*-*-hpux*" }
-    send "print 'scope1.c'::foo::funclocal\n"
-    expect {
-	-re "\\\$$decimal = 3\r\n$prompt $" {
-	    pass "print 'scope1.c'::foo::funclocal at foo"
-	}
-	-re "No symbol \"scope1.c\" in current context.*$prompt $" {
-	    send "print '$srcdir/$subdir/scope1.c'::foo::funclocal\n"
-	    exp_continue
-	}
-	-re "$prompt $" { fail "print 'scope1.c'::foo::funclocal at foo" }
-	timeout {
-	    fail "(timeout) print 'scope1.c'::foo::funclocal at foo"
-	}
-    }
+    if { [test_compiler_info gcc-*-*] } then { setup_xfail "rs6000-*-*" }
+    gdb_test "print 'scope1.c'::foo::funclocal" "\\\$$decimal = 3" "print 'scope1.c'::foo::funclocal at foo"  "No symbol \"scope1.c\" in current context.*" "print '$srcdir/$subdir/scope1.c'::foo::funclocal"
+
 
     # Print scope1.c::foo::funclocal_bss, which is 103
 
     gdb_test "print funclocal_bss" "\\\$$decimal = 103" \
 	"print funclocal_bss at foo"
 
-    if {!$gcc_compiled} then { setup_xfail "hppa*-*-hpux*" }
     gdb_test "print foo::funclocal_bss" "\\\$$decimal = 103" \
 	"print foo::funclocal_bss at foo"
 
-    if {$gcc_compiled} then { setup_xfail "rs6000-*-*" }
-    if {!$gcc_compiled} then { setup_xfail "hppa*-*-hpux*" }
-    send "print 'scope1.c'::foo::funclocal_bss\n"
-    expect {
-	-re "\\\$$decimal = 103\r\n$prompt $" {
-	    pass "print 'scope1.c'::foo::funclocal_bss at foo"
-	}
-	-re "No symbol \"scope1.c\" in current context.*$prompt $" {
-	    send "print '$srcdir/$subdir/scope1.c'::foo::funclocal_bss\n"
-	    exp_continue
-	}
-	-re "$prompt $" {
-	    fail "print 'scope1.c'::foo::funclocal_bss at foo"
-	}
-	timeout {
-	    fail "(timeout) print 'scope1.c'::foo::funclocal_bss at foo"
-	}
-    }
+    if { [test_compiler_info gcc-*-*] } then { setup_xfail "rs6000-*-*" }
+    gdb_test "print 'scope1.c'::foo::funclocal_bss" "\\\$$decimal = 103" "print 'scope1.c'::foo::funclocal_bss at foo"  "No symbol \"scope1.c\" in current context.*" "print '$srcdir/$subdir/scope1.c'::foo::funclocal_bss"
+
 
     # Print scope1.c::foo::funclocal_ro, which is 203
 
     gdb_test "print funclocal_ro" "\\\$$decimal = 203" \
 	"print funclocal_ro at foo"
 
-    if {!$gcc_compiled} then { setup_xfail "hppa*-*-hpux*" }
     gdb_test "print foo::funclocal_ro" "\\\$$decimal = 203" \
 	"print foo::funclocal_ro at foo"
 
-    if {$gcc_compiled} then { setup_xfail "rs6000-*-*" }
-    if {!$gcc_compiled} then { setup_xfail "hppa*-*-hpux*" }
-    send "print 'scope1.c'::foo::funclocal_ro\n"
-    expect {
-	-re "\\\$$decimal = 203\r\n$prompt $" {
-	    pass "print 'scope1.c'::foo::funclocal_ro at foo"
-	}
-	-re "No symbol \"scope1.c\" in current context.*$prompt $" {
-	    send "print '$srcdir/$subdir/scope1.c'::foo::funclocal_ro\n"
-	    exp_continue
-	}
-	-re "$prompt $" { fail "print 'scope1.c'::foo::funclocal_ro at foo" }
-	timeout {
-	    fail "(timeout) print 'scope1.c'::foo::funclocal_ro at foo"
-	}
-    }
+    if { [test_compiler_info gcc-*-*] } then { setup_xfail "rs6000-*-*" }
+    gdb_test "print 'scope1.c'::foo::funclocal_ro" "\\\$$decimal = 203" "print 'scope1.c'::foo::funclocal_ro at foo"  "No symbol \"scope1.c\" in current context.*" "print '$srcdir/$subdir/scope1.c'::foo::funclocal_ro"
+
 
     # Print scope1.c::bar::funclocal, which is 4
 
-    if {!$gcc_compiled} then { setup_xfail "hppa*-*-hpux*" }
     gdb_test "print bar::funclocal" "\\\$$decimal = 4" \
 	"print bar::funclocal at foo"
 
-    if {$gcc_compiled} then { setup_xfail "rs6000-*-*" }
-    if {!$gcc_compiled} then { setup_xfail "hppa*-*-hpux*" }
-    send "print 'scope1.c'::bar::funclocal\n"
-    expect {
-	-re "\\\$$decimal = 4\r\n$prompt $" {
-	    pass "print 'scope1.c'::bar::funclocal at foo"
-	}
-	-re "No symbol \"scope1.c\" in current context.*$prompt $" {
-	    send "print '$srcdir/$subdir/scope1.c'::bar::funclocal\n"
-	    exp_continue
-	}
-	-re "$prompt $" { fail "print 'scope1.c'::bar::funclocal at foo" }
-	timeout {
-	    fail "(timeout) print 'scope1.c'::bar::funclocal at foo"
-	}
-    }
+    if { [test_compiler_info gcc-*-*] } then { setup_xfail "rs6000-*-*" }
+    gdb_test "print 'scope1.c'::bar::funclocal" "\\\$$decimal = 4" "print 'scope1.c'::bar::funclocal at foo"  "No symbol \"scope1.c\" in current context.*" "print '$srcdir/$subdir/scope1.c'::bar::funclocal"
+    gdb_stop_suppressing_tests;
+
 }
 
 proc test_at_bar {} {
-    global prompt
+    global gdb_prompt
     global decimal
     global det_file
     global srcdir
     global subdir
-    global gcc_compiled
 
-    send "next\n"
-    expect {
-	-re ".*$prompt $" {}
-	timeout { fail "(timeout) next in bar()" ; return }
+    if [gdb_test "next" ".*" "" ] { 
+      gdb_suppress_tests ; 
     }
+
 
     # Print scope0.c::filelocal, which is 1
 
-    send "print 'scope0.c'::filelocal\n"
-    expect {
-	-re "\\\$$decimal = 1\r\n$prompt $" {
-	    pass "print 'scope0.c'::filelocal at bar"
-	}
-	-re "No symbol \"scope0.c\" in current context.*$prompt $" {
-	    send "print '$srcdir/$subdir/scope0.c'::filelocal\n"
-	    exp_continue
-	}
-	-re "$prompt $" {
-	    fail "print 'scope0.c'::filelocal at bar" ; return
-	}
-	timeout {
-	    fail "(timeout) print 'scope0.c'::filelocal at bar" ; return
-	}
+    if [gdb_test "print 'scope0.c'::filelocal" "\\\$$decimal = 1" "print 'scope0.c'::filelocal at bar"  "No symbol \"scope0.c\" in current context.*" "print '$srcdir/$subdir/scope0.c'::filelocal"] { 
+      gdb_suppress_tests ; 
     }
+
 
    # Print scope0.c::filelocal_bss, which is 101
 
-    send "print 'scope0.c'::filelocal_bss\n"
-    expect {
-	-re "\\\$$decimal = 101\r\n$prompt $" {
-	    pass "print 'scope0.c'::filelocal_bss in test_at_bar"
-	}
-	-re "No symbol \"scope0.c\" in current context.*$prompt $" {
-	    send "print '$srcdir/$subdir/scope0.c'::filelocal_bss\n"
-	    exp_continue
-	}
-	-re "$prompt $" {
-	    fail "print 'scope0.c'::filelocal_bss in test_at_bar"
-	    return
-	}
-	timeout {
-	    fail "(timeout) print 'scope0.c'::filelocal_bss in test_at_bar"
-	    return
-	}
+    if [gdb_test "print 'scope0.c'::filelocal_bss" "\\\$$decimal = 101" "print 'scope0.c'::filelocal_bss in test_at_bar"  "No symbol \"scope0.c\" in current context.*" "print '$srcdir/$subdir/scope0.c'::filelocal_bss"] { 
+      gdb_suppress_tests ; 
     }
+
 
    # Print scope0.c::filelocal_ro, which is 201
 
-    if {$gcc_compiled} then { setup_xfail "rs6000-*-*" }
+    if { [test_compiler_info gcc-*-*] } then { setup_xfail "rs6000-*-*" }
     setup_xfail "powerpc-*-*"
-    send "print 'scope0.c'::filelocal_ro\n"
-    expect {
-	-re "\\\$$decimal = 201\r\n$prompt $" {
-	    pass "print 'scope0.c'::filelocal_ro at bar"
-	}
-	-re "No symbol \"scope0.c\" in current context.*$prompt $" {
-	    send "print '$srcdir/$subdir/scope0.c'::filelocal_ro\n"
-	    exp_continue
-	}
-	-re "$prompt $" {
-	    fail "print 'scope0.c'::filelocal_ro at bar" ; return
-	}
-	timeout {
-	    fail "(timeout) print 'scope0.c'::filelocal_ro at bar" ; return
-	}
+    if [gdb_test "print 'scope0.c'::filelocal_ro" "\\\$$decimal = 201" "print 'scope0.c'::filelocal_ro at bar"  "No symbol \"scope0.c\" in current context.*" "print '$srcdir/$subdir/scope0.c'::filelocal_ro"] { 
+      gdb_suppress_tests ; 
     }
+
 
     # Print scope1.c::filelocal, which is 2
 
-    send "print filelocal\n"
-    expect {
-	-re "\\\$$decimal = 2\r\n$prompt $" {
-	    pass "print filelocal at bar"
-	}
-	-re "$prompt $" {
-	    fail "print filelocal at bar" ; return
-	}
-	timeout {
-	    fail "(timeout) print filelocal at bar" ; return
-	}
+    if [gdb_test "print filelocal" "\\\$$decimal = 2" "print filelocal at bar" ] { 
+      gdb_suppress_tests ; 
     }
 
-    if {$gcc_compiled} then { setup_xfail "rs6000-*-*" }
-    send "print 'scope1.c'::filelocal\n"
-    expect {
-	-re "\\\$$decimal = 2\r\n$prompt $" {
-	    pass "print 'scope1.c'::filelocal at bar"
-	}
-	-re "No symbol \"scope1.c\" in current context.*$prompt $" {
-	    send "print '$srcdir/$subdir/scope1.c'::filelocal\n"
-	    exp_continue
-	}
-	-re "$prompt $" {
-	    fail "print 'scope1.c'::filelocal at bar" ; return
-	}
-	timeout {
-	    fail "(timeout) print 'scope1.c'::filelocal at bar" ; return
-	}
+
+    if { [test_compiler_info gcc-*-*] } then { setup_xfail "rs6000-*-*" }
+    if [gdb_test "print 'scope1.c'::filelocal" "\\\$$decimal = 2" "print 'scope1.c'::filelocal at bar"  "No symbol \"scope1.c\" in current context.*" "print '$srcdir/$subdir/scope1.c'::filelocal"] { 
+      gdb_suppress_tests ; 
     }
+
 
     # Print scope1.c::filelocal_bss, which is 102
 
-    send "print filelocal_bss\n"
-    expect {
-	-re "\\\$$decimal = 102\r\n$prompt $" {
-	    pass "print filelocal_bss at bar"
-	}
-	-re "$prompt $" {
-	    fail "print filelocal_bss at bar" ; return
-	}
-	timeout {
-	    fail "(timeout) print filelocal_bss at bar" ; return
-	}
+    if [gdb_test "print filelocal_bss" "\\\$$decimal = 102" "print filelocal_bss at bar" ] { 
+      gdb_suppress_tests ; 
     }
 
-    if {$gcc_compiled} then { setup_xfail "rs6000-*-*" }
-    send "print 'scope1.c'::filelocal_bss\n"
-    expect {
-	-re "\\\$$decimal = 102\r\n$prompt $" {
-	    pass "print 'scope1.c'::filelocal_bss at bar"
-	}
-	-re "No symbol \"scope1.c\" in current context.*$prompt $" {
-	    send "print '$srcdir/$subdir/scope1.c'::filelocal_bss\n"
-	    exp_continue
-	}
-	-re "$prompt $" {
-	    fail "print 'scope1.c'::filelocal_bss at bar" ; return
-	}
-	timeout {
-	    fail "(timeout) print 'scope1.c'::filelocal_bss at bar" ; return
-	}
+
+    if { [test_compiler_info gcc-*-*] } then { setup_xfail "rs6000-*-*" }
+    if [gdb_test "print 'scope1.c'::filelocal_bss" "\\\$$decimal = 102" "print 'scope1.c'::filelocal_bss at bar"  "No symbol \"scope1.c\" in current context.*" "print '$srcdir/$subdir/scope1.c'::filelocal_bss"] { 
+      gdb_suppress_tests ; 
     }
+
 
     # Print scope1.c::filelocal_ro, which is 202
 
-    send "print filelocal_ro\n"
-    expect {
-	-re "\\\$$decimal = 202\r\n$prompt $" {
-	    pass "print filelocal_ro in test_at_bar"
-	}
-	-re "$prompt $" {
-	    fail "print filelocal_ro in test_at_bar"
-	    return
-	}
-	timeout {
-	    fail "(timeout) print filelocal_ro in test_at_bar"
-	    return
-	}
+    if [gdb_test "print filelocal_ro" "\\\$$decimal = 202" "print filelocal_ro in test_at_bar" ] { 
+      gdb_suppress_tests ; 
     }
 
-    if {$gcc_compiled} then { setup_xfail "rs6000-*-*" }
-    send "print 'scope1.c'::filelocal_ro\n"
-    expect {
-	-re "\\\$$decimal = 202\r\n$prompt $" {
-	    pass "print 'scope1.c'::filelocal_ro at bar"
-	}
-	-re "No symbol \"scope1.c\" in current context.*$prompt $" {
-	    send "print '$srcdir/$subdir/scope1.c'::filelocal_ro\n"
-	    exp_continue
-	}
-	-re "$prompt $" {
-	    fail "print 'scope1.c'::filelocal_ro at bar" ; return
-	}
-	timeout {
-	    fail "(timeout) print 'scope1.c'::filelocal_ro at bar" ; return
-	}
+
+    if { [test_compiler_info gcc-*-*] } then { setup_xfail "rs6000-*-*" }
+    if [gdb_test "print 'scope1.c'::filelocal_ro" "\\\$$decimal = 202" "print 'scope1.c'::filelocal_ro at bar"  "No symbol \"scope1.c\" in current context.*" "print '$srcdir/$subdir/scope1.c'::filelocal_ro"] { 
+      gdb_suppress_tests ; 
     }
+
 
     # Print scope1.c::foo::funclocal, which is 3
 
-    if {!$gcc_compiled} then { setup_xfail "hppa*-*-hpux*" }
-    send "print foo::funclocal\n"
-    expect {
-	-re "\\\$$decimal = 3\r\n$prompt $" {
-	    pass "print foo::funclocal at bar"
-	}
-	-re "$prompt $" {
-	    fail "print foo::funclocal at bar" ; return
-	}
-	timeout {
-	    fail "(timeout) print foo::funclocal at bar" ; return
-	}
+    if [gdb_test "print foo::funclocal" "\\\$$decimal = 3" "print foo::funclocal at bar" ] { 
+      gdb_suppress_tests ; 
     }
 
-    if {$gcc_compiled} then { setup_xfail "rs6000-*-*" }
-    send "print 'scope1.c'::foo::funclocal\n"
-    expect {
-	-re "\\\$$decimal = 3\r\n$prompt $" {
-	    pass "print 'scope1.c'::foo::funclocal at bar"
-	}
-	-re "No symbol \"scope1.c\" in current context.*$prompt $" {
-	    send "print '$srcdir/$subdir/scope1.c'::foo::funclocal\n"
-	    exp_continue
-	}
-	-re "$prompt $" {
-	    fail "print 'scope1.c'::foo::funclocal at bar" ; return
-	}
-	timeout {
-	    fail "(timeout) print 'scope1.c'::foo::funclocal at bar" ; return
-	}
+
+    if { [test_compiler_info gcc-*-*] } then { setup_xfail "rs6000-*-*" }
+    if [gdb_test "print 'scope1.c'::foo::funclocal" "\\\$$decimal = 3" "print 'scope1.c'::foo::funclocal at bar"  "No symbol \"scope1.c\" in current context.*" "print '$srcdir/$subdir/scope1.c'::foo::funclocal"] { 
+      gdb_suppress_tests ; 
     }
+
 
     # Print scope1.c::foo::funclocal_bss, which is 103
 
-    send "print foo::funclocal_bss\n"
-    expect {
-	-re "\\\$$decimal = 103\r\n$prompt $" {
-	    pass "print foo::funclocal_bss at bar"
-	}
-	-re "$prompt $" {
-	    fail "print foo::funclocal_bss at bar" ; return
-	}
-	timeout {
-	    fail "(timeout) print foo::funclocal_bss at bar" ; return
-	}
+    if [gdb_test "print foo::funclocal_bss" "\\\$$decimal = 103" "print foo::funclocal_bss at bar" ] { 
+      gdb_suppress_tests ; 
     }
 
-    if {$gcc_compiled} then { setup_xfail "rs6000-*-*" }
-    send "print 'scope1.c'::foo::funclocal_bss\n"
-    expect {
-	-re "\\\$$decimal = 103\r\n$prompt $" {
-	    pass "print 'scope1.c'::foo::funclocal_bss at bar"
-	}
-	-re "No symbol \"scope1.c\" in current context.*$prompt $" {
-	    send "print '$srcdir/$subdir/scope1.c'::foo::funclocal_bss\n"
-	    exp_continue
-	}
-	-re "$prompt $" {
-	    fail "print 'scope1.c'::foo::funclocal_bss at bar" ; return
-	}
-	timeout {
-	    fail "(timeout) print 'scope1.c'::foo::funclocal_bss at bar" ; return
-	}
+
+    if { [test_compiler_info gcc-*-*] } then { setup_xfail "rs6000-*-*" }
+    if [gdb_test "print 'scope1.c'::foo::funclocal_bss" "\\\$$decimal = 103" "print 'scope1.c'::foo::funclocal_bss at bar"  "No symbol \"scope1.c\" in current context.*" "print '$srcdir/$subdir/scope1.c'::foo::funclocal_bss"] { 
+      gdb_suppress_tests ; 
     }
+
 
     # Print scope1.c::foo::funclocal_ro, which is 203
 
-    send "print foo::funclocal_ro\n"
-    expect {
-	-re "\\\$$decimal = 203\r\n$prompt $" {
-	    pass "print foo::funclocal_ro at bar"
-	}
-	-re "$prompt $" {
-	    fail "print foo::funclocal_ro at bar" ; return
-	}
-	timeout {
-	    fail "(timeout) print foo::funclocal_ro at bar" ; return
-	}
+    if [gdb_test "print foo::funclocal_ro" "\\\$$decimal = 203" "print foo::funclocal_ro at bar" ] { 
+      gdb_suppress_tests ; 
     }
 
-    if {$gcc_compiled} then { setup_xfail "rs6000-*-*" }
-    send "print 'scope1.c'::foo::funclocal_ro\n"
-    expect {
-	-re "\\\$$decimal = 203\r\n$prompt $" {
-	    pass "print 'scope1.c'::foo::funclocal_ro at bar"
-	}
-	-re "No symbol \"scope1.c\" in current context.*$prompt $" {
-	    send "print '$srcdir/$subdir/scope1.c'::foo::funclocal_ro\n"
-	    exp_continue
-	}
-	-re "$prompt $" {
-	    fail "print 'scope1.c'::foo::funclocal_ro at bar" ; return
-	}
-	timeout {
-	    fail "(timeout) print 'scope1.c'::foo::funclocal_ro at bar" ; return
-	}
+
+    if { [test_compiler_info gcc-*-*] } then { setup_xfail "rs6000-*-*" }
+    if [gdb_test "print 'scope1.c'::foo::funclocal_ro" "\\\$$decimal = 203" "print 'scope1.c'::foo::funclocal_ro at bar"  "No symbol \"scope1.c\" in current context.*" "print '$srcdir/$subdir/scope1.c'::foo::funclocal_ro"] { 
+      gdb_suppress_tests ; 
     }
+
 
     # Print scope1.c::bar::funclocal, which is 4
 
-    send "print funclocal\n"
-    expect {
-	-re "\\\$$decimal = 4\r\n$prompt $" {
-	    pass "print funclocal at bar"
-	}
-	-re "$prompt $" {
-	    fail "print funclocal at bar" ; return
-	}
-	timeout {
-	    fail "(timeout) print funclocal at bar" ; return
-	}
+    if [gdb_test "print funclocal" "\\\$$decimal = 4" "print funclocal at bar" ] { 
+      gdb_suppress_tests ; 
     }
 
-    send "print bar::funclocal\n"
-    expect {
-	-re "\\\$$decimal = 4\r\n$prompt $" {
-	    pass "print bar::funclocal at bar"
-	}
-	-re "$prompt $" {
-	    fail "print bar::funclocal at bar" ; return
-	}
-	timeout {
-	    fail "(timeout) print bar::funclocal at bar" ; return
-	}
+
+    if [gdb_test "print bar::funclocal" "\\\$$decimal = 4" "print bar::funclocal at bar" ] { 
+      gdb_suppress_tests ; 
     }
 
-    if {$gcc_compiled} then { setup_xfail "rs6000-*-*" }
-    send "print 'scope1.c'::bar::funclocal\n"
-    expect {
-	-re "\\\$$decimal = 4\r\n$prompt $" {
-	    pass "print 'scope1.c'::bar::funclocal at bar"
-	}
-	-re "No symbol \"scope1.c\" in current context.*$prompt $" {
-	    send "print '$srcdir/$subdir/scope1.c'::bar::funclocal\n"
-	    exp_continue
-	}
-	-re "$prompt $" {
-	    fail "print 'scope1.c'::bar::funclocal at bar" ; return
-	}
-	timeout {
-	    fail "(timeout) print 'scope1.c'::bar::funclocal at bar" ; return
-	}
+
+    if { [test_compiler_info gcc-*-*] } then { setup_xfail "rs6000-*-*" }
+    if [gdb_test "print 'scope1.c'::bar::funclocal" "\\\$$decimal = 4" "print 'scope1.c'::bar::funclocal at bar"  "No symbol \"scope1.c\" in current context.*" "print '$srcdir/$subdir/scope1.c'::bar::funclocal"] { 
+      gdb_suppress_tests ; 
     }
+
 
     # Print scope1.c::bar::funclocal_bss, which is 104
 
-    send "print funclocal_bss\n"
-    expect {
-	-re "\\\$$decimal = 104\r\n$prompt $" {
-	    pass "print funclocal_bss at bar"
-	}
-	-re "$prompt $" {
-	    fail "print funclocal_bss at bar" ; return
-	}
-	timeout {
-	    fail "(timeout) print funclocal_bss at bar" ; return
-	}
+    if [gdb_test "print funclocal_bss" "\\\$$decimal = 104" "print funclocal_bss at bar" ] { 
+      gdb_suppress_tests ; 
     }
 
-    send "print bar::funclocal_bss\n"
-    expect {
-	-re "\\\$$decimal = 104\r\n$prompt $" {
-	    pass "print bar::funclocal_bss at bar"
-	}
-	-re "$prompt $" {
-	    fail "print bar::funclocal_bss at bar" ; return
-	}
-	timeout {
-	    fail "(timeout) print bar::funclocal_bss at bar" ; return
-	}
+
+    if [gdb_test "print bar::funclocal_bss" "\\\$$decimal = 104" "print bar::funclocal_bss at bar" ] { 
+      gdb_suppress_tests ; 
     }
 
-    if {$gcc_compiled} then { setup_xfail "rs6000-*-*" }
-    send "print 'scope1.c'::bar::funclocal_bss\n"
-    expect {
-	-re "\\\$$decimal = 104\r\n$prompt $" {
-	    pass "print 'scope1.c'::bar::funclocal_bss at bar"
-	}
-	-re "No symbol \"scope1.c\" in current context.*$prompt $" {
-	    send "print '$srcdir/$subdir/scope1.c'::bar::funclocal_bss\n"
-	    exp_continue
-	}
-	-re "$prompt $" {
-	    fail "print 'scope1.c'::bar::funclocal_bss at bar" ; return
-	}
-	timeout {
-	    fail "(timeout) print 'scope1.c'::bar::funclocal_bss at bar" ; return
-	}
+
+    if { [test_compiler_info gcc-*-*] } then { setup_xfail "rs6000-*-*" }
+    if [gdb_test "print 'scope1.c'::bar::funclocal_bss" "\\\$$decimal = 104" "print 'scope1.c'::bar::funclocal_bss at bar"  "No symbol \"scope1.c\" in current context.*" "print '$srcdir/$subdir/scope1.c'::bar::funclocal_bss"] { 
+      gdb_suppress_tests ; 
     }
+    gdb_stop_suppressing_tests;
+
 }
 
 # This test has little to do with local scopes, but it is in scope.exp anyway.
 # That's life.
 
 proc test_at_autovars {} {
-    global prompt
+    global gdb_prompt
     global decimal
     global hex
     global srcfile
 
     # Test symbol table lookup with 100 local (auto) variables.
 
-    send "break marker1\n" ; expect -re ".*$prompt $"
+    gdb_breakpoint marker1
 
-    send "cont\n"
-    expect {
-	-re "Break.* marker1 \\(\\) at .*:$decimal.*$prompt $" {
-	    send "up\n"
-	    expect {
-		-re ".*$prompt $" {}
-		timeout { fail "(timeout) up from marker1" ; return }
-	    }
-	}
-	-re "$prompt $" { fail "continue to marker1" ; return }
-	timeout { fail "(timeout) continue to marker1" ; return }
+    if [gdb_test "cont" "Break.* marker1 \\(\\) at .*:$decimal.*" "continue to marker1"] {
+	gdb_suppress_tests;
+    }
+
+    if [gdb_test "up" ".*autovars.*" "up from marker1 in scope.exp" ] { 
+	gdb_suppress_tests ; 
     }
 
     set count 0
     while {$count < 100} {
-	send "print i$count\n"
-	expect {
-	    -re ".* = $count\r\n$prompt $" {}
-	    -re "$prompt $" {
-		fail "bad value for auto variable i$count"; return
-	    }
-	    timeout {
-		fail "(timeout) bad value for auto variable i$count"; return
-	    }
+	if [gdb_test "print i$count" ".* = $count" "" ] { 
+	  gdb_suppress_tests ; 
 	}
+
 	set count [expr $count+1]
     }
     clear_xfail "*-*-*"
@@ -955,26 +468,20 @@ proc test_at_autovars {} {
 }
 
 proc test_at_localscopes {} {
-    global prompt
+    global gdb_prompt
     global decimal
     global hex
     global srcfile
 
-    send "break marker2\n" ; expect -re ".*$prompt $"
-    send "break marker3\n" ; expect -re ".*$prompt $"
-    send "break marker4\n" ; expect -re ".*$prompt $"
+    gdb_breakpoint marker2
+    gdb_breakpoint marker3
+    gdb_breakpoint marker4
 
-    send "cont\n"
-    expect {
-	-re "Break.* marker2 \\(\\) at .*:$decimal.*$prompt $" {
-	    send "up\n"
-	    expect {
-		-re ".*$prompt $" {}
-		timeout { fail "(timeout) up from marker2" ; return }
-	    }
-	}
-	-re "$prompt $" { fail "continue to marker2" ; return }
-	timeout { fail "(timeout) continue to marker2" ; return }
+    if [gdb_test "cont" "Break.* marker2 \\(\\) at .*:$decimal.*" "continue to marker2"] {
+	gdb_suppress_tests;
+    }
+    if [gdb_test "up" ".*localscopes.*" "up from marker2 in scopes.exp" ] { 
+	gdb_suppress_tests ; 
     }
 
     # Should be at first (outermost) scope.  Check values.
@@ -987,8 +494,10 @@ proc test_at_localscopes {} {
 	"print localval3, outer scope"
 
     if [gdb_test "cont" "Break.* marker3 \\(\\) at .*:$decimal.*" \
-	"continue to marker3 in scope.exp"] then { return }
-    if [gdb_test "up" "" "up from marker3 in scope.exp"] then { return }
+	"continue to marker3 in scope.exp"] then { gdb_suppress_tests }
+    if [gdb_test "up" ".*localscopes.*" "up from marker3 in scope.exp"] { 
+	gdb_suppress_tests 
+    }
 
     # Should be at next (first nested) scope.  Check values.
 
@@ -1001,15 +510,17 @@ proc test_at_localscopes {} {
 
     # This test will only fail if the file was compiled by gcc, but
     # there's no way to check that.
-    setup_xfail "a29k-*-udi" 2423
     if [gdb_test "cont" "Break.* marker4.*at .*:$decimal.*" \
-	"continue to marker4 in scope.exp"] then { return }
-    if [gdb_test "up" "" "up from marker4 in scope.exp"] then { return }
+	"continue to marker4 in scope.exp"] then { gdb_suppress_tests }
+    if [gdb_test "up" ".*localscopes.*" "up from marker4 in scope.exp"] {
+	gdb_suppress_tests 
+    }
 
     gdb_test "print localval" " = 30" "print localval, innermost scope"
     gdb_test "print localval1" " = 11" "print localval1, innermost scope"
     gdb_test "print localval2" " = 12" "print localval2, innermost scope"
     gdb_test "print localval3" " = 13" "print localval3, innermost scope"
+    gdb_stop_suppressing_tests;
 }
 
 # Start with a fresh gdb.
@@ -1040,22 +551,13 @@ gdb_test "print 'scope0.c'::filelocal_ro" "= 201"
 # randomly fail.  We've already put remote-pa on the target stack,
 # so we actually read memory from the board.  Problem is crt0.o
 # is responsible for clearing bss and that hasnt' happened yet.
-setup_xfail "hppa*-*-*pro*"
-send "print 'scope0.c'::filelocal_bss\n"
-expect {
-    -re " = 0\r\n$prompt $" {
-	pass "print 'scope0.c'::filelocal_bss before run"
-    }
-    -re "Cannot access memory.*$prompt $" {
-	setup_xfail "*-*-*"
-	fail "print 'scope0.c'::filelocal_bss before run"
-    }
-    -re ".*$prompt $" {
-	fail "print 'scope0.c'::filelocal_bss before run"
-    }
-    default {
-	fail "print 'scope0.c'::filelocal_bss before run"
-    }
+#
+# This is a problem for all non-native targets. -- manson
+if [is_remote target] {
+    unsupported "print 'scope0.c'::filelocal_bss before run"
+} else {
+    gdb_test "print 'scope0.c'::filelocal_bss" "= 0" \
+	"print 'scope0.c'::filelocal_bss before run"
 }
 
 gdb_test "print 'scope0.c'::filelocal" "= 1" \

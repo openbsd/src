@@ -1,12 +1,8 @@
 # Host: Intel 386 running Solaris 2 (SVR4)
 
-XM_FILE= xm-i386v4.h
-XDEPFILES= 
+XM_FILE= xm-i386.h
 
-NAT_FILE= nm-i386v4.h
-NATDEPFILES= core-regset.o procfs.o fork-child.o i386v4-nat.o corelow.o
-
-# SVR4 comes standard with terminfo, and in some implementations, the
-# old termcap descriptions are incomplete.  So ensure that we use the
-# new terminfo interface and latest terminal descriptions.
-TERMCAP=-ltermlib
+NAT_FILE= nm-i386sol2.h
+NATDEPFILES= fork-child.o i386v4-nat.o \
+	procfs.o proc-api.o proc-events.o proc-flags.o proc-why.o gcore.o \
+        solib.o solib-svr4.o solib-legacy.o

@@ -34,30 +34,49 @@ char *arg;
 
 #else /* ! vxworks */
 #  include <stdio.h>
+#  include <stdlib.h>
 #endif /* ! vxworks */
 
+#ifdef PROTOTYPES
+int factorial (int);
+
+int
+main (int argc, char **argv, char **envp)
+#else
+int
 main (argc, argv, envp)
 int argc;
 char *argv[], **envp;
+#endif
 {
 #ifdef usestubs
     set_debug_traps();
     breakpoint();
 #endif
+#ifdef FAKEARGV
+    printf ("%d\n", factorial (1));
+#else    
     if (argc != 2) {
 	printf ("usage:  factorial <number>\n");
 	return 1;
     } else {
 	printf ("%d\n", factorial (atoi (argv[1])));
     }
+#endif
     return 0;
 }
 
-int factorial (value)
-int value;
+#ifdef PROTOTYPES
+int factorial (int value)
+#else
+int factorial (value) int value;
+#endif
 {
+    int  local_var;
+
     if (value > 1) {
 	value *= factorial (value - 1);
     }
+    local_var = value;
     return (value);
 }

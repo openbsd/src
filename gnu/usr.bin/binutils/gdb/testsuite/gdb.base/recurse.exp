@@ -1,4 +1,5 @@
-# Copyright (C) 1992, 1996 Free Software Foundation, Inc.
+# Copyright 1992, 1994, 1995, 1996, 1997, 1999, 2000
+# Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -12,7 +13,7 @@
 # 
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  
 
 # Please email any bugs, comments, and/or additions to this file to:
 # bug-gdb@prep.ai.mit.edu
@@ -29,9 +30,8 @@ set bug_id 0
 set testfile "recurse"
 set srcfile ${testfile}.c
 set binfile ${objdir}/${subdir}/${testfile}
-if  { [compile "${srcdir}/${subdir}/${srcfile} -g -o ${binfile}"] != "" } {
-    perror "Couldn't compile ${srcfile}"
-    return -1
+if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug}] != "" } {
+     gdb_suppress_entire_file "Testcase compile failed, so all tests in this file will automatically fail."
 }
 
 # Start with a fresh gdb.
@@ -42,6 +42,11 @@ gdb_reinitialize_dir $srcdir/$subdir
 gdb_load ${binfile}
 
 proc recurse_tests {} {
+
+    # Disable hardware watchpoints if necessary.
+    if [target_info exists gdb,no_hardware_watchpoints] {
+	gdb_test "set can-use-hw-watchpoints 0" "" ""
+    }
 
     if [runto recurse] then {
 	# First we need to step over the assignment of b, so it has a known
@@ -54,7 +59,7 @@ proc recurse_tests {} {
 	if [gdb_test "continue" \
 	    "Continuing.*\[Ww\]atchpoint.*: b.*Old value = 0.*New value = 10.*" \
 	    "continue to first instance watchpoint, first time"] then {
-	    return
+	    gdb_suppress_tests;
 	}
 
 	# Continue inward for a few iterations
@@ -80,7 +85,7 @@ proc recurse_tests {} {
 	if [gdb_test "continue" \
 	    "Continuing.*\[Ww\]atchpoint.*: b.*Old value = 0.*New value = 5.*"\
 	    "continue to second instance watchpoint, first time"] then {
-	    return
+	gdb_suppress_tests;
 	}
 
 	# Continue inward for a few iterations
@@ -97,45 +102,67 @@ proc recurse_tests {} {
 	if [gdb_test "continue" \
 	    "Continuing.*\[Ww\]atchpoint.*: b.*Old value = 5.*New value = 120.*return.*" \
 	    "continue to second instance watchpoint, second time"] then { 
-	    return
+	    gdb_suppress_tests;
 	}
 
 	# Continue again.  We should have a watchpoint go out of scope now
 	if [gdb_test "continue" \
 	    "Continuing.*\[Ww\]atchpoint.*deleted.*recurse \\(a=6\\) .*" \
 	    "second instance watchpoint deleted when leaving scope"] then {
-	    return
+	    gdb_suppress_tests;
 	}
 
 	# Continue until second set of b (first instance).
+	# 24320 is allowed as the final value for b as that's the value
+	# b would have on systems with 16bit integers.
+	#
+	# We could fix the test program to deal with this too.
 	if [gdb_test "continue" \
-	    "Continuing.*\[Ww\]atchpoint.*b.*Old value = 10.*New value = 3628800.*return.*" \
+	    "Continuing.*\[Ww\]atchpoint.*b.*Old value = 10.*New value = \(3628800|24320\).*return.*" \
 	    "continue to first instance watchpoint, second time"] then {
-	    return
+	    gdb_suppress_tests
 	}
 
-	# Continue again.  We should have a watchpoint go out of scope now
+	# Continue again.  We should have a watchpoint go out of scope now.
+	#
+	# The former version expected the test to return to main().
+	# Now it expects the test to return to main or to stop in the
+	# function's epilogue.
+	# 
+	# The problem is that gdb needs to (but doesn't) understand
+	# function epilogues in the same way as for prologues.
+	# 
+	# If there is no hardware watchpoint (such as a x86 debug register),
+	# then watchpoints are done "the hard way" by single-stepping the
+	# target until the value of the watched variable changes.  If you
+	# are single-stepping, you will eventually step into an epilogue.
+	# When you do that, the "top" stack frame may become partially
+	# deconstructed (as when you pop the frame pointer, for instance),
+	# and from that point on, GDB can no longer make sense of the stack.
+	# 
+	# A test which stops in the epilogue is trying to determine when GDB
+	# leaves the stack frame in which the watchpoint was created.  It does
+	# this basically by watching for the frame pointer to change.  When
+	# the frame pointer changes, the test expects to be back in main, but
+	# instead it is still in the epilogue of the callee.
 	if [gdb_test "continue" \
-	    "Continuing.*\[Ww\]atchpoint.*deleted.*main \\(\\) .*" \
+	    "Continuing.*\[Ww\]atchpoint.*deleted.*\(main \\(\\) \|21.*\}\).*" \
 	    "first instance watchpoint deleted when leaving scope"] then {
-	    return
+	    gdb_suppress_tests;
 	}
     }
+    gdb_stop_suppressing_tests;
 }
 
-# Only enabled for some targets merely because it has not been tested 
-# elsewhere.
-if {[istarget "sparc*-*-sunos4*"] || [istarget "hppa*-*-bsd*"]} then {
+# Preserve the old timeout, and set a new one that should be
+# sufficient to avoid timing out during this test.
+set oldtimeout $timeout
+set timeout [expr "$timeout + 60"]
+verbose "Timeout is now $timeout seconds" 2
 
-    # Preserve the old timeout, and set a new one that should be
-    # sufficient to avoid timing out during this test.
-    set oldtimeout $timeout
-    set timeout [expr "$timeout + 60"]
-    verbose "Timeout is now $timeout seconds" 2
+recurse_tests
 
-    recurse_tests
+# Restore the preserved old timeout value.
+set timeout $oldtimeout
+verbose "Timeout is now $timeout seconds" 2
 
-    # Restore the preserved old timeout value.
-    set timeout $oldtimeout
-    verbose "Timeout is now $timeout seconds" 2
-}

@@ -3,35 +3,27 @@
 
 @c @finalout
 
-@ifinfo
-@format
-START-INFO-DIR-ENTRY
-* Stabs: (stabs).                 The "stabs" debugging information format.
-END-INFO-DIR-ENTRY
-@end format
-@end ifinfo
+@c This is a dir.info fragment to support semi-automated addition of
+@c manuals to an info tree.
+@dircategory Programming & development tools.
+@direntry
+* Stabs: (stabs).                 The "stabs" debugging information format.   
+@end direntry
 
 @ifinfo
 This document describes the stabs debugging symbol tables.
 
-Copyright 1992, 1993 Free Software Foundation, Inc.
+Copyright 1992,1993,1994,1995,1997,1998,2000,2001
+   Free Software Foundation, Inc.
 Contributed by Cygnus Support.  Written by Julia Menapace, Jim Kingdon,
 and David MacKenzie.
 
-Permission is granted to make and distribute verbatim copies of
-this manual provided the copyright notice and this permission notice
-are preserved on all copies.
-
-@ignore
-Permission is granted to process this file through Tex and print the
-results, provided the printed document carries copying permission
-notice identical to this one except for the removal of this paragraph
-(this paragraph not being relevant to the printed manual).
-
-@end ignore
-Permission is granted to copy or distribute modified versions of this
-manual under the terms of the GPL (for which purpose this text may be
-regarded as a program in the language TeX).
+Permission is granted to copy, distribute and/or modify this document
+under the terms of the GNU Free Documentation License, Version 1.1 or
+any later version published by the Free Software Foundation; with no
+Invariant Sections, with no Front-Cover Texts, and with no Back-Cover
+Texts.  A copy of the license is included in the section entitled ``GNU
+Free Documentation License''.
 @end ifinfo
 
 @setchapternewpage odd
@@ -43,7 +35,7 @@ regarded as a program in the language TeX).
 @page
 @tex
 \def\$#1${{#1}}  % Kluge: collect RCS revision info without $...$
-\xdef\manvers{\$Revision: 1.3 $}  % For use in headers, footers too
+\xdef\manvers{\$Revision: 1.1.1.1 $}  % For use in headers, footers too
 {\parskip=0pt
 \hfill Cygnus Support\par
 \hfill \manvers\par
@@ -52,13 +44,15 @@ regarded as a program in the language TeX).
 @end tex
 
 @vskip 0pt plus 1filll
-Copyright @copyright{} 1992, 1993 Free Software Foundation, Inc.
+Copyright @copyright{} 1992,1993,1994,1995,1997,1998,2000,2001 Free Software Foundation, Inc.
 Contributed by Cygnus Support.
 
-Permission is granted to make and distribute verbatim copies of
-this manual provided the copyright notice and this permission notice
-are preserved on all copies.
-
+Permission is granted to copy, distribute and/or modify this document
+under the terms of the GNU Free Documentation License, Version 1.1 or
+any later version published by the Free Software Foundation; with no
+Invariant Sections, with no Front-Cover Texts, and with no Back-Cover
+Texts.  A copy of the license is included in the section entitled ``GNU
+Free Documentation License''.
 @end titlepage
 
 @ifinfo
@@ -79,15 +73,18 @@ This document describes the stabs debugging format.
 * Symbol Descriptors::		Table of symbol descriptors
 * Type Descriptors::		Table of type descriptors
 * Expanded Reference::		Reference information by stab type
-* Questions::			Questions and anomolies
-* Sun Differences::		Differences between GNU stabs and Sun
-                                native stabs
+* Questions::			Questions and anomalies
 * Stab Sections::		In some object file formats, stabs are
                                 in sections.
 * Symbol Types Index::          Index of symbolic stab symbol type names.
+* GNU Free Documentation License::  The license for this documentation
 @end menu
 @end ifinfo
 
+@c TeX can handle the contents at the start but makeinfo 3.12 can not
+@iftex
+@contents
+@end iftex
 
 @node Overview
 @chapter Overview of Stabs
@@ -240,14 +237,25 @@ type is about to be defined.  Any other values following the
 a number follows the @samp{=} then the number is a @var{type-reference}.
 For a full description of types, @ref{Types}.
 
+A @var{type-number} is often a single number.  The GNU and Sun tools
+additionally permit a @var{type-number} to be a pair
+(@var{file-number},@var{filetype-number}) (the parentheses appear in the
+string, and serve to distinguish the two cases).  The @var{file-number}
+is 0 for the base source file, 1 for the first included file, 2 for the
+next, and so on.  The @var{filetype-number} is a number starting with
+1 which is incremented for each new type defined in the file.
+(Separating the file number and the type number permits the
+@code{N_BINCL} optimization to succeed more often; see @ref{Include
+Files}).
+
 There is an AIX extension for type attributes.  Following the @samp{=}
 are any number of type attributes.  Each one starts with @samp{@@} and
 ends with @samp{;}.  Debuggers, including AIX's dbx and GDB 4.10, skip
 any type attributes they do not recognize.  GDB 4.9 and other versions
-of dbx may not do this.  Because of a conflict with C++
+of dbx may not do this.  Because of a conflict with C@t{++}
 (@pxref{Cplusplus}), new attributes should not be defined which begin
 with a digit, @samp{(}, or @samp{-}; GDB may be unable to distinguish
-those from the C++ type descriptor @samp{@@}.  The attributes are:
+those from the C@t{++} type descriptor @samp{@@}.  The attributes are:
 
 @table @code
 @item a@var{boundary}
@@ -272,6 +280,12 @@ Indicate that this type is a string instead of an array of characters,
 or a bitstring instead of a set.  It doesn't change the layout of the
 data being represented, but does enable the debugger to know which type
 it is.
+
+@item V
+Indicate that this type is a vector instead of an array.  The only 
+major difference between vectors and arrays is that vectors are
+passed by value instead of by reference (vector coprocessor extension).
+
 @end table
 
 All of this can make the string field quite long.  All versions of GDB,
@@ -416,7 +430,7 @@ Some compilers (for example, GCC2 and SunOS4 @file{/bin/cc}) also
 include the directory in which the source was compiled, in a second
 @code{N_SO} symbol preceding the one containing the file name.  This
 symbol can be distinguished by the fact that it ends in a slash.  Code
-from the @code{cfront} C++ compiler can have additional @code{N_SO} symbols for
+from the @code{cfront} C@t{++} compiler can have additional @code{N_SO} symbols for
 nonexistent source files after the @code{N_SO} for the real source file;
 these are believed to contain no useful information.
 
@@ -463,7 +477,7 @@ the start of this one.  To specify the main source file again, use an
 @findex N_EXCL
 The @code{N_BINCL} approach works as follows.  An @code{N_BINCL} symbol
 specifies the start of an include file.  In an object file, only the
-string is significant; the Sun linker puts data into some of the other
+string is significant; the linker puts data into some of the other
 fields.  The end of the include file is marked by an @code{N_EINCL}
 symbol (which has no string field).  In an object file, there is no
 significant data in the @code{N_EINCL} symbol.  @code{N_BINCL} and
@@ -472,17 +486,18 @@ significant data in the @code{N_EINCL} symbol.  @code{N_BINCL} and
 If the linker detects that two source files have identical stabs between
 an @code{N_BINCL} and @code{N_EINCL} pair (as will generally be the case
 for a header file), then it only puts out the stabs once.  Each
-additional occurance is replaced by an @code{N_EXCL} symbol.  I believe
-the Sun (SunOS4, not sure about Solaris) linker is the only one which
-supports this feature.
+additional occurrence is replaced by an @code{N_EXCL} symbol.  I believe
+the GNU linker and the Sun (both SunOS4 and Solaris) linker are the only
+ones which supports this feature.
 
-The SunOS4 linker sets the value of a @code{N_BINCL} symbol to the total
-of all the characters in the stabs strings included in the header file,
-omitting the file number.  The value of an @code{N_EXCL} symbol is the
-same as the value of the @code{N_BINCL} symbol it replaces.  I do not
-know if this information is used by anything.  The @code{N_EINCL} value,
-and the values of the other and description fields for all three, appear
-to always be zero.
+A linker which supports this feature will set the value of a
+@code{N_BINCL} symbol to the total of all the characters in the stabs
+strings included in the header file, omitting any file numbers.  The
+value of an @code{N_EXCL} symbol is the same as the value of the
+@code{N_BINCL} symbol it replaces.  This information can be used to
+match up @code{N_EXCL} and @code{N_BINCL} symbols which have the same
+filename.  The @code{N_EINCL} value, and the values of the other and
+description fields for all three, appear to always be zero.
 
 @findex C_BINCL
 @findex C_EINCL
@@ -631,6 +646,15 @@ code of the procedure.  This stab is in turn directly followed by a
 group of other stabs describing elements of the procedure.  These other
 stabs describe the procedure's parameters, its block local variables, and
 its block structure.
+
+If functions can appear in different sections, then the debugger may not
+be able to find the end of a function.  Recent versions of GCC will mark
+the end of a function with an @code{N_FUN} symbol with an empty string
+for the name.  The value is the address of the end of the current
+function.  Without such a symbol, there is no indication of the address
+of the end of a function, and you must assume that it ended at the
+starting address of the next function or at the end of the text section
+for the program.
 
 @node Nested Procedures
 @section Nested Procedures
@@ -852,9 +876,9 @@ produces the following stabs:
 .stabn 224,0,0,LBE2             # @r{224 is N_RBRAC}
 @end example
 
-For more information on the @code{N_FUN} stab, see @xref{Procedures},
-and for more information on the @code{N_LBRAC} and
-@code{N_RBRAC} stabs, see @ref{Block Structure}.
+See @ref{Procedures} for more information on the @code{N_FUN} stab, and
+@ref{Block Structure} for more information on the @code{N_LBRAC} and
+@code{N_RBRAC} stabs.
 
 @node Global Variables
 @section Global Variables
@@ -1296,7 +1320,7 @@ of specifying builtin types do not specify everything that a debugger
 would need to know about the type---in some cases they merely specify
 enough information to distinguish the type from other types.
 
-The traditional way to define builtin types is convolunted, so new ways
+The traditional way to define builtin types is convoluted, so new ways
 have been invented to describe them.  Sun's @code{acc} uses special
 builtin type descriptors (@samp{b} and @samp{R}), and IBM uses negative
 type numbers.  GDB accepts all three ways, as of version 4.8; dbx just
@@ -1304,7 +1328,7 @@ accepts the traditional builtin types and perhaps one of the other two
 formats.  The following sections describe each of these formats.
 
 @menu
-* Traditional Builtin Types::	Put on your seatbelts and prepare for kludgery
+* Traditional Builtin Types::	Put on your seat belts and prepare for kludgery
 * Builtin Type Descriptors::	Builtin types with special type descriptors
 * Negative Type Numbers::	Builtin types using negative type numbers
 @end menu
@@ -1458,7 +1482,7 @@ IEEE 64-bit (double precision) floating point format.
 These are for complex numbers.  A comment in the GDB source describes
 them as Fortran @code{complex}, @code{double complex}, and
 @code{complex*16}, respectively, but what does that mean?  (i.e., Single
-precision?  Double precison?).
+precision?  Double precision?).
 
 @item 6 (NF_LDOUBLE)
 Long double.  This should probably only be used for Sun format
@@ -1741,7 +1765,7 @@ Another way is with the @samp{x} type descriptor, which is followed by
 @samp{s} for a structure tag, @samp{u} for a union tag, or @samp{e} for
 a enumerator tag, followed by the name of the tag, followed by @samp{:}.
 If the name contains @samp{::} between a @samp{<} and @samp{>} pair (for
-C++ templates), such a @samp{::} does not end the name---only a single
+C@t{++} templates), such a @samp{::} does not end the name---only a single
 @samp{:} ends the name; see @ref{Nested Symbols}.
 
 For example, the following C declarations:
@@ -1797,7 +1821,7 @@ The bound is passed by value on the stack at offset @var{offset} from
 the argument list.
 
 @item a @var{register-number}
-The bound is pased by reference in register number
+The bound is passed by reference in register number
 @var{register-number}.
 
 @item t @var{register-number}
@@ -1990,9 +2014,9 @@ The encoding of structures in stabs can be shown with an example.
 
 The following source code declares a structure tag and defines an
 instance of the structure in global scope. Then a @code{typedef} equates the
-structure tag with a new type.  Seperate stabs are generated for the
+structure tag with a new type.  Separate stabs are generated for the
 structure tag, the structure @code{typedef}, and the structure instance.  The
-stabs for the tag and the @code{typedef} are emited when the definitions are
+stabs for the tag and the @code{typedef} are emitted when the definitions are
 encountered.  Since the structure elements are not initialized, the
 stab and code for the structure variable itself is located at the end
 of the program in the bss section.
@@ -2016,8 +2040,9 @@ definition narrows the symbol type to structure.
 
 Following the @samp{s} type descriptor is the number of bytes the
 structure occupies, followed by a description of each structure element.
-The structure element descriptions are of the form @var{name:type}, @var{bit
-offset from the start of the struct}, @var{number of bits in the element}.
+The structure element descriptions are of the form
+@samp{@var{name}:@var{type}, @var{bit offset from the start of the
+struct}, @var{number of bits in the element}}.
 
 @c FIXME: phony line break.  Can probably be fixed by using an example
 @c with fewer fields.
@@ -2032,18 +2057,18 @@ types.  For these, the type following the @samp{@var{name}:} part of the
 element description is a simple type reference.  The other two structure
 elements are new types.  In this case there is a type definition
 embedded after the @samp{@var{name}:}.  The type definition for the
-array element looks just like a type definition for a standalone array.
+array element looks just like a type definition for a stand-alone array.
 The @code{s_next} field is a pointer to the same kind of structure that
 the field is an element of.  So the definition of structure type 16
 contains a type definition for an element which is a pointer to type 16.
 
-If a field is a static member (this is a C++ feature in which a single
+If a field is a static member (this is a C@t{++} feature in which a single
 variable appears to be a field of every structure of a given type) it
 still starts out with the field name, a colon, and the type, but then
 instead of a comma, bit position, comma, and bit size, there is a colon
 followed by the name of the variable which each such field refers to.
 
-If the structure has methods (a C++ feature), they follow the non-method
+If the structure has methods (a C@t{++} feature), they follow the non-method
 fields; see @ref{Cplusplus}.
 
 @node Typedefs
@@ -2060,7 +2085,8 @@ For example,
 @end example
 
 specifies that @code{s_typedef} refers to type number 16.  Such stabs
-have symbol type @code{N_LSYM} (or @code{C_DECL} for XCOFF).
+have symbol type @code{N_LSYM} (or @code{C_DECL} for XCOFF).  (The Sun
+documentation mentions using @code{N_GSYM} in some cases).
 
 If you are specifying the tag name for a structure, union, or
 enumeration, use the @samp{T} symbol descriptor instead.  I believe C is
@@ -2098,7 +2124,7 @@ The stab for the union tag, however, is located preceding the code for
 the procedure in which it is defined.  The stab type is @code{N_LSYM}.  This
 would seem to imply that the union type is file scope, like the struct
 type @code{s_tag}.  This is not true.  The contents and position of the stab
-for @code{u_type} do not convey any infomation about its procedure local
+for @code{u_type} do not convey any information about its procedure local
 scope.
 
 @c FIXME: phony line break.  Can probably be fixed by using an example
@@ -2114,8 +2140,8 @@ the stab describes an enumeration, structure, or union tag.  The type
 descriptor @samp{u}, following the @samp{23=} of the type definition,
 narrows it down to a union type definition.  Following the @samp{u} is
 the number of bytes in the union.  After that is a list of union element
-descriptions.  Their format is @var{name:type}, @var{bit offset into the
-union}, @var{number of bytes for the element;}.
+descriptions.  Their format is @samp{@var{name}:@var{type}, @var{bit
+offset into the union}, @var{number of bytes for the element};}.
 
 The stab for the union variable is:
 
@@ -2363,7 +2389,7 @@ Symnum n_type n_othr n_desc n_value  n_strx String
 @end example
 
 @node Cplusplus
-@chapter GNU C++ Stabs
+@chapter GNU C@t{++} Stabs
 
 @menu
 * Class Names::			C++ class names are both tags and typedefs.
@@ -2377,15 +2403,15 @@ Symnum n_type n_othr n_desc n_value  n_strx String
 * Protections::
 * Method Modifiers::
 * Virtual Methods::
-* Inheritence::
+* Inheritance::
 * Virtual Base Classes::
 * Static Members::
 @end menu
 
 @node Class Names
-@section C++ Class Names
+@section C@t{++} Class Names
 
-In C++, a class name which is declared with @code{class}, @code{struct},
+In C@t{++}, a class name which is declared with @code{class}, @code{struct},
 or @code{union}, is not only a tag, as in C, but also a type name.  Thus
 there should be stabs with both @samp{t} and @samp{T} symbol descriptors
 (@pxref{Typedefs}).
@@ -2394,7 +2420,7 @@ To save space, there is a special abbreviation for this case.  If the
 @samp{T} symbol descriptor is followed by @samp{t}, then the stab
 defines both a type name and a tag.
 
-For example, the C++ code
+For example, the C@t{++} code
 
 @example
 struct foo @{int x;@};
@@ -2416,7 +2442,7 @@ or
 @node Nested Symbols
 @section Defining a Symbol Within Another Type
 
-In C++, a symbol (such as a type name) can be defined within another type.
+In C@t{++}, a symbol (such as a type name) can be defined within another type.
 @c FIXME: Needs example.
 
 In stabs, this is sometimes represented by making the name of a symbol
@@ -2431,12 +2457,12 @@ then @code{foo::bar::baz} is the name of the symbol, @samp{t} is the
 symbol descriptor, and @samp{5=*6} is the type information.
 
 @node Basic Cplusplus Types
-@section Basic Types For C++
+@section Basic Types For C@t{++}
 
 << the examples that follow are based on a01.C >>
 
 
-C++ adds two more builtin types to the set defined for C.  These are
+C@t{++} adds two more builtin types to the set defined for C.  These are
 the unknown type and the vtable record type.  The unknown type, type
 16, is defined in terms of itself like the void type.
 
@@ -2447,7 +2473,7 @@ pfn, and delta2.  pfn is the function pointer.
 << In boilerplate $vtbl_ptr_type, what are the fields delta,
 index, and delta2 used for? >>
 
-This basic type is present in all C++ programs even if there are no
+This basic type is present in all C@t{++} programs even if there are no
 virtual methods defined.
 
 @display
@@ -2477,8 +2503,8 @@ virtual methods defined.
 @node Simple Classes
 @section Simple Class Definition
 
-The stabs describing C++ language features are an extension of the
-stabs describing C.  Stabs representing C++ class types elaborate
+The stabs describing C@t{++} language features are an extension of the
+stabs describing C.  Stabs representing C@t{++} class types elaborate
 extensively on the stab format used to describe structure types in C.
 Stabs representing class type variables look just like stabs
 representing C language variables.
@@ -2500,20 +2526,20 @@ stab is not located between an @code{N_FUN} and an @code{N_LBRAC} stab this indi
 that the class is defined at file scope.  If it were, then the @code{N_LSYM}
 would signify a local variable.
 
-A stab describing a C++ class type is similar in format to a stab
+A stab describing a C@t{++} class type is similar in format to a stab
 describing a C struct, with each class member shown as a field in the
 structure.  The part of the struct format describing fields is
-expanded to include extra information relevent to C++ class members.
+expanded to include extra information relevant to C@t{++} class members.
 In addition, if the class has multiple base classes or virtual
 functions the struct format outside of the field parts is also
 augmented.
 
-In this simple example the field part of the C++ class stab
+In this simple example the field part of the C@t{++} class stab
 representing member data looks just like the field part of a C struct
 stab.  The section on protections describes how its format is
 sometimes extended for member data.
 
-The field part of a C++ class stab representing a member function
+The field part of a C@t{++} class stab representing a member function
 differs substantially from the field part of a C struct stab.  It
 still begins with @samp{name:} but then goes on to define a new type number
 for the member function, describe its return type, its argument types,
@@ -2538,9 +2564,9 @@ The name ends with a period, and any characters except the period can
 occur in the @var{operator-name} string.
 
 The next part of the method description represents the arguments to the
-method, preceeded by a colon and ending with a semi-colon.  The types of
+method, preceded by a colon and ending with a semi-colon.  The types of
 the arguments are expressed in the same way argument types are expressed
-in C++ name mangling.  In this example an @code{int} and a @code{char}
+in C@t{++} name mangling.  In this example an @code{int} and a @code{char}
 map to @samp{ic}.
 
 This is followed by a number, a letter, and an asterisk or period,
@@ -2574,7 +2600,7 @@ information present for virtual methods.
 @node Class Instance
 @section Class Instance
 
-As shown above, describing even a simple C++ class definition is
+As shown above, describing even a simple C@t{++} class definition is
 accomplished by massively extending the stab format used in C to
 describe structure types.  However, once the class is defined, C stabs
 with no modifications can be used to describe class instances.  The
@@ -2601,7 +2627,7 @@ different from a standard C stab describing a local variable.
 @node Methods
 @section Method Definition
 
-The class definition shown above declares Ameth.  The C++ source below
+The class definition shown above declares Ameth.  The C@t{++} source below
 defines Ameth:
 
 @example
@@ -2630,7 +2656,7 @@ mangling.
 @c GDB.  But gpcompare.texi doesn't seem to be in the FSF GCC.
 
 @example
-.stabs "name:symbol_desriptor(global function)return_type(int)",
+.stabs "name:symbol_descriptor(global function)return_type(int)",
         N_FUN, NIL, NIL, code_addr_of_method_start
 
 .stabs "Ameth__5baseAic:F1",36,0,0,_Ameth__5baseAic
@@ -2639,8 +2665,8 @@ mangling.
 Here is the stab for the @code{this} pointer implicit argument.  The
 name of the @code{this} pointer is always @code{this}.  Type 19, the
 @code{this} pointer is defined as a pointer to type 20, @code{baseA},
-but a stab defining @code{baseA} has not yet been emited.  Since the
-compiler knows it will be emited shortly, here it just outputs a cross
+but a stab defining @code{baseA} has not yet been emitted.  Since the
+compiler knows it will be emitted shortly, here it just outputs a cross
 reference to the undefined symbol, by prefixing the symbol name with
 @samp{xs}.
 
@@ -2669,16 +2695,21 @@ pointer.
 @node Method Type Descriptor
 @section The @samp{#} Type Descriptor
 
-This is like the @samp{f} type descriptor for functions (@pxref{Function
-Types}), except that a function which uses the @samp{#} type descriptor
-takes an extra argument as its first argument, for the @code{this}
-pointer.  The @samp{#} type descriptor is optionally followed by the
-types of the arguments, then another @samp{#}.  If the types of the
-arguments are omitted, so that the second @samp{#} immediately follows
-the @samp{#} which is the type descriptor, the arguments are being
-omitted (to save space) and can be deduced from the mangled name of the
-method.  After the second @samp{#} there is type information for the
-return type of the method and a semicolon.
+This is used to describe a class method.  This is a function which takes
+an extra argument as its first argument, for the @code{this} pointer.
+
+If the @samp{#} is immediately followed by another @samp{#}, the second
+one will be followed by the return type and a semicolon.  The class and
+argument types are not specified, and must be determined by demangling
+the name of the method if it is available.
+
+Otherwise, the single @samp{#} is followed by the class type, a comma,
+the return type, a comma, and zero or more parameter types separated by
+commas.  The list of arguments is terminated by a semicolon.  In the
+debugging output generated by gcc, a final argument type of @code{void}
+indicates a method which does not take a variable number of arguments.
+If the final argument type of @code{void} does not appear, the method
+was declared with an ellipsis.
 
 Note that although such a type will normally be used to describe fields
 in structures, unions, or classes, for at least some versions of the
@@ -2687,15 +2718,26 @@ compiler it can also be used in other contexts.
 @node Member Type Descriptor
 @section The @samp{@@} Type Descriptor
 
-The @samp{@@} type descriptor is for a member (class and variable) type.
-It is followed by type information for the offset basetype, a comma, and
-type information for the type of the field being pointed to.  (FIXME:
-this is acknowledged to be gibberish.  Can anyone say what really goes
-here?).
+The @samp{@@} type descriptor is used together with the @samp{*} type
+descriptor for a pointer-to-non-static-member-data type.  It is followed
+by type information for the class (or union), a comma, and type
+information for the member data.
+
+The following C@t{++} source:
+
+@smallexample
+typedef int A::*int_in_a;
+@end smallexample
+
+generates the following stab:
+
+@smallexample
+.stabs "int_in_a:t20=*21=@@19,1",128,0,0,0
+@end smallexample
 
 Note that there is a conflict between this and type attributes
 (@pxref{String Field}); both use type descriptor @samp{@@}.
-Fortunately, the @samp{@@} type descriptor used in this C++ sense always
+Fortunately, the @samp{@@} type descriptor used in this C@t{++} sense always
 will be followed by a digit, @samp{(}, or @samp{-}, and type attributes
 never start with those things.
 
@@ -2703,9 +2745,9 @@ never start with those things.
 @section Protections
 
 In the simple class definition shown above all member data and
-functions were publicly accessable.  The example that follows
-contrasts public, protected and privately accessable fields and shows
-how these protections are encoded in C++ stabs.
+functions were publicly accessible.  The example that follows
+contrasts public, protected and privately accessible fields and shows
+how these protections are encoded in C@t{++} stabs.
 
 If the character following the @samp{@var{field-name}:} part of the
 string is @samp{/}, then the next character is the visibility.  @samp{0}
@@ -2719,7 +2761,7 @@ an optimized out field with a private or protected visibility).
 Visibility @samp{9} is not supported by GDB 4.11; this should be fixed
 in the next GDB release.
 
-The following C++ source:
+The following C@t{++} source:
 
 @example
 class vis @{
@@ -2747,9 +2789,9 @@ The @code{prot} field has protected visibility (@samp{/1}), type char
 (@samp{2}) and offset and size @samp{,32,8;}.  The @code{pub} field has
 type float (@samp{12}), and offset and size @samp{,64,32;}.
 
-Protections for member functions are signified by one digit embeded in
+Protections for member functions are signified by one digit embedded in
 the field part of the stab describing the method.  The digit is 0 if
-private, 1 if protected and 2 if public.  Consider the C++ class
+private, 1 if protected and 2 if public.  Consider the C@t{++} class
 definition below:
 
 @example
@@ -2773,7 +2815,7 @@ descriptors apply to the class name struct tag and struct type.
         meth_name::type_def(22)=sym_desc(method)returning(int);
         :args(int);protection(private)modifier(normal)virtual(no);
         meth_name::type_def(23)=sym_desc(method)returning(char);
-        :args(char);protection(protected)modifier(normal)virual(no);
+        :args(char);protection(protected)modifier(normal)virtual(no);
         meth_name::type_def(24)=sym_desc(method)returning(float);
         :args(float);protection(public)modifier(normal)virtual(no);;",
         N_LSYM,NIL,NIL,NIL
@@ -2814,7 +2856,7 @@ This class is described by the following stab:
         meth_name(VolatileMeth)::type_def(22)=sym_desc(method)
         returning(char);:arg(char);protection(public)modifier(volatile)virt(no)
         meth_name(ConstVolMeth)::type_def(23)=sym_desc(method)
-        returning(float);:arg(float);protection(public)modifer(const volatile)
+        returning(float);:arg(float);protection(public)modifier(const volatile)
         virtual(no);;", @dots{}
 @end display
 
@@ -2847,7 +2889,7 @@ struct is @samp{Adat}, an integer, starting at structure offset 0 and
 occupying 32 bits.
 
 The second field in the class struct is not explicitly defined by the
-C++ class definition but is implied by the fact that the class
+C@t{++} class definition but is implied by the fact that the class
 contains a virtual method.  This field is the vtable pointer.  The
 name of the vtable pointer field starts with @samp{$vf} and continues with a
 type reference to the class it is part of.  In this example the type
@@ -2859,7 +2901,7 @@ This is in turn defined as a pointer to another new type (22).
 
 Type 22 is the vtable itself, which is defined as an array, indexed by
 a range of integers between 0 and 1, and whose elements are of type
-17.  Type 17 was the vtable record type defined by the boilerplate C++
+17.  Type 17 was the vtable record type defined by the boilerplate C@t{++}
 type definitions, as shown earlier.
 
 The bit offset of the vtable pointer field is 32.  The number of bits
@@ -2877,7 +2919,7 @@ The first number represents the vtable index of the method.  This is a
 semi-colon.
 
 The second number is a type reference to the first base class in the
-inheritence hierarchy defining the virtual member function.  In this
+inheritance hierarchy defining the virtual member function.  In this
 case the class stab describes a base class so the virtual function is
 not overriding any other definition of the method.  Therefore the
 reference is to the type number of the class that the stab is
@@ -2889,7 +2931,7 @@ third marks the end of the struct definition.
 
 For classes containing virtual functions the very last section of the
 string part of the stab holds a type reference to the first base
-class.  This is preceeded by @samp{~%} and followed by a final semi-colon.
+class.  This is preceded by @samp{~%} and followed by a final semi-colon.
 
 @display
 .stabs "class_name(A):type_def(20)=sym_desc(struct)struct_bytes(8)
@@ -2910,22 +2952,22 @@ class.  This is preceeded by @samp{~%} and followed by a final semi-colon.
         A_virt::23=##1;:i;2A*-2147483647;20;;;~%20;",128,0,0,0
 @end example
 
-@node Inheritence
-@section Inheritence
+@node Inheritance
+@section Inheritance
 
-Stabs describing C++ derived classes include additional sections that
-describe the inheritence hierarchy of the class.  A derived class stab
+Stabs describing C@t{++} derived classes include additional sections that
+describe the inheritance hierarchy of the class.  A derived class stab
 also encodes the number of base classes.  For each base class it tells
-if the base class is virtual or not, and if the inheritence is private
+if the base class is virtual or not, and if the inheritance is private
 or public.  It also gives the offset into the object of the portion of
 the object corresponding to each base class.
 
-This additional information is embeded in the class stab following the
+This additional information is embedded in the class stab following the
 number of bytes in the struct.  First the number of base classes
 appears bracketed by an exclamation point and a comma.
 
 Then for each base type there repeats a series: a virtual character, a
-visibilty character, a number, a comma, another number, and a
+visibility character, a number, a comma, another number, and a
 semi-colon.
 
 The virtual character is @samp{1} if the base class is virtual and
@@ -3003,11 +3045,11 @@ the derivation of this class is encoded as follows.
 @display
 .stabs "derived_class_name:symbol_descriptors(struct tag&type)=
         type_descriptor(struct)struct_bytes(32)!num_bases(3),
-        base_virtual(no)inheritence_public(no)base_offset(0),
+        base_virtual(no)inheritance_public(no)base_offset(0),
         base_class_type_ref(A);
-        base_virtual(yes)inheritence_public(no)base_offset(NIL),
+        base_virtual(yes)inheritance_public(no)base_offset(NIL),
         base_class_type_ref(B);
-        base_virtual(no)inheritence_public(yes)base_offset(64),
+        base_virtual(no)inheritance_public(yes)base_offset(64),
         base_class_type_ref(C); @dots{}
 @end display
 
@@ -3022,10 +3064,10 @@ the derivation of this class is encoded as follows.
 @node Virtual Base Classes
 @section Virtual Base Classes
 
-A derived class object consists of a concatination in memory of the data
+A derived class object consists of a concatenation in memory of the data
 areas defined by each base class, starting with the leftmost and ending
 with the rightmost in the list of base classes.  The exception to this
-rule is for virtual inheritence.  In the example above, class @code{D}
+rule is for virtual inheritance.  In the example above, class @code{D}
 inherits virtually from base class @code{B}.  This means that an
 instance of a @code{D} object will not contain its own @code{B} part but
 merely a pointer to a @code{B} part, known as a virtual base pointer.
@@ -3244,13 +3286,13 @@ GNU Modula2 definition module dependency; see @ref{N_DEFD}.
 Function start/body/end line numbers (Solaris2).
 
 @item 0x50     N_EHDECL
-GNU C++ exception variable; see @ref{N_EHDECL}.
+GNU C@t{++} exception variable; see @ref{N_EHDECL}.
 
 @item 0x50     N_MOD2
 Modula2 info "for imc" (according to Ultrix V4.0); see @ref{N_MOD2}.
 
 @item 0x54     N_CATCH
-GNU C++ @code{catch} clause; see @ref{N_CATCH}.
+GNU C@t{++} @code{catch} clause; see @ref{N_CATCH}.
 
 @item 0x60     N_SSYM
 Structure of union element; see @ref{N_SSYM}.
@@ -3344,7 +3386,7 @@ for more information about their use.
 Variable on the stack; see @ref{Stack Variables}.
 
 @item :
-C++ nested symbol; see @xref{Nested Symbols}.
+C@t{++} nested symbol; see @xref{Nested Symbols}.
 
 @item a
 Parameter passed by reference in register; see @ref{Reference Parameters}.
@@ -3357,7 +3399,7 @@ Constant; see @ref{Constants}.
 
 @item C
 Conformant array bound (Pascal, maybe other languages); @ref{Conformant
-Arrays}.  Name of a caught exception (GNU C++).  These can be
+Arrays}.  Name of a caught exception (GNU C@t{++}).  These can be
 distinguished because the latter uses @code{N_CATCH} and the former uses
 another symbol type.
 
@@ -3458,17 +3500,17 @@ Type reference; see @ref{String Field}.
 Reference to builtin type; see @ref{Negative Type Numbers}.
 
 @item #
-Method (C++); see @ref{Method Type Descriptor}.
+Method (C@t{++}); see @ref{Method Type Descriptor}.
 
 @item *
 Pointer; see @ref{Miscellaneous Types}.
 
 @item &
-Reference (C++).
+Reference (C@t{++}).
 
 @item @@
 Type Attributes (AIX); see @ref{String Field}.  Member (class and variable)
-type (GNU C++); see @ref{Member Type Descriptor}.
+type (GNU C@t{++}); see @ref{Member Type Descriptor}.
 
 @item a
 Array; see @ref{Arrays}.
@@ -3479,7 +3521,7 @@ Open array; see @ref{Arrays}.
 @item b
 Pascal space type (AIX); see @ref{Miscellaneous Types}.  Builtin integer
 type (Sun); see @ref{Builtin Type Descriptors}.  Const and volatile
-qualfied type (OS9000).
+qualified type (OS9000).
 
 @item B
 Volatile-qualified type; see @ref{Miscellaneous Types}.
@@ -3573,7 +3615,7 @@ Wide character; see @ref{Builtin Type Descriptors}.
 Cross-reference; see @ref{Cross-References}.
 
 @item Y
-Used by IBM's xlC C++ compiler (for structures, I think).
+Used by IBM's xlC C@t{++} compiler (for structures, I think).
 
 @item z
 gstring; see @ref{Strings}.
@@ -3715,7 +3757,7 @@ if it is imported with the GNU M2 keyword @code{%INITIALIZE}.  Perhaps
 
 @deffn @code{.stabs} N_EHDECL
 @findex N_EHDECL
-GNU C++ exception variable <<?>>.
+GNU C@t{++} exception variable <<?>>.
 
 "@var{string} is variable name"
 
@@ -3737,9 +3779,9 @@ Note: conflicts with @code{N_EHDECL}  <<?>>
 
 @deffn @code{.stabn} N_CATCH
 @findex N_CATCH
-GNU C++ @code{catch} clause
+GNU C@t{++} @code{catch} clause
 
-GNU C++ @code{catch} clause.  The value is its address.  The desc field
+GNU C@t{++} @code{catch} clause.  The value is its address.  The desc field
 is nonzero if this entry is immediately followed by a @code{CAUGHT} stab
 saying what exception was caught.  Multiple @code{CAUGHT} stabs means
 that multiple exceptions can be caught here.  If desc is 0, it means all
@@ -3828,36 +3870,17 @@ In GNU C stabs, there seems to be no way to differentiate tag types:
 structures, unions, and enums (symbol descriptor @samp{T}) and typedefs
 (symbol descriptor @samp{t}) defined at file scope from types defined locally
 to a procedure or other more local scope.  They all use the @code{N_LSYM}
-stab type.  Types defined at procedure scope are emited after the
+stab type.  Types defined at procedure scope are emitted after the
 @code{N_RBRAC} of the preceding function and before the code of the
 procedure in which they are defined.  This is exactly the same as
 types defined in the source file between the two procedure bodies.
-GDB overcompensates by placing all types in block #1, the block for
+GDB over-compensates by placing all types in block #1, the block for
 symbols of file scope.  This is true for default, @samp{-ansi} and
 @samp{-traditional} compiler options. (Bugs gcc/1063, gdb/1066.)
 
 @item
 What ends the procedure scope?  Is it the proc block's @code{N_RBRAC} or the
 next @code{N_FUN}?  (I believe its the first.)
-@end itemize
-
-@node Sun Differences
-@appendix Differences Between GNU Stabs and Sun Native Stabs
-
-@c FIXME: Merge all this stuff into the main body of the document.
-
-@itemize @bullet
-@item
-GNU C stabs define @emph{all} types, file or procedure scope, as
-@code{N_LSYM}.  Sun doc talks about using @code{N_GSYM} too.
-
-@item
-Sun C stabs use type number pairs in the format
-(@var{file-number},@var{type-number}) where @var{file-number} is a
-number starting with 1 and incremented for each sub-source file in the
-compilation.  @var{type-number} is a number starting with 1 and
-incremented for each new type defined in the compilation.  GNU C stabs
-use the type number alone, with no source file number.
 @end itemize
 
 @node Stab Sections
@@ -3928,17 +3951,25 @@ header @code{sh_type} member set to @code{SHT_STRTAB} to mark it as a
 string table.  SOM and COFF have no way of linking the sections together
 or marking them as string tables.
 
-For COFF, the @code{.stab} and @code{.stabstr} sections are simply
+For COFF, the @code{.stab} and @code{.stabstr} sections may be simply
 concatenated by the linker.  GDB then uses the @code{n_desc} fields to
 figure out the extent of the original sections.  Similarly, the
 @code{n_value} fields of the header symbols are added together in order
 to get the actual position of the strings in a desired @code{.stabstr}
-section.  Although this design obviates any need for the linker to relocate
-or otherwise manipulate @code{.stab} and @code{.stabstr} sections, it also
-requires some care to ensure that the offsets are calculated correctly.
-For instance, if the linker were to pad in between the @code{.stabstr}
-sections before concatenating, then the offsets to strings in the middle
-of the executable's @code{.stabstr} section would be wrong.
+section.  Although this design obviates any need for the linker to
+relocate or otherwise manipulate @code{.stab} and @code{.stabstr}
+sections, it also requires some care to ensure that the offsets are
+calculated correctly.  For instance, if the linker were to pad in
+between the @code{.stabstr} sections before concatenating, then the
+offsets to strings in the middle of the executable's @code{.stabstr}
+section would be wrong.
+
+The GNU linker is able to optimize stabs information by merging
+duplicate strings and removing duplicate header file information
+(@pxref{Include Files}).  When some versions of the GNU linker optimize
+stabs in sections, they remove the leading @code{N_UNDF} symbol and
+arranges for all the @code{n_strx} fields to be relative to the start of
+the @code{.stabstr} section.
 
 @node ELF Linker Relocation
 @appendixsec Having the Linker Relocate Stabs in ELF 
@@ -3995,10 +4026,21 @@ is no more work than having the linker relocate ELF symbols, and it
 solves the problem of having to associate the ELF and stab symbols.
 However, no one has yet designed or implemented such a scheme.
 
+@raisesections
+@include fdl.texi
+@lowersections
+
 @node Symbol Types Index
 @unnumbered Symbol Types Index
 
 @printindex fn
 
+@c TeX can handle the contents at the start but makeinfo 3.12 can not
+@ifinfo
 @contents
+@end ifinfo
+@ifhtml
+@contents
+@end ifhtml
+
 @bye

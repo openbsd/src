@@ -1,0 +1,65 @@
+# Copyright 2004 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  
+
+# This file is part of the gdb testsuite.
+
+# This contains tests for breakpoints in C++.
+
+if $tracelevel then {
+        strace $tracelevel
+        }
+
+if { [skip_cplus_tests] } { continue }
+
+#
+# test running programs
+#
+set prms_id 0
+set bug_id 0
+
+set testfile "breakpoint"
+set srcfile ${testfile}.cc
+set binfile ${objdir}/${subdir}/${testfile}
+
+if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug c++}] != "" } {
+     gdb_suppress_entire_file "Testcase compile failed, so all tests in this file will automatically fail."
+}
+
+if [get_compiler_info ${binfile} "c++"] {
+    return -1
+}
+
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+gdb_load ${binfile}
+
+proc test_breakpoint {name} {
+    # Restart the program every time, so that a single failure doesn't
+    # lead to a cascade.
+    if ![runto_main] then {
+	perror "couldn't run to main when testing ${name}"
+	continue
+    } else {
+	gdb_breakpoint "${name}"
+	gdb_test "continue" "Continuing.\r\n\r\nBreakpoint \[0-9\]*, ${name}.*" "continue to ${name}"
+    }
+}
+
+test_breakpoint "C1::Nested::foo"
+
+gdb_exit
+return 0

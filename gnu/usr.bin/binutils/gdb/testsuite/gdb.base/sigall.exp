@@ -1,4 +1,4 @@
-#   Copyright (C) 1995 Free Software Foundation, Inc.
+#   Copyright 1995, 1996, 1997, 1999 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -12,12 +12,12 @@
 # 
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  
 
-if $nosignals {
-	verbose "Skipping sigall.exp because of nosignals."
-	continue
-	}
+if [target_info exists gdb,nosignals] {
+    verbose "Skipping sigall.exp because of nosignals."
+    continue
+}
 
 if $tracelevel then {
 	strace $tracelevel
@@ -26,14 +26,15 @@ if $tracelevel then {
 set prms_id 0
 set bug_id 0
 
+gdb_exit
+gdb_start
 gdb_reinitialize_dir $srcdir/$subdir
 
 set testfile sigall
 set srcfile ${testfile}.c
 set binfile ${objdir}/${subdir}/${testfile}
-if  { [compile "${srcdir}/${subdir}/${srcfile} -g -o ${binfile}"] != "" } {
-    perror "Couldn't compile ${srcfile}"
-    return -1
+if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug}] != "" } {
+     gdb_suppress_entire_file "Testcase compile failed, so all tests in this file will automatically fail."
 }
 
 # Make the first signal SIGABRT because it is always supported.
@@ -42,7 +43,7 @@ set thissig "ABRT"
 
 proc test_one_sig {nextsig} {
     global sig_supported
-    global prompt
+    global gdb_prompt
     global thissig
 
     set this_sig_supported $sig_supported
@@ -54,15 +55,15 @@ proc test_one_sig {nextsig} {
     set need_another_continue 1
     set missed_handler 0
     if $this_sig_supported then {
-	send "continue\n"
+	send_gdb "continue\n"
 	if { $thissig == "IO" } {
-	    setup_xfail "i*86-*-linuxoldld" "i*86-*-linuxaout"
+	    setup_xfail "i*86-pc-linuxoldld-gnu" "i*86-pc-linuxaout-gnu"
 	}
-	expect {
-	    -re "Continuing.*Program received signal SIG$thissig.*$prompt $" {
+	gdb_expect {
+	    -re "Continuing.*Program received signal SIG$thissig.*$gdb_prompt $" {
 		pass "get signal $thissig"
 	    }
-	    -re ".*$prompt $" {
+	    -re ".*$gdb_prompt $" {
 		fail "get signal $thissig"
 		set need_another_continue 0
 	    }
@@ -84,19 +85,19 @@ proc test_one_sig {nextsig} {
     }
 
     if $need_another_continue then {
-	send "continue\n"
+	send_gdb "continue\n"
 	if { $thissig == "URG" } {
-	    setup_xfail "i*86-*-linuxoldld" "i*86-*-linuxaout"
+	    setup_xfail "i*86-pc-linuxoldld-gnu" "i*86-pc-linuxaout-gnu"
 	}
         # Either Lynx or GDB screws up on SIGPRIO
 	if { $thissig == "PRIO" } {
 	    setup_xfail "*-*-*lynx*"
 	}
-	expect {
-	    -re "Breakpoint.*handle_$thissig.*$prompt $" {
+	gdb_expect {
+	    -re "Breakpoint.*handle_$thissig.*$gdb_prompt $" {
 		pass "send signal $thissig"
 	    }
-	    -re "Breakpoint.*gen_$nextsig.*kill.*$prompt $" {
+	    -re "Breakpoint.*gen_$nextsig.*kill.*$gdb_prompt $" {
 		fail "missed breakpoint at handle_$thissig"
 		set missed_handler 1
 	    }
@@ -104,17 +105,17 @@ proc test_one_sig {nextsig} {
     }
 
     if { $missed_handler == "0" } then {
-        send "signal 0\n"
-        expect {
-	    -re "Breakpoint.*gen_$nextsig.*kill.*$prompt $" {
+        send_gdb "signal 0\n"
+        gdb_expect {
+	    -re "Breakpoint.*gen_$nextsig.*kill.*$gdb_prompt $" {
 	        pass "advance to $nextsig"
 	        set sig_supported 1
 	    }
-	    -re "Breakpoint.*gen_$nextsig.*handle.*$prompt $" {
+	    -re "Breakpoint.*gen_$nextsig.*handle.*$gdb_prompt $" {
 	        pass "advance to $nextsig"
 	        set sig_supported 0
 	    }
-	    -re ".*$prompt $" { fail "advance to $nextsig" }
+	    -re ".*$gdb_prompt $" { fail "advance to $nextsig" }
 	    default { fail "advance to $nextsig (eof or timeout)" }
         }
     }
@@ -204,6 +205,6 @@ gdb_test "continue" \
     "Continuing.*Program received signal SIGTERM.*" \
     "get signal TERM"
 gdb_test "continue" "Breakpoint.*handle_TERM.*" "send signal TERM"
-gdb_test "continue" "Program exited normally\\." "continue to sigall exit"
+gdb_continue_to_end "continue to sigall exit"
 
 return 0

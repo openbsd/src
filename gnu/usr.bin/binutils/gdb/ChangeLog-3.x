@@ -3769,7 +3769,7 @@ Mon Dec 12 13:21:02 1988  Randall Smith  (randy at gluteus.ai.mit.edu)
 	* inflow.c (terminal_inferior): Checked *all* return codes from
 	ioctl's and fcntl's in routine.
 
-	* inflow.c (terminal_inferior): Added check for success of
+	* inflow.c (terminal_inferior): Added check for sucess of
 	TIOCSPGRP ioctl call.  Just notifies if bad.
 
 	* dbxread.c (symbol_file_command): Close was getting called twice;
@@ -3962,79 +3962,71 @@ Sun Dec  4 17:03:16 1988  Randall Smith  (randy at gluteus.ai.mit.edu)
 
 	* createtags: Cleaned up and commented.
 
-	* Makefile: Updated depen_memory and write_inferior_memory in that errno is
-	checked after each ptrace and returned to the caller.  Used in
-	value_at to detect references to addresses which are out of
-	bounds.  Also core.c (xfer_core_file): return 1 if invalid
-	address, 0 otherwise.
+	* Makefile: Updated dependency list and cleaned it up somewhat
+	(used macros, didn't make .o files depend on .c files, etc.)
 
-	* inflow.c, <machine>-infdep.c: removed all calls to ptrace from
-	inflo, m-sun3.h:  Cleaned up dealings with
-	functions returning structu0 19:19:36 1988  Peter TerMaat  (pete at corn-chex.ai.mit.edu)
+Fri Dec  2 11:44:46 1988  Randall Smith  (randy at apple-gunkies.ai.mit.edu)
 
-	* symmisc.c: (read_symsegs) Accept only format number 2.  Since
-	the size of the type structure changed when C++ support was added,
-	format 1 can no longer be used.
+	* value.h, values.c, infcmd.c, valops.c, m-i386.h, m-sparc.h,
+	m-merlin.h, m-npl.h, m-pn.h, m-umax.h, m-vax.h, m-hp9k320.h,
+	m-isi.h, m-news.h, m-sun2.h, m-sun3.h:  Cleaned up dealings with
+	functions returning structures.  Specifically: Added a function
+	called using_struct_return which indicates whether the function
+	being called is using the structure returning conventions or it is
+	using the value returning conventions on that machine.  Added a
+	macro, STORE_STRUCT_RETURN to store the address of the structure
+	to be copied into wherever it's supposed to go, and changed
+	call_function to handle all of this correctly.
 
-	* core.c, m-sunos4.h: (core_file_command) support for SunOS 4.0.
-	Slight change in the core structure.  #ifdef SUNOS4.  New file
-	m-sunos4.h.  May want to change config.gdb also.
+	* symseg.h, symtab.h, dbxread.c: Added hooks to recognize an
+	N_TEXT symbol with name "*gcc-compiled*" as being a flag
+	indicating that a file had been compiled with gcc and setting a
+	flag in all blocks produced during processing of that file.
 
-Fri Jul  8 19:59:49 1988  Peter TerMaat  (pete at corn-chex.ai.mit.edu)
+Thu Dec  1 13:54:29 1988  Randall Smith  (randy at apple-gunkies.ai.mit.edu)
 
-	* breakpoint.c: (break_command_1) Allow `break if condition'
-	rather than parsing `if' as a function name and returning an
-	error.
+	* m-sparc.h (PUSH_DUMMY_FRAME): Saved 8 less than the current pc,
+	as POP_FRAME and sparc return convention restore the pc to 8 more
+	than the value saved.
 
-Thu Jul  7 22:22:47 1988  Peter TerMaat  (pete at corn-chex.ai.mit.edu)
+	* valops.c, printcmd.c, findvar.c, value.h: Added the routine
+	value_from_register, to access a specific register of a specific
+	frame as containing a specific type, and used it in read_var_value
+	and print_frame_args.
 
-	* C++: valops.c, valprint.c, value.h, values.c: merged code to deal
-	with C++ expressions.
+Wed Nov 30 17:39:50 1988  Randall Smith  (randy at apple-gunkies.ai.mit.edu)
 
-Wed Jul  6 03:28:18 1988  Peter TerMaat  (pete at corn-chex.ai.mit.edu)
+	* dbxread.c (read_number): Will accept either the argument passed
+	as an ending character, or a null byte as an ending character.
 
-        * C++: dbxread.c: (read_dbx_symtab, condense_misc_bunches,
-	add_file_command)  Merged code to read symbol information from
-	an incrementally linked file.  symmisc.c:
-	(init_free_inclink_symtabs, free_inclink_symtabs) Cleanup
-	routines.
+	* Makefile, createtags: Added entry to create tags for gdb
+	distribution which will make sure currently configured machine
+	dependent files come first in the list.
 
-Tue Jul  5 02:50:41 1988  Peter TerMaat  (pete at corn-chex.ai.mit.edu)
+Wed Nov 23 13:27:34 1988  Randall Smith  (randy at gluteus.ai.mit.edu)
 
-	* C++: symtab.c, breakpoint.c, source.c:  Merged code to deal with
-	ambiguous line specifications.  In C++ one can have overloaded
-	function names, so that `list classname::overloadedfuncname'
-	refers to several different lines, possibly  sure currently configured machine
-	dependent files come first in e at corn-chex.ai.mit.edu)
+	* stack.c, infcmd.c, sparc-dep.c: Modified record_selected_frame
+	to work off of frame address.
 
-	* C++: symtab.c: replaced lookup_symtab_1 and lookup_symtab_2 with
-	a modified lookup_symbol which checks for fields of the current
-	implied argument `this'.  printcmd.c, source.c, symtab.c,
-	valops.c: Need to change callers once callers are
-	installed. 
+	* blockframe.c (create_new_frame, get_prev_frame_cache_item):
+	Added code to reset pointers within frame cache if it must be
+	realloc'd. 
 
-Wed Jun 29 01:26:56 1988  Peter TerMaat  (pete at frosted-flakes.ai.mit.edu)
+	* dbxread.c (read_dbx_symtab): Added in optimization comparing
+	last couple of characters instead of first couple to avoid
+	strcmp's in read_dbx_symtab (recording extern syms in misc
+	functions or not).  1 call to strlen is balanced out by many fewer
+	calls to strcmp.
 
-	* C++: eval.c, expprint.c, expread.y, expression.h, valarith.c, 
-	Merged code to deal with evaluation of user-defined operators,
-	member functions, and virtual functions.
-	binop_must_be_user_defined tests for user-defined binops, 
-	value_x_binop calls the appropriate operator function. 
+Tue Nov 22 16:40:14 1988  Randall Smith  (randy at cream-of-wheat.ai.mit.edu)
 
-Tue Jun 28 02:56:42 1988  Peter TerMaat  (pete at frosted-flakes.ai.mit.edu)
+	* dbxread.c (read_dbx_symtab): Took out optimization for ignoring
+	LSYM's; was disallowing typedefs.  Silly me.  
 
-	* C++: Makefile: changed the echo: expect 101 shift/reduce conflicts 
-	and 1 reduce/reduce conflict.
+	* Checkpointed distribution (mostly for sending to Tiemann).
 
-
-Local Variables:
-mode: indented-text
-eval: (auto-fill-mode 1)
-left-margin: 8
-fill-column: 74
-version-control: never
-End:
- ng destructors and
+	* expression.h: Added BINOP_MIN and BINOP_MAX operators for C++.
+	* symseg.h: Included flags for types having destructors and
 		constructors, and flags being defined via public and via
 		virtual paths.  Added fields NEXT_VARIANT, N_BASECLASSES,
 		and BASECLASSES to this type (tr: Changed types from

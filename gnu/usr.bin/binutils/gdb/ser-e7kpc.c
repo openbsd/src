@@ -1,6 +1,6 @@
-/* Remote serial interface using Hitachi E7000 PC ISA card in a PC
-
-   Copyright 1994 Free Software Foundation, Inc.
+/* Remote serial interface using Renesas E7000 PC ISA card in a PC
+   Copyright 1994, 1996, 1997, 1998, 1999, 2000
+   Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -16,40 +16,31 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 59 Temple Place - Suite 330,
+   Boston, MA 02111-1307, USA.  */
 
-#if defined(__GO32__) || defined(__WIN32__)
-#if defined(__WIN32__)
-//#define KERNEL
-//#define STRICT
-//#include <windows.h>
-/* we define the 32-bit calls which thunk to 16-bit dll calls 
- */
-#include "win-e7kpc.h"
-/* msvc uses strnicmp instead */
-#define strncasecmp strnicmp
-#else
-#include <sys/dos.h>
 #include "defs.h"
-#endif
+#if defined __GO32__ || defined _WIN32
 #include "serial.h"
+#include "gdb_string.h"
 
+#ifdef _WIN32
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#endif
 
-static int e7000pc_open PARAMS ((serial_t scb, const char *name));
-static void e7000pc_raw PARAMS ((serial_t scb));
-static int e7000pc_readchar PARAMS ((serial_t scb, int timeout));
-static int e7000pc_setbaudrate PARAMS ((serial_t scb, int rate));
-static int e7000pc_write PARAMS ((serial_t scb, const char *str, int len));
-static void e7000pc_close PARAMS ((serial_t scb));
-static serial_ttystate e7000pc_get_tty_state PARAMS ((serial_t scb));
-static int e7000pc_set_tty_state PARAMS ((serial_t scb, serial_ttystate state));
-static char *aptr PARAMS ((short p));
+#ifdef __GO32__
+#include <sys/dos.h>
+#endif
 
-static int dos_async_init PARAMS ((int port));
-static void dos_async_tx PARAMS ((const char c));
-static int dos_async_rx PARAMS (());
-
-
+static int e7000pc_open (struct serial *scb, const char *name);
+static void e7000pc_raw (struct serial *scb);
+static int e7000pc_readchar (struct serial *scb, int timeout);
+static int e7000pc_setbaudrate (struct serial *scb, int rate);
+static int e7000pc_write (struct serial *scb, const char *str, int len);
+static void e7000pc_close (struct serial *scb);
+static serial_ttystate e7000pc_get_tty_state (struct serial *scb);
+static int e7000pc_set_tty_state (struct serial *scb, serial_ttystate state);
 
 #define OFF_DPD 	0x0000
 #define OFF_DDP 	0x1000
@@ -63,103 +54,115 @@ static int dos_async_rx PARAMS (());
 #define OFF_READY  	0x300c
 #define OFF_PON    	0x300e
 
-#define IDLE       0x0000           
-#define CMD_CI     0x4349           
-#define CMD_CO     0x434f           
-#define CMD_LO     0x4c4f           
-#define CMD_LS     0x4c53           
-#define CMD_SV     0x5356           
-#define CMD_SS     0x5353           
-#define CMD_OK     0x4f4b           
-#define CMD_ER     0x4552           
-#define CMD_NF     0x4e46           
-#define CMD_AB     0x4142           
-#define CMD_ED     0x4544           
-#define CMD_CE     0x4345           
+#define IDLE       0x0000
+#define CMD_CI     0x4349
+#define CMD_CO     0x434f
+#define CMD_LO     0x4c4f
+#define CMD_LS     0x4c53
+#define CMD_SV     0x5356
+#define CMD_SS     0x5353
+#define CMD_OK     0x4f4b
+#define CMD_ER     0x4552
+#define CMD_NF     0x4e46
+#define CMD_AB     0x4142
+#define CMD_ED     0x4544
+#define CMD_CE     0x4345
 
 static unsigned long fa;
 static unsigned long irqtod;
 static unsigned long ready;
 static unsigned long fb;
-static unsigned long cpd ;
-static unsigned long cdp ;
+static unsigned long cpd;
+static unsigned long cdp;
 static unsigned long ready;
 static unsigned long pon;
 static unsigned long irqtop;
 static unsigned long board_at;
 
-#ifdef __WIN32__
-// These routines are normally part of the go32 dos extender.
-// We redefine them here to be calls into their Windoze equivs.
-static void dosmemget(int offset, int length, void *buffer);
-static void dosmemput(const void *buffer, int length, int offset);
-
-void dosmemget(int offset, int length, void *buffer)
-{
-    win_mem_get(buffer, length, offset);
-}
-void dosmemput(const void *buffer, int length, int offset)
-{
-    win_mem_put (buffer, length, offset);
-}
-
-#endif
+#ifdef __GO32__
 
 #define SET_BYTE(x,y)   { char _buf = y;dosmemput(&_buf,1, x);}
 #define SET_WORD(x,y)   { short _buf = y;dosmemput(&_buf,2, x);}
 #define GET_BYTE(x)     ( dosmemget(x,1,&bb), bb)
 #define GET_WORD(x)     ( dosmemget(x,2,&sb), sb)
-
 static unsigned char bb;
 static unsigned short sb;
 
+#else /* win32 */
 
-static struct sw 
+#define SET_BYTE(x,y)   *(volatile unsigned char *)(x) = (y)
+#define SET_WORD(x,y)   *(volatile unsigned short *)(x) = (y)
+#define GET_BYTE(x)     (*(volatile unsigned char *)(x))
+#define GET_WORD(x)     (*(volatile unsigned short *)(x))
+#define dosmemget(FROM, LEN, TO) memcpy ((void *)(TO), (void *)(FROM), (LEN))
+#define dosmemput(FROM, LEN, TO) memcpy ((void *)(TO), (void *)(FROM), (LEN))
+#endif
+
+static struct sw
+  {
+    int sw;
+    int addr;
+  }
+sigs[] =
 {
-  int sw;
-  int addr;
-} sigs[] = {
-  {0x14, 0xd0000},
-  {0x15, 0xd4000},
-  {0x16, 0xd8000},
-  {0x17, 0xdc000},
-  0};
+  {
+    0x14, 0xd0000
+  }
+  ,
+  {
+    0x15, 0xd4000
+  }
+  ,
+  {
+    0x16, 0xd8000
+  }
+  ,
+  {
+    0x17, 0xdc000
+  }
+  ,
+    0
+};
+
+#define get_ds_base() 0
 
 static int
-e7000pc_init ()
+e7000pc_init (void)
 {
+  int try;
+  unsigned long dsbase;
+
+  dsbase = get_ds_base ();
+
   /* Look around in memory for the board's signature */
 
-  int try;
-  
   for (try = 0; sigs[try].sw; try++)
-
     {
       int val;
-      board_at = sigs[try].addr;
+      board_at = sigs[try].addr - dsbase;
       fa = board_at + OFF_FA;
       fb = board_at + OFF_FB;
       cpd = board_at + OFF_CPD;
       cdp = board_at + OFF_CDP;
-      ready =board_at + OFF_READY;
-      pon = board_at + OFF_PON;	      
+      ready = board_at + OFF_READY;
+      pon = board_at + OFF_PON;
       irqtop = board_at + OFF_IRQTOP;
       irqtod = board_at + OFF_IRQTOD;
-      
+
       val = GET_WORD (ready);
 
-      if (val == (0xaaa0  | sigs[try].sw))
+      if (val == (0xaaa0 | sigs[try].sw))
 	{
-	  if (GET_BYTE (pon) & 0xf)
+	  if (GET_WORD (pon) & 0xf)
 	    {
-	      SET_BYTE(fa, 0);
-	      SET_BYTE (fb, 0);
+	      SET_WORD (fa, 0);
+	      SET_WORD (fb, 0);
 
-	      SET_BYTE (irqtop, 1); /* Disable interrupts from e7000 */
+	      SET_WORD (irqtop, 1);	/* Disable interrupts from e7000 */
 	      SET_WORD (ready, 1);
-	      printf_filtered ("\nConnected to the E7000PC at address 0x%x\n", 
+	      printf_filtered ("\nConnected to the E7000PC at address 0x%x\n",
 			       sigs[try].addr);
-	      return 1;	      
+	      return 1;
 	    }
 	  error ("The E7000 PC board is working, but the E7000 is turned off.\n");
 	  return 0;
@@ -178,69 +181,68 @@ its I/O space, remove other unneeded cards, etc etc\n");
 static int pbuf_size;
 static int pbuf_index;
 
-static 
-int 
-e7000_get ()
+/* Return next byte from cdp.  If no more, then return -1.  */
+
+static int
+e7000_get (void)
 {
   static char pbuf[1000];
   char tmp[1000];
   int x;
-  if (pbuf_index < pbuf_size) 
+
+  if (pbuf_index < pbuf_size)
     {
       x = pbuf[pbuf_index++];
     }
-  else if ((GET_BYTE (fb)  & 1))
+  else if ((GET_WORD (fb) & 1))
     {
       int i;
-      pbuf_size = GET_WORD(cdp + 2);
+      pbuf_size = GET_WORD (cdp + 2);
 
       dosmemget (cdp + 8, pbuf_size + 1, tmp);
 
       /* Tell the E7000 we've eaten */
-      SET_BYTE(fb,0);	
+      SET_WORD (fb, 0);
       /* Swap it around */
-      for (i = 0; i < pbuf_size; i++) 
+      for (i = 0; i < pbuf_size; i++)
 	{
-	  pbuf[i] = tmp[i^1];
+	  pbuf[i] = tmp[i ^ 1];
 	}
       pbuf_index = 0;
-      x =  pbuf[pbuf_index++];
+      x = pbuf[pbuf_index++];
     }
-  else 
-    { 
+  else
+    {
       x = -1;
     }
   return x;
 }
 
-static int
-dosasync_read (fd, buf, len, timeout)
-     int fd;
-     char *buf;
-     int len;
-     int timeout;
+/* Works just like read(), except that it takes a TIMEOUT in seconds.  Note
+   that TIMEOUT == 0 is a poll, and TIMEOUT == -1 means wait forever. */
 
+static int
+dosasync_read (int fd, char *buf, int len, int timeout)
 {
   long now;
   long then;
   int i = 0;
-  int p;
 
   /* Then look for some more if we're still hungry */
   time (&now);
   then = now + timeout;
   while (i < len)
     {
-      int ch = e7000_get();
-      
+      int ch = e7000_get ();
+
       /* While there's room in the buffer, and we've already
-	 read the stuff in, suck it over */
-      if (ch != -1) 
+         read the stuff in, suck it over */
+      if (ch != -1)
 	{
 	  buf[i++] = ch;
-	  while (i < len && pbuf_index < pbuf_size )
+	  while (i < len && pbuf_index < pbuf_size)
 	    {
-	      ch = e7000_get();
+	      ch = e7000_get ();
 	      if (ch == -1)
 		break;
 	      buf[i++] = ch;
@@ -261,55 +263,42 @@ dosasync_read (fd, buf, len, timeout)
 
 
 static int
-dosasync_write (fd, buf, len)
-     int fd;
-     const char *buf;
-     int len;
+dosasync_write (int fd, const char *buf, int len)
 {
   int i;
-  char dummy[1000];  
+  char dummy[1000];
 
-  
   /* Construct copy locally */
-  ((short *)dummy)[0] = CMD_CI;
-  ((short *)dummy)[1] = len;
-  ((short *)dummy)[2] = 0;
-  ((short *)dummy)[3] = 0;
-  for (i = 0; i < len ; i++) 
+  ((short *) dummy)[0] = CMD_CI;
+  ((short *) dummy)[1] = len;
+  ((short *) dummy)[2] = 0;
+  ((short *) dummy)[3] = 0;
+  for (i = 0; i < len; i++)
     {
-      dummy[8 + i ^ 1] = buf[i];
+      dummy[(8 + i) ^ 1] = buf[i];
     }
 
   /* Wait for the card to get ready */
-  while ((GET_BYTE(fa) & 1) != 0)
-    ;
+  while (GET_WORD (fa) & 1);
 
   /* Blast onto the ISA card */
-  dosmemput (dummy, 8 + len + 1,  cpd);
+  dosmemput (dummy, 8 + len + 1, cpd);
 
-  SET_BYTE(fa, 1);
-  SET_BYTE(irqtod, 1); /* Interrupt the E7000 */
+  SET_WORD (fa, 1);
+  SET_WORD (irqtod, 1);		/* Interrupt the E7000 */
 
   return len;
 }
 
 static int
-e7000pc_open (scb, name)
-     serial_t scb;
-     const char *name;
+e7000pc_open (struct serial *scb, const char *name)
 {
   if (strncasecmp (name, "pc", 2) != 0)
     {
       errno = ENOENT;
       return -1;
     }
-#ifdef __WIN32__
-  if (win_load_e7kpc () != 0)
-    {
-      errno = ENOENT;
-      return -1;
-    }
-#endif
+
   scb->fd = e7000pc_init ();
 
   if (!scb->fd)
@@ -319,38 +308,36 @@ e7000pc_open (scb, name)
 }
 
 static int
-e7000pc_noop (scb)
-     serial_t scb;
+e7000pc_noop (struct serial *scb)
 {
   return 0;
 }
 
 static void
-e7000pc_raw (scb)
-     serial_t scb;
+e7000pc_raw (struct serial *scb)
 {
   /* Always in raw mode */
 }
 
 static int
-e7000pc_readchar (scb, timeout)
-     serial_t scb;
-     int timeout;
+e7000pc_readchar (struct serial *scb, int timeout)
 {
   char buf;
 
- top:
+top:
 
   if (dosasync_read (scb->fd, &buf, 1, timeout))
     {
-      if (buf == 0) goto top;
+      if (buf == 0)
+	goto top;
       return buf;
     }
   else
     return SERIAL_TIMEOUT;
 }
 
-struct e7000pc_ttystate {
+struct e7000pc_ttystate
+{
   int dummy;
 };
 
@@ -358,8 +345,7 @@ struct e7000pc_ttystate {
    vector.  Someday, they may do something real... */
 
 static serial_ttystate
-e7000pc_get_tty_state (scb)
-     serial_t scb;
+e7000pc_get_tty_state (struct serial *scb)
 {
   struct e7000pc_ttystate *state;
 
@@ -369,44 +355,42 @@ e7000pc_get_tty_state (scb)
 }
 
 static int
-e7000pc_set_tty_state (scb, ttystate)
-     serial_t scb;
-     serial_ttystate ttystate;
+e7000pc_set_tty_state (struct serial *scb, serial_ttystate ttystate)
 {
   return 0;
 }
 
 static int
-e7000pc_noflush_set_tty_state (scb, new_ttystate, old_ttystate)
-     serial_t scb;
-     serial_ttystate new_ttystate;
-     serial_ttystate old_ttystate;
+e7000pc_noflush_set_tty_state (struct serial *scb,
+			       serial_ttystate new_ttystate,
+			       serial_ttystate old_ttystate)
 {
   return 0;
 }
 
 static void
-e7000pc_print_tty_state (scb, ttystate)
-     serial_t scb;
-     serial_ttystate ttystate;
+e7000pc_print_tty_state (struct serial *scb,
+			 serial_ttystate ttystate,
+			 struct ui_file *stream)
 {
   /* Nothing to print.  */
   return;
 }
 
 static int
-e7000pc_setbaudrate (scb, rate)
-     serial_t scb;
-     int rate;
+e7000pc_setbaudrate (struct serial *scb, int rate)
 {
   return 0;
 }
 
 static int
-e7000pc_write (scb, str, len)
-     serial_t scb;
-     const char *str;
-     int len;
+e7000pc_setstopbits (struct serial *scb, int rate)
+{
+  return 0;
+}
+
+static int
+e7000pc_write (struct serial *scb, const char *str, int len)
 {
   dosasync_write (scb->fd, str, len);
 
@@ -414,12 +398,8 @@ e7000pc_write (scb, str, len)
 }
 
 static void
-e7000pc_close (scb)
-     serial_t scb;
+e7000pc_close (struct serial *scb)
 {
-#ifdef __WIN32__
-  win_unload_e7kpc ();
-#endif
 }
 
 static struct serial_ops e7000pc_ops =
@@ -439,18 +419,18 @@ static struct serial_ops e7000pc_ops =
   e7000pc_print_tty_state,
   e7000pc_noflush_set_tty_state,
   e7000pc_setbaudrate,
+  e7000pc_setstopbits,
+  e7000pc_noop,			/* wait for output to drain */
 };
 
+#endif /*_WIN32 or __GO32__*/
+
+extern initialize_file_ftype _initialize_ser_e7000pc; /* -Wmissing-prototypes */
+
 void
-_initialize_ser_e7000pc ()
+_initialize_ser_e7000pc (void)
 {
+#if defined __GO32__ || defined _WIN32
   serial_add_interface (&e7000pc_ops);
+#endif  
 }
-#else
-
-void
-_initialize_ser_e7000pc ()
-{
-
-}
-#endif

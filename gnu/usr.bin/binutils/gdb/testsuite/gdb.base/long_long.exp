@@ -1,0 +1,312 @@
+# Copyright 1997, 1998, 1999, 2000, 2001, 2002, 2003
+# Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+
+# Please email any bugs, comments, and/or additions to this file to:
+# bug-gdb@prep.ai.mit.edu
+
+
+# long_long.exp   Test printing of 64-bit things in 32-bit gdb.
+#                 Also test differnet kinds of formats.
+#
+if $tracelevel then {
+	strace $tracelevel
+}
+
+if [target_info exists no_long_long] {
+    return 0
+}
+
+set testfile long_long
+set srcfile ${testfile}.c
+set binfile ${objdir}/${subdir}/${testfile}
+
+# What compiler are we using?
+#
+if [get_compiler_info ${binfile}] {
+    return -1
+}
+
+if {$hp_cc_compiler} {
+    set flag "+e"
+} else {
+    set flag ""
+}
+
+if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable [concat debug "additional_flags=$flag -w"]] != "" } {
+     gdb_suppress_entire_file "Testcase compile failed, so all tests in this file will automatically fail."
+}
+
+# use this to debug:
+#log_user 1
+
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+gdb_load ${binfile}
+
+if { ![runto known_types] } then { 
+   fail "run to known_types" 
+   return 
+}
+
+set target_bigendian_p 1
+send_gdb "show endian\n"
+gdb_expect {
+    -re ".*little endian.*$gdb_prompt $" { set target_bigendian_p 0 }
+    -re ".*big endian.*$gdb_prompt $" { }
+    -re ".*$gdb_prompt $" {
+	 fail "getting target endian"
+    }
+    default	{ fail "(timeout) getting target endian" }
+}
+
+# Detect targets with 2-byte integers.  Yes, it's not general to assume
+# that all others have 4-byte ints, but don't worry about it until one
+# actually exists.
+
+set sizeof_int 4
+send_gdb "print sizeof(int)\n"
+gdb_expect {
+    -re ".* = 2.*$gdb_prompt $" { set sizeof_int 2 }
+    -re ".*$gdb_prompt $" { }
+    default { }
+}
+
+# Detect targets with 2-byte pointers.  Assume all others use 4-bytes.
+set sizeof_ptr 4
+send_gdb "print sizeof(void*)\n"
+gdb_expect {
+    -re ".* = 2.*$gdb_prompt $" { set sizeof_ptr 2 }
+    -re ".*$gdb_prompt $" { }
+    default { }
+}
+
+# Detect targets with 4-byte shorts.  Assume all others use 2-bytes.
+
+set sizeof_short 2
+send_gdb "print sizeof(short)\n"
+gdb_expect {
+    -re ".* = 4.*$gdb_prompt $" { set sizeof_short 4 }
+    -re ".*$gdb_prompt $" { }
+    default { }
+}
+
+# Detect targets with 4-byte doubles.
+
+set sizeof_double 8
+send_gdb "print sizeof(double)\n"
+gdb_expect {
+    -re ".* = 4.*$gdb_prompt $" { set sizeof_double 4 }
+    -re ".*$gdb_prompt $" { }
+    default { }
+}
+
+set sizeof_long_double 8
+send_gdb "print sizeof(long double)\n"
+gdb_expect {
+    -re ".* = 4.*$gdb_prompt $" { set sizeof_long_double 4 }
+    -re ".*$gdb_prompt $" { }
+    default { }
+}
+
+gdb_test "n 4"   ".*38.*" "get to known place"
+
+# Check the hack for long long prints.
+#
+gdb_test "p/x hex" ".*0x0*0.*" "hex print p/x"
+gdb_test "p/x dec" ".*0xab54a98ceb1f0ad2.*" "decimal print p/x"
+# see if 'p/<code>' is handled same as 'p /<code>'
+#
+gdb_test "p /x dec" ".*0xab54a98ceb1f0ad2.*" "default print dec"
+gdb_test "p /x bin" ".*0x0*123456789abcdef.*" "default print bin"
+gdb_test "p /x oct" ".*0xa72ee53977053977.*" "default print oct"
+gdb_test "p hex" ".*= 0*x*0*0.*" "default print hex"
+
+gdb_test "p/u dec" ".*12345678901234567890.*" "decimal print p/u"
+gdb_test "p/t bin" ".*0*100100011010001010110011110001001101010111100110111101111.*" "binary print"
+gdb_test "p/o oct" ".*01234567123456701234567.*" "octal print"
+gdb_test "p /d bin" ".*81985529216486895.*" "print +ve long long"
+gdb_test "p/d dec" ".*-6101065172474983726.*" "decimal print p/d"
+
+# Try all the combinations to bump up coverage.
+#
+gdb_test "p/d oct" ".*-6399925985474168457.*"
+gdb_test "p/u oct" ".*12046818088235383159.*"
+gdb_test "p/o oct" ".*.*"
+gdb_test "p/t oct" ".*1010011100101110111001010011100101110111000001010011100101110111.*"
+if { $sizeof_ptr == 2 } {
+  gdb_test "p/a oct" ".*0x.*3977.*"
+} else {
+  gdb_test "p/a oct" ".*0x.*77053977.*"
+}
+gdb_test "p/c oct" ".*'w'.*"
+
+if { $sizeof_double == 8 || $sizeof_long_double == 8 } {
+    # ARM floating point numbers are not strictly little endian or big endian,
+    # but a hybrid.  They are in little endian format with the two words
+    # swapped in big endian format.
+
+    if { [istarget "arm*-*-*"] || \
+	    [istarget "xscale*-*-*"] || \
+	    [istarget "strongarm*-*-*"] } then {
+	# assume the long long represents a floating point double in ARM format
+	gdb_test "p/f oct" ".*2.1386676354387559e\\+265.*"
+    } else {
+	# assume the long long represents a floating point double in little
+	# endian format
+	gdb_test "p/f oct" ".*-5.9822653797615723e-120.*"
+    }
+
+} else {
+
+    gdb_test "p/f oct" ".*-2.42716126e-15.*"
+
+}
+
+if { $target_bigendian_p } {
+
+    if { $sizeof_int == 4 } {
+
+	gdb_test "p/d *(int *)&oct" ".*-1490098887.*"
+	gdb_test "p/u *(int *)&oct" ".*2804868409.*"
+	gdb_test "p/o *(int *)&oct" ".*024713562471.*"
+	gdb_test "p/t *(int *)&oct" ".*10100111001011101110010100111001.*"
+
+	if { $sizeof_ptr == 2 } {
+	    gdb_test "p/a *(int *)&oct" ".*0xe539.*"
+	} else {
+	    gdb_test "p/a *(int *)&oct" ".*0xf*a72ee539.*"
+	}
+
+	gdb_test "p/c *(int *)&oct" ".*57 '9'.*"
+	gdb_test "p/f *(int *)&oct" ".*-2.42716126e-15.*"
+
+    } else {
+
+	gdb_test "p/d *(int *)&oct" ".*-22738.*"
+	gdb_test "p/u *(int *)&oct" ".*42798.*"
+	gdb_test "p/o *(int *)&oct" ".*0123456.*"
+	gdb_test "p/t *(int *)&oct" ".*1010011100101110.*"
+
+	if { $sizeof_ptr == 2 } {
+	    gdb_test "p/a *(int *)&oct" ".*0xa72e.*"
+	} else {
+	    gdb_test "p/a *(int *)&oct" ".*0xffffa72e.*"
+	}
+	gdb_test "p/c *(int *)&oct" ".*46 '.'.*"
+	gdb_test "p/f *(int *)&oct" ".*-22738.*"
+
+    }
+
+    if { $sizeof_short == 2 } {
+	gdb_test "p/d *(short *)&oct" ".*-22738.*"
+	gdb_test "p/u *(short *)&oct" ".*42798.*"
+	gdb_test "p/o *(short *)&oct" ".*0123456.*"
+	gdb_test "p/t *(short *)&oct" ".*1010011100101110.*"
+	if { $sizeof_ptr == 2 } {
+	    gdb_test "p/a *(short *)&oct" ".*0xa72e.*"
+	} else {
+	    gdb_test "p/a *(short *)&oct" ".*0xf*ffffa72e.*"
+	}
+	gdb_test "p/c *(short *)&oct" ".* 46 '.'.*"
+	gdb_test "p/f *(short *)&oct" ".*-22738.*"
+    } else {
+	gdb_test "p/d *(short *)&oct" ".*-1490098887.*"
+	gdb_test "p/u *(short *)&oct" ".*2804868409.*"
+	gdb_test "p/o *(short *)&oct" ".*024713562471.*"
+	gdb_test "p/t *(short *)&oct" ".*10100111001011101110010100111001.*"
+	gdb_test "p/a *(short *)&oct" ".*0xf*a72ee539.*"
+	gdb_test "p/c *(short *)&oct" ".* 57 '9'.*"
+	gdb_test "p/f *(short *)&oct" ".*-2.42716126e-15.*"
+    }
+
+    gdb_test "x/x &oct" ".*0xa72ee539.*"
+    gdb_test "x/d &oct" ".*.-1490098887*"
+    gdb_test "x/u &oct" ".*2804868409.*"
+    gdb_test "x/o &oct" ".*024713562471.*"
+    gdb_test "x/t &oct" ".*10100111001011101110010100111001.*"
+    if { $sizeof_ptr == 2 } {
+	gdb_test "x/a &oct" ".*0xa72e.*"
+    } else {
+	gdb_test "x/a &oct" ".*0xa72ee539.*"
+    }
+    gdb_test "x/c &oct" ".*-89 .*"
+    # FIXME GDB's output is correct, but this longer match fails.
+    # gdb_test "x/c &oct" ".*-89 '\\\\247'.*"
+    if { $sizeof_double == 8 || $sizeof_long_double == 8 } {
+	gdb_test "x/f &oct" ".*-5.9822653797615723e-120.*"
+    } else {
+	gdb_test "x/f &oct" ".*-2.42716126e-15.*"
+    }
+
+    # FIXME Fill in the results for all the following tests.  (But be careful
+    # about looking at locations with unspecified contents!)
+
+    gdb_test "x/2x &oct" ".*0xa72ee53977053977.*"
+    gdb_test "x/2d &oct" ".*-6399925985474168457.*"
+    gdb_test "x/2u &oct" ".*.*"
+    gdb_test "x/2o &oct" ".*.*"
+    gdb_test "x/2t &oct" ".*.*"
+    gdb_test "x/2a &oct" ".*.*"
+    gdb_test "x/2c &oct" ".*.*"
+    gdb_test "x/2f &oct" ".*.*"
+
+    gdb_test "x/2bx &oct" ".*.*"
+    gdb_test "x/2bd &oct" ".*.*"
+    gdb_test "x/2bu &oct" ".*.*"
+    gdb_test "x/2bo &oct" ".*.*"
+    gdb_test "x/2bt &oct" ".*.*"
+    gdb_test "x/2ba &oct" ".*.*"
+    gdb_test "x/2bc &oct" ".*.*"
+    gdb_test "x/2bf &oct" ".*.*"
+
+    gdb_test "x/2hx &oct" ".*.*"
+    gdb_test "x/2hd &oct" ".*.*"
+    gdb_test "x/2hu &oct" ".*.*"
+    gdb_test "x/2ho &oct" ".*.*"
+    gdb_test "x/2ht &oct" ".*.*"
+    gdb_test "x/2ha &oct" ".*.*"
+    gdb_test "x/2hc &oct" ".*.*"
+    gdb_test "x/2hf &oct" ".*.*"
+
+    gdb_test "x/2wx &oct" ".*.*"
+    gdb_test "x/2wd &oct" ".*.*"
+    gdb_test "x/2wu &oct" ".*.*"
+    gdb_test "x/2wo &oct" ".*.*"
+    gdb_test "x/2wt &oct" ".*.*"
+    gdb_test "x/2wa &oct" ".*.*"
+    gdb_test "x/2wc &oct" ".*.*"
+    gdb_test "x/2wf &oct" ".*.*"
+
+    gdb_test "x/2gx &oct" ".*.*"
+    gdb_test "x/2gd &oct" ".*.*"
+    gdb_test "x/2gu &oct" ".*.*"
+    gdb_test "x/2go &oct" ".*.*"
+    gdb_test "x/2gt &oct" ".*.*"
+    gdb_test "x/2ga &oct" ".*.*"
+    gdb_test "x/2gc &oct" ".*.*"
+    gdb_test "x/2gf &oct" ".*.*"
+
+} else {
+
+    # FIXME Add little-endian versions of these tests, or define a
+    # gdb_test_bi with two strings to match on.
+
+}
+
+gdb_exit
+return 0

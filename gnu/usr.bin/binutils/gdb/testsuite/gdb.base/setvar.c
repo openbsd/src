@@ -1,7 +1,13 @@
+#include <stdlib.h>
+
+#ifdef PROTOTYPES
+int main (int argc, char **argv, char **envp)
+#else
 main (argc, argv, envp)
      int argc;
      char **argv;
      char **envp;
+#endif
 {
     extern void dummy();
 #ifdef usestubs
@@ -9,6 +15,7 @@ main (argc, argv, envp)
     breakpoint();
 #endif
     dummy();
+    return 0;
 }
 
 /* We put main() right up front so its line number doesn't keep changing.  */

@@ -1,5 +1,6 @@
 /* YACC grammar for Modula-2 expressions, for GDB.
-   Copyright (C) 1986, 1989, 1990, 1991, 1993, 1994, 1995
+   Copyright 1986, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1999,
+   2000
    Free Software Foundation, Inc.
    Generated from expread.y (now c-exp.y) and contributed by the Department
    of Computer Science at the State University of New York at Buffalo, 1991.
@@ -49,6 +50,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #include "bfd.h" /* Required by objfiles.h.  */
 #include "symfile.h" /* Required by objfiles.h.  */
 #include "objfiles.h" /* For have_full_symbols and have_partial_symbols */
+#include "block.h"
 
 /* Remap normal yacc parser interface names (yyparse, yylex, yyerror, etc),
    as well as gratuitiously global symbol names, so we can have multiple
@@ -86,6 +88,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #define	yylloc	m2_lloc
 #define	yyreds	m2_reds		/* With YYDEBUG defined */
 #define	yytoks	m2_toks		/* With YYDEBUG defined */
+#define yyname	m2_name		/* With YYDEBUG defined */
+#define yyrule	m2_rule		/* With YYDEBUG defined */
 #define yylhs	m2_yylhs
 #define yylen	m2_yylen
 #define yydefred m2_yydefred
@@ -97,25 +101,22 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #define yycheck	 m2_yycheck
 
 #ifndef YYDEBUG
-#define	YYDEBUG	0		/* Default to no yydebug support */
+#define	YYDEBUG 1		/* Default to yydebug support */
 #endif
 
-int
-yyparse PARAMS ((void));
+#define YYFPRINTF parser_fprintf
 
-static int
-yylex PARAMS ((void));
+int yyparse (void);
 
-void
-yyerror PARAMS ((char *));
+static int yylex (void);
+
+void yyerror (char *);
 
 #if 0
-static char *
-make_qualname PARAMS ((char *, char *));
+static char *make_qualname (char *, char *);
 #endif
 
-static int
-parse_number PARAMS ((int));
+static int parse_number (int);
 
 /* The sign of the number being parsed. */
 static int number_sign = 1;
@@ -135,7 +136,7 @@ static struct block *modblock=0;
 %union
   {
     LONGEST lval;
-    unsigned LONGEST ulval;
+    ULONGEST ulval;
     DOUBLEST dval;
     struct symbol *sym;
     struct type *tval;
@@ -216,6 +217,7 @@ type_exp:	type
 
 exp     :       exp '^'   %prec UNARY
                         { write_exp_elt_opcode (UNOP_IND); }
+	;
 
 exp	:	'-'
 			{ number_sign = -1; }
@@ -330,6 +332,7 @@ exp	:	INCL '(' exp ',' exp ')'
 
 exp	:	EXCL '(' exp ',' exp ')'
 			{ error("Sets are not implemented.");}
+	;
 
 set	:	'{' arglist '}'
 			{ error("Sets are not implemented.");}
@@ -538,7 +541,7 @@ block	:	fblock
 fblock	:	BLOCKNAME
 			{ struct symbol *sym
 			    = lookup_symbol (copy_name ($1), expression_context_block,
-					     VAR_NAMESPACE, 0, NULL);
+					     VAR_DOMAIN, 0, NULL);
 			  $$ = sym;}
 	;
 			     
@@ -547,7 +550,7 @@ fblock	:	BLOCKNAME
 fblock	:	block COLONCOLON BLOCKNAME
 			{ struct symbol *tem
 			    = lookup_symbol (copy_name ($3), $1,
-					     VAR_NAMESPACE, 0, NULL);
+					     VAR_DOMAIN, 0, NULL);
 			  if (!tem || SYMBOL_CLASS (tem) != LOC_BLOCK)
 			    error ("No function \"%s\" in specified context.",
 				   copy_name ($3));
@@ -571,7 +574,7 @@ variable:	INTERNAL_VAR
 variable:	block COLONCOLON NAME
 			{ struct symbol *sym;
 			  sym = lookup_symbol (copy_name ($3), $1,
-					       VAR_NAMESPACE, 0, NULL);
+					       VAR_DOMAIN, 0, NULL);
 			  if (sym == 0)
 			    error ("No symbol \"%s\" in specified context.",
 				   copy_name ($3));
@@ -590,7 +593,7 @@ variable:	NAME
 
  			  sym = lookup_symbol (copy_name ($1),
 					       expression_context_block,
-					       VAR_NAMESPACE,
+					       VAR_DOMAIN,
 					       &is_a_field_of_this,
 					       NULL);
 			  if (sym)
@@ -614,7 +617,7 @@ variable:	NAME
 			  else
 			    {
 			      struct minimal_symbol *msymbol;
-			      register char *arg = copy_name ($1);
+			      char *arg = copy_name ($1);
 
 			      msymbol =
 				lookup_minimal_symbol (arg, NULL, NULL);
@@ -669,12 +672,12 @@ static int
 parse_number (olen)
      int olen;
 {
-  register char *p = lexptr;
-  register LONGEST n = 0;
-  register LONGEST prevn = 0;
-  register int c,i,ischar=0;
-  register int base = input_radix;
-  register int len = olen;
+  char *p = lexptr;
+  LONGEST n = 0;
+  LONGEST prevn = 0;
+  int c,i,ischar=0;
+  int base = input_radix;
+  int len = olen;
   int unsigned_p = number_sign == 1 ? 1 : 0;
 
   if(p[len-1] == 'H')
@@ -817,20 +820,22 @@ static struct keyword keytab[] =
 static int
 yylex ()
 {
-  register int c;
-  register int namelen;
-  register int i;
-  register char *tokstart;
-  register char quote;
+  int c;
+  int namelen;
+  int i;
+  char *tokstart;
+  char quote;
 
  retry:
+
+  prev_lexptr = lexptr;
 
   tokstart = lexptr;
 
 
   /* See if it is a special token of length 2 */
   for( i = 0 ; i < (int) (sizeof tokentab2 / sizeof tokentab2[0]) ; i++)
-     if(STREQN(tokentab2[i].name, tokstart, 2))
+     if(DEPRECATED_STREQN(tokentab2[i].name, tokstart, 2))
      {
 	lexptr += 2;
 	return tokentab2[i].token;
@@ -931,7 +936,7 @@ yylex ()
     {
       /* It's a number.  */
       int got_dot = 0, got_e = 0;
-      register char *p = tokstart;
+      char *p = tokstart;
       int toktype;
 
       for (++p ;; ++p)
@@ -987,7 +992,7 @@ yylex ()
 
   /*  Lookup special keywords */
   for(i = 0 ; i < (int) (sizeof(keytab) / sizeof(keytab[0])) ; i++)
-     if(namelen == strlen(keytab[i].keyw) && STREQN(tokstart,keytab[i].keyw,namelen))
+     if(namelen == strlen(keytab[i].keyw) && DEPRECATED_STREQN(tokstart,keytab[i].keyw,namelen))
 	   return keytab[i].token;
 
   yylval.sval.ptr = tokstart;
@@ -1013,7 +1018,7 @@ yylex ()
     if (lookup_partial_symtab (tmp))
       return BLOCKNAME;
     sym = lookup_symbol (tmp, expression_context_block,
-			 VAR_NAMESPACE, 0, NULL);
+			 VAR_DOMAIN, 0, NULL);
     if (sym && SYMBOL_CLASS (sym) == LOC_BLOCK)
       return BLOCKNAME;
     if (lookup_typename (copy_name (yylval.sval), expression_context_block, 1))
@@ -1036,6 +1041,8 @@ yylex ()
        case LOC_CONST:
        case LOC_CONST_BYTES:
        case LOC_OPTIMIZED_OUT:
+       case LOC_COMPUTED:
+       case LOC_COMPUTED_ARG:
 	  return NAME;
 
        case LOC_TYPEDEF:
@@ -1050,17 +1057,21 @@ yylex ()
        case LOC_LABEL:
        case LOC_UNRESOLVED:
 	  error("internal:  Unforseen case in m2lex()");
+
+       default:
+	  error ("unhandled token in m2lex()");
+	  break;
        }
     }
     else
     {
        /* Built-in BOOLEAN type.  This is sort of a hack. */
-       if(STREQN(tokstart,"TRUE",4))
+       if(DEPRECATED_STREQN(tokstart,"TRUE",4))
        {
 	  yylval.ulval = 1;
 	  return M2_TRUE;
        }
-       else if(STREQN(tokstart,"FALSE",5))
+       else if(DEPRECATED_STREQN(tokstart,"FALSE",5))
        {
 	  yylval.ulval = 0;
 	  return M2_FALSE;
@@ -1090,5 +1101,8 @@ void
 yyerror (msg)
      char *msg;
 {
+  if (prev_lexptr)
+    lexptr = prev_lexptr;
+
   error ("A %s in expression, near `%s'.", (msg ? msg : "error"), lexptr);
 }

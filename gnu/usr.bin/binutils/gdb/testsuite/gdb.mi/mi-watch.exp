@@ -1,0 +1,166 @@
+# Copyright 1999, 2000, 2002 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  
+
+# Please email any bugs, comments, and/or additions to this file to:
+# bug-gdb@prep.ai.mit.edu
+
+#
+# Test essential Machine interface (MI) operations
+#
+# Verify that, using the MI, we can run a simple program and perform basic
+# debugging activities like: insert breakpoints, run the program,
+# step, next, continue until it ends and, last but not least, quit.
+#
+# The goal is not to test gdb functionality, which is done by other tests,
+# but to verify the correct output response to MI operations.
+#
+
+load_lib mi-support.exp
+set MIFLAGS "-i=mi"
+
+gdb_exit
+if [mi_gdb_start] {
+    continue
+}
+
+set testfile "basics"
+set srcfile ${testfile}.c
+set binfile ${objdir}/${subdir}/${testfile}
+if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug additional_flags=-DFAKEARGV}] != "" } {
+     gdb_suppress_entire_file "Testcase compile failed, so all tests in this file will automatically fail."
+}
+
+mi_delete_breakpoints
+mi_gdb_reinitialize_dir $srcdir/$subdir
+mi_gdb_load ${binfile}
+
+proc test_watchpoint_creation_and_listing {} {
+    global mi_gdb_prompt
+    global srcfile
+    global hex
+
+    # Insert a watchpoint and list
+    # Tests:
+    # -break-watch C
+    # -break-list
+
+    mi_gdb_test "111-break-watch C" \
+             "111\\^done,wpt=\{number=\"2\",exp=\"C\"\}" \
+             "break-watch operation"
+
+    mi_gdb_test "222-break-list" \
+	    "222\\\^done,BreakpointTable=\{nr_rows=\".\",nr_cols=\".\",hdr=\\\[\{width=\".*\",alignment=\".*\",col_name=\"number\",colhdr=\"Num\"\}.*colhdr=\"Type\".*colhdr=\"Disp\".*colhdr=\"Enb\".*colhdr=\"Address\".*colhdr=\"What\".*\\\],body=\\\[bkpt=\{number=\"1\",type=\"breakpoint\",disp=\"keep\",enabled=\"y\",addr=\"$hex\",func=\"callee4\",file=\".*basics.c\",line=\"8\",times=\"1\"\},bkpt=\{number=\"2\",type=\".*watchpoint\",disp=\"keep\",enabled=\"y\",addr=\"\",what=\"C\",times=\"0\"\}\\\]\}" \
+                "list of watchpoints"
+
+}
+
+# UNUSED at the time
+proc test_awatch_creation_and_listing {} {
+    global mi_gdb_prompt
+    global srcfile
+    global hex
+
+    # Insert an access watchpoint and list it
+    # Tests:
+    # -break-watch -a A
+    # -break-list
+
+    mi_gdb_test "333-break-watch -a A" \
+             "333\\^done,bkpt=\{number=\"1\",addr=\"$hex\",file=\".*basics.c\",line=\"32\"\}" \
+             "break-watch -a operation"
+
+    mi_gdb_test "444-break-list" \
+	    "444\\^done,BreakpointTable=\{.*,hdr=\\\[.*\\\],body=\\\[bkpt=\{number=\"3\",type=\"watchpoint\",disp=\"del\",enabled=\"y\",addr=\"$hex\",func=\"main\",file=\".*basics.c\",line=\"32\",times=\"0\"\},.*\}\\\]\}" \
+                "list of watchpoints awatch"
+
+    mi_gdb_test "777-break-delete 3" \
+	    "777\\^done" \
+	    "delete access watchpoint"
+}
+
+# UNUSED at the time
+proc test_rwatch_creation_and_listing {} {
+    global mi_gdb_prompt
+    global srcfile
+    global hex
+
+    # Insert a read watchpoint and list it.
+    # Tests:
+    # -break-insert -r B
+    # -break-list
+
+    mi_gdb_test "200-break-watch -r C" \
+             "200\\^done,bkpt=\{number=\"5\",type=\"breakpoint\",disp=\"keep\",enabled=\"y\",addr=\"$hex\",func=\"callee4\",file=\".*basics.c\",line=\"32\",times=\"0\"\}" \
+             "break-insert -r operation"
+
+    mi_gdb_test "300-break-list" \
+	    "300\\^done,BreakpointTable=\{.*,hdr=\\\[.*\\\],body=\\\[bkpt=\{number=\"5\",type=\"breakpoint\",disp=\"keep\",enabled=\"y\",addr=\"$hex\",func=\"main\",file=\".*basics.c\",line=\"32\",times=\"0\"\},.*\}\\\}\}" \
+                "list of breakpoints"
+
+    mi_gdb_test "177-break-delete 4" \
+	    "177\\^done" \
+	    "delete read watchpoint"
+}
+
+proc test_watchpoint_triggering {} {
+    global mi_gdb_prompt
+    global hex
+
+    # Continue execution until the watchpoint is reached,  continue again, 
+    # to see the watchpoint go out of scope.
+    # Does:
+    # -exec-continue (Here wp triggers)
+    # -exec-continue (Here wp goes out of scope)
+
+    send_gdb "222-exec-continue\n"
+    gdb_expect {
+      -re "222\\^running\r\n$mi_gdb_prompt" {
+        gdb_expect {
+	    -re "222\\*stopped,reason=\"watchpoint-trigger\",wpt=\{number=\"2\",exp=\"C\"\},value=\{old=\".*\",new=\"3\"\},thread-id=\"\[01\]\",frame=\{addr=\"$hex\",func=\"callee4\",args=\\\[\\\],file=\".*basics.c\",line=\"13\"\}\r\n$mi_gdb_prompt$" {
+            pass "watchpoint trigger"
+          }
+          -re ".*$mi_gdb_prompt$" {fail "watchpoint trigger (2)"}
+          timeout {fail "watchpoint trigger (timeout 2)"}
+        }
+      }
+      -re ".*$mi_gdb_prompt$" {fail "watchpoint trigger (1)"}
+      timeout {fail "watchpoint trigger (timeout 1)"}
+    }
+
+    send_gdb "223-exec-continue\n"
+    gdb_expect {
+      -re "223\\^running\r\n$mi_gdb_prompt" {
+        gdb_expect {
+	    -re "\[\r\n\]*223\\*stopped,reason=\"watchpoint-scope\",wpnum=\"2\",thread-id=\"\[01\]\",frame=\{addr=\"$hex\",func=\"callee3\",args=\\\[.*\\\],file=\".*basics.c\",line=\"18\"\}\r\n$mi_gdb_prompt$" {
+            pass "wp out of scope"
+          }
+          -re ".*$mi_gdb_prompt$" {fail "wp out of scope (2)"}
+          timeout {fail "wp out of scope (timeout 2)"}
+        }
+      }
+      -re ".*$mi_gdb_prompt$" {fail "wp out of scope (1)"}
+      timeout {fail "wp out of scope (timeout 1)"}
+    }
+}
+
+mi_runto callee4
+test_watchpoint_creation_and_listing
+#test_rwatch_creation_and_listing
+#test_awatch_creation_and_listing
+test_watchpoint_triggering
+
+mi_gdb_exit
+return 0

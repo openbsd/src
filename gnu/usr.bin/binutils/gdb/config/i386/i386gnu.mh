@@ -1,18 +1,20 @@
 # Host: Intel 386 running the GNU Hurd
-XDEPFILES= i387-tdep.o
-NATDEPFILES= i386gnu-nat.o gnu-nat.o fork-child.o solib.o notify_S.o process_reply_S.o msg_reply_S.o msg_U.o exc_request_U.o exc_request_S.o
-XM_FILE= xm-i386gnu.h
-NAT_FILE= nm-gnu.h
+NATDEPFILES= i386gnu-nat.o gnu-nat.o corelow.o core-regset.o \
+	     fork-child.o solib.o solib-svr4.o solib-legacy.o \
+	     notify_S.o process_reply_S.o msg_reply_S.o \
+	     msg_U.o exc_request_U.o exc_request_S.o
+
+XM_FILE= xm-i386.h
+NAT_FILE= nm-i386gnu.h
 MH_CFLAGS = -D_GNU_SOURCE
 
-XM_CLIBS = -lshouldbeinlibc -lm
+XM_CLIBS = -lshouldbeinlibc
 
 # Use our own user stubs for the msg rpcs, so we can make them time out, in
 # case the program is fucked, or we guess the wrong signal thread.
 msg-MIGUFLAGS = -D'MSG_IMPORTS=waittime 1000;'
 
 # ick
-MIG = mig
 MIGCOM = $(MIG) -cc cat - /dev/null
 
 # Reply servers need special massaging of the code mig generates, to make
@@ -29,11 +31,3 @@ MIGCOM = $(MIG) -cc cat - /dev/null
 %_U.h %_U.c: %.defs
 	$(CPP) $(CPPFLAGS) $($*-MIGUFLAGS) -x c $< \
 	| $(MIGCOM) -sheader /dev/null -server /dev/null -user $*_U.c -header $*_U.h
-
-gnu-nat.o: process_reply_S.h exc_request_S.h notify_S.h msg_reply_S.h exc_request_U.h msg_U.h
-
-gnu-nat.o i386gnu-nat.o: gnu-nat.h
-
-# Don't use the mmalloc library in Mach 3.
-MMALLOC = 
-MMALLOC_CFLAGS = -DNO_MMALLOC

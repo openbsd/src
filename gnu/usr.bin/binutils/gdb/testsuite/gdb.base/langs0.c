@@ -1,8 +1,14 @@
 /* This file is actually in C, it is not supposed to simulate something
    translated from another language or anything like that.  */
+#ifdef PROTOTYPES
+extern  int fsub_();
+
+int csub (int x)
+#else
 int
 csub (x)
      int x;
+#endif
 {
   return x + 1;
 }

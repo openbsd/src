@@ -1,341 +1,913 @@
 /* Target dependent code for the Motorola 68000 series.
-   Copyright (C) 1990, 1992 Free Software Foundation, Inc.
 
-This file is part of GDB.
+   Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1999, 2000,
+   2001, 2002, 2003, 2004 Free Software Foundation, Inc.
 
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
+   This file is part of GDB.
 
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+   This program is free software; you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation; either version 2 of the License, or
+   (at your option) any later version.
 
-You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software
-Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+
+   You should have received a copy of the GNU General Public License
+   along with this program; if not, write to the Free Software
+   Foundation, Inc., 59 Temple Place - Suite 330,
+   Boston, MA 02111-1307, USA.  */
 
 #include "defs.h"
+#include "dwarf2-frame.h"
 #include "frame.h"
-#include "gdbcore.h"
+#include "frame-base.h"
+#include "frame-unwind.h"
 #include "symtab.h"
+#include "gdbcore.h"
+#include "value.h"
+#include "gdb_string.h"
+#include "gdb_assert.h"
+#include "inferior.h"
+#include "regcache.h"
+#include "arch-utils.h"
+#include "osabi.h"
+#include "dis-asm.h"
 
+#include "m68k-tdep.h"
 
-/* Push an empty stack frame, to record the current PC, etc.  */
 
-void
-m68k_push_dummy_frame ()
+#define P_LINKL_FP	0x480e
+#define P_LINKW_FP	0x4e56
+#define P_PEA_FP	0x4856
+#define P_MOVEAL_SP_FP	0x2c4f
+#define P_ADDAW_SP	0xdefc
+#define P_ADDAL_SP	0xdffc
+#define P_SUBQW_SP	0x514f
+#define P_SUBQL_SP	0x518f
+#define P_LEA_SP_SP	0x4fef
+#define P_LEA_PC_A5	0x4bfb0170
+#define P_FMOVEMX_SP	0xf227
+#define P_MOVEL_SP	0x2f00
+#define P_MOVEML_SP	0x48e7
+
+
+#define REGISTER_BYTES_FP (16*4 + 8 + 8*12 + 3*4)
+#define REGISTER_BYTES_NOFP (16*4 + 8)
+
+/* Offset from SP to first arg on stack at first instruction of a function */
+#define SP_ARG0 (1 * 4)
+
+#if !defined (BPT_VECTOR)
+#define BPT_VECTOR 0xf
+#endif
+
+#if !defined (REMOTE_BPT_VECTOR)
+#define REMOTE_BPT_VECTOR 1
+#endif
+
+
+static const unsigned char *
+m68k_local_breakpoint_from_pc (CORE_ADDR *pcptr, int *lenptr)
 {
-  register CORE_ADDR sp = read_register (SP_REGNUM);
-  register int regnum;
-  char raw_buffer[12];
-
-  sp = push_word (sp, read_register (PC_REGNUM));
-  sp = push_word (sp, read_register (FP_REGNUM));
-  write_register (FP_REGNUM, sp);
-
-  /* Always save the floating-point registers, whether they exist on
-     this target or not.  */
-  for (regnum = FP0_REGNUM + 7; regnum >= FP0_REGNUM; regnum--)
-    {
-      read_register_bytes (REGISTER_BYTE (regnum), raw_buffer, 12);
-      sp = push_bytes (sp, raw_buffer, 12);
-    }
-
-  for (regnum = FP_REGNUM - 1; regnum >= 0; regnum--)
-    {
-      sp = push_word (sp, read_register (regnum));
-    }
-  sp = push_word (sp, read_register (PS_REGNUM));
-  write_register (SP_REGNUM, sp);
+  static unsigned char break_insn[] = {0x4e, (0x40 | BPT_VECTOR)};
+  *lenptr = sizeof (break_insn);
+  return break_insn;
 }
 
-/* Discard from the stack the innermost frame,
-   restoring all saved registers.  */
 
-void
-m68k_pop_frame ()
+static int
+m68k_register_bytes_ok (long numbytes)
 {
-  register struct frame_info *frame = get_current_frame ();
-  register CORE_ADDR fp;
-  register int regnum;
-  struct frame_saved_regs fsr;
-  struct frame_info *fi;
-  char raw_buffer[12];
-
-  fp = FRAME_FP (frame);
-  get_frame_saved_regs (frame, &fsr);
-  for (regnum = FP0_REGNUM + 7 ; regnum >= FP0_REGNUM ; regnum--)
-    {
-      if (fsr.regs[regnum])
-	{
-	  read_memory (fsr.regs[regnum], raw_buffer, 12);
-	  write_register_bytes (REGISTER_BYTE (regnum), raw_buffer, 12);
-	}
-    }
-  for (regnum = FP_REGNUM - 1 ; regnum >= 0 ; regnum--)
-    {
-      if (fsr.regs[regnum])
-	{
-	  write_register (regnum, read_memory_integer (fsr.regs[regnum], 4));
-	}
-    }
-  if (fsr.regs[PS_REGNUM])
-    {
-      write_register (PS_REGNUM, read_memory_integer (fsr.regs[PS_REGNUM], 4));
-    }
-  write_register (FP_REGNUM, read_memory_integer (fp, 4));
-  write_register (PC_REGNUM, read_memory_integer (fp + 4, 4));
-  write_register (SP_REGNUM, fp + 8);
-  flush_cached_frames ();
+  return ((numbytes == REGISTER_BYTES_FP)
+	  || (numbytes == REGISTER_BYTES_NOFP));
 }
 
+/* Return the GDB type object for the "standard" data type of data in
+   register N.  This should be int for D0-D7, SR, FPCONTROL and
+   FPSTATUS, long double for FP0-FP7, and void pointer for all others
+   (A0-A7, PC, FPIADDR).  Note, for registers which contain
+   addresses return pointer to void, not pointer to char, because we
+   don't want to attempt to print the string after printing the
+   address.  */
+
+static struct type *
+m68k_register_type (struct gdbarch *gdbarch, int regnum)
+{
+  if (regnum >= FP0_REGNUM && regnum <= FP0_REGNUM + 7)
+    return builtin_type_m68881_ext;
+
+  if (regnum == M68K_FPI_REGNUM || regnum == PC_REGNUM)
+    return builtin_type_void_func_ptr;
+
+  if (regnum == M68K_FPC_REGNUM || regnum == M68K_FPS_REGNUM
+      || regnum == PS_REGNUM)
+    return builtin_type_int32;
+
+  if (regnum >= M68K_A0_REGNUM && regnum <= M68K_A0_REGNUM + 7)
+    return builtin_type_void_data_ptr;
+
+  return builtin_type_int32;
+}
+
+/* Function: m68k_register_name
+   Returns the name of the standard m68k register regnum. */
+
+static const char *
+m68k_register_name (int regnum)
+{
+  static char *register_names[] = {
+    "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7",
+    "a0", "a1", "a2", "a3", "a4", "a5", "fp", "sp",
+    "ps", "pc",
+    "fp0", "fp1", "fp2", "fp3", "fp4", "fp5", "fp6", "fp7",
+    "fpcontrol", "fpstatus", "fpiaddr", "fpcode", "fpflags"
+  };
+
+  if (regnum < 0 ||
+      regnum >= sizeof (register_names) / sizeof (register_names[0]))
+    internal_error (__FILE__, __LINE__,
+		    "m68k_register_name: illegal register number %d", regnum);
+  else
+    return register_names[regnum];
+}
 
-/* Given an ip value corresponding to the start of a function,
-   return the ip of the first instruction after the function 
-   prologue.  This is the generic m68k support.  Machines which
-   require something different can override the SKIP_PROLOGUE
-   macro to point elsewhere.
+/* Extract from an array REGBUF containing the (raw) register state, a
+   function return value of TYPE, and copy that, in virtual format,
+   into VALBUF.  */
 
-   Some instructions which typically may appear in a function
-   prologue include:
+static void
+m68k_extract_return_value (struct type *type, struct regcache *regcache,
+			   void *valbuf)
+{
+  int len = TYPE_LENGTH (type);
+  char buf[M68K_MAX_REGISTER_SIZE];
 
-   A link instruction, word form:
+  if (TYPE_CODE (type) == TYPE_CODE_STRUCT
+      && TYPE_NFIELDS (type) == 1)
+    {
+      m68k_extract_return_value (TYPE_FIELD_TYPE (type, 0), regcache, valbuf);
+      return;
+    }
 
-	link.w	%a6,&0			4e56  XXXX
+  if (len <= 4)
+    {
+      regcache_raw_read (regcache, M68K_D0_REGNUM, buf);
+      memcpy (valbuf, buf + (4 - len), len);
+    }
+  else if (len <= 8)
+    {
+      regcache_raw_read (regcache, M68K_D0_REGNUM, buf);
+      memcpy (valbuf, buf + (8 - len), len - 4);
+      regcache_raw_read (regcache, M68K_D1_REGNUM,
+			 (char *) valbuf + (len - 4));
+    }
+  else
+    internal_error (__FILE__, __LINE__,
+		    "Cannot extract return value of %d bytes long.", len);
+}
 
-   A link instruction, long form:
+/* Write into the appropriate registers a function return value stored
+   in VALBUF of type TYPE, given in virtual format.  */
 
-	link.l  %fp,&F%1		480e  XXXX  XXXX
+static void
+m68k_store_return_value (struct type *type, struct regcache *regcache,
+			 const void *valbuf)
+{
+  int len = TYPE_LENGTH (type);
 
-   A movm instruction to preserve integer regs:
+  if (TYPE_CODE (type) == TYPE_CODE_STRUCT
+      && TYPE_NFIELDS (type) == 1)
+    {
+      m68k_store_return_value (TYPE_FIELD_TYPE (type, 0), regcache, valbuf);
+      return;
+    }
 
-	movm.l  &M%1,(4,%sp)		48ef  XXXX  XXXX
+  if (len <= 4)
+    regcache_raw_write_part (regcache, M68K_D0_REGNUM, 4 - len, len, valbuf);
+  else if (len <= 8)
+    {
+      regcache_raw_write_part (regcache, M68K_D1_REGNUM, 8 - len,
+			       len - 4, valbuf);
+      regcache_raw_write (regcache, M68K_D0_REGNUM,
+			  (char *) valbuf + (len - 4));
+    }
+  else
+    internal_error (__FILE__, __LINE__,
+		    "Cannot store return value of %d bytes long.", len);
+}
 
-   A fmovm instruction to preserve float regs:
+/* Extract from REGCACHE, which contains the (raw) register state, the
+   address in which a function should return its structure value, as a
+   CORE_ADDR.  */
 
-	fmovm   &FPM%1,(FPO%1,%sp)	f237  XXXX  XXXX  XXXX  XXXX
+static CORE_ADDR
+m68k_extract_struct_value_address (struct regcache *regcache)
+{
+  char buf[4];
 
-   Some profiling setup code (FIXME, not recognized yet):
+  regcache_cooked_read (regcache, M68K_D0_REGNUM, buf);
+  return extract_unsigned_integer (buf, 4);
+}
 
-	lea.l   (.L3,%pc),%a1		43fb  XXXX  XXXX  XXXX
-	bsr     _mcount			61ff  XXXX  XXXX
+static int
+m68k_use_struct_convention (int gcc_p, struct type *type)
+{
+  enum struct_return struct_return;
 
-  */
+  struct_return = gdbarch_tdep (current_gdbarch)->struct_return;
+  return generic_use_struct_convention (struct_return == reg_struct_return,
+					type);
+}
 
-#define P_LINK_L	0x480e
-#define P_LINK_W	0x4e56
-#define P_MOV_L		0x207c
-#define P_JSR		0x4eb9
-#define P_BSR		0x61ff
-#define P_LEA_L		0x43fb
-#define P_MOVM_L	0x48ef
-#define P_FMOVM		0xf237
-#define P_TRAP		0x4e40
+/* A function that tells us whether the function invocation represented
+   by fi does not have a frame on the stack associated with it.  If it
+   does not, FRAMELESS is set to 1, else 0.  */
+
+static int
+m68k_frameless_function_invocation (struct frame_info *fi)
+{
+  if (get_frame_type (fi) == SIGTRAMP_FRAME)
+    return 0;
+  else
+    return legacy_frameless_look_for_prologue (fi);
+}
+
+int
+delta68_in_sigtramp (CORE_ADDR pc, char *name)
+{
+  if (name != NULL)
+    return strcmp (name, "_sigcode") == 0;
+  else
+    return 0;
+}
 
 CORE_ADDR
-m68k_skip_prologue (ip)
-CORE_ADDR ip;
+delta68_frame_args_address (struct frame_info *frame_info)
 {
-  register CORE_ADDR limit;
-  struct symtab_and_line sal;
-  register int op;
-
-  /* Find out if there is a known limit for the extent of the prologue.
-     If so, ensure we don't go past it.  If not, assume "infinity". */
-
-  sal = find_pc_line (ip, 0);
-  limit = (sal.end) ? sal.end : (CORE_ADDR) ~0;
-
-  while (ip < limit)
+  /* we assume here that the only frameless functions are the system calls
+     or other functions who do not put anything on the stack. */
+  if (get_frame_type (frame_info) == SIGTRAMP_FRAME)
+    return get_frame_base (frame_info) + 12;
+  else if (legacy_frameless_look_for_prologue (frame_info))
     {
-      op = read_memory_integer (ip, 2);
-      op &= 0xFFFF;
-      
-      if (op == P_LINK_W)
+      /* Check for an interrupted system call */
+      if (get_next_frame (frame_info) && (get_frame_type (get_next_frame (frame_info)) == SIGTRAMP_FRAME))
+	return get_frame_base (get_next_frame (frame_info)) + 16;
+      else
+	return get_frame_base (frame_info) + 4;
+    }
+  else
+    return get_frame_base (frame_info);
+}
+
+CORE_ADDR
+delta68_frame_saved_pc (struct frame_info *frame_info)
+{
+  return read_memory_unsigned_integer (delta68_frame_args_address (frame_info)
+				       + 4, 4);
+}
+
+int
+delta68_frame_num_args (struct frame_info *fi)
+{
+  int val;
+  CORE_ADDR pc = DEPRECATED_FRAME_SAVED_PC (fi);
+  int insn = read_memory_unsigned_integer (pc, 2);
+  val = 0;
+  if (insn == 0047757 || insn == 0157374)	/* lea W(sp),sp or addaw #W,sp */
+    val = read_memory_integer (pc + 2, 2);
+  else if ((insn & 0170777) == 0050217	/* addql #N, sp */
+	   || (insn & 0170777) == 0050117)	/* addqw */
+    {
+      val = (insn >> 9) & 7;
+      if (val == 0)
+	val = 8;
+    }
+  else if (insn == 0157774)	/* addal #WW, sp */
+    val = read_memory_integer (pc + 2, 4);
+  val >>= 2;
+  return val;
+}
+
+static CORE_ADDR
+m68k_push_dummy_call (struct gdbarch *gdbarch, CORE_ADDR func_addr,
+		      struct regcache *regcache, CORE_ADDR bp_addr, int nargs,
+		      struct value **args, CORE_ADDR sp, int struct_return,
+		      CORE_ADDR struct_addr)
+{
+  char buf[4];
+  int i;
+
+  /* Push arguments in reverse order.  */
+  for (i = nargs - 1; i >= 0; i--)
+    {
+      struct type *value_type = VALUE_ENCLOSING_TYPE (args[i]);
+      int len = TYPE_LENGTH (value_type);
+      int container_len = (len + 3) & ~3;
+      int offset;
+
+      /* Non-scalars bigger than 4 bytes are left aligned, others are
+	 right aligned.  */
+      if ((TYPE_CODE (value_type) == TYPE_CODE_STRUCT
+	   || TYPE_CODE (value_type) == TYPE_CODE_UNION
+	   || TYPE_CODE (value_type) == TYPE_CODE_ARRAY)
+	  && len > 4)
+	offset = 0;
+      else
+	offset = container_len - len;
+      sp -= container_len;
+      write_memory (sp + offset, VALUE_CONTENTS_ALL (args[i]), len);
+    }
+
+  /* Store struct value address.  */
+  if (struct_return)
+    {
+      store_unsigned_integer (buf, 4, struct_addr);
+      regcache_cooked_write (regcache, M68K_A1_REGNUM, buf);
+    }
+
+  /* Store return address.  */
+  sp -= 4;
+  store_unsigned_integer (buf, 4, bp_addr);
+  write_memory (sp, buf, 4);
+
+  /* Finally, update the stack pointer...  */
+  store_unsigned_integer (buf, 4, sp);
+  regcache_cooked_write (regcache, M68K_SP_REGNUM, buf);
+
+  /* ...and fake a frame pointer.  */
+  regcache_cooked_write (regcache, M68K_FP_REGNUM, buf);
+
+  /* DWARF2/GCC uses the stack address *before* the function call as a
+     frame's CFA.  */
+  return sp + 8;
+}
+
+struct m68k_frame_cache
+{
+  /* Base address.  */
+  CORE_ADDR base;
+  CORE_ADDR sp_offset;
+  CORE_ADDR pc;
+
+  /* Saved registers.  */
+  CORE_ADDR saved_regs[M68K_NUM_REGS];
+  CORE_ADDR saved_sp;
+
+  /* Stack space reserved for local variables.  */
+  long locals;
+};
+
+/* Allocate and initialize a frame cache.  */
+
+static struct m68k_frame_cache *
+m68k_alloc_frame_cache (void)
+{
+  struct m68k_frame_cache *cache;
+  int i;
+
+  cache = FRAME_OBSTACK_ZALLOC (struct m68k_frame_cache);
+
+  /* Base address.  */
+  cache->base = 0;
+  cache->sp_offset = -4;
+  cache->pc = 0;
+
+  /* Saved registers.  We initialize these to -1 since zero is a valid
+     offset (that's where %fp is supposed to be stored).  */
+  for (i = 0; i < M68K_NUM_REGS; i++)
+    cache->saved_regs[i] = -1;
+
+  /* Frameless until proven otherwise.  */
+  cache->locals = -1;
+
+  return cache;
+}
+
+/* Check whether PC points at a code that sets up a new stack frame.
+   If so, it updates CACHE and returns the address of the first
+   instruction after the sequence that sets removes the "hidden"
+   argument from the stack or CURRENT_PC, whichever is smaller.
+   Otherwise, return PC.  */
+
+static CORE_ADDR
+m68k_analyze_frame_setup (CORE_ADDR pc, CORE_ADDR current_pc,
+			  struct m68k_frame_cache *cache)
+{
+  int op;
+
+  if (pc >= current_pc)
+    return current_pc;
+
+  op = read_memory_unsigned_integer (pc, 2);
+
+  if (op == P_LINKW_FP || op == P_LINKL_FP || op == P_PEA_FP)
+    {
+      cache->saved_regs[M68K_FP_REGNUM] = 0;
+      cache->sp_offset += 4;
+      if (op == P_LINKW_FP)
 	{
-	  ip += 4;	/* Skip link.w */
+	  /* link.w %fp, #-N */
+	  /* link.w %fp, #0; adda.l #-N, %sp */
+	  cache->locals = -read_memory_integer (pc + 2, 2);
+
+	  if (pc + 4 < current_pc && cache->locals == 0)
+	    {
+	      op = read_memory_unsigned_integer (pc + 4, 2);
+	      if (op == P_ADDAL_SP)
+		{
+		  cache->locals = read_memory_integer (pc + 6, 4);
+		  return pc + 10;
+		}
+	    }
+
+	  return pc + 4;
 	}
-      else if (op == 0x4856)
-	ip += 2; /* Skip pea %fp */
-      else if (op == 0x2c4f)
-	ip += 2; /* Skip move.l %sp, %fp */
-      else if (op == P_LINK_L)
+      else if (op == P_LINKL_FP)
 	{
-	  ip += 6;	/* Skip link.l */
-	}
-      else if (op == P_MOVM_L)
-	{
-	  ip += 6;	/* Skip movm.l */
-	}
-      else if (op == P_FMOVM)
-	{
-	  ip += 10;	/* Skip fmovm */
+	  /* link.l %fp, #-N */
+	  cache->locals = -read_memory_integer (pc + 2, 4);
+	  return pc + 6;
 	}
       else
 	{
-	  break;	/* Found unknown code, bail out. */
+	  /* pea (%fp); movea.l %sp, %fp */
+	  cache->locals = 0;
+
+	  if (pc + 2 < current_pc)
+	    {
+	      op = read_memory_unsigned_integer (pc + 2, 2);
+
+	      if (op == P_MOVEAL_SP_FP)
+		{
+		  /* move.l %sp, %fp */
+		  return pc + 4;
+		}
+	    }
+
+	  return pc + 2;
 	}
     }
-  return (ip);
+  else if ((op & 0170777) == P_SUBQW_SP || (op & 0170777) == P_SUBQL_SP)
+    {
+      /* subq.[wl] #N,%sp */
+      /* subq.[wl] #8,%sp; subq.[wl] #N,%sp */
+      cache->locals = (op & 07000) == 0 ? 8 : (op & 07000) >> 9;
+      if (pc + 2 < current_pc)
+	{
+	  op = read_memory_unsigned_integer (pc + 2, 2);
+	  if ((op & 0170777) == P_SUBQW_SP || (op & 0170777) == P_SUBQL_SP)
+	    {
+	      cache->locals += (op & 07000) == 0 ? 8 : (op & 07000) >> 9;
+	      return pc + 4;
+	    }
+	}
+      return pc + 2;
+    }
+  else if (op == P_ADDAW_SP || op == P_LEA_SP_SP)
+    {
+      /* adda.w #-N,%sp */
+      /* lea (-N,%sp),%sp */
+      cache->locals = -read_memory_integer (pc + 2, 2);
+      return pc + 4;
+    }
+  else if (op == P_ADDAL_SP)
+    {
+      /* adda.l #-N,%sp */
+      cache->locals = -read_memory_integer (pc + 2, 4);
+      return pc + 6;
+    }
+
+  return pc;
 }
 
-void
-m68k_find_saved_regs (frame_info, saved_regs)
-     struct frame_info *frame_info;
-     struct frame_saved_regs *saved_regs;
+/* Check whether PC points at code that saves registers on the stack.
+   If so, it updates CACHE and returns the address of the first
+   instruction after the register saves or CURRENT_PC, whichever is
+   smaller.  Otherwise, return PC.  */
+
+static CORE_ADDR
+m68k_analyze_register_saves (CORE_ADDR pc, CORE_ADDR current_pc,
+			     struct m68k_frame_cache *cache)
 {
-  register int regnum;							
-  register int regmask;							
-  register CORE_ADDR next_addr;						
-  register CORE_ADDR pc;
-
-  /* First possible address for a pc in a call dummy for this frame.  */
-  CORE_ADDR possible_call_dummy_start =
-    (frame_info)->frame - CALL_DUMMY_LENGTH - FP_REGNUM*4 - 4 - 8*12;
-
-  int nextinsn;
-  memset (saved_regs, 0, sizeof (*saved_regs));
-  if ((frame_info)->pc >= possible_call_dummy_start
-      && (frame_info)->pc <= (frame_info)->frame)
+  if (cache->locals >= 0)
     {
+      CORE_ADDR offset;
+      int op;
+      int i, mask, regno;
 
-      /* It is a call dummy.  We could just stop now, since we know
-	 what the call dummy saves and where.  But this code proceeds
-	 to parse the "prologue" which is part of the call dummy.
-	 This is needlessly complex and confusing.  FIXME.  */
-
-      next_addr = (frame_info)->frame;
-      pc = possible_call_dummy_start;
-    }
-  else   								
-    {
-      pc = get_pc_function_start ((frame_info)->pc); 			
-
-      if (0x4856 == read_memory_integer (pc, 2)
-	  && 0x2c4f == read_memory_integer (pc + 2, 2))
+      offset = -4 - cache->locals;
+      while (pc < current_pc)
 	{
-	  /*
-	    pea %fp
-            move.l %sp, %fp */
-
-	  pc += 4;
-	  next_addr = frame_info->frame;
-	}
-      else if (044016 == read_memory_integer (pc, 2))
-	/* link.l %fp */
-	/* Find the address above the saved   
-	   regs using the amount of storage from the link instruction.  */
-	next_addr = (frame_info)->frame + read_memory_integer (pc += 2, 4), pc+=4; 
-      else if (047126 == read_memory_integer (pc, 2))			
-	/* link.w %fp */
-	/* Find the address above the saved   
-	   regs using the amount of storage from the link instruction.  */
-	next_addr = (frame_info)->frame + read_memory_integer (pc += 2, 2), pc+=2; 
-      else goto lose;
-
-      /* If have an addal #-n, sp next, adjust next_addr.  */		
-      if ((0177777 & read_memory_integer (pc, 2)) == 0157774)		
-	next_addr += read_memory_integer (pc += 2, 4), pc += 4;		
-    }									
-  regmask = read_memory_integer (pc + 2, 2);				
-
-  /* Here can come an fmovem.  Check for it.  */		
-  nextinsn = 0xffff & read_memory_integer (pc, 2);			
-  if (0xf227 == nextinsn						
-      && (regmask & 0xff00) == 0xe000)					
-    { pc += 4; /* Regmask's low bit is for register fp7, the first pushed */ 
-      for (regnum = FP0_REGNUM + 7; regnum >= FP0_REGNUM; regnum--, regmask >>= 1)		
-	if (regmask & 1)						
-          saved_regs->regs[regnum] = (next_addr -= 12);		
-      regmask = read_memory_integer (pc + 2, 2); }
-
-  /* next should be a moveml to (sp) or -(sp) or a movl r,-(sp) */	
-  if (0044327 == read_memory_integer (pc, 2))				
-    { pc += 4; /* Regmask's low bit is for register 0, the first written */ 
-      for (regnum = 0; regnum < 16; regnum++, regmask >>= 1)		
-	if (regmask & 1)						
-          saved_regs->regs[regnum] = (next_addr += 4) - 4; }	
-  else if (0044347 == read_memory_integer (pc, 2))			
-    {
-      pc += 4; /* Regmask's low bit is for register 15, the first pushed */ 
-      for (regnum = 15; regnum >= 0; regnum--, regmask >>= 1)		
-	if (regmask & 1)						
-          saved_regs->regs[regnum] = (next_addr -= 4);
-    }
-  else if (0x2f00 == (0xfff0 & read_memory_integer (pc, 2)))		
-    {
-      regnum = 0xf & read_memory_integer (pc, 2); pc += 2;		
-      saved_regs->regs[regnum] = (next_addr -= 4);
-      /* gcc, at least, may use a pair of movel instructions when saving
-	 exactly 2 registers.  */
-      if (0x2f00 == (0xfff0 & read_memory_integer (pc, 2)))
-	{
-	  regnum = 0xf & read_memory_integer (pc, 2);
-	  pc += 2;
-	  saved_regs->regs[regnum] = (next_addr -= 4);
+	  op = read_memory_unsigned_integer (pc, 2);
+	  if (op == P_FMOVEMX_SP)
+	    {
+	      /* fmovem.x REGS,-(%sp) */
+	      op = read_memory_unsigned_integer (pc + 2, 2);
+	      if ((op & 0xff00) == 0xe000)
+		{
+		  mask = op & 0xff;
+		  for (i = 0; i < 16; i++, mask >>= 1)
+		    {
+		      if (mask & 1)
+			{
+			  cache->saved_regs[i + M68K_FP0_REGNUM] = offset;
+			  offset -= 12;
+			}
+		    }
+		  pc += 4;
+		}
+	      else
+		break;
+	    }
+	  else if ((op & 0170677) == P_MOVEL_SP)
+	    {
+	      /* move.l %R,-(%sp) */
+	      regno = ((op & 07000) >> 9) | ((op & 0100) >> 3);
+	      cache->saved_regs[regno] = offset;
+	      offset -= 4;
+	      pc += 2;
+	    }
+	  else if (op == P_MOVEML_SP)
+	    {
+	      /* movem.l REGS,-(%sp) */
+	      mask = read_memory_unsigned_integer (pc + 2, 2);
+	      for (i = 0; i < 16; i++, mask >>= 1)
+		{
+		  if (mask & 1)
+		    {
+		      cache->saved_regs[15 - i] = offset;
+		      offset -= 4;
+		    }
+		}
+	      pc += 4;
+	    }
+	  else
+	    break;
 	}
     }
 
-  /* fmovemx to index of sp may follow.  */				
-  regmask = read_memory_integer (pc + 2, 2);				
-  nextinsn = 0xffff & read_memory_integer (pc, 2);			
-  if (0xf236 == nextinsn						
-      && (regmask & 0xff00) == 0xf000)					
-    { pc += 10; /* Regmask's low bit is for register fp0, the first written */ 
-      for (regnum = FP0_REGNUM + 7; regnum >= FP0_REGNUM; regnum--, regmask >>= 1)		
-	if (regmask & 1)						
-          saved_regs->regs[regnum] = (next_addr += 12) - 12;	
-      regmask = read_memory_integer (pc + 2, 2); }			
-
-  /* clrw -(sp); movw ccr,-(sp) may follow.  */				
-  if (0x426742e7 == read_memory_integer (pc, 4))			
-    saved_regs->regs[PS_REGNUM] = (next_addr -= 4);		
-  lose: ;								
-  saved_regs->regs[SP_REGNUM] = (frame_info)->frame + 8;		
-  saved_regs->regs[FP_REGNUM] = (frame_info)->frame;		
-  saved_regs->regs[PC_REGNUM] = (frame_info)->frame + 4;		
-#ifdef SIG_SP_FP_OFFSET
-  /* Adjust saved SP_REGNUM for fake _sigtramp frames.  */
-  if (frame_info->signal_handler_caller && frame_info->next)
-    saved_regs->regs[SP_REGNUM] = frame_info->next->frame + SIG_SP_FP_OFFSET;
-#endif
+  return pc;
 }
 
 
-#ifdef USE_PROC_FS	/* Target dependent support for /proc */
+/* Do a full analysis of the prologue at PC and update CACHE
+   accordingly.  Bail out early if CURRENT_PC is reached.  Return the
+   address where the analysis stopped.
+
+   We handle all cases that can be generated by gcc.
+
+   For allocating a stack frame:
+
+   link.w %a6,#-N
+   link.l %a6,#-N
+   pea (%fp); move.l %sp,%fp
+   link.w %a6,#0; add.l #-N,%sp
+   subq.l #N,%sp
+   subq.w #N,%sp
+   subq.w #8,%sp; subq.w #N-8,%sp
+   add.w #-N,%sp
+   lea (-N,%sp),%sp
+   add.l #-N,%sp
+
+   For saving registers:
+
+   fmovem.x REGS,-(%sp)
+   move.l R1,-(%sp)
+   move.l R1,-(%sp); move.l R2,-(%sp)
+   movem.l REGS,-(%sp)
+
+   For setting up the PIC register:
+
+   lea (%pc,N),%a5
+
+   */
+
+static CORE_ADDR
+m68k_analyze_prologue (CORE_ADDR pc, CORE_ADDR current_pc,
+		       struct m68k_frame_cache *cache)
+{
+  unsigned int op;
+
+  pc = m68k_analyze_frame_setup (pc, current_pc, cache);
+  pc = m68k_analyze_register_saves (pc, current_pc, cache);
+  if (pc >= current_pc)
+    return current_pc;
+
+  /* Check for GOT setup.  */
+  op = read_memory_unsigned_integer (pc, 4);
+  if (op == P_LEA_PC_A5)
+    {
+      /* lea (%pc,N),%a5 */
+      return pc + 6;
+    }
+
+  return pc;
+}
+
+/* Return PC of first real instruction.  */
+
+static CORE_ADDR
+m68k_skip_prologue (CORE_ADDR start_pc)
+{
+  struct m68k_frame_cache cache;
+  CORE_ADDR pc;
+  int op;
+
+  cache.locals = -1;
+  pc = m68k_analyze_prologue (start_pc, (CORE_ADDR) -1, &cache);
+  if (cache.locals < 0)
+    return start_pc;
+  return pc;
+}
+
+static CORE_ADDR
+m68k_unwind_pc (struct gdbarch *gdbarch, struct frame_info *next_frame)
+{
+  char buf[8];
+
+  frame_unwind_register (next_frame, PC_REGNUM, buf);
+  return extract_typed_address (buf, builtin_type_void_func_ptr);
+}
+
+/* Normal frames.  */
+
+static struct m68k_frame_cache *
+m68k_frame_cache (struct frame_info *next_frame, void **this_cache)
+{
+  struct m68k_frame_cache *cache;
+  char buf[4];
+  int i;
+
+  if (*this_cache)
+    return *this_cache;
+
+  cache = m68k_alloc_frame_cache ();
+  *this_cache = cache;
+
+  /* In principle, for normal frames, %fp holds the frame pointer,
+     which holds the base address for the current stack frame.
+     However, for functions that don't need it, the frame pointer is
+     optional.  For these "frameless" functions the frame pointer is
+     actually the frame pointer of the calling frame.  Signal
+     trampolines are just a special case of a "frameless" function.
+     They (usually) share their frame pointer with the frame that was
+     in progress when the signal occurred.  */
+
+  frame_unwind_register (next_frame, M68K_FP_REGNUM, buf);
+  cache->base = extract_unsigned_integer (buf, 4);
+  if (cache->base == 0)
+    return cache;
+
+  /* For normal frames, %pc is stored at 4(%fp).  */
+  cache->saved_regs[M68K_PC_REGNUM] = 4;
+
+  cache->pc = frame_func_unwind (next_frame);
+  if (cache->pc != 0)
+    m68k_analyze_prologue (cache->pc, frame_pc_unwind (next_frame), cache);
+
+  if (cache->locals < 0)
+    {
+      /* We didn't find a valid frame, which means that CACHE->base
+	 currently holds the frame pointer for our calling frame.  If
+	 we're at the start of a function, or somewhere half-way its
+	 prologue, the function's frame probably hasn't been fully
+	 setup yet.  Try to reconstruct the base address for the stack
+	 frame by looking at the stack pointer.  For truly "frameless"
+	 functions this might work too.  */
+
+      frame_unwind_register (next_frame, M68K_SP_REGNUM, buf);
+      cache->base = extract_unsigned_integer (buf, 4) + cache->sp_offset;
+    }
+
+  /* Now that we have the base address for the stack frame we can
+     calculate the value of %sp in the calling frame.  */
+  cache->saved_sp = cache->base + 8;
+
+  /* Adjust all the saved registers such that they contain addresses
+     instead of offsets.  */
+  for (i = 0; i < M68K_NUM_REGS; i++)
+    if (cache->saved_regs[i] != -1)
+      cache->saved_regs[i] += cache->base;
+
+  return cache;
+}
+
+static void
+m68k_frame_this_id (struct frame_info *next_frame, void **this_cache,
+		    struct frame_id *this_id)
+{
+  struct m68k_frame_cache *cache = m68k_frame_cache (next_frame, this_cache);
+
+  /* This marks the outermost frame.  */
+  if (cache->base == 0)
+    return;
+
+  /* See the end of m68k_push_dummy_call.  */
+  *this_id = frame_id_build (cache->base + 8, cache->pc);
+}
+
+static void
+m68k_frame_prev_register (struct frame_info *next_frame, void **this_cache,
+			  int regnum, int *optimizedp,
+			  enum lval_type *lvalp, CORE_ADDR *addrp,
+			  int *realnump, void *valuep)
+{
+  struct m68k_frame_cache *cache = m68k_frame_cache (next_frame, this_cache);
+
+  gdb_assert (regnum >= 0);
+
+  if (regnum == M68K_SP_REGNUM && cache->saved_sp)
+    {
+      *optimizedp = 0;
+      *lvalp = not_lval;
+      *addrp = 0;
+      *realnump = -1;
+      if (valuep)
+	{
+	  /* Store the value.  */
+	  store_unsigned_integer (valuep, 4, cache->saved_sp);
+	}
+      return;
+    }
+
+  if (regnum < M68K_NUM_REGS && cache->saved_regs[regnum] != -1)
+    {
+      *optimizedp = 0;
+      *lvalp = lval_memory;
+      *addrp = cache->saved_regs[regnum];
+      *realnump = -1;
+      if (valuep)
+	{
+	  /* Read the value in from memory.  */
+	  read_memory (*addrp, valuep,
+		       register_size (current_gdbarch, regnum));
+	}
+      return;
+    }
+
+  frame_register_unwind (next_frame, regnum,
+			 optimizedp, lvalp, addrp, realnump, valuep);
+}
+
+static const struct frame_unwind m68k_frame_unwind =
+{
+  NORMAL_FRAME,
+  m68k_frame_this_id,
+  m68k_frame_prev_register
+};
+
+static const struct frame_unwind *
+m68k_frame_sniffer (struct frame_info *next_frame)
+{
+  return &m68k_frame_unwind;
+}
+
+/* Signal trampolines.  */
+
+static struct m68k_frame_cache *
+m68k_sigtramp_frame_cache (struct frame_info *next_frame, void **this_cache)
+{
+  struct m68k_frame_cache *cache;
+  struct gdbarch_tdep *tdep = gdbarch_tdep (current_gdbarch);
+  struct m68k_sigtramp_info info;
+  char buf[4];
+  int i;
+
+  if (*this_cache)
+    return *this_cache;
+
+  cache = m68k_alloc_frame_cache ();
+
+  frame_unwind_register (next_frame, M68K_SP_REGNUM, buf);
+  cache->base = extract_unsigned_integer (buf, 4) - 4;
+
+  info = tdep->get_sigtramp_info (next_frame);
+
+  for (i = 0; i < M68K_NUM_REGS; i++)
+    if (info.sc_reg_offset[i] != -1)
+      cache->saved_regs[i] = info.sigcontext_addr + info.sc_reg_offset[i];
+
+  *this_cache = cache;
+  return cache;
+}
+
+static void
+m68k_sigtramp_frame_this_id (struct frame_info *next_frame, void **this_cache,
+			     struct frame_id *this_id)
+{
+  struct m68k_frame_cache *cache =
+    m68k_sigtramp_frame_cache (next_frame, this_cache);
+
+  /* See the end of m68k_push_dummy_call.  */
+  *this_id = frame_id_build (cache->base + 8, frame_pc_unwind (next_frame));
+}
+
+static void
+m68k_sigtramp_frame_prev_register (struct frame_info *next_frame,
+				   void **this_cache,
+				   int regnum, int *optimizedp,
+				   enum lval_type *lvalp, CORE_ADDR *addrp,
+				   int *realnump, void *valuep)
+{
+  /* Make sure we've initialized the cache.  */
+  m68k_sigtramp_frame_cache (next_frame, this_cache);
+
+  m68k_frame_prev_register (next_frame, this_cache, regnum,
+			    optimizedp, lvalp, addrp, realnump, valuep);
+}
+
+static const struct frame_unwind m68k_sigtramp_frame_unwind =
+{
+  SIGTRAMP_FRAME,
+  m68k_sigtramp_frame_this_id,
+  m68k_sigtramp_frame_prev_register
+};
+
+static const struct frame_unwind *
+m68k_sigtramp_frame_sniffer (struct frame_info *next_frame)
+{
+  CORE_ADDR pc = frame_pc_unwind (next_frame);
+  char *name;
+
+  /* We shouldn't even bother to try if the OSABI didn't register
+     a get_sigtramp_info handler.  */
+  if (!gdbarch_tdep (current_gdbarch)->get_sigtramp_info)
+    return NULL;
+
+  find_pc_partial_function (pc, &name, NULL, NULL);
+  if (PC_IN_SIGTRAMP (pc, name))
+    return &m68k_sigtramp_frame_unwind;
+
+  return NULL;
+}
+
+static CORE_ADDR
+m68k_frame_base_address (struct frame_info *next_frame, void **this_cache)
+{
+  struct m68k_frame_cache *cache = m68k_frame_cache (next_frame, this_cache);
+
+  return cache->base;
+}
+
+static const struct frame_base m68k_frame_base =
+{
+  &m68k_frame_unwind,
+  m68k_frame_base_address,
+  m68k_frame_base_address,
+  m68k_frame_base_address
+};
+
+static struct frame_id
+m68k_unwind_dummy_id (struct gdbarch *gdbarch, struct frame_info *next_frame)
+{
+  char buf[4];
+  CORE_ADDR fp;
+
+  frame_unwind_register (next_frame, M68K_FP_REGNUM, buf);
+  fp = extract_unsigned_integer (buf, 4);
+
+  /* See the end of m68k_push_dummy_call.  */
+  return frame_id_build (fp + 8, frame_pc_unwind (next_frame));
+}
+
+#ifdef USE_PROC_FS		/* Target dependent support for /proc */
 
 #include <sys/procfs.h>
 
+/* Prototypes for supply_gregset etc. */
+#include "gregset.h"
+
 /*  The /proc interface divides the target machine's register set up into
-    two different sets, the general register set (gregset) and the floating
-    point register set (fpregset).  For each set, there is an ioctl to get
-    the current register set and another ioctl to set the current values.
+   two different sets, the general register set (gregset) and the floating
+   point register set (fpregset).  For each set, there is an ioctl to get
+   the current register set and another ioctl to set the current values.
 
-    The actual structure passed through the ioctl interface is, of course,
-    naturally machine dependent, and is different for each set of registers.
-    For the m68k for example, the general register set is typically defined
-    by:
+   The actual structure passed through the ioctl interface is, of course,
+   naturally machine dependent, and is different for each set of registers.
+   For the m68k for example, the general register set is typically defined
+   by:
 
-	typedef int gregset_t[18];
+   typedef int gregset_t[18];
 
-	#define	R_D0	0
-	...
-	#define	R_PS	17
+   #define      R_D0    0
+   ...
+   #define      R_PS    17
 
-    and the floating point set by:
+   and the floating point set by:
 
-    	typedef	struct fpregset {
-	  int	f_pcr;
-	  int	f_psr;
-	  int	f_fpiaddr;
-	  int	f_fpregs[8][3];		(8 regs, 96 bits each)
-	} fpregset_t;
+   typedef      struct fpregset {
+   int  f_pcr;
+   int  f_psr;
+   int  f_fpiaddr;
+   int  f_fpregs[8][3];         (8 regs, 96 bits each)
+   } fpregset_t;
 
-    These routines provide the packing and unpacking of gregset_t and
-    fpregset_t formatted data.
+   These routines provide the packing and unpacking of gregset_t and
+   fpregset_t formatted data.
 
  */
 
@@ -346,17 +918,16 @@ m68k_find_saved_regs (frame_info, saved_regs)
 #endif
 
 /*  Given a pointer to a general register set in /proc format (gregset_t *),
-    unpack the register contents and supply them as gdb's idea of the current
-    register values. */
+   unpack the register contents and supply them as gdb's idea of the current
+   register values. */
 
 void
-supply_gregset (gregsetp)
-gregset_t *gregsetp;
+supply_gregset (gregset_t *gregsetp)
 {
-  register int regi;
-  register greg_t *regp = (greg_t *) gregsetp;
+  int regi;
+  greg_t *regp = (greg_t *) gregsetp;
 
-  for (regi = 0 ; regi < R_PC ; regi++)
+  for (regi = 0; regi < R_PC; regi++)
     {
       supply_register (regi, (char *) (regp + regi));
     }
@@ -365,204 +936,207 @@ gregset_t *gregsetp;
 }
 
 void
-fill_gregset (gregsetp, regno)
-gregset_t *gregsetp;
-int regno;
+fill_gregset (gregset_t *gregsetp, int regno)
 {
-  register int regi;
-  register greg_t *regp = (greg_t *) gregsetp;
-  extern char registers[];
+  int regi;
+  greg_t *regp = (greg_t *) gregsetp;
 
-  for (regi = 0 ; regi < R_PC ; regi++)
+  for (regi = 0; regi < R_PC; regi++)
     {
-      if ((regno == -1) || (regno == regi))
-	{
-	  *(regp + regi) = *(int *) &registers[REGISTER_BYTE (regi)];
-	}
+      if (regno == -1 || regno == regi)
+	regcache_collect (regi, regp + regi);
     }
-  if ((regno == -1) || (regno == PS_REGNUM))
-    {
-      *(regp + R_PS) = *(int *) &registers[REGISTER_BYTE (PS_REGNUM)];
-    }
-  if ((regno == -1) || (regno == PC_REGNUM))
-    {
-      *(regp + R_PC) = *(int *) &registers[REGISTER_BYTE (PC_REGNUM)];
-    }
+  if (regno == -1 || regno == PS_REGNUM)
+    regcache_collect (PS_REGNUM, regp + R_PS);
+  if (regno == -1 || regno == PC_REGNUM)
+    regcache_collect (PC_REGNUM, regp + R_PC);
 }
 
 #if defined (FP0_REGNUM)
 
 /*  Given a pointer to a floating point register set in /proc format
-    (fpregset_t *), unpack the register contents and supply them as gdb's
-    idea of the current floating point register values. */
+   (fpregset_t *), unpack the register contents and supply them as gdb's
+   idea of the current floating point register values. */
 
-void 
-supply_fpregset (fpregsetp)
-fpregset_t *fpregsetp;
+void
+supply_fpregset (fpregset_t *fpregsetp)
 {
-  register int regi;
+  int regi;
   char *from;
-  
-  for (regi = FP0_REGNUM ; regi < FPC_REGNUM ; regi++)
+
+  for (regi = FP0_REGNUM; regi < M68K_FPC_REGNUM; regi++)
     {
-      from = (char *) &(fpregsetp -> f_fpregs[regi-FP0_REGNUM][0]);
+      from = (char *) &(fpregsetp->f_fpregs[regi - FP0_REGNUM][0]);
       supply_register (regi, from);
     }
-  supply_register (FPC_REGNUM, (char *) &(fpregsetp -> f_pcr));
-  supply_register (FPS_REGNUM, (char *) &(fpregsetp -> f_psr));
-  supply_register (FPI_REGNUM, (char *) &(fpregsetp -> f_fpiaddr));
+  supply_register (M68K_FPC_REGNUM, (char *) &(fpregsetp->f_pcr));
+  supply_register (M68K_FPS_REGNUM, (char *) &(fpregsetp->f_psr));
+  supply_register (M68K_FPI_REGNUM, (char *) &(fpregsetp->f_fpiaddr));
 }
 
 /*  Given a pointer to a floating point register set in /proc format
-    (fpregset_t *), update the register specified by REGNO from gdb's idea
-    of the current floating point register set.  If REGNO is -1, update
-    them all. */
+   (fpregset_t *), update the register specified by REGNO from gdb's idea
+   of the current floating point register set.  If REGNO is -1, update
+   them all. */
 
 void
-fill_fpregset (fpregsetp, regno)
-fpregset_t *fpregsetp;
-int regno;
+fill_fpregset (fpregset_t *fpregsetp, int regno)
 {
   int regi;
-  char *to;
-  char *from;
-  extern char registers[];
 
-  for (regi = FP0_REGNUM ; regi < FPC_REGNUM ; regi++)
+  for (regi = FP0_REGNUM; regi < M68K_FPC_REGNUM; regi++)
     {
-      if ((regno == -1) || (regno == regi))
-	{
-	  from = (char *) &registers[REGISTER_BYTE (regi)];
-	  to = (char *) &(fpregsetp -> f_fpregs[regi-FP0_REGNUM][0]);
-	  memcpy (to, from, REGISTER_RAW_SIZE (regi));
-	}
+      if (regno == -1 || regno == regi)
+	regcache_collect (regi, &fpregsetp->f_fpregs[regi - FP0_REGNUM][0]);
     }
-  if ((regno == -1) || (regno == FPC_REGNUM))
-    {
-      fpregsetp -> f_pcr = *(int *) &registers[REGISTER_BYTE (FPC_REGNUM)];
-    }
-  if ((regno == -1) || (regno == FPS_REGNUM))
-    {
-      fpregsetp -> f_psr = *(int *) &registers[REGISTER_BYTE (FPS_REGNUM)];
-    }
-  if ((regno == -1) || (regno == FPI_REGNUM))
-    {
-      fpregsetp -> f_fpiaddr = *(int *) &registers[REGISTER_BYTE (FPI_REGNUM)];
-    }
+  if (regno == -1 || regno == M68K_FPC_REGNUM)
+    regcache_collect (M68K_FPC_REGNUM, &fpregsetp->f_pcr);
+  if (regno == -1 || regno == M68K_FPS_REGNUM)
+    regcache_collect (M68K_FPS_REGNUM, &fpregsetp->f_psr);
+  if (regno == -1 || regno == M68K_FPI_REGNUM)
+    regcache_collect (M68K_FPI_REGNUM, &fpregsetp->f_fpiaddr);
 }
 
-#endif	/* defined (FP0_REGNUM) */
+#endif /* defined (FP0_REGNUM) */
 
-#endif  /* USE_PROC_FS */
+#endif /* USE_PROC_FS */
 
-#ifdef GET_LONGJMP_TARGET
 /* Figure out where the longjmp will land.  Slurp the args out of the stack.
    We expect the first arg to be a pointer to the jmp_buf structure from which
    we extract the pc (JB_PC) that we will land at.  The pc is copied into PC.
    This routine returns true on success. */
 
 int
-get_longjmp_target(pc)
-     CORE_ADDR *pc;
+m68k_get_longjmp_target (CORE_ADDR *pc)
 {
-  char buf[TARGET_PTR_BIT / TARGET_CHAR_BIT];
+  char *buf;
   CORE_ADDR sp, jb_addr;
+  struct gdbarch_tdep *tdep = gdbarch_tdep (current_gdbarch);
 
-  sp = read_register(SP_REGNUM);
+  if (tdep->jb_pc < 0)
+    {
+      internal_error (__FILE__, __LINE__,
+		      "m68k_get_longjmp_target: not implemented");
+      return 0;
+    }
 
-  if (target_read_memory (sp + SP_ARG0, /* Offset of first arg on stack */
-			  buf,
+  buf = alloca (TARGET_PTR_BIT / TARGET_CHAR_BIT);
+  sp = read_register (SP_REGNUM);
+
+  if (target_read_memory (sp + SP_ARG0,	/* Offset of first arg on stack */
+			  buf, TARGET_PTR_BIT / TARGET_CHAR_BIT))
+    return 0;
+
+  jb_addr = extract_unsigned_integer (buf, TARGET_PTR_BIT / TARGET_CHAR_BIT);
+
+  if (target_read_memory (jb_addr + tdep->jb_pc * tdep->jb_elt_size, buf,
 			  TARGET_PTR_BIT / TARGET_CHAR_BIT))
     return 0;
 
-  jb_addr = extract_address (buf, TARGET_PTR_BIT / TARGET_CHAR_BIT);
-
-  if (target_read_memory (jb_addr + JB_PC * JB_ELEMENT_SIZE, buf,
-			  TARGET_PTR_BIT / TARGET_CHAR_BIT))
-    return 0;
-
-  *pc = extract_address (buf, TARGET_PTR_BIT / TARGET_CHAR_BIT);
-
+  *pc = extract_unsigned_integer (buf, TARGET_PTR_BIT / TARGET_CHAR_BIT);
   return 1;
 }
-#endif /* GET_LONGJMP_TARGET */
 
-/* Immediately after a function call, return the saved pc before the frame
-   is setup.  For sun3's, we check for the common case of being inside of a
-   system call, and if so, we know that Sun pushes the call # on the stack
-   prior to doing the trap. */
+/* Function: m68k_gdbarch_init
+   Initializer function for the m68k gdbarch vector.
+   Called by gdbarch.  Sets up the gdbarch vector(s) for this target. */
 
-CORE_ADDR
-m68k_saved_pc_after_call(frame)
-     struct frame_info *frame;
+static struct gdbarch *
+m68k_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 {
-#ifdef SYSCALL_TRAP
-  int op;
+  struct gdbarch_tdep *tdep = NULL;
+  struct gdbarch *gdbarch;
 
-  op = read_memory_integer (frame->pc - SYSCALL_TRAP_OFFSET, 2);
+  /* find a candidate among the list of pre-declared architectures. */
+  arches = gdbarch_list_lookup_by_info (arches, &info);
+  if (arches != NULL)
+    return (arches->gdbarch);
 
-  if (op == SYSCALL_TRAP)
-    return read_memory_integer (read_register (SP_REGNUM) + 4, 4);
-  else
-#endif /* SYSCALL_TRAP */
-    return read_memory_integer (read_register (SP_REGNUM), 4);
+  tdep = xmalloc (sizeof (struct gdbarch_tdep));
+  gdbarch = gdbarch_alloc (&info, tdep);
+
+  set_gdbarch_long_double_format (gdbarch, &floatformat_m68881_ext);
+  set_gdbarch_long_double_bit (gdbarch, 96);
+
+  set_gdbarch_skip_prologue (gdbarch, m68k_skip_prologue);
+  set_gdbarch_breakpoint_from_pc (gdbarch, m68k_local_breakpoint_from_pc);
+
+  /* Stack grows down. */
+  set_gdbarch_inner_than (gdbarch, core_addr_lessthan);
+  set_gdbarch_parm_boundary (gdbarch, 32);
+
+  set_gdbarch_believe_pcc_promotion (gdbarch, 1);
+  set_gdbarch_decr_pc_after_break (gdbarch, 2);
+
+  set_gdbarch_extract_return_value (gdbarch, m68k_extract_return_value);
+  set_gdbarch_store_return_value (gdbarch, m68k_store_return_value);
+  set_gdbarch_deprecated_extract_struct_value_address (gdbarch, m68k_extract_struct_value_address);
+  set_gdbarch_use_struct_convention (gdbarch, m68k_use_struct_convention);
+
+  set_gdbarch_deprecated_frameless_function_invocation (gdbarch, m68k_frameless_function_invocation);
+  set_gdbarch_frame_args_skip (gdbarch, 8);
+
+  set_gdbarch_register_type (gdbarch, m68k_register_type);
+  set_gdbarch_register_name (gdbarch, m68k_register_name);
+  set_gdbarch_num_regs (gdbarch, 29);
+  set_gdbarch_register_bytes_ok (gdbarch, m68k_register_bytes_ok);
+  set_gdbarch_sp_regnum (gdbarch, M68K_SP_REGNUM);
+  set_gdbarch_pc_regnum (gdbarch, M68K_PC_REGNUM);
+  set_gdbarch_ps_regnum (gdbarch, M68K_PS_REGNUM);
+  set_gdbarch_fp0_regnum (gdbarch, M68K_FP0_REGNUM);
+
+  set_gdbarch_push_dummy_call (gdbarch, m68k_push_dummy_call);
+
+  /* Disassembler.  */
+  set_gdbarch_print_insn (gdbarch, print_insn_m68k);
+
+#if defined JB_PC && defined JB_ELEMENT_SIZE
+  tdep->jb_pc = JB_PC;
+  tdep->jb_elt_size = JB_ELEMENT_SIZE;
+#else
+  tdep->jb_pc = -1;
+#endif
+  tdep->get_sigtramp_info = NULL;
+  tdep->struct_return = pcc_struct_return;
+
+  /* Frame unwinder.  */
+  set_gdbarch_unwind_dummy_id (gdbarch, m68k_unwind_dummy_id);
+  set_gdbarch_unwind_pc (gdbarch, m68k_unwind_pc);
+
+  /* Hook in the DWARF CFI frame unwinder.  */
+  frame_unwind_append_sniffer (gdbarch, dwarf2_frame_sniffer);
+
+  frame_base_set_default (gdbarch, &m68k_frame_base);
+
+  /* Hook in ABI-specific overrides, if they have been registered.  */
+  gdbarch_init_osabi (info, gdbarch);
+
+  /* Now we have tuned the configuration, set a few final things,
+     based on what the OS ABI has told us.  */
+
+  if (tdep->jb_pc >= 0)
+    set_gdbarch_get_longjmp_target (gdbarch, m68k_get_longjmp_target);
+
+  frame_unwind_append_sniffer (gdbarch, m68k_sigtramp_frame_sniffer);
+  frame_unwind_append_sniffer (gdbarch, m68k_frame_sniffer);
+
+  return gdbarch;
 }
 
-/* This used to be needed by tm-sun3.h but is probably not
-   used by any targets anymore.  Keep it for now anyway.
-   This works like blockframe.c:sigtramp_saved_pc() */
 
-#ifdef	SIG_PC_FP_OFFSET
-CORE_ADDR
-m68k_sigtramp_saved_pc (frame)
-     struct frame_info *frame;
+static void
+m68k_dump_tdep (struct gdbarch *current_gdbarch, struct ui_file *file)
 {
-  CORE_ADDR nextfp, pc;
+  struct gdbarch_tdep *tdep = gdbarch_tdep (current_gdbarch);
 
-  if (frame->signal_handler_caller == 0)
-    abort();
-
-  nextfp = (frame)->next ?
-    (frame)->next->frame :
-    read_register (SP_REGNUM) - 8;
-  nextfp += SIG_PC_FP_OFFSET;
-
-  pc = read_memory_integer (nextfp, 4);
-
-  return pc;
+  if (tdep == NULL)
+    return;
 }
-#endif	/* SIG_PC_FP_OFFSET */
 
-/* For Open- and NetBSD, sigtramp is 32 bytes before STACK_END_ADDR,
-   but we don't know where that is until run-time!  */
-
-#if defined(TM_NBSD_H) || defined(TM_OBSD_H)
-int
-nbsd_in_sigtramp (pc)
-     CORE_ADDR pc;
-{
-  static CORE_ADDR stack_end_addr;
-  struct minimal_symbol *msymbol;
-  CORE_ADDR pssaddr;
-  int rv;
-
-  if (stack_end_addr == 0) {
-    msymbol = lookup_minimal_symbol("__ps_strings", NULL, NULL);
-    if (msymbol == NULL)
-      pssaddr = 0x40a0; /* XXX return 0? */
-    else
-      pssaddr = SYMBOL_VALUE_ADDRESS(msymbol);
-    stack_end_addr = read_memory_integer (pssaddr, 4);
-    stack_end_addr = (stack_end_addr + 0xFF) & ~0xFF;
-  }
-  rv = ((pc >= (stack_end_addr - 32)) &&
-	(pc < stack_end_addr));
-  return rv;
-}
-#endif	/* TM_NBSD_H || TM_OBSD_H */
+extern initialize_file_ftype _initialize_m68k_tdep; /* -Wmissing-prototypes */
 
 void
-_initialize_m68k_tdep ()
+_initialize_m68k_tdep (void)
 {
-  tm_print_insn = print_insn_m68k;
+  gdbarch_register (bfd_arch_m68k, m68k_gdbarch_init, m68k_dump_tdep);
 }

@@ -1,9 +1,13 @@
-MH_CFLAGS=-D__GO32__ -D__MSDOS__
-XDEPFILES= go32-xdep.o
+# Host: Intel x86 running DJGPP
+MH_CFLAGS= 
+
 XM_FILE= xm-go32.h
-TERMCAP= 
-HOST_IPC=-DDOS_IPC
-SER_HARDWIRE= ser-go32.o
-CC=i386-go32-gcc -O2 -fno-omit-frame-pointer
+
+NAT_FILE= nm-go32.h
+NATDEPFILES= go32-nat.o i386-nat.o
+
+HOST_IPC=
+CC= gcc
+XM_CLIBS= -ldbg
 
 

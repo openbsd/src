@@ -1,7 +1,26 @@
-if $nosignals {
-	verbose "Skipping signals.exp because of nosignals."
-	continue
-	}
+#   Copyright 1997, 1998, 1999, 2003 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  
+
+# Please email any bugs, comments, and/or additions to this file to:
+# bug-gdb@prep.ai.mit.edu
+
+if [target_info exists gdb,nosignals] {
+    verbose "Skipping signals.exp because of nosignals."
+    continue
+}
 
 if $tracelevel then {
 	strace $tracelevel
@@ -13,22 +32,24 @@ set bug_id 0
 set testfile signals
 set srcfile ${testfile}.c
 set binfile ${objdir}/${subdir}/${testfile}
-if  { [compile "${srcdir}/${subdir}/${srcfile} -g -o ${binfile}"] != "" } {
-    perror "Couldn't compile ${srcfile}"
-    return -1
+if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug}] != "" } {
+     gdb_suppress_entire_file "Testcase compile failed, so all tests in this file will automatically fail."
 }
 
 # Create and source the file that provides information about the compiler
 # used to compile the test case.
-execute_anywhere "rm -f ${binfile}.ci"
-if  { [compile "-E ${srcdir}/${subdir}/compiler.c > ${binfile}.ci"] != "" } {
-    perror "Couldn't make ${binfile}.ci file"
-    return -1
+if [get_compiler_info ${binfile}] {
+    return -1;
 }
-source ${binfile}.ci
+
+if {$hp_cc_compiler} {
+    set void 0
+} else {
+    set void void
+}
 
 proc signal_tests_1 {} {
-    global prompt
+    global gdb_prompt
     if [runto_main] then {
 	gdb_test "next" "signal \\(SIGUSR1.*" \
 		"next over signal (SIGALRM, handler)"
@@ -37,7 +58,7 @@ proc signal_tests_1 {} {
 	gdb_test "next" "\\+\\+count; /\\* first \\*/" \
 		"next over alarm (1)"
 	# An alarm has been signaled, give the signal time to get delivered.
-	exec sleep 2
+	sleep 2
 
 	# i386 BSD currently fails the next test with a SIGTRAP.
 	setup_xfail "i*86-*-bsd*"
@@ -51,11 +72,11 @@ proc signal_tests_1 {} {
 	# linux (aout versions) also fails with "next" acting like "continue"
 	# this is probably more dependant on the kernel version than on the
 	# object file format or utils.  (sigh)
-	setup_xfail "i*86-*-linuxaout" "i*86-*-linuxoldld"
-	send "next\n"
-	expect {
-	    -re "alarm .*$prompt $" { pass "next to 2nd alarm (1)" }
-	    -re "Program received signal SIGTRAP.*first.*$prompt $" {
+	setup_xfail "i*86-pc-linuxaout-gnu" "i*86-pc-linuxoldld-gnu"
+	send_gdb "next\n"
+	gdb_expect {
+	    -re "alarm .*$gdb_prompt $" { pass "next to 2nd alarm (1)" }
+	    -re "Program received signal SIGTRAP.*first.*$gdb_prompt $" {
 
 		# This can happen on machines that have a trace flag
 		# in their PS register.
@@ -82,10 +103,23 @@ proc signal_tests_1 {} {
 		# through_sigtramp_breakpoint upon return from the signal
 		# handler.
 
+		# SVR4 and Linux based i*86 systems exhibit this behaviour
+		# as well (it is uncovered by the `continue from a break
+		# in a signal handler' test below).
+		# As these systems use procfs, where we tell the kernel not
+		# to tell gdb about `pass' signals, and the trace flag is
+		# cleared by the kernel before entering the sigtramp
+		# routine, GDB will not notice the execution of the signal 
+		# handler.
+		# Upon return from the signal handler, GDB will receive
+		# a SIGTRAP from the set trace flag in the restored context.
+		# The SIGTRAP marks the end of a (albeit long winded)
+		# single step for GDB, causing this test to pass.
+
 		fail "next to 2nd alarm (1) (probably kernel bug)"
 		gdb_test "next" "alarm.*" "next to 2nd alarm (1)"
 	    }
-	    -re "Program exited with code.*$prompt $" {
+	    -re "Program exited with code.*$gdb_prompt $" {
 
 		# This is apparently a bug in the UnixWare kernel (but
 		# has not been investigated beyond the
@@ -118,7 +152,7 @@ proc signal_tests_1 {} {
 		fail "'next' behaved as 'continue (known SVR4 bug)'"
 		return 0
 	    }
-	    -re ".*$prompt $" { fail "next to 2nd alarm (1)" }
+	    -re ".*$gdb_prompt $" { fail "next to 2nd alarm (1)" }
 	    timeout { fail "next to 2nd alarm (1); (timeout)" }
 	    eof { fail "next to 2nd alarm (1); (eof)" }
 	}
@@ -127,23 +161,22 @@ proc signal_tests_1 {} {
 	gdb_test "next" "\\+\\+count; /\\* second \\*/" \
 	    "next to 2nd ++count in signals_tests_1"
 	# An alarm has been signaled, give the signal time to get delivered.
-	exec sleep 2
+	sleep 2
 
 	set bash_bug 0
-	send "next\n"
-	setup_xfail "i*86-*-linux"
-	expect {
-	    -re "Breakpoint.*handler.*$prompt $" {
+	send_gdb "next\n"
+	gdb_expect {
+	    -re "Breakpoint.*handler.*$gdb_prompt $" {
 		pass "next to handler in signals_tests_1"
 	    }
-	    -re "Program received signal SIGEMT.*$prompt $" {
+	    -re "Program received signal SIGEMT.*$gdb_prompt $" {
 		# Bash versions before 1.13.5 cause this behaviour
 		# by blocking SIGTRAP.
 		fail "next to handler in signals_tests_1 (known problem with bash versions before 1.13.5)"
 		set bash_bug 1
 		gdb_test "signal 0" "Breakpoint.*handler.*"
 	    }
-	    -re ".*$prompt $" { fail "next to handler in signals_tests_1" }
+	    -re ".*$gdb_prompt $" { fail "next to handler in signals_tests_1" }
 	    timeout { fail "next to handler in signals_tests_1 (timeout)" }
 	    eof { fail "next to handler in signals_tests_1 (eof)" }
 	}
@@ -151,8 +184,8 @@ proc signal_tests_1 {} {
 	# This doesn't test that main is frame #2, just that main is frame
 	# #2, #3, or higher.  At some point this should be fixed (but
 	# it quite possibly would introduce new FAILs on some systems).
-	setup_xfail "i*86-*-linux" "i*86-*-bsdi2.0"
-	gdb_test "backtrace" "#0.*handler.*#1.*#2.*main.*" \
+	setup_xfail "i*86-*-bsdi2.0"
+	gdb_test "backtrace 10" "#0.*handler.*#1.*signal handler.*#2.* main .*" \
 	    "backtrace in signals_tests_1"
 
 	gdb_test "break func1" "Breakpoint \[0-9\]+ .*"
@@ -162,11 +195,13 @@ proc signal_tests_1 {} {
 	# a SIGTRAP, but with different symptoms.
 	setup_xfail "vax-*-ultrix*"
 	setup_xfail "i*86-*-bsd*"
-	setup_xfail "i*86-*-linux"
-	send "continue\n"
-	expect {
-	    -re "Breakpoint.*func1.*$prompt $" { pass "continue to func1" }
-	    -re "Program received signal SIGTRAP.*second.*$prompt $" {
+	setup_xfail "i*86-*-freebsd*"
+	setup_xfail "i*86-pc-linux-gnu*"
+	setup_xfail "i*86-*-solaris2*"
+	send_gdb "continue\n"
+	gdb_expect {
+	    -re "Breakpoint.*func1.*$gdb_prompt $" { pass "continue to func1" }
+	    -re "Program received signal SIGTRAP.*second.*$gdb_prompt $" {
 
 		# See explanation for `next to 2nd alarm (1)' fail above.
 		# We did step into the signal handler, hit a breakpoint
@@ -178,7 +213,7 @@ proc signal_tests_1 {} {
 		gdb_test "continue" "Breakpoint.*func1.*" \
 		    "extra continue to func1"
 	    }
-	    -re "Program received signal SIGTRAP.*func1 ..;.*$prompt $" {
+	    -re "Program received signal SIGTRAP.*func1 ..;.*$gdb_prompt $" {
 
 		# On the vax under Ultrix the set trace flag in the restored
 		# context is causing the SIGTRAP, but after stepping one
@@ -188,22 +223,21 @@ proc signal_tests_1 {} {
 		gdb_test "continue" "Breakpoint.*func1.*" \
 		    "extra continue to func1"
 	    }
-	    -re ".*$prompt $" { fail "continue to func1" }
+	    -re ".*$gdb_prompt $" { fail "continue to func1" }
 	    default { fail "continue to func1" }
 	}
 
 	setup_xfail "*-*-irix*"
-	setup_xfail "i*86-*-linux"
-	send "signal SIGUSR1\n"
-	expect {
-	    -re "Breakpoint.*handler.*$prompt $" { pass "signal SIGUSR1" }
-	    -re "Program received signal SIGUSR1.*$prompt $" {
+	send_gdb "signal SIGUSR1\n"
+	gdb_expect {
+	    -re "Breakpoint.*handler.*$gdb_prompt $" { pass "signal SIGUSR1" }
+	    -re "Program received signal SIGUSR1.*$gdb_prompt $" {
 		# This is what irix4 and irix5 do.
 		# It would appear to be a kernel bug.
 		fail "signal SIGUSR1"
 		gdb_test "continue" "Breakpoint.*handler.*" "pass it SIGUSR1"
 	    }
-	    -re ".*$prompt $" { fail "signal SIGUSR1" }
+	    -re ".*$gdb_prompt $" { fail "signal SIGUSR1" }
 	    default { fail "signal SIGUSR1" }
 	}
 
@@ -219,25 +253,25 @@ proc signal_tests_1 {} {
 	# anytime soon.
 
 	setup_xfail "*-*-*"
-	send "continue\n"
-	expect {
-	    -re "Breakpoint.*func2.*$prompt $" { pass "continue to func2" }
-	    -re "Breakpoint.*func1.*$prompt $" {
+	send_gdb "continue\n"
+	gdb_expect {
+	    -re "Breakpoint.*func2.*$gdb_prompt $" { pass "continue to func2" }
+	    -re "Breakpoint.*func1.*$gdb_prompt $" {
 	    	fail "continue to func2"
 		gdb_test "continue" "Breakpoint.*func2.*" \
 		    "extra continue to func2"
 	    }
-	    -re ".*$prompt $" { fail "continue to func2" }
+	    -re ".*$gdb_prompt $" { fail "continue to func2" }
 	    default { fail "continue to func2" }
 	}
 
-	exec sleep 2
+	sleep 2
 
         # GDB yanks out the breakpoints to step over the breakpoint it
         # stopped at, which means the breakpoint at handler is yanked.
-	# But if NO_SINGLE_STEP, we won't get another chance to reinsert
-	# them (at least not with procfs, where we tell the kernel not
-	# to tell gdb about `pass' signals).  So the fix would appear to
+	# But if SOFTWARE_SINGLE_STEP_P, we won't get another chance to
+	# reinsert them (at least not with procfs, where we tell the kernel
+	# not to tell gdb about `pass' signals).  So the fix would appear to
 	# be to just yank that one breakpoint when we step over it.
 
 	setup_xfail "sparc*-*-*"
@@ -249,11 +283,13 @@ proc signal_tests_1 {} {
 	    setup_xfail "m68*-*-sunos4*"
 	}
 
-	setup_xfail "i*86-*-linux"
+	setup_xfail "i*86-pc-linux-gnu*"
+	setup_xfail "i*86-*-solaris2*"
 	gdb_test "continue" "Breakpoint.*handler.*" "continue to handler"
 
-	# If the NO_SINGLE_STEP failure happened, we have already exited.
-	# If we succeeded a continue will return from the handler to func2.
+	# If the SOFTWARE_SINGLE_STEP_P failure happened, we have already
+	# exited.
+        # If we succeeded a continue will return from the handler to func2.
 	# GDB now has `forgotten' that it intended to step over the
 	# breakpoint at func2 and will stop at func2.
 	setup_xfail "*-*-*"
@@ -278,7 +314,7 @@ proc signal_tests_1 {} {
 # braindamage.
 
 if {[ istarget "m68*-motorola-*" ] || [ istarget "hppa*-*-bsd*" ] ||
-    [ istarget "*-*-hpux*" ] || [ istarget "hppa*-*-osf*" ]} then {
+    [ istarget "hppa*-*-osf*" ]} then {
   setup_xfail "*-*-*"
   fail "ptrace loses on signals on this target"
   return 0
@@ -307,8 +343,13 @@ proc test_handle_all_print {} {
     set oldtimeout $timeout
     set timeout [expr "$timeout + 360"]
     verbose "Timeout is now $timeout seconds" 2
-    match_max 10000
-    gdb_test "handle all print" "Signal\[ 	\]+Stop\[ 	\]+Print\[ 	\]+Pass to program\[ 	\]+Description\r\nSIGHUP\[ 	\]+Yes\[ 	\]+Yes\[ 	\]+Yes\[ 	\]+Hangup.*SIG63\[ 	\]+Yes\[ 	\]+Yes\[ 	\]+Yes\[ 	\]+Real-time event 63.*EXC_BREAKPOINT\[ 	\]+Yes\[ 	\]+Yes\[ 	\]+Yes\[ 	\]+Breakpoint"
+    if { ![istarget "*-*-linux*"]
+         && ( [istarget "*-*-gnu*"]
+              || [istarget "*-*-mach*"] ) } {
+	gdb_test "handle all print" "Signal\[ 	\]+Stop\[ 	\]+Print\[ 	\]+Pass to program\[ 	\]+Description\r\nSIGHUP\[ 	\]+Yes\[ 	\]+Yes\[ 	\]+Yes\[ 	\]+Hangup.*SIG63\[ 	\]+Yes\[ 	\]+Yes\[ 	\]+Yes\[ 	\]+Real-time event 63.*EXC_BREAKPOINT\[ 	\]+Yes\[ 	\]+Yes\[ 	\]+Yes\[ 	\]+Breakpoint"
+    } else {
+	gdb_test "handle all print" "Signal\[ 	\]+Stop\[ 	\]+Print\[ 	\]+Pass to program\[ 	\]+Description\r\nSIGHUP\[ 	\]+Yes\[ 	\]+Yes\[ 	\]+Yes\[ 	\]+Hangup.*SIG63\[ 	\]+Yes\[ 	\]+Yes\[ 	\]+Yes\[ 	\]+Real-time event 63.*"
+    }
     set timeout $oldtimeout
     verbose "Timeout restored to $timeout seconds" 2
 }
@@ -322,14 +363,17 @@ signal_tests_1
 
 # Force a resync, so we're looking at the right prompt.  On SCO we
 # were getting out of sync (I don't understand why).
-send "p 1+1\n"
-expect {
-    -re "= 2.*$prompt $" {}
-    -re ".*$prompt $" { perror "sync trouble in signals.exp" }
+send_gdb "p 1+1\n"
+gdb_expect {
+    -re "= 2.*$gdb_prompt $" {}
+    -re ".*$gdb_prompt $" { perror "sync trouble in signals.exp" }
     default { perror "sync trouble in signals.exp" }
 }
 
 if [runto_main] then {
+    # Since count is a static variable outside main, runto_main
+    # is no guarantee that count will be 0 at this point.
+    gdb_test "set variable count = 0" ""
     gdb_test "break handler if 0" "Breakpoint \[0-9\]+ .*"
     gdb_test "set \$handler_breakpoint_number = \$bpnum" ""
 
@@ -339,14 +383,14 @@ if [runto_main] then {
     gdb_test "next" "\\+\\+count; /\\* first \\*/" \
 	"next to ++count #1 in signals.exp"
     # Give the signal time to get delivered
-    exec sleep 2
+    sleep 2
 
     # Now call a function.  When GDB tries to run the stack dummy,
     # it will hit the breakpoint at handler.  Provided it doesn't
     # lose its cool, this is not a problem, it just has to note
     # that the breakpoint condition is false and keep going.
 
-    gdb_test "p func1 ()" "^p func1 \\(\\)\r\n.\[0-9\]* = void" \
+    gdb_test "p func1 ()" "^p func1 \\(\\)\r\n.\[0-9\]* = $void" \
 	"p func1 () #1 in signals.exp"
 
     # Make sure the count got incremented.
@@ -361,7 +405,7 @@ if [runto_main] then {
     gdb_test "next" "alarm \\(.*" "next to alarm #2 in signals.exp"
     gdb_test "next" "\\+\\+count; /\\* second \\*/" \
 	"next to ++count #2 in signals.exp"
-    exec sleep 2
+    sleep 2
 
     # This time we stop when GDB tries to run the stack dummy.
     # So it is OK that we do not print the return value from the function.
@@ -372,11 +416,225 @@ The program being debugged stopped while in a function called from GDB.*" \
     # But we should be able to backtrace...
     # On alpha-*-osf2.0 this test works when run manually but sometime fails when
     # run under dejagnu, making it very hard to debug the problem.  Weird...
-    gdb_test "bt" "#0.*handler.*#1.*#2.*main.*" "bt in signals.exp"
+    gdb_test "bt 10" "#0.*handler.*#1.*signal handler.*#2.* main .*" "bt in signals.exp"
     # ...and continue...
     gdb_test "continue" "Continuing\\." "continue in signals.exp"
     # ...and then count should have been incremented
     gdb_test "p count" "= 5" "p count #2 in signals.exp"
+
+
+# Verify that "info signals" produces reasonable output.
+#
+    send_gdb "info signals\n"
+    gdb_expect {
+      -re "SIGHUP.*SIGINT.*SIGQUIT.*SIGILL.*SIGTRAP.*SIGABRT.*SIGEMT.*SIGFPE.*SIGKILL.*SIGBUS.*SIGSEGV.*SIGSYS.*SIGPIPE.*SIGALRM.*SIGTERM.*SIGURG.*SIGSTOP.*SIGTSTP.*SIGCONT.*SIGCHLD.*SIGTTIN.*SIGTTOU.*SIGIO.*SIGXCPU.*SIGXFSZ.*SIGVTALRM.*SIGPROF.*SIGWINCH.*SIGLOST.*SIGUSR1.*SIGUSR2.*SIGPWR.*SIGPOLL.*SIGWIND.*SIGPHONE.*SIGWAITING.*SIGLWP.*SIGDANGER.*SIGGRANT.*SIGRETRACT.*SIGMSG.*SIGSOUND.*SIGSAK.*SIGPRIO.*SIG33.*SIG34.*SIG35.*SIG36.*SIG37.*SIG38.*SIG39.*SIG40.*SIG41.*SIG42.*SIG43.*SIG44.*SIG45.*SIG46.*SIG47.*SIG48.*SIG49.*SIG50.*SIG51.*SIG52.*SIG53.*SIG54.*SIG55.*SIG56.*SIG57.*SIG58.*SIG59.*SIG60.*SIG61.*SIG62.*SIG63.*Use the \"handle\" command to change these tables.*$gdb_prompt $"\
+              {pass "info signals"}
+      -re "$gdb_prompt $"\
+              {fail "info signals"}
+      timeout {fail "(timeout) info signals"}
+    }
+
+# Verify that "info signal" correctly handles an argument, be it a
+# symbolic signal name, or an integer ID.
+#
+    send_gdb "info signal SIGTRAP\n"
+    gdb_expect {
+      -re ".*SIGTRAP\[ \t\]*Yes\[ \t\]*Yes\[ \t\]*No\[ \t\]*Trace/breakpoint trap.*$gdb_prompt $"\
+              {pass "info signal SIGTRAP"}
+      -re "$gdb_prompt $"\
+              {fail "info signal SIGTRAP"}
+      timeout {fail "(timeout) info signal SIGTRAP"}
+    }
+
+    send_gdb "info signal 5\n"
+    gdb_expect {
+      -re ".*SIGTRAP\[ \t\]*Yes\[ \t\]*Yes\[ \t\]*No\[ \t\]*Trace/breakpoint trap.*$gdb_prompt $"\
+              {pass "info signal 5"}
+      -re "$gdb_prompt $"\
+              {fail "info signal 5"}
+      timeout {fail "(timeout) info signal 5"}
+    }
+
+# Verify that "handle" with illegal arguments is gracefully, um, handled.
+#
+    send_gdb "handle\n"
+    gdb_expect {
+      -re "Argument required .signal to handle.*$gdb_prompt $"\
+              {pass "handle without arguments"}
+      -re "$gdb_prompt $"\
+              {fail "handle without arguments"}
+      timeout {fail "(timeout) handle without arguments"}
+    }
+
+    send_gdb "handle SIGFOO\n"
+    gdb_expect {
+      -re "Unrecognized or ambiguous flag word: \"SIGFOO\".*$gdb_prompt $"\
+              {pass "handle with bogus SIG"}
+      -re "$gdb_prompt $"\
+              {fail "handle with bogus SIG"}
+      timeout {fail "(timeout) handle with bogus SIG"}
+    }
+
+    send_gdb "handle SIGHUP frump\n"
+    gdb_expect {
+      -re "Unrecognized or ambiguous flag word: \"frump\".*$gdb_prompt $"\
+              {pass "handle SIG with bogus action"}
+      -re "$gdb_prompt $"\
+              {fail "handle SIG with bogus action"}
+      timeout {fail "(timeout) handle SIG with bogus action"}
+    }
+
+# Verify that "handle" can take multiple actions per SIG, and that in
+# the case of conflicting actions, that the rightmost action "wins".
+#
+    send_gdb "handle SIGHUP print noprint\n"
+    gdb_expect {
+      -re ".*SIGHUP\[ \t\]*No\[ \t\]*No\[ \t\]*Yes\[ \t\]*Hangup.*$gdb_prompt $"\
+              {pass "handle SIG with multiple conflicting actions"}
+      -re "$gdb_prompt $"\
+              {fail "handle SIG with multiple conflicting actions"}
+      timeout {fail "(timeout) handle SIG with multiple conflicting actions"}
+    }
+
+# Exercise all the various actions.  (We don't care what the outcome
+# is, this is just to ensure that they all can be parsed.)
+#
+    send_gdb "handle SIGHUP print noprint stop nostop ignore noignore pass nopass\n"
+    gdb_expect {
+      -re ".*Signal.*$gdb_prompt $"\
+              {pass "handle SIG parses all legal actions"}
+      -re "$gdb_prompt $"\
+              {fail "handle SIG parses all legal actions"}
+      timeout {fail "(timeout) handle SIG parses all legal actions"}
+    }
+
+# Verify that we can "handle" multiple signals at once, interspersed
+# with actions.
+#
+    send_gdb "handle SIG63 print SIGILL\n"
+    gdb_expect {
+      -re ".*SIGILL\[ \t\]*Yes\[ \t\]*Yes\[ \t\]*Yes\[ \t\]*Illegal instruction.*SIG63\[ \t\]*Yes\[ \t\]*Yes\[ \t\]*Yes\[ \t\]*Real-time event 63.*$gdb_prompt $"\
+              {pass "handle multiple SIGs"}
+      -re "$gdb_prompt $"\
+              {fail "handle multiple SIGs"}
+      timeout {fail "(timeout) handle multiple SIGs"}
+    }
+
+# Verify that "handle" can take a numeric argument for the signal ID,
+# rather than a symbolic name.  (This may not be portable; works for
+# HP-UX.)
+#
+# Also note that this testpoint overrides SIGTRAP, which on HP-UX at
+# least, is used to implement single-steps and breakpoints.  Don't
+# expect to run the inferior after this!
+#
+    send_gdb "handle 5 nopass\n"
+    gdb_expect {
+      -re ".*SIGTRAP is used by the debugger.*Are you sure you want to change it.*y or n.*"\
+              {send_gdb "y\n"
+               gdb_expect {
+                 -re ".*SIGTRAP\[ \t\]*Yes\[ \t\]*Yes\[ \t\]*No\[ \t\]*Trace/breakpoint trap.*$gdb_prompt $"\
+                         {pass "override SIGTRAP (#5)"}
+                 -re "$gdb_prompt $"\
+                         {fail "override SIGTRAP (#5)"}
+                 timeout {fail "(timeout) override SIGTRAP (#5)"}
+               }
+              }
+      -re "$gdb_prompt $"\
+              {fail "override SIGTRAP (#5)"}
+      timeout {fail "(timeout) override SIGTRAP (#5)"}
+    }
+
+# GDB doesn't seem to allow numeric signal IDs larger than 15.  Verify
+# that restriction.  ??rehrauer: Not sure if this is a feature or a
+# bug, actually.  Why is the range 1-15?
+#
+    send_gdb "handle 58\n"
+    gdb_expect {
+      -re "Only signals 1-15 are valid as numeric signals.*Use \"info signals\" for a list of symbolic signals.*$gdb_prompt $"\
+              {pass "invalid signal number rejected"}
+      -re "$gdb_prompt $"\
+              {fail "invalid signal number rejected"}
+      timeout {fail "(timeout) invalid signal number rejected"}
+    }
+
+# Verify that we can accept a signal ID range (number-number).
+# ??rehrauer: This feature isn't documented on the quick-reference
+# card.
+#
+    send_gdb "handle 13-15\n"
+    gdb_expect {
+      -re ".*SIGPIPE.*SIGALRM.*SIGTERM.*$gdb_prompt $"\
+              {pass "handle multiple SIGs via integer range"}
+      -re "$gdb_prompt $"\
+              {fail "handle multiple SIGs via integer range"}
+      timeout {fail "(timeout) handle multiple SIGs via integer range"}
+
+    }
+
+# Bizarrely enough, GDB also allows you to reverse the range
+# stat, stop IDs.  E.g., "3-1" and "1-3" mean the same thing.
+# Probably this isn't documented, but the code anticipates it,
+# so we'd best test it...
+#
+    send_gdb "handle 15-13\n"
+    gdb_expect {
+      -re ".*SIGPIPE.*SIGALRM.*SIGTERM.*$gdb_prompt $"\
+              {pass "handle multiple SIGs via integer range"}
+      -re "$gdb_prompt $"\
+              {fail "handle multiple SIGs via integer range"}
+      timeout {fail "(timeout) handle multiple SIGs via integer range"}
+
+    }
+
+# SIGINT is used by the debugger as well.  Verify that we can change
+# our minds about changing it.
+#
+    send_gdb "handle SIGINT nopass\n"
+    gdb_expect {
+      -re ".*SIGINT is used by the debugger.*Are you sure you want to change it.*y or n.*"\
+              {send_gdb "n\n"
+# ??rehrauer: When you answer "n", the header for the signal info is
+# printed, but not the actual handler settings.  Probably a bug.
+#
+               gdb_expect {
+                 -re "Not confirmed, unchanged.*Signal.*$gdb_prompt $"\
+                         {pass "override SIGINT"}
+                 -re "$gdb_prompt $"\
+                         {fail "override SIGINT"}
+                 timeout {fail "(timeout) override SIGINT"}
+               }
+              }
+      -re "$gdb_prompt $"\
+              {fail "override SIGINT"}
+      timeout {fail "(timeout) override SIGINT"}
+    }
+
+# Verify that GDB responds gracefully to the "signal" command with
+# a missing argument.
+#
+    send_gdb "signal\n"
+    gdb_expect {
+      -re "Argument required .signal number..*$gdb_prompt $"\
+              {pass "signal without arguments disallowed"}
+      -re "$gdb_prompt $"\
+              {fail "signal without arguments disallowed"}
+      timeout {fail "(timeout) signal without arguments disallowed"}
+    }
+
+# Verify that we can successfully send a signal other than 0 to
+# the inferior.  (This probably causes the inferior to run away.
+# Be prepared to rerun to main for further testing.)
+#
+    send_gdb "signal 5\n"
+    gdb_expect {
+      -re "Continuing with signal SIGTRAP.*$gdb_prompt $"\
+              {pass "sent signal 5"}
+      -re "$gdb_prompt $"\
+              {fail "sent signal 5"}
+      timeout {fail "(timeout) sent signal 5"}
+    }
+
 }
 
 return 0

@@ -1,24 +1,11 @@
 # Host: IBM RS/6000 running AIX4
 
 XM_FILE= xm-aix4.h
-XDEPFILES= 
 
 NAT_FILE= nm-rs6000.h
-NATDEPFILES= fork-child.o infptrace.o inftarg.o corelow.o rs6000-nat.o xcoffread.o
+NATDEPFILES= fork-child.o infptrace.o inftarg.o corelow.o rs6000-nat.o \
+	     xcoffsolib.o
 
 # When compiled with cc, for debugging, this argument should be passed.
 # We have no idea who our current compiler is though, so we skip it.
 # MH_CFLAGS = -bnodelcsect
-
-# Because of shared libraries, we risk ending up with *two*
-# incompatible versions of malloc if we use GNU malloc ...
-MMALLOC = 
-MMALLOC_CFLAGS = -DNO_MMALLOC
-
-# A bug in the AIX 3.2 libc.a results in unresolved references for .scalb and
-# .finite because we call ldexp via floatformat.  Circumvent by adding -lm.
-XM_CLIBS= -lm
-
-# Rumor has it that libtermcap is "not really functional", and that
-# -lcurses is better.
-TERMCAP= -lcurses

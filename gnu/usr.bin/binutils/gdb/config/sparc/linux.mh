@@ -1,0 +1,11 @@
+# Host: GNU/Linux SPARC
+NAT_FILE= nm-linux.h
+NATDEPFILES= sparc-nat.o sparc-sol2-nat.o \
+	corelow.o core-regset.o fork-child.o \
+	infptrace.o inftarg.o \
+	proc-service.o thread-db.o lin-lwp.o \
+	linux-proc.o gcore.o linux-nat.o
+
+# The dynamically loaded libthread_db needs access to symbols in the
+# gdb executable.
+LOADLIBES = -ldl -rdynamic

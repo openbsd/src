@@ -1,0 +1,281 @@
+#   Copyright 2002, 2003, 2004
+#   Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  
+
+# Please email any bugs, comments, and/or additions to this file to:
+# bug-gdb@prep.ai.mit.edu
+
+# This file was written by Corinna Vinschen <vinschen@redhat.com>
+
+if [target_info exists gdb,nofileio] {
+    verbose "Skipping fileio.exp because of no fileio capabilities."
+    continue
+}
+
+if $tracelevel then {
+        strace $tracelevel
+}
+
+set prms_id 0
+set bug_id 0
+
+set testfile "fileio"
+set srcfile ${testfile}.c
+set binfile ${objdir}/${subdir}/${testfile}
+
+if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug}] != "" } {
+    gdb_suppress_entire_file "Testcase compile failed, so all tests in this file will automatically fail."
+}
+
+# Create and source the file that provides information about the compiler
+# used to compile the test case.
+
+if [get_compiler_info ${binfile}] {
+    return -1;
+}
+
+remote_exec build {sh -xc test\ -r\ dir2.fileio.test\ &&\ chmod\ -f\ +w\ dir2.fileio.test}
+remote_exec build {sh -xc rm\ -rf\ *.fileio.test}
+
+set oldtimeout $timeout
+set timeout [expr "$timeout + 60"]
+
+# Start with a fresh gdb.
+
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+gdb_load ${binfile}
+send_gdb "set print sevenbit-strings\n" ; gdb_expect -re "$gdb_prompt $"
+send_gdb "set print address off\n" ; gdb_expect -re "$gdb_prompt $"
+send_gdb "set width 0\n" ; gdb_expect -re "$gdb_prompt $"
+
+
+if ![runto_main] then {
+    perror "couldn't run to breakpoint"
+    continue
+}
+
+send_gdb "tbreak 81\n" ; gdb_expect -re "$gdb_prompt $"
+gdb_test continue \
+"Continuing\\..*open 1:.*OK.*test_open \\(\\) at.*$srcfile:81.*" \
+"Open a file"
+
+send_gdb "tbreak 88\n" ; gdb_expect -re "$gdb_prompt $"
+gdb_test continue \
+"Continuing\\..*open 2:.*EEXIST.*test_open \\(\\) at.*$srcfile:88.*" \
+"Creating already existing file returns EEXIST"
+
+send_gdb "tbreak 95\n" ; gdb_expect -re "$gdb_prompt $"
+gdb_test continue \
+"Continuing\\..*open 3:.*EISDIR.*test_open \\(\\) at.*$srcfile:95.*" \
+"Open directory for writing returns EISDIR"
+
+send_gdb "tbreak 102\n" ; gdb_expect -re "$gdb_prompt $"
+gdb_test continue \
+"Continuing\\..*open 4:.*ENOENT.*test_open \\(\\) at.*$srcfile:102.*" \
+"Opening nonexistant file returns ENOENT"
+
+send_gdb "tbreak 109\n" ; gdb_expect -re "$gdb_prompt $"
+send_gdb "continue\n" ; gdb_expect -re "$gdb_prompt $"
+catch "system \"chmod -f -w nowrt.fileio.test\""
+
+send_gdb "tbreak 119\n" ; gdb_expect -re "$gdb_prompt $"
+gdb_test continue \
+"Continuing\\..*open 5:.*EACCES.*test_open \\(\\) at.*$srcfile:119.*" \
+"Open for write but no write permission returns EACCES"
+
+send_gdb "tbreak 140\n" ; gdb_expect -re "$gdb_prompt $"
+gdb_test continue \
+"Continuing\\..*write 1:.*OK.*test_write \\(\\) at.*$srcfile:140.*" \
+"Writing to a file"
+
+send_gdb "tbreak 145\n" ; gdb_expect -re "$gdb_prompt $"
+gdb_test continue \
+"Continuing\\..*write 2:.*EBADF.*test_write \\(\\) at.*$srcfile:145.*" \
+"Write using invalid file descriptor returns EBADF"
+
+send_gdb "tbreak 156\n" ; gdb_expect -re "$gdb_prompt $"
+gdb_test continue \
+"Continuing\\..*write 3:.*EBADF.*test_write \\(\\) at.*$srcfile:156.*" \
+"Writing to a read-only file returns EBADF"
+
+send_gdb "tbreak 182\n" ; gdb_expect -re "$gdb_prompt $"
+gdb_test continue \
+"Continuing\\..*read 1:.*OK.*test_read \\(\\) at.*$srcfile:182.*" \
+"Reading from a file"
+
+send_gdb "tbreak 186\n" ; gdb_expect -re "$gdb_prompt $"
+gdb_test continue \
+"Continuing\\..*read 2:.*EBADF.*test_read \\(\\) at.*$srcfile:186.*" \
+"Read using invalid file descriptor returns EBADF"
+
+send_gdb "tbreak 221\n" ; gdb_expect -re "$gdb_prompt $"
+gdb_test continue \
+"Continuing\\..*lseek 1:.*OK.*lseek 2:.*OK.*lseek 3:.*OK.*test_lseek \\(\\) at.*$srcfile:221.*" \
+"Lseeking a file"
+
+send_gdb "tbreak 241\n" ; gdb_expect -re "$gdb_prompt $"
+gdb_test continue \
+"Continuing\\..*close 1:.*OK.*test_close \\(\\) at.*$srcfile:241.*" \
+"Closing a file"
+
+send_gdb "tbreak 245\n" ; gdb_expect -re "$gdb_prompt $"
+gdb_test continue \
+"Continuing\\..*close 2:.*EBADF.*test_close \\(\\) at.*$srcfile:245.*" \
+"Closing an invalid file descriptor returns EBADF"
+
+send_gdb "tbreak 262\n" ; gdb_expect -re "$gdb_prompt $"
+gdb_test continue \
+"Continuing\\..*stat 1:.*OK.*test_stat \\(\\) at.*$srcfile:262.*" \
+"Stat a file"
+
+send_gdb "tbreak 267\n" ; gdb_expect -re "$gdb_prompt $"
+gdb_test continue \
+	"Continuing\\..*stat 2:.*(ENOENT|EFAULT).*test_stat \\(\\) at.*$srcfile:267.*" \
+"Stat a NULL pathname returns ENOENT or EFAULT"
+
+send_gdb "tbreak 272\n" ; gdb_expect -re "$gdb_prompt $"
+gdb_test continue \
+"Continuing\\..*stat 3:.*ENOENT.*test_stat \\(\\) at.*$srcfile:272.*" \
+"Stat an empty pathname returns ENOENT"
+
+send_gdb "tbreak 276\n" ; gdb_expect -re "$gdb_prompt $"
+gdb_test continue \
+"Continuing\\..*stat 4:.*ENOENT.*test_stat \\(\\) at.*$srcfile:276.*" \
+"Stat a nonexistant file returns ENOENT"
+
+send_gdb "tbreak 301\n" ; gdb_expect -re "$gdb_prompt $"
+gdb_test continue \
+"Continuing\\..*fstat 1:.*OK.*test_fstat \\(\\) at.*$srcfile:301.*" \
+"Fstat an open file"
+
+send_gdb "tbreak 305\n" ; gdb_expect -re "$gdb_prompt $"
+gdb_test continue \
+"Continuing\\..*fstat 2:.*EBADF.*test_fstat \\(\\) at.*$srcfile:305.*" \
+"Fstat an invalid file descriptor returns EBADF"
+
+send_gdb "tbreak 314\n" ; gdb_expect -re "$gdb_prompt $"
+gdb_test continue \
+"Continuing\\..*isatty 1:.*OK.*test_isatty \\(\\) at.*$srcfile:314.*" \
+"Isatty (stdin)"
+
+send_gdb "tbreak 315\n" ; gdb_expect -re "$gdb_prompt $"
+gdb_test continue \
+"Continuing\\..*isatty 2:.*OK.*test_isatty \\(\\) at.*$srcfile:315.*" \
+"Isatty (stdout)"
+
+send_gdb "tbreak 317\n" ; gdb_expect -re "$gdb_prompt $"
+gdb_test continue \
+"Continuing\\..*isatty 3:.*OK.*test_isatty \\(\\) at.*$srcfile:317.*" \
+"Isatty (stderr)"
+
+send_gdb "tbreak 319\n" ; gdb_expect -re "$gdb_prompt $"
+gdb_test continue \
+"Continuing\\..*isatty 4:.*OK.*test_isatty \\(\\) at.*$srcfile:319.*" \
+"Isatty (invalid fd)"
+
+send_gdb "tbreak 327\n" ; gdb_expect -re "$gdb_prompt $"
+gdb_test continue \
+"Continuing\\..*isatty 5:.*OK.*test_isatty \\(\\) at.*$srcfile:327.*" \
+"Isatty (open file)"
+
+send_gdb "set remote system-call-allowed 1\n"; gdb_expect -re ".*$gdb_prompt $"
+send_gdb "tbreak 347\n" ; gdb_expect -re "$gdb_prompt $"
+gdb_test continue \
+"Continuing\\..*system 1:.*OK.*test_system \\(\\) at.*$srcfile:347.*" \
+"System(3) call"
+
+# Is this ok?  POSIX says system returns a waitpid status?
+send_gdb "tbreak 349\n" ; gdb_expect -re "$gdb_prompt $"
+gdb_test continue \
+"Continuing\\..*system 2:.*OK.*test_system \\(\\) at.*$srcfile:349.*" \
+"System with invalid command returns 127"
+
+send_gdb "tbreak 378\n" ; gdb_expect -re "$gdb_prompt $"
+gdb_test continue \
+"Continuing\\..*rename 1:.*OK.*test_rename \\(\\) at.*$srcfile:378.*" \
+"Rename a file"
+
+send_gdb "tbreak 383\n" ; gdb_expect -re "$gdb_prompt $"
+gdb_test continue \
+"Continuing\\..*rename 2:.*EISDIR.*test_rename \\(\\) at.*$srcfile:383.*" \
+"Renaming a file to existing directory returns EISDIR"
+
+send_gdb "tbreak 388\n" ; gdb_expect -re "$gdb_prompt $"
+set test "Renaming a directory to a non-empty directory returns ENOTEMPTY or EEXIST"
+gdb_test_multiple continue "${test}" {
+    -re "Continuing\\..*rename 3:.*(ENOTEMPTY|EEXIST).*test_rename \\(\\) at.*$srcfile:388.*$gdb_prompt $" {
+	pass "${test}"
+    }
+    -re "Continuing\\..*rename 3:.*EBUSY.*test_rename \\(\\) at.*$srcfile:388.*$gdb_prompt $" {
+	# At least version <= 2.6/2004-01-08 of the Linux Kernel gets
+	# this wrong (reporting EBUSY) when the file system is NFS
+	# mounted.
+	setup_xfail *-*-*linux* gdb/1502
+	fail "${test}"
+    }
+}
+
+send_gdb "tbreak 393\n" ; gdb_expect -re "$gdb_prompt $"
+gdb_test continue \
+"Continuing\\..*rename 4:.*EINVAL.*test_rename \\(\\) at.*$srcfile:393.*" \
+"Renaming a directory to a subdir of itself returns EINVAL"
+
+send_gdb "tbreak 397\n" ; gdb_expect -re "$gdb_prompt $"
+gdb_test continue \
+"Continuing\\..*rename 5:.*ENOENT.*test_rename \\(\\) at.*$srcfile:397.*" \
+"Renaming a nonexistant file returns ENOENT"
+
+send_gdb "tbreak 412\n" ; gdb_expect -re "$gdb_prompt $"
+gdb_test continue \
+"Continuing\\..*unlink 1:.*OK.*test_unlink \\(\\) at.*$srcfile:412.*" \
+"Unlink a file"
+
+send_gdb "tbreak 432\n" ; gdb_expect -re "$gdb_prompt $"
+# This test fails on Cygwin because unlink() succeeds on Win32 systems
+# in that situation.
+if [ishost *cygwin*] {
+    setup_xfail "*-*-*"
+}
+gdb_test continue \
+"Continuing\\..*unlink 2:.*EACCES.*test_unlink \\(\\) at.*$srcfile:432.*" \
+"Unlinking a file in a directory w/o write access returns EACCES"
+
+send_gdb "tbreak 436\n" ; gdb_expect -re "$gdb_prompt $"
+gdb_test continue \
+"Continuing\\..*unlink 3:.*ENOENT.*test_unlink \\(\\) at.*$srcfile:436.*" \
+"Unlinking a nonexistant file returns ENOENT"
+
+send_gdb "tbreak 446\n" ; gdb_expect -re "$gdb_prompt $"
+gdb_test continue \
+"Continuing\\..*time 1:.*OK.*test_time \\(\\) at.*$srcfile:446.*" \
+"Time(2) call returns the same value as in parameter"
+
+sleep 2
+send_gdb "tbreak 450\n" ; gdb_expect -re "$gdb_prompt $"
+gdb_test continue \
+"Continuing\\..*time 2:.*OK.*test_time \\(\\) at.*$srcfile:450.*" \
+"Time(2) returns feasible values"
+
+send_gdb "quit\n"
+send_gdb "y\n"
+
+remote_exec build {sh -xc test\ -r\ dir2.fileio.test\ &&\ chmod\ -f\ +w\ dir2.fileio.test}
+remote_exec build {sh -xc rm\ -rf\ *.fileio.test}
+
+set timeout $oldtimeout
+return 0

@@ -1,9 +1,6 @@
-# Host: Bull DPX2 (68k, System V release 3)
-
-XM_FILE= xm-dpx2.h
-XDEPFILES=
-
-NAT_FILE= nm-dpx2.h
-NATDEPFILES= infptrace.o corelow.o core-aout.o inftarg.o dpx2-nat.o fork-child.o
-
-TERMCAP=-lcurses
+# OBSOLETE # Host: Bull DPX2 (68k, System V release 3)
+# OBSOLETE 
+# OBSOLETE XM_FILE= xm-dpx2.h
+# OBSOLETE 
+# OBSOLETE NAT_FILE= nm-dpx2.h
+# OBSOLETE NATDEPFILES= infptrace.o corelow.o core-aout.o inftarg.o dpx2-nat.o fork-child.o

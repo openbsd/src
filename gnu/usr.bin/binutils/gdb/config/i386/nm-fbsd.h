@@ -1,27 +1,79 @@
-/* Native-dependent definitions for Intel 386 running BSD Unix, for GDB.
-   Copyright 1986, 1987, 1989, 1992, 1996 Free Software Foundation, Inc.
+/* Native-dependent definitions for FreeBSD/i386.
 
-This file is part of GDB.
+   Copyright 1986, 1987, 1989, 1992, 1994, 1996, 1997, 2000, 2001, 2004
+   Free Software Foundation, Inc.
 
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
+   This file is part of GDB.
 
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+   This program is free software; you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation; either version 2 of the License, or
+   (at your option) any later version.
 
-You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software
-Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
 
-#ifndef NM_FREEBSD_H
-#define NM_FREEBSD_H
+   You should have received a copy of the GNU General Public License
+   along with this program; if not, write to the Free Software
+   Foundation, Inc., 59 Temple Place - Suite 330,
+   Boston, MA 02111-1307, USA.  */
 
-/* Be shared lib aware */
-#include "solib.h"
+#ifndef NM_FBSD_H
+#define NM_FBSD_H
+
+#ifdef HAVE_PT_GETDBREGS
+#define I386_USE_GENERIC_WATCHPOINTS
+#endif
+
+#include "i386/nm-i386.h"
+
+#ifdef HAVE_SYS_PARAM_H
+#include <sys/param.h>
+#endif
+
+/* Provide access to the i386 hardware debugging registers.  */
+
+#define I386_DR_LOW_SET_CONTROL(control) \
+  i386bsd_dr_set_control (control)
+extern void i386bsd_dr_set_control (unsigned long control);
+
+#define I386_DR_LOW_SET_ADDR(regnum, addr) \
+  i386bsd_dr_set_addr (regnum, addr)
+extern void i386bsd_dr_set_addr (int regnum, CORE_ADDR addr);
+
+#define I386_DR_LOW_RESET_ADDR(regnum) \
+  i386bsd_dr_reset_addr (regnum)
+extern void i386bsd_dr_reset_addr (int regnum);
+
+#define I386_DR_LOW_GET_STATUS() \
+  i386bsd_dr_get_status ()
+extern unsigned long i386bsd_dr_get_status (void);
+
+
+/* Type of the third argument to the `ptrace' system call.  */
+#define PTRACE_ARG3_TYPE caddr_t
+
+/* Override copies of {fetch,store}_inferior_registers in `infptrace.c'.  */
+#define FETCH_INFERIOR_REGISTERS
+
+/* Override child_resume in `infptrace.c' to work around a kernel bug.  */
+#define CHILD_RESUME
+
+/* Override child_pid_to_exec_file in 'inftarg.c'.  */
+#define CHILD_PID_TO_EXEC_FILE
+
+/* We can attach and detach.  */
+#define ATTACH_DETACH
+
+
+/* Support for the user struct.  */
+
+/* Return the size of the user struct.  */
+
+#define KERNEL_U_SIZE kernel_u_size ()
+extern int kernel_u_size (void);
 
 /* This is the amount to subtract from u.u_ar0
    to get the offset in the core file of the register values.  */
@@ -29,18 +81,18 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #include <machine/vmparam.h>
 #define KERNEL_U_ADDR USRSTACK
 
-#define FLOAT_INFO extern i386_float_info (); \
-						  i386_float_info ()
-
 #define REGISTER_U_ADDR(addr, blockend, regno) \
-	(addr) = i386_register_u_addr ((blockend),(regno));
+  (addr) = register_u_addr ((blockend), (regno))
+extern CORE_ADDR register_u_addr (CORE_ADDR blockend, int regno);
+
 
-extern int
-i386_register_u_addr PARAMS ((int, int));
+/* Shared library support.  */
 
-#define PTRACE_ARG3_TYPE char*
+#include "solib.h"
 
-/* make structure definitions match up with those expected in solib.c */
+/* Make structure definitions match up with those expected in
+   `solib-sunos.c'.  */
+
 #define link_object	sod
 #define lo_name		sod_name
 #define lo_library	sod_library
@@ -93,9 +145,4 @@ i386_register_u_addr PARAMS ((int, int));
 #define ld_un		d_un
 #define ld_2		d_sdt
 
-/* Return sizeof user struct to callers in less machine dependent routines */
-
-#define KERNEL_U_SIZE kernel_u_size()
-extern int kernel_u_size PARAMS ((void));
-
-#endif /* NM_FREEBSD_H */
+#endif /* nm-fbsd.h */

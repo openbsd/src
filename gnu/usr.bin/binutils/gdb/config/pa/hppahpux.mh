@@ -1,9 +1,6 @@
 # Host: Hewlett-Packard PA-RISC machine, running HPUX
 
-TERMCAP = -lcurses
-
 XM_FILE= xm-hppah.h
-XDEPFILES= ser-tcp.o
 
 NAT_FILE= nm-hppah.h
 NATDEPFILES= hppah-nat.o corelow.o core-aout.o inftarg.o fork-child.o somread.o infptrace.o hpread.o somsolib.o

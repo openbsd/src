@@ -1,10 +1,6 @@
 # Host: Little-endian Alpha running OSF/1-2.x using procfs
-XDEPFILES= 
 XM_FILE= xm-alphaosf.h
 NAT_FILE= nm-osf2.h
-NATDEPFILES= infptrace.o inftarg.o corelow.o alpha-nat.o fork-child.o osfsolib.o procfs.o
-
-# Under OSF2 the C runtime calls malloc, and that memory is later
-# freed.  This will result in memory corruption aborts so we have
-# to define NO_MMCHECK.
-MMALLOC_CFLAGS = -I$(MMALLOC_SRC) -DNO_MMCHECK
+NATDEPFILES= infptrace.o inftarg.o corelow.o alpha-nat.o fork-child.o \
+	solib-osf.o solib.o procfs.o proc-api.o proc-events.o proc-flags.o \
+	proc-why.o

@@ -1,8 +1,6 @@
 /* Definitions to make GDB run on a vax under Ultrix. */
 
 #include "vax/xm-vax.h"
-extern char *strdup();
-
 #define NO_PTRACE_H
 
 /* Old versions of ultrix have fd_set but not the FD_* macros.  */

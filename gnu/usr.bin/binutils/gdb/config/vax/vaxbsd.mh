@@ -8,6 +8,6 @@
 #msg  (but see comments in Makefile.dist about compiling with gcc).
 
 XM_FILE= xm-vaxbsd.h
-XDEPFILES= infptrace.o inftarg.o fork-child.o corelow.o core-aout.o
+NATDEPFILES= infptrace.o inftarg.o fork-child.o corelow.o core-aout.o
 
 NAT_FILE= nm-vax.h

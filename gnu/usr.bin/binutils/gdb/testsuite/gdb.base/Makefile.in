@@ -1,36 +1,32 @@
 VPATH = @srcdir@
 srcdir = @srcdir@
 
-EXECUTABLES = bitfields interrupt mips_pro return twice-tmp break langs \
-	nodebug run watchpoint callfuncs opaque scope whatis compiler \
-	opaque scope coremaker printcmds setvar exprs list ptype \
-	sigall funcargs recurse signals structs
+EXECUTABLES = all-types annota1 bitfields break \
+	call-ar-st call-rt-st call-strs callfuncs callfwmall \
+	chng-syms commands compiler condbreak constvars coremaker \
+	dbx-test display ending-run execd-prog exprs \
+	foll-exec foll-fork foll-vfork funcargs int-type interrupt jump \
+	langs list long_long mips_pro miscexprs nodebug opaque overlays \
+	pointers pointers2 printcmds ptype \
+	recurse reread reread1 restore return run \
+	scope section_command setshow setvar shmain sigall signals \
+	solib solib_sl so-impl-ld so-indr-cl \
+	step-line step-test structs structs2 \
+	twice-tmp varargs vforked-prog watchpoint whatis
 
-# uuencoded format to avoid SCCS/RCS problems with binary files.
-CROSS_EXECUTABLES = i486-elf i860-elf m68k-elf m68k-aout m68k-aout2  \
-	mips-ecoff sparc-aout sparc-elf
+MISCELLANEOUS = coremmap.data ../foobar.baz \
+	shr1.sl shr2.sl solib_sl.sl solib1.sl solib2.sl
 
-all:
-	@echo "Nothing to be done for all..."
-
-info:
-install-info:
-dvi:
-install:
-uninstall: force
-installcheck:
-check:
+all info install-info dvi install uninstall installcheck check:
+	@echo "Nothing to be done for $@..."
 
 clean mostlyclean:
-	-rm -f *~ *.o a.out xgdb *.x $(CROSS_EXECUTABLES) *.ci *.tmp
+	-rm -f *~ *.o a.out xgdb *.x *.ci *.tmp
 	-rm -f core core.coremaker coremaker.core corefile $(EXECUTABLES)
-	-rm -f twice-tmp.c
+	-rm -f $(MISCELLANEOUS) twice-tmp.c
 
 distclean maintainer-clean realclean: clean
 	-rm -f *~ core
 	-rm -f Makefile config.status config.log
 	-rm -f *-init.exp
 	-rm -fr *.log summary detail *.plog *.sum *.psum site.*
-
-Makefile : $(srcdir)/Makefile.in $(srcdir)/configure.in
-	$(SHELL) ./config.status --recheck

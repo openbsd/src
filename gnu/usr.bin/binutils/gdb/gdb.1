@@ -1,7 +1,7 @@
-.\" Copyright (c) 1991 Free Software Foundation
+.\" Copyright 1991, 1999 Free Software Foundation, Inc.
 .\" See section COPYING for conditions for redistribution
-.\" $Id: gdb.1,v 1.2 1996/11/23 03:37:31 niklas Exp $
-.TH gdb 1 "4nov1991" "GNU Tools" "GNU Tools"
+.\" $Id: gdb.1,v 1.1.1.1 2004/05/21 19:10:22 kettenis Exp $
+.TH gdb 1 "22may2002" "GNU Tools" "GNU Tools"
 .SH NAME
 gdb \- The GNU Debugger
 .SH SYNOPSIS
@@ -150,6 +150,12 @@ Execute next program line (after stopping); step \c
 \& any
 function calls in the line.
 .TP
+.B edit \fR[\|\fIfile\fB:\fR\|]\fIfunction
+look at the program line where it is presently stopped.
+.TP
+.B list \fR[\|\fIfile\fB:\fR\|]\fIfunction
+type the text of the program in the vicinity of where it is presently stopped.
+.TP
 .B step
 Execute next program line (after stopping); step \c
 .I into\c
@@ -214,6 +220,10 @@ List all options, with brief explanations.
 Read symbol table from file \c
 .I file\c
 \&.
+
+.TP
+.B \-write
+Enable writing into executable and core files.
 
 .TP
 .BI "\-exec=" "file"\c

@@ -1,0 +1,6 @@
+This is a version of ARM's RDI library which has been been put under a
+free software license.
+
+See ARM's Software Development Tools Reference Manual (Remote
+Debugging chapter), and the file gdb/remote-rdi.c for information
+about how to use it.

@@ -1,4 +1,5 @@
-# Copyright (C) 1992, 1994 Free Software Foundation, Inc.
+# Copyright 1992, 1994, 1995, 1996, 1997, 1999, 2002 Free Software
+# Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -12,7 +13,7 @@
 # 
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  
 
 # Please email any bugs, comments, and/or additions to this file to:
 # bug-gdb@prep.ai.mit.edu
@@ -28,29 +29,29 @@ set bug_id 0
 
 set testfile "opaque"
 set binfile ${objdir}/${subdir}/opaque
-if  { [compile "-g -c ${srcdir}/${subdir}/opaque0.c"] != "" } {
-    perror "Couldn't compile opaque0.c to object"
-    return -1
+
+#if  { [gdb_compile "${srcdir}/${subdir}/opaque0.c ${srcdir}/${subdir}/opaque1.c" "${binfile}" executable {debug}] != "" } {
+#     gdb_suppress_entire_file "Testcase compile failed, so all tests in this file will automatically fail."
+#}
+
+if  { [gdb_compile "${srcdir}/${subdir}/opaque0.c" "${binfile}0.o" object {debug}] != "" } {
+     gdb_suppress_entire_file "Testcase compile failed, so all tests in this file will automatically fail."
 }
-execute_anywhere "mv opaque0.o ${binfile}0.o"
-if  { [compile "-g -c ${srcdir}/${subdir}/opaque1.c"] != "" } {
-    perror "Couldn't compile opaque1.c to object"
-    return -1
+
+if  { [gdb_compile "${srcdir}/${subdir}/opaque1.c" "${binfile}1.o" object {debug}] != "" } {
+     gdb_suppress_entire_file "Testcase compile failed, so all tests in this file will automatically fail."
 }
-execute_anywhere "mv opaque1.o ${binfile}1.o"
-if  { [compile "${binfile}1.o ${binfile}0.o -o ${binfile}"] != "" } {
-    perror "Couldn't link opaque."
-    return -1
+
+if  { [gdb_compile "${binfile}0.o ${binfile}1.o" ${binfile} executable {debug}] != "" } {
+     gdb_suppress_entire_file "Testcase compile failed, so all tests in this file will automatically fail."
 }
+
 
 # Create and source the file that provides information about the compiler
 # used to compile the test case.
-execute_anywhere "rm -f ${binfile}.ci"
-if  { [compile "-E ${srcdir}/${subdir}/compiler.c > ${binfile}.ci"] != "" } {
-    perror "Couldn't make ${binfile}.ci file"
-    return -1
+if [get_compiler_info ${binfile}] {
+    return -1;
 }
-source ${binfile}.ci
 
 # Start with a fresh gdb.
 
@@ -84,7 +85,7 @@ gdb_load ${binfile}
 proc setup_xfail_on_opaque_pointer {} {
 	global gcc_compiled
 
-	setup_xfail "a29k-*-udi" "vax-*-*" "i*86-sequent-bsd*"
+	setup_xfail "vax-*-*" "i*86-sequent-bsd*"
 	if {!$gcc_compiled} then {
 		setup_xfail "alpha-*-*" "mips-sgi-irix5*"
 	}
@@ -106,9 +107,9 @@ gdb_test "whatis foop" \
 # Ensure that we know the form of the structure that foop points to.
 
 setup_xfail_on_opaque_pointer
-if {!$gcc_compiled} then { setup_xfail "rs6000-*-*" "hppa*-*-hpux*" }
+if {!$gcc_compiled} then { setup_xfail "rs6000-*-*" }
 gdb_test "ptype foop" \
-    "type = struct foo \{\r\n    int a;\r\n    int b;\r\n\} \[*\]+" \
+    "type = struct foo \{\[\r\n\]+    int a;\[\r\n\]+    int b;\[\r\n\]+\} \[*\]+" \
     "ptype on opaque struct pointer (statically)"
 
 
@@ -123,14 +124,14 @@ gdb_test "whatis afoo" \
 # Ensure that we know the form of "afoo".
 
 gdb_test "ptype afoo" \
-    "type = struct foo \{\r\n    int a;\r\n    int b;\r\n\}" \
+    "type = struct foo \{\[\r\n\]+    int a;\[\r\n\]+    int b;\[\r\n\]+\}" \
     "ptype on opaque struct instance (statically)"
 
 
 # Ensure that we know what a struct foo looks like.
 
 gdb_test "ptype struct foo" \
-    "type = struct foo \{\r\n    int a;\r\n    int b;\r\n\}" \
+    "type = struct foo \{\[\r\n\]+    int a;\[\r\n\]+    int b;\[\r\n\]+\}" \
     "ptype on opaque struct tagname (statically)"
 
 
@@ -167,9 +168,9 @@ gdb_test "whatis foop" \
 # Ensure that we know the form of the thing foop points to.
 
 setup_xfail_on_opaque_pointer
-if {!$gcc_compiled} then { setup_xfail "rs6000-*-*" "hppa*-*-hpux*" }
+if {!$gcc_compiled} then { setup_xfail "rs6000-*-*" }
 gdb_test "ptype foop" \
-    "type = struct foo \{\r\n    int a;\r\n    int b;\r\n\} \[*\]+" \
+    "type = struct foo \{\[\r\n\]+    int a;\[\r\n\]+    int b;\[\r\n\]+\} \[*\]+" \
     "ptype on opaque struct pointer (dynamically) 1"
 
 gdb_test "whatis afoo" \
@@ -180,15 +181,15 @@ gdb_test "whatis afoo" \
 # Ensure that we know the form of afoo, an instance of a struct foo.
 
 gdb_test "ptype afoo" \
-    "type = struct foo \{\r\n    int a;\r\n    int b;\r\n\}" \
-    "ptype on opaque struct instance (dynamically) 1"
+    "type = struct foo \{\[\r\n\]+    int a;\[\r\n\]+    int b;\[\r\n\]+\}" \
+    "ptype on opaque struct instance (dynamically) xyz 1"
 
 
 # Ensure that we know the form of an explicit struct foo.
 
 if {!$gcc_compiled} then { setup_xfail "rs6000-*-*" }
 gdb_test "ptype struct foo" \
-    "type = struct foo \{\r\n    int a;\r\n    int b;\r\n\}" \
+    "type = struct foo \{\[\r\n\]+    int a;\[\r\n\]+    int b;\[\r\n\]+\}" \
     "ptype on opaque struct tagname (dynamically) 1"
 
 
@@ -214,15 +215,37 @@ if ![runto getfoo] {
 setup_xfail_on_opaque_pointer
 gdb_test "whatis foop" \
     "type = struct foo \[*\]+" \
-    "whatis on opaque struct pointer (dynamically)"
+    "whatis on opaque struct pointer (dynamically) 1"
 
 
 # Ensure that we know the form of the thing foop points to.
 
 setup_xfail_on_opaque_pointer
-if {!$gcc_compiled} then { setup_xfail "rs6000-*-*" "hppa*-*-hpux*" }
+if {!$gcc_compiled} then { setup_xfail "rs6000-*-*" }
 gdb_test "ptype foop" \
-    "type = struct foo \{\r\n    int a;\r\n    int b;\r\n\} \[*\]+" \
+    "type = struct foo \{\[\r\n\]+    int a;\[\r\n\]+    int b;\[\r\n\]+\} \[*\]+" \
+    "ptype on opaque struct pointer (dynamically) 2"
+
+gdb_test "whatis afoo" \
+    "type = struct foo" \
+    "whatis on opaque struct instance (dynamically) 1"
+
+
+# Ensure that we know the form of afoo, an instance of a struct foo.
+
+gdb_test "ptype afoo" \
+    "type = struct foo \{\r\n    int a;\r\n    int b;\r\n\}" \
+    "ptype on opaque struct instance (dynamically) 1"
+
+gdb_test "ptype afoo" \
+    "type = struct foo \{\[\r\n\]*.*int a;\[\r\n\]*.*int b;\[\r\n\]*}\[\r\n\]*" \
+    "ptype on opaque struct instance (dynamically) pqr 1"
+
+
+# Ensure that we know the form of an explicit struct foo.
+
+gdb_test "ptype foop" \
+    "type = struct foo \{\[\r\n\]+    int a;\[\r\n\]+    int b;\[\r\n\]+\} \[*\]+" \
     "ptype on opaque struct pointer (dynamically) 2"
 
 gdb_test "whatis afoo" \
@@ -233,12 +256,12 @@ gdb_test "whatis afoo" \
 # Ensure that we know the form of afoo, an instance of a struct foo.
 
 gdb_test "ptype afoo" \
-    "type = struct foo \{\r\n    int a;\r\n    int b;\r\n\}" \
+    "type = struct foo \{\[\r\n\]+    int a;\[\r\n\]+    int b;\[\r\n\]+\}" \
     "ptype on opaque struct instance (dynamically) 2"
 
 
 # Ensure that we know the form of an explicit struct foo.
 
 gdb_test "ptype struct foo" \
-    "type = struct foo \{\r\n    int a;\r\n    int b;\r\n\}" \
+    "type = struct foo \{\[\r\n\]+    int a;\[\r\n\]+    int b;\[\r\n\]+\}" \
     "ptype on opaque struct tagname (dynamically) 2"

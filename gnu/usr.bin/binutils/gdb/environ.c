@@ -1,19 +1,22 @@
 /* environ.c -- library for manipulating environments for GNU.
-   Copyright (C) 1986, 1989 Free Software Foundation, Inc.
 
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
+   Copyright 1986, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 2000,
+   2003 Free Software Foundation, Inc.
 
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+   This program is free software; you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation; either version 2 of the License, or
+   (at your option) any later version.
 
-You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software
-Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+
+   You should have received a copy of the GNU General Public License
+   along with this program; if not, write to the Free Software
+   Foundation, Inc., 59 Temple Place - Suite 330,
+   Boston, MA 02111-1307, USA.  */
 
 #define min(a, b) ((a) < (b) ? (a) : (b))
 #define max(a, b) ((a) > (b) ? (a) : (b))
@@ -21,15 +24,14 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #include "defs.h"
 #include "environ.h"
 #include "gdb_string.h"
-#include "gdbcore.h"
-
 
+
 /* Return a new environment object.  */
 
 struct environ *
-make_environ ()
+make_environ (void)
 {
-  register struct environ *e;
+  struct environ *e;
 
   e = (struct environ *) xmalloc (sizeof (struct environ));
 
@@ -42,15 +44,14 @@ make_environ ()
 /* Free an environment and all the strings in it.  */
 
 void
-free_environ (e)
-     register struct environ *e;
+free_environ (struct environ *e)
 {
-  register char **vector = e->vector;
+  char **vector = e->vector;
 
   while (*vector)
-    free (*vector++);
+    xfree (*vector++);
 
-  free (e);
+  xfree (e);
 }
 
 /* Copy the environment given to this process into E.
@@ -58,21 +59,20 @@ free_environ (e)
    that all strings in these environments are safe to free.  */
 
 void
-init_environ (e)
-     register struct environ *e;
+init_environ (struct environ *e)
 {
   extern char **environ;
-  register int i;
+  int i;
 
   if (environ == NULL)
     return;
 
-  for (i = 0; environ[i]; i++) /*EMPTY*/;
+  for (i = 0; environ[i]; i++) /*EMPTY */ ;
 
   if (e->allocated < i)
     {
       e->allocated = max (i, e->allocated + 10);
-      e->vector = (char **) xrealloc ((char *)e->vector,
+      e->vector = (char **) xrealloc ((char *) e->vector,
 				      (e->allocated + 1) * sizeof (char *));
     }
 
@@ -80,8 +80,8 @@ init_environ (e)
 
   while (--i >= 0)
     {
-      register int len = strlen (e->vector[i]);
-      register char *new = (char *) xmalloc (len + 1);
+      int len = strlen (e->vector[i]);
+      char *new = (char *) xmalloc (len + 1);
       memcpy (new, e->vector[i], len + 1);
       e->vector[i] = new;
     }
@@ -91,8 +91,7 @@ init_environ (e)
    This is used to get something to pass to execve.  */
 
 char **
-environ_vector (e)
-     struct environ *e;
+environ_vector (struct environ *e)
 {
   return e->vector;
 }
@@ -100,16 +99,14 @@ environ_vector (e)
 /* Return the value in environment E of variable VAR.  */
 
 char *
-get_in_environ (e, var)
-     const struct environ *e;
-     const char *var;
+get_in_environ (const struct environ *e, const char *var)
 {
-  register int len = strlen (var);
-  register char **vector = e->vector;
-  register char *s;
+  int len = strlen (var);
+  char **vector = e->vector;
+  char *s;
 
   for (; (s = *vector) != NULL; vector++)
-    if (STREQN (s, var, len) && s[len] == '=')
+    if (strncmp (s, var, len) == 0 && s[len] == '=')
       return &s[len + 1];
 
   return 0;
@@ -118,18 +115,15 @@ get_in_environ (e, var)
 /* Store the value in E of VAR as VALUE.  */
 
 void
-set_in_environ (e, var, value)
-     struct environ *e;
-     const char *var;
-     const char *value;
+set_in_environ (struct environ *e, const char *var, const char *value)
 {
-  register int i;
-  register int len = strlen (var);
-  register char **vector = e->vector;
-  register char *s;
+  int i;
+  int len = strlen (var);
+  char **vector = e->vector;
+  char *s;
 
   for (i = 0; (s = vector[i]) != NULL; i++)
-    if (STREQN (s, var, len) && s[len] == '=')
+    if (strncmp (s, var, len) == 0 && s[len] == '=')
       break;
 
   if (s == 0)
@@ -137,14 +131,14 @@ set_in_environ (e, var, value)
       if (i == e->allocated)
 	{
 	  e->allocated += 10;
-	  vector = (char **) xrealloc ((char *)vector,
+	  vector = (char **) xrealloc ((char *) vector,
 				       (e->allocated + 1) * sizeof (char *));
 	  e->vector = vector;
 	}
       vector[i + 1] = 0;
     }
   else
-    free (s);
+    xfree (s);
 
   s = (char *) xmalloc (len + strlen (value) + 2);
   strcpy (s, var);
@@ -168,19 +162,17 @@ set_in_environ (e, var, value)
 /* Remove the setting for variable VAR from environment E.  */
 
 void
-unset_in_environ (e, var)
-     struct environ *e;
-     char *var;
+unset_in_environ (struct environ *e, char *var)
 {
-  register int len = strlen (var);
-  register char **vector = e->vector;
-  register char *s;
+  int len = strlen (var);
+  char **vector = e->vector;
+  char *s;
 
   for (; (s = *vector) != NULL; vector++)
     {
-      if (STREQN (s, var, len) && s[len] == '=')
+      if (DEPRECATED_STREQN (s, var, len) && s[len] == '=')
 	{
-	  free (s);
+	  xfree (s);
 	  /* Walk through the vector, shuffling args down by one, including
 	     the NULL terminator.  Can't use memcpy() here since the regions
 	     overlap, and memmove() might not be available. */

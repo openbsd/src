@@ -1,7 +1,7 @@
 /* This table is used as a source for every ascii character.
    It is explicitly unsigned to avoid differences due to native characters
    being either signed or unsigned. */
-
+#include <stdlib.h>
 unsigned char ctable1[256] = {
   0000, 0001, 0002, 0003, 0004, 0005, 0006, 0007,
   0010, 0011, 0012, 0013, 0014, 0015, 0016, 0017,
@@ -53,18 +53,24 @@ unsigned char ctable2[] = {
   'a','a','a','a','a','a','a','a','a','a','a','a','a','X','X','X',
   'a','a','a','a','a','a','a','a','a','a','a','a','a','a','X','X',
   'a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','X',
-  'a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a'
+  'a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a', 0
 };
 
 /* Single and multidimensional arrays to test access and printing of array
    members. */
+
+typedef int ArrayInt [10];
+ArrayInt a1 = {2,4,6,8,10,12,14,16,18,20};
+
+typedef char ArrayChar [5];
+ArrayChar a2 = {'a','b','c','d','\0'};
 
 int int1dim[12] = {0,1,2,3,4,5,6,7,8,9,10,11};
 int int2dim[3][4] = {{0,1,2,3},{4,5,6,7},{8,9,10,11}};
 int int3dim[2][3][2] = {{{0,1},{2,3},{4,5}},{{6,7},{8,9},{10,11}}};
 int int4dim[1][2][3][2] = {{{{0,1},{2,3},{4,5}},{{6,7},{8,9},{10,11}}}};
 
-char *teststring = "teststring contents";
+char *teststring = (char*)"teststring contents";
 
 /* Test printing of a struct containing character arrays. */
 
@@ -86,7 +92,7 @@ struct some_arrays *parrays = &arrays;
 
 /* -- */
 
-main ()
+int main ()
 {
 #ifdef usestubs
   set_debug_traps();
@@ -97,5 +103,5 @@ main ()
   /* Prevent AIX linker from removing variables.  */
   return ctable1[0] + ctable2[0] + int1dim[0] + int2dim[0][0]
     + int3dim[0][0][0] + int4dim[0][0][0][0] + teststring[0] +
-      *parrays -> array1;
+      *parrays -> array1 + a1[0] + a2[0];
 }

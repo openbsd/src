@@ -12,34 +12,4 @@ AC_SUBST(CC)
 AC_CONFIG_AUX_DIR(`cd $srcdir;pwd`/../../..)
 AC_CANONICAL_SYSTEM
 
-case "${target}" in
-
-# Do any other machines use .stabx?  What about i386-*-aix*?
-rs6000-*-aix*)		target_makefile_frag=xcoff.mt ;;
-
-alpha-*-*)		if test "x${with_gnu_as}" = xyes ; then
-			  target_makefile_frag=aout.mt
-			else
-			  target_makefile_frag=alpha.mt
-			fi
-			;;
-
-hppa*-*-*)		target_makefile_frag=hppa.mt ;;
-
-mips-*-bsd*)		target_makefile_frag=aout.mt ;;
-mips-*-*)		if test "x${with_gnu_as}" = xyes ; then
-			  target_makefile_frag=aout.mt
-			else
-			  target_makefile_frag=ecoff.mt
-			fi
-			;;
-
-*-*-*)			target_makefile_frag=aout.mt ;;
-
-esac
-
-# We also need to use a makefile fragment for the embedded targets
-# to get the flags right to build the test cases
-AC_SUBST_FILE(target_makefile_frag)
-	
 AC_OUTPUT(Makefile)

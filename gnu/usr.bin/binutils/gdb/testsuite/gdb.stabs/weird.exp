@@ -1,3 +1,23 @@
+# Copyright 1997, 1998, 1999, 2001, 2003, 2004
+# Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  
+
+# Please email any bugs, comments, and/or additions to this file to:
+# bug-gdb@prep.ai.mit.edu
+
 # Test that GDB properly ignores invalid stabs.
 # Also test that GDB can debug a .o file, and that it doesn't mind
 # a file that's more minimal than what a compiler normally puts out.
@@ -14,21 +34,39 @@ if ![file isdirectory ${objdir}/${subdir}] then {
 set prms_id 0
 set bug_id 0
 
+set testfile weird
+set srcfile ${objdir}/${subdir}/weird.s
+set binfile ${objdir}/${subdir}/weirdx.o
+
+if { [ get_compiler_info "$binfile" ] } {
+    return -1
+}
+
+if { $hp_cc_compiler || $hp_aCC_compiler } {
+    # The native hp-ux assembler does not support stabs at all.
+    # If the compiler is native hp-ux, of course the assembler is too.
+    # But if someone builds gcc with the native assembler (not recommended)
+    # rather than the gnu assembler, then this logic will not suppress it.
+    # -- chastain 2004-01-07
+    unsupported "stabs with hp-ux assembler"
+    continue
+}
+
 proc do_tests {} {
 	global binfile
-	global prompt
+	global gdb_prompt
 
 	# Mips/alpha targets that use gcc with mips-tfile put out the stabs
 	# assembler directives embedded in comments. If the assembler
 	# file is then processed with native cc, all stabs directives
 	# will be lost.
 	# Skip the rest of the stabs tests for this case.
-	send "ptype inttype\n"
-	expect {
-		-re "^ptype inttype\r*\ntype = inttype.*$prompt $" {
+	send_gdb "ptype inttype\n"
+	gdb_expect {
+		-re "^ptype inttype\r*\ntype = inttype.*$gdb_prompt $" {
 			pass "stabs found"
 		}
-		-re ".*$prompt $" {
+		-re ".*$gdb_prompt $" {
 			setup_xfail "mips-*-*"
 			setup_xfail "alpha-*-*"
 			fail "stabs not found"
@@ -151,9 +189,9 @@ field3 = 0x77888877\}" "print struct constant"
 
 	# GDB does not yet support arrays indexed by anything at all unusual
 	setup_xfail "*-*-*"
-	gdb_test "p array0" " = \{42, 43, 44, 45, 46, 47\}" "array0 with strange index"
+	gdb_test "p array0" " = \\{42, 43, 44, 45, 46, 47\\}" "array0 with strange index"
 	setup_xfail "*-*-*"
-	gdb_test "p array1" " = \{42, 43, 44\}" "array1 with strange index"
+	gdb_test "p array1" " = \\{42, 43, 44\\}" "array1 with strange index"
 
 	# GDB does not yet support this feature
 	gdb_test "whatis one_var" "type = inttype_one" \
@@ -183,26 +221,23 @@ field3 = 0x77888877\}" "print struct constant"
 	gdb_test "p common0var1" "= 24"
 	setup_xfail "*-*-*"
 	gdb_test "p common0var2" "= 22"
-
-	# this long line must be continous, not with "/" escaping the newline
-	gdb_test "p v_comb" "{<> = {<> = {x = 42}, \[_a-zA-Z$.\]* = \[0-9xa-fA-F\]*, a = 43}, <> = {\[_a-zA-Z$.\]* = \[0-9xa-fA-F\]*, b = 44}, comb = 45}"
 }
 
 proc print_weird_var { var } {
-	global prompt
+	global gdb_prompt
 
 	# Make sure that the variable gets printed out correctly, without
 	# any sort of warning message.
-	send "print $var\n"
-	expect {
-		-re "^print $var\r*\n.\[0-9\]* = 42.*$prompt $" {
+	send_gdb "print $var\n"
+	gdb_expect {
+		-re "^print $var\r*\n.\[0-9\]* = 42.*$gdb_prompt $" {
 			pass "variable $var printed properly"
 		}
-		-re ".*$prompt $" {
-			fail "variable $var not printed properly"
+		-re ".*$gdb_prompt $" {
+			fail "variable $var printed properly"
 		}
-		timeout { fail "variable $var not printed (timeout)" }
-		eof { fail "(eof) variable $var not printed" }
+		timeout { fail "variable $var printed properly (timeout)" }
+		eof { fail "variable $var printed properly (eof)" }
 	}
 
 	# Make sure that the stabs did get loaded in a sensible way.
@@ -217,17 +252,9 @@ proc print_weird_var { var } {
 	gdb_test "print sizeof ($var)" "= 4"
 }
 
-# Start with a fresh gdb
-
-gdb_exit
-gdb_start
-gdb_reinitialize_dir $srcdir/$subdir
 
 # Don't use gdb_load; it doesn't bitch if the loading produced some
 # error messages during symbol reading.
-set testfile weird
-set srcfile ${objdir}/${subdir}/weird.s
-set binfile ${objdir}/${subdir}/weirdx.o
 
 global target_os
 set sedscript ${srcdir}/${subdir}/aout.sed
@@ -255,21 +282,26 @@ switch -glob ${target_triplet} {
     }
 }
 
-
-set exec_output [execute_anywhere "sed -f ${sedscript} < ${srcdir}/${subdir}/weird.def > ${srcfile}"]
-if { $exec_output != "" } {
-    perror "Couldn't make test case."
+# Hope this is a Unix box.
+set exec_output [remote_exec build "sed" "-f ${sedscript}" "${srcdir}/${subdir}/weird.def" "${srcfile}"]
+if { [lindex $exec_output 0] != 0 } {
+    perror "Couldn't make test case. $exec_output"
     return -1
 }
 
-if  { [compile "-c ${srcfile}"] != "" } {
-    perror "Couldn't compile ${srcfile}"
-    return -1
+if  { [gdb_compile "${srcfile}" "${binfile}" object ""] != "" } {
+     gdb_suppress_entire_file "Testcase compile failed, so all tests in this file will automatically fail."
 }
-execute_anywhere "mv weird.o ${binfile}"
 
-set exec_output [execute_anywhere "rm -f ${srcfile}"]
-exp_send "file $binfile\n"
+remote_file build delete ${srcfile}
+
+# Start with a fresh gdb
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+
+set binfile [remote_download host ${binfile} object.o]
+send_gdb "file $binfile\n"
 # If $binfile is very long, a \r (but not a \n) will echo in the
 # middle of the echo of the command.  So to match the echo, we
 # would like to match anything not containing \n
@@ -277,15 +309,18 @@ exp_send "file $binfile\n"
 # But \[^\n\]* doesn't seem to work, so instead use the heuristic
 # that a filename won't contain a space and a warning message will.
 # But spaces following by backspaces aren't really spaces.
-expect {
-    -re "^file (\[^ \]| +\008)*\r*\nReading symbols from $binfile\.\.\.done\.\r*\n$prompt $" {
-	pass "weirdx.o read without error"
-    }
-    -re "A program is being debugged already.  Kill it\? \(y or n\)" {
-	send "y\n"
+gdb_expect 60 {
+    -re "^file (\[^ \]| +\008)*\r*\n" {
 	exp_continue
     }
-    -re ".*$prompt $" {
+    -re "A program is being debugged already.  Kill it\\? \\(y or n\\)" {
+	send_gdb "y\n"
+	exp_continue
+    }
+    -re "^Reading symbols from $binfile\\.\\.\\.done\.(|\r\nUsing host libthread_db library .*libthread_db.so.*\\.)\r\n$gdb_prompt $" {
+	pass "weirdx.o read without error"
+    }
+    -re ".*$gdb_prompt $" {
 	fail "Errors reading weirdx.o"
     }
     timeout {
@@ -296,5 +331,7 @@ expect {
 }
 
 do_tests
+
+remote_file host delete ${binfile}
 
 return 0

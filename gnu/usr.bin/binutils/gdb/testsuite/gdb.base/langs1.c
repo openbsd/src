@@ -16,14 +16,22 @@ static integer c__10000 = 10000;
 
 /* I am not sure whether there is a way to have a fortran program without */
 /* a MAIN, but it does not really harm us to have one. */
+#ifdef PROTOTYPES
+/* Main program */ void MAIN__()
+#else
 /* Main program */ MAIN__()
+#endif
 {
 } /* MAIN__ */
 
 #line 4 "langs1.f"
 /* Subroutine */ int fsub_()
 {
+#ifdef PROTOTYPES
+    extern integer cppsub_(int*);
+#else
     extern integer cppsub_();
+#endif
 
 #line 5 "langs1.f"
 #line 6 "langs1.f"

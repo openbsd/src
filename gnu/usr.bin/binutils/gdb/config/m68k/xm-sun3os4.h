@@ -1,27 +1,22 @@
-/* Macro definitions for a sun 3 running os 4.
-   Copyright (C) 1989, Free Software Foundation, Inc.
-
-This file is part of GDB.
-
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software
-Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
-
-#include "m68k/xm-sun3.h"
-#define FPU
-
-/* Prevent type conflicts between yacc malloc decls and defs.h */
-#define MALLOC_INCOMPATIBLE
-extern char *malloc();
-extern char *realloc();
-extern void free();
+// OBSOLETE /* Macro definitions for a sun 3 running os 4.
+// OBSOLETE    Copyright 1989, 1996, 1998 Free Software Foundation, Inc.
+// OBSOLETE 
+// OBSOLETE    This file is part of GDB.
+// OBSOLETE 
+// OBSOLETE    This program is free software; you can redistribute it and/or modify
+// OBSOLETE    it under the terms of the GNU General Public License as published by
+// OBSOLETE    the Free Software Foundation; either version 2 of the License, or
+// OBSOLETE    (at your option) any later version.
+// OBSOLETE 
+// OBSOLETE    This program is distributed in the hope that it will be useful,
+// OBSOLETE    but WITHOUT ANY WARRANTY; without even the implied warranty of
+// OBSOLETE    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// OBSOLETE    GNU General Public License for more details.
+// OBSOLETE 
+// OBSOLETE    You should have received a copy of the GNU General Public License
+// OBSOLETE    along with this program; if not, write to the Free Software
+// OBSOLETE    Foundation, Inc., 59 Temple Place - Suite 330,
+// OBSOLETE    Boston, MA 02111-1307, USA.  */
+// OBSOLETE 
+// OBSOLETE #include "m68k/xm-sun3.h"
+// OBSOLETE #define FPU

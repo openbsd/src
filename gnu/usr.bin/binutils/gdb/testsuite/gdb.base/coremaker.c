@@ -6,6 +6,8 @@
 #include <fcntl.h>
 #include <sys/mman.h>
 #include <signal.h>
+#include <stdlib.h>
+#include <unistd.h>
 
 #ifndef __STDC__
 #define	const	/**/
@@ -33,7 +35,6 @@ void
 mmapdata ()
 {
   int j, fd;
-  extern void *malloc ();
 
   /* Allocate and initialize a buffer that will be used to write
      the file that is later mapped in. */
@@ -112,9 +113,10 @@ func1 ()
   func2 ();
 }
 
-main ()
+int main ()
 {
   mmapdata ();
   func1 ();
+  return 0;
 }
 

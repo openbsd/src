@@ -1,0 +1,46 @@
+# Test Framework Driver
+#   Copyright (C) 1988, 1990, 1991, 1992, 1997 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  
+
+# This file was written by Rob Savoye. (rob@cygnus.com)
+
+load_lib gdb.exp
+
+#
+# gdb_load -- load a file into the debugger.
+#
+proc gdb_load { arg } {
+    global verbose
+    global loadpath
+    global loadfile
+    global gdb_prompt
+    global GDB
+    set loadfile [file tail $arg]
+    set loadpath [file dirname $arg]
+    send_user "Not implememted yet\n" ; return -1
+}
+
+#
+# gdb_start -- start GDB running
+#
+proc gdb_start { } {
+    global GDB
+    global GDBFLAGS
+    global spawn_id
+    global gdb_prompt
+    global verbose
+    send_user "Not implememted yet\n" ; return -1
+}

@@ -1,4 +1,5 @@
-#   Copyright (C) 1988, 1990, 1991, 1992 Free Software Foundation, Inc.
+#   Copyright 1988, 1990, 1991, 1992, 1994, 1995, 1996, 1997, 1999
+#   Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -12,7 +13,7 @@
 # 
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 # Please email any bugs, comments, and/or additions to this file to:
 # bug-gdb@prep.ai.mit.edu
@@ -23,10 +24,12 @@ if $tracelevel then {
     strace $tracelevel
 }
 
-# This only works for native, I think.
-if ![isnative] then {
+# Don't try this for remote targets.
+if [is_remote target] then {
     continue
 }
+
+gdb_start
 
 #
 # test running programs
@@ -37,64 +40,37 @@ set bug_id 0
 set testfile "run"
 set srcfile ${testfile}.c
 set binfile ${objdir}/${subdir}/${testfile}
-if  { [compile "${srcdir}/${subdir}/${srcfile} -g -o ${binfile}"] != "" } {
-    perror "Couldn't compile ${srcfile}"
-    return -1
+if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug}] != "" } {
+     gdb_suppress_entire_file "Testcase compile failed, so all tests in this file will automatically fail."
 }
 
+gdb_exit
+gdb_start
 delete_breakpoints
 gdb_reinitialize_dir $srcdir/$subdir
 gdb_load ${binfile}
 
-send "set print sevenbit-strings\n" ; expect -re "$prompt $"
-send "set print address off\n" ; expect -re "$prompt $"
-send "set width 0\n" ; expect -re "$prompt $"
-
-# Test that GDB correctly identifies that it does not control a terminal.
-send "info terminal\n"
-expect {
-    -re "No saved terminal information..*$prompt $"\
-	{ send "run 5\n"
-	    expect {
-		-re "Starting program.*$binfile.*120.*Program exited normally..*$prompt $"\
-		    { send "info terminal\n"
-			expect {
-			    -re "No saved terminal information..*$prompt $"\
-				{ pass "info terminal" }
-			    -re ".*$prompt $"	{ fail "info terminal" }
-			    timeout		{ fail "(timeout) info terminal" }
-			}
-		    }
-		-re ".*$prompt $"	{ fail "info terminal" }
-		timeout		{ fail "(timeout) info terminal" }
-	    }
-	}
-    -re ".*$prompt $"	{ fail "info terminal" }
-    timeout		{ fail "(timeout) info terminal" }
+gdb_test "set print sevenbit-strings" "" "test set print sevenbit-strings"
+gdb_test "set print address off" "" "test set print address off"
+gdb_test "set width 0" "" "test set width 0"
+gdb_test "info terminal" "No saved terminal information.*" "test info terminal"
+gdb_run_cmd 5
+gdb_expect {
+    -re ".*120.*Program exited normally.*$gdb_prompt $" {
+	gdb_test "info terminal" "No saved terminal information.*" "test info terminal #2"
+    }
+    default {
+	fail "term.exp, factorial didn't run to completion for info terminal"
+    }
 }
-
 
 # In mid-execution
-send "break main\n"
-expect {
-    -re "Breakpoint.* file .*, line.*$prompt $"\
-	{ send "run 5\n"
-	    expect {
-		-re "Starting program.*Breakpoint \[0-9\]+,.*main.*if .argc != 2.*$prompt $"\
-		    { send "info terminal\n"
-			expect {
-			    -re "Inferior's terminal status .currently saved by GDB.:.*$prompt $"\
-				{ pass "info terminal at breakpoint" }
-			    -re ".*$prompt $"	{ fail "info terminal at breakpoint" }
-			    timeout			{ fail "(timeout) info terminal at breakpoint" }
-			}
-		    }
-		-re ".*$prompt $"	{ fail "info terminal at breakpoint" }
-		timeout			{ fail "(timeout) info terminal at breakpoint" }
-	    }
-	}
-    -re ".*$prompt $"	{ fail "info terminal at breakpoint" }
+gdb_breakpoint main
+gdb_run_cmd 5
+gdb_expect {
+    -re ".*Breakpoint \[0-9\]+,.*main.*if .argc != 2.*$gdb_prompt $" {
+	gdb_test "info terminal" "Inferior's terminal status .currently saved by GDB.:.*" "info terminal at breakpoint"
+    }
+    -re ".*$gdb_prompt $"	{ fail "info terminal at breakpoint" }
     timeout		{ fail "(timeout) info terminal at breakpoint" }
 }
-
-

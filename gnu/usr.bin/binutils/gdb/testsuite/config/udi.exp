@@ -1,0 +1,110 @@
+# Test Framework Driver for GDB driving Universal Debug Interface on 29K
+#   Copyright 1988, 1990, 1991, 1992, 1993, 1994, 1997
+#   Free Software Foundation, Inc.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  
+
+# This file was written by Rob Savoye. (rob@cygnus.com)
+
+load_lib gdb.exp
+
+#
+# gdb_target_udi
+# Set gdb to the desired UDI target
+#
+proc gdb_target_udi { } {
+    global gdb_prompt
+    global verbose
+    global exit_status
+
+    set targetname [target_info mondfe,name];
+    # set targets hostname
+    send_gdb "target udi $targetname\n"
+    set timeout 60
+    verbose "Timeout is now $timeout seconds" 2
+    gdb_expect {
+	-re "target udi $targetname\[\r\n\]+" {
+	    exp_continue
+	}
+	-re "TIP UDI 1.2 Conformant.*$gdb_prompt $"	{
+	    verbose "Set target to $targetname"
+	}
+	-re "TIP-ipc WARNING,.*failed:" {
+	    warning "$expect_out(buffer)"
+	}
+	-re "TIP-ipc ERROR,.*failed:" {
+	    perror "$expect_out(buffer)"
+	}
+	-re "A program is being debugged already.  Kill it\? \(y or n\)" {
+	    send "y\n"
+	    exp_continue
+	}
+	timeout { 
+	    perror "Couldn't set target for UDI."
+	    cleanup
+	    exit $exit_status
+	}
+    }
+    set timeout 10
+    verbose "Timeout is now $timeout seconds" 2
+}
+
+#
+# gdb_load -- load a file into the debugger.
+#             return a -1 if anything goes wrong.
+#
+
+proc gdb_load { arg } {
+    global verbose
+    global loadpath
+    global loadfile
+    global GDB
+    global gdb_prompt
+
+    if [gdb_file_cmd $arg] {
+	return -1 
+    }
+
+    gdb_target_udi
+}
+
+#
+# gdb_start -- start GDB running. This assumes that there the
+#              UDICONF enviroment variable is set.
+#
+proc gdb_start { } {
+    global env;
+
+    set env(UDICONF) [target_info mondfe,udi_soc];
+    default_gdb_start
+    verbose "Setting up target, Please wait..."
+    gdb_target_udi
+}
+
+#
+# gdb_exit -- exit gdb
+#
+proc gdb_exit { } {
+    catch default_gdb_exit
+    set in [open [concat "|ls -F"] r]
+    while {[gets $in line]>-1} {
+	if [regexp "=$" $line] then {
+	    set line [string trimright $line "="]
+	    verbose "Removing the $line named socket"
+	    exec rm -f $line
+	}
+    }
+    close $in
+}

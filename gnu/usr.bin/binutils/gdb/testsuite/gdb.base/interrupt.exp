@@ -1,4 +1,5 @@
-# Copyright (C) 1994, 1995 Free Software Foundation, Inc.
+# Copyright 1994, 1995, 1996, 1997, 1998, 1999, 2000
+# Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -12,16 +13,19 @@
 # 
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  
 
 # Please email any bugs, comments, and/or additions to this file to:
 # bug-gdb@prep.ai.mit.edu
 
-if [info exists nointerrupts] {
-    if $nointerrupts {
-	verbose "Skipping interrupt.exp because of nointerrupts."
-	continue
-    }
+if [target_info exists gdb,nointerrupts] {
+    verbose "Skipping interrupt.exp because of nointerrupts."
+    continue
+}
+
+if [target_info exists gdb,noinferiorio] {
+    verbose "Skipping interrupt.exp because of noinferiorio."
+    return
 }
 
 if $tracelevel then {
@@ -34,16 +38,12 @@ set bug_id 0
 set testfile interrupt
 set srcfile ${testfile}.c
 set binfile ${objdir}/${subdir}/${testfile}
-if  { [compile "${srcdir}/${subdir}/${srcfile} -g -o ${binfile}"] != "" } {
-    perror "Couldn't compile ${srcfile}"
-    return -1
+if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug}] != "" } {
+     gdb_suppress_entire_file "Testcase compile failed, so all tests in this file will automatically fail."
 }
 
-if $noinferiorio {
-    verbose "Skipping interrupt.exp because of noinferiorio."
-    return
-}
-    
+gdb_start
+
 
 if ![file exists $binfile] then {
     perror "$binfile does not exist."
@@ -51,11 +51,12 @@ if ![file exists $binfile] then {
 } else {
     gdb_reinitialize_dir $srcdir/$subdir
     gdb_load $binfile
+    # Hope this is unix :-)
     gdb_test "shell stty intr '^C'" "" \
 	"set interrupt character in interrupt.exp"
     if [runto_main] then {
-	send "continue\n"
-	expect {
+	send_gdb "continue\n"
+	gdb_expect {
 	    -re "\r\ntalk to me baby\r\n$" {
 		pass "child process is alive"
 	    }
@@ -66,8 +67,8 @@ if ![file exists $binfile] then {
 	# program's output.  Under dejagnu (but not interactively) for
 	# SunOS4, it only appears once.  Don't worry about it, I imagine
 	# dejagnu has just done something to the tty modes.
-	send "a\n"
-	expect {
+	send_gdb "a\n"
+	gdb_expect {
 	    -re "^a\r\n(|a\r\n)$" {
 		pass "child process ate our char"
 	    }
@@ -75,27 +76,42 @@ if ![file exists $binfile] then {
 	    eof { fail "echo a (eof)" }
 	}
 	# Wait until the program is in the read system call again.
-	exec sleep 2
+	sleep 2
 
-	send "\003"
-	expect {
-	    -re "Program received signal SIGINT.*$prompt $" {
-		pass "send control C"
+	# Cntrl-c may fail for simulator targets running on a BSD host.
+	# This is the result of a combination of the read syscall
+	# being restarted and gdb capturing the cntrl-c signal.
+
+	# Cntrl-c may fail for simulator targets on slow hosts.
+	# This is because there is a race condition between entering
+	# the read and delivering the cntrl-c.
+
+	send_gdb "\003"
+	gdb_expect {
+	    -re "Program received signal SIGINT.*$gdb_prompt $" {
+		pass "send_gdb control C"
 	    }
-	    -re ".*$prompt $" { fail "send control C" }
-	    timeout { fail "send control C (timeout)" }
-	    eof { fail "send control C (eof)" }
+	    -re ".*$gdb_prompt $" { fail "send_gdb control C" }
+	    timeout { fail "send_gdb control C (timeout)" }
+	    eof { fail "send_gdb control C (eof)" }
 	}
 
-	send "p func1 ()\n"
-	expect {
-	    -re " = 4.*$prompt $" { pass "call function when asleep" }
-	    -re ".*Program received signal SIGSEGV.*$prompt $" {
-		setup_xfail "i*86-*-linux*"
+	send_gdb "p func1 ()\n"
+	gdb_expect {
+	    -re " = 4.*$gdb_prompt $" { pass "call function when asleep" }
+	    -re ".*Program received signal SIG(SEGV|ILL).*$gdb_prompt $" {
+		setup_xfail "i*86-pc-linux*-gnu*"
 		fail "child died when we called func1, skipped rest of tests"
 		return
 	    }
-	    -re "$prompt $" { fail "call function when asleep (wrong output)" }
+	    -re "$gdb_prompt $" {
+		# On HPUX-11.0 'send "p func1 ()"' above
+		# terminates the program. A defect is pending on this
+		# issue [defect #DTS CHFts24203]. Hence calling setup_xfail
+		# below.
+	        setup_xfail "hppa*-*-*11*" CHFts24203
+		fail "call function when asleep (wrong output)"
+	    }
 	    default {
 
 		# This fail probably happens whenever we use /proc (we
@@ -104,17 +120,17 @@ if ![file exists $binfile] then {
 
 		setup_xfail "sparc*-*-solaris2*"
 		setup_xfail "mips-*-ultrix*"
-		setup_xfail "hppa*-*-*"
-		setup_xfail "i386*-*-bsd*"
+		setup_xfail "i*86-*-solaris2*"
 		setup_xfail "*-*-sysv4*"
 		setup_xfail "vax-*-*"
 		setup_xfail "alpha-*-*"
+		setup_xfail "*-*-*bsd*"
 		setup_xfail "*-*-irix*"
 		setup_xfail "*-*-hpux*"
 		setup_xfail "*-*-*lynx*"
 		fail "call function when asleep (stays asleep)"
-		# Send a newline to wake it up
-		send "\n"
+		# Send_Gdb a newline to wake it up
+		send_gdb "\n"
 		gdb_test "" " = 4" "call function after waking it"
 	    }
 #	    eof { fail "call function when asleep (eof)" }
@@ -126,36 +142,39 @@ if ![file exists $binfile] then {
 	# And the program should still be doing the same thing.
 	# The optional trailing \r\n is in case we sent a newline above
 	# to wake the program, in which case the program now sends it
-	# back.  We check for it either here or in the next expect
+	# back.  We check for it either here or in the next gdb_expect
 	# command, because which one it ends up in is timing dependent.
-	send "continue\n"
+	send_gdb "continue\n"
 	# For some reason, i386-*-sysv4 gdb fails to issue the Continuing
 	# message, but otherwise appears normal (FIXME).
-	expect {
+	gdb_expect {
 	    -re "^continue\r\nContinuing.\r\n(\r\n|)$" { pass "continue" }
 	    -re "^continue\r\n\r\n" { fail "continue (missing Continuing.)" }
-	    -re "$prompt $" { fail "continue" }
+	    -re "$gdb_prompt $" { fail "continue" }
 	    timeout { fail "continue (timeout)" }
 	    eof { fail "continue (eof)" }
 	}
 
-	send "data\n"
+	send_gdb "data\n"
 	# The optional leading \r\n is in case we sent a newline above
 	# to wake the program, in which case the program now sends it
 	# back.
-	expect {
+        # FIXME: The pattern below leads to an expected success on HPUX-11.0
+        # but the success is spurious. Need to provide the right reg.expr.
+        # here.
+	gdb_expect {
 	    -re "^(\r\n|)data\r\n(|data\r\n)$" { pass "echo data" }
 	    timeout { fail "echo data (timeout)" }
 	    eof { fail "echo data (eof)" }
 	}
 
-	setup_xfail "i*86-*-linux*"
-	send "\004"
-	expect {
-	    -re "end of file.*Program exited normally.*$prompt $" {
+	setup_xfail "i*86-pc-linux*-gnu*"
+	send_gdb "\004"
+	gdb_expect {
+	    -re "end of file.*Program exited normally.*$gdb_prompt $" {
 		pass "send end of file"
 	    }
-	    -re "$prompt $" { fail "send end of file" }
+	    -re "$gdb_prompt $" { fail "send end of file" }
 	    timeout { fail "send end of file (timeout)" }
 	    eof { fail "send end of file (eof)" }
 	}

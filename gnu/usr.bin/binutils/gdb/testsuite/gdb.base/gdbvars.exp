@@ -1,4 +1,4 @@
-# Copyright (C) 1992 Free Software Foundation, Inc.
+# Copyright (C) 1992, 1997 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -12,7 +12,7 @@
 # 
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  
 
 # Please email any bugs, comments, and/or additions to this file to:
 # bug-gdb@prep.ai.mit.edu
@@ -27,21 +27,21 @@ set prms_id 0
 set bug_id 0
 
 proc test_convenience_variables {} {
-    global prompt
+    global gdb_prompt
 
-    gdb_test "set \$foo = 101"	" = 101\[\r\n\]*" \
+    gdb_test "set \$foo = 101"	"" \
 	"Set a new convenience variable"
 
     gdb_test "print \$foo"		" = 101" \
 	"Print contents of new convenience variable"
 
-    gdb_test "set \$foo = 301"	" = 301\[\r\n\]*" \
+    gdb_test "set \$foo = 301"	"" \
 	"Set convenience variable to a new value"
 
     gdb_test "print \$foo"		" = 301" \
 	"Print new contents of convenience variable"
 
-    gdb_test "set \$_ = 11"		" = 11\[\r\n\]*" \
+    gdb_test "set \$_ = 11"		"" \
 	"Set convenience variable \$_"
 
     gdb_test "print \$_"		" = 11" \
@@ -58,7 +58,7 @@ proc test_convenience_variables {} {
 }
 
 proc test_value_history {} {
-    global prompt
+    global gdb_prompt
 
     gdb_test "print 101"	"\\\$1 = 101" \
 	"Set value-history\[1\] using \$1"
@@ -84,7 +84,7 @@ proc test_value_history {} {
     gdb_test "print \$0"	"\\\$8 = 102" \
 	"Print value-history\[MAX\] using explicit index \$0"
 
-    gdb_test "print 108"	"\\\$9 = 108" ""
+    gdb_test "print 108"	"\\\$9 = 108"
 
     gdb_test "print \$\$0"	"\\\$10 = 108" \
 	"Print value-history\[MAX\] using explicit index \$\$0"
@@ -111,7 +111,7 @@ gdb_exit
 gdb_start
 gdb_reinitialize_dir $srcdir/$subdir
 
-send "set print sevenbit-strings\n" ; expect -re ".*$prompt $"
+send_gdb "set print sevenbit-strings\n" ; gdb_expect -re ".*$gdb_prompt $"
 
 test_value_history
 test_convenience_variables

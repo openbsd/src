@@ -1,0 +1,266 @@
+#   Copyright 2003, 2004
+#   Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  
+
+# Please email any bugs, comments, and/or additions to this file to:
+# bug-gdb@prep.ai.mit.edu
+
+# This file was created by Jeff Johnston. (jjohnstn@redhat.com)
+# The shared library compilation portion was copied from shlib-call.exp which was
+# written by Elena Zannoni (ezannoni@redhat.com).
+
+if $tracelevel then {
+    strace $tracelevel
+}
+
+#
+# test running programs
+#
+set prms_id 0
+set bug_id 0
+
+# are we on a target board?
+if ![isnative] then {
+    return 0
+}
+
+set testfile "pending"
+set libfile "pendshr"
+set srcfile ${testfile}.c
+set binfile ${objdir}/${subdir}/${testfile}
+
+if [get_compiler_info ${binfile}] {
+    return -1
+}
+
+if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}.o" object {debug}] != "" } {
+     gdb_suppress_entire_file "Testcase compile failed, so all tests in this file will automatically fail."
+}
+
+# Build the shared libraries this test case needs.
+#
+
+if {$gcc_compiled == 0} {
+    if [istarget "hppa*-hp-hpux*"] then {
+	set additional_flags "additional_flags=+z"
+    } elseif { [istarget "mips-sgi-irix*"] } {
+	# Disable SGI compiler's implicit -Dsgi
+	set additional_flags "additional_flags=-Usgi"
+    } else {
+	# don't know what the compiler is...
+	set additional_flags ""
+    }
+} else {
+    if { ([istarget "powerpc*-*-aix*"]
+       || [istarget "rs6000*-*-aix*"]) } {
+	set additional_flags ""
+    } else {
+	set additional_flags "additional_flags=-fpic"
+    }
+}
+
+if {[gdb_compile "${srcdir}/${subdir}/${libfile}.c" "${objdir}/${subdir}/${libfile}.o" object [list debug $additional_flags]] != ""} {
+     gdb_suppress_entire_file "Testcase compile failed, so all tests in this file will automatically fail."
+}
+
+if [istarget "hppa*-*-hpux*"] {
+    remote_exec build "ld -b ${objdir}/${subdir}/${libfile}.o -o ${objdir}/${subdir}/${libfile}.sl"
+} else {
+    set additional_flags "additional_flags=-shared"
+    if {[gdb_compile "${objdir}/${subdir}/${libfile}.o" "${objdir}/${subdir}/${libfile}.sl" executable [list debug $additional_flags]] != ""} {
+	gdb_suppress_entire_file "Testcase compile failed, so all tests in this file will automatically fail."
+    }
+}
+
+if { ($gcc_compiled 
+      &&  ([istarget "powerpc*-*-aix*"]
+	|| [istarget "rs6000*-*-aix*"] )) } {
+    set additional_flags "additional_flags=-L${objdir}/${subdir}"
+} elseif { [istarget "mips-sgi-irix*"] } {
+    set additional_flags "additional_flags=-rpath ${objdir}/${subdir}"
+} else {
+    set additional_flags ""
+}
+if {[gdb_compile "${objdir}/${subdir}/${testfile}.o ${objdir}/${subdir}/${libfile}.sl" "${binfile}" executable [list debug $additional_flags]] != ""} {
+     gdb_suppress_entire_file "Testcase compile failed, so all tests in this file will automatically fail."
+}
+
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+gdb_load ${binfile}
+
+if [target_info exists gdb_stub] {
+    gdb_step_for_stub;
+}
+#
+# Test setting, querying, and modifying pending breakpoints
+#
+
+gdb_test_multiple "break pendfunc1" "set pending breakpoint" {
+     -re ".*Make breakpoint pending.*y or \\\[n\\\]. $" {
+	    gdb_test "y" "Breakpoint.*pendfunc1.*pending." "set pending breakpoint"
+     }
+}
+
+gdb_test "info break" \
+    "Num Type\[ \]+Disp Enb Address\[ \]+What.*
+\[0-9\]+\[\t \]+breakpoint     keep y.*PENDING.*pendfunc1.*" \
+"single pending breakpoint info"
+
+#
+# Test breaking at existing function
+#
+
+set mainline [gdb_get_line_number "break main here"]
+
+gdb_test "break main" \
+    "Breakpoint.*at.* file .*$srcfile, line $mainline.*" \
+    "breakpoint function"
+
+gdb_test "info break" \
+    "Num Type\[ \]+Disp Enb Address\[ \]+What.*
+\[0-9\]+\[\t \]+breakpoint     keep y.*PENDING.*pendfunc1.*
+\[0-9\]+\[\t \]+breakpoint     keep y.* in main at .*$srcfile:$mainline" \
+"pending plus real breakpoint info"
+
+
+# 
+# Test not setting a pending breakpoint 
+#
+gdb_test_multiple "break pendfunc2" "Don't set pending breakpoint" {
+     -re ".*Make breakpoint pending.*y or \\\[n\\\]. $" {
+	    gdb_test "n" "" "Don't set pending breakpoint"
+     }
+}
+
+#
+# Add condition to pending breakpoint 
+#
+
+gdb_test "condition 1 k == 1" ""
+
+gdb_test "info break" \
+    "Num Type\[ \]+Disp Enb Address\[ \]+What.*
+\[0-9\]+\[\t \]+breakpoint     keep y.*PENDING.*pendfunc1.*
+\[\t \]+stop only if k == 1.*
+\[0-9\]+\[\t \]+breakpoint     keep y.* in main at .*$srcfile:$mainline" \
+"pending plus condition"
+
+#
+# Disable pending breakpoint
+#
+
+gdb_test "disable 1" ""
+
+gdb_test "info break" \
+    "Num Type\[ \]+Disp Enb Address\[ \]+What.*
+\[0-9\]+\[\t \]+breakpoint     keep n.*PENDING.*pendfunc1.*
+\[\t \]+stop only if k == 1.*
+\[0-9\]+\[\t \]+breakpoint     keep y.* in main at .*$srcfile:$mainline" \
+"pending disabled"
+
+#
+# Add commands to pending breakpoint
+#
+gdb_test "commands 1\nprint k\nend" "" \
+        "Set commands for pending breakpoint"
+
+gdb_test "info break" \
+    "Num Type\[ \]+Disp Enb Address\[ \]+What.*
+\[0-9\]+\[\t \]+breakpoint     keep n.*PENDING.*pendfunc1.*
+\[\t \]+stop only if k == 1.*
+\[\t \]+print k.*
+\[0-9\]+\[\t \]+breakpoint     keep y.* in main at .*$srcfile:$mainline" \
+"pending disabled plus commands"
+
+#
+# Try a pending break for a line in a source file with a condition
+#
+
+gdb_test_multiple "break pendshr.c:26 if x > 3" "Set pending breakpoint 2" {
+     -re ".*Make breakpoint pending.*y or \\\[n\\\]. $" {
+	    gdb_test "y" "Breakpoint.*pendshr.c:26.*pending." \
+		"Set pending breakpoint 2"
+     }
+}
+
+gdb_test "info break" \
+    "Num Type\[ \]+Disp Enb Address\[ \]+What.*
+\[0-9\]+\[\t \]+breakpoint     keep n.*PENDING.*pendfunc1.*
+\[\t \]+stop only if k == 1.*
+\[\t \]+print k.*
+\[0-9\]+\[\t \]+breakpoint     keep y.* in main at .*$srcfile:$mainline.*
+\[0-9\]+\[\t \]+breakpoint     keep y.*PENDING.*pendshr.c:26 if x > 3.*" \
+"multiple pending breakpoints"
+
+#
+# Run to main which should resolve a pending breakpoint
+#
+
+gdb_test "run" \
+"Breakpoint.*at.*
+Pending breakpoint \"pendshr.c:26 if x > 3\" resolved.*
+Breakpoint.*, main.*$mainline.*" \
+"running to main"
+
+#
+# Re-enable the first pending breakpoint which should resolve
+#
+
+gdb_test "enable 1" \
+"Breakpoint.*at.*
+Pending breakpoint \"pendfunc1.* resolved.*" \
+"re-enabling pending breakpoint that can resolve instantly"
+
+#
+# Continue to verify conditionals and commands for breakpoints are honored
+#
+
+gdb_test "continue" \
+".*Breakpoint.*pendfunc1.*at.*pendshr.c:26.*4;" \
+"continue to resolved breakpoint 2"
+
+gdb_test "continue" \
+".*Breakpoint.*pendfunc1.*at.*pendshr.c:26.*
+\[$\]1 = 1." \
+"continue to resolved breakpoint 1"
+
+delete_breakpoints
+
+gdb_breakpoint "main"
+
+#
+# Set non-existent pending breakpoint
+#
+gdb_test_multiple "break imaginary" "set imaginary pending breakpoint" {
+     -re ".*Make breakpoint pending.*y or \\\[n\\\]. $" {
+	    gdb_test "y" "Breakpoint.*imaginary.*pending." \
+		"set imaginary pending breakpoint"
+     }
+}
+
+#
+# rerun program and make sure that any pending breakpoint remains and no
+# error messages are issued for the missing function
+#
+
+rerun_to_main
+gdb_test "info break" \
+    "Num Type\[ \]+Disp Enb Address\[ \]+What.*
+\[0-9\]+\[\t \]+breakpoint     keep y.* in main at .*$srcfile:$mainline.*
+\[0-9\]+\[\t \]+breakpoint     keep y.*PENDING.*imaginary.*" \
+"verify pending breakpoint after restart"

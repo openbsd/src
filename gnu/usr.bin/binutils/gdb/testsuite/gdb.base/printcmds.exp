@@ -1,4 +1,7 @@
-# Copyright (C) 1992, 1994, 1995 Free Software Foundation, Inc.
+# This testcase is part of GDB, the GNU debugger.
+
+# Copyright 1992, 1994, 1995, 1996, 1997, 1999, 2000, 2002, 2003, 2004
+# Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -12,10 +15,10 @@
 # 
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  
 
 # Please email any bugs, comments, and/or additions to this file to:
-# bug-gdb@prep.ai.mit.edu
+# bug-gdb@gnu.org
 
 # This file was written by Fred Fish. (fnf@cygnus.com)
 
@@ -29,42 +32,28 @@ set bug_id 0
 set testfile "printcmds"
 set srcfile ${testfile}.c
 set binfile ${objdir}/${subdir}/${testfile}
-if  { [compile "${srcdir}/${subdir}/${srcfile} -g -o ${binfile}"] != "" } {
-    perror "Couldn't compile ${srcfile}"
-    return -1
+if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug}] != "" } {
+     gdb_suppress_entire_file "Testcase compile failed, so all tests in this file will automatically fail."
 }
 
 # Set the current language to C.  This counts as a test.  If it
 # fails, then we skip the other tests.
 
 proc set_lang_c {} {
-    global prompt
+    global gdb_prompt
 
-    send "set language c\n"
-    expect {
-	-re ".*$prompt $" {}
-	timeout { fail "set language c (timeout)" ; return 0 }
+    if [gdb_test "set language c" "" "set language c"] {
+	return 0
     }
 
-    send "show language\n"
-    expect {
-	-re ".* source language is \"c\".*$prompt $" {
-	    pass "set language to \"c\""
-	    return 1
-	}
-	-re ".*$prompt $" {
-	    fail "setting language to \"c\""
-	    return 0
-	}
-	timeout {
-	    fail "can't show language (timeout)"
-	    return 0
-	}
+    if [gdb_test "show language" ".* source language is \"c\".*"] {
+	return 0
     }
+    return 1;
 }
 
 proc test_integer_literals_accepted {} {
-    global prompt
+    global gdb_prompt
 
     # Test various decimal values.
 
@@ -92,7 +81,7 @@ proc test_integer_literals_accepted {} {
 }
 
 proc test_character_literals_accepted {} {
-    global prompt
+    global gdb_prompt
 
     gdb_test "p 'a'" " = 97 'a'"
     gdb_test "p/c 'a'" " = 97 'a'"
@@ -108,11 +97,11 @@ proc test_character_literals_accepted {} {
 }
 
 proc test_integer_literals_rejected {} {
-    global prompt
+    global gdb_prompt
 
     test_print_reject "p 0x" 
-    gdb_test "p ''" "Empty character constant\\."
-    gdb_test "p '''" "Empty character constant\\."
+    gdb_test "p ''" "(Empty character constant\\.|A character constant must contain at least one character\\.)"
+    gdb_test "p '''" "(Empty character constant\\.|A character constant must contain at least one character\\.)"
     test_print_reject "p '\\'"
 
     # Note that this turns into "p '\\\'" at gdb's input.
@@ -126,9 +115,12 @@ proc test_integer_literals_rejected {} {
     # lexer thinks that 123DEADBEEF is a floating point number, but
     # then fails to notice that atof() only eats the 123 part.
     # FIXME:  This should be put into PRMS.
+    # Fixed, 4/25/97, by Bob Manson.
 
-    setup_xfail "*-*-*"
     test_print_reject "p 123DEADBEEF"
+    test_print_reject "p 123foobar.bazfoo3"
+    test_print_reject "p 123EEEEEEEEEEEEEEEEE33333k333"
+    gdb_test "p 123.4+56.7" "180.(099\[0-9]*|100\[0-9\]*)" "check for floating addition"
 
     # Test various octal values.
 
@@ -142,9 +134,9 @@ proc test_integer_literals_rejected {} {
 }
 
 proc test_print_all_chars {} {
-    global prompt
+    global gdb_prompt
 
-    gdb_test "p ctable1\[0\]"   " = 0 '\\\\000'"
+    gdb_test "p ctable1\[0\]"   " = 0 '\\\\0'"
     gdb_test "p ctable1\[1\]"   " = 1 '\\\\001'"
     gdb_test "p ctable1\[2\]"   " = 2 '\\\\002'"
     gdb_test "p ctable1\[3\]"   " = 3 '\\\\003'"
@@ -155,7 +147,7 @@ proc test_print_all_chars {} {
     gdb_test "p ctable1\[8\]"   " = 8 '\\\\b'"
     gdb_test "p ctable1\[9\]"   " = 9 '\\\\t'"
     gdb_test "p ctable1\[10\]"  " = 10 '\\\\n'"
-    gdb_test "p ctable1\[11\]"  " = 11 '\\\\013'"
+    gdb_test "p ctable1\[11\]"  " = 11 '\\\\v'"
     gdb_test "p ctable1\[12\]"  " = 12 '\\\\f'"
     gdb_test "p ctable1\[13\]"  " = 13 '\\\\r'"
     gdb_test "p ctable1\[14\]"  " = 14 '\\\\016'"
@@ -171,7 +163,7 @@ proc test_print_all_chars {} {
     gdb_test "p ctable1\[24\]"  " = 24 '\\\\030'"
     gdb_test "p ctable1\[25\]"  " = 25 '\\\\031'"
     gdb_test "p ctable1\[26\]"  " = 26 '\\\\032'"
-    gdb_test "p ctable1\[27\]"  " = 27 '\\\\e'"
+    gdb_test "p ctable1\[27\]"  " = 27 '\\\\033'"
     gdb_test "p ctable1\[28\]"  " = 28 '\\\\034'"
     gdb_test "p ctable1\[29\]"  " = 29 '\\\\035'"
     gdb_test "p ctable1\[30\]"  " = 30 '\\\\036'"
@@ -406,429 +398,90 @@ proc test_print_all_chars {} {
 # repeat count, set to the default of 10.
 
 proc test_print_repeats_10 {} {
-    global prompt
+    global gdb_prompt
 
-    send "set print elements 1\n" ; expect -re "$prompt $"
-    gdb_test "p &ctable2\[0*16\]"  " = \\(unsigned char \\*\\) \"a\"..."
-    gdb_test "p &ctable2\[1*16\]"  " = \\(unsigned char \\*\\) \"a\"..."
-    gdb_test "p &ctable2\[2*16\]"  " = \\(unsigned char \\*\\) \"a\"..."
-    gdb_test "p &ctable2\[3*16\]"  " = \\(unsigned char \\*\\) \"a\"..."
-    gdb_test "p &ctable2\[4*16\]"  " = \\(unsigned char \\*\\) \"a\"..."
-    gdb_test "p &ctable2\[5*16\]"  " = \\(unsigned char \\*\\) \"a\"..."
-    gdb_test "p &ctable2\[6*16\]"  " = \\(unsigned char \\*\\) \"a\"..."
-    gdb_test "p &ctable2\[7*16\]"  " = \\(unsigned char \\*\\) \"a\"..."
-    gdb_test "p &ctable2\[8*16\]"  " = \\(unsigned char \\*\\) \"a\"..."
-    gdb_test "p &ctable2\[9*16\]"  " = \\(unsigned char \\*\\) \"a\"..."
-    gdb_test "p &ctable2\[10*16\]" " = \\(unsigned char \\*\\) \"a\"..."
-    gdb_test "p &ctable2\[11*16\]" " = \\(unsigned char \\*\\) \"a\"..."
-    gdb_test "p &ctable2\[12*16\]" " = \\(unsigned char \\*\\) \"a\"..."
-    gdb_test "p &ctable2\[13*16\]" " = \\(unsigned char \\*\\) \"a\"..."
-    gdb_test "p &ctable2\[14*16\]" " = \\(unsigned char \\*\\) \"a\"..."
-    gdb_test "p &ctable2\[15*16\]" " = \\(unsigned char \\*\\) \"a\"..."
-
-    send "set print elements 2\n" ; expect -re "$prompt $"
-    gdb_test "p &ctable2\[0*16\]"  " = \\(unsigned char \\*\\) \"aX\"..."
-    gdb_test "p &ctable2\[1*16\]"  " = \\(unsigned char \\*\\) \"aa\"..."
-    gdb_test "p &ctable2\[2*16\]"  " = \\(unsigned char \\*\\) \"aa\"..."
-    gdb_test "p &ctable2\[3*16\]"  " = \\(unsigned char \\*\\) \"aa\"..."
-    gdb_test "p &ctable2\[4*16\]"  " = \\(unsigned char \\*\\) \"aa\"..."
-    gdb_test "p &ctable2\[5*16\]"  " = \\(unsigned char \\*\\) \"aa\"..."
-    gdb_test "p &ctable2\[6*16\]"  " = \\(unsigned char \\*\\) \"aa\"..."
-    gdb_test "p &ctable2\[7*16\]"  " = \\(unsigned char \\*\\) \"aa\"..."
-    gdb_test "p &ctable2\[8*16\]"  " = \\(unsigned char \\*\\) \"aa\"..."
-    gdb_test "p &ctable2\[9*16\]"  " = \\(unsigned char \\*\\) \"aa\"..."
-    gdb_test "p &ctable2\[10*16\]" " = \\(unsigned char \\*\\) \"aa\"..."
-    gdb_test "p &ctable2\[11*16\]" " = \\(unsigned char \\*\\) \"aa\"..."
-    gdb_test "p &ctable2\[12*16\]" " = \\(unsigned char \\*\\) \"aa\"..."
-    gdb_test "p &ctable2\[13*16\]" " = \\(unsigned char \\*\\) \"aa\"..."
-    gdb_test "p &ctable2\[14*16\]" " = \\(unsigned char \\*\\) \"aa\"..."
-    gdb_test "p &ctable2\[15*16\]" " = \\(unsigned char \\*\\) \"aa\"..."
-
-    send "set print elements 3\n" ; expect -re "$prompt $"
-    gdb_test "p &ctable2\[0*16\]"  " = \\(unsigned char \\*\\) \"aXX\"..."
-    gdb_test "p &ctable2\[1*16\]"  " = \\(unsigned char \\*\\) \"aaX\"..."
-    gdb_test "p &ctable2\[2*16\]"  " = \\(unsigned char \\*\\) \"aaa\"..."
-    gdb_test "p &ctable2\[3*16\]"  " = \\(unsigned char \\*\\) \"aaa\"..."
-    gdb_test "p &ctable2\[4*16\]"  " = \\(unsigned char \\*\\) \"aaa\"..."
-    gdb_test "p &ctable2\[5*16\]"  " = \\(unsigned char \\*\\) \"aaa\"..."
-    gdb_test "p &ctable2\[6*16\]"  " = \\(unsigned char \\*\\) \"aaa\"..."
-    gdb_test "p &ctable2\[7*16\]"  " = \\(unsigned char \\*\\) \"aaa\"..."
-    gdb_test "p &ctable2\[8*16\]"  " = \\(unsigned char \\*\\) \"aaa\"..."
-    gdb_test "p &ctable2\[9*16\]"  " = \\(unsigned char \\*\\) \"aaa\"..."
-    gdb_test "p &ctable2\[10*16\]" " = \\(unsigned char \\*\\) \"aaa\"..."
-    gdb_test "p &ctable2\[11*16\]" " = \\(unsigned char \\*\\) \"aaa\"..."
-    gdb_test "p &ctable2\[12*16\]" " = \\(unsigned char \\*\\) \"aaa\"..."
-    gdb_test "p &ctable2\[13*16\]" " = \\(unsigned char \\*\\) \"aaa\"..."
-    gdb_test "p &ctable2\[14*16\]" " = \\(unsigned char \\*\\) \"aaa\"..."
-    gdb_test "p &ctable2\[15*16\]" " = \\(unsigned char \\*\\) \"aaa\"..."
-
-    send "set print elements 4\n" ; expect -re "$prompt $"
-    gdb_test "p &ctable2\[0*16\]"  " = \\(unsigned char \\*\\) \"aXXX\"..."
-    gdb_test "p &ctable2\[1*16\]"  " = \\(unsigned char \\*\\) \"aaXX\"..."
-    gdb_test "p &ctable2\[2*16\]"  " = \\(unsigned char \\*\\) \"aaaX\"..."
-    gdb_test "p &ctable2\[3*16\]"  " = \\(unsigned char \\*\\) \"aaaa\"..."
-    gdb_test "p &ctable2\[4*16\]"  " = \\(unsigned char \\*\\) \"aaaa\"..."
-    gdb_test "p &ctable2\[5*16\]"  " = \\(unsigned char \\*\\) \"aaaa\"..."
-    gdb_test "p &ctable2\[6*16\]"  " = \\(unsigned char \\*\\) \"aaaa\"..."
-    gdb_test "p &ctable2\[7*16\]"  " = \\(unsigned char \\*\\) \"aaaa\"..."
-    gdb_test "p &ctable2\[8*16\]"  " = \\(unsigned char \\*\\) \"aaaa\"..."
-    gdb_test "p &ctable2\[9*16\]"  " = \\(unsigned char \\*\\) \"aaaa\"..."
-    gdb_test "p &ctable2\[10*16\]" " = \\(unsigned char \\*\\) \"aaaa\"..."
-    gdb_test "p &ctable2\[11*16\]" " = \\(unsigned char \\*\\) \"aaaa\"..."
-    gdb_test "p &ctable2\[12*16\]" " = \\(unsigned char \\*\\) \"aaaa\"..."
-    gdb_test "p &ctable2\[13*16\]" " = \\(unsigned char \\*\\) \"aaaa\"..."
-    gdb_test "p &ctable2\[14*16\]" " = \\(unsigned char \\*\\) \"aaaa\"..."
-    gdb_test "p &ctable2\[15*16\]" " = \\(unsigned char \\*\\) \"aaaa\"..."
-
-    send "set print elements 5\n" ; expect -re "$prompt $"
-    gdb_test "p &ctable2\[0*16\]"  " = \\(unsigned char \\*\\) \"aXXXX\"..."
-    gdb_test "p &ctable2\[1*16\]"  " = \\(unsigned char \\*\\) \"aaXXX\"..."
-    gdb_test "p &ctable2\[2*16\]"  " = \\(unsigned char \\*\\) \"aaaXX\"..."
-    gdb_test "p &ctable2\[3*16\]"  " = \\(unsigned char \\*\\) \"aaaaX\"..."
-    gdb_test "p &ctable2\[4*16\]"  " = \\(unsigned char \\*\\) \"aaaaa\"..."
-    gdb_test "p &ctable2\[5*16\]"  " = \\(unsigned char \\*\\) \"aaaaa\"..."
-    gdb_test "p &ctable2\[6*16\]"  " = \\(unsigned char \\*\\) \"aaaaa\"..."
-    gdb_test "p &ctable2\[7*16\]"  " = \\(unsigned char \\*\\) \"aaaaa\"..."
-    gdb_test "p &ctable2\[8*16\]"  " = \\(unsigned char \\*\\) \"aaaaa\"..."
-    gdb_test "p &ctable2\[9*16\]"  " = \\(unsigned char \\*\\) \"aaaaa\"..."
-    gdb_test "p &ctable2\[10*16\]" " = \\(unsigned char \\*\\) \"aaaaa\"..."
-    gdb_test "p &ctable2\[11*16\]" " = \\(unsigned char \\*\\) \"aaaaa\"..."
-    gdb_test "p &ctable2\[12*16\]" " = \\(unsigned char \\*\\) \"aaaaa\"..."
-    gdb_test "p &ctable2\[13*16\]" " = \\(unsigned char \\*\\) \"aaaaa\"..."
-    gdb_test "p &ctable2\[14*16\]" " = \\(unsigned char \\*\\) \"aaaaa\"..."
-    gdb_test "p &ctable2\[15*16\]" " = \\(unsigned char \\*\\) \"aaaaa\"..."
-
-    send "set print elements 6\n" ; expect -re "$prompt $"
-    gdb_test "p &ctable2\[0*16\]"  " = \\(unsigned char \\*\\) \"aXXXXX\"..."
-    gdb_test "p &ctable2\[1*16\]"  " = \\(unsigned char \\*\\) \"aaXXXX\"..."
-    gdb_test "p &ctable2\[2*16\]"  " = \\(unsigned char \\*\\) \"aaaXXX\"..."
-    gdb_test "p &ctable2\[3*16\]"  " = \\(unsigned char \\*\\) \"aaaaXX\"..."
-    gdb_test "p &ctable2\[4*16\]"  " = \\(unsigned char \\*\\) \"aaaaaX\"..."
-    gdb_test "p &ctable2\[5*16\]"  " = \\(unsigned char \\*\\) \"aaaaaa\"..."
-    gdb_test "p &ctable2\[6*16\]"  " = \\(unsigned char \\*\\) \"aaaaaa\"..."
-    gdb_test "p &ctable2\[7*16\]"  " = \\(unsigned char \\*\\) \"aaaaaa\"..."
-    gdb_test "p &ctable2\[8*16\]"  " = \\(unsigned char \\*\\) \"aaaaaa\"..."
-    gdb_test "p &ctable2\[9*16\]"  " = \\(unsigned char \\*\\) \"aaaaaa\"..."
-    gdb_test "p &ctable2\[10*16\]" " = \\(unsigned char \\*\\) \"aaaaaa\"..."
-    gdb_test "p &ctable2\[11*16\]" " = \\(unsigned char \\*\\) \"aaaaaa\"..."
-    gdb_test "p &ctable2\[12*16\]" " = \\(unsigned char \\*\\) \"aaaaaa\"..."
-    gdb_test "p &ctable2\[13*16\]" " = \\(unsigned char \\*\\) \"aaaaaa\"..."
-    gdb_test "p &ctable2\[14*16\]" " = \\(unsigned char \\*\\) \"aaaaaa\"..."
-    gdb_test "p &ctable2\[15*16\]" " = \\(unsigned char \\*\\) \"aaaaaa\"..."
-
-    send "set print elements 7\n" ; expect -re "$prompt $"
-    gdb_test "p &ctable2\[0*16\]"  " = \\(unsigned char \\*\\) \"aXXXXXX\"..."
-    gdb_test "p &ctable2\[1*16\]"  " = \\(unsigned char \\*\\) \"aaXXXXX\"..."
-    gdb_test "p &ctable2\[2*16\]"  " = \\(unsigned char \\*\\) \"aaaXXXX\"..."
-    gdb_test "p &ctable2\[3*16\]"  " = \\(unsigned char \\*\\) \"aaaaXXX\"..."
-    gdb_test "p &ctable2\[4*16\]"  " = \\(unsigned char \\*\\) \"aaaaaXX\"..."
-    gdb_test "p &ctable2\[5*16\]"  " = \\(unsigned char \\*\\) \"aaaaaaX\"..."
-    gdb_test "p &ctable2\[6*16\]"  " = \\(unsigned char \\*\\) \"aaaaaaa\"..."
-    gdb_test "p &ctable2\[7*16\]"  " = \\(unsigned char \\*\\) \"aaaaaaa\"..."
-    gdb_test "p &ctable2\[8*16\]"  " = \\(unsigned char \\*\\) \"aaaaaaa\"..."
-    gdb_test "p &ctable2\[9*16\]"  " = \\(unsigned char \\*\\) \"aaaaaaa\"..."
-    gdb_test "p &ctable2\[10*16\]" " = \\(unsigned char \\*\\) \"aaaaaaa\"..."
-    gdb_test "p &ctable2\[11*16\]" " = \\(unsigned char \\*\\) \"aaaaaaa\"..."
-    gdb_test "p &ctable2\[12*16\]" " = \\(unsigned char \\*\\) \"aaaaaaa\"..."
-    gdb_test "p &ctable2\[13*16\]" " = \\(unsigned char \\*\\) \"aaaaaaa\"..."
-    gdb_test "p &ctable2\[14*16\]" " = \\(unsigned char \\*\\) \"aaaaaaa\"..."
-    gdb_test "p &ctable2\[15*16\]" " = \\(unsigned char \\*\\) \"aaaaaaa\"..."
-
-    send "set print elements 8\n" ; expect -re "$prompt $"
-    gdb_test "p &ctable2\[0*16\]"  " = \\(unsigned char \\*\\) \"aXXXXXXX\"..."
-    gdb_test "p &ctable2\[1*16\]"  " = \\(unsigned char \\*\\) \"aaXXXXXX\"..."
-    gdb_test "p &ctable2\[2*16\]"  " = \\(unsigned char \\*\\) \"aaaXXXXX\"..."
-    gdb_test "p &ctable2\[3*16\]"  " = \\(unsigned char \\*\\) \"aaaaXXXX\"..."
-    gdb_test "p &ctable2\[4*16\]"  " = \\(unsigned char \\*\\) \"aaaaaXXX\"..."
-    gdb_test "p &ctable2\[5*16\]"  " = \\(unsigned char \\*\\) \"aaaaaaXX\"..."
-    gdb_test "p &ctable2\[6*16\]"  " = \\(unsigned char \\*\\) \"aaaaaaaX\"..."
-    gdb_test "p &ctable2\[7*16\]"  " = \\(unsigned char \\*\\) \"aaaaaaaa\"..."
-    gdb_test "p &ctable2\[8*16\]"  " = \\(unsigned char \\*\\) \"aaaaaaaa\"..."
-    gdb_test "p &ctable2\[9*16\]"  " = \\(unsigned char \\*\\) \"aaaaaaaa\"..."
-    gdb_test "p &ctable2\[10*16\]" " = \\(unsigned char \\*\\) \"aaaaaaaa\"..."
-    gdb_test "p &ctable2\[11*16\]" " = \\(unsigned char \\*\\) \"aaaaaaaa\"..."
-    gdb_test "p &ctable2\[12*16\]" " = \\(unsigned char \\*\\) \"aaaaaaaa\"..."
-    gdb_test "p &ctable2\[13*16\]" " = \\(unsigned char \\*\\) \"aaaaaaaa\"..."
-    gdb_test "p &ctable2\[14*16\]" " = \\(unsigned char \\*\\) \"aaaaaaaa\"..."
-    gdb_test "p &ctable2\[15*16\]" " = \\(unsigned char \\*\\) \"aaaaaaaa\"..."
-
-    send "set print elements 9\n" ; expect -re "$prompt $"
-    gdb_test "p &ctable2\[0*16\]"  " = \\(unsigned char \\*\\) \"aXXXXXXXX\"..."
-    gdb_test "p &ctable2\[1*16\]"  " = \\(unsigned char \\*\\) \"aaXXXXXXX\"..."
-    gdb_test "p &ctable2\[2*16\]"  " = \\(unsigned char \\*\\) \"aaaXXXXXX\"..."
-    gdb_test "p &ctable2\[3*16\]"  " = \\(unsigned char \\*\\) \"aaaaXXXXX\"..."
-    gdb_test "p &ctable2\[4*16\]"  " = \\(unsigned char \\*\\) \"aaaaaXXXX\"..."
-    gdb_test "p &ctable2\[5*16\]"  " = \\(unsigned char \\*\\) \"aaaaaaXXX\"..."
-    gdb_test "p &ctable2\[6*16\]"  " = \\(unsigned char \\*\\) \"aaaaaaaXX\"..."
-    gdb_test "p &ctable2\[7*16\]"  " = \\(unsigned char \\*\\) \"aaaaaaaaX\"..."
-    gdb_test "p &ctable2\[8*16\]"  " = \\(unsigned char \\*\\) \"aaaaaaaaa\"..."
-    gdb_test "p &ctable2\[9*16\]"  " = \\(unsigned char \\*\\) \"aaaaaaaaa\"..."
-    gdb_test "p &ctable2\[10*16\]" " = \\(unsigned char \\*\\) \"aaaaaaaaa\"..."
-    gdb_test "p &ctable2\[11*16\]" " = \\(unsigned char \\*\\) \"aaaaaaaaa\"..."
-    gdb_test "p &ctable2\[12*16\]" " = \\(unsigned char \\*\\) \"aaaaaaaaa\"..."
-    gdb_test "p &ctable2\[13*16\]" " = \\(unsigned char \\*\\) \"aaaaaaaaa\"..."
-    gdb_test "p &ctable2\[14*16\]" " = \\(unsigned char \\*\\) \"aaaaaaaaa\"..."
-    gdb_test "p &ctable2\[15*16\]" " = \\(unsigned char \\*\\) \"aaaaaaaaa\"..."
-
-    send "set print elements 10\n" ; expect -re "$prompt $"
-    gdb_test "p &ctable2\[0*16\]"  " = \\(unsigned char \\*\\) \"aXXXXXXXXX\"..."
-    gdb_test "p &ctable2\[1*16\]"  " = \\(unsigned char \\*\\) \"aaXXXXXXXX\"..."
-    gdb_test "p &ctable2\[2*16\]"  " = \\(unsigned char \\*\\) \"aaaXXXXXXX\"..."
-    gdb_test "p &ctable2\[3*16\]"  " = \\(unsigned char \\*\\) \"aaaaXXXXXX\"..."
-    gdb_test "p &ctable2\[4*16\]"  " = \\(unsigned char \\*\\) \"aaaaaXXXXX\"..."
-    gdb_test "p &ctable2\[5*16\]"  " = \\(unsigned char \\*\\) \"aaaaaaXXXX\"..."
-    gdb_test "p &ctable2\[6*16\]"  " = \\(unsigned char \\*\\) \"aaaaaaaXXX\"..."
-    gdb_test "p &ctable2\[7*16\]"  " = \\(unsigned char \\*\\) \"aaaaaaaaXX\"..."
-    gdb_test "p &ctable2\[8*16\]"  " = \\(unsigned char \\*\\) \"aaaaaaaaaX\"..."
-    gdb_test "p &ctable2\[9*16\]"  " = \\(unsigned char \\*\\) \"aaaaaaaaaa\"..."
-    gdb_test "p &ctable2\[10*16\]" " = \\(unsigned char \\*\\) \"aaaaaaaaaa\"..."
-    gdb_test "p &ctable2\[11*16\]" " = \\(unsigned char \\*\\) \"aaaaaaaaaa\"..."
-    gdb_test "p &ctable2\[12*16\]" " = \\(unsigned char \\*\\) \"aaaaaaaaaa\"..."
-    gdb_test "p &ctable2\[13*16\]" " = \\(unsigned char \\*\\) \"aaaaaaaaaa\"..."
-    gdb_test "p &ctable2\[14*16\]" " = \\(unsigned char \\*\\) \"aaaaaaaaaa\"..."
-    gdb_test "p &ctable2\[15*16\]" " = \\(unsigned char \\*\\) \"aaaaaaaaaa\"..."
-
-    send "set print elements 11\n" ; expect -re "$prompt $"
-    gdb_test "p &ctable2\[0*16\]" \
-	" = \\(unsigned char \\*\\) \"aXXXXXXXXXX\"..."
-    gdb_test "p &ctable2\[1*16\]" \
-	" = \\(unsigned char \\*\\) \"aaXXXXXXXXX\"..."
-    gdb_test "p &ctable2\[2*16\]" \
-	" = \\(unsigned char \\*\\) \"aaaXXXXXXXX\"..."
-    gdb_test "p &ctable2\[3*16\]" \
-	" = \\(unsigned char \\*\\) \"aaaaXXXXXXX\"..."
-    gdb_test "p &ctable2\[4*16\]" \
-	" = \\(unsigned char \\*\\) \"aaaaaXXXXXX\"..."
-    gdb_test "p &ctable2\[5*16\]" \
-	" = \\(unsigned char \\*\\) \"aaaaaaXXXXX\"..."
-    gdb_test "p &ctable2\[6*16\]" \
-	" = \\(unsigned char \\*\\) \"aaaaaaaXXXX\"..."
-    gdb_test "p &ctable2\[7*16\]" \
-	" = \\(unsigned char \\*\\) \"aaaaaaaaXXX\"..."
-    gdb_test "p &ctable2\[8*16\]" \
-	" = \\(unsigned char \\*\\) \"aaaaaaaaaXX\"..."
-    gdb_test "p &ctable2\[9*16\]" \
-	" = \\(unsigned char \\*\\) \"aaaaaaaaaaX\"..."
-    gdb_test "p &ctable2\[10*16\]" \
-	" = \\(unsigned char \\*\\) 'a' <repeats 11 times>..."
-    gdb_test "p &ctable2\[11*16\]" \
-	" = \\(unsigned char \\*\\) 'a' <repeats 11 times>..."
-    gdb_test "p &ctable2\[12*16\]" \
-	" = \\(unsigned char \\*\\) 'a' <repeats 11 times>..."
-    gdb_test "p &ctable2\[13*16\]" \
-	" = \\(unsigned char \\*\\) 'a' <repeats 11 times>..."
-    gdb_test "p &ctable2\[14*16\]" \
-	" = \\(unsigned char \\*\\) 'a' <repeats 11 times>..."
-    gdb_test "p &ctable2\[15*16\]" \
-	" = \\(unsigned char \\*\\) 'a' <repeats 11 times>..."
-
-    send "set print elements 12\n" ; expect -re "$prompt $"
-    gdb_test "p &ctable2\[0*16\]" \
-	" = \\(unsigned char \\*\\) \"a\", 'X' <repeats 11 times>..."
-    gdb_test "p &ctable2\[1*16\]" \
-	" = \\(unsigned char \\*\\) \"aaXXXXXXXXXX\"..."
-    gdb_test "p &ctable2\[2*16\]" \
-	" = \\(unsigned char \\*\\) \"aaaXXXXXXXXX\"..."
-    gdb_test "p &ctable2\[3*16\]" \
-	" = \\(unsigned char \\*\\) \"aaaaXXXXXXXX\"..."
-    gdb_test "p &ctable2\[4*16\]" \
-	" = \\(unsigned char \\*\\) \"aaaaaXXXXXXX\"..."
-    gdb_test "p &ctable2\[5*16\]" \
-	" = \\(unsigned char \\*\\) \"aaaaaaXXXXXX\"..."
-    gdb_test "p &ctable2\[6*16\]" \
-	" = \\(unsigned char \\*\\) \"aaaaaaaXXXXX\"..."
-    gdb_test "p &ctable2\[7*16\]" \
-	" = \\(unsigned char \\*\\) \"aaaaaaaaXXXX\"..."
-    gdb_test "p &ctable2\[8*16\]" \
-	" = \\(unsigned char \\*\\) \"aaaaaaaaaXXX\"..."
-    gdb_test "p &ctable2\[9*16\]" \
-	" = \\(unsigned char \\*\\) \"aaaaaaaaaaXX\"..."
-    gdb_test "p &ctable2\[10*16\]" \
-	" = \\(unsigned char \\*\\) 'a' <repeats 11 times>, \"X\"..."
-    gdb_test "p &ctable2\[11*16\]" \
-	" = \\(unsigned char \\*\\) 'a' <repeats 12 times>..."
-    gdb_test "p &ctable2\[12*16\]" \
-	" = \\(unsigned char \\*\\) 'a' <repeats 12 times>..."
-    gdb_test "p &ctable2\[13*16\]" \
-	" = \\(unsigned char \\*\\) 'a' <repeats 12 times>..."
-    gdb_test "p &ctable2\[14*16\]" \
-	" = \\(unsigned char \\*\\) 'a' <repeats 12 times>..."
-    gdb_test "p &ctable2\[15*16\]" \
-	" = \\(unsigned char \\*\\) 'a' <repeats 12 times>..."
-
-    send "set print elements 13\n" ; expect -re "$prompt $"
-    gdb_test "p &ctable2\[0*16\]" \
-	" = \\(unsigned char \\*\\) \"a\", 'X' <repeats 12 times>..."
-    gdb_test "p &ctable2\[1*16\]" \
-	" = \\(unsigned char \\*\\) \"aa\", 'X' <repeats 11 times>..."
-    gdb_test "p &ctable2\[2*16\]" \
-	" = \\(unsigned char \\*\\) \"aaaXXXXXXXXXX\"..."
-    gdb_test "p &ctable2\[3*16\]" \
-	" = \\(unsigned char \\*\\) \"aaaaXXXXXXXXX\"..."
-    gdb_test "p &ctable2\[4*16\]" \
-	" = \\(unsigned char \\*\\) \"aaaaaXXXXXXXX\"..."
-    gdb_test "p &ctable2\[5*16\]" \
-	" = \\(unsigned char \\*\\) \"aaaaaaXXXXXXX\"..."
-    gdb_test "p &ctable2\[6*16\]" \
-	" = \\(unsigned char \\*\\) \"aaaaaaaXXXXXX\"..."
-    gdb_test "p &ctable2\[7*16\]" \
-	" = \\(unsigned char \\*\\) \"aaaaaaaaXXXXX\"..."
-    gdb_test "p &ctable2\[8*16\]" \
-	" = \\(unsigned char \\*\\) \"aaaaaaaaaXXXX\"..."
-    gdb_test "p &ctable2\[9*16\]" \
-	" = \\(unsigned char \\*\\) \"aaaaaaaaaaXXX\"..."
-    gdb_test "p &ctable2\[10*16\]" \
-	" = \\(unsigned char \\*\\) 'a' <repeats 11 times>, \"XX\"..."
-    gdb_test "p &ctable2\[11*16\]" \
-	" = \\(unsigned char \\*\\) 'a' <repeats 12 times>, \"X\"..."
-    gdb_test "p &ctable2\[12*16\]" \
-	" = \\(unsigned char \\*\\) 'a' <repeats 13 times>..."
-    gdb_test "p &ctable2\[13*16\]" \
-	" = \\(unsigned char \\*\\) 'a' <repeats 13 times>..."
-    gdb_test "p &ctable2\[14*16\]" \
-	" = \\(unsigned char \\*\\) 'a' <repeats 13 times>..."
-    gdb_test "p &ctable2\[15*16\]" \
-	" = \\(unsigned char \\*\\) 'a' <repeats 13 times>..."
-
-    send "set print elements 14\n" ; expect -re "$prompt $"
-    gdb_test "p &ctable2\[0*16\]" \
-	" = \\(unsigned char \\*\\) \"a\", 'X' <repeats 13 times>..."
-    gdb_test "p &ctable2\[1*16\]" \
-	" = \\(unsigned char \\*\\) \"aa\", 'X' <repeats 12 times>..."
-    gdb_test "p &ctable2\[2*16\]" \
-	" = \\(unsigned char \\*\\) \"aaa\", 'X' <repeats 11 times>..."
-    gdb_test "p &ctable2\[3*16\]" \
-	" = \\(unsigned char \\*\\) \"aaaaXXXXXXXXXX\"..."
-    gdb_test "p &ctable2\[4*16\]" \
-	" = \\(unsigned char \\*\\) \"aaaaaXXXXXXXXX\"..."
-    gdb_test "p &ctable2\[5*16\]" \
-	" = \\(unsigned char \\*\\) \"aaaaaaXXXXXXXX\"..."
-    gdb_test "p &ctable2\[6*16\]" \
-	" = \\(unsigned char \\*\\) \"aaaaaaaXXXXXXX\"..."
-    gdb_test "p &ctable2\[7*16\]" \
-	" = \\(unsigned char \\*\\) \"aaaaaaaaXXXXXX\"..."
-    gdb_test "p &ctable2\[8*16\]" \
-	" = \\(unsigned char \\*\\) \"aaaaaaaaaXXXXX\"..."
-    gdb_test "p &ctable2\[9*16\]" \
-	" = \\(unsigned char \\*\\) \"aaaaaaaaaaXXXX\"..."
-    gdb_test "p &ctable2\[10*16\]" \
-	" = \\(unsigned char \\*\\) 'a' <repeats 11 times>, \"XXX\"..."
-    gdb_test "p &ctable2\[11*16\]" \
-	" = \\(unsigned char \\*\\) 'a' <repeats 12 times>, \"XX\"..."
-    gdb_test "p &ctable2\[12*16\]" \
-	" = \\(unsigned char \\*\\) 'a' <repeats 13 times>, \"X\"..."
-    gdb_test "p &ctable2\[13*16\]" \
-	" = \\(unsigned char \\*\\) 'a' <repeats 14 times>..."
-    gdb_test "p &ctable2\[14*16\]" \
-	" = \\(unsigned char \\*\\) 'a' <repeats 14 times>..."
-    gdb_test "p &ctable2\[15*16\]" \
-	" = \\(unsigned char \\*\\) 'a' <repeats 14 times>..."
-
-    send "set print elements 15\n" ; expect -re "$prompt $"
-    gdb_test "p &ctable2\[0*16\]" \
-	" = \\(unsigned char \\*\\) \"a\", 'X' <repeats 14 times>..."
-    gdb_test "p &ctable2\[1*16\]" \
-	" = \\(unsigned char \\*\\) \"aa\", 'X' <repeats 13 times>..."
-    gdb_test "p &ctable2\[2*16\]" \
-	" = \\(unsigned char \\*\\) \"aaa\", 'X' <repeats 12 times>..."
-    gdb_test "p &ctable2\[3*16\]" \
-	" = \\(unsigned char \\*\\) \"aaaa\", 'X' <repeats 11 times>..."
-    gdb_test "p &ctable2\[4*16\]" \
-	" = \\(unsigned char \\*\\) \"aaaaaXXXXXXXXXX\"..."
-    gdb_test "p &ctable2\[5*16\]" \
-	" = \\(unsigned char \\*\\) \"aaaaaaXXXXXXXXX\"..."
-    gdb_test "p &ctable2\[6*16\]" \
-	" = \\(unsigned char \\*\\) \"aaaaaaaXXXXXXXX\"..."
-    gdb_test "p &ctable2\[7*16\]" \
-	" = \\(unsigned char \\*\\) \"aaaaaaaaXXXXXXX\"..."
-    gdb_test "p &ctable2\[8*16\]" \
-	" = \\(unsigned char \\*\\) \"aaaaaaaaaXXXXXX\"..."
-    gdb_test "p &ctable2\[9*16\]" \
-	" = \\(unsigned char \\*\\) \"aaaaaaaaaaXXXXX\"..."
-    gdb_test "p &ctable2\[10*16\]" \
-	" = \\(unsigned char \\*\\) 'a' <repeats 11 times>, \"XXXX\"..."
-    gdb_test "p &ctable2\[11*16\]" \
-	" = \\(unsigned char \\*\\) 'a' <repeats 12 times>, \"XXX\"..."
-    gdb_test "p &ctable2\[12*16\]" \
-	" = \\(unsigned char \\*\\) 'a' <repeats 13 times>, \"XX\"..."
-    gdb_test "p &ctable2\[13*16\]" \
-	" = \\(unsigned char \\*\\) 'a' <repeats 14 times>, \"X\"..."
-    gdb_test "p &ctable2\[14*16\]" \
-	" = \\(unsigned char \\*\\) 'a' <repeats 15 times>..."
-    gdb_test "p &ctable2\[15*16\]" \
-	" = \\(unsigned char \\*\\) 'a' <repeats 15 times>..."
-
-    send "set print elements 16\n" ; expect -re "$prompt $"
-    gdb_test "p &ctable2\[0*16\]" \
-	" = \\(unsigned char \\*\\) \"a\", 'X' <repeats 15 times>..."
-    gdb_test "p &ctable2\[1*16\]" \
-	" = \\(unsigned char \\*\\) \"aa\", 'X' <repeats 14 times>..."
-    gdb_test "p &ctable2\[2*16\]" \
-	" = \\(unsigned char \\*\\) \"aaa\", 'X' <repeats 13 times>..."
-    gdb_test "p &ctable2\[3*16\]" \
-	" = \\(unsigned char \\*\\) \"aaaa\", 'X' <repeats 12 times>..."
-    gdb_test "p &ctable2\[4*16\]" \
-	" = \\(unsigned char \\*\\) \"aaaaa\", 'X' <repeats 11 times>..."
-    gdb_test "p &ctable2\[5*16\]" \
-	" = \\(unsigned char \\*\\) \"aaaaaaXXXXXXXXXX\"..."
-    gdb_test "p &ctable2\[6*16\]" \
-	" = \\(unsigned char \\*\\) \"aaaaaaaXXXXXXXXX\"..."
-    gdb_test "p &ctable2\[7*16\]" \
-	" = \\(unsigned char \\*\\) \"aaaaaaaaXXXXXXXX\"..."
-    gdb_test "p &ctable2\[8*16\]" \
-	" = \\(unsigned char \\*\\) \"aaaaaaaaaXXXXXXX\"..."
-    gdb_test "p &ctable2\[9*16\]" \
-	" = \\(unsigned char \\*\\) \"aaaaaaaaaaXXXXXX\"..."
-    gdb_test "p &ctable2\[10*16\]" \
-	" = \\(unsigned char \\*\\) 'a' <repeats 11 times>, \"XXXXX\"..."
-    gdb_test "p &ctable2\[11*16\]" \
-	" = \\(unsigned char \\*\\) 'a' <repeats 12 times>, \"XXXX\"..."
-    gdb_test "p &ctable2\[12*16\]" \
-	" = \\(unsigned char \\*\\) 'a' <repeats 13 times>, \"XXX\"..."
-    gdb_test "p &ctable2\[13*16\]" \
-	" = \\(unsigned char \\*\\) 'a' <repeats 14 times>, \"XX\"..."
-    gdb_test "p &ctable2\[14*16\]" \
-	" = \\(unsigned char \\*\\) 'a' <repeats 15 times>, \"X\"..."
-    gdb_test "p &ctable2\[15*16\]" \
-	" = \\(unsigned char \\*\\) 'a' <repeats 16 times>"
+    for { set x 1; } { $x <= 16 } { incr x; } {
+	gdb_test "set print elements $x" ""
+	for { set e 1; } { $e <= 16 } {incr e; } {
+	    set v [expr $e - 1];
+	    set command "p &ctable2\[${v}*16\]"
+	    if { $x < $e } {
+		set aval $x;
+	    } else {
+		set aval $e;
+	    }
+	    set xval [expr $x - $e];
+	    if { $xval < 0 } {
+		set xval 0;
+	    }
+	    if { $aval > 10 } {
+		set a "'a' <repeats $aval times>";
+		if { $xval > 0 } {
+		    set a "${a}, \\\"";
+		}
+	    } else {
+		set a "\\\"[string range "aaaaaaaaaaaaaaaa" 1 $aval]";
+		if { $xval > 10 } {
+		    set a "$a\\\", ";
+		}
+	    }
+	    set xstr "";
+	    if { $xval > 10 } {
+		set xstr "'X' <repeats $xval times>";
+	    } else {
+		if { $xval > 0 } {
+		    set xstr "[string range "XXXXXXXXXXXXXXXX" 1 $xval]\\\"";
+		} else {
+		    if { $aval <= 10 } {
+			set xstr "\\\"";
+		    }
+		}
+	    }
+	    if { $aval < 16 } {
+		set xstr "${xstr}\[.\]\[.\]\[.\]"
+	    }
+	    set string " = \[(\]unsigned char \[*\]\[)\] ${a}${xstr}";
+	    gdb_test "$command" "$string" "$command with print elements set to $x";
+	}
+    }
 }
 
 proc test_print_strings {} {
-    global prompt
+    global gdb_prompt
 
     # We accept "(unsigned char *) " before the string.  char vs. unsigned char
     # is already tested elsewhere.
 
     # Test that setting print elements unlimited doesn't completely suppress
     # printing; this was a bug in older gdb's.
-    send "set print elements 0\n" ; expect -re "$prompt $"
+    gdb_test "set print elements 0" ""
     gdb_test "p teststring" \
-	" = (.unsigned char .. )?\"teststring contents\""
-    send "set print elements 1\n" ; expect -re "$prompt $"
+	" = (.unsigned char .. )?\"teststring contents\"" "p teststring with elements set to 0"
+    gdb_test "set print elements 1" ""
     gdb_test "p teststring" \
-	" = (.unsigned char .. )?\"t\"\\.\\.\\."
-    send "set print elements 5\n" ; expect -re "$prompt $"
+	" = (.unsigned char .. )?\"t\"\\.\\.\\." "p teststring with elements set to 1"
+    gdb_test "set print elements 5" ""
     gdb_test "p teststring" \
-	" = (.unsigned char .. )?\"tests\"\\.\\.\\."
-    send "set print elements 19\n" ; expect -re "$prompt $"
+	" = (.unsigned char .. )?\"tests\"\\.\\.\\." "p teststring with elements set to 5"
+    gdb_test "set print elements 19" ""
     gdb_test "p teststring" \
-	" = (.unsigned char .. )?\"teststring contents\""
-    send "set print elements 20\n" ; expect -re "$prompt $"
+	" = (.unsigned char .. )?\"teststring contents\"" "p teststring with elements set to 19"
+    gdb_test "set print elements 20" ""
     gdb_test "p teststring" \
-	" = (.unsigned char .. )?\"teststring contents\""
+	" = (.unsigned char .. )?\"teststring contents\"" "p teststring with elements set to 20"
 
-    send "set print elements 8\n" ; expect -re "$prompt $"
+    gdb_test "set print elements 8" ""
 
     gdb_test "p &ctable1\[0\]" \
 	" = \\(unsigned char \\*\\) \"\""
     gdb_test "p &ctable1\[1\]" \
 	" = \\(unsigned char \\*\\) \"\\\\001\\\\002\\\\003\\\\004\\\\005\\\\006\\\\a\\\\b\"..."
     gdb_test "p &ctable1\[1*8\]" \
-	" = \\(unsigned char \\*\\) \"\\\\b\\\\t\\\\n\\\\013\\\\f\\\\r\\\\016\\\\017\"..."
+	" = \\(unsigned char \\*\\) \"\\\\b\\\\t\\\\n\\\\v\\\\f\\\\r\\\\016\\\\017\"..."
     gdb_test "p &ctable1\[2*8\]" \
 	" = \\(unsigned char \\*\\) \"\\\\020\\\\021\\\\022\\\\023\\\\024\\\\025\\\\026\\\\027\"..."
     gdb_test "p &ctable1\[3*8\]" \
-	" = \\(unsigned char \\*\\) \"\\\\030\\\\031\\\\032\\\\e\\\\034\\\\035\\\\036\\\\037\"..."
+	" = \\(unsigned char \\*\\) \"\\\\030\\\\031\\\\032\\\\033\\\\034\\\\035\\\\036\\\\037\"..."
     gdb_test "p &ctable1\[4*8\]" \
 	" = \\(unsigned char \\*\\) \" !\\\\\"#\\\$%&'\"..."
     gdb_test "p &ctable1\[5*8\]" \
@@ -888,36 +541,52 @@ proc test_print_strings {} {
 }
 
 proc test_print_int_arrays {} {
-    global prompt
+    global gdb_prompt
 
-    send "set print elements 24\n" ; expect -re "$prompt $"
+    gdb_test "set print elements 24" ""
 
-    gdb_test "p int1dim" \
+    gdb_test_escape_braces "p int1dim" \
 	" = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11}"
-    gdb_test "p int2dim" \
+    gdb_test_escape_braces "p int2dim" \
 	" = {{0, 1, 2, 3}, {4, 5, 6, 7}, {8, 9, 10, 11}}"
-    gdb_test "p int3dim" \
+    gdb_test_escape_braces "p int3dim" \
 	" = {{{0, 1}, {2, 3}, {4, 5}}, {{6, 7}, {8, 9}, {10, 11}}}"
-    gdb_test "p int4dim" \
+    gdb_test_escape_braces "p int4dim" \
 	" = {{{{0, 1}, {2, 3}, {4, 5}}, {{6, 7}, {8, 9}, {10, 11}}}}"
+}
+
+proc test_print_typedef_arrays {} {
+    global gdb_prompt
+
+    gdb_test "set print elements 24" ""
+
+    gdb_test_escape_braces "p a1" \
+	" = {2, 4, 6, 8, 10, 12, 14, 16, 18, 20}"
+    gdb_test "p a1\[0\]" " = 2"
+    gdb_test "p a1\[9\]" " = 20"
+
+    gdb_test "p a2" \
+	" = \"abcd\""
+    gdb_test "p a2\[0\]" " = 97 'a'"
+    gdb_test "p a2\[3\]" " = 100 'd'"
 }
 
 proc test_artificial_arrays {} {
     # Send \026@ instead of just @ in case the kill character is @.
-    gdb_test "p int1dim\[0\]\026@2" " = {0, 1}" {p int1dim[0]@2}
-    gdb_test "p int1dim\[0\]\026@2\026@3" \
+    gdb_test_escape_braces "p int1dim\[0\]\026@2" " = {0, 1}" {p int1dim[0]@2}
+    gdb_test_escape_braces "p int1dim\[0\]\026@2\026@3" \
 	"({{0, 1}, {2, 3}, {4, 5}}|\[Cc\]annot.*)" \
 	{p int1dim[0]@2@3}
-    gdb_test {p/x (short [])0x12345678} \
+    gdb_test_escape_braces {p/x (short [])0x12345678} \
 	" = ({0x1234, 0x5678}|{0x5678, 0x1234})"
 }
 
 proc test_print_char_arrays {} {
-    global prompt
+    global gdb_prompt
     global hex
 
-    send "set print elements 24\n" ; expect -re "$prompt $"
-    send "set print address on\n" ; expect -re "$prompt $"
+    gdb_test "set print elements 24" ""
+    gdb_test "set print address on" ""
 
     gdb_test "p arrays" \
 	" = {array1 = \"abc\", array2 = \"d\", array3 = \"e\", array4 = \"fg\", array5 = \"hij\"}"
@@ -934,64 +603,54 @@ proc test_print_char_arrays {} {
     gdb_test "p parrays->array5"	" = \"hij\""
     gdb_test "p &parrays->array5"	" = \\(unsigned char \\(\\*\\)\\\[4\\\]\\) $hex"
 
-    send "set print address off\n" ; expect -re "$prompt $"
+    gdb_test "set print address off" ""
 }
 
 proc test_print_string_constants {} {
-    global prompt
+    global gdb_prompt
 
-    send "set print elements 50\n" ; expect -re "$prompt $"
+    gdb_test "set print elements 50" ""
 
-    setup_xfail "h8300*-*-*"
-    setup_xfail "a29k-*-udi" 2416
+    if [target_info exists gdb,cannot_call_functions] {
+	setup_xfail "*-*-*" 2416
+	fail "This target can not call functions"
+	return
+    }
+
+    # We need to up this because this can be really slow on some boards.
+    # (Test may involve inferior malloc() calls).
+    set timeout 60;
+
     gdb_test "p \"a string\""		" = \"a string\""
-    setup_xfail "h8300*-*-*"
-    setup_xfail "a29k-*-udi" 2416
     gdb_test "p \"embedded \\000 null\"" " = \"embedded \\\\000 null\""
-    setup_xfail "h8300*-*-*"
-    setup_xfail "a29k-*-udi" 2416
     gdb_test "p \"abcd\"\[2\]"	" = 99 'c'"
-    setup_xfail "h8300*-*-*"
-    setup_xfail "a29k-*-udi" 2416
     gdb_test "p sizeof (\"abcdef\")"	" = 7"
-    setup_xfail "h8300*-*-*"
-    setup_xfail "a29k-*-udi" 2416
     gdb_test "ptype \"foo\""		" = char \\\[4\\\]"
-    setup_xfail "h8300*-*-*"
-    setup_xfail "a29k-*-udi" 2416
     gdb_test "p *\"foo\""		" = 102 'f'"
-    setup_xfail "h8300*-*-*"
-    setup_xfail "a29k-*-udi" 2416
     gdb_test "ptype *\"foo\""		" = char"
-    setup_xfail "h8300*-*-*"
-    setup_xfail "a29k-*-udi" 2416
     gdb_test "p &*\"foo\""		" = \"foo\""
-    setup_xfail "*-*-*"
+    setup_kfail "gdb/538" *-*-*
     gdb_test "ptype &*\"foo\""	"type = char \\*"
-    setup_xfail "h8300*-*-*"
-    setup_xfail "a29k-*-udi" 2416
     gdb_test "p (char *)\"foo\""	" = \"foo\""
 }
 
 proc test_print_array_constants {} {
 
-    setup_xfail "h8300*-*-*"
-    setup_xfail "a29k-*-udi" 2416
+    if [target_info exists gdb,cannot_call_functions] {
+	setup_xfail "*-*-*" 2416
+	fail "This target can not call functions"
+	return
+    }
+
+    # We need to up this because this can be really slow on some boards.
+    # (Test may involve inferior malloc() calls).
+    set timeout 60;
+
     gdb_test "print {'a','b','c'}"	" = \"abc\""
-    setup_xfail "h8300*-*-*"
-    setup_xfail "a29k-*-udi" 2416
-    gdb_test "print {0,1,2}"		" = {0, 1, 2}"
-    setup_xfail "h8300*-*-*"
-    setup_xfail "a29k-*-udi" 2416
-    gdb_test "print {(long)0,(long)1,(long)2}"	" = {0, 1, 2}"
-    setup_xfail "h8300*-*-*"
-    setup_xfail "a29k-*-udi" 2416
-    gdb_test "print {{0,1,2},{3,4,5}}"  " = {{0, 1, 2}, {3, 4, 5}}"
-    setup_xfail "h8300*-*-*"
-    setup_xfail "a29k-*-udi" 2416
+    gdb_test_escape_braces "print {0,1,2}"    " = {0, 1, 2}"
+    gdb_test_escape_braces "print {(long)0,(long)1,(long)2}"  " = {0, 1, 2}"
+    gdb_test_escape_braces "print {{0,1,2},{3,4,5}}"  " = {{0, 1, 2}, {3, 4, 5}}"
     gdb_test "print {4,5,6}\[2\]"	" = 6"
-    setup_xfail "h8300*-*-*"
-    setup_xfail "a29k-*-udi" 2416
     gdb_test "print *&{4,5,6}\[1\]"	" = 5"
 }
 
@@ -1006,7 +665,16 @@ proc test_printf {} {
     # Test mixing args of different sizes.
     gdb_test "printf \"x=%d,y=%f,z=%d\\n\", 5, 6.0, 7" "x=5,y=6\.0+,z=7"
     gdb_test "printf \"%x %f, %c %x, %x, %f\\n\", 0xbad, -99.541, 'z',\
-0xfeedface, 0xdeadbeef, 5.0" "bad -99.5410+, z feedface, deadbeef, 5.0+"
+0xfeedface, 0xdeadbeef, 5.0" "bad -99.54\[0-9\]+, z feedface, deadbeef, 5.0+"
+}
+
+# Escape a left curly brace to prevent it from being interpreted as 
+# the beginning of a bound
+proc gdb_test_escape_braces { args } {
+
+    set pattern [lindex $args 1]
+    regsub -all {\{[0-9]} $pattern {\\&} esc_pattern
+    gdb_test [lindex $args 0] $esc_pattern [lindex $args 2]
 }
 
 # Start with a fresh gdb.
@@ -1015,19 +683,18 @@ gdb_exit
 gdb_start
 gdb_reinitialize_dir $srcdir/$subdir
 
-setup_xfail "h8300*-*-*"
 gdb_test "print \$pc" "No registers\\."
 # FIXME: should also test "print $pc" when there is an execfile but no
 # remote debugging target, process or corefile.
 
 gdb_load ${binfile}
 
-send "set print sevenbit-strings\n" ; expect -re "$prompt $"
-send "set print address off\n" ; expect -re "$prompt $"
-send "set width 0\n" ; expect -re "$prompt $"
+gdb_test "set print sevenbit-strings" ""
+gdb_test "set print address off" ""
+gdb_test "set width 0" ""
 
 if [set_lang_c] then {
-    gdb_test "p ctable1\[120\]" "120 'x'"
+    gdb_test "p ctable1\[120\]" "120 'x'" "p ctable1\[120\] #1"
 
     if [runto_main] then {
 	test_integer_literals_accepted
@@ -1037,6 +704,7 @@ if [set_lang_c] then {
 	test_print_repeats_10
 	test_print_strings
 	test_print_int_arrays
+	test_print_typedef_arrays
 	test_artificial_arrays
 	test_print_char_arrays
 # We used to do the runto main here.
