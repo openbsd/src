@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccd.c,v 1.56 2005/02/24 19:36:39 mickey Exp $	*/
+/*	$OpenBSD: ccd.c,v 1.57 2005/03/12 16:33:53 mickey Exp $	*/
 /*	$NetBSD: ccd.c,v 1.33 1996/05/05 04:21:14 thorpej Exp $	*/
 
 /*-
@@ -1329,10 +1329,12 @@ ccdioctl(dev, cmd, data, flag, p)
 		 * XXX to lock the kernel_map in interrupt context.  It is
 		 * XXX doable via a freelist implementation though.
 		 */
-		if (!ccdmap && !(ccd.ccd_flags & CCDF_OLD))
+		if (!ccdmap && !(ccd.ccd_flags & CCDF_OLD)) {
+			min = vm_map_min(kernel_map);
 			ccdmap = uvm_km_suballoc(kernel_map, &min, &max,
 			    CCD_CLUSTERS * MAXBSIZE, VM_MAP_INTRSAFE,
 			    FALSE, NULL);
+		}
 
 		/* Attach the disk. */
 		cs->sc_dkdev.dk_name = cs->sc_xname;
