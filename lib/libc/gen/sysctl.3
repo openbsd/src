@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.49 2000/07/09 13:34:10 itojun Exp $
+.\"	$OpenBSD: sysctl.3,v 1.50 2000/08/18 23:13:25 fgsch Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -625,7 +625,7 @@ per-SA basis via
 If this value is set to any non-zero value and no access control is
 configured, IPsec packets will be dropped.
 If set to 0, no testing of ingress packets will occur.
-The default value (for now) is 0.
+The default value is 1.
 .It Li ip.ipsec-invalid-life
 The lifetime of embryonic Security Associations (SAs that key management
 daemons have reserved but not fully established yet) in seconds.
