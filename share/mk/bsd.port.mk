@@ -1,6 +1,6 @@
 #-*- mode: Fundamental; tab-width: 4; -*-
 # ex:ts=4
-#	$OpenBSD: bsd.port.mk,v 1.22 1998/02/10 08:33:16 niklas Exp $
+#	$OpenBSD: bsd.port.mk,v 1.23 1998/02/11 00:34:55 niklas Exp $
 #	$NetBSD: $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
@@ -1585,7 +1585,7 @@ lib-depends:
 .if !defined(NO_DEPENDS)
 .if (${MACHINE_ARCH} == "alpha")
 	@for i in ${LIB_DEPENDS}; do \
-		lib=`${ECHO} $$i | ${SED} -e 's/\\\.[0-9][0-9]*\\\.[0-9][0-9]*:.*//'`; \
+		lib=`${ECHO} $$i | ${SED} -e 's/\\\.[0-9][0-9]*\\\.:.*//'`; \
 		dir=`${ECHO} $$i | ${SED} -e 's/[^:]*://'`; \
 		if expr "$$dir" : '.*:' > /dev/null; then \
 			target=`${ECHO} $$dir | ${SED} -e 's/.*://'`; \
