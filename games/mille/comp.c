@@ -1,4 +1,4 @@
-/*	$OpenBSD: comp.c,v 1.3 1999/09/25 15:52:19 pjanzen Exp $	*/
+/*	$OpenBSD: comp.c,v 1.4 2001/09/03 21:36:12 pjanzen Exp $	*/
 /*	$NetBSD: comp.c,v 1.4 1995/03/24 05:01:11 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)comp.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: comp.c,v 1.3 1999/09/25 15:52:19 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: comp.c,v 1.4 2001/09/03 21:36:12 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -131,7 +131,7 @@ norm:
 	if (foundend)
 		foundend = !check_ext(TRUE);
 	for (i = 0; safe && i < HAND_SZ; i++) {
-		if (issafety(pp->hand[i])) {
+		if (is_safety(pp->hand[i])) {
 			if (onecard(op) || (foundend && cango && !canstop)) {
 #ifdef DEBUG
 				if (Debug)
@@ -167,7 +167,7 @@ playsafe:
 			playit[i] = cango;
 		}
 	}
-	if (!pp->can_go && !isrepair(pp->battle))
+	if (!pp->can_go && !is_repair(pp->battle))
 		Numneed[opposite(pp->battle)]++;
 redoit:
 	foundlow = (cango || count[C_END_LIMIT] != 0
@@ -183,7 +183,7 @@ redoit:
 	value = valbuf;
 	for (i = 0; i < HAND_SZ; i++) {
 		card = pp->hand[i];
-		if (issafety(card) || playit[i] == (cango != 0)) {
+		if (is_safety(card) || playit[i] == (cango != 0)) {
 #ifdef DEBUG
 			if (Debug)
 				fprintf(outf, "CALCMOVE: switch(\"%s\")\n",
@@ -383,7 +383,7 @@ normbad:
 #endif
 		value++;
 	}
-	if (!pp->can_go && !isrepair(pp->battle))
+	if (!pp->can_go && !is_repair(pp->battle))
 		Numneed[opposite(pp->battle)]++;
 	if (cango) {
 play_it:
@@ -392,7 +392,7 @@ play_it:
 		Card_no = nummax;
 	}
 	else {
-		if (issafety(pp->hand[nummin])) { /* NEVER discard a safety */
+		if (is_safety(pp->hand[nummin])) { /* NEVER discard a safety */
 			nummax = nummin;
 			goto play_it;
 		}
@@ -415,7 +415,7 @@ onecard(pp)
 	bat = pp->battle;
 	spd = pp->speed;
 	card = -1;
-	if (pp->can_go || ((isrepair(bat) || bat == C_STOP || spd == C_LIMIT) &&
+	if (pp->can_go || ((is_repair(bat) || bat == C_STOP || spd == C_LIMIT) &&
 			   Numseen[S_RIGHT_WAY] != 0) ||
 	    (bat >= 0 && Numseen[safety(bat)] != 0))
 		switch (End - pp->mileage) {
@@ -478,7 +478,7 @@ canplay(pp, op, card)
 		break;
 	  case C_GO:
 		if (!pp->can_go &&
-		    (isrepair(pp->battle) || pp->battle == C_STOP))
+		    (is_repair(pp->battle) || pp->battle == C_STOP))
 			return TRUE;
 		break;
 	  case C_END_LIMIT:

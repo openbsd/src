@@ -1,4 +1,4 @@
-/*	$OpenBSD: end.c,v 1.3 1998/09/22 04:08:22 pjanzen Exp $	*/
+/*	$OpenBSD: end.c,v 1.4 2001/09/03 21:36:12 pjanzen Exp $	*/
 /*	$NetBSD: end.c,v 1.4 1995/03/24 05:01:30 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)end.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: end.c,v 1.3 1998/09/22 04:08:22 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: end.c,v 1.4 2001/09/03 21:36:12 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -49,7 +49,7 @@ static char rcsid[] = "$OpenBSD: end.c,v 1.3 1998/09/22 04:08:22 pjanzen Exp $";
  */
 
 /*
- *	print out the score as if it was final, and add the totals for
+ *	print out the score as if it were final, and add the totals for
  * the end-of-games points to the user who deserves it (if any).
  */
 void
@@ -94,7 +94,7 @@ finalscore(pp)
 static int	Last_tot[2];	/* last tot used for extrapolate	*/
 
 /*
- *	print out the score as if it was final, and add the totals for
+ *	print out the score as if it were final, and add the totals for
  * the end-of-games points to the user who deserves it (if any).
  */
 void

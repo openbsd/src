@@ -1,4 +1,4 @@
-/*	$OpenBSD: types.c,v 1.4 1999/09/25 15:52:20 pjanzen Exp $	*/
+/*	$OpenBSD: types.c,v 1.5 2001/09/03 21:36:12 pjanzen Exp $	*/
 /*	$NetBSD: types.c,v 1.4 1995/03/24 05:02:22 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)types.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: types.c,v 1.4 1999/09/25 15:52:20 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: types.c,v 1.5 2001/09/03 21:36:12 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -49,7 +49,7 @@ static char rcsid[] = "$OpenBSD: types.c,v 1.4 1999/09/25 15:52:20 pjanzen Exp $
  */
 
 int
-isrepair(card)
+is_repair(card)
 	CARD	card;
 {
 	return card == C_GAS || card == C_SPARE ||

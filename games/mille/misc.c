@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.6 2000/07/23 21:50:20 pjanzen Exp $	*/
+/*	$OpenBSD: misc.c,v 1.7 2001/09/03 21:36:12 pjanzen Exp $	*/
 /*	$NetBSD: misc.c,v 1.4 1995/03/24 05:01:54 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: misc.c,v 1.6 2000/07/23 21:50:20 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: misc.c,v 1.7 2001/09/03 21:36:12 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -107,7 +107,7 @@ getcard()
 			c = 0;
 			break;
 		  default:
-			putchar('\07');
+			beep();
 			addch('\b');
 			if (!isprint(c))
 				addch('\b');
@@ -126,7 +126,7 @@ getcard()
 					goto cont;
 				}
 				else
-					write(0, "\07", 1);
+					beep();
 			return c;
 		}
 cont:		;
@@ -172,7 +172,7 @@ done:
 				goto extend;
 			for (miles = 0, i = 0; i < HAND_SZ; i++)
 				if ((safe = pp->hand[i]) <= C_200)
-					miles += Value[safe]; 
+					miles += Value[safe];
 			if (miles + (Topcard - Deck) * 3 > 1000)
 				goto extend;
 			goto done;
@@ -219,7 +219,7 @@ getyn(promptno)
 		  default:
 			addstr(unctrl(c));
 			refresh();
-			putchar('\07');
+			beep();
 			break;
 		}
 	}

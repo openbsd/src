@@ -1,4 +1,4 @@
-/*	$OpenBSD: mille.h,v 1.4 1999/09/25 15:52:20 pjanzen Exp $	*/
+/*	$OpenBSD: mille.h,v 1.5 2001/09/03 21:36:12 pjanzen Exp $	*/
 /*	$NetBSD: mille.h,v 1.5 1995/03/24 05:01:51 cgd Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
 
 # define	HAND_SZ		7	/* number of cards in a hand	*/
 # define	DECK_SZ		101	/* number of cards in decks	*/
-# define	NUM_SAFE	4	/* number of saftey cards	*/
+# define	NUM_SAFE	4	/* number of safety cards	*/
 # define	NUM_MILES	5	/* number of milestones types	*/
 # define	NUM_CARDS	20	/* number of types of cards	*/
 # define	BOARD_Y		17	/* size of board screen		*/
@@ -200,7 +200,7 @@ typedef struct {
 # define	nextplay()	(Play = other(Play))
 # define	nextwin(x)	(1 - x)
 # define	opposite(x)	(Opposite[x])
-# define	issafety(x)	(x >= C_GAS_SAFE)
+# define	is_safety(x)	(x >= C_GAS_SAFE)
 
 /*
  * externals
@@ -243,7 +243,7 @@ void	getmove __P((void));
 int	getyn __P((int));
 int	haspicked __P((const PLAY *));
 void	init __P((void));
-int	isrepair __P((CARD));
+int	is_repair __P((CARD));
 int	main __P((int, char **));
 void	newboard __P((void));
 void	newscore __P((void));

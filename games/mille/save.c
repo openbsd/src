@@ -1,4 +1,4 @@
-/*	$OpenBSD: save.c,v 1.4 1999/09/25 15:52:20 pjanzen Exp $	*/
+/*	$OpenBSD: save.c,v 1.5 2001/09/03 21:36:12 pjanzen Exp $	*/
 /*	$NetBSD: save.c,v 1.4 1995/03/24 05:02:13 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)save.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: save.c,v 1.4 1999/09/25 15:52:20 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: save.c,v 1.5 2001/09/03 21:36:12 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -77,7 +77,7 @@ over:
 		refresh();
 		sp = buf;
 		while ((*sp = readch()) != '\n' && *sp != '\r' &&
-		    (sp - buf < sizeof(buf))) {
+		    (sp - buf < (int)sizeof(buf))) {
 			if (*sp == killchar())
 				goto over;
 			else if (*sp == erasechar()) {
