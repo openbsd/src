@@ -1,4 +1,4 @@
-/*	$OpenBSD: from.c,v 1.3 1997/01/15 23:42:29 millert Exp $	*/
+/*	$OpenBSD: from.c,v 1.4 1998/07/10 15:51:20 mickey Exp $	*/
 /*	$NetBSD: from.c,v 1.6 1995/09/01 01:39:10 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)from.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: from.c,v 1.3 1997/01/15 23:42:29 millert Exp $";
+static char rcsid[] = "$OpenBSD: from.c,v 1.4 1998/07/10 15:51:20 mickey Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -54,6 +54,7 @@ static char rcsid[] = "$OpenBSD: from.c,v 1.3 1997/01/15 23:42:29 millert Exp $"
 #include <stdlib.h>
 #include <unistd.h>
 #include <paths.h>
+#include <err.h>
 
 main(argc, argv)
 	int argc;
@@ -99,11 +100,8 @@ main(argc, argv)
 	if (!file) {
 		if (!(file = *argv)) {
 			if (!(file = getenv("MAIL"))) {
-				if (!(pwd = getpwuid(getuid()))) {
-					(void)fprintf(stderr,
-				"from: no password file entry for you.\n");
-					exit(1);
-				}
+				if (!(pwd = getpwuid(getuid())))
+					errx(1, "no password file entry for you");
 				if (file = getenv("USER")) {
 					(void)sprintf(buf, "%s/%s",
 					    _PATH_MAILDIR, file);
@@ -117,10 +115,8 @@ main(argc, argv)
 			file = buf;
 		}
 	}
-	if (!freopen(file, "r", stdin)) {
-		(void)fprintf(stderr, "from: can't read %s.\n", file);
-		exit(1);
-	}
+	if (!freopen(file, "r", stdin))
+		errx(1, file);
 	for (newline = 1; fgets(buf, sizeof(buf), stdin);) {
 		if (*buf == '\n') {
 			newline = 1;
