@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.150 2002/12/10 01:38:41 margarida Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.151 2002/12/13 21:54:31 henning Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -449,13 +449,23 @@ Furthermore, child queues can be specified as in an
 declaration, thus building a tree of queues using a part of
 their parent's bandwidth.
 .Pp
+Packets can be assigned to queues based on filter rules by using the
+.Pa queue
+keyword.
+Normally only one
+.Pa queue
+is specified; when a second one is specified it will instead be used for
+packets which have a
+.Pa tos
+of
+.Pa lowdelay Ns .
+.Pp
 To continue the previous example, the examples below would specify the
 four referenced
-queues, plus a few child queues. The
-.Pa tos
-field is used to give interactive
+queues, plus a few child queues.
+Interactive
 .Xr ssh 1
-sessions priority over bulk transfers like
+sessions get priority over bulk transfers like
 .Xr scp 1
 and
 .Xr sftp 1 Ns .
@@ -479,10 +489,8 @@ below).
 	keep state queue developers
     pass out on dc0 inet proto tcp from $employeehosts to any port 80 \\
 	keep state queue employees
-    pass out on dc0 inet proto tcp from any to any port 22 tos 0x10 \\
-	keep state queue ssh_interactive #priority for interactive sessions
-    pass out on dc0 inet proto tcp from any to any port 22 tos 0x08 \\
-	keep state queue ssh_bulk        #less priority for scp/sftp/...
+    pass out on dc0 inet proto tcp from any to any port 22 \\
+	keep state queue(ssh_bulk, ssh_interactive)
     pass out on dc0 inet proto tcp from any to any port 25 \\
 	keep state queue mail
 .Ed
