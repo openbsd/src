@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsm.c,v 1.4 1997/09/05 04:32:37 millert Exp $	*/
+/*	$OpenBSD: fsm.c,v 1.5 1998/01/17 20:30:22 millert Exp $	*/
 
 /*
  * fsm.c - {Link, IP} Control Protocol Finite State Machine.
@@ -23,7 +23,7 @@
 #if 0
 static char rcsid[] = "Id: fsm.c,v 1.13 1997/04/30 05:52:17 paulus Exp";
 #else
-static char rcsid[] = "$OpenBSD: fsm.c,v 1.4 1997/09/05 04:32:37 millert Exp $";
+static char rcsid[] = "$OpenBSD: fsm.c,v 1.5 1998/01/17 20:30:22 millert Exp $";
 #endif
 #endif
 
@@ -41,7 +41,7 @@ static char rcsid[] = "$OpenBSD: fsm.c,v 1.4 1997/09/05 04:32:37 millert Exp $";
 #include "pppd.h"
 #include "fsm.h"
 
-static void fsm_timeout __P((caddr_t));
+static void fsm_timeout __P((void *));
 static void fsm_rconfreq __P((fsm *, int, u_char *, int));
 static void fsm_rconfack __P((fsm *, int, u_char *, int));
 static void fsm_rconfnakrej __P((fsm *, int, int, u_char *, int));
@@ -126,7 +126,7 @@ fsm_lowerdown(f)
 
     case CLOSING:
 	f->state = INITIAL;
-	UNTIMEOUT(fsm_timeout, (caddr_t) f);	/* Cancel timeout */
+	UNTIMEOUT(fsm_timeout, f);	/* Cancel timeout */
 	break;
 
     case STOPPING:
@@ -134,7 +134,7 @@ fsm_lowerdown(f)
     case ACKRCVD:
     case ACKSENT:
 	f->state = STARTING;
-	UNTIMEOUT(fsm_timeout, (caddr_t) f);	/* Cancel timeout */
+	UNTIMEOUT(fsm_timeout, f);	/* Cancel timeout */
 	break;
 
     case OPENED:
@@ -217,7 +217,7 @@ fsm_close(f, reason)
     case ACKSENT:
     case OPENED:
 	if( f->state != OPENED )
-	    UNTIMEOUT(fsm_timeout, (caddr_t) f);	/* Cancel timeout */
+	    UNTIMEOUT(fsm_timeout, f);	/* Cancel timeout */
 	else if( f->callbacks->down )
 	    (*f->callbacks->down)(f);	/* Inform upper layers we're down */
 
@@ -225,7 +225,7 @@ fsm_close(f, reason)
 	f->retransmits = f->maxtermtransmits;
 	fsm_sdata(f, TERMREQ, f->reqid = ++f->id,
 		  (u_char *) f->term_reason, f->term_reason_len);
-	TIMEOUT(fsm_timeout, (caddr_t) f, f->timeouttime);
+	TIMEOUT(fsm_timeout, f, f->timeouttime);
 	--f->retransmits;
 
 	f->state = CLOSING;
@@ -239,7 +239,7 @@ fsm_close(f, reason)
  */
 static void
 fsm_timeout(arg)
-    caddr_t arg;
+    void *arg;
 {
     fsm *f = (fsm *) arg;
 
@@ -257,7 +257,7 @@ fsm_timeout(arg)
 	    /* Send Terminate-Request */
 	    fsm_sdata(f, TERMREQ, f->reqid = ++f->id,
 		      (u_char *) f->term_reason, f->term_reason_len);
-	    TIMEOUT(fsm_timeout, (caddr_t) f, f->timeouttime);
+	    TIMEOUT(fsm_timeout, f, f->timeouttime);
 	    --f->retransmits;
 	}
 	break;
@@ -424,7 +424,7 @@ fsm_rconfreq(f, id, inp, len)
 
     if (code == CONFACK) {
 	if (f->state == ACKRCVD) {
-	    UNTIMEOUT(fsm_timeout, (caddr_t) f);	/* Cancel timeout */
+	    UNTIMEOUT(fsm_timeout, f);	/* Cancel timeout */
 	    f->state = OPENED;
 	    if (f->callbacks->up)
 		(*f->callbacks->up)(f);	/* Inform upper layers */
@@ -480,13 +480,13 @@ fsm_rconfack(f, id, inp, len)
 
     case ACKRCVD:
 	/* Huh? an extra valid Ack? oh well... */
-	UNTIMEOUT(fsm_timeout, (caddr_t) f);	/* Cancel timeout */
+	UNTIMEOUT(fsm_timeout, f);	/* Cancel timeout */
 	fsm_sconfreq(f, 0);
 	f->state = REQSENT;
 	break;
 
     case ACKSENT:
-	UNTIMEOUT(fsm_timeout, (caddr_t) f);	/* Cancel timeout */
+	UNTIMEOUT(fsm_timeout, f);	/* Cancel timeout */
 	f->state = OPENED;
 	f->retransmits = f->maxconfreqtransmits;
 	if (f->callbacks->up)
@@ -541,7 +541,7 @@ fsm_rconfnakrej(f, code, id, inp, len)
     case REQSENT:
     case ACKSENT:
 	/* They didn't agree to what we wanted - try another request */
-	UNTIMEOUT(fsm_timeout, (caddr_t) f);	/* Cancel timeout */
+	UNTIMEOUT(fsm_timeout, f);	/* Cancel timeout */
 	if (ret < 0)
 	    f->state = STOPPED;		/* kludge for stopping CCP */
 	else
@@ -550,7 +550,7 @@ fsm_rconfnakrej(f, code, id, inp, len)
 
     case ACKRCVD:
 	/* Got a Nak/reject when we had already had an Ack?? oh well... */
-	UNTIMEOUT(fsm_timeout, (caddr_t) f);	/* Cancel timeout */
+	UNTIMEOUT(fsm_timeout, f);	/* Cancel timeout */
 	fsm_sconfreq(f, 0);
 	f->state = REQSENT;
 	break;
@@ -597,7 +597,7 @@ fsm_rtermreq(f, id, p, len)
 	    (*f->callbacks->down)(f);	/* Inform upper layers */
 	f->retransmits = 0;
 	f->state = STOPPING;
-	TIMEOUT(fsm_timeout, (caddr_t) f, f->timeouttime);
+	TIMEOUT(fsm_timeout, f, f->timeouttime);
 	break;
     }
 
@@ -616,13 +616,13 @@ fsm_rtermack(f)
 
     switch (f->state) {
     case CLOSING:
-	UNTIMEOUT(fsm_timeout, (caddr_t) f);
+	UNTIMEOUT(fsm_timeout, f);
 	f->state = CLOSED;
 	if( f->callbacks->finished )
 	    (*f->callbacks->finished)(f);
 	break;
     case STOPPING:
-	UNTIMEOUT(fsm_timeout, (caddr_t) f);
+	UNTIMEOUT(fsm_timeout, f);
 	f->state = STOPPED;
 	if( f->callbacks->finished )
 	    (*f->callbacks->finished)(f);
@@ -679,7 +679,7 @@ fsm_protreject(f)
 {
     switch( f->state ){
     case CLOSING:
-	UNTIMEOUT(fsm_timeout, (caddr_t) f);	/* Cancel timeout */
+	UNTIMEOUT(fsm_timeout, f);	/* Cancel timeout */
 	/* fall through */
     case CLOSED:
 	f->state = CLOSED;
@@ -691,7 +691,7 @@ fsm_protreject(f)
     case REQSENT:
     case ACKRCVD:
     case ACKSENT:
-	UNTIMEOUT(fsm_timeout, (caddr_t) f);	/* Cancel timeout */
+	UNTIMEOUT(fsm_timeout, f);	/* Cancel timeout */
 	/* fall through */
     case STOPPED:
 	f->state = STOPPED;
@@ -707,7 +707,7 @@ fsm_protreject(f)
 	f->retransmits = f->maxtermtransmits;
 	fsm_sdata(f, TERMREQ, f->reqid = ++f->id,
 		  (u_char *) f->term_reason, f->term_reason_len);
-	TIMEOUT(fsm_timeout, (caddr_t) f, f->timeouttime);
+	TIMEOUT(fsm_timeout, f, f->timeouttime);
 	--f->retransmits;
 
 	f->state = STOPPING;
@@ -764,7 +764,7 @@ fsm_sconfreq(f, retransmit)
 
     /* start the retransmit timer */
     --f->retransmits;
-    TIMEOUT(fsm_timeout, (caddr_t) f, f->timeouttime);
+    TIMEOUT(fsm_timeout, f, f->timeouttime);
 
     FSMDEBUG((LOG_INFO, "%s: sending Configure-Request, id %d",
 	      PROTO_NAME(f), f->reqid));

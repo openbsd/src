@@ -1,4 +1,4 @@
-/*	$OpenBSD: lcp.c,v 1.5 1997/09/05 04:32:40 millert Exp $	*/
+/*	$OpenBSD: lcp.c,v 1.6 1998/01/17 20:30:24 millert Exp $	*/
 
 /*
  * lcp.c - PPP Link Control Protocol.
@@ -21,9 +21,9 @@
 
 #ifndef lint
 #if 0
-static char rcsid[] = "Id: lcp.c,v 1.30 1997/04/30 05:52:59 paulus Exp";
+static char rcsid[] = "Id: lcp.c,v 1.31 1997/11/27 06:08:44 paulus Exp $";
 #else
-static char rcsid[] = "$OpenBSD: lcp.c,v 1.5 1997/09/05 04:32:40 millert Exp $";
+static char rcsid[] = "$OpenBSD: lcp.c,v 1.6 1998/01/17 20:30:24 millert Exp $";
 #endif
 #endif
 
@@ -84,7 +84,7 @@ static void lcp_rprotrej __P((fsm *, u_char *, int));
 
 static void lcp_echo_lowerup __P((int));
 static void lcp_echo_lowerdown __P((int));
-static void LcpEchoTimeout __P((caddr_t));
+static void LcpEchoTimeout __P((void *));
 static void lcp_received_echo_reply __P((fsm *, int, u_char *, int));
 static void LcpSendEchoRequest __P((fsm *));
 static void LcpLinkFailure __P((fsm *));
@@ -272,7 +272,7 @@ lcp_lowerup(unit)
      */
     ppp_set_xaccm(unit, xmit_accm[unit]);
     ppp_send_config(unit, PPP_MRU, 0xffffffff, 0, 0);
-    ppp_recv_config(unit, PPP_MRU, 0x00000000,
+    ppp_recv_config(unit, PPP_MRU, 0xffffffff,
 		    wo->neg_pcompression, wo->neg_accompression);
     peer_mru[unit] = PPP_MRU;
     lcp_allowoptions[unit].asyncmap = xmit_accm[unit][0];
@@ -791,7 +791,7 @@ lcp_nakci(f, p, len)
      */
     if (go->neg_mru && go->mru != DEFMRU) {
 	NAKCISHORT(CI_MRU, neg_mru,
-		   if (cishort <= wo->mru || cishort < DEFMRU)
+		   if (cishort <= wo->mru || cishort <= DEFMRU)
 		       try.mru = cishort;
 		   );
     }
@@ -1490,13 +1490,8 @@ lcp_up(f)
     ppp_send_config(f->unit, MIN(ao->mru, (ho->neg_mru? ho->mru: PPP_MRU)),
 		    (ho->neg_asyncmap? ho->asyncmap: 0xffffffff),
 		    ho->neg_pcompression, ho->neg_accompression);
-    /*
-     * If the asyncmap hasn't been negotiated, we really should
-     * set the receive asyncmap to ffffffff, but we set it to 0
-     * for backwards contemptibility.
-     */
     ppp_recv_config(f->unit, (go->neg_mru? MAX(wo->mru, go->mru): PPP_MRU),
-		    (go->neg_asyncmap? go->asyncmap: 0x00000000),
+		    (go->neg_asyncmap? go->asyncmap: 0xffffffff),
 		    go->neg_pcompression, go->neg_accompression);
 
     if (ho->neg_mru)
@@ -1525,7 +1520,7 @@ lcp_down(f)
 
     ppp_send_config(f->unit, PPP_MRU, 0xffffffff, 0, 0);
     ppp_recv_config(f->unit, PPP_MRU,
-		    (go->neg_asyncmap? go->asyncmap: 0x00000000),
+		    (go->neg_asyncmap? go->asyncmap: 0xffffffff),
 		    go->neg_pcompression, go->neg_accompression);
     peer_mru[f->unit] = PPP_MRU;
 }
@@ -1753,7 +1748,7 @@ LcpEchoCheck (f)
      * Start the timer for the next interval.
      */
     assert (lcp_echo_timer_running==0);
-    TIMEOUT (LcpEchoTimeout, (caddr_t) f, lcp_echo_interval);
+    TIMEOUT (LcpEchoTimeout, f, lcp_echo_interval);
     lcp_echo_timer_running = 1;
 }
 
@@ -1763,7 +1758,7 @@ LcpEchoCheck (f)
 
 static void
 LcpEchoTimeout (arg)
-    caddr_t arg;
+    void *arg;
 {
     if (lcp_echo_timer_running != 0) {
         lcp_echo_timer_running = 0;
@@ -1813,7 +1808,7 @@ LcpSendEchoRequest (f)
      * Detect the failure of the peer at this point.
      */
     if (lcp_echo_fails != 0) {
-        if (lcp_echos_pending++ >= lcp_echo_fails) {
+        if (lcp_echos_pending >= lcp_echo_fails) {
             LcpLinkFailure(f);
 	    lcp_echos_pending = 0;
 	}
@@ -1827,6 +1822,7 @@ LcpSendEchoRequest (f)
 	pktp = pkt;
 	PUTLONG(lcp_magic, pktp);
         fsm_sdata(f, ECHOREQ, lcp_echo_number++ & 0xFF, pkt, pktp - pkt);
+	++lcp_echos_pending;
     }
 }
 
@@ -1861,7 +1857,7 @@ lcp_echo_lowerdown (unit)
     fsm *f = &lcp_fsm[unit];
 
     if (lcp_echo_timer_running != 0) {
-        UNTIMEOUT (LcpEchoTimeout, (caddr_t) f);
+        UNTIMEOUT (LcpEchoTimeout, f);
         lcp_echo_timer_running = 0;
     }
 }

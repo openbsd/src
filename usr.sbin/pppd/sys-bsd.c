@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys-bsd.c,v 1.11 1997/12/17 08:49:46 deraadt Exp $	*/
+/*	$OpenBSD: sys-bsd.c,v 1.12 1998/01/17 20:30:29 millert Exp $	*/
 
 /*
  * sys-bsd.c - System-dependent procedures for setting up
@@ -24,9 +24,9 @@
 
 #ifndef lint
 #if 0
-static char rcsid[] = "Id: sys-bsd.c,v 1.28 1997/04/30 05:57:46 paulus Exp";
+static char rcsid[] = "Id: sys-bsd.c,v 1.29 1997/11/27 06:10:04 paulus Exp $";
 #else
-static char rcsid[] = "$OpenBSD: sys-bsd.c,v 1.11 1997/12/17 08:49:46 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: sys-bsd.c,v 1.12 1998/01/17 20:30:29 millert Exp $";
 #endif
 #endif
 
@@ -39,6 +39,7 @@ static char rcsid[] = "$OpenBSD: sys-bsd.c,v 1.11 1997/12/17 08:49:46 deraadt Ex
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <err.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <termios.h>
@@ -323,7 +324,6 @@ sipxfaddr(unit, network, node)
 {
 	int    skfd; 
 	int    result = 1;
-	struct sockaddr_ipx  ipx_addr;
 	struct ifreq         ifr;
 	struct sockaddr_ipx *sipx = (struct sockaddr_ipx *) &ifr.ifr_addr;
 
@@ -375,7 +375,6 @@ cipxfaddr(unit)
 {
 	int    skfd; 
 	int    result = 1;
-	struct sockaddr_ipx  ipx_addr;
 	struct ifreq         ifr;
 	struct sockaddr_ipx *sipx = (struct sockaddr_ipx *) &ifr.ifr_addr;
 

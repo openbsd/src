@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.20 1997/11/14 00:16:14 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.21 1998/01/17 20:30:25 millert Exp $	*/
 
 /*
  * main.c - Point-to-Point Protocol main module
@@ -20,7 +20,11 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: main.c,v 1.20 1997/11/14 00:16:14 millert Exp $";
+#if 0
+static char rcsid[] = "Id: main.c,v 1.43 1997/11/27 06:09:20 paulus Exp $";
+#else
+static char rcsid[] = "$OpenBSD: main.c,v 1.21 1998/01/17 20:30:25 millert Exp $";
+#endif
 #endif
 
 #include <stdio.h>
@@ -117,7 +121,7 @@ static void chld __P((int));
 static void toggle_debug __P((int));
 static void open_ccp __P((int));
 static void bad_signal __P((int));
-static void holdoff_end __P((caddr_t));
+static void holdoff_end __P((void *));
 static int device_script __P((char *, int, int));
 static void reap_kids __P((void));
 static void pr_log __P((void *, char *, ...));
@@ -163,7 +167,7 @@ main(argc, argv)
     int argc;
     char *argv[];
 {
-    int i, nonblock, fdflags;
+    int i, fdflags;
     struct sigaction sa;
     FILE *pidfile;
     char *p;
@@ -437,6 +441,7 @@ main(argc, argv)
 	    || fcntl(ttyfd, F_SETFL, fdflags & ~O_NONBLOCK) < 0)
 	    syslog(LOG_WARNING,
 		   "Couldn't reset non-blocking mode on device: %m");
+
 	hungup = 0;
 	kill_link = 0;
 
@@ -450,17 +455,20 @@ main(argc, argv)
 	} else
 	    tty_mode = statbuf.st_mode;
 
-	/*
-	 * Set line speed, flow control, etc.
-	 * Note that unless modem_chat is set the chat script has
-	 * no way of noticing if carrier drops.  This is a necessary
-	 * evil for systems without cua devices.
-	 */
-	set_up_tty(ttyfd, (modem_chat == 0));
-
 	/* run connection script */
 	if (connector && connector[0]) {
 	    MAINDEBUG((LOG_INFO, "Connecting with <%s>", connector));
+
+	    /*
+	     * Set line speed, flow control, etc.
+	     * On most systems we set CLOCAL for now so that we can talk
+	     * to the modem before carrier comes up.  But this has the
+	     * side effect that we might miss it if CD drops before we
+	     * get to clear CLOCAL below.  On systems where we can talk
+	     * successfully to the modem with CLOCAL clear and CD down,
+	     * we can clear CLOCAL at this point.
+	     */
+	    set_up_tty(ttyfd, (modem_chat == 0));
 
 	    /* drop dtr to hang up in case modem is off hook */
 	    if (!default_device && modem) {
@@ -584,7 +592,7 @@ main(argc, argv)
 	}
 
 	if (!persist)
-	    break;
+	    die(1);
 
 	if (demand)
 	    demand_discard();
@@ -614,7 +622,7 @@ main(argc, argv)
  */
 static void
 holdoff_end(arg)
-    caddr_t arg;
+    void *arg;
 {
     phase = PHASE_DORMANT;
 }
@@ -769,8 +777,8 @@ close_tty()
 
 struct	callout {
     struct timeval	c_time;		/* time at which to call routine */
-    caddr_t		c_arg;		/* argument to routine */
-    void		(*c_func) __P((caddr_t)); /* routine */
+    void		*c_arg;		/* argument to routine */
+    void		(*c_func) __P((void *)); /* routine */
     struct		callout *c_next;
 };
 
@@ -785,8 +793,8 @@ static struct timeval timenow;		/* Current time */
  */
 void
 timeout(func, arg, time)
-    void (*func) __P((caddr_t));
-    caddr_t arg;
+    void (*func) __P((void *));
+    void *arg;
     int time;
 {
     struct callout *newp, *p, **pp;
@@ -825,8 +833,8 @@ timeout(func, arg, time)
  */
 void
 untimeout(func, arg)
-    void (*func) __P((caddr_t));
-    caddr_t arg;
+    void (*func) __P((void *));
+    void *arg;
 {
     struct callout **copp, *freep;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pppd.h,v 1.7 1997/10/25 05:09:56 millert Exp $	*/
+/*	$OpenBSD: pppd.h,v 1.8 1998/01/17 20:30:28 millert Exp $	*/
 
 /*
  * pppd.h - PPP daemon global declarations.
@@ -180,9 +180,9 @@ extern struct protent *protocols[];
 void die __P((int));		/* Cleanup and exit */
 void quit __P((void));		/* like die(1) */
 void novm __P((char *));	/* Say we ran out of memory, and die */
-void timeout __P((void (*func)(caddr_t), caddr_t arg, int t));
+void timeout __P((void (*func)(void *), void *arg, int t));
 				/* Call func(arg) after t seconds */
-void untimeout __P((void (*func)(caddr_t), caddr_t arg));
+void untimeout __P((void (*func)(void *), void *arg));
 				/* Cancel call to func(arg) */
 int run_program __P((char *prog, char **args, int must_exist));
 				/* Run program prog with args in child */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: auth.c,v 1.11 1997/09/28 15:35:50 deraadt Exp $	*/
+/*	$OpenBSD: auth.c,v 1.12 1998/01/17 20:30:17 millert Exp $	*/
 
 /*
  * auth.c - PPP authentication and phase control.
@@ -36,9 +36,9 @@
 
 #ifndef lint
 #if 0
-static char rcsid[] = "Id: auth.c,v 1.32 1997/07/14 03:52:33 paulus Exp";
+static char rcsid[] = "Id: auth.c,v 1.35 1997/11/27 06:49:15 paulus Exp $";
 #else
-static char rcsid[] = "$OpenBSD: auth.c,v 1.11 1997/09/28 15:35:50 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: auth.c,v 1.12 1998/01/17 20:30:17 millert Exp $";
 #endif
 #endif
 
@@ -48,12 +48,15 @@ static char rcsid[] = "$OpenBSD: auth.c,v 1.11 1997/09/28 15:35:50 deraadt Exp $
 #include <unistd.h>
 #include <syslog.h>
 #include <pwd.h>
-#include <utmp.h>
-#include <fcntl.h>
 #include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
+#include <utmp.h>
+#include <fcntl.h>
+#if defined(_PATH_LASTLOG) && defined(_linux_)
+#include <lastlog.h>
+#endif
 
 #include <netdb.h>
 #include <netinet/in.h>
@@ -106,7 +109,7 @@ char peer_authname[MAXNAMELEN];
 /* Records which authentication operations haven't completed yet. */
 static int auth_pending[NUM_PPP];
 
-/* Set if we have successfully called login() */
+/* Set if we have successfully called plogin() */
 static int logged_in;
 
 /* Set if we have run the /etc/ppp/auth-up script. */
@@ -135,10 +138,10 @@ extern char *crypt __P((const char *, const char *));
 /* Prototypes for procedures local to this file. */
 
 static void network_phase __P((int));
-static void check_idle __P((caddr_t));
-static void connect_time_expired __P((caddr_t));
-static int  login __P((char *, char *, char **, int *));
-static void logout __P((void));
+static void check_idle __P((void *));
+static void connect_time_expired __P((void *));
+static int  plogin __P((char *, char *, char **, int *));
+static void plogout __P((void));
 static int  null_login __P((int));
 static int  get_pap_passwd __P((char *));
 static int  have_pap_secret __P((void));
@@ -149,9 +152,6 @@ static int  scan_authfile __P((FILE *, char *, char *, u_int32_t, char *,
 static void free_wordlist __P((struct wordlist *));
 static void auth_script __P((char *));
 static void set_allowed_addrs __P((int, struct wordlist *));
-#ifdef CBCP_SUPPORT
-static void callback_phase __P((int));
-#endif
 
 /*
  * An Open on LCP has requested a change from Dead to Establish phase.
@@ -174,7 +174,7 @@ link_terminated(unit)
     if (phase == PHASE_DEAD)
 	return;
     if (logged_in)
-	logout();
+	plogout();
     phase = PHASE_DEAD;
     syslog(LOG_NOTICE, "Connection terminated.");
 }
@@ -477,7 +477,7 @@ np_finished(unit, proto)
  */
 static void
 check_idle(arg)
-    caddr_t arg;
+    void *arg;
 {
     struct ppp_idle idle;
     time_t itime;
@@ -499,7 +499,7 @@ check_idle(arg)
  */
 static void
 connect_time_expired(arg)
-    caddr_t arg;
+    void *arg;
 {
     syslog(LOG_INFO, "Connect time expired");
     lcp_close(0, "Connect time expired");	/* Close connection */
@@ -644,10 +644,8 @@ check_passwd(unit, auser, userlen, apasswd, passwdlen, msg, msglen)
     ret = UPAP_AUTHACK;
     f = fopen(filename, "r");
     if (f == NULL) {
-	if (!uselogin) {
-	    syslog(LOG_ERR, "Can't open PAP password file %s: %m", filename);
-	    ret = UPAP_AUTHNAK;
-	}
+	syslog(LOG_ERR, "Can't open PAP password file %s: %m", filename);
+	ret = UPAP_AUTHNAK;
     } else {
 	check_access(f, filename);
 	remote = ipwo->accept_remote? 0: ipwo->hisaddr;
@@ -662,7 +660,7 @@ check_passwd(unit, auser, userlen, apasswd, passwdlen, msg, msglen)
     }
 
     if (uselogin && ret == UPAP_AUTHACK) {
-	ret = login(user, passwd, msg, msglen);
+	ret = plogin(user, passwd, msg, msglen);
 	if (ret == UPAP_AUTHNAK) {
 	    syslog(LOG_WARNING, "PAP login failure for %s", user);
 	}
@@ -715,7 +713,7 @@ static int pam_conv(int num_msg, const struct pam_message **msg,
 #endif
 
 /*
- * login - Check the user name and password against the system
+ * plogin - Check the user name and password against the system
  * password database, and login the user if OK.
  *
  * returns:
@@ -725,7 +723,7 @@ static int pam_conv(int num_msg, const struct pam_message **msg,
  */
 
 static int
-login(user, passwd, msg, msglen)
+plogin(user, passwd, msg, msglen)
     char *user;
     char *passwd;
     char **msg;
@@ -821,19 +819,19 @@ login(user, passwd, msg, msglen)
     logwtmp(tty, user, remote_name);		/* Add wtmp login entry */
 
 #ifdef _PATH_LASTLOG
-{
-    struct lastlog ll;
-    int fd;
+    {
+	    struct lastlog ll;
+	    int fd;
 
-    if ((fd = open(_PATH_LASTLOG, O_RDWR, 0)) >= 0) {
-	(void)lseek(fd, (off_t)pw->pw_uid * sizeof(ll), SEEK_SET);
-	memset(&ll, 0, sizeof(ll));
-	time(&ll.ll_time);
-	strncpy(ll.ll_line, tty, sizeof(ll.ll_line));
-	write(fd, (char *)&ll, sizeof(ll));
-	close(fd);
+	    if ((fd = open(_PATH_LASTLOG, O_RDWR, 0)) >= 0) {
+		(void)lseek(fd, (off_t)(pw->pw_uid * sizeof(ll)), SEEK_SET);
+		memset((void *)&ll, 0, sizeof(ll));
+		(void)time(&ll.ll_time);
+		(void)strncpy(ll.ll_line, tty, sizeof(ll.ll_line));
+		(void)write(fd, (char *)&ll, sizeof(ll));
+		(void)close(fd);
+	    }
     }
-}
 #endif
     logged_in = TRUE;
 
@@ -841,10 +839,10 @@ login(user, passwd, msg, msglen)
 }
 
 /*
- * logout - Logout the user.
+ * plogout - Logout the user.
  */
 static void
-logout()
+plogout()
 {
     char *tty;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.10 1997/10/25 05:09:57 millert Exp $	*/
+/*	$OpenBSD: options.c,v 1.11 1998/01/17 20:30:26 millert Exp $	*/
 
 /*
  * options.c - handles option processing for PPP.
@@ -21,9 +21,9 @@
 
 #ifndef lint
 #if 0
-static char rcsid[] = "Id: options.c,v 1.39 1997/07/14 03:53:34 paulus Exp";
+static char rcsid[] = "Id: options.c,v 1.40 1997/11/27 06:09:34 paulus Exp $";
 #else
-static char rcsid[] = "$OpenBSD: options.c,v 1.10 1997/10/25 05:09:57 millert Exp $";
+static char rcsid[] = "$OpenBSD: options.c,v 1.11 1998/01/17 20:30:26 millert Exp $";
 #endif
 #endif
 
@@ -166,7 +166,7 @@ static int setescape __P((char **));
 static int setmru __P((char **));
 static int setmtu __P((char **));
 #ifdef CBCP_SUPPORT
-static int setcbcp __P((char *));
+static int setcbcp __P((char **));
 #endif
 static int nomru __P((char **));
 static int nopcomp __P((char **));
@@ -258,7 +258,7 @@ static int setipxcpfails __P((char **));
 #endif /* IPX_CHANGE */
 
 #ifdef MSLANMAN
-static int setmslanman __P((void));
+static int setmslanman __P((char **));
 #endif
 
 static int number_option __P((char *, u_int32_t *, int));
@@ -2445,6 +2445,7 @@ setipxanet(argv)
 {
     ipxcp_wantoptions[0].accept_network = 1;
     ipxcp_allowoptions[0].accept_network = 1;
+    return 1;
 }
 
 static int
@@ -2453,6 +2454,7 @@ setipxalcl(argv)
 {
     ipxcp_wantoptions[0].accept_local = 1;
     ipxcp_allowoptions[0].accept_local = 1;
+    return 1;
 }
 
 static int
@@ -2461,6 +2463,7 @@ setipxarmt(argv)
 {
     ipxcp_wantoptions[0].accept_remote = 1;
     ipxcp_allowoptions[0].accept_remote = 1;
+    return 1;
 }
 
 static u_char *
@@ -2538,7 +2541,8 @@ resetipxproto(argv)
 
 #ifdef MSLANMAN
 static int
-setmslanman()
+setmslanman(argv)
+    char **argv;
 {
     ms_lanman = 1;
     return (1);

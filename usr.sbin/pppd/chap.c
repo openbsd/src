@@ -1,4 +1,4 @@
-/*	$OpenBSD: chap.c,v 1.6 1997/09/05 04:32:35 millert Exp $	*/
+/*	$OpenBSD: chap.c,v 1.7 1998/01/17 20:30:19 millert Exp $	*/
 
 /*
  * chap.c - Challenge Handshake Authentication Protocol.
@@ -37,9 +37,9 @@
 
 #ifndef lint
 #if 0
-static char rcsid[] = "Id: chap.c,v 1.14 1997/04/30 05:51:08 paulus Exp";
+static char rcsid[] = "Id: chap.c,v 1.15 1997/11/27 06:07:48 paulus Exp $";
 #else
-static char rcsid[] = "$OpenBSD: chap.c,v 1.6 1997/09/05 04:32:35 millert Exp $";
+static char rcsid[] = "$OpenBSD: chap.c,v 1.7 1998/01/17 20:30:19 millert Exp $";
 #endif
 #endif
 
@@ -92,10 +92,10 @@ struct protent chap_protent = {
 
 chap_state chap[NUM_PPP];		/* CHAP state; one for each unit */
 
-static void ChapChallengeTimeout __P((caddr_t));
-static void ChapResponseTimeout __P((caddr_t));
+static void ChapChallengeTimeout __P((void *));
+static void ChapResponseTimeout __P((void *));
 static void ChapReceiveChallenge __P((chap_state *, u_char *, int, int));
-static void ChapRechallenge __P((caddr_t));
+static void ChapRechallenge __P((void *));
 static void ChapReceiveResponse __P((chap_state *, u_char *, int, int));
 static void ChapReceiveSuccess __P((chap_state *, u_char *, int, int));
 static void ChapReceiveFailure __P((chap_state *, u_char *, int, int));
@@ -189,7 +189,7 @@ ChapAuthPeer(unit, our_name, digest)
  */
 static void
 ChapChallengeTimeout(arg)
-    caddr_t arg;
+    void *arg;
 {
     chap_state *cstate = (chap_state *) arg;
 
@@ -216,7 +216,7 @@ ChapChallengeTimeout(arg)
  */
 static void
 ChapResponseTimeout(arg)
-    caddr_t arg;
+    void *arg;
 {
     chap_state *cstate = (chap_state *) arg;
 
@@ -233,7 +233,7 @@ ChapResponseTimeout(arg)
  */
 static void
 ChapRechallenge(arg)
-    caddr_t arg;
+    void *arg;
 {
     chap_state *cstate = (chap_state *) arg;
 
@@ -287,12 +287,12 @@ ChapLowerDown(unit)
     /* Timeout(s) pending?  Cancel if so. */
     if (cstate->serverstate == CHAPSS_INITIAL_CHAL ||
 	cstate->serverstate == CHAPSS_RECHALLENGE)
-	UNTIMEOUT(ChapChallengeTimeout, (caddr_t) cstate);
+	UNTIMEOUT(ChapChallengeTimeout, cstate);
     else if (cstate->serverstate == CHAPSS_OPEN
 	     && cstate->chal_interval != 0)
-	UNTIMEOUT(ChapRechallenge, (caddr_t) cstate);
+	UNTIMEOUT(ChapRechallenge, cstate);
     if (cstate->clientstate == CHAPCS_RESPONSE)
-	UNTIMEOUT(ChapResponseTimeout, (caddr_t) cstate);
+	UNTIMEOUT(ChapResponseTimeout, cstate);
 
     cstate->clientstate = CHAPCS_INITIAL;
     cstate->serverstate = CHAPSS_INITIAL;
@@ -447,7 +447,7 @@ ChapReceiveChallenge(cstate, inp, id, len)
 
     /* cancel response send timeout if necessary */
     if (cstate->clientstate == CHAPCS_RESPONSE)
-	UNTIMEOUT(ChapResponseTimeout, (caddr_t) cstate);
+	UNTIMEOUT(ChapResponseTimeout, cstate);
 
     cstate->resp_id = id;
     cstate->resp_transmits = 0;
@@ -539,7 +539,7 @@ ChapReceiveResponse(cstate, inp, id, len)
 	return;
     }
 
-    UNTIMEOUT(ChapChallengeTimeout, (caddr_t) cstate);
+    UNTIMEOUT(ChapChallengeTimeout, cstate);
 
     if (len >= sizeof(rhostname))
 	len = sizeof(rhostname) - 1;
@@ -592,10 +592,13 @@ ChapReceiveResponse(cstate, inp, id, len)
             auth_peer_success(cstate->unit, PPP_CHAP, rhostname, len);
 	}
 	if (cstate->chal_interval != 0)
-	    TIMEOUT(ChapRechallenge, (caddr_t) cstate, cstate->chal_interval);
+	    TIMEOUT(ChapRechallenge, cstate, cstate->chal_interval);
+	syslog(LOG_NOTICE, "CHAP peer authentication succeeded for %s",
+		rhostname);
 
     } else {
-	syslog(LOG_ERR, "CHAP peer authentication failed");
+	syslog(LOG_ERR, "CHAP peer authentication failed for remote host %s",
+		rhostname);
 	cstate->serverstate = CHAPSS_BADAUTH;
 	auth_peer_fail(cstate->unit, PPP_CHAP);
     }
@@ -625,7 +628,7 @@ ChapReceiveSuccess(cstate, inp, id, len)
 	return;
     }
 
-    UNTIMEOUT(ChapResponseTimeout, (caddr_t) cstate);
+    UNTIMEOUT(ChapResponseTimeout, cstate);
 
     /*
      * Print message.
@@ -658,7 +661,7 @@ ChapReceiveFailure(cstate, inp, id, len)
 	return;
     }
 
-    UNTIMEOUT(ChapResponseTimeout, (caddr_t) cstate);
+    UNTIMEOUT(ChapResponseTimeout, cstate);
 
     /*
      * Print message.
@@ -703,7 +706,7 @@ ChapSendChallenge(cstate)
 
     CHAPDEBUG((LOG_INFO, "ChapSendChallenge: Sent id %d.", cstate->chal_id));
 
-    TIMEOUT(ChapChallengeTimeout, (caddr_t) cstate, cstate->timeouttime);
+    TIMEOUT(ChapChallengeTimeout, cstate, cstate->timeouttime);
     ++cstate->chal_transmits;
 }
 
@@ -803,7 +806,7 @@ ChapSendResponse(cstate)
     output(cstate->unit, outpacket_buf, outlen + PPP_HDRLEN);
 
     cstate->clientstate = CHAPCS_RESPONSE;
-    TIMEOUT(ChapResponseTimeout, (caddr_t) cstate, cstate->timeouttime);
+    TIMEOUT(ChapResponseTimeout, cstate, cstate->timeouttime);
     ++cstate->resp_transmits;
 }
 
