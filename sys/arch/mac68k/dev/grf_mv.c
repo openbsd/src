@@ -1,4 +1,4 @@
-/*	$OpenBSD: grf_mv.c,v 1.9 1997/03/14 14:16:52 briggs Exp $	*/
+/*	$OpenBSD: grf_mv.c,v 1.10 1997/03/29 23:47:13 briggs Exp $	*/
 /*	$NetBSD: grf_mv.c,v 1.17 1997/02/24 06:20:06 scottr Exp $	*/
 
 /*
@@ -52,10 +52,13 @@
 #include "grfvar.h"
 
 static void	load_image_data __P((caddr_t data, struct image_data *image));
-static void	grfmv_intr __P((void *vsc, int slot));
 
-#ifndef MYSTERY
 static char zero = 0;
+static void	grfmv_intr_generic __P((void *vsc, int slot));
+static void	grfmv_intr_cti __P((void *vsc, int slot));
+
+#ifdef MYSTERY
+static void	grfmv_intr_mystery __P((void *vsc, int slot));
 #endif
 
 static int	grfmv_mode __P((struct grf_softc *gp, int cmd, void *arg));
@@ -93,72 +96,6 @@ load_image_data(data, image)
 	bcopy(data + 38, &image->cmpCount,   2);
 	bcopy(data + 40, &image->cmpSize,    2);
 	bcopy(data + 42, &image->planeBytes, 4);
-}
-
-/*ARGSUSED*/
-static void
-grfmv_intr(vsc, slot)
-	void	*vsc;
-	int	slot;
-{
-#ifdef MYSTERY
-	struct grfbus_softc *sc;
-	caddr_t slotbase;
-
-	sc = (struct grfbus_softc *) vsc;
-	slotbase = (caddr_t) sc->sc_slot.virtual_base;
-	asm volatile("	movl	%0,a0
-			movl	a0@(0xff6028),d0
-			andl	#0x2,d0
-			beq	_mv_intr0
-			movql	#0x3,d0
-		_mv_intr0:
-			movl	a0@(0xff600c),d1
-			andl	#0x3,d1
-			cmpl	d1,d0
-			beq	_mv_intr_fin
-			movl	d0,a0@(0xff600c)
-			nop
-			tstb	d0
-			beq	_mv_intr1
-			movl	#0x0002,a0@(0xff6040)
-			movl	#0x0102,a0@(0xff6044)
-			movl	#0x0105,a0@(0xff6048)
-			movl	#0x000e,a0@(0xff604c)
-			movl	#0x001c,a0@(0xff6050)
-			movl	#0x00bc,a0@(0xff6054)
-			movl	#0x00c3,a0@(0xff6058)
-			movl	#0x0061,a0@(0xff605c)
-			movl	#0x0012,a0@(0xff6060)
-			bra	_mv_intr_fin
-		_mv_intr1:
-			movl	#0x0002,a0@(0xff6040)
-			movl	#0x0209,a0@(0xff6044)
-			movl	#0x020c,a0@(0xff6048)
-			movl	#0x000f,a0@(0xff604c)
-			movl	#0x0027,a0@(0xff6050)
-			movl	#0x00c7,a0@(0xff6054)
-			movl	#0x00d7,a0@(0xff6058)
-			movl	#0x006b,a0@(0xff605c)
-			movl	#0x0029,a0@(0xff6060)
-		_mv_intr_fin:
-			movl	#0x1,a0@(0xff6014)"
-		: : "g" (slotbase) : "a0","d0","d1");
-#else
-	caddr_t			 slotbase;
-	struct grfbus_softc	*sc;
-
-	sc = (struct grfbus_softc *) vsc;
-	slotbase = (caddr_t) sc->sc_slot.virtual_base;
-	switch (sc->card_id) {
-	case NUBUS_DRHW_WVC:
-		slotbase[0xa00000] = zero;
-		break;
-	default:
-		slotbase[0xa0000] = zero;
-		break;
-	}
-#endif
 }
 
 static int
@@ -264,9 +201,43 @@ grfmv_attach(parent, self, aux)
 		CARD_NAME_LEN);
 	cardname[CARD_NAME_LEN-1] = '\0';
 
+	if (sc->card_id == NUBUS_DRHW_TFB) {
+		/*
+		 * This is the Toby card, but apparently some manufacturers
+		 * (like Cornerstone) didn't bother to get/use their own
+		 * value here, even though the cards are different, so we
+		 * so we try to differentiate here.
+		 */
+		if (strncmp(cardname, "Samsung 768", 11) == 0) {
+			sc->card_id = NUBUS_DRHW_SAM768;
+		} else if (strncmp(cardname, "Toby frame", 10) == 0) {
+		} else {
+			printf(": (evil card pretending to be TFB)");
+		}
+	}
+
 	printf(": %s\n", cardname);
 
-	add_nubus_intr(sc->sc_slot.slot, grfmv_intr, sc);
+	switch (sc->card_id) {
+	case NUBUS_DRHW_M2HRVC:
+	case NUBUS_DRHW_TFB:
+		sc->cli_offset = 0xa0000;
+		add_nubus_intr(sc->sc_slot.slot, grfmv_intr_generic, sc);
+		break;
+	case NUBUS_DRHW_WVC:
+		sc->cli_offset = 0xa00000;
+		add_nubus_intr(sc->sc_slot.slot, grfmv_intr_generic, sc);
+		break;
+	case NUBUS_DRHW_SAM768:
+		add_nubus_intr(sc->sc_slot.slot, grfmv_intr_cti, sc);
+		break;
+	case NUBUS_DRHW_MICRON:
+		/* What do we know about this one? */
+	default:
+		printf("        Unknown video card 0x%x--", sc->card_id);
+		printf("Not installing interrupt routine.\n");
+		break;
+	}
 
 	/* Perform common video attachment. */
 	grf_establish(sc, &sc->sc_slot, grfmv_mode, grfmv_phys);
@@ -300,3 +271,99 @@ grfmv_phys(gp, addr)
 	return (caddr_t) (NUBUS_SLOT2PA(gp->sc_slot->slot) +
 				(addr - gp->sc_slot->virtual_base));
 }
+
+/* Interrupt handlers... */
+/*
+ * Generic routine to clear interrupts for cards where it simply takes
+ * a CLR.B to clear the interrupt.  The offset of this byte varies between
+ * cards.
+ */
+/*ARGSUSED*/
+static void
+grfmv_intr_generic(vsc, slot)
+	void	*vsc;
+	int	slot;
+{
+	caddr_t			 slotbase;
+	struct grfbus_softc	*sc;
+
+	sc = (struct grfbus_softc *) vsc;
+	slotbase = (caddr_t) sc->sc_slot.virtual_base;
+	slotbase[sc->cli_offset] = zero;
+}
+
+/*
+ * Routine to clear interrupts on Samsung 768x1006 video controller.
+ * This controller was manufactured by Cornerstone Technology, Inc.,
+ * now known as Cornerstone Imaging.
+ *
+ * To clear this interrupt, we apparently have to set, then clear,
+ * bit 2 at byte offset 0x80000 from the card's base.
+ *	Information for this provided by Brad Salai <bsalai@servtech.com>
+ */
+/*ARGSUSED*/
+static void
+grfmv_intr_cti(vsc, slot)
+	void	*vsc;
+	int	slot;
+{
+	volatile char		*slotbase;
+	struct grfbus_softc	*sc;
+
+	sc = (struct grfbus_softc *) vsc;
+	slotbase = ((volatile char *) sc->sc_slot.virtual_base) + 0x00080000;
+	*slotbase = (*slotbase | 0x02);
+	*slotbase = (*slotbase & 0xFD);
+}
+
+#ifdef MYSTERY
+/*ARGSUSED*/
+static void
+grfmv_intr_mystery(vsc, slot)
+	void	*vsc;
+	int	slot;
+{
+	struct grfbus_softc *sc;
+	caddr_t slotbase;
+
+	sc = (struct grfbus_softc *) vsc;
+	slotbase = (caddr_t) sc->sc_slot.virtual_base;
+	asm volatile("	movl	%0,a0
+			movl	a0@(0xff6028),d0
+			andl	#0x2,d0
+			beq	_mv_intr0
+			movql	#0x3,d0
+		_mv_intr0:
+			movl	a0@(0xff600c),d1
+			andl	#0x3,d1
+			cmpl	d1,d0
+			beq	_mv_intr_fin
+			movl	d0,a0@(0xff600c)
+			nop
+			tstb	d0
+			beq	_mv_intr1
+			movl	#0x0002,a0@(0xff6040)
+			movl	#0x0102,a0@(0xff6044)
+			movl	#0x0105,a0@(0xff6048)
+			movl	#0x000e,a0@(0xff604c)
+			movl	#0x001c,a0@(0xff6050)
+			movl	#0x00bc,a0@(0xff6054)
+			movl	#0x00c3,a0@(0xff6058)
+			movl	#0x0061,a0@(0xff605c)
+			movl	#0x0012,a0@(0xff6060)
+			bra	_mv_intr_fin
+		_mv_intr1:
+			movl	#0x0002,a0@(0xff6040)
+			movl	#0x0209,a0@(0xff6044)
+			movl	#0x020c,a0@(0xff6048)
+			movl	#0x000f,a0@(0xff604c)
+			movl	#0x0027,a0@(0xff6050)
+			movl	#0x00c7,a0@(0xff6054)
+			movl	#0x00d7,a0@(0xff6058)
+			movl	#0x006b,a0@(0xff605c)
+			movl	#0x0029,a0@(0xff6060)
+		_mv_intr_fin:
+			movl	#0x1,a0@(0xff6014)"
+		: : "g" (slotbase) : "a0","d0","d1");
+}
+#endif
