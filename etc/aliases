@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: aliases,v 1.12 2002/09/11 19:03:33 danh Exp $
+#	$OpenBSD: aliases,v 1.13 2002/12/27 14:43:08 danh Exp $
 #
 #  Aliases in this file will NOT be expanded in the header from
 #  Mail, but WILL be visible over networks or from /bin/mail.
@@ -32,6 +32,7 @@ _identd: root
 _rusersd: root
 _fingerd: root
 _x11:   root
+_spamd: root
 
 # Well-known aliases -- these should be filled in!
 # root:
