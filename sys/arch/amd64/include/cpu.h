@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.2 2004/02/09 22:15:52 mickey Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.3 2004/02/11 03:07:46 deraadt Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 2003/04/26 18:39:39 fvdl Exp $	*/
 
 /*-
@@ -327,51 +327,33 @@ void x86_bus_space_mallocok(void);
  * CTL_MACHDEP definitions.
  */
 #define	CPU_CONSDEV		1	/* dev_t: console terminal device */
-#define	CPU_BIOSBASEMEM		2	/* int: bios-reported base mem (K) */
-#define	CPU_BIOSEXTMEM		3	/* int: bios-reported ext. mem (K) */
-#define	CPU_NKPDE		4	/* int: number of kernel PDEs */
-#define	CPU_BOOTED_KERNEL	5	/* string: booted kernel name */
-#define CPU_DISKINFO		6	/* disk geometry information */
-#define CPU_FPU_PRESENT		7	/* FPU is present */
-#define	CPU_MAXID		8	/* number of valid machdep ids */
+#define	CPU_BIOS		2	/* BIOS variables */
+#define	CPU_BLK2CHR		3	/* convert blk maj into chr one */
+#define	CPU_CHR2BLK		4	/* convert chr maj into blk one */
+#define CPU_ALLOWAPERTURE	5	/* allow mmap of /dev/xf86 */
+#define CPU_CPUVENDOR		6	/* cpuid vendor string */
+#define CPU_CPUID		7	/* cpuid */
+#define CPU_CPUFEATURE		8	/* cpuid features */
+#define CPU_APMWARN		9	/* APM battery warning percentage */
+#define CPU_KBDRESET		10	/* keyboard reset under pcvt */
+#define CPU_APMHALT		11	/* halt -p hack */
+#define CPU_USERLDT		12
+#define CPU_MAXID		13	/* number of valid machdep ids */
 
 #define	CTL_MACHDEP_NAMES { \
 	{ 0, 0 }, \
 	{ "console_device", CTLTYPE_STRUCT }, \
-	{ "biosbasemem", CTLTYPE_INT }, \
-	{ "biosextmem", CTLTYPE_INT }, \
-	{ "nkpde", CTLTYPE_INT }, \
-	{ "booted_kernel", CTLTYPE_STRING }, \
-	{ "diskinfo", CTLTYPE_STRUCT }, \
-	{ "fpu_present", CTLTYPE_INT }, \
+	{ "bios", CTLTYPE_INT }, \
+	{ "blk2chr", CTLTYPE_STRUCT }, \
+	{ "chr2blk", CTLTYPE_STRUCT }, \
+	{ "allowaperture", CTLTYPE_INT }, \
+	{ "cpuvendor", CTLTYPE_STRING }, \
+	{ "cpuid", CTLTYPE_INT }, \
+	{ "cpufeature", CTLTYPE_INT }, \
+	{ "apmwarn", CTLTYPE_INT }, \
+	{ "kbdreset", CTLTYPE_INT }, \
+	{ "apmhalt", CTLTYPE_INT }, \
+	{ "userldt", CTLTYPE_INT }, \
 }
-
-
-/*
- * Structure for CPU_DISKINFO sysctl call.
- * XXX this should be somewhere else.
- */
-#define MAX_BIOSDISKS	16
-
-struct disklist {
-	int dl_nbiosdisks;			   /* number of bios disks */
-	struct biosdisk_info {
-		int bi_dev;			   /* BIOS device # (0x80 ..) */
-		int bi_cyl;			   /* cylinders on disk */
-		int bi_head;			   /* heads per track */
-		int bi_sec;			   /* sectors per track */
-		u_int64_t bi_lbasecs;		   /* total sec. (iff ext13) */
-#define BIFLAG_INVALID		0x01
-#define BIFLAG_EXTINT13		0x02
-		int bi_flags;
-	} dl_biosdisks[MAX_BIOSDISKS];
-
-	int dl_nnativedisks;			   /* number of native disks */
-	struct nativedisk_info {
-		char ni_devname[16];		   /* native device name */
-		int ni_nmatches; 		   /* # of matches w/ BIOS */
-		int ni_biosmatches[MAX_BIOSDISKS]; /* indices in dl_biosdisks */
-	} dl_nativedisks[1];			   /* actually longer */
-};
 
 #endif /* !_AMD64_CPU_H_ */
