@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_enc.c,v 1.7 1998/05/18 21:10:19 provos Exp $	*/
+/*	$OpenBSD: if_enc.c,v 1.8 1998/06/10 23:57:10 provos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -52,6 +52,7 @@
 #include <net/netisr.h>
 #include <net/route.h>
 #include <net/bpf.h>
+#include <net/if_enc.h>
 
 #ifdef	INET
 #include <netinet/in.h>
@@ -69,8 +70,6 @@ extern struct ifqueue nsintrq;
 #endif
 
 #include "bpfilter.h"
-
-#define	ENCMTU	(1024+512)
 
 struct ifnet enc_softc;
 
@@ -98,13 +97,13 @@ encattach(int nenc)
     enc_softc.if_type = IFT_ENC;
     enc_softc.if_ioctl = encioctl;
     enc_softc.if_output = encoutput;
-    enc_softc.if_hdrlen = 0;
+    enc_softc.if_hdrlen = ENC_HDRLEN;
     enc_softc.if_addrlen = 0;
 
     if_attach(&enc_softc);
 
 #if NBPFILTER > 0
-    bpfattach(&(enc_softc.if_bpf), &enc_softc, DLT_NULL, sizeof(u_int32_t));
+    bpfattach(&(enc_softc.if_bpf), &enc_softc, DLT_ENC, ENC_HDRLEN);
 #endif
 
     /* Just a bogus entry */
@@ -133,27 +132,6 @@ register struct rtentry *rt;
       panic("encoutput(): no HDR");
 
     ifp->if_lastchange = time;
-
-#if NBPFILTER > 0
-    if (ifp->if_bpf) 
-    {
-	/*
-	 * We need to prepend the address family as
-	 * a four byte field.  Cons up a dummy header
-	 * to pacify bpf.  This is safe because bpf
-	 * will only read from the mbuf (i.e., it won't
-	 * try to free it or keep a pointer a to it).
-	 */
-	struct mbuf m0;
-	u_int af = dst->sa_family;
-
-	m0.m_next = m;
-	m0.m_len = 4;
-	m0.m_data = (char *) &af;
-	
-	bpf_mtap(ifp->if_bpf, &m0);
-    }
-#endif
 
     m->m_pkthdr.rcvif = ifp;
     

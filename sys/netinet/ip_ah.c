@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah.c,v 1.15 1998/05/24 22:40:13 provos Exp $	*/
+/*	$OpenBSD: ip_ah.c,v 1.16 1998/06/10 23:57:13 provos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -53,6 +53,8 @@
 #include <net/if.h>
 #include <net/route.h>
 #include <net/netisr.h>
+#include <net/bpf.h>
+#include <net/if_enc.h>
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
@@ -70,6 +72,8 @@
 #include <netinet/ip_ah.h>
 
 #include <sys/syslog.h>
+
+#include "bpfilter.h"
 
 void	ah_input __P((struct mbuf *, int));
 
@@ -256,6 +260,34 @@ ah_input(register struct mbuf *m, int iphlen)
 	    ahstat.ahs_hdrops++;
 	    return;
 	}
+
+    /* Packet is authentic */
+    m->m_flags |= M_AUTH;
+
+#if NBPFILTER > 0
+    if (enc_softc.if_bpf) 
+    {
+        /*
+         * We need to prepend the address family as
+         * a four byte field.  Cons up a dummy header
+         * to pacify bpf.  This is safe because bpf
+         * will only read from the mbuf (i.e., it won't
+         * try to free it or keep a pointer a to it).
+         */
+        struct mbuf m0;
+        struct enchdr hdr;
+
+	hdr.af = AF_INET;
+	hdr.spi = tdbp->tdb_spi;
+	hdr.flags = m->m_flags & (M_AUTH|M_CONF|M_TUNNEL);
+
+        m0.m_next = m;
+        m0.m_len = ENC_HDRLEN;
+        m0.m_data = (char *) &hdr;
+        
+        bpf_mtap(enc_softc.if_bpf, &m0);
+    }
+#endif
 
     /*
      * Interface pointer is already in first mbuf; chop off the 

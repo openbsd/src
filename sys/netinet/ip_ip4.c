@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ip4.c,v 1.18 1998/05/22 07:29:20 angelos Exp $	*/
+/*	$OpenBSD: ip_ip4.c,v 1.19 1998/06/10 23:57:12 provos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -167,6 +167,8 @@ ip4_input(m, va_alist)
     m->m_pkthdr.len -= iphlen;
     m->m_data += iphlen;
 	
+    m->m_flags |= M_TUNNEL;
+
     /*
      * Interface pointer stays the same; if no IPsec processing has
      * been done (or will be done), this will point to a normal 

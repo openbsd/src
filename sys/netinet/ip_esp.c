@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.c,v 1.15 1998/05/24 22:40:12 provos Exp $	*/
+/*	$OpenBSD: ip_esp.c,v 1.16 1998/06/10 23:57:14 provos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -53,6 +53,8 @@
 #include <net/if.h>
 #include <net/route.h>
 #include <net/netisr.h>
+#include <net/bpf.h>
+#include <net/if_enc.h>
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
@@ -69,6 +71,8 @@
 #include <netinet/ip_ipsp.h>
 #include <netinet/ip_esp.h>
 #include <sys/syslog.h>
+
+#include "bpfilter.h"
 
 void	esp_input __P((struct mbuf *, int));
 
@@ -255,6 +259,34 @@ esp_input(register struct mbuf *m, int iphlen)
 	    espstat.esps_hdrops++;
 	    return;
 	}
+
+    /* Packet is confidental */
+    m->m_flags |= M_CONF;
+
+#if NBPFILTER > 0
+    if (enc_softc.if_bpf) 
+    {
+        /*
+         * We need to prepend the address family as
+         * a four byte field.  Cons up a dummy header
+         * to pacify bpf.  This is safe because bpf
+         * will only read from the mbuf (i.e., it won't
+         * try to free it or keep a pointer a to it).
+         */
+        struct mbuf m0;
+        struct enchdr hdr;
+
+	hdr.af = AF_INET;
+	hdr.spi = tdbp->tdb_spi;
+	hdr.flags = m->m_flags & (M_AUTH|M_CONF|M_TUNNEL);
+
+        m0.m_next = m;
+        m0.m_len = ENC_HDRLEN;
+        m0.m_data = (char *) &hdr;
+        
+        bpf_mtap(enc_softc.if_bpf, &m0);
+    }
+#endif
 
     /*
      * Interface pointer is already in first mbuf; chop off the 
