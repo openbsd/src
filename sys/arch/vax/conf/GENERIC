@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.30 2002/01/31 11:49:02 hugh Exp $
+#	$OpenBSD: GENERIC,v 1.31 2002/05/11 09:54:08 hugh Exp $
 #	$NetBSD: GENERIC,v 1.61 2000/04/19 06:50:36 itojun Exp $
 
 machine 	vax			# machine type; required
@@ -112,7 +112,7 @@ mtc0		at uba? csr 0174500	# Tape MSCP ctlr
 #de0		at uba? csr 0174510	# DELUA/DEUNA
 #qe0		at uba? csr 0174440	# DEQNA/DELQA
 #dhu0		at uba? csr 0160440	# DHU-11
-#dz0		at uba? csr 0160100	# DZ-11
+dz0		at uba? csr 0160100	# DZ-11
 #dl0		at uba? csr 0176500	# DL-11
 
 # MSCP devices
