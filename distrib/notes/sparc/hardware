@@ -94,8 +94,7 @@ with OpenBSD on the various Sparc architectures.  The sun4m architecture,
 particularly the Viking/SuperSPARC implementations, is probably the least
 stable and is also lacking useful floppy/audio support.  The 600MP support is
 less stable than the other sun4m machines, and there is currently no support
-for the VME bus found on this machine.  There is also no support for the
-Ross CY601/605 processor modules or the Ross HyperSPARC modules.
+for the VME bus found on this machine.
 
 The supplied GENERIC kernel is the best attempt at a configuration that
 works on the widest range of machinery (sun4, sun4c, and sun4m).  
