@@ -1,4 +1,4 @@
-/*	$OpenBSD: isp_pci.c,v 1.10 1999/12/16 05:19:50 mjacob Exp $	*/
+/*	$OpenBSD: isp_pci.c,v 1.11 2000/02/20 21:16:35 mjacob Exp $	*/
 /*
  * PCI specific probe and attach routines for Qlogic ISP SCSI adapters.
  *
@@ -43,7 +43,7 @@
 
 static u_int16_t isp_pci_rd_reg __P((struct ispsoftc *, int));
 static void isp_pci_wr_reg __P((struct ispsoftc *, int, u_int16_t));
-#ifndef	ISP_DISABLE_1080_SUPPORT
+#if !defined(ISP_DISABLE_1080_SUPPORT) && !defined(ISP_DISABLE_12160_SUPPORT)
 static u_int16_t isp_pci_rd_reg_1080 __P((struct ispsoftc *, int));
 static void isp_pci_wr_reg_1080 __P((struct ispsoftc *, int, u_int16_t));
 #endif
@@ -64,6 +64,9 @@ static int isp_pci_intr __P((void *));
 #endif
 #ifndef	ISP_1080_RISC_CODE
 #define	ISP_1080_RISC_CODE	NULL
+#endif
+#ifndef	ISP_12160_RISC_CODE
+#define	ISP_12160_RISC_CODE	NULL
 #endif
 #ifndef	ISP_2100_RISC_CODE
 #define	ISP_2100_RISC_CODE	NULL
@@ -99,6 +102,21 @@ static struct ispmdvec mdvec_1080 = {
 	isp_pci_reset1,
 	isp_pci_dumpregs,
 	ISP_1080_RISC_CODE, 0, ISP_CODE_ORG, 0,
+	BIU_BURST_ENABLE|BIU_PCI_CONF1_FIFO_64
+};
+#endif
+
+#ifndef	ISP_DISABLE_12160_SUPPORT
+static struct ispmdvec mdvec_12160 = {
+	isp_pci_rd_reg_1080,
+	isp_pci_wr_reg_1080,
+	isp_pci_mbxdma,
+	isp_pci_dmasetup,
+	isp_pci_dmateardown,
+	NULL,
+	isp_pci_reset1,
+	isp_pci_dumpregs,
+	ISP_12160_RISC_CODE, 0, ISP_CODE_ORG, 0,
 	BIU_BURST_ENABLE|BIU_PCI_CONF1_FIFO_64
 };
 #endif
@@ -151,6 +169,10 @@ static struct ispmdvec mdvec_2200 = {
 #define	PCI_PRODUCT_QLOGIC_ISP1280	0x1280
 #endif
 
+#ifndef	PCI_PRODUCT_QLOGIC_ISP12160
+#define	PCI_PRODUCT_QLOGIC_ISP12160	0x1216
+#endif
+
 #ifndef	PCI_PRODUCT_QLOGIC_ISP2100
 #define	PCI_PRODUCT_QLOGIC_ISP2100	0x2100
 #endif
@@ -169,6 +191,9 @@ static struct ispmdvec mdvec_2200 = {
 
 #define	PCI_QLOGIC_ISP1280	\
 	((PCI_PRODUCT_QLOGIC_ISP1280 << 16) | PCI_VENDOR_QLOGIC)
+
+#define	PCI_QLOGIC_ISP12160	\
+	((PCI_PRODUCT_QLOGIC_ISP12160 << 16) | PCI_VENDOR_QLOGIC)
 
 #define	PCI_QLOGIC_ISP2100	\
 	((PCI_PRODUCT_QLOGIC_ISP2100 << 16) | PCI_VENDOR_QLOGIC)
@@ -231,6 +256,10 @@ isp_pci_probe(parent, match, aux)
 	case PCI_QLOGIC_ISP1080:
 	case PCI_QLOGIC_ISP1240:
 	case PCI_QLOGIC_ISP1280:
+		return (1);
+#endif
+#ifndef	ISP_DISABLE_12160_SUPPORT
+	case PCI_QLOGIC_ISP12160:
 		return (1);
 #endif
 #ifndef	ISP_DISABLE_2100_SUPPORT
@@ -380,6 +409,22 @@ isp_pci_attach(parent, self, aux)
 	if (pa->pa_id == PCI_QLOGIC_ISP1280) {
 		isp->isp_mdvec = &mdvec_1080;
 		isp->isp_type = ISP_HA_SCSI_1280;
+		isp->isp_param = malloc(2 * sizeof (sdparam),
+		    M_DEVBUF, M_NOWAIT);
+		if (isp->isp_param == NULL) {
+			printf("%s: couldn't allocate sdparam table\n",
+			       isp->isp_name);
+			return;
+		}
+		bzero(isp->isp_param, sizeof (sdparam));
+		pcs->pci_poff[DMA_BLOCK >> _BLK_REG_SHFT] =
+		    ISP1080_DMA_REGS_OFF;
+	}
+#endif
+#ifndef	ISP_DISABLE_12160_SUPPORT
+	if (pa->pa_id == PCI_QLOGIC_ISP12160) {
+		isp->isp_mdvec = &mdvec_12160;
+		isp->isp_type = ISP_HA_SCSI_12160;
 		isp->isp_param = malloc(2 * sizeof (sdparam),
 		    M_DEVBUF, M_NOWAIT);
 		if (isp->isp_param == NULL) {
@@ -600,7 +645,7 @@ isp_pci_wr_reg(isp, regoff, val)
 	}
 }
 
-#ifndef	ISP_DISABLE_1080_SUPPORT
+#if !defined(ISP_DISABLE_1080_SUPPORT) && !defined(ISP_DISABLE_12160_SUPPORT)
 static u_int16_t
 isp_pci_rd_reg_1080(isp, regoff)
 	struct ispsoftc *isp;
@@ -788,12 +833,15 @@ isp_pci_dmasetup(isp, xs, rq, iptrp, optr)
 		drq = REQFLAG_DATA_OUT;
 	}
 
-	if (isp->isp_type & ISP_HA_FC) {
+	if (IS_FC(isp)) {
 		seglim = ISP_RQDSEG_T2;
 		((ispreqt2_t *)rq)->req_totalcnt = xs->datalen;
 		((ispreqt2_t *)rq)->req_flags |= drq;
 	} else {
-		seglim = ISP_RQDSEG;
+		if (XS_CDBLEN(xs) > 12)
+			seglim = 0;
+		else
+			seglim = ISP_RQDSEG;
 		rq->req_flags |= drq;
 	}
 	error = bus_dmamap_load(pci->pci_dmat, dmap, xs->data, xs->datalen,
