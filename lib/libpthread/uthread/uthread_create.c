@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_create.c,v 1.19 2003/07/08 00:17:19 marc Exp $	*/
+/*	$OpenBSD: uthread_create.c,v 1.20 2004/02/16 22:51:11 brad Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -46,7 +46,7 @@
 #include "pthread_private.h"
 
 int
-pthread_create(pthread_t * thread, const pthread_attr_t * attr,
+pthread_create(pthread_t *thread, const pthread_attr_t *attr,
 	       void *(*start_routine) (void *), void *arg)
 {
 	struct pthread	*curthread = _get_curthread();
@@ -57,6 +57,9 @@ pthread_create(pthread_t * thread, const pthread_attr_t * attr,
 	pthread_t       new_thread;
 	pthread_attr_t	pattr;
 	struct stack   *stack;
+
+	if (thread == NULL)
+		return(EINVAL);
 
 	/*
 	 * Locking functions in libc are required when there are
