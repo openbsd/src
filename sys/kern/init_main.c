@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.113 2004/04/01 00:27:51 tedu Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.114 2004/06/08 18:09:31 marc Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -123,6 +123,7 @@ struct	vnode *rootvp, *swapdev_vp;
 int	boothowto;
 struct	timeval boottime;
 struct	timeval runtime;
+int	ncpus =  1;
 
 #if !defined(NO_PROPOLICE)
 long	__guard[8];

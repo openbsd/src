@@ -1,4 +1,4 @@
-/*	$OpenBSD: systm.h,v 1.60 2004/01/05 00:16:56 espie Exp $	*/
+/*	$OpenBSD: systm.h,v 1.61 2004/06/08 18:09:31 marc Exp $	*/
 /*	$NetBSD: systm.h,v 1.50 1996/06/09 04:55:09 briggs Exp $	*/
 
 /*-
@@ -79,6 +79,7 @@ extern const char osversion[];
 extern const char osrelease[];
 extern int cold;		/* cold start flag initialized in locore */
 
+extern int ncpus;		/* number of CPUs */
 extern int nblkdev;		/* number of entries in bdevsw */
 extern int nchrdev;		/* number of entries in cdevsw */
 
