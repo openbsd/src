@@ -29,16 +29,57 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: arch.c,v 1.1 1996/06/23 04:22:36 tholo Exp $";
+static char rcsid[] = "$OpenBSD: arch.c,v 1.2 1996/06/29 20:29:34 tholo Exp $";
 #endif /* not lint */
 
+#include <stdio.h>
+#include <locale.h>
+#include <unistd.h>
 #include <sys/param.h>
+#include <sys/utsname.h>
+#include <err.h>
+
+static void usage __P((void));
 
 int
 main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	puts(MACHINE_ARCH);
+	struct utsname uts;
+	char *arch;
+	int c;
+
+	setlocale(LC_ALL, "");
+
+	arch = MACHINE_ARCH;
+	while ((c = getopt(argc, argv, "k")) != -1)
+		switch (c) {
+			case 'k':
+				arch = MACHINE;
+				break;
+			default:
+				usage();
+				/* NOTREASCHED */
+		}
+	if (optind != argc) {
+		usage();
+		/* NOTREACHED */
+	}
+	if (uname(&uts)) {
+		err(1, NULL);
+		/* NOTREACHED */
+	}
+	fputs(uts.sysname, stdout);
+	fputc('.', stdout);
+	fputs(arch, stdout);
+	fputc('\n', stdout);
 	exit(0);
+}
+
+static void
+usage()
+{
+	fprintf(stderr, "usage: arch [-k]\n");
+	exit(1);
 }

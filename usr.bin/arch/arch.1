@@ -26,7 +26,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: arch.1,v 1.1 1996/06/23 04:22:36 tholo Exp $
+.\"	$OpenBSD: arch.1,v 1.2 1996/06/29 20:29:34 tholo Exp $
 .\"
 .Dd June 22, 1996
 .Dt ARCH 1
@@ -36,10 +36,18 @@
 .Nd print architecture type
 .Sh SYNOPSIS
 .Nm arch
+.Op Fl k
 .Sh DESCRIPTION
 The
 .Nm arch
 command displays the machine's architecture type.
+.Pp
+The following options are available:
+.Bl -tag -width indent
+.It Fl k
+Display the kernel architecture instead of application
+architecture.
+.El
 .Sh SEE ALSO
 .Xr machine 1
 .Sh HISTORY
