@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.bsd-wrapper,v 1.62 2004/04/07 21:32:58 millert Exp $
+# $OpenBSD: Makefile.bsd-wrapper,v 1.63 2004/06/01 20:45:02 mickey Exp $
 #
 # Build wrapper for Perl 5.8.3
 #
@@ -611,33 +611,6 @@ x2p/cflags:
 # Never try to regenerate perly.c or perly.h
 perly.c perly.h: perly.y
 	-@true
-
-# Work around a gcc bug on hppa
-.if ${MACHINE} == "hppa"
-pp_pack.o: pp_pack.c
-	@echo "${COMPILE.c} ${.IMPSRC} -O0 -o ${.TARGET}"
-	@${COMPILE.c} ${.IMPSRC} -O0 -o ${.TARGET}.o
-	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
-	@rm -f ${.TARGET}.o
-
-pp_pack.go: pp_pack.c
-	@echo "${COMPILE.c} -g ${.IMPSRC} -O0 -o ${.TARGET}"
-	@${COMPILE.c} -g ${.IMPSRC} -O0 -o ${.TARGET}.o
-	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
-	@rm -f ${.TARGET}.o
-
-pp_pack.po: pp_pack.c
-	@echo "${COMPILE.c} -p ${.IMPSRC} -O0 -o ${.TARGET}"
-	@${COMPILE.c} -p ${.IMPSRC} -O0 -o ${.TARGET}.o
-	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
-	@rm -f ${.TARGET}.o
-
-pp_pack.so: pp_pack.c
-	@echo "${COMPILE.c} ${PICFLAG} -DPIC ${.IMPSRC} -O0 -o ${.TARGET}"
-	@${COMPILE.c} ${PICFLAG} -DPIC ${.IMPSRC} -O0 -o ${.TARGET}.o
-	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
-	@rm -f ${.TARGET}.o
-.endif
 
 .ifdef NOMAN
 maninstall:
