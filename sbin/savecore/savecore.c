@@ -1,4 +1,4 @@
-/*	$OpenBSD: savecore.c,v 1.40 2004/07/02 13:09:04 tholo Exp $	*/
+/*	$OpenBSD: savecore.c,v 1.41 2004/09/15 18:52:29 deraadt Exp $	*/
 /*	$NetBSD: savecore.c,v 1.26 1996/03/18 21:16:05 leo Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)savecore.c	8.3 (Berkeley) 1/2/94";
 #else
-static char rcsid[] = "$OpenBSD: savecore.c,v 1.40 2004/07/02 13:09:04 tholo Exp $";
+static char rcsid[] = "$OpenBSD: savecore.c,v 1.41 2004/09/15 18:52:29 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -63,6 +63,7 @@ static char rcsid[] = "$OpenBSD: savecore.c,v 1.40 2004/07/02 13:09:04 tholo Exp
 #include <tzfile.h>
 #include <unistd.h>
 #include <limits.h>
+#include <zlib.h>
 #include <kvm.h>
 #include <vis.h>
 
@@ -118,7 +119,7 @@ char	panic_mesg[1024];
 int	panicstr;
 char	vers[1024];
 
-int	clear, compress, force, verbose;	/* flags */
+int	clear, zcompress, force, verbose;	/* flags */
 
 void	 check_kmem(void);
 int	 check_space(void);
@@ -133,7 +134,6 @@ int	 Open(char *, int rw);
 char	*rawname(char *s);
 void	 save_core(void);
 void	 usage(void);
-void	 Write(int, void *, size_t);
 
 int
 main(int argc, char *argv[])
@@ -166,7 +166,7 @@ main(int argc, char *argv[])
 			kernel = optarg;
 			break;
 		case 'z':
-			compress = 1;
+			zcompress = 1;
 			break;
 		case '?':
 		default:
@@ -420,8 +420,8 @@ err1:			syslog(LOG_WARNING, "%s: %s", path, strerror(errno));
 
 	/* Create the core file. */
 	(void)snprintf(path, sizeof(path), "%s%s.%d.core%s",
-	    dirn, _PATH_UNIX, bounds, compress ? ".Z" : "");
-	if (compress) {
+	    dirn, _PATH_UNIX, bounds, zcompress ? ".Z" : "");
+	if (zcompress) {
 		if ((fp = zopen(path, "w", 0)) == NULL) {
 			syslog(LOG_ERR, "%s: %s", path, strerror(errno));
 			exit(1);
@@ -453,7 +453,7 @@ err1:			syslog(LOG_WARNING, "%s: %s", path, strerror(errno));
 
 	/* Copy the core file. */
 	syslog(LOG_NOTICE, "writing %score to %s",
-	    compress ? "compressed " : "", path);
+	    zcompress ? "compressed " : "", path);
 	for (; dumpsize > 0; dumpsize -= nr) {
 		(void)printf("%8dK\r", dumpsize / 1024);
 		(void)fflush(stdout);
@@ -482,8 +482,8 @@ err2:			syslog(LOG_WARNING,
 	/* Copy the kernel. */
 	ifd = Open(kernel ? kernel : _PATH_UNIX, O_RDONLY);
 	(void)snprintf(path, sizeof(path), "%s%s.%d%s",
-	    dirn, _PATH_UNIX, bounds, compress ? ".Z" : "");
-	if (compress) {
+	    dirn, _PATH_UNIX, bounds, zcompress ? ".Z" : "");
+	if (zcompress) {
 		if ((fp = zopen(path, "w", 0)) == NULL) {
 			syslog(LOG_ERR, "%s: %s", path, strerror(errno));
 			exit(1);
@@ -491,9 +491,9 @@ err2:			syslog(LOG_WARNING,
 	} else
 		ofd = Create(path, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
 	syslog(LOG_NOTICE, "writing %skernel to %s",
-	    compress ? "compressed " : "", path);
+	    zcompress ? "compressed " : "", path);
 	while ((nr = read(ifd, buf, sizeof(buf))) > 0) {
-		if (compress)
+		if (zcompress)
 			nw = fwrite(buf, 1, nr, fp);
 		else
 			nw = write(ofd, buf, nr);
@@ -512,7 +512,7 @@ err2:			syslog(LOG_WARNING,
 		    "WARNING: kernel may be incomplete");
 		exit(1);
 	}
-	if (compress)
+	if (zcompress)
 		(void)fclose(fp);
 	else
 		(void)close(ofd);
@@ -673,17 +673,6 @@ Create(char *file, int mode)
 		exit(1);
 	}
 	return (fd);
-}
-
-void
-Write(int fd, void *bp, size_t size)
-{
-	int n;
-
-	if ((n = write(fd, bp, size)) < size) {
-		syslog(LOG_ERR, "write: %s", strerror(n == -1 ? errno : EIO));
-		exit(1);
-	}
 }
 
 void
