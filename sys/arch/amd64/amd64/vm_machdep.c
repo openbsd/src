@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.1 2004/01/28 01:39:39 mickey Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.2 2004/05/13 20:20:24 sturm Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.1 2003/04/26 18:39:33 fvdl Exp $	*/
 
 /*-
@@ -68,7 +68,6 @@
 #include <machine/mtrr.h>
 
 void setredzone(struct proc *);
-void syscall_intern(struct proc *p);	/* syscall.c */
 
 /*
  * Finish a fork operation, with process p2 nearly set up.
@@ -99,7 +98,6 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack, size_t stacksize,
 		fpusave_proc(p1, 1);
 
 	p2->p_md.md_flags = p1->p_md.md_flags;
-	syscall_intern(p2);
 
 	/* Copy pcb from proc p1 to p2. */
 	if (p1 == curproc) {

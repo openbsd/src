@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.1 2004/01/28 01:39:39 mickey Exp $	*/
+/*	$OpenBSD: proc.h,v 1.2 2004/05/13 20:20:24 sturm Exp $	*/
 /*	$NetBSD: proc.h,v 1.1 2003/04/26 18:39:46 fvdl Exp $	*/
 
 /*
@@ -48,8 +48,6 @@ struct mdproc {
 	struct	trapframe *md_regs;	/* registers on current frame */
 	int	md_tss_sel;		/* TSS selector */
 	int	md_flags;
-					/* Syscall handling function */
-	void	(*md_syscall)(struct trapframe);
 	__volatile int md_astpending;
 };
 

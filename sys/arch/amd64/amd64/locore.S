@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.9 2004/02/25 00:16:04 deraadt Exp $	*/
+/*	$OpenBSD: locore.S,v 1.10 2004/05/13 20:20:24 sturm Exp $	*/
 /*	$NetBSD: locore.S,v 1.2 2003/04/26 19:34:45 fvdl Exp $	*/
 
 /*
@@ -1094,7 +1094,7 @@ IDTVEC(syscall)
 	movq	CPUVAR(CURPROC),%r14
 	movq	%rsp,P_MD_REGS(%r14)	# save pointer to frame
 	andl	$~MDP_IRET,P_MD_FLAGS(%r14)
-	call	*P_MD_SYSCALL(%r14)
+	call	_C_LABEL(syscall)
 1:	/* Check for ASTs on exit to user mode. */
 	cli
 	CHECK_ASTPENDING(%r11)
@@ -1191,7 +1191,7 @@ osyscall1:
 	sti
 	movq	CPUVAR(CURPROC),%rdx
 	movq	%rsp,P_MD_REGS(%rdx)	# save pointer to frame
-	call	*P_MD_SYSCALL(%rdx)
+	call	_C_LABEL(syscall)
 _C_LABEL(osyscall_return):
 2:	/* Check for ASTs on exit to user mode. */
 	cli

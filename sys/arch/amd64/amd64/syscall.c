@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.c,v 1.6 2004/02/19 18:43:32 deraadt Exp $	*/
+/*	$OpenBSD: syscall.c,v 1.7 2004/05/13 20:20:24 sturm Exp $	*/
 /*	$NetBSD: syscall.c,v 1.1 2003/04/26 18:39:32 fvdl Exp $	*/
 
 /*-
@@ -45,9 +45,10 @@
 #ifdef KTRACE
 #include <sys/ktrace.h>
 #endif
-#ifdef SYSTRACE
-#include <sys/systrace.h>
-#endif
+
+#include "systrace.h"
+#include <dev/systrace.h>
+
 #include <sys/syscall.h>
 
 #include <uvm/uvm_extern.h>
@@ -56,28 +57,7 @@
 #include <machine/psl.h>
 #include <machine/userret.h>
 
-void syscall_intern(struct proc *);
-void syscall_plain(struct trapframe);
-void syscall_fancy(struct trapframe);
-
-void
-syscall_intern(p)
-	struct proc *p;
-{
-#ifdef KTRACE
-	if (p->p_traceflag & (KTRFAC_SYSCALL | KTRFAC_SYSRET)) {
-		p->p_md.md_syscall = syscall_fancy;
-		return;
-	}
-#endif
-#ifdef SYSTRACE
-	if (ISSET(p->p_flag, P_SYSTRACE)) {
-		p->p_md.md_syscall = syscall_fancy;
-		return;
-	} 
-#endif
-	p->p_md.md_syscall = syscall_plain;
-}
+void syscall(struct trapframe);
 
 /*
  * syscall(frame):
@@ -85,7 +65,7 @@ syscall_intern(p)
  * Like trap(), argument is call by reference.
  */
 void
-syscall_plain(frame)
+syscall(frame)
 	struct trapframe frame;
 {
 	caddr_t params;
@@ -96,15 +76,14 @@ syscall_plain(frame)
 	size_t argsize, argoff;
 	register_t code, args[9], rval[2], *argp;
 
-
 	uvmexp.syscalls++;
 	p = curproc;
 
 	code = frame.tf_rax;
-	nsys = p->p_emul->e_nsysent;
 	callp = p->p_emul->e_sysent;
-	argoff = 0;
+	nsys = p->p_emul->e_nsysent;
 	argp = &args[0];
+	argoff = 0;
 
 	switch (code) {
 	case SYS_syscall:
@@ -154,118 +133,9 @@ syscall_plain(frame)
 		}
 	}
 
+	KERNEL_PROC_LOCK(p);
 #ifdef SYSCALL_DEBUG
 	scdebug_call(p, code, argp);
-#endif /* SYSCALL_DEBUG */
-
-	rval[0] = 0;
-	rval[1] = frame.tf_rdx;
-	KERNEL_PROC_LOCK(p);
-	error = (*callp->sy_call)(p, argp, rval);
-	KERNEL_PROC_UNLOCK(p);
-
-	switch (error) {
-	case 0:
-		frame.tf_rax = rval[0];
-		frame.tf_rdx = rval[1];
-		frame.tf_rflags &= ~PSL_C;	/* carry bit */
-		break;
-	case ERESTART:
-		/*
-		 * The offset to adjust the PC by depends on whether we entered
-		 * the kernel through the trap or call gate.  We pushed the
-		 * size of the instruction into tf_err on entry.
-		 */
-		frame.tf_rip -= frame.tf_err;
-		break;
-	case EJUSTRETURN:
-		/* nothing to do */
-		break;
-	default:
-	bad:
-		frame.tf_rax = error;
-		frame.tf_rflags |= PSL_C;	/* carry bit */
-		break;
-	}
-
-#ifdef SYSCALL_DEBUG
-	scdebug_ret(p, code, error, rval);
-#endif /* SYSCALL_DEBUG */
-	userret(p);
-}
-
-void
-syscall_fancy(frame)
-	struct trapframe frame;
-{
-	caddr_t params;
-	const struct sysent *callp;
-	struct proc *p;
-	int error;
-	int nsys;
-	size_t argsize, argoff;
-	register_t code, args[9], rval[2], *argp;
-
-	uvmexp.syscalls++;
-	p = curproc;
-
-	code = frame.tf_rax;
-	callp = p->p_emul->e_sysent;
-	nsys = p->p_emul->e_nsysent;
-	argp = &args[0];
-	argoff = 0;
-
-	switch (code) {
-	case SYS_syscall:
-	case SYS___syscall:
-		/*
-		 * Code is first argument, followed by actual args.
-		 */
-		code = frame.tf_rdi;
-		argp = &args[1];
-		argoff = 1;
-		break;
-	default:
-		break;
-	}
-
-	if (code < 0 || code >= nsys)
-		callp += p->p_emul->e_nosys;
-	else
-		callp += code;
-
-	argsize = (callp->sy_argsize >> 3) + argoff;
-	if (argsize) {
-		switch (MIN(argsize, 6)) {
-		case 6:
-			args[5] = frame.tf_r9;
-		case 5:
-			args[4] = frame.tf_r8;
-		case 4:
-			args[3] = frame.tf_r10;
-		case 3:
-			args[2] = frame.tf_rdx;
-		case 2:	
-			args[1] = frame.tf_rsi;
-		case 1:
-			args[0] = frame.tf_rdi;
-			break;
-		default:
-			panic("impossible syscall argsize");
-		}
-		if (argsize > 6) {
-			argsize -= 6;
-			params = (caddr_t)frame.tf_rsp + sizeof(register_t);
-			error = copyin(params, (caddr_t)&args[6],
-					argsize << 3);
-			if (error != 0)
-				goto bad;
-		}
-	}
-
-	KERNEL_PROC_LOCK(p);
-#ifdef SYSCALL_DEBUG
-	scdebug_call(p, code, args);
 #endif
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSCALL))
@@ -276,7 +146,8 @@ syscall_fancy(frame)
 	rval[1] = frame.tf_rdx;
 #if NSYSTRACE > 0
 	if (ISSET(p->p_flag, P_SYSTRACE))
-		error = systrace_redirect(code, p, args, rval);
+		error = systrace_redirect(code, p, argp, rval);
+	else
 #endif
 		error = (*callp->sy_call)(p, argp, rval);
 	KERNEL_PROC_UNLOCK(p);

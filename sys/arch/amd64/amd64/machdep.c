@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.23 2004/05/05 16:43:53 marc Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.24 2004/05/13 20:20:24 sturm Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -245,7 +245,6 @@ int	cpu_dumpsize(void);
 u_long	cpu_dump_mempagecnt(void);
 void	dumpsys(void);
 void	init_x86_64(paddr_t);
-void	syscall_intern(struct proc *p);
 
 #ifdef APERTURE
 #ifdef INSECURE
@@ -1156,8 +1155,6 @@ setregs(struct proc *p, struct exec_package *pack, u_long stack,
 #ifdef USER_LDT
 	pmap_ldt_cleanup(p);
 #endif
-
-	syscall_intern(p);
 
 	p->p_md.md_flags &= ~MDP_USEDFPU;
 	pcb->pcb_flags = 0;

@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.2 2004/02/07 17:00:12 miod Exp $
+#	$OpenBSD: genassym.cf,v 1.3 2004/05/13 20:20:24 sturm Exp $
 
 #	Written by Artur Grabowski art@openbsd.org, Public Domain
 
@@ -38,7 +38,6 @@ member	p_wchan
 member	P_MD_TSS_SEL	p_md.md_tss_sel
 member	P_MD_REGS	p_md.md_regs
 member	P_MD_FLAGS	p_md.md_flags
-member	P_MD_SYSCALL	p_md.md_syscall
 member	P_MD_ASTPENDING	p_md.md_astpending
 member	p_flag
 
