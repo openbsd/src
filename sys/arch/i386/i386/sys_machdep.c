@@ -83,6 +83,18 @@ int i386_set_ioperm __P((struct proc *, char *, register_t *));
 #ifdef TRACE
 int	nvualarm;
 
+void
+vdoualarm(arg)
+	int arg;
+{
+	register struct proc *p;
+
+	p = pfind(arg);
+	if (p)
+		psignal(p, 16);
+	nvualarm--;
+}
+
 int
 sys_vtrace(p, v, retval)
 	struct proc *p;
@@ -93,7 +105,6 @@ sys_vtrace(p, v, retval)
 		syscallarg(int) request;
 		syscallarg(int) value;
 	} */ *uap = v;
-	int vdoualarm();
 
 	switch (SCARG(uap, request)) {
 
@@ -124,17 +135,6 @@ sys_vtrace(p, v, retval)
 		break;
 	}
 	return (0);
-}
-
-vdoualarm(arg)
-	int arg;
-{
-	register struct proc *p;
-
-	p = pfind(arg);
-	if (p)
-		psignal(p, 16);
-	nvualarm--;
 }
 #endif
 
