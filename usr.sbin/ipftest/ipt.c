@@ -41,7 +41,7 @@
 
 #if !defined(lint) && defined(LIBC_SCCS)
 static	char	sccsid[] = "@(#)ipt.c	1.19 6/3/96 (C) 1993-1996 Darren Reed";
-static	char	rcsid[] = "$Id: ipt.c,v 1.9 1997/04/19 19:10:22 kstailey Exp $";
+static	char	rcsid[] = "$Id: ipt.c,v 1.10 1997/09/22 05:17:47 millert Exp $";
 #endif
 
 extern	int	fr_check();
@@ -175,7 +175,7 @@ char *argv[];
 	while ((i = (*r->r_readip)(buf, sizeof(buf), &iface, &dir)) > 0) {
 		ip->ip_off = ntohs(ip->ip_off);
 		ip->ip_len = ntohs(ip->ip_len);
-		switch (fr_check(ip, ip->ip_hl << 2, iface, dir)) /* XXX */
+		switch (fr_check(ip, ip->ip_hl << 2, (struct ifnet *)iface, dir)) /* XXX */
 		{
 		case -1 :
 			(void)printf("block");
