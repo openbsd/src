@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.83 2001/06/28 21:53:41 provos Exp $ */
+/*	$OpenBSD: pf.c,v 1.84 2001/06/28 22:17:42 provos Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -2264,6 +2264,7 @@ pf_reassemble(struct mbuf **m0, struct pf_fragment *frag,
 		if (frag == NULL)
 			goto drop_fragment;
 
+		microtime(&frag->fr_timeout);
 		frag->fr_flags = 0;
 		frag->fr_src = frent->fr_ip->ip_src;
 		frag->fr_dst = frent->fr_ip->ip_dst;
