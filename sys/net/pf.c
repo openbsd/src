@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.304 2003/01/18 06:31:59 mcbride Exp $ */
+/*	$OpenBSD: pf.c,v 1.305 2003/01/19 13:52:18 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -720,9 +720,9 @@ pf_print_state(struct pf_state *s)
 	pf_print_host(&s->gwy.addr, s->gwy.port, s->af);
 	printf(" ");
 	pf_print_host(&s->ext.addr, s->ext.port, s->af);
-	printf(" [lo=%lu high=%lu win=%u modulator=%u]", s->src.seqlo,
+	printf(" [lo=%u high=%u win=%u modulator=%u]", s->src.seqlo,
 	    s->src.seqhi, s->src.max_win, s->src.seqdiff);
-	printf(" [lo=%lu high=%lu win=%u modulator=%u]", s->dst.seqlo,
+	printf(" [lo=%u high=%u win=%u modulator=%u]", s->dst.seqlo,
 	    s->dst.seqhi, s->dst.max_win, s->dst.seqdiff);
 	printf(" %u:%u", s->src.state, s->dst.state);
 }
@@ -2964,7 +2964,7 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct ifnet *ifp,
 			printf("pf: loose state match: ");
 			pf_print_state(*state);
 			pf_print_flags(th->th_flags);
-			printf(" seq=%lu ack=%lu len=%u ackskew=%d pkts=%d\n",
+			printf(" seq=%u ack=%u len=%u ackskew=%d pkts=%d\n",
 			    seq, ack, pd->p_len, ackskew, (*state)->packets);
 		}
 
@@ -2999,7 +2999,7 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct ifnet *ifp,
 			printf("pf: BAD state: ");
 			pf_print_state(*state);
 			pf_print_flags(th->th_flags);
-			printf(" seq=%lu ack=%lu len=%u ackskew=%d pkts=%d "
+			printf(" seq=%u ack=%u len=%u ackskew=%d pkts=%d "
 			    "dir=%s,%s\n", seq, ack, pd->p_len, ackskew,
 			    ++(*state)->packets,
 			    direction == PF_IN ? "in" : "out",
@@ -3364,7 +3364,7 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct ifnet *ifp,
 				if (pf_status.debug >= PF_DEBUG_MISC) {
 					printf("pf: BAD ICMP state: ");
 					pf_print_state(*state);
-					printf(" seq=%lu\n", seq);
+					printf(" seq=%u\n", seq);
 				}
 				return (PF_DROP);
 			}
