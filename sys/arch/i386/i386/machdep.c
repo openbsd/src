@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.62 1997/10/25 22:04:04 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.63 1997/10/28 09:11:35 niklas Exp $	*/
 /*	$NetBSD: machdep.c,v 1.202 1996/05/18 15:54:59 christos Exp $	*/
 
 /*-
@@ -352,7 +352,6 @@ cpu_startup()
 	lldt(pcb->pcb_ldt_sel);
 
 	proc0.p_md.md_regs = (struct trapframe *)pcb->pcb_tss.tss_esp0 - 1;
-
 }
 
 /*
@@ -1274,7 +1273,7 @@ init386(first_avail)
 	 * BIOS leaves data in low memory and VM system doesn't work with
 	 * phys 0,  /boot leaves arguments at page 1.
 	 */
-	avail_start = NBPG + btoc(bootargc);
+	avail_start = NBPG + i386_round_page(bootargc);
 
 	avail_end = biosextmem ? IOM_END + biosextmem * 1024
 	    : biosbasemem * 1024;
