@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.46 2002/05/26 09:24:35 deraadt Exp $	*/
+/*	$OpenBSD: route.c,v 1.47 2002/06/04 22:22:37 itojun Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)route.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: route.c,v 1.46 2002/05/26 09:24:35 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: route.c,v 1.47 2002/06/04 22:22:37 itojun Exp $";
 #endif
 #endif /* not lint */
 
@@ -915,8 +915,6 @@ inet6_makenetandmask(sin6)
 		memset(&in6, 0, sizeof(in6));
 		if (!memcmp(&sin6->sin6_addr.s6_addr[8], &in6.s6_addr[8], 8))
 			plen = "64";
-		else
-			plen = "128";
 	}
 
 	if (plen) {
