@@ -1,4 +1,4 @@
-/*      $OpenBSD: pciide.c,v 1.7 1999/08/04 23:27:49 niklas Exp $     */
+/*      $OpenBSD: pciide.c,v 1.8 1999/08/05 00:10:31 niklas Exp $     */
 /*	$NetBSD: pciide.c,v 1.40 1999/07/12 13:49:38 bouyer Exp $	*/
 
 /*
@@ -656,12 +656,14 @@ pciide_mapregs_native(pa, cp, cmdsizep, ctlsizep)
 			return 0;
 		}	
 		intrstr = pci_intr_string(pa->pa_pc, intrhandle);
-		sc->sc_pci_ih = pci_intr_establish(pa->pa_pc,
-		    intrhandle, IPL_BIO, pciide_pci_intr, sc
 #ifdef __OpenBSD__
-		    , sc->sc_wdcdev.sc_dev.dv_xname
+		sc->sc_pci_ih = pci_intr_establish(pa->pa_pc,
+		    intrhandle, IPL_BIO, pciide_pci_intr, sc,
+		    sc->sc_wdcdev.sc_dev.dv_xname);
+#else
+		sc->sc_pci_ih = pci_intr_establish(pa->pa_pc,
+		    intrhandle, IPL_BIO, pciide_pci_intr, sc);
 #endif
-			);
 		if (sc->sc_pci_ih != NULL) {
 			printf("%s: using %s for native-PCI interrupt\n",
 			    sc->sc_wdcdev.sc_dev.dv_xname,
