@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.1 1997/07/06 20:22:58 mickey Exp $	*/
+/*	$OpenBSD: main.c,v 1.2 1997/07/06 20:47:32 mickey Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)compress.c	8.2 (Berkeley) 1/7/94";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.1 1997/07/06 20:22:58 mickey Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.2 1997/07/06 20:47:32 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -119,8 +119,8 @@ main(argc, argv)
 			decomp++;
 		}
 
-		if (strcmp(__progname, "zip") &&
-		    strcmp(__progname, "compress"))
+		if (strcmp(p, "zip") &&
+		    strcmp(p, "compress"))
 			errx(1, "unknown program name");
 	}
 
