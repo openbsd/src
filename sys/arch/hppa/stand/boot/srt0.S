@@ -1,4 +1,4 @@
-/*	$OpenBSD: srt0.S,v 1.5 1999/04/20 20:04:05 mickey Exp $	*/
+/*	$OpenBSD: srt0.S,v 1.6 1999/05/06 02:29:56 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -82,7 +82,7 @@ boff
 	ldo	R%edata(%r3),%r3	; Get address of edata.
 	ldil	L%begin,%r1
 	ldo	R%begin(%r1),%r1	; Get address of begin
-	sub	%r3,%r1,%r3		; Subtract to get # to bytes to copy
+	sub	%r3,%r1,%r3		; Subtract to get # of bytes to copy
 copyloop				; do
 	ldwm	4(%r5),%r1		;   *r4++ = *r5++;
 	addib,>= -4,%r3,copyloop	; while (--r3 >= 0);
@@ -120,8 +120,8 @@ zeroloop
 	ldo	-1(%r21),%r21
 	fdc	%r21(0,%r22)
 loop	addib,>,n -16,%r21,loop		; Decrement by cache line size (16).
-	fdc	%r21(0,%r22)
-	fdc	0(0,%r22)		; Flush first word at addr to handle
+	fdc	%r21(%sr0,%r22)
+	fdc	0(%sr0,%r22)		; Flush first word at addr to handle
 	sync				;   arbitrary cache line boundary.
 	nop				; Prevent prefetching.
 	nop
