@@ -1,4 +1,4 @@
-/*	$OpenBSD: ss.c,v 1.21 1997/03/10 02:29:39 kstailey Exp $	*/
+/*	$OpenBSD: ss.c,v 1.22 1997/03/10 02:34:42 kstailey Exp $	*/
 /*	$NetBSD: ss.c,v 1.10 1996/05/05 19:52:55 christos Exp $	*/
 
 /*
@@ -92,6 +92,10 @@ struct quirkdata {
 	 */
 	int	(*vendor_unique_sw)__P((struct ss_softc *, struct scan_io *,
 					struct scsi_set_window *, void *));
+	/* 
+	 * If the scanner requires use of GET_BUFFER_STATUS before READ
+	 * it can be called from ss_minphys().
+	 */
 	void	(*special_minphys)__P(( struct ss_softc *, struct buf *));
 };
 
@@ -575,7 +579,7 @@ ssstart(v)
 		} else {
 			/* generic scsi2 scanner read */
 			bzero(&read_cmd, sizeof(read_cmd));
-			read_cmd.opcode = READ;
+			read_cmd.opcode = READ_BIG;
 			_lto3b(bp->b_bcount, read_cmd.len);
 			flags = SCSI_DATA_IN;
 			/*
