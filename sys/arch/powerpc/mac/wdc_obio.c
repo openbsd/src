@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdc_obio.c,v 1.6 2000/09/08 05:43:56 rahnds Exp $	*/
+/*	$OpenBSD: wdc_obio.c,v 1.7 2001/02/20 04:26:34 drahn Exp $	*/
 /*	$NetBSD: wdc_obio.c,v 1.4 1999/06/14 08:53:06 tsubai Exp $	*/
 
 /*-
@@ -108,7 +108,7 @@ struct cfdriver wdc_cd = {
 static int	wdc_obio_dma_init __P((void *, int, int, void *, size_t, int));
 static void 	wdc_obio_dma_start __P((void *, int, int, int));
 static int	wdc_obio_dma_finish __P((void *, int, int, int));
-static void adjust_timing __P((struct channel_softc *));
+static void	adjust_timing __P((struct channel_softc *));
 
 int
 wdc_obio_probe(parent, match, aux)
@@ -194,7 +194,7 @@ wdc_obio_attach(parent, self, aux)
 		sc->sc_dmacmd = dbdma_alloc(sizeof(dbdma_command_t) * 20);
 		sc->sc_dmareg = mapiodev(ca->ca_baseaddr + ca->ca_reg[2],
 					 ca->ca_reg[3]);
-		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA;
+		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA|WDC_CAPABILITY_UDMA;
 	}
 	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16;
 	sc->sc_wdcdev.PIO_cap = 0;
@@ -220,6 +220,8 @@ wdc_obio_attach(parent, self, aux)
 	/* modify DMA access timings */
 	if (use_dma)
 		adjust_timing(chp);
+
+	wdc_print_current_modes(chp);
 }
 
 /* Multiword DMA transfer timings */
