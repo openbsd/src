@@ -1,4 +1,4 @@
-/*	$OpenBSD: spx_usrreq.c,v 1.13 2001/05/01 17:58:15 mickey Exp $	*/
+/*	$OpenBSD: spx_usrreq.c,v 1.14 2001/05/27 12:16:01 angelos Exp $	*/
 
 /*-
  *
@@ -798,6 +798,9 @@ spx_output(cb, m0)
 		 * Fill in mbuf with extended SP header
 		 * and addresses and length put into network format.
 		 */
+		M_COPY_HDR(m, m0);
+		m_tag_init(m0);
+		m0->m_flags &= ~M_PKTHDR;
 		MH_ALIGN(m, sizeof(struct spx));
 		m->m_len = sizeof(struct spx);
 		m->m_next = m0;
