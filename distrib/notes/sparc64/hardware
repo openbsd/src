@@ -6,6 +6,7 @@ OpenBSD/MACHINE OSREV runs on the following classes of machines:
 	- PCI based workstations:
 		Blade 100 (onboard ethernet has issues)
 		Enterprise 250
+		Netra X1
 		Ultra 5
 		Ultra 10
 		Ultra 30
@@ -27,29 +28,51 @@ X or compile the system, more RAM is recommended.
 At the moment, the X window system is not available.
 
 Supported devices {:-include-:}:
-	serial ports: 
-		Zilog ttya and ttyb (can be used as console if needed),
+	SCSI Host Adapters: 
+		SBus NCR53c9x adapters (esp)
+		SBus 10/100Mbit SunSwift Ethernet+SCSI cards, aka HME + FAS366
+		  cards (esp)
+		SBus QLogic adapters (isp)
+		PCI NCR53c8xx adapters (siop)
 
-	ethernet: 
-		on-board AMD Lance ethernet ("le0")
-		SBus AMD Lance ethernet cards
-		PCI/SBus SunSwift and Quad FastEthernet cards (hme, qfe)
-		SBus FastEthernet cards (qec+be)
-		SBus QuadEthernet cards (qec+qe)
+	PCI IDE Controllers: (pciide)
+		Acer Labs M5229
+		Command Technologies PCI0646
+		National Semiconductor PC87415
+		Other PCI IDE controllers may work, but have not been tested
 
-	SCSI: 
-		on-board "esp" SCSI controller
-		SBus "esp" SCSI controller (including 3rd party compatibles)
+	Ethernet Adapters:
+		onboard AMD Lance ethernet (le)
+		SBus AMD Lance ethernet cards (le)
+		SBus 10/100MBit Sun FastEthernet 1.0 cards (qec/be)
+		SBus Quad 10MBit Sun QuadEthernet cards (qec/qe)
+		onboard SBus/PCI HME Ethernet cards (hme)
+		SBus 10/100Mbit Ethernet cards (hme)
+		SBus 10/100Mbit SunSwift Ethernet+SCSI cards (hme)
+		SBus Quad 10/100MBit Quad Fast Ethernet cards (hme, qfe)
+		PCI Fast Ethernet (hme)
+		PCI Quad Fast Ethernet (hme)
+		PCI GEM Ethernet (gem) [not fully supported]
 
-	framebuffers:
-		on-board framebuffers,
-		(but the kernel will use the OpenPROM console still).
+	Serial ports: 
+		onboard SBUS Zilog 8530 (zs)
+		onboard 16550 compatibles (com)
+
+	Sound devices:
+		onboard SBus CS4321 (audiocs)
+		onboard EBus/PCI CS4231 (audioce)
+
+	Miscellaneous devices:
+		EBus beeper (beeper)
 
 
 Hardware the we do NOT currently support, but get many questions about:
-	Multiprocessor machines
-	Audio drivers
-	Floppy driver (except for booting)
-	FFB (Creator), PGX and AFB (Elite 3D) framebuffers
-        SBus ZX framebuffer (aka Leo)
-	other PCI and SBus cards have not been tested yet.
+
+	Framebuffers (these will work as PROM console output, but no raster
+	  console or X Window support yet).
+	Keyboards (these will work as PROM console input, but no X Window
+	  support yet).
+	Mice (no X Window support yet).
+	Multiprocessor machines.
+	Floppy driver (except for booting).
+	SBUS and PCI cards other than those listed above.

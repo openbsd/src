@@ -2,7 +2,9 @@ OpenBSDInstallPrelude
 
 There are several ways to install OpenBSD onto a disk. The easiest way
 in terms of preliminary setup is to use the OpenBSD installation
-cdrom, or an installation floppy.
+dnl XXX change back if more than one floppy again.
+dnl cdrom, or an installation floppy.
+cdrom, or the installation floppy.
 
 If your machine is hooked up in a network and you can find a server to
 arrange for a diskless setup, which is a convenient way to install on a
@@ -36,7 +38,7 @@ Booting from Floppy Disk installation media:
        ok boot floppy bsd
 
 This will cause the kernel contained in the floppy to be booted.
-Please note that PCI systems are not be able to boot from floppy; also,
+Please note that PCI systems are not able to boot from floppy; also,
 Ultra 1, 1E and 2 systems might need a firmware update to be able to boot
 from floppy; refer to the ``Updating your firmware'' section earlier in
 this document for details.
@@ -206,10 +208,10 @@ OpenBSDHTTPInstall
 OpenBSDTAPEInstall
 
 OpenBSDCDROMInstall
-
-	On some pci-based systems, installing files from CD-ROM yields
-	a lot of ``pciide bogus intr'' warning messages.  While annoying,
-	these messages do not prevent the installation from suceeding.
+dnl
+dnl	On some pci-based systems, installing files from CD-ROM yields
+dnl	a lot of ``pciide bogus intr'' warning messages.  While annoying,
+dnl	these messages do not prevent the installation from suceeding.
 		
 OpenBSDNFSInstall
 
