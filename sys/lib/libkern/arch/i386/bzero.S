@@ -1,13 +1,11 @@
+/*	$OpenBSD: bzero.S,v 1.2 1996/09/27 06:47:45 mickey Exp $	*/
+
 /*
  * Written by J.T. Conklin <jtc@netbsd.org>.
  * Public domain.
  */
 
 #include <machine/asm.h>
-
-#if defined(LIBC_SCCS)
-	RCSID("$NetBSD: bzero.S,v 1.5 1995/10/07 09:27:02 mycroft Exp $")
-#endif
 
 ENTRY(bzero)
 	pushl	%edi

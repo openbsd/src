@@ -1,13 +1,11 @@
+/*	$OpenBSD: memset.S,v 1.2 1996/09/27 06:47:47 mickey Exp $	*/
+
 /*
  * Written by J.T. Conklin <jtc@netbsd.org>.
  * Public domain.
  */
 
 #include <machine/asm.h>
-
-#if defined(LIBC_SCCS)
-	RCSID("$NetBSD: memset.S,v 1.8 1995/04/28 22:58:05 jtc Exp $")
-#endif
 
 ENTRY(memset)
 	pushl	%edi

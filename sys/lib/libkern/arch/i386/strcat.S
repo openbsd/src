@@ -1,13 +1,11 @@
+/*	$OpenBSD: strcat.S,v 1.2 1996/09/27 06:47:49 mickey Exp $	*/
+
 /*
  * Written by J.T. Conklin <jtc@netbsd.org>.
  * Public domain.
  */
 
 #include <machine/asm.h>
-
-#if defined(LIBC_SCCS)
-	RCSID("$NetBSD: strcat.S,v 1.6 1995/10/07 09:27:08 mycroft Exp $")
-#endif
 
 /*
  * NOTE: I've unrolled the loop eight times: large enough to make a

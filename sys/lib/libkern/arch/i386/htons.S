@@ -1,3 +1,5 @@
+/*	$OpenBSD: htons.S,v 1.2 1996/09/27 06:47:46 mickey Exp $	*/
+
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -34,14 +36,9 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)htons.s	5.2 (Berkeley) 12/17/90
- *	$Id: htons.S,v 1.1.1.1 1995/10/18 08:52:52 deraadt Exp $
  */
 
 #include <machine/asm.h>
-
-#if defined(LIBC_SCCS)
-RCSID("$Id: htons.S,v 1.1.1.1 1995/10/18 08:52:52 deraadt Exp $")
-#endif
 
 /* netorder = htons(hostorder) */
 ENTRY(htons)

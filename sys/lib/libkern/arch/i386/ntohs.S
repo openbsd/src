@@ -1,3 +1,5 @@
+/*	$OpenBSD: ntohs.S,v 1.2 1996/09/27 06:47:47 mickey Exp $	*/
+
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -34,14 +36,10 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ntohs.s	5.2 (Berkeley) 12/17/90
- *	$Id: ntohs.S,v 1.1.1.1 1995/10/18 08:52:52 deraadt Exp $
+ *	$Id: ntohs.S,v 1.2 1996/09/27 06:47:47 mickey Exp $
  */
 
 #include <machine/asm.h>
-
-#if defined(LIBC_SCCS)
-RCSID("$Id: ntohs.S,v 1.1.1.1 1995/10/18 08:52:52 deraadt Exp $")
-#endif
 
 /* hostorder = ntohs(netorder) */
 ENTRY(ntohs)

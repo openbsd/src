@@ -1,3 +1,4 @@
+/*	$OpenBSD: setjmp.S,v 1.2 1996/09/27 06:47:48 mickey Exp $	*/
 /*	$NetBSD: setjmp.S,v 1.5 1994/10/26 06:39:14 cgd Exp $	*/
 
 /*-
@@ -37,11 +38,6 @@
  *
  *	@(#)setjmp.s	5.1 (Berkeley) 4/23/90
  */
-
-#if defined(LIBC_SCCS)
-	.text
-	.asciz "$NetBSD: setjmp.S,v 1.5 1994/10/26 06:39:14 cgd Exp $"
-#endif
 
 /*
  * C library -- _setjmp, _longjmp
