@@ -60,7 +60,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: progressmeter.c,v 1.2 2003/01/12 16:57:02 markus Exp $");
+RCSID("$OpenBSD: progressmeter.c,v 1.3 2003/03/17 10:38:38 markus Exp $");
 
 #include <libgen.h>
 
@@ -124,7 +124,8 @@ stop_progress_meter()
 {
 	alarm(0);
 	draw_progress_meter();
-	atomicio(write, fileno(stdout), "\n", 1);
+	if (foregroundproc() != 0)
+		atomicio(write, fileno(stdout), "\n", 1);
 }
 
 static void
