@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_txpreg.h,v 1.10 2001/04/09 22:05:00 jason Exp $ */
+/*	$OpenBSD: if_txpreg.h,v 1.11 2001/04/10 19:52:38 jason Exp $ */
 
 /*
  * Copyright (c) 2001 Aaron Campbell <aaron@monkey.org>.
@@ -357,6 +357,18 @@ struct txp_tcpseg_desc {
 #define	TXP_MEDIA_CS		0x0020	/* carrier sense */
 #define	TXP_MEDIA_POL		0x0400	/* polarity reversed */
 #define	TXP_MEDIA_NOLINK	0x0800	/* 0 = link, 1 = no link */
+
+/*
+ * receive filter bits (par1 to TXP_CMD_RX_FILTER_{READ|WRITE}
+ */
+#define	TXP_RXFILT_DIRECT	0x0001	/* directed packets */
+#define	TXP_RXFILT_ALLMULTI	0x0002	/* all multicast packets */
+#define	TXP_RXFILT_BROADCAST	0x0004	/* broadcast packets */
+#define	TXP_RXFILT_PROMISC	0x0008	/* promiscuous mode */
+#define	TXP_RXFILT_HASHMULTI	0x0010	/* use multicast filter */
+
+/* multicast polynomial */
+#define	TXP_POLYNOMIAL		0x04c11db7
 
 /*
  * boot record (pointers to rings)

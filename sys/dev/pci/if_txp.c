@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_txp.c,v 1.9 2001/04/09 22:04:59 jason Exp $	*/
+/*	$OpenBSD: if_txp.c,v 1.10 2001/04/10 19:52:37 jason Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -103,6 +103,7 @@ int txp_download_fw_section __P((struct txp_softc *,
 int txp_alloc_rings __P((struct txp_softc *));
 void txp_dma_free __P((struct txp_softc *, struct txp_dma_alloc *));
 int txp_dma_malloc __P((struct txp_softc *, bus_size_t, struct txp_dma_alloc *));
+void txp_set_filter __P((struct txp_softc *));
 
 int txp_cmd_desc_numfree __P((struct txp_softc *));
 int txp_command __P((struct txp_softc *, u_int16_t, u_int16_t, u_int32_t,
@@ -1155,4 +1156,74 @@ txp_show_descriptor(d)
 		break;
 	}
 #endif
+}
+
+void
+txp_set_filter(sc)
+	struct txp_softc *sc;
+{
+	struct arpcom *ac = &sc->sc_arpcom;
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	u_int32_t crc, carry, hashbit, hash[2];
+	u_int16_t filter = 0;
+	u_int8_t octet;
+	int i, j, mcnt = 0;
+	struct ether_multi *enm;
+	struct ether_multistep step;
+
+again:
+	if (ifp->if_flags & IFF_PROMISC)
+		filter = TXP_RXFILT_PROMISC;
+	else if (ifp->if_flags & IFF_ALLMULTI)
+		filter = TXP_RXFILT_DIRECT | TXP_RXFILT_ALLMULTI |
+		    TXP_RXFILT_BROADCAST;
+	else {
+		filter = TXP_RXFILT_DIRECT | TXP_RXFILT_BROADCAST;
+		hash[0] = hash[1] = 0;
+
+		ETHER_FIRST_MULTI(step, ac, enm);
+		while (enm != NULL) {
+			if (bcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
+				/*
+				 * addresses.  For now, just accept all
+				 * multicasts, rather than trying to set only
+				 * those filter bits needed to match the range.
+				 * (At this time, the only use of address
+				 * ranges is for IP multicast routing, for
+				 * which the range is big enough to require
+				 * all bits set.)
+				 */
+				ifp->if_flags |= IFF_ALLMULTI;
+				goto again;
+			}
+
+			mcnt++;
+			crc = 0xffffffff;
+
+			for (i = 0; i < ETHER_ADDR_LEN; i++) {
+				octet = enm->enm_addrlo[i];
+				for (j = 0; j < 8; j++) {
+					carry = ((crc & 0x80000000) ? 1 : 0) ^
+					    (octet & 1);
+					crc <<= 1;
+					octet >>= 1;
+					if (carry)
+						crc = (crc ^ TXP_POLYNOMIAL) |
+						    carry;
+				}
+			}
+			hashbit = (u_int16_t)(crc & (64 - 1));
+			hash[hashbit / 32] |= (1 << hashbit % 32);
+			ETHER_NEXT_MULTI(step, enm);
+		}
+
+		if (mcnt > 0) {
+			filter |= TXP_RXFILT_HASHMULTI;
+			txp_command(sc, TXP_CMD_MCAST_HASH_MASK_WRITE,
+			    2, hash[0], hash[1], NULL, NULL, NULL, 0);
+		}
+	}
+
+	txp_command(sc, TXP_CMD_RX_FILTER_WRITE, filter, 0, 0,
+	    NULL, NULL, NULL, 0);
 }
