@@ -1,4 +1,4 @@
-.\"	$OpenBSD: afterboot.8,v 1.106 2005/03/02 16:08:47 jmc Exp $
+.\"	$OpenBSD: afterboot.8,v 1.107 2005/04/05 21:18:39 jmc Exp $
 .\"
 .\" Copyright (c) 1997 Marshall M. Midden
 .\" All rights reserved.
@@ -68,8 +68,8 @@ All significant and easily fixed problems will be reported at
 The web page will mention if a problem is security related.
 It is recommended that you check this page regularly.
 .Ss Login
-Login as
-.Dq Ic root .
+Log in as
+.Dq root .
 You can do so on the console, or over the network using
 .Xr ssh 1 .
 If you wish to deny root logins over the network, edit the
@@ -81,9 +81,7 @@ to
 (see
 .Xr sshd_config 5 ) .
 .Pp
-Upon successful login on the console, you may see the message
-.Dq Don't login as root, use su .
-For security reasons, it is bad practice to login as root during regular use
+For security reasons, it is bad practice to log in as root during regular use
 and maintenance of the system.
 Instead, administrators are encouraged to add a
 .Dq regular
