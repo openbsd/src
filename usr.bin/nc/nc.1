@@ -1,4 +1,4 @@
-.\"	$OpenBSD: nc.1,v 1.12 2001/05/04 01:38:31 millert Exp $
+.\"     $OpenBSD: nc.1,v 1.13 2001/06/26 06:55:06 ericj Exp $
 .\"
 .\" Copyright (c) 1996 David Sacerdote
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd August 1, 1996
+.Dd June 25, 2001
 .Dt NC 1
 .Os
 .Sh NAME
@@ -33,39 +33,33 @@
 .Nd "arbitrary TCP and UDP connections and listens"
 .Sh SYNOPSIS
 .Nm nc
-.Op Fl lnrtuvz
-.Op Fl g Ar intermediates
-.Op Fl G Ar hopcount
+.Op Fl 46hklnrtuvz
 .Op Fl i Ar interval
-.Op Fl o Ar filename
 .Op Fl p Ar source port
-.Op Fl s Ar ip address
+.Op Fl s Ar source ip address
 .Op Fl w Ar timeout
 .Op Ar hostname
-.Op Ar port[s...]
+.Op Ar port[s]
 .Sh DESCRIPTION
 The
 .Nm
 (or
 .Nm netcat )
-utility is used for just about anything under the sun
-involving TCP or UDP.
-It can open TCP connections, send UDP packets,
-listen on arbitrary TCP and UDP ports, do port scanning, and source
-routing.
+utility is used for just about anything under the sun involving TCP
+or UDP.
+It can open TCP connections, send UDP packets, listen on arbitrary
+TCP and UDP ports, do port scanning, and deal with both IPv4 and
+IPv6.
 Unlike
 .Xr telnet 1 ,
 .Nm
 scripts nicely, and separates error messages onto standard error instead
 of sending them to standard output, as
-.Xr telnet 1
+.Xr telnet 1 ,
 does with some.
 .Pp
-Destination ports can be single integers, names as listed in
-.Xr services 5 ,
-or ranges.
-Ranges are in the form nn-mm, and several separate ports and/or
-ranges may be specified on the command line.
+Destination ports can be single integers or ranges.
+Ranges are in the form nn-mm.
 .Pp
 Common uses include:
 .Pp
@@ -77,153 +71,109 @@ shell\-script based HTTP clients and servers
 .It
 network daemon testing
 .It
-source routing based connectivity testing
+network daemon testing
 .It
 and much, much more
 .El
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-.It Fl g Ar intermediate-host
-Specifies a hop along a loose source routed path.
-Can be used more than once to build a chain of hop points.
-.It Fl G Ar pointer
-Positions the
-.Dq hop counter
-within the list of machines in the path of a source routed packet.
-Must be a multiple of 4.
-.It Fl i Ar seconds
+.It Fl 4
+Forces
+.Nm
+to use IPv4 addresses only.
+.It Fl 6
+Forces
+.Nm
+to use IPv6 addresses only.
+.It Fl h
+Prints out
+.Nm
+help.
+.It Fl i Ar interval
 Specifies a delay time interval between lines of text sent and received.
 Also causes a delay time between connections to multiple ports.
-.It Fl l
-Is used to specify that
+.It Fl k
+Forces
 .Nm
-should listen for an incoming connection, rather than initiate a
+to stay listen for another connection after it's current connection
+is completed.
+.It Fl l
+Used to specify that
+.Nm
+should listen for an incoming connection rather than initiate a
 connection to a remote host.
-Any hostname/IP address and port arguments
-restrict the source of inbound connections to only that address and
-source port.
 .It Fl n
-Do not do DNS lookups on any of the specified addresses or hostnames, or
-names of port numbers from /etc/services.
-.It Fl o Ar filename
-Create a hexadecimal log of data transferred in the specified file.
-Each line begins with
-.Ql <
-or
-.Ql > .
-.Ql <
-means
-.Dq from the net
-and
-.Ql >
-means
-.Dq to the net .
+Do not do any DNS or service lookups on any specified addresses or
+hostnames, or ports.
 .It Fl p Ar port
 Specifies the source port
 .Nm
 should use, subject to privilege restrictions and availability.
 .It Fl r
-Specifies that source and/or destination ports should be chosen semi-randomly
-instead of sequentially within a range or in the order that the
-system assigns.
-.It Fl s Ar hostname/ip-address
+Specifies that source and/or destination ports should be chosen randomly
+instead of sequentially within a range or in the order that the system
+assigns.
+.It Fl s Ar hostname/ip address
 Specifies the IP of the interface which is used to send the packets.
-On some platforms, this can be used for UDP spoofing by using
-.Xr ifconfig 8
-to bring up a dummy interface with the desired source IP address.
 .It Fl t
 Causes
 .Nm
-to send RFC854 DON'T and WON'T responses to RFC854 DO
-and WILL requests.
+to send RFC854 DON'T and WON'T responses to RFC854 DO and WILL requests.
 This makes it possible to use
 .Nm
 to script telnet sessions.
-The presence of this option can be
-enabled or disabled as a compile-time option.
 .It Fl u
-Use UDP instead of TCP.
-On most platforms,
-.Nm
-will behave as if a connection is established until it receives an
-ICMP packet indicating that there is no program listening to what it
-sends.
+Use UDP instead of the default option of TCP.
 .It Fl v
-Verbose.
-Cause
+Have
 .Nm
-to display connection information.
-Using
-.Fl v
-more than once will cause
-.Nm
-to become even more verbose.
-.It Fl w Ar timeout
-Specifies the number of seconds
-.Nm
-should wait before deciding that
-an attempt to establish a connection is hopeless.
-Also used to specify how long to wait for more network data after standard
-input closes.
+give more verbose output.
 .It Fl z
 Specifies that
 .Nm
-should just scan for listening
-daemons, without sending any data to them.
-Diagnostic messages about refused connections will not be displayed unless
-.Fl v
-is specified twice.
+should just scan for listening daemons, without sending any data to them.
 .El
 .Sh EXAMPLES
 .Bl -tag -width x
-.It Li "nc"
-Wait for the user to type what would normally be command-line
-arguments on stdin.
-.It Li "nc example.host 42"
-Open a TCP connection to port 42 of example.host.
-If the connection
-fails, do not display any error messages, but simply exit.
-.It Li "nc -p 31337 example.host 42"
-Open a TCP connection to port 42 of example.host, and use port 31337
-as the source port.
-.It Li "nc -w 5 example.host 42"
-Open a TCP connection to port 42 of example.host, and time out after
+.It Li "nc hostname 42"
+Open a TCP connection to port 42 of hostname.
+.It Li "nc -p 31337 hostname 42"
+Open a TCP connection to port 42 of hostname, and use port 31337 as
+the source port.
+.It Li "nc -w 5 hostname 42"
+Open a TCP connection to port 42 of hostname, and timeout after
 five seconds while attempting to connect.
-.It Li "nc -u example.host 53"
-Send any data from stdin
-to UDP port 53 of example.host, and display any data returned.
+.It Li "nc -u hostname 53"
+Open a UDP connection to port 53 of hostname.
 .It Li "nc -s 10.1.2.3 example.host 42"
 Open a TCP connection to port 42 of example.host using 10.1.2.3 as the
 IP for the local end of the connection.
-.It Li "nc -v example.host 42"
-Open a TCP connection to port 42 of example.host, displaying some
+.It Li "nc -v hostname 42"
+Open a TCP connection to port 42 of hostname, displaying some
 diagnostic messages on stderr.
-.It Li "nc -v -v example.host 42"
-Open a TCP connection to port 42 of example.host, displaying all
+.It Li "nc -v -v hostname 42"
+Open a TCP connection to port 42 of hostname, displaying all
 diagnostic messages on stderr.
-.It Li "nc -v -z example.host 20-30"
+.It Li "nc -v -z hostname 20-30"
 Attempt to open TCP connections to ports 20 through 30 of
-example.host, and report which ones
+hostname , and report which ones
 .Nm
 was able to connect to.
-.It Li "nc -v -u -z -w 3 example.host 20-30"
+.It Li "nc -v -u -z -w 3 hostname 20-30"
 Send UDP packets to ports 20-30 of example.host, and report which ones
 did not respond with an ICMP packet after three seconds.
 .It Li "nc -l -p 3000"
 Listen on TCP port 3000, and once there is a connection, send stdin to
 the remote host, and send data from the remote host to stdout.
-.It Li "echo foobar | nc example.host 1000"
-Connect to port 1000 of example.host, send the string "foobar"
-followed by a newline, and move data from port 1000 of example.host to
-stdout until example.host closes the connection.
+.It Li "echo foobar | nc hostname 1000"
+Connect to port 1000 of hostname, send the string "foobar"
+followed by a newline, and move data from port 1000 of hostname to
+stdout until hostname closes the connection.
 .El
 .Sh SEE ALSO
 .Xr cat 1 ,
 .Xr telnet 1
-.Pp
-The
-.Nm netcat
-.Pa README .
 .Sh AUTHOR
-*Hobbit*  [hobbit@avian.org]
+Original implementation by *Hobbit*  [hobbit@avian.org].
+Rewritten with IPv6 support by Eric Jackson <ericj@monkey.org>.
