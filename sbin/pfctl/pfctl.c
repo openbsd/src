@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.127 2003/01/09 17:33:19 henning Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.128 2003/01/09 18:34:29 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1436,7 +1436,7 @@ main(int argc, char *argv[])
 			pfctl_show_nat(dev, opts);
 			break;
 		case 'q':
-			pfctl_show_altq(dev, opts);
+			pfctl_show_altq(dev, opts & PF_OPT_VERBOSE);
 			break;
 		case 's':
 			pfctl_show_states(dev, 0, opts);
@@ -1453,7 +1453,7 @@ main(int argc, char *argv[])
 		case 'a':
 			pfctl_show_rules(dev, opts, 0);
 			pfctl_show_nat(dev, opts);
-			pfctl_show_altq(dev, opts);
+			pfctl_show_altq(dev, opts & PF_OPT_VERBOSE);
 			pfctl_show_states(dev, 0, opts);
 			pfctl_show_status(dev);
 			pfctl_show_rules(dev, opts, 1);

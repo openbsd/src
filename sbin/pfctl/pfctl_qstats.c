@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_qstats.c,v 1.3 2003/01/09 18:27:41 henning Exp $ */
+/*	$OpenBSD: pfctl_qstats.c,v 1.4 2003/01/09 18:34:29 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer
@@ -50,7 +50,6 @@
 #include <altq/altq_priq.h>
 #include <altq/altq_hfsc.h>
 
-#include "pfctl_parser.h"
 #include "pfctl.h"
 
 union class_stats {
@@ -82,7 +81,7 @@ void			 pfctl_print_altq_nodestat(int,
 			    const struct pf_altq_node *);
 
 int
-pfctl_show_altq(int dev, int opts)
+pfctl_show_altq(int dev, int verbose)
 {
 	struct pf_altq_node	*root = NULL, *node;
 
@@ -90,7 +89,7 @@ pfctl_show_altq(int dev, int opts)
 		return (-1);
 
 	for (node = root; node != NULL; node = node->next)
-		pfctl_print_altq_node(dev, node, 0, opts & PF_OPT_VERBOSE);
+		pfctl_print_altq_node(dev, node, 0, verbose);
 	pfctl_free_altq_node(root);
 	return (0);
 }
