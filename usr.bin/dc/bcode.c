@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcode.c,v 1.21 2004/01/20 21:41:20 deraadt Exp $	*/
+/*	$OpenBSD: bcode.c,v 1.22 2004/02/11 20:44:31 otto Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: bcode.c,v 1.21 2004/01/20 21:41:20 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: bcode.c,v 1.22 2004/02/11 20:44:31 otto Exp $";
 #endif /* not lint */
 
 #include <ssl/ssl.h>
@@ -50,7 +50,7 @@ struct bmachine {
 	bool			extended_regs;
 	size_t			reg_array_size;
 	struct stack		*reg;
-	bool			interrupted;
+	volatile bool		interrupted;
 	struct source		readstack[RECURSION_STACK_SIZE];
 };
 
@@ -1704,9 +1704,8 @@ eval(void)
 				src_free();
 				bmachine.readsp--;
 				continue;
-			} else {
+			} else
 				bmachine.interrupted = false;
-			}
 		}
 #ifdef DEBUGGING
 		fprintf(stderr, "# %c\n", ch);
