@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "@(#)rwhod.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$OpenBSD: rwhod.c,v 1.11 1998/07/13 02:11:51 millert Exp $";
+static char rcsid[] = "$OpenBSD: rwhod.c,v 1.12 1998/08/16 21:22:18 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -286,6 +286,7 @@ onalrm(signo)
 	struct stat stb;
 	double avenrun[3];
 	time_t now;
+	struct	utmp *nutmp;
 	int cc;
 
 	now = time(NULL);
@@ -298,14 +299,17 @@ onalrm(signo)
 		if (stb.st_size > utmpsize) {
 			utmpsize = stb.st_size + 10 * sizeof(struct utmp);
 			if (utmp)
-				utmp = (struct utmp *)realloc(utmp, utmpsize);
+				nutmp = (struct utmp *)realloc(utmp, utmpsize);
 			else
-				utmp = (struct utmp *)malloc(utmpsize);
-			if (! utmp) {
+				nutmp = (struct utmp *)malloc(utmpsize);
+			if (!nutmp) {
 				fprintf(stderr, "rwhod: malloc failed\n");
+				if (utmp)
+					free(utmp);
 				utmpsize = 0;
 				goto done;
 			}
+			utmp = nutmp;
 		}
 		(void) lseek(utmpf, (off_t)0, SEEK_SET);
 		cc = read(utmpf, (char *)utmp, stb.st_size);
