@@ -217,6 +217,7 @@ struct sadb_policy {
 #define SADB_AALG_NONE               0
 #define SADB_AALG_MD5HMAC            2
 #define SADB_AALG_SHA1HMAC           3
+#define SADB_AALG_DES                4
 #define SADB_AALG_SHA2_256           5
 #define SADB_AALG_SHA2_384           6
 #define SADB_AALG_SHA2_512           7
@@ -226,13 +227,20 @@ struct sadb_policy {
 #define SADB_AALG_MAX                250
 
 #define SADB_EALG_NONE        0
+#define SADB_X_EALG_DES_IV64  1
 #define SADB_EALG_DESCBC      2
 #define SADB_EALG_3DESCBC     3
+#define SADB_X_EALG_RC5       4
+#define SADB_X_EALG_IDEA      5
 #define SADB_X_EALG_CAST      6
 #define SADB_X_EALG_BLF       7
-#define SADB_X_EALG_SKIPJACK  5
+#define SADB_X_EALG_3IDEA     8
+#define SADB_X_EALG_DES_IV32  9
+#define SADB_X_EALG_RC4       10
+#define SADB_X_EALG_NULL      11
 #define SADB_X_EALG_AES       12
-#define SADB_EALG_MAX         12
+#define SADB_X_EALG_SKIPJACK  249
+#define SADB_EALG_MAX         249
 
 #define SADB_SAFLAGS_PFS         	0x001    /* perfect forward secrecy */
 #define SADB_X_SAFLAGS_HALFIV    	0x002    /* Used for ESP-old */
