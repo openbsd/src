@@ -1,4 +1,4 @@
-/* $OpenBSD: http_main.c,v 1.15 2002/07/15 09:40:49 henning Exp $ */
+/* $OpenBSD: http_main.c,v 1.16 2002/07/16 14:08:34 henning Exp $ */
 
 /* ====================================================================
  * The Apache Software License, Version 1.1
@@ -5162,9 +5162,9 @@ static void standalone_main(int argc, char **argv)
 	if(!is_graceful)
 	    if (ap_server_chroot) {
 		if (geteuid()) {
-		    ap_log_error(APLOG_MARK, APLOG_ALERT, server_conf,
-			"can't run in secure mode if not started with "
-			"root privs.");
+		    ap_log_error(APLOG_MARK, APLOG_NOERRNO|APLOG_EMERG, 
+			server_conf, "can't run in secure mode if not "
+			"started with root privs.");
 		    exit(1);
 		}
 
@@ -5172,7 +5172,7 @@ static void standalone_main(int argc, char **argv)
 		OpenSSL_add_all_algorithms();
 
 		if (chroot(ap_server_root) < 0) {
-		    ap_log_error(APLOG_MARK, APLOG_CRIT, server_conf,
+		    ap_log_error(APLOG_MARK, APLOG_EMERG, server_conf,
 			"unable to chroot into %s!", ap_server_root);
 		    exit(1);
 		}
