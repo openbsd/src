@@ -1,4 +1,4 @@
-/*	$OpenBSD: socks.c,v 1.9 2004/10/17 03:13:55 djm Exp $	*/
+/*	$OpenBSD: socks.c,v 1.10 2005/02/08 15:26:23 otto Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist.  All rights reserved.
@@ -48,9 +48,9 @@
 #define SOCKS_IPV4	1
 
 
-int	remote_connect(char *, char *, struct addrinfo);
-int	socks_connect(char *host, char *port, struct addrinfo hints,
-	    char *proxyhost, char *proxyport, struct addrinfo proxyhints,
+int	remote_connect(const char *, const char *, struct addrinfo);
+int	socks_connect(const char *host, const char *port, struct addrinfo hints,
+	    const char *proxyhost, const char *proxyport, struct addrinfo proxyhints,
 	    int socksv);
 
 static in_addr_t
@@ -110,8 +110,9 @@ proxy_read_line(int fd, char *buf, int bufsz)
 }
 
 int
-socks_connect(char *host, char *port, struct addrinfo hints,
-    char *proxyhost, char *proxyport, struct addrinfo proxyhints,
+socks_connect(const char *host, const char *port,
+    struct addrinfo hints __attribute__ ((__unused__)),
+    const char *proxyhost, const char *proxyport, struct addrinfo proxyhints,
     int socksv)
 {
 	int proxyfd, r;
@@ -208,7 +209,7 @@ socks_connect(char *host, char *port, struct addrinfo hints,
 			    "CONNECT %s:%d HTTP/1.0\r\n\r\n",
 			    host, ntohs(serverport));
 		}
-		if (r == -1 || r >= sizeof(buf))
+		if (r == -1 || (size_t)r >= sizeof(buf))
 			errx (1, "hostname too long");
 		r = strlen(buf);
 

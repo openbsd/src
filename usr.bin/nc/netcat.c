@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.76 2004/12/10 16:51:31 hshoexer Exp $ */
+/* $OpenBSD: netcat.c,v 1.77 2005/02/08 15:26:23 otto Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  *
@@ -86,8 +86,8 @@ void	build_ports(char *);
 void	help(void);
 int	local_listen(char *, char *, struct addrinfo);
 void	readwrite(int);
-int	remote_connect(char *, char *, struct addrinfo);
-int	socks_connect(char *, char *, struct addrinfo, char *, char *,
+int	remote_connect(const char *, const char *, struct addrinfo);
+int	socks_connect(const char *, const char *, struct addrinfo, const char *, const char *,
 	struct addrinfo, int);
 int	udptest(int);
 int	unix_connect(char *);
@@ -104,7 +104,7 @@ main(int argc, char *argv[])
 	socklen_t len;
 	struct sockaddr_storage cliaddr;
 	char *proxy;
-	char *proxyhost = "", *proxyport = NULL;
+	const char *proxyhost = "", *proxyport = NULL;
 	struct addrinfo proxyhints;
 
 	ret = 1;
@@ -452,7 +452,7 @@ unix_listen(char *path)
  * port or source address if needed. Returns -1 on failure.
  */
 int
-remote_connect(char *host, char *port, struct addrinfo hints)
+remote_connect(const char *host, const char *port, struct addrinfo hints)
 {
 	struct addrinfo *res, *res0;
 	int s, error, x = 1;
