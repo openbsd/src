@@ -1,14 +1,14 @@
 #
 #	THREADWAY: threadway.teeny.org
 #
-#	$OpenBSD: THREADWAY,v 1.16 1996/10/21 10:20:32 mickey Exp $
+#	$OpenBSD: THREADWAY,v 1.17 1997/04/27 05:01:12 downsj Exp $
 #
 
 machine		i386
 option		I586_CPU
 
 option		XSERVER
-option		EXTMEM_SIZE=39936
+option		EXTMEM_SIZE=56320
 option		PCVT_USL_VT_COMPAT=1,PCVT_SCREENSAVER=1,PCVT_PRETTYSCRNS=0
 
 maxusers	32
@@ -49,7 +49,6 @@ option		LKM
 option		FFS
 option		QUOTA
 option		MFS
-option		LFS
 option		EXT2FS
 
 option		NFSCLIENT
@@ -95,8 +94,8 @@ pms0	at pckbd? irq 12		# PS/2 auxiliary port mouse
 
 de0	at pci? dev ? function ?
 
-ncr*	at pci? dev ? function ?	# NCR 538XX SCSI controllers
-scsibus* at ncr?
+ncr0	at pci? dev ? function ?	# NCR 538XX SCSI controllers
+scsibus0 at ncr0
 
 sd*	at scsibus? target ? lun ?	# SCSI disk drives
 st*	at scsibus? target ? lun ?	# SCSI tape drives
