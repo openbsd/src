@@ -1,4 +1,4 @@
-/*	$OpenBSD: adlookup.c,v 1.13 2003/03/16 00:30:38 margarida Exp $	*/
+/*	$OpenBSD: adlookup.c,v 1.14 2003/04/01 12:18:43 art Exp $	*/
 /*	$NetBSD: adlookup.c,v 1.17 1996/10/25 23:13:58 cgd Exp $	*/
 
 /*
@@ -76,7 +76,7 @@ adosfs_lookup(v)
 	struct anode *adp;	/* anode of search dir */
 	struct ucred *ucp;	/* lookup credentials */
 	struct proc  *p;
-	u_int32_t plen, hval, vpid;
+	u_int32_t plen, hval;
 	daddr_t bn;
 	char *pelt;
 
