@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.33 2001/06/27 04:49:41 art Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.34 2001/08/25 12:11:40 art Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -110,11 +110,11 @@ sys_exit(p, v, retval)
  */
 void
 exit1(p, rv)
-	register struct proc *p;
+	struct proc *p;
 	int rv;
 {
-	register struct proc *q, *nq;
-	register struct vmspace *vm;
+	struct proc *q, *nq;
+	struct vmspace *vm;
 
 	if (p->p_pid == 1)
 		panic("init died (signal %d, exit %d)",
