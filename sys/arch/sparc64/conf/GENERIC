@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.103 2004/09/24 20:55:05 jason Exp $
+#	$OpenBSD: GENERIC,v 1.104 2004/09/28 02:10:03 jason Exp $
 # 	$NetBSD: GENERIC32,v 1.18 2001/07/20 00:07:12 eeh Exp $
 
 machine		sparc64
@@ -190,6 +190,7 @@ clock*	at sbus?
 clock*	at ebus?
 rtc*	at ebus?
 clock0	at fhc0
+clkbrd*	at fhc?
 
 ## Timer chip found on (some) sun4u systems.
 timer*	at mainbus0
