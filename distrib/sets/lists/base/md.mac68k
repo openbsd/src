@@ -18,7 +18,7 @@
 ./usr/lib/libkafs.so.4.0
 ./usr/lib/libkdb.so.4.0
 ./usr/lib/libkrb.so.4.1
-./usr/lib/libkvm.so.5.1
+./usr/lib/libkvm.so.4.1
 ./usr/lib/libm.so.0.1
 ./usr/lib/libmenu.so.0.0
 ./usr/lib/libocurses.so.2.1
@@ -372,6 +372,7 @@
 ./usr/lib/perl5/m68k-openbsd/5.003/net/if_tun.ph
 ./usr/lib/perl5/m68k-openbsd/5.003/net/if_types.ph
 ./usr/lib/perl5/m68k-openbsd/5.003/net/netisr.ph
+./usr/lib/perl5/m68k-openbsd/5.003/net/pfkeyv2.ph
 ./usr/lib/perl5/m68k-openbsd/5.003/net/ppp-comp.ph
 ./usr/lib/perl5/m68k-openbsd/5.003/net/ppp_defs.ph
 ./usr/lib/perl5/m68k-openbsd/5.003/net/radix.ph
@@ -463,6 +464,7 @@
 ./usr/lib/perl5/m68k-openbsd/5.003/sys/localedef.ph
 ./usr/lib/perl5/m68k-openbsd/5.003/sys/lockf.ph
 ./usr/lib/perl5/m68k-openbsd/5.003/sys/malloc.ph
+./usr/lib/perl5/m68k-openbsd/5.003/sys/md5k.ph
 ./usr/lib/perl5/m68k-openbsd/5.003/sys/map.ph
 ./usr/lib/perl5/m68k-openbsd/5.003/sys/mbuf.ph
 ./usr/lib/perl5/m68k-openbsd/5.003/sys/mman.ph
