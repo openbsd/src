@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.105 2004/08/24 11:43:16 henning Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.106 2004/09/15 18:30:42 otto Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -290,22 +290,22 @@ main(int argc, char *argv[])
 		}
 
 		if (reconfig) {
+			reconfig = 0;
 			log_info("rereading config");
 			reconfigure(conffile, &conf, &mrt_l, &peer_l, rules_l);
-			reconfig = 0;
 		}
 
 		if (sigchld) {
+			sigchld = 0;
 			if (check_child(io_pid, "session engine"))
 				quit = 1;
 			if (check_child(rde_pid, "route decision engine"))
 				quit = 1;
-			sigchld = 0;
 		}
 
 		if (mrtdump == 1) {
-			mrt_handler(&mrt_l);
 			mrtdump = 0;
+			mrt_handler(&mrt_l);
 		}
 	}
 
