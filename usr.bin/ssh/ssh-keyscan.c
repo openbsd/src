@@ -7,7 +7,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: ssh-keyscan.c,v 1.36 2002/06/16 21:30:58 itojun Exp $");
+RCSID("$OpenBSD: ssh-keyscan.c,v 1.37 2002/06/27 08:49:44 markus Exp $");
 
 #include <sys/queue.h>
 #include <errno.h>
@@ -109,7 +109,8 @@ Linebuf_alloc(const char *filename, void (*errfun) (const char *,...))
 
 	if (!(lb = malloc(sizeof(*lb)))) {
 		if (errfun)
-			(*errfun) ("linebuf (%s): malloc failed\n", lb->filename);
+			(*errfun) ("linebuf (%s): malloc failed\n",
+			    filename ? filename : "(stdin)");
 		return (NULL);
 	}
 	if (filename) {
