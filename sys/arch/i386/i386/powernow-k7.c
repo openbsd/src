@@ -1,4 +1,4 @@
-/* $OpenBSD: powernow-k7.c,v 1.2 2004/07/14 05:38:37 tedu Exp $ */
+/* $OpenBSD: powernow-k7.c,v 1.3 2004/08/05 04:56:05 tedu Exp $ */
 /*
  * Copyright (c) 2004 Martin Végiard.
  * All rights reserved.
@@ -107,16 +107,19 @@ k7_powernow_getstates(uint32_t signature)
 	struct psb_s *psb;
 	struct pst_s *pst;
 	char *ptr;
+	bus_space_handle_t bh;
 
 	/*
 	 * Look in the 0xe0000 - 0x20000 physical address
 	 * range for the pst tables; 16 byte blocks
 	 */
-	if (bus_space_map(I386_BUS_SPACE_MEM, BIOS_START, BIOS_LEN, 0,
-	    (bus_space_handle_t *)&ptr)) {
+	if (bus_space_map(I386_BUS_SPACE_MEM, BIOS_START, BIOS_LEN, 0, &bh)) {
 		printf("k7_powernow: couldn't map BIOS\n");
 		return NULL;
 	}
+	ptr = malloc(BIOS_LEN, M_DEVBUF, M_NOWAIT);
+	memcpy(ptr, (void *)bh, BIOS_LEN);
+	bus_space_unmap(I386_BUS_SPACE_MEM, bh, BIOS_LEN);
 
 	for (i = 0; i < BIOS_LEN; i += 16, ptr += 16) {
 		if (memcmp(ptr, "AMDK7PNOW!", 10) == 0) {
