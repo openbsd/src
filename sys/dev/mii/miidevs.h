@@ -1,10 +1,10 @@
-/*	$OpenBSD: miidevs.h,v 1.12 2000/02/16 05:05:03 jason Exp $	*/
+/*	$OpenBSD: miidevs.h,v 1.13 2000/03/01 05:57:37 jason Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: miidevs,v 1.10 2000/02/16 05:04:25 jason Exp 
+ *	OpenBSD: miidevs,v 1.11 2000/03/01 05:57:18 jason Exp 
  */
 /* $NetBSD: miidevs,v 1.3 1998/11/05 03:43:43 thorpej Exp $ */
 
@@ -99,6 +99,8 @@
 /* Broadcom Corp. PHYs */
 #define	MII_MODEL_BROADCOM_3C905C	0x0017
 #define	MII_STR_BROADCOM_3C905C	"Broadcom 3C905C internal PHY"
+#define	MII_MODEL_BROADCOM_BCM5201	0x0021
+#define	MII_STR_BROADCOM_BCM5201	"BCM5201 10/100 media interface"
 
 /* Davicom Semiconductor PHYs */
 #define	MII_MODEL_xxDAVICOM_DM9101	0x0000
