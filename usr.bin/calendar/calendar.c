@@ -1,4 +1,4 @@
-/*	$OpenBSD: calendar.c,v 1.21 2003/06/10 22:20:45 deraadt Exp $	*/
+/*	$OpenBSD: calendar.c,v 1.22 2003/09/09 08:39:53 jmc Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -39,7 +39,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)calendar.c  8.3 (Berkeley) 3/25/94";
 #else
-static char rcsid[] = "$OpenBSD: calendar.c,v 1.21 2003/06/10 22:20:45 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: calendar.c,v 1.22 2003/09/09 08:39:53 jmc Exp $";
 #endif
 #endif /* not lint */
 
@@ -257,8 +257,8 @@ void
 usage(void)
 {
 	(void)fprintf(stderr,
-	    "usage: calendar [-a] [-A num] [-b] [-B num] [-t [[[cc]yy][mm]]dd] "
-	    "[-f calendarfile]\n");
+	    "usage: calendar [-ab] [-A num] [-B num] [-f calendarfile] "
+	    "[-t [[[cc]yy][mm]]dd]\n");
 	exit(1);
 }
 
