@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah_new.c,v 1.31 1999/12/08 02:26:18 angelos Exp $	*/
+/*	$OpenBSD: ip_ah_new.c,v 1.32 1999/12/08 06:16:56 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -199,13 +199,19 @@ ah_new_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
     unsigned char calcauth[AH_MAX_HASHLEN];
     int len, count, off, roff;
     struct mbuf *m0, *m1;
+    unsigned char *ptr;
     union authctx ctx;
     struct ah_new ah;
     
 #ifdef INET
-    unsigned char *ptr;
     struct ip ipo;
 #endif /* INET */
+
+#ifdef INET6
+    struct ip6_ext *ip6e;
+    struct ip6_hdr ip6;
+    int last;
+#endif /* INET6 */
 
     /* Save the AH header, we use it throughout */
     m_copydata(m, skip, sizeof(ah), (unsigned char *) &ah);
@@ -280,7 +286,7 @@ ah_new_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 #ifdef INET
 	case AF_INET:
 	    /*
-	     * This is the most painless way of dealing with IPv4 header
+	     * This is the least painful way of dealing with IPv4 header
 	     * and option processing -- just make sure they're in
 	     * contiguous memory.
 	     */
@@ -330,6 +336,15 @@ ah_new_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 		    case 0x94:	/* Router alert */
 		    case 0x95:	/* RFC1770 */
 			ahx->Update(&ctx, ptr + off, ptr[off + 1]);
+			/* Sanity check for zero-length options */
+			if (ptr[off + 1] == 0)
+			{
+			    DPRINTF(("ah_new_input(): illegal zero-length IPv4 option %d in SA %s/%08x\n", ptr[off], ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
+			    ahstat.ahs_hdrops++;
+			    m_freem(m);
+			    return NULL;
+			}
+
 			off += ptr[off + 1];
 			break;
 
@@ -338,13 +353,165 @@ ah_new_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 			off += ptr[off + 1];
 			break;
 		}
+
+		/* Sanity check */
+		if (off > skip)
+		{
+		    DPRINTF(("ah_new_input(): malformed IPv4 options header in SA %s/%08x\n", ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
+		    ahstat.ahs_hdrops++;
+		    m_freem(m);
+		    return NULL;
+		}
 	    }
 
 	    break;
 #endif /* INET */
 
 #ifdef INET6
-	    /* XXX */
+	case AF_INET6:  /* Ugly... */
+	    /* Copy and "cook" (later on) the IPv6 header */
+	    m_copydata(m, 0, sizeof(ip6), (unsigned char *) &ip6);
+
+	    /* We don't do IPv6 Jumbograms */
+	    if (ip6.ip6_plen == 0)
+	    {
+		DPRINTF(("ah_new_input(): unsupported IPv6 jumbogram in SA %s/%08x\n", ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
+		ahstat.ahs_hdrops++;
+		m_freem(m);
+		return NULL;
+	    }
+
+	    ip6.ip6_flow = 0;
+	    ip6.ip6_hlim = 0;
+	    ip6.ip6_vfc = IPV6_VERSION; /* This resets some bitfields */
+
+	    /* Include IPv6 header in authenticator computation */
+	    ahx->Update(&ctx, (unsigned char *) &ip6, sizeof(ip6));
+
+	    /* Let's deal with the remaining headers (if any) */
+	    if (skip - sizeof(struct ip6_hdr) > 0)
+	    {
+		if (m->m_len <= skip)
+		{
+		    MALLOC(ptr, unsigned char *, skip - sizeof(struct ip6_hdr),
+			   M_XDATA, M_WAITOK);
+
+		    /* Copy all the protocol headers after the IPv6 header */
+		    m_copydata(m, sizeof(struct ip6_hdr),
+			       skip - sizeof(struct ip6_hdr), ptr);
+		}
+		else
+		  ptr = mtod(m, unsigned char *) + sizeof(struct ip6_hdr);
+	    }
+	    else
+	      break;
+
+	    off = ip6.ip6_nxt & 0xff; /* Next header type */
+
+	    for (len = 0; len < skip - sizeof(struct ip6_hdr);)
+	      switch (off)
+	      {
+		  case IPPROTO_HOPOPTS:
+		  case IPPROTO_DSTOPTS:
+		      ip6e = (struct ip6_ext *) (ptr + len);
+
+		      /*
+		       * Process the mutable/immutable options -- borrows
+		       * heavily from the KAME code.
+		       */
+		      for (last = len, count = len + sizeof(struct ip6_ext);
+			   count < len + ((ip6e->ip6e_len + 1) << 3);)
+		      {
+			  if (ptr[count] == IP6OPT_PAD1)
+			  {
+			      count++;
+			      continue;
+			  }
+
+			  /* Sanity check */
+			  if (count + sizeof(struct ip6_ext) > len +
+			      ((ip6e->ip6e_len + 1) << 3))
+			  {
+			      DPRINTF(("ah_new_input(): malformed IPv6 options header in SA %s/%08x\n", ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
+			      ahstat.ahs_hdrops++;
+			      m_freem(m);
+
+			      /* Free, if we allocated */
+			      if (m->m_len < skip)
+			      {
+				  FREE(ptr, M_XDATA);
+				  ptr = NULL;
+			      }
+			      return NULL;
+			  }
+
+			  /*
+			   * If mutable option, calculate authenticator
+			   * for all immutable fields so far, then include
+			   * a zeroed-out version of this option.
+			   */
+			  if (ptr[count] & IP6OPT_MUTABLE)
+			  {
+			      /* Calculate immutables */
+			      ahx->Update(&ctx, ptr + last,
+					  count + sizeof(struct ip6e_ext) -
+					  last);
+			      last = count + ptr[count + 1] +
+				     sizeof(struct ip6e_ext);
+
+			      /* Calculate "zeroed-out" immutables */
+			      ahx->Update(&ctx, ipseczeroes, ptr[count + 1] -
+					  sizeof(struct ip6_ext));
+			  }
+			  
+			  count += ptr[count + 1] + sizeof(struct ip6_ext);
+
+			  /* Sanity check */
+			  if (count > skip - sizeof(struct ip6_hdr))
+			  {
+			      DPRINTF(("ah_new_input(): malformed IPv6 options header in SA %s/%08x\n", ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
+			      ahstat.ahs_hdrops++;
+			      m_freem(m);
+
+			      /* Free, if we allocated */
+			      if (m->m_len < skip)
+			      {
+				  FREE(ptr, M_XDATA);
+				  ptr = NULL;
+			      }
+			      return NULL;
+			  }
+		      }
+
+		      /* Include any trailing immutable options */
+		      ahx->Update(&ctx, ptr + last,
+				  len + ((ip6e->ip6e_len + 1) << 3) - last);
+
+		      len += ((ip6e->ip6e_len + 1) << 3); /* Advance */
+		      off = ip6e->ip6e_nxt;
+		      break;
+
+		  case IPPROTO_ROUTING:
+		      ip6e = (struct ip6_ext *) (ptr + len);
+		      ahx->Update(&ctx, ptr + len, (ip6e->ip6e_len + 1) << 3);
+		      len += ((ip6e->ip6e_len + 1) << 3); /* Advance */
+		      off = ip6e->ip6e_nxt;
+		      break;
+
+		  default:
+		      DPRINTF(("ah_new_input(): unexpected IPv6 header type %d in SA %s/%08x\n", off, ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));   
+		      len = skip - sizeof(struct ip6_hdr);
+		      break;
+	      }
+
+	    /* Free, if we allocated */
+	    if (m->m_len < skip)
+	    {
+		FREE(ptr, M_XDATA);
+		ptr = NULL;
+	    }
+
+	    break;
 #endif /* INET6 */
 
 	default:
@@ -496,14 +663,20 @@ ah_new_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
     struct auth_hash *ahx = (struct auth_hash *) tdb->tdb_authalgxform;
     unsigned char calcauth[AH_MAX_HASHLEN];
     int len, off, count;
+    unsigned char *ptr;
     struct ah_new *ah;
     union authctx ctx;
     struct mbuf *mo;
 
 #ifdef INET
-    unsigned char *ptr;
     struct ip ipo;
 #endif /* INET */
+
+#ifdef INET6
+    struct ip6_ext *ip6e;
+    struct ip6_hdr ip6;
+    int last;
+#endif /* INET6 */
 
     ahstat.ahs_output++;
 
@@ -620,6 +793,76 @@ ah_new_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 	    ipo.ip_p = IPPROTO_AH;
 	    ipo.ip_len = htons(ntohs(ipo.ip_len) + AH_NEW_FLENGTH);
 
+	    /* 
+	     * If we have a loose or strict routing option, we are
+	     * supposed to use the last address in it as the
+	     * destination address in the authenticated IPv4 header.
+	     *
+	     * Note that this is an issue only with the output routine;
+	     * we will correctly process (in the AH input routine) incoming
+	     * packets with these options without special consideration.
+	     *
+	     * We assume that the IP header contains the next hop's address,
+	     * and that the last entry in the option is the final
+	     * destination's address.
+	     */
+	    if (skip > sizeof(struct ip))
+	    {
+		for (off = sizeof(struct ip); off < skip;)
+		{
+		    /* First sanity check for zero-length options */
+		    if ((ptr[off] != IPOPT_EOL) && (ptr[off] != IPOPT_NOP) &&
+			(ptr[off + 1] == 0))
+		    {
+			DPRINTF(("ah_new_output(): illegal zero-length IPv4 option %d in SA %s/%08x\n", ptr[off], ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
+			ahstat.ahs_hdrops++;
+			m_freem(m);
+			return EMSGSIZE;
+		    }
+
+		    switch (ptr[off])
+		    {
+			case IPOPT_LSRR:
+			case IPOPT_SSRR:
+			    /* Sanity check for length */
+			    if (ptr[off + 1] < 2 + sizeof(struct in_addr))
+			    {
+				DPRINTF(("ah_new_output(): malformed LSRR or SSRR IPv4 option header in SA %s/%08x\n", ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
+				ahstat.ahs_hdrops++;
+				m_freem(m);
+				return EMSGSIZE;
+			    }
+
+			    bcopy(ptr + off + ptr[off + 1] -
+				  sizeof(struct in_addr),
+				  &(ipo.ip_dst), sizeof(struct in_addr));
+			    off = skip;
+			    break;
+
+			case IPOPT_EOL:
+			    off = skip;
+			    break;
+
+			case IPOPT_NOP:
+			    off++;
+			    break;
+
+			default:  /* Some other option, just skip it */
+			    off += ptr[off + 1];
+			    break;
+		    }
+
+		    /* Sanity check */
+		    if (off > skip)
+		    {
+			DPRINTF(("ah_new_output(): malformed IPv4 options header in SA %s/%08x\n", ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
+			ahstat.ahs_hdrops++;
+			m_freem(m);
+			return EMSGSIZE;
+		    }
+		}
+	    }
+
 	    /* Include IP header in authenticator computation */
 	    ahx->Update(&ctx, (unsigned char *) &ipo, sizeof(struct ip));
 
@@ -652,12 +895,158 @@ ah_new_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 			off += ptr[off + 1];
 			break;
 		}
+
+		/* Sanity check */
+		if (off > skip)
+		{
+		    DPRINTF(("ah_new_output(): malformed IPv4 options header in SA %s/%08x\n", ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
+		    ahstat.ahs_hdrops++;
+		    m_freem(m);
+		    return EMSGSIZE;
+		}
 	    }
 	    break;
 #endif /* INET */
 
 #ifdef INET6
 	case AF_INET6:
+	    /* Copy and "cook" the IPv6 header */
+	    m_copydata(m, 0, sizeof(ip6), (unsigned char *) &ip6);
+
+	    /* We don't do IPv6 Jumbograms */
+	    if (ip6.ip6_plen == 0)
+	    {
+		DPRINTF(("ah_new_output(): unsupported IPv6 jumbogram in SA %s/%08x\n", ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
+		ahstat.ahs_hdrops++;
+		m_freem(m);
+		return EMSGSIZE;
+	    }
+
+	    ip6.ip6_flow = 0;
+	    ip6.ip6_hlim = 0;
+	    ip6.ip6_vfc = IPV6_VERSION; /* This resets some bitfields */
+
+	    /*
+	     * Note that here we assume that on output, the IPv6 header
+	     * and any Type0 Routing Header present have been made to look
+	     * like the will at the destination. Note that this is a
+	     * different assumption than we made for IPv4 (because of 
+	     * different option processing in IPv4 and IPv6, and different
+	     * code paths from IPv4/IPv6 to here).
+	     */
+
+	    /* Include IPv6 header in authenticator computation */
+	    ahx->Update(&ctx, (unsigned char *) &ip6, sizeof(ip6));
+
+	    /* Let's deal with the remaining headers (if any) */
+	    if (skip - sizeof(struct ip6_hdr) > 0)
+	    {
+		if (m->m_len <= skip)
+		{
+		    MALLOC(ptr, unsigned char *,
+			   skip - sizeof(struct ip6_hdr), M_XDATA, M_WAITOK);
+
+		    /* Copy all the protocol headers after the IPv6 header */
+		    m_copydata(m, sizeof(struct ip6_hdr),
+			       skip - sizeof(struct ip6_hdr), ptr);
+		}
+		else
+		  ptr = mtod(m, unsigned char *) + sizeof(struct ip6_hdr);
+	    }
+	    else
+	      break; /* Done */
+
+	    off = ip6.ip6_nxt & 0xff; /* Next header type */
+	    for (len = 0; len < skip - sizeof(struct ip6_hdr);)
+	      switch (off)
+	      {
+		  case IPPROTO_HOPOPTS:
+		  case IPPROTO_DSTOPTS:
+		      ip6e = (struct ip6_ext *) (ptr + len);
+
+		      /*
+		       * Process the mutable/immutable options -- borrows
+		       * heavily from the KAME code.
+		       */
+		      for (last = len, count = len + sizeof(struct ip6_ext);
+			   count < len + ((ip6e->ip6e_len + 1) << 3);)
+		      {
+			  if (ptr[count] == IP6OPT_PAD1)
+			  {
+			      count++;
+			      continue;
+			  }
+
+			  /* Sanity check */
+			  if (count + sizeof(struct ip6_ext) > len +
+			      ((ip6e->ip6e_len + 1) << 3))
+			  {
+			      DPRINTF(("ah_new_output(): malformed IPv6 options header in SA %s/%08x\n", ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
+			      ahstat.ahs_hdrops++;
+			      m_freem(m);
+
+			      /* Free, if we allocated */
+			      if (m->m_len < skip)
+				FREE(ptr, M_XDATA);
+			      return EMSGSIZE;
+			  }
+
+			  /*
+			   * If mutable option, calculate authenticator
+			   * for all immutable fields so far, then include
+			   * a zeroed-out version of this option.
+			   */
+			  if (ptr[count] & IP6OPT_MUTABLE)
+			  {
+			      /* Calculate immutables */
+			      ahx->Update(&ctx, ptr + last, count + 2 - last);
+			      last = count + ptr[count + 1];
+
+			      /* Calculate "zeroed-out" immutables */
+			      ahx->Update(&ctx, ipseczeroes,
+					  ptr[count + 1] - 2);
+			  }
+			  
+			  count += ptr[count + 1];
+
+			  /* Sanity check */
+			  if (count > skip - sizeof(struct ip6_hdr))
+			  {
+			      DPRINTF(("ah_new_output(): malformed IPv6 options header in SA %s/%08x\n", ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
+			      ahstat.ahs_hdrops++;
+			      m_freem(m);
+
+			      /* Free, if we allocated */
+			      if (m->m_len < skip)
+				FREE(ptr, M_XDATA);
+			      return EMSGSIZE;
+			  }
+		      }
+
+		      /* Include any trailing immutable options */
+		      ahx->Update(&ctx, ptr + last,
+				  len + ((ip6e->ip6e_len + 1) << 3) - last);
+
+		      len += ((ip6e->ip6e_len + 1) << 3); /* Advance */
+		      off = ip6e->ip6e_nxt;
+		      break;
+
+		  case IPPROTO_ROUTING:
+		      ip6e = (struct ip6_ext *) (ptr + len);
+		      ahx->Update(&ctx, ptr + len, (ip6e->ip6e_len + 1) << 3);
+		      len += ((ip6e->ip6e_len + 1) << 3); /* Advance */
+		      off = ip6e->ip6e_nxt;
+		      break;
+	      }
+	    
+	    /* Free, if we allocated */
+	    if (m->m_len < skip)
+	    {
+		FREE(ptr, M_XDATA);
+		ptr = NULL;
+	    }
+
+	    break;
 #endif /* INET6 */
 
 	default:

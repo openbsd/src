@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.48 1999/12/06 07:14:36 angelos Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.49 1999/12/08 06:16:56 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -401,7 +401,7 @@ struct xformsw
 #define XFT_AUTH	0x0001
 #define XFT_CONF	0x0100
 
-#define IPSEC_ZEROES_SIZE	64
+#define IPSEC_ZEROES_SIZE	256	/* Larger than an IP6 extension hdr. */
 #define IPSEC_KERNFS_BUFSIZE    4096
 
 #if BYTE_ORDER == LITTLE_ENDIAN
