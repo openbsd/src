@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.47 1997/11/25 00:36:22 millert Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.48 1998/02/19 20:43:36 deraadt Exp $	*/
 /*	$NetBSD: disklabel.c,v 1.30 1996/03/14 19:49:24 ghudson Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: disklabel.c,v 1.47 1997/11/25 00:36:22 millert Exp $";
+static char rcsid[] = "$OpenBSD: disklabel.c,v 1.48 1998/02/19 20:43:36 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -411,7 +411,8 @@ writelabel(f, boot, lp)
 		 */
 		if (dosdp && pp->p_size &&
 		    (dosdp->dp_typ == DOSPTYP_OPENBSD ||
-		    dosdp->dp_typ == DOSPTYP_386BSD)) {
+		    dosdp->dp_typ == DOSPTYP_FREEBSD ||
+		    dosdp->dp_typ == DOSPTYP_NETBSD)) {
 		        sectoffset = get_le(&dosdp->dp_start) * lp->d_secsize;
 		} else {
 			if (dosdp) {
@@ -615,7 +616,17 @@ readmbr(f)
 		}
 	}
 	for (part = 0; part < NDOSPART; part++) {
-		if (get_le(&dp[part].dp_size) && dp[part].dp_typ == DOSPTYP_386BSD) {
+		if (get_le(&dp[part].dp_size) && dp[part].dp_typ == DOSPTYP_FREEBSD) {
+			fprintf(stderr, "# using MBR partition %d: "
+			    "type %02X off %d (0x%x) size %d (0x%x)\n", part,
+			    dp[part].dp_typ,
+			    get_le(&dp[part].dp_start), get_le(&dp[part].dp_start),
+			    get_le(&dp[part].dp_size), get_le(&dp[part].dp_size));
+			return (&dp[part]);
+		}
+	}
+	for (part = 0; part < NDOSPART; part++) {
+		if (get_le(&dp[part].dp_size) && dp[part].dp_typ == DOSPTYP_NETBSD) {
 			fprintf(stderr, "# using MBR partition %d: "
 			    "type %02X off %d (0x%x) size %d (0x%x)\n", part,
 			    dp[part].dp_typ,
@@ -653,8 +664,9 @@ readlabel(f)
 
 #ifdef DOSLABEL
 		if (dosdp && get_le(&dosdp->dp_size) &&
-		    (dosdp->dp_typ == DOSPTYP_386BSD ||
-		    dosdp->dp_typ == DOSPTYP_OPENBSD))
+		    (dosdp->dp_typ == DOSPTYP_OPENBSD ||
+		    (dosdp->dp_typ == DOSPTYP_FREEBSD ||
+		    dosdp->dp_typ == DOSPTYP_NETBSD))
 			sectoffset = get_le(&dosdp->dp_start) * DEV_BSIZE;
 #endif
 		if (verbose)
@@ -1554,8 +1566,10 @@ checklabel(lp)
 	if (lp->d_secperunit == 0)
 		lp->d_secperunit = lp->d_secpercyl * lp->d_ncylinders;
 #ifdef i386__notyet
-	if (dosdp && dosdp->dp_size && (dosdp->dp_typ == DOSPTYP_386BSD ||
-	    dosdp->dp_typ == DOSPTYP_OPENBSD)) {
+	if (dosdp && dosdp->dp_size &&
+	    (dosdp->dp_typ == DOSPTYP_OPENBSD ||
+	    dosdp->dp_typ == DOSPTYP_FREEBSD ||
+	    dosdp->dp_typ == DOSPTYP_NETBSD)) {
 		&& lp->d_secperunit > dosdp->dp_start + dosdp->dp_size) {
 		warnx("exceeds DOS partition size");
 		errors++;

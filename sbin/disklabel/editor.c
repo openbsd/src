@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.29 1998/01/11 18:21:17 millert Exp $	*/
+/*	$OpenBSD: editor.c,v 1.30 1998/02/19 20:43:37 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -31,7 +31,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.29 1998/01/11 18:21:17 millert Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.30 1998/02/19 20:43:37 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1734,9 +1734,11 @@ find_bounds(lp)
 	ending_sector = lp->d_secperunit;
 
 #ifdef DOSLABEL
-	/* If we have an MBR, use values from the OpenBSD/386BSD parition. */
-	if (dosdp && pp->p_size && (dosdp->dp_typ == DOSPTYP_OPENBSD ||
-	    dosdp->dp_typ == DOSPTYP_386BSD)) {
+	/* If we have an MBR, use values from the OpenBSD/FreeBSD parition. */
+	if (dosdp && pp->p_size &&
+	    (dosdp->dp_typ == DOSPTYP_OPENBSD ||
+	    dosdp->dp_typ == DOSPTYP_FREEBSD ||
+	    dosdp->dp_typ == DOSPTYP_NETBSD)) {
 		starting_sector = get_le(&dosdp->dp_start);
 		ending_sector = starting_sector + get_le(&dosdp->dp_size);
 		printf("Treating sectors %u-%u as the OpenBSD portion of the "
