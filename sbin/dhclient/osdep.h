@@ -1,4 +1,4 @@
-/*	$OpenBSD: osdep.h,v 1.7 2004/02/23 18:21:15 henning Exp $	*/
+/*	$OpenBSD: osdep.h,v 1.8 2004/02/23 18:26:43 henning Exp $	*/
 
 /* Operating system dependencies... */
 
@@ -69,9 +69,6 @@ extern int h_errno;
 #define TIME time_t
 #define GET_TIME(x)	time ((x))
 
-#define HAVE_SA_LEN
-#define HAVE_MKSTEMP
-
 #if defined(__alpha__) || (defined(__sparc64__) && defined(__arch64__))
 #define PTRSIZE_64BIT
 #endif
@@ -100,56 +97,4 @@ extern int h_errno;
 
 #ifndef BPF_FORMAT
 # define BPF_FORMAT "/dev/bpf%d"
-#endif
-
-#if defined (IFF_POINTOPOINT) && !defined (HAVE_IFF_POINTOPOINT)
-# define HAVE_IFF_POINTOPOINT
-#endif
-
-#if defined (AF_LINK) && !defined (HAVE_AF_LINK)
-# define HAVE_AF_LINK
-#endif
-
-#if defined (ARPHRD_TUNNEL) && !defined (HAVE_ARPHRD_TUNNEL)
-# define HAVE_ARPHRD_TUNNEL
-#endif
-
-#if defined (ARPHRD_LOOPBACK) && !defined (HAVE_ARPHRD_LOOPBACK)
-# define HAVE_ARPHRD_LOOPBACK
-#endif
-
-#if defined (ARPHRD_ROSE) && !defined (HAVE_ARPHRD_ROSE)
-# define HAVE_ARPHRD_ROSE
-#endif
-
-#if defined (ARPHRD_IEEE802) && !defined (HAVE_ARPHRD_IEEE802)
-# define HAVE_ARPHRD_IEEE802
-#endif
-
-#if defined (ARPHRD_FDDI) && !defined (HAVE_ARPHRD_FDDI)
-# define HAVE_ARPHRD_FDDI
-#endif
-
-#if defined (ARPHRD_AX25) && !defined (HAVE_ARPHRD_AX25)
-# define HAVE_ARPHRD_AX25
-#endif
-
-#if defined (ARPHRD_NETROM) && !defined (HAVE_ARPHRD_NETROM)
-# define HAVE_ARPHRD_NETROM
-#endif
-
-#if defined (ARPHRD_METRICOM) && !defined (HAVE_ARPHRD_METRICOM)
-# define HAVE_ARPHRD_METRICOM
-#endif
-
-#if defined (SO_BINDTODEVICE) && !defined (HAVE_SO_BINDTODEVICE)
-# define HAVE_SO_BINDTODEVICE
-#endif
-
-#if defined (SIOCGIFHWADDR) && !defined (HAVE_SIOCGIFHWADDR)
-# define HAVE_SIOCGIFHWADDR
-#endif
-
-#if defined (AF_LINK) && !defined (HAVE_AF_LINK)
-# define HAVE_AF_LINK
 #endif
