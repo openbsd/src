@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.75 2002/08/29 12:13:19 ho Exp $	*/
+/*	$OpenBSD: x509.c,v 1.76 2002/09/05 15:47:22 ho Exp $	*/
 /*	$EOM: x509.c,v 1.54 2001/01/16 18:42:16 ho Exp $	*/
 
 /*
@@ -1289,9 +1289,16 @@ x509_cert_get_subjects (void *scert, int *cnt, u_int8_t ***id,
 
   /*
    * XXX There can be a collection of subjectAltNames, but for now
-   * I only return the subjectName and a single subjectAltName.
+   * I only return the subjectName and a single subjectAltName, if present.
    */
-  *cnt = 2;
+  type = x509_cert_subjectaltname (cert, &altname, &altlen);
+  if (!type)
+    {
+      *cnt = 1;
+      altlen = 0;
+    }
+  else
+    *cnt = 2;
 
   *id = calloc (*cnt, sizeof **id);
   if (!*id)
@@ -1314,7 +1321,6 @@ x509_cert_get_subjects (void *scert, int *cnt, u_int8_t ***id,
   if (!subject)
     goto fail;
 
-
   (*id_len)[0] =
     ISAKMP_ID_DATA_OFF + i2d_X509_NAME (subject, NULL) - ISAKMP_GEN_SZ;
   (*id)[0] = malloc ((*id_len)[0]);
@@ -1327,67 +1333,68 @@ x509_cert_get_subjects (void *scert, int *cnt, u_int8_t ***id,
   ubuf = (*id)[0] + ISAKMP_ID_DATA_OFF - ISAKMP_GEN_SZ;
   i2d_X509_NAME (subject, &ubuf);
 
-  /* Stash the subjectAltName into the second slot.  */
-  type = x509_cert_subjectaltname (cert, &altname, &altlen);
-  if (!type)
-    goto fail;
-
-  buf = malloc (altlen + ISAKMP_ID_DATA_OFF);
-  if (!buf)
+  if (altlen)
     {
-      log_print ("x509_cert_get_subject: malloc (%d) failed",
-		 altlen + ISAKMP_ID_DATA_OFF);
-      goto fail;
-    }
-
-  switch (type)
-    {
-    case X509v3_DNS_NAME:
-      SET_ISAKMP_ID_TYPE (buf, IPSEC_ID_FQDN);
-      break;
-
-    case X509v3_RFC_NAME:
-      SET_ISAKMP_ID_TYPE (buf, IPSEC_ID_USER_FQDN);
-      break;
-
-    case X509v3_IP_ADDR:
-      /*
-       * XXX I dislike the numeric constants, but I don't know what we
-       * should use otherwise.
-       */
-      switch (altlen)
+      /* Stash the subjectAltName into the second slot.  */
+      buf = malloc (altlen + ISAKMP_ID_DATA_OFF);
+      if (!buf)
 	{
-	case 4:
-	  SET_ISAKMP_ID_TYPE (buf, IPSEC_ID_IPV4_ADDR);
-	  break;
-
-	case 16:
-	  SET_ISAKMP_ID_TYPE (buf, IPSEC_ID_IPV6_ADDR);
-	  break;
-
-	default:
-	  log_print ("x509_cert_get_subject: "
-		     "invalid subjectAltName iPAdress length %d ", altlen);
+	  log_print ("x509_cert_get_subject: malloc (%d) failed",
+		     altlen + ISAKMP_ID_DATA_OFF);
 	  goto fail;
 	}
-      break;
+
+      switch (type)
+	{
+	case X509v3_DNS_NAME:
+	  SET_ISAKMP_ID_TYPE (buf, IPSEC_ID_FQDN);
+	  break;
+
+	case X509v3_RFC_NAME:
+	  SET_ISAKMP_ID_TYPE (buf, IPSEC_ID_USER_FQDN);
+	  break;
+
+	case X509v3_IP_ADDR:
+	  /*
+	   * XXX I dislike the numeric constants, but I don't know what we
+	   * should use otherwise.
+	   */
+	  switch (altlen)
+	    {
+	    case 4:
+	      SET_ISAKMP_ID_TYPE (buf, IPSEC_ID_IPV4_ADDR);
+	      break;
+
+	    case 16:
+	      SET_ISAKMP_ID_TYPE (buf, IPSEC_ID_IPV6_ADDR);
+	      break;
+	      
+	    default:
+	      log_print ("x509_cert_get_subject: "
+			 "invalid subjectAltName iPAdress length %d ", altlen);
+	      goto fail;
+	    }
+	  break;
+	}
+
+      SET_IPSEC_ID_PROTO (buf + ISAKMP_ID_DOI_DATA_OFF, 0);
+      SET_IPSEC_ID_PORT (buf + ISAKMP_ID_DOI_DATA_OFF, 0);
+      memcpy (buf + ISAKMP_ID_DATA_OFF, altname, altlen);
+
+      (*id_len)[1] = ISAKMP_ID_DATA_OFF + altlen - ISAKMP_GEN_SZ;
+      (*id)[1] = malloc ((*id_len)[1]);
+      if (!(*id)[1])
+	{
+	  log_print ("x509_cert_get_subject: malloc (%d) failed",
+		     (*id_len)[1]);
+	  goto fail;
+	}
+      memcpy ((*id)[1], buf + ISAKMP_GEN_SZ, (*id_len)[1]);
+
+      free (buf);
+      buf = 0;
     }
 
-  SET_IPSEC_ID_PROTO (buf + ISAKMP_ID_DOI_DATA_OFF, 0);
-  SET_IPSEC_ID_PORT (buf + ISAKMP_ID_DOI_DATA_OFF, 0);
-  memcpy (buf + ISAKMP_ID_DATA_OFF, altname, altlen);
-
-  (*id_len)[1] = ISAKMP_ID_DATA_OFF + altlen - ISAKMP_GEN_SZ;
-  (*id)[1] = malloc ((*id_len)[1]);
-  if (!(*id)[1])
-    {
-      log_print ("x509_cert_get_subject: malloc (%d) failed", (*id_len)[1]);
-      goto fail;
-    }
-  memcpy ((*id)[1], buf + ISAKMP_GEN_SZ, (*id_len)[1]);
-
-  free (buf);
-  buf = 0;
   return 1;
 
  fail:
