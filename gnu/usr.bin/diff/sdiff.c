@@ -84,7 +84,18 @@ static void usage PARAMS((void));
 
 /* this lossage until the gnu libc conquers the universe */
 #if HAVE_TMPNAM
-#define private_tempnam() tmpnam ((char *) 0)
+char *private_tempnam()
+{
+	char *p;
+	int fd;
+
+	p = strdup("/tmp/sdiff.XXXXXXXXXX");
+	fd = mkstemp(p);
+	if (fd < 0)
+	  return NULL;
+	close(fd);
+	return p;
+}
 #else
 #ifndef PVT_tmpdir
 #define PVT_tmpdir "/tmp"
