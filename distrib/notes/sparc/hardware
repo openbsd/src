@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.65 2005/03/02 16:42:35 miod Exp $
+dnl	$OpenBSD: hardware,v 1.66 2005/03/06 12:53:25 jsg Exp $
 OpenBSD/MACHINE OSREV runs on the following classes of machines:
     * sun4: the VME series
 	- 4/100: Original sparc with VME. Many hardware bugs.
@@ -173,8 +173,11 @@ Supported devices {:-include-:}:
 	  + Tadpole PCMCIA controller (tslot)
 	- Wireless Ethernet adapters (wi)
 	  + Compact Flash Adapters (will show up as PCMCIA adapters)
-	      Buffalo AirStation CF
-	      ELSA XI800 CF
+	      Buffalo AirStation
+	      D-Link DCF-660W
+	      ELSA XI800
+	      Linksys WCF12
+	      Netgear MA701
 	  + PCMCIA Adapters
 	      3Com AirConnect 3CRWE737A PCMCIA
 	      ACTIONTEC HWC01170 PCMCIA

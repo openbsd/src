@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wi.4tbl,v 1.67 2005/02/18 06:53:10 jsg Exp $
+.\"	$OpenBSD: wi.4tbl,v 1.68 2005/03/06 12:53:25 jsg Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -167,6 +167,7 @@ Corega PCCB-11:Prism-2:PCMCIA
 Corega CGWLPCIA11:Prism-2:PCI
 Corega WLUSB-11:Prism-3:USB
 Corega WLUSB-11 Key:Prism-3:USB
+D-Link DCF-660W:Prism-2:CF
 D-Link DWL-120 (rev F):Prism-3:USB
 D-Link DWL-122:Prism-3:USB
 D-Link DWL-520 (rev A and B only):Prism-2.5:PCI
@@ -188,6 +189,7 @@ Intersil Mini-PCI:Prism-2.5:PCI
 Intersil ISL3872:Prism-3:PCI
 Intersil Prism 2X:Prism-3:USB
 JVC MP-XP7250:Prism-3:USB
+Linksys WCF12:Prism-2:CF
 Linksys Instant Wireless WPC11:Prism-2:PCMCIA
 Linksys Instant Wireless WPC11 2.5:Prism-2.5:PCMCIA
 Linksys Instant Wireless WPC11 3.0:Prism-3:PCMCIA

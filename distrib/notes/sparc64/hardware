@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.85 2005/03/05 01:49:27 miod Exp $
+dnl	$OpenBSD: hardware,v 1.86 2005/03/06 12:53:25 jsg Exp $
 OpenBSD/MACHINE OSREV runs on the following classes of machines:
 	- SBUS based workstations:
 		Ultra 1
@@ -191,8 +191,11 @@ dnl		PCI Alteon Tigon I/II PCI Gigabit Ethernet boards (ti)
 
 	Wireless Ethernet Adapters
 		Compact Flash Adapters (will show up as PCMCIA adapters)
-		    Buffalo AirStation CF
-		    ELSA XI800 CF
+		    Buffalo AirStation
+		    D-Link DCF-660W
+		    ELSA XI800
+		    Linksys WCF12
+		    Netgear MA701
 		PCMCIA Adapters
 		    3Com AirConnect 3CRWE737A PCMCIA
 		    ACTIONTEC HWC01170 PCMCIA

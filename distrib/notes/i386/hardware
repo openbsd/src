@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.182 2005/02/25 15:01:07 mickey Exp $
+dnl	$OpenBSD: hardware,v 1.183 2005/03/06 12:53:25 jsg Exp $
 OpenBSD/MACHINE OSREV works across a broad range of standard PCs and
 clones, with a wide variety of processors and I/O bus architectures.  It
 can be expected to install and run with minimal difficulties on most
@@ -489,7 +489,10 @@ Supported hardware {:-include-:}:
 	Wireless Ethernet Adapters
 		Compact Flash Adapters (will show up as PCMCIA adapters)
 		    Buffalo AirStation CF [A] [B] [C]
+		    D-Link DCF-660W [A] [B] [C]
 		    ELSA XI800 CF [A] [B] [C]
+		    Linksys WCF12 [A] [B] [C]
+		    Netgear MA701 [A] [B] [C]
 		PCMCIA Adapters
 		    3Com AirConnect 3CRWE737A PCMCIA [A] [B] [C]
 		    ACTIONTEC HWC01170 PCMCIA [A] [B] [C]

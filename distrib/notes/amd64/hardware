@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.36 2005/02/25 15:01:07 mickey Exp $
+dnl	$OpenBSD: hardware,v 1.37 2005/03/06 12:53:25 jsg Exp $
 OpenBSD/MACHINE OSREV should work on all Athlon 64-based and
 compatible designs.
 
@@ -392,7 +392,10 @@ dnl		YENTA-compatible PCI-CardBus bridges
 	Wireless Ethernet Adapters
 dnl		Compact Flash Adapters (will show up as PCMCIA adapters)
 dnl		    Buffalo AirStation CF
+dnl		    D-Link DCF-660W
 dnl		    ELSA XI800 CF
+dnl		    Linksys WCF12
+dnl		    Netgear MA701
 dnl		PCMCIA Adapters
 dnl		    3Com AirConnect 3CRWE737A PCMCIA
 dnl		    ACTIONTEC HWC01170 PCMCIA
