@@ -1,4 +1,4 @@
-.\"	$OpenBSD: compat_hpux.8,v 1.7 2005/03/26 20:20:57 mickey Exp $
+.\"	$OpenBSD: compat_hpux.8,v 1.8 2005/03/27 06:29:16 jmc Exp $
 .\"	$NetBSD: compat_hpux.8,v 1.2 2001/12/16 23:47:19 wiz Exp $
 .\"     from: compat_linux.8,v 1.23 2001/10/07 10:12:05 mbw Exp
 .\"
@@ -44,7 +44,7 @@ This applies to m68k (such as hp300) and hppa systems.
 Most programs should work, such as Matlab 4.2c and the HP-UX X11R5 server
 on m68k platforms.
 Programs that will not work are fairly uncommon, and often involve very low
-level hardware access and that includes X11 server on hppa machines.
+level hardware access, such as the X11 server on hppa machines.
 .Pp
 The HP-UX compatibility feature is active
 for kernels compiled with the
@@ -54,6 +54,7 @@ and
 options and the kern.emul.hpux
 .Xr sysctl 8
 enabled.
+The
 .Nm COMPAT_M68K4K
 option is only required for m68k platforms.
 HP-UX for m68k uses 4 KB page sizes, and
