@@ -1,6 +1,6 @@
 #!/bin/sh
 
-testsrc=$2/ssleay.cnf
+testsrc=$2/openssl.cnf
 test=$1/p
 cmd=/usr/sbin/openssl
 

@@ -8,4 +8,4 @@ echo type in this window after ssl negotiation and your output should
 echo be echoed by the server. 
 echo
 echo
-/usr/sbin/ssleay s_client -tls1
+/usr/sbin/openssl s_client -tls1

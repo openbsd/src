@@ -1,25 +1,25 @@
 #!/bin/sh
 
-#Test DSA certificate generation of ssleay
+#Test DSA certificate generation of openssl
 
 cd $1
 
 # Generate DSA paramter set
-ssleay dsaparam 512 -out dsa512.pem
+openssl dsaparam 512 -out dsa512.pem
 if [ $? != 0 ]; then
         exit 1;
 fi
 
 
 # Denerate a DSA certificate
-ssleay req -config $2/ssleay.cnf -x509 -newkey dsa:dsa512.pem -out testdsa.pem -keyout testdsa.key
+openssl req -config $2/openssl.cnf -x509 -newkey dsa:dsa512.pem -out testdsa.pem -keyout testdsa.key
 if [ $? != 0 ]; then
         exit 1;
 fi
 
 
 # Now check the certificate
-ssleay x509 -text -in testdsa.pem
+openssl x509 -text -in testdsa.pem
 if [ $? != 0 ]; then
         exit 1;
 fi
