@@ -1,4 +1,4 @@
-#	$OpenBSD: INST,v 1.21 1997/10/07 05:53:52 mickey Exp $
+#	$OpenBSD: INST,v 1.22 1997/12/17 08:54:43 downsj Exp $
 #	$NetBSD: INSTADP,v 1.17 1996/05/20 03:32:19 thorpej Exp $
 #
 #	Install kernels no longer support X.
@@ -11,6 +11,7 @@ option		INSTALL		# support floppy install
 option		I386_CPU	# CPU classes; at least one is REQUIRED
 option		I486_CPU
 option		I586_CPU
+option		I686_CPU
 option		GPL_MATH_EMULATE	# floating point emulation
 
 # Some BIOSes don't get the size of extended memory right.  If you

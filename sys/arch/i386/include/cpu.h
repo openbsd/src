@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.18 1997/12/09 03:36:41 deraadt Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.19 1997/12/17 08:54:51 downsj Exp $	*/
 /*	$NetBSD: cpu.h,v 1.35 1996/05/05 19:29:26 christos Exp $	*/
 
 /*-
@@ -96,7 +96,7 @@ int	want_resched;		/* resched() was called */
 #define	DELAY(x)		delay(x)
 void	delay __P((int));
 
-#ifdef I586_CPU
+#if defined(I586_CPU) || defined(I686_CPU)
 /*
  * High resolution clock support (Pentium only)
  */
@@ -129,18 +129,38 @@ void	delay __P((int));
  */
 #include <machine/cputypes.h>
 
-struct cpu_nameclass {
-	char *cpu_name;
-	int  cpu_class;
+struct cpu_nocpuid_nameclass {
+	int cpu_vendor;
+	const char *cpu_vendorname;
+	const char *cpu_name;
+	int cpu_class;
+	void (*cpu_setup) __P((const char *));
+};
+
+struct cpu_cpuid_nameclass {
+	const char *cpu_id;
+	int cpu_vendor;
+	const char *cpu_vendorname;
+	struct cpu_cpuid_family {
+		int cpu_class;
+		const char *cpu_models[CPU_MAXMODEL+2];
+		void (*cpu_setup) __P((const char *));
+	} cpu_family[CPU_MAXFAMILY - CPU_MINFAMILY + 1];
 };
 
 #ifdef _KERNEL
 extern int cpu;
 extern int cpu_class;
-extern struct cpu_nameclass i386_cpus[];
-#ifdef I586_CPU
-extern int pentium_mhz;
+extern int cpu_feature;
+extern int cpuid_level;
+extern struct cpu_nocpuid_nameclass i386_nocpuid_cpus[];
+extern struct cpu_cpuid_nameclass i386_cpuid_cpus[];
 
+#if defined(I586_CPU) || defined(I686_CPU)
+extern int pentium_mhz;
+#endif
+
+#ifdef I586_CPU
 /* F00F bug fix stuff for pentium cpu */
 extern int cpu_f00f_bug;
 void fix_f00f __P((void));

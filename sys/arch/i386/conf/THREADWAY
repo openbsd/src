@@ -1,16 +1,19 @@
 #
 #	THREADWAY: threadway.teeny.org
 #
-#	$OpenBSD: THREADWAY,v 1.22 1997/09/29 03:52:20 mickey Exp $
+#	Cyrix 150Mhz ("PR200+") 6x86
+#
+#	$OpenBSD: THREADWAY,v 1.23 1997/12/17 08:54:45 downsj Exp $
 #
 
 machine		i386
 option		I586_CPU
+option		I486_CPU
 
 option		XSERVER
 option		PCVT_SCREENSAVER=1,PCVT_PRETTYSCRNS=0
 option		NMBCLUSTERS=512
-option		APM_NOIDLE
+option		ATAPI_DEBUG_PROBE
 
 maxusers	32
 option		TIMEZONE=480

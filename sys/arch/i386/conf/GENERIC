@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.54 1997/10/20 01:40:11 todd Exp $
+#	$OpenBSD: GENERIC,v 1.55 1997/12/17 08:54:42 downsj Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -11,6 +11,7 @@ include "../../../conf/GENERIC"
 option		I386_CPU	# CPU classes; at least one is REQUIRED
 option		I486_CPU
 option		I586_CPU
+option		I686_CPU
 option		GPL_MATH_EMULATE	# floating point emulation
 
 #option		VM86		# Virtual 8086 emulation
