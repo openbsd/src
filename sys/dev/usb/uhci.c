@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhci.c,v 1.16 2000/11/11 16:23:30 drahn Exp $	*/
+/*	$OpenBSD: uhci.c,v 1.17 2000/12/11 04:23:20 ho Exp $	*/
 /*	$NetBSD: uhci.c,v 1.125 2000/09/23 21:00:10 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -1176,8 +1176,9 @@ uhci_intr(void *arg)
 	}
 	if (status & UHCI_STS_HCH) {
 		/* no acknowledge needed */
-		printf("%s: host controller halted\n", 
-		       USBDEVNAME(sc->sc_bus.bdev));
+		if (!sc->sc_dying)
+			printf("%s: host controller halted\n", 
+			       USBDEVNAME(sc->sc_bus.bdev));
 		sc->sc_dying = 1;
 #ifdef UHCI_DEBUG
 		uhci_dump_all(sc);
