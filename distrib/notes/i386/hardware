@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.93 2002/10/21 12:14:25 henning Exp $
+dnl	$OpenBSD: hardware,v 1.94 2002/11/21 05:30:37 jason Exp $
 OpenBSD/MACHINE OSREV works across a broad range of standard PC's and
 clones, with a wide variety of processors and I/O bus architectures.  It
 can be expected to install and run with minimal difficulties on most
@@ -514,6 +514,7 @@ Supported hardware {:-include-:}:
 	Cryptography Accelerators
 		Broadcom Bluesteelnet uBsec 5501, 5601, 5801, 5802, 5805,
 		  5820, 5821, 5822 [G]
+		Hifn 6500-based boards [G]
 		Hifn 7751-based boards, including: [G]
 		    Soekris Engineering vpn1201 and vpn1211
 		    GTGI PowerCrypt Encryption Accelerator
