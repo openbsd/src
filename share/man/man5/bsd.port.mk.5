@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.29 2001/03/28 11:33:31 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.30 2001/03/28 15:02:11 espie Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -224,7 +224,7 @@ Set based on corresponding INSTALL_* variables.
 .It Ev BUILD_DEPENDS
 List of other ports the current port needs to build correctly.
 Each item has the form
-.Sq file_to_test::directory[:target] .
+.Sq file_to_test::directory[,-subpackage][,flavor ...][:target] .
 The double :: is designed to allow wedging a package specification in the
 near future.
 .Sq target
@@ -238,6 +238,12 @@ The special name /nonexistent can be used to force a build
 dependency (see the ghostscript port for an example).
 .Sq directory
 is set relative to ${PORTSDIR}.
+.Sq subpackage
+is an optional subpackage name, to install instead of the default main
+package name.
+.Sq flavor ...
+is a comma separated list of flavors. By default, the dependency will build
+the default flavor.
 Build dependencies are checked at the beginning of the extract stage.
 .It Ev BZIP2
 Name of the bzip2 binary.
