@@ -1,7 +1,7 @@
-/*	$OpenBSD: sti.c,v 1.3 2001/01/11 21:23:53 mickey Exp $	*/
+/*	$OpenBSD: sti.c,v 1.4 2001/02/16 19:08:42 mickey Exp $	*/
 
 /*
- * Copyright (c) 2000 Michael Shalayeff
+ * Copyright (c) 2000-2001 Michael Shalayeff
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,6 +29,12 @@
  * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
+ */
+/*
+ * TODO:
+ *	call sti procs asynchronously;
+ *	implement console scroll-back;
+ *	X11 support.
  */
 
 #include <sys/param.h>
@@ -75,7 +81,7 @@ struct wsdisplay_emulops sti_emulops = {
 };
 
 int sti_ioctl __P((void *v, u_long cmd, caddr_t data, int flag, struct proc *p));
-int sti_mmap __P((void *v, off_t offset, int prot));
+paddr_t sti_mmap __P((void *v, off_t offset, int prot));
 int sti_alloc_screen __P((void *v, const struct wsscreen_descr *type,
 	void **cookiep, int *cxp, int *cyp, long *defattr));
 	void sti_free_screen __P((void *v, void *cookie));
@@ -451,7 +457,7 @@ sti_ioctl(v, cmd, data, flag, p)
 	return -1;
 }
 
-int
+paddr_t
 sti_mmap(v, offset, prot)
 	void *v;
 	off_t offset;
