@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.4 2001/01/16 05:34:15 jason Exp $	*/
+/*	$OpenBSD: server.c,v 1.5 2001/11/29 16:49:09 miod Exp $	*/
 
 /*
  * Copyright (c) 2000 Network Security Technologies, Inc. http://www.netsec.net
@@ -92,7 +92,6 @@ server_mode(bpffd, sysname, srvname, ea)
 	key_gen();
 
 	while (1) {
-reselect:
 		n = bpffd;
 		LIST_FOREACH(ses, &session_master.sm_sessions, s_next) {
 			if (ses->s_fd != -1 && ses->s_fd > n)
@@ -120,7 +119,7 @@ reselect:
 		n = select(n, fdsp, NULL, NULL, NULL);
 		if (n < 0) {
 			if (errno == EINTR)
-				goto reselect;
+				continue;
 			err(EX_IOERR, "select");
 			break;
 		}

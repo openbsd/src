@@ -1,4 +1,4 @@
-/*	$OpenBSD: pppoe.c,v 1.4 2001/04/15 20:41:46 jason Exp $	*/
+/*	$OpenBSD: pppoe.c,v 1.5 2001/11/29 16:49:09 miod Exp $	*/
 
 /*
  * Copyright (c) 2000 Network Security Technologies, Inc. http://www.netsec.net
@@ -275,8 +275,7 @@ setupfilter(ifn, ea, server_mode)
 		err(EX_IOERR, "set immediate");
 	}
 
-	strncpy(ifr.ifr_name, ifn, sizeof(ifr.ifr_name));
-	ifr.ifr_name[sizeof(ifr.ifr_name)-1] = '\0';
+	strlcpy(ifr.ifr_name, ifn, sizeof(ifr.ifr_name));
 	if (ioctl(fd, BIOCSETIF, &ifr) < 0) {
 		close(fd);
 		err(EX_IOERR, "set interface");
@@ -340,8 +339,7 @@ getifhwaddr(ifnhint, ifnambuf, ea)
 		    sizeof(ifrp->ifr_name)))
 			continue;
 		if (ifnhint == NULL) {
-			strncpy(req.ifr_name, ifrp->ifr_name, IFNAMSIZ);
-			req.ifr_name[IFNAMSIZ-1] = '\0';
+			strlcpy(req.ifr_name, ifrp->ifr_name, sizeof(req.ifr_name));
 			if (ioctl(s, SIOCGIFFLAGS, &req) < 0)
 				err(EX_IOERR, "get flags");
 			if ((req.ifr_flags & IFF_UP) == 0)
@@ -365,8 +363,7 @@ getifhwaddr(ifnhint, ifnambuf, ea)
 			return (-1);
 		}
 		bcopy(dl->sdl_data + dl->sdl_nlen, ea, sizeof(*ea));
-		strncpy(ifnambuf, ifrp->ifr_name, IFNAMSIZ);
-		ifnambuf[IFNAMSIZ-1] = '\0';
+		strlcpy(ifnambuf, ifrp->ifr_name, sizeof(ifnambuf));
 		free(inbuf);
 		close(s);
 		return (0);
