@@ -17,7 +17,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $OpenBSD: ip.c,v 1.29 2001/03/24 01:06:00 brian Exp $
+ * $OpenBSD: ip.c,v 1.30 2001/06/04 16:09:28 brian Exp $
  *
  *	TODO:
  *		o Return ICMP message for filterd packet
@@ -279,11 +279,16 @@ FilterCheck(const struct ip *pip, const struct filter *filter, unsigned *psecs)
             estab = syn = finrst = -1;
             sport = ntohs(0);
             break;
-          case IPPROTO_UDP:
           case IPPROTO_IPIP:
+            cproto = P_IPIP;
+            sport = dport = 0;
+            estab = syn = finrst = -1;
+            break;
+          case IPPROTO_UDP:
             cproto = P_UDP;
             if (datalen < 8) {	/* UDP header is 8 octets */
-              log_Printf(LogFILTER, " error: UDP must be at least 8 octets\n");
+              log_Printf(LogFILTER, " error: UDP/IPIP"
+                         " must be at least 8 octets\n");
               return 1;
             }
 
@@ -635,14 +640,20 @@ PacketCheck(struct bundle *bundle, unsigned char *cp, int nb,
 
   case IPPROTO_IPIP:
     if (logit && loglen < sizeof logbuf) {
-      uh = (struct udphdr *) ptop;
       snprintf(logbuf + loglen, sizeof logbuf - loglen,
-               "IPIP: %s:%d ---> ", inet_ntoa(pip->ip_src),
-               ntohs(uh->uh_sport));
+               "IPIP: %s ---> ", inet_ntoa(pip->ip_src));
       loglen += strlen(logbuf + loglen);
       snprintf(logbuf + loglen, sizeof logbuf - loglen,
-               "%s:%d", inet_ntoa(pip->ip_dst), ntohs(uh->uh_dport));
+               "%s", inet_ntoa(pip->ip_dst));
       loglen += strlen(logbuf + loglen);
+
+      if (((struct ip *)ptop)->ip_v == 4) {
+        snprintf(logbuf + loglen, sizeof logbuf - loglen, " contains ");
+        result = PacketCheck(bundle, ptop, nb - (ptop - cp), filter,
+                             logbuf, psecs);
+        if (result != -2)
+          return result;
+      }
     }
     break;
 
