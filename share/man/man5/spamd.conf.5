@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamd.conf.5,v 1.4 2003/03/08 21:36:12 jmc Exp $
+.\"	$OpenBSD: spamd.conf.5,v 1.5 2003/03/08 21:44:31 beck Exp $
 .\"
 .\" Copyright (c) 2003 Jason L. Wright (jason@thought.net)
 .\" Copyright (c) 2003 Bob Beck
@@ -59,8 +59,8 @@ Example:
 .Ic 	
 .Ic spews1:\e
 .Ic 	:black\e
-.Ic 	:msg=\e"SPAM. Your address \%A is in the spews level\e
-.Ic 	1 database\en see http://www.spews.org/ask.cgi?x=%A\en\e":\e
+.Ic 	:msg="SPAM. Your address \%A is in the spews level\e
+.Ic 	1 database\en see http://www.spews.org/ask.cgi?x=%A\en":\e
 .Ic 	:method=http:\e	
 .Ic 	:file=www.spews.org/spews_list_level1.txt:
 .Ic \ \	
