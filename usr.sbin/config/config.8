@@ -1,4 +1,4 @@
-.\"	$OpenBSD: config.8,v 1.19 2000/05/29 07:19:29 deraadt Exp $
+.\"	$OpenBSD: config.8,v 1.20 2000/05/29 07:28:54 angelos Exp $
 .\"	$NetBSD: config.8,v 1.10 1996/08/31 20:58:16 mycroft Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -212,17 +212,30 @@ include the following:
 .It machine Ar var
 Required.  Specifies the machine architecture.
 .It include Ar file
-la la la
+Include another configuration file.
 .It option Ar name
 Set a kernel option.  Kernel options may take either the form
 .Ar NAME
 or the form
 .Ar NAME=value .
+These options are passed to the compiler with the
+.Fl D
+flag.
 .It rmoption Ar name
-Delete a previously set option.
+Delete a previously set option.  This is useful when including another
+kernel configuration file.  A typical use is to include the
+.Va GENERIC
+kernel provided with each release and remove options that are
+unwanted, thus allowing for automatic inclusion of new device
+drivers.
 .It maxusers Ar number
 Required.  Used to size various system tables and maximum operating conditions
-in an approximate fashion.
+in an approximate fashion.  Multiple instances of this keyword may be
+specified.  The number provided in the last instance will be used, and
+warnings will be printed for each duplicate value.  This is convenient
+when used with the
+.Va include
+directive.
 .It config Ar bsd root on "dev [swap on dev [and dev ...]] [dump on dev [and dev ...]]"
 Required.  Specifies the swap and dump devices which the system should use.
 .It config Ar bsd swap generic
