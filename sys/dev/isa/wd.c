@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd.c,v 1.40 1999/05/09 20:40:43 weingart Exp $	*/
+/*	$OpenBSD: wd.c,v 1.41 1999/08/10 23:09:49 deraadt Exp $	*/
 /*	$NetBSD: wd.c,v 1.150 1996/05/12 23:54:03 mycroft Exp $ */
 
 /*
@@ -661,6 +661,10 @@ wdioctl(dev, xfer, addr, flag, p)
 		return 0;
 #endif
 
+	case DIOCRLDINFO:
+		wdgetdisklabel(dev, wd, wd->sc_dk.dk_label,
+		    wd->sc_dk.dk_cpulabel, 0);
+		return 0;
 	case DIOCGPDINFO: {
 			struct cpu_disklabel osdep;
 

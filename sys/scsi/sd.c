@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.38 1999/07/25 11:13:08 deraadt Exp $	*/
+/*	$OpenBSD: sd.c,v 1.39 1999/08/10 23:09:49 deraadt Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -786,6 +786,10 @@ sdioctl(dev, cmd, addr, flag, p)
 	}
 
 	switch (cmd) {
+	case DIOCRLDINFO:
+		sdgetdisklabel(dev, sd, sd->sc_dk.dk_label,
+		    sd->sc_dk.dk_cpulabel, 0);
+		return 0;
 	case DIOCGPDINFO: {
 			struct cpu_disklabel osdep;
 
