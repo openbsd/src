@@ -1,0 +1,77 @@
+.\" $OpenBSD: zkbd.4,v 1.1 2005/01/15 06:37:21 deraadt Exp $
+.\"
+.\" Copyright (c) CCYY YOUR NAME HERE <user@your.dom.ain>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd July 12, 1998
+.Dt ZKBD 4
+.Os
+.Sh NAME
+.Nm zkbd
+.Nd Zaurus keyboard support
+.Sh SYNOPSIS
+.Cd "zkbd*  at pxaip?"
+.Sh DESCRIPTION
+The
+.Nm
+driver provides support for the native keyboard found on the
+Zaurus.
+Access to the keyboard is through the
+.Xr wskbd 4
+driver.
+.Sh LAYOUT
+The Zaurus keyboard uses some strange chording behaviours to make
+certain key combinations show up.
+The left-hand Japanese key beside Ctrl is mapped as the ALT key.
+The non-obvious key mappings are explained here:
+.Pp
+.Bl -tag -width "xxxxxxxxxxxxx" -compact -offset indent
+.It Li \Fn u
+{
+.It Li \Fn i
+}
+.It Li \Fn d
+`
+.It Li Calendar
+F1
+.It Li Address
+F2
+.It Li Mail
+F3
+.It Li Home
+F4
+.It Li Menu
+F5
+.It Li Cancel
+ESC
+.It Li OK
+Enter
+.It Li Rear Toggle
+Up and Down
+.It Li Rear OK
+Right
+.It Li Rear Cancel
+Left
+.El
+.Pp
+Alt + F1 will select the second virtual console.
+.Sh SEE ALSO
+.Xr intro 4 ,
+.Xr pxaip 4
+.Sh HISTORY
+The
+.Nm
+driver
+appeared in
+.Ox 3.7 .
