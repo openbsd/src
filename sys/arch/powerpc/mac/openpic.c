@@ -1,4 +1,4 @@
-/*	$OpenBSD: openpic.c,v 1.3 2000/06/15 03:11:01 rahnds Exp $	*/
+/*	$OpenBSD: openpic.c,v 1.4 2000/07/07 13:22:42 rahnds Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -58,12 +58,12 @@
 #include <machine/pio.h>
 #include <powerpc/mac/openpicreg.h>
 
-#define ICU_LEN 64
+#define ICU_LEN 128
 #define LEGAL_IRQ(x) ((x >= 0) && (x < ICU_LEN))
 
 static int intrtype[ICU_LEN], intrmask[ICU_LEN], intrlevel[ICU_LEN];
 static struct intrhand *intrhand[ICU_LEN] = { 0 };
-static int hwirq[ICU_LEN], virq[64];
+static int hwirq[ICU_LEN], virq[ICU_LEN];
 unsigned int imen /* = 0xffffffff */; /* XXX */
 static int virq_max = 0;
 
@@ -145,6 +145,7 @@ vaddr_t openpic_base;
 void * openpic_intr_establish( void * lcv, int irq, int type, int level,
 	int (*ih_fun) __P((void *)), void *ih_arg, char *name);
 void openpic_intr_disestablish( void *lcp, void *arg);
+void openpic_collect_preconf_intr();
 
 void
 openpic_attach(parent, self, aux)
@@ -171,6 +172,10 @@ openpic_attach(parent, self, aux)
 	mac_intr_establish_func  = openpic_intr_establish;
 	mac_intr_disestablish_func  = openpic_intr_disestablish;
 	install_extint(ext_intr_openpic);
+	
+#if 1
+	openpic_collect_preconf_intr();
+#endif
 
 #if 1
 	mac_intr_establish(parent, 0x37, IST_LEVEL,
@@ -178,6 +183,28 @@ openpic_attach(parent, self, aux)
 #endif
 
 	printf("\n");
+}
+void
+openpic_collect_preconf_intr()
+{
+	int i;
+	printf("postconfiguring interrupts\n");
+	for (i = 0; i < ppc_configed_intr_cnt; i++) {
+		printf("\t%s irq %d level %d fun %x arg %x\n",
+			ppc_configed_intr[i].ih_what,
+			ppc_configed_intr[i].ih_irq,
+			ppc_configed_intr[i].ih_level,
+			ppc_configed_intr[i].ih_fun,
+			ppc_configed_intr[i].ih_arg
+			);
+		openpic_intr_establish(NULL,
+			ppc_configed_intr[i].ih_irq,
+			IST_LEVEL,
+			ppc_configed_intr[i].ih_level,
+			ppc_configed_intr[i].ih_fun,
+			ppc_configed_intr[i].ih_arg,
+			ppc_configed_intr[i].ih_what);
+	}
 }
 
 static int
@@ -419,7 +446,7 @@ mapirq(irq)
 {
 	int v;
 
-	if (irq < 0 || irq >= 64)
+	if (irq < 0 || irq >= ICU_LEN)
 		panic("invalid irq");
 	virq_max++;
 	v = virq_max;

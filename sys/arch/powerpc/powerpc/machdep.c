@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.42 2000/06/08 22:25:22 niklas Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.43 2000/07/07 13:22:43 rahnds Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -998,19 +998,35 @@ systype(char *name)
  */
 #include <dev/pci/pcivar.h>
 typedef void     *(intr_establish_t) __P((void *, pci_intr_handle_t,
-            int, int (*func)(void *), void *, char *));
+            int, int, int (*func)(void *), void *, char *));
 typedef void     (intr_disestablish_t) __P((void *, void *));
 
+int ppc_configed_intr_cnt = 0;
+struct intrhand ppc_configed_intr[MAX_PRECONF_INTR];
+
 void *
-ppc_intr_establish(lcv, ih, level, func, arg, name)
+ppc_intr_establish(lcv, ih, type, level, func, arg, name)
 	void *lcv;
 	pci_intr_handle_t ih;
+	int type;
 	int level;
 	int (*func) __P((void *));
 	void *arg;
 	char *name;
 {
-	panic("ppc_intr_establish called before interrupt controller configured: driver %s", name);
+	if (ppc_configed_intr_cnt < MAX_PRECONF_INTR) {
+		ppc_configed_intr[ppc_configed_intr_cnt].ih_fun = func;
+		ppc_configed_intr[ppc_configed_intr_cnt].ih_arg = arg;
+		ppc_configed_intr[ppc_configed_intr_cnt].ih_level = level;
+		ppc_configed_intr[ppc_configed_intr_cnt].ih_irq = ih;
+		ppc_configed_intr[ppc_configed_intr_cnt].ih_what = name;
+		ppc_configed_intr_cnt++;
+	} else {
+		panic("ppc_intr_establish called before interrupt controller"
+			" configured: driver %s too many interrupts\n", name);
+	}
+	/* disestablish is going to be tricky to supported for these :-) */
+	return (void *)ppc_configed_intr_cnt;
 }
 
 intr_establish_t *intr_establish_func = ppc_intr_establish;;
