@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_init.c,v 1.8 2001/09/19 20:50:59 mickey Exp $	*/
-/*	$NetBSD: uvm_init.c,v 1.12 2000/03/29 03:43:34 simonb Exp $	*/
+/*	$OpenBSD: uvm_init.c,v 1.9 2001/11/05 22:14:54 art Exp $	*/
+/*	$NetBSD: uvm_init.c,v 1.13 2000/06/26 14:21:18 mrg Exp $	*/
 
 /*
  *
@@ -51,7 +51,6 @@
 
 
 #include <vm/vm.h>
-#include <vm/vm_page.h>
 
 #include <uvm/uvm.h>
 

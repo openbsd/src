@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_loan.c,v 1.9 2001/09/11 20:05:26 miod Exp $	*/
-/*	$NetBSD: uvm_loan.c,v 1.20 2000/04/10 00:32:46 thorpej Exp $	*/
+/*	$OpenBSD: uvm_loan.c,v 1.10 2001/11/05 22:14:54 art Exp $	*/
+/*	$NetBSD: uvm_loan.c,v 1.21 2000/06/26 14:21:18 mrg Exp $	*/
 
 /*
  *
@@ -47,7 +47,6 @@
 #include <sys/mman.h>
 
 #include <vm/vm.h>
-#include <vm/vm_page.h>
 
 #include <uvm/uvm.h>
 

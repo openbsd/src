@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_fault.c,v 1.19 2001/09/19 20:50:59 mickey Exp $	*/
-/*	$NetBSD: uvm_fault.c,v 1.48 2000/04/10 01:17:41 thorpej Exp $	*/
+/*	$OpenBSD: uvm_fault.c,v 1.20 2001/11/05 22:14:54 art Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.49 2000/06/26 14:21:17 mrg Exp $	*/
 
 /*
  *

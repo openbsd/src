@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_amap.c,v 1.10 2001/09/11 20:05:25 miod Exp $	*/
-/*	$NetBSD: uvm_amap.c,v 1.22 1999/09/12 01:17:33 chs Exp $	*/
+/*	$OpenBSD: uvm_amap.c,v 1.11 2001/11/05 22:14:54 art Exp $	*/
+/*	$NetBSD: uvm_amap.c,v 1.23 2000/06/26 14:21:16 mrg Exp $	*/
 
 /*
  *
@@ -51,7 +51,6 @@
 #include <sys/pool.h>
 
 #include <vm/vm.h>
-#include <vm/vm_page.h>
 
 #define UVM_AMAP_C		/* ensure disabled inlines are in */
 #include <uvm/uvm.h>

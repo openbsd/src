@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_io.c,v 1.8 2001/09/20 02:07:43 art Exp $	*/
-/*	$NetBSD: uvm_io.c,v 1.10 2000/06/02 12:02:44 pk Exp $	*/
+/*	$OpenBSD: uvm_io.c,v 1.9 2001/11/05 22:14:54 art Exp $	*/
+/*	$NetBSD: uvm_io.c,v 1.11 2000/06/26 14:21:18 mrg Exp $	*/
 
 /*
  *
@@ -47,7 +47,6 @@
 #include <sys/uio.h>
 
 #include <vm/vm.h>
-#include <vm/vm_page.h>
 
 #include <uvm/uvm.h>
 

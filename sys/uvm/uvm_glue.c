@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_glue.c,v 1.20 2001/09/19 20:50:59 mickey Exp $	*/
-/*	$NetBSD: uvm_glue.c,v 1.36 2000/06/18 05:20:27 simonb Exp $	*/
+/*	$OpenBSD: uvm_glue.c,v 1.21 2001/11/05 22:14:54 art Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.37 2000/06/26 14:21:17 mrg Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -82,7 +82,6 @@
 #endif
 
 #include <vm/vm.h>
-#include <vm/vm_page.h>
 
 #include <uvm/uvm.h>
 

@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_mmap.c,v 1.21 2001/10/26 12:03:28 art Exp $	*/
-/*	$NetBSD: uvm_mmap.c,v 1.41 2000/05/23 02:19:20 enami Exp $	*/
+/*	$OpenBSD: uvm_mmap.c,v 1.22 2001/11/05 22:14:54 art Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.42 2000/06/26 14:21:18 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,6 @@
 #include <miscfs/specfs/specdev.h>
 
 #include <vm/vm.h>
-#include <vm/vm_page.h>
 
 #include <sys/syscallargs.h>
 
