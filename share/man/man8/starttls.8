@@ -1,4 +1,4 @@
-.\" $OpenBSD: starttls.8,v 1.11 2003/10/01 13:36:49 grange Exp $
+.\" $OpenBSD: starttls.8,v 1.12 2004/10/21 15:15:36 millert Exp $
 .\"
 .\" Copyright (c) 2001 Jose Nazario <jose@monkey.org>
 .\" All rights reserved.
@@ -327,7 +327,7 @@ Force strong (112 bit) encryption for communications for this server:
 .Pp
 For a TLS client, force string verification depths to at least 80 bits:
 .Pp
-.Dl TLS_Clt:desktop.example:net VERIFY:80
+.Dl TLS_Clt:desktop.example.net VERIFY:80
 .Pp
 Much more complicated access maps are possible, and error conditions (such
 as permanent or temporary, PERM+ or TEMP+) can be set on the basis of
