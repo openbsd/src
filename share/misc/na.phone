@@ -1,4 +1,4 @@
-#	$OpenBSD: na.phone,v 1.9 1997/11/18 07:36:36 mickey Exp $
+#	$OpenBSD: na.phone,v 1.10 1999/03/07 20:52:18 deraadt Exp $
 #	@(#)na.phone	8.1 (Berkeley) 6/8/93
 #
 # Area Code : City : State/Province : State/Province Abbrev.
@@ -95,7 +95,7 @@
 402:Lincoln:Nebraska:NE
 402:Omaha:Nebraska:NE
 403:Calgary:Alberta:AB
-403:Edmonton:Alberta:AB
+780:Edmonton:Alberta:AB
 403:Whitehorse:Yukon:YT
 403:Yellowknife:Northwest Territories:NT
 404:Atlanta(metro):Georgia:GA
