@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.5 1999/05/05 02:43:17 mickey Exp $	*/
+/*	$OpenBSD: conf.c,v 1.6 1999/11/16 17:02:16 mickey Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -132,28 +132,28 @@ cdev_decl(com);
 
 struct cdevsw   cdevsw[] =
 {
-	cdev_cn_init(1,cn),             /*  0: virtual console */
-	cdev_ctty_init(1,ctty),         /*  1: controlling terminal */
-	cdev_mm_init(1,mm),             /*  2: /dev/{null,mem,kmem,...} */
-	cdev_swap_init(1,sw),           /*  3: /dev/drum (swap pseudo-device) */
-	cdev_tty_init(NPTY,pts),        /*  4: pseudo-tty slave */
-	cdev_ptc_init(NPTY,ptc),        /*  5: pseudo-tty master */
-	cdev_log_init(1,log),           /*  6: /dev/klog */
-	cdev_disk_init(NCCD,ccd),       /*  7: concatenated disk */
-	cdev_disk_init(NVND,vnd),       /*  8: vnode disk driver */
-	cdev_disk_init(NRD,rd),         /*  9: RAM disk */
-	cdev_disk_init(NSD,sd),         /* 10: SCSI disk */
-	cdev_tape_init(NST,st),         /* 11: SCSI tape */
-	cdev_disk_init(NCD,cd),         /* 12: SCSI cd-rom */
-	cdev_ch_init(NCH,ch),         /* 13: SCSI changer */
-	cdev_ss_init(NSS,ss),         /* 14: SCSI scanner */
-	cdev_uk_init(NUK,uk),         /* 15: SCSI unknown */
-	cdev_fd_init(1,filedesc),       /* 16: file descriptor pseudo-device */
+	cdev_cn_init(1,cn),		/*  0: virtual console */
+	cdev_ctty_init(1,ctty),		/*  1: controlling terminal */
+	cdev_mm_init(1,mm),		/*  2: /dev/{null,mem,kmem,...} */
+	cdev_swap_init(1,sw),		/*  3: /dev/drum (swap pseudo-device) */
+	cdev_tty_init(NPTY,pts),	/*  4: pseudo-tty slave */
+	cdev_ptc_init(NPTY,ptc),	/*  5: pseudo-tty master */
+	cdev_log_init(1,log),		/*  6: /dev/klog */
+	cdev_disk_init(NCCD,ccd),	/*  7: concatenated disk */
+	cdev_disk_init(NVND,vnd),	/*  8: vnode disk driver */
+	cdev_disk_init(NRD,rd),		/*  9: RAM disk */
+	cdev_disk_init(NSD,sd),		/* 10: SCSI disk */
+	cdev_tape_init(NST,st),		/* 11: SCSI tape */
+	cdev_disk_init(NCD,cd),		/* 12: SCSI cd-rom */
+	cdev_ch_init(NCH,ch),		/* 13: SCSI changer */
+	cdev_ss_init(NSS,ss),		/* 14: SCSI scanner */
+	cdev_uk_init(NUK,uk),		/* 15: SCSI unknown */
+	cdev_fd_init(1,filedesc),	/* 16: file descriptor pseudo-device */
 	cdev_bpftun_init(NBPFILTER,bpf),/* 17: Berkeley packet filter */
-	cdev_bpftun_init(NTUN,tun),     /* 18: network tunnel */
-	cdev_lkm_init(NLKM,lkm),        /* 19: loadable module driver */
-	cdev_random_init(1,random),     /* 20: random generator */
-	cdev_gen_ipf(NIPF,ipl),         /* 21: ip filtering */
+	cdev_bpftun_init(NTUN,tun),	/* 18: network tunnel */
+	cdev_lkm_init(NLKM,lkm),	/* 19: loadable module driver */
+	cdev_random_init(1,random),	/* 20: random generator */
+	cdev_gen_ipf(NIPF,ipl),		/* 21: ip filtering */
 	cdev_tty_init(1,pdc),		/* 22: PDC device */
 	cdev_tty_init(NCOM,com),	/* 23: RS232 */
 	cdev_disk_init(NFD,fd),		/* 24: floppy drive */
