@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.246 2002/10/04 17:45:55 ish Exp $ */
+/*	$OpenBSD: pf.c,v 1.247 2002/10/05 21:17:57 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -372,6 +372,7 @@ pf_compare_rules(struct pf_rule *a, struct pf_rule *b)
 	    a->flagset != b->flagset ||
 	    a->rule_flag != b->rule_flag ||
 	    a->min_ttl != b->min_ttl ||
+	    a->tos != b->tos ||
 	    a->allow_opts != b->allow_opts)
 		return (1);
 	if (PF_ANEQ(&a->src.addr.addr, &b->src.addr.addr, a->af) ||
@@ -1698,6 +1699,8 @@ pf_test_tcp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 		else if (r->dst.port_op && !pf_match_port(r->dst.port_op,
 		    r->dst.port[0], r->dst.port[1], th->th_dport))
 			r = r->skip[PF_SKIP_DST_PORT];
+		else if (r->tos && !(r->tos & pd->tos))
+			r = TAILQ_NEXT(r, entries);
 		else if (r->rule_flag & PFRULE_FRAGMENT)
 			r = TAILQ_NEXT(r, entries);
 		else if ((r->flagset & th->th_flags) != r->flags)
@@ -1960,6 +1963,8 @@ pf_test_udp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 		else if (r->dst.port_op && !pf_match_port(r->dst.port_op,
 		    r->dst.port[0], r->dst.port[1], uh->uh_dport))
 			r = r->skip[PF_SKIP_DST_PORT];
+		else if (r->tos && !(r->tos & pd->tos))
+			r = TAILQ_NEXT(r, entries);
 		else if (r->rule_flag & PFRULE_FRAGMENT)
 			r = TAILQ_NEXT(r, entries);
 		else if (r->uid.op && (lookup != -1 || (lookup =
@@ -2247,6 +2252,8 @@ pf_test_icmp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 			r = TAILQ_NEXT(r, entries);
 		else if (r->code && r->code != icmpcode + 1)
 			r = TAILQ_NEXT(r, entries);
+		else if (r->tos && !(r->tos & pd->tos))
+			r = TAILQ_NEXT(r, entries);
 		else if (r->rule_flag & PFRULE_FRAGMENT)
 			r = TAILQ_NEXT(r, entries);
 		else {
@@ -2463,6 +2470,8 @@ pf_test_other(struct pf_rule **rm, int direction, struct ifnet *ifp,
 		    !PF_AZERO(&r->dst.mask, af) && !PF_MATCHA(r->dst.not,
 		    &r->dst.addr.addr, &r->dst.mask, pd->dst, af))
 			r = r->skip[PF_SKIP_DST_ADDR];
+		else if (r->tos && !(r->tos & pd->tos))
+			r = TAILQ_NEXT(r, entries);
 		else if (r->rule_flag & PFRULE_FRAGMENT)
 			r = TAILQ_NEXT(r, entries);
 		else {
@@ -2586,6 +2595,8 @@ pf_test_fragment(struct pf_rule **rm, int direction, struct ifnet *ifp,
 		    !PF_AZERO(&r->dst.mask, af) && !PF_MATCHA(r->dst.not,
 		    &r->dst.addr.addr, &r->dst.mask, pd->dst, af))
 			r = r->skip[PF_SKIP_DST_ADDR];
+		else if (r->tos && !(r->tos & pd->tos))
+			r = TAILQ_NEXT(r, entries);
 		else if (r->src.port_op || r->dst.port_op ||
 		    r->flagset || r->type || r->code)
 			r = TAILQ_NEXT(r, entries);
@@ -3881,6 +3892,7 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0)
 	pd.ip_sum = &h->ip_sum;
 	pd.proto = h->ip_p;
 	pd.af = AF_INET;
+	pd.tos = h->ip_tos;
 	pd.tot_len = h->ip_len;
 
 	/* handle fragments that didn't get reassembled by normalization */
@@ -4032,6 +4044,7 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0)
 	pd.dst = (struct pf_addr *)&h->ip6_dst;
 	pd.ip_sum = NULL;
 	pd.af = AF_INET6;
+	pd.tos = 0;
 	pd.tot_len = ntohs(h->ip6_plen) + sizeof(struct ip6_hdr);
 
 	off = ((caddr_t)h - m->m_data) + sizeof(struct ip6_hdr);

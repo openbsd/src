@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.90 2002/10/04 10:15:37 henning Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.91 2002/10/05 21:17:57 dhartmei Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -1006,7 +1006,7 @@ pf_rule        = action ( "in" | "out" )
                  [ "on" ifspec ] [ route ] [ af ] [ protospec ]
                  hosts
                  [ user ] [ group ] [ flags ]
-                 [ icmp-type | ipv6-icmp-type ]
+                 [ icmp-type | ipv6-icmp-type ] [ tos ]
                  [ ( "keep" | "modulate" ) "state" [ "(" state-opts ")" ] ]
                  [ "fragment" ] [ "no-df" ] [ "min-ttl" number ]
                  [ "max-mss" number ] [ fragmentation ] [ "allow-opts" ]
@@ -1078,6 +1078,9 @@ ipv6-icmp-type = "ipv6-icmp-type" ( icmp-type-code | "{" icmp-list "}" ) .
 icmp-type-code = ( icmp-type-name | icmp-type-number )
                  [ "code" ( icmp-code-name | icmp-code-number ) ] .
 icmp-list      = icmp-type-code [ [ "," ] icmp-list ] . 
+
+tos            = "tos" ( "lowdelay" | "throughput" | "reliability" |
+                         [ "0x" ] number ) .
 
 state-opts     = state-opt [ [ "," ] state-opts ] .
 state-opt      = ( "max" seconds ) | ( timeout seconds ) .

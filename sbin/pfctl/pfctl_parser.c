@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.94 2002/07/20 18:58:44 deraadt Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.95 2002/10/05 21:17:57 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -743,6 +743,8 @@ print_rule(struct pf_rule *r)
 				printf("code %u ", r->code-1);
 		}
 	}
+	if (r->tos)
+		printf("tos 0x%2.2x ", r->tos);
 	if (r->keep_state == PF_STATE_NORMAL)
 		printf("keep state ");
 	else if (r->keep_state == PF_STATE_MODULATE)

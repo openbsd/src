@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.89 2002/08/12 16:41:25 dhartmei Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.90 2002/10/05 21:17:57 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -276,6 +276,7 @@ struct pf_rule {
 	u_int8_t		 allow_opts;
 	u_int8_t		 rt;
 	u_int8_t		 return_ttl;
+	u_int8_t		 tos;
 };
 
 #define	PFRULE_RETURNRST	0x01
@@ -401,6 +402,7 @@ struct pf_pdesc {
 					 * state code. Easier than tags */
 	u_int8_t	 af;
 	u_int8_t	 proto;
+	u_int8_t	 tos;
 };
 
 /* flags for RDR options */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.154 2002/09/22 15:30:15 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.155 2002/10/05 21:17:57 dhartmei Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -243,7 +243,7 @@ typedef struct {
 %token	RETURNRST RETURNICMP RETURNICMP6 PROTO INET INET6 ALL ANY ICMPTYPE
 %token	ICMP6TYPE CODE KEEP MODULATE STATE PORT RDR NAT BINAT ARROW NODF
 %token	MINTTL ERROR ALLOWOPTS FASTROUTE ROUTETO DUPTO NO LABEL
-%token	NOROUTE FRAGMENT USER GROUP MAXMSS MAXIMUM TTL
+%token	NOROUTE FRAGMENT USER GROUP MAXMSS MAXIMUM TTL TOS
 %token	FRAGNORM FRAGDROP FRAGCROP
 %token	SET OPTIMIZATION TIMEOUT LIMIT LOGINTERFACE
 %token	ANTISPOOF FOR
@@ -251,6 +251,7 @@ typedef struct {
 %token	<v.i>	PORTUNARY PORTBINARY
 %type	<v.interface>	interface if_list if_item_not if_item
 %type	<v.number>	number port icmptype icmp6type minttl uid gid maxmss
+%type	<v.number>	tos
 %type	<v.i>	no dir log af nodf allowopts fragment fragcache
 %type	<v.b>	action flag flags blockspec
 %type	<v.range>	dport rport
@@ -430,7 +431,7 @@ antispoof_iflst	: if_item			{ $$ = $1; }
 		| antispoof_iflst comma if_item	{ $3->next = $1; $$ = $3; }
 
 pfrule		: action dir logquick interface route af proto fromto
-		  uids gids flags icmpspec keep fragment allowopts label
+		  uids gids flags icmpspec tos keep fragment allowopts label
 		{
 			struct pf_rule r;
 			struct node_state_opt *o;
@@ -466,8 +467,9 @@ pfrule		: action dir logquick interface route af proto fromto
 				}
 			}
 
-			r.keep_state = $13.action;
-			o = $13.options;
+			r.tos = $13;
+			r.keep_state = $14.action;
+			o = $14.options;
 			while (o) {
 				struct node_state_opt *p = o;
 
@@ -495,9 +497,9 @@ pfrule		: action dir logquick interface route af proto fromto
 				free(p);
 			}
 
-			if ($14)
+			if ($15)
 				r.rule_flag |= PFRULE_FRAGMENT;
-			r.allow_opts = $15;
+			r.allow_opts = $16;
 
 			if ($5.rt) {
 				r.rt = $5.rt;
@@ -525,14 +527,14 @@ pfrule		: action dir logquick interface route af proto fromto
 				}
 			}
 
-			if ($16) {
-				if (strlen($16) >= PF_RULE_LABEL_SIZE) {
+			if ($17) {
+				if (strlen($17) >= PF_RULE_LABEL_SIZE) {
 					yyerror("rule label too long (max "
 					    "%d chars)", PF_RULE_LABEL_SIZE-1);
 					YYERROR;
 				}
-				strlcpy(r.label, $16, sizeof(r.label));
-				free($16);
+				strlcpy(r.label, $17, sizeof(r.label));
+				free($17);
 			}
 
 			expand_rule(&r, $4, $7, $8.src.host, $8.src.port,
@@ -1121,6 +1123,25 @@ icmp6type	: STRING			{
 					YYERROR;
 				}
 				$$ = p->type + 1;
+			}
+		}
+		;
+
+tos		: /* empty */			{ $$ = 0; }
+		| TOS STRING			{
+			if (!strcmp($2, "lowdelay"))
+				$$ = IPTOS_LOWDELAY;
+			else if (!strcmp($2, "throughput"))
+				$$ = IPTOS_THROUGHPUT;
+			else if (!strcmp($2, "reliability"))
+				$$ = IPTOS_RELIABILITY;
+			else if ($2[0] == '0' && $2[1] == 'x')
+				$$ = strtoul($2, NULL, 16);
+			else
+				$$ = strtoul($2, NULL, 10);
+			if (!$$ || $$ > 255) {
+				yyerror("illegal tos value %s", $2);
+				YYERROR;
 			}
 		}
 		;
@@ -2281,6 +2302,7 @@ lookup(char *s)
 		{ "state",	STATE},
 		{ "timeout",	TIMEOUT},
 		{ "to",		TO},
+		{ "tos",	TOS},
 		{ "ttl",	TTL},
 		{ "user",	USER},
 	};
