@@ -1,4 +1,4 @@
-/*	$OpenBSD: odsyntax.c,v 1.6 2001/09/30 07:17:03 pvalchev Exp $	*/
+/*	$OpenBSD: odsyntax.c,v 1.7 2001/11/02 19:41:06 mickey Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,13 +35,14 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)odsyntax.c	5.4 (Berkeley) 3/8/91";*/
-static char rcsid[] = "$OpenBSD: odsyntax.c,v 1.6 2001/09/30 07:17:03 pvalchev Exp $";
+static char rcsid[] = "$OpenBSD: odsyntax.c,v 1.7 2001/11/02 19:41:06 mickey Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <stdlib.h>
-#include <ctype.h>
 #include <stdio.h>
+#include <ctype.h>
+#include <err.h>
 #include "hexdump.h"
 
 int deprecated;
@@ -131,11 +132,10 @@ oldsyntax(argc, argvp)
 		case 'w':
 		case '?':
 		default:
-			(void)fprintf(stderr,
-			    "od: od(1) has been deprecated for hexdump(1).\n");
+			warnx("od(1) has been deprecated for hexdump(1)");
 			if (ch != '?')
-				(void)fprintf(stderr,
-"od: hexdump(1) compatibility doesn't support the -%c option%s\n",
+				warnx("hexdump(1) compatibility doesn't"
+				    "support the -%c option%s",
 				    ch, ch == 's' ? "; see strings(1)." : ".");
 			usage();
 		}

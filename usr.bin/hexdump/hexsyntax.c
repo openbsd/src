@@ -1,4 +1,4 @@
-/*	$OpenBSD: hexsyntax.c,v 1.4 2001/07/12 05:17:10 deraadt Exp $	*/
+/*	$OpenBSD: hexsyntax.c,v 1.5 2001/11/02 19:41:06 mickey Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)hexsyntax.c	5.2 (Berkeley) 5/8/90";*/
-static char rcsid[] = "$OpenBSD: hexsyntax.c,v 1.4 2001/07/12 05:17:10 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: hexsyntax.c,v 1.5 2001/11/02 19:41:06 mickey Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -43,6 +43,7 @@ static char rcsid[] = "$OpenBSD: hexsyntax.c,v 1.4 2001/07/12 05:17:10 deraadt E
 #include <stdlib.h>
 #include <limits.h>
 #include <unistd.h>
+#include <err.h>
 #include "hexdump.h"
 
 off_t skip;				/* bytes to skip */
@@ -81,22 +82,16 @@ newsyntax(argc, argvp)
 			addfile(optarg);
 			break;
 		case 'n':
-			if ((length = atoi(optarg)) < 0) {
-				(void)fprintf(stderr,
-				    "hexdump: bad length value.\n");
-				exit(1);
-			}
+			if ((length = atoi(optarg)) < 0)
+				errx(1, "bad length value");
 			break;
 		case 'o':
 			add("\"%07.7_Ax\n\"");
 			add("\"%07.7_ax \" 8/2 \" %06o \" \"\\n\"");
 			break;
 		case 's':
-			if ((skip = strtol(optarg, &p, 0)) < 0) {
-				(void)fprintf(stderr,
-				    "hexdump: bad skip value.\n");
-				exit(1);
-			}
+			if ((skip = strtol(optarg, &p, 0)) < 0)
+				errx(1, "bad skip value");
 			switch(*p) {
 			case 'b':
 				skip *= 512;
@@ -132,7 +127,8 @@ newsyntax(argc, argvp)
 void
 usage()
 {
-	(void)fprintf(stderr,
-"hexdump: [-bcdovx] [-e fmt] [-f fmt_file] [-n length] [-s skip] [file ...]\n");
+	extern char *__progname;
+	fprintf(stderr, "usage: %s [-bcdovx] [-e fmt] [-f fmt_file] "
+			"[-n length] [-s skip] [file ...]", __progname);
 	exit(1);
 }

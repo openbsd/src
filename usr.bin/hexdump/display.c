@@ -1,4 +1,4 @@
-/*	$OpenBSD: display.c,v 1.6 2001/07/12 05:17:10 deraadt Exp $	*/
+/*	$OpenBSD: display.c,v 1.7 2001/11/02 19:41:06 mickey Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)display.c	5.11 (Berkeley) 3/9/91";*/
-static char rcsid[] = "$OpenBSD: display.c,v 1.6 2001/07/12 05:17:10 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: display.c,v 1.7 2001/11/02 19:41:06 mickey Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -46,6 +46,7 @@ static char rcsid[] = "$OpenBSD: display.c,v 1.6 2001/07/12 05:17:10 deraadt Exp
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <err.h>
 #include "hexdump.h"
 
 enum _vflag vflag = FIRST;
@@ -255,8 +256,7 @@ get()
 		    length == -1 ? need : MIN(length, need), stdin);
 		if (!n) {
 			if (ferror(stdin))
-				(void)fprintf(stderr, "hexdump: %s: %s\n",
-				    _argv[-1], strerror(errno));
+				warn("%s", _argv[-1]);
 			ateof = 1;
 			continue;
 		}
@@ -299,8 +299,7 @@ next(argv)
 	for (;;) {
 		if (*_argv) {
 			if (!(freopen(*_argv, "r", stdin))) {
-				(void)fprintf(stderr, "hexdump: %s: %s\n",
-				    *_argv, strerror(errno));
+				warn("%s", *_argv);
 				exitval = 1;
 				++_argv;
 				continue;
@@ -329,22 +328,16 @@ doskip(fname, statok)
 	struct stat sbuf;
 
 	if (statok) {
-		if (fstat(fileno(stdin), &sbuf)) {
-			(void)fprintf(stderr, "hexdump: %s: %s.\n",
-			    fname, strerror(errno));
-			exit(1);
-		}
+		if (fstat(fileno(stdin), &sbuf))
+			err(1, "%s", fname);
 		if (skip >= sbuf.st_size) {
 			skip -= sbuf.st_size;
 			address += sbuf.st_size;
 			return;
 		}
 	}
-	if (fseek(stdin, skip, SEEK_SET)) {
-		(void)fprintf(stderr, "hexdump: %s: %s.\n",
-		    fname, strerror(errno));
-		exit(1);
-	}
+	if (fseek(stdin, skip, SEEK_SET))
+		err(1, "%s", fname);
 	savaddress = address += skip;
 	skip = 0;
 }
@@ -356,14 +349,7 @@ emalloc(size)
 	char *p;
 
 	if (!(p = malloc((u_int)size)))
-		nomem();
+		err(1, "malloc");
 	bzero(p, size);
 	return(p);
-}
-
-void
-nomem()
-{
-	(void)fprintf(stderr, "hexdump: %s.\n", strerror(errno));
-	exit(1);
 }

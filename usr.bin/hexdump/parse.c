@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.6 2001/09/30 07:17:03 pvalchev Exp $	*/
+/*	$OpenBSD: parse.c,v 1.7 2001/11/02 19:41:06 mickey Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)parse.c	5.6 (Berkeley) 3/9/91";*/
-static char rcsid[] = "$OpenBSD: parse.c,v 1.6 2001/09/30 07:17:03 pvalchev Exp $";
+static char rcsid[] = "$OpenBSD: parse.c,v 1.7 2001/11/02 19:41:06 mickey Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -44,7 +44,14 @@ static char rcsid[] = "$OpenBSD: parse.c,v 1.6 2001/09/30 07:17:03 pvalchev Exp 
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
+#include <err.h>
 #include "hexdump.h"
+
+void addfile __P((char *));
+void add __P((char *));
+int size __P((FS *));
+void rewrite __P((FS *));
+void escape __P((char *));
 
 FU *endfu;					/* format at end-of-data */
 
@@ -56,15 +63,13 @@ addfile(name)
 	FILE *fp;
 	size_t len;
 
-	if (!(fp = fopen(name, "r"))) {
-		(void)fprintf(stderr, "hexdump: can't read %s.\n", name);
-		exit(1);
-	}
+	if (!(fp = fopen(name, "r")))
+		err(1, "%s", name);
 	while ((p = fgetln(fp, &len))) {
 		if (*(p + len - 1) == '\n')
 			*(p + len - 1) = '\0';
 		else {
-			(void)fprintf(stderr, "hexdump: incomplete line.\n");
+			warnx("incomplete line");
 			continue;
 		}
 		for (; *p && isspace(*p); ++p);
@@ -113,7 +118,7 @@ add(fmt)
 		if (isdigit(*p)) {
 			for (savep = p; isdigit(*p); ++p);
 			if (!isspace(*p) && *p != '/')
-				badfmt(fmt);
+				errx(1, "bad format {%s}", fmt);
 			/* may overwrite either white space or slash */
 			tfu->reps = atoi(savep);
 			tfu->flags = F_SETREP;
@@ -129,7 +134,7 @@ add(fmt)
 		if (isdigit(*p)) {
 			for (savep = p; isdigit(*p); ++p);
 			if (!isspace(*p))
-				badfmt(fmt);
+				errx(1, "bad format {%s}", fmt);
 			tfu->bcnt = atoi(savep);
 			/* skip trailing white space */
 			for (++p; isspace(*p); ++p);
@@ -137,12 +142,12 @@ add(fmt)
 
 		/* format */
 		if (*p != '"')
-			badfmt(fmt);
+			errx(1, "bad format {%s}", fmt);
 		for (savep = ++p; *p != '"';)
 			if (*p++ == 0)
-				badfmt(fmt);
+				errx(1, "bad format {%s}", fmt);
 		if (!(tfu->fmt = malloc(p - savep + 1)))
-			nomem();
+			err(1, "malloc");
 		(void) strncpy(tfu->fmt, savep, p - savep);
 		tfu->fmt[p - savep] = '\0';
 		escape(tfu->fmt);
@@ -150,10 +155,10 @@ add(fmt)
 	}
 	/* no single fu in fmt */
 	if (tfs->nextfu == NULL)
-		badfmt(fmt);
+		errx(1, "bad format {%s}", fmt);
 }
 
-static char *spec = ".#-+ 0123456789";
+static const char *spec = ".#-+ 0123456789";
 int
 size(fs)
 	FS *fs;
@@ -277,8 +282,7 @@ rewrite(fs)
 					pr->bcnt = 1;
 					break;
 				default:
-					p1[1] = '\0';
-					badcnt(p1);
+					errx(1, "bad byte count for conversion character \'%c\'", *p1);
 				}
 				break;
 			case 'd': case 'i':
@@ -297,7 +301,7 @@ rewrite(fs)
 					goto sw1;
 				default:
 					p1[2] = '\0';
-					badconv(p1);
+					errx(1, "bad conversion character %%%s", p1);
 				}
 				/* NOTREACHED */
 			case 'o': case 'u': case 'x': case 'X':
@@ -313,8 +317,7 @@ sw1:				switch(fu->bcnt) {
 					pr->bcnt = 2;
 					break;
 				default:
-					p1[1] = '\0';
-					badcnt(p1);
+					errx(1, "bad byte count for conversion character \'%c\'", *p1);
 				}
 				break;
 			case 'e': case 'E': case 'f': case 'g': case 'G':
@@ -327,15 +330,14 @@ sw1:				switch(fu->bcnt) {
 					pr->bcnt = 4;
 					break;
 				default:
-					p1[1] = '\0';
-					badcnt(p1);
+					errx(1, "bad byte count for conversion character \'%c\'", *p1);
 				}
 				break;
 			case 's':
 				pr->flags = F_STR;
 				switch(sokay) {
 				case NOTOKAY:
-					badsfmt();
+					errx(1, "%%s requires a precision or a byte count");
 				case USEBCNT:
 					pr->bcnt = fu->bcnt;
 					break;
@@ -361,7 +363,7 @@ sw1:				switch(fu->bcnt) {
 						break;
 					default:
 						p1[3] = '\0';
-						badconv(p1);
+						errx(1, "bad conversion character %%%s", p1);
 					}
 					break;
 				case 'c':
@@ -381,17 +383,16 @@ sw2:					switch(fu->bcnt) {
 						break;
 					default:
 						p1[2] = '\0';
-						badcnt(p1);
+						errx(1, "bad byte count for conversion character \'%s\'", p1);
 					}
 					break;
 				default:
 					p1[2] = '\0';
-					badconv(p1);
+					errx(1, "bad conversion character %%%s", p1);
 				}
 				break;
 			default:
-				p1[1] = '\0';
-				badconv(p1);
+				errx(1, "bad conversion character %%%c", *p1);
 			}
 
 			/*
@@ -401,17 +402,15 @@ sw2:					switch(fu->bcnt) {
 			savech = *p2;
 			p1[(pr->flags&F_ADDRESS)?2:1] = '\0';
 			if (!(pr->fmt = strdup(fmtp)))
-				nomem();
+				err(1, "malloc");
 			*p2 = savech;
 			pr->cchar = pr->fmt + (p1 - fmtp);
 			fmtp = p2;
 
 			/* only one conversion character if byte count */
-			if (!(pr->flags&F_ADDRESS) && fu->bcnt && nconv++) {
-				(void)fprintf(stderr,
-				    "hexdump: byte count with multiple conversion characters.\n");
-				exit(1);
-			}
+			if (!(pr->flags&F_ADDRESS) && fu->bcnt && nconv++)
+				errx(1,
+				    "byte count with multiple conversion characters");
 		}
 		/*
 		 * if format unit byte count not specified, figure it out
@@ -447,7 +446,6 @@ sw2:					switch(fu->bcnt) {
 			break;
 	}
 }
-
 
 void
 escape(p1)
@@ -490,37 +488,4 @@ escape(p1)
 				break;
 			}
 	}
-}
-
-void
-badcnt(s)
-	char *s;
-{
-	(void)fprintf(stderr,
-	    "hexdump: bad byte count for conversion character %s.\n", s);
-	exit(1);
-}
-
-void
-badsfmt()
-{
-	(void)fprintf(stderr,
-	    "hexdump: %%s requires a precision or a byte count.\n");
-	exit(1);
-}
-
-void
-badfmt(fmt)
-	char *fmt;
-{
-	(void)fprintf(stderr, "hexdump: bad format {%s}\n", fmt);
-	exit(1);
-}
-
-void
-badconv(ch)
-	char *ch;
-{
-	(void)fprintf(stderr, "hexdump: bad conversion character %%%s.\n", ch);
-	exit(1);
 }
