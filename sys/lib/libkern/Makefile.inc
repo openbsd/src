@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.9 1998/02/14 02:37:06 d Exp $
+#	$OpenBSD: Makefile.inc,v 1.10 1998/03/18 20:47:07 mickey Exp $
 #	$NetBSD: Makefile.inc,v 1.22 1996/09/30 15:54:35 ws Exp $
 #
 #	NOTE: $S must correspond to the top of the 'sys' tree
@@ -23,7 +23,7 @@ KERNMAKE= \
 	    LD='${LD}' STRIP='${STRIP}' \
 	    CPP='${CPP}' STRIP='${STRIP}' AR='${AR}' \
 	    NM='${NM}' LORDER='${LORDER}' \
-	    MACHINE='${MACHINE}' MACHINE_ARCH='${MACHINE_ARCH}' \
+	    XMACHINE='${MACHINE}' XMACHINE_ARCH='${MACHINE_ARCH}' \
 	    KERNCPPFLAGS='${CPPFLAGS:S@^-I.@-I../../.@g}'
 
 ${KERNLIB}:		.NOTMAIN __always_make_kernlib

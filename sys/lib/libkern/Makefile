@@ -1,8 +1,11 @@
-#	$OpenBSD: Makefile,v 1.11 1997/11/30 21:30:12 mickey Exp $
+#	$OpenBSD: Makefile,v 1.12 1998/03/18 20:47:04 mickey Exp $
 #	$NetBSD: Makefile,v 1.31 1996/08/10 04:01:31 mycroft Exp $
 
 LIB=	kern
 NOPIC=
+
+MACHINE=	${XMACHINE}
+MACHINE_ARCH=	${XMACHINE_ARCH}
 
 M=	${.CURDIR}/arch/${MACHINE_ARCH}
 
@@ -13,7 +16,7 @@ CPPFLAGS=	-I$M ${KERNCPPFLAGS}
 .include "$M/Makefile.inc"
 .endif
 
-.if (${MACHINE_ARCH} != "alpha")
+.if (${MACHINE_ARCH} != "alpha" && ${MACHINE} != "sgi")
 # Quad support
 SRCS+=	adddi3.c anddi3.c ashldi3.c ashrdi3.c cmpdi2.c divdi3.c iordi3.c \
 	lshldi3.c lshrdi3.c moddi3.c muldi3.c negdi2.c notdi2.c qdivrem.c \
