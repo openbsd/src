@@ -1025,7 +1025,7 @@ cdioctl(dev, cmd, addr, flag, p)
 	default:
 		if (CDPART(dev) != RAW_PART)
 			return ENOTTY;
-		return scsi_do_ioctl(cd->sc_link, dev, cmd, addr, flag, p);
+		return scsi_do_safeioctl(cd->sc_link, dev, cmd, addr, flag, p);
 	}
 
 #ifdef DIAGNOSTIC
