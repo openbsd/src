@@ -71,7 +71,7 @@
 **  _________________________________________________________________
 */
 
-static int ssl_rand_choosenum(int, int);
+static int ssl_rand_choosenum(int);
 static int ssl_rand_feedfp(pool *, FILE *, int);
 
 int ssl_rand_seed(server_rec *s, pool *p, ssl_rsctx_t nCtx, char *prefix)
@@ -155,7 +155,7 @@ int ssl_rand_seed(server_rec *s, pool *p, ssl_rsctx_t nCtx, char *prefix)
                 /*
                  * seed in some current state of the run-time stack (128 bytes)
                  */
-                n = ssl_rand_choosenum(0, sizeof(stackdata)-128-1);
+                n = ssl_rand_choosenum(sizeof(stackdata)-128-1);
                 RAND_seed(stackdata+n, 128);
                 nDone += 128;
 
@@ -165,7 +165,7 @@ int ssl_rand_seed(server_rec *s, pool *p, ssl_rsctx_t nCtx, char *prefix)
                 if (ap_scoreboard_image != NULL && SCOREBOARD_SIZE > 16) {
                     if ((m = ((SCOREBOARD_SIZE / 2) - 1)) > 1024)
                         m = 1024;
-                    n = ssl_rand_choosenum(0, m);
+                    n = ssl_rand_choosenum(m);
                     RAND_seed(((unsigned char *)ap_scoreboard_image)+n, m);
                     nDone += m;
                 }
@@ -210,17 +210,9 @@ static int ssl_rand_feedfp(pool *p, FILE *fp, int nReq)
     return nDone;
 }
 
-static int ssl_rand_choosenum(int l, int h)
+/* Generate a random number in the range 1-h */
+static int ssl_rand_choosenum(int h)
 {
-    int i;
-    char buf[50];
-
-    srand((unsigned int)time(NULL));
-    ap_snprintf(buf, sizeof(buf), "%.0f",
-                (((double)(rand()%RAND_MAX)/RAND_MAX)*(h-l)));
-    i = atoi(buf)+1;
-    if (i < l) i = l;
-    if (i > h) i = h;
-    return i;
+	return (int)(arc4random() / ((double)0xffffffffU + 1) * h + 1);
 }
 
