@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.42 1997/11/14 03:46:00 deraadt Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.43 1997/12/04 21:35:29 art Exp $	*/
 /*	$NetBSD: inetd.c,v 1.11 1996/02/22 11:14:41 mycroft Exp $	*/
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inetd.c	5.30 (Berkeley) 6/3/91";*/
-static char rcsid[] = "$OpenBSD: inetd.c,v 1.42 1997/11/14 03:46:00 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: inetd.c,v 1.43 1997/12/04 21:35:29 art Exp $";
 #endif /* not lint */
 
 /*
@@ -744,7 +744,7 @@ config(sig)
 						syslog(LOG_ERR,
 						    "%s: unknown rpc service",
 						    sep->se_service);
-						continue;
+						goto serv_unknown;
 					}
 					sep->se_rpcprog = rp->r_number;
 				}
@@ -762,7 +762,7 @@ config(sig)
 						syslog(LOG_ERR,
 						    "%s/%s: unknown service",
 						    sep->se_service, sep->se_proto);
-						continue;
+						goto serv_unknown;
 					}
 					port = sp->s_port;
 				}
@@ -779,6 +779,7 @@ config(sig)
 					setup(sep);
 			}
 		}
+	serv_unknown:
 		if (cp->se_next != NULL) {
 			struct servtab *tmp = cp;
 
