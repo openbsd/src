@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.76 2001/12/11 22:04:12 chris Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.77 2002/02/10 04:29:32 chris Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -2144,6 +2144,10 @@ apollo_chip_map(sc, pa)
 			sc->sc_wdcdev.UDMA_cap = 4;
 		}
 		break;
+	case PCI_PRODUCT_VIATECH_VT8366_ISA:
+		printf(": ATA100");
+		sc->sc_wdcdev.UDMA_cap = 5;
+		break;
 	default:
 		printf(": DMA");
 		sc->sc_wdcdev.UDMA_cap = 0;
@@ -2515,6 +2519,10 @@ cmd0643_9_chip_map(sc, pa)
 		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA | WDC_CAPABILITY_IRQACK;
 		switch (sc->sc_pp->ide_product) {
 		case PCI_PRODUCT_CMDTECH_649:
+			sc->sc_wdcdev.cap |= WDC_CAPABILITY_UDMA;
+			sc->sc_wdcdev.UDMA_cap = 5;
+			sc->sc_wdcdev.irqack = cmd646_9_irqack;
+			break;
 		case PCI_PRODUCT_CMDTECH_648:
 			sc->sc_wdcdev.cap |= WDC_CAPABILITY_UDMA;
 			sc->sc_wdcdev.UDMA_cap = 4;
