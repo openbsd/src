@@ -1,10 +1,10 @@
-/*	$OpenBSD: pcmciadevs.h,v 1.57 2001/03/27 07:52:29 mickey Exp $	*/
+/*	$OpenBSD: pcmciadevs.h,v 1.58 2001/03/27 10:24:22 peter Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcmciadevs,v 1.52 2001/03/27 07:52:15 mickey Exp 
+ *		OpenBSD: pcmciadevs,v 1.53 2001/03/27 10:23:44 peter Exp 
  */
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
@@ -62,6 +62,7 @@
 #define	PCMCIA_VENDOR_ADAPTEC	0x012f	/* Adaptec */
 #define	PCMCIA_VENDOR_QUATECH	0x0137	/* Quatech */
 #define	PCMCIA_VENDOR_COMPAQ	0x0138	/* Compaq */
+#define	PCMCIA_VENDOR_GREYCELL	0x0143	/* Grey Cell */
 #define	PCMCIA_VENDOR_LINKSYS	0x0149	/* Linksys */
 #define	PCMCIA_VENDOR_SIMPLETECH	0x014d	/* Simple Technology */
 #define	PCMCIA_VENDOR_SYMBOL	0x014d	/* Symbol */
@@ -190,6 +191,10 @@
 #define	PCMCIA_PRODUCT_FUJITSU_LA10S	0x1003
 #define	PCMCIA_CIS_FUJITSU_LA501	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_FUJITSU_LA501	0x2000
+ 
+/* Greycell */
+#define	PCMCIA_CIS_GREYCELL_GCS2000	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_GREYCELL_GCS2000	0x0201
 
 /* IBM */
 #define	PCMCIA_CIS_IBM_3270	{ NULL, NULL, NULL, NULL }
