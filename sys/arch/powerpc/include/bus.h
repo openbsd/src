@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.10 2001/02/07 06:06:10 drahn Exp $	*/
+/*	$OpenBSD: bus.h,v 1.11 2001/03/29 18:50:11 drahn Exp $	*/
 
 /*
  * Copyright (c) 1997 Per Fogelstrom.  All rights reserved.
@@ -54,6 +54,7 @@ typedef struct ppc_bus_space *bus_space_tag_t;
 
 struct ppc_bus_space {
 	u_int32_t	bus_base;
+	u_int32_t	bus_size;
 	u_int8_t	bus_reverse;	/* Reverse bytes */
 };
 #define POWERPC_BUS_TAG_BASE(x)  ((x)->bus_base)
@@ -267,20 +268,20 @@ bus_space_read_raw_multi_1(bus_space_tag_t bst, bus_space_handle_t bsh,
 	bus_addr_t ba, u_int8_t *dst, bus_size_t size);
 void
 bus_space_read_raw_multi_2(bus_space_tag_t bst, bus_space_handle_t bsh,
-	bus_addr_t ba, u_int16_t *dst, bus_size_t size);
+	bus_addr_t ba, u_int8_t *dst, bus_size_t size);
 void
 bus_space_read_raw_multi_4(bus_space_tag_t bst, bus_space_handle_t bsh,
-	bus_addr_t ba, u_int32_t *dst, bus_size_t size);
+	bus_addr_t ba, u_int8_t *dst, bus_size_t size);
 
 void
 bus_space_write_raw_multi_1(bus_space_tag_t bst, bus_space_handle_t bsh,
 	bus_addr_t ba, const u_int8_t *src, bus_size_t size);
 void
 bus_space_write_raw_multi_2(bus_space_tag_t bst, bus_space_handle_t bsh,
-	bus_addr_t ba, const u_int16_t *src, bus_size_t size);
+	bus_addr_t ba, const u_int8_t *src, bus_size_t size);
 void
 bus_space_write_raw_multi_4(bus_space_tag_t bst, bus_space_handle_t bsh,
-	bus_addr_t ba, const u_int32_t *src, bus_size_t size);
+	bus_addr_t ba, const u_int8_t *src, bus_size_t size);
 
 #define	bus_space_read_raw_multi_8 \
     !!! bus_space_read_raw_multi_8 not implemented !!!
