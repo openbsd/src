@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.38 1999/02/24 21:02:41 kjell Exp $	*/
+/*	$OpenBSD: ping.c,v 1.39 1999/07/18 16:21:55 hugh Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: ping.c,v 1.38 1999/02/24 21:02:41 kjell Exp $";
+static char rcsid[] = "$OpenBSD: ping.c,v 1.39 1999/07/18 16:21:55 hugh Exp $";
 #endif
 #endif /* not lint */
 
@@ -155,7 +155,8 @@ long npackets;			/* max packets to transmit */
 long nreceived;			/* # of packets we got back */
 long nrepeats;			/* number of duplicates */
 long ntransmitted;		/* sequence # for outbound packets = #sent */
-int interval = 1;		/* interval between packets */
+double interval = 1;		/* interval between packets */
+struct itimerval interstr;	/* interval structure for use with setitimer */
 
 /* timing */
 int timing;			/* flag to do timing */
@@ -163,6 +164,7 @@ int maxwait = MAXWAIT_DEFAULT;	/* max seconds to wait for response */
 quad_t tmin = 999999999;	/* minimum round trip time in millisec */
 quad_t tmax = 0;		/* maximum round trip time in millisec */
 quad_t tsum = 0;		/* sum of all times in millisec, for doing average */
+quad_t tsumsq = 0;		/* sum of all times squared, for std. dev. */
 
 #ifdef SIGINFO
 int reset_kerninfo;
@@ -177,6 +179,7 @@ int check_icmph __P((struct ip *));
 void pr_icmph __P((struct icmp *));
 void pr_pack __P((char *, int, struct sockaddr_in *));
 void pr_retip __P((struct ip *));
+quad_t qsqrt __P((quad_t));
 void usage();
 
 int
@@ -246,9 +249,18 @@ main(argc, argv)
 			options |= F_SADDR;
 			break;
 		case 'i':		/* wait between sending packets */
-			interval = strtol(optarg, NULL, 0);
-			if (interval <= 0)
+			interval = strtod(optarg, NULL);
+
+			if (interval <= 0 || interval >= INT_MAX)
 				errx(1, "bad timing interval: %s", optarg);
+
+			if (interval < 1)
+				if (getuid())
+					errx(1, "%s: only root may use interval < 1s", strerror(EPERM));
+
+			if (interval < 0.01)
+				interval = 0.01;
+
 			options |= F_INTERVAL;
 			break;
 		case 'L':
@@ -315,6 +327,13 @@ main(argc, argv)
 
 	if (argc != 1)
 		usage();
+
+	memset(&interstr, 0, sizeof(interstr));
+
+	interstr.it_value.tv_sec = (long) interval;
+	interstr.it_value.tv_usec =
+		(long) ((interval - interstr.it_value.tv_sec) * 1000000);
+
 	target = *argv;
 
 	memset(&whereto, 0, sizeof(struct sockaddr));
@@ -525,7 +544,7 @@ catcher()
 	pinger();
 	(void)signal(SIGALRM, catcher);
 	if (!npackets || ntransmitted < npackets)
-		alarm((u_int)interval);
+		setitimer(ITIMER_REAL, &interstr, (struct itimerval *)0);
 	else {
 		if (nreceived) {
 			waittime = 2 * tmax / 1000000;
@@ -672,6 +691,7 @@ pr_pack(buf, cc, from)
 			timersub(&tv, &tp, &tv);
 			triptime = (tv.tv_sec * 1000000) + tv.tv_usec;
 			tsum += triptime;
+			tsumsq += triptime * triptime;
 			if (triptime < tmin)
 				tmin = triptime;
 			if (triptime > tmax)
@@ -877,8 +897,6 @@ void
 summary(header)
 	int header;
 {
-	quad_t	i;
-
 	(void)putchar('\r');
 	(void)fflush(stdout);
 
@@ -899,13 +917,34 @@ summary(header)
 	}
 	(void)putchar('\n');
 	if (nreceived && timing) {
-		/* Only display average to milliseconds */
-		i = tsum / (nreceived + nrepeats);
-		(void)printf("round-trip min/avg/max = %d.%03d/%d.%03d/%d.%03d ms\n",
+		quad_t num = nreceived + nrepeats;
+		quad_t avg = tsum / num;
+		quad_t dev = qsqrt(tsumsq / num - avg * avg);
+		(void)printf("round-trip min/avg/max/std-dev = "
+		    "%d.%03d/%d.%03d/%d.%03d/%d.%03d ms\n",
 		    (int)(tmin / 1000), (int)(tmin % 1000),
-		    (int)(i / 1000), (int)(i % 1000),
-		    (int)(tmax / 1000), (int)(tmax % 1000));
+		    (int)(avg  / 1000), (int)(avg  % 1000),
+		    (int)(tmax / 1000), (int)(tmax % 1000),
+		    (int)(dev  / 1000), (int)(dev  % 1000));
 	}
+}
+
+quad_t
+qsqrt(quad_t qdev)
+{
+	quad_t y, x = 1;
+
+	if (!qdev)
+		return(0);
+
+	do { /* newton was a stinker */
+		y = x;
+		x = qdev / x;
+		x += y;
+		x /= 2;
+	} while (x - y);
+
+	return(x);
 }
 
 /*
