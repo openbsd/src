@@ -1,4 +1,4 @@
-# Copyright (C) 2001  Internet Software Consortium.
+# Copyright (C) 2001, 2003  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -13,7 +13,7 @@
 # NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-# $ISC: Makefile.in,v 1.2 2001/07/09 22:25:26 gson Exp $
+# $ISC: Makefile.in,v 1.2.2.2 2003/10/09 07:32:53 marka Exp $
 
 srcdir =	@srcdir@
 VPATH =		@srcdir@
@@ -31,7 +31,7 @@ CDEFINES =
 CWARNINGS =
 
 ISCLIBS =	../../lib/isc/libisc.@A@
-ISCCCLIBS =	../../lib/cc/libisccc.@A@
+ISCCCLIBS =	../../lib/isccc/libisccc.@A@
 
 ISCDEPLIBS =	../../lib/isc/libisc.@A@
 ISCCCDEPLIBS =	libisccc.@A@
@@ -71,7 +71,7 @@ libisccc.la: ${OBJS}
 	${LIBTOOL} --mode=link \
 		${CC} ${ALL_CFLAGS} -o libisccc.la -rpath ${libdir} \
 		-version-info ${LIBINTERFACE}:${LIBREVISION}:${LIBAGE} \
-		${OBJS} ${LIBS}
+		${OBJS} ${LIBS} ${ISCLIBS}
 
 timestamp: libisccc.@A@
 	touch timestamp

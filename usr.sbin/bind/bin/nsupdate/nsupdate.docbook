@@ -1,6 +1,6 @@
 <!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook V4.1//EN">
 <!--
- - Copyright (C) 2001  Internet Software Consortium.
+ - Copyright (C) 2001, 2003  Internet Software Consortium.
  -
  - Permission to use, copy, modify, and distribute this software for any
  - purpose with or without fee is hereby granted, provided that the above
@@ -16,7 +16,7 @@
  - WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 -->
 
-<!-- $ISC: nsupdate.docbook,v 1.8.2.1 2001/11/27 18:57:40 gson Exp $ -->
+<!-- $ISC: nsupdate.docbook,v 1.8.2.3 2003/07/22 04:03:36 marka Exp $ -->
 
 <refentry>
 <refentryinfo>
@@ -222,7 +222,7 @@ Sends all dynamic update requests using the local
 
 When no local statement is provided,
 <command>nsupdate</command>
-will send updates using an address and port choosen by the system.
+will send updates using an address and port chosen by the system.
 <parameter>port</parameter>
 can additionally be used to make requests come from a specific port.
 If no port number is specified, the system will assign one.

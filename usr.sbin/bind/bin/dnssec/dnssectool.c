@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000, 2001  Internet Software Consortium.
+ * Copyright (C) 2000, 2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: dnssectool.c,v 1.31.2.2 2001/11/27 22:41:49 gson Exp $ */
+/* $ISC: dnssectool.c,v 1.31.2.4 2003/10/09 07:32:31 marka Exp $ */
 
 #include <config.h>
 
@@ -244,7 +244,7 @@ strtotime(char *str, isc_int64_t now, isc_int64_t base) {
 		if (*endp != '\0')
 			fatal("time value %s is invalid", str);
 		val = now + offset;
-	} else if (strlen(str) == 8) {
+	} else if (strlen(str) == 8U) {
 		char timestr[15];
 		snprintf(timestr, sizeof(timestr), "%s000000", str);
 		result = dns_time64_fromtext(timestr, &val);

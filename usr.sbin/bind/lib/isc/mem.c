@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1997-2002  Internet Software Consortium.
+ * Copyright (C) 1997-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: mem.c,v 1.98.2.6 2002/07/10 06:10:45 marka Exp $ */
+/* $ISC: mem.c,v 1.98.2.8 2003/10/09 07:32:48 marka Exp $ */
 
 #include <config.h>
 
@@ -647,10 +647,10 @@ mem_putstats(isc_mem_t *ctx, void *ptr, size_t size) {
 	ctx->inuse -= size;
 
 	if (size > ctx->max_size) {
-		INSIST(ctx->stats[ctx->max_size].gets > 0);
+		INSIST(ctx->stats[ctx->max_size].gets > 0U);
 		ctx->stats[ctx->max_size].gets--;
 	} else {
-		INSIST(ctx->stats[size].gets > 0);
+		INSIST(ctx->stats[size].gets > 0U);
 		ctx->stats[size].gets--;
 	}
 }
@@ -664,7 +664,7 @@ mem_putstats(isc_mem_t *ctx, void *ptr, size_t size) {
 static void *
 default_memalloc(void *arg, size_t size) {
 	UNUSED(arg);
-	if (size == 0)
+	if (size == 0U)
 		size = 1;
 	return (malloc(size));
 }
@@ -701,7 +701,7 @@ isc_mem_createx(size_t init_max_size, size_t target_size,
 	if (ctx == NULL)
 		return (ISC_R_NOMEMORY);
 
-	if (init_max_size == 0)
+	if (init_max_size == 0U)
 		ctx->max_size = DEF_MAX_SIZE;
 	else
 		ctx->max_size = init_max_size;
@@ -833,7 +833,7 @@ destroy(isc_mem_t *ctx) {
 			if (ctx->stats[i].gets != 0)
 				print_active(ctx, stderr);
 #endif
-			INSIST(ctx->stats[i].gets == 0);
+			INSIST(ctx->stats[i].gets == 0U);
 		}
 	}
 
@@ -992,14 +992,14 @@ isc__mem_get(isc_mem_t *ctx, size_t size FLARG) {
 #endif /* ISC_MEM_USE_INTERNAL_MALLOC */
 
 	ADD_TRACE(ctx, ptr, size, file, line);
-	if (ctx->hi_water != 0 && !ctx->hi_called &&
+	if (ctx->hi_water != 0U && !ctx->hi_called &&
 	    ctx->inuse > ctx->hi_water) {
 		ctx->hi_called = ISC_TRUE;
 		call_water = ISC_TRUE;
 	}
 	if (ctx->inuse > ctx->maxinuse) {
 		ctx->maxinuse = ctx->inuse;
-		if (ctx->hi_water != 0 && ctx->inuse > ctx->hi_water &&
+		if (ctx->hi_water != 0U && ctx->inuse > ctx->hi_water &&
 		    (isc_mem_debugging & ISC_MEM_DEBUGUSAGE) != 0)
 			fprintf(stderr, "maxinuse = %lu\n",
 				(unsigned long)ctx->inuse);
@@ -1038,7 +1038,7 @@ isc__mem_put(isc_mem_t *ctx, void *ptr, size_t size FLARG)
 	 * isc_mem_setwater() called with 0 for hi_water and lo_water.
 	 */
 	if (ctx->hi_called && 
-	    (ctx->inuse < ctx->lo_water || ctx->lo_water == 0)) {
+	    (ctx->inuse < ctx->lo_water || ctx->lo_water == 0U)) {
 		ctx->hi_called = ISC_FALSE;
 
 		if (ctx->water != NULL)
@@ -1100,7 +1100,7 @@ isc_mem_stats(isc_mem_t *ctx, FILE *out) {
 	for (i = 0; i <= ctx->max_size; i++) {
 		s = &ctx->stats[i];
 
-		if (s->totalgets == 0 && s->gets == 0)
+		if (s->totalgets == 0U && s->gets == 0U)
 			continue;
 		fprintf(out, "%s%5lu: %11lu gets, %11lu rem",
 			(i == ctx->max_size) ? ">=" : "  ",
@@ -1340,7 +1340,7 @@ isc_mempool_create(isc_mem_t *mctx, size_t size, isc_mempool_t **mpctxp) {
 	isc_mempool_t *mpctx;
 
 	REQUIRE(VALID_CONTEXT(mctx));
-	REQUIRE(size > 0);
+	REQUIRE(size > 0U);
 	REQUIRE(mpctxp != NULL && *mpctxp == NULL);
 
 	/*

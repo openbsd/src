@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1999-2001  Internet Software Consortium.
+ * Copyright (C) 1999-2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,12 +15,18 @@
  * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: random.c,v 1.15 2001/01/09 21:56:22 bwelling Exp $ */
+/* $ISC: random.c,v 1.15.2.4 2003/10/09 07:32:49 marka Exp $ */
 
 #include <config.h>
 
 #include <stdlib.h>
 #include <time.h>		/* Required for time(). */
+#ifdef HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
 
 #include <isc/mutex.h>
 #include <isc/once.h>
@@ -34,7 +40,15 @@ static void
 initialize_rand(void)
 {
 #ifndef HAVE_ARC4RANDOM
-	srand(time(NULL));
+	unsigned int pid = getpid();
+
+	/*
+	 * The low bits of pid generally change faster.
+	 * Xor them with the high bits of time which change slowly.
+	 */
+	pid = ((pid << 16) & 0xffff0000) | ((pid >> 16) & 0xffff);
+
+	srand(time(NULL) ^ pid);
 #endif
 }
 
@@ -64,7 +78,11 @@ isc_random_get(isc_uint32_t *val)
 	initialize();
 
 #ifndef HAVE_ARC4RANDOM
-	*val = rand();
+	/*
+	 * rand()'s lower bits are not random.
+	 * rand()'s upper bit is zero.
+	 */
+	*val = ((rand() >> 4) & 0xffff) | ((rand() << 12) & 0xffff0000) ;
 #else
 	*val = arc4random();
 #endif

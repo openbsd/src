@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1998-2002  Internet Software Consortium.
+ * Copyright (C) 1998-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: name.h,v 1.95.2.2 2002/04/23 02:28:51 marka Exp $ */
+/* $ISC: name.h,v 1.95.2.4 2003/10/09 07:32:39 marka Exp $ */
 
 #ifndef DNS_NAME_H
 #define DNS_NAME_H 1
@@ -379,6 +379,22 @@ unsigned int
 dns_name_hash(dns_name_t *name, isc_boolean_t case_sensitive);
 /*
  * Provide a hash value for 'name'.
+ *
+ * Note: if 'case_sensitive' is ISC_FALSE, then names which differ only in
+ * case will have the same hash value.
+ *
+ * Requires:
+ *	'name' is a valid name
+ *
+ * Returns:
+ *	A hash value
+ */
+
+unsigned int
+dns_fullname_hash(dns_name_t *name, isc_boolean_t case_sensitive);
+/*
+ * Provide a hash value for 'name'.  Unlike dns_name_hash(), this function
+ * always takes into account of the entire name to calculate the hash value.
  *
  * Note: if 'case_sensitive' is ISC_FALSE, then names which differ only in
  * case will have the same hash value.

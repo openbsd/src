@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000, 2001  Internet Software Consortium.
+ * Copyright (C) 2000, 2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: thread.c,v 1.9 2001/01/09 21:58:02 bwelling Exp $ */
+/* $ISC: thread.c,v 1.9.2.3 2003/10/09 07:32:51 marka Exp $ */
 
 #include <config.h>
 
@@ -23,7 +23,7 @@
 #include <isc/util.h>
 
 #ifndef THREAD_MINSTACKSIZE
-#define THREAD_MINSTACKSIZE		(64 * 1024)
+#define THREAD_MINSTACKSIZE		(64U * 1024)
 #endif
 
 isc_result_t
@@ -36,7 +36,8 @@ isc_thread_create(isc_threadfunc_t func, isc_threadarg_t arg,
 
 	pthread_attr_init(&attr);
 
-#ifdef HAVE_PTHREAD_ATTR_GETSTACKSIZE
+#if defined(HAVE_PTHREAD_ATTR_GETSTACKSIZE) && \
+    defined(HAVE_PTHREAD_ATTR_SETSTACKSIZE)
 	ret = pthread_attr_getstacksize(&attr, &stacksize);
 	if (ret != 0)
 		return (ISC_R_UNEXPECTED);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1999-2001  Internet Software Consortium.
+ * Copyright (C) 1999-2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: master.h,v 1.31.2.1 2001/09/04 22:51:41 gson Exp $ */
+/* $ISC: master.h,v 1.31.2.3 2003/07/22 04:03:45 marka Exp $ */
 
 #ifndef DNS_MASTER_H
 #define DNS_MASTER_H 1
@@ -37,6 +37,7 @@
 #define DNS_MASTER_MANYERRORS 	0x00000002	/* Continue processing on errors. */
 #define DNS_MASTER_NOINCLUDE 	0x00000004	/* Disallow $INCLUDE directives. */
 #define DNS_MASTER_ZONE 	0x00000008	/* Loading a zone master file. */
+#define DNS_MASTER_SLAVE	0x00000020	/* Loading a slave master file. */
 
 ISC_LANG_BEGINDECLS
 

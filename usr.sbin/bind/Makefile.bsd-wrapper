@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.7 2003/02/28 19:43:20 art Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.8 2003/11/18 14:14:04 jakob Exp $
 
 .include <bsd.own.mk>
 
@@ -8,8 +8,7 @@ CONFIGURE_OPTS=	--prefix=/usr \
 		--sysconfdir=/etc \
 		--disable-shared \
 		--disable-threads \
-		--without-openssl \
-		--with-randomdev=/dev/arandom
+		--without-openssl
 
 PROG=	bin/check/named-checkconf \
 	bin/check/named-checkzone \

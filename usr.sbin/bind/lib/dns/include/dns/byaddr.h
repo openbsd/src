@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000, 2001  Internet Software Consortium.
+ * Copyright (C) 2000, 2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: byaddr.h,v 1.12 2001/01/09 21:52:18 bwelling Exp $ */
+/* $ISC: byaddr.h,v 1.12.2.2 2003/10/09 07:32:39 marka Exp $ */
 
 #ifndef DNS_BYADDR_H
 #define DNS_BYADDR_H 1
@@ -69,6 +69,7 @@ typedef struct dns_byaddrevent {
 } dns_byaddrevent_t;
 
 #define DNS_BYADDROPT_IPV6NIBBLE	0x0001
+#define DNS_BYADDROPT_IPV6INT		0x0002	/* Use IP6.INT nibble lookups */
 
 isc_result_t
 dns_byaddr_create(isc_mem_t *mctx, isc_netaddr_t *address, dns_view_t *view,
@@ -79,17 +80,13 @@ dns_byaddr_create(isc_mem_t *mctx, isc_netaddr_t *address, dns_view_t *view,
  *
  * Notes:
  *
- *	There are two reverse lookup formats for IPv6 addresses, 'bitstring'
- *	and 'nibble'.  The newer 'bitstring' format for the address fe80::1 is
- *
- *		\[xfe800000000000000000000000000001].ip6.int.
+ *	There is a reverse lookup format for IPv6 addresses, 'nibble'
  *
  *	The 'nibble' format for that address is
  *
- *   1.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.8.e.f.ip6.int.
+ *   1.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.8.e.f.ip6.arpa.
  *
- *	The 'bitstring' format will be used unless the DNS_BYADDROPT_IPV6NIBBLE
- *	option has been set.
+ *	DNS_BYADDROPT_IPV6INT can be used to get nibble lookups under ip6.int.
  *
  * Requires:
  *
@@ -147,10 +144,15 @@ dns_byaddr_destroy(dns_byaddr_t **byaddrp);
 isc_result_t
 dns_byaddr_createptrname(isc_netaddr_t *address, isc_boolean_t nibble,
 			 dns_name_t *name);
+
+isc_result_t
+dns_byaddr_createptrname2(isc_netaddr_t *address, unsigned int options,
+			  dns_name_t *name);
 /*
  * Creates a name that would be used in a PTR query for this address.  The
  * nibble flag indicates that the 'nibble' format is to be used if an IPv6
- * address is provided, instead of the 'bitstring' format.
+ * address is provided, instead of the 'bitstring' format.  'options' are
+ * the same as for dns_byaddr_create().
  *
  * Requires:
  * 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1999-2001  Internet Software Consortium.
+ * Copyright (C) 1999-2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: masterdump.c,v 1.56.2.2 2001/10/30 01:53:24 marka Exp $ */
+/* $ISC: masterdump.c,v 1.56.2.5 2003/07/22 04:03:41 marka Exp $ */
 
 #include <config.h>
 
@@ -124,6 +124,7 @@ typedef struct dns_totext_ctx {
 	char *			linebreak;
 	char 			linebreak_buf[DNS_TOTEXT_LINEBREAK_MAXLEN];
 	dns_name_t *		origin;
+	dns_name_t *		neworigin;
 	dns_fixedname_t		origin_fixname;
 	isc_uint32_t 		current_ttl;
 	isc_boolean_t 		current_ttl_valid;
@@ -186,7 +187,7 @@ static char spaces[N_SPACES+1] = "          ";
 #define N_TABS 10
 static char tabs[N_TABS+1] = "\t\t\t\t\t\t\t\t\t\t";
 
-
+#define NXDOMAIN(x) (((x)->attributes & DNS_RDATASETATTR_NXDOMAIN) != 0)
 
 /*
  * Output tabs and spaces to go from column '*current' to
@@ -306,6 +307,7 @@ totext_ctx_init(const dns_master_style_t *style, dns_totext_ctx_t *ctx) {
 	}
 
 	ctx->origin = NULL;
+	ctx->neworigin = NULL;
 	ctx->current_ttl = 0;
 	ctx->current_ttl_valid = ISC_FALSE;
 
@@ -458,7 +460,10 @@ rdataset_totext(dns_rdataset_t *rdataset,
 		 */
 		INDENT_TO(rdata_column);
 		if (rdataset->type == 0) {
-			RETERR(str_totext(";-$\n", target));
+			if (NXDOMAIN(rdataset))
+				RETERR(str_totext(";-$NXDOMAIN\n", target));
+			else
+				RETERR(str_totext(";-$NXRRSET\n", target));
 		} else {
 			dns_rdata_t rdata = DNS_RDATA_INIT;
 			isc_region_t r;
@@ -786,12 +791,22 @@ dump_rdatasets(isc_mem_t *mctx, dns_name_t *name, dns_rdatasetiter_t *rdsiter,
 	       isc_buffer_t *buffer, FILE *f)
 {
 	isc_result_t itresult, dumpresult;
+	isc_region_t r;
 	dns_rdataset_t rdatasets[MAXSORT];
 	dns_rdataset_t *sorted[MAXSORT];
 	int i, n;
 
 	itresult = dns_rdatasetiter_first(rdsiter);
 	dumpresult = ISC_R_SUCCESS;
+
+	if (itresult == ISC_R_SUCCESS && ctx->neworigin != NULL) {
+		isc_buffer_clear(buffer);
+		itresult = dns_name_totext(ctx->neworigin, ISC_FALSE, buffer);
+		RUNTIME_CHECK(itresult == ISC_R_SUCCESS);
+		isc_buffer_usedregion(buffer, &r);
+		fprintf(f, "$ORIGIN %.*s\n", (int) r.length, (char *) r.base);
+		ctx->neworigin = NULL;
+	}
 
  again:
 	for (i = 0;
@@ -929,14 +944,9 @@ dns_master_dumptostream(isc_mem_t *mctx, dns_db_t *db,
 				dns_fixedname_name(&ctx.origin_fixname);
 			result = dns_dbiterator_origin(dbiter, origin);
 			RUNTIME_CHECK(result == ISC_R_SUCCESS);
-			isc_buffer_clear(&buffer);
-			result = dns_name_totext(origin, ISC_FALSE, &buffer);
-			RUNTIME_CHECK(result == ISC_R_SUCCESS);
-			isc_buffer_usedregion(&buffer, &r);
-			fprintf(f, "$ORIGIN %.*s\n", (int) r.length,
-				(char *) r.base);
 			if ((ctx.style.flags & DNS_STYLEFLAG_REL_DATA) != 0)
 				ctx.origin = origin;
+			ctx.neworigin = origin;
 		}
 		result = dns_db_allrdatasets(db, node, version, now, &rdsiter);
 		if (result != ISC_R_SUCCESS) {

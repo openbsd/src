@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1998-2001  Internet Software Consortium.
+ * Copyright (C) 1998-2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: time.c,v 1.34.2.5 2001/10/22 23:28:26 gson Exp $ */
+/* $ISC: time.c,v 1.34.2.7 2003/10/09 07:32:52 marka Exp $ */
 
 #include <config.h>
 
@@ -173,7 +173,7 @@ isc_time_now(isc_time_t *t) {
 	 * Ensure the tv_sec value fits in t->seconds.
 	 */
 	if (sizeof(tv.tv_sec) > sizeof(t->seconds) &&
-	    ((tv.tv_sec | (unsigned int)-1) ^ (unsigned int)-1) != 0)
+	    ((tv.tv_sec | (unsigned int)-1) ^ (unsigned int)-1) != 0U)
 		return (ISC_R_RANGE);
 
 	t->seconds = tv.tv_sec;
@@ -366,7 +366,7 @@ isc_time_secondsastimet(isc_time_t *t, time_t *secondsp) {
 	    (time_t)0.5 != 0.5 &&	       /* Not a floating point type. */
 	    (i = (time_t)-1) != 4294967295u &&		       /* Is signed. */
 	    (seconds &
-	     (1U << (sizeof(time_t) * CHAR_BIT - 1))) != 0) {   /* Negative. */
+	     (1U << (sizeof(time_t) * CHAR_BIT - 1))) != 0U) {   /* Negative. */
 		/*
 		 * This UNUSED() is here to shut up the IRIX compiler:
 		 *	variable "i" was set but never used

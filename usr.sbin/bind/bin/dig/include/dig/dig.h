@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000, 2001  Internet Software Consortium.
+ * Copyright (C) 2000, 2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: dig.h,v 1.71.2.3 2001/11/15 01:24:13 marka Exp $ */
+/* $ISC: dig.h,v 1.71.2.6 2003/07/25 04:36:44 marka Exp $ */
 
 #ifndef DIG_H
 #define DIG_H
@@ -99,7 +99,7 @@ struct dig_lookup {
 		trace, /* dig +trace */
 		trace_root, /* initial query for either +trace or +nssearch */
 		tcp_mode,
-		nibble,
+		ip6_int,
 		comments,
 		stats,
 		section_question,
@@ -152,7 +152,8 @@ struct dig_query {
 		first_soa_rcvd,
 		second_rr_rcvd,
 		first_repeat_rcvd,
-		recv_made;
+		recv_made,
+		warn_id;
 	isc_uint32_t first_rr_serial;
 	isc_uint32_t second_rr_serial;
 	isc_uint32_t rr_count;
@@ -189,7 +190,8 @@ void
 get_address(char *host, in_port_t port, isc_sockaddr_t *sockaddr);
 
 isc_result_t
-get_reverse(char *reverse, char *value, isc_boolean_t nibble);
+get_reverse(char *reverse, char *value, isc_boolean_t ip6int,
+	    isc_boolean_t strict);
 
 void
 fatal(const char *format, ...) ISC_FORMAT_PRINTF(1, 2);

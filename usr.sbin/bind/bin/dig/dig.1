@@ -48,6 +48,10 @@ Unless it is told to query a specific name server,
 .PP
 When no command line arguments or options are given, will perform an
 NS query for "." (the root).
+.PP
+It is possible to set per user defaults for \fBdig\fR via
+\fI${HOME}/.digrc\fR. This file is read and any options in it
+are applied before the command line arguements.
 .SH "SIMPLE USAGE"
 .PP
 A typical invocation of \fBdig\fR looks like:
@@ -200,7 +204,7 @@ completeness.
 Set [do not set] the CD (checking disabled) bit in the query. This
 requests the server to not perform DNSSEC validation of responses.
 .TP
-\fB+[no]recursive\fR
+\fB+[no]recurse\fR
 Toggle the setting of the RD (recursion desired) bit in the query.
 This bit is set by default, which means \fBdig\fR
 normally sends recursive queries. Recursion is automatically disabled
@@ -352,6 +356,8 @@ isc.org.
 .SH "FILES"
 .PP
 \fI/etc/resolv.conf\fR
+.PP
+\fI${HOME}/.digrc\fR
 .SH "SEE ALSO"
 .PP
 \fBhost\fR(1),

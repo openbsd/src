@@ -1470,7 +1470,7 @@ else
         hardcode_libdir_flag_spec='${wl}-bnolibpath ${wl}-blibpath:$libdir:/usr/lib:/lib'
         # Warning - without using the other run time loading flags, -berok will
         #           link without error, but may produce a broken library.
-        allow_undefined_flag='${wl}-berok"
+        allow_undefined_flag='${wl}-berok'
         # This is a bit strange, but is similar to how AIX traditionally builds
         # it's shared libraries.
         archive_expsym_cmds="\$CC $shared_flag"' -o $output_objdir/$soname $libobjs $deplibs $compiler_flags ${allow_undefined_flag} '"\${wl}$no_entry_flag \${wl}$exp_sym_flag:\$export_symbols"' ~$AR -crlo $objdir/$libname$release.a $objdir/$soname'
@@ -1884,7 +1884,7 @@ beos*)
   shlibpath_var=LIBRARY_PATH
   ;;
 
-bsdi4*)
+bsdi[45]*)
   version_type=linux
   need_version=no
   library_names_spec='${libname}${release}.so$versuffix ${libname}${release}.so$major $libname.so'

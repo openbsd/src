@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1999-2002  Internet Software Consortium.
+ * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: view.h,v 1.73.2.2 2002/08/05 06:57:13 marka Exp $ */
+/* $ISC: view.h,v 1.73.2.7 2003/09/19 14:10:31 marka Exp $ */
 
 #ifndef DNS_VIEW_H
 #define DNS_VIEW_H 1
@@ -119,6 +119,8 @@ struct dns_view {
 	dns_aclenv_t			aclenv;
 	isc_boolean_t			flush;
 	dns_namelist_t *		delonly;
+	isc_boolean_t			rootdelonly;
+	dns_namelist_t *		rootexclude;
 
 	/*
 	 * Configurable data for server use only,
@@ -513,6 +515,12 @@ dns_view_findzonecut(dns_view_t *view, dns_name_t *name, dns_name_t *fname,
 		     isc_stdtime_t now, unsigned int options,
 		     isc_boolean_t use_hints,
 		     dns_rdataset_t *rdataset, dns_rdataset_t *sigrdataset);
+
+isc_result_t
+dns_view_findzonecut2(dns_view_t *view, dns_name_t *name, dns_name_t *fname,
+		      isc_stdtime_t now, unsigned int options,
+		      isc_boolean_t use_hints, isc_boolean_t use_cache,
+		      dns_rdataset_t *rdataset, dns_rdataset_t *sigrdataset);
 /*
  * Find the best known zonecut containing 'name'.
  *
@@ -525,6 +533,9 @@ dns_view_findzonecut(dns_view_t *view, dns_name_t *name, dns_name_t *fname,
  *
  *	If 'use_hints' is ISC_TRUE, and the view has a hints database, then
  *	it will be searched last.
+ *
+ *	If 'use_cache' is ISC_TRUE, and the view has a cache, then it will be
+ *	searched.
  *
  *	If 'sigrdataset' is not NULL, and there is a SIG rdataset which
  *	covers 'type', then 'sigrdataset' will be bound to it.
@@ -696,6 +707,22 @@ isc_result_t
 dns_view_adddelegationonly(dns_view_t *view, dns_name_t *name);
 /*
  * Add the given name to the delegation only table.
+ * 
+ *
+ * Requires:
+ *	'view' is valid.
+ *	'name' is valid.
+ *
+ * Returns:
+ *	ISC_R_SUCCESS
+ *	ISC_R_NOMEMORY
+ */
+
+isc_result_t
+dns_view_excludedelegationonly(dns_view_t *view, dns_name_t *name);
+/*
+ * Add the given name to be excluded from the root-delegation-only.
+ * 
  *
  * Requires:
  *	'view' is valid.
@@ -709,7 +736,8 @@ dns_view_adddelegationonly(dns_view_t *view, dns_name_t *name);
 isc_boolean_t
 dns_view_isdelegationonly(dns_view_t *view, dns_name_t *name);
 /*
- * Check if 'name' is in the delegation only table.
+ * Check if 'name' is in the delegation only table or if
+ * rootdelonly is set that name is not being excluded.
  *
  * Requires:
  *	'view' is valid.
@@ -720,7 +748,22 @@ dns_view_isdelegationonly(dns_view_t *view, dns_name_t *name);
  *	ISC_FALSE othewise.
  */
 
+void
+dns_view_setrootdelonly(dns_view_t *view, isc_boolean_t value);
+/*
+ * Set the root delegation only flag.
+ *
+ * Requires:
+ *	'view' is valid.
+ */
 
-ISC_LANG_ENDDECLS
+isc_boolean_t
+dns_view_getrootdelonly(dns_view_t *view);
+/*
+ * Get the root delegation only flag.
+ *
+ * Requires:
+ *	'view' is valid.
+ */
 
 #endif /* DNS_VIEW_H */

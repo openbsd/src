@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1998-2002  Internet Software Consortium.
+ * Copyright (C) 1998-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: lex.c,v 1.66.2.5 2002/03/26 00:55:07 marka Exp $ */
+/* $ISC: lex.c,v 1.66.2.7 2003/10/09 07:32:48 marka Exp $ */
 
 #include <config.h>
 
@@ -92,7 +92,7 @@ isc_lex_create(isc_mem_t *mctx, size_t max_token, isc_lex_t **lexp) {
 	 */
 
 	REQUIRE(lexp != NULL && *lexp == NULL);
-	REQUIRE(max_token > 0);
+	REQUIRE(max_token > 0U);
 
 	lex = isc_mem_get(mctx, sizeof *lex);
 	if (lex == NULL)
@@ -621,13 +621,13 @@ isc_lex_gettoken(isc_lex_t *lex, unsigned int options, isc_token_t *tokenp) {
 					state = lexstate_string;
 				}
 			}
-			if (remaining == 0) {
+			if (remaining == 0U) {
 				result = grow_data(lex, &remaining,
 						   &curr, &prev);
 				if (result != ISC_R_SUCCESS)
 					goto done;
 			}
-			INSIST(remaining > 0);
+			INSIST(remaining > 0U);
 			*curr++ = c;
 			*curr = '\0';
 			remaining--;
@@ -651,13 +651,13 @@ isc_lex_gettoken(isc_lex_t *lex, unsigned int options, isc_token_t *tokenp) {
 			if ((options & ISC_LEXOPT_ESCAPE) != 0)
 				escaped = (!escaped && c == '\\') ?
 						ISC_TRUE : ISC_FALSE;
-			if (remaining == 0) {
+			if (remaining == 0U) {
 				result = grow_data(lex, &remaining,
 						   &curr, &prev);
 				if (result != ISC_R_SUCCESS)
 					goto done;
 			}
-			INSIST(remaining > 0);
+			INSIST(remaining > 0U);
 			*curr++ = c;
 			*curr = '\0';
 			remaining--;
@@ -748,13 +748,13 @@ isc_lex_gettoken(isc_lex_t *lex, unsigned int options, isc_token_t *tokenp) {
 					escaped = ISC_TRUE;
 				else
 					escaped = ISC_FALSE;
-				if (remaining == 0) {
+				if (remaining == 0U) {
 					result = grow_data(lex, &remaining,
 							   &curr, &prev);
 					if (result != ISC_R_SUCCESS)
 						goto done;
 				}
-				INSIST(remaining > 0);
+				INSIST(remaining > 0U);
 				prev = curr;
 				*curr++ = c;
 				*curr = '\0';

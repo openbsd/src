@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1999-2001  Internet Software Consortium.
+ * Copyright (C) 1999-2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,13 +15,14 @@
  * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: sockaddr.c,v 1.48 2001/01/09 21:56:29 bwelling Exp $ */
+/* $ISC: sockaddr.c,v 1.48.2.2 2003/10/09 07:32:49 marka Exp $ */
 
 #include <config.h>
 
 #include <stdio.h>
 
 #include <isc/buffer.h>
+#include <isc/hash.h>
 #include <isc/msgs.h>
 #include <isc/netaddr.h>
 #include <isc/print.h>
@@ -175,47 +176,50 @@ isc_sockaddr_format(isc_sockaddr_t *sa, char *array, unsigned int size) {
 
 unsigned int
 isc_sockaddr_hash(const isc_sockaddr_t *sockaddr, isc_boolean_t address_only) {
-	unsigned int length;
-	const unsigned char *s;
+	unsigned int length = 0;
+	const unsigned char *s = NULL;
 	unsigned int h = 0;
 	unsigned int g;
+	unsigned int p = 0;
+	const struct in6_addr *in6;
 
 	REQUIRE(sockaddr != NULL);
-
-	if (address_only) {
-		switch (sockaddr->type.sa.sa_family) {
-		case AF_INET:
-			return (ntohl(sockaddr->type.sin.sin_addr.s_addr));
-		case AF_INET6:
-			s = (const unsigned char *)&sockaddr->
-							   type.sin6.sin6_addr;
-			length = sizeof sockaddr->type.sin6.sin6_addr;
-			break;
-		default:
-			UNEXPECTED_ERROR(__FILE__, __LINE__,
-					 isc_msgcat_get(isc_msgcat,
-							ISC_MSGSET_SOCKADDR,
-							ISC_MSG_UNKNOWNFAMILY,
-							"unknown "
-							"address family: %d"),
-					 (int)sockaddr->type.sa.sa_family);
-			s = (const unsigned char *)&sockaddr->type;
-			length = sockaddr->length;
+	switch (sockaddr->type.sa.sa_family) {
+	case AF_INET:
+		s = (const unsigned char *)&sockaddr->type.sin.sin_addr;
+		p = ntohs(sockaddr->type.sin.sin_port);
+		length = sizeof(sockaddr->type.sin.sin_addr.s_addr);
+		break;
+	case AF_INET6:
+		in6 = &sockaddr->type.sin6.sin6_addr;
+		if (IN6_IS_ADDR_V4MAPPED(in6)) {
+			s = (const unsigned char *)&in6[12];
+			length = sizeof(sockaddr->type.sin.sin_addr.s_addr);
+		} else {
+			s = (const unsigned char *)in6;
+			length = sizeof(sockaddr->type.sin6.sin6_addr);
 		}
-	} else {
+		p = ntohs(sockaddr->type.sin6.sin6_port);
+		break;
+	default:
+		UNEXPECTED_ERROR(__FILE__, __LINE__,
+				 isc_msgcat_get(isc_msgcat,
+					        ISC_MSGSET_SOCKADDR,
+				       		ISC_MSG_UNKNOWNFAMILY,
+						"unknown address family: %d"),
+					     (int)sockaddr->type.sa.sa_family);
 		s = (const unsigned char *)&sockaddr->type;
 		length = sockaddr->length;
+		p = 0;
 	}
 
-	while (length > 0) {
-		h = ( h << 4 ) + *s;
-		if ((g = ( h & 0xf0000000 )) != 0) {
-			h = h ^ (g >> 24);
-			h = h ^ g;
-		}
-		s++;
-		length--;
+	h = isc_hash_calc(s, length, ISC_TRUE);
+	if (!address_only) {
+		g = isc_hash_calc((const unsigned char *)&p, sizeof(p),
+				  ISC_TRUE);
+		h = h ^ g; /* XXX: we should concatenate h and p first */
 	}
+
 	return (h);
 }
 

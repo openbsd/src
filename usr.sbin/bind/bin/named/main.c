@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1999-2002  Internet Software Consortium.
+ * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: main.c,v 1.119.2.2 2002/08/05 06:57:01 marka Exp $ */
+/* $ISC: main.c,v 1.119.2.5 2003/10/09 07:32:33 marka Exp $ */
 
 #include <config.h>
 
@@ -28,6 +28,7 @@
 #include <isc/dir.h>
 #include <isc/entropy.h>
 #include <isc/file.h>
+#include <isc/hash.h>
 #include <isc/os.h>
 #include <isc/platform.h>
 #include <isc/resource.h>
@@ -38,6 +39,7 @@
 #include <isccc/result.h>
 
 #include <dns/dispatch.h>
+#include <dns/name.h>
 #include <dns/result.h>
 #include <dns/view.h>
 
@@ -432,6 +434,14 @@ create_managers(void) {
 		return (ISC_R_UNEXPECTED);
 	}
 
+	result = isc_hash_create(ns_g_mctx, ns_g_entropy, DNS_NAME_MAXWIRE);
+	if (result != ISC_R_SUCCESS) {
+		UNEXPECTED_ERROR(__FILE__, __LINE__,
+				 "isc_hash_create() failed: %s",
+				 isc_result_totext(result));
+		return (ISC_R_UNEXPECTED);
+	}
+
 	return (ISC_R_SUCCESS);
 }
 
@@ -449,6 +459,13 @@ destroy_managers(void) {
 	isc_taskmgr_destroy(&ns_g_taskmgr);
 	isc_timermgr_destroy(&ns_g_timermgr);
 	isc_socketmgr_destroy(&ns_g_socketmgr);
+
+	/*
+	 * isc_hash_destroy() cannot be called as long as a resolver may be
+	 * running.  Calling this after isc_taskmgr_destroy() ensures the
+	 * call is safe.
+	 */
+	isc_hash_destroy();
 }
 
 static void

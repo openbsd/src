@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1999-2001  Internet Software Consortium.
+ * Copyright (C) 1999-2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: rootns.c,v 1.20.2.1 2001/10/03 22:30:17 gson Exp $ */
+/* $ISC: rootns.c,v 1.20.2.3 2003/07/22 04:03:44 marka Exp $ */
 
 #include <config.h>
 
@@ -65,7 +65,7 @@ static char root_ns[] =
 "G.ROOT-SERVERS.NET.     3600000 IN      A       192.112.36.4\n"
 "H.ROOT-SERVERS.NET.     3600000 IN      A       128.63.2.53\n"
 "I.ROOT-SERVERS.NET.     3600000 IN      A       192.36.148.17\n"
-"J.ROOT-SERVERS.NET.     3600000 IN      A       198.41.0.10\n"
+"J.ROOT-SERVERS.NET.     3600000 IN      A       192.58.128.30\n"
 "K.ROOT-SERVERS.NET.     3600000 IN      A       193.0.14.129\n"
 "L.ROOT-SERVERS.NET.     3600000 IN      A       198.32.64.12\n"
 "M.ROOT-SERVERS.NET.     3600000 IN      A       202.12.27.33\n";

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1999-2001  Internet Software Consortium.
+ * Copyright (C) 1999-2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: rdataslab.c,v 1.29 2001/01/09 21:51:25 bwelling Exp $ */
+/* $ISC: rdataslab.c,v 1.29.2.2 2003/07/22 04:03:43 marka Exp $ */
 
 #include <config.h>
 
@@ -560,6 +560,38 @@ dns_rdataslab_equal(unsigned char *slab1, unsigned char *slab2,
 		current2 += length1;
 
 		count1--;
+	}
+	return (ISC_TRUE);
+}
+
+isc_boolean_t
+dns_rdataslab_equalx(unsigned char *slab1, unsigned char *slab2,
+		     unsigned int reservelen, dns_rdataclass_t rdclass,
+		     dns_rdatatype_t type)
+{
+	unsigned char *current1, *current2;
+	unsigned int count1, count2;
+	dns_rdata_t rdata1 = DNS_RDATA_INIT;
+	dns_rdata_t rdata2 = DNS_RDATA_INIT;
+
+	current1 = slab1 + reservelen;
+	count1 = *current1++ * 256;
+	count1 += *current1++;
+
+	current2 = slab2 + reservelen;
+	count2 = *current2++ * 256;
+	count2 += *current2++;
+
+	if (count1 != count2)
+		return (ISC_FALSE);
+
+	while (count1-- > 0) {
+		rdata_from_slab(&current1, rdclass, type, &rdata1);
+		rdata_from_slab(&current2, rdclass, type, &rdata2);
+		if (dns_rdata_compare(&rdata1, &rdata2) != 0)
+			return (ISC_FALSE);
+		dns_rdata_reset(&rdata1);
+		dns_rdata_reset(&rdata2);
 	}
 	return (ISC_TRUE);
 }

@@ -1,5 +1,5 @@
 /*
- * Portions Copyright (C) 1999-2001  Internet Software Consortium.
+ * Portions Copyright (C) 1999-2001, 2003  Internet Software Consortium.
  * Portions Copyright (C) 1995-2000 by Network Associates, Inc.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -19,7 +19,7 @@
 
 /*
  * Principal Author: Brian Wellington
- * $ISC: dst_api.c,v 1.88.2.2 2001/12/19 01:09:56 marka Exp $
+ * $ISC: dst_api.c,v 1.88.2.4 2003/10/09 07:32:46 marka Exp $
  */
 
 #include <config.h>
@@ -987,7 +987,7 @@ buildfilename(dns_name_t *name, dns_keytag_t id,
 		if (isc_buffer_availablelength(out) < strlen(directory))
 			return (ISC_R_NOSPACE);
 		isc_buffer_putstr(out, directory);
-		if (strlen(directory) > 0 &&
+		if (strlen(directory) > 0U &&
 		    directory[strlen(directory) - 1] != '/')
 			isc_buffer_putstr(out, "/");
 	}
@@ -1108,7 +1108,7 @@ dst__mem_realloc(void *ptr, size_t size) {
 
 	INSIST(dst_memory_pool != NULL);
 	p = NULL;
-	if (size > 0) {
+	if (size > 0U) {
 		p = dst__mem_alloc(size);
 		if (p != NULL && ptr != NULL)
 			memcpy(p, ptr, size);

@@ -1,4 +1,4 @@
-# Copyright (C) 1998-2001  Internet Software Consortium.
+# Copyright (C) 1998-2001, 2003  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -13,7 +13,7 @@
 # NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-# $ISC: Makefile.in,v 1.71.2.1 2001/10/22 23:28:13 gson Exp $
+# $ISC: Makefile.in,v 1.71.2.3 2003/10/09 07:32:47 marka Exp $
 
 srcdir =	@srcdir@
 VPATH =		@srcdir@
@@ -52,7 +52,7 @@ WIN32OBJS = 	win32/condition.@O@ win32/dir.@O@ win32/file.@O@ \
 OBJS =		@ISC_EXTRA_OBJS@ \
 		assertions.@O@ base64.@O@ bitstring.@O@ buffer.@O@ \
 		bufferlist.@O@ commandline.@O@ error.@O@ event.@O@ \
-		heap.@O@ hex.@O@ hmacmd5.@O@ \
+		hash.@O@ heap.@O@ hex.@O@ hmacmd5.@O@ \
 		lcg.@O@ lex.@O@ lfsr.@O@ lib.@O@ log.@O@ \
 		md5.@O@ mem.@O@ mutexblock.@O@ netaddr.@O@ ondestroy.@O@ \
 		quota.@O@ random.@O@ \

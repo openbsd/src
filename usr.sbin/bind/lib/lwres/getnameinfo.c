@@ -1,5 +1,5 @@
 /*
- * Portions Copyright (C) 1999-2001  Internet Software Consortium.
+ * Portions Copyright (C) 1999-2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: getnameinfo.c,v 1.30 2001/07/10 18:25:43 gson Exp $ */
+/* $ISC: getnameinfo.c,v 1.30.2.3 2003/07/23 06:57:56 marka Exp $ */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -162,7 +162,7 @@ lwres_getnameinfo(const struct sockaddr *sa, size_t salen, char *host,
 	}
 	proto = (flags & NI_DGRAM) ? "udp" : "tcp";
 
-	if (serv == NULL || servlen == 0) {
+	if (serv == NULL || servlen == 0U) {
 		/*
 		 * Caller does not want service.
 		 */
@@ -197,7 +197,7 @@ lwres_getnameinfo(const struct sockaddr *sa, size_t salen, char *host,
 	}
 #endif
 
-	if (host == NULL || hostlen == 0) {
+	if (host == NULL || hostlen == 0U) {
 		/*
 		 * What should we do?
 		 */

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1999-2001  Internet Software Consortium.
+ * Copyright (C) 1999-2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: db.h,v 1.67 2001/08/28 03:58:13 marka Exp $ */
+/* $ISC: db.h,v 1.67.2.2 2003/10/09 07:32:39 marka Exp $ */
 
 #ifndef DNS_DB_H
 #define DNS_DB_H 1
@@ -598,8 +598,7 @@ dns_db_findnode(dns_db_t *db, dns_name_t *name, isc_boolean_t create,
  *
  *	'db' is a valid database.
  *
- *	'name' is a valid, non-empty, absolute name that is a subdomain of
- *	the database's origin.  (It need not be a proper subdomain.)
+ *	'name' is a valid, non-empty, absolute name.
  *
  *	nodep != NULL && *nodep == NULL
  *

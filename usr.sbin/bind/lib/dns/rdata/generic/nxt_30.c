@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1999-2001  Internet Software Consortium.
+ * Copyright (C) 1999-2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: nxt_30.c,v 1.49 2001/07/16 03:06:23 marka Exp $ */
+/* $ISC: nxt_30.c,v 1.49.2.2 2003/07/22 04:03:46 marka Exp $ */
 
 /* reviewed: Wed Mar 15 18:21:15 PST 2000 by brister */
 
@@ -143,9 +143,9 @@ fromwire_nxt(ARGS_FROMWIRE) {
 	RETERR(dns_name_fromwire(&name, source, dctx, downcase, target));
 
 	isc_buffer_activeregion(source, &sr);
-	/* XXXRTH  Enforce RFC 2535 length rules if bit 0 is not set. */
-	if (sr.length > 8 * 1024)
-		return (DNS_R_EXTRADATA);
+	if (sr.length > 0 && (sr.base[0] & 0x80) == 0 &&
+	    ((sr.length > 16) || sr.base[sr.length - 1] == 0))
+		return (DNS_R_BADBITMAP);
 	RETERR(mem_tobuffer(target, sr.base, sr.length));
 	isc_buffer_forward(source, sr.length);
 	return (ISC_R_SUCCESS);
@@ -207,6 +207,10 @@ fromstruct_nxt(ARGS_FROMSTRUCT) {
 	REQUIRE(nxt->common.rdtype == type);
 	REQUIRE(nxt->common.rdclass == rdclass);
 	REQUIRE(nxt->typebits != NULL || nxt->len == 0);
+	if (nxt->typebits != NULL && (nxt->typebits[0] & 0x80) == 0) {
+		REQUIRE(nxt->len <= 16);
+		REQUIRE(nxt->typebits[nxt->len - 1] != 0);
+	}
 
 	UNUSED(type);
 	UNUSED(rdclass);

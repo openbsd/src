@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2002  Internet Software Consortium.
+ * Copyright (C) 2000-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: nslookup.c,v 1.90.2.3 2002/03/20 22:45:11 marka Exp $ */
+/* $ISC: nslookup.c,v 1.90.2.5 2003/10/09 07:32:30 marka Exp $ */
 
 #include <config.h>
 
@@ -626,7 +626,9 @@ addlookup(char *opt) {
 		rdclass = dns_rdataclass_in;
 	}
 	lookup = make_empty_lookup();
-	if (get_reverse(store, opt, lookup->nibble) == ISC_R_SUCCESS) {
+	if (get_reverse(store, opt, lookup->ip6_int, ISC_TRUE)
+	    == ISC_R_SUCCESS)
+	{
 		safecpy(lookup->textname, store, sizeof(lookup->textname));
 		lookup->rdtype = dns_rdatatype_ptr;
 		lookup->rdtypeset = ISC_TRUE;

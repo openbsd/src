@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2001  Internet Software Consortium.
+ * Copyright (C) 2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: rndc-confgen.c,v 1.9.2.4 2001/11/30 01:10:09 gson Exp $ */
+/* $ISC: rndc-confgen.c,v 1.9.2.6 2003/07/22 04:03:37 marka Exp $ */
 
 #include <config.h>
 
@@ -269,11 +269,8 @@ main(int argc, char **argv) {
 			char *buf;
 			len = strlen(chrootdir) + strlen(keyfile) + 2;
 			buf = isc_mem_get(mctx, len);
-			if (buf == NULL) {
-				fprintf(stderr, "isc_mem_get(%d) failed\n",
-					len);
-				goto cleanup;
-			}
+			if (buf == NULL)
+				fatal("isc_mem_get(%d) failed\n", len);
 			snprintf(buf, len, "%s/%s", chrootdir, keyfile);
 			
 			write_key_file(buf, user, keyname, &key_txtbuffer);
@@ -315,7 +312,6 @@ options {\n\
 		       serveraddr, port, serveraddr, keyname);
 	}
 
- cleanup:
 	if (show_final_mem)
 		isc_mem_stats(mctx, stderr);
 

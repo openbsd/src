@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000, 2001  Internet Software Consortium.
+ * Copyright (C) 2000, 2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: context.c,v 1.41 2001/07/19 16:59:32 gson Exp $ */
+/* $ISC: context.c,v 1.41.2.2 2003/10/09 07:32:54 marka Exp $ */
 
 #include <config.h>
 
@@ -152,14 +152,14 @@ lwres_context_initserial(lwres_context_t *ctx, lwres_uint32_t serial) {
 void
 lwres_context_freemem(lwres_context_t *ctx, void *mem, size_t len) {
 	REQUIRE(mem != NULL);
-	REQUIRE(len != 0);
+	REQUIRE(len != 0U);
 
 	CTXFREE(mem, len);
 }
 
 void *
 lwres_context_allocmem(lwres_context_t *ctx, size_t len) {
-	REQUIRE(len != 0);
+	REQUIRE(len != 0U);
 
 	return (CTXMALLOC(len));
 }
@@ -349,7 +349,7 @@ lwres_context_sendrecv(lwres_context_t *ctx,
 	 * Type of tv_sec is long, so make sure the unsigned long timeout
 	 * does not overflow it.
 	 */
-	if (ctx->timeout <= LONG_MAX)
+	if (ctx->timeout <= (unsigned int)LONG_MAX)
 		timeout.tv_sec = (long)ctx->timeout;
 	else
 		timeout.tv_sec = LONG_MAX;

@@ -725,6 +725,9 @@ compiler."
       # that all symbols are satisfied, otherwise we get a static library.
       allow_undefined=yes
       ;;
+    *-*-aix*)
+      allow_undefined=no
+      ;;
     *)
       allow_undefined=yes
       ;;
@@ -940,6 +943,7 @@ compiler."
       -allow-undefined)
 	# FIXME: remove this flag sometime in the future.
 	$echo "$modename: \`-allow-undefined' is deprecated because it is the default" 1>&2
+	allow_undefined=yes
 	continue
 	;;
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1998-2002  Internet Software Consortium.
+ * Copyright (C) 1998-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: rdata.h,v 1.51.2.2 2002/02/20 02:17:25 marka Exp $ */
+/* $ISC: rdata.h,v 1.51.2.4 2003/10/09 07:32:39 marka Exp $ */
 
 #ifndef DNS_RDATA_H
 #define DNS_RDATA_H 1
@@ -468,10 +468,6 @@ dns_rdatatype_ismeta(dns_rdatatype_t type);
 /*
  * Return true iff the rdata type 'type' is a meta-type
  * like ANY or AXFR.
- *
- * Requires:
- * 	'type' is a valid rdata type.
- *
  */
 
 isc_boolean_t
@@ -490,10 +486,6 @@ dns_rdataclass_ismeta(dns_rdataclass_t rdclass);
 /*
  * Return true iff the rdata class 'rdclass' is a meta-class
  * like ANY or NONE.
- *
- * Requires:
- * 	'rdclass' is a valid rdata class.
- *
  */
 
 isc_boolean_t

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1999-2001  Internet Software Consortium.
+ * Copyright (C) 1999-2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: rbt.c,v 1.115 2001/06/04 19:33:05 tale Exp $ */
+/* $ISC: rbt.c,v 1.115.2.2 2003/07/22 04:03:42 marka Exp $ */
 
 /* Principal Authors: DCL */
 
@@ -1526,8 +1526,7 @@ dns_rbt_formatnodename(dns_rbtnode_t *node, char *printname, unsigned int size)
 	if (result == ISC_R_SUCCESS)
 		dns_name_format(name, printname, size);
 	else
-		snprintf(printname, size,
-			 "<error building name: %s>",
+		snprintf(printname, size, "<error building name: %s>",
 			 dns_result_totext(result));
 
 	return (printname);

@@ -15,7 +15,7 @@
  * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: cache.c,v 1.45.2.4 2002/08/05 06:57:11 marka Exp $ */
+/* $ISC: cache.c,v 1.45.2.5 2003/10/16 06:07:12 marka Exp $ */
 
 #include <config.h>
 
@@ -245,7 +245,9 @@ dns_cache_create(isc_mem_t *mctx, isc_taskmgr_t *taskmgr,
 	for (i = 0; i < cache->db_argc; i++)
 		if (cache->db_argv[i] != NULL)
 			isc_mem_free(mctx, cache->db_argv[i]);
-	isc_mem_put(mctx, cache->db_argv, cache->db_argc * sizeof(char *));
+	if (cache->db_argv != NULL)
+		isc_mem_put(mctx, cache->db_argv,
+			    cache->db_argc * sizeof(char *));
  cleanup_dbtype:
 	isc_mem_free(mctx, cache->db_type);
  cleanup_filelock:
@@ -549,6 +551,8 @@ cache_cleaner_init(dns_cache_t *cache, isc_taskmgr_t *taskmgr,
 	return (ISC_R_SUCCESS);
 
  cleanup:
+	if (cleaner->overmem_event != NULL)
+		isc_event_free(&cleaner->overmem_event);
 	if (cleaner->resched_event != NULL)
 		isc_event_free(&cleaner->resched_event);
 	if (cleaner->cleaning_timer != NULL)

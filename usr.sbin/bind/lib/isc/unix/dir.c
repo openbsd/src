@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1999-2001  Internet Software Consortium.
+ * Copyright (C) 1999-2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: dir.c,v 1.18 2001/06/08 23:50:31 tale Exp $ */
+/* $ISC: dir.c,v 1.18.2.2 2003/10/09 07:32:52 marka Exp $ */
 
 /* Principal Authors: DCL */
 
@@ -164,7 +164,7 @@ isc_dir_current(char *dirname, size_t length, isc_boolean_t end_sep) {
 	 * XXXDCL Could automatically allocate memory if dirname == NULL.
 	 */
 	REQUIRE(dirname != NULL);
-	REQUIRE(length > 0);
+	REQUIRE(length > 0U);
 
 	cwd = getcwd(dirname, length);
 

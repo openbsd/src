@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1999-2001  Internet Software Consortium.
+ * Copyright (C) 1999-2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: xfrout.c,v 1.101.2.3 2001/10/30 01:28:29 marka Exp $ */
+/* $ISC: xfrout.c,v 1.101.2.5 2003/07/22 04:03:35 marka Exp $ */
 
 #include <config.h>
 
@@ -167,26 +167,37 @@ db_rr_iterator_init(db_rr_iterator_t *it, dns_db_t *db, dns_dbversion_t *ver,
 static isc_result_t
 db_rr_iterator_first(db_rr_iterator_t *it) {
 	it->result = dns_dbiterator_first(it->dbit);
-	if (it->result != ISC_R_SUCCESS)
-		return (it->result);
-	it->result = dns_dbiterator_current(it->dbit, &it->node,
+	/*
+	 * The top node may be empty when out of zone glue exists.
+	 * Walk the tree to find the first node with data.
+	 */
+	while (it->result == ISC_R_SUCCESS) {
+		it->result = dns_dbiterator_current(it->dbit, &it->node,
 				    dns_fixedname_name(&it->fixedname));
-	if (it->result != ISC_R_SUCCESS)
+		if (it->result != ISC_R_SUCCESS)
+			return (it->result);
+
+		it->result = dns_db_allrdatasets(it->db, it->node,
+						 it->ver, it->now,
+						 &it->rdatasetit);
+		if (it->result != ISC_R_SUCCESS)
+			return (it->result);
+
+		it->result = dns_rdatasetiter_first(it->rdatasetit);
+		if (it->result != ISC_R_SUCCESS) {
+			/*
+			 * This node is empty. Try next node.
+			 */
+			dns_rdatasetiter_destroy(&it->rdatasetit);
+			dns_db_detachnode(it->db, &it->node);
+			it->result = dns_dbiterator_next(it->dbit);
+			continue;
+		}
+		dns_rdatasetiter_current(it->rdatasetit, &it->rdataset);
+
+		it->result = dns_rdataset_first(&it->rdataset);
 		return (it->result);
-
-	it->result = dns_db_allrdatasets(it->db, it->node,
-					 it->ver, it->now,
-					 &it->rdatasetit);
-	if (it->result != ISC_R_SUCCESS)
-		return (it->result);
-
-	it->result = dns_rdatasetiter_first(it->rdatasetit);
-	if (it->result != ISC_R_SUCCESS)
-		return (it->result);
-
-	dns_rdatasetiter_current(it->rdatasetit, &it->rdataset);
-
-	it->result = dns_rdataset_first(&it->rdataset);
+	}
 	return (it->result);
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1999-2001  Internet Software Consortium.
+ * Copyright (C) 1999-2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: db.c,v 1.69.2.1 2001/09/04 23:09:33 gson Exp $ */
+/* $ISC: db.c,v 1.69.2.3 2003/10/09 07:32:36 marka Exp $ */
 
 /***
  *** Imports
@@ -428,7 +428,6 @@ dns_db_findnode(dns_db_t *db, dns_name_t *name,
 	 */
 
 	REQUIRE(DNS_DB_VALID(db));
-	REQUIRE(dns_name_issubdomain(name, &db->origin));
 	REQUIRE(nodep != NULL && *nodep == NULL);
 
 	return ((db->methods->findnode)(db, name, create, nodep));

@@ -1,6 +1,6 @@
 /*
- * Portions Copyright (C) 2001, 2002  Internet Software Consortium.
- * Portions Copyright (C) 2001, 2002  Nominum, Inc.
+ * Portions Copyright (C) 2001-2003  Internet Software Consortium.
+ * Portions Copyright (C) 2001-2003  Nominum, Inc.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,7 +16,7 @@
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: cc.c,v 1.4.2.2 2002/03/26 00:55:13 marka Exp $ */
+/* $ISC: cc.c,v 1.4.2.4 2003/10/09 07:32:53 marka Exp $ */
 
 #include <config.h>
 
@@ -105,7 +105,7 @@ value_towire(isccc_sexpr_t *elt, isccc_region_t *target)
 		 * the placeholder length too.  Adjust and
 		 * emit.
 		 */
-		INSIST(len >= 4);
+		INSIST(len >= 4U);
 		len -= 4;
 		PUT32(len, lenp);
 	} else if (isccc_sexpr_listp(elt)) {
@@ -128,7 +128,7 @@ value_towire(isccc_sexpr_t *elt, isccc_region_t *target)
 		 * 'len' is 4 bytes too big, since it counts
 		 * the placeholder length.  Adjust and emit.
 		 */
-		INSIST(len >= 4);
+		INSIST(len >= 4U);
 		len -= 4;
 		PUT32(len, lenp);
 	}
@@ -152,7 +152,7 @@ table_towire(isccc_sexpr_t *alist, isccc_region_t *target)
 		ks = isccc_sexpr_tostring(k);
 		v = ISCCC_SEXPR_CDR(kv);
 		len = strlen(ks);
-		INSIST(len <= 255);
+		INSIST(len <= 255U);
 		/*
 		 * Emit the key name.
 		 */

@@ -15,7 +15,7 @@
  * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: dispatch.h,v 1.45.22.2 2003/02/17 07:05:10 marka Exp $ */
+/* $ISC: dispatch.h,v 1.45.2.2 2003/03/06 04:38:22 marka Exp $ */
 
 #ifndef DNS_DISPATCH_H
 #define DNS_DISPATCH_H 1

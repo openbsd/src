@@ -1,5 +1,5 @@
 /*
- * Portions Copyright (C) 1996-2001  Internet Software Consortium.
+ * Portions Copyright (C) 1996-2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -66,7 +66,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 static char sccsid[] = "@(#)inet_addr.c	8.1 (Berkeley) 6/17/93";
-static char rcsid[] = "$ISC: lwinetaton.c,v 1.10 2001/01/09 21:59:25 bwelling Exp $";
+static char rcsid[] = "$ISC: lwinetaton.c,v 1.10.2.2 2003/10/09 07:32:55 marka Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <config.h>
@@ -148,7 +148,7 @@ lwres_net_aton(const char *cp, struct in_addr *addr) {
 			 *	a.b.c	(with c treated as 16 bits)
 			 *	a.b	(with b treated as 24 bits)
 			 */
-			if (pp >= parts + 3 || val > 0xff)
+			if (pp >= parts + 3 || val > 0xffU)
 				return (0);
 			*pp++ = (lwres_uint8_t)val;
 			c = *++cp;
@@ -175,19 +175,19 @@ lwres_net_aton(const char *cp, struct in_addr *addr) {
 		break;
 
 	case 2:				/* a.b -- 8.24 bits */
-		if (val > 0xffffff)
+		if (val > 0xffffffU)
 			return (0);
 		val |= parts[0] << 24;
 		break;
 
 	case 3:				/* a.b.c -- 8.8.16 bits */
-		if (val > 0xffff)
+		if (val > 0xffffU)
 			return (0);
 		val |= (parts[0] << 24) | (parts[1] << 16);
 		break;
 
 	case 4:				/* a.b.c.d -- 8.8.8.8 bits */
-		if (val > 0xff)
+		if (val > 0xffU)
 			return (0);
 		val |= (parts[0] << 24) | (parts[1] << 16) | (parts[2] << 8);
 		break;

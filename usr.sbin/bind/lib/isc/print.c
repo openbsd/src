@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1999-2001  Internet Software Consortium.
+ * Copyright (C) 1999-2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: print.c,v 1.22 2001/05/16 00:52:55 gson Exp $ */
+/* $ISC: print.c,v 1.22.2.3 2003/07/22 04:03:47 marka Exp $ */
 
 #include <config.h>
 
@@ -166,7 +166,6 @@ isc_print_vsnprintf(char *str, size_t size, const char *format, va_list ap) {
 				*str++ = *format;
 				size--;
 			}
-			format++;
 			count++;
 			break;
 		case 'q':

@@ -13,7 +13,7 @@
 # NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-AC_REVISION($Revision: 1.6 $)
+AC_REVISION($Revision: 1.7 $)
 
 AC_INIT(lib/dns/name.c)
 AC_PREREQ(2.13)
@@ -455,7 +455,7 @@ case "$use_randomdev" in
 	unspec)
 		case "$host" in
 			*-openbsd*)
-				devrandom=/dev/srandom
+				devrandom=/dev/arandom
 				;;
 			*)
 				devrandom=/dev/random
@@ -525,9 +525,11 @@ case $host in
 	use_threads=false ;;
 *-freebsd*)
 	use_threads=false ;;
-*-bsdi*)
-	# Thread signals do not appear to work reliably on BSDI.
+*-bsdi[234]*)
+	# Thread signals do not work reliably on some versions of BSD/OS.
 	use_threads=false ;;
+*-bsdi5*)
+	use_threads=true ;;
 *-linux*)
    	# Threads are disabled on Linux by default because most
 	# Linux kernels produce unusable core dumps from multithreaded
@@ -635,6 +637,9 @@ then
 
 	AC_CHECK_FUNC(pthread_attr_getstacksize,
 		      AC_DEFINE(HAVE_PTHREAD_ATTR_GETSTACKSIZE),)
+
+	AC_CHECK_FUNC(pthread_attr_setstacksize,
+		      AC_DEFINE(HAVE_PTHREAD_ATTR_SETSTACKSIZE),)
 
 	#
 	# Additional OS-specific issues related to pthreads and sigwait.
@@ -1404,6 +1409,8 @@ AC_SUBST(ISC_LWRES_GETNAMEINFOPROTO)
 #
 # Look for a sysctl call to get the list of network interfaces.
 #
+case $ac_cv_header_sys_sysctl_h in
+yes)
 AC_MSG_CHECKING(for interface list sysctl)
 AC_EGREP_CPP(found_rt_iflist, [
 #include <sys/param.h>
@@ -1416,6 +1423,8 @@ found_rt_iflist
 	[AC_MSG_RESULT(yes)
 	 AC_DEFINE(HAVE_IFLIST_SYSCTL)],
 	[AC_MSG_RESULT(no)])
+;;
+esac
 
 #
 # Check for some other useful functions that are not ever-present.

@@ -1,5 +1,5 @@
 /*
- * Portions Copyright (C) 2000, 2001  Internet Software Consortium.
+ * Portions Copyright (C) 2000, 2001, 2003  Internet Software Consortium.
  * Portions Copyright (C) 1995-2000 by Network Associates, Inc.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: dnssec-signkey.c,v 1.50.2.1 2001/10/05 00:21:46 bwelling Exp $ */
+/* $ISC: dnssec-signkey.c,v 1.50.2.3 2003/10/09 07:32:31 marka Exp $ */
 
 #include <config.h>
 
@@ -259,7 +259,7 @@ main(int argc, char *argv[]) {
 
 	setup_logging(verbose, mctx, &log);
 
-	if (strlen(argv[0]) < 8 || strncmp(argv[0], "keyset-", 7) != 0)
+	if (strlen(argv[0]) < 8U || strncmp(argv[0], "keyset-", 7) != 0)
 		fatal("keyset file '%s' must start with keyset-", argv[0]);
 
 	db = NULL;

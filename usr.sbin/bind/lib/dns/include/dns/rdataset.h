@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1999-2002  Internet Software Consortium.
+ * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: rdataset.h,v 1.41.2.2 2002/04/23 02:28:52 marka Exp $ */
+/* $ISC: rdataset.h,v 1.41.2.5 2003/07/22 04:03:45 marka Exp $ */
 
 #ifndef DNS_RDATASET_H
 #define DNS_RDATASET_H 1
@@ -104,7 +104,7 @@ struct dns_rdataset {
 	void *				private1;
 	void *				private2;
 	void *				private3;
-	void *				private4;
+	unsigned int			privateuint4;
 	void *				private5;
 };
 
@@ -129,6 +129,7 @@ struct dns_rdataset {
 #define DNS_RDATASETATTR_FIXEDORDER	0x0400
 #define DNS_RDATASETATTR_RANDOMIZE	0x0800
 #define DNS_RDATASETATTR_CHASE		0x1000		/* Used by resolver. */
+#define DNS_RDATASETATTR_NXDOMAIN	0x2000
 
 void
 dns_rdataset_init(dns_rdataset_t *rdataset);

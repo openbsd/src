@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000, 2001  Internet Software Consortium.
+ * Copyright (C) 2000, 2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: rndc.c,v 1.77.2.2 2001/11/28 23:37:50 gson Exp $ */
+/* $ISC: rndc.c,v 1.77.2.5 2003/07/22 04:03:37 marka Exp $ */
 
 /*
  * Principal Author: DCL
@@ -86,6 +86,7 @@ static char *command;
 static char *args;
 static char program[256];
 static isc_socket_t *sock = NULL;
+static isc_uint32_t serial;
 
 static void
 usage(int status) {
@@ -150,11 +151,25 @@ get_address(const char *host, in_port_t port, isc_sockaddr_t *sockaddr) {
 			hints.ai_family = PF_INET;
 		else if (isc_net_probeipv4() != ISC_R_SUCCESS)
 			hints.ai_family = PF_INET6;
-		else
+		else {
 			hints.ai_family = PF_UNSPEC;
+#ifdef AI_ADDRCONFIG
+			hints.ai_flags = AI_ADDRCONFIG;
+#endif
+		}
 		hints.ai_socktype = SOCK_STREAM;
 		isc_app_block();
+#ifdef AI_ADDRCONFIG
+ again:
+#endif
 		result = getaddrinfo(host, NULL, &hints, &res);
+#ifdef AI_ADDRCONFIG
+		if (result == EAI_BADFLAGS &&
+		    (hints.ai_flags & AI_ADDRCONFIG) != 0) {
+			hints.ai_flags &= ~AI_ADDRCONFIG;
+			goto again;
+		}
+#endif
 		isc_app_unblock();
 		if (result != 0)
 			fatal("Couldn't find server '%s': %s",
@@ -244,6 +259,83 @@ rndc_recvdone(isc_task_t *task, isc_event_t *event) {
 }
 
 static void
+rndc_recvnonce(isc_task_t *task, isc_event_t *event) {
+	isccc_sexpr_t *response = NULL;
+	isccc_sexpr_t *_ctrl;
+	isccc_region_t source;
+	isc_result_t result;
+	isc_uint32_t nonce;
+	isccc_sexpr_t *request = NULL;
+	isccc_time_t now;
+	isc_region_t r;
+	isccc_sexpr_t *data;
+	isccc_region_t message;
+	isc_uint32_t len;
+	isc_buffer_t b;
+
+	recvs--;
+
+	if (ccmsg.result == ISC_R_EOF)
+		fatal("connection to remote host closed\n"
+		      "This may indicate that the remote server is using "
+		      "an older version of \n"
+		      "the command protocol, this host is not authorized "
+		      "to connect,\nor the key is invalid.");
+
+	if (ccmsg.result != ISC_R_SUCCESS)
+		fatal("recv failed: %s", isc_result_totext(ccmsg.result));
+
+	source.rstart = isc_buffer_base(&ccmsg.buffer);
+	source.rend = isc_buffer_used(&ccmsg.buffer);
+
+	DO("parse message", isccc_cc_fromwire(&source, &response, &secret));
+
+	_ctrl = isccc_alist_lookup(response, "_ctrl");
+	if (_ctrl == NULL)
+		fatal("_ctrl section missing");
+	nonce = 0;
+	if (isccc_cc_lookupuint32(_ctrl, "_nonce", &nonce) != ISC_R_SUCCESS)
+		nonce = 0;
+
+	isc_stdtime_get(&now);
+
+	DO("create message", isccc_cc_createmessage(1, NULL, NULL, ++serial,
+						    now, now + 60, &request));
+	data = isccc_alist_lookup(request, "_data");
+	if (data == NULL)
+		fatal("_data section missing");
+	if (isccc_cc_definestring(data, "type", args) == NULL)
+		fatal("out of memory");
+	if (nonce != 0) {
+		_ctrl = isccc_alist_lookup(request, "_ctrl");
+		if (_ctrl == NULL)
+			fatal("_ctrl section missing");
+		if (isccc_cc_defineuint32(_ctrl, "_nonce", nonce) == NULL)
+			fatal("out of memory");
+	}
+	message.rstart = databuf + 4;
+	message.rend = databuf + sizeof(databuf);
+	DO("render message", isccc_cc_towire(request, &message, &secret));
+	len = sizeof(databuf) - REGION_SIZE(message);
+	isc_buffer_init(&b, databuf, 4);
+	isc_buffer_putuint32(&b, len - 4);
+	r.length = len;
+	r.base = databuf;
+
+	isccc_ccmsg_cancelread(&ccmsg);
+	DO("schedule recv", isccc_ccmsg_readmessage(&ccmsg, task,
+						    rndc_recvdone, NULL));
+	recvs++;
+	DO("send message", isc_socket_send(sock, &r, task, rndc_senddone,
+					   NULL));
+	sends++;
+
+	isc_event_free(&event);
+	isccc_sexpr_free(&response);
+	return;
+}
+
+static void
 rndc_connected(isc_task_t *task, isc_event_t *event) {
 	isc_socketevent_t *sevent = (isc_socketevent_t *)event;
 	isccc_sexpr_t *request = NULL;
@@ -252,7 +344,6 @@ rndc_connected(isc_task_t *task, isc_event_t *event) {
 	isccc_region_t message;
 	isc_region_t r;
 	isc_uint32_t len;
-	isc_uint32_t serial;
 	isc_buffer_t b;
 	isc_result_t result;
 
@@ -262,13 +353,12 @@ rndc_connected(isc_task_t *task, isc_event_t *event) {
 		fatal("connect failed: %s", isc_result_totext(sevent->result));
 
 	isc_stdtime_get(&now);
-	isc_random_get(&serial);
-	DO("create message", isccc_cc_createmessage(1, NULL, NULL, serial,
+	DO("create message", isccc_cc_createmessage(1, NULL, NULL, ++serial,
 						    now, now + 60, &request));
 	data = isccc_alist_lookup(request, "_data");
 	if (data == NULL)
 		fatal("_data section missing");
-	if (isccc_cc_definestring(data, "type", args) == NULL)
+	if (isccc_cc_definestring(data, "type", "null") == NULL)
 		fatal("out of memory");
 	message.rstart = databuf + 4;
 	message.rend = databuf + sizeof(databuf);
@@ -283,13 +373,12 @@ rndc_connected(isc_task_t *task, isc_event_t *event) {
 	isccc_ccmsg_setmaxsize(&ccmsg, 1024);
 
 	DO("schedule recv", isccc_ccmsg_readmessage(&ccmsg, task,
-						    rndc_recvdone, NULL));
+						    rndc_recvnonce, NULL));
 	recvs++;
 	DO("send message", isc_socket_send(sock, &r, task, rndc_senddone,
 					   NULL));
 	sends++;
 	isc_event_free(&event);
-	
 }
 
 static void
@@ -537,6 +626,8 @@ main(int argc, char **argv) {
 
 	if (argc < 1)
 		usage(1);
+
+	isc_random_get(&serial);
 
 	DO("create memory context", isc_mem_create(0, 0, &mctx));
 	DO("create socket manager", isc_socketmgr_create(mctx, &socketmgr));

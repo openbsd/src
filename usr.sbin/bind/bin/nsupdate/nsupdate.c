@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2002  Internet Software Consortium.
+ * Copyright (C) 2000-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: nsupdate.c,v 1.103.2.11 2002/08/06 04:23:20 marka Exp $ */
+/* $ISC: nsupdate.c,v 1.103.2.15 2003/07/25 03:31:42 marka Exp $ */
 
 #include <config.h>
 
@@ -32,6 +32,7 @@
 #include <isc/commandline.h>
 #include <isc/entropy.h>
 #include <isc/event.h>
+#include <isc/hash.h>
 #include <isc/lex.h>
 #include <isc/mem.h>
 #include <isc/region.h>
@@ -88,7 +89,7 @@ extern int h_errno;
 #define INITTEXT (2 * 1024)
 #define MAXTEXT (128 * 1024)
 #define FIND_TIMEOUT 5
-#define TTL_MAX 2147483647	/* Maximum signed 32 bit integer. */
+#define TTL_MAX 2147483647U	/* Maximum signed 32 bit integer. */
 
 #define DNSDEFAULTPORT 53
 
@@ -490,6 +491,10 @@ setup_system(void) {
 	result = isc_entropy_create(mctx, &entp);
 	check_result(result, "isc_entropy_create");
 
+	result = isc_hash_create(mctx, entp, DNS_NAME_MAXWIRE);
+	check_result(result, "isc_hash_create");
+	isc_hash_init();
+
 	result = dns_dispatchmgr_create(mctx, entp, &dispatchmgr);
 	check_result(result, "dns_dispatchmgr_create");
 
@@ -592,11 +597,25 @@ get_address(char *host, in_port_t port, isc_sockaddr_t *sockaddr) {
 			hints.ai_family = PF_INET;
 		else if (!have_ipv4)
 			hints.ai_family = PF_INET6;
-		else
+		else {
 			hints.ai_family = PF_UNSPEC;
+#ifdef AI_ADDRCONFIG
+			hints.ai_flags = AI_ADDRCONFIG;
+#endif
+		}
 		debug ("before getaddrinfo()");
 		isc_app_block();
+#ifdef AI_ADDRCONFIG
+ again:
+#endif
 		result = getaddrinfo(host, NULL, &hints, &res);
+#ifdef AI_ADDRCONFIG
+		if (result == EAI_BADFLAGS &&
+		    (hints.ai_flags & AI_ADDRCONFIG) != 0) {
+			hints.ai_flags &= ~AI_ADDRCONFIG;
+			goto again;
+		}
+#endif
 		isc_app_unblock();
 		if (result != 0) {
 			fatal("couldn't find server '%s': %s",
@@ -1158,7 +1177,7 @@ update_addordelete(char *cmdline, isc_boolean_t isdelete) {
 	if (isdelete)
 		ttl = 0;
 	else if (ttl > TTL_MAX) {
-		fprintf(stderr, "ttl '%s' is out of range (0 to %d)\n",
+		fprintf(stderr, "ttl '%s' is out of range (0 to %u)\n",
 			word, TTL_MAX);
 		goto failure;
 	}
@@ -1809,6 +1828,9 @@ cleanup(void) {
 
 	ddebug("Shutting down timer manager");
 	isc_timermgr_destroy(&timermgr);
+
+	ddebug("Destroying hash context");
+	isc_hash_destroy();
 
 	ddebug("Destroying memory context");
 	if (memdebugging)

@@ -13,7 +13,7 @@
 # NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-# $ISC: rules.in,v 1.40.2.3.4.2 2003/02/17 07:05:11 marka Exp $
+# $ISC: rules.in,v 1.40.2.5 2003/05/12 06:39:54 marka Exp $
 
 ###
 ### Common Makefile rules for BIND 9.
@@ -127,7 +127,7 @@ cleandir: distclean
 superclean: maintainer-clean
 
 clean distclean maintainer-clean::
-	rm -f *.@O@ *.lo *.la core *.core
+	rm -f *.@O@ *.lo *.la core *.core .depend
 	rm -rf .libs
 
 distclean maintainer-clean::

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1998-2002  Internet Software Consortium.
+ * Copyright (C) 1998-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,13 +15,14 @@
  * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: name.c,v 1.127.2.5 2002/08/02 00:33:05 marka Exp $ */
+/* $ISC: name.c,v 1.127.2.8 2003/10/09 07:32:37 marka Exp $ */
 
 #include <config.h>
 
 #include <ctype.h>
 
 #include <isc/buffer.h>
+#include <isc/hash.h>
 #include <isc/mem.h>
 #include <isc/print.h>
 #include <isc/string.h>
@@ -459,6 +460,20 @@ dns_name_hash(dns_name_t *name, isc_boolean_t case_sensitive) {
 	}
 
 	return (h);
+}
+
+unsigned int
+dns_fullname_hash(dns_name_t *name, isc_boolean_t case_sensitive) {
+	/*
+	 * Provide a hash value for 'name'.
+	 */
+	REQUIRE(VALID_NAME(name));
+
+	if (name->labels == 0)
+		return (0);
+
+	return (isc_hash_calc((const unsigned char *)name->ndata,
+			      name->length, case_sensitive));
 }
 
 dns_namereln_t
@@ -1807,7 +1822,7 @@ dns_name_totext(dns_name_t *name, isc_boolean_t omit_final_dot,
 				count = 256;
 			nlen--;
 			len = snprintf(num, sizeof(num), "%u", count);
-			INSIST(len <= 4);
+			INSIST(len <= 4U);
 			bytes = count / 8;
 			if (count % 8 != 0)
 				bytes++;
@@ -1960,7 +1975,7 @@ dns_name_tofilenametext(dns_name_t *name, isc_boolean_t omit_final_dot,
 				count = 256;
 			nlen--;
 			len = snprintf(num, sizeof(num), "%u", count);
-			INSIST(len <= 4);
+			INSIST(len <= 4U);
 			bytes = count / 8;
 			if (count % 8 != 0)
 				bytes++;

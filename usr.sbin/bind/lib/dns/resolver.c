@@ -15,7 +15,7 @@
  * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: resolver.c,v 1.218.2.12.4.4 2003/02/18 03:32:01 marka Exp $ */
+/* $ISC: resolver.c,v 1.218.2.24 2003/09/22 00:32:39 marka Exp $ */
 
 #include <config.h>
 
@@ -277,6 +277,8 @@ struct dns_resolver {
 					 == 0)
 #define ISFORWARDER(a)			(((a)->flags & \
 					 FCTX_ADDRINFO_FORWARDER) != 0)
+
+#define NXDOMAIN(r) (((r)->attributes & DNS_RDATASETATTR_NXDOMAIN) != 0)
 
 static void destroy(dns_resolver_t *res);
 static void empty_bucket(dns_resolver_t *res);
@@ -1579,20 +1581,13 @@ fctx_getaddresses(fetchctx_t *fctx) {
 		options = stdoptions;
 		/*
 		 * If this name is a subdomain of the query domain, tell
-		 * the ADB to start looking at "." if it doesn't know the
-		 * address.  This keeps us from getting stuck if the
-		 * nameserver is beneath the zone cut and we don't know its
-		 * address (e.g. because the A record has expired).
-		 * By restarting from ".", we ensure that any missing glue
-		 * will be reestablished.
-		 *
-		 * A further optimization would be to get the ADB to start
-		 * looking at the most enclosing zone cut above fctx->domain.
-		 * We don't expect this situation to happen very frequently,
-		 * so we've chosen the simple solution.
+		 * the ADB to start looking using zone/hint data. This keeps
+		 * us from getting stuck if the nameserver is beneath the
+		 * zone cut and we don't know its address (e.g. because the
+		 * A record has expired).
 		 */
 		if (dns_name_issubdomain(&ns.name, &fctx->domain))
-			options |= DNS_ADBFIND_STARTATROOT;
+			options |= DNS_ADBFIND_STARTATZONE;
 		options |= DNS_ADBFIND_GLUEOK;
 		options |= DNS_ADBFIND_HINTOK;
 
@@ -2309,7 +2304,7 @@ fctx_create(dns_resolver_t *res, dns_name_t *name, dns_rdatatype_t type,
 	/*
 	 * Compute an expiration time for the entire fetch.
 	 */
-	isc_interval_set(&interval, 90, 0);		/* XXXRTH constant */
+	isc_interval_set(&interval, 30, 0);		/* XXXRTH constant */
 	iresult = isc_time_nowplusinterval(&fctx->expires, &interval);
 	if (iresult != ISC_R_SUCCESS) {
 		UNEXPECTED_ERROR(__FILE__, __LINE__,
@@ -3014,7 +3009,10 @@ cache_name(fetchctx_t *fctx, dns_name_t *name, isc_stdtime_t now) {
 					eresult = DNS_R_DNAME;
 				}
 			}
-			if (rdataset->trust == dns_trust_glue) {
+			if (rdataset->trust == dns_trust_glue &&
+			    (rdataset->type == dns_rdatatype_ns ||
+		             (rdataset->type == dns_rdatatype_sig &&
+			      rdataset->covers == dns_rdatatype_ns))) {
 				/*
 				 * If the trust level is 'dns_trust_glue'
 				 * then we are adding data from a referral
@@ -3043,8 +3041,7 @@ cache_name(fetchctx_t *fctx, dns_name_t *name, isc_stdtime_t now) {
 					 * a negative cache entry, so we
 					 * must set eresult appropriately.
 					 */
-					 if (ardataset->covers ==
-					     dns_rdatatype_any)
+					 if (NXDOMAIN(ardataset))
 						 eresult =
 							 DNS_R_NCACHENXDOMAIN;
 					 else
@@ -3151,7 +3148,7 @@ ncache_adderesult(dns_message_t *message, dns_db_t *cache, dns_dbnode_t *node,
 			 * The cache data is also a negative cache
 			 * entry.
 			 */
-			if (ardataset->covers == dns_rdatatype_any)
+			if (NXDOMAIN(ardataset))
 				*eresultp = DNS_R_NCACHENXDOMAIN;
 			else
 				*eresultp = DNS_R_NCACHENXRRSET;
@@ -3170,7 +3167,7 @@ ncache_adderesult(dns_message_t *message, dns_db_t *cache, dns_dbnode_t *node,
 			result = ISC_R_SUCCESS;
 		}
 	} else if (result == ISC_R_SUCCESS) {
-		if (covers == dns_rdatatype_any)
+		if (NXDOMAIN(ardataset))
 			*eresultp = DNS_R_NCACHENXDOMAIN;
 		else
 			*eresultp = DNS_R_NCACHENXRRSET;
@@ -4589,15 +4586,19 @@ resquery_response(isc_task_t *task, isc_event_t *event) {
 		}
 
 		if (get_nameservers) {
+			dns_name_t *name;
 			dns_fixedname_init(&foundname);
 			fname = dns_fixedname_name(&foundname);
 			if (result != ISC_R_SUCCESS) {
 				fctx_done(fctx, DNS_R_SERVFAIL);
 				return;
 			}
+			if ((options & DNS_FETCHOPT_UNSHARED) == 0)
+				name = &fctx->name;
+			else
+				name = &fctx->domain;
 			result = dns_view_findzonecut(fctx->res->view,
-						      &fctx->domain,
-						      fname,
+						      name, fname,
 						      now, 0, ISC_TRUE,
 						      &fctx->nameservers,
 						      NULL);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2002  Internet Software Consortium.
+ * Copyright (C) 2000-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: dig.c,v 1.157.2.7 2002/03/12 03:55:57 marka Exp $ */
+/* $ISC: dig.c,v 1.157.2.13 2003/07/30 00:42:25 marka Exp $ */
 
 #include <config.h>
 #include <stdlib.h>
@@ -84,7 +84,7 @@ static char *argv0;
 static char domainopt[DNS_NAME_MAXTEXT];
 
 static isc_boolean_t short_form = ISC_FALSE, printcmd = ISC_TRUE,
-	nibble = ISC_FALSE, plusquest = ISC_FALSE, pluscomm = ISC_FALSE,
+	ip6_int = ISC_FALSE, plusquest = ISC_FALSE, pluscomm = ISC_FALSE,
 	multiline = ISC_FALSE;
 
 static const char *opcodetext[] = {
@@ -154,7 +154,7 @@ help(void) {
 "                 (Use ixfr=version for type ixfr)\n"
 "        q-opt    is one of:\n"
 "                 -x dot-notation     (shortcut for in-addr lookups)\n"
-"                 -n                  (nibble form for reverse IPv6 lookups)\n"
+"                 -i                  (IP6.INT reverse IPv6 lookups)\n"
 "                 -f filename         (batch mode)\n"
 "                 -b address          (bind to source address)\n"
 "                 -p port             (specify port number)\n"
@@ -174,7 +174,7 @@ help(void) {
 "                 +ndots=###          (Set NDOTS value)\n"
 "                 +[no]search         (Set whether to use searchlist)\n"
 "                 +[no]defname        (Ditto)\n"
-"                 +[no]recursive      (Recursive mode)\n"
+"                 +[no]recurse        (Recursive mode)\n"
 "                 +[no]ignore         (Don't revert to TCP for TC responses.)"
 "\n"
 "                 +[no]fail           (Don't try next server on SERVFAIL)\n"
@@ -681,8 +681,6 @@ plus_option(char *option, isc_boolean_t is_batchfile,
 				goto invalid_option;
 			lookup->udpsize = (isc_uint16_t) parse_uint(value,
 						    "buffer size", COMMSIZE);
-			if (lookup->udpsize > COMMSIZE)
-				lookup->udpsize = COMMSIZE;
 			break;
 		default:
 			goto invalid_option;
@@ -892,7 +890,7 @@ dash_option(char *option, char *next, dig_lookup_t **lookup,
 	struct in6_addr in6;
 
 	cmd = option[0];
-	if (strlen(option) > 1) {
+	if (strlen(option) > 1U) {
 		value_from_next = ISC_FALSE;
 		value = &option[1];
 	} else {
@@ -907,11 +905,14 @@ dash_option(char *option, char *next, dig_lookup_t **lookup,
 		help();
 		exit(0);
 		break;
+	case 'i':
+		ip6_int = ISC_TRUE;
+		return (ISC_FALSE);
 	case 'm': /* memdebug */
 		/* memdebug is handled in preparse_args() */
 		return (ISC_FALSE);
 	case 'n':
-		nibble = ISC_TRUE;
+		/* deprecated */
 		return (ISC_FALSE);
 	case '4':
 		if (have_ipv4)
@@ -1020,13 +1021,15 @@ dash_option(char *option, char *next, dig_lookup_t **lookup,
 		return (value_from_next);
 	case 'x':
 		*lookup = clone_lookup(default_lookup, ISC_TRUE);
-		if (get_reverse(textname, value, nibble) == ISC_R_SUCCESS) {
+		if (get_reverse(textname, value, ip6_int, ISC_TRUE)
+		    == ISC_R_SUCCESS)
+		{
 			strlcpy((*lookup)->textname, textname,
 				sizeof((*lookup)->textname));
 			debug("looking up %s", (*lookup)->textname);
 			(*lookup)->trace_root = ISC_TF((*lookup)->trace  ||
 						(*lookup)->ns_search_only);
-			(*lookup)->nibble = nibble;
+			(*lookup)->ip6_int = ip6_int;
 			if (!(*lookup)->rdtypeset)
 				(*lookup)->rdtype = dns_rdatatype_ptr;
 			if (!(*lookup)->rdclassset)

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000, 2001  Internet Software Consortium.
+ * Copyright (C) 2000, 2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -17,7 +17,7 @@
 
 /*
  * Principal Author: Brian Wellington
- * $ISC: opensslrsa_link.c,v 1.12.2.3 2001/12/19 01:29:31 marka Exp $
+ * $ISC: opensslrsa_link.c,v 1.12.2.5 2003/10/09 07:32:46 marka Exp $
  */
 #ifdef OPENSSL
 
@@ -217,6 +217,7 @@ opensslrsa_generate(dst_key_t *key, int exp) {
 	}
 
 	rsa->flags &= ~(RSA_FLAG_CACHE_PUBLIC | RSA_FLAG_CACHE_PRIVATE);
+	rsa->flags |= RSA_FLAG_BLINDING;
 
 	key->opaque = rsa;
 
@@ -296,6 +297,7 @@ opensslrsa_fromdns(dst_key_t *key, isc_buffer_t *data) {
 	if (rsa == NULL)
 		return (ISC_R_NOMEMORY);
 	rsa->flags &= ~(RSA_FLAG_CACHE_PUBLIC | RSA_FLAG_CACHE_PRIVATE);
+	rsa->flags |= RSA_FLAG_BLINDING;
 
 	if (r.length < 1) {
 		RSA_free(rsa);
@@ -434,6 +436,7 @@ opensslrsa_fromfile(dst_key_t *key, const char *filename) {
 	if (rsa == NULL)
 		DST_RET(ISC_R_NOMEMORY);
 	rsa->flags &= ~(RSA_FLAG_CACHE_PUBLIC | RSA_FLAG_CACHE_PRIVATE);
+	rsa->flags |= RSA_FLAG_BLINDING;
 	key->opaque = rsa;
 
 	for (i = 0; i < priv.nelements; i++) {

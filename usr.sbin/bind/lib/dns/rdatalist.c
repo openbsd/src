@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1999-2001  Internet Software Consortium.
+ * Copyright (C) 1999-2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: rdatalist.c,v 1.25 2001/01/09 21:51:21 bwelling Exp $ */
+/* $ISC: rdatalist.c,v 1.25.2.2 2003/07/22 04:03:43 marka Exp $ */
 
 #include <config.h>
 
@@ -74,7 +74,7 @@ dns_rdatalist_tordataset(dns_rdatalist_t *rdatalist,
 	rdataset->private1 = rdatalist;
 	rdataset->private2 = NULL;
 	rdataset->private3 = NULL;
-	rdataset->private4 = NULL;
+	rdataset->privateuint4 = 0;
 	rdataset->private5 = NULL;
 
 	return (ISC_R_SUCCESS);

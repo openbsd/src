@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2002  Internet Software Consortium.
+ * Copyright (C) 2000-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: lwtest.c,v 1.22.2.2 2002/08/05 06:57:07 marka Exp $ */
+/* $ISC: lwtest.c,v 1.22.2.4 2003/07/22 04:03:38 marka Exp $ */
 
 #include <config.h>
 
@@ -757,12 +757,21 @@ main(void) {
 	test_getnameinfo("1122:3344:5566:7788:99aa:bbcc:ddee:ff00",
 			 AF_INET6, "dname.example1");
 
+#ifdef ISC_RFC_2535
 	test_getrrsetbyname("a", 1, 1, 1, 0, 1);
 	test_getrrsetbyname("a.example1.", 1, 1, 1, 0, 1);
 	test_getrrsetbyname("e.example1.", 1, 1, 1, 1, 1);
 	test_getrrsetbyname("e.example1.", 1, 255, 1, 1, 0);
 	test_getrrsetbyname("e.example1.", 1, 24, 1, 0, 1);
 	test_getrrsetbyname("", 1, 1, 0, 0, 0);
+#else
+	test_getrrsetbyname("a", 1, 1, 1, 0, 1);
+	test_getrrsetbyname("a.example1.", 1, 1, 1, 0, 1);
+	test_getrrsetbyname("e.example1.", 1, 1, 1, 0, 1);
+	test_getrrsetbyname("e.example1.", 1, 255, 1, 0, 0);
+	/* test_getrrsetbyname("e.example1.", 1, 24, 1, 0, 1); */
+	test_getrrsetbyname("", 1, 1, 0, 0, 0);
+#endif
 
 	if (fails == 0)
 		printf("I:ok\n");

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1999-2002  Internet Software Consortium.
+ * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: log.c,v 1.70.2.5 2002/07/11 03:39:06 marka Exp $ */
+/* $ISC: log.c,v 1.70.2.9 2003/09/17 05:20:04 marka Exp $ */
 
 /* Principal Authors: DCL */
 
@@ -36,6 +36,7 @@
 #include <isc/mem.h>
 #include <isc/msgs.h>
 #include <isc/print.h>
+#include <isc/stat.h>
 #include <isc/stdio.h>
 #include <isc/string.h>
 #include <isc/time.h>
@@ -51,6 +52,10 @@
  * XXXDCL make dynamic?
  */
 #define LOG_BUFFER_SIZE	(8 * 1024)
+
+#ifndef PATH_MAX
+#define PATH_MAX 1024	/* AIX and others don't define this. */
+#endif
 
 /*
  * This is the structure that holds each named channel.  A simple linked
@@ -1186,9 +1191,9 @@ greatest_version(isc_logchannel_t *channel, int *greatestp) {
 
 static isc_result_t
 roll_log(isc_logchannel_t *channel) {
-	int i, greatest, digits = 0;
-	char current[FILENAME_MAX + 1];
-	char new[FILENAME_MAX + 1];
+	int i, n, greatest;
+	char current[PATH_MAX + 1];
+	char new[PATH_MAX + 1];
 	const char *path;
 	isc_result_t result;
 
@@ -1232,37 +1237,58 @@ roll_log(isc_logchannel_t *channel) {
 		 * Remove any excess logs on the way to that value.
 		 */
 		while (--greatest >= FILE_VERSIONS(channel)) {
-			snprintf(current, sizeof current, "%s.%d", path, greatest);
-			(void)remove(current);
+			n = snprintf(current, sizeof(current), "%s.%d",
+				     path, greatest);
+			if (n >= (int)sizeof(current) || n < 0)
+				result = ISC_R_NOSPACE;
+			else
+				result = isc_file_remove(current);
+			if (result != ISC_R_SUCCESS &&
+			    result != ISC_R_FILENOTFOUND)
+				syslog(LOG_ERR,
+				       "unable to remove log file '%s.%d': %s",
+				       path, greatest,
+				       isc_result_totext(result));
 		}
 
-	for (i = greatest; i > 0; i /= 10)
-		digits++;
-
-	/*
-	 * Ensure the name fits in the filesystem.  Note that in this will not
-	 * trigger failure until there is going to be a log rolled into a name
-	 * that is too long, not when the maximum possible version name would
-	 * be too long.  Imagine a case where the name for logs 0-9 is exactly
-	 * as long as the maximum filename, but FILE_VERSIONS is configured as
-	 * 11.  log.10's name will be too long, but no error will be triggered
-	 * until log.9 exists and needs to be rolled.
-	 */
-	if (strlen(path) + 1 + digits > FILENAME_MAX)
-		return (ISC_R_INVALIDFILE);
-
 	for (i = greatest; i > 0; i--) {
-		snprintf(current, sizeof current, "%s.%d", path, i - 1);
-		snprintf(new, sizeof new, "%s.%d", path, i);
-		(void)isc_file_rename(current, new);
+		result = ISC_R_SUCCESS;
+		n = snprintf(current, sizeof(current), "%s.%d", path, i - 1);
+		if (n >= (int)sizeof(current) || n < 0)
+			result = ISC_R_NOSPACE;
+		if (result == ISC_R_SUCCESS) {
+			n = snprintf(new, sizeof(new), "%s.%d", path, i);
+			if (n >= (int)sizeof(new) || n < 0)
+				result = ISC_R_NOSPACE;
+		}
+		if (result == ISC_R_SUCCESS)
+			result = isc_file_rename(current, new);
+		if (result != ISC_R_SUCCESS &&
+		    result != ISC_R_FILENOTFOUND)
+			syslog(LOG_ERR,
+			       "unable to rename log file '%s.%d' to "
+			       "'%s.%d': %s", path, i - 1, path, i,
+			       isc_result_totext(result));
 	}
 
 	if (FILE_VERSIONS(channel) != 0) {
-		snprintf(new, sizeof new, "%s.0", path);
-		(void)isc_file_rename(path, new);
-
-	} else if (FILE_VERSIONS(channel) == 0)
-		(void)remove(path);
+		n = snprintf(new, sizeof(new), "%s.0", path);
+		if (n >= (int)sizeof(new) || n < 0)
+			result = ISC_R_NOSPACE;
+		else
+			result = isc_file_rename(path, new);
+		if (result != ISC_R_SUCCESS &&
+		    result != ISC_R_FILENOTFOUND)
+			syslog(LOG_ERR,
+			       "unable to rename log file '%s' to '%s.0': %s",
+			       path, path, isc_result_totext(result));
+	} else {
+		result = isc_file_remove(path);
+		if (result != ISC_R_SUCCESS &&
+		    result != ISC_R_FILENOTFOUND)
+			syslog(LOG_ERR, "unable to remove log file '%s': %s",
+			       path, isc_result_totext(result));
+	}
 
 	return (ISC_R_SUCCESS);
 }
@@ -1288,8 +1314,7 @@ isc_log_open(isc_logchannel_t *channel) {
 	 * and either has no size limit or has reached its size limit.
 	 */
 	if (stat(path, &statbuf) == 0) {
-		regular_file = (statbuf.st_mode & S_IFREG) ?
-							ISC_TRUE : ISC_FALSE;
+		regular_file = S_ISREG(statbuf.st_mode) ? ISC_TRUE : ISC_FALSE;
 		/* XXXDCL if not regular_file complain? */
 		roll = ISC_TF(regular_file &&
 			      statbuf.st_size >= FILE_MAXSIZE(channel));
@@ -1303,8 +1328,17 @@ isc_log_open(isc_logchannel_t *channel) {
 	 */
 	if (result == ISC_R_SUCCESS && roll) {
 		result = roll_log(channel);
-		if (result != ISC_R_SUCCESS)
+		if (result != ISC_R_SUCCESS) {
+			if ((channel->flags & ISC_LOG_OPENERR) == 0) {
+				syslog(LOG_ERR,
+				       "isc_log_open: roll_log '%s' "
+				       "failed: %s",
+				       FILE_NAME(channel),
+				       isc_result_totext(result));
+				channel->flags |= ISC_LOG_OPENERR;
+			}
 			return (result);
+		}
 	}
 
 	result = isc_stdio_open(path, "a", &FILE_STREAM(channel));
@@ -1640,12 +1674,17 @@ isc_log_doit(isc_log_t *lctx, isc_logcategory_t *category,
 
 			if (FILE_STREAM(channel) == NULL) {
 				result = isc_log_open(channel);
+				if (result != ISC_R_SUCCESS &&
+				    (channel->flags & ISC_LOG_OPENERR) == 0) {
+					syslog(LOG_ERR,
+					       "isc_log_open '%s' failed: %s",
+					       FILE_NAME(channel),
+					       isc_result_totext(result));
+					channel->flags |= ISC_LOG_OPENERR;
+				}
 				if (result != ISC_R_SUCCESS)
 					break;
-				/*
-				 * Probably something more meaningful should be
-				 * done with an error.
-				 */
+				channel->flags &= ~ISC_LOG_OPENERR;
 			}
 			/* FALLTHROUGH */
 
@@ -1693,8 +1732,9 @@ isc_log_doit(isc_log_t *lctx, isc_logcategory_t *category,
 				syslog_level = syslog_map[-level];
 
 			syslog(FACILITY(channel) | syslog_level,
-			       "%s%s%s%s%s%s%s%s%s",
+			       "%s%s%s%s%s%s%s%s%s%s",
 			       printtime     ? time_string	: "",
+			       printtime     ? " "		: "",
 			       printtag      ? lcfg->tag	: "",
 			       printtag      ? ": "		: "",
 			       printcategory ? category->name	: "",

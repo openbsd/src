@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1999-2002  Internet Software Consortium.
+ * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: message.c,v 1.194.2.8 2002/02/28 05:17:49 marka Exp $ */
+/* $ISC: message.c,v 1.194.2.10 2003/07/22 04:03:41 marka Exp $ */
 
 /***
  *** Imports
@@ -2922,8 +2922,7 @@ dns_message_pseudosectiontotext(dns_message_t *msg,
 			ADD_STRING(target, ";; OPT PSEUDOSECTION:\n");
 		ADD_STRING(target, "; EDNS: version: ");
 		snprintf(buf, sizeof(buf), "%u",
-			 (unsigned int)((ps->ttl &
-					0x00ff0000 >> 16)));
+			 (unsigned int)((ps->ttl & 0x00ff0000) >> 16));
 		ADD_STRING(target, buf);
 		ADD_STRING(target, ", flags:");
 		if ((ps->ttl & DNS_MESSAGEEXTFLAG_DO) != 0)

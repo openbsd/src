@@ -1,4 +1,4 @@
-# Copyright (C) 2001  Internet Software Consortium.
+# Copyright (C) 2001, 2003  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -13,7 +13,7 @@
 # NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-# $ISC: Makefile.in,v 1.6 2001/07/09 22:25:27 gson Exp $
+# $ISC: Makefile.in,v 1.6.2.2 2003/10/09 07:32:54 marka Exp $
 
 srcdir =	@srcdir@
 VPATH =		@srcdir@
@@ -31,6 +31,8 @@ CDEFINES =
 CWARNINGS =
 
 ISCLIBS =	../../lib/isc/libisc.@A@
+ISCCCLIBS =	../../lib/isccc/libisccc.@A@
+DNSLIBS =	../../lib/dns/libdns.@A@
 ISCCFGLIBS =	../../lib/cfg/libisccfg.@A@
 
 ISCDEPLIBS =	../../lib/isc/libisc.@A@
@@ -66,7 +68,7 @@ libisccfg.la: ${OBJS}
 	${LIBTOOL} --mode=link \
 		${CC} ${ALL_CFLAGS} -o libisccfg.la -rpath ${libdir} \
 		-version-info ${LIBINTERFACE}:${LIBREVISION}:${LIBAGE} \
-		${OBJS} ${LIBS}
+		${OBJS} ${LIBS} ${DNSLIBS} ${ISCCCLIBS} ${ISCLIBS}
 
 timestamp: libisccfg.@A@
 	touch timestamp

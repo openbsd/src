@@ -94,7 +94,7 @@ HREF="Bv9ARM.ch06.html#Configuration_File_Grammar"
 ></DT
 ><DT
 >6.3. <A
-HREF="Bv9ARM.ch06.html#AEN3586"
+HREF="Bv9ARM.ch06.html#AEN3560"
 >Zone File</A
 ></DT
 ></DL
@@ -148,7 +148,7 @@ file documentation:</P
 ><DIV
 CLASS="informaltable"
 ><A
-NAME="AEN1105"
+NAME="AEN1060"
 ></A
 ><P
 ></P
@@ -738,7 +738,7 @@ CLASS="sect3"
 ><H3
 CLASS="sect3"
 ><A
-NAME="AEN1267"
+NAME="AEN1222"
 >6.1.1.1. Syntax</A
 ></H3
 ><PRE
@@ -769,7 +769,7 @@ CLASS="sect3"
 ><H3
 CLASS="sect3"
 ><A
-NAME="AEN1275"
+NAME="AEN1230"
 >6.1.1.2. Definition and Usage</A
 ></H3
 ><P
@@ -880,7 +880,7 @@ CLASS="sect2"
 ><H2
 CLASS="sect2"
 ><A
-NAME="AEN1304"
+NAME="AEN1259"
 >6.1.2. Comment Syntax</A
 ></H2
 ><P
@@ -899,7 +899,7 @@ CLASS="sect3"
 ><H3
 CLASS="sect3"
 ><A
-NAME="AEN1309"
+NAME="AEN1264"
 >6.1.2.1. Syntax</A
 ></H3
 ><P
@@ -931,7 +931,7 @@ CLASS="sect3"
 ><H3
 CLASS="sect3"
 ><A
-NAME="AEN1318"
+NAME="AEN1273"
 >6.1.2.2. Definition and Usage</A
 ></H3
 ><P
@@ -1041,7 +1041,7 @@ CLASS="acronym"
 ><DIV
 CLASS="informaltable"
 ><A
-NAME="AEN1342"
+NAME="AEN1297"
 ></A
 ><P
 ></P
@@ -1269,7 +1269,7 @@ CLASS="sect2"
 ><H2
 CLASS="sect2"
 ><A
-NAME="AEN1411"
+NAME="AEN1366"
 >6.2.1. <B
 CLASS="command"
 >acl</B
@@ -1316,7 +1316,7 @@ CLASS="command"
 ><DIV
 CLASS="informaltable"
 ><A
-NAME="AEN1424"
+NAME="AEN1379"
 ></A
 ><P
 ></P
@@ -1434,7 +1434,7 @@ CLASS="sect2"
 ><H2
 CLASS="sect2"
 ><A
-NAME="AEN1458"
+NAME="AEN1413"
 >6.2.3. <B
 CLASS="command"
 >controls</B
@@ -1737,7 +1737,7 @@ CLASS="sect2"
 ><H2
 CLASS="sect2"
 ><A
-NAME="AEN1531"
+NAME="AEN1486"
 >6.2.5. <B
 CLASS="command"
 >include</B
@@ -1757,7 +1757,7 @@ CLASS="sect2"
 ><H2
 CLASS="sect2"
 ><A
-NAME="AEN1536"
+NAME="AEN1491"
 >6.2.6. <B
 CLASS="command"
 >include</B
@@ -1786,7 +1786,7 @@ CLASS="sect2"
 ><H2
 CLASS="sect2"
 ><A
-NAME="AEN1543"
+NAME="AEN1498"
 >6.2.7. <B
 CLASS="command"
 >key</B
@@ -1820,7 +1820,7 @@ CLASS="sect2"
 ><H2
 CLASS="sect2"
 ><A
-NAME="AEN1550"
+NAME="AEN1505"
 >6.2.8. <B
 CLASS="command"
 >key</B
@@ -1898,7 +1898,7 @@ CLASS="sect2"
 ><H2
 CLASS="sect2"
 ><A
-NAME="AEN1568"
+NAME="AEN1523"
 >6.2.9. <B
 CLASS="command"
 >logging</B
@@ -2058,7 +2058,7 @@ CLASS="sect2"
 ><H2
 CLASS="sect2"
 ><A
-NAME="AEN1608"
+NAME="AEN1563"
 >6.2.10. <B
 CLASS="command"
 >logging</B
@@ -2121,7 +2121,7 @@ CLASS="sect3"
 ><H3
 CLASS="sect3"
 ><A
-NAME="AEN1624"
+NAME="AEN1579"
 >6.2.10.1. The <B
 CLASS="command"
 >channel</B
@@ -2635,7 +2635,7 @@ CLASS="acronym"
 ><DIV
 CLASS="informaltable"
 ><A
-NAME="AEN1748"
+NAME="AEN1703"
 ></A
 ><P
 ></P
@@ -3015,8 +3015,7 @@ been forced to NXDOMAIN as the result of a delegation-only zone or
 a <B
 CLASS="command"
 >delegation-only</B
-> in a stub or forward
-zone declartation.
+> in a hint or stub zone declartation.
 </P
 ></TD
 ></TR
@@ -3032,7 +3031,7 @@ CLASS="sect2"
 ><H2
 CLASS="sect2"
 ><A
-NAME="AEN1866"
+NAME="AEN1821"
 >6.2.11. <B
 CLASS="command"
 >lwres</B
@@ -3129,7 +3128,7 @@ CLASS="sect2"
 ><H2
 CLASS="sect2"
 ><A
-NAME="AEN1890"
+NAME="AEN1845"
 >6.2.12. <B
 CLASS="command"
 >lwres</B
@@ -3203,7 +3202,7 @@ CLASS="sect2"
 ><H2
 CLASS="sect2"
 ><A
-NAME="AEN1909"
+NAME="AEN1864"
 >6.2.13. <B
 CLASS="command"
 >options</B
@@ -4184,6 +4183,20 @@ CLASS="replaceable"
 ></TT
 >; </SPAN
 >]
+    [<SPAN
+CLASS="optional"
+> root-delegation-only [<SPAN
+CLASS="optional"
+> exclude { <TT
+CLASS="replaceable"
+><I
+>namelist
+</I
+></TT
+> } </SPAN
+>] ; </SPAN
+>]
+
 };
 </PRE
 ></DIV
@@ -4192,7 +4205,7 @@ CLASS="sect2"
 ><H2
 CLASS="sect2"
 ><A
-NAME="AEN2134"
+NAME="AEN2092"
 >6.2.14. <B
 CLASS="command"
 >options</B
@@ -4464,6 +4477,26 @@ CLASS="command"
 > option takes effect during
 the initial configuration load at server startup time and
 is ignored on subsequent reloads.</P
+></DD
+><DT
+><B
+CLASS="command"
+>root-delegation-only</B
+></DT
+><DD
+><P
+>&#13;Turn on enforcment of delegation-only in TLDs and root zones with an optional
+exclude list.
+</P
+><P
+>&#13;Note some TLDs are NOT delegation only (e.g. "DE", "LV", "US" and "MUSEUM").
+</P
+><PRE
+CLASS="programlisting"
+>&#13;options {
+	root-delegation-only exclude { "de"; "lv"; "us"; "museum"; };
+};
+</PRE
 ></DD
 ></DL
 ></DIV
@@ -5187,7 +5220,7 @@ CLASS="sect3"
 ><H3
 CLASS="sect3"
 ><A
-NAME="AEN2434"
+NAME="AEN2399"
 >6.2.14.2. Forwarding</A
 ></H3
 ><P
@@ -5391,7 +5424,7 @@ CLASS="sect3"
 ><H3
 CLASS="sect3"
 ><A
-NAME="AEN2499"
+NAME="AEN2464"
 >6.2.14.4. Interfaces</A
 ></H3
 ><P
@@ -5486,7 +5519,7 @@ CLASS="sect3"
 ><H3
 CLASS="sect3"
 ><A
-NAME="AEN2525"
+NAME="AEN2490"
 >6.2.14.5. Query Address</A
 ></H3
 ><P
@@ -5918,7 +5951,7 @@ CLASS="sect3"
 ><H3
 CLASS="sect3"
 ><A
-NAME="AEN2664"
+NAME="AEN2629"
 >6.2.14.7. Operating System Resource Limits</A
 ></H3
 ><P
@@ -6038,7 +6071,7 @@ CLASS="sect3"
 ><H3
 CLASS="sect3"
 ><A
-NAME="AEN2701"
+NAME="AEN2666"
 >6.2.14.8. Server  Resource Limits</A
 ></H3
 ><P
@@ -6122,7 +6155,7 @@ CLASS="sect3"
 ><H3
 CLASS="sect3"
 ><A
-NAME="AEN2729"
+NAME="AEN2694"
 >6.2.14.9. Periodic Task Intervals</A
 ></H3
 ><P
@@ -6489,7 +6522,7 @@ CLASS="command"
 ><DIV
 CLASS="informaltable"
 ><A
-NAME="AEN2817"
+NAME="AEN2782"
 ></A
 ><P
 ></P
@@ -6620,12 +6653,12 @@ NAME="synthesis"
 RFC1886, using AAAA records for forward lookups and "nibble labels" in
 the <TT
 CLASS="literal"
->ip6.int</TT
+>IP6.INT</TT
 > domain for reverse lookups, but do not support
 RFC2874-style lookups (using A6 records and binary labels in the
 <TT
 CLASS="literal"
->ip6.arpa</TT
+>IP6.ARPA</TT
 > domain).</P
 ><P
 >For those who wish to continue to use such stub resolvers rather than
@@ -6658,15 +6691,15 @@ fails, an AAAA lookups.  No matter which one succeeds, the results are
 returned as a set of synthetic AAAA records.  Similarly, recursive PTR
 queries in <TT
 CLASS="literal"
->ip6.int</TT
+>IP6.INT</TT
 > will cause a
 lookup in <TT
 CLASS="literal"
->ip6.arpa</TT
+>IP6.ARPA</TT
 > using binary
 labels, and if that fails, another lookup in <TT
 CLASS="literal"
->ip6.int</TT
+>IP6.INT</TT
 >.
 The results are returned as a synthetic PTR record in
 <TT
@@ -6893,7 +6926,7 @@ number is identical to the number in the beginning line.</P
 ><DIV
 CLASS="informaltable"
 ><A
-NAME="AEN2932"
+NAME="AEN2897"
 ></A
 ><P
 ></P
@@ -7029,6 +7062,34 @@ failure response other than those above.</P
 ><P
 ></P
 ></DIV
+><P
+>&#13;Each query received by the server will cause exactly one of
+<B
+CLASS="command"
+>success</B
+>,
+<B
+CLASS="command"
+>referral</B
+>,
+<B
+CLASS="command"
+>nxrrset</B
+>,
+<B
+CLASS="command"
+>nxdomain</B
+>, or
+<B
+CLASS="command"
+>failure</B
+>
+to be incremented, and may additionally cause the
+<B
+CLASS="command"
+>recursion</B
+> counter to be incremented.
+</P
 ></DIV
 ></DIV
 ><DIV
@@ -7329,7 +7390,7 @@ CLASS="sect2"
 ><H2
 CLASS="sect2"
 ><A
-NAME="AEN3047"
+NAME="AEN3019"
 >6.2.17. <B
 CLASS="command"
 >trusted-keys</B
@@ -7404,7 +7465,7 @@ CLASS="sect2"
 ><H2
 CLASS="sect2"
 ><A
-NAME="AEN3063"
+NAME="AEN3035"
 >6.2.18. <B
 CLASS="command"
 >trusted-keys</B
@@ -7439,7 +7500,7 @@ CLASS="sect2"
 ><H2
 CLASS="sect2"
 ><A
-NAME="AEN3071"
+NAME="AEN3043"
 >6.2.19. <B
 CLASS="command"
 >view</B
@@ -7514,7 +7575,7 @@ CLASS="sect2"
 ><H2
 CLASS="sect2"
 ><A
-NAME="AEN3087"
+NAME="AEN3059"
 >6.2.20. <B
 CLASS="command"
 >view</B
@@ -7701,7 +7762,7 @@ CLASS="replaceable"
 >] [<SPAN
 CLASS="optional"
 >{ 
-    type ( master | slave | hint | stub | forward /| delegation-only ) ;
+    type ( master | slave | hint | stub | forward | delegation-only ) ;
     [<SPAN
 CLASS="optional"
 > allow-notify { <TT
@@ -8174,7 +8235,7 @@ CLASS="sect2"
 ><H2
 CLASS="sect2"
 ><A
-NAME="AEN3240"
+NAME="AEN3212"
 >6.2.22. <B
 CLASS="command"
 >zone</B
@@ -8185,13 +8246,13 @@ CLASS="sect3"
 ><H3
 CLASS="sect3"
 ><A
-NAME="AEN3243"
+NAME="AEN3215"
 >6.2.22.1. Zone Types</A
 ></H3
 ><DIV
 CLASS="informaltable"
 ><A
-NAME="AEN3245"
+NAME="AEN3217"
 ></A
 ><P
 ></P
@@ -8329,7 +8390,7 @@ configured.</P
 >Stub zones can also be used as a way of forcing the resolution
 of a given domain to use a particular set of authoritative servers.
 For example, the caching name servers on a private network using
-RFC2157 addressing may be configured with stub zones for
+RFC1981 addressing may be configured with stub zones for
 <TT
 CLASS="literal"
 >10.in-addr.arpa</TT
@@ -8439,6 +8500,13 @@ status of infrastructure zones (e.g. COM, NET, ORG).  Any answer that
 is received without a explicit or implict delegation in the authority
 section will be treated as NXDOMAIN.  This does not apply to the zone
 apex.  This SHOULD NOT be applied to leaf zones.</P
+>
+<P
+><TT
+CLASS="varname"
+>delegation-only</TT
+> has no effect on answers received
+from forwarders.</P
 ></TD
 ></TR
 ></TBODY
@@ -8452,7 +8520,7 @@ CLASS="sect3"
 ><H3
 CLASS="sect3"
 ><A
-NAME="AEN3306"
+NAME="AEN3280"
 >6.2.22.2. Class</A
 ></H3
 ><P
@@ -8490,7 +8558,7 @@ CLASS="sect3"
 ><H3
 CLASS="sect3"
 ><A
-NAME="AEN3316"
+NAME="AEN3290"
 >6.2.22.3. Zone Options</A
 ></H3
 ><P
@@ -8717,7 +8785,7 @@ CLASS="command"
 ></DT
 ><DD
 ><P
->The flag only applies to forward and stub zones.  If set
+>The flag only applies to hint and stub zones.  If set
 to <TT
 CLASS="userinput"
 ><B
@@ -9148,7 +9216,7 @@ CLASS="varname"
 ><DIV
 CLASS="informaltable"
 ><A
-NAME="AEN3556"
+NAME="AEN3530"
 ></A
 ><P
 ></P
@@ -9255,7 +9323,7 @@ CLASS="sect1"
 ><H1
 CLASS="sect1"
 ><A
-NAME="AEN3586"
+NAME="AEN3560"
 >6.3. Zone File</A
 ></H1
 ><DIV
@@ -9276,7 +9344,7 @@ CLASS="sect3"
 ><H3
 CLASS="sect3"
 ><A
-NAME="AEN3591"
+NAME="AEN3565"
 >6.3.1.1. Resource Records</A
 ></H3
 ><P
@@ -9299,7 +9367,7 @@ HREF="Bv9ARM.ch06.html#rrset_ordering"
 ><DIV
 CLASS="informaltable"
 ><A
-NAME="AEN3597"
+NAME="AEN3571"
 ></A
 ><P
 ></P
@@ -9413,7 +9481,7 @@ or historical (h) and no longer in general use):</P
 ><DIV
 CLASS="informaltable"
 ><A
-NAME="AEN3629"
+NAME="AEN3603"
 ></A
 ><P
 ></P
@@ -9907,7 +9975,7 @@ are currently valid in the DNS:</P
 ><DIV
 CLASS="informaltable"
 ><A
-NAME="AEN3776"
+NAME="AEN3750"
 ></A
 ><P
 ></P
@@ -9962,7 +10030,7 @@ data that describes the resource:</P
 ><DIV
 CLASS="informaltable"
 ><A
-NAME="AEN3792"
+NAME="AEN3766"
 ></A
 ><P
 ></P
@@ -10139,7 +10207,7 @@ CLASS="sect3"
 ><H3
 CLASS="sect3"
 ><A
-NAME="AEN3840"
+NAME="AEN3814"
 >6.3.1.2. Textual expression of RRs</A
 ></H3
 ><P
@@ -10169,7 +10237,7 @@ knowledge of the typical representation for the data.</P
 ><DIV
 CLASS="informaltable"
 ><A
-NAME="AEN3847"
+NAME="AEN3821"
 ></A
 ><P
 ></P
@@ -10378,7 +10446,7 @@ domain names.</P
 ><DIV
 CLASS="informaltable"
 ><A
-NAME="AEN3913"
+NAME="AEN3887"
 ></A
 ><P
 ></P
@@ -10469,7 +10537,7 @@ CLASS="sect2"
 ><H2
 CLASS="sect2"
 ><A
-NAME="AEN3941"
+NAME="AEN3915"
 >6.3.2. Discussion of MX Records</A
 ></H2
 ><P
@@ -10505,7 +10573,7 @@ pointed to by the CNAME.</P
 ><DIV
 CLASS="informaltable"
 ><A
-NAME="AEN3947"
+NAME="AEN3921"
 ></A
 ><P
 ></P
@@ -10801,7 +10869,7 @@ used in a zone file.</P
 ><DIV
 CLASS="informaltable"
 ><A
-NAME="AEN4039"
+NAME="AEN4013"
 ></A
 ><P
 ></P
@@ -10884,7 +10952,7 @@ CLASS="sect2"
 ><H2
 CLASS="sect2"
 ><A
-NAME="AEN4062"
+NAME="AEN4036"
 >6.3.4. Inverse Mapping in IPv4</A
 ></H2
 ><P
@@ -10911,7 +10979,7 @@ CLASS="optional"
 ><DIV
 CLASS="informaltable"
 ><A
-NAME="AEN4067"
+NAME="AEN4041"
 ></A
 ><P
 ></P
@@ -10991,7 +11059,7 @@ CLASS="sect2"
 ><H2
 CLASS="sect2"
 ><A
-NAME="AEN4089"
+NAME="AEN4063"
 >6.3.5. Other Zone File Directives</A
 ></H2
 ><P
@@ -11016,7 +11084,7 @@ CLASS="sect3"
 ><H3
 CLASS="sect3"
 ><A
-NAME="AEN4096"
+NAME="AEN4070"
 >6.3.5.1. The <B
 CLASS="command"
 >$ORIGIN</B
@@ -11086,7 +11154,7 @@ CLASS="sect3"
 ><H3
 CLASS="sect3"
 ><A
-NAME="AEN4116"
+NAME="AEN4090"
 >6.3.5.2. The <B
 CLASS="command"
 >$INCLUDE</B
@@ -11168,7 +11236,7 @@ CLASS="sect3"
 ><H3
 CLASS="sect3"
 ><A
-NAME="AEN4136"
+NAME="AEN4110"
 >6.3.5.3. The <B
 CLASS="command"
 >$TTL</B
@@ -11208,7 +11276,7 @@ CLASS="sect2"
 ><H2
 CLASS="sect2"
 ><A
-NAME="AEN4147"
+NAME="AEN4121"
 >6.3.6. <SPAN
 CLASS="acronym"
 >BIND</SPAN
@@ -11277,17 +11345,17 @@ CLASS="programlisting"
 ><TT
 CLASS="literal"
 >0.0.0.192.IN-ADDR.ARPA NS SERVER1.EXAMPLE.
-0.0.0.192.IN-ADDR.ARPA NS SERVER2.EXAMPLE.
-1.0.0.192.IN-ADDR.ARPA CNAME 1.0.0.0.192.IN-ADDR.ARPA
-2.0.0.192.IN-ADDR.ARPA CNAME 2.0.0.0.192.IN-ADDR.ARPA
+0.0.0.192.IN-ADDR.ARPA. NS SERVER2.EXAMPLE.
+1.0.0.192.IN-ADDR.ARPA. CNAME 1.0.0.0.192.IN-ADDR.ARPA.
+2.0.0.192.IN-ADDR.ARPA. CNAME 2.0.0.0.192.IN-ADDR.ARPA.
 ...
-127.0.0.192.IN-ADDR.ARPA CNAME 127.0.0.0.192.IN-ADDR.ARPA
-.</TT
+127.0.0.192.IN-ADDR.ARPA. CNAME 127.0.0.0.192.IN-ADDR.ARPA.
+</TT
 ></PRE
 ><DIV
 CLASS="informaltable"
 ><A
-NAME="AEN4167"
+NAME="AEN4141"
 ></A
 ><P
 ></P

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1998-2002  Internet Software Consortium.
+ * Copyright (C) 1998-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: socket.c,v 1.207.2.14.4.2 2003/02/18 07:28:41 marka Exp $ */
+/* $ISC: socket.c,v 1.207.2.19 2003/07/23 06:57:54 marka Exp $ */
 
 #include <config.h>
 
@@ -648,7 +648,7 @@ build_msghdr_send(isc_socket_t *sock, isc_socketevent_t *dev,
 		buffer = ISC_LIST_NEXT(buffer, link);
 	}
 
-	INSIST(skip_count == 0);
+	INSIST(skip_count == 0U);
 
  config:
 	msg->msg_iov = iov;
@@ -990,7 +990,7 @@ doio_recv(isc_socket_t *sock, isc_socketevent_t *dev) {
 	dev->n += cc;
 	actual_count = cc;
 	buffer = ISC_LIST_HEAD(dev->bufferlist);
-	while (buffer != NULL && actual_count > 0) {
+	while (buffer != NULL && actual_count > 0U) {
 		REQUIRE(ISC_BUFFER_VALID(buffer));
 		if (isc_buffer_availablelength(buffer) <= actual_count) {
 			actual_count -= isc_buffer_availablelength(buffer);
@@ -1003,7 +1003,7 @@ doio_recv(isc_socket_t *sock, isc_socketevent_t *dev) {
 		}
 		buffer = ISC_LIST_NEXT(buffer, link);
 		if (buffer == NULL) {
-			INSIST(actual_count == 0);
+			INSIST(actual_count == 0U);
 		}
 	}
 
@@ -1315,6 +1315,20 @@ isc_socket_create(isc_socketmgr_t *manager, int pf, isc_sockettype_t type,
 		sock->fd = socket(pf, SOCK_STREAM, IPPROTO_TCP);
 		break;
 	}
+
+#ifdef F_DUPFD
+        /*
+         * Leave a space for stdio to work in.
+         */
+        if (sock->fd >= 0 && sock->fd < 20) {
+                int new, tmp;
+                new = fcntl(sock->fd, F_DUPFD, 20);
+                tmp = errno;
+                (void)close(sock->fd);
+                errno = tmp;
+                sock->fd = new;
+        }
+#endif
 
 	if (sock->fd >= (int)FD_SETSIZE) {
 		(void)close(sock->fd);
@@ -1740,6 +1754,21 @@ internal_accept(isc_task_t *me, isc_event_t *ev) {
 	memset(&dev->newsocket->address.type.sa, 0, addrlen);
 	fd = accept(sock->fd, &dev->newsocket->address.type.sa,
 		    (void *)&addrlen);
+
+#ifdef F_DUPFD
+        /*
+         * Leave a space for stdio to work in.
+         */
+        if (fd >= 0 && fd < 20) {
+                int new, tmp;
+                new = fcntl(fd, F_DUPFD, 20);
+                tmp = errno;
+                (void)close(fd);
+                errno = tmp;
+                fd = new;
+        }
+#endif
+
 	if (fd < 0) {
 		if (SOFT_ERROR(errno))
 			goto soft_error;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2002  Internet Software Consortium.
+ * Copyright (C) 2000-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: getrrset.c,v 1.11.2.2 2002/08/05 06:57:16 marka Exp $ */
+/* $ISC: getrrset.c,v 1.11.2.4 2003/10/09 07:32:55 marka Exp $ */
 
 #include <config.h>
 
@@ -48,7 +48,7 @@ lwresult_to_result(lwres_result_t lwresult) {
 
 static void *
 sane_malloc(size_t size) {
-	if (size == 0)
+	if (size == 0U)
 		size = 1;
 	return (malloc(size));
 }

@@ -1,6 +1,6 @@
 /*
- * Portions Copyright (C) 2001  Internet Software Consortium.
- * Portions Copyright (C) 2001  Nominum, Inc.
+ * Portions Copyright (C) 2001, 2003  Internet Software Consortium.
+ * Portions Copyright (C) 2001, 2003  Nominum, Inc.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,7 +16,7 @@
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: result.c,v 1.3 2001/03/28 23:11:40 bwelling Exp $ */
+/* $ISC: result.c,v 1.3.2.2 2003/07/22 04:03:52 marka Exp $ */
 
 #include <config.h>
 
@@ -30,6 +30,9 @@ static const char *text[ISCCC_R_NRESULTS] = {
 	"unknown version",			/* 1 */
 	"syntax error",				/* 2 */
 	"bad auth",				/* 3 */
+	"expired",				/* 4 */
+	"clock skew",				/* 5 */
+	"duplicate"				/* 6 */
 };
 
 #define ISCCC_RESULT_RESULTSET			2

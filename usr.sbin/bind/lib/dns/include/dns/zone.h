@@ -15,7 +15,7 @@
  * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: zone.h,v 1.106.2.5.4.2 2003/02/17 07:05:10 marka Exp $ */
+/* $ISC: zone.h,v 1.106.2.7 2003/03/06 04:38:22 marka Exp $ */
 
 #ifndef DNS_ZONE_H
 #define DNS_ZONE_H 1

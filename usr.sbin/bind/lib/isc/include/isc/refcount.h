@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2001  Internet Software Consortium.
+ * Copyright (C) 2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: refcount.h,v 1.3 2001/02/09 00:26:20 gson Exp $ */
+/* $ISC: refcount.h,v 1.3.2.3 2003/10/09 07:32:50 marka Exp $ */
 
 #ifndef ISC_REFCOUNT_H
 #define ISC_REFCOUNT_H 1
@@ -111,21 +111,23 @@ typedef struct isc_refcount {
 
 #define isc_refcount_increment(rp, tp)				\
 	do {							\
+		unsigned int *_tmp = (unsigned int *)(tp);	\
 		LOCK(&(rp)->lock);				\
 		REQUIRE((rp)->refs > 0);			\
 		++((rp)->refs);					\
-		if ((tp) != NULL)				\
-			*(unsigned int *)(tp) = ((rp)->refs);	\
+		if (_tmp != NULL)				\
+			*_tmp = ((rp)->refs);			\
 		UNLOCK(&(rp)->lock);				\
 	} while (0)
 
 #define isc_refcount_decrement(rp, tp)				\
 	do {							\
+		unsigned int *_tmp = (unsigned int *)(tp);	\
 		LOCK(&(rp)->lock);				\
 		REQUIRE((rp)->refs > 0);			\
 		--((rp)->refs);					\
-		if ((tp) != NULL)				\
-			*(unsigned int *)(tp) = ((rp)->refs);	\
+		if (_tmp != NULL)				\
+			*_tmp = ((rp)->refs);			\
 		UNLOCK(&(rp)->lock);				\
 	} while (0)
 

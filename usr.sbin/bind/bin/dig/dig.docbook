@@ -16,7 +16,7 @@
  - WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 -->
 
-<!-- $ISC: dig.docbook,v 1.4.2.2.4.2 2003/02/17 07:05:02 marka Exp $ -->
+<!-- $ISC: dig.docbook,v 1.4.2.7 2003/05/12 02:50:15 marka Exp $ -->
 
 <refentry>
 
@@ -96,6 +96,12 @@ Unless it is told to query a specific name server,
 <para>
 When no command line arguments or options are given, will perform an
 NS query for "." (the root).
+</para>
+
+<para>
+It is possible to set per user defaults for <command>dig</command> via
+<filename>${HOME}/.digrc</filename>.  This file is read and any options in it
+are applied before the command line arguements.
 </para>
 
 </refsect1>
@@ -309,7 +315,7 @@ Set [do not set] the CD (checking disabled) bit in the query.  This
 requests the server to not perform DNSSEC validation of responses.
 </para></listitem></varlistentry>
 
-<varlistentry><term><option>+[no]recursive</option></term>
+<varlistentry><term><option>+[no]recurse</option></term>
 <listitem><para>
 Toggle the setting of the RD (recursion desired) bit in the query.
 This bit is set by default, which means <command>dig</command>
@@ -470,7 +476,7 @@ The default is to not display malformed answers.
 <varlistentry><term><option>+[no]dnssec</option></term>
 <listitem><para>
 Requests DNSSEC records be sent by setting the DNSSEC OK bit (DO)
-in the the OPT record in the additional section of the query.
+in the OPT record in the additional section of the query.
 </para>
 
 </variablelist>
@@ -526,6 +532,9 @@ will not print the initial query when it looks up the NS records for
 <title>FILES</title>
 <para>
 <filename>/etc/resolv.conf</filename>
+</para>
+<para>
+<filename>${HOME}/.digrc</filename>
 </para>
 </refsect1>
 

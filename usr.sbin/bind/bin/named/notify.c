@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1999-2001  Internet Software Consortium.
+ * Copyright (C) 1999-2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: notify.c,v 1.24 2001/03/31 01:03:26 bwelling Exp $ */
+/* $ISC: notify.c,v 1.24.2.2 2003/07/22 04:03:34 marka Exp $ */
 
 #include <config.h>
 
@@ -84,7 +84,7 @@ ns_notify_start(ns_client_t *client) {
 	result = dns_message_firstname(request, DNS_SECTION_QUESTION);
 	if (result != ISC_R_SUCCESS) {
 		notify_log(ISC_LOG_INFO, "notify question section empty");
-		goto failure;
+		goto formerr;
 	}
 
 	/*
@@ -96,7 +96,7 @@ ns_notify_start(ns_client_t *client) {
 	if (ISC_LIST_NEXT(zone_rdataset, link) != NULL) {
 		notify_log(ISC_LOG_INFO,
 			   "notify question section contains multiple RRs");
-		goto failure;
+		goto formerr;
 	}
 
 	/* The zone section must have exactly one name. */
@@ -111,35 +111,38 @@ ns_notify_start(ns_client_t *client) {
 	if (zone_rdataset->type != dns_rdatatype_soa) {
 		notify_log(ISC_LOG_INFO,
 			   "notify question section contains no SOA");
-		goto failure;
+		goto formerr;
 	}
 
+	dns_name_format(zonename, str, sizeof(str));
 	result = dns_zt_find(client->view->zonetable, zonename, 0, NULL,
 			     &zone);
-	if (result != ISC_R_SUCCESS) {
-		dns_name_format(zonename, str, sizeof(str));
-		notify_log(ISC_LOG_INFO,
-			   "received notify for zone '%s': not authoritative",
-			   str);
-		goto failure;
-	}
+	if (result != ISC_R_SUCCESS)
+		goto notauth;
 
 	switch(dns_zone_gettype(zone)) {
 	case dns_zone_master:
 	case dns_zone_slave:
 	case dns_zone_stub:	/* Allow dialup passive to work. */
+		notify_log(ISC_LOG_INFO, "received notify for zone '%s'", str);
 		respond(client, dns_zone_notifyreceive(zone,
 			ns_client_getsockaddr(client), request));
 		break;
 	default:
-		dns_name_format(zonename, str, sizeof(str));
-		notify_log(ISC_LOG_INFO,
-			   "received notify for zone '%s': not authoritative",
-			   str);
-		goto failure;
+		goto notauth;
 	}
 	dns_zone_detach(&zone);
 	return;
+
+ notauth:
+	notify_log(ISC_LOG_INFO,
+		   "received notify for zone '%s': not authoritative",
+		   str);
+	result = DNS_R_NOTAUTH;
+	goto failure;
+
+ formerr:
+	result = DNS_R_FORMERR;
 
  failure:
 	if (zone != NULL)

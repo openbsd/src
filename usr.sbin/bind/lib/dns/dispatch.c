@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1999-2002  Internet Software Consortium.
+ * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: dispatch.c,v 1.101.2.3 2002/05/08 06:38:14 marka Exp $ */
+/* $ISC: dispatch.c,v 1.101.2.6 2003/07/22 04:03:40 marka Exp $ */
 
 #include <config.h>
 
@@ -478,12 +478,7 @@ allocate_event(dns_dispatch_t *disp) {
  *
  * If I/O result == CANCELED or error, free the buffer.
  *
- * If query:
- *	if no listeners: free the buffer, restart.
- *	if listener: allocate event, fill in details.
- *		If cannot allocate, free buffer, restart.
- *	if rq event queue is not empty, queue.  else, send.
- *	restart.
+ * If query, free the buffer, restart.
  *
  * If response:
  *	Allocate event, fill in details.
@@ -521,7 +516,12 @@ udp_recv(isc_task_t *task, isc_event_t *ev_in) {
 		     "got packet: requests %d, buffers %d, recvs %d",
 		     disp->requests, disp->mgr->buffers, disp->recv_pending);
 
-	if ((disp->attributes & DNS_DISPATCHATTR_NOLISTEN) == 0) {
+	if (ev->ev_type == ISC_SOCKEVENT_RECVDONE) {
+		/*
+		 * Unless the receive event was imported from a listening
+		 * interface, in which case the event type is
+		 * DNS_EVENT_IMPORTRECVDONE, receive operation must be pending.
+		 */
 		INSIST(disp->recv_pending != 0);
 		disp->recv_pending = 0;
 	}
@@ -664,20 +664,15 @@ udp_recv(isc_task_t *task, isc_event_t *ev_in) {
 /*
  * General flow:
  *
- * If I/O result == CANCELED, EOF, or error, free the buffer
- * and notify everyone as the various queues drain.
+ * If I/O result == CANCELED, EOF, or error, notify everyone as the
+ * various queues drain.
  *
- * If query:
- *	if no listeners: free the buffer, restart.
- *	if listener: allocate event, fill in details.
- *		If cannot allocate, free buffer, restart.
- *	if rq event queue is not empty, queue.  else, send.
- *	restart.
+ * If query, restart.
  *
  * If response:
  *	Allocate event, fill in details.
- *		If cannot allocate, free buffer, restart.
- *	find target.  If not found, free buffer, restart.
+ *		If cannot allocate, restart.
+ *	find target.  If not found, restart.
  *	if event queue is not empty, queue.  else, send.
  *	restart.
  */
@@ -742,7 +737,7 @@ tcp_recv(isc_task_t *task, isc_event_t *ev_in) {
 		 * free the event *before* calling destroy_disp().
 		 */
 		isc_event_free(&ev_in);
-		
+
 		disp->shutting_down = 1;
 		disp->shutdown_why = tcpmsg->result;
 
@@ -1541,7 +1536,7 @@ dns_dispatch_getudp(dns_dispatchmgr_t *mgr, isc_socketmgr_t *sockmgr,
 		{
 			disp->attributes |= DNS_DISPATCHATTR_NOLISTEN;
 			if (disp->recv_pending != 0)
-				isc_socket_cancel(disp->socket, NULL,
+				isc_socket_cancel(disp->socket, disp->task,
 						  ISC_SOCKCANCEL_RECV);
 		}
 
@@ -1679,7 +1674,7 @@ dns_dispatch_detach(dns_dispatch_t **dispp) {
 	killit = ISC_FALSE;
 	if (disp->refcount == 0) {
 		if (disp->recv_pending > 0)
-			isc_socket_cancel(disp->socket, NULL,
+			isc_socket_cancel(disp->socket, disp->task,
 					  ISC_SOCKCANCEL_RECV);
 		disp->shutting_down = 1;
 	}
@@ -1842,7 +1837,7 @@ dns_dispatch_removeresponse(dns_dispentry_t **resp,
 	killit = ISC_FALSE;
 	if (disp->refcount == 0) {
 		if (disp->recv_pending > 0)
-			isc_socket_cancel(disp->socket, NULL,
+			isc_socket_cancel(disp->socket, disp->task,
 					  ISC_SOCKCANCEL_RECV);
 		disp->shutting_down = 1;
 	}
@@ -2008,11 +2003,19 @@ dns_dispatch_changeattributes(dns_dispatch_t *disp,
 
 	LOCK(&disp->lock);
 
-	if ((disp->attributes & DNS_DISPATCHATTR_NOLISTEN) != 0 &&
-	    (attributes & DNS_DISPATCHATTR_NOLISTEN) == 0)
-	{
-		disp->attributes &= ~DNS_DISPATCHATTR_NOLISTEN;
-		startrecv(disp);
+	if ((mask & DNS_DISPATCHATTR_NOLISTEN) != 0) {
+		if ((disp->attributes & DNS_DISPATCHATTR_NOLISTEN) != 0 &&
+		    (attributes & DNS_DISPATCHATTR_NOLISTEN) == 0) {
+			disp->attributes &= ~DNS_DISPATCHATTR_NOLISTEN;
+			startrecv(disp);
+		} else if ((disp->attributes & DNS_DISPATCHATTR_NOLISTEN)
+			   == 0 &&
+			   (attributes & DNS_DISPATCHATTR_NOLISTEN) != 0) {
+			disp->attributes |= DNS_DISPATCHATTR_NOLISTEN;
+			if (disp->recv_pending != 0)
+				isc_socket_cancel(disp->socket, disp->task,
+						  ISC_SOCKCANCEL_RECV);
+		}
 	}
 
 	disp->attributes &= ~mask;
@@ -2034,7 +2037,7 @@ dns_dispatch_importrecv(dns_dispatch_t *disp, isc_event_t *event) {
 	INSIST(sevent->n <= disp->mgr->buffersize);
 	newsevent = (isc_socketevent_t *)
 		    isc_event_allocate(disp->mgr->mctx, NULL,
-				      ISC_SOCKEVENT_RECVDONE, udp_recv,
+				      DNS_EVENT_IMPORTRECVDONE, udp_recv,
 				      disp, sizeof(isc_socketevent_t));
 	if (newsevent == NULL)
 		return;

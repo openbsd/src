@@ -1,4 +1,4 @@
-# Copyright (C) 1999-2001  Internet Software Consortium.
+# Copyright (C) 1999-2001, 2003  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -13,7 +13,7 @@
 # NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-# $ISC: rbt_test.txt,v 1.13 2001/01/09 21:41:33 bwelling Exp $
+# $ISC: rbt_test.txt,v 1.13.2.2 2003/07/22 04:03:37 marka Exp $
 
 add a.vix.com
 add b.vix.com

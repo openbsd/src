@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1999-2001  Internet Software Consortium.
+ * Copyright (C) 1999-2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: a6_38.c,v 1.46 2001/07/26 21:34:00 gson Exp $ */
+/* $ISC: a6_38.c,v 1.46.2.2 2003/10/09 07:32:44 marka Exp $ */
 
 /* RFC2874 */
 
@@ -48,7 +48,7 @@ fromtext_in_a6(ARGS_FROMTEXT) {
 	 */
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_number,
 				      ISC_FALSE));
-	if (token.value.as_ulong > 128)
+	if (token.value.as_ulong > 128U)
 		RETTOK(ISC_R_RANGE);
 
 	prefixlen = (unsigned char)token.value.as_ulong;

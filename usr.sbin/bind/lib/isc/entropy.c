@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000, 2001  Internet Software Consortium.
+ * Copyright (C) 2000, 2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: entropy.c,v 1.3.2.1 2001/09/06 00:14:17 gson Exp $ */
+/* $ISC: entropy.c,v 1.3.2.3 2003/10/09 07:32:47 marka Exp $ */
 
 /*
  * This is the system independent part of the entropy module.  It is
@@ -303,7 +303,7 @@ entropypool_adddata(isc_entropy_t *ent, void *p, unsigned int len,
 	addr = (unsigned long)p;
 	buf = p;
 
-	if ((addr & 0x03) != 0) {
+	if ((addr & 0x03U) != 0U) {
 		val = 0;
 		switch (len) {
 		case 3:

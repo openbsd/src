@@ -15,7 +15,7 @@
 # NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-# $ISC: conf.sh.in,v 1.23.10.2 2003/02/17 07:05:06 marka Exp $
+# $ISC: conf.sh.in,v 1.23.2.2 2003/05/19 05:46:24 marka Exp $
 
 #
 # Common configuration data for system tests, to be sourced into
@@ -43,9 +43,9 @@ KEYSETTOOL=$TOP/bin/dnssec/dnssec-makekeyset
 # The "stress" test is not run by default since it creates enough
 # load on the machine to make it unusable to other users.
 #
-# dnssec and lwresd are missing from SUBDIRS as RFC 2535 support is disabled
+# dnssec is missing from SUBDIRS as RFC 2535 support is disabled
 # 
-SUBDIRS="cacheclean forward glue ixfr limits \
+SUBDIRS="cacheclean forward glue ixfr limits lwresd \
     masterfile notify nsupdate resolver sortlist stub tkey \
     unknown upforwd v6synth views xfer xferquota"
 

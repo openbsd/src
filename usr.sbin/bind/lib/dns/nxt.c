@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1999-2001  Internet Software Consortium.
+ * Copyright (C) 1999-2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: nxt.c,v 1.26 2001/01/09 21:51:09 bwelling Exp $ */
+/* $ISC: nxt.c,v 1.26.2.2 2003/10/09 07:32:37 marka Exp $ */
 
 #include <config.h>
 
@@ -119,7 +119,7 @@ dns_nxt_buildrdata(dns_db_t *db, dns_dbversion_t *version,
 	if (result != ISC_R_NOMORE)
 		return (result);
 
-	r.length += ((max_type + 7) / 8);
+	r.length += max_type / 8 + 1;
 	INSIST(r.length <= DNS_NXT_BUFFERSIZE);
 	dns_rdata_fromregion(rdata,
 			     dns_db_class(db),

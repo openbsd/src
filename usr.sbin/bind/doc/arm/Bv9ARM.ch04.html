@@ -1435,41 +1435,38 @@ CLASS="acronym"
 ><SPAN
 CLASS="acronym"
 >BIND</SPAN
-> 9 fully supports all currently defined forms of IPv6
-    name to address and address to name lookups.  It will also use
-    IPv6 addresses to make queries when running on an IPv6 capable
-    system.</P
+> 9 fully supports all currently
+    defined forms of IPv6 name to address and address to name
+    lookups.  It will also use IPv6 addresses to make queries when
+    running on an IPv6 capable system.</P
 ><P
 >For forward lookups, <SPAN
 CLASS="acronym"
 >BIND</SPAN
-> 9 supports both A6 and AAAA
-    records.  The use of AAAA records is deprecated, but it is still
-    useful for hosts to have both AAAA and A6 records to maintain
-    backward compatibility with installations where AAAA records are
-    still used.  In fact, the stub resolvers currently shipped with
-    most operating system support only AAAA lookups, because following
-    A6 chains is much harder than doing A or AAAA lookups.</P
+> 9 supports
+    both A6 and AAAA records.  The use of A6 records has been moved
+    to experimental (RFC 3363) and should be treated as deprecated.</P
 ><P
->For IPv6 reverse lookups, <SPAN
+>The use of "bitstring" labels for IPv6 has been moved to
+    experimental (RFC 3363) reverting to a nibble format.  The
+    suffix for the IPv6 reverse lookups has also changed from
+    <TT
+CLASS="literal"
+>IP6.INT</TT
+> to <TT
+CLASS="literal"
+>IP6.ARPA</TT
+> (RFC
+    3152).</P
+><P
+><SPAN
 CLASS="acronym"
 >BIND</SPAN
-> 9 supports the new
-    "bitstring" format used in the <SPAN
-CLASS="emphasis"
-><I
-CLASS="emphasis"
->ip6.arpa</I
-></SPAN
->
-    domain, as well as the older, deprecated "nibble" format used in
-    the <SPAN
-CLASS="emphasis"
-><I
-CLASS="emphasis"
->ip6.int</I
-></SPAN
-> domain.</P
+> 9 now defaults to nibble
+    <TT
+CLASS="literal"
+>IP6.ARPA</TT
+> format lookups.</P
 ><P
 ><SPAN
 CLASS="acronym"
@@ -1491,7 +1488,7 @@ CLASS="sect2"
 ><H2
 CLASS="sect2"
 ><A
-NAME="AEN1003"
+NAME="AEN1005"
 >4.8.1. Address Lookups Using AAAA Records</A
 ></H2
 ><P
@@ -1503,125 +1500,21 @@ CLASS="programlisting"
 >&#13;$ORIGIN example.com.
 host            3600    IN      AAAA    3ffe:8050:201:1860:42::1
 </PRE
-><P
->While their use is deprecated, they are useful to support
-      older IPv6 applications.  They should not be added where they
-      are not absolutely necessary.</P
 ></DIV
 ><DIV
 CLASS="sect2"
 ><H2
 CLASS="sect2"
 ><A
-NAME="AEN1008"
->4.8.2. Address Lookups Using A6 Records</A
+NAME="AEN1009"
+>4.8.2. Address to Name Lookups Using Nibble Format</A
 ></H2
-><P
->The A6 record is more flexible than the AAAA record, and
-      is therefore more complicated.  The A6 record can be used to
-      form a chain of A6 records, each specifying part of the IPv6
-      address. It can also be used to specify the entire record as
-      well.  For example, this record supplies the same data as the
-      AAAA record in the previous example:</P
-><PRE
-CLASS="programlisting"
->&#13;$ORIGIN example.com.
-host            3600    IN      A6      0 3ffe:8050:201:1860:42::1
-</PRE
-><DIV
-CLASS="sect3"
-><H3
-CLASS="sect3"
-><A
-NAME="AEN1012"
->4.8.2.1. A6 Chains</A
-></H3
-><P
->A6 records are designed to allow network
-        renumbering. This works when an A6 record only specifies the
-        part of the address space the domain owner controls.  For
-        example, a host may be at a company named "company."  It has
-        two ISPs which provide IPv6 address space for it.  These two
-        ISPs fully specify the IPv6 prefix they supply.</P
-><P
->In the company's address space:</P
-><PRE
-CLASS="programlisting"
->&#13;$ORIGIN example.com.
-host            3600    IN      A6      64 0:0:0:0:42::1 company.example1.net.
-host            3600    IN      A6      64 0:0:0:0:42::1 company.example2.net.
-</PRE
-><P
->ISP1 will use:</P
-><PRE
-CLASS="programlisting"
->&#13;$ORIGIN example1.net.
-company         3600    IN      A6      0 3ffe:8050:201:1860::
-</PRE
-><P
->ISP2 will use:</P
-><PRE
-CLASS="programlisting"
->&#13;$ORIGIN example2.net.
-company         3600    IN      A6      0 1234:5678:90ab:fffa::
-</PRE
-><P
->When <TT
-CLASS="literal"
->host.example.com</TT
-> is looked up,
-        the resolver (in the resolver daemon or caching name server)
-        will find two partial A6 records, and will use the additional
-        name to find the remainder of the data.</P
-></DIV
-><DIV
-CLASS="sect3"
-><H3
-CLASS="sect3"
-><A
-NAME="AEN1023"
->4.8.2.2. A6 Records for DNS Servers</A
-></H3
-><P
->When an A6 record specifies the address of a name
-        server, it should use the full address rather than specifying
-        a partial address.  For example:</P
-><PRE
-CLASS="programlisting"
->&#13;$ORIGIN example.com.
-@               14400           IN      NS              ns0
-                14400           IN      NS              ns1
-ns0             14400           IN      A6              0 3ffe:8050:201:1860:42::1
-ns1             14400           IN      A               192.168.42.1
-</PRE
-><P
->It is recommended that IPv4-in-IPv6 mapped addresses not
-        be used.  If a host has an IPv4 address, use an A record, not
-        an A6, with <TT
-CLASS="literal"
->::ffff:192.168.42.1</TT
-> as the
-        address.</P
-></DIV
-></DIV
-><DIV
-CLASS="sect2"
-><H2
-CLASS="sect2"
-><A
-NAME="AEN1029"
->4.8.3. Address to Name Lookups Using Nibble Format</A
-></H2
-><P
->While the use of nibble format to look up names is
-      deprecated, it is supported for backwards compatibility with
-      existing IPv6 applications.</P
 ><P
 >When looking up an address in nibble format, the address
       components are simply reversed, just as in IPv4, and
       <TT
 CLASS="literal"
->ip6.int.</TT
+>IP6.ARPA.</TT
 > is appended to the resulting name.
       For example, the following would provide reverse name lookup for
       a host with address
@@ -1631,118 +1524,8 @@ CLASS="literal"
 >.</P
 ><PRE
 CLASS="programlisting"
->&#13;$ORIGIN 0.6.8.1.1.0.2.0.0.5.0.8.e.f.f.3.ip6.int.
+>&#13;$ORIGIN 0.6.8.1.1.0.2.0.0.5.0.8.e.f.f.3.IP6.ARPA.
 1.0.0.0.0.0.0.0.0.0.0.0.2.4.0.0   14400 IN      PTR     host.example.com.
-</PRE
-></DIV
-><DIV
-CLASS="sect2"
-><H2
-CLASS="sect2"
-><A
-NAME="AEN1036"
->4.8.4. Address to Name Lookups Using Bitstring Format</A
-></H2
-><P
->Bitstring labels can start and end on any bit boundary,
-      rather than on a multiple of 4 bits as in the nibble
-      format. They also use <SPAN
-CLASS="emphasis"
-><I
-CLASS="emphasis"
->ip6.arpa</I
-></SPAN
-> rather than
-      <SPAN
-CLASS="emphasis"
-><I
-CLASS="emphasis"
->ip6.int</I
-></SPAN
->.</P
-><P
->To replicate the previous example using bitstrings:</P
-><PRE
-CLASS="programlisting"
->&#13;$ORIGIN \[x3ffe805002011860/64].ip6.arpa.
-\[x0042000000000001/64]         14400   IN      PTR     host.example.com.
-</PRE
-></DIV
-><DIV
-CLASS="sect2"
-><H2
-CLASS="sect2"
-><A
-NAME="AEN1043"
->4.8.5. Using DNAME for Delegation of IPv6 Reverse Addresses</A
-></H2
-><P
->In IPV6, the same host may have many addresses from many
-      network providers.  Since the trailing portion of the address
-      usually remains constant, <B
-CLASS="command"
->DNAME</B
-> can help
-      reduce the number of zone files used for reverse mapping that
-      need to be maintained.</P
-><P
->For example, consider a host which has two providers
-      (<TT
-CLASS="literal"
->example.net</TT
-> and
-      <TT
-CLASS="literal"
->example2.net</TT
->) and
-      therefore two IPv6 addresses.  Since the host chooses its own 64
-      bit host address portion, the provider address is the only part
-      that changes:</P
-><PRE
-CLASS="programlisting"
->&#13;$ORIGIN example.com.
-host                    IN      A6      64      ::1234:5678:1212:5675 cust1.example.net.
-                        IN      A6      64      ::1234:5678:1212:5675 subnet5.example2.net.
-$ORIGIN example.net.
-cust1                   IN      A6      48      0:0:0:dddd:: ipv6net.example.net.
-ipv6net                 IN      A6      0       aa:bb:cccc::
-$ORIGIN example2.net.
-subnet5                 IN      A6      48      0:0:0:1:: ipv6net2.example2.net.
-ipv6net2                IN      A6      0       6666:5555:4::
-</PRE
-><P
->This sets up forward lookups.  To handle the reverse lookups,
-the provider <TT
-CLASS="literal"
->example.net</TT
->
-would have:</P
-><PRE
-CLASS="programlisting"
->&#13;$ORIGIN \[x00aa00bbcccc/48].ip6.arpa.
-\[xdddd/16]             IN      DNAME           ipv6-rev.example.com.
-</PRE
-><P
->and <TT
-CLASS="literal"
->example2.net</TT
-> would have:</P
-><PRE
-CLASS="programlisting"
->&#13;$ORIGIN \[x666655550004/48].ip6.arpa.
-\[x0001/16]             IN      DNAME           ipv6-rev.example.com.
-</PRE
-><P
-><TT
-CLASS="literal"
->example.com</TT
->
-      needs only one zone file to handle both of these reverse
-      mappings:</P
-><PRE
-CLASS="programlisting"
->&#13;$ORIGIN ipv6-rev.example.com.
-\[x1234567812125675/64] IN      PTR             host.example.com. 
 </PRE
 ></DIV
 ></DIV

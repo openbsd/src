@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1999-2001  Internet Software Consortium.
+ * Copyright (C) 1999-2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: acconfig.h,v 1.35.2.1 2001/10/22 23:28:07 gson Exp $ */
+/* $ISC: acconfig.h,v 1.35.2.5 2003/08/05 00:42:53 marka Exp $ */
 
 /***
  *** This file is not to be included by any public header files, because
@@ -53,7 +53,7 @@
 /* define if catgets() is available */
 #undef HAVE_CATGETS
 
-/* define if you have the NET_RT_IFLIST sysctl variable. */
+/* define if you have the NET_RT_IFLIST sysctl variable and sys/sysctl.h */
 #undef HAVE_IFLIST_SYSCTL
 
 /* define if you need to #define _XPG4_2 before including sys/socket.h */
@@ -132,6 +132,9 @@ int sigwait(const unsigned int *set, int *sig);
 
 /* define if pthread_attr_getstacksize() is available */
 #undef HAVE_PTHREAD_ATTR_GETSTACKSIZE
+
+/* define if pthread_attr_setstacksize() is available */
+#undef HAVE_PTHREAD_ATTR_SETSTACKSIZE
 
 /* define if you have strerror in the C library. */
 #undef HAVE_STRERROR

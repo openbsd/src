@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1998-2001  Internet Software Consortium.
+ * Copyright (C) 1998-2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: base64.c,v 1.23 2001/03/22 00:07:04 bwelling Exp $ */
+/* $ISC: base64.c,v 1.23.2.2 2003/07/22 04:03:47 marka Exp $ */
 
 #include <config.h>
 
@@ -125,6 +125,17 @@ base64_decode_char(base64_decode_ctx_t *ctx, int c) {
 		if (ctx->val[0] == 64 || ctx->val[1] == 64)
 			return (ISC_R_BADBASE64);
 		if (ctx->val[2] == 64 && ctx->val[3] != 64)
+			return (ISC_R_BADBASE64);
+		/*
+		 * Check that bits that should be zero are.
+		 */
+		if (ctx->val[2] == 64 && (ctx->val[1] & 0xf) != 0)
+			return (ISC_R_BADBASE64);
+		/*
+		 * We don't need to test for ctx->val[2] != 64 as
+		 * the bottom two bits of 64 are zero.
+		 */
+		if (ctx->val[3] == 64 && (ctx->val[2] & 0x3) != 0)
 			return (ISC_R_BADBASE64);
 		n = (ctx->val[2] == 64) ? 1 :
 			(ctx->val[3] == 64) ? 2 : 3;

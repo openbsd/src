@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1999-2001  Internet Software Consortium.
+ * Copyright (C) 1999-2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: xfrin.c,v 1.124.2.2 2001/09/12 20:44:04 gson Exp $ */
+/* $ISC: xfrin.c,v 1.124.2.4 2003/07/22 04:03:45 marka Exp $ */
 
 #include <config.h>
 
@@ -1166,11 +1166,6 @@ xfrin_recv_done(isc_task_t *task, isc_event_t *ev) {
 
 		name = NULL;
 		dns_message_currentname(msg, DNS_SECTION_ANSWER, &name);
-		if (!dns_name_issubdomain(name, &xfr->name)) {
-			xfrin_log(xfr, ISC_LOG_WARNING,
-				  "ignoring out-of-zone data");
-			continue;
-		}
 		for (rds = ISC_LIST_HEAD(name->list);
 		     rds != NULL;
 		     rds = ISC_LIST_NEXT(rds, link))

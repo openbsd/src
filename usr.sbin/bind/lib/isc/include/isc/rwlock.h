@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1998-2001  Internet Software Consortium.
+ * Copyright (C) 1998-2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: rwlock.h,v 1.18 2001/03/08 00:55:15 tale Exp $ */
+/* $ISC: rwlock.h,v 1.18.2.3 2003/07/22 04:03:49 marka Exp $ */
 
 #ifndef ISC_RWLOCK_H
 #define ISC_RWLOCK_H 1
@@ -57,6 +57,7 @@ struct isc_rwlock {
 	unsigned int		writers_waiting;
 	unsigned int		read_quota;
 	unsigned int		write_quota;
+	isc_rwlocktype_t	original;
 };
 #else /* ISC_PLATFORM_USETHREADS */
 struct isc_rwlock {
@@ -79,6 +80,12 @@ isc_rwlock_trylock(isc_rwlock_t *rwl, isc_rwlocktype_t type);
 
 isc_result_t
 isc_rwlock_unlock(isc_rwlock_t *rwl, isc_rwlocktype_t type);
+
+isc_result_t
+isc_rwlock_tryupgrade(isc_rwlock_t *rwl);
+
+void
+isc_rwlock_downgrade(isc_rwlock_t *rwl);
 
 void
 isc_rwlock_destroy(isc_rwlock_t *rwl);

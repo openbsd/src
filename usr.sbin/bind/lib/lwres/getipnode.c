@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1999-2002  Internet Software Consortium.
+ * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: getipnode.c,v 1.30.2.3 2002/08/08 21:29:07 marka Exp $ */
+/* $ISC: getipnode.c,v 1.30.2.5 2003/10/09 07:32:55 marka Exp $ */
 
 #include <config.h>
 
@@ -242,13 +242,13 @@ lwres_getipnodebyaddr(const void *src, size_t len, int af, int *error_num) {
 
 	switch (af) {
 	case AF_INET:
-		if (len != INADDRSZ) {
+		if (len != (unsigned int)INADDRSZ) {
 			*error_num = NO_RECOVERY;
 			return (NULL);
 		}
 		break;
 	case AF_INET6:
-		if (len != IN6ADDRSZ) {
+		if (len != (unsigned int)IN6ADDRSZ) {
 			*error_num = NO_RECOVERY;
 			return (NULL);
 		}

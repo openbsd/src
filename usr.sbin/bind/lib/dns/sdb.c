@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000, 2001  Internet Software Consortium.
+ * Copyright (C) 2000, 2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: sdb.c,v 1.35 2001/06/28 21:34:54 gson Exp $ */
+/* $ISC: sdb.c,v 1.35.2.2 2003/10/09 07:32:38 marka Exp $ */
 
 #include <config.h>
 
@@ -763,8 +763,10 @@ find(dns_db_t *db, dns_name_t *name, dns_dbversion_t *version,
 	dns_fixedname_init(&fname);
 	xname = dns_fixedname_name(&fname);
 
-	if (rdataset == NULL)
+	if (rdataset == NULL) {
+		dns_rdataset_init(&xrdataset);
 		rdataset = &xrdataset;
+	}
 
 	result = DNS_R_NXDOMAIN;
 
