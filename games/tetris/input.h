@@ -1,4 +1,4 @@
-/*	$OpenBSD: input.h,v 1.2 1998/09/24 06:45:07 pjanzen Exp $	*/
+/*	$OpenBSD: input.h,v 1.3 1999/03/22 07:38:26 pjanzen Exp $	*/
 /*	$NetBSD: input.h,v 1.2 1995/04/22 07:42:36 cgd Exp $	*/
 
 /*-
@@ -39,7 +39,6 @@
  *	@(#)input.h	8.1 (Berkeley) 5/31/93
  */
 
-void	eat_input __P((void));
 int	rwait __P((struct timeval *));
 int	tgetchar __P((void));
 void	tsleep __P((void));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tetris.h,v 1.3 1998/09/24 06:45:08 pjanzen Exp $	*/
+/*	$OpenBSD: tetris.h,v 1.4 1999/03/22 07:38:30 pjanzen Exp $	*/
 /*	$NetBSD: tetris.h,v 1.2 1995/04/22 07:42:48 cgd Exp $	*/
 
 /*-
@@ -131,7 +131,9 @@ struct shape {
 };
 
 extern struct shape shapes[];
-#define	randshape() (&shapes[random() % 7])
+
+struct shape *curshape;
+struct shape *nextshape;
 
 /*
  * Shapes fall at a rate faster than once per second.
@@ -162,11 +164,16 @@ long	fallrate;		/* less than 1 million; smaller => faster */
  * and we score a point for each row it falls (plus one more as soon as
  * we find that it is at rest and integrate it---until then, it can
  * still be moved or rotated).
+ *
+ * If previewing has been turned on, the score is multiplied by PRE_PENALTY.
  */
+#define PRE_PENALTY 0.75
+
 int	score;			/* the obvious thing */
 gid_t	gid, egid;
 
 char	key_msg[100];
+int	showpreview;
 
 int	fits_in __P((struct shape *, int));
 void	place __P((struct shape *, int, int));

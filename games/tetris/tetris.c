@@ -1,4 +1,4 @@
-/*	$OpenBSD: tetris.c,v 1.6 1999/03/22 05:20:03 pjanzen Exp $	*/
+/*	$OpenBSD: tetris.c,v 1.7 1999/03/22 07:38:28 pjanzen Exp $	*/
 /*	$NetBSD: tetris.c,v 1.2 1995/04/22 07:42:47 cgd Exp $	*/
 
 /*-
@@ -66,6 +66,7 @@ static char copyright[] =
 
 static void	elide __P((void));
 static void	setup_board __P((void));
+struct shape	*randshape __P((void));
 void	onintr __P((int));
 void	usage __P((void));
 
@@ -113,13 +114,26 @@ elide()
 	}
 }
 
+struct shape *
+randshape()
+{
+	struct shape *tmp;
+	int i, j;
+
+	tmp = &shapes[random() % 7];
+	j = random() % 4;
+	for (i = 0; i < j; i++)
+		tmp = &shapes[tmp->rot];
+	return (tmp);
+}
+	
+
 int
 main(argc, argv)
 	int argc;
 	char *argv[];
 {
 	register int pos, c;
-	register struct shape *curshape;
 	register char *keys;
 	register int level = 2;
 	char key_write[6][10];
@@ -131,7 +145,8 @@ main(argc, argv)
 	egid = getegid();
 	setegid(gid);
 
-	while ((ch = getopt(argc, argv, "hk:l:s")) != -1)
+	showpreview = 0;
+	while ((ch = getopt(argc, argv, "hk:l:ps")) != -1)
 		switch(ch) {
 		case 'k':
 			if (strlen(keys = optarg) != 6)
@@ -142,6 +157,9 @@ main(argc, argv)
 			if (level < MINLEVEL || level > MAXLEVEL)
 				errx(1, "level must be from %d to %d",
 				    MINLEVEL, MAXLEVEL);
+			break;
+		case 'p':
+			showpreview = 1;
 			break;
 		case 's':
 			showscores(0);
@@ -186,6 +204,7 @@ main(argc, argv)
 	scr_set();
 
 	pos = A_FIRST*B_COLS + (B_COLS/2)-1;
+	nextshape = randshape();
 	curshape = randshape();
 
 	scr_msg(key_msg, 1);
@@ -216,7 +235,8 @@ main(argc, argv)
 			 * Choose a new shape.  If it does not fit,
 			 * the game is over.
 			 */
-			curshape = randshape();
+			curshape = nextshape;
+			nextshape = randshape();
 			pos = A_FIRST*B_COLS + (B_COLS/2)-1;
 			if (!fits_in(curshape, pos))
 				break;
@@ -274,15 +294,24 @@ main(argc, argv)
 			}
 			continue;
 		}
-		if (c == '\f')
+		if (c == '\f') {
 			scr_clear();
+			scr_msg(key_msg, 1);
+		}
 	}
 
 	scr_clear();
 	scr_end();
 
-	(void)printf("Your score:  %d point%s  x  level %d  =  %d\n",
-	    score, score == 1 ? "" : "s", level, score * level);
+	if (showpreview == 0)
+		(void)printf("Your score:  %d point%s  x  level %d  =  %d\n",
+		    score, score == 1 ? "" : "s", level, score * level);
+	else {
+		(void)printf("Your score:  %d point%s x level %d x preview penalty %0.3f = %d\n",
+		    score, score == 1 ? "" : "s", level, (double)PRE_PENALTY,
+		    (int)(score * level * PRE_PENALTY));
+		score = score * PRE_PENALTY;
+	}
 	savescore(level);
 
 	printf("\nHit RETURN to see high scores, ^C to skip.\n");
@@ -308,6 +337,6 @@ onintr(signo)
 void
 usage()
 {
-	(void)fprintf(stderr, "usage: tetris [-s] [-k keys] [-l level]\n");
+	(void)fprintf(stderr, "usage: tetris [-ps] [-k keys] [-l level]\n");
 	exit(1);
 }

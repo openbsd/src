@@ -1,4 +1,4 @@
-/*	$OpenBSD: screen.c,v 1.3 1999/01/08 04:11:50 pjanzen Exp $	*/
+/*	$OpenBSD: screen.c,v 1.4 1999/03/22 07:38:27 pjanzen Exp $	*/
 /*	$NetBSD: screen.c,v 1.4 1995/04/29 01:11:36 mycroft Exp $	*/
 
 /*-
@@ -279,10 +279,12 @@ scr_set()
 	if (Cols == 0)
 	Cols = COnum;
 	if (Rows < MINROWS || Cols < MINCOLS) {
-		(void) fprintf(stderr,
-		    "the screen is too small: must be at least %d x %d",
+		char smallscr[55];
+
+		(void) snprintf(smallscr, 55,
+		    "the screen is too small (must be at least %dx%d)",
 		    MINROWS, MINCOLS);
-		stop("");	/* stop() supplies \n */
+		stop(smallscr);
 	}
 	if (tcgetattr(0, &oldtt) < 0)
 		stop("tcgetattr() fails");
@@ -376,6 +378,7 @@ scr_update()
 	register regcell so, cur_so = 0;
 	register int i, ccol, j;
 	sigset_t sigset, osigset;
+	static struct shape *lastshape;
 
 	sigemptyset(&sigset);
 	sigaddset(&sigset, SIGTSTP);
@@ -389,8 +392,44 @@ scr_update()
 			putpad(HOstr);
 		else
 			moveto(0, 0);
-		(void) printf("%d", score);
+		(void) printf("Score: %d", score);
 		curscore = score;
+	}
+
+	/* draw preview of next pattern */
+	if (showpreview && (nextshape != lastshape)) {
+		int i;
+		static int r=5, c=2;
+		int tr, tc, t;
+
+		lastshape = nextshape;
+
+		/* clean */
+		putpad(SEstr);
+		moveto(r-1, c-1); putstr("          ");
+		moveto(r,   c-1); putstr("          ");
+		moveto(r+1, c-1); putstr("          ");
+		moveto(r+2, c-1); putstr("          ");
+
+		moveto(r-3, c-2);
+		putstr("Next shape:");
+
+		/* draw */
+		if (SOstr)
+			putpad(SOstr);
+		moveto(r, 2 * c);
+		putstr(SOstr ? "  " : "XX");
+		for (i = 0; i < 3; i++) {
+			t = c + r * B_COLS;
+			t += nextshape->off[i];
+
+			tr = t / B_COLS;
+			tc = t % B_COLS;
+
+			moveto(tr, 2*tc);
+			putstr(SOstr ? "  " : "XX");
+		}
+		putpad(SEstr);
 	}
 
 	bp = &board[D_FIRST * B_COLS];
