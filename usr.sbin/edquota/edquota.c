@@ -38,7 +38,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)edquota.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: edquota.c,v 1.40 2003/06/26 19:47:08 deraadt Exp $";
+static char *rcsid = "$Id: edquota.c,v 1.41 2004/03/09 18:26:42 tedu Exp $";
 #endif /* not lint */
 
 /*
@@ -520,7 +520,7 @@ readprivs(struct quotause *quplist, int infd)
 			if (dqblk.dqb_curblocks == qup->dqblk.dqb_curblocks &&
 			    dqblk.dqb_curinodes == qup->dqblk.dqb_curinodes)
 				break;
-			warnx("%s: cannot change current allocationn", fsp);
+			warnx("%s: cannot change current allocation", fsp);
 			break;
 		}
 	}
