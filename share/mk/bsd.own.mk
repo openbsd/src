@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.own.mk,v 1.11 1996/09/16 10:16:04 downsj Exp $
+#	$OpenBSD: bsd.own.mk,v 1.12 1996/09/16 10:23:58 downsj Exp $
 #	$NetBSD: bsd.own.mk,v 1.24 1996/04/13 02:08:09 thorpej Exp $
 
 .if defined(MAKECONF) && exists(${MAKECONF})
@@ -59,6 +59,9 @@ NLSMODE?=	${NONBINMODE}
 
 COPY?=		-c
 STRIP?=		-s
+
+# This may be changed for _single filesystem_ configurations (such as
+# routers and other embedded systems); normal systems should leave it alone!
 STATIC?=	-static
 
 # Define SYS_INCLUDE to indicate whether you want symbolic links to the system
