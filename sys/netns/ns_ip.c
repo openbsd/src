@@ -1,4 +1,4 @@
-/*	$OpenBSD: ns_ip.c,v 1.11 2001/05/22 19:07:12 angelos Exp $	*/
+/*	$OpenBSD: ns_ip.c,v 1.12 2001/05/27 12:29:23 angelos Exp $	*/
 /*	$NetBSD: ns_ip.c,v 1.16 1996/05/09 22:29:40 scottr Exp $	*/
 
 /*
@@ -285,14 +285,14 @@ nsipoutput(ifp, m, dst, rt)
 			m_freem(m);
 			return (ENOBUFS);
 		}
+		M_COPY_HDR(m0, m);
+		m->m_flags &= ~M_PKTHDR;
+		m_tag_init(m);
 		MH_ALIGN(m0, sizeof (struct ip));
 		m0->m_flags = m->m_flags & M_COPYFLAGS;
 		m0->m_next = m;
 		m0->m_len = sizeof (struct ip);
 		m0->m_pkthdr.len = m0->m_len + m->m_len;
-		m0->m_pkthdr.tags = m->m_pkthdr.tags;
-		m->m_flags &= ~M_PKTHDR;
-		TAILQ_INIT(&m->m_pkthdr.tags);
 	} else {
 		M_PREPEND(m, sizeof (struct ip), M_DONTWAIT);
 		if (m == 0)
