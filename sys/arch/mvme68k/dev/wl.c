@@ -1,4 +1,4 @@
-/*	$OpenBSD: wl.c,v 1.2 1997/02/11 02:55:44 deraadt Exp $ */
+/*	$OpenBSD: wl.c,v 1.3 1997/02/22 12:09:45 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Dale Rahn. All rights reserved.
@@ -68,27 +68,27 @@
 struct clboard {
 	union {
 		struct clreg	clreg;
-		char		xx[256];
+		volatile char		xx[256];
 	} chips[2];
 	union {
-		u_char		base;
-		char		xx[256];
+		volatile u_char		base;
+		volatile char		xx[256];
 	} sram;
 	union {
-		u_char		val;
-		char		xx[256];
+		volatile u_char		val;
+		volatile char		xx[256];
 	} ringstatus;
 	union {
-		u_char		val;
-		char		xx[256];
+		volatile u_char		val;
+		volatile char		xx[256];
 	} ringreset;
 	union {
-		u_char		val;
-		char		xx[256];
+		volatile u_char		val;
+		volatile char		xx[256];
 	} master;
 	union {
-		u_char		val;
-		char		xx[256];
+		volatile u_char		val;
+		volatile char		xx[256];
 	} reset;
 };
 
@@ -107,13 +107,13 @@ struct cl_info {
 	u_long  txcnt;
 	u_long  rxcnt;
 
-	void	*rx[2];
-	void	*rxp[2];
-	void	*tx[2];
-	void	*txp[2];
+	volatile void	*rx[2];
+	volatile void	*rxp[2];
+	volatile void	*tx[2];
+	volatile void	*txp[2];
 };
 #define CLCD_PORTS_PER_CHIP 4
-#define CL_BUFSIZE 256
+#define CL_BUFSIZE 128
 
 struct wlsoftc {
 	struct device	sc_dev;
@@ -147,19 +147,19 @@ struct {
 	u_char rx_timeout;
 } cl_clocks[] = {
 	/* 30.000 MHz */
-	{   64000, 0x3a, 0, 0xff },
-	{   56000, 0x42, 0, 0xff },
-	{   38400, 0x61, 0, 0xff },
-	{   19200, 0xc2, 0, 0xff },
-	{    9600, 0x61, 1, 0xff },
-	{    7200, 0x81, 1, 0xff },
-	{    4800, 0xc2, 1, 0xff },
-	{    3600, 0x40, 2, 0xff },
-	{    2400, 0x61, 2, 0xff },
-	{    1200, 0xc2, 2, 0xff },
-	{     600, 0x61, 3, 0xff },
-	{     300, 0xc2, 3, 0xff },
-	{     150, 0x61, 4, 0xff },
+	{   64000, 0x3a, 0, 0x01 },
+	{   56000, 0x42, 0, 0x01 },
+	{   38400, 0x61, 0, 0x01 },
+	{   19200, 0xc2, 0, 0x01 },
+	{    9600, 0x61, 1, 0x02 },
+	{    7200, 0x81, 1, 0x04 },
+	{    4800, 0xc2, 1, 0x04 },
+	{    3600, 0x40, 2, 0x08 },
+	{    2400, 0x61, 2, 0x10 },
+	{    1200, 0xc2, 2, 0x20 },
+	{     600, 0x61, 3, 0x40 },
+	{     300, 0xc2, 3, 0x80 },
+	{     150, 0x61, 4, 0xa0 },
 	{     110, 0x84, 4, 0xff },
 	{      50, 0x00, 5, 0xff },
 	{       0, 0x00, 0, 0},
@@ -174,6 +174,7 @@ void cl_unblock __P((struct tty *tp));
 int clccparam __P((struct wlsoftc *sc, struct termios *par, int channel));
 
 int clparam __P((struct tty *tp, struct termios *t));
+int cl_intr __P((struct wlsoftc *sc, int));
 int cl_mintr __P((struct wlsoftc *sc));
 int cl_txintr __P((struct wlsoftc *sc));
 int cl_rxintr __P((struct wlsoftc *sc));
@@ -318,22 +319,22 @@ wlattach(parent, self, aux)
 	}
 
 	/* enable interrupts */
-	sc->sc_ih_e.ih_fn = cl_rxintr;
+	sc->sc_ih_e.ih_fn = cl_intr;
 	sc->sc_ih_e.ih_arg = sc;
 	sc->sc_ih_e.ih_ipl = ca->ca_ipl;
 	sc->sc_ih_e.ih_wantframe = 0;
 
-	sc->sc_ih_m.ih_fn = cl_mintr;
+	sc->sc_ih_m.ih_fn = cl_intr;
 	sc->sc_ih_m.ih_arg = sc;
 	sc->sc_ih_m.ih_ipl = ca->ca_ipl;
 	sc->sc_ih_m.ih_wantframe = 0;
 
-	sc->sc_ih_t.ih_fn = cl_txintr;
+	sc->sc_ih_t.ih_fn = cl_intr;
 	sc->sc_ih_t.ih_arg = sc;
 	sc->sc_ih_t.ih_ipl = ca->ca_ipl;
 	sc->sc_ih_t.ih_wantframe = 0;
 
-	sc->sc_ih_r.ih_fn = cl_rxintr;
+	sc->sc_ih_r.ih_fn = cl_intr;
 	sc->sc_ih_r.ih_arg = sc;
 	sc->sc_ih_r.ih_ipl = ca->ca_ipl;
 	sc->sc_ih_r.ih_wantframe = 0;
@@ -375,8 +376,6 @@ cl_initchannel(sc, channel)
 	int channel;
 {
 	struct clreg *cl_reg = sc->cl_reg;
-
-	printf("init %d\n", channel);
 
 	/* set up option registers */
 	cl_reg->cl_car	= channel;
@@ -566,7 +565,7 @@ int wlopen (dev, flag, mode, p)
 		{
 			u_char save = sc->cl_reg->cl_car;
 			sc->cl_reg->cl_car = channel;
-			sc->cl_reg->cl_ier	= 0x88;
+			sc->cl_reg->cl_ier = IER_MDM | IER_RXD;
 			sc->cl_reg->cl_car = save;
 		}
 	} else if (tp->t_state & TS_XCLUDE && p->p_ucred->cr_uid != 0) {
@@ -634,7 +633,7 @@ void cloutput(tp)
 	cc = tp->t_outq.c_cc;
 	while (cc > 0) {
 /*XXX*/
-		cnt = min (CLCDBUF,cc);
+		cnt = min(CLCDBUF,cc);
 		cnt = q_to_b(&tp->t_outq, cl_obuffer, cnt);
 		if (cnt == 0) {
 			break;
@@ -675,6 +674,7 @@ int wlclose (dev, flag, mode, p)
 		sc->cl_reg->cl_msvr_rts = 0x00;
 		sc->cl_reg->cl_msvr_dtr = 0x00;
 		sc->cl_reg->cl_ccr = 0x05;
+		sc->cl_reg->cl_ier = 0x00;
 	}
 
 	splx(s);
@@ -831,12 +831,11 @@ clgetc(sc, channel)
 	int *channel;
 {
 	struct clreg *cl_reg;
-	u_char val, reoir, licr, isrl, fifo_cnt, data;
-	cl_reg = sc->cl_reg;
+	u_char reoir, licr, isrl, fifo_cnt, data;
 
-	val = cl_reg->cl_rir;
+	cl_reg = sc->cl_reg;
 	/* if no receive interrupt pending wait */
-	if (!(val & 0x80)) {
+	if ((cl_reg->cl_rir & RIR_REN) == 0) {
 		return 0;
 	}
 	/* XXX do we need to suck the entire FIFO contents? */
@@ -1053,7 +1052,7 @@ clstart(tp)
 	channel = CL_CHANNEL(dev);
 	unit = CL_UNIT(dev);
 	if (unit >= wl_cd.cd_ndevs || 
-		(sc = (struct wlsoftc *) wl_cd.cd_devs[unit]) == NULL) {
+	    (sc = (struct wlsoftc *) wl_cd.cd_devs[unit]) == NULL) {
 		return;
 	}
 
@@ -1061,14 +1060,56 @@ clstart(tp)
 		return;
 
 	s = splcl();
-	/*cl_dumpport(0);*/
 	if ((tp->t_state & (TS_TIMEOUT | TS_BUSY | TS_TTSTOP | TS_FLUSH)) == 0) {
 		tp->t_state |= TS_BUSY;
 		sc->cl_reg->cl_car = channel;
-		sc->cl_reg->cl_ier = sc->cl_reg->cl_ier | 0x3;
+		sc->cl_reg->cl_ier = sc->cl_reg->cl_ier | IER_TXMPTY | IER_TXD;
+#if 0
 		zscnputc(0, 'S');
+#endif
 	}
 	splx(s);
+}
+
+int
+cl_intr(sc, vec)
+	struct wlsoftc *sc;
+	int vec;
+{
+	u_char livr = sc->cl_reg->cl_livr;
+	u_char stk = sc->cl_reg->cl_stk;
+	int i = 0;
+
+	stk = ((stk & 0x80) >> 6) | (stk & 0x01);
+#if 1
+	zscnputc(0, '[');
+	zscnputc(0, '0' + vec - 0x70);
+	zscnputc(0, '0' + livr - 0x70);
+	zscnputc(0, '0' + stk);
+	zscnputc(0, ']');
+#endif
+
+	switch (stk & 3) {
+	case 0:
+#if 0
+		i += cl_rxintr(sc);
+		i += cl_mintr(sc);
+		i += cl_txintr(sc);
+#else
+		i += cl_rxintr(sc);
+#endif
+		break;
+	case 1:
+		i += cl_mintr(sc);
+		break;
+	case 2:
+		i += cl_txintr(sc);
+		break;
+	case 3:
+		i += cl_rxintr(sc);
+		break;
+	}
+	return (i);
 }
 
 int
@@ -1079,42 +1120,41 @@ cl_mintr(sc)
 	int channel;
 	struct tty *tp;
 
-zscnputc(0, 'M');
-
-	if(((mir = sc->cl_reg->cl_mir) & 0x40) == 0x0) {
-		/* only if intr is not shared? */
-		log(LOG_WARNING, "cl_mintr extra intr\n");
+	mir = sc->cl_reg->cl_mir;
+	if((mir & MIR_MACT) == 0)
 		return 0;
-	}
-	sc->sc_mxintrcnt.ev_count++;
+	zscnputc(0, 'M');
 
-	channel = mir & 0x03;
 	misr = sc->cl_reg->cl_misr;
 	msvr = sc->cl_reg->cl_msvr_rts;
-	if (misr & 0x01) {
+	channel = mir & MIR_MCM_M;
+
+	printf("stk 0x%x mir 0x%x chan 0x%x\n",
+	    sc->cl_reg->cl_stk, mir, channel);
+
+	sc->sc_mxintrcnt.ev_count++;
+
+	if (misr & MISR_TIMER1) {
 		/* timers are not currently used?? */
 		log(LOG_WARNING, "cl_mintr: channel %x timer 1 unexpected\n",channel);
 	}
-	if (misr & 0x02) {
+	if (misr & MISR_TIMER2) {
 		/* timers are not currently used?? */
 		log(LOG_WARNING, "cl_mintr: channel %x timer 2 unexpected\n",channel);
 	}
-	if (misr & 0x20) {
+	if (misr & MISR_CTSCHG) {
 		log(LOG_WARNING, "cl_mintr: channel %x cts %x\n",channel, 
-		((msvr & 0x20) != 0x0)
-		);
+		    ((msvr & 0x20) != 0x0));
 	}
-	if (misr & 0x40) {
+	if (misr & MISR_CDCHG) {
 		struct tty *tp = sc->sc_cl[channel].tty;
 		log(LOG_WARNING, "cl_mintr: channel %x cd %x\n",channel,
-		((msvr & 0x40) != 0x0)
-		);
+		    ((msvr & 0x40) != 0x0));
 		ttymodem(tp, ((msvr & 0x40) != 0x0) );
 	}
-	if (misr & 0x80) {
+	if (misr & MISR_DSRCHG) {
 		log(LOG_WARNING, "cl_mintr: channel %x dsr %x\n",channel,
-		((msvr & 0x80) != 0x0)
-		);
+		    ((msvr & 0x80) != 0x0));
 	}
 	sc->cl_reg->cl_meoir = 0x00;
 	return 1;
@@ -1124,10 +1164,9 @@ int
 cl_txintr(sc)
 	struct wlsoftc *sc;
 {
-	static empty = 0;
-	u_char tir, cmr, teoir;
-	u_char max;
-	int channel;
+	static int empty = 0;
+	u_char tir, cmr, teoir, tisr, tftc;
+	int chan;
 	struct tty *tp;
 	int cnt;
 	u_char buffer[CL_FIFO_MAX +1];
@@ -1136,101 +1175,51 @@ cl_txintr(sc)
 	int nbuf, busy, resid;
 	void *pbuffer;
 
-zscnputc(0, 'T');
-
-#if 0
-	if(((tir = sc->cl_reg->cl_tir) & 0x40) == 0x0) {
-		/* only if intr is not shared ??? */
-		log(LOG_WARNING, "cl_txintr extra intr\n");
+	tir = sc->cl_reg->cl_tir;
+	if((tir & (TIR_TEN|TIR_TACT)) == 0)
 		return 0;
-	}
+#if 0
+	zscnputc(0, 'T');
 #endif
-	sc->sc_txintrcnt.ev_count++;
 
-	channel	= tir & 0x03;
-	cmr	= sc->cl_reg->cl_cmr;
+	cmr = sc->cl_reg->cl_cmr;
+	chan = tir & TIR_TCN_M;
+	tisr = sc->cl_reg->cl_tisr;
+	tftc = sc->cl_reg->cl_tftc;
 	
-	printf("tir 0x%x chan 0x%x cmr 0x%x\n",
-	    tir, channel, cmr);
+	printf("stk 0x%x tir 0x%x chan 0x%x cmr 0x%x tisr 0x%x tftc 0x%x\n",
+	    sc->cl_reg->cl_stk, tir, chan, cmr, tisr, tftc);
 
-	sc->sc_cl[channel].txcnt ++;
+	sc->sc_txintrcnt.ev_count++;
+	sc->sc_cl[chan].txcnt++;
+	tp = sc->sc_cl[chan].tty;
 
-	tp = sc->sc_cl[channel].tty;
 	if (tp == NULL || (tp->t_state & TS_ISOPEN) == 0) {
-		sc->cl_reg->cl_ier = sc->cl_reg->cl_ier & ~0x3;
-		sc->cl_reg->cl_teoir = 0x08;
+		sc->cl_reg->cl_ier = sc->cl_reg->cl_ier & ~(IER_TXMPTY|IER_TXD);
+		sc->cl_reg->cl_teoir = TEOIR_NOTRANSF;
 		return 1;
 	}
+
 	switch (cmr & CL_TXMASK) {
-#if 0
-	case CL_TXDMAINT:
-		dmabsts = sc->cl_reg->cl_dmabsts;
-		log(LOG_WARNING, "cl_txintr: DMAMODE channel %x dmabsts %x\n",
-			channel, dmabsts);
-		nbuf = ((dmabsts & 0x8) >> 3) & 0x1;
-		busy = ((dmabsts & 0x4) >> 2) & 0x1;
-		do {
-			pbuffer = sc->sc_cl[channel].tx[nbuf];
-			resid = tp->t_outq.c_cc;
-			cnt = min (CL_BUFSIZE,resid);
-			log(LOG_WARNING, "cl_txintr: resid %x cnt %x pbuf %x\n",
-				resid, cnt, pbuffer);
-			if (cnt != 0) {
-				cnt = q_to_b(&tp->t_outq, pbuffer, cnt);
-				resid -= cnt;
-				if (nbuf == 0) {
-					sc->cl_reg->cl_atbadru =
-					    ((u_long) sc->sc_cl[channel].txp[nbuf])
-					    >> 16;
-					sc->cl_reg->cl_atbadrl =
-					    ((u_long) sc->sc_cl[channel].txp[nbuf]) &
-					    0xffff;
-					sc->cl_reg->cl_atbcnt = cnt;
-					sc->cl_reg->cl_atbsts = 0x43;
-				} else {
-					sc->cl_reg->cl_btbadru =
-					    ((u_long) sc->sc_cl[channel].txp[nbuf])
-					    >> 16;
-					sc->cl_reg->cl_btbadrl =
-					    ((u_long) sc->sc_cl[channel].txp[nbuf]) &
-					    0xffff;
-					sc->cl_reg->cl_btbcnt = cnt;
-					sc->cl_reg->cl_btbsts = 0x43;
-				}
-				teoir = 0x08;
-			} else {
-				teoir = 0x08;
-				if (tp->t_state & TS_BUSY) {
-					tp->t_state &= ~(TS_BUSY | TS_FLUSH);
-					if (tp->t_state & TS_ASLEEP) {
-							tp->t_state &= ~TS_ASLEEP;
-							wakeup((caddr_t) &tp->t_outq);
-					}
-					selwakeup(&tp->t_wsel);
-				}
-				sc->cl_reg->cl_ier = sc->cl_reg->cl_ier & ~0x3;
-			}
-			nbuf = ~nbuf & 0x1;
-			busy--;
-		} while (resid != 0 && busy != -1);
-		log(LOG_WARNING, "cl_txintr: done\n");
-		break;
-#endif
 	case CL_TXINTR:
-		max = sc->cl_reg->cl_tftc;
-		cnt = min ((int)max,tp->t_outq.c_cc);
+		cnt = min((int)tftc, tp->t_outq.c_cc);
 		if (cnt != 0) {
+			/*printf("s%d ", cnt);*/
 			cnt = q_to_b(&tp->t_outq, buffer, cnt);
+			/*printf("%d:", cnt);*/
 			empty = 0;
-			for (tptr = buffer; tptr < &buffer[cnt]; tptr++)
+			for (tptr = buffer; tptr < &buffer[cnt]; tptr++) {
+				/*printf("%c", *tptr);*/
 				sc->cl_reg->cl_tdr = *tptr;
-			teoir = 0x00;
+			}
+			/*printf("\n", cnt);*/
+			teoir = 0;
 		} else {
 			if (empty > 5 && ((empty % 20000 )== 0))
-				log(LOG_WARNING, "cl_txintr empty intr %d channel %d\n",
-				    empty, channel);
+				log(LOG_WARNING, "cl_txintr empty intr %d chan %d\n",
+				    empty, chan);
 			empty++;
-			teoir = 0x08;
+			teoir = TEOIR_NOTRANSF;
 			if (tp->t_state & TS_BUSY) {
 				tp->t_state &= ~(TS_BUSY | TS_FLUSH);
 				if (tp->t_state & TS_ASLEEP) {
@@ -1239,13 +1228,14 @@ zscnputc(0, 'T');
 				}
 				selwakeup(&tp->t_wsel);
 			}
-			sc->cl_reg->cl_ier = sc->cl_reg->cl_ier & ~0x3;
+			sc->cl_reg->cl_ier = sc->cl_reg->cl_ier & ~(IER_TXMPTY|IER_TXD);
 		}
 		break;
 	default:
 		log(LOG_WARNING, "cl_txintr unknown mode %x\n", cmr);
 		/* we probably will go to hell quickly now */
-		teoir = 0x08;
+		teoir = TEOIR_NOTRANSF;
+		break;
 	}
 	sc->cl_reg->cl_teoir = teoir;
 	return (1);
@@ -1255,130 +1245,77 @@ int
 cl_rxintr(sc)
 	struct wlsoftc *sc;
 {
-	u_char rir, channel, cmr, risrl;
+	u_char rir, chan, cmr, risrl;
 	u_char buffer[CL_FIFO_MAX +1];
-	u_char reoir, fifocnt, c;
+	u_char reoir = REOIR_NOTRANSF, fifocnt, c;
 	struct tty *tp;
 	int i;
 	
 	rir = sc->cl_reg->cl_rir;
-	sc->sc_rxintrcnt.ev_count++;
-	channel = rir & 0x3;
-	cmr = sc->cl_reg->cl_cmr;
-	reoir = 0x08;
-
-	sc->sc_cl[channel].rxcnt ++;
-	risrl = sc->cl_reg->cl_risrl;
-zscnputc(0, 'R');
-	printf("rir 0x%x chan 0x%x cmr 0x%x risrl 0x%x\n",
-	    rir, channel, cmr, risrl);
-	if (risrl & 0x80) {
-		/* timeout, no characters */
-		reoir = 0x08;
-	} else if (risrl & 0x08) {
-		cl_overflow (sc, channel, &sc->sc_fotime, "fifo");
-		reoir = 0x08;
-	} else if (risrl & 0x04) {
-		cl_parity(sc, channel);
-		reoir = 0x08;
-	} else if (risrl & 0x02) {
-		cl_frame(sc, channel);
-		reoir = 0x08;
-	} else if (risrl & 0x01) {
-		cl_break(sc, channel);
-		reoir = 0x08;
-	}
-
-	switch (cmr & CL_RXMASK) {
+	if((rir & RIR_RACT) == 0)
+		return 0;
 #if 0
-	case CL_RXDMAINT:
-		{
-			int nbuf;
-			u_short cnt;
-			int bufcomplete;
-			u_char status, dmabsts;
-			u_char risrh = sc->cl_reg->cl_risrh;
-			int i;
-			u_char *pbuf;
-
-			dmabsts = sc->cl_reg->cl_dmabsts;
-			nbuf = (risrh & 0x08) ? 1 : 0;
-			bufcomplete = (risrh & 0x20) ? 1 : 0;
-			if (nbuf == 0) {
-				cnt  = sc->cl_reg->cl_arbcnt;
-				status =  sc->cl_reg->cl_arbsts;
-			} else {
-				cnt  = sc->cl_reg->cl_brbcnt;
-				status =  sc->cl_reg->cl_brbsts;
-			}
-			tp = sc->sc_cl[channel].tty;
-			pbuf = sc->sc_cl[channel].rx[nbuf];
-
-			/* this should be done at off level */
-			{
-				u_short rcbadru, rcbadrl;
-				u_char arbsts, brbsts;
-				u_char *pbufs, *pbufe;
-				rcbadru = sc->cl_reg->cl_rcbadru;
-				rcbadrl = sc->cl_reg->cl_rcbadrl;
-				arbsts =  sc->cl_reg->cl_arbsts;
-				brbsts =  sc->cl_reg->cl_brbsts;
-				pbufs = sc->sc_cl[channel].rxp[nbuf];
-				pbufe = (u_char *)(((u_long)rcbadru << 16) |
-				    (u_long)rcbadrl);
-				cnt = pbufe - pbufs;
-			}
-			reoir = 0x0 | (bufcomplete) ? 0 : 0xd0;
-			sc->cl_reg->cl_reoir = reoir;
-			delay(10); /* give the chip a moment */
-			for (i = 0; i < cnt; i++) {
-				u_char c;
-				c = pbuf[i];
-				(*linesw[tp->t_line].l_rint)(c,tp);
-			}
-			/* this should be done at off level */
-			if (nbuf == 0) {
-				sc->cl_reg->cl_arbcnt = CL_BUFSIZE;
-				sc->cl_reg->cl_arbsts = 0x01;
-			} else {
-				sc->cl_reg->cl_brbcnt = CL_BUFSIZE;
-				sc->cl_reg->cl_brbsts = 0x01;
-			}
-		}
-		sc->cl_reg->cl_reoir = reoir;
-		break;
+	zscnputc(0, 'R');
 #endif
-	case CL_RXINTR:
-		fifocnt = sc->cl_reg->cl_rfoc;
-		tp = sc->sc_cl[channel].tty;
-		for (i = 0; i < fifocnt; i++) {
-			buffer[i] = sc->cl_reg->cl_rdr;
-		}
-		if (NULL == tp) {
-			/* if the channel is not configured,
-			 * dont send characters upstream.
-			 * also fix problem with NULL dereference
-			 */
-			reoir = 0x00;
+
+	cmr = sc->cl_reg->cl_cmr;
+	risrl = sc->cl_reg->cl_risrl;
+	chan = rir & RIR_RCN_M;
+
+	/*printf("stk 0x%x rir 0x%x chan 0x%x cmr 0x%x risrl 0x%x\n",
+	    sc->cl_reg->cl_stk, rir, chan, cmr, risrl);*/
+
+	sc->sc_rxintrcnt.ev_count++;
+	sc->sc_cl[chan].rxcnt++;
+
+	if (risrl & RISRL_TIMEOUT) {
+		reoir = REOIR_NOTRANSF;
+	} else if (risrl & RISRL_OE) {
+		cl_overflow(sc, chan, &sc->sc_fotime, "fifo");
+		reoir = REOIR_NOTRANSF;
+	} else if (risrl & RISRL_PE) {
+		cl_parity(sc, chan);
+		reoir = REOIR_NOTRANSF;
+	} else if (risrl & RISRL_FE) {
+		cl_frame(sc, chan);
+		reoir = REOIR_NOTRANSF;
+	} else if (risrl & RISRL_BREAK) {
+		cl_break(sc, chan);
+		reoir = REOIR_NOTRANSF;
+	} else {
+		switch (cmr & CL_RXMASK) {
+		case CL_RXINTR:
+			fifocnt = sc->cl_reg->cl_rfoc;
+			tp = sc->sc_cl[chan].tty;
+			for (i = 0; i < fifocnt; i++)
+				buffer[i] = sc->cl_reg->cl_rdr;
+			if (NULL == tp) {
+				/*
+				 * if the channel is not configured,
+				 * dont send characters upstream.
+				 * also fix problem with NULL dereference
+				 */
+				reoir = 0;
+				break;
+			}
+	
+			sc->cl_reg->cl_reoir = reoir;
+			for (i = 0; i < fifocnt; i++) {
+				u_char c = buffer[i];
+	
+				/* does any restricitions exist on spl for this call */
+				(*linesw[tp->t_line].l_rint)(c, tp);
+				reoir = 0;
+			}
+			break;
+		default:
+			log(LOG_WARNING, "cl_rxintr unknown mode %x\n", cmr);
+			/* we probably will go to hell quickly now */
+			reoir = REOIR_NOTRANSF;
 			break;
 		}
-
-		sc->cl_reg->cl_reoir = reoir;
-		for (i = 0; i < fifocnt; i++) {
-			u_char c = buffer[i];
-			/* does any restricitions exist on spl
-			 * for this call
-			 */
-			(*linesw[tp->t_line].l_rint)(c,tp);
-			reoir = 0x00;
-		}
-		break;
-	default:
-		log(LOG_WARNING, "cl_rxintr unknown mode %x\n", cmr);
-		/* we probably will go to hell quickly now */
-		reoir = 0x08;
-		sc->cl_reg->cl_reoir = reoir;
 	}
+	sc->cl_reg->cl_reoir = reoir;
 	return (1);
 }
 
@@ -1580,35 +1517,12 @@ clputc(sc, unit, c)
 	struct clreg *cl_reg;
 	cl_reg = sc->cl_reg;
 
-#if 0
-	if (unit == 0) {
-		s = splhigh();
-		oldchannel = cl_reg->cl_car;
-		cl_reg->cl_car = unit;
-		schar = cl_reg->cl_schr3;
-		cl_reg->cl_schr3 = c;
-		cl_reg->cl_stcr = 0x08 | 0x03; /* send special char, char 3 */
-		while (0 != cl_reg->cl_stcr) {
-			/* wait until cl notices the command
-			 * otherwise it may not notice the character
-			 * if we send characters too fast.
-			 */
-		}
-		DELAY(5);
-		cl_reg->cl_schr3 = schar;
-		cl_reg->cl_car = oldchannel;
-		splx(s);
-	} else {
-#endif
-		s = splhigh();
-		oldchannel = cl_reg->cl_car;
-		cl_reg->cl_car = unit;
-		if (cl_reg->cl_tftc > 0) {
-			cl_reg->cl_tdr = c;
-		}
-		cl_reg->cl_car = oldchannel;
-		splx(s);
-#if 0
+	s = splhigh();
+	oldchannel = cl_reg->cl_car;
+	cl_reg->cl_car = unit;
+	if (cl_reg->cl_tftc > 0) {
+		cl_reg->cl_tdr = c;
 	}
-#endif
+	cl_reg->cl_car = oldchannel;
+	splx(s);
 }
