@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.48 2004/02/10 01:31:20 millert Exp $	*/
+/*	$OpenBSD: conf.c,v 1.49 2004/05/30 08:11:25 grange Exp $	*/
 /*	$NetBSD: conf.c,v 1.16 1996/10/18 21:26:57 cgd Exp $	*/
 
 /*-
@@ -126,6 +126,7 @@ cdev_decl(pci);
 #endif
 
 #include "systrace.h"
+#include "hotplug.h"
 
 struct cdevsw	cdevsw[] =
 {
@@ -193,6 +194,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 53: ALTQ (deprecated) */
 	cdev_iop_init(NIOP, iop),	/* 54: I2O IOP control interface */
 	cdev_ptm_init(NPTY,ptm),	/* 55: pseudo-tty ptm device */
+	cdev_hotplug_init(NHOTPLUG,hotplug), /* 56: devices hot plugging */
 };
 int	nchrdev = sizeof (cdevsw) / sizeof (cdevsw[0]);
 

@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.53 2004/05/10 21:29:53 drahn Exp $g
+#	$OpenBSD: GENERIC,v 1.54 2004/05/30 08:11:26 grange Exp $g
 #
 # PPC GENERIC config file
 #
@@ -247,4 +247,5 @@ ch*		at scsibus? target ? lun ?
 ss*		at scsibus? target ? lun ?
 uk*		at scsibus? target ? lun ?
 
+#pseudo-device	hotplug	1	# devices hot plugging
 pseudo-device	wsmux	2	# mouse & keyboard multiplexor

@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.5 2004/04/15 00:15:32 pvalchev Exp $	*/
+/*	$OpenBSD: conf.c,v 1.6 2004/05/30 08:11:26 grange Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -190,6 +190,7 @@ cdev_decl(pci);
 #endif
 
 #include "pf.h"
+#include "hotplug.h"
 
 struct cdevsw	cdevsw[] =
 {
@@ -295,6 +296,7 @@ struct cdevsw	cdevsw[] =
  	cdev_oci_init(NBIO,bio),	/* 79: ioctl tunnel */
 	cdev_notdef(),			/* 80: gpr? XXX */
 	cdev_ptm_init(NPTY,ptm),	/* 81: pseudo-tty ptm device */
+	cdev_hotplug_init(NHOTPLUG,hotplug), /* 82: devices hot plugging */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 

@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.91 2004/04/18 02:26:43 pvalchev Exp $
+#	$OpenBSD: GENERIC,v 1.92 2004/05/30 08:11:26 grange Exp $
 # 	$NetBSD: GENERIC32,v 1.18 2001/07/20 00:07:12 eeh Exp $
 
 machine		sparc64
@@ -283,6 +283,8 @@ wi*		at pcmcia? function ?		# WaveLAN IEEE 802.11DS
 creator*	at mainbus0
 creator*	at upa0
 wsdisplay*	at creator?
+
+#pseudo-device	hotplug	1			# devices hot plugging
 
 # mouse & keyboard multiplexor pseudo-devices
 #pseudo-device	wsmux 	2

@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.364 2004/05/28 02:32:19 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.365 2004/05/30 08:11:26 grange Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -558,6 +558,7 @@ pseudo-device	mtrr		1	# Memory range attributes control
 pseudo-device	sequencer	1
 #pseudo-device	raid		4	# RAIDframe disk driver
 pseudo-device	bio		1	# ioctl multiplexing device
+pseudo-device	hotplug		1	# devices hot plugging
 
 # mouse & keyboard multiplexor pseudo-devices
 pseudo-device	wsmux		2

@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.73 2004/02/10 01:31:21 millert Exp $	*/
+/*	$OpenBSD: conf.h,v 1.74 2004/05/30 08:11:27 grange Exp $	*/
 /*	$NetBSD: conf.h,v 1.33 1996/05/03 20:03:32 christos Exp $	*/
 
 /*-
@@ -465,7 +465,14 @@ void	randomattach(void);
 	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
 	(dev_type_stop((*))) enodev, 0, seltrue, \
 	dev_init(c,n,mmap) }
-				 
+
+/* open, close, read, ioctl, poll, kqfilter */
+#define cdev_hotplug_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
+	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
+	(dev_type_stop((*))) enodev, 0, dev_init(c,n,poll), \
+	(dev_type_mmap((*))) enodev, D_KQFILTER, dev_init(c,n,kqfilter) }
+
 /* symbolic sleep message strings */
 extern char devopn[], devio[], devwait[], devin[], devout[];
 extern char devioc[], devcls[];
@@ -622,6 +629,8 @@ cdev_decl(ucom);
 cdev_decl(ulpt);
 cdev_decl(uscanner);
 cdev_decl(urio);
+
+cdev_decl(hotplug);
 
 #endif
 

@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.18 2004/05/29 22:12:22 tom Exp $
+#	$OpenBSD: GENERIC,v 1.19 2004/05/30 08:11:26 grange Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -488,6 +488,7 @@ ises*	at pci? dev ? function ?	# Pijnenburg PCC-ISES
 #pseudo-device	sequencer	1
 #pseudo-device	raid		4	# RAIDframe disk driver
 #pseudo-device	bio		1	# ioctl multiplexing device
+#pseudo-device	hotplug		1	# devices hot plugging
 
 # mouse & keyboard multiplexor pseudo-devices
 pseudo-device	wsmux		2

@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.25 2004/02/10 01:31:21 millert Exp $ */
+/*	$OpenBSD: conf.c,v 1.26 2004/05/30 08:11:26 grange Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -144,6 +144,7 @@ cdev_decl(pci);
 
 #include "radio.h"
 #include "bktr.h"
+#include "hotplug.h"
 
 struct cdevsw cdevsw[] = {
 	cdev_cn_init(1,cn),		/* 0: virtual console */
@@ -236,6 +237,7 @@ struct cdevsw cdevsw[] = {
 	cdev_bktr_init(NBKTR,bktr),	/* 75: Bt848 video capture device */
 	cdev_radio_init(NRADIO, radio),	/* 76: generic radio I/O */
 	cdev_ptm_init(NPTY,ptm),	/* 77: pseudo-tty ptm device */
+	cdev_hotplug_init(NHOTPLUG,hotplug), /* 78: devices hot plugging */
 };
 int nchrdev = sizeof cdevsw / sizeof cdevsw[0];
 

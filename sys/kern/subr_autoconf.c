@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_autoconf.c,v 1.36 2003/06/02 23:28:06 millert Exp $	*/
+/*	$OpenBSD: subr_autoconf.c,v 1.37 2004/05/30 08:11:26 grange Exp $	*/
 /*	$NetBSD: subr_autoconf.c,v 1.21 1996/04/04 06:06:18 cgd Exp $	*/
 
 /*
@@ -45,11 +45,14 @@
 
 #include <sys/param.h>
 #include <sys/device.h>
+#include <sys/hotplug.h>
 #include <sys/limits.h>
 #include <sys/malloc.h>
 #include <sys/systm.h>
 /* Extra stuff from Matthias Drochner <drochner@zelux6.zel.kfa-juelich.de> */
 #include <sys/queue.h>
+
+#include "hotplug.h"
 
 /*
  * Autoconfiguration subroutines.
@@ -404,6 +407,10 @@ config_attach(parent, match, aux, print)
 #endif
 	(*ca->ca_attach)(parent, dev, aux);
 	config_process_deferred_children(dev);
+#if NHOTPLUG > 0
+	if (!cold)
+		hotplug_device_attach(cd->cd_class, dev->dv_xname);
+#endif
 	return (dev);
 }
 
@@ -501,6 +508,11 @@ config_detach(dev, flags)
 	struct device *d;
 #endif
 	int rv = 0, i;
+#if NHOTPLUG > 0
+	char devname[16];
+
+	strlcpy(devname, dev->dv_xname, sizeof(devname));
+#endif
 
 	cf = dev->dv_cfdata;
 #ifdef DIAGNOSTIC
@@ -597,6 +609,11 @@ config_detach(dev, flags)
 		cd->cd_devs = NULL;
 		cd->cd_ndevs = 0;
 	}
+
+#if NHOTPLUG > 0
+	if (!cold)
+		hotplug_device_detach(cd->cd_class, devname);
+#endif
 
 	/*
 	 * Return success.
