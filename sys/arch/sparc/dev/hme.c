@@ -1,4 +1,4 @@
-/*	$OpenBSD: hme.c,v 1.29 2001/01/30 04:46:25 jason Exp $	*/
+/*	$OpenBSD: hme.c,v 1.30 2001/01/30 07:19:52 jason Exp $	*/
 
 /*
  * Copyright (c) 1998 Jason L. Wright (jason@thought.net)
@@ -489,7 +489,7 @@ hme_meminit(sc)
 	sc->sc_first_td = sc->sc_last_td = sc->sc_no_td = 0;
 	for (i = 0; i < HME_TX_RING_SIZE; i++) {
 		desc->hme_txd[i].tx_addr =
-		    (u_int32_t) &sc->sc_bufs_dva->tx_buf[i][0];
+		    (u_int32_t)sc->sc_bufs_dva->tx_buf[i];
 		desc->hme_txd[i].tx_flags = 0;
 	}
 
@@ -499,7 +499,7 @@ hme_meminit(sc)
 	sc->sc_last_rd = 0;
 	for (i = 0; i < HME_RX_RING_SIZE; i++) {
 		desc->hme_rxd[i].rx_addr =
-		    (u_int32_t) &sc->sc_bufs_dva->rx_buf[i][0];
+		    (u_int32_t)sc->sc_bufs_dva->rx_buf[i];
 		desc->hme_rxd[i].rx_flags = HME_RXD_OWN |
 		    ((HME_RX_PKT_BUF_SZ - HME_RX_OFFSET) << 16);
 	}
@@ -546,8 +546,8 @@ hmeinit(sc)
 	cr->ipkt_gap1 = HME_DEFAULT_IPKT_GAP1;
 	cr->ipkt_gap2 = HME_DEFAULT_IPKT_GAP2;
 
-	rxr->rx_ring = (u_int32_t)&sc->sc_desc_dva->hme_rxd[0];
-	txr->tx_ring = (u_int32_t)&sc->sc_desc_dva->hme_txd[0];
+	rxr->rx_ring = (u_int32_t)sc->sc_desc_dva->hme_rxd;
+	txr->tx_ring = (u_int32_t)sc->sc_desc_dva->hme_txd;
 
 	if (sc->sc_burst & SBUS_BURST_64)
 		gr->cfg = GR_CFG_BURST64;
@@ -809,7 +809,8 @@ hme_put(sc, idx, m)
 	struct mbuf *m;
 {
 	struct mbuf *n;
-	int len, tlen = 0, boff = 0;
+	u_int8_t *buf = sc->sc_bufs->tx_buf[idx];
+	int len, tlen = 0;
 
 	for (; m; m = n) {
 		len = m->m_len;
@@ -817,8 +818,8 @@ hme_put(sc, idx, m)
 			MFREE(m, n);
 			continue;
 		}
-		bcopy(mtod(m, caddr_t), &sc->sc_bufs->tx_buf[idx][boff], len);
-		boff += len;
+		bcopy(mtod(m, caddr_t), buf, len);
+		buf += len;
 		tlen += len;
 		MFREE(m, n);
 	}
@@ -843,7 +844,7 @@ hme_read(sc, idx, len)
 	}
 
 	/* Pull packet off interface. */
-	m = m_devget(&sc->sc_bufs->rx_buf[idx][0], len + HME_RX_OFFSET, 0,
+	m = m_devget(sc->sc_bufs->rx_buf[idx], len + HME_RX_OFFSET, 0,
 	    &sc->sc_arpcom.ac_if, NULL);
 	if (m == NULL) {
 		ifp->if_ierrors++;
