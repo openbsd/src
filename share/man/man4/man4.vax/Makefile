@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 1996/03/29 10:16:17 niklas Exp $
+#	$OpenBSD: Makefile,v 1.3 2001/02/26 21:15:49 aaron Exp $
 #	$NetBSD: Makefile,v 1.6 1996/03/03 17:13:09 thorpej Exp $
 #	from: @(#)Makefile	5.4 (Berkeley) 5/11/90
 
@@ -7,7 +7,7 @@ MAN=	acc.4 ad.4 autoconf.4 cons.4 crl.4 css.4 ct.4 ddn.4 de.4 dh.4 dhu.4 \
 	ht.4 hy.4 ik.4 il.4 intro.4 ix.4 kg.4 lp.4 mem.4 mt.4 mtio.4 np.4 \
 	pcl.4 ps.4 qe.4 rx.4 tm.4 tmscp.4 ts.4 tu.4 uda.4 up.4 ut.4 \
 	uu.4 va.4 vp.4 vv.4
-MLINKS=	mem.4 kmem.4
+MLINKS=	mem.4 kmem.4 mem.4 kUmem.4
 MANSUBDIR=/vax
 
 .include <bsd.prog.mk>

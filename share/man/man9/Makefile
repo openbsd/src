@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.31 2001/02/25 20:16:00 krw Exp $
+#	$OpenBSD: Makefile,v 1.32 2001/02/26 21:15:50 aaron Exp $
 #	$NetBSD: Makefile,v 1.4 1996/01/09 03:23:01 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
@@ -85,7 +85,8 @@ MLINKS+=store.9 subyte.9 store.9 suibyte.9 store.9 susword.9 \
 	store.9 suswintr.9 store.9 suword.9 store.9 suiword.9
 MLINKS+=time.9 boottime.9 time.9 mono_time.9 time.9 runtime.9
 MLINKS+=timeout.9 timeout_add.9 timeout.9 timeout_set.9 \
-	timeout.9 timeout_del.9 timeout.9 untimeout.9
+	timeout.9 timeout_pending.9 timeout.9 timeout_del.9 \
+	timeout.9 timeout_initialized.9 timeout.9 untimeout.9
 MLINKS+=vm_map_copy.9 vm_copy.9
 MLINKS+=vm_map_inherit.9 vm_inherit.9
 MLINKS+=vm_map_protect.9 vm_protect.9

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.19 2001/02/01 03:33:27 jason Exp $
+#	$OpenBSD: Makefile,v 1.20 2001/02/26 21:15:49 aaron Exp $
 #	from: @(#)Makefile	8.2 (Berkeley) 2/16/94
 
 MAN=	intro.4
@@ -8,6 +8,7 @@ MAN+=	magma.4 mem.4 ms.4 openprom.4 pnozz.4 qe.4 qec.4 scf.4 si.4 spif.4
 MAN+=	sw.4 tctrl.4 tcx.4 xbox.4 xd.4 xy.4 zs.4
 MLINKS=		mem.4 kmem.4
 MLINKS+=	fga.4 fvme.4
+MLINKS+=	fd.4 fdc.4
 MANSUBDIR=/sparc
 
 .include <bsd.prog.mk>

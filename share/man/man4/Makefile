@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.153 2001/02/20 21:45:04 jbm Exp $
+#	$OpenBSD: Makefile,v 1.154 2001/02/26 21:15:48 aaron Exp $
 
 MAN=	aac.4 ac97.4 adv.4 aha.4 ahb.4 ahc.4 aic.4 amphy.4 an.4 aria.4 ast.4 \
 	atalk.4 atapiscsi.4 audio.4 aue.4 auvia.4 awi.4 bpf.4 bridge.4 \
@@ -28,7 +28,9 @@ MAN=	aac.4 ac97.4 adv.4 aha.4 ahb.4 ahc.4 aic.4 amphy.4 an.4 aria.4 ast.4 \
 # IPv6
 MAN+=	faith.4 gif.4 icmp6.4 inet6.4 ip6.4
 
+MLINKS+=cardbus.4 cbb.4
 MLINKS+=fd.4 stderr.4 fd.4 stdin.4 fd.4 stdout.4
+MLINKS+=fpa.4 fea.4
 MLINKS+=netintro.4 networking.4
 MLINKS+=random.4 srandom.4 random.4 urandom.4 random.4 prandom.4
 MLINKS+=random.4 arandom.4
