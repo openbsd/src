@@ -69,16 +69,18 @@ instructions()
 		    strerror(errno));
 		exit(1);
 	}
+
+	if (!(path = getenv("PAGER")))
+		path = _PATH_MORE;
+	if ((pager = strrchr(path, '/')))
+		++pager;
+	pager = path;
+
 	switch (pid = vfork()) {
 	case -1:
 		(void)fprintf(stderr, "cribbage: %s.\n", strerror(errno));
 		exit(1);
 	case 0:
-		if (!(path = getenv("PAGER")))
-			path = _PATH_MORE;
-		if ((pager = strrchr(path, '/')))
-			++pager;
-		pager = path;
 		execlp(path, pager, _PATH_INSTR, NULL);
 		(void)fprintf(stderr, "cribbage: %s.\n", strerror(errno));
 		_exit(1);
