@@ -1,4 +1,4 @@
-/* $OpenBSD: mount_ntfs.c,v 1.6 2003/06/11 06:22:14 deraadt Exp $ */
+/* $OpenBSD: mount_ntfs.c,v 1.7 2003/07/02 22:38:54 avsm Exp $ */
 /* $NetBSD: mount_ntfs.c,v 1.9 2003/05/03 15:37:08 christos Exp $ */
 
 /*
@@ -117,8 +117,8 @@ main(int argc, char *argv[])
 		warnx("\"%s\" is a relative path", dir);
 		if (getcwd(ndir, sizeof(ndir)) == NULL)
 			err(EX_OSERR, "getcwd");
-		strncat(ndir, "/", sizeof(ndir) - strlen(ndir) - 1);
-		strncat(ndir, dir, sizeof(ndir) - strlen(ndir) - 1);
+		strlcat(ndir, "/", sizeof(ndir));
+		strlcat(ndir, dir, sizeof(ndir));
 		dir = ndir;
 		warnx("using \"%s\" instead", dir);
 	}
