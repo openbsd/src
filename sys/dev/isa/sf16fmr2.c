@@ -1,4 +1,4 @@
-/* $OpenBSD: sf16fmr2.c,v 1.2 2001/12/05 10:27:06 mickey Exp $ */
+/* $OpenBSD: sf16fmr2.c,v 1.3 2001/12/18 18:48:08 mickey Exp $ */
 /* $RuOBSD: sf16fmr2.c,v 1.12 2001/10/18 16:51:36 pva Exp $ */
 
 /*
@@ -189,7 +189,7 @@ sf2r_set_mute(struct sf2r_softc *sc)
 
 	mute = (sc->mute || !sc->vol) ? SF16FMR2_MUTE : SF16FMR2_UNMUTE;
 	bus_space_write_1(sc->tea.iot, sc->tea.ioh, 0, mute);
-	DELAY(6);
+	DELAY(64);
 	bus_space_write_1(sc->tea.iot, sc->tea.ioh, 0, mute);
 }
 
