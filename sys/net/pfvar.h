@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.106 2002/11/29 18:25:23 mickey Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.107 2002/12/01 19:54:32 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -633,11 +633,13 @@ struct pfioc_changeaddr {
 
 struct pfioc_rule {
 	u_int32_t	 ticket;
+	u_int32_t	 pool_ticket;
 	u_int32_t	 nr;
 	struct pf_rule	 rule;
 };
 
 struct pfioc_changerule {
+	u_int32_t		 pool_ticket;
 	u_int32_t		 action;
 	struct pf_rule		 oldrule;
 	struct pf_rule		 newrule;
@@ -645,11 +647,13 @@ struct pfioc_changerule {
 
 struct pfioc_nat {
 	u_int32_t	 ticket;
+	u_int32_t	 pool_ticket;
 	u_int32_t	 nr;
 	struct pf_nat	 nat;
 };
 
 struct pfioc_changenat {
+	u_int32_t	 pool_ticket;
 	u_int32_t	 action;
 	struct pf_nat	 oldnat;
 	struct pf_nat	 newnat;
@@ -683,11 +687,13 @@ struct pfioc_changebinat {
 
 struct pfioc_rdr {
 	u_int32_t	 ticket;
+	u_int32_t	 pool_ticket;
 	u_int32_t	 nr;
 	struct pf_rdr	 rdr;
 };
 
 struct pfioc_changerdr {
+	u_int32_t	 pool_ticket;
 	u_int32_t	 action;
 	struct pf_rdr	 oldrdr;
 	struct pf_rdr	 newrdr;
@@ -827,7 +833,7 @@ TAILQ_HEAD(pf_poolqueue, pf_pool);
 extern struct pf_poolqueue		 pf_pools[2];
 TAILQ_HEAD(pf_altqqueue, pf_altq);
 extern struct pf_altqqueue		 pf_altqs[2];
-extern struct pf_palist			 pf_pabuf;
+extern struct pf_palist			 pf_pabuf[2];
 
 
 extern u_int32_t		 ticket_rules_active;

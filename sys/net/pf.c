@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.266 2002/12/01 01:20:02 mcbride Exp $ */
+/*	$OpenBSD: pf.c,v 1.267 2002/12/01 19:54:32 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -271,7 +271,7 @@ struct pf_natqueue		 pf_nats[2];
 struct pf_binatqueue		 pf_binats[2];
 struct pf_rdrqueue		 pf_rdrs[2];
 struct pf_altqqueue		 pf_altqs[2];
-struct pf_palist		 pf_pabuf;
+struct pf_palist		 pf_pabuf[2];
 
 static __inline int
 pf_state_compare(struct pf_tree_node *a, struct pf_tree_node *b)
