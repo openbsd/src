@@ -227,7 +227,7 @@ void
 make_noise(howmany)
 int howmany;
 {
-    int spkrfd;
+    int spkrfd = -1;
     int trycnt;
 
     if (!speaker_ok)		/* don't bother after sticky errors */
@@ -259,7 +259,7 @@ int howmany;
 	return;
     }
     syslog(LOG_DEBUG, "sending %d tones to speaker", howmany);
-    write (spkrfd, "o4cc", 2 + howmany);
+    write(spkrfd, "o4cc", 2 + howmany);
     close(spkrfd);
     return;
 }
