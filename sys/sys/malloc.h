@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.h,v 1.6 1996/04/21 22:31:49 deraadt Exp $	*/
+/*	$OpenBSD: malloc.h,v 1.7 1996/07/14 03:52:56 downsj Exp $	*/
 /*	$NetBSD: malloc.h,v 1.23 1996/04/05 04:52:52 mhitch Exp $	*/
 
 /*
@@ -122,6 +122,7 @@
 #define	M_IPQ		69	/* IP packet queue entry */
 #define	M_AFS		70	/* Andrew File System */
 #define	M_ADOSFSBITMAP	71	/* adosfs bitmap */
+#define	M_EXT2FSNODE	72	/* EXT2FS vnode private part */
 #define	M_TEMP		84	/* misc temporary data buffers */
 #define	M_LAST		85	/* Must be last type + 1 */
 
@@ -198,7 +199,8 @@
 	"IP queue ent", /* 69 M_IPQ */ \
 	"afs",		/* 70 M_AFS */ \
 	"adosfs bitmap", /* 71 M_ADOSFSBITMAP */ \
-	NULL, NULL, NULL, NULL, \
+	"EXT2FS node",	/* 72 M_EXT2FSNODE */ \
+	NULL, NULL, NULL, \
 	NULL, NULL, NULL, NULL, NULL, \
 	NULL, NULL, NULL, \
 	"temp",		/* 84 M_TEMP */ \
