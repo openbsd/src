@@ -1,4 +1,4 @@
-.\"	$OpenBSD: select.2,v 1.9 1999/02/27 21:56:44 deraadt Exp $
+.\"	$OpenBSD: select.2,v 1.10 1999/03/02 10:32:31 deraadt Exp $
 .\"	$NetBSD: select.2,v 1.5 1995/06/27 22:32:28 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -184,16 +184,72 @@ a larger definition of
 .Dv FD_SETSIZE
 before the inclusion of
 .Aq Pa sys/types.h .
+The kernel will cope, and the userland libraries provided with the
+system are also ready for large numbers of file descriptors.
+.Pp
+Alternatively, to be really safe, it is possible to allocate
+.Ft fd_set
+bit-arrays dynamically.  The idea is to permit a program to
+work properly even if it is
+.Xr execve 2 Ns 'd
+with 4000 file descriptors pre-allocated.
+The following illustrates the technique which is used by
+userland libraries:
+.Pp
+.Bd -literal -offset indent -compact
+	fd_set *fdsr;
+	int max = fd;
+
+	fsdr = (fd_set *)calloc(howmany(max+1, NFDBITS),
+	    sizeof(fd_mask));
+	if (fdsr == NULL) {
+		...
+		return (-1);
+	}
+	FD_SET(fd, fdsr);
+	n = select(max+1, fdsr, NULL, NULL, &tv);
+	...
+	free(fdsr);
+.Ed
+.Pp
+Alternatively, it is possible to use the
+.Xr poll 2
+interface.
+.Xr poll 2
+is more efficient when the size of
+.Fn select Ns 's
+.Ft fd_set
+bit-arrays are very large, and for fixed numbers of
+file descriptors one need not size and dynamically allocate a
+memory object.
 .Pp
 .Fn select
 should probably have been designed to return the time remaining from the
 original timeout, if any, by modifying the time value in place.
-However, it is unlikely this semantic will ever be implemented, as the
-change would cause source code compatibility problems.
-In general it is unwise to assume that the timeout value will be
-unmodified by the
+Even though some systems stupidly act in this different way, it is
+unlikely this semantic will ever be commonly implemented, as the
+change causes massive source code compatibility problems.
+Furthermore, recent new standards have dictated the current behaviour.
+In general, due to the existance of those brain-damaged
+non-conforming systems, it is unwise to assume that the timeout
+value will be unmodified by the
 .Fn select
 call, and the caller should reinitialize it on each invocation.
+Calculating the delta is easily done by calling
+.Xr gettimeofday 2
+before and after the call to
+.Fn select Ns ,
+and using
+.Fn timersub
+(as described in
+.Xr getitimer 2 Ns ).
+.Pp
+Internally to the kernel,
+.Fn select
+works poorly if multiple processes wait on the same file descriptor.
+Given that, it is rather surprising to see that many daemons are
+written that way (ie.
+.Xr httpd 8 ).
 .Sh HISTORY
 The
 .Fn select
