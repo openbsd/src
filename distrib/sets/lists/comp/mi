@@ -4806,7 +4806,7 @@
 ./usr/share/man/cat9/VOP_MKDIR.0
 ./usr/share/man/cat9/VOP_PRINT.0
 ./usr/share/man/cat9/VOP_READLINK.0
-./usr/share/man/cat9/VOP_REALOCBLKS.0
+./usr/share/man/cat9/VOP_REALLOCBLKS.0
 ./usr/share/man/cat9/VOP_RECLAIM.0
 ./usr/share/man/cat9/VOP_REMOVE.0
 ./usr/share/man/cat9/VOP_REVOKE.0
