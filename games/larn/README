@@ -1,4 +1,4 @@
-$NetBSD: README,v 1.2 1995/03/23 08:33:07 cgd Exp $
+$OpenBSD: README,v 1.2 1998/09/15 05:17:51 pjanzen Exp $
 
 Larn is a dungeon type game program.  Larn is a adventure/action game similar
 in concept to rogue or hack, but with a much different feel. 
@@ -28,7 +28,6 @@ fortune.c		code for the fortune cookies
 global.c        code for globally used functions that are specific to larn
 header.h        constant and structure definitions
 help.c          code for the help screens in the game of larn
-.holidays		data file which lists upcoming holidays
 io.c    	    code to handle file and terminal i/o
 .larn.help.uue	larn help file (UUENCODED)
 .larnmaze		data file for pre-made mazes
