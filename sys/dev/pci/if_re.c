@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_re.c,v 1.7 2004/07/20 05:40:42 pvalchev Exp $	*/
+/*	$OpenBSD: if_re.c,v 1.8 2004/08/05 21:17:20 brad Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
  *	Bill Paul <wpaul@windriver.com>.  All rights reserved.
@@ -1989,7 +1989,7 @@ re_ioctl(ifp, command, data)
 		}
 		break;
 	case SIOCSIFMTU:
-		if (ifr->ifr_mtu > RL_JUMBO_MTU)
+		if (ifr->ifr_mtu > ETHERMTU_JUMBO)
 			error = EINVAL;
 		ifp->if_mtu = ifr->ifr_mtu;
 		break;
