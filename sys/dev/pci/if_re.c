@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_re.c,v 1.4 2004/06/05 18:35:09 pvalchev Exp $	*/
+/*	$OpenBSD: if_re.c,v 1.5 2004/06/05 19:08:25 pvalchev Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
  *	Bill Paul <wpaul@windriver.com>.  All rights reserved.
@@ -832,11 +832,11 @@ re_attach(struct device *parent, struct device *self, void *aux)
 	u_char			eaddr[ETHER_ADDR_LEN];
 	u_int16_t		as[3];
 	struct re_pci_softc	*psc = (struct re_pci_softc *)self;
-	struct rl_softc	*sc = &psc->sc_rl;
-	struct pci_attach_args 	*pa = aux;
-	pci_chipset_tag_t pc = pa->pa_pc;
-	pci_intr_handle_t ih;
-	const char *intrstr = NULL;
+	struct rl_softc		*sc = &psc->sc_rl;
+	struct pci_attach_args	*pa = aux;
+	pci_chipset_tag_t	pc = pa->pa_pc;
+	pci_intr_handle_t	ih;
+	const char		*intrstr = NULL;
 	struct ifnet		*ifp;
 	u_int16_t		re_did = 0;
 	int			error = 0, i;
@@ -902,8 +902,7 @@ re_attach(struct device *parent, struct device *self, void *aux)
 	/* Allocate interrupt */
 	if (pci_intr_map(pa, &ih)) {
 		printf(": couldn't map interrupt\n");
-		error = ENXIO;
-		goto fail;
+		return;
 	}
 	intrstr = pci_intr_string(pc, ih);
 	psc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, re_intr, sc,
@@ -912,7 +911,7 @@ re_attach(struct device *parent, struct device *self, void *aux)
 		printf(": couldn't establish interrupt");
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
-		goto fail;
+		return;
 	}
 	printf(": %s", intrstr);
 
@@ -979,7 +978,7 @@ re_attach(struct device *parent, struct device *self, void *aux)
 	error = re_allocmem(sc);
 
 	if (error)
-		goto fail;
+		return;
 
 	ifp = &sc->sc_arpcom.ac_if;
 	ifp->if_softc = sc;
@@ -1040,13 +1039,10 @@ re_attach(struct device *parent, struct device *self, void *aux)
 		printf("%s: attach aborted due to hardware diag failure\n",
 		    sc->sc_dev.dv_xname);
 		ether_ifdetach(ifp);
-		goto fail;
+		return;
 	}
 
 	DPRINTF(("leaving re_attach\n"));
-
-fail:
-	return;
 }
 
 
