@@ -70,6 +70,7 @@ all)
 	sh MAKEDEV sd0 sd1 sd2 sd3 st0 st1 cd0 cd1
 	sh MAKEDEV vnd0 vnd1 vnd2 vnd3
 	sh MAKEDEV ccd0 ccd1 ccd2 ccd3
+	sh MAKEDEV rd0
 	sh MAKEDEV grf0 grf1 grf2 grf3 ttye0
 	sh MAKEDEV tty00 tty01 pty0
 	sh MAKEDEV bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7
@@ -120,7 +121,6 @@ sd*|vnd*|ccd*)
 	sd*) name=sd; blk=4; chr=13;;
 	vnd*) name=vnd; blk=14; chr=19;;
 	ccd*) name=ccd; blk=16; chr=20;;
-	rd*)  name=rd;  blk=17; chr=17;;
 	esac
 	rm -f $name$unit? r$name$unit?
 	case $unit in
@@ -319,6 +319,18 @@ tun*)
 	mknod tun$unit c 24 $unit
 	chmod 600 tun$unit
 	chown root.wheel tun$unit
+	;;
+
+rd*)
+	blk=17; chr=17;
+	umask 2 ; unit=`expr $i : '.*d\(.*\)'`
+	mknod rd${unit}a b ${blk} `expr $unit '*' 16 + 0`
+	mknod rd${unit}c b ${blk} `expr $unit '*' 16 + 2`
+	mknod rrd${unit}a c ${chr} `expr $unit '*' 16 + 0`
+	mknod rrd${unit}c c ${chr} `expr $unit '*' 16 + 2`
+	chown root.operator rd${unit}[ac] rrd${unit}[ac]
+	chmod 640 rd${unit}[ac] rrd${unit}[ac]
+	umask 77
 	;;
 
 lkm)
