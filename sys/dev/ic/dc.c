@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.54 2003/01/31 14:22:38 deraadt Exp $	*/
+/*	$OpenBSD: dc.c,v 1.55 2003/02/25 17:29:09 tedu Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -574,10 +574,8 @@ int dc_mii_readreg(sc, frame)
 	}
 
 	for (i = 0x8000; i; i >>= 1) {
-		if (!ack) {
-			if (dc_mii_readbit(sc))
-				frame->mii_data |= i;
-		}
+		if (dc_mii_readbit(sc))
+			frame->mii_data |= i;
 	}
 
 fail:
