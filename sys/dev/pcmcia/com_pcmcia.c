@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_pcmcia.c,v 1.10 1999/01/11 05:12:19 millert Exp $	*/
+/*	$OpenBSD: com_pcmcia.c,v 1.11 1999/01/21 08:55:08 niklas Exp $	*/
 /*	$NetBSD: com_pcmcia.c,v 1.15 1998/08/22 17:47:58 msaitoh Exp $	*/
 
 /*-
@@ -106,6 +106,11 @@
 
 #include <dev/isa/isareg.h>
 
+#include "com.h"
+#ifdef i386
+#include "pccom.h"
+#endif
+
 #define	com_lcr		com_cfcr
 #define	SET(t, f)	(t) |= (f)
 
@@ -145,9 +150,15 @@ struct com_pcmcia_softc {
 	void *sc_ih;				/* interrupt handler */
 };
 
+#if NCOM_PCMCIA
 struct cfattach com_pcmcia_ca = {
 	sizeof(struct com_pcmcia_softc), com_pcmcia_match, com_pcmcia_attach
 };
+#elif NPCCOM_PCMCIA
+struct cfattach pccom_pcmcia_ca = {
+	sizeof(struct com_pcmcia_softc), com_pcmcia_match, com_pcmcia_attach
+};
+#endif
 
 /* Look for pcmcia cards with particular CIS strings */
 static struct com_dev *

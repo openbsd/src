@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccom.c,v 1.27 1999/01/11 05:11:25 millert Exp $	*/
+/*	$OpenBSD: pccom.c,v 1.28 1999/01/21 08:55:08 niklas Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*
@@ -200,6 +200,7 @@ extern int kgdb_debug_init;
 #define IS_ISAPNP(parent)	0
 #endif
 
+#if 0
 #if NPCCOM_PCMCIA
 #include <dev/pcmcia/pcmciavar.h>
 
@@ -401,6 +402,7 @@ com_pcmcia_attach(parent, self, aux)
 }
 #endif
 #endif
+#endif
 
 /*
  * must be called at spltty() or higher.
@@ -545,7 +547,8 @@ comprobe(parent, match, aux)
 	 * XXX for commulti probe, with a helper function that contains
 	 * XXX most of the interesting stuff.
 	 */
-#if NPCCOM_ISA || NPCCOM_PCMCIA || NPCCOM_ISAPNP
+/* #if NPCCOM_ISA || NPCCOM_PCMCIA || NPCCOM_ISAPNP */
+#if NPCCOM_ISA || NPCCOM_ISAPNP
 	if (IS_ISA(parent) || IS_ISAPNP(parent)) {
 		struct isa_attach_args *ia = aux;
 
@@ -587,7 +590,8 @@ comprobe(parent, match, aux)
 		bus_space_unmap(iot, ioh, COM_NPORTS);
 
 out:
-#if NPCCOM_ISA || NPCCOM_PCMCIA
+/* #if NPCCOM_ISA || NPCCOM_PCMCIA */
+#if NPCCOM_ISA
 	if (rv) {
 		struct isa_attach_args *ia = aux;
 
@@ -626,7 +630,8 @@ comattach(parent, self, aux)
 	} else
 	    sc->sc_hwflags = 0;
 	sc->sc_swflags = 0;
-#if NPCCOM_ISA || NPCCOM_PCMCIA || NPCCOM_ISAPNP
+/* #if NPCCOM_ISA || NPCCOM_PCMCIA || NPCCOM_ISAPNP */
+#if NPCCOM_ISA || NPCCOM_ISAPNP
 	if (IS_ISA(parent) || IS_ISAPNP(parent)) {
 		struct isa_attach_args *ia = aux;
 
@@ -852,7 +857,8 @@ comattach(parent, self, aux)
 	bus_space_write_1(iot, ioh, com_mcr, 0);
 
 	if (irq != IRQUNK) {
-#if NPCCOM_ISA || NPCCOM_PCMCIA || NPCCOM_ISAPNP
+/* #if NPCCOM_ISA || NPCCOM_PCMCIA || NPCCOM_ISAPNP */
+#if NPCCOM_ISA || NPCCOM_ISAPNP
 		if (IS_ISA(parent) || IS_ISAPNP(parent)) {
 			struct isa_attach_args *ia = aux;
 
