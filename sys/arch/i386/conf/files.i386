@@ -1,4 +1,4 @@
-#	$OpenBSD: files.i386,v 1.47 1998/09/22 08:06:07 fgsch Exp $
+#	$OpenBSD: files.i386,v 1.48 1998/10/04 23:34:37 niklas Exp $
 #	$NetBSD: files.i386,v 1.73 1996/05/07 00:58:36 thorpej Exp $
 #
 # new style config file for i386 architecture
@@ -177,15 +177,6 @@ major	{fd = 2}
 device	spkr: tty
 attach	spkr at pckbd
 file	arch/i386/isa/spkr.c		spkr needs-flag
-
-# National Semiconductor DS8390/WD83C690-based boards
-# (WD/SMC 80x3 family, SMC Ultra [8216], 3Com 3C503, NE[12]000, and clones)
-# XXX conflicts with other ports; can't be in files.isa
-#device	ed: ether, ifnet
-#attach	ed at isa with ed_isa
-#attach	ed at pcmcia with ed_pcmcia
-#attach	ed at pci with ed_pci
-#file	dev/isa/if_ed.c			ed & (ed_isa | ed_pcmcia | ed_pci) needs-flag
 
 # Adaptec AHA-284x VL SCSI controllers
 # device declaration in sys/conf/files
