@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr5380sbc.c,v 1.10 2001/06/24 20:59:39 fgsch Exp $	*/
+/*	$OpenBSD: ncr5380sbc.c,v 1.11 2001/08/08 21:15:42 miod Exp $	*/
 /*	$NetBSD: ncr5380sbc.c,v 1.13 1996/10/13 01:37:25 christos Exp $	*/
 
 /*
@@ -802,7 +802,7 @@ finish:
 	/* Clear our pointers to the request. */
 	sc->sc_current = NULL;
 	sc->sc_matrix[sr->sr_target][sr->sr_lun] = NULL;
-	untimeout(ncr5380_cmd_timeout, sr);
+	timeout_del(&sc->sc_timeout);
 
 	/* Make the request free. */
 	sr->sr_xs = NULL;
@@ -1041,7 +1041,8 @@ next_job:
 	if ((sr->sr_flags & SR_IMMED) == 0) {
 		i = (xs->timeout * hz) / 1000;
 		NCR_TRACE("sched: set timeout=%d\n", i);
-		timeout(ncr5380_cmd_timeout, sr, i);
+		timeout_set(&sc->sc_timeout, ncr5380_cmd_timeout, sr);
+		timeout_add(&sc->sc_timeout, i);
 	}
 
 have_nexus:
