@@ -1,4 +1,4 @@
-/*	$OpenBSD: macobio.c,v 1.15 2001/07/04 08:38:52 niklas Exp $	*/
+/*	$OpenBSD: macobio.c,v 1.16 2001/07/09 02:56:09 mickey Exp $	*/
 /*	$NetBSD: obio.c,v 1.6 1999/05/01 10:36:08 tsubai Exp $	*/
 
 /*-
@@ -46,9 +46,12 @@
 #include <machine/bus.h>
 #include <machine/autoconf.h>
 
-static void macobio_attach __P((struct device *, struct device *, void *));
-static int macobio_match __P((struct device *, void *, void *));
-static int macobio_print __P((void *, const char *));
+void macobio_attach __P((struct device *, struct device *, void *));
+int macobio_match __P((struct device *, void *, void *));
+int macobio_print __P((void *, const char *));
+void *undef_mac_establish __P((void * lcv, int irq, int type, int level,
+    int (*ih_fun) __P((void *)), void *ih_arg, char *name));
+void mac_intr_disestab __P((void *lcp, void *arg));
 
 struct macobio_softc {
 	struct device sc_dev;
@@ -160,7 +163,7 @@ macobio_attach(parent, self, aux)
 	printf("\n");
 
 	/*
-	 * This might be a hack, but it makes the interrupt controller 
+	 * This might be a hack, but it makes the interrupt controller
 	 * attach as expected if a device node existed in the OF tree.
 	 */
 	if (need_interrupt_controller) {
@@ -235,6 +238,7 @@ undef_mac_establish(lcv, irq, type, level, ih_fun, ih_arg, name)
 	printf("mac_intr_establish called, not yet inited\n");
 	return 0;
 }
+
 void
 mac_intr_disestab(lcp, arg)
 	void *lcp;
