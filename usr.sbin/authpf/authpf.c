@@ -1,4 +1,4 @@
-/*	$OpenBSD: authpf.c,v 1.88 2005/01/31 15:08:50 henning Exp $	*/
+/*	$OpenBSD: authpf.c,v 1.89 2005/02/10 04:24:15 joel Exp $	*/
 
 /*
  * Copyright (C) 1998 - 2002 Bob Beck (beck@openbsd.org).
@@ -302,7 +302,7 @@ main(int argc, char *argv[])
 	signal(SIGSTOP, need_death);
 	signal(SIGTSTP, need_death);
 	while (1) {
-		printf("\r\nHello %s, ", luser);
+		printf("\r\nHello %s. ", luser);
 		printf("You are authenticated from host \"%s\"\r\n", ipsrc);
 		setproctitle("%s@%s", luser, ipsrc);
 		print_message(PATH_MESSAGE);
