@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sn.c,v 1.11 1997/03/17 04:04:32 briggs Exp $	*/
+/*	$OpenBSD: if_sn.c,v 1.12 1997/03/17 04:20:54 briggs Exp $	*/
 
 /*
  * National Semiconductor  SONIC Driver
@@ -331,7 +331,7 @@ outloop:
 		return;
 	}
 
-	IF_DEQUEUE(&sc->sc_if.if_snd, m);
+	IF_DEQUEUE(&ifp->if_snd, m);
 	if (m == 0)
 		return;
 
@@ -344,8 +344,8 @@ outloop:
 	 * If bpf is listening on this interface, let it
 	 * see the packet before we commit it to the wire.
 	 */
-	if (sc->sc_if.if_bpf)
-		bpf_mtap(sc->sc_if.if_bpf, m);
+	if (ifp->if_bpf)
+		bpf_mtap(ifp->if_bpf, m);
 #endif
 
 	/*
@@ -357,7 +357,7 @@ outloop:
 		len = m->m_pkthdr.len;
 		m_freem(m);
 	} else {
-		IF_PREPEND(sc->sc_if.if_snd, m);
+		IF_PREPEND(ifp->if_snd, m);
 		return;
 	}
 
@@ -367,7 +367,7 @@ outloop:
 
 	sc->txb_inuse++;
 
-	sc->sc_if.if_opackets++;	/* # of pkts */
+	ifp->if_opackets++;	/* # of pkts */
 	sc->sc_sum.ls_opacks++;		/* # of pkts */
 
 	/* Jump back for possibly more punishment. */
@@ -513,9 +513,9 @@ snwatchdog(ifp)
 		else
 			log(LOG_ERR, "%s: Tx - lost interrupt\n",
 			   	 sc->sc_dev.dv_xname);
-		temp = sc->sc_if.if_flags & IFF_UP;
+		temp = ifp->if_flags & IFF_UP;
 		snreset(sc);
-		sc->sc_if.if_flags |= temp;
+		ifp->if_flags |= temp;
 	}
 }
 
@@ -1045,8 +1045,8 @@ sonic_read(sc, pkt, len)
 	 * If so, hand off the raw packet to enet, then discard things
 	 * not destined for us (but be sure to keep broadcast/multicast).
 	 */
-	if (sc->sc_if.if_bpf) {
-		bpf_tap(sc->sc_if.if_bpf, pkt,
+	if (ifp->if_bpf) {
+		bpf_tap(ifp->if_bpf, pkt,
 		    len + sizeof(struct ether_header));
 		if ((ifp->if_flags & IFF_PROMISC) != 0 &&
 		    (et->ether_dhost[0] & 1) == 0 && /* !mcast and !bcast */

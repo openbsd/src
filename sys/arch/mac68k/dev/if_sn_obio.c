@@ -1,5 +1,4 @@
-/*	$NetBSD$	*/
-/*	$OpenBSD: if_sn_obio.c,v 1.2 1997/03/14 14:11:35 briggs Exp $	*/
+/*	$OpenBSD: if_sn_obio.c,v 1.3 1997/03/17 04:17:00 briggs Exp $	*/
 
 /*
  * Copyright (C) 1997 Allen Briggs
@@ -41,10 +40,8 @@
 
 #include <net/if.h>
 
-#ifdef INET
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
-#endif
 
 #include <machine/bus.h>
 #include <machine/macinfo.h>
@@ -60,7 +57,6 @@
 static int	sn_obio_match __P((struct device *, void *, void *));
 static void	sn_obio_attach __P((struct device *, struct device *, void *));
 static void	sn_obio_getaddr __P((struct sn_softc *));
-void	snsetup __P((struct sn_softc *));
 
 struct cfattach sn_obio_ca = {
 	sizeof(struct sn_softc), sn_obio_match, sn_obio_attach

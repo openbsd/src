@@ -1,5 +1,4 @@
-/*	$NetBSD$	*/
-/*	$OpenBSD: if_sn_nubus.c,v 1.2 1997/03/14 14:11:35 briggs Exp $	*/
+/*	$OpenBSD: if_sn_nubus.c,v 1.3 1997/03/17 04:16:59 briggs Exp $	*/
 
 /*
  * Copyright (C) 1997 Allen Briggs
@@ -41,10 +40,8 @@
 
 #include <net/if.h>
 
-#ifdef INET
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
-#endif
 
 #include <machine/bus.h>
 #include <machine/viareg.h>
@@ -57,8 +54,6 @@
 static int	sn_nubus_match __P((struct device *, void *, void *));
 static void	sn_nubus_attach __P((struct device *, struct device *, void *));
 static int	sn_nb_card_vendor __P((struct nubus_attach_args *));
-
-void	snsetup __P((struct sn_softc *));
 
 struct cfattach sn_nubus_ca = {
 	sizeof(struct sn_softc), sn_nubus_match, sn_nubus_attach
