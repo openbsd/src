@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wi.4tbl,v 1.36 2004/03/18 19:15:27 millert Exp $
+.\"	$OpenBSD: wi.4tbl,v 1.37 2004/03/19 08:19:57 jmc Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -222,7 +222,7 @@ Join an existing BSS network (ie: connect to an access point):
 .Dl # ifconfig wi0 inet 192.168.0.20 netmask 0xffffff00
 .Pp
 Join a specific BSS network with network name
-.Dq my_net .
+.Dq my_net :
 .Dl # ifconfig wi0 inet 192.168.0.20 netmask 0xffffff00 nwid my_net
 .Pp
 Join a specific BSS network with WEP encryption:
@@ -232,21 +232,21 @@ Join a specific BSS network with WEP encryption:
 .Ed
 .Pp
 Join an ad-hoc network with network name
-.Dq my_net .
+.Dq my_net :
 .Bd -literal -compact -offset indent
 # ifconfig wi0 inet 192.168.0.20 netmask 0xffffff00 nwid my_net \e
 	mediaopt adhoc
 .Ed
 .Pp
 Create an IBBS network with network name
-.Dq my_net .
+.Dq my_net :
 .Bd -literal -compact -offset indent
 # ifconfig wi0 inet 192.168.0.20 netmask 0xffffff00 nwid my_net \e
 	mediaopt ibss-master
 .Ed
 .Pp
 Join an IBBS network with network name
-.Dq my_net .
+.Dq my_net :
 .Bd -literal -compact -offset indent
 # ifconfig wi0 inet 192.168.0.22 netmask 0xffffff00 nwid my_net \e
 	mediaopt ibss
@@ -275,21 +275,19 @@ The following examples utilize
 to set options not supported by
 .Xr ifconfig 8 .
 .Pp
-Enable software-based WEP (Prism only, see CAVEATS below):
-.Bd -literal -compact -offset indent
-# wicontrol wi0 -x 1
-.Ed
+Enable software-based WEP (Prism only, see
+.Sx CAVEATS
+below):
+.Dl # wicontrol wi0 -x 1
 .Pp
 Hide the SSID of a HostAP server (Prism only, requires firmware >= 1.6.3)
-.Bd -literal -compact -offset indent
-# wicontrol wi0 -E 3
-.Ed
+.Dl # wicontrol wi0 -E 3
 .Pp
 Note that when setting options via
 .Xr wicontrol 8
 in a
 .Xr hostname.if 5
-file (e.g.
+file (e.g.\&
 .Pa /etc/hostname.wi0 ) ,
 the
 .Xr wicontrol 8
