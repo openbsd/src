@@ -1,4 +1,4 @@
-/*	$OpenBSD: getopt_long.c,v 1.11 2002/12/10 17:51:42 millert Exp $	*/
+/*	$OpenBSD: getopt_long.c,v 1.12 2003/06/02 03:46:43 millert Exp $	*/
 /*	$NetBSD: getopt_long.c,v 1.15 2002/01/31 22:43:40 tv Exp $	*/
 
 /*
@@ -64,7 +64,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: getopt_long.c,v 1.11 2002/12/10 17:51:42 millert Exp $";
+static char *rcsid = "$OpenBSD: getopt_long.c,v 1.12 2003/06/02 03:46:43 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <err.h>
@@ -72,6 +72,8 @@ static char *rcsid = "$OpenBSD: getopt_long.c,v 1.11 2002/12/10 17:51:42 millert
 #include <getopt.h>
 #include <stdlib.h>
 #include <string.h>
+
+#define	REPLACE_GETOPT		/* use this getopt as the system getopt(3) */
 
 #ifdef REPLACE_GETOPT
 int	opterr = 1;		/* if error message should be printed */
