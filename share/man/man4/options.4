@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.77 2001/08/08 10:46:22 heko Exp $
+.\"	$OpenBSD: options.4,v 1.78 2001/08/08 15:21:20 jjbg Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -829,12 +829,6 @@ for details.
 Enables PFKEYv2 (RFC 2367) support.
 While not IP specific, this option is usually used in conjunction with option
 .Em IPSEC .
-.It Cd option IPCOMP
-Enables IPComp (IP Payload Compression Protocol) support. See
-.Xr ipcomp 4 
-and RFC 2393 for more details. Option
-.Em IPSEC 
-is required with this option.
 .It Cd option ALTQ
 Enables ALTQ (Alternate Queueing).  For simple rate-limiting, use
 .Xr tbrconfig 8
