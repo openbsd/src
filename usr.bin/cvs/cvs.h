@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.h,v 1.6 2004/07/16 03:08:26 jfb Exp $	*/
+/*	$OpenBSD: cvs.h,v 1.7 2004/07/23 05:40:32 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -212,15 +212,16 @@
 #define CVS_PATH_ROOTSPEC       CVS_PATH_CVSDIR "/Root"
 
 
+struct cvs_file;
+struct cvs_dir;
+
+
 struct cvs_op {
 	u_int  co_op;
 	uid_t  co_uid;    /* user performing the operation */
 	char  *co_path;   /* target path of the operation */
 	char  *co_tag;    /* tag or branch, NULL if HEAD */
 };
-
-
-
 
 
 
@@ -234,6 +235,42 @@ struct cvsroot {
 	u_int   cr_port;
 };
 
+
+#define CF_STAT     0x01    /* allocate space for file stats */
+#define CF_IGNORE   0x02    /* apply regular ignore rules */
+#define CF_RECURSE  0x04    /* recurse on directory operations */
+#define CF_SORT     0x08    /* all files are sorted alphabetically */
+
+
+/*
+ * The cvs_file structure is used to represent any file or directory within
+ * the CVS tree's hierarchy.  The <cf_path> field is a path relative to the
+ * directory in which the cvs command was executed.  The <cf_parent> field
+ * points back to the parent node in the directory tree structure (it is
+ * NULL if the directory is at the wd of the command).
+ *
+ * If the file's type is DT_DIR, then the <cf_ddat> pointer will point to
+ * a cvs_dir structure containing data specific to the directory (such as
+ * the contents of the directory's CVS/Entries, CVS/Root, etc.).
+ */
+
+struct cvs_file {
+	char            *cf_path;
+	struct cvs_file *cf_parent;  /* parent directory (NULL if none) */
+	char            *cf_name;
+	u_int            cf_type;    /* uses values from dirent.h */
+	struct stat     *cf_stat;
+	struct cvs_dir  *cf_ddat;   /* only for directories */
+
+	LIST_ENTRY(cvs_file)  cf_list;
+};
+
+
+struct cvs_dir {
+	struct cvsroot *cd_root;
+	char           *cd_repo;
+	LIST_HEAD(cvs_flist, cvs_file) cd_files;
+};
 
 #define CVS_HIST_ADDED    'A'
 #define CVS_HIST_EXPORT   'E'
@@ -346,10 +383,13 @@ void             cvsroot_free  (struct cvsroot *);
 struct cvsroot*  cvsroot_get   (const char *);
 
 
-int     cvs_file_init       (void);
-int     cvs_file_ignore     (const char *);
-int     cvs_file_isignored  (const char *);
-char**  cvs_file_getv       (const char *, int *);
+/* from file.c */
+int              cvs_file_init      (void);
+int              cvs_file_ignore    (const char *);
+int              cvs_file_isignored (const char *);
+char**           cvs_file_getv      (const char *, int *, int);
+struct cvs_file* cvs_file_get       (const char *, int);
+void             cvs_file_free      (struct cvs_file *);
 
 
 /* Entries API */

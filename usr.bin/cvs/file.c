@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.2 2004/07/16 03:08:26 jfb Exp $	*/
+/*	$OpenBSD: file.c,v 1.3 2004/07/23 05:40:32 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -88,6 +88,13 @@ static const char *cvs_ign_std[] = {
 
 
 TAILQ_HEAD(, cvs_ignpat)  cvs_ign_pats;
+
+
+static struct cvs_dir*  cvs_file_getdir  (struct cvs_file *, int);
+static void             cvs_file_freedir (struct cvs_dir *);
+static int              cvs_file_sort    (struct cvs_flist *);
+static int              cvs_file_cmp     (const void *, const void *);
+
 
 
 /*
@@ -212,7 +219,7 @@ cvs_file_isignored(const char *file)
  */
 
 char**
-cvs_file_getv(const char *dir, int *nfiles)
+cvs_file_getv(const char *dir, int *nfiles, int recurse)
 {
 	int nf, ret, fd;
 	long base;
@@ -259,4 +266,255 @@ cvs_file_getv(const char *dir, int *nfiles)
 	(void)close(fd);
 
 	return (fvec);
+}
+
+
+/*
+ * cvs_file_get()
+ *
+ * Load a cvs_file structure with all the information pertaining to the file
+ * <path>.
+ * Returns a pointer to the cvs file structure, which must later be freed
+ * with cvs_file_free().
+ */
+
+struct cvs_file*
+cvs_file_get(const char *path, int flags)
+{
+	size_t dlen;
+	struct stat st;
+	struct cvs_file *cfp;
+
+	printf("cvs_file_get(%s)\n", path);
+
+	if (stat(path, &st) == -1) {
+		cvs_log(LP_ERRNO, "failed to stat file");
+		return (NULL);
+	}
+
+	cfp = (struct cvs_file *)malloc(sizeof(*cfp));
+	if (cfp == NULL) {
+		cvs_log(LP_ERRNO, "failed to allocate CVS file data");
+		return (NULL);
+	}
+	memset(cfp, 0, sizeof(*cfp));
+
+	cfp->cf_path = strdup(path);
+	if (cfp->cf_path == NULL) {
+		free(cfp);
+		return (NULL);
+	}
+
+	cfp->cf_name = strrchr(cfp->cf_path, '/');
+	if (cfp->cf_name == NULL)
+		cfp->cf_name = cfp->cf_path;
+	else
+		cfp->cf_name++;
+
+	/* convert from stat mode to dirent values */
+	cfp->cf_type = IFTODT(st.st_mode);
+	if (cfp->cf_type == DT_DIR) {
+		cfp->cf_ddat = cvs_file_getdir(cfp, flags);
+		if (cfp->cf_ddat == NULL) {
+			cvs_file_free(cfp);
+			return (NULL);
+		}
+	}
+
+	if (flags & CF_STAT) {
+		cfp->cf_stat = (struct stat *)malloc(sizeof(struct stat));
+		if (cfp->cf_stat == NULL) {
+			cvs_log(LP_ERRNO, "failed to allocate stat structure");
+			cvs_file_free(cfp);
+			return (NULL);
+		}
+
+		memcpy(cfp->cf_stat, &st, sizeof(struct stat));
+	}
+
+	return (cfp);
+}
+
+
+/*
+ * cvs_file_getdir()
+ *
+ * Get a cvs directory structure for the directory whose path is <dir>.
+ */
+
+static struct cvs_dir*
+cvs_file_getdir(struct cvs_file *cf, int flags)
+{
+	int nf, ret, fd;
+	long base;
+	void *dp, *ep, *tmp;
+	char fbuf[1024], pbuf[MAXPATHLEN];
+	struct dirent *ent;
+	struct cvs_file *cfp;
+	struct cvs_dir *cdp;
+
+	cdp = (struct cvs_dir *)malloc(sizeof(*cdp));
+	if (cdp == NULL) {
+		cvs_log(LP_ERRNO, "failed to allocate dir");
+		return (NULL);
+	}
+	memset(cdp, 0, sizeof(*cdp));
+	LIST_INIT(&(cdp->cd_files));
+
+	if (cvs_readrepo(cf->cf_path, pbuf, sizeof(pbuf)) < 0) {
+		free(cdp);
+		return (NULL);
+	}
+
+	cdp->cd_repo = strdup(pbuf);
+	if (cdp->cd_repo == NULL) {
+		free(cdp);
+		return (NULL);
+	}
+
+	cdp->cd_root = cvsroot_get(cf->cf_path);
+	if (cdp->cd_root == NULL) {
+		cvs_file_freedir(cdp);
+		return (NULL);
+	}
+
+	fd = open(cf->cf_path, O_RDONLY);
+	if (fd == -1) {
+		cvs_log(LP_ERRNO, "failed to open `%s'", cf->cf_path);
+		cvs_file_freedir(cdp);
+		return (NULL);
+	}
+	ret = getdirentries(fd, fbuf, sizeof(fbuf), &base);
+	if (ret == -1) {
+		cvs_log(LP_ERRNO, "failed to get directory entries");
+		(void)close(fd);
+		cvs_file_freedir(cdp);
+		return (NULL);
+	}
+
+	dp = fbuf;
+	ep = fbuf + (size_t)ret;
+	while (dp < ep) {
+		ent = (struct dirent *)dp;
+		dp += ent->d_reclen;
+
+		if ((flags & CF_IGNORE) && cvs_file_isignored(ent->d_name))
+			continue;
+
+		snprintf(pbuf, sizeof(pbuf), "%s/%s", cf->cf_path, ent->d_name);
+		cfp = cvs_file_get(pbuf, flags);
+
+		LIST_INSERT_HEAD(&(cdp->cd_files), cfp, cf_list);
+	}
+
+	if (flags & CF_SORT)
+		cvs_file_sort(&(cdp->cd_files));
+
+	(void)close(fd);
+
+	return (cdp);
+}
+
+
+/*
+ * cvs_file_free()
+ *
+ * Free a cvs_file structure and its contents.
+ */
+
+void
+cvs_file_free(struct cvs_file *cf)
+{
+	struct cvs_file *cfp;
+	struct cvs_dir *cd;
+
+	if (cf->cf_path != NULL)
+		free(cf->cf_path);
+	if (cf->cf_stat != NULL)
+		free(cf->cf_stat);
+	if (cf->cf_ddat != NULL)
+		cvs_file_freedir(cf->cf_ddat);
+	free(cf);
+}
+
+
+/*
+ * cvs_file_freedir()
+ *
+ * Free a cvs_dir structure and its contents.
+ */
+
+static void
+cvs_file_freedir(struct cvs_dir *cd)
+{
+	struct cvs_file *cfp;
+
+	if (cd->cd_root != NULL)
+		cvsroot_free(cd->cd_root);
+	if (cd->cd_repo != NULL)
+		free(cd->cd_repo);
+
+	while (!LIST_EMPTY(&(cd->cd_files))) {
+		cfp = LIST_FIRST(&(cd->cd_files));
+		LIST_REMOVE(cfp, cf_list);
+		cvs_file_free(cfp);
+	}
+}
+
+
+/*
+ * cvs_file_sort()
+ *
+ * Sort a list of cvs file structures according to their filename.
+ */
+
+static int
+cvs_file_sort(struct cvs_flist *flp)
+{
+	int i;
+	size_t nb;
+	struct cvs_file *cf, *cfvec[256];
+
+	i = 0;
+	LIST_FOREACH(cf, flp, cf_list) {
+		printf("adding `%s'\n", cf->cf_path);
+		cfvec[i++] = cf;
+		if (i == sizeof(cfvec)/sizeof(struct cvs_file *)) {
+			cvs_log(LP_WARN, "too many files to sort");
+			return (-1);
+		}
+
+		/* now unlink it from the list,
+		 * we'll put it back in order later
+		 */
+		LIST_REMOVE(cf, cf_list);
+	}
+
+	/* clear the list just in case */
+	LIST_INIT(flp);
+	nb = (size_t)i;
+
+	printf("Before: \n");
+	for (i = 0; i < (int)nb; i++)
+		printf("[%d] = `%s'\n", i, cfvec[i]->cf_name);
+	heapsort(cfvec, nb, sizeof(cf), cvs_file_cmp);
+	printf("===================================\nAfter: \n");
+	for (i = 0; i < (int)nb; i++)
+		printf("[%d] = `%s'\n", i, cfvec[i]->cf_name);
+
+	/* rebuild the list from the bottom up */
+	for (i = (int)nb - 1; i >= 0; i--)
+		LIST_INSERT_HEAD(flp, cfvec[i], cf_list);
+
+	return (0);
+}
+
+
+static int
+cvs_file_cmp(const void *f1, const void *f2)
+{
+	struct cvs_file *cf1, *cf2;
+	cf1 = *(struct cvs_file **)f1;
+	cf2 = *(struct cvs_file **)f2;
+	return strcmp(cf1->cf_name, cf2->cf_name);
 }
