@@ -1,6 +1,6 @@
 #include "SYS.h"
 
-	.extern curbrk
+	.extern _ASM_LABEL(__curbrk)
 	.extern _C_LABEL(end)
 
 PREFIX2(brk,break)
@@ -24,10 +24,10 @@ PREFIX2(brk,break)
 	mr	7, 3
 	/* call break(size) */
 #ifndef PIC
-	addis	6, 0, curbrk@H
-	ori	6, 6, curbrk@L	/* # 6 = &curbrk */
+	addis	6, 0, _ASM_LABEL(__curbrk)@H
+	ori	6, 6, _ASM_LABEL(__curbrk)@L	/* # 6 = &__curbrk */
 #else
-	lwz	6,_ASM_LABEL(curbrk)@got(9)
+	lwz	6,_ASM_LABEL(__curbrk)@got(9)
 #endif
 
 	sc
@@ -37,8 +37,8 @@ PREFIX2(brk,break)
 	beq+	.L_brk_ok	/* OK so this is stupid but I haven't read b */
 	b	PIC_PLT(_ASM_LABEL(__cerror))
 
-	/* update, curbrk and return */
+	/* update, __curbrk and return */
 .L_brk_ok:
-	stw	7, 0(6)		/* # remember, 6=&curbrk, 3= new value */
+	stw	7, 0(6)		/* # remember, 6=&__curbrk, 3= new value */
 	mr	3, 0		/* # return 0 */
 	blr
