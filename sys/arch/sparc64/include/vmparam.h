@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.5 2001/12/05 16:25:44 art Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.6 2002/02/11 01:23:36 deraadt Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.18 2001/05/01 02:19:19 thorpej Exp $ */
 
 /*
@@ -85,7 +85,7 @@
 #define	DFLDSIZ		(128L*1024*1024)	/* initial data size limit */
 #endif
 #ifndef MAXDSIZ
-#define	MAXDSIZ		(1L<<39)		/* max data size */
+#define	MAXDSIZ		(512L*1024*1024*1024)	/* max data size */
 #endif
 #ifndef	DFLSSIZ
 #define	DFLSSIZ		(1024*1024)		/* initial stack size limit */
