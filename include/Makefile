@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.15 1996/06/12 11:21:39 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.16 1996/06/19 11:20:19 deraadt Exp $
 #	$NetBSD: Makefile,v 1.59 1996/05/15 21:36:43 jtc Exp $
 
 #	@(#)Makefile	5.45.1.1 (Berkeley) 5/6/91
@@ -16,7 +16,7 @@ FILES=	a.out.h ar.h assert.h bitstring.h bm.h cpio.h ctype.h db.h dirent.h \
 	regex.h regexp.h resolv.h \
 	search.h setjmp.h sgtty.h signal.h stab.h stddef.h stdio.h stdlib.h \
 	string.h strings.h struct.h sysexits.h tar.h time.h ttyent.h tzfile.h \
-	unistd.h util.h utime.h utmp.h vis.h
+	unistd.h utime.h utmp.h vis.h
 
 .if (${MACHINE_ARCH} != "alpha")
 FILES+=	dlfcn.h link.h
