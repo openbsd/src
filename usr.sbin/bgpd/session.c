@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.210 2004/12/23 15:15:55 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.211 2004/12/23 17:24:03 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2383,6 +2383,18 @@ getpeerbyaddr(struct bgpd_addr *addr)
 	/* we might want a more effective way to find peers by IP */
 	for (p = peers; p != NULL &&
 	    memcmp(&p->conf.remote_addr, addr, sizeof(p->conf.remote_addr));
+	    p = p->next)
+		;	/* nothing */
+
+	return (p);
+}
+
+struct peer *
+getpeerbydesc(const char *descr)
+{
+	struct peer *p;
+
+	for (p = peers; p != NULL && strcmp(p->conf.descr, descr);
 	    p = p->next)
 		;	/* nothing */
 
