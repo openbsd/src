@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.27 2004/10/26 21:27:53 mickey Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.28 2004/12/28 05:18:25 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -151,10 +151,11 @@ cpuattach(parent, self, aux)
 	    pdc_cache.dt_size, pdc_cache.dt_conf.tc_cst? "" : "in", p);
 
 	if (pdc_btlb.finfo.num_c)
-		printf(", %u BTLB\n", pdc_btlb.finfo.num_c);
+		printf(", %u BTLB", pdc_btlb.finfo.num_c);
 	else if (pdc_btlb.finfo.num_i || pdc_btlb.finfo.num_d)
-		printf(", %u/%u D/I BTLBs\n",
+		printf(", %u/%u D/I BTLBs",
 		    pdc_btlb.finfo.num_i, pdc_btlb.finfo.num_d);
+	printf("\n");
 
 	/* sanity against lusers amongst config editors */
 	if (ca->ca_irq == 31)
