@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.7 1995/03/21 15:08:53 cgd Exp $	*/
+/*	$NetBSD: io.c,v 1.9 1997/07/09 06:25:47 phil Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -407,6 +407,7 @@ msg(fmt, va_alist)
 	va_start(ap);
 #endif
 	(void)vsprintf(&Msgbuf[Newpos], fmt, ap);
+	Newpos = strlen(Msgbuf);
 	va_end(ap);
 	endmsg();
 }
@@ -432,6 +433,7 @@ addmsg(fmt, va_alist)
 	va_start(ap);
 #endif
 	(void)vsprintf(&Msgbuf[Newpos], fmt, ap);
+	Newpos = strlen(Msgbuf);
 	va_end(ap);
 }
 

@@ -1,4 +1,4 @@
-/*    $NetBSD: instr.c,v 1.4 1996/02/06 22:47:18 jtc Exp $    */
+/*	$NetBSD: instr.c,v 1.5 1997/07/10 06:47:30 mikel Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)instr.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: instr.c,v 1.4 1996/02/06 22:47:18 jtc Exp $";
+static char rcsid[] = "$NetBSD: instr.c,v 1.5 1997/07/10 06:47:30 mikel Exp $";
 #endif
 #endif /* not lint */
 
@@ -76,10 +76,10 @@ instructions()
 	case 0:
 		if (!(path = getenv("PAGER")))
 			path = _PATH_MORE;
-		if (pager = strrchr(path, '/'))
+		if ((pager = strrchr(path, '/')))
 			++pager;
 		pager = path;
-		execlp(path, pager, _PATH_INSTR, (char *)NULL);
+		execlp(path, pager, _PATH_INSTR, NULL);
 		(void)fprintf(stderr, "cribbage: %s.\n", strerror(errno));
 		_exit(1);
 	default:
