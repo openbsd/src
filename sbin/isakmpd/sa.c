@@ -1,4 +1,4 @@
-/*	$OpenBSD: sa.c,v 1.67 2003/05/14 17:37:22 ho Exp $	*/
+/*	$OpenBSD: sa.c,v 1.68 2003/05/15 02:28:56 ho Exp $	*/
 /*	$EOM: sa.c,v 1.112 2000/12/12 00:22:52 niklas Exp $	*/
 
 /*
@@ -791,8 +791,6 @@ sa_release (struct sa *sa)
     }
   if (sa->recv_key)
     key_free (sa->recv_keytype, ISAKMP_KEYTYPE_PUBLIC, sa->recv_key);
-  if (sa->sent_key)
-    key_free (sa->sent_keytype, ISAKMP_KEYTYPE_PRIVATE, sa->sent_key);
   if (sa->keynote_key)
     free (sa->keynote_key); /* This is just a string */
 #if defined (USE_POLICY) || defined (USE_KEYNOTE)

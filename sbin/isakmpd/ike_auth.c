@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike_auth.c,v 1.71 2003/05/15 02:08:54 ho Exp $	*/
+/*	$OpenBSD: ike_auth.c,v 1.72 2003/05/15 02:28:56 ho Exp $	*/
 /*	$EOM: ike_auth.c,v 1.59 2000/11/21 00:21:31 angelos Exp $	*/
 
 /*
@@ -964,6 +964,8 @@ rsa_sig_encode_hash (struct message *msg)
   u_int8_t *id;
   size_t id_len;
   int idtype;
+  int sent_keytype;
+  void *sent_key;
 
   id = initiator ? exchange->id_i : exchange->id_r;
   id_len = initiator ? exchange->id_i_len : exchange->id_r_len;
@@ -1117,11 +1119,10 @@ rsa_sig_encode_hash (struct message *msg)
 	  return 0;
 	}
 
-      exchange->sent_keytype = ISAKMP_KEY_RSA;
-      exchange->sent_key = key_internalize (ISAKMP_KEY_RSA,
-					    ISAKMP_KEYTYPE_PRIVATE, data,
-					    datalen);
-      if (!exchange->sent_key)
+      sent_keytype = ISAKMP_KEY_RSA;
+      sent_key = key_internalize (ISAKMP_KEY_RSA, ISAKMP_KEYTYPE_PRIVATE, data,
+				  datalen);
+      if (!sent_key)
 	{
 	  log_print ("rsa_sig_encode_hash: bad RSA private key from dynamic "
 		     "SA acquisition subsystem");
@@ -1130,22 +1131,22 @@ rsa_sig_encode_hash (struct message *msg)
     }
   else /* Try through the regular means.  */
     {
-      exchange->sent_key = ike_auth_get_key (IKE_AUTH_RSA_SIG, exchange->name,
-					     (char *)buf2, 0);
+      sent_key = ike_auth_get_key (IKE_AUTH_RSA_SIG, exchange->name,
+				   (char *)buf2, 0);
       free (buf2);
 
       /* Did we find a key?  */
-      if (!exchange->sent_key)
+      if (!sent_key)
 	{
 	  log_print ("rsa_sig_encode_hash: could not get private key");
 	  return -1;
 	}
 
-      exchange->sent_keytype = ISAKMP_KEY_RSA;
+      sent_keytype = ISAKMP_KEY_RSA;
     }
 
   /* Enable RSA blinding.  */
-  if (RSA_blinding_on (exchange->sent_key, NULL) != 1)
+  if (RSA_blinding_on (sent_key, NULL) != 1)
     {
       log_error ("rsa_sig_encode_hash: RSA_blinding_on () failed.");
       return -1;
@@ -1169,15 +1170,15 @@ rsa_sig_encode_hash (struct message *msg)
   snprintf (header, 80, "rsa_sig_encode_hash: HASH_%c", initiator ? 'I' : 'R');
   LOG_DBG_BUF ((LOG_MISC, 80, header, buf, hashsize));
 
-  data = malloc (RSA_size (exchange->sent_key));
+  data = malloc (RSA_size (sent_key));
   if (!data)
     {
       log_error ("rsa_sig_encode_hash: malloc (%d) failed",
-		 RSA_size (exchange->sent_key));
+		 RSA_size (sent_key));
       return -1;
     }
 
-  datalen = RSA_private_encrypt (hashsize, buf, data, exchange->sent_key,
+  datalen = RSA_private_encrypt (hashsize, buf, data, sent_key,
 				 RSA_PKCS1_PADDING);
   if (datalen == -1)
     {

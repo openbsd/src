@@ -1,4 +1,4 @@
-/*	$OpenBSD: sa.h,v 1.29 2002/06/09 08:13:07 todd Exp $	*/
+/*	$OpenBSD: sa.h,v 1.30 2003/05/15 02:28:56 ho Exp $	*/
 /*	$EOM: sa.h,v 1.58 2000/10/10 12:39:01 provos Exp $	*/
 
 /*
@@ -166,11 +166,9 @@ struct sa {
    * Certificates or other information we used to authenticate to the peer,
    * Phase 1.
    */
-  int sent_certtype, sent_keytype;
+  int sent_certtype;
   /* Certificate (to be) sent to peer, native format.  */
   void *sent_cert;
-  /* Key we'll use to authenticate to peer, native format.  */
-  void *sent_key;
 
   /* DOI-specific opaque data.  */
   void *data;

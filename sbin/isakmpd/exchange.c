@@ -1,4 +1,4 @@
-/*	$OpenBSD: exchange.c,v 1.78 2003/03/06 13:32:42 ho Exp $	*/
+/*	$OpenBSD: exchange.c,v 1.79 2003/05/15 02:28:55 ho Exp $	*/
 /*	$EOM: exchange.c,v 1.143 2000/12/04 00:02:25 angelos Exp $	*/
 
 /*
@@ -1299,9 +1299,6 @@ exchange_free_aux (void *v_exch)
   if (exchange->recv_key)
     key_free (exchange->recv_keytype, ISAKMP_KEYTYPE_PUBLIC,
 	      exchange->recv_key);
-  if (exchange->sent_key)
-    key_free (exchange->sent_keytype, ISAKMP_KEYTYPE_PRIVATE,
-	      exchange->sent_key);
   if (exchange->keynote_key)
     free (exchange->keynote_key); /* This is just a string */
 
@@ -1471,13 +1468,10 @@ exchange_finalize (struct message *msg)
       msg->isakmp_sa->recv_certtype = exchange->recv_certtype;
       msg->isakmp_sa->sent_certtype = exchange->sent_certtype;
       msg->isakmp_sa->recv_keytype = exchange->recv_keytype;
-      msg->isakmp_sa->sent_keytype = exchange->sent_keytype;
       msg->isakmp_sa->recv_key = exchange->recv_key;
-      msg->isakmp_sa->sent_key = exchange->sent_key;
       msg->isakmp_sa->keynote_key = exchange->keynote_key;
       /* Reset.  */
       exchange->recv_key = 0;
-      exchange->sent_key = 0;
       exchange->keynote_key = 0;
       msg->isakmp_sa->policy_id = exchange->policy_id;
       exchange->policy_id = -1;
