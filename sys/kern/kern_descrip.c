@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.43 2001/11/15 13:07:53 niklas Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.44 2002/01/23 00:39:47 art Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -87,9 +87,9 @@ void
 filedesc_init()
 {
 	pool_init(&file_pool, sizeof(struct file), 0, 0, 0, "filepl",
-		0, pool_page_alloc_nointr, pool_page_free_nointr, M_PROC);
+		&pool_allocator_nointr);
 	pool_init(&fdesc_pool, sizeof(struct filedesc0), 0, 0, 0, "fdescpl",
-		0, pool_page_alloc_nointr, pool_page_free_nointr, M_FILEDESC);
+		&pool_allocator_nointr);
 	LIST_INIT(&filehead);
 }
 

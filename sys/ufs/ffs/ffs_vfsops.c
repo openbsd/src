@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.48 2001/12/19 08:58:07 art Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.49 2002/01/23 00:39:48 art Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -1325,7 +1325,7 @@ ffs_init(vfsp)
 		return (0);
 	done = 1;
 	pool_init(&ffs_ino_pool, sizeof(struct inode), 0, 0, 0, "ffsino",
-	    0, pool_page_alloc_nointr, pool_page_free_nointr, M_FFSNODE);
+	    &pool_allocator_nointr);
 	softdep_initialize();
 	return (ufs_init(vfsp));
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.61 2001/12/27 22:33:46 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.62 2002/01/23 00:39:47 art Exp $	*/
 /*
  * Copyright (c) 2001 Miodrag Vallat
  * Copyright (c) 1998-2001 Steve Murphree, Jr.
@@ -1303,10 +1303,9 @@ pmap_init(void)
 		attr += npages;
 	}
 
-	pool_init(&pmappool, sizeof(struct pmap), 0, 0, 0, "pmappl", 0,
-	    pool_page_alloc_nointr, pool_page_free_nointr, M_VMPMAP);
-	pool_init(&pvpool, sizeof(pv_entry_t), 0, 0, 0, "pvpl", 0,
-	    NULL, NULL, M_VMPVENT);
+	pool_init(&pmappool, sizeof(struct pmap), 0, 0, 0, "pmappl",
+	    &pool_allocator_nointr);
+	pool_init(&pvpool, sizeof(pv_entry_t), 0, 0, 0, "pvpl", NULL);
 
 	pmap_initialized = TRUE;
 } /* pmap_init() */

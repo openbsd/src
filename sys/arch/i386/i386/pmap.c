@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.57 2001/12/19 08:58:05 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.58 2002/01/23 00:39:47 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
 
 /*
@@ -837,7 +837,7 @@ pmap_bootstrap(kva_start)
 	 */
 
 	pool_init(&pmap_pmap_pool, sizeof(struct pmap), 0, 0, 0, "pmappl",
-		  0, pool_page_alloc_nointr, pool_page_free_nointr, M_VMPMAP);
+	    &pool_allocator_nointr);
 
 #ifdef __NetBSD__
 	/*

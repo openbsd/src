@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.80 2001/12/19 08:58:06 art Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.81 2002/01/23 00:39:48 art Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -131,7 +131,7 @@ vntblinit()
 {
 
 	pool_init(&vnode_pool, sizeof(struct vnode), 0, 0, 0, "vnodes",
-		0, pool_page_alloc_nointr, pool_page_free_nointr, M_VNODE);
+	    &pool_allocator_nointr);
 	simple_lock_init(&mntvnode_slock);
 	simple_lock_init(&mntid_slock);
 	simple_lock_init(&spechash_slock);

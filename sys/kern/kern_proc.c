@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_proc.c,v 1.9 2002/01/16 20:50:17 miod Exp $	*/
+/*	$OpenBSD: kern_proc.c,v 1.10 2002/01/23 00:39:47 art Exp $	*/
 /*	$NetBSD: kern_proc.c,v 1.14 1996/02/09 18:59:41 christos Exp $	*/
 
 /*
@@ -110,7 +110,7 @@ procinit()
 	uihashtbl = hashinit(maxproc / 16, M_PROC, M_WAITOK, &uihash);
 
 	pool_init(&proc_pool, sizeof(struct proc), 0, 0, 0, "procpl",
-		0, pool_page_alloc_nointr, pool_page_free_nointr, M_PROC);
+		&pool_allocator_nointr);
 }
 
 /*

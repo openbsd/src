@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.184 2002/01/12 01:34:49 jasoni Exp $ */
+/*	$OpenBSD: pf.c,v 1.185 2002/01/23 00:39:48 art Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -959,21 +959,20 @@ pf_print_flags(u_int8_t f)
 void
 pfattach(int num)
 {
-	/* XXX - no M_* tags, but they are not used anyway */
 	pool_init(&pf_tree_pl, sizeof(struct pf_tree_node), 0, 0, 0, "pftrpl",
-	    0, NULL, NULL, 0);
+	    NULL);
 	pool_init(&pf_rule_pl, sizeof(struct pf_rule), 0, 0, 0, "pfrulepl",
-	    0, NULL, NULL, 0);
+	    NULL);
 	pool_init(&pf_nat_pl, sizeof(struct pf_nat), 0, 0, 0, "pfnatpl",
-	    0, NULL, NULL, 0);
+	    NULL);
 	pool_init(&pf_binat_pl, sizeof(struct pf_binat), 0, 0, 0, "pfbinatpl",
-	    0, NULL, NULL, 0);
+	    NULL);
 	pool_init(&pf_rdr_pl, sizeof(struct pf_rdr), 0, 0, 0, "pfrdrpl",
-	    0, NULL, NULL, 0);
+	    NULL);
 	pool_init(&pf_state_pl, sizeof(struct pf_state), 0, 0, 0, "pfstatepl",
-	    0, NULL, NULL, 0);
+	    NULL);
 	pool_init(&pf_sport_pl, sizeof(struct pf_port_node), 0, 0, 0, "pfsport",
-	    0, NULL, NULL, 0);
+	    NULL);
 
 	TAILQ_INIT(&pf_rules[0]);
 	TAILQ_INIT(&pf_rules[1]);

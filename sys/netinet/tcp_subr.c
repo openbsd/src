@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.55 2002/01/15 19:18:01 provos Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.56 2002/01/23 00:39:48 art Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -160,10 +160,10 @@ tcp_init()
 	tcp_iss = 1;		/* wrong */
 #endif /* TCP_COMPAT_42 */
 	pool_init(&tcpcb_pool, sizeof(struct tcpcb), 0, 0, 0, "tcpcbpl",
-	    0, NULL, NULL, M_PCB);
+	    NULL);
 #ifdef TCP_SACK
 	pool_init(&sackhl_pool, sizeof(struct sackhole), 0, 0, 0, "sackhlpl",
-	    0, NULL, NULL, M_PCB);
+	    NULL);
 #endif /* TCP_SACK */
 	in_pcbinit(&tcbtable, tcbhashsize);
 	tcp_now = arc4random() / 2;

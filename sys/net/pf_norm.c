@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.16 2001/12/03 22:25:06 dhartmei Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.17 2002/01/23 00:39:48 art Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -122,9 +122,9 @@ void
 pf_normalize_init(void)
 {
 	pool_init(&pf_frent_pl, sizeof(struct pf_frent), 0, 0, 0, "pffrent",
-	    0, NULL, NULL, 0);
+	    NULL);
 	pool_init(&pf_frag_pl, sizeof(struct pf_fragment), 0, 0, 0, "pffrag",
-	    0, NULL, NULL, 0);
+	    NULL);
 
 	pool_sethiwat(&pf_frag_pl, PFFRAG_FRAG_HIWAT);
 	pool_sethardlimit(&pf_frent_pl, PFFRAG_FRENT_HIWAT, NULL, 0);

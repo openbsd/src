@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.55 2001/12/19 08:58:06 art Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.56 2002/01/23 00:39:48 art Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*-
@@ -188,8 +188,7 @@ bufinit()
 	register int i;
 	int base, residual;
 
-	pool_init(&bufpool, sizeof(struct buf), 0, 0, 0, "bufpl", 0,
-	    NULL, NULL, M_DEVBUF);
+	pool_init(&bufpool, sizeof(struct buf), 0, 0, 0, "bufpl", NULL);
 	for (dp = bufqueues; dp < &bufqueues[BQUEUES]; dp++)
 		TAILQ_INIT(dp);
 	bufhashtbl = hashinit(nbuf, M_CACHE, M_WAITOK, &bufhash);

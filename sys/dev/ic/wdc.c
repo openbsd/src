@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdc.c,v 1.45 2002/01/12 05:36:09 jason Exp $     */
+/*      $OpenBSD: wdc.c,v 1.46 2002/01/23 00:39:47 art Exp $     */
 /*	$NetBSD: wdc.c,v 1.68 1999/06/23 19:00:17 bouyer Exp $ */
 
 
@@ -659,7 +659,7 @@ wdcattach(chp)
 	if (inited == 0) {
 		/* Initialize the wdc_xfer pool. */
 		pool_init(&wdc_xfer_pool, sizeof(struct wdc_xfer), 0,
-		    0, 0, "wdcspl", 0, NULL, NULL, M_DEVBUF);
+		    0, 0, "wdcspl", NULL);
 		inited++;
 	}
 	TAILQ_INIT(&chp->ch_queue->sc_xfer);

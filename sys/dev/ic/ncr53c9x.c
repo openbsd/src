@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr53c9x.c,v 1.11 2001/12/17 23:13:41 nordin Exp $	*/
+/*	$OpenBSD: ncr53c9x.c,v 1.12 2002/01/23 00:39:47 art Exp $	*/
 /*     $NetBSD: ncr53c9x.c,v 1.56 2000/11/30 14:41:46 thorpej Exp $    */
 
 /*
@@ -376,7 +376,7 @@ ncr53c9x_init(sc, doreset)
 	if (!ecb_pool_initialized) {
 		/* All instances share this pool */
 		pool_init(&ecb_pool, sizeof(struct ncr53c9x_ecb), 0, 0, 0,
-		    "ncr53c9x_ecb", 0, NULL, NULL, 0);
+		    "ncr53c9x_ecb", NULL);
 		ecb_pool_initialized = 1;
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_amap.c,v 1.20 2002/01/15 20:09:56 art Exp $	*/
+/*	$OpenBSD: uvm_amap.c,v 1.21 2002/01/23 00:39:48 art Exp $	*/
 /*	$NetBSD: uvm_amap.c,v 1.27 2000/11/25 06:27:59 chs Exp $	*/
 
 /*
@@ -157,8 +157,7 @@ amap_init()
 	 * Initialize the vm_amap pool.
 	 */
 	pool_init(&uvm_amap_pool, sizeof(struct vm_amap), 0, 0, 0,
-	    "amappl", 0, pool_page_alloc_nointr, pool_page_free_nointr, 
-	    M_UVMAMAP);
+	    "amappl", &pool_allocator_nointr);
 }
 
 /*

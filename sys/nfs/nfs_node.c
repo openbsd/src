@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_node.c,v 1.20 2002/01/16 21:51:16 ericj Exp $	*/
+/*	$OpenBSD: nfs_node.c,v 1.21 2002/01/23 00:39:48 art Exp $	*/
 /*	$NetBSD: nfs_node.c,v 1.16 1996/02/18 11:53:42 fvdl Exp $	*/
 
 /*
@@ -79,7 +79,7 @@ nfs_nhinit()
 	lockinit(&nfs_hashlock, PINOD, "nfs_hashlock", 0, 0);
 
 	pool_init(&nfs_node_pool, sizeof(struct nfsnode), 0, 0, 0, "nfsnodepl",
-	    0, pool_page_alloc_nointr, pool_page_free_nointr, M_NFSNODE);
+	    &pool_allocator_nointr);
 }
 
 /*

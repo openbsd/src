@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.45 2002/01/16 20:50:17 miod Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.46 2002/01/23 00:39:47 art Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -98,12 +98,16 @@ struct	pool mclpool;		/* mbuf cluster pool */
 extern	struct vm_map *mb_map;
 int	needqueuedrain;
 
-void	*mclpool_alloc __P((unsigned long, int, int));
-void	mclpool_release __P((void *, unsigned long, int));
+void	*mclpool_alloc __P((struct pool *, int));
+void	mclpool_release __P((struct pool *, void *));
 struct mbuf *m_copym0 __P((struct mbuf *, int, int, int, int));
 
 const char *mclpool_warnmsg =
     "WARNING: mclpool limit reached; increase NMBCLUSTERS";
+
+struct pool_allocator mclpool_allocator = {
+	mclpool_alloc, mclpool_release, 0,
+};
 
 /*
  * Initialize the mbuf allcator.
@@ -111,9 +115,8 @@ const char *mclpool_warnmsg =
 void
 mbinit()
 {
-	pool_init(&mbpool, MSIZE, 0, 0, 0, "mbpl", 0, NULL, NULL, 0);
-	pool_init(&mclpool, MCLBYTES, 0, 0, 0, "mclpl", 0, mclpool_alloc,
-	    mclpool_release, 0);
+	pool_init(&mbpool, MSIZE, 0, 0, 0, "mbpl", NULL);
+	pool_init(&mclpool, MCLBYTES, 0, 0, 0, "mclpl", &mclpool_allocator);
 
 	/*
 	 * Set the hard limit on the mclpool to the number of
@@ -134,10 +137,7 @@ mbinit()
 
 
 void *
-mclpool_alloc(sz, flags, mtype)
-	unsigned long sz;
-	int flags;
-	int mtype;
+mclpool_alloc(struct pool *pp, int flags)
 {
 	boolean_t waitok = (flags & PR_WAITOK) ? TRUE : FALSE;
 
@@ -146,10 +146,7 @@ mclpool_alloc(sz, flags, mtype)
 }
 
 void
-mclpool_release(v, sz, mtype)
-	void *v;
-	unsigned long sz;
-	int mtype;
+mclpool_release(struct pool *pp, void *v)
 {
 	uvm_km_free_poolpage1(mb_map, (vaddr_t)v);
 }

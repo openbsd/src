@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.10 2001/10/26 12:03:27 art Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.11 2002/01/23 00:39:47 art Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -890,7 +890,7 @@ void
 knote_init(void)
 {
 	pool_init(&knote_pool, sizeof(struct knote), 0, 0, 0, "knotepl",
-	    0, pool_page_alloc_nointr, pool_page_free_nointr, M_KNOTE);
+	    &pool_allocator_nointr);
 }
 
 struct knote *

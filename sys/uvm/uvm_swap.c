@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap.c,v 1.48 2002/01/02 22:23:25 miod Exp $	*/
+/*	$OpenBSD: uvm_swap.c,v 1.49 2002/01/23 00:39:48 art Exp $	*/
 /*	$NetBSD: uvm_swap.c,v 1.40 2000/11/17 11:39:39 mrg Exp $	*/
 
 /*
@@ -302,10 +302,10 @@ uvm_swap_init()
 
 
 	pool_init(&vndxfer_pool, sizeof(struct vndxfer), 0, 0, 0, "swp vnx",
-			    0, NULL, NULL, 0);
+	    NULL);
 
-	pool_init(&vndbuf_pool, sizeof(struct vndbuf), 0, 0, 0, "swp vnd", 0,
-			    NULL, NULL, 0);
+	pool_init(&vndbuf_pool, sizeof(struct vndbuf), 0, 0, 0, "swp vnd",
+	    NULL);
 
 	/*
 	 * Setup the initial swap partition

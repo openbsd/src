@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.55 2002/01/13 05:27:40 drahn Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.56 2002/01/23 00:39:47 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.1 1996/09/30 16:34:52 ws Exp $	*/
 
 /*
@@ -729,13 +729,12 @@ pmap_init()
 	for (i = npgs; --i >= 0;)
 		pv++->pv_idx = -1;
 #ifdef USE_PMAP_VP
-	pool_init(&pmap_vp_pool, PAGE_SIZE, 0, 0, 0, "ppvl",
-            0, NULL, NULL, M_VMPMAP);
+	pool_init(&pmap_vp_pool, PAGE_SIZE, 0, 0, 0, "ppvl", NULL);
 #endif
 	pool_init(&pmap_pv_pool, sizeof(struct pv_entry), 0, 0, 0, "pvpl",
-            0, NULL, NULL, M_VMPMAP);
+            NULL);
 	pool_init(&pmap_po_pool, sizeof(struct pte_ovfl), 0, 0, 0, "popl",
-            0, NULL, NULL, M_VMPMAP);
+            NULL);
 	pmap_attrib = (char *)pv;
 	bzero(pv, npgs);
 	pv = (struct pv_entry *)addr;

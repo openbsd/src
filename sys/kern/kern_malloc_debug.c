@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_malloc_debug.c,v 1.15 2001/12/08 02:24:07 art Exp $	*/
+/*	$OpenBSD: kern_malloc_debug.c,v 1.16 2002/01/23 00:39:47 art Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Artur Grabowski <art@openbsd.org>
@@ -216,7 +216,7 @@ debug_malloc_init(void)
 	debug_malloc_chunks_on_freelist = 0;
 
 	pool_init(&debug_malloc_pool, sizeof(struct debug_malloc_entry),
-	    0, 0, 0, "mdbepl", 0, NULL, NULL, 0);
+	    0, 0, 0, "mdbepl", NULL);
 }
 
 /*

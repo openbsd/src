@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.52 2002/01/19 19:00:14 millert Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.53 2002/01/23 00:39:47 art Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -152,7 +152,7 @@ void
 signal_init()
 {
 	pool_init(&sigacts_pool, sizeof(struct sigacts), 0, 0, 0, "sigapl",
-	    0, pool_page_alloc_nointr, pool_page_free_nointr, M_SUBPROC);
+	    &pool_allocator_nointr);
 }
 
 /*

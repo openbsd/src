@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_extent.c,v 1.18 2001/08/06 11:19:26 art Exp $	*/
+/*	$OpenBSD: subr_extent.c,v 1.19 2002/01/23 00:39:47 art Exp $	*/
 /*	$NetBSD: subr_extent.c,v 1.7 1996/11/21 18:46:34 cgd Exp $	*/
 
 /*-
@@ -114,7 +114,7 @@ extent_pool_init(void)
 
 	if (!inited) {
 		pool_init(&ex_region_pl, sizeof(struct extent_region), 0, 0, 0,
-		    "extentpl", 0, 0, 0, 0);
+		    "extentpl", NULL);
 		inited = 1;
 	}
 }

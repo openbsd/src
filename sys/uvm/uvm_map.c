@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.36 2002/01/02 22:23:25 miod Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.37 2002/01/23 00:39:48 art Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /* 
@@ -355,11 +355,9 @@ uvm_map_init()
 	 * initialize the map-related pools.
 	 */
 	pool_init(&uvm_vmspace_pool, sizeof(struct vmspace),
-	    0, 0, 0, "vmsppl", 0,
-	    pool_page_alloc_nointr, pool_page_free_nointr, M_VMMAP);
+	    0, 0, 0, "vmsppl", &pool_allocator_nointr);
 	pool_init(&uvm_map_entry_pool, sizeof(struct vm_map_entry),
-	    0, 0, 0, "vmmpepl", 0,
-	    pool_page_alloc_nointr, pool_page_free_nointr, M_VMMAP);
+	    0, 0, 0, "vmmpepl", &pool_allocator_nointr);
 }
 
 /*
