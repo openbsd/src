@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_readwrite.c,v 1.21 2001/12/10 02:19:34 art Exp $	*/
+/*	$OpenBSD: ufs_readwrite.c,v 1.22 2001/12/10 03:04:58 art Exp $	*/
 /*	$NetBSD: ufs_readwrite.c,v 1.9 1996/05/11 18:27:57 mycroft Exp $	*/
 
 /*-
@@ -143,11 +143,6 @@ READ(v)
 		if (bytesinfile < xfersize)
 			xfersize = bytesinfile;
 
-#ifdef LFS_READWRITE
-		(void)lfs_check(vp, lbn);
-		error = cluster_read(vp, &ip->i_ci, ip->i_ffs_size, lbn, 
-		    size, NOCRED, &bp);
-#else
 		if (lblktosize(fs, nextlbn) >= ip->i_ffs_size)
 			error = bread(vp, lbn, size, NOCRED, &bp);
 		else if (lbn - 1 == ip->i_ci.ci_lastr) {
@@ -156,7 +151,6 @@ READ(v)
 			    size, &nextlbn, &nextsize, 1, NOCRED, &bp);
 		} else
 			error = bread(vp, lbn, size, NOCRED, &bp);
-#endif
 		if (error)
 			break;
 		ip->i_ci.ci_lastr = lbn;
@@ -358,9 +352,6 @@ bcache:
 		if (error != 0)
 			bzero((char *)bp->b_data + blkoffset, xfersize);
 
-#ifdef LFS_READWRITE
-		(void)VOP_BWRITE(bp);
-#else
 		if (ioflag & IO_SYNC)
 			(void)bwrite(bp);
 		else if (xfersize + blkoffset == fs->fs_bsize) {
@@ -370,7 +361,6 @@ bcache:
 				bawrite(bp);
 		} else
 			bdwrite(bp);
-#endif
 		if (error || xfersize == 0)
 			break;
 	}
