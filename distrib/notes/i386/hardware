@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.114 2003/05/20 04:27:57 mickey Exp $
+dnl	$OpenBSD: hardware,v 1.115 2003/05/20 20:32:39 grange Exp $
 OpenBSD/MACHINE OSREV works across a broad range of standard PC's and
 clones, with a wide variety of processors and I/O bus architectures.  It
 can be expected to install and run with minimal difficulties on most
@@ -703,6 +703,8 @@ Supported hardware {:-include-:}:
 		    National Semiconductor LM78, LM78-J, LM79
 		    Winbond W83697HF, W83627HF, W83781D, W83782D
 		    VIA VT82C686A
+		    ITE IT8705F, IT8712F
+		    SiS SiS950
 	Many kinds of ISA Plug-and-Play cards
 		Nearly all SB-style audio cards
 		Nearly all joystick ports
