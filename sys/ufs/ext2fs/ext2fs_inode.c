@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_inode.c,v 1.6 1999/02/26 03:21:59 art Exp $	*/
+/*	$OpenBSD: ext2fs_inode.c,v 1.7 1999/08/17 14:20:46 art Exp $	*/
 /*	$NetBSD: ext2fs_inode.c,v 1.1 1997/06/11 09:33:56 bouyer Exp $	*/
 
 /*
@@ -83,7 +83,7 @@ ext2fs_inactive(v)
 	register struct vnode *vp = ap->a_vp;
 	register struct inode *ip = VTOI(vp);
 	struct timespec ts;
-	int error;
+	int error = 0;
 	extern int prtactive;
 	
 	if (prtactive && vp->v_usecount != 0)
