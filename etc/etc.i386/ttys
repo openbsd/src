@@ -1,6 +1,6 @@
 #
 #	from: @(#)ttys	5.1 (Berkeley) 4/17/89
-#	$Id: ttys,v 1.4 1996/08/09 00:25:03 deraadt Exp $
+#	$Id: ttys,v 1.5 1996/08/17 05:42:43 deraadt Exp $
 #
 # name	getty				type	status		comments
 #
@@ -13,7 +13,7 @@ ttyC4	"/usr/libexec/getty Pc"		vt220	off secure
 ttyC5	"/usr/libexec/getty Pc"		vt220	off secure
 ttyC6	"/usr/libexec/getty Pc"		vt220	off secure
 ttyC7	"/usr/libexec/getty Pc"		vt220	off secure
-tty00	"/usr/libexec/getty std.9600"	unknown on secure
+tty00	"/usr/libexec/getty std.9600"	unknown off
 tty01	"/usr/libexec/getty std.9600"	unknown off
 tty02	"/usr/libexec/getty std.9600"	unknown off
 tty03	"/usr/libexec/getty std.9600"	unknown off
