@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tcpdrop.8,v 1.3 2004/04/28 05:55:11 otto Exp $
+.\"	$OpenBSD: tcpdrop.8,v 1.4 2004/04/28 06:35:20 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Markus Friedl <markus@openbsd.org>
 .\"
@@ -38,19 +38,19 @@ and the foreign address
 port
 .Ar faddr .
 Addresses and ports can be specified by name or numeric value.
-.Sh EXAMPLE
-If one connection to, e.g.
+.Sh EXAMPLES
+If a connection to
 .Xr httpd 8
-is causing congestion on a network link one can drop the TCP session
+is causing congestion on a network link, one can drop the TCP session
 in charge:
-.Bd -literal
-# fstat | egrep 'httpd.*internet.*<--'
-www      httpd      21307    3* internet stream tcp \\
-	0xd1007ca8 192.168.5.41:80 <-- 192.168.5.1:26747
+.Bd -literal -offset indent
+# fstat | egrep 'httpd.*internet.*\*(Lt--'
+www      httpd      21307    3* internet stream tcp \e
+	0xd1007ca8 192.168.5.41:80 \*(Lt-- 192.168.5.1:26747
 .Ed
 .Pp
 The following command will drop the connection:
-.Bd -literal
+.Bd -literal -offset indent
 # tcpdrop 192.168.5.41 80 192.168.5.1 26747
 .Ed
 .Sh SEE ALSO
