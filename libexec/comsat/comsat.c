@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)comsat.c	8.1 (Berkeley) 6/4/93";*/
-static char rcsid[] = "$Id: comsat.c,v 1.1.1.1 1995/10/18 08:43:15 deraadt Exp $";
+static char rcsid[] = "$Id: comsat.c,v 1.2 1996/08/27 10:22:04 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -221,7 +221,7 @@ notify(utp, offset)
 	(void)tcgetattr(fileno(tp), &ttybuf);
 	cr = (ttybuf.c_oflag & ONLCR) && (ttybuf.c_oflag & OPOST) ?
 	    "\n" : "\n\r";
-	(void)strncpy(name, utp->ut_name, sizeof(utp->ut_name));
+	(void)strncpy(name, utp->ut_name, sizeof(name) - 1);
 	name[sizeof(name) - 1] = '\0';
 	(void)fprintf(tp, "%s\007New mail for %s@%.*s\007 has arrived:%s----%s",
 	    cr, name, (int)sizeof(hostname), hostname, cr, cr);

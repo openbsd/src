@@ -64,7 +64,7 @@ static void log_from_addr(char *fun_name, struct svc_req *req)
   host = gethostbyaddr((char *)&(addr->sin_addr), addr->sin_len, AF_INET);
   if (host)
   {
-    strncpy(hostname_buf, host->h_name, sizeof(hostname_buf));
+    strncpy(hostname_buf, host->h_name, sizeof(hostname_buf) -1);
     hostname_buf[sizeof(hostname_buf) -1] = '\0';
   }
   else	/* No hostname available - print raw address	*/

@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)rlogind.c	8.1 (Berkeley) 6/4/93"; */
-static char *rcsid = "$Id: rlogind.c,v 1.8 1996/08/02 10:13:35 deraadt Exp $";
+static char *rcsid = "$Id: rlogind.c,v 1.9 1996/08/27 10:26:59 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -216,7 +216,7 @@ doit(f, fromp)
 	hp = gethostbyaddr((char *)&fromp->sin_addr, sizeof(struct in_addr),
 	    fromp->sin_family);
 	if (hp) {
-		strncpy(hostname, hp->h_name, sizeof hostname);
+		strncpy(hostname, hp->h_name, sizeof(hostname)-1);
 		if (check_all) {
 			hp = gethostbyname(hostname);
 			if (hp) {
@@ -233,7 +233,8 @@ doit(f, fromp)
 	}
 	/* aha, the DNS looks spoofed */
 	if (hp == NULL || good == 0)
-		strncpy(hostname, inet_ntoa(fromp->sin_addr), sizeof hostname);
+		strncpy(hostname, inet_ntoa(fromp->sin_addr), sizeof(hostname)-1);
+	hostname[sizeof(hostname)-1] = '\0';
 
 
 #ifdef	KERBEROS
