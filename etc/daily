@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: daily,v 1.15 1996/12/15 19:11:54 millert Exp $
+#	$OpenBSD: daily,v 1.16 1997/01/03 22:51:26 millert Exp $
 #
 PATH=/bin:/usr/bin:/sbin:/usr/sbin:/usr/local
 host=`hostname -s`
@@ -12,10 +12,8 @@ if [ -f /etc/daily.local ];then
 	. /etc/daily.local
 fi
 
-TMP=`mktemp /tmp/_daily.XXXXXX` || {
-	ls -ldgT $TMP
-	exit 1
-}
+TMP=`mktemp /tmp/_daily.XXXXXX` || exit 1
+
 trap 'rm -f $TMP' 0 1 15
 
 echo ""
