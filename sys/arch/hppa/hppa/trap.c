@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.5 1999/07/16 01:59:26 mickey Exp $	*/
+/*	$OpenBSD: trap.c,v 1.6 1999/07/21 04:28:36 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -211,9 +211,12 @@ trap(type, frame)
 		break;
 #endif
 
+	case T_IBREAK:
+		/* skip break instruction */
+		frame->tf_iioq_head += 4;
+		frame->tf_iioq_tail += 4;
 	case T_DATALIGN:
 	case T_DBREAK:
-	case T_IBREAK:
 		if (kdb_trap (type, 0, frame))
 			return;
 		break;
@@ -275,6 +278,11 @@ trap(type, frame)
 	case T_DTLBMISS | T_USER:
 	case T_DTLBMISSNA:
 	case T_DTLBMISSNA | T_USER:
+#if 0
+if (kdb_trap (type, 0, frame))
+return;
+break;
+#endif
 		va = trunc_page(va);
 		map = &p->p_vmspace->vm_map;
 

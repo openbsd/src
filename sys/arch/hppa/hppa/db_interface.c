@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.5 1999/07/12 18:12:49 mickey Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.6 1999/07/21 04:28:36 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -116,6 +116,7 @@ struct db_variable db_regs[] = {
 
 	{ "hptm",  (long *)&ddb_regs.tf_hptm,  FCN_NULL },
 	{ "vtop",  (long *)&ddb_regs.tf_vtop,  FCN_NULL },
+	{ "cr28",  (long *)&ddb_regs.tf_cr28,  FCN_NULL },
 #if 0
 	u_int	ccr;	/* cr10 */
 	u_int	tr2;	/* cr26 */
@@ -182,10 +183,6 @@ kdb_trap(type, code, regs)
 	int s;
 
 	/* XXX Should switch to kdb`s own stack here. */
-
-	/* skip break instruction */
-	regs->tf_iioq_head += 4;
-	regs->tf_iioq_tail += 4;
 
 	ddb_regs = *regs;
 
