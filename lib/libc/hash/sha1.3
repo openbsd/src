@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sha1.3,v 1.25 2003/06/17 21:56:23 millert Exp $
+.\"	$OpenBSD: sha1.3,v 1.26 2003/06/25 19:33:34 deraadt Exp $
 .\"
 .\" Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
 .\"
@@ -45,7 +45,7 @@
 .Ft "char *"
 .Fn SHA1File "char *filename" "char *buf"
 .Ft "char *"
-.Fn SHA1Data "u_char *data" "u_int len" "char *buf"
+.Fn SHA1Data "const u_char *data" "u_int len" "char *buf"
 .Sh DESCRIPTION
 The SHA1 functions implement the NIST Secure Hash Algorithm (SHA-1),
 FIPS PUB 180-1.

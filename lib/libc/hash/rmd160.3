@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rmd160.3,v 1.19 2003/06/17 21:56:23 millert Exp $
+.\"	$OpenBSD: rmd160.3,v 1.20 2003/06/25 19:33:34 deraadt Exp $
 .\"
 .\" Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
 .\"
@@ -45,7 +45,7 @@
 .Ft "char *"
 .Fn RMD160File "char *filename" "char *buf"
 .Ft "char *"
-.Fn RMD160Data "u_char *data" "size_t len" "char *buf"
+.Fn RMD160Data "const u_char *data" "size_t len" "char *buf"
 .Sh DESCRIPTION
 The RMD160 functions implement the 160-bit RIPE message digest hash algorithm
 (RMD-160).

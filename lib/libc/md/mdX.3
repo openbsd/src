@@ -6,7 +6,7 @@
 .\" this stuff is worth it, you can buy me a beer in return.   Poul-Henning Kamp
 .\" ----------------------------------------------------------------------------
 .\"
-.\" 	$OpenBSD: mdX.3,v 1.18 2003/05/30 21:01:02 jmc Exp $
+.\" 	$OpenBSD: mdX.3,v 1.19 2003/06/25 19:33:34 deraadt Exp $
 .\"
 .Dd October 9, 1996
 .Dt MDX 3
@@ -36,7 +36,7 @@
 .Ft "char *"
 .Fn MDXFile "char *filename" "char *buf"
 .Ft "char *"
-.Fn MDXData "unsigned char *data" "unsigned int len" "char *buf"
+.Fn MDXData "const unsigned char *data" "unsigned int len" "char *buf"
 .Sh DESCRIPTION
 The MDX functions calculate a 128-bit cryptographic checksum (digest)
 for any number of input bytes.
