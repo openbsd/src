@@ -1,4 +1,4 @@
-/*	$OpenBSD: library_mquery.c,v 1.12 2003/07/18 14:09:02 drahn Exp $ */
+/*	$OpenBSD: library_mquery.c,v 1.13 2003/09/02 15:17:51 drahn Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -236,7 +236,7 @@ nohints:
  */
 
 elf_object_t *
-_dl_load_shlib(const char *libname, elf_object_t *parent, int type)
+_dl_load_shlib(const char *libname, elf_object_t *parent, int type, int flags)
 {
 	int try_any_minor, ignore_hints;
 	struct sod sod, req_sod;
@@ -270,6 +270,7 @@ again:
 			object = _dl_tryload_shlib(hint, type);
 			if (object != NULL) {
 				_dl_free((char *)sod.sod_name);
+				object->obj_flags = flags;
 				return (object);
 			}
 		}
@@ -291,6 +292,7 @@ again:
 			object = _dl_tryload_shlib(hint, type);
 			if (object != NULL) {
 				_dl_free((char *)sod.sod_name);
+				object->obj_flags = flags;
 				return (object);
 			}
 		}
@@ -308,6 +310,7 @@ again:
 		object = _dl_tryload_shlib(hint, type);
 		if (object != NULL) {
 			_dl_free((char *)sod.sod_name);
+			object->obj_flags = flags;
 			return(object);
 		}
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.c,v 1.19 2003/06/22 21:39:01 drahn Exp $ */
+/*	$OpenBSD: resolve.c,v 1.20 2003/09/02 15:17:51 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -184,17 +184,20 @@ _dl_lookup_object(const char *name)
 	return(0);
 }
 
+int find_symbol_obj(elf_object_t *object, const char *name, unsigned long hash,
+    int flags, const Elf_Sym **ref, const Elf_Sym **weak_sym,
+    elf_object_t **weak_object);
 
 Elf_Addr
 _dl_find_symbol(const char *name, elf_object_t *startlook,
-    const Elf_Sym **ref, int flags, int req_size, const char *module_name)
+    const Elf_Sym **ref, int flags, int req_size, elf_object_t *req_obj)
 {
 	const Elf_Sym *weak_sym = NULL;
-	const char *weak_symn = NULL; /* remove warning */
-	Elf_Addr weak_offs = 0;
 	unsigned long h = 0;
 	const char *p = name;
 	elf_object_t *object, *weak_object = NULL;
+	int found = 0;
+	int lastchance = 0;
 
 	while (*p) {
 		unsigned long g;
@@ -204,76 +207,108 @@ _dl_find_symbol(const char *name, elf_object_t *startlook,
 		h &= ~g;
 	}
 
+	if (req_obj->dyn.symbolic)
+		if (find_symbol_obj(req_obj, name, h, flags, ref, &weak_sym,
+		    &weak_object)) {
+			object = req_obj;
+			found = 1;
+			goto found;
+		}
+		    
+retry_nonglobal_dlo:
 	for (object = startlook; object;
 	    object = ((flags & SYM_SEARCH_SELF) ? 0 : object->next)) {
-		const Elf_Sym	*symt = object->dyn.symtab;
-		const char	*strt = object->dyn.strtab;
-		long	si;
-		const char *symn;
 
-		for (si = object->buckets[h % object->nbuckets];
-		    si != STN_UNDEF; si = object->chains[si]) {
-			const Elf_Sym *sym = symt + si;
+		if ((lastchance == 0) &&
+		    ((object->obj_flags & RTLD_GLOBAL) == 0) &&
+		    (object->obj_type == OBJTYPE_DLO) &&
+		    (object != req_obj)) 
+			continue;
 
-			if (sym->st_value == 0)
-				continue;
+		if (find_symbol_obj(object, name, h, flags, ref, &weak_sym,
+		    &weak_object)) {
+			found = 1;
+			break;
+		}
+	}
 
-			if (ELF_ST_TYPE(sym->st_info) != STT_NOTYPE &&
-			    ELF_ST_TYPE(sym->st_info) != STT_OBJECT &&
+found:
+	if (weak_object != NULL && found == 0) {
+		object=weak_object;
+		*ref = weak_sym;
+		found = 1;
+	}
+
+	if (found == 0) {
+		if (lastchance == 0) {
+			lastchance = 1;
+			goto retry_nonglobal_dlo;
+		}
+		if (flags & SYM_WARNNOTFOUND)
+			_dl_printf("%s:%s: undefined symbol '%s'\n",
+			    _dl_progname, req_obj->load_name, name);
+		return (0);
+	}
+
+	if (req_size != (*ref)->st_size && req_size != 0 &&
+	    (ELF_ST_TYPE((*ref)->st_info) != STT_FUNC)) {
+		_dl_printf("%s:%s: %s : WARNING: "
+		    "symbol(%s) size mismatch, relink your program\n",
+		    _dl_progname, req_obj->load_name,
+		    object->load_name, name);
+	}
+
+	return (object->load_offs);
+}
+
+int
+find_symbol_obj(elf_object_t *object, const char *name, unsigned long hash,
+    int flags, const Elf_Sym **ref, const Elf_Sym **weak_sym,
+    elf_object_t **weak_object)
+{
+	const Elf_Sym	*symt = object->dyn.symtab;
+	const char	*strt = object->dyn.strtab;
+	long	si;
+	const char *symn;
+
+	for (si = object->buckets[hash % object->nbuckets];
+	    si != STN_UNDEF; si = object->chains[si]) {
+		const Elf_Sym *sym = symt + si;
+
+		if (sym->st_value == 0)
+			continue;
+
+		if (ELF_ST_TYPE(sym->st_info) != STT_NOTYPE &&
+		    ELF_ST_TYPE(sym->st_info) != STT_OBJECT &&
+		    ELF_ST_TYPE(sym->st_info) != STT_FUNC)
+			continue;
+
+		symn = strt + sym->st_name;
+		if (sym != *ref && _dl_strcmp(symn, name))
+			continue;
+
+		/* allow this symbol if we are referring to a function
+		 * which has a value, even if section is UNDEF.
+		 * this allows &func to refer to PLT as per the
+		 * ELF spec. st_value is checked above.
+		 * if flags has SYM_PLT set, we must have actual
+		 * symbol, so this symbol is skipped.
+		 */
+		if (sym->st_shndx == SHN_UNDEF) {
+			if ((flags & SYM_PLT) || sym->st_value == 0 ||
 			    ELF_ST_TYPE(sym->st_info) != STT_FUNC)
 				continue;
+		}
 
-			symn = strt + sym->st_name;
-			if (sym != *ref && _dl_strcmp(symn, name))
-				continue;
-
-			/* allow this symbol if we are referring to a function
-			 * which has a value, even if section is UNDEF.
-			 * this allows &func to refer to PLT as per the
-			 * ELF spec. st_value is checked above.
-			 * if flags has SYM_PLT set, we must have actual
-			 * symbol, so this symbol is skipped.
-			 */
-			if (sym->st_shndx == SHN_UNDEF) {
-				if ((flags & SYM_PLT) || sym->st_value == 0 ||
-				    ELF_ST_TYPE(sym->st_info) != STT_FUNC)
-					continue;
-			}
-
-			if (ELF_ST_BIND(sym->st_info) == STB_GLOBAL) {
-				*ref = sym;
-				if (req_size != sym->st_size &&
-				    req_size != 0 &&
-				    (ELF_ST_TYPE(sym->st_info) != STT_FUNC)) {
-					_dl_printf("%s: %s : WARNING: "
-					    "symbol(%s) size mismatch ",
-					    _dl_progname, object->load_name,
-					    symn);
-					_dl_printf("relink your program\n");
-				}
-				return(object->load_offs);
-			} else if (ELF_ST_BIND(sym->st_info) == STB_WEAK) {
-				if (!weak_sym) {
-					weak_sym = sym;
-					weak_symn = symn;
-					weak_offs = object->load_offs;
-					weak_object = object;
-				}
+		if (ELF_ST_BIND(sym->st_info) == STB_GLOBAL) {
+			*ref = sym;
+			return 1;
+		} else if (ELF_ST_BIND(sym->st_info) == STB_WEAK) {
+			if (!*weak_sym) {
+				*weak_sym = sym;
+				*weak_object = object;
 			}
 		}
 	}
-	if (flags & SYM_WARNNOTFOUND && weak_sym == NULL) {
-		_dl_printf("%s:%s: undefined symbol '%s'\n",
-		    _dl_progname, module_name, name);
-	}
-	*ref = weak_sym;
-	if (weak_sym != NULL && req_size != weak_sym->st_size &&
-	    req_size != 0 && (ELF_ST_TYPE(weak_sym->st_info) != STT_FUNC)) {
-		_dl_printf("%s:%s: %s : WARNING: "
-		    "symbol(%s) size mismatch ",
-		    _dl_progname, module_name, weak_object->load_name,
-		    weak_symn);
-		_dl_printf("relink your program\n");
-	}
-	return (weak_offs);
+	return 0;
 }

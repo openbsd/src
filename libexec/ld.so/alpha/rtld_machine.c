@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.25 2003/07/28 03:11:00 drahn Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.26 2003/09/02 15:17:51 drahn Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -109,7 +109,7 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 		case R_TYPE(REFQUAD):
 			ooff = _dl_find_symbol(symn, _dl_objects, &this,
 			    SYM_SEARCH_ALL|SYM_WARNNOTFOUND|SYM_NOTPLT,
-			    sym->st_size, object->load_name);
+			    sym->st_size, object);
 			if (this == NULL)
 				goto resolve_failed;
 			*r_addr += ooff + this->st_value + relas->r_addend;
@@ -134,7 +134,7 @@ _dl_printf("unaligned RELATIVE: %p type: %d %s 0x%lx -> 0x%lx\n", r_addr,
 		case R_TYPE(JMP_SLOT):
 			ooff = _dl_find_symbol(symn, _dl_objects, &this,
 			    SYM_SEARCH_ALL|SYM_WARNNOTFOUND|SYM_PLT,
-			    sym->st_size, object->load_name);
+			    sym->st_size, object);
 			if (this == NULL)
 				goto resolve_failed;
 			*r_addr = ooff + this->st_value + relas->r_addend;
@@ -142,7 +142,7 @@ _dl_printf("unaligned RELATIVE: %p type: %d %s 0x%lx -> 0x%lx\n", r_addr,
 		case R_TYPE(GLOB_DAT):
 			ooff = _dl_find_symbol(symn, _dl_objects, &this,
 			    SYM_SEARCH_ALL|SYM_WARNNOTFOUND|SYM_NOTPLT,
-			    sym->st_size, object->load_name);
+			    sym->st_size, object);
 			if (this == NULL)
 				goto resolve_failed;
 			*r_addr = ooff + this->st_value + relas->r_addend;
@@ -196,8 +196,7 @@ _dl_bind(elf_object_t *object, int reloff)
 	addr = (Elf_Addr *)(object->load_offs + rela->r_offset);
 	this = NULL;
 	ooff = _dl_find_symbol(symn, _dl_objects, &this,
-	    SYM_SEARCH_ALL|SYM_WARNNOTFOUND|SYM_PLT, sym->st_size,
-	    object->load_name);
+	    SYM_SEARCH_ALL|SYM_WARNNOTFOUND|SYM_PLT, sym->st_size, object);
 	if (this == NULL) {
 		_dl_printf("lazy binding failed!\n");
 		*((int *)0) = 0;	/* XXX */
@@ -241,13 +240,13 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 	object->got_size = 0;
 	this = NULL;
 	ooff = _dl_find_symbol("__got_start", object, &this,
-	    SYM_SEARCH_SELF|SYM_NOWARNNOTFOUND|SYM_PLT, 0, NULL);
+	    SYM_SEARCH_SELF|SYM_NOWARNNOTFOUND|SYM_PLT, 0, object);
 	if (this != NULL)
 		object->got_addr = ooff + this->st_value;
 
 	this = NULL;
 	ooff = _dl_find_symbol("__got_end", object, &this,
-	    SYM_SEARCH_SELF|SYM_NOWARNNOTFOUND|SYM_PLT, 0, NULL);
+	    SYM_SEARCH_SELF|SYM_NOWARNNOTFOUND|SYM_PLT, 0, object);
 	if (this != NULL)
 		object->got_size = ooff + this->st_value  - object->got_addr;
 
@@ -255,13 +254,13 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 	object->plt_size = 0;
 	this = NULL;
 	ooff = _dl_find_symbol("__plt_start", object, &this,
-	    SYM_SEARCH_SELF|SYM_NOWARNNOTFOUND|SYM_PLT, 0, NULL);
+	    SYM_SEARCH_SELF|SYM_NOWARNNOTFOUND|SYM_PLT, 0, object);
 	if (this != NULL)
 		plt_addr = ooff + this->st_value;
 
 	this = NULL;
 	ooff = _dl_find_symbol("__plt_end", object, &this,
-	    SYM_SEARCH_SELF|SYM_NOWARNNOTFOUND|SYM_PLT, 0, NULL);
+	    SYM_SEARCH_SELF|SYM_NOWARNNOTFOUND|SYM_PLT, 0, object);
 	if (this != NULL)
 		object->plt_size = ooff + this->st_value  - plt_addr;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dlfcn.c,v 1.29 2003/06/26 07:53:27 deraadt Exp $ */
+/*	$OpenBSD: dlfcn.c,v 1.30 2003/09/02 15:17:51 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -47,7 +47,7 @@ static void _dl_thread_kern_go(void);
 static void (*_dl_thread_fnc)(int) = NULL;
 
 void *
-dlopen(const char *libname, int how)
+dlopen(const char *libname, int flags)
 {
 	elf_object_t *object, *dynobj;
 	Elf_Dyn	*dynp;
@@ -58,7 +58,7 @@ dlopen(const char *libname, int how)
 	DL_DEB(("dlopen: loading: %s\n", libname));
 
 	_dl_thread_kern_stop();
-	object = _dl_load_shlib(libname, _dl_objects, OBJTYPE_DLO);
+	object = _dl_load_shlib(libname, _dl_objects, OBJTYPE_DLO, flags);
 	/* this add_object should not be here, XXX */
 	if (object == 0) {
 		_dl_thread_kern_go();
@@ -91,7 +91,8 @@ dlopen(const char *libname, int how)
 
 			libname = dynobj->dyn.strtab + dynp->d_un.d_val;
 			_dl_thread_kern_stop();
-			depobj = _dl_load_shlib(libname, dynobj, OBJTYPE_LIB);
+			depobj = _dl_load_shlib(libname, dynobj, OBJTYPE_LIB,
+				flags|RTLD_GLOBAL);
 			if (!depobj)
 				_dl_exit(4);
 			/* this add_object should not be here, XXX */
@@ -137,7 +138,7 @@ dlsym(void *handle, const char *name)
 	}
 
 	retval = (void *)_dl_find_symbol(name, object, &sym,
-	    SYM_SEARCH_SELF|SYM_NOWARNNOTFOUND|SYM_NOTPLT, 0, "");
+	    SYM_SEARCH_SELF|SYM_NOWARNNOTFOUND|SYM_NOTPLT, 0, object);
 	if (sym != NULL)
 		retval += sym->st_value;
 	else

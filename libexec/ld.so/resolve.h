@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.h,v 1.27 2003/07/06 20:03:57 deraadt Exp $ */
+/*	$OpenBSD: resolve.h,v 1.28 2003/09/02 15:17:51 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -30,6 +30,7 @@
 #define _RESOLVE_H_
 
 #include <link.h>
+#include <dlfcn.h>
 
 struct load_list {
 	struct load_list *next;
@@ -111,6 +112,7 @@ typedef struct elf_object {
 #define	OBJTYPE_EXE	2
 #define	OBJTYPE_LIB	3
 #define	OBJTYPE_DLO	4
+	int		obj_flags;
 
 	Elf_Word	*buckets;
 	u_int32_t	nbuckets;
@@ -135,14 +137,14 @@ extern elf_object_t *_dl_finalize_object(const char *objname, Elf_Dyn *dynp,
 extern void	_dl_remove_object(elf_object_t *object);
 
 extern elf_object_t *_dl_lookup_object(const char *objname);
-extern elf_object_t *_dl_load_shlib(const char *, elf_object_t *, int);
+extern elf_object_t *_dl_load_shlib(const char *, elf_object_t *, int, int);
 extern void	_dl_unload_shlib(elf_object_t *object);
 
 extern int  _dl_md_reloc(elf_object_t *object, int rel, int relsz);
 extern void _dl_md_reloc_got(elf_object_t *object, int lazy);
 
 Elf_Addr _dl_find_symbol(const char *name, elf_object_t *startlook,
-    const Elf_Sym **ref, int flags, int sym_size, const char *module_name);
+    const Elf_Sym **ref, int flags, int sym_size, elf_object_t *object);
 /*
  * defines for _dl_find_symbol() flag field, three bits of meaning
  * myself	- clear: search all objects,	set: search only this object

@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.66 2003/07/09 21:01:10 drahn Exp $ */
+/*	$OpenBSD: loader.c,v 1.67 2003/09/02 15:17:51 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -36,6 +36,7 @@
 #include <nlist.h>
 #include <string.h>
 #include <link.h>
+#include <dlfcn.h>
 
 #include "syscall.h"
 #include "archdep.h"
@@ -109,7 +110,8 @@ _dl_dopreload(char *paths)
 	}
 
 	while ((cp = _dl_strsep(&dp, ":")) != NULL) {
-		shlib = _dl_load_shlib(cp, _dl_objects, OBJTYPE_LIB);
+		shlib = _dl_load_shlib(cp, _dl_objects, OBJTYPE_LIB,
+		DL_LAZY|RTLD_GLOBAL);
 		if (shlib == NULL) {
 			_dl_printf("%s: can't load library '%s'\n",
 			    _dl_progname, cp);
@@ -304,7 +306,7 @@ _dl_boot(const char **argv, char **envp, const long loff, long *dl_data)
 				    liblist[randomlist[i]].dynp->d_un.d_val;
 				DL_DEB(("needs: '%s'\n", libname));
 				depobj = _dl_load_shlib(libname, dynobj,
-				    OBJTYPE_LIB);
+				    OBJTYPE_LIB, DL_LAZY|RTLD_GLOBAL);
 				if (depobj == 0) {
 					_dl_printf(
 					    "%s: can't load library '%s'\n",
@@ -361,7 +363,7 @@ _dl_boot(const char **argv, char **envp, const long loff, long *dl_data)
 
 		sym = NULL;
 		ooff = _dl_find_symbol("atexit", _dl_objects, &sym,
-		    SYM_SEARCH_ALL|SYM_NOWARNNOTFOUND|SYM_PLT, 0, "");
+		    SYM_SEARCH_ALL|SYM_NOWARNNOTFOUND|SYM_PLT, 0, dyn_obj);
 		if (sym == NULL)
 			_dl_printf("cannot find atexit, destructors will not be run!\n");
 		else
@@ -407,6 +409,7 @@ _dl_boot(const char **argv, char **envp, const long loff, long *dl_data)
 		_dl_exit(0);
 
 	DL_DEB(("entry point: 0x%lx\n", dl_data[AUX_entry]));
+
 	/*
 	 * Return the entry point.
 	 */
