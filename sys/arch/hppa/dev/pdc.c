@@ -1,7 +1,7 @@
-/*	$OpenBSD: pdc.c,v 1.10 1999/11/26 16:48:28 mickey Exp $	*/
+/*	$OpenBSD: pdc.c,v 1.11 2000/01/26 20:55:20 mickey Exp $	*/
 
 /*
- * Copyright (c) 1998,1999 Michael Shalayeff
+ * Copyright (c) 1998-2000 Michael Shalayeff
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -330,7 +330,7 @@ void
 pdccninit(cn)
 	struct consdev *cn;
 {
-#ifdef PDC_DEBUG
+#ifdef DEBUG
 	printf("pdc0: console init\n");
 #endif
 }
