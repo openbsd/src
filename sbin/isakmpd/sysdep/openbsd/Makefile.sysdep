@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.sysdep,v 1.11 2000/12/12 01:45:08 niklas Exp $
+#	$OpenBSD: Makefile.sysdep,v 1.12 2000/12/29 03:13:07 smurph Exp $
 #	$EOM: Makefile.sysdep,v 1.17 2000/12/12 01:18:11 niklas Exp $
 
 #
@@ -40,7 +40,7 @@ IPSEC_CFLAGS=	-DUSE_PF_KEY_V2
 CFLAGS+=	-DHAVE_GETNAMEINFO
 
 # Some OpenBSD systems do not provide dlopen(3).
-.if ${MACHINE_ARCH} != "alpha" && ${MACHINE_ARCH} != "mips" && ${MACHINE_ARCH} != "powerpc" && ${MACHINE_ARCH} != "vax"
+.if ${MACHINE_ARCH} != "alpha" && ${MACHINE_ARCH} != "mips" && ${MACHINE_ARCH} != "powerpc" && ${MACHINE_ARCH} != "vax" && ${MACHINE_ARCH} != "m88k"
 HAVE_DLOPEN=	defined
 CFLAGS+=	-DSYMBOL_PREFIX='"_"'
 .endif
@@ -49,7 +49,7 @@ USE_LIBCRYPTO=	defined
 
 .ifdef FEATURES
 .if ${FEATURES:Mpolicy} == "policy"
-.if ${MACHINE_ARCH} != "alpha" && ${MACHINE_ARCH} != "vax" && ${MACHINE_ARCH} != "mvme88k"
+.if ${MACHINE_ARCH} != "alpha" && ${MACHINE_ARCH} != "vax" && ${MACHINE_ARCH} != "m88k"
 SRCS+=		keynote_compat.c
 .endif
 USE_KEYNOTE=	defined
