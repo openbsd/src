@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.20 2001/03/12 23:03:25 miod Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.21 2001/04/29 19:00:03 miod Exp $	*/
 
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -54,6 +54,7 @@
 #include <sys/buf.h>
 #include <sys/user.h>
 #include <sys/vnode.h>
+#include <sys/extent.h>
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
@@ -69,7 +70,7 @@
 #include <machine/cmmu.h>
 #include <machine/pte.h>
 
-extern struct map *iomap;
+extern struct extent *iomap_extent;
 extern vm_map_t   iomap_map;
 
 /*
@@ -318,8 +319,7 @@ vunmapbuf(bp, len)
 }
 
 
-#if 1
-/* XXX_FUTURE
+/*
  * Map a range [pa, pa+len] in the given map to a kernel address
  * in iomap space.
  *
@@ -330,8 +330,8 @@ vunmapbuf(bp, len)
 vm_offset_t
 iomap_mapin(vm_offset_t pa, vm_size_t len, boolean_t canwait)
 {
-	vm_offset_t		iova, tva, off, ppa;
-	register int 		s;
+	vm_offset_t	iova, tva, off, ppa;
+	int 		s, error;
 
 	if (len == 0)
 		return NULL;
@@ -341,19 +341,13 @@ iomap_mapin(vm_offset_t pa, vm_size_t len, boolean_t canwait)
 
 	len = round_page(off + len);
 
-	s = splimp();
-	for (;;) {
-		iova = rmalloc(iomap, len);
-		if (iova != 0)
-			break;
-		if (canwait) {
-			(void)tsleep(iomap, PRIBIO+1, "iomapin", 0);
-			continue;
-		}
-		splx(s);
-		return NULL;
-	}
+	s = splhigh();
+	error = extent_alloc(iomap_extent, len, PAGE_SIZE, 0,
+	    canwait ? EX_WAITSPACE : 0, &iova);
 	splx(s);
+
+	if (error != 0)
+		return NULL;
 	
 	cmmu_flush_tlb(1, iova, len);
 
@@ -386,8 +380,8 @@ iomap_mapin(vm_offset_t pa, vm_size_t len, boolean_t canwait)
 int
 iomap_mapout(vm_offset_t kva, vm_size_t len)
 {
-	register int 		s;
-	vm_offset_t 		off;
+	vm_offset_t 	off;
+	int 		s, error;
 
 	off = kva & PGOFSET;
 	kva = trunc_page(kva);
@@ -395,14 +389,14 @@ iomap_mapout(vm_offset_t kva, vm_size_t len)
 
 	pmap_remove(vm_map_pmap(iomap_map), kva, kva + len);
 
-	s = splimp();
-	rmfree(iomap, len, kva);
-	wakeup(iomap);
+	s = splhigh();
+	error = extent_free(iomap_extent, kva, len, EX_NOWAIT);
 	splx(s);
+	if (error != 0)
+		printf("iomap_mapout: extent_free failed\n");
+
 	return 1;
 }
-
-#endif /* XXX_FUTURE */
 
 /*
  * Allocate/deallocate a cache-inhibited range of kernel virtual address

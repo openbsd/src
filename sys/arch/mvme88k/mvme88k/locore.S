@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.14 2001/03/12 22:56:17 miod Exp $	*/
+/*	$OpenBSD: locore.S,v 1.15 2001/04/29 19:00:02 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -483,13 +483,11 @@ _esym:
 	word 	0
 #endif /* DDB || NKSYMS > 0 */
 
-	global	_intiobase, _intiolimit, _extiobase
+	global	_intiobase, _intiolimit
 _intiobase:
 	word	0		| KVA of base of internal IO space
 _intiolimit:
 	word	0		| KVA of end of internal IO space
-_extiobase:
-	word	0		| KVA of base of external IO space
 
 	global	_proc0paddr	/* move to C code */
 _proc0paddr:

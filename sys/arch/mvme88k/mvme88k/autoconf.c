@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.10 2001/03/16 00:03:58 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.11 2001/04/29 19:00:02 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -68,10 +68,6 @@ struct device	*getdisk __P((char *, int, int, dev_t *));
 
 int cold;   /* 1 if still booting */
 
-/* XXX must be allocated statically because of early console init */
-struct   map extiomap[EIOMAPSIZE/16];
-extern   void *extiobase;
-
 /*
  * called at boot time, configure all devices on the system.
  */
@@ -79,7 +75,6 @@ void
 configure()
 {
 	bootdv = NULL; /* set by device drivers (if found) */
-/*	rminit(extiomap, (long)EIOMAPSIZE, (long)1, "extio", EIOMAPSIZE/16);*/
 
 	if (config_rootfound("mainbus", "mainbus") == 0)
 		panic("no mainbus found");

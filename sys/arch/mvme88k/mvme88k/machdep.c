@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.31 2001/04/17 04:30:47 aaron Exp $	*/
+/* $OpenBSD: machdep.c,v 1.32 2001/04/29 19:00:03 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -74,6 +74,7 @@
 #include <sys/exec.h>
 #include <sys/sysctl.h>
 #include <sys/errno.h>
+#include <sys/extent.h>
 
 #include <net/netisr.h>
 
@@ -170,7 +171,6 @@ volatile vm_offset_t kernelva;
 volatile vm_offset_t utilva;
 volatile vm_offset_t sramva;
 volatile vm_offset_t obiova;
-volatile vm_offset_t extiova;
 
 int physmem;	  /* available physical memory, in pages */
 int cold;	  /* boot process flag */
@@ -205,9 +205,8 @@ vaddr_t iomapbase;
 vm_offset_t iomapbase;
 #endif 
 
-struct map *iomap;
+struct extent *iomap_extent;
 vm_map_t   iomap_map;
-int      niomap;
 
 /*
  * Declare these as initialized data so we can patch them.
@@ -739,7 +738,7 @@ cpu_startup()
 	}
 
 	/* 
-	 * Allocate map for external I/O XXX new code - smurph 
+	 * Allocate map for external I/O
 	 */
 #if defined(UVM)
 	iomap_map = uvm_km_suballoc(kernel_map, &iomapbase, &maxaddr,
@@ -751,7 +750,10 @@ cpu_startup()
 	if (iomap_map == NULL) {
 		panic("cpu_startup: unable to create iomap_map");
 	}
-	rminit(iomap, IOMAP_SIZE, (u_long)iomapbase, "iomap", NIOPMAP);
+	iomap_extent = extent_create("iomap", iomapbase,
+	    iomapbase + IOMAP_SIZE, M_DEVBUF, NULL, 0, EX_NOWAIT);
+	if (iomap_extent == 0)
+		panic("unable to allocate extent for iomap");
 
 	/*
 	 * Finally, allocate mbuf pool.  Since mclrefcnt is an off-size
@@ -905,13 +907,6 @@ allocsys(v)
 #endif
 	valloc(buf, struct buf, nbuf);
 
-#if 1 /*XXX_FUTURE*/
-	/*
-	 * Arbitrarily limit the number of devices mapping
-	 * the IO space at a given time to NIOPMAP (= 32, default).
-	 */
-	valloc(iomap, struct map, niomap = NIOPMAP);
-#endif
 	return v;
 }
 
