@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdc.c,v 1.83 2004/02/19 21:16:21 grange Exp $     */
+/*      $OpenBSD: wdc.c,v 1.84 2004/09/15 17:58:25 grange Exp $     */
 /*	$NetBSD: wdc.c,v 1.68 1999/06/23 19:00:17 bouyer Exp $ */
 
 
@@ -1744,7 +1744,7 @@ wdc_exec_command(drvp, wdc_c)
 		ret = WDC_COMPLETE;
 	} else {
 		if (wdc_c->flags & AT_WAIT) {
-			WDCDEBUG_PRINT(("wdc_exec_command sleeping"),
+			WDCDEBUG_PRINT(("wdc_exec_command sleeping\n"),
 				       DEBUG_FUNCS);
 
 			while ((wdc_c->flags & AT_DONE) == 0) {
@@ -2014,8 +2014,8 @@ wdc_exec_xfer(chp, xfer)
 	struct channel_softc *chp;
 	struct wdc_xfer *xfer;
 {
-	WDCDEBUG_PRINT(("wdc_exec_xfer %p channel %d drive %d\n", xfer,
-	    chp->channel, xfer->drive), DEBUG_XFERS);
+	WDCDEBUG_PRINT(("wdc_exec_xfer %p flags 0x%x channel %d drive %d\n",
+	    xfer, xfer->c_flags, chp->channel, xfer->drive), DEBUG_XFERS);
 
 	/* complete xfer setup */
 	xfer->chp = chp;
