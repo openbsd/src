@@ -1,4 +1,4 @@
-#	$OpenBSD: SUN4,v 1.29 2004/09/16 09:14:04 mickey Exp $
+#	$OpenBSD: SUN4,v 1.30 2004/09/27 19:32:38 miod Exp $
 # 	$NetBSD: GENERIC,v 1.28.2.1 1996/07/02 23:55:22 jtc Exp $
 
 # Machine architecture; required by config(8)
@@ -169,6 +169,3 @@ cd*	at scsibus?		# SCSI CD-ROMs
 ch*	at scsibus?		# SCSI changer devices
 ss*	at scsibus?		# SCSI scanners
 uk*	at scsibus?		# unknown SCSI devices
-
-#pseudo-device	strip	1	# radio clock
-

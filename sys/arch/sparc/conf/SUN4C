@@ -1,4 +1,4 @@
-#	$OpenBSD: SUN4C,v 1.50 2004/09/16 09:14:04 mickey Exp $
+#	$OpenBSD: SUN4C,v 1.51 2004/09/27 19:32:38 miod Exp $
 # 	$NetBSD: GENERIC,v 1.48 1997/08/23 19:19:01 mjacob Exp $
 
 # Machine architecture; required by config(8)
@@ -178,5 +178,3 @@ uk*	at scsibus?		# unknown SCSI devices
 # Floppy controller and drive found on SPARCstations.
 fdc0	at mainbus0				# sun4c controller
 fd*	at fdc0					# the drive itself
-
-#pseudo-device	strip	1	# radio clock

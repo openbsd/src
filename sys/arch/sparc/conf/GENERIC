@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.77 2004/09/16 09:35:36 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.78 2004/09/27 19:32:38 miod Exp $
 # 	$NetBSD: GENERIC,v 1.48 1997/08/23 19:19:01 mjacob Exp $
 
 # Machine architecture; required by config(8)
@@ -356,5 +356,3 @@ fd*	at fdc0					# the drive itself
 
 # Prestoserve NVRAM
 #presto*	at sbus?
-
-#pseudo-device	strip	1	# radio clock
