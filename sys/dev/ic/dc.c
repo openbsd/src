@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.52 2002/10/20 16:46:27 henning Exp $	*/
+/*	$OpenBSD: dc.c,v 1.53 2002/10/21 20:30:32 henning Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1431,6 +1431,9 @@ void dc_reset(sc)
 		CSR_WRITE_4(sc, DC_10BTCTRL, 0);
 		CSR_WRITE_4(sc, DC_WATCHDOG, 0);
 	}
+
+	if (sc->dc_type == DC_TYPE_21145)
+		dc_setcfg(sc, IFM_10_T);
 
 	return;
 }
