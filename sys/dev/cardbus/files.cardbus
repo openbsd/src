@@ -1,4 +1,4 @@
-#	$OpenBSD: files.cardbus,v 1.6 2002/06/26 15:55:34 tdeval Exp $
+#	$OpenBSD: files.cardbus,v 1.7 2004/06/22 23:55:23 millert Exp $
 #	$NetBSD: files.cardbus,v 1.8 2000/01/26 06:37:24 thorpej Exp $
 #
 # files.cardbus
@@ -53,6 +53,12 @@ file	dev/cardbus/if_rl_cardbus.c		rl_cardbus
 #
 #attach	com at cardbus with com_cardbus
 #file	dev/cardbus/com_cardbus.c		com_cardbus
+
+#
+# ADMtek ADM8211
+#
+attach	atw at cardbus with atw_cardbus
+file	dev/cardbus/if_atw_cardbus.c		atw_cardbus
 
 #
 # DECchip 21143 and clones.

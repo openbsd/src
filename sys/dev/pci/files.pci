@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.154 2004/06/05 06:13:06 pvalchev Exp $
+#	$OpenBSD: files.pci,v 1.155 2004/06/22 23:55:23 millert Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -492,3 +492,7 @@ file	dev/pci/fwlynx_pci.c		fwlynx_pci
 device	bce: ether, ifnet, mii, ifmedia, mii_phy
 attach	bce at pci
 file	dev/pci/if_bce.c		bce
+
+# ADMtek ADM8211 PCI/Mini-PCI
+attach	atw at pci with atw_pci
+file	dev/pci/if_atw_pci.c		atw_pci
