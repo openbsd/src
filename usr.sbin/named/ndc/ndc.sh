@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: ndc.sh,v 1.8 1998/05/23 19:24:56 millert Exp $
+#	$OpenBSD: ndc.sh,v 1.9 1998/06/03 17:15:59 millert Exp $
 
 USAGE='echo \
 	"usage: $0 \
@@ -8,7 +8,12 @@ USAGE='echo \
 	"; exit 1'
 
 PATH=%DESTSBIN%:/bin:/usr/bin:/usr/ucb:$PATH
-CHROOTDIR=%CHROOTDIR%
+
+if [ -r /etc/rc.conf ]; then
+	CHROOTDIR=`. /etc/rc.conf ; echo "$named_chroot"`
+else
+	CHROOTDIR=%CHROOTDIR%
+fi
 PIDFILE=${CHROOTDIR}/named.pid
 NAMED_CMD=named
 RUNNING=0
