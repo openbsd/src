@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.42 1997/10/17 08:13:58 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.43 1997/10/17 08:57:24 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -303,14 +303,14 @@ getrootdisk() {
 
 The installation program needs to know which disk to consider
 the root disk.  Note the unit number may be different than
-the unit number you used in the standalone installation
-program (especially on a PC with multiple disk controllers).
+the unit number you used in the boot program (especially on a
+PC with multiple disk controllers).
 
 Available disks are:
 
 __getrootdisk_1
 	_DKDEVS=`md_get_diskdevs`
-	echo	"$_DKDEVS"
+	echo	"	$_DKDEVS"
 	echo	""
 	echo -n	"Which disk is the root disk? "
 	getresp ""
@@ -1228,7 +1228,7 @@ the disk device containing the partition with the installation sets:
 
 __install_disk_1
 	_DKDEVS=`md_get_diskdevs`
-	echo    "$_DKDEVS"
+	echo    "	$_DKDEVS"
 	echo	""
 	echo -n	"Which is the disk with the installation sets? [abort] "
 
