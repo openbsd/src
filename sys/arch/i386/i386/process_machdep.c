@@ -1,4 +1,4 @@
-/*	$OpenBSD: process_machdep.c,v 1.5 1996/05/07 07:21:53 deraadt Exp $	*/
+/*	$OpenBSD: process_machdep.c,v 1.6 1996/05/30 09:30:07 deraadt Exp $	*/
 /*	$NetBSD: process_machdep.c,v 1.22 1996/05/03 19:42:25 christos Exp $	*/
 
 /*
@@ -193,6 +193,13 @@ process_write_regs(p, regs)
 				      verr_gdt(IDXSEL(sel)))
 #define	valid_sel(sel)	(ISPL(sel) == SEL_UPL && verr(sel))
 #define	null_sel(sel)	(!ISLDT(sel) && IDXSEL(sel) == 0)
+
+		/*
+		 * Check for security violations.
+		 */
+		if (((regs->r_eflags ^ tf->tf_eflags) & PSL_USERSTATIC) != 0 ||
+		    !USERMODE(regs->r_cs, regs->r_eflags))
+			return (EINVAL);
 
 		if ((regs->r_gs != pcb->pcb_gs && \
 		     !valid_sel(regs->r_gs) && !null_sel(regs->r_gs)) ||

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.18 1996/05/23 08:38:54 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.19 1996/05/30 09:30:09 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.202 1996/05/18 15:54:59 christos Exp $	*/
 
 /*-
@@ -412,7 +412,7 @@ identifycpu()
 		break;
 	}
 	strcat(cpu_model, "-class CPU)");
-	printf("%s", cpu_model);	/* cpu speed would be nice, but how? */
+	printf("%s", cpu_model);
 #if defined(I586_CPU)
 	if (cpu_class == CPUCLASS_586) {
 		calibrate_cyclecounter();
@@ -702,12 +702,6 @@ sys_sigreturn(p, v, retval)
 	tf->tf_cs = context.sc_cs;
 	tf->tf_esp = context.sc_esp;
 	tf->tf_ss = context.sc_ss;
-
-	if (context.sc_onstack & 01)
-		p->p_sigacts->ps_sigstk.ss_flags |= SS_ONSTACK;
-	else
-		p->p_sigacts->ps_sigstk.ss_flags &= ~SS_ONSTACK;
-	p->p_sigmask = context.sc_mask & ~sigcantmask;
 
 	if (context.sc_onstack & 01)
 		p->p_sigacts->ps_sigstk.ss_flags |= SS_ONSTACK;

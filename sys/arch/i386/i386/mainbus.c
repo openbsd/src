@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.4 1996/05/07 07:21:47 deraadt Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.5 1996/05/30 09:30:08 deraadt Exp $	*/
 /*	$NetBSD: mainbus.c,v 1.8 1996/04/11 22:13:37 cgd Exp $	*/
 
 /*
@@ -105,11 +105,7 @@ mainbus_attach(parent, self, aux)
 		config_found(self, &mba.mba_iba, mainbus_print);
 	}
 
-#ifndef AHA284X_HACK
 	if (!bcmp(ISA_HOLE_VADDR(EISA_ID_PADDR), EISA_ID, EISA_ID_LEN)) {
-#else
-	{
-#endif
 		mba.mba_eba.eba_busname = "eisa";
 		mba.mba_eba.eba_bc = NULL;
 		mba.mba_eba.eba_ec = NULL;

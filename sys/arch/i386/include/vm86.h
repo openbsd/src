@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm86.h,v 1.6 1996/05/07 07:22:11 deraadt Exp $	*/
+/*	$OpenBSD: vm86.h,v 1.7 1996/05/30 09:30:11 deraadt Exp $	*/
 /*	$NetBSD: vm86.h,v 1.8 1996/05/03 19:26:32 christos Exp $	*/
 
 #undef	VM86_USE_VIF
@@ -51,9 +51,6 @@
 
 #define	VM86_REALFLAGS	(~PSL_USERSTATIC)
 #define	VM86_VIRTFLAGS	(PSL_USERSTATIC & ~(PSL_MBO | PSL_MBZ))
-
-#define	VM86_SETDIRECT	(~PSL_USERSTATIC)
-#define	VM86_GETDIRECT	(VM86_SETDIRECT|PSL_MBO|PSL_MBZ)
 
 struct vm86_regs {
 	struct sigcontext vmsc;

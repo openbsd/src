@@ -1,4 +1,3 @@
-/*	$OpenBSD: vm86.c,v 1.6 1996/05/07 07:21:58 deraadt Exp $	*/
 /*	$NetBSD: vm86.c,v 1.15 1996/05/03 19:42:33 christos Exp $	*/
 
 /*-
@@ -75,10 +74,9 @@
 static void fast_intxx __P((struct proc *, int));
 static __inline int is_bitset __P((int, caddr_t));
 
-#define	SETDIRECT	((~(PSL_USERSTATIC|PSL_NT)) & 0xffff)
-#define	GETDIRECT	(SETDIRECT|0x02a) /* add in two MBZ bits */
-
+#define	CS(tf)		(*(u_short *)&tf->tf_cs)
 #define	IP(tf)		(*(u_short *)&tf->tf_eip)
+#define	SS(tf)		(*(u_short *)&tf->tf_ss)
 #define	SP(tf)		(*(u_short *)&tf->tf_esp)
 
 

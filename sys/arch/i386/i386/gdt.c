@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdt.c,v 1.9 1996/05/07 07:21:38 deraadt Exp $	*/
+/*	$OpenBSD: gdt.c,v 1.10 1996/05/30 09:30:06 deraadt Exp $	*/
 /*	$NetBSD: gdt.c,v 1.8 1996/05/03 19:42:06 christos Exp $	*/
 
 /*-
@@ -223,16 +223,6 @@ gdt_get_slot()
 		if (gdt_next != gdt_count)
 			panic("gdt_get_slot botch 1");
 		if (gdt_next >= gdt_size) {
-			/*
-			 * gdt_size is clamped by maxproc, set in
-			 * /sys/conf/param.c and clamped in init386().
-			 * It's held there to (MAXGDTSIZ - NGDT) if no
-			 * user LDTs, or half that if user LDTs are
-			 * allowed. It's important to count that
-			 * correctly, because by the time we get here,
-			 * it's too late to abort the fork operation
-			 * -- we must have a GDT slot available.
-			 */
 			if (gdt_size >= MAXGDTSIZ)
 				panic("gdt_get_slot botch 2");
 			if (dynamic_gdt == gdt)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.9 1996/05/07 07:21:51 deraadt Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.10 1996/05/30 09:30:08 deraadt Exp $	*/
 /*	$NetBSD: pmap.c,v 1.36 1996/05/03 19:42:22 christos Exp $	*/
 
 /*
@@ -182,7 +182,6 @@ char		*pmap_attributes;	/* reference and modify bits */
 TAILQ_HEAD(pv_page_list, pv_page) pv_page_freelist;
 int		pv_nfree;
 
-void	i386_protection_init __P((void));
 pt_entry_t *pmap_pte __P((pmap_t, vm_offset_t));
 struct pv_entry * pmap_alloc_pv __P((void));
 void pmap_free_pv __P((struct pv_entry *));
@@ -1380,8 +1379,7 @@ pmap_collect(pmap)
 	pmap_t pmap;
 {
 #ifdef DEBUG
-	if (pmapdebug & PDB_FOLLOW)
-		printf("pmap_collect(%x) ", pmap);
+	printf("pmap_collect(%x) ", pmap);
 #endif
 
 	if (pmap != pmap_kernel())
