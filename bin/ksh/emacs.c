@@ -1,4 +1,4 @@
-/*	$OpenBSD: emacs.c,v 1.25 2003/08/27 14:40:56 fgsch Exp $	*/
+/*	$OpenBSD: emacs.c,v 1.26 2003/08/27 14:56:11 fgsch Exp $	*/
 
 /*
  *  Emacs-like command line editing and history
@@ -122,7 +122,7 @@ static	char    *macroptr;
 static	int	prompt_skip;
 
 static int      x_ins       ARGS((char *cp));
-static void     x_delete    ARGS((int nc, int force_push));
+static void     x_delete    ARGS((int nc, int push));
 static int	x_bword     ARGS((void));
 static int	x_fword     ARGS((void));
 static void     x_goto      ARGS((char *cp));
@@ -535,9 +535,9 @@ x_del_char(c)
 
 /* Delete nc chars to the right of the cursor (including cursor position) */
 static void
-x_delete(nc, force_push)
+x_delete(nc, push)
 	int nc;
-	int force_push;
+	int push;
 {
 	int	i,j;
 	char	*cp;
@@ -554,7 +554,7 @@ x_delete(nc, force_push)
 	/*
 	 * This lets us yank a word we have deleted.
 	 */
-	if (force_push)
+	if (push)
 		x_push(nc);
 
 	xep -= nc;
