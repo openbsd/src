@@ -1,4 +1,4 @@
-/*	$OpenBSD: checkout.c,v 1.8 2004/08/06 13:08:39 jfb Exp $	*/
+/*	$OpenBSD: checkout.c,v 1.9 2004/08/12 21:03:46 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -69,21 +69,26 @@ cvs_checkout(int argc, char **argv)
 		return (EX_USAGE);
 	}
 
-	cvs_files = cvs_file_get(".", CF_IGNORE);
+	cvs_files = cvs_file_get(".", 0);
+	if (cvs_files == NULL)
+		return (EX_DATAERR);
+
 	root = CVS_DIR_ROOT(cvs_files);
 	if (root->cr_method != CVS_METHOD_LOCAL) {
 		cvs_connect(root);
+
+		if ((cvs_sendarg(root, argv[0], 0) < 0) ||
+		    (cvs_senddir(root, cvs_files) < 0) ||
+		    (cvs_sendreq(root, CVS_REQ_XPANDMOD, NULL) < 0))
+			cvs_log(LP_ERR, "failed to expand module");
+
+		/* XXX not too sure why we have to send this arg */
+		if ((cvs_sendarg(root, "-N", 0) < 0) ||
+		    (cvs_sendarg(root, argv[0], 0) < 0) ||
+		    (cvs_senddir(root, cvs_files) < 0) ||
+		    (cvs_sendreq(root, CVS_REQ_CO, NULL) < 0))
+			cvs_log(LP_ERR, "failed to checkout");
 	}
-
-	cvs_sendarg(root, argv[0], 0);
-	cvs_senddir(root, cvs_files);
-	cvs_sendreq(root, CVS_REQ_XPANDMOD, NULL);
-
-	/* XXX not too sure why we have to send this arg */
-	cvs_sendarg(root, "-N", 0);
-	cvs_sendarg(root, argv[0], 0);
-	cvs_senddir(root, cvs_files);
-	cvs_sendreq(root, CVS_REQ_CO, NULL);
 
 	return (0);
 }
