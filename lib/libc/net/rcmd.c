@@ -34,7 +34,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: rcmd.c,v 1.35 2000/02/18 04:12:20 itojun Exp $";
+static char *rcsid = "$OpenBSD: rcmd.c,v 1.36 2000/02/25 04:39:08 itojun Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -58,9 +58,10 @@ static char *rcsid = "$OpenBSD: rcmd.c,v 1.35 2000/02/18 04:12:20 itojun Exp $";
 #include <netgroup.h>
 
 int	__ivaliduser __P((FILE *, in_addr_t, const char *, const char *));
-int	__ivaliduser_sa __P((FILE *, struct sockaddr *, const char *, const char *));
-static int __icheckhost __P((struct sockaddr *, const char *));
-static char *__gethostloop __P((struct sockaddr *));
+int	__ivaliduser_sa __P((FILE *, struct sockaddr *, socklen_t,
+		const char *, const char *));
+static int __icheckhost __P((struct sockaddr *, socklen_t, const char *));
+static char *__gethostloop __P((struct sockaddr *, socklen_t));
 
 int
 rcmd(ahost, rport, locuser, remuser, cmd, fd2p)
@@ -391,14 +392,11 @@ iruserok_sa(raddr, rlen, superuser, ruser, luser)
 	char pbuf[MAXPATHLEN];
 
 	sa = (struct sockaddr *)raddr;
-#ifdef lint
-	rlen = rlen;
-#endif
 	first = 1;
 	hostf = superuser ? NULL : fopen(_PATH_HEQUIV, "r");
 again:
 	if (hostf) {
-		if (__ivaliduser_sa(hostf, sa, luser, ruser) == 0) {
+		if (__ivaliduser_sa(hostf, sa, rlen, luser, ruser) == 0) {
 			(void)fclose(hostf);
 			return (0);
 		}
@@ -467,13 +465,15 @@ __ivaliduser(hostf, raddrl, luser, ruser)
 	sin.sin_family = AF_INET;
 	sin.sin_len = sizeof(struct sockaddr_in);
 	memcpy(&sin.sin_addr, &raddrl, sizeof(sin.sin_addr));
-	return __ivaliduser_sa(hostf, (struct sockaddr *)&sin, luser, ruser);
+	return __ivaliduser_sa(hostf, (struct sockaddr *)&sin, sin.sin_len,
+		    luser, ruser);
 }
 
 int
-__ivaliduser_sa(hostf, raddr, luser, ruser)
+__ivaliduser_sa(hostf, raddr, salen, luser, ruser)
 	FILE *hostf;
 	struct sockaddr *raddr;
+	socklen_t salen;
 	const char *luser, *ruser;
 {
 	register char *user, *p;
@@ -536,14 +536,14 @@ __ivaliduser_sa(hostf, raddr, luser, ruser)
 				break;
 			case '@':
 				if (rhost == (char *)-1)
-					rhost = __gethostloop(raddr);
+					rhost = __gethostloop(raddr, salen);
 				hostok = 0;
 				if (rhost)
 					hostok = innetgr(&ahost[2], rhost,
 					    NULL, domain);
 				break;
 			default:
-				hostok = __icheckhost(raddr, &ahost[1]);
+				hostok = __icheckhost(raddr, salen, &ahost[1]);
 				break;
 			}
 		else if (ahost[0] == '-')
@@ -553,18 +553,18 @@ __ivaliduser_sa(hostf, raddr, luser, ruser)
 				break;
 			case '@':
 				if (rhost == (char *)-1)
-					rhost = __gethostloop(raddr);
+					rhost = __gethostloop(raddr, salen);
 				hostok = 0;
 				if (rhost)
 					hostok = -innetgr(&ahost[2], rhost,
 					    NULL, domain);
 				break;
 			default:
-				hostok = -__icheckhost(raddr, &ahost[1]);
+				hostok = -__icheckhost(raddr, salen, &ahost[1]);
 				break;
 			}
 		else
-			hostok = __icheckhost(raddr, ahost);
+			hostok = __icheckhost(raddr, salen, ahost);
 
 
 		if (auser[0] == '+')
@@ -620,8 +620,9 @@ bail:
  * if af == AF_INET6.
  */
 static int
-__icheckhost(raddr, lhost)
+__icheckhost(raddr, salen, lhost)
 	struct sockaddr *raddr;
+	socklen_t salen;
 	const char *lhost;
 {
 	struct addrinfo hints, *res, *r;
@@ -634,7 +635,7 @@ __icheckhost(raddr, lhost)
 #endif
 
 	h1[0] = '\0';
-	if (getnameinfo(raddr, raddr->sa_len, h1, sizeof(h1), NULL, 0,
+	if (getnameinfo(raddr, salen, h1, sizeof(h1), NULL, 0,
 	    niflags) != 0)
 		return (0);
 
@@ -675,8 +676,9 @@ __icheckhost(raddr, lhost)
  * if af == AF_INET6.
  */
 static char *
-__gethostloop(raddr)
+__gethostloop(raddr, salen)
 	struct sockaddr *raddr;
+	socklen_t salen;
 {
 	static char remotehost[NI_MAXHOST];
 	char h1[NI_MAXHOST], h2[NI_MAXHOST];
@@ -689,10 +691,10 @@ __gethostloop(raddr)
 #endif
 
 	h1[0] = remotehost[0] = '\0';
-	if (getnameinfo(raddr, raddr->sa_len, remotehost, sizeof(remotehost),
+	if (getnameinfo(raddr, salen, remotehost, sizeof(remotehost),
 	    NULL, 0, NI_NAMEREQD) != 0)
 		return (NULL);
-	if (getnameinfo(raddr, raddr->sa_len, h1, sizeof(h1), NULL, 0,
+	if (getnameinfo(raddr, salen, h1, sizeof(h1), NULL, 0,
 	    niflags) != 0)
 		return (NULL);
 
