@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.38 1998/05/18 18:29:07 mickey Exp $
+#	$OpenBSD: Makefile,v 1.39 1998/08/28 22:46:02 mickey Exp $
 
 #
 # For more information on building in tricky environments, please see
@@ -138,7 +138,7 @@ cross-binutils-new:
 	    /bin/sh ${BSDSRCDIR}/gnu/usr.bin/binutils/configure \
 	    --prefix ${CROSSDIR}/usr \
 	    --target `cat ${CROSSDIR}/TARGET_CANON` && \
-	    ${MAKE} && ${MAKE} install)
+	    ${MAKE} CFLAGS=${CFLAGS} && ${MAKE} DESTDIR=${CROSSDIR} install)
 	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 755 \
 	    ${.CURDIR}/usr.bin/lorder/lorder.sh.gnm \
 	    ${CROSSDIR}/usr/bin/`cat ${CROSSDIR}/TARGET_CANON`-lorder
@@ -310,12 +310,13 @@ cross-lib:
 		(cd $$lib; \
 		    ${CROSSENV} MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
 		    ${MAKE} NOMAN=; \
-		    DESTDIR=${CROSSDIR} MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
-		    ${MAKE} NOMAN= install); \
+		    ${CROSSENV} MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
+		    DESTDIR=${CROSSDIR} ${MAKE} NOMAN= install); \
 	    done; \
 	    ${CROSSENV} MAKEOBJDIR=obj.${MACHINE}.${TARGET} ${MAKE} NOMAN=; \
-	    MAKEOBJDIR=obj.${MACHINE}.${TARGET} DESTDIR=${CROSSDIR} \
-	    SKIPDIR=libocurses/PSD.doc ${MAKE} NOMAN= install)
+	    ${CROSSENV} MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
+	    DESTDIR=${CROSSDIR} SKIPDIR=libocurses/PSD.doc \
+	    ${MAKE} NOMAN= install)
 	ln -sf ${CROSSDIR}/usr/lib \
 	    ${CROSSDIR}/usr/`cat ${CROSSDIR}/TARGET_CANON`/lib
 
