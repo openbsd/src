@@ -52,5 +52,6 @@ void sha1Init __P((SHA1_INFO *));
 void sha1Transform __P((SHA1_INFO *));
 void sha1Final __P((SHA1_INFO *));
 void sha1Update __P((SHA1_INFO *, unsigned char *, int));
+void sha1ByteReverse __P((u_int32_t *, int));
 
 #endif /* _SHA1_H */
