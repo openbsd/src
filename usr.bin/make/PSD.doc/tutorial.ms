@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tutorial.ms,v 1.4 1998/12/05 00:06:30 espie Exp $
+.\"	$OpenBSD: tutorial.ms,v 1.5 1999/06/06 07:03:15 pjanzen Exp $
 .\"	$NetBSD: tutorial.ms,v 1.3 1996/03/06 00:15:31 christos Exp $
 .\" Copyright (c) 1988, 1989 by Adam de Boor
 .\" Copyright (c) 1989 by Berkeley Softworks
@@ -2601,7 +2601,7 @@ in the variable to be replaced by
 .I replacement-string ,
 unless the
 .CW g
-flag is given at the end, in which case all occurences of the string
+flag is given at the end, in which case all occurrences of the string
 are replaced. The substitution is performed on each word in the
 variable in turn. If 
 .I search-string
@@ -3338,7 +3338,7 @@ When the echo off command is executed, the shell will print
 .CW \-x
 flag (rather than the
 .CW \-v
-flag PMake usually uses)). PMake will remove all occurences of this
+flag PMake usually uses)). PMake will remove all occurrences of this
 string from the output, so you don't notice extra commands you didn't
 put there.
 .Bp
