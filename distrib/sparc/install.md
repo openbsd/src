@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.10 1997/05/16 02:09:38 grr Exp $
+#	$OpenBSD: install.md,v 1.11 1997/05/16 03:40:41 grr Exp $
 #	$NetBSD: install.md,v 1.3.2.5 1996/08/26 15:45:28 gwr Exp $
 #
 #
@@ -44,6 +44,20 @@
 # Machine-dependent install sets
 MDSETS="xbin xman xinc xcon"
 MSGBUF=/kern/msgbuf
+HOSTNAME=/kern/hostname
+
+# an alias for hostname(1)
+hostname() {
+	if [ -x /bin/hostname ]; then
+		/bin/hostname $1
+	else
+		if [ -z "$1" ]; then
+			cat $HOSTNAME
+		else
+			echo $1 > $HOSTNAME
+		fi
+	fi
+}
 
 md_set_term() {
 	if [ ! -z "$TERM" ]; then
@@ -83,20 +97,20 @@ md_machine_arch() {
 md_get_diskdevs() {
 	# return available disk devices
 	# dmesg | egrep "(^sd[0-9] |^x[dy][0-9] )" | cut -d" " -f1 | sort -u
-	sed -n -e '1,/^Copyright /d' -e '/^sd[0-9]/{s/ .*//;p;}' -e '/^x[dy][0-9]/{s/ .*//;p;}' \
-	    <  $MSGBUF
+	sed -n -e '1,/^OpenBSD /d' -e '/^sd[0-9] /{s/ .*//;p;}' \
+				-e '/^x[dy][0-9] /{s/ .*//;p;}' \ <  $MSGBUF
 }
 
 md_get_cddevs() {
 	# return available CDROM devices
 	# dmesg | grep "^cd[0-9] " | cut -d" " -f1 | sort -u
-	sed -n -e '1,/^Copyright /d' -e '/^cd[0-9]/{s/ .*//;p;q;}' < $MSGBUF
+	sed -n -e '1,/^OpenBSD /d' -e '/^cd[0-9] /{s/ .*//;p;}' < $MSGBUF
 }
 
 md_get_ifdevs() {
 	# return available network devices
 	# dmesg | egrep "(^le[0-9] |^ie[0-9] )" | cut -d" " -f1 | sort -u
-	sed -n -e '1,/^Copyright /d' -e '/^le[0-9]/{s/ .*//;p;q;}'< $MSGBUF
+	sed -n -e '1,/^OpenBSD /d' -e '/^le[0-9] /{s/ .*//;p;}'< $MSGBUF
 }
 
 md_get_partition_range() {
