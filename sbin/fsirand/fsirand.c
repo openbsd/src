@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsirand.c,v 1.6 1997/02/09 06:41:08 millert Exp $	*/
+/*	$OpenBSD: fsirand.c,v 1.7 1997/02/11 06:59:25 millert Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -31,7 +31,7 @@
  */
 
 #ifndef lint                                                              
-static char rcsid[] = "$OpenBSD: fsirand.c,v 1.6 1997/02/09 06:41:08 millert Exp $";
+static char rcsid[] = "$OpenBSD: fsirand.c,v 1.7 1997/02/11 06:59:25 millert Exp $";
 #endif /* not lint */                                                        
 
 #include <sys/types.h>
@@ -192,7 +192,6 @@ fsirand(device)
 		oldibufsize = ibufsize;
 	}
 
-#ifdef HAVE_FS_ID
 	if (printonly && (sblock->fs_id[0] || sblock->fs_id[1])) {
 		if (sblock->fs_inodefmt >= FS_44INODEFMT && sblock->fs_id[0])
 			(void)printf("%s was randomized on %s", devpath,
@@ -218,11 +217,9 @@ fsirand(device)
 			return (1);
 		}
 	}
-#endif
 
 	/* For each cylinder group, randomize inodes and update backup sblock */
 	for (cg = 0, inumber = 0; cg < sblock->fs_ncg; cg++) {
-#ifdef HAVE_FS_ID
 		/* Update superblock if appropriate */
 		if ((sblock->fs_inodefmt >= FS_44INODEFMT) && !printonly) {
 			dblk = fsbtodb(sblock, cgsblock(sblock, cg));
@@ -236,7 +233,6 @@ fsirand(device)
 				return (1);
 			}
 		}
-#endif
 
 		/* Read in inodes, then print or randomize generation nums */
 		dblk = fsbtodb(sblock, ino_to_fsba(sblock, inumber));
