@@ -1,5 +1,5 @@
-/*	$OpenBSD: zs.c,v 1.2 1996/06/08 16:01:42 briggs Exp $	*/
-/*	$NetBSD: zs.c,v 1.2 1996/05/23 05:18:48 briggs Exp $	*/
+/*	$OpenBSD: zs.c,v 1.3 1996/06/08 16:21:13 briggs Exp $	*/
+/*	$NetBSD: zs.c,v 1.4 1996/06/07 10:41:35 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -286,7 +286,7 @@ zsc_attach(parent, self, aux)
 		if (channel == 0) {
 			zs_write_reg(cs, 9, 0);
 
-			chip = zs_checkchip(cs);
+			chip = 0; /* We'll turn chip checking on post 1.2 */
 			printf(" chip type %d \n",chip);
 		}
 		cs->cs_chip = chip;
@@ -327,6 +327,8 @@ zstty_mdattach(zsc, zst, cs, tp)
 	struct zs_chanstate *cs;
 	struct tty *tp;
 {
+	int theflags;
+
 	zst->zst_resetdef = 0;
 	cs->cs_clock_count = 3; /* internal + externals */
 	cs->cs_cclk_flag = 0;  /* Not doing anything fancy by default */
@@ -334,10 +336,52 @@ zstty_mdattach(zsc, zst, cs, tp)
 	cs->cs_clocks[0].clk = mac68k_machine.sccClkConst*32;
 	cs->cs_clocks[0].flags = ZSC_RTXBRG; /* allowing divide by 16 will
 					melt the driver! */
-	cs->cs_clocks[1].clk = 0;
+
 	cs->cs_clocks[1].flags = ZSC_RTXBRG | ZSC_RTXDIV | ZSC_VARIABLE | ZSC_EXTERN;
-	cs->cs_clocks[2].clk = 0;
 	cs->cs_clocks[2].flags = ZSC_TRXDIV | ZSC_VARIABLE;
+	if (zst->zst_dev.dv_unit == 0) {
+		theflags = mac68k_machine.modem_flags;
+		cs->cs_clocks[1].clk = mac68k_machine.modem_dcd_clk;
+		cs->cs_clocks[2].clk = mac68k_machine.modem_cts_clk;
+	} else if (zst->zst_dev.dv_unit == 1) {
+		theflags = mac68k_machine.print_flags;
+		cs->cs_clocks[1].flags = ZSC_VARIABLE;
+		/*
+		 * Yes, we aren't defining ANY clock source enables for the
+		 * printer's DCD clock in. The hardware won't let us
+		 * use it. But a clock will freak out the chip, so we
+		 * let you set it, telling us to bar interrupts on the line.
+		 */
+		cs->cs_clocks[1].clk = mac68k_machine.print_dcd_clk;
+		cs->cs_clocks[2].clk = mac68k_machine.print_cts_clk;
+	}
+
+	if (cs->cs_clocks[1].clk)
+		zst->zst_hwflags |= ZS_HWFLAG_IGDCD;
+	if (cs->cs_clocks[2].clk)
+		zst->zst_hwflags |= ZS_HWFLAG_IGCTS;
+
+	if (theflags & ZSMAC_RAW) {
+		zst->zst_cflag = ZSTTY_RAW_CFLAG;
+		zst->zst_iflag = ZSTTY_RAW_IFLAG;
+		zst->zst_lflag = ZSTTY_RAW_LFLAG;
+		zst->zst_oflag = ZSTTY_RAW_OFLAG;
+		printf(" (raw defaults)");
+	}
+	if (theflags & ZSMAC_LOCALTALK) {
+		printf(" shielding from LocalTalk");
+		zst->zst_ospeed = tp->t_ospeed = 1;
+		zst->zst_ispeed = tp->t_ispeed = 1;
+		cs->cs_defspeed = 1;
+		cs->cs_creg[ZSRR_BAUDLO] = cs->cs_preg[ZSRR_BAUDLO] = 0xff;
+		cs->cs_creg[ZSRR_BAUDHI] = cs->cs_preg[ZSRR_BAUDHI] = 0xff;
+		zs_write_reg(cs, ZSRR_BAUDLO, 0xff);
+		zs_write_reg(cs, ZSRR_BAUDHI, 0xff);
+		/*
+		 * If we might have LocalTalk, then make sure we have the
+		 * Baud rate low-enough to not do any damage.
+		 */
+	}
 
 	/* For the mac, we have rtscts = check CTS for output control, no
 	 * input control. mdmbuf means check DCD for output, and use DTR
@@ -364,9 +408,13 @@ void
 zsmd_setclock(cs)
 	struct zs_chanstate *cs;
 {
-	if (cs->cs_pclk_flag & ZSC_EXTERN) {
-	/* XXX need to set the via! */
-	}
+	if (cs->cs_channel != 0)
+		return;
+	/*
+	 * If the new clock has the external bit set, then select the
+	 * external source.
+	 */
+	via_set_modem((cs->cs_pclk_flag & ZSC_EXTERN) ? 1 : 0);
 }
 
 int

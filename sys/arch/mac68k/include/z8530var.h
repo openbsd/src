@@ -1,5 +1,5 @@
-/*	$OpenBSD: z8530var.h,v 1.2 1996/05/26 18:36:11 briggs Exp $	*/
-/*	$NetBSD: z8530var.h,v 1.1 1996/05/18 18:54:45 briggs Exp $	*/
+/*	$OpenBSD: z8530var.h,v 1.3 1996/06/08 16:21:15 briggs Exp $	*/
+/*	$NetBSD: z8530var.h,v 1.2 1996/06/07 10:27:19 briggs Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -103,5 +103,9 @@ void zsmd_setclock  __P((struct zs_chanstate *cs));
 #define	ZSTTY_RAW_LFLAG (ECHOE|ECHOKE|ECHOCTL)
 #define	ZSTTY_RAW_OFLAG (ONLCR | OXTABS)
 /* Above taken from looking at a tty after a stty raw */
+
+/* Booter flags interface */
+#define ZSMAC_RAW	0x01
+#define ZSMAC_LOCALTALK	0x02
 
 #define zsprintf printf

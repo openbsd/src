@@ -1,5 +1,5 @@
-/*	$OpenBSD: machdep.c,v 1.14 1996/05/26 18:36:22 briggs Exp $	*/
-/*	$NetBSD: machdep.c,v 1.105 1996/05/25 14:45:31 briggs Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.15 1996/06/08 16:21:16 briggs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.108 1996/06/07 10:48:26 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1691,12 +1691,12 @@ static romvec_t romvecs[] =
 		(caddr_t) 0x4080c5cc,	/* InitUtil */
 		(caddr_t) 0x4080b186,	/* ReadXPRam */
 		(caddr_t) 0x4080b190,	/* WriteXPRam */
-		(caddr_t) 0x408b39b2,	/* jClkNoMem */		/* From PB180 */
+		(caddr_t) 0x408b39b2,	/* jClkNoMem */	/* From PB180 */
 		(caddr_t) 0x4080a818,	/* ADBAlternateInit */
 		(caddr_t) 0x40814800,	/* Egret */
-		(caddr_t) 0x40888400,	/* InitPwrMgr */	/* From PB180 */
-		(caddr_t) 0x0,		/* ADBReInit_JTBL */
-		(caddr_t) 0x0,		/* ROMResourceMap List Head */
+		(caddr_t) 0x40888400,	/* InitPwrMgr */ /* From PB180 */
+		(caddr_t) 0x408cce28,	/* ADBReInit_JTBL -- from PB160*/
+		(caddr_t) 0x4087eb90,	/* ROMRsrcMap List Head -- from PB160*/
 		(caddr_t) 0x4081c406,	/* FixDiv, wild guess */
 		(caddr_t) 0x4081c312,	/* FixMul, wild guess */
 	},
@@ -1898,10 +1898,10 @@ static romvec_t romvecs[] =
 		(caddr_t) 0x40a0b190,	/* WriteXPRam */
 		(caddr_t) 0x40ab3bf4,	/* jClkNoMem */
 		(caddr_t) 0x40a0a818,	/* ADBAlternateInit */
-		(caddr_t) 0x40ad1450,	/* Egret */
+		(caddr_t) 0x40acfd40,	/* Egret */
 		(caddr_t) 0x40a147c4,	/* InitEgret */
-		(caddr_t) 0x0,		/* ADBReInit_JTBL */
-		(caddr_t) 0x0,		/* ROMResourceMap List Head */
+		(caddr_t) 0x40a038a0,	/* ADBReInit_JTBL */
+		(caddr_t) 0x40a7eb90,	/* ROMResourceMap List Head */
 		(caddr_t) 0x40a1c406,	/* FixDiv */
 		(caddr_t) 0x40a1c312,	/* FixMul */
 	},
@@ -2104,6 +2104,13 @@ getenvvars()
 	mac68k_machine.do_graybars = getenv("GRAYBARS");
 	mac68k_machine.serial_boot_echo = getenv("SERIALECHO");
 	mac68k_machine.serial_console = getenv("SERIALCONSOLE");
+
+	mac68k_machine.modem_flags = getenv("SERIAL_MODEM_FLAGS");
+	mac68k_machine.modem_cts_clk = getenv("SERIAL_MODEM_HSKICLK");
+	mac68k_machine.modem_dcd_clk = getenv("SERIAL_MODEM_GPICLK");
+	mac68k_machine.print_flags = getenv("SERIAL_PRINT_FLAGS");
+	mac68k_machine.print_cts_clk = getenv("SERIAL_PRINT_HSKICLK");
+	mac68k_machine.print_dcd_clk = getenv("SERIAL_PRINT_GPICLK");
 	/* Should probably check this and fail if old */
 	mac68k_machine.booter_version = getenv("BOOTERVER");
 
@@ -2176,7 +2183,7 @@ setmachdep()
 	 * used later when we re-map the vectors from MacOS Address
 	 * Space to NetBSD Address Space.
 	 */
-	if ((mac68k_machine.serial_console & 0x01) == 0)
+	if ((mac68k_machine.serial_console & 0x03) == 0)
 		mrg_MacOSROMVectors = cpui->rom_vectors;
 
 	/*

@@ -1,5 +1,5 @@
-/*	$OpenBSD: cpu.h,v 1.6 1996/05/26 18:35:46 briggs Exp $	*/
-/*	$NetBSD: cpu.h,v 1.36 1996/05/25 14:48:38 briggs Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.7 1996/06/08 16:21:14 briggs Exp $	*/
+/*	$NetBSD: cpu.h,v 1.37 1996/06/07 00:15:33 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -241,6 +241,12 @@ struct mac68k_machine_S {
 	int			do_graybars;
 	int			serial_boot_echo;
 	int			serial_console;
+	int			modem_flags;
+	int			modem_cts_clk;
+	int			modem_dcd_clk;
+	int			print_flags;
+	int			print_cts_clk;
+	int			print_dcd_clk;
 	/*
 	 * Misc. hardware info.
 	 */

@@ -1,5 +1,5 @@
-/*	$OpenBSD: via.c,v 1.6 1996/05/26 18:36:37 briggs Exp $	*/
-/*	$NetBSD: via.c,v 1.44 1996/05/25 16:31:04 briggs Exp $	*/
+/*	$OpenBSD: via.c,v 1.7 1996/06/08 16:21:17 briggs Exp $	*/
+/*	$NetBSD: via.c,v 1.47 1996/06/07 13:04:46 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -172,6 +172,20 @@ VIA_initialize()
 	}
 }
 
+/*
+ * Set the state of the modem serial port's clock source.
+ */
+void
+via_set_modem(onoff)
+	int	onoff;
+{
+	via_reg(VIA1, vDirA) |= DA1O_vSync;
+	if (onoff)
+		via_reg(VIA1, vBufA) |= DA1O_vSync;
+	else
+		via_reg(VIA1, vBufA) &= ~DA1O_vSync;
+}
+
 void
 via1_intr(fp)
 	struct frame *fp;
@@ -222,9 +236,8 @@ via2_intr(fp)
 
 	bitnum = 0;
 	do {
-		if (intbits & mask) {
+		if (intbits & mask)
 			via2itab[bitnum](via2iarg[bitnum]);
-		}
 		mask <<= 1;
 	} while (intbits >= mask && ++bitnum < 7);
 }
@@ -248,9 +261,8 @@ rbv_intr(fp)
 
 	bitnum = 0;
 	do {
-		if (intbits & mask) {
+		if (intbits & mask)
 			via2itab[bitnum](via2iarg[bitnum]);
-		}
 		mask <<= 1;
 	} while (intbits >= mask && ++bitnum < 7);
 }

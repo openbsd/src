@@ -1,5 +1,5 @@
-/*	$OpenBSD: mac68k5380.c,v 1.5 1996/05/26 18:35:28 briggs Exp $	*/
-/*	$NetBSD: mac68k5380.c,v 1.24 1996/05/25 16:42:24 briggs Exp $	*/
+/*	$OpenBSD: mac68k5380.c,v 1.6 1996/06/08 16:21:11 briggs Exp $	*/
+/*	$NetBSD: mac68k5380.c,v 1.25 1996/06/07 01:45:43 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs

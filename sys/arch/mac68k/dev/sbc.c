@@ -1,5 +1,5 @@
-/*	$OpenBSD: sbc.c,v 1.1 1996/05/26 19:02:09 briggs Exp $	*/
-/*	$NetBSD: sbc.c,v 1.6 1996/05/08 03:44:56 scottr Exp $	*/
+/*	$OpenBSD: sbc.c,v 1.2 1996/06/08 16:21:12 briggs Exp $	*/
+/*	$NetBSD: sbc.c,v 1.7 1996/05/29 14:26:33 scottr Exp $	*/
 
 /*
  * Copyright (c) 1996 Scott Reynolds
@@ -750,8 +750,8 @@ sbc_drq_intr(p)
 
 	if (setjmp((label_t *) nofault)) {
 		nofault = (int *) 0;
-		count = (  (u_long) mac68k_buserr_addr
-			 - (u_long) sc->sc_drq_addr);
+		count = ((  (u_long) mac68k_buserr_addr
+			  - (u_long) sc->sc_drq_addr));
 
 		if ((count < 0) || (count > dh->dh_len)) {
 			printf("%s: complete=0x%x (pending 0x%x)\n",
@@ -772,6 +772,7 @@ sbc_drq_intr(p)
 	}
 
 	if (dh->dh_flags & SBC_DH_OUT) { /* Data Out */
+#ifdef notyet
 		/*
 		 * Get the source address aligned.
 		 */
@@ -817,6 +818,32 @@ sbc_drq_intr(p)
 			dh->dh_len -= dcount;
 			dh->dh_addr += dcount;
 		}
+#else
+		while (dh->dh_len) {
+			dcount = count = min(dh->dh_len, MAX_DMA_LEN);
+			drq = (volatile u_int8_t *) sc->sc_drq_addr;
+			data = (u_int8_t *) dh->dh_addr;
+#define W1		*drq++ = *data++
+			while (count) {
+				W1; count--;
+			}
+#undef W1
+			dh->dh_len -= dcount;
+			dh->dh_addr += dcount;
+		}
+#endif
+
+		/* Wait for the GLUE to raise /ACK */
+		while ((*ncr_sc->sci_csr & SCI_CSR_ACK) == 0)
+			;
+
+		/*
+		 * If the SCSI bus is still busy, trigger a bus error
+		 * by writing another byte to the SBC.
+		 */
+		if (*ncr_sc->sci_bus_csr & SCI_BUS_BSY)
+			*((u_int8_t *) sc->sc_drq_addr) = 0;
+
 	} else {	/* Data In */
 		/*
 		 * Get the dest address aligned.
@@ -891,6 +918,13 @@ sbc_drq_intr(p)
 	 * so we no longer short-circuit bus errors.
 	 */
 	nofault = (int *) 0;
+
+#ifdef SBC_DEBUG
+	if (sbc_debug & (SBC_DB_REG | SBC_DB_INTR))
+		printf("%s: drq intr complete: csr=0x%x, bus_csr=0x%x\n",
+		    ncr_sc->sc_dev.dv_xname, *ncr_sc->sci_csr,
+		    *ncr_sc->sci_bus_csr);
+#endif
 }
 
 void
@@ -1000,22 +1034,25 @@ void
 sbc_dma_start(ncr_sc)
 	struct ncr5380_softc *ncr_sc;
 {
+	register struct sbc_softc *sc = (struct sbc_softc *) ncr_sc;
 	struct sci_req *sr = ncr_sc->sc_current;
 	struct sbc_pdma_handle *dh = sr->sr_dma_hand;
 
 	/*
-	 * Match bus phase, set DMA mode, and assert data bus (for
-	 * writing only), then start the transfer.
+	 * Match bus phase, clear pending interrupts, set DMA mode, and
+	 * assert data bus (for writing only), then start the transfer.
 	 */
 	if (dh->dh_flags & SBC_DH_OUT) {
 		*ncr_sc->sci_tcmd = PHASE_DATA_OUT;
 		SCI_CLR_INTR(ncr_sc);
+		*sc->sc_iflag = 0x80 | (V2IF_SCSIIRQ | V2IF_SCSIDRQ);
 		*ncr_sc->sci_mode |= SCI_MODE_DMA;
 		*ncr_sc->sci_icmd = SCI_ICMD_DATA;
 		*ncr_sc->sci_dma_send = 0;
 	} else {
 		*ncr_sc->sci_tcmd = PHASE_DATA_IN;
 		SCI_CLR_INTR(ncr_sc);
+		*sc->sc_iflag = 0x80 | (V2IF_SCSIIRQ | V2IF_SCSIDRQ);
 		*ncr_sc->sci_mode |= SCI_MODE_DMA;
 		*ncr_sc->sci_icmd = 0;
 		*ncr_sc->sci_irecv = 0;
@@ -1040,6 +1077,7 @@ void
 sbc_dma_stop(ncr_sc)
 	struct ncr5380_softc *ncr_sc;
 {
+	register struct sbc_softc *sc = (struct sbc_softc *) ncr_sc;
 	struct sci_req *sr = ncr_sc->sc_current;
 	struct sbc_pdma_handle *dh = sr->sr_dma_hand;
 	register int ntrans;
@@ -1072,6 +1110,7 @@ sbc_dma_stop(ncr_sc)
 
 		/* Clear any pending interrupts. */
 		SCI_CLR_INTR(ncr_sc);
+		*sc->sc_iflag = 0x80 | (V2IF_SCSIIRQ | V2IF_SCSIDRQ);
 	}
 
 	/* Put SBIC back into PIO mode. */
