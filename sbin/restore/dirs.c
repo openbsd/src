@@ -1,4 +1,4 @@
-/*	$OpenBSD: dirs.c,v 1.9 1996/12/04 01:41:53 deraadt Exp $	*/
+/*	$OpenBSD: dirs.c,v 1.10 1996/12/15 18:49:24 millert Exp $	*/
 /*	$NetBSD: dirs.c,v 1.16 1995/06/19 00:20:11 cgd Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)dirs.c	8.5 (Berkeley) 8/31/94";
 #else
-static char rcsid[] = "$OpenBSD: dirs.c,v 1.9 1996/12/04 01:41:53 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: dirs.c,v 1.10 1996/12/15 18:49:24 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -270,8 +270,9 @@ treescan(pname, ino, todo)
 	 * begin search through the directory
 	 * skipping over "." and ".."
 	 */
-	(void) strncpy(locname, pname, MAXPATHLEN);
-	(void) strncat(locname, "/", MAXPATHLEN);
+	(void) strncpy(locname, pname, sizeof(locname) - 1);
+	locname[sizeof(locname) - 1] = '\0';
+	(void) strncat(locname, "/", sizeof(locname) - strlen(locname) - 1);
 	namelen = strlen(locname);
 	rst_seekdir(dirp, itp->t_seekpt, itp->t_seekpt);
 	dp = rst_readdir(dirp); /* "." */
@@ -291,9 +292,9 @@ treescan(pname, ino, todo)
 	 */
 	while (dp != NULL) {
 		locname[namelen] = '\0';
-		if (namelen + dp->d_namlen >= MAXPATHLEN) {
+		if (namelen + dp->d_namlen >= sizeof(locname)) {
 			fprintf(stderr, "%s%s: name exceeds %d char\n",
-				locname, dp->d_name, MAXPATHLEN);
+				locname, dp->d_name, sizeof(locname) - 1);
 		} else {
 			(void) strncat(locname, dp->d_name, (int)dp->d_namlen);
 			treescan(locname, dp->d_ino, todo);
@@ -464,7 +465,7 @@ dcvt(odp, ndp)
 	register struct direct *ndp;
 {
 
-	memset(ndp, 0, (long)(sizeof *ndp));
+	memset(ndp, 0, (size_t)(sizeof *ndp));
 	ndp->d_ino =  odp->d_ino;
 	ndp->d_type = DT_UNKNOWN;
 	(void) strncpy(ndp->d_name, odp->d_name, ODIRSIZ);
