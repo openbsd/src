@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.82 2000/09/29 03:51:11 angelos Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.83 2000/10/25 22:40:40 aaron Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -532,7 +532,7 @@ sendit:
          * If we're doing Path MTU discovery, we need to set DF unless
          * the route's MTU is locked.
 	 */
-	if ((flags & IP_MTUDISC) && ro->ro_rt &&
+	if ((flags & IP_MTUDISC) && ro && ro->ro_rt &&
 	    (ro->ro_rt->rt_rmx.rmx_locks & RTV_MTU) == 0)
 		ip->ip_off |= IP_DF;
 		
