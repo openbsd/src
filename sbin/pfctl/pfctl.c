@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.134 2003/01/18 15:00:24 cedric Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.135 2003/01/18 22:23:00 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -416,6 +416,7 @@ pfctl_kill_states(int dev, int opts)
 				/* fixup psk.psk_af */
 				psk.psk_af = resp[1]->ai_family;
 			}
+			freeaddrinfo(res[1]);
 		} else {
 			if (ioctl(dev, DIOCKILLSTATES, &psk))
 				err(1, "DIOCKILLSTATES");
@@ -426,8 +427,6 @@ pfctl_kill_states(int dev, int opts)
 	}
 
 	freeaddrinfo(res[0]);
-	if (res[1])
-		freeaddrinfo(res[1]);
 
 	if ((opts & PF_OPT_QUIET) == 0)
 		fprintf(stderr, "killed %d states from %d sources and %d "
