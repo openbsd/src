@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.177 2002/10/30 11:52:49 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.178 2002/10/30 11:55:19 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -2929,10 +2929,7 @@ host(char *s)
 
 	if (ifa_exists(s) || !strncmp(s, "self", IFNAMSIZ)) {
 		/* interface with this name exists */
-		if ((h = ifa_lookup(s, PFCTL_IFLOOKUP_HOST)) == NULL)
-			return (NULL);
-		else
-			return (h);
+		return(ifa_lookup(s, PFCTL_IFLOOKUP_HOST));
 	}
 
 	if (inet_aton(s, &ina) == 1) {
