@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc,v 1.16 1998/05/20 19:29:15 deraadt Exp $
+#	$OpenBSD: files.sparc,v 1.17 1998/07/04 01:27:53 deraadt Exp $
 #	$NetBSD: files.sparc,v 1.44 1997/08/31 21:29:16 pk Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
@@ -100,6 +100,18 @@ file	arch/sparc/dev/dma.c		dma | ledma
 device lebuffer {}
 attach lebuffer at sbus
 file	arch/sparc/dev/lebuffer.c	lebuffer
+
+device	qec {}
+attach	qec at sbus
+file	arch/sparc/dev/qec.c		qec
+
+device	be {}
+attach	be at qec
+file	arch/sparc/dev/be.c		be
+
+device	me {}
+attach	me at qec
+file	arch/sparc/dev/me.c		me
 
 device esp: scsi, ncr53c9x
 attach esp at sbus, dma, obio

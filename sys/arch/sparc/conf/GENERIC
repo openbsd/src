@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.28 1998/05/22 08:25:27 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.29 1998/07/04 01:27:52 deraadt Exp $
 # 	$NetBSD: GENERIC,v 1.48 1997/08/23 19:19:01 mjacob Exp $
 
 # Machine architecture; required by config(8)
@@ -136,6 +136,11 @@ lebuffer0	at sbus0 slot ? offset ?		# sun4m SBus
 lebuffer*	at sbus? slot ? offset ?		# sun4m SBus
 le0	at lebuffer0					#
 le*	at lebuffer?					#
+
+# Quad-ethernet glue device, and sub-devices
+qec*		at sbus0 slot ? offset ?
+#me*	at lebuffer?
+#be*	at lebuffer?
 
 # sun4/300 and sun4c Ethernet - an AMD 7990 LANCE
 le0	at sbus0 slot ? offset ?			# sun4c on-board
