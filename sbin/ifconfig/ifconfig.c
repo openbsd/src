@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.69 2002/07/08 00:48:54 deraadt Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.70 2002/11/23 15:08:50 henning Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -81,7 +81,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.69 2002/07/08 00:48:54 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.70 2002/11/23 15:08:50 henning Exp $";
 #endif
 #endif /* not lint */
 
@@ -2333,7 +2333,7 @@ in6_getaddr(s, which)
 #ifndef KAME_SCOPEID
 	struct sockaddr_in6 *sin6 = sin6tab[which];
 
-	sin->sin6_len = sizeof(*sin6);
+	sin6->sin6_len = sizeof(*sin6);
 	if (which != MASK)
 		sin6->sin6_family = AF_INET6;
 
