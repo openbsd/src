@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.14 2003/06/09 16:10:03 deraadt Exp $ */
+/*	$OpenBSD: ldasm.S,v 1.15 2003/07/09 21:01:10 drahn Exp $ */
 
 /*
  * Copyright (c) 2001 Niklas Hallqvist
@@ -95,6 +95,7 @@ L2:	ldiq	s3, L2		/* get where the linker thought we were */
 	mov	a5, s5
 	lda	s2, 0(sp)
 	mov	s2, a1
+	mov	0,  a2		/* dynamicp is unused on alpha */
 	CALL(_dl_boot_bind)
 	mov	s3, a0		/* **argv  */
 	mov	s4, a1		/* **envp  */

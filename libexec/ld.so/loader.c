@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.65 2003/07/06 20:03:57 deraadt Exp $ */
+/*	$OpenBSD: loader.c,v 1.66 2003/07/09 21:01:10 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -51,7 +51,7 @@ unsigned long _dl_boot(const char **, char **, const long, long *);
 void _dl_debug_state(void);
 void _dl_setup_env(char **);
 void _dl_dtors(void);
-void _dl_boot_bind(const long, long *);
+void _dl_boot_bind(const long, long *, Elf_Dyn *);
 
 const char *_dl_progname;
 int  _dl_pagesz;
@@ -414,7 +414,7 @@ _dl_boot(const char **argv, char **envp, const long loff, long *dl_data)
 }
 
 void
-_dl_boot_bind(const long sp, long *dl_data)
+_dl_boot_bind(const long sp, long *dl_data, Elf_Dyn *dynamicp)
 {
 	struct elf_object  dynld;	/* Resolver data for the loader */
 	AuxInfo		*auxstack;
@@ -464,6 +464,8 @@ _dl_boot_bind(const long sp, long *dl_data)
 
 #if defined(__alpha__)
 	dynp = (Elf_Dyn *)((long)_DYNAMIC);
+#elif defined(__sparc__) || defined(__sparc64__) || defined(__powerpc__)
+	dynp = dynamicp;
 #else
 	dynp = (Elf_Dyn *)((long)_DYNAMIC + loff);
 #endif

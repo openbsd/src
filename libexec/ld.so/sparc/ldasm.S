@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.12 2003/06/02 20:20:35 jason Exp $	*/
+/*	$OpenBSD: ldasm.S,v 1.13 2003/07/09 21:01:10 drahn Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -82,7 +82,21 @@ _dl_start:
 
 	add	%l3, DL_DATA_SIZE, %o0
 	mov	%o0, %l0
-	call	_dl_boot_bind		! _dl_boot_bind(sp,dl_data)
+
+	/*
+	 * need to figure out where _DYNAMIC is located newer binutils
+	 * does not fill in GOT to read _DYNAMIC before relocation.
+	 */
+	call	0f
+	 nop
+	call	_DYNAMIC+8		! not executed (no delay needed)
+0:	ld	[%o7+8], %o2		! load stub call instruction
+	sll	%o2, 2, %o2		! extract PC offset
+	sra	%o2, 0, %o2		! sign-extend
+
+	add	%o2, %o7, %o2		! real &_DYNAMIC
+
+	call	_dl_boot_bind		! _dl_boot_bind(sp,dl_data,dynamicp)
 	 mov	%l3, %o1
 
 	mov	%l3, %o3

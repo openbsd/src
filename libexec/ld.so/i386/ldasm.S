@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.6 2003/06/03 01:35:30 drahn Exp $ */
+/*	$OpenBSD: ldasm.S,v 1.7 2003/07/09 21:01:10 drahn Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -15,7 +15,7 @@
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
- * WsdfARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
  * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
  * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
  * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
@@ -40,6 +40,7 @@ _dl_start:
 	movl	%esp,%eax		# save stack pointer for _rtld
 	pushl	%ebx			# save ps_strings
 	subl	$DL_DATA_SIZE,%esp	# allocate dl_data
+	pushl	$0			# push 0 for dynamicp (unused on i386)
 	movl	%esp,%ebx
 	movl	%ebx,%edi		# save dl_data arg for dl_boot
 	pushl	%ebx			# push dl_data for dl_boot_bind
@@ -67,7 +68,7 @@ _dl_start:
 
 	call	_dl_boot@PLT		# _dl_boot(argv,envp,loff,dl_data)
 
-	addl	$4*4,%esp			# pop args
+	addl	$5*4,%esp		# pop args
 
 	addl	$DL_DATA_SIZE,%esp	# return dl_data
 
