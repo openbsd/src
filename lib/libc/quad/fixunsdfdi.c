@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: fixunsdfdi.c,v 1.3 2003/06/02 20:18:36 millert Exp $";
+static char rcsid[] = "$OpenBSD: fixunsdfdi.c,v 1.4 2004/04/25 21:05:01 dhartmei Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include "quad.h"
@@ -81,11 +81,11 @@ __fixunsdfdi(x)
 	x -= (double)t.uq;
 	if (x < 0) {
 		t.ul[H]--;
-		x += ULONG_MAX;
+		x += ULONG_MAX + 1;
 	}
 	if (x > ULONG_MAX) {
 		t.ul[H]++;
-		x -= ULONG_MAX;
+		x -= ULONG_MAX + 1;
 	}
 	t.ul[L] = (u_long)x;
 	return (t.uq);
