@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.README,v 1.25 2001/06/27 06:16:48 art Exp $
+#	$OpenBSD: bsd.README,v 1.26 2001/07/02 14:01:35 millert Exp $
 #	$NetBSD: bsd.README,v 1.17 1996/04/13 02:08:08 thorpej Exp $
 #	@(#)bsd.README	5.1 (Berkeley) 5/11/90
 
@@ -346,26 +346,39 @@ DPADD		Additional dependencies for the program.  Usually used for
 
 		The following libraries are predefined for DPADD:
 
+			LIBATALK	/usr/lib/libatalk.a
 			LIBC		/lib/libc.a
 			LIBCOMPAT	/usr/lib/libcompat.a
 			LIBCURSES	/usr/lib/libcurses.a
+			LIBCRYPTO	/usr/lib/libcrypto.a
 			LIBDBM		/usr/lib/libdbm.a
 			LIBDES		/usr/lib/libdes.a
-			LIBL		/usr/lib/libl.a
+			LIBEDIT		/usr/lib/libedit.a
+			LIBGCC		/usr/lib/libgcc.a
+			LIBKDB		/usr/lib/libkdb.a
+			LIBKEYNOTE	/usr/lib/libkeynote.a
 			LIBKDB		/usr/lib/libkdb.a
 			LIBKRB		/usr/lib/libkrb.a
+			LIBKAFS		/usr/lib/libkafs.a
 			LIBKVM		/usr/lib/libkvm.a
-			LIBOLDCURSES	/usr/lib/libocurses.a
+			LIBL		/usr/lib/libl.a
 			LIBM		/usr/lib/libm.a
 			LIBMP		/usr/lib/libmp.a
-			LIBPERL		/usr/lib/libperl.a
+			LIBOLDCURSES	/usr/lib/libocurses.a
 			LIBPC		/usr/lib/libpc.a
+			LIBPERL		/usr/lib/libperl.a
 			LIBPLOT		/usr/lib/libplot.a
-			LIBRPC		/usr/lib/sunrpc.a
+			LIBRESOLV	/usr/lib/libresolv.a
+			LIBRPCSVC	/usr/lib/librpcsvc.a
+			LIBSKEY		/usr/lib/libskey.a
+			LIBSSL		/usr/lib/libssl.a
+			LIBTELNET	/usr/lib/libtelnet.a
 			LIBTERMCAP	/usr/lib/libtermcap.a
 			LIBTERMLIB	/usr/lib/libtermlib.a
 			LIBUTIL		/usr/lib/libutil.a
+			LIBWRAP		/usr/lib/libwrap.a
 			LIBZ		/usr/lib/libz.a
+			LIBY		/usr/lib/liby.a
 
 SHAREDSTRINGS	If defined, a new .c.o rule is used that results in shared
 		strings, using xstr(1). Note that this will not work with
