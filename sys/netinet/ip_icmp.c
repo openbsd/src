@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.27 2000/10/09 14:39:46 provos Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.28 2000/10/10 14:24:33 itojun Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -86,9 +86,13 @@ int	icmpbmcastecho = 0;
 #ifdef ICMPPRINTFS
 int	icmpprintfs = 0;
 #endif
+int	icmperrppslim;
+int	icmperrpps_count = 0;
+struct timeval icmperrppslim_last;
 
 void icmp_mtudisc __P((struct icmp *));
 void icmp_mtudisc_timeout __P((struct rtentry *, struct rttimer *));
+int icmp_ratelimit __P((const struct in_addr *, const int, const int));
 
 extern	struct protosw inetsw[];
 
@@ -133,8 +137,17 @@ icmp_error(n, type, code, dest, destifp)
 	/* Don't send error in response to a multicast or broadcast packet */
 	if (n->m_flags & (M_BCAST|M_MCAST))
 		goto freeit;
+
 	/*
-	 * First, formulate icmp message
+	 * First, do a rate limitation check.
+ 	 */
+	if (icmp_ratelimit(&oip->ip_src, type, code)) {
+		/* XXX stat */
+		goto freeit;
+	}
+
+	/*
+	 * Now, formulate icmp message
 	 */
 	m = m_gethdr(M_DONTWAIT, MT_HEADER);
 	if (m == NULL)
@@ -728,6 +741,10 @@ icmp_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 		return (sysctl_int(oldp, oldlenp, newp, newlen, &icmpmaskrepl));
 	case ICMPCTL_BMCASTECHO:
 		return (sysctl_int(oldp, oldlenp, newp, newlen, &icmpbmcastecho));
+	case ICMPCTL_ERRPPSLIMIT:
+		return (sysctl_int(oldp, oldlenp, newp, newlen,
+		    &icmperrppslim));
+		break;
 	default:
 		return (ENOPROTOOPT);
 	}
@@ -852,4 +869,30 @@ icmp_mtudisc_timeout(rt, r)
 			rt->rt_rmx.rmx_mtu = 0;
 		}
 	}
+}
+
+/*
+ * Perform rate limit check.
+ * Returns 0 if it is okay to send the icmp packet.
+ * Returns 1 if the router SHOULD NOT send this icmp packet due to rate
+ * limitation.
+ *
+ * XXX per-destination/type check necessary?
+ */
+int
+icmp_ratelimit(dst, type, code)
+	const struct in_addr *dst;
+	const int type;			/* not used at this moment */
+	const int code;			/* not used at this moment */
+{
+
+	/* PPS limit */
+	if (!ppsratecheck(&icmperrppslim_last, &icmperrpps_count,
+	    icmperrppslim)) {
+		/* The packet is subject to rate limit */
+		return 1;
+	}
+
+	/*okay to send*/
+	return 0;
 }

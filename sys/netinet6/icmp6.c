@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.22 2000/09/16 08:58:18 itojun Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.23 2000/10/10 14:24:34 itojun Exp $	*/
 /*	$KAME: icmp6.c,v 1.144 2000/09/15 08:10:45 jinmei Exp $	*/
 
 /*
@@ -108,10 +108,9 @@ extern u_char ip6_protox[];
 struct icmp6stat icmp6stat;
 
 extern struct in6pcb rawin6pcb;
-extern struct timeval icmp6errratelim;
-static struct timeval icmp6errratelim_last;
 extern int icmp6errppslim;
 static int icmp6errpps_count = 0;
+static struct timeval icmp6errppslim_last;
 extern int icmp6_nodeinfo;
 static struct rttimer_queue *icmp6_mtudisc_timeout_q = NULL;
 extern int pmtu_expire;
@@ -1846,9 +1845,6 @@ icmp6_fasttimo()
 {
 
 	mld6_fasttimeo();
-
-	/* reset ICMPv6 pps limit */
-	icmp6errpps_count = 0;
 }
 
 static const char *
@@ -2365,14 +2361,6 @@ fail:
  * Returns 1 if the router SHOULD NOT send this icmp6 packet due to rate
  * limitation.
  *
- * There are two limitations defined:
- * - pps limit: ICMPv6 error packet cannot exceed defined packet-per-second.
- *   we measure it every 0.2 second, since fasttimo works every 0.2 second.
- * - rate limit: ICMPv6 error packet cannot appear more than once per
- *   defined interval.
- * In any case, if we perform rate limitation, we'll see jitter in the ICMPv6
- * error packets.
- *
  * XXX per-destination/type check necessary?
  */
 static int
@@ -2386,13 +2374,8 @@ icmp6_ratelimit(dst, type, code)
 	ret = 0;	/*okay to send*/
 
 	/* PPS limit */
-	icmp6errpps_count++;
-	if (icmp6errppslim && icmp6errpps_count > icmp6errppslim / 5) {
-		/* The packet is subject to pps limit */
-		ret++;
-	}
-
-	if (!ratecheck(&icmp6errratelim_last, &icmp6errratelim)) {
+	if (!ppsratecheck(&icmp6errppslim_last, &icmp6errpps_count,
+	    icmp6errppslim)) {
 		/* The packet is subject to rate limit */
 		ret++;
 	}
@@ -2483,28 +2466,6 @@ icmp6_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 	case ICMPV6CTL_STATS:
 		return sysctl_rdstruct(oldp, oldlenp, newp,
 				&icmp6stat, sizeof(icmp6stat));
-	case ICMPV6CTL_ERRRATELIMIT:
-	    {
-		int rate_usec, error, s;
-
-		/*
-		 * The sysctl specifies the rate in usec-between-icmp,
-		 * so we must convert from/to a timeval.
-		 */
-		rate_usec = (icmp6errratelim.tv_sec * 1000000) +
-		    icmp6errratelim.tv_usec;
-		error = sysctl_int(oldp, oldlenp, newp, newlen, &rate_usec);
-		if (error)
-			return (error);
-		if (rate_usec < 0)
-			return (EINVAL);
-		s = splsoftnet();
-		icmp6errratelim.tv_sec = rate_usec / 1000000;
-		icmp6errratelim.tv_usec = rate_usec % 1000000;
-		splx(s);
-
-		return (0);
-	    }
 	case ICMPV6CTL_ND6_PRUNE:
 		return sysctl_int(oldp, oldlenp, newp, newlen, &nd6_prune);
 	case ICMPV6CTL_ND6_DELAY:

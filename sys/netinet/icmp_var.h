@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp_var.h,v 1.4 1998/01/06 01:38:35 deraadt Exp $	*/
+/*	$OpenBSD: icmp_var.h,v 1.5 2000/10/10 14:24:33 itojun Exp $	*/
 /*	$NetBSD: icmp_var.h,v 1.8 1995/03/26 20:32:19 jtc Exp $	*/
 
 /*
@@ -61,12 +61,14 @@ struct	icmpstat {
  */
 #define	ICMPCTL_MASKREPL	1	/* allow replies to netmask requests */
 #define ICMPCTL_BMCASTECHO	2	/* reply to icmps to broadcast/mcast */
-#define ICMPCTL_MAXID		3
+#define ICMPCTL_ERRPPSLIMIT	3	/* ICMP error pps limitation */
+#define ICMPCTL_MAXID		4
 
 #define ICMPCTL_NAMES { \
 	{ 0, 0 }, \
 	{ "maskrepl", CTLTYPE_INT }, \
 	{ "bmcastecho", CTLTYPE_INT }, \
+	{ "errppslimit", CTLTYPE_INT }, \
 }
 
 #ifdef _KERNEL
