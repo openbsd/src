@@ -1,4 +1,4 @@
-/*	$OpenBSD: glob.c,v 1.4 1997/07/25 18:58:08 mickey Exp $	*/
+/*	$OpenBSD: glob.c,v 1.5 1997/09/01 18:40:50 millert Exp $	*/
 /*	$NetBSD: glob.c,v 1.10 1995/03/21 09:03:01 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)glob.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: glob.c,v 1.4 1997/07/25 18:58:08 mickey Exp $";
+static char rcsid[] = "$OpenBSD: glob.c,v 1.5 1997/09/01 18:40:50 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -410,7 +410,7 @@ libglob(vl)
     do {
 	ptr = short2qstr(*vl);
 	switch (glob(ptr, gflgs, 0, &globv)) {
-	case GLOB_ABEND:
+	case GLOB_ABORTED:
 	    setname(vis_str(*vl));
 	    stderror(ERR_NAME | ERR_GLOB);
 	    /* NOTREACHED */
