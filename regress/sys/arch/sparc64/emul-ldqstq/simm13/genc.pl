@@ -38,6 +38,12 @@ struct fpquad {
 	u_int32_t x4;
 };
 
+int compare_regs(union fpregs *, union fpregs *);
+void dump_reg(union fpregs *);
+void dump_regs(union fpregs *, union fpregs *, union fpregs *);
+void c_ldq(union fpregs *, int, struct fpquad *);
+void test_asm_ldq(char *, void (*)(struct fpquad *));
+
 int
 compare_regs(union fpregs *fr1, union fpregs *fr2)
 {
@@ -121,6 +127,15 @@ test_asm_ldq(char *desc, void (*func)(struct fpquad *))
 }
 MY__EOF
 ;
+
+$j = 0;
+for ($i = -4096; $i <= 4095; $i++) {
+	if (($i % 256) == 0) {
+		print "void test_$j(void);\n";
+		$j++;
+	}
+}
+
 $j = 0;
 for ($i = -4096; $i <= 4095; $i++) {
 	if ($i < 0) {
