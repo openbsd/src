@@ -2104,3 +2104,5 @@
 ./var/www/htdocs/manual/vhosts/index.html.ja.jis
 ./var/www/htdocs/manual/win_compiling.html
 ./var/www/htdocs/manual/win_service.html
+./usr/share/man/cat8/pcnfsd.0
+./usr/share/man/cat8/rpc.pcnfsd.0
