@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmds.c,v 1.14 2002/05/17 00:21:19 deraadt Exp $	*/
+/*	$OpenBSD: cmds.c,v 1.15 2002/09/06 19:28:01 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -38,7 +38,7 @@ static char sccsid[] = "@(#)cmds.c	5.1 (Berkeley) 5/11/93";
 #endif /* not lint */
 
 #ifdef sgi
-#ident "$Revision: 1.14 $"
+#ident "$Revision: 1.15 $"
 #endif
 
 #include "timedc.h"
@@ -93,8 +93,8 @@ daydiff(char *hostname)
 	struct timeval now;
 	struct pollfd pfd;
 	unsigned long sec;
-	int i, fromlen;
-	int trials;
+	int i, trials;
+	socklen_t fromlen;
 
 	for (trials = 0; trials < 10; trials++) {
 		/* ask for the time */
@@ -295,7 +295,8 @@ msite(int argc, char *argv[])
 {
 	struct sockaddr_in dest, from;
 	struct servent *srvp;
-	int i, length, cc;
+	int i, cc;
+	socklen_t length;
 	struct pollfd pfd;
 	struct tsp msg;
 	char *tgtname;
@@ -482,8 +483,8 @@ tracing(int argc, char *argv[])
 	struct tsp msg;
 	struct servent *srvp;
 	struct pollfd pfd;
-	int cc, length;
-	int onflag;
+	int cc, onflag;
+	socklen_t length;
 
 	if (argc != 2) {
 		printf("Usage: tracing { on | off }\n");

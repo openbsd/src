@@ -1,4 +1,4 @@
-/*	$OpenBSD: readmsg.c,v 1.10 2002/06/18 00:40:31 ericj Exp $	*/
+/*	$OpenBSD: readmsg.c,v 1.11 2002/09/06 19:28:01 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -76,6 +76,7 @@ readmsg(int type, char *machfrom, struct timeval *intvl,
 	struct netinfo *netfrom)
 {
 	int length;
+	socklen_t salength;
 	fd_set ready;
 	static struct tsplist *head = &msgslist;
 	static struct tsplist *tail = &msgslist;
@@ -201,9 +202,9 @@ again:
 				return(0);
 			continue;
 		}
-		length = sizeof(from);
+		salength = sizeof(from);
 		if ((n = recvfrom(sock, (char *)&msgin, sizeof(struct tsp), 0,
-			     (struct sockaddr*)&from, &length)) < 0) {
+			     (struct sockaddr *)&from, &salength)) < 0) {
 			syslog(LOG_ERR, "recvfrom: %m");
 			exit(1);
 		}

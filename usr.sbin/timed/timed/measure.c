@@ -1,4 +1,4 @@
-/*	$OpenBSD: measure.c,v 1.7 2002/06/18 00:40:31 ericj Exp $	*/
+/*	$OpenBSD: measure.c,v 1.8 2002/09/06 19:28:01 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -68,7 +68,7 @@ measure(u_long maxmsec,			/* wait this many msec at most */
 	struct sockaddr_in *addr,
 	int print)			/* print complaints on stderr */
 {
-	int length;
+	socklen_t length;
 	int measure_status;
 	int rcvcount, trials;
 	int cc, count;
