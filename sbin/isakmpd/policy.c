@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.2 1999/08/26 22:31:09 niklas Exp $	*/
+/*	$OpenBSD: policy.c,v 1.3 1999/10/26 22:32:28 angelos Exp $	*/
 /*	$EOM: policy.c,v 1.7 1999/08/26 11:21:47 niklas Exp $ */
 
 /*
@@ -35,10 +35,12 @@
  * This code was written under funding by Ericsson Radio Systems.
  */
 
+#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/mman.h>
 #include <sys/queue.h>
 #include <sys/stat.h>
+#include <regex.h>
 #include <ctype.h>
 #include <fcntl.h>
 #include <stdio.h>

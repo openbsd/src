@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.14 1999/10/01 14:08:40 niklas Exp $	*/
+/*	$OpenBSD: x509.c,v 1.15 1999/10/26 22:32:28 angelos Exp $	*/
 /*	$EOM: x509.c,v 1.24 1999/09/30 13:40:38 niklas Exp $	*/
 
 /*
@@ -47,6 +47,7 @@
 #include <unistd.h>
 
 #if defined (USE_KEYNOTE) || defined (HAVE_DLOPEN)
+#include <regex.h>
 #include <keynote.h>
 #endif /* USE_KEYNOTE || HAVE_DLOPEN */
 
