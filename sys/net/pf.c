@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.309 2003/01/24 15:05:31 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.310 2003/01/24 15:55:36 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -232,7 +232,7 @@ void			 pf_route6(struct mbuf **, struct pf_rule *, int,
 			    struct ifnet *, struct pf_state *);
 int			 pf_socket_lookup(uid_t *, gid_t *, int, sa_family_t,
 			    int, struct pf_pdesc *);
-u_int8_t		 pf_get_wscale(struct mbuf *, int, struct tcphdr *,
+u_int8_t		 pf_get_wscale(struct mbuf *, int, u_int16_t,
 			    sa_family_t);
 
 struct pf_pool_limit pf_pool_limits[PF_LIMIT_MAX] =
@@ -1823,17 +1823,20 @@ pf_socket_lookup(uid_t *uid, gid_t *gid, int direction, sa_family_t af,
 }
 
 u_int8_t
-pf_get_wscale(struct mbuf *m, int off, struct tcphdr *th, sa_family_t af)
+pf_get_wscale(struct mbuf *m, int off, u_int16_t th_off, sa_family_t af)
 {
 	int		 hlen;
+	u_int8_t	 hdr[60];
 	u_int8_t	*opt, optlen;
 	u_int8_t	 wscale = 0;
 
-	hlen = th->th_off << 2;
-	if (hlen <= sizeof(*th))
+	hlen = th_off << 2;		/* hlen <= sizeof(hdr) */
+	if (hlen <= sizeof(struct tcphdr))
 		return (0);
-	opt = (u_int8_t *)(th + 1);
-	hlen -= sizeof(*th);
+	if (!pf_pull_hdr(m, off, hdr, hlen, NULL, NULL, af))
+		return (0);
+	opt = hdr + sizeof(struct tcphdr);
+	hlen -= sizeof(struct tcphdr);
 	while (hlen >= 3) {
 		switch (*opt) {
 		case TCPOPT_EOL:
@@ -2076,7 +2079,7 @@ pf_test_tcp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 			s->src.seqdiff = 0;
 		if (th->th_flags & TH_SYN) {
 			s->src.seqhi++;
-			s->src.wscale = pf_get_wscale(m, off, th, af);
+			s->src.wscale = pf_get_wscale(m, off, th->th_off, af);
 		}
 		if (th->th_flags & TH_FIN)
 			s->src.seqhi++;
@@ -2869,7 +2872,7 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct ifnet *ifp,
 		end = seq + pd->p_len;
 		if (th->th_flags & TH_SYN) {
 			end++;
-			src->wscale = pf_get_wscale(m, off, th, pd->af);
+			src->wscale = pf_get_wscale(m, off, th->th_off, pd->af);
 		}
 		if (th->th_flags & TH_FIN)
 			end++;
@@ -4137,7 +4140,6 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0)
 
 	case IPPROTO_TCP: {
 		struct tcphdr	th;
-		int		hlen;
 
 		pd.hdr.tcp = &th;
 		if (!pf_pull_hdr(m, off, &th, sizeof(th),
@@ -4145,13 +4147,7 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0)
 			log = action != PF_PASS;
 			goto done;
 		}
-		hlen = th.th_off << 2;
-		if (hlen > sizeof(th) && !pf_pull_hdr(m, off, &th, hlen,
-		    &action, &reason, AF_INET)) {
-			log = action != PF_PASS;
-			goto done;
-		}
-		pd.p_len = pd.tot_len - off - hlen;
+		pd.p_len = pd.tot_len - off - (th.th_off << 2);
 		action = pf_normalize_tcp(dir, ifp, m, 0, off, h, &pd);
 		if (action == PF_DROP)
 			break;
@@ -4361,7 +4357,6 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0)
 
 	case IPPROTO_TCP: {
 		struct tcphdr	th;
-		int		hlen;
 
 		pd.hdr.tcp = &th;
 		if (!pf_pull_hdr(m, off, &th, sizeof(th),
@@ -4369,13 +4364,7 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0)
 			log = action != PF_PASS;
 			goto done;
 		}
-		hlen = th.th_off << 2;
-		if (hlen > sizeof(th) && !pf_pull_hdr(m, off, &th, hlen,
-		    &action, &reason, AF_INET6)) {
-			log = action != PF_PASS;
-			goto done;
-		}
-		pd.p_len = pd.tot_len - off - hlen;
+		pd.p_len = pd.tot_len - off - (th.th_off << 2);
 		action = pf_normalize_tcp(dir, ifp, m, 0, off, h, &pd);
 		if (action == PF_DROP)
 			break;
