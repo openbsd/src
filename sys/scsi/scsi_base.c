@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.25 1999/07/25 07:09:19 csapuntz Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.26 2000/03/01 18:12:04 millert Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -174,6 +174,7 @@ scsi_make_xs(sc_link, scsi_cmd, cmdlen, data_addr, datalen,
 	xs->retries = retries;
 	xs->timeout = timeout;
 	xs->bp = bp;
+	xs->req_sense_length = 0;	/* XXX - not used by scsi internals */
 
 	/*
 	 * Set the LUN in the CDB.  This may only be needed if we have an
