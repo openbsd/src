@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.109 2004/07/03 20:24:16 deraadt Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.110 2004/07/03 20:24:48 deraadt Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -77,7 +77,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.109 2004/07/03 20:24:16 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.110 2004/07/03 20:24:48 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -2540,14 +2540,11 @@ usage(void)
 #ifdef INET6
 	    "\t[[-]anycast] [eui64] [pltime n] [vltime n] [[-]tentative]\n"
 #endif
-#ifndef INET_ONLY
 	    "\t[vlan vlan_tag vlandev parent_iface] [-vlandev] [vhid n]\n"
 	    "\t[advbase n] [advskew n] [maxupd n] [pass passphrase]\n"
 	    "\t[state init | backup | master] [syncif iface] [-syncif]\n"
-	    "\t[phase n] [range netrange]\n"
+	    "\t[phase n] [range netrange] [timeslot timeslot_range]\n"
 	    "\t[802.2] [802.2tr] [802.3] [snap] [EtherII]\n"
-	    "\t[timeslot timeslot_range]\n"
-#endif
 	    "       ifconfig -A | -Am | -a | -am [address_family]\n"
 	    "       ifconfig -C\n"
 	    "       ifconfig -m interface [address_family]\n"
