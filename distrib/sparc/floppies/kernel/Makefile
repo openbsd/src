@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.2 1996/10/08 19:39:53 deraadt Exp $
+#	$Id: Makefile,v 1.3 1996/10/12 01:07:56 deraadt Exp $
 
 .include "../Makefile.inc"
 
@@ -43,7 +43,7 @@ unconfig:
 	-/bin/rm -f ${IMAGE}
 
 clean cleandir:
-	/bin/rm -f ${IMAGE}
+	/bin/rm -f ${IMAGE} bsd
 
 .include <bsd.obj.mk>
 .include <bsd.subdir.mk>
