@@ -1,5 +1,5 @@
-/*	$OpenBSD: ike_quick_mode.c,v 1.14 1999/04/27 21:04:07 niklas Exp $	*/
-/*	$EOM: ike_quick_mode.c,v 1.83 1999/04/25 22:08:08 niklas Exp $	*/
+/*	$OpenBSD: ike_quick_mode.c,v 1.15 1999/04/30 11:46:24 niklas Exp $	*/
+/*	$EOM: ike_quick_mode.c,v 1.84 1999/04/29 10:51:34 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -648,7 +648,7 @@ initiator_recv_HASH_SA_NONCE (struct message *msg)
       log_print ("initiator_recv_HASH_SA_NONCE: "
 		 "multiple SA payloads in quick mode");
       /* XXX Is there a better notification type?  */
-      message_drop (msg, ISAKMP_NOTIFY_PAYLOAD_MALFORMED, 0, 0, 0);
+      message_drop (msg, ISAKMP_NOTIFY_PAYLOAD_MALFORMED, 0, 1, 0);
       return -1;
     }
 
@@ -973,7 +973,7 @@ responder_recv_HASH_SA_NONCE (struct message *msg)
   if (hash != pkt + ISAKMP_HDR_SZ)
     {
       /* XXX Is there a better notification type?  */
-      message_drop (msg, ISAKMP_NOTIFY_PAYLOAD_MALFORMED, 0, 0, 0);
+      message_drop (msg, ISAKMP_NOTIFY_PAYLOAD_MALFORMED, 0, 1, 0);
       goto cleanup;
     }
   hash_len = GET_ISAKMP_GEN_LENGTH (hash);
@@ -1012,7 +1012,7 @@ responder_recv_HASH_SA_NONCE (struct message *msg)
   if (memcmp (hash + ISAKMP_GEN_SZ, my_hash, hash_len - ISAKMP_GEN_SZ) != 0)
     {
       /* XXX Is there a better notification type?  */
-      message_drop (msg, ISAKMP_NOTIFY_INVALID_HASH_INFORMATION, 0, 0, 0);
+      message_drop (msg, ISAKMP_NOTIFY_INVALID_HASH_INFORMATION, 0, 1, 0);
       goto cleanup;
     }
   free (my_hash);
@@ -1039,7 +1039,7 @@ responder_recv_HASH_SA_NONCE (struct message *msg)
 	{
 	  if (!isa->group_desc)
 	    {
-	      message_drop (msg, ISAKMP_NOTIFY_NO_PROPOSAL_CHOSEN, 0, 0, 0);
+	      message_drop (msg, ISAKMP_NOTIFY_NO_PROPOSAL_CHOSEN, 0, 1, 0);
 	      continue;
 	    }
 
@@ -1048,7 +1048,7 @@ responder_recv_HASH_SA_NONCE (struct message *msg)
 	    group_desc = isa->group_desc;
 	  else if (group_desc != isa->group_desc)
 	    {
-	      message_drop (msg, ISAKMP_NOTIFY_NO_PROPOSAL_CHOSEN, 0, 0, 0);
+	      message_drop (msg, ISAKMP_NOTIFY_NO_PROPOSAL_CHOSEN, 0, 1, 0);
 	      continue;
 	    }
 	}
@@ -1343,7 +1343,7 @@ responder_recv_HASH (struct message *msg)
   if (memcmp (hash + ISAKMP_GEN_SZ, my_hash, hash_len - ISAKMP_GEN_SZ) != 0)
     {
       /* XXX Is there a better notification type?  */
-      message_drop (msg, ISAKMP_NOTIFY_INVALID_HASH_INFORMATION, 0, 0, 0);
+      message_drop (msg, ISAKMP_NOTIFY_INVALID_HASH_INFORMATION, 0, 1, 0);
       goto cleanup;
     }
   free (my_hash);

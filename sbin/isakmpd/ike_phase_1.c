@@ -1,4 +1,5 @@
-/*	$Id: ike_phase_1.c,v 1.1 1999/04/19 21:05:22 niklas Exp $	*/
+/*	$OpenBSD: ike_phase_1.c,v 1.2 1999/04/30 11:46:23 niklas Exp $	*/
+/*	$EOM: ike_phase_1.c,v 1.3 1999/04/29 10:51:36 niklas Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist.  All rights reserved.
@@ -370,7 +371,7 @@ ike_phase_1_initiator_recv_SA (struct message *msg)
       log_print ("ike_phase_1_initiator_recv_SA: "
 		 "multiple SA, proposal or transform payloads in phase 1");
       /* XXX Is there a better notification type?  */
-      message_drop (msg, ISAKMP_NOTIFY_PAYLOAD_MALFORMED, 0, 0, 0);
+      message_drop (msg, ISAKMP_NOTIFY_PAYLOAD_MALFORMED, 0, 1, 0);
       return -1;
     }
 
@@ -442,7 +443,7 @@ ike_phase_1_responder_recv_SA (struct message *msg)
       log_print ("ike_phase_1_responder_recv_SA: "
 		 "multiple SA or proposal payloads in phase 1");
       /* XXX Is there a better notification type?  */
-      message_drop (msg, ISAKMP_NOTIFY_PAYLOAD_MALFORMED, 0, 0, 0);
+      message_drop (msg, ISAKMP_NOTIFY_PAYLOAD_MALFORMED, 0, 1, 0);
       return -1;
     }
 
@@ -463,7 +464,7 @@ ike_phase_1_responder_recv_SA (struct message *msg)
    */
   if (!exchange->crypto || !ie->hash || !ie->ike_auth || !ie->group)
     {
-      message_drop (msg, ISAKMP_NOTIFY_PAYLOAD_MALFORMED, 0, 0, 0);
+      message_drop (msg, ISAKMP_NOTIFY_PAYLOAD_MALFORMED, 0, 1, 0);
       return -1;
     }
 
@@ -892,7 +893,7 @@ ike_phase_1_recv_AUTH (struct message *msg)
   /* The decoded hash will be in ie->hash_r or ie->hash_i */
   if (ie->ike_auth->decode_hash (msg))
     {
-      message_drop (msg, ISAKMP_NOTIFY_PAYLOAD_MALFORMED, 0, 0, 0);
+      message_drop (msg, ISAKMP_NOTIFY_PAYLOAD_MALFORMED, 0, 1, 0);
       return -1;
     }
   
