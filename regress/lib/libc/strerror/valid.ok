@@ -3,3 +3,54 @@ Unknown error: -21345
 Undefined error: 0
 Unknown error: 2147483647
 Unknown error: -2147483648
+Operation not permitted
+0 34 0: 
+1 34 0: 
+2 34 1: O
+3 34 2: Op
+4 34 3: Ope
+5 34 4: Oper
+6 34 5: Opera
+7 34 6: Operat
+8 34 7: Operati
+9 34 8: Operatio
+10 34 9: Operation
+11 34 10: Operation 
+12 34 11: Operation n
+13 34 12: Operation no
+14 34 13: Operation not
+15 34 14: Operation not 
+16 34 15: Operation not p
+17 34 16: Operation not pe
+18 34 17: Operation not per
+19 34 18: Operation not perm
+20 34 19: Operation not permi
+21 34 20: Operation not permit
+22 34 21: Operation not permitt
+23 34 22: Operation not permitte
+24 0 23: Operation not permitted
+0 22 0: 
+1 22 0: 
+2 22 1: U
+3 22 2: Un
+4 22 3: Unk
+5 22 4: Unkn
+6 22 5: Unkno
+7 22 6: Unknow
+8 22 7: Unknown
+9 22 8: Unknown 
+10 22 9: Unknown e
+11 22 10: Unknown er
+12 22 11: Unknown err
+13 22 12: Unknown erro
+14 22 13: Unknown error
+15 22 14: Unknown error:
+16 22 15: Unknown error: 
+17 22 16: Unknown error: 2
+18 22 17: Unknown error: 21
+19 22 18: Unknown error: 213
+20 22 19: Unknown error: 2134
+21 22 20: Unknown error: 21345
+22 22 20: Unknown error: 21345
+23 22 20: Unknown error: 21345
+24 22 20: Unknown error: 21345
