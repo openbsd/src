@@ -1,4 +1,4 @@
-/*	$OpenBSD: fileio.c,v 1.43 2005/01/11 17:19:16 henning Exp $	*/
+/*	$OpenBSD: fileio.c,v 1.44 2005/01/31 15:48:00 millert Exp $	*/
 
 /*
  *	POSIX fileio.c
@@ -160,7 +160,7 @@ fbackupfile(const char *fn)
 	int		from, to, serrno;
 	ssize_t		nread;
 	char		buf[BUFSIZ];
-	char		*nname;
+	char		*nname, *tname;
 
 	if (stat(fn, &sb) == -1) {
 		ewprintf("Can't stat %s : %s", fn, strerror(errno));
@@ -168,20 +168,27 @@ fbackupfile(const char *fn)
 	}
 
 	if (asprintf(&nname, "%s~", fn) == -1) {
-		ewprintf("Can't allocate temp file name : %s",
-		    strerror(errno));
+		ewprintf("Can't allocate temp file name : %s", strerror(errno));
+		return (ABORT);
+	}
+
+	if (asprintf(&tname, "%s.XXXXXXXXXX", fn) == -1) {
+		ewprintf("Can't allocate temp file name : %s", strerror(errno));
+		free(nname);
 		return (ABORT);
 	}
 
 	if ((from = open(fn, O_RDONLY)) == -1) {
 		free(nname);
+		free(tname);
 		return (FALSE);
 	}
-	to = open(nname, O_WRONLY|O_CREAT|O_TRUNC, (sb.st_mode & 0777));
+	to = mkstemp(tname);
 	if (to == -1) {
 		serrno = errno;
 		close(from);
 		free(nname);
+		free(tname);
 		errno = serrno;
 		return (FALSE);
 	}
@@ -192,13 +199,20 @@ fbackupfile(const char *fn)
 		}
 	}
 	serrno = errno;
+	(void) fchmod(to, (sb.st_mode & 0777));
 	close(from);
 	close(to);
 	if (nread == -1) {
-		if (unlink(nname) == -1)
+		if (unlink(tname) == -1)
 			ewprintf("Can't unlink temp : %s", strerror(errno));
+	} else {
+		if (rename(tname, nname) == -1) {
+			ewprintf("Can't rename temp : %s", strerror(errno));
+			(void) unlink(tname);
+		}
 	}
 	free(nname);
+	free(tname);
 	errno = serrno;
 
 	return (nread == -1 ? FALSE : TRUE);
