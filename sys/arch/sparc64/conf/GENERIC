@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.32 2001/12/07 22:15:32 jason Exp $
+#	$OpenBSD: GENERIC,v 1.33 2001/12/14 15:18:18 jason Exp $
 # 	$NetBSD: GENERIC32,v 1.18 2001/07/20 00:07:12 eeh Exp $
 
 machine		sparc64
@@ -33,6 +33,9 @@ dc*	at pci? dev ? function ?
 
 siop*	at pci? dev ? function ?
 scsibus* at siop?
+
+vgafb*		at pci? disable dev ? function ?
+wsdisplay*	at vgafb?
 
 # USB bridges
 ohci*	at pci? dev ? function ?
@@ -124,11 +127,11 @@ nsphy*	at mii? phy ?				# NS and compatible PHYs
 qsphy*	at mii? phy ?				# Quality Semi QS6612 PHYs
 ukphy*	at mii? phy ?				# Unknown PHYs
 
-#cgsix*		at sbus? slot ? offset ?
-#wsdisplay*	at cgsix?
+cgsix*		at sbus? disable slot ? offset ?
+wsdisplay*	at cgsix?
 
-#cgthree*	at sbus? slot ? offset ?
-#wsdisplay*	at cgthree?
+cgthree*	at sbus? disable slot ? offset ?
+wsdisplay*	at cgthree?
 
 audiocs*	at sbus? slot ? offset ?
 audio*		at audiocs?
