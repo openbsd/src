@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.481 2001/12/28 18:22:25 jason Exp 
+ *		OpenBSD: pcidevs,v 1.482 2002/01/09 19:40:15 mickey Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -551,6 +551,7 @@
 #define	PCI_VENDOR_TOPIC	0x151f		/* Topic/SmartLink */
 #define	PCI_VENDOR_BLUESTEEL	0x15ab		/* Bluesteel Networks */
 #define	PCI_VENDOR_VMWARE	0x15ad		/* VMware */
+#define	PCI_VENDOR_COREGA	0x15e8		/* Corega */
 #define	PCI_VENDOR_EUMITCOM	0x1638		/* Eumitcom */
 #define	PCI_VENDOR_NETSEC	0x1660		/* NetSec */
 #define	PCI_VENDOR_GLOBALSUN	0x16ab		/* Global Sun */
@@ -1033,6 +1034,9 @@
 /* Contaq Microsystems products */
 #define	PCI_PRODUCT_CONTAQ_82C599	0x0600		/* 82C599 PCI-VLB */
 #define	PCI_PRODUCT_CONTAQ_82C693	0xc693		/* CY82C693U PCI-ISA */
+
+/* Corega products */
+#define	PCI_PRODUCT_COREGA_CGWLPCIA11	0x0130		/* WLAN 11Mb */
 
 /* Corollary Products */
 #define	PCI_PRODUCT_COROLLARY_CBUSII_PCIB	0x0014		/* C-Bus II-PCI */
