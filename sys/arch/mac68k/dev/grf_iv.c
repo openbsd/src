@@ -1,4 +1,4 @@
-/*	$OpenBSD: grf_iv.c,v 1.12 1997/03/18 05:54:01 briggs Exp $	*/
+/*	$OpenBSD: grf_iv.c,v 1.13 1997/03/29 03:16:18 briggs Exp $	*/
 /*	$NetBSD: grf_iv.c,v 1.17 1997/02/20 00:23:27 scottr Exp $	*/
 
 /*
@@ -109,6 +109,10 @@ grfiv_match(parent, vcf, aux)
 		if (sense == 0)
 			found = 0;
 
+		/* Set "Turbo SCSI" configuration to default */
+		bus_space_write_4(oa->oa_tag, bsh, 0x24, 0x1d1); /* ch0 */
+		bus_space_write_4(oa->oa_tag, bsh, 0x28, 0x1d1); /* ch1 */
+
 		/* Disable interrupts */
 		bus_space_write_4(oa->oa_tag, bsh, 0x104, 0);
 
@@ -120,6 +124,7 @@ grfiv_match(parent, vcf, aux)
 		bus_space_unmap(oa->oa_tag, bsh, 0x1000);
 
 		break;
+
 	default:
 		if (mac68k_vidlog == 0) {
 			found = 0;
