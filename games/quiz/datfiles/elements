@@ -8,7 +8,7 @@ N:7:14.007:Nitrogen
 O:8:15.999:Oxygen
 F:9:18.998:Fluorine
 Ne:10:20.18{0}:Neon
-Na:11:22.99{0}:Sodium
+Na:11:22.99{0}:[Sod|Natr]ium
 Mg:12:24.305:Magnesium
 Al:13:26.982:Aluminum
 Si:14:28.086:Silicon
@@ -16,14 +16,14 @@ P:15:30.974:Phosphorus
 S:16:32.066:Sul[ph|f]ur
 Cl:17:35.453:Chlorine
 Ar:18:39.948:Argon
-K:19:39.098:Potassium
+K:19:39.098:[Potass|Kal]ium
 Ca:20:40.078:Calcium
 Sc:21:44.956:Scandium
 Ti:22:47.87:Titanium
 V:23:50.94:Vanadium
 Cr:24:52{.{0{0}}}:Chromium
 Mn:25:54.94:Manganese
-Fe:26:55.85:Iron
+Fe:26:55.85:Iron|Ferrum
 Co:27:58.93:Cobalt
 Ni:28:58.69:Nickel
 Cu:29:63.55:Copper
@@ -47,7 +47,7 @@ Pd:46:106.42:Palladium
 Ag:47:107.87:Silver
 Cd:48:112.41:Cadmium
 In:49:114.82:Indium
-Sn:50:118.71:Tin
+Sn:50:118.71:Tin|Stannum
 Sb:51:121.76:Antimony
 Te:52:127.6{0}:Tellurium
 I:53:126.9{0}:Iodine
@@ -68,10 +68,10 @@ Ho:67:164.93:Holmium
 Er:68:167.26:Erbium
 Tm:69:168.93:Thulium
 Yb:70:173.04:Ytterbium
-Lu:71:174.97:Lutetium
+Lu:71:174.97:Lute[t|c]ium
 Hf:72:178.5:Hafnium
 Ta:73:180.95:Tantalum
-W:74:183.84:Tungsten
+W:74:183.84:Tungsten|Wolfram
 Re:75:186.21:Rhenium
 Os:76:190.2:Osmium
 Ir:77:192.2:Iridium
