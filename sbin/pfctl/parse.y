@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.143 2002/09/02 19:40:31 dhartmei Exp $	*/
+/*	$OpenBSD: parse.y,v 1.144 2002/09/02 19:42:54 dhartmei Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -161,6 +161,7 @@ int	findeol(void);
 int	yylex(void);
 struct	node_host *host(char *);
 int	atoul(char *, u_long *);
+int	getservice(char *);
 
 
 struct sym {
@@ -775,7 +776,7 @@ port		: STRING			{
 				if (s == NULL)
 					s = getservbyname($1, "udp");
 				if (s == NULL) {
-					yyerror("unknown protocol %s", $1);
+					yyerror("unknown port %s", $1);
 					YYERROR;
 				}
 				$$ = s->s_port;
@@ -1178,19 +1179,26 @@ no		: /* empty */			{ $$ = 0; }
 		| NO				{ $$ = 1; }
 		;
 
-rport		: port				{
-			$$.a = $1;
-			$$.b = $$.t = 0;
-		}
-		| port ':' port			{
-			$$.a = $1;
-			$$.b = $3;
-			$$.t = PF_RPORT_RANGE;
-		}
-		| port ':' '*'			{
-			$$.a = $1;
-			$$.b = 0;
-			$$.t = PF_RPORT_RANGE;
+rport		: STRING			{
+			char *p = strchr($1, ':');
+
+			if (p == NULL) {
+				if (($$.a = getservice($1)) == -1)
+					YYERROR;
+				$$.b = $$.t = 0;
+			} else if (!strcmp(p+1, "*")) {
+				*p = 0;
+				if (($$.a = getservice($1)) == -1)
+					YYERROR;
+				$$.b = 0;
+				$$.t = PF_RPORT_RANGE;
+			} else {
+				*p++ = 0;
+				if (($$.a = getservice($1)) == -1 ||
+				    ($$.b = getservice(p)) == -1)
+					YYERROR;
+				$$.t = PF_RPORT_RANGE;
+			}
 		}
 		;
 
@@ -1435,14 +1443,20 @@ rdrrule		: no RDR interface af proto FROM ipspec TO ipspec dport redirection
 dport		: /* empty */			{
 			$$.a = $$.b = $$.t = 0;
 		}
-		| PORT port			{
-			$$.a = $2;
-			$$.b = $$.t = 0;
-		}
-		| PORT port ':' port		{
-			$$.a = $2;
-			$$.b = $4;
-			$$.t = PF_DPORT_RANGE;
+		| PORT STRING			{
+			char *p = strchr($2, ':');
+
+			if (p == NULL) {
+				if (($$.a = getservice($2)) == -1)
+					YYERROR;
+				$$.b = $$.t = 0;
+			} else {
+				*p++ = 0;
+				if (($$.a = getservice($2)) == -1 ||
+				    ($$.b = getservice(p)) == -1)
+					YYERROR;
+				$$.t = PF_DPORT_RANGE;
+			}
 		}
 		;
 
@@ -2725,4 +2739,28 @@ atoul(char *s, u_long *ulvalp)
 		return (-1);
 	*ulvalp = ulval;
 	return (0);
+}
+
+int
+getservice(char *n)
+{
+	struct servent *s;
+	u_long ulval;
+
+	if (atoul(n, &ulval) == 0) {
+		if (ulval < 0 || ulval > 65535) {
+			yyerror("illegal port value %d", ulval);
+			return (-1);
+		}
+		return (htons(ulval));
+	} else {
+		s = getservbyname(n, "tcp");
+		if (s == NULL)
+			s = getservbyname(n, "udp");
+		if (s == NULL) {
+			yyerror("unknown port %s", n);
+			return (-1);
+		}
+		return (s->s_port);
+	}
 }
