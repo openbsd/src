@@ -1,4 +1,4 @@
-/*	$OpenBSD: dumprmt.c,v 1.8 1997/07/05 05:35:55 millert Exp $	*/
+/*	$OpenBSD: dumprmt.c,v 1.9 1998/04/26 18:10:49 deraadt Exp $	*/
 /*	$NetBSD: dumprmt.c,v 1.17 1997/06/05 16:10:47 mrg Exp $	*/
 
 /*-
@@ -63,6 +63,7 @@ static char rcsid[] = "$NetBSD: dumprmt.c,v 1.10 1996/03/15 22:39:26 scottr Exp 
 #include <ctype.h>
 #include <err.h>
 #include <netdb.h>
+#include <errno.h>
 #include <pwd.h>
 #include <signal.h>
 #include <stdio.h>
@@ -334,10 +335,9 @@ rmtreply(cmd)
 	if (*code == 'E' || *code == 'F') {
 		rmtgets(emsg, sizeof(emsg));
 		msg("%s: %s", cmd, emsg);
-		if (*code == 'F') {
+		errno = atoi(&code[1]);
+		if (*code == 'F')
 			rmtstate = TS_CLOSED;
-			return (-1);
-		}
 		return (-1);
 	}
 	if (*code != 'A') {
