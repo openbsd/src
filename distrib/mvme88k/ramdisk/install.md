@@ -1,4 +1,4 @@
-#       $OpenBSD: install.md,v 1.16 2002/05/19 16:16:05 krw Exp $
+#       $OpenBSD: install.md,v 1.17 2002/05/20 16:53:57 krw Exp $
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
@@ -49,10 +49,6 @@ md_set_term() {
 md_get_ifdevs() {
 	# return available network devices
 	dmesg | egrep "(^ie[0-9] )|(^le[0-9] )" | cut -d" " -f1 | sort -u
-}
-
-md_questions() {
-	:
 }
 
 md_installboot() {

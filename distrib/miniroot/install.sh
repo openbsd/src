@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.101 2002/05/15 11:54:34 mpech Exp $
+#	$OpenBSD: install.sh,v 1.102 2002/05/20 16:53:57 krw Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -308,12 +308,14 @@ while [ -z "$resp" ]; do
 done
 IFS=$_oifs
 
-md_questions
-
 install_sets $THESETS
 
-# Copy in configuration information and make devices in target root.
-cfgfiles="fstab hostname.* hosts myname mygate resolv.conf kbdtype"
+# Set machdep.apertureallowed if required. install_sets must be
+# done first so that /etc/sysctl.conf is available.
+set_machdep_apertureallowed
+	
+# Copy configuration files to /mnt/etc.
+cfgfiles="fstab hostname.* hosts myname mygate resolv.conf kbdtype sysctl.conf"
 
 echo
 if [ -f /etc/dhclient.conf ]; then

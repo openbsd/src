@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.223 2002/05/20 02:45:08 krw Exp $
+#	$OpenBSD: install.sub,v 1.224 2002/05/20 16:53:57 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -76,11 +76,12 @@
 #	md_set_term()		  - set up terminal
 #
 # The following variables can be provided if required:
-#	MDTERM     - 'vt220' assumed if not provided
-#	MDFSTYPE   - nothing assumed if not provided
-#	MDFSOPTS   - nothing assumed if not provided
-#	MDDISKDEVS - '/^[sw]d[0-9][0-9]* /s/ .*//p' assumed if not provided
-#	MDCDDEVS   - '/^cd[0-9][0-9]* /s/ .*//p'    assumed if not provided
+#	MDTERM      - 'vt220' assumed if not provided
+#	MDFSTYPE    - nothing assumed if not provided
+#	MDFSOPTS    - nothing assumed if not provided
+#	MDDISKDEVS  - '/^[sw]d[0-9][0-9]* /s/ .*//p' assumed if not provided
+#	MDCDDEVS    - '/^cd[0-9][0-9]* /s/ .*//p'    assumed if not provided
+#	MDXAPERTURE - if not empty, set machdep.allowaperture=value in sysctl.conf
 . install.md
 
 set_term() {
@@ -2122,6 +2123,19 @@ populateusrlocal() {
 	if [ -f /mnt/etc/mtree/BSD.local.dist ]; then
 		/mnt/usr/sbin/chroot /mnt /usr/sbin/mtree -Uedqn -p /usr/local -f /etc/mtree/BSD.local.dist >/dev/null
 	fi
+}
+
+set_machdep_apertureallowed() {
+	[ "$MDXAPERTURE" ] || return
+
+	ask "\nDo you expect to run the X Window System?" y
+	case $resp in
+	y*|Y*)
+		sed -e "/^#\(machdep\.allowaperture=${MDXAPERTURE}\)/s//\1	/" \
+			/mnt/etc/sysctl.conf > /tmp/sysctl.conf
+		echo "machdep.allowaperture enabled in /etc/sysctl.conf. Read xf86(4) for details."
+		;;
+	esac
 }
 
 finish_up() {

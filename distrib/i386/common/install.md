@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.7 2002/05/18 19:28:50 krw Exp $
+#	$OpenBSD: install.md,v 1.8 2002/05/20 16:53:57 krw Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -43,6 +43,7 @@
 MDSETS=kernel
 MDFSTYPE=msdos
 MDFSOPTS=-l
+MDXAPERTURE=2
 ARCH=ARCH
 
 md_set_term() {
@@ -97,30 +98,10 @@ __EOT
 	done
 }
 
-md_questions() {
-	echo
-	ask "Do you expect to run the X Window System?" y
-	case "$resp" in
-	y*|Y*)
-		xfree86=y
-		;;
-	esac
-	echo
-}
-
 md_installboot() {
 	echo Installing boot block...
 	cp /usr/mdec/boot /mnt/boot
 	/usr/mdec/installboot -v /mnt/boot /usr/mdec/biosboot ${1}
-
-	if [ "$xfree86" = y ]; then
-		echo
-		echo "Enabling machdep.allowaperture. Read xf86(4) for more information."
-		echo '1,$s/^#machdep\.allowaperture=2/machdep\.allowaperture=2	/
-w
-q' | ed /mnt/etc/sysctl.conf 2> /dev/null
-		echo
-	fi
 }
 
 md_checkfordisklabel() {

@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.15 2002/05/18 17:56:03 krw Exp $
+#	$OpenBSD: install.md,v 1.16 2002/05/20 16:53:57 krw Exp $
 #	$NetBSD: install.md,v 1.3.2.5 1996/08/26 15:45:28 gwr Exp $
 #
 #
@@ -48,10 +48,6 @@ MDCDDEVS="'/^cd[0-9] /s/ .*//p;/^ra[0-9] .* RRD40$/s/ .*//p'"
 ARCH=ARCH
 
 md_set_term() {
-}
-
-md_questions() {
-	:
 }
 
 md_installboot() {
