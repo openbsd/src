@@ -19,6 +19,7 @@ lwp.c:
 process.S:
 	HOST_CPU=${MACHINE_ARCH}; \
 	case "$$HOST_CPU" in \
+		arm)   PROCESS_S="process.arm.S" ;; \
 		x86_64)   PROCESS_S="process.x86_64.S" ;; \
 		sparc64) PROCESS_S="process.sparc.S" ;; \
 		sparc)   PROCESS_S="process.sparc.S" ;; \
