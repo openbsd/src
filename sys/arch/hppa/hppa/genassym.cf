@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.16 2000/07/03 17:45:11 mickey Exp $
+#	$OpenBSD: genassym.cf,v 1.17 2001/09/16 14:28:04 miod Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -56,135 +56,118 @@ include <machine/frame.h>
 include <machine/pmap.h>
 include <machine/iomod.h>
 
-
 # general constants
-define	NBPG			NBPG
-define	PGSHIFT			PGSHIFT
-define	USRSTACK		USRSTACK
-define	HPPA_PID_KERNEL		HPPA_PID_KERNEL
-define	HPPA_SID_KERNEL		HPPA_SID_KERNEL
-define	VM_MAXUSER_ADDRESS	VM_MAXUSER_ADDRESS
+export	NBPG
+export	PGSHIFT
+export	USRSTACK
+export	HPPA_PID_KERNEL
+export	HPPA_SID_KERNEL
+export	VM_MAXUSER_ADDRESS
 
 # `break' entry points
-define	HPPA_BREAK_KERNEL	HPPA_BREAK_KERNEL
-define	HPPA_BREAK_GET_PSW	HPPA_BREAK_GET_PSW
-define	HPPA_BREAK_SET_PSW	HPPA_BREAK_SET_PSW
+export	HPPA_BREAK_KERNEL
+export	HPPA_BREAK_GET_PSW
+export	HPPA_BREAK_SET_PSW
 
 # pte things
-define	TLB_REF_POS		TLB_REF_POS
-define	TLB_GATE_PROT		TLB_GATE_PROT
-define	TLB_DIRTY_POS		TLB_DIRTY_POS
+export	TLB_REF_POS
+export	TLB_GATE_PROT
+export	TLB_DIRTY_POS
 
 # hpt_table fields
 struct	hpt_entry
 member	hpt_tlbprot
 member	hpt_tlbpage
 member	hpt_entry
-define	hpt_tag	0
+define	HPT_TAG		0
 
 # pv_entry fields
 struct	pv_entry
 member	pv_hash
-member	pv_pmap
 member	pv_space
 member	pv_va
 member	pv_tlbpage
 member	pv_tlbprot
 
-# pmap
-struct	pmap
-member	pmap_space
-member	pmap_pid
-
-# export iomod
-struct	iomod
-member	io_command
-
-# export mbuf
-struct	mbuf
-member	m_len
-member	m_next
-member	m_data
-
 # saved state fields
-define	TF_SIZE		sizeof(struct trapframe)
-define	TF_FLAGS	offsetof(struct trapframe, tf_flags)
-define	TF_PHYS		offsetof(struct trapframe, tf_sar)
-define	TF_R1		offsetof(struct trapframe, tf_r1)
-define	TF_R2		offsetof(struct trapframe, tf_rp)
-define	TF_GOTO		offsetof(struct trapframe, tf_rp)
-define	TF_R3		offsetof(struct trapframe, tf_r3)
-define	TF_R4		offsetof(struct trapframe, tf_r4)
-define	TF_R5		offsetof(struct trapframe, tf_r5)
-define	TF_R6		offsetof(struct trapframe, tf_r6)
-define	TF_R7		offsetof(struct trapframe, tf_r7)
-define	TF_R8		offsetof(struct trapframe, tf_r8)
-define	TF_R9		offsetof(struct trapframe, tf_r9)
-define	TF_R10		offsetof(struct trapframe, tf_r10)
-define	TF_R11		offsetof(struct trapframe, tf_r11)
-define	TF_R12		offsetof(struct trapframe, tf_r12)
-define	TF_R13		offsetof(struct trapframe, tf_r13)
-define	TF_R14		offsetof(struct trapframe, tf_r14)
-define	TF_R15		offsetof(struct trapframe, tf_r15)
-define	TF_R16		offsetof(struct trapframe, tf_r16)
-define	TF_R17		offsetof(struct trapframe, tf_r17)
-define	TF_R18		offsetof(struct trapframe, tf_r18)
-define	TF_R19		offsetof(struct trapframe, tf_t4)
-define	TF_R20		offsetof(struct trapframe, tf_t3)
-define	TF_R21		offsetof(struct trapframe, tf_t2)
-define	TF_R22		offsetof(struct trapframe, tf_t1)
-define	TF_R23		offsetof(struct trapframe, tf_arg3)
-define	TF_R24		offsetof(struct trapframe, tf_arg2)
-define	TF_R25		offsetof(struct trapframe, tf_arg1)
-define	TF_R26		offsetof(struct trapframe, tf_arg0)
-define	TF_R27		offsetof(struct trapframe, tf_dp)
-define	TF_R28		offsetof(struct trapframe, tf_ret0)
-define	TF_R29		offsetof(struct trapframe, tf_ret1)
-define	TF_R30		offsetof(struct trapframe, tf_sp)
-define	TF_R31		offsetof(struct trapframe, tf_r31)
-define	TF_SR0		offsetof(struct trapframe, tf_sr0)
-define	TF_SR1		offsetof(struct trapframe, tf_sr1)
-define	TF_SR2		offsetof(struct trapframe, tf_sr2)
-define	TF_SR3		offsetof(struct trapframe, tf_sr3)
-define	TF_SR4		offsetof(struct trapframe, tf_sr4)
-define	TF_SR5		offsetof(struct trapframe, tf_sr5)
-define	TF_SR6		offsetof(struct trapframe, tf_sr6)
-define	TF_SR7		offsetof(struct trapframe, tf_sr7)
-define	TF_CR0		offsetof(struct trapframe, tf_rctr)
-define	TF_IIOQH	offsetof(struct trapframe, tf_iioq_head)
-define	TF_IIOQT	offsetof(struct trapframe, tf_iioq_tail)
-define	TF_IISQH	offsetof(struct trapframe, tf_iisq_head)
-define	TF_IISQT	offsetof(struct trapframe, tf_iisq_tail)
-define	TF_CR8		offsetof(struct trapframe, tf_pidr1)
-define	TF_CR9		offsetof(struct trapframe, tf_pidr2)
-define	TF_CR11		offsetof(struct trapframe, tf_sar)
-define	TF_CR12		offsetof(struct trapframe, tf_pidr3)
-define	TF_CR13		offsetof(struct trapframe, tf_pidr4)
-define	TF_CR15		offsetof(struct trapframe, tf_eiem)
-define	TF_CR19		offsetof(struct trapframe, tf_iir)
-define	TF_CR20		offsetof(struct trapframe, tf_isr)
-define	TF_CR21		offsetof(struct trapframe, tf_ior)
-define	TF_CR22		offsetof(struct trapframe, tf_ipsw)
-define	TF_CR23		offsetof(struct trapframe, tf_eirr)
-define	TF_CR24		offsetof(struct trapframe, tf_hptm)
-define	TF_CR25		offsetof(struct trapframe, tf_vtop)
-define	TF_CR28		offsetof(struct trapframe, tf_cr28)
-define	TF_CR30		offsetof(struct trapframe, tf_cr30)
+struct	trapframe
+member	TF_FLAGS
+member	TF_PHYS		tf_sar
+member	TF_R1
+member	TF_R2		tf_rp
+member	TF_GOTO		tf_rp
+member	TF_R3
+member	TF_R4
+member	TF_R5
+member	TF_R6
+member	TF_R7
+member	TF_R8
+member	TF_R9
+member	TF_R10
+member	TF_R11
+member	TF_R12
+member	TF_R13
+member	TF_R14
+member	TF_R15
+member	TF_R16
+member	TF_R17
+member	TF_R18
+member	TF_R19		tf_t4
+member	TF_R20		tf_t3
+member	TF_R21		tf_t2
+member	TF_R22		tf_t1
+member	TF_R23		tf_arg3
+member	TF_R24		tf_arg2
+member	TF_R25		tf_arg1
+member	TF_R26		tf_arg0
+member	TF_R27		tf_dp
+member	TF_R28		tf_ret0
+member	TF_R29		tf_ret1
+member	TF_R30		tf_sp
+member	TF_R31
+member	TF_SR0
+member	TF_SR1
+member	TF_SR2
+member	TF_SR3
+member	TF_SR4
+member	TF_SR5
+member	TF_SR6
+member	TF_SR7
+member	TF_CR0		tf_rctr
+member	TF_IIOQH	tf_iioq_head
+member	TF_IIOQT	tf_iioq_tail
+member	TF_IISQH	tf_iisq_head
+member	TF_IISQT	tf_iisq_tail
+member	TF_CR8		tf_pidr1
+member	TF_CR9		tf_pidr2
+member	TF_CR11		tf_sar
+member	TF_CR12		tf_pidr3
+member	TF_CR13		tf_pidr4
+member	TF_CR15		tf_eiem
+member	TF_CR19		tf_iir
+member	TF_CR20		tf_isr
+member	TF_CR21		tf_ior
+member	TF_CR22		tf_ipsw
+member	TF_CR23		tf_eirr
+member	TF_CR24		tf_hptm
+member	TF_CR25		tf_vtop
+member	TF_CR28
+member	TF_CR30
+member	TF_SIZE		sizeof(struct trapframe)
 
 # proc fields and values
 struct	proc
 member	p_forw
 member	p_back
-member	p_vmspace
 member	p_addr
 member	p_priority
 member	p_stat
 member	p_wchan
 member	p_md
-define	P_MD_FLAGS		offsetof(struct proc, p_md.md_flags)
-define	P_MD_REGS		offsetof(struct proc, p_md.md_regs)
-define	SSLEEP			SSLEEP
-define	SRUN			SRUN
+member	P_MD_FLAGS		p_md.md_flags
+member	P_MD_REGS		p_md.md_regs
+
+export	SRUN
 
 struct	pcb
 member	pcb_fpregs
@@ -195,11 +178,8 @@ member	pcb_uva
 struct	user
 member	u_pcb
 
-# interrupt/fault metering
-#define	V_INTR			offsetof(struct vmmeter, v_intr)
-
 # system calls
-define	SYSCALLGATE		SYSCALLGATE
-define	SYS_exit		SYS_exit
-define	SYS_execve		SYS_execve
-define	SYS_sigreturn		SYS_sigreturn
+export	SYSCALLGATE
+export	SYS_exit
+export	SYS_execve
+export	SYS_sigreturn

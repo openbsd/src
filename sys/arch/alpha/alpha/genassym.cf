@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.1 2001/05/11 09:45:22 art Exp $
+#	$OpenBSD: genassym.cf,v 1.2 2001/09/16 14:28:01 miod Exp $
 
 # Copyright (c) 1994, 1995 Gordon W. Ross
 # Copyright (c) 1993 Adam Glass
@@ -55,122 +55,126 @@ endif
 include <vm/vm.h>
 
 # general constants
-define	NBPG	NBPG
-define	PGSHIFT	PGSHIFT
-define	VM_MAX_ADDRESS	VM_MAX_ADDRESS
+export	NBPG
+export	PGSHIFT
+export	VM_MAX_ADDRESS
 
 # Register offsets, for stack frames.
-define	FRAME_V0	FRAME_V0
-define	FRAME_T0	FRAME_T0
-define	FRAME_T1	FRAME_T1
-define	FRAME_T2	FRAME_T2
-define	FRAME_T3	FRAME_T3
-define	FRAME_T4	FRAME_T4
-define	FRAME_T5	FRAME_T5
-define	FRAME_T6	FRAME_T6
-define	FRAME_T7	FRAME_T7
-define	FRAME_S0	FRAME_S0
-define	FRAME_S1	FRAME_S1
-define	FRAME_S2	FRAME_S2
-define	FRAME_S3	FRAME_S3
-define	FRAME_S4	FRAME_S4
-define	FRAME_S5	FRAME_S5
-define	FRAME_S6	FRAME_S6
-define	FRAME_A3	FRAME_A3
-define	FRAME_A4	FRAME_A4
-define	FRAME_A5	FRAME_A5
-define	FRAME_T8	FRAME_T8
-define	FRAME_T9	FRAME_T9
-define	FRAME_T10	FRAME_T10
-define	FRAME_T11	FRAME_T11
-define	FRAME_RA	FRAME_RA
-define	FRAME_T12	FRAME_T12
-define	FRAME_AT	FRAME_AT
-define	FRAME_SP	FRAME_SP
+export	FRAME_V0
+export	FRAME_T0
+export	FRAME_T1
+export	FRAME_T2
+export	FRAME_T3
+export	FRAME_T4
+export	FRAME_T5
+export	FRAME_T6
+export	FRAME_T7
+export	FRAME_S0
+export	FRAME_S1
+export	FRAME_S2
+export	FRAME_S3
+export	FRAME_S4
+export	FRAME_S5
+export	FRAME_S6
+export	FRAME_A3
+export	FRAME_A4
+export	FRAME_A5
+export	FRAME_T8
+export	FRAME_T9
+export	FRAME_T10
+export	FRAME_T11
+export	FRAME_RA
+export	FRAME_T12
+export	FRAME_AT
+export	FRAME_SP
 
-define	FRAME_SW_SIZE	FRAME_SW_SIZE
+export	FRAME_SW_SIZE
 
-define	FRAME_PS	FRAME_PS
-define	FRAME_PC	FRAME_PC
-define	FRAME_GP	FRAME_GP
-define	FRAME_A0	FRAME_A0
-define	FRAME_A1	FRAME_A1
-define	FRAME_A2	FRAME_A2
+export	FRAME_PS
+export	FRAME_PC
+export	FRAME_GP
+export	FRAME_A0
+export	FRAME_A1
+export	FRAME_A2
 
-define	FRAME_SIZE	FRAME_SIZE
+export	FRAME_SIZE
 
 # bits of the PS register
-define	ALPHA_PSL_USERMODE	ALPHA_PSL_USERMODE
-define	ALPHA_PSL_IPL_MASK	ALPHA_PSL_IPL_MASK
-define	ALPHA_PSL_IPL_0		ALPHA_PSL_IPL_0
-define	ALPHA_PSL_IPL_SOFT	ALPHA_PSL_IPL_SOFT
-define	ALPHA_PSL_IPL_HIGH	ALPHA_PSL_IPL_HIGH
+export	ALPHA_PSL_USERMODE
+export	ALPHA_PSL_IPL_MASK
+export	ALPHA_PSL_IPL_0
+export	ALPHA_PSL_IPL_SOFT
+export	ALPHA_PSL_IPL_HIGH
 
 # pte bits
-define	ALPHA_PTE_VALID	ALPHA_PTE_VALID
-define	ALPHA_PTE_ASM	ALPHA_PTE_ASM
-define	ALPHA_PTE_KR	ALPHA_PTE_KR
-define	ALPHA_PTE_KW	ALPHA_PTE_KW
+export	ALPHA_PTE_VALID
+export	ALPHA_PTE_ASM
+export	ALPHA_PTE_KR
+export	ALPHA_PTE_KW
 
 # Important offsets into the proc struct & associated constants
-define	P_FORW		offsetof(struct proc, p_forw)
-define	P_BACK		offsetof(struct proc, p_back)
-define	P_ADDR		offsetof(struct proc, p_addr)
-define	P_VMSPACE	offsetof(struct proc, p_vmspace)
-define	P_STAT		offsetof(struct proc, p_stat)
-define	P_MD_FLAGS	offsetof(struct proc, p_md.md_flags)
-define	P_MD_PCBPADDR	offsetof(struct proc, p_md.md_pcbpaddr)
-define	PH_LINK		offsetof(struct prochd, ph_link)
-define	PH_RLINK	offsetof(struct prochd, ph_rlink)
+struct	proc
+member	p_forw
+member	p_back
+member	p_addr
+member	p_vmspace
+member	p_stat
+member	P_MD_FLAGS	p_md.md_flags
+member	P_MD_PCBPADDR	p_md.md_pcbpaddr
+struct	prochd
+member	ph_link
+member	ph_rlink
 
 # offsets needed by cpu_switch() to switch mappings.
 define	VM_MAP_PMAP		offsetof(struct vmspace, vm_map.pmap) 
 
 # Important offsets into the user struct & associated constants
-define	UPAGES			UPAGES
-define	U_PCB			offsetof(struct user, u_pcb)
-define	U_PCB_HWPCB		offsetof(struct user, u_pcb.pcb_hw)
-define	U_PCB_HWPCB_KSP		offsetof(struct user, u_pcb.pcb_hw.apcb_ksp)
-define	U_PCB_CONTEXT		offsetof(struct user, u_pcb.pcb_context[0])
-define	U_PCB_ONFAULT		offsetof(struct user, u_pcb.pcb_onfault)
-define	U_PCB_ACCESSADDR	offsetof(struct user, u_pcb.pcb_accessaddr)
+export	UPAGES
+struct	user
+member	u_pcb
+member	U_PCB_HWPCB		u_pcb.pcb_hw
+member	U_PCB_HWPCB_KSP		u_pcb.pcb_hw.apcb_ksp
+member	U_PCB_CONTEXT		u_pcb.pcb_context[0]
+member	U_PCB_ONFAULT		u_pcb.pcb_onfault
+member	U_PCB_ACCESSADDR	u_pcb.pcb_accessaddr
 
 # Offsets into struct fpstate, for save, restore
-define	FPREG_FPR_REGS	offsetof(struct fpreg, fpr_regs[0])
-define	FPREG_FPR_CR	offsetof(struct fpreg, fpr_cr)
+struct	fpreg		FPREG_
+member	FPR_REGS	fpr_regs[0]
+member	fpr_cr
 
 # Important other addresses
-define	HWRPB_ADDR	HWRPB_ADDR
-define	VPTBASE		VPTBASE
+export	HWRPB_ADDR
+export	VPTBASE
 
 # Offsets into the HWRPB.
 define	RPB_PRIMARY_CPU_ID	offsetof(struct rpb, rpb_primary_cpu_id)
 
 # Kernel entries
-define	ALPHA_KENTRY_ARITH	ALPHA_KENTRY_ARITH
-define	ALPHA_KENTRY_MM		ALPHA_KENTRY_MM
-define	ALPHA_KENTRY_IF		ALPHA_KENTRY_IF
-define	ALPHA_KENTRY_UNA	ALPHA_KENTRY_UNA
+export	ALPHA_KENTRY_ARITH
+export	ALPHA_KENTRY_MM
+export	ALPHA_KENTRY_IF
+export	ALPHA_KENTRY_UNA
 
 # errno values 
-define	ENAMETOOLONG		ENAMETOOLONG
-define	EFAULT			EFAULT
+export	ENAMETOOLONG
+export	EFAULT
 
 # Syscalls called from sigreturn.
-define	SYS_sigreturn		SYS_sigreturn
-define	SYS_exit		SYS_exit
+export	SYS_sigreturn
+export	SYS_exit
 
 ifdef COMPAT_NETBSD
 # XXX - these should probably use the magic macro from machine/asm.h
-define	NETBSD_SYS___sigreturn14	NETBSD_SYS___sigreturn14
-define	NETBSD_SYS_exit			NETBSD_SYS_exit
+export	NETBSD_SYS___sigreturn14
+export	NETBSD_SYS_exit
 endif
 
 # CPU info
-define	CPU_INFO_CURPROC	offsetof(struct cpu_info, ci_curproc)
-define	CPU_INFO_FPCURPROC	offsetof(struct cpu_info, ci_fpcurproc)
-define	CPU_INFO_CURPCB		offsetof(struct cpu_info, ci_curpcb)
-define	CPU_INFO_IDLE_PCB_PADDR	offsetof(struct cpu_info, ci_idle_pcb_paddr)
-define	CPU_INFO_WANT_RESCHED	offsetof(struct cpu_info, ci_want_resched)
-define	CPU_INFO_ASTPENDING	offsetof(struct cpu_info, ci_astpending)
-define	CPU_INFO_SIZEOF		sizeof(struct cpu_info)
+struct	cpu_info	CPU_INFO_
+member	CURPROC		ci_curproc
+member	FPCURPROC	ci_fpcurproc
+member	CURPCB		ci_curpcb
+member	IDLE_PCB_PADDR	ci_idle_pcb_paddr
+member	WANT_RESCHED	ci_want_resched
+member	ASTPENDING	ci_astpending

@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.2 2001/09/11 20:05:24 miod Exp $
+#	$OpenBSD: genassym.cf,v 1.3 2001/09/16 14:28:04 miod Exp $
 #
 # Copyright (c) 1982, 1990 The Regents of the University of California.
 # All rights reserved.
@@ -42,34 +42,35 @@ include <vm/vm.h>
 include <machine/pcb.h>               
 include <machine/pmap.h>
 
-
-
-define	FRAMELEN	FRAMELEN
-define	FRAME_0		offsetof(struct trapframe, fixreg[0])
-define	FRAME_1		offsetof(struct trapframe, fixreg[1])
-define	FRAME_2		offsetof(struct trapframe, fixreg[2])
-define	FRAME_3		offsetof(struct trapframe, fixreg[3])
-define	FRAME_LR	offsetof(struct trapframe, lr)
-define	FRAME_CR	offsetof(struct trapframe, cr)
-define	FRAME_CTR	offsetof(struct trapframe, ctr)
-define	FRAME_XER	offsetof(struct trapframe, xer)
-define	FRAME_SRR0	offsetof(struct trapframe, srr0)
-define	FRAME_SRR1	offsetof(struct trapframe, srr1)
-define	FRAME_DAR	offsetof(struct trapframe, dar)
-define	FRAME_DSISR	offsetof(struct trapframe, dsisr)
-define	FRAME_EXC	offsetof(struct trapframe, exc)
+export	FRAMELEN
+struct	trapframe	FRAME_
+member	0		fixreg[0]
+member	1		fixreg[1]
+member	2		fixreg[2]
+member	3		fixreg[3]
+member	lr
+member	cr
+member	ctr
+member	xer
+member	srr0
+member	srr1
+member	dar
+member	dsisr
+member	exc
 
 define	SFRAMELEN	roundup(sizeof(struct switchframe), 16)
 
-define	PCB_PMR		offsetof(struct pcb, pcb_pmreal)
-define	PCB_SP		offsetof(struct pcb, pcb_sp)
-define	PCB_SPL		offsetof(struct pcb, pcb_spl)
-define	PCB_FAULT	offsetof(struct pcb, pcb_onfault)
+struct	pcb
+member	PCB_PMR		pcb_pmreal
+member	pcb_sp
+member	pcb_spl
+member	PCB_FAULT	pcb_onfault
 
-define	PM_USRSR	offsetof(struct pmap, pm_sr[USER_SR])
-define	PM_KERNELSR	offsetof(struct pmap, pm_sr[KERNEL_SR])
+struct	pmap
+member	PM_USRSR	pm_sr[USER_SR]
+member	PM_KERNELSR	pm_sr[KERNEL_SR]
 
-define	P_FORW		offsetof(struct proc, p_forw)
-define	P_BACK		offsetof(struct proc, p_back)
-define	P_ADDR		offsetof(struct proc, p_addr)
-
+struct	proc
+member	p_forw
+member	p_back
+member	p_addr

@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.2 2001/08/25 13:33:37 hugh Exp $
+#	$OpenBSD: genassym.cf,v 1.3 2001/09/16 14:28:04 miod Exp $
 #	$NetBSD: genassym.cf,v 1.10 1999/11/19 22:09:55 ragge Exp $
 #
 # Copyright (c) 1997 Ludd, University of Lule}, Sweden.
@@ -31,7 +31,6 @@
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-
 include	<sys/param.h>
 include	<sys/proc.h>
 include	<sys/errno.h>
@@ -45,75 +44,79 @@ include	<machine/sid.h>
 include	<machine/trap.h>
 include	<machine/cpu.h>
 
-define	P_PRIORITY	offsetof(struct proc, p_priority)
-define	P_ADDR		offsetof(struct proc, p_addr)
-define	P_VMSPACE	offsetof(struct proc, p_vmspace)
+struct	proc
+member	p_priority
+member	p_addr
+member	p_vmspace
 
-define	P0BR		offsetof(struct pcb, P0BR)
-define	P0LR		offsetof(struct pcb, P0LR)
-define	P1BR		offsetof(struct pcb, P1BR)
-define	P1LR		offsetof(struct pcb, P1LR)
-define	IFTRAP		offsetof(struct pcb, iftrap)
+struct	pcb
+member	P0BR
+member	P0LR
+member	P1BR
+member	P1LR
+member	iftrap
 
-define	MCHK		offsetof(struct cpu_dep, cpu_mchk)
-define	MEMERR		offsetof(struct cpu_dep, cpu_memerr)
+struct	cpu_dep
+member	MCHK		cpu_mchk
+member	MEMERR		cpu_memerr
 
-define	KERNBASE	KERNBASE
+export	KERNBASE
 
 # mtpr register numbers
-define	PR_KSP		PR_KSP
-define	PR_USP		PR_USP
-define	PR_ICCS		PR_ICCS
-define	PR_PCBB		PR_PCBB
-define	PR_IPL		PR_IPL
-define	PR_SBIFS	PR_SBIFS
-define	PR_EHSR		PR_EHSR
-define	PR_MCESR	PR_MCESR
-define	PR_P0BR		PR_P0BR
-define	PR_P1BR		PR_P1BR
-define	PR_P0LR		PR_P0LR
-define	PR_P1LR		PR_P1LR
-define	PR_SCBB		PR_SCBB
+export	PR_KSP
+export	PR_USP
+export	PR_ICCS
+export	PR_PCBB
+export	PR_IPL
+export	PR_SBIFS
+export	PR_EHSR
+export	PR_MCESR
+export	PR_P0BR
+export	PR_P1BR
+export	PR_P0LR
+export	PR_P1LR
+export	PR_SCBB
 
 # trap numbering
-define	T_KSPNOTVAL	T_KSPNOTVAL
-define	T_PRIVINFLT	T_PRIVINFLT
-define	T_XFCFLT	T_XFCFLT
-define	T_RESOPFLT	T_RESOPFLT
-define	T_RESADFLT	T_RESADFLT
-define	T_TRANSFLT	T_TRANSFLT
-define	T_PTEFETCH	T_PTEFETCH
-define	T_WRITE		T_WRITE
-define	T_ACCFLT	T_ACCFLT
-define	T_PTELEN	T_PTELEN
-define	T_TRCTRAP	T_TRCTRAP
-define	T_BPTFLT	T_BPTFLT
-define	T_ARITHFLT	T_ARITHFLT
-define	T_SYSCALL	T_SYSCALL
-define	T_ASTFLT	T_ASTFLT
-define	T_KDBTRAP	T_KDBTRAP
+export	T_KSPNOTVAL
+export	T_PRIVINFLT
+export	T_XFCFLT
+export	T_RESOPFLT
+export	T_RESADFLT
+export	T_TRANSFLT
+export	T_PTEFETCH
+export	T_WRITE	
+export	T_ACCFLT
+export	T_PTELEN
+export	T_TRCTRAP
+export	T_BPTFLT
+export	T_ARITHFLT
+export	T_SYSCALL
+export	T_ASTFLT
+export	T_KDBTRAP
 
 # software net interrupts
-define	NETISR_IP	NETISR_IP
-define	NETISR_ARP	NETISR_ARP
-define	NETISR_NS	NETISR_NS
-define	NETISR_ATALK	NETISR_ATALK
-define	NETISR_ISO	NETISR_ISO
-define	NETISR_CCITT	NETISR_CCITT
-define	NETISR_PPP	NETISR_PPP
-define	NETISR_IPV6	NETISR_IPV6
-define 	NETISR_BRIDGE	NETISR_BRIDGE
+export	NETISR_IP
+export	NETISR_ARP
+export	NETISR_NS
+export	NETISR_ATALK
+export	NETISR_ISO
+export	NETISR_CCITT
+export	NETISR_PPP
+export	NETISR_IPV6
+export 	NETISR_BRIDGE
 
-define	USPACE		USPACE
+export	USPACE	
 
-define	ENAMETOOLONG	ENAMETOOLONG
+export	ENAMETOOLONG
 
-define	EV_COUNT	offsetof(struct evcnt, ev_count)
+struct	evcnt
+member	ev_count
 
-define	SYS_sigreturn	SYS_sigreturn	
-define	SYS_exit	SYS_exit
+export	SYS_sigreturn
+export	SYS_exit
 
-define	VAX_TYP_UV2	VAX_TYP_UV2
-define	VAX_TYP_8SS	VAX_TYP_8SS
-define	VAX_BTYP_46	VAX_BTYP_46
-define	VAX_BTYP_48	VAX_BTYP_48
+export	VAX_TYP_UV2
+export	VAX_TYP_8SS
+export	VAX_BTYP_46
+export	VAX_BTYP_48

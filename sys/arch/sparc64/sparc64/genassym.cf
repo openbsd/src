@@ -124,18 +124,20 @@ include <sparc64/dev/fdvar.h>
 endif
 
 # general constants
-define	BSD		BSD
-define	USRSTACK	USRSTACK
+export	BSD
+export	USRSTACK
 define	PADDRT		sizeof(paddr_t)
 
 # proc fields and values
-define	P_ADDR		offsetof(struct proc, p_addr)
-define	P_STAT		offsetof(struct proc, p_stat)
-define	P_WCHAN		offsetof(struct proc, p_wchan)
-define	P_VMSPACE	offsetof(struct proc, p_vmspace)
-define	P_PID		offsetof(struct proc, p_pid)
-define	P_FPSTATE	offsetof(struct proc, p_md.md_fpstate)
-define	SRUN		SRUN
+struct	proc
+member	p_addr
+member	p_stat
+member	p_wchan
+member	p_vmspace
+member	p_pid
+member	P_FPSTATE	p_md.md_fpstate
+
+export	SRUN
 
 # user structure fields
 define	USIZ		sizeof(struct user)
@@ -147,140 +149,148 @@ define	VM_PMAP		offsetof(struct vmspace, vm_map.pmap)
 define	UVM_PAGE_IDLE_ZERO	offsetof(struct uvm, page_idle_zero)
 
 # pmap structure fields
-define	PM_CTX		offsetof(struct pmap, pm_ctx)
-define	PM_SEGS		offsetof(struct pmap, pm_segs)
-define	PM_PHYS		offsetof(struct pmap, pm_physaddr)
-
+struct	pmap
+member	pm_ctx
+member	pm_segs
+member	PM_PHYS		pm_physaddr
 
 # interrupt/fault metering
-define	V_SWTCH		offsetof(struct uvmexp, swtch)
-define	V_INTR		offsetof(struct uvmexp, intrs)
-define	V_FAULTS	offsetof(struct uvmexp, faults)
+struct	uwmexp		V_
+member	swtch
+member	INTR		intrs
+member	faults
 
 # CPU info structure
-define	CI_CURPROC	offsetof(struct cpu_info, ci_curproc)
-define	CI_CPCB		offsetof(struct cpu_info, ci_cpcb)
-define	CI_NEXT		offsetof(struct cpu_info, ci_next)
-define	CI_FPPROC	offsetof(struct cpu_info, ci_fpproc)
-define	CI_NUMBER	offsetof(struct cpu_info, ci_number)
-define	CI_UPAID	offsetof(struct cpu_info, ci_upaid)
-define	CI_SPINUP	offsetof(struct cpu_info, ci_spinup)
-define	CI_INITSTACK	offsetof(struct cpu_info, ci_initstack)
-define	CI_PADDR	offsetof(struct cpu_info, ci_paddr)
+struct	cpu_info
+member	ci_curproc
+member	ci_cpcb
+member	ci_next
+member	ci_fpproc
+member	ci_number
+member	ci_upaid
+member	ci_spinup
+member	ci_initstack
+member	ci_paddr
 
 # FPU state
-define	FS_REGS		offsetof(struct fpstate64, fs_regs)
-define	FS_FSR		offsetof(struct fpstate64, fs_fsr)
-define	FS_GSR		offsetof(struct fpstate64, fs_gsr)
-define	FS_QSIZE	offsetof(struct fpstate64, fs_qsize)
-define	FS_QUEUE	offsetof(struct fpstate64, fs_queue)
+struct	fpstate64
+member	fs_regs
+member	fs_fsr
+member	fs_gsr
+member	fs_qsize
+member	fs_queue
 define	FS_SIZE		sizeof(struct fpstate64)
-define	FSR_QNE		FSR_QNE
-define	FPRS_FEF	FPRS_FEF
-define	FPRS_DU		FPRS_DU
-define	FPRS_DL		FPRS_DL
+export	FSR_QNE
+export	FPRS_FEF
+export	FPRS_DU
+export	FPRS_DL
 
 # system calls
-define	SYS_sigreturn SYS_sigreturn
-define	SYS_execve	SYS_execve
-define	SYS_exit	SYS_exit
+export	SYS_sigreturn
+export	SYS_execve
+export	SYS_exit
 
 # errno
-define	EFAULT		EFAULT
-define	ENAMETOOLONG	ENAMETOOLONG
+export	EFAULT
+export	ENAMETOOLONG
 
 # PCB fields
-define	PCB_NSAVED	offsetof(struct pcb, pcb_nsaved)
-define	PCB_ONFAULT	offsetof(struct pcb, pcb_onfault)
-define	PCB_PSTATE	offsetof(struct pcb, pcb_pstate)
-define	PCB_CWP		offsetof(struct pcb, pcb_cwp)
-define	PCB_PIL		offsetof(struct pcb, pcb_pil)
-define	PCB_RW		offsetof(struct pcb, pcb_rw)
-define	PCB_SP		offsetof(struct pcb, pcb_sp)
-define	PCB_PC		offsetof(struct pcb, pcb_pc)
-define  PCB_LASTCALL	offsetof(struct pcb, lastcall)
+struct	pcb
+member	pcb_nsaved
+member	pcb_onfault
+member	pcb_pstate
+member	pcb_cwp
+member	pcb_pil
+member	pcb_rw
+member	pcb_sp
+member	pcb_pc
+member	PCB_LASTCALL	lastcall
 define	PCB_SIZE	sizeof(struct pcb)
 
-
 # trapframe64 fields
-define	TF_TSTATE	offsetof(struct trapframe64, tf_tstate)
-define	TF_PC		offsetof(struct trapframe64, tf_pc)
-define	TF_NPC		offsetof(struct trapframe64, tf_npc)
-define	TF_FAULT	offsetof(struct trapframe64, tf_fault)
-define	TF_KSTACK	offsetof(struct trapframe64, tf_kstack)
-define	TF_Y		offsetof(struct trapframe64, tf_y)
-define	TF_PIL		offsetof(struct trapframe64, tf_pil)
-define	TF_OLDPIL	offsetof(struct trapframe64, tf_oldpil)
-define	TF_TT		offsetof(struct trapframe64, tf_tt)
-define	TF_GLOBAL	offsetof(struct trapframe64, tf_global)
-define	TF_OUT		offsetof(struct trapframe64, tf_out)
-define	TF_LOCAL	offsetof(struct trapframe64, tf_local)
-define	TF_IN		offsetof(struct trapframe64, tf_in)
+struct	trapframe64
+member	tf_tstate
+member	tf_pc
+member	tf_npc
+member	tf_fault
+member	tf_kstack
+member	tf_y
+member	tf_pil
+member	tf_oldpil
+member	tf_tt
+member	tf_global
+member	tf_out
+member	tf_local
+member	tf_in
 # shortened versions
-define	TF_G		offsetof(struct trapframe64, tf_global)
-define	TF_O		offsetof(struct trapframe64, tf_out)
-define	TF_L		offsetof(struct trapframe64, tf_local)
-define	TF_I		offsetof(struct trapframe64, tf_in)
+member	TF_G		tf_global
+member	TF_O		tf_out
+member	TF_L		tf_local
+member	TF_I		tf_in
 define	TF_SIZE		sizeof(struct trapframe64)
 
 ifdef notyet
 # clockframe fields 
-define	CF_TSTATE	offsetof(struct clockframe, tstate)
-define	CF_PC		offsetof(struct clockframe, pc)
-define	CF_NPC		offsetof(struct clockframe, npc)
-define	CF_PIL		offsetof(struct clockframe, pil)
-define	CF_OLDPIL	offsetof(struct clockframe, oldpil)
-define	CF_FP		offsetof(struct clockframe, fp)
+struct	clockframe	CF_
+member	tstate
+member	pc
+member	npc
+member	pil
+member	oldpil
+member	fp
 endif
 
 # interrupt handler fields
-define	IH_FUN		offsetof(struct intrhand, ih_fun)
-define	IH_ARG		offsetof(struct intrhand, ih_arg)
-define	IH_NUMBER	offsetof(struct intrhand, ih_number)
-define	IH_PIL		offsetof(struct intrhand, ih_pil)
-define	IH_PEND		offsetof(struct intrhand, ih_pending)
-define	IH_NEXT		offsetof(struct intrhand, ih_next)
-define	IH_MAP		offsetof(struct intrhand, ih_map)
-define	IH_CLR		offsetof(struct intrhand, ih_clr)
+struct	intrhand
+member	ih_fun
+member	ih_arg
+member	ih_number
+member	ih_pil
+member	IH_PEND		ih_pending
+member	ih_next
+member	ih_map
+member	ih_clr
 	
 # mbuf fields of import
-define	M_NEXT		offsetof(struct mbuf, m_next)
-define	M_DATA		offsetof(struct mbuf, m_data)
-define	M_LEN		offsetof(struct mbuf, m_len)
+struct	mbuf
+member	m_next
+member	m_data
+member	m_len
 
 ifdef notyet
 # floppy trap handler fields
-define	FDC_REG_MSR	offsetof(struct fdcio, fdcio_reg_msr)
-define	FDC_REG_FIFO	offsetof(struct fdcio, fdcio_reg_fifo)
-define	FDC_ISTATE	offsetof(struct fdcio, fdcio_istate)
-define	FDC_STATUS	offsetof(struct fdcio, fdcio_status)
-define	FDC_NSTAT	offsetof(struct fdcio, fdcio_nstat)
-define	FDC_DATA	offsetof(struct fdcio, fdcio_data)
-define	FDC_TC		offsetof(struct fdcio, fdcio_tc)
-define	FDC_EVCNT	offsetof(struct fdcio, fdcio_intrcnt.ev_count)
+struct	fdcio
+member	FDC_REG_MSR	fdcio_reg_msr
+member	FDC_REG_FIFO	fdcio_reg_fifo
+member	FDC_ISTATE	fdcio_istate
+member	FDC_STATUS	fdcio_status
+member	FDC_NSTAT	fdcio_nstat
+member	FDC_DATA	fdcio_data
+member	FDC_TC		fdcio_tc
+member	FDC_EVCNT	fdcio_intrcnt.ev_count
 endif
 
 ifdef notyet
 # db_regs structure so we can save all registers
-define	DBR_TRAPS	offsetof(struct db_regs, dbr_traps)
-define	DBR_Y		offsetof(struct db_regs, dbr_y)
-define	DBR_TL		offsetof(struct db_regs, dbr_tl)
-define	DBR_CANRESTORE	offsetof(struct db_regs, dbr_canrestore)
-define	DBR_CANSAVE	offsetof(struct db_regs, dbr_cansave)
-define	DBR_CLEANWIN	offsetof(struct db_regs, dbr_cleanwin)
-define	DBR_CWP		offsetof(struct db_regs, dbr_cwp)
-define	DBR_WSTATE	offsetof(struct db_regs, dbr_wstate)
-define	DBR_G		offsetof(struct db_regs, dbr_g)
-define	DBR_AG		offsetof(struct db_regs, dbr_ag)
-define	DBR_IG		offsetof(struct db_regs, dbr_ig)
-define	DBR_MG		offsetof(struct db_regs, dbr_mg)
-define	DBR_OUT		offsetof(struct db_regs, dbr_out)
-define	DBR_LOCAL	offsetof(struct db_regs, dbr_local)
-define	DBR_IN		offsetof(struct db_regs, dbr_in)
+struct	db_regs
+member	dbr_traps
+member	dbr_y
+member	dbr_tl
+member	dbr_canrestore
+member	dbr_cansave
+member	dbr_cleanwin
+member	dbr_cwp
+member	dbr_wstate
+member	dbr_g
+member	dbr_ag
+member	dbr_ig
+member	dbr_mg
+member	dbr_out
+member	dbr_local
+member	dbr_in
 endif
 
 ifdef COMPAT_NETBSD
-define	NETBSD_SYS___sigreturn14	NETBSD_SYS___sigreturn14
-define	NETBSD_SYS_exit			NETBSD_SYS_exit
+export	NETBSD_SYS___sigreturn14
+export	NETBSD_SYS_exit
 endif
-

@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.7 2001/05/10 10:34:45 art Exp $
+#	$OpenBSD: genassym.cf,v 1.8 2001/09/16 14:28:04 miod Exp $
 #	$NetBSD: genassym.cf,v 1.2 1997/06/28 19:59:04 pk Exp $
 
 #
@@ -81,122 +81,137 @@ include <sparc/dev/fdreg.h>
 include <sparc/dev/fdvar.h>
 
 # general constants
-define	BSD		BSD
-define	SUN4_PGSHIFT	SUN4_PGSHIFT
-define	SUN4CM_PGSHIFT	SUN4CM_PGSHIFT
-define	USRSTACK	USRSTACK
+export	BSD
+export	SUN4_PGSHIFT
+export	SUN4CM_PGSHIFT
+export	USRSTACK
 
 # proc fields and values
-define	P_ADDR		offsetof(struct proc, p_addr)
-define	P_STAT		offsetof(struct proc, p_stat)
-define	P_WCHAN		offsetof(struct proc, p_wchan)
-define	P_VMSPACE	offsetof(struct proc, p_vmspace)
-define	SRUN		SRUN
+struct	proc
+member	p_addr
+member	p_stat
+member	p_wchan
+member	p_vmspace
+
+export	SRUN
 
 # VM structure fields
 define	VM_PMAP		offsetof(struct vmspace, vm_map.pmap)
-define	PMAP_CTX	offsetof(struct pmap, pm_ctx)
-define	PMAP_CTXNUM	offsetof(struct pmap, pm_ctxnum)
+struct	pmap
+member	PMAP_CTX	pm_ctx
+member	PMAP_CTXNUM	pm_ctxnum
 
 # interrupt/fault metering
-define  V_SWTCH		offsetof(struct uvmexp, swtch)
-define  V_INTR		offsetof(struct uvmexp, intrs)
-define  V_FAULTS	offsetof(struct uvmexp, faults)
+struct	uvmexp		V_
+member	swtch
+member	INTR		intrs
+member	faults
 
 # CPU info structure
-define  CPUINFO_GETSYNCFLT      offsetof(struct cpu_softc, get_syncflt)
-define  CPUINFO_GETASYNCFLT     offsetof(struct cpu_softc, get_asyncflt)
-define  CPUINFO_SYNCFLTDUMP     offsetof(struct cpu_softc, syncfltdump)
-define	CPUINFO_PURE_VCACHE_FLS	offsetof(struct cpu_softc, pure_vcache_flush)
+struct	cpu_softc
+member  CPUINFO_GETSYNCFLT      get_syncflt
+member  CPUINFO_GETASYNCFLT     get_asyncflt
+member  CPUINFO_SYNCFLTDUMP     syncfltdump
+member	CPUINFO_PURE_VCACHE_FLS	pure_vcache_flush
 
 # PTE bits and related information
-define	PG_W		PG_W
-define	PG_VSHIFT	PG_VSHIFT
-define	PG_PROTSHIFT	PG_PROTSHIFT
-define	PG_PROTUREAD	PG_PROTUREAD
-define	PG_PROTUWRITE	PG_PROTUWRITE
+export	PG_W
+export	PG_VSHIFT
+export	PG_PROTSHIFT
+export	PG_PROTUREAD
+export	PG_PROTUWRITE
 if defined(SUN4M)
-define	SRMMU_TETYPE	SRMMU_TETYPE
-define	SRMMU_TEPTE	SRMMU_TEPTE
-define	SRMMU_PROT_MASK	SRMMU_PROT_MASK
-define	PPROT_R_RW	PPROT_R_RW
-define	PPROT_RX_RX	PPROT_RX_RX
-define	PPROT_RWX_RWX	PPROT_RWX_RWX
-define	PPROT_WRITE	PPROT_WRITE
+export	SRMMU_TETYPE
+export	SRMMU_TEPTE
+export	SRMMU_PROT_MASK
+export	PPROT_R_RW
+export	PPROT_RX_RX
+export	PPROT_RWX_RWX
+export	PPROT_WRITE
 endif
 
 # FPU state
-define	FS_REGS		offsetof(struct fpstate, fs_regs)
-define	FS_FSR		offsetof(struct fpstate, fs_fsr)
-define	FS_QSIZE	offsetof(struct fpstate, fs_qsize)
-define	FS_QUEUE	offsetof(struct fpstate, fs_queue)
-define	FSR_QNE		FSR_QNE
+struct	fpstate
+member	fs_regs
+member	fs_fsr
+member	fs_qsize
+member	fs_queue
+export	FSR_QNE
 
 # system calls
-define	SYS_sigreturn	SYS_sigreturn
-define	SYS_execve	SYS_execve
-define	SYS_exit	SYS_exit
+export	SYS_sigreturn
+export	SYS_execve
+export	SYS_exit
 
 # errno
-define	EFAULT		EFAULT
-define	ENAMETOOLONG	ENAMETOOLONG
+export	EFAULT
+export	ENAMETOOLONG
 
 # PCB fields
-define	PCB_NSAVED	offsetof(struct pcb, pcb_nsaved)
-define	PCB_ONFAULT	offsetof(struct pcb, pcb_onfault)
-define	PCB_PSR		offsetof(struct pcb, pcb_psr)
-define	PCB_RW		offsetof(struct pcb, pcb_rw)
-define	PCB_SP		offsetof(struct pcb, pcb_sp)
-define	PCB_PC		offsetof(struct pcb, pcb_pc)
-define	PCB_UW		offsetof(struct pcb, pcb_uw)
-define	PCB_WIM		offsetof(struct pcb, pcb_wim)
+struct	pcb
+member	pcb_nsaved
+member	pcb_onfault
+member	pcb_psr
+member	pcb_rw
+member	pcb_sp
+member	pcb_pc
+member	pcb_uw
+member	pcb_wim
 
 # interrupt enable register PTE
 define	IE_REG_PTE_PG	(PG_V | PG_W | PG_S | PG_NC | PG_OBIO)
 
 ifdef notyet
 # ZSCC interrupt fields
-define	ZSC_A		offsetof(struct zs_softc, sc_a)
-define	ZSC_B		offsetof(struct zs_softc, sc_b)
-define	ZL_WREG		offsetof(struct zs_line, zl_wreg)
-define	ZL_TBC		offsetof(struct zs_line, zl_tbc)
-define	ZL_TBA		offsetof(struct zs_line, zl_tba)
-define	ZL_RBPUT	offsetof(struct zs_line, zl_rbput)
-define	ZL_RBUF		offsetof(struct zs_line, zl_rbuf)
+struct	zs_softc	Z
+member	sc_a
+member	sc_b
+struct	zs_line
+member	zl_wreg
+member	zl_tbc
+member	zl_tba
+member	zl_rbput
+member	zl_rbuf
 define	ZSRR1_DO_bit	ffs(ZSRR1_DO) - 1
 endif
 
 # audio trap handler fields
-define	AU_AMD		offsetof(struct auio, au_amd)
-define	AU_RDATA	offsetof(struct auio, au_rdata)
-define	AU_REND		offsetof(struct auio, au_rend)
-define	AU_PDATA	offsetof(struct auio, au_pdata)
-define	AU_PEND		offsetof(struct auio, au_pend)
+struct	auio
+member	au_amd
+member	au_rdata
+member	au_rend
+member	au_pdata
+member	au_pend
 define	AU_EVCNT	offsetof(struct auio, au_intrcnt.ev_count)
 
-define	AMD_IR		offsetof(struct amd7930, ir)
-define	AMD_BBRB	offsetof(struct amd7930, bbrb)
-define	AMD_BBTB	offsetof(struct amd7930, bbtb)
+struct	amd7930		AMD_
+member	ir
+member	bbrb
+member	bbtb
 
-define	PROM_BASE	PROM_BASE
+export	PROM_BASE
 
-define	PV_NODEOPS	offsetof(struct promvec, pv_nodeops)
-define	PV_HALT		offsetof(struct promvec, pv_halt)
-define	PV_EVAL		offsetof(struct promvec, pv_fortheval.v0_eval)
-define	PV_ROMVEC_VERS	offsetof(struct promvec, pv_romvec_vers)
+struct	promvec
+member	pv_nodeops
+member	pv_halt
+member	PV_EVAL		pv_fortheval.v0_eval
+member	pv_romvec_vers
 
-define	NO_NEXTNODE	offsetof(struct nodeops, no_nextnode)
-define	NO_GETPROP	offsetof(struct nodeops, no_getprop)
+struct	nodeops
+member	no_nextnode
+member	no_getprop
 
-define	OLDMON_PRINTF	offsetof(struct om_vector, printf)
-define	OLDMON_HALT	offsetof(struct om_vector, exitToMon)
+struct	om_vector	OLDMON_
+member	printf
+member	HALT		exitToMon
 
 # floppy trap handler fields
-define	FDC_REG_MSR	offsetof(struct fdcio, fdcio_reg_msr)
-define	FDC_REG_FIFO	offsetof(struct fdcio, fdcio_reg_fifo)
-define	FDC_ISTATE	offsetof(struct fdcio, fdcio_istate)
-define	FDC_STATUS	offsetof(struct fdcio, fdcio_status)
-define	FDC_NSTAT	offsetof(struct fdcio, fdcio_nstat)
-define	FDC_DATA	offsetof(struct fdcio, fdcio_data)
-define	FDC_TC		offsetof(struct fdcio, fdcio_tc)
-define	FDC_EVCNT	offsetof(struct fdcio, fdcio_intrcnt.ev_count)
+struct	fdcio
+member	FDC_REG_MSR	fdcio_reg_msr
+member	FDC_REG_FIFO	fdcio_reg_fifo
+member	FDC_ISTATE	fdcio_istate
+member	FDC_STATUS	fdcio_status
+member	FDC_NSTAT	fdcio_nstat
+member	FDC_DATA	fdcio_data
+member	FDC_TC		fdcio_tc
+member	FDC_EVCNT	fdcio_intrcnt.ev_count

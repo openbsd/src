@@ -1,5 +1,5 @@
 #	$NetBSD: genassym.cf,v 1.3 1997/07/16 00:01:49 is Exp $
-#	$OpenBSD: genassym.cf,v 1.8 2001/08/31 00:37:15 miod Exp $
+#	$OpenBSD: genassym.cf,v 1.9 2001/09/16 14:28:04 miod Exp $
 #
 # Copyright (c) 1982, 1990, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -57,64 +57,66 @@ include <amiga/amiga/cia.h>
 include <amiga/amiga/isr.h>
 
 # values for mmutype
-define	MMU_68851	MMU_68851
-define	MMU_68030	MMU_68030
-define	MMU_68040	MMU_68040
-define	MMU_68060	MMU_68060
+export	MMU_68851
+export	MMU_68030
+export	MMU_68040
+export	MMU_68060
 
 # values for cputype
-define	CPU_68020	CPU_68020
-define	CPU_68030	CPU_68030
-define	CPU_68040	CPU_68040
-define	CPU_68060	CPU_68060
+export	CPU_68020
+export	CPU_68030
+export	CPU_68040
+export	CPU_68060
 
 # values for ectype
-define	EC_NONE		EC_NONE
+export	EC_NONE
 
 # values for fputype
-define	FPU_NONE	FPU_NONE
-define	FPU_68881	FPU_68881
-define	FPU_68882	FPU_68882
-define	FPU_68040	FPU_68040
-define	FPU_68060	FPU_68060
-define	FPU_UNKNOWN	FPU_UNKNOWN
+export	FPU_NONE
+export	FPU_68881
+export	FPU_68882
+export	FPU_68040
+export	FPU_68060
+export	FPU_UNKNOWN
 
 ifdef FPU_EMULATE
-define	FPU_EMULATE	FPU_EMULATE
+export	FPU_EMULATE
 endif
 
 # values for machineid
-define	AMIGA_68020	AMIGA_68020
-define	AMIGA_68030	AMIGA_68030
-define	AMIGA_68040	AMIGA_68040
-define	AMIGA_68060	AMIGA_68060
+export	AMIGA_68020
+export	AMIGA_68030
+export	AMIGA_68040
+export	AMIGA_68060
 ifdef DRACO
-define	DRACO		DRACO
+export	DRACO
 endif
 ifdef BB060STUPIDROM
-define BB060STUPIDROM BB060STUPIDROM
+export BB060STUPIDROM
 endif
 
 # proc structure fields and values
-define	P_VMSPACE	offsetof(struct proc, p_vmspace)
-define	P_ADDR		offsetof(struct proc, p_addr)
-define  P_MD_REGS	offsetof(struct proc, p_md.md_regs)
+struct	proc
+member	p_vmspace
+member	p_addr
+member	P_MD_REGS	p_md.md_regs
 
 # interrupt/fault metering
-define	UVMEXP_INTRS	offsetof(struct uvmexp, intrs)
+struct	uvmexp		UVMEXP_
+member	intrs
 
 # general constants
-define	UPAGES		UPAGES
-define	USPACE		USPACE
-define	PGSHIFT		PGSHIFT
-define	USRSTACK	USRSTACK
+export	UPAGES
+export	USPACE
+export	PGSHIFT
+export	USRSTACK
 
 # PSL values
-define	PSL_S		PSL_S
-define	PSL_IPL7	PSL_IPL7
-define	PSL_IPL		PSL_IPL
-define	PSL_LOWIPL	PSL_LOWIPL
-define	PSL_USER	PSL_USER
+export	PSL_S
+export	PSL_IPL7
+export	PSL_IPL
+export	PSL_LOWIPL	
+export	PSL_USER
 define	SPL1		PSL_S | PSL_IPL1
 define	SPL2		PSL_S | PSL_IPL2
 define	SPL3		PSL_S | PSL_IPL3
@@ -123,49 +125,52 @@ define	SPL5		PSL_S | PSL_IPL5
 define	SPL6		PSL_S | PSL_IPL6
 
 # magic
-define	FC_SUPERD	FC_SUPERD
-define	CACHE_ON	CACHE_ON
-define	CACHE_OFF	CACHE_OFF
-define	CACHE_CLR	CACHE_CLR
-define	IC_CLEAR	IC_CLEAR
-define	DC_CLEAR	DC_CLEAR
-define	CACHE40_ON	CACHE40_ON
-define	CACHE40_OFF	CACHE40_OFF
-define	CACHE60_ON	CACHE60_ON
-define	CACHE60_OFF	CACHE60_OFF
-define	IC60_CUBC	IC60_CUBC
-define	IC60_CABC	IC60_CABC
+export	FC_SUPERD
+export	CACHE_ON
+export	CACHE_OFF
+export	CACHE_CLR
+export	IC_CLEAR
+export	DC_CLEAR
+export	CACHE40_ON
+export	CACHE40_OFF
+export	CACHE60_ON
+export	CACHE60_OFF
+export	IC60_CUBC
+export	IC60_CABC
 
 # pte/ste bits
-define	PG_V		PG_V
-define	PG_NV		PG_NV
-define	PG_RO		PG_RO
-define	PG_RW		PG_RW
-define	PG_CI		PG_CI
-define	PG_PROT		PG_PROT
-define	PG_FRAME	PG_FRAME
+export	PG_V
+export	PG_NV
+export	PG_RO
+export	PG_RW
+export	PG_CI
+export	PG_PROT
+export	PG_FRAME
 
 # pcb fields
-define	PCB_FLAGS	offsetof(struct pcb, pcb_flags)
-define	PCB_PS		offsetof(struct pcb, pcb_ps)
-define	PCB_USP		offsetof(struct pcb, pcb_usp)
-define	PCB_REGS	offsetof(struct pcb, pcb_regs)
-define	PCB_CMAP2	offsetof(struct pcb, pcb_cmap2)
-define	PCB_FPCTX	offsetof(struct pcb, pcb_fpregs)
+struct	pcb
+member	pcb_flags
+member	pcb_ps
+member	pcb_usp
+member	pcb_regs
+member	pcb_cmap2
+member	PCB_FPCTX	pcb_fpregs
 define	SIZEOF_PCB	sizeof(struct pcb)
 
 # isr fields
-define	ISR_FORW	offsetof(struct isr, isr_forw)
-define	ISR_INTR	offsetof(struct isr, isr_intr)
-define	ISR_ARG		offsetof(struct isr, isr_arg)
+struct	isr
+member	isr_forw
+member	isr_intr
+member	isr_arg
 
 # system calls
-define	SYS_exit	SYS_exit
-define	SYS_execve	SYS_execve
+export	SYS_exit
+export	SYS_execve
 
 # user fields
-define	U_PROF		offsetof(struct user, u_stats.p_prof)
-define	U_PROFSCALE	offsetof(struct user, u_stats.p_prof.pr_scale)
+struct	user
+member	U_PROF		u_stats.p_prof
+member	U_PROFSCALE	u_stats.p_prof.pr_scale
 
 # miscellaneous custom chip register offsets
 define	CIAICR		offsetof(struct CIA, icr)

@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.9 2001/05/05 23:25:36 art Exp $
+#	$OpenBSD: genassym.cf,v 1.10 2001/09/16 14:28:04 miod Exp $
 #
 # Copyright (c) 1982, 1990 The Regents of the University of California.
 # All rights reserved.
@@ -68,96 +68,108 @@ if NISA > 0
 include <i386/isa/isa_machdep.h>
 endif
 
-define	SRUN		SRUN
+export	SRUN
 
 # values for page tables
-define	PDSLOT_KERN	PDSLOT_KERN
-define	PDSLOT_PTE	PDSLOT_PTE
-define	NKPTP_MIN	NKPTP_MIN
-define	NKPTP_MAX	NKPTP_MAX
-define	APTDPTDI	APTDPTDI
+export	PDSLOT_KERN
+export	PDSLOT_PTE
+export	NKPTP_MIN
+export	NKPTP_MAX
+export	APTDPTDI
 
 # values for virtual memory
-define	VM_MAXUSER_ADDRESS VM_MAXUSER_ADDRESS
+export	VM_MAXUSER_ADDRESS
 
 # proc fields and values
-define	P_ADDR		offsetof(struct proc, p_addr)
-define	P_BACK		offsetof(struct proc, p_back)
-define	P_FORW		offsetof(struct proc, p_forw)
-define	P_PRIORITY	offsetof(struct proc, p_priority)
-define	P_STAT		offsetof(struct proc, p_stat)
-define	P_WCHAN		offsetof(struct proc, p_wchan)
-define	P_VMSPACE	offsetof(struct proc, p_vmspace)
-define	P_FLAG		offsetof(struct proc, p_flag)
+struct	proc
+member	p_addr
+member	p_back
+member	p_forw
+member	p_priority
+member	p_stat
+member	p_wchan
+member	p_vmspace
+member	p_flag
 
-define	P_SYSTEM	P_SYSTEM
+export	P_SYSTEM
 
 # interrupt/fault metering
-define	V_TRAP			offsetof(struct uvmexp, traps)
-define	V_INTR			offsetof(struct uvmexp, intrs)
+struct	uvmexp		V_
+member	TRAP		traps
+member	INTR		intrs
 
 # pcb fields
-define	PCB_CR3		offsetof(struct pcb, pcb_cr3)
-define	PCB_EBP		offsetof(struct pcb, pcb_ebp)
-define	PCB_ESP		offsetof(struct pcb, pcb_esp)
-define	PCB_FS		offsetof(struct pcb, pcb_fs)
-define	PCB_GS		offsetof(struct pcb, pcb_gs)
-define	PCB_CR0		offsetof(struct pcb, pcb_cr0)
-define	PCB_LDT_SEL	offsetof(struct pcb, pcb_ldt_sel)
-define	PCB_TSS_SEL	offsetof(struct pcb, pcb_tss_sel)
-define	PCB_ONFAULT	offsetof(struct pcb, pcb_onfault)
+struct	pcb
+member	pcb_cr3
+member	pcb_ebp
+member	pcb_esp
+member	pcb_fs
+member	pcb_gs
+member	pcb_cr0
+member	pcb_ldt_sel
+member	pcb_tss_sel
+member	pcb_onfault
 
 # frame definitions
-define	TF_CS		offsetof(struct trapframe, tf_cs)
-define	TF_TRAPNO	offsetof(struct trapframe, tf_trapno)
-define	TF_EFLAGS	offsetof(struct trapframe, tf_eflags)
-define	TF_EIP		offsetof(struct trapframe, tf_eip)
-define	TF_ERR		offsetof(struct trapframe, tf_err)
-
+struct	trapframe
+member	tf_cs
+member	tf_trapno
+member	tf_eflags
+member	tf_eip
+member	tf_err
 define	FRAMESIZE	sizeof(struct trapframe)
 
 # signal handling
-define	SIGF_HANDLER	offsetof(struct sigframe, sf_handler)
-define	SIGF_SC		offsetof(struct sigframe, sf_sc)
-define	SC_FS		offsetof(struct sigcontext, sc_fs)
-define	SC_GS		offsetof(struct sigcontext, sc_gs)
-define	SC_EFLAGS	offsetof(struct sigcontext, sc_eflags)
+struct	sigframe	SIGF_
+member	HANDLER		sf_handler
+member	SC		sf_sc
+struct	sigcontext
+member	sc_fs
+member	sc_gs
+member	sc_eflags
 
 # mbuf fields
 ifdef INET
-define	M_NEXT		offsetof(struct mbuf, m_next)
-define	M_DATA		offsetof(struct mbuf, m_data)
-define	M_LEN		offsetof(struct mbuf, m_len)
+struct	mbuf
+member	m_next
+member	m_data
+member	m_len
 endif
 
 # SVR4 frame offsets
 ifdef COMPAT_SVR4
-define	SVR4_SIGF_HANDLER	offsetof(struct svr4_sigframe, sf_handler)
-define	SVR4_SIGF_UC	offsetof(struct svr4_sigframe, sf_uc)
-define	SVR4_UC_FS	offsetof(struct svr4_ucontext, uc_mcontext.greg[SVR4_X86_FS])
-define	SVR4_UC_GS	offsetof(struct svr4_ucontext, uc_mcontext.greg[SVR4_X86_GS])
-define	SVR4_UC_EFLAGS	offsetof(struct svr4_ucontext, uc_mcontext.greg[SVR4_X86_EFL])
+struct	svr4_sigframe	SVR4_SIGF_
+member	HANDLER		sf_handler
+member	UC		sf_uc
+struct	svr4_ucontext	SVR4_UC_
+member	FS		uc_mcontext.greg[SVR4_X86_FS]
+member	GS		uc_mcontext.greg[SVR4_X86_GS]
+member	EFLAGS		uc_mcontext.greg[SVR4_X86_EFL]
 endif
 
 # Linux frame offsets
 ifdef COMPAT_LINUX
-define	LINUX_SIGF_HANDLER	offsetof(struct linux_sigframe, sf_handler)
-define	LINUX_SIGF_SC	offsetof(struct linux_sigframe, sf_sc)
-define	LINUX_SC_FS	offsetof(struct linux_sigcontext, sc_fs)
-define	LINUX_SC_GS	offsetof(struct linux_sigcontext, sc_gs)
-define	LINUX_SC_EFLAGS	offsetof(struct linux_sigcontext, sc_eflags)
+struct	linux_sigframe		LINUX_SIGF_
+member	HANDLER			sf_handler
+member	SC			sf_sc
+struct	linux_sigcontext	LINUX_
+member	sc_fs			
+member	sc_gs
+member	sc_eflags
 endif
 
 # FreeBSD frame offsets
 ifdef COMPAT_FREEBSD
-define	FREEBSD_SIGF_HANDLER	offsetof(struct freebsd_sigframe, sf_handler)
-define	FREEBSD_SIGF_SC	offsetof(struct freebsd_sigframe, sf_sc)
+struct	freebsd_sigframe	FREEBSD_SIGF_
+member	HANDLER			sf_handler
+member	SC			sf_sc
 endif
 
 # Interrupt metering
 if NISA > 0
-define	IH_FUN		offsetof(struct intrhand, ih_fun)
-define	IH_ARG		offsetof(struct intrhand, ih_arg)
-define	IH_COUNT	offsetof(struct intrhand, ih_count)
-define	IH_NEXT		offsetof(struct intrhand, ih_next)
+struct	intrhand
+member	ih_fun
+member	ih_arg
+member	ih_count
+member	ih_next
 endif

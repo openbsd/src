@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.2 2001/08/31 00:37:20 miod Exp $
+#	$OpenBSD: genassym.cf,v 1.3 2001/09/16 14:28:04 miod Exp $
 
 #
 # Copyright (c) 1995 Theo de Raadt
@@ -77,34 +77,37 @@ include <machine/cpu.h>
 include <machine/psl.h>
 
 # general constants
-define	NBPG			NBPG
+export	NBPG
 
 # proc fields and values
-define	P_FORW			offsetof(struct proc, p_forw)
-define	P_BACK			offsetof(struct proc, p_back)
-define	P_PRIORITY		offsetof(struct proc, p_priority)
-define	P_STAT			offsetof(struct proc, p_stat)
-define	P_WCHAN			offsetof(struct proc, p_wchan)
+struct	proc
+member	p_forw
+member	p_back
+member	p_priority
+member	p_stat
+member	p_wchan
 
-define	SRUN			SRUN
+export	SRUN
 
 # magic
-define	FC_USERD		FC_USERD
+export	FC_USERD
 
 # PSL values
-define	PSL_HIGHIPL		PSL_HIGHIPL
+export	PSL_HIGHIPL
 
 # pcb fields
-define	PCB_ONFAULT		offsetof(struct pcb, pcb_onfault)
+struct	pcb
+member	pcb_onfault
 
 # exception frame offset/sizes
-define	FR_SP			offsetof(struct frame, f_regs[15])
-define	FR_HW			offsetof(struct frame, f_sr)
-define	FR_ADJ			offsetof(struct frame, f_stackadj)
+struct	frame
+member	FR_SP		f_regs[15]
+member	FR_HW		f_sr
+member	FR_ADJ		f_stackadj
 
 # system calls
-define	SYS_sigreturn		SYS_sigreturn
+export	SYS_sigreturn
 
 # errno
-define	EFAULT			EFAULT
-define	ENAMETOOLONG		ENAMETOOLONG
+export	EFAULT
+export	ENAMETOOLONG

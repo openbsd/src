@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.11 2001/08/31 00:37:20 miod Exp $
+#	$OpenBSD: genassym.cf,v 1.12 2001/09/16 14:28:04 miod Exp $
 
 #
 # Copyright (c) 1995 Theo de Raadt
@@ -86,81 +86,85 @@ include <machine/prom.h>
 include <machine/pte.h>
 
 # general constants
-define	USPACE			USPACE
-define	PGSHIFT			PGSHIFT
-define	USRSTACK		USRSTACK
+export	USPACE
+export	PGSHIFT
+export	USRSTACK
 
 # proc fields and values
-define	P_ADDR			offsetof(struct proc, p_addr)
-define	P_MD_FLAGS		offsetof(struct proc, p_md.md_flags)
-define	P_MD_REGS		offsetof(struct proc, p_md.md_regs)
+struct	proc
+member	p_addr
+member	P_MD_FLAGS		p_md.md_flags
+member	P_MD_REGS		p_md.md_regs
 
 # interrupt/fault metering
-define	UVMEXP_INTRS		offsetof(struct uvmexp, intrs)
+struct	uvmexp			UVMEXP_
+member	intrs
 
 # PSL values
-define	PSL_S			PSL_S
-define	PSL_IPL7		PSL_IPL7
-define	PSL_LOWIPL		PSL_LOWIPL
-define	PSL_USER		PSL_USER
+export	PSL_S
+export	PSL_IPL7
+export	PSL_LOWIPL	
+export	PSL_USER
 define	SPL1			PSL_S | PSL_IPL1
 
 # magic
-define	CACHE_ON		CACHE_ON
-define	CACHE_OFF		CACHE_OFF
-define	CACHE_CLR		CACHE_CLR
-define	IC_CLEAR		IC_CLEAR
-define	DC_CLEAR		DC_CLEAR
-define	CACHE60_ON		CACHE60_ON
-define	IC60_CUBC		IC60_CUBC
-define	IC60_CABC		IC60_CABC
+export	CACHE_ON
+export	CACHE_OFF
+export	CACHE_CLR
+export	IC_CLEAR
+export	DC_CLEAR
+export	CACHE60_ON
+export	IC60_CUBC
+export	IC60_CABC
 
 # pte/ste bits
-define	PG_FRAME		PG_FRAME
+export	PG_FRAME
 
 # pcb fields
-define	PCB_PS			offsetof(struct pcb, pcb_ps)
-define	PCB_USP			offsetof(struct pcb, pcb_usp)
-define	PCB_REGS		offsetof(struct pcb, pcb_regs)
-define	PCB_FPCTX		offsetof(struct pcb, pcb_fpregs)
+struct	pcb
+member	pcb_ps
+member	pcb_usp
+member	pcb_regs
+member	PCB_FPCTX		pcb_fpregs
 define	SIZEOF_PCB		sizeof(struct pcb)
 
 # exception frame size
 define	FR_SIZE			sizeof(struct trapframe)
 
-
 define	SIZEOF_MVMEPROM_BRDID	sizeof(struct mvmeprom_brdid)
 define	MVMEPROM_BRDID_MODEL	offsetof(struct mvmeprom_brdid, model)
 
-define	NVRAM_147_ETHER		offsetof(struct nvram_147, ether)
-define	NVRAM_147_EMEM		offsetof(struct nvram_147, emem)
+struct	nvram_147		NVRAM_147_
+member	ether
+member	emem
 
-define	INTIOBASE_147		INTIOBASE_147
-define	INTIOBASE_162		INTIOBASE_162
-define	INTIOSIZE_147		INTIOSIZE_147
-define	INTIOSIZE_162		INTIOSIZE_162
+export	INTIOBASE_147
+export	INTIOBASE_162
+export	INTIOSIZE_147
+export	INTIOSIZE_162
 
-define	CPU_147			CPU_147
-define	CPU_162			CPU_162
-define	CPU_166			CPU_166
-define	CPU_167			CPU_167
-define	CPU_172			CPU_172
-define	CPU_177			CPU_177
+export	CPU_147
+export	CPU_162
+export	CPU_166
+export	CPU_167
+export	CPU_172
+export	CPU_177
 
-define	MMU_68030		MMU_68030
-define	MMU_68040		MMU_68040
-define	MMU_68060		MMU_68060
+export	MMU_68030
+export	MMU_68040
+export	MMU_68060
 
-define	CPU_68030		CPU_68030
-define	CPU_68040		CPU_68040
-define	CPU_68060		CPU_68060
+export	CPU_68030
+export	CPU_68040
+export	CPU_68060
 
-define	FPU_68881		FPU_68881
-define	FPU_68040		FPU_68040
-define	FPU_68060		FPU_68060
+export	FPU_68881
+export	FPU_68040
+export	FPU_68060
 
-define	NETCTRL_DEV		offsetof(struct prom_netctrl, dev)
-define	NETCTRL_CTRL		offsetof(struct prom_netctrl, ctrl)
-define	NETCTRL_CMD		offsetof(struct prom_netctrl, cmd)
-define	NETCTRL_ADDR		offsetof(struct prom_netctrl, addr)
-define	NETCTRL_LEN		offsetof(struct prom_netctrl, len)
+struct	prom_netctrl		NETCTRL_
+member	dev
+member	ctrl
+member	cmd
+member	addr
+member	len

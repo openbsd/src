@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.8 2001/08/31 00:37:20 miod Exp $
+#	$OpenBSD: genassym.cf,v 1.9 2001/09/16 14:28:04 miod Exp $
 #	$NetBSD: genassym.cf,v 1.7 1998/01/06 08:46:16 thorpej Exp $
 
 #
@@ -55,54 +55,57 @@ include	<machine/psl.h>
 include	<machine/reg.h>
 include	<machine/pte.h>
 
-define	P_ADDR			offsetof(struct proc, p_addr)
-define	P_MD_REGS		offsetof(struct proc, p_md.md_regs)
-define	P_MD_FLAGS		offsetof(struct proc, p_md.md_flags)
+struct	proc
+member	p_addr
+member	P_MD_REGS		p_md.md_regs
+member	P_MD_FLAGS		p_md.md_flags
 
 # interrupt/fault metering
-define	UVMEXP_INTRS		offsetof(struct uvmexp, intrs)
+struct	uvmexp			UVMEXP_
+member	intrs
 
-define	USPACE			USPACE
-define	PGSHIFT 		PGSHIFT
-define	USRSTACK		USRSTACK
+export	USPACE
+export	PGSHIFT
+export	USRSTACK
 
-define	PSL_S		PSL_S
-define	PSL_IPL7	PSL_IPL7
-define	PSL_LOWIPL	PSL_LOWIPL
-define	PSL_USER	PSL_USER
+export	PSL_S
+export	PSL_IPL7
+export	PSL_LOWIPL	
+export	PSL_USER
 define	SPL1			(PSL_S | PSL_IPL1)
 define	SPL2			(PSL_S | PSL_IPL2)
 
-define	FC_SUPERD		FC_SUPERD
+export	FC_SUPERD
 
-define	CACHE_ON		CACHE_ON
-define	CACHE_OFF		CACHE_OFF
-define	CACHE_CLR		CACHE_CLR
-define	CACHE40_ON		CACHE40_ON
-define	CACHE40_OFF		CACHE40_OFF
-define	IC_CLEAR		IC_CLEAR
-define	DC_CLEAR		DC_CLEAR
+export	CACHE_ON
+export	CACHE_OFF
+export	CACHE_CLR
+export	CACHE40_ON
+export	CACHE40_OFF
+export	IC_CLEAR
+export	DC_CLEAR
 
-define	PG_FRAME		PG_FRAME
+export	PG_FRAME
 
-define	PCB_PS			offsetof(struct pcb, pcb_ps)
-define	PCB_USP			offsetof(struct pcb, pcb_usp)
-define	PCB_REGS		offsetof(struct pcb, pcb_regs)
-define	PCB_FPCTX		offsetof(struct pcb, pcb_fpregs)
+struct	pcb
+member	pcb_ps
+member	pcb_usp
+member	pcb_regs
+member	PCB_FPCTX		pcb_fpregs
 define	SIZEOF_PCB		sizeof(struct pcb)
 
 define	FR_SIZE			sizeof(struct trapframe)
 
 define	CPUINFO_CLASS		offsetof(struct cpu_model_info, class)
-define	MACH_CLASSAV		MACH_CLASSAV
+export	MACH_CLASSAV
 
-define	CPU_68020		CPU_68020
-define	CPU_68030		CPU_68030
-define	CPU_68040		CPU_68040
+export	CPU_68020
+export	CPU_68030
+export	CPU_68040
 
-define	MMU_68851		MMU_68851
-define	MMU_68030		MMU_68030
-define	MMU_68040		MMU_68040
+export	MMU_68851
+export	MMU_68030
+export	MMU_68040
 
-define	FPU_68882		FPU_68882
-define	FPU_68040		FPU_68040
+export	FPU_68882
+export	FPU_68040

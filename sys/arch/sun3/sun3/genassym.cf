@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.5 2001/08/31 00:37:20 miod Exp $
+#	$OpenBSD: genassym.cf,v 1.6 2001/09/16 14:28:04 miod Exp $
 #	$NetBSD: genassym.c,v 1.32 1996/10/23 16:39:27 gwr Exp $
 
 #
@@ -64,65 +64,68 @@ include <sun3/sun3/interreg.h>
 include <sun3/sun3/buserr.h>
 
 # general constants
-define	NBSG			NBSG
-define	KERNBASE		KERNBASE
-define	USPACE			USPACE
-define	USRSTACK		USRSTACK
+export	NBSG
+export	KERNBASE
+export	USPACE
+export	USRSTACK
 
 # intersil clock internals
-define	IREG_CLOCK_ENAB_5	IREG_CLOCK_ENAB_5
+export	IREG_CLOCK_ENAB_5
 define	INTERSIL_INTR_OFFSET	offsetof(struct intersil7170, clk_intr_reg)
-define	INTERSIL_INTER_CSECONDS	INTERSIL_INTER_CSECONDS
+export	INTERSIL_INTER_CSECONDS
 
 # bus error
-define	BUSERR_REG		BUSERR_REG
-define	BUSERR_MMU		BUSERR_MMU
+export	BUSERR_REG
+export	BUSERR_MMU
 
 # PSL values
-define	PSL_S			PSL_S
-define	PSL_IPL7		PSL_IPL7
-define	PSL_LOWIPL		PSL_LOWIPL
-define	PSL_USER		PSL_USER
+export	PSL_S
+export	PSL_IPL7
+export	PSL_LOWIPL	
+export	PSL_USER
 
 # magic
-define	FC_CONTROL		FC_CONTROL
-define	FC_SUPERD		FC_SUPERD
-define	IC_CLEAR		IC_CLEAR
+export	FC_CONTROL
+export	FC_SUPERD
+export	IC_CLEAR
 
 # sun3 control space
-define	CONTEXT_0		CONTEXT_0
-define	CONTEXT_REG		CONTEXT_REG
-define	CONTEXT_NUM		CONTEXT_NUM
-define	SYSTEM_ENAB		SYSTEM_ENAB
-define	SYSTEM_ENAB_FPP		SYSTEM_ENAB_FPP
-define	SEGMAP_BASE		SEGMAP_BASE
+export	CONTEXT_0
+export	CONTEXT_REG
+export	CONTEXT_NUM
+export	SYSTEM_ENAB
+export	SYSTEM_ENAB_FPP
+export	SEGMAP_BASE
 
 # sun3 memory map
-define	DVMA_SPACE_START	DVMA_SPACE_START
-define	MONSTART		MONSTART
-define	PROM_BASE		PROM_BASE
+export	DVMA_SPACE_START
+export	MONSTART
+export	PROM_BASE
 
 # proc fields and values
-define	P_VMSPACE		offsetof(struct proc, p_vmspace)
-define	P_ADDR			offsetof(struct proc, p_addr)
-define	P_FLAG			offsetof(struct proc, p_flag)
-define	P_MD_FLAGS		offsetof(struct proc, p_md.md_flags)
-define	P_MD_REGS		offsetof(struct proc, p_md.md_regs)
+struct	proc
+member	p_vmspace
+member	p_addr
+member	p_flag
+member	P_MD_FLAGS		p_md.md_flags
+member	P_MD_REGS		p_md.md_regs
 
 # VM structure fields
 define	VM_PMAP			offsetof(struct vmspace, vm_map.pmap)
 
 # pcb fields
-define	PCB_FLAGS		offsetof(struct pcb, pcb_flags)
-define	PCB_PS			offsetof(struct pcb, pcb_ps)
-define	PCB_USP			offsetof(struct pcb, pcb_usp)
-define	PCB_REGS		offsetof(struct pcb, pcb_regs)
-define	PCB_FPCTX		offsetof(struct pcb, pcb_fpregs)
+struct	pcb
+member	pcb_flags
+member	pcb_ps
+member	pcb_usp
+member	pcb_regs
+member	PCB_FPCTX		pcb_fpregs
 define	SIZEOF_PCB		sizeof(struct pcb)
 
 # exception frame size
-define	CFSIZE			CFSIZE
+export	CFSIZE
 
 # FP frame offset
-define	FPF_REGS		offsetof(struct fpframe, fpf_regs[0])
-define	FPF_FPCR		offsetof(struct fpframe, fpf_fpcr)
+struct	fpframe
+member	FPF_REGS		fpf_regs[0]
+member	fpf_fpcr

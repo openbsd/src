@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.1 2001/05/20 05:51:22 miod Exp $
+#	$OpenBSD: genassym.cf,v 1.2 2001/09/16 14:28:04 miod Exp $
 #
 # Copyright (c) 1982, 1990 The Regents of the University of California.
 # All rights reserved.
@@ -32,7 +32,7 @@
 # SUCH DAMAGE.
 #
 #	@(#)genassym.c	7.8 (Berkeley) 5/7/91
-#	$Id: genassym.cf,v 1.1 2001/05/20 05:51:22 miod Exp $
+#	$Id: genassym.cf,v 1.2 2001/09/16 14:28:04 miod Exp $
 #
 
 include <sys/param.h>
@@ -49,26 +49,28 @@ include <sys/syscall.h>
 include <sys/user.h>
 
 # proc fields and values
-define	P_FORW			offsetof(struct proc, p_forw)
-define	P_BACK			offsetof(struct proc, p_back)
-define	P_ADDR			offsetof(struct proc, p_addr)
-define	P_STAT			offsetof(struct proc, p_stat)
-define	P_WCHAN			offsetof(struct proc, p_wchan)
+struct	proc
+member	p_forw
+member	p_back
+member	p_addr
+member	p_stat
+member	p_wchan
 
-define	SRUN			SRUN
+export	SRUN
 
 # general constants
-define	UPAGES			UPAGES
+export	UPAGES
 define	USIZE			USPACE
-define	NBPG			NBPG
+export	NBPG
 
 # pcb fields
-define	PCB_ONFAULT		offsetof(struct pcb, pcb_onfault)
-define	PCB_USER_STATE		offsetof(struct pcb, user_state)
+struct	pcb
+member	pcb_onfault
+member	PCB_USER_STATE		user_state
 
 # system calls
-define	SYS_exit		SYS_exit
-define	SYS_sigreturn		SYS_sigreturn
+export	SYS_exit
+export	SYS_sigreturn
 	
 # m88100_saved_state element indexes
 define	EF_R0		offsetof(struct m88100_saved_state, r[0]) / sizeof(int)
@@ -116,23 +118,24 @@ define	EF_CPU		offsetof(struct m88100_saved_state, cpu) / sizeof(int)
 define	SIZEOF_EF	sizeof(struct m88100_saved_state)
 
 # more (machine-dependent) pcb fields
-define	PCB_PC		offsetof(struct m88100_pcb, pcb_pc)
-define	PCB_IPL		offsetof(struct m88100_pcb, pcb_ipl)
-define	PCB_R14		offsetof(struct m88100_pcb, pcb_r14)
-define	PCB_R15		offsetof(struct m88100_pcb, pcb_r15)
-define	PCB_R16		offsetof(struct m88100_pcb, pcb_r16)
-define	PCB_R17		offsetof(struct m88100_pcb, pcb_r17)
-define	PCB_R18		offsetof(struct m88100_pcb, pcb_r18)
-define	PCB_R19		offsetof(struct m88100_pcb, pcb_r19)
-define	PCB_R20		offsetof(struct m88100_pcb, pcb_r20)
-define	PCB_R21		offsetof(struct m88100_pcb, pcb_r21)
-define	PCB_R22		offsetof(struct m88100_pcb, pcb_r22)
-define	PCB_R23		offsetof(struct m88100_pcb, pcb_r23)
-define	PCB_R24		offsetof(struct m88100_pcb, pcb_r24)
-define	PCB_R25		offsetof(struct m88100_pcb, pcb_r25)
-define	PCB_R26		offsetof(struct m88100_pcb, pcb_r26)
-define	PCB_R27		offsetof(struct m88100_pcb, pcb_r27)
-define	PCB_R28		offsetof(struct m88100_pcb, pcb_r28)
-define	PCB_R29		offsetof(struct m88100_pcb, pcb_r29)
-define	PCB_R30		offsetof(struct m88100_pcb, pcb_r30)
-define	PCB_SP		offsetof(struct m88100_pcb, pcb_sp)
+struct	m88100_pcb
+member	pcb_pc
+member	pcb_ipl
+member	pcb_r14
+member	pcb_r15
+member	pcb_r16
+member	pcb_r17
+member	pcb_r18
+member	pcb_r19
+member	pcb_r20
+member	pcb_r21
+member	pcb_r22
+member	pcb_r23
+member	pcb_r24
+member	pcb_r25
+member	pcb_r26
+member	pcb_r27
+member	pcb_r28
+member	pcb_r29
+member	pcb_r30
+member	pcb_sp
