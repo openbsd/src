@@ -1,5 +1,5 @@
-/*	$OpenBSD: pcibios.c,v 1.9 2000/09/04 17:00:17 deraadt Exp $	*/
-/*	$NetBSD: pcibios.c,v 1.4 2000/07/18 11:15:25 soda Exp $	*/
+/*	$OpenBSD: pcibios.c,v 1.10 2000/09/04 17:13:28 mickey Exp $	*/
+/*	$NetBSD: pcibios.c,v 1.5 2000/08/01 05:23:59 uch Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff
