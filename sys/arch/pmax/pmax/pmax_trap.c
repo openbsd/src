@@ -82,6 +82,7 @@
 #include <sys/mbuf.h>
 #include <netinet/in.h>
 #include <net/if.h>
+#include <net/if_media.h>
 #include <netinet/if_ether.h>
 
 struct ifnet; struct ethercom;
@@ -799,7 +800,7 @@ pmax_errintr()
 	}
 #if (NLED > 0)
 	*sysCSRPtr = ((csr & ~KN01_CSR_MBZ) & ~(KN01_CSR_LEDS_MASK))
-			| led_current;
+			| (led_current & KN01_CSR_LEDS_MASK);
 #else
 	*sysCSRPtr = (csr & ~KN01_CSR_MBZ) | 0xff;
 #endif
