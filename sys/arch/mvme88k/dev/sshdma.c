@@ -1,4 +1,4 @@
-/*	$OpenBSD: sshdma.c,v 1.5 2001/08/26 02:37:07 miod Exp $	*/
+/*	$OpenBSD: sshdma.c,v 1.6 2001/09/23 02:50:25 miod Exp $	*/
 
 /*
  * Copyright (c) 1996 Nivas Madhur
@@ -63,9 +63,6 @@
 #include <mvme88k/dev/pcctwofunc.h>
 #include <mvme88k/dev/pcctworeg.h>
 #endif
-
-extern struct pmap	kernel_pmap_store;
-#define	pmap_kernel()		(&kernel_pmap_store)
 
 int	afscmatch	__P((struct device *, void *, void *));
 void	afscattach	__P((struct device *, struct device *, void *));
