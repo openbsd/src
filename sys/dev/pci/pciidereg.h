@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciidereg.h,v 1.3 2001/04/04 07:02:54 csapuntz Exp $	*/
+/*	$OpenBSD: pciidereg.h,v 1.4 2002/11/20 21:33:37 grange Exp $	*/
 /*	$NetBSD: pciidereg.h,v 1.6 2000/11/14 18:42:58 thorpej Exp $	*/
 
 /*
@@ -85,20 +85,20 @@
 /* secondary channel registers offset */
 #define IDEDMA_SCH_OFFSET 0x08
 
-/* Bus master command register */
-#define IDEDMA_CMD 0x00
+/* Bus master command register (per channel) */
+#define IDEDMA_CMD(chan) (0x00 + IDEDMA_SCH_OFFSET * (chan))
 #define IDEDMA_CMD_WRITE 0x08
 #define IDEDMA_CMD_START 0x01
 
-/* Bus master status register */
-#define IDEDMA_CTL 0x02
+/* Bus master status register (per channel) */
+#define IDEDMA_CTL(chan) (0x02 + IDEDMA_SCH_OFFSET * (chan))
 #define IDEDMA_CTL_DRV_DMA(d)	(0x20 << (d))
 #define IDEDMA_CTL_INTR		0x04
 #define IDEDMA_CTL_ERR		0x02
 #define IDEDMA_CTL_ACT		0x01
 
-/* Bus master table pointer register */
-#define IDEDMA_TBL 0x04
+/* Bus master table pointer register (per channel) */
+#define IDEDMA_TBL(chan) (0x04 + IDEDMA_SCH_OFFSET * (chan))
 #define IDEDMA_TBL_MASK 0xfffffffc
 #define IDEDMA_TBL_ALIGN 0x00010000
 

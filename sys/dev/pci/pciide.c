@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.98 2002/11/20 19:39:02 jason Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.99 2002/11/20 21:33:37 grange Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -917,8 +917,7 @@ pciide_intr_flag(struct pciide_channel *cp)
 		for (retry = 10; retry > 0; retry--) {
 			status = bus_space_read_1(sc->sc_dma_iot, 
 			    sc->sc_dma_ioh,
-			    IDEDMA_CTL + IDEDMA_SCH_OFFSET * 
-			    cp->wdc_channel.channel);
+			    IDEDMA_CTL(cp->wdc_channel.channel));
 			if (status & IDEDMA_CTL_INTR) {
 				break;
 			}
@@ -1163,16 +1162,16 @@ pciide_dma_init(v, channel, drive, databuf, datalen, flags)
 
 	/* Clear status bits */
 	bus_space_write_1(sc->sc_dma_iot, sc->sc_dma_ioh,
-	    IDEDMA_CTL + IDEDMA_SCH_OFFSET * channel,
+	    IDEDMA_CTL(channel),
 	    bus_space_read_1(sc->sc_dma_iot, sc->sc_dma_ioh,
-		IDEDMA_CTL + IDEDMA_SCH_OFFSET * channel));
+		IDEDMA_CTL(channel)));
 	/* Write table addr */
 	bus_space_write_4(sc->sc_dma_iot, sc->sc_dma_ioh,
-	    IDEDMA_TBL + IDEDMA_SCH_OFFSET * channel,
+	    IDEDMA_TBL(channel),
 	    dma_maps->dmamap_table->dm_segs[0].ds_addr);
 	/* set read/write */
 	bus_space_write_1(sc->sc_dma_iot, sc->sc_dma_ioh,
-	    IDEDMA_CMD + IDEDMA_SCH_OFFSET * channel,
+	    IDEDMA_CMD(channel),
 	    (flags & WDC_DMA_READ) ? IDEDMA_CMD_WRITE: 0);
 	/* remember flags */
 	dma_maps->dma_flags = flags;
@@ -1188,9 +1187,9 @@ pciide_dma_start(v, channel, drive)
 
 	WDCDEBUG_PRINT(("pciide_dma_start\n"),DEBUG_XFERS);
 	bus_space_write_1(sc->sc_dma_iot, sc->sc_dma_ioh,
-	    IDEDMA_CMD + IDEDMA_SCH_OFFSET * channel,
+	    IDEDMA_CMD(channel),
 	    bus_space_read_1(sc->sc_dma_iot, sc->sc_dma_ioh,
-		IDEDMA_CMD + IDEDMA_SCH_OFFSET * channel) | IDEDMA_CMD_START);
+		IDEDMA_CMD(channel)) | IDEDMA_CMD_START);
 
 	sc->pciide_channels[channel].dma_in_progress = 1;
 }
@@ -1209,13 +1208,13 @@ pciide_dma_finish(v, channel, drive)
 	sc->pciide_channels[channel].dma_in_progress = 0;
 
 	status = bus_space_read_1(sc->sc_dma_iot, sc->sc_dma_ioh,
-	    IDEDMA_CTL + IDEDMA_SCH_OFFSET * channel);
+	    IDEDMA_CTL(channel));
 	WDCDEBUG_PRINT(("pciide_dma_finish: status 0x%x\n", status),
 	    DEBUG_XFERS);
 
 	/* stop DMA channel */
 	bus_space_write_1(sc->sc_dma_iot, sc->sc_dma_ioh,
-	    IDEDMA_CMD + IDEDMA_SCH_OFFSET * channel,
+	    IDEDMA_CMD(channel),
 	    (dma_maps->dma_flags & WDC_DMA_READ) ?
 	    0x00 : IDEDMA_CMD_WRITE);
 
@@ -1228,7 +1227,7 @@ pciide_dma_finish(v, channel, drive)
 
 	/* Clear status bits */
 	bus_space_write_1(sc->sc_dma_iot, sc->sc_dma_ioh,
-	    IDEDMA_CTL + IDEDMA_SCH_OFFSET * channel,
+	    IDEDMA_CTL(channel),
 	    status);
 
 	if ((status & IDEDMA_CTL_ERR) != 0) {
@@ -1260,9 +1259,9 @@ pciide_irqack(chp)
 
         /* clear status bits in IDE DMA registers */
         bus_space_write_1(sc->sc_dma_iot, sc->sc_dma_ioh,
-            IDEDMA_CTL + IDEDMA_SCH_OFFSET * chp->channel,
+            IDEDMA_CTL(chp->channel),
             bus_space_read_1(sc->sc_dma_iot, sc->sc_dma_ioh,
-                IDEDMA_CTL + IDEDMA_SCH_OFFSET * chp->channel));
+                IDEDMA_CTL(chp->channel)));
 }
 
 /* some common code used by several chip_map */
@@ -1537,7 +1536,7 @@ next:
 		if (idedma_ctl != 0) {
 			/* Add software bits in status register */
 			bus_space_write_1(sc->sc_dma_iot, sc->sc_dma_ioh,
-			    IDEDMA_CTL + (IDEDMA_SCH_OFFSET * channel),
+			    IDEDMA_CTL(channel),
 			    idedma_ctl);
 		}
 	}
@@ -1794,7 +1793,7 @@ end:	/*
 	if (idedma_ctl != 0) {
 		/* Add software bits in status register */
 		bus_space_write_1(sc->sc_dma_iot, sc->sc_dma_ioh,
-		    IDEDMA_CTL + (IDEDMA_SCH_OFFSET * chp->channel),
+		    IDEDMA_CTL(chp->channel),
 		    idedma_ctl);
 	}
 	pci_conf_write(sc->sc_pc, sc->sc_tag, PIIX_IDETIM, idetim);
@@ -1920,7 +1919,7 @@ pio:		/* use PIO mode */
 	if (idedma_ctl != 0) {
 		/* Add software bits in status register */
 		bus_space_write_1(sc->sc_dma_iot, sc->sc_dma_ioh,
-		    IDEDMA_CTL + (IDEDMA_SCH_OFFSET * channel),
+		    IDEDMA_CTL(channel),
 		    idedma_ctl);
 	}
 	pci_conf_write(sc->sc_pc, sc->sc_tag, PIIX_IDETIM, idetim);
@@ -2189,7 +2188,7 @@ pio:		/* setup PIO mode */
 	if (idedma_ctl != 0) {
 		/* Add software bits in status register */
 		bus_space_write_1(sc->sc_dma_iot, sc->sc_dma_ioh,
-		    IDEDMA_CTL + (IDEDMA_SCH_OFFSET * chp->channel),
+		    IDEDMA_CTL(chp->channel),
 		    idedma_ctl);
 	}
 	pciide_print_modes(cp);
@@ -2430,7 +2429,7 @@ pio:		/* setup PIO mode */
 	if (idedma_ctl != 0) {
 		/* Add software bits in status register */
 		bus_space_write_1(sc->sc_dma_iot, sc->sc_dma_ioh,
-		    IDEDMA_CTL + (IDEDMA_SCH_OFFSET * chp->channel),
+		    IDEDMA_CTL(chp->channel),
 		    idedma_ctl);
 	}
 	pciide_print_modes(cp);
@@ -2771,7 +2770,7 @@ cmd0643_9_setup_channel(chp)
 	if (idedma_ctl != 0) {
 		/* Add software bits in status register */
 		bus_space_write_1(sc->sc_dma_iot, sc->sc_dma_ioh,
-		    IDEDMA_CTL + (IDEDMA_SCH_OFFSET * chp->channel),
+		    IDEDMA_CTL(chp->channel),
 		    idedma_ctl);
 	}
 	pciide_print_modes(cp);
@@ -2965,7 +2964,7 @@ cmd680_setup_channel(chp)
 	if (idedma_ctl != 0) {
 		/* Add software bits in status register */
 		bus_space_write_1(sc->sc_dma_iot, sc->sc_dma_ioh,
-		    IDEDMA_CTL + (IDEDMA_SCH_OFFSET * chp->channel),
+		    IDEDMA_CTL(chp->channel),
 		    idedma_ctl);
 	}
 	pciide_print_modes(cp);
@@ -3128,7 +3127,7 @@ cy693_setup_channel(chp)
 	if (idedma_ctl != 0) {
 		/* Add software bits in status register */
 		bus_space_write_1(sc->sc_dma_iot, sc->sc_dma_ioh,
-		    IDEDMA_CTL, idedma_ctl);
+		    IDEDMA_CTL(chp->channel), idedma_ctl);
 	}
 }
 
@@ -3286,7 +3285,7 @@ pio:		sis_tim |= sis_pio_act[drvp->PIO_mode] <<
 	if (idedma_ctl != 0) {
 		/* Add software bits in status register */
 		bus_space_write_1(sc->sc_dma_iot, sc->sc_dma_ioh,
-		    IDEDMA_CTL, idedma_ctl);
+		    IDEDMA_CTL(chp->channel), idedma_ctl);
 	}
 	pciide_print_modes(cp);
 }
@@ -3409,8 +3408,7 @@ natsemi_setup_channel(chp)
 	if (idedma_ctl != 0) {
 		/* Add software bits in status register */
 		bus_space_write_1(sc->sc_dma_iot, sc->sc_dma_ioh,
-		    (chp->channel * IDEDMA_SCH_OFFSET) + IDEDMA_CTL,
-		    idedma_ctl);
+		    IDEDMA_CTL(chp->channel), idedma_ctl);
 	}
 	if (ndrives > 0) {
 		/* Unmask the channel if at least one drive is found */
@@ -3423,9 +3421,9 @@ natsemi_setup_channel(chp)
 
 	/* Go ahead and ack interrupts generated during probe. */
 	bus_space_write_1(sc->sc_dma_iot, sc->sc_dma_ioh,
-	    (chp->channel * IDEDMA_SCH_OFFSET) + IDEDMA_CTL,
+	    IDEDMA_CTL(chp->channel),
 	    bus_space_read_1(sc->sc_dma_iot, sc->sc_dma_ioh,
-		(chp->channel * IDEDMA_SCH_OFFSET) + IDEDMA_CTL));
+		IDEDMA_CTL(chp->channel)));
 }
 
 void
@@ -3438,12 +3436,12 @@ natsemi_irqack(chp)
 
 	/* The "clear" bits are in the wrong register *sigh* */
 	clr = bus_space_read_1(sc->sc_dma_iot, sc->sc_dma_ioh,
-	    IDEDMA_CMD + IDEDMA_SCH_OFFSET * chp->channel);
+	    IDEDMA_CMD(chp->channel));
 	clr |= bus_space_read_1(sc->sc_dma_iot, sc->sc_dma_ioh,
-	    IDEDMA_CTL + IDEDMA_SCH_OFFSET * chp->channel) &
+	    IDEDMA_CTL(chp->channel)) &
 	    (IDEDMA_CTL_ERR | IDEDMA_CTL_INTR);
 	bus_space_write_1(sc->sc_dma_iot, sc->sc_dma_ioh,
-	    IDEDMA_CMD + IDEDMA_SCH_OFFSET * chp->channel, clr);
+	    IDEDMA_CMD(chp->channel), clr);
 }
 
 int
@@ -3472,7 +3470,7 @@ natsemi_pci_intr(arg)
 
 		/* Get intr status */
 		ide_dmactl = bus_space_read_1(sc->sc_dma_iot, sc->sc_dma_ioh,
-		    (i * IDEDMA_SCH_OFFSET) + IDEDMA_CTL);
+		    IDEDMA_CTL(i));
 
 		if (ide_dmactl & IDEDMA_CTL_ERR)
 			printf("%s:%d: error intr\n",
@@ -3683,7 +3681,7 @@ pio:		pciide_pci_write(sc->sc_pc, sc->sc_tag,
 	if (idedma_ctl != 0) {
 		/* Add software bits in status register */
 		bus_space_write_1(sc->sc_dma_iot, sc->sc_dma_ioh,
-		    IDEDMA_CTL, idedma_ctl);
+		    IDEDMA_CTL(chp->channel), idedma_ctl);
 	}
 	pciide_print_modes(cp);
 }
@@ -3926,7 +3924,7 @@ hpt_setup_channel(chp)
 	if (idedma_ctl != 0) {
 		/* Add software bits in status register */
 		bus_space_write_1(sc->sc_dma_iot, sc->sc_dma_ioh,
-		    IDEDMA_CTL, idedma_ctl);
+		    IDEDMA_CTL(chp->channel), idedma_ctl);
 	}
 	pciide_print_modes(cp);
 }
@@ -3943,7 +3941,7 @@ hpt_pci_intr(arg)
 
 	for (i = 0; i < sc->sc_wdcdev.nchannels; i++) {
 		dmastat = bus_space_read_1(sc->sc_dma_iot, sc->sc_dma_ioh,
-		    IDEDMA_CTL + IDEDMA_SCH_OFFSET * i);
+		    IDEDMA_CTL(i));
 		if((dmastat & (IDEDMA_CTL_ACT | IDEDMA_CTL_INTR)) !=
 		    IDEDMA_CTL_INTR)
 		    continue;
@@ -3954,7 +3952,7 @@ hpt_pci_intr(arg)
 			printf("%s:%d: bogus intr\n",
 			    sc->sc_wdcdev.sc_dev.dv_xname, i);
 			bus_space_write_1(sc->sc_dma_iot, sc->sc_dma_ioh,
-			    IDEDMA_CTL + IDEDMA_SCH_OFFSET * i, dmastat);
+			    IDEDMA_CTL(i), dmastat);
 		} else
 			rv = 1;
 	}
@@ -4257,7 +4255,7 @@ pdc202xx_setup_channel(chp)
 	if (idedma_ctl != 0) {
 		/* Add software bits in status register */
 		bus_space_write_1(sc->sc_dma_iot, sc->sc_dma_ioh,
-		    IDEDMA_CTL, idedma_ctl);
+		    IDEDMA_CTL(channel), idedma_ctl);
 	}
 	pciide_print_modes(cp);
 }
@@ -4301,7 +4299,7 @@ pdc20268_setup_channel(chp)
 	if (idedma_ctl != 0) {
 		/* Add software bits in status register */
 		bus_space_write_1(sc->sc_dma_iot, sc->sc_dma_ioh,
-		    IDEDMA_CTL, idedma_ctl);
+		    IDEDMA_CTL(chp->channel), idedma_ctl);
 	}
 	pciide_print_modes(cp);
 }
@@ -4360,7 +4358,7 @@ pdc20265_pci_intr(arg)
 		 * but we can't do it another way).
 		 */
 		dmastat = bus_space_read_1(sc->sc_dma_iot,
-		    sc->sc_dma_ioh, IDEDMA_CTL + IDEDMA_SCH_OFFSET * i);
+		    sc->sc_dma_ioh, IDEDMA_CTL(i));
 		if ((dmastat & IDEDMA_CTL_INTR) == 0)
 			continue;
 
@@ -4735,7 +4733,7 @@ serverworks_setup_channel(chp)
 	if (idedma_ctl != 0) {
 		/* Add software bits in status register */
 		bus_space_write_1(sc->sc_dma_iot, sc->sc_dma_ioh,
-		    IDEDMA_CTL + IDEDMA_SCH_OFFSET * channel, idedma_ctl);
+		    IDEDMA_CTL(channel), idedma_ctl);
 	}
 	pciide_print_modes(cp);
 }
@@ -4752,7 +4750,7 @@ serverworks_pci_intr(arg)
 
 	for (i = 0; i < sc->sc_wdcdev.nchannels; i++) {
 		dmastat = bus_space_read_1(sc->sc_dma_iot, sc->sc_dma_ioh,
-		    IDEDMA_CTL + IDEDMA_SCH_OFFSET * i);
+		    IDEDMA_CTL(i));
 		if ((dmastat & (IDEDMA_CTL_ACT | IDEDMA_CTL_INTR)) !=
 		    IDEDMA_CTL_INTR)
 			continue;
@@ -4763,7 +4761,7 @@ serverworks_pci_intr(arg)
 			printf("%s:%d: bogus intr\n",
 			    sc->sc_wdcdev.sc_dev.dv_xname, i);
 			bus_space_write_1(sc->sc_dma_iot, sc->sc_dma_ioh,
-			    IDEDMA_CTL + IDEDMA_SCH_OFFSET * i, dmastat);
+			    IDEDMA_CTL(i), dmastat);
 		} else
 			rv = 1;
 	}
@@ -4930,7 +4928,7 @@ acard_setup_channel(chp)
 	if (idedma_ctl != 0) {
 		/* Add software bits in status register */
 		bus_space_write_1(sc->sc_dma_iot, sc->sc_dma_ioh,
-		    IDEDMA_CTL + IDEDMA_SCH_OFFSET * channel, idedma_ctl);
+		    IDEDMA_CTL(channel), idedma_ctl);
 	}
 	pciide_print_modes(cp);
 
@@ -4956,7 +4954,7 @@ acard_pci_intr(arg)
 
 	for (i = 0; i < sc->sc_wdcdev.nchannels; i++) {
 		dmastat = bus_space_read_1(sc->sc_dma_iot, sc->sc_dma_ioh,
-		    IDEDMA_CTL + IDEDMA_SCH_OFFSET * i);
+		    IDEDMA_CTL(i));
 		if ((dmastat & IDEDMA_CTL_INTR) == 0)
 			continue;
 		cp = &sc->pciide_channels[i];
@@ -4964,7 +4962,7 @@ acard_pci_intr(arg)
 		if ((wdc_cp->ch_flags & WDCF_IRQ_WAIT) == 0) {
 			(void)wdcintr(wdc_cp);
 			bus_space_write_1(sc->sc_dma_iot, sc->sc_dma_ioh,
-			    IDEDMA_CTL + IDEDMA_SCH_OFFSET * i, dmastat);
+			    IDEDMA_CTL(i), dmastat);
 			continue;
 		}
 		crv = wdcintr(wdc_cp);
