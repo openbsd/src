@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_sem.c,v 1.25 2003/12/20 19:06:29 millert Exp $	*/
+/*	$OpenBSD: sysv_sem.c,v 1.26 2004/03/13 07:17:39 tedu Exp $	*/
 /*	$NetBSD: sysv_sem.c,v 1.26 1996/02/09 19:00:25 christos Exp $	*/
 
 /*
@@ -762,17 +762,13 @@ semexit(struct proc *p)
 	}
 
 	/*
-	 * No (i.e. we are in case 1 or 2).
-	 *
-	 * If there is no undo vector, skip to the end and unlock the
-	 * semaphore facility if necessary.
+	 * If there is no undo vector, skip to the end.
 	 */
 	if (suptr == NULL)
 		return;
 
 	/*
-	 * We are now in case 1 or 2, and we have an undo vector for this
-	 * process.
+	 * We now have an undo vector for this process.
 	 */
 	DPRINTF(("proc @%p has undo structure with %d entries\n", p,
 	    suptr->un_cnt));
