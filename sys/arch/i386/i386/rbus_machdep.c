@@ -1,4 +1,4 @@
-/*	$OpenBSD: rbus_machdep.c,v 1.10 2001/06/08 08:08:53 art Exp $ */
+/*	$OpenBSD: rbus_machdep.c,v 1.11 2001/06/22 21:01:24 mickey Exp $ */
 /*	$NetBSD: rbus_machdep.c,v 1.2 1999/10/15 06:43:06 haya Exp $	*/
 
 /*
@@ -173,7 +173,7 @@ rbus_pccbb_parent_mem(pa)
 /**********************************************************************
  * rbus_tag_t rbus_pccbb_parent_io(struct pci_attach_args *pa)
  **********************************************************************/
-#define RBUS_IO_START	0x2000
+#define RBUS_IO_START	0xa000
 #define RBUS_IO_SIZE	0x1000
 
 rbus_tag_t
