@@ -1,4 +1,4 @@
-/*	$OpenBSD: auth_subr.c,v 1.8 2002/02/05 07:51:52 mpech Exp $	*/
+/*	$OpenBSD: auth_subr.c,v 1.9 2002/03/13 21:39:41 millert Exp $	*/
 
 /*-
  * Copyright (c) 1995,1996,1997 Berkeley Software Design, Inc.
@@ -81,7 +81,7 @@ struct auth_session_t {
 	char	*challenge;		/* last challenge issued */
 	int	flags;			/* see below */
 	struct	passwd *pwd;		/* password entry for user */
-        struct	timeval now;		/* time of authentication */
+	struct	timeval now;		/* time of authentication */
 
 	int	state;			/* authenticated state */
 
@@ -176,10 +176,10 @@ auth_clean(auth_session_t *as)
 	/*
 	 * Clean out the opt list
 	 */
-        while ((opt = as->optlist) != NULL) {
-                as->optlist = opt->next;
-                free(opt);
-        }
+	while ((opt = as->optlist) != NULL) {
+		as->optlist = opt->next;
+		free(opt);
+	}
 
 	/*
 	 * Clean out data
@@ -208,8 +208,8 @@ int
 auth_close(auth_session_t *as)
 {
 	struct rmfiles *rm;
-        struct authopts *opt;
-        struct authdata *data;
+	struct authopts *opt;
+	struct authdata *data;
 	int s;
 
 	/*
@@ -237,10 +237,10 @@ auth_close(auth_session_t *as)
 	/*
 	 * Clean out the opt list
 	 */
-        while ((opt = as->optlist) != NULL) {
-                as->optlist = opt->next;
-                free(opt);
-        }
+	while ((opt = as->optlist) != NULL) {
+		as->optlist = opt->next;
+		free(opt);
+	}
 
 	/*
 	 * Clean out data
@@ -296,7 +296,7 @@ auth_challenge(auth_session_t *as)
 	}
 
 	snprintf(path, sizeof(path), _PATH_AUTHPROG "%s", as->style);
-        auth_call(as, path, as->style, "-s", "challenge", as->name,
+	auth_call(as, path, as->style, "-s", "challenge", as->name,
 	    as->class, NULL);
 	if (as->state & AUTH_CHALLENGE)
 		as->challenge = auth_getvalue(as, "challenge");

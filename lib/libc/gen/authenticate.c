@@ -1,4 +1,4 @@
-/*	$OpenBSD: authenticate.c,v 1.7 2002/02/05 07:51:52 mpech Exp $	*/
+/*	$OpenBSD: authenticate.c,v 1.8 2002/03/13 21:39:41 millert Exp $	*/
 
 /*-
  * Copyright (c) 1997 Berkeley Software Design, Inc. All rights reserved.
@@ -112,45 +112,45 @@ _auth_checknologin(login_cap_t *lc, int print)
 {
 	struct stat sb;
 	char *nologin;
-       int mustfree;
+	int mustfree;
 
-       if (login_getcapbool(lc, "ignorenologin", 0))
-               return (0);
+	if (login_getcapbool(lc, "ignorenologin", 0))
+		return (0);
 
 	/*
 	 * If we fail to get the nologin file due to a database error,
 	 * assume there should have been one...
 	 */
-       nologin = login_getcapstr(lc, "nologin", "", NULL);
-       mustfree = nologin && *nologin != '\0';
-       if (nologin == NULL)
-               goto print_nologin;
+	nologin = login_getcapstr(lc, "nologin", "", NULL);
+	mustfree = nologin && *nologin != '\0';
+	if (nologin == NULL)
+		goto print_nologin;
 
-       /* First try the nologin file specified in login.conf. */
-       if (*nologin != '\0' && stat(nologin, &sb) == 0)
-               goto print_nologin;
-       if (mustfree)
-               free(nologin);
+	/* First try the nologin file specified in login.conf. */
+	if (*nologin != '\0' && stat(nologin, &sb) == 0)
+		goto print_nologin;
+	if (mustfree)
+		free(nologin);
 
-       /* If that doesn't exist try _PATH_NOLOGIN. */
-       if (stat(_PATH_NOLOGIN, &sb) == 0) {
-               nologin = _PATH_NOLOGIN;
-               goto print_nologin;
+	/* If that doesn't exist try _PATH_NOLOGIN. */
+	if (stat(_PATH_NOLOGIN, &sb) == 0) {
+		nologin = _PATH_NOLOGIN;
+		goto print_nologin;
 	}
 
-       /* Couldn't stat any nologin files, must be OK to login. */
-       return (0);
+	/* Couldn't stat any nologin files, must be OK to login. */
+	return (0);
 
 print_nologin:
-       if (print) {
-               if (!nologin || *nologin == '\0' || auth_cat(nologin) == 0) {
-                       puts("Logins are not allowed at this time.");
+	if (print) {
+		if (!nologin || *nologin == '\0' || auth_cat(nologin) == 0) {
+			puts("Logins are not allowed at this time.");
 			fflush(stdout);
 		}
 	}
-       if (mustfree)
-               free(nologin);
-       return (-1);
+	if (mustfree)
+		free(nologin);
+	return (-1);
 }
 
 int
