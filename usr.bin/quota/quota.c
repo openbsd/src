@@ -1,4 +1,4 @@
-/*	$OpenBSD: quota.c,v 1.20 2002/05/14 12:24:10 fgsch Exp $	*/
+/*	$OpenBSD: quota.c,v 1.21 2003/03/15 19:16:10 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -45,7 +45,7 @@ static const char copyright[] =
 #ifndef lint
 /*static char sccsid[] = "from: @(#)quota.c	8.1 (Berkeley) 6/6/93";*/
 static const char rcsid[] =
-"$OpenBSD: quota.c,v 1.20 2002/05/14 12:24:10 fgsch Exp $";
+"$OpenBSD: quota.c,v 1.21 2003/03/15 19:16:10 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -217,7 +217,7 @@ showuid(uid)
 }
 
 /*
- * Print out quotas for a specifed user name.
+ * Print out quotas for a specified user name.
  */
 void
 showusrname(name)
@@ -275,7 +275,7 @@ showgid(gid)
 }
 
 /*
- * Print out quotas for a specifed group name.
+ * Print out quotas for a specified group name.
  */
 void
 showgrpname(name)

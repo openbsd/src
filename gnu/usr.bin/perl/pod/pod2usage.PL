@@ -115,7 +115,7 @@ usage mesage format (defaults to standard input).
 
 B<pod2usage> will read the given input file looking for pod
 documentation and will print the corresponding usage message.
-If no input file is specifed than standard input is read.
+If no input file is specified than standard input is read.
 
 B<pod2usage> invokes the B<pod2usage()> function in the B<Pod::Usage>
 module. Please see L<Pod::Usage/pod2usage()>.

@@ -1,5 +1,5 @@
 \input texinfo.tex    @c -*-texinfo-*-
-@c $Id: texinfo.txi,v 1.4 2002/06/10 13:51:02 espie Exp $
+@c $Id: texinfo.txi,v 1.5 2003/03/15 19:16:10 deraadt Exp $
 @c Ordinarily Texinfo files have the extension .texi.  But texinfo.texi
 @c clashes with texinfo.tex on 8.3 filesystems, so we use texinfo.txi.
 
@@ -12000,7 +12000,7 @@ Brief descriptions:
 
 @table @code
 @item @@set @var{flag} [@var{value}]
-Set the variable @var{flag}, to the optional @var{value} if specifed.
+Set the variable @var{flag}, to the optional @var{value} if specified.
 
 @item @@clear @var{flag}
 Undefine the variable @var{flag}, whether or not it was previously defined.
@@ -16643,14 +16643,14 @@ Here are some notes on the example:
 
 @itemize @bullet
 @item
-@cindex $Id: texinfo.txi,v 1.4 2002/06/10 13:51:02 espie Exp $ comment
-@cindex CVS $Id: texinfo.txi,v 1.4 2002/06/10 13:51:02 espie Exp $, in Texinfo
-@cindex RCS $Id: texinfo.txi,v 1.4 2002/06/10 13:51:02 espie Exp $, in Texinfo
-The @samp{$Id: texinfo.txi,v 1.4 2002/06/10 13:51:02 espie Exp $} comment is for CVS (@pxref{Top,, Overview, cvs,
+@cindex $Id: texinfo.txi,v 1.5 2003/03/15 19:16:10 deraadt Exp $ comment
+@cindex CVS $Id: texinfo.txi,v 1.5 2003/03/15 19:16:10 deraadt Exp $, in Texinfo
+@cindex RCS $Id: texinfo.txi,v 1.5 2003/03/15 19:16:10 deraadt Exp $, in Texinfo
+The @samp{$Id: texinfo.txi,v 1.5 2003/03/15 19:16:10 deraadt Exp $} comment is for CVS (@pxref{Top,, Overview, cvs,
 Concurrent Versions System}) or RCS (see rcsintro(1)) version control
 systems, which expand it into a string such as:
 @example
-$Id: texinfo.txi,v 1.4 2002/06/10 13:51:02 espie Exp $
+$Id: texinfo.txi,v 1.5 2003/03/15 19:16:10 deraadt Exp $
 @end example
 (This is useful in all sources that use version control, not just manuals.)
 
@@ -16699,7 +16699,7 @@ Here is the sample document:
 @c because the literal @setfilename and @include confuse Automake.  Argh.
 @example
 \input texinfo    @@c -*-texinfo-*-
-@@comment $Id: texinfo.txi,v 1.4 2002/06/10 13:51:02 espie Exp $
+@@comment $Id: texinfo.txi,v 1.5 2003/03/15 19:16:10 deraadt Exp $
 @@comment %**start of header
 @@setfilename sample.info
 @@include version.texi

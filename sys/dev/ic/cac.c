@@ -1,4 +1,4 @@
-/*	$OpenBSD: cac.c,v 1.12 2003/03/06 22:31:21 mickey Exp $	*/
+/*	$OpenBSD: cac.c,v 1.13 2003/03/15 19:16:10 deraadt Exp $	*/
 /*	$NetBSD: cac.c,v 1.15 2000/11/08 19:20:35 ad Exp $	*/
 
 /*
@@ -420,7 +420,7 @@ cac_ccb_poll(struct cac_softc *sc, struct cac_ccb *wantccb, int timo)
 }
 
 /*
- * Enqueue the specifed command (if any) and attempt to start all enqueued
+ * Enqueue the specified command (if any) and attempt to start all enqueued
  * commands.  Must be called at splbio.
  */
 int
