@@ -4,7 +4,7 @@ R=	..
 .PATH:	${.CURDIR}/${R}
 PROG=	boot
 SRCS=	srt0.S boot.c promdev.c dvma.c net.c netif_sun.c conf.c version.c
-STRIP=
+INSTALL_STRIP=
 NOMAN=	1
 BINDIR=	/usr/mdec
 LIBS!=	cd ${.CURDIR}/${R}; ${MAKE} libdep

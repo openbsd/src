@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.4 1996/12/08 15:22:25 downsj Exp $
+#	$OpenBSD: Makefile,v 1.5 1997/04/27 20:56:08 millert Exp $
 #	$NetBSD: Makefile,v 1.15 1995/09/07 07:17:53 jtc Exp $
 
 LIB=	compat
@@ -53,7 +53,7 @@ MAN+=	regexp.3
 includes:
 	@cd ${.CURDIR}; for i in $(HDRS); do \
 	    j="cmp -s $$i ${DESTDIR}/usr/include/`basename $$i` || \
-		${INSTALL} ${COPY} -o ${BINOWN} -g ${BINGRP} -m 444 $$i \
+		${INSTALL} ${INSTALL_COPY} -o ${BINOWN} -g ${BINGRP} -m 444 $$i \
 		${DESTDIR}/usr/include"; \
 	    echo $$j; \
 	    eval "$$j"; \

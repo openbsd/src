@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.5 1997/01/02 20:48:29 rahnds Exp $
+#	$OpenBSD: Makefile,v 1.6 1997/04/27 20:56:48 millert Exp $
 #	$NetBSD: Makefile,v 1.9 1995/12/18 07:59:12 jonathan Exp $
 
 MAN=	lorder.1
@@ -12,7 +12,7 @@ SCRIPT=	lorder.sh
 .endif
 
 realinstall:
-	${INSTALL} ${COPY} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
+	${INSTALL} ${INSTALL_COPY} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
 	    ${.CURDIR}/${SCRIPT} ${DESTDIR}${BINDIR}/lorder
 
 .include <bsd.prog.mk>

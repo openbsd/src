@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.8 1997/01/19 22:46:48 graichen Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.9 1997/04/27 20:55:51 millert Exp $
 
 .if defined(OBJMACHINE)
 OBJDIR=	obj.${MACHINE}
@@ -64,11 +64,11 @@ install: maninstall
 .else
 install: 
 .endif
-	install ${COPY} ${STRIP} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
-		${PROG} ${DESTDIR}/usr/bin
+	${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP} -o ${BINOWN} -g ${BINGRP} \
+		-m ${BINMODE} ${PROG} ${DESTDIR}/usr/bin
 	@-cd $(.CURDIR); for i in gperf.info*; do \
 		cmp -s $$i $(DESTDIR)/usr/share/info/$$i || \
-		install -c -o $(BINOWN) -g $(BINGRP) -m $(NONBINMODE) \
+		${INSTALL} -c -o $(BINOWN) -g $(BINGRP) -m $(NONBINMODE) \
 		$$i $(DESTDIR)/usr/share/info/$$i; \
 	done
 

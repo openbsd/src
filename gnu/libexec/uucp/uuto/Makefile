@@ -1,5 +1,5 @@
 # Makefile for uuto
-# $Id: Makefile,v 1.1.1.1 1995/10/18 08:38:44 deraadt Exp $
+# $Id: Makefile,v 1.2 1997/04/27 20:55:54 millert Exp $
 
 BINDIR=		$(bindir)
 
@@ -13,7 +13,7 @@ uuto:	uuto.in
 		$(.CURDIR)/uuto.in > $(.TARGET)
 
 install:
-	install ${COPY} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
+	install ${INSTALL_COPY} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
 	    uuto ${DESTDIR}${BINDIR}
 
 .include <bsd.prog.mk>

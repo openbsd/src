@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.8 1997/01/23 02:24:22 niklas Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.9 1997/04/27 20:56:46 millert Exp $
 
 #
 # less config
@@ -72,8 +72,8 @@ gnu_install:
 	${MAKE} ${WCC} ${WCFLAGS} ${WLDFLAGS} LIBS=${LIBS} \
 		LESS_HLP=${LESS_HLP} bindir=${DESTDIR}${BINDIR} \
 		datadir=${DESTDIR}${PREFIX}/share/misc \
-		INSTALL_PROGRAM="${INSTALL} ${COPY} ${STRIP} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE}" \
-		INSTALL_DATA="${INSTALL} ${COPY} -o ${BINOWN} -g ${BINGRP} -m 444" \
+		INSTALL_PROGRAM="${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE}" \
+		INSTALL_DATA="${INSTALL} ${INSTALL_COPY} -o ${BINOWN} -g ${BINGRP} -m 444" \
 		INSTALL_MAN= INSTALLDIRS= install
 
 clean cleandir:

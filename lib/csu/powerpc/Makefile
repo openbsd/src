@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	8.1 (Berkeley) 6/1/93
-#	$Id: Makefile,v 1.1.1.1 1996/12/21 20:53:48 rahnds Exp $
+#	$Id: Makefile,v 1.2 1997/04/27 20:56:04 millert Exp $
 
 CFLAGS=		-DLIBC_SCCS
 OBJS=		crt0.o gcrt0.o crtbegin.o crtend.o
@@ -30,7 +30,7 @@ crtend.o: crtend.s
 	@rm -f ${.TARGET}.o
 
 install:
-	install ${COPY} -o ${BINOWN} -g ${BINGRP} -m 444 ${OBJS} \
+	${INSTALL} ${INSTALL_COPY} -o ${BINOWN} -g ${BINGRP} -m 444 ${OBJS} \
 		${DESTDIR}/usr/lib
 
 depend lint tags:

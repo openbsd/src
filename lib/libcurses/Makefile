@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.13 1997/02/27 21:45:53 tholo Exp $
+#	$OpenBSD: Makefile,v 1.14 1997/04/27 20:56:09 millert Exp $
 
 LIB=    curses
 SRCS=	hardscroll.c lib_acs.c lib_delch.c lib_insstr.c lib_options.c \
@@ -30,10 +30,10 @@ beforedepend: keys.tries
 includes:
 	@cd ${.CURDIR}; for i in unctrl.h; do \
 	  cmp -s $$i ${DESTDIR}/usr/include/$$i || \
-	  ${INSTALL} ${COPY} -m 444 -o $(BINOWN) -g $(BINGRP) $$i \
+	  ${INSTALL} ${INSTALL_COPY} -m 444 -o $(BINOWN) -g $(BINGRP) $$i \
 	  ${DESTDIR}/usr/include; done
 	@cd ${.CURDIR}; cmp -s curses.h ${DESTDIR}/usr/include/curses.h || \
-	  ${INSTALL} ${COPY} -m 444 -o $(BINOWN) -g $(BINGRP) curses.h \
+	  ${INSTALL} ${INSTALL_COPY} -m 444 -o $(BINOWN) -g $(BINGRP) curses.h \
 	  ${DESTDIR}/usr/include
 
 keys.tries: ${.CURDIR}/keys.list ${.CURDIR}/MKkeys.awk

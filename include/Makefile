@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.39 1997/04/19 21:26:15 millert Exp $
+#	$OpenBSD: Makefile,v 1.40 1997/04/27 20:55:58 millert Exp $
 #	$NetBSD: Makefile,v 1.59 1996/05/15 21:36:43 jtc Exp $
 
 #	@(#)Makefile	5.45.1.1 (Berkeley) 5/6/91
@@ -52,7 +52,7 @@ includes:
 	@echo installing ${FILES}
 	@-for i in ${FILES}; do \
 		cmp -s $$i ${DESTDIR}/usr/include/$$i || \
-		    ${INSTALL} ${COPY} -m 444 $$i ${DESTDIR}/usr/include/$$i; \
+		    ${INSTALL} ${INSTALL_COPY} -m 444 $$i ${DESTDIR}/usr/include/$$i; \
 	done
 	@echo installing ${DIRS}
 	@-for i in ${DIRS}; do \
@@ -60,7 +60,7 @@ includes:
 			${DESTDIR}/usr/include/$$i; \
 		(cd $$i; for j in *.[ih]; do \
 			cmp -s $$j ${DESTDIR}/usr/include/$$i/$$j || \
-			${INSTALL} ${COPY} -m 444 $$j ${DESTDIR}/usr/include/$$i/$$j; \
+			${INSTALL} ${INSTALL_COPY} -m 444 $$j ${DESTDIR}/usr/include/$$i/$$j; \
 		done); \
 	done
 	@echo installing ${LFILES}

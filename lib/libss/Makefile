@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.5 1997/02/26 02:03:39 downsj Exp $
+#	$OpenBSD: Makefile,v 1.6 1997/04/27 20:56:16 millert Exp $
 
 LIB=	ss
 HDRS=	ss.h ${.OBJDIR}/ss_err.h
@@ -24,7 +24,7 @@ includes: ss_err.h
 		${DESTDIR}/usr/include/ss; \
 	cd ${.CURDIR}; for i in $(HDRS); do \
 	    j="cmp -s $$i ${DESTDIR}/usr/include/ss/$$i || \
-		${INSTALL} ${COPY} -o ${BINOWN} -g ${BINGRP} -m 444 $$i \
+		${INSTALL} ${INSTALL_COPY} -o ${BINOWN} -g ${BINGRP} -m 444 $$i \
 		${DESTDIR}/usr/include/ss"; \
 	    echo $$j; \
 	    eval "$$j"; \

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.12 1997/04/19 21:26:17 millert Exp $
+#	$OpenBSD: Makefile,v 1.13 1997/04/27 20:56:07 millert Exp $
 #
 # All library objects contain sccsid strings by default; they may be
 # excluded as a space-saving measure.  To produce a library that does
@@ -101,7 +101,7 @@ tags: ${SRCS}
 	    >> tags; sort -o tags tags
 
 beforeinstall:
-	${INSTALL} ${COPY} -o ${BINOWN} -g ${BINGRP} -m 444 tags \
+	${INSTALL} ${INSTALL_COPY} -o ${BINOWN} -g ${BINGRP} -m 444 tags \
 		${DESTDIR}/var/db/libc.tags
 
 .include <bsd.lib.mk>

@@ -43,7 +43,7 @@ clean:
 
 .if !target(install)
 install: ${SA_PROG}.bin
-	install ${COPY} -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} \
+	${INSTALL} ${INSTALL_COPY} -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} \
 	  ${SA_PROG}.bin ${DESTDIR}${MDEC_DIR}/${SA_PROG}
 .endif
 

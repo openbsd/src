@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.5 1997/04/18 17:53:13 mickey Exp $
+#	$OpenBSD: Makefile,v 1.6 1997/04/27 20:56:28 millert Exp $
 
 PROG=	boot
 SRCS=	srt0.S boot.c cmd.c conf.c
@@ -7,7 +7,7 @@ AFLAGS+=-Wa,-R
 # AFLAGS+=-Wa,-a
 LD=ld
 LDFLAGS+=-nostdlib -Ttext $(START) -z -x -e start_boot -Bstatic
-STRIP=
+INSTALL_STRIP=
 MAN=	boot.8
 SADIR=${.CURDIR}/..
 

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.6 1997/02/09 23:58:15 millert Exp $
+#	$OpenBSD: Makefile,v 1.7 1997/04/27 20:56:43 millert Exp $
 
 MAGIC=		/etc/magic
 MAGICOWN=	root
@@ -22,7 +22,7 @@ magic:		$(MAGFILES)
 	cat $(MAGFILES) > $(.TARGET)
 
 afterinstall:
-	${INSTALL} ${COPY} -o $(MAGICOWN) -g $(MAGICGRP) -m $(MAGICMODE) magic \
+	${INSTALL} ${INSTALL_COPY} -o $(MAGICOWN) -g $(MAGICGRP) -m $(MAGICMODE) magic \
 		$(DESTDIR)$(MAGIC)
 
 .include <bsd.prog.mk>

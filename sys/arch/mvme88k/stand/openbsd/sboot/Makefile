@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.1.1.1 1997/03/03 19:31:10 rahnds Exp $
+#	$Id: Makefile,v 1.2 1997/04/27 20:56:34 millert Exp $
 
 S=	${.CURDIR}/../../../..
 INCL?= -I${.CURDIR} -I${.CURDIR}/../libsa -I${S}/lib/libsa -I${S}
@@ -31,9 +31,9 @@ rboot: rboot.tmp srec
 	dd ibs=32 skip=1 if=rboot.tmp | ${.OBJDIR}/srec 4 0x4000 rboot > rboot
 
 install:
-	install ${COPY} -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} \
+	${INSTALL} ${INSTALL_COPY} -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} \
 	    sboot ${DESTDIR}${MDEC_DIR}/sboot
-	install ${COPY} -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} \
+	${INSTALL} ${INSTALL_COPY} -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} \
 	    rboot ${DESTDIR}${MDEC_DIR}/rboot
 
 .include <bsd.prog.mk>

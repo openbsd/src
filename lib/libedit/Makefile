@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.4 1997/01/16 05:18:27 millert Exp $
+#	$OpenBSD: Makefile,v 1.5 1997/04/27 20:56:10 millert Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/4/93
 
 LIB=	edit
@@ -63,7 +63,7 @@ test:	libedit.a test.o
 includes:
 	-cd ${.CURDIR}; cmp -s histedit.h ${DESTDIR}/usr/include/histedit.h > \
 	    /dev/null 2>&1 || \
-	    ${INSTALL} ${COPY} -o ${BINOWN} -g ${BINGRP} -m 444 histedit.h \
+	    ${INSTALL} ${INSTALL_COPY} -o ${BINOWN} -g ${BINGRP} -m 444 histedit.h \
 	    ${DESTDIR}/usr/include
 
 .include <bsd.lib.mk>

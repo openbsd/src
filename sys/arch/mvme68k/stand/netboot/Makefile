@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.6 1997/04/22 16:13:43 gvf Exp $
+#	$OpenBSD: Makefile,v 1.7 1997/04/27 20:56:30 millert Exp $
 
 RELOC=0x3F0000
 SIZE?=	size
@@ -32,7 +32,7 @@ netboot.bin: netboot
 	dd ibs=32 skip=1 if=netboot of=$@
 
 install:
-	install ${COPY} -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} \
+	${INSTALL} ${INSTALL_COPY} -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} \
 	  netboot.bin ${DESTDIR}${MDEC_DIR}/netboot
 
 .include <bsd.prog.mk>

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.5 1997/04/21 20:31:00 mickey Exp $
+#	$OpenBSD: Makefile,v 1.6 1997/04/27 20:56:27 millert Exp $
 
 PROG=	biosboot
 SRCS=	biosboot.S
@@ -6,7 +6,7 @@ SRCS=	biosboot.S
 CPPFLAGS+=-DSTART=$(START) -DBOOTMAGIC=$(BOOTMAGIC) -DBOOTREL=$(BOOTREL)
 LD=ld
 LDFLAGS=-nostdlib -Ttext 0 -N -x -Bstatic
-STRIP=
+INSTALL_STRIP=
 MAN=	biosboot.8
 
 all:	machine-links

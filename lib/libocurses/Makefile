@@ -14,7 +14,7 @@ MAN=	ocurses.3
 includes:
 	-cd ${.CURDIR}; cmp -s curses.h ${DESTDIR}/usr/include/ocurses.h > \
 	    /dev/null 2>&1 || \
-	    ${INSTALL} ${COPY} -o ${BINOWN} -g ${BINGRP} -m 444 curses.h \
+	    ${INSTALL} ${INSTALL_COPY} -o ${BINOWN} -g ${BINGRP} -m 444 curses.h \
 	    ${DESTDIR}/usr/include/ocurses.h
 
 .if make(install)

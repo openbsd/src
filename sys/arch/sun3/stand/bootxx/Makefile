@@ -7,7 +7,7 @@ all:	${SA_PROG}
 
 # Do not strip or remove a.out header for this one.
 install: ${SA_PROG}
-	install ${COPY} -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} \
+	${INSTALL} ${INSTALL_COPY} -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} \
 	  ${SA_PROG} ${DESTDIR}${MDEC_DIR}/${SA_PROG}
 
 .include <bsd.prog.mk>

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.5 1997/02/13 00:12:07 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.6 1997/04/27 20:56:54 millert Exp $
 
 PROG=	strip
 .if ${HOSTCC} != ${CC}
@@ -13,10 +13,10 @@ STRIP=./strip
 .endif
 
 realinstall:
-	${INSTALL} ${COPY} -o ${BINOWN} -g ${BINGRP} -m 600 strip \
+	${INSTALL} ${INSTALL_COPY} -o ${BINOWN} -g ${BINGRP} -m 600 strip \
 	    ${DESTDIR}${BINDIR}
 	${STRIP} ${DESTDIR}${BINDIR}/strip
 	chmod ${BINMODE} ${DESTDIR}${BINDIR}/strip
-	-if [ "${COPY}" = "" ]; then rm -f ${STRIP}; fi
+	-if [ "${INSTALL_COPY}" = "" ]; then rm -f ${STRIP}; fi
 
 .include <bsd.prog.mk>

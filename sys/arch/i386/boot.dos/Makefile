@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.4 1997/01/02 16:37:53 etheisen Exp $
+#	$OpenBSD: Makefile,v 1.5 1997/04/27 20:56:26 millert Exp $
 #	$NetBSD: Makefile,v 1.18 1995/03/23 19:46:45 jtc Exp $
 #
 # Ported to boot 386BSD by Julian Elischer (julian@tfs.com)
@@ -27,7 +27,7 @@
 
 PROG=	boot.com
 NOMAN=	noman
-STRIP=
+INSTALL_STRIP=
 
 S=	${.CURDIR}/../../..
 

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.4 1996/12/08 15:36:15 downsj Exp $
+#	$OpenBSD: Makefile,v 1.5 1997/04/27 20:55:43 millert Exp $
 #	$NetBSD: Makefile,v 1.15 1996/02/29 00:21:16 jtc Exp $
 #	@(#)Makefile	8.2 (Berkeley) 4/19/94
 
@@ -26,9 +26,9 @@ STRFILE!=cd $(.CURDIR)/../strfile; \
 all: ${BLDS}
 
 install: ${SRCS} ${BLDS}
-	(cd ${.CURDIR} && ${INSTALL} ${COPY} -o ${BINOWN} -g ${BINGRP} -m 444 \
+	(cd ${.CURDIR} && ${INSTALL} ${INSTALL_COPY} -o ${BINOWN} -g ${BINGRP} -m 444 \
 	    ${SRCS} ${DESTDIR}/usr/share/games/fortune)
-	${INSTALL} ${COPY} -o ${BINOWN} -g ${BINGRP} -m 444 ${BLDS} \
+	${INSTALL} ${INSTALL_COPY} -o ${BINOWN} -g ${BINGRP} -m 444 ${BLDS} \
 	    ${DESTDIR}/usr/share/games/fortune
 
 fortunes.dat fortunes2.dat fortunes2-o.dat limerick.dat startrek.dat zippy.dat:

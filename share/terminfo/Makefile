@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 1996/07/22 04:46:01 tholo Exp $
+#	$OpenBSD: Makefile,v 1.2 1997/04/27 20:56:25 millert Exp $
 
 #MAN=	terminfo.5
 
@@ -13,7 +13,7 @@ terminfo.db: terminfo.src
 	info_mkdb -f terminfo ${.OBJDIR}/fixed
 
 realinstall:
-	install ${COPY} -o ${BINOWN} -g ${BINGRP} -m 444 terminfo.db \
+	${INSTALL} ${INSTALL_COPY} -o ${BINOWN} -g ${BINGRP} -m 444 terminfo.db \
 	     ${DESTDIR}${BINDIR}/misc/terminfo.db
 
 .include <bsd.prog.mk>

@@ -1,9 +1,9 @@
-#	$OpenBSD: Makefile,v 1.5 1996/12/08 14:32:21 downsj Exp $
+#	$OpenBSD: Makefile,v 1.6 1997/04/27 20:56:42 millert Exp $
 
 NOMAN=
 
 beforeinstall:
-	${INSTALL} ${COPY} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
+	${INSTALL} ${INSTALL_COPY} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
 		${.CURDIR}/cpp.sh ${DESTDIR}${BINDIR}/cpp
 
 .include <bsd.prog.mk>

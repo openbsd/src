@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.12 1997/04/21 03:39:19 millert Exp $
+#	$OpenBSD: Makefile,v 1.13 1997/04/27 20:57:06 millert Exp $
 #
 #  OpenBSD Makefile
 #
@@ -37,11 +37,11 @@ BINGRP=	bin
 BINMODE=4555
 
 beforeinstall:
-#	${INSTALL} ${COPY} -o ${BINOWN} -g ${BINGRP} -m 644 /dev/null \
+#	${INSTALL} ${INSTALL_COPY} -o ${BINOWN} -g ${BINGRP} -m 644 /dev/null \
 #	    ${DESTDIR}/etc/sendmail.fc
-	${INSTALL} ${COPY} -o ${BINOWN} -g ${BINGRP} -m 644 /dev/null \
+	${INSTALL} ${INSTALL_COPY} -o ${BINOWN} -g ${BINGRP} -m 644 /dev/null \
 	    ${DESTDIR}/var/log/sendmail.st
-	${INSTALL} ${COPY} -o ${BINOWN} -g ${BINGRP} -m 444 \
+	${INSTALL} ${INSTALL_COPY} -o ${BINOWN} -g ${BINGRP} -m 444 \
 	    ${.CURDIR}/sendmail.hf ${DESTDIR}/usr/share/misc
 
 .include "../../Makefile.inc"

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.3 1996/12/08 15:36:17 downsj Exp $
+#	$OpenBSD: Makefile,v 1.4 1997/04/27 20:55:46 millert Exp $
 #	$NetBSD: Makefile,v 1.12 1995/03/23 08:34:32 cgd Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
@@ -20,7 +20,7 @@ initdeck: initdeck.c
 	${HOSTCC} ${CFLAGS} ${LDFLAGS} ${LDSTATIC} -o ${.TARGET} ${.CURDIR}/initdeck.c ${LDADD}
 
 beforeinstall:
-	${INSTALL} ${COPY} -o ${BINOWN} -g ${BINGRP} -m 444 cards.pck \
+	${INSTALL} ${INSTALL_COPY} -o ${BINOWN} -g ${BINGRP} -m 444 cards.pck \
 	    ${DESTDIR}/usr/share/games
 
 .include <bsd.prog.mk>

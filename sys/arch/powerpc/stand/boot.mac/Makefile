@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 1997/04/01 21:01:48 rahnds Exp $
+#	$OpenBSD: Makefile,v 1.3 1997/04/27 20:56:35 millert Exp $
 #       $NetBSD: Makefile,v 1.1 1996/09/30 16:35:05 ws Exp $
 
 R=              ..
@@ -11,7 +11,7 @@ SRCS=           Locore.c boot.c ofdev.c net.c netif_of.c alloc.c
 #CFLAGS+=       -DDEBUG -DNETIF_DEBUG
 CFLAGS+=	-DEXEC_ELF
 NOMAN=
-STRIP=
+INSTALL_STRIP=
 MAKEELF=        makeelf
 BINDIR=         /usr/mdec
 OBJCOPY?=	objcopy

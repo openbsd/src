@@ -6,7 +6,7 @@ PROG=	bootxx
 SRCS=	srt0.S bootxx.c promdev.c dvma.c
 KOBJS=	__main.o bzero.o urem.o udiv.o
 NOMAN=	1
-STRIP=
+INSTALL_STRIP=
 BINDIR=	/usr/mdec
 CFLAGS= -DBOOTXX
 

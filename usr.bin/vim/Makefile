@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.7 1997/01/31 18:11:01 kstailey Exp $
+#	$OpenBSD: Makefile,v 1.8 1997/04/27 20:56:58 millert Exp $
 
 .PATH:	${.CURDIR}/doc
 
@@ -50,7 +50,7 @@ afterinstall:
 	${INSTALL} -d -m 555 -o ${BINOWN} -g ${BINGRP} ${DESTDIR}/usr/share/vim
 	cd ${.CURDIR}/doc; for i in ${DOCS}; do \
 		cmp -s $$i ${DESTDIR}/usr/share/vim/$$i || \
-		${INSTALL} ${COPY} -m 444 -o ${BINOWN} -g ${BINGRP} $$i \
+		${INSTALL} ${INSTALL_COPY} -m 444 -o ${BINOWN} -g ${BINGRP} $$i \
 		${DESTDIR}/usr/share/vim; done
 
 .include <bsd.prog.mk>
