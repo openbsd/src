@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.399 2005/01/14 12:21:02 grange Exp $
+#	$OpenBSD: GENERIC,v 1.400 2005/01/14 20:24:18 grange Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -173,7 +173,7 @@ scsibus* at usscanner?
 #uyap*	at uhub?		# Y@P firmware loader
 udsbr*	at uhub?		# D-Link DSB-R100 radio
 radio*	at udsbr?		# USB radio
-#ubt*	at uhub?		# USB Bluetooth
+ubt*	at uhub?		# USB Bluetooth
 ugen*	at uhub?		# USB Generic driver
 
 # FireWire Controllers
