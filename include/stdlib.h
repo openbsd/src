@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdlib.h,v 1.18 2002/02/20 18:11:04 millert Exp $	*/
+/*	$OpenBSD: stdlib.h,v 1.19 2002/02/20 18:12:44 millert Exp $	*/
 /*	$NetBSD: stdlib.h,v 1.25 1995/12/27 21:19:08 jtc Exp $	*/
 
 /*-
@@ -125,12 +125,8 @@ void	*realloc(void *, size_t);
 void	 srand(unsigned);
 double	 strtod(const char *, char **);
 long	 strtol(const char *, char **, int);
-long long
-	 strtoll(const char *, char **, int);
 unsigned long
 	 strtoul(const char *, char **, int);
-unsigned long long
-	 strtoull(const char *, char **, int);
 int	 system(const char *);
 
 /* these are currently just stubs */
@@ -169,8 +165,6 @@ char	*l64a(long);
 
 void	 cfree(void *);
 
-#ifndef _GETOPT_DEFINED_
-#define _GETOPT_DEFINED_
 int	 getopt(int, char * const *, const char *);
 extern	 char *optarg;			/* getopt(3) external variables */
 extern	 int opterr;
@@ -179,7 +173,6 @@ extern	 int optopt;
 extern	 int optreset;
 int	 getsubopt(char **, char * const *, char **);
 extern	 char *suboptarg;		/* getsubopt(3) external variable */
-#endif /* _GETOPT_DEFINED_ */
 
 int	 heapsort(void *, size_t, size_t, int (*)(const void *, const void *));
 int	 mergesort(void *, size_t, size_t, int (*)(const void *, const void *));
