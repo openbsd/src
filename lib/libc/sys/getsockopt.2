@@ -193,8 +193,8 @@ If the socket promises reliable delivery of data and
 the system will block the process on the 
 .Xr close 2
 attempt until it is able to transmit the data or until it decides it
-is unable to deliver the information (a timeout period, termed the
-linger interval, is specified in the
+is unable to deliver the information (a timeout period measured in seconds,
+termed the linger interval, is specified in the
 .Fn setsockopt
 call when
 .Dv SO_LINGER

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.19 1997/11/15 19:57:51 deraadt Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.20 1998/01/06 23:49:48 deraadt Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -196,8 +196,8 @@ soclose(so)
 				goto drop;
 			while (so->so_state & SS_ISCONNECTED) {
 				error = tsleep((caddr_t)&so->so_timeo,
-					       PSOCK | PCATCH, netcls,
-					       so->so_linger);
+				    PSOCK | PCATCH, netcls,
+				    so->so_linger * hz);
 				if (error)
 					break;
 			}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.13 1998/01/03 22:32:53 deraadt Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.14 1998/01/06 23:49:49 deraadt Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -147,7 +147,7 @@ tcp_usrreq(so, req, m, nam, control)
 		if (error)
 			break;
 		if ((so->so_options & SO_LINGER) && so->so_linger == 0)
-			so->so_linger = TCP_LINGERTIME * hz;
+			so->so_linger = TCP_LINGERTIME;
 		tp = sototcpcb(so);
 		break;
 
