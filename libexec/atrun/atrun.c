@@ -1,4 +1,4 @@
-/*	$OpenBSD: atrun.c,v 1.15 2001/08/27 16:18:58 deraadt Exp $	*/
+/*	$OpenBSD: atrun.c,v 1.16 2002/03/16 18:40:00 millert Exp $	*/
 
 /*
  *  atrun.c - run jobs queued by at; run with root privileges.
@@ -71,7 +71,7 @@
 /* File scope variables */
 
 static char *namep;
-static char rcsid[] = "$OpenBSD: atrun.c,v 1.15 2001/08/27 16:18:58 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: atrun.c,v 1.16 2002/03/16 18:40:00 millert Exp $";
 static int debug = 0;
 
 /* Local functions */
@@ -134,6 +134,7 @@ run_file(filename, uid, gid)
 	uid_t nuid;
 	gid_t ngid;
 	login_cap_t *lc;
+	auth_session_t *as;
 
 	PRIV_START
 
@@ -158,6 +159,13 @@ run_file(filename, uid, gid)
 	if (pw == NULL) {
 		syslog(LOG_ERR,"Userid %u not found - aborting job %s",
 		    uid, filename);
+		exit(EXIT_FAILURE);
+	}
+
+	as = auth_open();
+	if (as == NULL || auth_setpwd(as, pw) != 0) {
+		syslog(LOG_ERR,"Unable to allocate memory - aborting job %s",
+		    filename);
 		exit(EXIT_FAILURE);
 	}
 	PRIV_START
@@ -307,9 +315,10 @@ run_file(filename, uid, gid)
 		if (setusercontext(lc, pw, pw->pw_uid, LOGIN_SETALL) < 0)
 			perr("Cannot set user context");
 
-		if (auth_approval(NULL, lc, pw->pw_name, "at") <= 0)
+		if (auth_approval(as, lc, pw->pw_name, "at") <= 0)
 			perr2("Approval failure for ", pw->pw_name);
 
+		auth_close(as);
 		login_close(lc);
 
 		if (chdir(pw->pw_dir) < 0)
