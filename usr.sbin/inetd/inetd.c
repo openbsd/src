@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.98 2002/06/01 03:42:06 itojun Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.99 2002/06/07 07:37:41 itojun Exp $	*/
 /*	$NetBSD: inetd.c,v 1.11 1996/02/22 11:14:41 mycroft Exp $	*/
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inetd.c	5.30 (Berkeley) 6/3/91";*/
-static char rcsid[] = "$OpenBSD: inetd.c,v 1.98 2002/06/01 03:42:06 itojun Exp $";
+static char rcsid[] = "$OpenBSD: inetd.c,v 1.99 2002/06/07 07:37:41 itojun Exp $";
 #endif /* not lint */
 
 /*
@@ -150,6 +150,7 @@ static char rcsid[] = "$OpenBSD: inetd.c,v 1.98 2002/06/01 03:42:06 itojun Exp $
 #define RLIMIT_NOFILE	RLIMIT_OFILE
 #endif
 
+#include <net/if.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
@@ -165,6 +166,7 @@ static char rcsid[] = "$OpenBSD: inetd.c,v 1.98 2002/06/01 03:42:06 itojun Exp $
 #include <unistd.h>
 #include <string.h>
 #include <login_cap.h>
+#include <ifaddrs.h>
 #include <rpc/rpc.h>
 #include <rpc/pmap_clnt.h>
 #include <rpcsvc/nfs_prot.h>
@@ -567,7 +569,8 @@ dg_badinput(sa)
 		case 0: case 127: case 255:
 			goto bad;
 		}
-		/* XXX should check for subnet broadcast using getifaddrs(3) */
+		if (dg_broadcast(&in))
+			goto bad;
 		break;
 	case AF_INET6:
 		in6 = &((struct sockaddr_in6 *)sa)->sin6_addr;
@@ -598,6 +601,29 @@ dg_badinput(sa)
 
 bad:
 	return (1);
+}
+
+int
+dg_broadcast(in)
+	struct in_addr *in;
+{
+	struct ifaddrs *ifa, *ifap;
+	struct sockaddr_in *sin;
+
+	if (getifaddrs(&ifap) < 0)
+		return (0);
+	for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
+		if (ifa->ifa_addr->sa_family != AF_INET ||
+		    (ifa->ifa_flags & IFF_BROADCAST) == 0)
+			continue;
+		sin = (struct sockaddr_in *)ifa->ifa_addr;
+		if (sin->sin_addr.s_addr == in->s_addr) {
+			freeifaddrs(ifap);
+			return (1);
+		}
+	}
+	freeifaddrs(ifap);
+	return (0);
 }
 
 void
@@ -2054,4 +2080,3 @@ spawn(sep, ctrl)
 	if (!sep->se_wait && sep->se_socktype == SOCK_STREAM)
 		close(ctrl);
 }
-
