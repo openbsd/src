@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.50 2005/01/11 00:01:14 jfb Exp $	*/
+/*	$OpenBSD: file.c,v 1.51 2005/01/12 20:10:09 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -32,6 +32,7 @@
 #include <errno.h>
 #include <stdio.h>
 #include <fcntl.h>
+#include <libgen.h>
 #include <dirent.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -826,9 +827,6 @@ cvs_file_cmp(const void *f1, const void *f2)
 CVSFILE*
 cvs_file_alloc(const char *path, u_int type)
 {
-	size_t len;
-	char pbuf[MAXPATHLEN];
-	const char *fnp;
 	CVSFILE *cfp;
 	struct cvs_dir *ddat;
 
@@ -839,19 +837,7 @@ cvs_file_alloc(const char *path, u_int type)
 	}
 	memset(cfp, 0, sizeof(*cfp));
 
-	/* ditch trailing slashes */
-	strlcpy(pbuf, path, sizeof(pbuf));
-	len = strlen(pbuf);
-	while (pbuf[len - 1] == '/')
-		pbuf[--len] = '\0';
-
-	fnp = strrchr(path, '/');
-	if (fnp == NULL)
-		fnp = path;
-	else
-		fnp++;
-
-	cfp->cf_name = cvs_file_getname(fnp);
+	cfp->cf_name = cvs_file_getname(basename(path));
 	if (cfp->cf_name == NULL) {
 		cvs_log(LP_ERR, "failed to get file name from table");
 		return (NULL);
