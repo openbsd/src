@@ -29,7 +29,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: uthread_info.c,v 1.6 1999/01/17 23:58:10 d Exp $
+ * $OpenBSD: uthread_info.c,v 1.7 1999/02/01 08:23:46 d Exp $
  */
 #include <stdio.h>
 #include <fcntl.h>
@@ -108,8 +108,16 @@ _thread_dump_info(void)
 
 	/* Display a list of active threads */
 
-	snprintf(s, sizeof s, " %8s%c%-11s %2s %5s %-8s %5s %5s %s\n", 
-	    "id", ' ',  "state", "pr", "flag", "name", "utime", "stime",
+	snprintf(s, sizeof s, 
+#ifdef _THREAD_RUSAGE
+	    " %8s%c%-11s %2s %5s %-8s %5s %5s %s\n", 
+#else
+	    " %8s%c%-11s %2s %5s %-8s %s\n", 
+#endif
+	    "id", ' ',  "state", "pr", "flag", "name",
+#ifdef _THREAD_RUSAGE
+	    "utime", "stime",
+#endif
 	    "location");
 	_thread_sys_write(fd, s, strlen(s));
 
@@ -135,7 +143,11 @@ _thread_dump_info(void)
 		/* Output a record for the current thread: */
 		s[0] = 0;
 		snprintf(s, sizeof(s), 
-		    " %8p%c%-11s %2d %c%c%c%c%c %-8s %5.2f %5.2f %s\n",
+#ifdef _THREAD_RUSAGE
+		    " %8p%c%-11s %2d %c%c%c%c%c %-8.8s %5.2f %5.2f %s\n",
+#else
+		    " %8p%c%-11s %2d %c%c%c%c%c %-8.8s %s\n",
+#endif
 		    (void *)pthread,
 		    (pthread == _thread_run)     ? '*' : ' ',
 		    state,
@@ -148,10 +160,12 @@ _thread_dump_info(void)
 		    (pthread->attr.flags & PTHREAD_INHERIT_SCHED) ? 'I' : ' ',
 		    (pthread->attr.flags & PTHREAD_NOFLOAT)       ? 'F' : ' ',
 		    (pthread->name == NULL) ? "" : pthread->name,
+#ifdef _THREAD_RUSAGE
 		    pthread->ru_utime.tv_sec + 
 			(double)pthread->ru_utime.tv_usec / 1000000.0,
 		    pthread->ru_stime.tv_sec + 
 			(double)pthread->ru_stime.tv_usec / 1000000.0,
+#endif
 		    location
 		);
 		_thread_sys_write(fd, s, strlen(s));

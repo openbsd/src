@@ -29,7 +29,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: uthread_create.c,v 1.6 1999/01/17 23:57:27 d Exp $
+ * $OpenBSD: uthread_create.c,v 1.7 1999/02/01 08:23:46 d Exp $
  */
 #include <errno.h>
 #include <stdlib.h>
@@ -89,8 +89,10 @@ pthread_create(pthread_t * thread, const pthread_attr_t * attr,
 			new_thread->stack = stack;
 			new_thread->start_routine = start_routine;
 			new_thread->arg = arg;
+#ifdef _THREAD_RUSAGE
 			timerclear(&new_thread->ru_utime);
 			timerclear(&new_thread->ru_stime);
+#endif
 			_SPINUNLOCK(&new_thread->lock);
 
 			new_thread->cancelstate = PTHREAD_CANCEL_ENABLE;

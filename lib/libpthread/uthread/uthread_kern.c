@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  *
  * $FreeBSD: uthread_kern.c,v 1.15 1998/11/15 09:58:26 jb Exp $
- * $OpenBSD: uthread_kern.c,v 1.6 1999/01/17 23:49:49 d Exp $
+ * $OpenBSD: uthread_kern.c,v 1.7 1999/02/01 08:23:46 d Exp $
  *
  */
 #include <errno.h>
@@ -67,8 +67,10 @@ _thread_kern_sched(struct sigcontext * scp)
 	struct timespec ts1;
 	struct timeval  tv;
 	struct timeval  tv1;
+#ifdef _THREAD_RUSAGE
 	struct rusage	ru;
 	static struct rusage ru_prev;
+#endif
 
 	/*
 	 * Flag the pthread kernel as executing scheduler code
@@ -128,6 +130,7 @@ _thread_kern_sched(struct sigcontext * scp)
 	/* Save errno. */
 	_thread_run->error = errno;
 
+#ifdef _THREAD_RUSAGE
 	/* Accumulate time spent */
 	if (getrusage(RUSAGE_SELF, &ru))
 		PANIC("Cannot get resource usage");
@@ -137,6 +140,7 @@ _thread_kern_sched(struct sigcontext * scp)
 	timeradd(&tv, &_thread_run->ru_stime, &_thread_run->ru_stime);
 	memcpy(&ru_prev.ru_utime, &ru.ru_utime, sizeof ru_prev.ru_utime);
 	memcpy(&ru_prev.ru_stime, &ru.ru_stime, sizeof ru_prev.ru_stime);
+#endif /* _THREAD_RUSAGE */
 
 	/*
 	 * Enter a the scheduling loop that finds the next thread that is
