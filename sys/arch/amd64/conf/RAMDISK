@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.10 2004/06/25 11:03:28 art Exp $
+#	$OpenBSD: RAMDISK,v 1.11 2004/08/03 00:41:43 deraadt Exp $
 
 machine		amd64		# architecture, used by config; REQUIRED
 
@@ -206,7 +206,7 @@ fxp*	at pci? dev ? function ?		# EtherExpress 10/100B ethernet
 re*	at pci? dev ? function ?		# Realtek 8169/8169S/8110S
 #tx*	at pci? dev ? function ?		# SMC 83C170 EPIC ethernet
 #tl*	at pci? dev ? function ?		# Compaq Thunderlan ethernet
-#vr*	at pci? dev ? function ?		# VIA Rhine ethernet
+vr*	at pci? dev ? function ?		# VIA Rhine ethernet
 dc*	at pci? dev ? function ?		# 21143, "tulip" clone ethernet
 sis*	at pci? dev ? function ?		# SiS 900/7016 ethernet
 #wb*	at pci? dev ? function ?		# Winbond W89C840F ethernet

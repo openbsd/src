@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.12 2004/07/11 01:40:08 tedu Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.13 2004/08/03 00:41:44 deraadt Exp $
 
 machine		amd64		# architecture, used by config; REQUIRED
 
@@ -86,10 +86,14 @@ umass*	at uhub? port ? configuration ? # USB Mass Storage devices
 scsibus* at umass?
 #ums*	at uhidev? reportid ?
 #wsmouse* at ums? mux 0
-#aue*	at uhub? port ?			# ADMtek AN986 Pegasus Ethernet
-#cue*	at uhub? port ?			# CATC USB-EL1201A based Ethernet
-#kue*	at uhub? port ?			# Kawasaki KL5KUSB101B based Ethernet
-#upl*	at uhub? port ?			# Prolific PL2301/PL2302 host-to-host `network'
+aue*	at uhub? port ?			# ADMtek AN986 Pegasus Ethernet
+axe*	at uhub? port ?			# ASIX Electronics AX88172 USB Ethernet
+cue*	at uhub? port ?			# CATC USB-EL1201A based Ethernet
+kue*	at uhub? port ?			# Kawasaki KL5KUSB101B based Ethernet
+cdce*	at uhub? port ?			# CDC Ethernet
+url*	at uhub? port ?			# Realtek RTL8150L based adapters
+wi*	at uhub? port ?			# WaveLAN IEEE 802.11DS
+upl*	at uhub? port ?			# Prolific PL2301/PL2302 host-to-host `network'
 #urio*	at uhub? port ?			# Diamond Multimedia Rio 500
 #uscanner* at uhub? port ?		# USB Scanners
 #usscanner* at uhub? port ?		# USB SCSI scanners, e.g., HP5300
@@ -207,7 +211,7 @@ fxp*	at pci? dev ? function ?		# EtherExpress 10/100B ethernet
 #rl*	at pci? dev ? function ?		# RealTek 81[23]9 ethernet
 #tx*	at pci? dev ? function ?		# SMC 83C170 EPIC ethernet
 #tl*	at pci? dev ? function ?		# Compaq Thunderlan ethernet
-#vr*	at pci? dev ? function ?		# VIA Rhine ethernet
+vr*	at pci? dev ? function ?		# VIA Rhine ethernet
 dc*	at pci? dev ? function ?		# 21143, "tulip" clone ethernet
 sis*	at pci? dev ? function ?		# SiS 900/7016 ethernet
 #wb*	at pci? dev ? function ?		# Winbond W89C840F ethernet
