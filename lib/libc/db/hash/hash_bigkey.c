@@ -1,4 +1,4 @@
-/*	$OpenBSD: hash_bigkey.c,v 1.6 1999/02/15 05:11:24 millert Exp $	*/
+/*	$OpenBSD: hash_bigkey.c,v 1.7 2000/10/03 18:16:48 mickey Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)hash_bigkey.c	8.3 (Berkeley) 5/31/94";
 #else
-static char rcsid[] = "$OpenBSD: hash_bigkey.c,v 1.6 1999/02/15 05:11:24 millert Exp $";
+static char rcsid[] = "$OpenBSD: hash_bigkey.c,v 1.7 2000/10/03 18:16:48 mickey Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -256,7 +256,7 @@ __big_delete(hashp, bufp)
 	bufp->flags |= BUF_MOD;
 	if (rbufp)
 		__free_ovflpage(hashp, rbufp);
-	if (last_bfp != rbufp)
+	if (last_bfp && last_bfp != rbufp)
 		__free_ovflpage(hashp, last_bfp);
 
 	hashp->NKEYS--;
