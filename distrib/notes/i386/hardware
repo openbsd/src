@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.139 2004/02/14 20:11:51 andreas Exp $
+dnl	$OpenBSD: hardware,v 1.140 2004/02/28 02:19:04 mickey Exp $
 OpenBSD/MACHINE OSREV works across a broad range of standard PC's and
 clones, with a wide variety of processors and I/O bus architectures.  It
 can be expected to install and run with minimal difficulties on most
@@ -140,8 +140,12 @@ Supported hardware {:-include-:}:
 		    Dell PERC 2/Si, PERC 2/QC, PERC 3/Si, PERC 3/Di,
 		      PERC 3/QC
 		    HP NetRAID-4M
-		American Megatrends Inc. MegaRAID controllers in "Mass
-		  Storage" mode [A] [C]
+		American Megatrends Inc. MegaRAID PCI controllers in
+		  "Mass Storage" mode, including: [A] [C]
+		    AMI MegaRAID
+		    Dell PERC 4Si and 4Di
+		    HP NetRAID 438, 466 and T[567]
+		    LSI/Symbios 523 SATA
 		Compaq Smart ARRAY PCI/EISA adapters, including: [A] [C]
 		    Compaq Integrated Array
 		    Compaq IAES
