@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamd.8,v 1.44 2004/03/01 18:17:42 xsa Exp $
+.\"	$OpenBSD: spamd.8,v 1.45 2004/03/10 00:32:54 beck Exp $
 .\"
 .\" Copyright (c) 2002 Theo de Raadt.  All rights reserved.
 .\"
@@ -32,6 +32,7 @@
 .Nm spamd
 .Bk -words
 .Op Fl 45dgv
+.Op Fl b Ar address
 .Op Fl c Ar maxcon
 .Op Fl G Ar passtime:greyexp:whiteexp
 .Op Fl n Ar name
@@ -56,6 +57,14 @@ The options are as follows:
 Return error code 450 to the spammer (default).
 .It Fl 5
 Return error code 550 to the spammer.
+.It Fl b Ar address
+Specify the local address to which
+.Nm
+is to
+.Xr bind 2 .
+By default
+.Nm
+listens on all local addresses.
 .It Fl c Ar maxcon
 The maximum number of concurrent connections to allow.
 The default is 800.

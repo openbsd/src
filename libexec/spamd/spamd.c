@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.55 2004/02/28 00:03:59 beck Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.56 2004/03/10 00:32:54 beck Exp $	*/
 
 /*
  * Copyright (c) 2002 Theo de Raadt.  All rights reserved.
@@ -135,10 +135,11 @@ void
 usage(void)
 {
 	fprintf(stderr,
-	    "usage: spamd [-45dgv] [-c maxcon] [-G mins:hours:hours] [-n name]"
-	    "[-p port] [-r reply] [-s secs]\n");
+	    "usage: spamd [-45dgv] [-b address] [-c maxcon]\n");
 	fprintf(stderr,
-	    "             [-w window]\n");
+	    "             [-G mins:hours:hours] [-n name] [-p port]\n");
+	fprintf(stderr,
+	    "             [-r reply] [-s secs] [-w window]\n");
 	exit(1);
 }
 
@@ -851,6 +852,7 @@ main(int argc, char *argv[])
 	struct servent *ent;
 	struct rlimit rlp;
 	pid_t pid;
+	char *bind_address = NULL;
 
 	tzset();
 	openlog_r("spamd", LOG_PID | LOG_NDELAY, LOG_DAEMON, &sdata);
@@ -865,13 +867,16 @@ main(int argc, char *argv[])
 	if (gethostname(hostname, sizeof hostname) == -1)
 		err(1, "gethostname");
 
-	while ((ch = getopt(argc, argv, "45c:p:dgG:r:s:n:vw:")) != -1) {
+	while ((ch = getopt(argc, argv, "45b:c:p:dgG:r:s:n:vw:")) != -1) {
 		switch (ch) {
 		case '4':
 			nreply = "450";
 			break;
 		case '5':
 			nreply = "550";
+			break;
+		case 'b':
+			bind_address = optarg;
 			break;
 		case 'c':
 			i = atoi(optarg);
@@ -908,6 +913,7 @@ main(int argc, char *argv[])
 			if (i < 0 || i > 10)
 				usage();
 			stutter = i;
+			break;
 		case 'n':
 			spamd = optarg;
 			break;
@@ -968,7 +974,11 @@ main(int argc, char *argv[])
 
 	memset(&sin, 0, sizeof sin);
 	sin.sin_len = sizeof(sin);
-	sin.sin_addr.s_addr = htonl(INADDR_ANY);
+	if (bind_address) {
+		if (inet_pton(AF_INET, bind_address, &sin.sin_addr) != 1)
+			err(1, "inet_pton");
+	} else
+		sin.sin_addr.s_addr = htonl(INADDR_ANY);
 	sin.sin_family = AF_INET;
 	sin.sin_port = htons(port);
 
