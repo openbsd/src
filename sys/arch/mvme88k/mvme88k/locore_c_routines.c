@@ -1,4 +1,4 @@
-/* $OpenBSD: locore_c_routines.c,v 1.30 2003/08/22 11:23:06 miod Exp $	*/
+/* $OpenBSD: locore_c_routines.c,v 1.31 2003/09/01 19:14:04 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -38,6 +38,7 @@
 #include <machine/asm_macro.h>		/* enable/disable interrupts	*/
 #include <machine/cpu_number.h>		/* cpu_number()		*/
 #include <machine/locore.h>
+#include <machine/prom.h>
 #include <machine/trap.h>
 #ifdef M88100
 #include <machine/m88100.h>		/* DMT_VALID		*/
@@ -321,6 +322,8 @@ vector_init(m88k_exception_vector_area *vector, unsigned *vector_init_list)
 {
 	unsigned num;
 	unsigned vec;
+	extern void bugtrap(void);
+	extern void m88110_bugtrap(void);
 
 	for (num = 0; (vec = vector_init_list[num]) != END_OF_VECTOR_LIST; num++) {
 		if (vec != UNKNOWN_HANDLER)
@@ -331,42 +334,35 @@ vector_init(m88k_exception_vector_area *vector, unsigned *vector_init_list)
 		__asm__ (NOP_STRING);
 	}
 
+	/* Save BUG vector */
+	bugvec[0] = vector[MVMEPROM_VECTOR].word_one;
+	bugvec[1] = vector[MVMEPROM_VECTOR].word_two;
+
 	switch (cputyp) {
 #ifdef M88110
 	case CPU_88110:
-		while (num < 496) {
-			SET_VECTOR(num, m88110_sigsys);
-			num++;
-		}
-		num++; /* skip 496, BUG ROM vector */
-		SET_VECTOR(450, m88110_syscall_handler);
-
 		while (num <= SIGSYS_MAX)
 			SET_VECTOR(num++, m88110_sigsys);
 
 		while (num <= SIGTRAP_MAX)
 			SET_VECTOR(num++, m88110_sigtrap);
 
+		SET_VECTOR(450, m88110_syscall_handler);
+		SET_VECTOR(MVMEPROM_VECTOR, m88110_bugtrap);
 		SET_VECTOR(504, m88110_stepbpt);
 		SET_VECTOR(511, m88110_userbpt);
 		break;
 #endif /* M88110 */
 #ifdef M88100
 	case CPU_88100:
-		while (num < 496) {
-			SET_VECTOR(num, sigsys);
-			num++;
-		}
-		num++; /* skip 496, BUG ROM vector */
-
-		SET_VECTOR(450, syscall_handler);
-
 		while (num <= SIGSYS_MAX)
 			SET_VECTOR(num++, sigsys);
 
 		while (num <= SIGTRAP_MAX)
 			SET_VECTOR(num++, sigtrap);
 
+		SET_VECTOR(450, syscall_handler);
+		SET_VECTOR(MVMEPROM_VECTOR, bugtrap);
 		SET_VECTOR(504, stepbpt);
 		SET_VECTOR(511, userbpt);
 		break;
@@ -375,6 +371,10 @@ vector_init(m88k_exception_vector_area *vector, unsigned *vector_init_list)
 
 	/* GCC will by default produce explicit trap 503 for division by zero */
 	SET_VECTOR(503, vector_init_list[T_ZERODIV]);
+
+	/* Save new BUG vector */
+	sysbugvec[0] = vector[MVMEPROM_VECTOR].word_one;
+	sysbugvec[1] = vector[MVMEPROM_VECTOR].word_two;
 }
 
 #ifdef MVME188

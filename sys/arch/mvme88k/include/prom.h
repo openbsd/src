@@ -1,4 +1,4 @@
-/*	$OpenBSD: prom.h,v 1.10 2003/06/04 04:11:37 deraadt Exp $ */
+/*	$OpenBSD: prom.h,v 1.11 2003/09/01 19:14:04 miod Exp $ */
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -29,6 +29,9 @@
  */
 #ifndef __MACHINE_PROM_H__
 #define __MACHINE_PROM_H__
+
+/* BUG trap vector */
+#define	MVMEPROM_VECTOR		496
 
 #define MVMEPROM_INCHR		0x00
 #define MVMEPROM_INSTAT		0x01
@@ -157,11 +160,9 @@ struct mvmeprom_args {
 	u_int	cputyp;
 };
 
-#endif
+extern unsigned long bugvec[2], sysbugvec[2];	/* BUG trap vector copies */
 
-#define MVMEPROM_CALL(x)	\
-	__asm__ __volatile__ ( __CONCAT("or r9,r0,",__STRING(x)) ); \
-	__asm__ __volatile__ ("tb0 0,r0,496")
+#endif	/* _LOCORE */
 
 #define MVMEPROM_REG_DEVLUN	"r2"
 #define MVMEPROM_REG_CTRLLUN	"r3"

@@ -1,17 +1,56 @@
-/*	$OpenBSD: bugio.c,v 1.9 2002/03/05 22:11:37 miod Exp $ */
+/*	$OpenBSD: bugio.c,v 1.10 2003/09/01 19:14:01 miod Exp $ */
 /*  Copyright (c) 1998 Steve Murphree, Jr. */
 
 #include <sys/param.h>
 #include <sys/systm.h>
 
+#include <machine/asm_macro.h>
 #include <machine/bugio.h>
 #include <machine/prom.h>
 
 register_t ossr0, ossr1, ossr2, ossr3;
 register_t bugsr0, bugsr1, bugsr2, bugsr3;
 
+unsigned long bugvec[2], sysbugvec[2];
+
+void bug_vector(void);
+void sysbug_vector(void);
+
+#define MVMEPROM_CALL(x)						\
+	__asm__ __volatile__ (__CONCAT("or r9,r0,",__STRING(x)));	\
+	__asm__ __volatile__ ("tb0 0,r0,496")
+
+void
+bug_vector()
+{
+	unsigned long *vbr, psr;
+
+	psr = disable_interrupts_return_psr();	/* paranoia */
+
+	__asm__ __volatile__ ("ldcr %0, cr7" : "=r" (vbr));
+	vbr[2 * MVMEPROM_VECTOR + 0] = bugvec[0];
+	vbr[2 * MVMEPROM_VECTOR + 1] = bugvec[1];
+
+	set_psr(psr);
+}
+
+void
+sysbug_vector()
+{
+	unsigned long *vbr, psr;
+
+	psr = disable_interrupts_return_psr();	/* paranoia */
+
+	__asm__ __volatile__ ("ldcr %0, cr7" : "=r" (vbr));
+	vbr[2 * MVMEPROM_VECTOR + 0] = sysbugvec[0];
+	vbr[2 * MVMEPROM_VECTOR + 1] = sysbugvec[1];
+
+	set_psr(psr);
+}
+
 #define	BUGCTXT()							\
 {									\
+	bug_vector();							\
 	__asm__ __volatile__ ("ldcr %0, cr17" : "=r" (ossr0));		\
 	__asm__ __volatile__ ("ldcr %0, cr18" : "=r" (ossr1));		\
 	__asm__ __volatile__ ("ldcr %0, cr19" : "=r" (ossr2));		\
@@ -36,6 +75,7 @@ register_t bugsr0, bugsr1, bugsr2, bugsr3;
 	__asm__ __volatile__ ("stcr %0, cr18" :: "r"(ossr1));		\
 	__asm__ __volatile__ ("stcr %0, cr19" :: "r"(ossr2));		\
 	__asm__ __volatile__ ("stcr %0, cr20" :: "r"(ossr3));		\
+	sysbug_vector();						\
 }
 
 static void

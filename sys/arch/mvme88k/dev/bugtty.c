@@ -1,4 +1,4 @@
-/*	$OpenBSD: bugtty.c,v 1.15 2003/08/15 20:32:14 tedu Exp $ */
+/*	$OpenBSD: bugtty.c,v 1.16 2003/09/01 19:14:01 miod Exp $ */
 
 /* Copyright (c) 1998 Steve Murphree, Jr. 
  * Copyright (c) 1995 Dale Rahn.
@@ -113,7 +113,7 @@ bugttyattach(parent, self, aux)
 	struct device *self;
 	void *aux;
 {
-	printf(": bugtty\n");
+	printf(": fallback console\n");
 }
 
 #define BUGTTYUNIT(x) ((x) & (0x7f))
@@ -467,21 +467,6 @@ bugttycnprobe(cp)
 		return (0);
 	}
 		
-#if 0
-	switch (cputyp) {
-	case CPU_147:
-	case CPU_162:
-		cp->cn_pri = CN_NORMAL;
-		return (0);
-	default:
-		break;
-	}
-#endif
-#if 0
-	cp->cn_pri = CN_NORMAL;
-	return (0);
-#endif /* 0 */
-
 	/* locate the major number */
 	for (maj = 0; maj < nchrdev; maj++)
 		if (cdevsw[maj].d_open == bugttyopen)
