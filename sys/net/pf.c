@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.74 2001/06/27 04:01:56 deraadt Exp $ */
+/*	$OpenBSD: pf.c,v 1.75 2001/06/27 04:24:43 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -9,11 +9,11 @@
  * are met:
  *
  *    - Redistributions of source code must retain the above copyright
- *      notice, this list of conditions and the following disclaimer. 
+ *      notice, this list of conditions and the following disclaimer.
  *    - Redistributions in binary form must reproduce the above
  *      copyright notice, this list of conditions and the following
  *      disclaimer in the documentation and/or other materials provided
- *      with the distribution. 
+ *      with the distribution.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
@@ -403,7 +403,7 @@ find_state(struct pf_tree_node *p, struct pf_tree_key *key)
 
 	while (p && (c = tree_key_compare(&p->key, key)))
 		p = (c > 0) ? p->left : p->right;
-	pf_status.state_searches++;
+	pf_status.fcounters[FCNT_STATE_SEARCH]++;
 	return (p ? p->state : NULL);
 }
 
@@ -441,7 +441,7 @@ insert_state(struct pf_state *state)
 
 	TAILQ_INSERT_TAIL(&pf_states, state, entries);
 
-	pf_status.state_inserts++;
+	pf_status.fcounters[FCNT_STATE_INSERT]++;
 	pf_status.states++;
 }
 
@@ -478,7 +478,7 @@ purge_expired_states(void)
 			TAILQ_REMOVE(&pf_states, cur, entries);
 			pool_put(&pf_state_pl, cur);
 			cur = next;
-			pf_status.state_removals++;
+			pf_status.fcounters[FCNT_STATE_REMOVALS]++;
 			pf_status.states--;
 		}
 	}
@@ -579,7 +579,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 
 	if (!(flags & FWRITE))
 		return (EACCES);
-	
+
 	switch (cmd) {
 
 	case DIOCSTART:
@@ -988,21 +988,23 @@ u_int16_t
 cksum_fixup(u_int16_t cksum, u_int16_t old, u_int16_t new)
 {
 	u_int32_t l = cksum + old - new;
-	l = (l >> 16) + (l & 65535); 
+	l = (l >> 16) + (l & 65535);
 	l = l & 65535;
 	return (l ? l : 65535);
-}  
+}
 
 void
-change_ap(u_int32_t *a, u_int16_t *p, u_int16_t *ic, u_int16_t *pc, u_int32_t an,
-    u_int16_t pn)
+change_ap(u_int32_t *a, u_int16_t *p, u_int16_t *ic, u_int16_t *pc,
+    u_int32_t an, u_int16_t pn)
 {
 	u_int32_t ao = *a;
 	u_int16_t po = *p;
 	*a = an;
-	*ic = cksum_fixup(cksum_fixup(*ic, ao / 65536, an / 65536), ao % 65536, an % 65536);
+	*ic = cksum_fixup(cksum_fixup(*ic, ao / 65536,
+	    an / 65536), ao % 65536, an % 65536);
 	*p = pn;
-	*pc = cksum_fixup(cksum_fixup(cksum_fixup(*pc, ao / 65536, an / 65536), ao % 65536, an % 65536),
+	*pc = cksum_fixup(cksum_fixup(cksum_fixup(*pc, ao / 65536,
+	    an / 65536), ao % 65536, an % 65536),
 	    po, pn);
 }
 
@@ -1011,7 +1013,8 @@ change_a(u_int32_t *a, u_int16_t *c, u_int32_t an)
 {
 	u_int32_t ao = *a;
 	*a = an;
-	*c = cksum_fixup(cksum_fixup(*c, ao / 65536, an / 65536), ao % 65536, an % 65536);
+	*c = cksum_fixup(cksum_fixup(*c, ao / 65536, an / 65536),
+	    ao % 65536, an % 65536);
 }
 
 void
@@ -1027,12 +1030,15 @@ change_icmp(u_int32_t *ia, u_int16_t *ip, u_int32_t *oa, u_int32_t na,
 	*ic = cksum_fixup(*ic, opc, *pc);
 	/* Change inner ip address, fix inner ip checksum and icmp checksum. */
 	*ia = na;
-	*h2c = cksum_fixup(cksum_fixup(*h2c, oia / 65536, *ia / 65536), oia % 65536, *ia % 65536);
-	*ic = cksum_fixup(cksum_fixup(*ic, oia / 65536, *ia / 65536), oia % 65536, *ia % 65536);
+	*h2c = cksum_fixup(cksum_fixup(*h2c, oia / 65536, *ia / 65536),
+	    oia % 65536, *ia % 65536);
+	*ic = cksum_fixup(cksum_fixup(*ic, oia / 65536, *ia / 65536),
+	    oia % 65536, *ia % 65536);
 	*ic = cksum_fixup(*ic, oh2c, *h2c);
 	/* Change outer ip address, fix outer ip checksum. */
 	*oa = na;
-	*hc = cksum_fixup(cksum_fixup(*hc, ooa / 65536, *oa / 65536), ooa % 65536, *oa % 65536);
+	*hc = cksum_fixup(cksum_fixup(*hc, ooa / 65536, *oa / 65536),
+	    ooa % 65536, *oa % 65536);
 }
 
 void
@@ -1099,6 +1105,7 @@ send_reset(int direction, struct ifnet *ifp, struct ip *h, int off,
 		struct route *ro = &iproute;
 		struct sockaddr_in *dst;
 		int error;
+
 		bzero(ro, sizeof(*ro));
 		dst = (struct sockaddr_in *)&ro->ro_dst;
 		dst->sin_family = AF_INET;
@@ -1112,13 +1119,13 @@ send_reset(int direction, struct ifnet *ifp, struct ip *h, int off,
 	} else {
 		/* send RST through the loopback interface */
 		struct sockaddr_in dst;
+
 		dst.sin_family = AF_INET;
 		dst.sin_addr = h2->ip_dst;
 		dst.sin_len = sizeof(struct sockaddr_in);
 		m->m_pkthdr.rcvif = ifp;
 		looutput(lo0ifp, m, sintosa(&dst), NULL);
 	}
-	return;
 }
 
 int
@@ -1515,7 +1522,7 @@ pf_test_icmp(int direction, struct ifnet *ifp, struct mbuf *m,
 		/* XXX will log packet before rewrite */
 		if (rm->log)
 			PFLOG_PACKET(h, m, AF_INET, direction, reason, rm);
-		
+
 		if (rm->action != PF_PASS)
 			return (PF_DROP);
 	}
@@ -1577,28 +1584,30 @@ int
 pf_test_other(int direction, struct ifnet *ifp, struct mbuf *m, struct ip *h)
 {
 	struct pf_rule *r, *rm = NULL;
-	
+
 	TAILQ_FOREACH(r, pf_rules_active, entries) {
 		if ((r->direction == direction) &&
 		    ((r->ifp == NULL) || (r->ifp == ifp)) &&
 		    (!r->proto || (r->proto == h->ip_p)) &&
-		    ((!r->src.addr && !r->src.mask) || match_addr(r->src.not, r->src.addr,
-			r->src.mask, h->ip_src.s_addr)) &&
-		    ((!r->dst.addr && !r->dst.mask) || match_addr(r->dst.not, r->dst.addr,
-			r->dst.mask, h->ip_dst.s_addr))) {
+		    ((!r->src.addr && !r->src.mask) ||
+		    match_addr(r->src.not, r->src.addr,
+		    r->src.mask, h->ip_src.s_addr)) &&
+		    ((!r->dst.addr && !r->dst.mask) ||
+		    match_addr(r->dst.not, r->dst.addr,
+		    r->dst.mask, h->ip_dst.s_addr))) {
 			rm = r;
 			if (r->quick)
 				break;
 		}
 	}
-	
+
 	if (rm != NULL) {
 		u_short reason;
+
 		REASON_SET(&reason, PFRES_MATCH);
-		
 		if (rm->log)
 			PFLOG_PACKET(h, m, AF_INET, direction, reason, rm);
-		
+
 		if (rm->action != PF_PASS)
 			return (PF_DROP);
 	}
@@ -1619,13 +1628,14 @@ pf_test_state_tcp(int direction, struct ifnet *ifp, struct mbuf *m,
 	key.addr[1] = h->ip_dst.s_addr;
 	key.port[1] = th->th_dport;
 
-	s = find_state((direction == PF_IN) ? tree_ext_gwy : tree_lan_ext, &key);
+	s = find_state((direction == PF_IN) ? tree_ext_gwy : tree_lan_ext,
+	    &key);
 	if (s != NULL) {
 		u_int16_t len = h->ip_len - off - (th->th_off << 2);
 		u_int16_t win = ntohs(th->th_win);
 		u_int32_t seq = ntohl(th->th_seq), ack = ntohl(th->th_ack);
 		u_int32_t end = seq + len + ((th->th_flags & TH_SYN) ? 1 : 0) +
-			((th->th_flags & TH_FIN) ? 1 : 0);
+		    ((th->th_flags & TH_FIN) ? 1 : 0);
 		int ackskew;
 		struct pf_state_peer *src, *dst;
 
@@ -1641,7 +1651,7 @@ pf_test_state_tcp(int direction, struct ifnet *ifp, struct mbuf *m,
 			/* First packet from this end.  Set its state */
 			src->seqlo = end;
 			src->seqhi = end + 1;
-			src->max_win = 1;	
+			src->max_win = 1;
 		}
 
 		if ((th->th_flags & TH_ACK) == 0) {
@@ -1649,7 +1659,7 @@ pf_test_state_tcp(int direction, struct ifnet *ifp, struct mbuf *m,
 			ack = dst->seqlo;
 		} else if (ack == 0 &&
 			(th->th_flags & (TH_ACK|TH_RST)) == (TH_ACK|TH_RST)) {
-			/* According to Guido, broken tcp stacks dont set ack */
+			/* broken tcp stacks do not set ack */
 			ack = dst->seqlo;
 		}
 
@@ -1663,21 +1673,21 @@ pf_test_state_tcp(int direction, struct ifnet *ifp, struct mbuf *m,
 
 #define MAXACKWINDOW (0xffff + 1500)
 		if (SEQ_GEQ(src->seqhi, end) &&
-				/* Last octet inside other's window space */
-			SEQ_GEQ(seq, src->seqlo - dst->max_win) &&
-				/* Retrans: not more than one window back */
-			(ackskew >= -MAXACKWINDOW) &&
-				/* Acking not more than one window back */
-			(ackskew <= MAXACKWINDOW)) {
-				/* Acking not more than one window forward */
+		    /* Last octet inside other's window space */
+		    SEQ_GEQ(seq, src->seqlo - dst->max_win) &&
+		    /* Retrans: not more than one window back */
+		    (ackskew >= -MAXACKWINDOW) &&
+		    /* Acking not more than one window back */
+		    (ackskew <= MAXACKWINDOW)) {
+		    /* Acking not more than one window forward */
 
 			if (ackskew < 0) {
 				/* The sequencing algorithm is exteremely lossy
 				 * when there is fragmentation since the full
 				 * packet length can not be determined.  So we
-				 * deduce how much data passed by what the other
-				 * endpoint ACKs.  Thanks Guido!
-				 *  (Why MAXACKWINDOW is used)
+				 * deduce how much data passed by what the
+				 * other endpoint ACKs.  Thanks Guido!
+				 * (Why MAXACKWINDOW is used)
 				 */
 				dst->seqlo = ack;
 			}
@@ -1722,17 +1732,19 @@ pf_test_state_tcp(int direction, struct ifnet *ifp, struct mbuf *m,
 			else
 				s->expire = pftv.tv_sec + 24*60*60;
 
-			/* translate source/destination address, if necessary */
+			/* translate source/destination address, if needed */
 			if (s->lan.addr != s->gwy.addr ||
 			    s->lan.port != s->gwy.port) {
 				if (direction == PF_OUT)
-					change_ap(&h->ip_src.s_addr, &th->th_sport,
-					    &h->ip_sum, &th->th_sum,
-					    s->gwy.addr, s->gwy.port);
+					change_ap(&h->ip_src.s_addr,
+					    &th->th_sport, &h->ip_sum,
+					    &th->th_sum, s->gwy.addr,
+					    s->gwy.port);
 				else
-					change_ap(&h->ip_dst.s_addr, &th->th_dport,
-					    &h->ip_sum, &th->th_sum,
-					    s->lan.addr, s->lan.port);
+					change_ap(&h->ip_dst.s_addr,
+					    &th->th_dport, &h->ip_sum,
+					    &th->th_sum, s->lan.addr,
+					    s->lan.port);
 				rewrite++;
 			}
 
@@ -1744,10 +1756,10 @@ pf_test_state_tcp(int direction, struct ifnet *ifp, struct mbuf *m,
 			printf(" seq=%lu ack=%lu len=%u ", seq, ack, len);
 			printf("\n");
 			printf("State failure: %c %c %c %c\n",
-				SEQ_GEQ(src->seqhi, end) ? ' ' : '1',
-				SEQ_GEQ(seq, src->seqlo - dst->max_win)?' ':'2',
-				(ackskew >= -MAXACKWINDOW) ? ' ' : '3',
-				(ackskew <= MAXACKWINDOW) ? ' ' : '4');
+			    SEQ_GEQ(src->seqhi, end) ? ' ' : '1',
+			    SEQ_GEQ(seq, src->seqlo - dst->max_win) ? ' ': '2',
+			    (ackskew >= -MAXACKWINDOW) ? ' ' : '3',
+			    (ackskew <= MAXACKWINDOW) ? ' ' : '4');
 			s = NULL;
 		}
 
@@ -1774,9 +1786,9 @@ pf_test_state_udp(int direction, struct ifnet *ifp, struct mbuf *m,
 	key.addr[1] = h->ip_dst.s_addr;
 	key.port[1] = uh->uh_dport;
 
-	s = find_state((direction == PF_IN) ? tree_ext_gwy : tree_lan_ext, &key);
+	s = find_state((direction == PF_IN) ? tree_ext_gwy : tree_lan_ext,
+	    &key);
 	if (s != NULL) {
-
 		u_int16_t len = h->ip_len - off - 8;
 
 		struct pf_state_peer *src, *dst;
@@ -1843,7 +1855,6 @@ pf_test_state_icmp(int direction, struct ifnet *ifp, struct mbuf *m,
 		 * ICMP query/reply message not related to a TCP/UDP packet.
 		 * Search for an ICMP state.
 		 */
-
 		struct pf_state *s;
 		struct pf_tree_key key;
 
@@ -1856,12 +1867,11 @@ pf_test_state_icmp(int direction, struct ifnet *ifp, struct mbuf *m,
 		s = find_state((direction == PF_IN) ? tree_ext_gwy :
 		    tree_lan_ext, &key);
 		if (s != NULL) {
-
 			s->packets++;
 			s->bytes += len;
 			s->expire = pftv.tv_sec + 10;
 
-			/* translate source/destination address, if necessary */
+			/* translate source/destination address, if needed */
 			if (s->lan.addr != s->gwy.addr) {
 				if (direction == PF_OUT)
 					change_a(&h->ip_src.s_addr, &h->ip_sum,
@@ -1935,9 +1945,9 @@ pf_test_state_icmp(int direction, struct ifnet *ifp, struct mbuf *m,
 			else
 				ackskew = dst->seqlo - ntohl(th.th_ack);
 			if (!SEQ_GEQ(src->seqhi, end) ||
-				!SEQ_GEQ(seq, src->seqlo - dst->max_win) ||
-				!(ackskew >= -MAXACKWINDOW) ||
-				!(ackskew <= MAXACKWINDOW)) {
+			    !SEQ_GEQ(seq, src->seqlo - dst->max_win) ||
+			    !(ackskew >= -MAXACKWINDOW) ||
+			    !(ackskew <= MAXACKWINDOW)) {
 
 				printf("pf: BAD ICMP state: ");
 				print_state(direction, s);
@@ -1951,15 +1961,15 @@ pf_test_state_icmp(int direction, struct ifnet *ifp, struct mbuf *m,
 				if (direction == PF_IN) {
 					change_icmp(&h2.ip_src.s_addr,
 					    &th.th_sport, &h->ip_dst.s_addr,
-					    s->lan.addr, s->lan.port, &th.th_sum,
-					    &h2.ip_sum, &ih->icmp_cksum,
-					    &h->ip_sum);
+					    s->lan.addr, s->lan.port,
+					    &th.th_sum, &h2.ip_sum,
+					    &ih->icmp_cksum, &h->ip_sum);
 				} else {
 					change_icmp(&h2.ip_dst.s_addr,
 					    &th.th_dport, &h->ip_src.s_addr,
-					    s->gwy.addr, s->gwy.port, &th.th_sum,
-					    &h2.ip_sum, &ih->icmp_cksum,
-					    &h->ip_sum);
+					    s->gwy.addr, s->gwy.port,
+					    &th.th_sum, &h2.ip_sum,
+					    &ih->icmp_cksum, &h->ip_sum);
 				}
 				rewrite++;
 			}
@@ -2006,15 +2016,15 @@ pf_test_state_icmp(int direction, struct ifnet *ifp, struct mbuf *m,
 				if (direction == PF_IN) {
 					change_icmp(&h2.ip_src.s_addr,
 					    &uh.uh_sport, &h->ip_dst.s_addr,
-					    s->lan.addr, s->lan.port, &uh.uh_sum,
-					    &h2.ip_sum, &ih->icmp_cksum,
-					    &h->ip_sum);
+					    s->lan.addr, s->lan.port,
+					    &uh.uh_sum, &h2.ip_sum,
+					    &ih->icmp_cksum, &h->ip_sum);
 				} else {
 					change_icmp(&h2.ip_dst.s_addr,
 					    &uh.uh_dport, &h->ip_src.s_addr,
-					    s->gwy.addr, s->gwy.port, &uh.uh_sum,
-					    &h2.ip_sum, &ih->icmp_cksum,
-					    &h->ip_sum);
+					    s->gwy.addr, s->gwy.port,
+					    &uh.uh_sum, &h2.ip_sum,
+					    &ih->icmp_cksum, &h->ip_sum);
 				}
 				rewrite++;
 			}
@@ -2171,8 +2181,8 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf *m)
 
 done:
 	if (ifp == status_ifp) {
-		pf_status.bytes[dir] += h->ip_len;
-		pf_status.packets[dir][action]++;
+		pf_status.bcounters[dir] += h->ip_len;
+		pf_status.pcounters[dir][action]++;
 	}
 	if (log) {
 		struct pf_rule r0;
