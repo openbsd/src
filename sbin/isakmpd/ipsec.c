@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec.c,v 1.54 2001/07/06 14:37:11 ho Exp $	*/
+/*	$OpenBSD: ipsec.c,v 1.55 2001/08/22 08:49:00 niklas Exp $	*/
 /*	$EOM: ipsec.c,v 1.143 2000/12/11 23:57:42 niklas Exp $	*/
 
 /*
@@ -2269,4 +2269,75 @@ ipsec_id_size (char *section, u_int8_t *id)
   log_print ("ipsec_id_size: unrecognized/unsupported ID-type %d (%s)",
 	     *id, type);
   return -1;
+}
+
+/*
+ * Generate a string version of the ID.
+ */
+char *
+ipsec_id_string (u_int8_t *id, size_t id_len)
+{
+  /* XXX Guess at a maximum length.  */
+  char buf[256];
+  char *addrstr = 0;
+  size_t len;
+
+  /* XXX real ugly way of making the offsets correct.  */
+  id -= ISAKMP_GEN_SZ;
+
+  switch (GET_ISAKMP_ID_TYPE (id))
+    {
+    case IPSEC_ID_IPV4_ADDR:
+      if (id_len < sizeof (struct in_addr))
+	goto fail;
+      util_ntoa (&addrstr, AF_INET, id + ISAKMP_ID_DATA_OFF);
+      if (!addrstr)
+	goto fail;
+      if (snprintf (buf, sizeof buf, "ipv4/%s", addrstr) > sizeof buf - 1)
+	goto fail;
+      break;
+
+    case IPSEC_ID_IPV6_ADDR:
+      if (id_len < sizeof (struct in6_addr))
+	goto fail;
+      util_ntoa (&addrstr, AF_INET6, id + ISAKMP_ID_DATA_OFF);
+      if (!addrstr)
+	goto fail;
+      if (snprintf (buf, sizeof buf, "ipv6/%s", addrstr) > sizeof buf - 1)
+	goto fail;
+      break;
+
+    case IPSEC_ID_FQDN:
+    case IPSEC_ID_USER_FQDN:
+      /* Statically resolvable, should be optimized away by the compiler.  */
+      if (sizeof buf < sizeof "ufqdn/")
+	goto fail;
+      strcpy (buf,
+	      GET_ISAKMP_ID_TYPE (id) == IPSEC_ID_FQDN ? "fqdn/" : "ufqdn/");
+      len = strlen(buf);
+
+      /* Id is not NULL-terminated.  */
+      id_len -= ISAKMP_ID_DATA_OFF;
+      if (id_len > sizeof buf - len - 1)
+	goto fail;
+
+      memcpy (buf + len, id + ISAKMP_ID_DATA_OFF, id_len);
+      *(buf + len + id_len) = '\0';
+      break;
+
+    default:
+      /* Unknown type.  */
+      LOG_DBG ((LOG_MISC, 10, "id_string: unknown identity type %d\n",
+		GET_ISAKMP_ID_TYPE (id)));
+      goto fail;
+    }
+
+  if (addrstr)
+    free (addrstr);
+  return strdup (buf);
+
+ fail:
+  if (addrstr)
+    free (addrstr);
+  return 0;
 }

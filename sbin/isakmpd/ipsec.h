@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec.h,v 1.18 2001/07/01 20:43:39 niklas Exp $	*/
+/*	$OpenBSD: ipsec.h,v 1.19 2001/08/22 08:49:00 niklas Exp $	*/
 /*	$EOM: ipsec.h,v 1.42 2000/12/03 07:58:20 angelos Exp $	*/
 
 /*
@@ -161,6 +161,7 @@ extern int ipsec_gen_g_x (struct message *);
 extern int ipsec_get_id (char *, int *, struct sockaddr **, 
 			 struct sockaddr **, u_int8_t *, u_int16_t *);
 extern ssize_t ipsec_id_size (char *, u_int8_t *);
+extern char *ipsec_id_string (u_int8_t *, size_t);
 extern void ipsec_init (void);
 extern int ipsec_initial_contact (struct message *msg);
 extern int ipsec_is_attribute_incompatible (u_int16_t, u_int8_t *, u_int16_t,
