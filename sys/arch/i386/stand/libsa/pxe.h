@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxe.h,v 1.1 2004/03/19 13:48:18 tom Exp $ */
+/*	$OpenBSD: pxe.h,v 1.2 2004/09/20 17:51:07 miod Exp $ */
 /*	$NetBSD: pxe.h,v 1.1 2002/02/16 03:37:40 thorpej Exp $	*/
 
 /*
@@ -220,7 +220,7 @@ typedef struct {
 #define	PXENV_UNDI_SET_STATION_ADDRESS	0x000A
 typedef struct {
 	PXENV_STATUS_t	Status;
-	MAC_ADDR	StationAddress;		/* Temp MAC addres to use */
+	MAC_ADDR	StationAddress;		/* Temp MAC address to use */
 } __attribute__((__packed__)) t_PXENV_UNDI_SET_STATION_ADDR;
 
 #define	PXENV_UNDI_SET_PACKET_FILTER	0x000B

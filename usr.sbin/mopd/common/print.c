@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.7 2004/04/14 20:37:28 henning Exp $ */
+/*	$OpenBSD: print.c,v 1.8 2004/09/20 17:51:07 miod Exp $ */
 
 /*
  * Copyright (c) 1993-96 Mats O Jansson.  All rights reserved.
@@ -26,7 +26,7 @@
 
 #ifndef LINT
 static const char rcsid[] =
-    "$OpenBSD: print.c,v 1.7 2004/04/14 20:37:28 henning Exp $";
+    "$OpenBSD: print.c,v 1.8 2004/09/20 17:51:07 miod Exp $";
 #endif
 
 #include <sys/types.h>
@@ -342,7 +342,7 @@ mopPrintMopHeader(FILE *fd, u_char *pkt, int trans)
 			fprintf(fd, "Memory dump data\n");
 			break;
 		case MOP_K_CODE_PLT:
-			fprintf(fd, "Parameter load with transfer addres\n");
+			fprintf(fd, "Parameter load with transfer address\n");
 			break;
 		default:
 			fprintf(fd, "(unknown)\n");

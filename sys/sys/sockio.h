@@ -1,4 +1,4 @@
-/*	$OpenBSD: sockio.h,v 1.27 2004/06/26 07:00:58 alex Exp $	*/
+/*	$OpenBSD: sockio.h,v 1.28 2004/09/20 17:51:07 miod Exp $	*/
 /*	$NetBSD: sockio.h,v 1.5 1995/08/23 00:40:47 thorpej Exp $	*/
 
 /*-
@@ -88,7 +88,7 @@
 #define	SIOCSIFGENERIC	 _IOW('i', 57, struct ifreq)	/* generic IF set op */
 #define	SIOCGIFGENERIC	_IOWR('i', 58, struct ifreq)	/* generic IF get op */
 
-#define SIOCSIFPHYADDR   _IOW('i', 70, struct ifaliasreq) /* set gif addres */
+#define SIOCSIFPHYADDR   _IOW('i', 70, struct ifaliasreq) /* set gif address */
 #define	SIOCGIFPSRCADDR	_IOWR('i', 71, struct ifreq)	/* get gif psrc addr */
 #define	SIOCGIFPDSTADDR	_IOWR('i', 72, struct ifreq)	/* get gif pdst addr */
 #define	SIOCDIFPHYADDR	 _IOW('i', 73, struct ifreq)	/* delete gif addrs */
