@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike_quick_mode.c,v 1.56 2001/10/26 12:03:07 ho Exp $	*/
+/*	$OpenBSD: ike_quick_mode.c,v 1.57 2002/01/23 17:16:42 ho Exp $	*/
 /*	$EOM: ike_quick_mode.c,v 1.139 2001/01/26 10:43:17 niklas Exp $	*/
 
 /*
@@ -109,7 +109,7 @@ check_policy (struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
 {
   char *return_values[RETVALUES_NUM];
   char **principal = 0;
-  int i, result = 0, nprinc = 0;
+  int i, len, result = 0, nprinc = 0;
   int *x509_ids = 0, *keynote_ids = 0;
   unsigned char hashbuf[20]; /* Set to the largest digest result */
 #ifdef USE_X509
@@ -186,46 +186,45 @@ check_policy (struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
 	  goto policydone;
 	}
 
-      principal[0] = calloc (strlen (isakmp_sa->recv_key)
-			     + sizeof "passphrase:", sizeof (char));
+      len = strlen (isakmp_sa->recv_key) + sizeof "passphrase:";
+      principal[0] = calloc (len, sizeof (char));
       if (!principal[0])
         {
-	  log_error ("check_policy: calloc (%d, %d) failed",
-		     strlen (isakmp_sa->recv_key) + sizeof "passphrase:",
+	  log_error ("check_policy: calloc (%d, %d) failed", len,
 		     sizeof (char));
 	  goto policydone;
 	}
 
       /* XXX Consider changing the magic hash lengths with constants.  */
-      strcpy (principal[0], "passphrase:");
+      strlcpy (principal[0], "passphrase:", len);
       memcpy (principal[0] + sizeof "passphrase:" - 1, isakmp_sa->recv_key,
 	      strlen (isakmp_sa->recv_key));
 
-      principal[1] = calloc (sizeof "passphrase-md5-hex:" + 2 * 16,
-			     sizeof (char));
+      len = sizeof "passphrase-md5-hex:" + 2 * 16;
+      principal[1] = calloc (len, sizeof (char));
       if (!principal[1])
         {
-	  log_error ("check_policy: calloc (%d, %d) failed",
-		     sizeof "passphrase-md5-hex:" + 2 * 16, sizeof (char));
+	  log_error ("check_policy: calloc (%d, %d) failed", len,
+		     sizeof (char));
 	  goto policydone;
 	}
 
-      strcpy (principal[1], "passphrase-md5-hex:");
+      strlcpy (principal[1], "passphrase-md5-hex:", len);
       MD5 (isakmp_sa->recv_key, strlen (isakmp_sa->recv_key), hashbuf);
       for (i = 0; i < 16; i++)
 	sprintf (principal[1] + 2 * i + sizeof "passphrase-md5-hex:" - 1,
 		 "%02x", hashbuf[i]);
 
-      principal[2] = calloc (sizeof "passphrase-sha1-hex:" + 2 * 20,
-			     sizeof (char));
+      len = sizeof "passphrase-sha1-hex:" + 2 * 20;
+      principal[2] = calloc (len, sizeof (char));
       if (!principal[2])
         {
-	  log_error ("check_policy: calloc (%d, %d) failed",
-		     sizeof "passphrase-sha1-hex:" + 2 * 20, sizeof (char));
+	  log_error ("check_policy: calloc (%d, %d) failed", len,
+		     sizeof (char));
 	  goto policydone;
 	}
 
-      strcpy (principal[2], "passphrase-sha1-hex:");
+      strlcpy (principal[2], "passphrase-sha1-hex:", len);
       SHA1 (isakmp_sa->recv_key, strlen (isakmp_sa->recv_key), hashbuf);
       for (i = 0; i < 20; i++)
 	sprintf (principal[2] + 2 * i + sizeof "passphrase-sha1-hex:" - 1,
@@ -313,7 +312,7 @@ check_policy (struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
 			 sizeof (char));
 	      goto policydone;
             }
-	  strcpy (principal[1], "DN:");
+	  strlcpy (principal[1], "DN:", 259);
 	  LC (X509_NAME_oneline, (subject, principal[1] + 3, 256));
 	  nprinc = 2;
 	} else {
