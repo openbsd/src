@@ -1,4 +1,4 @@
-/*	$OpenBSD: obio.c,v 1.7 1997/08/08 08:25:20 downsj Exp $	*/
+/*	$OpenBSD: obio.c,v 1.8 1998/10/14 02:23:45 deraadt Exp $	*/
 /*	$NetBSD: obio.c,v 1.37 1997/07/29 09:58:11 fair Exp $	*/
 
 /*
@@ -153,7 +153,7 @@ busprint(args, obio)
 		ca->ca_ra.ra_name = "<unknown>";
 
 	if (obio)
-		printf("[%s at %s]", ca->ca_ra.ra_name, obio);
+		printf("%s at %s", ca->ca_ra.ra_name, obio);
 
 	printf(" addr %p", ca->ca_ra.ra_paddr);
 
