@@ -1,4 +1,4 @@
-/*	$OpenBSD: su.c,v 1.30 1997/09/11 11:21:55 deraadt Exp $	*/
+/*	$OpenBSD: su.c,v 1.31 1998/03/25 21:27:27 art Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)su.c	5.26 (Berkeley) 7/6/91";*/
-static char rcsid[] = "$OpenBSD: su.c,v 1.30 1997/09/11 11:21:55 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: su.c,v 1.31 1998/03/25 21:27:27 art Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -95,7 +95,7 @@ main(argc, argv)
 	uid_t ruid;
 	int asme, ch, asthem, fastlogin, prio;
 	enum { UNSET, YES, NO } iscsh = UNSET;
-	char *user, *shell, *avshell, *username, **np;
+	char *user, *shell = NULL, *avshell, *username, **np;
 	char shellbuf[MAXPATHLEN], avshellbuf[MAXPATHLEN];
 
 	asme = asthem = fastlogin = 0;
@@ -144,7 +144,7 @@ main(argc, argv)
 		errx(1, "who are you?");
 	if ((username = strdup(pwd->pw_name)) == NULL)
 		err(1, "can't allocate memory");
-	if (asme)
+	if (asme) {
 		if (pwd->pw_shell && *pwd->pw_shell) {
 			shell = strncpy(shellbuf, pwd->pw_shell, sizeof(shellbuf) - 1);
 			shellbuf[sizeof(shellbuf) - 1] = '\0';
@@ -152,6 +152,7 @@ main(argc, argv)
 			shell = _PATH_BSHELL;
 			iscsh = NO;
 		}
+	}
 
 	/* get target login information, default to root */
 	user = *argv ? *argv : "root";
@@ -327,6 +328,8 @@ ontty()
 }
 
 #ifdef KERBEROS
+int koktologin __P((char *, char *, char *));
+
 int
 kerberos(username, user, uid)
 	char *username, *user;
@@ -361,10 +364,11 @@ kerberos(username, user, uid)
 	 * the name of the person su'ing.  Otherwise (non-root case),
 	 * we need to get a ticket for "yyy.", where yyy represents
 	 * the name of the person being su'd to, and the instance is null
-	 *
-	 * We should have a way to set the ticket lifetime,
-	 * with a system default for root.
 	 */
+
+	printf("%s%s@%s's ", (uid == 0 ? username : user), 
+	       (uid == 0 ? ".root" : ""), lrealm);
+	fflush(stdout);
 	kerno = krb_get_pw_in_tkt((uid == 0 ? username : user),
 		(uid == 0 ? "root" : ""), lrealm,
 	    	"krbtgt", lrealm, DEFAULT_TKT_LIFE, 0);
@@ -436,6 +440,7 @@ kerberos(username, user, uid)
 	return (0);
 }
 
+int
 koktologin(name, realm, toname)
 	char *name, *realm, *toname;
 {
