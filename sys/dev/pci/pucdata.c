@@ -1,4 +1,4 @@
-/*	$OpenBSD: pucdata.c,v 1.39 2004/11/21 03:56:44 deraadt Exp $	*/
+/*	$OpenBSD: pucdata.c,v 1.40 2005/03/07 13:28:26 deraadt Exp $	*/
 /*	$NetBSD: pucdata.c,v 1.6 1999/07/03 05:55:23 cgd Exp $	*/
 
 /*
@@ -1008,6 +1008,14 @@ const struct puc_device_description puc_devices[] = {
 	    },
 	},
 
+	/* NetMos 1P PCI: 1P */
+	{   /* "NetMos NM9805 1284 Printer Port" */
+	    {   PCI_VENDOR_NETMOS, PCI_PRODUCT_NETMOS_1P,	0, 0	},
+	    {	0xffff,	0xffff,					0, 0	},
+	    {
+		{ PUC_PORT_TYPE_LPT, 0x10, 0x00, 0x00 },
+	    },
+	},
 	{ /* Sunix 4018A : 2-port parallel */
 	    {   PCI_VENDOR_SUNIX, PCI_PRODUCT_SUNIX_4018A,	0, 0	},
 	    {	0xffff,	0xffff,					0, 0	},
