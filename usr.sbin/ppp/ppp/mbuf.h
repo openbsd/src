@@ -15,7 +15,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $Id: mbuf.h,v 1.2 1999/02/06 03:22:42 brian Exp $
+ * $Id: mbuf.h,v 1.3 1999/03/29 08:20:33 brian Exp $
  *
  *	TODO:
  */
@@ -64,3 +64,4 @@ extern void mbuf_Log(void);
 extern int mbuf_Show(struct cmdargs const *);
 extern void mbuf_Enqueue(struct mqueue *, struct mbuf *);
 extern struct mbuf *mbuf_Dequeue(struct mqueue *);
+extern struct mbuf *mbuf_Contiguous(struct mbuf *);
