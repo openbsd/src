@@ -13,7 +13,7 @@ Generic header file for ssh.
 
 */
 
-/* RCSID("$Id: ssh.h,v 1.4 1999/09/29 18:16:21 dugsong Exp $"); */
+/* RCSID("$Id: ssh.h,v 1.5 1999/10/01 02:38:10 provos Exp $"); */
 
 #ifndef SSH_H
 #define SSH_H
@@ -70,10 +70,6 @@ only by root, whereas ssh_config should be world-readable. */
 
 #define SSH_PROGRAM		"/usr/bin/ssh"
 
-/* Random seed file for the daemon.  This file should be readable only by 
-   root. */
-#define SSH_DAEMON_SEED_FILE	ETCDIR "/ssh_random_seed"
-
 /* The process id of the daemon listening for connections is saved
    here to make it easier to kill the correct daemon when necessary. */
 #define SSH_DAEMON_PID_FILE	PIDDIR "/sshd.pid"
@@ -86,10 +82,6 @@ only by root, whereas ssh_config should be world-readable. */
    not be readable by anyone except the user him/herself, though this does
    not contain anything particularly secret. */
 #define SSH_USER_HOSTFILE	"~/.ssh/known_hosts"
-
-/* Name of the file containing client-side random seed.  This file should
-   only be readable by the user him/herself. */
-#define SSH_CLIENT_SEEDFILE	".ssh/random_seed"
 
 /* Name of the default file containing client-side authentication key. 
    This file should only be readable by the user him/herself. */

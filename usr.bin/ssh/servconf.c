@@ -12,7 +12,7 @@ Created: Mon Aug 21 15:48:58 1995 ylo
 */
 
 #include "includes.h"
-RCSID("$Id: servconf.c,v 1.6 1999/09/30 05:11:29 deraadt Exp $");
+RCSID("$Id: servconf.c,v 1.7 1999/10/01 02:38:09 provos Exp $");
 
 #include "ssh.h"
 #include "servconf.h"
@@ -26,7 +26,6 @@ void initialize_server_options(ServerOptions *options)
   options->port = -1;
   options->listen_addr.s_addr = htonl(INADDR_ANY);
   options->host_key_file = NULL;
-  options->random_seed_file = NULL;
   options->server_key_bits = -1;
   options->login_grace_time = -1;
   options->key_regeneration_time = -1;
@@ -73,8 +72,6 @@ void fill_default_server_options(ServerOptions *options)
     }
   if (options->host_key_file == NULL)
     options->host_key_file = HOST_KEY_FILE;
-  if (options->random_seed_file == NULL)
-    options->random_seed_file = SSH_DAEMON_SEED_FILE;
   if (options->server_key_bits == -1)
     options->server_key_bits = 768;
   if (options->login_grace_time == -1)
@@ -314,8 +311,10 @@ void read_server_config(ServerOptions *options, const char *filename)
 	  break;
 
 	case sRandomSeedFile:
-	  charptr = &options->random_seed_file;
-	  goto parse_pathname;
+	  fprintf(stderr, "%s line %d: option is obsolete.\n",
+		  filename, linenum);
+	  cp = strtok(NULL, WHITESPACE);
+	  break;
 
 	case sPermitRootLogin:
 	  intptr = &options->permit_root_login;

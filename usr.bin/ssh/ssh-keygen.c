@@ -14,7 +14,7 @@ Identity and host key generation and maintenance.
 */
 
 #include "includes.h"
-RCSID("$Id: ssh-keygen.c,v 1.5 1999/09/29 21:14:16 deraadt Exp $");
+RCSID("$Id: ssh-keygen.c,v 1.6 1999/10/01 02:38:09 provos Exp $");
 
 #include "rsa.h"
 #include "ssh.h"
@@ -409,10 +409,6 @@ main(int ac, char **av)
   if (change_comment)
     do_change_comment(pw);
 
-  /* Initialize random number generator.  This may take a while if the
-     user has no seed file, so display a message to the user. */
-  if (!quiet)
-    printf("Initializing random number generator...\n");
   arc4random_stir();
 
   if (quiet)
