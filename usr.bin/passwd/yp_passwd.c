@@ -1,4 +1,4 @@
-/*	$OpenBSD: yp_passwd.c,v 1.3 1996/07/22 03:53:21 deraadt Exp $	*/
+/*	$OpenBSD: yp_passwd.c,v 1.4 1996/08/30 13:37:53 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -34,7 +34,7 @@
  */
 #ifndef lint
 /*static char sccsid[] = "from: @(#)yp_passwd.c	1.0 2/2/93";*/
-static char rcsid[] = "$OpenBSD: yp_passwd.c,v 1.3 1996/07/22 03:53:21 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: yp_passwd.c,v 1.4 1996/08/30 13:37:53 deraadt Exp $";
 #endif /* not lint */
 
 #ifdef	YP
@@ -291,12 +291,13 @@ interpret(struct passwd *pwent, char *line)
 	return (pwent);
 }
 
+static char *__yplin;
+
 static struct passwd *
 ypgetpwnam(nam)
 	char *nam;
 {
 	static struct passwd pwent;
-	static char line[1024];
 	char *val;
 	int reason, vallen;
 	
@@ -310,10 +311,13 @@ ypgetpwnam(nam)
 		break;
 	}
 	val[vallen] = '\0';
-	strcpy(line, val);
+	if (__yplin)
+		free(__yplin);
+	__yplin = (char *)malloc(vallen + 1);
+	strcpy(__yplin, val);
 	free(val);
 
-	return(interpret(&pwent, line));
+	return(interpret(&pwent, __yplin));
 }
 
 #endif	/* YP */
