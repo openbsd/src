@@ -1,4 +1,4 @@
-/*	$OpenBSD: quot.c,v 1.6 1999/08/06 20:41:08 deraadt Exp $	*/
+/*	$OpenBSD: quot.c,v 1.7 1999/09/22 05:04:34 deraadt Exp $	*/
 /*	$NetBSD: quot.c,v 1.7.4.1 1996/05/31 18:06:36 jtc Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: quot.c,v 1.6 1999/08/06 20:41:08 deraadt Exp $";
+static char rcsid[] = "$Id: quot.c,v 1.7 1999/09/22 05:04:34 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -555,6 +555,10 @@ quot(name, mp)
 	get_inode(-1);		/* flush cache */
 	inituser();
 	initfsizes();
+	/*
+	 * XXX this is completely broken.  Of course you can't read a
+	 * directory, well, not anymore.  How to fix this, though...
+	 */
 	if ((fd = open(name, 0)) < 0
 	    || lseek(fd, SBOFF, 0) != SBOFF
 	    || read(fd, superblock, SBSIZE) != SBSIZE) {
