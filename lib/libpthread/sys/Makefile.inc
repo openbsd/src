@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.11 2003/07/22 17:15:12 brad Exp $
+#	$OpenBSD: Makefile.inc,v 1.12 2003/10/22 00:25:42 brad Exp $
 
 .PATH:	 ${SRCDIR}/sys ${SRCDIR}/arch/${MACHINE_ARCH}
 
@@ -23,8 +23,8 @@ HIDDEN_SYSCALLS= accept.o bind.o close.o connect.o dup.o dup2.o \
 	execve.o fchflags.o fchmod.o fchown.o fcntl.o \
 	flock.o fpathconf.o fstat.o fstatfs.o fsync.o getdirentries.o \
 	getlogin.o getpeername.o getsockname.o getsockopt.o ioctl.o kevent.o \
-	listen.o msync.o nanosleep.o open.o pipe.o poll.o read.o readv.o \
-	recvfrom.o recvmsg.o sched_yield.o select.o sendmsg.o sendto.o \
+	kqueue.o listen.o msync.o nanosleep.o open.o pipe.o poll.o read.o \
+	readv.o recvfrom.o recvmsg.o sched_yield.o select.o sendmsg.o sendto.o \
 	setsockopt.o shutdown.o sigaction.o sigaltstack.o \
 	sigprocmask.o sigsuspend.o \
 	socket.o socketpair.o wait4.o write.o writev.o \
