@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_info,v 1.5 2004/08/06 07:51:17 espie Exp $
+# $OpenBSD: pkg_info,v 1.6 2004/08/06 08:06:01 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -22,23 +22,6 @@ use OpenBSD::PackageInfo;
 use OpenBSD::PackageName;
 use Getopt::Std;
 use File::Copy;
-# XXX we don't want to load these packages all the time
-package OpenBSD::PackageLocator;
-our $AUTOLOAD;
-sub AUTOLOAD {
-	eval { require OpenBSD::PackageLocator;
-	};
-	goto &$AUTOLOAD;
-}
-
-package OpenBSD::PackingList;
-our $AUTOLOAD;
-sub AUTOLOAD {
-	eval {	require OpenBSD::PackingOld;
-		require OpenBSD::PackingList;
-	};
-	goto &$AUTOLOAD;
-}
 
 package main;
 
@@ -103,6 +86,9 @@ sub print_info
 		}
 		my $plist;
 		if ($opt_f || $opt_L) {
+			require OpenBSD::PackingOld;
+			require OpenBSD::PackingList;
+
 			if ($opt_f) {
 				$plist = OpenBSD::PackingList->fromfile($dir.CONTENTS);
 			} else {
@@ -178,6 +164,8 @@ for my $pkg (@ARGV) {
 		}
 	}
 				
+	require OpenBSD::PackageLocator;
+
 	my $true_package = OpenBSD::PackageLocator->find($pkg);
 	next unless $true_package;
 	my $dir = $true_package->info();

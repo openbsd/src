@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageLocator.pm,v 1.10 2004/08/06 07:51:17 espie Exp $
+# $OpenBSD: PackageLocator.pm,v 1.11 2004/08/06 08:06:01 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -17,17 +17,6 @@
 
 use strict;
 use warnings;
-
-# XXX we don't want to load Ustar all the time
-package OpenBSD::Ustar;
-
-our $AUTOLOAD;
-
-sub AUTOLOAD {
-	eval { require OpenBSD::Ustar;
-	};
-	goto &$AUTOLOAD;
-}
 
 package OpenBSD::PackageLocation;
 
@@ -365,6 +354,8 @@ sub _open
 	if (!defined $fh) {
 		return undef;
 	}
+	require OpenBSD::Ustar;
+
 	my $archive = new OpenBSD::Ustar $fh;
 	$self->{_archive} = $archive;
 }
@@ -436,11 +427,6 @@ sub unput
 {
 	my $self = shift;
 	$self->{_unput} = 1;
-}
-
-# allows the autoloader to work correctly
-sub DESTROY
-{
 }
 
 1;

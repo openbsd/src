@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingList.pm,v 1.19 2004/08/06 07:51:17 espie Exp $
+# $OpenBSD: PackingList.pm,v 1.20 2004/08/06 08:06:01 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -198,11 +198,6 @@ sub pkgbase($)
 	} else {
 		return '/usr/local';
 	}
-}
-
-# allows the autoloader to work correctly
-sub DESTROY
-{
 }
 
 1;

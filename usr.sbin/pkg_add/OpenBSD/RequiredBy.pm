@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: RequiredBy.pm,v 1.3 2004/08/06 07:51:17 espie Exp $
+# $OpenBSD: RequiredBy.pm,v 1.4 2004/08/06 08:06:01 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -63,10 +63,6 @@ sub add
 	    die "Can't add dependencies to $$self: $!";
 	print $fh join("\n", @pkgnames), "\n";
 	close($fh);
-}
-
-sub DESTROY
-{
 }
 
 1;

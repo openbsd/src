@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.40 2004/08/06 07:51:17 espie Exp $
+# $OpenBSD: pkg_add,v 1.41 2004/08/06 08:06:01 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -31,15 +31,6 @@ use File::Copy;
 
 our %forced = ();
 our ($ftp_only, $cdrom_only);
-
-# XXX we don't want to load this package all the time
-package OpenBSD::RequiredBy;
-our $AUTOLOAD;
-sub AUTOLOAD {
-	eval { require OpenBSD::RequiredBy;
-	};
-	goto &$AUTOLOAD;
-}
 
 package OpenBSD::PackingElement;
 
@@ -620,6 +611,8 @@ sub really_add($$)
 	my $dest = installed_info($pkgname);
 	register_installation($dir, $dest, $plist) unless $opt_n;
 	if (defined $handle->{solved_dependencies} && !$opt_n) {
+		require OpenBSD::RequiredBy;
+
 		for my $dep (@{$handle->{solved_dependencies}}) {
 			OpenBSD::RequiredBy->new($dep)->add($pkgname);
 		}
