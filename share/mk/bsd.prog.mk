@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.prog.mk,v 1.30 2001/08/23 16:39:33 art Exp $
+#	$OpenBSD: bsd.prog.mk,v 1.31 2002/05/11 00:20:21 espie Exp $
 #	$NetBSD: bsd.prog.mk,v 1.55 1996/04/08 21:19:26 jtc Exp $
 #	@(#)bsd.prog.mk	5.26 (Berkeley) 6/25/91
 
@@ -23,37 +23,57 @@ CRTEND?=         ${DESTDIR}/usr/lib/crtend.o
 .endif
 
 LIBCRT0?=	${DESTDIR}/usr/lib/crt0.o
+LIB45?=		${DESTDIR}/usr/lib/lib45.a
+LIBACL?=	${DESTDIR}/usr/lib/libacl.a
+LIBASN1?=	${DESTDIR}/usr/lib/libasn1.a
 LIBC?=		${DESTDIR}/usr/lib/libc.a
+LIBCOM_ERR?=	${DESTDIR}/usr/lib/libcom_err.a
 LIBCOMPAT?=	${DESTDIR}/usr/lib/libcompat.a
-LIBCURSES?=	${DESTDIR}/usr/lib/libcurses.a
 LIBCRYPTO?=	${DESTDIR}/usr/lib/libcrypto.a
-LIBDBM?=	${DESTDIR}/usr/lib/libdbm.a
+LIBCURSES?=	${DESTDIR}/usr/lib/libcurses.a
 LIBDES?=	${DESTDIR}/usr/lib/libdes.a
 LIBEDIT?=	${DESTDIR}/usr/lib/libedit.a
 LIBGCC?=	${DESTDIR}/usr/lib/libgcc.a
+LIBHDB?=	${DESTDIR}/usr/lib/libhdb.a
+LIBKADM?=	${DESTDIR}/usr/lib/libkadm.a
+LIBKADM5CLNT?=	${DESTDIR}/usr/lib/libkadm5clnt.a
+LIBKADM5SRV?=	${DESTDIR}/usr/lib/libkadm5srv.a
+LIBKAFS?=	${DESTDIR}/usr/lib/libkafs.a
 LIBKDB?=	${DESTDIR}/usr/lib/libkdb.a
 LIBKEYNOTE?=	${DESTDIR}/usr/lib/libkeynote.a
 LIBKRB?=	${DESTDIR}/usr/lib/libkrb.a
-LIBKAFS?=	${DESTDIR}/usr/lib/libkafs.a
+LIBKRB5?=	${DESTDIR}/usr/lib/libkrb5.a
 LIBKVM?=	${DESTDIR}/usr/lib/libkvm.a
 LIBL?=		${DESTDIR}/usr/lib/libl.a
 LIBM?=		${DESTDIR}/usr/lib/libm.a
-LIBMP?=		${DESTDIR}/usr/lib/libmp.a
 LIBOLDCURSES?=	${DESTDIR}/usr/lib/libocurses.a
-LIBPC?=		${DESTDIR}/usr/lib/libpc.a
+LIBPCAP?=	${DESTDIR}/usr/lib/libpcap.a
 LIBPERL?=	${DESTDIR}/usr/lib/libperl.a
-LIBPLOT?=	${DESTDIR}/usr/lib/libplot.a
-LIBRESOLV?=	${DESTDIR}/usr/lib/libresolv.a
 LIBRPCSVC?=	${DESTDIR}/usr/lib/librpcsvc.a
+LIBSECTOK?=	${DESTDIR}/usr/lib/libsectok.a
 LIBSKEY?=	${DESTDIR}/usr/lib/libskey.a
 LIBSSL?=	${DESTDIR}/usr/lib/libssl.a
 LIBTELNET?=	${DESTDIR}/usr/lib/libtelnet.a
 LIBTERMCAP?=	${DESTDIR}/usr/lib/libtermcap.a
 LIBTERMLIB?=	${DESTDIR}/usr/lib/libtermlib.a
+LIBUSB?=	${DESTDIR}/usr/lib/libusbhid.a
 LIBUTIL?=	${DESTDIR}/usr/lib/libutil.a
 LIBWRAP?=	${DESTDIR}/usr/lib/libwrap.a
 LIBY?=		${DESTDIR}/usr/lib/liby.a
 LIBZ?=		${DESTDIR}/usr/lib/libz.a
+
+.if ${MACHINE_ARCH} == "i386"
+LIBARCH?=	${DESTDIR}/usr/lib/libi386.a
+.else
+LIBARCH?=
+.endif
+
+# old stuff
+LIBDBM?=	${DESTDIR}/usr/lib/libdbm.a
+LIBMP?=		${DESTDIR}/usr/lib/libmp.a
+LIBPC?=		${DESTDIR}/usr/lib/libpc.a
+LIBPLOT?=	${DESTDIR}/usr/lib/libplot.a
+LIBRESOLV?=	${DESTDIR}/usr/lib/libresolv.a
 
 .if defined(SHAREDSTRINGS)
 CLEANFILES+=strings

@@ -1,7 +1,8 @@
-# $OpenBSD: Makefile,v 1.6 2002/02/17 01:12:09 marc Exp $
+# $OpenBSD: Makefile,v 1.7 2002/05/11 00:20:20 espie Exp $
 
 PROG=	pcap
 
+DPADD+= ${LIBPCAP}
 LDADD+= -lpcap
 
 REGRESSTARGETS=		sudo-regress-${PROG}

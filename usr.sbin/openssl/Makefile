@@ -5,6 +5,7 @@ BINOWN= root
 BINGRP= bin
 BINMODE= 555
 BINDIR= /usr/sbin
+DPADD=	${LIBSSL} ${LIBCRYPTO}
 LDADD=	-lssl -lcrypto
 NOMAN= not yet kiddies
 

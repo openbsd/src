@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.3 1998/05/22 00:47:29 millert Exp $
+#	$OpenBSD: Makefile,v 1.4 2002/05/11 00:20:20 espie Exp $
 #	$NetBSD: Makefile,v 1.1 1996/02/02 15:28:00 mrg Exp $
 # from: $Id: Makefile,v 8.1 1994/12/15 06:23:45 vixie Exp 
 
@@ -12,8 +12,6 @@ SRCS=	version.c db_dump.c db_glue.c db_load.c db_lookup.c db_reload.c \
 MAN=	named.8
 
 CFLAGS+=${INCLUDE} ${CONFIG}
-LDADD=	${LIBRESOLV}
-
 makeversionc:
 	(u=root d=`pwd` h=localhost t=`date +%c`; \
 	sed -e "s|%WHEN%|$${t}|" -e "s|%VERSION%|"${VER}"|" \

@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.1 2000/02/25 16:35:30 hin Exp $
+# $OpenBSD: Makefile,v 1.2 2002/05/11 00:20:18 espie Exp $
 
 PROG	= kftp
 
@@ -8,6 +8,7 @@ KRBDEPTH=../..
 .PATH:	${KRBSRC}/appl/ftp/common ${KRBSRC}/appl/ftp/ftp
 
 CFLAGS	+= -I. -I${KRBSRC}/appl/ftp/common
+DPADD	+= ${LIBKRB} ${LIBKAFS} ${LIBDES} ${LIBREADLINE} ${LIBCURSES}
 LDADD	+= ${LIBROKEN} -lkrb -lkafs -ldes -lreadline -lcurses
 
 SRCS	= sockbuf.c buffer.c common.h cmds.c cmdtab.c extern.h \

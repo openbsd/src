@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.7 2001/07/28 01:25:03 hugh Exp $
+# $OpenBSD: Makefile,v 1.8 2002/05/11 00:20:19 espie Exp $
 
 PROG	= ksrvutil
 
@@ -8,6 +8,8 @@ KRBDEPTH=../..
 .PATH:	${KRBSRC}/kadmin
 
 CFLAGS	+= -I. -I${KRBSRC}/lib/kadm -I${KRBSRC}/lib/krb
+DPADD	+= ${LIBKAFS} ${LIBKRB5} ${LIBKDB} ${LIBKADM} ${LIBKRB} ${LIBDES} \
+	${LIBCRYPTO} ${LIBASN1} ${LIBCOM_ERR}
 LDADD	+= -lkafs -lkrb5 -lkdb -lkadm -lkrb -ldes -lcrypto -lasn1 -lcom_err ${LIBROKEN}
 
 SRCS	= ksrvutil.c ksrvutil_get.c

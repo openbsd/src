@@ -1,11 +1,9 @@
-#	$OpenBSD: Makefile,v 1.2 1997/03/12 14:54:15 downsj Exp $
+#	$OpenBSD: Makefile,v 1.3 2002/05/11 00:20:20 espie Exp $
 
 PROG=	addr
 NOMAN=	yes
 
 CFLAGS+=${INCLUDE} ${CONFIG}
-
-LDADD=	${LIBRESOLV}
 
 .include <bsd.prog.mk>
 .include "../../Makefile.inc"

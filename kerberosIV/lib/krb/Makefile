@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.7 2001/05/14 14:13:36 hin Exp $
+# $OpenBSD: Makefile,v 1.8 2002/05/11 00:20:18 espie Exp $
 
 LIB	= krb
 
@@ -126,5 +126,6 @@ MLINKS+=krb_sendauth.3 krb_recvauth.3 krb_sendauth.3 krb_net_write.3 \
 MLINKS+=tf_util.3 tf_init.3 tf_util.3 tf_get_pname.3 tf_util.3 tf_get_pinst.3 \
 	tf_util.3 tf_get_cred.3 tf_util.3 tf_close.3
 
+DPADD+= ${LIBCOM_ERR}
 LDADD+= ${COM_ERR}
 .include <bsd.lib.mk>

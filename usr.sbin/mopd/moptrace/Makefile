@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 1996/09/21 19:12:37 maja Exp $
+#	$OpenBSD: Makefile,v 1.3 2002/05/11 00:20:20 espie Exp $
 
 PROG=	moptrace
 SRCS=	moptrace.c print.c cmp.c get.c mopdef.c nma.c device.c version.c pf.c \
@@ -6,6 +6,7 @@ SRCS=	moptrace.c print.c cmp.c get.c mopdef.c nma.c device.c version.c pf.c \
 MAN=	moptrace.1
 CFLAGS+= -I${.CURDIR} -I${.CURDIR}/.. -I${.CURDIR}/../common
 CLEANFILES= version.c version.h
+DPADD=	${LIBKVM}
 LDADD=	-lkvm
 .PATH:	${.CURDIR}/../common
 

@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.4 2002/03/04 23:26:43 deraadt Exp $
+# $OpenBSD: Makefile,v 1.5 2002/05/11 00:20:19 espie Exp $
 
 KRBDEPTH=../..
 .include <${.CURDIR}/../../Makefile.inc>
@@ -11,6 +11,8 @@ NOMAN=
 
 .PATH:	${KRB5SRC}/lib/kadm5
 CFLAGS+=-I${KRB5SRC}/lib/krb5 -I${KRB5SRC}/lib/kadm5
+DPADD+= ${LIBHDB} ${LIBKADM5SRV} ${LIBKRB5} ${LIBKRB} ${LIBKDB} ${LIBASN1} \
+	${LIBCRYPTO} ${LIBCOM_ERR} ${LIBKAFS} ${LIBUTIL} ${LIBDES}
 LDADD+=	-lhdb -lkadm5srv -lkrb5 -lkrb -lkdb ${LIBROKEN} -lasn1 -lcrypto \
 	-lcom_err -lhdb -lkafs -lutil -ldes
 

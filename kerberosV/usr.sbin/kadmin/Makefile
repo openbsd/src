@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.9 2002/03/04 23:26:43 deraadt Exp $
+# $OpenBSD: Makefile,v 1.10 2002/05/11 00:20:19 espie Exp $
 
 KRBDEPTH=../..
 .include <${.CURDIR}/../../Makefile.inc>
@@ -26,6 +26,9 @@ SRCS=	ank.c \
 
 .PATH:	${KRB5SRC}/kadmin
 CFLAGS+=-I${KRB5SRC}/lib/krb5 -I${KRB5SRC}/lib/kadm5
+DPADD+= ${LIBREADLINE} ${LIBCURSES} ${LIBHDB} ${LIBKADM5SRV} ${LIBKADM5CLNT} \
+	${LIBKRB5} ${LIBKRB} ${LIBASN1} ${LIBCRYPTO} ${LIBCOM_ERR} ${LIBKAFS} \
+	${LIBDES}
 LDADD+=	${LIBSL} -lreadline -lcurses -lhdb -lkadm5srv \
 	-lkadm5clnt -lkrb5 ${LIBROKEN} -lkrb -lasn1 -lcrypto -lcom_err -lkafs -ldes
 
