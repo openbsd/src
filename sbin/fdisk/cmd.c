@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.10 1997/10/19 23:29:35 deraadt Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.11 1997/10/19 23:33:54 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -149,7 +149,7 @@ Xedit(cmd, disk, mbr, tt, offset)
 	v = num;
 
 	/* Ask for partition type */
-	EDIT("Partition id", ASK_HEX, pp->id, 0, 0xFF, PRT_printall);
+	EDIT("Partition id ('0' to disable) ", ASK_HEX, pp->id, 0, 0xFF, PRT_printall);
 
 	/* Unused, so just zero out */
 	if (pp->id == DOSPTYP_UNUSED) {
