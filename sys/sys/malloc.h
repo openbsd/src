@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.h,v 1.51 2002/01/23 15:46:48 art Exp $	*/
+/*	$OpenBSD: malloc.h,v 1.52 2002/01/25 03:50:33 art Exp $	*/
 /*	$NetBSD: malloc.h,v 1.39 1998/07/12 19:52:01 augustss Exp $	*/
 
 /*
@@ -137,17 +137,9 @@
 #define	M_PAGEDEP	78	/* File page dependencies */
 #define	M_INODEDEP	79	/* Inode dependencies */
 #define	M_NEWBLK	80	/* New block allocation */
-#define	M_BMSAFEMAP	81	/* Block or frag alloc'ed from cyl group map */
-#define	M_ALLOCDIRECT	82	/* Block or frag dependency for an inode */
+/* 81-82 - free */
 #define	M_INDIRDEP	83	/* Indirect block dependencies */
-#define	M_ALLOCINDIR	84	/* Block dependency for an indirect block */
-#define	M_FREEFRAG	85	/* Previously used frag for an inode */
-#define	M_FREEBLKS	86	/* Blocks freed from an inode */
-#define	M_FREEFILE	87	/* Inode deallocated */
-#define	M_DIRADD	88	/* New directory entry */
-#define	M_MKDIR		89	/* New directory */
-#define	M_DIRREM	90	/* Directory entry deleted */
-/* 91 - free */
+/* 84-91 - free */
 #define M_VMSWAP	92	/* VM swap structures */
 /* 93-96 - free */
 #define	M_RAIDFRAME	97	/* Raidframe data */
@@ -254,20 +246,14 @@
 	"tdb",		/* 75 M_TDB */ \
 	"xform_data",	/* 76 M_XDATA */ \
 	NULL, \
- 	"pagedep",	/* 78 M_PAGEDEP */ \
- 	"inodedep",	/* 79 M_INODEDEP */ \
- 	"newblk",	/* 80 M_NEWBLK */ \
- 	"bmsafemap",	/* 81 M_BMSAFEMAP */ \
- 	"allocdirect",	/* 82 M_ALLOCDIRECT */ \
- 	"indirdep",	/* 83 M_INDIRDEP */ \
- 	"allocindir",	/* 84 M_ALLOCINDIR */ \
- 	"freefrag",	/* 85 M_FREEFRAG */ \
- 	"freeblks",	/* 86 M_FREEBLKS */ \
- 	"freefile",	/* 87 M_FREEFILE */ \
- 	"diradd",	/* 88 M_DIRADD */ \
- 	"mkdir",	/* 89 M_MKDIR */ \
- 	"dirrem",	/* 90 M_DIRREM */ \
- 	NULL, \
+	"pagedep",	/* 78 M_PAGEDEP */ \
+	"inodedep",	/* 79 M_INODEDEP */ \
+	"newblk",	/* 80 M_NEWBLK */ \
+	NULL, \
+	NULL, \
+	"indirdep",	/* 83 M_INDIRDEP */ \
+	NULL, NULL, NULL, NULL, \
+	NULL, NULL, NULL, NULL, \
 	"VM swap",	/* 92 M_VMSWAP */ \
 	NULL, NULL, NULL, NULL, \
 	"RaidFrame data", /* 97 M_RAIDFRAME */ \
