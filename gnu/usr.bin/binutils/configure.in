@@ -500,6 +500,9 @@ case "${target}" in
   powerpcle-*-solaris*)
     noconfigdirs="$noconfigdirs gdb sim make tcl tk expect"
     ;;
+  powerpc*-*-openbsd*)
+    noconfigdirs="$noconfigdirs gdb"
+    ;;
   rs6000-*-lynxos*)
     # The CVS server code doesn't work on the RS/6000
     # Newlib makes problems for libg++ in crosses.
