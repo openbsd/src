@@ -1,4 +1,4 @@
-/*      $OpenBSD: cmp.c,v 1.2 1996/06/26 05:32:05 deraadt Exp $      */
+/*      $OpenBSD: cmp.c,v 1.3 1996/08/01 00:01:38 michaels Exp $      */
 /*      $NetBSD: cmp.c,v 1.7 1995/09/08 03:22:56 tls Exp $      */
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)cmp.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: cmp.c,v 1.2 1996/06/26 05:32:05 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: cmp.c,v 1.3 1996/08/01 00:01:38 michaels Exp $";
 #endif
 #endif /* not lint */
 
@@ -106,8 +106,12 @@ endargs:
 		fd1 = 0;
 		file1 = "stdin";
 	}
-	else if ((fd1 = open(file1, O_RDONLY, 0)) < 0)
-		err(ERR_EXIT, "%s", file1);
+	else if ((fd1 = open(file1, O_RDONLY, 0)) < 0) {
+		if (sflag)
+			exit(ERR_EXIT);
+		else
+			err(ERR_EXIT, "%s", file1);
+	}
 	if (strcmp(file2 = argv[1], "-") == 0) {
 		if (special)
 			errx(ERR_EXIT,
@@ -140,7 +144,7 @@ endargs:
 	else
 		c_regular(fd1, file1, skip1, sb1.st_size,
 		    fd2, file2, skip2, sb2.st_size);
-	exit(0);
+	return 0;
 }
 
 static void
