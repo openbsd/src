@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.20 1996/11/10 10:23:46 downsj Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.21 1996/11/10 21:31:52 downsj Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.20 1996/05/03 19:41:56 christos Exp $	*/
 
 /*-
@@ -132,7 +132,7 @@ u_long	bootdev = 0;		/* should be dev_t, but not until 32 bits */
 static const char *devname[] = {
 	"wd",		/* 0 = wd */
 	"sw",		/* 1 = sw */
-	"",		/* 2 */
+	"fd",		/* 2 = fd */
 	"wt",		/* 3 = wt */
 	"sd",		/* 4 = sd */
 	"",		/* 5 */
@@ -150,7 +150,7 @@ static const char *devname[] = {
 	"",		/* 17 */
 	"acd",		/* 18 = acd */
 	"",		/* 19 */
-	"fd"		/* 20 = fd */
+	""		/* 20 */
 };
 
 dev_t	argdev = NODEV;
@@ -249,6 +249,9 @@ struct	genericconf {
 #if NWDC > 0
 	{ &wd_cd,  "wd",  0 },
 #endif
+#if NFDC > 0
+	{ &fd_cd,  "fd",  2 },
+#endif
 #if NSD > 0
 	{ &sd_cd,  "sd",  4 },
 #endif
@@ -260,9 +263,6 @@ struct	genericconf {
 #endif
 #if NACD > 0
 	{ &acd_cd,  "acd",  18 },
-#endif
-#if NFDC > 0
-	{ &fd_cd,  "fd",  20 },
 #endif
 	{ 0 }
 };
@@ -278,7 +278,7 @@ setconf()
 	char *num;
 
 #ifdef INSTALL
-	if (((bootdev >> B_TYPESHIFT) & B_TYPEMASK) == 20) {
+	if (((bootdev >> B_TYPESHIFT) & B_TYPEMASK) == 2) {
 		printf("\n\nInsert file system floppy...\n");
 		if (!(boothowto & RB_ASKNAME))
 			cngetc();

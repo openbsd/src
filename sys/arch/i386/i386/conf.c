@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.27 1996/11/06 02:30:57 deraadt Exp $	*/
+/*	$OpenBSD: conf.c,v 1.28 1996/11/10 21:31:52 downsj Exp $	*/
 /*	$NetBSD: conf.c,v 1.75 1996/05/03 19:40:20 christos Exp $	*/
 
 /*
@@ -72,7 +72,7 @@ struct bdevsw	bdevsw[] =
 {
 	bdev_disk_init(NWDC,wd),	/* 0: ST506/ESDI/IDE disk */
 	bdev_swap_init(1,sw),		/* 1: swap pseudo-device */
-	bdev_notdef(),
+	bdev_disk_init(NFD,fd),		/* 2: floppy diskette */
 	bdev_tape_init(NWT,wt),		/* 3: QIC-02/QIC-36 tape */
 	bdev_disk_init(NSD,sd),		/* 4: SCSI disk */
 	bdev_tape_init(NST,st),		/* 5: SCSI tape */
@@ -89,9 +89,6 @@ struct bdevsw	bdevsw[] =
 	bdev_disk_init(NCCD,ccd),	/* 16: concatenated disk driver */
 	bdev_disk_init(NRD,rd),		/* 17: ram disk driver */
 	bdev_disk_init(NACD,acd),	/* 18: ATAPI CD-ROM */
-	bdev_notdef(),
-	bdev_disk_init(NFD,fd),		/* 20: floppy diskette */
-	bdev_disk_init((NFD>2?NFD-2:0),fd),/* 21: floppy diskette */
 };
 int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 
@@ -220,7 +217,7 @@ struct cdevsw	cdevsw[] =
 #else
 	cdev_tty_init(NCOM,com),	/* 8: serial port */
 #endif
-	cdev_notdef(),
+	cdev_disk_init(NFD,fd),		/* 9: floppy disk */
 	cdev_tape_init(NWT,wt),		/* 10: QIC-02/QIC-36 tape */
 	cdev_disk_init(NSCD,scd),	/* 11: Sony CD-ROM */
 	cdev_pc_init(NPC + NVT,pc),	/* 12: PC console */
@@ -232,7 +229,7 @@ struct cdevsw	cdevsw[] =
 	cdev_disk_init(NCCD,ccd),	/* 18: concatenated disk driver */
 	cdev_ss_init(NSS,ss),           /* 19: SCSI scanner */
 	cdev_uk_init(NUK,uk),		/* 20: unknown SCSI */
-	cdev_ocis_init(NAPM,apm),	/* 21: Advanced Power Management */
+	cdev_ocis_init(NAPM,apm),	/* 21: Advancded Power Management */
 	cdev_fd_init(1,filedesc),	/* 22: file descriptor pseudo-device */
 	cdev_bpftun_init(NBPFILTER,bpf),/* 23: Berkeley packet filter */
 	cdev_disk_init(NACD,acd),	/* 24: ATAPI CD-ROM */
@@ -262,9 +259,6 @@ struct cdevsw	cdevsw[] =
 	cdev_gen_ipf(NIPF,ipl),         /* 44 ip filtering */
 	cdev_random_init(1,random),	/* 45 random data source */
 	cdev_uk_init(NPCTR,pctr),	/* 46: pentium performance counters */
-	cdev_notdef(),
-	cdev_disk_init(NFD,fd),		/* 48: floppy disk */
-	cdev_disk_init((NFD>2?NFD-2:0),fd),	/* 49: floppy disk */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -315,7 +309,7 @@ static int chrtoblktbl[] = {
 	/*  6 */	NODEV,
 	/*  7 */	NODEV,
 	/*  8 */	NODEV,
-	/*  9 */	NODEV,
+	/*  9 */	2,
 	/* 10 */	3,
 	/* 11 */	15,
 	/* 12 */	NODEV,
@@ -354,8 +348,8 @@ static int chrtoblktbl[] = {
 	/* 45 */	NODEV,
 	/* 46 */	NODEV,
 	/* 47 */	NODEV,
-	/* 48 */	20,
-	/* 49 */	21,
+	/* 48 */	NODEV,
+	/* 49 */	NODEV,
 };
 
 /*
