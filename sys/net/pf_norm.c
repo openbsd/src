@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.27 2002/05/19 22:31:28 deraadt Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.28 2002/05/21 08:42:35 espie Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -92,7 +92,7 @@ int			 pf_normalize_tcp(int, struct ifnet *, struct mbuf *,
 int			 pf_normalize_tcpopt(struct pf_rule *, struct mbuf *,
 			    struct tcphdr *, int);
 
-#define DPFPRINTF(x)	if (pf_status.debug >= PF_DEBUG_MISC) printf x
+#define DPFPRINTF(x)	if (pf_status.debug >= PF_DEBUG_MISC) { printf("%s: ", __func__); printf x ;}
 
 #if NPFLOG > 0
 #define PFLOG_PACKET(i,x,a,b,c,d,e) \
@@ -141,7 +141,7 @@ pf_purge_expired_fragments(void)
 		if (frag->fr_timeout > expire)
 			break;
 
-		DPFPRINTF((__FUNCTION__": expiring %p\n", frag));
+		DPFPRINTF(("expiring %p\n", frag));
 		pf_free_fragment(frag);
 	}
 }
@@ -156,7 +156,7 @@ pf_flush_fragments(void)
 	struct pf_fragment *frag;
 	int goal = pf_nfrents * 9 / 10;
 
-	DPFPRINTF((__FUNCTION__": trying to free > %d frents\n",
+	DPFPRINTF(("trying to free > %d frents\n",
 		   pf_nfrents - goal));
 
 	while (goal < pf_nfrents) {
@@ -307,7 +307,7 @@ pf_reassemble(struct mbuf **m0, struct pf_fragment *frag,
 		if (precut) {
 			m_adj(frent->fr_m, precut);
 
-			DPFPRINTF((__FUNCTION__": overlap -%d\n", precut));
+			DPFPRINTF(("overlap -%d\n", precut));
 			/* Enforce 8 byte boundaries */
 			off = ip->ip_off += precut;
 			ip->ip_len -= precut;
@@ -319,7 +319,7 @@ pf_reassemble(struct mbuf **m0, struct pf_fragment *frag,
 		u_int16_t aftercut;
 
 		aftercut = (ip->ip_len + off) - frea->fr_ip->ip_off;
-		DPFPRINTF((__FUNCTION__": adjust overlap %d\n", aftercut));
+		DPFPRINTF(("adjust overlap %d\n", aftercut));
 		if (aftercut < frea->fr_ip->ip_len) {
 			frea->fr_ip->ip_len -= aftercut;
 			frea->fr_ip->ip_off += aftercut;
@@ -360,14 +360,13 @@ pf_reassemble(struct mbuf **m0, struct pf_fragment *frag,
 		off += frep->fr_ip->ip_len;
 		if (off < frag->fr_max &&
 		    (next == NULL || next->fr_ip->ip_off != off)) {
-			DPFPRINTF((__FUNCTION__
-			    ": missing fragment at %d, next %d, max %d\n",
+			DPFPRINTF(("missing fragment at %d, next %d, max %d\n",
 			    off, next == NULL ? -1 : next->fr_ip->ip_off,
 			    frag->fr_max));
 			return (NULL);
 		}
 	}
-	DPFPRINTF((__FUNCTION__": %d < %d?\n", off, frag->fr_max));
+	DPFPRINTF(("%d < %d?\n", off, frag->fr_max));
 	if (off < frag->fr_max)
 		return (NULL);
 
@@ -375,7 +374,7 @@ pf_reassemble(struct mbuf **m0, struct pf_fragment *frag,
 	frent = LIST_FIRST(&frag->fr_queue);
 	KASSERT(frent != NULL);
 	if ((frent->fr_ip->ip_hl << 2) + off > IP_MAXPACKET) {
-		DPFPRINTF((__FUNCTION__": drop: too big: %d\n", off));
+		DPFPRINTF(("drop: too big: %d\n", off));
 		pf_free_fragment(frag);
 		return (NULL);
 	}
@@ -418,7 +417,7 @@ pf_reassemble(struct mbuf **m0, struct pf_fragment *frag,
 		m->m_pkthdr.len = plen;
 	}
 
-	DPFPRINTF((__FUNCTION__": complete: %p(%d)\n", m, ip->ip_len));
+	DPFPRINTF(("complete: %p(%d)\n", m, ip->ip_len));
 	return (m);
 
  drop_fragment:
@@ -483,7 +482,7 @@ pf_normalize_ip(struct mbuf **m0, int dir, struct ifnet *ifp, u_short *reason)
 
 	/* This can not happen */
 	if (h->ip_off & IP_DF) {
-		DPFPRINTF((__FUNCTION__": IP_DF\n"));
+		DPFPRINTF(("IP_DF\n"));
 		goto bad;
 	}
 
@@ -492,14 +491,14 @@ pf_normalize_ip(struct mbuf **m0, int dir, struct ifnet *ifp, u_short *reason)
 
 	/* All fragments are 8 byte aligned */
 	if (mff && (h->ip_len & 0x7)) {
-		DPFPRINTF((__FUNCTION__": mff and %d\n", h->ip_len));
+		DPFPRINTF(("mff and %d\n", h->ip_len));
 		goto bad;
 	}
 
 	max = fragoff + h->ip_len;
 	/* Respect maximum length */
 	if (max > IP_MAXPACKET) {
-		DPFPRINTF((__FUNCTION__": max packet %d\n", max));
+		DPFPRINTF(("max packet %d\n", max));
 		goto bad;
 	}
 	/* Check if we saw the last fragment already */
@@ -523,7 +522,7 @@ pf_normalize_ip(struct mbuf **m0, int dir, struct ifnet *ifp, u_short *reason)
 	frent->fr_m = m;
 
 	/* Might return a completely reassembled mbuf, or NULL */
-	DPFPRINTF((__FUNCTION__": reass frag %d @ %d\n", h->ip_id, fragoff));
+	DPFPRINTF(("reass frag %d @ %d\n", h->ip_id, fragoff));
 	*m0 = m = pf_reassemble(m0, frag, frent, mff);
 
 	if (m == NULL)
@@ -554,7 +553,7 @@ pf_normalize_ip(struct mbuf **m0, int dir, struct ifnet *ifp, u_short *reason)
 	return (PF_DROP);
 
  bad:
-	DPFPRINTF((__FUNCTION__": dropping bad fragment\n"));
+	DPFPRINTF(("dropping bad fragment\n"));
 
 	/* Free assoicated fragments */
 	if (frag != NULL)
