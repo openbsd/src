@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtwphyio.c,v 1.2 2005/01/19 11:07:33 jsg Exp $	*/
+/*	$OpenBSD: rtwphyio.c,v 1.3 2005/01/19 11:29:27 jsg Exp $	*/
 /* $NetBSD: rtwphyio.c,v 1.4 2004/12/25 06:58:37 dyoung Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
@@ -124,7 +124,7 @@ rtw_bbp_write(struct rtw_regs *regs, u_int addr, u_int val)
 }
 
 /* Help rtw_rf_hostwrite bang bits to RF over 3-wire interface. */
-__inline void
+void
 rtw_rf_hostbangbits(struct rtw_regs *regs, u_int32_t bits, int lo_to_hi,
     u_int nbits)
 {
@@ -181,7 +181,7 @@ rtw_rf_hostbangbits(struct rtw_regs *regs, u_int32_t bits, int lo_to_hi,
 /* Help rtw_rf_macwrite: tell MAC to bang bits to RF over the 3-wire
  * interface.
  */
-__inline int
+int
 rtw_rf_macbangbits(struct rtw_regs *regs, u_int32_t reg)
 {
 	int i;
@@ -234,7 +234,7 @@ rtw_grf5101_mac_crypt(u_int addr, u_int32_t val)
 #undef EXTRACT_NIBBLE
 }
 
-__inline const char *
+const char *
 rtw_rfchipid_string(enum rtw_rfchipid rfchipid)
 {
 	switch (rfchipid) {
