@@ -1,4 +1,4 @@
-/* $OpenBSD: zaurus_kbd.c,v 1.11 2005/01/28 14:47:31 drahn Exp $ */
+/* $OpenBSD: zaurus_kbd.c,v 1.12 2005/01/30 21:55:50 drahn Exp $ */
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@openbsd.org>
  *
@@ -118,6 +118,8 @@ void zkbd_poll(void *v);
 int zkbd_on(void *v);
 int zkbd_sync(void *v);
 int zkbd_hinge(void *v);
+
+int zkbd_modstate;
 
 struct cfattach zkbd_ca = {
 	sizeof(struct zkbd_softc), zkbd_match, zkbd_attach
@@ -338,6 +340,11 @@ zkbd_poll(void *v)
 			pxa2x0_gpio_clear_intr(sc->sc_sense_array[i]);
 
 	/* process after resetting interrupt */
+
+	zkbd_modstate = (
+		(sc->sc_keystate[84] ? (1 << 0) : 0) | /* shift */
+		(sc->sc_keystate[93] ? (1 << 1) : 0) | /* Fn */
+		(sc->sc_keystate[14] ? (1 << 2) : 0)); /* 'alt' */
 
 	for (i = 0; i < (sc->sc_nsense * sc->sc_nstrobe); i++) {
 		stuck = 0;

@@ -1,4 +1,4 @@
-/* $OpenBSD: zts.c,v 1.2 2005/01/28 23:26:54 drahn Exp $ */
+/* $OpenBSD: zts.c,v 1.3 2005/01/30 21:55:50 drahn Exp $ */
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@openbsd.org>
  *
@@ -99,7 +99,9 @@ zts_attach(struct device *parent, struct device *self, void *aux)
 
 
 	timeout_set(&(sc->sc_ts_poll), zts_poll, sc);
-	timeout_add(&sc->sc_ts_poll, POLL_TIMEOUT_RATE);
+
+	sc->sc_enabled = 0;
+	sc->sc_buttons = 0;
 
 /*
 	pxa2x0_gpio_set_function(IRQ_GPIO_TP_INT_C3K, GPIO_IN);
@@ -181,11 +183,32 @@ zts_irq(void *v)
 	 * relative mode here is really just a hack until abs mode
 	 * really works in X.
 	 */
-	if (t0 != 0 && t1 != 0) {
+	if (t0 > 10 && t1 > 10) {
 		int dx, dy;
 		int skip = 0;
 
 		if ( sc->sc_oldx == -1) {
+			extern int zkbd_modstate;
+			if (zkbd_modstate != 0) {
+				/*
+				 * use motifiers with touchpress to indicate
+				 * buttons.
+				 */
+
+				if(zkbd_modstate & (1 << 0)) {
+					/* shift */
+					sc->sc_buttons |= (1 << 0);
+				}
+				if(zkbd_modstate & (1 << 1)) {
+					/* Fn */
+					sc->sc_buttons |= (1 << 1);
+				}
+				if(zkbd_modstate & (1 << 2)) {
+					/* 'Alt' */
+					sc->sc_buttons |= (1 << 2);
+				}
+				
+			}
 			skip = 1;
 		}
 
@@ -202,9 +225,14 @@ zts_irq(void *v)
 		sc->sc_oldx = x;
 		sc->sc_oldy = y;
 		if (!skip)
-			wsmouse_input(sc->sc_wsmousedev, 0/* XXX buttons */,
+			wsmouse_input(sc->sc_wsmousedev,  sc->sc_buttons,
 			    dx, dy, 0 /* XXX*/, WSMOUSE_INPUT_DELTA);
 	} else {
+		
+		sc->sc_buttons = 0;
+		wsmouse_input(sc->sc_wsmousedev, sc->sc_buttons,
+		    0, 0, 0 /* XXX*/, WSMOUSE_INPUT_DELTA);
+
 		sc->sc_oldx = -1;
 		sc->sc_oldy = -1;
 	}
