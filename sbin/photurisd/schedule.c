@@ -35,7 +35,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: schedule.c,v 1.3 2000/12/15 01:06:51 provos Exp $";
+static char rcsid[] = "$Id: schedule.c,v 1.4 2000/12/15 02:42:09 provos Exp $";
 #endif
 
 #define _SCHEDULE_C_
@@ -197,10 +197,6 @@ schedule_process(int sock)
 	  remove = 0;
 	  switch(tmp->event) {
 	  case REKEY:
-#ifdef DEBUG
-	       if (state_root() != NULL)
-		    printf("Resetting secrets\n");
-#endif
 	       reset_secret();
 	       tmp->tm = time(NULL) + REKEY_TIMEOUT;
 	       break;

@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-/* $Id: state.h,v 1.4 2000/12/11 20:32:15 provos Exp $ */
+/* $Id: state.h,v 1.5 2000/12/15 02:42:09 provos Exp $ */
 /*
  * state.h: 
  * state object
@@ -36,6 +36,7 @@
 #ifndef _STATE_H_
 #define _STATE_H_
 
+#include <sys/queue.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <ssl/bn.h>
@@ -57,7 +58,7 @@
 #define IPSEC_NOTIFY		0x1000  /* State created by kernel notify */
 
 struct stateob {
-  struct stateob *next;            /* Linked list */
+  TAILQ_ENTRY(stateob) next;	   /* Linked list */
 
   int initiator;                   /* Boolean */
   int phase;                       /* Actual phase in the exchange */
@@ -136,6 +137,8 @@ struct stateob {
 };
 
 /* Prototypes */
+void state_init(void);
+
 int state_insert(struct stateob *);
 int state_unlink(struct stateob *);
 struct stateob *state_new(void);
@@ -143,6 +146,7 @@ int state_value_reset(struct stateob *);
 struct stateob *state_root(void);
 struct stateob *state_find(char *);
 struct stateob *state_find_next(struct stateob *, char *);
+struct stateob *state_find_icookie(u_int8_t *);
 struct stateob *state_find_cookies(char *, u_int8_t *, u_int8_t *);
 int state_save_verification(struct stateob *st, u_int8_t *buf, u_int16_t len);
 void state_copy_flags(struct stateob *src, struct stateob *dst);

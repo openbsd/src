@@ -34,7 +34,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: handle_cookie_response.c,v 1.3 2000/12/11 21:21:17 provos Exp $";
+static char rcsid[] = "$Id: handle_cookie_response.c,v 1.4 2000/12/15 02:42:08 provos Exp $";
 #endif
 
 #include <stdio.h>
@@ -68,12 +68,7 @@ handle_cookie_response(u_char *packet, int size,
 	header = (struct cookie_response *) packet;
 
 	/* Take multi home hosts into account */
-	st = state_root();
-	while(st != NULL) {
-	     if (!bcmp(header->icookie,st->icookie,COOKIE_SIZE))
-		  break;
-	     st = st->next;
-	}
+	st = state_find_icookie(header->icookie);
 	if (st == NULL)
 	     return -1;    /* Silently discard - XXX log perhaps ? */
 		

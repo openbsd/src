@@ -39,7 +39,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: kernel.c,v 1.17 2000/12/15 01:58:27 provos Exp $";
+static char rcsid[] = "$Id: kernel.c,v 1.18 2000/12/15 02:42:08 provos Exp $";
 #endif
 
 #include <time.h>
@@ -1359,7 +1359,7 @@ kernel_request_sa(struct sadb_msg *sadb)
 	st = state_find(dstbuf);
 
 	tm = time(NULL);
-	while (st != NULL && (st->lifetime <= tm || st->phase >= SPI_UPDATE))
+	while (st != NULL && (st->lifetime <= tm || st->phase < SPI_UPDATE))
 		st = state_find_next(st, dstbuf);
 
 	if (st == NULL) {
@@ -1393,10 +1393,30 @@ kernel_request_sa(struct sadb_msg *sadb)
 		} else
 			state_insert(st);
 	} else {
+		struct sockaddr_in sin;
+
 		/* 
 		 * We need different attributes for this exchange, send
 		 * an SPI_NEEDED message.
 		 */
+
+		packet_size = PACKET_BUFFER_SIZE; 
+		if (photuris_spi_needed(st, packet_buffer, &packet_size,
+					st->uSPIattrib,
+					st->uSPIattribsize) == -1) {
+			log_print(__FUNCTION__": photuris_spi_update()");
+			return (-1);
+		}
+
+		/* Send the packet */
+		sin.sin_port = htons(st->port); 
+		sin.sin_family = AF_INET; 
+		sin.sin_addr.s_addr = inet_addr(st->address);
+		    
+		if (sendto(global_socket, packet_buffer, packet_size, 0,
+			   (struct sockaddr *)&sin, sizeof(sin)) != packet_size) {
+			log_error(__FUNCTION__": sendto()");
+		}
 	}
 
 	return (0);

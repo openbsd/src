@@ -32,78 +32,63 @@
  * functions for handling states
  */
 
-#define _STATE_C_
+#include <sys/types.h>
+#include <sys/queue.h>
 
-#ifdef DEBUG
-#include <stdio.h>
-#endif
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
 #include <sys/time.h>
+
+#define _STATE_C_
+
 #include "photuris.h"
 #include "state.h"
 #include "schedule.h"
 #include "log.h"
 
-static struct stateob *stateob = NULL;
+TAILQ_HEAD(statelist, stateob) statehead;
+
+void
+state_init(void)
+{
+	TAILQ_INIT(&statehead);
+}
 
 int
 state_insert(struct stateob *ob)
 {
-     struct stateob *tmp;
+	TAILQ_INSERT_TAIL(&statehead, ob, next);
 
-     ob->next = NULL;
-
-     if(stateob == NULL) {
-	  stateob = ob;
-	  return 1;
-     }
-     
-     tmp=stateob;
-     while(tmp->next!=NULL)
-	  tmp = tmp->next;
-
-     tmp->next = ob;
-     return 1;
+	return (1);
 }
 
 int
 state_unlink(struct stateob *ob)
 {
-     struct stateob *tmp;
-     if(stateob == ob) {
-	  stateob = ob->next;
-	  free(ob);
-	  return 1;
-     }
+	TAILQ_REMOVE(&statehead, ob, next);
 
-     for(tmp=stateob; tmp!=NULL; tmp=tmp->next) {
-	  if(tmp->next==ob) {
-	       tmp->next=ob->next;
-	       free(ob);
-	       return 1;
-	  }
-     }
-     return 0;
+	return (1);
 }
 
 int 
 state_save_verification(struct stateob *st, u_int8_t *buf, u_int16_t len)
 {
-     if (st->verification == NULL || len > st->versize) {
-	  if (st->verification != NULL)
-	       free(st->verification);
+	if (st->verification == NULL || len > st->versize) {
+		if (st->verification != NULL)
+			free(st->verification);
 
-	  if ((st->verification = calloc(len, sizeof(u_int8_t))) == NULL) {
-	       log_error("calloc() in state_save_verification()");
-	       return -1;
-	  }
-     }
+		st->verification = calloc(len, sizeof(u_int8_t));
+		if (st->verification == NULL) {
+			log_error(__FUNCTION__": calloc()");
+			return (-1);
+		}
+	}
 
-     bcopy(buf, st->verification, len);
-     st->versize = len;
-     return 0;
+	bcopy(buf, st->verification, len);
+	st->versize = len;
+
+	return (0);
 }
 
 
@@ -114,36 +99,38 @@ state_save_verification(struct stateob *st, u_int8_t *buf, u_int16_t len)
 void
 state_copy_flags(struct stateob *src, struct stateob *dst)
 {
-     dst->initiator = src->initiator;
+	dst->initiator = src->initiator;
      
-     if (src->user != NULL)
-	  dst->user = strdup(src->user);
+	if (src->user != NULL)
+		dst->user = strdup(src->user);
 
-     dst->flags = src->flags;
+	dst->flags = src->flags;
 
-     strncpy(dst->address, src->address, sizeof(src->address)-1);
-     dst->address[sizeof(dst->address)-1] = 0;
+	strncpy(dst->address, src->address, sizeof(src->address)-1);
+	dst->address[sizeof(dst->address)-1] = 0;
 
-     dst->lifetime = src->lifetime;
-     dst->exchange_lifetime = src->exchange_lifetime;
-     dst->spi_lifetime = src->spi_lifetime;
+	dst->lifetime = src->lifetime;
+	dst->exchange_lifetime = src->exchange_lifetime;
+	dst->spi_lifetime = src->spi_lifetime;
 }
 
 struct stateob *
 state_new(void)
 {
-     struct stateob *p;
+	struct stateob *p;
 
-     if((p = calloc(1, sizeof(struct stateob)))==NULL)
-	  return NULL;
+	if((p = calloc(1, sizeof(struct stateob)))==NULL) {
+		log_error(__FUNCTION__": calloc");
+		return (NULL);
+	}
 
-     p->modulus = BN_new();
-     p->generator = BN_new();
+	p->modulus = BN_new();
+	p->generator = BN_new();
   
-     p->exchange_lifetime = exchange_lifetime;
-     p->spi_lifetime = spi_lifetime;
+	p->exchange_lifetime = exchange_lifetime;
+	p->spi_lifetime = spi_lifetime;
 
-     return p;
+	return (p);
 }
 
 int
@@ -202,7 +189,7 @@ state_value_reset(struct stateob *ob)
      if (ob->packet != NULL)
 	  free(ob->packet);
 
-     return 1;
+     return (1);
 }
 
 /* 
@@ -210,86 +197,92 @@ state_value_reset(struct stateob *ob)
  */
 
 struct stateob *
-state_root(void)
-{
-     return stateob;
-}
-
-struct stateob *
 state_find(char *address)
 {
-     struct stateob *tmp = stateob;
-     while (tmp != NULL) {
-          if (address == NULL || !strcmp(address, tmp->address))
-	       return tmp;
-	  tmp = tmp->next;
-     }
-     return NULL;
+	struct stateob *tmp;
+
+	for (tmp = TAILQ_FIRST(&statehead); tmp; tmp = TAILQ_NEXT(tmp, next)) {
+		if (address == NULL || !strcmp(address, tmp->address))
+			break;
+	}
+
+	return (tmp);
 }
 
 struct stateob * 
 state_find_next(struct stateob *prev, char *address) 
 { 
-     struct stateob *tmp = prev->next; 
-     while(tmp!=NULL) { 
-          if(address == NULL || !strcmp(address, tmp->address)) 
-               return tmp; 
-          tmp = tmp->next; 
+     struct stateob *tmp; 
+
+     for (tmp = TAILQ_NEXT(prev, next); tmp; tmp = TAILQ_NEXT(tmp, next)) {
+	     if (address == NULL || !strcmp(address, tmp->address)) 
+		     break;
      } 
-     return NULL; 
+
+     return (tmp); 
 } 
 
+struct stateob *
+state_find_icookie(u_int8_t *cookie)
+{
+	struct stateob *tmp;
+
+	for (tmp = TAILQ_FIRST(&statehead); tmp; tmp = TAILQ_NEXT(tmp, next)) {
+		if (!bcmp(tmp->icookie, cookie, COOKIE_SIZE))
+			break;
+	}
+
+	return (tmp);
+}
 
 struct stateob * 
 state_find_cookies(char *address, u_int8_t *icookie, u_int8_t *rcookie) 
 {
      struct stateob *tmp;
 
-     tmp = state_find(address);
-     while(tmp!=NULL) {
+     
+     for (tmp = state_find(address); tmp;
+	  tmp = state_find_next(tmp, address)) {
 	  if (!bcmp(tmp->icookie, icookie, COOKIE_SIZE) && 
 	      (rcookie == NULL || !bcmp(tmp->rcookie, rcookie, COOKIE_SIZE)))
-	       return tmp;
-	  tmp = state_find_next(tmp, address);
+		  break;
      }
 
-     return NULL;
+     return (tmp);
 }
 
 void
-state_cleanup()
+state_cleanup(void)
 {
      struct stateob *p;
-     struct stateob *tmp = stateob;
-     while(tmp!=NULL) {
-	  p = tmp;
-	  tmp = tmp->next;
-	  state_value_reset(p);
-	  free(p);
+
+     while ((p = TAILQ_FIRST(&statehead))) {
+	     TAILQ_REMOVE(&statehead, p, next);
+
+	     state_value_reset(p);
+	     free(p);
      }
-     stateob = NULL;
 }
 
 void
 state_expire(void)
 {
-     struct stateob *tmp = stateob, *p;
-     time_t tm;
+	struct stateob *tmp, *next;
+	time_t tm;
 
-     tm = time(NULL);
-     while (tmp != NULL) {
-	  if ((tmp->retries < max_retries || tmp->resource) &&
-	      (tmp->lifetime == -1 || tmp->lifetime > tm)) {
-	       tmp = tmp->next;
-	       continue;
-	  }
-#ifdef DEBUG
-	  printf("Expiring state to %s in phase %d\n",
-		tmp->address, tmp->phase);
-#endif
-	  p = tmp;
-	  tmp = tmp->next;
-	  state_value_reset(p);
-	  state_unlink(p);
-     }
+	tm = time(NULL);
+	for (tmp = TAILQ_FIRST(&statehead); tmp; tmp = next) {
+		next = TAILQ_NEXT(tmp, next);
+
+		if ((tmp->retries < max_retries || tmp->resource) &&
+		    (tmp->lifetime == -1 || tmp->lifetime > tm))
+			continue;
+
+		LOG_DBG((LOG_MISC, 35, __FUNCTION__
+			 ": Expiring state to %s in phase %d\n",
+			 tmp->address, tmp->phase));
+
+		state_value_reset(tmp);
+		state_unlink(tmp);
+	}
 }
