@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.3 1999/01/13 07:26:03 niklas Exp $	*/
+/*	$OpenBSD: misc.c,v 1.4 1999/05/24 15:37:43 aaron Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994 by Hellmuth Michaelis
@@ -91,14 +91,14 @@ void readfont(char *filename)
 	
 	if((in = fopen(filename, "r")) == NULL)
 	{
-		sprintf(buffer, "cannot open file %s for reading", filename);
+		snprintf(buffer, sizeof(buffer), "cannot open file %s for reading", filename);
 		perror(buffer);
 		exit(1);
 	}
 
 	if((fstat(fileno(in), sbp)) != 0)
 	{
-		sprintf(buffer, "cannot fstat file %s", filename);
+		snprintf(buffer, sizeof(buffer), "cannot fstat file %s", filename);
 		perror(buffer);
 		exit(1);
 	}
@@ -141,12 +141,12 @@ void readfont(char *filename)
 		exit(1);
 	}
 
-	strcpy(lfilename, filename);	/* save for write */
-	lfilesize = sbp->st_size;	/* save for write */
+	strncpy(lfilename, filename, sizeof(lfilename)); /* save for write */
+	lfilesize = sbp->st_size; /* save for write */
 
 	if((ret = fread(fonttab, sizeof(*fonttab), sbp->st_size, in)) != sbp->st_size)
 	{
-		sprintf(buffer,"error reading file %s, size = %ld, ret = %d\n",filename,(long)sbp->st_size, ret);
+		snprintf(buffer,sizeof(buffer),"error reading file %s, size = %ld, ret = %d\n",filename,(long)sbp->st_size, ret);
 		perror(buffer);
 		exit(1);
 	}		
@@ -166,11 +166,11 @@ void writefont()
 		int c;
 		char wfn[1024];
 		
-		strcpy(wfn, lfilename);
-		strcat(wfn, ".BAK");
+		strncpy(wfn, lfilename, sizeof(wfn));
+		strncat(wfn, ".BAK", sizeof(wfn) - strlen(wfn));
 		if((out = fopen(wfn, "w")) == NULL)
 		{
-			sprintf(buffer, "cannot open file %s for writing", wfn);
+			snprintf(buffer, sizeof(buffer), "cannot open file %s for writing", wfn);
 			perror(buffer);
 			exit(1);
 		}
@@ -184,14 +184,14 @@ void writefont()
 			
 	if((out = fopen(lfilename, "w")) == NULL)
 	{
-		sprintf(buffer, "cannot open file %s for writing", lfilename);
+		snprintf(buffer, sizeof(buffer), "cannot open file %s for writing", lfilename);
 		perror(buffer);
 		exit(1);
 	}
 
 	if((ret = fwrite(fonttab, sizeof(*fonttab), lfilesize, out)) != lfilesize)
 	{
-		sprintf(buffer,"error writing file %s, size=%d, ret=%d\n",lfilename,lfilesize, ret);
+		snprintf(buffer,sizeof(buffer),"error writing file %s, size=%d, ret=%d\n",lfilename,lfilesize, ret);
 		perror(buffer);
 		exit(1);
 	}		

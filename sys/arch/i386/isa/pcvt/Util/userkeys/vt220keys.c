@@ -1,4 +1,4 @@
-/*	$OpenBSD: vt220keys.c,v 1.4 1999/01/13 07:26:07 niklas Exp $	*/
+/*	$OpenBSD: vt220keys.c,v 1.5 1999/05/24 15:37:44 aaron Exp $	*/
 
 /*
  *      Trivial program to load VT220 Function keys with strings,
@@ -93,7 +93,7 @@ int main(argc,argv)
         int clearf = 0;         /* clear all keys before loading strings */
 	char *strcpy();
 
-        (void) strcpy(prog, *argv);  /* store program name               */
+        (void) strncpy(prog, *argv, sizeof(prog)); /* store program name */
 
         if(argc == 1) usage();  /* program requires options              */
 
@@ -251,9 +251,9 @@ void getinit()
 
         /* construct full path name for init file */
         home = getenv("HOME");
-        (void) strcpy(path, home);
-        (void) strcat(path,"/");
-        (void) strcat(path,INITFILE);
+        (void) strncpy(path, home, sizeof(path));
+        (void) strncat(path,"/",sizeof(path) - strlen(path));
+        (void) strncat(path,INITFILE,sizeof(path) - strlen(path));
 
         /* check status if init file    */
         if (stat(path, &statbuf) != -1)

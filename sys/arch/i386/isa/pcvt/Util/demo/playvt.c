@@ -1,4 +1,4 @@
-/*	$OpenBSD: playvt.c,v 1.3 1999/01/13 07:26:03 niklas Exp $	*/
+/*	$OpenBSD: playvt.c,v 1.4 1999/05/24 15:37:43 aaron Exp $	*/
 
 /*
  * Copyright (c) 1995 Hellmuth Michaelis
@@ -87,7 +87,7 @@ char *argv[];
 		{
 			char buffer[80];
 			strcpy(buffer,"ERROR opening file ");
-			strcat(buffer,filename);
+			strncat(buffer,filename,sizeof(buffer) - strlen(buffer));
 			perror(buffer);
 			exit(1);
 		}

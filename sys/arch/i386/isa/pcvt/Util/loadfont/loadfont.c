@@ -1,4 +1,4 @@
-/*	$OpenBSD: loadfont.c,v 1.4 1999/01/13 07:26:06 niklas Exp $	*/
+/*	$OpenBSD: loadfont.c,v 1.5 1999/05/24 15:37:44 aaron Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis
@@ -141,7 +141,7 @@ main(int argc, char **argv)
 		{
 			char buffer[80];
 			strcpy(buffer,"ERROR opening ");
-			strcat(buffer,device);
+			strncat(buffer,device,sizeof(buffer) - strlen(buffer));
 			perror(buffer);
 			exit(1);
 		}
@@ -226,7 +226,7 @@ main(int argc, char **argv)
 	if((in = fopen(filename, "r")) == NULL)
 	{
 		char buffer[80];
-		sprintf(buffer, "cannot open file %s for reading", filename);
+		snprintf(buffer, sizeof(buffer), "cannot open file %s for reading", filename);
 		perror(buffer);
 		exit(1);
 	}
@@ -234,7 +234,7 @@ main(int argc, char **argv)
 	if((fstat(fileno(in), sbp)) != 0)
 	{
 		char buffer[80];
-		sprintf(buffer, "cannot fstat file %s", filename);
+		snprintf(buffer, sizeof(buffer), "cannot fstat file %s", filename);
 		perror(buffer);
 		exit(1);
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: scon.c,v 1.11 1999/01/13 07:26:06 niklas Exp $	*/
+/*	$OpenBSD: scon.c,v 1.12 1999/05/24 15:37:44 aaron Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch
@@ -353,7 +353,7 @@ char *argv[];
 		{
 			char buffer[80];
 			strcpy(buffer,"ERROR opening ");
-			strcat(buffer,device);
+			strncat(buffer,device,sizeof(buffer) - strlen(buffer));
 			perror(buffer);
 			exit(1);
 		}
