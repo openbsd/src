@@ -1,4 +1,4 @@
-/*	$OpenBSD: echo.c,v 1.25 2002/08/22 23:28:19 deraadt Exp $	*/
+/*	$OpenBSD: echo.c,v 1.26 2003/04/16 17:30:49 millert Exp $	*/
 
 /*
  *	Echo line reading and writing.
@@ -410,6 +410,7 @@ complt_list(int flags, int c, char *buf, int cpos)
 	int	 oldcol = ttcol;
 	int	 oldhue = tthue;
 	char	 *linebuf;
+	size_t	 linesize, len;
 	const char *cp;
 
 	lh = NULL;
@@ -494,7 +495,8 @@ complt_list(int flags, int c, char *buf, int cpos)
 	 * Now do the display.  objects are written into linebuf until
 	 * it fills, and then put into the help buffer.
 	 */
-	if ((linebuf = malloc((nrow + 1) * sizeof(char))) == NULL)
+	linesize = MAX(ncol, maxwidth) + 1;
+	if ((linebuf = malloc(linesize)) == NULL)
 		return FALSE;
 	width = 0;
 
@@ -516,13 +518,14 @@ complt_list(int flags, int c, char *buf, int cpos)
 				linebuf[0] = '\0';
 				width = 0;
 			}
-			strlcat(linebuf, lh2->l_name + preflen, nrow+1);
-			i = strlen(lh2->l_name + preflen);
-			/* make all the objects nicely line up */
-			memset(linebuf + strlen(linebuf), ' ',
-			    maxwidth - i);
+			len = strlcat(linebuf, lh2->l_name + preflen, linesize);
 			width += maxwidth;
-			linebuf[width] = '\0';
+			if (len < width && width < linesize) {
+				/* pad so the objects nicely line up */
+				memset(linebuf + len, ' ',
+				    maxwidth - strlen(lh2->l_name + preflen));
+				linebuf[width] = '\0';
+			}
 		}
 	}
 	if (width > 0)
