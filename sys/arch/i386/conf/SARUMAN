@@ -1,17 +1,18 @@
 #
 #	SARUMAN -- i486DX/50 EISA bus
 #
-#	$OpenBSD: SARUMAN,v 1.2 1996/12/28 01:00:43 tholo Exp $
+#	$OpenBSD: SARUMAN,v 1.3 1997/03/02 08:04:22 tholo Exp $
 #
 
 machine		i386		# architecture, used by config; REQUIRED
 
 #option		I386_CPU	# CPU classes; at least one is REQUIRED
-option		I486_CPU
-#option		I586_CPU
+#option		I486_CPU
+option		I586_CPU
 #option		GPL_MATH_EMULATE	# floating point emulation
 
-option		EISAVERBOSE	# verbose EISA device information
+option		PCIVERBOSE	# verbose PCI device information
+#option		EISAVERBOSE	# verbose EISA device information
 
 option		DUMMY_NOPS	# speed hack; recommanded
 option		XSERVER
@@ -71,6 +72,7 @@ option		UNION		# union file system
 
 #option		GATEWAY		# packet forwarding
 option		INET		# IP + ICMP + TCP + UDP
+option		IPSEC		# IPsec
 #option		IMP		# missing files
 #option		NS		# XNS
 #option		ISO,TPIP	# OSI
@@ -82,7 +84,7 @@ config		bsd	root on wd0a swap on wd0b dumps on wd0b
 mainbus0 at root
 
 isa0	at mainbus0
-eisa0	at mainbus0
+pci0	at mainbus0
 
 npx0	at isa?	port 0xf0 irq 13	# math coprocessor
 isadma0	at isa?
@@ -109,6 +111,7 @@ spkr0	at pckbd?			# PC speaker
 
 pseudo-device	loop		1	# network loopback
 pseudo-device	bpfilter	8	# packet filter
+pseudo-device	enc		4	# encryption device
 
 pseudo-device	pty		64	# pseudo-terminals
 pseudo-device	vnd		4	# paging to files
