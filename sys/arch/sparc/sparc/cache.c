@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache.c,v 1.10 2000/02/19 21:45:55 art Exp $	*/
+/*	$OpenBSD: cache.c,v 1.11 2000/02/21 14:43:35 art Exp $	*/
 /*	$NetBSD: cache.c,v 1.34 1997/09/26 22:17:23 pk Exp $	*/
 
 /*
@@ -179,7 +179,10 @@ void
 hypersparc_cache_enable()
 {
 	int i, ls, ts;
-	u_int pcr;
+	u_int pcr, v;
+#ifdef notyet
+	extern u_long dvma_cachealign;
+#endif
 
 	ls = CACHEINFO.c_linesize;
 	ts = CACHEINFO.c_totalsize;
@@ -187,16 +190,13 @@ hypersparc_cache_enable()
 	pcr = lda(SRMMU_PCR, ASI_SRMMU);
 
 	/*
-	 * First we determine what type of cache we have, and
-	 * setup the anti-aliasing constants appropriately.
+	 * Setup the anti-aliasing constants and DVMA alignment constraint.
 	 */
-	if (pcr & HYPERSPARC_PCR_CS) {
-		cache_alias_bits = CACHE_ALIAS_BITS_HS256k;
-		cache_alias_dist = CACHE_ALIAS_DIST_HS256k;
-	} else {
-		cache_alias_bits = CACHE_ALIAS_BITS_HS128k;
-		cache_alias_dist = CACHE_ALIAS_DIST_HS128k;
-	}
+	cache_alias_dist = CACHEINFO.c_totalsize;
+	cache_alias_bits = (cache_alias_dist - 1) & ~PGOFSET;
+#ifdef notyet
+	dvma_cachealign = cache_alias_dist;
+#endif
 
 	/* Now reset cache tag memory if cache not yet enabled */
 	if ((pcr & HYPERSPARC_PCR_CE) == 0)
@@ -206,14 +206,31 @@ hypersparc_cache_enable()
 				sta(i, ASI_DCACHETAG, 0);
 		}
 
-	/* Enable write-back cache */
-	pcr |= (HYPERSPARC_PCR_CE | HYPERSPARC_PCR_CM);
+	pcr &= ~(HYPERSPARC_PCR_CE | HYPERSPARC_PCR_CM);
+
+	hypersparc_cache_flush_all();
+
+	pcr |= HYPERSPARC_PCR_CE;
+	if (CACHEINFO.c_vactype == VAC_WRITEBACK)
+		pcr |= HYPERSPARC_PCR_CM;
+
 	sta(SRMMU_PCR, ASI_SRMMU, pcr);
 	CACHEINFO.c_enabled = 1;
 
 	/* XXX: should add support */
 	if (CACHEINFO.c_hwflush)
 		panic("cache_enable: can't handle 4M with hw-flush cache");
+
+#ifdef notyet
+	/*
+	 * Enable instruction cache and, on single-processor machines,
+	 * disable `Unimplemented Flush Traps'.
+	 */
+	v = HYPERSPARC_ICCR_ICE | (ncpu == 1 ? HYPERSPARC_ICCR_FTD : 0);
+#else
+	v = HYPERSPARC_ICCR_FTD | HYPERSPARC_ICCR_ICE;
+#endif
+	wrasr(v, HYPERSPARC_ASRNUM_ICCR);
 
 	printf("cache enabled\n");
 }
