@@ -1,4 +1,4 @@
-/*	$OpenBSD: null_vfsops.c,v 1.19 2004/05/18 02:23:41 pedro Exp $	*/
+/*	$OpenBSD: null_vfsops.c,v 1.20 2004/05/18 12:37:51 pedro Exp $	*/
 /*	$NetBSD: null_vfsops.c,v 1.38 2002/09/21 18:09:29 christos Exp $	*/
 
 /*
@@ -125,7 +125,7 @@ nullfs_mount(mp, path, data, ndp, p)
 	/*
 	 * Get argument
 	 */
-	error = copyin(data, (caddr_t)&args, sizeof(struct null_args));
+	error = copyin(data, &args, sizeof(struct null_args));
 	if (error)
 		return (error);
 
@@ -159,7 +159,7 @@ nullfs_mount(mp, path, data, ndp, p)
 	 */
 	nmp = (struct null_mount *) malloc(sizeof(struct null_mount),
 	    M_UFSMNT, M_WAITOK);		/* XXX */
-	memset((caddr_t)nmp, 0, sizeof(struct null_mount));
+	memset(nmp, 0, sizeof(struct null_mount));
 
 	mp->mnt_data = (qaddr_t)nmp;
 	nmp->nullm_vfs = lowerrootvp->v_mount;

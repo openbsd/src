@@ -1,4 +1,4 @@
-/*	$OpenBSD: fifo_vnops.c,v 1.20 2004/05/14 21:33:58 millert Exp $	*/
+/*	$OpenBSD: fifo_vnops.c,v 1.21 2004/05/18 12:37:51 pedro Exp $	*/
 /*	$NetBSD: fifo_vnops.c,v 1.18 1996/03/16 23:52:42 christos Exp $	*/
 
 /*
@@ -327,13 +327,13 @@ fifo_ioctl(v)
 	if (ap->a_command == FIONBIO)
 		return (0);
 	if (ap->a_fflag & FREAD) {
-		filetmp.f_data = (caddr_t)ap->a_vp->v_fifoinfo->fi_readsock;
+		filetmp.f_data = ap->a_vp->v_fifoinfo->fi_readsock;
 		error = soo_ioctl(&filetmp, ap->a_command, ap->a_data, ap->a_p);
 		if (error)
 			return (error);
 	}
 	if (ap->a_fflag & FWRITE) {
-		filetmp.f_data = (caddr_t)ap->a_vp->v_fifoinfo->fi_writesock;
+		filetmp.f_data = ap->a_vp->v_fifoinfo->fi_writesock;
 		error = soo_ioctl(&filetmp, ap->a_command, ap->a_data, ap->a_p);
 		if (error)
 			return (error);
@@ -366,13 +366,13 @@ fifo_poll(v)
 		if (ap->a_events & (POLLIN | POLLRDNORM))
 			ap->a_vp->v_fifoinfo->fi_readsock->so_state &=
 			    ~SS_CANTRCVMORE;
-		filetmp.f_data = (caddr_t)ap->a_vp->v_fifoinfo->fi_readsock;
+		filetmp.f_data = ap->a_vp->v_fifoinfo->fi_readsock;
 		if (filetmp.f_data)
 			revents |= soo_poll(&filetmp, ap->a_events, ap->a_p);
 		ap->a_vp->v_fifoinfo->fi_readsock->so_state = ostate;
 	}
 	if (ap->a_events & (POLLOUT | POLLWRNORM | POLLWRBAND)) {
-		filetmp.f_data = (caddr_t)ap->a_vp->v_fifoinfo->fi_writesock;
+		filetmp.f_data = ap->a_vp->v_fifoinfo->fi_writesock;
 		if (filetmp.f_data)
 			revents |= soo_poll(&filetmp, ap->a_events, ap->a_p);
 	}
@@ -591,7 +591,7 @@ fifo_kqfilter(v)
 		return (1);
 	}
 
-	ap->a_kn->kn_hook = (caddr_t)so;
+	ap->a_kn->kn_hook = so;
 
 	SLIST_INSERT_HEAD(&sb->sb_sel.si_note, ap->a_kn, kn_selnext);
 	sb->sb_flags |= SB_KNOTE;

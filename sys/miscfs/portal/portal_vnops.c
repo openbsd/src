@@ -1,4 +1,4 @@
-/*	$OpenBSD: portal_vnops.c,v 1.18 2004/04/23 17:43:48 tedu Exp $	*/
+/*	$OpenBSD: portal_vnops.c,v 1.19 2004/05/18 12:37:51 pedro Exp $	*/
 /*	$NetBSD: portal_vnops.c,v 1.17 1996/02/13 13:12:57 mycroft Exp $	*/
 
 /*
@@ -363,7 +363,7 @@ portal_open(v)
 			splx(s);
 			goto bad;
 		}
-		(void) tsleep((caddr_t) &so->so_timeo, PSOCK, "portalcon", 5 * hz);
+		(void) tsleep(&so->so_timeo, PSOCK, "portalcon", 5 * hz);
 	}
 	splx(s);
 
@@ -386,7 +386,7 @@ portal_open(v)
 	pcred.pcr_gid = ap->a_cred->cr_gid;
 	pcred.pcr_ngroups = ap->a_cred->cr_ngroups;
 	bcopy(ap->a_cred->cr_groups, pcred.pcr_groups, NGROUPS * sizeof(gid_t));
-	aiov[0].iov_base = (caddr_t) &pcred;
+	aiov[0].iov_base = &pcred;
 	aiov[0].iov_len = sizeof(pcred);
 	aiov[1].iov_base = pt->pt_arg;
 	aiov[1].iov_len = pt->pt_size;
@@ -624,7 +624,7 @@ portal_reclaim(v)
 	struct portalnode *pt = VTOPORTAL(ap->a_vp);
 
 	if (pt->pt_arg) {
-		free((caddr_t) pt->pt_arg, M_TEMP);
+		free(pt->pt_arg, M_TEMP);
 		pt->pt_arg = 0;
 	}
 	FREE(ap->a_vp->v_data, M_TEMP);
