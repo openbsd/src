@@ -1,4 +1,5 @@
-.\"	@(#) $Header: /home/cvs/src/usr.sbin/slstats/Attic/slstats.8,v 1.1.1.1 1995/10/18 08:48:21 deraadt Exp $ (LBL)
+.\"	$OpenBSD: slstats.8,v 1.2 1996/06/10 08:38:54 deraadt Exp $
+.\"	$NetBSD: slstats.8,v 1.2.6.1 1996/06/07 01:42:24 thorpej Exp $
 .Dd July 5, 1993
 .Dt SLSTATS 8
 .Sh NAME
@@ -6,13 +7,11 @@
 .Nd report slip statistics
 .Sh SYNOPSIS
 .Nm slstats
+.Op Fl M Ar core
+.Op Fl N Ar system
 .Op Fl v
 .Op Fl i Ar interval
 .Op Ar unit-number
-.Oo
-.Ar system
-.Op Ar core
-.Oc
 .Sh DESCRIPTION
 .Pp
 The 
@@ -36,21 +35,18 @@ statistics.  All further output will describe activity between report
 intervals.
 .Pp
 The options are as follows:
-.Bl -tag -width Ds
+.Bl -tag -width "system   "
 .It Fl v
 Display additional statistics demonstrating the efficacy of VJ header
 compression and providing more explicit information on failure
 distribution.
 .It Fl i
 Specifies the interval between reports. The default interval is 5 seconds.
-.It Ar system
+.It Fl M Ar core
+Extract values associated with the name list from the specified.
+.It Fl N Ar system
 Extract the name list from the specified system instead of the default
 .Pa /netbsd .
-.It Ar core
-Extract values associated with the name list from the specified
-.Ar core
-instead of the default
-.Pa /dev/kmem .
 .El
 .Pp
 The following fields are printed on the input side:
@@ -101,12 +97,6 @@ compressed packet.  Only reported when the
 option is specified.
 .El
 .Sh BUGS
-Should use
-.Fl M Ar core
-and
-.Fl N Ar system
-like most other programs using the kvm library.
-.Pp
 Should take an interface name and not a unit number.
 .Pp
 .Sh SEE ALSO

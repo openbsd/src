@@ -1,6 +1,9 @@
+/*	$OpenBSD: slstats.c,v 1.4 1996/06/10 08:38:55 deraadt Exp $	*/
+/*	$NetBSD: slstats.c,v 1.6.6.1 1996/06/07 01:42:30 thorpej Exp $	*/
+
 /*
  * print serial line IP statistics:
- *	slstats [-i interval] [-v] [interface] [system] [core]
+ *	slstats [-i interval] [-v] [interface] [system [core]]
  *
  * Copyright (c) 1989, 1990, 1991, 1992 Regents of the University of
  * California. All rights reserved.
@@ -22,14 +25,8 @@
  */
 
 #ifndef lint
-/*static char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/slstats/Attic/slstats.c,v 1.3 1996/06/04 07:52:01 deraadt Exp $ (LBL)";*/
-static char rcsid[] = "$Id: slstats.c,v 1.3 1996/06/04 07:52:01 deraadt Exp $";
+static char rcsid[] = "$OpenBSD";
 #endif
-
-#include <stdio.h>
-#include <paths.h>
-#include <nlist.h>
 
 #define INET
 
@@ -38,8 +35,7 @@ static char rcsid[] = "$Id: slstats.c,v 1.3 1996/06/04 07:52:01 deraadt Exp $";
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/file.h>
-#include <errno.h>
-#include <signal.h>
+
 #include <net/if.h>
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
@@ -49,72 +45,105 @@ static char rcsid[] = "$Id: slstats.c,v 1.3 1996/06/04 07:52:01 deraadt Exp $";
 #include <net/slcompress.h>
 #include <net/if_slvar.h>
 
+#include <ctype.h>
+#include <err.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <kvm.h>
+#include <limits.h>
+#include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <paths.h>
+#include <nlist.h>
+#include <unistd.h>
+
 struct nlist nl[] = {
 #define N_SOFTC 0
 	{ "_sl_softc" },
 	"",
 };
 
-char	*system = _PATH_UNIX;
-char	*kmemf = _PATH_KMEM;
+extern	char __progname;	/* from crt0.o */
 
-int	kflag;
+char	*kernel;		/* kernel for namelist */
+char	*kmemf;			/* memory file */
+
+kvm_t	*kd;
+
 int	vflag;
 unsigned interval = 5;
 int	unit;
 
-extern	char *malloc();
-extern	off_t lseek();
+void	catchalarm __P((void));
+void	intpr __P((void));
+void	usage __P((void));
 
+int
 main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	--argc; ++argv;
-	while (argc > 0) {
-		if (strcmp(argv[0], "-v") == 0) {
-			++vflag;
-			++argv, --argc;
-			continue;
-		}
-		if (strcmp(argv[0], "-i") == 0 && argv[1] &&
-		    isdigit(argv[1][0])) {
-			interval = atoi(argv[1]);
+	char errbuf[_POSIX2_LINE_MAX];
+	int ch;
+
+	while ((ch = getopt(argc, argv, "i:M:N:v")) != -1) {
+		switch (ch) {
+		case 'i':
+			interval = atoi(optarg);
 			if (interval <= 0)
 				usage();
-			++argv, --argc;
-			++argv, --argc;
-			continue;
-		}
-		if (isdigit(argv[0][0])) {
-			unit = atoi(argv[0]);
-			if (unit < 0)
-				usage();
-			++argv, --argc;
-			continue;
-		}
-		if (kflag)
-			usage();
+			break;
 
-		system = *argv;
-		++argv, --argc;
-		if (argc > 0) {
-			kmemf = *argv++;
-			--argc;
-			kflag++;
+		case 'M':
+			kmemf = optarg;
+			break;
+
+		case 'N':
+			kernel = optarg;
+			break;
+
+		case 'v':
+			++vflag;
+			break;
+
+		default:
+			usage();
 		}
 	}
-        /*
+	argc -= optind;
+	argv += optind;
+
+	if (argc > 1)
+		usage();
+
+	while (argc--) {
+		if (isdigit(*argv[0])) {
+			unit = atoi(*argv);
+			if (unit < 0)
+				usage();
+			continue;
+		}
+
+		/* Fall to here, we have bogus arguments. */
+		usage();
+	}
+
+	/*
 	 * Discard setgid privileges if not the running kernel so that bad
 	 * guys can't print interesting stuff from kernel memory.
 	 */
-	if (!strcmp(kmemf, _PATH_KMEM) || !strcmp(system, _PATH_UNIX))
+	if (kmemf != NULL || kernel != NULL)
 		setgid(getgid());
 
-	if (kopen(system, kmemf, "slstats") < 0)
-		exit(1);
-	if (knlist(system, nl, "slstats") < 0)
-		exit(1);
+	memset(errbuf, 0, sizeof(errbuf));
+	if ((kd = kvm_openfiles(kernel, kmemf, NULL, O_RDONLY, errbuf)) == NULL)
+		errx(1, "can't open kvm: %s", errbuf);
+
+	if (kvm_nlist(kd, nl) < 0 || nl[0].n_type == 0)
+		errx(1, "%s: SLIP symbols not in namelist",
+		    kernel == NULL ? _PATH_UNIX : kernel);
+
 	intpr();
 	exit(0);
 }
@@ -122,12 +151,12 @@ main(argc, argv)
 #define V(offset) ((line % 20)? sc->offset - osc->offset : sc->offset)
 #define AMT (sizeof(*sc) - 2 * sizeof(sc->sc_comp.tstate))
 
+void
 usage()
 {
-	static char umsg[] =
-		"usage: slstats [-i interval] [-v] [unit] [system] [core]\n";
 
-	fprintf(stderr, umsg);
+	fprintf(stderr, "usage: %s [-M core] [-N system] [-i interval] %s",
+	    __progname, "[-v] [unit]\n");
 	exit(1);
 }
 
@@ -139,13 +168,13 @@ u_char	signalled;			/* set if alarm goes off "early" */
  * collected over that interval.  Assumes that interval is non-zero.
  * First line printed at top of screen is always cumulative.
  */
+void
 intpr()
 {
 	register int line = 0;
 	int oldmask;
-	void catchalarm();
 	struct sl_softc *sc, *osc;
-	off_t addr;
+	u_long addr;
 
 	addr = nl[N_SOFTC].n_value + unit * sizeof(struct sl_softc);
 	sc = (struct sl_softc *)malloc(AMT);
@@ -153,9 +182,10 @@ intpr()
 	bzero((char *)osc, AMT);
 
 	while (1) {
-		if (kread(addr, (char *)sc, AMT) < 0)
-			perror("kmem read");
-		(void)signal(SIGALRM, catchalarm);
+		if (kvm_read(kd, addr, (char *)sc, AMT) != AMT)
+			errx(1, "kvm_read: %s", kvm_geterr(kd));
+
+		(void)signal(SIGALRM, (void (*)())catchalarm);
 		signalled = 0;
 		(void)alarm(interval);
 
@@ -216,53 +246,4 @@ void
 catchalarm()
 {
 	signalled = 1;
-}
-
-#include <kvm.h>
-#include <fcntl.h>
-
-kvm_t *kd;
-
-kopen(system, kmemf, errstr)
-	char *system;
-	char *kmemf;
-	char *errstr;
-{
-	if (strcmp(system, _PATH_UNIX) == 0 &&
-	    strcmp(kmemf, _PATH_KMEM) == 0) {
-		system = 0;
-		kmemf = 0;
-	}
-	kd = kvm_open(system, kmemf, NULL, O_RDONLY, "slstats");
-	if (kd == NULL) 
-		return -1;
-	return 0;
-}
-
-int
-knlist(system, nl, errstr)
-	char *system;
-	struct nlist *nl;
-	char *errstr;
-{
-	if (kd == 0)
-		/* kopen() must be called first */
-		abort();
-		
-	if (kvm_nlist(kd, nl) < 0 || nl[0].n_type == 0) {
-		fprintf(stderr, "%s: %s: no namelist\n", errstr, system);
-		return -1;
-	}
-	return 0;
-}
-
-int
-kread(addr, buf, size)
-	off_t addr;
-	char *buf;
-	int size;
-{
-	if (kvm_read(kd, (u_long)addr, buf, size) != size)
-		return -1;
-	return 0;
 }
