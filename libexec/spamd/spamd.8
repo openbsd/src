@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamd.8,v 1.4 2002/12/25 10:14:20 deraadt Exp $
+.\"	$OpenBSD: spamd.8,v 1.5 2002/12/31 01:01:28 dhartmei Exp $
 .\"
 .\" Copyright (c) 2002 Theo de Raadt.  All rights reserved.
 .\"
@@ -90,7 +90,43 @@ which proceses a list of spammers addresses, and applies appropriate
 .Xr pfctl 8
 rdr rules.
 .Pp
+.Sh REDIRECTING SMTP CONNECTIONS
+With
+.Xr pf 4 ,
+connections to port 25 (SMTP) can be redirected to another host or port,
+based on the the source address of the sender.
+The
+.Pa rdr
+rules used for this purpose are described in
+.Xr pf.conf 5 .
+The rules can be loaded into an
+.Pa anchor
+to simplify handling.
+If the main ruleset contains the following
+.Pa rdr-anchor rule ,
+all
+.Pa rdr
+rules inside the specified
+.Pa anchor
+are evaluated for SMTP connections:
+.Bd -literal
+    rdr-anchor spews proto tcp from any to any port smtp
+.Ed
+.Pp
+And all
+.Pa rdr
+rules related to
+.Nm
+can be loaded into one or more rulesets inside that
+.Pa anchor ,
+like:
+.Bd -literal
+    echo "rdr from { 10.1.2.3, 10.2.3.4/30, 10.3.4.5/24 } to any port smtp
+      -> 127.0.0.1 port 8025" | pfctl -a spews:first -f -
+.Ed
+.Pp
 .Sh SEE ALSO
+.Xr pf.conf 5 ,
 .Xr spamd-setup 8 ,
 .Xr pfctl 8
 .Sh HISTORY
