@@ -1,4 +1,4 @@
-/*	$OpenBSD: ispvar.h,v 1.15 2001/02/12 23:51:20 mjacob Exp $ */
+/*	$OpenBSD: ispvar.h,v 1.16 2001/04/04 22:09:39 mjacob Exp $ */
 /*
  * Soft Definitions for for Qlogic ISP SCSI adapters.
  *
@@ -54,23 +54,23 @@
 #endif
 
 #define	ISP_CORE_VERSION_MAJOR	2
-#define	ISP_CORE_VERSION_MINOR	0
+#define	ISP_CORE_VERSION_MINOR	1
 
 /*
  * Vector for bus specific code to provide specific services.
  */
 struct ispsoftc;
 struct ispmdvec {
-	u_int16_t	(*dv_rd_reg) __P((struct ispsoftc *, int));
-	void		(*dv_wr_reg) __P((struct ispsoftc *, int, u_int16_t));
-	int		(*dv_mbxdma) __P((struct ispsoftc *));
-	int		(*dv_dmaset) __P((struct ispsoftc *,
-		XS_T *, ispreq_t *, u_int16_t *, u_int16_t));
+	u_int16_t	(*dv_rd_reg) (struct ispsoftc *, int);
+	void		(*dv_wr_reg) (struct ispsoftc *, int, u_int16_t);
+	int		(*dv_mbxdma) (struct ispsoftc *);
+	int		(*dv_dmaset) (struct ispsoftc *,
+		XS_T *, ispreq_t *, u_int16_t *, u_int16_t);
 	void		(*dv_dmaclr)
-		__P((struct ispsoftc *, XS_T *, u_int32_t));
-	void		(*dv_reset0) __P((struct ispsoftc *));
-	void		(*dv_reset1) __P((struct ispsoftc *));
-	void		(*dv_dregs) __P((struct ispsoftc *, const char *));
+		(struct ispsoftc *, XS_T *, u_int16_t);
+	void		(*dv_reset0) (struct ispsoftc *);
+	void		(*dv_reset1) (struct ispsoftc *);
+	void		(*dv_dregs) (struct ispsoftc *, const char *);
 	const u_int16_t	*dv_ispfw;	/* ptr to f/w */
 	u_int16_t	dv_conf1;
 	u_int16_t	dv_clock;	/* clock frequency */
@@ -499,27 +499,27 @@ typedef struct ispsoftc {
  * Reset Hardware. Totally. Assumes that you'll follow this with
  * a call to isp_init.
  */
-void isp_reset __P((struct ispsoftc *));
+void isp_reset(struct ispsoftc *);
 
 /*
  * Initialize Hardware to known state
  */
-void isp_init __P((struct ispsoftc *));
+void isp_init(struct ispsoftc *);
 
 /*
  * Reset the ISP and call completion for any orphaned commands.
  */
-void isp_reinit __P((struct ispsoftc *));
+void isp_reinit(struct ispsoftc *);
 
 /*
  * Interrupt Service Routine
  */
-int isp_intr __P((void *));
+int isp_intr(void *);
 
 /*
  * Command Entry Point- Platform Dependent layers call into this
  */
-int isp_start __P((XS_T *));
+int isp_start(XS_T *);
 /* these values are what isp_start returns */
 #define	CMD_COMPLETE	101	/* command completed */
 #define	CMD_EAGAIN	102	/* busy- maybe retry later */
@@ -529,7 +529,7 @@ int isp_start __P((XS_T *));
 /*
  * Command Completion Point- Core layers call out from this with completed cmds
  */
-void isp_done __P((XS_T *));
+void isp_done(XS_T *);
 
 /*
  * Platform Dependent to External to Internal Control Function
@@ -576,9 +576,10 @@ typedef enum {
 	ISPCTL_PDB_SYNC,		/* Synchronize Port Database */
 	ISPCTL_SEND_LIP,		/* Send a LIP */
 	ISPCTL_GET_POSMAP,		/* Get FC-AL position map */
+	ISPCTL_RUN_MBOXCMD,		/* run a mailbox command */
 	ISPCTL_TOGGLE_TMODE		/* toggle target mode */
 } ispctl_t;
-int isp_control __P((struct ispsoftc *, ispctl_t, void *));
+int isp_control(struct ispsoftc *, ispctl_t, void *);
 
 
 /*
@@ -614,6 +615,12 @@ int isp_control __P((struct ispsoftc *, ispctl_t, void *));
  * valid tag is set or not says whether something has arrived or departed.
  * The name refers to a favorite pastime of many city dwellers- watching
  * people come and go, talking of Michaelangelo, and so on..
+ *
+ * ISPASYNC_UNHANDLED_RESPONSE gives outer layers a chance to parse a
+ * response queue entry not otherwise handled. The outer layer should
+ * return non-zero if it handled it. The 'arg' points to a (possibly only
+ * partially) massaged response queue entry (see the platform's
+ * ISP_UNSWIZZLE_RESPONSE macro).
  */
 
 typedef enum {
@@ -627,9 +634,10 @@ typedef enum {
 	ISPASYNC_TARGET_MESSAGE,	/* target message */
 	ISPASYNC_TARGET_EVENT,		/* target asynchronous event */
 	ISPASYNC_TARGET_ACTION,		/* other target command action */
-	ISPASYNC_CONF_CHANGE		/* Platform Configuration Change */
+	ISPASYNC_CONF_CHANGE,		/* Platform Configuration Change */
+	ISPASYNC_UNHANDLED_RESPONSE	/* Unhandled Response Entry */
 } ispasync_t;
-int isp_async __P((struct ispsoftc *, ispasync_t, void *));
+int isp_async(struct ispsoftc *, ispasync_t, void *);
 
 #define	ISPASYNC_CHANGE_PDB	((void *) 0)
 #define	ISPASYNC_CHANGE_SNS	((void *) 1)
@@ -639,10 +647,10 @@ int isp_async __P((struct ispsoftc *, ispasync_t, void *));
  * Platform Dependent Error and Debug Printout
  */
 #ifdef	__GNUC__
-void isp_prt __P((struct ispsoftc *, int level, const char *, ...))
+void isp_prt(struct ispsoftc *, int level, const char *, ...)
 	__attribute__((__format__(__printf__,3,4)));
 #else
-void isp_prt __P((struct ispsoftc *, int level, const char *, ...));
+void isp_prt(struct ispsoftc *, int level, const char *, ...);
 #endif
 
 #define	ISP_LOGALL	0x0	/* log always */
