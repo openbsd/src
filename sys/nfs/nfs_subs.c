@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_subs.c,v 1.33 2001/08/19 17:45:07 jason Exp $	*/
+/*	$OpenBSD: nfs_subs.c,v 1.34 2001/08/19 18:14:54 art Exp $	*/
 /*	$NetBSD: nfs_subs.c,v 1.27.4.3 1996/07/08 20:34:24 jtc Exp $	*/
 
 /*
@@ -1049,28 +1049,6 @@ void
 nfs_init()
 {
 	static struct timeout nfs_timer_to;
-
-#if !defined(__alpha__) && !defined(__sparc64__) && defined(DIAGNOSTIC)
-	/*
-	 * Check to see if major data structures haven't bloated.
-	 */
-	if (sizeof (struct nfsnode) > NFS_NODEALLOC) {
-		printf("struct nfsnode bloated (> %dbytes)\n", NFS_NODEALLOC);
-		printf("Try reducing NFS_SMALLFH\n");
-	}
-	if (sizeof (struct nfsmount) > NFS_MNTALLOC) {
-		printf("struct nfsmount bloated (> %dbytes)\n", NFS_MNTALLOC);
-		printf("Try reducing NFS_MUIDHASHSIZ\n");
-	}
-	if (sizeof (struct nfssvc_sock) > NFS_SVCALLOC) {
-		printf("struct nfssvc_sock bloated (> %dbytes)\n",NFS_SVCALLOC);
-		printf("Try reducing NFS_UIDHASHSIZ\n");
-	}
-	if (sizeof (struct nfsuid) > NFS_UIDALLOC) {
-		printf("struct nfsuid bloated (> %dbytes)\n",NFS_UIDALLOC);
-		printf("Try unionizing the nu_nickname and nu_flag fields\n");
-	}
-#endif
 
 	nfsrtt.pos = 0;
 	rpc_vers = txdr_unsigned(RPC_VER2);
