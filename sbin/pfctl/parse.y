@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.316 2003/02/13 10:26:21 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.317 2003/02/14 13:23:17 cedric Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -2426,9 +2426,15 @@ binatrule	: no BINAT interface af proto FROM host TO ipspec redirection
 				binat.proto = $5->proto;
 				free($5);
 			}
+
 			if ($7 != NULL && disallow_table($7, "invalid use of "
 			    "table <%s> as the source address of a binat rule"))
 				YYERROR;
+			if ($10 != NULL && $10->host != NULL && disallow_table(
+			    $10->host, "invalid use of table <%s> as the "
+			    "redirect address of a binat rule"))
+				YYERROR;
+
 			if ($7 != NULL && $9 != NULL && $7->af != $9->af) {
 				yyerror("binat ip versions must match");
 				YYERROR;
