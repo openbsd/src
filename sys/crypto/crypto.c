@@ -1,3 +1,5 @@
+/*	$OpenBSD: crypto.c,v 1.7 2000/06/06 06:49:47 deraadt Exp $	*/
+
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *

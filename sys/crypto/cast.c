@@ -1,4 +1,5 @@
-/*      $OpenBSD: cast.c,v 1.1 2000/02/28 23:13:04 deraadt Exp $       */
+/*      $OpenBSD: cast.c,v 1.2 2000/06/06 06:49:47 deraadt Exp $       */
+
 /*
  *	CAST-128 in C
  *	Written by Steve Reid <sreid@sea-to-sky.net>

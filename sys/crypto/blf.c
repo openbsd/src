@@ -1,4 +1,5 @@
-/* $OpenBSD: blf.c,v 1.1 2000/02/28 23:13:04 deraadt Exp $ */
+/*	$OpenBSD: blf.c,v 1.2 2000/06/06 06:49:46 deraadt Exp $	*/
+
 /*
  * Blowfish block cipher for OpenBSD
  * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
