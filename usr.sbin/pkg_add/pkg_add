@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.11 2003/11/06 22:05:19 espie Exp $
+# $OpenBSD: pkg_add,v 1.12 2003/11/09 15:42:48 espie Exp $
 #
 # Copyright (c) 2003 Marc Espie.
 # 
@@ -305,7 +305,7 @@ sub really_add($)
 	my $plist = $handle->{plist};
 	my $dir = $handle->info();
 	my $pkgname = $plist->pkgname();
-	$ENV{'PKG_PREFIX'} = $plist->prefix();
+	$ENV{'PKG_PREFIX'} = '/usr/local';
 	# check for collisions with existing stuff
 	my $collisions = 0;
 	for my $item (@{$plist->{items}}) {
@@ -405,7 +405,7 @@ while (my $pkg = shift @todo) {
 	}
 	for my $dep (@{$plist->{libdepend}}) {
 		next if $dep->{name} ne $plist->pkgname();
-		if (!check_lib_specs($plist->prefix(), $dep->{libspec})) {
+		if (!check_lib_specs('/usr/local', $dep->{libspec})) {
 			print "Can't install $pkg: incorrect libspec: ",
 			    $dep->{libspec}, "\n";
 			next MAINLOOP;
