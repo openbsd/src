@@ -1,4 +1,4 @@
-/*	$OpenBSD: pathnames.h,v 1.3 1997/06/10 20:04:35 deraadt Exp $	*/
+/*	$OpenBSD: pathnames.h,v 1.4 1997/06/12 00:39:56 downsj Exp $	*/
 
 /*
  *	@(#)pathnames.h	5.4 (Berkeley) 6/1/90
@@ -85,7 +85,7 @@
 #define	_PATH_XFERTRACE	"/etc/namedb/tmp/xfer.trace"
 #define _PATH_XFERDDT	"/etc/namedb/tmp/xfer.ddt"
 #define	_PATH_TMPXFER	"/etc/namedb/tmp/xfer.ddt.XXXXXX"
-#define	_PATH_TMPDIR	"/var/namedb/tmp"
+#define	_PATH_TMPDIR	"/etc/namedb/tmp"
 
 #else /* BSD */
 
