@@ -2139,3 +2139,6 @@
 ./usr/mdec/netboot
 ./usr/mdec/stboot
 ./usr/mdec/tftpboot
+./usr/libdata/perl5/site_perl/m88k-openbsd/dev/mii/ciphyreg.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/if_vgereg.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/if_vgevar.ph

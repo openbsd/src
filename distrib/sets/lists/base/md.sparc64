@@ -2204,3 +2204,6 @@
 ./usr/sbin/eeprom
 ./usr/sbin/hotplugd
 ./usr/sbin/wsconscfg
+./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/mii/ciphyreg.ph
+./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/pci/if_vgereg.ph
+./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/pci/if_vgevar.ph

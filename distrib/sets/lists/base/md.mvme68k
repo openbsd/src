@@ -2193,3 +2193,6 @@
 ./usr/mdec/rboot
 ./usr/mdec/sboot
 ./usr/mdec/stboot
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/mii/ciphyreg.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/if_vgereg.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/if_vgevar.ph

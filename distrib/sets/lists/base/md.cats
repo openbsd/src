@@ -2270,3 +2270,6 @@
 ./usr/share/misc/pcvtfonts/vt220l.810
 ./usr/share/misc/pcvtfonts/vt220l.814
 ./usr/share/misc/pcvtfonts/vt220l.816
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/mii/ciphyreg.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/if_vgereg.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/if_vgevar.ph

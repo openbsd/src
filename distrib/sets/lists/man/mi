@@ -1110,6 +1110,7 @@
 ./usr/share/man/cat4/cd.0
 ./usr/share/man/cat4/cdce.0
 ./usr/share/man/cat4/ch.0
+./usr/share/man/cat4/ciphy.0
 ./usr/share/man/cat4/clcs.0
 ./usr/share/man/cat4/clct.0
 ./usr/share/man/cat4/cmpci.0
@@ -1643,6 +1644,7 @@
 ./usr/share/man/cat4/vax/vsbus.0
 ./usr/share/man/cat4/vax/ze.0
 ./usr/share/man/cat4/vga.0
+./usr/share/man/cat4/vge.0
 ./usr/share/man/cat4/viaenv.0
 ./usr/share/man/cat4/vlan.0
 ./usr/share/man/cat4/vnd.0

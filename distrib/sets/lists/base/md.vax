@@ -2099,3 +2099,6 @@
 ./usr/mdec/raboot
 ./usr/mdec/sdboot
 ./usr/mdec/xxboot
+./usr/libdata/perl5/site_perl/vax-openbsd/dev/mii/ciphyreg.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/if_vgereg.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/if_vgevar.ph

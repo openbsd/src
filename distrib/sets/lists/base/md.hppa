@@ -2203,3 +2203,6 @@
 ./usr/mdec/xxboot
 ./usr/sbin/wsconscfg
 ./usr/sbin/wsfontload
+./usr/libdata/perl5/site_perl/hppa-openbsd/dev/mii/ciphyreg.ph
+./usr/libdata/perl5/site_perl/hppa-openbsd/dev/pci/if_vgereg.ph
+./usr/libdata/perl5/site_perl/hppa-openbsd/dev/pci/if_vgevar.ph

@@ -2174,3 +2174,6 @@
 ./usr/mdec/installboot
 ./usr/mdec/mbr
 ./usr/sbin/wsconscfg
+./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/mii/ciphyreg.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/if_vgereg.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/if_vgevar.ph

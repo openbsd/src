@@ -403,6 +403,7 @@
 ./usr/include/dev/mii/amphyreg.h
 ./usr/include/dev/mii/bmtphyreg.h
 ./usr/include/dev/mii/brgphyreg.h
+./usr/include/dev/mii/ciphyreg.h
 ./usr/include/dev/mii/eephyreg.h
 ./usr/include/dev/mii/icsphyreg.h
 ./usr/include/dev/mii/inphyreg.h
@@ -495,6 +496,8 @@
 ./usr/include/dev/pci/if_tlreg.h
 ./usr/include/dev/pci/if_txpreg.h
 ./usr/include/dev/pci/if_txvar.h
+./usr/include/dev/pci/if_vgereg.h
+./usr/include/dev/pci/if_vgevar.h
 ./usr/include/dev/pci/if_vrreg.h
 ./usr/include/dev/pci/if_wbreg.h
 ./usr/include/dev/pci/isesreg.h
