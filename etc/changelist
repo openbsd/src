@@ -1,4 +1,4 @@
-#	$OpenBSD: changelist,v 1.40 2004/07/14 15:50:42 millert Exp $
+#	$OpenBSD: changelist,v 1.41 2005/02/07 06:01:07 david Exp $
 #
 # List of files which the security script backs up and checks
 # for modifications.
@@ -62,6 +62,7 @@
 /etc/networks
 /etc/newsyslog.conf
 /etc/ntpd.conf
+/etc/ospfd.conf
 /etc/passwd
 /etc/pf.conf
 /etc/pf.os
