@@ -1,4 +1,4 @@
-/*	$OpenBSD: psl.h,v 1.1 1998/07/07 21:32:44 mickey Exp $	*/
+/*	$OpenBSD: psl.h,v 1.2 1998/08/29 01:29:59 mickey Exp $	*/
 
 /*
  *  (c) Copyright 1987 HEWLETT-PACKARD COMPANY
@@ -78,8 +78,8 @@
 /*
  * Kernel PSW Masks
  */
-#define	RESET_PSW	(PSW_R | PSW_Q | PSW_P | PSW_D)
-#define	KERNEL_PSW	(PSW_R | PSW_Q | PSW_P | PSW_D | PSW_I)
+#define	RESET_PSW	(PSW_R | PSW_Q | PSW_P | PSW_D | PSW_I)
+#define	KERNEL_PSW	(PSW_C | PSW_Q | PSW_P | PSW_D)
 #define	SYSTEM_MASK	(PSW_R | PSW_Q | PSW_P | PSW_D | PSW_I)
 #define	GLOBAL_VAR_MASK	(PSW_H | PSW_L | PSW_C | PSW_M)
 #define	PER_INST_MASK	(PSW_X | PSW_T | PSW_N | PSW_B | PSW_V | PSW_CB | SYSTEM_MASK)
