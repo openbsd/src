@@ -1,4 +1,4 @@
-/*	$OpenBSD: bzero.S,v 1.2 1999/05/09 18:49:10 mickey Exp $	*/
+/*	$OpenBSD: bzero.S,v 1.3 1999/09/14 00:50:31 mickey Exp $	*/
 
 /*
  *  (c) Copyright 1988 HEWLETT-PACKARD COMPANY
@@ -47,7 +47,7 @@ ENTRY(blkclr)
  *	int		count;
  */
 ALTENTRY(bzero)
-        comb,>=,n r0,arg1,$bzero_exit
+	comb,>=,n r0,arg1,$bzero_exit
 
 	/*
 	 * If we need to clear less than a word do it a byte at a time
@@ -61,22 +61,22 @@ ALTENTRY(bzero)
 	 * store with stbys.
 	 */
 
-        extru   arg0,31,2,t2
-        add     arg1,t2,arg1
+	extru	arg0,31,2,t2
+	add	arg1,t2,arg1
 
 	/*
 	 * We will zero the destination in blocks of 16 bytes as long as we 
 	 * can and then we'll go to the 4 byte moves.
 	 */
 
-        addib,<,n -16,arg1,$bzero_word
+	addib,<,n -16,arg1,$bzero_word
 
 $bzero_loop_16
-        stbys,b,m r0,4(arg0)
-        stwm    r0,4(arg0)
-        stwm    r0,4(arg0)
-        addib,>= -16,arg1,$bzero_loop_16
-        stwm    r0,4(arg0)
+	stbys,b,m r0,4(arg0)
+	stwm	r0,4(arg0)
+	stwm	r0,4(arg0)
+	addib,>= -16,arg1,$bzero_loop_16
+	stwm	r0,4(arg0)
 
 	/*
 	 * see if there is anything left that needs to be zeroed in a word 
@@ -85,21 +85,21 @@ $bzero_loop_16
 	 */
 
 $bzero_word
-        addib,<,n 12,arg1,$bzero_cleanup
+	addib,<,n 12,arg1,$bzero_cleanup
 
 $bzero_loop_4
-        addib,>= -4,arg1,$bzero_loop_4
-        stbys,b,m r0,4(arg0)
+	addib,>= -4,arg1,$bzero_loop_4
+	stbys,b,m r0,4(arg0)
 
 	/*
 	 * zero the last bytes that may be unaligned on a word boundary
 	 */
 
 $bzero_cleanup
-        addib,=,n 4,arg1,$bzero_exit
-        add	arg0,arg1,arg0
-        b       $bzero_exit
-        stbys,e r0,0(arg0)
+	addib,=,n 4,arg1,$bzero_exit
+	add	arg0,arg1,arg0
+	b	$bzero_exit
+	stbys,e	r0,0(arg0)
 	b,n	$bzero_exit
 
 
@@ -108,8 +108,8 @@ $bzero_cleanup
 	 */
 
 $bzero_bytes
-        addib,> -1,arg1,$bzero_bytes
-        stbs,ma r0,1(arg0) 
+	addib,> -1,arg1,$bzero_bytes
+	stbs,ma r0,1(arg0) 
 
 $bzero_exit
 	bv	0(rp)
