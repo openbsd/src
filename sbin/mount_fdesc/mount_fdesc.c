@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_fdesc.c,v 1.9 2003/06/11 06:22:13 deraadt Exp $	*/
+/*	$OpenBSD: mount_fdesc.c,v 1.10 2003/07/03 22:41:40 tedu Exp $	*/
 /*	$NetBSD: mount_fdesc.c,v 1.7 1996/04/13 01:31:15 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mount_fdesc.c	8.2 (Berkeley) 3/27/94";
 #else
-static char rcsid[] = "$OpenBSD: mount_fdesc.c,v 1.9 2003/06/11 06:22:13 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: mount_fdesc.c,v 1.10 2003/07/03 22:41:40 tedu Exp $";
 #endif
 #endif /* not lint */
 
@@ -71,6 +71,7 @@ int
 main(int argc, char *argv[])
 {
 	int ch, mntflags;
+	char path[MAXPATHLEN];
 
 	mntflags = 0;
 	while ((ch = getopt(argc, argv, "o:")) != -1)
@@ -88,7 +89,10 @@ main(int argc, char *argv[])
 	if (argc != 2)
 		usage();
 
-	if (mount(MOUNT_FDESC, argv[1], mntflags, NULL)) {
+	if (realpath(argv[1], path) == NULL)
+		err(1, "realpath %s", path);
+
+	if (mount(MOUNT_FDESC, path, mntflags, NULL)) {
 		if (errno == EOPNOTSUPP)
 			errx(1, "%s: Filesystem not supported by kernel",
 			    argv[1]);

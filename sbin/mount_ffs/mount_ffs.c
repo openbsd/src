@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_ffs.c,v 1.16 2003/06/11 06:22:13 deraadt Exp $	*/
+/*	$OpenBSD: mount_ffs.c,v 1.17 2003/07/03 22:41:40 tedu Exp $	*/
 /*	$NetBSD: mount_ffs.c,v 1.3 1996/04/13 01:31:19 jtc Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mount_ufs.c	8.2 (Berkeley) 3/27/94";
 #else
-static char rcsid[] = "$OpenBSD: mount_ffs.c,v 1.16 2003/06/11 06:22:13 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: mount_ffs.c,v 1.17 2003/07/03 22:41:40 tedu Exp $";
 #endif
 #endif /* not lint */
 
@@ -74,7 +74,7 @@ main(int argc, char *argv[])
 {
 	struct ufs_args args;		/* XXX ffs_args */
 	int ch, mntflags;
-	char *fs_name, *errcause;
+	char fs_name[MAXPATHLEN], *errcause;
 
 	mntflags = 0;
 	optind = optreset = 1;		/* Reset for parse of new argv. */
@@ -94,7 +94,8 @@ main(int argc, char *argv[])
 		ffs_usage();
 
         args.fspec = argv[0];		/* The name of the device file. */
-	fs_name = argv[1];		/* The mount point. */
+	if (realpath(argv[1], fs_name) == NULL) 	/* The mount point. */
+		err(1, "realpath %s", fs_name);
 
 #define DEFAULT_ROOTUID	-2
 	args.export_info.ex_root = DEFAULT_ROOTUID;

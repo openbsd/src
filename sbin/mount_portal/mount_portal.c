@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_portal.c,v 1.24 2003/06/11 06:22:14 deraadt Exp $	*/
+/*	$OpenBSD: mount_portal.c,v 1.25 2003/07/03 22:41:40 tedu Exp $	*/
 /*	$NetBSD: mount_portal.c,v 1.8 1996/04/13 01:31:54 jtc Exp $	*/
 
 /*
@@ -43,7 +43,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mount_portal.c	8.6 (Berkeley) 4/26/95";
 #else
-static char rcsid[] = "$OpenBSD: mount_portal.c,v 1.24 2003/06/11 06:22:14 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: mount_portal.c,v 1.25 2003/07/03 22:41:40 tedu Exp $";
 #endif
 #endif /* not lint */
 
@@ -73,7 +73,7 @@ const struct mntopt mopts[] = {
 
 extern char *__progname;	/* from crt0.o */
 
-static char *mountpt;		/* made available to signal handler */
+static char mountpt[MAXPATHLEN];	/* made available to signal handler */
 
 static void usage(void);
 
@@ -152,7 +152,8 @@ main(int argc, char *argv[])
 	 * Get config file and mount point
 	 */
 	conf = argv[optind];
-	mountpt = argv[optind+1];
+	if (realpath(argv[optind+1], mountpt) == NULL)
+		err(1, "realpath %s", mountpt);
 
 	/*
 	 * Construct the listening socket

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_xfs.c,v 1.6 2000/01/22 20:25:02 deraadt Exp $	*/
+/*	$OpenBSD: mount_xfs.c,v 1.7 2003/07/03 22:41:40 tedu Exp $	*/
 /*
  * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
@@ -72,6 +72,7 @@ main(int argc, char **argv)
 {
 	int ch;
 	int mntflags = 0;
+	char path[MAXPATHLEN];
 
 	optind = optreset = 1;
 	while ((ch = getopt(argc, argv, "o:")) != -1)
@@ -90,7 +91,10 @@ main(int argc, char **argv)
 	if (argc != 2)
 		usage();
 
-	if (mount(MOUNT_XFS, argv[1], mntflags, argv[0])) {
+	if (realpath(argv[1], path) == NULL)
+		err(1, "realpath %s", path);
+
+	if (mount(MOUNT_XFS, path, mntflags, argv[0])) {
 		if (errno == EOPNOTSUPP)
 			errx(1, "Filesystem not supported by kernel");
 		else

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_procfs.c,v 1.10 2003/06/11 06:22:14 deraadt Exp $	*/
+/*	$OpenBSD: mount_procfs.c,v 1.11 2003/07/03 22:41:40 tedu Exp $	*/
 /*	$NetBSD: mount_procfs.c,v 1.7 1996/04/13 01:31:59 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mount_procfs.c	8.3 (Berkeley) 3/27/94";
 #else
-static char rcsid[] = "$OpenBSD: mount_procfs.c,v 1.10 2003/06/11 06:22:14 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: mount_procfs.c,v 1.11 2003/07/03 22:41:40 tedu Exp $";
 #endif
 #endif /* not lint */
 
@@ -75,6 +75,7 @@ main(int argc, char *argv[])
 {
 	int ch, mntflags, altflags;
 	struct procfs_args args;
+	char path[MAXPATHLEN];
 
 	mntflags = altflags = 0;
 	while ((ch = getopt(argc, argv, "o:")) != -1)
@@ -92,10 +93,13 @@ main(int argc, char *argv[])
 	if (argc != 2)
 		usage();
 
+	if (realpath(argv[1], path) == NULL)
+		err(1, "realpath %s", path);
+
 	args.version = PROCFS_ARGSVERSION;
 	args.flags = altflags;
 
-	if (mount(MOUNT_PROCFS, argv[1], mntflags, &args)) {
+	if (mount(MOUNT_PROCFS, path, mntflags, &args)) {
 		if (errno == EOPNOTSUPP)
 			errx(1, "%s: Filesystem not supported by kernel",
 			    argv[1]);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_umap.c,v 1.13 2003/06/11 06:22:14 deraadt Exp $	*/
+/*	$OpenBSD: mount_umap.c,v 1.14 2003/07/03 22:41:40 tedu Exp $	*/
 /*	$NetBSD: mount_umap.c,v 1.5 1996/04/13 01:32:05 jtc Exp $	*/
 
 /*
@@ -43,7 +43,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mount_umap.c	8.3 (Berkeley) 3/27/94";
 #else
-static char rcsid[] = "$OpenBSD: mount_umap.c,v 1.13 2003/06/11 06:22:14 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: mount_umap.c,v 1.14 2003/07/03 22:41:40 tedu Exp $";
 #endif
 #endif /* not lint */
 
@@ -98,7 +98,7 @@ main(int argc, char *argv[])
 	u_long umapdata[UMAPFILEENTRIES][2];
 	u_long gmapdata[GMAPFILEENTRIES][2];
 	int ch, count, gnentries, mntflags, unentries;
-	char *gmapfile, *umapfile, *source, *target, buf[20];
+	char *gmapfile, *umapfile, *source, target[MAXPATHLEN], buf[20];
 
 	mntflags = 0;
 	umapfile = gmapfile = NULL;
@@ -124,7 +124,8 @@ main(int argc, char *argv[])
 		usage();
 
 	source = argv[0];
-	target = argv[1];
+	if (realpath(argv[1], target) == NULL)
+		err(1, "realpath %s", target);
 
 	/* Read in uid mapping data. */
 	if ((fp = fopen(umapfile, "r")) == NULL)
@@ -225,7 +226,7 @@ main(int argc, char *argv[])
 	args.gnentries = gnentries;
 	args.gmapdata  = gmapdata;
 
-	if (mount(MOUNT_UMAP, argv[1], mntflags, &args)) {
+	if (mount(MOUNT_UMAP, target, mntflags, &args)) {
 		if (errno == EOPNOTSUPP)
 			errx(1, "%s: Filesystem not supported by kernel",
 			    argv[1]);

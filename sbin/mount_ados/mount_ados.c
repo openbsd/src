@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_ados.c,v 1.11 2003/07/02 22:38:53 avsm Exp $	*/
+/*	$OpenBSD: mount_ados.c,v 1.12 2003/07/03 22:41:40 tedu Exp $	*/
 /*	$NetBSD: mount_ados.c,v 1.5 1996/04/13 01:30:59 jtc Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: mount_ados.c,v 1.11 2003/07/02 22:38:53 avsm Exp $";
+static char rcsid[] = "$OpenBSD: mount_ados.c,v 1.12 2003/07/03 22:41:40 tedu Exp $";
 #endif /* not lint */
 
 #include <sys/cdefs.h>
@@ -67,7 +67,7 @@ main(int argc, char *argv[])
 	struct adosfs_args args;
 	struct stat sb;
 	int c, mntflags, set_gid, set_uid, set_mask;
-	char *dev, *dir, ndir[MAXPATHLEN+1];
+	char *dev, dir[MAXPATHLEN];
 
 	mntflags = set_gid = set_uid = set_mask = 0;
 	(void)memset(&args, '\0', sizeof(args));
@@ -100,16 +100,8 @@ main(int argc, char *argv[])
 		usage();
 
 	dev = argv[optind];
-	dir = argv[optind + 1];
-	if (dir[0] != '/') {
-		warnx("\"%s\" is a relative path.", dir);
-		if (getcwd(ndir, sizeof(ndir)) == NULL)
-			err(1, "getcwd");
-		strlcat(ndir, "/", sizeof(ndir));
-		strlcat(ndir, dir, sizeof(ndir));
-		dir = ndir;
-		warnx("using \"%s\" instead.", dir);
-	}
+	if (realpath(argv[optind + 1], dir) == NULL)
+		err(1, "realpath %s", dir);
 
 	args.fspec = dev;
 	args.export_info.ex_root = -2;	/* unchecked anyway on DOS fs */

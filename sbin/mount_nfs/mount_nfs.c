@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_nfs.c,v 1.32 2003/06/11 06:22:14 deraadt Exp $	*/
+/*	$OpenBSD: mount_nfs.c,v 1.33 2003/07/03 22:41:40 tedu Exp $	*/
 /*	$NetBSD: mount_nfs.c,v 1.12.4.1 1996/05/25 22:48:05 fvdl Exp $	*/
 
 /*
@@ -180,7 +180,7 @@ main(int argc, char *argv[])
 	struct nfs_args *nfsargsp;
 	struct nfs_args nfsargs;
 	int mntflags, altflags, num;
-	char *name, *p, *spec;
+	char name[MAXPATHLEN], *p, *spec;
 
 	retrycnt = DEF_RETRY;
 
@@ -368,7 +368,8 @@ main(int argc, char *argv[])
 		usage();
 
 	spec = *argv++;
-	name = *argv;
+	if (realpath(*argv, name) == NULL)
+		err(1, "realpath %s", name);
 
 	if (!getnfsargs(spec, nfsargsp))
 		exit(1);

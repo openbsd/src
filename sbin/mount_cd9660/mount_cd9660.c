@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_cd9660.c,v 1.15 2003/06/11 06:22:13 deraadt Exp $	*/
+/*	$OpenBSD: mount_cd9660.c,v 1.16 2003/07/03 22:41:40 tedu Exp $	*/
 /*	$NetBSD: mount_cd9660.c,v 1.3 1996/04/13 01:31:08 jtc Exp $	*/
 
 /*
@@ -45,7 +45,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mount_cd9660.c	8.4 (Berkeley) 3/27/94";
 #else
-static char rcsid[] = "$OpenBSD: mount_cd9660.c,v 1.15 2003/06/11 06:22:13 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: mount_cd9660.c,v 1.16 2003/07/03 22:41:40 tedu Exp $";
 #endif
 #endif /* not lint */
 
@@ -75,7 +75,7 @@ main(int argc, char *argv[])
 {
 	struct iso_args args;
 	int ch, mntflags, opts;
-	char *dev, *dir;
+	char *dev, dir[MAXPATHLEN];
 
 	mntflags = opts = 0;
 	while ((ch = getopt(argc, argv, "egjo:R")) != -1)
@@ -106,7 +106,8 @@ main(int argc, char *argv[])
 		usage();
 
 	dev = argv[0];
-	dir = argv[1];
+	if (realpath(argv[1], dir) == NULL)
+		err(1, "realpath %s", dir);
 
 #define DEFAULT_ROOTUID	-2
 	args.fspec = dev;
