@@ -1,6 +1,6 @@
-#	$OpenBSD: Makefile,v 1.2 2002/02/23 01:25:11 art Exp $
+#	$OpenBSD: Makefile,v 1.3 2004/05/23 16:04:18 markus Exp $
 
-SUBDIR+= pfctl
+SUBDIR+= ipsecadm pfctl
 
 install:
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsecadm.c,v 1.78 2004/05/23 08:48:03 markus Exp $ */
+/* $OpenBSD: ipsecadm.c,v 1.79 2004/05/23 16:04:18 markus Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -1385,6 +1385,9 @@ main(int argc, char *argv[])
 				} else if (!strcasecmp(argv[i + 1], "ipcomp")) {
 					smsg.sadb_msg_satype = SADB_X_SATYPE_IPCOMP;
 					proto = IPPROTO_IPCOMP;
+				} else if (!strcasecmp(argv[i + 1], "tcpmd5")) {
+					smsg.sadb_msg_satype = SADB_X_SATYPE_TCPSIGNATURE;
+					proto = IPPROTO_TCP;
 				} else {
 					fprintf(stderr,
 					    "%s: unknown security protocol type %s\n",
