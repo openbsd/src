@@ -1,4 +1,4 @@
-/*	$OpenBSD: ispmbox.h,v 1.11 2001/01/09 03:28:12 mjacob Exp $ */
+/*	$OpenBSD: ispmbox.h,v 1.12 2001/02/12 23:48:29 mjacob Exp $ */
 /*
  * Mailbox and Queue Entry Definitions for for Qlogic ISP SCSI adapters.
  *
@@ -588,6 +588,22 @@ typedef struct isp_icb {
 	array[ICB_NNM5] = (u_int8_t) ((wwn >> 40) & 0xff), \
 	array[ICB_NNM6] = (u_int8_t) ((wwn >> 48) & 0xff), \
 	array[ICB_NNM7] = (u_int8_t) ((wwn >> 56) & 0xff)
+
+/*
+ * FC-AL Position Map
+ *
+ * This is an at most 128 byte map that returns either
+ * the LILP or Firmware generated list of ports.
+ *
+ * We deviate a bit from the returned qlogic format to
+ * use an extra bit to say whether this was a LILP or
+ * f/w generated map.
+ */
+typedef struct {
+	u_int8_t	fwmap	: 1,
+			count	: 7;
+	u_int8_t	map[127];
+} fcpos_map_t;
 
 /*
  * Port Data Base Element
