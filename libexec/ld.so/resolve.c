@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.c,v 1.3 2001/05/31 22:10:06 art Exp $ */
+/*	$OpenBSD: resolve.c,v 1.4 2001/06/08 06:46:59 art Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -53,9 +53,8 @@ void * _dl_malloc(int);
  */
 
 elf_object_t *
-_dl_add_object(const char *objname, Elf_Dyn *dynp,
-			     const u_long *dl_data, const int objtype,
-			     const long laddr, const long loff)
+_dl_add_object(const char *objname, Elf_Dyn *dynp, const u_long *dl_data,
+	const int objtype, const long laddr, const long loff)
 {
 	elf_object_t *object;
 #if 0
@@ -63,31 +62,30 @@ _dl_add_object(const char *objname, Elf_Dyn *dynp,
 		objname, dynp, dl_data, objtype, laddr, loff);
 #endif
 
-	object = (elf_object_t *)_dl_malloc(sizeof(elf_object_t));
+	object = _dl_malloc(sizeof(elf_object_t));
 
-	if(_dl_objects == 0) {	/* First object ? */
+	if (_dl_objects == 0) {			/* First object ? */
 		_dl_last_object = _dl_objects = object;
-	}
-	else {
+	} else {
 		_dl_last_object->next = object;
 		object->prev = _dl_last_object;
 		_dl_last_object = object;
 	}
 
 	object->load_dyn = dynp;
-	while(dynp->d_tag != DT_NULL) {
-		if(dynp->d_tag < DT_NUM) {
+	while (dynp->d_tag != DT_NULL) {
+		if (dynp->d_tag < DT_NUM) {
 			object->Dyn.info[dynp->d_tag] = dynp->d_un.d_val;
-		}
-		else if(dynp->d_tag >= DT_LOPROC && dynp->d_tag < DT_LOPROC + DT_NUM) {
+		} else if (dynp->d_tag >= DT_LOPROC &&
+			    dynp->d_tag < DT_LOPROC + DT_NUM) {
 			object->Dyn.info[dynp->d_tag + DT_NUM - DT_LOPROC] = dynp->
 d_un.d_val;
 		}
-		if(dynp->d_tag == DT_TEXTREL)
+		if (dynp->d_tag == DT_TEXTREL)
 			object->dyn.textrel = 1;
-		if(dynp->d_tag == DT_SYMBOLIC)
+		if (dynp->d_tag == DT_SYMBOLIC)
 			object->dyn.symbolic = 1;
-		if(dynp->d_tag == DT_BIND_NOW)
+		if (dynp->d_tag == DT_BIND_NOW)
 			object->dyn.bind_now = 1;
 		dynp++;
 	}
