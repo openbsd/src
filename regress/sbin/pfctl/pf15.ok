@@ -1,5 +1,5 @@
 @0 scrub in all no-df fragment reassemble 
-@0 scrub in all min-ttl 25 fragment reassemble 
-@0 scrub in all max-mss 224 fragment reassemble 
-@0 scrub out all no-df max-mss 224 fragment reassemble 
-@0 scrub in all max-mss 224 fragment reassemble 
+@1 scrub in all min-ttl 25 fragment reassemble 
+@2 scrub in all max-mss 224 fragment reassemble 
+@3 scrub out all no-df max-mss 224 fragment reassemble 
+@4 scrub in all max-mss 224 fragment reassemble 
