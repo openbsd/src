@@ -137,11 +137,10 @@ program opens the file
 and appends the user's
 .Fa utmp
 record.
-The same
+! When the user logs out, a
 .Fa utmp
-record but with an updated ut_time, empty ut_host,
-and empty ut_name is later appended
-to the file when the user logs out. (See
+! record with the tty line, an updated time stamp, and zero'd name and host
+! fields is appended to the file. (See
 .Xr init 8 . )
 The
 .Nm wtmp
