@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.43 2001/05/16 05:07:52 millert Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.44 2001/06/18 09:00:24 art Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -84,7 +84,7 @@ int	filt_signal(struct knote *kn, long hint);
 struct filterops sig_filtops =
 	{ 0, filt_sigattach, filt_sigdetach, filt_signal };
 
-void stop __P((struct proc *p));
+void proc_stop __P((struct proc *p));
 void killproc __P((struct proc *, char *));
 int cansignal __P((struct proc *, struct pcred *, struct proc *, int));
 
@@ -864,7 +864,7 @@ psignal(p, signum)
 			p->p_xstat = signum;
 			if ((p->p_pptr->p_flag & P_NOCLDSTOP) == 0)
 				psignal(p->p_pptr, SIGCHLD);
-			stop(p);
+			proc_stop(p);
 			goto out;
 		}
 		/*
@@ -1006,10 +1006,8 @@ issignal(p)
 			} else {
 				/* ptrace debugging */
 				psignal(p->p_pptr, SIGCHLD);
-				do {
-					stop(p);
-					mi_switch();
-				} while (!trace_req(p) && p->p_flag & P_TRACED);
+				proc_stop(p);
+				mi_switch();
 			}
 
 			/*
@@ -1069,7 +1067,7 @@ issignal(p)
 				p->p_xstat = signum;
 				if ((p->p_pptr->p_flag & P_NOCLDSTOP) == 0)
 					psignal(p->p_pptr, SIGCHLD);
-				stop(p);
+				proc_stop(p);
 				mi_switch();
 				break;
 			} else if (prop & SA_IGNORE) {
@@ -1114,8 +1112,8 @@ keep:
  * on the run queue.
  */
 void
-stop(p)
-	register struct proc *p;
+proc_stop(p)
+	struct proc *p;
 {
 
 	p->p_stat = SSTOP;
