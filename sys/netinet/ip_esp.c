@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.c,v 1.52 2001/03/15 06:30:59 mickey Exp $ */
+/*	$OpenBSD: ip_esp.c,v 1.53 2001/03/23 04:27:33 angelos Exp $ */
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -1158,13 +1158,26 @@ m_pad(struct mbuf *m, int n)
 	return NULL;
     }
 
+    /* Check for zero-length trailing mbufs, and find the last one */
+    for (m1 = m0; m1->m_next; m1 = m1->m_next)
+    {
+	if (m1->m_next->m_len != 0)
+	{
+	    DPRINTF(("m_pad(): length mismatch (should be %d instead of %d)\n",
+		     m->m_pkthdr.len, m->m_pkthdr.len + m1->m_next->m_len));
+	    m_freem(m);
+	    return NULL;
+	}
+
+	m0 = m1->m_next;
+    }
+
     if ((m0->m_flags & M_EXT) ||
 	(m0->m_data + m0->m_len + pad >= &(m0->m_dat[MLEN])))
     {
 	/*
 	 * Add an mbuf to the chain
 	 */
-
 	MGET(m1, M_DONTWAIT, MT_DATA);
 	if (m1 == 0)
 	{
