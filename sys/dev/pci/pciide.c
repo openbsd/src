@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.84 2002/06/08 23:04:07 chris Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.85 2002/06/08 23:32:51 chris Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -326,6 +326,14 @@ const struct pciide_product_desc pciide_amd_products[] =  {
 	  0,
 	  amd756_chip_map
 	},
+	{ PCI_PRODUCT_AMD_PBC768_IDE,
+	  0,
+	  amd756_chip_map
+	},
+	{ PCI_PRODUCT_AMD_8111_IDE,
+	  0,
+	  amd756_chip_map
+	}
 };
 
 #ifdef notyet
@@ -1978,6 +1986,8 @@ amd756_chip_map(sc, pa)
 	sc->sc_wdcdev.DMA_cap = 2;
 	switch (sc->sc_pp->ide_product) {
 	case PCI_PRODUCT_AMD_766_IDE:
+	case PCI_PRODUCT_AMD_PBC768_IDE:
+	case PCI_PRODUCT_AMD_8111_IDE:
 		sc->sc_wdcdev.UDMA_cap = 5;
 		break;
 	default:
@@ -3627,7 +3637,8 @@ hpt_pci_intr(arg)
 	for (i = 0; i < sc->sc_wdcdev.nchannels; i++) {
 		dmastat = bus_space_read_1(sc->sc_dma_iot, sc->sc_dma_ioh,
 		    IDEDMA_CTL + IDEDMA_SCH_OFFSET * i);
-		if((dmastat & IDEDMA_CTL_INTR) == 0)
+		if((dmastat & (IDEDMA_CTL_ACT | IDEDMA_CTL_INTR)) !=
+		    IDEDMA_CTL_INTR)
 		    continue;
 		cp = &sc->pciide_channels[i];
 		wdc_cp = &cp->wdc_channel;	       
