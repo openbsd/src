@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld.c,v 1.32 2002/12/11 23:24:39 millert Exp $	*/
+/*	$OpenBSD: rtld.c,v 1.33 2003/01/05 09:04:10 pvalchev Exp $	*/
 /*	$NetBSD: rtld.c,v 1.43 1996/01/14 00:35:17 pk Exp $	*/
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -1529,15 +1529,17 @@ xprintf("dlclose(%s): refcount = %d\n", smp->som_path, LM_PRIVATE(smp)->spd_refc
 static void *
 __dlsym(void *fd, const char *sym)
 {
-	struct so_map	*smp = (struct so_map *)fd, *src_map = NULL;
+	struct so_map	*smp, *src_map = NULL;
 	struct nzlist	*np;
 	long		addr;
 
 	/*
 	 * Restrict search to passed map if dlopen()ed.
 	 */
-	if (LM_PRIVATE(smp)->spd_flags & RTLD_DL)
-		src_map = smp;
+	if (fd == NULL)
+		smp = link_map_head;
+	else
+		src_map = smp = (struct so_map *)fd;
 
 	np = lookup(sym, &src_map, 1);
 	if (np == NULL) {
