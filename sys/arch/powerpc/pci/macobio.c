@@ -128,7 +128,6 @@ obio_attach(parent, self, aux)
 			/* always ??? */
 			heathrow_FCR = mapiodev(reg[2] + HEATHROW_FCR_OFFSET,
 				4);
-			printf("heathrow fcr, %x\n", heathrow_FCR);
 		}
 		break;
 	case 0x22:	/* keylargo */
