@@ -4,12 +4,12 @@
 # generated from:
 #
 #	OpenBSD: etc.sparc64/MAKEDEV.md,v 1.17 2002/02/14 13:29:21 todd Exp 
-#	OpenBSD: MAKEDEV.mi,v 1.32 2002/02/15 21:13:47 todd Exp 
-#	OpenBSD: MAKEDEV.sub,v 1.6 2002/02/14 05:50:37 todd Exp 
+#	OpenBSD: MAKEDEV.mi,v 1.34 2002/02/17 05:14:30 deraadt Exp 
+#	OpenBSD: MAKEDEV.sub,v 1.7 2002/02/16 01:19:52 deraadt Exp 
 #
-#	$OpenBSD: MAKEDEV,v 1.56 2002/02/15 21:16:02 todd Exp $
+#	$OpenBSD: MAKEDEV,v 1.57 2002/02/17 05:14:55 deraadt Exp $
 #
-# Copyright (c) 2001 Todd T. Fries <todd@OpenBSD.org>
+# Copyright (c) 2001,2002 Todd T. Fries <todd@OpenBSD.org>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -34,7 +34,7 @@
 # Device "make" file.  Valid arguments:
 #	all	makes all known devices, including local devices.
 #		Tries to make the ``standard'' number of each type.
-#	ramdisk	devices to be put on install floppies
+#	ramdisk	devices to be put on ramdisk-based media
 #	std	standard devices
 #	local	configuration specific devices
 # Tapes:
@@ -46,7 +46,7 @@
 #	sd*	SCSI disks
 #	cd*	SCSI cdrom drives
 #	vnd*	"file" pseudo-disks
-#	rd*	"ramdisk" pseudo-disks
+#	rd*	"rd" pseudo-disks
 #	ccd*	concatenated disk devices
 #	raid*	RAIDframe disk devices
 # Console ports:

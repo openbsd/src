@@ -3,13 +3,13 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.sparc/MAKEDEV.md,v 1.8 2002/02/14 13:29:20 todd Exp 
-#	OpenBSD: MAKEDEV.mi,v 1.32 2002/02/15 21:13:47 todd Exp 
-#	OpenBSD: MAKEDEV.sub,v 1.6 2002/02/14 05:50:37 todd Exp 
+#	OpenBSD: etc.sparc/MAKEDEV.md,v 1.9 2002/02/17 05:14:30 deraadt Exp 
+#	OpenBSD: MAKEDEV.mi,v 1.34 2002/02/17 05:14:30 deraadt Exp 
+#	OpenBSD: MAKEDEV.sub,v 1.7 2002/02/16 01:19:52 deraadt Exp 
 #
-#	$OpenBSD: MAKEDEV,v 1.85 2002/02/15 21:16:02 todd Exp $
+#	$OpenBSD: MAKEDEV,v 1.86 2002/02/17 05:14:55 deraadt Exp $
 #
-# Copyright (c) 2001 Todd T. Fries <todd@OpenBSD.org>
+# Copyright (c) 2001,2002 Todd T. Fries <todd@OpenBSD.org>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -45,7 +45,7 @@
 #	uk*	SCSI Unknown device
 #	ss*	SCSI scanners
 #	xy*	Xylogic 450/451 disks
-#	rd*	"ramdisk" pseudo-disks
+#	rd*	"rd" pseudo-disks
 #	xd*	Xylogic 753/7053 disks
 #	fd*	Floppy disk drives (3 1/2", 5 1/4")
 #	vnd*	"file" pseudo-disks
@@ -197,7 +197,7 @@ U=`unt $i`
 
 case $i in
 ramdisk)
-	R std random
+	R std random bpf0
 	R fd0 sd0 sd1 rd0
 	;;
 

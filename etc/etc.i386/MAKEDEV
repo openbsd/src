@@ -3,13 +3,13 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.i386/MAKEDEV.md,v 1.4 2002/02/14 13:29:20 todd Exp 
-#	OpenBSD: MAKEDEV.mi,v 1.32 2002/02/15 21:13:47 todd Exp 
-#	OpenBSD: MAKEDEV.sub,v 1.6 2002/02/14 05:50:37 todd Exp 
+#	OpenBSD: etc.i386/MAKEDEV.md,v 1.5 2002/02/17 05:14:30 deraadt Exp 
+#	OpenBSD: MAKEDEV.mi,v 1.34 2002/02/17 05:14:30 deraadt Exp 
+#	OpenBSD: MAKEDEV.sub,v 1.7 2002/02/16 01:19:52 deraadt Exp 
 #
-#	$OpenBSD: MAKEDEV,v 1.120 2002/02/15 21:16:02 todd Exp $
+#	$OpenBSD: MAKEDEV,v 1.121 2002/02/17 05:14:55 deraadt Exp $
 #
-# Copyright (c) 2001 Todd T. Fries <todd@OpenBSD.org>
+# Copyright (c) 2001,2002 Todd T. Fries <todd@OpenBSD.org>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -34,9 +34,8 @@
 # Device "make" file.  Valid arguments:
 #	all	makes all known devices, including local devices.
 #		Tries to make the ``standard'' number of each type.
-#	ramdisk	devices to be put on install floppies
+#	ramdisk	devices to be put on ramdisk-based media
 #	std	standard devices
-#	ramdisk	makes all devices for a ramdisk kernel
 #	local	configuration specific devices
 # Tapes:
 #	wt*		QIC-interface (e.g. not SCSI) 3M cartridge tape
@@ -49,7 +48,7 @@
 #	cd*	SCSI cdrom drives
 #	mcd*	Mitsumi cdrom drives
 #	vnd*	"file" pseudo-disks
-#	rd*	"ramdisk" pseudo-disks
+#	rd*	"rd" pseudo-disks
 #	ccd*	concatenated disk devices
 #	raid*	RAIDframe disk devices
 # Console ports:
@@ -222,7 +221,7 @@ U=`unt $i`
 
 case $i in
 ramdisk)
-	R std wt0 fd0 wd0 wd1 sd0 sd1 tty00 tty01 rd0
+	R std bpf0 fd0 wd0 wd1 sd0 sd1 tty00 tty01 rd0
 	R st0 cd0 ttyC0 random
 	;;
 
@@ -551,11 +550,6 @@ wt*)
 
 local)
 	test -s $T.local && sh $T.local
-	;;
-
-ramdisk)
-	R bpf0 std mcd0 st0 st1 cd0 cd1 sd0 sd1 sd2 sd3 wd0 wd1 wd2
-	R wd3 rd0 wt0 ttyC0
 	;;
 
 all)
