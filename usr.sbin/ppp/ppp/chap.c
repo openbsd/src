@@ -17,7 +17,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $OpenBSD: chap.c,v 1.25 2000/11/07 23:32:04 brian Exp $
+ * $OpenBSD: chap.c,v 1.26 2001/04/01 22:41:23 brian Exp $
  *
  *	TODO:
  */
@@ -810,16 +810,12 @@ chap_Input(struct bundle *bundle, struct link *l, struct mbuf *bp)
         name = chap->auth.in.name;
         nlen = strlen(name);
 #ifndef NORADIUS
-        if (*bundle->radius.cfg.file) {
-          u_char end;
-
-          end = chap->challenge.local[*chap->challenge.local+1];
-          chap->challenge.local[*chap->challenge.local+1] = '\0';
+        if (*bundle->radius.cfg.file)
           radius_Authenticate(&bundle->radius, &chap->auth,
-                              chap->auth.in.name, ans,
-                              chap->challenge.local + 1);
-          chap->challenge.local[*chap->challenge.local+1] = end;
-        } else
+                              chap->auth.in.name, ans, alen + 1,
+                              chap->challenge.local + 1,
+                              *chap->challenge.local);
+        else
 #endif
         {
           key = auth_GetSecret(bundle, name, nlen, p);

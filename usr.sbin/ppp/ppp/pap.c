@@ -18,7 +18,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $OpenBSD: pap.c,v 1.14 2000/07/19 11:06:35 brian Exp $
+ * $OpenBSD: pap.c,v 1.15 2001/04/01 22:41:23 brian Exp $
  *
  *	TODO:
  */
@@ -249,7 +249,7 @@ pap_Input(struct bundle *bundle, struct link *l, struct mbuf *bp)
 #ifndef NORADIUS
       if (*bundle->radius.cfg.file)
         radius_Authenticate(&bundle->radius, authp, authp->in.name,
-                            key, NULL);
+                            key, strlen(key), NULL, 0);
       else
 #endif
       if (auth_Validate(bundle, authp->in.name, key, p))

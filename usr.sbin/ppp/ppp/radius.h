@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: radius.h,v 1.5 2001/03/24 01:06:05 brian Exp $
+ *	$OpenBSD: radius.h,v 1.6 2001/04/01 22:41:23 brian Exp $
  */
 
 struct radius {
@@ -65,7 +65,8 @@ extern void radius_Destroy(struct radius *);
 
 extern void radius_Show(struct radius *, struct prompt *);
 extern void radius_Authenticate(struct radius *, struct authinfo *,
-                                const char *, const char *, const char *);
+                                const char *, const char *, int,
+                                const char *, int);
 extern void radius_Account(struct radius *, struct radacct *, 
                            struct datalink *, int, struct in_addr *,
                            struct in_addr *, struct pppThroughput *);
