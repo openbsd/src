@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.3 2003/12/20 15:10:33 henning Exp $
+#	$OpenBSD: Makefile,v 1.4 2003/12/20 20:46:08 henning Exp $
 
 PROG=	bgpd
 SRCS=	bgpd.c buffer.c session.c log.c parse.y config.c imsg.c \
@@ -6,9 +6,8 @@ SRCS=	bgpd.c buffer.c session.c log.c parse.y config.c imsg.c \
 CFLAGS+= -Wall
 CFLAGS+= -Wstrict-prototypes -Wmissing-prototypes
 CLFAGS+= -Wmissing-declarations -Wredundant-decls
-CFLAGS+= -Wshadow -Wpointer-arith -Wcast-qual -Wcast-align
+CFLAGS+= -Wshadow -Wpointer-arith -Wcast-qual
 CFLAGS+= -Wsign-compare
-CFLAGS+= -Werror
 YFLAGS=
 NOMAN=
 
