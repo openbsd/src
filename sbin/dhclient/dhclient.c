@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.50 2004/05/07 23:05:19 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.51 2004/05/08 16:16:33 henning Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -1982,7 +1982,7 @@ void
 script_set_env(struct client_state *client, const char *prefix,
     const char *name, const char *value)
 {
-	int i, namelen;
+	int i, j, namelen;
 
 	namelen = strlen(name);
 
@@ -2022,11 +2022,11 @@ script_set_env(struct client_state *client, const char *prefix,
 		error("script_set_env: no memory for variable assignment");
 
 	/* No `` or $() command substitution allowed in environment values! */
-	for (i=0; i < strlen(value); i++)
-		switch (value[i]) {
+	for (j=0; j < strlen(value); j++)
+		switch (value[j]) {
 		case '`':
 		case '$':
-			error("illegal character (%c) in value '%s'", value[i],
+			error("illegal character (%c) in value '%s'", value[j],
 			    value);
 			/* not reached */
 		}
