@@ -1,4 +1,4 @@
-/*	$OpenBSD: ad1848.c,v 1.19 1999/07/29 09:45:04 niklas Exp $	*/
+/*	$OpenBSD: ad1848.c,v 1.20 2000/03/02 23:02:48 mickey Exp $	*/
 /*	$NetBSD: ad1848.c,v 1.45 1998/01/30 02:02:38 augustss Exp $	*/
 
 /*
@@ -151,7 +151,7 @@ int	ad1848_set_speed __P((struct ad1848_softc *, u_long *));
 void	ad1848_mute_monitor __P((void *, int));
 
 static int ad_read __P((struct ad1848_softc *, int));
-static __inline void ad_write __P((struct ad1848_softc *, int, int));
+static void ad_write __P((struct ad1848_softc *, int, int));
 static void ad_set_MCE __P((struct ad1848_softc *, int));
 static void wait_for_calibration __P((struct ad1848_softc *));
 
@@ -163,23 +163,27 @@ ad_read(sc, reg)
     struct ad1848_softc *sc;
     int reg;
 {
-    int x;
+    int x, s;
 
+    s = splaudio();
     ADWRITE(sc, AD1848_IADDR, (reg & 0xff) | sc->MCE_bit);
     x = ADREAD(sc, AD1848_IDATA);
+    splx(s);
     /*  printf("(%02x<-%02x) ", reg|sc->MCE_bit, x); */
 
     return x;
 }
 
-static __inline void
+static void
 ad_write(sc, reg, data)
     struct ad1848_softc *sc;
     int reg;
     int data;
 {
+    int s = splaudio();
     ADWRITE(sc, AD1848_IADDR, (reg & 0xff) | sc->MCE_bit);
     ADWRITE(sc, AD1848_IDATA, data & 0xff);
+    splx(s);
     /* printf("(%02x->%02x) ", reg|sc->MCE_bit, data); */
 }
 
