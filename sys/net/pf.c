@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.24 2001/06/25 08:42:08 art Exp $ */
+/*	$OpenBSD: pf.c,v 1.25 2001/06/25 08:58:21 art Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -58,15 +58,15 @@
  * Tree data structure
  */
 
-struct tree_node {
+struct pf_tree_node {
 	struct tree_key {
 		u_int32_t	 addr[2];
 		u_int16_t	 port[2];
 		u_int8_t	 proto;
 	}			 key;
 	struct state		*state;
-	struct tree_node	*left;
-	struct tree_node	*right;
+	struct pf_tree_node	*left;
+	struct pf_tree_node	*right;
 	signed char		 balance;
 };
 
@@ -78,7 +78,7 @@ struct rule		*rulehead;
 struct nat		*nathead;
 struct rdr		*rdrhead;
 struct state		*statehead;
-struct tree_node	*tree_lan_ext, *tree_ext_gwy;
+struct pf_tree_node	*tree_lan_ext, *tree_ext_gwy;
 struct timeval		 pftv;
 struct status		 status;
 struct ifnet		*status_ifp;
@@ -98,12 +98,12 @@ struct pool		pf_state_pl;
  */
 
 int		 tree_key_compare(struct tree_key *, struct tree_key *);
-void		 tree_rotate_left(struct tree_node **);
-void		 tree_rotate_right(struct tree_node **);
-int		 tree_insert(struct tree_node **, struct tree_key *,
+void		 tree_rotate_left(struct pf_tree_node **);
+void		 tree_rotate_right(struct pf_tree_node **);
+int		 tree_insert(struct pf_tree_node **, struct tree_key *,
 		    struct state *);
-int		 tree_remove(struct tree_node **, struct tree_key *);
-struct state	*find_state(struct tree_node *, struct tree_key *);
+int		 tree_remove(struct pf_tree_node **, struct tree_key *);
+struct state	*find_state(struct pf_tree_node *, struct tree_key *);
 void		 insert_state(struct state *);
 void		 purge_expired_states(void);
 void		 print_ip(struct ifnet *, struct ip *);
@@ -174,9 +174,9 @@ tree_key_compare(struct tree_key *a, struct tree_key *b)
 }
 
 void
-tree_rotate_left(struct tree_node **p)
+tree_rotate_left(struct pf_tree_node **p)
 {
-	struct tree_node *q = *p;
+	struct pf_tree_node *q = *p;
 
 	*p = (*p)->right;
 	q->right = (*p)->left;
@@ -190,9 +190,9 @@ tree_rotate_left(struct tree_node **p)
 }
 
 void
-tree_rotate_right(struct tree_node **p)
+tree_rotate_right(struct pf_tree_node **p)
 {
-	struct tree_node *q = *p;
+	struct pf_tree_node *q = *p;
 
 	*p = (*p)->left;
 	q->left = (*p)->right;
@@ -206,7 +206,7 @@ tree_rotate_right(struct tree_node **p)
 }
 
 int
-tree_insert(struct tree_node **p, struct tree_key *key, struct state *state)
+tree_insert(struct pf_tree_node **p, struct tree_key *key, struct state *state)
 {
 	int deltaH = 0;
 
@@ -247,7 +247,7 @@ tree_insert(struct tree_node **p, struct tree_key *key, struct state *state)
 }
 
 int
-tree_remove(struct tree_node **p, struct tree_key *key)
+tree_remove(struct pf_tree_node **p, struct tree_key *key)
 {
 	int deltaH = 0;
 	int c;
@@ -283,19 +283,19 @@ tree_remove(struct tree_node **p, struct tree_key *key)
 		}
 	} else {
 		if ((*p)->right == NULL) {
-			struct tree_node *p0 = *p;
+			struct pf_tree_node *p0 = *p;
 
 			*p = (*p)->left;
 			pool_put(&pf_tree_pl, p0);
 			deltaH = 1;
 		} else if ((*p)->left == NULL) {
-			struct tree_node *p0 = *p;
+			struct pf_tree_node *p0 = *p;
 
 			*p = (*p)->right;
 			pool_put(&pf_tree_pl, p0);
 			deltaH = 1;
 		} else {
-			struct tree_node **qq = &(*p)->left;
+			struct pf_tree_node **qq = &(*p)->left;
 
 			while ((*qq)->right != NULL)
 				qq = &(*qq)->right;
@@ -320,7 +320,7 @@ tree_remove(struct tree_node **p, struct tree_key *key)
 }
 
 struct state *
-find_state(struct tree_node *p, struct tree_key *key)
+find_state(struct pf_tree_node *p, struct tree_key *key)
 {
 	int c;
 
@@ -474,7 +474,7 @@ void
 pfattach(int num)
 {
 	/* XXX - no M_* tags, but they are not used anyway */
-        pool_init(&pf_tree_pl, sizeof(struct tree_node), 0, 0, 0, "pftrpl",
+        pool_init(&pf_tree_pl, sizeof(struct pf_tree_node), 0, 0, 0, "pftrpl",
                 0, NULL, NULL, 0);
         pool_init(&pf_rule_pl, sizeof(struct rule), 0, 0, 0, "pfrulepl",
                 0, NULL, NULL, 0);
