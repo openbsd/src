@@ -1,4 +1,4 @@
-/*	$OpenBSD: pppd.h,v 1.14 2002/07/01 19:31:37 deraadt Exp $	*/
+/*	$OpenBSD: pppd.h,v 1.15 2003/04/25 23:24:32 deraadt Exp $	*/
 
 /*
  * pppd.h - PPP daemon global declarations.
@@ -209,8 +209,8 @@ void log_packet(u_char *, int, char *, int);
 				/* Format a packet and log it with syslog */
 void print_string(char *, int,  void (*) (void *, char *, ...), void *);
 				/* Format a string for output */
-int fmtmsg(char *, int, char *, ...);		/* sprintf++ */
-int vfmtmsg(char *, int, char *, va_list);	/* vsprintf++ */
+int fmtmsg(char *, int, char *, ...);		/* snprintf++ */
+int vfmtmsg(char *, int, char *, va_list);	/* vsnprintf++ */
 void script_setenv(char *, char *);	/* set script env var */
 void script_unsetenv(char *);		/* unset script env var */
 

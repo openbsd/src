@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.41 2003/04/14 03:14:59 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.42 2003/04/25 23:24:04 deraadt Exp $	*/
 
 /*
  * main.c - Point-to-Point Protocol main module
@@ -46,7 +46,7 @@
 #if 0
 static char rcsid[] = "Id: main.c,v 1.49 1998/05/05 05:24:17 paulus Exp $";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.41 2003/04/14 03:14:59 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.42 2003/04/25 23:24:04 deraadt Exp $";
 #endif
 #endif
 
@@ -1396,7 +1396,7 @@ novm(msg)
 }
 
 /*
- * fmtmsg - format a message into a buffer.  Like sprintf except we
+ * fmtmsg - format a message into a buffer.  Like snprintf except we
  * also specify the length of the output buffer, and we handle
  * %r (recursive format), %m (error message) and %I (IP address) formats.
  * Doesn't do floating-point formats.

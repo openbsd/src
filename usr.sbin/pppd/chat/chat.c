@@ -1,4 +1,4 @@
-/*	$OpenBSD: chat.c,v 1.20 2003/04/04 22:38:49 avsm Exp $	*/
+/*	$OpenBSD: chat.c,v 1.21 2003/04/25 23:23:50 deraadt Exp $	*/
 
 /*
  *	Chat -- a program for automatic session establishment (i.e. dial
@@ -83,7 +83,7 @@
 #if 0
 static char rcsid[] = "Id: chat.c,v 1.19 1998/03/24 23:57:48 paulus Exp $";
 #else
-static char rcsid[] = "$OpenBSD: chat.c,v 1.20 2003/04/04 22:38:49 avsm Exp $";
+static char rcsid[] = "$OpenBSD: chat.c,v 1.21 2003/04/25 23:23:50 deraadt Exp $";
 #endif
 #endif
 
@@ -209,7 +209,7 @@ void break_sequence(void);
 void terminate(int status);
 void pack_array(char **array, int end);
 char *expect_strtok(char *, char *);
-int vfmtmsg(char *, int, const char *, va_list);	/* vsprintf++ */
+int vfmtmsg(char *, int, const char *, va_list);	/* vsnprintf++ */
 
 int main(int, char *[]);
 
@@ -1492,7 +1492,7 @@ pack_array (array, end)
 }
 
 /*
- * vfmtmsg - format a message into a buffer.  Like vsprintf except we
+ * vfmtmsg - format a message into a buffer.  Like vsnprintf except we
  * also specify the length of the output buffer, and we handle the
  * %m (error message) format.
  * Doesn't do floating-point formats.
