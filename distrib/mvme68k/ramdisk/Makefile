@@ -8,9 +8,11 @@ CRUNCHCONF?=    ${.CURDIR}/${CBIN}.conf
 BASE=miniroot
 
 MOUNT_POINT=	/mnt1
-BDEV=		/dev/vnd0a
-CDEV=		/dev/rvnd0a
-RDEV=		/dev/vnd0c
+BDEV=		/dev/rd0a
+CDEV=		/dev/rrd0a
+RDEV=		/dev/rd0c
+
+KERNEL=		${SRCSYSDIR}/arch/mvme68k/compile/MINIROOT/bsd
 
 all: ${CBIN} ${IMAGE}
 	@echo "all done"
@@ -29,14 +31,29 @@ ${IMAGE}:	do_prep do_mount do_files do_umount_copy do_unconfig
 	rm rd.pid;\
 	fi
 
+rdsetroot:	${TOP}/common/rdsetroot.c
+	${HOSTCC} -o rdsetroot ${TOP}/common/rdsetroot.c
+
+setroot: bsd
+	rdsetroot bsd < miniroot-12.fs
+
+bsd:	${KERNEL}
+	cp ${KERNEL} bsd
+
+writetape:
+	echo rewinding tape < /dev/rst0
+	buffer -i /usr/mdec/stboot -o /dev/nrst0
+	buffer -i /usr/mdec/bootst -o /dev/nrst0
+	buffer -B -p75 -i bsd -o /dev/nrst0
+	echo rewinding tape < /dev/rst0
+
+
 do_prep: ${CBIN} do_unconfig
-	#sh ${.CURDIR}/start_rdconfig.sh ${CDEV} ${NBLKS}
-	dd if=/dev/zero of=${IMAGE} bs=1k count=2048
-	vnconfig -cv ${RDEV} ${IMAGE}
-	disklabel -r -w ${RDEV} ${DISKTYPE}
+	sh ${.CURDIR}/start_rdconfig.sh ${RDEV} ${NBLKS}
+	disklabel -w ${RDEV} ${DISKTYPE}
 	
 do_mount:
-	-newfs ${NEWFSARGS} -s ${NBLKS} ${BDEV} ${DISKTYPE}
+	-newfs ${NEWFSARGS} -s ${NBLKS} ${CDEV} ${DISKTYPE}
 	mount ${BDEV} ${MOUNT_POINT}
  
 do_umount_copy:
@@ -48,7 +65,11 @@ do_umount_copy:
 
 do_unconfig:
 	-umount ${MOUNT_POINT}
-	-vnconfig -u ${RDEV}
+	if [ -e rd.pid ] ; then \
+	kill `< rd.pid`; \
+	rm rd.pid; \
+	fi
+
 
 .PRECIOUS:	${IMAGE}
 

@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.1 1997/02/15 04:27:17 rahnds Exp $
+#	$OpenBSD: list,v 1.2 1997/02/16 03:26:25 rahnds Exp $
 
 COPY	${OBJDIR}/raminst		raminst
 LINK	raminst			bin/cat
@@ -72,8 +72,8 @@ COPY	${DESTDIR}/etc/services		etc
 COPY	${DESTDIR}/etc/spwd.db		etc
 
 # and the common installation tools
-COPY	${TOPDIR}/inst-common/dot.commonutils	.commonutils
-COPY	${TOPDIR}/inst-common/termcap.vt	usr/share/misc/termcap
+COPY	${TOPDIR}/common/dot.commonutils	.commonutils
+COPY	${TOPDIR}/common/termcap.vt	usr/share/misc/termcap
 
 # the disktab explanation file
 COPY	disktab.preinstall		etc
