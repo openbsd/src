@@ -1,4 +1,4 @@
-static char *rcs_id = "$Id: set_scanner.c,v 1.4 2002/05/29 19:01:48 deraadt Exp $";
+static char *rcs_id = "$Id: set_scanner.c,v 1.5 2002/06/01 20:27:15 deraadt Exp $";
 /*
  * Copyright (c) 1995 Kenneth Stailey
  * All rights reserved.
@@ -185,12 +185,12 @@ main(int argc, char *argv[])
     if ((s_fd = open(device_special, O_RDONLY)) < 0) {
       fprintf(stderr, "open of %s failed: ", device_special);
       perror("");
-      exit(-1);
+      exit(1);
     }
 
     if (ioctl(s_fd, SCIOCGET, &s_io) < 0) {
       perror("ioctl SCIOCGET");
-      exit(-1);
+      exit(1);
     }
 
     if (width != UNINITIALIZED)
@@ -221,7 +221,7 @@ main(int argc, char *argv[])
 
     if (ioctl(s_fd, SCIOCSET, &s_io) < 0) {
       perror("ioctl SCIOCSET");
-      exit(-1);
+      exit(1);
     }
 #ifdef __IBMR2
   }
@@ -256,14 +256,14 @@ inches_to_1200th(char *numeral)
 
   if ((bc = fopen("/tmp/set_scanner.bc_work", "w")) == NULL) {
     perror("creating temp file '/tmp/set_scanner.bc_work'");
-    exit(-1);
+    exit(1);
   }
   fprintf(bc, "%s * 1200\nquit\n", numeral);
   fclose(bc);
 
   if ((bc = popen("bc -l /tmp/set_scanner.bc_work", "r")) == NULL) {
     perror("running bc");
-    exit(-1);
+    exit(1);
   }
   fgets(result, 50, bc);
   result[strlen(result) - 1] = '\0';  /* eat newline from fgets */
@@ -277,7 +277,7 @@ inches_to_1200th(char *numeral)
 	fprintf(stderr, "set_scanner: please do not use fractions with a  ");
 	fprintf(stderr, "granularity less than\nset_scanner: one ");
 	fprintf(stderr, "twelve-thousandths of an inch\n");
-	exit(-1);
+	exit(1);
       }
   }
 
@@ -290,7 +290,7 @@ usage(char *prog_name)
   fprintf(stderr,
 	  "usage: %s [-w width] [-h height] [-x x_origin] [-y y_origin]\n[-r resolution] [-l logical name] [-i image mode] [-d (for setting defaults)]\n",
 	  prog_name);
-  exit(-1);
+  exit(1);
 }
 
 int xlate_image_code(char *image_code)

@@ -1,4 +1,4 @@
-static char *rcs_id = "$Id: get_scanner.c,v 1.4 2002/05/29 19:01:47 deraadt Exp $";
+static char *rcs_id = "$Id: get_scanner.c,v 1.5 2002/06/01 20:27:15 deraadt Exp $";
 /*
  * Copyright (c) 1995 Kenneth Stailey
  * All rights reserved.
@@ -70,7 +70,7 @@ void
 usage(char *prog_name)
 {
   fprintf(stderr, "usage: %s [-p][-q][-l <logical name>]\n", prog_name);
-  exit(-1);
+  exit(1);
 }
 
 
@@ -117,12 +117,12 @@ main(int argc, char *argv[])
   snprintf(device_special, sizeof device_special, "/dev/%s", logical_name);
   if ((s_fd = open(device_special, O_RDONLY)) < 0) {
     perror("open of scanner");
-    exit(-1);
+    exit(1);
   }
 
   if (ioctl(s_fd, SCIOCGET, &s_io) < 0) {
     perror("ioctl on scanner");
-    exit(-1);
+    exit(1);
   }
 
   if (do_pixels) {
