@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.sysdep,v 1.5 2001/08/13 14:33:35 itojun Exp $
+#	$OpenBSD: Makefile.sysdep,v 1.6 2001/10/26 16:03:07 ho Exp $
 
 #
 # Copyright (c) 1999 Niklas Hallqvist.  All rights reserved.
@@ -34,7 +34,7 @@
 #
 
 # Override default features
-FEATURES=	tripledes des blowfish cast ec aggressive debug
+FEATURES=	tripledes des blowfish cast x509 ec aggressive debug
 
 .if defined(TOPDIR)
 LIBSYSDEPDIR=	${TOPDIR}/sysdep/common/libsysdep
@@ -42,7 +42,7 @@ LIBSYSDEPDIR=	${TOPDIR}/sysdep/common/libsysdep
 LIBSYSDEPDIR=	${.CURDIR}/sysdep/common/libsysdep
 .endif
 
-LDADD+=		-lgmp ${LIBSYSDEPDIR}/libsysdep.a -L/usr/local/lib 
+LDADD+=		-lgmp ${LIBSYSDEPDIR}/libsysdep.a -lipsec -L/usr/local/lib 
 DPADD+=		${LIBGMP} ${LIBSYSDEPDIR}/libsysdep.a
 
 CFLAGS+=	-DHAVE_GETNAMEINFO -DHAVE_GETIFADDRS \

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysdep-os.h,v 1.2 2001/01/28 22:38:48 niklas Exp $	*/
+/*	$OpenBSD: sysdep-os.h,v 1.3 2001/10/26 16:03:07 ho Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -40,11 +40,6 @@
 #define KAME
 
 #include <netinet6/ipsec.h>
-
-/* We need in_addr_t, in_port_t & socklen_t.  */
-typedef u_int32_t in_addr_t;
-typedef u_int16_t in_port_t;
-typedef u_int32_t socklen_t;
 
 #if 0
 /* OpenSSL differs from OpenBSD very slightly... */
