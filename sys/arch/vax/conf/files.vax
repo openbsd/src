@@ -1,4 +1,4 @@
-#	$OpenBSD: files.vax,v 1.24 2001/05/16 22:15:18 hugh Exp $
+#	$OpenBSD: files.vax,v 1.25 2001/11/14 14:37:22 hugh Exp $
 #       $NetBSD: files.vax,v 1.60 1999/08/27 20:04:32 ragge Exp $
 #
 # new style config file for vax architecture
@@ -358,7 +358,7 @@ attach asc at vsbus with asc_vsbus
 file	arch/vax/vsa/asc_vsbus.c	asc needs-flag
 
 include "compat/ultrix/files.ultrix"
-#include "compat/vax1k/files.vax1k"
+include "compat/vax1k/files.vax1k"
 
 # Dom h{ra f}r vara kvar s} l{nge f}r vi se vilka vi beh|ver...
 #arch/vax/vax/dkbad.c         standard
