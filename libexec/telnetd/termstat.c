@@ -1,4 +1,4 @@
-/*	$OpenBSD: termstat.c,v 1.2 1996/03/28 23:22:05 niklas Exp $	*/
+/*	$OpenBSD: termstat.c,v 1.3 1996/12/23 13:12:54 robin Exp $	*/
 /*	$NetBSD: termstat.c,v 1.5 1996/02/28 20:38:27 thorpej Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
 static char sccsid[] = "@(#)termstat.c	8.2 (Berkeley) 5/30/95";
 static char rcsid[] = "$NetBSD: termstat.c,v 1.5 1996/02/28 20:38:27 thorpej Exp $";
 #else
-static char rcsid[] = "$OpenBSD: termstat.c,v 1.2 1996/03/28 23:22:05 niklas Exp $";
+static char rcsid[] = "$OpenBSD: termstat.c,v 1.3 1996/12/23 13:12:54 robin Exp $";
 #endif
 #endif /* not lint */
 
@@ -468,7 +468,7 @@ clientstat(code, parm1, parm2)
 		 ack = (useeditmode & MODE_ACK);
 		 useeditmode &= ~MODE_ACK;
 
-		 if (changed = (useeditmode ^ editmode)) {
+		 if ((changed = (useeditmode ^ editmode))) {
 			/*
 			 * This check is for a timing problem.  If the
 			 * state of the tty has changed (due to the user
