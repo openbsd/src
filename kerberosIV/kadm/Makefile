@@ -1,10 +1,10 @@
-#	$Id: Makefile,v 1.2 1996/06/02 07:21:32 tholo Exp $
+#	$OpenBSD: Makefile,v 1.3 1996/06/02 14:41:59 niklas Exp $
 
 LIB=	kadm
 SRCS=	kadm_err.c kadm_cli_wrap.c kadm_stream.c kadm_supp.c
 CFLAGS+=-I. -I${.CURDIR}
-.if exists(${.CURDIR}/../krb/obj)
-CFLAGS+=-I${.CURDIR}/../krb/obj
+.if exists(${.CURDIR}/../krb/${__objdir})
+CFLAGS+=-I${.CURDIR}/../krb/${__objdir}
 .else
 CFLAGS+=-I${.CURDIR}/../krb
 .endif

@@ -1,19 +1,19 @@
-#	$Id: Makefile,v 1.1.1.1 1995/12/14 06:52:48 tholo Exp $
+#	$OpenBSD: Makefile,v 1.2 1996/06/02 14:42:02 niklas Exp $
 
 PROG=   kadmind
 SRCS=   admin_server.c kadm_funcs.c kadm_ser_wrap.c kadm_server.c
-.if exists(${.CURDIR}/../kadm/obj)
-CFLAGS+=-I${.CURDIR}/../kadm/obj
+.if exists(${.CURDIR}/../kadm/${__objdir})
+CFLAGS+=-I${.CURDIR}/../kadm/${__objdir}
 .else
 CFLAGS+=-I${.CURDIR}/../kadm
 .endif
-.if exists(${.CURDIR}/../krb/obj)
-CFLAGS+=-I${.CURDIR}/../krb/obj
+.if exists(${.CURDIR}/../krb/${__objdir})
+CFLAGS+=-I${.CURDIR}/../krb/${__objdir}
 .else
 CFLAGS+=-I${.CURDIR}/../krb
 .endif
-.if exists(${.CURDIR}/../ss/obj)
-CFLAGS+=-I${.CURDIR}/../ss/obj
+.if exists(${.CURDIR}/../ss/${__objdir})
+CFLAGS+=-I${.CURDIR}/../ss/${__objdir}
 .else
 CFLAGS+=-I${.CURDIR}/../ss
 .endif
