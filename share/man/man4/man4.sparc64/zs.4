@@ -1,4 +1,4 @@
-.\"	$OpenBSD: zs.4,v 1.6 2002/12/03 19:50:33 miod Exp $
+.\"	$OpenBSD: zs.4,v 1.7 2003/01/28 21:20:56 miod Exp $
 .\"
 .\" Copyright (c) 1998, 2002 The OpenBSD Project
 .\" All rights reserved.
@@ -97,6 +97,10 @@ The built-in mappings are at this time:
 (
 .Dq it
 ) Italian.
+.It KB_JP
+(
+.Dq jp
+) Japanese (type 5 only).
 .It KB_NL
 (
 .Dq \&nl
@@ -171,5 +175,6 @@ The first outgoing connection succeeds, but second and subsequent
 connections fail, apparently due to a getty hang.
 The hung getty apparently prevents the cua device from being re-opened.
 .Pp
-The kernel does not provide a keyboard layout for all manufactured Sun
+The kernel does not provide a keyboard layout for all manufactured
+.Tn Sun
 keyboard models.
