@@ -1,5 +1,5 @@
 #
-# $OpenBSD: COYOTE,v 1.11 2000/05/26 00:44:20 miod Exp $
+# $OpenBSD: COYOTE,v 1.12 2001/01/03 02:03:28 miod Exp $
 #
 
 #
@@ -84,8 +84,12 @@ bwtwo0 at obmem0 addr ?
 #
 scsibus* at scsi?
 
-# Sun incompatible scsi device mappings
 sd* at scsibus? target ? lun ?
+st* at scsibus? target ? lun ?
+cd* at scsibus? target ? lun ?
+ch* at scsibus? target ? lun ?
+ss* at scsibus? target ? lun ?
+uk* at scsibus? target ? lun ?
 
 # Compatibility options
 option	 	COMPAT_SUNOS	# can run SunOS 4.1.1 executables

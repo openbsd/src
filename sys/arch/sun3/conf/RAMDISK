@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.16 2000/06/19 01:22:34 miod Exp $
+#	$OpenBSD: RAMDISK,v 1.17 2001/01/03 02:03:28 miod Exp $
 #	$NetBSD: RAMDISK,v 1.3.4.1 1996/08/19 23:35:10 gwr Exp $
 
 # Machine architecture; required by config(8)
@@ -113,19 +113,9 @@ si1 at vmes0 addr 0xff204000 level 2 vect 0x41 flags 0x07
 #
 scsibus* at scsi?
 
-# Sun compatible scsi device mappings
-sd0 at scsibus? target 0 lun 0
-sd1 at scsibus? target 0 lun 1
-sd2 at scsibus? target 1 lun 0
-sd3 at scsibus? target 1 lun 1
 sd* at scsibus? target ? lun ?
-
-st0 at scsibus? target 4 lun 0
-st1 at scsibus? target 5 lun 0
 st* at scsibus? target ? lun ?
-
-#cd0 at scsibus? target 6 lun 0
-#cd* at scsibus? target ? lun ?
+cd* at scsibus? target ? lun ?
 
 # RAM-disk (root for install tape)
 pseudo-device	rd		2	# RAM-disk
