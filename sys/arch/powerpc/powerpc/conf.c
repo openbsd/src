@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.10 1998/08/06 15:04:06 pefo Exp $ */
+/*	$OpenBSD: conf.c,v 1.11 1998/09/16 04:18:09 rahnds Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -107,6 +107,8 @@ cdev_decl(ofrtc);
 #include <sd.h>
 #include <st.h>
 #include <cd.h>
+#include <uk.h>
+#include <ss.h>
 cdev_decl(st);  
 cdev_decl(sd);
 cdev_decl(cd);
@@ -136,6 +138,8 @@ cdev_decl(lkm);
 #else   
 #define NIPF 0
 #endif  
+#include "ksyms.h"
+cdev_decl(ksyms);
 
 
 struct cdevsw cdevsw[] = {
@@ -180,6 +184,9 @@ struct cdevsw cdevsw[] = {
         cdev_lkm_dummy(),               /* 38 */
         cdev_gen_ipf(NIPF,ipl),         /* 39: IP filter */
         cdev_random_init(1,random),     /* 40: random data source */
+	cdev_uk_init(NUK,uk),		/* 41: unknown SCSI */
+	cdev_ss_init(NSS,ss),           /* 42: SCSI scanner */
+	cdev_ksyms_init(NKSYMS,ksyms),	/* 43: Kernel symbols device */
 	/* If adding devs, don't forget to expand 'chrtoblktbl' below! */
 };
 int nchrdev = sizeof cdevsw / sizeof cdevsw[0];
