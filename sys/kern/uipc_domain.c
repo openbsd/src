@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_domain.c,v 1.15 2003/06/02 23:28:06 millert Exp $	*/
+/*	$OpenBSD: uipc_domain.c,v 1.16 2004/02/24 21:43:55 tedu Exp $	*/
 /*	$NetBSD: uipc_domain.c,v 1.14 1996/02/09 19:00:44 christos Exp $	*/
 
 /*
@@ -44,6 +44,8 @@
 #include <uvm/uvm_extern.h>
 #include <sys/sysctl.h>
 #include <sys/timeout.h>
+
+#include "bpfilter.h"
 
 struct	domain *domains;
 
@@ -207,6 +209,11 @@ net_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	for (dp = domains; dp; dp = dp->dom_next)
 		if (dp->dom_family == family)
 			goto found;
+#if NBPFILTER > 0
+	if (family == PF_BPF)
+		return (bpf_sysctl(name + 1, namelen - 1, oldp, oldlenp,
+		    newp, newlen));
+#endif
 	return (ENOPROTOOPT);
 found:
 	switch (family) {

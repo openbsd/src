@@ -1,4 +1,4 @@
-/*	$OpenBSD: socket.h,v 1.46 2003/06/02 23:28:21 millert Exp $	*/
+/*	$OpenBSD: socket.h,v 1.47 2004/02/24 21:43:56 tedu Exp $	*/
 /*	$NetBSD: socket.h,v 1.14 1996/02/09 18:25:36 christos Exp $	*/
 
 /*
@@ -209,6 +209,7 @@ struct sockproto {
 #define PF_ENCAP	AF_ENCAP
 #define	PF_SIP		AF_SIP
 #define PF_KEY		AF_KEY
+#define PF_BPF		pseudo_AF_HDRCMPLT
 #define	PF_MAX		AF_MAX
 
 /*
@@ -278,6 +279,7 @@ struct sockcred {
 	{ "encap", CTLTYPE_NODE }, \
 	{ "sip", CTLTYPE_NODE }, \
 	{ "key", CTLTYPE_NODE }, \
+	{ "bpf", CTLTYPE_NODE }, \
 }
 
 /*
@@ -299,6 +301,20 @@ struct sockcred {
 	{ "flags", CTLTYPE_STRUCT }, \
 	{ "iflist", CTLTYPE_STRUCT }, \
 }
+
+/*
+ * PF_BPF  not really a family, but connected under CTL_NET
+ */
+#define NET_BPF_BUFSIZE		1		/* default buffer size */
+#define NET_BPF_MAXBUFSIZE	2		/* maximum buffer size */
+#define NET_BPF_MAXID		3
+
+#define CTL_NET_BPF_NAMES { \
+	{ 0, 0 }, \
+	{ "bufsize", CTLTYPE_INT }, \
+	{ "maxbufsize", CTLTYPE_INT }, \
+}
+
 
 /*
  * Maximum queue length specifiable by listen(2).

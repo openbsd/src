@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.43 2004/02/06 22:38:58 tedu Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.44 2004/02/24 21:43:55 tedu Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -50,6 +50,7 @@
 #include <sys/socket.h>
 #include <sys/poll.h>
 #include <sys/kernel.h>
+#include <sys/sysctl.h>
 
 #include <net/if.h>
 #include <net/bpf.h>
@@ -1377,4 +1378,39 @@ bpfdetach(ifp)
 			pbp = &bp->bif_next;
 	}
 	ifp->if_bpf = NULL;
+}
+
+int
+bpf_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
+    size_t newlen)
+{
+	int newval;
+	int error;
+
+	if (namelen != 1)
+		return (ENOTDIR);
+
+	switch (name[0]) {
+	case NET_BPF_BUFSIZE:
+		newval = bpf_bufsize;
+		error = sysctl_int(oldp, oldlenp, newp, newlen, &newval);
+		if (error)
+			return (error);
+		if (newval < BPF_MINBUFSIZE || newval > bpf_maxbufsize)
+			return (EINVAL);
+		bpf_bufsize = newval;
+		break;
+	case NET_BPF_MAXBUFSIZE:
+		newval = bpf_maxbufsize;
+		error = sysctl_int(oldp, oldlenp, newp, newlen, &newval);
+		if (error)
+			return (error);
+		if (newval < BPF_MINBUFSIZE)
+			return (EINVAL);
+		bpf_maxbufsize = newval;
+		break;
+	default:
+		return (EOPNOTSUPP);
+	}
+	return (0);
 }
