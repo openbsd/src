@@ -1,4 +1,4 @@
-.\" $OpenBSD: mirroring-ports.7,v 1.7 2001/11/13 13:54:26 mpech Exp $
+.\" $OpenBSD: mirroring-ports.7,v 1.8 2002/08/29 07:34:31 wcobb Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -67,7 +67,7 @@ set on the command line, e.g.,
 .Bd -literal -offset indent
 	cd mirror && make -j 5 -f path_to_makefile FETCH=fetch_script
 .Ed
-
+.Pp
 Targets are set up so that each port is referenced by its full name, and
 retrieves all its distfiles.
 The default

@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.73 2002/08/07 15:49:57 avsm Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.74 2002/08/29 07:34:31 wcobb Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -909,7 +909,7 @@ Its main use is for disabling part of a multi-packages build, for instance:
 .Bd -literal
 FLAVOR=no_gnome make package 
 .Ed
-
+.Pp
 Creation of a separate working directory is mandatory.
 If, at a later time, a full build with all subpackages is required,
 all the work will need to be done again.

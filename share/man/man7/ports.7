@@ -23,7 +23,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $OpenBSD: ports.7,v 1.25 2002/05/08 19:34:13 millert Exp $
+.\" $OpenBSD: ports.7,v 1.26 2002/08/29 07:34:31 wcobb Exp $
 .\" $FreeBSD: ports.7,v 1.7 1998/06/23 04:38:50 hoek Exp $
 .\"
 .Dd January 25, 1998
@@ -109,12 +109,12 @@ port belonging to category,
 .It Va maintainer
 port maintained by a given person.
 .El
-
+.Pp
 For instance, to invoke clean on all ports in the x11 category, one can say:
 .Bd -literal -offset indent
 	$ make category=x11 clean
 .Ed
-
+.Pp
 The index search is done by a perl script, so all regular expressions from
 .Xr perlre 1
 apply.
@@ -132,7 +132,7 @@ line, e.g., to avoid stopping after each problem.
 .Bd -literal -offset indent
 	$ make REPORT_PROBLEM=true
 .Ed
-
+.Pp
 The targets that do this are
 .Ar build , checksum , clean , configure , extract , fake, fetch ,
 .Ar install , distclean , deinstall, reinstall, mirror-distfiles, obj ,
@@ -190,7 +190,7 @@ Using
 .Bd -literal -offset indent
 	$ make checksum REFETCH=true
 .Ed
-
+.Pp
 will try to get a set of distfiles that match the recorded checksum.
 .It Ar depends
 Install
@@ -290,7 +290,7 @@ problems.
 .Sh NETWORK CONFIGURATION
 The variables pertaining to network access have been marshalled into
 .Pa ${PORTSDIR}/infrastructure/template/network.conf.template .
-
+.Pp
 To customize that setup, copy that file into
 .Pa ${PORTSDIR}/infrastructure/db/network.conf
 and edit it.
