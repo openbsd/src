@@ -1,4 +1,4 @@
-.\" $Id: ppp.8,v 1.19 1998/03/16 07:29:30 brian Exp $
+.\" $Id: ppp.8,v 1.20 1998/06/12 17:45:14 brian Exp $
 .Dd 20 September 1995
 .Os OpenBSD
 .Dt PPP 8
@@ -7,14 +7,13 @@
 .Nd Point to Point Protocol (a.k.a. iijppp) 
 .Sh SYNOPSIS
 .Nm
-.\" SOMEONE FIX ME ! The .Op macro can't handle enough args !
-[
+.Oo
 .Fl auto |
 .Fl background |
 .Fl ddial |
 .Fl direct |
 .Fl dedicated
-]
+.Oc
 .Op Fl alias
 .Op Ar system
 .Sh DESCRIPTION
