@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.15 1997/05/14 15:41:18 niklas Exp $
+#	$OpenBSD: MAKEDEV,v 1.16 1997/07/07 08:58:14 graichen Exp $
 #	@(#)MAKEDEV	8.1 (Berkeley) 6/9/93
 #
 
@@ -114,7 +114,8 @@ bpf*)
 	;;
 
 ipl)
-	mknod ipl c 88 0
+	rm -f ipl
+	mknod ipl c 91 0
 	chown root.wheel ipl
 	;;
 
