@@ -530,6 +530,7 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/readline/rlstdc.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/readline/tilde.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/readpassphrase.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/sectok.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/ssl/conf_api.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/ssl/dso.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/ssl/engine.ph

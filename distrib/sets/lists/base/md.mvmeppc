@@ -1525,6 +1525,7 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/scsi/ss_mustek.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/scsi/ssvar.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/search.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/sectok.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/setjmp.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sgtty.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sha1.ph

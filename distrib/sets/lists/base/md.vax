@@ -1091,6 +1091,7 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/scsi/ss_mustek.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/scsi/ssvar.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/search.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/sectok.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/setjmp.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sgtty.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sha1.ph

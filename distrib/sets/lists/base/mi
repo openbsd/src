@@ -147,6 +147,7 @@
 ./sbin/swapctl
 ./sbin/swapon
 ./sbin/sysctl
+./sbin/tbrconfig
 ./sbin/ttyflags
 ./sbin/tunefs
 ./sbin/umount
@@ -159,6 +160,7 @@
 ./usr/bin/addftinfo
 ./usr/bin/afmtodit
 ./usr/bin/afslog
+./usr/bin/altqstat
 ./usr/bin/apply
 ./usr/bin/apropos
 ./usr/bin/arch
@@ -394,6 +396,7 @@
 ./usr/bin/scp
 ./usr/bin/script
 ./usr/bin/sdiff
+./usr/bin/sectok
 ./usr/bin/sed
 ./usr/bin/sendbug
 ./usr/bin/sftp
@@ -1239,6 +1242,7 @@
 ./usr/sbin/activadm
 ./usr/sbin/activinit
 ./usr/sbin/adduser
+./usr/sbin/altqd
 ./usr/sbin/amd
 ./usr/sbin/amq
 ./usr/sbin/apachectl

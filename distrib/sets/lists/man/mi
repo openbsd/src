@@ -180,6 +180,7 @@
 ./usr/share/man/cat1/afslog.0
 ./usr/share/man/cat1/alias.0
 ./usr/share/man/cat1/alpha
+./usr/share/man/cat1/altqstat.0
 ./usr/share/man/cat1/amiga
 ./usr/share/man/cat1/apply.0
 ./usr/share/man/cat1/apropos.0
@@ -547,6 +548,7 @@
 ./usr/share/man/cat1/scp.0
 ./usr/share/man/cat1/script.0
 ./usr/share/man/cat1/sdiff.0
+./usr/share/man/cat1/sectok.0
 ./usr/share/man/cat1/sed.0
 ./usr/share/man/cat1/sendbug.0
 ./usr/share/man/cat1/sftp.0
@@ -1253,6 +1255,7 @@
 ./usr/share/man/cat4/vax/dhu.0
 ./usr/share/man/cat4/vax/dmc.0
 ./usr/share/man/cat4/vax/dmf.0
+./usr/share/man/cat4/vax/dmv.0
 ./usr/share/man/cat4/vax/dmz.0
 ./usr/share/man/cat4/vax/dn.0
 ./usr/share/man/cat4/vax/dz.0
@@ -1272,6 +1275,7 @@
 ./usr/share/man/cat4/vax/kUmem.0
 ./usr/share/man/cat4/vax/kg.0
 ./usr/share/man/cat4/vax/kmem.0
+./usr/share/man/cat4/vax/le.0
 ./usr/share/man/cat4/vax/lp.0
 ./usr/share/man/cat4/vax/mem.0
 ./usr/share/man/cat4/vax/mt.0
@@ -1292,6 +1296,7 @@
 ./usr/share/man/cat4/vax/va.0
 ./usr/share/man/cat4/vax/vp.0
 ./usr/share/man/cat4/vax/vv.0
+./usr/share/man/cat4/vax/ze.0
 ./usr/share/man/cat4/vga.0
 ./usr/share/man/cat4/vlan.0
 ./usr/share/man/cat4/vnd.0
@@ -1322,6 +1327,7 @@
 ./usr/share/man/cat5/acct.0
 ./usr/share/man/cat5/aliases.0
 ./usr/share/man/cat5/alpha
+./usr/share/man/cat5/altq.conf.0
 ./usr/share/man/cat5/amiga
 ./usr/share/man/cat5/arc
 ./usr/share/man/cat5/bootparams.0
@@ -1372,6 +1378,7 @@
 ./usr/share/man/cat5/krb.equiv.0
 ./usr/share/man/cat5/krb.extra.0
 ./usr/share/man/cat5/krb.realms.0
+./usr/share/man/cat5/krb5.conf.0
 ./usr/share/man/cat5/lastlog.0
 ./usr/share/man/cat5/link.0
 ./usr/share/man/cat5/login.conf.0
@@ -1479,6 +1486,7 @@
 ./usr/share/man/cat8/alpha/wsconscfg.0
 ./usr/share/man/cat8/alpha/wsconsctl.0
 ./usr/share/man/cat8/alpha/wsfontload.0
+./usr/share/man/cat8/altqd.0
 ./usr/share/man/cat8/amd.0
 ./usr/share/man/cat8/amiga
 ./usr/share/man/cat8/amiga/MAKEDEV.0
@@ -1830,6 +1838,7 @@
 ./usr/share/man/cat8/sysctl.0
 ./usr/share/man/cat8/syslogd.0
 ./usr/share/man/cat8/talkd.0
+./usr/share/man/cat8/tbrconfig.0
 ./usr/share/man/cat8/tcpd.0
 ./usr/share/man/cat8/tcpdchk.0
 ./usr/share/man/cat8/tcpdmatch.0

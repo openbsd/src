@@ -1535,6 +1535,7 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/scsi/ss_mustek.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/scsi/ssvar.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/search.ph
+./usr/libdata/perl5/site_perl/alpha-openbsd/sectok.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/setjmp.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/sgtty.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/sha1.ph

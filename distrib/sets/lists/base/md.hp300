@@ -1558,6 +1558,7 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/scsi/ss_mustek.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/scsi/ssvar.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/search.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/sectok.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/setjmp.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sgtty.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sha1.ph
