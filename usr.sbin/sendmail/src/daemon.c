@@ -293,8 +293,7 @@ getrequests(e)
 			lotherend = socksize;
 			t = accept(DaemonSocket,
 			    (struct sockaddr *)&RealHostAddr, &lotherend);
-			if (t >= 0 || (errno != EINTR && errno != ENETUNREACH
-			    && errno != EHOSTUNREACH))
+			if (t >= 0 || errno != EINTR)
 				break;
 		}
 		savederrno = errno;
