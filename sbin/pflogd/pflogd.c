@@ -1,4 +1,4 @@
-/*	$OpenBSD: pflogd.c,v 1.25 2004/01/15 20:15:14 canacar Exp $	*/
+/*	$OpenBSD: pflogd.c,v 1.26 2004/01/16 10:45:49 jmc Exp $	*/
 
 /*
  * Copyright (c) 2001 Theo de Raadt
@@ -147,7 +147,7 @@ logmsg(int pri, const char *message, ...)
 __dead void
 usage(void)
 {
-	fprintf(stderr, "usage: pflogd [-D] [-d delay] [-f filename] ");
+	fprintf(stderr, "usage: pflogd [-Dx] [-d delay] [-f filename] ");
 	fprintf(stderr, "[-s snaplen] [expression]\n");
 	exit(1);
 }
