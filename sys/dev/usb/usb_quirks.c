@@ -1,6 +1,6 @@
-/*	$OpenBSD: usb_quirks.c,v 1.15 2002/07/25 04:07:33 nate Exp $ */
-/*	$NetBSD: usb_quirks.c,v 1.40 2002/07/11 21:14:34 augustss Exp $	*/
-/*	$FreeBSD: src/sys/dev/usb/usb_quirks.c,v 1.13 1999/11/17 22:33:47 n_hibma Exp $	*/
+/*	$OpenBSD: usb_quirks.c,v 1.16 2003/06/27 20:12:59 nate Exp $ */
+/*	$NetBSD: usb_quirks.c,v 1.45 2003/05/10 17:47:14 hamajima Exp $	*/
+/*	$FreeBSD: src/sys/dev/usb/usb_quirks.c,v 1.30 2003/01/02 04:15:55 imp Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -76,19 +76,27 @@ Static const struct usbd_quirk_entry {
  { USB_VENDOR_MCT, USB_PRODUCT_MCT_USB232,          0x102, { UQ_BUS_POWERED }},
  { USB_VENDOR_METRICOM, USB_PRODUCT_METRICOM_RICOCHET_GS,
  	0x100, { UQ_ASSUME_CM_OVER_DATA | UQ_NO_STRINGS }},
+ { USB_VENDOR_SANYO, USB_PRODUCT_SANYO_SCP4900,
+ 	0x000, { UQ_ASSUME_CM_OVER_DATA | UQ_NO_STRINGS }},
  { USB_VENDOR_TI, USB_PRODUCT_TI_UTUSB41,	    0x110, { UQ_POWER_CLAIM }},
  { USB_VENDOR_ACERP, USB_PRODUCT_ACERP_ACERSCAN_320U,
 						    0x000, { UQ_NO_STRINGS }},
  { USB_VENDOR_TELEX, USB_PRODUCT_TELEX_MIC1,	    0x009, { UQ_AU_NO_FRAC }},
  { USB_VENDOR_SILICONPORTALS, USB_PRODUCT_SILICONPORTALS_YAPPHONE,
    						    0x100, { UQ_AU_INP_ASYNC }},
+ { USB_VENDOR_AVANCELOGIC, USB_PRODUCT_AVANCELOGIC_USBAUDIO,
+   						    0x101, { UQ_AU_INP_ASYNC }},
+ { USB_VENDOR_NEODIO, USB_PRODUCT_NEODIO_ND5010,    0x100, { UQ_NO_STRINGS }},
+ { USB_VENDOR_PLANTRONICS, USB_PRODUCT_PLANTRONICS_HEADSET,
+   						    0x004, { UQ_AU_INP_ASYNC }},
  /* XXX These should have a revision number, but I don't know what they are. */
  { USB_VENDOR_HP, USB_PRODUCT_HP_895C,		    ANY,   { UQ_BROKEN_BIDIR }},
  { USB_VENDOR_HP, USB_PRODUCT_HP_880C,		    ANY,   { UQ_BROKEN_BIDIR }},
  { USB_VENDOR_HP, USB_PRODUCT_HP_815C,		    ANY,   { UQ_BROKEN_BIDIR }},
  { USB_VENDOR_HP, USB_PRODUCT_HP_810C,		    ANY,   { UQ_BROKEN_BIDIR }},
  { USB_VENDOR_HP, USB_PRODUCT_HP_830C,		    ANY,   { UQ_BROKEN_BIDIR }},
-
+ { USB_VENDOR_HP, USB_PRODUCT_HP_1220C,		    ANY,   { UQ_BROKEN_BIDIR }},
+ { USB_VENDOR_LOGITECH, USB_PRODUCT_LOGITECH_WMRPAD,  ANY, { UQ_NO_STRINGS }},
  { 0, 0, 0, { 0 } }
 };
 
