@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_ohci.c,v 1.1 2005/01/04 03:47:00 drahn Exp $ */
+/*	$OpenBSD: pxa2x0_ohci.c,v 1.2 2005/01/04 03:48:02 drahn Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -101,8 +101,8 @@ pxaohci_attach(struct device *parent, struct device *self, void *aux)
 	/* XXX splusb? */
 	sc->sc_ih = pxa2x0_intr_establish(sc->sc_intr, IPL_USB, ohci_intr, sc,
 	    sc->sc.sc_bus.bdev.dv_xname);
-	sc->sc_ih1 = pxa2x0_intr_establish(2, IPL_USB, ohci_intr, sc,
-	    sc->sc.sc_bus.bdev.dv_xname);
+	sc->sc_ih1 = pxa2x0_intr_establish(PXA2X0_INT_USBH2, IPL_USB,
+	    ohci_intr, sc, sc->sc.sc_bus.bdev.dv_xname);
 
 	strlcpy(sc->sc.sc_vendor, "Vendor String", sizeof(sc->sc.sc_vendor));
 
