@@ -1,4 +1,4 @@
-# $OpenBSD: Vstat.pm,v 1.5 2004/04/28 06:47:12 espie Exp $
+# $OpenBSD: Vstat.pm,v 1.6 2004/07/07 22:00:06 espie Exp $
 #
 # Copyright (c) 2003 Marc Espie.
 # 
@@ -46,6 +46,8 @@ sub create_mntpoint($)
 {
 	my $mntpoint = shift;
 	my $dev = (stat $mntpoint)[0];
+	# check that stat worked
+	return undef unless defined $dev;
 	my $n = $dirinfo->{"$dev"};
 	if (!defined $n) {
 		$n = { mnt => $mntpoint, dev => $dev, used => 0 };
@@ -68,6 +70,7 @@ sub init_dirinfo()
 	    } elsif (m/^.*?\s+\d+\s+\d+\s+(\d+)\s+\d+\%\s+(\/.*?)$/) {
 	    	my ($mntpoint, $avail) = ($2, $1);
 		my $i = create_mntpoint($mntpoint);
+		next unless defined $i;
 		$i->{avail} = $avail;
 	    }
     }
@@ -79,6 +82,7 @@ sub init_dirinfo()
 	    if (m/^.*?\s+on\s+(\/.*?)\s+type\s+.*?(?:\s+\((.*?)\))?$/) {
 		my ($mntpoint, $opts) = ($1, $2);
 		my $i = create_mntpoint($mntpoint);
+		next unless defined $i;
 		next unless defined $opts;
 		for my $o (split /,\s*/, $opts) {
 		    if ($o eq 'read-only') {
