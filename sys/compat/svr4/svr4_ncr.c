@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_ncr.c,v 1.1 1996/04/25 10:20:18 niklas Exp $	 */
+/*	$OpenBSD: svr4_ncr.c,v 1.2 1996/10/17 19:15:50 niklas Exp $	 */
 
 /*
  * Copyright (c) 1995, 1996 Niklas Hallqvist
@@ -33,10 +33,19 @@
 
 #ifdef COMPAT_SVR4_NCR
 
+#include <sys/types.h>
 #include <sys/errno.h>
+#include <sys/signal.h>
+
+#include <compat/svr4/svr4_types.h>
+#include <compat/svr4/svr4_signal.h>
+#include <compat/svr4/svr4_syscallargs.h>
 
 int
-svr4_ncr_sys_rdebug()
+svr4_ncr_sys_rdebug(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
 {
 	return ENXIO;
 }

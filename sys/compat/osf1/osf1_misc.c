@@ -1,4 +1,4 @@
-/*	$OpenBSD: osf1_misc.c,v 1.6 1996/10/12 15:45:03 niklas Exp $	*/
+/*	$OpenBSD: osf1_misc.c,v 1.7 1996/10/17 19:15:49 niklas Exp $	*/
 /*	$NetBSD: osf1_misc.c,v 1.7 1995/10/07 06:53:04 mycroft Exp $	*/
 
 /*
@@ -967,7 +967,9 @@ osf1_sys_execve(p, v, retval)
 	struct osf1_sys_execve_args *uap = v;
 
 	caddr_t sg = stackgap_init(p->p_emul);
+#if 0
 	OSF1_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+#endif
 
 	return (sys_execve(p, (struct sys_execve_args *)&uap, retval));
 }
