@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_txp.c,v 1.45 2001/06/23 20:54:15 jason Exp $	*/
+/*	$OpenBSD: if_txp.c,v 1.46 2001/06/23 22:56:51 jason Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -583,7 +583,6 @@ txp_rx_reclaim(sc, r)
 {
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	struct txp_rx_desc *rxd;
-	struct ether_header *eh;
 	struct mbuf *m;
 	struct txp_swdesc *sd;
 	u_int32_t roff, woff;
@@ -611,8 +610,6 @@ txp_rx_reclaim(sc, r)
 		m = sd->sd_mbuf;
 		free(sd, M_DEVBUF);
 		m->m_pkthdr.len = m->m_len = rxd->rx_len;
-
-		eh = mtod(m, struct ether_header *);
 
 #ifdef __STRICT_ALIGNMENT
 		{
@@ -654,8 +651,6 @@ txp_rx_reclaim(sc, r)
 			bpf_mtap(ifp->if_bpf, m);
 #endif
 
-		m_adj(m, sizeof(struct ether_header));
-
 		if (rxd->rx_stat & RX_STAT_IPCKSUMBAD)
 			sumflags |= M_IPV4_CSUM_IN_BAD;
 		else if (rxd->rx_stat & RX_STAT_IPCKSUMGOOD)
@@ -675,13 +670,17 @@ txp_rx_reclaim(sc, r)
 
 #if NVLAN > 0
 		if (rxd->rx_stat & RX_STAT_VLAN) {
+			struct ether_header *eh;
+
+			eh = mtod(m, struct ether_header *);
+			m_adj(m, sizeof(struct ether_header));
 			if (vlan_input_tag(eh, m, htons(rxd->rx_vlan >> 16)) < 0)
 				ifp->if_noproto++;
 			goto next;
 		}
 #endif
 
-		ether_input(ifp, eh, m);
+		ether_input_mbuf(ifp, m);
 
 next:
 
