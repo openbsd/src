@@ -1,4 +1,4 @@
-/*	$OpenBSD: memprobe.c,v 1.18 1997/10/20 14:56:09 mickey Exp $	*/
+/*	$OpenBSD: memprobe.c,v 1.19 1997/10/20 20:20:45 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner, Michael Shalayeff
@@ -38,15 +38,16 @@
 
 static int addrprobe __P((u_int));
 u_int cnvmem, extmem;		/* XXX - compatibility */
-struct _bios_memmap *memory_map;
+bios_memmap_t *memory_map;
+u_int memap_size = 0;
 
 /* BIOS int 15, AX=E820
  *
  * This is the "prefered" method.
  */
-static __inline struct _bios_memmap *
+static __inline bios_memmap_t *
 bios_E820(mp)
-	register struct _bios_memmap *mp;
+	register bios_memmap_t *mp;
 {
 	int rc = 0, off = 0, sig;
 
@@ -75,9 +76,9 @@ bios_E820(mp)
  * Only used if int 15, AX=E820 does not work.
  * This should work for more than 64MB.
  */
-static __inline struct _bios_memmap *
+static __inline bios_memmap_t *
 bios_E801(mp)
-	register struct _bios_memmap *mp;
+	register bios_memmap_t *mp;
 {
 	int rc, m1, m2;
 
@@ -110,9 +111,9 @@ bios_E801(mp)
  * Only used if int 15, AX=E801 does not work.
  * Machines with this are restricted to 64MB.
  */
-static __inline struct _bios_memmap *
+static __inline bios_memmap_t *
 bios_8800(mp)
-	register struct _bios_memmap *mp;
+	register bios_memmap_t *mp;
 {
 	int rc, mem;
 
@@ -136,9 +137,9 @@ bios_8800(mp)
  *
  * Only used if int 15, AX=E820 does not work.
  */
-static __inline struct _bios_memmap *
+static __inline bios_memmap_t *
 bios_int12(mp)
-	struct _bios_memmap *mp;
+	register bios_memmap_t *mp;
 {
 	int mem;
 
@@ -146,7 +147,7 @@ bios_int12(mp)
 
 	__asm __volatile(DOINT(0x12) : "=a" (mem) :: "%ecx", "%edx", "cc");
 
-	/* Fill out a _bios_memmap */
+	/* Fill out a bios_memmap_t */
 	mp->addr = 0;
 	mp->size = mem & 0xffff;
 	mp->type = BIOS_MAP_FREE;
@@ -220,9 +221,9 @@ addrprobe(kloc)
  * XXX - Does not detect aliases memory.
  * XXX - Could be destructive, as it does write.
  */
-struct _bios_memmap *
+static __inline bios_memmap_t *
 badprobe(mp)
-	register struct _bios_memmap *mp;
+	register bios_memmap_t *mp;
 {
 	int ram;
 
@@ -246,8 +247,8 @@ badprobe(mp)
 void
 memprobe()
 {
-	static struct _bios_memmap bm[32];	/* This is easier */
-	struct _bios_memmap *pm = bm, *im;
+	static bios_memmap_t bm[32];	/* This is easier */
+	bios_memmap_t *pm = bm, *im;
 	int total = 0;
 
 	printf("Probing memory: ");
@@ -264,6 +265,7 @@ memprobe()
 	pm->type = BIOS_MAP_END;
 	/* Register in global var */
 	memory_map = bm;
+	memap_size = pm - bm + 1;
 	printf("\nmem0:");
 
 	/* Get total free memory */
