@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr.c,v 1.44 1999/03/30 21:53:38 millert Exp $	*/
+/*	$OpenBSD: ncr.c,v 1.45 1999/04/05 16:38:04 millert Exp $	*/
 /*	$NetBSD: ncr.c,v 1.63 1997/09/23 02:39:15 perry Exp $	*/
 
 /**************************************************************************
@@ -130,11 +130,10 @@
 /*
 **    The maximum number of tags per logic unit.
 **    Used only for disk devices that support tags.
-**    To enable tagged queuing set this to be >= 4.
 */
 
 #ifndef SCSI_NCR_DFLT_TAGS
-#define SCSI_NCR_DFLT_TAGS    (0)
+#define SCSI_NCR_DFLT_TAGS    (4)
 #endif /* SCSI_NCR_DFLT_TAGS */
 
 /*==========================================================
@@ -168,9 +167,10 @@
 **    The maximum number of jobs scheduled for starting.
 **    There should be one slot per target, and one slot
 **    for each tag of each target in use.
+**    The calculation below is actually quite silly ...
 */
 
-#define MAX_START   (256)
+#define MAX_START   (MAX_TARGET + (MAX_TARGET - 1) * SCSI_NCR_DFLT_TAGS)
 
 /*
 **    The maximum number of segments a transfer is split into.
@@ -1465,7 +1465,7 @@ static	void	ncr_attach	(pcici_t tag, int unit);
 
 #if 0
 static char ident[] =
-	"\n$OpenBSD: ncr.c,v 1.44 1999/03/30 21:53:38 millert Exp $\n";
+	"\n$OpenBSD: ncr.c,v 1.45 1999/04/05 16:38:04 millert Exp $\n";
 #endif
 
 static const u_long	ncr_version = NCR_VERSION	* 11
