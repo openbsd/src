@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sleep.1,v 1.9 1999/12/06 20:27:38 espie Exp $
+.\"	$OpenBSD: sleep.1,v 1.10 2000/01/05 01:58:03 pjanzen Exp $
 .\"	$NetBSD: sleep.1,v 1.9 1995/07/25 19:37:43 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994
@@ -52,6 +52,8 @@ The
 utility
 suspends execution for a minimum of
 .Ar seconds .
+.Ar seconds
+must be positive and may contain a decimal fraction.
 .Nm
 is used to schedule the execution of other commands (see
 .Sx EXAMPLES
@@ -73,10 +75,6 @@ An error occurred.
 handles fractional arguments as an extension to
 .St -p1003.2 .
 .Sh EXAMPLES
-To schedule the execution of a command for
-.Va x
-seconds later:
-.Pp
 .Dl (sleep 1800; sh command_file >& errors)&
 .Pp
 This incantation would wait a half hour before

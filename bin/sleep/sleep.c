@@ -1,4 +1,4 @@
-/*	$OpenBSD: sleep.c,v 1.8 1997/09/12 04:44:32 millert Exp $	*/
+/*	$OpenBSD: sleep.c,v 1.9 2000/01/05 01:58:03 pjanzen Exp $	*/
 /*	$NetBSD: sleep.c,v 1.8 1995/03/21 09:11:11 cgd Exp $	*/
 
 /*
@@ -44,17 +44,18 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)sleep.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: sleep.c,v 1.8 1997/09/12 04:44:32 millert Exp $";
+static char rcsid[] = "$OpenBSD: sleep.c,v 1.9 2000/01/05 01:58:03 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
+#include <ctype.h>
+#include <errno.h>
+#include <locale.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
-#include <ctype.h>
-#include <locale.h>
 #include <time.h>
-#include <signal.h>
+#include <unistd.h>
 
 void usage __P((void));
 void alarmh __P((int));
@@ -65,7 +66,7 @@ main(argc, argv)
 	char *argv[];
 {
 	int ch;
-	int secs = 0;
+	time_t secs = 0, t;
 	unsigned char *cp;
 	long nsecs = 0;
 	struct timespec rqtp;
@@ -77,6 +78,8 @@ main(argc, argv)
 
 	while ((ch = getopt(argc, argv, "")) != -1)
 		switch(ch) {
+		case '?':
+		case 'h':
 		default:
 			usage();
 		}
@@ -89,7 +92,10 @@ main(argc, argv)
 	cp = *argv;
 	while ((*cp != '\0') && (*cp != '.')) {
 		if (!isdigit(*cp)) usage();
-		secs = (secs * 10) + (*cp++ - '0');
+		t = (secs * 10) + (*cp++ - '0');
+		if (t / 10 != secs)	/* oflow */
+			exit(EINVAL);
+		secs = t;
 	}
 
 	/* Handle fractions of a second */
@@ -111,11 +117,12 @@ main(argc, argv)
 		}
 	}
 
-	rqtp.tv_sec = (time_t) secs;
+	rqtp.tv_sec = secs;
 	rqtp.tv_nsec = nsecs;
 
 	if ((secs > 0) || (nsecs > 0))
-		(void)nanosleep(&rqtp, NULL);
+		if (nanosleep(&rqtp, NULL))
+			exit(errno);
 	exit(0);
 }
 
