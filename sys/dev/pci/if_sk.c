@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.17 2001/09/11 20:05:25 miod Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.18 2001/10/05 00:55:40 nate Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -761,13 +761,11 @@ skc_probe(parent, match, aux)
 {
 	struct pci_attach_args *pa = aux;
 
-	if (PCI_VENDOR(pa->pa_id) != PCI_VENDOR_SCHNEIDERKOCH)
-		return (0);
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_SCHNEIDERKOCH &&
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_SCHNEIDERKOCH_GE)
+		return (1);
 
-	if (PCI_PRODUCT(pa->pa_id) != PCI_PRODUCT_SCHNEIDERKOCH_GE)
-		return (0);
-
-	return (1);
+	return (0);
 }
 
 /*
