@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_nfs.c,v 1.35 2003/07/29 18:38:36 deraadt Exp $	*/
+/*	$OpenBSD: mount_nfs.c,v 1.36 2003/10/07 18:35:57 henning Exp $	*/
 /*	$NetBSD: mount_nfs.c,v 1.12.4.1 1996/05/25 22:48:05 fvdl Exp $	*/
 
 /*
@@ -97,6 +97,10 @@ static char rcsid[] = "$NetBSD: mount_nfs.c,v 1.12.4.1 1996/05/25 22:48:05 fvdl 
 #define ALTF_PORT	0x2000
 #define ALTF_NFSV2	0x4000
 #define ALTF_NOAC       0x8000
+#define ALTF_ACREGMIN	0x10000
+#define ALTF_ACREGMAX	0x20000
+#define ALTF_ACDIRMIN	0x40000
+#define ALTF_ACDIRMAX	0x80000
 
 const struct mntopt mopts[] = {
 	MOPT_STDOPTS,
@@ -118,6 +122,10 @@ const struct mntopt mopts[] = {
 	{ "port", 0, ALTF_PORT, 1 },
 	{ "nfsv2", 0, ALTF_NFSV2, 1 },
 	{ "ac", 1, ALTF_NOAC, 1 },
+	{ "acregmin", 0, ALTF_ACREGMIN, 1},
+	{ "acregmax", 0, ALTF_ACREGMAX, 1},
+	{ "acdirmin", 0, ALTF_ACDIRMIN, 1},
+	{ "acdirmax", 0, ALTF_ACDIRMAX, 1},
 	{ NULL }
 };
 
@@ -302,6 +310,26 @@ main(int argc, char *argv[])
 				nfsargsp->acregmax = 0;
 				nfsargsp->acdirmin = 0;
 				nfsargsp->acdirmax = 0;
+			}
+			if (altflags & ALTF_ACREGMIN) {
+				nfsargsp->flags |= NFSMNT_ACREGMIN;
+				nfsargsp->acregmin =
+				    atoi(strstr(optarg, "acregmin=") + 9);
+			}
+			if (altflags & ALTF_ACREGMAX) {
+				nfsargsp->flags |= NFSMNT_ACREGMAX;
+				nfsargsp->acregmax =
+				    atoi(strstr(optarg, "acregmax=") + 9);
+			}
+			if (altflags & ALTF_ACDIRMIN) {
+				nfsargsp->flags |= NFSMNT_ACDIRMIN;
+				nfsargsp->acdirmin =
+				    atoi(strstr(optarg, "acdirmin=") + 9);
+			}
+			if (altflags & ALTF_ACDIRMAX) {
+				nfsargsp->flags |= NFSMNT_ACDIRMAX;
+				nfsargsp->acdirmax =
+				    atoi(strstr(optarg, "acdirmax=") + 9);
 			}
 			altflags = 0;
 			break;

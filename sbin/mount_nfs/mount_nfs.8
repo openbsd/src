@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mount_nfs.8,v 1.31 2003/06/02 20:06:15 millert Exp $
+.\"	$OpenBSD: mount_nfs.8,v 1.32 2003/10/07 18:35:57 henning Exp $
 .\"	$NetBSD: mount_nfs.8,v 1.3 1996/02/18 11:59:10 fvdl Exp $
 .\"
 .\" Copyright (c) 1992, 1993, 1994, 1995
@@ -151,11 +151,31 @@ See the
 man page for possible options and their meanings.
 The following NFS specific options are also available:
 .Bl -tag -width indent
+.It acregmax=num
+Cache file attributes for no more than
+.Ar num
+seconds.
+The default is 60 seconds.
+.It acregmin=num
+Cache file attributes for at least
+.Ar num
+seconds.
+The default is 5 seconds.
+.It acdirmax=num
+Cache directory attributes for no more than
+.Ar num
+seconds.
+The default is 60 seconds.
+.It acdirmin=num
+Cache directory attributes for at least
+.Ar num
+seconds.
+The default is 5 seconds.
+.It noac
+Disable attribute caching for both files and directories.
 .It port=portnumber
 Use specified port number for NFS requests.
 The default is to query the portmapper for the NFS port.
-.It noac
-Turn off attribute caching for both directories and files.
 .El
 .It Fl r Ar readsize
 Set the read data size to the specified value.
