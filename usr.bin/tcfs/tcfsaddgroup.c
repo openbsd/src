@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcfsaddgroup.c,v 1.5 2000/06/19 20:35:47 fgsch Exp $	*/
+/*	$OpenBSD: tcfsaddgroup.c,v 1.6 2000/06/19 20:50:58 fgsch Exp $	*/
 
 /*
  *	Transparent Cryptographic File System (TCFS) for NetBSD 
@@ -356,7 +356,8 @@ addgroup_main (int argn, char *argv[])
 		/*
 		 * Encrypt the just generated key with the user password
 		 */
-		if (!tcfs_encrypt_key (user, passwd, newkey, cryptedkey, GROUPKEY))
+		if (!tcfs_encrypt_key (passwd, newkey, GKEYSIZE,
+		    cryptedkey, GROUPKEY))
 			tcfs_error (ER_MEM, NULL);
 
 		free (newkey);
