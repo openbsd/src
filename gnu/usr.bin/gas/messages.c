@@ -1,4 +1,4 @@
-/*	$OpenBSD: messages.c,v 1.2 1998/02/15 18:48:55 niklas Exp $	*/
+/*	$OpenBSD: messages.c,v 1.3 2002/04/20 01:13:57 deraadt Exp $	*/
 
 /* messages.c - error reporter -
    Copyright (C) 1987, 1991, 1992 Free Software Foundation, Inc.
@@ -20,7 +20,7 @@
    the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: messages.c,v 1.2 1998/02/15 18:48:55 niklas Exp $";
+static char rcsid[] = "$OpenBSD: messages.c,v 1.3 2002/04/20 01:13:57 deraadt Exp $";
 #endif
 
 #include <stdio.h>
@@ -260,7 +260,7 @@ as_warn (const char *format,...)
   if (!flag_no_warnings)
     {
       va_start (args, format);
-      vsprintf (buffer, format, args);
+      vsnprintf (buffer, sizeof buffer, format, args);
       va_end (args);
       as_warn_internal ((char *) NULL, 0, buffer);
     }
@@ -279,7 +279,7 @@ as_warn (format, va_alist)
   if (!flag_no_warnings)
     {
       va_start (args);
-      vsprintf (buffer, format, args);
+      vsnprintf (buffer, sizeof buffer, format, args);
       va_end (args);
       as_warn_internal ((char *) NULL, 0, buffer);
     }
@@ -317,7 +317,7 @@ as_warn_where (char *file, unsigned int line, const char *format,...)
   if (!flag_no_warnings)
     {
       va_start (args, format);
-      vsprintf (buffer, format, args);
+      vsnprintf (buffer, sizeof buffer, format, args);
       va_end (args);
       as_warn_internal (file, line, buffer);
     }
@@ -338,7 +338,7 @@ as_warn_where (file, line, format, va_alist)
   if (!flag_no_warnings)
     {
       va_start (args);
-      vsprintf (buffer, format, args);
+      vsnprintf (buffer, sizeof buffer, format, args);
       va_end (args);
       as_warn_internal (file, line, buffer);
     }
@@ -403,7 +403,7 @@ as_bad (const char *format,...)
   char buffer[200];
 
   va_start (args, format);
-  vsprintf (buffer, format, args);
+  vsnprintf (buffer, sizeof buffer, format, args);
   va_end (args);
 
   as_bad_internal ((char *) NULL, 0, buffer);
@@ -420,7 +420,7 @@ as_bad (format, va_alist)
   char buffer[200];
 
   va_start (args);
-  vsprintf (buffer, format, args);
+  vsnprintf (buffer, sizeof buffer, format, args);
   va_end (args);
 
   as_bad_internal ((char *) NULL, 0, buffer);
@@ -454,7 +454,7 @@ as_bad_where (char *file, unsigned int line, const char *format,...)
   char buffer[200];
 
   va_start (args, format);
-  vsprintf (buffer, format, args);
+  vsnprintf (buffer, sizeof buffer, format, args);
   va_end (args);
 
   as_bad_internal (file, line, buffer);
@@ -473,7 +473,7 @@ as_bad_where (file, line, format, va_alist)
   char buffer[200];
 
   va_start (args);
-  vsprintf (buffer, format, args);
+  vsnprintf (buffer, sizeof buffer, format, args);
   va_end (args);
 
   as_bad_internal (file, line, buffer);
@@ -568,26 +568,6 @@ fprint_value (file, val)
   if (sizeof (val) <= sizeof (bfd_vma))
     {
       fprintf_vma (file, val);
-      return;
-    }
-#endif
-  abort ();
-}
-
-void
-sprint_value (buf, val)
-     char *buf;
-     valueT val;
-{
-  if (sizeof (val) <= sizeof (long))
-    {
-      sprintf (buf, "%ld", val);
-      return;
-    }
-#ifdef BFD_ASSEMBLER
-  if (sizeof (val) <= sizeof (bfd_vma))
-    {
-      sprintf_vma (buf, val);
       return;
     }
 #endif
