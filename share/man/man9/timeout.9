@@ -1,4 +1,4 @@
-.\"	$OpenBSD: timeout.9,v 1.4 2000/03/23 11:15:21 art Exp $
+.\"	$OpenBSD: timeout.9,v 1.5 2000/04/18 12:57:17 art Exp $
 .\"
 .\" Copyright (c) 2000 Artur Grabowski <art@openbsd.org>
 .\" All rights reserved. 
@@ -33,7 +33,7 @@
 .Nm timeout_set ,
 .Nm timeout_add ,
 .Nm timeout_del
-.Nd execute a function after a specified length of time
+.Nd execute a function after a specified period of time
 .Sh SYNOPSIS
 .Fd #include <sys/types.h>
 .Fd #include <sys/timeout.h>
@@ -43,7 +43,27 @@
 .Fn "timeout_pending" "struct timeout *to"
 .Fn "timeout_initialized" "struct timeout *to"
 .Sh DESCRIPTION
-The finction
+The
+.Nm timeout
+API provides a mechanism to execute a function at a given time.
+The granularity of the time is limited by the granularity of the
+.Nm hardclock
+timer which executes
+.Nm hz
+times a second.
+The function will be called at softclock interrupt level.
+.Pp
+It's the caller responsibility to provide those functions with
+pre-allocated timeout structures. All functions in this API may
+be used in interrupt context below
+.Fn splclock .
+.Pp
+This API replaces the historic functions
+.Fn timeout
+and
+.Fn untimeout .
+.Pp
+The function
 .Fn timeout_set
 Prepares the timeout structure
 .Fa to
@@ -79,14 +99,15 @@ Negative values of
 are illegal. If the value is
 .Sq 0
 it will, in the current implementation, be treated as
-.Sq 1
-, but in the future it might cause an immediate timeout.
+.Sq 1 ,
+but in the future it might cause an immediate timeout.
 The timeout in the
 .Fa to
 argument must be already initialized by
 .Fn timeout_set
-and may not be used in calls to timeout_set until it has
-timed out or been removed with
+and may not be used in calls to
+.Fn timeout_set
+until it has timed out or been removed with
 .Fn timeout_del .
 If the timeout in the
 .Fa to
@@ -107,12 +128,6 @@ macro can be used to check if a timeout is scheduled to run.
 The
 .Fn timeout_initialized
 macro can be used to check if a timeout has been initialized.
-.Pp
-It's the caller responsibility to provide those functions with
-the timeout structures. No functions in this API will do memory
-allocation. All functions in this API may be called in interrupt
-context below
-.Fn splclock .
 .Pp
 The old
 .Fn timeout
