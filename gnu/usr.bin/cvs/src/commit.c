@@ -589,7 +589,7 @@ check_fileproc (file, update_dir, repository, entries, srcfiles)
 	    if (status == T_ADDED)
 	    {
 		char rcs[PATH_MAX];
-
+#ifndef DEATH_SUPPORT
 #ifdef DEATH_SUPPORT
 		/* Don't look in the attic; if it exists there we will
 		   move it back out in checkaddfile.  */
@@ -610,6 +610,7 @@ check_fileproc (file, update_dir, repository, entries, srcfiles)
 		    freevers_ts (&vers);
 		    return (1);
 		}
+#endif
 		if (vers->tag && isdigit (*vers->tag) &&
 		    numdots (vers->tag) > 1)
 		{
@@ -1442,6 +1443,7 @@ checkaddfile (file, repository, tag, srcfiles)
     int newfile = 0;
 #endif
 
+#ifndef DEATH_SUPPORT
     if (tag)
     {
 	(void) sprintf(rcs, "%s/%s", repository, CVSATTIC);
@@ -1452,6 +1454,7 @@ checkaddfile (file, repository, tag, srcfiles)
 	(void) sprintf (rcs, "%s/%s/%s%s", repository, CVSATTIC, file, RCSEXT);
     }
     else
+#endif
 	locate_rcs (file, repository, rcs);
 
 #ifdef DEATH_SUPPORT
