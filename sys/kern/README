@@ -1,0 +1,10 @@
+$OpenBSD: README,v 1.1 1997/06/03 14:28:16 kstailey Exp $	-*- text -*-
+
+		     Notes on Adding a System Call
+
+You must always commit syscalls.master before rebuilding the files, then
+commit them separately so that the correct RCS stuff shows up in the
+generated files.
+
+Don't forget to increment the minor number of src/lib/libc/shlib_version
+when one adds a syscall.
