@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.mvmeppc,v 1.15 2003/07/22 19:39:50 otto Exp $
+#	$OpenBSD: Makefile.mvmeppc,v 1.16 2003/11/24 17:35:13 espie Exp $
 #
 # Makefile for OpenBSD PowerPC
 #
@@ -40,7 +40,7 @@ CPPFLAGS=	${INCLUDES} ${IDENT} -D_KERNEL \
 		-Dpowerpc -D__mvmeppc__
 CWARNFLAGS=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes \
 		-Wno-uninitialized -Wno-format -Wno-main
-CMACHFLAGS=	-msoft-float -Wa,-m7400
+CMACHFLAGS=	-msoft-float -Wa,-m7400 -fno-builtin-printf -fno-builtin-log
 .if ${IDENT:M-DNO_PROPOLICE}
 CMACHFLAGS+=	-fno-stack-protector
 .endif
