@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.15 2002/04/30 04:05:49 deraadt Exp $
+#	$OpenBSD: list,v 1.16 2002/05/01 19:21:28 mickey Exp $
 #	$NetBSD: list,v 1.2.4.2 1996/06/26 19:25:00 pk Exp $
 
 # Amiga extra's
@@ -16,7 +16,7 @@ SYMLINK	/tmp	var/tmp
 SCRIPT	${DESTDIR}/dev/MAKEDEV		dev/MAKEDEV
 SPECIAL	cd dev; sh MAKEDEV ramdisk
 
-TERMCAP	vt100,vt200,dumb		usr/share/misc/termcap
+TERMCAP	vt100,vt220,dumb		usr/share/misc/termcap
 
 # various files that we need in /etc for the install
 COPY	${DESTDIR}/etc/disktab		etc/disktab.shadow

@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.7 2002/05/01 01:15:53 millert Exp $
+#	$OpenBSD: list,v 1.8 2002/05/01 19:21:28 mickey Exp $
 
 SRCDIRS distrib/special
 SRCDIRS usr.bin bin sbin usr.sbin gnu/usr.bin
@@ -61,7 +61,7 @@ COPY	${DESTDIR}/etc/group			etc/group
 COPY	${CURDIR}/../../miniroot/protocols	etc/protocols
 COPY	${CURDIR}/../../miniroot/services	etc/services
 COPY	${DESTDIR}/etc/spwd.db			etc/spwd.db
-TERMCAP	vt100,vt200,dumb			usr/share/misc/termcap
+TERMCAP	vt100,vt220,dumb			usr/share/misc/termcap
 
 COPY	${DESTDIR}/bsd				.
 COPY	${DESTDIR}/boot				.

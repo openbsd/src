@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.11 2002/04/30 09:18:20 deraadt Exp $
+#	$OpenBSD: list,v 1.12 2002/05/01 19:21:28 mickey Exp $
 #	$NetBSD: list,v 1.4.4.1 1996/06/20 20:30:26 pk Exp $
 
 SRCDIRS distrib/special
@@ -62,7 +62,7 @@ SYMLINK	/tmp/disktab.shadow			etc/disktab
 SYMLINK	/tmp/fstab.shadow			etc/fstab
 SYMLINK	/tmp/resolv.conf.shadow			etc/resolv.conf
 SYMLINK	/tmp/hosts				etc/hosts
-TERMCAP	vt100,vt200,dumb,sun			usr/share/misc/termcap
+TERMCAP	vt100,vt220,dumb,sun			usr/share/misc/termcap
 
 # and the installation scripts
 SCRIPT	${CURDIR}/../../miniroot/dot.profile	.profile
