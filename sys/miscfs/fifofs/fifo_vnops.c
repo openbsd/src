@@ -1,4 +1,4 @@
-/*	$OpenBSD: fifo_vnops.c,v 1.19 2004/03/02 04:42:52 tedu Exp $	*/
+/*	$OpenBSD: fifo_vnops.c,v 1.20 2004/05/14 21:33:58 millert Exp $	*/
 /*	$NetBSD: fifo_vnops.c,v 1.18 1996/03/16 23:52:42 christos Exp $	*/
 
 /*
@@ -191,18 +191,20 @@ fifo_open(v)
 		rso->so_state |= SS_CANTRCVMORE;
 	}
 	if (ap->a_mode & FREAD) {
-		if (fip->fi_readers++ == 0) {
+		fip->fi_readers++;
+		if (fip->fi_readers == 1) {
 			fip->fi_writesock->so_state &= ~SS_CANTSENDMORE;
 			if (fip->fi_writers > 0)
 				wakeup(&fip->fi_writers);
 		}
 	}
 	if (ap->a_mode & FWRITE) {
+		fip->fi_writers++;
 		if ((ap->a_mode & O_NONBLOCK) && fip->fi_readers == 0) {
 			error = ENXIO;
 			goto bad;
 		}
-		if (fip->fi_writers++ == 0) {
+		if (fip->fi_writers == 1) {
 			fip->fi_readsock->so_state &= ~SS_CANTRCVMORE;
 			if (fip->fi_readers > 0)
 				wakeup(&fip->fi_readers);
