@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.360 2003/05/18 19:58:56 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.361 2003/06/03 12:34:04 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -186,8 +186,6 @@ struct pf_tag		*pf_get_tag(struct mbuf *);
 int			 pf_match_tag(struct mbuf *, struct pf_rule *,
 			     struct pf_rule *, struct pf_rule *,
 			     struct pf_tag *, int *);
-int			 pf_tag_packet(struct mbuf *, struct pf_tag *,
-			     int);
 
 #ifdef INET6
 void			 pf_poolmask(struct pf_addr *, struct pf_addr*,
