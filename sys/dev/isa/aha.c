@@ -1,4 +1,4 @@
-/*	$OpenBSD: aha.c,v 1.21 1996/05/31 08:14:51 deraadt Exp $	*/
+/*	$OpenBSD: aha.c,v 1.22 1996/05/31 10:57:04 deraadt Exp $	*/
 /*	$NetBSD: aha.c,v 1.11 1996/05/12 23:51:23 mycroft Exp $	*/
 
 #define AHADIAG
@@ -486,6 +486,8 @@ AGAIN:
 		}
 
 		untimeout(aha_timeout, ccb);
+		isadma_copyfrombuf((caddr_t)ccb, CCB_PHYS_SIZE,
+		    1, ccb->ccb_phys);
 		aha_done(sc, ccb);
 
 	next:
@@ -766,6 +768,8 @@ aha_start_ccbs(sc)
 #endif
 
 		/* Link ccb to mbo. */
+		isadma_copytobuf((caddr_t)ccb, CCB_PHYS_SIZE,
+		    1, ccb->ccb_phys);
 		ltophys(ccb->ccb_phys[0].addr, wmbo->ccb_addr);
 		if (ccb->flags & CCB_ABORT)
 			wmbo->cmd = AHA_MBO_ABORT;
@@ -1277,7 +1281,6 @@ aha_scsi_cmd(xs)
 
 	s = splbio();
 	aha_queue_ccb(sc, ccb);
-	splx(s);
 
 	/*
 	 * Usually return SUCCESSFULLY QUEUED
@@ -1300,6 +1303,7 @@ aha_scsi_cmd(xs)
 		scsi_done(xs);
 		return COMPLETE;
 	}
+	splx(s);
 
 	if ((flags & SCSI_POLL) == 0)
 		return SUCCESSFULLY_QUEUED;
@@ -1352,15 +1356,19 @@ aha_timeout(arg)
 	void *arg;
 {
 	struct aha_ccb *ccb = arg;
-	struct scsi_xfer *xs = ccb->xs;
-	struct scsi_link *sc_link = xs->sc_link;
-	struct aha_softc *sc = sc_link->adapter_softc;
+	struct scsi_xfer *xs;
+	struct scsi_link *sc_link;
+	struct aha_softc *sc;
 	int s;
 
 	sc_print_addr(sc_link);
 	printf("timed out");
 
 	s = splbio();
+	isadma_copyfrombuf((caddr_t)ccb, CCB_PHYS_SIZE, 1, ccb->ccb_phys);
+	xs = ccb->xs;
+	sc_link = xs->sc_link;
+	sc = sc_link->adapter_softc;
 
 #ifdef AHADIAG
 	/*
