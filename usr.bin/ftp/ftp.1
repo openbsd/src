@@ -1,4 +1,4 @@
-.\" 	$OpenBSD: ftp.1,v 1.29 2000/03/07 21:11:09 aaron Exp $
+.\" 	$OpenBSD: ftp.1,v 1.30 2000/06/13 21:28:38 millert Exp $
 .\" 	$NetBSD: ftp.1,v 1.22 1997/08/18 10:20:22 lukem Exp $
 .\"
 .\" Copyright (c) 1985, 1989, 1990, 1993
@@ -288,30 +288,8 @@ prints each command sent to the remote machine,
 preceded by the string
 .Ql \-\-> .
 .It Ic dir Op Ar remote-directory Op Ar local-file
-Print a listing of the contents of a
-directory on the remote machine.
-The listing includes any system-dependent information that the server
-chooses to include; for example, most
-.Ux
-systems will produce
-output from the command
-.Ql ls \-l .
-(See also
-.Ic ls . )
-If
-.Ar remote-directory
-is left unspecified, the current working directory is used.
-If interactive prompting is on,
-.Nm
-will prompt the user to verify that the last argument is indeed the
-target local file for receiving
-.Ic dir
-output.
-If no local file is specified, or if
-.Ar local-file
-is
-.Dq - ,
-the output is sent to the terminal.
+A synonym for
+.Ic ls .
 .It Ic disconnect
 A synonym for
 .Ic close .
@@ -435,8 +413,14 @@ A synonym for
 .It Ic lpwd
 Print the working directory on the local machine.
 .It Ic \&ls Op Ar remote-directory Op Ar local-file
-Print a list of the files in a
+Print a listing of the contents of a
 directory on the remote machine.
+The listing includes any system-dependent information that the server
+chooses to include; for example, most
+.Ux
+systems will produce
+output from the command
+.Ql ls \-l .
 If
 .Ar remote-directory
 is left unspecified, the current working directory is used.
@@ -495,15 +479,8 @@ Delete the
 .Ar remote-files
 on the remote machine.
 .It Ic mdir Ar remote-files local-file
-Like
-.Ic dir ,
-except multiple remote files may be specified.
-If interactive prompting is on,
-.Nm
-will prompt the user to verify that the last argument is indeed the
-target local file for receiving
-.Ic mdir
-output.
+A synonym for
+.Ic mls .
 .It Ic mget Ar remote-files
 Expand the
 .Ar remote-files
@@ -576,8 +553,25 @@ exist on the current system, the remote file is considered
 Otherwise, this command is identical to
 .Ar get .
 .It Ic nlist Op Ar remote-directory Op Ar local-file
-A synonym for
-.Ic ls .
+Print a list of the files in a
+directory on the remote machine.
+If
+.Ar remote-directory
+is left unspecified, the current working directory is used.
+If interactive prompting is on,
+.Nm
+will prompt the user to verify that the last argument is indeed the
+target local file for receiving
+.Ic nlist
+output.
+If no local file is specified, or if
+.Ar local-file
+is
+.Dq - ,
+the output is sent to the terminal.  Note that on some servers, the
+.Ic nlist
+command will only return information on normal files (not directories
+or special files).
 .It Ic nmap Op Ar inpattern outpattern
 Set or unset the filename mapping mechanism.
 If no arguments are specified, the filename mapping mechanism is unset.

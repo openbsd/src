@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmds.c,v 1.32 1999/12/08 12:57:06 itojun Exp $	*/
+/*	$OpenBSD: cmds.c,v 1.33 2000/06/13 21:28:38 millert Exp $	*/
 /*	$NetBSD: cmds.c,v 1.27 1997/08/18 10:20:15 lukem Exp $	*/
 
 /*
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-static char rcsid[] = "$OpenBSD: cmds.c,v 1.32 1999/12/08 12:57:06 itojun Exp $";
+static char rcsid[] = "$OpenBSD: cmds.c,v 1.33 2000/06/13 21:28:38 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -1169,7 +1169,7 @@ ls(argc, argv)
 		code = -1;
 		return;
 	}
-	cmd = strcmp(argv[0], "dir") == 0 ? "LIST" : "NLST";
+	cmd = strcmp(argv[0], "nlist") == 0 ? "NLST" : "LIST";
 	oldargv2 = argv[2];
 	if (strcmp(argv[2], "-") && !globulize(&argv[2])) {
 		code = -1;
@@ -1202,7 +1202,6 @@ mls(argc, argv)
 {
 	sig_t oldintr;
 	int ointer, i;
-	int dolist;
 	char mode[1], *dest, *odest;
 
 	if (argc < 2 && !another(&argc, &argv, "remote-files"))
@@ -1221,15 +1220,13 @@ usage:
 			code = -1;
 			return;
 	}
-	dolist = strcmp(argv[0], "mls");
 	mname = argv[0];
 	mflag = 1;
 	oldintr = signal(SIGINT, mabort);
 	(void)setjmp(jabort);
 	for (i = 1; mflag && i < argc-1; ++i) {
 		*mode = (i == 1) ? 'w' : 'a';
-		recvrequest(dolist ? "LIST" : "NLST", dest, argv[i], mode,
-		    0, 0);
+		recvrequest("LIST", dest, argv[i], mode, 0, 0);
 		if (!mflag && fromatty) {
 			ointer = interactive;
 			interactive = 1;
