@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.60 2003/08/27 08:17:34 jmc Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.61 2004/01/26 18:23:51 deraadt Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*-
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)traceroute.c	8.1 (Berkeley) 6/6/93";*/
 #else
-static char rcsid[] = "$OpenBSD: traceroute.c,v 1.60 2003/08/27 08:17:34 jmc Exp $";
+static char rcsid[] = "$OpenBSD: traceroute.c,v 1.61 2004/01/26 18:23:51 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -296,18 +296,17 @@ int dump;
 int
 main(int argc, char *argv[])
 {
-	struct hostent *hp;
-	struct sockaddr_in from, to;
-	int ch, i, lsrr, on, probe, seq, tos;
-	int ttl_flag, incflag = 1, protoset = 0;
-	struct ip *ip;
-	u_int32_t tmprnd;
-	int sump = 0;
 	int mib[4] = { CTL_NET, PF_INET, IPPROTO_IP, IPCTL_DEFTTL };
+	int ttl_flag = 0, incflag = 1, protoset = 0, sump = 0;
+	int ch, i, lsrr = 0, on = 1, probe, seq = 0, tos = 0;
 	size_t size = sizeof(max_ttl);
-	long l;
-	char *ep;
+	struct sockaddr_in from, to;
+	struct hostent *hp;
+	u_int32_t tmprnd;
+	struct ip *ip;
 	u_int8_t ttl;
+	char *ep;
+	long l;
 
 	if ((s = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP)) < 0)
 		err(5, "icmp socket");
@@ -321,10 +320,6 @@ main(int argc, char *argv[])
 	(void) sysctl(mib, sizeof(mib)/sizeof(mib[0]), &max_ttl, &size,
 	    NULL, 0);
 
-	ttl_flag = 0;
-	lsrr = 0;
-	on = 1;
-	seq = tos = 0;
 	while ((ch = getopt(argc, argv, "SDIdg:f:m:np:q:rs:t:w:vlP:c")) != -1)
 		switch (ch) {
 		case 'S':
@@ -509,9 +504,8 @@ main(int argc, char *argv[])
 
 	ip = (struct ip *)outpacket;
 	if (lsrr != 0) {
-		u_char *p;
+		u_char *p = (u_char *)(ip + 1);
 
-		p = (u_char *)(ip + 1);
 		*p++ = IPOPT_NOP;
 		*p++ = IPOPT_LSRR;
 		*p++ = lsrrlen - 1;
@@ -583,12 +577,9 @@ main(int argc, char *argv[])
 		printf("Skipping %u intermediate hops\n", first_ttl - 1);
 
 	for (ttl = first_ttl; ttl <= max_ttl; ++ttl) {
+		int got_there = 0, unreachable = 0, timeout = 0, loss;
 		in_addr_t lastaddr = 0;
-		int got_there = 0;
-		int unreachable = 0;
-		int timeout = 0;
 		quad_t dt;
-		int loss;
 
 		printf("%2u ", ttl);
 		for (probe = 0, loss = 0; probe < nprobes; ++probe) {
@@ -612,8 +603,8 @@ main(int argc, char *argv[])
 					print(packet, cc, &from);
 					lastaddr = from.sin_addr.s_addr;
 				}
-				dt = (quad_t)(t2.tv_sec - t1.tv_sec) * 1000000
-				    + (quad_t)(t2.tv_usec - t1.tv_usec);
+				dt = (quad_t)(t2.tv_sec - t1.tv_sec) * 1000000 +
+				    (quad_t)(t2.tv_usec - t1.tv_usec);
 				printf("  %u", (u_int)(dt / 1000));
 				if (dt % 1000)
 					printf(".%u", (u_int)(dt % 1000));
@@ -715,9 +706,9 @@ main(int argc, char *argv[])
 int
 wait_for_reply(int sock, struct sockaddr_in *from, struct timeval *sent)
 {
+	socklen_t fromlen = sizeof (*from);
 	struct timeval now, wait;
 	int cc = 0, fdsn;
-	socklen_t fromlen = sizeof (*from);
 	fd_set *fdsp;
 
 	fdsn = howmany(sock+1, NFDBITS) * sizeof(fd_mask);
@@ -766,8 +757,8 @@ send_probe(int seq, u_int8_t ttl, int iflag, struct sockaddr_in *to)
 	struct udphdr *up = (struct udphdr *)(p + lsrrlen);
 	struct icmp *icmpp = (struct icmp *)(p + lsrrlen);
 	struct packetdata *op;
-	int i;
 	struct timeval tv;
+	int i;
 
 	ip->ip_len = htons(datalen);
 	ip->ip_ttl = ttl;
@@ -820,7 +811,8 @@ send_probe(int seq, u_int8_t ttl, int iflag, struct sockaddr_in *to)
 		icmpp->icmp_cksum = 0;
 		icmpp->icmp_cksum = in_cksum((u_short *)icmpp,
 		    datalen - sizeof(struct ip) - lsrrlen);
-		if (icmpp->icmp_cksum == 0) icmpp->icmp_cksum = 0xffff;
+		if (icmpp->icmp_cksum == 0)
+			icmpp->icmp_cksum = 0xffff;
 	}
 
 	if (dump)
@@ -829,7 +821,7 @@ send_probe(int seq, u_int8_t ttl, int iflag, struct sockaddr_in *to)
 	i = sendto(sndsock, outpacket, datalen, 0, (struct sockaddr *)to,
 	    sizeof(struct sockaddr_in));
 	if (i < 0 || i != datalen)  {
-		if (i<0)
+		if (i < 0)
 			perror("sendto");
 		printf("traceroute: wrote %s %d chars, ret=%d\n", hostname,
 		    datalen, i);
@@ -837,26 +829,38 @@ send_probe(int seq, u_int8_t ttl, int iflag, struct sockaddr_in *to)
 	}
 }
 
+static char *ttab[] = {
+	"Echo Reply",
+	"ICMP 1",
+	"ICMP 2",
+	"Dest Unreachable",
+	"Source Quench",
+	"Redirect",
+	"ICMP 6",
+	"ICMP 7",
+	"Echo",
+	"Router Advert",
+	"Router Solicit",
+	"Time Exceeded",
+	"Param Problem",
+	"Timestamp",
+	"Timestamp Reply",
+	"Info Request",
+	"Info Reply",
+	"Mask Request",
+	"Mask Reply"
+};
+
 /*
  * Convert an ICMP "type" field to a printable string.
  */
 char *
 pr_type(u_int8_t t)
 {
-	static char *ttab[] = {
-	"Echo Reply",	"ICMP 1",	"ICMP 2",	"Dest Unreachable",
-	"Source Quench", "Redirect",	"ICMP 6",	"ICMP 7",
-	"Echo",		"Router Advert",	"Router Solicit",	"Time Exceeded",
-	"Param Problem", "Timestamp",	"Timestamp Reply", "Info Request",
-	"Info Reply", "Mask Request", "Mask Reply"
-	};
-
 	if (t > 18)
 		return ("OUT-OF-RANGE");
-
 	return (ttab[t]);
 }
-
 
 int
 packet_ok(u_char *buf, int cc, struct sockaddr_in *from, int seq, int iflag)
@@ -881,9 +885,10 @@ packet_ok(u_char *buf, int cc, struct sockaddr_in *from, int seq, int iflag)
 #else
 	icp = (struct icmp *)buf;
 #endif /* ARCHAIC */
-	type = icp->icmp_type; code = icp->icmp_code;
+	type = icp->icmp_type;
+	code = icp->icmp_code;
 	if ((type == ICMP_TIMXCEED && code == ICMP_TIMXCEED_INTRANS) ||
-	    type == ICMP_UNREACH || type == ICMP_ECHOREPLY ) {
+	    type == ICMP_UNREACH || type == ICMP_ECHOREPLY) {
 		struct ip *hip;
 		struct udphdr *up;
 		struct icmp *icmpp;
@@ -965,10 +970,8 @@ print(u_char *buf, int cc, struct sockaddr_in *from)
 u_short
 in_cksum(u_short *addr, int len)
 {
-	int nleft = len;
-	u_short *w = addr;
-	u_short answer;
-	int sum = 0;
+	u_short *w = addr, answer;
+	int nleft = len, sum = 0;
 
 	/*
 	 *  Our algorithm is simple, using a 32 bit accumulator (sum),
@@ -1002,10 +1005,10 @@ in_cksum(u_short *addr, int len)
 char *
 inetname(struct in_addr in)
 {
-	char *cp;
-	struct hostent *hp;
-	static int first = 1;
 	static char domain[MAXHOSTNAMELEN], line[MAXHOSTNAMELEN];
+	static int first = 1;
+	struct hostent *hp;
+	char *cp;
 
 	if (first && !nflag) {
 		first = 0;
