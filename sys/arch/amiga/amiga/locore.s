@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.19 1997/03/26 21:51:31 niklas Exp $	*/
+/*	$OpenBSD: locore.s,v 1.20 1997/03/27 12:06:45 niklas Exp $	*/
 /*	$NetBSD: locore.s,v 1.72 1996/12/17 11:09:10 is Exp $	*/
 
 /*
@@ -1100,7 +1100,7 @@ Lcacheon:
 	clrl	sp@-			| stack adjust count
 	lea	sp@(-64),sp		| construct space for D0-D7/A0-A7
 	lea	_proc0,a0		| proc0 in a0
-	movl	sp,a0@(P_MD + MD_REGS)	| save frame for proc0
+	movl	sp,a0@(P_MD_REGS)	| save frame for proc0
 	movl	usp,a1
 	movl	a1,sp@(FR_SP)		| save user stack pointer in frame
 	pea	sp@			| addr of space for D0 
@@ -1134,7 +1134,7 @@ Lnoflush:
  */
 	.globl	_proc_trampoline
 _proc_trampoline:
-	movl	a3@(P_MD + MD_REGS),sp	| frame pointer of process in sp
+	movl	a3@(P_MD_REGS),sp	| frame pointer of process in sp
 	movl	a3,sp@-			| push function arg (curproc)
 	jbsr	a2@			| call function
 	addql	#4,sp			| pop arg
