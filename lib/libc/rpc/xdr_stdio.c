@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: xdr_stdio.c,v 1.5 2001/09/15 13:51:01 deraadt Exp $";
+static char *rcsid = "$OpenBSD: xdr_stdio.c,v 1.6 2001/09/17 18:34:51 jason Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -108,7 +108,7 @@ xdrstdio_getlong(xdrs, lp)
 	if (fread((caddr_t)lp, sizeof(int32_t), 1,
 	    (FILE *)xdrs->x_private) != 1)
 		return (FALSE);
-	*lp = (long)ntohl((int32_t)*lp);
+	*lp = (long)ntohl((u_int32_t)*lp);
 	return (TRUE);
 }
 
@@ -117,7 +117,7 @@ xdrstdio_putlong(xdrs, lp)
 	XDR *xdrs;
 	long *lp;
 {
-	long mycopy = (long)htonl((int32_t)*lp);
+	long mycopy = (long)htonl((u_int32_t)*lp);
 
 	if (fwrite((caddr_t)&mycopy, sizeof(int32_t), 1,
 	    (FILE *)xdrs->x_private) != 1)

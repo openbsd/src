@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: xdr_mem.c,v 1.7 2001/09/15 13:51:01 deraadt Exp $";
+static char *rcsid = "$OpenBSD: xdr_mem.c,v 1.8 2001/09/17 18:34:51 jason Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -129,7 +129,7 @@ xdrmem_putlong_aligned(xdrs, lp)
 
 	if ((xdrs->x_handy -= sizeof(int32_t)) < 0)
 		return (FALSE);
-	*(int32_t *)xdrs->x_private = htonl(*lp);
+	*(int32_t *)xdrs->x_private = htonl((u_int32_t)*lp);
 	xdrs->x_private += sizeof(int32_t);
 	return (TRUE);
 }
@@ -158,7 +158,7 @@ xdrmem_putlong_unaligned(xdrs, lp)
 
 	if ((xdrs->x_handy -= sizeof(int32_t)) < 0)
 		return (FALSE);
-	l = htonl(*lp);
+	l = htonl((u_int32_t)*lp);
 	memcpy(xdrs->x_private, &l, sizeof(int32_t));
 	xdrs->x_private += sizeof(int32_t);
 	return (TRUE);
