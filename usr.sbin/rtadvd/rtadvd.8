@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rtadvd.8,v 1.3 2000/01/05 19:53:12 angelos Exp $
+.\"	$OpenBSD: rtadvd.8,v 1.4 2000/01/06 07:06:19 angelos Exp $
 .\" 
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
 .\" All rights reserved.
@@ -46,33 +46,34 @@ advertises router advertisement packet to the specified
 .Ar interfaces .
 .Pp
 The program will daemonize itself on invocation.
-Then, it will voluntarily send router advertisement packet periodically.
-If a router solicitation packet from host has reached the program,
-the program will respond by router advertisement packet.
+It will then periodically send router advertisement packets, as well
+as in response to router solicitation messages sent by end hosts.
 .Pp
-For each interface, which is called advertising interface,
-content of router advertisement can be described in
+Router advertisements can be configured on a per-interface basis, as
+described in
 .Xr rtadvd.conf 5 .
 .Pp
-If there is no description for the interface in the configuration file
-or if the configuration file does not exist,
+In the event of no configuration file entry for an interface,
+or if the configuration file does not exist altogether,
 .Nm
 sets all the parameters to their default values.
 In particular,
 .Nm
-gets all the interface routes from the routing table and advertises
+reads all the interface routes from the routing table and advertises
 them as on-link prefixes.
 .Pp
 .Nm Rtadvd
-watches the routing table.
+also watches the routing table.
 By default, if an interface direct route is
 added/deleted on an advertising interface,
 .Nm
 adds/deletes the corresponding prefix to/from its advertising list,
 respectively.
-If you do not want to enable this feature, you should specify the
+The
 .Ic Fl s
-command line option when advocation.
+command line option may be used to disable this behavior.
+.Pp
+The command line options are:
 .Bl -tag -width indent
 .\"
 .It Fl c
@@ -83,15 +84,13 @@ By default,
 .Pa /etc/rtadvd.conf
 is used.
 .It Fl d
-Debug.
+Print debugging information.
 .It Fl D
-More debug.
+Even more debugging information is printed.
 .It Fl f
-Foreground mode.
-Do not become daemon.
+Foreground mode (useful when debugging).
 .It Fl s
-Static prefix.
-Do not watch the routing table.
+Do not monitor routing table changes (static prefix).
 .El
 .Sh RETURN VALUES
 The program exits with 0 on success, and non-zero on failures.
@@ -109,10 +108,9 @@ The
 .Nm
 command first appeared in WIDE Hydrangea IPv6 protocol stack kit.
 .Sh CAVEAT
-Do not perform router advertisement toward upstream direction,
-you should only advertise to downstream direction.
-If you advertise toward upstream by mistake,
-you will see icmp6 redirect storm on that subnet.
-This is because of the specification,
-which says that advertising router is assumed to become
-the default outgoing router for end hosts in the subnet.
+Router advertisements should only be performed downstream. Erroneous
+upstream advertisements will cause
+.Xr icmp6 4
+redirect packet storms in the subnet, as (per the specification) the
+advertising router is assumed to become the default ongoing router for
+end hosts in the subnet.
