@@ -1,4 +1,4 @@
-/* $OpenBSD: zaurus_kbd.c,v 1.6 2005/01/15 05:58:53 drahn Exp $ */
+/* $OpenBSD: zaurus_kbd.c,v 1.7 2005/01/15 17:51:57 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@openbsd.org>
  *
@@ -284,9 +284,10 @@ zkbd_poll(void *v)
 			type = sc->sc_keystate[i] ? WSCONS_EVENT_KEY_DOWN :
 			    WSCONS_EVENT_KEY_UP;
 
-/*
-printf("key %d %s\n", i, sc->sc_keystate[i] ? "pressed" : "released");
-*/
+#if 0
+			printf("key %d %s\n", i,
+			    sc->sc_keystate[i] ? "pressed" : "released");
+#endif
 
 	                wskbd_input(sc->sc_wskbddev, type, i);
 
@@ -304,21 +305,27 @@ printf("key %d %s\n", i, sc->sc_keystate[i] ? "pressed" : "released");
 int
 zkbd_on(void *v)
 {
+#if 0
 	printf("on key pressed\n");
+#endif
 	return 1;
 }
 
 int
 zkbd_sync(void *v)
 {
+#if 0
 	printf("sync button pressed\n");
+#endif
 	return 1;
 }
 
 int
 zkbd_hinge(void *v)
 {
+#if 0
 	printf("hinge event pressed\n");
+#endif
 	return 1;
 }
 
