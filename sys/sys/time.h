@@ -1,4 +1,4 @@
-/*	$OpenBSD: time.h,v 1.7 1998/02/08 22:41:47 tholo Exp $	*/
+/*	$OpenBSD: time.h,v 1.8 1998/11/21 03:01:03 d Exp $	*/
 /*	$NetBSD: time.h,v 1.18 1996/04/23 10:29:33 mycroft Exp $	*/
 
 /*
@@ -174,6 +174,9 @@ void	microtime __P((struct timeval *tv));
 
 __BEGIN_DECLS
 int	adjtime __P((const struct timeval *, struct timeval *));
+int	clock_getres __P((clockid_t, struct timespec *));
+int	clock_gettime __P((clockid_t, struct timespec *));
+int	clock_settime __P((clockid_t, const struct timespec *));
 int	futimes __P((int, const struct timeval *));
 int	getitimer __P((int, struct itimerval *));
 int	gettimeofday __P((struct timeval *, struct timezone *));
