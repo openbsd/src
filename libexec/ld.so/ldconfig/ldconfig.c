@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldconfig.c,v 1.3 2001/05/11 13:28:09 art Exp $	*/
+/*	$OpenBSD: ldconfig.c,v 1.4 2001/05/11 13:31:42 art Exp $	*/
 
 /*
  * Copyright (c) 1993,1995 Paul Kranenburg
@@ -450,7 +450,7 @@ readhints()
 	msize = PAGSIZ;
 	addr = mmap(0, msize, PROT_READ, MAP_PRIVATE, fd, 0);
 
-	if (addr == (caddr_t)-1) {
+	if (addr == MAP_FAILED) {
 		warn("%s", _PATH_LD_HINTS);
 		return -1;
 	}
