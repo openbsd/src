@@ -1,8 +1,9 @@
-#	$OpenBSD: list,v 1.22 2003/02/15 12:15:48 krw Exp $
+#	$OpenBSD: list,v 1.23 2003/09/04 08:16:17 henning Exp $
 #	$NetBSD: list,v 1.2.4.2 1996/06/26 19:25:00 pk Exp $
 
 # Sparc extra's
 LINK	instbin				sbin/disklabel
+LINK	instbin				sbin/restore
 LINK	instbin				usr/bin/grep usr/bin/egrep usr/bin/fgrep
 LINK	instbin				usr/bin/less usr/bin/more
 LINK	instbin				usr/sbin/installboot
