@@ -1,4 +1,4 @@
-/*	$OpenBSD: fstat.c,v 1.5 1996/08/12 19:45:47 deraadt Exp $	*/
+/*	$OpenBSD: fstat.c,v 1.6 1996/08/17 09:10:47 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -41,7 +41,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)fstat.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$OpenBSD: fstat.c,v 1.5 1996/08/12 19:45:47 deraadt Exp $";
+static char *rcsid = "$OpenBSD: fstat.c,v 1.6 1996/08/17 09:10:47 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -655,7 +655,7 @@ socktrans(sock, i)
 			    inet_ntoa(inpcb.inp_laddr),
 			    ntohs(inpcb.inp_lport));
 			if (inpcb.inp_fport)
-				printf(" -> %s:%d",
+				printf(" <-> %s:%d",
 				    inpcb.inp_faddr.s_addr == INADDR_ANY ? "*" :
 				    inet_ntoa(inpcb.inp_faddr),
 				    ntohs(inpcb.inp_fport));
@@ -673,7 +673,7 @@ socktrans(sock, i)
 			    inet_ntoa(inpcb.inp_laddr),
 			    ntohs(inpcb.inp_lport));
 			if (inpcb.inp_fport)
-				printf(" -> %s:%d",
+				printf(" <-> %s:%d",
 				    inpcb.inp_faddr.s_addr == INADDR_ANY ? "*" :
 				    inet_ntoa(inpcb.inp_faddr),
 				    ntohs(inpcb.inp_fport));
