@@ -1517,6 +1517,15 @@ main(argc, argv, envp)
 	{
 		char buf[MAXLINE];
 
+#if _FFR_TESTMODE_DROP_PRIVS
+		dp = drop_privileges(TRUE);
+		if (dp != EX_OK)
+		{
+			CurEnv->e_id = NULL;
+			finis(TRUE, dp);
+		}
+#endif /* _FFR_TESTMODE_DROP_PRIVS */
+
 		if (isatty(fileno(stdin)))
 			Verbose = 2;
 

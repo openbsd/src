@@ -2985,7 +2985,7 @@ setclass(class, str)
 			dprintf("setclass(%s, %s)\n", macname(class), str);
 
 		s = stab(str, ST_CLASS, ST_ENTER);
-		setbitn(class, s->s_class);
+		setbitn(((unsigned int)class) & 0xff, s->s_class);
 	}
 }
 /*

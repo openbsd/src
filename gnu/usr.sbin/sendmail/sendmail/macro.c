@@ -377,7 +377,7 @@ macid(p, ep)
 			*ep = p + 1;
 		if (tTd(35, 14))
 			dprintf("%c\n", *p);
-		return *p;
+		return ((unsigned int)*p) & 0xff;
 	}
 	bp = mbuf;
 	while (*++p != '\0' && *p != '}' && bp < &mbuf[sizeof mbuf - 1])
@@ -401,7 +401,7 @@ macid(p, ep)
 	else if (mbuf[1] == '\0')
 	{
 		/* ${x} == $x */
-		mid = mbuf[0];
+		mid = ((unsigned int)mbuf[0]) & 0xff;
 		p++;
 	}
 	else
@@ -428,6 +428,11 @@ macid(p, ep)
 	}
 	if (ep != NULL)
 		*ep = p;
+	if (mid < 0 || mid > MAXMACROID)
+	{
+		syserr("Unable to assign macro/class ID (mid = 0x%x)", mid);
+		mid = 0;
+	}
 	if (tTd(35, 14))
 		dprintf("0x%x\n", mid);
 	return mid;

@@ -306,6 +306,7 @@ copy_class(src, dst)
 	register STAB **shead;
 	register STAB *s;
 
+	dst = ((unsigned int)dst) & 0xff;
 	for (shead = SymTab; shead < &SymTab[STABSIZE]; shead++)
 	{
 		for (s = *shead; s != NULL; s = s->s_next)
