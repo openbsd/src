@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_pcmcia.c,v 1.13 2001/11/20 23:39:51 mickey Exp $	*/
+/*	$OpenBSD: if_wi_pcmcia.c,v 1.14 2001/11/27 18:12:03 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -208,6 +208,21 @@ static const struct wi_pcmcia_product {
 	  PCMCIA_PRODUCT_ELSA_XI800_IEEE,
 	  PCMCIA_CIS_ELSA_XI800_IEEE,
 	  "ELSA XI800 CF Wireless LAN"
+	},
+	{ PCMCIA_VENDOR_BUFFALO,
+	  PCMCIA_PRODUCT_BUFFALO_WLI_PCM_S11,
+	  PCMCIA_CIS_BUFFALO_WLI_PCM_S11,
+	  "BUFFALO AirStation 11Mbps WLAN"
+	},
+	{ PCMCIA_VENDOR_BUFFALO,
+	  PCMCIA_PRODUCT_BUFFALO_WLI_CF_S11G,
+	  PCMCIA_CIS_BUFFALO_WLI_CF_S11G,
+	  "BUFFALO AirStation 11Mbps CF WLAN"
+	},
+	{ PCMCIA_VENDOR_EMTAC,
+	  PCMCIA_PRODUCT_EMTAC_WLAN,
+	  PCMCIA_CIS_EMTAC_WLAN,
+	  "EMTAC A2424i 11Mbps WLAN Card"
 	},
 	{ 0,
 	  0,
