@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.10 2001/06/24 22:42:18 art Exp $ */
+/*	$OpenBSD: pf.c,v 1.11 2001/06/24 23:10:23 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -326,7 +326,7 @@ find_state(struct tree_node *p, struct tree_key *key)
 {
 	signed char c;
 
-	while ((p != NULL) && (c = tree_key_compare(&p->key, key)))
+	while (p && (c = tree_key_compare(&p->key, key)))
 		p = (c > 0) ? p->left : p->right;
 	status.state_searches++;
 	return p ? p->state : NULL;
@@ -833,7 +833,7 @@ send_reset(int direction, struct ifnet *ifp, struct ip *h, struct tcphdr *th)
 	m->m_data += max_linkhdr;
 	m->m_pkthdr.len = m->m_len = len;
 	m->m_pkthdr.rcvif = NULL;
-	bzero((caddr_t)m->m_data, len);
+	bzero(m->m_data, len);
 	h2 = mtod(m, struct ip *);
 
 	/* IP header fields included in the TCP checksum */
@@ -877,7 +877,7 @@ send_reset(int direction, struct ifnet *ifp, struct ip *h, struct tcphdr *th)
 		struct route *ro = &iproute;
 		struct sockaddr_in *dst;
 		int error;
-		bzero((caddr_t)ro, sizeof(*ro));
+		bzero(ro, sizeof(*ro));
 		dst = (struct sockaddr_in *)&ro->ro_dst;
 		dst->sin_family = AF_INET;
 		dst->sin_addr = h2->ip_dst;
@@ -931,9 +931,10 @@ struct nat *
 get_nat(struct ifnet *ifp, u_int8_t proto, u_int32_t addr)
 {
 	struct nat *n = nathead, *nm = NULL;
-	while ((n != NULL) && (nm == NULL)) {
-		if ((n->ifp == ifp) &&
-		    (!n->proto || (n->proto == proto)) &&
+
+	while (n && nm == NULL) {
+		if (n->ifp == ifp &&
+		    (!n->proto || n->proto == proto) &&
 		    match_addr(n->not, n->saddr, n->smask, addr))
 			nm = n;
 		else
@@ -946,11 +947,11 @@ struct rdr *
 get_rdr(struct ifnet *ifp, u_int8_t proto, u_int32_t addr, u_int16_t port)
 {
 	struct rdr *r = rdrhead, *rm = NULL;
-	while ((r != NULL) && (rm == NULL)) {
-		if ((r->ifp == ifp) &&
-		    (!r->proto || (r->proto == proto)) &&
+	while (r && rm == NULL) {
+		if (r->ifp == ifp &&
+		    (!r->proto || r->proto == proto) &&
 		    match_addr(r->not, r->daddr, r->dmask, addr) &&
-		    (r->dport == port))
+		    r->dport == port)
 			rm = r;
 		else
 			r = r->next;
@@ -970,7 +971,8 @@ pf_test_tcp(int direction, struct ifnet *ifp, struct ip *h, struct tcphdr *th)
 
 	if (direction == PF_OUT) {
 		/* check outgoing packet for NAT */
-		if ((nat = get_nat(ifp, IPPROTO_TCP, h->ip_src.s_addr)) != NULL) {
+		if ((nat = get_nat(ifp, IPPROTO_TCP,
+		    h->ip_src.s_addr)) != NULL) {
 			baddr = h->ip_src.s_addr;
 			bport = th->th_sport;
 			change_ap(&h->ip_src.s_addr, &th->th_sport, &h->ip_sum,
@@ -988,9 +990,9 @@ pf_test_tcp(int direction, struct ifnet *ifp, struct ip *h, struct tcphdr *th)
 	}
 
 	while (r != NULL) {
-		if ((r->direction == direction) &&
-		    ((r->ifp == NULL) || (r->ifp == ifp)) &&
-		    (!r->proto || (r->proto == IPPROTO_TCP)) &&
+		if (r->direction == direction &&
+		    (r->ifp == NULL || r->ifp == ifp) &&
+		    (!r->proto || r->proto == IPPROTO_TCP) &&
 		    ((th->th_flags & r->flagset) == r->flags) &&
 		    (!r->src.addr || match_addr(r->src.not, r->src.addr,
 		    r->src.mask, h->ip_src.s_addr)) &&
@@ -1012,9 +1014,10 @@ pf_test_tcp(int direction, struct ifnet *ifp, struct ip *h, struct tcphdr *th)
 	if ((rm != NULL) && rm->log) {
 		u_int32_t seq = ntohl(th->th_seq);
 		u_int16_t len = h->ip_len - ((h->ip_hl + th->th_off) << 2);
+
 		printf("packetfilter: @%u", mnr);
-		printf(" %s %s", rm->action ? "block" : "pass", direction ? "in" :
-		    "out");
+		printf(" %s %s", rm->action ? "block" : "pass",
+		    direction ? "in" : "out");
 		printf(" on %s proto tcp", ifp->if_xname);
 		printf(" from ");
 		print_host(h->ip_src.s_addr, th->th_sport);
@@ -1149,7 +1152,7 @@ pf_test_udp(int direction, struct ifnet *ifp, struct ip *h, struct udphdr *uh)
 		nr++;
 	}
 
-	if ((rm != NULL) && rm->log) {
+	if (rm != NULL && rm->log) {
 		printf("packetfilter: @%u", mnr);
 		printf(" %s %s", rm->action ? "block" : "pass", direction ? "in" :
 		    "out");
@@ -1161,10 +1164,10 @@ pf_test_udp(int direction, struct ifnet *ifp, struct ip *h, struct udphdr *uh)
 		printf("\n");
 	}
 
-	if ((rm != NULL) && (rm->action != PF_PASS))
+	if (rm != NULL && rm->action != PF_PASS)
 		return PF_DROP;
 
-	if (((rm != NULL) && rm->keep_state) || (nat != NULL) || (rdr != NULL)) {
+	if ((rm != NULL && rm->keep_state) || nat != NULL || rdr != NULL) {
 		/* create new state */
 		u_int16_t len;
 		struct state *s;
@@ -1255,7 +1258,7 @@ pf_test_icmp(int direction, struct ifnet *ifp, struct ip *h, struct icmp *ih)
 		nr++;
 	}
 
-	if ((rm != NULL) && rm->log) {
+	if (rm != NULL && rm->log) {
 		printf("packetfilter: @%u", mnr);
 		printf(" %s %s", rm->action ? "block" : "pass", direction ? "in" :
 		    "out");
@@ -1268,10 +1271,10 @@ pf_test_icmp(int direction, struct ifnet *ifp, struct ip *h, struct icmp *ih)
 		printf("\n");
 	}
 
-	if ((rm != NULL) && (rm->action != PF_PASS))
+	if (rm != NULL && rm->action != PF_PASS)
 		return PF_DROP;
 
-	if (((rm != NULL) && rm->keep_state) || (nat != NULL)) {
+	if ((rm != NULL && rm->keep_state) || nat != NULL) {
 		/* create new state */
 		u_int16_t len;
 		u_int16_t id;
@@ -1343,9 +1346,9 @@ pf_test_state_tcp(int direction, struct ifnet *ifp, struct ip *h, struct tcphdr 
 		}
 
 		/* some senders do that instead of ACKing FIN */
-		if ((th->th_flags == TH_RST) && !ack && !len &&
-		    ((seq == src->seqhi) || (seq == src->seqhi-1)) &&
-		    (src->state >= 4) && (dst->state >= 3))
+		if (th->th_flags == TH_RST && !ack && !len &&
+		    (seq == src->seqhi || seq == src->seqhi-1) &&
+		    src->state >= 4 && dst->state >= 3)
 			ack = dst->seqhi;
 
 		if ((dst->seqhi >= dst->seqlo ?
@@ -1364,7 +1367,7 @@ pf_test_state_tcp(int direction, struct ifnet *ifp, struct ip *h, struct tcphdr 
 			if (th->th_flags & TH_SYN) {
 				src->seqhi = seq + len;
 				src->seqlo = src->seqhi - 1;
-			} else if ((seq + len) - src->seqhi < 65536)
+			} else if (seq + len - src->seqhi < 65536)
 				src->seqhi = seq + len;
 
 			/* update states */
@@ -1374,7 +1377,7 @@ pf_test_state_tcp(int direction, struct ifnet *ifp, struct ip *h, struct tcphdr 
 			if (th->th_flags & TH_FIN)
 				if (src->state < 3)
 					src->state = 3;
-			if ((th->th_flags & TH_ACK) && (ack == dst->seqhi)) {
+			if ((th->th_flags & TH_ACK) && ack == dst->seqhi) {
 				if (dst->state == 1)
 					dst->state = 2;
 				else if (dst->state == 3)
@@ -1384,18 +1387,18 @@ pf_test_state_tcp(int direction, struct ifnet *ifp, struct ip *h, struct tcphdr 
 				src->state = dst->state = 5;
 
 			/* update expire time */
-			if ((src->state >= 4) && (dst->state >= 4))
+			if (src->state >= 4 && dst->state >= 4)
 				s->expire = pftv.tv_sec + 5;
-			else if ((src->state >= 3) || (dst->state >= 3))
+			else if (src->state >= 3 || dst->state >= 3)
 				s->expire = pftv.tv_sec + 300;
-			else if ((src->state < 2) || (dst->state < 2))
+			else if (src->state < 2 || dst->state < 2)
 				s->expire = pftv.tv_sec + 30;
 			else
 				s->expire = pftv.tv_sec + 24*60*60;
 
 			/* translate source/destination address, if necessary */
-			if ((s->lan.addr != s->gwy.addr)
-			    || (s->lan.port != s->gwy.port)) {
+			if (s->lan.addr != s->gwy.addr ||
+			    s->lan.port != s->gwy.port) {
 				if (direction == PF_OUT)
 					change_ap(&h->ip_src.s_addr, &th->th_sport,
 					    &h->ip_sum, &th->th_sum,
@@ -1456,14 +1459,14 @@ pf_test_state_udp(int direction, struct ifnet *ifp, struct ip *h, struct udphdr 
 			dst->state = 2;
 
 		/* update expire time */
-		if ((src->state == 2) && (dst->state == 2))
+		if (src->state == 2 && dst->state == 2)
 			s->expire = pftv.tv_sec + 60;
 		else
 			s->expire = pftv.tv_sec + 20;
 
 		/* translate source/destination address, if necessary */
-		if ((s->lan.addr != s->gwy.addr)
-		    || (s->lan.port != s->gwy.port)) {
+		if (s->lan.addr != s->gwy.addr ||
+		    s->lan.port != s->gwy.port) {
 			if (direction == PF_OUT)
 				change_ap(&h->ip_src.s_addr, &uh->uh_sport,
 				    &h->ip_sum, &uh->uh_sum,
@@ -1484,11 +1487,11 @@ pf_test_state_icmp(int direction, struct ifnet *ifp, struct ip *h, struct icmp *
 {
 	u_int16_t len = h->ip_len - (h->ip_hl << 2) - 8;
 
-	if ((ih->icmp_type != ICMP_UNREACH) &&
-	    (ih->icmp_type != ICMP_SOURCEQUENCH) &&
-	    (ih->icmp_type != ICMP_REDIRECT) &&
-	    (ih->icmp_type != ICMP_TIMXCEED) &&
-	    (ih->icmp_type != ICMP_PARAMPROB)) {
+	if (ih->icmp_type != ICMP_UNREACH &&
+	    ih->icmp_type != ICMP_SOURCEQUENCH &&
+	    ih->icmp_type != ICMP_REDIRECT &&
+	    ih->icmp_type != ICMP_TIMXCEED &&
+	    ih->icmp_type != ICMP_PARAMPROB) {
 
 		/*
 		 * ICMP query/reply message not related to a TCP/UDP packet.
@@ -1569,8 +1572,8 @@ pf_test_state_icmp(int direction, struct ifnet *ifp, struct ip *h, struct icmp *
 				return NULL;
 			}
 
-			if ((s->lan.addr != s->gwy.addr) ||
-			    (s->lan.port != s->gwy.port)) {
+			if (s->lan.addr != s->gwy.addr ||
+			    s->lan.port != s->gwy.port) {
 				if (direction == PF_IN) {
 					change_icmp(&h2->ip_src.s_addr,
 					    &th->th_sport, &h->ip_dst.s_addr,
@@ -1599,13 +1602,13 @@ pf_test_state_icmp(int direction, struct ifnet *ifp, struct ip *h, struct icmp *
 			key.addr[1] = h2->ip_src.s_addr;
 			key.port[1] = uh->uh_sport;
 
-			s = find_state((direction == PF_IN) ? tree_ext_gwy :
+			s = find_state(direction == PF_IN ? tree_ext_gwy :
 			    tree_lan_ext, &key);
 			if (s == NULL)
 				return NULL;
 
-			if ((s->lan.addr != s->gwy.addr) ||
-			    (s->lan.port != s->gwy.port)) {
+			if (s->lan.addr != s->gwy.addr ||
+			    s->lan.port != s->gwy.port) {
 				if (direction == PF_IN) {
 					change_icmp(&h2->ip_src.s_addr,
 					    &uh->uh_sport, &h->ip_dst.s_addr,
@@ -1687,7 +1690,7 @@ pf_test(int direction, struct ifnet *ifp, struct mbuf **m)
 
 	/* purge expire states, at most once every 10 seconds */
 	microtime(&pftv);
-	if ((pftv.tv_sec - last_purge) >= 10) {
+	if (pftv.tv_sec - last_purge >= 10) {
 		purge_expired_states();
 		last_purge = pftv.tv_sec;
 	}
