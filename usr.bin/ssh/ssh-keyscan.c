@@ -7,7 +7,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: ssh-keyscan.c,v 1.51 2005/03/01 10:41:28 djm Exp $");
+RCSID("$OpenBSD: ssh-keyscan.c,v 1.52 2005/03/01 15:47:14 jmc Exp $");
 
 #include <sys/queue.h>
 #include <errno.h>
@@ -674,7 +674,7 @@ fatal(const char *fmt,...)
 static void
 usage(void)
 {
-	fprintf(stderr, "usage: %s [-Hv46] [-p port] [-T timeout] [-t type] [-f file]\n"
+	fprintf(stderr, "usage: %s [-46Hv] [-f file] [-p port] [-T timeout] [-t type]\n"
 	    "\t\t   [host | addrlist namelist] [...]\n",
 	    __progname);
 	exit(1);
