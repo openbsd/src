@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_debug.c,v 1.16 2003/06/02 23:28:14 millert Exp $	*/
+/*	$OpenBSD: tcp_debug.c,v 1.17 2003/06/09 07:40:25 itojun Exp $	*/
 /*	$NetBSD: tcp_debug.c,v 1.10 1996/02/13 23:43:36 christos Exp $	*/
 
 /*
@@ -109,16 +109,16 @@ int	tcpconsdebug = 0;
 #endif
 
 struct	tcp_debug tcp_debug[TCP_NDEBUG];
-int	tcp_debx = 0;
+int	tcp_debx;
 
 /*
  * Tcp debug routines
  */
 void
-tcp_trace(act, ostate, tp, m, req, len)
+tcp_trace(act, ostate, tp, headers, req, len)
 	short act, ostate;
 	struct tcpcb *tp;
-	struct mbuf *m;
+	caddr_t headers;
 	int req;
 	int len;
 {
@@ -126,27 +126,15 @@ tcp_trace(act, ostate, tp, m, req, len)
 	tcp_seq seq, ack;
 	int flags;
 #endif
-	caddr_t headers;
-	struct tcp_debug *td;
-	struct tcpiphdr *ti;
+	struct tcp_debug *td = &tcp_debug[tcp_debx++];
+	struct tcpiphdr *ti = (struct tcpiphdr *)headers;
 	struct tcphdr *th;
 #ifdef INET6
 	struct tcpipv6hdr *ti6 = (struct tcpipv6hdr *)ti;
 #endif
 
-	td = &tcp_debug[tcp_debx++];
 	if (tcp_debx == TCP_NDEBUG)
 		tcp_debx = 0;
-
-	if (m)
-		headers = mtod(m, caddr_t);
-	else
-		headers = NULL;
-	ti = (struct tcpiphdr *)headers;
-#ifdef INET6
-	ti6 = (struct tcpipv6hdr *)headers;
-#endif
-
 	td->td_time = iptime();
 	td->td_act = act;
 	td->td_ostate = ostate;
@@ -158,7 +146,7 @@ tcp_trace(act, ostate, tp, m, req, len)
 	switch (tp->pf) {
 #ifdef INET6
 	case PF_INET6:
-		if (ti6) {
+		if (ti) {
 			th = &ti6->ti6_t;
 			td->td_ti6 = *ti6;
 		} else

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.130 2003/06/02 23:28:14 millert Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.131 2003/06/09 07:40:25 itojun Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -97,6 +97,9 @@
 #include <netinet6/in6_var.h>
 #include <netinet6/nd6.h>
 
+struct	tcpiphdr tcp_saveti;
+struct  tcpipv6hdr tcp_saveti6;
+
 /* for the packet header length in the mbuf */
 #define M_PH_LEN(m)      (((struct mbuf *)(m))->m_pkthdr.len)
 #define M_V6_LEN(m)      (M_PH_LEN(m) - sizeof(struct ip6_hdr))
@@ -104,6 +107,7 @@
 #endif /* INET6 */
 
 int	tcprexmtthresh = 3;
+struct	tcpiphdr tcp_saveti;
 int	tcptv_keep_init = TCPTV_KEEP_INIT;
 
 extern u_long sb_max;
@@ -409,7 +413,7 @@ tcp_input(struct mbuf *m, ...)
 	u_long tiwin;
 	u_int32_t ts_val, ts_ecr;
 	int ts_present = 0;
-	int iphlen, toff;
+	int iphlen;
 	va_list ap;
 	struct tcphdr *th;
 #ifdef INET6
@@ -423,13 +427,12 @@ tcp_input(struct mbuf *m, ...)
 	int error, s;
 #endif /* IPSEC */
 	int af;
-	struct mbuf *tcp_saveti = NULL;
 #ifdef TCP_ECN
 	u_char iptos;
 #endif
 
 	va_start(ap, m);
-	toff = va_arg(ap, int);
+	iphlen = va_arg(ap, int);
 	va_end(ap);
 
 	tcpstat.tcps_rcvtotal++;
@@ -459,44 +462,101 @@ tcp_input(struct mbuf *m, ...)
 	switch (af) {
 	case AF_INET:
 #ifdef DIAGNOSTIC
-		if (toff < sizeof(struct ip)) {
+		if (iphlen < sizeof(struct ip)) {
 			m_freem(m);
 			return;
 		}
 #endif /* DIAGNOSTIC */
-		ip = mtod(m, struct ip *);
-		iphlen = sizeof(*ip);
-		IP6_EXTHDR_GET(th, struct tcphdr *, m, toff,
-		    sizeof(struct tcphdr));
-		if (th == NULL) {
-			tcpstat.tcps_rcvshort++;
+		if (iphlen > sizeof(struct ip)) {
+#if 0	/*XXX*/
+			ip_stripoptions(m, (struct mbuf *)0);
+			iphlen = sizeof(struct ip);
+#else
+			m_freem(m);
 			return;
-		}
-		len = m->m_pkthdr.len;
-		tlen = len - toff;
-#ifdef TCP_ECN
-		/* save ip_tos before clearing it for checksum */
-		iptos = ip->ip_tos;
 #endif
+		}
 		break;
 #ifdef INET6
 	case AF_INET6:
 #ifdef DIAGNOSTIC
-		if (toff < sizeof(struct ip6_hdr)) {
+		if (iphlen < sizeof(struct ip6_hdr)) {
 			m_freem(m);
 			return;
 		}
 #endif /* DIAGNOSTIC */
-		ip6 = mtod(m, struct ip6_hdr *);
-		iphlen = sizeof(*ip6);
-		IP6_EXTHDR_GET(th, struct tcphdr *, m, toff,
-		    sizeof(struct tcphdr));
-		if (th == NULL) {
+		if (iphlen > sizeof(struct ip6_hdr)) {
+#if 0 /*XXX*/
+			ipv6_stripoptions(m, iphlen);
+			iphlen = sizeof(struct ip6_hdr);
+#else
+			m_freem(m);
+			return;
+#endif
+		}
+		break;
+#endif
+	default:
+		m_freem(m);
+		return;
+	}
+
+	if (m->m_len < iphlen + sizeof(struct tcphdr)) {
+		m = m_pullup2(m, iphlen + sizeof(struct tcphdr));
+		if (m == NULL) {
 			tcpstat.tcps_rcvshort++;
 			return;
 		}
-		len = m->m_pkthdr.len;
-		tlen = len - toff;
+	}
+
+	ip = NULL;
+#ifdef INET6
+	ip6 = NULL;
+#endif
+	switch (af) {
+	case AF_INET:
+	    {
+		struct tcpiphdr *ti;
+
+		ip = mtod(m, struct ip *);
+#if 1
+		tlen = m->m_pkthdr.len - iphlen;
+#else
+		tlen = ((struct ip *)ti)->ip_len;
+#endif
+		ti = mtod(m, struct tcpiphdr *);
+
+#ifdef TCP_ECN
+		/* save ip_tos before clearing it for checksum */
+		iptos = ip->ip_tos;
+#endif
+		/*
+		 * Checksum extended TCP header and data.
+		 */
+		len = sizeof(struct ip) + tlen;
+		bzero(ti->ti_x1, sizeof ti->ti_x1);
+		ti->ti_len = (u_int16_t)tlen;
+		HTONS(ti->ti_len);
+		if ((m->m_pkthdr.csum & M_TCP_CSUM_IN_OK) == 0) {
+			if (m->m_pkthdr.csum & M_TCP_CSUM_IN_BAD) {
+				tcpstat.tcps_inhwcsum++;
+				tcpstat.tcps_rcvbadsum++;
+				goto drop;
+			}
+			if ((ti->ti_sum = in_cksum(m, len)) != 0) {
+				tcpstat.tcps_rcvbadsum++;
+				goto drop;
+			}
+		} else {
+			m->m_pkthdr.csum &= ~M_TCP_CSUM_IN_OK;
+			tcpstat.tcps_inhwcsum++;
+		}
+		break;
+	    }
+#ifdef INET6
+	case AF_INET6:
+		ip6 = mtod(m, struct ip6_hdr *);
+		tlen = m->m_pkthdr.len - iphlen;
 #ifdef TCP_ECN
 		iptos = (ntohl(ip6->ip6_flow) >> 20) & 0xff;
 #endif
@@ -521,36 +581,6 @@ tcp_input(struct mbuf *m, ...)
 			goto drop;
 		}
 
-		break;
-#endif
-	default:
-		m_freem(m);
-		return;
-	}
-
-	switch (af) {
-	case AF_INET:
-		/*
-		 * Checksum extended TCP header and data.
-		 */
-		HTONS(ip->ip_len);
-		if ((m->m_pkthdr.csum & M_TCP_CSUM_IN_OK) == 0) {
-			if (m->m_pkthdr.csum & M_TCP_CSUM_IN_BAD) {
-				tcpstat.tcps_inhwcsum++;
-				tcpstat.tcps_rcvbadsum++;
-				goto drop;
-			}
-			if (in4_cksum(m, IPPROTO_TCP, toff, tlen) != 0) {
-				tcpstat.tcps_rcvbadsum++;
-				goto drop;
-			}
-		} else {
-			m->m_pkthdr.csum &= ~M_TCP_CSUM_IN_OK;
-			tcpstat.tcps_inhwcsum++;
-		}
-		break;
-#ifdef INET6
-	case AF_INET6:
 		/*
 		 * Checksum extended TCP header and data.
 		 */
@@ -563,6 +593,8 @@ tcp_input(struct mbuf *m, ...)
 	}
 #endif /* TUBA_INCLUDE */
 
+	th = (struct tcphdr *)(mtod(m, caddr_t) + iphlen);
+
 	/*
 	 * Check that TCP offset makes sense,
 	 * pull out TCP options and adjust length.		XXX
@@ -574,13 +606,25 @@ tcp_input(struct mbuf *m, ...)
 	}
 	tlen -= off;
 	if (off > sizeof(struct tcphdr)) {
-		IP6_EXTHDR_GET(th, struct tcphdr *, m, toff, off);
-		if (th == NULL) {
-			tcpstat.tcps_rcvshort++;
-			return;
+		if (m->m_len < iphlen + off) {
+			if ((m = m_pullup2(m, iphlen + off)) == NULL) {
+				tcpstat.tcps_rcvshort++;
+				return;
+			}
+			switch (af) {
+			case AF_INET:
+				ip = mtod(m, struct ip *);
+				break;
+#ifdef INET6
+			case AF_INET6:
+				ip6 = mtod(m, struct ip6_hdr *);
+				break;
+#endif
+			}
+			th = (struct tcphdr *)(mtod(m, caddr_t) + iphlen);
 		}
 		optlen = off - sizeof(struct tcphdr);
-		optp = mtod(m, u_int8_t *) + toff + sizeof(struct tcphdr);
+		optp = mtod(m, u_int8_t *) + iphlen + sizeof(struct tcphdr);
 		/*
 		 * Do quick retrieval of timestamp options ("options
 		 * prediction?").  If timestamp is the only option and it's
@@ -668,28 +712,16 @@ findpcb:
 	if (so->so_options & (SO_DEBUG|SO_ACCEPTCONN)) {
 		if (so->so_options & SO_DEBUG) {
 			ostate = tp->t_state;
-			tcp_saveti = NULL;
-			MGETHDR(tcp_saveti, M_DONTWAIT, MT_HEADER);
-			if (!tcp_saveti)
-				goto nosave;
-#ifdef DIAGNOSTIC
-			if (iphlen + sizeof(struct tcphdr) > MCLBYTES) {
-				printf("cannot save to tcp_saveti\n");
-				goto nosave;
-			}
+			switch (af) {
+#ifdef INET6
+			case AF_INET6:
+				tcp_saveti6 = *(mtod(m, struct tcpipv6hdr *));
+				break;
 #endif
-			if (iphlen + sizeof(struct tcphdr) > MHLEN) {
-				MCLGET(tcp_saveti, M_DONTWAIT);
-				if ((tcp_saveti->m_flags & M_EXT) == 0) {
-					m_freem(tcp_saveti);
-					tcp_saveti = NULL;
-					goto nosave;
-				}
+			case AF_INET:
+				tcp_saveti = *(mtod(m, struct tcpiphdr *));
+				break;
 			}
-			m_copydata(m, 0, iphlen, mtod(tcp_saveti, caddr_t));
-			m_copydata(m, toff, sizeof(struct tcphdr),
-			    mtod(tcp_saveti, caddr_t) + iphlen);
-	nosave:;
 		}
 		if (so->so_options & SO_ACCEPTCONN) {
 			struct socket *so1;
@@ -847,7 +879,7 @@ findpcb:
 	        tdb = gettdb(tdbi->spi, &tdbi->dst, tdbi->proto);
 	} else
 		tdb = NULL;
-	ipsp_spd_lookup(m, af, toff, &error, IPSP_DIRECTION_IN,
+	ipsp_spd_lookup(m, af, iphlen, &error, IPSP_DIRECTION_IN,
 	    tdb, inp);
 	if (error) {
 		splx(s);
@@ -1044,7 +1076,7 @@ findpcb:
 			if (so->so_state & SS_CANTRCVMORE)
 				m_freem(m);
 			else {
-				m_adj(m, toff + off);
+				m_adj(m, iphlen + off);
 				sbappendstream(&so->so_rcv, m);
 			}
 			sorwakeup(so);
@@ -1058,7 +1090,7 @@ findpcb:
 	/*
 	 * Compute mbuf offset to TCP data segment.
 	 */
-	hdroptlen = toff + off;
+	hdroptlen = iphlen + off;
 
 	/*
 	 * Calculate amount of space in receive window,
@@ -2206,8 +2238,20 @@ dodata:							/* XXX */
 			break;
 		}
 	}
-	if (so->so_options & SO_DEBUG)
-		tcp_trace(TA_INPUT, ostate, tp, tcp_saveti, 0, tlen);
+	if (so->so_options & SO_DEBUG) {
+		switch (tp->pf) {
+#ifdef INET6
+		case PF_INET6:
+			tcp_trace(TA_INPUT, ostate, tp, (caddr_t) &tcp_saveti6,
+			    0, tlen);
+			break;
+#endif /* INET6 */
+		case PF_INET:
+			tcp_trace(TA_INPUT, ostate, tp, (caddr_t) &tcp_saveti,
+			    0, tlen);
+			break;
+		}
+	}
 
 	/*
 	 * Return any desired output.
@@ -2215,7 +2259,6 @@ dodata:							/* XXX */
 	if (needoutput || (tp->t_flags & TF_ACKNOW)) {
 		(void) tcp_output(tp);
 	}
-	m_freem(tcp_saveti);
 	return;
 
 dropafterack:
@@ -2228,7 +2271,6 @@ dropafterack:
 	m_freem(m);
 	tp->t_flags |= TF_ACKNOW;
 	(void) tcp_output(tp);
-	m_freem(tcp_saveti);
 	return;
 
 dropwithreset_ratelim:
@@ -2278,17 +2320,27 @@ dropwithreset:
 	/* destroy temporarily created socket */
 	if (dropsocket)
 		(void) soabort(so);
-	m_freem(tcp_saveti);
 	return;
 
 drop:
 	/*
 	 * Drop space held by incoming segment and return.
 	 */
-	if (tp && (tp->t_inpcb->inp_socket->so_options & SO_DEBUG))
-		tcp_trace(TA_DROP, ostate, tp, tcp_saveti, 0, tlen);
+	if (tp && (tp->t_inpcb->inp_socket->so_options & SO_DEBUG)) {
+		switch (tp->pf) {
+#ifdef INET6
+		case PF_INET6:
+			tcp_trace(TA_DROP, ostate, tp, (caddr_t) &tcp_saveti6,
+			    0, tlen);
+			break;
+#endif /* INET6 */
+		case PF_INET:
+			tcp_trace(TA_DROP, ostate, tp, (caddr_t) &tcp_saveti,
+			    0, tlen);
+			break;
+		}
+	}
 
-	m_freem(tcp_saveti);
 	m_freem(m);
 	/* destroy temporarily created socket */
 	if (dropsocket)

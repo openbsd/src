@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.70 2003/06/02 23:28:15 millert Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.71 2003/06/09 07:40:25 itojun Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -484,7 +484,7 @@ tcp_usrreq(so, req, m, nam, control)
 		panic("tcp_usrreq");
 	}
 	if (tp && (so->so_options & SO_DEBUG))
-		tcp_trace(TA_USER, ostate, tp, NULL, req, 0);
+		tcp_trace(TA_USER, ostate, tp, (caddr_t)0, req, 0);
 	splx(s);
 	return (error);
 }
