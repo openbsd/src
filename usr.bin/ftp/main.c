@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.31 1997/04/28 20:35:59 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.32 1997/06/01 22:30:49 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.21 1997/04/05 03:27:39 lukem Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.31 1997/04/28 20:35:59 millert Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.32 1997/06/01 22:30:49 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -122,9 +122,10 @@ main(argc, argv)
 	ttyout = stdout;
 	if (isatty(fileno(ttyout)) && !dumb_terminal)
 		progress = 1;		/* progress bar on if going to a tty */
-	else {
-		ttyout = stderr;
+
+	if (!isatty(fileno(ttyout))) {
 		outfd = fileno(stdout);
+		ttyout = stderr;
 	}
 
 	while ((ch = getopt(argc, argv, "adeginpPr:tvV")) != -1) {
