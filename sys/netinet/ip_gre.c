@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip_gre.c,v 1.6 2000/01/25 17:18:59 espie Exp $ */
+/*      $OpenBSD: ip_gre.c,v 1.7 2001/02/09 19:59:10 angelos Exp $ */
 /*	$NetBSD: ip_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -55,6 +55,7 @@
 #include <net/if.h>
 #include <net/netisr.h>
 #include <net/route.h>
+#include <net/bpf.h>
 
 #include <machine/cpu.h>
 
@@ -80,12 +81,15 @@
 #include <netatalk/at_extern.h>
 #endif
 
+#include "bpfilter.h"
+
 /* Needs IP headers. */
 #include <net/if_gre.h>
 
 #include <machine/stdarg.h>
 
 struct gre_softc *gre_lookup __P((struct mbuf *, u_int8_t));
+static int gre_input2 __P((struct mbuf *, int, u_char));
 
 /*
  * Decapsulate.
@@ -97,18 +101,25 @@ struct gre_softc *gre_lookup __P((struct mbuf *, u_int8_t));
  */
 
 static int
-gre_input2(struct mbuf *m ,int hlen,u_char proto)
+gre_input2(m , hlen, proto)
+        struct mbuf *m;
+	int hlen;
+	u_char proto;
 {
 	register struct greip *gip = mtod(m, struct greip *);
 	register int s;
 	register struct ifqueue *ifq;
 	struct gre_softc *sc;
 	u_short flags;
+	u_int af;
 
 	if ((sc = gre_lookup(m, proto)) == NULL) {
 		/* No matching tunnel or tunnel is down. */
 		return (0);
 	}
+
+	m->m_pkthdr.rcvif = &sc->sc_if;
+	printf("%s\n", sc->sc_if.if_xname);
 
 	sc->sc_if.if_ipackets++;
 	sc->sc_if.if_ibytes += m->m_pkthdr.len;
@@ -137,23 +148,27 @@ gre_input2(struct mbuf *m ,int hlen,u_char proto)
 		switch (ntohs(gip->gi_ptype)) { /* ethertypes */
 		case ETHERTYPE_IP: /* shouldn't need a schednetisr(), as */
 			ifq = &ipintrq;          /* we are in ip_input */
+			af = AF_INET;
 			break;
 #ifdef NS
 		case ETHERTYPE_NS:
 			ifq = &nsintrq;
 			schednetisr(NETISR_NS);
+			af = AF_NS;
 			break;
 #endif
 #ifdef NETATALK
 		case ETHERTYPE_AT:
 			ifq = &atintrq1;
 			schednetisr(NETISR_ATALK);
+			af = AF_APPLETALK;
 			break;
 #endif
 #ifdef INET6
 		case ETHERTYPE_IPV6:
 		        ifq = &ip6intrq;
 			schednetisr(NETISR_IPV6);
+			af = AF_INET6;
 			break;
 #endif /* INET6 */
 		default:	   /* others not yet supported */
@@ -169,8 +184,8 @@ gre_input2(struct mbuf *m ,int hlen,u_char proto)
 	m->m_len -= hlen;
 	m->m_pkthdr.len -= hlen;
 
-#if NBPFILTER >0
-        if (sc->sc_if->if_bpf) {
+#if NBPFILTER > 0
+        if (sc->sc_if.if_bpf) {
                 /*
                  * We need to prepend the address family as
                  * a four byte field.  Cons up a fake header
@@ -179,13 +194,12 @@ gre_input2(struct mbuf *m ,int hlen,u_char proto)
                  * try to free it or keep a pointer a to it).
                  */
                 struct mbuf m0;
-                u_int af = dst->sa_family;
 
                 m0.m_next = m;
                 m0.m_len = 4;
                 m0.m_data = (char *) &af;
 
-                bpf_mtap(sc->sc_if->if_bpf, &m0);
+                bpf_mtap(sc->sc_if.if_bpf, &m0);
         }
 #endif
 
@@ -261,6 +275,7 @@ gre_mobile_input(m, va_alist)
 	va_list ap;
 	u_char osrc = 0;
 	int msiz;
+	u_int af = AF_INET;
 
 	va_start(ap,m);
 	hlen = va_arg(ap, int);
@@ -276,6 +291,8 @@ gre_mobile_input(m, va_alist)
 		m_freem(m);
 		return;
 	}
+
+	m->m_pkthdr.rcvif = &sc->sc_if;
 
 	sc->sc_if.if_ipackets++;  
 	sc->sc_if.if_ibytes += m->m_pkthdr.len;
@@ -308,8 +325,8 @@ gre_mobile_input(m, va_alist)
 
 	ifq = &ipintrq;
 
-#if NBPFILTER >0
-        if (sc->sc_if->if_bpf) {
+#if NBPFILTER > 0
+        if (sc->sc_if.if_bpf) {
                 /*
                  * We need to prepend the address family as
                  * a four byte field.  Cons up a fake header
@@ -318,13 +335,12 @@ gre_mobile_input(m, va_alist)
                  * try to free it or keep a pointer a to it).
                  */
                 struct mbuf m0;
-                u_int af = dst->sa_family;
 
                 m0.m_next = m;
                 m0.m_len = 4;
                 m0.m_data = (char *) &af;
 
-                bpf_mtap(sc->sc_if->if_bpf, &m0);
+                bpf_mtap(sc->sc_if.if_bpf, &m0);
         }
 #endif
 
