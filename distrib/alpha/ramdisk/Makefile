@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.21 2000/07/03 19:15:35 niklas Exp $
+#	$OpenBSD: Makefile,v 1.22 2001/01/23 20:54:40 art Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -26,6 +26,8 @@ FLOPPYBLKS?=	2880
 FLOPPYTYPE?=	floppy3
 BOOT?=		/usr/mdec/boot
 BOOTXX?=	/usr/mdec/bootxx
+
+RDSETROOT=	elfrdsetroot
 
 .include "${TOP}/inst-common/Makefile.inc"
 
@@ -64,13 +66,13 @@ ${FLOPPY}:	bsd.gz
 	fi
 
 bsd.gz:	bsd.rd
-	cp bsd.rd bsd.strip
+	objcopy -Sg -R .comment bsd.rd bsd.strip
 	${STRIP} bsd.strip
 	${GZIP} -c ${GZIPFLAGS} bsd.strip > bsd.gz
 
-bsd.rd: bsd ${IMAGE} ecoffrdsetroot
+bsd.rd: bsd ${IMAGE} ${RDSETROOT}
 	cp bsd bsd.rd
-	${.OBJDIR}/ecoffrdsetroot bsd.rd < ${IMAGE}
+	${.OBJDIR}/${RDSETROOT} bsd.rd < ${IMAGE}
 
 bsd:
 	cd ${.CURDIR}/../../../sys/arch/alpha/conf && config RAMDISK
@@ -83,6 +85,9 @@ ${IMAGE}:	do_prep do_mount do_files do_umount
 
 ecoffrdsetroot:	${TOP}/ecoffrdsetroot.c
 	${HOSTCC} ${HOSTCFLAGS} -o ecoffrdsetroot ${TOP}/ecoffrdsetroot.c
+
+elfrdsetroot: ${TOP}/elfrdsetroot.c
+	${HOSTCC} ${HOSTCFLAGS} -o elfrdsetroot ${TOP}/elfrdsetroot.c
 
 do_prep:
 	dd if=/dev/zero of=${REALIMAGE} count=${NBLKS}

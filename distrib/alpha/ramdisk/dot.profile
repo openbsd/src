@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: dot.profile,v 1.11 2000/10/25 16:38:11 millert Exp $
+#	$OpenBSD: dot.profile,v 1.12 2001/01/23 20:54:41 art Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # All rights reserved.
@@ -89,10 +89,6 @@ if [ "X${DONEPROFILE}" = "X" ]; then
 		echo "Type $resp unknown."
 	done
 	export TERM
-
-	# pull in the functions that people will use from the shell prompt.
-	. /.commonutils
-	. /.instutils
 
 	# Installing or upgrading?
 	_forceloop=""

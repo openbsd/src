@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.7 1998/09/21 23:22:57 deraadt Exp $
+#	$OpenBSD: list,v 1.8 2001/01/23 20:54:41 art Exp $
 
 # we strip comments from files since we need the space...
 
@@ -7,10 +7,10 @@
 
 # and the installation tools
 SPECIAL	sed -e '/^#[ 	].*$/d' < ${CURDIR}/dot.profile > .profile
-SPECIAL	sed -e '/^#[ 	].*$/d' < ${CURDIR}/dot.instutils > .instutils
 SPECIAL	sed -e '/^#[ 	].*$/d' < ${CURDIR}/disktab.shadow > etc/disktab.shadow
 SPECIAL	sed -e "/^VERSION=/s/=.*/=${REV}/" -e '/^#[ 	].*$/d' < ${CURDIR}/../../miniroot/install.sub > install.sub
 SPECIAL	sed -e '/^#[ 	].*$/d' < ${CURDIR}/../../miniroot/install.sh > install
-SPECIAL	sed -e '/^#[ 	].*$/d' < ${CURDIR}/../../miniroot/upgrade.sh > upgrade
+#SPECIAL	sed -e '/^#[ 	].*$/d' < ${CURDIR}/../../miniroot/upgrade.sh > upgrade
 SPECIAL	sed -e '/^#[ 	].*$/d' < ${CURDIR}/install.md > install.md
-SPECIAL	chmod 755 install upgrade
+SPECIAL	chmod 755 install
+#SPECIAL chmod 755 upgrade
