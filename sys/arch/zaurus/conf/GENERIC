@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.3 2005/01/04 05:13:34 drahn Exp $
+#	$OpenBSD: GENERIC,v 1.4 2005/01/10 05:09:37 deraadt Exp $
 #
 # GENERIC machine description file
 #
@@ -136,8 +136,30 @@ wd0		at wdc? flags 0x0000
 wd*		at wdc? flags 0x0000
 
 # PHY
-rlphy*		at mii?		# RealTek 8139 internal PHYs
-ukphy*		at mii?		# generic unknown PHYs
+exphy*	at mii?			# 3Com internal PHYs
+inphy*	at mii?			# Intel 82555 PHYs
+iophy*	at mii?			# Intel 82553 PHYs
+icsphy*	at mii?			# ICS 1890 PHYs
+lxtphy*	at mii?			# Level1 LXT970 PHYs
+nsphy*	at mii?			# NS and compatible PHYs
+nsphyter*	at mii?		# NS and compatible PHYs
+qsphy*	at mii?			# Quality Semi QS6612 PHYs
+sqphy*	at mii?			# Seeq 8x220 PHYs
+rlphy* at mii?			# RealTek 8139 internal PHYs
+mtdphy* at mii?			# Myson MTD972 PHYs
+dcphy*	at mii?			# Digital Clone PHYs
+acphy*	at mii?			# Altima AC101 PHYs
+amphy*	at mii?			# AMD 79C873 PHYs
+tqphy*	at mii?			# TDK 78Q212x PHYs
+bmtphy*	at mii?			# Broadcom 10/100 PHYs
+brgphy*	at mii?			# Broadcom Gigabit PHYs
+eephy* at mii?			# Marvell 88E1000 series PHY
+xmphy*	at mii?			# XaQti XMAC-II PHYs
+nsgphy*	at mii?			# NS gigabit PHYs
+urlphy*	at mii?			# Realtek RTL8150L internal PHY
+rgephy*	at mii?			# Realtek 8169S/8110S PHY
+ciphy*  at mii?			# Cicada CS8201 10/100/1000 copper PHY
+ukphy*	at mii?			# "unknown" PHYs
 
 # On-board device support
 obio0		at pxaip? intr 8
