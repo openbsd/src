@@ -29,7 +29,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: sigvec.3,v 1.23 2003/05/12 14:34:13 jmc Exp $
+.\"	$OpenBSD: sigvec.3,v 1.24 2003/05/30 11:56:45 jmc Exp $
 .\"
 .Dd April 29, 1991
 .Dt SIGVEC 3
@@ -117,9 +117,9 @@ must arrange to restore the previous context itself.
 When a signal is delivered to a process a new signal mask is
 installed for the duration of the process' signal handler
 (or until a
-.Xr sigblock
+.Xr sigblock 3
 or
-.Xr sigsetmask
+.Xr sigsetmask 3
 call is made).
 This mask is formed by taking the union of the current signal mask,
 the signal to be delivered, and
@@ -287,6 +287,9 @@ A 0 value indicated that the call succeeded.
 A \-1 return value indicates an error occurred and
 .Va errno
 is set to indicated the reason.
+.Sh EXAMPLES
+For an example of signal handler declarations, see
+.Xr sigaction 2 .
 .Sh ERRORS
 .Fn sigvec
 will fail and no new signal handler will be installed if one
@@ -308,9 +311,6 @@ An attempt is made to ignore or supply a handler for
 or
 .Dv SIGSTOP .
 .El
-.Sh EXAMPLES
-For an example of signal handler declarations, see
-.Xr sigaction 2 .
 .Sh SEE ALSO
 .Xr kill 1 ,
 .Xr kill 2 ,
@@ -326,5 +326,4 @@ For an example of signal handler declarations, see
 .Xr sigpause 3 ,
 .Xr sigsetmask 3 ,
 .Xr sigsetops 3 ,
-.Xr sigvec 3 ,
 .Xr tty 4
