@@ -1,4 +1,4 @@
-/*	$OpenBSD: show.c,v 1.5 1997/12/08 03:55:25 deraadt Exp $	*/
+/*	$OpenBSD: show.c,v 1.6 1998/07/09 01:32:12 deraadt Exp $	*/
 /*	$NetBSD: show.c,v 1.1 1996/11/15 18:01:41 gwr Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-static char *rcsid = "$OpenBSD: show.c,v 1.5 1997/12/08 03:55:25 deraadt Exp $";
+static char *rcsid = "$OpenBSD: show.c,v 1.6 1998/07/09 01:32:12 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -192,9 +192,9 @@ p_rtentry(rtm)
 		old_af = af;
 		pr_family(af);
 		if (af != AF_ENCAP)
-		  pr_rthdr();
+			pr_rthdr();
 		else
-		  pr_encaphdr();
+			pr_encaphdr();
 	}
 	if (af == AF_ENCAP) {
 		encap_print(rtm);
@@ -330,7 +330,7 @@ p_sockaddr(sa, flags, width)
 		while (s < slim && cp < cplim) {
 			cp += sprintf(cp, " %02x", *s++);
 			if (s < slim)
-			    cp += sprintf(cp, "%02x", *s++);
+				cp += sprintf(cp, "%02x", *s++);
 		}
 		cp = workbuf;
 	    }
