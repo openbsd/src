@@ -1,4 +1,4 @@
-/*	$OpenBSD: su.c,v 1.41 2001/09/18 04:41:09 millert Exp $	*/
+/*	$OpenBSD: su.c,v 1.42 2001/09/18 16:37:59 millert Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -43,7 +43,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "from: @(#)su.c	5.26 (Berkeley) 7/6/91";
 #else
-static const char rcsid[] = "$OpenBSD: su.c,v 1.41 2001/09/18 04:41:09 millert Exp $";
+static const char rcsid[] = "$OpenBSD: su.c,v 1.42 2001/09/18 16:37:59 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -159,7 +159,8 @@ main(argc, argv)
 		auth_errx(as, 1, "can't allocate memory");
 	if (asme) {
 		if (pwd->pw_shell && *pwd->pw_shell) {
-			shell = strdup(pwd->pw_shell);
+			if ((shell = strdup(pwd->pw_shell)) == NULL)
+				auth_errx(as, 1, "can't allocate memory");
 		} else {
 			shell = _PATH_BSHELL;
 			iscsh = NO;
