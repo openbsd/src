@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.23 1998/08/11 20:26:59 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.24 1998/08/22 07:44:03 mickey Exp $	*/
 /*	$NetBSD: main.c,v 1.14 1997/06/05 11:13:24 lukem Exp $	*/
 
 /*-
@@ -557,9 +557,12 @@ main(argc, argv)
 static void
 usage()
 {
+	extern char *__progname;
 
-	(void)fprintf(stderr, "usage: dump [-0123456789cnu] [-B records] [-b blocksize] [-d density] [-f file]\n            [-h level] [-s feet] [-T date] filesystem\n");
-	(void)fprintf(stderr, "       dump [-W | -w]\n");
+	(void)fprintf(stderr, "usage: %s [-0123456789acnu] [-B records]"
+		      "[-b blocksize] [-d density] [-f file]\n"
+		      "            [-h level] [-s feet] [-T date] filesystem\n"
+		      "       %s [-W | -w]\n", __progname, __progname);
 	exit(X_STARTUP);
 }
 
