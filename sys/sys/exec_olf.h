@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_olf.h,v 1.1 1996/10/27 19:44:17 etheisen Exp $	*/
+/*	$OpenBSD: exec_olf.h,v 1.2 1996/11/06 18:35:22 etheisen Exp $	*/
 /*
  * Copyright (c) 1996 Erik Theisen
  * All rights reserved.
@@ -93,7 +93,6 @@
 #define OOS_SCO		11		/* SCO UNIX */
 #define OOS_DELL	13		/* DELL SVR4 */
 #define OOS_NUM		14		/* Number of systems */
-
 /*
  * Lowercase and numbers ONLY.
  * No whitespace or punc.
@@ -111,6 +110,16 @@
 #define OOSN_IRIX	"irix"		/* SGI IRIX */
 #define OOSN_SCO	"sco"		/* SCO UNIX */
 #define OOSN_DELL	"dell"		/* DELL SVR4 */
+#define ONAMEV 		{ OOSN_NULL, OOSN_OPENBSD, OOSN_NETBSD, \
+		 	  OOSN_FREEBSD, OOSN_44BSD, OOSN_LINUX, \
+		 	  OOSN_MACH, OOSN_SVR4, OOSN_ESIX, \
+		 	  OOSN_SOLARIS, OOSN_IRIX, OOSN_SCO, \
+		 	  OOSN_DELL, \
+		 	0 }
+
+/* e_ident[] strip */
+#define OSTRIP_N	0		/* NOT Stripped */
+#define OSTRIP		1		/* Stripped */
 
 /* e_ident */
 #define IS_OLF(ehdr) ((ehdr).e_ident[OI_MAG0] == OLFMAG0 && \
