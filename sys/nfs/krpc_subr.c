@@ -1,4 +1,4 @@
-/*	$OpenBSD: krpc_subr.c,v 1.6 1997/04/25 09:22:34 deraadt Exp $	*/
+/*	$OpenBSD: krpc_subr.c,v 1.7 1997/04/27 23:06:01 angelos Exp $	*/
 /*	$NetBSD: krpc_subr.c,v 1.12.4.1 1996/06/07 00:52:26 cgd Exp $	*/
 
 /*
@@ -60,6 +60,7 @@
 #include <nfs/rpcv2.h>
 #include <nfs/krpc.h>
 #include <nfs/xdr_subs.h>
+#include <dev/rndvar.h>
 
 /*
  * Kernel support for Sun RPC
@@ -200,7 +201,8 @@ krpc_call(sa, prog, vers, func, data, from_p)
 	struct rpc_reply *reply;
 	struct uio auio;
 	int error, rcvflg, timo, secs, len;
-	static u_int32_t xid = ~0xFF;
+	static u_int32_t xid = 0;
+	u_int32_t newxid;
 	u_int16_t tport;
 
 	/*
@@ -296,7 +298,8 @@ krpc_call(sa, prog, vers, func, data, from_p)
 	mhead->m_len = sizeof(*call);
 	bzero((caddr_t)call, sizeof(*call));
 	/* rpc_call part */
-	xid++;
+	while ((newxid = arc4random()) == xid);
+	xid = newxid;
 	call->rp_xid = txdr_unsigned(xid);
 	/* call->rp_direction = 0; */
 	call->rp_rpcvers = txdr_unsigned(2);
