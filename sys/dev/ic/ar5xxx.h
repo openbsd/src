@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5xxx.h,v 1.5 2004/11/11 20:11:28 reyk Exp $	*/
+/*	$OpenBSD: ar5xxx.h,v 1.6 2004/11/23 10:13:04 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004 Reyk Floeter <reyk@vantronix.net>.
@@ -772,6 +772,7 @@ struct ath_hal {
 	u_int8_t		ah_bssid[IEEE80211_ADDR_LEN];
 
 	u_int32_t		ah_gpio[AR5K_MAX_GPIO];
+	int			ah_gpio_npins;
 
 	ar5k_capabilities_t	ah_capabilities;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5210.c,v 1.6 2004/11/11 20:11:28 reyk Exp $	*/
+/*	$OpenBSD: ar5210.c,v 1.7 2004/11/23 10:13:04 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004 Reyk Floeter <reyk@vantronix.net>.
@@ -2338,6 +2338,9 @@ ar5k_ar5210_get_capabilities(hal)
 
 	/* Set supported modes */
 	hal->ah_capabilities.cap_mode = HAL_MODE_11A | HAL_MODE_TURBO;
+
+	/* Set number of GPIO pins */
+	hal->ah_gpio_npins = AR5K_AR5210_NUM_GPIO;
 
 	return (AH_TRUE);
 }
