@@ -1800,3 +1800,5 @@
 ./var/yp/Makefile.yp
 ./var/yp/Makefile.yp.dist
 ./var/yp/README
+./usr/libexec/smtpd
+./usr/libexec/smtpfwdd

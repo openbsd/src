@@ -2287,3 +2287,4 @@
 ./usr/share/mk/bsd.subdir.mk
 ./usr/share/mk/bsd.sys.mk
 ./var/db/libc.tags
+./usr/include/kerberosIV/krb-protos.h
