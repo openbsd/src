@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.31 2002/12/05 02:49:55 kjc Exp $ */
+/*	$OpenBSD: conf.c,v 1.32 2003/05/14 00:20:37 tedu Exp $ */
 
 /*-
  * Copyright (c) 1995 Theo de Raadt
@@ -268,7 +268,7 @@ getnulldev()
 	return makedev(mem_no, 2);
 }
 
-static int chrtoblktbl[] = {
+int chrtoblktbl[] = {
 	/* XXXX This needs to be dynamic for LKMs. */
 	/*VCHR*/	/*VBLK*/
 	/*  0 */	NODEV,
@@ -299,42 +299,7 @@ static int chrtoblktbl[] = {
 	/* 25 */	NODEV,
 	/* 26 */	10,		/* XD disk */
 };
-
-/*
- * Convert a character device number to a block device number.
- */
-dev_t
-chrtoblk(dev)
-	dev_t dev;
-{
-	int blkmaj;
-
-	if (major(dev) >= nchrdev ||
-	    major(dev) >= sizeof(chrtoblktbl)/sizeof(chrtoblktbl[0]))
-		return (NODEV);
-	blkmaj = chrtoblktbl[major(dev)];
-	if (blkmaj == NODEV)
-		return (NODEV);
-	return (makedev(blkmaj, minor(dev)));
-}
-
-/*
- * Convert a character device number to a block device number.
- */
-dev_t
-blktochr(dev)
-	dev_t dev;
-{
-	int blkmaj = major(dev);
-	int i;
-
-	if (blkmaj >= nblkdev)
-		return (NODEV);
-	for (i = 0; i < sizeof(chrtoblktbl)/sizeof(chrtoblktbl[0]); i++)
-		if (blkmaj == chrtoblktbl[i])
-			return (makedev(i, minor(dev)));
-	return (NODEV);
-}
+int nchrtoblktbl = sizeof(chrtoblktbl) / sizeof(chrtoblktbl[0]);
 
 /*
  * This entire table could be autoconfig()ed but that would mean that

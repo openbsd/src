@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.31 2002/12/05 02:49:55 kjc Exp $	*/
+/*	$OpenBSD: conf.c,v 1.32 2003/05/14 00:20:37 tedu Exp $	*/
 /*	$NetBSD: conf.c,v 1.41 1997/02/11 07:35:49 scottr Exp $	*/
 
 /*
@@ -214,7 +214,7 @@ getnulldev()
 	return makedev(mem_no, 2);
 }
 
-static int chrtoblktab[] = {
+int chrtoblktab[] = {
 	/* XXXX This needs to be dynamic for LKMs. */
 	/*VCHR*/	/*VBLK*/
 	/*  0 */	NODEV,
@@ -239,39 +239,7 @@ static int chrtoblktab[] = {
 	/* 19 */	8,
 	/* 20 */	9,
 };
-
-dev_t
-chrtoblk(dev)
-	dev_t	dev;
-{
-	int	blkmaj;
-
-	if (major(dev) >= nchrdev ||
-	    major(dev) > sizeof(chrtoblktab)/sizeof(chrtoblktab[0]))
-		return (NODEV);
-	blkmaj = chrtoblktab[major(dev)];
-	if (blkmaj == NODEV)
-		return (NODEV);
-	return (makedev(blkmaj, minor(dev)));
-}
-
-/*
- * Convert a character device number to a block device number.
- */
-dev_t
-blktochr(dev)
-	dev_t dev;
-{
-	int blkmaj = major(dev);
-	int i;
-
-	if (blkmaj >= nblkdev)
-		return (NODEV);
-	for (i = 0; i < sizeof(chrtoblktab)/sizeof(chrtoblktab[0]); i++)
-		if (blkmaj == chrtoblktab[i])
-			return (makedev(i, minor(dev)));
-	return (NODEV);
-}
+int nchrtoblktbl = sizeof(chrtoblktbl) / sizeof(chrtoblktbl[0]);
 
 #define itecnpollc	nullcnpollc
 cons_decl(ite);

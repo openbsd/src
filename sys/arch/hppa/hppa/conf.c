@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.25 2003/02/08 12:34:27 todd Exp $	*/
+/*	$OpenBSD: conf.c,v 1.26 2003/05/14 00:20:37 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -183,7 +183,7 @@ int mem_no = 2;		/* major device number of memory special file */
  */
 dev_t   swapdev = makedev(1, 0);
 
-static int chrtoblktbl[] = {
+int chrtoblktbl[] = {
 	/* XXXX This needs to be dynamic for LKMs. */
 	/*VCHR*/	/*VBLK*/
 	/*  0 */	NODEV,
@@ -214,39 +214,7 @@ static int chrtoblktbl[] = {
 	/* 25 */	7,
 	/* 25 */	8,
 };
-
-/*
- * Convert a character device number to a block device number.
- */
-dev_t
-chrtoblk(dev)
-	dev_t dev;
-{
-	int blkmaj;
-	if (major(dev) >= nchrdev)
-		return (NODEV);
-	blkmaj = chrtoblktbl[major(dev)];
-	if (blkmaj == NODEV)
-		return (NODEV);
-	return (makedev(blkmaj, minor(dev)));
-}
-
-/*
- * Convert a block device number to a character device number.
- */
-dev_t
-blktochr(dev)
-	dev_t dev;
-{
-	int blkmaj = major(dev);
-	int i;
-	if (blkmaj >= nblkdev)
-		return (NODEV);
-	for (i = 0; i < sizeof(chrtoblktbl)/sizeof(chrtoblktbl[0]); i++)
-		if (blkmaj == chrtoblktbl[i])
-			return (makedev(i, minor(dev)));
-	return (NODEV);
-}
+int nchrtoblktbl = sizeof(chrtoblktbl) / sizeof(chrtoblktbl[0]);
 
 /*
  * Returns true if dev is /dev/zero.

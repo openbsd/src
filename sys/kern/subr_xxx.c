@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_xxx.c,v 1.6 1997/11/06 05:58:20 csapuntz Exp $	*/
+/*	$OpenBSD: subr_xxx.c,v 1.7 2003/05/14 00:20:38 tedu Exp $	*/
 /*	$NetBSD: subr_xxx.c,v 1.10 1996/02/04 02:16:51 christos Exp $	*/
 
 /*
@@ -42,6 +42,8 @@
  */
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/device.h>
+#include <sys/conf.h>
 
 #include <machine/cpu.h>
 
@@ -110,4 +112,51 @@ nullop(v)
 {
 
 	return (0);
+}
+
+struct bdevsw *
+bdevsw_lookup(dev_t dev)
+{
+	return (&bdevsw[major(dev)]);
+}
+
+struct cdevsw *
+cdevsw_lookup(dev_t dev)
+{
+	return (&cdevsw[major(dev)]);
+}
+
+/*
+ * Convert a character device number to a block device number.
+ */
+dev_t
+chrtoblk(dev)
+	dev_t dev;
+{
+	int blkmaj;
+
+	if (major(dev) >= nchrdev || major(dev) >= nchrtoblktbl)
+		return (NODEV);
+	blkmaj = chrtoblktbl[major(dev)];
+	if (blkmaj == NODEV)
+		return (NODEV);
+	return (makedev(blkmaj, minor(dev)));
+}
+
+/*
+ * Convert a block device number to a character device number.
+ */
+dev_t
+blktochr(dev)
+	dev_t dev;
+{
+	int blkmaj = major(dev);
+	int i;
+
+	if (blkmaj >= nblkdev)
+		return (NODEV);
+	for (i = 0; i < nchrtoblktbl; i++)
+		if (blkmaj == chrtoblktbl[i])
+			return (makedev(i, minor(dev)));
+	return (NODEV);
 }
