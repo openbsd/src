@@ -1,5 +1,5 @@
 # Build wrapper for Apache 
-# $OpenBSD: Makefile.bsd-wrapper,v 1.31 2002/07/22 18:17:50 henning Exp $
+# $OpenBSD: Makefile.bsd-wrapper,v 1.32 2002/09/09 11:44:58 henning Exp $
 
 # Our lndir is hacked; specify a full path to avoid potential conflicts
 # with the one installed with X11.
@@ -135,6 +135,7 @@ MUNGEDFILES =	${.OBJDIR}/src/ap/Makefile \
 		${.OBJDIR}/src/modules/extra/Makefile \
 		${.OBJDIR}/src/modules/proxy/Makefile \
 		${.OBJDIR}/src/modules/standard/Makefile \
+		${.OBJDIR}/src/modules/keynote/Makefile \
 		${.OBJDIR}/src/modules/ssl/Makefile \
 		${.OBJDIR}/src/modules/ssl/ssl_expr_parse.c \
 		${.OBJDIR}/src/modules/ssl/ssl_expr_parse.h \
