@@ -32,13 +32,14 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: syslog.c,v 1.4 1997/07/25 20:30:04 mickey Exp $";
+static char rcsid[] = "$OpenBSD: syslog.c,v 1.5 1998/03/05 22:13:10 brian Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/syslog.h>
 #include <sys/uio.h>
+#include <sys/un.h>
 #include <netdb.h>
 
 #include <errno.h>
@@ -235,7 +236,7 @@ vsyslog(pri, fmt, ap)
 	}
 }
 
-static struct sockaddr SyslogAddr;	/* AF_UNIX address of local logger */
+static struct sockaddr_un SyslogAddr;	/* AF_UNIX address of local logger */
 
 void
 openlog(ident, logstat, logfac)
@@ -249,9 +250,11 @@ openlog(ident, logstat, logfac)
 		LogFacility = logfac;
 
 	if (LogFile == -1) {
-		SyslogAddr.sa_family = AF_UNIX;
-		(void)strncpy(SyslogAddr.sa_data, _PATH_LOG,
-		    sizeof(SyslogAddr.sa_data));
+		memset(&SyslogAddr, '\0', sizeof(SyslogAddr));
+		SyslogAddr.sun_len = sizeof(SyslogAddr);
+		SyslogAddr.sun_family = AF_UNIX;
+		(void)strncpy(SyslogAddr.sun_path, _PATH_LOG,
+		    sizeof(SyslogAddr.sun_path));
 		if (LogStat & LOG_NDELAY) {
 			if ((LogFile = socket(AF_UNIX, SOCK_DGRAM, 0)) == -1)
 				return;
@@ -259,7 +262,8 @@ openlog(ident, logstat, logfac)
 		}
 	}
 	if (LogFile != -1 && !connected)
-		if (connect(LogFile, &SyslogAddr, sizeof(SyslogAddr)) == -1) {
+		if (connect(LogFile, (struct sockaddr *)&SyslogAddr,
+			sizeof(SyslogAddr)) == -1) {
 			(void)close(LogFile);
 			LogFile = -1;
 		} else
