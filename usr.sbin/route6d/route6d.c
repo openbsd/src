@@ -1,5 +1,5 @@
-/*	$OpenBSD: route6d.c,v 1.6 2000/05/16 14:16:06 itojun Exp $	*/
-/*	$KAME: route6d.c,v 1.19 2000/05/16 13:10:39 itojun Exp $	*/
+/*	$OpenBSD: route6d.c,v 1.7 2000/05/18 13:30:47 itojun Exp $	*/
+/*	$KAME: route6d.c,v 1.25 2000/05/17 09:05:36 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -30,8 +30,8 @@
  * SUCH DAMAGE.
  */
 
-#ifndef	lint
-static char _rcsid[] = "$KAME: route6d.c,v 1.19 2000/05/16 13:10:39 itojun Exp $";
+#if 0
+static char _rcsid[] = "$KAME: route6d.c,v 1.25 2000/05/17 09:05:36 itojun Exp $";
 #endif
 
 #include <stdio.h>
@@ -165,7 +165,8 @@ struct	riprt {
 	struct	riprt *rrt_same;	/* same destination - future use */
 	struct	netinfo6 rrt_info;	/* network info */
 	struct	in6_addr rrt_gw;	/* gateway */
-	u_long	rrt_flags;
+	u_long	rrt_flags;		/* kernel routing table flags */
+	u_long	rrt_rflags;		/* route6d routing table flags */
 	time_t	rrt_t;			/* when the route validated */
 	int	rrt_index;		/* ifindex from which this route got */
 };
@@ -202,12 +203,11 @@ int logopened = 0;
 
 static	u_long	seq = 0;
 
-#define	RTF_AGGREGATE		0x08000000
-#define	RTF_NOADVERTISE		0x10000000
-#define	RTF_NH_NOT_LLADDR	0x20000000
-#define RTF_SENDANYWAY		0x40000000
-#define	RTF_CHANGED		0x80000000
-#define	RTF_ROUTE_H		0xffff
+#define	RRTF_AGGREGATE		0x08000000
+#define	RRTF_NOADVERTISE	0x10000000
+#define	RRTF_NH_NOT_LLADDR	0x20000000
+#define RRTF_SENDANYWAY		0x40000000
+#define	RRTF_CHANGED		0x80000000
 
 int main __P((int, char **));
 void ripalarm __P((int));
@@ -445,7 +445,7 @@ rtdexit(sig)
 
 	alarm(0);
 	for (rrt = riprt; rrt; rrt = rrt->rrt_next) {
-		if (rrt->rrt_flags & RTF_AGGREGATE) {
+		if (rrt->rrt_rflags & RRTF_AGGREGATE) {
 			delroute(&rrt->rrt_info, &rrt->rrt_gw);
 		}
 	}
@@ -664,7 +664,7 @@ ripsend(ifcp, sin, flag)
 				sizeof(struct netinfo6);
 		nrt = 0; np = ripbuf->rip6_nets; nh = NULL;
 		for (rrt = riprt; rrt; rrt = rrt->rrt_next) {
-			if (rrt->rrt_flags & RTF_NOADVERTISE)
+			if (rrt->rrt_rflags & RRTF_NOADVERTISE)
 				continue;
 			/* Put the route to the buffer */
 			*np = rrt->rrt_info;
@@ -679,7 +679,7 @@ ripsend(ifcp, sin, flag)
 		return;
 	}
 
-	if ((flag & RTF_SENDANYWAY) == 0 &&
+	if ((flag & RRTF_SENDANYWAY) == 0 &&
 	    (qflag || (ifcp->ifc_flags & IFF_LOOPBACK)))
 		return;
 	if (iff_find(ifcp, 'N') != NULL)
@@ -703,7 +703,7 @@ ripsend(ifcp, sin, flag)
 			sizeof(struct netinfo6);
 	nrt = 0; np = ripbuf->rip6_nets; nh = NULL;
 	for (rrt = riprt; rrt; rrt = rrt->rrt_next) {
-		if (rrt->rrt_flags & RTF_NOADVERTISE)
+		if (rrt->rrt_rflags & RRTF_NOADVERTISE)
 			continue;
 		/* Need to check filer here */
 		ok = 1;
@@ -740,12 +740,13 @@ ripsend(ifcp, sin, flag)
 		if (tobeadv(rrt, ifcp) == 0)
 			continue;
 		/* Only considers the routes with flag if specified */
-		if ((flag & RTF_CHANGED) && (rrt->rrt_flags & RTF_CHANGED) == 0)
+		if ((flag & RRTF_CHANGED) &&
+		    (rrt->rrt_rflags & RRTF_CHANGED) == 0)
 			continue;
 		/* Check nexthop */
 		if (rrt->rrt_index == ifcp->ifc_index &&
 		    !IN6_IS_ADDR_UNSPECIFIED(&rrt->rrt_gw) &&
-		    (rrt->rrt_flags & RTF_NH_NOT_LLADDR) == 0) {
+		    (rrt->rrt_rflags & RRTF_NH_NOT_LLADDR) == 0) {
 			if (nh == NULL || !IN6_ARE_ADDR_EQUAL(nh, &rrt->rrt_gw)) {
 				if (nrt == maxrte - 2)
 					ripflush(ifcp, sin);
@@ -760,7 +761,7 @@ ripsend(ifcp, sin, flag)
 			}
 		} else if (nh && (rrt->rrt_index != ifcp->ifc_index ||
 			          !IN6_ARE_ADDR_EQUAL(nh, &rrt->rrt_gw) ||
-				  rrt->rrt_flags & RTF_NH_NOT_LLADDR)) {
+				  rrt->rrt_rflags & RRTF_NH_NOT_LLADDR)) {
 			/* Reset nexthop */
 			if (nrt == maxrte - 2)
 				ripflush(ifcp, sin);
@@ -1085,7 +1086,7 @@ riprecv()
 					*nq = *np;
 					addroute(rrt, &nh, ifcp);
 				}
-				rrt->rrt_flags |= RTF_CHANGED;
+				rrt->rrt_rflags |= RRTF_CHANGED;
 				rrt->rrt_t = t;
 				need_trigger = 1;
 			} else if (nq->rip6_metric < np->rip6_metric &&
@@ -1094,7 +1095,7 @@ riprecv()
 				/* Got worse route from same gw */
 				nq->rip6_metric = np->rip6_metric;
 				rrt->rrt_t = t;
-				rrt->rrt_flags |= RTF_CHANGED;
+				rrt->rrt_rflags |= RRTF_CHANGED;
 				need_trigger = 1;
 			} else if (nq->rip6_metric == np->rip6_metric &&
 				   rrt->rrt_index == ifcp->ifc_index &&
@@ -1128,7 +1129,7 @@ riprecv()
 			riprt = rrt;
 			/* Update routing table */
 			addroute(rrt, &nh, ifcp);
-			rrt->rrt_flags |= RTF_CHANGED;
+			rrt->rrt_rflags |= RRTF_CHANGED;
 			need_trigger = 1;
 			rrt->rrt_t = t;
 		}
@@ -1141,12 +1142,12 @@ riprecv()
 					continue;
 				if (ic->ifc_flags & IFF_UP)
 					ripsend(ic, &ic->ifc_ripsin,
-						RTF_CHANGED);
+						RRTF_CHANGED);
 			}
 		}
 		/* Reset the flag */
 		for (rrt = riprt; rrt; rrt = rrt->rrt_next)
-			rrt->rrt_flags &= ~RTF_CHANGED;
+			rrt->rrt_rflags &= ~RRTF_CHANGED;
 	}
 }
 
@@ -1208,7 +1209,7 @@ riprequest(ifcp, np, nn, sin)
 	}
 	/* Whole routing table dump */
 	trace(1, "\tRIP Request -- whole routing table\n");
-	ripsend(ifcp, sin, RTF_SENDANYWAY);
+	ripsend(ifcp, sin, RRTF_SENDANYWAY);
 }
 
 /*
@@ -1925,7 +1926,8 @@ ifrt(ifcp, again)
 
 /*
  * there are couple of p2p interface routing models.  "behavior" lets
- * you pick one.
+ * you pick one.  it looks that gated behavior fits best with BSDs,
+ * since BSD kernels does not look at prefix length on p2p interfaces.
  */
 void
 ifrt_p2p(ifcp, again)
@@ -1936,7 +1938,7 @@ ifrt_p2p(ifcp, again)
 	struct riprt *rrt;
 	struct netinfo6 *np;
 	struct in6_addr addr, dest;
-	int advert, i;
+	int advert, ignore, i;
 #define P2PADVERT_NETWORK	1
 #define P2PADVERT_ADDR		2
 #define P2PADVERT_DEST		4
@@ -1950,25 +1952,30 @@ ifrt_p2p(ifcp, again)
 		dest = ifa->ifa_raddr;
 		applyplen(&addr, ifa->ifa_plen);
 		applyplen(&dest, ifa->ifa_plen);
+		advert = ignore = 0;
 		switch (behavior) {
 		case CISCO:
 			/*
-			 * advertise addr/plen, treating p2p interface
-			 * just like shared medium interface.
-			 * this may cause trouble if you reuse addr/plen
-			 * in other places.
+			 * honor addr/plen, just like normal shared medium
+			 * interface.  this may cause trouble if you reuse
+			 * addr/plen on other interfaces.
+			 *
+			 * advertise addr/plen.
 			 */
 			advert |= P2PADVERT_NETWORK;
 			break;
 		case GATED:
 			/*
-			 * advertise dest/128.  since addr/128 is not
-			 * advertised, addr/128 is not reachable from other
-			 * interfaces (if p2p interface is A, addr/128 is not
-			 * reachable from other interfaces).  not sure why it
-			 * is not advertised.
+			 * prefixlen on p2p interface is meaningless.
+			 * advertise addr/128 and dest/128.
+			 *
+			 * do not install network route to route6d routing
+			 * table (if we do, it would prevent route installation
+			 * for other p2p interface that shares addr/plen).
 			 */
+			advert |= P2PADVERT_ADDR;
 			advert |= P2PADVERT_DEST;
+			ignore |= P2PADVERT_NETWORK;
 			break;
 		case ROUTE6D:
 			/*
@@ -1979,11 +1986,14 @@ ifrt_p2p(ifcp, again)
 			else {
 				advert |= P2PADVERT_ADDR;
 				advert |= P2PADVERT_DEST;
+				ignore |= P2PADVERT_NETWORK;
 			}
 			break;
 		}
 
 		for (i = 1; i <= P2PADVERT_MAX; i *= 2) {
+			if ((ignore & i) != 0)
+				continue;
 			if ((rrt = MALLOC(struct riprt)) == NULL)
 				fatal("malloc: struct riprt");
 			memset(rrt, 0, sizeof(*rrt));
@@ -2019,7 +2029,7 @@ ifrt_p2p(ifcp, again)
 				continue;
 			}
 			if ((advert & i) == 0) {
-				rrt->rrt_flags |= RTF_NOADVERTISE;
+				rrt->rrt_rflags |= RRTF_NOADVERTISE;
 				noadv = ", NO-ADV";
 			} else
 				noadv = "";
@@ -2348,7 +2358,7 @@ rt_entry(rtm, again)
 			inet6_n2p(&rrt->rrt_gw));
 		trace(0, "*****     dest(%s) if(%s) -- Not optimized.\n",
 			inet6_n2p(&rrt->rrt_info.rip6_dest), ifname);
-		rrt->rrt_flags |= RTF_NH_NOT_LLADDR;
+		rrt->rrt_rflags |= RRTF_NH_NOT_LLADDR;
 	}
 
 	/* Put it to the route list */
@@ -2387,7 +2397,7 @@ addroute(rrt, gw, ifcp)
 	rtm->rtm_version = RTM_VERSION;
 	rtm->rtm_seq = ++seq;
 	rtm->rtm_pid = pid;
-	rtm->rtm_flags = rrt->rrt_flags & RTF_ROUTE_H;
+	rtm->rtm_flags = rrt->rrt_flags;
 	rtm->rtm_addrs = RTA_DST | RTA_GATEWAY | RTA_NETMASK;
 	rtm->rtm_rmx.rmx_hopcount = np->rip6_metric - 1;
 	rtm->rtm_inits = RTV_HOPCOUNT;
@@ -2689,9 +2699,9 @@ rtdump(sig)
 			fprintf(dump, " tag(0x%04x)",
 				ntohs(rrt->rrt_info.rip6_tag) & 0xffff);
 		}
-		if (rrt->rrt_flags & RTF_NH_NOT_LLADDR)
+		if (rrt->rrt_rflags & RRTF_NH_NOT_LLADDR)
 			fprintf(dump, " NOT-LL");
-		if (rrt->rrt_flags & RTF_NOADVERTISE)
+		if (rrt->rrt_rflags & RRTF_NOADVERTISE)
 			fprintf(dump, " NO-ADV");
 		fprintf(dump, "\n");
 	}
@@ -2769,7 +2779,8 @@ ifonly:
 		rrt->rrt_info.rip6_metric = 1;
 		rrt->rrt_info.rip6_tag = htons(routetag & 0xffff);
 		rrt->rrt_gw = in6addr_loopback;
-		rrt->rrt_flags = RTF_UP | RTF_REJECT | RTF_AGGREGATE;
+		rrt->rrt_flags = RTF_UP | RTF_REJECT;
+		rrt->rrt_rflags = RRTF_AGGREGATE;
 		rrt->rrt_t = 0;
 		rrt->rrt_index = loopifindex;
 		/* Put the route to the list */
