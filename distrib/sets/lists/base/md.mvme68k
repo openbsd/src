@@ -4,7 +4,7 @@
 ./usr/include/m68k
 ./usr/lib/gcc-lib/m68k-unknown-openbsd2.3
 ./usr/lib/libacl.so.4.1
-./usr/lib/libc.so.20.0
+./usr/lib/libc.so.20.1
 ./usr/lib/libcurses.so.4.2
 ./usr/lib/libdes.so.6.0
 ./usr/lib/libedit.so.0.0
@@ -592,3 +592,4 @@
 ./usr/mdec/rboot
 ./usr/mdec/sboot
 ./usr/mdec/stboot
+./usr/lib/perl5/site_perl/m68k-openbsd/cast.ph

@@ -370,3 +370,4 @@
 ./usr/mdec/installboot
 ./usr/mdec/netboot
 ./usr/mdec/setnetbootinfo
+./usr/lib/perl5/site_perl/alpha-openbsd/cast.ph

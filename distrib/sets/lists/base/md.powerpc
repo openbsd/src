@@ -359,3 +359,4 @@
 ./usr/powerpc-unknown-openbsd2.3/bin
 ./usr/powerpc-unknown-openbsd2.3/lib
 ./usr/powerpc-unknown-openbsd2.3/lib/ldscripts
+./usr/lib/perl5/site_perl/powerpc-openbsd/cast.ph

@@ -1,3 +1,5 @@
+./usr/include/machine/ioctl_bt848.h
+./usr/include/machine/ioctl_meteor.h
 ./usr/bin/gdb
 ./usr/include/ansidecl.h
 ./usr/include/bfd.h

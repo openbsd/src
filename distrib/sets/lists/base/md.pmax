@@ -8,7 +8,7 @@
 ./usr/lib/gcc-lib/mipsel-unknown-openbsd2.3/2.8.1/include
 ./usr/lib/gcc-lib/mipsel-unknown-openbsd2.3/2.8.1/include/objc
 ./usr/lib/libacl.so.4.1
-./usr/lib/libc.so.20.0
+./usr/lib/libc.so.20.1
 ./usr/lib/libcurses.so.4.2
 ./usr/lib/libdes.so.6.0
 ./usr/lib/libedit.so.0.0
@@ -398,3 +398,4 @@
 ./usr/mipsel-unknown-openbsd2.3/bin
 ./usr/mipsel-unknown-openbsd2.3/lib
 ./usr/mipsel-unknown-openbsd2.3/lib/ldscripts
+./usr/lib/perl5/site_perl/mips-openbsd/cast.ph

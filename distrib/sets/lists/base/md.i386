@@ -10,7 +10,7 @@
 ./usr/include/i386
 ./usr/lib/gcc-lib/i386-unknown-openbsd2.3
 ./usr/lib/libacl.so.4.1
-./usr/lib/libc.so.20.0
+./usr/lib/libc.so.20.1
 ./usr/lib/libcurses.so.4.2
 ./usr/lib/libdes.so.6.0
 ./usr/lib/libedit.so.0.0
@@ -626,3 +626,6 @@
 ./usr/share/misc/pcvtfonts/vt220l.810
 ./usr/share/misc/pcvtfonts/vt220l.814
 ./usr/share/misc/pcvtfonts/vt220l.816
+./usr/lib/perl5/site_perl/i386-openbsd/cast.ph
+./usr/lib/perl5/site_perl/i386-openbsd/machine/ioctl_bt848.ph
+./usr/lib/perl5/site_perl/i386-openbsd/machine/ioctl_meteor.ph
