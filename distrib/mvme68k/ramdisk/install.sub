@@ -611,7 +611,7 @@ install_from_mounted_fs() {
 			fi
 		done
 	else
-		echo "There are no NetBSD install sets available in \"$1\""
+		echo "There are no OpenBSD install sets available in \"$1\""
 		return
 	fi
 
