@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-llc.c,v 1.12 2001/04/08 22:45:53 jakob Exp $	*/
+/*	$OpenBSD: print-llc.c,v 1.13 2001/06/25 19:56:11 itojun Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995, 1996, 1997
@@ -26,7 +26,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-llc.c,v 1.12 2001/04/08 22:45:53 jakob Exp $";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-llc.c,v 1.13 2001/06/25 19:56:11 itojun Exp $";
 #endif
 
 #include <sys/param.h>
@@ -68,7 +68,9 @@ llc_print(const u_char *p, u_int length, u_int caplen,
 {
 	struct llc llc;
 	register u_short et;
+#if 0
 	u_short control;
+#endif
 	register int ret;
 
 	if (caplen < 3) {
@@ -146,6 +148,7 @@ llc_print(const u_char *p, u_int length, u_int caplen,
 		return (1);
 	}
 
+#if 0
 	if (llc.ssap == 0xf0 && llc.dsap == 0xf0) {
 		/*
 		 * we don't actually have a full netbeui parser yet, but the
@@ -181,6 +184,7 @@ llc_print(const u_char *p, u_int length, u_int caplen,
 		netbeui_print(control, p, p + min(caplen, length));
 		return (1);
 	}
+#endif
 
 	if ((llc.ssap & ~LLC_GSAP) == llc.dsap) {
 		if (eflag)
@@ -234,6 +238,7 @@ llc_print(const u_char *p, u_int length, u_int caplen,
 		    }
 		}
 
+#if 0
 		if (!strcmp(m,"ui") && f=='C') {
 			/*
 			 * we don't have a proper ipx decoder yet, but there
@@ -241,6 +246,7 @@ llc_print(const u_char *p, u_int length, u_int caplen,
 			 */
 			ipx_netbios_print(p,p+min(caplen,length));
 		}
+#endif
 
 	} else {
 		char f;

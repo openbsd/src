@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-tcp.c,v 1.14 2000/12/07 22:36:46 mickey Exp $	*/
+/*	$OpenBSD: print-tcp.c,v 1.15 2001/06/25 19:56:11 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -23,7 +23,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-tcp.c,v 1.14 2000/12/07 22:36:46 mickey Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-tcp.c,v 1.15 2001/06/25 19:56:11 itojun Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -564,8 +564,10 @@ tcp_print(register const u_char *bp, register u_int length,
 	bp += (tp->th_off * 4);
 	if (sport == BGP_PORT || dport == BGP_PORT)
 		bgp_print(bp, length);
+#if 0
 	else if (sport == NETBIOS_SSN_PORT || dport == NETBIOS_SSN_PORT)
 		nbt_tcp_print(bp, length);
+#endif
 	return;
 bad:
 	fputs("[bad opt]", stdout);
