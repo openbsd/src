@@ -1,4 +1,4 @@
-.\" $OpenBSD: crypt.3,v 1.8 1997/11/30 22:06:02 deraadt Exp $
+.\" $OpenBSD: crypt.3,v 1.9 1997/11/30 23:16:30 provos Exp $
 .\"
 .\" FreeSec: libcrypt
 .\"
@@ -129,7 +129,7 @@ state 64 times.
 The version number, the logarithm of the number of rounds and 
 the concatenation of salt and
 hashed password are separated by the ``$'' character. An encoded ``8''
-would specify 64 rounds.
+would specify 256 rounds.
 A valid password looks like this:
 .Pp
 ``$2a$12$eIAq8PR8sIUnJ1HaohxX2O9x9Qlm2vK97LJ5dsXdmB.eXF42qjchC''.
