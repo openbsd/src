@@ -1,5 +1,5 @@
 /*
- * $OpenBSD: md5.c,v 1.7 1997/08/01 10:07:11 deraadt Exp $
+ * $OpenBSD: md5.c,v 1.8 1998/01/02 07:04:23 deraadt Exp $
  *
  * Derived from:
  *	MDDRIVER.C - test driver for MD2, MD4 and MD5
@@ -40,6 +40,7 @@ static void MDString __P((char *));
 static void MDTimeTrial __P((void *));
 static void MDTestSuite __P((void));
 static void MDFilter __P((int, void *));
+static void usage __P((char *));
 
 int main __P((int, char *[]));
 
@@ -67,7 +68,7 @@ main(argc, argv)
 	int     argc;
 	char   *argv[];
 {
-	int     i;
+	int     ch;
 	char   *p;
 	char	buf[41];
 	void   *context;
@@ -102,25 +103,35 @@ main(argc, argv)
 			err(1, "malloc");
 	}
 
-	if (argc > 1)
-		for (i = 1; i < argc; i++)
-			if (argv[i][0] == '-' && argv[i][1] == 's')
-				MDString(argv[i] + 2);
-			else if (strcmp(argv[i], "-t") == 0)
-				MDTimeTrial(context);
-			else if (strcmp(argv[i], "-p") == 0)
+	if (argc > 1) {
+		while ((ch = getopt(argc, argv, "ps:tx")) != -1) {
+			switch (ch) {
+			case 'p':
 				MDFilter(1, context);
-			else if (strcmp(argv[i], "-x") == 0)
+				break;
+			case 's':
+				MDString(optarg);
+				break;
+			case 't':
+				MDTimeTrial(context);
+				break;
+			case 'x':
 				MDTestSuite();
-			else {
-				p = MDFile(argv[i], buf);
-				if (!p)
-					warn(argv[i]);
-				else
-					(void)printf("%s (%s) = %s\n", MDType,
-					    argv[i], p);
+				break;
+			default:
+				usage(MDType);
 			}
-	else
+		}
+		while (optind < argc) {
+			p = MDFile(argv[optind], buf);
+			if (!p)
+				perror(argv[optind]);
+			else
+				printf("%s (%s) = %s\n", MDType,
+				    argv[optind], p);
+			optind++;
+		}
+	} else
 		MDFilter(0, context);
 
 	exit(0);
@@ -220,4 +231,12 @@ MDFilter(pipe, context)
 		MDUpdate(context, buffer, len);
 	}
 	(void)printf("%s\n", MDEnd(context,buf));
+}
+
+static void
+usage(type)
+char *type;
+{
+	fprintf(stderr, "usage: %s [-ptx] [-s string] [file ...]\n", type);
+	exit(1);
 }

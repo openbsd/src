@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sha1.1,v 1.3 1997/11/12 14:29:48 provos Exp $
+.\"	$OpenBSD: sha1.1,v 1.4 1998/01/02 07:04:24 deraadt Exp $
 .\"
 .Dd July 12, 1997
 .Dt SHA1 1
@@ -8,11 +8,9 @@
 .Nd "calculate a message-digest fingerprint (checksum) for a file"
 .Sh SYNOPSIS
 .Nm
-.Op Fl p
-.Op Fl t
-.Op Fl x
-.Op Fl s Ns Ar string
-.Op Ar filename(s)
+.Op Fl ptx
+.Op Fl s Ar string
+.Op Ar file ...
 .Sh DESCRIPTION
 .Nm
 takes as input a message of arbitrary length and produces
@@ -28,13 +26,14 @@ encrypted with a private (secret) key under a public-key cryptosystem
 such as
 .Em RSA .
 .Sh OPTIONS
-The following four options may be used in any combination, except
-that
-.Ar filename(s)
-must be the last objects on the command line.
-.Bl -tag -width "filename(s)"
-.It Fl s Ns Ar string
-prints a checksum of the given string.
+The following four options may be used in any combination and must
+precede any files named on the command line.  The SHA-1
+sum of each file listed on the command line is printed after the options
+are processed.
+.Bl -tag -width Fl
+.It Fl s Ar string
+prints a checksum of the given
+.Ar string .
 .It Fl p
 echos stdin to stdout and appends the
 .Em SHA-1
@@ -43,9 +42,6 @@ sum to stdout.
 runs a built-in time trial.
 .It Fl x
 runs a built-in test script.
-.It Ar filename(s)
-prints the checksum for each file.  If no files are specified,
-standard input is used.
 .El
 .Sh SEE ALSO
 .Xr cksum 1 ,
