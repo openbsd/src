@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsck.c,v 1.16 2003/09/25 04:16:41 deraadt Exp $	*/
+/*	$OpenBSD: fsck.c,v 1.17 2004/01/13 15:59:13 otto Exp $	*/
 /*	$NetBSD: fsck.c,v 1.7 1996/10/03 20:06:30 christos Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  *
  */
 
-static const char rcsid[] = "$OpenBSD: fsck.c,v 1.16 2003/09/25 04:16:41 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: fsck.c,v 1.17 2004/01/13 15:59:13 otto Exp $";
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -436,7 +436,7 @@ mangle(char *opts, int *argcp, const char ***argvp, int *maxargcp)
 			int newmaxargc = maxargc + 50;
 
 			argv = erealloc(argv, newmaxargc * sizeof(char *));
-			maxargc == newmaxargc;
+			maxargc = newmaxargc;
 		}
 		if (*p != '\0') {
 			if (*p == '-') {
