@@ -1,4 +1,4 @@
-/* $OpenBSD: strtonum.c,v 1.3 2004/06/21 23:12:25 marc Exp $ */
+/* $OpenBSD: strtonum.c,v 1.4 2004/07/16 16:03:36 millert Exp $ */
 /*
  * Copyright (c) 2004 Ted Unangst and Todd Miller
  * All rights reserved.
@@ -25,12 +25,13 @@
 #define TOOLARGE 	3
 
 unsigned long long
-strtonum(const char *numstr, long long minval, unsigned long long maxval,
+strtonum(const char *numstr, long long minval, unsigned long long umaxval,
     const char **errstrp)
 {
-	unsigned long long ull;
+	long long ll, maxval = (long long)umaxval;
+	unsigned long long ull = 0;
 	char *ep;
-	int error;
+	int error = 0;
 	struct errval {
 		const char *errstr;
 		int err;
@@ -43,19 +44,23 @@ strtonum(const char *numstr, long long minval, unsigned long long maxval,
 
 	ev[0].err = errno;
 	errno = 0;
-	error = 0;
-	ull = 0;
-	if (minval > maxval || maxval < minval ||
-	    (minval < 0 && maxval > LLONG_MAX))
-		error = INVALID;
-	else if (maxval > LLONG_MAX ) {
+	if (umaxval > LLONG_MAX ) {
+		if (minval < 0) {
+			error = INVALID;
+			goto done;
+		}
 		ull = strtoull(numstr, &ep, 10);
 		if (numstr == ep || *ep != '\0')
 			error = INVALID;
-		else if ((ull == ULLONG_MAX && errno == ERANGE) || ull > maxval)
+		else if ((ull == ULLONG_MAX && errno == ERANGE) ||
+		    ull > umaxval)
 			error = TOOLARGE;
 	} else {
-		long long ll = strtoll(numstr, &ep, 10);
+		if (minval > maxval || maxval < minval) {
+			error = INVALID;
+			goto done;
+		}
+		ll = strtoll(numstr, &ep, 10);
 		if (numstr == ep || *ep != '\0')
 			error = INVALID;
 		else if ((ll == LLONG_MIN && errno == ERANGE) || ll < minval)
@@ -64,6 +69,7 @@ strtonum(const char *numstr, long long minval, unsigned long long maxval,
 			error = TOOLARGE;
 		ull = (unsigned long long)ll;
 	}
+done:
 	if (errstrp != NULL)
 		*errstrp = ev[error].errstr;
 	errno = ev[error].err;
