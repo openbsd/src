@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_command.c,v 1.4 1996/03/11 11:16:01 mickey Exp $	*/
+/*	$OpenBSD: db_command.c,v 1.5 1996/04/19 07:43:48 mickey Exp $	*/
 
 /* 
  * Mach Operating System
@@ -449,7 +449,7 @@ db_error(s)
 	if (s)
 	    db_printf(s);
 	db_flush_lex();
-	longjmp(db_recover, 1);
+	longjmp(db_recover);
 }
 
 

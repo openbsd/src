@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccd.c,v 1.8 1996/04/18 23:47:00 niklas Exp $	*/
+/*	$OpenBSD: ccd.c,v 1.9 1996/04/19 07:43:47 mickey Exp $	*/
 /*	$NetBSD: ccd.c,v 1.29 1996/03/07 15:00:11 christos Exp $	*/
 
 /*-
@@ -110,7 +110,6 @@
 #include <sys/vnode.h>
 #include <sys/cpu.h>
 
-#include <dev/dev_conf.h>
 #include <dev/ccdvar.h>
 
 #if defined(CCDDEBUG) && !defined(DEBUG)
