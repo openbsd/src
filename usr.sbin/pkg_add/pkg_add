@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.75 2004/10/12 09:35:15 espie Exp $
+# $OpenBSD: pkg_add,v 1.76 2004/10/13 18:39:07 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -145,6 +145,32 @@ sub install
 	}
 }
 
+package OpenBSD::PackingElement::Sysctl;
+use OpenBSD::Error;
+
+sub install
+{
+	my ($self, $state) = @_;
+
+	my $name = $self->{name};
+	open(my $pipe, '-|', '/sbin/sysctl', $name);
+	my $actual = <$pipe>;
+	chomp $actual;
+	$actual =~ s/^\Q$name\E\s*\=\s*//;
+	if ($self->{mode} eq '=' && $actual eq $self->{value}) {
+		return;
+	}
+	if ($self->{mode} eq '>=' && $actual >= $self->{value}) {
+		return;
+	}
+	if ($state->{not}) {
+		print "sysctl -w $name != ".
+		    $self->{value}, "\n";
+		return;
+	}
+	VSystem($state->{verbose}, '/sbin/sysctl', $name.'='.$self->{value});
+}
+			
 package OpenBSD::PackingElement::FileBase;
 use OpenBSD::Error;
 use File::Basename;

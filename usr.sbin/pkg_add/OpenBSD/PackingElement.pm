@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.54 2004/10/12 21:05:20 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.55 2004/10/13 18:39:07 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -859,6 +859,29 @@ sub destate
 	} else {
 		$state->{mode} = $self->{name};
 	}
+}
+
+package OpenBSD::PackingElement::Sysctl;
+our @ISA=qw(OpenBSD::PackingElement::Action);
+
+__PACKAGE__->setKeyword('sysctl');
+sub keyword() { 'sysctl' }
+
+sub new
+
+{
+	my ($class, $args) = @_;
+	if ($args =~ m/^\s*(.*)\s*(\=|\>=)\s*(.*)\s*$/) {
+		bless { name => $1, mode => $2, value => $3}, $class;
+	} else {
+		die "Bad syntax for \@sysctl";
+	}
+}
+
+sub stringize
+{
+	my $self = $_[0];
+	return $self->{name}.$self->{mode}.$self->{value};
 }
 
 package OpenBSD::PackingElement::ExeclikeAction;
