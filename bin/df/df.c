@@ -1,4 +1,4 @@
-/*	$OpenBSD: df.c,v 1.33 2003/02/19 07:32:03 tedu Exp $	*/
+/*	$OpenBSD: df.c,v 1.34 2003/05/26 18:02:32 ian Exp $	*/
 /*	$NetBSD: df.c,v 1.21.2.1 1995/11/01 00:06:11 jtc Exp $	*/
 
 /*
@@ -49,7 +49,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)df.c	8.7 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: df.c,v 1.33 2003/02/19 07:32:03 tedu Exp $";
+static char rcsid[] = "$OpenBSD: df.c,v 1.34 2003/05/26 18:02:32 ian Exp $";
 #endif
 #endif /* not lint */
 
@@ -65,16 +65,18 @@ static char rcsid[] = "$OpenBSD: df.c,v 1.33 2003/02/19 07:32:03 tedu Exp $";
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <util.h>
 
 extern	char *__progname;
 
-int	 bread(int, off_t, void *, int);
 char	*getmntpt(char *);
-void	 bsdprint(struct statfs *, long, int);
-void	 posixprint(struct statfs *, long, int);
 int	 selected(const char *);
 void	 maketypelist(char *);
 long	 regetmntinfo(struct statfs **, long);
+void	 bsdprint(struct statfs *, long, int);
+void	 prtstat(struct statfs *, int, int, int);
+void	 posixprint(struct statfs *, long, int);
+int 	 bread(int, off_t, void *, int);
 void	 usage(void);
 
 int		raw_df(char *, struct statfs *);
@@ -289,59 +291,26 @@ regetmntinfo(struct statfs **mntbufp, long mntsize)
 /*
  * "human-readable" output: use 3 digits max.--put unit suffixes at
  * the end.  Makes output compact and easy-to-read esp. on huge disks.
+ * Code moved into libutil; this is now just a wrapper.
  */
-
-typedef enum { NONE = 0, KILO, MEGA, GIGA, TERA, PETA /* , EXA */ } unit_t;
-
-unit_t
-unit_adjust(double *val)
-{
-	double abval;
-	unit_t unit;
-
-	abval = fabs(*val);
-	if (abval < 1024)
-		unit = NONE;
-	else if (abval < 1048576ULL) {
-		unit = KILO;
-		*val /= 1024;
-	} else if (abval < 1073741824ULL) {
-		unit = MEGA;
-		*val /= 1048576;
-	} else if (abval < 1099511627776ULL) {
-		unit = GIGA;
-		*val /= 1073741824ULL;
-	} else if (abval < 1125899906842624ULL) {
-		unit = TERA;
-		*val /= 1099511627776ULL;
-	} else /* if (abval < 1152921504606846976ULL) */ {
-		unit = PETA;
-		*val /= 1125899906842624ULL;
-	}
-	return (unit);
-}
-
 void
-prthumanval(double bytes)
+prthumanval(long long bytes)
 {
-	unit_t unit;
+	char ret[FMT_SCALED_STRSIZE];
 
-	unit = unit_adjust(&bytes);
-
-	if (bytes == 0)
-		(void)printf("     0B");
-	else if (bytes > 10)
-		(void)printf(" %5.0f%c", bytes, "BKMGTPE"[unit]);
-	else
-		(void)printf(" %5.1f%c", bytes, "BKMGTPE"[unit]);
+	if (fmt_scaled(bytes, ret) == -1) {
+		(void)printf(" %lld", bytes);
+		return;
+	}
+	(void)printf(" %6s", ret);
 }
 
 void
 prthuman(struct statfs *sfsp, long used)
 {
-	prthumanval((double)(sfsp->f_blocks) * (double)(sfsp->f_bsize));
-	prthumanval((double)(used) * (double)(sfsp->f_bsize));
-	prthumanval((double)(sfsp->f_bavail) * (double)(sfsp->f_bsize));
+	prthumanval((long long)sfsp->f_blocks * (long long)sfsp->f_bsize);
+	prthumanval((long long)used * (long long)sfsp->f_bsize);
+	prthumanval((long long)sfsp->f_bavail * (long long)sfsp->f_bsize);
 }
 
 /*
