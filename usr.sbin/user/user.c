@@ -1,4 +1,4 @@
-/* $OpenBSD: user.c,v 1.32 2002/04/03 22:35:26 millert Exp $ */
+/* $OpenBSD: user.c,v 1.33 2002/04/04 18:39:32 millert Exp $ */
 /* $NetBSD: user.c,v 1.45 2001/08/17 08:29:00 joda Exp $ */
 
 /*
@@ -297,7 +297,7 @@ copydotfiles(char *skeldir, uid_t uid, gid_t gid, char *dir)
 	if (n == 0) {
 		warnx("No \"dot\" initialisation files found");
 	} else {
-		(void) asystem("cd %s; %s -rw -pe %s . %s", 
+		(void) asystem("cd %s && %s -rw -pe %s . %s", 
 				skeldir, PAX, (verbose) ? "-v" : "", dir);
 	}
 	(void) asystem("%s -R -P %u:%u %s", CHOWN, uid, gid, dir);
@@ -356,6 +356,7 @@ creategid(char *group, gid_t gid, char *name)
 	(void) fclose(from);
 	(void) fclose(to);
 	if (rename(f, _PATH_GROUP) < 0) {
+		(void) unlink(f);
 		warn("can't create gid: can't rename `%s' to `%s'", f,
 		    _PATH_GROUP);
 		return 0;
@@ -434,6 +435,7 @@ modify_gid(char *group, char *newent)
 	(void) fclose(from);
 	(void) fclose(to);
 	if (rename(f, _PATH_GROUP) < 0) {
+		(void) unlink(f);
 		warn("can't create gid: can't rename `%s' to `%s'", f, _PATH_GROUP);
 		return 0;
 	}
@@ -534,6 +536,7 @@ append_group(char *user, int ngroups, char **groups)
 	(void) fclose(from);
 	(void) fclose(to);
 	if (rename(f, _PATH_GROUP) < 0) {
+		(void) unlink(f);
 		warn("can't create gid: can't rename `%s' to `%s'", f, _PATH_GROUP);
 		return 0;
 	}
