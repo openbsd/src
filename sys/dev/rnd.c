@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.56 2002/03/21 23:02:22 mickey Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.57 2002/04/01 08:25:58 mickey Exp $	*/
 
 /*
  * random.c -- A strong random number generator
@@ -312,7 +312,7 @@ int	rnd_debug = 0x0000;
 
 /*
  * For the purposes of better mixing, we use the CRC-32 polynomial as
- * well to make a twisted Generalized Feedback Shift Reigster
+ * well to make a twisted Generalized Feedback Shift Register
  *
  * (See M. Matsumoto & Y. Kurita, 1992.  Twisted GFSR generators.  ACM
  * Transactions on Modeling and Computer Simulation 2(3):179-194.
@@ -346,7 +346,7 @@ int	rnd_debug = 0x0000;
  * modulo the generator polymnomial.  Now, for random primitive polynomials,
  * this is a universal class of hash functions, meaning that the chance
  * of a collision is limited by the attacker's knowledge of the generator
- * polynomail, so if it is chosen at random, an attacker can never force
+ * polynomial, so if it is chosen at random, an attacker can never force
  * a collision.  Here, we use a fixed polynomial, but we *can* assume that
  * ###--> it is unknown to the processes generating the input entropy. <-###
  * Because of this important property, this is a good, collision-resistant
@@ -474,7 +474,7 @@ void arc4maybeinit(void);
  * old state, and its input always includes the time of day in
  * microseconds.  Moreover, bytes from the stream may at any point be
  * diverted to multiple processes or even kernel functions desiring
- * random numbers.  This increases the strenght of the random stream,
+ * random numbers.  This increases the strength of the random stream,
  * but makes it impossible to use this code for encryption--There is
  * no way ever to reproduce the same stream of random bytes.
  *
@@ -544,7 +544,7 @@ arc4maybeinit(void)
 
 /*
  * called by timeout to mark arc4 for stirring,
- * actuall stirring happens on any access attempt.
+ * actual stirring happens on any access attempt.
  */
 void
 arc4_reinit(v)
