@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.67 2003/06/03 12:34:04 henning Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.68 2003/06/08 09:41:08 cedric Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -76,10 +76,6 @@ struct pf_pool		*pf_get_pool(char *, char *, u_int32_t,
 			    u_int8_t, u_int8_t, u_int8_t, u_int8_t, u_int8_t);
 int			 pf_get_ruleset_number(u_int8_t);
 void			 pf_init_ruleset(struct pf_ruleset *);
-struct pf_anchor	*pf_find_anchor(const char *);
-struct pf_ruleset	*pf_find_ruleset(char *, char *);
-struct pf_ruleset	*pf_find_or_create_ruleset(char *, char *);
-void			 pf_remove_if_empty_ruleset(struct pf_ruleset *);
 void			 pf_mv_pool(struct pf_palist *, struct pf_palist *);
 void			 pf_empty_pool(struct pf_palist *);
 int			 pfioctl(dev_t, u_long, caddr_t, int, struct proc *);
@@ -354,7 +350,7 @@ pf_remove_if_empty_ruleset(struct pf_ruleset *ruleset)
 	struct pf_anchor	*anchor;
 	int			 i;
 
-	if (ruleset == NULL || ruleset->anchor == NULL)
+	if (ruleset == NULL || ruleset->anchor == NULL || ruleset->tables > 0)
 		return;
 	for (i = 0; i < PF_RULESET_MAX; ++i)
 		if (!TAILQ_EMPTY(ruleset->rules[i].active.ptr) ||
@@ -1883,7 +1879,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			error = ENODEV;
 			break;
 		}
-		error = pfr_clr_tables(&io->pfrio_ndel, io->pfrio_flags);
+		error = pfr_clr_tables(&io->pfrio_table, &io->pfrio_ndel,
+		    io->pfrio_flags);
 		break;
 	}
 
@@ -1918,8 +1915,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			error = ENODEV;
 			break;
 		}
-		error = pfr_get_tables(io->pfrio_buffer, &io->pfrio_size,
-		    io->pfrio_flags);
+		error = pfr_get_tables(&io->pfrio_table, io->pfrio_buffer,
+		    &io->pfrio_size, io->pfrio_flags);
 		break;
 	}
 
@@ -1930,8 +1927,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			error = ENODEV;
 			break;
 		}
-		error = pfr_get_tstats(io->pfrio_buffer, &io->pfrio_size,
-		    io->pfrio_flags);
+		error = pfr_get_tstats(&io->pfrio_table, io->pfrio_buffer,
+		    &io->pfrio_size, io->pfrio_flags);
 		break;
 	}
 

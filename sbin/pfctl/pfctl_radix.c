@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_radix.c,v 1.12 2003/04/27 16:02:08 cedric Exp $ */
+/*	$OpenBSD: pfctl_radix.c,v 1.13 2003/06/08 09:41:07 cedric Exp $ */
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -45,12 +45,14 @@
 extern int dev;
 
 int
-pfr_clr_tables(int *ndel, int flags)
+pfr_clr_tables(struct pfr_table *filter, int *ndel, int flags)
 {
 	struct pfioc_table io;
 
 	bzero(&io, sizeof io);
 	io.pfrio_flags = flags;
+	if (filter != NULL)
+		io.pfrio_table = *filter;
 	if (ioctl(dev, DIOCRCLRTABLES, &io))
 		return (-1);
 	if (ndel != NULL)
@@ -101,7 +103,8 @@ pfr_del_tables(struct pfr_table *tbl, int size, int *ndel, int flags)
 }
 
 int
-pfr_get_tables(struct pfr_table *tbl, int *size, int flags)
+pfr_get_tables(struct pfr_table *filter, struct pfr_table *tbl, int *size,
+	int flags)
 {
 	struct pfioc_table io;
 
@@ -111,6 +114,8 @@ pfr_get_tables(struct pfr_table *tbl, int *size, int flags)
 	}
 	bzero(&io, sizeof io);
 	io.pfrio_flags = flags;
+	if (filter != NULL)
+		io.pfrio_table = *filter;
 	io.pfrio_buffer = tbl;
 	io.pfrio_esize = sizeof(*tbl);
 	io.pfrio_size = *size;
@@ -121,7 +126,8 @@ pfr_get_tables(struct pfr_table *tbl, int *size, int flags)
 }
 
 int
-pfr_get_tstats(struct pfr_tstats *tbl, int *size, int flags)
+pfr_get_tstats(struct pfr_table *filter, struct pfr_tstats *tbl, int *size,
+	int flags)
 {
 	struct pfioc_table io;
 
@@ -131,6 +137,8 @@ pfr_get_tstats(struct pfr_tstats *tbl, int *size, int flags)
 	}
 	bzero(&io, sizeof io);
 	io.pfrio_flags = flags;
+	if (filter != NULL)
+		io.pfrio_table = *filter;
 	io.pfrio_buffer = tbl;
 	io.pfrio_esize = sizeof(*tbl);
 	io.pfrio_size = *size;

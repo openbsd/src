@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.h,v 1.18 2003/04/30 12:30:27 cedric Exp $ */
+/*	$OpenBSD: pfctl.h,v 1.19 2003/06/08 09:41:07 cedric Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -35,11 +35,11 @@
 
 void	 pfr_set_fd(int);
 int	 pfr_get_fd(void);
-int	 pfr_clr_tables(int *, int);
+int	 pfr_clr_tables(struct pfr_table *, int *, int);
 int	 pfr_add_tables(struct pfr_table *, int, int *, int);
 int	 pfr_del_tables(struct pfr_table *, int, int *, int);
-int	 pfr_get_tables(struct pfr_table *, int *, int);
-int	 pfr_get_tstats(struct pfr_tstats *, int *, int);
+int	 pfr_get_tables(struct pfr_table *, struct pfr_table *, int *, int);
+int	 pfr_get_tstats(struct pfr_table *, struct pfr_tstats *, int *, int);
 int	 pfr_clr_tstats(struct pfr_table *, int, int *, int);
 int	 pfr_clr_addrs(struct pfr_table *, int *, int);
 int	 pfr_add_addrs(struct pfr_table *, struct pfr_addr *, int, int *, int);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.153 2003/06/03 12:34:04 henning Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.154 2003/06/08 09:41:08 cedric Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -494,6 +494,7 @@ struct pf_ruleset {
 		}			 active, inactive;
 	}			 rules[PF_RULESET_MAX];
 	struct pf_anchor	*anchor;
+	int			 tables;
 };
 
 TAILQ_HEAD(pf_rulesetqueue, pf_ruleset);
@@ -502,6 +503,7 @@ struct pf_anchor {
 	TAILQ_ENTRY(pf_anchor)	 entries;
 	char			 name[PF_ANCHOR_NAME_SIZE];
 	struct pf_rulesetqueue	 rulesets;
+	int			 tables;
 };
 
 TAILQ_HEAD(pf_anchorqueue, pf_anchor);
@@ -591,6 +593,7 @@ struct pfr_ktable {
 	struct radix_node_head	*pfrkt_ip6;
 	struct pfr_ktable	*pfrkt_shadow;
 	struct pfr_ktable	*pfrkt_root;
+	struct pf_ruleset	*pfrkt_rs;
 	int			 pfrkt_nflags;
 };
 #define pfrkt_t		pfrkt_ts.pfrts_t
@@ -900,7 +903,8 @@ struct pfioc_ruleset {
 #define PFR_FLAG_CLSTATS	0x00000008
 #define PFR_FLAG_ADDRSTOO	0x00000010
 #define PFR_FLAG_REPLACE	0x00000020
-#define PFR_FLAG_ALLMASK	0x0000003F
+#define PFR_FLAG_ALLRSETS	0x00000040
+#define PFR_FLAG_ALLMASK	0x0000007F
 
 struct pfioc_table {
 	struct pfr_table	 pfrio_table;
@@ -1030,6 +1034,11 @@ extern int			 pf_insert_state(struct pf_state *);
 extern struct pf_state		*pf_find_state(struct pf_state_tree *,
 				    struct pf_tree_node *);
 extern struct pf_anchor		*pf_find_anchor(const char *);
+extern struct pf_ruleset	*pf_find_ruleset(char *, char *);
+extern struct pf_ruleset	*pf_find_or_create_ruleset(char *, char *);
+extern void			 pf_remove_if_empty_ruleset(
+				    struct pf_ruleset *);
+
 extern struct ifnet		*status_ifp;
 extern struct pf_rule		 pf_default_rule;
 extern void			 pf_addrcpy(struct pf_addr *, struct pf_addr *,
@@ -1078,11 +1087,11 @@ void	pfr_update_stats(struct pfr_ktable *, struct pf_addr *, sa_family_t,
 struct pfr_ktable *
 	pfr_attach_table(struct pf_ruleset *, char *);
 void	pfr_detach_table(struct pfr_ktable *);
-int	pfr_clr_tables(int *, int);
+int	pfr_clr_tables(struct pfr_table *, int *, int);
 int	pfr_add_tables(struct pfr_table *, int, int *, int);
 int	pfr_del_tables(struct pfr_table *, int, int *, int);
-int	pfr_get_tables(struct pfr_table *, int *, int);
-int	pfr_get_tstats(struct pfr_tstats *, int *, int);
+int	pfr_get_tables(struct pfr_table *, struct pfr_table *, int *, int);
+int	pfr_get_tstats(struct pfr_table *, struct pfr_tstats *, int *, int);
 int	pfr_clr_tstats(struct pfr_table *, int, int *, int);
 int	pfr_set_tflags(struct pfr_table *, int, int, int, int *, int *, int);
 int	pfr_clr_addrs(struct pfr_table *, int *, int);

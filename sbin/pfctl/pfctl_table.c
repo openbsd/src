@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_table.c,v 1.42 2003/05/24 18:12:12 cedric Exp $ */
+/*	$OpenBSD: pfctl_table.c,v 1.43 2003/06/08 09:41:07 cedric Exp $ */
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -156,7 +156,7 @@ pfctl_table(int argc, char *argv[], char *tname, const char *command,
 	if (!strcmp(command, "-F")) {
 		if (argc || file != NULL)
 			usage();
-		RVTEST(pfr_clr_tables(&ndel, flags));
+		RVTEST(pfr_clr_tables(&table, &ndel, flags));
 		xprintf(opts, "%d tables deleted", ndel);
 	} else if (!strcmp(command, "-s")) {
 		if (argc || file != NULL)
@@ -165,13 +165,13 @@ pfctl_table(int argc, char *argv[], char *tname, const char *command,
 			if (opts & PF_OPT_VERBOSE2) {
 				grow_buffer(sizeof(struct pfr_tstats), size);
 				size = msize;
-				RVTEST(pfr_get_tstats(buffer.tstats, &size,
-				    flags));
+				RVTEST(pfr_get_tstats(&table, buffer.tstats,
+				    &size, flags));
 			} else {
 				grow_buffer(sizeof(struct pfr_table), size);
 				size = msize;
-				RVTEST(pfr_get_tables(buffer.tables, &size,
-				    flags));
+				RVTEST(pfr_get_tables(&table, buffer.tables,
+				    &size, flags));
 			}
 			if (size <= msize)
 				break;
@@ -569,6 +569,9 @@ radix_perror(void)
 {
 	if (errno == ESRCH)
 		fprintf(stderr, "%s: Table does not exist.\n", __progname);
+	else if (errno == ENOENT)
+		fprintf(stderr, "%s: Anchor or Ruleset does not exist.\n",
+		    __progname);
 	else
 		perror(__progname);
 }
