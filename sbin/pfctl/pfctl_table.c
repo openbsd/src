@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_table.c,v 1.32 2003/02/04 12:10:02 cedric Exp $ */
+/*	$OpenBSD: pfctl_table.c,v 1.33 2003/02/04 17:29:06 cedric Exp $ */
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -56,7 +56,7 @@
 
 extern void	usage(void);
 static int	pfctl_table(int, char *[], char *, char *, char *, int);
-static void	grow_buffer(int, int);
+static void	grow_buffer(size_t, int);
 static void	print_table(struct pfr_table *, int);
 static void	print_tstats(struct pfr_tstats *, int);
 static void	load_addr(int, char *[], char *, int);
@@ -310,7 +310,7 @@ pfctl_table(int argc, char *argv[], char *tname, char *command,
 }
 
 void
-grow_buffer(int bs, int minsize)
+grow_buffer(size_t bs, int minsize)
 {
 	assert(minsize == 0 || minsize > msize);
 	if (!msize) {
@@ -326,6 +326,8 @@ grow_buffer(int bs, int minsize)
 			msize *= 2;
 		else
 			msize = minsize;
+		if (msize < 0 || msize >= SIZE_T_MAX / bs)
+			err(1, "buffer overflow");
 		buffer.caddr = realloc(buffer.caddr, msize * bs);
 		if (buffer.caddr == NULL)
 			err(1, "realloc");
