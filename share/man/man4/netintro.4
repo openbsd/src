@@ -1,4 +1,4 @@
-.\"	$OpenBSD: netintro.4,v 1.26 2004/08/15 23:27:35 jaredy Exp $
+.\"	$OpenBSD: netintro.4,v 1.27 2004/08/21 21:22:43 jaredy Exp $
 .\"	$NetBSD: netintro.4,v 1.4 1995/10/19 08:03:40 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
@@ -105,6 +105,27 @@ and/or in the system error log,
 (see
 .Xr syslogd 8 ) ,
 due to errors in device operation.
+.Pp
+Network interfaces may be collected together into interface groups.
+An interface group is a container that can be used generically when
+referring to any interface by related some criteria.
+Interfaces may be a member of any number of interface groups.
+All interfaces are members of their interface family group by default.
+For example, a PPP interface such as
+.Li ppp0
+is a member of the PPP interface family group,
+.Li ppp .
+When an action is performed on an interface group, such as packet
+filtering by the
+.Xr pf 4
+subsystem, the operation will be applied to each member interface in the
+group, if supported by the subsystem.
+The
+.Xr ifconfig 8
+utility can be used to view and assign membership of an interface to an
+interface group with the
+.Cm group
+modifier.
 .Sh PROTOCOLS
 The system currently supports the
 Internet protocols (IPv4 and IPv6),
@@ -484,6 +505,7 @@ from the group
 .Xr ip 4 ,
 .Xr ip6 4 ,
 .Xr lo 4 ,
+.Xr pf 4 ,
 .Xr tcp 4 ,
 .Xr udp 4 ,
 .Xr hosts 5 ,
