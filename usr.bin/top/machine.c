@@ -1,4 +1,4 @@
-/*	$OpenBSD: machine.c,v 1.17 1999/10/29 08:58:43 todd Exp $	*/
+/*	$OpenBSD: machine.c,v 1.18 1999/11/14 09:03:46 deraadt Exp $	*/
 
 /*
  * top - a top users display for Unix
@@ -80,11 +80,9 @@ struct handle
 
 /* definitions for indices in the nlist array */
 #define X_CP_TIME	0
-#define X_HZ		1
 
 static struct nlist nlst[] = {
     { "_cp_time" },		/* 0 */
-    { "_hz" },			/* 1 */
     { 0 }
 };
 
@@ -115,7 +113,7 @@ static kvm_t *kd;
 
 /* these are retrieved from the kernel in _init */
 
-static          int hz;
+static          int stathz;
 
 /* these are offsets obtained via nlist and used in the get_ functions */
 
@@ -175,10 +173,22 @@ static int pageshift;		/* log base 2 of the pagesize */
 #define pagetok(size) ((size) << pageshift)
 
 int
+getstathz()
+{
+	int mib[2];
+	struct clockinfo cinf;
+	size_t size = sizeof(cinf);
+
+	mib[0] = CTL_KERN;
+	mib[1] = KERN_CLOCKRATE;
+	if (sysctl(mib, 2, &cinf, &size, NULL, 0) == -1)
+		return (-1);
+	return (cinf.stathz);
+}
+
+int
 machine_init(statics)
-
 struct statics *statics;
-
 {
     register int i = 0;
     register int pagesize;
@@ -202,9 +212,9 @@ struct statics *statics;
     if (i > 0 && check_nlist(nlst) > 0)
 	return(-1);
 
-    /* get the symbol values out of kmem */
-    (void) getkval(nlst[X_HZ].n_value,     (int *)(&hz),	sizeof(hz),
-	    nlst[X_HZ].n_name);
+    stathz = getstathz();
+    if (stathz == -1)
+	return(-1);
 
     /* stash away certain offsets for later use */
     cp_time_offset = nlst[X_CP_TIME].n_value;
@@ -443,7 +453,7 @@ char *(*get_userid)();
 	comm[COMSIZ - 1] = '\0';
     }
 
-    cputime = (PP(pp, p_uticks) + PP(pp, p_sticks) + PP(pp, p_iticks)) / hz;
+    cputime = (PP(pp, p_uticks) + PP(pp, p_sticks) + PP(pp, p_iticks)) / stathz;
 
     /* calculate the base for cpu percentages */
     pct = pctdouble(PP(pp, p_pctcpu));
