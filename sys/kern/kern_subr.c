@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_subr.c,v 1.28 2004/06/13 21:49:26 niklas Exp $	*/
+/*	$OpenBSD: kern_subr.c,v 1.29 2004/11/28 02:11:33 deraadt Exp $	*/
 /*	$NetBSD: kern_subr.c,v 1.15 1996/04/09 17:21:56 ragge Exp $	*/
 
 /*
@@ -194,6 +194,8 @@ struct hook_desc_head startuphook_list =
     TAILQ_HEAD_INITIALIZER(startuphook_list);
 struct hook_desc_head shutdownhook_list =
     TAILQ_HEAD_INITIALIZER(shutdownhook_list);
+struct hook_desc_head mountroothook_list =
+    TAILQ_HEAD_INITIALIZER(mountroothook_list);
 
 void *
 hook_establish(head, tail, fn, arg)

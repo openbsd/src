@@ -1,4 +1,4 @@
-/*	$OpenBSD: systm.h,v 1.64 2004/09/16 07:07:17 grange Exp $	*/
+/*	$OpenBSD: systm.h,v 1.65 2004/11/28 02:11:33 deraadt Exp $	*/
 /*	$NetBSD: systm.h,v 1.50 1996/06/09 04:55:09 briggs Exp $	*/
 
 /*-
@@ -243,7 +243,8 @@ struct hook_desc {
 };
 TAILQ_HEAD(hook_desc_head, hook_desc);
 
-extern struct hook_desc_head shutdownhook_list, startuphook_list;
+extern struct hook_desc_head shutdownhook_list, startuphook_list,
+    mountroothook_list;
 
 void	*hook_establish(struct hook_desc_head *, int, void (*)(void *), void *);
 void	hook_disestablish(struct hook_desc_head *, void *);
@@ -263,6 +264,12 @@ void	dohooks(struct hook_desc_head *, int);
 #define shutdownhook_disestablish(vhook) \
 	hook_disestablish(&shutdownhook_list, (vhook))
 #define doshutdownhooks() dohooks(&shutdownhook_list, HOOK_REMOVE)
+
+#define mountroothook_establish(fn, arg) \
+	hook_establish(&mountroothook_list, 0, (fn), (arg))
+#define mountroothook_disestablish(vhook) \
+	hook_disestablish(&mountroothook_list, (vhook))
+#define domountroothooks() dohooks(&mountroothook_list, HOOK_REMOVE|HOOK_FREE)
 
 /*
  * Power management hooks.
