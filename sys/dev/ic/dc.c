@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.63 2003/09/25 21:45:11 mickey Exp $	*/
+/*	$OpenBSD: dc.c,v 1.64 2003/09/29 18:53:58 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -2087,19 +2087,20 @@ int
 dc_rx_resync(sc)
 	struct dc_softc *sc;
 {
-	int i, pos;
-	struct dc_desc *cur_rx;
+	u_int32_t stat;
+	int i, pos, offset;
 
 	pos = sc->dc_cdata.dc_rx_prod;
 
 	for (i = 0; i < DC_RX_LIST_CNT; i++) {
+
+		offset = offsetof(struct dc_list_data, dc_rx_list[pos]);
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_listmap,
-		    offsetof(struct dc_list_data, dc_rx_list[pos]),
-		    sizeof(struct dc_desc),
+		    offset, sizeof(struct dc_desc),
 		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
-		cur_rx = &sc->dc_ldata->dc_rx_list[pos];
-		if (!(cur_rx->dc_status & htole32(DC_RXSTAT_OWN)))
+		stat = sc->dc_ldata->dc_rx_list[pos].dc_status;
+		if (!(stat & htole32(DC_RXSTAT_OWN)))
 			break;
 		DC_INC(pos, DC_RX_LIST_CNT);
 	}
@@ -2125,25 +2126,31 @@ dc_rxeof(sc)
 	struct mbuf *m;
 	struct ifnet *ifp;
 	struct dc_desc *cur_rx;
-	int i, total_len = 0;
+	int i, offset, total_len = 0;
 	u_int32_t rxstat;
 
 	ifp = &sc->sc_arpcom.ac_if;
 	i = sc->dc_cdata.dc_rx_prod;
 
-	while(!(sc->dc_ldata->dc_rx_list[i].dc_status &
-	    htole32(DC_RXSTAT_OWN))) {
-		struct mbuf		*m0 = NULL;
+	for(;;) {
+		struct mbuf	*m0 = NULL;
 
+		offset = offsetof(struct dc_list_data, dc_rx_list[i]);
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_listmap,
-		    offsetof(struct dc_list_data, dc_rx_list[i]),
-		    sizeof(struct dc_desc),
+		    offset, sizeof(struct dc_desc),
 		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
 		cur_rx = &sc->dc_ldata->dc_rx_list[i];
 		rxstat = letoh32(cur_rx->dc_status);
+		if (rxstat & DC_RXSTAT_OWN)
+			break;
+
 		m = sc->dc_cdata.dc_rx_chain[i].sd_mbuf;
 		total_len = DC_RXBYTES(rxstat);
+
+		bus_dmamap_sync(sc->sc_dmat, sc->dc_cdata.dc_rx_chain[i].sd_map,
+		    0, sc->dc_cdata.dc_rx_chain[i].sd_map->dm_mapsize,
+		    BUS_DMASYNC_POSTREAD);
 
 		if (sc->dc_flags & DC_PNIC_RX_BUG_WAR) {
 			if ((rxstat & DC_WHOLEFRAME) != DC_WHOLEFRAME) {
@@ -2194,10 +2201,6 @@ dc_rxeof(sc)
 		/* No errors; receive the packet. */	
 		total_len -= ETHER_CRC_LEN;
 
-		bus_dmamap_sync(sc->sc_dmat, sc->dc_cdata.dc_rx_chain[i].sd_map,
-		    0, sc->dc_cdata.dc_rx_chain[i].sd_map->dm_mapsize,
-		    BUS_DMASYNC_POSTREAD);
-
 		m0 = m_devget(mtod(m, char *) - ETHER_ALIGN,
 		    total_len + ETHER_ALIGN, 0, ifp, NULL);
 		dc_newbuf(sc, i, m);
@@ -2210,7 +2213,6 @@ dc_rxeof(sc)
 		m = m0;
 
 		ifp->if_ipackets++;
-
 #if NBPFILTER > 0
 		if (ifp->if_bpf)
 			bpf_mtap(ifp->if_bpf, m);
@@ -2232,7 +2234,7 @@ dc_txeof(sc)
 {
 	struct dc_desc *cur_tx = NULL;
 	struct ifnet *ifp;
-	int idx;
+	int idx, offset;
 
 	ifp = &sc->sc_arpcom.ac_if;
 
@@ -2247,9 +2249,9 @@ dc_txeof(sc)
 	while(idx != sc->dc_cdata.dc_tx_prod) {
 		u_int32_t		txstat;
 
+		offset = offsetof(struct dc_list_data, dc_tx_list[idx]);
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_listmap,
-		    offsetof(struct dc_list_data, dc_tx_list[idx]),
-		    sizeof(struct dc_desc),
+		    offset, sizeof(struct dc_desc),
 		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
 		cur_tx = &sc->dc_ldata->dc_tx_list[idx];
@@ -2329,6 +2331,11 @@ dc_txeof(sc)
 			m_freem(sc->dc_cdata.dc_tx_chain[idx].sd_mbuf);
 			sc->dc_cdata.dc_tx_chain[idx].sd_mbuf = NULL;
 		}
+
+		bus_dmamap_sync(sc->sc_dmat, sc->sc_listmap,
+		    offset, sizeof(struct dc_desc),
+		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
+
 		sc->dc_cdata.dc_tx_cnt--;
 		DC_INC(idx, DC_TX_LIST_CNT);
 	}
@@ -2589,8 +2596,8 @@ dc_encap(sc, m_head, txidx)
 	sc->dc_ldata->dc_tx_list[*txidx].dc_status = htole32(DC_TXSTAT_OWN);
 
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_listmap,
-	    offsetof(struct dc_list_data, dc_tx_list[0]),
-	    sizeof(struct dc_desc) * DC_TX_LIST_CNT,
+	    offsetof(struct dc_list_data, dc_tx_list[*txidx]),
+	    sizeof(struct dc_desc) * cnt,
 	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 	*txidx = frag;
@@ -2818,6 +2825,13 @@ dc_init(xsc)
 	 * Init tx descriptors.
 	 */
 	dc_list_tx_init(sc);
+
+	/*
+	 * Sync down both lists initialized.
+	 */
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_listmap,
+	    0, sc->sc_listmap->dm_mapsize,
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 	/*
 	 * Load the address of the RX list.
@@ -3110,9 +3124,12 @@ dc_stop(sc)
 			sc->dc_cdata.dc_tx_chain[i].sd_mbuf = NULL;
 		}
 	}
-
 	bzero((char *)&sc->dc_ldata->dc_tx_list,
 		sizeof(sc->dc_ldata->dc_tx_list));
+
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_listmap,
+	    0, sc->sc_listmap->dm_mapsize,
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 }
