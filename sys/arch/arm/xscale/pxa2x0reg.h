@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0reg.h,v 1.14 2005/03/30 13:37:34 dlg Exp $ */
+/*	$OpenBSD: pxa2x0reg.h,v 1.15 2005/04/05 13:12:05 pascoe Exp $ */
 /* $NetBSD: pxa2x0reg.h,v 1.4 2003/06/11 20:43:01 scw Exp $ */
 
 /*
@@ -740,7 +740,7 @@ struct pxa2x0_dma_desc {
 #define  USBHC_HIT_MASK		(USBHC_HIT_RWUT | USBHC_HIT_BAT | \
     USBHC_HIT_IRQT | USBHC_HIT_TAT | USBHC_HIT_UPS1T | USBHC_HIT_UPS2T | \
     USBHC_HIT_UPRT | USBHC_HIT_STAT | USBHC_HIT_SMAT | USBHC_HIT_UPS3T)
-#define USBHC_RST_WAIT	10	/* ms to wait for reset */
+#define USBHC_RST_WAIT	10000	/* usecs to wait for reset */
 
 /* OS Timer */
 #define OST_OSMR0	0x0000	/* Match 0 */
