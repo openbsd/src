@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.66 2003/11/03 18:24:28 tedu Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.67 2004/03/15 14:17:25 mickey Exp $	*/
 
 /*
  * rnd.c -- A strong random number generator
@@ -560,6 +560,10 @@ arc4maybeinit(void)
 	extern int hz;
 
 	if (!arc4random_initialized) {
+#ifdef DIAGNOSTIC
+		if (!rnd_attached)
+			panic("arc4maybeinit: premature");
+#endif
 		arc4random_initialized++;
 		arc4_stir();
 		/* 10 minutes, per dm@'s suggestion */
