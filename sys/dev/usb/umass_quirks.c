@@ -1,4 +1,4 @@
-/*	$OpenBSD: umass_quirks.c,v 1.14 2004/07/17 06:04:00 dlg Exp $	*/
+/*	$OpenBSD: umass_quirks.c,v 1.15 2004/07/21 07:43:41 dlg Exp $	*/
 /*	$NetBSD: umass_quirks.c,v 1.67 2004/06/28 07:49:16 mycroft Exp $	*/
 
 /*
@@ -400,7 +400,7 @@ Static const struct umass_quirk umass_quirks[] = {
 
 	{ { USB_VENDOR_SONY, USB_PRODUCT_SONY_MSC },
 	  UMASS_WPROTO_CBI, UMASS_CPROTO_UFI,
-	  UMASS_QUIRK_RS_NO_CLEAR_UA,
+	  0,
 	  PQUIRK_NOMODESENSE,
 	  UMATCH_DEVCLASS_DEVSUBCLASS_DEVPROTO,
 	  NULL, NULL
@@ -440,7 +440,7 @@ Static const struct umass_quirk umass_quirks[] = {
 
 	{ { USB_VENDOR_YEDATA, USB_PRODUCT_YEDATA_FLASHBUSTERU },
 	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UFI,
-	  UMASS_QUIRK_RS_NO_CLEAR_UA,
+	  0,
 	  PQUIRK_NOMODESENSE,
 	  UMATCH_VENDOR_PRODUCT_REV,
 	  NULL, umass_fixup_yedata

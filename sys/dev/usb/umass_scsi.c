@@ -1,4 +1,4 @@
-/*	$OpenBSD: umass_scsi.c,v 1.7 2004/02/21 00:47:42 krw Exp $ */
+/*	$OpenBSD: umass_scsi.c,v 1.8 2004/07/21 07:43:41 dlg Exp $ */
 /*	$NetBSD: umass_scsipi.c,v 1.9 2003/02/16 23:14:08 augustss Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -356,6 +356,7 @@ umass_scsi_cb(struct umass_softc *sc, void *priv, int residue, int status)
 		DPRINTF(UDMASS_CMD, ("umass_scsi_cb: status cmd failed for "
 		    "scsi op 0x%02x\n", xs->cmd->opcode));
 		/* fetch sense data */
+		sc->sc_sense = 1;
 		memset(&scbus->sc_sense_cmd, 0, sizeof(scbus->sc_sense_cmd));
 		scbus->sc_sense_cmd.opcode = REQUEST_SENSE;
 		scbus->sc_sense_cmd.byte2 = link->lun << SCSI_CMD_LUN_SHIFT;
@@ -405,20 +406,11 @@ umass_scsi_sense_cb(struct umass_softc *sc, void *priv, int residue,
 	DPRINTF(UDMASS_CMD,("umass_scsi_sense_cb: xs=%p residue=%d "
 		"status=%d\n", xs, residue, status));
 
+	sc->sc_sense = 0;
 	switch (status) {
 	case STATUS_CMD_OK:
 	case STATUS_CMD_UNKNOWN:
 		/* getting sense data succeeded */
-		if (xs->cmd->opcode == INQUIRY && (xs->resid < xs->datalen ||
-		    (sc->sc_quirks & UMASS_QUIRK_RS_NO_CLEAR_UA /* XXX */))) {
-			/*
-			 * Some drivers return SENSE errors even after INQUIRY.
-			 * The upper layer doesn't like that.
-			 */
-			xs->error = XS_NOERROR;
-			break;
-		}
-		/* XXX look at residue */
 		if (residue == 0 || residue == 14)/* XXX */
 			xs->error = XS_SENSE;
 		else

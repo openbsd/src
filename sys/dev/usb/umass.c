@@ -1,4 +1,4 @@
-/*	$OpenBSD: umass.c,v 1.28 2004/07/17 06:04:00 dlg Exp $ */
+/*	$OpenBSD: umass.c,v 1.29 2004/07/21 07:43:41 dlg Exp $ */
 /*	$NetBSD: umass.c,v 1.98 2003/09/08 19:30:59 mycroft Exp $	*/
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
@@ -319,10 +319,6 @@ USB_ATTACH(umass)
 		}
 	}
 
-	/* XXX - Now unsupported CBI with CCI */
-	if (sc->sc_wire == UMASS_WPROTO_CBI_I)
-		sc->sc_wire = UMASS_WPROTO_CBI;
-
 	if (sc->sc_cmd == UMASS_CPROTO_UNSPEC) {
 		switch (id->bInterfaceSubClass) {
 		case UISUBCLASS_SCSI:
@@ -453,6 +449,9 @@ USB_ATTACH(umass)
 	}
 
 	/* Open the bulk-in and -out pipe */
+	DPRINTF(UDMASS_USB, ("%s: opening iface %p epaddr %d for BULKOUT\n",
+	    USBDEVNAME(sc->sc_dev), sc->sc_iface,
+	    sc->sc_epaddr[UMASS_BULKOUT]));
 	err = usbd_open_pipe(sc->sc_iface, sc->sc_epaddr[UMASS_BULKOUT],
 				USBD_EXCLUSIVE_USE,
 				&sc->sc_pipe[UMASS_BULKOUT]);
@@ -462,6 +461,9 @@ USB_ATTACH(umass)
 		umass_disco(sc);
 		USB_ATTACH_ERROR_RETURN;
 	}
+	DPRINTF(UDMASS_USB, ("%s: opening iface %p epaddr %d for BULKIN\n",
+	    USBDEVNAME(sc->sc_dev), sc->sc_iface,
+	    sc->sc_epaddr[UMASS_BULKIN]));
 	err = usbd_open_pipe(sc->sc_iface, sc->sc_epaddr[UMASS_BULKIN],
 				USBD_EXCLUSIVE_USE, &sc->sc_pipe[UMASS_BULKIN]);
 	if (err) {
@@ -483,6 +485,9 @@ USB_ATTACH(umass)
 	 * arriving concurrently.
 	 */
 	if (sc->sc_wire == UMASS_WPROTO_CBI_I) {
+		DPRINTF(UDMASS_USB, ("%s: opening iface %p epaddr %d for INTRIN\n",
+		    USBDEVNAME(sc->sc_dev), sc->sc_iface,
+		    sc->sc_epaddr[UMASS_INTRIN]));
 		err = usbd_open_pipe(sc->sc_iface, sc->sc_epaddr[UMASS_INTRIN],
 				USBD_EXCLUSIVE_USE, &sc->sc_pipe[UMASS_INTRIN]);
 		if (err) {
@@ -1450,27 +1455,11 @@ umass_cbi_state(usbd_xfer_handle xfer, usbd_private_handle priv,
 					sc->transfer_xfer[XFER_CBI_DATA]))
 				umass_cbi_reset(sc, STATUS_WIRE_FAILED);
 
-		} else if (sc->sc_wire == UMASS_WPROTO_CBI_I) {
-			DPRINTF(UDMASS_CBI, ("%s: no data phase\n",
-				USBDEVNAME(sc->sc_dev)));
-			sc->transfer_state = TSTATE_CBI_STATUS;
-			if (umass_setup_transfer(sc, sc->sc_pipe[UMASS_INTRIN],
-					&sc->sbl, sizeof(sc->sbl),
-					0,	/* fixed length transfer */
-					sc->transfer_xfer[XFER_CBI_STATUS])){
-				umass_cbi_reset(sc, STATUS_WIRE_FAILED);
-			}
 		} else {
 			DPRINTF(UDMASS_CBI, ("%s: no data phase\n",
 				USBDEVNAME(sc->sc_dev)));
-			/* No command completion interrupt. Request
-			 * sense data.
-			 */
-			sc->transfer_state = TSTATE_IDLE;
-			sc->transfer_cb(sc, sc->transfer_priv,
-			       0, STATUS_CMD_UNKNOWN);
+			goto dostatus;
 		}
-
 		return;
 
 	case TSTATE_CBI_DATA:
@@ -1503,15 +1492,15 @@ umass_cbi_state(usbd_xfer_handle xfer, usbd_private_handle priv,
 					umass_dump_buffer(sc, sc->transfer_data,
 						sc->transfer_actlen, 48));
 
+	dostatus:
 		if (sc->sc_wire == UMASS_WPROTO_CBI_I) {
 			sc->transfer_state = TSTATE_CBI_STATUS;
 			memset(&sc->sbl, 0, sizeof(sc->sbl));
 			if (umass_setup_transfer(sc, sc->sc_pipe[UMASS_INTRIN],
 				    &sc->sbl, sizeof(sc->sbl),
 				    0,	/* fixed length transfer */
-				    sc->transfer_xfer[XFER_CBI_STATUS])){
+				    sc->transfer_xfer[XFER_CBI_STATUS]))
 				umass_cbi_reset(sc, STATUS_WIRE_FAILED);
-			}
 		} else {
 			/* No command completion interrupt. Request
 			 * sense to get status of command.
@@ -1542,6 +1531,15 @@ umass_cbi_state(usbd_xfer_handle xfer, usbd_private_handle priv,
 
 		/* Dissect the information in the buffer */
 
+		{
+			u_int32_t actlen;
+			usbd_get_xfer_status(xfer, NULL, NULL, &actlen, NULL);
+			DPRINTF(UDMASS_CBI, ("%s: CBI_STATUS actlen=%d\n",
+			    USBDEVNAME(sc->sc_dev), actlen));
+			if (actlen != 2)
+				break;
+		}
+
 		if (sc->sc_cmd == UMASS_CPROTO_UFI) {
 			int status;
 
@@ -1555,37 +1553,44 @@ umass_cbi_state(usbd_xfer_handle xfer, usbd_private_handle priv,
 				USBDEVNAME(sc->sc_dev),
 				sc->sbl.ufi.asc, sc->sbl.ufi.ascq));
 
-			if (sc->sbl.ufi.asc == 0 && sc->sbl.ufi.ascq == 0)
+			if ((sc->sbl.ufi.asc == 0 && sc->sbl.ufi.ascq == 0) ||
+			    sc->sc_sense)
 				status = STATUS_CMD_OK;
 			else
 				status = STATUS_CMD_FAILED;
 
-			/* No sense, command successful */
+			/* No autosense, command successful */
+			sc->transfer_state = TSTATE_IDLE;
+			sc->transfer_cb(sc, sc->transfer_priv,
+			    sc->transfer_datalen - sc->transfer_actlen, status);
 		} else {
+			int status;
+
 			/* Command Interrupt Data Block */
+
 			DPRINTF(UDMASS_CBI, ("%s: type=0x%02x, value=0x%02x\n",
 				USBDEVNAME(sc->sc_dev),
 				sc->sbl.common.type, sc->sbl.common.value));
 
 			if (sc->sbl.common.type == IDB_TYPE_CCI) {
-				int err;
-
-				if ((sc->sbl.common.value&IDB_VALUE_STATUS_MASK)
-							== IDB_VALUE_PASS) {
-					err = STATUS_CMD_OK;
-				} else if ((sc->sbl.common.value & IDB_VALUE_STATUS_MASK)
-							== IDB_VALUE_FAIL ||
-					   (sc->sbl.common.value & IDB_VALUE_STATUS_MASK)
-						== IDB_VALUE_PERSISTENT) {
-					err = STATUS_CMD_FAILED;
-				} else {
-					err = STATUS_WIRE_FAILED;
-				}
+				switch (sc->sbl.common.value &
+				    IDB_VALUE_STATUS_MASK) {
+				case IDB_VALUE_PASS:
+					status = STATUS_CMD_OK;
+					break;
+				case IDB_VALUE_FAIL:
+				case IDB_VALUE_PERSISTENT:
+					status = STATUS_CMD_FAILED;
+					break;
+				case IDB_VALUE_PHASE:
+					status = STATUS_WIRE_FAILED;
+					break;
+ 				}
 
 				sc->transfer_state = TSTATE_IDLE;
 				sc->transfer_cb(sc, sc->transfer_priv,
-						sc->transfer_datalen,
-						err);
+				    sc->transfer_datalen - sc->transfer_actlen,
+				    status);
 			}
 		}
 		return;
@@ -1595,21 +1600,23 @@ umass_cbi_state(usbd_xfer_handle xfer, usbd_private_handle priv,
 			printf("%s: CBI bulk-in/out stall clear failed, %s\n",
 			       USBDEVNAME(sc->sc_dev), usbd_errstr(err));
 			umass_cbi_reset(sc, STATUS_WIRE_FAILED);
+		} else {
+			sc->transfer_state = TSTATE_IDLE;
+			sc->transfer_cb(sc, sc->transfer_priv,
+			    sc->transfer_datalen, STATUS_CMD_FAILED);
 		}
-
-		sc->transfer_state = TSTATE_IDLE;
-		sc->transfer_cb(sc, sc->transfer_priv,
-				sc->transfer_datalen,
-				STATUS_CMD_FAILED);
 		return;
 
 	case TSTATE_CBI_SCLEAR:
-		if (err)	/* should not occur */
+		if (err) {	/* should not occur */
 			printf("%s: CBI intr-in stall clear failed, %s\n",
 			       USBDEVNAME(sc->sc_dev), usbd_errstr(err));
-
-		/* Something really bad is going on. Reset the device */
-		umass_cbi_reset(sc, STATUS_CMD_FAILED);
+			umass_cbi_reset(sc, STATUS_WIRE_FAILED);
+		} else {
+			sc->transfer_state = TSTATE_IDLE;
+			sc->transfer_cb(sc, sc->transfer_priv,
+			    sc->transfer_datalen, STATUS_CMD_FAILED);
+		}
 		return;
 
 	/***** CBI Reset *****/
