@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: getwd.c,v 1.7 2003/06/11 21:03:10 deraadt Exp $";
+static char *rcsid = "$OpenBSD: getwd.c,v 1.8 2003/10/10 07:52:58 miod Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -47,3 +47,6 @@ getwd(char *buf)
 	strlcpy(buf, strerror(errno), MAXPATHLEN);
 	return((char *)NULL);
 }
+
+__warn_references(getwd,
+    "warning: getwd() possibly used unsafely; consider using getcwd()");
