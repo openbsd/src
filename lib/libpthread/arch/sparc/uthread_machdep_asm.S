@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_machdep_asm.S,v 1.1 2000/09/25 01:16:40 d Exp $	*/
+/*	$OpenBSD: uthread_machdep_asm.S,v 1.2 2001/09/10 19:39:27 jason Exp $	*/
 /* David Leonard <d@csee.uq.edu.au>. Public domain. */
 
 #include <machine/asm.h>
@@ -9,7 +9,7 @@
  * On sparc this also means we switch register windows.
  */
 
-#ifdef __sparc_v9__
+#ifdef __sparcv9__
 #define flushw		.word 0x81580000
 #else
 #define flushw		t T_FLUSHWIN
