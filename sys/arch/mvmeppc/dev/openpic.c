@@ -1,4 +1,4 @@
-/*	$OpenBSD: openpic.c,v 1.18 2004/11/19 22:10:24 miod Exp $	*/
+/*	$OpenBSD: openpic.c,v 1.19 2004/11/19 22:11:54 miod Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -713,7 +713,7 @@ openpic_enable_irq(irq, type)
 	int irq;
 	int type;
 {
-	u_int x;
+	u_int x, isrc;
 
 #ifdef DIAGNOSTIC
 	/* skip invalid irqs */
@@ -722,23 +722,26 @@ openpic_enable_irq(irq, type)
 #endif
 	irq -= PIC_OFFSET;
 
-	while ((x = openpic_read(OPENPIC_SRC_VECTOR(irq))) & OPENPIC_ACTIVITY) {
-		x = openpic_iack(0);
+	x = openpic_read(OPENPIC_SRC_VECTOR(irq));
+
+	isrc = x & ~(OPENPIC_IMASK | OPENPIC_SENSE_LEVEL |
+	    OPENPIC_POLARITY_POSITIVE | OPENPIC_ACTIVITY);
+	if (irq == 0)
+		isrc |= OPENPIC_POLARITY_POSITIVE;
+	if (type == IST_LEVEL)
+		isrc |= OPENPIC_SENSE_LEVEL;
+	else
+		isrc |= OPENPIC_SENSE_EDGE;
+
+	/* Ack all pending interrupts if this one is pending. */
+	while (x & OPENPIC_ACTIVITY) {
+		(void)openpic_iack(0);
 		openpic_eoi(0);
+		x = openpic_read(OPENPIC_SRC_VECTOR(irq));
 	}
 
-	x &= ~(OPENPIC_IMASK|OPENPIC_SENSE_LEVEL|OPENPIC_SENSE_EDGE|
-			 OPENPIC_POLARITY_POSITIVE);
-#if 1
-	if (irq == 0) {
-		x |= OPENPIC_POLARITY_POSITIVE;
-	}
-#endif
-	if (type == IST_LEVEL)
-		x |= OPENPIC_SENSE_LEVEL;
-	else
-		x |= OPENPIC_SENSE_EDGE;
-	openpic_write(OPENPIC_SRC_VECTOR(irq), x);
+	if (x != isrc)
+		openpic_write(OPENPIC_SRC_VECTOR(irq), isrc);
 }
 
 void
