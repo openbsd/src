@@ -1,4 +1,4 @@
-/*	$OpenBSD: msg.c,v 1.13 2003/04/25 23:30:21 deraadt Exp $	*/
+/*	$OpenBSD: msg.c,v 1.14 2003/04/25 23:44:08 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -167,7 +167,7 @@ retry:		FREE_SPACE(sp, bp, blen);
 	/*
 	 * Nvi should run on machines that don't support the numbered argument
 	 * specifications (%[digit]*$).  We do this by reformatting the string
-	 * so that we can hand it to vnsprintf(3) and it will use the arguments
+	 * so that we can hand it to vsnprintf(3) and it will use the arguments
 	 * in the right order.  When vsnprintf returns, we put the string back
 	 * into the right order.  It's undefined, according to SVID III, to mix
 	 * numbered argument specifications with the standard style arguments,
