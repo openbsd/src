@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_process.c,v 1.10 2001/04/09 07:14:18 tholo Exp $	*/
+/*	$OpenBSD: sys_process.c,v 1.11 2001/06/18 08:17:46 deraadt Exp $	*/
 /*	$NetBSD: sys_process.c,v 1.55 1996/05/15 06:17:47 tls Exp $	*/
 
 /*-
@@ -243,6 +243,39 @@ sys_ptrace(p, v, retval)
 		 */
 #endif
 	case  PT_CONTINUE:
+		/*
+		 * From the 4.4BSD PRM:
+		 * "The data argument is taken as a signal number and the
+		 * child's execution continues at location addr as if it
+		 * incurred that signal.  Normally the signal number will
+		 * be either 0 to indicate that the signal that caused the
+		 * stop should be ignored, or that value fetched out of
+		 * the process's image indicating which signal caused
+		 * the stop.  If addr is (int *)1 then execution continues
+		 * from where it stopped."
+		 */
+
+		/* Check that the data is a valid signal number or zero. */
+		if (SCARG(uap, data) < 0 || SCARG(uap, data) >= NSIG)
+			return (EINVAL);
+
+		PHOLD(t);
+#ifdef PT_STEP
+		/*
+		 * Arrange for a single-step, if that's requested and possible.
+		 */
+		error = process_sstep(t, SCARG(uap, req) == PT_STEP);
+		if (error)
+			goto relebad;
+#endif
+
+		/* If the address paramter is not (int *)1, set the pc. */
+		if ((int *)SCARG(uap, addr) != (int *)1)
+			if ((error = process_set_pc(t, SCARG(uap, addr))) != 0)
+				goto relebad;
+		PRELE(t);
+		goto sendsig;
+
 	case  PT_DETACH:
 		/*
 		 * From the 4.4BSD PRM:
@@ -261,7 +294,6 @@ sys_ptrace(p, v, retval)
 			return (EINVAL);
 
 		PHOLD(t);
-
 #ifdef PT_STEP
 		/*
 		 * Arrange for a single-step, if that's requested and possible.
@@ -270,27 +302,19 @@ sys_ptrace(p, v, retval)
 		if (error)
 			goto relebad;
 #endif
-
-		/* If the address paramter is not (int *)1, set the pc. */
-		if ((int *)SCARG(uap, addr) != (int *)1)
-			if ((error = process_set_pc(t, SCARG(uap, addr))) != 0)
-				goto relebad;
-
 		PRELE(t);
 
-		if (SCARG(uap, req) == PT_DETACH) {
-			/* give process back to original parent or init */
-			if (t->p_oppid != t->p_pptr->p_pid) {
-				struct proc *pp;
+		/* give process back to original parent or init */
+		if (t->p_oppid != t->p_pptr->p_pid) {
+			struct proc *pp;
 
-				pp = pfind(t->p_oppid);
-				proc_reparent(t, pp ? pp : initproc);
-			}
-
-			/* not being traced any more */
-			t->p_oppid = 0;
-			CLR(t->p_flag, P_TRACED|P_WAITED);
+			pp = pfind(t->p_oppid);
+			proc_reparent(t, pp ? pp : initproc);
 		}
+
+		/* not being traced any more */
+		t->p_oppid = 0;
+		CLR(t->p_flag, P_TRACED|P_WAITED);
 
 	sendsig:
 		/* Finally, deliver the requested signal (or none). */
