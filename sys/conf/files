@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.308 2004/06/28 01:34:46 aaron Exp $
+#	$OpenBSD: files,v 1.309 2004/07/15 12:10:44 henning Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -782,40 +782,6 @@ file netatalk/at_proto.c		netatalk
 file netatalk/ddp_input.c		netatalk
 file netatalk/ddp_output.c		netatalk
 file netatalk/ddp_usrreq.c		netatalk
-file netiso/clnp_debug.c		iso
-file netiso/clnp_er.c			iso
-file netiso/clnp_frag.c			iso
-file netiso/clnp_input.c		iso
-file netiso/clnp_options.c		iso
-file netiso/clnp_output.c		iso
-file netiso/clnp_raw.c			iso
-file netiso/clnp_subr.c			iso
-file netiso/clnp_timer.c		iso
-file netiso/cltp_usrreq.c		iso
-file netiso/esis.c			iso
-file netiso/idrp_usrreq.c		iso
-file netiso/if_cons.c			iso
-file netiso/if_eon.c			eon
-file netiso/iso.c			iso
-file netiso/iso_chksum.c		iso
-file netiso/iso_pcb.c			iso
-file netiso/iso_proto.c			iso
-file netiso/iso_snpac.c			iso
-file netiso/tp_astring.c		iso | tpip
-file netiso/tp_cons.c			iso
-file netiso/tp_driver.c			iso | tpip
-file netiso/tp_emit.c			iso | tpip
-file netiso/tp_inet.c			iso | tpip
-file netiso/tp_input.c			iso | tpip
-file netiso/tp_iso.c			iso
-file netiso/tp_meas.c			iso | tpip
-file netiso/tp_output.c			iso | tpip
-file netiso/tp_pcb.c			iso | tpip
-file netiso/tp_subr.c			iso | tpip
-file netiso/tp_subr2.c			iso | tpip
-file netiso/tp_timer.c			iso | tpip
-file netiso/tp_trace.c			iso | tpip
-file netiso/tp_usrreq.c			iso | tpip
 file netnatm/natm_pcb.c			natm
 file netnatm/natm_proto.c		natm
 file netnatm/natm.c			natm
