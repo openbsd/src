@@ -16,7 +16,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$Id: do_command.c,v 1.6 1999/08/28 20:13:13 millert Exp $";
+static char rcsid[] = "$Id: do_command.c,v 1.7 2000/06/03 15:36:38 millert Exp $";
 #endif
 
 
@@ -107,7 +107,7 @@ child_process(e, u)
 	 * use wait() explictly.  so we have to disable the signal (which
 	 * was inherited from the parent).
 	 */
-	(void) signal(SIGCHLD, SIG_IGN);
+	(void) signal(SIGCHLD, SIG_DFL);
 #else
 	/* on system-V systems, we are ignoring SIGCLD.  we have to stop
 	 * ignoring it now or the wait() in cron_pclose() won't work.
