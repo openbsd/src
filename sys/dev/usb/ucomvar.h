@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucomvar.h,v 1.7 2001/10/31 04:24:44 nate Exp $ */
+/*	$OpenBSD: ucomvar.h,v 1.8 2002/01/30 20:45:34 nordin Exp $ */
 /*	$NetBSD: ucomvar.h,v 1.9 2001/01/23 21:56:17 augustss Exp $	*/
 
 /*
@@ -38,11 +38,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-
-/* Macros to clear/set/test flags. */
-#define SET(t, f)       (t) |= (f)
-#define CLR(t, f)       (t) &= ~(f)
-#define ISSET(t, f)     ((t) & (f))
 
 #if defined(__NetBSD__)
 #include "locators.h"

@@ -1,4 +1,4 @@
-/*	$OpenBSD: procfs_mem.c,v 1.16 2002/01/20 11:27:52 art Exp $	*/
+/*	$OpenBSD: procfs_mem.c,v 1.17 2002/01/30 20:45:35 nordin Exp $	*/
 /*	$NetBSD: procfs_mem.c,v 1.8 1996/02/09 22:40:50 christos Exp $	*/
 
 /*
@@ -55,8 +55,6 @@
 #include <miscfs/procfs/procfs.h>
 
 #include <uvm/uvm_extern.h>
-
-#define	ISSET(t, f)	((t) & (f))
 
 /*
  * Copy data in and out of the target process.

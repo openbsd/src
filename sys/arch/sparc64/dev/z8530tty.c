@@ -1,4 +1,4 @@
-/*	$OpenBSD: z8530tty.c,v 1.2 2002/01/15 22:00:12 jason Exp $	*/
+/*	$OpenBSD: z8530tty.c,v 1.3 2002/01/30 20:45:34 nordin Exp $	*/
 /*	$NetBSD: z8530tty.c,v 1.77 2001/05/30 15:24:24 lukem Exp $	*/
 
 /*-
@@ -190,11 +190,6 @@ struct zstty_softc {
 	u_char  zst_ppsassert;			/* pps leading edge */
 	u_char  zst_ppsclear;			/* pps trailing edge */
 };
-
-/* Macros to clear/set/test flags. */
-#define SET(t, f)	(t) |= (f)
-#define CLR(t, f)	(t) &= ~(f)
-#define ISSET(t, f)	((t) & (f))
 
 /* Definition of the driver for autoconfig. */
 static int	zstty_match(struct device *, void *, void *);

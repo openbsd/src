@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.49 2001/12/27 22:34:36 nordin Exp $	*/
+/*	$OpenBSD: tty.c,v 1.50 2002/01/30 20:45:35 nordin Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -155,11 +155,6 @@ u_char const char_type[] = {
 #undef	NO
 #undef	TB
 #undef	VT
-
-/* Macros to clear/set/test flags. */
-#define	SET(t, f)	(t) |= (f)
-#define	CLR(t, f)	(t) &= ~((unsigned)(f))
-#define	ISSET(t, f)	((t) & (f))
 
 #define	islower(c)	((c) >= 'a' && (c) <= 'z')
 #define	isupper(c)	((c) >= 'A' && (c) <= 'Z')

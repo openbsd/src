@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_supio.c,v 1.2 1998/03/01 12:57:05 niklas Exp $	*/
+/*	$OpenBSD: com_supio.c,v 1.3 2002/01/30 20:45:34 nordin Exp $	*/
 /*	$NetBSD: com_supio.c,v 1.3 1997/08/27 20:41:30 is Exp $	*/
 
 /*-
@@ -84,11 +84,6 @@ static tcflag_t comconscflag;
 struct cfattach com_supio_ca = {
 	sizeof(struct comsupio_softc), com_supio_match, com_supio_attach
 };
-
-/* Macros to clear/set/test flags. */
-#define	SET(t, f)	(t) |= (f)
-#define	CLR(t, f)	(t) &= ~(f)
-#define	ISSET(t, f)	((t) & (f))
 
 int
 com_supio_match(parent, match, aux)

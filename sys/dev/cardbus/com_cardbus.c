@@ -1,4 +1,4 @@
-/* $OpenBSD: com_cardbus.c,v 1.5 2001/07/09 23:11:44 niklas Exp $ */
+/* $OpenBSD: com_cardbus.c,v 1.6 2002/01/30 20:45:34 nordin Exp $ */
 /* $NetBSD: com_cardbus.c,v 1.4 2000/04/17 09:21:59 joda Exp $ */
 
 /*
@@ -73,7 +73,6 @@
 #include <dev/ic/ns16550reg.h>
 
 #define	com_lcr		com_cfcr
-#define	SET(t, f)	(t) |= (f)
 
 struct com_cardbus_softc {
 	struct com_softc	cc_com;

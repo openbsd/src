@@ -1,4 +1,4 @@
-/*	$OpenBSD: procfs_ctl.c,v 1.7 1997/08/29 04:24:37 millert Exp $	*/
+/*	$OpenBSD: procfs_ctl.c,v 1.8 2002/01/30 20:45:35 nordin Exp $	*/
 /*	$NetBSD: procfs_ctl.c,v 1.14 1996/02/09 22:40:48 christos Exp $	*/
 
 /*
@@ -101,11 +101,6 @@ static vfs_namemap_t signames[] = {
 };
 
 static int procfs_control __P((struct proc *, struct proc *, int));
-
-/* Macros to clear/set/test flags. */
-#define	SET(t, f)	(t) |= (f)
-#define	CLR(t, f)	(t) &= ~(f)
-#define	ISSET(t, f)	((t) & (f))
 
 static int
 procfs_control(curp, p, op)

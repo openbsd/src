@@ -1,4 +1,4 @@
-/*	$OpenBSD: zs.c,v 1.30 2002/01/10 00:06:17 nordin Exp $	*/
+/*	$OpenBSD: zs.c,v 1.31 2002/01/30 20:45:34 nordin Exp $	*/
 /*	$NetBSD: zs.c,v 1.49 1997/08/31 21:26:37 pk Exp $ */
 
 /*
@@ -90,11 +90,6 @@
 
 #define DEVUNIT(x)      (minor(x) & 0x7f)
 #define DEVCUA(x)       (minor(x) & 0x80)
-
-/* Macros to clear/set/test flags. */
-#define SET(t, f)       (t) |= (f)
-#define CLR(t, f)       (t) &= ~(f)
-#define ISSET(t, f)     ((t) & (f))
 
 #define	ZSMAJOR	12		/* XXX */
 

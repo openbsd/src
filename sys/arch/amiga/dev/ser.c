@@ -1,4 +1,4 @@
-/*	$OpenBSD: ser.c,v 1.9 1998/02/22 23:33:05 niklas Exp $	*/
+/*	$OpenBSD: ser.c,v 1.10 2002/01/30 20:45:34 nordin Exp $	*/
 /*	$NetBSD: ser.c,v 1.43 1998/01/12 10:40:11 thorpej Exp $	*/
 
 /*
@@ -79,11 +79,6 @@
 
 #define SERUNIT(dev)   (minor(dev) & 0x7f)
 #define SERCUA(dev)    (minor(dev) & 0x80)
-
-/* Macros to clear/set/test flags. */
-#define	SET(t, f)	(t) |= (f)
-#define	CLR(t, f)	(t) &= ~(f)
-#define	ISSET(t, f)	((t) & (f))
 
 void serattach __P((struct device *, struct device *, void *));
 int sermatch __P((struct device *, void *, void *));
