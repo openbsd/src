@@ -1,5 +1,5 @@
-/*	$OpenBSD: sa.h,v 1.10 1999/04/05 21:02:32 niklas Exp $	*/
-/*	$EOM: sa.h,v 1.46 1999/04/05 08:09:22 niklas Exp $	*/
+/*	$OpenBSD: sa.h,v 1.11 1999/04/19 19:59:28 niklas Exp $	*/
+/*	$EOM: sa.h,v 1.47 1999/04/13 14:22:58 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -179,7 +179,7 @@ extern struct sa *sa_lookup (u_int8_t *, u_int8_t *);
 extern struct sa *sa_lookup_by_header (u_int8_t *, int);
 extern struct sa *sa_lookup_by_name (char *, int);
 extern struct sa *sa_lookup_from_icookie (u_int8_t *);
-extern void sa_mark_replaced (struct sa *, int);
+extern void sa_mark_replaced (struct sa *);
 extern void sa_reference (struct sa *);
 extern void sa_release (struct sa *);
 extern void sa_soft_expire (struct sa *);
