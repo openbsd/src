@@ -1,0 +1,178 @@
+#	@(#)Makefile.hp300	7.10 (Berkeley) 6/27/91
+#	$Id: Makefile.m88k,v 1.1.1.1 1995/10/18 10:54:19 deraadt Exp $
+#
+# Makefile for NetBSD
+#
+# This makefile is constructed from a machine description:
+#	config machineid
+# Most changes should be made in the machine description
+#	/sys/arch/m88k/conf/``machineid''
+# after which you should do
+#	 config machineid
+# Machine generic makefile changes should be made in
+#	/sys/arch/m88k/conf/Makefile.m88k
+# after which config should be rerun for all machines of that type.
+#
+# N.B.: NO DEPENDENCIES ON FOLLOWING FLAGS ARE VISIBLE TO MAKEFILE
+#	IF YOU CHANGE THE DEFINITION OF ANY OF THESE RECOMPILE EVERYTHING
+#
+# -DTRACE	compile in kernel tracing hooks
+# -DQUOTA	compile in file system quotas
+
+
+# DEBUG is set to -g by config if debugging is requested (config -g).
+# PROF is set to -pg by config if profiling is requested (config -p).
+AS=	as ${DEBUG}
+CC=	cc ${DEBUG}
+CPP=	cpp
+LD=	ld 
+TOUCH=	touch -f -c
+AWK=	awk
+TR=	tr -s
+
+# source tree is located via $S relative to the compilation directory
+S=	../../../..
+M88K=	../..
+
+INCLUDES= -I. -I$S/arch -I$S -I$S/sys 
+.if defined(DESTDIR)
+INCLUDES+= -nostdinc -idirafter ${DESTDIR}/usr/include
+.endif
+COPTS=	${INCLUDES} ${IDENT} -DKERNEL -D_KERNEL -DGOOFYLDOFFSET=0x20 -Dm88k
+CFLAGS=	-O ${COPTS} -fwritable-strings
+
+### find out what to use for libkern
+.include "$S/lib/libkern/Makefile.inc"
+.ifndef PROF
+LIBKERN=	${KERNLIB}
+.else
+LIBKERN=	${KERNLIB_PROF}
+.endif
+
+### find out what to use for libcompact
+.include "$S/compat/common/Makefile.inc"
+.ifndef PROF
+LIBCOMPACT=	${COMPATLIB}
+.else
+LIBCOMPACT=	${COMPATLIB_PROF}
+.endif
+
+# compile rules: rules are named ${TYPE}_${SUFFIX}${CONFIG_DEP}
+# where TYPE is NORMAL, DRIVER, or PROFILE}; SUFFIX is the file suffix,
+# capitalized (e.g. C for a .c file), and CONFIG_DEP is _C if the file
+# is marked as config-dependent.
+
+NORMAL_C=	${CC} -c ${CFLAGS} ${PROF} $<
+NORMAL_C_C=	${CC} -c ${CFLAGS} ${PROF} ${PARAM} $<
+
+DRIVER_C=	${CC} -c ${CFLAGS} ${PROF} $<
+DRIVER_C_C=	${CC} -c ${CFLAGS} ${PROF} ${PARAM} $<
+
+PROFILE_C=	${CC} -S -c ${COPTS} $<; \
+		sed -e s/_mcount/mcount/ -e s/subrmcount/subr_mcount/ <$*.s | \
+		${AS} -o $@; \
+		rm -f $*.s
+
+NORMAL_S=	${CPP} ${COPTS} $< | ${TR} '\\' '\012' | ${AS} -o $@
+NORMAL_S_C=	${CPP} ${COPTS} ${PARAM} $< | ${TR} '\\' '\012' | ${AS} -o $@
+
+%OBJS
+
+%CFILES
+
+# load lines for config "xxx" will be emitted as:
+# xxx: ${SYSTEM_DEP} swapxxx.o
+#	${SYSTEM_LD_HEAD}
+#	${SYSTEM_LD} swapxxx.o
+#	${SYSTEM_LD_TAIL}
+SYSTEM_OBJ=	locore.o ${FPSP} vnode_if.o ${OBJS} param.o ioconf.o \
+		${LIBKERN} ${LIBCOMPAT}
+SYSTEM_DEP=	Makefile ${SYSTEM_OBJ}
+SYSTEM_LD_HEAD=	@echo loading $@;rm -f $@
+SYSTEM_LD=	-@if [ X${DEBUG} = X-g ]; \
+		then strip=-X; \
+		else strip=-x; \
+		fi; \
+		echo ${LD} $$strip -Ttext 10020 -o $@ ${SYSTEM_OBJ} vers.o; \
+		${LD} $$strip -Ttext 10020 -o $@ ${SYSTEM_OBJ} libgcc.a vers.o
+SYSTEM_LD_TAIL=	@size $@; chmod 755 $@; \
+		[ X${DEBUG} = X-g ] && { \
+		echo cp $@ $@.gdb; rm -f $@.gdb; cp $@ $@.gdb; \
+		echo strip -d $@; strip -d $@; } || true
+
+%LOAD
+
+vers.o:	newvers
+
+newvers:
+	sh $S/conf/newvers.sh ${KERN_IDENT}
+	${CC} $(CFLAGS) -c vers.c
+
+clean::
+	rm -f eddep *netbsd netbsd.gdb tags vnode_if.[ch] *.o locore.i \
+		[a-z]*.s [Ee]rrs errs linterrs makelinks
+
+lint: /tmp param.c
+	@lint -hbxn -DGENERIC -Dvolatile= ${COPTS} ${PARAM} -UKGDB \
+	    ${M88K}/m88k/Locore.c ${CFILES} ${M88K}/m88k/swapgeneric.c \
+	    ioconf.c param.c| \
+	    grep -v 'struct/union .* never defined' | \
+	    grep -v 'possible pointer alignment problem'
+
+locore.o: assym.s ${M88K}/m88k/eh.S ${M88K}/m88k/locore.S 
+locore.o: machine/trap.h machine/psl.h machine/cpu.h
+	${CPP} -DLOCORE ${COPTS} ${M88K}/m88k/locore.S | ${TR} '\\' '\012' | ${AS} -o locore.o
+
+# the following is necessary because autoconf.o depends on #if GENERIC
+autoconf.o: Makefile
+
+# the following are necessary because the files depend on the types of
+# hp cpu's included in the system configuration
+machdep.o sys_machdep.o pmap.o pmap_bootstrap.o trap.o dma.o:	Makefile
+
+# depend on network or filesystem configuration
+uipc_proto.o vfs_conf.o locore.o:	Makefile
+
+# depend on maxusers
+assym.s: Makefile
+
+assym.s: genassym
+	./genassym >assym.s
+#	cp assym.s ${.CURDIR}/../../include
+
+genassym:
+	${CC} -static ${INCLUDES} ${IDENT} ${PARAM} -Dm88k \
+	    -o genassym ${M88K}/m88k/genassym.c
+	rm genassym.o
+
+depend: assym.s param.c vnode_if.h
+	for f in ${CFILES} ioconf.c param.c ; \
+	do \
+		(mkdep -a ${COPTS} $${f}) \
+	done
+	mkdep -a -p ${INCLUDES} ${IDENT} ${PARAM} ${M88K}/m88k/genassym.c
+
+links:
+	egrep '#if' ${CFILES} | sed -f $S/conf/defines | \
+	  sed -e 's/:.*//' -e 's/\.c/.o/' | sort -u > dontlink
+	echo ${CFILES} | tr -s ' ' '\12' | sed 's/\.c/.o/' | \
+	  sort -u | comm -23 - dontlink | \
+	  sed 's,../.*/\(.*.o\),rm -f \1;ln -s ../GENERIC/\1 \1,' > makelinks
+	sh makelinks && rm -f dontlink
+
+tags:
+	@echo "see $S/kern/Makefile for tags"
+
+ioconf.o: ioconf.c
+	${CC} -c ${CFLAGS} ioconf.c
+
+param.c: $S/conf/param.c
+	rm -f param.c
+	cp $S/conf/param.c .
+
+param.o: param.c Makefile
+	${CC} -c ${CFLAGS} ${PARAM} param.c
+vnode_if.c vnode_if.h:	$S/kern/vnode_if.sh $S/kern/vnode_if.src
+	AWK="${AWK}" sh $S/kern/vnode_if.sh $S/kern/vnode_if.src
+
+%RULES
