@@ -1,4 +1,4 @@
-.\"	$OpenBSD: queue.3,v 1.27 2003/03/09 17:18:44 millert Exp $
+.\"	$OpenBSD: queue.3,v 1.28 2003/04/16 07:51:22 mickey Exp $
 .\"	$NetBSD: queue.3,v 1.4 1995/07/03 00:25:36 mycroft Exp $
 .\"
 .\" Copyright (c) 1993 The Regents of the University of California.
@@ -715,7 +715,7 @@ SIMPLEQ_INSERT_TAIL(&head, n1, entries);
 for (np = SIMPLEQ_FIRST(&head); np != NULL; np = SIMPLEQ_NEXT(np, entries))
 	np-> ...
 					/* Delete. */
-while (SIMPLEQ_FIRST(&head) != NULL)		
+while ((n1 = SIMPLEQ_FIRST(&head)) != NULL)
 	SIMPLEQ_REMOVE_HEAD(&head, n1, entries);
 .Ed
 .Sh TAIL QUEUES
