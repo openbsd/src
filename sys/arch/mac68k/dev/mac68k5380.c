@@ -1,4 +1,4 @@
-/*	$OpenBSD: mac68k5380.c,v 1.9 1997/03/08 16:16:54 briggs Exp $	*/
+/*	$OpenBSD: mac68k5380.c,v 1.10 1997/04/07 12:56:45 briggs Exp $	*/
 /*	$NetBSD: mac68k5380.c,v 1.29 1997/02/28 15:50:50 scottr Exp $	*/
 
 /*
@@ -432,13 +432,13 @@ extern	int			*nofault, mac68k_buserr_addr;
 		long_data = (u_int32_t *) pending_5380_data;
 
 #define R4	*long_data++ = *long_drq++
-		while ( count >= 64 ) {
+		while ( count > 64 ) {
 			R4; R4; R4; R4; R4; R4; R4; R4;
 			R4; R4; R4; R4; R4; R4; R4; R4;	/* 64 */
 			count -= 64;
 		}
-		while (count >= 4) {
-			R4; count -= 4;
+		while (count > 8) {
+			R4; R4; count -= 8;
 		}
 #undef R4
 		data = (u_int8_t *) long_data;
@@ -451,6 +451,12 @@ extern	int			*nofault, mac68k_buserr_addr;
 		pending_5380_count -= dcount;
 		pending_5380_data += dcount;
 		}
+		/*
+		 * OK.  No bus error occurred above.  Clear the nofault flag
+		 * so we no longer short-circuit bus errors.
+		 */
+		nofault = (int *) 0;
+
 	} else {
 		int	resid;
 
@@ -482,13 +488,14 @@ extern	int			*nofault, mac68k_buserr_addr;
 		long_data = (u_int32_t *) pending_5380_data;
 
 #define W4	*long_drq++ = *long_data++
-		while ( count >= 64 ) {
+		while ( count > 64 ) {
 			W4; W4; W4; W4; W4; W4; W4; W4;
 			W4; W4; W4; W4; W4; W4; W4; W4; /*  64 */
 			count -= 64;
 		}
-		while (count >= 4) {
-			W4; count -= 4;
+		while ( count > 8 ) {
+			W4; W4;
+			count -= 8;
 		}
 #undef W4
 		data = (u_int8_t *) long_data;
@@ -501,21 +508,20 @@ extern	int			*nofault, mac68k_buserr_addr;
 		pending_5380_count -= dcount;
 		pending_5380_data += dcount;
 		}
+
 		PID("write complete");
+
+		/*
+		 * OK.  No bus error occurred above.  Clear the nofault flag
+		 * so we no longer short-circuit bus errors.
+		 */
+		nofault = (int *) 0;
 
 		drq = (volatile u_int8_t *) ncr_5380_with_drq;
 		tmp_data = *drq;
 
-		PID("read a byte?");
-
-		nofault = (int *) 0;
+		PID("read a byte to force a phase change");
 	}
-
-	/*
-	 * OK.  No bus error occurred above.  Clear the nofault flag
-	 * so we no longer short-circuit bus errors.
-	 */
-	nofault = (int *) 0;
 
 	PID("end drq");
 	return;
