@@ -1,4 +1,4 @@
-#	$OpenBSD: files.oldconf,v 1.16 1997/01/12 12:07:23 downsj Exp $
+#	$OpenBSD: files.oldconf,v 1.17 1997/01/18 08:13:56 downsj Exp $
 #	$NetBSD: files.oldconf,v 1.67.4.1 1996/05/29 23:14:10 cgd Exp $
 #
 adosfs/adlookup.c	optional adosfs
@@ -189,6 +189,11 @@ netinet/tcp_subr.c	optional inet
 netinet/tcp_timer.c	optional inet
 netinet/tcp_usrreq.c	optional inet
 netinet/udp_usrreq.c	optional inet
+netinet/ip_fil.c	optional ipfilter
+netinet/fil.c		optional ipfilter
+netinet/ip_nat.c	optional ipfilter
+netinet/ip_frag.c	optional ipfilter
+netinet/ip_state.c	optional ipfilter
 netiso/clnp_debug.c	optional iso
 netiso/clnp_er.c	optional iso
 netiso/clnp_frag.c	optional iso
