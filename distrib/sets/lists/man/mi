@@ -372,7 +372,7 @@
 ./usr/share/man/cat1/patch.0
 ./usr/share/man/cat1/pax.0
 ./usr/share/man/cat1/pegasos
-./usr/share/man/cat1/pegosos
+./usr/share/man/cat1/pegasos
 ./usr/share/man/cat1/perl.0
 ./usr/share/man/cat1/perl5004delta.0
 ./usr/share/man/cat1/perl5005delta.0
@@ -669,7 +669,7 @@
 ./usr/share/man/cat3/mvme88k
 ./usr/share/man/cat3/mvmeppc
 ./usr/share/man/cat3/pegasos
-./usr/share/man/cat3/pegosos
+./usr/share/man/cat3/pegasos
 ./usr/share/man/cat3/pthread_stackseg_np.0
 ./usr/share/man/cat3/pthread_yield.0
 ./usr/share/man/cat3/sparc
@@ -1327,7 +1327,7 @@
 ./usr/share/man/cat4/pegasos/intro.0
 ./usr/share/man/cat4/pegasos/kmem.0
 ./usr/share/man/cat4/pegasos/mem.0
-./usr/share/man/cat4/pegosos
+./usr/share/man/cat4/pegasos
 ./usr/share/man/cat4/pf.0
 ./usr/share/man/cat4/pflog.0
 ./usr/share/man/cat4/pfsync.0
@@ -1666,7 +1666,7 @@
 ./usr/share/man/cat5/newsyslog.conf.0
 ./usr/share/man/cat5/passwd.0
 ./usr/share/man/cat5/passwd.conf.0
-./usr/share/man/cat5/pegosos
+./usr/share/man/cat5/pegasos
 ./usr/share/man/cat5/pf.conf.0
 ./usr/share/man/cat5/pf.os.0
 ./usr/share/man/cat5/phones.0
@@ -2006,10 +2006,10 @@
 ./usr/share/man/cat8/pegasos/MAKEDEV.0
 ./usr/share/man/cat8/pegasos/wsconscfg.0
 ./usr/share/man/cat8/pegasos/wsconsctl.0
-./usr/share/man/cat8/pegosos
-./usr/share/man/cat8/pegosos/fdisk.0
-./usr/share/man/cat8/pegosos/kbd.0
-./usr/share/man/cat8/pegosos/wsmoused.0
+./usr/share/man/cat8/pegasos
+./usr/share/man/cat8/pegasos/fdisk.0
+./usr/share/man/cat8/pegasos/kbd.0
+./usr/share/man/cat8/pegasos/wsmoused.0
 ./usr/share/man/cat8/pfctl.0
 ./usr/share/man/cat8/pflogd.0
 ./usr/share/man/cat8/ping.0
@@ -2199,7 +2199,7 @@
 ./usr/share/man/cat9/mvme88k
 ./usr/share/man/cat9/mvmeppc
 ./usr/share/man/cat9/pegasos
-./usr/share/man/cat9/pegosos
+./usr/share/man/cat9/pegasos
 ./usr/share/man/cat9/sparc
 ./usr/share/man/cat9/sparc64
 ./usr/share/man/cat9/vax
@@ -2216,7 +2216,7 @@
 ./usr/share/man/man1/mvme88k
 ./usr/share/man/man1/mvmeppc
 ./usr/share/man/man1/pegasos
-./usr/share/man/man1/pegosos
+./usr/share/man/man1/pegasos
 ./usr/share/man/man1/sparc
 ./usr/share/man/man1/sparc64
 ./usr/share/man/man1/vax
@@ -2236,7 +2236,7 @@
 ./usr/share/man/man4/mvme88k
 ./usr/share/man/man4/mvmeppc
 ./usr/share/man/man4/pegasos
-./usr/share/man/man4/pegosos
+./usr/share/man/man4/pegasos
 ./usr/share/man/man4/sparc
 ./usr/share/man/man4/sparc64
 ./usr/share/man/man4/vax
@@ -2256,7 +2256,7 @@
 ./usr/share/man/man8/mvme88k
 ./usr/share/man/man8/mvmeppc
 ./usr/share/man/man8/pegasos
-./usr/share/man/man8/pegosos
+./usr/share/man/man8/pegasos
 ./usr/share/man/man8/sparc
 ./usr/share/man/man8/sparc64
 ./usr/share/man/man8/vax
@@ -2274,7 +2274,7 @@
 ./usr/share/man/ps1/mvme88k
 ./usr/share/man/ps1/mvmeppc
 ./usr/share/man/ps1/pegasos
-./usr/share/man/ps1/pegosos
+./usr/share/man/ps1/pegasos
 ./usr/share/man/ps1/sparc
 ./usr/share/man/ps1/sparc64
 ./usr/share/man/ps1/vax
@@ -2294,7 +2294,7 @@
 ./usr/share/man/ps3/mvme88k
 ./usr/share/man/ps3/mvmeppc
 ./usr/share/man/ps3/pegasos
-./usr/share/man/ps3/pegosos
+./usr/share/man/ps3/pegasos
 ./usr/share/man/ps3/sparc
 ./usr/share/man/ps3/sparc64
 ./usr/share/man/ps3/vax
@@ -2312,7 +2312,7 @@
 ./usr/share/man/ps4/mvme88k
 ./usr/share/man/ps4/mvmeppc
 ./usr/share/man/ps4/pegasos
-./usr/share/man/ps4/pegosos
+./usr/share/man/ps4/pegasos
 ./usr/share/man/ps4/sparc
 ./usr/share/man/ps4/sparc64
 ./usr/share/man/ps4/vax
@@ -2329,7 +2329,7 @@
 ./usr/share/man/ps5/mvme88k
 ./usr/share/man/ps5/mvmeppc
 ./usr/share/man/ps5/pegasos
-./usr/share/man/ps5/pegosos
+./usr/share/man/ps5/pegasos
 ./usr/share/man/ps5/sparc
 ./usr/share/man/ps5/sparc64
 ./usr/share/man/ps5/vax
@@ -2348,7 +2348,7 @@
 ./usr/share/man/ps8/mvme88k
 ./usr/share/man/ps8/mvmeppc
 ./usr/share/man/ps8/pegasos
-./usr/share/man/ps8/pegosos
+./usr/share/man/ps8/pegasos
 ./usr/share/man/ps8/sparc
 ./usr/share/man/ps8/sparc64
 ./usr/share/man/ps8/vax
@@ -2365,7 +2365,7 @@
 ./usr/share/man/ps9/mvme88k
 ./usr/share/man/ps9/mvmeppc
 ./usr/share/man/ps9/pegasos
-./usr/share/man/ps9/pegosos
+./usr/share/man/ps9/pegasos
 ./usr/share/man/ps9/sparc
 ./usr/share/man/ps9/sparc64
 ./usr/share/man/ps9/vax

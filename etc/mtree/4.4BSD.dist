@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.158 2004/01/28 18:00:22 deraadt Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.159 2004/01/29 09:07:50 deraadt Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -1067,7 +1067,7 @@ sparc64
 ..
 amd64
 ..
-pegosos
+pegasos
 ..
 cats
 ..
@@ -1122,7 +1122,7 @@ sparc64
 ..
 amd64
 ..
-pegosos
+pegasos
 ..
 cats
 ..
@@ -1166,7 +1166,7 @@ sparc64
 ..
 amd64
 ..
-pegosos
+pegasos
 ..
 cats
 ..
@@ -1203,7 +1203,7 @@ sparc64
 ..
 amd64
 ..
-pegosos
+pegasos
 ..
 cats
 ..
@@ -1252,7 +1252,7 @@ sparc64
 ..
 amd64
 ..
-pegosos
+pegasos
 ..
 cats
 ..
@@ -1291,7 +1291,7 @@ sparc64
 ..
 amd64
 ..
-pegosos
+pegasos
 ..
 cats
 ..
@@ -1330,7 +1330,7 @@ sparc64
 ..
 amd64
 ..
-pegosos
+pegasos
 ..
 cats
 ..
@@ -1387,7 +1387,7 @@ sparc64
 ..
 amd64
 ..
-pegosos
+pegasos
 ..
 cats
 ..
@@ -1431,7 +1431,7 @@ sparc64
 ..
 amd64
 ..
-pegosos
+pegasos
 ..
 cats
 ..
@@ -1470,7 +1470,7 @@ sparc64
 ..
 amd64
 ..
-pegosos
+pegasos
 ..
 cats
 ..
@@ -1519,7 +1519,7 @@ sparc64
 ..
 amd64
 ..
-pegosos
+pegasos
 ..
 cats
 ..
@@ -1558,7 +1558,7 @@ sparc64
 ..
 amd64
 ..
-pegosos
+pegasos
 ..
 cats
 ..
@@ -1597,7 +1597,7 @@ sparc64
 ..
 amd64
 ..
-pegosos
+pegasos
 ..
 cats
 ..
@@ -1651,7 +1651,7 @@ sparc64
 ..
 amd64
 ..
-pegosos
+pegasos
 ..
 cats
 ..
@@ -1705,7 +1705,7 @@ sparc64
 ..
 amd64
 ..
-pegosos
+pegasos
 ..
 cats
 ..
