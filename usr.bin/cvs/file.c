@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.26 2004/08/12 18:36:39 jfb Exp $	*/
+/*	$OpenBSD: file.c,v 1.27 2004/08/12 21:05:32 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -251,6 +251,8 @@ cvs_file_create(const char *path, u_int type, mode_t mode)
 			cvs_file_free(cfp);
 			return (NULL);
 		}
+
+		cfp->cf_ddat->cd_ent = cvs_ent_open(path, O_RDWR);
 
 	}
 	else {
