@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.12 2004/09/27 14:36:15 jfb Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.13 2004/09/27 15:33:44 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -230,6 +230,8 @@ void
 rcs_close(RCSFILE *rfp)
 {
 	struct rcs_delta *rdp;
+	struct rcs_lock *rlp;
+	struct rcs_sym *rsp;
 
 	if (rfp->rf_ref > 1) {
 		rfp->rf_ref--;
@@ -240,6 +242,21 @@ rcs_close(RCSFILE *rfp)
 		rdp = TAILQ_FIRST(&(rfp->rf_delta));
 		TAILQ_REMOVE(&(rfp->rf_delta), rdp, rd_list);
 		rcs_freedelta(rdp);
+	}
+
+	while (!TAILQ_EMPTY(&(rfp->rf_symbols))) {
+		rsp = TAILQ_FIRST(&(rfp->rf_symbols));
+		TAILQ_REMOVE(&(rfp->rf_symbols), rsp, rs_list);
+		rcsnum_free(rsp->rs_num);
+		free(rsp->rs_name);
+		free(rsp);
+	}
+
+	while (!TAILQ_EMPTY(&(rfp->rf_locks))) {
+		rlp = TAILQ_FIRST(&(rfp->rf_locks));
+		TAILQ_REMOVE(&(rfp->rf_locks), rlp, rl_list);
+		rcsnum_free(rlp->rl_num);
+		free(rlp);
 	}
 
 	if (rfp->rf_head != NULL)
@@ -1049,6 +1066,9 @@ rcs_parse_delta(RCSFILE *rfp)
 		}
 	}
 
+	if (tokstr != NULL)
+		free(tokstr);
+
 	TAILQ_INSERT_TAIL(&(rfp->rf_delta), rdp, rd_list);
 
 	return (ret);
@@ -1071,10 +1091,6 @@ rcs_parse_deltatext(RCSFILE *rfp)
 	RCSNUM *tnum;
 	struct rcs_delta *rdp;
 
-	tnum = rcsnum_alloc();
-	if (tnum == NULL)
-		return (-1);
-
 	tok = rcs_gettok(rfp);
 	if (tok == RCS_TOK_EOF)
 		return (0);
@@ -1085,12 +1101,18 @@ rcs_parse_deltatext(RCSFILE *rfp)
 		    RCS_TOKSTR(rfp));
 		return (-1);
 	}
+
+	tnum = rcsnum_alloc();
+	if (tnum == NULL)
+		return (-1);
 	rcsnum_aton(RCS_TOKSTR(rfp), NULL, tnum);
 
 	TAILQ_FOREACH(rdp, &(rfp->rf_delta), rd_list) {
 		if (rcsnum_cmp(tnum, rdp->rd_num, 0) == 0)
 			break;
 	}
+	rcsnum_free(tnum);
+
 	if (rdp == NULL) {
 		cvs_log(LP_ERR, "RCS delta text `%s' has no matching delta",
 		    RCS_TOKSTR(rfp));
