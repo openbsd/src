@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ike.c,v 1.4 2000/10/03 14:25:47 ho Exp $	*/
+/*	$OpenBSD: print-ike.c,v 1.5 2001/04/09 21:44:40 ho Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -31,7 +31,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-ike.c,v 1.4 2000/10/03 14:25:47 ho Exp $ (XXX)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-ike.c,v 1.5 2001/04/09 21:44:40 ho Exp $ (XXX)";
 #endif
 
 #include <sys/param.h>
@@ -45,6 +45,7 @@ struct rtentry;
 
 #include <net/if.h>
 #include <netinet/in.h>
+#include <arpa/inet.h>
 
 #include <ctype.h>
 #include <stdio.h>
@@ -77,11 +78,12 @@ struct notification_payload {
 	u_char    data[0];
 };
 
-static int isakmp_doi;
-
-static void isakmp_pl_print(register u_char type, register u_char *payload);
+static void ike_pl_print(register u_char, register u_char *, u_char);
 
 int ike_tab_level = 0;
+u_char xform_proto;
+
+static const char *ike[] = IKE_PROTO_INITIALIZER;
 
 #define SMALL_TABS 4
 #define SPACES "                                                   "
@@ -97,11 +99,27 @@ ike_tab_offset (void)
   return (p > line ? p : line);
 }
 
+static char *
+ike_get_cookie (u_char *ic, u_char *rc)
+{
+	static char cookie_jar[35];
+	register int i;
+	cookie_jar[0] = cookie_jar[34] = 0;
+
+	for (i = 0; i < 8; i++)
+		sprintf (cookie_jar + (i<<1), "%02x", *(ic + i));
+	strcat (cookie_jar, "->");
+	for (i = 0; i < 8; i++)
+		sprintf (cookie_jar + 18 + (i<<1), "%02x", *(rc + i));
+
+	return cookie_jar;
+}
+
 /*
  * Print isakmp requests
  */
 void
-isakmp_print (register const u_char *cp, register u_int length)
+ike_print (register const u_char *cp, register u_int length)
 {
 	struct isakmp_header *ih;
 	register const u_char *ep;
@@ -145,16 +163,8 @@ isakmp_print (register const u_char *cp, register u_int length)
 		printf(" commit");
 	}
 
-	printf("\n\tcookie: %02x%02x%02x%02x%02x%02x%02x%02x->"
-	       "%02x%02x%02x%02x%02x%02x%02x%02x",
-	       ih->init_cookie[0], ih->init_cookie[1],
-	       ih->init_cookie[2], ih->init_cookie[3], 
-	       ih->init_cookie[4], ih->init_cookie[5], 
-	       ih->init_cookie[6], ih->init_cookie[7], 
-	       ih->resp_cookie[0], ih->resp_cookie[1], 
-	       ih->resp_cookie[2], ih->resp_cookie[3], 
-	       ih->resp_cookie[4], ih->resp_cookie[5], 
-	       ih->resp_cookie[6], ih->resp_cookie[7]);
+	printf("\n\tcookie: %s", ike_get_cookie (ih->init_cookie,
+						 ih->resp_cookie));
 
 	TCHECK(ih->msgid, sizeof(ih->msgid));
 	printf(" msgid: %02x%02x%02x%02x",
@@ -180,7 +190,7 @@ isakmp_print (register const u_char *cp, register u_int length)
 
 	/* if verbose, print payload data */
 	if (vflag)
-	        isakmp_pl_print(nextpayload, payload);
+	        ike_pl_print(nextpayload, payload, ISAKMP_DOI);
 
 	return;
 
@@ -189,12 +199,12 @@ trunc:
 }
 
 void
-isakmp_sa_print (register u_char *buf, register int len)
+ike_sa_print (register u_char *buf, register int len)
 {
 	u_int32_t situation = ntohl(*(u_int32_t *)(buf + 4));
-	isakmp_doi = ntohl((*(u_int32_t *)buf));
-	printf(" DOI: %d", isakmp_doi);
-	if (isakmp_doi == IPSEC_DOI) {
+	u_char ike_doi = ntohl((*(u_int32_t *)buf));
+	printf(" DOI: %d", ike_doi);
+	if (ike_doi == IPSEC_DOI) {
 	        printf("(IPSEC) situation: ");
 		if (situation & IKE_SITUATION_IDENTITY_ONLY)
 		        printf("IDENTITY_ONLY ");
@@ -204,14 +214,14 @@ isakmp_sa_print (register u_char *buf, register int len)
 		        printf("INTEGRITY ");
 		if ((situation & IKE_SITUATION_MASK) == 0)
 		        printf("0x%x (unknown)", situation);
-	        isakmp_pl_print (PAYLOAD_PROPOSAL, buf + 8);
+	        ike_pl_print (PAYLOAD_PROPOSAL, buf + 8, IPSEC_DOI);
 	}
 	else
 	        printf(" situation: (unknown)");
 }
 
 int
-isakmp_attribute_print (register u_char *buf)
+ike_attribute_print (register u_char *buf, u_char doi)
 {
 	static char *attrs[] = IKE_ATTR_INITIALIZER;
 	static char *attr_enc[] = IKE_ATTR_ENCRYPT_INITIALIZER;
@@ -220,19 +230,29 @@ isakmp_attribute_print (register u_char *buf)
 	static char *attr_gdesc[] = IKE_ATTR_GROUP_DESC_INITIALIZER;
 	static char *attr_gtype[] = IKE_ATTR_GROUP_INITIALIZER;
 	static char *attr_ltype[] = IKE_ATTR_SA_DURATION_INITIALIZER;
+	static char *ipsec_attrs[] = IPSEC_ATTR_INITIALIZER;
+	static char *ipsec_attr_encap[] = IPSEC_ATTR_ENCAP_INITIALIZER;
+	static char *ipsec_attr_auth[] = IPSEC_ATTR_AUTH_INITIALIZER;
+	static char *ipsec_attr_ltype[] = IPSEC_ATTR_DURATION_INITIALIZER;
 
 	unsigned short type = buf[0]<<8 | buf[1];
 	unsigned short length = 0, p;
 
-	printf("\n\t%sattribute %s = ", ike_tab_offset(),
-	       ((type & 0x7fff) < sizeof attrs / sizeof attrs[0] ?
-		attrs[type & 0x7fff] : "unknown"));
+	if (doi == ISAKMP_DOI) 
+		printf("\n\t%sattribute %s = ", ike_tab_offset(),
+		       ((type & 0x7fff) < sizeof attrs / sizeof attrs[0] ?
+			attrs[type & 0x7fff] : "unknown"));
+	else
+		printf("\n\t%sattribute %s = ", ike_tab_offset(),
+		       ((type & 0x7fff) < 
+			(sizeof ipsec_attrs / sizeof ipsec_attrs[0]) ?
+			ipsec_attrs[type & 0x7fff] : "unknown"));
+		
 	if (!(type >> 15)) {
 	        length = buf[2]<<8 | buf[3];
 	        for (p = 0; p < length; p++)
 	               printf("%02x", (char)*(buf + 4 + p));
-	}
-	else {
+	} else {
 	        p = buf[2]<<8 | buf[3];
 
 #define CASE_PRINT(TYPE,var) \
@@ -243,68 +263,175 @@ isakmp_attribute_print (register u_char *buf)
                         printf("%d (unknown)", p); \
                 break;
  
+	if (doi == ISAKMP_DOI)
 		switch(type & 0x7fff) {
-		CASE_PRINT(IKE_ATTR_ENCRYPTION_ALGORITHM, attr_enc);
-		CASE_PRINT(IKE_ATTR_HASH_ALGORITHM, attr_hash);
-		CASE_PRINT(IKE_ATTR_AUTHENTICATION_METHOD, attr_auth);
-		CASE_PRINT(IKE_ATTR_GROUP_DESC, attr_gdesc);
-		CASE_PRINT(IKE_ATTR_GROUP_TYPE, attr_gtype);
-		CASE_PRINT(IKE_ATTR_LIFE_TYPE, attr_ltype);
+			CASE_PRINT(IKE_ATTR_ENCRYPTION_ALGORITHM, attr_enc);
+			CASE_PRINT(IKE_ATTR_HASH_ALGORITHM, attr_hash);
+			CASE_PRINT(IKE_ATTR_AUTHENTICATION_METHOD, attr_auth);
+			CASE_PRINT(IKE_ATTR_GROUP_DESC, attr_gdesc);
+			CASE_PRINT(IKE_ATTR_GROUP_TYPE, attr_gtype);
+			CASE_PRINT(IKE_ATTR_LIFE_TYPE, attr_ltype);
 		default:
-		  printf("%d", p);
+			printf("%d", p);
+		}
+	else
+		switch(type & 0x7fff) {
+			CASE_PRINT(IPSEC_ATTR_SA_LIFE_TYPE, ipsec_attr_ltype);
+			CASE_PRINT(IPSEC_ATTR_ENCAPSULATION_MODE,
+				   ipsec_attr_encap);
+			CASE_PRINT(IPSEC_ATTR_AUTHENTICATION_ALGORITHM,
+				   ipsec_attr_auth);
+		default:
+			printf ("%d", p);
 		}
 	}
+#undef CASE_PRINT
+
 	return length + 4;
 }
 
 void
-isakmp_transform_print (register u_char *buf, register int len)
+ike_transform_print (register u_char *buf, register int len, u_char doi)
 {
+	const char *ah[] = IPSEC_AH_INITIALIZER;
+	const char *esp[] = IPSEC_ESP_INITIALIZER;
 	u_char *attr = buf + 4;
 
-	printf("\n\t%stransform: %d ID: %d", ike_tab_offset(),
-	       (char)buf[0], (char)buf[1]);
+	printf("\n\t%stransform: %d ID: ", ike_tab_offset(), (char)buf[0]);
 	
+	switch (doi) {
+	case ISAKMP_DOI:
+		if (buf[1] < (sizeof ike / sizeof ike[0]))
+			printf ("%s", ike[buf[1]]);
+		else
+			printf ("%d(unknown)", buf[1]);
+		break;
+
+	default: /* IPSEC_DOI */
+		switch (xform_proto) {	/* from ike_proposal_print */
+		case PROTO_IPSEC_AH:
+			if (buf[1] < (sizeof ah / sizeof ah[0]))
+				printf ("%s", ah[buf[1]]);
+			else
+				printf ("%d(unknown)", buf[1]);
+			break;
+		case PROTO_IPSEC_ESP:
+			if (buf[1] < (sizeof esp / sizeof esp[0]))
+				printf ("%s", esp[buf[1]]);
+			else
+				printf ("%d(unknown)", buf[1]);
+			break;
+		default:
+			printf ("%d(unknown)", buf[1]);
+		}
+		break;
+	}
+ 
 	ike_tab_level++;
 	while((int)(attr - buf) < len - 4)  /* Skip last 'NONE' attr */
-	        attr += isakmp_attribute_print(attr);
+		attr += ike_attribute_print(attr, doi);
 	ike_tab_level--;
 }
 
 void
-isakmp_proposal_print (register u_char *buf, register int len)
+ike_proposal_print (register u_char *buf, register int len, u_char doi)
 {
-	printf(" proposal: %d proto: %d(%s) spisz: %d xforms: %d", 
-	       buf[0], buf[1], (buf[1] == PROTO_ISAKMP ? "ISAKMP" : "unknown"),
-	       buf[2], buf[3]);
+	printf(" proposal: %d proto: %s spisz: %d xforms: %d", 
+	       buf[0], (buf[1] < (sizeof ike / sizeof ike[0]) ? ike[buf[1]] : 
+			"(unknown)"), buf[2], buf[3]);
+
+	/* We need to store this for upcoming ike_attribute_print call. */
+	xform_proto = buf[1];
+
+	if (buf[2]) {
+		/* XXX it is possible that spisz may be != 4 ... */
+		printf(" SPI: 0x%08x", 
+		       buf[4]<<24 | buf[5]<<16 | buf[6]<<8 | buf[7]);
+		doi = IPSEC_DOI;
+	} else 
+		doi = ISAKMP_DOI;
 
 	if((char)buf[3] > 0)
-	       isakmp_pl_print(PAYLOAD_TRANSFORM, buf+4);
+		ike_pl_print(PAYLOAD_TRANSFORM, buf+4+buf[2], doi);
 }
 
 void
-isakmp_ke_print (register u_char *buf, register int len)
+ike_ke_print (register u_char *buf, register int len, u_char doi)
 {
-	if (isakmp_doi != IPSEC_DOI)
+	if (doi != IPSEC_DOI)
 		return;
 
-	printf(" <KE payload data (not shown)> len: %d", len);
+	/* XXX ... */
 }
 	
 void
-isakmp_id_print (register u_char *buf, register int len)
+ipsec_id_print (register u_char *buf, register int len, u_char doi)
 {
-	if (isakmp_doi != IPSEC_DOI) 
+	static const char *idtypes[] = IPSEC_ID_TYPE_INITIALIZER;
+	char ntop_buf[INET6_ADDRSTRLEN];
+	struct in_addr in;
+	u_char *p;
+
+	if (doi != ISAKMP_DOI) 
 		return;
 
-	printf(" <ID payload data (not shown)> len: %d", len);
+	/* Don't print proto+port unless actually used */
+	if (buf[1] | buf[2] | buf[3])
+		printf (" proto: %d port: %d", buf[1], (buf[2] << 8) + buf[3]);
+
+	printf (" type: %s = ", buf[0] < (sizeof idtypes/sizeof idtypes[0]) ?
+		idtypes[buf[0]] : "<unknown>");
+
+	switch (buf[0]) {
+	case IPSEC_ID_IPV4_ADDR:
+		memcpy (&in.s_addr, buf + 4, sizeof in);
+		printf ("%s", inet_ntoa (in));
+		break;
+	case IPSEC_ID_IPV4_ADDR_SUBNET:
+	case IPSEC_ID_IPV4_ADDR_RANGE:
+		memcpy (&in.s_addr, buf + 4, sizeof in);
+		printf ("%s%s", inet_ntoa (in),
+			buf[0] == IPSEC_ID_IPV4_ADDR_SUBNET ? "/" : "-");
+		memcpy (&in.s_addr, buf + 8, sizeof in);
+		printf ("%s", inet_ntoa (in));
+		break;
+
+	case IPSEC_ID_IPV6_ADDR:
+		printf ("%s", inet_ntop (AF_INET6, buf + 4, ntop_buf,
+					 sizeof ntop_buf));
+		break;
+	case IPSEC_ID_IPV6_ADDR_SUBNET:
+	case IPSEC_ID_IPV6_ADDR_RANGE:
+		printf ("%s%s", inet_ntop (AF_INET6, buf + 4, ntop_buf,
+					   sizeof ntop_buf),
+			buf[0] == IPSEC_ID_IPV6_ADDR_SUBNET ? "/" : "-");
+		printf ("%s", inet_ntop (AF_INET6, buf + 4 + sizeof ntop_buf,
+					 ntop_buf, sizeof ntop_buf));
+
+	case IPSEC_ID_FQDN:
+	case IPSEC_ID_USER_FQDN:
+		printf ("\"");
+		for(p = buf + 4; (int)(p - buf) < len; p++)
+			printf("%c",(isprint(*p) ? *p : '.'));
+		printf ("\"");
+		break;
+
+	case IPSEC_ID_DER_ASN1_DN:
+	case IPSEC_ID_DER_ASN1_GN:
+	case IPSEC_ID_KEY_ID:
+	default:
+		printf ("\"(not shown)\"");
+		break;
+	}
 }
 
 void
-isakmp_notification_print (register u_char *buf, register int len)
+ike_notification_print (register u_char *buf, register int len)
 {
   	static const char *nftypes[] = IKE_NOTIFY_TYPES_INITIALIZER;
   	struct notification_payload *np = (struct notification_payload *)buf;
+	u_int32_t *replay;
+	u_char *attr;
 
 	if (len < sizeof (struct notification_payload)) {
 		printf (" (|len)");
@@ -323,18 +450,52 @@ isakmp_notification_print (register u_char *buf, register int len)
 
 	if (np->type > 0 && np->type < (sizeof nftypes / sizeof nftypes[0]))
 		printf("%s", nftypes[np->type]);
-	else
+	else switch (np->type) {
+
+	case NOTIFY_IPSEC_RESPONDER_LIFETIME:
+		printf("RESPONDER LIFETIME");
+		if (np->spi_size == 16)
+			printf ("(%s)", ike_get_cookie (&np->data[0], 
+							&np->data[8]));
+		else
+			printf("SPI: 0x%08x", np->data[0]<<24 | 
+			       np->data[1]<<16 | np->data[2]<<8 | np->data[3]);
+		attr = &np->data[np->spi_size];
+		ike_tab_level++;
+		while((int)(attr - buf) < len - 4)  /* Skip last 'NONE' attr */
+			attr += ike_attribute_print(attr, IPSEC_DOI);
+		ike_tab_level--;	
+		break;
+
+	case NOTIFY_IPSEC_REPLAY_STATUS:
+		replay = (u_int32_t *)&np->data[np->spi_size];
+		printf("REPLAY STATUS [%sabled] ", *replay ? "en" : "dis");
+		if (np->spi_size == 16)
+			printf ("(%s)", ike_get_cookie (&np->data[0], 
+							&np->data[8]));
+		else
+			printf("SPI: 0x%08x", np->data[0]<<24 | 
+			       np->data[1]<<16 | np->data[2]<<8 | np->data[3]);
+		break; 
+
+	case NOTIFY_IPSEC_INITIAL_CONTACT:
+		printf("INITIAL CONTACT (%s)", ike_get_cookie (&np->data[0],
+							       &np->data[8]));
+		break;
+
+	default:
 	  	printf("%d (unknown)", np->type);
-	
+		break;
+	}
   	return;
 }
 	
 void
-isakmp_vendor_print (register u_char *buf, register int len)
+ike_vendor_print (register u_char *buf, register int len, u_char doi)
 {
 	u_char *p = buf;
 
-	if (isakmp_doi != IPSEC_DOI) 
+	if (doi != IPSEC_DOI) 
 		return;
 
 	printf(" \"");
@@ -344,7 +505,7 @@ isakmp_vendor_print (register u_char *buf, register int len)
 }
 
 void
-isakmp_pl_print (register u_char type, register u_char *buf)
+ike_pl_print (register u_char type, register u_char *buf, u_char doi)
 {
 	static const char *pltypes[] = IKE_PAYLOAD_TYPES_INITIALIZER;
 	int next_type = buf[0];
@@ -363,23 +524,24 @@ isakmp_pl_print (register u_char type, register u_char *buf)
 		return;
 
 	case PAYLOAD_SA:
-		isakmp_sa_print(buf+4, this_len);
+		ike_sa_print(buf+4, this_len);
 		break;
 	    
 	case PAYLOAD_PROPOSAL:
-		isakmp_proposal_print(buf+4, this_len);
+		ike_proposal_print(buf+4, this_len, doi);
 		break;
 	    
 	case PAYLOAD_TRANSFORM:
-	        isakmp_transform_print(buf+4, this_len);
+		ike_transform_print(buf+4, this_len, doi);
 		break;
 	    
 	case PAYLOAD_KE:
-		isakmp_ke_print(buf+4, this_len);
+		ike_ke_print(buf+4, this_len, doi);
 		break;
 	    
 	case PAYLOAD_ID:
-	        isakmp_id_print(buf+4, this_len);
+		/* Should only happen with IPsec DOI */
+	        ipsec_id_print(buf+4, this_len, doi);
 		break;
 
 	case PAYLOAD_CERT:
@@ -391,11 +553,11 @@ isakmp_pl_print (register u_char type, register u_char *buf)
 		break;
 	    
 	case PAYLOAD_NOTIFICATION:
-	  	isakmp_notification_print(buf, this_len);
+	  	ike_notification_print(buf, this_len);
 		break;
 
 	case PAYLOAD_VENDOR:
-	        isakmp_vendor_print(buf+4, this_len);
+	        ike_vendor_print(buf+4, this_len, doi);
 		break;
 
 	default:
@@ -403,10 +565,14 @@ isakmp_pl_print (register u_char type, register u_char *buf)
 	ike_tab_level--;
 
 	if(next_type)  /* Recurse over next payload */
-	        isakmp_pl_print(next_type, buf + this_len);
+	        ike_pl_print(next_type, buf + this_len, doi);
 
 	return;
 
 pltrunc:
-	fputs(" [|isakmp]", stdout);
+	if (doi == ISAKMP_DOI)
+		fputs(" [|isakmp]", stdout);
+	else
+		fputs(" [|ipsec]", stdout);
+
 }
