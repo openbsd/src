@@ -1,4 +1,4 @@
-/*	$OpenBSD: pchb.c,v 1.44 2005/01/13 00:43:01 brad Exp $	*/
+/*	$OpenBSD: pchb.c,v 1.45 2005/03/09 21:53:49 hshoexer Exp $	*/
 /*	$NetBSD: pchb.c,v 1.6 1997/06/06 23:29:16 thorpej Exp $	*/
 
 /*
@@ -86,8 +86,8 @@
 #define PCISET_INTEL_BRIDGE_NUMBER(reg)	(((reg) >> 8) & 0xff)
 #define PCISET_INTEL_PCI_BUS_NUMBER(reg)	(((reg) >> 16) & 0xff)
 
-#define PCISET_INTEL_SDRAMC_REG	0x76
-#define PCISET_INTEL_SDRAMC_IPDLT	(1 << 8)
+#define PCISET_INTEL_SDRAMC_REG	0x74
+#define PCISET_INTEL_SDRAMC_IPDLT	(1 << 24)
 
 /* XXX should be in dev/ic/i82424{reg.var}.h */
 #define I82424_CPU_BCTL_REG		0x53
