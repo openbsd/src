@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.3 2005/01/11 19:22:08 deraadt Exp $
+#	$OpenBSD: list,v 1.4 2005/01/12 18:25:32 deraadt Exp $
 
 SRCDIRS distrib/special
 SRCDIRS usr.bin bin sbin usr.sbin
@@ -13,6 +13,8 @@ LINK	instbin					bin/df
 LINK	instbin					bin/ed
 LINK	instbin					bin/expr
 LINK	instbin					bin/hostname
+LINK	instbin					bin/ksh bin/sh
+ARGVLINK ksh					-sh
 LINK	instbin					bin/ln
 LINK	instbin					bin/ls
 LINK	instbin					bin/mkdir
@@ -20,38 +22,35 @@ LINK	instbin					bin/mt bin/eject
 LINK	instbin					bin/mv
 LINK	instbin					bin/pax bin/tar bin/cpio
 LINK	instbin					bin/rm
-LINK	instbin					bin/ksh bin/sh
-ARGVLINK ksh					-sh
 LINK	instbin					bin/stty
 LINK	instbin					bin/sync
+LINK	instbin					sbin/dhclient
 LINK	instbin					sbin/disklabel
-#LINK	instbin					sbin/fdisk
+LINK	instbin					sbin/dmesg
+LINK	instbin					sbin/fdisk
 LINK	instbin					sbin/fsck
-LINK	instbin					sbin/fsck_ffs
 LINK	instbin					sbin/fsck_ext2fs
-LINK	instbin					sbin/reboot sbin/halt
+LINK	instbin					sbin/fsck_ffs
 LINK	instbin					sbin/ifconfig
 LINK	instbin					sbin/init
-LINK	instbin					sbin/dhclient
-LINK	instbin					sbin/dmesg
 LINK	instbin					sbin/mknod
 LINK	instbin					sbin/mount
 LINK	instbin					sbin/mount_cd9660
+LINK	instbin					sbin/mount_ext2fs
 LINK	instbin					sbin/mount_ffs
 LINK	instbin					sbin/mount_msdos
 LINK	instbin					sbin/mount_nfs
-LINK	instbin					sbin/mount_ext2fs
 LINK	instbin					sbin/newfs
 LINK	instbin					sbin/newfs_msdos
 LINK	instbin					sbin/ping
 LINK	instbin					sbin/ping6
+LINK	instbin					sbin/reboot sbin/halt
 LINK	instbin					sbin/route
 LINK	instbin					sbin/rtsol
 LINK	instbin					sbin/umount
-#LINK	instbin					sbin/kbd
 #LINK	instbin					sbin/wicontrol
-LINK	instbin					usr/bin/grep usr/bin/fgrep usr/bin/egrep
 LINK	instbin					usr/bin/ftp
+LINK	instbin					usr/bin/grep usr/bin/fgrep usr/bin/egrep
 LINK	instbin					usr/bin/gzip usr/bin/gunzip usr/bin/gzcat
 LINK	instbin					usr/bin/less usr/bin/more
 LINK	instbin					usr/bin/sed

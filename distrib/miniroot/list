@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.35 2005/01/11 19:21:07 deraadt Exp $
+#	$OpenBSD: list,v 1.36 2005/01/12 18:25:29 deraadt Exp $
 #	$NetBSD: list,v 1.4.4.1 1996/06/20 20:30:26 pk Exp $
 
 SRCDIRS distrib/special
@@ -14,6 +14,8 @@ LINK	instbin					bin/df
 LINK	instbin					bin/ed
 LINK	instbin					bin/expr
 LINK	instbin					bin/hostname
+LINK	instbin					bin/ksh bin/sh
+ARGVLINK ksh					-sh
 LINK	instbin					bin/ln
 LINK	instbin					bin/ls
 LINK	instbin					bin/mkdir
@@ -21,13 +23,11 @@ LINK	instbin					bin/mt
 LINK	instbin					bin/mv
 LINK	instbin					bin/pax bin/tar bin/cpio
 LINK	instbin					bin/rm
-LINK	instbin					bin/ksh bin/sh
 LINK	instbin					bin/stty
 LINK	instbin					bin/sync
 LINK	instbin					sbin/dmesg
 LINK	instbin					sbin/fsck
 LINK	instbin					sbin/fsck_ffs
-LINK	instbin					sbin/reboot sbin/halt
 LINK	instbin					sbin/ifconfig
 LINK	instbin					sbin/init
 LINK	instbin					sbin/mknod
@@ -38,15 +38,13 @@ LINK	instbin					sbin/mount_nfs
 LINK	instbin					sbin/newfs sbin/mount_mfs
 LINK	instbin					sbin/ping
 LINK	instbin					sbin/ping6
-LINK	instbin					sbin/rtsol
+LINK	instbin					sbin/reboot sbin/halt
 LINK	instbin					sbin/route
+LINK	instbin					sbin/rtsol
 LINK	instbin					sbin/umount
 LINK	instbin					usr/bin/ftp
 LINK	instbin					usr/bin/gzip usr/bin/gunzip usr/bin/gzcat
 LINK	instbin					usr/bin/sed
-
-# `internal' crunchgen links
-ARGVLINK ksh					-sh
 
 # various files that we need in /etc for the install
 COPY	${DESTDIR}/etc/group			etc/group

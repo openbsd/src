@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.10 2005/01/11 19:21:07 deraadt Exp $
+#	$OpenBSD: list,v 1.11 2005/01/12 18:25:27 deraadt Exp $
 
 SRCDIRS distrib/special
 SRCDIRS bin sbin usr.bin usr.sbin
@@ -9,46 +9,46 @@ COPY	${OBJDIR}/instbin			instbin
 LINK	instbin					bin/cat
 LINK	instbin					bin/chmod
 LINK	instbin					bin/cp
-LINK	instbin					bin/pax bin/cpio bin/tar
 LINK	instbin					bin/dd
 LINK	instbin					bin/df
 LINK	instbin					bin/ed
+LINK	instbin					bin/hostname
+LINK	instbin					bin/ksh bin/sh
+ARGVLINK ksh					-sh
 LINK	instbin					bin/ln
 LINK	instbin					bin/ls
 LINK	instbin					bin/mkdir
 LINK	instbin					bin/mv
+LINK	instbin					bin/pax bin/cpio bin/tar
 LINK	instbin					bin/rm
-LINK	instbin					bin/hostname
-LINK	instbin					bin/ksh bin/sh
 LINK	instbin					bin/stty
 LINK	instbin					sbin/chmod bin/chgrp sbin/chown
 LINK	instbin					sbin/disklabel
-LINK	instbin					sbin/fdisk
 LINK	instbin					sbin/dmesg
+LINK	instbin					sbin/fdisk
 LINK	instbin					sbin/fsck
 LINK	instbin					sbin/fsck_ffs
-LINK	instbin					sbin/reboot sbin/halt
 LINK	instbin					sbin/ifconfig
 LINK	instbin					sbin/init
 LINK	instbin					sbin/mknod
 LINK	instbin					sbin/mount
 LINK	instbin					sbin/mount_cd9660
 LINK	instbin					sbin/mount_ffs
+LINK	instbin					sbin/reboot sbin/halt
 #LINK	instbin					sbin/mount_msdos
 #LINK	instbin					sbin/mount_ext2fs
-LINK	instbin					sbin/ping
+LINK	instbin					sbin/kbd
 LINK	instbin					sbin/newfs
+LINK	instbin					sbin/ping
 LINK	instbin					sbin/restore
 LINK	instbin					sbin/route
 LINK	instbin					sbin/umount
-LINK	instbin					sbin/kbd
-LINK	instbin					usr/bin/grep usr/bin/egrep usr/bin/fgrep
 LINK	instbin					usr/bin/ftp
+LINK	instbin					usr/bin/grep usr/bin/egrep usr/bin/fgrep
 LINK	instbin					usr/bin/gzip usr/bin/gunzip usr/bin/gzcat
 LINK	instbin					usr/bin/less usr/bin/more
 LINK	instbin					usr/bin/sed
 LINK	instbin					usr/mdec/installboot
-ARGVLINK ksh					-sh
 
 # copy the MAKEDEV script and make some devices
 SCRIPT ${DESTDIR}/dev/MAKEDEV			dev/MAKEDEV

@@ -1,10 +1,11 @@
-#	$OpenBSD: list,v 1.19 2005/01/11 19:21:08 deraadt Exp $
+#	$OpenBSD: list,v 1.20 2005/01/12 18:25:31 deraadt Exp $
 
 SRCDIRS distrib/special
 SRCDIRS bin sbin usr.bin usr.sbin
 
 # copy the crunched binary, link to it, and kill it
 COPY	${OBJDIR}/instbin			instbin
+#LINK	instbin					sbin/mount_cd9660
 LINK	instbin					bin/cat
 LINK	instbin					bin/chmod bin/chgrp sbin/chown
 LINK	instbin					bin/cp
@@ -14,6 +15,7 @@ LINK	instbin					bin/ed
 LINK	instbin					bin/expr
 LINK	instbin					bin/hostname
 LINK	instbin					bin/ksh bin/sh
+ARGVLINK ksh					-sh
 LINK	instbin					bin/ln
 LINK	instbin					bin/ls
 LINK	instbin					bin/mkdir
@@ -31,20 +33,17 @@ LINK	instbin					sbin/ifconfig
 LINK	instbin					sbin/init
 LINK	instbin					sbin/mknod
 LINK	instbin					sbin/mount
-#LINK	instbin					sbin/mount_cd9660
 LINK	instbin					sbin/mount_ffs
 LINK	instbin					sbin/newfs
 LINK	instbin					sbin/ping
 LINK	instbin					sbin/reboot sbin/halt
 LINK	instbin					sbin/route
 LINK	instbin					sbin/umount
-LINK	instbin					usr/bin/grep usr/bin/egrep usr/bin/fgrep
 LINK	instbin					usr/bin/ftp
+LINK	instbin					usr/bin/grep usr/bin/egrep usr/bin/fgrep
 LINK	instbin					usr/bin/gzip usr/bin/gunzip usr/bin/gzcat
 LINK	instbin					usr/bin/less usr/bin/more
 LINK	instbin					usr/bin/sed
-
-ARGVLINK ksh					-sh
 
 SCRIPT	${DESTDIR}/dev/MAKEDEV			dev/MAKEDEV
 SPECIAL	cd dev; sh MAKEDEV ramdisk

@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.23 2005/01/11 19:21:08 deraadt Exp $
+#	$OpenBSD: list,v 1.24 2005/01/12 18:25:31 deraadt Exp $
 #	$NetBSD: list,v 1.4.4.1 1996/06/20 20:30:26 pk Exp $
 
 SRCDIRS distrib/special
@@ -15,6 +15,7 @@ LINK	instbin					bin/ed
 LINK	instbin					bin/expr
 LINK	instbin					bin/hostname
 LINK	instbin					bin/ksh bin/sh
+ARGVLINK ksh					-sh
 LINK	instbin					bin/ln
 LINK	instbin					bin/ls
 LINK	instbin					bin/mkdir
@@ -40,16 +41,14 @@ LINK	instbin					sbin/ping
 LINK	instbin					sbin/ping6
 LINK	instbin					sbin/reboot sbin/halt
 LINK	instbin					sbin/restore
-LINK	instbin					sbin/rtsol
 LINK	instbin					sbin/route
+LINK	instbin					sbin/rtsol
 LINK	instbin					sbin/umount
-LINK	instbin					usr/bin/grep usr/bin/egrep usr/bin/fgrep
 LINK	instbin					usr/bin/ftp
+LINK	instbin					usr/bin/grep usr/bin/egrep usr/bin/fgrep
 LINK	instbin					usr/bin/gzip usr/bin/gunzip usr/bin/gzcat
 LINK	instbin					usr/bin/less usr/bin/more
 LINK	instbin					usr/bin/sed
-
-ARGVLINK ksh					-sh
 
 SCRIPT	${DESTDIR}/dev/MAKEDEV			dev/MAKEDEV
 SPECIAL	cd dev; sh MAKEDEV ramdisk

@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.13 2005/01/11 19:21:08 deraadt Exp $
+#	$OpenBSD: list,v 1.14 2005/01/12 18:25:32 deraadt Exp $
 
 SRCDIRS distrib/special
 SRCDIRS bin sbin usr.bin usr.sbin
@@ -13,14 +13,14 @@ LINK	instbin					bin/dd
 LINK	instbin					bin/df
 LINK	instbin					bin/ed
 LINK	instbin					bin/expr
+LINK	instbin					bin/ksh bin/sh
+ARGVLINK ksh					-sh
 LINK	instbin					bin/ln
 LINK	instbin					bin/ls
 LINK	instbin					bin/mkdir
-LINK	instbin					bin/mv
 LINK	instbin					bin/mt
+LINK	instbin					bin/mv
 LINK	instbin					bin/rm
-LINK	instbin					bin/ksh bin/sh
-ARGVLINK ksh					-sh
 LINK	instbin					bin/stty
 LINK	instbin					bin/sync
 LINK	instbin					sbin/disklabel
@@ -35,11 +35,11 @@ LINK	instbin					sbin/mount
 LINK	instbin					sbin/mount_ffs
 LINK	instbin					sbin/mount_nfs
 LINK	instbin					sbin/newfs
-LINK	instbin					sbin/reboot
 LINK	instbin					sbin/ping
 LINK	instbin					sbin/ping6
-LINK	instbin					sbin/rtsol
+LINK	instbin					sbin/reboot
 LINK	instbin					sbin/route
+LINK	instbin					sbin/rtsol
 LINK	instbin					sbin/shutdown
 LINK	instbin					sbin/slattach
 LINK	instbin					sbin/umount
