@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.107 1999/02/24 22:36:42 angelos Exp $
+#	$OpenBSD: files,v 1.108 1999/02/24 22:38:22 angelos Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -454,7 +454,6 @@ file netinet/ip_ah_old.c		inet & ipsec
 file netinet/ip_ah_new.c		inet & ipsec
 file netinet/ip_rmd160.c		inet & ipsec
 file netinet/ip_sha1.c			inet & ipsec
-file netinet/ip_skipjack.c		inet & ipsec
 file netinet/ip_blf.c			inet & ipsec
 file netinet/ip_cast.c			inet & ipsec
 file netinet/ip_skipjack.c		inet & ipsec
