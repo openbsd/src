@@ -12,7 +12,7 @@ Created: Wed Apr 19 17:41:39 1995 ylo
 */
 
 #include "includes.h"
-RCSID("$Id: cipher.c,v 1.4 1999/09/28 04:45:36 provos Exp $");
+RCSID("$Id: cipher.c,v 1.5 1999/09/30 05:19:57 deraadt Exp $");
 
 #include "ssh.h"
 #include "cipher.h"
@@ -80,9 +80,9 @@ static
 void
 swap_bytes(const unsigned char *src, unsigned char *dst_, int n)
 {
-  uint32 *dst = (uint32 *)dst_;	/* dst must be properly aligned. */
+  u_int32_t *dst = (u_int32_t *)dst_;	/* dst must be properly aligned. */
   union {
-    uint32 i;
+    u_int32_t i;
     char c[4];
   } t;
 

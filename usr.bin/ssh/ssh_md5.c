@@ -43,12 +43,12 @@ void MD5Init(struct MD5Context *ctx)
  */
 void MD5Update(struct MD5Context *ctx, unsigned char const *buf, unsigned len)
 {
-    uint32 t;
+    u_int32_t t;
 
     /* Update bitcount */
 
     t = ctx->bits[0];
-    if ((ctx->bits[0] = (t + ((uint32)len << 3)) & 0xffffffff) < t)
+    if ((ctx->bits[0] = (t + ((u_int32_t)len << 3)) & 0xffffffff) < t)
 	ctx->bits[1]++;		/* Carry from low to high */
     ctx->bits[1] += len >> 29;
 
@@ -147,10 +147,10 @@ void MD5Final(unsigned char digest[16], struct MD5Context *ctx)
  * reflect the addition of 16 longwords of new data.  MD5Update blocks
  * the data and converts bytes into longwords for this routine.
  */
-void MD5Transform(uint32 buf[4], const unsigned char inext[64])
+void MD5Transform(u_int32_t buf[4], const unsigned char inext[64])
 {
-    register word32 a, b, c, d, i;
-    word32 in[16];
+    register u_int32_t a, b, c, d, i;
+    u_int32_t in[16];
     
     for (i = 0; i < 16; i++)
       in[i] = GET_32BIT_LSB_FIRST(inext + 4 * i);
