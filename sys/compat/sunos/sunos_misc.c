@@ -1,4 +1,4 @@
-/*	$OpenBSD: sunos_misc.c,v 1.17 1997/11/14 22:59:20 deraadt Exp $	*/
+/*	$OpenBSD: sunos_misc.c,v 1.18 1997/11/30 21:40:30 deraadt Exp $	*/
 /*	$NetBSD: sunos_misc.c,v 1.65 1996/04/22 01:44:31 christos Exp $	*/
 
 /*
@@ -265,9 +265,9 @@ sunos_sys_mount(p, v, retval)
 	register_t *retval;
 {
 	struct sunos_sys_mount_args *uap = v;
-	struct emul *e = p->p_emul;
 	int oflags = SCARG(uap, flags), nflags, error;
 	char fsname[MFSNAMELEN];
+	caddr_t sg = stackgap_init(p->p_emul);
 
 	if (oflags & (SUNM_NOSUB | SUNM_SYS5))
 		return (EINVAL);
@@ -288,7 +288,7 @@ sunos_sys_mount(p, v, retval)
 		return (error);
 
 	if (strncmp(fsname, "4.2", sizeof fsname) == 0) {
-		SCARG(uap, type) = STACKGAPBASE;
+		SCARG(uap, type) = stackgap_alloc(&sg, sizeof("ffs"));
 		error = copyout("ffs", SCARG(uap, type), sizeof("ffs"));
 		if (error)
 			return (error);
@@ -307,10 +307,9 @@ sunos_sys_mount(p, v, retval)
 			return (error);
 		bcopy(&sain, &sa, sizeof sa);
 		sa.sa_len = sizeof(sain);
-		SCARG(uap, data) = STACKGAPBASE;
+		SCARG(uap, data) = stackgap_alloc(&sg, sizeof(na));
 		na.version = NFS_ARGSVERSION;
-		na.addr = (struct sockaddr *)
-			  ((int)SCARG(uap, data) + sizeof na);
+		na.addr = stackgap_alloc(&sg, sizeof(struct sockaddr));
 		na.addrlen = sizeof(struct sockaddr);
 		na.sotype = SOCK_DGRAM;
 		na.proto = IPPROTO_UDP;
