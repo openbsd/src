@@ -1,6 +1,6 @@
-# $OpenBSD: krb5.conf.example,v 1.3 2002/06/09 06:15:15 todd Exp $
+# $OpenBSD: krb5.conf.example,v 1.4 2003/08/01 08:41:52 hin Exp $
 #
-# Example Kerberos 5 configuration file. You need to change the defaults
+# Example Kerberos 5 configuration file. You may need to change the defaults
 # in this file to match your environment.
 #
 # See krb5.conf(5) and the heimdal infopage for more information.
@@ -8,19 +8,19 @@
 # Normally, the realm should be your DNS domain name with uppercase
 # letters. In this example file, we've written the realm as MY.REALM
 # and the domain as my.domain to make it clear what we refer to.
-
+#
+# Normally, it is not necessary to do any changes on client-only
+# machines, as it's recommended that the information needed is put
+# in DNS.
+# On server machines, it is not strictly necessary, but it is recommended
+# to have local configuration.
+#
 [libdefaults]
 	# Set the realm of this host here
         default_realm = MY.REALM
 
 	# Maximum allowed time difference between KDC and this host
 	clockskew = 300
-
-	# Use DNS to convert Kerberos 4 host instances
-	v4_instance_resolve = yes
-
-	# Get Kerberos 4 tickets in kauth, login et al.
-	krb4_get_tickets = yes
 
 	# Uncomment this if you run NAT on the client side of kauth.
 	# This may be considered a security issue though.
@@ -30,20 +30,6 @@
 	MY.REALM = {
 		# Specify KDC here
 		kdc = kerberos.my.domain
-
-		# If you use Kerberos 4 compatibility, you probably want this.
-		v4_name_convert = {
-			host = {
-				rcmd = host
-				ftp = ftp
-				pop = pop
-			}
-		}
-
-		# Use this/these DNS domains when trying to convert
-		# Kerberos 4 principals
-		default_domain = my.domain
-		v4_domains = my.domain
 	}
 
 	# Example of a "foreign" realm
@@ -64,13 +50,6 @@
 
 	# For a k5 only realm, this will be fine
 #	default_keys = v5
-
-	# For a k5 realm with k4 compatibilty, you probably want this
-#	default_keys = v5 v4
-
-	# For a k5 realm with k4 nodes and AFS, this should work.
-	# Remember to set your cell name here - used for salting the password
-#	default_keys = v5 v4 des:afs3-salt:my.afs.cell
 
 [logging]
 	# The KDC logs by default, but it's nice to have a kadmind log as well.
