@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.58 2002/12/18 16:49:54 dhartmei Exp $
+# $OpenBSD: Makefile,v 1.59 2002/12/19 10:10:35 mcbride Exp $
 
 PFTESTS=1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27
 PFTESTS+=28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45
@@ -44,11 +44,11 @@ pfsimple${n}:
 REGRESS_TARGETS+=pfload${n}
 
 pfload${n}:
-	pfctl -a regress:regress -f - < ${.CURDIR}/pf${n}.in
-	pfctl -a regress:regress -vvsr | \
+	${SUDO} pfctl -a regress:regress -f - < ${.CURDIR}/pf${n}.in
+	${SUDO} pfctl -a regress:regress -vvsr | \
 	    diff -u ${.CURDIR}/pf${n}.loaded /dev/stdin
-	pfctl -a regress:regress -Fn >/dev/null 2>&1
-	pfctl -a regress:regress -Fr >/dev/null 2>&1
+	${SUDO} pfctl -a regress:regress -Fn >/dev/null 2>&1
+	${SUDO} pfctl -a regress:regress -Fr >/dev/null 2>&1
 
 .endfor
 
