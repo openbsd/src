@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_krb5.c,v 1.9 2001/06/25 21:36:49 hin Exp $	*/
+/*	$OpenBSD: login_krb5.c,v 1.10 2001/06/25 22:02:13 hin Exp $	*/
 
 /*-
  * Copyright (c) 2001 Hans Insulander <hin@openbsd.org>.
@@ -43,7 +43,7 @@
 #include <util.h>
 
 #include <kerberosV/krb5.h>
-#ifdef KRB4
+#ifdef KRB524
 #include <kerberosIV/krb.h>
 #endif
 
@@ -108,7 +108,7 @@ store_tickets(struct passwd *pwd, int ticket_newfiles, int ticket_store,
 			krb5_cc_get_type(context, ccache_store),
 			krb5_cc_get_name(context, ccache_store));
 
-#ifdef KRB4
+#ifdef KRB524
 		get_krb4_ticket =
 			krb5_config_get_bool_default (context, NULL,
 						      get_krb4_ticket,
@@ -162,7 +162,7 @@ store_tickets(struct passwd *pwd, int ticket_newfiles, int ticket_store,
 #endif
 	
 	/* Need to chown the ticket file */
-#ifdef KRB4
+#ifdef KRB524
 	if(get_krb4_ticket)
 		fprintf(back, BI_SETENV " KRBTKFILE %s\n",
 			krb4_ticket_file);
