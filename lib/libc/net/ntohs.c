@@ -4,7 +4,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: ntohs.c,v 1.4 1996/08/19 08:29:35 tholo Exp $";
+static char *rcsid = "$OpenBSD: ntohs.c,v 1.5 1996/12/12 03:19:56 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -12,12 +12,12 @@ static char *rcsid = "$OpenBSD: ntohs.c,v 1.4 1996/08/19 08:29:35 tholo Exp $";
 
 #undef ntohs
 
-unsigned short
+u_int16_t
 #if __STDC__
-ntohs(unsigned short x)
+ntohs(u_int16_t x)
 #else
 ntohs(x)
-	unsigned short x;
+	u_int16_t x;
 #endif
 {
 #if BYTE_ORDER == LITTLE_ENDIAN
