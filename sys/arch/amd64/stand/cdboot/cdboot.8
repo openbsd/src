@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cdboot.8,v 1.2 2004/08/24 15:37:59 tom Exp $
+.\"	$OpenBSD: cdboot.8,v 1.3 2004/08/24 21:49:55 tom Exp $
 .\" Copyright (c) 2004 Tom Cosgrove
 .\" Copyright (c) 2003 Matthias Drochner
 .\" Copyright (c) 1999 Doug White
@@ -58,8 +58,11 @@ If no commands are given for a short time,
 will then attempt to load an
 .Ox
 kernel from the CD.
-It first looks for
-.Pa /3.6/amd64/bsd.rd ,
+It first looks for the install kernel
+.Pa bsd.rd
+in the standard amd64 release directory
+(e.g.\&
+.Pa /3.6/amd64/bsd.rd ) ,
 then for
 .Pa /bsd .
 It may be told to boot an alternative kernel,
@@ -96,3 +99,8 @@ The
 .Nm
 program first appeared in
 .Ox 3.6 .
+.Sh BUGS
+The
+.Ic ls
+command does not work on ISO-9660 (cd9660) filesystems,
+which are used on most CDs.
