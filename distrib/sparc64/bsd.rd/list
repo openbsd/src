@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.13 2002/05/07 10:29:48 deraadt Exp $
+#	$OpenBSD: list,v 1.14 2002/05/23 04:41:35 deraadt Exp $
 #	$NetBSD: list,v 1.4.4.1 1996/06/20 20:30:26 pk Exp $
 
 SRCDIRS distrib/special
@@ -68,7 +68,7 @@ TERMCAP	vt100,vt220,dumb,sun			usr/share/misc/termcap
 SCRIPT	${CURDIR}/../../miniroot/dot.profile	.profile
 SCRIPT	${CURDIR}/../common/install.md		install.md
 SCRIPT	${CURDIR}/../../miniroot/install.sh	install
-SCRIPT	${CURDIR}/../../miniroot/install.sh	upgrade
+SCRIPT	${CURDIR}/../../miniroot/upgrade.sh	upgrade
 SCRIPT	${CURDIR}/../../miniroot/install.sub	install.sub
 SPECIAL	chmod 755 install upgrade
 
