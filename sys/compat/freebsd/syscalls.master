@@ -1,4 +1,4 @@
-	$OpenBSD: syscalls.master,v 1.13 2000/05/01 23:10:58 deraadt Exp $
+	$OpenBSD: syscalls.master,v 1.14 2000/07/07 18:26:43 brad Exp $
 ;	$NetBSD: syscalls.master,v 1.3 1995/10/10 18:28:40 mycroft Exp $
 
 ;	from: @(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -275,9 +275,9 @@
 ; system calls.  (This includes various calls added for compatibity
 ; with other Unix variants.)
 ; Some of these calls are now supported by BSD...
-151	UNIMPL
-152	UNIMPL
-153	UNIMPL
+151	UNIMPL		sem_lock
+152	UNIMPL		sem_wakeup
+153	UNIMPL		asyncdaemon
 154	UNIMPL
 #if defined(NFSCLIENT) || defined(NFSSERVER)
 155	NOARGS		{ int sys_nfssvc(int flag, caddr_t argp); }
@@ -329,13 +329,13 @@
 171	UNIMPL		1.0 shmsys
 #endif
 172	UNIMPL
-173	UNIMPL
-174	UNIMPL
+173	UNIMPL		pread
+174	UNIMPL		pwrite
 175	UNIMPL
 176	STD		{ int freebsd_ntp_adjtime(struct freebsd_timex *tp); }
-177	UNIMPL
-178	UNIMPL
-179	UNIMPL
+177	UNIMPL		sfork
+178	UNIMPL		getdescriptor
+179	UNIMPL		setdescriptor
 180	UNIMPL
 
 ; Syscalls 180-199 are used by/reserved for BSD
@@ -381,11 +381,11 @@
 #ifdef FREEBSD_BASED_ON_44LITE_R2
 205	STD		{ int freebsd_sys_undelete(char *path); }
 #else
-205	UNIMPL
+205	UNIMPL		undelete
 #endif
-206	UNIMPL
+206	UNIMPL		futimes
 207	NOARGS		{ int sys_getpgid(pid_t pid); }
-208	UNIMPL
+208	UNIMPL		reboot
 209	NOARGS		{ int sys_poll(struct pollfd *fds, \
 			    unsigned long nfds, int timeout); }
 ;
@@ -401,7 +401,7 @@
 217	UNIMPL
 218	UNIMPL
 219	UNIMPL
-; Now, what else did they add recently...
+; Syscalls 220-239 are reserved for syscalls imported from NetBSD
 #ifdef SYSVSEM
 220	NOARGS		{ int sys___semctl(int semid, int semnum, int cmd, \
 			    union semun *arg); }
@@ -444,11 +444,11 @@
 232	UNIMPL
 233	UNIMPL
 234	UNIMPL
-235	UNIMPL
-236	UNIMPL
-237	UNIMPL
-238	UNIMPL
-239	UNIMPL
+235	UNIMPL		timer_create
+236	UNIMPL		timer_delete
+237	UNIMPL		timer_settime
+238	UNIMPL		timer_gettime
+239	UNIMPL		timer_getoverrun
 240	NOARGS		{ int sys_nanosleep(const struct timespec *rqtp, \
 				struct timespec *rmtp); }
 241	UNIMPL
@@ -460,6 +460,7 @@
 247	UNIMPL
 248	UNIMPL
 249	UNIMPL
+; syscall numbers initially used in OpenBSD
 250	NOARGS		{ int sys_minherit(caddr_t addr, size_t len, \
 			    int inherit); }
 251	NOARGS		{ int sys_rfork(int flags); }
@@ -467,3 +468,113 @@
 			    unsigned long nfds, int timeout); }
 253	NOARGS		{ int sys_issetugid(void); }
 254	NOARGS		{ int sys_lchown(char *path, int uid, int gid); }
+255	UNIMPL
+256	UNIMPL
+257	UNIMPL
+258	UNIMPL
+259	UNIMPL
+260	UNIMPL
+261	UNIMPL
+262	UNIMPL
+263	UNIMPL
+264	UNIMPL
+265	UNIMPL
+266	UNIMPL
+267	UNIMPL
+268	UNIMPL
+269	UNIMPL
+270	UNIMPL
+271	UNIMPL
+272	UNIMPL		getdents
+273	UNIMPL
+274	UNIMPL		lchmod
+275	UNIMPL		lchown
+276	UNIMPL		lutimes
+277	UNIMPL		msync
+278	UNIMPL		stat
+279	UNIMPL		fstat
+280	UNIMPL		lstat
+281	UNIMPL
+282	UNIMPL
+283	UNIMPL
+284	UNIMPL
+285	UNIMPL
+286	UNIMPL
+287	UNIMPL
+288	UNIMPL
+289	UNIMPL
+290	UNIMPL
+291	UNIMPL
+292	UNIMPL
+293	UNIMPL
+294	UNIMPL
+295	UNIMPL
+296	UNIMPL
+297	UNIMPL		fhstatfs
+298	UNIMPL		fhopen
+299	UNIMPL		fhstat
+; syscall numbers for FreeBSD
+300	UNIMPL		modnext
+301	UNIMPL		modstat
+302	UNIMPL		modfnext
+303	UNIMPL		modfind
+304	UNIMPL		kldload
+305	UNIMPL		kldunload
+306	UNIMPL		kldfind
+307	UNIMPL		kldnext
+308	UNIMPL		kldstat
+309	UNIMPL		kldfirstmod
+310	UNIMPL		getsid
+311	UNIMPL		setresuid
+312	UNIMPL		setresgid
+313	UNIMPL		signanosleep
+314	UNIMPL		aio_return
+315	UNIMPL		aio_suspend
+316	UNIMPL		aio_cancel
+317	UNIMPL		aio_error
+318	UNIMPL		aio_read
+319	UNIMPL		aio_write
+320	UNIMPL		lio_listio
+321	UNIMPL		yield
+322	UNIMPL		thr_sleep
+323	UNIMPL		thr_wakeup
+324	UNIMPL		mlockall
+325	UNIMPL		munlockall
+326	UNIMPL		__getcwd
+327	UNIMPL		sched_setparam
+328	UNIMPL		sched_getparam
+329	UNIMPL		sched_setscheduler
+330	UNIMPL		sched_getscheduler
+331	UNIMPL		sched_yield
+332	UNIMPL		sched_get_priority_max
+333	UNIMPL		sched_get_priority_min
+334	UNIMPL		sched_rr_get_interval
+335	UNIMPL		utrace
+336	UNIMPL		sendfile
+337	UNIMPL		kldsym
+338	UNIMPL		jail
+339	UNIMPL		pioctl
+340	UNIMPL		4.0 sigprocmask
+341	UNIMPL		4.0 sigsuspend
+342	UNIMPL		4.0 sigaction
+343	UNIMPL		4.0 sigpending
+344	UNIMPL		4.0 sigreturn
+345	UNIMPL		sigtimedwait
+346	UNIMPL		sigwaitinfo
+347	UNIMPL		__acl_get_file
+348	UNIMPL		__acl_set_file
+349	UNIMPL		__acl_get_fd
+350	UNIMPL		__acl_set_fd
+351	UNIMPL		__acl_delete_file
+352	UNIMPL		__acl_delete_fd
+353	UNIMPL		__acl_aclcheck_file
+354	UNIMPL		__acl_aclcheck_fd
+355	UNIMPL		extattrctl
+356	UNIMPL		extattr_set_file
+357	UNIMPL		extattr_get_file
+358	UNIMPL		extattr_delete_file
+359	UNIMPL		aio_waitcomplete
+360	UNIMPL		getresuid
+361	UNIMPL		getresgid
+362	UNIMPL		kqueue
+363	UNIMPL		kevent
