@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.86 2001/12/01 18:57:33 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.87 2002/02/22 21:12:13 drahn Exp $
 
 # not yet done: catman
 
@@ -27,6 +27,9 @@ SUBDIR+=iteconfig grfconfig videomode
 SUBDIR+=bad144 apm apmd fdformat memconfig
 SUBDIR+=eeprom screenblank grfinfo hilinfo
 SUBDIR+=wsconscfg wsfontload
+
+# Extended Attribute tools
+SUBDIR+=extattrctl setextattr getextattr
 
 .if (${AFS:L} == "yes")
 SUBDIR+=afs
