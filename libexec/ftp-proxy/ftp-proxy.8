@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ftp-proxy.8,v 1.10 2001/12/05 23:47:12 dhartmei Exp $
+.\"	$OpenBSD: ftp-proxy.8,v 1.11 2001/12/06 00:22:45 beck Exp $
 .\"
 .\" Copyright (c) 1996-2001
 .\"	Obtuse Systems Corporation, All rights reserved.
@@ -84,12 +84,12 @@ to
 .Nm maxport
 as described below.
 .It Fl n
-Activate network address translation mode.
-In this mode, the proxy will not attempt to proxy passive mode (PASV or EPSV)
-data connections, for this to work on a gateway you will need to be forwarding
-packets and doing network address translation to allow the outbound passive
-connections from the client to reach the server.
-See
+Activate network address translation mode.  In this mode, the proxy
+will not attempt to proxy passive mode (PASV or EPSV) data
+connections, In order for this to work, the machine running the proxy
+will need to be forwarding packets and doing network address
+translation to allow the outbound passive connections from the client
+to reach the server.  See
 .Xr nat.conf 5
 for more details on nat.
 The proxy only ignores passive mode data connections when using this flag,
