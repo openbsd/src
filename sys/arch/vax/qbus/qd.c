@@ -1,4 +1,4 @@
-/*	$OpenBSD: qd.c,v 1.3 2002/03/14 01:26:48 millert Exp $	*/
+/*	$OpenBSD: qd.c,v 1.4 2002/06/08 08:50:26 art Exp $	*/
 /*	$NetBSD: qd.c,v 1.17 2000/01/24 02:40:29 matt Exp $	*/
 
 /*-
@@ -1697,7 +1697,9 @@ panic("qd_strategy");
 	ubarelse(uh, &QBAreg);
 #endif
 	if (!(dga->csr & DMA_ERR)) {
+		s = splbio();
 		biodone(bp);
+		splx(s);
 		return;
 	}
 
@@ -1718,7 +1720,9 @@ panic("qd_strategy");
 		DMA_SETIGNORE(DMAheader[unit]);
 		dga->csr |= DMA_IE;
 	}
+	s = splbio();
 	biodone(bp);
+	splx(s);
 } /* qd_strategy */
 
 

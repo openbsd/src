@@ -1,4 +1,4 @@
-/*	$OpenBSD: ts.c,v 1.9 2002/05/23 15:31:57 art Exp $ */
+/*	$OpenBSD: ts.c,v 1.10 2002/06/08 08:50:26 art Exp $ */
 /*	$NetBSD: ts.c,v 1.11 1997/01/11 11:34:43 ragge Exp $ */
 
 /*-
@@ -428,6 +428,7 @@ tsstart (sc, bp)
 	volatile int i, itmp;
 	int ioctl;
 	int cmd;
+	int s;
 
 	if ((dp = ts_wtab[ctlr]) != NULL) {
 		/*
@@ -439,7 +440,9 @@ tsstart (sc, bp)
 		/* bertram: ubarelse ??? */
 		ts_wtab[ctlr] = NULL;
 		dp->b_flags |= B_ERROR;
+		s = splbio();
 		biodone (dp);
+		splx(s);
 
 		if (tsreg->tssr & TS_SC) {	/* Special Condition; Error */
 			log (TS_PRI, "%s: tssr 0x%x, state %d\n",

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mscp_disk.c,v 1.10 2002/03/14 01:26:48 millert Exp $	*/
+/*	$OpenBSD: mscp_disk.c,v 1.11 2002/06/08 08:50:26 art Exp $	*/
 /*	$NetBSD: mscp_disk.c,v 1.30 2001/11/13 07:38:28 lukem Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -292,6 +292,8 @@ rastrategy(bp)
 {
 	int unit;
 	struct ra_softc *ra;
+	int s;
+
 	/*
 	 * Make sure this is a reasonable drive to use.
 	 */
@@ -332,7 +334,9 @@ rastrategy(bp)
 	return;
 
 done:
+	s = splbio();
 	biodone(bp);
+	splx(s);
 }
 
 int
@@ -699,6 +703,7 @@ rxstrategy(bp)
 {
 	int unit;
 	struct rx_softc *rx;
+	int s;
 
 	/*
 	 * Make sure this is a reasonable drive to use.
@@ -734,7 +739,9 @@ rxstrategy(bp)
 	return;
 
 done:
+	s = splbio();
 	biodone(bp);
+	splx(s);
 }
 
 int
@@ -869,8 +876,11 @@ rriodone(usc, bp)
 	struct device *usc;
 	struct buf *bp;
 {
+	int s;
 
+	s = splbio();
 	biodone(bp);
+	splx(s);
 }
 
 /*

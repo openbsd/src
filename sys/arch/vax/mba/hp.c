@@ -1,4 +1,4 @@
-/*	$OpenBSD: hp.c,v 1.11 2002/03/14 01:26:48 millert Exp $ */
+/*	$OpenBSD: hp.c,v 1.12 2002/06/08 08:50:26 art Exp $ */
 /*	$NetBSD: hp.c,v 1.22 2000/02/12 16:09:33 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -208,7 +208,9 @@ hpstrategy(bp)
 
 done:
 	bp->b_resid = bp->b_bcount;
+	s = splbio();
 	biodone(bp);
+	splx(s);
 }
 
 /*

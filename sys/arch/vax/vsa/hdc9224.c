@@ -1,4 +1,4 @@
-/*	$OpenBSD: hdc9224.c,v 1.8 2002/03/14 03:16:02 millert Exp $ */
+/*	$OpenBSD: hdc9224.c,v 1.9 2002/06/08 08:50:26 art Exp $ */
 /*	$NetBSD: hdc9224.c,v 1.6 1997/03/15 16:32:22 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -445,7 +445,9 @@ done:
 	 * Correctly set the buf to indicate a completed xfer
 	 */
 	bp->b_resid = 0;	/* ??? bertram */
+	s = splbio();
 	biodone(bp);
+	splx(s);
 }
 
 int
