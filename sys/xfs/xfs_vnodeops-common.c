@@ -49,7 +49,7 @@
 #include <xfs/xfs_syscalls.h>
 #include <xfs/xfs_vnodeops.h>
 
-RCSID("$Id: xfs_vnodeops-common.c,v 1.1 1999/04/30 01:59:01 art Exp $");
+RCSID("$Id: xfs_vnodeops-common.c,v 1.2 1999/06/03 19:49:37 art Exp $");
 
 int
 xfs_open_valid(struct vnode * vp, struct ucred * cred, u_int tok)
@@ -294,8 +294,12 @@ xfs_write_common(struct vnode *vp, struct uio *uiop, int ioflag, struct ucred *c
 	if (error2 == 0) {
 	    xn->attr.va_size  = sub_attr.va_size;
 	    xn->attr.va_mtime = sub_attr.va_mtime;
+#ifdef UVM
+	    uvm_vnp_setsize(vp, sub_attr.va_size);
+#else
 #ifdef HAVE_KERNEL_VNODE_PAGER_SETSIZE
 	    vnode_pager_setsize(vp, sub_attr.va_size);
+#endif
 #endif
 	}
 	xfs_vfs_unlock(t, xfs_uio_to_proc(uiop));

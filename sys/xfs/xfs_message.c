@@ -45,7 +45,7 @@
 #include <xfs/xfs_vfsops.h>
 #include <xfs/xfs_vnodeops.h>
 
-RCSID("$Id: xfs_message.c,v 1.4 1999/04/30 01:59:00 art Exp $");
+RCSID("$Id: xfs_message.c,v 1.5 1999/06/03 19:49:38 art Exp $");
 
 int
 xfs_message_installroot(int fd,
@@ -119,8 +119,12 @@ xfs_message_installattr(int fd,
     if (t != 0) {
 	t->tokens = message->node.tokens;
 	xfs_attr2vattr(&message->node.attr, &t->attr);
+#ifdef UVM
+	uvm_vnp_setsize(XNODE_TO_VNODE(t), t->attr.va_size);
+#else
 #ifdef HAVE_KERNEL_VNODE_PAGER_SETSIZE
 	vnode_pager_setsize(XNODE_TO_VNODE(t), t->attr.va_size);
+#endif
 #endif
 	bcopy(message->node.id, t->id, sizeof(t->id));
 	bcopy(message->node.rights, t->rights, sizeof(t->rights));
@@ -194,8 +198,12 @@ xfs_message_installdata(int fd,
 
 	    t->tokens = message->node.tokens;
 	    xfs_attr2vattr(&message->node.attr, &t->attr);
+#ifdef UVM
+	    uvm_vnp_setsize(XNODE_TO_VNODE(t), t->attr.va_size);
+#else
 #ifdef HAVE_KERNEL_VNODE_PAGER_SETSIZE
 	    vnode_pager_setsize(XNODE_TO_VNODE(t), t->attr.va_size);
+#endif
 #endif
 	    if (XNODE_TO_VNODE(t)->v_type == VDIR
 		&& (message->flag & XFS_INVALID_DNLC))
