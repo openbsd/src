@@ -1,0 +1,7 @@
+#ifdef __POWERPC__
+#include <MacHeadersPPC>
+#else
+#include <MacHeaders68K>
+#endif
+
+#define HAVE_CONFIG_H

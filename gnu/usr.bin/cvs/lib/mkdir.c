@@ -54,7 +54,7 @@ mkdir (dpath, dmode)
     }
 
   /* If stat fails for a reason other than non-existence, return error. */
-  if (errno != ENOENT)
+  if (! existence_error (errno))
     return -1;
 
   cpid = fork ();

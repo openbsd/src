@@ -12,18 +12,68 @@
  */
 
 #include "cvs.h"
+#include "getline.h"
 
 #ifndef lint
 static const char rcsid[] = "$CVSid: @(#)entries.c 1.44 94/10/07 $";
 USE(rcsid);
 #endif
 
-static Node *AddEntryNode PROTO((List * list, char *name, char *version,
-			   char *timestamp, char *options, char *tag,
-			   char *date, char *conflict));
+static Node *AddEntryNode PROTO((List * list, Entnode *entnode));
+
+static Entnode *fgetentent PROTO((FILE *));
+static int   fputentent PROTO((FILE *, Entnode *));
 
 static FILE *entfile;
 static char *entfilename;		/* for error messages */
+
+/*
+ * Construct an Entnode
+ */
+Entnode *
+Entnode_Create(user, vn, ts, options, tag, date, ts_conflict)
+    const char *user;
+    const char *vn;
+    const char *ts;
+    const char *options;
+    const char *tag;
+    const char *date;
+    const char *ts_conflict;
+{
+    Entnode *ent;
+    
+    /* Note that timestamp and options must be non-NULL */
+    ent = (Entnode *) xmalloc (sizeof (Entnode));
+    ent->user      = xstrdup (user);
+    ent->version   = xstrdup (vn);
+    ent->timestamp = xstrdup (ts ? ts : "");
+    ent->options   = xstrdup (options ? options : "");
+    ent->tag       = xstrdup (tag);
+    ent->date      = xstrdup (date);
+    ent->conflict  = xstrdup (ts_conflict);
+
+    return ent;
+}
+
+/*
+ * Destruct an Entnode
+ */
+void
+Entnode_Destroy (ent)
+    Entnode *ent;
+{
+    free (ent->user);
+    free (ent->version);
+    free (ent->timestamp);
+    free (ent->options);
+    if (ent->tag)
+	free (ent->tag);
+    if (ent->date)
+	free (ent->date);
+    if (ent->conflict)
+	free (ent->conflict);
+    free (ent);
+}
 
 /*
  * Write out the line associated with a node of an entries file
@@ -34,32 +84,9 @@ write_ent_proc (node, closure)
      Node *node;
      void *closure;
 {
-    Entnode *p;
-
-    p = (Entnode *) node->data;
-    if (fprintf (entfile, "/%s/%s/%s", node->key, p->version,
-		 p->timestamp) == EOF)
-	error (1, errno, "cannot write %s", entfilename);
-    if (p->conflict)
-    {
-	if (fprintf (entfile, "+%s", p->conflict) < 0)
-	    error (1, errno, "cannot write %s", entfilename);
-    }
-    if (fprintf (entfile, "/%s/", p->options) < 0)
+    if (fputentent(entfile, (Entnode *) node->data))
 	error (1, errno, "cannot write %s", entfilename);
 
-    if (p->tag)
-    {
-	if (fprintf (entfile, "T%s\n", p->tag) < 0)
-	    error (1, errno, "cannot write %s", entfilename);
-    }
-    else if (p->date)
-    {
-	if (fprintf (entfile, "D%s\n", p->date) < 0)
-	    error (1, errno, "cannot write %s", entfilename);
-    }
-    else if (fprintf (entfile, "\n") < 0)
-	error (1, errno, "cannot write %s", entfilename);
     return (0);
 }
 
@@ -131,6 +158,7 @@ Register (list, fname, vn, ts, options, tag, date, ts_conflict)
     char *date;
     char *ts_conflict;
 {
+    Entnode *entnode;
     Node *node;
 
 #ifdef SERVER_SUPPORT
@@ -156,7 +184,8 @@ Register (list, fname, vn, ts, options, tag, date, ts_conflict)
 #endif
     }
 
-    node = AddEntryNode (list, fname, vn, ts, options, tag, date, ts_conflict);
+    entnode = Entnode_Create(fname, vn, ts, options, tag, date, ts_conflict);
+    node = AddEntryNode (list, entnode);
 
     if (!noexec)
     {
@@ -188,27 +217,22 @@ freesdt (p)
     free ((char *) sdtp);
 }
 
-struct entent {
-    char *user;
-    char *vn;
-    char *ts;
-    char *options;
-    char *tag;
-    char *date;
-    char *ts_conflict;
-};
-
-struct entent *
+static Entnode *
 fgetentent(fpin)
     FILE *fpin;
 {
-    static struct entent ent;
-    static char line[MAXLINELEN];
+    Entnode *ent;
+    char *line;
+    size_t line_chars_allocated;
     register char *cp;
     char *user, *vn, *ts, *options;
     char *tag_or_date, *tag, *date, *ts_conflict;
 
-    while (fgets (line, sizeof (line), fpin) != NULL)
+    line = NULL;
+    line_chars_allocated = 0;
+
+    ent = NULL;
+    while (getline (&line, &line_chars_allocated, fpin) > 0)
     {
 	if (line[0] != '/')
 	    continue;
@@ -257,7 +281,6 @@ fgetentent(fpin)
 	    struct stat sb;
 	    if (strlen (ts) > 30 && stat (user, &sb) == 0)
 	    {
-		extern char *ctime ();
 		char *c = ctime (&sb.st_mtime);
 		
 		if (!strncmp (ts + 25, c, 24))
@@ -270,18 +293,46 @@ fgetentent(fpin)
 	    }
 	}
 
-	ent.user = user;
-	ent.vn = vn;
-	ent.ts = ts;
-	ent.options = options;
-	ent.tag = tag;
-	ent.date = date;
-	ent.ts_conflict = ts_conflict;
-
-	return &ent;
+	ent = Entnode_Create(user, vn, ts, options, tag, date, ts_conflict);
+	break;
     }
 
-    return NULL;
+    free (line);
+    return ent;
+}
+
+static int
+fputentent(fp, p)
+    FILE *fp;
+    Entnode *p;
+{
+    if (fprintf (fp, "/%s/%s/%s", p->user, p->version, p->timestamp) < 0)
+	return 1;
+    if (p->conflict)
+    {
+	if (fprintf (fp, "+%s", p->conflict) < 0)
+	    return 1;
+    }
+    if (fprintf (fp, "/%s/", p->options) < 0)
+	return 1;
+
+    if (p->tag)
+    {
+	if (fprintf (fp, "T%s\n", p->tag) < 0)
+	    return 1;
+    }
+    else if (p->date)
+    {
+	if (fprintf (fp, "D%s\n", p->date) < 0)
+	    return 1;
+    }
+    else 
+    {
+	if (fprintf (fp, "\n") < 0)
+	    return 1;
+    }
+
+    return 0;
 }
 
 
@@ -293,7 +344,7 @@ Entries_Open (aflag)
     int aflag;
 {
     List *entries;
-    struct entent *ent;
+    Entnode *ent;
     char *dirtag, *dirdate;
     int do_rewrite = 0;
     FILE *fpin;
@@ -328,31 +379,18 @@ Entries_Open (aflag)
     {
 	while ((ent = fgetentent (fpin)) != NULL) 
 	{
-	    (void) AddEntryNode (entries, 
-				 ent->user,
-				 ent->vn,
-				 ent->ts,
-				 ent->options,
-				 ent->tag,
-				 ent->date,
-				 ent->ts_conflict);
+	    (void) AddEntryNode (entries, ent);
 	}
 
 	fclose (fpin);
     }
 
     fpin = fopen (CVSADM_ENTLOG, "r");
-    if (fpin != NULL) {
+    if (fpin != NULL) 
+    {
 	while ((ent = fgetentent (fpin)) != NULL) 
 	{
-	    (void) AddEntryNode (entries, 
-				 ent->user,
-				 ent->vn,
-				 ent->ts,
-				 ent->options,
-				 ent->tag,
-				 ent->date,
-				 ent->ts_conflict);
+	    (void) AddEntryNode (entries, ent);
 	}
 	do_rewrite = 1;
 	fclose (fpin);
@@ -362,8 +400,6 @@ Entries_Open (aflag)
 	write_entries (entries);
 
     /* clean up and return */
-    if (fpin)
-	(void) fclose (fpin);
     if (dirtag)
 	free (dirtag);
     if (dirdate)
@@ -398,16 +434,7 @@ Entries_delproc (node)
     Entnode *p;
 
     p = (Entnode *) node->data;
-    free (p->version);
-    free (p->timestamp);
-    free (p->options);
-    if (p->tag)
-	free (p->tag);
-    if (p->date)
-	free (p->date);
-    if (p->conflict)
-	free (p->conflict);
-    free ((char *) p);
+    Entnode_Destroy(p);
 }
 
 /*
@@ -415,21 +442,14 @@ Entries_delproc (node)
  * list
  */
 static Node *
-AddEntryNode (list, name, version, timestamp, options, tag, date, conflict)
+AddEntryNode (list, entdata)
     List *list;
-    char *name;
-    char *version;
-    char *timestamp;
-    char *options;
-    char *tag;
-    char *date;
-    char *conflict;
+    Entnode *entdata;
 {
     Node *p;
-    Entnode *entdata;
 
     /* was it already there? */
-    if ((p  = findnode (list, name)) != NULL)
+    if ((p  = findnode (list, entdata->user)) != NULL)
     {
 	/* take it out */
 	delnode (p);
@@ -441,21 +461,11 @@ AddEntryNode (list, name, version, timestamp, options, tag, date, conflict)
     p->delproc = Entries_delproc;
 
     /* this one gets a key of the name for hashing */
-    p->key = xstrdup (name);
-
-    /* malloc the data parts and fill them in */
-    p->data = xmalloc (sizeof (Entnode));
-    entdata = (Entnode *) p->data;
-    entdata->version = xstrdup (version);
-    entdata->timestamp = xstrdup (timestamp);
-    if (entdata->timestamp == NULL)
-       entdata->timestamp = xstrdup ("");/* must be non-NULL */
-    entdata->options = xstrdup (options);
-    if (entdata->options == NULL)
-	entdata->options = xstrdup ("");/* must be non-NULL */
-    entdata->conflict = xstrdup (conflict);
-    entdata->tag = xstrdup (tag);
-    entdata->date = xstrdup (date);
+    /* FIXME This results in duplicated data --- the hash package shouldn't
+       assume that the key is dynamically allocated.  The user's free proc
+       should be responsible for freeing the key. */
+    p->key = xstrdup (entdata->user);
+    p->data = (char *) entdata;
 
     /* put the node into the list */
     addnode (list, p);
@@ -499,7 +509,7 @@ WriteTag (dir, tag, date)
 	    error (1, errno, "cannot close %s", tmp);
     }
     else
-	if (unlink_file (tmp) < 0 && errno != ENOENT)
+	if (unlink_file (tmp) < 0 && ! existence_error (errno))
 	    error (1, errno, "cannot remove %s", tmp);
 }
 
@@ -512,8 +522,6 @@ ParseTag (tagp, datep)
     char **datep;
 {
     FILE *fp;
-    char line[MAXLINELEN];
-    char *cp;
 
     if (tagp)
 	*tagp = (char *) NULL;
@@ -522,15 +530,24 @@ ParseTag (tagp, datep)
     fp = fopen (CVSADM_TAG, "r");
     if (fp)
     {
-	if (fgets (line, sizeof (line), fp) != NULL)
+	char *line;
+	int line_length;
+	size_t line_chars_allocated;
+
+	line = NULL;
+	line_chars_allocated = 0;
+	  
+	if ((line_length = getline (&line, &line_chars_allocated, fp)) > 0)
 	{
-	    if ((cp = strrchr (line, '\n')) != NULL)
-		*cp = '\0';
+	    /* Remove any trailing newline.  */
+	    if (line[line_length - 1] == '\n')
+	        line[--line_length] = '\0';
 	    if (*line == 'T' && tagp)
 		*tagp = xstrdup (line + 1);
 	    else if (*line == 'D' && datep)
 		*datep = xstrdup (line + 1);
 	}
 	(void) fclose (fp);
+	free (line);
     }
 }

@@ -53,12 +53,14 @@
 
 /*
  * The "diff" program to execute when creating patch output.  This "diff"
- * must support the "-c" option for context diffing.  Specify a full pathname
- * if your site wants to use a particular diff.  If you are using the GNU
- * version of diff (version 1.15 or later), this should be "diff -a".
+ * must support the "-c" option for context diffing.  Specify a full
+ * pathname if your site wants to use a particular diff.  If you are
+ * using the GNU version of diff (version 1.15 or later), this should
+ * be "diff -a".
  * 
- * NOTE: this program is only used for the ``patch'' sub-command.  The other
- * commands use rcsdiff which will use whatever version of diff was specified
+ * NOTE: this program is only used for the ``patch'' sub-command (and
+ * for ``update'' if you are using the server).  The other commands
+ * use rcsdiff which will use whatever version of diff was specified
  * when rcsdiff was built on your system.
  */
 
@@ -112,6 +114,17 @@
  * unless the user overrides the default with the RCSBIN environment variable
  * or the "-b" option to CVS.
  * 
+ * If you're compiling the authenticating server (see
+ * AUTH_SERVER_SUPPORT farther down), then you probably want to set
+ * RCSBIN_DFLT.  The authenticating server starts out running as root,
+ * and then switches to run as the appropriate user once
+ * authentication is complete.  No shell is ever started by that user,
+ * so the PATH environment variable may not contain the directory with
+ * the RCS binaries, even though if that user logged in normally, PATH
+ * would include the directory.  An alternative to setting RCSBIN_DFLT
+ * is to make sure that root has the right directory in its path
+ * already.
+ *
  * This define should be either the empty string ("") or a full pathname to the
  * directory containing all the installed programs from the RCS distribution.
  */
@@ -130,6 +143,33 @@
  */
 #ifndef EDITOR_DFLT
 #define	EDITOR_DFLT	"notepad"
+#endif
+
+/*
+ * The default umask to use when creating or otherwise setting file or
+ * directory permissions in the repository.  Must be a value in the
+ * range of 0 through 0777.  For example, a value of 002 allows group
+ * rwx access and world rx access; a value of 007 allows group rwx
+ * access but no world access.  This value is overridden by the value
+ * of the CVSUMASK environment variable, which is interpreted as an
+ * octal number.
+ */
+#ifndef UMASK_DFLT
+#define	UMASK_DFLT	002
+#endif
+
+/*
+ * The cvs admin command is restricted to the members of the group
+ * CVS_ADMIN_GROUP.  If this group does not exist, all users are
+ * allowed to run cvs admin.  To disable the cvs admin for all users,
+ * create an empty group CVS_ADMIN_GROUP.  To disable access control for
+ * cvs admin, comment out the define below.
+ *
+ * Under Windows NT, this must not be used because it tries to include
+ * <grp.h>
+ */
+#ifdef CVS_ADMIN_GROUP
+/* #define CVS_ADMIN_GROUP "cvsadmin" */
 #endif
 
 /*
@@ -187,8 +227,7 @@
  * so the case in which someone has logged in as root does not occur.
  * Thus, there is no need for this hack.
  */
-#undef	CVS_BADROOT
-
+#undef CVS_BADROOT
 
 /*
  * The "cvs diff" command accepts all the single-character options that GNU
@@ -201,6 +240,23 @@
 #ifndef CVS_DIFFDATE
 #define	CVS_DIFFDATE
 #endif
+
+/*
+ * The authenticated client/server is under construction -- it is not
+ * known to work with Windows NT.
+ */
+/* #define AUTH_CLIENT_SUPPORT 1 */
+/* #define AUTH_SERVER_SUPPORT 1 */
+
+/*
+ * This tells the client that it must use send()/recv() to talk to the
+ * server if it is connected to the server via a socket; Win95 is said to
+ * need it because _open_osfhandle doesn't work.  This is only
+ * implemented for pserver, not rsh.  Furthermore, NT doesn't seem to have send()
+ * and recv(), or maybe one has to link against a different library or something,
+ * I don't know.  So this is commented out.
+ */
+/* #define NO_SOCKET_TO_FD 1 */
 
 /* End of CVS configuration section */
 

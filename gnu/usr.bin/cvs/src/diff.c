@@ -183,35 +183,28 @@ diff (argc, argv)
 	if (diff_date2)
 	    client_senddate (diff_date2);
 
+	send_file_names (argc, argv);
 #if 0
-/* FIXME:  We shouldn't have to send current files to diff two revs, but it
-   doesn't work yet and I haven't debugged it.  So send the files --
-   it's slower but it works.  gnu@cygnus.com  Apr94  */
-
-/* Idea: often times the changed region of a file is relatively small.
-   It would be cool if the client could just divide the file into 4k
-   blocks or whatever and send hash values for the blocks.  Send hash
-   values for blocks aligned with the beginning of the file and the
-   end of the file.  Then the server can tell how much of the head and
-   tail of the file is unchanged.  Well, hash collisions will screw
-   things up, but MD5 has 128 bits of hash value...  */
-
+	/* FIXME: We shouldn't have to send current files to diff two
+	   revs, but it doesn't work yet and I haven't debugged it.
+	   So send the files -- it's slower but it works.
+	   gnu@cygnus.com Apr94 */
 	/* Send the current files unless diffing two revs from the archive */
 	if (diff_rev2 == NULL && diff_date2 == NULL)
-	    send_files (argc, argv, local);
-	else
-	    send_file_names (argc, argv);
-#else
-	send_files (argc, argv, local, 0);
 #endif
+	send_files (argc, argv, local, 0);
 
-	if (fprintf (to_server, "diff\n") < 0)
-	    error (1, errno, "writing to server");
+	send_to_server ("diff\012", 0);
         err = get_responses_and_close ();
 	free (options);
 	return (err);
     }
 #endif
+
+    if (diff_rev1 != NULL)
+	tag_check_valid (diff_rev1, argc, argv, local, 0, "");
+    if (diff_rev2 != NULL)
+	tag_check_valid (diff_rev2, argc, argv, local, 0, "");
 
     which = W_LOCAL;
     if (diff_rev2 != NULL || diff_date2 != NULL)
@@ -350,7 +343,7 @@ diff_fileproc (file, update_dir, repository, entries, srcfiles)
 	/* Backup the current version of the file to CVS/,,filename */
 	sprintf(fname,"%s/%s%s",CVSADM, CVSPREFIX, file);
 	if (unlink_file_dir (fname) < 0)
-	    if (errno != ENOENT)
+	    if (! existence_error (errno))
 		error (1, errno, "cannot remove %s", file);
 	rename_file (file, fname);
 	/* Copy the wrapped file to the current directory then go to work */
@@ -420,7 +413,7 @@ diff_fileproc (file, update_dir, repository, entries, srcfiles)
     if (tocvsPath)
     {
 	if (unlink_file_dir (file) < 0)
-	    if (errno != ENOENT)
+	    if (! existence_error (errno))
 		error (1, errno, "cannot remove %s", file);
 
 	rename_file (fname,file);
@@ -450,6 +443,8 @@ diff_mark_errors (err)
 
 /*
  * Print a warm fuzzy message when we enter a dir
+ *
+ * Don't try to diff directories that don't exist! -- DW
  */
 /* ARGSUSED */
 static Dtype
@@ -459,6 +454,11 @@ diff_dirproc (dir, pos_repos, update_dir)
     char *update_dir;
 {
     /* XXX - check for dirs we don't want to process??? */
+
+    /* YES ... for instance dirs that don't exist!!! -- DW */
+    if (!isdir (dir) )
+      return (R_SKIP_ALL);
+  
     if (!quiet)
 	error (0, 0, "Diffing %s", update_dir);
     return (R_PROCESS);
@@ -522,8 +522,11 @@ diff_file_nodiff (file, repository, entries, srcfiles, vers)
 				diff_date1, file, 1, 0, entries, srcfiles);
 	    if (xvers->vn_rcs == NULL)
 	    {
-		if (diff_rev1)
-		    error (0, 0, "tag %s is not in file %s", diff_rev1, file);
+		/* Don't gripe if it doesn't exist, just ignore! */
+		if (! isfile (file))
+                  /* null statement */ ;
+		else if (diff_rev1)
+                    error (0, 0, "tag %s is not in file %s", diff_rev1, file);
 		else
 		    error (0, 0, "no revision for date %s in file %s",
 			   diff_date1, file);
@@ -544,7 +547,10 @@ diff_file_nodiff (file, repository, entries, srcfiles, vers)
 				diff_date2, file, 1, 0, entries, srcfiles);
 	    if (xvers->vn_rcs == NULL)
 	    {
-		if (diff_rev1)
+		/* Don't gripe if it doesn't exist, just ignore! */
+		if (! isfile (file))
+                  /* null statement */ ;
+		else if (diff_rev1)
 		    error (0, 0, "tag %s is not in file %s", diff_rev2, file);
 		else
 		    error (0, 0, "no revision for date %s in file %s",

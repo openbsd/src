@@ -30,6 +30,11 @@ extern int client_admin PROTO((int argc, char **argv));
 extern int client_export PROTO((int argc, char **argv));
 extern int client_history PROTO((int argc, char **argv));
 extern int client_release PROTO((int argc, char **argv));
+extern int client_watch PROTO((int argc, char **argv));
+extern int client_watchers PROTO((int argc, char **argv));
+extern int client_editors PROTO((int argc, char **argv));
+extern int client_edit PROTO((int argc, char **argv));
+extern int client_unedit PROTO((int argc, char **argv));
 
 /*
  * Flag variable for seeing whether common code is running as a client
@@ -37,13 +42,26 @@ extern int client_release PROTO((int argc, char **argv));
  */
 extern int client_active;
 
+/*
+ * Flag variable for seeing whether the server has been started yet.
+ * As of this writing, only edit.c:notify_check() uses it.
+ */
+extern int server_started;
+
 /* Is the -P option to checkout or update specified?  */
 extern int client_prune_dirs;
 
-/* Stream to write to the server.  */
-extern FILE *to_server;
-/* Stream to read from the server.  */
-extern FILE *from_server;
+#ifdef AUTH_CLIENT_SUPPORT
+extern int use_authenticating_server;
+int connect_to_pserver PROTO((int *tofdp, int* fromfdp, int verify_only));
+# ifndef CVS_AUTH_PORT
+# define CVS_AUTH_PORT 2401
+# endif /* CVS_AUTH_PORT */
+#endif /* AUTH_CLIENT_SUPPORT */
+
+/* Talking to the server. */
+void send_to_server PROTO((char *str, size_t len));
+void read_from_server PROTO((char *buf, size_t len));
 
 /* Internal functions that handle client communication to server, etc.  */
 int supported_request PROTO ((char *));
@@ -65,9 +83,7 @@ send_file_names PROTO((int argc, char **argv));
 /*
  * Send Repository, Modified and Entry.  argc and argv contain only
  * the files to operate on (or empty for everything), not options.
- * local is nonzero if we should not recurse (-l option).  Also sends
- * Argument lines for argc and argv, so should be called after options
- * are sent.
+ * local is nonzero if we should not recurse (-l option).
  */
 void
 send_files PROTO((int argc, char **argv, int local, int aflag));
@@ -159,5 +175,5 @@ extern int client_process_import_file
     PROTO((char *message, char *vfile, char *vtag,
 	   int targc, char *targv[], char *repository));
 extern void client_import_done PROTO((void));
-
+extern void client_notify PROTO((char *, char *, char *, int, char *));
 #endif /* CLIENT_SUPPORT */

@@ -30,7 +30,9 @@ hashp (key)
 
     while (*key != 0)
     {
-	h = (h << 4) + *key++;
+	unsigned int c = *key++;
+	/* The FOLD_FN_CHAR is so that findnode_fn works.  */
+	h = (h << 4) + FOLD_FN_CHAR (c);
 	if ((g = h & 0xf0000000) != 0)
 	    h = (h ^ (g >> 24)) ^ g;
     }
@@ -272,6 +274,29 @@ findnode (list, key)
 }
 
 /*
+ * Like findnode, but for a filename.
+ */
+Node *
+findnode_fn (list, key)
+    List *list;
+    const char *key;
+{
+    Node *head, *p;
+
+    if (list == (List *) NULL)
+	return ((Node *) NULL);
+
+    head = list->hasharray[hashp (key)];
+    if (head == (Node *) NULL)
+	return ((Node *) NULL);
+
+    for (p = head->hashnext; p != head; p = p->hashnext)
+	if (fncmp (p->key, key) == 0)
+	    return (p);
+    return ((Node *) NULL);
+}
+
+/*
  * walk a list with a specific proc
  */
 int
@@ -290,6 +315,13 @@ walklist (list, proc, closure)
     for (p = head->next; p != head; p = p->next)
 	err += proc (p, closure);
     return (err);
+}
+
+int
+list_isempty (list)
+    List *list;
+{
+    return list == NULL || list->list->next == list->list;
 }
 
 /*
@@ -358,6 +390,7 @@ nodetypestring (type)
     case UPDATE:	return("UPDATE");
     case LOCK:		return("LOCK");
     case NDBMNODE:	return("NDBMNODE");
+    case FILEATTR:	return("FILEATTR");
     }
 
     return("<trash>");

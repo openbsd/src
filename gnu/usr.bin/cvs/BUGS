@@ -1,3 +1,17 @@
+To report bugs send mail to bug-cvs@prep.ai.mit.edu, or run the "cvsbug"
+program and fill out the template:
+
+	$ cvsbug
+
+The "cvsbug" program is installed in the same location as the "cvs"
+program.  If your installation failed, you may need to run "cvsbug"
+directly out of the "src" directory as "src/cvsbug.sh".  This is also
+the procedure for submitting suggested changes to CVS--note that all
+submitted changes may be distributed under the terms of the GNU Public
+License, so if you don't like this, don't submit them.
+
+
+
 * `cvs checkout -d nested/dir/path <module>' just doesn't work.  The
   simpler version -- `cvs checkout -d single-dir <module>' works,
   however.
@@ -14,7 +28,7 @@
 
 
 * From: Roland McGrath <roland@gnu.ai.mit.edu>
-  To: Cyclic CVS Hackers <cyclic-cvs@cyclic.com>
+  To: Cyclic CVS Hackers <info-cvs@prep.ai.mit.edu>
   Subject: weird bug
   Date: Sat, 25 Mar 1995 16:41:41 -0500
   X-Windows: Even your dog won't like it.
@@ -170,7 +184,7 @@
   
 
   From: "Charles M. Hannum" <mycroft@ai.mit.edu>
-  To: remote-cvs@cyclic.com
+  To: info-cvs@prep.ai.mit.edu
   Cc: jimb@totoro.bio.indiana.edu
   Subject: Re: forwarded message from Charles M. Hannum
   Date: Wed, 22 Feb 1995 22:07:07 -0500
@@ -183,7 +197,7 @@
 
 
 * From: "Charles M. Hannum" <mycroft@ai.mit.edu>
-  To: remote-cvs@cyclic.com
+  To: info-cvs@prep.ai.mit.edu
   Subject: Regarding that relative path problem
   Date: Thu, 23 Feb 1995 02:41:51 -0500
 
@@ -205,7 +219,7 @@
 
 
 * From: "Charles M. Hannum" <mycroft@ai.mit.edu>
-  To: remote-cvs@cyclic.com
+  To: info-cvs@prep.ai.mit.edu
   Subject: Still one more bug
   Date: Sat, 25 Feb 1995 17:01:15 -0500
   
@@ -225,7 +239,7 @@
 
 
 * From: Roland McGrath <roland@gnu.ai.mit.edu>
-  To: Cyclic CVS Hackers <cyclic-cvs@cyclic.com>
+  To: Cyclic CVS Hackers <info-cvs@prep.ai.mit.edu>
   Subject: bizarre failure mode
   Date: Tue, 7 Mar 95 14:17:28 -0500
   

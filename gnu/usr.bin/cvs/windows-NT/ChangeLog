@@ -1,3 +1,123 @@
+Thu Jan 11 16:01:27 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* README: Update with information for Visual C++ 4.0, some
+	warnings that weren't mentioned, etc.
+
+Thu Jan 11 12:04:42 1996  Norbert Kiesel  <nk@col.sw-ley.de>
+
+	* options.h: remove CVS_NOADMIN
+
+Wed Jan  3 16:17:19 1996  Jon Dart  <jdart@tss.com>
+			  and Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* run.c (filter_stream_through_program): If pidp is NULL, don't
+	store to *pidp.
+	* ndir.h: Change MAXNAMLEN to 255.
+	* run.c (build_command): Deal with it if there are no arguments at
+	all.
+
+Mon Jan  1 23:40:01 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* filesubr.c (link_file): New function.
+
+	* README: Mention CRLF vs. LF in cvsnt.mak.  Other minor revisions.
+
+Fri Dec 22 12:00:00 1995  Jim Kingdon  <kingdon@peary.cyclic.com>
+
+	* run.c (filter_stream_through_program): On error, error() rather
+	than returning -1.
+
+Thu Dec 21 16:00:00 1995  Jim Kingdon  <kingdon@peary.cyclic.com>
+
+	* options.h: Don't define NO_SOCKET_TO_FD.
+
+Mon Dec 18 09:57:29 1995  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* options.h: Explain NO_SOCKET_TO_FD some more.
+
+Sun Dec 17 21:19:18 1995  Karl Fogel  <kfogel@floss.cyclic.com>
+
+        * options.h (NO_SOCKET_TO_FD): define to 1.
+
+Tue Dec 12 19:18:00 1995  Karl Fogel  <kfogel@floss.cyclic.com>
+
+        * options.h (AUTH_CLIENT_SUPPORT, AUTH_SERVER_SUPPORT): these
+        replace CVS_LOGIN.
+        (RCSBIN_DFLT): expand comment.
+
+Mon Dec 11 12:43:35 1995  adamg  <adamg@microsoft.com>
+
+	* config.h: Add INITIALIZE_SOCKET_SUBSYSTEM macro to ensure that
+	winsock is initialized early enough for the gethostname() in
+	main.c to succeed.
+	* rcmd.c: Remove from init_winsock(), and rcmd() code that
+	initialized winsock on demand.
+
+Thu Dec  7 14:49:16 1995  Jim Meyering  (meyering@comco.com)
+
+	* filesubr.c (isaccessible): Rename from isaccessable.
+	Update callers.
+
+Mon Dec  4 10:46:31 1995  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* The following change was copied from src/filesubr.c.  This is
+	because we need filesubr.c to compile, not because we are trying
+	to make set*id work on NT (if it even has set*id).
+	* filesubr.c (isaccessable): new function.  Checks access-rights
+	for files like access(), but is getxid-safe.  Falls back to
+	access() if SETXID_SUPPORT is not enabled.
+	(isfile): replace stat() by isaccessable(file, F_OK)
+	(isreadable): replace access() by isaccessable()
+	(iswritable): ditto
+	(make_directory): rename local variable buf to sb
+
+Fri Nov 24 11:17:16 EST 1995  Boleslaw Ciesielski  <bolek@viewlogic.com>
+
+	* filesubr.c (convert_file): Pass S_IWRITE to open when creating
+	file (fixes problem with deleting temporary files).
+
+Fri Nov 24 11:12:47 1995  Boleslaw Ciesielski  <bolek@viewlogic.com>
+
+	* run.c (build_command): Move len++ inside loop, to make room for
+	spaces between arguments.
+
+Thu Oct 26 10:12:51 1995  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* README: Say that patch is required, not optional.
+
+Wed Oct 25 07:40:17 1995  Noel Cragg  <noel@virtual.office.com>
+
+	* startserver.c (wnt_start_server): removed NTOHS call; since the
+	resulting number was passed as the port number to rcmd which
+	called NTOHS again, we did a complicated NOOP.
+
+Tue Oct 24 10:59:03 1995  Norbert Kiesel  <nk@col.sw-ley.de>
+
+	* Makefile.in: insert autoconf variables. This allows e.g. make
+	  dist to work when configure was called from within a subdir.
+
+	* Makefile.in (dist): replace by rule which honors $(srcdir)
+
+Mon Oct 23 18:51:49 1995  Karl Fogel  <kfogel@floss.cyclic.com>
+
+        * Makefile.in (clean): new rule, does nothing but satisfy
+        top-level Makefile's beliefs about what its children can do.
+
+Fri Oct 20 11:09:55 1995  Norbert Kiesel  <nk@col.sw-ley.de>
+
+	* config.h: use same layout and comments as current ../config.h.in
+
+	* options.h: as above for ../src/options.h.in
+
+Tue Oct 10 16:04:18 1995  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* README: Update to remove obsolete information (e.g. ftp
+	distributions).
+
+Thu Oct  5 17:28:52 1995  Kevin Layer  <layer@franz.com>
+
+	* filesubr.c: Add semicolon after USE.
+
 Thu Sep 7  19:18:00 1995  Jim Blandy  <jimb@cyclic.com>
 
 	* config.h (CVS_SUPPORT): #define this.

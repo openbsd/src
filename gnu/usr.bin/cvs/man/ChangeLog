@@ -1,3 +1,25 @@
+Tue Nov 14 15:47:44 1995  Greg A. Woods  <woods@most.weird.com>
+
+	* cvs.5:
+	- list filenames in alpha sort order
+	- describe the cvswrappers file
+	- describe the taginfo file
+	- fix cvsinit chapter number
+	(This is by no means complete -- it's just stuff I noticed.)
+
+	* cvs.1: put the filenames in alpha sort order
+
+	* cvsinit.8: remove the .pl extension from filenames
+
+Wed Oct 18 11:07:07 1995  Vince Demarco  <vdemarco@bou.shl.com>
+
+	* cvs.1 (Flag): Updated the CVSROOT/wrappers stuff. Everyone seems
+        to think this is a NEXT specific thing it isn't.
+
+Tue Oct 17 17:38:27 1995  Warren Jones  <wjones@tc.fluke.com>
+
+	* cvs.1: Change \. to \&. at start of line.
+
 Tue Oct  3 13:43:33 1995  Del  <del@matra.com.au>
 
 	* cvs.1: Updated man page for all the new features of 1.6

@@ -1,7 +1,7 @@
 #
 # The CVS Modules File
 #
-# $CVSid: @(#)modules 1.5 92/03/31 $
+#ident	"@(#)cvs/examples:$Name:  $:$Id: modules,v 1.1.1.2 1996/01/30 00:19:21 tholo Exp $"
 #
 # Three different line formats are valid:
 #	key	-a    aliases...
@@ -11,6 +11,7 @@
 # Where "options" are composed of:
 #	-i prog		Run "prog" on "cvs commit" from top-level of module.
 #	-o prog		Run "prog" on "cvs checkout" of module.
+#	-e prog		Run "prog" on "cvs export" of module.
 #	-t prog		Run "prog" on "cvs rtag" of module.
 #	-u prog		Run "prog" on "cvs update" of module.
 #	-d dir		Place module in directory "dir" instead of module name.
@@ -32,10 +33,14 @@ world		-a .
 
 # CVSROOT support
 CVSROOT		-i /usr/local/bin/mkmodules CVSROOT
+commitinfo	-i /usr/local/bin/mkmodules CVSROOT commitinfo
+cvswrappers	-i /usr/local/bin/mkmodules CVSROOT cvswrappers
+editinfo	-i /usr/local/bin/mkmodules CVSROOT editinfo
 modules		-i /usr/local/bin/mkmodules CVSROOT modules
 loginfo		-i /usr/local/bin/mkmodules CVSROOT loginfo
-commitinfo	-i /usr/local/bin/mkmodules CVSROOT commitinfo
 rcsinfo		-i /usr/local/bin/mkmodules CVSROOT rcsinfo
+rcstemplate	-i /usr/local/bin/mkmodules CVSROOT rcstemplate
+taginfo		-i /usr/local/bin/mkmodules CVSROOT taginfo
 
 # Add more modules here 
 #

@@ -19,6 +19,7 @@
 # $CVSid: @(#)Makefile.in 1.21 94/09/24 $
 srcdir     = @srcdir@
 top_srcdir = @top_srcdir@
+cvs_srcdir = @top_srcdir@/src
 VPATH      = @srcdir@
 
 SHELL = /bin/sh
@@ -30,11 +31,11 @@ SOURCES = \
 	alloca.c \
 	argmatch.c \
 	dup2.c \
-	error.c \
 	fnmatch.c \
 	ftruncate.c \
 	getdate.c \
 	getdate.y \
+    	getline.c \
 	getopt.c \
 	getopt1.c \
 	getwd.c \
@@ -56,12 +57,12 @@ SOURCES = \
 	xgetwd.c \
 	yesno.c
 
-HEADERS = getopt.h fnmatch.h regex.h system.h wait.h md5.h error.h save-cwd.h
+HEADERS = getline.h getopt.h fnmatch.h regex.h system.h wait.h md5.h save-cwd.h
 
 OBJECTS = \
     @ALLOCA@ @LIBOBJS@ \
     argmatch.o \
-    error.o \
+    getline.o \
     getopt.o \
     getopt1.o \
     md5.o \
@@ -87,7 +88,8 @@ CPPFLAGS=
 YACC = @YACC@
 
 .c.o:
-	$(CC) $(CPPFLAGS) -I.. -I$(srcdir) $(DEFS) $(CFLAGS) -c $<
+	$(CC) $(CPPFLAGS) -I.. -I$(srcdir) -I$(cvs_srcdir) \
+              $(DEFS) $(CFLAGS) -c $<
 
 all: libcvs.a
 .PHONY: all

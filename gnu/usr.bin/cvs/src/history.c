@@ -579,8 +579,7 @@ history (argc, argv)
 	    option_with_arg ("-x", rec_types);
 	option_with_arg ("-z", tz_name);
 
-	if (fprintf (to_server, "history\n") < 0)
-	    error (1, errno, "writing to server");
+	send_to_server ("history\012", 0);
         return get_responses_and_close ();
     }
 #endif
@@ -944,6 +943,7 @@ fill_hrec (line, hr)
     int c;
     int off;
     static int idx = 0;
+    unsigned long date;
 
     memset ((char *) hr, 0, sizeof (*hr));
     while (isspace (*line))
@@ -953,7 +953,8 @@ fill_hrec (line, hr)
     *rtn++ = '\0';
 
     hr->type = line++;
-    (void) sscanf (line, "%x", &hr->date);
+    (void) sscanf (line, "%lx", &date);
+    hr->date = date;
     while (*line && strchr ("0123456789abcdefABCDEF", *line))
 	line++;
     if (*line == '\0')

@@ -47,7 +47,7 @@ wnt_start_server (int *tofd, int *fromfd,
     if ((s = getservbyname("shell", "tcp")) == NULL)
 	port = IPPORT_CMDSERVER;
     else
-        port = ntohs (s->s_port);
+        port = s->s_port;
 
     read_fd = rcmd (&server_host,
     	            port,

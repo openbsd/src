@@ -89,22 +89,12 @@
 /* Define if you have MIT Kerberos version 4 available.  */
 #undef HAVE_KERBEROS
 
-/* This is always defined; it tells some library files to include
-   CVS-specific features.  */
-#undef CVS_SUPPORT
-
 /* Define if you want CVS to be able to be a remote repository client.  */
 #undef CLIENT_SUPPORT
 
 /* Define if you want CVS to be able to serve repositories to remote
    clients.  */
 #undef SERVER_SUPPORT
-
-/* the path to the gnu diff program on your system  */
-#undef DIFF
-
-/* the path to the gnu grep program on your system  */
-#undef GREP
 
 /* The number of bytes in a int.  */
 #undef SIZEOF_INT
@@ -144,6 +134,21 @@
 
 /* Define if you have the setvbuf function.  */
 #undef HAVE_SETVBUF
+
+/* Define if you have the sigaction function.  */
+#undef HAVE_SIGACTION
+
+/* Define if you have the sigblock function.  */
+#undef HAVE_SIGBLOCK
+
+/* Define if you have the sigprocmask function.  */
+#undef HAVE_SIGPROCMASK
+
+/* Define if you have the sigsetmask function.  */
+#undef HAVE_SIGSETMASK
+
+/* Define if you have the sigvec function.  */
+#undef HAVE_SIGVEC
 
 /* Define if you have the timezone function.  */
 #undef HAVE_TIMEZONE
@@ -192,6 +197,9 @@
 
 /* Define if you have the <sys/param.h> header file.  */
 #undef HAVE_SYS_PARAM_H
+
+/* Define if you have the <sys/resource.h> header file.  */
+#undef HAVE_SYS_RESOURCE_H
 
 /* Define if you have the <sys/select.h> header file.  */
 #undef HAVE_SYS_SELECT_H

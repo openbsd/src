@@ -219,7 +219,8 @@ find_dirs (dir, list, checkadm)
 	if (strcmp (dp->d_name, ".") == 0 ||
 	    strcmp (dp->d_name, "..") == 0 ||
 	    strcmp (dp->d_name, CVSATTIC) == 0 ||
-	    strcmp (dp->d_name, CVSLCK) == 0)
+	    strcmp (dp->d_name, CVSLCK) == 0 ||
+	    strcmp (dp->d_name, CVSREP) == 0)
 	    continue;
 
 #ifdef DT_DIR

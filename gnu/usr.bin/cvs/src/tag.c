@@ -12,6 +12,7 @@
  */
 
 #include "cvs.h"
+#include "save-cwd.h"
 
 #ifndef lint
 static const char rcsid[] = "$CVSid: @(#)tag.c 1.60 94/09/30 $";
@@ -59,7 +60,7 @@ static List *tlist;
 
 static const char *const tag_usage[] =
 {
-    "Usage: %s %s [-lRF] [-b] [-d] tag [files...]\n",
+    "Usage: %s %s [-lRF] [-b] [-d] [-r tag|-D date] tag [files...]\n",
     "\t-l\tLocal directory only, not recursive.\n",
     "\t-R\tProcess directories recursively.\n",
     "\t-d\tDelete the given Tag.\n",
@@ -138,6 +139,8 @@ tag (argc, argv)
     argc--;
     argv++;
 
+    if (date && numtag)
+	error (1, 0, "-r and -D options are mutually exclusive");
     if (delete && branch_mode)
 	error (0, 0, "warning: -b ignored with -d options");
     RCS_check_tag (symtag);
@@ -159,28 +162,32 @@ tag (argc, argv)
 	if (force_tag_move)
 	    send_arg("-F");
 
+	if (numtag)
+	    option_with_arg ("-r", numtag);
+	if (date)
+	    client_senddate (date);
+
 	send_arg (symtag);
 
-#if 0
+	send_file_names (argc, argv);
 	/* FIXME:  We shouldn't have to send current files, but I'm not sure
 	   whether it works.  So send the files --
 	   it's slower but it works.  */
-	send_file_names (argc, argv);
-#else
 	send_files (argc, argv, local, 0);
-#endif
-	if (fprintf (to_server, "tag\n") < 0)
-	    error (1, errno, "writing to server");
+	send_to_server ("tag\012", 0);
         return get_responses_and_close ();
     }
 #endif
+
+    if (numtag != NULL)
+	tag_check_valid (numtag, argc, argv, local, 0, "");
 
     /* check to make sure they are authorized to tag all the 
        specified files in the repository */
 
     mtlist = getlist();
     err = start_recursion (check_fileproc, check_filesdoneproc,
-                           (Dtype (*) ()) NULL, (int (*) ()) NULL,
+                           (DIRENTPROC) NULL, (DIRLEAVEPROC) NULL,
                            argc, argv, local, W_LOCAL, 0, 1,
                            (char *) NULL, 1, 0);
     
@@ -190,8 +197,8 @@ tag (argc, argv)
     }
      
     /* start the recursion processor */
-    err = start_recursion (tag_fileproc, (int (*) ()) NULL, tag_dirproc,
-			   (int (*) ()) NULL, argc, argv, local,
+    err = start_recursion (tag_fileproc, (FILESDONEPROC) NULL, tag_dirproc,
+			   (DIRLEAVEPROC) NULL, argc, argv, local,
 			   W_LOCAL, 0, 1, (char *) NULL, 1, 0);
     dellist(&mtlist);
     return (err);
@@ -242,13 +249,13 @@ check_fileproc(file, update_dir, repository, entries, srcfiles)
     p->delproc = tag_delproc;
     vers = Version_TS (repository, (char *) NULL, (char *) NULL, (char *) NULL,
 		       file, 0, 0, entries, srcfiles);
-    p->data = RCS_getversion(vers->srcfile, numtag, date, force_tag_match);
+    p->data = RCS_getversion(vers->srcfile, numtag, date, force_tag_match, 0);
     if (p->data != NULL)
     {
         int addit = 1;
         char *oversion;
         
-        oversion = RCS_getversion (vers->srcfile, symtag, (char *) NULL, 1);
+        oversion = RCS_getversion (vers->srcfile, symtag, (char *) NULL, 1, 0);
         if (oversion == NULL) 
         {
             if (delete)
@@ -409,7 +416,7 @@ tag_fileproc (file, update_dir, repository, entries, srcfiles)
         nversion = RCS_getversion(vers->srcfile,
                                   numtag,
                                   date,
-                                  force_tag_match);
+                                  force_tag_match, 0);
         if (nversion == NULL)
         {
 	    freevers_ts (&vers);
@@ -428,7 +435,7 @@ tag_fileproc (file, update_dir, repository, entries, srcfiles)
 	 * "rcs" to remove the tag... trust me.
 	 */
 
-	version = RCS_getversion (vers->srcfile, symtag, (char *) NULL, 1);
+	version = RCS_getversion (vers->srcfile, symtag, (char *) NULL, 1, 0);
 	if (version == NULL || vers->srcfile == NULL)
 	{
 	    freevers_ts (&vers);
@@ -507,7 +514,7 @@ tag_fileproc (file, update_dir, repository, entries, srcfiles)
      * module -- which I have found to be a typical tagging operation.
      */
     rev = branch_mode ? RCS_magicrev (vers->srcfile, version) : version;
-    oversion = RCS_getversion (vers->srcfile, symtag, (char *) NULL, 1);
+    oversion = RCS_getversion (vers->srcfile, symtag, (char *) NULL, 1, 0);
     if (oversion != NULL)
     {
        int isbranch = RCS_isbranch (file, symtag, srcfiles);
@@ -579,4 +586,216 @@ tag_dirproc (dir, repos, update_dir)
     if (!quiet)
 	error (0, 0, "%s %s", delete ? "Untagging" : "Tagging", update_dir);
     return (R_PROCESS);
+}
+
+/* Code relating to the val-tags file.  Note that this file has no way
+   of knowing when a tag has been deleted.  The problem is that there
+   is no way of knowing whether a tag still exists somewhere, when we
+   delete it some places.  Using per-directory val-tags files (in
+   CVSREP) might be better, but that might slow down the process of
+   verifying that a tag is correct (maybe not, for the likely cases,
+   if carefully done), and/or be harder to implement correctly.  */
+
+struct val_args {
+    char *name;
+    int found;
+};
+
+/* Pass as a static until we get around to fixing start_recursion to pass along
+   a void * where we can stash it.  */
+static struct val_args *val_args_static;
+
+static int val_fileproc PROTO ((char *, char *, char *, List *, List *));
+
+static int
+val_fileproc (file, update_dir, repository, entries, srcfiles)
+    char *file;
+    char *update_dir;
+    char *repository;
+    List *entries;
+    List *srcfiles;
+{
+    RCSNode *rcsdata;
+    Node *node;
+    struct val_args *args = val_args_static;
+
+    node = findnode (srcfiles, file);
+    if (node == NULL)
+	/* Not sure this can happen, after all we passed only
+	   W_REPOS | W_ATTIC.  */
+	return 0;
+    rcsdata = (RCSNode *) node->data;
+    if (RCS_gettag (rcsdata, args->name, 1, 0) != NULL)
+    {
+	/* FIXME: should find out a way to stop the search at this point.  */
+	args->found = 1;
+    }
+    return 0;
+}
+
+static Dtype val_direntproc PROTO ((char *, char *, char *));
+
+static Dtype
+val_direntproc (dir, repository, update_dir)
+    char *dir;
+    char *repository;
+    char *update_dir;
+{
+    /* This is not quite right--it doesn't get right the case of "cvs
+       update -d -r foobar" where foobar is a tag which exists only in
+       files in a directory which does not exist yet, but which is
+       about to be created.  */
+    if (isdir (dir))
+	return 0;
+    return R_SKIP_ALL;
+}
+
+/* Check to see whether NAME is a valid tag.  If so, return.  If not
+   print an error message and exit.  ARGC, ARGV, LOCAL, and AFLAG specify
+   which files we will be operating on.
+
+   REPOSITORY is the repository if we need to cd into it, or NULL if
+   we are already there, or "" if we should do a W_LOCAL recursion.
+   Sorry for three cases, but the "" case is needed in case the
+   working directories come from diverse parts of the repository, the
+   NULL case avoids an unneccesary chdir, and the non-NULL, non-""
+   case is needed for checkout, where we don't want to chdir if the
+   tag is found in CVSROOTADM_VALTAGS, but there is not (yet) any
+   local directory.  */
+void
+tag_check_valid (name, argc, argv, local, aflag, repository)
+    char *name;
+    int argc;
+    char **argv;
+    int local;
+    int aflag;
+    char *repository;
+{
+    DBM *db;
+    char *valtags_filename;
+    int err;
+    datum mytag;
+    struct val_args the_val_args;
+    struct saved_cwd cwd;
+    int which;
+
+    /* Numeric tags require only a syntactic check.  */
+    if (isdigit (name[0]))
+    {
+	char *p;
+	for (p = name; *p != '\0'; ++p)
+	{
+	    if (!(isdigit (*p) || *p == '.'))
+		error (1, 0, "\
+Numeric tag %s contains characters other than digits and '.'", name);
+	}
+	return;
+    }
+
+    mytag.dptr = name;
+    mytag.dsize = strlen (name);
+
+    valtags_filename = xmalloc (strlen (CVSroot) + sizeof CVSROOTADM
+				+ sizeof CVSROOTADM_HISTORY + 20);
+    strcpy (valtags_filename, CVSroot);
+    strcat (valtags_filename, "/");
+    strcat (valtags_filename, CVSROOTADM);
+    strcat (valtags_filename, "/");
+    strcat (valtags_filename, CVSROOTADM_VALTAGS);
+    db = dbm_open (valtags_filename, O_RDWR, 0666);
+    if (db == NULL)
+    {
+	if (!existence_error (errno))
+	    error (1, errno, "cannot read %s", valtags_filename);
+
+	/* If the file merely fails to exist, we just keep going and create
+	   it later if need be.  */
+    }
+    else
+    {
+	datum val;
+
+	val = dbm_fetch (db, mytag);
+	if (val.dptr != NULL)
+	{
+	    /* Found.  The tag is valid.  */
+	    dbm_close (db);
+	    free (valtags_filename);
+	    return;
+	}
+	/* FIXME: should check errors somehow (add dbm_error to myndbm.c?).  */
+    }
+
+    /* We didn't find the tag in val-tags, so look through all the RCS files
+       to see whether it exists there.  Yes, this is expensive, but there
+       is no other way to cope with a tag which might have been created
+       by an old version of CVS, from before val-tags was invented.  */
+
+    the_val_args.name = name;
+    the_val_args.found = 0;
+    val_args_static = &the_val_args;
+
+    which = W_REPOS | W_ATTIC;
+
+    if (repository != NULL)
+    {
+	if (repository[0] == '\0')
+	    which |= W_LOCAL;
+	else
+	{
+	    if (save_cwd (&cwd))
+		exit (1);
+	    if (chdir (repository) < 0)
+		error (1, errno, "cannot change to %s directory", repository);
+	}
+    }
+
+    err = start_recursion (val_fileproc, (FILESDONEPROC) NULL,
+			   val_direntproc, (DIRLEAVEPROC) NULL,
+			   argc, argv, local, which, aflag,
+			   1, NULL, 1, 0);
+    if (repository != NULL && repository[0] != '\0')
+    {
+	if (restore_cwd (&cwd, NULL))
+	    exit (1);
+	free_cwd (&cwd);
+    }
+
+    if (!the_val_args.found)
+	error (1, 0, "no such tag %s", name);
+    else
+    {
+	/* The tags is valid but not mentioned in val-tags.  Add it.  */
+	datum value;
+
+	if (noexec)
+	{
+	    if (db != NULL)
+		dbm_close (db);
+	    free (valtags_filename);
+	    return;
+	}
+
+	if (db == NULL)
+	{
+	    mode_t omask;
+	    omask = umask (cvsumask);
+	    db = dbm_open (valtags_filename, O_RDWR | O_CREAT | O_TRUNC, 0666);
+	    (void) umask (omask);
+
+	    if (db == NULL)
+	    {
+		error (0, errno, "cannot create %s", valtags_filename);
+		free (valtags_filename);
+		return;
+	    }
+	}
+	value.dptr = "y";
+	value.dsize = 1;
+	if (dbm_store (db, mytag, value, DBM_REPLACE) < 0)
+	    error (0, errno, "cannot store %s into %s", name,
+		   valtags_filename);
+	dbm_close (db);
+    }
+    free (valtags_filename);
 }

@@ -1,4 +1,39 @@
-This is the NEWS file for pcl-cvs, an Elisp front-end to CVS.
+This is the NEWS file for pcl-cvs, an Emacs elisp front-end to CVS.
+
+User-visible changes in the un-official CVS release of pcl-cvs
+from the official 1.05 release to 1.05-CVS-$Name:  $:
+
+* Support for using ChangeLog files, including hooks to automatically
+  guess CVS log entries from ChangeLog contents.
+
+* Support for client/server CVS (versions 1.5 through 1.7 and newer).
+
+* New commands for tagging files and directory trees (still needs to
+  be made to run in the background).
+
+* Better support for recognizing and handling unknown directories.
+
+* An attempt at new ediff and emerge interfaces (still needs work!),
+  including attempts to make vendor-branch merging work.
+
+* In a possibly misguided attempt to make it easier to see the effects
+  of changes that affect several files, diff output is now stored in a
+  uniqe buffer for each file.
+
+* Some commands now have default flags (cvs-*-flags).
+
+* Proper quoting of command line arguments displayed in *cvs-tmp*.
+
+* More hacking with getting CVSROOT right, though probably all
+  pointless, since CVS should do the right thing all the time.
+
+* Elib is back, at least in the CVS distribution.
+
+* Lots of minor bug fixes, tweaks, cleanup, re-indentation, etc.
+
+* Some minor tweaks, fixes, re-indentation, etc., in the
+  documentation.
+
 
 User-visible changes in pcl-cvs from 1.04 to 1.05:
 
@@ -111,3 +146,4 @@ User-visible changes in pcl-cvs from 1.02 to 1.03:
   variable is set (otherwise it uses /tmp).
 
 ---End of file NEWS---
+#ident	"@(#)cvs/contrib/pcl-cvs:$Name:  $:$Id: NEWS,v 1.1.1.2 1996/01/30 00:19:06 tholo Exp $"

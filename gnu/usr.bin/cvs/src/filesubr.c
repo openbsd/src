@@ -151,33 +151,88 @@ int
 isfile (file)
     const char *file;
 {
-    struct stat sb;
-
-    if (stat (file, &sb) < 0)
-	return (0);
-    return (1);
+    return isaccessible(file, F_OK);
 }
 
 /*
  * Returns non-zero if the argument file is readable.
- * XXX - must be careful if "cvs" is ever made setuid!
  */
 int
 isreadable (file)
     const char *file;
 {
-    return (access (file, R_OK) != -1);
+    return isaccessible(file, R_OK);
 }
 
 /*
- * Returns non-zero if the argument file is writable
- * XXX - muct be careful if "cvs" is ever made setuid!
+ * Returns non-zero if the argument file is writable.
  */
 int
 iswritable (file)
     const char *file;
 {
-    return (access (file, W_OK) != -1);
+    return isaccessible(file, W_OK);
+}
+
+/*
+ * Returns non-zero if the argument file is accessable according to
+ * mode.  If compiled with SETXID_SUPPORT also works if cvs has setxid
+ * bits set.
+ */
+int
+isaccessible (file, mode)
+    const char *file;
+    const int mode;
+{
+#ifdef SETXID_SUPPORT
+    struct stat sb;
+    int umask = 0;
+    int gmask = 0;
+    int omask = 0;
+    int uid;
+    
+    if (stat(file, &sb) == -1)
+	return 0;
+    if (mode == F_OK)
+	return 1;
+
+    uid = geteuid();
+    if (uid == 0)		/* superuser */
+    {
+	if (mode & X_OK)
+	    return sb.st_mode & (S_IXUSR|S_IXGRP|S_IXOTH);
+	else
+	    return 1;
+    }
+	
+    if (mode & R_OK)
+    {
+	umask |= S_IRUSR;
+	gmask |= S_IRGRP;
+	omask |= S_IROTH;
+    }
+    if (mode & W_OK)
+    {
+	umask |= S_IWUSR;
+	gmask |= S_IWGRP;
+	omask |= S_IWOTH;
+    }
+    if (mode & X_OK)
+    {
+	umask |= S_IXUSR;
+	gmask |= S_IXGRP;
+	omask |= S_IXOTH;
+    }
+
+    if (sb.st_uid == uid)
+	return (sb.st_mode & umask) == umask;
+    else if (sb.st_gid == getegid())
+	return (sb.st_mode & gmask) == gmask;
+    else
+	return (sb.st_mode & omask) == omask;
+#else
+    return access(file, mode) == 0;
+#endif
 }
 
 /*
@@ -202,9 +257,9 @@ void
 make_directory (name)
     const char *name;
 {
-    struct stat buf;
+    struct stat sb;
 
-    if (stat (name, &buf) == 0 && (!S_ISDIR (buf.st_mode)))
+    if (stat (name, &sb) == 0 && (!S_ISDIR (sb.st_mode)))
 	    error (0, 0, "%s already exists but is not a directory", name);
     if (!noexec && mkdir (name, 0777) < 0)
 	error (1, errno, "cannot make directory %s", name);
@@ -225,7 +280,7 @@ make_directories (name)
 
     if (mkdir (name, 0777) == 0 || errno == EEXIST)
 	return;
-    if (errno != ENOENT)
+    if (! existence_error (errno))
     {
 	error (0, errno, "cannot make path to %s", name);
 	return;
@@ -242,8 +297,7 @@ make_directories (name)
 
 /*
  * Change the mode of a file, either adding write permissions, or removing
- * all write permissions.  Adding write permissions honors the current umask
- * setting.
+ * all write permissions.  Either change honors the current umask setting.
  */
 void
 xchmod (fname, writable)
@@ -259,17 +313,18 @@ xchmod (fname, writable)
 	    error (0, errno, "cannot stat %s", fname);
 	return;
     }
+    oumask = umask (0);
+    (void) umask (oumask);
     if (writable)
     {
-	oumask = umask (0);
-	(void) umask (oumask);
-	mode = sb.st_mode | ~oumask & (((sb.st_mode & S_IRUSR) ? S_IWUSR : 0) |
-				       ((sb.st_mode & S_IRGRP) ? S_IWGRP : 0) |
-				       ((sb.st_mode & S_IROTH) ? S_IWOTH : 0));
+	mode = sb.st_mode | (~oumask
+			     & (((sb.st_mode & S_IRUSR) ? S_IWUSR : 0)
+				| ((sb.st_mode & S_IRGRP) ? S_IWGRP : 0)
+				| ((sb.st_mode & S_IROTH) ? S_IWOTH : 0)));
     }
     else
     {
-	mode = sb.st_mode & ~(S_IWRITE | S_IWGRP | S_IWOTH);
+	mode = sb.st_mode & ~(S_IWRITE | S_IWGRP | S_IWOTH) & ~oumask;
     }
 
     if (trace)
@@ -309,7 +364,9 @@ rename_file (from, to)
 }
 
 /*
- * link a file, if possible.
+ * link a file, if possible.  Warning: the Windows NT version of this
+ * function just copies the file, so only use this function in ways
+ * that can deal with either a link or a copy.
  */
 int
 link_file (from, to)
@@ -401,7 +458,7 @@ deep_remove_dir (path)
     struct dirent *dp;
     char	   buf[PATH_MAX];
 
-    if ( rmdir (path) != 0 && errno == ENOTEMPTY )
+    if (rmdir (path) != 0 && (errno == ENOTEMPTY || errno == EEXIST)) 
     {
 	if ((dirp = opendir (path)) == NULL)
 	    /* If unable to open the directory return
@@ -439,7 +496,8 @@ deep_remove_dir (path)
 	}
 	closedir (dirp);
 	return rmdir (path);
-    }
+	}
+
     /* Was able to remove the directory return 0 */
     return 0;
 }

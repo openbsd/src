@@ -1,3 +1,93 @@
+Tue Jan 23 13:02:24 1996  Greg A. Woods  <woods@most.weird.com>
+
+	* pcl-cvs.el (pcl-cvs-bugs-address): change the default address
+	as suggested by Per Cederqvist.
+	* pcl-cvs.el: removed comments refering to Signum, etc.
+
+Sun Jan 21 12:51:12 1996  Greg A. Woods  <woods@most.weird.com>
+
+	* pcl-cvs.el (cvs-parse-stderr): fix typo (missing '\') that was
+	causing occasional un-reported, un-traced, failures that simply
+	said something like "RE missing '\(' or '\\('" -- hopefully this
+	is the last such bug!
+
+Tue Jan 16 13:57:16 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* Makefile.in: Rename "dist" target back to "dist-dir".  The
+	latter is what actually gets used.
+	(pcl-cvs.dvi): Restore srcdir to pcl-cvs.texinfo.  Fix typo
+	(pcl-cvs.texifo -> pcl-cvs.texinfo).
+	(TEXINDEX,TEX,SET_TEXINPUTS): New variables.
+	(.el.elc): Copy .el file to build dir so .elc file gets put there.
+	(dist-dir): Fix typo (cvs.info -> pcl-cvs.info).
+	* cookie.el: New file, copied from elib 1.0.
+	* README: Remove note about requiring elib; it claimed that CVS
+	contained a copy of elib, but it lied.
+	* pcl-cvs.el: Change (require 'cookie) to (load "cookie.el").
+	* pcl-cvs-lucid.el: Change (require 'pcl-cvs) to (load "pcl-cvs.el").
+
+Fri Jan 12 10:32:14 1996  Greg A. Woods  <woods@most.weird.com>
+
+	* pcl-cvs.elc, pcl-cvs-lucid.elc: removed
+
+	* pcl-cvs.el: run through the spell checker...
+	- noted some free variables in comments
+	(cvs-inhibit-copyright-message): move this above
+	cvs-startup-message to keep the compiler quiet
+
+	* compile-all.el: removed (use make for dependency checking!)
+
+	* Makefile.in: tweak various comments and echo messages...
+	(elcfiles): removed this target.
+	(.SUFFIXES, .el.elc): added support for elisp files.
+	(CORE): new macro -- list of files all .elc depend on [still empty]
+	(BATCHFLAGS): new macro -- flags to pass to emacs
+	(OBJDIR_DISTFILES): added ELCFILES to be shipped in distribution
+
+	* README: fix the RCS Id.
+
+	* INSTALL: re-copy formatted makeinfo output from pcl-cvs.info,
+	just to keep everything in proper synchronisation.
+
+	* pcl-cvs.texinfo (Pcl-cvs installation): update to match Karl's
+	new wording from INSTALL.
+
+Wed Jan 10 22:04:35 1996  Karl Fogel  <kfogel@floss.red-bean.com>
+
+        * INSTALL: make first item read a little more smoothly.
+
+        * README: note that pcl-cvs has been tested under 19.30.
+
+Wed Jan 10 17:59:00 1996  Greg A. Woods  <woods@most.weird.com>
+
+	* ChangeLog.woods: these are changes integrated in from my
+	own pcl-cvs repository module, and based on the original PCL-CVS
+	Version 1.05 release.  They include most, if not all, of the
+	changes from the Cygnus and Cyclic CVS contrib versions of
+	PCL-CVS (i.e. the changes noted below).
+
+Sat Dec 30 15:01:45 1995  Karl Fogel  <kfogel@floss.cyclic.com>
+
+        * pcl-cvs.el (cvs-changelog-ours-p): check that
+        `add-log-full-name' and `add-log-mailing-address' are non-nil, in
+        addition to checking that they are boundp.
+        
+Thu Dec 21 16:45:48 1995  Karl Fogel  <kfogel@occs.cs.oberlin.edu>
+
+        * pcl-cvs.el (cvs-parse-stderr): ignore kerberos connection
+        failure, since CVS will automatically try rsh next.  I think this
+        is okay because if a person needs to know that kerberos failed,
+        then chances are the rsh failed too, and *that* error message will
+        clue them in that something's afoot.
+
+Wed Nov 22 11:01:50 1995  Joshua Cowan <jcowan@hermit.reslife.okstate.edu>
+
+        * pcl-cvs.el (cvs-changelog-ours-p): use `user-full-name' if
+        `add-log-full-name' unbound, as not every uses the stuff in
+        add-log.el.  Same with `add-log-mailing-address'.
+        (cvs-changelog-entries): change to `change-log-mode' unless
+        already in it.
+
 Sun Jul  9 20:57:11 1995  Karl Fogel  <kfogel@floss.cyclic.com>
 
         * "/bin/rmdir" as default, not "/usr/local/bin/rmdir".

@@ -25,7 +25,13 @@
 #define	RCSSYMBOLS	"symbols"
 #define	RCSDATE		"date"
 #define	RCSDESC		"desc"
+#define RCSEXPAND	"expand"
+
+/* Used by the version of death support which results if you define
+   DEATH_SUPPORT and not DEATH_STATE.  Requires a hacked up RCS.  Considered
+   obsolete.  */
 #define RCSDEAD		"dead"
+
 #define	DATEFORM	"%02d.%02d.%02d.%02d.%02d.%02d"
 #define	SDATEFORM	"%d.%d.%d.%d.%d.%d"
 
@@ -44,6 +50,7 @@ struct rcsnode
     char *head;
     char *branch;
     char *symbols_data;
+    char *expand;
     List *symbols;
     List *versions;
     List *dates;
@@ -78,9 +85,10 @@ RCSNode *RCS_parse PROTO((const char *file, const char *repos));
 RCSNode *RCS_parsercsfile PROTO((char *rcsfile));
 char *RCS_check_kflag PROTO((const char *arg));
 char *RCS_getdate PROTO((RCSNode * rcs, char *date, int force_tag_match));
-char *RCS_gettag PROTO((RCSNode * rcs, char *tag, int force_tag_match));
+char *RCS_gettag PROTO((RCSNode * rcs, char *symtag, int force_tag_match,
+			int return_both));
 char *RCS_getversion PROTO((RCSNode * rcs, char *tag, char *date,
-		      int force_tag_match));
+		      int force_tag_match, int return_both));
 char *RCS_magicrev PROTO((RCSNode *rcs, char *rev));
 int RCS_isbranch PROTO((char *file, char *rev, List *srcfiles));
 int RCS_nodeisbranch PROTO((char *rev, RCSNode *rcs));

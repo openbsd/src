@@ -152,7 +152,7 @@ RCS_parse (file, repos)
 	fclose (fp);
 	return (rcs);
     }
-    else if (errno != ENOENT)
+    else if (! existence_error (errno))
     {
 	error (0, errno, "cannot open %s", rcsfile);
 	return NULL;
@@ -177,7 +177,7 @@ RCS_parse (file, repos)
 	fclose (fp);
 	return (rcs);
     }
-    else if (errno != ENOENT)
+    else if (! existence_error (errno))
     {
 	error (0, errno, "cannot open %s", rcsfile);
 	return NULL;
@@ -347,6 +347,12 @@ RCS_reparsercsfile (rdata)
 	    }
 	}
 
+	if (strcmp (RCSEXPAND, key) == 0)
+	{
+	    rdata->expand = xstrdup (value);
+	    continue;
+	}
+
 	/*
 	 * check key for '.''s and digits (probably a rev) if it is a
 	 * revision, we are done with the headers and are down to the
@@ -494,6 +500,8 @@ freercsnode (rnodep)
 	dellist (&(*rnodep)->symbols);
     if ((*rnodep)->symbols_data != (char *) NULL)
 	free ((*rnodep)->symbols_data);
+    if ((*rnodep)->expand != NULL)
+	free ((*rnodep)->expand);
     if ((*rnodep)->head != (char *) NULL)
 	free ((*rnodep)->head);
     if ((*rnodep)->branch != (char *) NULL)
@@ -827,15 +835,15 @@ do_branches (list, val)
  * The result is returned; null-string if error.
  */
 char *
-RCS_getversion (rcs, tag, date, force_tag_match)
+RCS_getversion (rcs, tag, date, force_tag_match, return_both)
     RCSNode *rcs;
     char *tag;
     char *date;
     int force_tag_match;
+    int return_both;
 {
     /* make sure we have something to look at... */
-    if (rcs == NULL)
-	return ((char *) NULL);
+    assert (rcs != NULL);
 
     if (tag && date)
     {
@@ -845,7 +853,7 @@ RCS_getversion (rcs, tag, date, force_tag_match)
 	 * first lookup the tag; if that works, turn the revision into
 	 * a branch and lookup the date.
 	 */
-	tagrev = RCS_gettag (rcs, tag, force_tag_match);
+	tagrev = RCS_gettag (rcs, tag, force_tag_match, 0);
 	if (tagrev == NULL)
 	    return ((char *) NULL);
 
@@ -856,7 +864,7 @@ RCS_getversion (rcs, tag, date, force_tag_match)
 	return (rev);
     }
     else if (tag)
-	return (RCS_gettag (rcs, tag, force_tag_match));
+	return (RCS_gettag (rcs, tag, force_tag_match, return_both));
     else if (date)
 	return (RCS_getdate (rcs, date, force_tag_match));
     else
@@ -873,16 +881,17 @@ RCS_getversion (rcs, tag, date, force_tag_match)
  * If the matched tag is a branch tag, find the head of the branch.
  */
 char *
-RCS_gettag (rcs, tag, force_tag_match)
+RCS_gettag (rcs, symtag, force_tag_match, return_both)
     RCSNode *rcs;
-    char *tag;
+    char *symtag;
     int force_tag_match;
+    int return_both;
 {
     Node *p;
+    char *tag = symtag;
 
     /* make sure we have something to look at... */
-    if (rcs == NULL)
-	return ((char *) NULL);
+    assert (rcs != NULL);
 
     /* XXX this is probably not necessary, --jtc */
     if (rcs->flags & PARTIAL) 
@@ -982,7 +991,25 @@ RCS_gettag (rcs, tag, force_tag_match)
 	else
 	    p = findnode (rcs->versions, tag);
 	if (p != NULL)
-	    return (xstrdup (tag));
+	{
+	    /*
+	     * we have found a numeric revision for the revision tag.
+	     * To support expanding the RCS keyword Name, return both
+	     * the numeric tag and the supplied tag (which might be
+	     * symbolic).  They are separated with a ':' which is not
+	     * a valid tag char.  The variable return_both is only set
+	     * if this function is called through Version_TS ->
+	     * RCS_getversion.
+	     */
+	    if (return_both)
+	    {
+		char *both = xmalloc(strlen(tag) + 2 + strlen(symtag));
+		sprintf(both, "%s:%s", tag, symtag);
+		return both;
+	    }
+	    else
+		return (xstrdup (tag));
+	}
 	else
 	{
 	    /* The revision wasn't there, so return the head or NULL */
@@ -1211,8 +1238,7 @@ RCS_getbranch (rcs, tag, force_tag_match)
     char *cp;
 
     /* make sure we have something to look at... */
-    if (rcs == NULL)
-	return ((char *) NULL);
+    assert (rcs != NULL);
 
     if (rcs->flags & PARTIAL)
 	RCS_reparsercsfile (rcs);
@@ -1323,16 +1349,14 @@ RCS_head (rcs)
     RCSNode *rcs;
 {
     /* make sure we have something to look at... */
-    if (rcs == NULL)
-	return ((char *) NULL);
-
-    if (rcs->branch)
-	return (RCS_getbranch (rcs, rcs->branch, 1));
+    assert (rcs != NULL);
 
     /*
      * NOTE: we call getbranch with force_tag_match set to avoid any
      * possibility of recursion
      */
+    if (rcs->branch)
+	return (RCS_getbranch (rcs, rcs->branch, 1));
     else
 	return (xstrdup (rcs->head));
 }
@@ -1353,8 +1377,7 @@ RCS_getdate (rcs, date, force_tag_match)
     RCSVers *vers = NULL;
 
     /* make sure we have something to look at... */
-    if (rcs == NULL)
-	return ((char *) NULL);
+    assert (rcs != NULL);
 
     if (rcs->flags & PARTIAL)
 	RCS_reparsercsfile (rcs);
@@ -1526,8 +1549,7 @@ RCS_getrevtime (rcs, rev, date, fudge)
     RCSVers *vers;
 
     /* make sure we have something to look at... */
-    if (rcs == NULL)
-	return (revdate);
+    assert (rcs != NULL);
 
     if (rcs->flags & PARTIAL)
 	RCS_reparsercsfile (rcs);

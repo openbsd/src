@@ -1,5 +1,5 @@
 #
-# $CVSid: @(#)loginfo 1.5 92/03/31 $
+#ident	"@(#)cvs/examples:$Name:  $:$Id: loginfo,v 1.1.1.2 1996/01/30 00:19:20 tholo Exp $"
 #
 # The "loginfo" file is used to control where "cvs commit" log information
 # is sent.  The first entry on a line is a regular expression which is tested
@@ -32,5 +32,8 @@
 #	-m mailto	- send mail to "mailto" (multiple -m's permitted) [optional]
 #	-f logfile	- save messages to logfile [optional]
 #	%s		- must follow other options at the end of the line
+#
+# without perl you could do this:
+#DEFAULT		(echo ""; who am i; date; cat) >> $CVSROOT/CVSROOT/commitlog
 #
 DEFAULT			$CVSROOT/CVSROOT/log -f $CVSROOT/CVSROOT/commitlog  %s

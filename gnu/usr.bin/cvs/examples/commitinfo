@@ -1,5 +1,5 @@
 #
-# $Id: commitinfo,v 1.1.1.1 1995/12/19 09:21:42 deraadt Exp $
+#ident	"@(#)cvs/examples:$Name:  $:$Id: commitinfo,v 1.1.1.2 1996/01/30 00:19:19 tholo Exp $"
 #
 # The "commitinfo" file is used to control pre-commit checks.
 # The filter on the right is invoked with the repository and a list 

@@ -1,4 +1,4 @@
-#!/bin/sh
+#! /bin/sh
 # Submit a problem report to a GNATS site.
 # Copyright (C) 1993 Free Software Foundation, Inc.
 # Contributed by Brendan Kehoe (brendan@cygnus.com), based on a
@@ -6,8 +6,8 @@
 #
 # This file is part of GNU GNATS.
 # Modified by Berliner for CVS.
-# Modified by Jim Blandy for CVS 1.5.
-# $CVSid: @(#)cvsbug.sh 1.2 94/10/22 $
+#
+#ident	"@(#)cvs/src:$Name:  $:$Id: cvsbug.sh,v 1.1.1.2 1996/01/30 00:17:47 tholo Exp $"
 #
 # GNU GNATS is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -43,7 +43,7 @@ GNATS_ADDR=bug-cvs@prep.ai.mit.edu
 ## [ ! -d $DATADIR/gnats -a -d "$GCC_EXEC_PREFIX" ] && DATADIR=${GCC_EXEC_PREFIX}..
 
 # The default release for this host.
-DEFAULT_RELEASE="post-cvs-1.5"
+DEFAULT_RELEASE="xVERSIONx"
 
 # The default organization.
 DEFAULT_ORGANIZATION="net"
@@ -337,24 +337,14 @@ X-send-pr-version: $VERSION
 >Submitter-Id:   $SUBMITTER
 >Originator: 	 $ORIGINATOR
 >Organization:
-`
-  if [ -n "$ORGANIZATION" ]; then
-    echo "$ORGANIZATION"
-  else
-    echo "	$ORGANIZATION_C" ;
-  fi ;
-`
+${ORGANIZATION-$ORGANIZATION_C}
 >Confidential:  $CONFIDENTIAL_C
 >Synopsis:	$SYNOPSIS_C
 >Severity:	$SEVERITY_C
 >Priority:	$PRIORITY_C
 >Category: 	$CATEGORY_C
 >Class:		$CLASS_C
->Release:	 `if [ -n "$DEFAULT_RELEASE" ]; then
-		   echo "$DEFAULT_RELEASE"
-		  else
-		   echo "	$RELEASE_C"
-		  fi; `
+>Release:	${DEFAULT_RELEASE-$RELEASE_C}
 >Environment:
     	$ENVIRONMENT_C
 `[ -n "$SYSTEM" ] && echo System: $SYSTEM`

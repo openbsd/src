@@ -1,77 +1,53 @@
-	     Concurrent Versions System (CVS) Version 1.5
+	           Concurrent Versions System (CVS)
 		    ported to Microsoft Windows NT
 			   Cyclic Software
 
-Cyclic Software has ported the client side of CVS 1.5 to Windows NT.
-The port implements the full set of CVS commands, but cannot access
-repositories located on the local machine.  The repository must live
-on another machine (a Unix box, say) which runs a complete port of
-CVS.
+Check the ../INSTALL file for information on the most recent version
+of CVS which has been known to be tested with NT.
 
-Source code for the port is available from Cyclic Software as:
+The port implements the full set of CVS commands, but is client only,
+not server or local ("local" meaning accessing repositories on a
+filesystem mounted on the local machine).  The repository must live on
+another machine (a Unix box, say) which runs a complete port of CVS.
 
-	ftp://ftp.cyclic.com/pub/cvs/windows-nt/cvs-1.5nt.tar.gz
-
-That includes documentation, in Texinfo and PostScript.  It's all
-distributed as a gzipped tar file instead of a .ZIP file because, as
-far as I can tell, PKZIP insists on munging long file names, which
-would confuse the makefile for Visual C++.
+We don't distribute a .ZIP source distribution partly because, as far
+as I can tell, PKZIP insists on munging long file names, which would
+confuse the makefile for Visual C++.
 
 To compile, use Microsoft Visual C++ on the file cvsnt.mak in the
-distribution's top directory.  We haven't tested it under any other
-development environments.  If you're curious, see below about the
-warnings you may encounter.
+distribution's top directory.  At least with the tar port I'm using,
+the sources get extracted without carriage returns and you must add
+carriage returns to the end of every line in cvsnt.mak.  It doesn't
+seem to be necessary to add them to any other file.  This has been
+tested with Visual C++ 2.1.  Visual C++ 4.0 apparently requires one to
+remove some quotation marks from cvsnt.mak (around save-cwd.c,
+save-cwd.sbr, and save-cwd.obj).
 
-We've put a Windows NT 80x86 executable for CVS in the same directory
-as the source distribution, called cvs.exe.  Full documentation is
-present in PostScript format in the source distribution.  Generally,
-we'd like to avoid spending much time on binary distributions.
+Send bug reports to bug-cvs@prep.ai.mit.edu.
 
-Please send bug reports to bug-cvs@prep.ai.mit.edu.  I can't promise
-to fix them --- paying work must come first --- but the reports will
-not be tossed, and I'll see what I can do.
+As of August 20, 1995, this port passed the test in src/sanity.sh.
+(We ran the checks by hand, since we couldn't find a port of the
+Bourne shell good enough to execute the script).  Sanity.sh provides
+pretty minimal feature coverage, but still gives me some confidence it
+isn't totally broken.
 
-This port passes the test in src/sanity.sh.  (We ran the checks by
-hand, since we couldn't find a port of the Bourne shell good enough to
-execute the script).  Sanity.sh provides pretty minimal feature
-coverage, but still gives me some confidence it isn't totally broken.
-
-For best results, you will also need GNU patch and GZIP installed on
-your system, although CVS can be used without them.  The Congruent
-ports of these packages to Windows NT, binary and source, are
-available in:
+You will also need GNU patch installed on your system.  GZIP is useful
+but not required.  The Congruent ports of these packages to Windows
+NT, binary and source, are available in:
 
 	ftp://microlib.cc.utexas.edu/microlib/nt/gnu
 
-At the moment, this port isn't integrated into our mainline CVS
-sources, but I expect that to be straightforward.  I'll get around to
-it soon, but as I said, paying work...
-
-Now, strictly speaking, I don't *know* that this port won't correctly
-access repositories on the local machine.  I haven't tried it.  I
-have put calls to abort in places I'm pretty sure are wrong.  If you'd
-like to finish it off and post patches, Morten Hindsholm's port of CVS
-1.4A2 to Windows NT might be helpful; it is available as
+If you'd like to finish off the port of local CVS, Morten Hindsholm's
+port of CVS 1.4A2 to Windows NT might be helpful; it is available as
 
 	ftp://ftp.digex.net/pub/access/schueman/cvs/cvsnt14b.zip
 
 
+The following harmless warnings are known:
 
-I get the following warnings when compiling this port of CVS 1.5 under
-Microsoft Visual C++.  They are all harmless.
-
-- main.c: This is a very weird warning message!  If you understand
-  what it's trying to say, let me know:
-	'void (__cdecl *)(void)' differs in parameter lists from
-	'void (__cdecl *)(void )'
-  Okay, whatever, man.
-- sighandle.c: These are harmless conflicts in the arguments of
-  pointed-to functions.  You're welcome to submit patches for them.
 - regex.c: These are signed/unsigned comparison conflicts.  I am not
   going to *touch* this code. :-) I got my fill of it when I was
   hacking GNU Emacs.
-
-
-
-Jim Blandy <jimb@cyclic.com>
-Sunday, August 20, 1995
+.\lib\getdate.c(760) : warning C4013: 'getdate_yyparse' undefined; assuming extern returning int
+.\lib\getdate.c(1612) : warning C4102: 'yyerrlab' : unreferenced label
+.\lib\getdate.c(1612) : warning C4102: 'yynewstate' : unreferenced label

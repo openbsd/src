@@ -6,34 +6,30 @@
 #include <malloc.h>
 #include <errno.h>
 #include <winsock.h>
+#include <stdio.h>
 #include <assert.h>
 
 #include "rcmd.h"
 
-static int
+void
 init_winsock ()
 {
-    static char initialized = 0;
     WSADATA data;
-
-    if (initialized)
-        return 0;
+    int optionValue = SO_SYNCHRONOUS_NONALERT;
 
     if (WSAStartup (MAKEWORD (1, 1), &data))
-        return -1;
-
     {
-        int optionValue = SO_SYNCHRONOUS_NONALERT;
-
-        if (setsockopt(INVALID_SOCKET, SOL_SOCKET,
-                       SO_OPENTYPE, (char *)&optionValue, sizeof(optionValue))
-	    == SOCKET_ERROR)
-	    return -1;
+      fprintf (stderr, "cvs: unable to initialize winsock\n");
+      exit (1);
     }
 
-    initialized = 1;
-
-    return 0;
+     if (setsockopt(INVALID_SOCKET, SOL_SOCKET,
+                    SO_OPENTYPE, (char *)&optionValue, sizeof(optionValue))
+         == SOCKET_ERROR)
+     {
+         fprintf (stderr, "cvs: unable to setup winsock\n");
+         exit (1);
+     }
 }
 
 static int
@@ -189,9 +185,6 @@ rcmd (const char **ahost,
     int fd;
 
     assert (fd2p == 0);
-
-    if (init_winsock () < 0)
-        return -1;
 
     if (resolve_address (ahost, &sai) < 0)
         return -1;

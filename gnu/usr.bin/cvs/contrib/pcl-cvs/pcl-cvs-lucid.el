@@ -31,7 +31,8 @@
 ;; Middle-click runs find-file.
 
 
-(require 'pcl-cvs)
+;(require 'pcl-cvs)
+(load "pcl-cvs.el")
 
 (defvar cvs-menu
   '("CVS"

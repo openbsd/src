@@ -10,6 +10,7 @@
 
 
 #include "cvs.h"
+#include "getline.h"
 
 #ifndef lint
 static const char rcsid[] = "$CVSid: @(#)cvsrc.c 1.9 94/09/30 $";
@@ -36,10 +37,13 @@ read_cvsrc (argc, argv)
     char *homeinit;
     FILE *cvsrcfile;
 
-    char linebuf [MAXLINELEN];
-  
+    char *line;
+    int line_length;
+    size_t line_chars_allocated;
+
     char *optstart;
 
+    int command_len;
     int found = 0;
 
     int i;
@@ -72,7 +76,7 @@ read_cvsrc (argc, argv)
 
     /* if it can't be read, there's no point to continuing */
 
-    if (access (homeinit, R_OK) != 0)
+    if (!isreadable (homeinit))
     {
 	free (homeinit);
 	return;
@@ -80,15 +84,20 @@ read_cvsrc (argc, argv)
 
     /* now scan the file until we find the line for the command in question */
 
+    line = NULL;
+    line_chars_allocated = 0;
+    command_len = strlen (command_name);
     cvsrcfile = open_file (homeinit, "r");
-    while (fgets (linebuf, MAXLINELEN, cvsrcfile))
+    while ((line_length = getline (&line, &line_chars_allocated, cvsrcfile))
+	   >= 0)
     {
 	/* skip over comment lines */
-	if (linebuf[0] == '#')
+	if (line[0] == '#')
 	    continue;
 
 	/* stop if we match the current command */
-	if (!strncmp (linebuf, (*argv)[0], strlen ((*argv)[0])))
+	if (!strncmp (line, command_name, command_len)
+	    && isspace (*(line + command_len)))
 	{
 	    found = 1;
 	    break;
@@ -100,8 +109,8 @@ read_cvsrc (argc, argv)
     if (found)
     {
 	/* skip over command in the options line */
-	optstart = strtok(linebuf+strlen((*argv)[0]), "\t \n");
-      
+	optstart = strtok (line + command_len, "\t \n");
+
 	do
 	{
 	    new_argv [new_argc] = xstrdup (optstart);
@@ -122,6 +131,9 @@ read_cvsrc (argc, argv)
 	}
 	while ((optstart = strtok (NULL, "\t \n")) != NULL);
     }
+
+    if (line != NULL)
+	free (line);
 
     /* now copy the remaining arguments */
   

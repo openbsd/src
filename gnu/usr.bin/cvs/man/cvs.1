@@ -2,7 +2,7 @@
 .ds Rv \\$3
 .ds Dt \\$4
 ..
-.Id $Id: cvs.1,v 1.1.1.1 1995/12/19 09:21:35 deraadt Exp $
+.Id $Id: cvs.1,v 1.1.1.2 1996/01/30 00:18:40 tholo Exp $
 .TH CVS 1 "\*(Dt"
 .\" Full space in nroff; half space in troff
 .de SP
@@ -1924,7 +1924,7 @@ supporting files, see
 .I
 Files in home directories:
 .TP
-\.cvsrc
+\&.cvsrc
 The
 .B cvs
 initialisation file.  Lines in this file can be used to specify default
@@ -1938,7 +1938,7 @@ is always passed the
 .B \-c
 option in addition to any other options passed on the command line.
 .TP
-\.cvswrappers
+\&.cvswrappers
 Specifies wrappers to be used in addition to those specified in the
 CVSROOT/cvswrappers file in the repository.
 .LP
@@ -2010,37 +2010,35 @@ Records programs for filtering
 .` "cvs commit"
 requests.
 .TP
-CVSROOT/history
-Log file of \fBcvs\fP transactions.
-.TP
-CVSROOT/modules,v
-Definitions for modules in this repository.
-.TP
-CVSROOT/loginfo,v
-Records programs for piping
-.` "cvs commit"
-log entries.
-.TP
-CVSROOT/rcsinfo,v
-Records pathnames to templates used during a
-.` "cvs commit"
-operation.
+CVSROOT/cvswrappers,v
+Records
+.B cvs
+wrapper commands to be used when checking files into and out of the
+repository.  Wrappers allow the file or directory to be processed
+on the way in and out of CVS.  The intended uses are many, one
+possible use would be to reformat a C file before the file is checked
+in, so all of the code in the repository looks the same.
 .TP
 CVSROOT/editinfo,v
 Records programs for editing/validating
 .` "cvs commit"
 log entries.
 .TP
-CVSROOT/cvswrappers,v
-Records
-.B cvs
-wrapper commands to be used when checking files into and out of the
-repository.  Wrappers are essentially directories that are to be
-treated as files.  This file allows wrappers to be processed
-on the way in and out of CVS.  The intended use is to wrap up a wrapper
-into a single tar, such that that tar can be treated as a single
-binary file in
-.BR cvs .
+CVSROOT/history
+Log file of \fBcvs\fP transactions.
+.TP
+CVSROOT/loginfo,v
+Records programs for piping
+.` "cvs commit"
+log entries.
+.TP
+CVSROOT/modules,v
+Definitions for modules in this repository.
+.TP
+CVSROOT/rcsinfo,v
+Records pathnames to templates used during a
+.` "cvs commit"
+operation.
 .TP
 CVSROOT/taginfo,v
 Records programs for validating/logging
@@ -2049,7 +2047,7 @@ and
 .` "cvs rtag"
 operations.
 .TP
-Attic
+MODULE/Attic
 Directory for removed source files.
 .TP
 #cvs.lock

@@ -1,3 +1,21 @@
+Thu Jan 18 09:39:16 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* README: Talk about submitting changes to contrib directory.
+
+Tue Nov 14 15:28:25 1995  Greg A. Woods  <woods@most.weird.com>
+
+	* README: fix some spelling and other typos
+
+	* Makefile.in: if I need reminding to run cvsinit....
+
+Tue Nov 14 13:47:40 1995  Greg A. Woods  <woods@most.weird.com>
+
+	* log_accum.pl:
+	- Fix 'cvs status' to use global -Qq options
+	- fix up a couple of comments, incl., my proper address
+
+	* log.pl: add a CVSid and fix a couple of comments
+
 Sun Oct  1 02:02:57 1995  Peter Wemm  <peter@haywire.dialix.com>
 
 	* Makefile.in: supply a suffix rule to deal with .sh "source"

@@ -101,7 +101,7 @@ add (argc, argv)
 	int i;
 	start_server ();
 	ign_setup ();
-	option_with_arg ("-k", options);
+	if (options) send_arg(options);
 	option_with_arg ("-m", message);
 	for (i = 0; i < argc; ++i)
 	  /* FIXME: Does this erroneously call Create_Admin in error
@@ -128,9 +128,9 @@ add (argc, argv)
 		free (date);
 	      free (rcsdir);
 	    }
+	send_file_names (argc, argv);
 	send_files (argc, argv, 0, 0);
-	if (fprintf (to_server, "add\n") < 0)
-	  error (1, errno, "writing to server");
+	send_to_server ("add\012", 0);
 	return get_responses_and_close ();
       }
 #endif
@@ -438,7 +438,7 @@ add_directory (repository, dir)
 	}
 #endif
 
-	omask = umask ((mode_t) 2);
+	omask = umask (cvsumask);
 	if (CVS_MKDIR (rcsdir, 0777) < 0)
 	{
 	    error (0, errno, "cannot mkdir %s", rcsdir);
@@ -517,16 +517,7 @@ build_entry (repository, user, options, message, entries, tag)
 	return (0);
 
     /*
-     * The options for the "add" command are store in the file CVS/user,p
-     * XXX - no they are not!
-     */
-    (void) sprintf (fname, "%s/%s%s", CVSADM, user, CVSEXT_OPT);
-    fp = open_file (fname, "w+");
-    if (fclose (fp) == EOF)
-	error(1, errno, "cannot close %s", fname);
-
-    /*
-     * And the requested log is read directly from the user and stored in the
+     * The requested log is read directly from the user and stored in the
      * file user,t.  If the "message" argument is set, use it as the
      * initial creation log (which typically describes the file).
      */
@@ -539,8 +530,8 @@ build_entry (repository, user, options, message, entries, tag)
 
     /*
      * Create the entry now, since this allows the user to interrupt us above
-     * without needing to clean anything up (well, we could clean up the ,p
-     * and ,t files, but who cares).
+     * without needing to clean anything up (well, we could clean up the
+     * ,t file, but who cares).
      */
     (void) sprintf (line, "Initial %s", user);
     Register (entries, user, "0", line, options, tag, (char *) 0, (char *) 0);

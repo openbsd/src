@@ -5,10 +5,13 @@
 @node Top
 @top CVS Client/Server
 
+This manual describes the client/server protocol used by CVS.  It does
+not describe how to use or administer client/server CVS; see the
+regular CVS manual for that.
+
 @menu
 * Goals::             Basic design decisions, requirements, scope, etc.
 * Notes::             Notes on the current implementation
-* How To::            How to remote your favorite CVS command
 * Protocol Notes::    Possible enhancements, limitations, etc. of the protocol
 * Protocol::          Complete description of the protocol
 @end menu
@@ -72,100 +75,11 @@ The server can also be started by @code{cvs kserver}, in which case it
 does an initial Kerberos authentication on stdin.  If the authentication
 succeeds, it subsequently runs identically to @code{cvs server}.
 
-The current server implementation can use up huge amounts of memory when
-transmitting a lot of data.  Avoiding this would be a bit tricky because
-it is not acceptable to have the server block on the network (which may
-be very slow) when it has locks open.  The buffer code has been
-rewritten so that this does not appear to be a serious problem in
-practice.  However, if it is seen to be a problem several solutions are
-possible.  The two-pass design would involve first noting what versions
-of everything we need (with locks in place) and then sending the data,
-blocking on the network, with no locks needed.  The lather-rinse-repeat
-design would involve doing things as it does now until a certain amount
-of server memory is being used (10M?), then releasing locks, and trying
-the whole update again (some of it is presumably already done).  One
-problem with this is getting merges to work right.
-
-@node How To
-@chapter How to add more remote commands
-
-It's the usual simple twelve step process.  Let's say you're making
-the existing @code{cvs fix} command work remotely.
-
-@itemize @bullet
-@item
-Add a declaration for the @code{fix} function, which already implements
-the @code{cvs fix} command, to @file{server.c}.
-@item
-Now, the client side.
-Add a function @code{client_fix} to @file{client.c}, which calls 
-@code{parse_cvsroot} and then calls the usual @code{fix} function.
-@item
-Add a declaration for @code{client_fix} to @file{client.h}.
-@item
-Add @code{client_fix} to the "fix" entry in the table of commands in
-@file{main.c}.
-@item
-Now for the server side.
-Add the @code{serve_fix} routine to @file{server.c}; make it do:
-@example @code
-static void
-serve_fix (arg)
-    char *arg;
-@{
-    do_cvs_command (fix);
-@}
-@end example
-@item
-Add the server command @code{"fix"} to the table of requests in @file{server.c}.
-@item
-The @code{fix} function can now be entered in three different situations:
-local (the old situation), client, and server.  On the server side it probably
-will not need any changes to cope.
-Modify the @code{fix} function so that if it is run when the variable
-@code{client_active} is set, it starts the server, sends over parsed 
-arguments and possibly files, sends a "fix" command to the server,
-and handles responses from the server.  Sample code:
-@example @code
-    if (!client_active) @{
-        /* Do whatever you used to do */
-    @} else @{
-        /* We're the local client.  Fire up the remote server.  */
-        start_server ();
-
-        if (local)
-            if (fprintf (to_server, "Argument -l\n") == EOF)
-                error (1, errno, "writing to server");
-        send_option_string (options);
-
-        send_files (argc, argv, local);
-
-        if (fprintf (to_server, "fix\n") == EOF)
-            error (1, errno, "writing to server");
-        err = get_responses_and_close ();
-    @}
-@end example
-@item
-Build it locally.  Copy the new version into somewhere on the 
-remote system, in your path so that @code{rsh host cvs} finds it.
-Now you can test it.
-@item
-You may want to set the environment variable @code{CVS_CLIENT_PORT} to
--1 to prevent the client from contacting the server via a direct TCP
-link.  That will force the client to fall back to using @code{rsh},
-which will run your new binary.
-@item
-Set the environment variable @code{CVS_CLIENT_LOG} to a filename prefix
-such as @file{/tmp/cvslog}.  Whenever you run a remote CVS command,
-the commands and responses sent across the client/server connection
-will be logged in @file{/tmp/cvslog.in} and @file{/tmp/cvslog.out}.
-Examine them for problems while you're testing.
-@end itemize
-
-This should produce a good first cut at a working remote @code{cvs fix}
-command.  You may have to change exactly how arguments are passed,
-whether files or just their names are sent, and how some of the deeper
-infrastructure of your command copes with remoteness.
+The current server implementation can use up huge amounts of memory
+when transmitting a lot of data over a slow link (i.e. the network is
+slower than the server can generate the data).  There is some
+experimental code (see @code{SERVER_FLOWCONTROL} in options.h) which
+should help significantly.
 
 @node Protocol Notes
 @chapter Notes on the Protocol
@@ -206,6 +120,9 @@ repositories are implemented, and the rcsmerge is done by the client.
 
 @node Protocol
 @chapter The CVS client/server protocol
+
+In the following, @samp{\n} refers to a linefeed and @samp{\t} refers
+to a horizontal tab.
 
 @menu
 * Entries Lines::               
@@ -248,17 +165,29 @@ A mode is any number of repetitions of
 separated by @samp{,}.
 
 @var{mode-type} is an identifier composed of alphanumeric characters.
-Currently specified: @samp{u} for user, @samp{g} for group, @samp{o} for
-other, as specified in POSIX.  If at all possible, give these their
-POSIX meaning and use other mode-types for other behaviors.  For
-example, on VMS it shouldn't be hard to make the groups behave like
-POSIX, but you would need to use ACLs for some cases.
+Currently specified: @samp{u} for user, @samp{g} for group, @samp{o}
+for other (see below for discussion of whether these have their POSIX
+meaning or are more loose).  Unrecognized values of @var{mode-type}
+are silently ignored.
 
 @var{data} consists of any data not containing @samp{,}, @samp{\0} or
 @samp{\n}.  For @samp{u}, @samp{g}, and @samp{o} mode types, data
 consists of alphanumeric characters, where @samp{r} means read, @samp{w}
 means write, @samp{x} means execute, and unrecognized letters are
 silently ignored.
+
+The two most obvious ways in which the mode matters are: (1) is it
+writeable?  This is used by the developer communication features, and
+is implemented even on OS/2 (and could be implemented on DOS), whose
+notion of mode is limited to a readonly bit. (2) is it executable?
+Unix CVS users need CVS to store this setting (for shell scripts and
+the like).  The current CVS implementation on unix does a little bit
+more than just maintain these two settings, but it doesn't really have
+a nice general facility to store or version control the mode, even on
+unix, much less across operating systems with diverse protection
+features.  So all the ins and outs of what the mode means across
+operating systems haven't really been worked out (e.g. should the VMS
+port use ACLs to get POSIX semantics for groups?).
 
 @node Requests
 @section Requests
@@ -383,6 +312,29 @@ unchanged.  This is necessary for correct behavior since only the server
 knows what possible files may exist, and thus what files are
 nonexistent.
 
+@item Notify @var{filename} \n
+Tell the server that a @code{edit} or @code{unedit} command has taken
+place.  The server needs to send a @code{Notified} response, but such
+response is deferred until the next time that the server is sending
+responses.  Response expected: no.  Additional data:
+@example
+@var{notification-type} \t @var{time} \t @var{clienthost} \t
+@var{working-dir} \t @var{watches} \n
+@end example
+where @var{notification-type} is @samp{E} for edit or @samp{U} for
+unedit, @var{time} is the time at which the edit or unedit took place,
+@var{clienthost} is the name of the host on which the edit or unedit
+took place, and @var{working-dir} is the pathname of the working
+directory where the edit or unedit took place.  @var{watches} are the
+temporary watches to set; if it is followed by \t then the tab and the
+rest of the line are ignored.
+
+@item Questionable @var{filename} \n
+Response expected: no.  Additional data: no.  Tell the server to check
+whether @var{filename} should be ignored, and if not, next time the
+server sends responses, send (in a @code{M} response) @samp{?} followed
+by the directory and filename.
+
 @item Argument @var{text} \n
 Response expected: no.
 Save argument for use in a subsequent command.  Arguments
@@ -409,7 +361,6 @@ rdiff; the latter do not access the working directory and thus have no
 need to expand modules on the client side.
 
 @item co \n
-@itemx update \n
 @itemx ci \n
 @itemx diff \n
 @itemx tag \n
@@ -419,11 +370,11 @@ need to expand modules on the client side.
 @itemx remove \n
 @itemx rdiff \n
 @itemx rtag \n
-@itemx import \n
 @itemx admin \n
 @itemx export \n
 @itemx history \n
-@itemx release \n
+@itemx watchers \n
+@itemx editors \n
 Response expected: yes.  Actually do a cvs command.  This uses any
 previous @code{Argument}, @code{Repository}, @code{Entry},
 @code{Modified}, or @code{Lost} requests, if they have been sent.  The
@@ -431,6 +382,47 @@ last @code{Repository} sent specifies the working directory at the time
 of the operation.  No provision is made for any input from the user.
 This means that @code{ci} must use a @code{-m} argument if it wants to
 specify a log message.
+
+@itemx update \n
+Response expected: yes.  Actually do a @code{cvs update} command.  This
+uses any previous @code{Argument}, @code{Repository}, @code{Entry},
+@code{Modified}, or @code{Lost} requests, if they have been sent.  The
+last @code{Repository} sent specifies the working directory at the time
+of the operation.  The @code{-I} option is not used--files which the
+client can decide whether to ignore are not mentioned and the client
+sends the @code{Questionable} request for others.
+
+@item import \n
+Response expected: yes.  Actually do a @code{cvs import} command.  This
+uses any previous @code{Argument}, @code{Repository}, @code{Entry},
+@code{Modified}, or @code{Lost} requests, if they have been sent.  The
+last @code{Repository} sent specifies the working directory at the time
+of the operation.  The files to be imported are sent in @code{Modified}
+requests (files which the client knows should be ignored are not sent;
+the server must still process the CVSROOT/cvsignore file unless -I ! is
+sent).  A log message must have been specified with a @code{-m}
+argument.
+
+@item watch-on \n
+@itemx watch-off \n
+@itemx watch-add \n
+@itemx watch-remove \n
+Response expected: yes.  Actually do the @code{cvs watch on}, @code{cvs
+watch off}, @code{cvs watch add}, and @code{cvs watch remove} commands,
+respectively.  This uses any previous @code{Argument},
+@code{Repository}, @code{Entry}, @code{Modified}, or @code{Lost}
+requests, if they have been sent.  The last @code{Repository} sent
+specifies the working directory at the time of the operation.
+
+@item release \n
+Response expected: yes.  Note that a @code{cvs release} command has
+taken place and update the history file accordingly.
+
+@item noop \n
+Response expected: yes.  This request is a null command in the sense
+that it doesn't do anything, but merely (as with any other requests
+expecting a response) sends back any responses pertaining to pending
+errors, pending @code{Notified} responses, etc.
 
 @item update-patches \n
 This request does not actually do anything.  It is used as a signal that
@@ -526,6 +518,12 @@ This will only be used when the client has an exact copy of an earlier
 revision of a file.  This response is only used if the @code{update}
 command is given the @samp{-u} argument.
 
+@item Mode @var{mode} \n
+This @var{mode} applies to the next file mentioned in
+@code{Checked-in}.  It does not apply to any request which follows a
+@code{Checked-in}, @code{New-entry}, @code{Updated}, @code{Merged}, or
+@code{Patched} response.
+
 @item Checksum @var{checksum}\n
 The @var{checksum} applies to the next file sent over via
 @code{Updated}, @code{Merged}, or @code{Patched}.  In the case of
@@ -581,10 +579,21 @@ Additional data: @var{prog} \n.  Tell the client to set an update
 program, which should be supplied with the @code{Update-prog} request
 for future operations.
 
-@item Module-expansion @var{pathname} \n
-Return a file or directory which is included in a particular module.
-@var{pathname} is relative to cvsroot, unlike most pathnames in
-responses.
+@item Notified @var{pathname} \n
+Indicate to the client that the notification for @var{pathname} has been
+done.  There should be one such response for every @code{Notify}
+request; if there are several @code{Notify} requests for a single file,
+the requests should be processed in order; the first @code{Notified}
+response pertains to the first @code{Notify} request, etc.
+
+@item Module-expansion @var{pathname} \n Return a file or directory
+which is included in a particular module.  @var{pathname} is relative
+to cvsroot, unlike most pathnames in responses.  @var{pathname} should
+be used to look and see whether some or all of the module exists on
+the client side; it is not necessarily suitable for passing as an
+argument to a @code{co} request (for example, if the modules file
+contains the @samp{-d} option, it will be the directory specified with
+@samp{-d}, not the name of the module).
 
 @item M @var{text} \n
 A one-line message for the user.

@@ -82,17 +82,17 @@ cvsremove (argc, argv)
 	ign_setup ();
 	if (local)
 	    send_arg("-l");
+	send_file_names (argc, argv);
 	send_files (argc, argv, local, 0);
-	if (fprintf (to_server, "remove\n") < 0)
-	    error (1, errno, "writing to server");
+	send_to_server ("remove\012", 0);
         return get_responses_and_close ();
     }
 #endif
 
     /* start the recursion processor */
-    err = start_recursion (remove_fileproc, (int (*) ()) NULL, remove_dirproc,
-			   (int (*) ()) NULL, argc, argv, local,
-			   W_LOCAL, 0, 1, (char *) NULL, 1, 0);
+    err = start_recursion (remove_fileproc, (FILESDONEPROC) NULL,
+                           remove_dirproc, (DIRLEAVEPROC) NULL, argc, argv,
+                           local, W_LOCAL, 0, 1, (char *) NULL, 1, 0);
 
     if (removed_files)
 	error (0, 0, "use '%s commit' to remove %s permanently", program_name,
@@ -123,12 +123,22 @@ remove_fileproc (file, update_dir, repository, entries, srcfiles)
     char fname[PATH_MAX];
     Vers_TS *vers;
 
-    /*
-     * If unlinking the file works, good.  If not, the "unremoved"
-     * error will indicate problems.
-     */
     if (force)
-	(void) unlink (file);
+    {
+	if (!noexec)
+	{
+	    if (unlink (file) < 0 && ! existence_error (errno))
+	    {
+		if (update_dir[0] == '\0')
+		    error (0, errno, "unable to remove %s", file);
+		else
+		    error (0, errno, "unable to remove %s/%s", update_dir,
+			   file);
+	    }
+	}
+	/* else FIXME should probably act as if the file doesn't exist
+	   in doing the following checks.  */
+    }
 
     vers = Version_TS (repository, (char *) NULL, (char *) NULL, (char *) NULL,
 		       file, 0, 0, entries, srcfiles);
@@ -148,12 +158,9 @@ remove_fileproc (file, update_dir, repository, entries, srcfiles)
     {
 	/*
 	 * It's a file that has been added, but not commited yet. So,
-	 * remove the ,p and ,t file for it and scratch it from the
-	 * entries file.
-	 */
+	 * remove the ,t file for it and scratch it from the
+	 * entries file.  */
 	Scratch_Entry (entries, file);
-	(void) sprintf (fname, "%s/%s%s", CVSADM, file, CVSEXT_OPT);
-	(void) unlink_file (fname);
 	(void) sprintf (fname, "%s/%s%s", CVSADM, file, CVSEXT_LOG);
 	(void) unlink_file (fname);
 	if (!quiet)

@@ -42,12 +42,10 @@ INSTALL_DATA = @INSTALL_DATA@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 
 EXAMPLE_FILES = commitinfo editinfo loginfo modules rcsinfo taginfo \
-	rcstemplate checkoutlist cvswrappers uncom comb
+	rcstemplate checkoutlist cvswrappers wrap unwrap notify
 
 DISTFILES = \
-	.cvsignore Makefile.in ChangeLog \
-	commitinfo editinfo loginfo modules rcsinfo taginfo \
-	rcstemplate checkoutlist cvswrappers uncom comb
+	.cvsignore Makefile.in ChangeLog $(EXAMPLE_FILES)
 
 all: Makefile
 .PHONY: all
@@ -56,6 +54,7 @@ install: all $(libdir)/cvs/examples
 	for f in $(EXAMPLE_FILES) ; do\
 		$(INSTALL_DATA) $(srcdir)/$$f $(libdir)/cvs/examples/$$f; \
 	done
+	@echo "You might consider running 'cvsinit' to upgrade your repository(s)...."
 .PHONY: install
 
 $(libdir)/cvs/examples:

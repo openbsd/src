@@ -29,7 +29,11 @@
 /* AIX alloca decl has to be the first thing in the file, bletch! */
  #pragma alloca
 #else  /* not _AIX */
+#ifdef ALLOCA_IN_STDLIB
+ /* then we need do nothing */
+#else
 char *alloca ();
+#endif /* not ALLOCA_IN_STDLIB */
 #endif /* not _AIX */
 #endif /* not HAVE_ALLOCA_H */
 #endif /* not __GNUS__ */
@@ -50,37 +54,103 @@ char *alloca ();
 #undef S_ISNWK
 #endif
 
+/* Not all systems have S_IFMT, but we probably want to use it if we
+   do.  See ChangeLog for a more detailed discussion. */
+
 #if !defined(S_ISBLK) && defined(S_IFBLK)
-#define	S_ISBLK(m) (((m) & S_IFMT) == S_IFBLK)
+# if defined(S_IFMT)
+# define	S_ISBLK(m) (((m) & S_IFMT) == S_IFBLK)
+# else
+# define S_ISBLK(m) ((m) & S_IFBLK)
+# endif
 #endif
+
 #if !defined(S_ISCHR) && defined(S_IFCHR)
-#define	S_ISCHR(m) (((m) & S_IFMT) == S_IFCHR)
+# if defined(S_IFMT)
+# define	S_ISCHR(m) (((m) & S_IFMT) == S_IFCHR)
+# else
+# define S_ISCHR(m) ((m) & S_IFCHR)
+# endif
 #endif
+
 #if !defined(S_ISDIR) && defined(S_IFDIR)
-#define	S_ISDIR(m) (((m) & S_IFMT) == S_IFDIR)
+# if defined(S_IFMT)
+# define	S_ISDIR(m) (((m) & S_IFMT) == S_IFDIR)
+# else
+# define S_ISDIR(m) ((m) & S_IFDIR)
+# endif
 #endif
+
 #if !defined(S_ISREG) && defined(S_IFREG)
-#define	S_ISREG(m) (((m) & S_IFMT) == S_IFREG)
+# if defined(S_IFMT)
+# define	S_ISREG(m) (((m) & S_IFMT) == S_IFREG)
+# else
+# define S_ISREG(m) ((m) & S_IFREG)
+# endif
 #endif
+
 #if !defined(S_ISFIFO) && defined(S_IFIFO)
-#define	S_ISFIFO(m) (((m) & S_IFMT) == S_IFIFO)
+# if defined(S_IFMT)
+# define	S_ISFIFO(m) (((m) & S_IFMT) == S_IFIFO)
+# else
+# define S_ISFIFO(m) ((m) & S_IFIFO)
+# endif
 #endif
+
 #if !defined(S_ISLNK) && defined(S_IFLNK)
-#define	S_ISLNK(m) (((m) & S_IFMT) == S_IFLNK)
+# if defined(S_IFMT)
+# define	S_ISLNK(m) (((m) & S_IFMT) == S_IFLNK)
+# else
+# define S_ISLNK(m) ((m) & S_IFLNK)
+# endif
 #endif
+
 #if !defined(S_ISSOCK) && defined(S_IFSOCK)
-#define	S_ISSOCK(m) (((m) & S_IFMT) == S_IFSOCK)
+# if defined(S_IFMT)
+# define	S_ISSOCK(m) (((m) & S_IFMT) == S_IFSOCK)
+# else
+# define S_ISSOCK(m) ((m) & S_IFSOCK)
+# endif
 #endif
+
 #if !defined(S_ISMPB) && defined(S_IFMPB) /* V7 */
-#define S_ISMPB(m) (((m) & S_IFMT) == S_IFMPB)
-#define S_ISMPC(m) (((m) & S_IFMT) == S_IFMPC)
+# if defined(S_IFMT)
+# define S_ISMPB(m) (((m) & S_IFMT) == S_IFMPB)
+# define S_ISMPC(m) (((m) & S_IFMT) == S_IFMPC)
+# else
+# define S_ISMPB(m) ((m) & S_IFMPB)
+# define S_ISMPC(m) ((m) & S_IFMPC)
+# endif
 #endif
+
 #if !defined(S_ISNWK) && defined(S_IFNWK) /* HP/UX */
-#define S_ISNWK(m) (((m) & S_IFMT) == S_IFNWK)
+# if defined(S_IFMT)
+# define S_ISNWK(m) (((m) & S_IFMT) == S_IFNWK)
+# else
+# define S_ISNWK(m) ((m) & S_IFNWK)
+# endif
 #endif
+
 #if !defined(HAVE_MKFIFO)
 #define mkfifo(path, mode) (mknod ((path), (mode) | S_IFIFO, 0))
 #endif
+
+#ifdef NEED_DECOY_PERMISSIONS        /* OS/2, really */
+
+#define	S_IRUSR S_IREAD
+#define	S_IWUSR S_IWRITE
+#define	S_IXUSR S_IEXEC
+#define	S_IRWXU	(S_IRUSR | S_IWUSR | S_IXUSR)
+#define	S_IRGRP S_IREAD
+#define	S_IWGRP S_IWRITE
+#define	S_IXGRP S_IEXEC
+#define	S_IRWXG	(S_IRGRP | S_IWGRP | S_IXGRP)
+#define	S_IROTH S_IREAD
+#define	S_IWOTH S_IWRITE
+#define	S_IXOTH S_IEXEC
+#define	S_IRWXO	(S_IROTH | S_IWOTH | S_IXOTH)
+
+#else /* ! NEED_DECOY_PERMISSIONS */
 
 #ifndef S_IRUSR
 #define	S_IRUSR 0400
@@ -100,7 +170,8 @@ char *alloca ();
 #define	S_IXOTH	(S_IXGRP >> 3)	/* Execute by others.  */
 /* Read, write, and execute by others.  */
 #define	S_IRWXO	(S_IRWXG >> 3)
-#endif
+#endif /* !def S_IRUSR */
+#endif /* NEED_DECOY_PERMISSIONS */
 
 #if defined(POSIX) || defined(HAVE_UNISTD_H)
 #include <unistd.h>
@@ -221,6 +292,8 @@ extern long timezone;
    have to debug the configure check across all the machines).  */
 #if defined (HAVE_UTIME_H) && !defined (NeXT)
 #include <utime.h>
+#elif defined (HAVE_SYS_UTIME_H)
+# include <sys/utime.h>
 #else
 #ifndef ALTOS
 struct utimbuf
@@ -233,34 +306,36 @@ int utime ();
 #endif
 
 #if STDC_HEADERS || HAVE_STRING_H
-#include <string.h>
-/* An ANSI string.h and pre-ANSI memory.h might conflict. */
-#if !STDC_HEADERS && HAVE_MEMORY_H
-#include <memory.h>
-#endif /* not STDC_HEADERS and HAVE_MEMORY_H */
-
-#ifndef index
-#define index strchr
-#endif /* index */
-
-#ifndef rindex
-#define rindex strrchr
-#endif /* rindex */
-
-#ifndef bcmp
-#define bcmp(s1, s2, n) memcmp ((s1), (s2), (n))
-#endif /* bcmp */
-
-#ifndef bzero
-#define bzero(s, n) memset ((s), 0, (n))
-#endif /* bzero */
-
+#  include <string.h>
+   /* An ANSI string.h and pre-ANSI memory.h might conflict. */
+#  if !STDC_HEADERS && HAVE_MEMORY_H
+#    include <memory.h>
+#  endif /* not STDC_HEADERS and HAVE_MEMORY_H */
 #else /* not STDC_HEADERS and not HAVE_STRING_H */
-#include <strings.h>
-/* memory.h and strings.h conflict on some systems. */
+#  include <strings.h>
+   /* memory.h and strings.h conflict on some systems. */
 #endif /* not STDC_HEADERS and not HAVE_STRING_H */
 
 #include <errno.h>
+
+/* Not all systems set the same error code on a non-existent-file
+   error.  This tries to ask the question somewhat portably.
+   On systems that don't have ENOTEXIST, this should behave just like
+   x == ENOENT.  "x" is probably errno, of course. */
+
+#ifdef ENOTEXIST
+#  ifdef EOS2ERR
+#    define existence_error(x) \
+     (((x) == ENOTEXIST) || ((x) == ENOENT) || ((x) == EOS2ERR))
+#  else
+#    define existence_error(x) \
+     (((x) == ENOTEXIST) || ((x) == ENOENT))
+#  endif
+#else
+#    define existence_error(x) ((x) == ENOENT)
+#endif
+
+
 #ifdef STDC_HEADERS
 #include <stdlib.h>
 #else
@@ -275,6 +350,29 @@ extern int errno;
 char *getcwd ();
 #else
 char *getwd ();
+#endif
+
+/* check for POSIX signals */
+#if defined(HAVE_SIGACTION) && defined(HAVE_SIGPROCMASK)
+# define POSIX_SIGNALS
+#endif
+
+/* MINIX 1.6 doesn't properly support sigaction */
+#if defined(_MINIX)
+# undef POSIX_SIGNALS
+#endif
+
+/* If !POSIX, try for BSD.. Reason: 4.4BSD implements these as wrappers */
+#if !defined(POSIX_SIGNALS)
+# if defined(HAVE_SIGVEC) && defined(HAVE_SIGSETMASK) && defined(HAVE_SIGBLOCK)
+#  define BSD_SIGNALS
+# endif
+#endif
+
+/* Under OS/2, this must be included _after_ stdio.h; that's why we do
+   it here. */
+#ifdef USE_OWN_TCPIP_H
+#include "tcpip.h"
 #endif
 
 #ifdef HAVE_FCNTL_H
@@ -334,7 +432,6 @@ char *getwd ();
 #ifndef S_IWOTH
 #define	S_IWOTH		0000002		/* write permission, other */
 #endif
-
 
 /* Under MS-DOS and its derivatives (like Windows NT), mkdir takes only one
    argument; permission is handled very differently on those systems than in

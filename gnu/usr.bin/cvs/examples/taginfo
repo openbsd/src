@@ -1,11 +1,11 @@
 #
-# $Id: taginfo,v 1.1.1.1 1995/12/19 09:21:43 deraadt Exp $
+#ident	"@(#)cvs/examples:$Name:  $:$Id: taginfo,v 1.1.1.2 1996/01/30 00:19:23 tholo Exp $"
 #
 # The "taginfo" file is used to control pre-tag checks.
 # The filter on the right is invoked with the following arguments:
 #
 # $1 -- tagname
-# $2 -- operation "add" for tag and "del" for tag -d
+# $2 -- operation "add" for tag, "mov" for tag -F, and "del" for tag -d
 # $3 -- repository
 # $4->  file revision [file revision ...]
 #
@@ -22,4 +22,4 @@
 # If the name "ALL" appears as a regular expression it is always used
 # in addition to the first matching regex or "DEFAULT".
 #
-#DEFAULT			$CVSROOT/CVSROOT/tag_logging_program
+DEFAULT			$CVSROOT/CVSROOT/tag_logging_program

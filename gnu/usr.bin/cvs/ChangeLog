@@ -1,3 +1,308 @@
+Wed Jan 24 20:26:55 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* configure.in: Remove diff stuff.  Also remove AC_CANONICAL_HOST
+	and bindir crud as that was the only place they were used.
+	* config.h.in, configure: Regenerated.
+	* config.sub, config.guess: Removed.
+	* src/options.h.in (DIFF): Change to "diff" and change comment to tell
+	people not to use -a.
+	* src/sanity.sh: New test binfiles tests for above-fixed bug (see
+	comments in patch_file in update.c--passing -a to diff generates a
+	patch which patch cannot apply).
+
+	* NEWS: Adjust to reflect existence of 1.7.
+
+Tue Jan 23 14:20:39 1996  Jim Blandy  <jimb@totoro.cyclic.com>
+
+	* devel-cvs: New file, not to be included in the distribution.
+
+Thu Jan 18 21:46:56 1996  Jim Blandy  <jimb@totoro.cyclic.com>
+
+	* BUGS: Remove all mention of the outdated cyclic-cvs@cyclic.com
+	and remote-cvs@cyclic.com addresses.  It turns out that people see
+	these addresses and use them.  Mention the proper way to report
+	bugs.
+
+Wed Jan 17 16:40:01 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* README: Fix typo (info-cvs-requests -> info-cvs-request).
+
+Fri Jan 12 13:38:12 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* configure.in, configure: Revert "Checking user's gender" change.
+	Sure, you only live once, but I want mine to be a *long* life, not
+	one interrupted by a CVS user who is not amused coming after me
+	with an axe.
+
+Fri Jan 12 12:46:23 1996  Karl Fogel  <kfogel@floss.red-bean.com>
+
+        * configure: regenerated.
+        
+        * configure.in: print "Checking user's gender... ok".  I mean,
+        what the heck, you only live once.
+
+Thu Jan 11 14:00:00 1996  Jim Kingdon  <peary.cyclic.com>
+
+	* cvsnt.mak: Update dependencies.
+
+Thu Jan 11 12:03:10 1996  Norbert Kiesel  <nk@col.sw-ley.de>
+
+	* NEWS: document loss of CVS_NOADMIN.  Also, mention the
+	  possibility to use "cvs" in .cvsrc.
+
+Wed Jan 10 20:40:23 1996  Karl Fogel  <kfogel@floss.red-bean.com>
+
+        * configure: regenerated.
+
+        * configure.in (AC_OUTPUT): added `macintosh/Makefile'.
+        
+        * Makefile.in (SUBDIRS): added `macintosh'.
+
+Wed Jan 10 01:17:18 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* README: Remove URL of obsolete David Zuhn web page.
+
+	* FAQ: Replace entire file with short paragraph explaining the FAQ
+	is dead.
+
+	* configure.in: Don't set exec_prefix.  Set bindir from prefix if
+	exec_prefix isn't set.
+	* configure: Regenerated.
+
+	* INSTALL: Update list of machines for 1.6.85 (further changes to
+	the list of machines will not receive ChangeLog entries).
+
+Tue Jan  9 09:02:05 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* NEWS: Mention changes in default ignore list.
+
+	* INSTALL: check.log is not in /tmp/cvs-sanity.  Mention
+	submitting bug reports as a possibility, not a request from us.
+	Separate out "make check" a bit to make clear it is optional.
+
+Mon Jan  8 11:42:40 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* INSTALL: Remove grep stuff; no longer necessary.
+	Don't say that patch must understand unidiffs; no longer true.
+	Suggest configuring with -Wall (here until we have a "how to hack
+	CVS document").
+
+Wed Jan  3 19:00:00 1996  Jim Kingdon  <kingdon@peary.cyclic.com>
+
+	* .cvsignore: Add cvsnt.vcp.
+
+Mon Jan  1 22:45:50 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* os2/Makefile.in (Makefile), windows-NT/Makefile.in (Makefile):
+	New rules.
+
+Sun Dec 31 16:52:49 1995  Karl Fogel  <kfogel@floss.cyclic.com>
+
+        * NEWS: add a blurb about password authentication.
+
+Sun Dec 31 16:16:38 1995  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* README: Add "submissions will be distributed under the GPL"
+	language (like the newspapers have for letters to the editor).
+
+Thu Dec 21 16:00:00 1995  Jim Kingdon  <kingdon@peary.cyclic.com>
+
+	* cvsnt.mak: Revert to an old version, then add in recent changes
+	to lists of files (using Visual C++; not by hand editing--this way
+	it can be used as an internal project not just an external one).
+
+Tue Dec 19 17:13:14 1995  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* NEWS: Mention -kb (strictly speaking a bugfix, not a new
+	feature, I guess, but it seems worth mentioning anyway).
+
+Tue Dec 19 17:00:00 1995  Jim Kingdon  <kingdon@peary.cyclic.com>
+
+	* TODO: Remove "regular TODO list:" line which accidentally got
+	checked in.
+
+Mon Dec 18 18:59:30 1995  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* Makefile.in (TAR_VERBOSE): Default to empty, not "v".  I don't
+	want that whole long list of files any more than jimb's daily
+	update script does.
+
+Sun Dec 17 23:59:11 1995  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* configure.in (AC_REPLACE_FUNCS): Remove vasprintf.
+	* configure: Regenerated.
+
+Sat Dec 16 17:19:45 1995  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* configure.in (AC_REPLACE_FUNCS): Add vasprintf.
+	* configure: Regenerated.
+
+Mon Nov 20 14:19:47 1995  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* TODO: Remove items about developer communications; they are done.
+	* NEWS: Mention developer communication features.
+	* cvsinit.sh: Also add notify file.
+
+Mon Dec 11 22:44:58 1995  Karl Fogel  <kfogel@totoro.cyclic.com>
+
+        * New subdir "macintosh", for Mike Ladwig's
+        <mike@twinpeaks.prc.com> port-in-progress.
+
+Thu Dec  7 14:32:49 1995  Jim Meyering	(meyering@comco.com)
+
+	* Makefile.in (check): Make sure library is built before running
+	make in src.
+	(remotecheck): Likewise.
+	(installcheck): Likewise.
+
+Wed Dec  6 11:40:37 1995  J.T. Conklin  <jtc@slave.cygnus.com>
+
+	* configure.in: Remove leading -l from first argument of
+ 	AC_CHECK_LIB for -lkrb and -ldes checks.
+
+Mon Dec  4 08:06:31 1995  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* config.h.in: Regenerated.
+
+Sun Dec  3 20:05:10 1995  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* configure.in: Remove grep stuff.
+	* configure: Regenerated.
+
+Fri Dec  1 11:16:18 1995  Norbert Kiesel  <nk@col.sw-ley.de>
+
+	* configure, config.h.in: re-ran autoconf
+
+	* configure.in (AC_CHECK_HEADERS): add sys/resource.h to list of
+	  tested headers
+
+	* Makefile.in (DISTFILES): add config.sub and config.guess
+
+Thu Nov 23 09:01:53 1995  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* TODO: Remove item about doc describing undoing a change; it
+	already does.
+
+Sun Nov 19 18:12:36 1995  Jim Blandy  <jimb@totoro.cyclic.com>
+
+	* Makefile.in (dist): Pull out the 'v' in the tar command to a
+	variable, so I can disable it in my daily update script.
+
+Tue Nov 14 18:31:36 1995  Greg A. Woods  <woods@most.weird.com>
+
+	* cvsinit.sh:
+	- new rcs id
+	- new opening comment
+	- read only one "word" for CVSROOT
+	- add checkoutlist, cvswrappers, taginfo, wrap, & unwrap to
+	examples install loop, special handling for latter....
+	- don't do any special stuff for loginfo -- always comment out
+	everything in the newly installed examples
+	- add a wee message to suggest editing newly installed examples
+	- tweak some more comments, esp. regarding install of contrib
+	scripts....
+	- make $CVSROOT/CVROOT/history group writable if it didn't exist
+	as it's not very useful otherwise
+
+Tue Nov 14 15:22:25 1995  Greg A. Woods  <woods@most.weird.com>
+
+	* cvsinit.sh: woops!  wasn't installing contrib/log!
+
+Tue Nov 14 12:09:11 1995  Greg A. Woods  <woods@most.weird.com>
+
+	* INSTALL: oops, missed a couple of things about "configure"
+
+	* configure: re-ran autoconf
+
+Tue Nov 14 11:06:25 1995  Greg A. Woods  <woods@most.weird.com>
+
+	* config.guess, config.sub: first time in (from autoconf-2.4)
+
+	* configure.in:
+	- updated to work with autoconf-2.4
+	- call AC_CANONICAL_HOST to get host OS type right (needs
+	config.sub and config.guess)
+	- added full support for --with-diffutils and --with-gnugrep
+	- fixed the diff search to work almost like the one for RCS-5.7
+	- fixed some quoting problems
+
+	* README: mention optional 'make check' step
+
+	* INSTALL:
+	- updated notes about working SunOS versions
+	- re-wrote notes about RCS, diffutils, etc.
+	- added notes about configuring	with GNU diffutils and GNU grep
+	- added notes about using 'make	check'
+	- changed bug reporiting instructions to mention cvsbug
+	- re-wrote notes about setting CVSROOT in shell startups
+
+Fri Nov  3 11:11:16 1995  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* README: Fix typo in URL of molli's web site.
+
+Tue Oct 31 19:28:16 1995  Karl Fogel  <kfogel@totoro.cyclic.com>
+
+        * testing something, please ignore.
+
+Mon Oct 23 18:37:27 1995  Karl Fogel  <kfogel@floss.cyclic.com>
+
+        * configure: re-ran autoconf.
+
+        * configure.in (AC_OUTPUT): os2/Makefile.
+
+        * Makefile.in (SUBDIRS): added os2 subdir.
+
+Mon Oct 23 12:02:51 1995  Norbert Kiesel  <nk@col.sw-ley.de>
+
+	* cvsnt.mak:  added lib/getline.c
+
+Fri Oct 20 17:04:55 1995  Norbert Kiesel  <nk@col.sw-ley.de>
+
+	* cvsnt.mak: added src/expand_path.c, error.[ch] now in src
+
+Thu Oct 19 16:26:32 1995  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* INSTALL: Remove note about RCS 5.7 and log messages
+	consisting only of whitespace; fixed in CVS on 11 Jul 95.
+
+Tue Oct 17 17:57:23 1995  Warren Jones  <wjones@tc.fluke.com>
+
+	* man/cvs.5, examples/modules: Document -e.
+
+Tue Oct 10 16:34:25 1995  Thorsten Lockert  <tholo@sigmasoft.com>
+
+	* configure.in: More crud looking for kerberos, this time for 4.4BSD.
+	* configure: Regenerated.
+
+Sun Oct  8 12:22:19 1995  Peter Wemm  <peter@haywire.DIALix.COM>
+
+	* configure.in: check for POSIX and BSD style reliable signals
+	* configure: regenerated by autoconf
+	* config.h.in: regenerated by autoheader
+
+Fri Oct  6 21:50:48 1995  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	There is little point in trying to share a file as trivial as
+	lib/error.c between programs.  So just admit it is CVS specific:
+	* lib/error.c: Move from here...
+	* src/error.c: ...to here, and remove CVS_SUPPORT ifdefs.
+	* lib/error.h: Move from here...
+	* src/error.h: ...to here.  Remove CVS_SUPPORT
+	ifdefs; remove unused variable error_message_count.
+	* src/Makefile.in (OBJECTS): Add error.o.
+	(SOURCES): Add error.c.
+	(HEADERS): Add error.h.
+	* lib/Makefile.in (OBJECTS): Remove error.o.
+	(SOURCES): Remove error.c.
+	(HEADERS): Remove error.h.
+	* acconfig.h, configure.in: Remove CVS_SUPPORT.
+	* configure, config.h.in: Rebuilt using autoconf and autoheader.
+	* windows-NT/config.h: Remove CVS_SUPPORT.
+
+Thu Oct  5 17:26:38 1995  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* INSTALL: Mention Siemens-Nixdorf RM600.
+
 Tue Oct  3 09:32:19 1995  Jim Kingdon  <kingdon@harvey.cyclic.com>
 
 	* NEWS: Remove item about -f global option; it is old news already
@@ -17,11 +322,11 @@ Mon Oct  2 18:10:35 1995  Larry Jones  <larry.jones@sdrc.com>
 	we need it for the FD_SET stuff for select().)
 	Moved check for gethostname() after check for connect() since if
 	connect() is not found, we may add librariesd and gethostname()
-	may well be in one of those libraries. 
+	may well be in one of those libraries.
 	If connect() isn't found, look in -linet (ISC) in addition to
 	-lsocket and -lnsl.  Also, ignore the cache since we need to
 	update LIBS reguardless of whether it was found before or not and
-	the answer may well be different afterwards. 
+	the answer may well be different afterwards.
 	Define CLIENT_SUPPORT and SERVER_SUPPORT only if connect() is
 	found.
 
@@ -238,7 +543,7 @@ Tue Jul 18 21:18:00 1995  Jim Blandy  <jimb@cyclic.com>
 
 	* configure.in (AC_CHECK_HEADERS): Check for sys/time.h.  If you're
 	using AC_HEADER_TIME, it's best to check for this too.
-	
+
 	* cvsnt.mak: New file --- makefile equivalent for Microsoft Visual C++.
 	Choose this as your project when working with CVS under MSVC++.
 	* cvsnt.vcp: New file --- configuration info for Microsoft Visual C++.
@@ -300,7 +605,7 @@ Sun Jul	 9 19:03:00 1995  Greg A. Woods	 <woods@most.weird.com>
 
 	* Makefile.in: add another reminder to run 'cvsinit' to update
 	repository(ies) (from previous local changes)
-	
+
 Thu Jul	 6 17:53:55 1995  Paul Eggert  <eggert@twinsun.com>
 
 	* Makefile.in (mostlyclean-local): Remove $(PROGS).
@@ -418,8 +723,8 @@ Tue May 30 00:07:15 1995  Jim Meyering	(meyering@comco.com)
 Mon May 29 22:24:28 1995  J.T. Conklin	<jtc@rtl.cygnus.com>
 
 	* configure.in: Use AC_HEADER_DIRENT instead of AC_DIR_HEADER.
-	Use AC_HEADER_STAT to determine if S_FOO() macros work.	 
-	Use AC_HEADER_TIME to determine if both <sys/time.h> and <time.h> 
+	Use AC_HEADER_STAT to determine if S_FOO() macros work.
+	Use AC_HEADER_TIME to determine if both <sys/time.h> and <time.h>
 	can be included as recommend by autoconf manual.
 	Remove AC_STRUCT_TM test, as above test is better.
 
@@ -453,7 +758,7 @@ Fri Apr 28 22:31:26 1995  Jim Blandy  <jimb@totoro.bio.indiana.edu>
 
 Sat Apr	 8 19:02:21 1995  Roland McGrath  <roland@baalperazim.frob.com>
 
-	* configure.in: Check for fchdir.  
+	* configure.in: Check for fchdir.
 	(connect check): Use AC_CHECK_LIB instead of (obsolete)
 	AC_HAVE_LIBRARY.
 

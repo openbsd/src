@@ -76,6 +76,18 @@ xstrdup (str)
     return (s);
 }
 
+/* Remove trailing newlines from STRING, destructively. */
+void
+strip_trailing_newlines (str)
+     char *str;
+{
+  int len;
+  len = strlen (str) - 1;
+
+  while (str[len] == '\n')
+    str[len--] = '\0';
+}
+
 /*
  * Recover the space allocated by Find_Names() and line2argv()
  */
@@ -148,8 +160,8 @@ getcaller ()
     if (uid == (uid_t) 0)
     {
 	/* super-user; try getlogin() to distinguish */
-	if (((name = getenv("LOGNAME")) || (name = getenv("USER")) ||
-	     (name = getlogin ())) && *name)
+	if (((name = getlogin ()) || (name = getenv("LOGNAME")) ||
+	     (name = getenv("USER"))) && *name)
 	    return (name);
     }
     if ((pw = (struct passwd *) getpwuid (uid)) == NULL)

@@ -1,4 +1,7 @@
-;;; @(#) Id: pcl-cvs-startup.el,v 1.4 1993/05/31 18:40:33 ceder Exp 
+;;;#ident "@(#)OrigId: pcl-cvs-startup.el,v 1.4 1993/05/31 18:40:33 ceder Exp "
+;;;
+;;;#ident "@(#)cvs/contrib/pcl-cvs:$Name:  $:$Id: pcl-cvs-startup.el,v 1.1.1.2 1996/01/30 00:19:13 tholo Exp $"
+;;;
 (autoload 'cvs-update "pcl-cvs"
 	  "Run a 'cvs update' in the current working directory. Feed the
 output to a *cvs* buffer and run cvs-mode on it.

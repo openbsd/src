@@ -11,7 +11,7 @@
 #
 # Contributed by David Hampton <hampton@cisco.com>
 #
-# hacked greatly by Greg A. Woods <woods@web.net>
+# hacked greatly by Greg A. Woods <woods@planix.com>
 
 # Usage: log_accum.pl [-d] [-s] [-M module] [[-m mailto] ...] [-f logfile]
 #	-d		- turn on debugging
@@ -25,6 +25,10 @@
 #
 
 $MAILER	       = "Mail";	# set this to something that takes "-s"
+
+#
+#	End user configurable options.
+#
 
 # Constants (don't change these!)
 #
@@ -458,9 +462,9 @@ for ($i = 0; ; $i++) {
 		next;		# ignore the silly "dir" entries
 	    }
 	    if ($debug) {
-		print STDERR "main(): doing status on $dofile\n";
+		print STDERR "main(): doing 'cvs -nQq status -v $dofile'\n";
 	    }
-	    open(STATUS, "-|") || exec 'cvs', '-n', 'status', '-Qqv', $dofile;
+	    open(STATUS, "-|") || exec 'cvs', '-nQq', 'status', '-v', $dofile;
 	    while (<STATUS>) {
 		chop;
 		push(@status_txt, $_);

@@ -18,10 +18,6 @@
 
 #include "cvs.h"
 
-#ifdef _MINIX
-#undef	POSIX		/* Minix 1.6 doesn't support POSIX.1 sigaction yet */
-#endif
-
 #ifdef HAVE_VPRINTF
 #if defined (USE_PROTOTYPES) ? USE_PROTOTYPES : defined (__STDC__)
 #include <stdarg.h>
@@ -179,7 +175,7 @@ run_exec (stin, stout, sterr, flags)
     int rerrno = 0;
     int pid, w;
 
-#ifdef POSIX
+#ifdef POSIX_SIGNALS
     sigset_t sigset_mask, sigset_omask;
     struct sigaction act, iact, qact;
 
@@ -286,7 +282,7 @@ run_exec (stin, stout, sterr, flags)
     }
 
     /* the parent.  Ignore some signals for now */
-#ifdef POSIX
+#ifdef POSIX_SIGNALS
     if (flags & RUN_SIGIGNORE)
     {
 	act.sa_handler = SIG_IGN;
@@ -320,7 +316,7 @@ run_exec (stin, stout, sterr, flags)
 #endif
 
     /* wait for our process to die and munge return status */
-#ifdef POSIX
+#ifdef POSIX_SIGNALS
     while ((w = waitpid (pid, &status, 0)) == -1 && errno == EINTR)
 	;
 #else
@@ -347,7 +343,7 @@ run_exec (stin, stout, sterr, flags)
 	rc = 1;
 
     /* restore the signals */
-#ifdef POSIX
+#ifdef POSIX_SIGNALS
     if (flags & RUN_SIGIGNORE)
     {
 	(void) sigaction (SIGINT, &iact, (struct sigaction *) NULL);
@@ -477,6 +473,9 @@ close_on_exec (fd)
 /*
  * dir = 0 : main proc writes to new proc, which writes to oldfd
  * dir = 1 : main proc reads from new proc, which reads from oldfd
+ *
+ * Returns: a file descriptor.  On failure (i.e., the exec fails),
+ * then filter_stream_through_program() complains and dies.
  */
 
 int

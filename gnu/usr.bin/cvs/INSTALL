@@ -1,3 +1,5 @@
+#ident	"$CVSid$"
+
 First, read the README file.  If you're still happy...
 
 CVS has been tested on the following platforms.  The most recent
@@ -12,40 +14,46 @@ Alpha:
 	DEC Alpha running OSF/1 version 3.0 (1.5.95) (footnote 7)
 HPPA:
 	HP 9000/710 running HP-UX 8.07A using gcc (about 1.4A2)
-	HP 9000/715 running HP-UX 9.01 using gcc (about 1.4A2)
+	HP 9000/715 running HP-UX 9.01 (1.6)
         HPPA 1.1 running HP-UX A.09.03 (1.5.95) (footnote 8)
-	NextSTEP 3.3 (1.4.92, a few tweaks needed)
+	NextSTEP 3.3 (1.6.86)
 i386 family:
-	Gateway P5-66 (pentium) running Solaris 2.4 using gcc (about 1.4A2)
-	PC Clone running UnixWare v1.1.1 using gcc (about 1.4A2)
-	PC Clone running ISC 4.0.1 (1.5.94)
-	PC Clone running Fintronic Linux 1.2.5 (1.5)
-	PC Clone running BSDI 2.0 (1.4.93) (footnote 5)
-	PC Clone running Windows NT 3.51 (1.5 client)
+	Solaris 2.4 using gcc (about 1.4A2)
+	UnixWare v1.1.1 using gcc (about 1.4A2)
+	ISC 4.0.1 (1.5.94)
+	Linux (kernel 1.2.x) (1.6.86)
+	BSDI 2.0 (1.4.93) (footnote 5)
 	FreeBSD 2.0.5, i486, gcc (1.5.95)
-	NextSTEP 3.3 (1.4.92, a few tweaks needed)
+	NextSTEP 3.3 (1.6.86)
 	SCO Unix 3.2.4.2 (1.4.93) (footnote 4)
 	SCO OpenServer 5.0.0, "CC='cc -b elf' configure"
+	Lynx 2.3.0 080695 (1.6.86) (footnote 9)
+	Windows NT 3.51 (1.6.86 client-only)
 m68k:
-	NextSTEP 3.3 (1.4.92, a few tweaks needed)
+	Sun 3 running SunOS 4.1.1_U1 w/ bundled K&R /usr/5bin/cc (1.6)
+	NextSTEP 3.3 (1.6.86)
+	Lynx 2.3.0 062695 (1.6.86) (footnote 9)
 m88k:
 	Data General AViiON running dgux 5.4R2.10 (1.5)
 	Harris Nighthawk 5800 running CX/UX 7.1 (1.5) (footnote 6)
 MIPS:
 	DECstation running Ultrix 4.2a (1.4.90)
-	DECstation running Ultrix 4.3 (1.5)
+	DECstation running Ultrix 4.3 (1.6.86)
 	SGI running Irix 4.0.5H using gcc and cc (about 1.4A2) (footnote 2)
 	SGI running Irix 5.3 (1.4.93)
 	SGI running Irix-6 (about 1.4.90) (footnote 3)
+	Siemens-Nixdorf RM600 running SINIX-Y (1.6)
 PowerPC or RS/6000:
-	IBM RS/6000 running AIX 3.2.5 (cc=xlc, CVS 1.5)
+	IBM RS/6000 running AIX 3.1 using gcc and cc (1.6.86)
+	IBM RS/6000 running AIX 3.2.5 using xlc (1.5)
 	IBM RS/6000 running AIX 4.1 using gcc and cc (about 1.4A2) (footnote 1)
+	Lynx 2.3.1 120495 (1.6.86) (footnote 9)
 SPARC:
-	Sun SPARC running SunOS 4.1.3, 4.1.2, and 4.1.1 (1.5)
-	Sun SPARC running SunOS 4.1.3, w/ bundled K&R cc (1.5.94)
+	Sun SPARC running SunOS 4.1.x (1.6.86)
 	Sun SPARCstation 10 running Solaris 2.3 using gcc and cc (about 1.4A2)
 	Sun SPARCstation running Solaris 2.4 using gcc and cc (about 1.5.91)
-	NextSTEP 3.3 (1.4.92, a few tweaks needed)
+	Sun SPARC running Solaris 2.5 (2.5 beta?) (1.6.4)
+	NextSTEP 3.3 (1.6.86)
 
 (footnote 1)
 	AIX 4.1 systems fail to run "configure" due to bugs in their
@@ -79,6 +87,17 @@ SPARC:
         success with this configure command:
   CC=cc CFLAGS='+O2 -Aa -D_HPUX_SOURCE' ./configure --verbose hppa1.1-hp-hpux
 
+(footnote 9) 
+    Had to configure with ./configure --host=<arch>-lynx.
+
+    In src/cvs.h, protected the waitpid prototype with ifdef _POSIX_SOURCE.
+    (I might try building with gcc -mposix -D_POSIX_SOURCE.)
+
+    LynxOS has <dirent.h>, but you don't want to use it.
+    You want to use <sys/dir.h> instead.
+    So after running configure I had to undef HAVE_DIRENT_H and
+    define HAVE_SYS_DIR_H.
+
 -------------------------------------------------------------------------------
 
 Installation under Unix:
@@ -98,32 +117,49 @@ Installation under Unix:
 
     This release of CVS also requires RCS commands to be installed in
     the user's PATH (or a path you have configured in src/options.h).
-    If you don't have RCS, you will need to get it from GNU as well.
-    It is best to get the version 5.6.0.1 (or later) version of RCS,
-    available from prep.ai.mit.edu in the file
-    pub/gnu/rcs-5.6.0.1.tar.Z.  It is best (although not essential) to
-    avoid RCS versions 5.6.[5-7] beta because the rcsmerge therein
-    defaults to -A instead of -E which affects the way CVS handles
-    conflicts (this is fixed in RCS 5.6.8 and RCS 5.7).  Along with
-    RCS, you will want to run GNU diff.  This will allow revision
-    control of files with binary data (a real nice feature).  You will
-    need at least version 1.15 of GNU diff for this to work.  Be sure
-    that you configure RCS to work correctly with GNU diff to avoid
-    other configuration problems.  If you are running RCS 5.7, you
-    should be aware that you must supply a log message containing at
-    least one non-whitespace character (CVS catches some, but not all,
-    cases).  This has always been a problem but the symptoms are
-    apparently more severe with RCS 5.7.  This is expected to be fixed
-    in a future CVS release.
+    If you don't have RCS, you will need to get it from GNU as well.  It
+    is best to get the version 5.7 (or later) version of RCS, available
+    from prep.ai.mit.edu in the file pub/gnu/rcs-5.7.tar.gz.  It is best
+    (although not essential) to avoid RCS versions 5.6.[5-7] beta
+    because the rcsmerge therein defaults to -A instead of -E which
+    affects the way CVS handles conflicts (this is fixed in RCS 5.6.8
+    and RCS 5.7).
 
-    If you are using the remote client, you will need a version of
-    patch which understands unidiffs (such as any recent version of
-    GNU patch).
+    Along with RCS, you will want to run GNU diffutils.  This will allow
+    revision control of files with binary data (a real nice feature).
+    You will need at least version 1.15 of GNU diff for this to work.
+    The current version of GNU diffutils is 2.7, and it is also
+    available from prep.ai.mit.edu in the file pub/gnu/diffutils-2.7.tar.gz.
+
+    WARNING:  Be sure that you (have) configure(d) RCS to work correctly
+    with GNU diff to avoid other configuration problems.
+
+    Configure will attempt to discern the location of your most capable
+    version of diff, and tries to find the GNU Diffutils version first.
+    You can explicitly tell configure to use the diffutils that's
+    installed in the same place you intend to install CVS:
+
+	$ ./configure --with-diffutils
+
+    Or, if you've installed it somewhere else, you can give configure
+    the full pathname:
+
+	$ ./configure --with-diffutils=/usr/gnu/bin/diff
+
+    If you are using the remote client, you will need patch installed.
 
     NOTE: The configure program will cache the results of the previous
     configure execution.  If you need to re-run configure from scratch, you
     may need to run "make distclean" first to remove the cached
     configuration information.
+
+    If you are using gcc and are planning to modify CVS, you may want to
+    configure with -Wall, which can detect many programming errors.  This
+    is not the default because it might cause spurious warnings, but at least
+    on some machines, there are no spurious warnings.  For example:
+	$ CFLAGS="-g -Wall" ./configure
+
+    Try './configure --help' for further information on its usage.
 
     NOTE ON CVS's USE OF NDBM:
 
@@ -172,10 +208,35 @@ Installation under Unix:
 
 	$ make
 
-    This will (hopefully) make the needed CVS binaries within the "src"
-    directory.  Send me your "config.status" file with your host type,
-    operating system information, and make output if something fails for
-    your system.
+    This will (hopefully) make the needed CVS binaries within the
+    "src" directory.  If something fails for your system, and you want
+    to submit a bug report, you may wish to include your
+    "config.status" file, your host type, operating system and
+    compiler information, make output, and anything else you think
+    will be helpful.
+
+3a)  Run the regression tests (optional).
+
+    You may also wish to validate the correctness of the new binary by
+    running the regression tests:
+
+	$ make check
+
+    Note that if your /bin/sh doesn't support shell functions, you'll
+    have to try something like this, where "/bin/sh5" is replaced by the
+    pathname of a shell which handles normal shell functions:
+
+	$ make SHELL=/bin/sh5 check
+
+    WARNING:  This test can take quite a while to run, esp. if your
+    disks are slow or over-loaded.
+
+    If you receive any un-expected output from the regression tests,
+    it may indicate a bug in CVS (or might just indicate a problem
+    running the tests).  If you choose to submit a bug report,
+    relevant information to include might be your "config.status"
+    file, your host type, operating system and compiler information,
+    the contents of check.log, and any "make check" output.
 
 4)  Install the binaries/documentation:
 
@@ -215,14 +276,16 @@ Installation under Unix:
     PATH.  There are many ways to customize CVS for your site.  Read the
     cvs(5) manual page when you get the chance.
 
-7)  Have all users of the CVS system set the CVSROOT environment variable
-    appropriately to reflect the placement of your source repository.  If
-    the above example is used, the following commands can be placed in
-    user's ~/.profile, ~/.bash_profile, or ~/.login file:
+7)  Have all users of the CVS system set the CVSROOT environment
+    variable appropriately to reflect the placement of your source
+    repository.  If the above example is used, the following commands
+    can be placed in user's ~/.profile, ~/.bash_profile file; or in the
+    site-wide /etc/profile:
 
 	CVSROOT=/src/master; export CVSROOT
 
-    for sh/bash/ksh users, or
+    for sh/bash/ksh users, or place the following commands in the user's
+    ~/.cshrc, ~/.login, or /etc/chsrc file:
 
 	setenv CVSROOT /src/master
 
@@ -237,7 +300,7 @@ Installation under Unix:
     following commands:
 
 	$ make distclean
-	$ cvs import -m 'CVS 1.4 distribution' cvs CVS CVS1_4
+	$ cvs import -m 'CVS 1.6 distribution' cvs CVS CVS-1_6
 
 9)  Having done step 8, one should be able to checkout a fresh copy of the
     CVS distribution and hack away at the sources with the following command:
@@ -259,12 +322,14 @@ Installation under Unix:
 
 -------------------------------------------------------------------------------
 
-Detailed info about your interaction with "configure":
+Detailed information about your interaction with "configure":
 
 The "configure" script and its interaction with its options and the
-environment is described here.
+environment is described here.  For more detailed documentation about
+"configure", please refer to the GNU Autoconf documentation.
 
 Supported options are:
+
 	--srcdir=DIR		Useful for compiling on many different
 				machines sharing one source tree.
 	--prefix=DIR		The root of where to install the
@@ -272,15 +337,17 @@ Supported options are:
 	--exec_prefix=DIR	If you want executables in a
 				host-dependent place and shared
 				things in a host-independent place.
+	--with-diffutils[=PATH]	Assume use of GNU diffutils is possible.
 
 The following environment variables override configure's default
 behaviour:
+
 	CC			If not set, tries to use gcc first,
 				then cc.  Also tries to use "-g -O"
 				as options, backing down to -g
 				alone if that doesn't work.
 	INSTALL			If not set, tries to use "install", then
-				"cp" as a final choice.
+				"./install-sh" as a final choice.
 	RANLIB			If not set, tries to determine if "ranlib"
 				is available, choosing "echo" if it doesn't
 				appear to be.

@@ -1,3 +1,45 @@
+Changes since 1.7:
+
+<none yet>
+
+Changes from 1.6 to 1.7:
+
+* The default ignore list has changed slightly: *.obj has been added
+and CVS* has been changed to CVS CVS.adm.
+
+* CVS now supports password authentication when accessing remote
+repositories; this is useful for sites that can't use rsh (because of
+a firewall, for example), and also don't have kerberos.  See node
+"Password authenticated" (in "Remote repositories", in
+doc/cvs.texinfo) for more details.  Note: This feature requires both
+the client and server to be upgraded.
+
+* Using the -kb option to specify binary files now works--most cases
+did not work before.  See the "Binary files" section of
+doc/cvs.texinfo for details.
+
+* New developer communication features.  See the "Watches" section of
+doc/cvs.texinfo for details.
+
+* RCS keyword "Name" supported for "cvs update -r <tag>" and "cvs
+checkout -r <tag>".
+
+* If there is a group whose name matches a compiled in value which
+defaults to "cvsadmin", only members of that group can use "cvs
+admin".  This replaces the CVS_NOADMIN option.
+
+* CVS now sets the modes of files in the repository based on the
+CVSUMASK environment variable or a compiled in value defaulting to
+002.  This way other developers will be able to access the files in
+the repository regardless of the umask of the developer creating them.
+
+* The command names in .cvsrc now match the official name of the
+command, not the one (possibly an alias) by which it was invoked.  If
+you had previously relied on "cvs di" and "cvs diff" using different
+options, instead use a shell function or alias (for example "alias
+cvsdi='cvs diff -u'").  You also can specify global CVS options (like
+"-z") using the command name "cvs".
+
 Changes from 1.5 to 1.6:
 
 * Del updated the man page to include all of the new features

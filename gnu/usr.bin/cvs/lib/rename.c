@@ -39,6 +39,8 @@ rename (from, to)
 
   if (stat (from, &from_stats) == 0)
     {
+      /* We don't check existence_error because the systems which need it
+	 have rename().  */
       if (unlink (to) && errno != ENOENT)
 	return -1;
       if ((from_stats.st_mode & S_IFMT) == S_IFDIR)
@@ -72,6 +74,8 @@ rename (from, to)
 	}
       else
 	{
+	  /* We don't check existence_error because the systems which need it
+	     have rename().  */
 	  if (link (from, to) == 0 && (unlink (from) == 0 || errno == ENOENT))
 	    return 0;
 	}

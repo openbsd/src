@@ -54,9 +54,9 @@
 /*
  * The "diff" program to execute when creating patch output.  This "diff"
  * must support the "-c" option for context diffing.  Specify a full
- * pathname if your site wants to use a particular diff.  If you are
- * using the GNU version of diff (version 1.15 or later), this should
- * be "diff -a".  
+ * pathname if your site wants to use a particular diff.  Note that unlike
+ * the diff used with RCS, you *must not* supply -a here (doing so will cause
+ * the server to generate patches which patch cannot handle in some cases).
  * 
  * NOTE: this program is only used for the ``patch'' sub-command (and
  * for ``update'' if you are using the server).  The other commands
@@ -65,18 +65,18 @@
  */
 
 #ifndef DIFF
-#define	DIFF	"@gdiff_path@"
+#define	DIFF	"diff"
 #endif
 
 /*
  * The "grep" program to execute when checking to see if a merged file had
- * any conflicts.  This "grep" must support the "-s" option and a standard
+ * any conflicts.  This "grep" must support a standard basic
  * regular expression as an argument.  Specify a full pathname if your site
  * wants to use a particular grep.
  */
 
 #ifndef GREP
-#define GREP "@ggrep_path@"
+#define GREP "grep"
 #endif
 
 /*
@@ -114,9 +114,20 @@
  * unless the user overrides the default with the RCSBIN environment variable
  * or the "-b" option to CVS.
  * 
+ * If you're compiling the authenticating server (see
+ * AUTH_SERVER_SUPPORT farther down), then you probably want to set
+ * RCSBIN_DFLT.  The authenticating server starts out running as root,
+ * and then switches to run as the appropriate user once
+ * authentication is complete.  No shell is ever started by that user,
+ * so the PATH environment variable may not contain the directory with
+ * the RCS binaries, even though if that user logged in normally, PATH
+ * would include the directory.  An alternative to setting RCSBIN_DFLT
+ * is to make sure that root has the right directory in its path
+ * already.  Another, probably better alternative is to specify -b in
+ * /etc/inetd.conf.
+ *
  * This define should be either the empty string ("") or a full pathname to the
- * directory containing all the installed programs from the RCS distribution.
- */
+ * directory containing all the installed programs from the RCS distribution.  */
 #ifndef RCSBIN_DFLT
 #define	RCSBIN_DFLT	""
 #endif
@@ -130,6 +141,30 @@
  */
 #ifndef EDITOR_DFLT
 #define	EDITOR_DFLT	"vi"
+#endif
+
+/*
+ * The default umask to use when creating or otherwise setting file or
+ * directory permissions in the repository.  Must be a value in the
+ * range of 0 through 0777.  For example, a value of 002 allows group
+ * rwx access and world rx access; a value of 007 allows group rwx
+ * access but no world access.  This value is overridden by the value
+ * of the CVSUMASK environment variable, which is interpreted as an
+ * octal number.
+ */
+#ifndef UMASK_DFLT
+#define	UMASK_DFLT	002
+#endif
+
+/*
+ * The cvs admin command is restricted to the members of the group
+ * CVS_ADMIN_GROUP.  If this group does not exist, all users are
+ * allowed to run cvs admin.  To disable the cvs admin for all users,
+ * create an empty group CVS_ADMIN_GROUP.  To disable access control for
+ * cvs admin, comment out the define below.
+ */
+#ifndef CVS_ADMIN_GROUP
+#define CVS_ADMIN_GROUP "cvsadmin"
 #endif
 
 /*
@@ -188,19 +223,6 @@
 #endif
 
 /*
- * The "cvs admin" command allows people to get around most of the logging
- * and info procedures within CVS.  For exmaple, "cvs tag tagname filename"
- * will perform some validity checks on the tag, while "cvs admin -Ntagname"
- * will not perform those checks.  For this reason, some sites may wish to
- * disable the admin function completely.
- *
- * To disable the admin function, uncomment the lines below.
- */
-#ifndef CVS_NOADMIN
-/* #define CVS_NOADMIN */
-#endif
-
-/*
  * The "cvs diff" command accepts all the single-character options that GNU
  * diff (1.15) accepts.  Except -D.  GNU diff uses -D as a way to put
  * cpp-style #define's around the output differences.  CVS, by default, uses
@@ -210,6 +232,40 @@
  */
 #ifndef CVS_DIFFDATE
 #define	CVS_DIFFDATE
+#endif
+
+/*
+ * define this to enable the SETXID support (see FAQ 4D.13)
+ */
+#ifndef SETXID_SUPPORT
+/* #define SETXID_SUPPORT */
+#endif
+
+/*
+ * The client and server will not perform password-authentication
+ * unless you explicitly ask for it.  You can build a binary that only
+ * serves or only clients (sure it's a verb), or one that does both.
+ */
+/* #define AUTH_CLIENT_SUPPORT 1 */
+/* #define AUTH_SERVER_SUPPORT 1 */
+
+/*
+ * If you are working with a large remote repository and a 'cvs checkout' is
+ * swamping your network and memory, define these to enable flow control.
+ * You will end up with even less guarantees of a consistant checkout,
+ * but that may be better than no checkout at all.  The master server process
+ * will monitor how far it is getting behind, if it reaches the high water
+ * mark, it will signal the child process to stop generating data when
+ * convenient (ie: no locks are held, currently at the beginning of a 
+ * new directory).  Once the buffer has drained sufficiently to reach the
+ * low water mark, it will be signalled to start again.
+ * -- EXPERIMENTAL! --  A better solution may be in the works.
+ * You may override the default hi/low watermarks here too.
+ */
+#ifndef SERVER_FLOWCONTROL
+/* #define SERVER_FLOWCONTROL */
+/* #define SERVER_HI_WATER (2 * 1024 * 1024) */
+/* #define SERVER_LO_WATER (1 * 1024 * 1024) */
 #endif
 
 /* End of CVS configuration section */

@@ -36,7 +36,10 @@ program and fill out the template:
 
 The "cvsbug" program is installed in the same location as the "cvs"
 program.  If your installation failed, you may need to run "cvsbug"
-directly out of the "src" directory as "src/cvsbug.sh".
+directly out of the "src" directory as "src/cvsbug.sh".  This is also
+the procedure for submitting suggested changes to CVS--note that all
+submitted changes may be distributed under the terms of the GNU Public
+License, so if you don't like this, don't submit them.
 
 Please consult the INSTALL file for information on tested
 configurations.  If you have a comment about an already tested
@@ -99,6 +102,7 @@ Please read the INSTALL file for installation instructions.  Brief summary:
 
 	$ ./configure
 	$ make
+	$ make check	# optional, long-running, step
 	$ make install
 	$ cvsinit
 
@@ -107,12 +111,11 @@ Please read the INSTALL file for installation instructions.  Brief summary:
 * How do I get up-to-date information and information about other
 versions of CVS?
 
-On the web, http://www.winternet.com/~zoo/cvs/ or
-http://www.loria.fr/~molli/cvs-index.
+On the web, http://www.loria.fr/~molli/cvs-index.html.
 
 The mailing list for CVS is info-cvs@prep.ai.mit.edu.  Send
 subscription and removal requests for that list to
-info-cvs-requests@prep.ai.mit.edu.
+info-cvs-request@prep.ai.mit.edu.
 
 [Historical note: info-cvs@prep.ai.mit.edu is now the union of
  info-cvs@prep and cyclic-cvs@cyclic.com.  Please use the prep
@@ -195,7 +198,7 @@ apologize.  Just write to me and let me know!
 	Raye Raskin <raye.raskin@lia.com>
 	Harlan Stenn <harlan@landmark.com>
 	Gunnar Tornblom <gunnar.tornblom@senet.abb.se>
-	Greg A. Woods <woods@kuma.web.net>
+	Greg A. Woods <woods@planix.com>
 
 Many contributors have added code to the "contrib" directory.  See the
 README file there for a list of what is available.  There is also a

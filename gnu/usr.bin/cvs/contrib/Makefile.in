@@ -94,6 +94,7 @@ install: all $(libdir)/cvs/contrib
 	for f in $(PROGS) ; do\
 		$(INSTALL_PROGRAM) $$f $(bindir)/$$f; \
 	done
+	@echo "You might consider running 'cvsinit' to upgrade your repository(s)...."
 .PHONY: install
 
 $(libdir)/cvs/contrib:

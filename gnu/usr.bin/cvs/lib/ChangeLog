@@ -1,3 +1,146 @@
+Thu Jan 25 00:14:06 1996  Jim Kingdon  <kingdon@beezley.cyclic.com>
+
+	* yesno.c (yesno): fflush stdout as well as stderr.
+
+Wed Jan  3 18:16:50 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* sighandle.c (SIG_register): Use memset not bzero.
+	* system.h: Remove defines for index, rindex, bcmp, and bzero.
+	All the calls to those functions are gone from CVS.
+
+Tue Jan  2 13:00:00 1996  Jim Kingdon  <kingdon@peary.cyclic.com>
+
+	Visual C++ lint:
+	* sighandle.c: Prototype SIG_handle and SIG_defaults.
+	Use SIG_ERR where appropriate.
+
+Mon Dec 18 10:15:05 1995  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* rename.c: Check ENOENT rather than existence_error.  The latter
+	is undefined in this file, and including system.h is said to cause
+	(unspecified) problems.
+
+Sun Dec 17 23:58:06 1995  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* vasprintf.c: Removed (it is no longer used).
+	* Makefile.in (SOURCES): Remove vasprintf.c.
+
+Sat Dec 16 17:18:33 1995  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* vasprintf.c: Added.
+	* Makefile.in (SOURCES): Add vasprintf.c
+
+Mon Dec  4 10:54:04 1995  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* getdate.c: Remove #line directives.  I know, this is a kludge,
+	but Visual C++ 2.1 seems to require it (why, I have no idea.  It
+	has no trouble with the #line directives in getdate in CVS 1.6).
+
+Sat Nov 18 16:20:37 1995  Karl Fogel  <kfogel@floss.cyclic.com>
+
+        * rename.c: same.
+
+        * mkdir.c: Use new macro `existence_error', instead of comparing
+        errno to ENOENT directly.
+
+        * system.h (existence_error): new macro, tries to portably ask if
+        errno represents a file-not-exist error.
+
+Fri Nov 17 20:08:58 1995  Karl Fogel  <kfogel@floss.cyclic.com>
+
+        * system.h (NEED_DECOY_PERMISSIONS): moved this section to where
+        it belongs, duh.
+
+        * getdate.c: if STDC_HEADERS, then just include <stdlib.h> instead
+        of declaring malloc() and realloc() to be char *.
+
+        * system.h: ifdef NEED_DECOY_PERMISSIONS, then define the S_I*
+        permission masks for USR, GRP, and OTH in terms of the simpler
+        OS/2 masks.
+
+Wed Nov 15 15:36:03 1995  Karl Fogel  <kfogel@floss.cyclic.com>
+
+        * system.h: ifdef USE_OWN_TCPIP_H, then include "tcpip.h".  Only
+        OS/2 does this right now.
+
+Tue Nov 14 18:44:57 1995  Greg A. Woods  <woods@most.weird.com>
+
+	* getdate.c: OK, this one is from SunOS-4.1 yacc and may be more
+	portable -- at least it compiles silently here!  ;-)
+
+Mon Nov 13 03:53:45 1995  Karl Fogel  <kfogel@floss.cyclic.com>
+
+        * fnmatch.c: conform to 80 column standard (yes, I'm a pedant).
+
+Wed Nov  8 11:10:59 1995  Karl Fogel  <kfogel@floss.cyclic.com>
+
+        * system.h (STAT_MACROS): ifdef S_IFMT, then use it as before; but
+        if it's not defined, then just do a single mask and assume
+        acceptance any of non-zero result.  Norbert, I trust you'll let me
+        know if this is unsatisfactory. :-)
+        Ifdef HAVE_SYS_UTIME_H, then include <sys/utime.h>.  Only OS/2
+        defines this right now.
+
+Wed Nov  8 13:18:51 1995  Norbert Kiesel  <nk@col.sw-ley.de>
+
+	* valloc.c: omit malloc declaration (it's already in system.h
+	  which is included and conflicts with <stdlib.h> on some
+	  systems).
+
+Tue Nov  7 19:38:48 1995  Norbert Kiesel  <nk@col.sw-ley.de>
+
+	* system.h (STAT_MACROS_BROKEN): undo previous change, because
+	  else all regular files will be identified as links (the mask for
+	  links is S_IFREG|S_IFCHR).
+
+Mon Nov  6 19:20:56 1995  Karl Fogel  <kfogel@floss.cyclic.com>
+
+        * system.h (STAT_MACROS_BROKEN): in defining the S_IF* macros,
+        don't fold to 1 or 0 by first masking with S_IFMT; not all
+        systems have that macro, and anyway it's only necessary that we
+        return non-zero.
+
+Fri Oct 27 13:43:35 1995  Karl Fogel  <kfogel@floss.cyclic.com>
+
+        * save-cwd.c: use __PROTO instead of __P (see below).
+
+        * getline.h (__PROTO): same as below.
+
+        * save-cwd.h (__PROTO): replaces __P.  New name, so don't ask if
+        already defined.  The conflict was that OS/2 w/ IBM C/C++ uses
+        `__P' for something else, in <ctype.h> of all places.
+
+        * system.h: do nothing about alloca ifdef ALLOCA_IN_STDLIB (see
+        ../src/ChangeLog).
+
+Tue Oct 24 13:01:25 1995  Norbert Kiesel  <nk@col.sw-ley.de>
+
+	* wait.h: include sys/resource.h if available. This is needed at
+	  least under AIX-3.2 where <sys/wait.h> doesn't include it.
+
+Mon Oct 23 17:39:11 1995  Norbert Kiesel  <nk@col.sw-ley.de>
+
+	* valloc.c (valloc): change parameter definition
+
+Sun Oct 22 14:15:44 1995  Jim Meyering  (meyering@comco.com)
+
+	* getline.c, getline.h: New files.
+	* Makefile.in (SOURCES, OBJECTS, HEADERS): Add getline.c, getline.o,
+	and getline.h, respectively.
+
+Tue Oct 10 18:01:50 1995  Karl Fogel  <kfogel@totoro.cyclic.com>
+
+        * Makefile.in (cvs_srcdir): define cvs_srcdir to be ../src, then
+        include it with -I so save_cwd.c can find error.h (for example).
+
+Sun Oct  8 12:27:57 1995  Peter Wemm  <peter@haywire.DIALix.COM>
+
+	* system.h: define POSIX_SIGNALS or BSD_SIGNALS if configure has
+	located all the necessary functions for each "type".
+	* sighandle.c: detect/use POSIX/BSD reliable signals (especially
+	for blocking signals in critical sections).  Helps prevent stray
+	locks on interruption.
+
 Mon Oct  2 18:11:23 1995  Jim Blandy  <jimb@totoro.cyclic.com>
 
 	* system.h: Doc fix.
@@ -19,9 +162,9 @@ Sun Oct  1 21:03:40 1995  Karl Fogel  <kfogel@totoro.cyclic.com>
         * regex.c: reverted below change.
 
 Thu Sep 28 13:37:04 1995  Larry Jones <larry.jones@sdrc.com>
-        
+
         * regexp.c: check for ISC.
-        
+
 Thu Sep 7  19:18:00 1995  Jim Blandy  <jimb@cyclic.com>
 
 	* save-cwd.c: #include <direct.h> and <io.h>, on systems that

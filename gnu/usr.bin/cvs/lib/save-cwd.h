@@ -7,16 +7,14 @@ struct saved_cwd
     char *name;
   };
 
-#ifndef __P
 #if defined (__GNUC__) || (defined (__STDC__) && __STDC__)
-#define __P(args) args
+#define __PROTO(args) args
 #else
-#define __P(args) ()
+#define __PROTO(args) ()
 #endif  /* GCC.  */
-#endif  /* Not __P.  */
 
-int save_cwd __P((struct saved_cwd *cwd));
-int restore_cwd __P((const struct saved_cwd *cwd, const char *dest));
-void free_cwd __P((struct saved_cwd *cwd));
+int save_cwd __PROTO((struct saved_cwd *cwd));
+int restore_cwd __PROTO((const struct saved_cwd *cwd, const char *dest));
+void free_cwd __PROTO((struct saved_cwd *cwd));
 
 #endif /* SAVE_CWD_H */

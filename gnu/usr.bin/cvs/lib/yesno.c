@@ -32,6 +32,7 @@ yesno ()
   int rv;
 
   fflush (stderr);
+  fflush (stdout);
   c = getchar ();
   rv = (c == 'y') || (c == 'Y');
   while (c != EOF && c != '\n')

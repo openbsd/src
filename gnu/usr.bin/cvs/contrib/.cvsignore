@@ -1,0 +1,13 @@
+Makefile
+clmerge
+cln_hist
+commit_prep
+cvs_acls
+cvscheck
+log
+log_accum
+mfpipe
+rcs-to-cvs
+rcs2log
+rcslock
+sccs2rcs

@@ -44,30 +44,34 @@ INSTALL_PROGRAM = @INSTALL_PROGRAM@
 LIBS = @LIBS@
 
 SOURCES = add.c admin.c checkin.c checkout.c classify.c client.c commit.c \
-create_adm.c cvsrc.c diff.c entries.c find_names.c hash.c history.c ignore.c \
-import.c lock.c log.c logmsg.c main.c modules.c myndbm.c no_diff.c \
+create_adm.c cvsrc.c diff.c edit.c entries.c error.c expand_path.c \
+fileattr.c find_names.c hash.c history.c ignore.c import.c \
+lock.c log.c login.c logmsg.c main.c modules.c myndbm.c no_diff.c \
 parseinfo.c patch.c rcs.c rcscmds.c recurse.c release.c remove.c repos.c \
-root.c rtag.c server.c status.c subr.c filesubr.c run.c tag.c update.c \
-wrapper.c vers_ts.c version.c
+root.c rtag.c scramble.c server.c status.c subr.c filesubr.c run.c \
+tag.c update.c watch.c wrapper.c vers_ts.c version.c
 MSOURCES = mkmodules.c
 
-OBJECTS = add.o admin.o checkin.o checkout.o classify.o commit.o \
-create_adm.o cvsrc.o diff.o entries.o find_names.o hash.o history.o \
-ignore.o import.o lock.o log.o logmsg.o main.o modules.o myndbm.o no_diff.o \
+OBJECTS = add.o admin.o checkin.o checkout.o classify.o client.o commit.o \
+create_adm.o cvsrc.o diff.o edit.o entries.o expand_path.o \
+fileattr.o find_names.o hash.o history.o ignore.o import.o \
+lock.o log.o login.o logmsg.o main.o modules.o myndbm.o no_diff.o \
 parseinfo.o patch.o rcs.o rcscmds.o recurse.o release.o remove.o repos.o \
-root.o rtag.o status.o tag.o update.o wrapper.o vers_ts.o server.o client.o
+root.o rtag.o scramble.o server.o status.o tag.o update.o \
+watch.o wrapper.o vers_ts.o
 
 MOBJECTS = hash.o mkmodules.o myndbm.o
 
-COMMON_OBJECTS = subr.o filesubr.o run.o version.o
+COMMON_OBJECTS = subr.o filesubr.o run.o version.o error.o
 
-HEADERS = cvs.h rcs.h hash.h myndbm.h patchlevel.h \
-	update.h server.h client.h
+HEADERS = cvs.h rcs.h hash.h myndbm.h \
+	update.h server.h client.h error.h fileattr.h edit.h watch.h
+
+TAGFILES = $(HEADERS) options.h.in $(SOURCES) $(MSOURCES)
 
 DISTFILES = .cvsignore Makefile.in ChangeLog ChangeLog.fsf \
 	    NOTES README-rm-add \
-            sanity.sh cvsbug.sh \
-            $(HEADERS) options.h.in $(SOURCES) $(MSOURCES) 
+            sanity.sh cvsbug.sh $(TAGFILES)
 
 PROGS = cvs mkmodules cvsbug
 
@@ -82,7 +86,7 @@ INCLUDES = -I. -I.. -I$(srcdir) -I$(top_srcdir)/lib
 .c.o:
 	$(CC) $(CPPFLAGS) $(INCLUDES) $(DEFS) $(CFLAGS) -c $<
 
-all: $(PROGS)
+all: Makefile $(PROGS)
 .PHONY: all
 
 saber_cvs:
@@ -121,11 +125,11 @@ remotecheck: all
 	$(SHELL) $(srcdir)/sanity.sh -r `pwd`/cvs
 .PHONY: remotecheck
 
-tags: $(DISTFILES)
-	ctags $(DISTFILES)
+tags: $(TAGFILES)
+	ctags $(TAGFILES)
 
-TAGS: $(DISTFILES)
-	etags `for i in $(DISTFILES); do echo $(srcdir)/$$i; done`
+TAGS: $(TAGFILES)
+	etags `for i in $(TAGFILES); do echo $(srcdir)/$$i; done`
 
 ls:
 	@echo $(DISTFILES)
@@ -172,7 +176,16 @@ mkmodules: $(MOBJECTS) $(COMMON_OBJECTS)
 	$(CC) $(LDFLAGS) -o $@ $(MOBJECTS) $(COMMON_OBJECTS) ../lib/libcvs.a $(LIBS) $(LIBIBERTY)
 
 cvsbug: cvsbug.sh
-	cp $(srcdir)/cvsbug.sh cvsbug
+	echo > .fname \
+	  cvs-`sed < $(srcdir)/version.c \
+		    -e '/version_string/!d' \
+		    -e 's/[^0-9.]*\([0-9.]*\).*/\1/' \
+		    -e q`
+	sed -e 's,xLIBDIRx,$(libdir)/cvs,g' \
+	    -e "s,xVERSIONx,`cat .fname`,g" $(srcdir)/$@.sh > $@-t
+	rm -f .fname
+	mv $@-t $@
+	chmod a+x $@
 
 # Compilation rules.
 

@@ -82,12 +82,12 @@ status (argc, argv)
       if (local)
 	send_arg("-l");
 
+      send_file_names (argc, argv);
       /* XXX This should only need to send file info; the file
 	 contents themselves will not be examined.  */
       send_files (argc, argv, local, 0);
 
-      if (fprintf (to_server, "status\n") < 0)
-	error (1, errno, "writing to server");
+      send_to_server ("status\012", 0);
       err = get_responses_and_close ();
 
       return err;
@@ -95,8 +95,8 @@ status (argc, argv)
 #endif
 
     /* start the recursion processor */
-    err = start_recursion (status_fileproc, (int (*) ()) NULL, status_dirproc,
-			   (int (*) ()) NULL, argc, argv, local,
+    err = start_recursion (status_fileproc, (FILESDONEPROC) NULL, status_dirproc,
+			   (DIRLEAVEPROC) NULL, argc, argv, local,
 			   W_LOCAL, 0, 1, (char *) NULL, 1, 0);
 
     return (err);

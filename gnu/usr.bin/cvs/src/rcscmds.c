@@ -28,6 +28,7 @@ int
 RCS_deltag(path, tag, noerr)
     const char *path;
     const char *tag;
+    int noerr;
 {
     run_setup ("%s%s -q -N%s", Rcsbin, RCS, tag);
     run_arg (path);
@@ -64,6 +65,7 @@ int
 RCS_unlock(path, rev, noerr)
     const char *path;
     const char *rev;
+    int noerr;
 {
     run_setup ("%s%s -q -u%s", Rcsbin, RCS, rev ? rev : "");
     run_arg (path);
@@ -80,10 +82,6 @@ RCS_merge(path, options, rev1, rev2)
 {
     int status;
 
-    /* We pass -E to rcsmerge so that it will not indicate a conflict if
-       both things we are merging are modified the same way.
-
-       Well, okay, but my rcsmerge doesn't take a -E option.  --JimB */
     /* XXX - Do merge by hand instead of using rcsmerge, due to -k handling */
 
     run_setup ("%s%s %s -r%s -r%s %s", Rcsbin, RCS_RCSMERGE,
@@ -93,10 +91,10 @@ RCS_merge(path, options, rev1, rev2)
     if (status == 0) 
     {
 	/* Run GREP to see if there appear to be conflicts in the file */
-	run_setup ("%s -s", GREP);
+	run_setup ("%s", GREP);
 	run_arg (RCS_MERGE_PAT);
 	run_arg (path);
-	status = (run_exec (RUN_TTY, RUN_TTY, RUN_TTY, RUN_NORMAL) == 0);
+	status = (run_exec (RUN_TTY, DEVNULL, RUN_TTY, RUN_NORMAL) == 0);
 
     }
 #endif

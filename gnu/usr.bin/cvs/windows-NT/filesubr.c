@@ -27,7 +27,7 @@
 
 #ifndef lint
 static const char rcsid[] = "$CVSid:$";
-USE(rcsid)
+USE(rcsid);
 #endif
 
 /*
@@ -110,6 +110,20 @@ copy_file (from, to)
     (void) utime (to, &t);
 }
 
+/*
+ * link a file, if possible.  Warning: the Windows NT version of this
+ * function just copies the file, so only use this function in ways
+ * that can deal with either a link or a copy.
+ */
+int
+link_file (from, to)
+    const char *from;
+    const char *to;
+{
+    copy_file (from, to);
+    return 0;
+}
+
 /* FIXME-krp: these functions would benefit from caching the char * &
    stat buf.  */
 
@@ -153,33 +167,88 @@ int
 isfile (file)
     const char *file;
 {
-    struct stat sb;
-
-    if (stat (file, &sb) < 0)
-	return (0);
-    return (1);
+    return isaccessible(file, F_OK);
 }
 
 /*
  * Returns non-zero if the argument file is readable.
- * XXX - must be careful if "cvs" is ever made setuid!
  */
 int
 isreadable (file)
     const char *file;
 {
-    return (access (file, R_OK) != -1);
+    return isaccessible(file, R_OK);
 }
 
 /*
- * Returns non-zero if the argument file is writable
- * XXX - muct be careful if "cvs" is ever made setuid!
+ * Returns non-zero if the argument file is writable.
  */
 int
 iswritable (file)
     const char *file;
 {
-    return (access (file, W_OK) != -1);
+    return isaccessible(file, W_OK);
+}
+
+/*
+ * Returns non-zero if the argument file is accessable according to
+ * mode.  If compiled with SETXID_SUPPORT also works if cvs has setxid
+ * bits set.
+ */
+int
+isaccessible (file, mode)
+    const char *file;
+    const int mode;
+{
+#ifdef SETXID_SUPPORT
+    struct stat sb;
+    int umask = 0;
+    int gmask = 0;
+    int omask = 0;
+    int uid;
+    
+    if (stat(file, &sb) == -1)
+	return 0;
+    if (mode == F_OK)
+	return 1;
+
+    uid = geteuid();
+    if (uid == 0)		/* superuser */
+    {
+	if (mode & X_OK)
+	    return sb.st_mode & (S_IXUSR|S_IXGRP|S_IXOTH);
+	else
+	    return 1;
+    }
+	
+    if (mode & R_OK)
+    {
+	umask |= S_IRUSR;
+	gmask |= S_IRGRP;
+	omask |= S_IROTH;
+    }
+    if (mode & W_OK)
+    {
+	umask |= S_IWUSR;
+	gmask |= S_IWGRP;
+	omask |= S_IWOTH;
+    }
+    if (mode & X_OK)
+    {
+	umask |= S_IXUSR;
+	gmask |= S_IXGRP;
+	omask |= S_IXOTH;
+    }
+
+    if (sb.st_uid == uid)
+	return (sb.st_mode & umask) == umask;
+    else if (sb.st_gid == getegid())
+	return (sb.st_mode & gmask) == gmask;
+    else
+	return (sb.st_mode & omask) == omask;
+#else
+    return access(file, mode) == 0;
+#endif
 }
 
 /*
@@ -204,9 +273,9 @@ void
 make_directory (name)
     const char *name;
 {
-    struct stat buf;
+    struct stat sb;
 
-    if (stat (name, &buf) == 0 && (!S_ISDIR (buf.st_mode)))
+    if (stat (name, &sb) == 0 && (!S_ISDIR (sb.st_mode)))
 	    error (0, 0, "%s already exists but is not a directory", name);
     if (!noexec && mkdir (name) < 0)
 	error (1, errno, "cannot make directory %s", name);
@@ -707,7 +776,7 @@ convert_file (char *infile,  int inflags,
 
     if ((infd = open (infile, inflags)) < 0)
         error (1, errno, "couldn't read %s", infile);
-    if ((outfd = open (outfile, outflags)) < 0)
+    if ((outfd = open (outfile, outflags, S_IWRITE)) < 0)
         error (1, errno, "couldn't write %s", outfile);
 
     while ((len = read (infd, buf, sizeof (buf))) > 0)

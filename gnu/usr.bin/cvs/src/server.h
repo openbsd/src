@@ -79,6 +79,12 @@ extern void server_update_entries
 
 enum progs {PROG_CHECKIN, PROG_UPDATE};
 extern void server_prog PROTO((char *, char *, enum progs));
+extern void server_cleanup PROTO((int sig));
+
+#ifdef SERVER_FLOWCONTROL
+/* Pause if it's convenient to avoid memory blowout */
+extern void server_check_pause PROTO((void));
+#endif /* SERVER_FLOWCONTROL */
 
 #endif /* SERVER_SUPPORT */
 

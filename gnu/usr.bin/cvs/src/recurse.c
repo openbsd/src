@@ -10,6 +10,8 @@
 
 #include "cvs.h"
 #include "save-cwd.h"
+#include "fileattr.h"
+#include "edit.h"
 
 #ifndef lint
 static const char rcsid[] = "$CVSid: @(#)recurse.c 1.31 94/09/30 $";
@@ -26,10 +28,10 @@ static void addfile PROTO((List **listp, char *dir, char *file));
 /*
  * Local static versions eliminates the need for globals
  */
-static int (*fileproc) ();
-static int (*filesdoneproc) ();
-static Dtype (*direntproc) ();
-static int (*dirleaveproc) ();
+static FILEPROC fileproc;
+static FILESDONEPROC filesdoneproc;
+static DIRENTPROC direntproc;
+static DIRLEAVEPROC dirleaveproc;
 static int which;
 static Dtype flags;
 static int aflag;
@@ -44,10 +46,10 @@ static List *filelist = NULL; /* holds list of files on which to operate */
 static List *dirlist = NULL; /* holds list of directories on which to operate */
 
 struct recursion_frame {
-  int (*fileproc)();
-  int (*filesdoneproc) ();
-  Dtype (*direntproc) ();
-  int (*dirleaveproc) ();
+  FILEPROC fileproc;
+  FILESDONEPROC filesdoneproc;
+  DIRENTPROC direntproc;
+  DIRLEAVEPROC dirleaveproc;
   Dtype flags;
   int which;
   int aflag;
@@ -68,10 +70,10 @@ int
 start_recursion (fileproc, filesdoneproc, direntproc, dirleaveproc,
 		 argc, argv, local, which, aflag, readlock,
 		 update_preload, dosrcs, wd_is_repos)
-    int (*fileproc) ();
-    int (*filesdoneproc) ();
-    Dtype (*direntproc) ();
-    int (*dirleaveproc) ();
+    FILEPROC fileproc;
+    FILESDONEPROC filesdoneproc;
+    DIRENTPROC 	direntproc;
+    DIRLEAVEPROC dirleaveproc;
     int argc;
     char **argv;
     int local;
@@ -213,6 +215,7 @@ start_recursion (fileproc, filesdoneproc, direntproc, dirleaveproc,
 		    /* look for it in the repository. */
 		    repos = Name_Repository (dir, update_dir);
 		    (void) sprintf (tmp, "%s/%s", repos, comp);
+		    free (repos);
 
 		    if (!wrap_name_has (comp, WRAP_TOCVS) && isdir(tmp))
 			addlist (&dirlist, argv[i]);
@@ -266,10 +269,10 @@ start_recursion (fileproc, filesdoneproc, direntproc, dirleaveproc,
 int
 do_recursion (xfileproc, xfilesdoneproc, xdirentproc, xdirleaveproc,
 	      xflags, xwhich, xaflag, xreadlock, xdosrcs)
-    int (*xfileproc) ();
-    int (*xfilesdoneproc) ();
-    Dtype (*xdirentproc) ();
-    int (*xdirleaveproc) ();
+    FILEPROC xfileproc;
+    FILESDONEPROC xfilesdoneproc;
+    DIRENTPROC xdirentproc;
+    DIRLEAVEPROC xdirleaveproc;
     Dtype xflags;
     int xwhich;
     int xaflag;
@@ -295,6 +298,18 @@ do_recursion (xfileproc, xfilesdoneproc, xdirentproc, xdirleaveproc,
     readlock = noexec ? 0 : xreadlock;
     dosrcs = xdosrcs;
 
+#if defined(SERVER_SUPPORT) && defined(SERVER_FLOWCONTROL)
+    /*
+     * Now would be a good time to check to see if we need to stop
+     * generating data, to give the buffers a chance to drain to the
+     * remote client.  We should not have locks active at this point.
+     */
+    if (server_active
+	/* If there are writelocks around, we cannot pause here.  */
+	&& (readlock || noexec))
+	server_pause_check();
+#endif
+
     /*
      * Fill in repository with the current repository
      */
@@ -311,6 +326,8 @@ do_recursion (xfileproc, xfilesdoneproc, xdirentproc, xdirleaveproc,
 	(void) getwd (repository);
     }
     srepository = repository;		/* remember what to free */
+
+    fileattr_startdir (repository);
 
     /*
      * The filesdoneproc needs to be called for each directory where files
@@ -365,6 +382,15 @@ do_recursion (xfileproc, xfilesdoneproc, xdirentproc, xdirleaveproc,
 	if (readlock && repository && Reader_Lock (repository) != 0)
 	    error (1, 0, "read lock failed - giving up");
 
+#ifdef CLIENT_SUPPORT
+	/* For the server, we handle notifications in a completely different
+	   place (server_notify).  For local, we can't do them here--we don't
+	   have writelocks in place, and there is no way to get writelocks
+	   here.  */
+	if (client_active)
+	    notify_check (repository, update_dir);
+#endif
+
 	/* pre-parse the source files */
 	if (dosrcs && repository)
 	    srcfiles = RCS_parsefiles (filelist, repository);
@@ -388,6 +414,9 @@ do_recursion (xfileproc, xfilesdoneproc, xdirentproc, xdirleaveproc,
     /* call-back files done proc (if any) */
     if (dodoneproc && filesdoneproc != NULL)
 	err = filesdoneproc (err, repository, update_dir[0] ? update_dir : ".");
+
+    fileattr_write ();
+    fileattr_free ();
 
     /* process the directories (if necessary) */
     if (dirlist != NULL)

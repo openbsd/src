@@ -42,7 +42,7 @@ RSC=rc.exe
 OUTDIR=.\WinRel
 INTDIR=.\WinRel
 
-ALL : .\WinRel\cvs.exe .\WinRel\cvsnt.bsc
+ALL : $(OUTDIR)/cvs.exe $(OUTDIR)/cvsnt.bsc
 
 $(OUTDIR) : 
     if not exist $(OUTDIR)/nul mkdir $(OUTDIR)
@@ -61,74 +61,79 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 BSC32_FLAGS=/nologo /o$(OUTDIR)/"cvsnt.bsc" 
 BSC32_SBRS= \
-	.\WinRel\subr.sbr \
-	.\WinRel\admin.sbr \
-	.\WinRel\server.sbr \
-	.\WinRel\diff.sbr \
-	.\WinRel\client.sbr \
-	.\WinRel\checkout.sbr \
-	.\WinRel\no_diff.sbr \
-	.\WinRel\entries.sbr \
-	.\WinRel\tag.sbr \
-	.\WinRel\rtag.sbr \
-	.\WinRel\status.sbr \
-	.\WinRel\root.sbr \
-	.\WinRel\myndbm.sbr \
-	.\WinRel\hash.sbr \
-	.\WinRel\repos.sbr \
-	.\WinRel\parseinfo.sbr \
-	.\WinRel\vers_ts.sbr \
-	.\WinRel\checkin.sbr \
-	.\WinRel\commit.sbr \
-	.\WinRel\version.sbr \
-	.\WinRel\cvsrc.sbr \
-	.\WinRel\remove.sbr \
-	.\WinRel\update.sbr \
-	.\WinRel\logmsg.sbr \
-	.\WinRel\classify.sbr \
-	.\WinRel\history.sbr \
-	.\WinRel\add.sbr \
-	.\WinRel\lock.sbr \
-	.\WinRel\recurse.sbr \
-	.\WinRel\modules.sbr \
-	.\WinRel\find_names.sbr \
-	.\WinRel\rcs.sbr \
-	.\WinRel\create_adm.sbr \
-	.\WinRel\main.sbr \
-	.\WinRel\patch.sbr \
-	.\WinRel\release.sbr \
-	.\WinRel\rcscmds.sbr \
-	.\WinRel\import.sbr \
-	.\WinRel\ignore.sbr \
-	.\WinRel\log.sbr \
-	.\WinRel\wrapper.sbr \
-	.\WinRel\getwd.sbr \
-	.\WinRel\error.sbr \
-	.\WinRel\sighandle.sbr \
-	.\WinRel\getopt.sbr \
-	.\WinRel\argmatch.sbr \
-	.\WinRel\md5.sbr \
-	.\WinRel\yesno.sbr \
-	.\WinRel\getopt1.sbr \
-	.\WinRel\valloc.sbr \
-	.\WinRel\xgetwd.sbr \
-	.\WinRel\regex.sbr \
-	.\WinRel\fnmatch.sbr \
-	.\WinRel\getdate.sbr \
-	".\WinRel\save-cwd.sbr" \
-	.\WinRel\mkdir.sbr \
-	.\WinRel\run.sbr \
-	.\WinRel\pwd.sbr \
-	.\WinRel\filesubr.sbr \
-	.\WinRel\win32.sbr \
-	.\WinRel\waitpid.sbr \
-	.\WinRel\ndir.sbr \
-	.\WinRel\strippath.sbr \
-	.\WinRel\stripslash.sbr \
-	.\WinRel\rcmd.sbr \
-	.\WinRel\startserver.sbr
+	$(INTDIR)/subr.sbr \
+	$(INTDIR)/admin.sbr \
+	$(INTDIR)/server.sbr \
+	$(INTDIR)/diff.sbr \
+	$(INTDIR)/client.sbr \
+	$(INTDIR)/checkout.sbr \
+	$(INTDIR)/no_diff.sbr \
+	$(INTDIR)/entries.sbr \
+	$(INTDIR)/tag.sbr \
+	$(INTDIR)/rtag.sbr \
+	$(INTDIR)/status.sbr \
+	$(INTDIR)/root.sbr \
+	$(INTDIR)/myndbm.sbr \
+	$(INTDIR)/hash.sbr \
+	$(INTDIR)/repos.sbr \
+	$(INTDIR)/parseinfo.sbr \
+	$(INTDIR)/vers_ts.sbr \
+	$(INTDIR)/checkin.sbr \
+	$(INTDIR)/commit.sbr \
+	$(INTDIR)/version.sbr \
+	$(INTDIR)/cvsrc.sbr \
+	$(INTDIR)/remove.sbr \
+	$(INTDIR)/update.sbr \
+	$(INTDIR)/logmsg.sbr \
+	$(INTDIR)/classify.sbr \
+	$(INTDIR)/history.sbr \
+	$(INTDIR)/add.sbr \
+	$(INTDIR)/lock.sbr \
+	$(INTDIR)/recurse.sbr \
+	$(INTDIR)/modules.sbr \
+	$(INTDIR)/find_names.sbr \
+	$(INTDIR)/rcs.sbr \
+	$(INTDIR)/create_adm.sbr \
+	$(INTDIR)/main.sbr \
+	$(INTDIR)/patch.sbr \
+	$(INTDIR)/release.sbr \
+	$(INTDIR)/rcscmds.sbr \
+	$(INTDIR)/import.sbr \
+	$(INTDIR)/ignore.sbr \
+	$(INTDIR)/log.sbr \
+	$(INTDIR)/wrapper.sbr \
+	$(INTDIR)/error.sbr \
+	$(INTDIR)/expand_path.sbr \
+	$(INTDIR)/edit.sbr \
+	$(INTDIR)/fileattr.sbr \
+	$(INTDIR)/watch.sbr \
+	$(INTDIR)/getwd.sbr \
+	$(INTDIR)/sighandle.sbr \
+	$(INTDIR)/getopt.sbr \
+	$(INTDIR)/argmatch.sbr \
+	$(INTDIR)/md5.sbr \
+	$(INTDIR)/yesno.sbr \
+	$(INTDIR)/getopt1.sbr \
+	$(INTDIR)/valloc.sbr \
+	$(INTDIR)/xgetwd.sbr \
+	$(INTDIR)/regex.sbr \
+	$(INTDIR)/fnmatch.sbr \
+	$(INTDIR)/getdate.sbr \
+	$(INTDIR)/"save-cwd.sbr" \
+	$(INTDIR)/getline.sbr \
+	$(INTDIR)/mkdir.sbr \
+	$(INTDIR)/run.sbr \
+	$(INTDIR)/pwd.sbr \
+	$(INTDIR)/filesubr.sbr \
+	$(INTDIR)/win32.sbr \
+	$(INTDIR)/waitpid.sbr \
+	$(INTDIR)/ndir.sbr \
+	$(INTDIR)/strippath.sbr \
+	$(INTDIR)/stripslash.sbr \
+	$(INTDIR)/rcmd.sbr \
+	$(INTDIR)/startserver.sbr
 
-.\WinRel\cvsnt.bsc : $(OUTDIR)  $(BSC32_SBRS)
+$(OUTDIR)/cvsnt.bsc : $(OUTDIR)  $(BSC32_SBRS)
     $(BSC32) @<<
   $(BSC32_FLAGS) $(BSC32_SBRS)
 <<
@@ -142,74 +147,79 @@ LINK32_FLAGS=kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib\
  /PDB:$(OUTDIR)/"cvsnt.pdb" /MACHINE:I386 /OUT:"WinRel/cvs.exe" 
 DEF_FILE=
 LINK32_OBJS= \
-	.\WinRel\subr.obj \
-	.\WinRel\admin.obj \
-	.\WinRel\server.obj \
-	.\WinRel\diff.obj \
-	.\WinRel\client.obj \
-	.\WinRel\checkout.obj \
-	.\WinRel\no_diff.obj \
-	.\WinRel\entries.obj \
-	.\WinRel\tag.obj \
-	.\WinRel\rtag.obj \
-	.\WinRel\status.obj \
-	.\WinRel\root.obj \
-	.\WinRel\myndbm.obj \
-	.\WinRel\hash.obj \
-	.\WinRel\repos.obj \
-	.\WinRel\parseinfo.obj \
-	.\WinRel\vers_ts.obj \
-	.\WinRel\checkin.obj \
-	.\WinRel\commit.obj \
-	.\WinRel\version.obj \
-	.\WinRel\cvsrc.obj \
-	.\WinRel\remove.obj \
-	.\WinRel\update.obj \
-	.\WinRel\logmsg.obj \
-	.\WinRel\classify.obj \
-	.\WinRel\history.obj \
-	.\WinRel\add.obj \
-	.\WinRel\lock.obj \
-	.\WinRel\recurse.obj \
-	.\WinRel\modules.obj \
-	.\WinRel\find_names.obj \
-	.\WinRel\rcs.obj \
-	.\WinRel\create_adm.obj \
-	.\WinRel\main.obj \
-	.\WinRel\patch.obj \
-	.\WinRel\release.obj \
-	.\WinRel\rcscmds.obj \
-	.\WinRel\import.obj \
-	.\WinRel\ignore.obj \
-	.\WinRel\log.obj \
-	.\WinRel\wrapper.obj \
-	.\WinRel\getwd.obj \
-	.\WinRel\error.obj \
-	.\WinRel\sighandle.obj \
-	.\WinRel\getopt.obj \
-	.\WinRel\argmatch.obj \
-	.\WinRel\md5.obj \
-	.\WinRel\yesno.obj \
-	.\WinRel\getopt1.obj \
-	.\WinRel\valloc.obj \
-	.\WinRel\xgetwd.obj \
-	.\WinRel\regex.obj \
-	.\WinRel\fnmatch.obj \
-	.\WinRel\getdate.obj \
-	".\WinRel\save-cwd.obj" \
-	.\WinRel\mkdir.obj \
-	.\WinRel\run.obj \
-	.\WinRel\pwd.obj \
-	.\WinRel\filesubr.obj \
-	.\WinRel\win32.obj \
-	.\WinRel\waitpid.obj \
-	.\WinRel\ndir.obj \
-	.\WinRel\strippath.obj \
-	.\WinRel\stripslash.obj \
-	.\WinRel\rcmd.obj \
-	.\WinRel\startserver.obj
+	$(INTDIR)/subr.obj \
+	$(INTDIR)/admin.obj \
+	$(INTDIR)/server.obj \
+	$(INTDIR)/diff.obj \
+	$(INTDIR)/client.obj \
+	$(INTDIR)/checkout.obj \
+	$(INTDIR)/no_diff.obj \
+	$(INTDIR)/entries.obj \
+	$(INTDIR)/tag.obj \
+	$(INTDIR)/rtag.obj \
+	$(INTDIR)/status.obj \
+	$(INTDIR)/root.obj \
+	$(INTDIR)/myndbm.obj \
+	$(INTDIR)/hash.obj \
+	$(INTDIR)/repos.obj \
+	$(INTDIR)/parseinfo.obj \
+	$(INTDIR)/vers_ts.obj \
+	$(INTDIR)/checkin.obj \
+	$(INTDIR)/commit.obj \
+	$(INTDIR)/version.obj \
+	$(INTDIR)/cvsrc.obj \
+	$(INTDIR)/remove.obj \
+	$(INTDIR)/update.obj \
+	$(INTDIR)/logmsg.obj \
+	$(INTDIR)/classify.obj \
+	$(INTDIR)/history.obj \
+	$(INTDIR)/add.obj \
+	$(INTDIR)/lock.obj \
+	$(INTDIR)/recurse.obj \
+	$(INTDIR)/modules.obj \
+	$(INTDIR)/find_names.obj \
+	$(INTDIR)/rcs.obj \
+	$(INTDIR)/create_adm.obj \
+	$(INTDIR)/main.obj \
+	$(INTDIR)/patch.obj \
+	$(INTDIR)/release.obj \
+	$(INTDIR)/rcscmds.obj \
+	$(INTDIR)/import.obj \
+	$(INTDIR)/ignore.obj \
+	$(INTDIR)/log.obj \
+	$(INTDIR)/wrapper.obj \
+	$(INTDIR)/error.obj \
+	$(INTDIR)/expand_path.obj \
+	$(INTDIR)/edit.obj \
+	$(INTDIR)/fileattr.obj \
+	$(INTDIR)/watch.obj \
+	$(INTDIR)/getwd.obj \
+	$(INTDIR)/sighandle.obj \
+	$(INTDIR)/getopt.obj \
+	$(INTDIR)/argmatch.obj \
+	$(INTDIR)/md5.obj \
+	$(INTDIR)/yesno.obj \
+	$(INTDIR)/getopt1.obj \
+	$(INTDIR)/valloc.obj \
+	$(INTDIR)/xgetwd.obj \
+	$(INTDIR)/regex.obj \
+	$(INTDIR)/fnmatch.obj \
+	$(INTDIR)/getdate.obj \
+	$(INTDIR)/"save-cwd.obj" \
+	$(INTDIR)/getline.obj \
+	$(INTDIR)/mkdir.obj \
+	$(INTDIR)/run.obj \
+	$(INTDIR)/pwd.obj \
+	$(INTDIR)/filesubr.obj \
+	$(INTDIR)/win32.obj \
+	$(INTDIR)/waitpid.obj \
+	$(INTDIR)/ndir.obj \
+	$(INTDIR)/strippath.obj \
+	$(INTDIR)/stripslash.obj \
+	$(INTDIR)/rcmd.obj \
+	$(INTDIR)/startserver.obj
 
-.\WinRel\cvs.exe : $(OUTDIR)  $(DEF_FILE) $(LINK32_OBJS)
+$(OUTDIR)/cvs.exe : $(OUTDIR)  $(DEF_FILE) $(LINK32_OBJS)
     $(LINK32) @<<
   $(LINK32_FLAGS) $(LINK32_OBJS)
 <<
@@ -227,7 +237,7 @@ LINK32_OBJS= \
 OUTDIR=.\WinDebug
 INTDIR=.\WinDebug
 
-ALL : .\WinDebug\cvs.exe .\WinDebug\cvsnt.bsc
+ALL : $(OUTDIR)/cvs.exe $(OUTDIR)/cvsnt.bsc
 
 $(OUTDIR) : 
     if not exist $(OUTDIR)/nul mkdir $(OUTDIR)
@@ -246,74 +256,79 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 BSC32_FLAGS=/nologo /o$(OUTDIR)/"cvsnt.bsc" 
 BSC32_SBRS= \
-	.\WinDebug\subr.sbr \
-	.\WinDebug\admin.sbr \
-	.\WinDebug\server.sbr \
-	.\WinDebug\diff.sbr \
-	.\WinDebug\client.sbr \
-	.\WinDebug\checkout.sbr \
-	.\WinDebug\no_diff.sbr \
-	.\WinDebug\entries.sbr \
-	.\WinDebug\tag.sbr \
-	.\WinDebug\rtag.sbr \
-	.\WinDebug\status.sbr \
-	.\WinDebug\root.sbr \
-	.\WinDebug\myndbm.sbr \
-	.\WinDebug\hash.sbr \
-	.\WinDebug\repos.sbr \
-	.\WinDebug\parseinfo.sbr \
-	.\WinDebug\vers_ts.sbr \
-	.\WinDebug\checkin.sbr \
-	.\WinDebug\commit.sbr \
-	.\WinDebug\version.sbr \
-	.\WinDebug\cvsrc.sbr \
-	.\WinDebug\remove.sbr \
-	.\WinDebug\update.sbr \
-	.\WinDebug\logmsg.sbr \
-	.\WinDebug\classify.sbr \
-	.\WinDebug\history.sbr \
-	.\WinDebug\add.sbr \
-	.\WinDebug\lock.sbr \
-	.\WinDebug\recurse.sbr \
-	.\WinDebug\modules.sbr \
-	.\WinDebug\find_names.sbr \
-	.\WinDebug\rcs.sbr \
-	.\WinDebug\create_adm.sbr \
-	.\WinDebug\main.sbr \
-	.\WinDebug\patch.sbr \
-	.\WinDebug\release.sbr \
-	.\WinDebug\rcscmds.sbr \
-	.\WinDebug\import.sbr \
-	.\WinDebug\ignore.sbr \
-	.\WinDebug\log.sbr \
-	.\WinDebug\wrapper.sbr \
-	.\WinDebug\getwd.sbr \
-	.\WinDebug\error.sbr \
-	.\WinDebug\sighandle.sbr \
-	.\WinDebug\getopt.sbr \
-	.\WinDebug\argmatch.sbr \
-	.\WinDebug\md5.sbr \
-	.\WinDebug\yesno.sbr \
-	.\WinDebug\getopt1.sbr \
-	.\WinDebug\valloc.sbr \
-	.\WinDebug\xgetwd.sbr \
-	.\WinDebug\regex.sbr \
-	.\WinDebug\fnmatch.sbr \
-	.\WinDebug\getdate.sbr \
-	".\WinDebug\save-cwd.sbr" \
-	.\WinDebug\mkdir.sbr \
-	.\WinDebug\run.sbr \
-	.\WinDebug\pwd.sbr \
-	.\WinDebug\filesubr.sbr \
-	.\WinDebug\win32.sbr \
-	.\WinDebug\waitpid.sbr \
-	.\WinDebug\ndir.sbr \
-	.\WinDebug\strippath.sbr \
-	.\WinDebug\stripslash.sbr \
-	.\WinDebug\rcmd.sbr \
-	.\WinDebug\startserver.sbr
+	$(INTDIR)/subr.sbr \
+	$(INTDIR)/admin.sbr \
+	$(INTDIR)/server.sbr \
+	$(INTDIR)/diff.sbr \
+	$(INTDIR)/client.sbr \
+	$(INTDIR)/checkout.sbr \
+	$(INTDIR)/no_diff.sbr \
+	$(INTDIR)/entries.sbr \
+	$(INTDIR)/tag.sbr \
+	$(INTDIR)/rtag.sbr \
+	$(INTDIR)/status.sbr \
+	$(INTDIR)/root.sbr \
+	$(INTDIR)/myndbm.sbr \
+	$(INTDIR)/hash.sbr \
+	$(INTDIR)/repos.sbr \
+	$(INTDIR)/parseinfo.sbr \
+	$(INTDIR)/vers_ts.sbr \
+	$(INTDIR)/checkin.sbr \
+	$(INTDIR)/commit.sbr \
+	$(INTDIR)/version.sbr \
+	$(INTDIR)/cvsrc.sbr \
+	$(INTDIR)/remove.sbr \
+	$(INTDIR)/update.sbr \
+	$(INTDIR)/logmsg.sbr \
+	$(INTDIR)/classify.sbr \
+	$(INTDIR)/history.sbr \
+	$(INTDIR)/add.sbr \
+	$(INTDIR)/lock.sbr \
+	$(INTDIR)/recurse.sbr \
+	$(INTDIR)/modules.sbr \
+	$(INTDIR)/find_names.sbr \
+	$(INTDIR)/rcs.sbr \
+	$(INTDIR)/create_adm.sbr \
+	$(INTDIR)/main.sbr \
+	$(INTDIR)/patch.sbr \
+	$(INTDIR)/release.sbr \
+	$(INTDIR)/rcscmds.sbr \
+	$(INTDIR)/import.sbr \
+	$(INTDIR)/ignore.sbr \
+	$(INTDIR)/log.sbr \
+	$(INTDIR)/wrapper.sbr \
+	$(INTDIR)/error.sbr \
+	$(INTDIR)/expand_path.sbr \
+	$(INTDIR)/edit.sbr \
+	$(INTDIR)/fileattr.sbr \
+	$(INTDIR)/watch.sbr \
+	$(INTDIR)/getwd.sbr \
+	$(INTDIR)/sighandle.sbr \
+	$(INTDIR)/getopt.sbr \
+	$(INTDIR)/argmatch.sbr \
+	$(INTDIR)/md5.sbr \
+	$(INTDIR)/yesno.sbr \
+	$(INTDIR)/getopt1.sbr \
+	$(INTDIR)/valloc.sbr \
+	$(INTDIR)/xgetwd.sbr \
+	$(INTDIR)/regex.sbr \
+	$(INTDIR)/fnmatch.sbr \
+	$(INTDIR)/getdate.sbr \
+	$(INTDIR)/"save-cwd.sbr" \
+	$(INTDIR)/getline.sbr \
+	$(INTDIR)/mkdir.sbr \
+	$(INTDIR)/run.sbr \
+	$(INTDIR)/pwd.sbr \
+	$(INTDIR)/filesubr.sbr \
+	$(INTDIR)/win32.sbr \
+	$(INTDIR)/waitpid.sbr \
+	$(INTDIR)/ndir.sbr \
+	$(INTDIR)/strippath.sbr \
+	$(INTDIR)/stripslash.sbr \
+	$(INTDIR)/rcmd.sbr \
+	$(INTDIR)/startserver.sbr
 
-.\WinDebug\cvsnt.bsc : $(OUTDIR)  $(BSC32_SBRS)
+$(OUTDIR)/cvsnt.bsc : $(OUTDIR)  $(BSC32_SBRS)
     $(BSC32) @<<
   $(BSC32_FLAGS) $(BSC32_SBRS)
 <<
@@ -327,74 +342,79 @@ LINK32_FLAGS=kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib\
  /PDB:$(OUTDIR)/"cvsnt.pdb" /DEBUG /MACHINE:I386 /OUT:"WinDebug/cvs.exe" 
 DEF_FILE=
 LINK32_OBJS= \
-	.\WinDebug\subr.obj \
-	.\WinDebug\admin.obj \
-	.\WinDebug\server.obj \
-	.\WinDebug\diff.obj \
-	.\WinDebug\client.obj \
-	.\WinDebug\checkout.obj \
-	.\WinDebug\no_diff.obj \
-	.\WinDebug\entries.obj \
-	.\WinDebug\tag.obj \
-	.\WinDebug\rtag.obj \
-	.\WinDebug\status.obj \
-	.\WinDebug\root.obj \
-	.\WinDebug\myndbm.obj \
-	.\WinDebug\hash.obj \
-	.\WinDebug\repos.obj \
-	.\WinDebug\parseinfo.obj \
-	.\WinDebug\vers_ts.obj \
-	.\WinDebug\checkin.obj \
-	.\WinDebug\commit.obj \
-	.\WinDebug\version.obj \
-	.\WinDebug\cvsrc.obj \
-	.\WinDebug\remove.obj \
-	.\WinDebug\update.obj \
-	.\WinDebug\logmsg.obj \
-	.\WinDebug\classify.obj \
-	.\WinDebug\history.obj \
-	.\WinDebug\add.obj \
-	.\WinDebug\lock.obj \
-	.\WinDebug\recurse.obj \
-	.\WinDebug\modules.obj \
-	.\WinDebug\find_names.obj \
-	.\WinDebug\rcs.obj \
-	.\WinDebug\create_adm.obj \
-	.\WinDebug\main.obj \
-	.\WinDebug\patch.obj \
-	.\WinDebug\release.obj \
-	.\WinDebug\rcscmds.obj \
-	.\WinDebug\import.obj \
-	.\WinDebug\ignore.obj \
-	.\WinDebug\log.obj \
-	.\WinDebug\wrapper.obj \
-	.\WinDebug\getwd.obj \
-	.\WinDebug\error.obj \
-	.\WinDebug\sighandle.obj \
-	.\WinDebug\getopt.obj \
-	.\WinDebug\argmatch.obj \
-	.\WinDebug\md5.obj \
-	.\WinDebug\yesno.obj \
-	.\WinDebug\getopt1.obj \
-	.\WinDebug\valloc.obj \
-	.\WinDebug\xgetwd.obj \
-	.\WinDebug\regex.obj \
-	.\WinDebug\fnmatch.obj \
-	.\WinDebug\getdate.obj \
-	".\WinDebug\save-cwd.obj" \
-	.\WinDebug\mkdir.obj \
-	.\WinDebug\run.obj \
-	.\WinDebug\pwd.obj \
-	.\WinDebug\filesubr.obj \
-	.\WinDebug\win32.obj \
-	.\WinDebug\waitpid.obj \
-	.\WinDebug\ndir.obj \
-	.\WinDebug\strippath.obj \
-	.\WinDebug\stripslash.obj \
-	.\WinDebug\rcmd.obj \
-	.\WinDebug\startserver.obj
+	$(INTDIR)/subr.obj \
+	$(INTDIR)/admin.obj \
+	$(INTDIR)/server.obj \
+	$(INTDIR)/diff.obj \
+	$(INTDIR)/client.obj \
+	$(INTDIR)/checkout.obj \
+	$(INTDIR)/no_diff.obj \
+	$(INTDIR)/entries.obj \
+	$(INTDIR)/tag.obj \
+	$(INTDIR)/rtag.obj \
+	$(INTDIR)/status.obj \
+	$(INTDIR)/root.obj \
+	$(INTDIR)/myndbm.obj \
+	$(INTDIR)/hash.obj \
+	$(INTDIR)/repos.obj \
+	$(INTDIR)/parseinfo.obj \
+	$(INTDIR)/vers_ts.obj \
+	$(INTDIR)/checkin.obj \
+	$(INTDIR)/commit.obj \
+	$(INTDIR)/version.obj \
+	$(INTDIR)/cvsrc.obj \
+	$(INTDIR)/remove.obj \
+	$(INTDIR)/update.obj \
+	$(INTDIR)/logmsg.obj \
+	$(INTDIR)/classify.obj \
+	$(INTDIR)/history.obj \
+	$(INTDIR)/add.obj \
+	$(INTDIR)/lock.obj \
+	$(INTDIR)/recurse.obj \
+	$(INTDIR)/modules.obj \
+	$(INTDIR)/find_names.obj \
+	$(INTDIR)/rcs.obj \
+	$(INTDIR)/create_adm.obj \
+	$(INTDIR)/main.obj \
+	$(INTDIR)/patch.obj \
+	$(INTDIR)/release.obj \
+	$(INTDIR)/rcscmds.obj \
+	$(INTDIR)/import.obj \
+	$(INTDIR)/ignore.obj \
+	$(INTDIR)/log.obj \
+	$(INTDIR)/wrapper.obj \
+	$(INTDIR)/error.obj \
+	$(INTDIR)/expand_path.obj \
+	$(INTDIR)/edit.obj \
+	$(INTDIR)/fileattr.obj \
+	$(INTDIR)/watch.obj \
+	$(INTDIR)/getwd.obj \
+	$(INTDIR)/sighandle.obj \
+	$(INTDIR)/getopt.obj \
+	$(INTDIR)/argmatch.obj \
+	$(INTDIR)/md5.obj \
+	$(INTDIR)/yesno.obj \
+	$(INTDIR)/getopt1.obj \
+	$(INTDIR)/valloc.obj \
+	$(INTDIR)/xgetwd.obj \
+	$(INTDIR)/regex.obj \
+	$(INTDIR)/fnmatch.obj \
+	$(INTDIR)/getdate.obj \
+	$(INTDIR)/"save-cwd.obj" \
+	$(INTDIR)/getline.obj \
+	$(INTDIR)/mkdir.obj \
+	$(INTDIR)/run.obj \
+	$(INTDIR)/pwd.obj \
+	$(INTDIR)/filesubr.obj \
+	$(INTDIR)/win32.obj \
+	$(INTDIR)/waitpid.obj \
+	$(INTDIR)/ndir.obj \
+	$(INTDIR)/strippath.obj \
+	$(INTDIR)/stripslash.obj \
+	$(INTDIR)/rcmd.obj \
+	$(INTDIR)/startserver.obj
 
-.\WinDebug\cvs.exe : $(OUTDIR)  $(DEF_FILE) $(LINK32_OBJS)
+$(OUTDIR)/cvs.exe : $(OUTDIR)  $(DEF_FILE) $(LINK32_OBJS)
     $(LINK32) @<<
   $(LINK32_FLAGS) $(LINK32_OBJS)
 <<
@@ -433,44 +453,19 @@ DEP_SUBR_=\
 	.\lib\getopt.h\
 	.\lib\wait.h\
 	.\src\rcs.h\
+	.\src\error.h\
+	.\src\update.h\
 	".\windows-NT\ndir.h"
 
-!IF  "$(CFG)" == "Win32 Release"
-
-.\WinRel\subr.obj :  $(SOURCE)  $(DEP_SUBR_) $(INTDIR)
+$(INTDIR)/subr.obj :  $(SOURCE)  $(DEP_SUBR_) $(INTDIR)
    $(CPP) $(CPP_PROJ)  $(SOURCE) 
-
-!ELSEIF  "$(CFG)" == "Win32 Debug"
-
-.\WinDebug\subr.obj :  $(SOURCE)  $(DEP_SUBR_) $(INTDIR)
-   $(CPP) $(CPP_PROJ)  $(SOURCE) 
-
-!ENDIF 
 
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\src\admin.c
-
-!IF  "$(CFG)" == "Win32 Release"
-
-.\WinRel\admin.obj :  $(SOURCE)  $(INTDIR)
-   $(CPP) $(CPP_PROJ)  $(SOURCE) 
-
-!ELSEIF  "$(CFG)" == "Win32 Debug"
-
-.\WinDebug\admin.obj :  $(SOURCE)  $(INTDIR)
-   $(CPP) $(CPP_PROJ)  $(SOURCE) 
-
-!ENDIF 
-
-# End Source File
-################################################################################
-# Begin Source File
-
-SOURCE=.\src\server.c
-DEP_SERVE=\
+DEP_ADMIN=\
 	.\src\cvs.h\
 	".\windows-NT\config.h"\
 	".\windows-NT\options.h"\
@@ -486,37 +481,71 @@ DEP_SERVE=\
 	.\lib\getopt.h\
 	.\lib\wait.h\
 	.\src\rcs.h\
+	.\src\error.h\
+	.\src\update.h\
 	".\windows-NT\ndir.h"
 
-!IF  "$(CFG)" == "Win32 Release"
-
-.\WinRel\server.obj :  $(SOURCE)  $(DEP_SERVE) $(INTDIR)
+$(INTDIR)/admin.obj :  $(SOURCE)  $(DEP_ADMIN) $(INTDIR)
    $(CPP) $(CPP_PROJ)  $(SOURCE) 
 
-!ELSEIF  "$(CFG)" == "Win32 Debug"
+# End Source File
+################################################################################
+# Begin Source File
 
-.\WinDebug\server.obj :  $(SOURCE)  $(DEP_SERVE) $(INTDIR)
+SOURCE=.\src\server.c
+DEP_SERVE=\
+	.\src\cvs.h\
+	.\src\watch.h\
+	.\src\edit.h\
+	.\src\fileattr.h\
+	".\windows-NT\config.h"\
+	".\windows-NT\options.h"\
+	".\windows-NT\alloca.h"\
+	.\lib\fnmatch.h\
+	".\windows-NT\pwd.h"\
+	.\lib\system.h\
+	.\src\hash.h\
+	.\src\server.h\
+	.\src\client.h\
+	.\src\myndbm.h\
+	.\lib\regex.h\
+	.\lib\getopt.h\
+	.\lib\wait.h\
+	.\src\rcs.h\
+	.\src\error.h\
+	.\src\update.h\
+	".\windows-NT\ndir.h"
+
+$(INTDIR)/server.obj :  $(SOURCE)  $(DEP_SERVE) $(INTDIR)
    $(CPP) $(CPP_PROJ)  $(SOURCE) 
-
-!ENDIF 
 
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\src\diff.c
+DEP_DIFF_=\
+	.\src\cvs.h\
+	".\windows-NT\config.h"\
+	".\windows-NT\options.h"\
+	".\windows-NT\alloca.h"\
+	.\lib\fnmatch.h\
+	".\windows-NT\pwd.h"\
+	.\lib\system.h\
+	.\src\hash.h\
+	.\src\server.h\
+	.\src\client.h\
+	.\src\myndbm.h\
+	.\lib\regex.h\
+	.\lib\getopt.h\
+	.\lib\wait.h\
+	.\src\rcs.h\
+	.\src\error.h\
+	.\src\update.h\
+	".\windows-NT\ndir.h"
 
-!IF  "$(CFG)" == "Win32 Release"
-
-.\WinRel\diff.obj :  $(SOURCE)  $(INTDIR)
+$(INTDIR)/diff.obj :  $(SOURCE)  $(DEP_DIFF_) $(INTDIR)
    $(CPP) $(CPP_PROJ)  $(SOURCE) 
-
-!ELSEIF  "$(CFG)" == "Win32 Debug"
-
-.\WinDebug\diff.obj :  $(SOURCE)  $(INTDIR)
-   $(CPP) $(CPP_PROJ)  $(SOURCE) 
-
-!ENDIF 
 
 # End Source File
 ################################################################################
@@ -525,7 +554,7 @@ SOURCE=.\src\diff.c
 SOURCE=.\src\client.c
 DEP_CLIEN=\
 	.\src\cvs.h\
-	.\src\update.h\
+	.\lib\getline.h\
 	.\lib\md5.h\
 	".\windows-NT\config.h"\
 	".\windows-NT\options.h"\
@@ -541,19 +570,12 @@ DEP_CLIEN=\
 	.\lib\getopt.h\
 	.\lib\wait.h\
 	.\src\rcs.h\
+	.\src\error.h\
+	.\src\update.h\
 	".\windows-NT\ndir.h"
 
-!IF  "$(CFG)" == "Win32 Release"
-
-.\WinRel\client.obj :  $(SOURCE)  $(DEP_CLIEN) $(INTDIR)
+$(INTDIR)/client.obj :  $(SOURCE)  $(DEP_CLIEN) $(INTDIR)
    $(CPP) $(CPP_PROJ)  $(SOURCE) 
-
-!ELSEIF  "$(CFG)" == "Win32 Debug"
-
-.\WinDebug\client.obj :  $(SOURCE)  $(DEP_CLIEN) $(INTDIR)
-   $(CPP) $(CPP_PROJ)  $(SOURCE) 
-
-!ENDIF 
 
 # End Source File
 ################################################################################
@@ -576,19 +598,12 @@ DEP_CHECK=\
 	.\lib\getopt.h\
 	.\lib\wait.h\
 	.\src\rcs.h\
+	.\src\error.h\
+	.\src\update.h\
 	".\windows-NT\ndir.h"
 
-!IF  "$(CFG)" == "Win32 Release"
-
-.\WinRel\checkout.obj :  $(SOURCE)  $(DEP_CHECK) $(INTDIR)
+$(INTDIR)/checkout.obj :  $(SOURCE)  $(DEP_CHECK) $(INTDIR)
    $(CPP) $(CPP_PROJ)  $(SOURCE) 
-
-!ELSEIF  "$(CFG)" == "Win32 Debug"
-
-.\WinDebug\checkout.obj :  $(SOURCE)  $(DEP_CHECK) $(INTDIR)
-   $(CPP) $(CPP_PROJ)  $(SOURCE) 
-
-!ENDIF 
 
 # End Source File
 ################################################################################
@@ -611,19 +626,12 @@ DEP_NO_DI=\
 	.\lib\getopt.h\
 	.\lib\wait.h\
 	.\src\rcs.h\
+	.\src\error.h\
+	.\src\update.h\
 	".\windows-NT\ndir.h"
 
-!IF  "$(CFG)" == "Win32 Release"
-
-.\WinRel\no_diff.obj :  $(SOURCE)  $(DEP_NO_DI) $(INTDIR)
+$(INTDIR)/no_diff.obj :  $(SOURCE)  $(DEP_NO_DI) $(INTDIR)
    $(CPP) $(CPP_PROJ)  $(SOURCE) 
-
-!ELSEIF  "$(CFG)" == "Win32 Debug"
-
-.\WinDebug\no_diff.obj :  $(SOURCE)  $(DEP_NO_DI) $(INTDIR)
-   $(CPP) $(CPP_PROJ)  $(SOURCE) 
-
-!ENDIF 
 
 # End Source File
 ################################################################################
@@ -631,6 +639,64 @@ DEP_NO_DI=\
 
 SOURCE=.\src\entries.c
 DEP_ENTRI=\
+	.\src\cvs.h\
+	.\lib\getline.h\
+	".\windows-NT\config.h"\
+	".\windows-NT\options.h"\
+	".\windows-NT\alloca.h"\
+	.\lib\fnmatch.h\
+	".\windows-NT\pwd.h"\
+	.\lib\system.h\
+	.\src\hash.h\
+	.\src\server.h\
+	.\src\client.h\
+	.\src\myndbm.h\
+	.\lib\regex.h\
+	.\lib\getopt.h\
+	.\lib\wait.h\
+	.\src\rcs.h\
+	.\src\error.h\
+	.\src\update.h\
+	".\windows-NT\ndir.h"
+
+$(INTDIR)/entries.obj :  $(SOURCE)  $(DEP_ENTRI) $(INTDIR)
+   $(CPP) $(CPP_PROJ)  $(SOURCE) 
+
+# End Source File
+################################################################################
+# Begin Source File
+
+SOURCE=.\src\tag.c
+DEP_TAG_C=\
+	.\src\cvs.h\
+	".\lib\save-cwd.h"\
+	".\windows-NT\config.h"\
+	".\windows-NT\options.h"\
+	".\windows-NT\alloca.h"\
+	.\lib\fnmatch.h\
+	".\windows-NT\pwd.h"\
+	.\lib\system.h\
+	.\src\hash.h\
+	.\src\server.h\
+	.\src\client.h\
+	.\src\myndbm.h\
+	.\lib\regex.h\
+	.\lib\getopt.h\
+	.\lib\wait.h\
+	.\src\rcs.h\
+	.\src\error.h\
+	.\src\update.h\
+	".\windows-NT\ndir.h"
+
+$(INTDIR)/tag.obj :  $(SOURCE)  $(DEP_TAG_C) $(INTDIR)
+   $(CPP) $(CPP_PROJ)  $(SOURCE) 
+
+# End Source File
+################################################################################
+# Begin Source File
+
+SOURCE=.\src\rtag.c
+DEP_RTAG_=\
 	.\src\cvs.h\
 	".\windows-NT\config.h"\
 	".\windows-NT\options.h"\
@@ -646,109 +712,97 @@ DEP_ENTRI=\
 	.\lib\getopt.h\
 	.\lib\wait.h\
 	.\src\rcs.h\
+	.\src\error.h\
+	.\src\update.h\
 	".\windows-NT\ndir.h"
 
-!IF  "$(CFG)" == "Win32 Release"
-
-.\WinRel\entries.obj :  $(SOURCE)  $(DEP_ENTRI) $(INTDIR)
+$(INTDIR)/rtag.obj :  $(SOURCE)  $(DEP_RTAG_) $(INTDIR)
    $(CPP) $(CPP_PROJ)  $(SOURCE) 
-
-!ELSEIF  "$(CFG)" == "Win32 Debug"
-
-.\WinDebug\entries.obj :  $(SOURCE)  $(DEP_ENTRI) $(INTDIR)
-   $(CPP) $(CPP_PROJ)  $(SOURCE) 
-
-!ENDIF 
-
-# End Source File
-################################################################################
-# Begin Source File
-
-SOURCE=.\src\tag.c
-
-!IF  "$(CFG)" == "Win32 Release"
-
-.\WinRel\tag.obj :  $(SOURCE)  $(INTDIR)
-   $(CPP) $(CPP_PROJ)  $(SOURCE) 
-
-!ELSEIF  "$(CFG)" == "Win32 Debug"
-
-.\WinDebug\tag.obj :  $(SOURCE)  $(INTDIR)
-   $(CPP) $(CPP_PROJ)  $(SOURCE) 
-
-!ENDIF 
-
-# End Source File
-################################################################################
-# Begin Source File
-
-SOURCE=.\src\rtag.c
-
-!IF  "$(CFG)" == "Win32 Release"
-
-.\WinRel\rtag.obj :  $(SOURCE)  $(INTDIR)
-   $(CPP) $(CPP_PROJ)  $(SOURCE) 
-
-!ELSEIF  "$(CFG)" == "Win32 Debug"
-
-.\WinDebug\rtag.obj :  $(SOURCE)  $(INTDIR)
-   $(CPP) $(CPP_PROJ)  $(SOURCE) 
-
-!ENDIF 
 
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\src\status.c
+DEP_STATU=\
+	.\src\cvs.h\
+	".\windows-NT\config.h"\
+	".\windows-NT\options.h"\
+	".\windows-NT\alloca.h"\
+	.\lib\fnmatch.h\
+	".\windows-NT\pwd.h"\
+	.\lib\system.h\
+	.\src\hash.h\
+	.\src\server.h\
+	.\src\client.h\
+	.\src\myndbm.h\
+	.\lib\regex.h\
+	.\lib\getopt.h\
+	.\lib\wait.h\
+	.\src\rcs.h\
+	.\src\error.h\
+	.\src\update.h\
+	".\windows-NT\ndir.h"
 
-!IF  "$(CFG)" == "Win32 Release"
-
-.\WinRel\status.obj :  $(SOURCE)  $(INTDIR)
+$(INTDIR)/status.obj :  $(SOURCE)  $(DEP_STATU) $(INTDIR)
    $(CPP) $(CPP_PROJ)  $(SOURCE) 
-
-!ELSEIF  "$(CFG)" == "Win32 Debug"
-
-.\WinDebug\status.obj :  $(SOURCE)  $(INTDIR)
-   $(CPP) $(CPP_PROJ)  $(SOURCE) 
-
-!ENDIF 
 
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\src\root.c
+DEP_ROOT_=\
+	.\src\cvs.h\
+	".\windows-NT\config.h"\
+	".\windows-NT\options.h"\
+	".\windows-NT\alloca.h"\
+	.\lib\fnmatch.h\
+	".\windows-NT\pwd.h"\
+	.\lib\system.h\
+	.\src\hash.h\
+	.\src\server.h\
+	.\src\client.h\
+	.\src\myndbm.h\
+	.\lib\regex.h\
+	.\lib\getopt.h\
+	.\lib\wait.h\
+	.\src\rcs.h\
+	.\src\error.h\
+	.\src\update.h\
+	".\windows-NT\ndir.h"
 
-!IF  "$(CFG)" == "Win32 Release"
-
-.\WinRel\root.obj :  $(SOURCE)  $(INTDIR)
+$(INTDIR)/root.obj :  $(SOURCE)  $(DEP_ROOT_) $(INTDIR)
    $(CPP) $(CPP_PROJ)  $(SOURCE) 
-
-!ELSEIF  "$(CFG)" == "Win32 Debug"
-
-.\WinDebug\root.obj :  $(SOURCE)  $(INTDIR)
-   $(CPP) $(CPP_PROJ)  $(SOURCE) 
-
-!ENDIF 
 
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\src\myndbm.c
+DEP_MYNDB=\
+	.\src\cvs.h\
+	.\lib\getline.h\
+	".\windows-NT\config.h"\
+	".\windows-NT\options.h"\
+	".\windows-NT\alloca.h"\
+	.\lib\fnmatch.h\
+	".\windows-NT\pwd.h"\
+	.\lib\system.h\
+	.\src\hash.h\
+	.\src\server.h\
+	.\src\client.h\
+	.\src\myndbm.h\
+	.\lib\regex.h\
+	.\lib\getopt.h\
+	.\lib\wait.h\
+	.\src\rcs.h\
+	.\src\error.h\
+	.\src\update.h\
+	".\windows-NT\ndir.h"
 
-!IF  "$(CFG)" == "Win32 Release"
-
-.\WinRel\myndbm.obj :  $(SOURCE)  $(INTDIR)
+$(INTDIR)/myndbm.obj :  $(SOURCE)  $(DEP_MYNDB) $(INTDIR)
    $(CPP) $(CPP_PROJ)  $(SOURCE) 
-
-!ELSEIF  "$(CFG)" == "Win32 Debug"
-
-.\WinDebug\myndbm.obj :  $(SOURCE)  $(INTDIR)
-   $(CPP) $(CPP_PROJ)  $(SOURCE) 
-
-!ENDIF 
 
 # End Source File
 ################################################################################
@@ -771,98 +825,19 @@ DEP_HASH_=\
 	.\lib\getopt.h\
 	.\lib\wait.h\
 	.\src\rcs.h\
+	.\src\error.h\
+	.\src\update.h\
 	".\windows-NT\ndir.h"
 
-!IF  "$(CFG)" == "Win32 Release"
-
-.\WinRel\hash.obj :  $(SOURCE)  $(DEP_HASH_) $(INTDIR)
+$(INTDIR)/hash.obj :  $(SOURCE)  $(DEP_HASH_) $(INTDIR)
    $(CPP) $(CPP_PROJ)  $(SOURCE) 
-
-!ELSEIF  "$(CFG)" == "Win32 Debug"
-
-.\WinDebug\hash.obj :  $(SOURCE)  $(DEP_HASH_) $(INTDIR)
-   $(CPP) $(CPP_PROJ)  $(SOURCE) 
-
-!ENDIF 
 
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\src\repos.c
-
-!IF  "$(CFG)" == "Win32 Release"
-
-.\WinRel\repos.obj :  $(SOURCE)  $(INTDIR)
-   $(CPP) $(CPP_PROJ)  $(SOURCE) 
-
-!ELSEIF  "$(CFG)" == "Win32 Debug"
-
-.\WinDebug\repos.obj :  $(SOURCE)  $(INTDIR)
-   $(CPP) $(CPP_PROJ)  $(SOURCE) 
-
-!ENDIF 
-
-# End Source File
-################################################################################
-# Begin Source File
-
-SOURCE=.\src\parseinfo.c
-
-!IF  "$(CFG)" == "Win32 Release"
-
-.\WinRel\parseinfo.obj :  $(SOURCE)  $(INTDIR)
-   $(CPP) $(CPP_PROJ)  $(SOURCE) 
-
-!ELSEIF  "$(CFG)" == "Win32 Debug"
-
-.\WinDebug\parseinfo.obj :  $(SOURCE)  $(INTDIR)
-   $(CPP) $(CPP_PROJ)  $(SOURCE) 
-
-!ENDIF 
-
-# End Source File
-################################################################################
-# Begin Source File
-
-SOURCE=.\src\vers_ts.c
-
-!IF  "$(CFG)" == "Win32 Release"
-
-.\WinRel\vers_ts.obj :  $(SOURCE)  $(INTDIR)
-   $(CPP) $(CPP_PROJ)  $(SOURCE) 
-
-!ELSEIF  "$(CFG)" == "Win32 Debug"
-
-.\WinDebug\vers_ts.obj :  $(SOURCE)  $(INTDIR)
-   $(CPP) $(CPP_PROJ)  $(SOURCE) 
-
-!ENDIF 
-
-# End Source File
-################################################################################
-# Begin Source File
-
-SOURCE=.\src\checkin.c
-
-!IF  "$(CFG)" == "Win32 Release"
-
-.\WinRel\checkin.obj :  $(SOURCE)  $(INTDIR)
-   $(CPP) $(CPP_PROJ)  $(SOURCE) 
-
-!ELSEIF  "$(CFG)" == "Win32 Debug"
-
-.\WinDebug\checkin.obj :  $(SOURCE)  $(INTDIR)
-   $(CPP) $(CPP_PROJ)  $(SOURCE) 
-
-!ENDIF 
-
-# End Source File
-################################################################################
-# Begin Source File
-
-SOURCE=.\src\commit.c
-DEP_COMMI=\
+DEP_REPOS=\
 	.\src\cvs.h\
 	".\windows-NT\config.h"\
 	".\windows-NT\options.h"\
@@ -878,127 +853,302 @@ DEP_COMMI=\
 	.\lib\getopt.h\
 	.\lib\wait.h\
 	.\src\rcs.h\
+	.\src\error.h\
+	.\src\update.h\
 	".\windows-NT\ndir.h"
 
-!IF  "$(CFG)" == "Win32 Release"
-
-.\WinRel\commit.obj :  $(SOURCE)  $(DEP_COMMI) $(INTDIR)
+$(INTDIR)/repos.obj :  $(SOURCE)  $(DEP_REPOS) $(INTDIR)
    $(CPP) $(CPP_PROJ)  $(SOURCE) 
 
-!ELSEIF  "$(CFG)" == "Win32 Debug"
+# End Source File
+################################################################################
+# Begin Source File
 
-.\WinDebug\commit.obj :  $(SOURCE)  $(DEP_COMMI) $(INTDIR)
+SOURCE=.\src\parseinfo.c
+DEP_PARSE=\
+	.\src\cvs.h\
+	".\windows-NT\config.h"\
+	".\windows-NT\options.h"\
+	".\windows-NT\alloca.h"\
+	.\lib\fnmatch.h\
+	".\windows-NT\pwd.h"\
+	.\lib\system.h\
+	.\src\hash.h\
+	.\src\server.h\
+	.\src\client.h\
+	.\src\myndbm.h\
+	.\lib\regex.h\
+	.\lib\getopt.h\
+	.\lib\wait.h\
+	.\src\rcs.h\
+	.\src\error.h\
+	.\src\update.h\
+	".\windows-NT\ndir.h"
+
+$(INTDIR)/parseinfo.obj :  $(SOURCE)  $(DEP_PARSE) $(INTDIR)
    $(CPP) $(CPP_PROJ)  $(SOURCE) 
 
-!ENDIF 
+# End Source File
+################################################################################
+# Begin Source File
+
+SOURCE=.\src\vers_ts.c
+DEP_VERS_=\
+	.\src\cvs.h\
+	".\windows-NT\config.h"\
+	".\windows-NT\options.h"\
+	".\windows-NT\alloca.h"\
+	.\lib\fnmatch.h\
+	".\windows-NT\pwd.h"\
+	.\lib\system.h\
+	.\src\hash.h\
+	.\src\server.h\
+	.\src\client.h\
+	.\src\myndbm.h\
+	.\lib\regex.h\
+	.\lib\getopt.h\
+	.\lib\wait.h\
+	.\src\rcs.h\
+	.\src\error.h\
+	.\src\update.h\
+	".\windows-NT\ndir.h"
+
+$(INTDIR)/vers_ts.obj :  $(SOURCE)  $(DEP_VERS_) $(INTDIR)
+   $(CPP) $(CPP_PROJ)  $(SOURCE) 
+
+# End Source File
+################################################################################
+# Begin Source File
+
+SOURCE=.\src\checkin.c
+DEP_CHECKI=\
+	.\src\cvs.h\
+	.\src\fileattr.h\
+	".\windows-NT\config.h"\
+	".\windows-NT\options.h"\
+	".\windows-NT\alloca.h"\
+	.\lib\fnmatch.h\
+	".\windows-NT\pwd.h"\
+	.\lib\system.h\
+	.\src\hash.h\
+	.\src\server.h\
+	.\src\client.h\
+	.\src\myndbm.h\
+	.\lib\regex.h\
+	.\lib\getopt.h\
+	.\lib\wait.h\
+	.\src\rcs.h\
+	.\src\error.h\
+	.\src\update.h\
+	".\windows-NT\ndir.h"
+
+$(INTDIR)/checkin.obj :  $(SOURCE)  $(DEP_CHECKI) $(INTDIR)
+   $(CPP) $(CPP_PROJ)  $(SOURCE) 
+
+# End Source File
+################################################################################
+# Begin Source File
+
+SOURCE=.\src\commit.c
+DEP_COMMI=\
+	.\src\cvs.h\
+	.\lib\getline.h\
+	.\src\edit.h\
+	.\src\fileattr.h\
+	".\windows-NT\config.h"\
+	".\windows-NT\options.h"\
+	".\windows-NT\alloca.h"\
+	.\lib\fnmatch.h\
+	".\windows-NT\pwd.h"\
+	.\lib\system.h\
+	.\src\hash.h\
+	.\src\server.h\
+	.\src\client.h\
+	.\src\myndbm.h\
+	.\lib\regex.h\
+	.\lib\getopt.h\
+	.\lib\wait.h\
+	.\src\rcs.h\
+	.\src\error.h\
+	.\src\update.h\
+	".\windows-NT\ndir.h"
+
+$(INTDIR)/commit.obj :  $(SOURCE)  $(DEP_COMMI) $(INTDIR)
+   $(CPP) $(CPP_PROJ)  $(SOURCE) 
 
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\src\version.c
+DEP_VERSI=\
+	.\src\cvs.h\
+	".\windows-NT\config.h"\
+	".\windows-NT\options.h"\
+	".\windows-NT\alloca.h"\
+	.\lib\fnmatch.h\
+	".\windows-NT\pwd.h"\
+	.\lib\system.h\
+	.\src\hash.h\
+	.\src\server.h\
+	.\src\client.h\
+	.\src\myndbm.h\
+	.\lib\regex.h\
+	.\lib\getopt.h\
+	.\lib\wait.h\
+	.\src\rcs.h\
+	.\src\error.h\
+	.\src\update.h\
+	".\windows-NT\ndir.h"
 
-!IF  "$(CFG)" == "Win32 Release"
-
-.\WinRel\version.obj :  $(SOURCE)  $(INTDIR)
+$(INTDIR)/version.obj :  $(SOURCE)  $(DEP_VERSI) $(INTDIR)
    $(CPP) $(CPP_PROJ)  $(SOURCE) 
-
-!ELSEIF  "$(CFG)" == "Win32 Debug"
-
-.\WinDebug\version.obj :  $(SOURCE)  $(INTDIR)
-   $(CPP) $(CPP_PROJ)  $(SOURCE) 
-
-!ENDIF 
 
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\src\cvsrc.c
+DEP_CVSRC=\
+	.\src\cvs.h\
+	.\lib\getline.h\
+	".\windows-NT\config.h"\
+	".\windows-NT\options.h"\
+	".\windows-NT\alloca.h"\
+	.\lib\fnmatch.h\
+	".\windows-NT\pwd.h"\
+	.\lib\system.h\
+	.\src\hash.h\
+	.\src\server.h\
+	.\src\client.h\
+	.\src\myndbm.h\
+	.\lib\regex.h\
+	.\lib\getopt.h\
+	.\lib\wait.h\
+	.\src\rcs.h\
+	.\src\error.h\
+	.\src\update.h\
+	".\windows-NT\ndir.h"
 
-!IF  "$(CFG)" == "Win32 Release"
-
-.\WinRel\cvsrc.obj :  $(SOURCE)  $(INTDIR)
+$(INTDIR)/cvsrc.obj :  $(SOURCE)  $(DEP_CVSRC) $(INTDIR)
    $(CPP) $(CPP_PROJ)  $(SOURCE) 
-
-!ELSEIF  "$(CFG)" == "Win32 Debug"
-
-.\WinDebug\cvsrc.obj :  $(SOURCE)  $(INTDIR)
-   $(CPP) $(CPP_PROJ)  $(SOURCE) 
-
-!ENDIF 
 
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\src\remove.c
+DEP_REMOV=\
+	.\src\cvs.h\
+	".\windows-NT\config.h"\
+	".\windows-NT\options.h"\
+	".\windows-NT\alloca.h"\
+	.\lib\fnmatch.h\
+	".\windows-NT\pwd.h"\
+	.\lib\system.h\
+	.\src\hash.h\
+	.\src\server.h\
+	.\src\client.h\
+	.\src\myndbm.h\
+	.\lib\regex.h\
+	.\lib\getopt.h\
+	.\lib\wait.h\
+	.\src\rcs.h\
+	.\src\error.h\
+	.\src\update.h\
+	".\windows-NT\ndir.h"
 
-!IF  "$(CFG)" == "Win32 Release"
-
-.\WinRel\remove.obj :  $(SOURCE)  $(INTDIR)
+$(INTDIR)/remove.obj :  $(SOURCE)  $(DEP_REMOV) $(INTDIR)
    $(CPP) $(CPP_PROJ)  $(SOURCE) 
-
-!ELSEIF  "$(CFG)" == "Win32 Debug"
-
-.\WinDebug\remove.obj :  $(SOURCE)  $(INTDIR)
-   $(CPP) $(CPP_PROJ)  $(SOURCE) 
-
-!ENDIF 
 
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\src\update.c
+DEP_UPDAT=\
+	.\src\cvs.h\
+	.\lib\md5.h\
+	.\src\watch.h\
+	.\src\fileattr.h\
+	.\src\edit.h\
+	".\windows-NT\config.h"\
+	".\windows-NT\options.h"\
+	".\windows-NT\alloca.h"\
+	.\lib\fnmatch.h\
+	".\windows-NT\pwd.h"\
+	.\lib\system.h\
+	.\src\hash.h\
+	.\src\server.h\
+	.\src\client.h\
+	.\src\myndbm.h\
+	.\lib\regex.h\
+	.\lib\getopt.h\
+	.\lib\wait.h\
+	.\src\rcs.h\
+	.\src\error.h\
+	.\src\update.h\
+	".\windows-NT\ndir.h"
 
-!IF  "$(CFG)" == "Win32 Release"
-
-.\WinRel\update.obj :  $(SOURCE)  $(INTDIR)
+$(INTDIR)/update.obj :  $(SOURCE)  $(DEP_UPDAT) $(INTDIR)
    $(CPP) $(CPP_PROJ)  $(SOURCE) 
-
-!ELSEIF  "$(CFG)" == "Win32 Debug"
-
-.\WinDebug\update.obj :  $(SOURCE)  $(INTDIR)
-   $(CPP) $(CPP_PROJ)  $(SOURCE) 
-
-!ENDIF 
 
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\src\logmsg.c
+DEP_LOGMS=\
+	.\src\cvs.h\
+	.\lib\getline.h\
+	".\windows-NT\config.h"\
+	".\windows-NT\options.h"\
+	".\windows-NT\alloca.h"\
+	.\lib\fnmatch.h\
+	".\windows-NT\pwd.h"\
+	.\lib\system.h\
+	.\src\hash.h\
+	.\src\server.h\
+	.\src\client.h\
+	.\src\myndbm.h\
+	.\lib\regex.h\
+	.\lib\getopt.h\
+	.\lib\wait.h\
+	.\src\rcs.h\
+	.\src\error.h\
+	.\src\update.h\
+	".\windows-NT\ndir.h"
 
-!IF  "$(CFG)" == "Win32 Release"
-
-.\WinRel\logmsg.obj :  $(SOURCE)  $(INTDIR)
+$(INTDIR)/logmsg.obj :  $(SOURCE)  $(DEP_LOGMS) $(INTDIR)
    $(CPP) $(CPP_PROJ)  $(SOURCE) 
-
-!ELSEIF  "$(CFG)" == "Win32 Debug"
-
-.\WinDebug\logmsg.obj :  $(SOURCE)  $(INTDIR)
-   $(CPP) $(CPP_PROJ)  $(SOURCE) 
-
-!ENDIF 
 
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\src\classify.c
+DEP_CLASS=\
+	.\src\cvs.h\
+	".\windows-NT\config.h"\
+	".\windows-NT\options.h"\
+	".\windows-NT\alloca.h"\
+	.\lib\fnmatch.h\
+	".\windows-NT\pwd.h"\
+	.\lib\system.h\
+	.\src\hash.h\
+	.\src\server.h\
+	.\src\client.h\
+	.\src\myndbm.h\
+	.\lib\regex.h\
+	.\lib\getopt.h\
+	.\lib\wait.h\
+	.\src\rcs.h\
+	.\src\error.h\
+	.\src\update.h\
+	".\windows-NT\ndir.h"
 
-!IF  "$(CFG)" == "Win32 Release"
-
-.\WinRel\classify.obj :  $(SOURCE)  $(INTDIR)
+$(INTDIR)/classify.obj :  $(SOURCE)  $(DEP_CLASS) $(INTDIR)
    $(CPP) $(CPP_PROJ)  $(SOURCE) 
-
-!ELSEIF  "$(CFG)" == "Win32 Debug"
-
-.\WinDebug\classify.obj :  $(SOURCE)  $(INTDIR)
-   $(CPP) $(CPP_PROJ)  $(SOURCE) 
-
-!ENDIF 
 
 # End Source File
 ################################################################################
@@ -1021,19 +1171,12 @@ DEP_HISTO=\
 	.\lib\getopt.h\
 	.\lib\wait.h\
 	.\src\rcs.h\
+	.\src\error.h\
+	.\src\update.h\
 	".\windows-NT\ndir.h"
 
-!IF  "$(CFG)" == "Win32 Release"
-
-.\WinRel\history.obj :  $(SOURCE)  $(DEP_HISTO) $(INTDIR)
+$(INTDIR)/history.obj :  $(SOURCE)  $(DEP_HISTO) $(INTDIR)
    $(CPP) $(CPP_PROJ)  $(SOURCE) 
-
-!ELSEIF  "$(CFG)" == "Win32 Debug"
-
-.\WinDebug\history.obj :  $(SOURCE)  $(DEP_HISTO) $(INTDIR)
-   $(CPP) $(CPP_PROJ)  $(SOURCE) 
-
-!ENDIF 
 
 # End Source File
 ################################################################################
@@ -1042,6 +1185,7 @@ DEP_HISTO=\
 SOURCE=.\src\add.c
 DEP_ADD_C=\
 	.\src\cvs.h\
+	".\lib\save-cwd.h"\
 	".\windows-NT\config.h"\
 	".\windows-NT\options.h"\
 	".\windows-NT\alloca.h"\
@@ -1056,19 +1200,12 @@ DEP_ADD_C=\
 	.\lib\getopt.h\
 	.\lib\wait.h\
 	.\src\rcs.h\
+	.\src\error.h\
+	.\src\update.h\
 	".\windows-NT\ndir.h"
 
-!IF  "$(CFG)" == "Win32 Release"
-
-.\WinRel\add.obj :  $(SOURCE)  $(DEP_ADD_C) $(INTDIR)
+$(INTDIR)/add.obj :  $(SOURCE)  $(DEP_ADD_C) $(INTDIR)
    $(CPP) $(CPP_PROJ)  $(SOURCE) 
-
-!ELSEIF  "$(CFG)" == "Win32 Debug"
-
-.\WinDebug\add.obj :  $(SOURCE)  $(DEP_ADD_C) $(INTDIR)
-   $(CPP) $(CPP_PROJ)  $(SOURCE) 
-
-!ENDIF 
 
 # End Source File
 ################################################################################
@@ -1091,45 +1228,23 @@ DEP_LOCK_=\
 	.\lib\getopt.h\
 	.\lib\wait.h\
 	.\src\rcs.h\
+	.\src\error.h\
+	.\src\update.h\
 	".\windows-NT\ndir.h"
 
-!IF  "$(CFG)" == "Win32 Release"
-
-.\WinRel\lock.obj :  $(SOURCE)  $(DEP_LOCK_) $(INTDIR)
+$(INTDIR)/lock.obj :  $(SOURCE)  $(DEP_LOCK_) $(INTDIR)
    $(CPP) $(CPP_PROJ)  $(SOURCE) 
-
-!ELSEIF  "$(CFG)" == "Win32 Debug"
-
-.\WinDebug\lock.obj :  $(SOURCE)  $(DEP_LOCK_) $(INTDIR)
-   $(CPP) $(CPP_PROJ)  $(SOURCE) 
-
-!ENDIF 
 
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\src\recurse.c
-
-!IF  "$(CFG)" == "Win32 Release"
-
-.\WinRel\recurse.obj :  $(SOURCE)  $(INTDIR)
-   $(CPP) $(CPP_PROJ)  $(SOURCE) 
-
-!ELSEIF  "$(CFG)" == "Win32 Debug"
-
-.\WinDebug\recurse.obj :  $(SOURCE)  $(INTDIR)
-   $(CPP) $(CPP_PROJ)  $(SOURCE) 
-
-!ENDIF 
-
-# End Source File
-################################################################################
-# Begin Source File
-
-SOURCE=.\src\modules.c
-DEP_MODUL=\
+DEP_RECUR=\
 	.\src\cvs.h\
+	".\lib\save-cwd.h"\
+	.\src\fileattr.h\
+	.\src\edit.h\
 	".\windows-NT\config.h"\
 	".\windows-NT\options.h"\
 	".\windows-NT\alloca.h"\
@@ -1144,19 +1259,41 @@ DEP_MODUL=\
 	.\lib\getopt.h\
 	.\lib\wait.h\
 	.\src\rcs.h\
+	.\src\error.h\
+	.\src\update.h\
 	".\windows-NT\ndir.h"
 
-!IF  "$(CFG)" == "Win32 Release"
-
-.\WinRel\modules.obj :  $(SOURCE)  $(DEP_MODUL) $(INTDIR)
+$(INTDIR)/recurse.obj :  $(SOURCE)  $(DEP_RECUR) $(INTDIR)
    $(CPP) $(CPP_PROJ)  $(SOURCE) 
 
-!ELSEIF  "$(CFG)" == "Win32 Debug"
+# End Source File
+################################################################################
+# Begin Source File
 
-.\WinDebug\modules.obj :  $(SOURCE)  $(DEP_MODUL) $(INTDIR)
+SOURCE=.\src\modules.c
+DEP_MODUL=\
+	.\src\cvs.h\
+	".\lib\save-cwd.h"\
+	".\windows-NT\config.h"\
+	".\windows-NT\options.h"\
+	".\windows-NT\alloca.h"\
+	.\lib\fnmatch.h\
+	".\windows-NT\pwd.h"\
+	.\lib\system.h\
+	.\src\hash.h\
+	.\src\server.h\
+	.\src\client.h\
+	.\src\myndbm.h\
+	.\lib\regex.h\
+	.\lib\getopt.h\
+	.\lib\wait.h\
+	.\src\rcs.h\
+	.\src\error.h\
+	.\src\update.h\
+	".\windows-NT\ndir.h"
+
+$(INTDIR)/modules.obj :  $(SOURCE)  $(DEP_MODUL) $(INTDIR)
    $(CPP) $(CPP_PROJ)  $(SOURCE) 
-
-!ENDIF 
 
 # End Source File
 ################################################################################
@@ -1179,55 +1316,68 @@ DEP_FIND_=\
 	.\lib\getopt.h\
 	.\lib\wait.h\
 	.\src\rcs.h\
+	.\src\error.h\
+	.\src\update.h\
 	".\windows-NT\ndir.h"
 
-!IF  "$(CFG)" == "Win32 Release"
-
-.\WinRel\find_names.obj :  $(SOURCE)  $(DEP_FIND_) $(INTDIR)
+$(INTDIR)/find_names.obj :  $(SOURCE)  $(DEP_FIND_) $(INTDIR)
    $(CPP) $(CPP_PROJ)  $(SOURCE) 
-
-!ELSEIF  "$(CFG)" == "Win32 Debug"
-
-.\WinDebug\find_names.obj :  $(SOURCE)  $(DEP_FIND_) $(INTDIR)
-   $(CPP) $(CPP_PROJ)  $(SOURCE) 
-
-!ENDIF 
 
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\src\rcs.c
+DEP_RCS_C=\
+	.\src\cvs.h\
+	".\windows-NT\config.h"\
+	".\windows-NT\options.h"\
+	".\windows-NT\alloca.h"\
+	.\lib\fnmatch.h\
+	".\windows-NT\pwd.h"\
+	.\lib\system.h\
+	.\src\hash.h\
+	.\src\server.h\
+	.\src\client.h\
+	.\src\myndbm.h\
+	.\lib\regex.h\
+	.\lib\getopt.h\
+	.\lib\wait.h\
+	.\src\rcs.h\
+	.\src\error.h\
+	.\src\update.h\
+	".\windows-NT\ndir.h"
 
-!IF  "$(CFG)" == "Win32 Release"
-
-.\WinRel\rcs.obj :  $(SOURCE)  $(INTDIR)
+$(INTDIR)/rcs.obj :  $(SOURCE)  $(DEP_RCS_C) $(INTDIR)
    $(CPP) $(CPP_PROJ)  $(SOURCE) 
-
-!ELSEIF  "$(CFG)" == "Win32 Debug"
-
-.\WinDebug\rcs.obj :  $(SOURCE)  $(INTDIR)
-   $(CPP) $(CPP_PROJ)  $(SOURCE) 
-
-!ENDIF 
 
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\src\create_adm.c
+DEP_CREAT=\
+	.\src\cvs.h\
+	".\windows-NT\config.h"\
+	".\windows-NT\options.h"\
+	".\windows-NT\alloca.h"\
+	.\lib\fnmatch.h\
+	".\windows-NT\pwd.h"\
+	.\lib\system.h\
+	.\src\hash.h\
+	.\src\server.h\
+	.\src\client.h\
+	.\src\myndbm.h\
+	.\lib\regex.h\
+	.\lib\getopt.h\
+	.\lib\wait.h\
+	.\src\rcs.h\
+	.\src\error.h\
+	.\src\update.h\
+	".\windows-NT\ndir.h"
 
-!IF  "$(CFG)" == "Win32 Release"
-
-.\WinRel\create_adm.obj :  $(SOURCE)  $(INTDIR)
+$(INTDIR)/create_adm.obj :  $(SOURCE)  $(DEP_CREAT) $(INTDIR)
    $(CPP) $(CPP_PROJ)  $(SOURCE) 
-
-!ELSEIF  "$(CFG)" == "Win32 Debug"
-
-.\WinDebug\create_adm.obj :  $(SOURCE)  $(INTDIR)
-   $(CPP) $(CPP_PROJ)  $(SOURCE) 
-
-!ENDIF 
 
 # End Source File
 ################################################################################
@@ -1236,12 +1386,11 @@ SOURCE=.\src\create_adm.c
 SOURCE=.\src\main.c
 DEP_MAIN_=\
 	.\src\cvs.h\
-	.\src\patchlevel.h\
-	".\windows-NT\pwd.h"\
 	".\windows-NT\config.h"\
 	".\windows-NT\options.h"\
 	".\windows-NT\alloca.h"\
 	.\lib\fnmatch.h\
+	".\windows-NT\pwd.h"\
 	.\lib\system.h\
 	.\src\hash.h\
 	.\src\server.h\
@@ -1251,19 +1400,12 @@ DEP_MAIN_=\
 	.\lib\getopt.h\
 	.\lib\wait.h\
 	.\src\rcs.h\
+	.\src\error.h\
+	.\src\update.h\
 	".\windows-NT\ndir.h"
 
-!IF  "$(CFG)" == "Win32 Release"
-
-.\WinRel\main.obj :  $(SOURCE)  $(DEP_MAIN_) $(INTDIR)
+$(INTDIR)/main.obj :  $(SOURCE)  $(DEP_MAIN_) $(INTDIR)
    $(CPP) $(CPP_PROJ)  $(SOURCE) 
-
-!ELSEIF  "$(CFG)" == "Win32 Debug"
-
-.\WinDebug\main.obj :  $(SOURCE)  $(DEP_MAIN_) $(INTDIR)
-   $(CPP) $(CPP_PROJ)  $(SOURCE) 
-
-!ENDIF 
 
 # End Source File
 ################################################################################
@@ -1272,6 +1414,7 @@ DEP_MAIN_=\
 SOURCE=.\src\patch.c
 DEP_PATCH=\
 	.\src\cvs.h\
+	.\lib\getline.h\
 	".\windows-NT\config.h"\
 	".\windows-NT\options.h"\
 	".\windows-NT\alloca.h"\
@@ -1286,62 +1429,19 @@ DEP_PATCH=\
 	.\lib\getopt.h\
 	.\lib\wait.h\
 	.\src\rcs.h\
+	.\src\error.h\
+	.\src\update.h\
 	".\windows-NT\ndir.h"
 
-!IF  "$(CFG)" == "Win32 Release"
-
-.\WinRel\patch.obj :  $(SOURCE)  $(DEP_PATCH) $(INTDIR)
+$(INTDIR)/patch.obj :  $(SOURCE)  $(DEP_PATCH) $(INTDIR)
    $(CPP) $(CPP_PROJ)  $(SOURCE) 
-
-!ELSEIF  "$(CFG)" == "Win32 Debug"
-
-.\WinDebug\patch.obj :  $(SOURCE)  $(DEP_PATCH) $(INTDIR)
-   $(CPP) $(CPP_PROJ)  $(SOURCE) 
-
-!ENDIF 
 
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\src\release.c
-
-!IF  "$(CFG)" == "Win32 Release"
-
-.\WinRel\release.obj :  $(SOURCE)  $(INTDIR)
-   $(CPP) $(CPP_PROJ)  $(SOURCE) 
-
-!ELSEIF  "$(CFG)" == "Win32 Debug"
-
-.\WinDebug\release.obj :  $(SOURCE)  $(INTDIR)
-   $(CPP) $(CPP_PROJ)  $(SOURCE) 
-
-!ENDIF 
-
-# End Source File
-################################################################################
-# Begin Source File
-
-SOURCE=.\src\rcscmds.c
-
-!IF  "$(CFG)" == "Win32 Release"
-
-.\WinRel\rcscmds.obj :  $(SOURCE)  $(INTDIR)
-   $(CPP) $(CPP_PROJ)  $(SOURCE) 
-
-!ELSEIF  "$(CFG)" == "Win32 Debug"
-
-.\WinDebug\rcscmds.obj :  $(SOURCE)  $(INTDIR)
-   $(CPP) $(CPP_PROJ)  $(SOURCE) 
-
-!ENDIF 
-
-# End Source File
-################################################################################
-# Begin Source File
-
-SOURCE=.\src\import.c
-DEP_IMPOR=\
+DEP_RELEA=\
 	.\src\cvs.h\
 	".\windows-NT\config.h"\
 	".\windows-NT\options.h"\
@@ -1357,55 +1457,125 @@ DEP_IMPOR=\
 	.\lib\getopt.h\
 	.\lib\wait.h\
 	.\src\rcs.h\
+	.\src\error.h\
+	.\src\update.h\
 	".\windows-NT\ndir.h"
 
-!IF  "$(CFG)" == "Win32 Release"
-
-.\WinRel\import.obj :  $(SOURCE)  $(DEP_IMPOR) $(INTDIR)
+$(INTDIR)/release.obj :  $(SOURCE)  $(DEP_RELEA) $(INTDIR)
    $(CPP) $(CPP_PROJ)  $(SOURCE) 
 
-!ELSEIF  "$(CFG)" == "Win32 Debug"
+# End Source File
+################################################################################
+# Begin Source File
 
-.\WinDebug\import.obj :  $(SOURCE)  $(DEP_IMPOR) $(INTDIR)
+SOURCE=.\src\rcscmds.c
+DEP_RCSCM=\
+	.\src\cvs.h\
+	".\windows-NT\config.h"\
+	".\windows-NT\options.h"\
+	".\windows-NT\alloca.h"\
+	.\lib\fnmatch.h\
+	".\windows-NT\pwd.h"\
+	.\lib\system.h\
+	.\src\hash.h\
+	.\src\server.h\
+	.\src\client.h\
+	.\src\myndbm.h\
+	.\lib\regex.h\
+	.\lib\getopt.h\
+	.\lib\wait.h\
+	.\src\rcs.h\
+	.\src\error.h\
+	.\src\update.h\
+	".\windows-NT\ndir.h"
+
+$(INTDIR)/rcscmds.obj :  $(SOURCE)  $(DEP_RCSCM) $(INTDIR)
    $(CPP) $(CPP_PROJ)  $(SOURCE) 
 
-!ENDIF 
+# End Source File
+################################################################################
+# Begin Source File
+
+SOURCE=.\src\import.c
+DEP_IMPOR=\
+	.\src\cvs.h\
+	".\lib\save-cwd.h"\
+	".\windows-NT\config.h"\
+	".\windows-NT\options.h"\
+	".\windows-NT\alloca.h"\
+	.\lib\fnmatch.h\
+	".\windows-NT\pwd.h"\
+	.\lib\system.h\
+	.\src\hash.h\
+	.\src\server.h\
+	.\src\client.h\
+	.\src\myndbm.h\
+	.\lib\regex.h\
+	.\lib\getopt.h\
+	.\lib\wait.h\
+	.\src\rcs.h\
+	.\src\error.h\
+	.\src\update.h\
+	".\windows-NT\ndir.h"
+
+$(INTDIR)/import.obj :  $(SOURCE)  $(DEP_IMPOR) $(INTDIR)
+   $(CPP) $(CPP_PROJ)  $(SOURCE) 
 
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\src\ignore.c
+DEP_IGNOR=\
+	.\src\cvs.h\
+	".\windows-NT\config.h"\
+	".\windows-NT\options.h"\
+	".\windows-NT\alloca.h"\
+	.\lib\fnmatch.h\
+	".\windows-NT\pwd.h"\
+	.\lib\system.h\
+	.\src\hash.h\
+	.\src\server.h\
+	.\src\client.h\
+	.\src\myndbm.h\
+	.\lib\regex.h\
+	.\lib\getopt.h\
+	.\lib\wait.h\
+	.\src\rcs.h\
+	.\src\error.h\
+	.\src\update.h\
+	".\windows-NT\ndir.h"
 
-!IF  "$(CFG)" == "Win32 Release"
-
-.\WinRel\ignore.obj :  $(SOURCE)  $(INTDIR)
+$(INTDIR)/ignore.obj :  $(SOURCE)  $(DEP_IGNOR) $(INTDIR)
    $(CPP) $(CPP_PROJ)  $(SOURCE) 
-
-!ELSEIF  "$(CFG)" == "Win32 Debug"
-
-.\WinDebug\ignore.obj :  $(SOURCE)  $(INTDIR)
-   $(CPP) $(CPP_PROJ)  $(SOURCE) 
-
-!ENDIF 
 
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\src\log.c
+DEP_LOG_C=\
+	.\src\cvs.h\
+	".\windows-NT\config.h"\
+	".\windows-NT\options.h"\
+	".\windows-NT\alloca.h"\
+	.\lib\fnmatch.h\
+	".\windows-NT\pwd.h"\
+	.\lib\system.h\
+	.\src\hash.h\
+	.\src\server.h\
+	.\src\client.h\
+	.\src\myndbm.h\
+	.\lib\regex.h\
+	.\lib\getopt.h\
+	.\lib\wait.h\
+	.\src\rcs.h\
+	.\src\error.h\
+	.\src\update.h\
+	".\windows-NT\ndir.h"
 
-!IF  "$(CFG)" == "Win32 Release"
-
-.\WinRel\log.obj :  $(SOURCE)  $(INTDIR)
+$(INTDIR)/log.obj :  $(SOURCE)  $(DEP_LOG_C) $(INTDIR)
    $(CPP) $(CPP_PROJ)  $(SOURCE) 
-
-!ELSEIF  "$(CFG)" == "Win32 Debug"
-
-.\WinDebug\log.obj :  $(SOURCE)  $(INTDIR)
-   $(CPP) $(CPP_PROJ)  $(SOURCE) 
-
-!ENDIF 
 
 # End Source File
 ################################################################################
@@ -1428,19 +1598,161 @@ DEP_WRAPP=\
 	.\lib\getopt.h\
 	.\lib\wait.h\
 	.\src\rcs.h\
+	.\src\error.h\
+	.\src\update.h\
 	".\windows-NT\ndir.h"
 
-!IF  "$(CFG)" == "Win32 Release"
-
-.\WinRel\wrapper.obj :  $(SOURCE)  $(DEP_WRAPP) $(INTDIR)
+$(INTDIR)/wrapper.obj :  $(SOURCE)  $(DEP_WRAPP) $(INTDIR)
    $(CPP) $(CPP_PROJ)  $(SOURCE) 
 
-!ELSEIF  "$(CFG)" == "Win32 Debug"
+# End Source File
+################################################################################
+# Begin Source File
 
-.\WinDebug\wrapper.obj :  $(SOURCE)  $(DEP_WRAPP) $(INTDIR)
+SOURCE=.\src\error.c
+DEP_ERROR=\
+	.\src\cvs.h\
+	".\windows-NT\config.h"\
+	".\windows-NT\options.h"\
+	".\windows-NT\alloca.h"\
+	.\lib\fnmatch.h\
+	".\windows-NT\pwd.h"\
+	.\lib\system.h\
+	.\src\hash.h\
+	.\src\server.h\
+	.\src\client.h\
+	.\src\myndbm.h\
+	.\lib\regex.h\
+	.\lib\getopt.h\
+	.\lib\wait.h\
+	.\src\rcs.h\
+	.\src\error.h\
+	.\src\update.h\
+	".\windows-NT\ndir.h"
+
+$(INTDIR)/error.obj :  $(SOURCE)  $(DEP_ERROR) $(INTDIR)
    $(CPP) $(CPP_PROJ)  $(SOURCE) 
 
-!ENDIF 
+# End Source File
+################################################################################
+# Begin Source File
+
+SOURCE=.\src\expand_path.c
+DEP_EXPAN=\
+	.\src\cvs.h\
+	".\windows-NT\config.h"\
+	".\windows-NT\options.h"\
+	".\windows-NT\alloca.h"\
+	.\lib\fnmatch.h\
+	".\windows-NT\pwd.h"\
+	.\lib\system.h\
+	.\src\hash.h\
+	.\src\server.h\
+	.\src\client.h\
+	.\src\myndbm.h\
+	.\lib\regex.h\
+	.\lib\getopt.h\
+	.\lib\wait.h\
+	.\src\rcs.h\
+	.\src\error.h\
+	.\src\update.h\
+	".\windows-NT\ndir.h"
+
+$(INTDIR)/expand_path.obj :  $(SOURCE)  $(DEP_EXPAN) $(INTDIR)
+   $(CPP) $(CPP_PROJ)  $(SOURCE) 
+
+# End Source File
+################################################################################
+# Begin Source File
+
+SOURCE=.\src\edit.c
+DEP_EDIT_=\
+	.\src\cvs.h\
+	.\lib\getline.h\
+	.\src\watch.h\
+	.\src\edit.h\
+	.\src\fileattr.h\
+	".\windows-NT\config.h"\
+	".\windows-NT\options.h"\
+	".\windows-NT\alloca.h"\
+	.\lib\fnmatch.h\
+	".\windows-NT\pwd.h"\
+	.\lib\system.h\
+	.\src\hash.h\
+	.\src\server.h\
+	.\src\client.h\
+	.\src\myndbm.h\
+	.\lib\regex.h\
+	.\lib\getopt.h\
+	.\lib\wait.h\
+	.\src\rcs.h\
+	.\src\error.h\
+	.\src\update.h\
+	".\windows-NT\ndir.h"
+
+$(INTDIR)/edit.obj :  $(SOURCE)  $(DEP_EDIT_) $(INTDIR)
+   $(CPP) $(CPP_PROJ)  $(SOURCE) 
+
+# End Source File
+################################################################################
+# Begin Source File
+
+SOURCE=.\src\fileattr.c
+DEP_FILEA=\
+	.\src\cvs.h\
+	.\lib\getline.h\
+	.\src\fileattr.h\
+	".\windows-NT\config.h"\
+	".\windows-NT\options.h"\
+	".\windows-NT\alloca.h"\
+	.\lib\fnmatch.h\
+	".\windows-NT\pwd.h"\
+	.\lib\system.h\
+	.\src\hash.h\
+	.\src\server.h\
+	.\src\client.h\
+	.\src\myndbm.h\
+	.\lib\regex.h\
+	.\lib\getopt.h\
+	.\lib\wait.h\
+	.\src\rcs.h\
+	.\src\error.h\
+	.\src\update.h\
+	".\windows-NT\ndir.h"
+
+$(INTDIR)/fileattr.obj :  $(SOURCE)  $(DEP_FILEA) $(INTDIR)
+   $(CPP) $(CPP_PROJ)  $(SOURCE) 
+
+# End Source File
+################################################################################
+# Begin Source File
+
+SOURCE=.\src\watch.c
+DEP_WATCH=\
+	.\src\cvs.h\
+	.\src\edit.h\
+	.\src\fileattr.h\
+	.\src\watch.h\
+	".\windows-NT\config.h"\
+	".\windows-NT\options.h"\
+	".\windows-NT\alloca.h"\
+	.\lib\fnmatch.h\
+	".\windows-NT\pwd.h"\
+	.\lib\system.h\
+	.\src\hash.h\
+	.\src\server.h\
+	.\src\client.h\
+	.\src\myndbm.h\
+	.\lib\regex.h\
+	.\lib\getopt.h\
+	.\lib\wait.h\
+	.\src\rcs.h\
+	.\src\error.h\
+	.\src\update.h\
+	".\windows-NT\ndir.h"
+
+$(INTDIR)/watch.obj :  $(SOURCE)  $(DEP_WATCH) $(INTDIR)
+   $(CPP) $(CPP_PROJ)  $(SOURCE) 
 
 # End Source File
 # End Group
@@ -1451,234 +1763,151 @@ DEP_WRAPP=\
 # Begin Source File
 
 SOURCE=.\lib\getwd.c
+DEP_GETWD=\
+	".\windows-NT\config.h"\
+	.\lib\system.h\
+	".\windows-NT\alloca.h"\
+	".\windows-NT\ndir.h"
 
-!IF  "$(CFG)" == "Win32 Release"
-
-.\WinRel\getwd.obj :  $(SOURCE)  $(INTDIR)
+$(INTDIR)/getwd.obj :  $(SOURCE)  $(DEP_GETWD) $(INTDIR)
    $(CPP) $(CPP_PROJ)  $(SOURCE) 
-
-!ELSEIF  "$(CFG)" == "Win32 Debug"
-
-.\WinDebug\getwd.obj :  $(SOURCE)  $(INTDIR)
-   $(CPP) $(CPP_PROJ)  $(SOURCE) 
-
-!ENDIF 
-
-# End Source File
-################################################################################
-# Begin Source File
-
-SOURCE=.\lib\error.c
-
-!IF  "$(CFG)" == "Win32 Release"
-
-.\WinRel\error.obj :  $(SOURCE)  $(INTDIR)
-   $(CPP) $(CPP_PROJ)  $(SOURCE) 
-
-!ELSEIF  "$(CFG)" == "Win32 Debug"
-
-.\WinDebug\error.obj :  $(SOURCE)  $(INTDIR)
-   $(CPP) $(CPP_PROJ)  $(SOURCE) 
-
-!ENDIF 
 
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\lib\sighandle.c
+DEP_SIGHA=\
+	".\windows-NT\config.h"\
+	.\lib\system.h\
+	".\windows-NT\alloca.h"\
+	".\windows-NT\ndir.h"
 
-!IF  "$(CFG)" == "Win32 Release"
-
-.\WinRel\sighandle.obj :  $(SOURCE)  $(INTDIR)
+$(INTDIR)/sighandle.obj :  $(SOURCE)  $(DEP_SIGHA) $(INTDIR)
    $(CPP) $(CPP_PROJ)  $(SOURCE) 
-
-!ELSEIF  "$(CFG)" == "Win32 Debug"
-
-.\WinDebug\sighandle.obj :  $(SOURCE)  $(INTDIR)
-   $(CPP) $(CPP_PROJ)  $(SOURCE) 
-
-!ENDIF 
 
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\lib\getopt.c
+DEP_GETOP=\
+	".\windows-NT\config.h"\
+	.\lib\getopt.h
 
-!IF  "$(CFG)" == "Win32 Release"
-
-.\WinRel\getopt.obj :  $(SOURCE)  $(INTDIR)
+$(INTDIR)/getopt.obj :  $(SOURCE)  $(DEP_GETOP) $(INTDIR)
    $(CPP) $(CPP_PROJ)  $(SOURCE) 
-
-!ELSEIF  "$(CFG)" == "Win32 Debug"
-
-.\WinDebug\getopt.obj :  $(SOURCE)  $(INTDIR)
-   $(CPP) $(CPP_PROJ)  $(SOURCE) 
-
-!ENDIF 
 
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\lib\argmatch.c
+DEP_ARGMA=\
+	".\windows-NT\config.h"
 
-!IF  "$(CFG)" == "Win32 Release"
-
-.\WinRel\argmatch.obj :  $(SOURCE)  $(INTDIR)
+$(INTDIR)/argmatch.obj :  $(SOURCE)  $(DEP_ARGMA) $(INTDIR)
    $(CPP) $(CPP_PROJ)  $(SOURCE) 
-
-!ELSEIF  "$(CFG)" == "Win32 Debug"
-
-.\WinDebug\argmatch.obj :  $(SOURCE)  $(INTDIR)
-   $(CPP) $(CPP_PROJ)  $(SOURCE) 
-
-!ENDIF 
 
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\lib\md5.c
+DEP_MD5_C=\
+	".\windows-NT\config.h"\
+	.\lib\md5.h
 
-!IF  "$(CFG)" == "Win32 Release"
-
-.\WinRel\md5.obj :  $(SOURCE)  $(INTDIR)
+$(INTDIR)/md5.obj :  $(SOURCE)  $(DEP_MD5_C) $(INTDIR)
    $(CPP) $(CPP_PROJ)  $(SOURCE) 
-
-!ELSEIF  "$(CFG)" == "Win32 Debug"
-
-.\WinDebug\md5.obj :  $(SOURCE)  $(INTDIR)
-   $(CPP) $(CPP_PROJ)  $(SOURCE) 
-
-!ENDIF 
 
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\lib\yesno.c
+DEP_YESNO=\
+	".\windows-NT\config.h"
 
-!IF  "$(CFG)" == "Win32 Release"
-
-.\WinRel\yesno.obj :  $(SOURCE)  $(INTDIR)
+$(INTDIR)/yesno.obj :  $(SOURCE)  $(DEP_YESNO) $(INTDIR)
    $(CPP) $(CPP_PROJ)  $(SOURCE) 
-
-!ELSEIF  "$(CFG)" == "Win32 Debug"
-
-.\WinDebug\yesno.obj :  $(SOURCE)  $(INTDIR)
-   $(CPP) $(CPP_PROJ)  $(SOURCE) 
-
-!ENDIF 
 
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\lib\getopt1.c
+DEP_GETOPT=\
+	".\windows-NT\config.h"\
+	.\lib\getopt.h
 
-!IF  "$(CFG)" == "Win32 Release"
-
-.\WinRel\getopt1.obj :  $(SOURCE)  $(INTDIR)
+$(INTDIR)/getopt1.obj :  $(SOURCE)  $(DEP_GETOPT) $(INTDIR)
    $(CPP) $(CPP_PROJ)  $(SOURCE) 
-
-!ELSEIF  "$(CFG)" == "Win32 Debug"
-
-.\WinDebug\getopt1.obj :  $(SOURCE)  $(INTDIR)
-   $(CPP) $(CPP_PROJ)  $(SOURCE) 
-
-!ENDIF 
 
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\lib\valloc.c
+DEP_VALLO=\
+	".\windows-NT\config.h"\
+	.\lib\system.h\
+	".\windows-NT\alloca.h"\
+	".\windows-NT\ndir.h"
 
-!IF  "$(CFG)" == "Win32 Release"
-
-.\WinRel\valloc.obj :  $(SOURCE)  $(INTDIR)
+$(INTDIR)/valloc.obj :  $(SOURCE)  $(DEP_VALLO) $(INTDIR)
    $(CPP) $(CPP_PROJ)  $(SOURCE) 
-
-!ELSEIF  "$(CFG)" == "Win32 Debug"
-
-.\WinDebug\valloc.obj :  $(SOURCE)  $(INTDIR)
-   $(CPP) $(CPP_PROJ)  $(SOURCE) 
-
-!ENDIF 
 
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\lib\xgetwd.c
+DEP_XGETW=\
+	".\windows-NT\config.h"\
+	.\lib\system.h\
+	".\windows-NT\alloca.h"\
+	".\windows-NT\ndir.h"
 
-!IF  "$(CFG)" == "Win32 Release"
-
-.\WinRel\xgetwd.obj :  $(SOURCE)  $(INTDIR)
+$(INTDIR)/xgetwd.obj :  $(SOURCE)  $(DEP_XGETW) $(INTDIR)
    $(CPP) $(CPP_PROJ)  $(SOURCE) 
-
-!ELSEIF  "$(CFG)" == "Win32 Debug"
-
-.\WinDebug\xgetwd.obj :  $(SOURCE)  $(INTDIR)
-   $(CPP) $(CPP_PROJ)  $(SOURCE) 
-
-!ENDIF 
 
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\lib\regex.c
+DEP_REGEX=\
+	".\windows-NT\config.h"\
+	.\lib\regex.h\
+	".\windows-NT\alloca.h"
 
-!IF  "$(CFG)" == "Win32 Release"
-
-.\WinRel\regex.obj :  $(SOURCE)  $(INTDIR)
+$(INTDIR)/regex.obj :  $(SOURCE)  $(DEP_REGEX) $(INTDIR)
    $(CPP) $(CPP_PROJ)  $(SOURCE) 
-
-!ELSEIF  "$(CFG)" == "Win32 Debug"
-
-.\WinDebug\regex.obj :  $(SOURCE)  $(INTDIR)
-   $(CPP) $(CPP_PROJ)  $(SOURCE) 
-
-!ENDIF 
 
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\lib\fnmatch.c
+DEP_FNMAT=\
+	".\windows-NT\config.h"\
+	.\lib\fnmatch.h
 
-!IF  "$(CFG)" == "Win32 Release"
-
-.\WinRel\fnmatch.obj :  $(SOURCE)  $(INTDIR)
+$(INTDIR)/fnmatch.obj :  $(SOURCE)  $(DEP_FNMAT) $(INTDIR)
    $(CPP) $(CPP_PROJ)  $(SOURCE) 
-
-!ELSEIF  "$(CFG)" == "Win32 Debug"
-
-.\WinDebug\fnmatch.obj :  $(SOURCE)  $(INTDIR)
-   $(CPP) $(CPP_PROJ)  $(SOURCE) 
-
-!ENDIF 
 
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\lib\getdate.c
+DEP_GETDA=\
+	".\windows-NT\config.h"\
+	".\windows-NT\alloca.h"
 
-!IF  "$(CFG)" == "Win32 Release"
-
-.\WinRel\getdate.obj :  $(SOURCE)  $(INTDIR)
+$(INTDIR)/getdate.obj :  $(SOURCE)  $(DEP_GETDA) $(INTDIR)
    $(CPP) $(CPP_PROJ)  $(SOURCE) 
-
-!ELSEIF  "$(CFG)" == "Win32 Debug"
-
-.\WinDebug\getdate.obj :  $(SOURCE)  $(INTDIR)
-   $(CPP) $(CPP_PROJ)  $(SOURCE) 
-
-!ENDIF 
 
 # End Source File
 ################################################################################
@@ -1688,19 +1917,21 @@ SOURCE=".\lib\save-cwd.c"
 DEP_SAVE_=\
 	".\windows-NT\config.h"\
 	".\lib\save-cwd.h"\
-	.\lib\error.h
+	.\src\error.h
 
-!IF  "$(CFG)" == "Win32 Release"
-
-".\WinRel\save-cwd.obj" :  $(SOURCE)  $(DEP_SAVE_) $(INTDIR)
+$(INTDIR)/"save-cwd.obj" :  $(SOURCE)  $(DEP_SAVE_) $(INTDIR)
    $(CPP) $(CPP_PROJ)  $(SOURCE) 
 
-!ELSEIF  "$(CFG)" == "Win32 Debug"
+# End Source File
+################################################################################
+# Begin Source File
 
-".\WinDebug\save-cwd.obj" :  $(SOURCE)  $(DEP_SAVE_) $(INTDIR)
+SOURCE=.\lib\getline.c
+DEP_GETLI=\
+	".\windows-NT\config.h"
+
+$(INTDIR)/getline.obj :  $(SOURCE)  $(DEP_GETLI) $(INTDIR)
    $(CPP) $(CPP_PROJ)  $(SOURCE) 
-
-!ENDIF 
 
 # End Source File
 # End Group
@@ -1711,36 +1942,56 @@ DEP_SAVE_=\
 # Begin Source File
 
 SOURCE=".\windows-NT\mkdir.c"
+DEP_MKDIR=\
+	.\src\cvs.h\
+	".\windows-NT\config.h"\
+	".\windows-NT\options.h"\
+	".\windows-NT\alloca.h"\
+	.\lib\fnmatch.h\
+	".\windows-NT\pwd.h"\
+	.\lib\system.h\
+	.\src\hash.h\
+	.\src\server.h\
+	.\src\client.h\
+	.\src\myndbm.h\
+	.\lib\regex.h\
+	.\lib\getopt.h\
+	.\lib\wait.h\
+	.\src\rcs.h\
+	.\src\error.h\
+	.\src\update.h\
+	".\windows-NT\ndir.h"
 
-!IF  "$(CFG)" == "Win32 Release"
-
-.\WinRel\mkdir.obj :  $(SOURCE)  $(INTDIR)
+$(INTDIR)/mkdir.obj :  $(SOURCE)  $(DEP_MKDIR) $(INTDIR)
    $(CPP) $(CPP_PROJ)  $(SOURCE) 
-
-!ELSEIF  "$(CFG)" == "Win32 Debug"
-
-.\WinDebug\mkdir.obj :  $(SOURCE)  $(INTDIR)
-   $(CPP) $(CPP_PROJ)  $(SOURCE) 
-
-!ENDIF 
 
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=".\windows-NT\run.c"
+DEP_RUN_C=\
+	.\src\cvs.h\
+	".\windows-NT\config.h"\
+	".\windows-NT\options.h"\
+	".\windows-NT\alloca.h"\
+	.\lib\fnmatch.h\
+	".\windows-NT\pwd.h"\
+	.\lib\system.h\
+	.\src\hash.h\
+	.\src\server.h\
+	.\src\client.h\
+	.\src\myndbm.h\
+	.\lib\regex.h\
+	.\lib\getopt.h\
+	.\lib\wait.h\
+	.\src\rcs.h\
+	.\src\error.h\
+	.\src\update.h\
+	".\windows-NT\ndir.h"
 
-!IF  "$(CFG)" == "Win32 Release"
-
-.\WinRel\run.obj :  $(SOURCE)  $(INTDIR)
+$(INTDIR)/run.obj :  $(SOURCE)  $(DEP_RUN_C) $(INTDIR)
    $(CPP) $(CPP_PROJ)  $(SOURCE) 
-
-!ELSEIF  "$(CFG)" == "Win32 Debug"
-
-.\WinDebug\run.obj :  $(SOURCE)  $(INTDIR)
-   $(CPP) $(CPP_PROJ)  $(SOURCE) 
-
-!ENDIF 
 
 # End Source File
 ################################################################################
@@ -1750,35 +2001,36 @@ SOURCE=".\windows-NT\pwd.c"
 DEP_PWD_C=\
 	".\windows-NT\pwd.h"
 
-!IF  "$(CFG)" == "Win32 Release"
-
-.\WinRel\pwd.obj :  $(SOURCE)  $(DEP_PWD_C) $(INTDIR)
+$(INTDIR)/pwd.obj :  $(SOURCE)  $(DEP_PWD_C) $(INTDIR)
    $(CPP) $(CPP_PROJ)  $(SOURCE) 
-
-!ELSEIF  "$(CFG)" == "Win32 Debug"
-
-.\WinDebug\pwd.obj :  $(SOURCE)  $(DEP_PWD_C) $(INTDIR)
-   $(CPP) $(CPP_PROJ)  $(SOURCE) 
-
-!ENDIF 
 
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=".\windows-NT\filesubr.c"
+DEP_FILES=\
+	.\src\cvs.h\
+	".\windows-NT\config.h"\
+	".\windows-NT\options.h"\
+	".\windows-NT\alloca.h"\
+	.\lib\fnmatch.h\
+	".\windows-NT\pwd.h"\
+	.\lib\system.h\
+	.\src\hash.h\
+	.\src\server.h\
+	.\src\client.h\
+	.\src\myndbm.h\
+	.\lib\regex.h\
+	.\lib\getopt.h\
+	.\lib\wait.h\
+	.\src\rcs.h\
+	.\src\error.h\
+	.\src\update.h\
+	".\windows-NT\ndir.h"
 
-!IF  "$(CFG)" == "Win32 Release"
-
-.\WinRel\filesubr.obj :  $(SOURCE)  $(INTDIR)
+$(INTDIR)/filesubr.obj :  $(SOURCE)  $(DEP_FILES) $(INTDIR)
    $(CPP) $(CPP_PROJ)  $(SOURCE) 
-
-!ELSEIF  "$(CFG)" == "Win32 Debug"
-
-.\WinDebug\filesubr.obj :  $(SOURCE)  $(INTDIR)
-   $(CPP) $(CPP_PROJ)  $(SOURCE) 
-
-!ENDIF 
 
 # End Source File
 ################################################################################
@@ -1788,35 +2040,19 @@ SOURCE=".\windows-NT\win32.c"
 DEP_WIN32=\
 	".\windows-NT\config.h"
 
-!IF  "$(CFG)" == "Win32 Release"
-
-.\WinRel\win32.obj :  $(SOURCE)  $(DEP_WIN32) $(INTDIR)
+$(INTDIR)/win32.obj :  $(SOURCE)  $(DEP_WIN32) $(INTDIR)
    $(CPP) $(CPP_PROJ)  $(SOURCE) 
-
-!ELSEIF  "$(CFG)" == "Win32 Debug"
-
-.\WinDebug\win32.obj :  $(SOURCE)  $(DEP_WIN32) $(INTDIR)
-   $(CPP) $(CPP_PROJ)  $(SOURCE) 
-
-!ENDIF 
 
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=".\windows-NT\waitpid.c"
+DEP_WAITP=\
+	".\windows-NT\config.h"
 
-!IF  "$(CFG)" == "Win32 Release"
-
-.\WinRel\waitpid.obj :  $(SOURCE)  $(INTDIR)
+$(INTDIR)/waitpid.obj :  $(SOURCE)  $(DEP_WAITP) $(INTDIR)
    $(CPP) $(CPP_PROJ)  $(SOURCE) 
-
-!ELSEIF  "$(CFG)" == "Win32 Debug"
-
-.\WinDebug\waitpid.obj :  $(SOURCE)  $(INTDIR)
-   $(CPP) $(CPP_PROJ)  $(SOURCE) 
-
-!ENDIF 
 
 # End Source File
 ################################################################################
@@ -1826,57 +2062,26 @@ SOURCE=".\windows-NT\ndir.c"
 DEP_NDIR_=\
 	".\windows-NT\ndir.h"
 
-!IF  "$(CFG)" == "Win32 Release"
-
-.\WinRel\ndir.obj :  $(SOURCE)  $(DEP_NDIR_) $(INTDIR)
+$(INTDIR)/ndir.obj :  $(SOURCE)  $(DEP_NDIR_) $(INTDIR)
    $(CPP) $(CPP_PROJ)  $(SOURCE) 
-
-!ELSEIF  "$(CFG)" == "Win32 Debug"
-
-.\WinDebug\ndir.obj :  $(SOURCE)  $(DEP_NDIR_) $(INTDIR)
-   $(CPP) $(CPP_PROJ)  $(SOURCE) 
-
-!ENDIF 
 
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=".\windows-NT\strippath.c"
-DEP_STRIP=\
-	".\windows-NT\config.h"
 
-!IF  "$(CFG)" == "Win32 Release"
-
-.\WinRel\strippath.obj :  $(SOURCE)  $(DEP_STRIP) $(INTDIR)
+$(INTDIR)/strippath.obj :  $(SOURCE)  $(INTDIR)
    $(CPP) $(CPP_PROJ)  $(SOURCE) 
-
-!ELSEIF  "$(CFG)" == "Win32 Debug"
-
-.\WinDebug\strippath.obj :  $(SOURCE)  $(DEP_STRIP) $(INTDIR)
-   $(CPP) $(CPP_PROJ)  $(SOURCE) 
-
-!ENDIF 
 
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=".\windows-NT\stripslash.c"
-DEP_STRIPS=\
-	".\windows-NT\config.h"
 
-!IF  "$(CFG)" == "Win32 Release"
-
-.\WinRel\stripslash.obj :  $(SOURCE)  $(DEP_STRIPS) $(INTDIR)
+$(INTDIR)/stripslash.obj :  $(SOURCE)  $(INTDIR)
    $(CPP) $(CPP_PROJ)  $(SOURCE) 
-
-!ELSEIF  "$(CFG)" == "Win32 Debug"
-
-.\WinDebug\stripslash.obj :  $(SOURCE)  $(DEP_STRIPS) $(INTDIR)
-   $(CPP) $(CPP_PROJ)  $(SOURCE) 
-
-!ENDIF 
 
 # End Source File
 ################################################################################
@@ -1886,17 +2091,8 @@ SOURCE=".\windows-NT\rcmd.c"
 DEP_RCMD_=\
 	".\windows-NT\rcmd.h"
 
-!IF  "$(CFG)" == "Win32 Release"
-
-.\WinRel\rcmd.obj :  $(SOURCE)  $(DEP_RCMD_) $(INTDIR)
+$(INTDIR)/rcmd.obj :  $(SOURCE)  $(DEP_RCMD_) $(INTDIR)
    $(CPP) $(CPP_PROJ)  $(SOURCE) 
-
-!ELSEIF  "$(CFG)" == "Win32 Debug"
-
-.\WinDebug\rcmd.obj :  $(SOURCE)  $(DEP_RCMD_) $(INTDIR)
-   $(CPP) $(CPP_PROJ)  $(SOURCE) 
-
-!ENDIF 
 
 # End Source File
 ################################################################################
@@ -1920,19 +2116,12 @@ DEP_START=\
 	.\lib\getopt.h\
 	.\lib\wait.h\
 	.\src\rcs.h\
+	.\src\error.h\
+	.\src\update.h\
 	".\windows-NT\ndir.h"
 
-!IF  "$(CFG)" == "Win32 Release"
-
-.\WinRel\startserver.obj :  $(SOURCE)  $(DEP_START) $(INTDIR)
+$(INTDIR)/startserver.obj :  $(SOURCE)  $(DEP_START) $(INTDIR)
    $(CPP) $(CPP_PROJ)  $(SOURCE) 
-
-!ELSEIF  "$(CFG)" == "Win32 Debug"
-
-.\WinDebug\startserver.obj :  $(SOURCE)  $(DEP_START) $(INTDIR)
-   $(CPP) $(CPP_PROJ)  $(SOURCE) 
-
-!ENDIF 
 
 # End Source File
 # End Group

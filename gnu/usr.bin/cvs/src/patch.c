@@ -13,6 +13,7 @@
  */
 
 #include "cvs.h"
+#include "getline.h"
 
 #ifndef lint
 static const char rcsid[] = "$CVSid: @(#)patch.c 1.57 94/09/30 $";
@@ -33,7 +34,9 @@ static int toptwo_diffs = 0;
 static int local = 0;
 static char *options = NULL;
 static char *rev1 = NULL;
+static int rev1_validated = 1;
 static char *rev2 = NULL;
+static int rev2_validated = 1;
 static char *date1 = NULL;
 static char *date2 = NULL;
 static char tmpfile1[L_tmpnam+1], tmpfile2[L_tmpnam+1], tmpfile3[L_tmpnam+1];
@@ -202,8 +205,7 @@ patch (argc, argv)
 		send_arg (argv[i]);
 	}
 
-	if (fprintf (to_server, "rdiff\n") < 0)
-	    error (1, errno, "writing to server");
+	send_to_server ("rdiff\012", 0);
         return get_responses_and_close ();
     }
 #endif
@@ -310,9 +312,20 @@ patch_proc (pargc, argv, xwhere, mwhere, mfile, shorten, local_specified,
     else
 	which = W_REPOS;
 
+    if (rev1 != NULL && !rev1_validated)
+    {
+	tag_check_valid (rev1, *pargc - 1, argv + 1, local, 0, NULL);
+	rev1_validated = 1;
+    }
+    if (rev2 != NULL && !rev2_validated)
+    {
+	tag_check_valid (rev2, *pargc - 1, argv + 1, local, 0, NULL);
+	rev2_validated = 1;
+    }
+
     /* start the recursion processor */
-    err = start_recursion (patch_fileproc, (int (*) ()) NULL, patch_dirproc,
-			   (int (*) ()) NULL, *pargc - 1, argv + 1, local,
+    err = start_recursion (patch_fileproc, (FILESDONEPROC) NULL, patch_dirproc,
+			   (DIRLEAVEPROC) NULL, *pargc - 1, argv + 1, local,
 			   which, 0, 1, where, 1, 1);
 
     return (err);
@@ -342,7 +355,9 @@ patch_fileproc (file, update_dir, repository, entries, srcfiles)
     int isattic = 0;
     int retcode = 0;
     char file1[PATH_MAX], file2[PATH_MAX], strippath[PATH_MAX];
-    char line1[MAXLINELEN], line2[MAXLINELEN];
+    char *line1, *line2;
+    size_t line1_chars_allocated;
+    size_t line2_chars_allocated;
     char *cp1, *cp2, *commap;
     FILE *fp;
 
@@ -360,7 +375,7 @@ patch_fileproc (file, update_dir, repository, entries, srcfiles)
     if (isattic && rev2 == NULL && date2 == NULL)
 	vers_head = NULL;
     else
-	vers_head = RCS_getversion (rcsfile, rev2, date2, force_tag_match);
+	vers_head = RCS_getversion (rcsfile, rev2, date2, force_tag_match, 0);
 
     if (toptwo_diffs)
     {
@@ -378,7 +393,7 @@ patch_fileproc (file, update_dir, repository, entries, srcfiles)
 	    return (1);
 	}
     }
-    vers_tag = RCS_getversion (rcsfile, rev1, date1, force_tag_match);
+    vers_tag = RCS_getversion (rcsfile, rev1, date1, force_tag_match, 0);
 
     if (vers_tag == NULL && (vers_head == NULL || isattic))
 	return (0);			/* nothing known about specified revs */
@@ -465,6 +480,12 @@ patch_fileproc (file, update_dir, repository, entries, srcfiles)
     run_setup ("%s -%c", DIFF, unidiff ? 'u' : 'c');
     run_arg (tmpfile1);
     run_arg (tmpfile2);
+
+    line1 = NULL;
+    line1_chars_allocated = 0;
+    line2 = NULL;
+    line2_chars_allocated = 0;
+
     switch (run_exec (RUN_TTY, tmpfile3, RUN_TTY, RUN_NORMAL))
     {
 	case -1:			/* fork/wait failure */
@@ -488,8 +509,8 @@ patch_fileproc (file, update_dir, repository, entries, srcfiles)
 	    (void) fflush (stdout);
 
 	    fp = open_file (tmpfile3, "r");
-	    if (fgets (line1, sizeof (line1), fp) == NULL ||
-		fgets (line2, sizeof (line2), fp) == NULL)
+	    if (getline (&line1, &line1_chars_allocated, fp) < 0 ||
+		getline (&line2, &line2_chars_allocated, fp) < 0)
 	    {
 		error (0, errno, "failed to read diff file header %s for %s",
 		       tmpfile3, rcs);
@@ -557,14 +578,19 @@ patch_fileproc (file, update_dir, repository, entries, srcfiles)
 	    if (update_dir[0] != '\0')
 		(void) printf ("%s/", update_dir);
 	    (void) printf ("%s%s", rcs, cp2);
-	    while (fgets (line1, sizeof (line1), fp) != NULL)
-		(void) printf ("%s", line1);
+	    /* spew the rest of the diff out */
+	    while (getline (&line1, &line1_chars_allocated, fp) >= 0)
+		(void) fputs (line1, stdout);
 	    (void) fclose (fp);
 	    break;
 	default:
 	    error (0, 0, "diff failed for %s", rcs);
     }
   out:
+    if (line1)
+        free (line1);
+    if (line2)
+        free (line2);
     (void) unlink_file (tmpfile1);
     (void) unlink_file (tmpfile2);
     (void) unlink_file (tmpfile3);

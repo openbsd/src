@@ -19,7 +19,7 @@
 enum ntype
 {
     UNKNOWN, HEADER, ENTRIES, FILES, LIST, RCSNODE,
-    RCSVERS, DIRS, UPDATE, LOCK, NDBMNODE
+    RCSVERS, DIRS, UPDATE, LOCK, NDBMNODE, FILEATTR
 };
 typedef enum ntype Ntype;
 
@@ -46,9 +46,11 @@ typedef struct list List;
 
 List *getlist PROTO((void));
 Node *findnode PROTO((List * list, const char *key));
+Node *findnode_fn PROTO((List * list, const char *key));
 Node *getnode PROTO((void));
 int addnode PROTO((List * list, Node * p));
 int walklist PROTO((List * list, int (*)(Node *n, void *closure), void *closure));
+int list_isempty PROTO ((List *list));
 void dellist PROTO((List ** listp));
 void delnode PROTO((Node * p));
 void freenode PROTO((Node * p));

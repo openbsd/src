@@ -1,8 +1,8 @@
 .de Id
-.ds Rv \\$3
-.ds Dt \\$4
+.ds Rv \\$4
+.ds Dt \\$5
 ..
-.Id $Id: cvsinit.8,v 1.1.1.1 1995/12/19 09:21:35 deraadt Exp $
+.Id @(#)ccvs/man:$Name:  $:$Id: cvsinit.8,v 1.1.1.2 1996/01/30 00:18:43 tholo Exp $
 .TH CVSINIT 8 "\*(Dt"
 .\" Full space in nroff; half space in troff
 .de SP
@@ -65,22 +65,22 @@ Records programs for editing/validating
 .` "cvs commit"
 log entries.
 .TP
-$CVSROOT/log.pl
+$CVSROOT/log
 Sample logging script for use in
 .IR loginfo .
 .TP
-$CVSROOT/commit_prep.pl
+$CVSROOT/commit_prep
 Sample logging script for use in
 .I commitinfo
 with the
-.I log_accum.pl
+.I log_accum
 script
 .TP
-$CVSROOT/log_accum.pl
+$CVSROOT/log_accum
 Sample loggin script for use in
 .I loginfo
 with the
-.I commit_prep.pl
+.I commit_prep
 script
 .\"
 .SH "ENVIRONMENT VARIABLES"

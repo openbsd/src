@@ -84,7 +84,7 @@ do_module (db, mname, m_type, msg, callback_proc, where,
     char *mname;
     enum mtype m_type;
     char *msg;
-    int (*callback_proc) ();
+    CALLBACKPROC callback_proc;
     char *where;
     int shorten;
     int local_specified;
@@ -97,16 +97,18 @@ do_module (db, mname, m_type, msg, callback_proc, where,
     char *tag_prog = NULL;
     char *update_prog = NULL;
     struct saved_cwd cwd;
-    char line[MAXLINELEN];
-    char *xmodargv[MAXFILEPERDIR];
+    char *line;
+    int modargc;
+    int xmodargc;
     char **modargv;
+    char *xmodargv[MAXFILEPERDIR];
     char *value;
     char *zvalue;
     char *mwhere = NULL;
     char *mfile = NULL;
     char *spec_opt = NULL;
     char xvalue[PATH_MAX];
-    int modargc, alias = 0;
+    int alias = 0;
     datum key, val;
     char *cp;
     int c, err = 0;
@@ -114,10 +116,11 @@ do_module (db, mname, m_type, msg, callback_proc, where,
 #ifdef SERVER_SUPPORT
     if (trace)
       {
-	fprintf (stderr, "%c-> do_module (%s, %s, %s, %s)\n",
+	fprintf (stderr, "%s%c-> do_module (%s, %s, %s, %s)\n",
+		 error_use_protocol ? "E " : "",
 		 (server_active) ? 'S' : ' ',
-                mname, msg, where ? where : "",
-                extra_arg ? extra_arg : "");
+		 mname, msg, where ? where : "",
+		 extra_arg ? extra_arg : "");
       }
 #endif
 
@@ -348,7 +351,12 @@ do_module (db, mname, m_type, msg, callback_proc, where,
 		(void) sprintf (nullrepos, "%s/%s/%s", CVSroot,
 				CVSROOTADM, CVSNULLREPOS);
 		if (!isfile (nullrepos))
+		{
+		    mode_t omask;
+		    omask = umask (cvsumask);
 		    (void) CVS_MKDIR (nullrepos, 0777);
+		    (void) umask (omask);
+		}
 		if (!isdir (nullrepos))
 		    error (1, 0, "there is no repository %s", nullrepos);
 
@@ -386,10 +394,13 @@ do_module (db, mname, m_type, msg, callback_proc, where,
      */
 
     /* Put the value on a line with XXX prepended for getopt to eat */
+    line = xmalloc (strlen (value) + 10);
     (void) sprintf (line, "%s %s", "XXX", value);
 
     /* turn the line into an argv[] array */
-    line2argv (&modargc, xmodargv, line);
+    line2argv (&xmodargc, xmodargv, line);
+    free (line);
+    modargc = xmodargc;
     modargv = xmodargv;
 
     /* parse the args */
@@ -471,8 +482,12 @@ do_module (db, mname, m_type, msg, callback_proc, where,
     err += callback_proc (&modargc, modargv, where, mwhere, mfile, shorten,
 			  local_specified, mname, msg);
 
-    /* clean up */
-    free_names (&modargc, modargv);
+#if 0
+    /* FIXME: I've fixed this so that the correct arguments are called, 
+       but now this fails because there is code below this point that
+       uses optarg values extracted from the arg vector. */
+    free_names (&xmodargc, xmodargv);
+#endif
 
     /* if there were special include args, process them now */
 
@@ -749,7 +764,8 @@ cat_module (status)
     int moduleargc;
     struct sortrec *s_h;
     char *cp, *cp2, **argv;
-    char line[MAXLINELEN], *moduleargv[MAXFILEPERDIR];
+    char *line;
+    char *moduleargv[MAXFILEPERDIR];
 
 #ifdef sun
 #ifdef TIOCGSIZE
@@ -801,8 +817,10 @@ cat_module (status)
 	}
 
 	/* Parse module file entry as command line and print options */
+	line = xmalloc (strlen (s_h->modname) + strlen (s_h->rest) + 10);
 	(void) sprintf (line, "%s %s", s_h->modname, s_h->rest);
 	line2argv (&moduleargc, moduleargv, line);
+	free (line);
 	argc = moduleargc;
 	argv = moduleargv;
 
@@ -866,5 +884,7 @@ cat_module (status)
 	    *cp++ = '\0';
 	    (void) printf ("%s\n", cp2);
 	}
+
+	free_names(&moduleargc, moduleargv);
     }
 }

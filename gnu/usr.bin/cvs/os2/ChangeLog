@@ -1,0 +1,589 @@
+Sun Jan 28 12:31:03 1996  Jim Kingdon  (kingdon@beezley)
+
+	* filesubr.c (unlink_file): Use xchmod, not chmod, to make the
+	file read-write.
+	(xchmod): Translate / to \ in file name.  If file doesn't exist,
+	return ENOENT rather than passing it to attrib (which will print an
+	error message).
+
+Sun Jan 28 01:51:27 1996  Jim Kingdon  (kingdon@beezley)
+
+	* config.h: Fix unclosed comment.
+
+Sun Jan 28 00:16:58 1996  Karl Fogel  (kfogel@floss.cyclic.com)
+
+        * filesubr.c (xchmod): rewritten for OS/2.
+
+Sat Jan 27 16:18:20 1996  Karl Fogel  (kfogel@floss.cyclic.com)
+
+        * config.h (CHMOD_BROKEN): define to 1.
+
+        * filesubr.c (rename_file): rename() returns non-zero error codes,
+        not necessarily negative.
+
+Fri Jan 26 00:52:12 1996  unknown  (unknown@beezley)
+
+	* filesubr.c (copy_file): Open the file we are writing, not 
+	just the one we are reading, in binary mode.
+
+Thu Jan 18 14:53:58 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* Makefile.in (CFLAGS): Don't use +=.  This makefile must be
+	portable because it is used on all platforms (e.g. for "make dist").
+
+Thu Jan 11 12:04:42 1996  Norbert Kiesel  <nk@col.sw-ley.de>
+
+	* options.h: remove CVS_NOADMIN
+
+Wed Jan 10 15:56:46 1996  Karl Fogel  <kfogel@floss.red-bean.com>
+
+        * options.h, config.h: moved NO_SOCKET_TO_FD definition from
+        options.h to config.h, which is where it belongs.
+
+Tue Jan  9 16:43:15 1996  Karl Fogel  <kfogel@floss.red-bean.com>
+
+        * run.c (sleep): commented out this definition.
+        * config.h: #define sleep() in terms of DosSleep(), unless sleep()
+        is defined already.  Normally it's defined in
+        tcpip/include/utils.h, however on beezley that definition is
+        commented out for some reason.
+        Don't prototype sleep().
+
+Tue Jan  9 16:22:35 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* .cvsignore: Add cvs.exe and icc.in.
+
+Tue Jan 09 16:43:59 1996  Jim Kingdon  (kingdon@beezley.cyclic.com)
+
+	* filesubr.c (link_file): New function (copied from
+	../windows-NT/filesubr.c)
+
+Fri Jan  5 17:03:09 1996  Karl Fogel  <kfogel@floss.red-bean.com>
+
+        * Makefile.in: "lib_dir", not "libdir", to avoid conflict with
+        top-level Makefile.
+
+Mon Jan  1 22:59:46 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* Makefile.in (DISTFILES): Makefile is not in srcdir.
+
+Sat Dec 23 23:08:43 1995  Karl Fogel  <kfogel@floss.cyclic.com>
+
+        * README: adjust for below change.
+
+        * Makefile.in (install-cvs): replaces `install', which must remain
+        a dummy rule so it will work under Unix.
+
+Wed Dec 20 15:18:06 1995  Karl Fogel  <kfogel@floss.cyclic.com>
+
+        * Makefile.in: build scramble.obj.
+
+Mon Dec 18 22:49:28 1995  Karl Fogel  <kfogel@floss.cyclic.com>
+
+        * Reverted all changes between Mon Dec 18 14:54:04 1995 and
+        present, non-inclusive.
+
+Mon Dec 18 21:59:07 1995  Karl Fogel  <kfogel@floss.cyclic.com>
+
+        * getpass.c: removed -- getpass() lives in os2/login.c now.
+
+        * cvslogin.c: filled in.
+
+        * login.c: new file.
+
+        * Makefile.in: moved login.c and login.obj from COMMON to OS2
+        section.
+
+Mon Dec 18 19:55:43 1995  Karl Fogel  <kfogel@floss.cyclic.com>
+
+        * cvslogin.c: added long explanatory comment.
+
+Mon Dec 18 18:13:57 1995  Karl Fogel  <kfogel@floss.cyclic.com>
+
+        * Makefile.in (DISTFILES): include cvslogin.c.
+        
+Mon Dec 18 18:07:26 1995  Karl Fogel  <kfogel@floss.cyclic.com>
+
+        * README: updated.
+
+        * Makefile.in (cvslogin.exe): new rule.
+        (install): new rule.
+        (install_dir): new var.
+
+        * cvslogin.c: new file.
+
+Mon Dec 18 14:54:04 1995  Karl Fogel  (kfogel@floss.cyclic.com)
+
+        * getpass.c (getpass): removed debugging garbage.
+
+        * options.h (NO_SOCKET_TO_FD): fixed comment (Windows 95, not NT,
+        has this problem).
+        (AUTH_CLIENT_SUPPORT): on by default.
+
+        * porttcp.c (SockStrError): fixed typo.
+        (IbmSockSend): `Buffer' arg is const void * again.
+        (IbmSockRecv): `Buffer' arg is const void * again.
+
+        * tcpip.h (send): move send/recv redef section farther down to
+        avoid type conflicts with the real send() and recv().
+        (IbmSockSend, IbmSockRecv): adjust prototype.
+
+Mon Dec 18 12:31:22 1995  Karl Fogel  <kfogel@floss.cyclic.com>
+
+        * tcpip.h: reformatted.
+        (send, recv): redefine to IbmSockSend and IbmSockRecv.
+
+        * porttcp.c: reformatted.
+
+Mon Dec 18 04:59:52 1995  Karl Fogel  (kfogel@floss.cyclic.com)
+
+        * tcpip.h (send, recv): don't define these to be anything else.
+
+        * porttcp.c (IbmSockSend, IbmSockRecv): make `Buffer' argument
+        char * instead of void *, to evade an over-eager compiler.
+
+Sun Dec 17 21:16:17 1995  Karl Fogel  <kfogel@floss.cyclic.com>
+
+        * options.h (NO_SOCKET_TO_FD): define to 1.
+
+Sat Dec 16 21:31:02 1995  Karl Fogel  <kfogel@floss.cyclic.com>
+
+        * run.c: mark unimplemented routines more clearly.  Hopefully I'll
+        get time to implement them soon.
+
+Fri Dec 15 17:50:17 1995  Karl Fogel  (kfogel@floss.cyclic.com)
+
+        * tcpip.h, porttcp.c: new files.
+
+        * makefile.in: added new files (for the "cvs watch" and "cvs edit"
+        commands just checked in by Jim Kingdon).
+
+Thu Dec 14 12:18:20 1995  Karl Fogel  <kfogel@floss.cyclic.com>
+
+        * config.h (RSH_NEEDS_BINARY_FLAG): define to 1.
+
+        * run.c (filter_stream_through_program): die, rather than return
+        -1, if spawn failed.
+
+        * options.h (AUTH_CLIENT_SUPPORT): leave unset by default.
+
+Wed Dec 13 21:31:10 1995  Karl Fogel  (kfogel@floss.cyclic.com)
+
+        * waitpid.c (waitpid): Don't deal specially with statusp after all.
+        The problem lies elsewhere.
+
+Wed Dec 13 20:58:12 1995  Karl Fogel  (kfogel@floss.cyclic.com)
+
+        * waitpid.c (waitpid): oops, make sure there is storage for
+        local_statusp.
+        Don't assign to *statusp if statusp is NULL.
+
+Wed Dec 13 19:52:08 1995  Karl Fogel  <kfogel@floss.cyclic.com>
+
+        * waitpid.c (waitpid): be more careful about child's exit status,
+        and about return status of this function.
+
+Wed Dec 13 20:10:50 1995  Karl Fogel  (kfogel@floss.cyclic.com)
+
+        * makefile.in (clean): pass /NOE to the linker, to avoid duplicate
+	symbols when linking with setargv.obj.
+
+Wed Dec 13 18:44:47 1995  Karl Fogel  <kfogel@floss.cyclic.com>
+
+        * Makefile.in (ARGVLIB): new lib, link with this so command-line
+        wildcard expansion works.  No, I'm not making this up.
+
+Tue Dec 12 20:43:56 1995  Karl Fogel  (kfogel@floss.cyclic.com)
+
+        * getpass.c (getpass): new file and function.
+
+        * options.h: prototype getpass() for OS/2.
+
+        * makefile.in: include new file getpass.c.
+
+Tue Dec 12 19:21:05 1995  Karl Fogel  <kfogel@floss.cyclic.com>
+
+        * options.h (RCSBIN_DFLT): expand comment.
+        (AUTH_CLIENT_SUPPORT, AUTH_SERVER_SUPPORT): replace obsolete 
+        CVS_AUTH_CLIENT_SUPPORT and CVS_AUTH_SERVER_SUPPORT.
+
+Mon Dec 11 16:03:01 1995  Karl Fogel  (kfogel@beezley.cyclic.com)
+
+	* makefile.in: removed various and sundry cruft...
+
+Mon Dec 11 15:57:03 1995  Karl Fogel  (kfogel@beezley.cyclic.com)
+
+	* Removed cvs.exe; we don't need to keep the binary in the
+	repository, now that binary file handling has been tested.
+
+Mon Dec 11 15:53:51 1995  Karl Fogel  (kfogel@beezley.cyclic.com)
+
+	* rcmd.c (init_sockets): use sock_init(), not SockInit().
+
+Mon Dec 11 12:43:35 1995  Adam Glass  <adamg@microsoft.com>
+        
+	* config.h: Remove NEED_CALL_SOCKINIT macro in favor of the more
+ 	generic INITIALIZE_SOCKET_SUBSYSTEM.
+  	* rcmd.c: Move old NEED_CALL_SOCKINIT code here and wrap it in a
+ 	function, i.e init_sockets()
+        
+Sat Dec 09 21:16:09 1995  Karl Fogel  (kfogel@beezley.cyclic.com)
+
+	* Added cvs.exe, mainly to test binary file handling.  Once we
+	know it works, we can remove it.
+
+Sat Dec 09 15:29:16 1995  Karl Fogel  (kfogel@beezley.cyclic.com)
+
+	* options.h (DIFF, GREP): don't expect autoconf to help us out.
+
+Sat Dec 09 15:05:41 1995  Karl Fogel  (kfogel@beezley.cyclic.com)
+
+	* makefile.in (libdir): Fixed.
+
+	* options.h: define CVS_AUTH_CLIENT_SUPPORT and
+	CVS_AUTH_SERVER_SUPPORT, instead of CVS_LOGIN.
+
+Thu Dec  7 14:49:16 1995  Jim Meyering  (meyering@comco.com)
+
+	* filesubr.c (isaccessible): Rename from isaccessable.
+
+Mon Dec  4 11:28:10 1995  Norbert Kiesel  <nk@col.sw-ley.de>
+
+	* Makefile.in (DISTFILES): prefix all filenames with
+	  ${srcdir}${PS}
+	  (dist-dir): remove ${srcdir}${PS} (some files already had this
+	  prefix, now all have it)
+
+Fri Dec  1 14:29:44 1995  Karl Fogel  <kfogel@floss.cyclic.com>
+
+        * Makefile.in (srcdir, libdir, cvs_srcdir): use autoconf vars.
+        (dist-dir): use above vars now that they are autoconf-friendly.
+        (clean): same.
+
+Thu Nov 30 18:09:50 1995  Karl Fogel  <kfogel@floss.cyclic.com>
+
+        * waitpid.c (waitpid): if _cwait() returns -1, test errno.  If
+        ECHILD, then just return pid, else return -1.  This is for OS/2,
+        which doesn't have zombie processes, or any other way of
+        remembering a child process after it exits, as far as I can tell.
+
+        * run.c (close_on_exec): don't error, just silently do nothing.
+
+        * Makefile.in: use src/client.c, not os2/client.c.
+
+        * config.h (EXECUTE_PERMISSION_LOSES): define to 1 (see
+        src/client.c for why).
+        (START_RSH_WITH_POPEN_RW): define to 1 (see src/client.c).
+
+Wed Nov 29 16:34:34 1995  Karl Fogel  <kfogel@floss.cyclic.com>
+
+        * client.c (start_server): declare pipes[] as int, not FILE *.
+        Kinda nice that it worked anyway, but scary.  Ugh.
+
+Wed Nov 22 11:29:11 1995  Karl Fogel  <kfogel@floss.cyclic.com>
+
+        * config.h (KFF_DEBUG): expand to nothing; we don't want to print
+        out debugging messages in a production copy.
+
+Tue Nov 21 17:36:16 1995  unknown  (unknown@beezley)
+
+        * popen.c: #include <fcntl.h>.
+
+Tue Nov 21 16:18:37 1995  Karl Fogel  <kfogel@floss.cyclic.com>
+
+        * popen.h (popenRW): prototype popenRW()... why wasn't I doing
+        this before?
+
+        * client.c (start_server): set tofd and fromfd with popenRW, now
+        that it handles int file descriptors.
+        Log to a file if asked, now that we have
+        filter_stream_through_program().
+
+        * popen.c (popenRW): put int file descriptors into the `pipes'
+        array, not FILE *'s.  We'll fdopen in start_server, just like
+        the good old days.
+
+Tue Nov 21 16:34:37 1995  unknown  (unknown@beezley)
+
+        * run.c (filter_stream_through_program): defined for OS/2.
+
+        * client.c (start_server): pass a char **argv to popenRW and get a
+        pid in return (instead of a return code).
+
+        * popen.c (popenRW): use a char **argv and spawnvp(), instead of a
+        char *command and DosExecPgm().
+
+Mon Nov 20 23:31:54 1995  unknown  (unknown@beezley)
+
+        * filesubr.c (convert_file): pass (S_IREAD | S_IWRITE) to open();
+        we need it if O_CREAT, and it won't hurt if not.
+
+Sun Nov 19 13:43:02 1995  unknown  (unknown@beezley)
+
+	* makefile.in (clean): remove obj files in src/ and lib/ dirs too.
+
+Sun Nov 19 12:35:08 1995  Karl Fogel  <kfogel@floss.cyclic.com>
+
+        * client.c (start_server): took out old debug statements.
+
+        * dirent.c, dirent.h: took out ^M's.
+
+Sat Nov 18 13:39:06 1995  Karl Fogel  <kfogel@floss.cyclic.com>
+
+        * client.c (start_server): took out debug statements.
+
+        * filesubr.c (make_directories): compare errno to EACCESS, not
+        EEXIST, to see if the dir already exists.
+
+        * client.c, filesubr.c: Use new macro `existence_error', instead
+        of comparing errno to ENOENT directly.
+
+        * popen.c (popenRW): fixed misleading comment.
+
+        * client.c:
+        (rsh_pid): no more need for this var; the handle-to-PID library in
+        popen.c manages PID's for us now.
+        (start_rsh_server): removed this func, since we don't use it -- we
+        do use `rsh', but we call it directly from popenRW().
+        (get_responses_and_close): removed cruft that doesn't apply to
+        this port -- i.e., blocks conditional on HAVE_KERBEROS or
+        RSH_NOT_TRANSPARENT.
+        (start_server): Just check return code, instead of recording
+        rsh_pid.
+
+Fri Nov 17 21:13:22 1995  Karl Fogel  <kfogel@floss.cyclic.com>
+
+        * client.c (call_in_directory): Ask EACCESS even though we're
+        looking for EEXIST.  That's just The Way Things Are Done here,
+        apparently.  Ick.
+
+        * getdate.c: took out some cruft that the more portable versions
+        need.
+
+        * Makefile.in: use getdate.c from os2/ subdir, not lib/.
+        We don't use startserver.c anymore, so don't build it.
+
+        * client.c (change_mode): never set anything executable, until we
+        understand what that means in OS/2.
+
+        * config.h (NEED_DECOY_PERMISSIONS): define to 1 (& see
+        system.h).
+
+Fri Nov 17 15:02:05 1995  Karl Fogel  <kfogel@floss.cyclic.com>
+
+        * client.c: fixed up more error codes.
+
+        * client.c: (send_repository): take into account the cornucopia of
+        error codes so generously offered by OS/2.
+
+Fri Nov 17 14:53:22 1995  Karl Fogel  <kfogel@floss.cyclic.com>
+
+        * client.c, client.h: new files, copied from ../src/.
+
+        * config.h (HAVE_POPEN_RW): don't define this anymore, since we'll
+        just be using our own version of client.c.
+
+        * Makefile.in: reflect the fact that os2/client.c is now used
+        instead of src/client.c.
+
+Thu Nov 16 21:47:22 1995  Karl Fogel  <kfogel@floss.cyclic.com>
+
+	* startserver.c: removed.  We don't need this anymore.
+
+        * config.h (RSH_NOT_TRANSPARENT): undef this.  We have a
+        transparent rsh.
+        (HAVE_POPEN_RW): define to 1.
+
+        * popen.c (popenRW): open writing and reading streams in binary
+        mode (i.e., "wb" and "rb").
+
+        * Makefile.in (clean): use `rm' not `del' to remove files.
+
+Wed Nov 15 15:21:53 1995  Karl Fogel  <kfogel@floss.cyclic.com>
+
+        * config.h: don't prototype gethostname() here anymore.
+        (USE_OWN_TCPIP_H): define to 1.
+        (NEED_CALL_SOCKINIT): define to 1.
+        (KFF_DEBUG): debugging macro.
+
+Tue Nov 14 12:20:22 1995  Greg A. Woods  <woods@most.weird.com>
+
+	* .cvsignore: "Makefile" generated by ../configure
+
+Mon Nov 13 13:21:43 1995  Karl Fogel  <kfogel@floss.cyclic.com>
+
+        * Makefile.in (PS): note to maintainers about this var.
+
+Mon Nov 13 07:28:04 1995  Karl Fogel  <kfogel@floss.cyclic.com>
+
+        * README: updated.
+
+        * rcmd.c: #include <stdio.h>.
+
+        * Makefile.in: Include lib/regex, lib/getdate, strippath.
+        (PS): default to "/", since we always "make dist" on Unix
+        systems.
+        Ahem, "save-cwd" with a hyphen, not an underscore.  Oops.
+
+        * strippath.c: new file.
+
+        * popen.c: set DIAGNOSTIC off.  Reformat for readability.
+
+        * popen.h: new file.
+
+        * config.h (USE_OWN_POPEN): define to 1.
+
+        * run.c (Popen): make this work now that we have popen().
+
+Mon Nov 13 01:23:27 1995  Karl Fogel  <kfogel@floss.cyclic.com>
+
+        * Makefile.in:
+	(cvs.exe): broke up OBJECTS into components to create icc.in in
+        more steps.  OBJECTS had gotten so big that it formed too long a
+        command line all by itself.  Sheesh.
+        Include stripslash (see below), lib/save_cwd, lib/sighandle,
+        lib/yesno, startserver (see below), rcmd (see below), lib/xgetwd,
+        lib/md5, waitpid (see below), lib/fnmatch, popen (see below).
+
+        * popen.c, rcmd.c, rcmd.h, startserver.c, stripslash.c, waitpid.c:
+        New files.
+
+        * run.c (close_on_exec): new func (skeleton).
+        (sleep): new func (OS/2 doesn't seem to have this).
+
+        * pwd.c (getlogin): Don't call win32getlogin(), obviously.
+
+        * config.h (W_OK, R_OK, X_OK, F_OK): define masks for access().
+        Include <process.h> for getpid().
+
+        * filesubr.c (isaccessable): define.  Don't know why I left it out
+        before.  For that matter, I don't know how the Windows NT port
+        gets along without it.  Hmmm.
+
+Sat Nov 11 15:00:01 1995  Karl Fogel  <kfogel@floss.cyclic.com>
+
+        * Makefile.in: Use backslashes in pathnames, so ICC doesn't
+        mistake them for options.
+
+        * run.c (run_setup): cleared away Windows NT stuff, left skeleton
+        functions that just complain and die for now.
+        (run_exec): correctly check return of spawn under OS/2; return
+        child's exit status.
+        (run_args): declare as returning void, in agreement with cvs.h.
+
+Fri Nov 10 14:21:14 1995  Karl Fogel  <kfogel@floss.cyclic.com>
+
+        * Makefile.in (COMMON_SOURCES, COMMON_OBJECTS): removed filesubr
+        and run, since we have OS/2-specific versions of them now.
+        (DISTFILES): Include Makefile in distribution, since people won't
+        be running configure on their OS/2 systems.
+        (LIB_SOURCES, LIB_OBJECTS): new vars; we'll just build stuff in
+        the lib directory and link it in directly.
+        Made rules for compiling objects and for the full executable.
+        (SHELL): got rid of this var, no need for it here.
+        Use a pattern rule for obj files.
+        Some other minor tweaks for OS/2.
+
+        * threads.c: new file.
+
+Wed Nov  8 11:14:46 1995  Karl Fogel  <kfogel@floss.cyclic.com>
+
+        * run.c: include <stdarg.h> and <stdio.h>.
+        Change all VA_START to va_start.
+        Don't ask HAVE_VPRINTF -- this is an OS/2-specific file and we can
+        take things for granted.
+        Started simplifying old NT `HANDLE' code.
+
+        * Makefile.in (OS2_SOURCES): added run.c.
+
+        * run.c: new file, copied from ../windows-NT/run.c.  Started
+        making changes for OS/2.
+
+        * test-makefile (all): don't bother to echo $CFLAGS; we can just
+        read the compilation command.
+
+        * filesubr.c (unlink_file): make this work on OS/2.
+        (unlink_file_dir): don't ask if errno == EISDIR.  We ain't
+        got EISDIR in OS/2.
+        (deep_remove_dir): use EACCESS to determine if directory
+        nonempty.  We ain't got ENOTEMPTY in OS/2.
+        (that_swing): removed references.  We ain't got that_swing in
+        OS/2.
+        (rename_file): just use unlink_file(); move to after definition of
+        unlink_file() so we don't have to deal with IBM C/C++'s strange
+        prototyping rituals.
+        (link_file): removed this function -- no one uses it anymore.
+        It still exists in src/filesubr.c, though.
+        (OS2_filename_classes): new table (well, old table, new name).
+        All references changed.
+
+        * config.h (HAVE_SYS_UTIME_H): define to 1.
+
+        * options.h: undef SETXID_SUPPORT, to correspond with Norbert
+        Kiesel's recent change to ../src/options.h.in, etc.
+
+Mon Nov  6 16:29:00 1995  Karl Fogel  <kfogel@floss.cyclic.com>
+
+        * test-makefile (CFLAGS): -DHAVE_CONFIG_H -- this turns out to be
+        important for stuff in lib/.
+        Other trivial changes.
+
+        * config.h (HAVE_DIRENT_H): define to 1, now that we have our own
+        dirent.h and dirent.c.
+
+        * Makefile.in (OS2_SOURCES): added filesubr.c; this may not be
+        permanent.
+
+Sun Nov  5 16:17:33 1995  Karl Fogel  <kfogel@floss.cyclic.com>
+
+        * Makefile.in (OS2_HEADERS, OS2_SOURCES): added dirent.h and
+        dirent.c, respectively.
+
+        * dirent.c, dirent.h: new files.
+
+Sat Oct 28 14:41:38 1995  Karl Fogel  <kfogel@floss.cyclic.com>
+
+        * Makefile.in (DISTFILES): include `test-makefile'.
+
+        * test-makefile: new file; to be removed when the port is done.
+
+Fri Oct 27 13:03:28 1995  Karl Fogel  <kfogel@floss.cyclic.com>
+
+        * Makefile.in (OS2_HEADERS, OS2_SOURCES): adjust as necessary for
+        below changes.
+
+        * config.h: oops, don't forget second argument, MODE.
+
+        * mkdir.c (os2_mkdir): new file, new function.
+        Can probably be merged with wnt_mkdir at some point.
+
+        * config.h (ALLOCA_IN_STDLIB): new #define.
+
+        * pwd.h, pwd.c: new files (for now, copied from ../windows-NT
+        directory.  We'll modify/merge them as necessary.)
+
+        * config.h: don't use __stdcall in declaration of gethostname().
+
+        * Makefile.in (DISTFILES): include config.h and options.h.
+
+Wed Oct 25 12:52:54 1995  Karl Fogel  <kfogel@floss.cyclic.com>
+
+        * config.h: new file; will maintain by hand.
+        Made first pass through to cast it into OS/2-ish condition.
+
+        * Makefile.in: started adding lots of OS/2 gunk.
+        Took out autoconf stuff; just don't want to fool around with that
+        until after it compiles on beezley.
+        (cvs.exe): moved this rule to bottom.
+
+Tue Oct 24 13:51:05 1995  Norbert Kiesel  <nk@col.sw-ley.de>
+
+	* Makefile.in: add autoconf variables
+
+	* Makefile.in (dist): use $(srcdir)
+
+Mon Oct 23 17:37:36 1995  Karl Fogel  <kfogel@floss.cyclic.com>
+
+        * Makefile.in (clean): new rule.
+
+        * init os2 directory.  Made dummy Makefile.in, README.

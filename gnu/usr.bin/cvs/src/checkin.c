@@ -16,6 +16,8 @@
  */
 
 #include "cvs.h"
+#include "fileattr.h"
+#include "edit.h"
 
 #ifndef lint
 static const char rcsid[] = "$CVSid: @(#)checkin.c 1.48 94/10/07 $";
@@ -66,7 +68,7 @@ Checkin (type, file, update_dir, repository,
 	{
             copy_file (tocvsPath, fname);
 	    if (unlink_file_dir (file) < 0)
-		if (errno != ENOENT)
+		if (! existence_error (errno))
 		    error (1, errno, "cannot remove %s", file);
 	    copy_file (tocvsPath, file);
 	}
@@ -121,7 +123,7 @@ Checkin (type, file, update_dir, repository,
 	     * If we want read-only files, muck the permissions here, before
 	     * getting the file time-stamp.
 	     */
-	    if (cvswrite == FALSE)
+	    if (cvswrite == FALSE || fileattr_get (file, "_watched"))
 		xchmod (file, 0);
 
 #ifndef DEATH_SUPPORT
@@ -198,7 +200,9 @@ Checkin (type, file, update_dir, repository,
 	else
 	    server_checked_in (file, update_dir, repository);
     }
+    else
 #endif
+	mark_up_to_date (file);
 
     return (0);
 }

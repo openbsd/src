@@ -1,0 +1,40 @@
+# I use this for single compilation while porting; once the port is
+# done it can be removed.
+
+THIS_BASENAME = ../src/add
+
+CC = icc
+
+LIB = s:\ibmcpp\lib;s:\toolkt21\os2lib;
+CINC = -Is:/ibmcpp/include -Is:/toolkt21/c/os2h
+CFLAGS = -C+
+CFLAGS += -W3 -Wpro+rea+tru+use+ -Ti+ -Ss+ -Gd+ -Gm+ -G4 -Q+ -Sm ${CINC}
+CFLAGS += -DIBM_CPP -DHAVE_CONFIG_H
+
+# translation of most important CFLAGS -- others are trivial
+# ICC sez  -C+  -W3     -Ti+ ${CINC}
+# GCC sez  -c   -Wall   -g   ${CINC}
+
+# "-I../os2" below ought to be equivalent to "-I."
+CFLAGS += -I../os2 -I../lib -I../src
+
+# Preprocesses to stdout.
+# CFLAGS += -Pd+
+  
+# TCP/IP stuff
+TCPIPLIB = s:\ibmtcpip\lib\tcp32dll.lib	s:\ibmtcpip\lib\so32dll.lib porttcp.obj
+
+# We probably don't need these.
+# RPCLIB   = s:\ibmtcpip\lib\rpc32dll.lib
+# FTPLIB   = s:\ibmtcpip\lib\ftpapi.lib
+
+CFLAGS 	 += -DTCPIP_IBM -Is:\ibmtcpip\include
+
+all: ${THIS_BASENAME}.obj
+# all: ${THIS_BASENAME}.exe
+
+${THIS_BASENAME}.obj: ${THIS_BASENAME}.c
+	${CC} ${CFLAGS} /Fo${THIS_BASENAME}.obj ${THIS_BASENAME}.c
+
+${THIS_BASENAME}.exe: ${THIS_BASENAME}.c
+	${CC} ${CFLAGS} /Fe${THIS_BASENAME}.exe ${THIS_BASENAME}.c

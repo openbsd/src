@@ -15,7 +15,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-    $Header: /home/cvs/src/gnu/usr.bin/cvs/windows-NT/ndir.h,v 1.1.1.1 1995/12/19 09:21:43 deraadt Exp $
+    $Header: /home/cvs/src/gnu/usr.bin/cvs/windows-NT/ndir.h,v 1.1.1.2 1996/01/30 00:19:27 tholo Exp $
  */
 
 /* Everything non trivial in this code is taken from: @(#)msd_dir.c 1.4
@@ -27,7 +27,10 @@
 
 #define	rewinddir(dirp)	seekdir(dirp, 0L)
 
-#define	MAXNAMLEN	12
+/* 255 is said to be big enough for Windows NT.  The more elegant
+   solution would be declaring d_name as one byte long and allocating
+   it to the actual size needed.  */
+#define	MAXNAMLEN	255
 
 struct direct
 {

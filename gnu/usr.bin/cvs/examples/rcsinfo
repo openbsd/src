@@ -1,5 +1,5 @@
 #
-# $Id: rcsinfo,v 1.1.1.1 1995/12/19 09:21:43 deraadt Exp $
+#ident	"@(#)cvs/examples:$Name:  $:$Id: rcsinfo,v 1.1.1.2 1996/01/30 00:19:22 tholo Exp $"
 #
 # The "rcsinfo" file is used to control templates with which the editor
 # is invoked on commit and import.

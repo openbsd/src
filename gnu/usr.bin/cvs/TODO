@@ -6,9 +6,6 @@ $CVSid: @(#)TODO 1.26 94/09/21 $
        appropriate points ]]
     (I'm not sure what this means -kingdon, Jun 1995).
 
-16. List of current users of a directory needs to be maintained.
-    [[ sort of solved by history database ]]
-
 22. Catch signals for cleanup when "add"ing files.
 
 24. Insist on a log message.
@@ -42,20 +39,6 @@ $CVSid: @(#)TODO 1.26 94/09/21 $
     [[ most commands now use the generic recursion processor, but not all;
     this note is left here to remind me to fix the others ]]
 
-51. a way to identify what files other people are working on.  Imagine "cvs
-    modified", which prints out a table like 
-
-	file	modifiers
-	=====	=========
-	foo.c
-	bar.c	wsd
-	baz.c	nrt jda
-
-    I think this would be pretty difficult; I don't know if this
-    information is stored anywhere.  Also it's hard to say how one gets a
-    user name, maybe a path to their local hierarchy is all you could get.
-    [[ the history stuff does some of this, but not all ]]
-
 52. SCCS has a feature that I would *love* to see in CVS, as it is very
     useful.  One may make a private copy of SCCS suid to a particular user,
     so other users in the authentication list may check files in and out of
@@ -66,21 +49,6 @@ $CVSid: @(#)TODO 1.26 94/09/21 $
     perceived administrative, technical and performance headaches.  A tool
     such as CVS with features that provide group-like functionality would
     be a huge help.
-
-53. I'd suggest a way to notify users if/when a file(s) is being worked on.
-    I suggest:
-	+ Always checkout/update files a readonly.
-	+ To work on a file, the user should do:
-		cvs advise filename
-	+ This would maintain their email address associated with that
-	  file name in the repository and change the file mode to writable.
-	+ If other references to that file exist, the registered individuals
-	  are notified via email that another user(s) is going to be working
-	  on same.
-	+ When a committ occurs, the user is automatically 'unadvise'd (the
-	  inverse command should be supported as well) and other's are notified
-	  that a merge will be necessary before their checkin can be
-	  successful.
 
 62. Consider using revision controlled files and directories to handle the
     new module format -- consider a cvs command front-end to
@@ -93,7 +61,7 @@ $CVSid: @(#)TODO 1.26 94/09/21 $
     [[ it got better, then we added functionality, making it worse again ]]
 
 66. Length of the CVS temporary files must be limited to 14 characters for
-    System-V stupid support.  As weel as the length on the CVS.adm files.
+    System-V stupid support.  As well as the length on the CVS.adm files.
 
 67. cvs import should populate the vendor sources with CVS.adm files so
     that one could use the vendor sources directly without having the check
@@ -107,10 +75,6 @@ $CVSid: @(#)TODO 1.26 94/09/21 $
 
 73. Consider an option (in .cvsrc?) to automatically add files that are new
     and specified to commit.
-
-74. Consider adding a way to remove directories/files that you are done
-    with... somehow.
-    [[ cvs release sort of does this ]]
 
 76. Consider adding a layer of abstraction so that CVS can work with both
     RCS and SCCS files.  Larry says this should be #ifdef'ed.
@@ -139,10 +103,6 @@ $CVSid: @(#)TODO 1.26 94/09/21 $
 
 93. Need to think hard about release and development environments.  Think
     about execsets as well.
-
-97. The documentation should describe how to undo a change ("cvs
-update -j 1.2 -j 1.1 foo.c" followed by a commit undoes the change
-from 1.1 to 1.2).
 
 98. If diff3 bombs out (too many differences) cvs then thinks that the file
     has been updated and is OK to be commited even though the file 

@@ -55,6 +55,7 @@ static List *tlist;
 
 static char *symtag;
 static char *numtag;
+static int numtag_validated = 0;
 static int delete;			/* adding a tag by default */
 static int attic_too;			/* remove tag from Attic files */
 static int branch_mode;			/* make an automagic "branch" tag */
@@ -175,7 +176,7 @@ rtag (argc, argv)
 	if (branch_mode)
 	    send_arg("-b");
 	if (force_tag_move)
-	    send_arg("-T");
+	    send_arg("-F");
 	if (run_module_prog)
 	    send_arg("-n");
 	if (attic_too)
@@ -194,8 +195,7 @@ rtag (argc, argv)
 		send_arg (argv[i]);
 	}
 
-	if (fprintf (to_server, "rtag\n") < 0)
-	    error (1, errno, "writing to server");
+	send_to_server ("rtag\012", 0);
         return get_responses_and_close ();
     }
 #endif
@@ -289,12 +289,18 @@ rtag_proc (pargc, argv, xwhere, mwhere, mfile, shorten, local_specified,
     else
 	which = W_REPOS;
 
+    if (numtag != NULL && !numtag_validated)
+    {
+	tag_check_valid (numtag, *pargc - 1, argv + 1, local, 0, NULL);
+	numtag_validated = 1;
+    }
+
     /* check to make sure they are authorized to tag all the 
        specified files in the repository */
 
     mtlist = getlist();
     err = start_recursion (check_fileproc, check_filesdoneproc,
-                           (Dtype (*) ()) NULL, (int (*) ()) NULL,
+                           (DIRENTPROC) NULL, (DIRLEAVEPROC) NULL,
                            *pargc - 1, argv + 1, local, which, 0, 1,
                            where, 1, 1);
     
@@ -304,8 +310,8 @@ rtag_proc (pargc, argv, xwhere, mwhere, mfile, shorten, local_specified,
     }
      
     /* start the recursion processor */
-    err = start_recursion (rtag_fileproc, (int (*) ()) NULL, rtag_dirproc,
-			   (int (*) ()) NULL, *pargc - 1, argv + 1, local,
+    err = start_recursion (rtag_fileproc, (FILESDONEPROC) NULL, rtag_dirproc,
+			   (DIRLEAVEPROC) NULL, *pargc - 1, argv + 1, local,
 			   which, 0, 1, where, 1, 1);
 
     dellist(&mtlist);
@@ -358,13 +364,13 @@ check_fileproc(file, update_dir, repository, entries, srcfiles)
     p->delproc = tag_delproc;
     vers = Version_TS (repository, (char *) NULL, (char *) NULL,
         (char *) NULL, file, 0, 0, entries, srcfiles);
-    p->data = RCS_getversion(vers->srcfile, numtag, date, force_tag_match);
+    p->data = RCS_getversion(vers->srcfile, numtag, date, force_tag_match, 0);
     if (p->data != NULL)
     {
         int addit = 1;
         char *oversion;
         
-        oversion = RCS_getversion (vers->srcfile, symtag, (char *) NULL, 1);
+        oversion = RCS_getversion (vers->srcfile, symtag, (char *) NULL, 1, 0);
         if (oversion == NULL) 
         {
             if (delete)
@@ -541,7 +547,7 @@ rtag_fileproc (file, update_dir, repository, entries, srcfiles)
 	    return (rtag_delete (rcsfile));
     }
 
-    version = RCS_getversion (rcsfile, numtag, date, force_tag_match);
+    version = RCS_getversion (rcsfile, numtag, date, force_tag_match, 0);
     if (version == NULL)
     {
 	/* If -a specified, clean up any old tags */
@@ -584,7 +590,7 @@ rtag_fileproc (file, update_dir, repository, entries, srcfiles)
 	* typical tagging operation.
 	*/
        rev = branch_mode ? RCS_magicrev (rcsfile, version) : version;
-       oversion = RCS_getversion (rcsfile, symtag, (char *) 0, 1);
+       oversion = RCS_getversion (rcsfile, symtag, (char *) NULL, 1, 0);
        if (oversion != NULL)
        {
 	  int isbranch = RCS_isbranch (file, symtag, srcfiles);
@@ -651,13 +657,13 @@ rtag_delete (rcsfile)
 
     if (numtag)
     {
-	version = RCS_getversion (rcsfile, numtag, (char *) 0, 1);
+	version = RCS_getversion (rcsfile, numtag, (char *) NULL, 1, 0);
 	if (version == NULL)
 	    return (0);
 	free (version);
     }
 
-    version = RCS_getversion (rcsfile, symtag, (char *) 0, 1);
+    version = RCS_getversion (rcsfile, symtag, (char *) NULL, 1, 0);
     if (version == NULL)
 	return (0);
     free (version);
