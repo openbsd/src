@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamlogd.8,v 1.3 2004/02/28 14:53:06 matthieu Exp $
+.\"	$OpenBSD: spamlogd.8,v 1.4 2004/07/14 21:38:09 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Bob Beck.  All rights reserved.
 .\"
@@ -39,7 +39,8 @@ updates the
 whitelist entries whenever a connection
 to port 25 is logged to the
 .Xr pflog 4
-interface. The source addresses of inbound connections are whitelisted
+interface.
+The source addresses of inbound connections are whitelisted
 when seen by
 .Nm
 to ensure that their entries in
@@ -49,19 +50,22 @@ The destination addresses of outbound connections are whitelisted
 when seen by
 .Nm
 so that replies to outbound mail may be received without initial
-greylisting delays (see GREYLISTING in
-.Xr spamd 8 ).
+greylisting delays
+(see
+.Sx GREYLISTING
+in
+.Xr spamd 8 ) .
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
 .It Fl I
 Specify that
 .Nm
-is only to whitelist inbound smtp connections.
+is only to whitelist inbound SMTP connections.
 By default
 .Nm
-will whitelist the source of inbound smtp connections, and the
-target of outbound smtp connections.
+will whitelist the source of inbound SMTP connections, and the
+target of outbound SMTP connections.
 .It Fl i Ar interface
 Specify a network interface on which packets must arrive.
 The default is to watch for connections logged from any interfaces.
@@ -74,7 +78,7 @@ to update the whitelist entries.
 An example
 .Xr pf.conf 5
 configuration for logging such connections is as follows:
-.Bd -literal -offset 4n
+.Bd -literal -offset indent
 EXT_IF = "fxp0"
 MAILHOSTS = "{129.128.11.10, 129.128.11.43}"
 pass in log on $EXT_IF inet proto tcp to $MAILHOSTS \e
@@ -86,25 +90,25 @@ pass out log on $EXT_IF inet proto tcp from $MAILHOSTS \e
 .Nm
 sends log messages to
 .Xr syslogd 8
-using
-.Em facility
-daemon.
+using facility
+.Em daemon .
 .Nm
 will log each connection it sees at level
-.Em LOG_DEBUG .
+.Dv LOG_DEBUG .
 .Sh FILES
 /var/db/spamd
 .Sh SEE ALSO
+.Xr syslog 3 ,
 .Xr pflog 4 ,
 .Xr spamd.conf 5 ,
 .Xr pflogd 8 ,
 .Xr spamd 8 ,
 .Xr spamd-setup 8 ,
 .Xr spamdb 8 ,
+.Xr syslogd 8 ,
 .Xr tcpdump 8
 .Sh HISTORY
 The
 .Nm
-command
-appeared in
+command first appeared in
 .Ox 3.5 .
