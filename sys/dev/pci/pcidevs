@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.541 2002/09/03 18:55:20 jason Exp $
+	$OpenBSD: pcidevs,v 1.542 2002/09/03 20:04:14 jason Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -967,6 +967,8 @@ product BLUESTEEL 5601		0x5601	5601
 /* Broadcom */
 product BROADCOM BCM5700	0x1644	BCM5700
 product BROADCOM BCM5701	0x1645	BCM5701
+product BROADCOM 5801		0x5801	5801
+product BROADCOM 5802		0x5802	5802
 product BROADCOM 5805		0x5805	5805
 product BROADCOM 5820		0x5820	5820
 product BROADCOM 5821		0x5821	5821
