@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.3 1998/11/23 03:29:50 mickey Exp $	*/
+/*	$OpenBSD: autoconf.h,v 1.4 1998/12/29 21:54:12 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -31,6 +31,7 @@
  */
 
 #include <machine/bus.h>
+#include <machine/pdc.h>
 
 struct confargs {
 	const char	*ca_name;	/* device name/description */
