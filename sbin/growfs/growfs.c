@@ -1,4 +1,4 @@
-/* $OpenBSD: growfs.c,v 1.1 2003/07/28 21:09:28 tedu Exp $ */
+/* $OpenBSD: growfs.c,v 1.2 2003/07/29 22:54:26 tedu Exp $ */
 /*
  * Copyright (c) 2000 Christoph Herrmann, Thomas-Henning von Kamptz
  * Copyright (c) 1980, 1989, 1993 The Regents of the University of California.
@@ -46,7 +46,7 @@ static const char copyright[] =
 Copyright (c) 1980, 1989, 1993 The Regents of the University of California.\n\
 All rights reserved.\n";
 
-static const char rcsid[] = "$OpenBSD: growfs.c,v 1.1 2003/07/28 21:09:28 tedu Exp $";
+static const char rcsid[] = "$OpenBSD: growfs.c,v 1.2 2003/07/29 22:54:26 tedu Exp $";
 #endif /* not lint */
 
 /* ********************************************************** INCLUDES ***** */
@@ -222,7 +222,7 @@ growfs(int fsi, int fso, unsigned int Nflag)
 	 * Now build the cylinders group blocks and
 	 * then print out indices of cylinder groups.
 	 */
-	printf("super - block backups (for fsck -b #) at:\n");
+	printf("superblock backups (for fsck -b #) at:\n");
 	i = 0;
 	width = charsperline();
 
@@ -233,7 +233,7 @@ growfs(int fsi, int fso, unsigned int Nflag)
 		initcg(cylno, utime, fso, Nflag);
 		j = snprintf(tmpbuf, sizeof tmpbuf, " %d%s",
 		    (int)fsbtodb(&sblock, cgsblock(&sblock, cylno)),
-		    cylno < (sblock.fs_ncg - 1) ? "," : "" );
+		    cylno < (sblock.fs_ncg - 1) ? "," : "");
 		if (i + j >= width) {
 			printf("\n");
 			i = 0;
@@ -317,7 +317,7 @@ growfs(int fsi, int fso, unsigned int Nflag)
 	 */
 
 	/*
-	 * Write out the duplicate super blocks.
+	 * Write out the duplicate superblocks.
 	 */
 	for (cylno = 0; cylno < sblock.fs_ncg; cylno++) {
 		wtfs(fsbtodb(&sblock, cgsblock(&sblock, cylno)),
@@ -378,7 +378,7 @@ initcg(int cylno, time_t utime, int fso, unsigned int Nflag)
 	acg.cg_freeoff = acg.cg_iusedoff + howmany(sblock.fs_ipg, NBBY);
 	if (sblock.fs_contigsumsize <= 0) {
 		acg.cg_nextfreeoff = acg.cg_freeoff +
-		    howmany(sblock.fs_cpg* sblock.fs_spc / NSPF(&sblock), NBBY);
+		    howmany(sblock.fs_cpg * sblock.fs_spc / NSPF(&sblock), NBBY);
 	} else {
 		acg.cg_clustersumoff = acg.cg_freeoff + howmany
 		    (sblock.fs_cpg * sblock.fs_spc / NSPF(&sblock), NBBY) -
@@ -429,7 +429,7 @@ initcg(int cylno, time_t utime, int fso, unsigned int Nflag)
 			acg.cg_cs.cs_nffree++;
 		}
 	}
-	for (d = dupper; d + sblock.fs_frag <= dmax - cbase; ) {
+	for (d = dupper; d + sblock.fs_frag <= dmax - cbase;) {
 		blkno = d / sblock.fs_frag;
 		setblock(&sblock, cg_blksfree(&acg), blkno);
 		if (sblock.fs_contigsumsize > 0) {
@@ -568,7 +568,7 @@ cond_bl_upd(ufs_daddr_t *block, struct gfs_bpp *field,
 			/*
 			 * The fragment is part of the block, so update.
 			 */
-			*block=(f->new * sblock.fs_frag+(*block % sblock.fs_frag));
+			*block = (f->new * sblock.fs_frag + (*block % sblock.fs_frag));
 			f->found++;
 			DBG_PRINT3("scg (%d->%d)[%d] reference updated\n",
 			    f->old, f->new, *block % sblock.fs_frag);
@@ -1262,7 +1262,7 @@ updcsloc(time_t utime, int fsi, int fso, unsigned int Nflag)
 				clrbit(cg_clustersfree(&acg), d / sblock.fs_frag);
 				for (lcs = 0, l = (d / sblock.fs_frag) + 1;
 				    lcs < sblock.fs_contigsumsize;
-				    l++, lcs++ ) {
+				    l++, lcs++) {
 					if (isclr(cg_clustersfree(&acg), l))
 						break;
 				}
@@ -1294,10 +1294,10 @@ updcsloc(time_t utime, int fsi, int fso, unsigned int Nflag)
 			cg_blks(&sblock, &acg, cbtocylno(&sblock, d))
 			    [cbtorpos(&sblock, d)]--;
 			if (sblock.fs_contigsumsize > 0) {
-				clrbit(cg_clustersfree(&acg), d/sblock.fs_frag);
-				for (lcs = 0, l=(d/sblock.fs_frag)+1;
+				clrbit(cg_clustersfree(&acg), d / sblock.fs_frag);
+				for (lcs = 0, l = (d / sblock.fs_frag) + 1;
 				    lcs < sblock.fs_contigsumsize;
-				    l++, lcs++ ) {
+				    l++, lcs++) {
 					if (isclr(cg_clustersfree(&acg), l))
 						break;
 				}
@@ -1312,8 +1312,8 @@ updcsloc(time_t utime, int fsi, int fso, unsigned int Nflag)
 		for (; d < dupper; d++) {
 			DBG_PRINT1("scg second frag check loop d=%d\n", d);
 			if (isclr(cg_blksfree(&acg), d)) {
-				bp[ind].old = d/sblock.fs_frag;
-				bp[ind].flags|=GFS_FL_LAST;
+				bp[ind].old = d / sblock.fs_frag;
+				bp[ind].flags |= GFS_FL_LAST;
 			} else {
 				clrbit(cg_blksfree(&acg), d);
 				acg.cg_cs.cs_nffree--;
@@ -1415,13 +1415,11 @@ updcsloc(time_t utime, int fsi, int fso, unsigned int Nflag)
 			    (size_t)sblock.fs_bsize, &ablk, fsi);
 			wtfs(fsbtodb(&sblock, bp[i].new * sblock.fs_frag),
 			    (size_t)sblock.fs_bsize, &ablk, fso, Nflag);
-			DBG_DUMP_HEX(&sblock,
-			    "copied full block",
+			DBG_DUMP_HEX(&sblock, "copied full block",
 			    (unsigned char *)&ablk);
 
 			DBG_PRINT2("scg (%d->%d) block relocated\n",
-			    bp[i].old,
-			    bp[i].new);
+			    bp[i].old, bp[i].new);
 		}
 
 		/*
@@ -1431,9 +1429,8 @@ updcsloc(time_t utime, int fsi, int fso, unsigned int Nflag)
 		 * inodes.
 		 */
 		for (cylno = 0; cylno < osblock.fs_ncg; cylno++) {
-			DBG_PRINT1("scg doing cg (%d)\n",
-			    cylno);
-			for (inc = osblock.fs_ipg - 1 ; inc>=0 ; inc--) {
+			DBG_PRINT1("scg doing cg (%d)\n", cylno);
+			for (inc = osblock.fs_ipg - 1; inc >= 0; inc--) {
 				updrefs(cylno, (ino_t)inc, bp, fsi, fso, Nflag);
 			}
 		}
@@ -1474,7 +1471,6 @@ updcsloc(time_t utime, int fsi, int fso, unsigned int Nflag)
 	    &acg);
 
 	DBG_LEAVE;
-	return;
 }
 
 /* ************************************************************** rdfs ***** */
@@ -1498,7 +1494,6 @@ rdfs(daddr_t bno, size_t size, void *bf, int fsi)
 	}
 
 	DBG_LEAVE;
-	return;
 }
 
 /* ************************************************************** wtfs ***** */
@@ -1524,7 +1519,6 @@ wtfs(daddr_t bno, size_t size, void *bf, int fso, unsigned int Nflag)
 		err(36, "wtfs: write error: %ld", (long)bno);
 
 	DBG_LEAVE;
-	return;
 }
 
 /* ************************************************************* alloc ***** */
@@ -1561,25 +1555,21 @@ alloc(void)
 	 * block here which we have to relocate a couple of seconds later again
 	 * again, and we are not prepared to to this anyway.
 	 */
-	blkno=-1;
-	dlower = cgsblock(&sblock, acg.cg_cgx)-cgbase(&sblock, acg.cg_cgx);
-	dupper = cgdmin(&sblock, acg.cg_cgx)-cgbase(&sblock, acg.cg_cgx);
-	dmax = cgbase(&sblock, acg.cg_cgx)+sblock.fs_fpg;
+	blkno = -1;
+	dlower = cgsblock(&sblock, acg.cg_cgx) - cgbase(&sblock, acg.cg_cgx);
+	dupper = cgdmin(&sblock, acg.cg_cgx) - cgbase(&sblock, acg.cg_cgx);
+	dmax = cgbase(&sblock, acg.cg_cgx) + sblock.fs_fpg;
 	if (dmax > sblock.fs_size) {
 		dmax = sblock.fs_size;
 	}
-	dmax-=cgbase(&sblock, acg.cg_cgx); /* retransform into cg */
+	dmax -= cgbase(&sblock, acg.cg_cgx); /* retransform into cg */
 	csmin = sblock.fs_csaddr - cgbase(&sblock, acg.cg_cgx);
 	csmax = csmin + howmany(sblock.fs_cssize, sblock.fs_fsize);
 	DBG_PRINT3("seek range: dl=%d, du=%d, dm=%d\n",
-	    dlower,
-	    dupper,
-	    dmax);
-	DBG_PRINT2("range cont: csmin=%d, csmax=%d\n",
-	    csmin,
-	    csmax);
+	    dlower, dupper, dmax);
+	DBG_PRINT2("range cont: csmin=%d, csmax=%d\n", csmin, csmax);
 
-	for (d = 0; (d < dlower && blkno==-1); d+=sblock.fs_frag) {
+	for (d = 0; (d < dlower && blkno == -1); d += sblock.fs_frag) {
 		if (d >= csmin && d<=csmax) {
 			continue;
 		}
@@ -1589,7 +1579,7 @@ alloc(void)
 			break;
 		}
 	}
-	for (d = dupper; (d < dmax && blkno==-1); d+=sblock.fs_frag) {
+	for (d = dupper; (d < dmax && blkno == -1); d += sblock.fs_frag) {
 		if (d >= csmin && d <= csmax) {
 			continue;
 		}
@@ -1624,7 +1614,7 @@ alloc(void)
 		 * Lets start with the blocks before our allocated block ...
 		 */
 		for (lcs1 = 0, l = blkno - 1; lcs1<sblock.fs_contigsumsize;
-		    l--, lcs1++ ) {
+		    l--, lcs1++) {
 			if (isclr(cg_clustersfree(&acg), l))
 				break;
 		}
@@ -1633,7 +1623,7 @@ alloc(void)
 		 * block.
 		 */
 		for (lcs2 = 0, l = blkno + 1; lcs2<sblock.fs_contigsumsize;
-		    l++, lcs2++ ) {
+		    l++, lcs2++) {
 			if (isclr(cg_clustersfree(&acg), l))
 				break;
 		}
@@ -1728,7 +1718,6 @@ clrblock(struct fs *fs, unsigned char *cp, int h)
 	}
 
 	DBG_LEAVE;
-	return;
 }
 
 /* ********************************************************** setblock ***** */
@@ -1763,7 +1752,6 @@ setblock(struct fs *fs, unsigned char *cp, int h)
 	}
 
 	DBG_LEAVE;
-	return;
 }
 
 /* ************************************************************ ginode ***** */
@@ -1878,13 +1866,13 @@ main(int argc, char **argv)
 	DBG_ENTER;
 
 	while ((ch = getopt(argc, argv, "Ns:vy")) != -1) {
-		switch(ch) {
+		switch (ch) {
 		case 'N':
 			Nflag = 1;
 			break;
 		case 's':
-			size=(size_t)atol(optarg);
-			if (size<1) {
+			size = (size_t)atol(optarg);
+			if (size < 1) {
 				usage();
 			}
 			break;
@@ -1969,11 +1957,9 @@ main(int argc, char **argv)
 	/*
 	 * Read the current superblock, and take a backup.
 	 */
-	rdfs((daddr_t)(SBOFF/DEV_BSIZE), (size_t)SBSIZE, &osblock,
-	    fsi);
-	if (osblock.fs_magic != FS_MAGIC) {
+	rdfs((daddr_t)(SBOFF / DEV_BSIZE), (size_t)SBSIZE, &osblock, fsi);
+	if (osblock.fs_magic != FS_MAGIC)
 		errx(1, "superblock not recognized");
-	}
 	memcpy(&fsun1, &fsun2, sizeof(fsun2));
 
 	DBG_OPEN("/tmp/growfs.debug"); /* already here we need a superblock */
@@ -2006,7 +1992,7 @@ main(int argc, char **argv)
 	 * Check if we find an active snapshot.
 	 */
 	if (ExpertFlag == 0) {
-		for (j = 0; j<FSMAXSNAP; j++) {
+		for (j = 0; j < FSMAXSNAP; j++) {
 			if (sblock.fs_snapinum[j]) {
 				errx(1, "active snapshot found in filesystem\n"
 				    "	please remove all snapshots before "
@@ -2066,7 +2052,7 @@ main(int argc, char **argv)
 	if ((sblock.fs_size - (sblock.fs_ncg - 1) * sblock.fs_fpg) <
 	    sblock.fs_fpg && cgdmin(&sblock, (sblock.fs_ncg - 1))-
 	    cgbase(&sblock, (sblock.fs_ncg - 1)) > (sblock.fs_size -
-	    (sblock.fs_ncg - 1) * sblock.fs_fpg )) {
+	    (sblock.fs_ncg - 1) * sblock.fs_fpg)) {
 		/*
 		 * The space in the new last cylinder group is too small,
 		 * so revert back.
@@ -2141,7 +2127,7 @@ return_disklabel(int fd, struct disklabel *lp, unsigned int Nflag)
 	if (!Nflag) {
 		lp->d_checksum = 0;
 		sum = 0;
-		ptr=(u_short *)lp;
+		ptr = (u_short *)lp;
 
 		/*
 		 * recalculate checksum
@@ -2226,7 +2212,7 @@ updclst(int block)
 		/*
 		 * calculate size for the trailing cluster
 		 */
-		for (block--; lcs < sblock.fs_contigsumsize; block--, lcs++ ) {
+		for (block--; lcs < sblock.fs_contigsumsize; block--, lcs++) {
 			if (isclr(cg_clustersfree(&acg), block))
 				break;
 		}
@@ -2289,7 +2275,7 @@ updrefs(int cg, ino_t in, struct gfs_bpp *bp, int fsi, int fso, unsigned int
 	remaining_blocks = howmany(ino->di_size, sblock.fs_bsize);
 	for (ictr = 0; ictr < MIN(NDADDR, (unsigned int)remaining_blocks);
 	    ictr++) {
-		iptr=&(ino->di_db[ictr]);
+		iptr = &(ino->di_db[ictr]);
 		if (*iptr)
 			cond_bl_upd(iptr, bp, GFS_PS_INODE, fso, Nflag);
 	}
@@ -2319,7 +2305,7 @@ updrefs(int cg, ino_t in, struct gfs_bpp *bp, int fsi, int fso, unsigned int
 	}
 	DBG_PRINT0("scg indirect_1 blocks checked\n");
 
-	remaining_blocks-= howmany(sblock.fs_bsize, sizeof(ufs_daddr_t));
+	remaining_blocks -= howmany(sblock.fs_bsize, sizeof(ufs_daddr_t));
 	if (remaining_blocks<0) {
 		DBG_LEAVE;
 		return;
@@ -2341,7 +2327,7 @@ updrefs(int cg, ino_t in, struct gfs_bpp *bp, int fsi, int fso, unsigned int
 			i1_src = fsbtodb(&sblock, *ind2ptr);
 			rdfs(i1_src, (size_t)sblock.fs_bsize, &i1blk,
 			    fsi);
-			for (ictr = 0; ictr<MIN(howmany((unsigned int)
+			for (ictr = 0; ictr < MIN(howmany((unsigned int)
 			    sblock.fs_bsize, sizeof(ufs_daddr_t)),
 			    (unsigned int)remaining_blocks); ictr++) {
 				iptr = &((ufs_daddr_t *)&i1blk)[ictr];
@@ -2370,7 +2356,7 @@ updrefs(int cg, ino_t in, struct gfs_bpp *bp, int fsi, int fso, unsigned int
 		i3_src = fsbtodb(&sblock, ino->di_ib[2]);
 		rdfs(i3_src, (size_t)sblock.fs_bsize, &i3blk, fsi);
 		for (ind3ctr = 0; ind3ctr < howmany(sblock.fs_bsize,
-		    sizeof(ufs_daddr_t)); ind3ctr ++) {
+		    sizeof(ufs_daddr_t)); ind3ctr++) {
 			ind3ptr = &((ufs_daddr_t *)&i3blk)[ind3ctr];
 			if (!*ind3ptr)
 				continue;
@@ -2380,8 +2366,8 @@ updrefs(int cg, ino_t in, struct gfs_bpp *bp, int fsi, int fso, unsigned int
 			rdfs(i2_src, (size_t)sblock.fs_bsize, &i2blk,
 			    fsi);
 			for (ind2ctr = 0; ind2ctr < howmany(sblock.fs_bsize,
-			    sizeof(ufs_daddr_t)); ind2ctr ++) {
-				ind2ptr=&((ufs_daddr_t *)&i2blk)[ind2ctr];
+			    sizeof(ufs_daddr_t)); ind2ctr++) {
+				ind2ptr = &((ufs_daddr_t *)&i2blk)[ind2ctr];
 				if (!*ind2ptr)
 					continue;
 				cond_bl_upd(ind2ptr, bp, GFS_PS_IND_BLK_LVL2,
