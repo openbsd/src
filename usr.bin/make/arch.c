@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: arch.c,v 1.46 2001/05/29 12:53:38 espie Exp $ */
+/*	$OpenBSD: arch.c,v 1.47 2001/05/30 00:43:00 deraadt Exp $ */
 /*	$NetBSD: arch.c,v 1.17 1996/11/06 17:58:59 christos Exp $	*/
 
 /*
@@ -602,7 +602,7 @@ ArchMTimeMember(archive, member, hash)
 	if (he != NULL)
 	    return mtime_of_member(he);
 	else {
-	    if (end - member > AR_NAME_SIZE) {
+	    if ((size_t)(end - member) > AR_NAME_SIZE) {
 		/* Try truncated name.	*/
 		end = member + AR_NAME_SIZE;
 		he = ohash_find(&ar->members,
@@ -890,6 +890,7 @@ Arch_Touch(gn)
     ArchTouch(Varq_Value(ARCHIVE_INDEX, gn), Varq_Value(MEMBER_INDEX, gn));
 }
 
+/*ARGSUSED*/
 void
 Arch_TouchLib(gn)
     GNode	    *gn;	/* The node of the library to touch */
@@ -899,6 +900,8 @@ Arch_TouchLib(gn)
 	ArchTouch(gn->path, RANLIBMAG);
 	set_times(gn->path);
     }
+#else
+    gn = gn;
 #endif
 }
 
@@ -1019,7 +1022,9 @@ bool
 Arch_LibOODate(gn)
     GNode	  *gn;		/* The library's graph node */
 {
+#ifdef RANLIBMAG
     TIMESTAMP	  modTimeTOC;	/* mod time of __.SYMDEF */
+#endif
 
     if (OP_NOP(gn->type) && Lst_IsEmpty(&gn->children))
 	return false;

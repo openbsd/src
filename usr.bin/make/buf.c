@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: buf.c,v 1.17 2001/05/29 12:17:03 espie Exp $	*/
+/*	$OpenBSD: buf.c,v 1.18 2001/05/30 00:43:00 deraadt Exp $	*/
 /*	$NetBSD: buf.c,v 1.9 1996/12/31 17:53:21 christos Exp $ */
 
 /*
@@ -128,7 +128,7 @@ Buf_AddChars(bp, numBytes, bytesPtr)
     const char	*bytesPtr;
 {
 
-    if (bp->endPtr - bp->inPtr < numBytes+1)
+    if ((size_t)(bp->endPtr - bp->inPtr) < numBytes+1)
 	BufExpand(bp, numBytes);
 
     memcpy(bp->inPtr, bytesPtr, numBytes);
