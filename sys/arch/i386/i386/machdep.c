@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.55 1997/10/02 14:30:04 downsj Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.56 1997/10/22 23:37:12 mickey Exp $	*/
 /*	$NetBSD: machdep.c,v 1.202 1996/05/18 15:54:59 christos Exp $	*/
 
 /*-
@@ -1239,10 +1239,12 @@ init386(first_avail)
 	 * extent map.  This is done before the addresses are
 	 * page rounded just to make sure we get them all.
 	 */
+#if 0
 	if (extent_alloc_region(iomem_ex, 0, IOM_BEGIN, EX_NOWAIT)) {
 		/* XXX What should we do? */
 		printf("WARNING: CAN'T ALLOCATE BASE RAM FROM IOMEM EXTENT MAP!\n");
 	}
+#endif
 	avail_end = biosextmem ? IOM_END + biosextmem * 1024
 	    : biosbasemem * 1024;	/* just temporary use */
 

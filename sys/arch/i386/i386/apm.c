@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.12 1997/10/13 00:09:20 mickey Exp $	*/
+/*	$OpenBSD: apm.c,v 1.13 1997/10/22 23:37:10 mickey Exp $	*/
 
 /*-
  * Copyright (c) 1995 John T. Kohl.  All rights reserved.
@@ -601,9 +601,9 @@ apmprobe(parent, match, aux)
 
 	if (apminited)
 		return 0;
-	if (!(ba->apm_detail & APM_BIOS_PM_DISABLED) &&
-	    !(ba->apm_detail & APM_BIOS_PM_DISENGAGED) &&
-	    (ba->apm_detail & APM_32BIT_SUPPORTED) &&
+	if (!(ba->bios_apmp->apm_detail & APM_BIOS_PM_DISABLED) &&
+	    !(ba->bios_apmp->apm_detail & APM_BIOS_PM_DISENGAGED) &&
+	    (ba->bios_apmp->apm_detail & APM_32BIT_SUPPORTED) &&
 	    strcmp(ba->bios_dev, "apm") == 0) {
 		return 1;
 	}
@@ -616,36 +616,36 @@ apmattach(parent, self, aux)
 	void *aux;
 {
 	extern union descriptor *dynamic_gdt;
-	register struct bios_attach_args *ba = aux;
+	bios_apminfo_t *ap = ((struct bios_attach_args *)aux)->bios_apmp;
 	struct apm_softc *sc = (void *)self;
 	struct apmregs regs;
 
 	/*
 	 * set up GDT descriptors for APM
 	 */
-	if (ba->apm_detail & APM_32BIT_SUPPORTED) {
-		apm_flags = ba->apm_detail;
+	if (ap->apm_detail & APM_32BIT_SUPPORTED) {
+		apm_flags = ap->apm_detail;
 		apm_ep.seg = GSEL(GAPM32CODE_SEL,SEL_KPL);
-		apm_ep.entry = ba->apm_entry;
+		apm_ep.entry = ap->apm_entry;
 		setsegment(&dynamic_gdt[GAPM32CODE_SEL].sd,
-			   (void *)ISA_HOLE_VADDR(ba->apm_code32_base),
-			   ba->apm_code_len-1, SDT_MEMERA, SEL_KPL, 1, 0);
+			   (void *)ISA_HOLE_VADDR(ap->apm_code32_base),
+			   ap->apm_code_len-1, SDT_MEMERA, SEL_KPL, 1, 0);
 		setsegment(&dynamic_gdt[GAPM16CODE_SEL].sd,
-			   (void *)ISA_HOLE_VADDR(ba->apm_code16_base),
-			   ba->apm_code_len-1, SDT_MEMERA, SEL_KPL, 0, 0);
+			   (void *)ISA_HOLE_VADDR(ap->apm_code16_base),
+			   ap->apm_code_len-1, SDT_MEMERA, SEL_KPL, 0, 0);
 		setsegment(&dynamic_gdt[GAPMDATA_SEL].sd,
-			   (void *)ISA_HOLE_VADDR(ba->apm_data_base),
-			   ba->apm_data_len-1, SDT_MEMRWA, SEL_KPL, 1, 0);
+			   (void *)ISA_HOLE_VADDR(ap->apm_data_base),
+			   ap->apm_data_len-1, SDT_MEMRWA, SEL_KPL, 1, 0);
 #if defined(DEBUG) || defined(APMDEBUG)
 		printf(": flags %x code 32:%x/%x 16:%x/%x %x "
 		       "data %x/%x/%x ep %x (%x:%x)\n%s", apm_flags,
-		    ba->apm_code32_base, ISA_HOLE_VADDR(ba->apm_code32_base),
-		    ba->apm_code16_base, ISA_HOLE_VADDR(ba->apm_code16_base),
-		    ba->apm_code_len,
-		    ba->apm_data_base, ISA_HOLE_VADDR(ba->apm_data_base),
-		    ba->apm_data_len,
-		    ba->apm_entry, apm_ep.seg,
-		    ba->apm_entry+ISA_HOLE_VADDR(ba->apm_code32_base),
+		    ap->apm_code32_base, ISA_HOLE_VADDR(ap->apm_code32_base),
+		    ap->apm_code16_base, ISA_HOLE_VADDR(ap->apm_code16_base),
+		    ap->apm_code_len,
+		    ap->apm_data_base, ISA_HOLE_VADDR(ap->apm_data_base),
+		    ap->apm_data_len,
+		    ap->apm_entry, apm_ep.seg,
+		    ap->apm_entry+ISA_HOLE_VADDR(ap->apm_code32_base),
 		    sc->sc_dev.dv_xname);
 #endif
 		apm_set_ver(sc);

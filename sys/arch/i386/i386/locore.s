@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.35 1997/10/19 06:34:22 mickey Exp $	*/
+/*	$OpenBSD: locore.s,v 1.36 1997/10/22 23:37:12 mickey Exp $	*/
 /*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
 
 /*-
@@ -43,7 +43,6 @@
 #include "npx.h"
 #include "assym.h"
 #include "apm.h"
-#include "bios.h"
 #include "pctr.h"
 
 #include <sys/errno.h>
@@ -154,10 +153,9 @@
 
 	.globl	_cpu,_cpu_vendor,_cold,_cnvmem,_extmem,_esym
 	.globl	_boothowto,_bootdev,_atdevbase
-	.globl	_bootapiver,_proc0paddr,_curpcb,_PTDpaddr,_dynamic_gdt
-#if NBIOS > 0
-	.globl	_BIOS_vars
-#endif
+	.globl	_proc0paddr,_curpcb,_PTDpaddr,_dynamic_gdt
+	.globl	_bootapiver, _bootargc, _bootargv
+
 _cpu:		.long	0	# are we 386, 386sx, 486, 586 or 686
 _cpu_vendor:	.space	16	# vendor string returned by `cpuid' instruction
 _cold:		.long	1	# cold till we are not
@@ -165,7 +163,9 @@ _esym:		.long	0	# ptr to end of syms
 _cnvmem:	.long	0	# conventional memory size
 _extmem:	.long	0	# extended memory size
 _atdevbase:	.long	0	# location of start of iomem in virtual
-_bootapiver:	.long	0
+_bootapiver:	.long	0	# /boot API version
+_bootargc:	.long	0	# /boot argc
+_bootargv:	.long	0	# /boot argv
 _proc0paddr:	.long	0
 _PTDpaddr:	.long	0	# paddr of PTD, for libkvm
 
@@ -203,16 +203,10 @@ start:	movw	$0x1234,0x472			# warm boot
 
 	movl	12(%esp),%eax
 	movl	%eax,RELOC(_bootapiver)
-#if NBIOS > 0
-	orl	%eax, %eax
-	jz	1f	/* old boots */
-	movl	28(%esp), %esi
-	movl	$RELOC(_BIOS_vars), %edi
-	movl	32(%esp), %ecx
-	cld
-	rep;	movsb
-1:
-#endif /* NBIOS */
+	movl	28(%esp), %eax
+	movl	%eax, RELOC(_bootargc)
+	movl	32(%esp), %eax
+	movl	%eax, RELOC(_bootargv)
 
 	/* First, reset the PSL. */
 	pushl	$PSL_MBO

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bios.c,v 1.10 1997/10/19 06:34:21 mickey Exp $	*/
+/*	$OpenBSD: bios.c,v 1.11 1997/10/22 23:37:11 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -32,17 +32,22 @@
  *
  */
 
+/* #define BIOS_DEBUG */
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/errno.h>
 #include <sys/proc.h>
+#include <sys/malloc.h>
+#include <sys/reboot.h>
 
 #include <vm/vm.h>
 #include <sys/sysctl.h>
 
 #include <dev/cons.h>
+#include <stand/boot/bootarg.h>
 
 #include <machine/cpu.h>
 #include <machine/pio.h>
@@ -58,22 +63,13 @@
 
 #include "apm.h"
 
-#define LMVAS (1024*1024-NBPG)
-#define LMVOF NBPG
-
-int gdt_get_slot __P((void));
-
 struct bios_softc {
 	struct	device sc_dev;
-
-	bus_space_handle_t bt;
 };
 
 int biosprobe __P((struct device *, void *, void *));
 void biosattach __P((struct device *, struct device *, void *));
-void bios_init __P((bus_space_handle_t));
 int bios_print __P((void *, const char *));
-static __inline int bios_call __P((u_int cmd, u_int arg));
 
 struct cfattach bios_ca = {
 	sizeof(struct bios_softc), biosprobe, biosattach
@@ -83,57 +79,14 @@ struct cfdriver bios_cd = {
 	NULL, "bios", DV_DULL
 };
 
-int bios_initted = 0;
-int bios_ds, bios_cs16;
-bus_space_handle_t bios_lmva;
-struct {
-	u_int32_t ip;
-	u_int16_t cs;
-} bios_kentry;
-struct BIOS_vars BIOS_vars;
+extern bus_addr_t bootargv;
+extern int bootargc;
+extern u_int bootapiver; /* locore.s */
+extern dev_t bootdev;
 
-static __inline int
-bios_call(cmd, arg)
-	u_int cmd;
-	u_int arg;
-{
-	int rv;
-	__asm volatile ("pushl %1\n\t"
-			"pushl %2\n\t"
-			"pushl %%ds\n\t"
-			"movl  %4, %%ds\n\t"
-			"movl  %4, %%es\n\t"
-			"movl  %4, %%gs\n\t"
-			"movl  %4, %%fs\n\t"
-			"lcall %%cs:(%3)\n\t"
-			"popl  %%ds\n\t"
-			"addl $8, %%esp"
-			: "=a" (rv)
-			: "id" (cmd), "r" (arg),
-			  "r" (&bios_kentry), "r" (bios_ds));
-	return rv;
-}
+bios_diskinfo_t *bios_diskinfo;
 
-void
-bios_init(bt)
-	bus_space_handle_t bt;
-{
-	if (bios_initted)
-		return;
-
-	if (bus_space_map(bt, LMVOF, LMVAS, 0, &bios_lmva) == 0) {
-		extern union descriptor *dynamic_gdt;
-
-		setsegment(&dynamic_gdt[bios_kentry.cs = gdt_get_slot()].sd,
-			   (void*)bios_lmva, LMVAS, SDT_MEMERA, SEL_KPL, 1, 0);
-		setsegment(&dynamic_gdt[bios_ds = gdt_get_slot()].sd,
-			   (void*)bios_lmva, LMVAS, SDT_MEMRWA, SEL_KPL, 1, 0);
-		setsegment(&dynamic_gdt[bios_cs16 = gdt_get_slot()].sd,
-			   (void*)bios_lmva, LMVAS, SDT_MEMERA, SEL_KPL, 0, 0);
-
-		bios_initted++;
-	}
-}
+bios_diskinfo_t *bios_getdiskinfo __P((dev_t));
 
 int
 biosprobe(parent, match, aux)
@@ -141,21 +94,31 @@ biosprobe(parent, match, aux)
 	void *match, *aux;
 {
 	struct bios_attach_args *bia = aux;
-	extern u_int bootapiver; /* locore.s */
+	bus_space_handle_t hsp;
+	int error;
 
-	if (bootapiver == 0)
+#ifdef BIOS_DEBUG
+	printf("%s%d: boot API ver %x, %x; args %p[%d]\n",
+	       bia->bios_dev, bios_cd.cd_ndevs,
+	       bootapiver, BOOT_APIVER, bootargv, bootargc);
+#endif
+	/* there could be only one */
+	if (bios_cd.cd_ndevs || strcmp(bia->bios_dev, bios_cd.cd_name))
 		return 0;
 
-#if 0
-	if (!bios_initted) {
-		bus_space_handle_t hsp;
+	if (bootapiver < BOOT_APIVER || bootargv == NULL)
+		return 0;
 
-		if (bus_space_map(bia->bios_memt, LMVOF, LMVAS, 0, &hsp) != 0)
-			return 0;
-		bus_space_unmap(bia->bios_memt, hsp, LMVAS);
-	}
+	if ((error = bus_space_map(bia->bios_memt,
+				   bootargv, bootargc, 1, &hsp)) != 0) {
+#ifdef DEBUG
+		printf("bios0: bus_space_map() == %d\n", error);
 #endif
-	return !bios_cd.cd_ndevs && !strcmp(bia->bios_dev, "bios");
+		return 0;
+	}
+	bus_space_unmap(bia->bios_memt, hsp, bootargc);
+
+	return 1;
 }
 
 void
@@ -165,44 +128,69 @@ biosattach(parent, self, aux)
 {
 	struct bios_softc *sc = (void *) self;
 	struct bios_attach_args *bia = aux;
-
+#if NAPM > 0 || defined(DEBUG)
+	bios_apminfo_t *apm;
+#endif
 	u_int8_t *va = ISA_HOLE_VADDR(0xffff0);
-	char *p;
+	char *str;
+	bus_space_handle_t hsp;
+	bootarg_t *p, *q;
 
-	sc->bt = bia->bios_memt;
-	/* bios_init(sc->bt); */
+	if (bus_space_map(bia->bios_memt, bootargv, bootargc, 1, &hsp) != 0) {
+#ifdef DEBUG
+		panic("getbootargs: can't map low memory");
+#endif
+		return;
+	}
+
 	switch (va[14]) {
 	default:
-	case 0xff: p = "PC";		break;
-	case 0xfe: p = "PC/XT";		break;
-	case 0xfd: p = "PCjr";		break;
-	case 0xfc: p = "AT/286+";	break;
-	case 0xfb: p = "PC/XT+";	break;
-	case 0xfa: p = "PS/2 25/30";	break;
-	case 0xf9: p = "PC Convertible";break;
-	case 0xf8: p = "PS/2 386+";	break;
+	case 0xff: str = "PC";		break;
+	case 0xfe: str = "PC/XT";	break;
+	case 0xfd: str = "PCjr";	break;
+	case 0xfc: str = "AT/286+";	break;
+	case 0xfb: str = "PC/XT+";	break;
+	case 0xfa: str = "PS/2 25/30";	break;
+	case 0xf9: str = "PC Convertible";break;
+	case 0xf8: str = "PS/2 386+";	break;
 	}
 	printf(": %s(%02x) BIOS, date %c%c/%c%c/%c%c\n",
-	    p, va[15], va[5], va[6], va[8], va[9], va[11], va[12]);
+	       str, va[15], va[5], va[6], va[8], va[9], va[11], va[12]);
+
+	printf("%s:", sc->sc_dev.dv_xname);
+	p = (bootarg_t *)hsp;
+	for(q = p; q->ba_type != BOOTARG_END; q = q->ba_next) {
+		q->ba_next = (bootarg_t *)((caddr_t)q + q->ba_size);
+		switch (q->ba_type) {
+		case BOOTARG_MEMMAP:
+			printf(" memmap");
+			break;
+		case BOOTARG_DISKINFO:
+			printf(" diskinfo");
+			bios_diskinfo = (bios_diskinfo_t *)q->ba_arg;
+			break;
+		case BOOTARG_APMINFO:
+			printf(" apminfo");
+			apm = (bios_apminfo_t *)q->ba_arg;
+			break;
+		default:
+		}
+	}
+	printf("\n");
+
 #ifdef DEBUG
 	printf("apminfo: %x, code %x/%x[%x], data %x[%x], entry %x\n",
-	    BIOS_vars.bios_apm_detail, BIOS_vars.bios_apm_code32_base,
-	    BIOS_vars.bios_apm_code16_base, BIOS_vars.bios_apm_code_len,
-	    BIOS_vars.bios_apm_data_base, BIOS_vars.bios_apm_data_len,
-	    BIOS_vars.bios_apm_entry);
+	       apm->apm_detail, apm->apm_code32_base,
+	       apm->apm_code16_base, apm->apm_code_len,
+	       apm->apm_data_base, apm->apm_data_len, apm->apm_entry);
 #endif
 #if NAPM > 0
 	{
 		struct bios_attach_args ba;
 
-		ba.apm_detail = BIOS_vars.bios_apm_detail;
-		ba.apm_code32_base = BIOS_vars.bios_apm_code32_base;
-		ba.apm_code16_base = BIOS_vars.bios_apm_code16_base;
-		ba.apm_code_len = BIOS_vars.bios_apm_code_len;
-		ba.apm_data_base = BIOS_vars.bios_apm_data_base;
-		ba.apm_data_len = BIOS_vars.bios_apm_data_len;
-		ba.apm_entry = BIOS_vars.bios_apm_entry;
+		ba.bios_apmp = apm;
 		ba.bios_dev = "apm";
+		ba.bios_func = 0x15;
 		config_found(self, &ba, bios_print);
 	}
 #endif
@@ -216,7 +204,8 @@ bios_print(aux, pnp)
 	struct bios_attach_args *ba = aux;
 
 	if (pnp)
-		printf("%s at %s", ba->bios_dev, pnp);
+		printf("%s at %s function 0x%x",
+		       ba->bios_dev, pnp, ba->bios_func);
 	return (UNCONF);
 }
 
@@ -281,7 +270,7 @@ bioscnprobe(cn)
 {
 #if 0
 	bios_init(I386_BUS_SPACE_MEM); /* XXX */
-	if (!bios_initted)
+	if (!bios_cd.cd_ndevs)
 		return;
 
 	if (0 && bios_call(BOOTC_CHECK, NULL))
@@ -331,20 +320,31 @@ bios_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	size_t newlen;
 	struct proc *p;
 {
-	extern u_int cnvmem, extmem, bootapiver; /* locore.s */
+	extern u_int cnvmem, extmem; /* locore.s */
+	bios_diskinfo_t *pdi;
+	int biosdev;
 
 	/* all sysctl names at this level are terminal */
-	if (namelen != 1)
+	if (namelen != 1 && name[0] != BIOS_DISKINFO)
 		return (ENOTDIR);		/* overloaded */
-
-	if (bootapiver == 0)
-		return EOPNOTSUPP;
 
 	switch (name[0]) {
 	case BIOS_DEV:
-		return sysctl_rdint(oldp, oldlenp, newp, BIOS_vars.bios_dev);
-	case BIOS_GEOMETRY:
-		return sysctl_rdint(oldp, oldlenp, newp, BIOS_vars.bios_geometry);
+		if (bootapiver < BOOT_APIVER)
+			return EOPNOTSUPP;
+		if ((pdi = bios_getdiskinfo(bootdev)) == NULL)
+			return ENXIO;
+		biosdev = pdi->bios_number;
+		return sysctl_rdint(oldp, oldlenp, newp, biosdev);
+	case BIOS_DISKINFO:
+		if (namelen != 2)
+			return ENOTDIR;
+		if (bootapiver < BOOT_APIVER)
+			return EOPNOTSUPP;
+		if ((pdi = bios_getdiskinfo(name[1])) == NULL)
+			return ENXIO;
+		return sysctl_rdstruct(oldp, oldlenp, newp,
+					pdi, sizeof(*bios_diskinfo));
 	case BIOS_CNVMEM:
 		return sysctl_rdint(oldp, oldlenp, newp, cnvmem);
 	case BIOS_EXTMEM:
@@ -354,3 +354,26 @@ bios_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	}
 	/* NOTREACHED */
 }
+
+bios_diskinfo_t *
+bios_getdiskinfo(dev)
+	dev_t dev;
+{
+	bios_diskinfo_t *pdi;
+
+	for (pdi = bios_diskinfo; pdi->bios_number != -1; pdi++) {
+		if ((dev & B_MAGICMASK) == B_DEVMAGIC) { /* search by bootdev */
+			if (pdi->bsd_dev == dev)
+				break;
+		} else {
+			if (pdi->bios_number == dev)
+				break;
+		}
+	}
+
+	if (pdi->bios_number == -1)
+		return NULL;
+	else
+		return pdi;
+}
+
