@@ -1,4 +1,4 @@
-/*	$Id: siopreg.h,v 1.2 1995/11/07 08:49:33 deraadt Exp $ */
+/*	$OpenBSD: siopreg.h,v 1.3 1996/04/28 11:03:32 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt

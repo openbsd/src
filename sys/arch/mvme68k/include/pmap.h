@@ -1,4 +1,4 @@
-/*	$Id: pmap.h,v 1.2 1995/11/07 08:49:57 deraadt Exp $ */
+/*	$OpenBSD: pmap.h,v 1.3 1996/04/28 10:56:25 deraadt Exp $ */
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University

@@ -1,3 +1,3 @@
-/*	$Id: asm.h,v 1.2 1995/11/07 08:49:45 deraadt Exp $ */
+/*	$OpenBSD: asm.h,v 1.3 1996/04/28 10:56:02 deraadt Exp $ */
 
 #include <m68k/asm.h>

@@ -1,4 +1,4 @@
-/*	$Id: exec.h,v 1.2 1995/11/07 08:49:50 deraadt Exp $ */
+/*	$OpenBSD: exec.h,v 1.3 1996/04/28 10:56:16 deraadt Exp $ */
 
 /*
  * Copyright (c) 1993 Christopher G. Demetriou

@@ -1,4 +1,4 @@
-/*	$Id: siopvar.h,v 1.3 1996/02/03 18:31:12 chuck Exp $ */
+/*	$OpenBSD: siopvar.h,v 1.4 1996/04/28 11:03:33 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt

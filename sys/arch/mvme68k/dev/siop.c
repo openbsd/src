@@ -1,4 +1,4 @@
-/*	$Id: siop.c,v 1.4 1996/02/03 18:31:10 chuck Exp $ */
+/*	$OpenBSD: siop.c,v 1.5 1996/04/28 11:03:30 deraadt Exp $ */
 
 /*
  * Copyright (c) 1994 Michael L. Hitch

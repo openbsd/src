@@ -1,4 +1,4 @@
-/*	$Id: sys_machdep.c,v 1.4 1995/11/28 01:24:16 deraadt Exp $ */
+/*	$OpenBSD: sys_machdep.c,v 1.5 1996/04/28 10:59:13 deraadt Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1993

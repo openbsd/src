@@ -1,4 +1,4 @@
-/*	$Id: varargs.h,v 1.2 1995/11/07 08:50:07 deraadt Exp $ */
+/*	$OpenBSD: varargs.h,v 1.3 1996/04/28 10:56:36 deraadt Exp $ */
 
 /* Just use the common m68k definition */
 #include <m68k/varargs.h>

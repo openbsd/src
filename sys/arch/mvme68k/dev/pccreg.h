@@ -1,4 +1,4 @@
-/*	$Id: pccreg.h,v 1.2 1995/11/07 08:49:21 deraadt Exp $ */
+/*	$OpenBSD: pccreg.h,v 1.3 1996/04/28 11:03:27 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt

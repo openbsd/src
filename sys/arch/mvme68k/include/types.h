@@ -1,4 +1,4 @@
-/*	$Id: types.h,v 1.2 1995/11/07 08:50:06 deraadt Exp $ */
+/*	$OpenBSD: types.h,v 1.3 1996/04/28 10:56:35 deraadt Exp $ */
 
 #ifndef _MACHINE_TYPES_H_
 #define _MACHINE_TYPES_H_

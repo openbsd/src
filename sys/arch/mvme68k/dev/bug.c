@@ -1,4 +1,4 @@
-/*	$Id: bug.c,v 1.2 1995/11/07 08:48:49 deraadt Exp $ */
+/*	$OpenBSD: bug.c,v 1.3 1996/04/28 11:03:18 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Dale Rahn.

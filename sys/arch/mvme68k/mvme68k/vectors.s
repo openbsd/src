@@ -1,4 +1,4 @@
-/*	$Id: vectors.s,v 1.2 1995/11/07 08:50:28 deraadt Exp $ */
+/*	$OpenBSD: vectors.s,v 1.3 1996/04/28 10:59:17 deraadt Exp $ */
 
 | Copyright (c) 1995 Theo de Raadt
 |

@@ -1,3 +1,5 @@
+/*	$OpenBSD: disklabel.h,v 1.2 1996/04/28 10:56:12 deraadt Exp $ */
+
 /*
  * Copyright (c) 1995 Dale Rahn.
  * All rights reserved.

@@ -1,3 +1,5 @@
+/*	$OpenBSD: disksubr.c,v 1.4 1996/04/28 10:58:59 deraadt Exp $ */
+
 /*
  * Copyright (c) 1995 Dale Rahn.
  * All rights reserved.

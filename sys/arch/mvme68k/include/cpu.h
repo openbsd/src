@@ -1,4 +1,4 @@
-/*	$Id: cpu.h,v 1.3 1995/12/21 14:40:36 deraadt Exp $ */
+/*	$OpenBSD: cpu.h,v 1.4 1996/04/28 10:56:07 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt

@@ -1,4 +1,4 @@
-/*	$Id: pmap_bootstrap.c,v 1.2 1995/11/07 08:50:24 deraadt Exp $ */
+/*	$OpenBSD: pmap_bootstrap.c,v 1.3 1996/04/28 10:59:08 deraadt Exp $ */
 
 /* 
  * Copyright (c) 1995 Theo de Raadt

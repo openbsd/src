@@ -1,4 +1,4 @@
-/*	$Id: mem.c,v 1.3 1995/11/30 22:52:05 deraadt Exp $ */
+/*	$OpenBSD: mem.c,v 1.4 1996/04/28 10:59:03 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt

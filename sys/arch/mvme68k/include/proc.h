@@ -1,4 +1,4 @@
-/*	$Id: proc.h,v 1.3 1995/11/28 20:43:07 deraadt Exp $ */
+/*	$OpenBSD: proc.h,v 1.4 1996/04/28 10:56:25 deraadt Exp $ */
 
 /*
  * Copyright (c) 1991, 1993

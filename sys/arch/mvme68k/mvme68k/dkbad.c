@@ -1,4 +1,4 @@
-/*	$Id: dkbad.c,v 1.2 1995/11/07 08:50:17 deraadt Exp $ */
+/*	$OpenBSD: dkbad.c,v 1.3 1996/04/28 10:59:00 deraadt Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993

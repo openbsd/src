@@ -1,4 +1,4 @@
-/*	$Id: mcreg.h,v 1.2 1995/11/07 08:49:10 deraadt Exp $ */
+/*	$OpenBSD: mcreg.h,v 1.3 1996/04/28 11:03:24 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt

@@ -1,4 +1,4 @@
-/*	$Id: prom.h,v 1.2 1995/11/07 08:49:59 deraadt Exp $ */
+/*	$OpenBSD: prom.h,v 1.3 1996/04/28 10:56:27 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -64,7 +64,7 @@
 #define ENVIRONTYPE_NETBOOT	4
 #define ENVIRONTYPE_MEMSIZE	5
 
-#ifndef LOCORE
+#ifndef _LOCORE
 struct prom_netctrl {
 	u_char	dev;
 	u_char	ctrl;

@@ -1,4 +1,4 @@
-/*	$Id: autoconf.h,v 1.2 1995/11/07 08:49:46 deraadt Exp $ */
+/*	$OpenBSD: autoconf.h,v 1.3 1996/04/28 10:56:03 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
