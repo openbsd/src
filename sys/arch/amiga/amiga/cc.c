@@ -1,4 +1,4 @@
-/*	$OpenBSD: cc.c,v 1.4 1996/05/02 06:43:12 niklas Exp $	*/
+/*	$OpenBSD: cc.c,v 1.5 1996/06/04 12:48:14 niklas Exp $	*/
 /*	$NetBSD: cc.c,v 1.9 1996/04/21 21:06:50 veego Exp $	*/
 
 /*
@@ -43,6 +43,8 @@
 #else
 #define INLINE
 #endif
+
+void	defchannel_handler __P((int));
 
 /* init all the "custom chips" */
 void
@@ -339,7 +341,6 @@ void
 cc_init_audio()
 {
 	int i;
-	extern int defchannel_handler();
 
 	/*
 	 * disable all audio interupts
@@ -420,6 +421,7 @@ out:
  * other software modules are free to install their own
  * handler
  */
+void
 defchannel_handler(i)
 	int i;
 {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cc.h,v 1.3 1996/05/02 06:43:13 niklas Exp $	*/
+/*	$OpenBSD: cc.h,v 1.4 1996/06/04 12:48:15 niklas Exp $	*/
 /*	$NetBSD: cc.h,v 1.7 1996/04/21 21:06:52 veego Exp $	*/
 
 /*
@@ -148,7 +148,7 @@ vm_offset_t chipmem_end;
 #define CHIPMEMTOP	(0x00200000)
 #define NCHIPMEMPG	btoc(CHIPMEMTOP - CHIPMEMBASE)
 
-typedef int (*handler_func_t)();
+typedef void (*handler_func_t) __P((int));
 
 /*
  * Prototypes.
