@@ -326,9 +326,15 @@ SendBootRepl(req, rconn, filelist)
 	/*
 	 *  Copy file name to `filepath' string, and into reply packet.
 	 */
-	src = &req->r_brq.rmp_flnm;
 	dst1 = filepath;
 	dst2 = &rpl->r_brpl.rmp_flnm;
+	if (req->r_brq.rmp_flnmsize)
+		src = &req->r_brq.rmp_flnm;
+	else {
+		/* no file supplied, substitute the first one */
+		src = filelist[0];
+		req->r_brq.rmp_flnmsize = strlen(src);
+	}
 	for (i = 0; i < req->r_brq.rmp_flnmsize; i++)
 		*dst1++ = *dst2++ = *src++;
 	*dst1 = '\0';
