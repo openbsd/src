@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ne.4,v 1.8 2001/10/05 14:45:53 mpech Exp $
+.\"	$OpenBSD: ne.4,v 1.9 2002/03/18 20:46:07 miod Exp $
 .\"	$NetBSD: ne.4,v 1.4 1998/02/22 05:21:20 enami Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -43,7 +43,9 @@
 .Nm ne
 .Nd NE2000 and compatible Ethernet driver
 .Sh SYNOPSIS
-.Cd "ne0 at isa? port 0x300 irq 9"
+.Cd "ne0 at isa? port 0x240 irq 9"
+.Cd "ne1 at isa? port 0x300 irq 10"
+.Cd "ne2 at isa? port 0x280 irq 9"
 .Cd "ne* at isapnp?"
 .Cd "ne* at pci? dev ? function ?"
 .Cd "ne* at pcmcia? function ?"
