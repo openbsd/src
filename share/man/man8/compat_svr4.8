@@ -1,4 +1,4 @@
-.\"	$OpenBSD: compat_svr4.8,v 1.3 1998/01/02 08:51:30 deraadt Exp $
+.\"	$OpenBSD: compat_svr4.8,v 1.4 1998/07/21 21:50:28 deraadt Exp $
 .\"	$NetBSD: compat_svr4.8,v 1.1 1996/07/06 17:14:50 christos Exp $
 .\"
 .\" Copyright (c) 1996 Christos Zoulas
@@ -115,6 +115,14 @@ Setup the configuration files and devices:
 .Pp
 An alternative method is to mount a whole svr4 partition in /emul/svr4
 and then override with other mounts /emul/svr4/etc and /emul/svr4/dev.
+.Pp
+Clearly, you cannot use a complete SVR4
+.Pa /dev
+directory as
+.Pa /emul/svr4/dev ,
+because other device nodes, such as
+.Pa /dev/null ,
+need to be OpenBSD device nodes).
 .Sh BUGS
 Many system calls are still not emulated.
 
