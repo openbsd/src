@@ -1,4 +1,4 @@
-/*	$OpenBSD: yppush.h,v 1.6 2002/07/19 02:38:40 deraadt Exp $ */
+/*	$OpenBSD: yppush.h,v 1.7 2002/09/06 18:40:02 deraadt Exp $ */
 
 /*
  * Copyright (c) 1996 Mats O Jansson <moj@stacken.kth.se>
@@ -52,7 +52,7 @@ enum yppush_status {
 	YPPUSH_CLEAR = -11,
 	YPPUSH_FORCE = -12,
 	YPPUSH_XFRERR = -13,
-	YPPUSH_REFUSED = -14,
+	YPPUSH_REFUSED = -14
 };
 typedef enum yppush_status yppush_status;
 
