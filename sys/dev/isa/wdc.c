@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdc.c,v 1.19 1997/07/04 17:02:04 downsj Exp $	*/
+/*	$OpenBSD: wdc.c,v 1.20 1997/07/04 19:17:56 downsj Exp $	*/
 /*	$NetBSD: wd.c,v 1.150 1996/05/12 23:54:03 mycroft Exp $ */
 
 /*
@@ -100,6 +100,8 @@ struct cfdriver wdc_cd = {
 	NULL, "wdc", DV_DULL
 };
 
+enum wdcreset_mode { WDCRESET_VERBOSE, WDCRESET_SILENT };
+
 #if NWD > 0
 int	wdc_ata_intr	__P((struct wdc_softc *,struct wdc_xfer *));
 void	wdc_ata_start	__P((struct wdc_softc *,struct wdc_xfer *));
@@ -109,7 +111,7 @@ __inline static void u_int16_to_string __P((u_int16_t *, char *, size_t));
 int	wait_for_phase	__P((struct wdc_softc *, int));
 int	wait_for_unphase __P((struct wdc_softc *, int));
 void	wdcstart	__P((struct wdc_softc *));
-int	wdcreset	__P((struct wdc_softc *));
+int	wdcreset	__P((struct wdc_softc *, enum wdcreset_mode));
 void	wdcrestart	__P((void *arg));
 void	wdcunwedge	__P((struct wdc_softc *));
 void	wdctimeout	__P((void *arg));
@@ -175,10 +177,20 @@ wdcprobe(parent, match, aux)
 		wdc->sc_flags |= WDCF_ONESLAVE;
 	}
 
-	if (wdcreset(wdc) != 0) {
-		delay(500000);
-		if (wdcreset(wdc) != 0)
-			goto nomatch;
+	if (wdcreset(wdc, WDCRESET_SILENT) != 0) {
+		/*
+		 * if the reset failed,, there is no master. test for ATAPI
+		 * signature on the salve device. If no ATAPI slave, wait 5s
+		 * and retry a reset.
+		 */
+		bus_space_write_1(iot, ioh, wd_sdh, WDSD_IBM | 0x10);	/* slave */
+		if (bus_space_read_1(iot, ioh, wd_cyl_lo) != 0x14 ||
+		    bus_space_read_1(iot, ioh, wd_cyl_hi) != 0xeb) {
+			delay(500000);
+			if (wdcreset(wdc, WDCRESET_SILENT) != 0)
+				goto nomatch;
+		}
+		wdc->sc_flags |= WDCF_ONESLAVE;
 	}
 
 	/* Select drive 0 or ATAPI slave device */
@@ -233,6 +245,8 @@ wdcattach(parent, self, aux)
 #if NWD > 0
 	int drive;
 #endif	/* NWD */
+	bus_space_tag_t iot = wdc->sc_iot;
+	bus_space_handle_t ioh = wdc->sc_ioh;
 
 	TAILQ_INIT(&wdc->sc_xfer);
 	wdc->sc_drq = ia->ia_drq;
@@ -268,6 +282,12 @@ wdcattach(parent, self, aux)
 	 * Attach standard IDE/ESDI/etc. disks to the controller.
 	 */
 	for (drive = 0; drive < 2; drive++) {
+		/* test for ATAPI signature on this drive */
+		bus_space_write_1(iot, ioh, wd_sdh, WDSD_IBM | (drive << 4));
+		if (bus_space_read_1(iot, ioh, wd_cyl_lo) == 0x14 &&
+		    bus_space_read_1(iot, ioh, wd_cyl_hi) == 0xeb) {
+			continue;
+		}
 		/* controller active while autoconf */
 		wdc->sc_flags |= WDCF_ACTIVE;
 
@@ -1126,7 +1146,7 @@ wdc_atapi_get_params(ab_link, drive, id)
 
 	wdc->sc_flags |= WDCF_ACTIVE;
 	error = 1;
-	(void)wdcreset(wdc);
+	(void)wdcreset(wdc, WDCRESET_VERBOSE);
 	if ((status = wdccommand((struct wd_link*)ab_link,
 	    ATAPI_SOFT_RESET, drive, 0, 0, 0, 0)) != 0) {
 #ifdef ATAPI_DEBUG
@@ -1543,8 +1563,9 @@ wdcintr(arg)
 }
 
 int
-wdcreset(wdc)
+wdcreset(wdc, mode)
 	struct wdc_softc *wdc;
+	enum wdcreset_mode mode;
 {
 	bus_space_tag_t iot = wdc->sc_iot;
 	bus_space_handle_t ioh = wdc->sc_ioh;
@@ -1557,7 +1578,7 @@ wdcreset(wdc)
 	(void) bus_space_read_1(iot, ioh, wd_error);
 	bus_space_write_1(iot, ioh, wd_ctlr, WDCTL_4BIT);
 
-	if (wait_for_unbusy(wdc) < 0) {
+	if ((wait_for_unbusy(wdc) < 0) && mode != WDCRESET_SILENT) {
 		printf("%s: reset failed\n", wdc->sc_dev.dv_xname);
 		return 1;
 	}
@@ -1596,7 +1617,7 @@ wdcunwedge(wdc)
 
 	untimeout(wdctimeout, wdc);
 	wdc->sc_flags &= ~WDCF_IRQ_WAIT;
-	(void) wdcreset(wdc);
+	(void) wdcreset(wdc, WDCRESET_VERBOSE);
 
 	/* Schedule recalibrate for all drives on this controller. */
 	for (unit = 0; unit < 2; unit++) {
