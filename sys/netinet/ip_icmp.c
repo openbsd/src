@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.4 1996/05/07 15:20:23 mickey Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.5 1996/05/09 14:33:32 mickey Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -120,7 +120,7 @@ icmp_error(n, type, code, dest, destifp)
 	m = m_gethdr(M_DONTWAIT, MT_HEADER);
 	if (m == NULL)
 		goto freeit;
-	icmplen = oiplen + oip->ip_len;
+	icmplen = oiplen + min(8,oip->ip_len);
 	m->m_len = icmplen + ICMP_MINLEN;
 	MH_ALIGN(m, m->m_len);
 	icp = mtod(m, struct icmp *);
