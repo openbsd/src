@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ether.c,v 1.40 2002/06/09 16:26:10 itojun Exp $  */
+/*	$OpenBSD: ip_ether.c,v 1.41 2002/10/15 14:52:46 jason Exp $  */
 /*
  * The author of this code is Angelos D. Keromytis (kermit@adk.gr)
  *
@@ -23,7 +23,7 @@
  */
 
 /*
- * Ethernet-inside-IP processing
+ * Ethernet-inside-IP processing (RFC3378).
  */
 
 #include "bridge.h"
