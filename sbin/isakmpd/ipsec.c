@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsec.c,v 1.89 2004/04/15 18:39:25 deraadt Exp $	 */
+/* $OpenBSD: ipsec.c,v 1.90 2004/05/19 14:30:26 ho Exp $	 */
 /* $EOM: ipsec.c,v 1.143 2000/12/11 23:57:42 niklas Exp $	 */
 
 /*
@@ -1699,6 +1699,49 @@ ipsec_keymat_length(struct proto * proto)
 	}
 }
 
+/* Helper function for ipsec_get_id().  */
+static int
+ipsec_get_proto_port(char *section, u_int8_t *tproto, u_int16_t *port)
+{
+	struct protoent	*pe = NULL;
+	struct servent	*se;
+	char	*pstr;
+	
+	pstr = conf_get_str(section, "Protocol");
+	if (!pstr) {
+		*tproto = 0;
+		return 0;
+	}
+	*tproto = (u_int8_t)atoi(pstr);
+	if (!*tproto) {
+		pe = getprotobyname(pstr);
+		if (pe)
+			*tproto = pe->p_proto;
+	}
+	if (!*tproto) {
+		log_print("ipsec_get_proto_port: protocol \"%s\" unknown",
+		    pstr);
+		return -1;
+	}
+
+	pstr = conf_get_str(section, "Port");
+	if (!pstr)
+		return 0;
+	*port = (u_int16_t)atoi(pstr);
+	if (!*port) {
+		se = getservbyname(pstr,
+		    pe ? pe->p_name : (pstr ? pstr : NULL));
+		if (se)
+			*port = se->s_port;
+	}
+	if (!*port) {
+		log_print("ipsec_get_proto_port: port \"%s\" unknown",
+		    pstr);
+		return -1;
+	}
+	return 0;
+}
+
 /*
  * Out of a named section SECTION in the configuration file find out
  * the network address and mask as well as the ID type.  Put the info
@@ -1706,14 +1749,15 @@ ipsec_keymat_length(struct proto * proto)
  * Return 0 on success and -1 on failure.
  */
 int
-ipsec_get_id(char *section, int *id, struct sockaddr ** addr,
-	     struct sockaddr ** mask, u_int8_t * tproto, u_int16_t * port)
+ipsec_get_id(char *section, int *id, struct sockaddr **addr,
+    struct sockaddr **mask, u_int8_t *tproto, u_int16_t *port)
 {
-	char           *type, *address, *netmask;
+	char	*type, *address, *netmask;
 
 	type = conf_get_str(section, "ID-type");
 	if (!type) {
-		log_print("ipsec_get_id: section %s has no \"ID-type\" tag", section);
+		log_print("ipsec_get_id: section %s has no \"ID-type\" tag",
+		    section);
 		return -1;
 	}
 	*id = constant_value(ipsec_id_cst, type);
@@ -1722,19 +1766,16 @@ ipsec_get_id(char *section, int *id, struct sockaddr ** addr,
 	case IPSEC_ID_IPV6_ADDR:
 		address = conf_get_str(section, "Address");
 		if (!address) {
-			log_print("ipsec_get_id: section %s has no \"Address\" tag",
-				  section);
+			log_print("ipsec_get_id: section %s has no "
+			    "\"Address\" tag", section);
 			return -1;
 		}
 		if (text2sockaddr(address, NULL, addr)) {
-			log_print("ipsec_get_id: invalid address %s in section %s", address,
-				  section);
+			log_print("ipsec_get_id: invalid address %s in "
+			    "section %s", address, section);
 			return -1;
 		}
-		*tproto = conf_get_num(section, "Protocol", 0);
-		if (*tproto)
-			*port = conf_get_num(section, "Port", 0);
-		break;
+		return ipsec_get_proto_port(section, tproto, port);
 
 #ifdef notyet
 	case IPSEC_ID_FQDN:
@@ -1748,30 +1789,27 @@ ipsec_get_id(char *section, int *id, struct sockaddr ** addr,
 	case IPSEC_ID_IPV6_ADDR_SUBNET:
 		address = conf_get_str(section, "Network");
 		if (!address) {
-			log_print("ipsec_get_id: section %s has no \"Network\" tag",
-				  section);
+			log_print("ipsec_get_id: section %s has no "
+			    "\"Network\" tag", section);
 			return -1;
 		}
 		if (text2sockaddr(address, NULL, addr)) {
-			log_print("ipsec_get_id: invalid section %s network %s", section,
-				  address);
+			log_print("ipsec_get_id: invalid section %s "
+			    "network %s", section, address);
 			return -1;
 		}
 		netmask = conf_get_str(section, "Netmask");
 		if (!netmask) {
-			log_print("ipsec_get_id: section %s has no \"Netmask\" tag",
-				  section);
+			log_print("ipsec_get_id: section %s has no "
+			    "\"Netmask\" tag", section);
 			return -1;
 		}
 		if (text2sockaddr(netmask, NULL, mask)) {
-			log_print("ipsec_id_build: invalid section %s network %s", section,
-				  netmask);
+			log_print("ipsec_id_build: invalid section %s "
+			    "network %s", section, netmask);
 			return -1;
 		}
-		*tproto = conf_get_num(section, "Protocol", 0);
-		if (*tproto)
-			*port = conf_get_num(section, "Port", 0);
-		break;
+		return ipsec_get_proto_port(section, tproto, port);
 
 #ifdef notyet
 	case IPSEC_ID_IPV4_RANGE:
@@ -1791,8 +1829,8 @@ ipsec_get_id(char *section, int *id, struct sockaddr ** addr,
 #endif
 
 	default:
-		log_print("ipsec_get_id: unknown ID type \"%s\" in section %s", type,
-			  section);
+		log_print("ipsec_get_id: unknown ID type \"%s\" in "
+		    "section %s", type, section);
 		return -1;
 	}
 
