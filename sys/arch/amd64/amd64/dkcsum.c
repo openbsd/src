@@ -1,4 +1,4 @@
-/*	$OpenBSD: dkcsum.c,v 1.1 2004/02/25 00:16:04 deraadt Exp $	*/
+/*	$OpenBSD: dkcsum.c,v 1.2 2004/08/11 18:51:04 millert Exp $	*/
 
 /*-
  * Copyright (c) 1997 Niklas Hallqvist.  All rights reserved.
@@ -58,7 +58,7 @@ dkcsumattach(void)
 	struct device *dv;
 	struct buf *bp;
 	struct bdevsw *bdsw;
-	dev_t dev;
+	dev_t dev, pribootdev, altbootdev;
 	int error;
 	u_int32_t csum;
 	bios_diskinfo_t *bdi, *hit;
@@ -66,6 +66,8 @@ dkcsumattach(void)
 	/* do nothing if no diskinfo passed from /boot, or a bad length */
 	if (bios_diskinfo == NULL || bios_cksumlen * DEV_BSIZE > MAXBSIZE)
 		return;
+
+	pribootdev = altbootdev = 0;
 
 	/*
 	 * XXX Whatif DEV_BSIZE is changed to something else than the BIOS
@@ -164,22 +166,37 @@ dkcsumattach(void)
 			continue;
 		}
 
-		/* Fixup bootdev if units match.  This means that all of
+		/*
+		 * Fixup bootdev if units match.  This means that all of
 		 * hd*, sd*, wd*, will be interpreted the same.  Not 100%
 		 * backwards compatible, but sd* and wd* should be phased-
 		 * out in the bootblocks.
 		 */
-		if (B_UNIT(bootdev) == (hit->bios_number & 0x7F)) {
+
+		/* B_TYPE dependent hd unit counting bootblocks */ 
+		if ((B_TYPE(bootdev) == B_TYPE(hit->bsd_dev)) &&
+		    (B_UNIT(bootdev) == B_UNIT(hit->bsd_dev))) {
 			int type, ctrl, adap, part, unit;
 
-			/* Translate to MAKEBOOTDEV() style */
 			type = major(bp->b_dev);
 			adap = B_ADAPTOR(bootdev);
 			ctrl = B_CONTROLLER(bootdev);
 			unit = DISKUNIT(bp->b_dev);
 			part = B_PARTITION(bootdev);
 
-			bootdev = MAKEBOOTDEV(type, ctrl, adap, unit, part);
+			pribootdev = MAKEBOOTDEV(type, ctrl, adap, unit, part);
+		}
+		/* B_TYPE independent hd unit counting bootblocks */
+		if (B_UNIT(bootdev) == (hit->bios_number & 0x7F)) {
+			int type, ctrl, adap, part, unit;
+
+			type = major(bp->b_dev);
+			adap = B_ADAPTOR(bootdev);
+			ctrl = B_CONTROLLER(bootdev);
+			unit = DISKUNIT(bp->b_dev);
+			part = B_PARTITION(bootdev);
+
+			altbootdev = MAKEBOOTDEV(type, ctrl, adap, unit, part);
 		}
 
 		/* This will overwrite /boot's guess, just so you remember */
@@ -187,6 +204,8 @@ dkcsumattach(void)
 		    DISKUNIT(bp->b_dev), RAW_PART);
 		hit->flags |= BDI_PICKED;
 	}
+	bootdev = pribootdev ? pribootdev : altbootdev ? altbootdev : bootdev;
+
 	bp->b_flags |= B_INVAL;
 	brelse(bp);
 }
