@@ -1,4 +1,4 @@
-/*	$OpenBSD: mountd.c,v 1.10 1996/09/19 06:12:08 deraadt Exp $	*/
+/*	$OpenBSD: mountd.c,v 1.11 1996/09/28 05:47:42 downsj Exp $	*/
 /*	$NetBSD: mountd.c,v 1.31 1996/02/18 11:57:53 fvdl Exp $	*/
 
 /*
@@ -412,7 +412,7 @@ mntsrv(rqstp, transp)
 				add_mlist(inet_ntoa(transp->xp_raddr.sin_addr),
 					dirpath);
 			if (debug)
-				fprintf(stderr,"Mount successfull.\n");
+				fprintf(stderr,"Mount successful.\n");
 		} else {
 			bad = EACCES;
 			if (!svc_sendreply(transp, xdr_long, (caddr_t)&bad))
