@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.8 2004/03/25 08:38:52 tom Exp $
+dnl	$OpenBSD: hardware,v 1.9 2004/08/03 21:31:08 miod Exp $
 OpenBSD/MACHINE OSREV runs on the systems built around the following
 MVME boards:
 
@@ -15,13 +15,18 @@ compile the system, more RAM is recommended.
 
 Supported HYPERmodules: (for MVME188 systems)
 
+	1P32 (1 88100 processor, 2 88200 CMMUs, similar to MVME187)
+	1P64 (1 88100 processor, 4 88200 CMMUs)
+	1P128 (1 88100 processor, 8 88200 CMMUs, untested)
+	1P128 (1 88100 processor, 2 88204 CMMUs)
+	1P256 (1 88100 processor, 4 88204 CMMUs)
+	1P512 (1 88100 processor, 8 88204 CMMUs, untested)
 	2P64 (2 88100 processors, 4 88200 CMMUs)
+	2P128 (2 88100 processors, 8 88200 CMMUs)
 	2P256 (2 88100 processors, 4 88204 CMMUs)
+	2P512 (2 88100 processors, 8 88204 CMMUs)
 	4P128 (4 88100 processors, 8 88200 CMMUs)
 	4P512 (4 88100 processors, 8 88204 CMMUs)
-
-	The 1P64, 1P128, 2P128 and 2P512 HYPERmodules are not
-	currently supported.
 
 Supported devices:
 
