@@ -1,4 +1,4 @@
-/*	$OpenBSD: isa_machdep.c,v 1.30 1998/06/29 02:12:58 downsj Exp $	*/
+/*	$OpenBSD: isa_machdep.c,v 1.31 1998/07/17 22:00:00 deraadt Exp $	*/
 /*	$NetBSD: isa_machdep.c,v 1.22 1997/06/12 23:57:32 thorpej Exp $	*/
 
 #define ISA_DMA_STATS
@@ -491,12 +491,16 @@ isa_intr_establish(ic, irq, type, level, ih_fun, ih_arg, ih_what)
 
 	/* no point in sleeping unless someone can free memory. */
 	ih = malloc(sizeof *ih, M_DEVBUF, cold ? M_NOWAIT : M_WAITOK);
-	if (ih == NULL)
-		panic("isa_intr_establish: can't malloc handler info");
+	if (ih == NULL) {
+		printf("%s: isa_intr_establish: can't malloc handler info\n",
+		    ih_what);
+		return NULL;
+	}
 
-	if (!LEGAL_IRQ(irq) || type == IST_NONE)
-		panic("intr_establish: bogus irq or type");
-
+	if (!LEGAL_IRQ(irq) || type == IST_NONE) {
+		printf("%s: intr_establish: bogus irq or type\n", ih_what);
+		return NULL;
+	}
 	switch (intrtype[irq]) {
 	case IST_NONE:
 		intrtype[irq] = type;
@@ -506,10 +510,12 @@ isa_intr_establish(ic, irq, type, level, ih_fun, ih_arg, ih_what)
 		if (type == intrtype[irq])
 			break;
 	case IST_PULSE:
-		if (type != IST_NONE)
-			panic("intr_establish: can't share %s with %s, irq %d",
-			    isa_intr_typename(intrtype[irq]),
-			    isa_intr_typename(type), irq);
+		if (type != IST_NONE) {
+			/*printf("%s: intr_establish: can't share %s with %s, irq %d\n",
+			    ih_what, isa_intr_typename(intrtype[irq]),
+			    isa_intr_typename(type), irq);*/
+			return NULL;
+		}
 		break;
 	}
 
