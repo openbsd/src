@@ -1,4 +1,4 @@
-/*	$OpenBSD: savecore.c,v 1.5 1996/06/23 13:16:21 deraadt Exp $	*/
+/*	$OpenBSD: savecore.c,v 1.6 1996/08/20 04:22:40 deraadt Exp $	*/
 /*	$NetBSD: savecore.c,v 1.26 1996/03/18 21:16:05 leo Exp $	*/
 
 /*-
@@ -407,12 +407,6 @@ err1:			syslog(LOG_WARNING, "%s: %s", path, strerror(errno));
 
 	/* Seek to the start of the core. */
 	Lseek(ifd, (off_t)dumplo, L_SET);
-
-	if (kvm_dump_wrtheader(kd_dump, fp, dumpsize) == -1) {
-		syslog(LOG_ERR, "kvm_dump_wrtheader: %s : %s", path,
-			kvm_geterr(kd_dump));
-		exit(1);
-	}
 
 	if (kvm_dump_wrtheader(kd_dump, fp, dumpsize) == -1) {
 		syslog(LOG_ERR, "kvm_dump_wrtheader: %s : %s", path,
