@@ -1,4 +1,4 @@
-.\" $OpenBSD: pfctl.8,v 1.32 2001/09/06 15:04:34 mpech Exp $
+.\" $OpenBSD: pfctl.8,v 1.33 2001/09/30 05:29:37 frantzen Exp $
 .\"
 .\" Copyright (c) 2001 Kjell Wooding.  All rights reserved.
 .\"
@@ -36,6 +36,7 @@
 .Op Fl F Ar modifier
 .Op Fl l Ar interface
 .Op Fl N Ar file
+.Op Fl O Ar level
 .Op Fl R Ar file
 .Op Fl s Ar modifier
 .Op Fl t Ar modifier
@@ -107,6 +108,31 @@ option.
 Do not actually load rules.
 .It Fl N Ar file
 Load a NAT rules file.
+.It Fl O Ar modifier
+Optimize the engine to one of the following network topographies or
+environments:
+.Bl -tag -width "O high-latency " -compact
+.It Fl O Ar default
+A normal network environment.  Suitable for almost all networks.
+.It Fl O Ar normal
+Alias for
+.Em default
+.It Fl O Ar high-latency
+A high-latency environment (such as a satellite connection)
+.It Fl O Ar satellite
+Alias for
+.Em high-latency
+.It Fl O Ar aggressive
+Aggressively expire connections when they are likely no longer valid.  This
+can greatly reduce the memory usage of the firewall at the cost of dropping
+idle connections early.
+.It Fl O Ar conservative
+Extremely conservative settings.  Pains will be taken to avoid dropping
+legitimate connections at the expense of greater memory utilization (possibly
+much greater on a busy network) and slightly increased processor utilization.
+.El
+Currently the optimizations only encompass the state table timeouts but much
+more is planned in future revisions of the FSMs.
 .It Fl q
 Only print errors and warnings.
 .It Fl R Ar file

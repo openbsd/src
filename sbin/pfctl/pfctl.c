@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.40 2001/09/22 18:30:11 deraadt Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.41 2001/09/30 05:29:37 frantzen Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -60,6 +60,7 @@ int	 pfctl_clear_stats(int, int);
 int	 pfctl_clear_rules(int, int);
 int	 pfctl_clear_nat(int, int);
 int	 pfctl_clear_states(int, int);
+int	 pfctl_hint(int, const char *, int);
 int	 pfctl_show_rules(int, int);
 int	 pfctl_show_nat(int);
 int	 pfctl_show_states(int, u_int8_t);
@@ -74,6 +75,7 @@ int	 pfctl_debug(int, u_int32_t, int);
 
 int	 opts = 0;
 char	*clearopt;
+char	*hintopt;
 char	*logopt;
 char	*natopt;
 char	*rulesopt;
@@ -102,6 +104,54 @@ static const struct {
 	{ "interval",		PFTM_INTERVAL },
 	{ NULL,			0 }};
 
+struct pf_hint {
+	const char	*name;
+	int		timeout;
+};
+static const struct pf_hint pf_hint_normal[] = {
+	{ "tcp.first",		2 * 60 },
+	{ "tcp.opening",	30 },
+	{ "tcp.established",	24 * 60 * 60 },
+	{ "tcp.closing",	15 * 60 },
+	{ "tcp.finwait",	45 },
+	{ "tcp.closed",		90 },
+	{ NULL,			0}};
+static const struct pf_hint pf_hint_satellite[] = {
+	{ "tcp.first",		3 * 60},
+	{ "tcp.opening",	30 + 5},
+	{ "tcp.closing",	15 * 60 + 5},
+	{ "tcp.finwait",	45 + 5},
+	{ "tcp.closed",		90 + 5},
+	{ NULL,			0}};
+static const struct pf_hint pf_hint_conservative[] = {
+	{ "tcp.first",		60 * 60 },
+	{ "tcp.opening",	15 * 60 },
+	{ "tcp.established",	5 * 24 * 60 * 60 },
+	{ "tcp.closing",	60 * 60 },
+	{ "tcp.finwait",	10 * 60 },
+	{ "tcp.closed",		3 * 60 },
+	{ NULL,			0}};
+static const struct pf_hint pf_hint_aggressive[] = {
+	{ "tcp.first",		30 },
+	{ "tcp.opening",	5 },
+	{ "tcp.established",	5 * 60 * 60 },
+	{ "tcp.closing",	60 },
+	{ "tcp.finwait",	60 },
+	{ "tcp.closed",		30 },
+	{ NULL,			0}};
+
+static const struct {
+	const char *name;
+	const struct pf_hint *hint;
+} pf_hints[] = {
+	{ "normal",		pf_hint_normal },
+	{ "default",		pf_hint_normal },
+	{ "satellite",		pf_hint_satellite },
+	{ "high-latency",	pf_hint_satellite },
+	{ "conservative",	pf_hint_conservative },
+	{ "aggressive",		pf_hint_aggressive },
+	{ NULL,			NULL }};
+
 void
 usage()
 {
@@ -109,7 +159,7 @@ usage()
 
 	fprintf(stderr, "usage: %s [-dehnqv] [-F set] [-l interface] ",
 	    __progname);
-	fprintf(stderr, "[-N file] [-R file] [-s set] [-t set] [-x level]\n");
+	fprintf(stderr, "[-N file] [-O level] [-R file] [-s set] [-t set] [-x level]\n");
 	exit(1);
 }
 
@@ -488,6 +538,28 @@ pfctl_log(int dev, char *ifname, int opts)
 }
 
 int
+pfctl_hint(int dev, const char *opt, int opts)
+{
+	const struct pf_hint *hint;
+	int i, r;
+
+	for (i = 0; pf_hints[i].name; i++)
+		if (strcasecmp(opt, pf_hints[i].name) == 0)
+			break;
+
+	hint = pf_hints[i].hint;
+	if (hint->name == NULL) {
+		warnx("Bad hint name.  Format -O hint");
+		return 1;
+	}
+
+	for (i = 0; hint[i].name; i++)
+		if ((r = pfctl_settimeout(dev, hint[i].name, hint[i].timeout)))
+			return r;
+	return (0);
+}
+
+int
 pfctl_timeout(int dev, char *opt, int opts)
 {
 	char *seconds, *serr = NULL;
@@ -608,7 +680,7 @@ main(int argc, char *argv[])
 	if (argc < 2)
 		usage();
 
-	while ((ch = getopt(argc, argv, "deqF:hl:nN:R:s:t:vx:")) != -1) {
+	while ((ch = getopt(argc, argv, "deqF:hl:nN:O:R:s:t:vx:")) != -1) {
 		switch (ch) {
 		case 'd':
 			opts |= PF_OPT_DISABLE;
@@ -630,6 +702,9 @@ main(int argc, char *argv[])
 			break;
 		case 'N':
 			natopt = optarg;
+			break;
+		case 'O':
+			hintopt = optarg;
 			break;
 		case 'R':
 			rulesopt = optarg;
@@ -735,6 +810,10 @@ main(int argc, char *argv[])
 
 	if (logopt != NULL)
 		if (pfctl_log(dev, logopt, opts))
+			error = 1;
+
+	if (hintopt != NULL)
+		if (pfctl_hint(dev, hintopt, opts))
 			error = 1;
 
 	if (timeoutopt != NULL)
