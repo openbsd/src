@@ -52,7 +52,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: res_init.c,v 1.8 1996/09/22 02:18:44 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: res_init.c,v 1.9 1996/09/22 05:14:05 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -68,7 +68,6 @@ static char rcsid[] = "$OpenBSD: res_init.c,v 1.8 1996/09/22 02:18:44 deraadt Ex
 
 static void res_setoptions __P((char *, char *));
 static u_int32_t net_mask __P((struct in_addr));
-static u_int16_t res_randomid __P((void));
 
 /*
  * Resolver state default settings
@@ -408,7 +407,7 @@ net_mask(in)		/* XXX - should really use system's version of this */
 }
 
 static u_int16_t
-__res_randomid()
+res_randomid()
 {
 	struct timeval now;
 
