@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.8 1999/01/07 22:18:59 deraadt Exp $	*/
+/*	$OpenBSD: route.c,v 1.9 1999/01/08 00:56:06 deraadt Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -36,6 +36,18 @@
  *	@(#)route.c	8.2 (Berkeley) 11/15/93
  */
 
+/*
+%%% portions-copyright-nrl-95
+Portions of this software are Copyright 1995-1998 by Randall Atkinson,
+Ronald Lee, Daniel McDonald, Bao Phan, and Chris Winters. All Rights
+Reserved. All rights under this copyright have been assigned to the US
+Naval Research Laboratory (NRL). The NRL Copyright Notice and License
+Agreement Version 1.1 (January 17, 1995) applies to these portions of the
+software.
+You should have received a copy of the license with this software. If you
+didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
+*/
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
@@ -66,6 +78,8 @@
 int	rttrash;		/* routes not in table but not freed */
 struct	sockaddr wildcard;	/* zero valued cookie for wildcard searches */
 
+static int okaytoclone __P((u_int, int));
+
 void
 rtable_init(table)
 	void **table;
@@ -82,6 +96,70 @@ route_init()
 {
 	rn_init();	/* initialize all zeroes, all ones, mask table */
 	rtable_init((void **)rt_tables);
+}
+
+void
+rtalloc_noclone(ro, howstrict)
+	register struct route *ro;
+	int howstrict;
+{
+	if (ro->ro_rt && ro->ro_rt->rt_ifp && (ro->ro_rt->rt_flags & RTF_UP))
+		return;		/* XXX */
+	ro->ro_rt = rtalloc2(&ro->ro_dst, 1, howstrict);
+}
+
+static int
+okaytoclone(flags, howstrict)
+	u_int flags;
+	int howstrict;
+{
+	if (howstrict == ALL_CLONING)
+		return 1;
+	if (howstrict == ONNET_CLONING && !(flags & (RTF_GATEWAY|RTF_TUNNEL)))
+		return 1;
+	return 0;
+}
+
+struct rtentry *
+rtalloc2(dst, report,howstrict)
+	register struct sockaddr *dst;
+	int report,howstrict;
+{
+	register struct radix_node_head *rnh = rt_tables[dst->sa_family];
+	register struct rtentry *rt;
+	register struct radix_node *rn;
+	struct rtentry *newrt = 0;
+	struct rt_addrinfo info;
+	int  s = splnet(), err = 0, msgtype = RTM_MISS;
+
+	if (rnh && (rn = rnh->rnh_matchaddr((caddr_t)dst, rnh)) &&
+	    ((rn->rn_flags & RNF_ROOT) == 0)) {
+		newrt = rt = (struct rtentry *)rn;
+		if (report && (rt->rt_flags & RTF_CLONING) &&
+		    okaytoclone(rt->rt_flags, howstrict)) {
+			err = rtrequest(RTM_RESOLVE, dst, SA(0), SA(0), 0,
+			    &newrt);
+			if (err) {
+				newrt = rt;
+				rt->rt_refcnt++;
+				goto miss;
+			}
+			if ((rt = newrt) && (rt->rt_flags & RTF_XRESOLVE)) {
+				msgtype = RTM_RESOLVE;
+				goto miss;
+			}
+		} else
+			rt->rt_refcnt++;
+	} else {
+		rtstat.rts_unreach++;
+miss:		if (report) {
+			bzero((caddr_t)&info, sizeof(info));
+			info.rti_info[RTAX_DST] = dst;
+			rt_missmsg(msgtype, &info, 0, err);
+		}
+	}
+	splx(s);
+	return (newrt);
 }
 
 /*
@@ -160,7 +238,8 @@ rtfree(rt)
 			return;
 		}
 		ifa = rt->rt_ifa;
-		IFAFREE(ifa);
+		if (ifa)
+			IFAFREE(ifa);
 		Free(rt_key(rt));
 		Free(rt);
 	}
@@ -332,6 +411,10 @@ ifa_ifwithroute(flags, dst, gateway)
 		if (rt == NULL)
 			return (NULL);
 		rt->rt_refcnt--;
+		/* The gateway must be local if the same address family. */
+		if (!(flags & RTF_TUNNEL) && (rt->rt_flags & RTF_GATEWAY) && 
+		    rt_key(rt)->sa_family == dst->sa_family)
+			return (0);
 		if ((ifa = rt->rt_ifa) == NULL)
 			return (NULL);
 	}
@@ -427,19 +510,52 @@ rtrequest(req, dst, gateway, netmask, flags, ret_nrt)
 		ifa->ifa_refcnt++;
 		rt->rt_ifa = ifa;
 		rt->rt_ifp = ifa->ifa_ifp;
-		if (req == RTM_RESOLVE)
+		if (req == RTM_RESOLVE) {
+			/*
+			 * Copy both metrics and a back pointer to the cloned
+			 * route's parent.
+			 */
 			rt->rt_rmx = (*ret_nrt)->rt_rmx; /* copy metrics */
+			rt->rt_parent = *ret_nrt;	 /* Back ptr. to parent. */
+		}
 		if (ifa->ifa_rtrequest)
 			ifa->ifa_rtrequest(req, rt, SA(ret_nrt ? *ret_nrt : NULL));
 		if (ret_nrt) {
 			*ret_nrt = rt;
 			rt->rt_refcnt++;
 		}
+#ifdef INET6
+		/* If we have a v4_in_v4 or a v4_in_v6 tunnel route
+		 * then do some tunnel state (e.g. security state)
+		 * initialization.
+		 *
+		 * Since IPV6 packets flow down this path, we don't
+		 * want it using ipv4_tunnelsetup(rt) (since they
+		 * have their own ipv6_tunnel_parent/child()
+		 * routines which are called ipv6_rtrequest().)
+		 *
+		 * Thus, we check to see if the packet is to a v4
+		 * destination.
+		 */
+		if (dst->sa_family == AF_INET && (rt->rt_flags & RTF_TUNNEL))
+			ipv4_tunnelsetup(rt);
+#endif /* INET6 */
 		break;
 	}
 bad:
 	splx(s);
 	return (error);
+}
+
+/*
+ * Set up any tunnel states (e.g. security) information
+ * for v4_in_v4 or v4_in_v6 tunnel routes.
+ */
+void
+ipv4_tunnelsetup(rt)
+	register struct rtentry *rt;
+{
+	/* XXX */
 }
 
 int
@@ -545,17 +661,24 @@ rtinit(ifa, cmd, flags)
 	}
 	if (cmd == RTM_ADD && error == 0 && (rt = nrt) != NULL) {
 		rt->rt_refcnt--;
+#ifdef INET6
+		/* Initialize Path MTU for IPv6 interface route */
+		if (ifa->ifa_addr->sa_family == AF_INET6 &&
+		    !rt->rt_rmx.rmx_mtu)
+			rt->rt_rmx.rmx_mtu = ifa->ifa_ifp->if_mtu;
+#endif /* INET6 */
 		if (rt->rt_ifa != ifa) {
 			printf("rtinit: wrong ifa (%p) was (%p)\n",
 			       ifa, rt->rt_ifa);
 			if (rt->rt_ifa->ifa_rtrequest)
-			    rt->rt_ifa->ifa_rtrequest(RTM_DELETE, rt, SA(NULL));
+				rt->rt_ifa->ifa_rtrequest(RTM_DELETE, rt,
+				    SA(NULL));
 			IFAFREE(rt->rt_ifa);
 			rt->rt_ifa = ifa;
 			rt->rt_ifp = ifa->ifa_ifp;
 			ifa->ifa_refcnt++;
 			if (ifa->ifa_rtrequest)
-			    ifa->ifa_rtrequest(RTM_ADD, rt, SA(NULL));
+				ifa->ifa_rtrequest(RTM_ADD, rt, SA(NULL));
 		}
 		rt_newaddrmsg(cmd, ifa, error, nrt);
 	}
