@@ -1,4 +1,4 @@
-/*	$Id: if_ipw.c,v 1.19 2004/11/02 06:06:21 marius Exp $  */
+/*	$Id: if_ipw.c,v 1.20 2004/11/03 17:07:10 damien Exp $  */
 
 /*-
  * Copyright (c) 2004
@@ -1365,8 +1365,8 @@ ipw_tx_init(struct ipw_softc *sc)
 	}
 	TAILQ_INIT(&sc->sc_free_sbuf);
 	for (i = 0, sbuf = sc->tx_sbuf_list; i < IPW_NDATA; i++, sbuf++) {
-		error = bus_dmamap_create(sc->sc_dmat, IPW_NDATA * MCLBYTES,
-		    IPW_NDATA, MCLBYTES, 0, BUS_DMA_NOWAIT, &sbuf->map);
+		error = bus_dmamap_create(sc->sc_dmat, MCLBYTES, IPW_NDATA,
+		    MCLBYTES, 0, BUS_DMA_NOWAIT, &sbuf->map);
 		if (error != 0) {
 			errmsg = "could not create txbuf dma map";
 			goto fail;
@@ -1511,8 +1511,8 @@ ipw_rx_init(struct ipw_softc *sc)
 			goto fail;
 		}
 
-		error = bus_dmamap_create(sc->sc_dmat, IPW_NRBD * MCLBYTES,
-		    IPW_NRBD, MCLBYTES, 0, BUS_DMA_NOWAIT, &sbuf->map);
+		error = bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1, MCLBYTES,
+		    0, BUS_DMA_NOWAIT, &sbuf->map);
 		if (error != 0) {
 			m_freem(sbuf->m);
 			errmsg = "could not create rxbuf dma map";
