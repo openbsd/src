@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.48 1997/10/25 05:22:19 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.49 1997/10/29 21:38:17 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -976,7 +976,7 @@ install_from_mounted_fs() {
 		else
 			resp=y
 		fi
-		echo -n "Continue extraction [$resp]?"
+		echo -n "Continue extraction in this directory [$resp]?"
 		getresp "$resp"
 		if [ "$resp" = "n" ]; then
 			break
