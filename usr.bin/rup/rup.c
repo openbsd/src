@@ -1,4 +1,4 @@
-/*	$OpenBSD: rup.c,v 1.5 1996/12/10 19:00:03 deraadt Exp $	*/
+/*	$OpenBSD: rup.c,v 1.6 1997/02/01 07:18:28 tholo Exp $	*/
 
 /*-
  * Copyright (c) 1993, John Brezak
@@ -34,7 +34,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: rup.c,v 1.5 1996/12/10 19:00:03 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: rup.c,v 1.6 1997/02/01 07:18:28 tholo Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -186,7 +186,8 @@ print_rup_data(host, host_stat)
 {
 	struct tm *tmp_time;
 	struct tm host_time;
-	struct tm host_uptime;
+	unsigned ups=0,upm=0,uph=0,upd=0;
+
 	char days_buf[16];
 	char hours_buf[16];
 
@@ -197,21 +198,25 @@ print_rup_data(host, host_stat)
 
 	host_stat->curtime.tv_sec -= host_stat->boottime.tv_sec;
 
-	tmp_time = gmtime((time_t *)&host_stat->curtime.tv_sec);
-	host_uptime = *tmp_time;
+	ups=host_stat->curtime.tv_sec;
+	upd=ups/(3600*24);
+	ups-=upd*3600*24;
+	uph=ups/3600;
+	ups-=uph*3600;
+	upm=ups/60;
 
-	if (host_uptime.tm_yday != 0)
-		sprintf(days_buf, "%3d day%s, ", host_uptime.tm_yday,
-		    (host_uptime.tm_yday > 1) ? "s" : "");
+	if (upd != 0)
+		sprintf(days_buf, "%3u day%s, ", upd,
+			(upd > 1) ? "s" : "");
 	else
 		days_buf[0] = '\0';
 
-	if (host_uptime.tm_hour != 0)
-		sprintf(hours_buf, "%2d:%02d, ",
-		    host_uptime.tm_hour, host_uptime.tm_min);
+	if (uph != 0)
+		sprintf(hours_buf, "%2u:%02u, ",
+			uph, upm);
 	else
-		if (host_uptime.tm_min != 0)
-			sprintf(hours_buf, "%2d mins, ", host_uptime.tm_min);
+		if (upm != 0)
+			sprintf(hours_buf, "%2u mins, ", upm);
 		else
 			hours_buf[0] = '\0';
 
