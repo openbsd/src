@@ -1,4 +1,4 @@
-/*	$OpenBSD: time.c,v 1.9 1997/09/02 20:51:21 mickey Exp $	*/
+/*	$OpenBSD: time.c,v 1.10 1997/10/12 21:04:23 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -45,7 +45,9 @@
  * Convert from bcd (packed) to int
  */
 static __inline u_int8_t
-bcdtoint(register u_int8_t c) {
+bcdtoint(c)
+	register u_int8_t c;
+{
 
 	return ((c & 0xf0) / 8) * 5 + (c & 0x0f);
 }
@@ -80,7 +82,9 @@ compute(year, month, day, hour, min, sec)
 }
 
 static int
-bios_time_date(int f, register u_int8_t *b)
+bios_time_date(f, b)
+	int f;
+	register u_int8_t *b;
 {
 	__asm __volatile(DOINT(0x1a) "\n\t"
 		       "setc %b0\n\t"
@@ -102,13 +106,15 @@ bios_time_date(int f, register u_int8_t *b)
 }
 
 static __inline int
-biosdate(register u_int8_t *b)
+biosdate(b)
+	register u_int8_t *b;
 {
 	return bios_time_date(4 << 8, b);
 }
 
 static __inline int
-biostime(register u_int8_t *b)
+biostime(b)
+	register u_int8_t *b;
 {
 	return bios_time_date(2 << 8, b);
 }
