@@ -41,8 +41,8 @@
 .Nm sbrk
 .Nd change data segment size
 .Sh SYNOPSIS
-.Fd #include <sys/types.h>
-.Ft int
+.Fd #include <unistd.h>
+.Ft char *
 .Fn brk "const char *addr"
 .Ft char *
 .Fn sbrk "int incr"
@@ -135,6 +135,7 @@ to support the expansion.
 .Xr execve 2 ,
 .Xr getrlimit 2 ,
 .Xr malloc 3 ,
+.Xr mmap 2 ,
 .Xr end 3
 .Sh BUGS
 Setting the break may fail due to a temporary lack of
