@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.1 2003/12/17 11:46:54 henning Exp $ */
+/*	$OpenBSD: config.c,v 1.2 2003/12/19 14:23:28 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -28,7 +28,6 @@
 #include "bgpd.h"
 
 void			*sconf;
-static u_int32_t	 max_id = 1;	/* reserve 0 */
 
 u_int32_t	get_bgpid(void);
 u_int32_t	get_id(struct peer *);
@@ -118,5 +117,8 @@ get_bgpid(void)
 u_int32_t
 get_id(struct peer *p)
 {
-	return (max_id++);
+	/*
+	 * XXX this collides with multiviews and will need more clue later XXX
+	 */
+	return (ntohl(p->conf.remote_addr.sin_addr.s_addr));
 }
