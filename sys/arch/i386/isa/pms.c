@@ -1,4 +1,4 @@
-/*	$OpenBSD: pms.c,v 1.23 1999/05/22 02:11:25 deraadt Exp $	*/
+/*	$OpenBSD: pms.c,v 1.24 1999/11/22 07:13:56 matthieu Exp $	*/
 /*	$NetBSD: pms.c,v 1.29 1996/05/12 23:12:42 mycroft Exp $	*/
 
 /*-
@@ -48,6 +48,7 @@
 #include <sys/file.h>
 #include <sys/select.h>
 #include <sys/proc.h>
+#include <sys/signalvar.h>
 #include <sys/vnode.h>
 #include <sys/device.h>
 
@@ -97,6 +98,8 @@ struct pms_softc {		/* driver status information */
 
 	struct clist sc_q;
 	struct selinfo sc_rsel;
+	struct proc *sc_io;	/* process that opened pms (can get SIGIO) */
+	char   sc_async;	/* send SIGIO on input ready */
 	u_char sc_state;	/* mouse driver state */
 #define	PMS_OPEN	0x01	/* device is open */
 #define	PMS_ASLP	0x02	/* waiting for mouse data */
@@ -268,6 +271,8 @@ pmsopen(dev, flag, mode, p)
 	sc->sc_status = 0;
 	sc->sc_flags = (PMSTYPE(dev) ? PMS_RAW : 0);
 	sc->sc_x = sc->sc_y = 0;
+	sc->sc_async = 0;
+	sc->sc_io = p;
 
 	/* Enable interrupts. */
 	pms_dev_cmd(PMS_DEV_ENABLE);
@@ -316,6 +321,7 @@ pmsclose(dev, flag, mode, p)
 	pms_aux_cmd(PMS_AUX_DISABLE);
 
 	sc->sc_state &= ~PMS_OPEN;
+	sc->sc_io = NULL;
 
 	clfree(&sc->sc_q);
 
@@ -415,6 +421,19 @@ pmsioctl(dev, cmd, addr, flag, p)
 
 	error = 0;
 	switch (cmd) {
+
+	case FIONBIO:		/* we will remove this someday (soon???) */
+		return (0);
+
+	case FIOASYNC:
+		sc->sc_async = *(int *)addr != 0;
+		break;
+
+	case TIOCSPGRP:
+		if (*(int *)addr != sc->sc_io->p_pgid)
+			return (EPERM);
+		break;
+
 	case MOUSEIOCREAD:
 		s = spltty();
 
@@ -531,6 +550,10 @@ pmsintr(arg)
 					wakeup((caddr_t)sc);
 				}
 				selwakeup(&sc->sc_rsel);
+				if (sc->sc_async) {
+				    	psignal(sc->sc_io, SIGIO); 
+				}
+
 			}
 
 			break;
@@ -550,6 +573,10 @@ pmsintr(arg)
 			wakeup((caddr_t)sc);
 		}
 		selwakeup(&sc->sc_rsel);
+		if (sc->sc_async) {
+		    	psignal(sc->sc_io, SIGIO); 
+		}
+
 	}
 
 	return -1;
