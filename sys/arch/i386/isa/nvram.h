@@ -53,6 +53,7 @@
 
 #define	NVRAM_RESET_RST		0x00		/* normal reset */
 #define	NVRAM_RESET_LOAD 	0x04		/* load system */
+#define	NVRAM_RESET_SOFT	0x0A		/* soft reset */
 
 /* NVRAM byte 2: diskette drive type in upper/lower nibble */
 #define NVRAM_DISKETTE	(MC_NVRAM_START + 2)	/* RTC offset 0x10 */
