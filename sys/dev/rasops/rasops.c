@@ -1,4 +1,4 @@
-/*	$OpenBSD: rasops.c,v 1.8 2002/08/12 02:31:01 jason Exp $	*/
+/*	$OpenBSD: rasops.c,v 1.9 2003/12/17 11:21:08 miod Exp $	*/
 /*	$NetBSD: rasops.c,v 1.35 2001/02/02 06:01:01 marcus Exp $	*/
 
 /*-
@@ -54,41 +54,81 @@
 #include <errno.h>
 #endif
 
-/* ANSI colormap (R,G,B). Upper 8 are high-intensity */
-const u_char rasops_cmap[256*3] = {
-	0x00, 0x00, 0x00, /* black */
-	0x7f, 0x00, 0x00, /* red */
-	0x00, 0x7f, 0x00, /* green */
-	0x7f, 0x7f, 0x00, /* brown */
-	0x00, 0x00, 0x7f, /* blue */
-	0x7f, 0x00, 0x7f, /* magenta */
-	0x00, 0x7f, 0x7f, /* cyan */
-	0xc7, 0xc7, 0xc7, /* white - XXX too dim? */
+/* ANSI colormap (R,G,B) */
 
-	0x7f, 0x7f, 0x7f, /* black */
-	0xff, 0x00, 0x00, /* red */
-	0x00, 0xff, 0x00, /* green */
-	0xff, 0xff, 0x00, /* brown */
-	0x00, 0x00, 0xff, /* blue */
-	0xff, 0x00, 0xff, /* magenta */
-	0x00, 0xff, 0xff, /* cyan */
-	0xff, 0xff, 0xff, /* white */
+#define	NORMAL_BLACK	0x000000
+#define	NORMAL_RED	0x7f0000
+#define	NORMAL_GREEN	0x007f00
+#define	NORMAL_BROWN	0x7f7f00
+#define	NORMAL_BLUE	0x00007f
+#define	NORMAL_MAGENTA	0x7f007f
+#define	NORMAL_CYAN	0x007f7f
+#define	NORMAL_WHITE	0xc7c7c7	/* XXX too dim? */
+
+#define	HILITE_BLACK	0x7f7f7f
+#define	HILITE_RED	0xff0000
+#define	HILITE_GREEN	0x00ff00
+#define	HILITE_BROWN	0xffff00
+#define	HILITE_BLUE	0x0000ff
+#define	HILITE_MAGENTA	0xff00ff
+#define	HILITE_CYAN	0x00ffff
+#define	HILITE_WHITE	0xffffff
+
+const u_char rasops_cmap[256 * 3] = {
+#define	_C(x)	((x) & 0xff0000) >> 16, ((x) & 0x00ff00) >> 8, ((x) & 0x0000ff)
+
+	_C(NORMAL_BLACK),
+	_C(NORMAL_RED),
+	_C(NORMAL_GREEN),
+	_C(NORMAL_BROWN),
+	_C(NORMAL_BLUE),
+	_C(NORMAL_MAGENTA),
+	_C(NORMAL_CYAN),
+	_C(NORMAL_WHITE),
+
+	_C(HILITE_BLACK),
+	_C(HILITE_RED),
+	_C(HILITE_GREEN),
+	_C(HILITE_BROWN),
+	_C(HILITE_BLUE),
+	_C(HILITE_MAGENTA),
+	_C(HILITE_CYAN),
+	_C(HILITE_WHITE),
 
 	/*
-	 * For the cursor, we need at least the last (255th)
-	 * color to be white. Fill up white completely for
-	 * simplicity.
+	 * For the cursor, we need the last 16 colors to be the
+	 * opposite of the first 16. Fill the intermediate space with
+	 * white completely for simplicity.
 	 */
-#define _CMWHITE 0xff, 0xff, 0xff,
-#define _CMWHITE16	_CMWHITE _CMWHITE _CMWHITE _CMWHITE \
-			_CMWHITE _CMWHITE _CMWHITE _CMWHITE \
-			_CMWHITE _CMWHITE _CMWHITE _CMWHITE \
-			_CMWHITE _CMWHITE _CMWHITE _CMWHITE
+#define _CMWHITE16 \
+	_C(HILITE_WHITE), _C(HILITE_WHITE), _C(HILITE_WHITE), _C(HILITE_WHITE), \
+	_C(HILITE_WHITE), _C(HILITE_WHITE), _C(HILITE_WHITE), _C(HILITE_WHITE), \
+	_C(HILITE_WHITE), _C(HILITE_WHITE), _C(HILITE_WHITE), _C(HILITE_WHITE), \
+	_C(HILITE_WHITE), _C(HILITE_WHITE), _C(HILITE_WHITE), _C(HILITE_WHITE),
 	_CMWHITE16 _CMWHITE16 _CMWHITE16 _CMWHITE16 _CMWHITE16
 	_CMWHITE16 _CMWHITE16 _CMWHITE16 _CMWHITE16 _CMWHITE16
-	_CMWHITE16 _CMWHITE16 _CMWHITE16 _CMWHITE16 _CMWHITE16
+	_CMWHITE16 _CMWHITE16 _CMWHITE16 _CMWHITE16
 #undef _CMWHITE16
-#undef _CMWHITE
+
+	_C(~HILITE_WHITE),
+	_C(~HILITE_CYAN),
+	_C(~HILITE_MAGENTA),
+	_C(~HILITE_BLUE),
+	_C(~HILITE_BROWN),
+	_C(~HILITE_GREEN),
+	_C(~HILITE_RED),
+	_C(~HILITE_BLACK),
+
+	_C(~NORMAL_WHITE),
+	_C(~NORMAL_CYAN),
+	_C(~NORMAL_MAGENTA),
+	_C(~NORMAL_BLUE),
+	_C(~NORMAL_BROWN),
+	_C(~NORMAL_GREEN),
+	_C(~NORMAL_RED),
+	_C(~NORMAL_BLACK),
+
+#undef	_C
 };
 
 /* True if color is gray */
