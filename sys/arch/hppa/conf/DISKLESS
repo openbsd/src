@@ -1,4 +1,4 @@
-#	$OpenBSD: DISKLESS,v 1.4 1999/02/25 16:48:06 mickey Exp $
+#	$OpenBSD: DISKLESS,v 1.5 1999/02/25 16:59:24 mickey Exp $
 #
 # Diskless kernel config
 #
@@ -125,7 +125,6 @@ eba*	at mainbus0 irq 17	# EISA Bus Adapter (i82350 or TI???)
 #dino*	at mainbus0 irq ?	# PCI bus adapter
 
 #sti*	at mainbus0 irq ?	# [H]CRX-{8,24,48}[Z] graphics
-#myri*	at mainbus0 irq ?	# ANSI/VITA-26-1998 Gbit iface
 
 # internal i/o space
 gsc*	at lasi?		# 712,715/100,725/75,725/100
@@ -185,6 +184,9 @@ scsibus* at bha?
 #wdc1	at isa? port 0x170 irq 15
 #ie*	at isa? port 0x360 iomem 0xd0000 irq 7
 #ie*	at isa? port 0x300 irq 10
+
+# PCI devices
+#myri*	at pci? dev ? function ?	# ANSI/VITA-26-1998 Gbit iface
 
 # MI devices
 option	WSEMUL_DUMB

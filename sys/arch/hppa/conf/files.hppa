@@ -1,4 +1,4 @@
-#	$OpenBSD: files.hppa,v 1.10 1999/02/25 16:37:12 mickey Exp $
+#	$OpenBSD: files.hppa,v 1.11 1999/02/25 16:59:24 mickey Exp $
 #
 # hppa-specific configuration info
 
@@ -44,6 +44,11 @@ include "dev/isa/files.isapnp"
 include "dev/eisa/files.eisa"
 
 #
+# PCI Bus support
+#
+include "dev/pci/files.pci"
+
+#
 # General System Connect Bus
 #
 define	gscbus	{ }
@@ -84,6 +89,10 @@ file	arch/hppa/dev/wax.c		wax
 device	eba: eisabus
 attach	eba at mainbus
 file	arch/hppa/dev/eba.c		eba
+
+device	dino: pcibus
+attach	dino at mainbus
+file	arch/hppa/dev/dino.c		dino
 
 device	sti: wsemuldisplaydev
 attach	sti at mainbus
@@ -150,10 +159,11 @@ file	arch/hppa/gsc/atwo.c		atwo
 #attach	medusa at gsc
 #file	arch/hppa/gsc/medusa.c		medusa
 
+# XXX should not be here
 # ANSI/VITA 26-1998 Gbit packet switching network iface
-#device	myri
-#attach	myri at gsc
-#file	arch/hppa/gsc/myri.c		myri
+#device	myri: ether
+#attach	myri at pci
+#file	dev/pci/myri.c			myri
 
 #
 # PC Keyboard controller (ps2)
