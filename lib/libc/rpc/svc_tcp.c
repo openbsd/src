@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: svc_tcp.c,v 1.16 1998/05/19 06:59:43 deraadt Exp $";
+static char *rcsid = "$OpenBSD: svc_tcp.c,v 1.17 1998/05/22 04:21:38 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -341,25 +341,27 @@ readtcp(xprt, buf, len)
 	register int sock = xprt->xp_sock;
 	struct timeval start, delta;
 	struct timeval tmp1, tmp2;
-	fd_set *fds, readfds;
-
-	if (sock+1 > FD_SETSIZE) {
-		int bytes = howmany(sock+1, NFDBITS) * sizeof(fd_mask);
-		fds = (fd_set *)malloc(bytes);
-		if (fds == NULL)
-			goto fatal_err;
-		memset(fds, 0, bytes);
-	} else {
-		fds = &readfds;
-		FD_ZERO(fds);
-	}
+	fd_set *fds = NULL;
+	int prevbytes = 0, bytes;
+	extern int __svc_fdsetsize;
+	extern fd_set *__svc_fdset;
 
 	delta = wait_per_try;
 	gettimeofday(&start, NULL);
 	do {
-		/* XXX we know the other bits are still clear */
+		bytes = howmany(__svc_fdsetsize, NFDBITS) * sizeof(fd_mask);
+		if (bytes != prevbytes) {
+			if (fds)
+				free(fds);
+			fds = (fd_set *)malloc(bytes);
+			prevbytes = bytes;
+		}
+		if (fds == NULL)
+			goto fatal_err;
+		memcpy(fds, __svc_fdset, bytes);
+
 		FD_SET(sock, fds);
-		switch (select(sock+1, fds, NULL, NULL, &delta)) {
+		switch (select(svc_maxfd+1, fds, NULL, NULL, &delta)) {
 		case -1:
 			if (errno != EINTR)
 				goto fatal_err;
@@ -372,16 +374,27 @@ readtcp(xprt, buf, len)
 			continue;
 		case 0:
 			goto fatal_err;
+		default:
+			if (!FD_ISSET(sock, fds)) {
+				svc_getreqset2(fds, svc_maxfd+1);
+				gettimeofday(&tmp1, NULL);
+				timersub(&tmp1, &start, &tmp2);
+				timersub(&wait_per_try, &tmp2, &tmp1);
+				if (tmp1.tv_sec < 0 || !timerisset(&tmp1))
+					goto fatal_err;
+				delta = tmp1;
+				continue;
+			}
 		}
 	} while (!FD_ISSET(sock, fds));
 	if ((len = read(sock, buf, len)) > 0) {
-		if (fds != &readfds)
+		if (fds)
 			free(fds);
 		return (len);
 	}
 fatal_err:
 	((struct tcp_conn *)(xprt->xp_p1))->strm_stat = XPRT_DIED;
-	if (fds != &readfds)
+	if (fds)
 		free(fds);
 	return (-1);
 }
