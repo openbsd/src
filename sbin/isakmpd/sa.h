@@ -1,5 +1,5 @@
-/*	$OpenBSD: sa.h,v 1.17 2000/08/03 07:23:18 niklas Exp $	*/
-/*	$EOM: sa.h,v 1.57 2000/07/12 20:50:49 angelos Exp $	*/
+/*	$OpenBSD: sa.h,v 1.18 2000/10/10 13:35:24 niklas Exp $	*/
+/*	$EOM: sa.h,v 1.58 2000/10/10 12:39:01 provos Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -121,7 +121,7 @@ struct sa {
   u_int8_t phase;
 
   /* A reference counter for this structure.  */
-  u_int8_t refcnt;
+  u_int16_t refcnt;
 
   /* Various flags, look below for descriptions.  */
   u_int32_t flags;
