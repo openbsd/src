@@ -19,8 +19,9 @@ the Free Software Foundation, 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  */
 
 /* m68k is an old configuration that does not yet use the TARGET_CPU_DEFAULT
-   framework.  */
-#define TARGET_DEFAULT (MASK_BITFIELD | MASK_68881 | MASK_68020)
+   framework. OpenBSD uses -m68020-60 by default.  */
+#define TARGET_DEFAULT \
+	(MASK_BITFIELD | MASK_68881 | MASK_68020 | MASK_68040 | MASK_68060)
 
 #include <m68k/m68k.h>
 
