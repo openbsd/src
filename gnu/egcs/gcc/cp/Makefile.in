@@ -161,7 +161,7 @@ SUBDIR_MALLOC = `if [ x$(MALLOC) != x ]; then echo ../$(MALLOC); else true; fi`
 # How to link with both our special library facilities
 # and the system's installed libraries.
 LIBS = $(SUBDIR_OBSTACK) $(SUBDIR_USE_ALLOCA) $(SUBDIR_MALLOC) \
-  $(INTLLIBS) $(CLIB)
+  $(INTLLIBS) $(CLIB) $(LIBIBERTY)
 
 # Specify the directories to be searched for header files.
 # Both . and srcdir are used, in that order,
