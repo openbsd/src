@@ -1,4 +1,4 @@
-/*	$OpenBSD: psl.h,v 1.11 2001/12/16 23:49:46 miod Exp $ */
+/*	$OpenBSD: psl.h,v 1.12 2001/12/20 06:33:16 smurph Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * All rights reserved.
@@ -59,11 +59,16 @@
 /*
  * processor status register
  */
+
 #define PSR_MODE	0x80000000U	/* supervisor/user mode */
 #define PSR_BO		0x40000000U	/* byte-ordering 0:big 1:little */
-#define PSR_SER		0x20000000U	/* serial mode */
+#define PSR_SER		0x20000000U	/* 88110 serial mode */
 #define PSR_C		0x10000000U	/* carry */
-#define PSR_SFD		0x000003F0U	/* SFU disable */
+#define PSR_SGN		0x04000000U	/* 88110 Signed Immediate mode */
+#define PSR_SRM		0x02000000U	/* 88110 Serialize Memory */
+#define PSR_TRACE	0x00800000U	/* 88110 hardware trace */
+#define PSR_SFD		0x000003E0U	/* SFU disable */
+#define PSR_SFD2	0x00000010U	/* 88110 SFU2 (Graphics) disable */
 #define PSR_SFD1	0x00000008U	/* SFU1 (FPU) disable */
 #define PSR_MXM		0x00000004U	/* misaligned access enable */
 #define PSR_IND		0x00000002U	/* interrupt disable */
@@ -82,10 +87,16 @@ struct psr {
     unsigned
 	psr_mode: 1,
 	psr_bo  : 1,
-	psr_ser : 1,
+	psr_ser : 1, /* mc88110 */
 	psr_c   : 1,
-	        :18,
-	psr_sfd : 6,
+	        : 1,
+	psr_sgn : 1, /* mc88110 */
+	psr_srm : 1, /* mc88110 */
+	        : 1,
+	psr_trc	: 1, /* mc88110 */
+		:13,
+	psr_sfd : 5,
+	psr_sfd2: 1, /* mc88110 */
 	psr_sfd1: 1,
 	psr_mxm : 1,
 	psr_ind : 1,
