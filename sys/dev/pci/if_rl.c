@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rl.c,v 1.5 1998/11/18 21:42:08 jason Exp $	*/
+/*	$OpenBSD: if_rl.c,v 1.6 1998/11/19 07:01:55 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -31,7 +31,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$FreeBSD: if_rl.c,v 1.1 1998/10/18 16:24:30 wpaul Exp $
+ *	$FreeBSD: if_rl.c,v 1.2 1998/11/18 21:03:57 wpaul Exp $
  */
 
 /*
@@ -945,6 +945,7 @@ static int rl_encap(sc, c, m_head)
 	struct mbuf		*m_head;
 {
 	struct mbuf		*m;
+	struct mbuf		*m_new = NULL;
 
 	/*
 	 * There are two possible encapsulation mechanisms
@@ -961,35 +962,33 @@ static int rl_encap(sc, c, m_head)
 
 	m = m_head;
 
-	if (m->m_pkthdr.len > MHLEN || (mtod(m, u_int32_t) & 0x00000003)) {
-		struct mbuf		*m_new = NULL;
+	MGETHDR(m_new, M_DONTWAIT, MT_DATA);
+	if (m_new == NULL) {
+		printf("%s: no memory for tx list", sc->sc_dev.dv_xname);
+		return(1);
+	}
+	if (m_head->m_pkthdr.len > MHLEN) {
+		MCLGET(m_new, M_DONTWAIT);
 
-		MGETHDR(m_new, M_DONTWAIT, MT_DATA);
-		if (m_new == NULL) {
+		if (!(m_new->m_flags & M_EXT)) {
+			m_freem(m_new);
 			printf("%s: no memory for tx list",
 					sc->sc_dev.dv_xname);
 			return(1);
 		}
-		if (m_head->m_pkthdr.len > MHLEN) {
-			MCLGET(m_new, M_DONTWAIT);
-			if (!(m_new->m_flags & M_EXT)) {
-				m_freem(m_new);
-				printf("%s: no memory for tx list",
-						sc->sc_dev.dv_xname);
-				return(1);
-			}
-		}
-		m_copydata(m_head, 0, m_head->m_pkthdr.len,	
-					mtod(m_new, caddr_t));
-		m_new->m_pkthdr.len = m_new->m_len = m_head->m_pkthdr.len;
-		m_freem(m_head);
-		m_head = m_new;
 	}
+	m_copydata(m_head, 0, m_head->m_pkthdr.len,	
+				mtod(m_new, caddr_t));
+	m_new->m_pkthdr.len = m_new->m_len = m_head->m_pkthdr.len;
+	m_freem(m_head);
+	m_head = m_new;
 
 	/* Pad frames to at least 60 bytes. */
-	if (m_head->m_pkthdr.len < RL_MIN_FRAMELEN)
+	if (m_head->m_pkthdr.len < RL_MIN_FRAMELEN) {
 		m_head->m_pkthdr.len +=
 			(RL_MIN_FRAMELEN - m_head->m_pkthdr.len);
+		m_head->m_len = m_head->m_pkthdr.len;
+	}
 
 	c->rl_mbuf = m_head;
 
@@ -1292,12 +1291,11 @@ rl_probe(parent, match, aux)
 		case PCI_PRODUCT_REALTEK_RT8139:
 			return 1;
 		}
-		return 0;
 	}
 
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_REALTEK2) {
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_ACCTON) {
 		switch (PCI_PRODUCT(pa->pa_id)) {
-		case PCI_PRODUCT_REALTEK2_RT8139:
+		case PCI_PRODUCT_ACCTON_5030:
 			return 1;
 		}
 	}

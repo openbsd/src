@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rlreg.h,v 1.3 1998/11/18 21:42:10 jason Exp $	*/
+/*	$OpenBSD: if_rlreg.h,v 1.4 1998/11/19 07:01:56 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -31,7 +31,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$FreeBSD: if_rlreg.h,v 1.1 1998/10/18 16:24:30 wpaul Exp $
+ *	$FreeBSD: if_rlreg.h,v 1.2 1998/11/18 21:03:58 wpaul Exp $
  */
 
 /*
@@ -369,14 +369,22 @@ struct rl_softc {
  * RealTek PCI vendor ID
  */
 #define	RT_VENDORID				0x10EC
-#define RT_VENDORID_ALT				0x1211
+
+/*
+ * Accton PCI vendor ID
+ */
+#define ACCTON_VENDORID				0x1113
 
 /*
  * RealTek chip device IDs.
  */
 #define	RT_DEVICEID_8129			0x8129
 #define	RT_DEVICEID_8139			0x8139
-#define RT_DEVICEID_8139_ALT			0x1211
+
+/*
+ * Accton MPX 5030/5038 device ID.
+ */
+#define ACCTON_DEVICEID_5030			0x1211
 
 /*
  * Texas Instruments PHY identifiers
