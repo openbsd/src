@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.151 2004/10/11 10:41:16 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.152 2004/11/17 10:51:37 espie Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -429,6 +429,18 @@ It moves existing patches from
 .Pa patch-file
 to
 .Pa patch-file.orig
+.It Ar update
+Update an existing installation to a newer package:
+scan the installation for a package with the same
+.Ev FULLPKGPATH ,
+and update it using 
+.Sq pkg_add -r
+if a newer package is available.
+See
+.Ev UPDATE_COOKIES_DIR
+and
+.Ev FORCE_UPDATE
+as well.
 .It Ar update-plist
 Update the packing lists for a port, using the fake installation and the
 existing packing lists.
@@ -915,6 +927,16 @@ See also
 Canonical list of flavors being set for the current build, dash-separated.
 See
 .Ev FULLPKGNAME .
+.It Ev FORCE_UPDATE
+User settings.
+If set to
+.Sq Yes ,
+the
+.Ar update
+target will always update an installed package,
+even if it is the same version,
+and all dependencies that install packages will
+also force an update.
 .It Ev FTP_PACKAGES
 User settings.
 Base location where packages suitable for ftp (see
@@ -1492,6 +1514,12 @@ Defaults to ${PKGDIR}/UNMESSAGE if this file exists.
 Leave empty if no message is needed.
 .It Ev UNZIP
 Name of the unzip binary.
+.It Ev UPDATE_COOKIES_DIR
+User settings.
+Used to store cookies for package updates, defaults to
+.Pa ${PORTSDIR}/bulk/${MACHINE_ARCH} .
+If set to empty, will revert to a file under
+.Pa ${WRKDIR} .
 .It Ev USE_GMAKE
 Set to
 .Sq Yes
@@ -1642,6 +1670,8 @@ Default setup of ${FTP_PACKAGES}.
 Default setup of ${PKGREPOSITORY}.
 .It Pa ${PORTSDIR}/bulk/${MACHINE_ARCH}
 Default setup of ${BULK_COOKIES_DIR}.
+.It Pa ${PORTSDIR}/update/${MACHINE_ARCH}
+Default setup of ${UPDATE_COOKIES_DIR}.
 .It Pa ${PORTSDIR}/mystuff
 Extra directory used to store local ports before committing them.
 All depend targets will normally look there after the normal lookup fails.
