@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.122 2002/08/19 02:31:02 itojun Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.123 2002/09/05 23:37:35 itojun Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -1077,8 +1077,12 @@ findpcb:
 			 * Drop TCP, IP headers and TCP options then add data
 			 * to socket buffer.
 			 */
-			m_adj(m, iphlen + off);
-			sbappendstream(&so->so_rcv, m);
+			if (so->so_state & SS_CANTRCVMORE)
+				m_freem(m);
+			else {
+				m_adj(m, iphlen + off);
+				sbappendstream(&so->so_rcv, m);
+			}
 			sorwakeup(so);
 			TCP_SETUP_ACK(tp, tiflags);
 			if (tp->t_flags & TF_ACKNOW)
@@ -2156,8 +2160,12 @@ dodata:							/* XXX */
 			tcpstat.tcps_rcvpack++;
 			tcpstat.tcps_rcvbyte += tlen;
 			ND6_HINT(tp);
-			m_adj(m, hdroptlen);
-			sbappendstream(&so->so_rcv, m);
+			if (so->so_state & SS_CANTRCVMORE)
+				m_freem(m);
+			else {
+				m_adj(m, hdroptlen);
+				sbappendstream(&so->so_rcv, m);
+			}
 			sorwakeup(so);
 		} else {
 			m_adj(m, hdroptlen);
