@@ -38,7 +38,6 @@ Boston, MA 02111-1307, USA.  */
 #include "function.h"
 #include "toplev.h"
 #include "intl.h"
-#include "protector.h"
 
 #include "obstack.h"
 #define	obstack_chunk_alloc	xmalloc
