@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.27 2001/06/27 05:50:03 kjc Exp $	*/
+/*	$OpenBSD: conf.c,v 1.28 2001/06/27 06:16:39 angelos Exp $	*/
 /*	$NetBSD: conf.c,v 1.16 1996/10/18 21:26:57 cgd Exp $	*/
 
 /*-
@@ -109,11 +109,6 @@ cdev_decl(com);
 cdev_decl(lpt);
 cdev_decl(rd);
 cdev_decl(raid);
-#ifdef IPFILTER
-#define NIPF 1
-#else
-#define NIPF 0
-#endif
 cdev_decl(prom);			/* XXX XXX XXX */
 cdev_decl(wd);
 #include "cy.h"
