@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.20 2001/06/27 18:30:30 art Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.21 2001/07/25 13:25:33 art Exp $	*/
 /*	$NetBSD: pmap.h,v 1.30 1997/08/04 20:00:47 pk Exp $ */
 
 /*
@@ -315,8 +315,7 @@ void		pmap_writetext __P((unsigned char *, int));
 boolean_t	pmap_clear_modify4_4c __P((struct vm_page *));
 boolean_t	pmap_clear_reference4_4c __P((struct vm_page *));
 void		pmap_copy_page4_4c __P((paddr_t, paddr_t));
-void		pmap_enter4_4c __P((pmap_t, vaddr_t, paddr_t, vm_prot_t,
-				    boolean_t, vm_prot_t));
+int		pmap_enter4_4c __P((pmap_t, vaddr_t, paddr_t, vm_prot_t, int));
 boolean_t	pmap_extract4_4c __P((pmap_t, vaddr_t, paddr_t *));
 boolean_t	pmap_is_modified4_4c __P((struct vm_page *));
 boolean_t	pmap_is_referenced4_4c __P((struct vm_page *));
@@ -335,8 +334,7 @@ void		pmap_changeprot4_4c __P((pmap_t, vaddr_t, vm_prot_t, int));
 boolean_t	pmap_clear_modify4m __P((struct vm_page *));
 boolean_t	pmap_clear_reference4m __P((struct vm_page *));
 void		pmap_copy_page4m __P((paddr_t, paddr_t));
-void		pmap_enter4m __P((pmap_t, vaddr_t, paddr_t, vm_prot_t,
-				  boolean_t, vm_prot_t));
+int		pmap_enter4m __P((pmap_t, vaddr_t, paddr_t, vm_prot_t, int));
 boolean_t	pmap_extract4m __P((pmap_t, vaddr_t, paddr_t *));
 boolean_t	pmap_is_modified4m __P((struct vm_page *));
 boolean_t	pmap_is_referenced4m __P((struct vm_page *));
@@ -388,8 +386,8 @@ void		pmap_changeprot4m __P((pmap_t, vaddr_t, vm_prot_t, int));
 extern boolean_t	(*pmap_clear_modify_p) __P((struct vm_page *));
 extern boolean_t	(*pmap_clear_reference_p) __P((struct vm_page *));
 extern void		(*pmap_copy_page_p) __P((paddr_t, paddr_t));
-extern void		(*pmap_enter_p) __P((pmap_t, vaddr_t, paddr_t,
-					     vm_prot_t, boolean_t, vm_prot_t));
+extern int		(*pmap_enter_p) __P((pmap_t, vaddr_t, paddr_t,
+					     vm_prot_t, int));
 extern boolean_t	(*pmap_extract_p) __P((pmap_t, vaddr_t, paddr_t *));
 extern boolean_t	(*pmap_is_modified_p) __P((struct vm_page *));
 extern boolean_t	(*pmap_is_referenced_p) __P((struct vm_page *));

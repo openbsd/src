@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.45 2001/06/08 08:08:48 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.46 2001/07/25 13:25:31 art Exp $	*/
 
 /*
  * Copyright (c) 1998-2001 Michael Shalayeff
@@ -974,24 +974,25 @@ pmap_destroy(pmap)
 	splx(s);
 }
 /*
- * pmap_enter(pmap, va, pa, prot, wired, access_type)
+ * pmap_enter(pmap, va, pa, prot, flags)
  *	Create a translation for the virtual address (va) to the physical
  *	address (pa) in the pmap with the protection requested. If the
  *	translation is wired then we can not allow a page fault to occur
  *	for this mapping.
  */
-void
-pmap_enter(pmap, va, pa, prot, wired, access_type)
+int
+pmap_enter(pmap, va, pa, prot, flags)
 	pmap_t pmap;
 	vaddr_t va;
 	paddr_t pa;
-	vm_prot_t prot, access_type;
-	boolean_t wired;
+	vm_prot_t prot;
+	int flags;
 {
 	register struct pv_entry *pv, *ppv;
 	u_int tlbpage, tlbprot;
 	pa_space_t space;
 	boolean_t waswired;
+	boolean_t wired = (flags & PMAP_WIRED) != 0;
 	int s;
 
 	pa = hppa_trunc_page(pa);
@@ -1010,7 +1011,7 @@ pmap_enter(pmap, va, pa, prot, wired, access_type)
 	tlbpage = tlbbtop(pa);
 	tlbprot = TLB_REF | pmap_prot(pmap, prot) | pmap->pmap_pid;
 
-	if (access_type & VM_PROT_WRITE)
+	if (flags & VM_PROT_WRITE)
 		tlbprot |= TLB_DIRTY;
 
 	if (!(ppv = pmap_find_va(space, va))) {
@@ -1073,6 +1074,8 @@ pmap_enter(pmap, va, pa, prot, wired, access_type)
 	if (pmapdebug & PDB_ENTER)
 		printf("pmap_enter: leaving\n");
 #endif
+
+	return (KERN_SUCCESS);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.28 2001/07/05 10:00:38 art Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.29 2001/07/25 13:25:33 art Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.30 1997/03/10 23:55:40 pk Exp $ */
 
 /*
@@ -93,8 +93,8 @@ pagemove(from, to, size)
 		pmap_remove(pmap_kernel(),
 		    (vaddr_t)from, (vaddr_t)from + PAGE_SIZE);
 		pmap_enter(pmap_kernel(),
-		    (vaddr_t)to, pa, VM_PROT_READ | VM_PROT_WRITE, 1,
-		     VM_PROT_READ | VM_PROT_WRITE);
+		    (vaddr_t)to, pa, VM_PROT_READ | VM_PROT_WRITE,
+		     VM_PROT_READ | VM_PROT_WRITE | PMAP_WIRED);
 		from += PAGE_SIZE;
 		to += PAGE_SIZE;
 		size -= PAGE_SIZE;
@@ -236,8 +236,7 @@ dvma_mapin_space(map, va, len, canwait, space)
 #endif
 #endif
 			pmap_enter(pmap_kernel(), tva, pa | PMAP_NC,
-				   VM_PROT_READ | VM_PROT_WRITE, 1,
-				   0);
+				   VM_PROT_READ | VM_PROT_WRITE, PMAP_WIRED);
 		}
 
 		tva += PAGE_SIZE;
@@ -343,7 +342,7 @@ vmapbuf(bp, sz)
 		 * contexts... maybe we should avoid this extra work
 		 */
 		pmap_enter(pmap_kernel(), kva, pa,
-			   VM_PROT_READ | VM_PROT_WRITE, 1, 0);
+			   VM_PROT_READ | VM_PROT_WRITE, PMAP_WIRED);
 
 		uva += PAGE_SIZE;
 		kva += PAGE_SIZE;

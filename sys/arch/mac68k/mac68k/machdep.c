@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.74 2001/07/05 10:12:10 art Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.75 2001/07/25 13:25:32 art Exp $	*/
 /*	$NetBSD: machdep.c,v 1.207 1998/07/08 04:39:34 thorpej Exp $	*/
 
 /*
@@ -354,8 +354,8 @@ cpu_startup(void)
 	for (i = 0; i < btoc(MSGBUFSIZE); i++)
 		pmap_enter(pmap_kernel(), (vm_offset_t)msgbufp,
 		    high[numranges - 1] + i * NBPG,
-		    VM_PROT_READ|VM_PROT_WRITE, TRUE,
-		    VM_PROT_READ|VM_PROT_WRITE);
+		    VM_PROT_READ|VM_PROT_WRITE,
+		    VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
 	initmsgbuf((caddr_t)msgbufp, round_page(MSGBUFSIZE));
 
 	/*
@@ -492,8 +492,8 @@ again:
 				panic("cpu_startup: not enough memory for "
 				    "buffer cache");
 			pmap_enter(kernel_map->pmap, curbuf,
-			    VM_PAGE_TO_PHYS(pg), VM_PROT_ALL, TRUE,
-			    VM_PROT_ALL);
+			    VM_PAGE_TO_PHYS(pg), VM_PROT_ALL,
+			    VM_PROT_ALL|PMAP_WIRED);
 			curbuf += PAGE_SIZE;
 			curbufsize -= PAGE_SIZE;
 		}
@@ -718,7 +718,7 @@ boot(howto)
 
 	/* Map the last physical page VA = PA for doboot() */
 	pmap_enter(pmap_kernel(), (vm_offset_t)maxaddr, (vm_offset_t)maxaddr,
-	    VM_PROT_ALL, TRUE, VM_PROT_ALL);
+	    VM_PROT_ALL, VM_PROT_ALL|PMAP_WIRED);
 
 
 	printf("rebooting...\n");
@@ -910,7 +910,7 @@ dumpsys()
 			maddr = h->ram_segs[seg].start;
 		}
 		pmap_enter(pmap_kernel(), (vm_offset_t)vmmap, maddr,
-		    VM_PROT_READ, TRUE, VM_PROT_READ);
+		    VM_PROT_READ, VM_PROT_READ|PMAP_WIRED);
 
 		error = (*dump)(dumpdev, blkno, vmmap, NBPG);
  bad:

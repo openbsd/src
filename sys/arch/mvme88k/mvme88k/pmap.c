@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.36 2001/07/22 19:58:17 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.37 2001/07/25 13:25:32 art Exp $	*/
 /*
  * Copyright (c) 1996 Nivas Madhur
  * All rights reserved.
@@ -2548,10 +2548,10 @@ pmap_expand(pmap_t map, vm_offset_t v)
  *	}
  *
  */
-void
+int
 pmap_enter(pmap_t pmap, vm_offset_t va, vm_offset_t pa,
-	   vm_prot_t prot, boolean_t wired,
-	   vm_prot_t access_type)
+	   vm_prot_t prot,
+	   int flags)
 {
 	int		ap;
 	int		spl, spl_sav;
@@ -2563,10 +2563,7 @@ pmap_enter(pmap_t pmap, vm_offset_t va, vm_offset_t pa,
 	register unsigned	users;
 	register pte_template_t	opte;
 	int		kflush;
-
-	if (pmap == PMAP_NULL) {
-		panic("pmap_enter: pmap is NULL");
-	}
+	boolean_t wired = (flags & PMAP_WIRED) != 0;
 
 	CHECK_PAGE_ALIGN (va, "pmap_entry - VA");
 	CHECK_PAGE_ALIGN (pa, "pmap_entry - PA");
@@ -2767,6 +2764,7 @@ Retry:
 	if (pv_e != PV_ENTRY_NULL)
 		free((caddr_t) pv_e, M_VMPVENT);
 
+	return (KERN_SUCCESS);
 } /* pmap_enter */
 
 /*
@@ -4429,7 +4427,7 @@ pmap_range_remove(pmap_range_t *ranges, vm_offset_t start, vm_offset_t end)
 void
 pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 {
-	pmap_enter(pmap_kernel(), va, pa, prot, 1, VM_PROT_READ|VM_PROT_WRITE);
+	pmap_enter(pmap_kernel(), va, pa, prot, VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
 }
 
 void
@@ -4439,8 +4437,8 @@ pmap_kenter_pgs(vaddr_t va, struct vm_page **pgs, int npgs)
 
 	for (i = 0; i < npgs; i++, va += PAGE_SIZE) {
 		pmap_enter(pmap_kernel(), va, VM_PAGE_TO_PHYS(pgs[i]),
-			VM_PROT_READ|VM_PROT_WRITE, 1,
-			VM_PROT_READ|VM_PROT_WRITE);
+			VM_PROT_READ|VM_PROT_WRITE,
+			VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.27 2001/07/05 10:03:48 art Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.28 2001/07/25 13:25:32 art Exp $	*/
 
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -273,7 +273,7 @@ vmapbuf(bp, len)
 		if (pmap_extract(pmap, (vm_offset_t)addr, &pa) == FALSE)
 			panic("vmapbuf: null page frame");
 		pmap_enter(vm_map_pmap(phys_map), kva, pa,
-			   VM_PROT_READ|VM_PROT_WRITE, TRUE, 0);
+			   VM_PROT_READ|VM_PROT_WRITE, PMAP_WIRED);
 		addr += PAGE_SIZE;
 		kva += PAGE_SIZE;
 		len -= PAGE_SIZE;
@@ -347,7 +347,7 @@ iomap_mapin(vm_offset_t pa, vm_size_t len, boolean_t canwait)
 
 	while (len>0) {
 		pmap_enter(vm_map_pmap(iomap_map), tva, ppa,
-			   VM_PROT_WRITE|VM_PROT_READ|(CACHE_INH << 16), 1, 0);
+			   VM_PROT_WRITE|VM_PROT_READ|(CACHE_INH << 16), PMAP_WIRED);
 		len -= PAGE_SIZE;
 		tva += PAGE_SIZE;
 		ppa += PAGE_SIZE;
@@ -423,7 +423,7 @@ mapiospace(caddr_t pa, int len)
 	pa = (caddr_t)trunc_page((paddr_t)pa);
 
 	pmap_enter(kernel_pmap, phys_map_vaddr1, (vm_offset_t)pa,
-		   VM_PROT_READ|VM_PROT_WRITE, 1, 0);
+		   VM_PROT_READ|VM_PROT_WRITE, PMAP_WIRED);
 	
 	return (phys_map_vaddr1 + off);
 }
@@ -511,8 +511,8 @@ pagemove(from, to, size)
 		pmap_remove(kernel_pmap,
 			    (vm_offset_t)from, (vm_offset_t)from + NBPG);
 		pmap_enter(kernel_pmap,
-			   (vm_offset_t)to, pa, VM_PROT_READ|VM_PROT_WRITE, 1,
-			   VM_PROT_READ|VM_PROT_WRITE);
+			   (vm_offset_t)to, pa, VM_PROT_READ|VM_PROT_WRITE,
+			   VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
 		from += NBPG;
 		to += NBPG;
 		size -= NBPG;

@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.15 2001/06/23 19:36:44 art Exp $ */
+/* $OpenBSD: pmap.c,v 1.16 2001/07/25 13:25:31 art Exp $ */
 /* $NetBSD: pmap.c,v 1.154 2000/12/07 22:18:55 thorpej Exp $ */
 
 /*-
@@ -1683,9 +1683,8 @@ pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
  *	or lose information.  That is, this routine must actually
  *	insert this page into the given map NOW.
  */
-void
-pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int wired,
-	vm_prot_t access_type)
+int
+pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 {
 	boolean_t managed;
 	pt_entry_t *pte, npte, opte;
@@ -1695,19 +1694,18 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int wired,
 	boolean_t needisync = FALSE;
 	boolean_t setisync = FALSE;
 	boolean_t isactive;
+	boolean_t wired;
 	long cpu_id = cpu_number();
-	int error;
+	int error = KERN_SUCCESS;
 
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_ENTER))
 		printf("pmap_enter(%p, %lx, %lx, %x, %x)\n",
 		       pmap, va, pa, prot, access_type);
 #endif
-	if (pmap == NULL)
-		return;
-
 	managed = PAGE_IS_MANAGED(pa);
 	isactive = PMAP_ISACTIVE(pmap, cpu_id);
+	wired = (flags & PMAP_WIRED) != 0;
 
 	/*
 	 * Determine what we need to do about the I-stream.  If
@@ -1756,10 +1754,8 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int wired,
 		if (pmap->pm_lev1map == kernel_lev1map) {
 			error = pmap_lev1map_create(pmap, cpu_id);
 			if (error != KERN_SUCCESS) {
-#ifdef notyet
 				if (flags & PMAP_CANFAIL)
-					return (error);
-#endif
+					goto out;
 				panic("pmap_enter: unable to create lev1map");
 			}
 		}
@@ -1776,10 +1772,8 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int wired,
 			error = pmap_ptpage_alloc(pmap, l1pte, PGU_L2PT);
 			if (error != KERN_SUCCESS) {
 				pmap_l1pt_delref(pmap, l1pte, cpu_id);
-#ifdef notyet
 				if (flags & PMAP_CANFAIL)
-					return (error);
-#endif
+					goto out;
 				panic("pmap_enter: unable to create L2 PT "
 				    "page");
 			}
@@ -1803,10 +1797,8 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int wired,
 			error = pmap_ptpage_alloc(pmap, l2pte, PGU_L3PT);
 			if (error != KERN_SUCCESS) {
 				pmap_l2pt_delref(pmap, l1pte, l2pte, cpu_id);
-#ifdef notyet
 				if (flags & PMAP_CANFAIL)
-					return (error);
-#endif
+					goto out;
 				panic("pmap_enter: unable to create L3 PT "
 				    "page");
 			}
@@ -1911,10 +1903,8 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int wired,
 		error = pmap_pv_enter(pmap, pa, va, pte, TRUE);
 		if (error != KERN_SUCCESS) {
 			pmap_l3pt_delref(pmap, va, pte, cpu_id, NULL);
-#ifdef notyet
 			if (flags & PMAP_CANFAIL)
-				return (error);
-#endif
+				goto out;
 			panic("pmap_enter: unable to enter mapping in PV "
 			    "table");
 		}
@@ -1937,13 +1927,13 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int wired,
 		int attrs;
 
 #ifdef DIAGNOSTIC
-		if ((access_type & VM_PROT_ALL) & ~prot)
+		if ((flags & VM_PROT_ALL) & ~prot)
 			panic("pmap_enter: access type exceeds prot");
 #endif
 		simple_lock(&pvh->pvh_slock);
-		if (access_type & VM_PROT_WRITE)
+		if (flags & VM_PROT_WRITE)
 			pvh->pvh_attrs |= (PGA_REFERENCED|PGA_MODIFIED);
-		else if (access_type & VM_PROT_ALL)
+		else if (flags & VM_PROT_ALL)
 			pvh->pvh_attrs |= PGA_REFERENCED;
 		attrs = pvh->pvh_attrs;
 		simple_unlock(&pvh->pvh_slock);
@@ -1993,12 +1983,11 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int wired,
 	if (needisync)
 		PMAP_SYNC_ISTREAM(pmap);
 
+out:
 	PMAP_UNLOCK(pmap);
 	PMAP_MAP_TO_HEAD_UNLOCK();
 
-#ifdef notyet	
-	return (KERN_SUCCESS);
-#endif	
+	return error;
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.13 2001/06/27 03:54:13 art Exp $	*/
+/*	$OpenBSD: mem.c,v 1.14 2001/07/25 13:25:31 art Exp $	*/
 /*	$NetBSD: mem.c,v 1.18 1997/02/02 07:17:14 thorpej Exp $	*/
 
 /*
@@ -146,7 +146,7 @@ mmrw(dev, uio, flags)
 #endif
 			pmap_enter(pmap_kernel(), (vm_offset_t)vmmap,
 			    trunc_page(v), uio->uio_rw == UIO_READ ?
-			    VM_PROT_READ : VM_PROT_WRITE, TRUE, 0);
+			    VM_PROT_READ : VM_PROT_WRITE, PMAP_WIRED);
 			o = uio->uio_offset & PGOFSET;
 			c = min(uio->uio_resid, (int)(NBPG - o));
 			error = uiomove((caddr_t)vmmap + o, c, uio);

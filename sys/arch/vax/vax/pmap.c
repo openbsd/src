@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.18 2001/07/05 10:00:40 art Exp $ */
+/*	$OpenBSD: pmap.c,v 1.19 2001/07/25 13:25:33 art Exp $ */
 /*	$NetBSD: pmap.c,v 1.74 1999/11/13 21:32:25 matt Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999 Ludd, University of Lule}, Sweden.
@@ -654,26 +654,23 @@ if(startpmapdebug)
  * pmap_enter() is the main routine that puts in mappings for pages, or
  * upgrades mappings to more "rights". Note that:
  */
-void
-pmap_enter(pmap, v, p, prot, wired, access_type)
+int
+pmap_enter(pmap, v, p, prot, flags)
 	pmap_t	pmap;
 	vaddr_t	v;
 	paddr_t	p;
 	vm_prot_t prot;
-	boolean_t wired;
-	vm_prot_t access_type;
+	int flags;
 {
 	struct	pv_entry *pv, *tmp;
 	int	i, s, newpte, oldpte, *patch, index = 0; /* XXX gcc */
+	boolean_t wired = (flags & PMAP_WIRED) != 0;
 
 #ifdef PMAPDEBUG
 if (startpmapdebug)
-	printf("pmap_enter: pmap %p v %lx p %lx prot %x wired %d access %x\n",
-		    pmap, v, p, prot, wired, access_type & VM_PROT_ALL);
+	printf("pmap_enter: pmap %p v %lx p %lx prot %x wired %d flags %x\n",
+		    pmap, v, p, prot, wired, flags);
 #endif
-	/* Can this happen with UVM??? */
-	if (pmap == 0)
-		return;
 
 	RECURSESTART;
 	/* Find addess of correct pte */
@@ -728,11 +725,12 @@ if (startpmapdebug)
 				pg = uvm_pagealloc(NULL, 0, NULL, 0);
 				if (pg != NULL)
 					break;
+				if (flags & PMAP_CANFAIL) {
+					RECURSEEND;
+					return (KERN_RESOURCE_SHORTAGE);
+				}
 
-				if (pmap == pmap_kernel())
-					panic("pmap_enter: no free pages");
-				else
-					uvm_wait("pmap_enter");
+				panic("pmap_enter: no free pages");
 			}
 
 			phys = VM_PAGE_TO_PHYS(pg);
@@ -754,7 +752,7 @@ if (startpmapdebug)
 	if (newpte == (oldpte | PG_W)) {
 		patch[i] |= PG_W; /* Just wiring change */
 		RECURSEEND;
-		return;
+		return (KERN_SUCCESS);
 	}
 
 	/* Changing mapping? */
@@ -789,11 +787,11 @@ if (startpmapdebug)
 	}
 	pmap->pm_stats.resident_count++;
 
-	if (access_type & VM_PROT_READ) {
+	if (flags & VM_PROT_READ) {
 		pv->pv_attr |= PG_V;
 		newpte |= PG_V;
 	}
-	if (access_type & VM_PROT_WRITE)
+	if (flags & VM_PROT_WRITE)
 		pv->pv_attr |= PG_M;
 
 	patch[i] = newpte;
@@ -814,7 +812,7 @@ if (startpmapdebug)
 		more_pventries();
 
 	mtpr(0, PR_TBIA); /* Always; safety belt */
-	return;
+	return (KERN_SUCCESS);
 }
 
 void *

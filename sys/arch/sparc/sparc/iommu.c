@@ -1,4 +1,4 @@
-/*	$OpenBSD: iommu.c,v 1.8 2001/06/08 08:09:27 art Exp $	*/
+/*	$OpenBSD: iommu.c,v 1.9 2001/07/25 13:25:33 art Exp $	*/
 /*	$NetBSD: iommu.c,v 1.13 1997/07/29 09:42:04 fair Exp $ */
 
 /*
@@ -198,8 +198,8 @@ iommu_attach(parent, self, aux)
 		/* XXX - art, pagewire breaks the tailq */
 		uvm_pagewire(m);
 		pmap_enter(pmap_kernel(), iopte_va, VM_PAGE_TO_PHYS(m),
-			   VM_PROT_READ|VM_PROT_WRITE, 1,
-			   VM_PROT_READ|VM_PROT_WRITE);
+			   VM_PROT_READ|VM_PROT_WRITE,
+			   VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
 		iopte_va += NBPG;
 		m = TAILQ_NEXT(m, pageq);
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.13 2001/06/27 04:44:02 art Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.14 2001/07/25 13:25:33 art Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.37 1996/11/20 18:57:22 gwr Exp $	*/
 
 /*-
@@ -290,7 +290,7 @@ bus_mapin(bustype, paddr, sz)
 	pmap_map((int)va, pa | pmt, pa + sz, VM_PROT_ALL);
 #else
 	do {
-		pmap_enter(pmap_kernel(), va, pa | pmt, VM_PROT_ALL, FALSE, 0);
+		pmap_enter(pmap_kernel(), va, pa | pmt, VM_PROT_ALL, 0);
 		va += NBPG;
 		pa += NBPG;
 	} while ((sz -= NBPG) > 0);

@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.45 2001/07/05 10:12:15 art Exp $	*/
+/* $OpenBSD: machdep.c,v 1.46 2001/07/25 13:25:32 art Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -481,7 +481,7 @@ cpu_startup()
 	for (i = 0; i < btoc(MSGBUFSIZE); i++)
 		pmap_enter(kernel_pmap, (vm_offset_t)msgbufp,
 			   avail_end + i * NBPG, VM_PROT_READ|VM_PROT_WRITE,
-			   VM_PROT_READ|VM_PROT_WRITE, TRUE);
+			   VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
 	initmsgbuf((caddr_t)msgbufp, round_page(MSGBUFSIZE));
 
 	/*
@@ -632,8 +632,8 @@ cpu_startup()
 				panic("cpu_startup: not enough memory for "
 				      "buffer cache");
 			pmap_enter(kernel_map->pmap, curbuf,
-				   VM_PAGE_TO_PHYS(pg), VM_PROT_ALL, TRUE,
-				   VM_PROT_READ|VM_PROT_WRITE);
+				   VM_PAGE_TO_PHYS(pg), VM_PROT_ALL,
+				   VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
 			curbuf += PAGE_SIZE;
 			curbufsize -= PAGE_SIZE;
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.27 2001/07/18 10:47:05 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.28 2001/07/25 13:25:33 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.64 1996/11/20 18:57:35 gwr Exp $	*/
 
 /*-
@@ -1623,7 +1623,7 @@ pmap_map(virt, start, end, prot)
 	int		prot;
 {
 	while (start < end) {
-		pmap_enter(kernel_pmap, virt, start, prot, FALSE, 0);
+		pmap_enter(kernel_pmap, virt, start, prot, 0);
 		virt += NBPG;
 		start += NBPG;
 	}
@@ -2461,20 +2461,18 @@ pmap_enter_user(pmap, va, pa, prot, wired, new_pte)
  *	insert this page into the given map NOW.
  */
 
-void
-pmap_enter(pmap, va, pa, prot, wired, access_type)
+int
+pmap_enter(pmap, va, pa, prot, flags)
 	pmap_t pmap;
 	vm_offset_t va;
 	vm_offset_t pa;
 	vm_prot_t prot;
-	boolean_t wired;
-	vm_prot_t access_type;
+	int flags;
 {
 	int pte_proto;
 	int s;
+	boolean_t wired = (flags & PMAP_WIRED) != 0;
 
-	if (pmap == NULL)
-		return;
 #ifdef	PMAP_DEBUG
 	if ((pmap_debug & PMD_ENTER) ||
 		(va == pmap_db_watchva))
@@ -2510,6 +2508,8 @@ pmap_enter(pmap, va, pa, prot, wired, access_type)
 		pmap_enter_user(pmap, va, pa, prot, wired, pte_proto);
 	}
 	PMAP_UNLOCK();
+
+	return (KERN_SUCCESS);
 }
 
 /*
@@ -3365,7 +3365,7 @@ pmap_deactivate(p)
 void
 pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 {
-	pmap_enter(pmap_kernel(), va, pa, prot, 1, VM_PROT_READ|VM_PROT_WRITE);
+	pmap_enter(pmap_kernel(), va, pa, prot, VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
 }
 
 void
@@ -3375,8 +3375,8 @@ pmap_kenter_pgs(vaddr_t va, struct vm_page **pgs, int npgs)
 
 	for (i = 0; i < npgs; i++, va += PAGE_SIZE) {
 		pmap_enter(pmap_kernel(), va, VM_PAGE_TO_PHYS(pgs[i]),
-			VM_PROT_READ|VM_PROT_WRITE, 1,
-			VM_PROT_READ|VM_PROT_WRITE);
+			VM_PROT_READ|VM_PROT_WRITE,
+			VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
 	}
 }
 

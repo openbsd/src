@@ -1,5 +1,5 @@
-/*	$OpenBSD: pmap.h,v 1.19 2001/07/18 10:47:05 art Exp $	*/
-/*	$NetBSD: pmap.h,v 1.16 1996/03/31 22:15:32 pk Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.20 2001/07/25 13:25:33 art Exp $	*/
+/*	$NetBSD: pmap.h,v 1.36 1999/11/13 00:24:39 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -113,19 +113,7 @@ void		 pmap_copy __P((pmap_t, pmap_t, vaddr_t, vsize_t, vaddr_t));
 void		 pmap_copy_page __P((paddr_t, paddr_t));
 struct pmap 	 *pmap_create __P((void));
 void		 pmap_destroy __P((pmap_t));
-#if defined(__i386__)
-#ifdef notyet
 int		 pmap_enter __P((pmap_t, vaddr_t, paddr_t, vm_prot_t, int));
-#else
-int		 _pmap_enter __P((pmap_t, vaddr_t, paddr_t, vm_prot_t, int));
-#define	 pmap_enter(pmap, va, pa, prot, wired, access_type) \
-    (_pmap_enter((pmap), (va), (pa), (prot), ((wired) ? PMAP_WIRED : 0)))
-#endif
-#else
-void		 pmap_enter __P((pmap_t,
-		    vaddr_t, paddr_t, vm_prot_t, boolean_t, vm_prot_t));
-#endif
-
 boolean_t	 pmap_extract __P((pmap_t, vaddr_t, paddr_t *));
 #if defined(PMAP_GROWKERNEL)
 vaddr_t		 pmap_growkernel __P((vaddr_t));

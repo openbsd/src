@@ -1,4 +1,4 @@
-/*	$OpenBSD: bios.c,v 1.44 2001/07/10 11:07:26 espie Exp $	*/
+/*	$OpenBSD: bios.c,v 1.45 2001/07/25 13:25:32 art Exp $	*/
 
 /*
  * Copyright (c) 1997-2001 Michael Shalayeff
@@ -409,14 +409,14 @@ bios32_service(service, e, ei)
 	     va += i386_trunc_page(BIOS32_START);
 	     pa < endpa; pa += NBPG, va += NBPG) {
 		pmap_enter(pmap_kernel(), va, pa,
-		    VM_PROT_READ | VM_PROT_WRITE, TRUE,
-		    VM_PROT_READ | VM_PROT_WRITE);
+		    VM_PROT_READ | VM_PROT_WRITE,
+		    VM_PROT_READ | VM_PROT_WRITE | PMAP_WIRED);
 
 		/* for all you, broken hearted */
 		if (pa >= i386_trunc_page(base)) {
 			pmap_enter(pmap_kernel(), sva, pa,
-			    VM_PROT_READ | VM_PROT_WRITE, TRUE,
-			    VM_PROT_READ | VM_PROT_WRITE);
+			    VM_PROT_READ | VM_PROT_WRITE,
+			    VM_PROT_READ | VM_PROT_WRITE | PMAP_WIRED);
 			sva += NBPG;
 		}
 	}

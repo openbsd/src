@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.26 2001/06/27 04:19:17 art Exp $ */
+/*	$OpenBSD: vm_machdep.c,v 1.27 2001/07/25 13:25:32 art Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -194,8 +194,8 @@ pagemove(from, to, size)
 			    (vm_offset_t)from, (vm_offset_t)from + PAGE_SIZE);
 		pmap_enter(pmap_kernel(),
 			   (vm_offset_t)to, pa, 
-            VM_PROT_READ|VM_PROT_WRITE, 1, 
-            VM_PROT_READ|VM_PROT_WRITE);
+            VM_PROT_READ|VM_PROT_WRITE,
+            VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
 		from += PAGE_SIZE;
 		to += PAGE_SIZE;
 		size -= PAGE_SIZE;
@@ -305,7 +305,7 @@ vmapbuf(bp, siz)
 		    (vm_offset_t)addr, &pa) == FALSE)
 			panic("vmapbuf: null page frame");
 		pmap_enter(vm_map_pmap(phys_map), kva, trunc_page(pa),
-			   VM_PROT_READ|VM_PROT_WRITE, TRUE, VM_PROT_READ|VM_PROT_WRITE);
+			   VM_PROT_READ|VM_PROT_WRITE, VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
 		addr += PAGE_SIZE;
 		kva += PAGE_SIZE;
 	}

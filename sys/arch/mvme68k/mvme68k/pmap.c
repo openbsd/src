@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.26 2001/07/22 19:58:14 miod Exp $ */
+/*	$OpenBSD: pmap.c,v 1.27 2001/07/25 13:25:32 art Exp $ */
 
 /* 
  * Copyright (c) 1995 Theo de Raadt
@@ -657,7 +657,7 @@ pmap_map(va, spa, epa, prot)
 #endif
 
 	while (spa < epa) {
-		pmap_enter(pmap_kernel(), va, spa, prot, FALSE, prot);
+		pmap_enter(pmap_kernel(), va, spa, prot, prot);
 		va += NBPG;
 		spa += NBPG;
 	}
@@ -1030,28 +1030,26 @@ pmap_protect(pmap, sva, eva, prot)
  *	insert this page into the given map NOW.
  */
 
-void
-pmap_enter(pmap, va, pa, prot, wired, access_type)
-	register pmap_t pmap;
+int
+pmap_enter(pmap, va, pa, prot, flags)
+	pmap_t pmap;
 	vaddr_t va;
-	register paddr_t pa;
+	paddr_t pa;
 	vm_prot_t prot;
-	boolean_t wired;
-   vm_prot_t access_type;
+	int flags;
 {
 	register pt_entry_t *pte;
 	register int npte;
 	vm_offset_t opa;
 	boolean_t cacheable = TRUE;
 	boolean_t checkpv = TRUE;
+	boolean_t wired = (flags & PMAP_WIRED) != 0;
 
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_ENTER))
-		printf("pmap_enter(%x, %x, %x, %x, %x, %x)\n",
-		       pmap, va, pa, prot, wired, access_type);
+		printf("pmap_enter(%x, %x, %x, %x, %x)\n",
+		       pmap, va, pa, prot, flags);
 #endif
-	if (pmap == NULL)
-		return;
 
 	/*
 	 * For user mapping, allocate kernel VM resources if necessary.
@@ -1233,6 +1231,8 @@ validate:
 	if ((pmapdebug & PDB_WIRING) && pmap != pmap_kernel())
 		pmap_check_wiring("enter", trunc_page(pmap_pte(pmap, va)));
 #endif
+
+	return (KERN_SUCCESS);
 }
 
 /*
@@ -1527,7 +1527,7 @@ pmap_zero_page(phys)
 		printf("pmap_zero_page(%x)\n", phys);
 #endif
 	kva = (vm_offset_t) CADDR1;
-	pmap_enter(pmap_kernel(), kva, phys, VM_PROT_READ|VM_PROT_WRITE, TRUE, VM_PROT_READ|VM_PROT_WRITE);
+	pmap_enter(pmap_kernel(), kva, phys, VM_PROT_READ|VM_PROT_WRITE, VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
 	zeropage((caddr_t)kva);
 	pmap_remove_mapping(pmap_kernel(), kva, PT_ENTRY_NULL,
 			    PRM_TFLUSH|PRM_CFLUSH);
@@ -1559,8 +1559,8 @@ pmap_copy_page(src, dst)
 #endif
 	skva = (vm_offset_t) CADDR1;
 	dkva = (vm_offset_t) CADDR2;
-	pmap_enter(pmap_kernel(), skva, src, VM_PROT_READ, TRUE, VM_PROT_READ);
-	pmap_enter(pmap_kernel(), dkva, dst, VM_PROT_READ|VM_PROT_WRITE, TRUE, VM_PROT_READ|VM_PROT_WRITE);
+	pmap_enter(pmap_kernel(), skva, src, VM_PROT_READ, VM_PROT_READ|PMAP_WIRED);
+	pmap_enter(pmap_kernel(), dkva, dst, VM_PROT_READ|VM_PROT_WRITE, VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
 	copypage((caddr_t)skva, (caddr_t)dkva);
 	/* CADDR1 and CADDR2 are virtually contiguous */
 	pmap_remove(pmap_kernel(), skva, skva + (2 * NBPG));
@@ -2192,7 +2192,7 @@ pmap_enter_ptpage(pmap, va)
 		kpt_used_list = kpt;
 		ptpa = kpt->kpt_pa;
 		bzero((caddr_t)kpt->kpt_va, NBPG);
-		pmap_enter(pmap, va, ptpa, VM_PROT_DEFAULT, TRUE, VM_PROT_DEFAULT);
+		pmap_enter(pmap, va, ptpa, VM_PROT_DEFAULT, VM_PROT_DEFAULT|PMAP_WIRED);
 #if defined(M68060)
 		if (mmutype == MMU_68060) {
 			pmap_changebit(ptpa, PG_CCB, 0);
@@ -2415,7 +2415,7 @@ pmap_check_wiring(str, va)
 void
 pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 {
-	pmap_enter(pmap_kernel(), va, pa, prot, 1, VM_PROT_READ|VM_PROT_WRITE);
+	pmap_enter(pmap_kernel(), va, pa, prot, VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
 }
 
 void
@@ -2425,8 +2425,8 @@ pmap_kenter_pgs(vaddr_t va, struct vm_page **pgs, int npgs)
 
 	for (i = 0; i < npgs; i++, va += PAGE_SIZE) {
 		pmap_enter(pmap_kernel(), va, VM_PAGE_TO_PHYS(pgs[i]),
-			VM_PROT_READ|VM_PROT_WRITE, 1,
-			VM_PROT_READ|VM_PROT_WRITE);
+			VM_PROT_READ|VM_PROT_WRITE,
+			VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.87 2001/06/27 18:30:30 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.88 2001/07/25 13:25:33 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
@@ -538,8 +538,7 @@ void	pv_unlink4_4c __P((struct pvlist *, struct pmap *, vaddr_t));
 boolean_t	(*pmap_clear_modify_p) __P((struct vm_page *));
 boolean_t	(*pmap_clear_reference_p) __P((struct vm_page *));
 void		(*pmap_copy_page_p) __P((paddr_t, paddr_t));
-void		(*pmap_enter_p) __P((pmap_t, vaddr_t, paddr_t, vm_prot_t,
-				     boolean_t, vm_prot_t));
+int		(*pmap_enter_p) __P((pmap_t, vaddr_t, paddr_t, vm_prot_t, int));
 boolean_t	(*pmap_extract_p) __P((pmap_t, vaddr_t, paddr_t *));
 boolean_t	(*pmap_is_modified_p) __P((struct vm_page *));
 boolean_t	(*pmap_is_referenced_p) __P((struct vm_page *));
@@ -3434,7 +3433,7 @@ pmap_map(va, pa, endpa, prot)
 	int pgsize = PAGE_SIZE;
 
 	while (pa < endpa) {
-		pmap_enter(pmap_kernel(), va, pa, prot, 1, 0);
+		pmap_enter(pmap_kernel(), va, pa, prot, PMAP_WIRED);
 		va += pgsize;
 		pa += pgsize;
 	}
@@ -4869,27 +4868,24 @@ out:
 
 #if defined(SUN4) || defined(SUN4C)
 
-void
-pmap_enter4_4c(pm, va, pa, prot, wired, access_type)
+int
+pmap_enter4_4c(pm, va, pa, prot, flags)
 	struct pmap *pm;
 	vaddr_t va;
 	paddr_t pa;
 	vm_prot_t prot;
-	int wired;
-	vm_prot_t access_type;
+	int flags;
 {
 	struct pvlist *pv;
 	int pteproto, ctx;
-
-	if (pm == NULL)
-		return;
+	boolean_t wired = (flags & PMAP_WIRED) != 0;
 
 	if (VA_INHOLE(va)) {
 #ifdef DEBUG
 		printf("pmap_enter: pm %p, va 0x%lx, pa 0x%lx: in MMU hole\n",
 			pm, va, pa);
 #endif
-		return;
+		return (KERN_FAILURE);
 	}
 
 #ifdef DEBUG
@@ -4920,6 +4916,8 @@ pmap_enter4_4c(pm, va, pa, prot, wired, access_type)
 	else
 		pmap_enu4_4c(pm, va, prot, wired, pv, pteproto);
 	setcontext4(ctx);
+
+	return (KERN_SUCCESS);
 }
 
 /* enter new (or change existing) kernel mapping */
@@ -5222,7 +5220,7 @@ pmap_kenter_pa4_4c(va, pa, prot)
 	paddr_t pa;
 	vm_prot_t prot;
 {
-	pmap_enter4_4c(pmap_kernel(), va, pa, prot, TRUE, 0);
+	pmap_enter4_4c(pmap_kernel(), va, pa, prot, PMAP_WIRED);
 }
 
 void
@@ -5235,7 +5233,7 @@ pmap_kenter_pgs4_4c(va, pgs, npgs)
 
 	for (i = 0; i < npgs; i++, va += PAGE_SIZE) {
 		pmap_enter4_4c(pmap_kernel(), va, VM_PAGE_TO_PHYS(pgs[i]),
-                               VM_PROT_READ|VM_PROT_WRITE, TRUE, 0);
+                               VM_PROT_READ|VM_PROT_WRITE, PMAP_WIRED);
 	}
 }
 
@@ -5265,20 +5263,17 @@ pmap_kremove4_4c(va, len)
  *	XXX	should have different entry points for changing!
  */
 
-void
-pmap_enter4m(pm, va, pa, prot, wired, access_type)
+int
+pmap_enter4m(pm, va, pa, prot, flags)
 	struct pmap *pm;
 	vaddr_t va;
 	paddr_t pa;
 	vm_prot_t prot;
-	int wired;
-	vm_prot_t access_type;
+	int flags;
 {
 	struct pvlist *pv;
 	int pteproto, ctx;
-
-	if (pm == NULL)
-		return;
+	boolean_t wired = (flags & PMAP_WIRED) != 0;
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_ENTER)
@@ -5325,13 +5320,15 @@ pmap_enter4m(pm, va, pa, prot, wired, access_type)
 		pmap_enu4m(pm, va, prot, wired, pv, pteproto);
 
 	if (pv) {
-		if (access_type & VM_PROT_WRITE)
+		if (flags & VM_PROT_WRITE)
 			pv->pv_flags |= PV_MOD4M;
-		if (access_type & VM_PROT_READ)
+		if (flags & VM_PROT_READ)
 			pv->pv_flags |= PV_REF4M;
 	}
 
 	setcontext4m(ctx);
+
+	return (KERN_SUCCESS);
 }
 
 /* enter new (or change existing) kernel mapping */
@@ -5856,7 +5853,7 @@ pmap_copy(dst_pmap, src_pmap, dst_addr, len, src_addr)
 				   (pte & PPROT_WRITE)
 					? (VM_PROT_WRITE | VM_PROT_READ)
 					: VM_PROT_READ,
-				   0, 0);
+				   0);
 			src_addr += NBPG;
 			dst_addr += NBPG;
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.42 2001/07/15 12:23:55 assar Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.43 2001/07/25 13:25:32 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.84 2000/02/21 02:01:24 chs Exp $	*/
 
 /*
@@ -2084,7 +2084,7 @@ pmap_map(va, spa, epa, prot)
 	vm_prot_t prot;
 {
 	while (spa < epa) {
-		_pmap_enter(pmap_kernel(), va, spa, prot, 0);
+		pmap_enter(pmap_kernel(), va, spa, prot, 0);
 		va += NBPG;
 		spa += NBPG;
 	}
@@ -3434,7 +3434,7 @@ pmap_transfer_ptes(srcpmap, srcl, dstpmap, dstl, toxfer, move)
  */
 
 int
-_pmap_enter(pmap, va, pa, prot, flags)
+pmap_enter(pmap, va, pa, prot, flags)
 	struct pmap *pmap;
 	vaddr_t va;
 	paddr_t pa;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mappedcopy.c,v 1.5 2001/06/08 08:08:57 art Exp $	*/
+/*	$OpenBSD: mappedcopy.c,v 1.6 2001/07/25 13:25:32 art Exp $	*/
 /*	$NetBSD: mappedcopy.c,v 1.1 1997/02/02 06:54:10 thorpej Exp $	*/
 
 /*
@@ -111,8 +111,8 @@ mappedcopyin(fromp, top, count)
 		if (pmap_extract(upmap, trunc_page((vaddr_t)fromp), &upa) == FALSE)
 			panic("mappedcopyin: null page frame");
 		len = min(count, (PAGE_SIZE - off));
-		pmap_enter(pmap_kernel(), kva, upa, VM_PROT_READ, TRUE,
-			   VM_PROT_READ);
+		pmap_enter(pmap_kernel(), kva, upa, VM_PROT_READ,
+			   VM_PROT_READ|PMAP_WIRED);
 		if (len == PAGE_SIZE && alignable && off == 0)
 			copypage((caddr_t)kva, top);
 		else
@@ -163,8 +163,8 @@ mappedcopyout(fromp, top, count)
 			panic("mappedcopyout: null page frame");
 		len = min(count, (PAGE_SIZE - off));
 		pmap_enter(pmap_kernel(), kva, upa,
-		    VM_PROT_READ|VM_PROT_WRITE, TRUE,
-		    VM_PROT_READ|VM_PROT_WRITE);
+		    VM_PROT_READ|VM_PROT_WRITE,
+		    VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
 		if (len == PAGE_SIZE && alignable && off == 0)
 			copypage(fromp, (caddr_t)kva);
 		else

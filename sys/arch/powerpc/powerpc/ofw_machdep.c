@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_machdep.c,v 1.22 2001/06/24 23:29:35 drahn Exp $	*/
+/*	$OpenBSD: ofw_machdep.c,v 1.23 2001/07/25 13:25:33 art Exp $	*/
 /*	$NetBSD: ofw_machdep.c,v 1.1 1996/09/30 16:34:50 ws Exp $	*/
 
 /*
@@ -187,7 +187,7 @@ restore_ofw_mapping()
 			continue;
 
 		while (size > 0) {
-			pmap_enter(&ofw_pmap, va, pa, VM_PROT_ALL, 1, 0);
+			pmap_enter(&ofw_pmap, va, pa, VM_PROT_ALL, PMAP_WIRED);
 			pa += NBPG;
 			va += NBPG;
 			size -= NBPG;

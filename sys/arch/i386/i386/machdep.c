@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.169 2001/07/15 10:54:44 niklas Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.170 2001/07/25 13:25:32 art Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -360,8 +360,8 @@ cpu_startup()
 	for (i = 0; i < btoc(MSGBUFSIZE); i++, pa += NBPG)
 		pmap_enter(pmap_kernel(),
 		    (vm_offset_t)((caddr_t)msgbufp + i * NBPG), pa,
-		    VM_PROT_READ|VM_PROT_WRITE, TRUE,
-		    VM_PROT_READ|VM_PROT_WRITE);
+		    VM_PROT_READ|VM_PROT_WRITE,
+		    VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
 	initmsgbuf((caddr_t)msgbufp, round_page(MSGBUFSIZE));
 
 	printf("%s", version);
@@ -627,8 +627,8 @@ setup_buffers(maxaddr)
 		for (size = PAGE_SIZE * (i < residual ? base + 1 : base);
 		    size > 0; size -= NBPG, addr += NBPG) {
 			pmap_enter(pmap_kernel(), addr, pg->phys_addr,
-			    VM_PROT_READ|VM_PROT_WRITE, TRUE,
-			    VM_PROT_READ|VM_PROT_WRITE);
+			    VM_PROT_READ|VM_PROT_WRITE,
+			    VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
 			pg = pg->pageq.tqe_next;
 		}
 	}
@@ -1815,7 +1815,7 @@ dumpsys()
 			printf("(%x %d) ", maddr, blkno);
 #endif
 			pmap_enter(pmap_kernel(), dumpspace, maddr,
-			    VM_PROT_READ, TRUE, 0);
+			    VM_PROT_READ, PMAP_WIRED);
 			if ((error = (*dump)(dumpdev, blkno,
 			    (caddr_t)dumpspace, NBPG)))
 				break;
@@ -2110,8 +2110,8 @@ init386(first_avail)
 			panic("cannot reserve /boot args memory");
 
 		pmap_enter(pmap_kernel(), (vaddr_t)bootargp, (paddr_t)bootargv,
-		    VM_PROT_READ|VM_PROT_WRITE, TRUE,
-		    VM_PROT_READ|VM_PROT_WRITE);
+		    VM_PROT_READ|VM_PROT_WRITE,
+		    VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
 
 		bios_getopt();
 
@@ -3089,8 +3089,8 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 			if (size == 0)
 				panic("_bus_dmamem_map: size botch");
 			pmap_enter(pmap_kernel(), va, addr,
-			    VM_PROT_READ | VM_PROT_WRITE, TRUE,
-			    VM_PROT_READ | VM_PROT_WRITE);
+			    VM_PROT_READ | VM_PROT_WRITE,
+			    VM_PROT_READ | VM_PROT_WRITE | PMAP_WIRED);
 		}
 	}
 	pmap_update();

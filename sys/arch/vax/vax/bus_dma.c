@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.2 2001/06/08 08:09:31 art Exp $	*/
+/*	$OpenBSD: bus_dma.c,v 1.3 2001/07/25 13:25:33 art Exp $	*/
 /*	$NetBSD: bus_dma.c,v 1.5 1999/11/13 00:32:20 thorpej Exp $	*/
 
 /*-
@@ -475,8 +475,8 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 			if (vax_boardtype == VAX_BTYP_43)
 				addr |= KA43_DIAGMEM;
 			pmap_enter(pmap_kernel(), va, addr,
-			    VM_PROT_READ | VM_PROT_WRITE, TRUE,
-			    VM_PROT_READ | VM_PROT_WRITE);
+			    VM_PROT_READ | VM_PROT_WRITE,
+			    VM_PROT_READ | VM_PROT_WRITE | PMAP_WIRED);
 		}
 	}
 	return (0);

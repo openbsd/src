@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.5 2001/07/18 10:47:05 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.6 2001/07/25 13:25:32 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.1 1996/09/30 16:34:52 ws Exp $	*/
 
 /*
@@ -1161,13 +1161,12 @@ pmap_remove_pv(pm, pteidx, va, pte_lo)
 /*
  * Insert physical page at pa into the given pmap at virtual address va.
  */
-void
-pmap_enter(pm, va, pa, prot, wired, access_type)
+int
+pmap_enter(pm, va, pa, prot, flags)
 	struct pmap *pm;
 	vm_offset_t va, pa;
 	vm_prot_t prot;
-	int wired;
-	vm_prot_t access_type;
+	int flags;
 {
 	sr_t sr;
 	int idx, i, s;
@@ -1224,7 +1223,7 @@ pmap_enter(pm, va, pa, prot, wired, access_type)
 	 */
 	if (pte_insert(idx, &pte)) {
 		splx(s);
-		return;
+		return (KERN_SUCCESS);
 	}
 	
 	/*
@@ -1236,6 +1235,8 @@ pmap_enter(pm, va, pa, prot, wired, access_type)
 	po->po_pte = pte;
 	LIST_INSERT_HEAD(potable + idx, po, po_list);
 	splx(s);
+
+	return (KERN_SUCCESS);
 }
 
 void
@@ -1244,7 +1245,7 @@ pmap_kenter_pa(va, pa, prot)
 	paddr_t pa;
 	vm_prot_t prot;
 {
-	pmap_enter(pmap_kernel(), va, pa, prot, 1, 0);
+	pmap_enter(pmap_kernel(), va, pa, prot, PMAP_WIRED);
 }
 
 void
@@ -1257,7 +1258,7 @@ pmap_kenter_pgs(va, pgs, npgs)
 
 	for (i = 0; i < npgs; i++, va += PAGE_SIZE) {
 		pmap_enter(pmap_kernel(), va, VM_PAGE_TO_PHYS(pgs[i]),
-				VM_PROT_READ|VM_PROT_WRITE, 1, 0);
+				VM_PROT_READ|VM_PROT_WRITE, PMAP_WIRED);
 	}
 }
 

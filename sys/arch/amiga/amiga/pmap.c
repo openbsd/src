@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.33 2001/07/18 10:47:04 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.34 2001/07/25 13:25:31 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.68 1999/06/19 19:44:09 is Exp $	*/
 
 /*-
@@ -769,7 +769,7 @@ pmap_map(virt, start, end, prot)
 		    prot);
 #endif
 	while (start < end) {
-		pmap_enter(pmap_kernel(), virt, start, prot, FALSE, 0);
+		pmap_enter(pmap_kernel(), virt, start, prot, 0);
 		virt += PAGE_SIZE;
 		start += PAGE_SIZE;
 	}
@@ -1110,28 +1110,26 @@ pmap_protect(pmap, sva, eva, prot)
  */
 extern int kernel_copyback;
 
-void
-pmap_enter(pmap, va, pa, prot, wired, access_type)
+int
+pmap_enter(pmap, va, pa, prot, flags)
 	pmap_t pmap;
 	vaddr_t va;
 	paddr_t pa;
 	vm_prot_t prot;
-	boolean_t wired;
-	vm_prot_t access_type;
+	int flags;
 {
 	u_int *pte;
 	int npte;
 	paddr_t opa;
 	boolean_t cacheable = TRUE;
 	boolean_t checkpv = TRUE;
+	boolean_t wired = (flags & PMAP_WIRED) != 0;
 
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_ENTER))
 		printf("pmap_enter(%p, %lx, %lx, %x, %x)\n", pmap, va, pa,
 		    prot, wired);
 #endif
-	if (pmap == NULL)
-		return;
 
 #ifdef DEBUG
 	if (pmap == pmap_kernel())
@@ -1379,6 +1377,8 @@ validate:
 		pmap_check_wiring("enter", trunc_page((vaddr_t)pmap_pte(pmap, va)));
 	}
 #endif
+
+	return (KERN_SUCCESS);
 }
 
 /*
@@ -2397,8 +2397,8 @@ pmap_enter_ptpage(pmap, va)
 		kpt_used_list = kpt;
 		ptpa = kpt->kpt_pa;
 		bzero((char *)kpt->kpt_va, NBPG);
-		pmap_enter(pmap, va, ptpa, VM_PROT_DEFAULT, TRUE,
-			   VM_PROT_DEFAULT);
+		pmap_enter(pmap, va, ptpa, VM_PROT_DEFAULT,
+			   VM_PROT_DEFAULT|PMAP_WIRED);
 #if defined(M68060)
 		if (machineid & AMIGA_68060) {
 			pmap_changebit(ptpa, PG_CCB, 0);
@@ -2599,7 +2599,8 @@ pmap_virtual_space(vstartp, vendp)
 void
 pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 {
-	pmap_enter(pmap_kernel(), va, pa, prot, 1, VM_PROT_READ|VM_PROT_WRITE);
+	pmap_enter(pmap_kernel(), va, pa, prot,
+		VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
 }
 
 void
@@ -2609,8 +2610,8 @@ pmap_kenter_pgs(vaddr_t va, struct vm_page **pgs, int npgs)
 
 	for (i = 0; i < npgs; i++, va += PAGE_SIZE) {
 		pmap_enter(pmap_kernel(), va, VM_PAGE_TO_PHYS(pgs[i]),
-			VM_PROT_READ|VM_PROT_WRITE, 1,
-			VM_PROT_READ|VM_PROT_WRITE);
+			VM_PROT_READ|VM_PROT_WRITE,
+			VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
 	}
 }
 
