@@ -3,9 +3,9 @@
  * (Modifications made here may easily be lost!)
  *
  * Created from the file:
- *	OpenBSD: vnode_if.src,v 1.9 1998/12/05 16:54:02 csapuntz Exp 
+ *	OpenBSD: vnode_if.src,v 1.10 2001/03/01 20:54:34 provos Exp 
  * by the script:
- *	OpenBSD: vnode_if.sh,v 1.8 2001/02/26 17:34:18 art Exp 
+ *	OpenBSD: vnode_if.sh,v 1.6 1999/03/03 20:58:27 deraadt Exp 
  */
 
 /*
@@ -188,6 +188,14 @@ struct vop_select_args {
 };
 extern struct vnodeop_desc vop_select_desc;
 int VOP_SELECT __P((struct vnode *, int, int, struct ucred *, struct proc *));
+
+struct vop_kqfilter_args {
+	struct vnodeop_desc *a_desc;
+	struct vnode *a_vp;
+	struct knote *a_kn;
+};
+extern struct vnodeop_desc vop_kqfilter_desc;
+int VOP_KQFILTER __P((struct vnode *, struct knote *));
 
 struct vop_revoke_args {
 	struct vnodeop_desc *a_desc;

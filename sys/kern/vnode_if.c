@@ -3,9 +3,9 @@
  * (Modifications made here may easily be lost!)
  *
  * Created from the file:
- *	OpenBSD: vnode_if.src,v 1.9 1998/12/05 16:54:02 csapuntz Exp 
+ *	OpenBSD: vnode_if.src,v 1.10 2001/03/01 20:54:34 provos Exp 
  * by the script:
- *	OpenBSD: vnode_if.sh,v 1.8 2001/02/26 17:34:18 art Exp 
+ *	OpenBSD: vnode_if.sh,v 1.6 1999/03/03 20:58:27 deraadt Exp 
  */
 
 /*
@@ -137,9 +137,8 @@ int VOP_CREATE(dvp, vpp, cnp, vap)
 	struct vop_create_args a;
 	a.a_desc = VDESC(vop_create);
 	a.a_dvp = dvp;
-#ifdef LOCKDEBUG
-	if ((dvp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(dvp))
-		panic("vop_create: dvp");
+#ifdef DIAGNOSTIC
+	if ((dvp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(dvp)) panic("vop_create: dvp");
 #endif
 	a.a_vpp = vpp;
 	a.a_cnp = cnp;
@@ -172,9 +171,8 @@ int VOP_MKNOD(dvp, vpp, cnp, vap)
 	struct vop_mknod_args a;
 	a.a_desc = VDESC(vop_mknod);
 	a.a_dvp = dvp;
-#ifdef LOCKDEBUG
-	if ((dvp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(dvp))
-		panic("vop_mknod: dvp");
+#ifdef DIAGNOSTIC
+	if ((dvp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(dvp)) panic("vop_mknod: dvp");
 #endif
 	a.a_vpp = vpp;
 	a.a_cnp = cnp;
@@ -269,9 +267,8 @@ int VOP_ACCESS(vp, mode, cred, p)
 	struct vop_access_args a;
 	a.a_desc = VDESC(vop_access);
 	a.a_vp = vp;
-#ifdef LOCKDEBUG
-	if ((vp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(vp))
-		panic("vop_access: vp");
+#ifdef DIAGNOSTIC
+	if ((vp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(vp)) panic("vop_access: vp");
 #endif
 	a.a_mode = mode;
 	a.a_cred = cred;
@@ -335,9 +332,8 @@ int VOP_SETATTR(vp, vap, cred, p)
 	struct vop_setattr_args a;
 	a.a_desc = VDESC(vop_setattr);
 	a.a_vp = vp;
-#ifdef LOCKDEBUG
-	if ((vp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(vp))
-		panic("vop_setattr: vp");
+#ifdef DIAGNOSTIC
+	if ((vp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(vp)) panic("vop_setattr: vp");
 #endif
 	a.a_vap = vap;
 	a.a_cred = cred;
@@ -370,9 +366,8 @@ int VOP_READ(vp, uio, ioflag, cred)
 	struct vop_read_args a;
 	a.a_desc = VDESC(vop_read);
 	a.a_vp = vp;
-#ifdef LOCKDEBUG
-	if ((vp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(vp))
-		panic("vop_read: vp");
+#ifdef DIAGNOSTIC
+	if ((vp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(vp)) panic("vop_read: vp");
 #endif
 	a.a_uio = uio;
 	a.a_ioflag = ioflag;
@@ -405,9 +400,8 @@ int VOP_WRITE(vp, uio, ioflag, cred)
 	struct vop_write_args a;
 	a.a_desc = VDESC(vop_write);
 	a.a_vp = vp;
-#ifdef LOCKDEBUG
-	if ((vp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(vp))
-		panic("vop_write: vp");
+#ifdef DIAGNOSTIC
+	if ((vp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(vp)) panic("vop_write: vp");
 #endif
 	a.a_uio = uio;
 	a.a_ioflag = ioflag;
@@ -514,6 +508,33 @@ int VOP_SELECT(vp, which, fflags, cred, p)
 	return (VCALL(vp, VOFFSET(vop_select), &a));
 }
 
+int vop_kqfilter_vp_offsets[] = {
+	VOPARG_OFFSETOF(struct vop_kqfilter_args,a_vp),
+	VDESC_NO_OFFSET
+};
+struct vnodeop_desc vop_kqfilter_desc = {
+	0,
+	"vop_kqfilter",
+	0,
+	vop_kqfilter_vp_offsets,
+	VDESC_NO_OFFSET,
+	VDESC_NO_OFFSET,
+	VDESC_NO_OFFSET,
+	VDESC_NO_OFFSET,
+	NULL,
+};
+
+int VOP_KQFILTER(vp, kn)
+	struct vnode *vp;
+	struct knote *kn;
+{
+	struct vop_kqfilter_args a;
+	a.a_desc = VDESC(vop_kqfilter);
+	a.a_vp = vp;
+	a.a_kn = kn;
+	return (VCALL(vp, VOFFSET(vop_kqfilter), &a));
+}
+
 int vop_revoke_vp_offsets[] = {
 	VOPARG_OFFSETOF(struct vop_revoke_args,a_vp),
 	VDESC_NO_OFFSET
@@ -597,9 +618,8 @@ int VOP_FSYNC(vp, cred, waitfor, p)
 	struct vop_fsync_args a;
 	a.a_desc = VDESC(vop_fsync);
 	a.a_vp = vp;
-#ifdef LOCKDEBUG
-	if ((vp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(vp))
-		panic("vop_fsync: vp");
+#ifdef DIAGNOSTIC
+	if ((vp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(vp)) panic("vop_fsync: vp");
 #endif
 	a.a_cred = cred;
 	a.a_waitfor = waitfor;
@@ -663,14 +683,12 @@ int VOP_REMOVE(dvp, vp, cnp)
 	struct vop_remove_args a;
 	a.a_desc = VDESC(vop_remove);
 	a.a_dvp = dvp;
-#ifdef LOCKDEBUG
-	if ((dvp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(dvp))
-		panic("vop_remove: dvp");
+#ifdef DIAGNOSTIC
+	if ((dvp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(dvp)) panic("vop_remove: dvp");
 #endif
 	a.a_vp = vp;
-#ifdef LOCKDEBUG
-	if ((vp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(vp))
-		panic("vop_remove: vp");
+#ifdef DIAGNOSTIC
+	if ((vp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(vp)) panic("vop_remove: vp");
 #endif
 	a.a_cnp = cnp;
 	return (VCALL(dvp, VOFFSET(vop_remove), &a));
@@ -701,9 +719,8 @@ int VOP_LINK(dvp, vp, cnp)
 	struct vop_link_args a;
 	a.a_desc = VDESC(vop_link);
 	a.a_dvp = dvp;
-#ifdef LOCKDEBUG
-	if ((dvp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(dvp))
-		panic("vop_link: dvp");
+#ifdef DIAGNOSTIC
+	if ((dvp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(dvp)) panic("vop_link: dvp");
 #endif
 	a.a_vp = vp;
 	a.a_cnp = cnp;
@@ -743,9 +760,8 @@ int VOP_RENAME(fdvp, fvp, fcnp, tdvp, tvp, tcnp)
 	a.a_fvp = fvp;
 	a.a_fcnp = fcnp;
 	a.a_tdvp = tdvp;
-#ifdef LOCKDEBUG
-	if ((tdvp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(tdvp))
-		panic("vop_rename: tdvp");
+#ifdef DIAGNOSTIC
+	if ((tdvp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(tdvp)) panic("vop_rename: tdvp");
 #endif
 	a.a_tvp = tvp;
 	a.a_tcnp = tcnp;
@@ -777,9 +793,8 @@ int VOP_MKDIR(dvp, vpp, cnp, vap)
 	struct vop_mkdir_args a;
 	a.a_desc = VDESC(vop_mkdir);
 	a.a_dvp = dvp;
-#ifdef LOCKDEBUG
-	if ((dvp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(dvp))
-		panic("vop_mkdir: dvp");
+#ifdef DIAGNOSTIC
+	if ((dvp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(dvp)) panic("vop_mkdir: dvp");
 #endif
 	a.a_vpp = vpp;
 	a.a_cnp = cnp;
@@ -812,14 +827,12 @@ int VOP_RMDIR(dvp, vp, cnp)
 	struct vop_rmdir_args a;
 	a.a_desc = VDESC(vop_rmdir);
 	a.a_dvp = dvp;
-#ifdef LOCKDEBUG
-	if ((dvp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(dvp))
-		panic("vop_rmdir: dvp");
+#ifdef DIAGNOSTIC
+	if ((dvp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(dvp)) panic("vop_rmdir: dvp");
 #endif
 	a.a_vp = vp;
-#ifdef LOCKDEBUG
-	if ((vp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(vp))
-		panic("vop_rmdir: vp");
+#ifdef DIAGNOSTIC
+	if ((vp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(vp)) panic("vop_rmdir: vp");
 #endif
 	a.a_cnp = cnp;
 	return (VCALL(dvp, VOFFSET(vop_rmdir), &a));
@@ -851,9 +864,8 @@ int VOP_SYMLINK(dvp, vpp, cnp, vap, target)
 	struct vop_symlink_args a;
 	a.a_desc = VDESC(vop_symlink);
 	a.a_dvp = dvp;
-#ifdef LOCKDEBUG
-	if ((dvp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(dvp))
-		panic("vop_symlink: dvp");
+#ifdef DIAGNOSTIC
+	if ((dvp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(dvp)) panic("vop_symlink: dvp");
 #endif
 	a.a_vpp = vpp;
 	a.a_cnp = cnp;
@@ -889,9 +901,8 @@ int VOP_READDIR(vp, uio, cred, eofflag, ncookies, cookies)
 	struct vop_readdir_args a;
 	a.a_desc = VDESC(vop_readdir);
 	a.a_vp = vp;
-#ifdef LOCKDEBUG
-	if ((vp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(vp))
-		panic("vop_readdir: vp");
+#ifdef DIAGNOSTIC
+	if ((vp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(vp)) panic("vop_readdir: vp");
 #endif
 	a.a_uio = uio;
 	a.a_cred = cred;
@@ -925,9 +936,8 @@ int VOP_READLINK(vp, uio, cred)
 	struct vop_readlink_args a;
 	a.a_desc = VDESC(vop_readlink);
 	a.a_vp = vp;
-#ifdef LOCKDEBUG
-	if ((vp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(vp))
-		panic("vop_readlink: vp");
+#ifdef DIAGNOSTIC
+	if ((vp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(vp)) panic("vop_readlink: vp");
 #endif
 	a.a_uio = uio;
 	a.a_cred = cred;
@@ -984,9 +994,8 @@ int VOP_INACTIVE(vp, p)
 	struct vop_inactive_args a;
 	a.a_desc = VDESC(vop_inactive);
 	a.a_vp = vp;
-#ifdef LOCKDEBUG
-	if ((vp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(vp))
-		panic("vop_inactive: vp");
+#ifdef DIAGNOSTIC
+	if ((vp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(vp)) panic("vop_inactive: vp");
 #endif
 	a.a_p = p;
 	return (VCALL(vp, VOFFSET(vop_inactive), &a));
@@ -1103,9 +1112,8 @@ int VOP_BMAP(vp, bn, vpp, bnp, runp)
 	struct vop_bmap_args a;
 	a.a_desc = VDESC(vop_bmap);
 	a.a_vp = vp;
-#ifdef LOCKDEBUG
-	if ((vp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(vp))
-		panic("vop_bmap: vp");
+#ifdef DIAGNOSTIC
+	if ((vp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(vp)) panic("vop_bmap: vp");
 #endif
 	a.a_bn = bn;
 	a.a_vpp = vpp;
@@ -1226,9 +1234,8 @@ int VOP_BLKATOFF(vp, offset, res, bpp)
 	struct vop_blkatoff_args a;
 	a.a_desc = VDESC(vop_blkatoff);
 	a.a_vp = vp;
-#ifdef LOCKDEBUG
-	if ((vp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(vp))
-		panic("vop_blkatoff: vp");
+#ifdef DIAGNOSTIC
+	if ((vp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(vp)) panic("vop_blkatoff: vp");
 #endif
 	a.a_offset = offset;
 	a.a_res = res;
@@ -1261,9 +1268,8 @@ int VOP_VALLOC(pvp, mode, cred, vpp)
 	struct vop_valloc_args a;
 	a.a_desc = VDESC(vop_valloc);
 	a.a_pvp = pvp;
-#ifdef LOCKDEBUG
-	if ((pvp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(pvp))
-		panic("vop_valloc: pvp");
+#ifdef DIAGNOSTIC
+	if ((pvp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(pvp)) panic("vop_valloc: pvp");
 #endif
 	a.a_mode = mode;
 	a.a_cred = cred;
@@ -1298,9 +1304,8 @@ int VOP_BALLOC(vp, startoffset, size, cred, flags, bpp)
 	struct vop_balloc_args a;
 	a.a_desc = VDESC(vop_balloc);
 	a.a_vp = vp;
-#ifdef LOCKDEBUG
-	if ((vp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(vp))
-		panic("vop_balloc: vp");
+#ifdef DIAGNOSTIC
+	if ((vp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(vp)) panic("vop_balloc: vp");
 #endif
 	a.a_startoffset = startoffset;
 	a.a_size = size;
@@ -1333,9 +1338,8 @@ int VOP_REALLOCBLKS(vp, buflist)
 	struct vop_reallocblks_args a;
 	a.a_desc = VDESC(vop_reallocblks);
 	a.a_vp = vp;
-#ifdef LOCKDEBUG
-	if ((vp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(vp))
-		panic("vop_reallocblks: vp");
+#ifdef DIAGNOSTIC
+	if ((vp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(vp)) panic("vop_reallocblks: vp");
 #endif
 	a.a_buflist = buflist;
 	return (VCALL(vp, VOFFSET(vop_reallocblks), &a));
@@ -1365,9 +1369,8 @@ int VOP_VFREE(pvp, ino, mode)
 	struct vop_vfree_args a;
 	a.a_desc = VDESC(vop_vfree);
 	a.a_pvp = pvp;
-#ifdef LOCKDEBUG
-	if ((pvp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(pvp))
-		panic("vop_vfree: pvp");
+#ifdef DIAGNOSTIC
+	if ((pvp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(pvp)) panic("vop_vfree: pvp");
 #endif
 	a.a_ino = ino;
 	a.a_mode = mode;
@@ -1400,9 +1403,8 @@ int VOP_TRUNCATE(vp, length, flags, cred, p)
 	struct vop_truncate_args a;
 	a.a_desc = VDESC(vop_truncate);
 	a.a_vp = vp;
-#ifdef LOCKDEBUG
-	if ((vp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(vp))
-		panic("vop_truncate: vp");
+#ifdef DIAGNOSTIC
+	if ((vp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(vp)) panic("vop_truncate: vp");
 #endif
 	a.a_length = length;
 	a.a_flags = flags;
@@ -1436,9 +1438,8 @@ int VOP_UPDATE(vp, access, modify, waitfor)
 	struct vop_update_args a;
 	a.a_desc = VDESC(vop_update);
 	a.a_vp = vp;
-#ifdef LOCKDEBUG
-	if ((vp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(vp))
-		panic("vop_update: vp");
+#ifdef DIAGNOSTIC
+	if ((vp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(vp)) panic("vop_update: vp");
 #endif
 	a.a_access = access;
 	a.a_modify = modify;
@@ -1470,9 +1471,8 @@ int VOP_WHITEOUT(dvp, cnp, flags)
 	struct vop_whiteout_args a;
 	a.a_desc = VDESC(vop_whiteout);
 	a.a_dvp = dvp;
-#ifdef LOCKDEBUG
-	if ((dvp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(dvp))
-		panic("vop_whiteout: dvp");
+#ifdef DIAGNOSTIC
+	if ((dvp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(dvp)) panic("vop_whiteout: dvp");
 #endif
 	a.a_cnp = cnp;
 	a.a_flags = flags;
@@ -1550,6 +1550,7 @@ struct vnodeop_desc *vfs_op_descs[] = {
 	&vop_lease_desc,
 	&vop_ioctl_desc,
 	&vop_select_desc,
+	&vop_kqfilter_desc,
 	&vop_revoke_desc,
 	&vop_mmap_desc,
 	&vop_fsync_desc,
