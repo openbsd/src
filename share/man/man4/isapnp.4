@@ -1,4 +1,4 @@
-.\"	$OpenBSD: isapnp.4,v 1.5 1999/06/05 13:18:32 aaron Exp $
+.\"	$OpenBSD: isapnp.4,v 1.6 1999/07/06 19:27:45 deraadt Exp $
 .\"	$NetBSD: isapnp.4,v 1.8 1998/06/07 09:08:46 enami Exp $
 .\"
 .\" Copyright (c) 1997 Jonathan Stone
@@ -43,29 +43,28 @@ An
 bus can be configured for each supported ISA bus.
 .Sh INTRODUCTION
 .Ox
-provides machine-independent bus support and
-drivers for ISA Plug-and-Play (isapnp) autoconfiguration of
-PnP-compatible
+provides machine-independent bus support and drivers for ISA
+Plug-and-Play (isapnp) autoconfiguration of PnP-compatible
 devices on an ISA bus.
 .Sh SUPPORTED DEVICES
 .Ox
 includes machine-independent ISAPNP drivers, sorted by function
 and driver name:
 .Pp
-.\" .Ss SCSI controllers
-.\" .Bl -tag -width speaker -offset indent -compact
-.\" .It aic
-.\" Adaptec AHA-1520B SCSI controller card.
-.\" .El
-.\"
-.\" .Pp
+.Ss SCSI controllers
+.Bl -tag -width speaker -offset indent -compact
+.It aic
+Adaptec AHA-1520B SCSI controller card.
+.It aha
+Adaptec AHA-154x SCSI controller card.
+.El
+.Pp
 .Ss Serial and parallel interfaces
 .Bl -tag -width speaker -offset indent -compact
-.It pccom
+.It com & pccom
 8250/16450/16550/16650/16850-compatible ISA PnP serial cards and internal
 modems (i386 only).
 .El
-.\"
 .Pp
 .Ss Network interfaces
 .Bl -tag -width speaker -offset indent -compact
@@ -76,45 +75,67 @@ Ethernet driver for Lance based ethernet interface.
 .It ne
 NE2000-compatible ethernet interfaces.
 .El
-.\"
 .Ss Sound cards
 .Bl -tag -width speaker -offset indent -compact
 .It sb
 Soundblaster series sound cards (SB16 PnP through AWE64).
-.\" .It guspnp
-.\" Gravis Ultrasound PnP sound cards.
+.It gus
+Gravis Ultrasound PnP sound cards.
 .It ym
 Yamaha OPL3-SA3 sound cards.
+.It wss
+Windows Sound System cards.
 .El
-.\" .Pp
-.\" ISA Plug-and-Play devices also have alternate ISA drivers with
-.\" static ISA IO address configuration.
-.\" These are listed in 
-.\" .Xr isa 4 .
-.\" The
-.\" .Nm
-.\" bus ignores devices that have already been found and configured as
-.\" .Xr isa 4
-.\" devices.
-.\" The
-.\" .Nm
-.\" bus is only effective on machines which lack a PnP BIOS, or where
-.\" the PnP BIOS has been disabled.
-.\" The manual pages for each individual 
-.\" .Nm
-.\" driver also list
-.\" the supported front-ends for other buses.
+.Ss Misc devices
+.Bl -tag -width speaker -offset indent -compact
+.It joy
+Joystick driver.
+.El
+.Sh PROBLEMS
+From time to time an
+.Em isapnp
+device will be found which the kernel does not recognize.
+The kernel matches
+.Em isapnp
+devices to device drivers based on identifiers which each device
+provides.  For example, this device:
+.Pp
+joy0 at isapnp0 <Creative SB16 PnP, CTL7001, PNPB02F, Game> port 0x200/8
+.Pp
+This joystick calls itself by the two names
+.Em CTL7001
+and
+.Em PNPB02F .
+.Em PNPB02F
+is a standard name, but
+.Em CTL7001
+is a vendor-specific name.  Some devices unfortunately advertise only
+using  vendor-specific names, for instance:
+.Pp
+isapnp0: <PnP Sound Chip, @P@1001, , > port 0x200/8 not configured
+.Pp
+Testing will show that this device is actually a joystick.  To resolve
+the issue, the actual name
+.Em @P@1001
+has to be entered into the database found in
+.Pa /sys/dev/isa/pnpdevs
+and a new kernel must be built.
+Then the device will probe like this:
+.Pp
+joy0 at isapnp0 <PnP Sound Chip, @P@1001, , > port 0x200/8
+.Pp
 .Sh SEE ALSO
-.\" .Xr aic 4 ,
+.Xr aic 4 ,
+.Xr aha 4 ,
 .Xr ep 4 ,
-.\" .Xr guspnp 4 ,
 .Xr intro 4 ,
-.\" .Xr isa 4 ,
 .Xr le 4 ,
 .Xr ne 4 ,
 .Xr pccom 4 ,
 .Xr sb 4 ,
-.Xr ym 4
+.Xr ym 4 ,
+.Xr wss 4 ,
+.Xr joy 4
 .Sh HISTORY
 The
 .Nm
