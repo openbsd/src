@@ -35,7 +35,7 @@
 ./usr/lib/libossaudio.so.0.0
 ./usr/lib/libotermcap.so.3.0
 ./usr/lib/libpanel.so.1.1
-./usr/lib/libpcap.so.0.2
+./usr/lib/libpcap.so.1.0
 ./usr/lib/libskey.so.1.0
 ./usr/lib/libssl.so.1.0
 ./usr/lib/libstdc++.so.29.0
@@ -679,3 +679,5 @@
 ./usr/sbin/fdformat
 ./usr/sbin/screenblank
 ./usr/libdata/perl5/site_perl/sparc-openbsd/net/if_sppp.p
+./usr/libdata/perl5/site_perl/sparc-openbsd/pcap-int.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/sys/ataio.ph

@@ -31,7 +31,7 @@
 ./usr/lib/libossaudio.so.0.0
 ./usr/lib/libotermcap.so.3.0
 ./usr/lib/libpanel.so.1.1
-./usr/lib/libpcap.so.0.2
+./usr/lib/libpcap.so.1.0
 ./usr/lib/libskey.so.1.0
 ./usr/lib/libssl.so.1.0
 ./usr/lib/libstdc++.so.29.0
@@ -704,3 +704,5 @@
 ./usr/share/misc/pcvtfonts/vt220l.814
 ./usr/share/misc/pcvtfonts/vt220l.816
 ./usr/libdata/perl5/site_perl/i386-openbsd/net/if_sppp.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/pcap-int.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/sys/ataio.ph

@@ -2619,3 +2619,8 @@
 ./usr/share/zoneinfo/America/Belem
 ./usr/share/zoneinfo/America/Porto_Velho
 ./usr/share/zoneinfo/Antarctica/Syowa
+./usr/sbin/certpatch
+./etc/isakmpd
+./etc/isakmpd/ca
+./etc/isakmpd/certs
+./etc/isakmpd/private

@@ -382,3 +382,5 @@
 ./usr/powerpc-unknown-openbsd2.5/bin
 ./usr/powerpc-unknown-openbsd2.5/lib
 ./usr/powerpc-unknown-openbsd2.5/lib/ldscripts
+./usr/libdata/perl5/site_perl/powerpc-openbsd/pcap-int.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/ataio.ph

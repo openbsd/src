@@ -654,3 +654,5 @@
 ./usr/share/info/ld.info-2
 ./usr/share/info/ld.info-3
 ./usr/libdata/perl5/site_perl/alpha-openbsd/net/if_sppp.ph
+./usr/libdata/perl5/site_perl/alpha-openbsd/pcap-int.ph
+./usr/libdata/perl5/site_perl/alpha-openbsd/sys/ataio.ph

@@ -28,7 +28,7 @@
 ./usr/lib/libocurses.so.3.0
 ./usr/lib/libotermcap.so.3.0
 ./usr/lib/libpanel.so.1.1
-./usr/lib/libpcap.so.0.2
+./usr/lib/libpcap.so.1.0
 ./usr/lib/libskey.so.1.0
 ./usr/lib/libssl.so.1.0
 ./usr/lib/libtermcap.so.5.0
@@ -418,3 +418,5 @@
 ./usr/mipsel-unknown-openbsd2.5/bin
 ./usr/mipsel-unknown-openbsd2.5/lib
 ./usr/mipsel-unknown-openbsd2.5/lib/ldscripts
+./usr/libdata/perl5/site_perl/mips-openbsd/pcap-int.ph
+./usr/libdata/perl5/site_perl/mips-openbsd/sys/ataio.ph

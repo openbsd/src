@@ -32,7 +32,7 @@
 ./usr/lib/libossaudio.so.0.0
 ./usr/lib/libotermcap.so.3.0
 ./usr/lib/libpanel.so.1.1
-./usr/lib/libpcap.so.0.2
+./usr/lib/libpcap.so.1.0
 ./usr/lib/libskey.so.1.0
 ./usr/lib/libssl.so.1.0
 ./usr/lib/libstdc++.so.29.0
@@ -664,3 +664,5 @@
 ./usr/share/keymaps/amiga/fr.map
 ./usr/share/keymaps/amiga/sw.map
 ./usr/share/keymaps/amiga/us.map
+./usr/libdata/perl5/site_perl/m68k-openbsd/pcap-int.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/sys/ataio.ph
