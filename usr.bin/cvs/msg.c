@@ -1,4 +1,4 @@
-/*	$OpenBSD: msg.c,v 1.2 2004/07/25 03:21:11 jfb Exp $	*/
+/*	$OpenBSD: msg.c,v 1.3 2004/09/25 12:22:54 jfb Exp $	*/
 /*
  * Copyright (c) 2002 Matthieu Herrb
  * Copyright (c) 2001 Niels Provos <provos@citi.umich.edu>
@@ -179,7 +179,8 @@ cvsd_sendmsg(int fd, u_int type, const void *data, size_t len)
  * in the <dst> buffer.  The <len> parameter should contain the maximum
  * length of data that can be stored in <dst>, and will contain the actual
  * size of data stored on return.  The message type is stored in <type>.
- * Returns 0 on success, or -1 on failure.
+ * Returns 1 if a message was read, 0 if the remote end closed the message
+ * socket and no further messages can be read, or -1 on failure.
  */
 
 int
@@ -189,10 +190,12 @@ cvsd_recvmsg(int fd, u_int *type, void *dst, size_t *len)
 	ssize_t ret;
 	struct cvsd_msg msg;
 
-	if (read(fd, &msg, sizeof(msg)) == -1) {
+	if ((ret = read(fd, &msg, sizeof(msg))) == -1) {
 		cvs_log(LP_ERRNO, "failed to read message header");
 		return (-1);
 	}
+	else if (ret == 0)
+		return (0);
 
 	if (*len < msg.cm_len) {
 		cvs_log(LP_ERR, "buffer size too small for message data");
