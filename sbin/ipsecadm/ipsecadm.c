@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsecadm.c,v 1.11 1999/02/26 10:04:05 angelos Exp $ */
+/* $OpenBSD: ipsecadm.c,v 1.12 1999/02/27 07:29:17 deraadt Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and 
@@ -821,7 +821,8 @@ main(int argc, char **argv)
 	exit(1);
     }
 
-    if (isencauth(mode) && keyp == NULL)
+    if (((mode & (ESP_NEW | ESP_OLD)) && keyp == NULL) ||
+        ((mode & (AH_NEW | AH_OLD)) && authp == NULL))
     {
 	fprintf(stderr, "%s: no key material specified\n", argv[0]);
 	exit(1);

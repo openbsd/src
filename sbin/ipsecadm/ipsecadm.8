@@ -1,4 +1,4 @@
-.\" $OpenBSD: ipsecadm.8,v 1.2 1999/02/25 17:43:19 deraadt Exp $
+.\" $OpenBSD: ipsecadm.8,v 1.3 1999/02/27 07:29:17 deraadt Exp $
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
 .\"
@@ -337,7 +337,7 @@ Setup a SPI which uses new esp with 3des encryption and HMAC-SHA1
 authentication:
 .Bd -literal
 ipsecadm -enc 3des -auth sha1 -spi 1001 -dst 169.20.12.2 -src 169.20.12.3
--key 638063806380638063806380638063806380638063806380 -authp 1234123412341234
+-key 638063806380638063806380638063806380638063806380 -authkey 1234123412341234
 .Ed
 .Pp
 Setup a SPI for authentication with old ah only:
