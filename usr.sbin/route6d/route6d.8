@@ -1,5 +1,5 @@
-.\"	$OpenBSD: route6d.8,v 1.12 2001/06/23 05:57:10 deraadt Exp $
-.\"	$KAME: route6d.8,v 1.9 2000/07/24 12:39:46 itojun Exp $
+.\"	$OpenBSD: route6d.8,v 1.13 2002/06/02 23:49:47 itojun Exp $
+.\"	$KAME: route6d.8,v 1.11 2002/06/02 15:00:30 itojun Exp $
 .\"
 .\" Copyright (c) 1996 WIDE Project. All rights reserved.
 .\"
@@ -19,10 +19,10 @@
 .Os
 .Sh NAME
 .Nm route6d
-.Nd RIP6 Routing Daemon
+.Nd RIP6 routing daemon
 .Sh SYNOPSIS
 .Nm route6d
-.Op Fl adDhlqsS
+.Op Fl adDhlnqsS
 .Bk -words
 .Op Fl R Ar routelog
 .Ek
@@ -58,12 +58,12 @@ Enables aging of the statically defined routes.
 With this option, any
 statically defined routes will be removed unless corresponding updates
 arrive as if the routes are received at the startup of
-.Nm Ns .
+.Nm "" .
 .\"
 .It Fl R Ar routelog
-This option makes the
+This option makes
 .Nm
-to log the route change (add/delete) to the file
+log route changes (add/delete) to the file
 .Ar routelog .
 .\"
 .It Fl A Ar prefix/preflen,if1[,if2...]
@@ -73,51 +73,50 @@ specifies the prefix and the prefix length of the
 aggregated route.
 When advertising routes,
 .Nm
-filters specific routes covered by the aggregate,
+filters specific routes covered by the aggregate
 and advertises the aggregated route
-.Ar prefix/preflen ,
-to the interfaces specified in the comma-separated interface list,
+.Ar prefix/preflen
+to the interfaces specified in the comma-separated interface list
 .Ar if1[,if2...] .
 .Nm
 creates a static route to
-.Ar prefix/preflen
-with
+.Ar prefix/preflen ,
+with the
 .Dv RTF_REJECT
-flag, into the kernel routing table.
+flag set, into the kernel routing table.
 .\"
 .It Fl d
-Enables output of debugging message.
+Enables output of debugging messages.
 This option also instructs
 .Nm
 to run in foreground mode
-.Pq does not become daemon .
+.Pq i.e., it does not become a daemon process .
 .\"
 .It Fl D
-Enables extensive output of debugging message.
+Enables extensive output of debugging messages.
 This option also instructs
 .Nm
 to run in foreground mode
-.Pq does not become daemon .
+.Pq i.e., it does not become a daemon process .
 .\"
 .It Fl h
-Disables the split horizon processing.
+Disables split horizon processing.
 .\"
 .It Fl l
 By default,
 .Nm
 will not exchange site local routes for safety reasons.
-This is because semantics of site local address space is rather vague
-.Pq specification is still in being worked ,
-and there is no good way to define site local boundary.
+This is because the semantics of site local address space are rather vague,
+as the specification is still being worked on,
+and there is no good way to define the site local boundary.
 With
-.Fl l
-option,
+.Fl l ,
 .Nm
 will exchange site local routes as well.
 It must not be used on site boundary routers,
 since
 .Fl l
-option assumes that all interfaces are in the same site.
+assumes that all interfaces are in the same site.
 .\"
 .It Fl L Ar prefix/preflen,if1[,if2...]
 Filter incoming routes from interfaces
@@ -127,7 +126,7 @@ will accept incoming routes that are in
 .Ar prefix/preflen .
 If multiple
 .Fl L
-options are specified, any routes that match one of the options is accepted.
+options are specified, all routes that match any of the options are accepted.
 .Li ::/0
 is treated specially as default route, not
 .Do
@@ -144,7 +143,11 @@ For example, with
 .Li ::/0,if1
 .Dc
 .Nm
-will accept default route and routes in 6bone test address, but no others.
+will accept the default route and routes in the 6bone test address range,
+but no others.
+.\"
+.It Fl n
+Do not update the kernel routing table.
 .\"
 .It Fl N Ar if1[,if2...]
 Do not listen to, or advertise, route from/to interfaces specified by
@@ -155,35 +158,35 @@ Restrict route advertisement toward interfaces specified by
 .Ar if1,[if2...] .
 With this option
 .Nm
-will only advertise routes that matches
+will only advertise routes that match
 .Ar prefix/preflen .
 .\"
 .It Fl q
 Makes
 .Nm
-in listen-only mode.
+use listen-only mode.
 No advertisement is sent.
 .\"
 .It Fl s
 Makes
 .Nm
-to advertise the statically defined routes which exist in the kernel routing
+advertise the statically defined routes which exist in the kernel routing
 table when
 .Nm
-invoked.
+is invoked.
 Announcements obey the regular split horizon rule.
 .\"
 .It Fl S
 This option is the same as
-.Fl s
-option except that no split horizon rule does apply.
+.Fl s ,
+except that the split horizon rule does apply.
 .\"
 .It Fl T Ar if1[,if2...]
-Advertise only default route, toward
+Advertise only the default route toward
 .Ar if1,[if2...] .
 .\"
 .It Fl t Ar tag
-Attach route tag
+Attach the route tag
 .Ar tag
 to originated route entries.
 .Ar tag
@@ -205,10 +208,13 @@ will dump the current internal state into
 .Sh FILES
 .Bl -tag -width /var/run/route6d_dump -compact
 .It Pa /var/run/route6d_dump
-dumps internal state on
+contains the internal state dumps created if
+.Nm
+receives a
 .Dv SIGINT
 or
 .Dv SIGUSR1
+signal
 .El
 .\"
 .Sh SEE ALSO
@@ -220,30 +226,30 @@ or
 .%D January 1997
 .Re
 .\"
-.Sh NOTE
+.Sh NOTES
 .Nm
-uses IPv6 advanced API,
+uses the advanced IPv6 API,
 defined in RFC2292,
 for communicating with peers using link-local addresses.
 .Pp
 Internally
 .Nm
-embeds interface identifier into bit 32 to 63 of link-local addresses
+embeds interface identifiers into bits 32 to 63 of link-local addresses
 .Po
 .Li fe80::xx
 and
 .Li ff02::xx
 .Pc
-so they will be visible on internal state dump file
+so they will be visible in the internal state dump file
 .Pq Pa /var/run/route6d_dump .
 .Pp
 Routing table manipulation differs from IPv6 implementation to implementation.
 Currently
 .Nm
-obeys WIDE Hydrangea/KAME IPv6 kernel,
+obeys the WIDE Hydrangea/KAME IPv6 kernel,
 and will not be able to run on other platforms.
 .Pp
-Current
+Currently,
 .Nm
 does not reduce the rate of the triggered updates when consecutive updates
 arrive.
