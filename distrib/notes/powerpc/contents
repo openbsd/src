@@ -25,6 +25,10 @@ prompt type "boot enet:,ofwboot /bsd.rd"
 This assumes that that a machine is configured with bootp/tftp/nfs to
 make the kernel and bootloader available.
 
+NOTE:
+The powerpc port does not currently support sharing the disk with MacOS
+This is an important fact on the imac which does not support more than
+one disk.
 
 DistributionDescription
 
