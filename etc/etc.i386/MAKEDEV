@@ -4,10 +4,10 @@
 # generated from:
 #
 #	OpenBSD: etc.i386/MAKEDEV.md,v 1.2 2002/01/23 07:53:01 todd Exp 
-#	OpenBSD: MAKEDEV.mi,v 1.22 2002/01/23 08:09:30 todd Exp 
+#	OpenBSD: MAKEDEV.mi,v 1.23 2002/02/08 20:26:36 todd Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.5 2002/01/23 06:02:19 todd Exp 
 #
-#	$OpenBSD: MAKEDEV,v 1.112 2002/01/23 08:23:19 todd Exp $
+#	$OpenBSD: MAKEDEV,v 1.113 2002/02/08 20:54:35 todd Exp $
 #
 # Copyright (c) 2001 Todd T. Fries <todd@OpenBSD.org>
 # All rights reserved.
@@ -206,6 +206,7 @@ M() {
 	return 0
 }
 R() {
+[ "$DEBUG" ] && set -x
 for i in "$@"
 do
 U=`unt $i`
@@ -249,11 +250,11 @@ mouse*)
 
 usbs)
 	R utty0 utty1 ugen0 ugen1 ulpt0 ulpt1 uhid0 uhid1 uhid2 uhid3
-	R urio0 usb0 usb1
+	R uscanner0 urio0 usb0 usb1
 	;;
 
 radio*)
-	M radio$U     c 76 $U 644
+	M radio$U     c 76 $U
 	MKlist="$MKlist;[ -e radio ] || ln -s radio$U radio"
 	;;
 
@@ -568,8 +569,8 @@ all)
 	R ttyc0 ttyc1 ttyc2 ttyc3 ttyc4 ttyc5 ttyc6 ttyc7 apm crypto
 	R pf altq pctr tun0 tun1 tun2 tun3 bpf0 bpf1 bpf2 bpf3 bpf4
 	R bpf5 bpf6 bpf7 bpf8 bpf9 fd1 fd1B fd1C fd1D fd1E fd1F fd1G
-	R fd1H fd0 fd0B fd0C fd0D fd0E fd0F fd0G fd0H rd0 raid0 raid1
-	R raid2 raid3 wd0 wd1 wd2 wd3 ccd0 ccd1 ccd2 ccd3 vnd0 vnd1
+	R fd1H fd0 fd0B fd0C fd0D fd0E fd0F fd0G fd0H wd0 wd1 wd2 wd3
+	R rd0 raid0 raid1 raid2 raid3 ccd0 ccd1 ccd2 ccd3 vnd0 vnd1
 	R vnd2 vnd3 std cd0 cd1 ch0 st0 st1 pty0 pty1 fd mcd0 sd0 sd1
 	R sd2 sd3 sd4
 	;;
