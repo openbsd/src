@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.36 2001/08/28 09:19:03 jj Exp $
+#	$OpenBSD: GENERIC,v 1.37 2001/10/18 08:43:16 jj Exp $
 #	$NetBSD: GENERIC,v 1.85 1997/08/27 19:32:49 is Exp $
 
 #
@@ -142,7 +142,7 @@ mfcs1		at mfc0 unit 1		# MFC serial
 
 drbbc0		at mainbus0		# DraCo battery backed clock
 drsupio0	at mainbus0		# DraCo superio chip
-com*		at drsupio? port ?	# DraCo serial
+#com*		at drsupio? port ?	# DraCo serial
 
 a2kbbc0 	at mainbus0		# A2000 battery backed clock
 a34kbbc0	at mainbus0		# A3000/A4000 battery backed clock
@@ -226,23 +226,23 @@ pcmcia*	at pcic? controller ? socket ?
 
 option		PCMCIAVERBOSE
 
-com0	at isa? port 0x3f8 irq 4	# Standard PC serial ports
-com1	at isa? port 0x2f8 irq 3
-com2	at isa? port 0x3e8 irq 5
+#com0	at isa? port 0x3f8 irq 4	# Standard PC serial ports
+#com1	at isa? port 0x2f8 irq 3
+#com2	at isa? port 0x3e8 irq 5
 #com3	at isa? port 0x2e8 irq 9	# (conflicts with some video cards)
-com4	at isa? port 0x0f0 irq 11	# Crosslink builtin ports
-com5	at isa? port 0x0f8 irq 10
-ast0	at isa? port 0x1a0 irq 3	# AST 4-port serial cards
-com*	at ast? slave ?
-boca0	at isa? port 0x100 irq 5	# BOCA 8-port serial cards
-com*	at boca? slave ?
-rtfps0	at isa? port 0x1230 irq 10	# RT 4-port serial cards
-com*	at rtfps? slave ?
+#com4	at isa? port 0x0f0 irq 11	# Crosslink builtin ports
+#com5	at isa? port 0x0f8 irq 10
+#ast0	at isa? port 0x1a0 irq 3	# AST 4-port serial cards
+#com*	at ast? slave ?
+#boca0	at isa? port 0x100 irq 5	# BOCA 8-port serial cards
+#com*	at boca? slave ?
+#rtfps0	at isa? port 0x1230 irq 10	# RT 4-port serial cards
+#com*	at rtfps? slave ?
 # option for using CD1400 handshaking for incoming data
 # requires a special cable that exchanges the RTS and DTR lines
 # options CY_HW_RTS
 # cy0	at isa? iomem 0xd4000 irq 12	# ISA cyclom card
-com*	at pcmcia? function ?		# PCMCIA modems/serial ports
+#com*	at pcmcia? function ?		# PCMCIA modems/serial ports
 
 lpt0	at isa? port 0x378 irq 7	# Standard PC parallel ports
 lpt1	at isa? port 0x278
