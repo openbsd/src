@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_drv.c,v 1.15 1997/01/27 23:20:59 deraadt Exp $	*/
+/*	$OpenBSD: pcvt_drv.c,v 1.16 1997/09/18 16:22:44 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -171,6 +171,9 @@ pcattach(struct isa_device *dev)
 {
 #endif /* PCVT_NETBSD > 9 */
 
+#if PCVT_NETBSD >= 120
+	int maj;
+#endif
 	int i;
 
 	if(do_initialization)
@@ -240,12 +243,20 @@ pcattach(struct isa_device *dev)
 
 #if PCVT_NETBSD || (PCVT_FREEBSD > 110 && PCVT_FREEBSD < 200)
 
+#if PCVT_NETBSD >= 120
+	for (maj = 0; maj < nchrdev; maj++) {
+		if ((u_int)cdevsw[maj].d_open == (u_int)pcopen)
+			break;
+	}
+#endif /* PCVT_NETBSD >= 120 */
+
 	for(i = 0; i < totalscreens; i++)
 	{
 
 #if PCVT_NETBSD > 100
 	    vs[i].vs_tty = ttymalloc();
 #if PCVT_NETBSD >= 120
+	    vs[i].vs_tty->t_dev = makedev(maj, i);
 	    tty_attach(vs[i].vs_tty);
 #endif /* PCVT_NETBSD >= 120 */
 #else /* !PCVT_NETBSD > 100 */
