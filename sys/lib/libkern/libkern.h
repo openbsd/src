@@ -1,4 +1,4 @@
-/*	$OpenBSD: libkern.h,v 1.11 1997/05/05 14:35:09 millert Exp $	*/
+/*	$OpenBSD: libkern.h,v 1.12 1997/09/14 19:10:49 niklas Exp $	*/
 /*	$NetBSD: libkern.h,v 1.7 1996/03/14 18:52:08 christos Exp $	*/
 
 /*-
@@ -115,7 +115,45 @@ abs(j)
 }
 #endif
 
+#ifdef NDEBUG						/* tradition! */
+#define	assert(e)	((void)0)
+#else
+#ifdef __STDC__
+#define	assert(e)	((e) ? (void)0 :				    \
+			    __assert("", __FILE__, __LINE__, #e))
+#else
+#define	assert(e)	((e) ? (void)0 :				    \
+			    __assert("", __FILE__, __LINE__, "e"))
+#endif
+#endif
+
+#ifndef DIAGNOSTIC
+#define	KASSERT(e)	((void)0)
+#else
+#ifdef __STDC__
+#define	KASSERT(e)	((e) ? (void)0 :				    \
+			    __assert("diagnostic ", __FILE__, __LINE__, #e))
+#else
+#define	KASSERT(e)	((e) ? (void)0 :				    \
+			    __assert("diagnostic ", __FILE__, __LINE__, "e"))
+#endif
+#endif
+
+#ifndef DEBUG
+#define	KDASSERT(e)	((void)0)
+#else
+#ifdef __STDC__
+#define	KDASSERT(e)	((e) ? (void)0 :				    \
+			    __assert("debugging ", __FILE__, __LINE__, #e))
+#else
+#define	KDASSERT(e)	((e) ? (void)0 :				    \
+			    __assert("debugging ", __FILE__, __LINE__, "e"))
+#endif
+#endif
+
 /* Prototypes for non-quad routines. */
+void	 __assert __P((const char *, const char *, int, const char *))
+	    __attribute__ ((__noreturn__));
 int	 bcmp __P((const void *, const void *, size_t));
 int	 ffs __P((int));
 int	 locc __P((int, char *, u_int));
