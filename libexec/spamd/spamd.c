@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.13 2003/03/02 20:40:15 deraadt Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.14 2003/03/02 20:49:10 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002 Theo de Raadt.  All rights reserved.
@@ -132,8 +132,10 @@ parse_configline(char *line)
 
 	name = line;
 
-	for (cp = name; *cp != ';'; cp++)
+	for (cp = name; *cp && *cp != ';'; cp++)
 		;
+	if (*cp != ';')
+		goto parse_error;
 	*cp++ = '\0';
 	msg = cp;
 	if (*cp++ != '"')
