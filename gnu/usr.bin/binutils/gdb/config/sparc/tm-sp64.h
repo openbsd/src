@@ -20,9 +20,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
-#ifndef GDB_TARGET_IS_SPARC64
-#define GDB_TARGET_IS_SPARC64 1
-#endif
+#define GDB_TARGET_IS_SPARC64
 
 #include "sparc/tm-sparc.h"
 
@@ -283,3 +281,15 @@ extern int
 get_longjmp_target PARAMS ((CORE_ADDR *));
 
 #define GET_LONGJMP_TARGET(ADDR) get_longjmp_target(ADDR)
+
+#define TARGET_READ_SP() \
+    sparc64_read_sp()
+
+#define TARGET_READ_FP() \
+    sparc64_read_fp()
+
+#define TARGET_WRITE_SP(val) \
+    sparc64_write_sp(val)
+
+#define TARGET_WRITE_FP(val) \
+    sparc64_write_fp(val)
