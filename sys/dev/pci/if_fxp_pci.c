@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fxp_pci.c,v 1.30 2004/09/18 20:31:45 beck Exp $	*/
+/*	$OpenBSD: if_fxp_pci.c,v 1.31 2004/09/20 04:24:00 brad Exp $	*/
 
 /*
  * Copyright (c) 1995, David Greenman
@@ -228,7 +228,8 @@ fxp_pci_attach(parent, self, aux)
 	    (PCI_PRODUCT(pa->pa_id) == 0x2449 || 
 	    (PCI_PRODUCT(pa->pa_id) > 0x1030 && 
 	    PCI_PRODUCT(pa->pa_id) < 0x1039) || 
-	    (PCI_PRODUCT(pa->pa_id) == 0x1229 && (rev == 8 || rev == 9))))
+	    (PCI_PRODUCT(pa->pa_id) == 0x1229 && (rev == 8 || rev == 9 ||
+		rev == 12 || rev == 13))))
 		sc->sc_flags |= FXPF_DISABLE_STANDBY;
 
 	/* enable bus mastering */
