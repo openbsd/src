@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_ipcomp.c,v 1.8 2002/07/05 23:20:53 angelos Exp $ */
+/* $OpenBSD: ip_ipcomp.c,v 1.9 2002/09/12 10:11:39 ho Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Jacques Bernard-Gundol (jj@wabbitt.org)
@@ -370,7 +370,7 @@ ipcomp_output(m, tdb, mp, skip, protoff)
 	int             protoff;
 {
 	struct comp_algo *ipcompx = (struct comp_algo *) tdb->tdb_compalgxform;
-	int             rblen, ralen, hlen;
+	int             hlen;
 	u_int8_t        prot;
 	u_int16_t       cpi;
 	struct cryptodesc *crdc = NULL;
@@ -408,7 +408,6 @@ ipcomp_output(m, tdb, mp, skip, protoff)
 	}
 #endif
 
-	rblen = m->m_pkthdr.len - skip;	/* Raw payload length before comp. */
 	hlen = IPCOMP_HLENGTH;
 
 	ipcompstat.ipcomps_output++;
@@ -421,7 +420,7 @@ ipcomp_output(m, tdb, mp, skip, protoff)
 		 * Since compression is going to reduce the size, no need to
 		 * worry
 		 */
-		if (skip + hlen + ralen > IP_MAXPACKET) {
+		if (m->m_pkthdr.len + hlen > IP_MAXPACKET) {
 			DPRINTF(("ipcomp_output(): packet in IPCA %s/%08x got too big\n",
 			    ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
 			m_freem(m);
@@ -434,7 +433,7 @@ ipcomp_output(m, tdb, mp, skip, protoff)
 #ifdef INET6
 	case AF_INET6:
 		/* Check for IPv6 maximum packet size violations */
-		if (skip + hlen + ralen > IPV6_MAXPACKET) {
+		if (m->m_pkthdr.len + hlen > IPV6_MAXPACKET) {
 			DPRINTF(("ipcomp_output(): packet in IPCA %s/%08x got too big\n",
 			    ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
 			m_freem(m);
