@@ -1,4 +1,4 @@
-/*	$OpenBSD: newsyslog.c,v 1.76 2003/12/16 19:32:45 otto Exp $	*/
+/*	$OpenBSD: newsyslog.c,v 1.77 2004/04/05 19:41:50 millert Exp $	*/
 
 /*
  * Copyright (c) 1999, 2002, 2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -71,7 +71,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: newsyslog.c,v 1.76 2003/12/16 19:32:45 otto Exp $";
+static const char rcsid[] = "$OpenBSD: newsyslog.c,v 1.77 2004/04/05 19:41:50 millert Exp $";
 #endif /* not lint */
 
 #ifndef CONF
@@ -135,7 +135,7 @@ struct conf_entry {
 	off_t   size;		/* Size cutoff to trigger trimming the log */
 	int     hours;		/* Hours between log trimming */
 	time_t  trim_at;	/* Specific time at which to do trimming */
-	int     permissions;	/* File permissions on the log */
+	mode_t  permissions;	/* File permissions on the log */
 	int	signal;		/* Signal to send (defaults to SIGHUP) */
 	int     flags;		/* Flags (CE_COMPACT & CE_BINARY)  */
 	char	*whom;		/* Whom to notify if logfile changes */
@@ -169,7 +169,7 @@ int	age_old_log(struct conf_entry *);
 int	domonitor(struct conf_entry *);
 int	isnumberstr(char *);
 int	log_trim(char *);
-int	movefile(char *, char *, uid_t, gid_t, int);
+int	movefile(char *, char *, uid_t, gid_t, mode_t);
 int	stat_suffix(char *, size_t, char *, struct stat *,
 	    int (*)(const char *, struct stat *));
 off_t	sizefile(char *);
@@ -555,13 +555,17 @@ parse_file(int *nentries)
 			working->gid = (gid_t)-1;
 		}
 
-		if (!sscanf(q, "%o", &working->permissions))
+		l = strtol(q, &ep, 8);
+		if (*ep != '\0' || l < 0 || l > ALLPERMS)
 			errx(1, "%s:%d: bad permissions: %s", conf, lineno, q);
+		working->permissions = (mode_t)l;
 
 		q = parse = missing_field(sob(++parse), errline, lineno);
 		*(parse = son(parse)) = '\0';
-		if (!sscanf(q, "%d", &working->numlogs) || working->numlogs < 0)
+		l = strtol(q, &ep, 10);
+		if (*ep != '\0' || l < 0 || l >= INT_MAX)
 			errx(1, "%s:%d: bad number: %s", conf, lineno, q);
+		working->numlogs = (int)l;
 
 		q = parse = missing_field(sob(++parse), errline, lineno);
 		*(parse = son(parse)) = '\0';
@@ -1325,7 +1329,7 @@ parseDWM(char *s)
  * Move a file using rename(2) is possible and copying if not.
  */
 int
-movefile(char *from, char *to, uid_t owner_uid, gid_t group_gid, int perm)
+movefile(char *from, char *to, uid_t owner_uid, gid_t group_gid, mode_t perm)
 {
 	FILE *src, *dst;
 	int i;
