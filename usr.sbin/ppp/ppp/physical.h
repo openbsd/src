@@ -16,7 +16,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- *  $Id: physical.h,v 1.5 1999/04/19 16:59:40 brian Exp $
+ *  $Id: physical.h,v 1.6 1999/04/27 00:21:25 brian Exp $
  *
  */
 
@@ -55,7 +55,8 @@ struct physical {
     unsigned rts_cts : 1;      /* Is rts/cts enabled? */
     unsigned parity;           /* What parity is enabled? (TTY flags) */
     unsigned speed;            /* Modem speed */
-    char devlist[LINE_LEN];    /* Comma-separated list of devices */
+    char devlist[LINE_LEN];    /* NUL separated list of devices */
+    int ndev;                  /* number of devices in list */
     struct {
       unsigned required : 1;   /* Is cd *REQUIRED* on this device */
       int delay;               /* Wait this many seconds after login script */
