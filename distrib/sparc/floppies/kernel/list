@@ -1,4 +1,0 @@
-#	$OpenBSD: list,v 1.4 1997/05/01 11:30:55 niklas Exp $
-
-# copy the kernel
-COPY	${OBJDIR}/bsd	bsd

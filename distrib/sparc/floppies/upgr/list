@@ -1,8 +1,0 @@
-#	$OpenBSD: list,v 1.2 1997/05/01 11:30:59 niklas Exp $
-
-# and the upgrade tools
-COPY	dot.profile			.profile
-COPY	dot.upgrutils			.upgrutils
-COPY	upgrade.sh			upgrade
-COPY	dot.hdprofile			tmp/.hdprofile
-SPECIAL	chmod 755 upgrade
