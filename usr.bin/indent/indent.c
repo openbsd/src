@@ -1,4 +1,4 @@
-/*	$OpenBSD: indent.c,v 1.17 2003/06/26 21:43:07 deraadt Exp $	*/
+/*	$OpenBSD: indent.c,v 1.18 2004/11/29 06:20:03 jsg Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";*/
-static char rcsid[] = "$OpenBSD: indent.c,v 1.17 2003/06/26 21:43:07 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: indent.c,v 1.18 2004/11/29 06:20:03 jsg Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -762,7 +762,7 @@ check_type:
 	    if (ps.in_parameter_declaration)
 		prefix_blankline_requested = 0;
 
-	    if (ps.p_l_follow > 0) {	/* check for preceeding unbalanced
+	    if (ps.p_l_follow > 0) {	/* check for preceding unbalanced
 					 * parens */
 		diag(1, "Unbalanced parens");
 		ps.p_l_follow = 0;

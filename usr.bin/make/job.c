@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: job.c,v 1.57 2004/07/19 02:10:47 espie Exp $	*/
+/*	$OpenBSD: job.c,v 1.58 2004/11/29 06:20:03 jsg Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -1987,7 +1987,7 @@ end_loop:
 	     * Need to send the output to the screen. Null terminate it
 	     * first, overwriting the newline character if there was one.
 	     * So long as the line isn't one we should filter (according
-	     * to the shell description), we print the line, preceeded
+	     * to the shell description), we print the line, preceded
 	     * by a target banner if this target isn't the same as the
 	     * one for which we last printed something.
 	     * The rest of the data in the buffer are then shifted down

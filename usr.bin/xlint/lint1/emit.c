@@ -1,4 +1,4 @@
-/*	$OpenBSD: emit.c,v 1.5 2003/04/26 02:28:24 deraadt Exp $	*/
+/*	$OpenBSD: emit.c,v 1.6 2004/11/29 06:20:03 jsg Exp $	*/
 /*	$NetBSD: emit.c,v 1.2 1995/07/03 21:24:00 cgd Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: emit.c,v 1.5 2003/04/26 02:28:24 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: emit.c,v 1.6 2004/11/29 06:20:03 jsg Exp $";
 #endif
 
 #include <stdio.h>
@@ -210,7 +210,7 @@ outint(i)
 
 /*
  * write the name of a symbol to the output buffer
- * the name is preceeded by its length
+ * the name is preceded by its length
  */
 void
 outname(name)

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: 3.t,v 1.6 2003/06/02 20:06:15 millert Exp $
+.\"	$OpenBSD: 3.t,v 1.7 2004/11/29 06:20:03 jsg Exp $
 .\"	$NetBSD: 3.t,v 1.4 1996/10/11 20:15:49 thorpej Exp $
 .\"
 .\" Copyright (c) 1982, 1993
@@ -350,7 +350,7 @@ When found,
 .I fsck
 will prompt the user to adjust the length of the offending directory
 which is done by shortening the size of the directory to the end of the
-last allocated block preceeding the hole.
+last allocated block preceding the hole.
 Unfortunately, this means that another Phase 1 run has to be done.
 .I Fsck
 will remind the user to rerun fsck after repairing a

@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-#	$OpenBSD: th,v 1.10 2003/09/01 05:16:46 fgsch Exp $
+#	$OpenBSD: th,v 1.11 2004/11/29 06:20:02 jsg Exp $
 
 
 #
@@ -67,7 +67,7 @@
 #					file; the end-quote should be followed
 #					by a newline, then the file data
 #					(if any).  The first word may be
-#					preceeded by a ! to strip the trailing
+#					preceded by a ! to strip the trailing
 #					newline in a symlink.
 #	file-result		    mps Used to verify a file, symlink or
 #					directory is created correctly.
@@ -84,7 +84,7 @@
 #					The end-quote should be followed
 #					by a newline, then the file data
 #					(if any).  The first word may be
-#					preceeded by a ! to strip the trailing
+#					preceded by a ! to strip the trailing
 #					newline in the file contents.
 #					The permissions, user and group fields
 #					may be * meaning accept any value.

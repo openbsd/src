@@ -1,4 +1,4 @@
-/* $OpenBSD: mouse_protocols.c,v 1.8 2004/01/04 21:41:12 drahn Exp $ */
+/* $OpenBSD: mouse_protocols.c,v 1.9 2004/11/29 06:20:02 jsg Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Baptiste Marchand, Julien Montagne and Jerome Verdon
@@ -955,10 +955,10 @@ mouse_protocol(u_char rBuf, mousestatus_t * act)
 
 		/*
 		 * [KY-97/08/03]
-		 * Receive the fourth byte only when preceeding three bytes have
+		 * Receive the fourth byte only when preceding three bytes have
 		 * been detected (pBufP >= cur_proto[4]).  In the previous
 		 * versions, the test was pBufP == 0; thus, we may have mistakingly
-		 * received a byte even if we didn't see anything preceeding
+		 * received a byte even if we didn't see anything preceding
 		 * the byte.
 		 */
 

@@ -1,4 +1,4 @@
-$OpenBSD: README,v 1.1 1999/08/05 22:41:39 niklas Exp $
+$OpenBSD: README,v 1.2 2004/11/29 06:20:03 jsg Exp $
 $EOM: README,v 1.1 1999/08/05 15:07:37 niklas Exp $
 
 XXX The old run.sh test-framework is obsoleted, it will go away anyday.
@@ -21,7 +21,7 @@ Our test environment should be able to parse scripts like this:
 Ticks are not absolute but relative to the last event.  the format is
 Perl's pack/unpack template formats.  Data is in the given format with
 one exception, spaces are ignored, newlines are end-of-data unless
-preceeded by a backslash.
+preceded by a backslash.
 
 Comments are lines with a numbersign as the first non-whitespace
 character.  Empty lines are ignored, unless inside a multi-line data

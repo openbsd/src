@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: suff.c,v 1.53 2004/06/19 13:34:30 robert Exp $ */
+/*	$OpenBSD: suff.c,v 1.54 2004/11/29 06:20:03 jsg Exp $ */
 /*	$NetBSD: suff.c,v 1.13 1996/11/06 17:59:25 christos Exp $	*/
 
 /*
@@ -757,7 +757,7 @@ Suff_GetPath(const char *sname)
  *	The searchPath field of all the suffixes is extended by the
  *	directories in dirSearchPath. If paths were specified for the
  *	".h" suffix, the directories are stuffed into a global variable
- *	called ".INCLUDES" with each directory preceeded by a -I. The same
+ *	called ".INCLUDES" with each directory preceded by a -I. The same
  *	is done for the ".a" suffix, except the variable is called
  *	".LIBS" and the flag is -L.
  *-----------------------------------------------------------------------

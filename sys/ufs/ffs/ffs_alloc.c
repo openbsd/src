@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_alloc.c,v 1.52 2004/11/01 15:55:38 pedro Exp $	*/
+/*	$OpenBSD: ffs_alloc.c,v 1.53 2004/11/29 06:20:02 jsg Exp $	*/
 /*	$NetBSD: ffs_alloc.c,v 1.11 1996/05/11 18:27:09 mycroft Exp $	*/
 
 /*
@@ -328,7 +328,7 @@ error:
  * logical blocks to be made contiguous are given. The allocator attempts
  * to find a range of sequential blocks starting as close as possible to
  * an fs_rotdelay offset from the end of the allocation for the logical
- * block immediately preceeding the current range. If successful, the
+ * block immediately preceding the current range. If successful, the
  * physical block numbers in the buffer pointers and in the inode are
  * changed to reflect the new allocation. If unsuccessful, the allocation
  * is left unchanged. The success in doing the reallocation is returned.

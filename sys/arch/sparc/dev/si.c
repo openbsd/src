@@ -1,4 +1,4 @@
-/*	$OpenBSD: si.c,v 1.20 2004/09/29 07:35:11 miod Exp $	*/
+/*	$OpenBSD: si.c,v 1.21 2004/11/29 06:20:02 jsg Exp $	*/
 /*	$NetBSD: si.c,v 1.38 1997/08/27 11:24:20 bouyer Exp $	*/
 
 /*-
@@ -817,7 +817,7 @@ si_vme_intr_off(ncr_sc)
 
 /*
  * This function is called during the COMMAND or MSG_IN phase
- * that preceeds a DATA_IN or DATA_OUT phase, in case we need
+ * that precedes a DATA_IN or DATA_OUT phase, in case we need
  * to setup the DMA engine before the bus enters a DATA phase.
  *
  * XXX: The VME adapter appears to suppress SBC interrupts
@@ -1132,7 +1132,7 @@ si_obio_intr_off(ncr_sc)
 
 /*
  * This function is called during the COMMAND or MSG_IN phase
- * that preceeds a DATA_IN or DATA_OUT phase, in case we need
+ * that precedes a DATA_IN or DATA_OUT phase, in case we need
  * to setup the DMA engine before the bus enters a DATA phase.
  *
  * On the OBIO version we just clear the DMA count and address
