@@ -2,6 +2,7 @@
 #
 # optional flags are: MEASURE TESTING DEBUG
 
+CFLAGS+=-DHAVENIS
 PROG=	timed
 SRCS=	acksend.c candidate.c correct.c master.c networkdelta.c readmsg.c \
 	slave.c timed.c byteorder.c measure.c cksum.c
