@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ftpd.8,v 1.7 1996/08/10 06:23:41 downsj Exp $
+.\"	$OpenBSD: ftpd.8,v 1.8 1996/08/19 04:36:30 millert Exp $
 .\"	$NetBSD: ftpd.8,v 1.8 1996/01/14 20:55:23 thorpej Exp $
 .\"
 .\" Copyright (c) 1985, 1988, 1991, 1993
@@ -116,7 +116,7 @@ The inactivity timeout period is set to
 .Ar timeout
 seconds (the default is 15 minutes).
 .It Fl u
-The default umask is set to
+Change the default umask from 027 to
 .Ar mask .
 .El
 .Pp
@@ -288,39 +288,38 @@ subtree be constructed with care, following these rules:
 .It Pa ~ftp
 Make the home directory owned by
 .Dq root
-and unwritable by anyone.
+and unwritable by anyone (mode 555).
 .It Pa ~ftp/bin
 Make this directory owned by
 .Dq root
-and unwritable by anyone (mode 555).
+and unwritable by anyone (mode 555 or 111).
 The program
 .Xr ls 1
 must be present to support the list command.
-This program should be mode 111.
+This program should be mode 111 (executable only).
 .It Pa ~ftp/etc
 Make this directory owned by
 .Dq root
-and unwritable by anyone (mode 555).
+and unwritable by anyone (mode 555 or 111).
 The files pwd.db (see
-.Xr passwd 5 )
+.Xr pwd_mkdb 8 )
 and
 .Xr group 5
 must be present for the 
 .Xr ls
 command to be able to produce owner names rather than numbers.
 The password field in
-.Xr passwd
+.Xr pwd.db
 is not used, and should not contain real passwords.
 The file
 .Pa motd ,
 if present, will be printed after a successful login.
 These files should be mode 444.
 .It Pa ~ftp/pub
-Make this directory mode 777 and owned by
-.Dq ftp .
-Guests
-can then place files which are to be accessible via the anonymous
-account in this directory.
+Make this directory mode 555 and owned by
+.Dq root .
+This is traditionally where publically accessible files are
+stored for download.
 .El
 .Sh FILES
 .Bl -tag -width /etc/ftpwelcome -compact
