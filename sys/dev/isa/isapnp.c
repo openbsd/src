@@ -1,4 +1,4 @@
-/*	$OpenBSD: isapnp.c,v 1.25 1999/03/04 22:14:35 deraadt Exp $	*/
+/*	$OpenBSD: isapnp.c,v 1.26 1999/08/10 22:00:43 deraadt Exp $	*/
 /*	$NetBSD: isapnp.c,v 1.9.4.3 1997/10/29 00:40:43 thorpej Exp $	*/
 
 /*
@@ -65,9 +65,7 @@ void isapnp_configure __P((struct isapnp_softc *,
     const struct isa_attach_args *));
 void isapnp_print_pin __P((const char *, struct isapnp_pin *, size_t));
 int isapnp_print __P((void *, const char *));
-#ifdef _KERNEL
 int isapnp_submatch __P((struct device *, void *, void *));
-#endif
 int isapnp_find __P((struct isapnp_softc *, int));
 int isapnp_match __P((struct device *, void *, void *));
 void isapnp_attach __P((struct device *, struct device *, void *));
@@ -198,9 +196,7 @@ isapnp_free_region(t, r)
 	if (r->length == 0)
 		return;
 
-#ifdef _KERNEL
 	bus_space_unmap(t, r->h, r->length);
-#endif
 	r->h = NULL;
 }
 
@@ -221,9 +217,7 @@ isapnp_alloc_region(t, r)
 	r->h = NULL;
 	for (r->base = r->minbase; r->base <= r->maxbase;
 	     r->base += r->align) {
-#ifdef _KERNEL
 		error = bus_space_map(t, r->base, r->length, 0, &r->h);
-#endif
 		if (error == 0)
 			return 0;
 	}
@@ -572,7 +566,6 @@ isapnp_print(aux, str)
 }
 
 
-#ifdef _KERNEL
 /* isapnp_submatch():
  *	Probe the logical device...
  */
@@ -611,8 +604,6 @@ isapnp_submatch(parent, match, aux)
 
 	return (0);
 }
-#endif
-
 
 /* isapnp_find():
  *	Probe and add cards
@@ -924,14 +915,9 @@ isapnp_attach(parent, self, aux)
 			lpa->ia_delaybah = ia->ia_delaybah;
 
 			isapnp_write_reg(sc, ISAPNP_ACTIVATE, 1);
-#ifdef _KERNEL
 			if (config_found_sm(self, lpa, isapnp_print,
 			    isapnp_submatch) == NULL)
 				isapnp_write_reg(sc, ISAPNP_ACTIVATE, 0);
-#else
-			isapnp_print(lpa, NULL);
-			printf("\n");
-#endif
 			ISAPNP_FREE(lpa);
 		}
 		isapnp_write_reg(sc, ISAPNP_WAKE, 0);    /* Good night cards */
