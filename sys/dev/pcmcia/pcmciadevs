@@ -1,4 +1,4 @@
-	$OpenBSD: pcmciadevs,v 1.85 2002/03/29 18:54:07 millert Exp $
+	$OpenBSD: pcmciadevs,v 1.86 2002/04/02 03:57:05 millert Exp $
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
 /*
@@ -104,6 +104,7 @@ vendor ELSA			0xd601	Elsa
  */
 /* 3COM */
 product 3COM 3CRWE737A		0x0001 3Com AirConnect Wireless LAN
+product 3COM 3CRWE777A		0x0777 3Com AirConnect Wireless LAN
 product 3COM 3CXM056BNW		0x002f 3Com/NoteWorthy 3CXM056-BNW
 product 3COM 3CXEM556		0x0035 3Com 3CXEM556
 product 3COM 3CXEM556B		0x003d 3Com 3CXEM556B-INT

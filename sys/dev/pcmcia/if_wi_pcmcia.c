@@ -1,4 +1,4 @@
-/* $OpenBSD: if_wi_pcmcia.c,v 1.20 2002/03/29 18:54:07 millert Exp $ */
+/* $OpenBSD: if_wi_pcmcia.c,v 1.21 2002/04/02 03:57:05 millert Exp $ */
 /* $NetBSD: if_wi_pcmcia.c,v 1.14 2001/11/26 04:34:56 ichiro Exp $ */
 
 /*
@@ -107,6 +107,11 @@ static const struct wi_pcmcia_product {
 	{ PCMCIA_VENDOR_3COM,
 	  PCMCIA_PRODUCT_3COM_3CRWE737A,
 	  PCMCIA_CIS_3COM_3CRWE737A,
+	  "3Com AirConnect Wireless LAN"
+	},
+	{ PCMCIA_VENDOR_3COM,
+	  PCMCIA_PRODUCT_3COM_3CRWE777A,
+	  PCMCIA_CIS_3COM_3CRWE777A,
 	  "3Com AirConnect Wireless LAN"
 	},
 	{ PCMCIA_VENDOR_COREGA,
