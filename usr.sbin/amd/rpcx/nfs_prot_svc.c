@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfs_prot_svc.c	8.1 (Berkeley) 6/6/93
- *	$Id: nfs_prot_svc.c,v 1.1.1.1 1995/10/18 08:47:23 deraadt Exp $
+ *	$Id: nfs_prot_svc.c,v 1.2 2002/08/26 03:01:32 pvalchev Exp $
  *
  */
 
@@ -181,15 +181,14 @@ SVCXPRT *transp;
 		return;
 	}
 	bzero((char *)&argument, sizeof(argument));
-	if (!svc_getargs(transp, xdr_argument, (caddr_t) &argument)) {
+	if (!svc_getargs(transp, xdr_argument, (char *)&argument)) {
 		svcerr_decode(transp);
 		return;
 	}
 	result = (*local)(&argument, rqstp);
-	if (result != NULL && !svc_sendreply(transp, xdr_result, result)) {
+	if (result != NULL && !svc_sendreply(transp, xdr_result, result))
 		svcerr_systemerr(transp);
-	}
-	if (!svc_freeargs(transp, xdr_argument, (caddr_t) &argument)) {
+	if (!svc_freeargs(transp, xdr_argument, (char *)&argument)) {
 		plog(XLOG_FATAL, "unable to free rpc arguments in nfs_program_1");
 		going_down(1);
 	}
