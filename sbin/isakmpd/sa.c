@@ -1,5 +1,5 @@
-/*	$OpenBSD: sa.c,v 1.28 2000/05/02 14:36:04 niklas Exp $	*/
-/*	$EOM: sa.c,v 1.102 2000/04/12 03:10:57 provos Exp $	*/
+/*	$OpenBSD: sa.c,v 1.29 2000/06/08 20:51:11 niklas Exp $	*/
+/*	$EOM: sa.c,v 1.104 2000/05/19 05:47:52 angelos Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -489,6 +489,12 @@ sa_release (struct sa *sa)
 	else if (sa->recv_certtype == ISAKMP_CERTENC_NONE)
 	  free (sa->recv_cert);
     }
+  if (sa->recv_key)
+    free (sa->recv_key);
+#if defined(POLICY) || defined(KEYNOTE)
+  if (sa->policy_id != -1)
+    LK (kn_close, (sa->policy-id));
+#endif
   if (sa->name)
     free (sa->name);
   if (sa->keystate)
