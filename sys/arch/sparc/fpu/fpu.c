@@ -110,6 +110,7 @@ fpu_cleanup(p, fs)
 {
 	register int i, fsr = fs->fs_fsr, error;
 	union instr instr;
+	caddr_t pc = (caddr_t)p->p_md.md_tf->tf_pc;	/* XXX only approximate */
 	struct fpemu fe;
 
 	switch ((fsr >> FSR_FTT_SHIFT) & FSR_FTT_MASK) {
@@ -119,10 +120,9 @@ fpu_cleanup(p, fs)
 		break;
 
 	case FSR_TT_IEEE:
-		/* XXX missing trap address! */
 		if ((i = fsr & FSR_CX) == 0)
 			panic("fpu ieee trap, but no exception");
-		trapsignal(p, SIGFPE, fpu_codes[i - 1], fpu_types[i - i], 0);
+		trapsignal(p, SIGFPE, fpu_codes[i - 1], fpu_types[i - i], pc);
 		break;		/* XXX should return, but queue remains */
 
 	case FSR_TT_UNFIN:
@@ -139,7 +139,7 @@ fpu_cleanup(p, fs)
 		log(LOG_ERR, "fpu hardware error (%s[%d])\n",
 		    p->p_comm, p->p_pid);
 		uprintf("%s[%d]: fpu hardware error\n", p->p_comm, p->p_pid);
-		trapsignal(p, SIGFPE, -1, FPE_FLTINV, 0);	/* ??? */
+		trapsignal(p, SIGFPE, -1, FPE_FLTINV, pc);	/* ??? */
 		goto out;
 
 	default:
@@ -164,11 +164,11 @@ fpu_cleanup(p, fs)
 		case FPE:
 			trapsignal(p, SIGFPE,
 			    fpu_codes[(fs->fs_fsr & FSR_CX) - 1],
-			    fpu_types[(fs->fs_fsr & FSR_CX) - 1], 0);
+			    fpu_types[(fs->fs_fsr & FSR_CX) - 1], pc);
 			break;
 
 		case NOTFPU:
-			trapsignal(p, SIGILL, 0, ILL_COPROC, 0);
+			trapsignal(p, SIGILL, 0, ILL_COPROC, pc);
 			break;
 
 		default:
