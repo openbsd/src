@@ -16,14 +16,13 @@ As well you may be interested in
 For the imac systems, no floppy image is available, for now it
 is necessary to bootstrap the system from an existing BSD or unix system.
 
-At this time the bootloader and kernel must initally be loaded from the
-network. A method to boot from cd is not yet available.
+At this time the bootloader and kernel must initally be loaded from
+the network.  To load the network bootloader and install kernel from
+the openfirmware prompt type "boot enet:,ofwboot /bsd.rd".  This
+assumes that that a machine is configured with bootp/tftp/nfs to make
+the kernel and bootloader available.
 
-To load the network bootloader and install kernel from the openfirmware
-prompt type "boot enet:,ofwboot /bsd.rd"
-
-This assumes that that a machine is configured with bootp/tftp/nfs to
-make the kernel and bootloader available.
+To boot from CD, use "boot cd:,ofwboot /OSREV/powerpc/bsd.rd"
 
 NOTE:
 The powerpc port does not currently support sharing the disk with MacOS
