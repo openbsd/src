@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.15 2002/10/24 19:27:15 mickey Exp $	*/
+/*	$OpenBSD: conf.c,v 1.16 2003/01/14 10:59:18 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -40,12 +40,12 @@ const char version[] = "0.7";
 int	debug = 0;
 
 struct fs_ops file_system[] = {
-	{ lif_open,    lif_close,    lif_read,    lif_write,    lif_seek,
-	  lif_stat,    lif_readdir    },
 	{ ufs_open,    ufs_close,    ufs_read,    ufs_write,    ufs_seek,
 	  ufs_stat,    ufs_readdir    },
 	{ cd9660_open, cd9660_close, cd9660_read, cd9660_write, cd9660_seek,
 	  cd9660_stat, cd9660_readdir },
+	{ lif_open,    lif_close,    lif_read,    lif_write,    lif_seek,
+	  lif_stat,    lif_readdir    },
 };
 int nfsys = NENTS(file_system);
 
