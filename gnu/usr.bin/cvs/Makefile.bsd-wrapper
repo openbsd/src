@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.36 2001/05/25 23:13:46 ho Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.37 2001/09/30 20:31:46 tholo Exp $
 
 .include <bsd.own.mk>
 
@@ -54,8 +54,9 @@ maninstall:
 
 install: maninstall
 	${MAKE} ${GNUCFLAGS} prefix=${DESTDIR}/usr \
-		infodir=${DESTDIR}/usr/share/info \
-		bindir=${DESTDIR}/usr/bin INSTALL_MAN= install
+		infodir=/usr/share/info \
+		libexecdir=/usr/libexec \
+		bindir=/usr/bin INSTALL_MAN= install
 
 clean cleandir:
 	-@if [ -e Makefile ]; then ${MAKE} distclean; fi
