@@ -1,8 +1,8 @@
-/*	$Id: kdb_destroy.c,v 1.2 1996/08/22 01:18:51 deraadt Exp $	*/
+/* $KTH: kdb_destroy.c,v 1.7 1997/03/31 02:25:21 assar Exp $ */
 
 /*-
  * Copyright 1987, 1988 by the Student Information Processing Board
- *	of the Massachusetts Institute of Technology
+ *      of the Massachusetts Institute of Technology
  *
  * Permission to use, copy, modify, and distribute this software
  * and its documentation for any purpose and without fee is
@@ -17,27 +17,31 @@
  * provided "as is" without express or implied warranty.
  */
 
-#include <adm_locl.h>
+#include "adm_locl.h"
 
 int
-main(void)
+main(int argc, char **argv)
 {
     char    answer[10];		/* user input */
     char    dbm[256];		/* database path and name */
     char    dbm1[256];		/* database path and name */
-#if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)
+#ifdef HAVE_NEW_DB
     char   *file;               /* database file names */
 #else
     char   *file1, *file2;	/* database file names */
 #endif
 
-    strcpy(dbm, DBM_FILE);
-#if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)
+    strncpy(dbm, DBM_FILE, sizeof(dbm) - 5);
+    dbm[sizeof(dbm) - 5] = '\0';
+#ifdef HAVE_NEW_DB
     file = strcat(dbm, ".db");
+    file[sizeof(dbm) - 1] = '\0';
 #else
-    strcpy(dbm1, DBM_FILE);
+    strncpy(dbm1, DBM_FILE, sizeof(dbm) - 5);
     file1 = strcat(dbm, ".dir");
+    file1[sizeof(dbm) - 1] = '\0';
     file2 = strcat(dbm1, ".pag");
+    file2[sizeof(dbm) - 1] = '\0';
 #endif
 
     printf("You are about to destroy the Kerberos database ");
@@ -46,16 +50,18 @@ main(void)
     fgets(answer, sizeof(answer), stdin);
 
     if (answer[0] == 'y' || answer[0] == 'Y') {
-#if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)
-	if (unlink(file) == 0)
+#ifdef HAVE_NEW_DB
+      if (unlink(file) == 0)
 #else
 	if (unlink(file1) == 0 && unlink(file2) == 0)
 #endif
-	    fprintf(stderr, "Database deleted at %s\n", DBM_FILE);
+	  {
+	    warnx ("Database deleted at %s", DBM_FILE);
+	    return 0;
+	  }
 	else
-	    fprintf(stderr, "Database cannot be deleted at %s\n",
-		    DBM_FILE);
+	    warn ("Database cannot be deleted at %s", DBM_FILE);
     } else
-	fprintf(stderr, "Database not deleted.\n");
-    exit(1);
+        warnx ("Database not deleted at %s", DBM_FILE);
+    return 1;
 }
