@@ -1,4 +1,4 @@
-.\" $OpenBSD: authpf.8,v 1.22 2003/03/06 04:07:38 david Exp $
+.\" $OpenBSD: authpf.8,v 1.23 2003/03/10 15:37:29 jmc Exp $
 .\"
 .\" Copyright (c) 2002 Bob Beck (beck@openbsd.org>.  All rights reserved.
 .\"
@@ -49,7 +49,7 @@ allowing them Internet use, or a gateway that allows different users into
 different places.
 .Nm
 logs the successful start and end of a session to
-.Xr syslog 8 .
+.Xr syslogd 8 .
 This, combined with properly set up filter rules and secure switches,
 can be used to ensure users are held accountable for their network traffic.
 .Pp
@@ -192,7 +192,7 @@ print a brief message and die.
 It should be noted that a ban takes precedence over an allow.
 .Pp
 On failure, messages will be logged to
-.Xr syslog 8
+.Xr syslogd 8
 for the system administrator.
 The user does not see these, but will be told the system is unavailable due to
 technical difficulties.

@@ -17,7 +17,7 @@
 .\" ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 .\" SOFTWARE.
 .\"
-.\" $OpenBSD: crontab.1,v 1.19 2003/02/20 20:38:08 millert Exp $
+.\" $OpenBSD: crontab.1,v 1.20 2003/03/10 15:37:30 jmc Exp $
 .\"
 .Dd June 8, 1999
 .Dt CRONTAB 1
@@ -95,11 +95,11 @@ examines
 i.e., the
 crontab of the person executing the command.
 Note that
-.Xr su 8
+.Xr su 1
 can confuse
 .Nm
 and that if you are running inside of
-.Xr su 8
+.Xr su 1
 you should always use the
 .Fl u
 option for safety's sake.

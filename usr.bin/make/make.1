@@ -1,4 +1,4 @@
-.\"	$OpenBSD: make.1,v 1.48 2003/01/05 10:10:44 pvalchev Exp $
+.\"	$OpenBSD: make.1,v 1.49 2003/03/10 15:37:30 jmc Exp $
 .\"	$OpenPackages$
 .\"	$NetBSD: make.1,v 1.18 1997/03/10 21:19:53 christos Exp $
 .\"
@@ -604,7 +604,7 @@ Alternate path to the current directory.
 normally sets
 .Ql Va .CURDIR
 to the canonical path given by
-.Xr getcwd 2 .
+.Xr getcwd 3 .
 However, if the environment variable
 .Ev PWD
 is set and gives a path to the current directory, then
