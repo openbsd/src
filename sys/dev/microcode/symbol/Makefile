@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.4 2004/12/19 16:19:42 deraadt Exp $
+# $OpenBSD: Makefile,v 1.5 2004/12/31 00:28:31 deraadt Exp $
 
 NOPROG=
 NOMAN=
@@ -7,7 +7,7 @@ NOMAN=
 .if (${MACHINE} == "i386") || (${MACHINE} == "macppc") || \
     (${MACHINE} == "sparc") || (${MACHINE} == "sparc64") || \
     (${MACHINE} == "hppa") || (${MACHINE} == "hppa64") || \
-    (${MACHINE} == "sgi")
+    (${MACHINE} == "sgi") || (${MACHINE} == "zaurus")
 
 afterinstall:
 	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 644 \
