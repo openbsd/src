@@ -1,4 +1,4 @@
-.\"     $OpenBSD: mbuf.9,v 1.8 2003/03/14 19:27:48 jason Exp $
+.\"     $OpenBSD: mbuf.9,v 1.9 2003/03/14 19:29:54 jason Exp $
 .\"
 .\" Copyright (c) 2001 Jean-Jacques Bernard-Gundol <jjbg@openbsd.org>
 .\" All rights reserved.
@@ -57,10 +57,6 @@
 .Fn m_pullup "struct mbuf *n" "int len"
 .Ft struct mbuf *
 .Fn m_pullup2 "struct mbuf *n" "int len"
-.Ft struct mbuf *
-.Fn m_retry "int i" "int t"
-.Ft struct mbuf *
-.Fn m_retryhdr "int i" "int t"
 .Ft struct mbuf *
 .Fn m_split "struct mbuf *m0" "int len0" "int wait"
 .Ft struct mbuf *
