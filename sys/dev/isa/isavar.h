@@ -1,4 +1,4 @@
-/*	$OpenBSD: isavar.h,v 1.38 1999/08/08 19:16:47 deraadt Exp $	*/
+/*	$OpenBSD: isavar.h,v 1.39 1999/08/09 17:38:45 deraadt Exp $	*/
 /*	$NetBSD: isavar.h,v 1.26 1997/06/06 23:43:57 thorpej Exp $	*/
 
 /*-
@@ -297,12 +297,12 @@ struct isa_attach_args {
 	 */
 #define ia_iobase	ipa_io[0].base
 #define ia_iosize	ipa_io[0].length
+#define ia_ioh		ipa_io[0].h
 #define ia_irq		ipa_irq[0].num
 #define	ia_drq		ipa_drq[0].num
 #define	ia_drq2		ipa_drq[1].num
 #define ia_maddr	ipa_mem[0].base
 #define ia_msize	ipa_mem[0].length
-#define ia_ioh		ipa_io[0].h
 #define ia_memh		ipa_mem[0].h
 
 	void	*ia_aux;		/* driver specific */
