@@ -783,7 +783,8 @@ show_issue(void)
 	f = fopen("/etc/issue", "r");
     if(f){
 	while(fgets(buf, sizeof(buf)-2, f)){
-	    strcpy(buf + strcspn(buf, "\r\n"), "\r\n");
+	    size_t off = strcspn(buf, "\r\n");  	
+	    strlcpy(buf + off, "\r\n", sizeof(buf) - off);
 	    writenet((unsigned char*)buf, strlen(buf));
 	}
 	fclose(f);
