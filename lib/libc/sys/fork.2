@@ -70,7 +70,7 @@ This descriptor copying is also used by the shell to
 establish standard input and output for newly created processes
 as well as to set up pipes.
 .It
-The child processes resource utilizations
+The child process' resource utilizations
 are set to 0; see
 .Xr setrlimit 2 .
 .El
@@ -87,25 +87,25 @@ is set to indicate the error.
 .Sh ERRORS
 .Fn Fork
 will fail and no child process will be created if:
-.Bl -tag -width Er
+.Bl -tag -width [EAGAIN]
 .It Bq Er EAGAIN
 The system-imposed limit on the total
 number of processes under execution would be exceeded.
 This limit is configuration-dependent.
 .It Bq Er EAGAIN
-The system-imposed limit
-.Dv MAXUPRC
-.Pq Aq Pa sys/param.h
+The limit
+.Dv RLIMIT_NPROC
 on the total number of
-processes under execution by a single user would be exceeded.
+processes under execution by a this user id would be exceeded.
 .It Bq Er ENOMEM
 There is insufficient swap space for the new process.
 .El
 .Sh SEE ALSO
 .Xr execve 2 ,
+.Xr setrlimit 2 ,
 .Xr wait 2
 .Sh HISTORY
 A
-.Fn fork 2
+.Fn fork
 function call appeared in
 .At v6 .
