@@ -12,7 +12,7 @@
  */
 
 #include "includes.h"
-RCSID("$Id: servconf.c,v 1.30 2000/02/24 18:22:16 markus Exp $");
+RCSID("$Id: servconf.c,v 1.31 2000/03/07 20:40:41 markus Exp $");
 
 #include "ssh.h"
 #include "servconf.h"
@@ -402,7 +402,7 @@ parse_flag:
 
 		case sIgnoreUserKnownHosts:
 			intptr = &options->ignore_user_known_hosts;
-			goto parse_int;
+			goto parse_flag;
 
 		case sRhostsAuthentication:
 			intptr = &options->rhosts_authentication;
