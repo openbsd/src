@@ -1,4 +1,4 @@
-/*	$OpenBSD: cp.c,v 1.20 2002/07/04 04:26:39 deraadt Exp $	*/
+/*	$OpenBSD: cp.c,v 1.21 2003/01/06 01:52:52 millert Exp $	*/
 /*	$NetBSD: cp.c,v 1.14 1995/09/07 06:14:51 jtc Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)cp.c	8.5 (Berkeley) 4/29/95";
 #else
-static char rcsid[] = "$OpenBSD: cp.c,v 1.20 2002/07/04 04:26:39 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: cp.c,v 1.21 2003/01/06 01:52:52 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -88,6 +88,8 @@ static char rcsid[] = "$OpenBSD: cp.c,v 1.20 2002/07/04 04:26:39 deraadt Exp $";
 	while ((p).p_end > (p).p_path + 1 && (p).p_end[-1] == '/')	\
 		*--(p).p_end = '\0';					\
 }
+
+#define	fts_dne(_x)	(_x->fts_pointer != NULL)
 
 PATH_T to = { to.p_path, "" };
 
@@ -279,7 +281,7 @@ copy(char *argv[], enum op type, int fts_options)
 	struct stat to_stat;
 	FTS *ftsp;
 	FTSENT *curr;
-	int base, dne, nlen, rval;
+	int base, nlen, rval;
 	char *p, *target_mid;
 #ifdef lint
 	base = 0;
@@ -357,25 +359,37 @@ copy(char *argv[], enum op type, int fts_options)
 		if (stat(to.p_path, &to_stat) == -1) {
 			if (curr->fts_info == FTS_DP)
 				continue;
-			dne = 1;
+			/*
+			 * We use fts_pointer as a boolean to indicate that
+			 * we created this directory ourselves.  We'll use
+			 * this later on via the fts_dne macro to decide
+			 * whether or not to set the directory mode during
+			 * the post-order pass.
+			 */
+			curr->fts_pointer = (void *)1;
 		} else {
 			/*
-			 * For -p mode, we need to reset the directory
-			 * times in the post-order pass since the times
-			 * will have been changed when we added files to
-			 * the directory in the pre-order pass.
+			 * Set directory mode/user/times on the post-order
+			 * pass.  We can't do this earlier because the mode
+			 * may not allow us write permission.  Furthermore,
+			 * if we set the times during the pre-order pass,
+			 * the they will get changed later when the directory
+			 * is populated.
 			 */
 			if (curr->fts_info == FTS_DP) {
-				if (pflag && S_ISDIR(to_stat.st_mode)) {
-					struct timeval tv[2];
-
-					TIMESPEC_TO_TIMEVAL(&tv[0],
-					    &curr->fts_statp->st_atimespec);
-					TIMESPEC_TO_TIMEVAL(&tv[1],
-					    &curr->fts_statp->st_mtimespec);
-					if (utimes(to.p_path, tv))
-						warn("utimes: %s", to.p_path);
-				}
+				if (!S_ISDIR(to_stat.st_mode))
+					continue;
+				/*
+				 * If not -p and directory didn't exist, set
+				 * it to be the same as the from directory,
+				 * unmodified by the umask; arguably wrong,
+				 * but it's been that way forever.
+				 */
+				if (pflag && setfile(curr->fts_statp, 0))
+					rval = 1;
+				else if (fts_dne(curr))
+					(void)chmod(to.p_path,
+					    curr->fts_statp->st_mode);
 				continue;
 			}
 			if (to_stat.st_dev == curr->fts_statp->st_dev &&
@@ -394,12 +408,11 @@ copy(char *argv[], enum op type, int fts_options)
 				rval = 1;
 				continue;
 			}
-			dne = 0;
 		}
 
 		switch (curr->fts_statp->st_mode & S_IFMT) {
 		case S_IFLNK:
-			if (copy_link(curr, !dne))
+			if (copy_link(curr, !fts_dne(curr)))
 				rval = 1;
 			break;
 		case S_IFDIR:
@@ -418,7 +431,7 @@ copy(char *argv[], enum op type, int fts_options)
 			 * 555) and not causing a permissions race.  If the
 			 * umask blocks owner writes, we fail..
 			 */
-			if (dne) {
+			if (fts_dne(curr)) {
 				if (mkdir(to.p_path,
 				    curr->fts_statp->st_mode | S_IRWXU) < 0)
 					err(1, "%s", to.p_path);
@@ -426,37 +439,26 @@ copy(char *argv[], enum op type, int fts_options)
 				errno = ENOTDIR;
 				err(1, "%s", to.p_path);
 			}
-			/*
-			 * If not -p and directory didn't exist, set it to be
-			 * the same as the from directory, unmodified by the
-			 * umask; arguably wrong, but it's been that way
-			 * forever.
-			 */
-			if (pflag && setfile(curr->fts_statp, 0))
-				rval = 1;
-			else if (dne)
-				(void)chmod(to.p_path,
-				    curr->fts_statp->st_mode);
 			break;
 		case S_IFBLK:
 		case S_IFCHR:
 			if (Rflag) {
-				if (copy_special(curr->fts_statp, !dne))
+				if (copy_special(curr->fts_statp, !fts_dne(curr)))
 					rval = 1;
 			} else
-				if (copy_file(curr, dne))
+				if (copy_file(curr, fts_dne(curr)))
 					rval = 1;
 			break;
 		case S_IFIFO:
 			if (Rflag) {
-				if (copy_fifo(curr->fts_statp, !dne))
+				if (copy_fifo(curr->fts_statp, !fts_dne(curr)))
 					rval = 1;
 			} else
-				if (copy_file(curr, dne))
+				if (copy_file(curr, fts_dne(curr)))
 					rval = 1;
 			break;
 		default:
-			if (copy_file(curr, dne))
+			if (copy_file(curr, fts_dne(curr)))
 				rval = 1;
 			break;
 		}
