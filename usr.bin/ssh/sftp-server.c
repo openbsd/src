@@ -27,7 +27,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "includes.h"
-RCSID("$OpenBSD: sftp-server.c,v 1.3 2000/09/01 22:32:41 markus Exp $");
+RCSID("$OpenBSD: sftp-server.c,v 1.4 2000/09/04 19:10:08 markus Exp $");
 
 #include "ssh.h"
 #include "buffer.h"
@@ -198,7 +198,7 @@ decode_attrib(Buffer *b)
 	if (a.flags & SSH_FXA_HAVE_SIZE) {
 		a.size_high = get_int();
 		a.size_low = get_int();
-		a.size = (u_int64_t) a.size_high << 32 + a.size_low;
+		a.size = (((u_int64_t) a.size_high) << 32) + a.size_low;
 	}
 	if (a.flags & SSH_FXA_HAVE_UGID) {
 		a.uid = get_int();
@@ -548,7 +548,7 @@ process_read(void)
 	off_low = get_int();
 	len = get_int();
 
-	off = (u_int64_t) off_high << 32 + off_low;
+	off = (((u_int64_t) off_high) << 32) + off_low;
 	TRACE("read id %d handle %d off %qd len %d", id, handle, off, len);
 	if (len > sizeof buf) {
 		len = sizeof buf;
@@ -590,7 +590,7 @@ process_write(void)
 	off_low = get_int();
 	data = get_string(&len);
 
-	off = (u_int64_t) off_high << 32 + off_low;
+	off = (((u_int64_t) off_high) << 32) + off_low;
 	TRACE("write id %d handle %d off %qd len %d", id, handle, off, len);
 	fd = handle_to_fd(handle);
 	if (fd >= 0) {
@@ -779,7 +779,7 @@ ls_file(char *name, struct stat *st)
 {
 	char buf[1024];
 	snprintf(buf, sizeof buf, "0%o %d %d %qd %d %s",
-	    st->st_mode, st->st_uid, st->st_gid, st->st_size, st->st_mtime,
+	    st->st_mode, st->st_uid, st->st_gid, (long long)st->st_size,(int) st->st_mtime,
 	    name);
 	return xstrdup(buf);
 }
