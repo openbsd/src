@@ -1,4 +1,4 @@
-#	$OpenBSD: inter.phone,v 1.10 2001/07/13 22:30:34 mickey Exp $
+#	$OpenBSD: inter.phone,v 1.11 2001/07/13 22:44:15 mickey Exp $
 #	@(#)inter.phone	8.1 (Berkeley) 6/9/93
 #	$FreeBSD-Id: inter.phone,v 1.15 1997/02/22 13:56:06 peter Exp $
 #
@@ -377,9 +377,110 @@
 358:19:Uusimaa:Finland
 358:28::Aaland Islands
 359:2:Sofia:Bulgaria
+370:1:Shauliai:Lithuania
 370:2:Vilnius:Lithuania
+370:6:Klaipeda:Lithuania
+370:7:Kaunas:Lithuania
+370:10:Birstonas:Lithuania
+370:11:Ukmerge:Lithuania
+370:16:Skuodas:Lithuania
+370:17:Svencionys:Lithuania
+370:18:Plunge:Lithuania
+370:19:Jonava:Lithuania
+370:20:Birzai:Lithuania
+370:28:Raseinai:Lithuania
+370:29:Ignalina:Lithuania
+370:30:Moletai:Lithuania
+370:31:Kupiskis:Lithuania
+370:32:Sirvintos:Lithuania
+370:33:Druskininkai:Lithuania
+370:35:Alytus:Lithuania
+370:36:Palanga:Lithuania
+370:37:Elektrienai:Lithuania
+370:38:Trakai:Lithuania
+370:39:Utena:Lithuania
+370:40:Gargzdei:Lithuania
+370:41:Silute:Lithuania
+370:42:Vilkaviskis:Lithuania
+370:43:Marijampole:Lithuania
+370:46:Taurage:Lithuania
+370:47:Sakiai:Lithuania
+370:48:Jurbarkas:Lithuania
+370:49:Prienai:Lithuania
+370:50:Salcininkai:Lithuania
+370:51:Anyksciai:Lithuania
+370:54:Panevezys:Lithuania
+370:56:Kaisiadorys:Lithuania
+370:57:Kedainiai:Lithuania
+370:58:Kretinga:Lithuania
+370:59:Nida:Lithuania
+370:60:Varena:Lithuania
+370:66:Snieckus, Visaginas:Lithuania
+370:68:Lazdijai:Lithuania
+370:69:Silale:Lithuania
+370:70:Zarasai:Lithuania
+370:71:Pasvalys:Lithuania
+370:78:Rokiskis:Lithuania
+370:90:cellular mobile (NMT-450):Lithuania
+370:91:Pakruojis:Lithuania
+370:92:Radviliskis:Lithuania
+370:93:Mazeikiai:Lithuania
+370:94:Telsiai:Lithuania
+370:95:Naujoji Akmene:Lithuania
+370:96:Joniskis:Lithuania
+370:97:Kelme:Lithuania
+370:98:cellular mobile (GSM-2; 5D numbers):Lithuania
+370:99:cellular mobile (GSM-1; 5D numbers):Lithuania
 371:2:Riga:Latvia
-372:2:Tallin:Estonia
+371:2:Jurmala:Latvia
+371:2:Olaine:Latvia
+371:2:Sigulda:Latvia
+371:30:Jelgava:Latvia
+371:31:Tukums:Latvia
+371:32:Talsi:Latvia
+371:33:Kuldiga:Latvia
+371:34:Aizpute(Liepaja):Latvia
+371:36:Ventspils:Latvia
+371:37:Dobele:Latvia
+371:38:Saldus:Latvia
+371:39:Bauska:Latvia
+371:40:Limbazi:Latvia
+371:41:Cesis:Latvia
+371:42:Valmiera:Latvia
+371:43:Aluksne:Latvia
+371:44:Gulbene:Latvia
+371:45:Balvi:Latvia
+371:46:Rezekne:Latvia
+371:47:Valka:Latvia
+371:48:Madona:Latvia
+371:50:Ogre:Latvia
+371:51:Aizkraukle:Latvia
+371:52:Jekabpils:Latvia
+371:53:Preili:Latvia
+371:54:Daugavpils:Latvia
+371:56:Kraslava:Latvia
+371:57:Ludza:Latvia
+372:2:Harjus:Estonia
+372:2:Tallinn:Estonia
+372:5:NMT(mobile):Estonia
+372:6:Tallinn:Estonia
+372:32:Laane-Viru(Rakvere):Estonia
+372:33:Ida-Viru(Kohtla-Jarve):Estonia
+372:34:Tartu:Estonia
+372:35:Narva:Estonia
+372:38:Jarva(Paide):Estonia
+372:39:Sillamae:Estonia
+372:41:Voru:Estonia
+372:43:Viljandi:Estonia
+372:44:Parnu:Estonia
+372:45:Saare(Kuressaare):Estonia
+372:46:Hiiu(Kardla):Estonia
+372:47:Haapsalu:Estonia
+372:48:Rapla:Estonia
+372:72:Tartu:Estonia
+372:76:Valga:Estonia
+372:77:Jogeva:Estonia
+372:79:Polva:Estonia
 373:2:Kishinev:Moldova
 373:30:Soroka:Moldova
 373:31:Beltsy:Moldova
