@@ -1,5 +1,5 @@
 #!/bin/csh
-#	$OpenBSD: which.csh,v 1.2 1996/06/26 05:42:58 deraadt Exp $
+#	$OpenBSD: which.csh,v 1.3 1997/01/07 15:38:58 niklas Exp $
 
 #
 # DO NOT USE "csh -f"
@@ -67,11 +67,22 @@ foreach arg ( $argv )
 	    if ( -x $i/$arg && ! -d $i/$arg ) then
 		echo $i/$arg
 		set found
+		set one_found
 		break
 	    endif
 	end
     endif
     if ( ! $?found ) then
 	echo no $arg in $path
+	set one_missed
     endif
 end
+if ( $?one_missed ) then
+    if ( $?one_found ) then
+	exit 1
+    else
+	exit 2
+    endif
+else
+    exit 0
+endif
