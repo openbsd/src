@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtw.c,v 1.6 2005/01/10 06:49:19 jsg Exp $	*/
+/*	$OpenBSD: rtw.c,v 1.7 2005/01/19 09:36:18 jsg Exp $	*/
 /* $NetBSD: rtw.c,v 1.29 2004/12/27 19:49:16 dyoung Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
@@ -178,8 +178,7 @@ struct mbuf * rtw_dmamap_load_txbuf(bus_dma_tag_t, bus_dmamap_t, struct mbuf *,
 int rtw_newstate(struct ieee80211com *, enum ieee80211_state, int);
 int rtw_media_change(struct ifnet *);
 int rtw_txctl_blk_setup_all(struct rtw_softc *);
-struct rtw_rf * rtw_rf_attach(struct rtw_softc *, enum rtw_rfchipid,
-    rtw_rf_write_t, int);
+struct rtw_rf * rtw_rf_attach(struct rtw_softc *, enum rtw_rfchipid, int);
 u_int8_t rtw_check_phydelay(struct rtw_regs *, u_int32_t);
 
 #ifdef RTW_DEBUG
@@ -3275,10 +3274,23 @@ rtw_txdesc_blk_setup_all(struct rtw_softc *sc)
 }
 
 struct rtw_rf *
-rtw_rf_attach(struct rtw_softc *sc, enum rtw_rfchipid rfchipid,
-    rtw_rf_write_t rf_write, int digphy)
+rtw_rf_attach(struct rtw_softc *sc, enum rtw_rfchipid rfchipid, int digphy)
 {
+	rtw_rf_write_t rf_write;
 	struct rtw_rf *rf;
+
+	switch (rfchipid) {
+	default:
+		rf_write = rtw_rf_hostwrite;
+		break;
+	case RTW_RFCHIPID_INTERSIL:
+	case RTW_RFCHIPID_PHILIPS:
+	case RTW_RFCHIPID_GCT: /* XXX a guess */
+	case RTW_RFCHIPID_RFMD:
+		rf_write = (rtw_host_rfio) ? rtw_rf_hostwrite : rtw_rf_macwrite;
+		break;
+
+	}
 
 	switch (rfchipid) {
 	case RTW_RFCHIPID_MAXIM:
@@ -3331,9 +3343,8 @@ rtw_check_phydelay(struct rtw_regs *regs, u_int32_t rcr0)
 void
 rtw_attach(struct rtw_softc *sc)
 {
-	rtw_rf_write_t rf_write;
 	struct rtw_txctl_blk *stc;
-	int pri, rc, vers;
+	int pri, rc;
 
 #if 0
 	CASSERT(RTW_DESC_ALIGNMENT % sizeof(struct rtw_txdesc) == 0,
@@ -3352,22 +3363,16 @@ rtw_attach(struct rtw_softc *sc)
 
 	switch (RTW_READ(&sc->sc_regs, RTW_TCR) & RTW_TCR_HWVERID_MASK) {
 	case RTW_TCR_HWVERID_F:
-		vers = 'F';
-		rf_write = rtw_rf_macwrite;
+		sc->sc_hwverid = 'F';
 		break;
 	case RTW_TCR_HWVERID_D:
-		vers = 'D';
-		if (rtw_host_rfio)
-			rf_write = rtw_rf_hostwrite;
-		else
-			rf_write = rtw_rf_macwrite;
+		sc->sc_hwverid = 'D';
 		break;
 	default:
-		vers = '?';
-		rf_write = rtw_rf_macwrite;
+		sc->sc_hwverid = '?';
 		break;
 	}
-	printf("%s: ver %c ", sc->sc_dev.dv_xname, vers);
+	printf("%s: ver %c ", sc->sc_dev.dv_xname, sc->sc_hwverid);
 
 	rc = bus_dmamem_alloc(sc->sc_dmat, sizeof(struct rtw_descs),
 	    RTW_DESC_ALIGNMENT, 0, &sc->sc_desc_segs, 1, &sc->sc_desc_nsegs,
@@ -3477,7 +3482,7 @@ rtw_attach(struct rtw_softc *sc)
 
 	NEXT_ATTACH_STATE(sc, FINISH_PARSE_SROM);
 
-	sc->sc_rf = rtw_rf_attach(sc, sc->sc_rfchipid, rf_write,
+	sc->sc_rf = rtw_rf_attach(sc, sc->sc_rfchipid,
 	    sc->sc_flags & RTW_F_DIGPHY);
 
 	if (sc->sc_rf == NULL) {

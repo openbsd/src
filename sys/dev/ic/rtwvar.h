@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtwvar.h,v 1.1 2004/12/29 01:02:31 jsg Exp $	*/
+/*	$OpenBSD: rtwvar.h,v 1.2 2005/01/19 09:36:18 jsg Exp $	*/
 /* $NetBSD: rtwvar.h,v 1.10 2004/12/26 22:37:57 mycroft Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
@@ -438,6 +438,8 @@ struct rtw_softc {
 		u_int8_t			pad[64];
 	} sc_txtapu;
 	enum rtw_access		sc_access;
+	
+	int			sc_hwverid;
 };
 
 #define	sc_if		sc_ic.ic_if
