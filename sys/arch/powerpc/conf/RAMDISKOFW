@@ -52,7 +52,7 @@ config                bsd     root on rd0a swap on rd0b
 mainbus0	at root
 cpu*		at mainbus0
 
-ofroot*		at root
+ofroot*		at mainbus0
 
 ofbus*		at openfirm?
 
