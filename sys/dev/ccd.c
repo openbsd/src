@@ -1,5 +1,5 @@
-/*	$OpenBSD: ccd.c,v 1.11 1996/05/02 13:34:39 deraadt Exp $	*/
-/*	$NetBSD: ccd.c,v 1.32 1996/04/22 01:26:39 christos Exp $	*/
+/*	$OpenBSD: ccd.c,v 1.12 1996/05/10 12:32:11 deraadt Exp $	*/
+/*	$NetBSD: ccd.c,v 1.33 1996/05/05 04:21:14 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -583,7 +583,7 @@ ccdopen(dev, flags, fmt, p)
 
  done:
 	ccdunlock(cs);
-	return (0);
+	return (error);
 }
 
 /* ARGSUSED */
