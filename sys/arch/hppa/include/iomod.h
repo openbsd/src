@@ -1,5 +1,35 @@
-/*	$OpenBSD: iomod.h,v 1.7 2000/04/24 14:24:48 mickey Exp $	*/
+/*	$OpenBSD: iomod.h,v 1.8 2000/05/15 15:16:41 mickey Exp $	*/
 
+/*
+ * Copyright (c) 2000 Michael Shalayeff
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *      This product includes software developed by Michael Shalayeff.
+ * 4. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR OR HIS RELATIVES BE LIABLE FOR ANY DIRECT,
+ * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF MIND, USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+ * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+ * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+ * THE POSSIBILITY OF SUCH DAMAGE.
+ */
 /*
  * Copyright (c) 1990 mt Xinu, Inc.  All rights reserved.
  * Copyright (c) 1990,1991,1992,1994 University of Utah.  All rights reserved.
@@ -129,7 +159,9 @@ struct pagezero {
 	u_int	ivec_toclen;		/* bytes of ivec_toc code */
 	int	(*ivec_rendz)__P((void)); /* exec'd after Rendezvous Signal */
 	u_int	ivec_mempflen;		/* bytes of ivec_mempf code */
-	int	ivec_resv[10];		/* (reserved) must be zero */
+	u_int	ivec_resv[2];		/* (reserved) */
+	u_int	ivec_mbz;		/* must be zero */
+	u_int	ivec_resv2[7];		/* (reserved) */
 
 	/* [0x040] Processor Dependent */
 	union	{
@@ -141,19 +173,48 @@ struct pagezero {
 		} pd_Viper;
 	} pz_Pdep;
 
-	/* [0x200] Reserved */
-	u_int	resv1[84];		/* (reserved) */
+	/* [0x200] IODC Data Area Descriptors
+		   use PDC_ALLOC to allocate these memory regions */
+	u_int	iodc_cons_base;		/* */
+	u_int	iodc_cons_size;		/* */
+	u_int	iodc_kbrd_base;		/* */
+	u_int	iodc_kbrd_size;		/* */
+	u_int	iodc_boot_base;		/* */
+	u_int	iodc_boot_size;		/* */
 
-	/* [0x350] Memory Configuration */
+	/* [0x218] */
+	u_int	resv1[0x41];
+
+	/* [0x31C] Capability Flags */
+	u_int	cap_flags;		/* system capabitlities */
+#define	HPPA_CAP_WIDESCSI	0x00000001
+
+	/* [0x320] Keyboard Extensions */
+	u_int	kbrd_ext[2];
+
+	/* [0x328] Boot Device Extensions */
+	u_int	boot_ext[2];
+
+	/* [0x330] Console/Display Extensions */
+	u_int	cons_ext[2];
+
+	/* [0x338] Initial Memory Module Extensions */
+	u_int	imm_ext[2];
+
+	/* [0x340] Memory Configuration */
+	u_int	memc_cont_l;		/* memc_cont low part */
+	u_int	memc_phsize_l;		/* memc_phsize low part */
+	u_int	memc_adsize_l;		/* memc_adsize low part */
+	u_int	memc_resv;		/* (reserved) */
 	u_int	memc_cont;		/* bytes of contiguous valid memory */
 	u_int	memc_phsize;		/* bytes of valid physical memory */
 	u_int	memc_adsize;		/* bytes of SPA space used by PDC */
-	u_int	memc_resv;		/* (reserved) */
+	u_int	memc_hpa_h;		/* HPA of CPU (high) */
 
 	/* [0x360] Miscellaneous */
 	struct boot_err mem_be[8];	/* boot errors (see above) */
 	u_int	mem_free;		/* first free phys. memory location */
-	struct iomod *mem_hpa;		/* HPA of CPU */
+	u_int	mem_hpa;		/* HPA of CPU */
 	int	(*mem_pdc)__P((void));	/* PDC entry point */
 	u_int	mem_10msec;		/* # of Interval Timer ticks in 10msec*/
 
