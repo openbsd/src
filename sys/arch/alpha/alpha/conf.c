@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.24 2001/06/24 21:19:08 art Exp $	*/
+/*	$OpenBSD: conf.c,v 1.25 2001/06/25 03:19:39 kjell Exp $	*/
 /*	$NetBSD: conf.c,v 1.16 1996/10/18 21:26:57 cgd Exp $	*/
 
 /*-
@@ -178,7 +178,7 @@ struct cdevsw	cdevsw[] =
 	cdev_scanner_init(NSS,ss),	/* 32: SCSI scanner */
 	cdev_uk_init(NUK,uk),		/* 33: SCSI unknown */
 	cdev_random_init(1,random),	/* 34: random data source */
-	cdev_gen_ipf(NIPF,ipl),		/* 35: IP filter log */
+	cdev_pf_init(NPF, pf),		/* 35: packet filter */
 	cdev_disk_init(NWD,wd), 	/* 36: ST506/ESDI/IDE disk */
 	cdev_notdef(),			/* 37 */
         cdev_tty_init(NCY,cy),          /* 38: Cyclom serial port */
@@ -199,7 +199,6 @@ struct cdevsw	cdevsw[] =
 #else
 	cdev_notdef(),			/* 51 */
 #endif
-	cdev_pf_init(NPF, pf),		/* 52: packet filter */
 };
 int	nchrdev = sizeof (cdevsw) / sizeof (cdevsw[0]);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.23 2000/09/26 14:03:52 art Exp $	*/
+/*	$OpenBSD: conf.c,v 1.24 2001/06/25 03:19:50 kjell Exp $	*/
 /*	$NetBSD: conf.c,v 1.39 1997/05/12 08:17:53 thorpej Exp $	*/
 
 /*-
@@ -152,11 +152,8 @@ cdev_decl(ksyms);
 cdev_decl(xfs_dev);
 #endif
 
-#ifdef IPFILTER
-#define NIPF 1
-#else
-#define NIPF 0
-#endif
+#include "pf.h"
+cdev_decl(pf);
 
 struct cdevsw	cdevsw[] =
 {
@@ -193,7 +190,7 @@ struct cdevsw	cdevsw[] =
 	cdev_lkm_dummy(),		/* 30 */
 	cdev_lkm_dummy(),		/* 31 */
 	cdev_random_init(1,random),	/* 32: random generator */
-	cdev_gen_ipf(NIPF,ipl),		/* 33: ip filtering */
+	cdev_pf_init(NPF,pf),		/* 33: packet filter */
 	cdev_disk_init(NRD,rd),		/* 34: RAM disk */
 	cdev_tty_init(NAPCI,apci),	/* 35: Apollo APCI UARTs */
 	cdev_ksyms_init(NKSYMS,ksyms),	/* 36: Kernel symbols device */
@@ -214,6 +211,7 @@ struct cdevsw	cdevsw[] =
 #ifdef XFS
 	cdev_xfs_init(NXFS,xfs_dev),	/* 51: xfs communication device */
 #else
+	
 	cdev_notdef(),			/* 51 */
 #endif
 };

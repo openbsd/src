@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.31 2001/06/24 23:36:05 kjell Exp $
+#	$OpenBSD: MAKEDEV,v 1.32 2001/06/25 03:20:07 kjell Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -33,7 +33,7 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-#	$OpenBSD: MAKEDEV,v 1.31 2001/06/24 23:36:05 kjell Exp $
+#	$OpenBSD: MAKEDEV,v 1.32 2001/06/25 03:20:07 kjell Exp $
 #
 # Device "make" file.  Valid arguments:
 #	all	makes all known devices, including local devices,
@@ -400,7 +400,7 @@ bpf*)
 
 pf)
 	rm -f pf
-	mknod pf c 73 0
+	mknod pf c 39 0
 	chown root.wheel pf
 	chmod 600 pf
 	;;

@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.29 2001/06/24 23:36:11 kjell Exp $
+#	$OpenBSD: MAKEDEV,v 1.30 2001/06/25 03:20:24 kjell Exp $
 #	$NetBSD: MAKEDEV,v 1.30 2000/01/21 12:28:29 tsutsui Exp $
 #
 #	@(#)MAKEDEV	8.1 (Berkeley) 6/9/93
@@ -593,7 +593,7 @@ qd*)
 
 pf)
 	rm -f pf
-	mknod pf c 73 0
+	mknod pf c 42 0
 	chown root.wheel pf
 	chmod 600 pf
 	;;

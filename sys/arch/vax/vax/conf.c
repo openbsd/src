@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.26 2001/05/16 22:15:18 hugh Exp $ */
+/*	$OpenBSD: conf.c,v 1.27 2001/06/25 03:20:22 kjell Exp $ */
 /*	$NetBSD: conf.c,v 1.44 1999/10/27 16:38:54 ragge Exp $	*/
 
 /*-
@@ -122,12 +122,6 @@ bdev_decl(cd);
 
 #include "ksyms.h"
 cdev_decl(ksyms);
-
-#ifdef IPFILTER
-#define NIPF 1
-#else
-#define NIPF 0
-#endif
 
 struct bdevsw	bdevsw[] =
 {
@@ -441,6 +435,9 @@ dev_decl(filedesc,open);
 #include "wskbd.h"
 #include "wsmouse.h"
 
+#include "pf.h"
+cdev_decl(pf);
+
 struct cdevsw	cdevsw[] =
 {
 	cdev_cn_init(1,cn),		/* 0: virtual console */
@@ -485,7 +482,7 @@ struct cdevsw	cdevsw[] =
 	cdev_audio_init(NNP,np),	/* 39: NP Intelligent Board */
 	cdev_graph_init(NQV,qv),	/* 40: QVSS graphic display */
 	cdev_graph_init(NQD,qd),	/* 41: QDSS graphic display */
-	cdev_gen_ipf(NIPF,ipl),	/* 42: Packet filter */
+	cdev_pf_init(NPF,pf),		/* 42: packet filter */
 	cdev_ingres_init(NII,ii),	/* 43: Ingres device */
 	cdev_notdef(),			/* 44  was Datakit */
 	cdev_notdef(),			/* 45  was Datakit */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.15 2001/03/12 22:57:30 miod Exp $	*/
+/*	$OpenBSD: conf.c,v 1.16 2001/06/25 03:20:09 kjell Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -195,11 +195,9 @@ cdev_decl(ksyms);
 #define NLKM 0
 #endif
 
-#ifdef IPFILTER
-#define NIPF 1
-#else
-#define NIPF 0
-#endif
+
+#include "pf.h"
+cdev_decl(pf);
 
 cdev_decl(lkm);
 
@@ -258,7 +256,7 @@ struct cdevsw	cdevsw[] =
 	cdev_lkm_dummy(),                /* 36 */
 	cdev_lkm_dummy(),                /* 37 */
 	cdev_lkm_dummy(),                /* 38 */
-	cdev_gen_ipf(NIPF,ipl),          /* 39: IP filter */
+	cdev_pf_init(NPF,pf),		/* 39: packet filter */
 	cdev_random_init(1,random),	 /* 40: random data source */
 	cdev_notdef(),                   /* 41 */
 	cdev_notdef(),                   /* 42 */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.22 2000/09/26 14:03:53 art Exp $	*/
+/*	$OpenBSD: conf.c,v 1.23 2001/06/25 03:20:01 kjell Exp $	*/
 /*	$NetBSD: conf.c,v 1.41 1997/02/11 07:35:49 scottr Exp $	*/
 
 /*
@@ -119,11 +119,8 @@ cdev_decl(ksyms);
 cdev_decl(xfs_dev);
 #endif
 
-#ifdef IPFILTER
-#define NIPF 1
-#else
-#define NIPF 0
-#endif
+#include "pf.h"
+cdev_decl(pf);
 
 struct cdevsw	cdevsw[] =
 {
@@ -162,7 +159,7 @@ struct cdevsw	cdevsw[] =
 	cdev_random_init(1,random),	/* 32: random data source */
 	cdev_ss_init(NSS,ss),           /* 33: SCSI scanner */
 	cdev_uk_init(NUK,uk),		/* 34: SCSI unknown */
-	cdev_gen_ipf(NIPF,ipl),         /* 35: IP filter log */
+	cdev_pf_init(NPF,pf),		/* 35: packet filter */
 	cdev_audio_init(NASC,asc),      /* 36: ASC audio device */
 	cdev_ksyms_init(NKSYMS,ksyms),	/* 37: Kernel symbols device */
 	cdev_notdef(),			/* 38 */

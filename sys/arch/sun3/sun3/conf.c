@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.27 2000/09/26 14:03:55 art Exp $	*/
+/*	$OpenBSD: conf.c,v 1.28 2001/06/25 03:20:19 kjell Exp $	*/
 /*	$NetBSD: conf.c,v 1.51 1996/11/04 16:16:09 gwr Exp $	*/
 
 /*-
@@ -111,6 +111,9 @@ struct bdevsw	bdevsw[] =
 };
 int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 
+#include "pf.h"
+cdev_decl(pf);
+
 struct cdevsw	cdevsw[] =
 {
 	cdev_cn_init(1,cn),		/* 0: virtual console */
@@ -192,7 +195,7 @@ struct cdevsw	cdevsw[] =
 	cdev_random_init(1,random),	/* 72: randomness source */
 	cdev_uk_init(NUK,uk),		/* 73: unknown SCSI */
 	cdev_ss_init(NSS,ss),           /* 74: SCSI scanner */
-	cdev_gen_ipf(NIPF,ipl),		/* 75: ip filter log */
+	cdev_pf_init(NPF,pf),		/* 75: packet filter */
 	cdev_lkm_init(NLKM,lkm),	/* 76: loadable module driver */
 	cdev_lkm_dummy(),		/* 77 */
 	cdev_lkm_dummy(),		/* 78 */

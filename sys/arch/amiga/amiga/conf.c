@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.29 2000/10/12 19:36:51 espie Exp $	*/
+/*	$OpenBSD: conf.c,v 1.30 2001/06/25 03:19:44 kjell Exp $	*/
 /*	$NetBSD: conf.c,v 1.42 1997/01/07 11:35:03 mrg Exp $	*/
 
 /*-
@@ -116,6 +116,8 @@ cdev_decl(audio);
 	(dev_type_stop((*)))enodev, 0, seltrue, \
 	(dev_type_mmap((*)))enodev }
 
+#include "pf.h"
+cdev_decl(pf);
 
 struct cdevsw	cdevsw[] =
 {
@@ -153,7 +155,7 @@ struct cdevsw	cdevsw[] =
  	cdev_tty_init(NMSC,msc),	/* 31: A2232 MSC Multiport serial */
 	cdev_tty_init(NCOM,com),	/* 32: ISA serial port */
 	cdev_lpt_init(NLPT,lpt),	/* 33: ISA parallel printer */
-	cdev_gen_ipf(NIPF,ipl),		/* 34: IP filter log */
+	cdev_pf_init(NPF,pf),		/* 34: packet filter */
 	cdev_random_init(1,random),	/* 35: random data source */
 	cdev_uk_init(NUK,uk),		/* 36: unknown SCSI */
 	cdev_disk_init(NWD,wd),		/* 37: ST506/ESDI/IDE disk */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.73 2001/06/24 19:48:57 kjell Exp $	*/
+/*	$OpenBSD: conf.c,v 1.74 2001/06/25 03:19:59 kjell Exp $	*/
 /*	$NetBSD: conf.c,v 1.75 1996/05/03 19:40:20 christos Exp $	*/
 
 /*
@@ -213,12 +213,6 @@ cdev_decl(ucom);
 #include "cz.h"
 cdev_decl(cztty);
 
-#ifdef IPFILTER
-#define NIPF 1
-#else
-#define NIPF 0
-#endif
-
 /* XXX -- this needs to be supported by config(8)! */
 #if (NCOM > 0) && (NPCCOM > 0)
 #error com and pccom are mutually exclusive.  Sorry.
@@ -301,7 +295,7 @@ struct cdevsw	cdevsw[] =
 #else
 	cdev_notdef(),			/* 43 */
 #endif
-	cdev_gen_ipf(NIPF,ipl),         /* 44: ip filtering */
+	cdev_notdef(),			/* 44 */
 	cdev_random_init(1,random),	/* 45: random data source */
 	cdev_ocis_init(NPCTR,pctr),	/* 46: pentium performance counters */
 	cdev_disk_init(NRD,rd),		/* 47: ram disk driver */

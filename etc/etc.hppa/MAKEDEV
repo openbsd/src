@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.5 2001/06/24 23:36:01 kjell Exp $
+#	$OpenBSD: MAKEDEV,v 1.6 2001/06/25 03:19:57 kjell Exp $
 #	@(#)MAKEDEV	5.5 (Berkeley) 5/28/91
 #
 # Device "make" file.  Valid arguments:
@@ -183,7 +183,7 @@ bpf*)
 
 pf)
 	rm -f pf
-	mknod pf c 73 0
+	mknod pf c 21 0
 	chown root.wheel pf
 	chmod 600 pf
 	;;

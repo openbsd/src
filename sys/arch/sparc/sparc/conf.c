@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.26 2000/09/26 14:03:55 art Exp $	*/
+/*	$OpenBSD: conf.c,v 1.27 2001/06/25 03:20:15 kjell Exp $	*/
 /*	$NetBSD: conf.c,v 1.40 1996/04/11 19:20:03 thorpej Exp $ */
 
 /*
@@ -128,6 +128,9 @@ struct bdevsw	bdevsw[] =
 };
 int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 
+#include "pf.h"
+cdev_decl(pf);
+
 struct cdevsw	cdevsw[] =
 {
 	cdev_cn_init(1,cn),		/* 0: virtual console */
@@ -197,7 +200,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 56 */
 	cdev_notdef(),			/* 57 */
 	cdev_disk_init(NCD,cd),		/* 58: SCSI CD-ROM */
-	cdev_gen_ipf(NIPF,ipl),		/* 59: ip filtering log */
+	cdev_pf_init(NPF,pf),		/* 59: packet filter */
 	cdev_notdef(),			/* 60 */
 	cdev_notdef(),			/* 61 */
 	cdev_notdef(),			/* 62 */

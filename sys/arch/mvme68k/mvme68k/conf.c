@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.20 2000/09/26 14:03:53 art Exp $ */
+/*	$OpenBSD: conf.c,v 1.21 2001/06/25 03:20:05 kjell Exp $ */
 
 /*-
  * Copyright (c) 1995 Theo de Raadt
@@ -178,11 +178,8 @@ dev_decl(filedesc,open);
 
 #include "tun.h"
 
-#ifdef IPFILTER
-#define NIPF 1
-#else
-#define NIPF 0
-#endif
+#include "pf.h"
+cdev_decl(pf);
 
 struct cdevsw	cdevsw[] =
 {
@@ -225,7 +222,7 @@ struct cdevsw	cdevsw[] =
 	cdev_lkm_dummy(),		/* 36 */
 	cdev_lkm_dummy(),		/* 37 */
 	cdev_lkm_dummy(),		/* 38 */
-	cdev_gen_ipf(NIPF,ipl),         /* 39: IP filter */
+	cdev_pf_init(NPF,pf),		/* 39: packet filter */
 	cdev_random_init(1,random),	/* 40: random data source */
 	cdev_uk_init(NUK,uk),		/* 41: unknown SCSI */
 	cdev_ss_init(NSS,ss),           /* 42: SCSI scanner */

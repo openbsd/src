@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.12 2001/06/24 23:36:06 kjell Exp $
+#	$OpenBSD: MAKEDEV,v 1.13 2001/06/25 03:20:11 kjell Exp $
 #	$NetBSD: MAKEDEV,v 1.5 1997/01/01 23:46:23 pk Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -289,7 +289,7 @@ lpt*|lpa*)
 
 pf)
 	rm -f pf
-	mknod pf c 73 0
+	mknod pf c 39 0
 	chown root.wheel pf
 	chmod 600 pf
 	;;
