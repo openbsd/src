@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.9 2001/01/28 23:31:28 niklas Exp $
+#	$OpenBSD: MAKEDEV,v 1.10 2001/03/12 23:23:50 miod Exp $
 #	$NetBSD: MAKEDEV,v 1.5 1997/01/01 23:46:23 pk Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -36,8 +36,8 @@
 # Disks:
 #	sd*	SCSI disks
 #	cd*	SCSI CD-ROM
+#	rd*	"ramdisk" pseudo-disks
 #	vnd*	"file" pseudo-disks
-#	md*	"memory" pseudo-disks
 #	ccd*	contatenated disk devices
 #
 # Pseudo terminals:
@@ -50,7 +50,6 @@
 # Call units:
 #
 # Special purpose devices:
-#	fd	file descriptors
 #	bpf*	packet filter
 #	lkm	loadable kernel modules interface
 #	tun*	network tunnel driver
@@ -67,43 +66,31 @@
 #	vmes	16-bit vme interface
 
 PATH=/sbin:/usr/sbin:/bin:/usr/bin:/usr/etc
+this=$0
 umask 77
 for i
 do
 case $i in
 
 all)
-	sh MAKEDEV std fd st0 ttya ttyb ttyc ttyd
-	sh MAKEDEV tty00 tty01 tty02 tty03
-	sh MAKEDEV ttyw0
-	sh MAKEDEV sd0 sd1 sd2 sd3 sd4 sd5 sd6 sd7 sd8 sd9
-	sh MAKEDEV vnd0 vnd1 pty0 cd0 ipl
-	sh MAKEDEV bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9
-	#sh MAKEDEV ccd0 ccd1 ccd2 ccd3
-	sh MAKEDEV tun0 tun1 lkm local
-	sh MAKEDEV sram0 nvram0 flash0 vmel0 vmes0
-	#sh MAKEDEV lp0 lptwo0
-	sh MAKEDEV random
-	sh MAKEDEV uk0 uk1
-	sh MAKEDEV ss0
-	;;
-
-all)
-	sh $0 std fd pty0
-	sh $0 sd0 sd1 sd2 sd3 sd4 sd5 sd6 sd7 sd8 sd9 
-	sh $0 st0 st1 ch0 cd0 cd1 lpa0 lpt0  
-	sh $0 bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9
-	sh $0 tun0 tun1 lkm ipl
-	sh $0 ccd0 ccd1 ccd2 ccd3 
-	sh $0 md0 ss0 ch0 uk0 uk1 lkm
-	sh $0 sram0 nvram0 flash0 vmel0 vmes0
-	sh $0 vnd0 vnd1
-	sh $0 uk0 uk1
-	sh $0 local
+	sh $this std fd st0 ttya ttyb ttyc ttyd
+	sh $this tty00 tty01 tty02 tty03
+	sh $this ttyw0
+	sh $this sd0 sd1 sd2 sd3 sd4 sd5 sd6 sd7 sd8 sd9
+	sh $this vnd0 vnd1 pty0 cd0 ipl
+	sh $this bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9
+	#sh $this ccd0 ccd1 ccd2 ccd3
+	sh $this tun0 tun1 lkm local
+	sh $this sram0 nvram0 flash0 vmel0 vmes0
+	#sh $this lp0 lptwo0
+	sh $this random
+	sh $this uk0 uk1
+	sh $this ss0
 	;;
 
 std)
-	rm -f console drum mem kmem null zero tty klog stdin stdout stderr
+	rm -f console drum mem kmem null zero tty
+	rm -f klog stdin stdout stderr ksyms
 	mknod console		c 0 0
 	mknod drum		c 3 0	; chmod 640 drum ; chgrp kmem drum
 	mknod kmem		c 2 1	; chmod 640 kmem ; chgrp kmem kmem
@@ -115,20 +102,21 @@ std)
 	mknod stdin		c 21 0	; chmod 666 stdin
 	mknod stdout		c 21 1	; chmod 666 stdout
 	mknod stderr		c 21 2	; chmod 666 stderr
+	mknod ksyms		c 43 0	; chmod 640 ksyms ; chown root.kmem ksyms
 	;;
 
 raminst)
-	sh MAKEDEV std fd st0 ttya rd0
-	sh MAKEDEV tty00 tty01 tty02 tty03
-	sh MAKEDEV sd0 sd1 sd2 sd3 
-	sh MAKEDEV pty0 
-	#sh MAKEDEV ccd0 ccd1 ccd2 ccd3
-	sh MAKEDEV tun0 tun1 lkm local
-	sh MAKEDEV sram0 nvram0 flash0 vmel0 vmes0
-	#sh MAKEDEV lp0 lptwo0
-	sh MAKEDEV random
-	sh MAKEDEV uk0 uk1
-	sh MAKEDEV ss0
+	sh $this std fd st0 ttya rd0
+	sh $this tty00 tty01 tty02 tty03
+	sh $this sd0 sd1 sd2 sd3 
+	sh $this pty0 
+	#sh $this ccd0 ccd1 ccd2 ccd3
+	sh $this tun0 tun1 lkm local
+	sh $this sram0 nvram0 flash0 vmel0 vmes0
+	#sh $this lp0 lptwo0
+	sh $this random
+	sh $this uk0 uk1
+	sh $this ss0
 	;;
 
 fd)
@@ -140,17 +128,6 @@ fd)
 	chown -R bin.bin fd
 	chmod 555 fd
 	chmod 666 fd/*
-	;;
-
-md*)
-	case $i in
-	md*) name=md;	unit=${i#md};	chr=32;	blk=9;;
-	esac
-	rm -f $name$unit r$name$unit
-	mknod $name$unit	b $blk `expr $unit + 0`
-	mknod r$name$unit	c $chr `expr $unit + 16`
-	chgrp operator $name$unit r$name$unit
-	chmod 640 $name$unit r$name$unit
 	;;
 
 ss*)
@@ -170,23 +147,15 @@ ccd*|sd*)
 	sd*) name=sd;	unit=${i#sd};	blk=4;	chr=8;;
 	esac
 	rm -f $name$unit? r$name$unit?
-	mknod ${name}${unit}a	b $blk `expr $unit '*' 8 + 0`
-	mknod ${name}${unit}b	b $blk `expr $unit '*' 8 + 1`
-	mknod ${name}${unit}c	b $blk `expr $unit '*' 8 + 2`
-	mknod ${name}${unit}d	b $blk `expr $unit '*' 8 + 3`
-	mknod ${name}${unit}e	b $blk `expr $unit '*' 8 + 4`
-	mknod ${name}${unit}f	b $blk `expr $unit '*' 8 + 5`
-	mknod ${name}${unit}g	b $blk `expr $unit '*' 8 + 6`
-	mknod ${name}${unit}h	b $blk `expr $unit '*' 8 + 7`
-	mknod r${name}${unit}a	c $chr `expr $unit '*' 8 + 0`
-	mknod r${name}${unit}b	c $chr `expr $unit '*' 8 + 1`
-	mknod r${name}${unit}c	c $chr `expr $unit '*' 8 + 2`
-	mknod r${name}${unit}d	c $chr `expr $unit '*' 8 + 3`
-	mknod r${name}${unit}e	c $chr `expr $unit '*' 8 + 4`
-	mknod r${name}${unit}f	c $chr `expr $unit '*' 8 + 5`
-	mknod r${name}${unit}g	c $chr `expr $unit '*' 8 + 6`
-	mknod r${name}${unit}h	c $chr `expr $unit '*' 8 + 7`
-	chgrp operator $name$unit? r$name$unit?
+	minor=`expr $unit '*' 16`
+	for slice in a b c d e f g h i j k l m n o p
+	do
+		dev=${name}${unit}${slice}
+		mknod $dev b $blk $minor
+		mknod r$dev c $chr $minor
+		minor=$(( $minor + 1 ))
+	done
+	chown root.operator $name$unit? r$name$unit?
 	chmod 640 $name$unit? r$name$unit?
 	;;
 
@@ -301,9 +270,9 @@ cd*)
 	esac
 	rm -f $name$unit? r$name$unit?
 	mknod ${name}${unit}a	b $blk `expr $unit '*' 8 + 0`
-	mknod ${name}${unit}d	b $blk `expr $unit '*' 8 + 3`
+	mknod ${name}${unit}c	b $blk `expr $unit '*' 8 + 2`
 	mknod r${name}${unit}a	c $chr `expr $unit '*' 8 + 0`
-	mknod r${name}${unit}d	c $chr `expr $unit '*' 8 + 3`
+	mknod r${name}${unit}c	c $chr `expr $unit '*' 8 + 2`
 	chgrp operator $name$unit? r$name$unit?
 	chmod 640 $name$unit? r$name$unit?
 	;;
@@ -352,6 +321,7 @@ random|srandom|urandom|prandom|arandom)
 	chown root.wheel random srandom urandom prandom arandom
 	chmod 644 random srandom urandom prandom arandom
 	;;
+
 rd*)
 	umask 2 ; unit=`expr $i : '.*d\(.*\)'`
 	mknod rd${unit}a b 7 `expr $unit '*' 16 + 0`
