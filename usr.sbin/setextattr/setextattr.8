@@ -1,4 +1,4 @@
-.\"	$OpenBSD: setextattr.8,v 1.1 2002/02/22 21:09:47 drahn Exp $
+.\"	$OpenBSD: setextattr.8,v 1.2 2003/02/13 08:23:39 jmc Exp $
 .\"-
 .\" Copyright (c) 2000, 2001 Robert N. M. Watson
 .\" All rights reserved.
@@ -60,13 +60,13 @@ In order for
 to succeed, the attribute service must be available on the file system,
 and appropriate privilege may be required.
 .Sh EXAMPLES
-.Dl # setextattr system md5 /kernel `md5 -q /kernel`
+.Dl # setextattr system md5 /kernel `md5 < /kernel`
 .Pp
 Set the
 .Dq md5
 extended attribute on the file /kernel to the string
 containing the output of
-.Dq md5 -q /kernel .
+.Dq md5 < /kernel .
 .Sh SEE ALSO
 .Xr extattr 2 ,
 .Xr extattr 3 ,

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sesd.8,v 1.6 2001/07/20 19:09:48 mpech Exp $
+.\"	$OpenBSD: sesd.8,v 1.7 2003/02/13 08:23:39 jmc Exp $
 .\"
 .\" Copyright (c) 2000 Matthew Jacob
 .\" All rights reserved.
@@ -51,7 +51,7 @@ in state and logs such changes to the system error logger
 At least one device must be specified.
 When no other options are supplied,
 .Nm
-detached becomes a daemon, by default waking up every 30 seconds to
+detaches and becomes a daemon, by default waking up every 30 seconds to
 poll each device for a change in state.
 .Pp
 The options are as follows:
@@ -76,9 +76,9 @@ SCSI Environmental Services Devices
 .El
 .Sh SEE ALSO
 .Xr ses 4 ,
-.Xr syslogd 8 ,
 .Xr getencstat 8 ,
 .Xr setencstat 8 ,
-.Xr setobjstat 8
+.Xr setobjstat 8 ,
+.Xr syslogd 8
 .Sh BUGS
 This is something of a toy, but it is better than nothing.

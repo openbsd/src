@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.180 2003/02/12 13:27:20 mcbride Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.181 2003/02/13 08:23:40 jmc Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -53,7 +53,7 @@ Tables provide a mechanism for increasing the performance and flexibility of
 rules with large numbers of source or destination addresses.
 .It Cm Options
 Options tune the behaviour of the packet filtering engine.
-.It Cm Traffic Normalisation Li (e.g. Em scrub Ns )
+.It Cm Traffic Normalization Li (e.g. Em scrub Ns )
 Traffic normalization protects internal machines against inconsistencies
 in Internet protocols and implementations.
 .It Cm Queueing
@@ -345,7 +345,7 @@ These can be combined:
 .Ic set limit { states 20000, frags 20000 }
 .Ed
 .It Ar set optimization
-Optimise the engine for one of the following network environments:
+Optimize the engine for one of the following network environments:
 .Pp
 .Bl -tag -width xxxx -compact
 .It Ar normal

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamd.8,v 1.9 2003/02/10 12:01:51 dhartmei Exp $
+.\"	$OpenBSD: spamd.8,v 1.10 2003/02/13 08:23:39 jmc Exp $
 .\"
 .\" Copyright (c) 2002 Theo de Raadt.  All rights reserved.
 .\"
@@ -37,7 +37,7 @@
 .Op Fl n Ar name
 .Sh DESCRIPTION
 .Nm
-is a a fake
+is a fake
 .Xr sendmail 8 Ns -like
 daemon which absorbs false mail.
 If the
@@ -62,7 +62,7 @@ into the background.
 The SMTP error to return to the spammer, ie 450, 451, 550.  This defaults
 to 450.
 .It Fl c
-the Maximum number of concurrent connections to allow.
+The maximum number of concurrent connections to allow.
 .It Fl p
 Specify the port number that
 .Nm
@@ -88,7 +88,8 @@ and is used in conjuction with
 .Xr spamd-setup 8
 which processes a list of spammers' addresses, and applies appropriate
 .Xr pfctl 8
-rdr rules.
+.Em rdr
+rules.
 .Pp
 .Sh REDIRECTING SMTP CONNECTIONS
 With
@@ -96,29 +97,29 @@ With
 connections to port 25 (SMTP) can be redirected to another host or port,
 based on the source address of the sender.
 The
-.Pa rdr
+.Em rdr
 rules used for this purpose are described in
 .Xr pf.conf 5 .
 The rules can be loaded into an
-.Pa anchor
+.Em anchor
 to simplify handling.
 If the main ruleset contains the following
-.Pa rdr-anchor rule ,
+.Em rdr-anchor rule ,
 all
-.Pa rdr
+.Em rdr
 rules inside the specified
-.Pa anchor
+.Em anchor
 are evaluated for SMTP connections:
 .Bd -literal
     rdr-anchor spews proto tcp from any to any port smtp
 .Ed
 .Pp
 And all
-.Pa rdr
+.Em rdr
 rules related to
 .Nm
 can be loaded into one or more rulesets inside that
-.Pa anchor ,
+.Em anchor ,
 like:
 .Bd -literal
     echo "rdr inet proto tcp from { 10.1.2.3, 10.2.3.4/30, 10.3.4.5/24 }
@@ -127,8 +128,8 @@ like:
 .Pp
 .Sh SEE ALSO
 .Xr pf.conf 5 ,
-.Xr spamd-setup 8 ,
-.Xr pfctl 8
+.Xr pfctl 8 ,
+.Xr spamd-setup 8
 .Sh HISTORY
 The
 .Nm
