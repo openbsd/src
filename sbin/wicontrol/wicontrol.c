@@ -1,4 +1,4 @@
-/*	$OpenBSD: wicontrol.c,v 1.43 2002/10/27 16:20:48 millert Exp $	*/
+/*	$OpenBSD: wicontrol.c,v 1.44 2002/12/12 04:21:18 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -69,7 +69,7 @@
 static const char copyright[] = "@(#) Copyright (c) 1997, 1998, 1999\
 	Bill Paul. All rights reserved.";
 static const char rcsid[] =
-	"@(#) $OpenBSD: wicontrol.c,v 1.43 2002/10/27 16:20:48 millert Exp $";
+	"@(#) $OpenBSD: wicontrol.c,v 1.44 2002/12/12 04:21:18 deraadt Exp $";
 #endif
 
 void wi_getval(char *, struct wi_req *);
@@ -101,9 +101,7 @@ const struct wi_card_ident wi_card_ident[] = {
 };
 
 void
-wi_getval(iface, wreq)
-	char			*iface;
-	struct wi_req		*wreq;
+wi_getval(char *iface, struct wi_req *wreq)
 {
 	struct ifreq		ifr;
 	int			s;
@@ -125,9 +123,7 @@ wi_getval(iface, wreq)
 }
 
 void
-wi_setval(iface, wreq)
-	char			*iface;
-	struct wi_req		*wreq;
+wi_setval(char *iface, struct wi_req *wreq)
 {
 	struct ifreq		ifr;
 	int			s;
@@ -149,8 +145,7 @@ wi_setval(iface, wreq)
 }
 
 void
-wi_printstr(wreq)
-	struct wi_req		*wreq;
+wi_printstr(struct wi_req *wreq)
 {
 	char			*ptr;
 	int			i, max;
@@ -178,10 +173,7 @@ wi_printstr(wreq)
 }
 
 void
-wi_setstr(iface, code, str)
-	char			*iface;
-	int			code;
-	char			*str;
+wi_setstr(char *iface, int code, char *str)
 {
 	struct wi_req		wreq;
 
@@ -202,11 +194,7 @@ wi_setstr(iface, code, str)
 }
 
 void
-wi_setbytes(iface, code, bytes, len)
-	char			*iface;
-	int			code;
-	char			*bytes;
-	int			len;
+wi_setbytes(char *iface, int code, char *bytes, int len)
 {
 	struct wi_req		wreq;
 
@@ -220,10 +208,7 @@ wi_setbytes(iface, code, bytes, len)
 }
 
 void
-wi_setword(iface, code, word)
-	char			*iface;
-	int			code;
-	char			*word;
+wi_setword(char *iface, int code, char *word)
 {
 	struct wi_req		wreq;
 	int			value = strtol(word, NULL, 10);
@@ -238,10 +223,7 @@ wi_setword(iface, code, word)
 }
 
 void
-wi_sethex(iface, code, str)
-	char			*iface;
-	int			code;
-	char			*str;
+wi_sethex(char *iface, int code, char *str)
 {
 	struct ether_addr	*addr;
 
@@ -257,8 +239,7 @@ wi_sethex(iface, code, str)
 }
 
 int
-wi_hex2int(c)
-	char			c;
+wi_hex2int(char c)
 {
 	if (c >= '0' && c <= '9')
 		return (c - '0');
@@ -271,9 +252,7 @@ wi_hex2int(c)
 }
 
 void
-wi_str2key(s, k)
-	char			*s;
-	struct wi_key		*k;
+wi_str2key(char *s, struct wi_key *k)
 {
 	int			n, i;
 	char			*p;
@@ -296,10 +275,7 @@ wi_str2key(s, k)
 }
 
 void
-wi_setkeys(iface, idx, key)
-	char			*iface;
-	int			 idx;
-	char			*key;
+wi_setkeys(char *iface, int idx, char *key)
 {
 	struct wi_req		wreq;
 	struct wi_ltv_keys	*keys;
@@ -342,8 +318,7 @@ wi_setkeys(iface, idx, key)
 }
 
 void
-wi_printkeys(wreq)
-	struct wi_req		*wreq;
+wi_printkeys(struct wi_req *wreq)
 {
 	int			 i, j, bn;
 	struct wi_key		*k;
@@ -376,9 +351,7 @@ wi_printkeys(wreq)
 }
 
 void
-wi_printcardid(wreq, chip_id)
-	struct wi_req *wreq;
-	u_int16_t chip_id;
+wi_printcardid(struct wi_req *wreq, u_int16_t chip_id)
 {
 	const char *chip_name;
 	const struct wi_card_ident *id;
@@ -411,8 +384,7 @@ wi_printcardid(wreq, chip_id)
 }
 
 void
-wi_printwords(wreq)
-	struct wi_req		*wreq;
+wi_printwords(struct wi_req *wreq)
 {
 	int			i;
 
@@ -423,8 +395,7 @@ wi_printwords(wreq)
 }
 
 void
-wi_printbool(wreq)
-	struct wi_req		*wreq;
+wi_printbool(struct wi_req *wreq)
 {
 	if (letoh16(wreq->wi_val[0]))
 		printf("[ On ]");
@@ -433,8 +404,7 @@ wi_printbool(wreq)
 }
 
 void
-wi_printhex(wreq)
-	struct wi_req		*wreq;
+wi_printhex(struct wi_req *wreq)
 {
 	int			i;
 	unsigned char		*c;
@@ -452,8 +422,7 @@ wi_printhex(wreq)
 }
 
 void
-wi_printalgorithm(wreq)
-	struct wi_req   *wreq;
+wi_printalgorithm(struct wi_req *wreq)
 {
 	switch(letoh16(wreq->wi_val[0])) {
 	case WI_CRYPTO_FIRMWARE_WEP:
@@ -469,8 +438,7 @@ wi_printalgorithm(wreq)
 }
 
 void
-wi_printaplist(iface)
-	char			*iface;
+wi_printaplist(char *iface)
 {
 	int			prism2, len, i = 0, j, s, flags, nap;
 	struct wi_req		wreq;
@@ -643,8 +611,7 @@ struct wi_table wi_crypt_table[] = {
 };
 
 void
-wi_dumpinfo(iface)
-	char			*iface;
+wi_dumpinfo(char *iface)
 {
 	struct wi_req		wreq;
 	int			i, has_wep, chip_id;
@@ -737,8 +704,7 @@ wi_dumpinfo(iface)
 }
 
 void
-wi_dumpstats(iface)
-	char			*iface;
+wi_dumpstats(char *iface)
 {
 	struct wi_req		wreq;
 	struct wi_counters	*c;
@@ -795,8 +761,7 @@ wi_dumpstats(iface)
 }
 
 void
-wi_dumpstations(iface)
-	char			*iface;
+wi_dumpstations(char *iface)
 {
 	struct hostap_getall    reqall;
 	struct hostap_sta	stas[WIHAP_MAX_STATIONS];
@@ -838,7 +803,7 @@ wi_dumpstations(iface)
 }
 
 __dead void
-usage()
+usage(void)
 {
 	extern char *__progname;
 
@@ -894,9 +859,7 @@ struct wi_func wi_opt[] = {
 };
 
 int
-main(argc, argv)
-	int			argc;
-	char			*argv[];
+main(int argc, char *argv[])
 {
 	char	*iface = "wi0";
 	int	ch, p, dumpstats, dumpinfo = 1, ifspecified;
@@ -977,9 +940,7 @@ main(argc, argv)
 }
 
 int
-get_if_flags(s, name)
-	int		s;
-	const char	*name;
+get_if_flags(int s, const char *name)
 {
 	struct ifreq	ifr;
 	int		flags;
@@ -993,10 +954,7 @@ get_if_flags(s, name)
 }
 
 int
-set_if_flags(s, name, flags)
-	int		s;
-	const char	*name;
-	int		flags;
+set_if_flags(int s, const char *name, int flags)
 {
 	struct ifreq ifr;
 
@@ -1013,10 +971,7 @@ set_if_flags(s, name, flags)
  * (ripped screaming from ifconfig/ifconfig.c)
  */
 void
-printb(s, v, bits)
-	char *s;
-	char *bits;
-	unsigned short v;
+printb(char *s, unsigned short v, char *bits)
 {
 	int i, any = 0;
 	char c;
