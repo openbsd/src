@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmds.c,v 1.18 2003/06/26 21:36:40 deraadt Exp $	*/
+/*	$OpenBSD: cmds.c,v 1.19 2004/02/04 21:54:05 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -34,7 +34,7 @@ static char sccsid[] = "@(#)cmds.c	5.1 (Berkeley) 5/11/93";
 #endif /* not lint */
 
 #ifdef sgi
-#ident "$Revision: 1.18 $"
+#ident "$Revision: 1.19 $"
 #endif
 
 #include "timedc.h"
@@ -238,7 +238,7 @@ clockdiff(int argc, char *argv[])
 			printf("%s is down\n", hp->h_name);
 			continue;
 		case NONSTDTIME:
-			printf("%s transmitts a non-standard time format\n",
+			printf("%s transmits a non-standard time format\n",
 			    hp->h_name);
 			continue;
 		case UNREACHABLE:
