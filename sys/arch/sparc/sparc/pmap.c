@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.33 1999/09/03 18:11:29 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.34 1999/09/03 18:33:42 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
@@ -1197,14 +1197,14 @@ mmu_setup4m_L1(regtblptd, kpmap)
 
 				for (k = 0; k < SRMMU_L3SIZE; k++) {
 					sp->sg_npte++;
-					(sp->sg_pte)[k] =
+					setpgt4m(&sp->sg_pte[k],
 					    (te & SRMMU_L1PPNMASK) |
 					    (j << SRMMU_L2PPNSHFT) |
 					    (k << SRMMU_L3PPNSHFT) |
 					    (te & SRMMU_PGBITSMSK) |
 					    ((te & SRMMU_PROT_MASK) |
 					     PPROT_U2S_OMASK) |
-					    SRMMU_TEPTE;
+					    SRMMU_TEPTE);
 				}
 			}
 			break;
@@ -1250,14 +1250,14 @@ mmu_setup4m_L2(segtblptd, rp)
 			 */
 			for (k = 0; k < SRMMU_L3SIZE; k++) {
 				sp->sg_npte++;
-				(sp->sg_pte)[k] =
+				setpgt4m(&sp->sg_pte[k],
 				    (te & SRMMU_L1PPNMASK) |
 				    (te & SRMMU_L2PPNMASK) |
 				    (k << SRMMU_L3PPNSHFT) |
 				    (te & SRMMU_PGBITSMSK) |
 				    ((te & SRMMU_PROT_MASK) |
 				     PPROT_U2S_OMASK) |
-				    SRMMU_TEPTE;
+				    SRMMU_TEPTE);
 			}
 			break;
 
@@ -1288,7 +1288,7 @@ mmu_setup4m_L3(pagtblptd, sp)
 			break;
 		case SRMMU_TEPTE:
 			sp->sg_npte++;
-			sp->sg_pte[i] = te | PPROT_U2S_OMASK;
+			setpgt4m(&sp->sg_pte[i], te | PPROT_U2S_OMASK);
 			break;
 		case SRMMU_TEPTD:
 			panic("mmu_setup4m_L3: PTD found in L3 page table");
