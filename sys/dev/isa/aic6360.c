@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic6360.c,v 1.11 1997/01/23 04:13:52 flipk Exp $ */
+/*	$OpenBSD: aic6360.c,v 1.12 1997/07/07 16:19:37 niklas Exp $ */
 /*	$NetBSD: aic6360.c,v 1.46 1996/05/12 23:51:37 mycroft Exp $	*/
 
 #define	integrate	static inline
@@ -97,7 +97,7 @@
  * may spin in the interrupt routine waiting for this byte to come.  How long?
  * This is really (SCSI) device and processor dependent.  Tuneable, I guess.
  */
-#define AIC_MSGIN_SPIN		1 	/* Will spinwait upto ?ms for a new msg byte */
+#define AIC_MSGIN_SPIN		1 	/* Spin upto ?ms for a new msg byte */
 #define AIC_MSGOUT_SPIN		1
 
 /* Include debug functions?  At the end of this file there are a bunch of
@@ -128,6 +128,7 @@
 #include <sys/user.h>
 #include <sys/queue.h>
 
+#include <machine/bus.h>
 #include <machine/intr.h>
 #include <machine/pio.h>
 
@@ -140,6 +141,7 @@
 /* Definitions, most of them has turned out to be unneccesary, but here they
  * are anyway.
  */
+#define AIC_NPORTS	0x20	/* I/O port space used */
 
 /* AIC6360 definitions */
 #define SCSISEQ		0x00	/* SCSI sequence control */
@@ -495,7 +497,8 @@ struct aic_softc {
 	struct isadev sc_id;
 	void *sc_ih;
 
-	int sc_iobase;
+	bus_space_tag_t sc_iot;
+	bus_space_handle_t sc_ioh;
 	int sc_irq, sc_drq;
 
 	struct scsi_link sc_link;	/* prototype for subdevs */
@@ -565,8 +568,16 @@ struct aic_softc {
 #define AIC_DOBREAK	0x40
 int aic_debug = 0x00; /* AIC_SHOWSTART|AIC_SHOWMISC|AIC_SHOWTRACE; */
 #define	AIC_PRINT(b, s)	do {if ((aic_debug & (b)) != 0) printf s;} while (0)
-#define	AIC_BREAK()	do {if ((aic_debug & AIC_DOBREAK) != 0) Debugger();} while (0)
-#define	AIC_ASSERT(x)	do {if (x) {} else {printf("%s at line %d: assertion failed\n", sc->sc_dev.dv_xname, __LINE__); Debugger();}} while (0)
+#define	AIC_BREAK() \
+	do { if ((aic_debug & AIC_DOBREAK) != 0) Debugger(); } while (0)
+#define	AIC_ASSERT(x) \
+	do { \
+		if (!x) { \
+			printf("%s at line %d: assertion failed\n", \
+			    sc->sc_dev.dv_xname, __LINE__); \
+			Debugger(); \
+		} \
+	} while (0)
 #else
 #define	AIC_PRINT(b, s)
 #define	AIC_BREAK()
@@ -593,7 +604,7 @@ integrate void	aic_sched_msgout __P((struct aic_softc *, u_char));
 integrate void	aic_setsync	__P((struct aic_softc *, struct aic_tinfo *));
 void	aic_select	__P((struct aic_softc *, struct aic_acb *));
 void	aic_timeout	__P((void *));
-int	aic_find	__P((struct aic_softc *));
+int	aic_find	__P((struct aic_softc *, struct isa_attach_args *));
 void	aic_sched	__P((struct aic_softc *));
 void	aic_scsi_reset	__P((struct aic_softc *));
 void	aic_reset	__P((struct aic_softc *));
@@ -657,15 +668,15 @@ aicprobe(parent, match, aux)
 		return 0;
 #endif
 
-	sc->sc_iobase = ia->ia_iobase;
-	if (aic_find(sc) != 0)
+	if (aic_find(sc, ia) != 0)
 		return 0;
 
 #ifdef NEWCONFIG
 	if (ia->ia_irq != IRQUNK) {
 		if (ia->ia_irq != sc->sc_irq) {
-			printf("%s: irq mismatch; kernel configured %d != board configured %d\n",
-			    sc->sc_dev.dv_xname, ia->ia_irq, sc->sc_irq);
+			printf("%s: irq mismatch; ", sc->sc_dev.dv_xname);
+			printf("kernel configured %d != board configured %d\n",
+			    ia->ia_irq, sc->sc_irq);
 			return 0;
 		}
 	} else
@@ -673,8 +684,9 @@ aicprobe(parent, match, aux)
 
 	if (ia->ia_drq != DRQUNK) {
 		if (ia->ia_drq != sc->sc_drq) {
-			printf("%s: drq mismatch; kernel configured %d != board configured %d\n",
-			    sc->sc_dev.dv_xname, ia->ia_drq, sc->sc_drq);
+			printf("%s: drq mismatch; ", sc->sc_dev.dv_xname);
+			printf("kernel configured %d != board configured %d\n",
+			    ia->ia_drq, sc->sc_drq);
 			return 0;
 		}
 	} else
@@ -682,46 +694,51 @@ aicprobe(parent, match, aux)
 #endif
 
 	ia->ia_msize = 0;
-	ia->ia_iosize = 0x20;
+	ia->ia_iosize = AIC_NPORTS;
 	return 1;
 }
 
-/* Do the real search-for-device.
- * Prerequisite: sc->sc_iobase should be set to the proper value
+/*
+ * Do the real search-for-device.
  */
 int
-aic_find(sc)
+aic_find(sc, ia)
 	struct aic_softc *sc;
+	struct isa_attach_args *ia;
 {
-	int iobase = sc->sc_iobase;
+	bus_space_tag_t iot = ia->ia_iot;
+	bus_space_handle_t ioh;
 	char chip_id[sizeof(IDSTRING)];	/* For chips that support it */
 	int i;
 
+	if (bus_space_map(iot, ia->ia_iobase, AIC_NPORTS, 0, &ioh))
+		return (0);
+
 	/* Remove aic6360 from possible powerdown mode */
-	outb(iobase + DMACNTRL0, 0);
+	bus_space_write_1(iot, ioh, DMACNTRL0, 0);
 
 	/* Thanks to mark@aggregate.com for the new method for detecting
 	 * whether the chip is present or not.  Bonus: may also work for
 	 * the AIC-6260!
  	 */
-	AIC_TRACE(("aic: probing for aic-chip at port 0x%x\n",
-	    sc->sc_iobase));
+	AIC_TRACE(("aic: probing for aic-chip at port 0x%x\n", ia->ia_iobase));
  	/*
  	 * Linux also init's the stack to 1-16 and then clears it,
      	 *  6260's don't appear to have an ID reg - mpg
  	 */
 	/* Push the sequence 0,1,..,15 on the stack */
 #define STSIZE 16
-	outb(iobase + DMACNTRL1, 0);	/* Reset stack pointer */
+	bus_space_write_1(iot, ioh, DMACNTRL1, 0); /* Reset stack pointer */
 	for (i = 0; i < STSIZE; i++)
-		outb(iobase + STACK, i);
+		bus_space_write_1(iot, ioh, STACK, i);
 
 	/* See if we can pull out the same sequence */
-	outb(iobase + DMACNTRL1, 0);
- 	for (i = 0; i < STSIZE && inb(iobase + STACK) == i; i++)
+	bus_space_write_1(iot, ioh, DMACNTRL1, 0);
+ 	for (i = 0; i < STSIZE && bus_space_read_1(iot, ioh, STACK) == i; i++)
 		;
 	if (i != STSIZE) {
 		AIC_START(("STACK futzed at %d.\n", i));
+		bus_space_unmap(iot, ioh, AIC_NPORTS);
 		return ENXIO;
 	}
 
@@ -729,10 +746,10 @@ aic_find(sc)
 	 * now only used for informational purposes.
 	 */
 	bzero(chip_id, sizeof(chip_id));
-	insb(iobase + ID, chip_id, sizeof(IDSTRING)-1);
-	AIC_START(("AIC found at 0x%x ", sc->sc_iobase));
-	AIC_START(("ID: %s ",chip_id));
-	AIC_START(("chip revision %d\n",(int)inb(iobase + REV)));
+	bus_space_read_multi_1(iot, ioh, ID, chip_id, sizeof(IDSTRING) - 1);
+	AIC_START(("AIC found at 0x%x ", ia->ia_iobase));
+	AIC_START(("ID: %s ", chip_id));
+	AIC_START(("chip revision %d\n",(int)bus_space_read_1(iot, ioh, REV)));
 
 	sc->sc_initiator = 7;
 	sc->sc_freq = 20;	/* XXXX Assume 20 MHz. */
@@ -749,6 +766,7 @@ aic_find(sc)
 	sc->sc_minsync = (2 * 250) / sc->sc_freq;
 	sc->sc_maxsync = (9 * 250) / sc->sc_freq;
 
+	bus_space_unmap(iot, ioh, AIC_NPORTS);
 	return 0;
 }
 
@@ -761,10 +779,17 @@ aicattach(parent, self, aux)
 	void *aux;
 {
 	struct isa_attach_args *ia = aux;
+	bus_space_tag_t iot = ia->ia_iot;
+	bus_space_handle_t ioh;
 	struct aic_softc *sc = (void *)self;
 
 	AIC_TRACE(("aicattach  "));
 	sc->sc_state = AIC_INIT;
+
+	bus_space_map(iot, ia->ia_iobase, AIC_NPORTS, 0, &ioh);
+	sc->sc_iot = iot;
+	sc->sc_ioh = ioh;
+
 	aic_init(sc);	/* Init chip and driver */
 
 	/*
@@ -790,40 +815,53 @@ aicattach(parent, self, aux)
 
 /* Initialize AIC6360 chip itself
  * The following conditions should hold:
- * aicprobe should have succeeded, i.e. the iobase address in aic_softc must
+ * aicprobe should have succeeded, i.e. the ioh handle in aic_softc must
  * be valid.
  */
 void
 aic_reset(sc)
 	struct aic_softc *sc;
 {
-	int iobase = sc->sc_iobase;
+	bus_space_handle_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
 
-	outb(iobase + SCSITEST, 0);	/* Doc. recommends to clear these two */
-	outb(iobase + TEST, 0);		/* registers before operations commence */
+	/*
+	 * Doc. recommends to clear these two registers before operations
+	 * commence
+	 */
+	bus_space_write_1(iot, ioh, SCSITEST, 0);
+	bus_space_write_1(iot, ioh, TEST, 0);
 
 	/* Reset SCSI-FIFO and abort any transfers */
-	outb(iobase + SXFRCTL0, CHEN | CLRCH | CLRSTCNT);
+	bus_space_write_1(iot, ioh, + SXFRCTL0, CHEN | CLRCH | CLRSTCNT);
 
 	/* Reset DMA-FIFO */
-	outb(iobase + DMACNTRL0, RSTFIFO);
-	outb(iobase + DMACNTRL1, 0);
+	bus_space_write_1(iot, ioh, DMACNTRL0, RSTFIFO);
+	bus_space_write_1(iot, ioh, DMACNTRL1, 0);
 
-	outb(iobase + SCSISEQ, 0);	/* Disable all selection features */
-	outb(iobase + SXFRCTL1, 0);
+	/* Disable all selection features */
+	bus_space_write_1(iot, ioh, SCSISEQ, 0);
+	bus_space_write_1(iot, ioh, SXFRCTL1, 0);
 
-	outb(iobase + SIMODE0, 0x00);	/* Disable some interrupts */
-	outb(iobase + CLRSINT0, 0x7f);	/* Clear a slew of interrupts */
+	/* Disable some interrupts */
+	bus_space_write_1(iot, ioh, SIMODE0, 0x00);
+	/* Clear a slew of interrupts */
+	bus_space_write_1(iot, ioh, CLRSINT0, 0x7f);
 
-	outb(iobase + SIMODE1, 0x00);	/* Disable some more interrupts */
-	outb(iobase + CLRSINT1, 0xef);	/* Clear another slew of interrupts */
+	/* Disable some more interrupts */
+	bus_space_write_1(iot, ioh, SIMODE1, 0x00);
+	/* Clear another slew of interrupts */
+	bus_space_write_1(iot, ioh, CLRSINT1, 0xef);
 
-	outb(iobase + SCSIRATE, 0);	/* Disable synchronous transfers */
+	/* Disable synchronous transfers */
+	bus_space_write_1(iot, ioh, SCSIRATE, 0);
 
-	outb(iobase + CLRSERR, 0x07);	/* Haven't seen ant errors (yet) */
+	/* Haven't seen ant errors (yet) */
+	bus_space_write_1(iot, ioh, CLRSERR, 0x07);
 
-	outb(iobase + SCSIID, sc->sc_initiator << OID_S); /* Set our SCSI-ID */
-	outb(iobase + BRSTCNTRL, EISA_BRST_TIM);
+	/* Set our SCSI-ID */
+	bus_space_write_1(iot, ioh, SCSIID, sc->sc_initiator << OID_S);
+	bus_space_write_1(iot, ioh, BRSTCNTRL, EISA_BRST_TIM);
 }
 
 /* Pull the SCSI RST line for 500 us */
@@ -831,11 +869,12 @@ void
 aic_scsi_reset(sc)
 	struct aic_softc *sc;
 {
-	int iobase = sc->sc_iobase;
+	bus_space_handle_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
 
-	outb(iobase + SCSISEQ, SCSIRSTO);
+	bus_space_write_1(iot, ioh, SCSISEQ, SCSIRSTO);
 	delay(500);
-	outb(iobase + SCSISEQ, 0);
+	bus_space_write_1(iot, ioh, SCSISEQ, 0);
 	delay(50);
 }
 
@@ -846,7 +885,8 @@ void
 aic_init(sc)
 	struct aic_softc *sc;
 {
-	int iobase = sc->sc_iobase;
+	bus_space_handle_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
 	struct aic_acb *acb;
 	int r;
 
@@ -903,7 +943,7 @@ aic_init(sc)
 	}
 
 	sc->sc_state = AIC_IDLE;
-	outb(iobase + DMACNTRL0, INTEN);
+	bus_space_write_1(iot, ioh, DMACNTRL0, INTEN);
 }
 
 void
@@ -1055,7 +1095,8 @@ aic_poll(sc, xs, count)
 	struct scsi_xfer *xs;
 	int count;
 {
-	int iobase = sc->sc_iobase;
+	bus_space_handle_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
 
 	AIC_TRACE(("aic_poll  "));
 	while (count) {
@@ -1063,7 +1104,7 @@ aic_poll(sc, xs, count)
 		 * If we had interrupts enabled, would we
 		 * have got an interrupt?
 		 */
-		if ((inb(iobase + DMASTAT) & INTSTAT) != 0)
+		if ((bus_space_read_1(iot, ioh, DMASTAT) & INTSTAT) != 0)
 			aicintr(sc);
 		if ((xs->flags & ITSDONE) != 0)
 			return 0;
@@ -1082,10 +1123,11 @@ aic_sched_msgout(sc, m)
 	struct aic_softc *sc;
 	u_char m;
 {
-	int iobase = sc->sc_iobase;
+	bus_space_handle_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
 
 	if (sc->sc_msgpriq == 0)
-		outb(iobase + SCSISIG, sc->sc_phase | ATNO);
+		bus_space_write_1(iot, ioh, SCSISIG, sc->sc_phase | ATNO);
 	sc->sc_msgpriq |= m;
 }
 
@@ -1098,13 +1140,14 @@ aic_setsync(sc, ti)
 	struct aic_tinfo *ti;
 {
 #if AIC_USE_SYNCHRONOUS
-	int iobase = sc->sc_iobase;
+	bus_space_handle_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
 
 	if (ti->offset != 0)
-		outb(iobase + SCSIRATE,
+		bus_space_write_1(iot, ioh, SCSIRATE,
 		    ((ti->period * sc->sc_freq) / 250 - 2) << 4 | ti->offset);
 	else
-		outb(iobase + SCSIRATE, 0);
+		bus_space_write_1(iot, ioh, SCSIRATE, 0);
 #endif
 }
 
@@ -1117,19 +1160,21 @@ aic_select(sc, acb)
 	struct aic_softc *sc;
 	struct aic_acb *acb;
 {
+	bus_space_handle_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
 	struct scsi_link *sc_link = acb->xs->sc_link;
 	int target = sc_link->target;
 	struct aic_tinfo *ti = &sc->sc_tinfo[target];
-	int iobase = sc->sc_iobase;
 
-	outb(iobase + SCSIID, sc->sc_initiator << OID_S | target);
+	bus_space_write_1(iot, ioh, SCSIID,
+	    sc->sc_initiator << OID_S | target);
 	aic_setsync(sc, ti);
-	outb(iobase + SXFRCTL1, STIMO_256ms | ENSTIMER);
+	bus_space_write_1(iot, ioh, SXFRCTL1, STIMO_256ms | ENSTIMER);
 
 	/* Always enable reselections. */
-	outb(iobase + SIMODE0, ENSELDI | ENSELDO);
-	outb(iobase + SIMODE1, ENSCSIRST | ENSELTIMO);
-	outb(iobase + SCSISEQ, ENRESELI | ENSELO | ENAUTOATNO);
+	bus_space_write_1(iot, ioh, SIMODE0, ENSELDI | ENSELDO);
+	bus_space_write_1(iot, ioh, SIMODE1, ENSCSIRST | ENSELTIMO);
+	bus_space_write_1(iot, ioh, SCSISEQ, ENRESELI | ENSELO | ENAUTOATNO);
 
 	sc->sc_state = AIC_SELECTING;
 }
@@ -1151,8 +1196,9 @@ aic_reselect(sc, message)
 	 */
 	selid = sc->sc_selid & ~(1 << sc->sc_initiator);
 	if (selid & (selid - 1)) {
-		printf("%s: reselect with invalid selid %02x; sending DEVICE RESET\n",
+		printf("%s: reselect with invalid selid %02x; ",
 		    sc->sc_dev.dv_xname, selid);
+		printf("sending DEVICE RESET\n");
 		AIC_BREAK();
 		goto reset;
 	}
@@ -1171,8 +1217,9 @@ aic_reselect(sc, message)
 			break;
 	}
 	if (acb == NULL) {
-		printf("%s: reselect from target %d lun %d with no nexus; sending ABORT\n",
+		printf("%s: reselect from target %d lun %d with no nexus; ",
 		    sc->sc_dev.dv_xname, target, lun);
+		printf("sending ABORT\n");
 		AIC_BREAK();
 		goto abort;
 	}
@@ -1217,16 +1264,18 @@ void
 aic_sched(sc)
 	register struct aic_softc *sc;
 {
+	bus_space_handle_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
 	struct aic_acb *acb;
 	struct scsi_link *sc_link;
 	struct aic_tinfo *ti;
-	int iobase = sc->sc_iobase;
 
 	/*
 	 * Find first acb in ready queue that is for a target/lunit pair that
 	 * is not busy.
 	 */
-	outb(iobase + CLRSINT1, CLRSELTIMO | CLRBUSFREE | CLRSCSIPERR);
+	bus_space_write_1(iot, ioh, CLRSINT1,
+	    CLRSELTIMO | CLRBUSFREE | CLRSCSIPERR);
 	for (acb = sc->ready_list.tqh_first; acb != NULL;
 	    acb = acb->chain.tqe_next) {
 		sc_link = acb->xs->sc_link;
@@ -1244,9 +1293,9 @@ aic_sched(sc)
 	}
 	AIC_MISC(("idle  "));
 	/* Nothing to start; just enable reselections and wait. */
-	outb(iobase + SIMODE0, ENSELDI);
-	outb(iobase + SIMODE1, ENSCSIRST);
-	outb(iobase + SCSISEQ, ENRESELI);
+	bus_space_write_1(iot, ioh, SIMODE0, ENSELDI);
+	bus_space_write_1(iot, ioh, SIMODE1, ENSCSIRST);
+	bus_space_write_1(iot, ioh, SCSISEQ, ENRESELI);
 }
 
 void
@@ -1380,7 +1429,8 @@ void
 aic_msgin(sc)
 	register struct aic_softc *sc;
 {
-	int iobase = sc->sc_iobase;
+	bus_space_handle_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
 	u_char sstat1;
 	int n;
 
@@ -1407,7 +1457,7 @@ nextbyte:
 	 */
 	for (;;) {
 		for (;;) {
-			sstat1 = inb(iobase + SSTAT1);
+			sstat1 = bus_space_read_1(iot, ioh, SSTAT1);
 			if ((sstat1 & (REQINIT | PHASECHG | BUSFREE)) != 0)
 				break;
 			/* Wait for REQINIT.  XXX Need timeout. */
@@ -1430,11 +1480,12 @@ nextbyte:
 		/* Gather incoming message bytes if needed. */
 		if ((sc->sc_flags & AIC_DROP_MSGIN) == 0) {
 			if (n >= AIC_MAX_MSG_LEN) {
-				(void) inb(iobase + SCSIDAT);
+				(void) bus_space_read_1(iot, ioh, SCSIDAT);
 				sc->sc_flags |= AIC_DROP_MSGIN;
 				aic_sched_msgout(sc, SEND_REJECT);
 			} else {
-				*sc->sc_imp++ = inb(iobase + SCSIDAT);
+				*sc->sc_imp++ = bus_space_read_1(iot, ioh,
+				    SCSIDAT);
 				n++;
 				/*
 				 * This testing is suboptimal, but most
@@ -1451,18 +1502,18 @@ nextbyte:
 					break;
 			}
 		} else
-			(void) inb(iobase + SCSIDAT);
+			(void) bus_space_read_1(iot, ioh, SCSIDAT);
 
 		/*
 		 * If we reach this spot we're either:
 		 * a) in the middle of a multi-byte message, or
 		 * b) dropping bytes.
 		 */
-		outb(iobase + SXFRCTL0, CHEN | SPIOEN);
+		bus_space_write_1(iot, ioh, SXFRCTL0, CHEN | SPIOEN);
 		/* Ack the last byte read. */
-		(void) inb(iobase + SCSIDAT);
-		outb(iobase + SXFRCTL0, CHEN);
-		while ((inb(iobase + SCSISIG) & ACKI) != 0)
+		(void) bus_space_read_1(iot, ioh, SCSIDAT);
+		bus_space_write_1(iot, ioh, SXFRCTL0, CHEN);
+		while ((bus_space_read_1(iot, ioh, SCSISIG) & ACKI) != 0)
 			;
 	}
 
@@ -1558,14 +1609,16 @@ nextbyte:
 				ti->flags &= ~DO_SYNC;
 				if (ti->offset == 0) {
 				} else if (ti->period < sc->sc_minsync ||
-					   ti->period > sc->sc_maxsync ||
-					   ti->offset > 8) {
+				    ti->period > sc->sc_maxsync ||
+				    ti->offset > 8) {
 					ti->period = ti->offset = 0;
 					aic_sched_msgout(sc, SEND_SDTR);
 				} else {
 					sc_print_addr(acb->xs->sc_link);
-					printf("sync, offset %d, period %dnsec\n",
-					    ti->offset, ti->period * 4);
+					printf("sync, offset %d, ",
+					    ti->offset);
+					printf("period %dnsec\n",
+					    ti->period * 4);
 				}
 				aic_setsync(sc, ti);
 				break;
@@ -1590,8 +1643,9 @@ nextbyte:
 #endif
 
 			default:
-				printf("%s: unrecognized MESSAGE EXTENDED; sending REJECT\n",
+				printf("%s: unrecognized MESSAGE EXTENDED; ",
 				    sc->sc_dev.dv_xname);
+				printf("sending REJECT\n");
 				AIC_BREAK();
 				goto reject;
 			}
@@ -1609,8 +1663,9 @@ nextbyte:
 
 	case AIC_RESELECTED:
 		if (!MSG_ISIDENTIFY(sc->sc_imess[0])) {
-			printf("%s: reselect without IDENTIFY; sending DEVICE RESET\n",
+			printf("%s: reselect without IDENTIFY; ",
 			    sc->sc_dev.dv_xname);
+			printf("sending DEVICE RESET\n");
 			AIC_BREAK();
 			goto reset;
 		}
@@ -1633,11 +1688,11 @@ nextbyte:
 #endif
 	}
 
-	outb(iobase + SXFRCTL0, CHEN | SPIOEN);
+	bus_space_write_1(iot, ioh, SXFRCTL0, CHEN | SPIOEN);
 	/* Ack the last message byte. */
-	(void) inb(iobase + SCSIDAT);
-	outb(iobase + SXFRCTL0, CHEN);
-	while ((inb(iobase + SCSISIG) & ACKI) != 0)
+	(void) bus_space_read_1(iot, ioh, SCSIDAT);
+	bus_space_write_1(iot, ioh, SXFRCTL0, CHEN);
+	while ((bus_space_read_1(iot, ioh, SCSISIG) & ACKI) != 0)
 		;
 
 	/* Go get the next message, if any. */
@@ -1654,7 +1709,8 @@ void
 aic_msgout(sc)
 	register struct aic_softc *sc;
 {
-	int iobase = sc->sc_iobase;
+	bus_space_handle_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
 #if AIC_USE_SYNCHRONOUS
 	struct aic_tinfo *ti;
 #endif
@@ -1664,9 +1720,9 @@ aic_msgout(sc)
 	AIC_TRACE(("aic_msgout  "));
 
 	/* Reset the FIFO. */
-	outb(iobase + DMACNTRL0, RSTFIFO);
+	bus_space_write_1(iot, ioh, DMACNTRL0, RSTFIFO);
 	/* Enable REQ/ACK protocol. */
-	outb(iobase + SXFRCTL0, CHEN | SPIOEN);
+	bus_space_write_1(iot, ioh, SXFRCTL0, CHEN | SPIOEN);
 
 	if (sc->sc_prevphase == PH_MSGOUT) {
 		if (sc->sc_omp == sc->sc_omess) {
@@ -1687,7 +1743,7 @@ aic_msgout(sc)
 			 * Set ATN.  If we're just sending a trivial 1-byte
 			 * message, we'll clear ATN later on anyway.
 			 */
-			outb(iobase + SCSISIG, PH_MSGOUT | ATNO);
+			bus_space_write_1(iot, ioh, SCSISIG, PH_MSGOUT | ATNO);
 		} else {
 			/* This is a continuation of the previous message. */
 			n = sc->sc_omp - sc->sc_omess;
@@ -1780,7 +1836,7 @@ nextbyte:
 	/* Send message bytes. */
 	for (;;) {
 		for (;;) {
-			sstat1 = inb(iobase + SSTAT1);
+			sstat1 = bus_space_read_1(iot, ioh, SSTAT1);
 			if ((sstat1 & (REQINIT | PHASECHG | BUSFREE)) != 0)
 				break;
 			/* Wait for REQINIT.  XXX Need timeout. */
@@ -1797,20 +1853,20 @@ nextbyte:
 			 * case we reassert ATN anyway).
 			 */
 			if (sc->sc_msgpriq == 0)
-				outb(iobase + CLRSINT1, CLRATNO);
+				bus_space_write_1(iot, ioh, CLRSINT1, CLRATNO);
 			goto out;
 		}
 
 		/* Clear ATN before last byte if this is the last message. */
 		if (n == 1 && sc->sc_msgpriq == 0)
-			outb(iobase + CLRSINT1, CLRATNO);
+			bus_space_write_1(iot, ioh, CLRSINT1, CLRATNO);
 		/* Send message byte. */
-		outb(iobase + SCSIDAT, *--sc->sc_omp);
+		bus_space_write_1(iot, ioh, SCSIDAT, *--sc->sc_omp);
 		--n;
 		/* Keep track of the last message we've sent any bytes of. */
 		sc->sc_lastmsg = sc->sc_currmsg;
 		/* Wait for ACK to be negated.  XXX Need timeout. */
-		while ((inb(iobase + SCSISIG) & ACKI) != 0)
+		while ((bus_space_read_1(iot, ioh, SCSISIG) & ACKI) != 0)
 			;
 
 		if (n == 0)
@@ -1833,7 +1889,7 @@ nextbyte:
 
 out:
 	/* Disable REQ/ACK protocol. */
-	outb(iobase + SXFRCTL0, CHEN);
+	bus_space_write_1(iot, ioh, SXFRCTL0, CHEN);
 }
 
 /* aic_dataout_pio: perform a data transfer using the FIFO datapath in the aic6360
@@ -1848,19 +1904,20 @@ aic_dataout_pio(sc, p, n)
 	u_char *p;
 	int n;
 {
-	int iobase = sc->sc_iobase;
+	bus_space_handle_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
 	register u_char dmastat = 0;
 	int out = 0;
 #define DOUTAMOUNT 128		/* Full FIFO */
 
 	/* Clear host FIFO and counter. */
-	outb(iobase + DMACNTRL0, RSTFIFO | WRITE);
+	bus_space_write_1(iot, ioh, DMACNTRL0, RSTFIFO | WRITE);
 	/* Enable FIFOs. */
-	outb(iobase + SXFRCTL0, SCSIEN | DMAEN | CHEN);
-	outb(iobase + DMACNTRL0, ENDMA | DWORDPIO | WRITE);
+	bus_space_write_1(iot, ioh, SXFRCTL0, SCSIEN | DMAEN | CHEN);
+	bus_space_write_1(iot, ioh, DMACNTRL0, ENDMA | DWORDPIO | WRITE);
 
 	/* Turn off ENREQINIT for now. */
-	outb(iobase + SIMODE1,
+	bus_space_write_1(iot, ioh, SIMODE1,
 	    ENSCSIRST | ENSCSIPERR | ENBUSFREE | ENPHASECHG);
 
 	/* I have tried to make the main loop as tight as possible.  This
@@ -1869,7 +1926,7 @@ aic_dataout_pio(sc, p, n)
 	 */
 	while (n > 0) {
 		for (;;) {
-			dmastat = inb(iobase + DMASTAT);
+			dmastat = bus_space_read_1(iot, ioh, DMASTAT);
 			if ((dmastat & (DFIFOEMP | INTSTAT)) != 0)
 				break;
 		}
@@ -1882,9 +1939,11 @@ aic_dataout_pio(sc, p, n)
 			out += DOUTAMOUNT;
 
 #if AIC_USE_DWORDS
-			outsl(iobase + DMADATALONG, p, DOUTAMOUNT >> 2);
+			bus_space_write_multi_4(iot, ioh, DMADATALONG, p,
+			    DOUTAMOUNT >> 2);
 #else
-			outsw(iobase + DMADATA, p, DOUTAMOUNT >> 1);
+			bus_space_write_multi_2(iot, ioh, DMADATA, p,
+			    DOUTAMOUNT >> 1);
 #endif
 
 			p += DOUTAMOUNT;
@@ -1899,51 +1958,57 @@ aic_dataout_pio(sc, p, n)
 
 #if AIC_USE_DWORDS
 			if (xfer >= 12) {
-				outsl(iobase + DMADATALONG, p, xfer >> 2);
+				bus_space_write_multi_4(iot, ioh, DMADATALONG,
+				    p, xfer >> 2);
 				p += xfer & ~3;
 				xfer &= 3;
 			}
 #else
 			if (xfer >= 8) {
-				outsw(iobase + DMADATA, p, xfer >> 1);
+				bus_space_write_multi_2(iot, ioh,  DMADATA, p,
+				    xfer >> 1);
 				p += xfer & ~1;
 				xfer &= 1;
 			}
 #endif
 
 			if (xfer > 0) {
-				outb(iobase + DMACNTRL0, ENDMA | B8MODE | WRITE);
-				outsb(iobase + DMADATA, p, xfer);
+				bus_space_write_1(iot, ioh, DMACNTRL0,
+				    ENDMA | B8MODE | WRITE);
+				bus_space_write_multi_1(iot, ioh,  DMADATA, p,
+				    xfer);
 				p += xfer;
-				outb(iobase + DMACNTRL0, ENDMA | DWORDPIO | WRITE);
+				bus_space_write_1(iot, ioh, DMACNTRL0,
+				    ENDMA | DWORDPIO | WRITE);
 			}
 		}
 	}
 
 	if (out == 0) {
-		outb(iobase + SXFRCTL1, BITBUCKET);
+		bus_space_write_1(iot, ioh, SXFRCTL1, BITBUCKET);
 		for (;;) {
-			if ((inb(iobase + DMASTAT) & INTSTAT) != 0)
+			if ((bus_space_read_1(iot, ioh, DMASTAT) & INTSTAT) !=
+			    0)
 				break;
 		}
-		outb(iobase + SXFRCTL1, 0);
+		bus_space_write_1(iot, ioh, SXFRCTL1, 0);
 		AIC_MISC(("extra data  "));
 	} else {
 		/* See the bytes off chip */
 		for (;;) {
-			dmastat = inb(iobase + DMASTAT);
+			dmastat = bus_space_read_1(iot, ioh, DMASTAT);
 			if ((dmastat & INTSTAT) != 0)
 				goto phasechange;
 			if ((dmastat & DFIFOEMP) != 0 &&
-			    (inb(iobase + SSTAT2) & SEMPTY) != 0)
+			    (bus_space_read_1(iot, ioh, SSTAT2) & SEMPTY) != 0)
 				break;
 		}
 	}
 
 phasechange:
 	/* Stop the FIFO data path. */
-	outb(iobase + SXFRCTL0, CHEN);
-	while ((inb(iobase + SXFRCTL0) & SCSIEN) != 0)
+	bus_space_write_1(iot, ioh, SXFRCTL0, CHEN);
+	while ((bus_space_read_1(iot, ioh, SXFRCTL0) & SCSIEN) != 0)
 		;
 
 	if ((dmastat & INTSTAT) != 0) {
@@ -1951,16 +2016,18 @@ phasechange:
 		int amount;
 
 		/* Stop transfers, do some accounting */
-		amount = inb(iobase + FIFOSTAT) + (inb(iobase + SSTAT2) & 15);
+		amount = bus_space_read_1(iot, ioh, FIFOSTAT) +
+		    (bus_space_read_1(iot, ioh, SSTAT2) & 15);
 		if (amount > 0) {
 			out -= amount;
-			outb(iobase + SXFRCTL0, CHEN | CLRSTCNT | CLRCH);
+			bus_space_write_1(iot, ioh, SXFRCTL0,
+			    CHEN | CLRSTCNT | CLRCH);
 			AIC_MISC(("+%d ", amount));
 		}
 	}
 
 	/* Turn on ENREQINIT again. */
-	outb(iobase + SIMODE1,
+	bus_space_write_1(iot, ioh, SIMODE1,
 	    ENSCSIRST | ENSCSIPERR | ENBUSFREE | ENREQINIT | ENPHASECHG);
 
 	return out;
@@ -1979,19 +2046,20 @@ aic_datain_pio(sc, p, n)
 	u_char *p;
 	int n;
 {
-	int iobase = sc->sc_iobase;
+	bus_space_handle_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
 	register u_char dmastat;
 	int in = 0;
 #define DINAMOUNT 128		/* Full FIFO */
 
 	/* Clear host FIFO and counter. */
-	outb(iobase + DMACNTRL0, RSTFIFO);
+	bus_space_write_1(iot, ioh, DMACNTRL0, RSTFIFO);
 	/* Enable FIFOs. */
-	outb(iobase + SXFRCTL0, SCSIEN | DMAEN | CHEN);
-	outb(iobase + DMACNTRL0, ENDMA | DWORDPIO);
+	bus_space_write_1(iot, ioh, SXFRCTL0, SCSIEN | DMAEN | CHEN);
+	bus_space_write_1(iot, ioh, DMACNTRL0, ENDMA | DWORDPIO);
 
 	/* Turn off ENREQINIT for now. */
-	outb(iobase + SIMODE1,
+	bus_space_write_1(iot, ioh, SIMODE1,
 	    ENSCSIRST | ENSCSIPERR | ENBUSFREE | ENPHASECHG);
 
 	/* We leave this loop if one or more of the following is true:
@@ -2001,7 +2069,7 @@ aic_datain_pio(sc, p, n)
 	while (n > 0) {
 		/* Wait for fifo half full or phase mismatch */
 		for (;;) {
-			dmastat = inb(iobase + DMASTAT);
+			dmastat = bus_space_read_1(iot, ioh, DMASTAT);
 			if ((dmastat & (DFIFOFULL | INTSTAT)) != 0)
 				break;
 		}
@@ -2011,16 +2079,18 @@ aic_datain_pio(sc, p, n)
 			in += DINAMOUNT;
 
 #if AIC_USE_DWORDS
-			insl(iobase + DMADATALONG, p, DINAMOUNT >> 2);
+			bus_space_read_multi_4(iot, ioh, DMADATALONG, p,
+			    DINAMOUNT >> 2);
 #else
-			insw(iobase + DMADATA, p, DINAMOUNT >> 1);
+			bus_space_read_multi_2(iot, ioh, DMADATA, p,
+			    DINAMOUNT >> 1);
 #endif
 
 			p += DINAMOUNT;
 		} else {
 			register int xfer;
 
-			xfer = min(inb(iobase + FIFOSTAT), n);
+			xfer = min(bus_space_read_1(iot, ioh, FIFOSTAT), n);
 			AIC_MISC((">%d ", xfer));
 
 			n -= xfer;
@@ -2028,23 +2098,28 @@ aic_datain_pio(sc, p, n)
 
 #if AIC_USE_DWORDS
 			if (xfer >= 12) {
-				insl(iobase + DMADATALONG, p, xfer >> 2);
+				bus_space_read_multi_4(iot, ioh, DMADATALONG,
+				    p, xfer >> 2);
 				p += xfer & ~3;
 				xfer &= 3;
 			}
 #else
 			if (xfer >= 8) {
-				insw(iobase + DMADATA, p, xfer >> 1);
+				bus_space_read_multi_2(iot, ioh, DMADATA, p,
+				    xfer >> 1);
 				p += xfer & ~1;
 				xfer &= 1;
 			}
 #endif
 
 			if (xfer > 0) {
-				outb(iobase + DMACNTRL0, ENDMA | B8MODE);
-				insb(iobase + DMADATA, p, xfer);
+				bus_space_write_1(iot, ioh, DMACNTRL0,
+				    ENDMA | B8MODE);
+				bus_space_read_multi_1(iot, ioh, DMADATA, p,
+				    xfer);
 				p += xfer;
-				outb(iobase + DMACNTRL0, ENDMA | DWORDPIO);
+				bus_space_write_1(iot, ioh, DMACNTRL0,
+				    ENDMA | DWORDPIO);
 			}
 		}
 
@@ -2059,23 +2134,24 @@ aic_datain_pio(sc, p, n)
 	 * FIFO is not empty, waste some bytes....
 	 */
 	if (in == 0) {
-		outb(iobase + SXFRCTL1, BITBUCKET);
+		bus_space_write_1(iot, ioh, SXFRCTL1, BITBUCKET);
 		for (;;) {
-			if ((inb(iobase + DMASTAT) & INTSTAT) != 0)
+			if ((bus_space_read_1(iot, ioh, DMASTAT) & INTSTAT) !=
+			    0)
 				break;
 		}
-		outb(iobase + SXFRCTL1, 0);
+		bus_space_write_1(iot, ioh, SXFRCTL1, 0);
 		AIC_MISC(("extra data  "));
 	}
 
 phasechange:
 	/* Stop the FIFO data path. */
-	outb(iobase + SXFRCTL0, CHEN);
-	while ((inb(iobase + SXFRCTL0) & SCSIEN) != 0)
+	bus_space_write_1(iot, ioh, SXFRCTL0, CHEN);
+	while ((bus_space_read_1(iot, ioh, SXFRCTL0) & SCSIEN) != 0)
 		;
 
 	/* Turn on ENREQINIT again. */
-	outb(iobase + SIMODE1,
+	bus_space_write_1(iot, ioh, SIMODE1,
 	    ENSCSIRST | ENSCSIPERR | ENBUSFREE | ENREQINIT | ENPHASECHG);
 
 	return in;
@@ -2091,7 +2167,8 @@ aicintr(arg)
 	void *arg;
 {
 	register struct aic_softc *sc = arg;
-	int iobase = sc->sc_iobase;
+	bus_space_handle_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
 	u_char sstat0, sstat1;
 	register struct aic_acb *acb;
 	register struct scsi_link *sc_link;
@@ -2102,7 +2179,7 @@ aicintr(arg)
 	 * Clear INTEN.  We enable it again before returning.  This makes the
 	 * interrupt esssentially level-triggered.
 	 */
-	outb(iobase + DMACNTRL0, 0);
+	bus_space_write_1(iot, ioh, DMACNTRL0, 0);
 
 	AIC_TRACE(("aicintr  "));
 
@@ -2110,7 +2187,7 @@ loop:
 	/*
 	 * First check for abnormal conditions, such as reset.
 	 */
-	sstat1 = inb(iobase + SSTAT1);
+	sstat1 = bus_space_read_1(iot, ioh, SSTAT1);
 	AIC_MISC(("sstat1:0x%02x ", sstat1));
 
 	if ((sstat1 & SCSIRSTI) != 0) {
@@ -2123,7 +2200,7 @@ loop:
 	 */
 	if ((sstat1 & SCSIPERR) != 0) {
 		printf("%s: SCSI bus parity error\n", sc->sc_dev.dv_xname);
-		outb(iobase + CLRSINT1, CLRSCSIPERR);
+		bus_space_write_1(iot, ioh, CLRSINT1, CLRSCSIPERR);
 		if (sc->sc_prevphase == PH_MSGIN) {
 			sc->sc_flags |= AIC_DROP_MSGIN;
 			aic_sched_msgout(sc, SEND_PARITY_ERROR);
@@ -2144,7 +2221,7 @@ loop:
 	switch (sc->sc_state) {
 	case AIC_IDLE:
 	case AIC_SELECTING:
-		sstat0 = inb(iobase + SSTAT0);
+		sstat0 = bus_space_read_1(iot, ioh, SSTAT0);
 		AIC_MISC(("sstat0:0x%02x ", sstat0));
 
 		if ((sstat0 & TARGET) != 0) {
@@ -2153,7 +2230,7 @@ loop:
 			 */
 			printf("%s: target mode selected; going to BUS FREE\n",
 			    sc->sc_dev.dv_xname);
-			outb(iobase + SCSISIG, 0);
+			bus_space_write_1(iot, ioh, SCSISIG, 0);
 
 			goto sched;
 		} else if ((sstat0 & SELDI) != 0) {
@@ -2172,7 +2249,7 @@ loop:
 			}
 
 			/* Save reselection ID. */
-			sc->sc_selid = inb(iobase + SELID);
+			sc->sc_selid = bus_space_read_1(iot, ioh, SELID);
 
 			sc->sc_state = AIC_RESELECTED;
 		} else if ((sstat0 & SELDO) != 0) {
@@ -2184,8 +2261,9 @@ loop:
 			 * c) Mark device as busy.
 			 */
 			if (sc->sc_state != AIC_SELECTING) {
-				printf("%s: selection out while idle; resetting\n",
+				printf("%s: selection out while idle; ",
 				    sc->sc_dev.dv_xname);
+				printf("resetting\n");
 				AIC_BREAK();
 				goto reset;
 			}
@@ -2221,32 +2299,35 @@ loop:
 
 			/* On our first connection, schedule a timeout. */
 			if ((acb->xs->flags & SCSI_POLL) == 0)
-				timeout(aic_timeout, acb, (acb->timeout * hz) / 1000);
+				timeout(aic_timeout, acb,
+				    (acb->timeout * hz) / 1000);
 
 			sc->sc_state = AIC_CONNECTED;
 		} else if ((sstat1 & SELTO) != 0) {
 			AIC_MISC(("selection timeout  "));
 
 			if (sc->sc_state != AIC_SELECTING) {
-				printf("%s: selection timeout while idle; resetting\n",
+				printf("%s: selection timeout while idle; ",
 				    sc->sc_dev.dv_xname);
+				printf("resetting\n");
 				AIC_BREAK();
 				goto reset;
 			}
 			AIC_ASSERT(sc->sc_nexus != NULL);
 			acb = sc->sc_nexus;
 
-			outb(iobase + SXFRCTL1, 0);
-			outb(iobase + SCSISEQ, ENRESELI);
-			outb(iobase + CLRSINT1, CLRSELTIMO);
+			bus_space_write_1(iot, ioh, SXFRCTL1, 0);
+			bus_space_write_1(iot, ioh, SCSISEQ, ENRESELI);
+			bus_space_write_1(iot, ioh, CLRSINT1, CLRSELTIMO);
 			delay(250);
 
 			acb->xs->error = XS_SELTIMEOUT;
 			goto finish;
 		} else {
 			if (sc->sc_state != AIC_IDLE) {
-				printf("%s: BUS FREE while not idle; state=%d\n",
-				    sc->sc_dev.dv_xname, sc->sc_state);
+				printf("%s: BUS FREE while not idle; ",
+				    sc->sc_dev.dv_xname);
+				printf("state=%d\n", sc->sc_state);
 				AIC_BREAK();
 				goto out;
 			}
@@ -2258,14 +2339,16 @@ loop:
 		 * Turn off selection stuff, and prepare to catch bus free
 		 * interrupts, parity errors, and phase changes.
 		 */
-		outb(iobase + SXFRCTL0, CHEN | CLRSTCNT | CLRCH);
-		outb(iobase + SXFRCTL1, 0);
-		outb(iobase + SCSISEQ, ENAUTOATNP);
-		outb(iobase + CLRSINT0, CLRSELDI | CLRSELDO);
-		outb(iobase + CLRSINT1, CLRBUSFREE | CLRPHASECHG);
-		outb(iobase + SIMODE0, 0);
-		outb(iobase + SIMODE1,
-		    ENSCSIRST | ENSCSIPERR | ENBUSFREE | ENREQINIT | ENPHASECHG);
+		bus_space_write_1(iot, ioh, SXFRCTL0, CHEN | CLRSTCNT | CLRCH);
+		bus_space_write_1(iot, ioh, SXFRCTL1, 0);
+		bus_space_write_1(iot, ioh, SCSISEQ, ENAUTOATNP);
+		bus_space_write_1(iot, ioh, CLRSINT0, CLRSELDI | CLRSELDO);
+		bus_space_write_1(iot, ioh, CLRSINT1,
+		    CLRBUSFREE | CLRPHASECHG);
+		bus_space_write_1(iot, ioh, SIMODE0, 0);
+		bus_space_write_1(iot, ioh, SIMODE1,
+		    ENSCSIRST | ENSCSIPERR | ENBUSFREE | ENREQINIT |
+		    ENPHASECHG);
 
 		sc->sc_flags = 0;
 		sc->sc_prevphase = PH_INVALID;
@@ -2274,7 +2357,8 @@ loop:
 
 	if ((sstat1 & BUSFREE) != 0) {
 		/* We've gone to BUS FREE phase. */
-		outb(iobase + CLRSINT1, CLRBUSFREE | CLRPHASECHG);
+		bus_space_write_1(iot, ioh, CLRSINT1,
+		    CLRBUSFREE | CLRPHASECHG);
 
 		switch (sc->sc_state) {
 		case AIC_RESELECTED:
@@ -2319,8 +2403,9 @@ loop:
 				 * disconnecting, and this is necessary to
 				 * clean up their state.
 				 */
-				printf("%s: unexpected disconnect; sending REQUEST SENSE\n",
+				printf("%s: unexpected disconnect; ",
 				    sc->sc_dev.dv_xname);
+				printf("sending REQUEST SENSE\n");
 				AIC_BREAK();
 				aic_sense(sc, acb);
 				goto out;
@@ -2343,7 +2428,7 @@ loop:
 		}
 	}
 
-	outb(iobase + CLRSINT1, CLRPHASECHG);
+	bus_space_write_1(iot, ioh, CLRSINT1, CLRPHASECHG);
 
 dophase:
 	if ((sstat1 & REQINIT) == 0) {
@@ -2351,8 +2436,8 @@ dophase:
 		goto out;
 	}
 
-	sc->sc_phase = inb(iobase + SCSISIG) & PH_MASK;
-	outb(iobase + SCSISIG, sc->sc_phase);
+	sc->sc_phase = bus_space_read_1(iot, ioh, SCSISIG) & PH_MASK;
+	bus_space_write_1(iot, ioh, SCSISIG, sc->sc_phase);
 
 	switch (sc->sc_phase) {
 	case PH_MSGOUT:
@@ -2414,12 +2499,12 @@ dophase:
 		AIC_ASSERT(sc->sc_nexus != NULL);
 		acb = sc->sc_nexus;
 		/* XXXX Don't clear FIFO.  Wait for byte to come in. */
-		outb(iobase + SXFRCTL0, CHEN | SPIOEN);
-		outb(iobase + DMACNTRL0, RSTFIFO);
-		acb->target_stat = inb(iobase + SCSIDAT);
-		outb(iobase + SXFRCTL0, CHEN);
-		outb(iobase + DMACNTRL0, RSTFIFO);
-		while ((inb(iobase + SXFRCTL0) & SCSIEN) != 0)
+		bus_space_write_1(iot, ioh, SXFRCTL0, CHEN | SPIOEN);
+		bus_space_write_1(iot, ioh, DMACNTRL0, RSTFIFO);
+		acb->target_stat = bus_space_read_1(iot, ioh, SCSIDAT);
+		bus_space_write_1(iot, ioh, SXFRCTL0, CHEN);
+		bus_space_write_1(iot, ioh, DMACNTRL0, RSTFIFO);
+		while ((bus_space_read_1(iot, ioh, SXFRCTL0) & SCSIEN) != 0)
 			;
 		AIC_MISC(("target_stat=0x%02x  ", acb->target_stat));
 		sc->sc_prevphase = PH_STAT;
@@ -2443,7 +2528,7 @@ sched:
 	goto out;
 
 out:
-	outb(iobase + DMACNTRL0, INTEN);
+	bus_space_write_1(iot, ioh, DMACNTRL0, INTEN);
 	return 1;
 }
 
@@ -2561,20 +2646,30 @@ void
 aic_dump6360(sc)
 	struct aic_softc *sc;
 {
-	int iobase = sc->sc_iobase;
+	bus_space_handle_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
 
 	printf("aic6360: SCSISEQ=%x SXFRCTL0=%x SXFRCTL1=%x SCSISIG=%x\n",
-	    inb(iobase + SCSISEQ), inb(iobase + SXFRCTL0),
-	    inb(iobase + SXFRCTL1), inb(iobase + SCSISIG));
+	    bus_space_read_1(iot, ioh, SCSISEQ),
+	    bus_space_read_1(iot, ioh, SXFRCTL0),
+	    bus_space_read_1(iot, ioh, SXFRCTL1),
+	    bus_space_read_1(iot, ioh, SCSISIG));
 	printf("         SSTAT0=%x SSTAT1=%x SSTAT2=%x SSTAT3=%x SSTAT4=%x\n",
-	    inb(iobase + SSTAT0), inb(iobase + SSTAT1), inb(iobase + SSTAT2),
-	    inb(iobase + SSTAT3), inb(iobase + SSTAT4));
-	printf("         SIMODE0=%x SIMODE1=%x DMACNTRL0=%x DMACNTRL1=%x DMASTAT=%x\n",
-	    inb(iobase + SIMODE0), inb(iobase + SIMODE1),
-	    inb(iobase + DMACNTRL0), inb(iobase + DMACNTRL1),
-	    inb(iobase + DMASTAT));
+	    bus_space_read_1(iot, ioh, SSTAT0),
+	    bus_space_read_1(iot, ioh, SSTAT1),
+	    bus_space_read_1(iot, ioh, SSTAT2),
+	    bus_space_read_1(iot, ioh, SSTAT3),
+	    bus_space_read_1(iot, ioh, SSTAT4));
+	printf("         SIMODE0=%x SIMODE1=%x ",
+	    bus_space_read_1(iot, ioh, SIMODE0),
+	    bus_space_read_1(iot, ioh, SIMODE1));
+	printf("DMACNTRL0=%x DMACNTRL1=%x DMASTAT=%x\n",
+	    bus_space_read_1(iot, ioh, DMACNTRL0),
+	    bus_space_read_1(iot, ioh, DMACNTRL1),
+	    bus_space_read_1(iot, ioh, DMASTAT));
 	printf("         FIFOSTAT=%d SCSIBUS=0x%x\n",
-	    inb(iobase + FIFOSTAT), inb(iobase + SCSIBUS));
+	    bus_space_read_1(iot, ioh, FIFOSTAT),
+	    bus_space_read_1(iot, ioh, SCSIBUS));
 }
 
 void
@@ -2585,9 +2680,9 @@ aic_dump_driver(sc)
 	int i;
 
 	printf("nexus=%p prevphase=%x\n", sc->sc_nexus, sc->sc_prevphase);
-	printf("state=%x msgin=%x msgpriq=%x msgoutq=%x lastmsg=%x currmsg=%x\n",
-	    sc->sc_state, sc->sc_imess[0],
-	    sc->sc_msgpriq, sc->sc_msgoutq, sc->sc_lastmsg, sc->sc_currmsg);
+	printf("state=%x msgin=%x ", sc->sc_state, sc->sc_imess[0]);
+	printf("msgpriq=%x msgoutq=%x lastmsg=%x currmsg=%x\n", sc->sc_msgpriq,
+	    sc->sc_msgoutq, sc->sc_lastmsg, sc->sc_currmsg);
 	for (i = 0; i < 7; i++) {
 		ti = &sc->sc_tinfo[i];
 		printf("tinfo%d: %d cmds %d disconnects %d timeouts",
