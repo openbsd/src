@@ -1,8 +1,9 @@
+/*	$OpenBSD: srec.c,v 1.2 2001/04/30 00:06:34 miod Exp $	*/
+
 /*
  * Public domain, believed to be by Mike Price.
  * 
  * convert binary file to Srecord format
- * XXX srec generates improper checksums for 4-byte dumps
  */
 #include <stdio.h>
 #include <ctype.h>
@@ -73,10 +74,11 @@ main(argc, argv)
 	}
 
 	/*
-	 * kludge -> don't know why you have to add the +1 = works
-	 * for size =3 at least
+	 * kludge -> some sizes need an extra count (1 if size == 3, 2 if
+	 * size == 4).  Don't ask why.
 	 */
-	printf("%02X\n", checksum(base, (char *) 0, 0, size) + 1);
+	printf("%02X\n", checksum(base, (char *) 0, 0, size) +
+	    (size - 2));
 	exit (0);
 }
 
