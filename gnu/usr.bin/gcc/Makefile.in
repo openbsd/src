@@ -690,7 +690,7 @@ $(srcdir)/version.c: $(VERSION_DEP)
 	if [ $${date} != RELEASE ]; then ver="testgcc-$${ver} $${date} experimental"; fi; \
 	echo "char *version_string = \"$${ver}\";" >>tmp-version.c
 	rm -f tmp-ver
-	$(srcdir)/move-if-change tmp-version.c $(srcdir)/version.c
+	sh $(srcdir)/move-if-change tmp-version.c $(srcdir)/version.c
 
 Makefile: $(srcdir)/Makefile.in config.status $(srcdir)/version.c \
    $(xmake_file) $(tmake_file) $(LANG_MAKEFILES)
@@ -1075,7 +1075,7 @@ s-mlib: $(srcdir)/genmultilib Makefile
 	  "$(MULTILIB_MATCHES)" \
 	  "$(MULTILIB_EXCEPTIONS)" \
 	  "$(MULTILIB_EXTRA_OPTS)" > tmp-mlib.h
-	$(srcdir)/move-if-change tmp-mlib.h multilib.h
+	sh $(srcdir)/move-if-change tmp-mlib.h multilib.h
 	touch s-mlib
 
 # Build multiple copies of libgcc.a, one for each target switch.
@@ -1211,7 +1211,7 @@ c-parse.y: c-parse.in
 #$(srcdir)/c-gperf.h: c-parse.gperf
 #	gperf -p -j1 -i 1 -g -o -t -G -N is_reserved_word -k1,3,$$ \
 #	   $(srcdir)/c-parse.gperf >tmp-gperf.h
-#	 sh $(srcdir)/move-if-change tmp-gperf.h $(srcdir)/c-gperf.h
+#	sh $(srcdir)/move-if-change tmp-gperf.h $(srcdir)/c-gperf.h
 
 c-decl.o : c-decl.c $(CONFIG_H) $(TREE_H) c-tree.h c-lex.h flags.h output.h
 c-typeck.o : c-typeck.c $(CONFIG_H) $(TREE_H) c-tree.h flags.h output.h
