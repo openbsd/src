@@ -3,8 +3,8 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.sparc/MAKEDEV.md,v 1.16 2002/12/05 04:30:21 kjc Exp 
-#	OpenBSD: MAKEDEV.mi,v 1.56 2003/01/06 17:19:16 todd Exp 
+#	OpenBSD: etc.sparc/MAKEDEV.md,v 1.17 2003/04/13 22:55:43 miod Exp 
+#	OpenBSD: MAKEDEV.mi,v 1.58 2003/04/10 16:11:12 millert Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.7 2002/02/16 01:19:52 deraadt Exp 
 #
 #
@@ -49,6 +49,7 @@
 #	fd*	Floppy disk drives (3 1/2", 5 1/4")
 #	vnd*	"file" pseudo-disks
 #	ccd*	concatenated disk devices
+#	presto*	Prestoserve NVRAM memory
 # Pseudo terminals:
 #	tty*	set of 16 slave psuedo terminals
 #	pty*	set of 16 master pseudo terminals
@@ -139,7 +140,7 @@ dodisk()
 		M r$1$2$d	c $4 $(($n+$count)) 640
 		let count=count+1
 	done
-	MKlist="$MKlist;chown root.operator $1$2? r$1$2?"
+	MKlist="$MKlist;chown root:operator $1$2? r$1$2?"
 }
 
 dodisk2()
@@ -171,7 +172,7 @@ M() {
 	mklist="$mklist $1"
 	G=${6:-wheel}
 	[ "$7" ] && {
-		MKlist="$MKlist;chown $7.$G $1"
+		MKlist="$MKlist;chown $7:$G $1"
 	} || {
 		case $G in
 		wheel)g=0;;kmem)g=2;;operator)g=5;;tty)g=4;;dialer)g=117;;_lkm)g=61;;
@@ -467,17 +468,19 @@ local)
 	;;
 
 all)
-	R ccd0 ccd1 ccd2 ccd3 vnd0 vnd1 vnd2 vnd3 sd0 sd1 sd2 sd3 sd4
-	R cd0 cd1 rd0 xy0 xy1 xy2 xy3 tun0 tun1 tun2 tun3 bpf0 bpf1
-	R bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9 pty0 pty1 pty2 fd1
-	R fd1B fd1C fd1D fd1E fd1F fd1G fd1H fd0 fd0B fd0C fd0D fd0E
-	R fd0F fd0G fd0H xfs0 ss0 ss1 ch0 ses0 cuaa cuab cuac cuad
-	R ttya ttyb ttyc ttyd wscons audio0 uk0 random lkm pf systrace
-	R xd0 xd1 xd2 xd3 raid0 raid1 raid2 raid3 std st0 st1 fd
+	R presto0 ccd0 ccd1 ccd2 ccd3 vnd0 vnd1 vnd2 vnd3 sd0 sd1 sd2
+	R sd3 sd4 cd0 cd1 rd0 xy0 xy1 xy2 xy3 tun0 tun1 tun2 tun3 bpf0
+	R bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9 pty0 pty1 pty2
+	R fd1 fd1B fd1C fd1D fd1E fd1F fd1G fd1H fd0 fd0B fd0C fd0D
+	R fd0E fd0F fd0G fd0H xfs0 ss0 ss1 ch0 ses0 cuaa cuab cuac
+	R cuad ttya ttyb ttyc ttyd wscons audio0 uk0 random lkm pf
+	R systrace xd0 xd1 xd2 xd3 raid0 raid1 raid2 raid3 std st0 st1
+	R fd
 	;;
 
-xd*|xy*|sd*|raid*|ccd*)
+presto*|xd*|xy*|sd*|raid*|ccd*)
 	case $i in
+	presto*) dodisk presto $U 26 25 $U 0;;
 	xd*) dodisk xd $U 10 42 $U 0;;
 	xy*) dodisk xy $U 3 9 $U 0;;
 	sd*) dodisk sd $U 7 17 $U 0;;
