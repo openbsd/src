@@ -1,4 +1,4 @@
-/*	$OpenBSD: crl.c,v 1.5 2002/03/14 01:26:48 millert Exp $	*/
+/*	$OpenBSD: crl.c,v 1.6 2002/06/10 21:56:11 miod Exp $	*/
 /*	$NetBSD: crl.c,v 1.6 2000/01/24 02:40:33 matt Exp $	*/
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -131,7 +131,7 @@ crlrw(dev, uio, flag)
 		return (0);
 	s = spl4();
 	while (crltab.crl_state & CRL_BUSY)
-		sleep((caddr_t)&crltab, PRIBIO);
+		tsleep((caddr_t)&crltab, PRIBIO, "crlrw", 0);
 	crltab.crl_state |= CRL_BUSY;
 	splx(s);
 
@@ -152,7 +152,7 @@ crlrw(dev, uio, flag)
 		s = spl4(); 
 		crlstart();
 		while ((bp->b_flags & B_DONE) == 0)
-			sleep((caddr_t)bp, PRIBIO);	
+			tsleep((caddr_t)bp, PRIBIO, "crlrw", 0);	
 		splx(s);
 		if (bp->b_flags & B_ERROR) {
 			error = EIO;

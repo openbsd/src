@@ -1,4 +1,4 @@
-/*	$OpenBSD: ts.c,v 1.10 2002/06/08 08:50:26 art Exp $ */
+/*	$OpenBSD: ts.c,v 1.11 2002/06/10 21:56:11 miod Exp $ */
 /*	$NetBSD: ts.c,v 1.11 1997/01/11 11:34:43 ragge Exp $ */
 
 /*-
@@ -380,7 +380,7 @@ tscommand (dev, cmd, count)
 		if (bp->b_bcount == 0 && (bp->b_flags & B_DONE))
 			break;
 		bp->b_flags |= B_WANTED;
-		sleep ((caddr_t)bp, PRIBIO);
+		tsleep ((caddr_t)bp, PRIBIO, "tscommand", 0);
 		/* check MOT-flag !!! */
 	}
 	bp->b_flags = B_BUSY | B_READ;
