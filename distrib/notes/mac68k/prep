@@ -1,4 +1,4 @@
-dnl	$OpenBSD: prep,v 1.13 2004/03/17 09:25:09 jmc Exp $
+dnl	$OpenBSD: prep,v 1.14 2004/03/23 13:47:41 nick Exp $
 Find your favorite disk partitioning utility.  Some
 of the ones that have been tried and seem to work are:
 	APS Powertools 2.7.3
@@ -8,11 +8,7 @@ of the ones that have been tried and seem to work are:
 	I/O Formatter from Diversified (?)
 	Silverlining from LaCie
 
-You can get "HD SC Setup" from
-	ftp://ftphqx.info.apple.com/Apple_Support_Area/
-	    Apple_Software_Updates/English-North_American/Macintosh/Utilities/
-	    Apple_HD_SC_Setup_7.3.5.sea.bin
-(this address has been split into several lines for readability).
+"HD SC Setup" is included with the supported versions of Mac OS.
 This utility ignores non-Apple hard disks unless you patch it with the
 application found at <http://www.euronet.nl/users/ernstoud/hdpatch.html>.
 
