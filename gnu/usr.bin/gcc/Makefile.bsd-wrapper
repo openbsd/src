@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.34 1998/10/18 20:02:30 millert Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.35 1999/02/04 00:07:14 millert Exp $
 
 MAN=		cccp.1 gcc.1 cp/g++.1 f/g77.1
 MLINKS+=	gcc.1 cc.1
@@ -24,7 +24,7 @@ M_ARCH=		${MACHINE_ARCH}
 GCCARCH=	${M_ARCH}-unknown-openbsd`uname -r`
 
 all:	config.status
-	${MAKE} ${GNUCFLAGS} BISON=yacc CC=${CC} LDFLAGS=${LDSTATIC} \
+	${MAKE} ${GNUCFLAGS} BISON=yacc CC="${CC}" LDFLAGS="${LDSTATIC}" \
 		build_infodir=. all doc
 
 
