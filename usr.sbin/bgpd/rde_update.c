@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.6 2004/02/19 23:07:00 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.7 2004/02/24 14:27:27 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -488,6 +488,7 @@ up_set_prefix(u_char *buf, int len, struct bgpd_addr *prefix, u_int8_t plen)
 	return (totlen);
 }
 
+#define MIN_PREFIX_LEN	5	/* 1 byte prefix lenght + 4 bytes addr */
 int
 up_dump_prefix(u_char *buf, int len, struct uplist_prefix *prefix_head,
     struct rde_peer *peer)
@@ -520,8 +521,23 @@ up_dump_attrnlri(u_char *buf, int len, struct rde_peer *peer)
 	int			 r, wpos;
 	u_int16_t		 attr_len;
 
-	upa = TAILQ_FIRST(&peer->updates);
-	if (upa == NULL || upa->attr_len + 5 > len) {
+	/*
+	 * It is possible that a queued path attribute has no nlri prefix.
+	 * Ignore and remove those path attributes.
+	 */
+	while ((upa = TAILQ_FIRST(&peer->updates)) != NULL)
+		if (TAILQ_EMPTY(&upa->prefix_h)) {
+			if (RB_REMOVE(uptree_attr, &peer->up_attrs,
+			    upa) == NULL)
+				log_warnx("dequeuing update failed.");
+			TAILQ_REMOVE(&peer->updates, upa, attr_l);
+			free(upa->attr);
+			free(upa);
+			peer->up_acnt--;
+		} else
+			break;
+
+	if (upa == NULL || upa->attr_len + MIN_PREFIX_LEN > len) {
 		/*
 		 * either no packet or not enough space.
 		 * The length field needs to be set to zero else it would be
