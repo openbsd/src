@@ -1,4 +1,4 @@
-/*	$OpenBSD: psl.h,v 1.2 1998/08/29 01:29:59 mickey Exp $	*/
+/*	$OpenBSD: psl.h,v 1.3 1998/10/30 19:33:38 mickey Exp $	*/
 
 /*
  *  (c) Copyright 1987 HEWLETT-PACKARD COMPANY
@@ -14,7 +14,6 @@
  *  Hewlett-Packard Company makes no representations about the
  *  suitability of this software for any purpose.
  */
-
 /*
  * Copyright (c) 1990,1991,1994 The University of Utah and
  * the Computer Systems Laboratory (CSL).  All rights reserved.
@@ -29,8 +28,8 @@
  * 	Utah $Hdr: psl.h 1.3 94/12/14$
  */
 
-#ifndef _HPPA_PSL_H_
-#define _PHPPA_SL_H_
+#ifndef _MACHINE_PSL_H_
+#define _MACHINE_PSL_H_
 
 /*
  * Processor Status Word (PSW) Masks
@@ -57,41 +56,12 @@
 #define PSW_SS	0x10000000	/* Kernel managed single step */
 
 /*
- * PSW Bit Positions
- */
-#define	PSW_T_P		7
-#define	PSW_H_P		8
-#define	PSW_L_P		9
-#define	PSW_N_P		10
-#define	PSW_X_P		11
-#define	PSW_B_P		12
-#define	PSW_C_P		13
-#define	PSW_V_P		14
-#define	PSW_M_P		15
-#define	PSW_CB_P	23
-#define	PSW_R_P		27
-#define	PSW_Q_P		28
-#define	PSW_P_P		29
-#define	PSW_D_P		30
-#define	PSW_I_P		31
-
-/*
  * Kernel PSW Masks
  */
 #define	RESET_PSW	(PSW_R | PSW_Q | PSW_P | PSW_D | PSW_I)
 #define	KERNEL_PSW	(PSW_C | PSW_Q | PSW_P | PSW_D)
 #define	SYSTEM_MASK	(PSW_R | PSW_Q | PSW_P | PSW_D | PSW_I)
 #define	GLOBAL_VAR_MASK	(PSW_H | PSW_L | PSW_C | PSW_M)
-#define	PER_INST_MASK	(PSW_X | PSW_T | PSW_N | PSW_B | PSW_V | PSW_CB | SYSTEM_MASK)
 #define	PTRACE_MASK	(PSW_N | PSW_V | PSW_CB)
 
-/*
- * Macros to decode processor status word.
- */
-#define PC_PRIV_MASK    3
-#define PC_PRIV_KERN    0
-#define PC_PRIV_USER    3
-#define USERMODE(pc)    (((pc) & PC_PRIV_MASK) != PC_PRIV_KERN)
-
-#endif  /* _HPPA_PSL_H_ */
-
+#endif  /* _MACHINE_PSL_H_ */
