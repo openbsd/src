@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.20 2003/09/19 02:40:11 krw Exp $
+#	$OpenBSD: install.md,v 1.21 2003/09/21 02:11:42 krw Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -147,7 +147,7 @@ __EOT
 }
 
 md_checkforMBRdisklabel() {
-	local _disk=$1
+	local _disk=$1 rval=0
 
 	ask "Are you *sure* you want to put a MBR disklabel on the disk?" n
 	case $resp in
@@ -175,14 +175,13 @@ __EOT
 		;;
 	esac
 
-	disklabel -r $_disk > /dev/null 2> /tmp/checkfordisklabel
+	disklabel -r $_disk >/dev/null 2>/tmp/checkfordisklabel
+
 	if grep "no disk label" /tmp/checkfordisklabel; then
 		rval=1
 	elif grep "disk label corrupted" /tmp/checkfordisklabel; then
 		rval=2
-	else
-		rval=0
-	fi
+	fi >/dev/null 2>&1
 
 	rm -f /tmp/checkfordisklabel
 	return $rval

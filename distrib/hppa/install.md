@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.2 2003/09/18 00:02:42 krw Exp $
+#	$OpenBSD: install.md,v 1.3 2003/09/21 02:11:42 krw Exp $
 #
 # machine dependent section of installation/upgrade script.
 #
@@ -17,18 +17,17 @@ md_installboot() {
 	echo "done."
 }
 
+# $1 is the disk to check
 md_checkfordisklabel() {
-	# $1 is the disk to check
-	local rval
+	local rval=0
 
-	disklabel $1 > /dev/null 2> /tmp/checkfordisklabel
+	disklabel $1 >/dev/null 2>/tmp/checkfordisklabel
+
 	if grep "no disk label" /tmp/checkfordisklabel; then
 		rval=1
 	elif grep "disk label corrupted" /tmp/checkfordisklabel; then
 		rval=2
-	else
-		rval=0
-	fi
+	fi >/dev/null 2>&1
 
 	rm -f /tmp/checkfordisklabel
 	return $rval
