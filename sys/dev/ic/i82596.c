@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82596.c,v 1.1 1999/08/15 23:49:30 mickey Exp $	*/
+/*	$OpenBSD: i82596.c,v 1.2 1999/11/26 17:45:57 mickey Exp $	*/
 /*	$NetBSD: i82586.c,v 1.18 1998/08/15 04:42:42 mycroft Exp $	*/
 
 /*-
@@ -209,8 +209,6 @@ int	i82596_cmd_wait		__P((struct ie_softc *));
 
 #ifdef I82596_DEBUG
 void 	print_rbd	__P((struct ie_softc *, int));
-
-int spurious_intrs = 0;
 #endif
 
 struct cfdriver ie_cd = {
@@ -224,83 +222,44 @@ int
 i82596_probe(sc)
 	struct ie_softc *sc;
 {
-#ifdef rewrite_also_do_the_test_command
-	volatile struct ie_sys_conf_ptr *scp;
-	volatile struct ie_int_sys_conf_ptr *iscp;
-	volatile struct ie_sys_ctl_block *scb;
-	u_long realbase;
-	int s;
+	int i;
 
-	s = splnet();
+	sc->scp = sc->sc_msize - IE_SCP_SZ;
+	sc->iscp = 0;
+	sc->scb = 32;
 
-	realbase = (u_long)where + size - (1 << 24);
+	(sc->ie_bus_write16)(sc, IE_ISCP_BUSY(sc->iscp), 1);
+	(sc->ie_bus_write16)(sc, IE_ISCP_SCB(sc->iscp), sc->scb);
+	(sc->ie_bus_write24)(sc, IE_ISCP_BASE(sc->iscp), sc->sc_maddr);
+	(sc->ie_bus_write24)(sc, IE_SCP_ISCP(sc->scp), sc->sc_maddr);
+	(sc->ie_bus_write16)(sc, IE_SCP_BUS_USE(sc->scp), sc->sysbus);
 
-	scp = (volatile struct ie_sys_conf_ptr *)(realbase + IE_SCP_ADDR);
-	bzero((char *)scp, sizeof *scp);
-
-	/*
-	 * First we put the ISCP at the bottom of memory; this tests to make
-	 * sure that our idea of the size of memory is the same as the
-	 * controller's.  This is NOT where the ISCP will be in normal
-	 * operation.
-	 */
-	iscp = (volatile struct ie_int_sys_conf_ptr *)where;
-	bzero((char *)iscp, sizeof *iscp);
-
-	scb = (volatile struct ie_sys_ctl_block *)where;
-	bzero((char *)scb, sizeof *scb);
-
-	scp->ie_bus_use = 0;		/* 16-bit */
-	scp->ie_iscp_ptr = (caddr_t)((volatile caddr_t)iscp -
-	    (volatile caddr_t)realbase);
-
-	iscp->ie_busy = 1;
-	iscp->ie_scb_offset = MK_16(realbase, scb) + 256;
-
-	(sc->reset)(sc);
+	(sc->hwreset)(sc, IE_CARD_RESET);
 	(sc->chan_attn)(sc);
+	DELAY(1000);
 
-	delay(100);			/* wait a while... */
-
-	if (iscp->ie_busy) {
-		splx(s);
-		return 0;
-	}
-
-	/*
-	 * Now relocate the ISCP to its real home, and reset the controller
-	 * again.
-	 */
-	iscp = (void *)ALIGN(realbase + IE_SCP_ADDR - sizeof(*iscp));
-	bzero((char *)iscp, sizeof *iscp);
-
-	scp->ie_iscp_ptr = (caddr_t)((caddr_t)iscp - (caddr_t)realbase);
-
-	iscp->ie_busy = 1;
-	iscp->ie_scb_offset = MK_16(realbase, scb);
-
-	(sc->reset)(sc);
-	(sc->chan_attn)(sc);
-
-	delay(100);
-
-	if (iscp->ie_busy) {
-		splx(s);
-		return 0;
-	}
-
-	sc->sc_msize = size;
-	sc->sc_maddr = (caddr_t)realbase;
-
-	sc->iscp = iscp;
-	sc->scb = scb;
-
-	/*
-	 * Acknowledge any interrupts we may have caused...
-	 */
-	ie_ack(sc, IE_ST_WHENCE);
-	splx(s);
+	if ((sc->ie_bus_read16)(sc, IE_ISCP_BUSY(sc->iscp))) {
+#ifdef I82596_DEBUG
+		printf ("%s: ISCP set failed\n", sc->sc_dev.dv_xname);
 #endif
+		return 0;
+	}
+
+	if (sc->port) {
+		(sc->ie_bus_write24)(sc, IE_SCP_TEST(sc->scp), -1);
+		(sc->port)(sc, IE_PORT_TEST);
+		for (i = 9000; i-- &&
+			     (sc->ie_bus_read16)(sc, IE_SCP_TEST(sc->scp));
+		     DELAY(100));
+
+#ifdef I82596_DEBUG
+		printf ("%s: test %x:%x\n", sc->sc_dev.dv_xname,
+			*((volatile int32_t *)(sc->bh + sc->scp)),
+			*(int32_t *)(sc->bh + IE_SCP_TEST(sc->scp)));
+
+#endif
+	}
+
 	return 1;
 }
 
@@ -336,6 +295,15 @@ i82596_attach(sc, name, etheraddr, media, nmedia, defmedia)
 	int i;
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 
+	/* Setup SCP+ISCP */
+	(sc->ie_bus_write16)(sc, IE_ISCP_BUSY(sc->iscp), 1);
+	(sc->ie_bus_write16)(sc, IE_ISCP_SCB(sc->iscp), sc->scb);
+	(sc->ie_bus_write24)(sc, IE_ISCP_BASE(sc->iscp), sc->sc_maddr);
+	(sc->ie_bus_write24)(sc, IE_SCP_ISCP(sc->scp), sc->sc_maddr +sc->iscp);
+	(sc->ie_bus_write16)(sc, IE_SCP_BUS_USE(sc->scp), sc->sysbus);
+	(sc->hwreset)(sc, IE_CARD_RESET);
+
+	/* Setup Iface */
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 	ifp->if_softc = sc;
 	ifp->if_start = i82596_start;
@@ -362,7 +330,8 @@ i82596_attach(sc, name, etheraddr, media, nmedia, defmedia)
 	if_attach(ifp);
 	ether_ifattach(ifp);
 
-	printf(" address %s, type %s\n", ether_sprintf(etheraddr), name);
+	printf(" %s v%d.%d, address %s\n", name, sc->sc_vers / 10,
+	       sc->sc_vers % 10, ether_sprintf(etheraddr));
 
 #if NBPFILTER > 0
 	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
@@ -541,20 +510,15 @@ i82596_intr(v)
          * Implementation dependent interrupt handling.
          */
 	if (sc->intrhook)
-		(sc->intrhook)(sc, INTR_ENTER);
+		(sc->intrhook)(sc, IE_INTR_ENTER);
 
 	off = IE_SCB_STATUS(sc->scb);
 	bus_space_barrier(sc->bt, sc->bh, off, 2, BUS_SPACE_BARRIER_READ);
 	status = sc->ie_bus_read16(sc, off) /* & IE_ST_WHENCE */;
 
 	if ((status & IE_ST_WHENCE) == 0) {
-#ifdef I82596_DEBUG
-		if ((spurious_intrs++ % 25) == 0)
-			printf("%s: i82596_intr: %d spurious interrupts\n",
-			       sc->sc_dev.dv_xname, spurious_intrs);
-#endif
 		if (sc->intrhook)
-			(sc->intrhook)(sc, INTR_EXIT);
+			(sc->intrhook)(sc, IE_INTR_EXIT);
 
 		return (0);
 	}
@@ -580,7 +544,7 @@ loop:
 			status, IE_ST_BITS);
 #endif
 	if (sc->intrhook)
-		(sc->intrhook)(sc, INTR_LOOP);
+		(sc->intrhook)(sc, IE_INTR_LOOP);
 
 	/*
 	 * Interrupt ACK was posted asynchronously; wait for
@@ -595,7 +559,7 @@ loop:
 
 out:
 	if (sc->intrhook)
-		(sc->intrhook)(sc, INTR_EXIT);
+		(sc->intrhook)(sc, IE_INTR_EXIT);
 	return (1);
 
 reset:
@@ -1349,7 +1313,7 @@ i82596_proberam(sc)
 	bus_space_barrier(sc->bt, sc->bh, off, 1, BUS_SPACE_BARRIER_WRITE);
 
 	if (sc->hwreset)
-		(sc->hwreset)(sc, CHIP_PROBE);
+		(sc->hwreset)(sc, IE_CHIP_PROBE);
 
 	(sc->chan_attn) (sc);
 
@@ -1392,7 +1356,7 @@ i82596_reset(sc, hard)
 	 * lockups.
 	 */
 	if (hard && sc->hwreset)
-		(sc->hwreset)(sc, CARD_RESET);
+		(sc->hwreset)(sc, IE_CARD_RESET);
 
 	delay(100);
 	ie_ack(sc, IE_ST_WHENCE);

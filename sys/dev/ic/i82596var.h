@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82596var.h,v 1.1 1999/08/15 23:49:30 mickey Exp $	*/
+/*	$OpenBSD: i82596var.h,v 1.2 1999/11/26 17:45:57 mickey Exp $	*/
 /*	$NetBSD: i82586var.h,v 1.10 1998/08/15 04:42:42 mycroft Exp $	*/
 
 /*-
@@ -98,7 +98,7 @@
  * This sun version based on i386 version 1.30.
  */
 
-#undef I82596_DEBUG
+/* #define I82596_DEBUG */
 
 /* Debug elements */
 #define	IED_RINT	0x01
@@ -123,12 +123,17 @@
 #define IE_MAXMCAST	(IE_TBUF_SIZE/6)/* must fit in transmit buffer */
 
 
-#define INTR_ENTER	0		/* intr hook called on ISR entry */
-#define INTR_EXIT	1		/* intr hook called on ISR exit */
-#define INTR_LOOP	2		/* intr hook called on ISR loop */
+#define	IE_INTR_ENTER	0		/* intr hook called on ISR entry */
+#define	IE_INTR_EXIT	1		/* intr hook called on ISR exit */
+#define	IE_INTR_LOOP	2		/* intr hook called on ISR loop */
 
-#define CHIP_PROBE	0		/* reset called from chip probe */
-#define CARD_RESET	1		/* reset called from card reset */
+#define	IE_CHIP_PROBE	0		/* reset called from chip probe */
+#define	IE_CARD_RESET	1		/* reset called from card reset */
+
+#define	IE_PORT_RESET	0
+#define	IE_PORT_TEST	1
+#define	IE_PORT_SCP	2
+#define	IE_PORT_DUMP	3
 
 /*
  * Ethernet status, per interface.
@@ -188,7 +193,6 @@ struct ie_softc {
 	void	*sc_iobase;	/* (MD) KVA of base of 24 bit addr space */
 	u_long	sc_maddr;	/* (MD) base of chip's RAM (16bit addr space) */
 	u_int	sc_msize;	/* (MD) how much RAM we have/use */
-	void	*sc_reg;	/* (MD) KVA of car's register (also iot/ioh) */
 	u_int	sc_flags;	/* (MI/MD) flags */
 #define	IEMD_FLAG0	0x00010000
 #define	IEMD_FLAG1	0x00020000
@@ -205,6 +209,7 @@ struct ie_softc {
 	void	(*hwreset) __P((struct ie_softc *, int));
 	void	(*hwinit) __P((struct ie_softc *));
 	void	(*chan_attn) __P((struct ie_softc *));
+	void	(*port) __P((struct ie_softc *, u_int));
 	int	(*intrhook) __P((struct ie_softc *, int where));
 
 	void	(*memcopyin) __P((struct ie_softc *, void *, int, size_t));
@@ -236,6 +241,9 @@ struct ie_softc {
 	 */
 	int	buf_area;	/* Start of descriptors and buffers */
 	int	buf_area_sz;	/* Size of above */
+
+	/* SYSBUS byte */
+	int	sysbus;
 
 	/*
 	 * The buffers & descriptors (recv and xmit)
