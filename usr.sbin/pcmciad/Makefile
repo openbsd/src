@@ -1,9 +1,9 @@
-# $Id: Makefile,v 1.2 1996/05/01 20:33:02 hvozda Exp $
+# $Id: Makefile,v 1.3 1996/08/21 06:48:20 tholo Exp $
 
 SRCS=	pcmciad.c pcmcia_conf.c
-VPATH=  ${.CURDIR}/../../sys/dev/pcmcia
+.PATH:  ${.CURDIR}/../../sys/dev/pcmcia
 
-CFLAGS+= -g -Wmissing-prototypes -I${.CURDIR}/../../sys
+CFLAGS+=-Wmissing-prototypes -I${.CURDIR}/../../sys
 PROG=	pcmciad
 MAN=	pcmciad.8
 
