@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.32 2001/02/24 04:42:47 angelos Exp $
+#	$OpenBSD: Makefile,v 1.33 2001/03/22 15:16:44 markus Exp $
 #	$EOM: Makefile,v 1.78 2000/10/15 21:33:42 niklas Exp $
 
 #
@@ -129,7 +129,7 @@ SUBDIR=		apps
 
 .if ${FEATURES} != ""
 FEATURES_UC!=	echo ${FEATURES} | tr '[:lower:]' '[:upper:]'
-CFLAGS+=	${FEATURES_UC:S/^/-DUSE_/}
+CFLAGS+=	${FEATURES_UC:S/^/-DUSE_/g}
 .endif
 
 .if make(install)
