@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.5 2002/01/02 17:40:56 art Exp $
+#	$OpenBSD: Makefile,v 1.6 2002/01/02 17:53:01 art Exp $
 #	$NetBSD: Makefile,v 1.11 1995/12/12 01:54:15 cgd Exp $
 
 PROG=	dbtest
@@ -8,10 +8,13 @@ PROG=	dbtest
 CFLAGS+= -g -D__DBINTERFACE_PRIVATE -DDEBUG
 CLEANFILES+= t1 t2 t3
 
-REGRESSTARGETS=do-db
+DBTARGETS=1 2 3 4 5 6 7 8 9 10 11 12 13 20
 
-# XXX - should be split into sub-tests here, not in the script.
-do-db: ${PROG}
-	sh ${.CURDIR}/run.test
+.for DT in ${DBTARGETS}
+db-${DT}:
+	sh ${.CURDIR}/run.test ${DT}
+REGRESSTARGETS+=db-${DT}
+.PHONY: db-${DT}
+.endfor
 
 .include <bsd.regress.mk>
