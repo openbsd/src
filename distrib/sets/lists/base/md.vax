@@ -1,4 +1,5 @@
 ./pcs750.bin
+./sbin/kbd
 ./sbin/ldconfig
 ./usr/bin/c++filt
 ./usr/bin/ldd
