@@ -1,4 +1,4 @@
-.\" $OpenBSD: spell.1,v 1.2 2002/03/01 22:19:02 millert Exp $
+.\" $OpenBSD: spell.1,v 1.3 2002/03/02 16:33:51 millert Exp $
 .\"
 .\" Copyright (C) 1985, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -76,9 +76,13 @@
 .Op Fl biltvx
 .Op Fl d Ar list
 .Op Fl h Ar spellhist
+.Oo
+.Fl m
+.Ar m | s | e | a | l
+.Oc
 .Op Fl s Ar stop
 .Op + Ns Ar extra_list
-.Op Ar file ...
+.Op Ar
 .Sh DESCRIPTION
 .Nm spell
 collects words from the named documents and looks them up in a spelling list.
@@ -172,6 +176,38 @@ Store misspelled words in the specified history file.
 The output of
 .Li who -m
 is appended to the history file after the list of misspelled words.
+.It Fl m
+Enable support for common
+.Xr troff 1
+macro packages; this option is passed verbatim to
+.Xr deroff 1 .
+The
+.Fl m
+option takes the following arguments:
+.Bl -tag -width Ds
+.It a
+recognize 
+.Xr man 7
+macros.
+.It e
+recognize 
+.Xr me 7
+macros.
+.It m
+recognize 
+.Xr me 7
+macros.
+.It s
+recognize 
+.Xr me 7
+macros.
+.It l
+recognize 
+.Xr mm 7
+macros and delete
+.Xr mm 7
+lists.
+.El
 .It Fl s Ar stop_list
 Use the specified stop list instead of the default system stop list.
 The stop list must be sorted as specified above.
@@ -204,7 +240,8 @@ Binary executed by the shell script
 .Xr look 1 ,
 .Xr sed 1 ,
 .Xr sort 1 ,
-.Xr tee 1
+.Xr tee 1 ,
+.Xr troff 1
 .Sh BUGS
 The spelling list lacks many technical terms; new installations will
 probably wish to monitor the output for several months to gather local

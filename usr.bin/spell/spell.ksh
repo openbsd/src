@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: spell.ksh,v 1.1 2002/03/01 22:01:11 millert Exp $
+# $OpenBSD: spell.ksh,v 1.2 2002/03/02 16:33:51 millert Exp $
 #
 # Copyright (c) 2001 Todd C. Miller <Todd.Miller@courtesan.com>
 # All rights reserved.
@@ -58,7 +58,7 @@ fi
 # of the args and quit the loop when we find something starting with '+'
 set -A argv $0 "$@"
 while test "${argv[$OPTIND]#+}" = "${argv[$OPTIND]}" && \
-    getopts "biltvxd:h:s:" c; do
+    getopts "biltvxd:h:m:s:" c; do
 	case $c in
 	b)	LANG=$BRITISH
 		STOP_LANG=$AMERICAN
@@ -66,7 +66,9 @@ while test "${argv[$OPTIND]#+}" = "${argv[$OPTIND]}" && \
 		;;
 	i)	DEROFF="$DEROFF -i"
 		;;
-	l)	DEROFF="delatex"
+	i)	DEROFF="$DEROFF -i"
+		;;
+	m)	DEROFF="$DEROFF -m $OPTARG"
 		;;
 	t)	DEROFF="detex"
 		;;
