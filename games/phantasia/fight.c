@@ -1,4 +1,4 @@
-/*	$OpenBSD: fight.c,v 1.5 2000/06/29 07:39:42 pjanzen Exp $	*/
+/*	$OpenBSD: fight.c,v 1.6 2002/01/04 16:16:32 art Exp $	*/
 /*	$NetBSD: fight.c,v 1.2 1995/03/24 03:58:39 cgd Exp $	*/
 
 /*
@@ -163,7 +163,7 @@ encounter(particular)
 	{
 		more(Lines);
 		++flockcnt;
-		longjmp(Fightenv, 0);
+		longjmp(Fightenv, 1);
 		/* NOTREACHED */
 	} else
 		if (Circle > 1.0
@@ -462,7 +462,7 @@ monsthits()
 		    "Shrieeeek!!  You scared it, and it called one of its friends.");
 		more(Lines);
 		Whichmonster = (int) ROLL(70.0, 30.0);
-		longjmp(Fightenv, 0);
+		longjmp(Fightenv, 1);
 		/* NOTREACHED */
 
 	case SM_BALROG:
@@ -654,7 +654,7 @@ monsthits()
 			    "%s flew away, and left you to contend with one of its friends.",
 			    Enemyname);
 			Whichmonster = 55 + ((drandom() > 0.5) ? 22 : 0);
-			longjmp(Fightenv, 0);
+			longjmp(Fightenv, 1);
 			/* NOTREACHED */
 
 		case SM_TROLL:
@@ -917,7 +917,7 @@ throwspell()
 			else {
 				Player.p_mana -= MM_XFORM;
 				Whichmonster = (int) ROLL(0.0, 100.0);
-				longjmp(Fightenv, 0);
+				longjmp(Fightenv, 1);
 				/* NOTREACHED */
 				}
 			break;
@@ -1000,7 +1000,7 @@ throwspell()
 				mvaddstr(5, 0, "Which monster do you want [0-99] ? ");
 				Whichmonster = (int) infloat();
 				Whichmonster = MAX(0, MIN(99, Whichmonster));
-				longjmp(Fightenv, 0);
+				longjmp(Fightenv, 1);
 				/* NOTREACHED */
 			}
 			break;
@@ -1299,7 +1299,7 @@ awardtreasure()
 				    Shield =
 					(Player.p_maxenergy + Player.p_energy) * 5.5 + Circle * 50.0;
 				    Whichmonster = pickmonster();
-				    longjmp(Fightenv, 0);
+				    longjmp(Fightenv, 1);
 				    /* NOTREACHED */
 
 				case 2:
@@ -1308,7 +1308,7 @@ awardtreasure()
 				    more(whichtreasure);
 				    Player.p_speed = 1e6;
 				    Whichmonster = pickmonster();
-				    longjmp(Fightenv, 0);
+				    longjmp(Fightenv, 1);
 				    /* NOTREACHED */
 
 				case 3:
@@ -1317,7 +1317,7 @@ awardtreasure()
 				    more(whichtreasure);
 				    Player.p_might *= 10.0;
 				    Whichmonster = pickmonster();
-				    longjmp(Fightenv, 0);
+				    longjmp(Fightenv, 1);
 				    /* NOTREACHED */
 
 				case 4:
@@ -1331,7 +1331,7 @@ awardtreasure()
 				    addstr("Which monster do you want [0-99] ? ");
 				    Whichmonster = (int) infloat();
 				    Whichmonster = MIN(99, MAX(0, Whichmonster));
-				    longjmp(Fightenv, 0);
+				    longjmp(Fightenv, 1);
 
 				case 6:
 				    addstr("It was cursed!\n");

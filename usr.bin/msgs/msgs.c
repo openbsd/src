@@ -1,4 +1,4 @@
-/*	$OpenBSD: msgs.c,v 1.19 2001/11/19 19:02:15 mpech Exp $	*/
+/*	$OpenBSD: msgs.c,v 1.20 2002/01/04 16:22:19 art Exp $	*/
 /*	$NetBSD: msgs.c,v 1.7 1995/09/28 06:57:40 tls Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)msgs.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: msgs.c,v 1.19 2001/11/19 19:02:15 mpech Exp $";
+static char rcsid[] = "$OpenBSD: msgs.c,v 1.20 2002/01/04 16:22:19 art Exp $";
 #endif
 #endif /* not lint */
 
@@ -723,7 +723,7 @@ onsusp(unused)
 	kill(0, SIGTSTP);
 	signal(SIGTSTP, onsusp);
 	if (!mailing)
-		longjmp(tstpbuf, 0);
+		longjmp(tstpbuf, 1);
 }
 
 int
