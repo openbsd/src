@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.17 1997/02/22 00:28:57 niklas Exp $	*/
+/*	$OpenBSD: locore.s,v 1.18 1997/03/26 19:04:25 niklas Exp $	*/
 /*	$NetBSD: locore.s,v 1.72 1996/12/17 11:09:10 is Exp $	*/
 
 /*
@@ -1215,15 +1215,7 @@ Lauexit:
 	movl	sp@+,a2			| restore scratch reg
 	rts
 
-/*
- * non-local gotos
- */
-ENTRY(setjmp)
-	movl	sp@(4),a0	| savearea pointer
-	moveml	#0xFCFC,a0@	| save d2-d7/a2-a7
-	movl	sp@,a0@(48)	| and return address
-	moveq	#0,d0		| return 0
-	rts
+#include <m68k/m68k/support.s>
 
 ENTRY(qsetjmp)
 	movl	sp@(4),a0	| savearea pointer
@@ -1232,13 +1224,6 @@ ENTRY(qsetjmp)
 	movl	sp,a0@+		| save SP
 	movl	sp@,a0@		| and return address
 	moveq	#0,d0		| return 0
-	rts
-
-ENTRY(longjmp)
-	movl	sp@(4),a0
-	moveml	a0@+,#0xFCFC
-	movl	a0@,sp@
-	moveq	#1,d0
 	rts
 
 /*
@@ -2048,30 +2033,6 @@ ENTRY(ploadw)
 	jeq	Lploadw040
 	ploadw	#1,a0@			| pre-load translation
 Lploadw040:				| should 68040 do a ptest?
-	rts
-
-ENTRY(_insque)
-	movw	sr,d0
-	movw	#PSL_HIGHIPL,sr		| atomic
-	movl	sp@(8),a0		| where to insert (after)
-	movl	sp@(4),a1		| element to insert (e)
-	movl	a0@,a1@			| e->next = after->next
-	movl	a0,a1@(4)		| e->prev = after
-	movl	a1,a0@			| after->next = e
-	movl	a1@,a0
-	movl	a1,a0@(4)		| e->next->prev = e
-	movw	d0,sr
-	rts
-
-ENTRY(_remque)
-	movw	sr,d0
-	movw	#PSL_HIGHIPL,sr		| atomic
-	movl	sp@(4),a0		| element to remove (e)
-	movl	a0@,a1
-	movl	a0@(4),a0
-	movl	a0,a1@(4)		| e->next->prev = e->prev
-	movl	a1,a0@			| e->prev->next = e->next
-	movw	d0,sr
 	rts
 
 #ifdef FPCOPROC
