@@ -1,0 +1,84 @@
+.\" $OpenBSD: tga.4,v 1.1 2001/10/06 22:33:39 nate Exp $
+.\"
+.\" Copyright (c) 2001 Nathan L. Binkert
+.\" All rights reserved.
+.\"
+.\" Permission to redistribute, use, copy, and modify this software
+.\" without fee is hereby granted, provided that the following
+.\" conditions are met:
+.\"
+.\" 1. This entire notice is included in all source code copies of any
+.\"    software which is or includes a copy or modification of this
+.\"    software.
+.\" 2. The name of the author may not be used to endorse or promote
+.\"    products derived from this software without specific prior
+.\"    written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
+.\" OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+.\" WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
+.\" DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+.\" GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+.\" WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+.\" NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+.\" SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd October 5, 2001
+.Dt TGA 4
+.Os
+.Sh NAME
+.Nm tga
+.Nd TGA graphics driver
+.Sh SYNOPSIS
+.Cd "tga* at pci? dev ? function ?"
+.Cd "wsdisplay* at tga?"
+.Sh DESCRIPTION
+This driver handles TGA graphics hardware within the
+.Xr wscons 4
+console framework.
+.Pp
+On TGA adapters, the resolution is set on the card and is not changed
+at runtime.  On some TGA models, there are four dip switches.  On
+other models, there is a rotary switch with positions 0-F.  There are
+also some that use jumpers.
+.Pp
+.Ss TGA Switch Settings:
+.Bl -column "Setting" "Pixel Freq" "Resolution" "Refresh Rate"
+.It Li Switch Ta Pixel Ta Monitor Ta Refresh
+.It Em "Setting	Freq (MHz)	Resolution	Rate (MHz)"
+.It " "
+.It Li 0 Ta 130 Ta 1280x1024 Ta 72
+.It Li 1 Ta 119 Ta 1280x1024 Ta 66
+.It Li 2 Ta 108 Ta 1280x1024 Ta 60
+.It Li 3 Ta 104 Ta 1152x900 Ta 72
+.It Li 4 Ta 93 Ta 1152x900 Ta 66
+.It Li 5 Ta 75 Ta 1024x768 Ta 70
+.It Li 6 Ta 74 Ta 1024x768 Ta 72
+.It Li 7 Ta 69 Ta 1024x864 Ta 60
+.It Li 8 Ta 65 Ta 1024x768 Ta 60
+.It Li 9 Ta 50 Ta 800x600 Ta 72
+.It Li A Ta 40 Ta 800x600 Ta 60
+.It Li B Ta 32 Ta 640x480 Ta 72
+.It Li C Ta 25 Ta 640x480 Ta 60
+.El
+.Pp
+The settings for D, E, and F are for 1600x1200 on some cards, but
+there are no guarantees.
+.Pp
+N.B.: The resolution selected is the resolution used in X windows.
+.Pp
+There are also a couple of extra jumpers on some card.  One of these
+jumpers often selects the card to be the primary display.  Exactly one
+of the cards in your machine should have that jumper on.  If you have
+extra cards, they should have the jumper off.
+.Sh SEE ALSO
+.Xr pci 4 ,
+.Xr wscons 4 ,
+.Xr wsconscfg 8 ,
+.Xr wsfontload 8
+.Sh BUGS
+There are some problems with the background randomly switching between
+black and blue.
