@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_altq.c,v 1.83 2004/03/14 21:51:44 dhartmei Exp $	*/
+/*	$OpenBSD: pfctl_altq.c,v 1.84 2004/04/26 02:50:04 kjc Exp $	*/
 
 /*
  * Copyright (c) 2002
@@ -304,7 +304,8 @@ eval_pfqueue(struct pfctl *pf, struct pf_altq *pa, struct node_queue_bw *bw,
     struct node_queue_opt *opts)
 {
 	/* should be merged with expand_queue */
-	struct pf_altq	*if_pa, *parent;
+	struct pf_altq	*if_pa, *parent, *altq;
+	u_int32_t	 bwsum;
 	int		 error = 0;
 
 	/* find the corresponding interface and copy fields used by queues */
@@ -336,22 +337,35 @@ eval_pfqueue(struct pfctl *pf, struct pf_altq *pa, struct node_queue_bw *bw,
 		pa->qlimit = DEFAULT_QLIMIT;
 
 	if (pa->scheduler == ALTQT_CBQ || pa->scheduler == ALTQT_HFSC) {
-		if ((pa->bandwidth = eval_bwspec(bw,
-		    parent == NULL ? 0 : parent->bandwidth)) == 0) {
-			fprintf(stderr, "bandwidth for %s invalid (%d / %d)\n",
-			    pa->qname, bw->bw_absolute, bw->bw_percent);
-			return (1);
-		}
+		pa->bandwidth = eval_bwspec(bw,
+		    parent == NULL ? 0 : parent->bandwidth);
 
 		if (pa->bandwidth > pa->ifbandwidth) {
 			fprintf(stderr, "bandwidth for %s higher than "
 			    "interface\n", pa->qname);
 			return (1);
 		}
-		if (parent != NULL && pa->bandwidth > parent->bandwidth) {
-			fprintf(stderr, "bandwidth for %s higher than parent\n",
-			    pa->qname);
-			return (1);
+		/* check the sum of the child bandwidth is under parent's */
+		if (parent != NULL) {
+			if (pa->bandwidth > parent->bandwidth) {
+				warnx("bandwidth for %s higher than parent",
+				    pa->qname);
+				return (1);
+			}
+			bwsum = 0;
+			TAILQ_FOREACH(altq, &altqs, entries) {
+				if (strncmp(altq->ifname, pa->ifname,
+				    IFNAMSIZ) == 0 &&
+				    altq->qname[0] != 0 &&
+				    strncmp(altq->parent, pa->parent,
+				    PF_QNAME_SIZE) == 0)
+					bwsum += altq->bandwidth;
+			}
+			bwsum += pa->bandwidth;
+			if (bwsum > parent->bandwidth) {
+				warnx("the sum of the child bandwidth higher"
+				    " than parent \"%s\"", parent->qname);
+			}
 		}
 	}
 
@@ -733,17 +747,30 @@ eval_pfqueue_hfsc(struct pfctl *pf, struct pf_altq *pa)
 
 	/* check the real-time service curve.  reserve 20% of interface bw */
 	if (opts->rtsc_m2 != 0) {
+		/* add this queue to the sum */
+		sc.m1 = opts->rtsc_m1;
+		sc.d = opts->rtsc_d;
+		sc.m2 = opts->rtsc_m2;
+		gsc_add_sc(&rtsc, &sc);
+		/* compare the sum with 80% of the interface */
 		sc.m1 = 0;
 		sc.d = 0;
 		sc.m2 = pa->ifbandwidth / 100 * 80;
 		if (!is_gsc_under_sc(&rtsc, &sc)) {
-			warnx("real-time sc exceeds the interface bandwidth");
+			warnx("real-time sc exceeds 80%% of the interface "
+			    "bandwidth (%s)", rate2str((double)sc.m2));
 			goto err_ret;
 		}
 	}
 
 	/* check the link-sharing service curve. */
 	if (opts->lssc_m2 != 0) {
+		/* add this queue to the child sum */
+		sc.m1 = opts->lssc_m1;
+		sc.d = opts->lssc_d;
+		sc.m2 = opts->lssc_m2;
+		gsc_add_sc(&lssc, &sc);
+		/* compare the sum of the children with parent's sc */
 		sc.m1 = parent->pq_u.hfsc_opts.lssc_m1;
 		sc.d = parent->pq_u.hfsc_opts.lssc_d;
 		sc.m2 = parent->pq_u.hfsc_opts.lssc_m2;
