@@ -1,4 +1,4 @@
-/* $OpenBSD: spc.c,v 1.2 2004/08/19 10:22:01 miod Exp $ */
+/* $OpenBSD: spc.c,v 1.3 2004/08/21 17:58:34 miod Exp $ */
 /* $NetBSD: spc.c,v 1.2 2003/11/17 14:37:59 tsutsui Exp $ */
 
 /*
@@ -59,6 +59,7 @@ void spc_dio_dmadone(struct spc_softc *);
 void spc_dio_dmago(void *);
 void spc_dio_dmastop(void *);
 int  spc_dio_intr(void *);
+void spc_dio_reset(struct spc_softc *);
 
 #define	HPSPC_ADDRESS(o)	(dsc->sc_dregs + ((o) << 1) + 1)
 #define	hpspc_read(o)		*(volatile u_int8_t *)(HPSPC_ADDRESS(o))
@@ -133,6 +134,7 @@ spc_dio_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_dma_start = spc_dio_dmastart;
 	sc->sc_dma_done  = spc_dio_dmadone;
+	sc->sc_reset = spc_dio_reset;
 
 	dsc->sc_dq.dq_softc = dsc;
 	dsc->sc_dq.dq_start = spc_dio_dmago;
@@ -275,4 +277,13 @@ spc_dio_intr(void *arg)
 		return 0;
 
 	return spc_intr(arg);
+}
+
+void
+spc_dio_reset(struct spc_softc *sc)
+{
+	struct spc_dio_softc *dsc = (struct spc_dio_softc *)sc;
+
+	spc_reset(sc);
+	hpspc_write(HPSCSI_HCONF, 0x00);
 }
