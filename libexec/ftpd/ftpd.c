@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.121 2002/02/19 19:39:38 millert Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.122 2002/03/12 02:15:39 millert Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -73,7 +73,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.4 (Berkeley) 4/16/94";
 #else
-static char rcsid[] = "$OpenBSD: ftpd.c,v 1.121 2002/02/19 19:39:38 millert Exp $";
+static char rcsid[] = "$OpenBSD: ftpd.c,v 1.122 2002/03/12 02:15:39 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -97,6 +97,7 @@ static char rcsid[] = "$OpenBSD: ftpd.c,v 1.121 2002/02/19 19:39:38 millert Exp 
 #include <arpa/inet.h>
 #include <arpa/telnet.h>
 
+#include <bsd_auth.h>
 #include <ctype.h>
 #include <dirent.h>
 #include <err.h>
@@ -108,6 +109,7 @@ static char rcsid[] = "$OpenBSD: ftpd.c,v 1.121 2002/02/19 19:39:38 millert Exp 
 #include <netdb.h>
 #include <pwd.h>
 #include <signal.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -117,8 +119,6 @@ static char rcsid[] = "$OpenBSD: ftpd.c,v 1.121 2002/02/19 19:39:38 millert Exp 
 #include <unistd.h>
 #include <util.h>
 #include <utmp.h>
-#include <bsd_auth.h>
-#include <stdarg.h>
 
 #if defined(TCPWRAPPERS)
 #include <tcpd.h>
@@ -273,7 +273,7 @@ static void
 usage()
 {
 	syslog(LOG_ERR,
-	    "usage: ftpd [-AdDhlMSUv] [-t timeout] [-T maxtimeout] [-u mask]");
+	    "usage: ftpd [-AdDhlMPSU46] [-t timeout] [-T maxtimeout] [-u mask]");
 	exit(2);
 }
 
@@ -301,6 +301,7 @@ main(argc, argv, envp)
 			break;
 
 		case 'd':
+		case 'v':		/* deprecated */
 			debug = 1;
 			break;
 
@@ -359,10 +360,6 @@ main(argc, argv, envp)
 
 		case 'U':
 			doutmp = 1;
-			break;
-
-		case 'v':
-			debug = 1;
 			break;
 
 		case '4':
