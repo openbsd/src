@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.44 2000/01/09 23:44:03 angelos Exp $	*/
+/*	$OpenBSD: inet.c,v 1.45 2000/01/21 03:24:06 angelos Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-static char *rcsid = "$OpenBSD: inet.c,v 1.44 2000/01/09 23:44:03 angelos Exp $";
+static char *rcsid = "$OpenBSD: inet.c,v 1.45 2000/01/21 03:24:06 angelos Exp $";
 #endif
 #endif /* not lint */
 
@@ -71,7 +71,7 @@ static char *rcsid = "$OpenBSD: inet.c,v 1.44 2000/01/09 23:44:03 angelos Exp $"
 #include <netinet/ip_ipsp.h>
 #include <netinet/ip_ah.h>
 #include <netinet/ip_esp.h>
-#include <netinet/ip_ip4.h>
+#include <netinet/ip_ipip.h>
 #include <netinet/ip_ether.h>
 
 #include <arpa/inet.h>
@@ -764,29 +764,29 @@ esp_stats(off, name)
  * Dump ESP statistics structure.
  */
 void
-ip4_stats(off, name)
+ipip_stats(off, name)
         u_long off;
         char *name;
 {
-        struct ip4stat ip4stat;
+        struct ipipstat ipipstat;
 
         if (off == 0)
                 return;
-        kread(off, (char *)&ip4stat, sizeof (ip4stat));
+        kread(off, (char *)&ipipstat, sizeof (ipipstat));
         printf("%s:\n", name);
 
-#define p(f, m) if (ip4stat.f || sflag <= 1) \
-    printf(m, ip4stat.f, plural(ip4stat.f))
+#define p(f, m) if (ipipstat.f || sflag <= 1) \
+    printf(m, ipipstat.f, plural(ipipstat.f))
 
-        p(ip4s_ipackets, "\t%u total input packet%s\n");
-        p(ip4s_opackets, "\t%u total output packet%s\n");
-        p(ip4s_hdrops, "\t%u packet%s shorter than header shows\n");
-        p(ip4s_pdrops, "\t%u packet%s dropped due to policy\n");
-        p(ip4s_spoof, "\t%u packet%s with possibly spoofed local addresses\n");
-        p(ip4s_qfull, "\t%u packet%s were dropped due to full output queue\n");
-	p(ip4s_ibytes, "\t%qu input byte%s\n");
-	p(ip4s_obytes, "\t%qu output byte%s\n");
-	p(ip4s_family, "\t%u protocol family mismatches\n");
-	p(ip4s_unspec, "\t%u attempts to use tunnel with unspecified endpoint(s)\n");
+        p(ipips_ipackets, "\t%u total input packet%s\n");
+        p(ipips_opackets, "\t%u total output packet%s\n");
+        p(ipips_hdrops, "\t%u packet%s shorter than header shows\n");
+        p(ipips_pdrops, "\t%u packet%s dropped due to policy\n");
+        p(ipips_spoof, "\t%u packet%s with possibly spoofed local addresses\n");
+        p(ipips_qfull, "\t%u packet%s were dropped due to full output queue\n");
+	p(ipips_ibytes, "\t%qu input byte%s\n");
+	p(ipips_obytes, "\t%qu output byte%s\n");
+	p(ipips_family, "\t%u protocol family mismatches\n");
+	p(ipips_unspec, "\t%u attempts to use tunnel with unspecified endpoint(s)\n");
 #undef p
 }
